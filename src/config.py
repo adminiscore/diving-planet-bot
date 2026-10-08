@@ -229,6 +229,11 @@ class Settings(BaseSettings):
     # mueve dentro del grupo sin preguntar "¿seguís siendo 2?" (acompanante-goteo). Si duda, se pregunta como hoy.
     # Banco ciego: 0/10 nuevas por debajo, 9/10 ya contadas. PROMOCIONADO 7-oct (mini-ronda s426-extra-B: goteo pasa).
     jev_persona_ya_contada: bool = True
+    # s4-27 (8-oct): la ubicacion que el detector deduce de un HOTEL ("cocoliso" -> en las islas) se declara en
+    # `detected_fields` como cualquier otro dato, asi que pasa por la puerta de Jev (u3-3/u3-4). Antes no se declaraba
+    # y se colaba siempre: "¿me pasas el contacto del hotel Cocoliso?" (Jev: no afirma ubicacion) dejaba al cliente "ya
+    # en las islas" (contacto-hoteles-cocoliso-san-pedro). En medicion (aqui y en el compose).
+    hotel_ubicacion_declarada: bool = True
     # s4-27 (7-oct, Gonzalo): si el cliente NOMBRA cuantas inmersiones ("el precio de las 2 inmersiones") y su origen
     # consta, el contexto del RAG dice que plan del catalogo es (`conversational_core._plan_nombrado`). Caso:
     # precio-desde-islas-vs-cartagena, el RAG negaba las 2 inmersiones desde las islas (124 USD) y ofrecia el paquete

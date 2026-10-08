@@ -1,0 +1,986 @@
+INFO:     127.0.0.1:54296 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54994 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50392 - "GET /health HTTP/1.1" 200 OK
+INFO:     [WEBHOOK] Event: conversation_created, message_type: None
+INFO:     [WEBHOOK] New conversation: 3561
+INFO:     172.18.0.9:41796 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     [WEBHOOK] Event: message_created, message_type: incoming
+INFO:     [BOT] Incoming from Synth isla-hotel-refresher: hola quiero bucear, ya estoy en las islas
+INFO:     [ROUTER][JEV] 1777 ms detected={'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.04, 'adds_person': 0.03, 'shares_open_fact': 0.14, 'changes_date': False, 'affirms_location': True, 'affirms_certification': False, 'affirms_group': False, 'affirms_nationality': False, 'affirms_activity': True} msg='hola quiero bucear, ya estoy en las islas'
+INFO:     [GRAPH] conv=3561 route=booking
+INFO:     [CORE][NOTAS] Jev: nada que apuntar (0.14): no se llama al extractor
+INFO:     [INTENT] Activity updated to: certified_diving (service: 2_dives_1_day)
+INFO:     [INTENT] Detected location: island
+INFO:     [TURN_METRICS] {"conv": "3561", "start": "2026-10-08T08:14:54Z", "latency": 4.043, "turn_type": "reserva", "route": "booking", "rag_used": false, "language": "es", "step": "free_text", "activity_chosen": false, "cart_items": 0, "booking_link_sent": false, "escalated": false, "fallback": false, "error": null, "router": "jev", "router_ms": 1777, "llm_calls": 1, "embeddings": 0, "llm_seconds": 0.847, "models": {"gpt-4o-mini": 1}, "nodes": {"router": 1.8101, "setup": 0.0067, "availability": 0.0024, "routing": 0.0105, "extraction": 0.9469, "slotfill_close": 0.0011, "booking": 0.9935}, "rag_adelantado": "descartado", "notas": "saltadas"}
+INFO:     [BOT] Sending Chatwoot message conv=3561 url=http://dp-chatwoot:3000/api/v1/accounts/1/conversations/3561/messages
+INFO:     [BOT] Message sent to conversation 3561
+INFO:     [WEBHOOK] Event: message_created, message_type: outgoing
+INFO:     [WEBHOOK] Skipping non-actionable message_type=outgoing
+INFO:     172.18.0.9:42352 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     172.18.0.9:41796 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42246 - "GET /health HTTP/1.1" 200 OK
+INFO:     [WEBHOOK] Event: message_created, message_type: incoming
+INFO:     [BOT] Incoming from Synth isla-hotel-refresher: estoy en el hotel Isla del Sol
+INFO:     [ROUTER][JEV] 388 ms detected={'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.04, 'adds_person': 0.03, 'shares_open_fact': 0.05, 'changes_date': False, 'affirms_location': True, 'affirms_certification': False, 'affirms_group': False, 'affirms_nationality': False, 'affirms_activity': False} msg='estoy en el hotel Isla del Sol'
+INFO:     [GRAPH] conv=3561 route=booking
+INFO:     [CORE][NOTAS] Jev: nada que apuntar (0.05): no se llama al extractor
+INFO:     [RAG][REWRITE] original=estoy en el hotel Isla del Sol... rewritten=¿Estoy en el hotel Isla del Sol?...
+INFO:     [INTENT] Detected island: isla_del_sol
+INFO:     [INTENT] Detected hotel: isla_del_sol_hotel
+INFO:     [CORE][U3-6] señales sin LLM (Jev: acompañante 0.04, no pide recordar)
+INFO:     [CORE][U3-7] respuesta a certification por Jev: None (1.00)
+INFO:     [RAG][RETRIEVAL] query_topics=['location_islands', 'accommodation'] candidates=48 preview=[{'source': 'policies', 'id': 19555, 'score': 0.5707, 'score_final': 0.5871, 'branches': ['vector']}, {'source': 'faqs', 'id': 19485, 'score': 0.5259, 'score_final': 0.542, 'branches': ['vector']}, {'source': 'faqs', 'id': 19317, 'score': 0.5148, 'score_final': 0.5307, 'branches': ['vector']}, {'source': 'faqs', 'id': 19489, 'score': 0.5141, 'score_final': 0.5297, 'branches': ['vector']}, {'source': 'faqs', 'id': 19427, 'score': 0.5122, 'score_final': 0.5275, 'branches': ['vector']}, {'source': 'faqs', 'id': 19305, 'score': 0.5037, 'score_final': 0.5188, 'branches': ['vector']}, {'source': 'policies', 'id': 19537, 'score': 0.5034, 'score_final': 0.5183, 'branches': ['vector']}, {'source': 'policies', 'id': 19531, 'score': 0.4733, 'score_final': 0.488, 'branches': ['vector']}]
+INFO:     [RAG][RETRIEVAL] query_topics=['location_islands'] candidates=48 preview=[{'source': 'policies', 'id': 19537, 'score': 0.5221, 'score_final': 0.5385, 'branches': ['vector']}, {'source': 'faqs', 'id': 19305, 'score': 0.506, 'score_final': 0.5222, 'branches': ['vector']}, {'source': 'policies', 'id': 19555, 'score': 0.5011, 'score_final': 0.5169, 'branches': ['vector']}, {'source': 'faqs', 'id': 19427, 'score': 0.4933, 'score_final': 0.5089, 'branches': ['vector']}, {'source': 'services', 'id': 19231, 'score': 0.4694, 'score_final': 0.4847, 'branches': ['vector']}, {'source': 'policies', 'id': 19509, 'score': 0.4673, 'score_final': 0.4824, 'branches': ['vector']}, {'source': 'services', 'id': 19223, 'score': 0.4663, 'score_final': 0.4812, 'branches': ['vector']}, {'source': 'services', 'id': 19233, 'score': 0.4656, 'score_final': 0.4803, 'branches': ['vector']}]
+INFO:     [RAG][RETRIEVAL] query_topics=['location_islands'] candidates=48 preview=[{'source': 'policies', 'id': 19537, 'score': 0.5567, 'score_final': 0.573, 'branches': ['vector']}, {'source': 'faqs', 'id': 19305, 'score': 0.5401, 'score_final': 0.5562, 'branches': ['vector']}, {'source': 'policies', 'id': 19555, 'score': 0.5349, 'score_final': 0.5508, 'branches': ['vector']}, {'source': 'faqs', 'id': 19427, 'score': 0.5192, 'score_final': 0.5349, 'branches': ['vector']}, {'source': 'faqs', 'id': 19489, 'score': 0.5053, 'score_final': 0.5207, 'branches': ['vector']}, {'source': 'policies', 'id': 19509, 'score': 0.5037, 'score_final': 0.5189, 'branches': ['vector']}, {'source': 'faqs', 'id': 19445, 'score': 0.4957, 'score_final': 0.5106, 'branches': ['vector']}, {'source': 'faqs', 'id': 19429, 'score': 0.4896, 'score_final': 0.5043, 'branches': ['vector']}]
+2026-10-08 08:15:07 [info     ] knowledge_loaded               file=brand_tone.json items=1
+INFO:     [TURN_METRICS] {"conv": "3561", "start": "2026-10-08T08:15:05Z", "latency": 2.175, "turn_type": "reserva", "route": "booking", "rag_used": false, "language": "es", "step": "free_text", "activity_chosen": false, "cart_items": 0, "booking_link_sent": false, "escalated": false, "fallback": false, "error": null, "router": "jev", "router_ms": 389, "llm_calls": 3, "embeddings": 3, "llm_seconds": 2.198, "models": {"gpt-4o-mini": 3}, "nodes": {"router": 0.4096, "setup": 0.01, "availability": 0.0106, "routing": 0.0103, "extraction": 0.5995, "slotfill_close": 1.0886, "booking": 1.7506}, "rag_adelantado": "descartado", "notas": "saltadas"}
+INFO:     [BOT] Sending Chatwoot message conv=3561 url=http://dp-chatwoot:3000/api/v1/accounts/1/conversations/3561/messages
+INFO:     [BOT] Message sent to conversation 3561
+INFO:     172.18.0.9:35964 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     [WEBHOOK] Event: message_created, message_type: outgoing
+INFO:     [WEBHOOK] Skipping non-actionable message_type=outgoing
+INFO:     172.18.0.9:42364 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     [WEBHOOK] Event: message_created, message_type: incoming
+INFO:     [BOT] Incoming from Synth isla-hotel-refresher: soy certificado, voy solo
+INFO:     [ROUTER][JEV] 382 ms detected={'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.04, 'adds_person': 0.04, 'shares_open_fact': 0.31, 'changes_date': False, 'affirms_location': False, 'affirms_certification': True, 'affirms_group': True, 'affirms_nationality': False, 'affirms_activity': False} msg='soy certificado, voy solo'
+INFO:     [GRAPH] conv=3561 route=booking
+INFO:     [NOTES_EXTRACTOR] captured=['certificado de buceo', 'viaja solo'] msg='soy certificado, voy solo'
+INFO:     [CORE] notes captured -> ['certificado de buceo', 'viaja solo']
+INFO:     [RAG][REWRITE] original=soy certificado, voy solo... rewritten=¿Soy buzo certificado y voy solo?...
+INFO:     [LLM_EXTRACTOR][COMBINED] filled gaps=['location'] msg='soy certificado, voy solo'
+INFO:     [INTENT] Detected certification: True
+INFO:     [INTENT] Detected group size: 1
+INFO:     [RAG][RETRIEVAL] query_topics=['location_islands'] candidates=48 preview=[{'source': 'services', 'id': 19227, 'score': 0.4102, 'score_final': 0.4266, 'branches': ['vector']}, {'source': 'services', 'id': 19231, 'score': 0.4055, 'score_final': 0.4217, 'branches': ['vector']}, {'source': 'services', 'id': 19223, 'score': 0.4047, 'score_final': 0.4205, 'branches': ['vector']}, {'source': 'faqs', 'id': 19421, 'score': 0.4016, 'score_final': 0.4173, 'branches': ['vector']}, {'source': 'services', 'id': 19225, 'score': 0.3999, 'score_final': 0.4153, 'branches': ['vector']}, {'source': 'services', 'id': 19253, 'score': 0.3965, 'score_final': 0.4116, 'branches': ['vector']}, {'source': 'services', 'id': 19215, 'score': 0.3888, 'score_final': 0.4037, 'branches': ['vector']}, {'source': 'services', 'id': 19219, 'score': 0.3883, 'score_final': 0.4031, 'branches': ['vector']}]
+INFO:     [RAG][RETRIEVAL] query_topics=['location_islands'] candidates=48 preview=[{'source': 'faqs', 'id': 19329, 'score': 0.6172, 'score_final': 0.6336, 'branches': ['vector']}, {'source': 'faqs', 'id': 19327, 'score': 0.6107, 'score_final': 0.6269, 'branches': ['vector']}, {'source': 'policies', 'id': 19529, 'score': 0.5972, 'score_final': 0.613, 'branches': ['vector']}, {'source': 'faqs', 'id': 19435, 'score': 0.584, 'score_final': 0.5996, 'branches': ['vector']}, {'source': 'faqs', 'id': 19387, 'score': 0.5831, 'score_final': 0.5985, 'branches': ['vector']}, {'source': 'policies', 'id': 19495, 'score': 0.5826, 'score_final': 0.5978, 'branches': ['vector']}, {'source': 'faqs', 'id': 19337, 'score': 0.5773, 'score_final': 0.5922, 'branches': ['vector']}, {'source': 'faqs', 'id': 19483, 'score': 0.5652, 'score_final': 0.5799, 'branches': ['vector']}]
+INFO:     [TURN_METRICS] {"conv": "3561", "start": "2026-10-08T08:15:14Z", "latency": 2.197, "turn_type": "reserva", "route": "booking", "rag_used": false, "language": "es", "step": "free_text", "activity_chosen": false, "cart_items": 0, "booking_link_sent": false, "escalated": false, "fallback": false, "error": null, "router": "jev", "router_ms": 383, "llm_calls": 4, "embeddings": 2, "llm_seconds": 3.733, "models": {"gpt-4o-mini": 4}, "nodes": {"router": 0.4013, "setup": 0.024, "availability": 0.0052, "routing": 0.0097, "extraction": 0.9786, "slotfill_close": 0.7485, "booking": 1.7831}, "rag_adelantado": "descartado", "notas": "extraidas"}
+INFO:     [BOT] Sending Chatwoot message conv=3561 url=http://dp-chatwoot:3000/api/v1/accounts/1/conversations/3561/messages
+INFO:     [BOT] Message sent to conversation 3561
+INFO:     [WEBHOOK] Event: message_created, message_type: outgoing
+INFO:     [WEBHOOK] Skipping non-actionable message_type=outgoing
+INFO:     172.18.0.9:35986 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     172.18.0.9:35974 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     [WEBHOOK] Event: message_created, message_type: incoming
+INFO:     [BOT] Incoming from Synth isla-hotel-refresher: si, hace 3 años que no buceo
+INFO:     [ROUTER][JEV] 384 ms detected={'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.04, 'adds_person': 0.03, 'shares_open_fact': 0.3, 'changes_date': False, 'affirms_location': False, 'affirms_certification': False, 'affirms_group': False, 'affirms_nationality': False, 'affirms_activity': False} msg='si, hace 3 años que no buceo'
+INFO:     [GRAPH] conv=3561 route=booking
+INFO:     [RAG][REWRITE] original=si, hace 3 años que no buceo... rewritten=¿Han pasado más de 2 años desde mi última inmersión? Sí, hac...
+INFO:     [RAG][RETRIEVAL] query_topics=['location_islands'] candidates=48 preview=[{'source': 'policies', 'id': 19493, 'score': 0.6535, 'score_final': 0.6698, 'branches': ['vector']}, {'source': 'faqs', 'id': 19307, 'score': 0.5983, 'score_final': 0.6145, 'branches': ['vector']}, {'source': 'faqs', 'id': 19313, 'score': 0.5827, 'score_final': 0.5986, 'branches': ['vector']}, {'source': 'services', 'id': 19213, 'score': 0.5593, 'score_final': 0.575, 'branches': ['vector']}, {'source': 'services', 'id': 19221, 'score': 0.5415, 'score_final': 0.5569, 'branches': ['vector']}, {'source': 'services', 'id': 19217, 'score': 0.5414, 'score_final': 0.5566, 'branches': ['vector']}, {'source': 'services', 'id': 19219, 'score': 0.5385, 'score_final': 0.5535, 'branches': ['vector']}, {'source': 'services', 'id': 19207, 'score': 0.5367, 'score_final': 0.5514, 'branches': ['vector']}]
+INFO:     [RAG][RETRIEVAL] query_topics=['location_islands'] candidates=48 preview=[{'source': 'policies', 'id': 19493, 'score': 0.611, 'score_final': 0.6274, 'branches': ['vector']}, {'source': 'faqs', 'id': 19307, 'score': 0.5786, 'score_final': 0.5947, 'branches': ['vector']}, {'source': 'faqs', 'id': 19313, 'score': 0.5601, 'score_final': 0.576, 'branches': ['vector']}, {'source': 'services', 'id': 19213, 'score': 0.5439, 'score_final': 0.5595, 'branches': ['vector']}, {'source': 'services', 'id': 19221, 'score': 0.528, 'score_final': 0.5433, 'branches': ['vector']}, {'source': 'faqs', 'id': 19329, 'score': 0.5276, 'score_final': 0.5427, 'branches': ['vector']}, {'source': 'services', 'id': 19217, 'score': 0.5121, 'score_final': 0.5271, 'branches': ['vector']}, {'source': 'services', 'id': 19229, 'score': 0.5064, 'score_final': 0.5211, 'branches': ['vector']}]
+INFO:     [NOTES_EXTRACTOR] captured=['hace 3 años que no bucea'] msg='si, hace 3 años que no buceo'
+INFO:     [CORE] notes captured -> ['hace 3 años que no bucea']
+INFO:     [LLM_EXTRACTOR][COMBINED] filled gaps=['is_certified', 'group_size', 'location'] msg='si, hace 3 años que no buceo'
+INFO:     [INTENT] Detected last dive: True
+INFO:     [TURN_METRICS] {"conv": "3561", "start": "2026-10-08T08:15:22Z", "latency": 2.225, "turn_type": "reserva", "route": "booking", "rag_used": false, "language": "es", "step": "free_text", "activity_chosen": false, "cart_items": 0, "booking_link_sent": false, "escalated": false, "fallback": false, "error": null, "router": "jev", "router_ms": 384, "llm_calls": 4, "embeddings": 2, "llm_seconds": 3.117, "models": {"gpt-4o-mini": 4}, "nodes": {"router": 0.4053, "setup": 0.0269, "availability": 0.0052, "routing": 0.0071, "extraction": 1.0109, "slotfill_close": 0.7396, "booking": 1.8075}, "rag_adelantado": "descartado", "notas": "extraidas"}
+INFO:     [BOT] Sending Chatwoot message conv=3561 url=http://dp-chatwoot:3000/api/v1/accounts/1/conversations/3561/messages
+INFO:     [BOT] Message sent to conversation 3561
+INFO:     [WEBHOOK] Event: message_created, message_type: outgoing
+INFO:     [WEBHOOK] Skipping non-actionable message_type=outgoing
+INFO:     172.18.0.9:39974 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     172.18.0.9:39962 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     [WEBHOOK] Event: message_created, message_type: incoming
+INFO:     [BOT] Incoming from Synth isla-hotel-refresher: no soy colombiano
+INFO:     [ROUTER][JEV] 365 ms detected={'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.03, 'adds_person': 0.04, 'shares_open_fact': 0.15, 'changes_date': False, 'affirms_location': False, 'affirms_certification': False, 'affirms_group': False, 'affirms_nationality': True, 'affirms_activity': False} msg='no soy colombiano'
+INFO:     [GRAPH] conv=3561 route=booking
+INFO:     [CORE][NOTAS] Jev: nada que apuntar (0.15): no se llama al extractor
+INFO:     [INTENT] Detected nationality is_colombian=False
+INFO:     [RAG][REWRITE] original=no soy colombiano... rewritten=¿El refresher está disponible para personas que no son colom...
+INFO:     [RAG][RETRIEVAL] query_topics=['location_islands'] candidates=48 preview=[{'source': 'policies', 'id': 19505, 'score': 0.4199, 'score_final': 0.4363, 'branches': ['vector']}, {'source': 'faqs', 'id': 19301, 'score': 0.4087, 'score_final': 0.4248, 'branches': ['vector']}, {'source': 'policies', 'id': 19567, 'score': 0.4068, 'score_final': 0.4227, 'branches': ['vector']}, {'source': 'faqs', 'id': 19453, 'score': 0.3922, 'score_final': 0.4078, 'branches': ['vector']}, {'source': 'policies', 'id': 19549, 'score': 0.3906, 'score_final': 0.406, 'branches': ['vector']}, {'source': 'faqs', 'id': 19305, 'score': 0.3877, 'score_final': 0.4029, 'branches': ['vector']}, {'source': 'policies', 'id': 19537, 'score': 0.3823, 'score_final': 0.3972, 'branches': ['vector']}, {'source': 'policies', 'id': 19509, 'score': 0.3807, 'score_final': 0.3954, 'branches': ['vector']}]
+INFO:     [RAG][RETRIEVAL] query_topics=['location_islands'] candidates=48 preview=[{'source': 'services', 'id': 19271, 'score': 0.537, 'score_final': 0.5534, 'branches': ['vector']}, {'source': 'services', 'id': 19253, 'score': 0.4714, 'score_final': 0.4873, 'branches': ['vector']}, {'source': 'policies', 'id': 19505, 'score': 0.4594, 'score_final': 0.4751, 'branches': ['vector']}, {'source': 'faqs', 'id': 19301, 'score': 0.4572, 'score_final': 0.4726, 'branches': ['vector']}, {'source': 'services', 'id': 19211, 'score': 0.4551, 'score_final': 0.4702, 'branches': ['vector']}, {'source': 'services', 'id': 19225, 'score': 0.4549, 'score_final': 0.4698, 'branches': ['vector']}, {'source': 'services', 'id': 19233, 'score': 0.4543, 'score_final': 0.469, 'branches': ['vector']}, {'source': 'services', 'id': 19213, 'score': 0.4524, 'score_final': 0.4669, 'branches': ['vector']}]
+INFO:     [CORE][SIGNALS] detected={'recall_field': 'is_colombian'} msg='no soy colombiano'
+INFO:     [CORE][U3-7] respuesta a refresher por Jev: None (0.98)
+INFO:     [TURN_METRICS] {"conv": "3561", "start": "2026-10-08T08:15:31Z", "latency": 2.118, "turn_type": "reserva", "route": "booking", "rag_used": false, "language": "es", "step": "free_text", "activity_chosen": false, "cart_items": 0, "booking_link_sent": false, "escalated": false, "fallback": false, "error": null, "router": "jev", "router_ms": 365, "llm_calls": 3, "embeddings": 2, "llm_seconds": 2.339, "models": {"gpt-4o-mini": 3}, "nodes": {"router": 0.3835, "setup": 0.0042, "availability": 0.0039, "routing": 0.0051, "extraction": 0.9048, "slotfill_close": 0.7704, "booking": 1.7156}, "rag_adelantado": "descartado", "notas": "saltadas"}
+INFO:     [BOT] Sending Chatwoot message conv=3561 url=http://dp-chatwoot:3000/api/v1/accounts/1/conversations/3561/messages
+INFO:     127.0.0.1:45078 - "GET /health HTTP/1.1" 200 OK
+INFO:     [BOT] Message sent to conversation 3561
+INFO:     [WEBHOOK] Event: message_created, message_type: outgoing
+INFO:     [WEBHOOK] Skipping non-actionable message_type=outgoing
+INFO:     172.18.0.9:45468 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     172.18.0.9:45454 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     172.18.0.9:53676 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     [WEBHOOK] Event: conversation_created, message_type: None
+INFO:     [WEBHOOK] New conversation: 3562
+INFO:     [WEBHOOK] Event: message_created, message_type: incoming
+INFO:     [BOT] Incoming from Synth semana-santa-solo-avanzado-islas: Estoy interesada en bucear en semana santa 18 y 19
+INFO:     [RAG][RETRIEVAL] query_topics=[] candidates=48 preview=[{'source': 'faqs', 'id': 19281, 'score': 0.6086, 'score_final': 0.6249, 'branches': ['vector']}, {'source': 'faqs', 'id': 19327, 'score': 0.5814, 'score_final': 0.5975, 'branches': ['vector']}, {'source': 'faqs', 'id': 19309, 'score': 0.5663, 'score_final': 0.5822, 'branches': ['vector']}, {'source': 'services', 'id': 19235, 'score': 0.5619, 'score_final': 0.5776, 'branches': ['vector']}, {'source': 'services', 'id': 19255, 'score': 0.5608, 'score_final': 0.5761, 'branches': ['vector']}, {'source': 'services', 'id': 19243, 'score': 0.5579, 'score_final': 0.5731, 'branches': ['vector']}, {'source': 'faqs', 'id': 19433, 'score': 0.5545, 'score_final': 0.5694, 'branches': ['vector']}, {'source': 'services', 'id': 19241, 'score': 0.5516, 'score_final': 0.5663, 'branches': ['vector']}]
+INFO:     [ROUTER][JEV] 407 ms duda=['availability_question@0.52'] -> router LLM (se conservan ['affirms_activity', 'affirms_certification', 'affirms_group', 'affirms_location', 'affirms_nationality', 'affirms_p', 'asks_question', 'asks_recall', 'changes_date', 'companion_joins', 'corrects', 'needs_staff', 'shares_open_fact']) msg='Estoy interesada en bucear en semana santa 18 y 19'
+INFO:     [ESCALATION][ROUTING_SIGNALS] detected={'wants_human': False, 'wants_menu_or_restart': False, 'sensitive_topic': False, 'adaptive_diving_topic': False, 'booking_change_topic': False, 'asks_for_contact_number': False, 'broken_link_complaint': False, 'availability_question': True, 'comparing_options': False, 'affirms_location': False, 'affirms_activity': True, 'affirms_certification': False, 'affirms_group': False, 'affirms_nationality': False, 'corrects': False, 'asks_recall': False, 'needs_staff': False, 'changes_date': False, 'companion_joins': 0.04, 'shares_open_fact': 0.05, 'asks_question': False, 'affirms_p': {'affirms_location': 0.07, 'affirms_activity': 0.95, 'affirms_certification': 0.04, 'affirms_group': 0.04, 'affirms_nationality': 0.02}} msg='Estoy interesada en bucear en semana santa 18 y 19'
+INFO:     [GRAPH] conv=3562 route=booking
+INFO:     [CORE][NOTAS] Jev: nada que apuntar (0.05): no se llama al extractor
+INFO:     [INTENT] Activity updated to: certified_diving (service: 2_dives_1_day)
+INFO:     [TURN_METRICS] {"conv": "3562", "start": "2026-10-08T08:15:40Z", "latency": 2.929, "turn_type": "reserva", "route": "booking", "rag_used": false, "language": "es", "step": "free_text", "activity_chosen": false, "cart_items": 0, "booking_link_sent": false, "escalated": false, "fallback": false, "error": null, "router": "llm_uncertain", "router_ms": 407, "llm_calls": 3, "embeddings": 1, "llm_seconds": 4.453, "models": {"gpt-4o-mini": 2, "gpt-4.1-mini": 1}, "nodes": {"router": 2.1763, "setup": 0.0052, "availability": 0.0035, "routing": 0.0036, "extraction": 0.7115, "slotfill_close": 0.0012, "booking": 0.7415}, "rag_adelantado": "descartado", "notas": "saltadas"}
+INFO:     [BOT] Sending Chatwoot message conv=3562 url=http://dp-chatwoot:3000/api/v1/accounts/1/conversations/3562/messages
+INFO:     [BOT] Message sent to conversation 3562
+INFO:     [WEBHOOK] Event: message_created, message_type: outgoing
+INFO:     [WEBHOOK] Skipping non-actionable message_type=outgoing
+INFO:     172.18.0.9:53692 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     172.18.0.9:53676 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     [WEBHOOK] Event: message_created, message_type: incoming
+INFO:     [BOT] Incoming from Synth semana-santa-solo-avanzado-islas: Un solo buzo avanzado
+INFO:     [ROUTER][JEV] 321 ms detected={'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.28, 'adds_person': 0.11, 'shares_open_fact': 0.1, 'changes_date': False, 'affirms_location': False, 'affirms_certification': True, 'affirms_group': True, 'affirms_nationality': False, 'affirms_activity': True} msg='Un solo buzo avanzado'
+INFO:     [GRAPH] conv=3562 route=booking
+INFO:     [CORE][NOTAS] Jev: nada que apuntar (0.10): no se llama al extractor
+INFO:     [RAG][REWRITE] original=Un solo buzo avanzado... rewritten=¿Hay un solo buzo avanzado en el grupo?...
+INFO:     [RAG][RETRIEVAL] query_topics=[] candidates=48 preview=[{'source': 'policies', 'id': 19553, 'score': 0.5333, 'score_final': 0.5497, 'branches': ['vector']}, {'source': 'faqs', 'id': 19359, 'score': 0.5246, 'score_final': 0.5408, 'branches': ['vector']}, {'source': 'faqs', 'id': 19337, 'score': 0.5065, 'score_final': 0.5224, 'branches': ['vector']}, {'source': 'policies', 'id': 19529, 'score': 0.4973, 'score_final': 0.5129, 'branches': ['vector']}, {'source': 'faqs', 'id': 19435, 'score': 0.4918, 'score_final': 0.5071, 'branches': ['vector']}, {'source': 'faqs', 'id': 19383, 'score': 0.4845, 'score_final': 0.4996, 'branches': ['vector']}, {'source': 'faqs', 'id': 19343, 'score': 0.478, 'score_final': 0.493, 'branches': ['vector']}, {'source': 'faqs', 'id': 19355, 'score': 0.4755, 'score_final': 0.4902, 'branches': ['vector']}]
+INFO:     [RAG][RETRIEVAL] query_topics=[] candidates=48 preview=[{'source': 'faqs', 'id': 19383, 'score': 0.5322, 'score_final': 0.5486, 'branches': ['vector']}, {'source': 'faqs', 'id': 19365, 'score': 0.5173, 'score_final': 0.5334, 'branches': ['vector']}, {'source': 'faqs', 'id': 19351, 'score': 0.5132, 'score_final': 0.529, 'branches': ['vector']}, {'source': 'faqs', 'id': 19337, 'score': 0.506, 'score_final': 0.5216, 'branches': ['vector']}, {'source': 'faqs', 'id': 19359, 'score': 0.5044, 'score_final': 0.5198, 'branches': ['vector']}, {'source': 'faqs', 'id': 19285, 'score': 0.5038, 'score_final': 0.5189, 'branches': ['vector']}, {'source': 'faqs', 'id': 19369, 'score': 0.4994, 'score_final': 0.5143, 'branches': ['vector']}, {'source': 'faqs', 'id': 19387, 'score': 0.4971, 'score_final': 0.5118, 'branches': ['vector']}]
+INFO:     [LLM_EXTRACTOR] filled gaps=['group_size'] msg='Un solo buzo avanzado'
+INFO:     [EXTRACT][CUTOVER] applied={'group_size': 1} msg='Un solo buzo avanzado'
+INFO:     [INTENT] Detected certification: True
+INFO:     [INTENT] Detected group size: 1
+INFO:     [TURN_METRICS] {"conv": "3562", "start": "2026-10-08T08:15:50Z", "latency": 1.92, "turn_type": "reserva", "route": "booking", "rag_used": false, "language": "es", "step": "free_text", "activity_chosen": false, "cart_items": 0, "booking_link_sent": false, "escalated": false, "fallback": false, "error": null, "router": "jev", "router_ms": 322, "llm_calls": 3, "embeddings": 2, "llm_seconds": 2.036, "models": {"gpt-4o-mini": 3}, "nodes": {"router": 0.3433, "setup": 0.0053, "availability": 0.0026, "routing": 0.0035, "extraction": 0.8911, "slotfill_close": 0.65, "booking": 1.5662}, "rag_adelantado": "descartado", "notas": "saltadas"}
+INFO:     [BOT] Sending Chatwoot message conv=3562 url=http://dp-chatwoot:3000/api/v1/accounts/1/conversations/3562/messages
+INFO:     [BOT] Message sent to conversation 3562
+INFO:     172.18.0.9:39088 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     [WEBHOOK] Event: message_created, message_type: outgoing
+INFO:     [WEBHOOK] Skipping non-actionable message_type=outgoing
+INFO:     172.18.0.9:39082 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     [WEBHOOK] Event: message_created, message_type: incoming
+INFO:     [BOT] Incoming from Synth semana-santa-solo-avanzado-islas: 1. Cuakes son sus costos con equipo?
+2. ⁠tienen disponibilidad?
+3. ⁠tienen algun hospedaje o zona pa
+INFO:     [RAG][RETRIEVAL] query_topics=['accommodation'] candidates=48 preview=[{'source': 'faqs', 'id': 19485, 'score': 0.5508, 'score_final': 0.5672, 'branches': ['vector']}, {'source': 'policies', 'id': 19555, 'score': 0.5145, 'score_final': 0.5306, 'branches': ['vector']}, {'source': 'faqs', 'id': 19317, 'score': 0.5097, 'score_final': 0.5255, 'branches': ['vector']}, {'source': 'faqs', 'id': 19433, 'score': 0.4717, 'score_final': 0.4873, 'branches': ['vector']}, {'source': 'policies', 'id': 19533, 'score': 0.4684, 'score_final': 0.4838, 'branches': ['vector']}, {'source': 'faqs', 'id': 19429, 'score': 0.467, 'score_final': 0.4822, 'branches': ['vector']}, {'source': 'faqs', 'id': 19303, 'score': 0.4623, 'score_final': 0.4772, 'branches': ['vector']}, {'source': 'faqs', 'id': 19439, 'score': 0.4481, 'score_final': 0.4628, 'branches': ['vector']}]
+INFO:     [ROUTER][JEV] 337 ms duda=['availability_question@0.41'] -> router LLM (se conservan ['affirms_activity', 'affirms_certification', 'affirms_group', 'affirms_location', 'affirms_nationality', 'affirms_p', 'asks_question', 'asks_recall', 'changes_date', 'companion_joins', 'corrects', 'needs_staff', 'pending_answer', 'shares_open_fact']) msg='1. Cuakes son sus costos con equipo?\n2. \u2060tienen disponibilidad?\n3. \u2060tienen algun'
+INFO:     [ESCALATION][ROUTING_SIGNALS] detected={'wants_human': False, 'wants_menu_or_restart': False, 'sensitive_topic': False, 'adaptive_diving_topic': False, 'availability_question': True, 'broken_link_complaint': False, 'asks_for_contact_number': False, 'comparing_options': False, 'booking_change_topic': False, 'affirms_location': False, 'affirms_activity': True, 'affirms_certification': False, 'affirms_group': False, 'affirms_nationality': False, 'corrects': False, 'asks_recall': False, 'needs_staff': False, 'changes_date': False, 'companion_joins': 0.07, 'shares_open_fact': 0.05, 'asks_question': True, 'affirms_p': {'affirms_location': 0.07, 'affirms_activity': 0.54, 'affirms_certification': 0.05, 'affirms_group': 0.04, 'affirms_nationality': 0.03}, 'pending_answer': {'slot': 'location', 'value': 'cartagena', 'confidence': 0.27}} msg='1. Cuakes son sus costos con equipo?\n2. \u2060tienen disponibilidad?\n3. \u2060tienen algun'
+INFO:     [GRAPH] conv=3562 route=booking
+INFO:     [CORE][NOTAS] Jev: nada que apuntar (0.05): no se llama al extractor
+INFO:     [CORE][U3-6] recordar sin LLM (Jev: no pide recordar)
+INFO:     [CORE][RAG5] respuesta adelantada aprovechada
+INFO:     [CORE][S4-26] la regex ve a otra persona y Jev no (0.07): manda Jev
+INFO:     [CORE][U3-6] señales sin LLM (Jev: acompañante 0.07, no pide recordar)
+INFO:     [CORE][S4-26] la regex ve a otra persona y Jev no (0.07): manda Jev
+INFO:     127.0.0.1:56168 - "GET /health HTTP/1.1" 200 OK
+INFO:     [RAG][GROUNDING][JEV] se mantiene: 0.97 'Salidas de Buceo 2 inmersiones (1 día) desde Cartagena: 197 '
+INFO:     [RAG][GROUNDING] grounded=False verdict=HALLUCINATED - Salidas de Buceo 2 inmersiones (1 día) desde Cartagena: 197 USD normal / 700.000 COP normal (sin descuento por equipo propio, porque es obligatorio traer el equipo completo para que aplique el 5%). 
+INFO:     [RAG][GROUNDING] attempt 1 rejected (HALLUCINATED - Salidas de Buceo 2 inmersiones (1 día) desde Cartagena: 197 USD normal / 700.000 COP normal (sin descuento por equipo propio, porque es obligatorio traer el equipo completo para que aplique el 5%). ) query=1. Cuakes son sus costos con equipo?
+2. ⁠tienen di...
+INFO:     [RAG][GROUNDING] grounded=True verdict=GROUNDED
+INFO:     [RAG] Query: 1. Cuakes son sus costos con equipo?
+2. ⁠tienen disponibilid... | Docs: 8 | Tokens: 9861 | Cached: 9216 | Sources: ['faqs', 'policies', 'faqs', 'faqs', 'policies', 'faqs', 'faqs', 'faqs']
+INFO:     [TURN_METRICS] {"conv": "3562", "start": "2026-10-08T08:15:58Z", "latency": 11.79, "turn_type": "rag", "route": "booking", "rag_used": true, "language": "es", "step": "free_text", "activity_chosen": false, "cart_items": 0, "booking_link_sent": false, "escalated": false, "fallback": false, "error": null, "router": "llm_uncertain", "router_ms": 337, "llm_calls": 6, "embeddings": 1, "llm_seconds": 13.048, "models": {"gpt-4o-mini": 2, "gpt-4.1-mini": 2, "gpt-4.1": 2}, "nodes": {"router": 1.6674, "setup": 0.035, "availability": 0.0068, "routing": 0.0088, "extraction": 0.0119, "slotfill_close": 10.0258, "booking": 10.1101}, "rag_adelantado": "aprovechado", "notas": "saltadas"}
+INFO:     [BOT] Sending Chatwoot message conv=3562 url=http://dp-chatwoot:3000/api/v1/accounts/1/conversations/3562/messages
+INFO:     [BOT] Message sent to conversation 3562
+INFO:     [WEBHOOK] Event: message_created, message_type: outgoing
+INFO:     [WEBHOOK] Skipping non-actionable message_type=outgoing
+INFO:     172.18.0.9:39592 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     [WEBHOOK] Event: message_created, message_type: incoming
+INFO:     [BOT] Incoming from Synth semana-santa-solo-avanzado-islas: Quiero quedarme en las islas
+INFO:     [ROUTER][JEV] 345 ms detected={'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.04, 'adds_person': 0.04, 'shares_open_fact': 0.07, 'changes_date': False, 'affirms_location': True, 'affirms_certification': False, 'affirms_group': False, 'affirms_nationality': False, 'affirms_activity': False} msg='Quiero quedarme en las islas'
+INFO:     [GRAPH] conv=3562 route=booking
+INFO:     [CORE][NOTAS] Jev: nada que apuntar (0.07): no se llama al extractor
+INFO:     [RAG][REWRITE] original=Quiero quedarme en las islas... rewritten=¿Puedo quedarme en las islas?...
+INFO:     [RAG][RETRIEVAL] query_topics=['location_islands'] candidates=48 preview=[{'source': 'faqs', 'id': 19439, 'score': 1.0, 'score_final': 1.032, 'branches': ['bm25', 'vector']}, {'source': 'policies', 'id': 19557, 'score': 0.5777, 'score_final': 0.6102, 'branches': ['bm25', 'vector']}, {'source': 'policies', 'id': 19531, 'score': 0.5565, 'score_final': 0.5726, 'branches': ['vector']}, {'source': 'policies', 'id': 19537, 'score': 0.5269, 'score_final': 0.5428, 'branches': ['vector']}, {'source': 'faqs', 'id': 19305, 'score': 0.5208, 'score_final': 0.5361, 'branches': ['vector']}, {'source': 'faqs', 'id': 19333, 'score': 0.5122, 'score_final': 0.5274, 'branches': ['vector']}, {'source': 'faqs', 'id': 19317, 'score': 0.51, 'score_final': 0.5249, 'branches': ['vector']}, {'source': 'faqs', 'id': 19445, 'score': 0.5093, 'score_final': 0.524, 'branches': ['vector']}]
+INFO:     [RAG][RETRIEVAL] query_topics=['location_islands'] candidates=48 preview=[{'source': 'policies', 'id': 19557, 'score': 1.0, 'score_final': 1.0328, 'branches': ['bm25', 'vector']}, {'source': 'policies', 'id': 19531, 'score': 0.4656, 'score_final': 0.4818, 'branches': ['vector']}, {'source': 'policies', 'id': 19537, 'score': 0.4508, 'score_final': 0.4666, 'branches': ['vector']}, {'source': 'faqs', 'id': 19305, 'score': 0.4504, 'score_final': 0.466, 'branches': ['vector']}, {'source': 'policies', 'id': 19555, 'score': 0.4473, 'score_final': 0.4627, 'branches': ['vector']}, {'source': 'faqs', 'id': 19317, 'score': 0.4438, 'score_final': 0.4589, 'branches': ['vector']}, {'source': 'faqs', 'id': 19427, 'score': 0.438, 'score_final': 0.4529, 'branches': ['vector']}, {'source': 'services', 'id': 19213, 'score': 0.4329, 'score_final': 0.4476, 'branches': ['vector']}]
+INFO:     [LLM_EXTRACTOR][COMBINED] filled gaps=['is_certified', 'evidence'] msg='Quiero quedarme en las islas'
+INFO:     [TURN_METRICS] {"conv": "3562", "start": "2026-10-08T08:16:17Z", "latency": 1.411, "turn_type": "reserva", "route": "booking", "rag_used": false, "language": "es", "step": "free_text", "activity_chosen": false, "cart_items": 0, "booking_link_sent": false, "escalated": false, "fallback": false, "error": null, "router": "jev", "router_ms": 346, "llm_calls": 3, "embeddings": 2, "llm_seconds": 2.263, "models": {"gpt-4o-mini": 3}, "nodes": {"router": 0.3703, "setup": 0.023, "availability": 0.0072, "routing": 0.0083, "extraction": 0.9736, "slotfill_close": 0.0009, "booking": 1.0298}, "rag_adelantado": "descartado", "notas": "saltadas"}
+INFO:     [BOT] Sending Chatwoot message conv=3562 url=http://dp-chatwoot:3000/api/v1/accounts/1/conversations/3562/messages
+INFO:     [BOT] Message sent to conversation 3562
+INFO:     [WEBHOOK] Event: message_created, message_type: outgoing
+INFO:     [WEBHOOK] Skipping non-actionable message_type=outgoing
+INFO:     172.18.0.9:49074 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     172.18.0.9:49066 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     [WEBHOOK] Event: message_created, message_type: incoming
+INFO:     [BOT] Incoming from Synth semana-santa-solo-avanzado-islas: Veo q los 5 buceos serian por 293 pagando en el website
+INFO:     [ROUTER][JEV] 327 ms detected={'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.05, 'adds_person': 0.03, 'shares_open_fact': 0.04, 'changes_date': False, 'affirms_location': False, 'affirms_certification': False, 'affirms_group': False, 'affirms_nationality': False, 'affirms_activity': True} msg='Veo q los 5 buceos serian por 293 pagando en el website'
+INFO:     [GRAPH] conv=3562 route=booking
+INFO:     [CORE][NOTAS] Jev: nada que apuntar (0.04): no se llama al extractor
+INFO:     [RAG][RETRIEVAL] query_topics=['location_islands'] candidates=48 preview=[{'source': 'services', 'id': 19219, 'score': 0.6057, 'score_final': 0.6221, 'branches': ['vector']}, {'source': 'services', 'id': 19221, 'score': 0.5823, 'score_final': 0.5984, 'branches': ['vector']}, {'source': 'services', 'id': 19213, 'score': 0.5813, 'score_final': 0.5972, 'branches': ['vector']}, {'source': 'services', 'id': 19217, 'score': 0.5696, 'score_final': 0.5849, 'branches': ['vector']}, {'source': 'services', 'id': 19203, 'score': 0.5688, 'score_final': 0.584, 'branches': ['vector']}, {'source': 'services', 'id': 19207, 'score': 0.5642, 'score_final': 0.5791, 'branches': ['vector']}, {'source': 'services', 'id': 19215, 'score': 0.5611, 'score_final': 0.5759, 'branches': ['vector']}, {'source': 'services', 'id': 19225, 'score': 0.5605, 'score_final': 0.575, 'branches': ['vector']}]
+INFO:     [LLM_EXTRACTOR][COMBINED] filled gaps=['is_certified', 'location', 'group_size'] msg='Veo q los 5 buceos serian por 293 pagando en el website'
+INFO:     [LLM_EXTRACTOR] filled gaps=['group_allocation'] msg='Veo q los 5 buceos serian por 293 pagando en el website'
+INFO:     [EXTRACT][CUTOVER] applied={'group_allocation': {'certified_diving': 1}} msg='Veo q los 5 buceos serian por 293 pagando en el website'
+INFO:     [INTENT] Detected group allocation: {'certified_diving': 1}
+INFO:     [INTENT] Detected cert dive count: 5
+INFO:     [TURN_METRICS] {"conv": "3562", "start": "2026-10-08T08:16:26Z", "latency": 2.701, "turn_type": "reserva", "route": "booking", "rag_used": false, "language": "es", "step": "free_text", "activity_chosen": false, "cart_items": 0, "booking_link_sent": false, "escalated": false, "fallback": false, "error": null, "router": "jev", "router_ms": 327, "llm_calls": 4, "embeddings": 1, "llm_seconds": 5.028, "models": {"gpt-4o-mini": 3, "gpt-4.1-mini": 1}, "nodes": {"router": 0.346, "setup": 0.0903, "availability": 0.01, "routing": 0.005, "extraction": 2.2027, "slotfill_close": 0.0015, "booking": 2.3411}, "rag_adelantado": "descartado", "notas": "saltadas"}
+INFO:     [BOT] Sending Chatwoot message conv=3562 url=http://dp-chatwoot:3000/api/v1/accounts/1/conversations/3562/messages
+INFO:     [BOT] Message sent to conversation 3562
+INFO:     [WEBHOOK] Event: message_created, message_type: outgoing
+INFO:     [WEBHOOK] Skipping non-actionable message_type=outgoing
+INFO:     172.18.0.9:41006 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     172.18.0.9:49076 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39952 - "GET /health HTTP/1.1" 200 OK
+INFO:     [WEBHOOK] Event: message_created, message_type: incoming
+INFO:     [BOT] Incoming from Synth semana-santa-solo-avanzado-islas: Ustedes cotizan los hoteles san pedro y cocoliso
+INFO:     [RAG][RETRIEVAL] query_topics=['location_islands'] candidates=48 preview=[{'source': 'faqs', 'id': 19429, 'score': 0.5511, 'score_final': 0.5675, 'branches': ['vector']}, {'source': 'policies', 'id': 19555, 'score': 0.5407, 'score_final': 0.5568, 'branches': ['vector']}, {'source': 'policies', 'id': 19537, 'score': 0.5399, 'score_final': 0.5557, 'branches': ['vector']}, {'source': 'faqs', 'id': 19427, 'score': 0.5313, 'score_final': 0.547, 'branches': ['vector']}, {'source': 'faqs', 'id': 19485, 'score': 0.51, 'score_final': 0.5254, 'branches': ['vector']}, {'source': 'faqs', 'id': 19445, 'score': 0.5082, 'score_final': 0.5234, 'branches': ['vector']}, {'source': 'faqs', 'id': 19489, 'score': 0.5067, 'score_final': 0.5216, 'branches': ['vector']}, {'source': 'faqs', 'id': 19317, 'score': 0.5036, 'score_final': 0.5183, 'branches': ['vector']}]
+INFO:     [ROUTER][JEV] 353 ms detected={'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.03, 'adds_person': 0.03, 'shares_open_fact': 0.03, 'changes_date': False, 'affirms_location': False, 'affirms_certification': False, 'affirms_group': False, 'affirms_nationality': False, 'affirms_activity': False} msg='Ustedes cotizan los hoteles san pedro y cocoliso'
+INFO:     [GRAPH] conv=3562 route=booking
+INFO:     [CORE][NOTAS] Jev: nada que apuntar (0.03): no se llama al extractor
+INFO:     [CORE][RAG5] respuesta adelantada aprovechada
+INFO:     [CORE][U3-7] respuesta a safety por Jev: None (1.00)
+INFO:     [RAG][GROUNDING] grounded=True verdict=GROUNDED
+INFO:     [RAG] Query: Ustedes cotizan los hoteles san pedro y cocoliso... | Docs: 8 | Tokens: 9824 | Cached: 7040 | Sources: ['faqs', 'policies', 'policies', 'faqs', 'faqs', 'faqs', 'faqs', 'faqs']
+INFO:     [TURN_METRICS] {"conv": "3562", "start": "2026-10-08T08:16:36Z", "latency": 2.659, "turn_type": "rag", "route": "booking", "rag_used": true, "language": "es", "step": "free_text", "activity_chosen": false, "cart_items": 0, "booking_link_sent": false, "escalated": false, "fallback": false, "error": null, "router": "jev", "router_ms": 354, "llm_calls": 2, "embeddings": 1, "llm_seconds": 2.325, "models": {"gpt-4.1-mini": 1, "gpt-4.1": 1}, "nodes": {"router": 0.3719, "setup": 0.0067, "availability": 0.0045, "routing": 0.0069, "extraction": 0.0054, "slotfill_close": 2.2285, "booking": 2.2751}, "rag_adelantado": "aprovechado", "notas": "saltadas"}
+INFO:     [BOT] Sending Chatwoot message conv=3562 url=http://dp-chatwoot:3000/api/v1/accounts/1/conversations/3562/messages
+INFO:     [BOT] Message sent to conversation 3562
+INFO:     172.18.0.9:53148 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     [WEBHOOK] Event: message_created, message_type: outgoing
+INFO:     [WEBHOOK] Skipping non-actionable message_type=outgoing
+INFO:     172.18.0.9:41020 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     [WEBHOOK] Event: message_created, message_type: incoming
+INFO:     [BOT] Incoming from Synth semana-santa-solo-avanzado-islas: Me interesa llegaria el 17 de abril y me iria el 20 de abril
+INFO:     [RAG][RETRIEVAL] query_topics=['location_islands'] candidates=48 preview=[{'source': 'policies', 'id': 19557, 'score': 0.4961, 'score_final': 0.5125, 'branches': ['vector']}, {'source': 'policies', 'id': 19531, 'score': 0.4502, 'score_final': 0.4663, 'branches': ['vector']}, {'source': 'policies', 'id': 19509, 'score': 0.4374, 'score_final': 0.4533, 'branches': ['vector']}, {'source': 'services', 'id': 19225, 'score': 0.4364, 'score_final': 0.452, 'branches': ['vector']}, {'source': 'policies', 'id': 19537, 'score': 0.4317, 'score_final': 0.4469, 'branches': ['vector']}, {'source': 'faqs', 'id': 19305, 'score': 0.4304, 'score_final': 0.4453, 'branches': ['vector']}, {'source': 'policies', 'id': 19501, 'score': 0.4264, 'score_final': 0.4411, 'branches': ['vector']}, {'source': 'services', 'id': 19221, 'score': 0.4246, 'score_final': 0.4391, 'branches': ['vector']}]
+INFO:     [ROUTER][JEV] 506 ms detected={'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.04, 'adds_person': 0.04, 'shares_open_fact': 0.04, 'changes_date': False, 'affirms_location': False, 'affirms_certification': False, 'affirms_group': False, 'affirms_nationality': False, 'affirms_activity': False} msg='Me interesa llegaria el 17 de abril y me iria el 20 de abril'
+INFO:     [GRAPH] conv=3562 route=booking
+INFO:     [CORE][NOTAS] Jev: nada que apuntar (0.04): no se llama al extractor
+INFO:     [LLM_EXTRACTOR][COMBINED] filled gaps=['location'] msg='Me interesa llegaria el 17 de abril y me iria el 20 de abril'
+INFO:     [CORE][U3-7] respuesta a safety por Jev: None (1.00)
+INFO:     [TURN_METRICS] {"conv": "3562", "start": "2026-10-08T08:16:46Z", "latency": 2.596, "turn_type": "reserva", "route": "booking", "rag_used": false, "language": "es", "step": "free_text", "activity_chosen": false, "cart_items": 0, "booking_link_sent": false, "escalated": false, "fallback": false, "error": null, "router": "jev", "router_ms": 506, "llm_calls": 2, "embeddings": 1, "llm_seconds": 1.916, "models": {"gpt-4o-mini": 2}, "nodes": {"router": 0.5274, "setup": 0.0084, "availability": 0.0064, "routing": 0.0076, "extraction": 1.2588, "slotfill_close": 0.7435, "booking": 2.0557}, "rag_adelantado": "descartado", "notas": "saltadas"}
+INFO:     [BOT] Sending Chatwoot message conv=3562 url=http://dp-chatwoot:3000/api/v1/accounts/1/conversations/3562/messages
+INFO:     [BOT] Message sent to conversation 3562
+INFO:     [WEBHOOK] Event: message_created, message_type: outgoing
+INFO:     [WEBHOOK] Skipping non-actionable message_type=outgoing
+INFO:     172.18.0.9:43800 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     172.18.0.9:53160 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     [WEBHOOK] Event: message_created, message_type: incoming
+INFO:     [BOT] Incoming from Synth semana-santa-solo-avanzado-islas: Hay disponibilidad?
+INFO:     [ROUTER][JEV] 358 ms duda=['availability_question@0.47'] -> router LLM (se conservan ['affirms_activity', 'affirms_certification', 'affirms_group', 'affirms_location', 'affirms_nationality', 'affirms_p', 'asks_question', 'asks_recall', 'changes_date', 'companion_joins', 'corrects', 'needs_staff', 'pending_answer', 'shares_open_fact']) msg='Hay disponibilidad?'
+INFO:     [RAG][REWRITE] original=Hay disponibilidad?... rewritten=¿Hay disponibilidad para las fechas del 17 al 20 de abril?...
+INFO:     [RAG][RETRIEVAL] query_topics=['location_islands'] candidates=48 preview=[{'source': 'policies', 'id': 19557, 'score': 0.5472, 'score_final': 0.5636, 'branches': ['vector']}, {'source': 'policies', 'id': 19531, 'score': 0.5219, 'score_final': 0.538, 'branches': ['vector']}, {'source': 'policies', 'id': 19501, 'score': 0.5164, 'score_final': 0.5323, 'branches': ['vector']}, {'source': 'policies', 'id': 19537, 'score': 0.5109, 'score_final': 0.5266, 'branches': ['vector']}, {'source': 'faqs', 'id': 19439, 'score': 0.5013, 'score_final': 0.5166, 'branches': ['vector']}, {'source': 'services', 'id': 19225, 'score': 0.4945, 'score_final': 0.5096, 'branches': ['vector']}, {'source': 'services', 'id': 19221, 'score': 0.4921, 'score_final': 0.5071, 'branches': ['vector']}, {'source': 'faqs', 'id': 19333, 'score': 0.4906, 'score_final': 0.5053, 'branches': ['vector']}]
+INFO:     [RAG][RETRIEVAL] query_topics=['location_islands'] candidates=48 preview=[{'source': 'policies', 'id': 19537, 'score': 0.4923, 'score_final': 0.5087, 'branches': ['vector']}, {'source': 'policies', 'id': 19557, 'score': 0.4697, 'score_final': 0.4858, 'branches': ['vector']}, {'source': 'faqs', 'id': 19429, 'score': 0.4684, 'score_final': 0.4843, 'branches': ['vector']}, {'source': 'policies', 'id': 19509, 'score': 0.457, 'score_final': 0.4726, 'branches': ['vector']}, {'source': 'faqs', 'id': 19305, 'score': 0.4545, 'score_final': 0.4698, 'branches': ['vector']}, {'source': 'services', 'id': 19225, 'score': 0.4539, 'score_final': 0.469, 'branches': ['vector']}, {'source': 'services', 'id': 19223, 'score': 0.449, 'score_final': 0.4639, 'branches': ['vector']}, {'source': 'services', 'id': 19233, 'score': 0.4465, 'score_final': 0.4612, 'branches': ['vector']}]
+INFO:     [ESCALATION][ROUTING_SIGNALS] detected={'availability_question': True, 'wants_human': False, 'wants_menu_or_restart': False, 'sensitive_topic': False, 'adaptive_diving_topic': False, 'booking_change_topic': False, 'asks_for_contact_number': False, 'broken_link_complaint': False, 'comparing_options': False, 'affirms_location': False, 'affirms_activity': False, 'affirms_certification': False, 'affirms_group': False, 'affirms_nationality': False, 'corrects': False, 'asks_recall': False, 'needs_staff': False, 'changes_date': False, 'companion_joins': 0.04, 'shares_open_fact': 0.02, 'asks_question': True, 'affirms_p': {'affirms_location': 0.05, 'affirms_activity': 0.13, 'affirms_certification': 0.03, 'affirms_group': 0.02, 'affirms_nationality': 0.02}, 'pending_answer': {'slot': 'safety', 'value': None, 'confidence': 1.0}} msg='Hay disponibilidad?'
+INFO:     [GRAPH] conv=3562 route=changes
+INFO:     [NODE:changes] disponibilidad (post-núcleo) / sin match -> delego en la cascada
+2026-10-08 08:16:57 [info     ] knowledge_loaded               file=policies.json items=1
+INFO:     [CORE][NOTAS] Jev: nada que apuntar (0.02): no se llama al extractor
+INFO:     [CORE][U3-6] recordar sin LLM (Jev: no pide recordar)
+INFO:     [CORE][RAG5] respuesta adelantada aprovechada
+INFO:     [RAG][GROUNDING] grounded=True verdict=GROUNDED
+INFO:     [RAG] Query: Hay disponibilidad?... | Docs: 12 | Tokens: 11900 | Cached: 8064 | Sources: ['policies', 'policies', 'policies', 'policies', 'faqs', 'services', 'services', 'faqs', 'faqs', 'policies', 'faqs', 'services']
+INFO:     [TURN_METRICS] {"conv": "3562", "start": "2026-10-08T08:16:55Z", "latency": 3.855, "turn_type": "rag", "route": "changes", "rag_used": true, "language": "es", "step": "free_text", "activity_chosen": false, "cart_items": 0, "booking_link_sent": false, "escalated": false, "fallback": false, "error": null, "router": "llm_uncertain", "router_ms": 358, "llm_calls": 4, "embeddings": 2, "llm_seconds": 4.735, "models": {"gpt-4o-mini": 2, "gpt-4.1-mini": 1, "gpt-4.1": 1}, "nodes": {"router": 1.6931, "changes": 2.1487}, "rag_adelantado": "aprovechado", "notas": "saltadas"}
+INFO:     [BOT] Sending Chatwoot message conv=3562 url=http://dp-chatwoot:3000/api/v1/accounts/1/conversations/3562/messages
+INFO:     [BOT] Message sent to conversation 3562
+INFO:     [WEBHOOK] Event: message_created, message_type: outgoing
+INFO:     [WEBHOOK] Skipping non-actionable message_type=outgoing
+INFO:     172.18.0.9:44198 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     172.18.0.9:43810 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59662 - "GET /health HTTP/1.1" 200 OK
+INFO:     [WEBHOOK] Event: message_created, message_type: incoming
+INFO:     [BOT] Incoming from Synth semana-santa-solo-avanzado-islas: Uno de los buceos puede ser en wreck?
+INFO:     [RAG][RETRIEVAL] query_topics=['location_islands'] candidates=48 preview=[{'source': 'faqs', 'id': 19409, 'score': 0.5743, 'score_final': 0.5906, 'branches': ['vector']}, {'source': 'services', 'id': 19207, 'score': 0.5648, 'score_final': 0.5809, 'branches': ['vector']}, {'source': 'services', 'id': 19205, 'score': 0.5611, 'score_final': 0.577, 'branches': ['vector']}, {'source': 'faqs', 'id': 19327, 'score': 0.5607, 'score_final': 0.5763, 'branches': ['vector']}, {'source': 'services', 'id': 19221, 'score': 0.5586, 'score_final': 0.574, 'branches': ['vector']}, {'source': 'services', 'id': 19219, 'score': 0.5584, 'score_final': 0.5736, 'branches': ['vector']}, {'source': 'services', 'id': 19213, 'score': 0.5568, 'score_final': 0.5717, 'branches': ['vector']}, {'source': 'services', 'id': 19227, 'score': 0.5548, 'score_final': 0.5695, 'branches': ['vector']}]
+INFO:     [ROUTER][JEV] 342 ms detected={'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.05, 'adds_person': 0.03, 'shares_open_fact': 0.03, 'changes_date': False, 'affirms_location': False, 'affirms_certification': False, 'affirms_group': False, 'affirms_nationality': False, 'affirms_activity': True} msg='Uno de los buceos puede ser en wreck?'
+INFO:     [GRAPH] conv=3562 route=booking
+INFO:     [CORE][NOTAS] Jev: nada que apuntar (0.03): no se llama al extractor
+INFO:     [CORE][U3-6] recordar sin LLM (Jev: no pide recordar)
+INFO:     [CORE][RAG5] respuesta adelantada aprovechada
+INFO:     [RAG][GROUNDING][JEV] se mantiene: 0.92 'Uno de los buceos puede ser en un pecio (wreck) en las Islas' | 0.87 'Puedes comentar tu interés en hacer un buceo en wreck para q'
+INFO:     [RAG][GROUNDING] grounded=False verdict=HALLUCINATED - Uno de los buceos puede ser en un pecio (wreck) en las Islas del Rosario. NO | - Puedes comentar tu interés en hacer un buceo en wreck para que el equipo lo tenga en cuenta y te asignen ese sitio en
+INFO:     [RAG][GROUNDING] attempt 1 rejected (HALLUCINATED - Uno de los buceos puede ser en un pecio (wreck) en las Islas del Rosario. NO | - Puedes comentar tu interés en hacer un buceo en wreck para que el equipo lo tenga en cuenta y te asignen ese sitio en) query=Uno de los buceos puede ser en wreck?...
+INFO:     [RAG][GROUNDING] grounded=True verdict=GROUNDED
+INFO:     [RAG] Query: Uno de los buceos puede ser en wreck?... | Docs: 8 | Tokens: 13003 | Cached: 12544 | Sources: ['faqs', 'services', 'services', 'faqs', 'services', 'services', 'services', 'services']
+INFO:     [TURN_METRICS] {"conv": "3562", "start": "2026-10-08T08:17:07Z", "latency": 6.155, "turn_type": "rag", "route": "booking", "rag_used": true, "language": "es", "step": "free_text", "activity_chosen": false, "cart_items": 0, "booking_link_sent": false, "escalated": false, "fallback": false, "error": null, "router": "jev", "router_ms": 342, "llm_calls": 5, "embeddings": 1, "llm_seconds": 6.136, "models": {"gpt-4o-mini": 1, "gpt-4.1-mini": 2, "gpt-4.1": 2}, "nodes": {"router": 0.3792, "setup": 0.0071, "availability": 0.0064, "routing": 0.0092, "extraction": 0.9235, "slotfill_close": 4.7843, "booking": 5.7554}, "rag_adelantado": "aprovechado", "notas": "saltadas"}
+INFO:     [BOT] Sending Chatwoot message conv=3562 url=http://dp-chatwoot:3000/api/v1/accounts/1/conversations/3562/messages
+INFO:     [BOT] Message sent to conversation 3562
+INFO:     [WEBHOOK] Event: message_created, message_type: outgoing
+INFO:     [WEBHOOK] Skipping non-actionable message_type=outgoing
+INFO:     172.18.0.9:47186 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     [WEBHOOK] Event: conversation_created, message_type: None
+INFO:     [WEBHOOK] New conversation: 3563
+INFO:     172.18.0.9:55384 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     [WEBHOOK] Event: message_created, message_type: incoming
+INFO:     [BOT] Incoming from Synth paquete-5-buceos-islas-residente-sin-recogida: Tienes disponibilidad para el plan de 5 buceos para el finde del 27 de junio al 30 de junio
+INFO:     [RAG][RETRIEVAL] query_topics=['availability'] candidates=48 preview=[{'source': 'faqs', 'id': 19433, 'score': 0.5723, 'score_final': 0.5887, 'branches': ['vector']}, {'source': 'faqs', 'id': 19323, 'score': 0.5676, 'score_final': 0.5838, 'branches': ['vector']}, {'source': 'policies', 'id': 19501, 'score': 0.5638, 'score_final': 0.5796, 'branches': ['vector']}, {'source': 'faqs', 'id': 19281, 'score': 0.5582, 'score_final': 0.5738, 'branches': ['vector']}, {'source': 'faqs', 'id': 19327, 'score': 0.557, 'score_final': 0.5724, 'branches': ['vector']}, {'source': 'services', 'id': 19239, 'score': 0.5541, 'score_final': 0.5693, 'branches': ['vector']}, {'source': 'policies', 'id': 19561, 'score': 0.5494, 'score_final': 0.5643, 'branches': ['vector']}, {'source': 'services', 'id': 19219, 'score': 0.5439, 'score_final': 0.5587, 'branches': ['vector']}]
+INFO:     [ROUTER][JEV] 381 ms detected={'availability_question': True, 'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.05, 'adds_person': 0.03, 'shares_open_fact': 0.03, 'changes_date': False, 'affirms_location': False, 'affirms_certification': False, 'affirms_group': False, 'affirms_nationality': False, 'affirms_activity': True} msg='Tienes disponibilidad para el plan de 5 buceos para el finde del 27 de junio al '
+INFO:     [GRAPH] conv=3563 route=booking
+INFO:     [CORE][NOTAS] Jev: nada que apuntar (0.03): no se llama al extractor
+INFO:     [CORE][RAG5] respuesta adelantada aprovechada
+INFO:     [INTENT] Activity updated to: certified_diving (service: 2_dives_1_day)
+INFO:     [INTENT] Detected cert dive count: 5
+INFO:     [RAG][GROUNDING] grounded=True verdict=GROUNDED
+INFO:     [RAG] Query: Tienes disponibilidad para el plan de 5 buceos para el finde... | Docs: 8 | Tokens: 9841 | Cached: 7040 | Sources: ['faqs', 'faqs', 'policies', 'faqs', 'faqs', 'services', 'policies', 'services']
+INFO:     [TURN_METRICS] {"conv": "3563", "start": "2026-10-08T08:17:21Z", "latency": 3.844, "turn_type": "rag", "route": "booking", "rag_used": true, "language": "es", "step": "free_text", "activity_chosen": false, "cart_items": 0, "booking_link_sent": true, "escalated": false, "fallback": false, "error": null, "router": "jev", "router_ms": 381, "llm_calls": 3, "embeddings": 1, "llm_seconds": 4.352, "models": {"gpt-4o-mini": 1, "gpt-4.1-mini": 1, "gpt-4.1": 1}, "nodes": {"router": 0.4082, "setup": 0.0062, "availability": 0.0046, "routing": 0.0052, "extraction": 0.9806, "slotfill_close": 2.399, "booking": 3.4211}, "rag_adelantado": "aprovechado", "notas": "saltadas"}
+INFO:     [BOT] Sending Chatwoot message conv=3563 url=http://dp-chatwoot:3000/api/v1/accounts/1/conversations/3563/messages
+INFO:     [BOT] Message sent to conversation 3563
+INFO:     172.18.0.9:55394 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     [WEBHOOK] Event: message_created, message_type: outgoing
+INFO:     [WEBHOOK] Skipping non-actionable message_type=outgoing
+INFO:     172.18.0.9:55384 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     [WEBHOOK] Event: message_created, message_type: incoming
+INFO:     [BOT] Incoming from Synth paquete-5-buceos-islas-residente-sin-recogida: Para dos personas
+INFO:     [ROUTER][JEV] 379 ms detected={'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.85, 'adds_person': 0.07, 'shares_open_fact': 0.03, 'changes_date': False, 'affirms_location': False, 'affirms_certification': False, 'affirms_group': True, 'affirms_nationality': False, 'affirms_activity': False} msg='Para dos personas'
+INFO:     [GRAPH] conv=3563 route=booking
+INFO:     [CORE][NOTAS] Jev: nada que apuntar (0.03): no se llama al extractor
+INFO:     [RAG][REWRITE] original=Para dos personas... rewritten=¿Es posible reservar el plan de 5 buceos para dos personas?...
+INFO:     [RAG][RETRIEVAL] query_topics=['booking'] candidates=48 preview=[{'source': 'faqs', 'id': 19433, 'score': 0.6566, 'score_final': 0.673, 'branches': ['vector']}, {'source': 'policies', 'id': 19561, 'score': 0.6213, 'score_final': 0.6375, 'branches': ['vector']}, {'source': 'faqs', 'id': 19327, 'score': 0.6205, 'score_final': 0.6363, 'branches': ['vector']}, {'source': 'policies', 'id': 19517, 'score': 0.6197, 'score_final': 0.6353, 'branches': ['vector']}, {'source': 'services', 'id': 19219, 'score': 0.6145, 'score_final': 0.6299, 'branches': ['vector']}, {'source': 'services', 'id': 19239, 'score': 0.6139, 'score_final': 0.6291, 'branches': ['vector']}, {'source': 'faqs', 'id': 19447, 'score': 0.6094, 'score_final': 0.6244, 'branches': ['vector']}, {'source': 'faqs', 'id': 19315, 'score': 0.6078, 'score_final': 0.6225, 'branches': ['vector']}]
+INFO:     [RAG][RETRIEVAL] query_topics=[] candidates=48 preview=[{'source': 'policies', 'id': 19503, 'score': 0.3432, 'score_final': 0.3596, 'branches': ['vector']}, {'source': 'policies', 'id': 19561, 'score': 0.3217, 'score_final': 0.3379, 'branches': ['vector']}, {'source': 'policies', 'id': 19533, 'score': 0.3038, 'score_final': 0.3197, 'branches': ['vector']}, {'source': 'policies', 'id': 19553, 'score': 0.2887, 'score_final': 0.3043, 'branches': ['vector']}, {'source': 'faqs', 'id': 19433, 'score': 0.2781, 'score_final': 0.2935, 'branches': ['vector']}, {'source': 'policies', 'id': 19541, 'score': 0.2765, 'score_final': 0.2917, 'branches': ['vector']}, {'source': 'faqs', 'id': 19487, 'score': 0.2746, 'score_final': 0.2895, 'branches': ['vector']}, {'source': 'policies', 'id': 19563, 'score': 0.2714, 'score_final': 0.2861, 'branches': ['vector']}]
+INFO:     [LLM_EXTRACTOR] filled gaps=['group_size'] msg='Para dos personas'
+INFO:     [EXTRACT][CUTOVER] applied={'group_size': 2} msg='Para dos personas'
+INFO:     [INTENT] Detected group size: 2
+INFO:     [TURN_METRICS] {"conv": "3563", "start": "2026-10-08T08:17:31Z", "latency": 2.102, "turn_type": "reserva", "route": "booking", "rag_used": false, "language": "es", "step": "free_text", "activity_chosen": false, "cart_items": 0, "booking_link_sent": false, "escalated": false, "fallback": false, "error": null, "router": "jev", "router_ms": 380, "llm_calls": 3, "embeddings": 2, "llm_seconds": 2.305, "models": {"gpt-4o-mini": 3}, "nodes": {"router": 0.3978, "setup": 0.0047, "availability": 0.0035, "routing": 0.0039, "extraction": 1.016, "slotfill_close": 0.6449, "booking": 1.692}, "rag_adelantado": "descartado", "notas": "saltadas"}
+INFO:     [BOT] Sending Chatwoot message conv=3563 url=http://dp-chatwoot:3000/api/v1/accounts/1/conversations/3563/messages
+INFO:     [BOT] Message sent to conversation 3563
+INFO:     [WEBHOOK] Event: message_created, message_type: outgoing
+INFO:     [WEBHOOK] Skipping non-actionable message_type=outgoing
+INFO:     172.18.0.9:36854 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     172.18.0.9:36848 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40562 - "GET /health HTTP/1.1" 200 OK
+INFO:     [WEBHOOK] Event: message_created, message_type: incoming
+INFO:     [BOT] Incoming from Synth paquete-5-buceos-islas-residente-sin-recogida: Hola para residentes en colombia (3 años) no aplica el desc colombia o?
+INFO:     [RAG][RETRIEVAL] query_topics=[] candidates=48 preview=[{'source': 'policies', 'id': 19505, 'score': 0.5405, 'score_final': 0.5569, 'branches': ['vector']}, {'source': 'faqs', 'id': 19301, 'score': 0.5329, 'score_final': 0.549, 'branches': ['vector']}, {'source': 'policies', 'id': 19567, 'score': 0.5299, 'score_final': 0.5458, 'branches': ['vector']}, {'source': 'faqs', 'id': 19453, 'score': 0.5261, 'score_final': 0.5417, 'branches': ['vector']}, {'source': 'faqs', 'id': 19449, 'score': 0.4665, 'score_final': 0.4818, 'branches': ['vector']}, {'source': 'policies', 'id': 19549, 'score': 0.4646, 'score_final': 0.4798, 'branches': ['vector']}, {'source': 'faqs', 'id': 19451, 'score': 0.4561, 'score_final': 0.471, 'branches': ['vector']}, {'source': 'policies', 'id': 19507, 'score': 0.4468, 'score_final': 0.4615, 'branches': ['vector']}]
+INFO:     [ROUTER][JEV] 374 ms detected={'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.05, 'adds_person': 0.04, 'shares_open_fact': 0.1, 'changes_date': False, 'affirms_location': False, 'affirms_certification': False, 'affirms_group': False, 'affirms_nationality': False, 'affirms_activity': False} msg='Hola para residentes en colombia (3 años) no aplica el desc colombia o?'
+INFO:     [GRAPH] conv=3563 route=booking
+INFO:     [CORE][NOTAS] Jev: nada que apuntar (0.10): no se llama al extractor
+INFO:     [CORE][U3-6] recordar sin LLM (Jev: no pide recordar)
+INFO:     [CORE][RAG5] respuesta adelantada aprovechada
+INFO:     [CORE][U3-6] señales sin LLM (Jev: acompañante 0.05, no pide recordar)
+INFO:     [RAG][GROUNDING] grounded=True verdict=GROUNDED
+INFO:     [RAG] Query: Hola para residentes en colombia (3 años) no aplica el desc ... | Docs: 8 | Tokens: 9098 | Cached: 7040 | Sources: ['policies', 'faqs', 'policies', 'faqs', 'faqs', 'policies', 'faqs', 'policies']
+INFO:     [TURN_METRICS] {"conv": "3563", "start": "2026-10-08T08:17:40Z", "latency": 2.623, "turn_type": "rag", "route": "booking", "rag_used": true, "language": "es", "step": "free_text", "activity_chosen": false, "cart_items": 0, "booking_link_sent": false, "escalated": false, "fallback": false, "error": null, "router": "jev", "router_ms": 374, "llm_calls": 2, "embeddings": 1, "llm_seconds": 2.165, "models": {"gpt-4.1-mini": 1, "gpt-4.1": 1}, "nodes": {"router": 0.3999, "setup": 0.0032, "availability": 0.0025, "routing": 0.0035, "extraction": 0.0143, "slotfill_close": 2.1566, "booking": 2.2015}, "rag_adelantado": "aprovechado", "notas": "saltadas"}
+INFO:     [BOT] Sending Chatwoot message conv=3563 url=http://dp-chatwoot:3000/api/v1/accounts/1/conversations/3563/messages
+INFO:     [BOT] Message sent to conversation 3563
+INFO:     172.18.0.9:59274 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     [WEBHOOK] Event: message_created, message_type: outgoing
+INFO:     [WEBHOOK] Skipping non-actionable message_type=outgoing
+INFO:     172.18.0.9:59272 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     [WEBHOOK] Event: message_created, message_type: incoming
+INFO:     [BOT] Incoming from Synth paquete-5-buceos-islas-residente-sin-recogida: Va quiero comprar sin ir de cartagena
+INFO:     [ROUTER][JEV] 363 ms detected={'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.11, 'adds_person': 0.04, 'shares_open_fact': 0.13, 'changes_date': False, 'affirms_location': False, 'affirms_certification': False, 'affirms_group': False, 'affirms_nationality': False, 'affirms_activity': False} msg='Va quiero comprar sin ir de cartagena'
+INFO:     [GRAPH] conv=3563 route=booking
+INFO:     [CORE][NOTAS] Jev: nada que apuntar (0.13): no se llama al extractor
+INFO:     [CORE][RAG5] respuesta adelantada aprovechada
+INFO:     [EXTRACT][U3-4] campo=location regex='cartagena' descartado por Jev (no lo afirma)
+INFO:     [CORE][U3-6] señales sin LLM (Jev: acompañante 0.11, no pide recordar)
+INFO:     [CORE][U3-7] respuesta a certification por Jev: None (0.98)
+INFO:     [RAG][REWRITE] original=Va quiero comprar sin ir de cartagena... rewritten=¿Puedo comprar sin ir a Cartagena?...
+INFO:     [RAG][RETRIEVAL] query_topics=[] candidates=48 preview=[{'source': 'faqs', 'id': 19479, 'score': 0.5488, 'score_final': 0.5652, 'branches': ['vector']}, {'source': 'policies', 'id': 19557, 'score': 0.522, 'score_final': 0.5381, 'branches': ['vector']}, {'source': 'policies', 'id': 19509, 'score': 0.5207, 'score_final': 0.5366, 'branches': ['vector']}, {'source': 'faqs', 'id': 19487, 'score': 0.5127, 'score_final': 0.5283, 'branches': ['vector']}, {'source': 'policies', 'id': 19539, 'score': 0.5123, 'score_final': 0.5277, 'branches': ['vector']}, {'source': 'services', 'id': 19267, 'score': 0.5104, 'score_final': 0.5256, 'branches': ['vector']}, {'source': 'policies', 'id': 19549, 'score': 0.5074, 'score_final': 0.5223, 'branches': ['vector']}, {'source': 'faqs', 'id': 19305, 'score': 0.5, 'score_final': 0.5148, 'branches': ['vector']}]
+INFO:     [RAG][RETRIEVAL] query_topics=[] candidates=48 preview=[{'source': 'services', 'id': 19267, 'score': 0.5118, 'score_final': 0.5282, 'branches': ['vector']}, {'source': 'faqs', 'id': 19479, 'score': 0.5047, 'score_final': 0.5209, 'branches': ['vector']}, {'source': 'services', 'id': 19237, 'score': 0.4869, 'score_final': 0.5028, 'branches': ['vector']}, {'source': 'policies', 'id': 19509, 'score': 0.4842, 'score_final': 0.4998, 'branches': ['vector']}, {'source': 'services', 'id': 19235, 'score': 0.4761, 'score_final': 0.4915, 'branches': ['vector']}, {'source': 'faqs', 'id': 19487, 'score': 0.4714, 'score_final': 0.4866, 'branches': ['vector']}, {'source': 'services', 'id': 19261, 'score': 0.4658, 'score_final': 0.4808, 'branches': ['vector']}, {'source': 'policies', 'id': 19557, 'score': 0.464, 'score_final': 0.4787, 'branches': ['vector']}]
+INFO:     [RAG][GROUNDING] grounded=True verdict=GROUNDED
+INFO:     [RAG] Query: Va quiero comprar sin ir de cartagena... | Docs: 11 | Tokens: 10919 | Cached: 7040 | Sources: ['faqs', 'policies', 'policies', 'faqs', 'policies', 'services', 'policies', 'faqs', 'services', 'services', 'services']
+INFO:     [TURN_METRICS] {"conv": "3563", "start": "2026-10-08T08:17:50Z", "latency": 3.943, "turn_type": "rag", "route": "booking", "rag_used": true, "language": "es", "step": "free_text", "activity_chosen": false, "cart_items": 0, "booking_link_sent": false, "escalated": false, "fallback": false, "error": null, "router": "jev", "router_ms": 363, "llm_calls": 3, "embeddings": 2, "llm_seconds": 3.365, "models": {"gpt-4o-mini": 1, "gpt-4.1-mini": 1, "gpt-4.1": 1}, "nodes": {"router": 0.3791, "setup": 0.0039, "availability": 0.0037, "routing": 0.0062, "extraction": 0.0109, "slotfill_close": 3.5041, "booking": 3.5518}, "rag_adelantado": "aprovechado", "notas": "saltadas"}
+INFO:     [BOT] Sending Chatwoot message conv=3563 url=http://dp-chatwoot:3000/api/v1/accounts/1/conversations/3563/messages
+INFO:     [BOT] Message sent to conversation 3563
+INFO:     [WEBHOOK] Event: message_created, message_type: outgoing
+INFO:     [WEBHOOK] Skipping non-actionable message_type=outgoing
+INFO:     172.18.0.9:51878 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     172.18.0.9:51862 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     [WEBHOOK] Event: message_created, message_type: incoming
+INFO:     [BOT] Incoming from Synth paquete-5-buceos-islas-residente-sin-recogida: COcoliso
+INFO:     [ROUTER][JEV] 366 ms detected={'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.1, 'adds_person': 0.07, 'shares_open_fact': 0.08, 'changes_date': False, 'affirms_location': False, 'affirms_certification': False, 'affirms_group': False, 'affirms_nationality': False, 'affirms_activity': False} msg='COcoliso'
+INFO:     [GRAPH] conv=3563 route=booking
+INFO:     [CORE][NOTAS] Jev: nada que apuntar (0.08): no se llama al extractor
+INFO:     [RAG][REWRITE] original=COcoliso... rewritten=¿Me puedes dar más información sobre el paquete de 5 inmersi...
+INFO:     [RAG][RETRIEVAL] query_topics=['location_islands'] candidates=48 preview=[{'source': 'services', 'id': 19239, 'score': 0.6233, 'score_final': 0.6396, 'branches': ['vector']}, {'source': 'services', 'id': 19219, 'score': 0.6139, 'score_final': 0.63, 'branches': ['vector']}, {'source': 'faqs', 'id': 19447, 'score': 0.6042, 'score_final': 0.6201, 'branches': ['vector']}, {'source': 'services', 'id': 19199, 'score': 0.6033, 'score_final': 0.619, 'branches': ['vector']}, {'source': 'services', 'id': 19241, 'score': 0.5981, 'score_final': 0.6135, 'branches': ['vector']}, {'source': 'services', 'id': 19217, 'score': 0.5967, 'score_final': 0.6119, 'branches': ['vector']}, {'source': 'services', 'id': 19243, 'score': 0.5955, 'score_final': 0.6105, 'branches': ['vector']}, {'source': 'services', 'id': 19213, 'score': 0.5933, 'score_final': 0.608, 'branches': ['vector']}]
+INFO:     [RAG][RETRIEVAL] query_topics=['location_islands'] candidates=51 preview=[{'source': 'faqs', 'id': 19429, 'score': 1.0, 'score_final': 1.0278, 'branches': ['bm25', 'vector']}, {'source': 'policies', 'id': 19525, 'score': 0.2954, 'score_final': 0.3118, 'branches': ['vector']}, {'source': 'faqs', 'id': 19419, 'score': 0.2684, 'score_final': 0.2846, 'branches': ['vector']}, {'source': 'faqs', 'id': 19489, 'score': 0.25, 'score_final': 0.2775, 'branches': ['bm25', 'vector']}, {'source': 'policies', 'id': 19555, 'score': 0.25, 'score_final': 0.2766, 'branches': ['bm25', 'vector']}, {'source': 'services', 'id': 19257, 'score': 0.2585, 'score_final': 0.2744, 'branches': ['vector']}, {'source': 'services', 'id': 19255, 'score': 0.2562, 'score_final': 0.2718, 'branches': ['vector']}, {'source': 'services', 'id': 19259, 'score': 0.2551, 'score_final': 0.2705, 'branches': ['vector']}]
+INFO:     [LLM_EXTRACTOR][COMBINED] filled gaps=['is_colombian', 'group_size'] msg='COcoliso'
+INFO:     [EXTRACT][U3-5] relleno descartado por Jev (no lo afirma): ['is_colombian']
+INFO:     [INTENT] Detected location: island
+INFO:     [INTENT] Detected island: isla_grande
+INFO:     [INTENT] Detected hotel: cocoliso
+INFO:     [CORE][U3-6] señales sin LLM (Jev: acompañante 0.10, no pide recordar)
+INFO:     [CORE][U3-7] respuesta a certification por Jev: None (0.97)
+INFO:     [TURN_METRICS] {"conv": "3563", "start": "2026-10-08T08:18:01Z", "latency": 2.345, "turn_type": "reserva", "route": "booking", "rag_used": false, "language": "es", "step": "free_text", "activity_chosen": false, "cart_items": 0, "booking_link_sent": false, "escalated": false, "fallback": false, "error": null, "router": "jev", "router_ms": 366, "llm_calls": 3, "embeddings": 2, "llm_seconds": 2.438, "models": {"gpt-4o-mini": 3}, "nodes": {"router": 0.3933, "setup": 0.0047, "availability": 0.0068, "routing": 0.0075, "extraction": 0.889, "slotfill_close": 1.0049, "booking": 1.9354}, "rag_adelantado": "descartado", "notas": "saltadas"}
+INFO:     [BOT] Sending Chatwoot message conv=3563 url=http://dp-chatwoot:3000/api/v1/accounts/1/conversations/3563/messages
+INFO:     [BOT] Message sent to conversation 3563
+INFO:     [WEBHOOK] Event: message_created, message_type: outgoing
+INFO:     [WEBHOOK] Skipping non-actionable message_type=outgoing
+INFO:     172.18.0.9:39062 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     172.18.0.9:39050 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44848 - "GET /health HTTP/1.1" 200 OK
+INFO:     [WEBHOOK] Event: message_created, message_type: incoming
+INFO:     [BOT] Incoming from Synth paquete-5-buceos-islas-residente-sin-recogida: cual es el costo del paquete
+INFO:     [ROUTER][JEV] 368 ms detected={'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.03, 'adds_person': 0.03, 'shares_open_fact': 0.02, 'changes_date': False, 'affirms_location': False, 'affirms_certification': False, 'affirms_group': False, 'affirms_nationality': False, 'affirms_activity': False} msg='cual es el costo del paquete'
+INFO:     [GRAPH] conv=3563 route=booking
+INFO:     [CORE][NOTAS] Jev: nada que apuntar (0.02): no se llama al extractor
+INFO:     [CORE][RAG5] respuesta adelantada aprovechada
+INFO:     [INTENT] Detected duration: multi_day
+INFO:     [CORE][U3-6] señales sin LLM (Jev: acompañante 0.03, no pide recordar)
+INFO:     [RAG][REWRITE] original=cual es el costo del paquete... rewritten=¿Cuál es el costo del paquete?...
+INFO:     [RAG][RETRIEVAL] query_topics=['location_islands'] candidates=48 preview=[{'source': 'policies', 'id': 19537, 'score': 0.5241, 'score_final': 0.5405, 'branches': ['vector']}, {'source': 'faqs', 'id': 19445, 'score': 0.5042, 'score_final': 0.5203, 'branches': ['vector']}, {'source': 'services', 'id': 19213, 'score': 0.4892, 'score_final': 0.5051, 'branches': ['vector']}, {'source': 'services', 'id': 19219, 'score': 0.4867, 'score_final': 0.5023, 'branches': ['vector']}, {'source': 'services', 'id': 19217, 'score': 0.4858, 'score_final': 0.5012, 'branches': ['vector']}, {'source': 'services', 'id': 19215, 'score': 0.4857, 'score_final': 0.5008, 'branches': ['vector']}, {'source': 'services', 'id': 19203, 'score': 0.4784, 'score_final': 0.4934, 'branches': ['vector']}, {'source': 'services', 'id': 19221, 'score': 0.4741, 'score_final': 0.4888, 'branches': ['vector']}]
+INFO:     [RAG][RETRIEVAL] query_topics=['location_islands'] candidates=48 preview=[{'source': 'policies', 'id': 19537, 'score': 0.54, 'score_final': 0.5564, 'branches': ['vector']}, {'source': 'faqs', 'id': 19445, 'score': 0.5205, 'score_final': 0.5366, 'branches': ['vector']}, {'source': 'services', 'id': 19213, 'score': 0.5071, 'score_final': 0.523, 'branches': ['vector']}, {'source': 'services', 'id': 19219, 'score': 0.5052, 'score_final': 0.5208, 'branches': ['vector']}, {'source': 'services', 'id': 19217, 'score': 0.5043, 'score_final': 0.5197, 'branches': ['vector']}, {'source': 'services', 'id': 19215, 'score': 0.5035, 'score_final': 0.5187, 'branches': ['vector']}, {'source': 'services', 'id': 19203, 'score': 0.4992, 'score_final': 0.5141, 'branches': ['vector']}, {'source': 'services', 'id': 19221, 'score': 0.4931, 'score_final': 0.5078, 'branches': ['vector']}]
+INFO:     [RAG][GROUNDING] grounded=True verdict=GROUNDED
+INFO:     [RAG] Query: cual es el costo del paquete... | Docs: 8 | Tokens: 12694 | Cached: 8064 | Sources: ['policies', 'faqs', 'services', 'services', 'services', 'services', 'services', 'services']
+INFO:     [TURN_METRICS] {"conv": "3563", "start": "2026-10-08T08:18:10Z", "latency": 4.719, "turn_type": "rag", "route": "booking", "rag_used": true, "language": "es", "step": "free_text", "activity_chosen": false, "cart_items": 0, "booking_link_sent": true, "escalated": false, "fallback": false, "error": null, "router": "jev", "router_ms": 368, "llm_calls": 3, "embeddings": 2, "llm_seconds": 4.313, "models": {"gpt-4o-mini": 1, "gpt-4.1-mini": 1, "gpt-4.1": 1}, "nodes": {"router": 0.3901, "setup": 0.0073, "availability": 0.0047, "routing": 0.0096, "extraction": 0.0118, "slotfill_close": 4.263, "booking": 4.3158}, "rag_adelantado": "aprovechado", "notas": "saltadas"}
+INFO:     [BOT] Sending Chatwoot message conv=3563 url=http://dp-chatwoot:3000/api/v1/accounts/1/conversations/3563/messages
+INFO:     [BOT] Message sent to conversation 3563
+INFO:     [WEBHOOK] Event: message_created, message_type: outgoing
+INFO:     [WEBHOOK] Skipping non-actionable message_type=outgoing
+INFO:     172.18.0.9:37372 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     [WEBHOOK] Event: message_created, message_type: incoming
+INFO:     [BOT] Incoming from Synth paquete-5-buceos-islas-residente-sin-recogida: como residente?
+INFO:     [ROUTER][JEV] 397 ms detected={'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.05, 'adds_person': 0.05, 'shares_open_fact': 0.14, 'changes_date': False, 'affirms_location': False, 'affirms_certification': False, 'affirms_group': False, 'affirms_nationality': False, 'affirms_activity': False} msg='como residente?'
+INFO:     [GRAPH] conv=3563 route=booking
+INFO:     [CORE][NOTAS] Jev: nada que apuntar (0.14): no se llama al extractor
+INFO:     [CORE][U3-6] recordar sin LLM (Jev: no pide recordar)
+INFO:     [CORE][RAG5] respuesta adelantada aprovechada
+INFO:     [CORE][U3-6] señales sin LLM (Jev: acompañante 0.05, no pide recordar)
+INFO:     [RAG][REWRITE] original=como residente?... rewritten=¿Hay algún costo diferente para residentes?...
+INFO:     [RAG][RETRIEVAL] query_topics=['location_islands'] candidates=48 preview=[{'source': 'policies', 'id': 19537, 'score': 0.4099, 'score_final': 0.4263, 'branches': ['vector']}, {'source': 'services', 'id': 19227, 'score': 0.3992, 'score_final': 0.4154, 'branches': ['vector']}, {'source': 'services', 'id': 19231, 'score': 0.3918, 'score_final': 0.4076, 'branches': ['vector']}, {'source': 'policies', 'id': 19557, 'score': 0.3866, 'score_final': 0.4023, 'branches': ['vector']}, {'source': 'policies', 'id': 19531, 'score': 0.3835, 'score_final': 0.3989, 'branches': ['vector']}, {'source': 'services', 'id': 19225, 'score': 0.3808, 'score_final': 0.396, 'branches': ['vector']}, {'source': 'faqs', 'id': 19305, 'score': 0.3804, 'score_final': 0.3954, 'branches': ['vector']}, {'source': 'services', 'id': 19223, 'score': 0.38, 'score_final': 0.3947, 'branches': ['vector']}]
+INFO:     [RAG][RETRIEVAL] query_topics=['location_islands'] candidates=48 preview=[{'source': 'faqs', 'id': 19445, 'score': 0.5433, 'score_final': 0.5597, 'branches': ['vector']}, {'source': 'policies', 'id': 19537, 'score': 0.5353, 'score_final': 0.5514, 'branches': ['vector']}, {'source': 'policies', 'id': 19505, 'score': 0.5123, 'score_final': 0.5282, 'branches': ['vector']}, {'source': 'faqs', 'id': 19301, 'score': 0.5045, 'score_final': 0.5201, 'branches': ['vector']}, {'source': 'policies', 'id': 19507, 'score': 0.4907, 'score_final': 0.5061, 'branches': ['vector']}, {'source': 'policies', 'id': 19509, 'score': 0.47, 'score_final': 0.4852, 'branches': ['vector']}, {'source': 'faqs', 'id': 19305, 'score': 0.4653, 'score_final': 0.4802, 'branches': ['vector']}, {'source': 'policies', 'id': 19557, 'score': 0.4629, 'score_final': 0.4776, 'branches': ['vector']}]
+INFO:     [RAG][GROUNDING] grounded=True verdict=GROUNDED
+INFO:     [RAG] Query: como residente?... | Docs: 12 | Tokens: 11498 | Cached: 8064 | Sources: ['faqs', 'policies', 'policies', 'faqs', 'policies', 'policies', 'faqs', 'policies', 'services', 'services', 'policies', 'services']
+INFO:     [TURN_METRICS] {"conv": "3563", "start": "2026-10-08T08:18:21Z", "latency": 3.81, "turn_type": "rag", "route": "booking", "rag_used": true, "language": "es", "step": "free_text", "activity_chosen": false, "cart_items": 0, "booking_link_sent": false, "escalated": false, "fallback": false, "error": null, "router": "jev", "router_ms": 397, "llm_calls": 3, "embeddings": 2, "llm_seconds": 3.251, "models": {"gpt-4o-mini": 1, "gpt-4.1-mini": 1, "gpt-4.1": 1}, "nodes": {"router": 0.4227, "setup": 0.0105, "availability": 0.0027, "routing": 0.009, "extraction": 0.0117, "slotfill_close": 3.2993, "booking": 3.3654}, "rag_adelantado": "aprovechado", "notas": "saltadas"}
+INFO:     [BOT] Sending Chatwoot message conv=3563 url=http://dp-chatwoot:3000/api/v1/accounts/1/conversations/3563/messages
+INFO:     [BOT] Message sent to conversation 3563
+INFO:     [WEBHOOK] Event: message_created, message_type: outgoing
+INFO:     [WEBHOOK] Skipping non-actionable message_type=outgoing
+INFO:     172.18.0.9:33136 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     172.18.0.9:33130 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     [WEBHOOK] Event: message_created, message_type: incoming
+INFO:     [BOT] Incoming from Synth paquete-5-buceos-islas-residente-sin-recogida: sin recojos
+INFO:     [ROUTER][JEV] 386 ms detected={'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.07, 'adds_person': 0.04, 'shares_open_fact': 0.23, 'changes_date': False, 'affirms_location': False, 'affirms_certification': False, 'affirms_group': False, 'affirms_nationality': False, 'affirms_activity': False} msg='sin recojos'
+INFO:     [GRAPH] conv=3563 route=booking
+INFO:     [RAG][REWRITE] original=sin recojos... rewritten=¿No incluye recogida?...
+INFO:     [RAG][RETRIEVAL] query_topics=['equipment'] candidates=55 preview=[{'source': 'services', 'id': 19271, 'score': 1.0, 'score_final': 1.027, 'branches': ['bm25', 'vector']}, {'source': 'services', 'id': 19209, 'score': 0.724, 'score_final': 0.7496, 'branches': ['bm25', 'vector']}, {'source': 'services', 'id': 19211, 'score': 0.7126, 'score_final': 0.7407, 'branches': ['bm25', 'vector']}, {'source': 'services', 'id': 19203, 'score': 0.6429, 'score_final': 0.669, 'branches': ['bm25', 'vector']}, {'source': 'services', 'id': 19219, 'score': 0.6279, 'score_final': 0.6536, 'branches': ['bm25', 'vector']}, {'source': 'services', 'id': 19207, 'score': 0.6244, 'score_final': 0.6507, 'branches': ['bm25', 'vector']}, {'source': 'services', 'id': 19221, 'score': 0.6189, 'score_final': 0.6448, 'branches': ['bm25', 'vector']}, {'source': 'services', 'id': 19205, 'score': 0.6145, 'score_final': 0.6411, 'branches': ['bm25', 'vector']}]
+INFO:     [RAG][RETRIEVAL] query_topics=['location_islands'] candidates=48 preview=[{'source': 'policies', 'id': 19537, 'score': 0.5237, 'score_final': 0.5401, 'branches': ['vector']}, {'source': 'faqs', 'id': 19305, 'score': 0.4793, 'score_final': 0.4954, 'branches': ['vector']}, {'source': 'faqs', 'id': 19445, 'score': 0.4722, 'score_final': 0.4881, 'branches': ['vector']}, {'source': 'policies', 'id': 19509, 'score': 0.462, 'score_final': 0.4776, 'branches': ['vector']}, {'source': 'faqs', 'id': 19429, 'score': 0.454, 'score_final': 0.4694, 'branches': ['vector']}, {'source': 'faqs', 'id': 19427, 'score': 0.4311, 'score_final': 0.4463, 'branches': ['vector']}, {'source': 'faqs', 'id': 19303, 'score': 0.43, 'score_final': 0.445, 'branches': ['vector']}, {'source': 'policies', 'id': 19557, 'score': 0.4198, 'score_final': 0.4345, 'branches': ['vector']}]
+INFO:     [RAG][RETRIEVAL] query_topics=['location_islands'] candidates=48 preview=[{'source': 'policies', 'id': 19537, 'score': 0.4867, 'score_final': 0.5031, 'branches': ['vector']}, {'source': 'faqs', 'id': 19305, 'score': 0.4438, 'score_final': 0.4599, 'branches': ['vector']}, {'source': 'policies', 'id': 19509, 'score': 0.4322, 'score_final': 0.4481, 'branches': ['vector']}, {'source': 'faqs', 'id': 19429, 'score': 0.4278, 'score_final': 0.4435, 'branches': ['vector']}, {'source': 'faqs', 'id': 19445, 'score': 0.4244, 'score_final': 0.4398, 'branches': ['vector']}, {'source': 'faqs', 'id': 19427, 'score': 0.4238, 'score_final': 0.4389, 'branches': ['vector']}, {'source': 'services', 'id': 19227, 'score': 0.3985, 'score_final': 0.4134, 'branches': ['vector']}, {'source': 'services', 'id': 19231, 'score': 0.3948, 'score_final': 0.4095, 'branches': ['vector']}]
+INFO:     [LLM_EXTRACTOR][COMBINED] filled gaps=['group_size', 'location', 'is_colombian'] msg='sin recojos'
+INFO:     [EXTRACT][U3-5] relleno descartado por Jev (no lo afirma): ['is_colombian']
+INFO:     [CORE][U3-6] señales sin LLM (Jev: acompañante 0.07, no pide recordar)
+INFO:     [CORE][U3-7] respuesta a certification por Jev: None (0.95)
+INFO:     [TURN_METRICS] {"conv": "3563", "start": "2026-10-08T08:18:32Z", "latency": 2.023, "turn_type": "reserva", "route": "booking", "rag_used": false, "language": "es", "step": "free_text", "activity_chosen": false, "cart_items": 0, "booking_link_sent": false, "escalated": false, "fallback": false, "error": null, "router": "jev", "router_ms": 386, "llm_calls": 3, "embeddings": 3, "llm_seconds": 1.998, "models": {"gpt-4o-mini": 3}, "nodes": {"router": 0.4107, "setup": 0.0045, "availability": 0.0046, "routing": 0.0045, "extraction": 0.9013, "slotfill_close": 0.6625, "booking": 1.5995}, "rag_adelantado": "descartado", "notas": "extraidas"}
+INFO:     [BOT] Sending Chatwoot message conv=3563 url=http://dp-chatwoot:3000/api/v1/accounts/1/conversations/3563/messages
+INFO:     [BOT] Message sent to conversation 3563
+INFO:     [WEBHOOK] Event: message_created, message_type: outgoing
+INFO:     [WEBHOOK] Skipping non-actionable message_type=outgoing
+INFO:     172.18.0.9:42832 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     172.18.0.9:42826 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45960 - "GET /health HTTP/1.1" 200 OK
+INFO:     [WEBHOOK] Event: message_created, message_type: incoming
+INFO:     [BOT] Incoming from Synth paquete-5-buceos-islas-residente-sin-recogida: El 21 y 22
+INFO:     [ROUTER][JEV] 370 ms duda=['availability_question@0.37'] -> router LLM (se conservan ['affirms_activity', 'affirms_certification', 'affirms_group', 'affirms_location', 'affirms_nationality', 'affirms_p', 'asks_question', 'asks_recall', 'changes_date', 'companion_joins', 'corrects', 'needs_staff', 'pending_answer', 'shares_open_fact']) msg='El 21 y 22'
+INFO:     [RAG][REWRITE] original=El 21 y 22... rewritten=¿Las fechas de la reserva son el 21 y 22?...
+INFO:     [RAG][RETRIEVAL] query_topics=['location_islands'] candidates=48 preview=[{'source': 'policies', 'id': 19501, 'score': 0.5177, 'score_final': 0.5341, 'branches': ['vector']}, {'source': 'policies', 'id': 19557, 'score': 0.5159, 'score_final': 0.5321, 'branches': ['vector']}, {'source': 'policies', 'id': 19531, 'score': 0.5042, 'score_final': 0.5201, 'branches': ['vector']}, {'source': 'policies', 'id': 19517, 'score': 0.4935, 'score_final': 0.5092, 'branches': ['vector']}, {'source': 'policies', 'id': 19543, 'score': 0.4877, 'score_final': 0.5031, 'branches': ['vector']}, {'source': 'faqs', 'id': 19439, 'score': 0.4813, 'score_final': 0.4965, 'branches': ['vector']}, {'source': 'services', 'id': 19225, 'score': 0.4754, 'score_final': 0.4903, 'branches': ['vector']}, {'source': 'policies', 'id': 19537, 'score': 0.4739, 'score_final': 0.4886, 'branches': ['vector']}]
+INFO:     [RAG][RETRIEVAL] query_topics=['location_islands'] candidates=48 preview=[{'source': 'policies', 'id': 19557, 'score': 0.4276, 'score_final': 0.444, 'branches': ['vector']}, {'source': 'policies', 'id': 19537, 'score': 0.4212, 'score_final': 0.4374, 'branches': ['vector']}, {'source': 'services', 'id': 19225, 'score': 0.4094, 'score_final': 0.4253, 'branches': ['vector']}, {'source': 'faqs', 'id': 19429, 'score': 0.4093, 'score_final': 0.425, 'branches': ['vector']}, {'source': 'services', 'id': 19223, 'score': 0.3943, 'score_final': 0.4097, 'branches': ['vector']}, {'source': 'policies', 'id': 19531, 'score': 0.3938, 'score_final': 0.4089, 'branches': ['vector']}, {'source': 'services', 'id': 19219, 'score': 0.3934, 'score_final': 0.4083, 'branches': ['vector']}, {'source': 'services', 'id': 19227, 'score': 0.3924, 'score_final': 0.4071, 'branches': ['vector']}]
+INFO:     [ESCALATION][ROUTING_SIGNALS] detected={'wants_human': False, 'wants_menu_or_restart': False, 'sensitive_topic': False, 'adaptive_diving_topic': False, 'booking_change_topic': False, 'asks_for_contact_number': False, 'broken_link_complaint': False, 'availability_question': True, 'comparing_options': False, 'affirms_location': False, 'affirms_activity': False, 'affirms_certification': False, 'affirms_group': False, 'affirms_nationality': False, 'corrects': False, 'asks_recall': False, 'needs_staff': False, 'changes_date': False, 'companion_joins': 0.03, 'shares_open_fact': 0.03, 'asks_question': False, 'affirms_p': {'affirms_location': 0.06, 'affirms_activity': 0.11, 'affirms_certification': 0.03, 'affirms_group': 0.03, 'affirms_nationality': 0.02}, 'pending_answer': {'slot': 'certification', 'value': None, 'confidence': 1.0}} msg='El 21 y 22'
+INFO:     [GRAPH] conv=3563 route=booking
+INFO:     [CORE][NOTAS] Jev: nada que apuntar (0.03): no se llama al extractor
+INFO:     [LLM_EXTRACTOR][COMBINED] filled gaps=['group_size', 'location', 'is_colombian'] msg='El 21 y 22'
+INFO:     [EXTRACT][U3-5] relleno descartado por Jev (no lo afirma): ['is_colombian']
+INFO:     [LLM_EXTRACTOR] filled gaps=['group_allocation'] msg='El 21 y 22'
+INFO:     [TURN_METRICS] {"conv": "3563", "start": "2026-10-08T08:18:40Z", "latency": 3.995, "turn_type": "reserva", "route": "booking", "rag_used": false, "language": "es", "step": "free_text", "activity_chosen": false, "cart_items": 0, "booking_link_sent": false, "escalated": false, "fallback": false, "error": null, "router": "llm_uncertain", "router_ms": 371, "llm_calls": 5, "embeddings": 2, "llm_seconds": 5.841, "models": {"gpt-4o-mini": 4, "gpt-4.1-mini": 1}, "nodes": {"router": 1.7616, "setup": 0.0044, "availability": 0.0038, "routing": 0.0054, "extraction": 2.19, "booking": 2.2212}, "rag_adelantado": "descartado", "notas": "saltadas"}
+INFO:     [BOT] Sending Chatwoot message conv=3563 url=http://dp-chatwoot:3000/api/v1/accounts/1/conversations/3563/messages
+INFO:     [BOT] Message sent to conversation 3563
+INFO:     172.18.0.9:39462 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     [WEBHOOK] Event: message_created, message_type: outgoing
+INFO:     [WEBHOOK] Skipping non-actionable message_type=outgoing
+INFO:     172.18.0.9:39450 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     [WEBHOOK] Event: message_created, message_type: incoming
+INFO:     [BOT] Incoming from Synth paquete-5-buceos-islas-residente-sin-recogida: Y me regreso el 23 a las 6:30 pm
+INFO:     [RAG][RETRIEVAL] query_topics=['schedule'] candidates=48 preview=[{'source': 'faqs', 'id': 19277, 'score': 0.4316, 'score_final': 0.448, 'branches': ['vector']}, {'source': 'policies', 'id': 19543, 'score': 0.4041, 'score_final': 0.4202, 'branches': ['vector']}, {'source': 'faqs', 'id': 19311, 'score': 0.3944, 'score_final': 0.4103, 'branches': ['vector']}, {'source': 'faqs', 'id': 19465, 'score': 0.3933, 'score_final': 0.4089, 'branches': ['vector']}, {'source': 'policies', 'id': 19497, 'score': 0.3925, 'score_final': 0.4079, 'branches': ['vector']}, {'source': 'policies', 'id': 19557, 'score': 0.3805, 'score_final': 0.3957, 'branches': ['vector']}, {'source': 'policies', 'id': 19501, 'score': 0.3334, 'score_final': 0.3484, 'branches': ['vector']}, {'source': 'policies', 'id': 19521, 'score': 0.3322, 'score_final': 0.3469, 'branches': ['vector']}]
+INFO:     [ROUTER][JEV] 340 ms duda=['booking_change_topic=none@0.44'] -> router LLM (se conservan ['affirms_activity', 'affirms_certification', 'affirms_group', 'affirms_location', 'affirms_nationality', 'affirms_p', 'asks_question', 'asks_recall', 'changes_date', 'companion_joins', 'corrects', 'needs_staff', 'shares_open_fact']) msg='Y me regreso el 23 a las 6:30 pm'
+INFO:     [RAG][RETRIEVAL] query_topics=['location_islands'] candidates=48 preview=[{'source': 'policies', 'id': 19557, 'score': 0.5155, 'score_final': 0.5319, 'branches': ['vector']}, {'source': 'policies', 'id': 19537, 'score': 0.4649, 'score_final': 0.481, 'branches': ['vector']}, {'source': 'faqs', 'id': 19305, 'score': 0.4583, 'score_final': 0.4741, 'branches': ['vector']}, {'source': 'policies', 'id': 19509, 'score': 0.4519, 'score_final': 0.4675, 'branches': ['vector']}, {'source': 'faqs', 'id': 19465, 'score': 0.448, 'score_final': 0.4634, 'branches': ['vector']}, {'source': 'services', 'id': 19213, 'score': 0.4428, 'score_final': 0.458, 'branches': ['vector']}, {'source': 'faqs', 'id': 19277, 'score': 0.4391, 'score_final': 0.4541, 'branches': ['vector']}, {'source': 'policies', 'id': 19497, 'score': 0.4363, 'score_final': 0.451, 'branches': ['vector']}]
+INFO:     [ESCALATION][ROUTING_SIGNALS] detected={'wants_human': False, 'wants_menu_or_restart': False, 'sensitive_topic': False, 'adaptive_diving_topic': False, 'booking_change_topic': False, 'asks_for_contact_number': False, 'broken_link_complaint': False, 'availability_question': False, 'comparing_options': False, 'affirms_location': False, 'affirms_activity': False, 'affirms_certification': False, 'affirms_group': False, 'affirms_nationality': False, 'corrects': False, 'asks_recall': False, 'needs_staff': False, 'changes_date': False, 'companion_joins': 0.04, 'shares_open_fact': 0.15, 'asks_question': False, 'affirms_p': {'affirms_location': 0.08, 'affirms_activity': 0.07, 'affirms_certification': 0.03, 'affirms_group': 0.03, 'affirms_nationality': 0.02}} msg='Y me regreso el 23 a las 6:30 pm'
+INFO:     [GRAPH] conv=3563 route=booking
+INFO:     [CORE][NOTAS] Jev: nada que apuntar (0.15): no se llama al extractor
+INFO:     [LLM_EXTRACTOR][COMBINED] filled gaps=['is_certified', 'location'] msg='Y me regreso el 23 a las 6:30 pm'
+INFO:     [LLM_EXTRACTOR] filled gaps=['group_allocation'] msg='Y me regreso el 23 a las 6:30 pm'
+INFO:     [EXTRACT][CUTOVER] applied={'is_certified': False} msg='Y me regreso el 23 a las 6:30 pm'
+INFO:     [INTENT] Detected certification: False
+INFO:     [RAG][GROUNDING] grounded=True verdict=GROUNDED
+INFO:     [RAG] Query: Y me regreso el 23 a las 6:30 pm... | Docs: 8 | Tokens: 10591 | Cached: 8064 | Sources: ['policies', 'policies', 'faqs', 'policies', 'faqs', 'services', 'faqs', 'policies']
+INFO:     [TURN_METRICS] {"conv": "3563", "start": "2026-10-08T08:18:52Z", "latency": 4.13, "turn_type": "reserva", "route": "booking", "rag_used": false, "language": "es", "step": "free_text", "activity_chosen": false, "cart_items": 0, "booking_link_sent": false, "escalated": false, "fallback": false, "error": null, "router": "llm_uncertain", "router_ms": 340, "llm_calls": 7, "embeddings": 2, "llm_seconds": 7.631, "models": {"gpt-4o-mini": 5, "gpt-4.1-mini": 1, "gpt-4.1": 1}, "nodes": {"router": 1.5981, "setup": 0.0371, "availability": 0.0086, "routing": 0.0119, "extraction": 2.4326, "slotfill_close": 0.0019, "booking": 2.5171}, "rag_adelantado": "descartado", "notas": "saltadas"}
+INFO:     [BOT] Sending Chatwoot message conv=3563 url=http://dp-chatwoot:3000/api/v1/accounts/1/conversations/3563/messages
+INFO:     [BOT] Message sent to conversation 3563
+INFO:     172.18.0.9:58258 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     [WEBHOOK] Event: message_created, message_type: outgoing
+INFO:     [WEBHOOK] Skipping non-actionable message_type=outgoing
+INFO:     172.18.0.9:58246 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     [WEBHOOK] Event: conversation_created, message_type: None
+INFO:     [WEBHOOK] New conversation: 3564
+INFO:     172.18.0.9:41520 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     [WEBHOOK] Event: message_created, message_type: incoming
+INFO:     [BOT] Incoming from Synth logistica-isla-fragata-regreso-otro-dia: Hello! I have a question about the diving excursion. My husband and I are booked for April 13-14 and
+INFO:     [RAG][RETRIEVAL] query_topics=['location_islands', 'accommodation'] candidates=48 preview=[{'source': 'faqs', 'id': 19428, 'score': 0.6776, 'score_final': 0.694, 'branches': ['vector']}, {'source': 'faqs', 'id': 19318, 'score': 0.6762, 'score_final': 0.6924, 'branches': ['vector']}, {'source': 'policies', 'id': 19510, 'score': 0.6553, 'score_final': 0.6712, 'branches': ['vector']}, {'source': 'faqs', 'id': 19306, 'score': 0.6527, 'score_final': 0.6683, 'branches': ['vector']}, {'source': 'policies', 'id': 19538, 'score': 0.6266, 'score_final': 0.642, 'branches': ['vector']}, {'source': 'faqs', 'id': 19486, 'score': 0.623, 'score_final': 0.6382, 'branches': ['vector']}, {'source': 'faqs', 'id': 19412, 'score': 0.571, 'score_final': 0.586, 'branches': ['vector']}, {'source': 'faqs', 'id': 19446, 'score': 0.5703, 'score_final': 0.5851, 'branches': ['vector']}]
+INFO:     [ROUTER][JEV] 352 ms detected={'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.92, 'adds_person': 0.04, 'shares_open_fact': 0.04, 'changes_date': False, 'affirms_location': True, 'affirms_certification': False, 'affirms_group': True, 'affirms_nationality': False, 'affirms_activity': True} msg='Hello! I have a question about the diving excursion. My husband and I are booked'
+INFO:     [GRAPH] conv=3564 route=booking
+INFO:     [CORE][NOTAS] Jev: nada que apuntar (0.04): no se llama al extractor
+INFO:     [CORE][U3-6] recordar sin LLM (Jev: no pide recordar)
+INFO:     [CORE][RAG5] respuesta adelantada aprovechada
+INFO:     127.0.0.1:58012 - "GET /health HTTP/1.1" 200 OK
+INFO:     [EXTRACT][U3-4] campo=activity regex='certified_diving' llm=None descartado (nadie lo afirma) msg='Hello! I have a question about the diving excursion. My husb'
+INFO:     [INTENT] Detected location: island
+INFO:     [RAG][GROUNDING] grounded=True verdict=GROUNDED
+INFO:     [RAG] Query: Hello! I have a question about the diving excursion. My husb... | Docs: 8 | Tokens: 7859 | Cached: 0 | Sources: ['faqs', 'faqs', 'policies', 'faqs', 'policies', 'faqs', 'faqs', 'faqs']
+INFO:     [TURN_METRICS] {"conv": "3564", "start": "2026-10-08T08:19:04Z", "latency": 3.054, "turn_type": "rag", "route": "booking", "rag_used": true, "language": "en", "step": "free_text", "activity_chosen": false, "cart_items": 0, "booking_link_sent": false, "escalated": false, "fallback": false, "error": null, "router": "jev", "router_ms": 352, "llm_calls": 4, "embeddings": 1, "llm_seconds": 4.347, "models": {"gpt-4o-mini": 2, "gpt-4.1-mini": 1, "gpt-4.1": 1}, "nodes": {"router": 0.3742, "setup": 0.0041, "availability": 0.0062, "routing": 0.007, "extraction": 1.7466, "slotfill_close": 0.8826, "booking": 2.6689}, "rag_adelantado": "aprovechado", "notas": "saltadas"}
+INFO:     [BOT] Sending Chatwoot message conv=3564 url=http://dp-chatwoot:3000/api/v1/accounts/1/conversations/3564/messages
+INFO:     [BOT] Message sent to conversation 3564
+INFO:     [WEBHOOK] Event: message_created, message_type: outgoing
+INFO:     [WEBHOOK] Skipping non-actionable message_type=outgoing
+INFO:     172.18.0.9:45350 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     172.18.0.9:41520 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     [WEBHOOK] Event: message_created, message_type: incoming
+INFO:     [BOT] Incoming from Synth logistica-isla-fragata-regreso-otro-dia: Amazing thank you! We’re thinking about extending our stay on the Rosario islands. Would it be possi
+INFO:     [RAG][RETRIEVAL] query_topics=['location_islands'] candidates=48 preview=[{'source': 'faqs', 'id': 19318, 'score': 0.615, 'score_final': 0.6314, 'branches': ['vector']}, {'source': 'faqs', 'id': 19428, 'score': 0.6123, 'score_final': 0.6284, 'branches': ['vector']}, {'source': 'faqs', 'id': 19306, 'score': 0.5694, 'score_final': 0.5853, 'branches': ['vector']}, {'source': 'policies', 'id': 19538, 'score': 0.5682, 'score_final': 0.5839, 'branches': ['vector']}, {'source': 'faqs', 'id': 19486, 'score': 0.5659, 'score_final': 0.5812, 'branches': ['vector']}, {'source': 'services', 'id': 19204, 'score': 0.5622, 'score_final': 0.5773, 'branches': ['vector']}, {'source': 'services', 'id': 19222, 'score': 0.5616, 'score_final': 0.5765, 'branches': ['vector']}, {'source': 'services', 'id': 19206, 'score': 0.5569, 'score_final': 0.5716, 'branches': ['vector']}]
+INFO:     [ROUTER][JEV] 405 ms detected={'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.12, 'adds_person': 0.03, 'shares_open_fact': 0.05, 'changes_date': False, 'affirms_location': False, 'affirms_certification': False, 'affirms_group': False, 'affirms_nationality': False, 'affirms_activity': True} msg='Amazing thank you! We’re thinking about extending our stay on the Rosario island'
+INFO:     [GRAPH] conv=3564 route=booking
+INFO:     [CORE][NOTAS] Jev: nada que apuntar (0.05): no se llama al extractor
+INFO:     [CORE][U3-6] recordar sin LLM (Jev: no pide recordar)
+INFO:     [CORE][RAG5] respuesta adelantada aprovechada
+INFO:     [EXTRACT][U3-4] campo=location regex='island' descartado por Jev (no lo afirma)
+INFO:     [EXTRACT][U3-4] campo=activity regex='certified_diving' llm=None descartado (nadie lo afirma) msg='Amazing thank you! We’re thinking about extending our stay o'
+INFO:     [CORE][U3-6] señales sin LLM (Jev: acompañante 0.12, no pide recordar)
+INFO:     [RAG][GROUNDING] grounded=True verdict=GROUNDED
+INFO:     [RAG] Query: Amazing thank you! We’re thinking about extending our stay o... | Docs: 8 | Tokens: 9140 | Cached: 6016 | Sources: ['faqs', 'faqs', 'faqs', 'policies', 'faqs', 'services', 'services', 'services']
+INFO:     [TURN_METRICS] {"conv": "3564", "start": "2026-10-08T08:19:14Z", "latency": 3.306, "turn_type": "rag", "route": "booking", "rag_used": true, "language": "en", "step": "free_text", "activity_chosen": false, "cart_items": 0, "booking_link_sent": false, "escalated": false, "fallback": false, "error": null, "router": "jev", "router_ms": 406, "llm_calls": 4, "embeddings": 1, "llm_seconds": 4.222, "models": {"gpt-4o-mini": 2, "gpt-4.1-mini": 1, "gpt-4.1": 1}, "nodes": {"router": 0.4362, "setup": 0.0496, "availability": 0.0099, "routing": 0.021, "extraction": 0.646, "slotfill_close": 2.1011, "booking": 2.8533}, "rag_adelantado": "aprovechado", "notas": "saltadas"}
+INFO:     [BOT] Sending Chatwoot message conv=3564 url=http://dp-chatwoot:3000/api/v1/accounts/1/conversations/3564/messages
+INFO:     [BOT] Message sent to conversation 3564
+INFO:     [WEBHOOK] Event: message_created, message_type: outgoing
+INFO:     [WEBHOOK] Skipping non-actionable message_type=outgoing
+INFO:     172.18.0.9:45390 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     172.18.0.9:45352 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     [WEBHOOK] Event: conversation_created, message_type: None
+INFO:     172.18.0.9:45392 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     [WEBHOOK] New conversation: 3565
+INFO:     [WEBHOOK] Event: message_created, message_type: incoming
+INFO:     [BOT] Incoming from Synth cambio-fecha-por-enfermedad: Hello! My husband and I arrived in Cartagena last night and are so excited for diving with your team
+INFO:     [RAG][RETRIEVAL] query_topics=[] candidates=48 preview=[{'source': 'faqs', 'id': 19296, 'score': 0.5731, 'score_final': 0.5895, 'branches': ['vector']}, {'source': 'services', 'id': 19238, 'score': 0.5656, 'score_final': 0.5817, 'branches': ['vector']}, {'source': 'services', 'id': 19248, 'score': 0.5654, 'score_final': 0.5813, 'branches': ['vector']}, {'source': 'services', 'id': 19200, 'score': 0.5648, 'score_final': 0.5804, 'branches': ['vector']}, {'source': 'services', 'id': 19236, 'score': 0.5534, 'score_final': 0.5688, 'branches': ['vector']}, {'source': 'services', 'id': 19242, 'score': 0.5506, 'score_final': 0.5658, 'branches': ['vector']}, {'source': 'faqs', 'id': 19424, 'score': 0.548, 'score_final': 0.5629, 'branches': ['vector']}, {'source': 'services', 'id': 19204, 'score': 0.5478, 'score_final': 0.5625, 'branches': ['vector']}]
+INFO:     [ROUTER][JEV] 398 ms detected={'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.97, 'adds_person': 0.03, 'shares_open_fact': 0.05, 'changes_date': False, 'affirms_location': True, 'affirms_certification': False, 'affirms_group': True, 'affirms_nationality': False, 'affirms_activity': True} msg='Hello! My husband and I arrived in Cartagena last night and are so excited for d'
+INFO:     [GRAPH] conv=3565 route=booking
+INFO:     [CORE][NOTAS] Jev: nada que apuntar (0.05): no se llama al extractor
+INFO:     [CORE][U3-6] recordar sin LLM (Jev: no pide recordar)
+INFO:     [CORE][RAG5] respuesta adelantada aprovechada
+INFO:     [EXTRACT][U3-4] campo=location regex='island' llm='cartagena' corregido msg='Hello! My husband and I arrived in Cartagena last night and '
+INFO:     [INTENT] Activity updated to: certified_diving (service: 2_dives_1_day)
+INFO:     [INTENT] Detected location: cartagena
+INFO:     [RAG][GROUNDING] grounded=True verdict=GROUNDED
+INFO:     [RAG] Query: Hello! My husband and I arrived in Cartagena last night and ... | Docs: 8 | Tokens: 9919 | Cached: 0 | Sources: ['faqs', 'services', 'services', 'services', 'services', 'services', 'faqs', 'services']
+INFO:     [TURN_METRICS] {"conv": "3565", "start": "2026-10-08T08:19:24Z", "latency": 3.983, "turn_type": "rag", "route": "booking", "rag_used": true, "language": "en", "step": "free_text", "activity_chosen": false, "cart_items": 0, "booking_link_sent": false, "escalated": false, "fallback": false, "error": null, "router": "jev", "router_ms": 399, "llm_calls": 5, "embeddings": 1, "llm_seconds": 5.899, "models": {"gpt-4o-mini": 3, "gpt-4.1-mini": 1, "gpt-4.1": 1}, "nodes": {"router": 0.4192, "setup": 0.0091, "availability": 0.0052, "routing": 0.0088, "extraction": 2.4135, "slotfill_close": 1.0922, "booking": 3.5507}, "rag_adelantado": "aprovechado", "notas": "saltadas"}
+INFO:     [BOT] Sending Chatwoot message conv=3565 url=http://dp-chatwoot:3000/api/v1/accounts/1/conversations/3565/messages
+INFO:     [BOT] Message sent to conversation 3565
+INFO:     172.18.0.9:54696 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     [WEBHOOK] Event: message_created, message_type: outgoing
+INFO:     [WEBHOOK] Skipping non-actionable message_type=outgoing
+INFO:     172.18.0.9:45392 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60122 - "GET /health HTTP/1.1" 200 OK
+INFO:     [WEBHOOK] Event: message_created, message_type: incoming
+INFO:     [BOT] Incoming from Synth cambio-fecha-por-enfermedad: Just completed the waivers. Thank you!
+INFO:     [ROUTER][JEV] 335 ms detected={'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.06, 'adds_person': 0.03, 'shares_open_fact': 0.03, 'changes_date': False, 'affirms_location': False, 'affirms_certification': False, 'affirms_group': False, 'affirms_nationality': False, 'affirms_activity': False} msg='Just completed the waivers. Thank you!'
+INFO:     [GRAPH] conv=3565 route=booking
+INFO:     [CORE][NOTAS] Jev: nada que apuntar (0.03): no se llama al extractor
+INFO:     [RAG][REWRITE] original=Just completed the waivers. Thank you!... rewritten=Have the waivers been completed? Thank you!...
+INFO:     [RAG][RETRIEVAL] query_topics=[] candidates=48 preview=[{'source': 'policies', 'id': 19546, 'score': 0.4962, 'score_final': 0.5126, 'branches': ['vector']}, {'source': 'faqs', 'id': 19484, 'score': 0.3748, 'score_final': 0.3909, 'branches': ['vector']}, {'source': 'policies', 'id': 19520, 'score': 0.3318, 'score_final': 0.3477, 'branches': ['vector']}, {'source': 'policies', 'id': 19514, 'score': 0.3001, 'score_final': 0.3157, 'branches': ['vector']}, {'source': 'faqs', 'id': 19482, 'score': 0.2923, 'score_final': 0.3077, 'branches': ['vector']}, {'source': 'faqs', 'id': 19460, 'score': 0.2769, 'score_final': 0.292, 'branches': ['vector']}, {'source': 'policies', 'id': 19536, 'score': 0.2762, 'score_final': 0.2911, 'branches': ['vector']}, {'source': 'faqs', 'id': 19436, 'score': 0.2745, 'score_final': 0.2892, 'branches': ['vector']}]
+INFO:     [RAG][RETRIEVAL] query_topics=[] candidates=48 preview=[{'source': 'policies', 'id': 19546, 'score': 0.4592, 'score_final': 0.4756, 'branches': ['vector']}, {'source': 'faqs', 'id': 19484, 'score': 0.3293, 'score_final': 0.3455, 'branches': ['vector']}, {'source': 'policies', 'id': 19520, 'score': 0.2895, 'score_final': 0.3054, 'branches': ['vector']}, {'source': 'policies', 'id': 19514, 'score': 0.2681, 'score_final': 0.2837, 'branches': ['vector']}, {'source': 'faqs', 'id': 19482, 'score': 0.2486, 'score_final': 0.264, 'branches': ['vector']}, {'source': 'policies', 'id': 19536, 'score': 0.2467, 'score_final': 0.2618, 'branches': ['vector']}, {'source': 'faqs', 'id': 19342, 'score': 0.2368, 'score_final': 0.2517, 'branches': ['vector']}, {'source': 'faqs', 'id': 19344, 'score': 0.2325, 'score_final': 0.247, 'branches': ['vector']}]
+INFO:     [LLM_EXTRACTOR][COMBINED] filled gaps=['location'] msg='Just completed the waivers. Thank you!'
+INFO:     [CORE] contradiccion descartada location: 'cartagena' -> 'island' (Jev: no lo afirma)
+INFO:     [CORE][U3-6] señales sin LLM (Jev: acompañante 0.06, no pide recordar)
+INFO:     [CORE][U3-7] respuesta a certification por Jev: None (1.00)
+INFO:     [TURN_METRICS] {"conv": "3565", "start": "2026-10-08T08:19:35Z", "latency": 1.718, "turn_type": "reserva", "route": "booking", "rag_used": false, "language": "en", "step": "free_text", "activity_chosen": false, "cart_items": 0, "booking_link_sent": false, "escalated": false, "fallback": false, "error": null, "router": "jev", "router_ms": 336, "llm_calls": 3, "embeddings": 2, "llm_seconds": 2.046, "models": {"gpt-4o-mini": 3}, "nodes": {"router": 0.3528, "setup": 0.0079, "availability": 0.0032, "routing": 0.0042, "extraction": 0.7674, "slotfill_close": 0.555, "booking": 1.3556}, "rag_adelantado": "descartado", "notas": "saltadas"}
+INFO:     [BOT] Sending Chatwoot message conv=3565 url=http://dp-chatwoot:3000/api/v1/accounts/1/conversations/3565/messages
+INFO:     [BOT] Message sent to conversation 3565
+INFO:     [WEBHOOK] Event: message_created, message_type: outgoing
+INFO:     [WEBHOOK] Skipping non-actionable message_type=outgoing
+INFO:     172.18.0.9:46936 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     172.18.0.9:54706 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     [WEBHOOK] Event: message_created, message_type: incoming
+INFO:     [BOT] Incoming from Synth cambio-fecha-por-enfermedad: Hello. Unfortunately my husband is dealing with food poisoning and experienced the worst of it last 
+INFO:     [RAG][RETRIEVAL] query_topics=[] candidates=48 preview=[{'source': 'policies', 'id': 19502, 'score': 0.4286, 'score_final': 0.445, 'branches': ['vector']}, {'source': 'faqs', 'id': 19482, 'score': 0.4078, 'score_final': 0.4239, 'branches': ['vector']}, {'source': 'faqs', 'id': 19294, 'score': 0.3998, 'score_final': 0.4157, 'branches': ['vector']}, {'source': 'faqs', 'id': 19464, 'score': 0.3823, 'score_final': 0.3979, 'branches': ['vector']}, {'source': 'faqs', 'id': 19438, 'score': 0.3797, 'score_final': 0.3951, 'branches': ['vector']}, {'source': 'faqs', 'id': 19310, 'score': 0.3713, 'score_final': 0.3864, 'branches': ['vector']}, {'source': 'services', 'id': 19256, 'score': 0.3618, 'score_final': 0.3767, 'branches': ['vector']}, {'source': 'faqs', 'id': 19448, 'score': 0.3582, 'score_final': 0.3729, 'branches': ['vector']}]
+INFO:     [ROUTER][JEV] 389 ms detected={'availability_question': True, 'sensitive_topic': 'medical_questions', 'booking_change_topic': 'reschedule', 'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.96, 'adds_person': 0.03, 'shares_open_fact': 0.95, 'changes_date': True, 'affirms_location': False, 'affirms_certification': False, 'affirms_group': True, 'affirms_nationality': False, 'affirms_activity': True} msg='Hello. Unfortunately my husband is dealing with food poisoning and experienced t'
+INFO:     [GRAPH] conv=3565 route=safety
+INFO:     [NODE:escalation] sensible (señal LLM) reason=medical_questions
+INFO:     [TURN_METRICS] {"conv": "3565", "start": "2026-10-08T08:19:44Z", "latency": 0.426, "turn_type": "escalado", "route": "safety", "rag_used": false, "language": "en", "step": "escalate", "activity_chosen": false, "cart_items": 0, "booking_link_sent": false, "escalated": true, "fallback": false, "error": null, "router": "jev", "router_ms": 390, "llm_calls": 0, "embeddings": 1, "llm_seconds": 0, "models": {}, "nodes": {"router": 0.4089, "safety": 0.0035}, "rag_adelantado": "descartado"}
+INFO:     [BOT] Lead note sent conv=3565
+INFO:     [WEBHOOK] Event: message_created, message_type: outgoing
+INFO:     [WEBHOOK] Skipping non-actionable message_type=outgoing
+INFO:     172.18.0.9:46964 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+2026-10-08 08:19:45 [info     ] escalated_to_human             conversation_id=3565 reason=medical_questions
+INFO:     [BOT] Sending Chatwoot message conv=3565 url=http://dp-chatwoot:3000/api/v1/accounts/1/conversations/3565/messages
+INFO:     [WEBHOOK] Event: conversation_status_changed, message_type: None
+INFO:     [WEBHOOK] Status changed
+INFO:     172.18.0.9:46964 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     [BOT] Message sent to conversation 3565
+INFO:     172.18.0.9:46964 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     [WEBHOOK] Event: message_created, message_type: outgoing
+INFO:     [WEBHOOK] Skipping non-actionable message_type=outgoing
+INFO:     172.18.0.9:46952 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     [WEBHOOK] Event: message_created, message_type: incoming
+INFO:     [BOT] Incoming from Synth cambio-fecha-por-enfermedad: I think Tuesday would be best. We already have a room booked on the island for Monday night and Tues
+INFO:     [RAG][RETRIEVAL] query_topics=[] candidates=48 preview=[{'source': 'faqs', 'id': 19312, 'score': 0.3237, 'score_final': 0.3401, 'branches': ['vector']}, {'source': 'policies', 'id': 19518, 'score': 0.3211, 'score_final': 0.3372, 'branches': ['vector']}, {'source': 'faqs', 'id': 19486, 'score': 0.3135, 'score_final': 0.3294, 'branches': ['vector']}, {'source': 'faqs', 'id': 19440, 'score': 0.3109, 'score_final': 0.3266, 'branches': ['vector']}, {'source': 'policies', 'id': 19558, 'score': 0.3062, 'score_final': 0.3216, 'branches': ['vector']}, {'source': 'policies', 'id': 19532, 'score': 0.3045, 'score_final': 0.3196, 'branches': ['vector']}, {'source': 'faqs', 'id': 19430, 'score': 0.3023, 'score_final': 0.3173, 'branches': ['vector']}, {'source': 'policies', 'id': 19556, 'score': 0.3009, 'score_final': 0.3156, 'branches': ['vector']}]
+INFO:     [RAG] Low confidence query=I think Tuesday would be best. We already have a room booked... retrieval_query=I think Tuesday would be best. We already have a room booked on the island for Monday night and Tuesday night... top_score=0.340 min_cosine=0.400 min_bm25=0.050 sources=['faqs', 'policies', 'faqs', 'faqs', 'policies', 'policies', 'faqs', 'policies']
+INFO:     [ROUTER][JEV] 372 ms detected={'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.06, 'adds_person': 0.03, 'shares_open_fact': 0.25, 'changes_date': False, 'affirms_location': True, 'affirms_certification': False, 'affirms_group': False, 'affirms_nationality': False, 'affirms_activity': False} msg='I think Tuesday would be best. We already have a room booked on the island for M'
+INFO:     [GRAPH] conv=3565 route=booking
+INFO:     [LLM_EXTRACTOR][COMBINED] filled gaps=['location'] msg='I think Tuesday would be best. We already have a room booked'
+INFO:     [CORE] contradiccion sin cue location: 'cartagena' -> 'island', se confirma
+INFO:     [NOTES_EXTRACTOR] captured=['room booked on the island for Monday and Tuesday nights'] msg='I think Tuesday would be best. We already have a room booked'
+INFO:     [CORE] notes captured -> ['room booked on the island for Monday and Tuesday nights']
+INFO:     [TURN_METRICS] {"conv": "3565", "start": "2026-10-08T08:19:51Z", "latency": 1.682, "turn_type": "reserva", "route": "booking", "rag_used": false, "language": "en", "step": "free_text", "activity_chosen": false, "cart_items": 0, "booking_link_sent": false, "escalated": false, "fallback": false, "error": null, "router": "jev", "router_ms": 372, "llm_calls": 3, "embeddings": 1, "llm_seconds": 1.9, "models": {"gpt-4o-mini": 3}, "nodes": {"router": 0.391, "setup": 0.0289, "availability": 0.0073, "routing": 0.0074, "extraction": 0.6131, "slotfill_close": 0.6018, "booking": 1.2803}, "rag_adelantado": "descartado", "notas": "extraidas"}
+INFO:     [BOT] Sending Chatwoot message conv=3565 url=http://dp-chatwoot:3000/api/v1/accounts/1/conversations/3565/messages
+INFO:     [BOT] Message sent to conversation 3565
+INFO:     [WEBHOOK] Event: message_created, message_type: outgoing
+INFO:     [WEBHOOK] Skipping non-actionable message_type=outgoing
+INFO:     172.18.0.9:35972 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     172.18.0.9:35958 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     [WEBHOOK] Event: message_created, message_type: incoming
+INFO:     [BOT] Incoming from Synth cambio-fecha-por-enfermedad: We do not have a transfer to the island. We will most likely stay in Cartagena tomorrow night, then 
+INFO:     [RAG][RETRIEVAL] query_topics=['availability'] candidates=48 preview=[{'source': 'policies', 'id': 19532, 'score': 0.5729, 'score_final': 0.5893, 'branches': ['vector']}, {'source': 'faqs', 'id': 19440, 'score': 0.558, 'score_final': 0.5741, 'branches': ['vector']}, {'source': 'policies', 'id': 19558, 'score': 0.5575, 'score_final': 0.5734, 'branches': ['vector']}, {'source': 'faqs', 'id': 19438, 'score': 0.552, 'score_final': 0.5676, 'branches': ['vector']}, {'source': 'services', 'id': 19200, 'score': 0.5478, 'score_final': 0.5632, 'branches': ['vector']}, {'source': 'faqs', 'id': 19480, 'score': 0.5255, 'score_final': 0.5407, 'branches': ['vector']}, {'source': 'faqs', 'id': 19412, 'score': 0.5192, 'score_final': 0.5341, 'branches': ['vector']}, {'source': 'services', 'id': 19248, 'score': 0.5175, 'score_final': 0.5322, 'branches': ['vector']}]
+INFO:     [ROUTER][JEV] 407 ms detected={'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.13, 'adds_person': 0.04, 'shares_open_fact': 0.13, 'changes_date': False, 'affirms_location': True, 'affirms_certification': False, 'affirms_group': False, 'affirms_nationality': False, 'affirms_activity': True} msg='We do not have a transfer to the island. We will most likely stay in Cartagena t'
+INFO:     [GRAPH] conv=3565 route=booking
+INFO:     [CORE][NOTAS] Jev: nada que apuntar (0.13): no se llama al extractor
+INFO:     [CORE] correccion no confirmada, se queda lo guardado: ['location']
+INFO:     [LLM_EXTRACTOR][COMBINED] filled gaps=['group_size', 'location'] msg='We do not have a transfer to the island. We will most likely'
+INFO:     [EXTRACT][CUTOVER] applied={'group_size': 2} msg='We do not have a transfer to the island. We will most likely stay in Cartagena tomorrow night, then come diving on Tuesday, and stay overnight on the island Tuesday night'
+INFO:     [INTENT] Detected group size: 2
+INFO:     [TURN_METRICS] {"conv": "3565", "start": "2026-10-08T08:19:59Z", "latency": 1.772, "turn_type": "reserva", "route": "booking", "rag_used": false, "language": "en", "step": "free_text", "activity_chosen": false, "cart_items": 0, "booking_link_sent": false, "escalated": false, "fallback": false, "error": null, "router": "jev", "router_ms": 407, "llm_calls": 2, "embeddings": 1, "llm_seconds": 1.975, "models": {"gpt-4o-mini": 2}, "nodes": {"router": 0.4259, "setup": 0.0267, "availability": 0.0057, "routing": 0.0094, "extraction": 1.2632, "slotfill_close": 0.0042, "booking": 1.3345}, "rag_adelantado": "descartado", "notas": "saltadas"}
+INFO:     [BOT] Sending Chatwoot message conv=3565 url=http://dp-chatwoot:3000/api/v1/accounts/1/conversations/3565/messages
+INFO:     [BOT] Message sent to conversation 3565
+INFO:     [WEBHOOK] Event: message_created, message_type: outgoing
+INFO:     [WEBHOOK] Skipping non-actionable message_type=outgoing
+INFO:     172.18.0.9:48814 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     172.18.0.9:48798 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59990 - "GET /health HTTP/1.1" 200 OK
+INFO:     [WEBHOOK] Event: message_created, message_type: incoming
+INFO:     [BOT] Incoming from Synth cambio-fecha-por-enfermedad: I apologize for the change and confusion!
+INFO:     [ROUTER][JEV] 339 ms detected={'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.03, 'adds_person': 0.03, 'shares_open_fact': 0.03, 'changes_date': False, 'affirms_location': False, 'affirms_certification': False, 'affirms_group': False, 'affirms_nationality': False, 'affirms_activity': False} msg='I apologize for the change and confusion!'
+INFO:     [GRAPH] conv=3565 route=booking
+INFO:     [CORE][NOTAS] Jev: nada que apuntar (0.03): no se llama al extractor
+INFO:     [RAG][REWRITE] original=I apologize for the change and confusion... rewritten=Can you clarify if there are any issues with my change in pl...
+INFO:     [RAG][RETRIEVAL] query_topics=[] candidates=48 preview=[{'source': 'policies', 'id': 19502, 'score': 0.4376, 'score_final': 0.454, 'branches': ['vector']}, {'source': 'policies', 'id': 19504, 'score': 0.4283, 'score_final': 0.4444, 'branches': ['vector']}, {'source': 'faqs', 'id': 19294, 'score': 0.3912, 'score_final': 0.4071, 'branches': ['vector']}, {'source': 'faqs', 'id': 19304, 'score': 0.3762, 'score_final': 0.3918, 'branches': ['vector']}, {'source': 'faqs', 'id': 19422, 'score': 0.3611, 'score_final': 0.3765, 'branches': ['vector']}, {'source': 'policies', 'id': 19500, 'score': 0.3561, 'score_final': 0.3713, 'branches': ['vector']}, {'source': 'faqs', 'id': 19472, 'score': 0.3462, 'score_final': 0.3611, 'branches': ['vector']}, {'source': 'faqs', 'id': 19334, 'score': 0.3419, 'score_final': 0.3566, 'branches': ['vector']}]
+INFO:     [RAG][RETRIEVAL] query_topics=[] candidates=48 preview=[{'source': 'policies', 'id': 19502, 'score': 0.2047, 'score_final': 0.2211, 'branches': ['vector']}, {'source': 'policies', 'id': 19500, 'score': 0.1937, 'score_final': 0.2098, 'branches': ['vector']}, {'source': 'policies', 'id': 19504, 'score': 0.1934, 'score_final': 0.2093, 'branches': ['vector']}, {'source': 'faqs', 'id': 19460, 'score': 0.163, 'score_final': 0.1786, 'branches': ['vector']}, {'source': 'faqs', 'id': 19294, 'score': 0.1589, 'score_final': 0.1743, 'branches': ['vector']}, {'source': 'services', 'id': 19270, 'score': 0.1478, 'score_final': 0.1627, 'branches': ['vector']}, {'source': 'faqs', 'id': 19330, 'score': 0.14, 'score_final': 0.1547, 'branches': ['vector']}, {'source': 'faqs', 'id': 19354, 'score': 0.1359, 'score_final': 0.1504, 'branches': ['vector']}]
+INFO:     [LLM_EXTRACTOR][COMBINED] filled gaps=['location'] msg='I apologize for the change and confusion!'
+INFO:     [CORE] contradiccion descartada location: 'cartagena' -> 'island' (Jev: no lo afirma)
+INFO:     [CORE][U3-6] señales sin LLM (Jev: acompañante 0.03, no pide recordar)
+INFO:     [CORE][U3-7] respuesta a certification por Jev: None (1.00)
+INFO:     [TURN_METRICS] {"conv": "3565", "start": "2026-10-08T08:20:08Z", "latency": 1.723, "turn_type": "reserva", "route": "booking", "rag_used": false, "language": "en", "step": "free_text", "activity_chosen": false, "cart_items": 0, "booking_link_sent": false, "escalated": false, "fallback": false, "error": null, "router": "jev", "router_ms": 340, "llm_calls": 3, "embeddings": 2, "llm_seconds": 1.916, "models": {"gpt-4o-mini": 3}, "nodes": {"router": 0.3613, "setup": 0.0043, "availability": 0.0037, "routing": 0.0049, "extraction": 0.7427, "slotfill_close": 0.5686, "booking": 1.3479}, "rag_adelantado": "descartado", "notas": "saltadas"}
+INFO:     [BOT] Sending Chatwoot message conv=3565 url=http://dp-chatwoot:3000/api/v1/accounts/1/conversations/3565/messages
+INFO:     [BOT] Message sent to conversation 3565
+INFO:     172.18.0.9:36028 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     [WEBHOOK] Event: message_created, message_type: outgoing
+INFO:     [WEBHOOK] Skipping non-actionable message_type=outgoing
+INFO:     172.18.0.9:36014 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     172.18.0.9:36036 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     [WEBHOOK] Event: conversation_created, message_type: None
+INFO:     [WEBHOOK] New conversation: 3566
+INFO:     [WEBHOOK] Event: message_created, message_type: incoming
+INFO:     [BOT] Incoming from Synth regreso-otro-dia-paquete-5: Seguramente tomaremos el paquete de 5 buceos para 2 personas con el traslado saliendo desde cartagen
+INFO:     [RAG][RETRIEVAL] query_topics=['schedule'] candidates=48 preview=[{'source': 'faqs', 'id': 19437, 'score': 0.6805, 'score_final': 0.6969, 'branches': ['vector']}, {'source': 'services', 'id': 19239, 'score': 0.6703, 'score_final': 0.6865, 'branches': ['vector']}, {'source': 'policies', 'id': 19557, 'score': 0.6654, 'score_final': 0.6813, 'branches': ['vector']}, {'source': 'services', 'id': 19199, 'score': 0.6643, 'score_final': 0.6799, 'branches': ['vector']}, {'source': 'services', 'id': 19197, 'score': 0.6537, 'score_final': 0.6691, 'branches': ['vector']}, {'source': 'services', 'id': 19201, 'score': 0.6523, 'score_final': 0.6675, 'branches': ['vector']}, {'source': 'services', 'id': 19241, 'score': 0.6426, 'score_final': 0.6575, 'branches': ['vector']}, {'source': 'faqs', 'id': 19447, 'score': 0.6425, 'score_final': 0.6572, 'branches': ['vector']}]
+INFO:     [ROUTER][JEV] 350 ms detected={'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.92, 'adds_person': 0.04, 'shares_open_fact': 0.05, 'changes_date': False, 'affirms_location': True, 'affirms_certification': False, 'affirms_group': True, 'affirms_nationality': False, 'affirms_activity': True} msg='Seguramente tomaremos el paquete de 5 buceos para 2 personas con el traslado sal'
+INFO:     [GRAPH] conv=3566 route=booking
+INFO:     [CORE][NOTAS] Jev: nada que apuntar (0.05): no se llama al extractor
+INFO:     [CORE][U3-6] recordar sin LLM (Jev: no pide recordar)
+INFO:     [CORE][RAG5] respuesta adelantada aprovechada
+INFO:     [EXTRACT][U3-4] campo=location regex='island' llm='cartagena' corregido msg='Seguramente tomaremos el paquete de 5 buceos para 2 personas'
+INFO:     [INTENT] Activity updated to: certified_diving (service: 2_dives_1_day)
+INFO:     [INTENT] Detected group size: 2
+INFO:     [INTENT] Detected duration: multi_day
+INFO:     [INTENT] Detected cert dive count: 5
+INFO:     [INTENT] Detected location: cartagena
+INFO:     [RAG][GROUNDING] grounded=True verdict=GROUNDED
+INFO:     [RAG] Query: Seguramente tomaremos el paquete de 5 buceos para 2 personas... | Docs: 8 | Tokens: 11526 | Cached: 7040 | Sources: ['faqs', 'services', 'policies', 'services', 'services', 'services', 'services', 'faqs']
+INFO:     [TURN_METRICS] {"conv": "3566", "start": "2026-10-08T08:20:17Z", "latency": 3.75, "turn_type": "rag", "route": "booking", "rag_used": true, "language": "es", "step": "free_text", "activity_chosen": false, "cart_items": 0, "booking_link_sent": false, "escalated": false, "fallback": false, "error": null, "router": "jev", "router_ms": 350, "llm_calls": 4, "embeddings": 1, "llm_seconds": 5.094, "models": {"gpt-4o-mini": 2, "gpt-4.1-mini": 1, "gpt-4.1": 1}, "nodes": {"router": 0.3773, "setup": 0.0082, "availability": 0.0047, "routing": 0.0063, "extraction": 1.855, "slotfill_close": 1.4644, "booking": 3.3587}, "rag_adelantado": "aprovechado", "notas": "saltadas"}
+INFO:     [BOT] Sending Chatwoot message conv=3566 url=http://dp-chatwoot:3000/api/v1/accounts/1/conversations/3566/messages
+INFO:     [BOT] Message sent to conversation 3566
+INFO:     [WEBHOOK] Event: message_created, message_type: outgoing
+INFO:     [WEBHOOK] Skipping non-actionable message_type=outgoing
+INFO:     172.18.0.9:34206 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     172.18.0.9:36036 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     [WEBHOOK] Event: message_created, message_type: incoming
+INFO:     [BOT] Incoming from Synth regreso-otro-dia-paquete-5: Porque el paquete es saliendo un dia y regresando al siguiente a Cartagena. Nosotros quedaríamos 1 n
+INFO:     [RAG][RETRIEVAL] query_topics=[] candidates=48 preview=[{'source': 'policies', 'id': 19557, 'score': 0.6213, 'score_final': 0.6377, 'branches': ['vector']}, {'source': 'faqs', 'id': 19437, 'score': 0.5329, 'score_final': 0.549, 'branches': ['vector']}, {'source': 'faqs', 'id': 19303, 'score': 0.5162, 'score_final': 0.5321, 'branches': ['vector']}, {'source': 'faqs', 'id': 19447, 'score': 0.5146, 'score_final': 0.5302, 'branches': ['vector']}, {'source': 'faqs', 'id': 19479, 'score': 0.511, 'score_final': 0.5263, 'branches': ['vector']}, {'source': 'services', 'id': 19199, 'score': 0.5076, 'score_final': 0.5228, 'branches': ['vector']}, {'source': 'services', 'id': 19239, 'score': 0.5065, 'score_final': 0.5214, 'branches': ['vector']}, {'source': 'services', 'id': 19201, 'score': 0.505, 'score_final': 0.5198, 'branches': ['vector']}]
+INFO:     [ROUTER][JEV] 397 ms duda=['booking_change_topic=reschedule@0.36'] -> router LLM (se conservan ['affirms_activity', 'affirms_certification', 'affirms_group', 'affirms_location', 'affirms_nationality', 'affirms_p', 'asks_question', 'asks_recall', 'changes_date', 'companion_joins', 'corrects', 'needs_staff', 'pending_answer', 'shares_open_fact']) msg='Porque el paquete es saliendo un dia y regresando al siguiente a Cartagena. Noso'
+INFO:     [ESCALATION][ROUTING_SIGNALS] detected={'wants_human': False, 'wants_menu_or_restart': False, 'sensitive_topic': False, 'adaptive_diving_topic': False, 'booking_change_topic': 'modify_headcount', 'affirms_location': False, 'affirms_activity': False, 'affirms_certification': False, 'affirms_group': False, 'affirms_nationality': False, 'corrects': False, 'asks_recall': False, 'needs_staff': False, 'changes_date': False, 'companion_joins': 0.17, 'shares_open_fact': 0.14, 'asks_question': False, 'affirms_p': {'affirms_location': 0.59, 'affirms_activity': 0.18, 'affirms_certification': 0.03, 'affirms_group': 0.05, 'affirms_nationality': 0.02}, 'pending_answer': {'slot': 'certification', 'value': None, 'confidence': 1.0}} msg='Porque el paquete es saliendo un dia y regresando al siguiente a Cartagena. Noso'
+INFO:     [GRAPH] conv=3566 route=booking
+INFO:     [CORE][NOTAS] Jev: nada que apuntar (0.14): no se llama al extractor
+INFO:     [LLM_EXTRACTOR][COMBINED] filled gaps=['group_size'] msg='Porque el paquete es saliendo un dia y regresando al siguien'
+INFO:     [CORE][U3-6] señales sin LLM (Jev: acompañante 0.17, no pide recordar)
+INFO:     [CORE][U3-7] respuesta a certification por Jev: None (1.00)
+INFO:     [TURN_METRICS] {"conv": "3566", "start": "2026-10-08T08:20:28Z", "latency": 3.268, "turn_type": "reserva", "route": "booking", "rag_used": false, "language": "es", "step": "free_text", "activity_chosen": false, "cart_items": 0, "booking_link_sent": false, "escalated": false, "fallback": false, "error": null, "router": "llm_uncertain", "router_ms": 397, "llm_calls": 4, "embeddings": 1, "llm_seconds": 4.306, "models": {"gpt-4o-mini": 3, "gpt-4.1-mini": 1}, "nodes": {"router": 1.633, "setup": 0.0084, "availability": 0.0059, "routing": 0.0067, "extraction": 0.7896, "slotfill_close": 0.7893, "booking": 1.6212}, "rag_adelantado": "descartado", "notas": "saltadas"}
+INFO:     [BOT] Sending Chatwoot message conv=3566 url=http://dp-chatwoot:3000/api/v1/accounts/1/conversations/3566/messages
+INFO:     [BOT] Message sent to conversation 3566
+INFO:     [WEBHOOK] Event: message_created, message_type: outgoing
+INFO:     [WEBHOOK] Skipping non-actionable message_type=outgoing
+INFO:     172.18.0.9:56580 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     172.18.0.9:56570 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55828 - "GET /health HTTP/1.1" 200 OK
+INFO:     [WEBHOOK] Event: conversation_created, message_type: None
+INFO:     172.18.0.9:53932 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     [WEBHOOK] New conversation: 3567
+INFO:     [WEBHOOK] Event: message_created, message_type: incoming
+INFO:     [BOT] Incoming from Synth contacto-hoteles-cocoliso-san-pedro: Hola!!
+INFO:     [ROUTER][JEV] 350 ms detected={'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.03, 'adds_person': 0.03, 'shares_open_fact': 0.03, 'changes_date': False, 'affirms_location': False, 'affirms_certification': False, 'affirms_group': False, 'affirms_nationality': False, 'affirms_activity': False} msg='Hola!!'
+INFO:     [GRAPH] conv=3567 route=booking
+INFO:     [CORE][NOTAS] Jev: nada que apuntar (0.03): no se llama al extractor
+INFO:     [TURN_METRICS] {"conv": "3567", "start": "2026-10-08T08:20:38Z", "latency": 0.428, "turn_type": "saludo", "route": "booking", "rag_used": false, "language": "es", "step": "free_text", "activity_chosen": false, "cart_items": 0, "booking_link_sent": false, "escalated": false, "fallback": false, "error": null, "router": "jev", "router_ms": 350, "llm_calls": 0, "embeddings": 0, "llm_seconds": 0, "models": {}, "nodes": {"router": 0.3695, "setup": 0.0073, "availability": 0.0058, "routing": 0.0052, "extraction": 0.0082, "slotfill_close": 0.0016, "booking": 0.0487}, "rag_adelantado": "descartado", "notas": "saltadas"}
+INFO:     [BOT] Sending Chatwoot message conv=3567 url=http://dp-chatwoot:3000/api/v1/accounts/1/conversations/3567/messages
+INFO:     [BOT] Message sent to conversation 3567
+INFO:     [WEBHOOK] Event: message_created, message_type: outgoing
+INFO:     [WEBHOOK] Skipping non-actionable message_type=outgoing
+INFO:     172.18.0.9:53944 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     172.18.0.9:53932 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     [WEBHOOK] Event: message_created, message_type: incoming
+INFO:     [BOT] Incoming from Synth contacto-hoteles-cocoliso-san-pedro: Me pasas el contacto del hotel cocoliso?
+INFO:     [ROUTER][JEV] 339 ms detected={'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.04, 'adds_person': 0.03, 'shares_open_fact': 0.03, 'changes_date': False, 'affirms_location': False, 'affirms_certification': False, 'affirms_group': False, 'affirms_nationality': False, 'affirms_activity': False} msg='Me pasas el contacto del hotel cocoliso?'
+INFO:     [GRAPH] conv=3567 route=booking
+INFO:     [CORE][NOTAS] Jev: nada que apuntar (0.03): no se llama al extractor
+INFO:     [CORE][U3-6] recordar sin LLM (Jev: no pide recordar)
+INFO:     [CORE][RAG5] respuesta adelantada aprovechada
+INFO:     [INTENT] Detected location: island
+INFO:     [CORE][U3-6] señales sin LLM (Jev: acompañante 0.04, no pide recordar)
+INFO:     [RAG][REWRITE] original=Me pasas el contacto del hotel cocoliso?... rewritten=¿Me puedes pasar el contacto del hotel Cocoliso?...
+INFO:     [RAG][RETRIEVAL] query_topics=['location_islands', 'accommodation'] candidates=48 preview=[{'source': 'policies', 'id': 19555, 'score': 0.5424, 'score_final': 0.5588, 'branches': ['vector']}, {'source': 'faqs', 'id': 19485, 'score': 0.5079, 'score_final': 0.524, 'branches': ['vector']}, {'source': 'faqs', 'id': 19429, 'score': 0.498, 'score_final': 0.5139, 'branches': ['vector']}, {'source': 'faqs', 'id': 19427, 'score': 0.4627, 'score_final': 0.4784, 'branches': ['vector']}, {'source': 'faqs', 'id': 19317, 'score': 0.4594, 'score_final': 0.4748, 'branches': ['vector']}, {'source': 'policies', 'id': 19525, 'score': 0.4256, 'score_final': 0.4407, 'branches': ['vector']}, {'source': 'faqs', 'id': 19489, 'score': 0.4126, 'score_final': 0.4275, 'branches': ['vector']}, {'source': 'policies', 'id': 19509, 'score': 0.4057, 'score_final': 0.4204, 'branches': ['vector']}]
+INFO:     [RAG][RETRIEVAL] query_topics=['location_islands', 'accommodation'] candidates=48 preview=[{'source': 'policies', 'id': 19555, 'score': 0.5219, 'score_final': 0.5383, 'branches': ['vector']}, {'source': 'faqs', 'id': 19485, 'score': 0.4893, 'score_final': 0.5055, 'branches': ['vector']}, {'source': 'faqs', 'id': 19429, 'score': 0.4884, 'score_final': 0.5043, 'branches': ['vector']}, {'source': 'faqs', 'id': 19427, 'score': 0.4544, 'score_final': 0.47, 'branches': ['vector']}, {'source': 'faqs', 'id': 19317, 'score': 0.4464, 'score_final': 0.4618, 'branches': ['vector']}, {'source': 'policies', 'id': 19525, 'score': 0.4219, 'score_final': 0.4371, 'branches': ['vector']}, {'source': 'policies', 'id': 19509, 'score': 0.4071, 'score_final': 0.422, 'branches': ['vector']}, {'source': 'faqs', 'id': 19305, 'score': 0.4018, 'score_final': 0.4165, 'branches': ['vector']}]
+INFO:     [RAG][GROUNDING] grounded=True verdict=GROUNDED
+INFO:     [RAG] Query: Me pasas el contacto del hotel cocoliso?... | Docs: 9 | Tokens: 9359 | Cached: 7040 | Sources: ['policies', 'faqs', 'faqs', 'faqs', 'faqs', 'policies', 'faqs', 'policies', 'faqs']
+INFO:     [TURN_METRICS] {"conv": "3567", "start": "2026-10-08T08:20:46Z", "latency": 3.868, "turn_type": "rag", "route": "booking", "rag_used": true, "language": "es", "step": "free_text", "activity_chosen": false, "cart_items": 0, "booking_link_sent": false, "escalated": false, "fallback": false, "error": null, "router": "jev", "router_ms": 339, "llm_calls": 4, "embeddings": 2, "llm_seconds": 4.196, "models": {"gpt-4o-mini": 2, "gpt-4.1-mini": 1, "gpt-4.1": 1}, "nodes": {"router": 0.3585, "setup": 0.0265, "availability": 0.0058, "routing": 0.0072, "extraction": 0.0084, "slotfill_close": 3.4306, "booking": 3.4986}, "rag_adelantado": "aprovechado", "notas": "saltadas"}
+INFO:     [BOT] Sending Chatwoot message conv=3567 url=http://dp-chatwoot:3000/api/v1/accounts/1/conversations/3567/messages
+INFO:     [BOT] Message sent to conversation 3567
+INFO:     [WEBHOOK] Event: message_created, message_type: outgoing
+INFO:     [WEBHOOK] Skipping non-actionable message_type=outgoing
+INFO:     172.18.0.9:60204 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     172.18.0.9:53960 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     [WEBHOOK] Event: message_created, message_type: incoming
+INFO:     [BOT] Incoming from Synth contacto-hoteles-cocoliso-san-pedro: Muchas gracias
+INFO:     [ROUTER][JEV] 415 ms detected={'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.04, 'adds_person': 0.02, 'shares_open_fact': 0.03, 'changes_date': False, 'affirms_location': False, 'affirms_certification': False, 'affirms_group': False, 'affirms_nationality': False, 'affirms_activity': False} msg='Muchas gracias'
+INFO:     [GRAPH] conv=3567 route=booking
+INFO:     [CORE][NOTAS] Jev: nada que apuntar (0.03): no se llama al extractor
+INFO:     [RAG][REWRITE] original=Muchas gracias... rewritten=¿Me puedes ayudar con la reserva de buceo o alguna actividad...
+INFO:     [RAG][RETRIEVAL] query_topics=['location_islands'] candidates=48 preview=[{'source': 'faqs', 'id': 19427, 'score': 0.6811, 'score_final': 0.6975, 'branches': ['vector']}, {'source': 'faqs', 'id': 19485, 'score': 0.6795, 'score_final': 0.6956, 'branches': ['vector']}, {'source': 'faqs', 'id': 19317, 'score': 0.6549, 'score_final': 0.6708, 'branches': ['vector']}, {'source': 'faqs', 'id': 19423, 'score': 0.6136, 'score_final': 0.6292, 'branches': ['vector']}, {'source': 'policies', 'id': 19555, 'score': 0.6075, 'score_final': 0.6229, 'branches': ['vector']}, {'source': 'services', 'id': 19211, 'score': 0.6055, 'score_final': 0.6206, 'branches': ['vector']}, {'source': 'faqs', 'id': 19433, 'score': 0.6052, 'score_final': 0.6201, 'branches': ['vector']}, {'source': 'faqs', 'id': 19429, 'score': 0.6046, 'score_final': 0.6193, 'branches': ['vector']}]
+INFO:     [RAG][RETRIEVAL] query_topics=['location_islands'] candidates=48 preview=[{'source': 'policies', 'id': 19537, 'score': 0.4146, 'score_final': 0.431, 'branches': ['vector']}, {'source': 'services', 'id': 19219, 'score': 0.3825, 'score_final': 0.3986, 'branches': ['vector']}, {'source': 'services', 'id': 19227, 'score': 0.3814, 'score_final': 0.3973, 'branches': ['vector']}, {'source': 'services', 'id': 19223, 'score': 0.3794, 'score_final': 0.3951, 'branches': ['vector']}, {'source': 'faqs', 'id': 19489, 'score': 0.3794, 'score_final': 0.3948, 'branches': ['vector']}, {'source': 'services', 'id': 19225, 'score': 0.3793, 'score_final': 0.3945, 'branches': ['vector']}, {'source': 'services', 'id': 19253, 'score': 0.3733, 'score_final': 0.3883, 'branches': ['vector']}, {'source': 'policies', 'id': 19557, 'score': 0.3727, 'score_final': 0.3874, 'branches': ['vector']}]
+INFO:     [CORE][U3-6] señales sin LLM (Jev: acompañante 0.04, no pide recordar)
+INFO:     [TURN_METRICS] {"conv": "3567", "start": "2026-10-08T08:20:57Z", "latency": 1.359, "turn_type": "reserva", "route": "booking", "rag_used": false, "language": "es", "step": "free_text", "activity_chosen": false, "cart_items": 0, "booking_link_sent": false, "escalated": false, "fallback": false, "error": null, "router": "jev", "router_ms": 415, "llm_calls": 3, "embeddings": 2, "llm_seconds": 2.321, "models": {"gpt-4o-mini": 3}, "nodes": {"router": 0.4396, "setup": 0.0253, "availability": 0.0081, "routing": 0.0076, "extraction": 0.8371, "slotfill_close": 0.0115, "booking": 0.9079}, "rag_adelantado": "descartado", "notas": "saltadas"}
+INFO:     [BOT] Sending Chatwoot message conv=3567 url=http://dp-chatwoot:3000/api/v1/accounts/1/conversations/3567/messages
+INFO:     [BOT] Message sent to conversation 3567
+INFO:     [WEBHOOK] Event: message_created, message_type: outgoing
+INFO:     [WEBHOOK] Skipping non-actionable message_type=outgoing
+INFO:     172.18.0.9:43440 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     172.18.0.9:60208 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     [WEBHOOK] Event: message_created, message_type: incoming
+INFO:     [BOT] Incoming from Synth contacto-hoteles-cocoliso-san-pedro: O el San Pedro
+INFO:     [ROUTER][JEV] 407 ms detected={'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.1, 'adds_person': 0.09, 'shares_open_fact': 0.05, 'changes_date': False, 'affirms_location': False, 'affirms_certification': False, 'affirms_group': False, 'affirms_nationality': False, 'affirms_activity': False} msg='O el San Pedro'
+INFO:     [GRAPH] conv=3567 route=booking
+INFO:     [CORE][NOTAS] Jev: nada que apuntar (0.05): no se llama al extractor
+INFO:     [RAG][REWRITE] original=O el San Pedro... rewritten=¿Puedo hacer la actividad en el San Pedro?...
+INFO:     127.0.0.1:48890 - "GET /health HTTP/1.1" 200 OK
+INFO:     [RAG][RETRIEVAL] query_topics=['location_islands'] candidates=48 preview=[{'source': 'faqs', 'id': 19429, 'score': 0.5183, 'score_final': 0.5347, 'branches': ['vector']}, {'source': 'services', 'id': 19227, 'score': 0.4947, 'score_final': 0.5108, 'branches': ['vector']}, {'source': 'policies', 'id': 19557, 'score': 0.4895, 'score_final': 0.5054, 'branches': ['vector']}, {'source': 'services', 'id': 19223, 'score': 0.489, 'score_final': 0.5046, 'branches': ['vector']}, {'source': 'services', 'id': 19233, 'score': 0.4866, 'score_final': 0.5019, 'branches': ['vector']}, {'source': 'services', 'id': 19231, 'score': 0.4828, 'score_final': 0.4979, 'branches': ['vector']}, {'source': 'services', 'id': 19225, 'score': 0.4821, 'score_final': 0.497, 'branches': ['vector']}, {'source': 'faqs', 'id': 19321, 'score': 0.4774, 'score_final': 0.4921, 'branches': ['vector']}]
+INFO:     [RAG][RETRIEVAL] query_topics=['location_islands'] candidates=48 preview=[{'source': 'faqs', 'id': 19429, 'score': 0.4667, 'score_final': 0.4831, 'branches': ['vector']}, {'source': 'faqs', 'id': 19489, 'score': 0.4242, 'score_final': 0.4403, 'branches': ['vector']}, {'source': 'policies', 'id': 19537, 'score': 0.4235, 'score_final': 0.4394, 'branches': ['vector']}, {'source': 'policies', 'id': 19555, 'score': 0.4134, 'score_final': 0.429, 'branches': ['vector']}, {'source': 'faqs', 'id': 19427, 'score': 0.4057, 'score_final': 0.4211, 'branches': ['vector']}, {'source': 'policies', 'id': 19509, 'score': 0.3926, 'score_final': 0.4078, 'branches': ['vector']}, {'source': 'policies', 'id': 19497, 'score': 0.3879, 'score_final': 0.4028, 'branches': ['vector']}, {'source': 'faqs', 'id': 19305, 'score': 0.3867, 'score_final': 0.4014, 'branches': ['vector']}]
+INFO:     [INTENT] Detected island: isla_grande
+INFO:     [INTENT] Detected hotel: san_pedro_majagua
+INFO:     [CORE][U3-6] señales sin LLM (Jev: acompañante 0.10, no pide recordar)
+INFO:     [TURN_METRICS] {"conv": "3567", "start": "2026-10-08T08:21:05Z", "latency": 1.619, "turn_type": "reserva", "route": "booking", "rag_used": false, "language": "es", "step": "free_text", "activity_chosen": false, "cart_items": 0, "booking_link_sent": false, "escalated": false, "fallback": false, "error": null, "router": "jev", "router_ms": 407, "llm_calls": 3, "embeddings": 2, "llm_seconds": 2.255, "models": {"gpt-4o-mini": 3}, "nodes": {"router": 0.4334, "setup": 0.0491, "availability": 0.1238, "routing": 0.0102, "extraction": 0.9287, "slotfill_close": 0.0015, "booking": 1.1705}, "rag_adelantado": "descartado", "notas": "saltadas"}
+INFO:     [BOT] Sending Chatwoot message conv=3567 url=http://dp-chatwoot:3000/api/v1/accounts/1/conversations/3567/messages
+INFO:     [BOT] Message sent to conversation 3567
+INFO:     [WEBHOOK] Event: message_created, message_type: outgoing
+INFO:     [WEBHOOK] Skipping non-actionable message_type=outgoing
+INFO:     172.18.0.9:43468 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     172.18.0.9:43454 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     [WEBHOOK] Event: conversation_created, message_type: None
+INFO:     [WEBHOOK] New conversation: 3568
+INFO:     172.18.0.9:41602 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     [WEBHOOK] Event: message_created, message_type: incoming
+INFO:     [BOT] Incoming from Synth recogida-ubuntu-comida-y-certificacion: Hi,
+I just booked a beginner mini diving experience online. I created accounts for my son ([NOMBRE],
+INFO:     [RAG][RETRIEVAL] query_topics=[] candidates=48 preview=[{'source': 'faqs', 'id': 19322, 'score': 0.5473, 'score_final': 0.5637, 'branches': ['vector']}, {'source': 'services', 'id': 19210, 'score': 0.4814, 'score_final': 0.4975, 'branches': ['vector']}, {'source': 'policies', 'id': 19498, 'score': 0.4793, 'score_final': 0.4951, 'branches': ['vector']}, {'source': 'faqs', 'id': 19324, 'score': 0.4706, 'score_final': 0.4862, 'branches': ['vector']}, {'source': 'policies', 'id': 19518, 'score': 0.4703, 'score_final': 0.4857, 'branches': ['vector']}, {'source': 'services', 'id': 19272, 'score': 0.4629, 'score_final': 0.4781, 'branches': ['vector']}, {'source': 'services', 'id': 19236, 'score': 0.4622, 'score_final': 0.4771, 'branches': ['vector']}, {'source': 'faqs', 'id': 19332, 'score': 0.458, 'score_final': 0.4727, 'branches': ['vector']}]
+INFO:     [ROUTER][JEV] 420 ms detected={'corrects': False, 'asks_recall': False, 'needs_staff': True, 'companion_joins': 0.97, 'adds_person': 0.04, 'shares_open_fact': 0.1, 'changes_date': False, 'affirms_location': True, 'affirms_certification': True, 'affirms_group': True, 'affirms_nationality': False, 'affirms_activity': True} msg='Hi,\nI just booked a beginner mini diving experience online. I created accounts f'
+INFO:     [GRAPH] conv=3568 route=safety
+INFO:     [NODE:escalation] sensible (keyword) reason=medical_questions
+INFO:     [TURN_METRICS] {"conv": "3568", "start": "2026-10-08T08:21:14Z", "latency": 0.463, "turn_type": "escalado", "route": "safety", "rag_used": false, "language": "en", "step": "escalate", "activity_chosen": false, "cart_items": 0, "booking_link_sent": false, "escalated": true, "fallback": false, "error": null, "router": "jev", "router_ms": 421, "llm_calls": 0, "embeddings": 1, "llm_seconds": 0, "models": {}, "nodes": {"router": 0.4447, "safety": 0.0019}, "rag_adelantado": "descartado"}
+INFO:     [BOT] Lead note sent conv=3568
+INFO:     [WEBHOOK] Event: message_created, message_type: outgoing
+INFO:     [WEBHOOK] Skipping non-actionable message_type=outgoing
+INFO:     172.18.0.9:41612 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+2026-10-08 08:21:15 [info     ] escalated_to_human             conversation_id=3568 reason=medical_questions
+INFO:     [BOT] Sending Chatwoot message conv=3568 url=http://dp-chatwoot:3000/api/v1/accounts/1/conversations/3568/messages
+INFO:     [WEBHOOK] Event: conversation_status_changed, message_type: None
+INFO:     [WEBHOOK] Status changed
+INFO:     172.18.0.9:41612 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     [BOT] Message sent to conversation 3568
+INFO:     [WEBHOOK] Event: message_created, message_type: outgoing
+INFO:     [WEBHOOK] Skipping non-actionable message_type=outgoing
+INFO:     172.18.0.9:41612 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     172.18.0.9:41602 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     [WEBHOOK] Event: message_created, message_type: incoming
+INFO:     [BOT] Incoming from Synth recogida-ubuntu-comida-y-certificacion: Hi, is there a way to eat at your facility or we need to bring our food ?
+INFO:     [RAG][RETRIEVAL] query_topics=['equipment'] candidates=48 preview=[{'source': 'faqs', 'id': 19422, 'score': 0.4893, 'score_final': 0.5057, 'branches': ['vector']}, {'source': 'policies', 'id': 19526, 'score': 0.4452, 'score_final': 0.4613, 'branches': ['vector']}, {'source': 'faqs', 'id': 19420, 'score': 0.3586, 'score_final': 0.3745, 'branches': ['vector']}, {'source': 'faqs', 'id': 19430, 'score': 0.3231, 'score_final': 0.3387, 'branches': ['vector']}, {'source': 'policies', 'id': 19540, 'score': 0.3109, 'score_final': 0.3263, 'branches': ['vector']}, {'source': 'policies', 'id': 19524, 'score': 0.3005, 'score_final': 0.3156, 'branches': ['vector']}, {'source': 'policies', 'id': 19534, 'score': 0.2992, 'score_final': 0.3141, 'branches': ['vector']}, {'source': 'policies', 'id': 19502, 'score': 0.2982, 'score_final': 0.3129, 'branches': ['vector']}]
+INFO:     [ROUTER][JEV] 362 ms detected={'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.04, 'adds_person': 0.03, 'shares_open_fact': 0.07, 'changes_date': False, 'affirms_location': False, 'affirms_certification': False, 'affirms_group': False, 'affirms_nationality': False, 'affirms_activity': False} msg='Hi, is there a way to eat at your facility or we need to bring our food ?'
+INFO:     [GRAPH] conv=3568 route=booking
+INFO:     [CORE][NOTAS] Jev: nada que apuntar (0.07): no se llama al extractor
+INFO:     [CORE][U3-6] recordar sin LLM (Jev: no pide recordar)
+INFO:     [CORE][RAG5] respuesta adelantada aprovechada
+INFO:     [INTENT] Detected language: en
+INFO:     [RAG][GROUNDING] grounded=True verdict=GROUNDED
+INFO:     [RAG] Query: Hi, is there a way to eat at your facility or we need to bri... | Docs: 8 | Tokens: 7560 | Cached: 6016 | Sources: ['faqs', 'policies', 'faqs', 'faqs', 'policies', 'policies', 'policies', 'policies']
+INFO:     [TURN_METRICS] {"conv": "3568", "start": "2026-10-08T08:21:21Z", "latency": 2.865, "turn_type": "rag", "route": "booking", "rag_used": true, "language": "en", "step": "free_text", "activity_chosen": false, "cart_items": 0, "booking_link_sent": false, "escalated": false, "fallback": false, "error": null, "router": "jev", "router_ms": 362, "llm_calls": 3, "embeddings": 1, "llm_seconds": 3.206, "models": {"gpt-4o-mini": 1, "gpt-4.1-mini": 1, "gpt-4.1": 1}, "nodes": {"router": 0.3854, "setup": 0.0328, "availability": 0.0059, "routing": 0.0074, "extraction": 0.0182, "slotfill_close": 2.3807, "booking": 2.4661}, "rag_adelantado": "aprovechado", "notas": "saltadas"}
+INFO:     [BOT] Sending Chatwoot message conv=3568 url=http://dp-chatwoot:3000/api/v1/accounts/1/conversations/3568/messages
+INFO:     [BOT] Message sent to conversation 3568
+INFO:     [WEBHOOK] Event: message_created, message_type: outgoing
+INFO:     [WEBHOOK] Skipping non-actionable message_type=outgoing
+INFO:     172.18.0.9:32916 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     172.18.0.9:32914 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     [WEBHOOK] Event: message_created, message_type: incoming
+INFO:     [BOT] Incoming from Synth recogida-ubuntu-comida-y-certificacion: Hi. Is it possible for my son [NOMBRE] a PADi certificat ?
+INFO:     [RAG][RETRIEVAL] query_topics=['certification'] candidates=48 preview=[{'source': 'faqs', 'id': 19470, 'score': 0.362, 'score_final': 0.3784, 'branches': ['vector']}, {'source': 'policies', 'id': 19514, 'score': 0.3333, 'score_final': 0.3494, 'branches': ['vector']}, {'source': 'faqs', 'id': 19310, 'score': 0.3146, 'score_final': 0.3305, 'branches': ['vector']}, {'source': 'services', 'id': 19260, 'score': 0.3095, 'score_final': 0.3251, 'branches': ['vector']}, {'source': 'faqs', 'id': 19330, 'score': 0.3077, 'score_final': 0.3231, 'branches': ['vector']}, {'source': 'policies', 'id': 19548, 'score': 0.3069, 'score_final': 0.3221, 'branches': ['vector']}, {'source': 'faqs', 'id': 19484, 'score': 0.3049, 'score_final': 0.3199, 'branches': ['vector']}, {'source': 'faqs', 'id': 19476, 'score': 0.2997, 'score_final': 0.3144, 'branches': ['vector']}]
+INFO:     [ROUTER][JEV] 360 ms detected={'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.86, 'adds_person': 0.1, 'shares_open_fact': 0.08, 'changes_date': False, 'affirms_location': False, 'affirms_certification': False, 'affirms_group': False, 'affirms_nationality': False, 'affirms_activity': False} msg='Hi. Is it possible for my son [NOMBRE] a PADi certificat ?'
+INFO:     [GRAPH] conv=3568 route=booking
+INFO:     [CORE][NOTAS] Jev: nada que apuntar (0.08): no se llama al extractor
+INFO:     [CORE][U3-6] recordar sin LLM (Jev: no pide recordar)
+INFO:     [CORE][RAG5] respuesta adelantada aprovechada
+INFO:     [EXTRACT][U3-4] campo=activity regex='certified_diving' descartado por Jev (no lo afirma)
+INFO:     [EXTRACT][U3-4] campo=is_certified regex=True descartado por Jev (no lo afirma)
+INFO:     [RAG][RETRIEVAL] query_topics=['certification'] candidates=48 preview=[{'source': 'faqs', 'id': 19422, 'score': 0.4346, 'score_final': 0.451, 'branches': ['vector']}, {'source': 'policies', 'id': 19526, 'score': 0.4142, 'score_final': 0.4303, 'branches': ['vector']}, {'source': 'policies', 'id': 19514, 'score': 0.3831, 'score_final': 0.399, 'branches': ['vector']}, {'source': 'faqs', 'id': 19420, 'score': 0.3761, 'score_final': 0.3917, 'branches': ['vector']}, {'source': 'faqs', 'id': 19476, 'score': 0.3681, 'score_final': 0.3834, 'branches': ['vector']}, {'source': 'policies', 'id': 19542, 'score': 0.3626, 'score_final': 0.3778, 'branches': ['vector']}, {'source': 'faqs', 'id': 19310, 'score': 0.3592, 'score_final': 0.3741, 'branches': ['vector']}, {'source': 'policies', 'id': 19496, 'score': 0.3567, 'score_final': 0.3714, 'branches': ['vector']}]
+INFO:     [CORE][SIGNALS] detected={'mentions_other_person': True, 'companion_activity': 'certified_diving', 'companion_is_singular': True, 'companion_qty': 1} msg='Hi. Is it possible for my son [NOMBRE] a PADi certificat ?'
+INFO:     [CORE] merged companion activity certified_diving x1 -> alloc={'certified_diving': 1}
+INFO:     [RAG][GROUNDING] grounded=True verdict=GROUNDED
+INFO:     [RAG] Query: Hi. Is it possible for my son [NOMBRE] a PADi certificat ?... | Docs: 8 | Tokens: 7621 | Cached: 6016 | Sources: ['faqs', 'policies', 'policies', 'faqs', 'faqs', 'policies', 'faqs', 'policies']
+INFO:     [TURN_METRICS] {"conv": "3568", "start": "2026-10-08T08:21:31Z", "latency": 3.014, "turn_type": "rag", "route": "booking", "rag_used": true, "language": "en", "step": "free_text", "activity_chosen": false, "cart_items": 0, "booking_link_sent": false, "escalated": false, "fallback": false, "error": null, "router": "jev", "router_ms": 361, "llm_calls": 4, "embeddings": 2, "llm_seconds": 4.073, "models": {"gpt-4o-mini": 2, "gpt-4.1-mini": 1, "gpt-4.1": 1}, "nodes": {"router": 0.3861, "setup": 0.0225, "availability": 0.0043, "routing": 0.0085, "extraction": 0.9645, "slotfill_close": 1.594, "booking": 2.6138}, "rag_adelantado": "aprovechado", "notas": "saltadas"}
+INFO:     [BOT] Sending Chatwoot message conv=3568 url=http://dp-chatwoot:3000/api/v1/accounts/1/conversations/3568/messages
+INFO:     [BOT] Message sent to conversation 3568
+INFO:     172.18.0.9:53550 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     [WEBHOOK] Event: message_created, message_type: outgoing
+INFO:     [WEBHOOK] Skipping non-actionable message_type=outgoing
+INFO:     172.18.0.9:53542 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52030 - "GET /health HTTP/1.1" 200 OK
+INFO:     [WEBHOOK] Event: message_created, message_type: incoming
+INFO:     [BOT] Incoming from Synth recogida-ubuntu-comida-y-certificacion: We are leaving tomorrow before noon
+INFO:     [ROUTER][JEV] 370 ms detected={'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.09, 'adds_person': 0.03, 'shares_open_fact': 0.75, 'changes_date': False, 'affirms_location': False, 'affirms_certification': False, 'affirms_group': False, 'affirms_nationality': False, 'affirms_activity': False} msg='We are leaving tomorrow before noon'
+INFO:     [GRAPH] conv=3568 route=booking
+INFO:     [RAG][REWRITE] original=We are leaving tomorrow before noon... rewritten=What time do we need to arrive for the tour if we are leavin...
+INFO:     [RAG][RETRIEVAL] query_topics=['availability'] candidates=48 preview=[{'source': 'faqs', 'id': 19466, 'score': 0.4777, 'score_final': 0.4941, 'branches': ['vector']}, {'source': 'faqs', 'id': 19278, 'score': 0.4563, 'score_final': 0.4724, 'branches': ['vector']}, {'source': 'faqs', 'id': 19312, 'score': 0.4443, 'score_final': 0.4602, 'branches': ['vector']}, {'source': 'policies', 'id': 19498, 'score': 0.4399, 'score_final': 0.4556, 'branches': ['vector']}, {'source': 'policies', 'id': 19522, 'score': 0.4079, 'score_final': 0.4233, 'branches': ['vector']}, {'source': 'policies', 'id': 19518, 'score': 0.3915, 'score_final': 0.4066, 'branches': ['vector']}, {'source': 'faqs', 'id': 19420, 'score': 0.3715, 'score_final': 0.3864, 'branches': ['vector']}, {'source': 'policies', 'id': 19526, 'score': 0.3714, 'score_final': 0.3861, 'branches': ['vector']}]
+INFO:     [RAG][RETRIEVAL] query_topics=['availability'] candidates=48 preview=[{'source': 'faqs', 'id': 19466, 'score': 0.3474, 'score_final': 0.3638, 'branches': ['vector']}, {'source': 'faqs', 'id': 19312, 'score': 0.3362, 'score_final': 0.3523, 'branches': ['vector']}, {'source': 'faqs', 'id': 19278, 'score': 0.3064, 'score_final': 0.3223, 'branches': ['vector']}, {'source': 'policies', 'id': 19498, 'score': 0.3035, 'score_final': 0.3191, 'branches': ['vector']}, {'source': 'policies', 'id': 19518, 'score': 0.3011, 'score_final': 0.3165, 'branches': ['vector']}, {'source': 'faqs', 'id': 19420, 'score': 0.2372, 'score_final': 0.2523, 'branches': ['vector']}, {'source': 'services', 'id': 19268, 'score': 0.2344, 'score_final': 0.2494, 'branches': ['vector']}, {'source': 'policies', 'id': 19522, 'score': 0.2323, 'score_final': 0.247, 'branches': ['vector']}]
+INFO:     [NOTES_EXTRACTOR] captured=['leaving tomorrow before noon'] msg='We are leaving tomorrow before noon'
+INFO:     [CORE] notes captured -> ['leaving tomorrow before noon']
+INFO:     [TURN_METRICS] {"conv": "3568", "start": "2026-10-08T08:21:41Z", "latency": 1.21, "turn_type": "reserva", "route": "booking", "rag_used": false, "language": "en", "step": "free_text", "activity_chosen": false, "cart_items": 0, "booking_link_sent": false, "escalated": false, "fallback": false, "error": null, "router": "jev", "router_ms": 370, "llm_calls": 4, "embeddings": 2, "llm_seconds": 2.74, "models": {"gpt-4o-mini": 4}, "nodes": {"router": 0.391, "setup": 0.0437, "availability": 0.006, "routing": 0.0092, "extraction": 0.7281, "slotfill_close": 0.0009, "booking": 0.8079}, "rag_adelantado": "descartado", "notas": "extraidas"}
+INFO:     [BOT] Sending Chatwoot message conv=3568 url=http://dp-chatwoot:3000/api/v1/accounts/1/conversations/3568/messages
+INFO:     [BOT] Message sent to conversation 3568
+INFO:     172.18.0.9:53570 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     [WEBHOOK] Event: message_created, message_type: outgoing
+INFO:     [WEBHOOK] Skipping non-actionable message_type=outgoing
+INFO:     172.18.0.9:53556 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     [WEBHOOK] Event: conversation_created, message_type: None
+INFO:     [WEBHOOK] New conversation: 3569
+INFO:     172.18.0.9:42108 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     [WEBHOOK] Event: message_created, message_type: incoming
+INFO:     [BOT] Incoming from Synth minicurso-islas-y-acompanante-lancha: Buena Tardes quería preguntarte estaremos en islas del rosario en junio y quería regalarle a mi espo
+INFO:     [RAG][RETRIEVAL] query_topics=['location_islands'] candidates=48 preview=[{'source': 'faqs', 'id': 19327, 'score': 0.6924, 'score_final': 0.7088, 'branches': ['vector']}, {'source': 'faqs', 'id': 19409, 'score': 0.6747, 'score_final': 0.6908, 'branches': ['vector']}, {'source': 'faqs', 'id': 19397, 'score': 0.6561, 'score_final': 0.672, 'branches': ['vector']}, {'source': 'faqs', 'id': 19415, 'score': 0.6558, 'score_final': 0.6714, 'branches': ['vector']}, {'source': 'services', 'id': 19207, 'score': 0.6552, 'score_final': 0.6706, 'branches': ['vector']}, {'source': 'services', 'id': 19213, 'score': 0.6547, 'score_final': 0.6698, 'branches': ['vector']}, {'source': 'faqs', 'id': 19317, 'score': 0.6501, 'score_final': 0.665, 'branches': ['vector']}, {'source': 'services', 'id': 19209, 'score': 0.6498, 'score_final': 0.6645, 'branches': ['vector']}]
+INFO:     [ROUTER][JEV] 417 ms detected={'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.91, 'adds_person': 0.05, 'shares_open_fact': 0.64, 'changes_date': False, 'affirms_location': True, 'affirms_certification': True, 'affirms_group': False, 'affirms_nationality': False, 'affirms_activity': True} msg='Buena Tardes quería preguntarte estaremos en islas del rosario en junio y quería'
+INFO:     [GRAPH] conv=3569 route=booking
+INFO:     [CORE][RAG5] respuesta adelantada aprovechada
+INFO:     [EXTRACT][U3-4] campo=activity regex='snorkel' llm='minicourse' corregido msg='Buena Tardes quería preguntarte estaremos en islas del rosar'
+INFO:     [LLM_EXTRACTOR] filled gaps=['is_certified'] msg='Buena Tardes quería preguntarte estaremos en islas del rosar'
+INFO:     [EXTRACT][CUTOVER] applied={'is_certified': False} msg='Buena Tardes quería preguntarte estaremos en islas del rosario en junio y quería regalarle a mi esposo una experiencia del buceo no tiene experiencia en buceo, solo snorke normal quería conocer los planes y costos gracias'
+INFO:     [INTENT] Activity updated to: minicourse (service: None)
+INFO:     [INTENT] Detected location: island
+INFO:     [CORE][SIGNALS] detected={'companion_activity': 'minicourse', 'mentions_other_person': True, 'companion_is_singular': True, 'companion_qty': 1} msg='Buena Tardes quería preguntarte estaremos en islas del rosario en junio y quería'
+INFO:     [CORE] merged companion activity minicourse x1 -> alloc={'minicourse': 2}
+INFO:     [RAG][GROUNDING] grounded=True verdict=GROUNDED
+INFO:     [RAG] Query: Buena Tardes quería preguntarte estaremos en islas del rosar... | Docs: 8 | Tokens: 10333 | Cached: 7040 | Sources: ['faqs', 'faqs', 'faqs', 'faqs', 'services', 'services', 'faqs', 'services']
+INFO:     [TURN_METRICS] {"conv": "3569", "start": "2026-10-08T08:21:50Z", "latency": 5.411, "turn_type": "rag", "route": "booking", "rag_used": true, "language": "es", "step": "free_text", "activity_chosen": false, "cart_items": 0, "booking_link_sent": true, "escalated": false, "fallback": false, "error": null, "router": "jev", "router_ms": 418, "llm_calls": 6, "embeddings": 1, "llm_seconds": 8.242, "models": {"gpt-4o-mini": 4, "gpt-4.1-mini": 1, "gpt-4.1": 1}, "nodes": {"router": 0.4474, "setup": 0.0352, "availability": 0.0052, "routing": 0.0082, "extraction": 4.8809, "booking": 4.9485}, "rag_adelantado": "aprovechado", "notas": "extraidas"}
+INFO:     [BOT] Sending Chatwoot message conv=3569 url=http://dp-chatwoot:3000/api/v1/accounts/1/conversations/3569/messages
+INFO:     [BOT] Message sent to conversation 3569
+INFO:     [WEBHOOK] Event: message_created, message_type: outgoing
+INFO:     [WEBHOOK] Skipping non-actionable message_type=outgoing
+INFO:     172.18.0.9:42122 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     [WEBHOOK] Event: message_created, message_type: incoming
+INFO:     [BOT] Incoming from Synth minicurso-islas-y-acompanante-lancha: una noche en coral sand y la otra no lo hemos decidido a un si repetir  o en majagua para mas comodi
+INFO:     [RAG][RETRIEVAL] query_topics=['location_islands'] candidates=48 preview=[{'source': 'policies', 'id': 19557, 'score': 0.5537, 'score_final': 0.5701, 'branches': ['vector']}, {'source': 'policies', 'id': 19555, 'score': 0.5375, 'score_final': 0.5536, 'branches': ['vector']}, {'source': 'faqs', 'id': 19485, 'score': 0.5283, 'score_final': 0.5442, 'branches': ['vector']}, {'source': 'faqs', 'id': 19429, 'score': 0.5261, 'score_final': 0.5417, 'branches': ['vector']}, {'source': 'faqs', 'id': 19317, 'score': 0.5236, 'score_final': 0.539, 'branches': ['vector']}, {'source': 'faqs', 'id': 19427, 'score': 0.5132, 'score_final': 0.5283, 'branches': ['vector']}, {'source': 'policies', 'id': 19537, 'score': 0.5054, 'score_final': 0.5203, 'branches': ['vector']}, {'source': 'faqs', 'id': 19437, 'score': 0.4994, 'score_final': 0.5141, 'branches': ['vector']}]
+INFO:     [ROUTER][JEV] 399 ms detected={'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.12, 'adds_person': 0.04, 'shares_open_fact': 0.08, 'changes_date': False, 'affirms_location': False, 'affirms_certification': False, 'affirms_group': False, 'affirms_nationality': False, 'affirms_activity': False} msg='una noche en coral sand y la otra no lo hemos decidido a un si repetir  o en maj'
+INFO:     [GRAPH] conv=3569 route=booking
+INFO:     [CORE][NOTAS] Jev: nada que apuntar (0.08): no se llama al extractor
+INFO:     [LLM_EXTRACTOR][COMBINED] filled gaps=['is_certified', 'location', 'group_allocation'] msg='una noche en coral sand y la otra no lo hemos decidido a un '
+INFO:     [CORE] contradiccion descartada group_allocation: {'minicourse': 2} -> {'undecided': 1} (Jev: no lo afirma)
+INFO:     [INTENT] Detected island: isla_grande
+INFO:     [INTENT] Detected hotel: san_pedro_majagua
+INFO:     [TURN_METRICS] {"conv": "3569", "start": "2026-10-08T08:22:03Z", "latency": 1.391, "turn_type": "reserva", "route": "booking", "rag_used": false, "language": "es", "step": "free_text", "activity_chosen": false, "cart_items": 0, "booking_link_sent": false, "escalated": false, "fallback": false, "error": null, "router": "jev", "router_ms": 399, "llm_calls": 2, "embeddings": 1, "llm_seconds": 1.664, "models": {"gpt-4o-mini": 2}, "nodes": {"router": 0.4235, "setup": 0.0341, "availability": 0.0064, "routing": 0.0154, "extraction": 0.8715, "slotfill_close": 0.0025, "booking": 0.9504}, "rag_adelantado": "descartado", "notas": "saltadas"}
+INFO:     [BOT] Sending Chatwoot message conv=3569 url=http://dp-chatwoot:3000/api/v1/accounts/1/conversations/3569/messages
+INFO:     [BOT] Message sent to conversation 3569
+INFO:     [WEBHOOK] Event: message_created, message_type: outgoing
+INFO:     [WEBHOOK] Skipping non-actionable message_type=outgoing
+INFO:     172.18.0.9:38664 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     172.18.0.9:38652 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38030 - "GET /health HTTP/1.1" 200 OK
+INFO:     [WEBHOOK] Event: message_created, message_type: incoming
+INFO:     [BOT] Incoming from Synth minicurso-islas-y-acompanante-lancha: este me interesa
+INFO:     [ROUTER][JEV] 373 ms detected={'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.04, 'adds_person': 0.03, 'shares_open_fact': 0.03, 'changes_date': False, 'affirms_location': False, 'affirms_certification': False, 'affirms_group': False, 'affirms_nationality': False, 'affirms_activity': False} msg='este me interesa'
+INFO:     [GRAPH] conv=3569 route=booking
+INFO:     [CORE][NOTAS] Jev: nada que apuntar (0.03): no se llama al extractor
+INFO:     [CORE][U3-7] respuesta a nationality por Jev: None (1.00)
+INFO:     [RAG][REWRITE] original=este me interesa... rewritten=¿Me puedes dar más información sobre este plan?...
+INFO:     [RAG][RETRIEVAL] query_topics=[] candidates=48 preview=[{'source': 'faqs', 'id': 19325, 'score': 0.4457, 'score_final': 0.4621, 'branches': ['vector']}, {'source': 'faqs', 'id': 19323, 'score': 0.4142, 'score_final': 0.4303, 'branches': ['vector']}, {'source': 'faqs', 'id': 19303, 'score': 0.4088, 'score_final': 0.4247, 'branches': ['vector']}, {'source': 'policies', 'id': 19499, 'score': 0.3881, 'score_final': 0.4038, 'branches': ['vector']}, {'source': 'faqs', 'id': 19327, 'score': 0.3871, 'score_final': 0.4025, 'branches': ['vector']}, {'source': 'policies', 'id': 19519, 'score': 0.376, 'score_final': 0.3911, 'branches': ['vector']}, {'source': 'policies', 'id': 19501, 'score': 0.3755, 'score_final': 0.3904, 'branches': ['vector']}, {'source': 'policies', 'id': 19557, 'score': 0.3687, 'score_final': 0.3834, 'branches': ['vector']}]
+INFO:     [RAG][RETRIEVAL] query_topics=['location_islands'] candidates=48 preview=[{'source': 'services', 'id': 19225, 'score': 0.4032, 'score_final': 0.4196, 'branches': ['vector']}, {'source': 'services', 'id': 19227, 'score': 0.4014, 'score_final': 0.4175, 'branches': ['vector']}, {'source': 'services', 'id': 19231, 'score': 0.4004, 'score_final': 0.4162, 'branches': ['vector']}, {'source': 'policies', 'id': 19537, 'score': 0.3989, 'score_final': 0.4145, 'branches': ['vector']}, {'source': 'services', 'id': 19223, 'score': 0.3949, 'score_final': 0.4103, 'branches': ['vector']}, {'source': 'services', 'id': 19233, 'score': 0.3933, 'score_final': 0.4085, 'branches': ['vector']}, {'source': 'services', 'id': 19229, 'score': 0.39, 'score_final': 0.405, 'branches': ['vector']}, {'source': 'services', 'id': 19219, 'score': 0.3811, 'score_final': 0.3958, 'branches': ['vector']}]
+INFO:     [TURN_METRICS] {"conv": "3569", "start": "2026-10-08T08:22:11Z", "latency": 1.134, "turn_type": "reserva", "route": "booking", "rag_used": false, "language": "es", "step": "free_text", "activity_chosen": false, "cart_items": 0, "booking_link_sent": false, "escalated": false, "fallback": false, "error": null, "router": "jev", "router_ms": 373, "llm_calls": 2, "embeddings": 3, "llm_seconds": 1.165, "models": {"gpt-4o-mini": 2}, "nodes": {"router": 0.4087, "setup": 0.0097, "availability": 0.0043, "routing": 0.0054, "extraction": 0.0088, "slotfill_close": 0.6242, "booking": 0.7004}, "rag_adelantado": "descartado", "notas": "saltadas"}
+INFO:     [BOT] Sending Chatwoot message conv=3569 url=http://dp-chatwoot:3000/api/v1/accounts/1/conversations/3569/messages
+INFO:     [BOT] Message sent to conversation 3569
+INFO:     [WEBHOOK] Event: message_created, message_type: outgoing
+INFO:     [WEBHOOK] Skipping non-actionable message_type=outgoing
+INFO:     172.18.0.9:37840 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     172.18.0.9:37828 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     [WEBHOOK] Event: message_created, message_type: incoming
+INFO:     [BOT] Incoming from Synth minicurso-islas-y-acompanante-lancha: MINI CURSOS
+Recogida en su hotel en la isla, entrenamiento en piscina y 1 inmersión en los arrecifes
+INFO:     [RAG][RETRIEVAL] query_topics=['location_islands'] candidates=48 preview=[{'source': 'services', 'id': 19209, 'score': 0.6647, 'score_final': 0.6811, 'branches': ['vector']}, {'source': 'services', 'id': 19223, 'score': 0.6586, 'score_final': 0.6748, 'branches': ['vector']}, {'source': 'services', 'id': 19227, 'score': 0.638, 'score_final': 0.6539, 'branches': ['vector']}, {'source': 'services', 'id': 19233, 'score': 0.6376, 'score_final': 0.6532, 'branches': ['vector']}, {'source': 'services', 'id': 19231, 'score': 0.6371, 'score_final': 0.6525, 'branches': ['vector']}, {'source': 'services', 'id': 19225, 'score': 0.635, 'score_final': 0.6502, 'branches': ['vector']}, {'source': 'services', 'id': 19229, 'score': 0.6264, 'score_final': 0.6414, 'branches': ['vector']}, {'source': 'services', 'id': 19271, 'score': 0.6162, 'score_final': 0.6309, 'branches': ['vector']}]
+INFO:     [ROUTER][JEV] 379 ms detected={'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.04, 'adds_person': 0.04, 'shares_open_fact': 0.04, 'changes_date': False, 'affirms_location': False, 'affirms_certification': False, 'affirms_group': False, 'affirms_nationality': False, 'affirms_activity': True} msg='MINI CURSOS\nRecogida en su hotel en la isla, entrenamiento en piscina y 1 inmers'
+INFO:     [GRAPH] conv=3569 route=booking
+INFO:     [CORE][NOTAS] Jev: nada que apuntar (0.04): no se llama al extractor
+INFO:     [CORE][U3-7] respuesta a nationality por Jev: None (0.94)
+INFO:     [TURN_METRICS] {"conv": "3569", "start": "2026-10-08T08:22:19Z", "latency": 3.708, "turn_type": "reserva", "route": "booking", "rag_used": false, "language": "es", "step": "free_text", "activity_chosen": false, "cart_items": 0, "booking_link_sent": false, "escalated": false, "fallback": false, "error": null, "router": "jev", "router_ms": 380, "llm_calls": 3, "embeddings": 1, "llm_seconds": 6.048, "models": {"gpt-4o-mini": 2, "gpt-4.1-mini": 1}, "nodes": {"router": 0.4056, "setup": 0.0044, "availability": 0.004, "routing": 0.0047, "extraction": 0.8289, "slotfill_close": 2.4262, "booking": 3.2894}, "rag_adelantado": "descartado", "notas": "saltadas"}
+INFO:     [BOT] Sending Chatwoot message conv=3569 url=http://dp-chatwoot:3000/api/v1/accounts/1/conversations/3569/messages
+INFO:     [BOT] Message sent to conversation 3569
+INFO:     172.18.0.9:37586 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     172.18.0.9:37586 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     [WEBHOOK] Event: message_created, message_type: outgoing
+INFO:     [WEBHOOK] Skipping non-actionable message_type=outgoing
+INFO:     [WEBHOOK] Event: message_created, message_type: incoming
+INFO:     [BOT] Incoming from Synth minicurso-islas-y-acompanante-lancha: pero i ria en el la lancha solo el no hay como pagar para acompañarlo aun que no vallamos a sumergir
+INFO:     [RAG][RETRIEVAL] query_topics=['payment'] candidates=48 preview=[{'source': 'faqs', 'id': 19487, 'score': 0.546, 'score_final': 0.5624, 'branches': ['vector']}, {'source': 'policies', 'id': 19553, 'score': 0.4865, 'score_final': 0.5027, 'branches': ['vector']}, {'source': 'policies', 'id': 19539, 'score': 0.4682, 'score_final': 0.4841, 'branches': ['vector']}, {'source': 'faqs', 'id': 19447, 'score': 0.4572, 'score_final': 0.4728, 'branches': ['vector']}, {'source': 'faqs', 'id': 19479, 'score': 0.4494, 'score_final': 0.4648, 'branches': ['vector']}, {'source': 'faqs', 'id': 19465, 'score': 0.4276, 'score_final': 0.4428, 'branches': ['vector']}, {'source': 'faqs', 'id': 19445, 'score': 0.4254, 'score_final': 0.4403, 'branches': ['vector']}, {'source': 'policies', 'id': 19537, 'score': 0.4219, 'score_final': 0.4366, 'branches': ['vector']}]
+INFO:     [RAG][RETRIEVAL] query_topics=['location_islands'] candidates=48 preview=[{'source': 'faqs', 'id': 19487, 'score': 0.5707, 'score_final': 0.5871, 'branches': ['vector']}, {'source': 'policies', 'id': 19537, 'score': 0.5208, 'score_final': 0.537, 'branches': ['vector']}, {'source': 'faqs', 'id': 19445, 'score': 0.4987, 'score_final': 0.5146, 'branches': ['vector']}, {'source': 'policies', 'id': 19539, 'score': 0.4857, 'score_final': 0.5014, 'branches': ['vector']}, {'source': 'policies', 'id': 19553, 'score': 0.4813, 'score_final': 0.4967, 'branches': ['vector']}, {'source': 'faqs', 'id': 19479, 'score': 0.4793, 'score_final': 0.4945, 'branches': ['vector']}, {'source': 'faqs', 'id': 19305, 'score': 0.4792, 'score_final': 0.4942, 'branches': ['vector']}, {'source': 'services', 'id': 19233, 'score': 0.4624, 'score_final': 0.4771, 'branches': ['vector']}]
+INFO:     [ROUTER][JEV] 422 ms duda=['booking_change_topic=none@0.52'] -> router LLM (se conservan ['affirms_activity', 'affirms_certification', 'affirms_group', 'affirms_location', 'affirms_nationality', 'affirms_p', 'asks_question', 'asks_recall', 'changes_date', 'companion_joins', 'corrects', 'needs_staff', 'pending_answer', 'shares_open_fact']) msg='pero i ria en el la lancha solo el no hay como pagar para acompañarlo aun que no'
+INFO:     [ESCALATION][ROUTING_SIGNALS] detected={'wants_human': False, 'wants_menu_or_restart': False, 'sensitive_topic': False, 'adaptive_diving_topic': False, 'booking_change_topic': False, 'asks_for_contact_number': False, 'broken_link_complaint': False, 'availability_question': True, 'comparing_options': False, 'affirms_location': False, 'affirms_activity': False, 'affirms_certification': False, 'affirms_group': False, 'affirms_nationality': False, 'corrects': False, 'asks_recall': False, 'needs_staff': False, 'changes_date': False, 'companion_joins': 0.83, 'shares_open_fact': 0.16, 'asks_question': True, 'affirms_p': {'affirms_location': 0.08, 'affirms_activity': 0.15, 'affirms_certification': 0.06, 'affirms_group': 0.66, 'affirms_nationality': 0.02}, 'pending_answer': {'slot': 'nationality', 'value': None, 'confidence': 0.98}} msg='pero i ria en el la lancha solo el no hay como pagar para acompañarlo aun que no'
+INFO:     [GRAPH] conv=3569 route=booking
+INFO:     [CORE][NOTAS] Jev: nada que apuntar (0.16): no se llama al extractor
+INFO:     [CORE][RAG5] respuesta adelantada aprovechada
+INFO:     [CORE][U3-7] respuesta a nationality por Jev: None (0.98)
+INFO:     [RAG][GROUNDING] grounded=True verdict=GROUNDED
+INFO:     [RAG] Query: pero i ria en el la lancha solo el no hay como pagar para ac... | Docs: 8 | Tokens: 9881 | Cached: 7040 | Sources: ['faqs', 'policies', 'faqs', 'policies', 'policies', 'faqs', 'faqs', 'services']
+INFO:     [TURN_METRICS] {"conv": "3569", "start": "2026-10-08T08:22:29Z", "latency": 2.829, "turn_type": "rag", "route": "booking", "rag_used": true, "language": "es", "step": "free_text", "activity_chosen": false, "cart_items": 0, "booking_link_sent": false, "escalated": false, "fallback": false, "error": null, "router": "llm_uncertain", "router_ms": 423, "llm_calls": 3, "embeddings": 2, "llm_seconds": 3.591, "models": {"gpt-4o-mini": 1, "gpt-4.1-mini": 1, "gpt-4.1": 1}, "nodes": {"router": 1.7669, "setup": 0.003, "availability": 0.0029, "routing": 0.0548, "extraction": 0.0083, "slotfill_close": 0.9684, "booking": 1.0518}, "rag_adelantado": "aprovechado", "notas": "saltadas"}
+INFO:     [BOT] Sending Chatwoot message conv=3569 url=http://dp-chatwoot:3000/api/v1/accounts/1/conversations/3569/messages
+INFO:     [BOT] Message sent to conversation 3569
+INFO:     [WEBHOOK] Event: message_created, message_type: outgoing
+INFO:     [WEBHOOK] Skipping non-actionable message_type=outgoing
+INFO:     172.18.0.9:38286 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     172.18.0.9:37588 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53712 - "GET /health HTTP/1.1" 200 OK
+INFO:     [WEBHOOK] Event: conversation_created, message_type: None
+INFO:     [WEBHOOK] New conversation: 3570
+INFO:     172.18.0.9:58054 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     [WEBHOOK] Event: message_created, message_type: incoming
+INFO:     [BOT] Incoming from Synth desde-islas-buzo-certificado: Thank you for contacting us, how may we help? Hii!! I am staying at Isla Grande and I would love to 
+INFO:     [RAG][RETRIEVAL] query_topics=['location_islands', 'depth'] candidates=48 preview=[{'source': 'faqs', 'id': 19486, 'score': 0.6318, 'score_final': 0.6482, 'branches': ['vector']}, {'source': 'faqs', 'id': 19318, 'score': 0.5818, 'score_final': 0.5979, 'branches': ['vector']}, {'source': 'faqs', 'id': 19320, 'score': 0.572, 'score_final': 0.5879, 'branches': ['vector']}, {'source': 'faqs', 'id': 19324, 'score': 0.5495, 'score_final': 0.5651, 'branches': ['vector']}, {'source': 'services', 'id': 19206, 'score': 0.5431, 'score_final': 0.5585, 'branches': ['vector']}, {'source': 'services', 'id': 19208, 'score': 0.5427, 'score_final': 0.5579, 'branches': ['vector']}, {'source': 'faqs', 'id': 19428, 'score': 0.542, 'score_final': 0.5569, 'branches': ['vector']}, {'source': 'faqs', 'id': 19434, 'score': 0.5346, 'score_final': 0.5493, 'branches': ['vector']}]
+INFO:     [ROUTER][JEV] 341 ms detected={'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.05, 'adds_person': 0.04, 'shares_open_fact': 0.06, 'changes_date': False, 'affirms_location': True, 'affirms_certification': False, 'affirms_group': False, 'affirms_nationality': False, 'affirms_activity': True} msg='Thank you for contacting us, how may we help? Hii!! I am staying at Isla Grande '
+INFO:     [GRAPH] conv=3570 route=booking
+INFO:     [CORE][NOTAS] Jev: nada que apuntar (0.06): no se llama al extractor
+INFO:     [CORE][U3-6] recordar sin LLM (Jev: no pide recordar)
+INFO:     [CORE][RAG5] respuesta adelantada aprovechada
+INFO:     [INTENT] Activity updated to: certified_diving (service: 2_dives_1_day)
+INFO:     [INTENT] Detected location: island
+INFO:     [CORE][S4-26] la regex ve a otra persona y Jev no (0.05): manda Jev
+INFO:     [CORE][S4-26] la regex ve a otra persona y Jev no (0.05): manda Jev
+INFO:     [RAG][GROUNDING] grounded=True verdict=GROUNDED
+INFO:     [RAG] Query: Thank you for contacting us, how may we help? Hii!! I am sta... | Docs: 8 | Tokens: 8449 | Cached: 6016 | Sources: ['faqs', 'faqs', 'faqs', 'faqs', 'services', 'services', 'faqs', 'faqs']
+INFO:     [TURN_METRICS] {"conv": "3570", "start": "2026-10-08T08:22:40Z", "latency": 3.638, "turn_type": "rag", "route": "booking", "rag_used": true, "language": "en", "step": "free_text", "activity_chosen": false, "cart_items": 0, "booking_link_sent": false, "escalated": false, "fallback": false, "error": null, "router": "jev", "router_ms": 342, "llm_calls": 3, "embeddings": 1, "llm_seconds": 3.977, "models": {"gpt-4o-mini": 1, "gpt-4.1-mini": 1, "gpt-4.1": 1}, "nodes": {"router": 0.3665, "setup": 0.0077, "availability": 0.0066, "routing": 0.0067, "extraction": 0.7546, "slotfill_close": 2.462, "booking": 3.2607}, "rag_adelantado": "aprovechado", "notas": "saltadas"}
+INFO:     [BOT] Sending Chatwoot message conv=3570 url=http://dp-chatwoot:3000/api/v1/accounts/1/conversations/3570/messages
+INFO:     [BOT] Message sent to conversation 3570
+INFO:     [WEBHOOK] Event: message_created, message_type: outgoing
+INFO:     [WEBHOOK] Skipping non-actionable message_type=outgoing
+INFO:     172.18.0.9:58062 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     172.18.0.9:58054 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     [WEBHOOK] Event: message_created, message_type: incoming
+INFO:     [BOT] Incoming from Synth desde-islas-buzo-certificado: I have my open water certificate and I’m still a beginner :)
+INFO:     [RAG][RETRIEVAL] query_topics=['certification', 'depth'] candidates=48 preview=[{'source': 'faqs', 'id': 19342, 'score': 0.5405, 'score_final': 0.5569, 'branches': ['vector']}, {'source': 'faqs', 'id': 19340, 'score': 0.4825, 'score_final': 0.4986, 'branches': ['vector']}, {'source': 'faqs', 'id': 19344, 'score': 0.4787, 'score_final': 0.4946, 'branches': ['vector']}, {'source': 'faqs', 'id': 19394, 'score': 0.4681, 'score_final': 0.4837, 'branches': ['vector']}, {'source': 'faqs', 'id': 19314, 'score': 0.452, 'score_final': 0.4674, 'branches': ['vector']}, {'source': 'policies', 'id': 19530, 'score': 0.4508, 'score_final': 0.466, 'branches': ['vector']}, {'source': 'faqs', 'id': 19436, 'score': 0.4468, 'score_final': 0.4617, 'branches': ['vector']}, {'source': 'faqs', 'id': 19378, 'score': 0.4372, 'score_final': 0.4519, 'branches': ['vector']}]
+INFO:     [ROUTER][JEV] 349 ms detected={'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.04, 'adds_person': 0.04, 'shares_open_fact': 0.31, 'changes_date': False, 'affirms_location': False, 'affirms_certification': True, 'affirms_group': False, 'affirms_nationality': False, 'affirms_activity': False} msg='I have my open water certificate and I’m still a beginner :)'
+INFO:     [GRAPH] conv=3570 route=booking
+INFO:     [NOTES_EXTRACTOR] captured=['beginner diver', 'has open water certificate'] msg='I have my open water certificate and I’m still a beginner :)'
+INFO:     [CORE] notes captured -> ['beginner diver', 'has open water certificate']
+INFO:     [EXTRACT][IS_CERTIFIED_VETO] regex=False llm=True applied=False msg='I have my open water certificate and I’m still a beginner :)'
+INFO:     [INTENT] Detected certification: False
+INFO:     [TURN_METRICS] {"conv": "3570", "start": "2026-10-08T08:22:50Z", "latency": 1.839, "turn_type": "reserva", "route": "booking", "rag_used": false, "language": "en", "step": "free_text", "activity_chosen": false, "cart_items": 0, "booking_link_sent": false, "escalated": false, "fallback": false, "error": null, "router": "jev", "router_ms": 350, "llm_calls": 3, "embeddings": 1, "llm_seconds": 2.022, "models": {"gpt-4o-mini": 3}, "nodes": {"router": 0.3744, "setup": 0.0279, "availability": 0.0081, "routing": 0.0091, "extraction": 0.7082, "slotfill_close": 0.6805, "booking": 1.4533}, "rag_adelantado": "descartado", "notas": "extraidas"}
+INFO:     [BOT] Sending Chatwoot message conv=3570 url=http://dp-chatwoot:3000/api/v1/accounts/1/conversations/3570/messages
+INFO:     [BOT] Message sent to conversation 3570
+INFO:     [WEBHOOK] Event: message_created, message_type: outgoing
+INFO:     [WEBHOOK] Skipping non-actionable message_type=outgoing
+INFO:     172.18.0.9:46750 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     172.18.0.9:46742 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     [WEBHOOK] Event: message_created, message_type: incoming
+INFO:     [BOT] Incoming from Synth desde-islas-buzo-certificado: Im staying at el hamaquero
+INFO:     [ROUTER][JEV] 405 ms detected={'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.04, 'adds_person': 0.04, 'shares_open_fact': 0.06, 'changes_date': False, 'affirms_location': True, 'affirms_certification': False, 'affirms_group': False, 'affirms_nationality': False, 'affirms_activity': False} msg='Im staying at el hamaquero'
+INFO:     [GRAPH] conv=3570 route=booking
+INFO:     [CORE][NOTAS] Jev: nada que apuntar (0.06): no se llama al extractor
+INFO:     [RAG][REWRITE] original=Im staying at el hamaquero... rewritten=Which hotel are you staying at? I'm staying at El Hamaquero....
+INFO:     [RAG][RETRIEVAL] query_topics=['location_islands', 'accommodation', 'depth'] candidates=48 preview=[{'source': 'policies', 'id': 19556, 'score': 0.4737, 'score_final': 0.4901, 'branches': ['vector']}, {'source': 'faqs', 'id': 19486, 'score': 0.4575, 'score_final': 0.4736, 'branches': ['vector']}, {'source': 'faqs', 'id': 19430, 'score': 0.3677, 'score_final': 0.3836, 'branches': ['vector']}, {'source': 'faqs', 'id': 19318, 'score': 0.3675, 'score_final': 0.3831, 'branches': ['vector']}, {'source': 'faqs', 'id': 19428, 'score': 0.3467, 'score_final': 0.3621, 'branches': ['vector']}, {'source': 'faqs', 'id': 19306, 'score': 0.3384, 'score_final': 0.3536, 'branches': ['vector']}, {'source': 'policies', 'id': 19498, 'score': 0.3362, 'score_final': 0.3511, 'branches': ['vector']}, {'source': 'faqs', 'id': 19322, 'score': 0.3262, 'score_final': 0.3409, 'branches': ['vector']}]
+INFO:     [RAG][RETRIEVAL] query_topics=[] candidates=48 preview=[{'source': 'policies', 'id': 19556, 'score': 0.4458, 'score_final': 0.4621, 'branches': ['vector']}, {'source': 'faqs', 'id': 19486, 'score': 0.4361, 'score_final': 0.4522, 'branches': ['vector']}, {'source': 'faqs', 'id': 19318, 'score': 0.3686, 'score_final': 0.3845, 'branches': ['vector']}, {'source': 'faqs', 'id': 19430, 'score': 0.3494, 'score_final': 0.365, 'branches': ['vector']}, {'source': 'faqs', 'id': 19306, 'score': 0.3398, 'score_final': 0.3551, 'branches': ['vector']}, {'source': 'faqs', 'id': 19428, 'score': 0.338, 'score_final': 0.3531, 'branches': ['vector']}, {'source': 'faqs', 'id': 19322, 'score': 0.3328, 'score_final': 0.3477, 'branches': ['vector']}, {'source': 'policies', 'id': 19532, 'score': 0.318, 'score_final': 0.3327, 'branches': ['vector']}]
+INFO:     [LLM_EXTRACTOR][COMBINED] filled gaps=['is_certified', 'location'] msg='Im staying at el hamaquero'
+INFO:     [CORE] verificacion de campos sabidos descartada (el turno contesto 'hotel'): {'is_certified': True}
+INFO:     [INTENT] Detected island: isla_marina
+INFO:     [TURN_METRICS] {"conv": "3570", "start": "2026-10-08T08:22:58Z", "latency": 1.459, "turn_type": "reserva", "route": "booking", "rag_used": false, "language": "en", "step": "free_text", "activity_chosen": false, "cart_items": 0, "booking_link_sent": false, "escalated": false, "fallback": false, "error": null, "router": "jev", "router_ms": 405, "llm_calls": 3, "embeddings": 2, "llm_seconds": 2.271, "models": {"gpt-4o-mini": 3}, "nodes": {"router": 0.4332, "setup": 0.0223, "availability": 0.0032, "routing": 0.0042, "extraction": 0.9646, "slotfill_close": 0.0009, "booking": 1.0107}, "rag_adelantado": "descartado", "notas": "saltadas"}
+INFO:     [BOT] Sending Chatwoot message conv=3570 url=http://dp-chatwoot:3000/api/v1/accounts/1/conversations/3570/messages
+INFO:     [BOT] Message sent to conversation 3570
+INFO:     [WEBHOOK] Event: message_created, message_type: outgoing
+INFO:     [WEBHOOK] Skipping non-actionable message_type=outgoing
+INFO:     172.18.0.9:36634 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     172.18.0.9:36620 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45422 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:35866 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:35338 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44942 - "GET /health HTTP/1.1" 200 OK

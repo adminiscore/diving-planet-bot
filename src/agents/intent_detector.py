@@ -2312,6 +2312,14 @@ class IntentDetector:
                     intent.detected_fields.append("island")
                 if not intent.location:
                     intent.location = "island"
+                    # s4-27 (flag `hotel_ubicacion_declarada`): la ubicacion que se deduce del hotel se DECLARA, como
+                    # todas, para que pase por la puerta de Jev (u3-3/u3-4). Sin declararla se colaba siempre:
+                    # "¿me pasas el contacto del hotel Cocoliso?" (Jev: no afirma ubicacion) dejaba al cliente "ya en
+                    # las islas" (contacto-hoteles-cocoliso-san-pedro).
+                    from src.config import settings  # lazy: el detector no depende de la config
+
+                    if settings.hotel_ubicacion_declarada:
+                        intent.detected_fields.append("location")
                 intent.detected_fields.append("hotel")
                 break
 

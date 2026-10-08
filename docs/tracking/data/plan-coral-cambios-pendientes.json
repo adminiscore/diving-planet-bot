@@ -1,24 +1,13 @@
 {
-  "que_es": "Cola de cambios PENDIENTES DE APLICAR a la pagina Plan Coral. NO es una copia de su base de datos (eso es plan-coral.json, que se regenera exportando). Aqui se deja lo que alguien no ha podido escribir en la pagina, listo para volcarlo tal cual.",
-  "pagina": "https://claude.ai/artifact/XiGd3kguTNwwqTnH7mQwgi",
-  "por_que_existe": "En la sesion de Claude Code de Gonzalo la herramienta ArtifactData NO aparece: buscada 6 veces (select:ArtifactData, select:artifact_data/ArtifactDB/ArtifactStore/ArtifactCollections y 2 busquedas por descripcion) y siempre 'No matching deferred tools found'. No es cuenta ni permisos: esa misma sesion SI tiene DesignSync y RemoteTrigger, que autentican con el login de claude.ai, y la config tiene oauthAccount con organizationRole admin, sin ninguna ANTHROPIC_API_KEY. Si la herramienta existiera pero estuviera capada por no ser propietario, apareceria en la lista y fallaria AL LLAMARLA; no aparece en absoluto. Tampoco se intento republicar el HTML en ningun momento. Hipotesis viva: diferencia de version de Claude Code (pedir a Gadea la suya y comparar).",
-  "como_aplicar": {
-    "con_claude": "Con la herramienta ArtifactData (NO con Artifact, y sin republicar el HTML): leer el documento, y hacer update pasando su version como if_version. Coleccion tasks -> doc_id = el id de la tarea. Coleccion log -> documentos nuevos.",
-    "a_mano": "Abrir la pagina con sesion iniciada y copiar cada campo en su tarea o en la bitacora.",
-    "al_terminar": "Dejar 'pendientes' como lista vacia, poner la fecha en 'aplicado_el' y quien lo aplico en 'aplicado_por', todo en el MISMO commit. Si esta lista se queda llena, el repo y la pagina han divergido: esa es la senal."
-  },
-  "aplicado_el": "2026-10-07",
-  "aplicado_por": "Gadea (con Claude): 12 entradas de bitácora (1-oct a 7-oct, Álvaro y Gonzalo) y rag-7 hecha (nota de Álvaro delante, más una línea de la ronda de Gonzalo del 1-oct); fase RAG marcada CERRADA el 2-oct",
-  "pendientes": [
-    {
-      "coleccion": "log",
-      "operacion": "set",
-      "doc_id": "l-1007-gonzalo-s4-27",
-      "campos": {
-        "at": "2026-10-07T21:30:00Z",
-        "byLabel": "Gonzalo (con Claude)",
-        "text": "7-oct noche: s4-27 paso 1 HECHO y PROMOCIONADO. Caso precio-desde-islas (el bot negaba las 2 inmersiones desde las islas, 124 USD, y ofrecia el paquete de 3): el catalogo lo trae; con el historial real el modelo se iba al paquete (rag_piezas 1/3; con el plan en el contexto 3/3). Arreglo RAG_PLAN_NOMBRADO: si el cliente nombra N inmersiones y su origen consta, el contexto dice que plan es. Escalon 0 en PRE 3/3 (antes 0/3). Ronda core s427-B: 95,2 -> 96,0 %, 26/32 sin fallos, 1 regresion ajena (descuento-online, el enrutador duda). Queda de s4-27: referencias sin numero ('ese plan') -> pregunta de Jev. Evidencia: docs/robustness/s4-27/README.md."
-      }
-    }
-  ]
+ "que_es": "Cola de cambios PENDIENTES DE APLICAR a la pagina Plan Coral. NO es una copia de su base de datos (eso es plan-coral.json, que se regenera exportando). Aqui se deja lo que alguien no ha podido escribir en la pagina, listo para volcarlo tal cual.",
+ "pagina": "https://claude.ai/artifact/XiGd3kguTNwwqTnH7mQwgi",
+ "por_que_existe": "En la sesion de Claude Code de Gonzalo la herramienta ArtifactData NO aparece: buscada 6 veces (select:ArtifactData, select:artifact_data/ArtifactDB/ArtifactStore/ArtifactCollections y 2 busquedas por descripcion) y siempre 'No matching deferred tools found'. No es cuenta ni permisos: esa misma sesion SI tiene DesignSync y RemoteTrigger, que autentican con el login de claude.ai, y la config tiene oauthAccount con organizationRole admin, sin ninguna ANTHROPIC_API_KEY. Si la herramienta existiera pero estuviera capada por no ser propietario, apareceria en la lista y fallaria AL LLAMARLA; no aparece en absoluto. Tampoco se intento republicar el HTML en ningun momento. Hipotesis viva: diferencia de version de Claude Code (pedir a Gadea la suya y comparar).",
+ "como_aplicar": {
+  "con_claude": "Con la herramienta ArtifactData (NO con Artifact, y sin republicar el HTML): leer el documento, y hacer update pasando su version como if_version. Coleccion tasks -> doc_id = el id de la tarea. Coleccion log -> documentos nuevos.",
+  "a_mano": "Abrir la pagina con sesion iniciada y copiar cada campo en su tarea o en la bitacora.",
+  "al_terminar": "Dejar 'pendientes' como lista vacia, poner la fecha en 'aplicado_el' y quien lo aplico en 'aplicado_por', todo en el MISMO commit. Si esta lista se queda llena, el repo y la pagina han divergido: esa es la senal."
+ },
+ "aplicado_el": "2026-10-08",
+ "aplicado_por": "Gadea (con Claude): bitácora l-1007-gonzalo-s4-27 (s4-27 paso 1) y s4-27 pasa a 'en curso'",
+ "pendientes": []
 }

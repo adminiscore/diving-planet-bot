@@ -249,6 +249,10 @@ services:
       # plan del catalogo es (precio-desde-islas: 124 USD 3/3, hoy 0/3). Ronda core s427-B: 95,2 -> 96,0 %, sin
       # regresiones suyas -> PROMOCIONADO. Revert = quitar esta linea y False en config.py.
       RAG_PLAN_NOMBRADO: "true"
+      # s4-27 (8-oct): la ubicacion deducida de un HOTEL se declara y pasa por la puerta de Jev ("¿me pasas el contacto
+      # del hotel Cocoliso?" ya no deja al cliente en las islas). EN MEDICION (mini-ronda de los 10 dialogos con hotel).
+      # Revert = "false" aqui y en config.py.
+      HOTEL_UBICACION_DECLARADA: "true"
       # rag-5 (30-sep): el RAG arranca a la vez que el enrutador (Jev) y se aprovecha solo con el mismo contexto
       # (si no, se rehace). PROMOCIONADO 1-oct (HISTORY 0.29.88). Revert = "false" aqui y en config.py.
       RAG_ADELANTADO: "true"

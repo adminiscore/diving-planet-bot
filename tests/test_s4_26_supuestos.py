@@ -163,3 +163,22 @@ def test_el_contexto_del_rag_no_dice_carrito(monkeypatch, flag, palabra):
     st = _state(mixed_cart=[{"type": "course", "qty": 1, "label": "Curso Basico PADI (Open Water)"}])
     ctx = supervisor._build_extra_context(st) or ""
     assert palabra in ctx
+
+
+# --- hotel_ubicacion_declarada (s4-27): la ubicacion deducida del hotel pasa por la puerta de Jev --------------
+
+@pytest.mark.parametrize("flag", [True, False])
+def test_la_ubicacion_del_hotel_se_declara(monkeypatch, flag):
+    monkeypatch.setattr(settings, "hotel_ubicacion_declarada", flag)
+    intent = core._detector.detect("¿Me pasas el contacto del hotel cocoliso?", _state())
+    assert intent.location == "island" and intent.hotel == "cocoliso"
+    assert ("location" in intent.detected_fields) is flag
+
+
+def test_con_la_ubicacion_declarada_jev_la_tira_si_nadie_la_afirma(monkeypatch):
+    monkeypatch.setattr(settings, "hotel_ubicacion_declarada", True)
+    st = _state()
+    st._affirms_p = {"location": 0.05}
+    intent = core._detector.detect("me pasas el contacto del hotel cocoliso", st)
+    core._drop_regex_fields_jev_denies(intent, st)
+    assert intent.location is None
