@@ -1,6 +1,15 @@
 History
 =======
 
+0.30.3 - (2026-10-08)
+----------------------
+* **s4-27 CERRADA (Gadea con Claude): la ubicación deducida de un hotel pasa por la puerta de Jev — `HOTEL_UBICACION_DECLARADA` PROMOCIONADO; lo demás de s4-27, decidido con datos.**
+  - **Causa:** "¿Me pasas el contacto del hotel Cocoliso?" dejaba al cliente "ya en las islas" aunque Jev dijera que no afirma ninguna ubicación. `intent_detector._detect_location` ponía `location=island` desde el hotel **sin declararlo** en `detected_fields`, y las puertas de Jev (u3-3/u3-4) solo miran lo declarado. Arreglo: se declara (una línea, sin patrones nuevos). Controles: "estamos alojados en el hotel Cocoliso" y "we're staying at San Pedro de Majagua" siguen en las islas.
+  - **Mini-ronda A/B** con los **10 diálogos visibles que nombran un hotel** (A en PRE `a3ef857` sin el arreglo, B en `1d23bc9`, misma franja, mismo juez): **79,7 → 85,3 %**, 2 → 4/10 sin fallos, 6 mejoras (la buscada: `contacto-hoteles-cocoliso`), 1 regresión ajena (`logistica-isla-fragata`: la regla de las condiciones, intermitente; mismo recorrido de estado en A y B). Gasto ≈ 0,8 $.
+  - **Lo que no se hace, con datos:** la pregunta de Jev para planes sin número ("ese plan"): 0 casos claros en los 63 fallos del golden visible (ronda completa del 2-oct). Las fichas gemelas de origen (B): su caso, `paquete-en-carrito`, pasa desde el 7-oct; se reabre si vuelve a fallar.
+  - **Pasa a s4-28:** "Estaremos visitando Cartagena y quería coordinar inmersiones en Isla del Rosario" → `location=island`: Jev dice bien que afirma una ubicación, pero QUÉ lugar lo decide la regex `place_by_role` por la preposición ("inmersiones **en** Isla del Rosario" = estancia). Arreglarlo con palabras sería un parche: que lo decida Jev (pregunta de elección Cartagena / ya en las islas / no consta, con banco de calibración). La repetición de "¿ya tienen el Advanced?" va con s4-29.
+  - Queda abierto: "O el San Pedro" (continuación elíptica de una pregunta) aún marca islas; Jev no lo descarta con seguridad. No se fuerza (sería ajustar el caso).
+
 0.30.2 - (2026-10-07)
 ----------------------
 * **s4-27 (búsqueda): el plan que NOMBRA el cliente va al contexto del RAG — PROMOCIONADO** (Gonzalo). Evidencia: `docs/robustness/s4-27/README.md`.

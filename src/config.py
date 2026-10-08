@@ -232,7 +232,8 @@ class Settings(BaseSettings):
     # s4-27 (8-oct): la ubicacion que el detector deduce de un HOTEL ("cocoliso" -> en las islas) se declara en
     # `detected_fields` como cualquier otro dato, asi que pasa por la puerta de Jev (u3-3/u3-4). Antes no se declaraba
     # y se colaba siempre: "¿me pasas el contacto del hotel Cocoliso?" (Jev: no afirma ubicacion) dejaba al cliente "ya
-    # en las islas" (contacto-hoteles-cocoliso-san-pedro). En medicion (aqui y en el compose).
+    # en las islas" (contacto-hoteles-cocoliso-san-pedro). PROMOCIONADO 8-oct: mini-ronda de los 10 dialogos visibles con
+    # hotel, A/B en la misma franja: 79,7 -> 85,3 %, 2 -> 4/10 sin fallos (HISTORY 0.30.3). Revert = False aqui y en el compose.
     hotel_ubicacion_declarada: bool = True
     # s4-27 (7-oct, Gonzalo): si el cliente NOMBRA cuantas inmersiones ("el precio de las 2 inmersiones") y su origen
     # consta, el contexto del RAG dice que plan del catalogo es (`conversational_core._plan_nombrado`). Caso:

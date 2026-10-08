@@ -13,7 +13,24 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 
 > **📏 LEER ANTES DE MEDIR — decisiones del 24-sep-2026 (Gadea):** (1) latencia y llamadas con nuestros logs `[TURN_METRICS]` + `scripts/turn_metrics.py`, no con Langfuse (plan gratuito superado, reinicio 16-oct); (2) pruebas A/B por escalones, juzgando solo los diálogos que cambian. Todo en `docs/robustness/protocolo-medicion.md`.
 
-### ▶️ RETOMAR AQUÍ — 7-oct noche (Gonzalo): s4-27 paso 1 HECHO y PROMOCIONADO — el plan que nombra el cliente va al contexto
+### ▶️ RETOMAR AQUÍ — 8-oct (Gadea con Claude): s4-27 CERRADA — `HOTEL_UBICACION_DECLARADA` promocionado
+
+**Estado.** PRE sirve `feature/pre_gadea` con `HOTEL_UBICACION_DECLARADA` **encendido** (HISTORY 0.30.3). La ubicación que
+se deduce de un hotel ya pasa por la puerta de Jev ("¿me pasas el contacto del hotel Cocoliso?" no deja al cliente en
+las islas). Mini-ronda A/B de los 10 diálogos visibles con hotel: 79,7 → 85,3 %. Cola de Plan Coral aplicada y vacía.
+
+**s4-27, decidido con datos:** la pregunta de Jev para "ese plan" sin número NO se hace (0 casos en el golden visible);
+las fichas gemelas (B) quedan aparcadas (su caso ya pasa). **Siguiente, en orden:**
+1. **s4-28 — regex que deciden solas.** Primer caso ya localizado: `place_by_role` (intent_detector) decide QUÉ lugar es
+   la ubicación por la preposición; "visitando Cartagena… inmersiones en Isla del Rosario" sale islas
+   (`precio-desde-islas-vs-cartagena`). Propuesta: pregunta de elección de Jev (Cartagena / ya en las islas / no consta),
+   calibrada con banco propio + ciego antes de tocar el flujo. Segundo candidato: `descuento-online-sin-codigo` (el
+   enrutador decide cuando Jev duda). Luego el inventario completo.
+2. Decisiones pendientes de Gadea (sin cambios): criterio `acompanante-lancha-escalar` y el del Open Water en
+   `manual-duracion-curso`.
+- **A para la próxima ronda core:** `2026-10-07-s427-B` (el cambio de hoy solo toca 1 diálogo de la core).
+
+### (anterior) 7-oct noche (Gonzalo): s4-27 paso 1 HECHO y PROMOCIONADO — el plan que nombra el cliente va al contexto
 
 **Estado.** PRE sirve `feature/pre_gadea` (sana, `check_deploy` en verde) con `RAG_PLAN_NOMBRADO` **encendido**
 (HISTORY 0.30.2; evidencia `docs/robustness/s4-27/README.md`). Integrad `feature/pre_gadea` antes de subir.
