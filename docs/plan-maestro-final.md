@@ -452,6 +452,12 @@ medias (u3-1 ✅, u3-4 ✅ promocionada, u3-5 🟡); PRE con u3-4 encendido. Sui
 | **11** | R6: robustez de producción | r6-2 (guardrails), g-5 (carga) | el bot nunca deja sin respuesta; inyección medida; p95 con N clientes a la vez |
 | **12** | Q5: calidad continua y entrega | q5-1, g-3, g-4, g-4b, g-6, m0-4, q5-2 | gate en CI; simulador; bucle producción → golden; testers reales; SOAK; entrega |
 
+> **Estado al 8-oct, cierre de la sesión de Álvaro:** **s4-31 CERRADA** (el prompt del RAG no necesita reescribirse para
+> Luna; la puerta del origen conserva el resto de la respuesta, `ORIGEN_CONSERVA_RESPUESTA` promocionado; ronda visible
+> con Luna 92,8 %, reales 88,7 %). **s4-33 EN CURSO:** Luna como revisor no pasa con 142 juicios reales (tumba 42 frente
+> a 13), el revisor sigue en gpt-4.1. **6 decisiones pendientes de Gadea** (5 de negocio + cómo seguir con el revisor)
+> arriba del todo en `session-handoff.md`. Después: s4-28, flujo de la reserva, examen oculto, pasos 11 y 12. HISTORY 0.31.1-0.31.3.
+
 > **Estado al 8-oct (Gadea con Claude):** S4 avanza por causa: s4-26 (punto 4) y s4-27 CERRADAS, s4-28 (regex que
 > deciden solas) EN CURSO con su primer caso promocionado (Jev decide qué lugar es la ubicación). **Cambio de modelo
 > promocionado (s4-30, HISTORY 0.31.0):** la respuesta del RAG la escribe GPT-6 Luna sin razonamiento con respaldo a

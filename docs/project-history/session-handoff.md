@@ -13,24 +13,71 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 
 > **📏 LEER ANTES DE MEDIR — decisiones del 24-sep-2026 (Gadea):** (1) latencia y llamadas con nuestros logs `[TURN_METRICS]` + `scripts/turn_metrics.py`, no con Langfuse (plan gratuito superado, reinicio 16-oct); (2) pruebas A/B por escalones, juzgando solo los diálogos que cambian. Todo en `docs/robustness/protocolo-medicion.md`.
 
-### 🔔 PARA GADEA, LO PRIMERO AL COGER LA RAMA — 5 decisiones de negocio (Álvaro, 8-oct)
+### 🔔 PARA GADEA, LO PRIMERO AL COGER LA RAMA — 6 decisiones PENDIENTES DE DECIDIR (Álvaro, 8-oct)
 
-Salen del mapa de fallos de la ronda visible con Luna (`docs/robustness/fallos-por-causa-2026-10-08-luna-visible.json`).
-En cada una el bot hace una cosa y el criterio del golden pide otra; no se toca nada hasta que decidas. Apunta la
-respuesta aquí debajo de cada punto (o en Plan Coral) y quien siga la aplica.
+**Estado de todas: ⏳ PENDIENTE DE DECIDIR.** Nada de esto se ha tocado en el bot: se aplica cuando decidas. Apunta la
+respuesta en la columna "Decisión" (o en Plan Coral) y quien siga la aplica y la mide.
 
-| # | Pregunta | Hoy el bot | El golden pide | Casos |
+**A. Cinco de negocio** — salen del mapa de fallos de la ronda visible con Luna
+(`docs/robustness/fallos-por-causa-2026-10-08-luna-visible.json`): en cada una el bot hace una cosa y el criterio del
+golden pide otra.
+
+| # | Pregunta | Hoy el bot | El golden pide | Casos | Decisión |
+|---|---|---|---|---|---|
+| 1 | ¿Puede Coral dar el **TOTAL de un grupo** (personas × precio del catálogo)? | No: el prompt del RAG prohíbe calcular totales ("el total exacto al reservar") | El total (`precio-total-cop-grupo-mixto`) | `grupo-mixto-precio-cop-total` | ⏳ |
+| 2 | ¿Damos por hecho que **los hoteles base (San Pedro de Majagua, Cocoliso) tienen acceso en lancha** y la recogida está incluida? | Duda y dice que "el equipo confirma si el hotel tiene acceso" (`RAG_CONDICIONES_ABIERTAS`, regla del punto 4) | Que la recogida está incluida | `paquete-5-buceos-islas-residente-sin-recogida` | ⏳ |
+| 3 | ¿A qué hora **termina el día 1 del Open Water**? | La base dice 12:00-13:00 (tu decisión del 30-sep) | El criterio `hora-fin-dia1` dice 4:30 p.m. | `open-water-hoteles-noche-fotos-horario` | ⏳ |
+| 4 | ¿La **propina de las fotos** (50.000 COP / 14 USD) va al catálogo, o se excluye del criterio automático de importes? | La dice (está en la FAQ) | `importes-catalogo` la suspende porque no está en el catálogo | 3 diálogos de fotos | ⏳ |
+| 5 | **`acompanante-lancha-escalar`**: ¿el acompañante en lancha lo confirma el bot (plan de acompañante, con precio) o se pasa a un asesor? | Lo confirma con el plan de acompañante | Pasar a un asesor | `minicurso-islas-y-acompanante-lancha` | ⏳ |
+
+**B. Una técnica — el revisor (s4-33, era decisión tuya pasarlo a Luna):** con las instrucciones nuevas
+(`juez_v3_luna`, apagado), Luna caza más inventos que gpt-4.1 en el banco etiquetado, pero en 142 respuestas REALES de
+PRE (escritas ya por Luna) tumba 42 frente a 13, casi todo verdades (HISTORY 0.31.3). **El revisor sigue en gpt-4.1.**
+
+| # | Pregunta | Opciones | Coste de medirla | Decisión |
 |---|---|---|---|---|
-| 1 | ¿Puede Coral dar el **TOTAL de un grupo** (personas × precio del catálogo)? | No: el prompt del RAG prohíbe calcular totales ("el total exacto al reservar") | El total (`precio-total-cop-grupo-mixto`) | `grupo-mixto-precio-cop-total` |
-| 2 | ¿Damos por hecho que **los hoteles base (San Pedro de Majagua, Cocoliso) tienen acceso en lancha** y la recogida está incluida? | Duda y dice que "el equipo confirma si el hotel tiene acceso" (`RAG_CONDICIONES_ABIERTAS`, regla del punto 4) | Que la recogida está incluida | `paquete-5-buceos-islas-residente-sin-recogida` |
-| 3 | ¿A qué hora **termina el día 1 del Open Water**? | La base dice 12:00-13:00 (tu decisión del 30-sep) | El criterio `hora-fin-dia1` dice 4:30 p.m. | `open-water-hoteles-noche-fotos-horario` |
-| 4 | ¿La **propina de las fotos** (50.000 COP / 14 USD) va al catálogo, o se excluye del criterio automático de importes? | La dice (está en la FAQ) | `importes-catalogo` la suspende porque no está en el catálogo | 3 diálogos de fotos |
-| 5 | **`acompanante-lancha-escalar`**: ¿el acompañante en lancha lo confirma el bot (plan de acompañante, con precio) o se pasa a un asesor? | Lo confirma con el plan de acompañante | Pasar a un asesor | `minicurso-islas-y-acompanante-lancha` |
+| 6 | **¿Cómo seguimos con el revisor?** | (a) **etiquetar** los 142 juicios reales (`docs/robustness/juez/s4-33/juicios-reales-142.jsonl`, primero los 33 desacuerdos) y ajustar las instrucciones de Luna con ese banco; (b) **Luna con razonamiento bajo** como revisor (más fiable, más lento); (c) abaratar por otra vía: **gpt-4.1-mini** con el v3 (≈5 veces más barato que gpt-4.1); (d) dejar gpt-4.1 de momento. Recomendación de Álvaro/Claude: medir (b) y (c) primero (céntimos, minutos, `scripts/rejuzgar_juicios.py`) y con eso decidir si hace falta (a), que lleva trabajo a mano. | (b) y (c): céntimos; (a): horas de etiquetado | ⏳ |
 
-Pendiente de antes (sigue): el criterio del Open Water en `manual-duracion-curso` y el ajuste de privacidad de
-OpenRouter para medir DeepSeek oficial como referencia.
+**C. Pendientes de antes (siguen ⏳):** el criterio del Open Water en `manual-duracion-curso`; el ajuste de privacidad de
+OpenRouter (`openrouter.ai/settings/privacy`) para medir DeepSeek oficial solo como referencia.
 
-### ▶️ RETOMAR AQUÍ — 8-oct noche (Álvaro con Claude): s4-31 CERRADA; s4-33 EN CURSO — Luna como revisor aún NO
+### ▶️ RETOMAR AQUÍ — 8-oct, CIERRE DE SESIÓN (Álvaro con Claude): s4-31 CERRADA; s4-33 EN CURSO — Luna como revisor aún NO
+
+**Estado al cerrar.** PRE sirve `feature/pre_alvaro` (`check_deploy` en verde). **Integrad `feature/pre_alvaro` antes de
+subir** (lleva todo `feature/pre_gadea` del 8-oct + esta sesión; nada que integrar de otras ramas). Modelos: respuesta del
+RAG en `gpt-6-luna` con respaldo a `gpt-4.1-mini` a los 3 s; revisor `gpt-4.1` + J2; extracción y secundarias
+`gpt-4o-mini`. Flags nuevos de esta sesión: `ORIGEN_CONSERVA_RESPUESTA` **encendido (promocionado)**; `JUEZ_V3_LUNA`
+**apagado**. HISTORY 0.31.1-0.31.3.
+
+**Resumen de la sesión (8-oct, tarde-noche):**
+
+| Qué | Resultado | Dónde |
+|---|---|---|
+| Integrar `feature/pre_gadea` (Luna con respaldo, s4-26/27/28, opción C de Gonzalo) | fast-forward, sin conflictos | `b357414` |
+| Ronda del golden VISIBLE con Luna | 92,8 %, 61/95 sin fallos, reales 88,7 %; respaldo ganó 4 de 156 | `2026-10-08-luna-visible`, HISTORY 0.31.1 |
+| Mapa de los 58 fallos por causa + herramienta | 33 del RAG, 17 del flujo; leído entero | `fallos-por-causa-2026-10-08-luna-visible.json`, `scripts/fallos_por_turno.py` |
+| s4-31: la puerta del origen conserva el resto de la respuesta | **PROMOCIONADO** (mini-ronda 92,6 → 97,0 %) | `ORIGEN_CONSERVA_RESPUESTA`, HISTORY 0.31.1 |
+| s4-31: el prompt del RAG para Luna | **no necesita reescribirse** (los "no lo tengo" de Luna son de búsqueda); s4-31 CERRADA | HISTORY 0.31.2 |
+| `RAG_FICHA_DEL_SERVICIO` re-medido con Luna | sin ganancia, +0,8 s → sigue apagado | `rag-piezas/2026-10-08-luna-ficha-{A,B}.json` |
+| s4-33: instrucciones del revisor para Luna | mejor en el banco, **no pasa** con 142 juicios reales → apagado, decisión 6 | `docs/robustness/juez/s4-33/`, `scripts/rejuzgar_juicios.py`, HISTORY 0.31.3 |
+| Decisiones para Gadea | 6 pendientes (5 de negocio + el revisor), arriba | este fichero, cola de Plan Coral |
+| Gasto OpenAI del 8-oct | ≈ 17 $ (Gadea ~10 $, sesión ~7 $) | — |
+
+**Orden para quien siga:**
+1. **Gadea decide las 6 de arriba** (y las 2 de antes). Sin la 6, s4-33 no avanza.
+2. s4-33 según la decisión 6. Medir (c): `python -m scripts.rejuzgar_juicios docs/robustness/juez/s4-33/juicios-reales-142.jsonl
+   --modelo gpt-4.1-mini`. Medir (b): lo mismo con `--modelo gpt-6-luna --flag juez_v3_luna` y la variable de entorno
+   `RAZONAMIENTO_MODELOS_NUEVOS=low` (`llm_client.adaptar_parametros`; afecta a todas las llamadas gpt-6 del proceso, y
+   en `rejuzgar_juicios` solo está el juez). **Ojo:** `grounding_check` solo da sitio al razonamiento en la rama
+   `gpt-5`/`o` (tope de salida + 4000); con Luna el tope es 300 y el razonamiento puede agotarlo → añadir `gpt-6` a esa
+   rama antes de medir (b).
+3. s4-28 (origen dado a entender tarde; el extractor que se inventa `location` con el origen pendiente).
+4. Flujo de la reserva: los 17 fallos de textos fijos del mapa, por causa.
+5. Ronda COMPLETA con el examen oculto (la nota real con Luna); después el plan principal: paso 11 (R6), paso 12 (Q5).
+
+---
+
+**Detalle de s4-33 (8-oct noche):**
 
 **s4-33** (HISTORY 0.31.3, evidencia `docs/robustness/juez/s4-33/`): instrucciones del revisor para Luna hechas
 (`juez_v3_luna`, **apagado**). Con el banco etiquetado sale mejor que gpt-4.1 (ciego: inventos colados 5/28 → 1/28,
