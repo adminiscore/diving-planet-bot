@@ -13,7 +13,26 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 
 > **📏 LEER ANTES DE MEDIR — decisiones del 24-sep-2026 (Gadea):** (1) latencia y llamadas con nuestros logs `[TURN_METRICS]` + `scripts/turn_metrics.py`, no con Langfuse (plan gratuito superado, reinicio 16-oct); (2) pruebas A/B por escalones, juzgando solo los diálogos que cambian. Todo en `docs/robustness/protocolo-medicion.md`.
 
-### ▶️ RETOMAR AQUÍ — 8-oct tarde (Gadea con Claude): s4-28 primer caso HECHO — `JEV_LUGAR_CLIENTE` promocionado
+### ▶️ RETOMAR AQUÍ — 8-oct noche (Gadea con Claude): la respuesta del RAG pasa a GPT-6 Luna con respaldo (PROMOCIONADO)
+
+**Estado.** PRE sirve `feature/pre_gadea` con la respuesta del RAG en **gpt-6-luna sin razonamiento** y **respaldo a
+gpt-4.1-mini a los 3 s** (`RAG_RESPALDO_*`); extracción y secundarias en gpt-4o-mini; juez en gpt-4.1 (HISTORY
+0.31.0). Estudio completo (tablas de calidad, latencia p50/p95 y coste, fase a fase): **https://claude.ai/artifact/TRPkyWYGFDnzdTsDS4QoXf**
+(privado: pedid a Gadea que os lo comparta). Ojo: la generación nueva de OpenAI tiene más cola de latencia; mirad
+siempre el p95 y el campo `rag_respaldo` de TURN_METRICS.
+
+**Siguiente, en orden:**
+1. **Aprovechar Luna (ajustar por causa, no a ciegas):** ronda del golden VISIBLE completo (95 diálogos, sin el oculto)
+   con Luna para tener la lista de fallos de respuestas del RAG; arreglar por causa lo que sea del prompt del RAG
+   (escrito para gpt-4.1-mini) y medir. El juez se queda en gpt-4.1 (Luna como juez: +1 s por juicio).
+2. **En 3-4 semanas:** repetir la medida de latencia de Luna (extracción y juez). Si su cola baja, pasar la extracción y
+   el juez (ajustando antes su prompt con el banco etiquetado): ahí está el ahorro grande (~3,5 $ / 1.000 turnos).
+3. **DeepSeek oficial:** solo como referencia, cuando Gadea permita en OpenRouter los proveedores que entrenan
+   (`openrouter.ai/settings/privacy`); medir con `OPENROUTER_PROVEEDORES=deepseek OPENROUTER_PERMITIR_ENTRENAMIENTO=true`.
+4. s4-28 sigue (regex que deciden solas): origen dado a entender tarde, `descuento-online`, inventario.
+- **A para la próxima ronda core:** `2026-10-08-respaldo-B` (95,6 % la A, 94,7 % la B; misma franja, tarde).
+
+### (anterior) 8-oct tarde (Gadea con Claude): s4-28 primer caso HECHO — `JEV_LUGAR_CLIENTE` promocionado
 
 **Estado.** PRE sirve `feature/pre_gadea` con `JEV_LUGAR_CLIENTE` **encendido** (HISTORY 0.30.4): la regex propone que
 el mensaje trae una ubicación y Jev (`customer_place`, misma llamada) decide CUÁL. Mini-ronda A/B de los 11 diálogos

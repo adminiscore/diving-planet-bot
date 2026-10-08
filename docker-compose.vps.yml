@@ -101,7 +101,8 @@ services:
       # vivan en el repo y no a mano en el .env.pre del VPS (environment > env_file).
       # Son los mismos que el valor por defecto de src/config.py, y
       # tests/test_models_pinned.py falla si se separan. Mapa: README "LLM models".
-      # 8-oct: ronda A/B de la respuesta del RAG con GPT-6 Luna + respaldo (RAG_RESPALDO_MODELO / _SEGUNDOS).
+      # 8-oct: PROMOCIONADO -- la respuesta del RAG con GPT-6 Luna (sin razonamiento) y respaldo a gpt-4.1-mini a los 3 s
+      # (ronda respaldo-A/B; HISTORY 0.31.0). Extraccion y secundarias en gpt-4o-mini; juez en gpt-4.1.
       OPENAI_MODEL: "gpt-4o-mini"
       RAG_ANSWER_MODEL: "gpt-6-luna"
       RAG_RESPALDO_MODELO: "gpt-4.1-mini"

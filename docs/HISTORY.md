@@ -1,6 +1,17 @@
 History
 =======
 
+0.31.0 - (2026-10-08)
+----------------------
+* **Cambio de modelos: la respuesta del RAG pasa a GPT-6 Luna (sin razonamiento) con RESPALDO a gpt-4.1-mini a los 3 s — PROMOCIONADO** (Gadea con Claude). Estudio completo para el equipo: https://claude.ai/artifact/TRPkyWYGFDnzdTsDS4QoXf (privado; compartir desde *Share*).
+  - **Fase 0 (compatibilidad):** los modelos de la API nueva rechazan `max_tokens` y gpt-6 razona por defecto → `llm_client.adaptar_parametros` lo traduce en un solo sitio. Luna escribe Markdown de documento → `channels/formato.a_whatsapp` lo pasa a formato de WhatsApp (`FORMATO_WHATSAPP`).
+  - **Fase 1 (respuesta del RAG, PRE sin desplegar):** Luna claramente mejor leyendo las respuestas (124 USD desde las islas, no supone el refresher, da precio y link; 1 rechazo del juez frente a 2). **Fase 2 (extracción, golden visible en local):** igual o algo mejor (juez ciego: gana 11, pierde 8). **Fase 3 (juez):** deja pasar menos inventos (2/36 frente a 6/36) pero +1 s por juicio → el juez sigue en gpt-4.1.
+  - **Fase 4, Luna en todo (`modelos-A/B`):** calidad igual (94,7 %), pero p95 de los turnos 5,4 → 8,6 s: ~8 % de respuestas del RAG a 11-13 s. No es solo Luna: toda la generación nueva de OpenAI (gpt-5, 5.6, 6) tiene ~0,2-0,4 s más de base y colas más largas que la 4.x (medido alternando 7 modelos); Luna es la mejor de su generación. El "Fast mode" (`service_tier: priority`) no cortó la cola en la muestra.
+  - **Arreglo de la cola:** `rag_agent.generar_con_respaldo`: si Luna no termina en `RAG_RESPALDO_SEGUNDOS` (3), se lanza la misma petición a `RAG_RESPALDO_MODELO` (gpt-4.1-mini) en paralelo y gana la primera; `rag_respaldo` en TURN_METRICS. Extracción y secundarias vuelven a gpt-4o-mini.
+  - **Ronda `respaldo-A/B`** (misma franja): calidad 95,6 → 94,7 % (ruido: de las 4 regresiones, 2 son textos fijos del flujo y 2 criterio estricto del juez; la mejora del refresher sí es de Luna); turnos p50 +0,07 s, p95 +0,6 s, **máximo 9,7 → 7,6 s**; turnos de RAG p50 +0,8 s; el respaldo saltó en el 10 % y corta las colas. **Coste sin juez −64 %** (1,10 → ~0,40 $ por 1.000 turnos; el juez gpt-4.1, ~3,5 $, es la pieza más cara).
+  - **Descartados con medida:** gpt-5-mini/nano (sin modo sin razonamiento real, colas de hasta 10 s), Gemini Flash (7-20 s de primer token), Claude Haiku 4.5 (más lenta en total), DeepSeek V4.1 Flash por proveedores de EE. UU. (no ahorra; algo más lenta; decisión de Gadea). **DeepSeek oficial (China):** OpenRouter la bloquea por la privacidad de la cuenta (entrenan con los datos de pago); pendiente de que Gadea cambie el ajuste para medirla solo como referencia (no apta para clientes reales).
+  - **Código nuevo:** `llm_client` enruta los modelos con prefijo de proveedor ("deepseek/…") por OpenRouter (`OPENROUTER_PROVEEDORES`, por latencia, sin retención; `OPENROUTER_PERMITIR_ENTRENAMIENTO` solo pruebas). Herramientas: `reproducir_juez_pre --env` y segundos por turno, `sonda_juez_modelo`. Gasto del estudio ≈ 8 $.
+
 0.30.4 - (2026-10-08)
 ----------------------
 * **s4-28, primer caso: la regex PROPONE que hay ubicación; CUÁL es (Cartagena / islas / ninguna) lo decide Jev — `JEV_LUGAR_CLIENTE` PROMOCIONADO** (Gadea con Claude).
