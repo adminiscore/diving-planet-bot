@@ -13,26 +13,59 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 
 > **📏 LEER ANTES DE MEDIR — decisiones del 24-sep-2026 (Gadea):** (1) latencia y llamadas con nuestros logs `[TURN_METRICS]` + `scripts/turn_metrics.py`, no con Langfuse (plan gratuito superado, reinicio 16-oct); (2) pruebas A/B por escalones, juzgando solo los diálogos que cambian. Todo en `docs/robustness/protocolo-medicion.md`.
 
-### ▶️ RETOMAR AQUÍ — 8-oct noche (Gadea con Claude): la respuesta del RAG pasa a GPT-6 Luna con respaldo (PROMOCIONADO)
+### ▶️ RETOMAR AQUÍ — 8-oct noche (Gadea con Claude → siguen Álvaro o Gonzalo): RAG en GPT-6 Luna con respaldo; siguiente s4-31 y s4-33
 
-**Estado.** PRE sirve `feature/pre_gadea` con la respuesta del RAG en **gpt-6-luna sin razonamiento** y **respaldo a
-gpt-4.1-mini a los 3 s** (`RAG_RESPALDO_*`); extracción y secundarias en gpt-4o-mini; juez en gpt-4.1 (HISTORY
-0.31.0). Estudio completo (tablas de calidad, latencia p50/p95 y coste, fase a fase): **https://claude.ai/artifact/TRPkyWYGFDnzdTsDS4QoXf**
-(privado: pedid a Gadea que os lo comparta). Ojo: la generación nueva de OpenAI tiene más cola de latencia; mirad
-siempre el p95 y el campo `rag_respaldo` de TURN_METRICS.
+**Estado.**
+- PRE sirve `feature/pre_gadea` (commit del cierre del 8-oct; `check_deploy` en verde). Modelos: **respuesta del RAG en
+  `gpt-6-luna` sin razonamiento con respaldo a `gpt-4.1-mini` a los 3 s** (`RAG_RESPALDO_MODELO` / `_SEGUNDOS`);
+  extracción y secundarias en `gpt-4o-mini`; juez en `gpt-4.1`. Flags nuevos de hoy encendidos: `HOTEL_UBICACION_DECLARADA`,
+  `JEV_LUGAR_CLIENTE`, `FORMATO_WHATSAPP`. `OPENROUTER_PERMITIR_ENTRENAMIENTO` apagado (solo pruebas).
+- Suite 2.973 verde, ruff limpio. Plan Coral al día (s4-27 y s4-30 hechas; s4-28 en curso; s4-31, s4-32, s4-33 nuevas).
+  Mapa de Coral v19. Nada que integrar de otras ramas.
+- **Estudio completo de modelos** (calidad, latencia p50/p95, coste, fase a fase): **https://claude.ai/artifact/TRPkyWYGFDnzdTsDS4QoXf**
+  (privado: pedid a Gadea que os lo comparta).
 
-**Siguiente, en orden:**
-1. **Aprovechar Luna (ajustar por causa, no a ciegas):** ronda del golden VISIBLE completo (95 diálogos, sin el oculto)
-   con Luna para tener la lista de fallos de respuestas del RAG; arreglar por causa lo que sea del prompt del RAG
-   (escrito para gpt-4.1-mini) y medir. El juez se queda en gpt-4.1 (Luna como juez: +1 s por juicio).
-2. **En 3-4 semanas:** repetir la medida de latencia de Luna (extracción y juez). Si su cola baja, pasar la extracción y
-   el juez (ajustando antes su prompt con el banco etiquetado): ahí está el ahorro grande (~3,5 $ / 1.000 turnos).
-3. **DeepSeek oficial:** solo como referencia, cuando Gadea permita en OpenRouter los proveedores que entrenan
-   (`openrouter.ai/settings/privacy`); medir con `OPENROUTER_PROVEEDORES=deepseek OPENROUTER_PERMITIR_ENTRENAMIENTO=true`.
-4. s4-28 sigue (regex que deciden solas): origen dado a entender tarde, `descuento-online`, inventario.
-- **A para la próxima ronda core:** `2026-10-08-respaldo-B` (95,6 % la A, 94,7 % la B; misma franja, tarde).
+**Hecho hoy (HISTORY 0.30.3 → 0.31.0):**
 
-### (anterior) 8-oct tarde (Gadea con Claude): s4-28 primer caso HECHO — `JEV_LUGAR_CLIENTE` promocionado
+| Qué | Estado | Dónde |
+|---|---|---|
+| s4-27: ubicación deducida de un hotel por la puerta de Jev | Promocionado (mini-ronda 79,7 → 85,2 %) | 0.30.3, `intent_detector` |
+| s4-28, 1er caso: Jev decide QUÉ lugar (Cartagena / islas / ninguno) | Promocionado (mini-ronda 82,8 → 85,2 %) | 0.30.4, `_lugar_por_jev`, `sonda_lugar_cliente.py` |
+| Modelos: RAG a GPT-6 Luna + respaldo; adaptador de parámetros; formato WhatsApp; enrutado OpenRouter | Promocionado (core 95,6 → 94,7 % ruido; p95 +0,6 s; máx −2,1 s; coste −64 %) | 0.31.0, `rag_agent.generar_con_respaldo`, `llm_client` |
+| Luna en todo; gpt-5-mini/nano; Gemini Flash; Claude Haiku 4.5; DeepSeek por EE. UU.; Fast mode | Descartados con medida | 0.31.0 |
+
+**Siguiente, en orden (decidido por Gadea el 8-oct):**
+1. **s4-31 — ajustar el prompt del RAG para Luna, por causa.** (1) Ronda del golden VISIBLE completo (95, sin el oculto)
+   con la configuración de PRE; (2) agrupar los fallos por causa y separar prompt / flujo / búsqueda; (3) ajustar solo lo
+   que falla, con escalón 0 y mini-ronda A/B de los diálogos afectados. Hecho = fallos del RAG clasificados y los del
+   prompt arreglados y medidos sin subir el p95.
+2. **s4-33 — el juez a Luna (DECISIÓN DE GADEA, aunque tarde ~1 s más: ajustado es mejor y mucho más barato).** (1) Ajustar
+   el prompt del juez v3 para Luna con el grupo de DISEÑO del banco (`scripts/sonda_juez_modelo.py`) y comprobar en el
+   CIEGO sin tocar nada: no perder lo ganado en inventos (2/36) y recuperar las aprobadas (33/40 → 40/40); (2) escalón 0 en
+   PRE (`reproducir_juez_pre --codigo-local --env GROUNDING_V3_MODEL=gpt-6-luna`); (3) A/B de la core. Mejor después de
+   s4-31 (o separado) para no mezclar efectos.
+3. **s4-32 (en 3-4 semanas):** repetir la latencia de Luna en la extracción; si baja, A/B.
+4. s4-28 sigue: origen dado a entender tarde (`precio-desde-islas`: "desde ese hotel"), `descuento-online` (enrutador
+   cuando Jev duda), inventario de regex. Decisiones pendientes de Gadea: criterios `acompanante-lancha-escalar` y el del
+   Open Water en `manual-duracion-curso`; DeepSeek oficial solo como referencia, cuando Gadea cambie la privacidad de
+   OpenRouter (`openrouter.ai/settings/privacy`).
+
+**Cómo medir:**
+- Ronda: `ENV_FILE=.env.dev python -m scripts.run_synthetic_pre --name <nombre> --sample core` (o `--sample golden --ids a,b,c`),
+  luego `turn_metrics --from-run ... --out docs/robustness/snapshots/<r>.json`, `judge_golden_set --run ... --snapshot ...`
+  y `ab_judge_compare <A> <B>`. **A para la próxima core: `2026-10-08-respaldo-B`.**
+- A/B siempre en la misma franja horaria (la tarde es más lenta en OpenAI). Mirad p50, **p95 y máx** y `rag_respaldo` en
+  TURN_METRICS (cuántas veces saltó y quién ganó).
+- Probar otro modelo sin desplegar: `reproducir_juez_pre <dialogo> --codigo-local --env RAG_ANSWER_MODEL=...` (da segundos por turno).
+
+**Avisos de hoy:**
+- La generación nueva de OpenAI (gpt-5, 5.6, 6) tiene ~0,2-0,4 s más de base y colas largas; con 10 llamadas no se ve la cola
+  (~8 %), con una ronda sí. gpt-6 rechaza `max_tokens` y razona por defecto: lo arregla `llm_client.adaptar_parametros`.
+- Un mismo modelo por OpenRouter varía muchísimo según el proveedor y el momento (Together pasó de 1,3 s a 2,9 s de p50).
+- OpenRouter bloquea la API oficial de DeepSeek porque entrena con los datos de pago (ajuste de privacidad de la cuenta).
+- Gasto de OpenAI del 8-oct ≈ 10 $ (mini-rondas, estudio de modelos y tres rondas core con juez).
+
+### ✅ 8-oct tarde (Gadea con Claude): s4-28 primer caso HECHO — `JEV_LUGAR_CLIENTE` promocionado
 
 **Estado.** PRE sirve `feature/pre_gadea` con `JEV_LUGAR_CLIENTE` **encendido** (HISTORY 0.30.4): la regex propone que
 el mensaje trae una ubicación y Jev (`customer_place`, misma llamada) decide CUÁL. Mini-ronda A/B de los 11 diálogos
@@ -51,7 +84,7 @@ OpenAI), y mini-ronda A/B de solo esos diálogos en la misma franja (`--sample g
    `manual-duracion-curso`.
 - **A para la próxima ronda core:** `2026-10-07-s427-B`. Las rondas de hoy (hotel, lugar) fueron mini-rondas.
 
-### (anterior) 8-oct (Gadea con Claude): s4-27 CERRADA — `HOTEL_UBICACION_DECLARADA` promocionado
+### ✅ 8-oct (Gadea con Claude): s4-27 CERRADA — `HOTEL_UBICACION_DECLARADA` promocionado
 
 **Estado.** PRE sirve `feature/pre_gadea` con `HOTEL_UBICACION_DECLARADA` **encendido** (HISTORY 0.30.3). La ubicación que
 se deduce de un hotel ya pasa por la puerta de Jev ("¿me pasas el contacto del hotel Cocoliso?" no deja al cliente en
@@ -68,7 +101,7 @@ las fichas gemelas (B) quedan aparcadas (su caso ya pasa). **Siguiente, en orden
    `manual-duracion-curso`.
 - **A para la próxima ronda core:** `2026-10-07-s427-B` (el cambio de hoy solo toca 1 diálogo de la core).
 
-### (anterior) 7-oct noche (Gonzalo): s4-27 paso 1 HECHO y PROMOCIONADO — el plan que nombra el cliente va al contexto
+### ✅ 7-oct noche (Gonzalo): s4-27 paso 1 HECHO y PROMOCIONADO — el plan que nombra el cliente va al contexto
 
 **Estado.** PRE sirve `feature/pre_gadea` (sana, `check_deploy` en verde) con `RAG_PLAN_NOMBRADO` **encendido**
 (HISTORY 0.30.2; evidencia `docs/robustness/s4-27/README.md`). Integrad `feature/pre_gadea` antes de subir.
@@ -90,7 +123,7 @@ catálogo de ese plan. Ronda core `2026-10-07-s427-B`: **95,2 → 96,0 %**, 26/3
 - `descuento-online-sin-codigo` falla según lo que decida el enrutador LLM cuando Jev duda (0,38): sale en las dos
   últimas rondas, una vez a favor y otra en contra. Candidato claro para s4-28.
 
-### (anterior) 7-oct noche (Gadea con Claude → sigue Gonzalo): punto 4 (s4-26) CERRADO — 6 arreglos PROMOCIONADOS en PRE
+### ✅ 7-oct noche (Gadea con Claude → sigue Gonzalo): punto 4 (s4-26) CERRADO — 6 arreglos PROMOCIONADOS en PRE
 
 **Para Gonzalo (Gadea, 7-oct):** continúas tú desde aquí, con el orden de abajo (s4-27 → s4-28). Todo está subido en
 `feature/pre_gadea` y PRE lo sirve sano. **Dos decisiones pendientes de Gadea**, no las toques sin su visto bueno:
@@ -125,7 +158,7 @@ estado de la reserva por turno: así se encontraron las causas del punto 4) y `r
    (el acompañante desde las islas existe, al mismo precio): proponer a Gadea actualizarlo.
 4. s4-29 (futuro): no repetir una pregunta que el cliente ignoró dos veces. Después, plan principal: paso 11 (R6), 12 (Q5).
 
-### (anterior) 7-oct tarde (Gonzalo): punto 3 CERRADO — opción C medida, arreglada y ENCENDIDA en PRE
+### ✅ 7-oct tarde (Gonzalo): punto 3 CERRADO — opción C medida, arreglada y ENCENDIDA en PRE
 
 **Estado.** PRE sirve `feature/pre_alvaro` con `RAG_ORIGEN_PREGUNTA` **encendido** (promocionado). **Integrad
 `feature/pre_alvaro` en vuestra rama antes de subir.** HISTORY 0.30.0; evidencia en `docs/robustness/origen-c/README.md`.

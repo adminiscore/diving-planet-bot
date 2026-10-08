@@ -452,6 +452,15 @@ medias (u3-1 ✅, u3-4 ✅ promocionada, u3-5 🟡); PRE con u3-4 encendido. Sui
 | **11** | R6: robustez de producción | r6-2 (guardrails), g-5 (carga) | el bot nunca deja sin respuesta; inyección medida; p95 con N clientes a la vez |
 | **12** | Q5: calidad continua y entrega | q5-1, g-3, g-4, g-4b, g-6, m0-4, q5-2 | gate en CI; simulador; bucle producción → golden; testers reales; SOAK; entrega |
 
+> **Estado al 8-oct (Gadea con Claude):** S4 avanza por causa: s4-26 (punto 4) y s4-27 CERRADAS, s4-28 (regex que
+> deciden solas) EN CURSO con su primer caso promocionado (Jev decide qué lugar es la ubicación). **Cambio de modelo
+> promocionado (s4-30, HISTORY 0.31.0):** la respuesta del RAG la escribe GPT-6 Luna sin razonamiento con respaldo a
+> gpt-4.1-mini a los 3 s (calidad en ruido, p95 +0,6 s, coste −64 %); extracción en gpt-4o-mini y juez en gpt-4.1.
+> **Orden siguiente (Gadea):** s4-31 ajustar el prompt del RAG para Luna por causa (ronda del golden visible) → s4-33
+> el juez a Luna ajustado con el banco (aunque tarde ~1 s más: mejor y mucho más barato) → s4-32 extracción a Luna en
+> 3-4 semanas si baja su latencia. Después, el plan principal: paso 11 (R6) y 12 (Q5). Detalle: `session-handoff.md`,
+> "RETOMAR AQUÍ" del 8-oct.
+
 > **Estado al 6-oct (Álvaro):** punto 1 del bloque siguiente HECHO: **el juez del golden compara con la misma base
 > que usa el bot** (referencia `curada`, por defecto; HISTORY 0.29.96). Calibración 85,7 → 85,7-90 %; en la ronda
 > completa, los veredictos que dependen de la referencia mejoran (links como "fuga", precios del catálogo,
