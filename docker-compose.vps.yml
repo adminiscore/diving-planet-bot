@@ -103,7 +103,9 @@ services:
       # tests/test_models_pinned.py falla si se separan. Mapa: README "LLM models".
       # 8-oct: ronda A/B de la respuesta del RAG con GPT-6 Luna + respaldo (RAG_RESPALDO_MODELO / _SEGUNDOS).
       OPENAI_MODEL: "gpt-4o-mini"
-      RAG_ANSWER_MODEL: "gpt-4.1-mini"
+      RAG_ANSWER_MODEL: "gpt-6-luna"
+      RAG_RESPALDO_MODELO: "gpt-4.1-mini"
+      RAG_RESPALDO_SEGUNDOS: "3.0"
       # Juez de grounding v3 (flag GROUNDING_V3, 28-sep): gpt-4.1 (con gpt-4.1-mini el v3 era inestable).
       GROUNDING_V3_MODEL: "gpt-4.1"
       EXTRACTION_MODEL: "gpt-4o-mini"

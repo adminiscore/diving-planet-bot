@@ -48,7 +48,7 @@ class Settings(BaseSettings):
     # 8-oct (cambio de modelos): ronda core A/B con GPT-6 Luna en todo (modelos-A/B): calidad igual (94,7 %), p95 de los
     # turnos 5,4 -> 8,6 s (cola de Luna). Extraccion y secundarias vuelven a gpt-4o-mini. La respuesta del RAG: ver
     # `rag_respaldo_*` (Luna con respaldo).
-    rag_answer_model: str = "gpt-4.1-mini"
+    rag_answer_model: str = "gpt-6-luna"  # con respaldo: rag_respaldo_modelo
     openai_embedding_model: str = "text-embedding-3-small"
     # Model used to transcribe incoming customer voice notes (see
     # src/channels/audio.py). gpt-4o-mini-transcribe is cheaper/better than
@@ -166,7 +166,7 @@ class Settings(BaseSettings):
     # 8-oct: respuesta del RAG con RESPALDO (`rag_agent.generar_con_respaldo`): si el modelo principal
     # (`rag_answer_model`) no ha terminado en `rag_respaldo_segundos`, se lanza la misma peticion a `rag_respaldo_modelo`
     # en paralelo y se usa la primera que termine. Corta la cola de GPT-6 Luna. Vacio o 0 = sin respaldo.
-    rag_respaldo_modelo: str = ""
+    rag_respaldo_modelo: str = "gpt-4.1-mini"  # EN MEDICION (ronda respaldo-A/B)
     rag_respaldo_segundos: float = 3.0
     # 8-oct (prueba de DeepSeek): un modelo con prefijo de proveedor ("deepseek/deepseek-v4.1-flash") sale por
     # OpenRouter (`llm_client.parametros_openrouter`), solo por estos proveedores (separados por comas, por latencia,
