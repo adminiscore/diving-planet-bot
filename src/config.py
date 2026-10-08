@@ -235,6 +235,12 @@ class Settings(BaseSettings):
     # en las islas" (contacto-hoteles-cocoliso-san-pedro). PROMOCIONADO 8-oct: mini-ronda de los 10 dialogos visibles con
     # hotel, A/B en la misma franja: 79,7 -> 85,3 %, 2 -> 4/10 sin fallos (HISTORY 0.30.3). Revert = False aqui y en el compose.
     hotel_ubicacion_declarada: bool = True
+    # s4-28 (8-oct): una pregunta mas de Jev en la misma llamada (`customer_place`: Cartagena / ya en las islas / no lo
+    # dice). La regex sigue PROPONIENDO que el mensaje trae una ubicacion; QUE lugar es lo decide Jev cuando esta
+    # seguro (>= 0,6). `place_by_role` lo decidia por la preposicion: "visitando Cartagena... coordinar inmersiones EN
+    # Isla del Rosario" salia islas (precio-desde-islas-vs-cartagena). Banco ciego: Jev 12/12, regex 4/12, 0 seguras y
+    # equivocadas. En medicion (aqui y en el compose).
+    jev_lugar_cliente: bool = True
     # s4-27 (7-oct, Gonzalo): si el cliente NOMBRA cuantas inmersiones ("el precio de las 2 inmersiones") y su origen
     # consta, el contexto del RAG dice que plan del catalogo es (`conversational_core._plan_nombrado`). Caso:
     # precio-desde-islas-vs-cartagena, el RAG negaba las 2 inmersiones desde las islas (124 USD) y ofrecia el paquete

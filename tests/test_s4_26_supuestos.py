@@ -182,3 +182,60 @@ def test_con_la_ubicacion_declarada_jev_la_tira_si_nadie_la_afirma(monkeypatch):
     intent = core._detector.detect("me pasas el contacto del hotel cocoliso", st)
     core._drop_regex_fields_jev_denies(intent, st)
     assert intent.location is None
+
+
+# --- jev_lugar_cliente (s4-28): la regex propone que hay ubicacion; Jev decide cual ---------------------------
+
+def _intent(msg, st):
+    return core._detector.detect(msg, st)
+
+
+@pytest.mark.parametrize("lugar, esperado", [
+    ({"choice": "cartagena", "confidence": 0.95}, "cartagena"),  # Jev seguro de otro lugar: el suyo
+    ({"choice": "none", "confidence": 0.98}, None),              # Jev seguro de que no lo dice: sin ubicacion
+    ({"choice": "cartagena", "confidence": 0.53}, None),         # otro lugar y Jev duda: se pregunta
+    ({"choice": "none", "confidence": 0.38}, "island"),          # solo duda de que lo diga: la regex
+    ({"choice": "islands", "confidence": 0.40}, "island"),       # de acuerdo: se queda
+    (None, "island"),                                            # sin Jev: la regex, como hoy
+])
+def test_el_lugar_lo_decide_jev(monkeypatch, lugar, esperado):
+    monkeypatch.setattr(settings, "jev_lugar_cliente", True)
+    st = _state()
+    st._jev_lugar = lugar
+    intent = _intent("vamos a estar en cartagena y queremos bucear en las islas del rosario", st)
+    assert intent.location == "island"  # lo que propone la regex por la preposicion
+    core._lugar_por_jev(intent, st)
+    assert intent.location == esperado
+    assert ("location" in intent.detected_fields) is (esperado is not None)
+    if esperado != "island":
+        assert intent.island is None and "island" not in intent.detected_fields
+
+
+def test_un_hotel_de_isla_manda_sobre_jev(monkeypatch):
+    monkeypatch.setattr(settings, "jev_lugar_cliente", True)
+    st = _state()
+    st._jev_lugar = {"choice": "cartagena", "confidence": 0.8}  # Jev no conoce los hoteles
+    intent = _intent("estamos alojados en el hotel san pedro de majagua desde el lunes", st)
+    core._lugar_por_jev(intent, st)
+    assert intent.location == "island"
+
+
+def test_lugar_con_el_flag_apagado(monkeypatch):
+    monkeypatch.setattr(settings, "jev_lugar_cliente", False)
+    st = _state()
+    st._jev_lugar = {"choice": "cartagena", "confidence": 0.95}
+    intent = _intent("vamos a estar en cartagena y queremos bucear en las islas del rosario", st)
+    core._lugar_por_jev(intent, st)
+    assert intent.location == "island"
+
+
+def test_jev_pide_el_lugar_solo_con_el_flag(monkeypatch):
+    from src.agents import jev_router
+
+    monkeypatch.setattr(settings, "jev_lugar_cliente", True)
+    assert jev_router.CUSTOMER_PLACE in jev_router._questions_for_turn()
+    out = jev_router.answers_to_signals({jev_router.CUSTOMER_PLACE: {"type": "choice", "choice": "none", "confidence": 0.9}})
+    assert out[jev_router.CUSTOMER_PLACE] == {"choice": "none", "confidence": 0.9}
+    assert jev_router.uncertain_answers({jev_router.CUSTOMER_PLACE: {"type": "choice", "choice": "none", "confidence": 0.3}}) == []
+    monkeypatch.setattr(settings, "jev_lugar_cliente", False)
+    assert jev_router.CUSTOMER_PLACE not in jev_router._questions_for_turn()

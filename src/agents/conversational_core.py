@@ -2005,6 +2005,48 @@ def _recommend_inferred_minicourse(intent, state: ConversationState, message: st
         intent.detected_fields.remove("activity")
 
 
+def _lugar_por_jev(intent, state: ConversationState) -> None:
+    """s4-28 (flag `jev_lugar_cliente`): la regex PROPONE que el mensaje trae una ubicación; CUÁL es lo decide Jev
+    (`customer_place`). `place_by_role` lo decidía por la preposición: "estamos en Cartagena y queremos bucear EN las
+    islas" salía islas, y "quiero bucear en las islas del rosario" dejaba al cliente "ya en las islas".
+
+    - Un hotel de isla nombrado en el mensaje manda (Jev no conoce los hoteles; la regex sí: "alojados en el San Pedro
+      de Majagua" -> Jev decía Cartagena con 0,8).
+    - Jev de acuerdo: se queda. Jev seguro (>= CUSTOMER_PLACE_MIN) de otra cosa: su lugar, o ninguno si dice que el
+      mensaje no lo dice.
+    - Jev propone OTRO lugar pero duda: la ubicación queda sin saber y la reserva la pregunta (no suponer el
+      origen). Si solo duda de que el mensaje lo diga ("none" sin seguridad), lo de la regex.
+    No rellena lugares que la regex no propuso. Sin respuesta de Jev, lo de la regex, como hoy. Simulado con el
+    detector real en 36 mensajes (bancos de los tests de place_by_role, ciego y de mensajes largos): regex 18/36,
+    esta regla 33/36; empeora 1 ambiguo ("estoy en cartagena pero el hotel es en isla grande" -> se pregunta)."""
+    if not settings.jev_lugar_cliente or intent.location not in ("cartagena", "island"):
+        return
+    if intent.hotel and intent.location == "island":
+        return
+    from src.agents.jev_router import CUSTOMER_PLACE_MIN  # lazy
+
+    lugar = getattr(state, "_jev_lugar", None) or {}
+    choice = lugar.get("choice")
+    if choice not in ("cartagena", "islands", "none"):
+        return
+    jev = {"cartagena": "cartagena", "islands": "island"}.get(choice)
+    if jev == intent.location:
+        return
+    seguro = lugar.get("confidence", 0.0) >= CUSTOMER_PLACE_MIN
+    if not seguro and jev is None:
+        return  # Jev solo duda de que el mensaje lo diga: lo de la regex ("estaremos en islas del rosario")
+    nuevo = jev if seguro else None
+    logger.info(f"[EXTRACT][S4-28] lugar: regex={intent.location!r} -> {nuevo!r} (Jev {choice} {lugar.get('confidence', 0.0):.2f})")
+    intent.location = nuevo
+    if nuevo != "island":
+        intent.island = None
+        intent.detected_fields = [f for f in intent.detected_fields if f != "island"]
+    if nuevo is None:
+        intent.detected_fields = [f for f in intent.detected_fields if f != "location"]
+    elif "location" not in intent.detected_fields:
+        intent.detected_fields.append("location")
+
+
 def _asks_for_a_course(message: str) -> bool:
     """¿El principiante pide un CURSO (certificarse) y no probar? El sustantivo de la familia de cursos
     del registro ("curso"/"course", tambien en plural) o la intencion de curso que ya ve el detector.
@@ -2726,6 +2768,7 @@ async def _understand(state: ConversationState, message: str, *, answered_pendin
     _take_undecided_members(intent, state)
     _flag_cert_or_course(intent, state, message)
     _recommend_inferred_minicourse(intent, state, message)
+    _lugar_por_jev(intent, state)
     supervisor._apply_detected_intent(intent, state, message)
 
     # Circuit-breaker (portado 2026-09-01, hallazgo en vivo, batería de
@@ -3900,6 +3943,8 @@ async def _routing_phase(
     # s4-26: probabilidad de Jev de que el mensaje SUME a una persona nueva (no a alguien ya contado). Ausente = no lo
     # sabemos.
     state._jev_adds_person = routing_signals.get("adds_person")
+    # s4-28: dónde está / desde dónde sale el cliente según Jev ({choice, confidence}); ausente = no lo sabemos.
+    state._jev_lugar = routing_signals.get("customer_place")
 
     # COMPRENDER (carryover PRIMERO): si hay un slot pendiente y este mensaje
     # lo RESUELVE, el carryover gana aunque el mensaje "parezca pregunta" por

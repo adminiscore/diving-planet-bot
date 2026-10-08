@@ -253,6 +253,9 @@ services:
       # del hotel Cocoliso?" ya no deja al cliente en las islas). PROMOCIONADO 8-oct (mini-ronda hotel: 79,7 -> 85,3 %).
       # Revert = "false" aqui y en config.py.
       HOTEL_UBICACION_DECLARADA: "true"
+      # s4-28 (8-oct): la regex propone que hay ubicacion; CUAL (Cartagena / islas / ninguna) lo decide Jev
+      # (customer_place). Discrepan y Jev duda: no se supone, se pregunta. EN MEDICION. Revert = "false" aqui y en config.py.
+      JEV_LUGAR_CLIENTE: "true"
       # rag-5 (30-sep): el RAG arranca a la vez que el enrutador (Jev) y se aprovecha solo con el mismo contexto
       # (si no, se rehace). PROMOCIONADO 1-oct (HISTORY 0.29.88). Revert = "false" aqui y en config.py.
       RAG_ADELANTADO: "true"

@@ -1,0 +1,1068 @@
+{
+ "meta": {
+  "generado": "2026-10-08T09:07:03+00:00",
+  "commit": "aed3c2e",
+  "rama": "feature/pre_gadea"
+ },
+ "estructura": {
+  "componentes": [
+   {
+    "id": "b_acuse",
+    "vista": "booking",
+    "titulo": "Acuse (en paralelo)",
+    "tipo": "paralelo",
+    "nodo_grafo": null,
+    "modelos": [
+     "extraction_model"
+    ],
+    "interruptores": [
+     "ack_in_parallel"
+    ]
+   },
+   {
+    "id": "b_availability",
+    "vista": "booking",
+    "titulo": "Disponibilidad",
+    "tipo": "agente",
+    "nodo_grafo": "availability",
+    "modelos": [],
+    "interruptores": [
+     "rag_v2",
+     "s4_fixes"
+    ]
+   },
+   {
+    "id": "b_entrada",
+    "vista": "booking",
+    "titulo": "Viene del enrutador",
+    "tipo": "entrada",
+    "nodo_grafo": null,
+    "modelos": [],
+    "interruptores": []
+   },
+   {
+    "id": "b_extraction",
+    "vista": "booking",
+    "titulo": "Entender los datos",
+    "tipo": "agente",
+    "nodo_grafo": "extraction",
+    "modelos": [
+     "extraction_model"
+    ],
+    "interruptores": []
+   },
+   {
+    "id": "b_notas",
+    "vista": "booking",
+    "titulo": "Notas (en paralelo)",
+    "tipo": "paralelo",
+    "nodo_grafo": null,
+    "modelos": [
+     "extraction_model"
+    ],
+    "interruptores": [
+     "notes_in_parallel",
+     "notas_puerta_jev"
+    ]
+   },
+   {
+    "id": "b_pregunta",
+    "vista": "booking",
+    "titulo": "Respuesta a la pregunta (en paralelo)",
+    "tipo": "paralelo",
+    "nodo_grafo": null,
+    "modelos": [],
+    "interruptores": [
+     "answer_and_continue"
+    ]
+   },
+   {
+    "id": "b_routing",
+    "vista": "booking",
+    "titulo": "Señales",
+    "tipo": "agente",
+    "nodo_grafo": "routing",
+    "modelos": [
+     "extraction_model"
+    ],
+    "interruptores": [
+     "answer_and_continue",
+     "corrections_v2"
+    ]
+   },
+   {
+    "id": "b_salida",
+    "vista": "booking",
+    "titulo": "Vuelve a cerrar el turno",
+    "tipo": "salida",
+    "nodo_grafo": null,
+    "modelos": [],
+    "interruptores": []
+   },
+   {
+    "id": "b_setup",
+    "vista": "booking",
+    "titulo": "Preparar",
+    "tipo": "agente",
+    "nodo_grafo": "setup",
+    "modelos": [
+     "openai_model"
+    ],
+    "interruptores": []
+   },
+   {
+    "id": "b_slotfill_close",
+    "vista": "booking",
+    "titulo": "Preguntar o cerrar",
+    "tipo": "agente",
+    "nodo_grafo": "slotfill_close",
+    "modelos": [
+     "extraction_model"
+    ],
+    "interruptores": [
+     "recommend_inferred_minicourse"
+    ]
+   },
+   {
+    "id": "booking",
+    "vista": "general",
+    "titulo": "Reserva",
+    "tipo": "agente",
+    "nodo_grafo": "booking",
+    "modelos": [],
+    "interruptores": []
+   },
+   {
+    "id": "cascada",
+    "vista": "general",
+    "titulo": "Cascada (respaldo)",
+    "tipo": "respaldo",
+    "nodo_grafo": null,
+    "modelos": [],
+    "interruptores": []
+   },
+   {
+    "id": "catalogo",
+    "vista": "general",
+    "titulo": "Catálogo",
+    "tipo": "datos",
+    "nodo_grafo": null,
+    "modelos": [],
+    "interruptores": []
+   },
+   {
+    "id": "changes",
+    "vista": "general",
+    "titulo": "Cambios",
+    "tipo": "agente",
+    "nodo_grafo": "changes",
+    "modelos": [],
+    "interruptores": []
+   },
+   {
+    "id": "chatwoot",
+    "vista": "general",
+    "titulo": "Chatwoot",
+    "tipo": "externo",
+    "nodo_grafo": null,
+    "modelos": [],
+    "interruptores": []
+   },
+   {
+    "id": "ci",
+    "vista": "general",
+    "titulo": "GitHub CI",
+    "tipo": "infra",
+    "nodo_grafo": null,
+    "modelos": [],
+    "interruptores": []
+   },
+   {
+    "id": "cierre",
+    "vista": "general",
+    "titulo": "Cerrar el turno",
+    "tipo": "salida",
+    "nodo_grafo": null,
+    "modelos": [
+     "openai_model"
+    ],
+    "interruptores": []
+   },
+   {
+    "id": "cliente",
+    "vista": "general",
+    "titulo": "Cliente",
+    "tipo": "entrada",
+    "nodo_grafo": null,
+    "modelos": [],
+    "interruptores": []
+   },
+   {
+    "id": "deflection",
+    "vista": "general",
+    "titulo": "Desvío",
+    "tipo": "agente",
+    "nodo_grafo": "deflection",
+    "modelos": [],
+    "interruptores": []
+   },
+   {
+    "id": "entrada",
+    "vista": "general",
+    "titulo": "Entrada",
+    "tipo": "entrada",
+    "nodo_grafo": null,
+    "modelos": [],
+    "interruptores": []
+   },
+   {
+    "id": "envio",
+    "vista": "general",
+    "titulo": "Enviar",
+    "tipo": "salida",
+    "nodo_grafo": null,
+    "modelos": [],
+    "interruptores": []
+   },
+   {
+    "id": "estado",
+    "vista": "general",
+    "titulo": "Memoria de la conversación",
+    "tipo": "datos",
+    "nodo_grafo": null,
+    "modelos": [],
+    "interruptores": []
+   },
+   {
+    "id": "info",
+    "vista": "general",
+    "titulo": "Información",
+    "tipo": "agente",
+    "nodo_grafo": "info",
+    "modelos": [],
+    "interruptores": []
+   },
+   {
+    "id": "kb",
+    "vista": "general",
+    "titulo": "Base de conocimiento",
+    "tipo": "datos",
+    "nodo_grafo": null,
+    "modelos": [
+     "openai_embedding_model"
+    ],
+    "interruptores": [
+     "rag_kb_v2"
+    ]
+   },
+   {
+    "id": "metricas",
+    "vista": "general",
+    "titulo": "Métricas",
+    "tipo": "externo",
+    "nodo_grafo": null,
+    "modelos": [],
+    "interruptores": []
+   },
+   {
+    "id": "openai",
+    "vista": "general",
+    "titulo": "OpenAI",
+    "tipo": "externo",
+    "nodo_grafo": null,
+    "modelos": [],
+    "interruptores": []
+   },
+   {
+    "id": "openrouter",
+    "vista": "general",
+    "titulo": "OpenRouter (Jev)",
+    "tipo": "externo",
+    "nodo_grafo": null,
+    "modelos": [
+     "jev_model"
+    ],
+    "interruptores": [
+     "jev_router_enabled"
+    ]
+   },
+   {
+    "id": "pre",
+    "vista": "general",
+    "titulo": "Servidor PRE",
+    "tipo": "infra",
+    "nodo_grafo": null,
+    "modelos": [],
+    "interruptores": []
+   },
+   {
+    "id": "preparacion",
+    "vista": "general",
+    "titulo": "Preparar el turno",
+    "tipo": "entrada",
+    "nodo_grafo": null,
+    "modelos": [
+     "openai_transcription_model"
+    ],
+    "interruptores": [
+     "chatwoot_typing_indicator"
+    ]
+   },
+   {
+    "id": "r_buscar",
+    "vista": "info",
+    "titulo": "Buscar",
+    "tipo": "datos",
+    "nodo_grafo": null,
+    "modelos": [
+     "openai_embedding_model"
+    ],
+    "interruptores": [
+     "rag_busqueda_origen",
+     "rag_busqueda_doble"
+    ]
+   },
+   {
+    "id": "r_catalogo",
+    "vista": "info",
+    "titulo": "Catálogo",
+    "tipo": "datos",
+    "nodo_grafo": null,
+    "modelos": [],
+    "interruptores": [
+     "rag_v2",
+     "rag_prompt_cache"
+    ]
+   },
+   {
+    "id": "r_confianza",
+    "vista": "info",
+    "titulo": "¿Es fiable lo encontrado?",
+    "tipo": "cerebro",
+    "nodo_grafo": null,
+    "modelos": [],
+    "interruptores": []
+   },
+   {
+    "id": "r_entrada",
+    "vista": "info",
+    "titulo": "Llega una pregunta",
+    "tipo": "entrada",
+    "nodo_grafo": null,
+    "modelos": [],
+    "interruptores": []
+   },
+   {
+    "id": "r_escribir",
+    "vista": "info",
+    "titulo": "Escribir la respuesta",
+    "tipo": "llm",
+    "nodo_grafo": null,
+    "modelos": [
+     "rag_answer_model"
+    ],
+    "interruptores": [
+     "rag_concise",
+     "rag_origen_pregunta"
+    ]
+   },
+   {
+    "id": "r_guardas",
+    "vista": "info",
+    "titulo": "Comprobaciones fijas",
+    "tipo": "cerebro",
+    "nodo_grafo": null,
+    "modelos": [],
+    "interruptores": []
+   },
+   {
+    "id": "r_nolotengo",
+    "vista": "info",
+    "titulo": "\"No lo tengo a la mano\"",
+    "tipo": "salida",
+    "nodo_grafo": null,
+    "modelos": [],
+    "interruptores": []
+   },
+   {
+    "id": "r_reescribir",
+    "vista": "info",
+    "titulo": "Reescribir la pregunta",
+    "tipo": "llm",
+    "nodo_grafo": null,
+    "modelos": [
+     "openai_model"
+    ],
+    "interruptores": []
+   },
+   {
+    "id": "r_reglas",
+    "vista": "info",
+    "titulo": "Textos fijos y atajos",
+    "tipo": "agente",
+    "nodo_grafo": null,
+    "modelos": [],
+    "interruptores": []
+   },
+   {
+    "id": "r_reintento",
+    "vista": "info",
+    "titulo": "Reintento con motivo",
+    "tipo": "cerebro",
+    "nodo_grafo": null,
+    "modelos": [],
+    "interruptores": [
+     "rag_regen_feedback"
+    ]
+   },
+   {
+    "id": "r_revisor",
+    "vista": "info",
+    "titulo": "Revisor",
+    "tipo": "llm",
+    "nodo_grafo": null,
+    "modelos": [
+     "grounding_v3_model"
+    ],
+    "interruptores": [
+     "grounding_v3",
+     "juez_por_tipo",
+     "juez_segunda_opinion",
+     "juez_presentacion",
+     "juez_privacidad_por_linea"
+    ]
+   },
+   {
+    "id": "r_salida",
+    "vista": "info",
+    "titulo": "Respuesta aprobada",
+    "tipo": "salida",
+    "nodo_grafo": null,
+    "modelos": [],
+    "interruptores": []
+   },
+   {
+    "id": "route_message",
+    "vista": "general",
+    "titulo": "Director del turno",
+    "tipo": "cerebro",
+    "nodo_grafo": null,
+    "modelos": [],
+    "interruptores": [
+     "agent_arch"
+    ]
+   },
+   {
+    "id": "router",
+    "vista": "general",
+    "titulo": "Enrutador",
+    "tipo": "cerebro",
+    "nodo_grafo": "router",
+    "modelos": [
+     "jev_model",
+     "extraction_model"
+    ],
+    "interruptores": [
+     "jev_router_enabled",
+     "s4_fixes"
+    ]
+   },
+   {
+    "id": "safety",
+    "vista": "general",
+    "titulo": "Seguridad",
+    "tipo": "agente",
+    "nodo_grafo": "safety",
+    "modelos": [],
+    "interruptores": []
+   }
+  ],
+  "aristas": [
+   [
+    "b_acuse",
+    "b_slotfill_close",
+    "paralelo"
+   ],
+   [
+    "b_availability",
+    "b_routing",
+    "condicional"
+   ],
+   [
+    "b_availability",
+    "b_salida",
+    "condicional"
+   ],
+   [
+    "b_entrada",
+    "b_setup",
+    "normal"
+   ],
+   [
+    "b_extraction",
+    "b_salida",
+    "condicional"
+   ],
+   [
+    "b_extraction",
+    "b_slotfill_close",
+    "condicional"
+   ],
+   [
+    "b_pregunta",
+    "b_slotfill_close",
+    "paralelo"
+   ],
+   [
+    "b_routing",
+    "b_extraction",
+    "condicional"
+   ],
+   [
+    "b_routing",
+    "b_pregunta",
+    "paralelo"
+   ],
+   [
+    "b_routing",
+    "b_salida",
+    "condicional"
+   ],
+   [
+    "b_setup",
+    "b_acuse",
+    "paralelo"
+   ],
+   [
+    "b_setup",
+    "b_availability",
+    "condicional"
+   ],
+   [
+    "b_setup",
+    "b_notas",
+    "paralelo"
+   ],
+   [
+    "b_setup",
+    "b_salida",
+    "condicional"
+   ],
+   [
+    "b_slotfill_close",
+    "b_salida",
+    "normal"
+   ],
+   [
+    "booking",
+    "cascada",
+    "respaldo"
+   ],
+   [
+    "booking",
+    "catalogo",
+    "datos"
+   ],
+   [
+    "booking",
+    "cierre",
+    "normal"
+   ],
+   [
+    "booking",
+    "kb",
+    "datos"
+   ],
+   [
+    "booking",
+    "openai",
+    "datos"
+   ],
+   [
+    "cascada",
+    "cierre",
+    "normal"
+   ],
+   [
+    "changes",
+    "cascada",
+    "respaldo"
+   ],
+   [
+    "changes",
+    "cierre",
+    "normal"
+   ],
+   [
+    "chatwoot",
+    "entrada",
+    "normal"
+   ],
+   [
+    "ci",
+    "pre",
+    "infra"
+   ],
+   [
+    "cierre",
+    "envio",
+    "normal"
+   ],
+   [
+    "cierre",
+    "metricas",
+    "datos"
+   ],
+   [
+    "cierre",
+    "openai",
+    "datos"
+   ],
+   [
+    "cliente",
+    "chatwoot",
+    "normal"
+   ],
+   [
+    "deflection",
+    "cascada",
+    "respaldo"
+   ],
+   [
+    "deflection",
+    "cierre",
+    "normal"
+   ],
+   [
+    "entrada",
+    "preparacion",
+    "normal"
+   ],
+   [
+    "envio",
+    "chatwoot",
+    "vuelta"
+   ],
+   [
+    "envio",
+    "estado",
+    "datos"
+   ],
+   [
+    "info",
+    "cascada",
+    "respaldo"
+   ],
+   [
+    "info",
+    "catalogo",
+    "datos"
+   ],
+   [
+    "info",
+    "cierre",
+    "normal"
+   ],
+   [
+    "info",
+    "kb",
+    "datos"
+   ],
+   [
+    "info",
+    "openai",
+    "datos"
+   ],
+   [
+    "preparacion",
+    "estado",
+    "datos"
+   ],
+   [
+    "preparacion",
+    "openai",
+    "datos"
+   ],
+   [
+    "preparacion",
+    "route_message",
+    "normal"
+   ],
+   [
+    "r_buscar",
+    "r_confianza",
+    "normal"
+   ],
+   [
+    "r_catalogo",
+    "r_escribir",
+    "datos"
+   ],
+   [
+    "r_catalogo",
+    "r_revisor",
+    "datos"
+   ],
+   [
+    "r_confianza",
+    "r_escribir",
+    "normal"
+   ],
+   [
+    "r_entrada",
+    "r_reglas",
+    "normal"
+   ],
+   [
+    "r_escribir",
+    "r_guardas",
+    "normal"
+   ],
+   [
+    "r_guardas",
+    "r_reintento",
+    "bucle"
+   ],
+   [
+    "r_guardas",
+    "r_revisor",
+    "normal"
+   ],
+   [
+    "r_reescribir",
+    "r_buscar",
+    "normal"
+   ],
+   [
+    "r_reglas",
+    "r_reescribir",
+    "normal"
+   ],
+   [
+    "r_reglas",
+    "r_salida",
+    "atajo"
+   ],
+   [
+    "r_reintento",
+    "r_escribir",
+    "bucle"
+   ],
+   [
+    "r_reintento",
+    "r_nolotengo",
+    "bucle"
+   ],
+   [
+    "r_revisor",
+    "r_reintento",
+    "bucle"
+   ],
+   [
+    "r_revisor",
+    "r_salida",
+    "normal"
+   ],
+   [
+    "route_message",
+    "router",
+    "normal"
+   ],
+   [
+    "router",
+    "booking",
+    "condicional"
+   ],
+   [
+    "router",
+    "changes",
+    "condicional"
+   ],
+   [
+    "router",
+    "deflection",
+    "condicional"
+   ],
+   [
+    "router",
+    "info",
+    "condicional"
+   ],
+   [
+    "router",
+    "openai",
+    "datos"
+   ],
+   [
+    "router",
+    "openrouter",
+    "datos"
+   ],
+   [
+    "router",
+    "safety",
+    "condicional"
+   ],
+   [
+    "safety",
+    "cascada",
+    "respaldo"
+   ],
+   [
+    "safety",
+    "cierre",
+    "normal"
+   ]
+  ],
+  "interruptores": {
+   "ack_in_parallel": {
+    "codigo": true,
+    "pre": true
+   },
+   "agent_arch": {
+    "codigo": true,
+    "pre": true
+   },
+   "answer_and_continue": {
+    "codigo": true,
+    "pre": true
+   },
+   "chatwoot_typing_indicator": {
+    "codigo": true,
+    "pre": true
+   },
+   "cierre_sin_repetir": {
+    "codigo": true,
+    "pre": true
+   },
+   "corrections_v2": {
+    "codigo": true,
+    "pre": true
+   },
+   "grounding_v3": {
+    "codigo": true,
+    "pre": true
+   },
+   "hotel_ubicacion_declarada": {
+    "codigo": true,
+    "pre": true
+   },
+   "jev_acompanante_manda": {
+    "codigo": true,
+    "pre": true
+   },
+   "jev_lugar_cliente": {
+    "codigo": true,
+    "pre": true
+   },
+   "jev_persona_ya_contada": {
+    "codigo": true,
+    "pre": true
+   },
+   "jev_router_enabled": {
+    "codigo": false,
+    "pre": true
+   },
+   "juez_por_tipo": {
+    "codigo": false,
+    "pre": false
+   },
+   "juez_presentacion": {
+    "codigo": true,
+    "pre": true
+   },
+   "juez_privacidad_por_linea": {
+    "codigo": true,
+    "pre": true
+   },
+   "juez_segunda_opinion": {
+    "codigo": true,
+    "pre": true
+   },
+   "llm_activity_veto_cutover": {
+    "codigo": true,
+    "pre": true
+   },
+   "llm_activity_veto_shadow_mode": {
+    "codigo": false,
+    "pre": false
+   },
+   "llm_certification_veto_cutover": {
+    "codigo": false,
+    "pre": false
+   },
+   "llm_certification_veto_shadow_mode": {
+    "codigo": false,
+    "pre": false
+   },
+   "llm_extraction_cutover_certification": {
+    "codigo": true,
+    "pre": true
+   },
+   "llm_extraction_cutover_group": {
+    "codigo": true,
+    "pre": true
+   },
+   "llm_extraction_cutover_location": {
+    "codigo": true,
+    "pre": true
+   },
+   "llm_extraction_cutover_logistics": {
+    "codigo": true,
+    "pre": true
+   },
+   "llm_extraction_shadow_mode": {
+    "codigo": false,
+    "pre": false
+   },
+   "llm_group_allocation_veto_cutover": {
+    "codigo": true,
+    "pre": true
+   },
+   "llm_group_allocation_veto_shadow_mode": {
+    "codigo": false,
+    "pre": false
+   },
+   "llm_group_size_veto_cutover": {
+    "codigo": true,
+    "pre": true
+   },
+   "llm_group_size_veto_shadow_mode": {
+    "codigo": false,
+    "pre": false
+   },
+   "llm_location_veto_cutover": {
+    "codigo": false,
+    "pre": false
+   },
+   "llm_location_veto_shadow_mode": {
+    "codigo": false,
+    "pre": false
+   },
+   "llm_nationality_veto_cutover": {
+    "codigo": false,
+    "pre": false
+   },
+   "llm_nationality_veto_shadow_mode": {
+    "codigo": false,
+    "pre": false
+   },
+   "notas_puerta_jev": {
+    "codigo": true,
+    "pre": true
+   },
+   "notes_in_parallel": {
+    "codigo": true,
+    "pre": true
+   },
+   "rag_adelantado": {
+    "codigo": true,
+    "pre": true
+   },
+   "rag_busqueda_doble": {
+    "codigo": true,
+    "pre": true
+   },
+   "rag_busqueda_origen": {
+    "codigo": true,
+    "pre": true
+   },
+   "rag_concise": {
+    "codigo": false,
+    "pre": false
+   },
+   "rag_condiciones_abiertas": {
+    "codigo": true,
+    "pre": true
+   },
+   "rag_contesta_lo_que_sabe": {
+    "codigo": false,
+    "pre": false
+   },
+   "rag_ficha_del_servicio": {
+    "codigo": false,
+    "pre": false
+   },
+   "rag_kb_v2": {
+    "codigo": true,
+    "pre": true
+   },
+   "rag_origen_pregunta": {
+    "codigo": true,
+    "pre": true
+   },
+   "rag_plan_elegido": {
+    "codigo": true,
+    "pre": true
+   },
+   "rag_plan_nombrado": {
+    "codigo": true,
+    "pre": true
+   },
+   "rag_prompt_cache": {
+    "codigo": true,
+    "pre": true
+   },
+   "rag_regen_feedback": {
+    "codigo": true,
+    "pre": true
+   },
+   "rag_v2": {
+    "codigo": true,
+    "pre": true
+   },
+   "recommend_inferred_minicourse": {
+    "codigo": true,
+    "pre": true
+   },
+   "red_menciones_con_principal": {
+    "codigo": true,
+    "pre": true
+   },
+   "s4_fixes": {
+    "codigo": true,
+    "pre": true
+   }
+  },
+  "modelos": {
+   "extraction_model": {
+    "codigo": "gpt-4o-mini",
+    "pre": "gpt-4o-mini"
+   },
+   "grounding_v3_model": {
+    "codigo": "gpt-4.1",
+    "pre": "gpt-4.1"
+   },
+   "jev_model": {
+    "codigo": "typesafe/jev-1.13",
+    "pre": "typesafe/jev-1.13"
+   },
+   "openai_embedding_model": {
+    "codigo": "text-embedding-3-small",
+    "pre": "text-embedding-3-small"
+   },
+   "openai_model": {
+    "codigo": "gpt-4o-mini",
+    "pre": "gpt-4o-mini"
+   },
+   "openai_transcription_model": {
+    "codigo": "gpt-4o-mini-transcribe",
+    "pre": "gpt-4o-mini-transcribe"
+   },
+   "rag_answer_model": {
+    "codigo": "gpt-4.1-mini",
+    "pre": "gpt-4.1-mini"
+   }
+  }
+ },
+ "cambios": {
+  "piezas_nuevas": [],
+  "piezas_quitadas": [],
+  "flechas_nuevas": [],
+  "flechas_quitadas": [],
+  "interruptores": [
+   "jev_lugar_cliente"
+  ],
+  "modelos": []
+ }
+}

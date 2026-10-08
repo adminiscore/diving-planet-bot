@@ -337,6 +337,30 @@ _ADDS_PERSON_Q = {
     ),
 }
 
+# s4-28 (8-oct, flag `jev_lugar_cliente`): ¿DÓNDE está o desde dónde sale el cliente? La regex (`place_by_role`)
+# lo decide por la preposición y lee "estamos en Cartagena y queremos bucear EN las islas" como islas. La regex sigue
+# PROPONIENDO que el mensaje trae una ubicación; Jev decide CUÁL cuando está seguro (>= CUSTOMER_PLACE_MIN). Banco de
+# los tests de place_by_role: 9/10 (1 dudoso, ninguno mal); banco ciego de frases nuevas: 12/12 frente a 4/12 de la
+# regex; 0 respuestas seguras y equivocadas (scripts/sonda_lugar_cliente.py).
+CUSTOMER_PLACE = "customer_place"
+CUSTOMER_PLACE_MIN = 0.6
+_CUSTOMER_PLACE_Q = {
+    "type": "choice",
+    "instructions": (
+        "Where is the customer (or their group) staying, or setting out from, for the diving trip? Only count what "
+        "they say about THEMSELVES: the city or hotel they are in or will stay at, or where they leave from. The "
+        "Rosario Islands are where every dive happens, so naming them as the place to DIVE, VISIT or GO TO is not "
+        "where the customer is."
+    ),
+    "criteria": {
+        "cartagena": "They are in, are staying in, or set out from Cartagena (the city or the mainland).",
+        "islands": "They are staying on, or will already be on, one of the islands (Rosario Islands, Isla Grande, "
+                   "Baru...) when they dive.",
+        "none": "The message does not say where they are or leave from: it only names a place to dive, visit or go "
+                "to, asks a question about a place, or is unclear.",
+    },
+}
+
 # rag-5 (1-oct): ¿el mensaje cuenta algo del cliente que haya que APUNTAR como nota? Puerta del extractor de
 # notas (`conversational_core._maybe_capture_notes`): Gonzalo midió el 30-sep que de 26 notas nuevas solo 7
 # eran buenas y 15 eran la pregunta del cliente apuntada como hecho, o inventada ("how much would that be" ->
@@ -402,7 +426,7 @@ def pending_answer_value(slot: str, answer: dict) -> dict:
 _U34_QUESTIONS = (
     ASKS_QUESTION, AFFIRMS_LOCATION, AFFIRMS_ACTIVITY, ACTIVITY_HYPOTHESIS,
     AFFIRMS_CERTIFICATION, AFFIRMS_GROUP, AFFIRMS_NATIONALITY, CORRECTS, ASKS_RECALL, NEEDS_STAFF,
-    CHANGES_DATE, COMPANION_JOINS, PENDING_ANSWER, SHARES_OPEN_FACT, ADDS_PERSON,
+    CHANGES_DATE, COMPANION_JOINS, PENDING_ANSWER, SHARES_OPEN_FACT, ADDS_PERSON, CUSTOMER_PLACE,
 )
 
 
@@ -441,6 +465,8 @@ def _questions_for_turn(pending_slot: str | None = None) -> dict:
     q[COMPANION_JOINS] = _COMPANION_JOINS_Q
     if settings.jev_persona_ya_contada:
         q[ADDS_PERSON] = _ADDS_PERSON_Q
+    if settings.jev_lugar_cliente:
+        q[CUSTOMER_PLACE] = _CUSTOMER_PLACE_Q
     if settings.notas_puerta_jev:
         q[SHARES_OPEN_FACT] = _SHARES_OPEN_FACT_Q
     return q
@@ -494,6 +520,9 @@ def answers_to_signals(answers: dict, threshold: float = THRESHOLD) -> dict:
     if COMPANION_JOINS in answers:
         # Se emite la PROBABILIDAD: el filtro solo actua cuando Jev esta seguro de que NO.
         out[COMPANION_JOINS] = (answers.get(COMPANION_JOINS) or {}).get("noul", 1.0)
+    if CUSTOMER_PLACE in answers:
+        a = answers.get(CUSTOMER_PLACE) or {}
+        out[CUSTOMER_PLACE] = {"choice": a.get("choice"), "confidence": float(a.get("confidence", 0.0))}
     if ADDS_PERSON in answers:
         # Ausente o sin respuesta = 1.0 ("puede ser nueva"): se pregunta el total, como hoy.
         out[ADDS_PERSON] = (answers.get(ADDS_PERSON) or {}).get("noul", 1.0)
