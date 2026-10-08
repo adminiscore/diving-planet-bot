@@ -13,7 +13,34 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 
 > **📏 LEER ANTES DE MEDIR — decisiones del 24-sep-2026 (Gadea):** (1) latencia y llamadas con nuestros logs `[TURN_METRICS]` + `scripts/turn_metrics.py`, no con Langfuse (plan gratuito superado, reinicio 16-oct); (2) pruebas A/B por escalones, juzgando solo los diálogos que cambian. Todo en `docs/robustness/protocolo-medicion.md`.
 
-### ▶️ RETOMAR AQUÍ — 8-oct noche (Gadea con Claude → siguen Álvaro o Gonzalo): RAG en GPT-6 Luna con respaldo; siguiente s4-31 y s4-33
+### ▶️ RETOMAR AQUÍ — 8-oct noche (Álvaro con Claude): s4-31 EN CURSO, primera causa arreglada (`ORIGEN_CONSERVA_RESPUESTA`)
+
+**Estado.** PRE sirve `feature/pre_alvaro` (= `feature/pre_gadea` del 8-oct + s4-31). **Integrad `feature/pre_alvaro`
+antes de subir.** HISTORY 0.31.1. Modelos sin cambios respecto al bloque de Gadea de abajo.
+
+**s4-31, lo hecho:** ronda del golden VISIBLE completo con Luna (`2026-10-08-luna-visible`: 92,8 %, 61/95 sin fallos,
+reales 88,7 %) y **mapa de fallos por causa** (`docs/robustness/fallos-por-causa-2026-10-08-luna-visible.json`, con
+`scripts/fallos_por_turno.py`). De 58 fallos, 33 son de turnos del RAG. Causa 1 (la puerta del origen tapaba el resto,
+6) **arreglada y promocionada** (mini-ronda `conserva-A/B` 92,6 → 97,0 %). Los "no tengo el dato" de Luna comprobados
+son de **búsqueda** (el dato no llega al contexto), no de prompt.
+
+**s4-31, lo que queda, en orden:**
+1. **Búsqueda** (5 comprobados): la ficha del servicio de la conversación no sale con preguntas concretas ("¿a qué hora
+   termina el primer día?" en `open-water-hoteles-noche-fotos-horario`), ni la norma de equipaje
+   (`equipaje-mochilas-y-almacenamiento`), ni la de fotos (`programa-fotos-y-alojamiento`), ni el punto de encuentro
+   (`principiante-hora-lugar-y-precio`). Mirar si basta con meter la ficha del servicio activo en el contexto (ya existe
+   `catalog.service_fact_sheet`) y por qué aquí no entró.
+2. **Leer los 21 fallos del RAG "por leer"** del mapa (prompt / búsqueda / juez) y los 17 del flujo.
+3. Prompt: "es la 1:46 p.m. en Cartagena" (la hora del contexto es para el bot, no para decirla).
+4. Después, s4-33 (el revisor a Luna; ojo: rechaza a menudo "el residente / nacido en Colombia paga en COP", que es cierto).
+- **Para s4-28:** con la pregunta del origen pendiente, el extractor LLM se inventa `location=cartagena` ante una respuesta
+  a otra cosa ("May 3rd"); la puerta de Jev no lo frena (HISTORY 0.31.1).
+- **Para Gadea:** `hora-fin-dia1` espera "4:30" y la base dice 12:00-13:00; la propina de fotos (50.000 COP) suspende
+  `importes-catalogo`.
+- **Respaldo:** en la ronda visible ganó 4 de 156 (en `respaldo-B`, 0). Seguir mirando `rag_respaldo` en cada ronda.
+- Gasto de OpenAI del 8-oct: ~10 $ (Gadea) + ~4,5 $ (tarde).
+
+### ✅ 8-oct noche (Gadea con Claude) — SUPERADO por el bloque de arriba: RAG en GPT-6 Luna con respaldo; siguiente s4-31 y s4-33
 
 **Estado.**
 - PRE sirve `feature/pre_gadea` (commit del cierre del 8-oct; `check_deploy` en verde). Modelos: **respuesta del RAG en

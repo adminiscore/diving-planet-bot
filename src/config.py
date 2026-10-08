@@ -228,8 +228,9 @@ class Settings(BaseSettings):
     # fija, se quitan solo las frases con un importe y su pregunta final, y se anade la del origen. En la ronda del
     # golden visible con Luna (2026-10-08-luna-visible) 6 de 33 fallos del RAG eran de perder lo que no era el precio
     # ("no hay precio especial para colombianos", "con 1,5 anos no hace falta refresher"). Tambien quita los links de
-    # reserva y lo que incluye (dependen del origen). Escalon 0 en PRE: las 6 conservan lo que no es precio. ENCENDIDO para
-    # su mini-ronda B (= PRE).
+    # reserva y lo que incluye (dependen del origen). Escalon 0 en PRE: las 6 conservan lo que no es precio. Mini-ronda
+    # conserva-A/B (9 dialogos, misma franja): 92,6 -> 97,0 %, 5 -> 8/9 sin fallos, 6 mejoras, ninguna regresion del flag.
+    # PROMOCIONADO 8-oct (HISTORY 0.31.1). Revert = False aqui y en el compose.
     origen_conserva_respuesta: bool = True
     # Punto 4 (s4-26, 7-oct): si Jev esta SEGURO de que el mensaje no mete a otra persona (companion_joins <
     # COMPANION_NONE_MAX, la misma puerta de u3-6), la regex de "menciona a alguien" (`_mentions_person`) no puede

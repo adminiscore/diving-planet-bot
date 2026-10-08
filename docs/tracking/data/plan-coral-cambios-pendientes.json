@@ -1,13 +1,33 @@
 {
- "que_es": "Cola de cambios PENDIENTES DE APLICAR a la pagina Plan Coral. NO es una copia de su base de datos (eso es plan-coral.json, que se regenera exportando). Aqui se deja lo que alguien no ha podido escribir en la pagina, listo para volcarlo tal cual.",
- "pagina": "https://claude.ai/artifact/XiGd3kguTNwwqTnH7mQwgi",
- "por_que_existe": "En la sesion de Claude Code de Gonzalo la herramienta ArtifactData NO aparece: buscada 6 veces (select:ArtifactData, select:artifact_data/ArtifactDB/ArtifactStore/ArtifactCollections y 2 busquedas por descripcion) y siempre 'No matching deferred tools found'. No es cuenta ni permisos: esa misma sesion SI tiene DesignSync y RemoteTrigger, que autentican con el login de claude.ai, y la config tiene oauthAccount con organizationRole admin, sin ninguna ANTHROPIC_API_KEY. Si la herramienta existiera pero estuviera capada por no ser propietario, apareceria en la lista y fallaria AL LLAMARLA; no aparece en absoluto. Tampoco se intento republicar el HTML en ningun momento. Hipotesis viva: diferencia de version de Claude Code (pedir a Gadea la suya y comparar).",
- "como_aplicar": {
-  "con_claude": "Con la herramienta ArtifactData (NO con Artifact, y sin republicar el HTML): leer el documento, y hacer update pasando su version como if_version. Coleccion tasks -> doc_id = el id de la tarea. Coleccion log -> documentos nuevos.",
-  "a_mano": "Abrir la pagina con sesion iniciada y copiar cada campo en su tarea o en la bitacora.",
-  "al_terminar": "Dejar 'pendientes' como lista vacia, poner la fecha en 'aplicado_el' y quien lo aplico en 'aplicado_por', todo en el MISMO commit. Si esta lista se queda llena, el repo y la pagina han divergido: esa es la senal."
- },
- "aplicado_el": "2026-10-08",
- "aplicado_por": "Gadea (con Claude): bitácora l-1007-gonzalo-s4-27 (s4-27 paso 1) y s4-27 pasa a 'en curso'",
- "pendientes": []
+  "que_es": "Cola de cambios PENDIENTES DE APLICAR a la pagina Plan Coral. NO es una copia de su base de datos (eso es plan-coral.json, que se regenera exportando). Aqui se deja lo que alguien no ha podido escribir en la pagina, listo para volcarlo tal cual.",
+  "pagina": "https://claude.ai/artifact/XiGd3kguTNwwqTnH7mQwgi",
+  "por_que_existe": "En la sesion de Claude Code de Gonzalo la herramienta ArtifactData NO aparece: buscada 6 veces (select:ArtifactData, select:artifact_data/ArtifactDB/ArtifactStore/ArtifactCollections y 2 busquedas por descripcion) y siempre 'No matching deferred tools found'. No es cuenta ni permisos: esa misma sesion SI tiene DesignSync y RemoteTrigger, que autentican con el login de claude.ai, y la config tiene oauthAccount con organizationRole admin, sin ninguna ANTHROPIC_API_KEY. Si la herramienta existiera pero estuviera capada por no ser propietario, apareceria en la lista y fallaria AL LLAMARLA; no aparece en absoluto. Tampoco se intento republicar el HTML en ningun momento. Hipotesis viva: diferencia de version de Claude Code (pedir a Gadea la suya y comparar).",
+  "como_aplicar": {
+    "con_claude": "Con la herramienta ArtifactData (NO con Artifact, y sin republicar el HTML): leer el documento, y hacer update pasando su version como if_version. Coleccion tasks -> doc_id = el id de la tarea. Coleccion log -> documentos nuevos.",
+    "a_mano": "Abrir la pagina con sesion iniciada y copiar cada campo en su tarea o en la bitacora.",
+    "al_terminar": "Dejar 'pendientes' como lista vacia, poner la fecha en 'aplicado_el' y quien lo aplico en 'aplicado_por', todo en el MISMO commit. Si esta lista se queda llena, el repo y la pagina han divergido: esa es la senal."
+  },
+  "aplicado_el": "2026-10-08",
+  "aplicado_por": "Gadea (con Claude): bitácora l-1007-gonzalo-s4-27 (s4-27 paso 1) y s4-27 pasa a 'en curso'",
+  "pendientes": [
+    {
+      "coleccion": "log",
+      "operacion": "set",
+      "doc_id": "l-1008-alvaro-s431",
+      "campos": {
+        "at": "2026-10-08T21:00:00Z",
+        "byLabel": "Alvaro (con Claude)",
+        "text": "8-oct noche: s4-31 en curso. Ronda del golden visible con Luna: 92,8 %, 61/95 sin fallos, reales 88,7 %. Mapa de fallos por causa (58: 33 del RAG, 17 de la reserva). Los 'no tengo el dato' de Luna son de busqueda, no de prompt. Causa 1 arreglada: la puerta del origen ya no tapa el resto de la respuesta (ORIGEN_CONSERVA_RESPUESTA, mini-ronda 92,6 -> 97,0 %, promocionado). Respaldo: gano 4 de 156. Siguiente: la busqueda (ficha del servicio activo). HISTORY 0.31.1."
+      }
+    },
+    {
+      "coleccion": "tasks",
+      "operacion": "update",
+      "doc_id": "s4-31",
+      "campos": {
+        "status": "en curso",
+        "note": "8-oct noche (Alvaro): ronda visible con Luna y mapa de fallos por causa hechos; causa 1 (puerta del origen) arreglada y promocionada. Sigue: busqueda (ficha del servicio activo), leer los 21 fallos del RAG por leer, prompt (no decir la hora). HISTORY 0.31.1."
+      }
+    }
+  ]
 }
