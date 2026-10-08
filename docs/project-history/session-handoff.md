@@ -13,6 +13,23 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 
 > **📏 LEER ANTES DE MEDIR — decisiones del 24-sep-2026 (Gadea):** (1) latencia y llamadas con nuestros logs `[TURN_METRICS]` + `scripts/turn_metrics.py`, no con Langfuse (plan gratuito superado, reinicio 16-oct); (2) pruebas A/B por escalones, juzgando solo los diálogos que cambian. Todo en `docs/robustness/protocolo-medicion.md`.
 
+### 🔔 PARA GADEA, LO PRIMERO AL COGER LA RAMA — 5 decisiones de negocio (Álvaro, 8-oct)
+
+Salen del mapa de fallos de la ronda visible con Luna (`docs/robustness/fallos-por-causa-2026-10-08-luna-visible.json`).
+En cada una el bot hace una cosa y el criterio del golden pide otra; no se toca nada hasta que decidas. Apunta la
+respuesta aquí debajo de cada punto (o en Plan Coral) y quien siga la aplica.
+
+| # | Pregunta | Hoy el bot | El golden pide | Casos |
+|---|---|---|---|---|
+| 1 | ¿Puede Coral dar el **TOTAL de un grupo** (personas × precio del catálogo)? | No: el prompt del RAG prohíbe calcular totales ("el total exacto al reservar") | El total (`precio-total-cop-grupo-mixto`) | `grupo-mixto-precio-cop-total` |
+| 2 | ¿Damos por hecho que **los hoteles base (San Pedro de Majagua, Cocoliso) tienen acceso en lancha** y la recogida está incluida? | Duda y dice que "el equipo confirma si el hotel tiene acceso" (`RAG_CONDICIONES_ABIERTAS`, regla del punto 4) | Que la recogida está incluida | `paquete-5-buceos-islas-residente-sin-recogida` |
+| 3 | ¿A qué hora **termina el día 1 del Open Water**? | La base dice 12:00-13:00 (tu decisión del 30-sep) | El criterio `hora-fin-dia1` dice 4:30 p.m. | `open-water-hoteles-noche-fotos-horario` |
+| 4 | ¿La **propina de las fotos** (50.000 COP / 14 USD) va al catálogo, o se excluye del criterio automático de importes? | La dice (está en la FAQ) | `importes-catalogo` la suspende porque no está en el catálogo | 3 diálogos de fotos |
+| 5 | **`acompanante-lancha-escalar`**: ¿el acompañante en lancha lo confirma el bot (plan de acompañante, con precio) o se pasa a un asesor? | Lo confirma con el plan de acompañante | Pasar a un asesor | `minicurso-islas-y-acompanante-lancha` |
+
+Pendiente de antes (sigue): el criterio del Open Water en `manual-duracion-curso` y el ajuste de privacidad de
+OpenRouter para medir DeepSeek oficial como referencia.
+
 ### ▶️ RETOMAR AQUÍ — 8-oct, cierre (Álvaro con Claude): s4-31 CERRADA; siguiente s4-33 (el revisor a Luna)
 
 **s4-31 cerrada** (HISTORY 0.31.2): el prompt del RAG no necesita reescribirse para Luna. Mapa de los 58 fallos leído
