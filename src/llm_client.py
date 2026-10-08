@@ -55,9 +55,48 @@ def _with_timeout(client: _C) -> _C:
 
 def trace_openai(client: _C) -> _C:
     """Cliente OpenAI trazado por Langfuse si el tracing está activo; si no, el
-    `client` que se pasa. En ambos casos con el timeout de r6-1 aplicado."""
+    `client` que se pasa. En ambos casos con el timeout de r6-1 aplicado y los
+    parámetros adaptados al modelo de cada llamada (`adaptar_parametros`)."""
     traced = traced_openai_client(settings)
-    return _with_timeout(traced if traced is not None else client)
+    return _con_parametros_adaptados(_with_timeout(traced if traced is not None else client))
+
+
+# Modelos de la API nueva (8-oct, fase 0 del cambio de modelos): gpt-5/gpt-6 y la serie o RECHAZAN `max_tokens`
+# ("Use 'max_completion_tokens' instead", 400) y gpt-6 RAZONA por defecto (esfuerzo "medium"), lo que se come la
+# latencia. Todas las llamadas del bot usan `max_tokens`, así que el cambio de modelo se hace aquí, en un sitio, y no
+# en cada llamada. Los modelos de antes (gpt-4o-mini, gpt-4.1…) rechazan `reasoning_effort`: a ellos no se les toca.
+_API_NUEVA = ("gpt-5", "gpt-6", "o1", "o3", "o4")
+
+
+def adaptar_parametros(kwargs: dict) -> dict:
+    """Los parámetros de una llamada a `chat.completions.create`, adaptados a su modelo."""
+    model = str(kwargs.get("model") or "")
+    if not model.startswith(_API_NUEVA):
+        return kwargs
+    kw = dict(kwargs)
+    if "max_tokens" in kw:
+        kw["max_completion_tokens"] = kw.pop("max_tokens")
+    if model.startswith("gpt-6") and "reasoning_effort" not in kw:
+        kw["reasoning_effort"] = settings.razonamiento_modelos_nuevos
+    return kw
+
+
+def _con_parametros_adaptados(client: _C) -> _C:
+    """Envuelve `chat.completions.create` del cliente REAL con `adaptar_parametros` (mismo criterio que el timeout:
+    a un mock de los tests no se le toca)."""
+    if not isinstance(client, _RealAsyncOpenAI):
+        return client
+    try:
+        completions = client.chat.completions
+        original = completions.create
+
+        async def create(*args, **kwargs):
+            return await original(*args, **adaptar_parametros(kwargs))
+
+        completions.create = create
+    except Exception as exc:  # noqa: BLE001 — nunca romper el turno por esto
+        logger.warning("[LLM] no se pudieron adaptar los parámetros del cliente: %s", exc)
+    return client
 
 
 def _is_empty_for(spec: dict, value) -> bool:

@@ -10,6 +10,7 @@ el juez. Repite el diálogo N veces. **Nunca usa el examen oculto.**
     python -m scripts.reproducir_juez_pre <dialogo> --dry          # solo enseña los turnos
     python -m scripts.reproducir_juez_pre <dialogo> --flag juez_privacidad_por_linea   # flag SOLO en ese proceso
     python -m scripts.reproducir_juez_pre <dialogo> --codigo-local --flag x          # con el código local, sin desplegar
+    python -m scripts.reproducir_juez_pre <dialogo> --codigo-local --env RAG_ANSWER_MODEL=gpt-6-luna   # otro modelo
 
 Coste: el de N conversaciones del bot (céntimos por conversación). La cuenta de OpenAI es la misma que la de PRE.
 """
@@ -22,7 +23,7 @@ ROOT = Path(__file__).resolve().parent.parent
 GOLDEN = ROOT / "docs/robustness/golden-set/golden-dialogues.json"
 
 _REMOTO = r'''
-import asyncio, json
+import asyncio, json, time
 from src.agents import rag_agent, supervisor
 from src.config import settings
 from src.flows.state import ConversationState
@@ -42,11 +43,13 @@ async def main():
         st = ConversationState(conversation_id=f"repro-juez-{rep}")
         for i, msg in enumerate(TURNOS, 1):
             juicios.clear()
+            t0 = time.perf_counter()
             try:
                 reply = await supervisor.route_message(st, msg)
             except Exception as exc:  # noqa: BLE001
                 reply = f"ERROR {type(exc).__name__}: {exc}"
-            print(json.dumps({"rep": rep, "turn": i, "msg": msg, "reply": reply, "juicios": list(juicios)},
+            print(json.dumps({"rep": rep, "turn": i, "msg": msg, "reply": reply, "juicios": list(juicios),
+                              "segundos": round(time.perf_counter() - t0, 2)},
                              ensure_ascii=False), flush=True)
 
 asyncio.run(main())
@@ -77,6 +80,8 @@ def main() -> None:
     ap.add_argument("--out", help="JSONL de salida (una línea por turno y repetición)")
     ap.add_argument("--dry", action="store_true")
     ap.add_argument("--flag", action="append", default=[], help="interruptor a encender SOLO en ese proceso (repetible)")
+    ap.add_argument("--env", action="append", default=[], metavar="CLAVE=VALOR",
+                    help="variable de entorno SOLO en ese proceso (repetible), p. ej. RAG_ANSWER_MODEL=gpt-6-luna")
     ap.add_argument("--codigo-local", action="store_true",
                     help="corre con el código LOCAL (sin desplegar) copiado dentro de dp-pre-bot; PRE no cambia")
     args = ap.parse_args()
@@ -92,7 +97,8 @@ def main() -> None:
 
     script = f"TURNOS_JSON = {json.dumps(ts, ensure_ascii=False)!r}\nN_REPS = {args.reps}\nFLAGS = {args.flag!r}\n{_REMOTO}"
     codigo = subir_codigo_local() if args.codigo_local else None
-    r = pre_ssh(docker_python(codigo_local=codigo), input_text=script, timeout=max(600, 240 * args.reps))
+    entorno = dict(e.split("=", 1) for e in args.env)
+    r = pre_ssh(docker_python(entorno, codigo_local=codigo), input_text=script, timeout=max(600, 240 * args.reps))
     filas = [json.loads(ln) for ln in (r.stdout or "").splitlines() if ln.startswith("{")]
     out = Path(args.out) if args.out else ROOT / f"repro-{args.dialogo}.jsonl"
     out.write_text("".join(json.dumps(f, ensure_ascii=False) + "\n" for f in filas), encoding="utf-8")

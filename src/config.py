@@ -19,7 +19,11 @@ class Settings(BaseSettings):
     # Hasta el 25-sep este valia "gpt-4o" (el del orquestador ya retirado) y PRE lo
     # cambiaba desde el .env.pre del VPS, fuera del repo.
     # Lo usan condense_query, el juez de grounding, el detector de idioma y el resumen.
-    openai_model: str = "gpt-4o-mini"
+    # 8-oct (cambio de modelos, fase 4): gpt-6-luna SIN razonamiento (llm_client.adaptar_parametros pone
+    # max_completion_tokens y reasoning_effort=none). Fases 0-3: RAG claramente mejor (124 USD, no supone el refresher,
+    # 1 rechazo del juez frente a 2) con +0,5 s de mediana; extraccion igual o algo mejor con +0,2 s por llamada (Gadea:
+    # se acepta por calidad). EN MEDICION: ronda core A/B. Revert = el modelo de antes aqui y en el compose.
+    openai_model: str = "gpt-6-luna"  # antes gpt-4o-mini
     # Model for the narrow, structured LLM gap-filler extractor
     # (src/agents/llm_extractor.py, robustness Fases 1-3). Kept SEPARATE from
     # openai_model (then used by the action orchestrator, retired in 308488d): the extraction is a small
@@ -30,7 +34,11 @@ class Settings(BaseSettings):
     # (degrades to "regex-only / ask", never to a wrong value). ~15-30x cheaper
     # and faster per call. Revert to "gpt-4o" here if ever needed. See
     # docs/robustness/progress-log.md (Fase 4).
-    extraction_model: str = "gpt-4o-mini"
+    # 8-oct (cambio de modelos, fase 4): gpt-6-luna SIN razonamiento (llm_client.adaptar_parametros pone
+    # max_completion_tokens y reasoning_effort=none). Fases 0-3: RAG claramente mejor (124 USD, no supone el refresher,
+    # 1 rechazo del juez frente a 2) con +0,5 s de mediana; extraccion igual o algo mejor con +0,2 s por llamada (Gadea:
+    # se acepta por calidad). EN MEDICION: ronda core A/B. Revert = el modelo de antes aqui y en el compose.
+    extraction_model: str = "gpt-6-luna"  # antes gpt-4o-mini
     # Model for the RAG answer-generation call only (rag_agent.py
     # `_answer_with_llm`). Kept SEPARATE from `openai_model` (used broadly
     # across the bot) so we can trial a stronger model for JUST this call --
@@ -45,7 +53,11 @@ class Settings(BaseSettings):
     # `temperature`, usan `reasoning_effort`); cualquier modelo puesto aqui
     # debe seguir aceptando `temperature`/`max_tokens` como hoy (gpt-4.1-mini,
     # gpt-4o, etc.).
-    rag_answer_model: str = "gpt-4.1-mini"
+    # 8-oct (cambio de modelos, fase 4): gpt-6-luna SIN razonamiento (llm_client.adaptar_parametros pone
+    # max_completion_tokens y reasoning_effort=none). Fases 0-3: RAG claramente mejor (124 USD, no supone el refresher,
+    # 1 rechazo del juez frente a 2) con +0,5 s de mediana; extraccion igual o algo mejor con +0,2 s por llamada (Gadea:
+    # se acepta por calidad). EN MEDICION: ronda core A/B. Revert = el modelo de antes aqui y en el compose.
+    rag_answer_model: str = "gpt-6-luna"  # antes gpt-4.1-mini
     openai_embedding_model: str = "text-embedding-3-small"
     # Model used to transcribe incoming customer voice notes (see
     # src/channels/audio.py). gpt-4o-mini-transcribe is cheaper/better than
@@ -152,6 +164,14 @@ class Settings(BaseSettings):
     juez_por_tipo: bool = False
     # J1 (1-oct): con un modelo de razonamiento como juez (GROUNDING_V3_MODEL=gpt-5-mini), su esfuerzo de razonamiento.
     grounding_reasoning_effort: str = "low"
+    # 8-oct (cambio de modelos, fase 0): esfuerzo de razonamiento para los modelos gpt-6 cuando la llamada no lo pide.
+    # GPT-6 Luna razona por defecto ("medium"); "none" = sin razonamiento, como los modelos de hoy (medido: 0 tokens
+    # de razonamiento, misma latencia total que gpt-4.1-mini con el prompt del RAG). Ver `llm_client.adaptar_parametros`.
+    razonamiento_modelos_nuevos: str = "none"
+    # 8-oct (cambio de modelos): el texto que sale a Chatwoot/WhatsApp se pasa a formato de WhatsApp (`**x**` -> `*x*`,
+    # `[texto](url)` -> `texto: url`, titulos -> negrita). GPT-6 Luna escribe Markdown de documento y WhatsApp lo ensenaba
+    # con los asteriscos. Solo presentacion; lo que ya esta en formato WhatsApp no cambia. `channels/formato.py`.
+    formato_whatsapp: bool = True
     # J2 (1-oct): segunda opinion de Jev sobre las frases que el juez marca NO (src/agents/juez_segunda_opinion.py).
     # Solo cuando el juez rechaza; si Jev esta seguro de que ninguna afirma nada del negocio, la respuesta pasa.
     # rag_piezas 1-oct (96 respuestas por lado): cobertura 88 -> 90 %, contradicciones 3 -> 1, misma latencia. Calibrado

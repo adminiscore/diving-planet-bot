@@ -400,6 +400,10 @@ async def send_chatwoot_message(conversation_id: str, message: str, quick_replie
         "api_access_token": settings.chatwoot_api_token,
         "Content-Type": "application/json",
     }
+    if settings.formato_whatsapp:
+        from src.channels.formato import a_whatsapp  # lazy
+
+        message = a_whatsapp(message)  # 8-oct: Markdown de documento (GPT-6 Luna) -> formato de WhatsApp
     payload = {
         "content": message,
         "message_type": 1,  # 1 = outgoing in Chatwoot API

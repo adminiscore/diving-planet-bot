@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-08T10:15:17+00:00",
-  "commit": "81efeae",
+  "generado": "2026-10-08T11:23:07+00:00",
+  "commit": "3bd5651",
   "rama": "feature/pre_gadea"
  },
  "vistas": {
@@ -130,8 +130,8 @@
     },
     {
      "ajuste": "extraction_model",
-     "codigo": "gpt-4o-mini",
-     "pre": "gpt-4o-mini"
+     "codigo": "gpt-6-luna",
+     "pre": "gpt-6-luna"
     }
    ],
    "interruptores": [
@@ -274,8 +274,8 @@
    "modelos": [
     {
      "ajuste": "openai_model",
-     "codigo": "gpt-4o-mini",
-     "pre": "gpt-4o-mini"
+     "codigo": "gpt-6-luna",
+     "pre": "gpt-6-luna"
     }
    ],
    "interruptores": [],
@@ -441,8 +441,8 @@
    "modelos": [
     {
      "ajuste": "openai_model",
-     "codigo": "gpt-4o-mini",
-     "pre": "gpt-4o-mini"
+     "codigo": "gpt-6-luna",
+     "pre": "gpt-6-luna"
     }
    ],
    "interruptores": [],
@@ -497,8 +497,8 @@
    "modelos": [
     {
      "ajuste": "extraction_model",
-     "codigo": "gpt-4o-mini",
-     "pre": "gpt-4o-mini"
+     "codigo": "gpt-6-luna",
+     "pre": "gpt-6-luna"
     }
    ],
    "interruptores": [
@@ -536,8 +536,8 @@
    "modelos": [
     {
      "ajuste": "extraction_model",
-     "codigo": "gpt-4o-mini",
-     "pre": "gpt-4o-mini"
+     "codigo": "gpt-6-luna",
+     "pre": "gpt-6-luna"
     }
    ],
    "detalle": [
@@ -563,8 +563,8 @@
    "modelos": [
     {
      "ajuste": "extraction_model",
-     "codigo": "gpt-4o-mini",
-     "pre": "gpt-4o-mini"
+     "codigo": "gpt-6-luna",
+     "pre": "gpt-6-luna"
     }
    ],
    "interruptores": [
@@ -594,8 +594,8 @@
    "modelos": [
     {
      "ajuste": "extraction_model",
-     "codigo": "gpt-4o-mini",
-     "pre": "gpt-4o-mini"
+     "codigo": "gpt-6-luna",
+     "pre": "gpt-6-luna"
     }
    ],
    "interruptores": [
@@ -627,8 +627,8 @@
    "modelos": [
     {
      "ajuste": "extraction_model",
-     "codigo": "gpt-4o-mini",
-     "pre": "gpt-4o-mini"
+     "codigo": "gpt-6-luna",
+     "pre": "gpt-6-luna"
     }
    ],
    "interruptores": [
@@ -709,8 +709,8 @@
    "modelos": [
     {
      "ajuste": "openai_model",
-     "codigo": "gpt-4o-mini",
-     "pre": "gpt-4o-mini"
+     "codigo": "gpt-6-luna",
+     "pre": "gpt-6-luna"
     }
    ],
    "interruptores": [],
@@ -801,8 +801,8 @@
    "modelos": [
     {
      "ajuste": "rag_answer_model",
-     "codigo": "gpt-4.1-mini",
-     "pre": "gpt-4.1-mini"
+     "codigo": "gpt-6-luna",
+     "pre": "gpt-6-luna"
     }
    ],
    "interruptores": [
@@ -1610,6 +1610,17 @@
    "sin_efecto": null
   },
   {
+   "nombre": "formato_whatsapp",
+   "area": "Chat",
+   "titulo": "Formato de WhatsApp",
+   "texto": "Antes de enviar, el texto pasa a formato de WhatsApp: la negrita de documento (**así**) queda *así* y los enlaces [texto](url) quedan 'texto: url'. Los modelos nuevos escriben en formato de documento.",
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": false,
+   "usado_por": [],
+   "sin_efecto": null
+  },
+  {
    "nombre": "grounding_v3",
    "area": "Preguntas",
    "titulo": "Revisor dato a dato",
@@ -2158,8 +2169,8 @@
  "modelos": [
   {
    "ajuste": "extraction_model",
-   "codigo": "gpt-4o-mini",
-   "pre": "gpt-4o-mini",
+   "codigo": "gpt-6-luna",
+   "pre": "gpt-6-luna",
    "usado_por": [
     "router",
     "b_routing",
@@ -2169,7 +2180,7 @@
     "b_acuse"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 159
+   "llamadas_ultima_ronda": null
   },
   {
    "ajuste": "grounding_v3_model",
@@ -2206,15 +2217,15 @@
   },
   {
    "ajuste": "openai_model",
-   "codigo": "gpt-4o-mini",
-   "pre": "gpt-4o-mini",
+   "codigo": "gpt-6-luna",
+   "pre": "gpt-6-luna",
    "usado_por": [
     "cierre",
     "b_setup",
     "r_reescribir"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 159
+   "llamadas_ultima_ronda": null
   },
   {
    "ajuste": "openai_transcription_model",
@@ -2228,13 +2239,13 @@
   },
   {
    "ajuste": "rag_answer_model",
-   "codigo": "gpt-4.1-mini",
-   "pre": "gpt-4.1-mini",
+   "codigo": "gpt-6-luna",
+   "pre": "gpt-6-luna",
    "usado_por": [
     "r_escribir"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 41
+   "llamadas_ultima_ronda": null
   }
  ],
  "ronda": {
