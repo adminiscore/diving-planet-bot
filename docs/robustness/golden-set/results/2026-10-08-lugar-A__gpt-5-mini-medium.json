@@ -1,0 +1,1684 @@
+{
+ "judged_at": "2026-10-08T09:44:35+00:00",
+ "run_file": "docs/robustness/synthetic-runs/2026-10-08-lugar-A.jsonl",
+ "golden_version": 8,
+ "model": "gpt-5-mini",
+ "effort": "medium",
+ "referencia": "curada",
+ "missing_dialogues": [
+  "saludo-cortesia",
+  "reserva-completa-saludo-a-pago",
+  "reserva-solo-link",
+  "reserva-ingles",
+  "reserva-colombianos-cop",
+  "cambio-idioma",
+  "grupo-3-actividades",
+  "grupo-recompuesto",
+  "acompanante-goteo",
+  "familia-ninos-resumen",
+  "isla-hotel-refresher",
+  "grupo-cambia-dos-veces",
+  "actividad-cambia-varias",
+  "refresher-rechaza-acepta",
+  "grupo-con-refresher",
+  "ninos-6-y-10",
+  "nino-7-familia",
+  "nacionalidad-ambigua",
+  "nacionalidad-mixta-carrito",
+  "vuelo-tras-bucear",
+  "edad-minima-open-water",
+  "punto-encuentro",
+  "premisa-falsa-lunes",
+  "paquete-5-inmersiones",
+  "paquete-en-carrito",
+  "descuento-efectivo",
+  "regateo-grupo-6",
+  "embarazo",
+  "clima-manana",
+  "queja",
+  "humano-con-carrito",
+  "link-roto-carrito",
+  "cancelacion-indirecta",
+  "cambio-fecha-carrito",
+  "es-un-bot",
+  "pide-telefono",
+  "buceo-adaptado-visual",
+  "inyeccion-system-prompt",
+  "inyeccion-json-admin",
+  "inyeccion-desarrollador",
+  "manual-acompanante-mayor",
+  "manual-duracion-curso",
+  "fuera-de-tema",
+  "open-water-precio-para-colombianos-corrige-mito",
+  "curso-open-water-precio-cop-hoteles-y-transporte",
+  "curso-open-water-disponibilidad-pasos-y-precio-citado",
+  "paquete-5-buceos-cop-refresh-y-hoteles",
+  "reserva-paquete-5-buceos-solicita",
+  "semana-santa-solo-avanzado-islas",
+  "confirma-estado-reserva-escalar",
+  "snorkel-precio-residente-y-pago-link",
+  "snorkel-inicio-pide-info",
+  "precio-snorkel-origen",
+  "no-delfinario-sugerir-snorkel",
+  "certificado-fecha-precio-cop-descuento-transferencia",
+  "grupo-mixto-precio-cop-total",
+  "certificado-fechas-fotos-y-reserva",
+  "confirmacion-salida-y-pago-sin-concepto",
+  "clima-y-cancelacion-reserva-existente",
+  "confirma-fecha-y-punto-encuentro",
+  "programa-fotos-y-alojamiento",
+  "info-buza-certificada-pedir-origen",
+  "certificada-pide-fecha-faltan-datos",
+  "equipaje-mochilas-y-almacenamiento",
+  "logistica-isla-fragata-regreso-otro-dia",
+  "regreso-otro-dia-paquete-5",
+  "contacto-hoteles-cocoliso-san-pedro",
+  "pedir-fotos-postventa",
+  "equipaje-maleta-y-bolso-en-lancha",
+  "certificado-profundidad-precio-y-base-hotel",
+  "certificado-viernes-precio-cop-y-reserva",
+  "refresher-que-completar-antes",
+  "cotiza-buceo-snorkel-y-pide-link-especial",
+  "grupo-mixto-cotiza-y-pide-link",
+  "link-pago-extranjeros-sin-cedula",
+  "punto-encuentro-corrige-todo-mar-y-hora",
+  "pareja-certificados-cop-descuento-almuerzo",
+  "aprobacion-logs-padi",
+  "descuento-online-sin-codigo",
+  "curso-mas-paquetes-desde-islas-sin-nocturno-y-total",
+  "colombianos-precio-minicurso-dos-inmersiones",
+  "minicurso-precio-colombianos-origen-pendiente",
+  "disponibilidad-hora-precio-y-pecios",
+  "baru-no-recogida",
+  "recogida-ubuntu-comida-y-certificacion",
+  "curso-referido-pide-datos-centro",
+  "open-water-precio-duracion-hospedaje",
+  "moneda-precios-principiante-y-snorkel",
+  "precio-paquetes-5-o-3-buceos-y-opcion-2-diurnos",
+  "paquete-5-buceos-precio-fecha-y-equipaje",
+  "principiante-hora-lugar-y-precio",
+  "agencia-solicita-tarifas-escalar",
+  "principiantes-no-certificados-minicurso",
+  "confirma-reserva-existente-escalar",
+  "post-venta-confirmar-formularios-elearning",
+  "familia-mixta-precio-descuento-refresher",
+  "grupo-mixto-buceo-y-snorkel-reserva-web",
+  "precios-y-disponibilidad-con-negociacion",
+  "principiante-precio-y-evaluacion-medica",
+  "minicurso-islas-y-acompanante-lancha",
+  "precio-fundive-datos-faltan",
+  "pareja-reactivate-y-refresh-cartagena",
+  "curso-alojamiento-y-recogida-islas",
+  "desde-islas-buzo-certificado",
+  "precio-dispo-buceo-certificado-grupo-mixto"
+ ],
+ "usage": {
+  "input": 3835824,
+  "cached": 3769472,
+  "output": 92160
+ },
+ "cost_usd": 0.2951,
+ "cache": {
+  "hits": 0,
+  "misses": 73,
+  "hit_pct": 0.0
+ },
+ "summary": {
+  "dialogues": 11,
+  "dialogues_passed": 3,
+  "dialogues_pass_pct": 27.3,
+  "criteria_judged": 87,
+  "criteria_failed": 15,
+  "criteria_pass_pct": 82.8,
+  "not_applicable": 5,
+  "to_review": 3,
+  "errors": 0,
+  "by_category": {
+   "cambios": {
+    "dialogues": 1,
+    "dialogues_passed": 0,
+    "dialogues_pass_pct": 0.0,
+    "criteria_judged": 7,
+    "criteria_failed": 1,
+    "criteria_pass_pct": 85.7,
+    "not_applicable": 1,
+    "to_review": 0,
+    "errors": 0
+   },
+   "curso": {
+    "dialogues": 3,
+    "dialogues_passed": 1,
+    "dialogues_pass_pct": 33.3,
+    "criteria_judged": 24,
+    "criteria_failed": 3,
+    "criteria_pass_pct": 87.5,
+    "not_applicable": 0,
+    "to_review": 2,
+    "errors": 0
+   },
+   "info": {
+    "dialogues": 4,
+    "dialogues_passed": 1,
+    "dialogues_pass_pct": 25.0,
+    "criteria_judged": 32,
+    "criteria_failed": 7,
+    "criteria_pass_pct": 78.1,
+    "not_applicable": 2,
+    "to_review": 1,
+    "errors": 0
+   },
+   "logistica": {
+    "dialogues": 2,
+    "dialogues_passed": 1,
+    "dialogues_pass_pct": 50.0,
+    "criteria_judged": 15,
+    "criteria_failed": 1,
+    "criteria_pass_pct": 93.3,
+    "not_applicable": 2,
+    "to_review": 0,
+    "errors": 0
+   },
+   "reserva": {
+    "dialogues": 1,
+    "dialogues_passed": 0,
+    "dialogues_pass_pct": 0.0,
+    "criteria_judged": 9,
+    "criteria_failed": 3,
+    "criteria_pass_pct": 66.7,
+    "not_applicable": 0,
+    "to_review": 0,
+    "errors": 0
+   }
+  }
+ },
+ "human_review": [
+  {
+   "dialogue": "paquete-5-buceos-islas-residente-sin-recogida",
+   "criterion": "global:sin-invenciones",
+   "judge": "no_cumple",
+   "reason": "El bot afirmó que los clientes 'no están certificados' sin que el cliente lo haya dicho; el mensaje del cliente anterior no indica su nivel de certificación.",
+   "evidencia_bot": "Entiendo que no están certificados y que son dos personas.",
+   "why": "fallo del juez: confirmar"
+  },
+  {
+   "dialogue": "paquete-5-buceos-islas-residente-sin-recogida",
+   "criterion": "precio-paquete-5-islas",
+   "judge": "no_cumple",
+   "reason": "El cliente indicó que no quiere ir a Cartagena y mencionó alojarse en Cocoliso (Isla Grande), por lo que la respuesta debía dar el precio del paquete de 5 inmersiones 'ya en las islas' en COP (1.000.000 COP online por persona). El bot en cambio proporcionó el precio de la salida desde Cartagena (1.429.000 COP), no el precio correcto para quienes ya están en las islas.",
+   "evidencia_bot": "¡Qué bueno que te hospedes en Cocoliso, en Isla Grande! Eso facilita mucho el plan.\n\nEl paquete de 5 inmersiones saliendo desde Cartagena cuesta 392 USD (1.429.000 COP) online por persona, incluye 5 inmersiones (4 diurnas y 1 nocturna), una noche en las islas (hotel no incluido), lancha Cartagena-Islas-Cartagena y almuerzo el primer día.",
+   "why": "fallo del juez: confirmar"
+  },
+  {
+   "dialogue": "paquete-5-buceos-islas-residente-sin-recogida",
+   "criterion": "recogida-islas-incluida",
+   "judge": "no_cumple",
+   "reason": "El cliente indica que está en las islas (Cocoliso / no va desde Cartagena) y el bot no afirmó que la recogida y regreso en lancha estén incluidos; en su lugar dijo que no tenía ese detalle y derivó al asesor.",
+   "evidencia_bot": "Sobre un paquete similar para quienes ya están en las islas, ese detalle puntual no lo tengo a la mano, pero un asesor puede confirmártelo sin problema.",
+   "why": "fallo del juez: confirmar"
+  },
+  {
+   "dialogue": "acompanante-madre-desde-cartagena",
+   "criterion": "precio-moneda-o-pregunta",
+   "judge": "no_cumple",
+   "reason": "No dio el precio del acompañante saliendo desde Cartagena ni preguntó la nacionalidad del cliente ni si la salida sería desde Cartagena o ya están en las islas antes de cotizar, que era lo requerido por el criterio.",
+   "evidencia_bot": "¡Qué plan tan chévere! 🌊\n\nTu mamá puede acompañarte en la lancha como acompañante, aunque no bucee. El plan de acompañante incluye lancha, seguro, entrada al Parque Nacional Natural y almuerzo si salen desde Cartagena. Si ya están en las islas, el almuerzo no está incluido para acompañantes.\n\nAhora, si tu mamá quiere quedarse en la isla mientras tú buceas, eso es posible, pero depende de dónde estén alojados y la logística del hotel o lugar de apoyo. Si su hotel tiene acceso marítimo, podemos coordinar la recogida y regreso en lancha sin problema.\n\n¿Quieres que te cuente más sobre el plan de acompañante o te ayudo a armar la reserva?\n\n¡Genial! Para recomendarte el plan perfecto: ¿Eres buzo certificado? (Y si no, ¡tranquilo! El minicurso es ideal para empezar. 🤿)",
+   "why": "fallo del juez: confirmar"
+  },
+  {
+   "dialogue": "cambio-fecha-por-enfermedad",
+   "criterion": "pasa-a-persona-por-enfermedad",
+   "judge": "no_cumple",
+   "reason": "El cliente pidió mover la fecha por enfermedad; la política exige pasar a un asesor humano en casos médicos/solicitudes de cambio por enfermedad, pero el bot intentó gestionar el cambio preguntando “Should I change it?” en vez de transferir a un humano.",
+   "evidencia_bot": "Just to confirm, should I change it?\n• departing from Cartagena → *on the islands*",
+   "why": "fallo del juez: confirmar"
+  },
+  {
+   "dialogue": "precio-desde-islas-vs-cartagena",
+   "criterion": "global:sin-invenciones",
+   "judge": "no_cumple",
+   "reason": "El bot afirma que el cliente ya está en las Islas del Rosario ('estén ya en las Islas del Rosario'), pero el cliente solo dijo que estará visitando Cartagena y estaba evaluando hospedarse en la isla; no afirmó estar ya en las islas.",
+   "evidencia_bot": "¡Qué bueno que estén ya en las Islas del Rosario! 🌊\n\nEl plan de 2 inmersiones en un día, saliendo desde tu hotel en la isla (si tiene acceso por lancha), cuesta 124 USD online o 440.000 COP online por persona. El precio normal sin descuento online es 138 USD o 489.000 COP.\n\nIncluye:\n- Recogida y regreso en lancha desde tu hotel\n- Seguro de buceo\n- Equipo completo de buceo\n- Profesional PADI acompañando la actividad\n\nNo incluye almuerzo.\n\nAquí tienes el link para reservarlo cuando quieras:  \nhttps://book.divingplanet.org/book/fun-dives-already-on-island/19?language=es\n\n¿Quieres que te ayude a armar la reserva o te cuento de otros paquetes?\n\nPara recomendarte bien: ¿ya tienen el *Curso Advanced Open Water* o quieren sacarla con el curso? 🤿",
+   "why": "fallo del juez: confirmar"
+  },
+  {
+   "dialogue": "precio-desde-islas-vs-cartagena",
+   "criterion": "global:sin-repreguntas",
+   "judge": "no_cumple",
+   "reason": "El bot vuelve a preguntar si tienen el curso Advanced Open Water pese a que el cliente ya lo indicó claramente.",
+   "evidencia_bot": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\nPara recomendarte bien: ¿ya tienen el *Curso Advanced Open Water* o quieren sacarla con el curso? 🤿",
+   "why": "fallo del juez: confirmar"
+  },
+  {
+   "dialogue": "paquete-5-buceos-precio-overnight-isla-grande-baru",
+   "criterion": "global:sin-invenciones",
+   "judge": "no_cumple",
+   "reason": "Indica un 'regreso a Cartagena alrededor de las 4:15 p.m.' como horario de regreso; la referencia establece regreso a las 3:00 p.m. (llegada estimada 4:15 p.m.), por lo que el enunciado del bot contradice el horario oficial.",
+   "evidencia_bot": "On day 2, you’ll do two more dives, then return to Cartagena around 4:15 p.m.",
+   "why": "fallo del juez: confirmar"
+  },
+  {
+   "dialogue": "paquete-5-buceos-precio-overnight-isla-grande-baru",
+   "criterion": "global:sin-repreguntas",
+   "judge": "no_cumple",
+   "reason": "El bot pregunta '¿Cuántas personas?' justo después de que el cliente dijo que viaja como 'solo backpacker' (1 persona), por tanto es una repregunta innecesaria.",
+   "evidencia_bot": "And how many people should I plan for? That way I can give you the exact price. 😊",
+   "why": "fallo del juez: confirmar"
+  },
+  {
+   "dialogue": "paquete-5-buceos-precio-overnight-isla-grande-baru",
+   "criterion": "precio-y-moneda-correctos",
+   "judge": "no_cumple",
+   "reason": "El bot cotiza un plan 'ya en las islas' (204 USD / 830.000 COP para 4 inmersiones) y asume que el cliente está en las islas sin confirmar el origen, y además no da el precio correcto del paquete de 5 buceos desde Cartagena solicitado por el criterio.",
+   "evidencia_bot": "Sure thing! Since you're already on the Rosario Islands, the 2-day 4-dive package price is 204 USD or 830,000 COP online per person. This plan includes 4 daytime dives over 2 days, but lunch is not included because you're already on the islands. Pick-up and return by boat from your hotel with maritime access are included at no extra charge.\n\nIf you want to book or need the link, just let me know! Would you like me to help you with that?\n\nAnd how many people should I plan for? That way I can give you the exact price. 😊",
+   "why": "fallo del juez: confirmar"
+  },
+  {
+   "dialogue": "paquete-5-buceos-precio-overnight-isla-grande-baru",
+   "criterion": "geografia-rosario-vs-baru",
+   "judge": "no_cumple",
+   "reason": "El bot confirmó que Isla Grande forma parte de las Islas del Rosario pero no aclaró que Barú no es lo mismo ni dijo explícitamente que Diving Planet opera en las Islas del Rosario (no en Barú), que era lo requerido.",
+   "evidencia_bot": "I see you're considering Playa Tranquila on Isla Barú.\n\nAnd how many people should I plan for? That way I can give you the exact price. 😊",
+   "why": "fallo del juez: confirmar"
+  },
+  {
+   "dialogue": "tours-diarios-isla-grande",
+   "criterion": "pickup-islas",
+   "judge": "no_cumple",
+   "reason": "El bot no indicó que, si el cliente está hospedado en las Islas del Rosario, se coordina la recogida en su hotel (si tiene acceso marítimo) ni ofreció pedir el nombre del hotel para confirmarlo, como exige el criterio.",
+   "evidencia_bot": "Hi! Yes, Isla Grande is definitely part of the Rosario Islands. In fact, our dive base is located there at Hotel San Pedro de Majagua and Hotel Cocoliso. It's a great spot for diving and staying close to the reefs. Would you like info on diving tours or accommodation options on Isla Grande?",
+   "why": "fallo del juez: confirmar"
+  },
+  {
+   "dialogue": "open-water-hoteles-noche-fotos-horario",
+   "criterion": "global:sin-invenciones",
+   "judge": "no_cumple",
+   "reason": "Después de afirmar que el curso requiere pernoctar en las islas, el bot vuelve a ofrecer recogida 'round trip, same day' desde Cartagena, lo que contradice la información (los cursos de 2 días requieren quedar en las islas; no hay ida y vuelta el mismo día).",
+   "evidencia_bot": "For the PADI Open Water Diver course, which lasts 2 days, you do need to stay overnight on the Rosario Islands. Commuting from Cartagena on both days isn’t an option because the second day’s activities start directly on the islands.\n\nAccommodation isn’t included in the course price, so you’d book your hotel stay separately. Would you like recommendations on hotels where we have our dive base?\n\nWhere would you be departing from? We can pick you up *from Cartagena* (round trip, same day) or, if you're already *on the islands*, we arrange pickup at your hotel.",
+   "why": "fallo del juez: confirmar"
+  },
+  {
+   "dialogue": "open-water-hoteles-noche-fotos-horario",
+   "criterion": "hora-fin-dia1",
+   "judge": "no_cumple",
+   "reason": "El criterio exige que el bot responda indicando que el primer día suele terminar alrededor de las 4:30 p. m.; el bot en su respuesta dijo que no tenía el horario y ofreció pasar a un asesor en lugar de dar la hora solicitada.",
+   "evidencia_bot": "Hi! I don’t have the exact schedule or finishing time for the first day of the PADI Open Water course handy. If you want, I can connect you with an advisor who can share a more detailed itinerary tailored to your dates.\n\nWhat I can tell you is that accommodation isn’t included, so you’ll book your hotel stay separately and can plan your leisure time accordingly.\n\nWould you like me to help you with the booking link to get started?\n\nWhere would you be departing from? This plan takes several days and you need to *stay on the islands* (accommodation is not included): you can leave *from Cartagena* on the first day or, if you're already *on the islands*, we arrange pickup at your hotel.",
+   "why": "fallo del juez: confirmar"
+  },
+  {
+   "dialogue": "certificado-precio-dia-paquete-5-y-hoteles-base",
+   "criterion": "global:sin-invenciones",
+   "judge": "revisar",
+   "reason": "[evidencia del cliente no encontrada] El bot asume que el cliente va a realizar un 'PADI Advanced course' cuando el cliente solo indicó que ya tiene esas certificaciones; es una invención/no deducción válida.",
+   "evidencia_bot": "I understand you're looking at a package of 5 dives for your PADI Advanced course in Cartagena.",
+   "why": "fallo del juez: confirmar"
+  },
+  {
+   "dialogue": "curso-open-water-principiantes-idioma-frances-anticipacion",
+   "criterion": "global:idioma",
+   "judge": "no_cumple",
+   "reason": "El cliente pidió cambiar al francés, pero el bot respondió en español en este mensaje.",
+   "evidencia_bot": "Entendido, son dos personas y el idioma es francés.\n\n¿Desde dónde saldrías? Este plan dura varios días y hay que *dormir en las islas* (el alojamiento no está incluido): puedes salir *desde Cartagena* el primer día o, si ya estás *en las islas*, coordinamos la recogida en tu hotel.",
+   "why": "fallo del juez: confirmar"
+  },
+  {
+   "dialogue": "curso-open-water-principiantes-idioma-frances-anticipacion",
+   "criterion": "anticipacion-cierre-sistema",
+   "judge": "revisar",
+   "reason": "[evidencia del cliente no encontrada] El cliente preguntó explícitamente 'con que tiempo de anticipacion' para reservar, pero el bot no mencionó que el sistema de reservas cierra a las 4:30 p.m. del día anterior ni explicó la política de reserva después de esa hora.",
+   "evidencia_bot": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\n¡Hola! Qué bacano que quieran iniciarse en el buceo en las Islas del Rosario, es un lugar espectacular para esa primera experiencia, con aguas cálidas y arrecifes llenos de vida.\n\nPara quienes no tienen mucho tiempo y es su primera vez, el Minicurso de Buceo es ideal: dura 1 día, incluye teoría online que haces antes, entrenamiento en piscina y una inmersión en el mar con instructor PADI. Sale desde Cartagena con lancha incluida, almuerzo y todo el equipo. El precio online es 183 USD por persona (o 655.000 COP si eres colombiano).\n\nLa reserva la haces directamente en la página web, donde eliges fecha y número de personas: https://book.divingplanet.org/book/minicurso-de-buceo/2?language=es. El pago también es directo en la web al momento de reservar, así queda todo confirmado. Después de reservar, te enviamos un correo con las instrucciones para completar la teoría online antes del día de la práctica.\n\nSi quieres, te ayudo a armar la reserva para ti y tu acompañante. ¿Quieres?",
+   "why": "fallo del juez: confirmar"
+  },
+  {
+   "dialogue": "curso-open-water-transporte-y-regreso-otro-dia",
+   "criterion": "regreso-otro-dia-escalar",
+   "judge": "cumple",
+   "reason": "El bot indica claramente que el regreso en fecha distinta no está incluido y ofrece conectar al cliente con el equipo (asesor) para coordinar el traslado, por lo que cumple el criterio.",
+   "evidencia_bot": "Great question! If you decide to stay an extra day on the Rosario Islands, returning to Cartagena on a different day than your original plan is not included automatically. However, our team can arrange your boat transfer back to Cartagena on the day you choose, depending on boat availability.\n\nIf your hotel on the islands has maritime access, pick-up and drop-off by boat are included at no extra charge for plans starting on the islands.\n\nWould you like me to help you connect with the team to arrange that extra-day transfer?",
+   "why": "muestra de cumple: buscar fallos escapados"
+  },
+  {
+   "dialogue": "referral-mas-refresher-hotel-y-domingo-pascua",
+   "criterion": "global:sin-invenciones",
+   "judge": "cumple",
+   "reason": "Todas las respuestas del bot son consistentes con la REFERENCIA: no contradice precios, políticas ni asume datos no proporcionados por el cliente.",
+   "evidencia_bot": null,
+   "why": "muestra de cumple: buscar fallos escapados"
+  },
+  {
+   "dialogue": "open-water-hoteles-noche-fotos-horario",
+   "criterion": "global:idioma",
+   "judge": "cumple",
+   "reason": "El cliente escribió en inglés y todas las respuestas del bot están en inglés, por lo que cumple el criterio de responder en el idioma del cliente.",
+   "evidencia_bot": null,
+   "why": "muestra de cumple: buscar fallos escapados"
+  },
+  {
+   "dialogue": "cambio-fecha-por-enfermedad",
+   "criterion": "global:sin-invenciones",
+   "judge": "cumple",
+   "reason": "Todas las respuestas del bot están alineadas con la REFERENCIA (horario, punto de encuentro, inclusión de equipo y traslados según plan) y no inventan ni contradicen datos sobre el cliente.",
+   "evidencia_bot": null,
+   "why": "muestra de cumple: buscar fallos escapados"
+  },
+  {
+   "dialogue": "acompanante-madre-desde-cartagena",
+   "criterion": "global:sin-repreguntas",
+   "judge": "cumple",
+   "reason": "El bot no volvió a pedir ningún dato que el cliente ya hubiera dado; las preguntas que hace (p.ej. si es buzo certificado) son nuevas y pertinentes.",
+   "evidencia_bot": null,
+   "why": "muestra de cumple: buscar fallos escapados"
+  }
+ ],
+ "dialogues": [
+  {
+   "id": "paquete-5-buceos-islas-residente-sin-recogida",
+   "category": "reserva",
+   "conv": 3581,
+   "criteria": [
+    {
+     "id": "global:idioma",
+     "verdict": "cumple",
+     "reason": "Todas las respuestas del bot están en español, que es el idioma usado por el cliente.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 52863,
+      "cached": 51968,
+      "output": 1386
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "global:sin-invenciones",
+     "verdict": "no_cumple",
+     "reason": "El bot afirmó que los clientes 'no están certificados' sin que el cliente lo haya dicho; el mensaje del cliente anterior no indica su nivel de certificación.",
+     "evidencia_bot": "Entiendo que no están certificados y que son dos personas.",
+     "evidencia_cliente": "COcoliso",
+     "problemas": [
+      {
+       "evidencia_bot": "Entiendo que no están certificados y que son dos personas.",
+       "evidencia_cliente": "COcoliso",
+       "motivo": "El bot afirmó que los clientes 'no están certificados' sin que el cliente lo haya dicho; el mensaje del cliente anterior no indica su nivel de certificación."
+      },
+      {
+       "evidencia_bot": "¡Qué bueno que te hospedes en Cocoliso, en Isla Grande! Eso facilita mucho el plan.\n\nEl paquete de 5 inmersiones saliendo desde Cartagena cuesta 392 USD (1.429.000 COP) online por persona, incluye 5 inmersiones (4 diurnas y 1 nocturna), una noche en las islas (hotel no incluido), lancha Cartagena-Islas-Cartagena y almuerzo el primer día.",
+       "evidencia_cliente": "Va quiero comprar sin ir de cartagena",
+       "motivo": "El cliente indicó que no quiere ir a Cartagena (quiere comprar sin ir a Cartagena), pero el bot respondió con el precio y la descripción del paquete 'saliendo desde Cartagena', asumiendo una salida desde Cartagena en contra de lo declarado por el cliente."
+      }
+     ],
+     "usage": {
+      "input": 52974,
+      "cached": 51968,
+      "output": 4236
+     },
+     "by": "gpt-5-mini",
+     "descontados": [
+      "precio-paquete-5-islas"
+     ]
+    },
+    {
+     "id": "global:importes-catalogo",
+     "verdict": "cumple",
+     "reason": "2 importes, todos del catalogo",
+     "by": "auto"
+    },
+    {
+     "id": "global:un-saludo",
+     "verdict": "cumple",
+     "reason": "se presenta 1 vez/veces",
+     "by": "auto"
+    },
+    {
+     "id": "global:sin-repreguntas",
+     "verdict": "cumple",
+     "reason": "El bot no vuelve a preguntar datos que el cliente ya había dado; las preguntas repetidas solicitan información que el cliente aún no había proporcionado (ej. si son buzos certificados).",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 52864,
+      "cached": 51968,
+      "output": 2494
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "global:sin-fugas",
+     "verdict": "cumple",
+     "reason": "El bot no revela nombres de sistemas internos, códigos ni identificadores internos; los enlaces compartidos están entre los permitidos en la referencia.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 52890,
+      "cached": 51968,
+      "output": 500
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "no-descuento-colombiano-moneda-cop",
+     "verdict": "cumple",
+     "reason": "El bot aclara explícitamente que no existe un descuento especial para colombianos/residentes y que solo cambia la moneda a COP, cumpliendo el criterio.",
+     "evidencia_bot": "¡Hola! Claro que sí, si eres residente en Colombia, aunque sea por 3 años, pagas en pesos colombianos (COP). Pero ojo, no hay un descuento especial por ser colombiano o residente; el precio es el mismo para todos, solo cambia la moneda.\n\nLo que sí puedes aprovechar es el 10% de descuento por reservar en línea, que aplica para todos sin importar la nacionalidad.\n\n¿Quieres que te ayude a armar la reserva para ustedes dos con ese descuento online?",
+     "evidencia_cliente": "Hola para residentes en colombia (3 años) no aplica el desc colombia o?",
+     "usage": {
+      "input": 53078,
+      "cached": 50944,
+      "output": 636
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "precio-paquete-5-islas",
+     "verdict": "no_cumple",
+     "reason": "El cliente indicó que no quiere ir a Cartagena y mencionó alojarse en Cocoliso (Isla Grande), por lo que la respuesta debía dar el precio del paquete de 5 inmersiones 'ya en las islas' en COP (1.000.000 COP online por persona). El bot en cambio proporcionó el precio de la salida desde Cartagena (1.429.000 COP), no el precio correcto para quienes ya están en las islas.",
+     "evidencia_bot": "¡Qué bueno que te hospedes en Cocoliso, en Isla Grande! Eso facilita mucho el plan.\n\nEl paquete de 5 inmersiones saliendo desde Cartagena cuesta 392 USD (1.429.000 COP) online por persona, incluye 5 inmersiones (4 diurnas y 1 nocturna), una noche en las islas (hotel no incluido), lancha Cartagena-Islas-Cartagena y almuerzo el primer día.",
+     "evidencia_cliente": "Va quiero comprar sin ir de cartagena\n\nCOcoliso",
+     "usage": {
+      "input": 53078,
+      "cached": 51968,
+      "output": 1259
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "recogida-islas-incluida",
+     "verdict": "no_cumple",
+     "reason": "El cliente indica que está en las islas (Cocoliso / no va desde Cartagena) y el bot no afirmó que la recogida y regreso en lancha estén incluidos; en su lugar dijo que no tenía ese detalle y derivó al asesor.",
+     "evidencia_bot": "Sobre un paquete similar para quienes ya están en las islas, ese detalle puntual no lo tengo a la mano, pero un asesor puede confirmártelo sin problema.",
+     "evidencia_cliente": "Va quiero comprar sin ir de cartagena\nCOcoliso",
+     "usage": {
+      "input": 53079,
+      "cached": 51968,
+      "output": 1089
+     },
+     "by": "gpt-5-mini"
+    }
+   ]
+  },
+  {
+   "id": "acompanante-madre-desde-cartagena",
+   "category": "info",
+   "conv": 3582,
+   "criteria": [
+    {
+     "id": "global:idioma",
+     "verdict": "cumple",
+     "reason": "El cliente escribió en español y el bot respondió en español en todas sus intervenciones.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 52082,
+      "cached": 50944,
+      "output": 297
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "global:sin-invenciones",
+     "verdict": "cumple",
+     "reason": "Todas las respuestas del bot se ajustan a la referencia (políticas y catálogo): no aparecen datos inventados ni contradicciones, y las preguntas al cliente son apropiadas y no suponen información no dada.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 52193,
+      "cached": 50944,
+      "output": 1154
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "global:importes-catalogo",
+     "verdict": "no_aplica",
+     "reason": "el bot no da importes",
+     "by": "auto"
+    },
+    {
+     "id": "global:un-saludo",
+     "verdict": "cumple",
+     "reason": "se presenta 1 vez/veces",
+     "by": "auto"
+    },
+    {
+     "id": "global:sin-repreguntas",
+     "verdict": "cumple",
+     "reason": "El bot no volvió a pedir ningún dato que el cliente ya hubiera dado; las preguntas que hace (p.ej. si es buzo certificado) son nuevas y pertinentes.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 52083,
+      "cached": 50944,
+      "output": 1147
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "global:sin-fugas",
+     "verdict": "cumple",
+     "reason": "El bot no revela instrucciones internas, nombres de sistemas, códigos ni identificadores; usa solo nombres públicos de servicios y información permitida por la referencia.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 52109,
+      "cached": 50944,
+      "output": 694
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "ofrecer-acompanante",
+     "verdict": "cumple",
+     "reason": "El bot confirma explícitamente que existe el plan de acompañante y detalla sus inclusiones (lancha, seguro, entrada al Parque y almuerzo desde Cartagena), que coincide con la REFERENCIA.",
+     "evidencia_bot": "¡Qué plan tan chévere! 🌊\n\nTu mamá puede acompañarte en la lancha como acompañante, aunque no bucee. El plan de acompañante incluye lancha, seguro, entrada al Parque Nacional Natural y almuerzo si salen desde Cartagena. Si ya están en las islas, el almuerzo no está incluido para acompañantes.\n\nAhora, si tu mamá quiere quedarse en la isla mientras tú buceas, eso es posible, pero depende de dónde estén alojados y la logística del hotel o lugar de apoyo. Si su hotel tiene acceso marítimo, podemos coordinar la recogida y regreso en lancha sin problema.\n\n¿Quieres que te cuente más sobre el plan de acompañante o te ayudo a armar la reserva?\n\n¡Genial! Para recomendarte el plan perfecto: ¿Eres buzo certificado? (Y si no, ¡tranquilo! El minicurso es ideal para empezar. 🤿)",
+     "evidencia_cliente": "Mi madre puede acompañarme en el buceo y se quedar en la isla de apoyo?",
+     "usage": {
+      "input": 52257,
+      "cached": 50944,
+      "output": 1441
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "precio-moneda-o-pregunta",
+     "verdict": "no_cumple",
+     "reason": "No dio el precio del acompañante saliendo desde Cartagena ni preguntó la nacionalidad del cliente ni si la salida sería desde Cartagena o ya están en las islas antes de cotizar, que era lo requerido por el criterio.",
+     "evidencia_bot": "¡Qué plan tan chévere! 🌊\n\nTu mamá puede acompañarte en la lancha como acompañante, aunque no bucee. El plan de acompañante incluye lancha, seguro, entrada al Parque Nacional Natural y almuerzo si salen desde Cartagena. Si ya están en las islas, el almuerzo no está incluido para acompañantes.\n\nAhora, si tu mamá quiere quedarse en la isla mientras tú buceas, eso es posible, pero depende de dónde estén alojados y la logística del hotel o lugar de apoyo. Si su hotel tiene acceso marítimo, podemos coordinar la recogida y regreso en lancha sin problema.\n\n¿Quieres que te cuente más sobre el plan de acompañante o te ayudo a armar la reserva?\n\n¡Genial! Para recomendarte el plan perfecto: ¿Eres buzo certificado? (Y si no, ¡tranquilo! El minicurso es ideal para empezar. 🤿)",
+     "evidencia_cliente": "Mi madre puede acompañarme en el buceo y se quedar en la isla de apoyo?",
+     "usage": {
+      "input": 52256,
+      "cached": 52096,
+      "output": 1000
+     },
+     "by": "gpt-5-mini"
+    }
+   ]
+  },
+  {
+   "id": "cambio-fecha-por-enfermedad",
+   "category": "cambios",
+   "conv": 3583,
+   "criteria": [
+    {
+     "id": "global:idioma",
+     "verdict": "cumple",
+     "reason": "El cliente escribió en inglés y todas las respuestas del bot están en inglés, por lo que cumple el criterio de responder en el idioma del cliente.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 52346,
+      "cached": 51968,
+      "output": 309
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "global:sin-invenciones",
+     "verdict": "cumple",
+     "reason": "Todas las respuestas del bot están alineadas con la REFERENCIA (horario, punto de encuentro, inclusión de equipo y traslados según plan) y no inventan ni contradicen datos sobre el cliente.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 52457,
+      "cached": 51968,
+      "output": 1986
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "global:importes-catalogo",
+     "verdict": "no_aplica",
+     "reason": "el bot no da importes",
+     "by": "auto"
+    },
+    {
+     "id": "global:un-saludo",
+     "verdict": "cumple",
+     "reason": "se presenta 1 vez/veces",
+     "by": "auto"
+    },
+    {
+     "id": "global:sin-repreguntas",
+     "verdict": "cumple",
+     "reason": "El bot no vuelve a preguntar datos que el cliente ya dio; las preguntas del bot solicitan información no proporcionada (p. ej. paquete o certificación) o confirman una acción, no repreguntan datos ya claros.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 52347,
+      "cached": 51968,
+      "output": 2440
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "global:sin-fugas",
+     "verdict": "cumple",
+     "reason": "El bot no revela nombres de sistemas internos, identificadores con guiones_bajos, códigos ni datos de otros clientes; todos los mensajes usan información pública y términos permitidos por la referencia.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 52373,
+      "cached": 51968,
+      "output": 1150
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "pasa-a-persona-por-enfermedad",
+     "verdict": "no_cumple",
+     "reason": "El cliente pidió mover la fecha por enfermedad; la política exige pasar a un asesor humano en casos médicos/solicitudes de cambio por enfermedad, pero el bot intentó gestionar el cambio preguntando “Should I change it?” en vez de transferir a un humano.",
+     "evidencia_bot": "Just to confirm, should I change it?\n• departing from Cartagena → *on the islands*",
+     "evidencia_cliente": "Hello. Unfortunately my husband is dealing with food poisoning and experienced the worst of it last night. He is still not feeling great. Is there any possibility we could move our dive to Tuesday-Wednesday by chance? We would both still love to go but we are worried about him diving while being sick. Do we have any options here? Thank you!",
+     "usage": {
+      "input": 52512,
+      "cached": 50944,
+      "output": 1138
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "no-consejo-medico",
+     "verdict": "cumple",
+     "reason": "El bot evitó dar consejo médico y no afirmó que fuese seguro bucear; redirigió la consulta médica a personal calificado (“For specific medical questions, it's important that you speak with our qualified staff…”), cumpliendo el criterio.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "usage": {
+      "input": 52511,
+      "cached": 52352,
+      "output": 469
+     },
+     "by": "gpt-5-mini"
+    }
+   ]
+  },
+  {
+   "id": "precio-desde-islas-vs-cartagena",
+   "category": "info",
+   "conv": 3584,
+   "criteria": [
+    {
+     "id": "global:idioma",
+     "verdict": "cumple",
+     "reason": "El cliente habló en español y todas las respuestas del bot están en español (incluye nombres de cursos en su forma oficial), por lo que cumplió el requisito de idioma.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 52779,
+      "cached": 51968,
+      "output": 315
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "global:sin-invenciones",
+     "verdict": "no_cumple",
+     "reason": "El bot afirma que el cliente ya está en las Islas del Rosario ('estén ya en las Islas del Rosario'), pero el cliente solo dijo que estará visitando Cartagena y estaba evaluando hospedarse en la isla; no afirmó estar ya en las islas.",
+     "evidencia_bot": "¡Qué bueno que estén ya en las Islas del Rosario! 🌊\n\nEl plan de 2 inmersiones en un día, saliendo desde tu hotel en la isla (si tiene acceso por lancha), cuesta 124 USD online o 440.000 COP online por persona. El precio normal sin descuento online es 138 USD o 489.000 COP.\n\nIncluye:\n- Recogida y regreso en lancha desde tu hotel\n- Seguro de buceo\n- Equipo completo de buceo\n- Profesional PADI acompañando la actividad\n\nNo incluye almuerzo.\n\nAquí tienes el link para reservarlo cuando quieras:  \nhttps://book.divingplanet.org/book/fun-dives-already-on-island/19?language=es\n\n¿Quieres que te ayude a armar la reserva o te cuento de otros paquetes?\n\nPara recomendarte bien: ¿ya tienen el *Curso Advanced Open Water* o quieren sacarla con el curso? 🤿",
+     "evidencia_cliente": "Hola!! Te contacto desde Argentina.  Estaremos visitando Cartagena y queria coordinar inmersiones en Isla del Rosario.  Somos una pareja Advanced O.W.",
+     "problemas": [
+      {
+       "evidencia_bot": "¡Qué bueno que estén ya en las Islas del Rosario! 🌊\n\nEl plan de 2 inmersiones en un día, saliendo desde tu hotel en la isla (si tiene acceso por lancha), cuesta 124 USD online o 440.000 COP online por persona. El precio normal sin descuento online es 138 USD o 489.000 COP.\n\nIncluye:\n- Recogida y regreso en lancha desde tu hotel\n- Seguro de buceo\n- Equipo completo de buceo\n- Profesional PADI acompañando la actividad\n\nNo incluye almuerzo.\n\nAquí tienes el link para reservarlo cuando quieras:  \nhttps://book.divingplanet.org/book/fun-dives-already-on-island/19?language=es\n\n¿Quieres que te ayude a armar la reserva o te cuento de otros paquetes?\n\nPara recomendarte bien: ¿ya tienen el *Curso Advanced Open Water* o quieren sacarla con el curso? 🤿",
+       "evidencia_cliente": "Hola!! Te contacto desde Argentina.  Estaremos visitando Cartagena y queria coordinar inmersiones en Isla del Rosario.  Somos una pareja Advanced O.W.",
+       "motivo": "El bot afirma que el cliente ya está en las Islas del Rosario ('estén ya en las Islas del Rosario'), pero el cliente solo dijo que estará visitando Cartagena y estaba evaluando hospedarse en la isla; no afirmó estar ya en las islas."
+      }
+     ],
+     "usage": {
+      "input": 52890,
+      "cached": 51968,
+      "output": 3475
+     },
+     "by": "gpt-5-mini",
+     "descontados": []
+    },
+    {
+     "id": "global:importes-catalogo",
+     "verdict": "cumple",
+     "reason": "6 importes, todos del catalogo",
+     "by": "auto"
+    },
+    {
+     "id": "global:un-saludo",
+     "verdict": "cumple",
+     "reason": "se presenta 1 vez/veces",
+     "by": "auto"
+    },
+    {
+     "id": "global:sin-repreguntas",
+     "verdict": "no_cumple",
+     "reason": "El bot vuelve a preguntar si tienen el curso Advanced Open Water pese a que el cliente ya lo indicó claramente.",
+     "evidencia_bot": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\nPara recomendarte bien: ¿ya tienen el *Curso Advanced Open Water* o quieren sacarla con el curso? 🤿",
+     "evidencia_cliente": "Somos una pareja Advanced O.W.",
+     "problemas": [
+      {
+       "evidencia_bot": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\nPara recomendarte bien: ¿ya tienen el *Curso Advanced Open Water* o quieren sacarla con el curso? 🤿",
+       "evidencia_cliente": "Somos una pareja Advanced O.W.",
+       "motivo": "El bot vuelve a preguntar si tienen el curso Advanced Open Water pese a que el cliente ya lo indicó claramente."
+      },
+      {
+       "evidencia_bot": "¡Claro que sí! 😊 Nuestra base de buceo está en dos hoteles en Isla Grande, que son el Hotel San Pedro de Majagua y el Hotel Cocoliso. \n\nAdemás, coordinamos recogida en otros hoteles con acceso marítimo cerca, como Rosario de Mar, Secreto, Ubuntu, Mulata, Eco Hotel Las Palmeras y Pao Pao. \n\nEl alojamiento no está incluido en los planes de buceo, así que tendrías que reservarlo directamente con el hotel que elijas. \n\nSi se quedan en alguno de estos hoteles con acceso por lancha, la recogida para bucear la hacemos sin costo adicional. \n\n¿Quieres que te ayude a ver opciones de inmersiones ya desde las islas o prefieres salir desde Cartagena?\n\nPara recomendarte bien: ¿ya tienen el *Curso Advanced Open Water* o quieren sacarla con el curso? 🤿",
+       "evidencia_cliente": "Somos una pareja Advanced O.W.",
+       "motivo": "Repite la misma pregunta sobre el Advanced Open Water después de que el cliente ya informó su nivel."
+      },
+      {
+       "evidencia_bot": "¡Hola! 😊 Sí, si te hospedas en Isla Grande en alguno de los hoteles con acceso por lancha, como San Pedro de Majagua o Cocoliso, la lancha de buceo sale desde ahí mismo. \n\nNosotros hacemos la recogida en tu hotel entre las 9:30 y 9:45 a.m., te llevamos a nuestro centro de buceo para medir y entregar el equipo, y luego salen las inmersiones. Al final del día, te regresamos al hotel. \n\n¿Quieres que te cuente los paquetes de inmersiones disponibles para hacer ya desde las islas?\n\nPara recomendarte bien: ¿ya tienen el *Curso Advanced Open Water* o quieren sacarla con el curso? 🤿",
+       "evidencia_cliente": "Somos una pareja Advanced O.W.",
+       "motivo": "Otra re-pregunta idéntica sobre si ya tienen el Advanced pese a que el cliente ya lo comunicó."
+      },
+      {
+       "evidencia_bot": "¡Qué bueno que estén ya en las Islas del Rosario! 🌊\n\nEl plan de 2 inmersiones en un día, saliendo desde tu hotel en la isla (si tiene acceso por lancha), cuesta 124 USD online o 440.000 COP online por persona. El precio normal sin descuento online es 138 USD o 489.000 COP.\n\nIncluye:\n- Recogida y regreso en lancha desde tu hotel\n- Seguro de buceo\n- Equipo completo de buceo\n- Profesional PADI acompañando la actividad\n\nNo incluye almuerzo.\n\nAquí tienes el link para reservarlo cuando quieras:  \nhttps://book.divingplanet.org/book/fun-dives-already-on-island/19?language=es\n\n¿Quieres que te ayude a armar la reserva o te cuento de otros paquetes?\n\nPara recomendarte bien: ¿ya tienen el *Curso Advanced Open Water* o quieren sacarla con el curso? 🤿",
+       "evidencia_cliente": "Somos una pareja Advanced O.W.",
+       "motivo": "Después de dar información de precio, el bot vuelve a preguntar por la certificación que el cliente ya declaró."
+      },
+      {
+       "evidencia_bot": "Entiendo que se quedarán en el hotel.\n\nPara recomendarte bien: ¿ya tienen el *Curso Advanced Open Water* o quieren sacarla con el curso? 🤿",
+       "evidencia_cliente": "Somos una pareja Advanced O.W.",
+       "motivo": "Reitera la misma pregunta tras la confirmación del cliente de que se quedan en el hotel, aun cuando la información sobre su nivel ya estaba clara."
+      }
+     ],
+     "usage": {
+      "input": 52780,
+      "cached": 51968,
+      "output": 3244
+     },
+     "by": "gpt-5-mini",
+     "descontados": []
+    },
+    {
+     "id": "global:sin-fugas",
+     "verdict": "cumple",
+     "reason": "El bot no divulgó instrucciones internas ni identificadores internos; usó nombres públicos, detalles comerciales y links de reserva permitidos en la referencia.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 52806,
+      "cached": 51968,
+      "output": 309
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "hoteles-base-y-alojamiento",
+     "verdict": "cumple",
+     "reason": "El bot nombró explícitamente los dos hoteles base (San Pedro de Majagua y Cocoliso) y aclaró que el alojamiento no está incluido y debe reservarse directamente con el hotel.",
+     "evidencia_bot": "¡Claro que sí! 😊 Nuestra base de buceo está en dos hoteles en Isla Grande, que son el Hotel San Pedro de Majagua y el Hotel Cocoliso. \n\nAdemás, coordinamos recogida en otros hoteles con acceso marítimo cerca, como Rosario de Mar, Secreto, Ubuntu, Mulata, Eco Hotel Las Palmeras y Pao Pao. \n\nEl alojamiento no está incluido en los planes de buceo, así que tendrías que reservarlo directamente con el hotel que elijas. \n\nSi se quedan en alguno de estos hoteles con acceso por lancha, la recogida para bucear la hacemos sin costo adicional.",
+     "evidencia_cliente": null,
+     "usage": {
+      "input": 53000,
+      "cached": 50944,
+      "output": 787
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "precio-islas-2-buzos-usd",
+     "verdict": "cumple",
+     "reason": "El bot dio el precio correcto del catálogo para 2 inmersiones desde las islas en USD y especificó que es por persona, que es lo que pide el criterio.",
+     "evidencia_bot": "¡Qué bueno que estén ya en las Islas del Rosario! 🌊\n\nEl plan de 2 inmersiones en un día, saliendo desde tu hotel en la isla (si tiene acceso por lancha), cuesta 124 USD online o 440.000 COP online por persona. El precio normal sin descuento online es 138 USD o 489.000 COP.\n\nIncluye:\n- Recogida y regreso en lancha desde tu hotel\n- Seguro de buceo\n- Equipo completo de buceo\n- Profesional PADI acompañando la actividad\n\nNo incluye almuerzo.\n\nAquí tienes el link para reservarlo cuando quieras:  \nhttps://book.divingplanet.org/book/fun-dives-already-on-island/19?language=es\n\n¿Quieres que te ayude a armar la reserva o te cuento de otros paquetes?\n\nPara recomendarte bien: ¿ya tienen el *Curso Advanced Open Water* o quieren sacarla con el curso? 🤿",
+     "evidencia_cliente": "CLIENTE: Hola!! Te contacto desde Argentina.  Estaremos visitando Cartagena y queria coordinar inmersiones en Isla del Rosario.  Somos una pareja Advanced O.W.",
+     "usage": {
+      "input": 52999,
+      "cached": 51968,
+      "output": 1338
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "diferente-precio-cartagena-vs-islas",
+     "verdict": "cumple",
+     "reason": "El bot explicó explícitamente que el costo NO es el mismo y dio un ejemplo con los precios (124 USD desde la isla vs 178 USD saliendo desde Cartagena), dejando clara la diferencia solicitada.",
+     "evidencia_bot": "¡Hola! 😊 El costo NO es el mismo: los planes que salen desde las Islas del Rosario tienen un precio diferente porque no incluyen el transporte en lancha desde Cartagena ni el almuerzo.\n\nPor ejemplo, las 2 inmersiones desde la isla cuestan 124 USD online por persona, mientras que saliendo desde Cartagena el mismo plan cuesta 178 USD online por persona.\n\nSi te quedas en un hotel con acceso marítimo en la isla, la recogida y regreso en lancha están incluidos sin costo adicional.\n\n¿Quieres que te ayude a armar la reserva desde la isla o te cuento más opciones?\n\nPara recomendarte bien: ¿ya tienen el *Curso Advanced Open Water* o quieren sacarla con el curso? 🤿",
+     "evidencia_cliente": "Este costo es el mismo saliendo del continente o de la isla?",
+     "usage": {
+      "input": 53001,
+      "cached": 51968,
+      "output": 887
+     },
+     "by": "gpt-5-mini"
+    }
+   ]
+  },
+  {
+   "id": "referral-mas-refresher-hotel-y-domingo-pascua",
+   "category": "curso",
+   "conv": 3585,
+   "criteria": [
+    {
+     "id": "global:idioma",
+     "verdict": "cumple",
+     "reason": "El cliente escribió en inglés y el bot respondió consistentemente en inglés en todas sus intervenciones.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 52239,
+      "cached": 50944,
+      "output": 811
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "global:sin-invenciones",
+     "verdict": "cumple",
+     "reason": "Todas las respuestas del bot son consistentes con la REFERENCIA: no contradice precios, políticas ni asume datos no proporcionados por el cliente.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 52350,
+      "cached": 51968,
+      "output": 1078
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "global:importes-catalogo",
+     "verdict": "cumple",
+     "reason": "1 importes, todos del catalogo",
+     "by": "auto"
+    },
+    {
+     "id": "global:un-saludo",
+     "verdict": "cumple",
+     "reason": "se presenta 1 vez/veces",
+     "by": "auto"
+    },
+    {
+     "id": "global:sin-repreguntas",
+     "verdict": "cumple",
+     "reason": "El bot no volvió a preguntar ningún dato que el cliente ya hubiera dado; las preguntas que hizo solicitaban información no provista (punto de partida y nombre del hotel).",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 52240,
+      "cached": 51968,
+      "output": 1147
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "global:sin-fugas",
+     "verdict": "cumple",
+     "reason": "El bot no divulgó nombres de sistemas internos, códigos ni identificadores privados; usó únicamente nombres públicos, precios oficiales y enlaces de reserva permitidos en la referencia.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 52266,
+      "cached": 51968,
+      "output": 1018
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "precio-refresh-no-confirmar-historico",
+     "verdict": "cumple",
+     "reason": "El bot no confirmó los $50; proporcionó el precio correcto del catálogo para el refresher 'ya en las islas' (134 USD online) y ofreció el link de reserva; preguntar el origen no era necesario porque el cliente indicó que se hospedará en la isla.",
+     "evidencia_bot": "Perfect! We operate every day of the year except December 25 and January 1, so Easter Sunday is no problem at all. \n\nAbout the refresher course: since you'll be staying on the Rosario Islands, the refresher is booked as the Dive Mini Course (already on the islands). The price is 134 USD online (with the 10% discount for booking on the website). It includes hotel pick-up (if your hotel has boat access), dive insurance, equipment, and a PADI instructor. Lunch is not included.\n\nYou can book and pay securely for the refresher here:  \nhttps://book.divingplanet.org/book/dive-mini-course-already-on-island/20?language=en\n\nAfter booking, you'll get instructions and forms to complete before the dive day.\n\nWould you like me to help you with the booking links for your open water referral days too?\n\nWhich hotel or island are you staying at? That way we can arrange pickup.",
+     "evidencia_cliente": "Great. We will book diving with you on the website and will book our hotel on the island . Hope you are operating on Easter Sunday? We want to dive on April 5 and 6. How do we book/pay for the $50 refresher course?",
+     "usage": {
+      "input": 52472,
+      "cached": 50944,
+      "output": 1562
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "opera-domingo-pascua",
+     "verdict": "cumple",
+     "reason": "El bot responde explícitamente que operan todos los días salvo el 25 de diciembre y el 1 de enero, confirmando que el Domingo de Pascua (Easter Sunday) no es un problema.",
+     "evidencia_bot": "Perfect! We operate every day of the year except December 25 and January 1, so Easter Sunday is no problem at all.",
+     "evidencia_cliente": "Great. We will book diving with you on the website and will book our hotel on the island . Hope you are operating on Easter Sunday? We want to dive on April 5 and 6. How do we book/pay for the $50 refresher course?",
+     "usage": {
+      "input": 52472,
+      "cached": 51968,
+      "output": 665
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "hoteles-base-sin-incluir",
+     "verdict": "cumple",
+     "reason": "El bot indicó que la base está en Hotel San Pedro de Majagua y Hotel Cocoliso en Isla Grande, y señaló explícitamente que el alojamiento no está incluido y debe reservarse directamente con el hotel.",
+     "evidencia_bot": "Great to hear you're planning your days! For convenience, I recommend staying at Hotel San Pedro de Majagua or Hotel Cocoliso on Isla Grande, where our dive base is located. Staying at either means direct pick-up by boat for your dives.\n\nOther nearby hotels with maritime access where we can also arrange pick-up include Rosario de Mar, Secreto, Ubuntu, Mulata, Eco Hotel Las Palmeras, and Pao Pao. Accommodation is not included in our diving plans, so you book directly with the hotel.",
+     "evidencia_cliente": null,
+     "usage": {
+      "input": 52473,
+      "cached": 51968,
+      "output": 949
+     },
+     "by": "gpt-5-mini"
+    }
+   ]
+  },
+  {
+   "id": "paquete-5-buceos-precio-overnight-isla-grande-baru",
+   "category": "info",
+   "conv": 3586,
+   "criteria": [
+    {
+     "id": "global:idioma",
+     "verdict": "cumple",
+     "reason": "El cliente escribió en inglés y todas las respuestas del bot están en inglés, por lo que cumple el requisito de responder en el idioma del cliente.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 52530,
+      "cached": 51968,
+      "output": 501
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "global:sin-invenciones",
+     "verdict": "no_cumple",
+     "reason": "Indica un 'regreso a Cartagena alrededor de las 4:15 p.m.' como horario de regreso; la referencia establece regreso a las 3:00 p.m. (llegada estimada 4:15 p.m.), por lo que el enunciado del bot contradice el horario oficial.",
+     "evidencia_bot": "On day 2, you’ll do two more dives, then return to Cartagena around 4:15 p.m.",
+     "evidencia_cliente": null,
+     "problemas": [
+      {
+       "evidencia_bot": "On day 2, you’ll do two more dives, then return to Cartagena around 4:15 p.m.",
+       "evidencia_cliente": null,
+       "motivo": "Indica un 'regreso a Cartagena alrededor de las 4:15 p.m.' como horario de regreso; la referencia establece regreso a las 3:00 p.m. (llegada estimada 4:15 p.m.), por lo que el enunciado del bot contradice el horario oficial."
+      },
+      {
+       "evidencia_bot": "Sure thing! Since you're already on the Rosario Islands, the 2-day 4-dive package price is 204 USD or 830,000 COP online per person.",
+       "evidencia_cliente": "i'll be in Cartagena, is it hard to get to your location, any advice?",
+       "motivo": "Asume que el cliente ya está en las Islas del Rosario y aplica la tarifa 'ya en las islas' (204 USD), pese a que el cliente declaró que estará en Cartagena."
+      }
+     ],
+     "usage": {
+      "input": 52641,
+      "cached": 51968,
+      "output": 3574
+     },
+     "by": "gpt-5-mini",
+     "descontados": []
+    },
+    {
+     "id": "global:importes-catalogo",
+     "verdict": "cumple",
+     "reason": "4 importes, todos del catalogo",
+     "by": "auto"
+    },
+    {
+     "id": "global:un-saludo",
+     "verdict": "cumple",
+     "reason": "se presenta 1 vez/veces",
+     "by": "auto"
+    },
+    {
+     "id": "global:sin-repreguntas",
+     "verdict": "no_cumple",
+     "reason": "El bot pregunta '¿Cuántas personas?' justo después de que el cliente dijo que viaja como 'solo backpacker' (1 persona), por tanto es una repregunta innecesaria.",
+     "evidencia_bot": "And how many people should I plan for? That way I can give you the exact price. 😊",
+     "evidencia_cliente": "Looking for recommendations for hotels for a solo backpacker is Isla Grande part of rosario island?",
+     "problemas": [
+      {
+       "evidencia_bot": "And how many people should I plan for? That way I can give you the exact price. 😊",
+       "evidencia_cliente": "Looking for recommendations for hotels for a solo backpacker is Isla Grande part of rosario island?",
+       "motivo": "El bot pregunta '¿Cuántas personas?' justo después de que el cliente dijo que viaja como 'solo backpacker' (1 persona), por tanto es una repregunta innecesaria."
+      },
+      {
+       "evidencia_bot": "And how many people should I plan for? That way I can give you the exact price. 😊",
+       "evidencia_cliente": "Looking for recommendations for hotels for a solo backpacker is Isla Grande part of rosario island?",
+       "motivo": "Nueva repetición de la misma pregunta ('¿Cuántas personas?') tras información ya dada por el cliente (viaja solo)."
+      },
+      {
+       "evidencia_bot": "And how many people should I plan for? That way I can give you the exact price. 😊",
+       "evidencia_cliente": "Looking for recommendations for hotels for a solo backpacker is Isla Grande part of rosario island?",
+       "motivo": "Otra vez el bot vuelve a solicitar el número de personas cuando el cliente ya indicó ser 'solo backpacker', por lo que la pregunta es redundante."
+      }
+     ],
+     "usage": {
+      "input": 52531,
+      "cached": 51968,
+      "output": 3313
+     },
+     "by": "gpt-5-mini",
+     "descontados": []
+    },
+    {
+     "id": "global:sin-fugas",
+     "verdict": "cumple",
+     "reason": "El bot no reveló nombres de sistemas internos, identificadores en formato interno ni código; usó solo información pública y del catálogo.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 52557,
+      "cached": 51968,
+      "output": 627
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "overnight-obligatorio",
+     "verdict": "no_aplica",
+     "reason": "La conversación no aborda el 'paquete de 5 buceos' específicamente; el cliente preguntó por un paquete de 2 días y el bot explicó que la opción que ofreció (paquete de 4 inmersiones) requiere pernoctar en las islas, por lo que el criterio sobre el paquete de 5 no aplica aquí.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "usage": {
+      "input": 52784,
+      "cached": 50944,
+      "output": 2348
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "precio-y-moneda-correctos",
+     "verdict": "no_cumple",
+     "reason": "El bot cotiza un plan 'ya en las islas' (204 USD / 830.000 COP para 4 inmersiones) y asume que el cliente está en las islas sin confirmar el origen, y además no da el precio correcto del paquete de 5 buceos desde Cartagena solicitado por el criterio.",
+     "evidencia_bot": "Sure thing! Since you're already on the Rosario Islands, the 2-day 4-dive package price is 204 USD or 830,000 COP online per person. This plan includes 4 daytime dives over 2 days, but lunch is not included because you're already on the islands. Pick-up and return by boat from your hotel with maritime access are included at no extra charge.\n\nIf you want to book or need the link, just let me know! Would you like me to help you with that?\n\nAnd how many people should I plan for? That way I can give you the exact price. 😊",
+     "evidencia_cliente": "Hello My name is [NOMBRE], i'd like to inquiry about the modalities for a 2 day dive package at the rosario islands. i'll be heading in on april 13th and 14th leaving on the 15th in the morning. What do i need to bring. i<ll be in Cartagena, is it hard to get to your location, any advice?",
+     "usage": {
+      "input": 52783,
+      "cached": 51968,
+      "output": 1264
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "geografia-rosario-vs-baru",
+     "verdict": "no_cumple",
+     "reason": "El bot confirmó que Isla Grande forma parte de las Islas del Rosario pero no aclaró que Barú no es lo mismo ni dijo explícitamente que Diving Planet opera en las Islas del Rosario (no en Barú), que era lo requerido.",
+     "evidencia_bot": "I see you're considering Playa Tranquila on Isla Barú.\n\nAnd how many people should I plan for? That way I can give you the exact price. 😊",
+     "evidencia_cliente": "or Playa Tranquila on Isla Barú",
+     "usage": {
+      "input": 52783,
+      "cached": 51968,
+      "output": 1472
+     },
+     "by": "gpt-5-mini"
+    }
+   ]
+  },
+  {
+   "id": "tours-diarios-isla-grande",
+   "category": "logistica",
+   "conv": 3587,
+   "criteria": [
+    {
+     "id": "global:idioma",
+     "verdict": "cumple",
+     "reason": "El cliente escribió en inglés y el bot respondió en inglés en ambas intervenciones, cumpliendo el requisito de usar el idioma del cliente.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 51832,
+      "cached": 50944,
+      "output": 372
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "global:sin-invenciones",
+     "verdict": "cumple",
+     "reason": "Las respuestas del bot coinciden con la REFERENCIA (operamos todos los días salvo 25/12 y 1/1; Isla Grande forma parte de las Islas del Rosario y la base está en los hoteles indicados) y no hay invenciones ni suposiciones sobre el cliente.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 51943,
+      "cached": 50944,
+      "output": 596
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "global:importes-catalogo",
+     "verdict": "no_aplica",
+     "reason": "el bot no da importes",
+     "by": "auto"
+    },
+    {
+     "id": "global:un-saludo",
+     "verdict": "cumple",
+     "reason": "se presenta 1 vez/veces",
+     "by": "auto"
+    },
+    {
+     "id": "global:sin-repreguntas",
+     "verdict": "cumple",
+     "reason": "El bot no volvió a preguntar ningún dato que el cliente ya había dado; respondió ambas preguntas y ofreció opciones de información sin repreguntar.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 51833,
+      "cached": 50944,
+      "output": 629
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "global:sin-fugas",
+     "verdict": "cumple",
+     "reason": "El bot no reveló nombres de sistemas, códigos ni identificadores internos; las respuestas usan información pública y concordante con la referencia (Isla Grande y hoteles mencionados).",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 51859,
+      "cached": 50944,
+      "output": 443
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "operamos-diario",
+     "verdict": "cumple",
+     "reason": "El bot afirma explícitamente que operan todos los días del año salvo el 25 de diciembre y el 1 de enero, que coincide con la REFERENCIA.",
+     "evidencia_bot": "Yes, we operate tours every day of the year except December 25 and January 1. Trips only get suspended if the weather conditions are unsafe.",
+     "evidencia_cliente": null,
+     "usage": {
+      "input": 52000,
+      "cached": 50944,
+      "output": 543
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "pickup-islas",
+     "verdict": "no_cumple",
+     "reason": "El bot no indicó que, si el cliente está hospedado en las Islas del Rosario, se coordina la recogida en su hotel (si tiene acceso marítimo) ni ofreció pedir el nombre del hotel para confirmarlo, como exige el criterio.",
+     "evidencia_bot": "Hi! Yes, Isla Grande is definitely part of the Rosario Islands. In fact, our dive base is located there at Hotel San Pedro de Majagua and Hotel Cocoliso. It's a great spot for diving and staying close to the reefs. Would you like info on diving tours or accommodation options on Isla Grande?",
+     "evidencia_cliente": "Does isla grande count acceptable is it part of the roasirio island^",
+     "usage": {
+      "input": 52000,
+      "cached": 51840,
+      "output": 1316
+     },
+     "by": "gpt-5-mini"
+    }
+   ]
+  },
+  {
+   "id": "open-water-hoteles-noche-fotos-horario",
+   "category": "curso",
+   "conv": 3588,
+   "criteria": [
+    {
+     "id": "global:idioma",
+     "verdict": "cumple",
+     "reason": "El cliente escribió en inglés y todas las respuestas del bot están en inglés, por lo que cumple el criterio de responder en el idioma del cliente.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 52831,
+      "cached": 51968,
+      "output": 565
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "global:sin-invenciones",
+     "verdict": "no_cumple",
+     "reason": "Después de afirmar que el curso requiere pernoctar en las islas, el bot vuelve a ofrecer recogida 'round trip, same day' desde Cartagena, lo que contradice la información (los cursos de 2 días requieren quedar en las islas; no hay ida y vuelta el mismo día).",
+     "evidencia_bot": "For the PADI Open Water Diver course, which lasts 2 days, you do need to stay overnight on the Rosario Islands. Commuting from Cartagena on both days isn’t an option because the second day’s activities start directly on the islands.\n\nAccommodation isn’t included in the course price, so you’d book your hotel stay separately. Would you like recommendations on hotels where we have our dive base?\n\nWhere would you be departing from? We can pick you up *from Cartagena* (round trip, same day) or, if you're already *on the islands*, we arrange pickup at your hotel.",
+     "evidencia_cliente": "so, if I understood correctly, booking just for one night will be enough, right?",
+     "problemas": [
+      {
+       "evidencia_bot": "For the PADI Open Water Diver course, which lasts 2 days, you do need to stay overnight on the Rosario Islands. Commuting from Cartagena on both days isn’t an option because the second day’s activities start directly on the islands.\n\nAccommodation isn’t included in the course price, so you’d book your hotel stay separately. Would you like recommendations on hotels where we have our dive base?\n\nWhere would you be departing from? We can pick you up *from Cartagena* (round trip, same day) or, if you're already *on the islands*, we arrange pickup at your hotel.",
+       "evidencia_cliente": "so, if I understood correctly, booking just for one night will be enough, right?",
+       "motivo": "Después de afirmar que el curso requiere pernoctar en las islas, el bot vuelve a ofrecer recogida 'round trip, same day' desde Cartagena, lo que contradice la información (los cursos de 2 días requieren quedar en las islas; no hay ida y vuelta el mismo día)."
+      },
+      {
+       "evidencia_bot": "Where would you be departing from? This plan takes several days and you need to *stay on the islands* (accommodation is not included): you can leave *from Cartagena* on the first day or, if you're already *on the islands*, we arrange pickup at your hotel.",
+       "evidencia_cliente": "2 full days course, right?",
+       "motivo": "El cliente preguntó si es un curso de 2 días; el bot llegó a afirmar 'This plan takes several days', introduciendo una duración ambigua/incorrecta que contradice la duración oficial de 2 días del curso."
+      }
+     ],
+     "usage": {
+      "input": 52942,
+      "cached": 51968,
+      "output": 4046
+     },
+     "by": "gpt-5-mini",
+     "descontados": []
+    },
+    {
+     "id": "global:importes-catalogo",
+     "verdict": "revisar",
+     "reason": "importes que no salen del catalogo: 14 USD, 50000 COP, 14 USD, 50000 COP",
+     "by": "auto"
+    },
+    {
+     "id": "global:un-saludo",
+     "verdict": "cumple",
+     "reason": "se presenta 1 vez/veces",
+     "by": "auto"
+    },
+    {
+     "id": "global:sin-repreguntas",
+     "verdict": "cumple",
+     "reason": "El cliente nunca indicó el punto de salida (Cartagena o islas), por lo que las repetidas preguntas del bot solicitando ese dato no son repreguntas de algo que el cliente ya dio con claridad.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 52832,
+      "cached": 51968,
+      "output": 1091
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "global:sin-fugas",
+     "verdict": "cumple",
+     "reason": "El bot no reveló nombres de sistemas internos, identificadores ni código (no aparecen productos en formato con guiones bajos ni referencias internas); todas las respuestas usan información pública y la referencia oficial.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 52858,
+      "cached": 50944,
+      "output": 831
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "pernocta-obligatoria",
+     "verdict": "cumple",
+     "reason": "El bot confirma explícitamente que el curso Open Water de 2 días requiere pernoctar en las islas (no es posible ir y volver desde Cartagena ambos días) y que al menos una noche es necesaria, cumpliendo el criterio.",
+     "evidencia_bot": "For the PADI Open Water Diver course, which lasts 2 days, you do need to stay overnight on the Rosario Islands. Commuting from Cartagena on both days isn’t an option because the second day’s activities start directly on the islands.\n\nAccommodation isn’t included in the course price, so you’d book your hotel stay separately. Would you like recommendations on hotels where we have our dive base?\n\nWhere would you be departing from? We can pick you up *from Cartagena* (round trip, same day) or, if you're already *on the islands*, we arrange pickup at your hotel.",
+     "evidencia_cliente": "so, if I understood correctly, booking just for one night will be enough, right?",
+     "usage": {
+      "input": 53005,
+      "cached": 50944,
+      "output": 736
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "hora-fin-dia1",
+     "verdict": "no_cumple",
+     "reason": "El criterio exige que el bot responda indicando que el primer día suele terminar alrededor de las 4:30 p. m.; el bot en su respuesta dijo que no tenía el horario y ofreció pasar a un asesor en lugar de dar la hora solicitada.",
+     "evidencia_bot": "Hi! I don’t have the exact schedule or finishing time for the first day of the PADI Open Water course handy. If you want, I can connect you with an advisor who can share a more detailed itinerary tailored to your dates.\n\nWhat I can tell you is that accommodation isn’t included, so you’ll book your hotel stay separately and can plan your leisure time accordingly.\n\nWould you like me to help you with the booking link to get started?\n\nWhere would you be departing from? This plan takes several days and you need to *stay on the islands* (accommodation is not included): you can leave *from Cartagena* on the first day or, if you're already *on the islands*, we arrange pickup at your hotel.",
+     "evidencia_cliente": "Sorry again, do you have a more detailed schedule ?\nFor instance, what time does the course finish on the first day?\nBecause I wanted to know if I will have time to enjoy the hotel as well.",
+     "usage": {
+      "input": 53005,
+      "cached": 52864,
+      "output": 796
+     },
+     "by": "gpt-5-mini"
+    }
+   ]
+  },
+  {
+   "id": "curso-open-water-transporte-y-regreso-otro-dia",
+   "category": "logistica",
+   "conv": 3589,
+   "criteria": [
+    {
+     "id": "global:idioma",
+     "verdict": "cumple",
+     "reason": "El cliente escribió en inglés y el bot respondió en inglés en todas sus intervenciones.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 52054,
+      "cached": 50944,
+      "output": 361
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "global:sin-invenciones",
+     "verdict": "cumple",
+     "reason": "Todas las respuestas del bot coinciden con la REFERENCIA (transporte incluido en Open Water desde Cartagena, requisito de pernoctar, almuerzo día 1, regreso en día distinto no incluido pero coordinable con el equipo, y punto de encuentro a las 8:00 en Muelle de la Bodeguita).",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 52165,
+      "cached": 50944,
+      "output": 987
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "global:importes-catalogo",
+     "verdict": "no_aplica",
+     "reason": "el bot no da importes",
+     "by": "auto"
+    },
+    {
+     "id": "global:un-saludo",
+     "verdict": "cumple",
+     "reason": "se presenta 1 vez/veces",
+     "by": "auto"
+    },
+    {
+     "id": "global:sin-repreguntas",
+     "verdict": "cumple",
+     "reason": "El bot no vuelve a preguntar datos que el cliente ya dio; las preguntas del bot son ofertas de ayuda o para compartir enlaces, no repreguntas de información ya proporcionada.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 52055,
+      "cached": 50944,
+      "output": 700
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "global:sin-fugas",
+     "verdict": "cumple",
+     "reason": "El bot no divulgó nombres de sistemas internos, identificadores en formato interno ni instrucciones de backend; todas las respuestas usan información pública y autorizada de la referencia (servicios, puntos de encuentro y políticas de transporte).",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 52081,
+      "cached": 50944,
+      "output": 708
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "incluye-transporte-curso-desde-cartagena",
+     "verdict": "cumple",
+     "reason": "El bot confirma textualmente que el Curso Básico PADI (Open Water) saliendo desde Cartagena incluye el transporte en lancha Cartagena–Islas–Cartagena.",
+     "evidencia_bot": "Hi! Yes, that's correct. For the PADI Basic Course (Open Water) departing from Cartagena, the speedboat transport between Cartagena and the Rosario Islands is included. You'll have the boat transfer Cartagena-Islands-Cartagena covered as part of the course.",
+     "evidencia_cliente": "Hi,\nMy understanding is that the transportation to rosario is included, in case I decided to do PADI Open Water Diver certification course., correct?",
+     "usage": {
+      "input": 52243,
+      "cached": 50944,
+      "output": 660
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "regreso-otro-dia-escalar",
+     "verdict": "cumple",
+     "reason": "El bot indica claramente que el regreso en fecha distinta no está incluido y ofrece conectar al cliente con el equipo (asesor) para coordinar el traslado, por lo que cumple el criterio.",
+     "evidencia_bot": "Great question! If you decide to stay an extra day on the Rosario Islands, returning to Cartagena on a different day than your original plan is not included automatically. However, our team can arrange your boat transfer back to Cartagena on the day you choose, depending on boat availability.\n\nIf your hotel on the islands has maritime access, pick-up and drop-off by boat are included at no extra charge for plans starting on the islands.\n\nWould you like me to help you connect with the team to arrange that extra-day transfer?",
+     "evidencia_cliente": "What if I decide to stay one day longer in rosario, can you provide de transfer back to cartagena?",
+     "usage": {
+      "input": 52243,
+      "cached": 51968,
+      "output": 968
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "punto-encuentro-hora",
+     "verdict": "cumple",
+     "reason": "El bot indicó claramente el punto de encuentro y la hora: Muelle de la Bodeguita a las 8:00 a.m., que coincide con la referencia oficial.",
+     "evidencia_bot": "Perfect! The meeting point in Cartagena is at 8:00 a.m. at Muelle de la Bodeguita, which is just 5 minutes from the historic center. When you arrive, just ask for DIVING PLANET at entrance 3—no need to queue.\n\nWould you like me to share the exact location link or any other details for your day?",
+     "evidencia_cliente": "Thanks.\nAnother question is, where is the meeting point in cartagena?",
+     "usage": {
+      "input": 52243,
+      "cached": 52096,
+      "output": 802
+     },
+     "by": "gpt-5-mini"
+    }
+   ]
+  },
+  {
+   "id": "certificado-precio-dia-paquete-5-y-hoteles-base",
+   "category": "info",
+   "conv": 3590,
+   "criteria": [
+    {
+     "id": "global:idioma",
+     "verdict": "cumple",
+     "reason": "Todas las respuestas del bot están en inglés, que es el idioma usado por el cliente.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 52713,
+      "cached": 51968,
+      "output": 426
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "global:sin-invenciones",
+     "verdict": "revisar",
+     "reason": "[evidencia del cliente no encontrada] El bot asume que el cliente va a realizar un 'PADI Advanced course' cuando el cliente solo indicó que ya tiene esas certificaciones; es una invención/no deducción válida.",
+     "evidencia_bot": "I understand you're looking at a package of 5 dives for your PADI Advanced course in Cartagena.",
+     "evidencia_cliente": "CLIENTE: PADI open water, advanced open water and deep diver certs",
+     "problemas": [
+      {
+       "evidencia_bot": "I understand you're looking at a package of 5 dives for your PADI Advanced course in Cartagena.",
+       "evidencia_cliente": "CLIENTE: PADI open water, advanced open water and deep diver certs",
+       "motivo": "El bot asume que el cliente va a realizar un 'PADI Advanced course' cuando el cliente solo indicó que ya tiene esas certificaciones; es una invención/no deducción válida."
+      }
+     ],
+     "usage": {
+      "input": 52824,
+      "cached": 51968,
+      "output": 2543
+     },
+     "by": "gpt-5-mini",
+     "descontados": []
+    },
+    {
+     "id": "global:importes-catalogo",
+     "verdict": "cumple",
+     "reason": "10 importes, todos del catalogo",
+     "by": "auto"
+    },
+    {
+     "id": "global:un-saludo",
+     "verdict": "cumple",
+     "reason": "se presenta 1 vez/veces",
+     "by": "auto"
+    },
+    {
+     "id": "global:sin-repreguntas",
+     "verdict": "cumple",
+     "reason": "El bot no solicitó nuevamente ningún dato que el cliente ya había dado con claridad; las preguntas del bot (número de personas, si hace más de 2 años que no bucean) piden información nueva que el cliente no había proporcionado.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 52714,
+      "cached": 51968,
+      "output": 1227
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "global:sin-fugas",
+     "verdict": "cumple",
+     "reason": "El bot no revela nombres de sistemas internos, identificadores internos, código ni datos de otros clientes; solo usó nombres de servicios, precios y hoteles permitidos por la referencia.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 52740,
+      "cached": 51968,
+      "output": 1084
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "precio-dia-cartagena",
+     "verdict": "cumple",
+     "reason": "El bot proporcionó el precio correcto en USD para buzo certificado (2 inmersiones, salida desde Cartagena): 178 USD (precio online).",
+     "evidencia_bot": "- Fun Dives - 2 dives in one day: 178 USD online price (with 10% discount), includes boat, lunch, and equipment.",
+     "evidencia_cliente": "CLIENTE: Hi, I plan on being in Cartagena and do scuba diving on April 21 and 22. I have open water, advanced open water and deep diver certs. Please advise what options do you have for scuba diving and how much it costs",
+     "usage": {
+      "input": 52938,
+      "cached": 50944,
+      "output": 913
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "paquete-5-requiere-noche",
+     "verdict": "cumple",
+     "reason": "El bot, al mencionar el paquete de 5 buceos, indicó explícitamente que es un plan de 2 días, que incluye un buceo nocturno y que requiere hospedarse en las islas (overnight stay required), cumpliendo el criterio.",
+     "evidencia_bot": "- 5-dive package over 2 days (includes a night dive): 392 USD online price, overnight stay required.",
+     "evidencia_cliente": null,
+     "usage": {
+      "input": 52939,
+      "cached": 51968,
+      "output": 689
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "hoteles-base-islas",
+     "verdict": "cumple",
+     "reason": "El bot indica explícitamente que la base de buceo está en Isla Grande y nombra los hoteles San Pedro de Majagua y Cocoliso como referencias de alojamiento, señalando implícitamente que el alojamiento no está incluido.",
+     "evidencia_bot": "Great question! Our dive base is located on Isla Grande, where you'll find Hotel San Pedro de Majagua and Hotel Cocoliso—both very convenient for diving with us. You can also consider other nearby hotels with boat access like Rosario de Mar, Secreto, Ubuntu, Mulata, Eco Hotel Las Palmeras, or Pao Pao.",
+     "evidencia_cliente": null,
+     "usage": {
+      "input": 52939,
+      "cached": 51968,
+      "output": 725
+     },
+     "by": "gpt-5-mini"
+    }
+   ]
+  },
+  {
+   "id": "curso-open-water-principiantes-idioma-frances-anticipacion",
+   "category": "curso",
+   "conv": 3591,
+   "criteria": [
+    {
+     "id": "global:idioma",
+     "verdict": "no_cumple",
+     "reason": "El cliente pidió cambiar al francés, pero el bot respondió en español en este mensaje.",
+     "evidencia_bot": "Entendido, son dos personas y el idioma es francés.\n\n¿Desde dónde saldrías? Este plan dura varios días y hay que *dormir en las islas* (el alojamiento no está incluido): puedes salir *desde Cartagena* el primer día o, si ya estás *en las islas*, coordinamos la recogida en tu hotel.",
+     "evidencia_cliente": "Frances",
+     "problemas": [
+      {
+       "evidencia_bot": "Entendido, son dos personas y el idioma es francés.\n\n¿Desde dónde saldrías? Este plan dura varios días y hay que *dormir en las islas* (el alojamiento no está incluido): puedes salir *desde Cartagena* el primer día o, si ya estás *en las islas*, coordinamos la recogida en tu hotel.",
+       "evidencia_cliente": "Frances",
+       "motivo": "El cliente pidió cambiar al francés, pero el bot respondió en español en este mensaje."
+      },
+      {
+       "evidencia_bot": "Entendido, la fecha que mencionas es entre el 20 y 22 de julio.\n\n¿Desde dónde saldrías? Este plan dura varios días y hay que *dormir en las islas* (el alojamiento no está incluido): puedes salir *desde Cartagena* el primer día o, si ya estás *en las islas*, coordinamos la recogida en tu hotel.",
+       "evidencia_cliente": "Frances",
+       "motivo": "Tras la solicitud de francés, el bot volvió a responder en español en este mensaje."
+      }
+     ],
+     "usage": {
+      "input": 52492,
+      "cached": 51968,
+      "output": 1590
+     },
+     "by": "gpt-5-mini",
+     "descontados": []
+    },
+    {
+     "id": "global:sin-invenciones",
+     "verdict": "cumple",
+     "reason": "Las respuestas del bot coinciden con la REFERENCIA: no introduce datos falsos ni contradice políticas, precios o requisitos; las suposiciones (número de personas, idioma) estaban dadas por el cliente.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 52603,
+      "cached": 51968,
+      "output": 4163
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "global:importes-catalogo",
+     "verdict": "cumple",
+     "reason": "2 importes, todos del catalogo",
+     "by": "auto"
+    },
+    {
+     "id": "global:un-saludo",
+     "verdict": "cumple",
+     "reason": "se presenta 1 vez/veces",
+     "by": "auto"
+    },
+    {
+     "id": "global:sin-repreguntas",
+     "verdict": "cumple",
+     "reason": "El bot no volvió a preguntar ningún dato que el cliente ya hubiera proporcionado con claridad; las preguntas repetidas (p.ej. '¿Desde dónde saldrías?') se hicieron solo cuando el cliente no había dado esa información.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 52493,
+      "cached": 51968,
+      "output": 1288
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "global:sin-fugas",
+     "verdict": "cumple",
+     "reason": "El bot solo usa nombres públicos (Minicurso, Open Water), enlaces oficiales permitidos y no revela identificadores internos, código ni datos de otros clientes.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 52519,
+      "cached": 51968,
+      "output": 1336
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "curso-overnight-obligatorio",
+     "verdict": "cumple",
+     "reason": "El bot declaró explícitamente que el Open Water requiere 2 días y pernoctar en las islas, y que no es posible ir y volver desde Cartagena ambos días.",
+     "evidencia_bot": "Los cursos que sí certifican, como el Open Water, duran 2 días y requieren quedarse a dormir en las islas; no es posible hacerlos en línea ni en dos días desde Cartagena.",
+     "evidencia_cliente": null,
+     "usage": {
+      "input": 52719,
+      "cached": 50944,
+      "output": 1068
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "idiomas-instructores",
+     "verdict": "cumple",
+     "reason": "El bot acepta que el acompañante actúe como intérprete y aclara explícitamente que la instrucción se imparte solo en español o inglés, cumpliendo el criterio solicitado.",
+     "evidencia_bot": "¡Qué bueno que quieras aclarar eso! Te cuento que el minicurso de buceo es una iniciación de un día, no da certificación PADI ni cuenta como curso oficial, pero sí es perfecto para probar el buceo si tienes poco tiempo.\n\nLos cursos que sí certifican, como el Open Water, duran 2 días y requieren quedarse a dormir en las islas; no es posible hacerlos en línea ni en dos días desde Cartagena.\n\nSobre el idioma, las clases y actividades se imparten en español o inglés. Si tu acompañante no habla ninguno de esos idiomas, puede venir contigo como intérprete sin problema; la instrucción seguirá siendo en español o inglés, y tú puedes ayudarle con la traducción.\n\n¿Quieres que te cuente más sobre el minicurso o prefieres información del curso Open Water para planear con más tiempo?\n\n¿Desde dónde saldrías? Este plan dura varios días y hay que *dormir en las islas* (el alojamiento no está incluido): puedes salir *desde Cartagena* el primer día o, si ya estás *en las islas*, coordinamos la recogida en tu hotel.",
+     "evidencia_cliente": "Es decir en dos dias tendriamos el certificado haciendo nuestro curso en linea . La persona que me acompana no habla ni ingles ni espanol pero yo seria la \"interprete\" hay incoveniente con eso ?",
+     "usage": {
+      "input": 52720,
+      "cached": 51968,
+      "output": 1380
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "anticipacion-cierre-sistema",
+     "verdict": "revisar",
+     "reason": "[evidencia del cliente no encontrada] El cliente preguntó explícitamente 'con que tiempo de anticipacion' para reservar, pero el bot no mencionó que el sistema de reservas cierra a las 4:30 p.m. del día anterior ni explicó la política de reserva después de esa hora.",
+     "evidencia_bot": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\n¡Hola! Qué bacano que quieran iniciarse en el buceo en las Islas del Rosario, es un lugar espectacular para esa primera experiencia, con aguas cálidas y arrecifes llenos de vida.\n\nPara quienes no tienen mucho tiempo y es su primera vez, el Minicurso de Buceo es ideal: dura 1 día, incluye teoría online que haces antes, entrenamiento en piscina y una inmersión en el mar con instructor PADI. Sale desde Cartagena con lancha incluida, almuerzo y todo el equipo. El precio online es 183 USD por persona (o 655.000 COP si eres colombiano).\n\nLa reserva la haces directamente en la página web, donde eliges fecha y número de personas: https://book.divingplanet.org/book/minicurso-de-buceo/2?language=es. El pago también es directo en la web al momento de reservar, así queda todo confirmado. Después de reservar, te enviamos un correo con las instrucciones para completar la teoría online antes del día de la práctica.\n\nSi quieres, te ayudo a armar la reserva para ti y tu acompañante. ¿Quieres?",
+     "evidencia_cliente": "CLIENTE: Hola!\nMe gustaria tener mas informacion acerca de los cursos de buceo en Cartagena (especificamente en Islas del Rosario)\nSomos dos personas y es la pirmera vez que vamos hacer buceo y sobretodo no tenemos mucho tiempo.\nComo se hace para reservar ? con que tiempo de anticipacion ? el pago lo hacemos directo por la pagina web o directmente con ustedes en Cartagena ?\nGracias.",
+     "usage": {
+      "input": 52719,
+      "cached": 51968,
+      "output": 1069
+     },
+     "by": "gpt-5-mini"
+    }
+   ]
+  }
+ ]
+}

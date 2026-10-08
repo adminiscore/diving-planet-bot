@@ -2033,6 +2033,11 @@ def _lugar_por_jev(intent, state: ConversationState) -> None:
     if jev == intent.location:
         return
     seguro = lugar.get("confidence", 0.0) >= CUSTOMER_PLACE_MIN
+    if jev is None and intent.location == "cartagena":
+        # La pregunta existe porque las islas son donde se bucea: nombrarlas no dice donde esta el cliente. Con
+        # Cartagena no pasa: "cursos de buceo en Cartagena" -> Jev "no lo dice" (0,77) quitaba Cartagena y el bot
+        # preguntaba el origen (repregunta, mini-ronda lugar-B). Cartagena solo la cambia Jev por las islas.
+        return
     if not seguro and jev is None:
         return  # Jev solo duda de que el mensaje lo diga: lo de la regex ("estaremos en islas del rosario")
     nuevo = jev if seguro else None

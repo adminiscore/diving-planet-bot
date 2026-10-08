@@ -239,3 +239,13 @@ def test_jev_pide_el_lugar_solo_con_el_flag(monkeypatch):
     assert jev_router.uncertain_answers({jev_router.CUSTOMER_PLACE: {"type": "choice", "choice": "none", "confidence": 0.3}}) == []
     monkeypatch.setattr(settings, "jev_lugar_cliente", False)
     assert jev_router.CUSTOMER_PLACE not in jev_router._questions_for_turn()
+
+
+def test_jev_no_quita_cartagena_si_solo_dice_que_no_consta(monkeypatch):
+    monkeypatch.setattr(settings, "jev_lugar_cliente", True)
+    st = _state()
+    st._jev_lugar = {"choice": "none", "confidence": 0.77}
+    intent = _intent("me gustaria tener mas informacion acerca de los cursos de buceo en cartagena", st)
+    assert intent.location == "cartagena"
+    core._lugar_por_jev(intent, st)
+    assert intent.location == "cartagena"
