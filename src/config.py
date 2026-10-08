@@ -19,11 +19,7 @@ class Settings(BaseSettings):
     # Hasta el 25-sep este valia "gpt-4o" (el del orquestador ya retirado) y PRE lo
     # cambiaba desde el .env.pre del VPS, fuera del repo.
     # Lo usan condense_query, el juez de grounding, el detector de idioma y el resumen.
-    # 8-oct (cambio de modelos, fase 4): gpt-6-luna SIN razonamiento (llm_client.adaptar_parametros pone
-    # max_completion_tokens y reasoning_effort=none). Fases 0-3: RAG claramente mejor (124 USD, no supone el refresher,
-    # 1 rechazo del juez frente a 2) con +0,5 s de mediana; extraccion igual o algo mejor con +0,2 s por llamada (Gadea:
-    # se acepta por calidad). EN MEDICION: ronda core A/B. Revert = el modelo de antes aqui y en el compose.
-    openai_model: str = "gpt-6-luna"  # antes gpt-4o-mini
+    openai_model: str = "gpt-4o-mini"
     # Model for the narrow, structured LLM gap-filler extractor
     # (src/agents/llm_extractor.py, robustness Fases 1-3). Kept SEPARATE from
     # openai_model (then used by the action orchestrator, retired in 308488d): the extraction is a small
@@ -34,11 +30,7 @@ class Settings(BaseSettings):
     # (degrades to "regex-only / ask", never to a wrong value). ~15-30x cheaper
     # and faster per call. Revert to "gpt-4o" here if ever needed. See
     # docs/robustness/progress-log.md (Fase 4).
-    # 8-oct (cambio de modelos, fase 4): gpt-6-luna SIN razonamiento (llm_client.adaptar_parametros pone
-    # max_completion_tokens y reasoning_effort=none). Fases 0-3: RAG claramente mejor (124 USD, no supone el refresher,
-    # 1 rechazo del juez frente a 2) con +0,5 s de mediana; extraccion igual o algo mejor con +0,2 s por llamada (Gadea:
-    # se acepta por calidad). EN MEDICION: ronda core A/B. Revert = el modelo de antes aqui y en el compose.
-    extraction_model: str = "gpt-6-luna"  # antes gpt-4o-mini
+    extraction_model: str = "gpt-4o-mini"
     # Model for the RAG answer-generation call only (rag_agent.py
     # `_answer_with_llm`). Kept SEPARATE from `openai_model` (used broadly
     # across the bot) so we can trial a stronger model for JUST this call --
@@ -53,11 +45,10 @@ class Settings(BaseSettings):
     # `temperature`, usan `reasoning_effort`); cualquier modelo puesto aqui
     # debe seguir aceptando `temperature`/`max_tokens` como hoy (gpt-4.1-mini,
     # gpt-4o, etc.).
-    # 8-oct (cambio de modelos, fase 4): gpt-6-luna SIN razonamiento (llm_client.adaptar_parametros pone
-    # max_completion_tokens y reasoning_effort=none). Fases 0-3: RAG claramente mejor (124 USD, no supone el refresher,
-    # 1 rechazo del juez frente a 2) con +0,5 s de mediana; extraccion igual o algo mejor con +0,2 s por llamada (Gadea:
-    # se acepta por calidad). EN MEDICION: ronda core A/B. Revert = el modelo de antes aqui y en el compose.
-    rag_answer_model: str = "gpt-6-luna"  # antes gpt-4.1-mini
+    # 8-oct (cambio de modelos): ronda core A/B con GPT-6 Luna en todo (modelos-A/B): calidad igual (94,7 %), p95 de los
+    # turnos 5,4 -> 8,6 s (cola de Luna). Extraccion y secundarias vuelven a gpt-4o-mini. La respuesta del RAG: ver
+    # `rag_respaldo_*` (Luna con respaldo).
+    rag_answer_model: str = "gpt-4.1-mini"
     openai_embedding_model: str = "text-embedding-3-small"
     # Model used to transcribe incoming customer voice notes (see
     # src/channels/audio.py). gpt-4o-mini-transcribe is cheaper/better than
@@ -172,6 +163,20 @@ class Settings(BaseSettings):
     # `[texto](url)` -> `texto: url`, titulos -> negrita). GPT-6 Luna escribe Markdown de documento y WhatsApp lo ensenaba
     # con los asteriscos. Solo presentacion; lo que ya esta en formato WhatsApp no cambia. `channels/formato.py`.
     formato_whatsapp: bool = True
+    # 8-oct: respuesta del RAG con RESPALDO (`rag_agent.generar_con_respaldo`): si el modelo principal
+    # (`rag_answer_model`) no ha terminado en `rag_respaldo_segundos`, se lanza la misma peticion a `rag_respaldo_modelo`
+    # en paralelo y se usa la primera que termine. Corta la cola de GPT-6 Luna. Vacio o 0 = sin respaldo.
+    rag_respaldo_modelo: str = ""
+    rag_respaldo_segundos: float = 3.0
+    # 8-oct (prueba de DeepSeek): un modelo con prefijo de proveedor ("deepseek/deepseek-v4.1-flash") sale por
+    # OpenRouter (`llm_client.parametros_openrouter`), solo por estos proveedores (separados por comas, por latencia,
+    # sin retención de datos). "deepseek" = la API oficial (servidores en China: solo para pruebas sin datos de
+    # clientes); "baseten,fireworks/us,coreweave" = EE. UU. Vacío = cualquiera, por latencia.
+    openrouter_base_url: str = "https://openrouter.ai/api/v1"
+    openrouter_proveedores: str = "baseten,fireworks/us,coreweave"
+    # OpenRouter solo deja usar la API oficial de DeepSeek si se acepta que ENTRENEN con los datos (su politica "Paid
+    # model training"). Apagado = nunca. Solo para pruebas con datos anonimizados; nunca con clientes reales.
+    openrouter_permitir_entrenamiento: bool = False
     # J2 (1-oct): segunda opinion de Jev sobre las frases que el juez marca NO (src/agents/juez_segunda_opinion.py).
     # Solo cuando el juez rechaza; si Jev esta seguro de que ninguna afirma nada del negocio, la respuesta pasa.
     # rag_piezas 1-oct (96 respuestas por lado): cobertura 88 -> 90 %, contradicciones 3 -> 1, misma latencia. Calibrado

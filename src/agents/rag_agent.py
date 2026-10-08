@@ -1284,6 +1284,49 @@ async def _verify_grounding(answer: str, context: str, lang: str) -> tuple[bool,
     return await is_grounded(answer, context, lang=lang)
 
 
+async def generar_con_respaldo(client, messages: list[dict]):
+    """La llamada que escribe la respuesta del RAG, con RESPALDO (8-oct, cambio de modelos).
+
+    GPT-6 Luna escribe mejores respuestas, pero tiene una cola de latencia (~8 % de llamadas a 6-13 s en la ronda
+    modelos-B). Si el modelo principal no ha terminado en `rag_respaldo_segundos`, se lanza la MISMA petición al
+    modelo de respaldo (`rag_respaldo_modelo`, gpt-4.1-mini) en paralelo y se usa la primera que termine; la otra
+    se cancela. Si el principal falla, contesta el respaldo. Sin respaldo configurado, la llamada de siempre."""
+    from src.observability import note_turn  # lazy
+
+    principal = settings.rag_answer_model or settings.openai_model
+    respaldo, espera = settings.rag_respaldo_modelo, settings.rag_respaldo_segundos
+
+    def llamar(model: str):
+        return client.chat.completions.create(model=model, messages=messages, temperature=0.3, max_tokens=500)
+
+    if not respaldo or espera <= 0 or respaldo == principal:
+        return await llamar(principal)
+    t0 = asyncio.get_running_loop().time()
+    t_principal = asyncio.ensure_future(llamar(principal))
+    await asyncio.wait({t_principal}, timeout=espera)
+    if t_principal.done() and t_principal.exception() is None:
+        note_turn(rag_respaldo="principal", rag_respaldo_s=round(asyncio.get_running_loop().time() - t0, 2))
+        return t_principal.result()
+    if t_principal.done():  # el principal falló antes de la espera: contesta el respaldo
+        logger.warning(f"[RAG][RESPALDO] {principal} falló ({t_principal.exception()}): contesta {respaldo}")
+        note_turn(rag_respaldo="error_principal", rag_respaldo_s=round(asyncio.get_running_loop().time() - t0, 2))
+        return await llamar(respaldo)
+    t_respaldo = asyncio.ensure_future(llamar(respaldo))
+    pendientes = {t_principal, t_respaldo}
+    while pendientes:
+        hechas, pendientes = await asyncio.wait(pendientes, return_when=asyncio.FIRST_COMPLETED)
+        buena = next((t for t in hechas if t.exception() is None), None)
+        if buena is not None:
+            for t in pendientes:
+                t.cancel()
+            gana = "gana_principal" if buena is t_principal else "gana_respaldo"
+            segundos = round(asyncio.get_running_loop().time() - t0, 2)
+            logger.info(f"[RAG][RESPALDO] {principal} tardaba más de {espera:g} s: {gana} ({segundos} s)")
+            note_turn(rag_respaldo=gana, rag_respaldo_s=segundos)
+            return buena.result()
+    return t_respaldo.result()  # fallaron los dos: la excepción del respaldo sube y el llamador da el fallback
+
+
 async def rag_answer(
     query: str,
     lang: str = "es",
@@ -1529,12 +1572,7 @@ async def rag_answer(
         last_reject = ""
         for attempt in range(2):
             try:
-                response = await client.chat.completions.create(
-                    model=settings.rag_answer_model or settings.openai_model,
-                    messages=messages,
-                    temperature=0.3,
-                    max_tokens=500,
-                )
+                response = await generar_con_respaldo(client, messages)
             except Exception as exc:
                 logger.warning(f"[RAG][LLM] failed to answer query={query[:60]}... error={exc}")
                 return fallback

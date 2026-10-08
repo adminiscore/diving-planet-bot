@@ -26,3 +26,16 @@ def test_un_esfuerzo_pedido_por_la_llamada_se_respeta():
 def test_gpt5_traduce_el_tope_pero_no_impone_esfuerzo():
     out = adaptar_parametros({"model": "gpt-5-mini", "max_tokens": 300})
     assert out == {"model": "gpt-5-mini", "max_completion_tokens": 300}
+
+
+def test_los_modelos_con_proveedor_salen_por_openrouter(monkeypatch):
+    from src.llm_client import es_de_openrouter, parametros_openrouter
+
+    assert es_de_openrouter("deepseek/deepseek-v4.1-flash")
+    assert not es_de_openrouter("gpt-6-luna") and not es_de_openrouter("gpt-4.1-mini")
+    monkeypatch.setattr(settings, "openrouter_proveedores", "baseten, fireworks/us")
+    out = parametros_openrouter({"model": "deepseek/deepseek-v4.1-flash", "max_tokens": 500, "temperature": 0.3})
+    assert out["max_tokens"] == 500 and out["temperature"] == 0.3
+    assert out["extra_body"]["provider"] == {"only": ["baseten", "fireworks/us"], "sort": "latency",
+                                             "allow_fallbacks": True, "data_collection": "deny"}
+    assert out["extra_body"]["reasoning"] == {"enabled": False}

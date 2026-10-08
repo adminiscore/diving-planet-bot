@@ -249,6 +249,11 @@ def turn_metrics_line(conversation_id: str, facts: dict, started_at: str, second
         payload["notas"] = facts["notas"]  # rag-5: puerta de Jev del extractor de notas (saltadas / extraidas)
     if facts.get("rag_rehecho_por"):
         payload["rag_rehecho_por"] = facts["rag_rehecho_por"]  # rag-5: qué parte de la huella cambió
+    if facts.get("rag_respaldo"):
+        # 8-oct: respuesta del RAG con respaldo. "principal" (contestó antes de la espera), "gana_principal" /
+        # "gana_respaldo" (saltó el respaldo y ganó ese), "error_principal" (falló el principal y contestó el respaldo).
+        payload["rag_respaldo"] = facts["rag_respaldo"]
+        payload["rag_respaldo_s"] = facts.get("rag_respaldo_s")
     return f"{TURN_METRICS_TAG} {json.dumps(payload, ensure_ascii=False, default=str)}"
 
 

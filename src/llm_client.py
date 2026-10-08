@@ -81,9 +81,41 @@ def adaptar_parametros(kwargs: dict) -> dict:
     return kw
 
 
+def es_de_openrouter(model: str) -> bool:
+    """Modelos con prefijo de proveedor ("deepseek/deepseek-v4.1-flash"): no son de OpenAI y salen por OpenRouter."""
+    return "/" in (model or "")
+
+
+def parametros_openrouter(kwargs: dict) -> dict:
+    """Los parámetros para OpenRouter (8-oct, prueba de DeepSeek): solo los proveedores de
+    `settings.openrouter_proveedores` (por latencia, saltando al siguiente si uno falla), SIN retención de datos ni
+    entrenamiento (`data_collection: deny`) y sin razonamiento. El modelo y los pesos son los mismos en cada proveedor;
+    lo que cambia es DÓNDE se procesan los mensajes y su latencia."""
+    kw = dict(kwargs)
+    proveedores = [p.strip() for p in settings.openrouter_proveedores.split(",") if p.strip()]
+    extra = dict(kw.pop("extra_body", None) or {})
+    datos = "allow" if settings.openrouter_permitir_entrenamiento else "deny"
+    extra.setdefault("provider", {"only": proveedores, "sort": "latency", "allow_fallbacks": True, "data_collection": datos}
+                     if proveedores else {"sort": "latency", "data_collection": datos})
+    extra.setdefault("reasoning", {"enabled": False})
+    kw["extra_body"] = extra
+    return kw
+
+
+_cliente_openrouter: _RealAsyncOpenAI | None = None
+
+
+def _openrouter() -> _RealAsyncOpenAI:
+    global _cliente_openrouter
+    if _cliente_openrouter is None:
+        _cliente_openrouter = _with_timeout(_RealAsyncOpenAI(api_key=settings.openrouter_api_key,
+                                                             base_url=settings.openrouter_base_url))
+    return _cliente_openrouter
+
+
 def _con_parametros_adaptados(client: _C) -> _C:
     """Envuelve `chat.completions.create` del cliente REAL con `adaptar_parametros` (mismo criterio que el timeout:
-    a un mock de los tests no se le toca)."""
+    a un mock de los tests no se le toca). Un modelo con prefijo de proveedor sale por OpenRouter."""
     if not isinstance(client, _RealAsyncOpenAI):
         return client
     try:
@@ -91,6 +123,8 @@ def _con_parametros_adaptados(client: _C) -> _C:
         original = completions.create
 
         async def create(*args, **kwargs):
+            if es_de_openrouter(str(kwargs.get("model") or "")):
+                return await _openrouter().chat.completions.create(*args, **parametros_openrouter(kwargs))
             return await original(*args, **adaptar_parametros(kwargs))
 
         completions.create = create
