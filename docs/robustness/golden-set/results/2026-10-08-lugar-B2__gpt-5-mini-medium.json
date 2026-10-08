@@ -1,0 +1,358 @@
+{
+ "judged_at": "2026-10-08T10:14:39+00:00",
+ "run_file": "docs/robustness/synthetic-runs/2026-10-08-lugar-B2.jsonl",
+ "golden_version": 8,
+ "model": "gpt-5-mini",
+ "effort": "medium",
+ "referencia": "curada",
+ "missing_dialogues": [
+  "saludo-cortesia",
+  "reserva-completa-saludo-a-pago",
+  "reserva-solo-link",
+  "reserva-ingles",
+  "reserva-colombianos-cop",
+  "cambio-idioma",
+  "grupo-3-actividades",
+  "grupo-recompuesto",
+  "acompanante-goteo",
+  "familia-ninos-resumen",
+  "isla-hotel-refresher",
+  "grupo-cambia-dos-veces",
+  "actividad-cambia-varias",
+  "refresher-rechaza-acepta",
+  "grupo-con-refresher",
+  "ninos-6-y-10",
+  "nino-7-familia",
+  "nacionalidad-ambigua",
+  "nacionalidad-mixta-carrito",
+  "vuelo-tras-bucear",
+  "edad-minima-open-water",
+  "punto-encuentro",
+  "premisa-falsa-lunes",
+  "paquete-5-inmersiones",
+  "paquete-en-carrito",
+  "descuento-efectivo",
+  "regateo-grupo-6",
+  "embarazo",
+  "clima-manana",
+  "queja",
+  "humano-con-carrito",
+  "link-roto-carrito",
+  "cancelacion-indirecta",
+  "cambio-fecha-carrito",
+  "es-un-bot",
+  "pide-telefono",
+  "buceo-adaptado-visual",
+  "inyeccion-system-prompt",
+  "inyeccion-json-admin",
+  "inyeccion-desarrollador",
+  "manual-acompanante-mayor",
+  "manual-duracion-curso",
+  "fuera-de-tema",
+  "open-water-precio-para-colombianos-corrige-mito",
+  "curso-open-water-precio-cop-hoteles-y-transporte",
+  "curso-open-water-disponibilidad-pasos-y-precio-citado",
+  "paquete-5-buceos-cop-refresh-y-hoteles",
+  "reserva-paquete-5-buceos-solicita",
+  "semana-santa-solo-avanzado-islas",
+  "paquete-5-buceos-islas-residente-sin-recogida",
+  "confirma-estado-reserva-escalar",
+  "snorkel-precio-residente-y-pago-link",
+  "snorkel-inicio-pide-info",
+  "precio-snorkel-origen",
+  "no-delfinario-sugerir-snorkel",
+  "certificado-fecha-precio-cop-descuento-transferencia",
+  "acompanante-madre-desde-cartagena",
+  "grupo-mixto-precio-cop-total",
+  "certificado-fechas-fotos-y-reserva",
+  "confirmacion-salida-y-pago-sin-concepto",
+  "clima-y-cancelacion-reserva-existente",
+  "confirma-fecha-y-punto-encuentro",
+  "programa-fotos-y-alojamiento",
+  "info-buza-certificada-pedir-origen",
+  "certificada-pide-fecha-faltan-datos",
+  "equipaje-mochilas-y-almacenamiento",
+  "logistica-isla-fragata-regreso-otro-dia",
+  "cambio-fecha-por-enfermedad",
+  "precio-desde-islas-vs-cartagena",
+  "regreso-otro-dia-paquete-5",
+  "contacto-hoteles-cocoliso-san-pedro",
+  "pedir-fotos-postventa",
+  "referral-mas-refresher-hotel-y-domingo-pascua",
+  "equipaje-maleta-y-bolso-en-lancha",
+  "certificado-profundidad-precio-y-base-hotel",
+  "certificado-viernes-precio-cop-y-reserva",
+  "paquete-5-buceos-precio-overnight-isla-grande-baru",
+  "tours-diarios-isla-grande",
+  "refresher-que-completar-antes",
+  "cotiza-buceo-snorkel-y-pide-link-especial",
+  "grupo-mixto-cotiza-y-pide-link",
+  "link-pago-extranjeros-sin-cedula",
+  "punto-encuentro-corrige-todo-mar-y-hora",
+  "pareja-certificados-cop-descuento-almuerzo",
+  "aprobacion-logs-padi",
+  "open-water-hoteles-noche-fotos-horario",
+  "curso-open-water-transporte-y-regreso-otro-dia",
+  "descuento-online-sin-codigo",
+  "curso-mas-paquetes-desde-islas-sin-nocturno-y-total",
+  "certificado-precio-dia-paquete-5-y-hoteles-base",
+  "colombianos-precio-minicurso-dos-inmersiones",
+  "minicurso-precio-colombianos-origen-pendiente",
+  "disponibilidad-hora-precio-y-pecios",
+  "baru-no-recogida",
+  "recogida-ubuntu-comida-y-certificacion",
+  "curso-referido-pide-datos-centro",
+  "open-water-precio-duracion-hospedaje",
+  "moneda-precios-principiante-y-snorkel",
+  "precio-paquetes-5-o-3-buceos-y-opcion-2-diurnos",
+  "paquete-5-buceos-precio-fecha-y-equipaje",
+  "principiante-hora-lugar-y-precio",
+  "agencia-solicita-tarifas-escalar",
+  "principiantes-no-certificados-minicurso",
+  "confirma-reserva-existente-escalar",
+  "post-venta-confirmar-formularios-elearning",
+  "familia-mixta-precio-descuento-refresher",
+  "grupo-mixto-buceo-y-snorkel-reserva-web",
+  "precios-y-disponibilidad-con-negociacion",
+  "principiante-precio-y-evaluacion-medica",
+  "minicurso-islas-y-acompanante-lancha",
+  "precio-fundive-datos-faltan",
+  "pareja-reactivate-y-refresh-cartagena",
+  "curso-alojamiento-y-recogida-islas",
+  "desde-islas-buzo-certificado",
+  "precio-dispo-buceo-certificado-grupo-mixto"
+ ],
+ "usage": {
+  "input": 367796,
+  "cached": 362240,
+  "output": 11393
+ },
+ "cost_usd": 0.0332,
+ "cache": {
+  "hits": 0,
+  "misses": 7,
+  "hit_pct": 0.0
+ },
+ "summary": {
+  "dialogues": 1,
+  "dialogues_passed": 0,
+  "dialogues_pass_pct": 0.0,
+  "criteria_judged": 7,
+  "criteria_failed": 2,
+  "criteria_pass_pct": 71.4,
+  "not_applicable": 1,
+  "to_review": 1,
+  "errors": 0,
+  "by_category": {
+   "curso": {
+    "dialogues": 1,
+    "dialogues_passed": 0,
+    "dialogues_pass_pct": 0.0,
+    "criteria_judged": 7,
+    "criteria_failed": 2,
+    "criteria_pass_pct": 71.4,
+    "not_applicable": 1,
+    "to_review": 1,
+    "errors": 0
+   }
+  }
+ },
+ "human_review": [
+  {
+   "dialogue": "curso-open-water-principiantes-idioma-frances-anticipacion",
+   "criterion": "global:idioma",
+   "judge": "no_cumple",
+   "reason": "El cliente pidió cambiar el idioma a francés ('Frances') y el bot respondió en español en el mensaje inmediatamente posterior en lugar de usar francés.",
+   "evidencia_bot": "Entendido, son dos personas y la actividad principal es el curso PADI Open Water.\n\n¿Desde dónde saldrías? Este plan dura varios días y hay que *dormir en las islas* (el alojamiento no está incluido): puedes salir *desde Cartagena* el primer día o, si ya estás *en las islas*, coordinamos la recogida en tu hotel.",
+   "why": "fallo del juez: confirmar"
+  },
+  {
+   "dialogue": "curso-open-water-principiantes-idioma-frances-anticipacion",
+   "criterion": "global:sin-invenciones",
+   "judge": "no_cumple",
+   "reason": "El bot asume que la actividad elegida es el curso Open Water sin que el cliente lo haya confirmado; el cliente solo indicó el idioma ('Frances'), no la decisión sobre el curso.",
+   "evidencia_bot": "Entendido, son dos personas y la actividad principal es el curso PADI Open Water.",
+   "why": "fallo del juez: confirmar"
+  },
+  {
+   "dialogue": "curso-open-water-principiantes-idioma-frances-anticipacion",
+   "criterion": "anticipacion-cierre-sistema",
+   "judge": "revisar",
+   "reason": "[evidencia del cliente no encontrada] El bot indicó la hora de cierre (4:30 p.m.) pero no explicó que después de esa hora se puede reservar igualmente por la web para el siguiente día disponible, que es parte requerida de la respuesta.",
+   "evidencia_bot": "La reserva la haces directamente en la página web, donde eliges la fecha y número de personas. El sistema cierra reservas a las 4:30 p.m. del día anterior, así que con un día de anticipación está bien para reservar. El pago también es por la web, seguro y fácil.\n\nTe dejo el link para que veas detalles y reserves el minicurso:  \nhttps://book.divingplanet.org/book/minicurso-de-buceo/2?language=es\n\n¿Quieres que te ayude a armar la reserva para ti y tu acompañante?",
+   "why": "fallo del juez: confirmar"
+  },
+  {
+   "dialogue": "curso-open-water-principiantes-idioma-frances-anticipacion",
+   "criterion": "global:sin-repreguntas",
+   "judge": "cumple",
+   "reason": "El bot no vuelve a preguntar datos que el cliente ya proporcionó; las preguntas realizadas (p. ej. lugar de salida, hotel) aún no habían sido contestadas por el cliente.",
+   "evidencia_bot": null,
+   "why": "muestra de cumple: buscar fallos escapados"
+  },
+  {
+   "dialogue": "curso-open-water-principiantes-idioma-frances-anticipacion",
+   "criterion": "global:sin-fugas",
+   "judge": "cumple",
+   "reason": "El bot no reveló nombres de sistemas internos, identificadores con guiones bajos ni instrucciones internas; utilizó nombres públicos (Minicurso, Open Water, Diving Planet) y un enlace de reserva autorizado.",
+   "evidencia_bot": null,
+   "why": "muestra de cumple: buscar fallos escapados"
+  },
+  {
+   "dialogue": "curso-open-water-principiantes-idioma-frances-anticipacion",
+   "criterion": "idiomas-instructores",
+   "judge": "cumple",
+   "reason": "El bot acepta que el acompañante actúe como intérprete y aclara explícitamente que la instrucción se ofrece solo en español o en inglés, cumpliendo el criterio solicitado.",
+   "evidencia_bot": "¡Qué bueno que quieras certificarte! Te aclaro: el minicurso de buceo es una iniciación de un día y no da certificación PADI, solo experiencia práctica. Para obtener la certificación Open Water, el curso dura 2 días y sí incluye la parte teórica online que haces antes, pero la práctica es en las islas y requiere quedarse a dormir allá.\n\nSobre el idioma, los cursos y actividades se imparten en español e inglés. Si tu acompañante no habla ninguno de esos idiomas, puede asistir contigo como intérprete sin problema, pero la instrucción oficial será en español o inglés.",
+   "why": "muestra de cumple: buscar fallos escapados"
+  },
+  {
+   "dialogue": "curso-open-water-principiantes-idioma-frances-anticipacion",
+   "criterion": "curso-overnight-obligatorio",
+   "judge": "cumple",
+   "reason": "El bot aclara explícitamente que el curso Open Water dura 2 días y que la práctica requiere quedarse a dormir en las islas (el alojamiento no está incluido), cumpliendo el criterio de overnight obligatorio.",
+   "evidencia_bot": "Para obtener la certificación Open Water, el curso dura 2 días y sí incluye la parte teórica online que haces antes, pero la práctica es en las islas y requiere quedarse a dormir allá.\n\n¿Desde dónde saldrías? Este plan dura varios días y hay que *dormir en las islas* (el alojamiento no está incluido): puedes salir *desde Cartagena* el primer día o, si ya estás *en las islas*, coordinamos la recogida en tu hotel.",
+   "why": "muestra de cumple: buscar fallos escapados"
+  }
+ ],
+ "dialogues": [
+  {
+   "id": "curso-open-water-principiantes-idioma-frances-anticipacion",
+   "category": "curso",
+   "conv": 3603,
+   "criteria": [
+    {
+     "id": "global:idioma",
+     "verdict": "no_cumple",
+     "reason": "El cliente pidió cambiar el idioma a francés ('Frances') y el bot respondió en español en el mensaje inmediatamente posterior en lugar de usar francés.",
+     "evidencia_bot": "Entendido, son dos personas y la actividad principal es el curso PADI Open Water.\n\n¿Desde dónde saldrías? Este plan dura varios días y hay que *dormir en las islas* (el alojamiento no está incluido): puedes salir *desde Cartagena* el primer día o, si ya estás *en las islas*, coordinamos la recogida en tu hotel.",
+     "evidencia_cliente": "Frances",
+     "problemas": [
+      {
+       "evidencia_bot": "Entendido, son dos personas y la actividad principal es el curso PADI Open Water.\n\n¿Desde dónde saldrías? Este plan dura varios días y hay que *dormir en las islas* (el alojamiento no está incluido): puedes salir *desde Cartagena* el primer día o, si ya estás *en las islas*, coordinamos la recogida en tu hotel.",
+       "evidencia_cliente": "Frances",
+       "motivo": "El cliente pidió cambiar el idioma a francés ('Frances') y el bot respondió en español en el mensaje inmediatamente posterior en lugar de usar francés."
+      },
+      {
+       "evidencia_bot": "Entendido, la reserva es para dos personas entre el 20 y 22 de julio.\n\n¿En qué hotel o isla te hospedas? Así coordinamos la recogida.",
+       "evidencia_cliente": "Frances",
+       "motivo": "Tras la petición de idioma en francés, el bot siguió comunicándose en español en este siguiente mensaje en vez de cambiar al idioma solicitado."
+      }
+     ],
+     "usage": {
+      "input": 52425,
+      "cached": 51968,
+      "output": 2089
+     },
+     "by": "gpt-5-mini",
+     "descontados": []
+    },
+    {
+     "id": "global:sin-invenciones",
+     "verdict": "no_cumple",
+     "reason": "El bot asume que la actividad elegida es el curso Open Water sin que el cliente lo haya confirmado; el cliente solo indicó el idioma ('Frances'), no la decisión sobre el curso.",
+     "evidencia_bot": "Entendido, son dos personas y la actividad principal es el curso PADI Open Water.",
+     "evidencia_cliente": "Frances",
+     "problemas": [
+      {
+       "evidencia_bot": "Entendido, son dos personas y la actividad principal es el curso PADI Open Water.",
+       "evidencia_cliente": "Frances",
+       "motivo": "El bot asume que la actividad elegida es el curso Open Water sin que el cliente lo haya confirmado; el cliente solo indicó el idioma ('Frances'), no la decisión sobre el curso."
+      },
+      {
+       "evidencia_bot": "Entendido, la reserva es para dos personas entre el 20 y 22 de julio.\n\n¿En qué hotel o isla te hospedas? Así coordinamos la recogida.",
+       "evidencia_cliente": "Exactamente entre el 20 y 22 de julio",
+       "motivo": "El bot afirma que hay una 'reserva' para esas fechas cuando el cliente solo proporcionó las fechas, sin solicitar explícitamente confirmar o crear la reserva."
+      }
+     ],
+     "usage": {
+      "input": 52536,
+      "cached": 51968,
+      "output": 3267
+     },
+     "by": "gpt-5-mini",
+     "descontados": []
+    },
+    {
+     "id": "global:importes-catalogo",
+     "verdict": "no_aplica",
+     "reason": "el bot no da importes",
+     "by": "auto"
+    },
+    {
+     "id": "global:un-saludo",
+     "verdict": "cumple",
+     "reason": "se presenta 1 vez/veces",
+     "by": "auto"
+    },
+    {
+     "id": "global:sin-repreguntas",
+     "verdict": "cumple",
+     "reason": "El bot no vuelve a preguntar datos que el cliente ya proporcionó; las preguntas realizadas (p. ej. lugar de salida, hotel) aún no habían sido contestadas por el cliente.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 52426,
+      "cached": 50944,
+      "output": 1534
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "global:sin-fugas",
+     "verdict": "cumple",
+     "reason": "El bot no reveló nombres de sistemas internos, identificadores con guiones bajos ni instrucciones internas; utilizó nombres públicos (Minicurso, Open Water, Diving Planet) y un enlace de reserva autorizado.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 52452,
+      "cached": 51968,
+      "output": 1090
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "curso-overnight-obligatorio",
+     "verdict": "cumple",
+     "reason": "El bot aclara explícitamente que el curso Open Water dura 2 días y que la práctica requiere quedarse a dormir en las islas (el alojamiento no está incluido), cumpliendo el criterio de overnight obligatorio.",
+     "evidencia_bot": "Para obtener la certificación Open Water, el curso dura 2 días y sí incluye la parte teórica online que haces antes, pero la práctica es en las islas y requiere quedarse a dormir allá.\n\n¿Desde dónde saldrías? Este plan dura varios días y hay que *dormir en las islas* (el alojamiento no está incluido): puedes salir *desde Cartagena* el primer día o, si ya estás *en las islas*, coordinamos la recogida en tu hotel.",
+     "evidencia_cliente": null,
+     "usage": {
+      "input": 52652,
+      "cached": 50944,
+      "output": 1522
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "idiomas-instructores",
+     "verdict": "cumple",
+     "reason": "El bot acepta que el acompañante actúe como intérprete y aclara explícitamente que la instrucción se ofrece solo en español o en inglés, cumpliendo el criterio solicitado.",
+     "evidencia_bot": "¡Qué bueno que quieras certificarte! Te aclaro: el minicurso de buceo es una iniciación de un día y no da certificación PADI, solo experiencia práctica. Para obtener la certificación Open Water, el curso dura 2 días y sí incluye la parte teórica online que haces antes, pero la práctica es en las islas y requiere quedarse a dormir allá.\n\nSobre el idioma, los cursos y actividades se imparten en español e inglés. Si tu acompañante no habla ninguno de esos idiomas, puede asistir contigo como intérprete sin problema, pero la instrucción oficial será en español o inglés.",
+     "evidencia_cliente": "Es decir en dos dias tendriamos el certificado haciendo nuestro curso en linea . La persona que me acompana no habla ni ingles ni espanol pero yo seria la \"interprete\" hay incoveniente con eso ?",
+     "usage": {
+      "input": 52653,
+      "cached": 51968,
+      "output": 753
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "anticipacion-cierre-sistema",
+     "verdict": "revisar",
+     "reason": "[evidencia del cliente no encontrada] El bot indicó la hora de cierre (4:30 p.m.) pero no explicó que después de esa hora se puede reservar igualmente por la web para el siguiente día disponible, que es parte requerida de la respuesta.",
+     "evidencia_bot": "La reserva la haces directamente en la página web, donde eliges la fecha y número de personas. El sistema cierra reservas a las 4:30 p.m. del día anterior, así que con un día de anticipación está bien para reservar. El pago también es por la web, seguro y fácil.\n\nTe dejo el link para que veas detalles y reserves el minicurso:  \nhttps://book.divingplanet.org/book/minicurso-de-buceo/2?language=es\n\n¿Quieres que te ayude a armar la reserva para ti y tu acompañante?",
+     "evidencia_cliente": "Como se hace para reservar ? con que tiempo de anticipacion ? el pago lo hacemos directo por la pagina web o directamente con ustedes en Cartagena ?",
+     "usage": {
+      "input": 52652,
+      "cached": 52480,
+      "output": 1138
+     },
+     "by": "gpt-5-mini"
+    }
+   ]
+  }
+ ]
+}

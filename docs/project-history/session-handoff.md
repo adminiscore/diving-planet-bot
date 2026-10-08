@@ -13,7 +13,26 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 
 > **📏 LEER ANTES DE MEDIR — decisiones del 24-sep-2026 (Gadea):** (1) latencia y llamadas con nuestros logs `[TURN_METRICS]` + `scripts/turn_metrics.py`, no con Langfuse (plan gratuito superado, reinicio 16-oct); (2) pruebas A/B por escalones, juzgando solo los diálogos que cambian. Todo en `docs/robustness/protocolo-medicion.md`.
 
-### ▶️ RETOMAR AQUÍ — 8-oct (Gadea con Claude): s4-27 CERRADA — `HOTEL_UBICACION_DECLARADA` promocionado
+### ▶️ RETOMAR AQUÍ — 8-oct tarde (Gadea con Claude): s4-28 primer caso HECHO — `JEV_LUGAR_CLIENTE` promocionado
+
+**Estado.** PRE sirve `feature/pre_gadea` con `JEV_LUGAR_CLIENTE` **encendido** (HISTORY 0.30.4): la regex propone que
+el mensaje trae una ubicación y Jev (`customer_place`, misma llamada) decide CUÁL. Mini-ronda A/B de los 11 diálogos
+visibles afectados: 82,8 → 85,2 %. Banco de calibración: `scripts/sonda_lugar_cliente.py` (ninguna frase del golden).
+Método que ha funcionado (barato): simular el alcance sobre el golden visible con el detector local + Jev (sin
+OpenAI), y mini-ronda A/B de solo esos diálogos en la misma franja (`--sample golden --ids`).
+
+**Siguiente, en orden (s4-28):**
+1. **Origen dado a entender tarde:** en `precio-desde-islas-vs-cartagena` el cliente habla de su hotel en la isla
+   ("¿desde ahí sale la lancha?", "desde ese hotel", "quedándonos en el hotel") y nada lo recoge: el RAG cotiza desde
+   Cartagena por la pista del turno 1. Antes salía bien por arrastrar el error del turno 1. Buscar la causa general
+   (no ajustar este diálogo).
+2. `descuento-online-sin-codigo`: el enrutador LLM decide cuando Jev duda (0,38); cambia de una ronda a otra.
+3. El inventario de regex que deciden solas (plan de s4-28 en Plan Coral) y registrar desacuerdos regex-Jev.
+4. Decisiones pendientes de Gadea (sin cambios): criterio `acompanante-lancha-escalar` y el del Open Water en
+   `manual-duracion-curso`.
+- **A para la próxima ronda core:** `2026-10-07-s427-B`. Las rondas de hoy (hotel, lugar) fueron mini-rondas.
+
+### (anterior) 8-oct (Gadea con Claude): s4-27 CERRADA — `HOTEL_UBICACION_DECLARADA` promocionado
 
 **Estado.** PRE sirve `feature/pre_gadea` con `HOTEL_UBICACION_DECLARADA` **encendido** (HISTORY 0.30.3). La ubicación que
 se deduce de un hotel ya pasa por la puerta de Jev ("¿me pasas el contacto del hotel Cocoliso?" no deja al cliente en

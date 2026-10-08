@@ -1,6 +1,14 @@
 History
 =======
 
+0.30.4 - (2026-10-08)
+----------------------
+* **s4-28, primer caso: la regex PROPONE que hay ubicación; CUÁL es (Cartagena / islas / ninguna) lo decide Jev — `JEV_LUGAR_CLIENTE` PROMOCIONADO** (Gadea con Claude).
+  - **Causa:** `place_by_role` decidía el lugar por la preposición: "estamos en Cartagena y queremos bucear **en** las islas" salía islas, y "quiero bucear en las islas del rosario" dejaba al cliente "ya en las islas".
+  - **Arreglo:** pregunta de elección de Jev en la misma llamada (`customer_place`) y `_lugar_por_jev`: un hotel de isla nombrado manda (Jev no conoce los hoteles: "alojados en el San Pedro de Majagua" → Jev decía Cartagena con 0,8); Jev seguro (≥ 0,6) decide el lugar o que no lo dice; Jev propone OTRO lugar pero duda → la ubicación queda sin saber y se pregunta; Cartagena solo la cambia Jev por las islas ("cursos de buceo en Cartagena" no se vuelve a preguntar).
+  - **Calibración** (`scripts/sonda_lugar_cliente.py`, ninguna frase del golden): banco ciego Jev 12/12 frente a regex 4/12; simulado con el detector real en 36 mensajes (tests de `place_by_role`, ciego y mensajes largos) regex 18/36 → 32/36. Pierde el ambiguo "no sé si Cartagena o las islas".
+  - **Alcance y medida:** simulado sobre el golden visible, cambia en 11 diálogos (3 de la core). Mini-ronda A/B en la misma franja: **82,8 → 85,2 %**, 5 mejoras (`precio-desde-islas` y `paquete-5-buceos-precio-overnight` ya no suponen las islas; el segundo cotiza bien el paquete de 5 desde Cartagena), 2 regresiones leídas: `curso-open-water-francés` (arreglada: Cartagena se mantiene) y `precio-desde-islas` / precio de las 2 inmersiones — salía bien por **arrastrar el error** del turno 1; el origen se da a entender después ("desde ese hotel", "quedándonos en el hotel") y nada lo recoge: **siguiente caso de s4-28**. En PRE solo actuó en 2 turnos: las puertas u3-3/u3-4 ya quitaban antes la mayoría. Gasto ≈ 0,9 $.
+
 0.30.3 - (2026-10-08)
 ----------------------
 * **s4-27 CERRADA (Gadea con Claude): la ubicación deducida de un hotel pasa por la puerta de Jev — `HOTEL_UBICACION_DECLARADA` PROMOCIONADO; lo demás de s4-27, decidido con datos.**
