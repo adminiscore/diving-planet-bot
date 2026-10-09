@@ -41,28 +41,42 @@ PRE (escritas ya por Luna) tumba 42 frente a 13, casi todo verdades (HISTORY 0.3
 **C. Pendientes de antes:** el criterio del Open Water en `manual-duracion-curso` ✅ (FAQ curada nueva: "sacarse la
 certificación" = Open Water, o el Referido; el Scuba Diver es la parcial). **DeepSeek: FUERA DEL PLAN** (Gadea, 9-oct).
 
-### ▶️ RETOMAR AQUÍ — 9-oct (Gadea con Claude): decisiones aplicadas; s4-33 con los 142 juicios ETIQUETADOS
+### ▶️ RETOMAR AQUÍ — 9-oct, CIERRE DE SESIÓN (Gadea con Claude): decisiones aplicadas, s4-33 CERRADA, equipo en el catálogo
 
-**Estado.** PRE sirve `feature/pre_gadea` (lleva todo `pre_alvaro`). Flag nuevo `CATALOGO_HOTELES_BASE` **encendido
-(promocionado)**. HISTORY 0.31.4.
+**Estado al cerrar.** PRE sirve `feature/pre_gadea` @ `25da3a5` (`check_deploy` en verde, 50 ajustes del compose
+coinciden). **Integrad `feature/pre_gadea` antes de subir** (lleva todo `pre_alvaro`; nada que integrar de otras ramas).
+Modelos sin cambios: respuesta del RAG `gpt-6-luna` con respaldo a `gpt-4.1-mini` a los 3 s; **revisor `gpt-4.1` + J2
+(se queda, decisión de Gadea)**; extracción y secundarias `gpt-4o-mini`. Flags nuevos, los dos **encendidos
+(promocionados)**: `CATALOGO_HOTELES_BASE`, `CATALOGO_EQUIPO_INCLUIDO`. `JUEZ_V3_LUNA` sigue **apagado**. Ajuste nuevo
+`juez_luna_razonamiento` (por defecto "none", solo para medir). HISTORY 0.31.4-0.31.6. Plan Coral al día (cola vacía).
+Mapa de Coral v22.
+
+**Resumen de la sesión (9-oct):**
 
 | Qué | Resultado | Dónde |
 |---|---|---|
-| 6 decisiones de Gadea (tabla de arriba) | aplicadas: 3 criterios del golden, catálogo, FAQs | HISTORY 0.31.4 |
-| Mini-ronda `decisiones-A/B` (13 diálogos) | 87,8 → 88,9 %, 6 mejoras, 4 regresiones leídas que no son del cambio | `results/2026-10-09-decisiones-{A,B}` |
-| s4-33 (a): 142 juicios reales leídos + 7 preguntas a Gadea | 96 aprobados, **38 verdades** (Luna tumba 37, gpt-4.1 8), **5 inventos** (Luna caza 4, gpt-4.1 3), 3 dudosos | `docs/robustness/juez/s4-33/etiquetas-142.json` |
-| Hechos nuevos del negocio (Gadea) | 2 inmersiones en 2 puntos distintos (cambio de sitio: el instructor), 40-50 min, sin código de descuento, acompañante puede quedarse en la isla, ningún plan incluye alojamiento | FAQs curadas |
+| Las 6 decisiones que dejó Álvaro (tabla de arriba, todas ✅) | aplicadas: 3 criterios del golden reescritos, propina sin cifra, hoteles base en el catálogo, FAQ "primera certificación" | HISTORY 0.31.4 |
+| Mini-ronda `decisiones-A/B` (13 diálogos) | 87,8 → 88,9 %, 6 mejoras; 4 regresiones leídas, ninguna del cambio | `golden-set/results/2026-10-09-decisiones-{A,B}*` |
+| s4-33: 142 juicios reales leídos con Gadea (7 preguntas de negocio) | 96 aprobados, 27 verdades, 11 ciertos pero fuera del contexto, 5 inventos, 3 dudosos | `docs/robustness/juez/s4-33/etiquetas-142.json` |
+| s4-33: Luna como revisor, ajustada con ese banco | **no compensa**: ciego, verdades que pasan 7/36 (gpt-4.1: 34/36). Razonamiento bajo y gpt-4.1-mini, descartados. **CERRADA, se queda gpt-4.1** | HISTORY 0.31.5, `scripts/banco_juez_reales.py`, `juez/s4-33/banco142-*.txt` |
+| Equipo incluido en cada plan del catálogo (el Dive Master no) | mini-ronda `equipo-A/B`: 94,5 → 96,4 %, 2 mejoras, 0 regresiones, p95 6,6 → 5,4 s | HISTORY 0.31.6 |
+| Hechos nuevos del negocio (Gadea), en FAQs curadas | 2 inmersiones en 2 puntos distintos (si hay que cambiar, decide el instructor), 40-50 min cada una, el precio no cambia por el punto, sin código de descuento, el acompañante puede quedarse en la isla, ningún plan incluye alojamiento | `data/knowledge_base/curada/faqs.json` |
 
 **Siguiente (en orden):**
-1. **s4-33 — CERRADA (HISTORY 0.31.5): Luna NO mejora a gpt-4.1 con respuestas reales (ciego: verdades 7/36 frente a
-   34/36). DECISIÓN DE GADEA: se mantiene gpt-4.1 de revisor.** Herramienta:
-   `scripts/banco_juez_reales.py`. Lo de abajo era el plan antes de medir: Errores de Luna por tipo: frases sobre lo que el bot
-   NO sabe ("no tengo el horario"), deducciones de lo que dijo el cliente (edad 17 ≥ 10), consejos genéricos (traer
-   toalla), paráfrasis del contexto (9:30-9:45). Meta: tumbar los 5 inventos y dejar pasar las 38 verdades y los 96
-   aprobados. Luego escalón 0 en PRE y A/B de la core.
-2. **HECHO:** cada plan del catálogo dice si el equipo va incluido (`CATALOGO_EQUIPO_INCLUIDO`, promocionado; mini-ronda
-   equipo-A/B 94,5 → 96,4 %, 0 regresiones; HISTORY 0.31.6).
-3. s4-28 → los 17 fallos del flujo de reserva → ronda completa con el examen oculto → R6/Q5 (orden de Álvaro).
+1. **s4-28:** el origen dado a entender tarde (`precio-desde-islas`: "desde ese hotel") y el extractor que se inventa
+   `location` con la pregunta del origen pendiente (`[LLM_EXTRACTOR][COMBINED] filled ... location`, ver 0.31.1).
+2. **Los 17 fallos del flujo de reserva** (`fallos-por-causa-2026-10-08-luna-visible.json`, causa flujo). Visto hoy en
+   `paquete-5-buceos-islas-residente-sin-recogida`: el texto fijo "¿Sois buzos certificados?" se repite en CADA turno
+   aunque el cliente conteste otra cosa, y el bot se inventa "no están certificados" al oír "Cocoliso" o "sin recojos".
+3. Ronda completa con el examen oculto (una sola vez, al cerrar el bloque) → R6/Q5.
+
+**Avisos:**
+- Hechos del negocio ciertos que el contexto del revisor no trae NO son errores del revisor: van a la base (FAQs).
+- Un banco del revisor con respuestas de otro modelo engaña (el del 1-oct daba a Luna como mejor). Medir con respuestas
+  reales de PRE y ciego por diálogo (`banco_juez_reales.py`).
+- A/B en la misma franja; sacad la foto (`turn_metrics`) y los logs de PRE ANTES de subir: el deploy borra los logs.
+- `run_synthetic_pre --name X` ya antepone la fecha al fichero: no pongáis la fecha en el nombre.
+- Gasto OpenAI del 9-oct ≈ 3,5 $ (jueces de 4 mini-rondas y los bancos del revisor).
 
 ### ▶️ RETOMAR AQUÍ — 8-oct, CIERRE DE SESIÓN (Álvaro con Claude): s4-31 CERRADA; s4-33 EN CURSO — Luna como revisor aún NO
 

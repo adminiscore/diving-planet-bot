@@ -509,6 +509,13 @@ medias (u3-1 ✅, u3-4 ✅ promocionada, u3-5 🟡); PRE con u3-4 encendido. Sui
 > `RAG_BUSQUEDA_DOBLE` y `JUEZ_SEGUNDA_OPINION`; **después, la ronda COMPLETA con el examen oculto**, una sola vez, como
 > cierre del bloque RAG. Detalle: `session-handoff.md`, "RETOMAR AQUÍ" del 1-oct tarde.
 
+> **Estado al 9-oct (Gadea), fase S4:** modelos: respuesta del RAG en GPT-6 Luna con respaldo (0.31.0); el **revisor se
+> queda en gpt-4.1** (s4-33 cerrada: Luna, medida con 142 juicios reales etiquetados, tumba demasiadas verdades;
+> 0.31.5). Decisiones de negocio de Gadea aplicadas (sin totales de grupo, hoteles base con recogida, horarios,
+> propina voluntaria, acompañante; 0.31.4) y equipo incluido en el catálogo (0.31.6). **Orden:** s4-28 (origen dado a
+> entender / extractor) → los 17 fallos del flujo de reserva → ronda COMPLETA con el examen oculto (una vez) → R6/Q5.
+> Detalle: `session-handoff.md`, "RETOMAR AQUÍ" del 9-oct.
+
 > **Estado al 1-oct (Gadea), fase RAG:** rag-1, rag-2, rag-3 y **rag-5 ✅ promocionadas**; rag-4 ❌ descartada.
 > rag-5 (HISTORY 0.29.88): el RAG arranca a la vez que el enrutador y la puerta de Jev para las notas evita que se
 > rehaga; turnos con pregunta p50 5,37 → 3,44 s, calidad igual (23/32). **Orden decidido por Gadea el 1-oct:
