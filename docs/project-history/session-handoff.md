@@ -54,8 +54,8 @@ certificación" = Open Water, o el Referido; el Scuba Diver es la parcial). **De
 | Hechos nuevos del negocio (Gadea) | 2 inmersiones en 2 puntos distintos (cambio de sitio: el instructor), 40-50 min, sin código de descuento, acompañante puede quedarse en la isla, ningún plan incluye alojamiento | FAQs curadas |
 
 **Siguiente (en orden):**
-1. **s4-33 — HECHO el ajuste (HISTORY 0.31.5): Luna NO mejora a gpt-4.1 con respuestas reales (ciego: verdades 7/36
-   frente a 34/36). Pendiente de la DECISIÓN de Gadea** (seguir con gpt-4.1 o probar otra vía). Herramienta:
+1. **s4-33 — CERRADA (HISTORY 0.31.5): Luna NO mejora a gpt-4.1 con respuestas reales (ciego: verdades 7/36 frente a
+   34/36). DECISIÓN DE GADEA: se mantiene gpt-4.1 de revisor.** Herramienta:
    `scripts/banco_juez_reales.py`. Lo de abajo era el plan antes de medir: Errores de Luna por tipo: frases sobre lo que el bot
    NO sabe ("no tengo el horario"), deducciones de lo que dijo el cliente (edad 17 ≥ 10), consejos genéricos (traer
    toalla), paráfrasis del contexto (9:30-9:45). Meta: tumbar los 5 inventos y dejar pasar las 38 verdades y los 96
