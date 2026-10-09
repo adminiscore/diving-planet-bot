@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-09T08:12:09+00:00",
-  "commit": "f05dd2c",
+  "generado": "2026-10-09T08:44:14+00:00",
+  "commit": "f105d51",
   "rama": "feature/pre_gadea"
  },
  "vistas": {
@@ -158,8 +158,8 @@
    "marca": "openrouter",
    "tiempos": {
     "n": 71,
-    "p50": 0.571,
-    "p95": 1.905
+    "p50": 0.576,
+    "p95": 1.976
    }
   },
   {
@@ -187,8 +187,8 @@
    "interruptores": [],
    "tiempos": {
     "n": 1,
-    "p50": 2.78,
-    "p95": 2.78
+    "p50": 2.664,
+    "p95": 2.664
    }
   },
   {
@@ -231,8 +231,8 @@
    "interruptores": [],
    "tiempos": {
     "n": 70,
-    "p50": 2.169,
-    "p95": 4.792
+    "p50": 2.327,
+    "p95": 5.5
    }
   },
   {
@@ -434,8 +434,8 @@
    "marca": "openai",
    "tiempos": {
     "n": 70,
-    "p50": 0.016,
-    "p95": 0.034
+    "p50": 0.011,
+    "p95": 0.04
    }
   },
   {
@@ -505,7 +505,7 @@
    "marca": "openai",
    "tiempos": {
     "n": 70,
-    "p50": 0.008,
+    "p50": 0.007,
     "p95": 0.015
    }
   },
@@ -532,8 +532,8 @@
    "marca": "openai",
    "tiempos": {
     "n": 70,
-    "p50": 0.624,
-    "p95": 1.903
+    "p50": 0.652,
+    "p95": 1.772
    }
   },
   {
@@ -564,8 +564,8 @@
    "marca": "openai",
    "tiempos": {
     "n": 69,
-    "p50": 0.838,
-    "p95": 4.705
+    "p50": 0.94,
+    "p95": 5.024
    }
   },
   {
@@ -669,7 +669,7 @@
    "conteo": {
     "n": 36,
     "que": "preguntas",
-    "fuente": "2026-10-09-decisiones-A.json"
+    "fuente": "2026-10-09-decisiones-B.json"
    }
   },
   {
@@ -828,7 +828,7 @@
    "conteo": {
     "n": 38,
     "que": "veces",
-    "fuente": "logs-pre-2026-10-09-decisiones-A.txt"
+    "fuente": "logs-pre-2026-10-09-decisiones-B.txt"
    }
   },
   {
@@ -844,7 +844,7 @@
    "conteo": {
     "n": 38,
     "que": "veces",
-    "fuente": "logs-pre-2026-10-09-decisiones-A.txt"
+    "fuente": "logs-pre-2026-10-09-decisiones-B.txt"
    }
   },
   {
@@ -914,7 +914,7 @@
    "conteo": {
     "n": 38,
     "que": "veces",
-    "fuente": "logs-pre-2026-10-09-decisiones-A.txt"
+    "fuente": "logs-pre-2026-10-09-decisiones-B.txt"
    }
   },
   {
@@ -936,9 +936,9 @@
    ],
    "modelos": [],
    "conteo": {
-    "n": 1,
+    "n": 2,
     "que": "veces",
-    "fuente": "logs-pre-2026-10-09-decisiones-A.txt"
+    "fuente": "logs-pre-2026-10-09-decisiones-B.txt"
    }
   },
   {
@@ -954,7 +954,7 @@
    "conteo": {
     "n": 0,
     "que": "veces",
-    "fuente": "logs-pre-2026-10-09-decisiones-A.txt"
+    "fuente": "logs-pre-2026-10-09-decisiones-B.txt"
    }
   },
   {
@@ -967,9 +967,9 @@
    "modelos": [],
    "interruptores": [],
    "conteo": {
-    "n": 37,
+    "n": 36,
     "que": "veces",
-    "fuente": "logs-pre-2026-10-09-decisiones-A.txt"
+    "fuente": "logs-pre-2026-10-09-decisiones-B.txt"
    }
   }
  ],
@@ -1468,7 +1468,7 @@
    "de": "r_revisor",
    "a": "r_salida",
    "etiqueta": "todo SÍ",
-   "peso": 0.9737,
+   "peso": 0.9474,
    "origen": "curada",
    "estilo": "normal",
    "vista": "info",
@@ -1479,7 +1479,7 @@
    "a": "r_reintento",
    "etiqueta": "algún NO",
    "estilo": "bucle",
-   "peso": 0.0263,
+   "peso": 0.0526,
    "origen": "curada",
    "vista": "info",
    "peso_fuente": "medido"
@@ -2236,7 +2236,7 @@
     "b_acuse"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 147
+   "llamadas_ultima_ronda": 149
   },
   {
    "ajuste": "grounding_v3_model",
@@ -2258,7 +2258,7 @@
    ],
    "proveedor": "OpenRouter",
    "llamadas_ultima_ronda": null,
-   "nota": "Decidió solo 61 de 71 mensajes; en los otros 10 decidió el LLM de respaldo (sus llamadas cuentan en gpt-4o-mini)."
+   "nota": "Decidió solo 60 de 71 mensajes; en los otros 11 decidió el LLM de respaldo (sus llamadas cuentan en gpt-4o-mini)."
   },
   {
    "ajuste": "openai_embedding_model",
@@ -2281,7 +2281,7 @@
     "r_reescribir"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 147
+   "llamadas_ultima_ronda": 149
   },
   {
    "ajuste": "openai_transcription_model",
@@ -2305,61 +2305,66 @@
   }
  ],
  "ronda": {
-  "etiqueta": "2026-10-09-decisiones-A",
-  "run_at": "2026-10-09T08:01:00Z",
-  "fichero": "2026-10-09-decisiones-A.json",
-  "commit": "f05dd2c",
+  "etiqueta": "2026-10-09-decisiones-B",
+  "run_at": "2026-10-09T08:31:13Z",
+  "fichero": "2026-10-09-decisiones-B.json",
+  "commit": "86ff333",
   "por_tipo": {
    "reserva": {
     "turns": 35,
-    "latency_p50": 1.943,
-    "latency_p95": 4.385,
-    "latency_avg": 2.214,
-    "llm_calls_avg": 2.8,
+    "latency_p50": 2.101,
+    "latency_p95": 3.865,
+    "latency_avg": 2.211,
+    "llm_calls_avg": 2.74,
     "llm_calls_p95": 5.3,
     "llm_calls_max": 7,
-    "embeddings_avg": 1.51,
-    "llm_share": 1.172,
+    "embeddings_avg": 1.54,
+    "llm_share": 1.111,
     "tokens_avg": 0,
     "cost_avg_usd": 0
    },
    "rag": {
     "turns": 36,
-    "latency_p50": 4.0,
-    "latency_p95": 5.816,
-    "latency_avg": 4.076,
-    "llm_calls_avg": 3.58,
-    "llm_calls_p95": 5.0,
+    "latency_p50": 4.457,
+    "latency_p95": 6.46,
+    "latency_avg": 4.709,
+    "llm_calls_avg": 3.69,
+    "llm_calls_p95": 6.0,
     "llm_calls_max": 6,
-    "embeddings_avg": 1.42,
-    "llm_share": 1.129,
+    "embeddings_avg": 1.39,
+    "llm_share": 1.104,
     "tokens_avg": 0,
     "cost_avg_usd": 0
    }
   },
   "enrutador": {
    "by_backend": {
-    "jev": 61,
-    "llm_uncertain": 10
+    "jev": 60,
+    "llm_uncertain": 11
    },
-   "ms_p50": 538.0,
-   "ms_p95": 742.5
+   "ms_p50": 545.0,
+   "ms_p95": 612.0
   },
   "cliente": {
    "turns": 71,
    "conversations": 13,
    "no_reply": 0,
    "multi_bubble": 0,
-   "latency_p50": 3.0,
-   "latency_p95": 6.0,
-   "latency_max": 7
+   "latency_p50": 4.0,
+   "latency_p95": 6.5,
+   "latency_max": 15
   },
   "llamadas_por_modelo": {
-   "gpt-4o-mini": 147,
+   "gpt-4o-mini": 149,
    "gpt-6-luna": 42,
    "gpt-4.1": 38
   },
-  "calidad": null
+  "calidad": {
+   "criteria_pass_pct": 88.9,
+   "dialogues_passed": 3,
+   "dialogues": 13,
+   "model": "gpt-5-mini (medium)"
+  }
  },
  "pesos_fuente": "Los % del enrutador y de las fases de la reserva salen de la foto de la ronda; los del revisor y el reintento, de los logs de PRE de la misma ronda. La cascada y los textos fijos no dejan rastro medible: se animan con una estimación y no llevan porcentaje."
 }
