@@ -1,6 +1,16 @@
 History
 =======
 
+0.31.8 - (2026-10-09)
+----------------------
+* **s4-28 casos 2 y 3 + un fallo del flujo de reserva: `ORIGEN_DEL_CLIENTE` y `GRUPO_POR_EDADES` PROMOCIONADOS** (Gonzalo). Evidencia: `docs/robustness/s4-28/README.md`.
+  - **Caso 2, "desde ese hotel":** ya funciona en PRE (`JEV_LUGAR_CLIENTE` + Luna + `RAG_PLAN_NOMBRADO`): 124 USD con su condición 2/2, "quedándonos en el hotel" deja las islas. No se toca.
+  - **Caso 3, el extractor se inventa el origen:** con la pregunta del origen pendiente, "May 3rd" volvía con `location=cartagena` sacado del texto del bot. `ORIGEN_DEL_CLIENTE`: el `location` del relleno vale si algún mensaje del CLIENTE nombra un lugar (detector, pistas de la puerta del origen, muelles y barrios de Cartagena) o Jev dice que lo afirma. Logs de PRE del 2 al 9-oct: 11 rellenos, se tiran 2 (los dos inventos). Escalón 0: 8/8 sin origen inventado.
+  - **Flujo, el grupo dado con edades:** "2 adults (ages 42, 19) / 1 youth (age 17) / …" — la guarda de cifras tiraba {buceo 3, snorkel 3} (ningún "3" escrito) y el bot repreguntaba. `GRUPO_POR_EDADES`: cada edad del mensaje es una persona (como una persona nombrada) y el detector lee "age 17" en singular (no "minimum age"). Escalón 0: 3/3 guardan 6 personas, 3 y 3; en el golden visible el detector solo cambia en ese mensaje.
+  - **Mini-ronda `s428-A/B`** (8 diálogos, misma tarde): **83,3 → 83,6 %**, 1 → 2/8 sin fallos, la mejora buscada (`familia-mixta` da el precio), 1 regresión ajena (`grupo-mixto`: mismo camino de la reserva en A y B, cambia solo una respuesta del RAG).
+  - `scripts/reproducir_juez_pre.py`: estado de la reserva y traza del flujo por turno, `--hasta N`. Tests: `test_s4_28_origen_del_cliente.py` (12), `test_grupo_por_edades.py` (7).
+  - **Se acabó el crédito de OpenAI** a mitad (juez de A: 429 "no credits remaining"; PRE tampoco contestaba). Recargado el 9-oct. Gasto de la sesión ≈ 1,3 $.
+
 0.31.7 - (2026-10-09)
 ----------------------
 * **Estudio del regex del bot y FASE NUEVA EX "Entender con IA: el regex deja de decidir"** (Gadea con Claude; solo docs y herramientas, sin cambios del bot).

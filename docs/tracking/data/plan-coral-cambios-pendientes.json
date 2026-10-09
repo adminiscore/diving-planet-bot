@@ -1,13 +1,24 @@
 {
- "que_es": "Cola de cambios PENDIENTES DE APLICAR a la pagina Plan Coral. NO es una copia de su base de datos (eso es plan-coral.json, que se regenera exportando). Aqui se deja lo que alguien no ha podido escribir en la pagina, listo para volcarlo tal cual.",
- "pagina": "https://claude.ai/artifact/XiGd3kguTNwwqTnH7mQwgi",
- "por_que_existe": "En la sesion de Claude Code de Gonzalo la herramienta ArtifactData NO aparece: buscada 6 veces (select:ArtifactData, select:artifact_data/ArtifactDB/ArtifactStore/ArtifactCollections y 2 busquedas por descripcion) y siempre 'No matching deferred tools found'. No es cuenta ni permisos: esa misma sesion SI tiene DesignSync y RemoteTrigger, que autentican con el login de claude.ai, y la config tiene oauthAccount con organizationRole admin, sin ninguna ANTHROPIC_API_KEY. Si la herramienta existiera pero estuviera capada por no ser propietario, apareceria en la lista y fallaria AL LLAMARLA; no aparece en absoluto. Tampoco se intento republicar el HTML en ningun momento. Hipotesis viva: diferencia de version de Claude Code (pedir a Gadea la suya y comparar).",
- "como_aplicar": {
-  "con_claude": "Con la herramienta ArtifactData (NO con Artifact, y sin republicar el HTML): leer el documento, y hacer update pasando su version como if_version. Coleccion tasks -> doc_id = el id de la tarea. Coleccion log -> documentos nuevos.",
-  "a_mano": "Abrir la pagina con sesion iniciada y copiar cada campo en su tarea o en la bitacora.",
-  "al_terminar": "Dejar 'pendientes' como lista vacia, poner la fecha en 'aplicado_el' y quien lo aplico en 'aplicado_por', todo en el MISMO commit. Si esta lista se queda llena, el repo y la pagina han divergido: esa es la senal."
- },
- "aplicado_el": "2026-10-09",
- "aplicado_por": "Gadea (con Claude): 7 entradas de Álvaro del 8-oct (s4-31 hecha, s4-33 en curso, 5 de bitácora)",
- "pendientes": []
+  "que_es": "Cola de cambios PENDIENTES DE APLICAR a la pagina Plan Coral. NO es una copia de su base de datos (eso es plan-coral.json, que se regenera exportando). Aqui se deja lo que alguien no ha podido escribir en la pagina, listo para volcarlo tal cual.",
+  "pagina": "https://claude.ai/artifact/XiGd3kguTNwwqTnH7mQwgi",
+  "por_que_existe": "En la sesion de Claude Code de Gonzalo la herramienta ArtifactData NO aparece: buscada 6 veces (select:ArtifactData, select:artifact_data/ArtifactDB/ArtifactStore/ArtifactCollections y 2 busquedas por descripcion) y siempre 'No matching deferred tools found'. No es cuenta ni permisos: esa misma sesion SI tiene DesignSync y RemoteTrigger, que autentican con el login de claude.ai, y la config tiene oauthAccount con organizationRole admin, sin ninguna ANTHROPIC_API_KEY. Si la herramienta existiera pero estuviera capada por no ser propietario, apareceria en la lista y fallaria AL LLAMARLA; no aparece en absoluto. Tampoco se intento republicar el HTML en ningun momento. Hipotesis viva: diferencia de version de Claude Code (pedir a Gadea la suya y comparar).",
+  "como_aplicar": {
+    "con_claude": "Con la herramienta ArtifactData (NO con Artifact, y sin republicar el HTML): leer el documento, y hacer update pasando su version como if_version. Coleccion tasks -> doc_id = el id de la tarea. Coleccion log -> documentos nuevos.",
+    "a_mano": "Abrir la pagina con sesion iniciada y copiar cada campo en su tarea o en la bitacora.",
+    "al_terminar": "Dejar 'pendientes' como lista vacia, poner la fecha en 'aplicado_el' y quien lo aplico en 'aplicado_por', todo en el MISMO commit. Si esta lista se queda llena, el repo y la pagina han divergido: esa es la senal."
+  },
+  "aplicado_el": "2026-10-09",
+  "aplicado_por": "Gadea (con Claude): 7 entradas de Álvaro del 8-oct (s4-31 hecha, s4-33 en curso, 5 de bitácora)",
+  "pendientes": [
+    {
+      "coleccion": "log",
+      "operacion": "set",
+      "doc_id": "l-1009-gonzalo-s4-28",
+      "campos": {
+        "at": "2026-10-09T17:00:00Z",
+        "byLabel": "Gonzalo (con Claude)",
+        "text": "9-oct tarde: s4-28 casos 2 y 3 CERRADOS. 'Desde ese hotel' ya funcionaba (JEV_LUGAR_CLIENTE + Luna + RAG_PLAN_NOMBRADO). ORIGEN_DEL_CLIENTE: el origen que rellena el extractor solo vale si el cliente nombro un lugar ('May 3rd' ya no se vuelve Cartagena; logs 2-9 oct: 11 rellenos, se tiran los 2 inventos). GRUPO_POR_EDADES: cada edad es una persona para el reparto ('2 adults (ages 42, 19) / 1 youth (age 17)...' ya no repregunta). Mini-ronda s428-A/B 83,3 -> 83,6 %, 1 regresion ajena: los dos PROMOCIONADOS. Se acabo el credito de OpenAI a mitad (recargado). Siguiente: ex-0. Evidencia: docs/robustness/s4-28/README.md, HISTORY 0.31.8."
+      }
+    }
+  ]
 }

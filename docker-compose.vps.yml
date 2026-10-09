@@ -268,8 +268,8 @@ services:
       RAG_PLAN_NOMBRADO: "true"
       # s4-28 y flujo de reserva (9-oct, Gonzalo): el origen que rellena el extractor solo vale si el cliente nombro un
       # lugar ("May 3rd" ya no se vuelve Cartagena); cada edad del mensaje cuenta como una persona para el reparto del
-      # grupo y se lee "age 17" en singular (familia-mixta: ya no repregunta "¿cuantos?"). ENCENDIDOS para su
-      # mini-ronda B (s428-B); si no pasan, quitar estas lineas y False en config.py.
+      # grupo y se lee "age 17" en singular (familia-mixta: ya no repregunta "¿cuantos?"). Mini-ronda s428-A/B:
+      # 83,3 -> 83,6 %, ninguna regresion suya -> PROMOCIONADOS. Revert = quitar estas lineas y False en config.py.
       ORIGEN_DEL_CLIENTE: "true"
       GRUPO_POR_EDADES: "true"
       # s4-27 (8-oct): la ubicacion deducida de un HOTEL se declara y pasa por la puerta de Jev ("¿me pasas el contacto

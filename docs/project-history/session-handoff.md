@@ -41,7 +41,31 @@ PRE (escritas ya por Luna) tumba 42 frente a 13, casi todo verdades (HISTORY 0.3
 **C. Pendientes de antes:** el criterio del Open Water en `manual-duracion-curso` ✅ (FAQ curada nueva: "sacarse la
 certificación" = Open Water, o el Referido; el Scuba Diver es la parcial). **DeepSeek: FUERA DEL PLAN** (Gadea, 9-oct).
 
-### ▶️ RETOMAR AQUÍ — 9-oct, CIERRE DE SESIÓN (Gadea con Claude): decisiones aplicadas, s4-33 CERRADA, equipo en el catálogo
+### ▶️ RETOMAR AQUÍ — 9-oct tarde (Gonzalo): s4-28 casos 2 y 3 CERRADOS; dos arreglos PROMOCIONADOS; siguiente ex-0
+
+**Estado.** PRE sirve `feature/pre_gadea` (sana) con `ORIGEN_DEL_CLIENTE` y `GRUPO_POR_EDADES` **encendidos**
+(HISTORY 0.31.8; evidencia `docs/robustness/s4-28/README.md`). Integrad `feature/pre_gadea` antes de subir.
+
+**Qué se hizo:**
+- **"desde ese hotel"** (`precio-desde-islas`): ya funcionaba con lo de Gadea + Luna + `RAG_PLAN_NOMBRADO`. No se toca.
+- **El extractor se inventaba el origen** ("May 3rd" → Cartagena, sacado del texto del bot): ahora el origen del
+  relleno solo vale si el cliente nombró un lugar o Jev dice que lo afirma. En la línea de EX ("sin cita, no hay dato").
+- **El grupo dado con edades** ("2 adults (ages 42, 19) / 1 youth (age 17)…"): cada edad cuenta como una persona para
+  respaldar el reparto; ya no repregunta "¿cuántos?".
+- Mini-ronda `s428-A/B`: 83,3 → 83,6 %, mejora la buscada, 1 regresión ajena (variación del RAG).
+- `reproducir_juez_pre` enseña el **estado de la reserva y la traza del flujo por turno**, y `--hasta N`. Muy útil
+  para ex-0 y para encontrar causas del flujo.
+- **El crédito de OpenAI se acabó a mitad** (429 "no credits remaining": PRE no contestaba). Recargado.
+
+**Para EX (lo visto hoy, ejemplos reales para el banco de ex-0):** "1 buzo avanzado y 2 para bautismo" acaba en
+"minicurso para una persona" y "¿Cuántos serían para buceo certificado?" 5 turnos seguidos (`grupo-mixto`); "Somos una
+pareja Advanced O.W." = quieren el curso Advanced (`precio-desde-islas`); "3 of us will dive and 3 will snorkeling"
+sobre {buceo 3} pregunta "¿lo cambio?" (es una ampliación); la pregunta fija del origen sale 6 turnos seguidos
+(`familia-mixta`, s4-29).
+
+**Siguiente:** el plan EX de Gadea (bloque de abajo): **ex-0** primero.
+
+### ▶️ (anterior) 9-oct, CIERRE DE SESIÓN (Gadea con Claude): decisiones aplicadas, s4-33 CERRADA, equipo en el catálogo
 
 **Estado al cerrar.** PRE sirve `feature/pre_gadea` @ `25da3a5` (`check_deploy` en verde, 50 ajustes del compose
 coinciden). **Integrad `feature/pre_gadea` antes de subir** (lleva todo `pre_alvaro`; nada que integrar de otras ramas).

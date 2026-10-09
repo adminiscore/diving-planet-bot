@@ -60,13 +60,25 @@ personas, 3 buceo y 3 snorkel** (antes, nada en el turno 1 y solo "3 buceo" desd
 
 Tests: `tests/test_grupo_por_edades.py` (7).
 
-## Medida: mini-ronda A/B (PENDIENTE — se acabó el crédito de OpenAI)
+## Medida: mini-ronda `s428-A/B` — PROMOCIONADOS
 
 8 diálogos: los dos donde actúan (`familia-mixta`, `curso-referido`) y controles (`punto-encuentro`,
 `precio-desde-islas`, `grupo-mixto-precio-cop-total`, `nino-7-familia`, `grupo-recompuesto`,
-`minicurso-islas-y-acompanante-lancha`). **A** (`2026-10-09-s428-A`, PRE `2ad4c7c`, flags apagados): hecha, 44 turnos,
-0 sin respuesta; logs y foto guardados. **Su juez falló: "no credits remaining" (429)**. Falta: recargar, juzgar A,
-desplegar B (los dos flags encendidos en config y compose, sin subir), ronda B, comparar, leer regresiones, decidir.
+`minicurso-islas-y-acompanante-lancha`). A en PRE `2ad4c7c` (flags apagados), B en `9fff4e8` (los dos encendidos),
+misma tarde; 44 turnos cada una, 0 sin respuesta. (A se juzgó después de recargar: el primer intento falló por falta de
+crédito.)
+
+- **Calidad: 83,3 → 83,6 %**, diálogos sin fallos **1 → 2/8**. Mejoras: **`familia-mixta` /
+  `precio-mixto-cartagena-o-pregunta-faltantes`** (la buscada: con el grupo bien guardado da el precio en vez de
+  preguntar "¿cuántos?") y `nino-7-familia` / `importes-catalogo`.
+- **1 regresión, no es de los flags:** `grupo-mixto-precio-cop-total`. A y B recorren el MISMO camino de la reserva
+  (mismos textos en t1-t3 y t5-t6); solo cambia la respuesta del RAG en t4 (A dio los dos precios, B solo el del
+  minicurso). Es variación del RAG. Ese diálogo sí enseña un fallo serio del flujo, ya en el plan EX de Gadea: "1 buzo
+  avanzado y 2 para bautismo" queda como "minicurso para una persona" y el bot repite "¿Cuántos serían para buceo
+  certificado?" en 5 turnos.
+- En la ronda B no saltó la guarda del origen (el extractor no se inventó ninguno esta vez): su medida es el escalón 0.
+
+**Decisión (Gonzalo, 9-oct): `ORIGEN_DEL_CLIENTE` y `GRUPO_POR_EDADES` se quedan ENCENDIDOS en PRE.** Gasto ≈ 0,6 $.
 
 ## Pendiente que sale de aquí
 

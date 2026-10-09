@@ -1,0 +1,228 @@
+{
+ "label": "2026-10-09-s428-B",
+ "source": "turn_metrics (log de PRE)",
+ "taken_at": "2026-10-09T12:59:50+00:00",
+ "run_at": "2026-10-09T12:59:19Z",
+ "commit": "9fff4e8",
+ "environment": "staging",
+ "window": {
+  "from": "2026-10-09T12:46:43Z",
+  "to": "2026-10-09T13:01:26Z",
+  "first_turn": "2026-10-09T12:51:34Z",
+  "last_turn": "2026-10-09T12:59:19Z"
+ },
+ "all": {
+  "turns": 44,
+  "latency_p50": 3.479,
+  "latency_p95": 5.722,
+  "latency_avg": 3.102,
+  "llm_calls_avg": 3.25,
+  "llm_calls_p95": 5.0,
+  "llm_calls_max": 6,
+  "embeddings_avg": 1.45,
+  "llm_share": 1.208,
+  "tokens_avg": 0,
+  "cost_avg_usd": 0
+ },
+ "by_type": {
+  "reserva": {
+   "turns": 23,
+   "latency_p50": 1.947,
+   "latency_p95": 3.993,
+   "latency_avg": 2.041,
+   "llm_calls_avg": 2.57,
+   "llm_calls_p95": 4.0,
+   "llm_calls_max": 5,
+   "embeddings_avg": 1.52,
+   "llm_share": 1.173,
+   "tokens_avg": 0,
+   "cost_avg_usd": 0
+  },
+  "rag": {
+   "turns": 21,
+   "latency_p50": 3.996,
+   "latency_p95": 6.143,
+   "latency_avg": 4.264,
+   "llm_calls_avg": 4.0,
+   "llm_calls_p95": 5.0,
+   "llm_calls_max": 6,
+   "embeddings_avg": 1.38,
+   "llm_share": 1.226,
+   "tokens_avg": 0,
+   "cost_avg_usd": 0
+  }
+ },
+ "by_turn_type": {
+  "info": {
+   "turns": 1,
+   "latency_p50": 0.63,
+   "latency_p95": 0.63,
+   "latency_avg": 0.63,
+   "llm_calls_avg": 0.0,
+   "llm_calls_p95": 0.0,
+   "llm_calls_max": 0,
+   "embeddings_avg": 0,
+   "llm_share": 0.0,
+   "tokens_avg": 0,
+   "cost_avg_usd": 0
+  },
+  "rag": {
+   "turns": 21,
+   "latency_p50": 3.996,
+   "latency_p95": 6.143,
+   "latency_avg": 4.264,
+   "llm_calls_avg": 4.0,
+   "llm_calls_p95": 5.0,
+   "llm_calls_max": 6,
+   "embeddings_avg": 1.38,
+   "llm_share": 1.226,
+   "tokens_avg": 0,
+   "cost_avg_usd": 0
+  },
+  "reserva": {
+   "turns": 22,
+   "latency_p50": 1.954,
+   "latency_p95": 4.016,
+   "latency_avg": 2.105,
+   "llm_calls_avg": 2.68,
+   "llm_calls_p95": 4.0,
+   "llm_calls_max": 5,
+   "embeddings_avg": 1.59,
+   "llm_share": 1.189,
+   "tokens_avg": 0,
+   "cost_avg_usd": 0
+  }
+ },
+ "turns_with_summary": 44,
+ "business": {
+  "conversations": 8,
+  "turns": 44,
+  "turns_per_conversation": 5.5,
+  "funnel": {
+   "hablan": {
+    "conversations": 8,
+    "pct": 100.0
+   },
+   "eligen_actividad": {
+    "conversations": 0,
+    "pct": 0.0
+   },
+   "carrito_con_personas": {
+    "conversations": 0,
+    "pct": 0.0
+   },
+   "link_de_pago": {
+    "conversations": 3,
+    "pct": 37.5
+   }
+  },
+  "escalation_rate_pct": 0.0,
+  "fallback_turns": 0,
+  "fallback_pct_of_turns": 0.0,
+  "by_turn_type": {
+   "reserva": 22,
+   "rag": 21,
+   "info": 1
+  }
+ },
+ "nodes": {
+  "booking": {
+   "n": 42,
+   "p50": 1.788,
+   "p95": 5.204
+  },
+  "info": {
+   "n": 2,
+   "p50": 1.623,
+   "p95": 3.063
+  },
+  "extraction": {
+   "n": 42,
+   "p50": 0.675,
+   "p95": 1.981
+  },
+  "slotfill_close": {
+   "n": 40,
+   "p50": 0.672,
+   "p95": 3.96
+  },
+  "router": {
+   "n": 44,
+   "p50": 0.579,
+   "p95": 2.05
+  },
+  "setup": {
+   "n": 42,
+   "p50": 0.025,
+   "p95": 0.042
+  },
+  "routing": {
+   "n": 42,
+   "p50": 0.009,
+   "p95": 0.015
+  },
+  "availability": {
+   "n": 42,
+   "p50": 0.006,
+   "p95": 0.012
+  }
+ },
+ "router": {
+  "by_backend": {
+   "jev": 36,
+   "llm_uncertain": 8
+  },
+  "ms_p50": 546.0,
+  "ms_p95": 583.1
+ },
+ "models": {
+  "gpt-4o-mini": 99,
+  "gpt-6-luna": 23,
+  "gpt-4.1": 21
+ },
+ "rag_adelantado": {
+  "resultados": {
+   "descartado": 23,
+   "aprovechado": 21
+  },
+  "latencia_turnos_rag": {
+   "aprovechado": {
+    "n": 21,
+    "p50": 3.996,
+    "p95": 6.143
+   }
+  },
+  "rehecho_por": {}
+ },
+ "run_file": "docs/robustness/synthetic-runs/2026-10-09-s428-B.jsonl",
+ "client_latency": {
+  "turns": 44,
+  "conversations": 8,
+  "no_reply": 0,
+  "multi_bubble": 0,
+  "latency_p50": 4.0,
+  "latency_p95": 5.85,
+  "latency_max": 7
+ },
+ "quality": {
+  "results_file": "docs/robustness/golden-set/results/2026-10-09-s428-B__gpt-5-mini-medium.json",
+  "model": "gpt-5-mini (medium)",
+  "referencia": "curada",
+  "dialogues": 8,
+  "dialogues_passed": 2,
+  "dialogues_pass_pct": 25.0,
+  "criteria_judged": 61,
+  "criteria_failed": 10,
+  "criteria_pass_pct": 83.6,
+  "not_applicable": 4,
+  "to_review": 0,
+  "errors": 0,
+  "by_category": {
+   "curso": 85.7,
+   "edades": 100.0,
+   "grupo": 77.3,
+   "info": 88.2,
+   "logistica": 71.4
+  }
+ }
+}
