@@ -1,6 +1,13 @@
 History
 =======
 
+0.31.6 - (2026-10-09)
+----------------------
+* **El catálogo dice si cada plan incluye el equipo — `CATALOGO_EQUIPO_INCLUIDO` PROMOCIONADO** (Gadea con Claude).
+  - **Causa:** solo una FAQ decía que el equipo va incluido; el catálogo (que ven siempre el RAG y el revisor) no. En `decisiones-B` el revisor tumbó "el equipo está incluido en el precio del plan", que es cierto, y el turno se fue a 15 s.
+  - **Arreglo:** `catalog._parte_equipo`, sacado de los datos de cada plan (`included_es` / `not_included_es`): 34 de 36 planes "equipo incluido"; el **Dive Master "equipo NO incluido (hay que tener equipo propio)"**. Solo en la línea del catálogo: la ficha del servicio de la base v2 ya lo dice en "Incluye" y no cambia (no hay que regenerar la base). Tests en `tests/test_catalogo_hoteles_base.py`.
+  - **Mini-ronda `equipo-A/B`** (8 diálogos visibles que hablan de equipo, misma franja): criterios **94,5 → 96,4 %**, sin fallos 5 → 6/8, **2 mejoras, 0 regresiones**; turnos p50 3,3 → 3,0 s, p95 6,6 → 5,4 s. El turno de `semana-santa` ("¿costos con equipo?") ya no se reescribe por el equipo. Juez ≈ 0,31 $.
+
 0.31.5 - (2026-10-09)
 ----------------------
 * **s4-33: Luna como revisor, medido con el banco de juicios REALES → NO MEJORA a gpt-4.1. **DECISIÓN DE GADEA: se mantiene gpt-4.1 de revisor; s4-33 CERRADA.** `JUEZ_V3_LUNA` sigue APAGADO (Gadea con Claude). Se revisa cuando salga otro modelo, junto con s4-32. Medidas en `docs/robustness/juez/s4-33/banco142-*.txt`.

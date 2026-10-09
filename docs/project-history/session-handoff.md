@@ -60,8 +60,8 @@ certificación" = Open Water, o el Referido; el Scuba Diver es la parcial). **De
    NO sabe ("no tengo el horario"), deducciones de lo que dijo el cliente (edad 17 ≥ 10), consejos genéricos (traer
    toalla), paráfrasis del contexto (9:30-9:45). Meta: tumbar los 5 inventos y dejar pasar las 38 verdades y los 96
    aprobados. Luego escalón 0 en PRE y A/B de la core.
-2. **Pista (no hecha):** el catálogo no dice que el equipo va incluido en todos los planes (FAQ 11 sí): el revisor tumbó
-   "el equipo está incluido" en `decisiones-B` (turno de 15 s). Candidato a línea general del catálogo, con su mini-ronda.
+2. **HECHO:** cada plan del catálogo dice si el equipo va incluido (`CATALOGO_EQUIPO_INCLUIDO`, promocionado; mini-ronda
+   equipo-A/B 94,5 → 96,4 %, 0 regresiones; HISTORY 0.31.6).
 3. s4-28 → los 17 fallos del flujo de reserva → ronda completa con el examen oculto → R6/Q5 (orden de Álvaro).
 
 ### ▶️ RETOMAR AQUÍ — 8-oct, CIERRE DE SESIÓN (Álvaro con Claude): s4-31 CERRADA; s4-33 EN CURSO — Luna como revisor aún NO

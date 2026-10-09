@@ -249,7 +249,8 @@ class Settings(BaseSettings):
     catalogo_hoteles_base: bool = True
     # 9-oct: cada plan del catalogo dice si el equipo va incluido (sale de included_es/not_included_es de services.json;
     # el Dive Master NO). Antes solo lo decia una FAQ y el revisor tumbo "el equipo esta incluido en el precio del plan"
-    # (decisiones-B). flows/catalog.service_fact_parts. Revert = False aqui y en el compose.
+    # (decisiones-B). flows/catalog._parte_equipo (solo el catalogo; la ficha de la base v2 no cambia). PROMOCIONADO 9-oct
+    # (mini-ronda equipo-A/B: 94,5 -> 96,4 %, 2 mejoras, 0 regresiones; HISTORY 0.31.6). Revert = False aqui y en el compose.
     catalogo_equipo_incluido: bool = True
     # Punto 4 (s4-26, 7-oct): si Jev esta SEGURO de que el mensaje no mete a otra persona (companion_joins <
     # COMPANION_NONE_MAX, la misma puerta de u3-6), la regex de "menciona a alguien" (`_mentions_person`) no puede
