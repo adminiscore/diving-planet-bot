@@ -333,7 +333,10 @@ async def is_grounded(answer: str, context: str, lang: str = "es") -> tuple[bool
     )
     # v4 copia cada frase de la respuesta (con tipo y veredicto): necesita más sitio que la lista de datos.
     tope = 700 if por_tipo else 300 if settings.grounding_v3 else 30
-    if model.startswith(("gpt-5", "o")):
+    if model.startswith("gpt-6") and settings.juez_luna_razonamiento != "none":
+        # s4-33 (9-oct): Luna razonando como juez; el razonamiento cuenta en el tope de salida.
+        extra = {"reasoning_effort": settings.juez_luna_razonamiento, "max_completion_tokens": tope + 4000}
+    elif model.startswith(("gpt-5", "o")):
         # J1 (1-oct): juez de razonamiento. No admite temperatura y su razonamiento cuenta en el tope de salida.
         extra = {"reasoning_effort": settings.grounding_reasoning_effort, "max_completion_tokens": tope + 4000}
     else:

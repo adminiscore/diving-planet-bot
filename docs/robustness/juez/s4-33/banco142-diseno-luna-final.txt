@@ -1,0 +1,55 @@
+gpt-6-luna ['juez_v3_luna'] [] · grupo diseño · 70 respuestas
+  diseño: inventos que deja pasar 0/8 (mejor 0) · verdades que pasan 19/30 · aprobadas que pasan 41/43 (mejor todas) · [fuera de contexto que pasan 0/8, no cuenta]
+  tiempo por juicio: mediana 3.40s · p90 4.89s
+
+[aprobada -> RECHAZA] #44 CONS2-open-water-precio-para-colombianos-corrige-mito t1
+    respuesta: '¡Buenos días! Qué bueno que quieres empezar en el buceo con el Curso Básico PADI (Open Water), es una experiencia increíble para certificarse y descubrir el mundo submarino en las Islas del Rosario.\n\nPara colombianos, el costo del Curso Básico PADI es 2.450.000 COP si reservas online (con el 10% de '
+    juez: HALLUCINATED - El curso permite descubrir el mundo submarino en las Islas del Rosario. NO
+
+[falso -> RECHAZA] #53 curso-referido-pide-datos-centro t6
+    respuesta: 'If [NOMBRE] has completed the e-learning **and pool sessions** with a PADI dive center, the relevant option is the **Open Water Referral Course** in Cartagena. They’ll need to bring the referral paperwork signed by their PADI instructor. The practical certification takes 2 days, with 4 instructor-su'
+    juez: HALLUCINATED - The referral paperwork should contain the diver’s details and confirmation of completed training. NO
+
+[falso -> RECHAZA] #53 curso-referido-pide-datos-centro t6
+    respuesta: 'If [NOMBRE] has completed the e-learning **and pool sessions** with a PADI dive center, the relevant option is the **Open Water Referral Course** in Cartagena. They’ll need to bring the referral paperwork signed by their PADI instructor. The practical certification takes 2 days, with 4 instructor-su'
+    juez: HALLUCINATED - The referral paperwork should contain the diver’s details and confirmation of completed training. NO
+
+[falso -> RECHAZA] #66 principiante-hora-lugar-y-precio t1
+    respuesta: 'Hello! A dive trip in the Rosario Islands is a lovely way to explore the reef. You can book for one person, but the website closes bookings for the next day at 4:30 p.m. the day before. Since it’s currently 2:01 p.m. in Cartagena, you can still try booking online for tomorrow; availability is confir'
+    juez: HALLUCINATED - The customer can book for one person. NO | - The booking calendar confirms availability. NO
+
+[falso -> RECHAZA] #66 principiante-hora-lugar-y-precio t1
+    respuesta: 'Hello! A dive trip in the Rosario Islands is a lovely way to explore the reef. You can book for one person, but the website closes bookings for the next day at 4:30 p.m. the day before. Since it’s currently 2:01 p.m. in Cartagena, you can still try booking online for tomorrow; availability is confir'
+    juez: HALLUCINATED - The customer can book for one person. NO | - The customer can still try booking online for tomorrow at 2:01 p.m. NO | - Availability is confirmed in the booking calendar. NO
+
+[aprobada -> RECHAZA] #84 ON-open-water-precio-para-colombianos-corrige-mito t2
+    respuesta: '¡Claro que sí! Para el curso básico de buceo (PADI Open Water) el precio para colombianos depende de si sales desde Cartagena o si ya estás en las Islas del Rosario, porque cambia un poco según el punto de partida.\n\n- Desde Cartagena, el curso básico cuesta 2.450.000 COP si reservas online (con el 1'
+    juez: HALLUCINATED - Coral dará el dato exacto y el link para reservar cuando sepa el punto de partida. NO
+
+[falso -> RECHAZA] #98 ON-precio-desde-islas-vs-cartagena t7
+    respuesta: '¡Buena pregunta! Los precios desde las Islas del Rosario son diferentes a los que salen desde Cartagena porque no incluyen el transporte en lancha desde el continente ni el almuerzo. \n\nAsí que el costo que te di para las inmersiones desde la isla es distinto (generalmente más bajo) que el que sale d'
+    juez: HALLUCINATED - El costo desde las islas es generalmente más bajo que desde Cartagena: NO | - Puedo pasar los precios exactos para bucear desde las islas: NO | - Puedo ayudar con los links para reservar: NO
+
+[falso -> RECHAZA] #102 V2-colombianos-precio-minicurso-dos-inmersiones t3
+    respuesta: '¡Claro que sí! Desde Cartagena, las salidas de buceo incluyen 2 inmersiones en un día completo, porque la logística de la lancha y el tiempo no permiten hacer solo una inmersión ni una extra.\n\nSobre la duración exacta de cada inmersión, eso lo puede confirmar un asesor del equipo, que te dará el det'
+    juez: HALLUCINATED - La duración exacta de cada inmersión depende del plan y las condiciones. NO | - Un asesor del equipo puede confirmar la duración exacta de cada inmersión. NO
+
+[falso -> RECHAZA] #102 V2-colombianos-precio-minicurso-dos-inmersiones t3
+    respuesta: '¡Claro que sí! Desde Cartagena, las salidas de buceo incluyen 2 inmersiones en un día completo, porque la logística de la lancha y el tiempo no permiten hacer solo una inmersión ni una extra.\n\nSobre la duración exacta de cada inmersión, eso lo puede confirmar un asesor del equipo, que te dará el det'
+    juez: HALLUCINATED - La duración exacta de cada inmersión depende del plan y las condiciones. NO | - Un asesor puede confirmar la duración exacta de cada inmersión. NO
+
+[falso -> RECHAZA] #138 precio-desde-islas-vs-cartagena t4
+    respuesta: '¡Exacto! Si ya estás en las Islas del Rosario y te hospedas en un hotel con acceso por lancha, la recogida para bucear sale directamente desde tu hotel. Nosotros pasamos a recogerte entre 9:30 y 9:45 a.m., te llevamos a nuestro centro de buceo para preparar todo, y luego regresamos al hotel después '
+    juez: HALLUCINATED - La recogida es entre 9:30 y 9:45 a.m. NO | - Así evita tener que ir hasta Cartagena. NO | - Ofrece contar las opciones de paquetes de buceo desde las islas y sus precios. NO
+
+[falso -> RECHAZA] #138 precio-desde-islas-vs-cartagena t4
+    respuesta: '¡Exacto! Si ya estás en las Islas del Rosario y te hospedas en un hotel con acceso por lancha, la recogida para bucear sale directamente desde tu hotel. Nosotros pasamos a recogerte entre 9:30 y 9:45 a.m., te llevamos a nuestro centro de buceo para preparar todo, y luego regresamos al hotel después '
+    juez: HALLUCINATED - Así evita tener que ir hasta Cartagena. NO | - Es más cómodo para el cliente. NO
+
+[falso -> RECHAZA] #140 precio-desde-islas-vs-cartagena t7
+    respuesta: '¡Buena pregunta! Los precios para bucear desde las Islas del Rosario son diferentes a los que salen desde Cartagena porque no incluyen el transporte en lancha desde el continente ni el almuerzo.\n\nAsí que el costo que te di para las inmersiones desde el hotel en la isla es distinto (generalmente más '
+    juez: HALLUCINATED - Hay un plan de 2 inmersiones desde las islas. NO
+
+[falso -> RECHAZA] #140 precio-desde-islas-vs-cartagena t7
+    respuesta: '¡Buena pregunta! Los precios para bucear desde las Islas del Rosario son diferentes a los que salen desde Cartagena porque no incluyen el transporte en lancha desde el continente ni el almuerzo.\n\nAsí que el costo que te di para las inmersiones desde el hotel en la isla es distinto (generalmente más '
+    juez: HALLUCINATED - Se ofrece un plan de 2 inmersiones desde las islas. NO

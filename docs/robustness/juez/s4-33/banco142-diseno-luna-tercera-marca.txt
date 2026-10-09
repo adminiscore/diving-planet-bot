@@ -1,0 +1,43 @@
+gpt-6-luna ['juez_v3_luna'] [] · grupo diseño · 70 respuestas
+  diseño: inventos que deja pasar 0/8 (mejor 0) · verdades que pasan 23/30 · aprobadas que pasan 40/43 (mejor todas) · [fuera de contexto que pasan 0/8, no cuenta]
+  tiempo por juicio: mediana 3.60s · p90 8.12s
+
+[falso -> RECHAZA] #18 CONS-minicurso-precio-colombianos-origen-pendiente t4
+    respuesta: '¡Claro que sí! Si son colombianos, pagan en pesos colombianos; el precio es el mismo, solo cambia la moneda. No hay un descuento especial por ser colombiano.\n\nPara principiantes, el *Minicurso de Buceo* saliendo desde Cartagena cuesta **$655.000 COP por persona reservando online**. Incluye lancha id'
+    juez: HALLUCINATED - El cliente puede seleccionar 2 personas en el enlace. NO
+
+[aprobada -> RECHAZA] #44 CONS2-open-water-precio-para-colombianos-corrige-mito t1
+    respuesta: '¡Buenos días! Qué bueno que quieres empezar en el buceo con el Curso Básico PADI (Open Water), es una experiencia increíble para certificarse y descubrir el mundo submarino en las Islas del Rosario.\n\nPara colombianos, el costo del Curso Básico PADI es 2.450.000 COP si reservas online (con el 10% de '
+    juez: HALLUCINATED - El curso permite descubrir el mundo submarino en las Islas del Rosario. NO
+
+[falso -> RECHAZA] #53 curso-referido-pide-datos-centro t6
+    respuesta: 'If [NOMBRE] has completed the e-learning **and pool sessions** with a PADI dive center, the relevant option is the **Open Water Referral Course** in Cartagena. They’ll need to bring the referral paperwork signed by their PADI instructor. The practical certification takes 2 days, with 4 instructor-su'
+    juez: HALLUCINATED - The referral paperwork should contain the diver’s details and confirmation of completed training. NO
+
+[falso -> RECHAZA] #53 curso-referido-pide-datos-centro t6
+    respuesta: 'If [NOMBRE] has completed the e-learning **and pool sessions** with a PADI dive center, the relevant option is the **Open Water Referral Course** in Cartagena. They’ll need to bring the referral paperwork signed by their PADI instructor. The practical certification takes 2 days, with 4 instructor-su'
+    juez: HALLUCINATED - The referral paperwork should contain the diver’s details and confirmation of completed training. NO
+
+[falso -> RECHAZA] #66 principiante-hora-lugar-y-precio t1
+    respuesta: 'Hello! A dive trip in the Rosario Islands is a lovely way to explore the reef. You can book for one person, but the website closes bookings for the next day at 4:30 p.m. the day before. Since it’s currently 2:01 p.m. in Cartagena, you can still try booking online for tomorrow; availability is confir'
+    juez: HALLUCINATED - Availability is confirmed in the booking calendar. NO
+
+[falso -> RECHAZA] #66 principiante-hora-lugar-y-precio t1
+    respuesta: 'Hello! A dive trip in the Rosario Islands is a lovely way to explore the reef. You can book for one person, but the website closes bookings for the next day at 4:30 p.m. the day before. Since it’s currently 2:01 p.m. in Cartagena, you can still try booking online for tomorrow; availability is confir'
+    juez: HALLUCINATED - Availability is confirmed in the booking calendar. — NO
+
+[falso -> RECHAZA] #67 principiante-hora-lugar-y-precio t1
+    respuesta: 'Hello! A dive trip in the Rosario Islands is a lovely way to explore the reef. You can book for one person, but the website closes bookings for the next day at 4:30 p.m. the day before. Since it’s currently 2:01 p.m. in Cartagena, you can still book online for tomorrow.\n\nAre you departing from Carta'
+    juez: HALLUCINATED - You can book for one person. — NO
+
+[aprobada -> RECHAZA] #83 ON-open-water-precio-para-colombianos-corrige-mito t1
+    respuesta: '¡Buenos días! Qué bueno que quieras hacer el curso básico de buceo, es una experiencia increíble para descubrir el mundo submarino de las Islas del Rosario.\n\nPara darte el costo exacto para colombianos, necesito saber si saldrías desde Cartagena o si ya estás en las Islas del Rosario, porque el prec'
+    juez: HALLUCINATED - El curso básico de buceo es una experiencia para descubrir el mundo submarino de las Islas del Rosario. — NO
+
+[aprobada -> RECHAZA] #96 ON-precio-desde-islas-vs-cartagena t4
+    respuesta: '¡Hola! Si ya estás en las Islas del Rosario y te hospedas en un hotel con acceso marítimo, la lancha de buceo te recoge directamente en tu hotel para llevarte a nuestro centro de buceo. No necesitas ir a otro punto; la recogida es puerta a puerta en la isla.\n\nAsí que sí, desde tu hotel sale la lanch'
+    juez: HALLUCINATED - La recogida es puerta a puerta en la isla. NO | - No necesita desplazarse al muelle principal. NO
+
+[falso -> RECHAZA] #140 precio-desde-islas-vs-cartagena t7
+    respuesta: '¡Buena pregunta! Los precios para bucear desde las Islas del Rosario son diferentes a los que salen desde Cartagena porque no incluyen el transporte en lancha desde el continente ni el almuerzo.\n\nAsí que el costo que te di para las inmersiones desde el hotel en la isla es distinto (generalmente más '
+    juez: HALLUCINATED - Existe un plan de 2 inmersiones desde las islas. NO

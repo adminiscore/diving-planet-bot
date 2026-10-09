@@ -195,6 +195,10 @@ class Settings(BaseSettings):
     # valoraciones y ofertas de ayuda no son datos; las deducciones directas del contexto cuentan). Va con
     # GROUNDING_V3_MODEL=gpt-6-luna. APAGADO hasta medirlo (banco sonda_juez_modelo, escalon 0, A/B core).
     juez_v3_luna: bool = False
+    # s4-33 (9-oct): razonamiento de GPT-6 Luna cuando hace de juez de grounding ("none" = como el resto de llamadas a
+    # gpt-6; "low"/"medium" = razona antes de la lista y el tope de salida sube 4000 tokens, como el juez gpt-5/o).
+    # Se mide con scripts/banco_juez_reales.py --ajuste juez_luna_razonamiento=low.
+    juez_luna_razonamiento: str = "none"
     # 1-oct (Alvaro, paso 1 del "Siguiente" de Gonzalo): el juez ve la presentacion de Diving Planet (PADI 5
     # Estrellas, 30 años), la misma frase que el bot tiene ordenado decir (prompts/info.py PRESENTACION_*). Sin ella
     # el juez tiraba esas frases por inventadas (ronda 2026-10-01-juez-B). APAGADO hasta medirlo

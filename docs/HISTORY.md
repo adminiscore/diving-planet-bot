@@ -1,6 +1,14 @@
 History
 =======
 
+0.31.5 - (2026-10-09)
+----------------------
+* **s4-33: Luna como revisor, medido con el banco de juicios REALES → NO MEJORA a gpt-4.1. El revisor sigue en gpt-4.1; `JUEZ_V3_LUNA` sigue APAGADO. Decisión para Gadea** (Gadea con Claude). Medidas en `docs/robustness/juez/s4-33/banco142-*.txt`.
+  - **Banco** (`scripts/banco_juez_reales.py`, nuevo): los 142 juicios etiquetados con Gadea, en grupos por diálogo fijados antes de medir (diseño 70 / ciego 69; las versiones CONS-/ON-/V2- de un diálogo, juntas). Etiqueta nueva **`fuera-contexto`** (11): hechos CIERTOS que el contexto del juez no traía (2 puntos distintos, 40-50 min, sin código, e-learning): rechazarlos es lo correcto para un juez de grounding; se arreglan en la base (FAQs de 0.31.4), no en el juez.
+  - **Ajuste en diseño:** la **tercera marca "NO ES DATO"** (en vez de pedirle que no enumere lo que no es dato, lo clasifica; el código ya solo cuenta las líneas que acaban en NO) sube las verdades que pasan de ~13 a ~20/30 sin colar inventos (0/8). Los retoques finos se pierden en el ruido (±4 de 30 entre dos pasadas iguales). Luna con **razonamiento bajo** (ajuste nuevo `juez_luna_razonamiento`, por defecto "none"): 0/8 inventos pero aprobadas 33/43 y 5,3 s por juicio → descartado.
+  - **Ciego (sin tocar nada, 3 repeticiones):** gpt-4.1: inventos que se cuelan 0/3, verdades que pasan **34/36**, aprobadas 52/53, 2,6 s. **Luna ajustada: 3/3, 7/36, 50/53, 3,3 s.** Sigue tumbando ofertas de ayuda y consejos que las instrucciones nombran, y datos que el catálogo dice tal cual; deja pasar "incluye una noche de alojamiento". Banco del 1-oct (ciego): Luna 0/28 inventos colados, 14/28 verdades, 19/22 aprobadas; gpt-4.1 3/28, 10/28, 22/22. **gpt-4.1-mini: 25/28 inventos colados → descartado.**
+  - **Lectura:** Luna sin razonamiento caza mejor los inventos (en diseño 0/8 frente a 4-6 de 8-12 de gpt-4.1), pero con contextos largos (>10.000 tokens) tumba muchas verdades en respuestas que no ha visto, y cada rechazo cuesta una reescritura (+2-3 s) o un "no lo tengo". Con las respuestas reales de PRE, gpt-4.1 es el revisor más equilibrado.
+
 0.31.4 - (2026-10-09)
 ----------------------
 * **Las 6 decisiones de Gadea aplicadas + s4-33 opción (a): los 142 juicios reales etiquetados con Gadea** (Gadea con Claude). Mini-ronda `decisiones-A/B` hecha: **`CATALOGO_HOTELES_BASE` PROMOCIONADO**.

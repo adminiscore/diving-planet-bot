@@ -1,0 +1,107 @@
+gpt-6-luna ['juez_v3_luna'] ['juez_luna_razonamiento=low'] · grupo diseño · 70 respuestas
+  diseño: inventos que deja pasar 0/8 (mejor 0) · verdades que pasan 14/30 · aprobadas que pasan 33/43 (mejor todas) · [fuera de contexto que pasan 0/8, no cuenta]
+  tiempo por juicio: mediana 5.25s · p90 7.26s
+
+[falso -> RECHAZA] #13 CONS-familia-mixta-precio-descuento-refresher t3
+    respuesta: 'No, you don’t need to book two separate trips. Diving and snorkeling can be combined on the same day, though snorkeling takes place in a different area from the dive sites. Depending on the group size, everyone may travel on the same boat or the group may be split by activity.\n\nFor your group, the b'
+    juez: HALLUCINATED - The booking should include 3 certified divers and 3 snorkelers — NO | - The booking flow can help select activities and quantities — NO | - The team will confirm the exact arrangement and availabili
+
+[falso -> RECHAZA] #13 CONS-familia-mixta-precio-descuento-refresher t3
+    respuesta: 'No, you don’t need to book two separate trips. Diving and snorkeling can be combined on the same day, though snorkeling takes place in a different area from the dive sites. Depending on the group size, everyone may travel on the same boat or the group may be split by activity.\n\nFor your group, the b'
+    juez: HALLUCINATED - The booking should include 3 certified divers and 3 snorkelers. NO | - The booking flow lets customers select activities and quantities. NO | - The team will confirm the exact arrangement and availa
+
+[aprobada -> RECHAZA] #15 CONS-familia-mixta-precio-descuento-refresher t5
+    respuesta: 'There’s no discount code needed. The 10% online discount is applied automatically when you book directly through our website. For groups of 5 or more, there’s an additional 10% discount on recreational diving and snorkeling; it isn’t applied automatically, so the team needs to apply it. Would you li'
+    juez: HALLUCINATED - There’s no discount code needed. NO
+
+[falso -> RECHAZA] #38 CONS2-familia-mixta-precio-descuento-refresher t1
+    respuesta: 'Hi! That sounds like a lovely day in the Rosario Islands—certified divers can enjoy two open-water dives, while the snorkeling group can join a snorkeling tour.\n\nFor guests departing from Cartagena, the online prices are:\n- **2 dives:** USD 178 per person\n- **Snorkeling:** USD 126 per person\n\nThe 17'
+    juez: HALLUCINATED - The children meet the minimum age for snorkeling. NO | - The booking flow will confirm the exact group total. NO
+
+[falso -> RECHAZA] #38 CONS2-familia-mixta-precio-descuento-refresher t1
+    respuesta: 'Hi! That sounds like a lovely day in the Rosario Islands—certified divers can enjoy two open-water dives, while the snorkeling group can join a snorkeling tour.\n\nFor guests departing from Cartagena, the online prices are:\n- **2 dives:** USD 178 per person\n- **Snorkeling:** USD 126 per person\n\nThe 17'
+    juez: HALLUCINATED - Certified divers can enjoy two open-water dives — NO | - The assistant cannot provide a combined total — NO | - The booking flow will confirm the exact group total — NO
+
+[aprobada -> RECHAZA] #43 CONS2-minicurso-precio-colombianos-origen-pendiente t4
+    respuesta: '¡Claro que sí! Si son de Bogotá, pagan en pesos colombianos. El precio es el mismo para todos; solo cambia la moneda, no hay un descuento especial por ser colombiano.\n\nComo son principiantes, el plan adecuado es el *Minicurso de Buceo*: desde Cartagena cuesta **$655.000 COP por persona reservando on'
+    juez: HALLUCINATED - Si son de Bogotá, pagan en pesos colombianos: NO
+
+[falso -> RECHAZA] #53 curso-referido-pide-datos-centro t6
+    respuesta: 'If [NOMBRE] has completed the e-learning **and pool sessions** with a PADI dive center, the relevant option is the **Open Water Referral Course** in Cartagena. They’ll need to bring the referral paperwork signed by their PADI instructor. The practical certification takes 2 days, with 4 instructor-su'
+    juez: HALLUCINATED - The referral paperwork should contain the diver’s details and confirmation of completed training — NO | - There is a transfer form — NO | - Customers should not send personal or ID details here — NO
+
+[falso -> RECHAZA] #53 curso-referido-pide-datos-centro t6
+    respuesta: 'If [NOMBRE] has completed the e-learning **and pool sessions** with a PADI dive center, the relevant option is the **Open Water Referral Course** in Cartagena. They’ll need to bring the referral paperwork signed by their PADI instructor. The practical certification takes 2 days, with 4 instructor-su'
+    juez: HALLUCINATED - The referral paperwork should contain the diver’s details and confirmation of completed training — NO | - Customers should not send personal or ID details here — NO
+
+[aprobada -> RECHAZA] #56 open-water-hoteles-noche-fotos-horario t3
+    respuesta: 'Yes, that’s right: the Open Water course takes 2 days and requires an overnight stay on the Rosario Islands, so one night is enough for the course schedule. Accommodation isn’t included, and you’ll need to book it directly with the hotel. Would you like the booking link for the Open Water course?'
+    juez: HALLUCINATED - One night is enough for the course schedule. NO
+
+[aprobada -> RECHAZA] #59 open-water-hoteles-noche-fotos-horario t7
+    respuesta: 'The instructor may take photos or videos during the dives, but a photographer isn’t guaranteed, and it’s not included in the price. If the instructor takes any, they’re usually shared by the next day; the customary tip is COP 50,000 / USD 14, paid directly to the instructor.'
+    juez: HALLUCINATED - The instructor may take photos or videos during the dives — NO | - If taken, photos or videos are usually shared by the next day — NO
+
+[falso -> RECHAZA] #66 principiante-hora-lugar-y-precio t1
+    respuesta: 'Hello! A dive trip in the Rosario Islands is a lovely way to explore the reef. You can book for one person, but the website closes bookings for the next day at 4:30 p.m. the day before. Since it’s currently 2:01 p.m. in Cartagena, you can still try booking online for tomorrow; availability is confir'
+    juez: HALLUCINATED - At 2:01 p.m. in Cartagena, you can still try booking online for tomorrow. NO | - Availability is confirmed in the booking calendar. NO
+
+[falso -> RECHAZA] #66 principiante-hora-lugar-y-precio t1
+    respuesta: 'Hello! A dive trip in the Rosario Islands is a lovely way to explore the reef. You can book for one person, but the website closes bookings for the next day at 4:30 p.m. the day before. Since it’s currently 2:01 p.m. in Cartagena, you can still try booking online for tomorrow; availability is confir'
+    juez: HALLUCINATED - It is currently 2:01 p.m. in Cartagena. NO | - You can still try booking online for tomorrow. NO | - Availability is confirmed in the booking calendar. NO
+
+[falso -> RECHAZA] #67 principiante-hora-lugar-y-precio t1
+    respuesta: 'Hello! A dive trip in the Rosario Islands is a lovely way to explore the reef. You can book for one person, but the website closes bookings for the next day at 4:30 p.m. the day before. Since it’s currently 2:01 p.m. in Cartagena, you can still book online for tomorrow.\n\nAre you departing from Carta'
+    juez: HALLUCINATED - It is currently 2:01 p.m. in Cartagena. NO | - You can still book online for tomorrow. NO
+
+[falso -> RECHAZA] #68 principiante-hora-lugar-y-precio t3
+    respuesta: 'Of course! The meeting time and location depend on whether you’re departing from Cartagena or already staying on the islands. I can’t confirm the exact details or tomorrow’s availability here, but a team advisor can help finalize them. Where will you be departing from?'
+    juez: HALLUCINATED - The meeting time and location depend on whether the customer departs from Cartagena or is already staying on the islands. NO | - Coral cannot confirm the exact meeting details here. NO
+
+[falso -> RECHAZA] #68 principiante-hora-lugar-y-precio t3
+    respuesta: 'Of course! The meeting time and location depend on whether you’re departing from Cartagena or already staying on the islands. I can’t confirm the exact details or tomorrow’s availability here, but a team advisor can help finalize them. Where will you be departing from?'
+    juez: HALLUCINATED - The meeting time depends on the departure location. NO
+
+[aprobada -> RECHAZA] #69 principiante-hora-lugar-y-precio t4
+    respuesta: 'Sure! Since you’re a beginner and haven’t mentioned a certification, the Dive Mini Course is the suitable option—no prior certification is required.\n\n- **Departing from Cartagena:** USD 183 online / USD 204 regular. It includes the round-trip boat and lunch.\n- **Already on the Rosario Islands:** USD'
+    juez: HALLUCINATED - The Dive Mini Course is a suitable option for a beginner with a few previous dives — NO
+
+[aprobada -> RECHAZA] #93 ON-pareja-certificados-cop-descuento-almuerzo t4
+    respuesta: '¡Claro que sí! El plan de 2 inmersiones saliendo desde Cartagena incluye almuerzo durante el día. 😊\n\nEl almuerzo es arroz con pollo o arroz con vegetales para quienes prefieren opción vegetariana o tienen alguna restricción (solo avisa si tienes alergias).\n\n¿Quieres que te ayude con el link para res'
+    juez: HALLUCINATED - Quienes tienen cualquier restricción alimentaria reciben arroz con vegetales. NO
+
+[aprobada -> RECHAZA] #95 ON-precio-desde-islas-vs-cartagena t3
+    respuesta: 'Tranqui, el precio por noche lo maneja directamente cada hotel, así que lo mejor es que contactes con ellos para esa info puntual. Nosotros no manejamos tarifas de alojamiento, solo la parte de buceo y logística.\n\nSi quieres, te puedo ayudar a armar tu plan de inmersiones desde las islas o desde Car'
+    juez: HALLUCINATED - El precio por noche lo maneja directamente cada hotel: NO | - Diving Planet no maneja tarifas de alojamiento: NO | - Diving Planet se encarga solo de buceo y logística: NO
+
+[falso -> RECHAZA] #102 V2-colombianos-precio-minicurso-dos-inmersiones t3
+    respuesta: '¡Claro que sí! Desde Cartagena, las salidas de buceo incluyen 2 inmersiones en un día completo, porque la logística de la lancha y el tiempo no permiten hacer solo una inmersión ni una extra.\n\nSobre la duración exacta de cada inmersión, eso lo puede confirmar un asesor del equipo, que te dará el det'
+    juez: HALLUCINATED - Un asesor puede confirmar la duración exacta de cada inmersión según el plan y las condiciones — NO | - El link permite ver fechas y precios en pesos — NO
+
+[falso -> RECHAZA] #102 V2-colombianos-precio-minicurso-dos-inmersiones t3
+    respuesta: '¡Claro que sí! Desde Cartagena, las salidas de buceo incluyen 2 inmersiones en un día completo, porque la logística de la lancha y el tiempo no permiten hacer solo una inmersión ni una extra.\n\nSobre la duración exacta de cada inmersión, eso lo puede confirmar un asesor del equipo, que te dará el det'
+    juez: HALLUCINATED - Un asesor puede confirmar la duración exacta de cada inmersión según el plan y las condiciones: NO | - El link permite ver fechas y precios en pesos: NO
+
+[falso -> RECHAZA] #105 V2-curso-open-water-transporte-y-regreso-otro-dia t2
+    respuesta: 'Great question! If you decide to stay an extra day on the Rosario Islands beyond your planned course or dive package, we can definitely arrange your boat transfer back to Cartagena on a different day. This is coordinated by our team to ensure space on the boat and smooth logistics.\n\nJust keep in min'
+    juez: HALLUCINATED - The team ensures smooth logistics. NO
+
+[aprobada -> RECHAZA] #106 V2-curso-open-water-transporte-y-regreso-otro-dia t3
+    respuesta: 'Perfect! The meeting point in Cartagena is at 8:00 a.m. at Muelle de la Bodeguita, just 5 minutes from the historic center. When you arrive, no need to queue—just ask for DIVING PLANET at entrance 3.\n\nIf you want, I can share the exact location link or help with anything else for your day trip. Woul'
+    juez: HALLUCINATED - The activity is a day trip — NO
+
+[aprobada -> RECHAZA] #120 colombianos-precio-minicurso-dos-inmersiones t2
+    respuesta: '¡Qué bueno que estén planeando bucear con nosotros desde Bogotá! 🇨🇴 Te cuento que no hay una tarifa especial para colombianos; el precio es el mismo para todos, solo que ustedes pagan en pesos colombianos (COP) y los extranjeros en dólares (USD). \n\nAsí que ustedes verán los precios en pesos, y el re'
+    juez: HALLUCINATED - Los colombianos verán los precios en pesos. NO
+
+[aprobada -> RECHAZA] #137 precio-desde-islas-vs-cartagena t3
+    respuesta: 'Tranqui, el precio por noche lo manejan directamente los hoteles, nosotros no lo gestionamos ni tenemos tarifas fijas. Lo mejor es que contactes al hotel que te interese para reservar y consultar precios.\n\nSi quieres, te puedo ayudar con los planes de buceo desde las islas, que ya incluyen la recogi'
+    juez: HALLUCINATED - Diving Planet no gestiona el alojamiento ni tiene tarifas fijas de hotel: NO
+
+[falso -> RECHAZA] #138 precio-desde-islas-vs-cartagena t4
+    respuesta: '¡Exacto! Si ya estás en las Islas del Rosario y te hospedas en un hotel con acceso por lancha, la recogida para bucear sale directamente desde tu hotel. Nosotros pasamos a recogerte entre 9:30 y 9:45 a.m., te llevamos a nuestro centro de buceo para preparar todo, y luego regresamos al hotel después '
+    juez: HALLUCINATED - La recogida es entre las 9:30 y las 9:45 a. m.: NO
+
+[falso -> RECHAZA] #138 precio-desde-islas-vs-cartagena t4
+    respuesta: '¡Exacto! Si ya estás en las Islas del Rosario y te hospedas en un hotel con acceso por lancha, la recogida para bucear sale directamente desde tu hotel. Nosotros pasamos a recogerte entre 9:30 y 9:45 a.m., te llevamos a nuestro centro de buceo para preparar todo, y luego regresamos al hotel después '
+    juez: HALLUCINATED - La recogida es entre 9:30 y 9:45 a.m. NO

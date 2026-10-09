@@ -1,0 +1,150 @@
+gpt-4.1 [] [] · grupo ciego · 69 respuestas
+  ciego : inventos que deja pasar 0/3 (mejor 0) · verdades que pasan 34/36 · aprobadas que pasan 52/53 (mejor todas) · [fuera de contexto que pasan 1/3, no cuenta]
+  tiempo por juicio: mediana 2.64s · p90 3.68s
+gpt-6-luna ['juez_v3_luna'] [] · grupo ciego · 69 respuestas
+  ciego : inventos que deja pasar 3/3 (mejor 0) · verdades que pasan 7/36 · aprobadas que pasan 50/53 (mejor todas) · [fuera de contexto que pasan 0/3, no cuenta]
+  tiempo por juicio: mediana 3.30s · p90 5.04s
+
+[falso -> RECHAZA] #30 CONS2-certificado-fecha-precio-cop-descuento-transferencia t7
+    respuesta: 'Si eres cliente extranjero, el pago se hace completo al reservar, con tarjeta en la página web; no se paga el día de la salida. El precio se muestra en USD y puedes usar tu pasaporte como documento de identificación. ¿Quieres que te comparta el enlace para la salida de 2 inmersiones desde Cartagena?'
+    juez: HALLUCINATED - No se paga el día de la salida: NO | - Ofrece compartir el enlace para la salida de 2 inmersiones desde Cartagena: NO
+
+[falso -> RECHAZA] #30 CONS2-certificado-fecha-precio-cop-descuento-transferencia t7
+    respuesta: 'Si eres cliente extranjero, el pago se hace completo al reservar, con tarjeta en la página web; no se paga el día de la salida. El precio se muestra en USD y puedes usar tu pasaporte como documento de identificación. ¿Quieres que te comparta el enlace para la salida de 2 inmersiones desde Cartagena?'
+    juez: HALLUCINATED - No se paga el día de la salida: NO | - Ofrecer compartir el enlace para la salida de 2 inmersiones desde Cartagena: NO
+
+[falso -> RECHAZA] #30 CONS2-certificado-fecha-precio-cop-descuento-transferencia t7
+    respuesta: 'Si eres cliente extranjero, el pago se hace completo al reservar, con tarjeta en la página web; no se paga el día de la salida. El precio se muestra en USD y puedes usar tu pasaporte como documento de identificación. ¿Quieres que te comparta el enlace para la salida de 2 inmersiones desde Cartagena?'
+    juez: HALLUCINATED - No se paga el día de la salida: NO | - Ofrecer compartir el enlace para la salida de 2 inmersiones desde Cartagena: NO
+
+[aprobada -> RECHAZA] #32 CONS2-certificado-fecha-precio-cop-descuento-transferencia t9
+    respuesta: 'Si tienes cuenta local, eso no cambia el descuento: el *10% online* aplica al reservar y pagar en la página web. La transferencia solo se ofrece si falla el sistema de reserva o el pago en línea; en ese caso se mantiene el descuento online. Como cliente extranjero, el pago habitual es el 100% con ta'
+    juez: HALLUCINATED - Ofrece compartir el enlace para reservar las 2 inmersiones desde Cartagena. NO
+
+[falso -> RECHAZA] #46 CONS2-refresher-rechaza-acepta t2
+    respuesta: 'Sí, el refresher tiene un costo propio; no es un recargo adicional a otra salida. Como llevas 5 años sin bucear, normalmente se requiere hacerlo antes de volver al agua.\n\nSi sales desde Cartagena, el precio online es **655.000 COP** y el precio normal es **727.000 COP**. Incluye el repaso en piscina'
+    juez: HALLUCINATED - El refresher tiene un costo propio y no es un recargo adicional a otra salida. — NO
+
+[falso -> RECHAZA] #46 CONS2-refresher-rechaza-acepta t2
+    respuesta: 'Sí, el refresher tiene un costo propio; no es un recargo adicional a otra salida. Como llevas 5 años sin bucear, normalmente se requiere hacerlo antes de volver al agua.\n\nSi sales desde Cartagena, el precio online es **655.000 COP** y el precio normal es **727.000 COP**. Incluye el repaso en piscina'
+    juez: HALLUCINATED - El refresher tiene un costo propio y no es un recargo adicional a otra salida. — NO
+
+[falso -> RECHAZA] #46 CONS2-refresher-rechaza-acepta t2
+    respuesta: 'Sí, el refresher tiene un costo propio; no es un recargo adicional a otra salida. Como llevas 5 años sin bucear, normalmente se requiere hacerlo antes de volver al agua.\n\nSi sales desde Cartagena, el precio online es **655.000 COP** y el precio normal es **727.000 COP**. Incluye el repaso en piscina'
+    juez: HALLUCINATED - El refresher tiene un costo propio y no es un recargo adicional a otra salida. NO
+
+[aprobada -> RECHAZA] #61 paquete-5-buceos-islas-residente-sin-recogida t3
+    respuesta: '¡Hola! Sí, si eres residente en Colombia pagas en pesos colombianos, pero no hay un descuento especial por residencia: el precio es el mismo, solo cambia la moneda. Puedes obtener el 10% de descuento reservando en línea. ¿Quieres que te comparta el enlace del plan de 5 buceos?'
+    juez: HALLUCINATED - Ofrece compartir el enlace del plan de 5 buceos. NO
+
+[falso -> RECHAZA] #75 ON-acompanante-madre-desde-cartagena t3
+    respuesta: '¡Qué plan tan chévere! Tu mamá puede acompañarte sin problema aunque no bucee. Tenemos el plan de acompañante para quienes no se sumergen pero van en la lancha con el grupo. \n\nSi salen desde Cartagena, el acompañante tiene lancha ida y vuelta, almuerzo, seguro y entrada al Parque Nacional Natural in'
+    juez: HALLUCINATED - Diving Planet no maneja directamente la logística de alojamiento. NO | - La recogida puede coordinarse para el regreso o para el buceo. NO
+
+[falso -> RECHAZA] #75 ON-acompanante-madre-desde-cartagena t3
+    respuesta: '¡Qué plan tan chévere! Tu mamá puede acompañarte sin problema aunque no bucee. Tenemos el plan de acompañante para quienes no se sumergen pero van en la lancha con el grupo. \n\nSi salen desde Cartagena, el acompañante tiene lancha ida y vuelta, almuerzo, seguro y entrada al Parque Nacional Natural in'
+    juez: HALLUCINATED - Diving Planet no maneja directamente la logística de alojamiento. NO | - La recogida puede coordinarse para el regreso o para el buceo. NO
+
+[falso -> RECHAZA] #75 ON-acompanante-madre-desde-cartagena t3
+    respuesta: '¡Qué plan tan chévere! Tu mamá puede acompañarte sin problema aunque no bucee. Tenemos el plan de acompañante para quienes no se sumergen pero van en la lancha con el grupo. \n\nSi salen desde Cartagena, el acompañante tiene lancha ida y vuelta, almuerzo, seguro y entrada al Parque Nacional Natural in'
+    juez: HALLUCINATED - Diving Planet no maneja directamente la logística de alojamiento. NO
+
+[falso -> RECHAZA] #87 ON-paquete-5-buceos-cop-refresh-y-hoteles t3
+    respuesta: '¡Qué bueno que ya tienes tu curso básico desde abril de 2025! Eso significa que estás certificado Open Water Diver y listo para bucear con autonomía hasta 18 metros. 🌊\n\nComo llevas menos de 2 años desde tu certificación, no necesitas hacer un refresher para volver a bucear con seguridad. Solo asegúr'
+    juez: HALLUCINATED - El equipo debe estar en buen estado: NO
+
+[falso -> RECHAZA] #87 ON-paquete-5-buceos-cop-refresh-y-hoteles t3
+    respuesta: '¡Qué bueno que ya tienes tu curso básico desde abril de 2025! Eso significa que estás certificado Open Water Diver y listo para bucear con autonomía hasta 18 metros. 🌊\n\nComo llevas menos de 2 años desde tu certificación, no necesitas hacer un refresher para volver a bucear con seguridad. Solo asegúr'
+    juez: HALLUCINATED - Tener el curso básico desde abril de 2025 significa que está certificado Open Water Diver: NO | - La certificación Open Water Diver permite bucear con autonomía hasta 18 metros: NO | - Puede hacer u
+
+[falso -> RECHAZA] #87 ON-paquete-5-buceos-cop-refresh-y-hoteles t3
+    respuesta: '¡Qué bueno que ya tienes tu curso básico desde abril de 2025! Eso significa que estás certificado Open Water Diver y listo para bucear con autonomía hasta 18 metros. 🌊\n\nComo llevas menos de 2 años desde tu certificación, no necesitas hacer un refresher para volver a bucear con seguridad. Solo asegúr'
+    juez: HALLUCINATED - Tener el curso básico desde abril de 2025 significa que está certificado Open Water Diver: NO | - El equipo debe estar en buen estado: NO
+
+[falso -> RECHAZA] #89 ON-paquete-5-buceos-precio-overnight-isla-grande-baru t1
+    respuesta: 'Hi [NOMBRE]! Diving for two days in the Rosario Islands is an amazing experience—you’ll love the vibrant reefs and warm Caribbean waters. Since you’ll be in Cartagena and plan to dive on April 13th and 14th, leaving on the 15th morning, the 4-dive package over 2 days is a great fit. \n\nHere’s how it '
+    juez: HALLUCINATED - Muelle de la Bodeguita is well known and accessible. — NO
+
+[falso -> RECHAZA] #89 ON-paquete-5-buceos-precio-overnight-isla-grande-baru t1
+    respuesta: 'Hi [NOMBRE]! Diving for two days in the Rosario Islands is an amazing experience—you’ll love the vibrant reefs and warm Caribbean waters. Since you’ll be in Cartagena and plan to dive on April 13th and 14th, leaving on the 15th morning, the 4-dive package over 2 days is a great fit. \n\nHere’s how it '
+    juez: HALLUCINATED - Muelle de la Bodeguita is well known and accessible. NO
+
+[falso -> RECHAZA] #89 ON-paquete-5-buceos-precio-overnight-isla-grande-baru t1
+    respuesta: 'Hi [NOMBRE]! Diving for two days in the Rosario Islands is an amazing experience—you’ll love the vibrant reefs and warm Caribbean waters. Since you’ll be in Cartagena and plan to dive on April 13th and 14th, leaving on the 15th morning, the 4-dive package over 2 days is a great fit. \n\nHere’s how it '
+    juez: HALLUCINATED - Muelle de la Bodeguita is well known and accessible. NO
+
+[falso -> RECHAZA] #92 ON-paquete-en-carrito t3
+    respuesta: '¡Claro que sí! Tenemos varios paquetes para buzos certificados que quieren más días de buceo y disfrutar a fondo las Islas del Rosario.\n\nPor ejemplo, hay paquetes de 3, 5, 7 y hasta 9 inmersiones que se extienden de 1 a 4 días. Algunos incluyen buceo nocturno y otros solo diurnos, según prefieras. E'
+    juez: HALLUCINATED - Para los paquetes de varios días normalmente hay que dormir en las islas. NO | - Los paquetes de varios días no son ida y vuelta el mismo día. NO
+
+[falso -> RECHAZA] #92 ON-paquete-en-carrito t3
+    respuesta: '¡Claro que sí! Tenemos varios paquetes para buzos certificados que quieren más días de buceo y disfrutar a fondo las Islas del Rosario.\n\nPor ejemplo, hay paquetes de 3, 5, 7 y hasta 9 inmersiones que se extienden de 1 a 4 días. Algunos incluyen buceo nocturno y otros solo diurnos, según prefieras. E'
+    juez: HALLUCINATED - Para los paquetes de varios días normalmente hay que dormir en las islas. NO | - Los paquetes de varios días no son ida y vuelta el mismo día. NO
+
+[invento -> PASA] #110 V2-paquete-5-buceos-cop-refresh-y-hoteles t1
+    respuesta: '¡Buenos días! El paquete de 5 inmersiones para colombianos que sale desde Cartagena cuesta 1.429.000 COP si reservas online (con el 10% de descuento) y 1.587.000 COP si reservas normal. Incluye lancha ida y vuelta, 5 inmersiones (4 diurnas y 1 nocturna), seguro, equipo, almuerzo el primer día y una '
+    juez: GROUNDED
+
+[invento -> PASA] #110 V2-paquete-5-buceos-cop-refresh-y-hoteles t1
+    respuesta: '¡Buenos días! El paquete de 5 inmersiones para colombianos que sale desde Cartagena cuesta 1.429.000 COP si reservas online (con el 10% de descuento) y 1.587.000 COP si reservas normal. Incluye lancha ida y vuelta, 5 inmersiones (4 diurnas y 1 nocturna), seguro, equipo, almuerzo el primer día y una '
+    juez: GROUNDED
+
+[invento -> PASA] #110 V2-paquete-5-buceos-cop-refresh-y-hoteles t1
+    respuesta: '¡Buenos días! El paquete de 5 inmersiones para colombianos que sale desde Cartagena cuesta 1.429.000 COP si reservas online (con el 10% de descuento) y 1.587.000 COP si reservas normal. Incluye lancha ida y vuelta, 5 inmersiones (4 diurnas y 1 nocturna), seguro, equipo, almuerzo el primer día y una '
+    juez: GROUNDED
+
+[falso -> RECHAZA] #113 V2-paquete-5-buceos-cop-refresh-y-hoteles t3
+    respuesta: '¡Qué bueno que ya tienes tu curso básico completado! Eso te da la certificación Open Water Diver, que es perfecta para hacer el paquete de 5 inmersiones.\n\nComo tu certificación es reciente (menos de 2 años), no necesitas hacer ningún refresher ni trámite especial para bucear con nosotros. Solo asegú'
+    juez: HALLUCINATED - Si la certificación es reciente (menos de 2 años), no se necesita ningún trámite especial para bucear con Diving Planet. — NO | - Hay que llevar el carné de certificación. — NO
+
+[falso -> RECHAZA] #113 V2-paquete-5-buceos-cop-refresh-y-hoteles t3
+    respuesta: '¡Qué bueno que ya tienes tu curso básico completado! Eso te da la certificación Open Water Diver, que es perfecta para hacer el paquete de 5 inmersiones.\n\nComo tu certificación es reciente (menos de 2 años), no necesitas hacer ningún refresher ni trámite especial para bucear con nosotros. Solo asegú'
+    juez: HALLUCINATED - Con una certificación reciente no se necesita ningún trámite especial para bucear con Diving Planet. NO | - Hay que llevar el carné de certificación. NO
+
+[falso -> RECHAZA] #113 V2-paquete-5-buceos-cop-refresh-y-hoteles t3
+    respuesta: '¡Qué bueno que ya tienes tu curso básico completado! Eso te da la certificación Open Water Diver, que es perfecta para hacer el paquete de 5 inmersiones.\n\nComo tu certificación es reciente (menos de 2 años), no necesitas hacer ningún refresher ni trámite especial para bucear con nosotros. Solo asegú'
+    juez: HALLUCINATED - Si la certificación es reciente (menos de 2 años), no se necesita ningún trámite especial para bucear con Diving Planet. NO | - Hay que llevar el carné de certificación. NO
+
+[falso -> RECHAZA] #118 V2-referral-mas-refresher-hotel-y-domingo-pascua t3
+    respuesta: 'Perfect! We are here to help. We operate every day of the year except December 25 and January 1, so diving on Easter Sunday, April 5, is no problem at all.\n\nAbout the refresher course: the price is actually 183 USD online if you book departing from Cartagena, or 134 USD online if you are already on '
+    juez: HALLUCINATED - Payment is completed securely online. NO
+
+[falso -> RECHAZA] #118 V2-referral-mas-refresher-hotel-y-domingo-pascua t3
+    respuesta: 'Perfect! We are here to help. We operate every day of the year except December 25 and January 1, so diving on Easter Sunday, April 5, is no problem at all.\n\nAbout the refresher course: the price is actually 183 USD online if you book departing from Cartagena, or 134 USD online if you are already on '
+    juez: HALLUCINATED - Payment is completed securely online. NO
+
+[falso -> RECHAZA] #118 V2-referral-mas-refresher-hotel-y-domingo-pascua t3
+    respuesta: 'Perfect! We are here to help. We operate every day of the year except December 25 and January 1, so diving on Easter Sunday, April 5, is no problem at all.\n\nAbout the refresher course: the price is actually 183 USD online if you book departing from Cartagena, or 134 USD online if you are already on '
+    juez: HALLUCINATED - Payment is completed securely online. NO
+
+[falso -> RECHAZA] #129 paquete-5-buceos-cop-refresh-y-hoteles t3
+    respuesta: '¡Qué bueno que ya tienes tu curso básico desde abril de 2025! Eso significa que estás certificado Open Water Diver y listo para bucear con autonomía hasta 18 metros. 🌊\n\nComo llevas menos de 2 años desde tu certificación, no necesitas hacer un refresher para volver al agua. Solo asegúrate de traer tu'
+    juez: HALLUCINATED - Estás certificado Open Water Diver. NO | - Debes traer tu certificación. NO | - Debes traer tu equipo o puedes rentarlo con Diving Planet. NO
+
+[falso -> RECHAZA] #129 paquete-5-buceos-cop-refresh-y-hoteles t3
+    respuesta: '¡Qué bueno que ya tienes tu curso básico desde abril de 2025! Eso significa que estás certificado Open Water Diver y listo para bucear con autonomía hasta 18 metros. 🌊\n\nComo llevas menos de 2 años desde tu certificación, no necesitas hacer un refresher para volver al agua. Solo asegúrate de traer tu'
+    juez: HALLUCINATED - Estás certificado Open Water Diver. NO | - Debes traer tu certificación. NO | - Debes traer tu equipo o puedes rentarlo con Diving Planet. NO
+
+[falso -> RECHAZA] #129 paquete-5-buceos-cop-refresh-y-hoteles t3
+    respuesta: '¡Qué bueno que ya tienes tu curso básico desde abril de 2025! Eso significa que estás certificado Open Water Diver y listo para bucear con autonomía hasta 18 metros. 🌊\n\nComo llevas menos de 2 años desde tu certificación, no necesitas hacer un refresher para volver al agua. Solo asegúrate de traer tu'
+    juez: HALLUCINATED - Estás certificado Open Water Diver por haber hecho el curso básico: NO | - Debes traer tu certificación: NO | - Puedes traer tu equipo: NO | - Diving Planet ofrece alquiler de equipo: NO | - Diving 
+
+[falso -> RECHAZA] #133 paquete-5-buceos-precio-overnight-isla-grande-baru t6
+    respuesta: 'Sure thing! Since you’re already on the Rosario Islands, the 2-day dive packages have prices without transport from Cartagena or lunch included.\n\nFor example, the 4-dive package over 2 days is about 204 USD / 830,000 COP online price. Equipment rental is included if you don’t bring your own complete'
+    juez: HALLUCINATED - Equipment rental is included if you don’t bring your own complete gear. NO
+
+[falso -> RECHAZA] #133 paquete-5-buceos-precio-overnight-isla-grande-baru t6
+    respuesta: 'Sure thing! Since you’re already on the Rosario Islands, the 2-day dive packages have prices without transport from Cartagena or lunch included.\n\nFor example, the 4-dive package over 2 days is about 204 USD / 830,000 COP online price. Equipment rental is included if you don’t bring your own complete'
+    juez: HALLUCINATED - Equipment rental is included if you don’t bring your own complete gear. NO
+
+[falso -> RECHAZA] #133 paquete-5-buceos-precio-overnight-isla-grande-baru t6
+    respuesta: 'Sure thing! Since you’re already on the Rosario Islands, the 2-day dive packages have prices without transport from Cartagena or lunch included.\n\nFor example, the 4-dive package over 2 days is about 204 USD / 830,000 COP online price. Equipment rental is included if you don’t bring your own complete'
+    juez: HALLUCINATED - Equipment rental is included if you don’t bring your own complete gear. NO
+
+[aprobada -> RECHAZA] #141 reserva-paquete-5-buceos-solicita t1
+    respuesta: '¡Buenos días! El paquete de 5 inmersiones es una experiencia espectacular para buzos certificados, con 4 buceos diurnos y 1 nocturno en 2 días, incluyendo lancha rápida y almuerzo el primer día. \n\n¿Desde dónde saldrías, desde Cartagena o ya estás en las Islas del Rosario? Así te paso el link correct'
+    juez: HALLUCINATED - El link de reserva depende de si sale desde Cartagena o ya está en las Islas del Rosario: NO
+
+######## gpt-6-luna
+  ciego : inventos que deja pasar 0/28 (mejor 0) · verdades que deja pasar 14/28 (mejor todas) · aprobadas que siguen pasando 19/22
+  tiempo por juicio: mediana 2.71s · p90 4.21s (78 juicios)

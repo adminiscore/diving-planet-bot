@@ -1,5 +1,5 @@
 {
- "_comment": "s4-33 (9-oct, Gadea con Claude): etiquetas de los 142 juicios reales (juicios-reales-142.jsonl, mismo orden: 'i'). invento = debe rechazarse; falso = debe pasar (cierto o no es un dato del negocio); dudoso = no cuenta; aprobada = la aprueban gpt-4.1 y Luna y, leída, no tiene inventos (debe seguir pasando); pregunta-gadea = depende de un hecho del negocio que no está en el contexto (preguntas P1-P7). Clave = origen|sha1(respuesta)[:8]. 9-oct: las 14 'pregunta-gadea' resueltas con sus respuestas (P1-P7).",
+ "_comment": "s4-33 (9-oct, Gadea con Claude): etiquetas de los 142 juicios reales (juicios-reales-142.jsonl, mismo orden: 'i'). invento = debe rechazarse; falso = debe pasar (cierto o no es un dato del negocio); dudoso = no cuenta; aprobada = la aprueban gpt-4.1 y Luna y, leída, no tiene inventos (debe seguir pasando); pregunta-gadea = depende de un hecho del negocio que no está en el contexto (preguntas P1-P7). Clave = origen|sha1(respuesta)[:8]. 9-oct: las 14 'pregunta-gadea' resueltas con sus respuestas (P1-P7). 9-oct (2): 'fuera-contexto' = cierto según Gadea pero ausente del contexto del juez; no cuenta para ajustar el juez (rechazarlo es lo correcto; se arregla en la base).",
  "etiquetas": {
   "CONS-certificado-fecha-precio-cop-descuento-transferencia t2|5ba41fc7": {
    "i": 0,
@@ -16,10 +16,10 @@
   "CONS-certificado-fecha-precio-cop-descuento-transferencia t4|ed9b622b": {
    "i": 2,
    "origen": "CONS-certificado-fecha-precio-cop-descuento-transferencia t4",
-   "etiqueta": "falso",
+   "etiqueta": "fuera-contexto",
    "pre_gpt41": "rechaza",
    "pregunta": "P1",
-   "nota": "P1: dos puntos distintos, el sitio puede cambiar según condiciones (Gadea)"
+   "nota": "P1: dos puntos distintos, el sitio puede cambiar según condiciones (Gadea) · cierto (Gadea) pero NO está en el contexto que vio el juez: rechazarlo es correcto para un juez de grounding; se arregla en la base (FAQs del 9-oct)"
   },
   "CONS-certificado-fecha-precio-cop-descuento-transferencia t4|56c89c5b": {
    "i": 3,
@@ -168,10 +168,10 @@
   "CONS2-certificado-fecha-precio-cop-descuento-transferencia t4|12285570": {
    "i": 27,
    "origen": "CONS2-certificado-fecha-precio-cop-descuento-transferencia t4",
-   "etiqueta": "falso",
+   "etiqueta": "fuera-contexto",
    "pre_gpt41": "rechaza",
    "pregunta": "P1",
-   "nota": "P1"
+   "nota": "P1 · cierto (Gadea) pero NO está en el contexto que vio el juez: rechazarlo es correcto para un juez de grounding; se arregla en la base (FAQs del 9-oct)"
   },
   "CONS2-certificado-fecha-precio-cop-descuento-transferencia t4|ccc5d3a5": {
    "i": 28,
@@ -257,10 +257,10 @@
   "CONS2-familia-mixta-precio-descuento-refresher t5|98e33607": {
    "i": 41,
    "origen": "CONS2-familia-mixta-precio-descuento-refresher t5",
-   "etiqueta": "falso",
+   "etiqueta": "fuera-contexto",
    "pre_gpt41": "pasa",
    "pregunta": "P3",
-   "nota": "P3: no existe código de descuento (Gadea)"
+   "nota": "P3: no existe código de descuento (Gadea) · cierto (Gadea) pero NO está en el contexto que vio el juez: rechazarlo es correcto para un juez de grounding; se arregla en la base (FAQs del 9-oct)"
   },
   "CONS2-familia-mixta-precio-descuento-refresher t6|0dc501b7": {
    "i": 42,
@@ -307,18 +307,18 @@
   "curso-referido-pide-datos-centro t2|f9242c49": {
    "i": 49,
    "origen": "curso-referido-pide-datos-centro t2",
-   "etiqueta": "falso",
+   "etiqueta": "fuera-contexto",
    "pre_gpt41": "rechaza",
    "pregunta": "P4",
-   "nota": "P4: con el e-learning hecho, aquí hace lo que le falta (Gadea)"
+   "nota": "P4: con el e-learning hecho, aquí hace lo que le falta (Gadea) · cierto (Gadea) pero NO está en el contexto que vio el juez: rechazarlo es correcto para un juez de grounding; se arregla en la base (FAQs del 9-oct)"
   },
   "curso-referido-pide-datos-centro t2|c02dd38e": {
    "i": 50,
    "origen": "curso-referido-pide-datos-centro t2",
-   "etiqueta": "falso",
+   "etiqueta": "fuera-contexto",
    "pre_gpt41": "pasa",
    "pregunta": "P4",
-   "nota": "P4"
+   "nota": "P4 · cierto (Gadea) pero NO está en el contexto que vio el juez: rechazarlo es correcto para un juez de grounding; se arregla en la base (FAQs del 9-oct)"
   },
   "curso-referido-pide-datos-centro t3|6ac58545": {
    "i": 51,
@@ -481,10 +481,10 @@
   "ON-colombianos-precio-minicurso-dos-inmersiones t3|fa2e003b": {
    "i": 77,
    "origen": "ON-colombianos-precio-minicurso-dos-inmersiones t3",
-   "etiqueta": "falso",
+   "etiqueta": "fuera-contexto",
    "pre_gpt41": "rechaza",
    "pregunta": "P2",
-   "nota": "P2: 40-50 min (Gadea)"
+   "nota": "P2: 40-50 min (Gadea) · cierto (Gadea) pero NO está en el contexto que vio el juez: rechazarlo es correcto para un juez de grounding; se arregla en la base (FAQs del 9-oct)"
   },
   "ON-colombianos-precio-minicurso-dos-inmersiones t3|fb2f61ed": {
    "i": 78,
@@ -643,10 +643,10 @@
   "V2-colombianos-precio-minicurso-dos-inmersiones t5|60a38f68": {
    "i": 103,
    "origen": "V2-colombianos-precio-minicurso-dos-inmersiones t5",
-   "etiqueta": "falso",
+   "etiqueta": "fuera-contexto",
    "pre_gpt41": "pasa",
    "pregunta": "P7",
-   "nota": "P7: el precio no cambia por bucear en puntos distintos (Gadea)"
+   "nota": "P7: el precio no cambia por bucear en puntos distintos (Gadea) · cierto (Gadea) pero NO está en el contexto que vio el juez: rechazarlo es correcto para un juez de grounding; se arregla en la base (FAQs del 9-oct)"
   },
   "V2-curso-open-water-transporte-y-regreso-otro-dia t1|bce879d1": {
    "i": 104,
@@ -669,10 +669,10 @@
   "V2-minicurso-precio-colombianos-origen-pendiente t4|88f2ea0a": {
    "i": 107,
    "origen": "V2-minicurso-precio-colombianos-origen-pendiente t4",
-   "etiqueta": "falso",
+   "etiqueta": "fuera-contexto",
    "pre_gpt41": "pasa",
    "pregunta": "P5",
-   "nota": "P5: el minicurso incluye todo el equipo (Gadea; FAQ 11)"
+   "nota": "P5: el minicurso incluye todo el equipo (Gadea; FAQ 11) · cierto (Gadea) pero NO está en el contexto que vio el juez: rechazarlo es correcto para un juez de grounding; se arregla en la base (FAQs del 9-oct)"
   },
   "V2-open-water-precio-para-colombianos-corrige-mito t1|97f9bc49": {
    "i": 108,
@@ -744,10 +744,10 @@
   "acompanante-madre-desde-cartagena t3|27052bbc": {
    "i": 119,
    "origen": "acompanante-madre-desde-cartagena t3",
-   "etiqueta": "falso",
+   "etiqueta": "fuera-contexto",
    "pre_gpt41": "pasa",
    "pregunta": "P6",
-   "nota": "P6: puede quedarse en la isla; ningún plan incluye alojamiento (Gadea)"
+   "nota": "P6: puede quedarse en la isla; ningún plan incluye alojamiento (Gadea) · cierto (Gadea) pero NO está en el contexto que vio el juez: rechazarlo es correcto para un juez de grounding; se arregla en la base (FAQs del 9-oct)"
   },
   "colombianos-precio-minicurso-dos-inmersiones t2|cff510e9": {
    "i": 120,
@@ -758,10 +758,10 @@
   "colombianos-precio-minicurso-dos-inmersiones t3|f02a5abf": {
    "i": 121,
    "origen": "colombianos-precio-minicurso-dos-inmersiones t3",
-   "etiqueta": "falso",
+   "etiqueta": "fuera-contexto",
    "pre_gpt41": "rechaza",
    "pregunta": "P2",
-   "nota": "P2"
+   "nota": "P2 · cierto (Gadea) pero NO está en el contexto que vio el juez: rechazarlo es correcto para un juez de grounding; se arregla en la base (FAQs del 9-oct)"
   },
   "colombianos-precio-minicurso-dos-inmersiones t3|7e45edc0": {
    "i": 122,
@@ -772,10 +772,10 @@
   "colombianos-precio-minicurso-dos-inmersiones t5|04857ecc": {
    "i": 123,
    "origen": "colombianos-precio-minicurso-dos-inmersiones t5",
-   "etiqueta": "falso",
+   "etiqueta": "fuera-contexto",
    "pre_gpt41": "pasa",
    "pregunta": "P1+P7",
-   "nota": "P1+P7"
+   "nota": "P1+P7 · cierto (Gadea) pero NO está en el contexto que vio el juez: rechazarlo es correcto para un juez de grounding; se arregla en la base (FAQs del 9-oct)"
   },
   "minicurso-precio-colombianos-origen-pendiente t4|8501bd1d": {
    "i": 124,
