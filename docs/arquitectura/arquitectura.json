@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-09T08:44:14+00:00",
-  "commit": "f105d51",
+  "generado": "2026-10-09T09:41:40+00:00",
+  "commit": "862438a",
   "rama": "feature/pre_gadea"
  },
  "vistas": {
@@ -775,6 +775,13 @@
     {
      "nombre": "catalogo_hoteles_base",
      "titulo": "Recogida confirmada en los hoteles base",
+     "codigo": true,
+     "pre": true,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "catalogo_equipo_incluido",
+     "titulo": "El catálogo dice si el equipo va incluido",
      "codigo": true,
      "pre": true,
      "sin_efecto": false
@@ -1575,6 +1582,19 @@
    "usado_por": [
     "b_routing",
     "b_pregunta"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "catalogo_equipo_incluido",
+   "area": "Preguntas",
+   "titulo": "El catálogo dice si el equipo va incluido",
+   "texto": "Cada plan del catálogo indica si incluye el equipo (casi todos) o si hay que traer equipo propio (Dive Master), para que Coral lo diga y el revisor no lo tome por inventado.",
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
+   "usado_por": [
+    "r_catalogo"
    ],
    "sin_efecto": null
   },

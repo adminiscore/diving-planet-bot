@@ -247,6 +247,10 @@ class Settings(BaseSettings):
     # tambien a Cocoliso (paquete-5-buceos-islas-residente-sin-recogida). PROMOCIONADO 9-oct (mini-ronda decisiones-A/B:
     # recogida-islas-incluida revisar -> cumple; HISTORY 0.31.4). Revert = False aqui y en el compose.
     catalogo_hoteles_base: bool = True
+    # 9-oct: cada plan del catalogo dice si el equipo va incluido (sale de included_es/not_included_es de services.json;
+    # el Dive Master NO). Antes solo lo decia una FAQ y el revisor tumbo "el equipo esta incluido en el precio del plan"
+    # (decisiones-B). flows/catalog.service_fact_parts. Revert = False aqui y en el compose.
+    catalogo_equipo_incluido: bool = True
     # Punto 4 (s4-26, 7-oct): si Jev esta SEGURO de que el mensaje no mete a otra persona (companion_joins <
     # COMPANION_NONE_MAX, la misma puerta de u3-6), la regex de "menciona a alguien" (`_mentions_person`) no puede
     # contradecirlo. "Si cuantos dias son?" casaba "son" (hijo, en ingles) y el flujo preguntaba la actividad de un

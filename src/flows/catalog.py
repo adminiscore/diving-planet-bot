@@ -484,6 +484,20 @@ def service_fact_parts(service_id: str, lang: str) -> list[str]:
     return parts
 
 
+def _parte_equipo(service_id: str, lang: str) -> list[str]:
+    """9-oct (flag `catalogo_equipo_incluido`): si el plan incluye el equipo, para la línea del CATÁLOGO (no para la
+    ficha del servicio, que ya lo dice en "Incluye" y cuyo cambio obligaría a regenerar la base v2). El catálogo no lo
+    decía (solo una FAQ) y el revisor tumbó "el equipo está incluido en el precio del plan", que es cierto
+    (decisiones-B, turno de 15 s). Sale de los datos de cada plan: el Dive Master NO lo incluye (equipo propio)."""
+    incluye = (SERVICES[service_id].get("includes_es") or "").lower()
+    no_incluye = " ".join(RAW_SERVICES.get(service_id, {}).get("not_included_es") or []).lower()
+    if "equipo" in incluye:
+        return ["equipo incluido" if lang == "es" else "gear included"]
+    if "equipo" in no_incluye:
+        return ["equipo NO incluido (hay que tener equipo propio)" if lang == "es" else "gear NOT included (own gear needed)"]
+    return []
+
+
 def catalog_facts(lang: str) -> str:
     """Paso 5 (RAG, flag `rag_v2`): el catalogo entero como hechos compactos para el contexto
     del RAG — precio online y normal, duracion, si obliga a dormir en las islas y si pide
@@ -498,7 +512,10 @@ def catalog_facts(lang: str) -> str:
     (el guard de importes sigue exigiendo que cada cifra este en el contexto)."""
     if lang in _FACTS_CACHE:
         return _FACTS_CACHE[lang]
+    from src.config import settings  # lazy
+
     es = lang == "es"
+    catalogo_equipo = settings.catalogo_equipo_incluido
     groups: dict[bool, list[str]] = {False: [], True: []}
     for service_id, svc in SERVICES.items():
         if svc.get("category") == "private":
@@ -506,6 +523,8 @@ def catalog_facts(lang: str) -> str:
         name = svc.get("name_es" if es else "name_en") or service_id
         island = service_id.endswith("_already_on_island")
         parts = service_fact_parts(service_id, lang)
+        if catalogo_equipo:
+            parts += _parte_equipo(service_id, lang)
         groups[island].append(f"- {name}: " + "; ".join(parts) + ".")
     # El refresher se vende con el servicio que le da el registro de actividades (hoy el minicurso). Paso 8
     # (28-sep): sin el atajo fijo del refresher, el RAG decia "el refresh no esta listado con precio".
@@ -521,8 +540,6 @@ def catalog_facts(lang: str) -> str:
                 f"- Refresher (review for certified divers with more than 2 years without diving; booked as "
                 f"'{svc.get('name_en')}'): {price} online."
             )
-    from src.config import settings  # lazy
-
     comp = COMPANION_PRICE
     companion = money.usd_cop(comp["usd_online"], comp["cop_online"])
     # 9-oct (Gadea, flag `catalogo_hoteles_base`): en los hoteles base la recogida no depende del acceso maritimo. Con

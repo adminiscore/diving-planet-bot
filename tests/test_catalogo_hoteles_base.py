@@ -22,3 +22,24 @@ def test_apagado_deja_la_linea_de_antes(monkeypatch, lang):
     monkeypatch.setattr(catalog, "_FACTS_CACHE", {})
     linea = next(x for x in catalog_facts(lang).splitlines() if "Rosario" in x and x.endswith(":"))
     assert "Cocoliso" not in linea
+
+
+# 9-oct (flag `catalogo_equipo_incluido`): cada plan del CATÁLOGO dice si el equipo va incluido; el Dive Master no.
+# La ficha del servicio (base v2) no cambia: ya lo dice en "Incluye".
+def _linea(lang, nombre):
+    return next(x for x in catalog_facts(lang).splitlines() if x.startswith(f"- {nombre}:"))
+
+
+def test_equipo_incluido_por_plan(monkeypatch):
+    monkeypatch.setattr(settings, "catalogo_equipo_incluido", True)
+    monkeypatch.setattr(catalog, "_FACTS_CACHE", {})
+    assert "equipo incluido" in _linea("es", catalog.SERVICES["minicourse"]["name_es"])
+    assert "gear included" in _linea("en", catalog.SERVICES["snorkeling"]["name_en"])
+    assert "equipo NO incluido (hay que tener equipo propio)" in _linea("es", catalog.SERVICES["divemaster"]["name_es"])
+    assert "equipo" not in catalog.service_fact_sheet("minicourse", "es").split("Incluye")[0]
+
+
+def test_equipo_apagado(monkeypatch):
+    monkeypatch.setattr(settings, "catalogo_equipo_incluido", False)
+    monkeypatch.setattr(catalog, "_FACTS_CACHE", {})
+    assert "equipo incluido" not in catalog_facts("es")
