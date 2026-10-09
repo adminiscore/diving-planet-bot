@@ -240,7 +240,8 @@ class Settings(BaseSettings):
     # 9-oct (decision de Gadea): en los hoteles base (San Pedro de Majagua y Cocoliso) la recogida esta confirmada e
     # incluida; el catalogo lo dice en la linea de "ya en las islas" (flows/catalog.catalog_facts), que ven siempre el
     # RAG y el revisor. Sin esto, la condicion "si tu hotel tiene acceso maritimo" (RAG_CONDICIONES) se aplicaba
-    # tambien a Cocoliso (paquete-5-buceos-islas-residente-sin-recogida). Revert = False aqui y en el compose.
+    # tambien a Cocoliso (paquete-5-buceos-islas-residente-sin-recogida). PROMOCIONADO 9-oct (mini-ronda decisiones-A/B:
+    # recogida-islas-incluida revisar -> cumple; HISTORY 0.31.4). Revert = False aqui y en el compose.
     catalogo_hoteles_base: bool = True
     # Punto 4 (s4-26, 7-oct): si Jev esta SEGURO de que el mensaje no mete a otra persona (companion_joins <
     # COMPANION_NONE_MAX, la misma puerta de u3-6), la regex de "menciona a alguien" (`_mentions_person`) no puede

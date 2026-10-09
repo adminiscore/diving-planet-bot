@@ -41,6 +41,28 @@ PRE (escritas ya por Luna) tumba 42 frente a 13, casi todo verdades (HISTORY 0.3
 **C. Pendientes de antes:** el criterio del Open Water en `manual-duracion-curso` ✅ (FAQ curada nueva: "sacarse la
 certificación" = Open Water, o el Referido; el Scuba Diver es la parcial). **DeepSeek: FUERA DEL PLAN** (Gadea, 9-oct).
 
+### ▶️ RETOMAR AQUÍ — 9-oct (Gadea con Claude): decisiones aplicadas; s4-33 con los 142 juicios ETIQUETADOS
+
+**Estado.** PRE sirve `feature/pre_gadea` (lleva todo `pre_alvaro`). Flag nuevo `CATALOGO_HOTELES_BASE` **encendido
+(promocionado)**. HISTORY 0.31.4.
+
+| Qué | Resultado | Dónde |
+|---|---|---|
+| 6 decisiones de Gadea (tabla de arriba) | aplicadas: 3 criterios del golden, catálogo, FAQs | HISTORY 0.31.4 |
+| Mini-ronda `decisiones-A/B` (13 diálogos) | 87,8 → 88,9 %, 6 mejoras, 4 regresiones leídas que no son del cambio | `results/2026-10-09-decisiones-{A,B}` |
+| s4-33 (a): 142 juicios reales leídos + 7 preguntas a Gadea | 96 aprobados, **38 verdades** (Luna tumba 37, gpt-4.1 8), **5 inventos** (Luna caza 4, gpt-4.1 3), 3 dudosos | `docs/robustness/juez/s4-33/etiquetas-142.json` |
+| Hechos nuevos del negocio (Gadea) | 2 inmersiones en 2 puntos distintos (cambio de sitio: el instructor), 40-50 min, sin código de descuento, acompañante puede quedarse en la isla, ningún plan incluye alojamiento | FAQs curadas |
+
+**Siguiente (en orden):**
+1. **s4-33:** ajustar `GROUNDING_VERIFY_V3_LUNA_*` con `etiquetas-142.json` (partir en diseño/ciego por diálogo, ajustar SOLO
+   con diseño; medir con `rejuzgar_juicios` y la columna de etiquetas). Errores de Luna por tipo: frases sobre lo que el bot
+   NO sabe ("no tengo el horario"), deducciones de lo que dijo el cliente (edad 17 ≥ 10), consejos genéricos (traer
+   toalla), paráfrasis del contexto (9:30-9:45). Meta: tumbar los 5 inventos y dejar pasar las 38 verdades y los 96
+   aprobados. Luego escalón 0 en PRE y A/B de la core.
+2. **Pista (no hecha):** el catálogo no dice que el equipo va incluido en todos los planes (FAQ 11 sí): el revisor tumbó
+   "el equipo está incluido" en `decisiones-B` (turno de 15 s). Candidato a línea general del catálogo, con su mini-ronda.
+3. s4-28 → los 17 fallos del flujo de reserva → ronda completa con el examen oculto → R6/Q5 (orden de Álvaro).
+
 ### ▶️ RETOMAR AQUÍ — 8-oct, CIERRE DE SESIÓN (Álvaro con Claude): s4-31 CERRADA; s4-33 EN CURSO — Luna como revisor aún NO
 
 **Estado al cerrar.** PRE sirve `feature/pre_alvaro` (`check_deploy` en verde). **Integrad `feature/pre_alvaro` antes de
