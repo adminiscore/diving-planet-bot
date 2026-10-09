@@ -1761,6 +1761,30 @@ def _normalized_words(text: str) -> str:
     return " ".join(re.findall(r"\w+", strip_accents((text or "").lower())))
 
 
+# Muelles y barrios de Cartagena que nombran los clientes y el detector no conoce (solo para saber si el cliente nombró
+# un lugar; el lugar lo sigue decidiendo el detector). Salieron al repasar los rellenos de `location` de los logs de PRE
+# del 2 al 9-oct: "El todo mar donde se van a encontrar", "El de boca grande?" (punto-encuentro-corrige-todo-mar).
+_LUGAR_DE_CARTAGENA_RE = re.compile(
+    r"\bboca\s?grande\b|\bgetseman[ií]\b|\bcastillo\s?grande\b|\blaguito\b|\bcentro\s+hist[oó]rico\b|"
+    r"\bbodeguita\b|\btodo\s?mar\b",
+    re.IGNORECASE,
+)
+
+
+def _cliente_nombra_un_lugar(state: ConversationState, message: str) -> bool:
+    """¿Nombra algún mensaje del CLIENTE (el de ahora o uno anterior) un lugar que el detector reconoce? Lo que dice
+    el bot no cuenta: su saludo y su pregunta del origen nombran Cartagena y las islas (s4-28)."""
+    textos = [h.get("content") or "" for h in (state.history or []) if h.get("role") == "user"] + [message or ""]
+    for texto in textos:
+        # las mismas pistas que la puerta del origen (Barú, Tierra Bomba…) y los muelles/barrios de Cartagena
+        if _PISTA_ORIGEN_RE.search(texto) or _LUGAR_DE_CARTAGENA_RE.search(texto):
+            return True
+        leido = _detector.detect(texto, ConversationState(conversation_id="lugar"))
+        if leido.location or getattr(leido, "hotel", None) or getattr(leido, "island", None):
+            return True
+    return False
+
+
 def _quote_backs_boolean(field: str, pending_slot: str | None, message: str, evidence: dict) -> bool:
     """Respuesta doble (hallazgo B, 2026-09-15): "desde cartagena, somos paisas" con la
     ubicacion pendiente. El extractor cita, en la misma peticion, las palabras del mensaje
@@ -2622,6 +2646,15 @@ async def _understand(state: ConversationState, message: str, *, answered_pendin
             if len(cleaned) + undecided_backed < len(alloc_patch) + wants_undecided:
                 with_people, undecided_with_people = _back(_message_numbers(message) + _named_people(message))
                 people = _named_people(message)[1]
+                if settings.grupo_por_edades:
+                    # 9-oct (familia-mixta): "2 adults (ages 42, 19) / 1 youth (age 17) / Snorkeling / 1 Adult
+                    # (Age 43) / 2 kids (Ages 14, 10)": el reparto {buceo 3, snorkel 3} es correcto pero ningún
+                    # "3" está escrito, y la guarda lo tiraba y preguntaba "¿cuántos serían?". Cada edad que el
+                    # mensaje da es una persona, igual que una persona nombrada. Se cuentan sobre el MENSAJE (el
+                    # detector, sin llamadas): en el turno con pregunta la puerta de u3-4 ya quitó las edades del
+                    # intent (no se pueden verificar).
+                    edades = _detector.detect(message, ConversationState(conversation_id="edades")).ages or []
+                    people = max(people, len(edades))
                 # Total que dijo el mensaje o la conversacion, nunca el del LLM.
                 known_total = intent.group_size or state.detected_group_size
                 if len(with_people) + undecided_with_people == len(alloc_patch) + wants_undecided:
@@ -2742,6 +2775,22 @@ async def _understand(state: ConversationState, message: str, *, answered_pendin
                 f"{patch['group_size']} msg={supervisor._log_safe_message(message)!r}"
             )
             patch.pop("group_size")
+        # s4-28 (9-oct, flag `origen_del_cliente`): con la pregunta del origen pendiente, "May 3rd" volvía con
+        # `location=cartagena` (familia-mixta, 1 de 3 en PRE; ronda conserva-B): ningún mensaje del cliente nombra un
+        # lugar, así que solo pudo salir del texto del BOT ("¿saldrías desde Cartagena…?"), y el bot contestaba la
+        # pregunta guardada con el precio de Cartagena. Un origen del relleno vale si algún mensaje del cliente nombra
+        # un lugar (el detector de siempre: Cartagena y sus apodos, las islas, los hoteles) o si Jev dice que ESTE
+        # mensaje lo afirma.
+        if (
+            settings.origen_del_cliente and "location" in patch
+            and (getattr(state, "_answer_affirms", None) or {}).get("location") is not True
+            and not _cliente_nombra_un_lugar(state, message)
+        ):
+            logger.info(
+                f"[CORE] location del relleno descartada (ningún mensaje del cliente nombra un lugar): "
+                f"{patch['location']!r} msg={supervisor._log_safe_message(message)!r}"
+            )
+            patch.pop("location")
         # Solo cuenta si se pidio (dos lados del grupo en el mensaje), venga de donde venga el patch.
         mixed_nationality = patch.pop("mixed_nationality", None) is True and bool(extra_fields)
         for field_name, value in patch.items():

@@ -1,8 +1,8 @@
 {
  "meta": {
-  "generado": "2026-10-09T10:23:11+00:00",
-  "commit": "a134ee5",
-  "rama": "feature/pre_gadea"
+  "generado": "2026-10-09T11:26:03+00:00",
+  "commit": "2ad4c7c",
+  "rama": "feature/l1_gonzalo"
  },
  "vistas": {
   "general": {
@@ -1678,6 +1678,17 @@
    "sin_efecto": null
   },
   {
+   "nombre": "grupo_por_edades",
+   "area": "Reserva",
+   "titulo": "Cada edad es una persona",
+   "texto": "Si el cliente lista a su grupo con edades ('2 adults (ages 42, 19), 1 youth (age 17)…'), Coral cuenta a cada uno y guarda el reparto, en vez de preguntar '¿cuántos serían?'.",
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
+   "usado_por": [],
+   "sin_efecto": null
+  },
+  {
    "nombre": "hotel_ubicacion_declarada",
    "area": "Reserva",
    "titulo": "Nombrar un hotel no es estar allí",
@@ -2035,6 +2046,17 @@
    "usado_por": [
     "r_escribir"
    ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "origen_del_cliente",
+   "area": "Reserva",
+   "titulo": "El origen lo dice el cliente",
+   "texto": "Si el extractor deduce desde dónde sale el cliente, solo se guarda si el cliente nombró algún lugar: una fecha como 'May 3rd' ya no se vuelve 'sale desde Cartagena' por lo que preguntó el bot.",
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
+   "usado_por": [],
    "sin_efecto": null
   },
   {

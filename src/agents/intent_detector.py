@@ -1894,10 +1894,17 @@ class IntentDetector:
         for m in re.finditer(r'\b(?:uno|una|otr[oa]|el\s+otro|la\s+otra)\s+de\s+(\d{1,2})\b', message):
             _add(m.group(1))
         # 4) "aged 8 and 10", "ages 8 and 10", "edad 8 y 10".
+        #    9-oct (flag `grupo_por_edades`): también en singular, "1 youth (age 17)" (familia-mixta: se perdían 2 de
+        #    6 edades); no "minimum age 10" / "edad mínima", que es una regla, no una persona.
+        from src.config import settings  # lazy: el detector no depende de la config
+
+        _edad_re = r'aged|ages?' if settings.grupo_por_edades else r'aged|ages'
         for m in re.finditer(
-            r'\b(?:aged|ages|edad(?:es)?(?:\s+de)?)\s+((?:\d{1,2}\s*(?:,|y|e|and|&)\s*)*\d{1,2})',
+            rf'\b(?:{_edad_re}|edad(?:es)?(?:\s+de)?)\s+((?:\d{{1,2}}\s*(?:,|y|e|and|&)\s*)*\d{{1,2}})',
             message,
         ):
+            if settings.grupo_por_edades and re.search(r'm[ií]nim|\bmin\b', message[max(0, m.start() - 12):m.start()]):
+                continue
             _add(m.group(1))
         # 5) English kid-noun + "are/is N and M": "our kids are 7 and 11".
         for m in re.finditer(

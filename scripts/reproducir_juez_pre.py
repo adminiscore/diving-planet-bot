@@ -10,6 +10,7 @@ el juez. Repite el diálogo N veces. **Nunca usa el examen oculto.**
     python -m scripts.reproducir_juez_pre <dialogo> --dry          # solo enseña los turnos
     python -m scripts.reproducir_juez_pre <dialogo> --flag juez_privacidad_por_linea   # flag SOLO en ese proceso
     python -m scripts.reproducir_juez_pre <dialogo> --codigo-local --flag x          # con el código local, sin desplegar
+    python -m scripts.reproducir_juez_pre <dialogo> --hasta 2 --reps 8               # solo los 2 primeros turnos
     python -m scripts.reproducir_juez_pre <dialogo> --codigo-local --env RAG_ANSWER_MODEL=gpt-6-luna   # otro modelo
 
 Coste: el de N conversaciones del bot (céntimos por conversación). La cuenta de OpenAI es la misma que la de PRE.
@@ -37,20 +38,36 @@ async def _spy(answer, context, lang="es"):
     juicios.append({"ok": ok, "why": why[:800], "answer": answer, "context": context})
     return ok, why
 rag_agent.is_grounded = _spy
+# 9-oct (s4-28): el estado de la reserva y las líneas del flujo de cada turno, para ver QUÉ camino puso un dato
+# (p. ej. el extractor rellenando `location` con la pregunta del origen pendiente).
+import logging
+_TRAZA = []
+class _Traza(logging.Handler):
+    def emit(self, rec):
+        m = rec.getMessage()
+        if any(t in m for t in ("[EXTRACT]", "[LLM_EXTRACTOR]", "[CORE]", "[INTENT]", "[ROUTER]")):
+            _TRAZA.append(m[:400])
+logging.getLogger().addHandler(_Traza())
+logging.getLogger().setLevel(logging.INFO)
+_CAMPOS = ("location", "detected_location", "core_pending_slot", "pregunta_precio_pendiente", "detected_activity",
+           "selected_service", "detected_group_size", "detected_group_allocation", "is_certified", "is_colombian")
 
 async def main():
     for rep in range(REPS):
         st = ConversationState(conversation_id=f"repro-juez-{rep}")
         for i, msg in enumerate(TURNOS, 1):
             juicios.clear()
+            _TRAZA.clear()
             t0 = time.perf_counter()
             try:
                 reply = await supervisor.route_message(st, msg)
             except Exception as exc:  # noqa: BLE001
                 reply = f"ERROR {type(exc).__name__}: {exc}"
+            estado = {c: getattr(st, c, None) for c in _CAMPOS if getattr(st, c, None) not in (None, "", [], {})}
             print(json.dumps({"rep": rep, "turn": i, "msg": msg, "reply": reply, "juicios": list(juicios),
-                              "segundos": round(time.perf_counter() - t0, 2)},
-                             ensure_ascii=False), flush=True)
+                              "segundos": round(time.perf_counter() - t0, 2), "estado": estado,
+                              "traza": list(_TRAZA)},
+                             ensure_ascii=False, default=str), flush=True)
 
 asyncio.run(main())
 '''
@@ -82,11 +99,12 @@ def main() -> None:
     ap.add_argument("--flag", action="append", default=[], help="interruptor a encender SOLO en ese proceso (repetible)")
     ap.add_argument("--env", action="append", default=[], metavar="CLAVE=VALOR",
                     help="variable de entorno SOLO en ese proceso (repetible), p. ej. RAG_ANSWER_MODEL=gpt-6-luna")
+    ap.add_argument("--hasta", type=int, help="solo los N primeros turnos (para repetir mucho un turno concreto)")
     ap.add_argument("--codigo-local", action="store_true",
                     help="corre con el código LOCAL (sin desplegar) copiado dentro de dp-pre-bot; PRE no cambia")
     args = ap.parse_args()
 
-    ts = turnos(args.dialogo)
+    ts = turnos(args.dialogo)[: args.hasta or None]
     print(f"{args.dialogo}: {len(ts)} turnos × {args.reps} repeticiones")
     for i, t in enumerate(ts, 1):
         print(f"  {i}. {t}")

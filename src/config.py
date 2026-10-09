@@ -307,6 +307,20 @@ class Settings(BaseSettings):
     # duda, ningun mensaje nombra inmersiones), latencia igual. PROMOCIONADO: ENCENDIDO. Revert = False aqui y quitar
     # la linea del compose.
     rag_plan_nombrado: bool = True
+    # s4-28 (9-oct, Gonzalo): el origen (`location`) que rellena el extractor LLM solo vale si algun mensaje del CLIENTE
+    # nombra un lugar (el detector de siempre) o si Jev dice que este mensaje lo afirma
+    # (`conversational_core._cliente_nombra_un_lugar`). Caso: con la pregunta del origen pendiente, "May 3rd" volvia con
+    # location=cartagena sacado del texto del bot (familia-mixta-precio-descuento-refresher, 1/3 en PRE).
+    # Escalon 0 en PRE (codigo local, 8 reps del turno 2): el invento sale 1/8 y se descarta. ENCENDIDO para su
+    # mini-ronda B (s428-B).
+    origen_del_cliente: bool = True
+    # 9-oct (Gonzalo, fallos del flujo de reserva): cada EDAD que da el mensaje cuenta como una persona para respaldar
+    # el reparto del grupo, como una persona nombrada; y el detector lee tambien "age 17" en singular (no "minimum
+    # age"). Caso: familia-mixta-precio-descuento-refresher ("2 adults (ages 42, 19) / 1 youth (age 17) / Snorkeling /
+    # 1 Adult (Age 43) / 2 kids (Ages 14, 10)"): el reparto {buceo 3, snorkel 3} se tiraba por no tener un "3" escrito
+    # y el bot preguntaba "¿cuantos serian para buceo certificado?". Escalon 0 en PRE: 3/3 guardan 6 personas (3 y 3);
+    # en el golden visible el detector solo cambia en ese mensaje. ENCENDIDO para su mini-ronda B (s428-B).
+    grupo_por_edades: bool = True
     # Paso 9 (l2-2, 28-sep): el catalogo va al final del prompt del SISTEMA (fijo por idioma) y el primero en
     # el contexto del juez, para que el prompt caching de OpenAI lo reutilice entre conversaciones (antes iba
     # en el mensaje del usuario, detras del historial: nunca se cacheaba). ENCENDIDO por defecto (= PRE, paso 10).
