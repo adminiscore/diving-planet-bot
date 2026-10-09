@@ -1,6 +1,13 @@
 History
 =======
 
+0.31.4 - (2026-10-09)
+----------------------
+* **Las 6 decisiones de Gadea aplicadas + s4-33 opción (a): los 142 juicios reales etiquetados con Gadea** (Gadea con Claude). Mini-ronda `decisiones-A/B` en curso.
+  - **Decisiones (las que dejó Álvaro el 8-oct):** (1) el bot **no da totales de grupo**, da el precio por persona → criterio `precio-total-cop-grupo-mixto` reescrito. (2) **Hoteles base** (San Pedro de Majagua, Cocoliso): recogida confirmada e incluida → lo dice el catálogo en la línea de "ya en las islas" (`CATALOGO_HOTELES_BASE`, encendido; antes `RAG_CONDICIONES_ABIERTAS` hacía dudar de Cocoliso). (3) Las actividades terminan hacia las **12:00-13:00**; la lancha vuelve a Cartagena hacia las 4-4:30 (desde Cartagena, con almuerzo); el día 1 del Open Water se duerme en las islas → criterio `hora-fin-dia1` reescrito. (4) La **propina de las fotos es voluntaria**, sin cifra → quitados los 50.000 COP / 14 USD de la FAQ (curada, `faqs.json`, `policies.json`). (5) El **acompañante en lancha lo confirma el bot** con su precio → criterio `acompanante-lancha-escalar` reescrito. (6) Revisor a Luna: opción (a). **DeepSeek fuera del plan.**
+  - **`manual-duracion-curso`:** FAQ curada nueva "quiero sacarme la certificación": el Open Water es la certificación completa (o el Referido si ya hizo teoría y piscina); el Scuba Diver (está en el catálogo) es la parcial.
+  - **s4-33, los 142 juicios reales leídos uno a uno** (`docs/robustness/juez/s4-33/etiquetas-142.json`; `rejuzgar_juicios --salida` guarda cada juicio entero): 96 aprobados por los dos sin inventos, **38 verdades** (de ellas, Luna tumba 37 y gpt-4.1 8), **5 inventos** (Luna caza 4; gpt-4.1 dejó pasar 2: "no hay plan de 2 inmersiones desde las islas"), 3 dudosos. Re-juzgado hoy: Luna v3-luna rechaza 44 (el 8-oct, 42). Respuestas de Gadea a 7 hechos del negocio, añadidas a la base curada: las 2 inmersiones son en **dos puntos distintos** (si hay que cambiar de sitio lo decide el instructor), cada inmersión **40-50 min**, el precio no cambia por el punto, **no existe código de descuento**, el acompañante puede quedarse en la isla, ningún plan incluye alojamiento. Siguiente: ajustar `GROUNDING_VERIFY_V3_LUNA_*` con este banco (diseño/ciego).
+
 0.31.3 - (2026-10-08)
 ----------------------
 * **s4-33 (el revisor a Luna) EN CURSO: con el banco etiquetado sale MEJOR que gpt-4.1, pero en juicios REALES es demasiado estricto — NO se lanza la ronda; flag `JUEZ_V3_LUNA` APAGADO** (Álvaro con Claude). Evidencia en `docs/robustness/juez/s4-33/`.

@@ -13,10 +13,10 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 
 > **📏 LEER ANTES DE MEDIR — decisiones del 24-sep-2026 (Gadea):** (1) latencia y llamadas con nuestros logs `[TURN_METRICS]` + `scripts/turn_metrics.py`, no con Langfuse (plan gratuito superado, reinicio 16-oct); (2) pruebas A/B por escalones, juzgando solo los diálogos que cambian. Todo en `docs/robustness/protocolo-medicion.md`.
 
-### 🔔 PARA GADEA, LO PRIMERO AL COGER LA RAMA — 6 decisiones PENDIENTES DE DECIDIR (Álvaro, 8-oct)
+### ✅ Las 6 decisiones que dejó Álvaro (8-oct): DECIDIDAS por Gadea el 9-oct
 
-**Estado de todas: ⏳ PENDIENTE DE DECIDIR.** Nada de esto se ha tocado en el bot: se aplica cuando decidas. Apunta la
-respuesta en la columna "Decisión" (o en Plan Coral) y quien siga la aplica y la mide.
+**Estado: decididas.** Se aplicaron el 9-oct (HISTORY 0.31.4). Los hechos del negocio que salen de aquí (horarios,
+propina, hoteles base, totales, acompañante) no se vuelven a preguntar.
 
 **A. Cinco de negocio** — salen del mapa de fallos de la ronda visible con Luna
 (`docs/robustness/fallos-por-causa-2026-10-08-luna-visible.json`): en cada una el bot hace una cosa y el criterio del
@@ -24,11 +24,11 @@ golden pide otra.
 
 | # | Pregunta | Hoy el bot | El golden pide | Casos | Decisión |
 |---|---|---|---|---|---|
-| 1 | ¿Puede Coral dar el **TOTAL de un grupo** (personas × precio del catálogo)? | No: el prompt del RAG prohíbe calcular totales ("el total exacto al reservar") | El total (`precio-total-cop-grupo-mixto`) | `grupo-mixto-precio-cop-total` | ⏳ |
-| 2 | ¿Damos por hecho que **los hoteles base (San Pedro de Majagua, Cocoliso) tienen acceso en lancha** y la recogida está incluida? | Duda y dice que "el equipo confirma si el hotel tiene acceso" (`RAG_CONDICIONES_ABIERTAS`, regla del punto 4) | Que la recogida está incluida | `paquete-5-buceos-islas-residente-sin-recogida` | ⏳ |
-| 3 | ¿A qué hora **termina el día 1 del Open Water**? | La base dice 12:00-13:00 (tu decisión del 30-sep) | El criterio `hora-fin-dia1` dice 4:30 p.m. | `open-water-hoteles-noche-fotos-horario` | ⏳ |
-| 4 | ¿La **propina de las fotos** (50.000 COP / 14 USD) va al catálogo, o se excluye del criterio automático de importes? | La dice (está en la FAQ) | `importes-catalogo` la suspende porque no está en el catálogo | 3 diálogos de fotos | ⏳ |
-| 5 | **`acompanante-lancha-escalar`**: ¿el acompañante en lancha lo confirma el bot (plan de acompañante, con precio) o se pasa a un asesor? | Lo confirma con el plan de acompañante | Pasar a un asesor | `minicurso-islas-y-acompanante-lancha` | ⏳ |
+| 1 | ¿Puede Coral dar el **TOTAL de un grupo** (personas × precio del catálogo)? | No: el prompt del RAG prohíbe calcular totales ("el total exacto al reservar") | El total (`precio-total-cop-grupo-mixto`) | `grupo-mixto-precio-cop-total` | ✅ **No da el total**: precio por persona. Criterio cambiado |
+| 2 | ¿Damos por hecho que **los hoteles base (San Pedro de Majagua, Cocoliso) tienen acceso en lancha** y la recogida está incluida? | Duda y dice que "el equipo confirma si el hotel tiene acceso" (`RAG_CONDICIONES_ABIERTAS`, regla del punto 4) | Que la recogida está incluida | `paquete-5-buceos-islas-residente-sin-recogida` | ✅ **Sí, incluida**. El catálogo lo dice (`CATALOGO_HOTELES_BASE`) |
+| 3 | ¿A qué hora **termina el día 1 del Open Water**? | La base dice 12:00-13:00 (tu decisión del 30-sep) | El criterio `hora-fin-dia1` dice 4:30 p.m. | `open-water-hoteles-noche-fotos-horario` | ✅ Las actividades terminan hacia las **12:00-13:00**; la lancha vuelve a Cartagena hacia las 4-4:30 (desde Cartagena, con almuerzo). El día 1 del Open Water se duerme en las islas. Criterio cambiado |
+| 4 | ¿La **propina de las fotos** (50.000 COP / 14 USD) va al catálogo, o se excluye del criterio automático de importes? | La dice (está en la FAQ) | `importes-catalogo` la suspende porque no está en el catálogo | 3 diálogos de fotos | ✅ **Fuera del catálogo**: la propina es voluntaria, lo que quiera el cliente. Quitada la cifra de la FAQ |
+| 5 | **`acompanante-lancha-escalar`**: ¿el acompañante en lancha lo confirma el bot (plan de acompañante, con precio) o se pasa a un asesor? | Lo confirma con el plan de acompañante | Pasar a un asesor | `minicurso-islas-y-acompanante-lancha` | ✅ **Lo confirma el bot** con el plan de acompañante y su precio. Criterio cambiado |
 
 **B. Una técnica — el revisor (s4-33, era decisión tuya pasarlo a Luna):** con las instrucciones nuevas
 (`juez_v3_luna`, apagado), Luna caza más inventos que gpt-4.1 en el banco etiquetado, pero en 142 respuestas REALES de
@@ -36,10 +36,10 @@ PRE (escritas ya por Luna) tumba 42 frente a 13, casi todo verdades (HISTORY 0.3
 
 | # | Pregunta | Opciones | Coste de medirla | Decisión |
 |---|---|---|---|---|
-| 6 | **¿Cómo seguimos con el revisor?** | (a) **etiquetar** los 142 juicios reales (`docs/robustness/juez/s4-33/juicios-reales-142.jsonl`, primero los 33 desacuerdos) y ajustar las instrucciones de Luna con ese banco; (b) **Luna con razonamiento bajo** como revisor (más fiable, más lento); (c) abaratar por otra vía: **gpt-4.1-mini** con el v3 (≈5 veces más barato que gpt-4.1); (d) dejar gpt-4.1 de momento. Recomendación de Álvaro/Claude: medir (b) y (c) primero (céntimos, minutos, `scripts/rejuzgar_juicios.py`) y con eso decidir si hace falta (a), que lleva trabajo a mano. | (b) y (c): céntimos; (a): horas de etiquetado | ⏳ |
+| 6 | **¿Cómo seguimos con el revisor?** | (a) **etiquetar** los 142 juicios reales (`docs/robustness/juez/s4-33/juicios-reales-142.jsonl`, primero los 33 desacuerdos) y ajustar las instrucciones de Luna con ese banco; (b) **Luna con razonamiento bajo** como revisor (más fiable, más lento); (c) abaratar por otra vía: **gpt-4.1-mini** con el v3 (≈5 veces más barato que gpt-4.1); (d) dejar gpt-4.1 de momento. Recomendación de Álvaro/Claude: medir (b) y (c) primero (céntimos, minutos, `scripts/rejuzgar_juicios.py`) y con eso decidir si hace falta (a), que lleva trabajo a mano. | (b) y (c): céntimos; (a): horas de etiquetado | ✅ **(a)**: revisar los 142 juicios con Gadea (Claude pregunta las dudas) y dejar el revisor de Luna impecable |
 
-**C. Pendientes de antes (siguen ⏳):** el criterio del Open Water en `manual-duracion-curso`; el ajuste de privacidad de
-OpenRouter (`openrouter.ai/settings/privacy`) para medir DeepSeek oficial solo como referencia.
+**C. Pendientes de antes:** el criterio del Open Water en `manual-duracion-curso` ✅ (FAQ curada nueva: "sacarse la
+certificación" = Open Water, o el Referido; el Scuba Diver es la parcial). **DeepSeek: FUERA DEL PLAN** (Gadea, 9-oct).
 
 ### ▶️ RETOMAR AQUÍ — 8-oct, CIERRE DE SESIÓN (Álvaro con Claude): s4-31 CERRADA; s4-33 EN CURSO — Luna como revisor aún NO
 
@@ -179,9 +179,8 @@ son de **búsqueda** (el dato no llega al contexto), no de prompt.
    s4-31 (o separado) para no mezclar efectos.
 3. **s4-32 (en 3-4 semanas):** repetir la latencia de Luna en la extracción; si baja, A/B.
 4. s4-28 sigue: origen dado a entender tarde (`precio-desde-islas`: "desde ese hotel"), `descuento-online` (enrutador
-   cuando Jev duda), inventario de regex. Decisiones pendientes de Gadea: criterios `acompanante-lancha-escalar` y el del
-   Open Water en `manual-duracion-curso`; DeepSeek oficial solo como referencia, cuando Gadea cambie la privacidad de
-   OpenRouter (`openrouter.ai/settings/privacy`).
+   cuando Jev duda), inventario de regex. (Las decisiones de Gadea de los criterios `acompanante-lancha-escalar` y
+   `manual-duracion-curso` se tomaron el 9-oct; DeepSeek quedó FUERA DEL PLAN el 9-oct.)
 
 **Cómo medir:**
 - Ronda: `ENV_FILE=.env.dev python -m scripts.run_synthetic_pre --name <nombre> --sample core` (o `--sample golden --ids a,b,c`),

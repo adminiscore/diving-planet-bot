@@ -1,82 +1,13 @@
 {
-  "que_es": "Cola de cambios PENDIENTES DE APLICAR a la pagina Plan Coral. NO es una copia de su base de datos (eso es plan-coral.json, que se regenera exportando). Aqui se deja lo que alguien no ha podido escribir en la pagina, listo para volcarlo tal cual.",
-  "pagina": "https://claude.ai/artifact/XiGd3kguTNwwqTnH7mQwgi",
-  "por_que_existe": "En la sesion de Claude Code de Gonzalo la herramienta ArtifactData NO aparece: buscada 6 veces (select:ArtifactData, select:artifact_data/ArtifactDB/ArtifactStore/ArtifactCollections y 2 busquedas por descripcion) y siempre 'No matching deferred tools found'. No es cuenta ni permisos: esa misma sesion SI tiene DesignSync y RemoteTrigger, que autentican con el login de claude.ai, y la config tiene oauthAccount con organizationRole admin, sin ninguna ANTHROPIC_API_KEY. Si la herramienta existiera pero estuviera capada por no ser propietario, apareceria en la lista y fallaria AL LLAMARLA; no aparece en absoluto. Tampoco se intento republicar el HTML en ningun momento. Hipotesis viva: diferencia de version de Claude Code (pedir a Gadea la suya y comparar).",
-  "como_aplicar": {
-    "con_claude": "Con la herramienta ArtifactData (NO con Artifact, y sin republicar el HTML): leer el documento, y hacer update pasando su version como if_version. Coleccion tasks -> doc_id = el id de la tarea. Coleccion log -> documentos nuevos.",
-    "a_mano": "Abrir la pagina con sesion iniciada y copiar cada campo en su tarea o en la bitacora.",
-    "al_terminar": "Dejar 'pendientes' como lista vacia, poner la fecha en 'aplicado_el' y quien lo aplico en 'aplicado_por', todo en el MISMO commit. Si esta lista se queda llena, el repo y la pagina han divergido: esa es la senal."
-  },
-  "aplicado_el": "2026-10-08",
-  "aplicado_por": "Gadea (con Claude): bitácora l-1007-gonzalo-s4-27 (s4-27 paso 1) y s4-27 pasa a 'en curso'",
-  "pendientes": [
-    {
-      "coleccion": "log",
-      "operacion": "set",
-      "doc_id": "l-1008-alvaro-s431",
-      "campos": {
-        "at": "2026-10-08T21:00:00Z",
-        "byLabel": "Alvaro (con Claude)",
-        "text": "8-oct noche: s4-31 en curso. Ronda del golden visible con Luna: 92,8 %, 61/95 sin fallos, reales 88,7 %. Mapa de fallos por causa (58: 33 del RAG, 17 de la reserva). Los 'no tengo el dato' de Luna son de busqueda, no de prompt. Causa 1 arreglada: la puerta del origen ya no tapa el resto de la respuesta (ORIGEN_CONSERVA_RESPUESTA, mini-ronda 92,6 -> 97,0 %, promocionado). Respaldo: gano 4 de 156. Siguiente: la busqueda (ficha del servicio activo). HISTORY 0.31.1."
-      }
-    },
-    {
-      "coleccion": "tasks",
-      "operacion": "update",
-      "doc_id": "s4-31",
-      "campos": {
-        "status": "hecha",
-        "note": "8-oct (Alvaro): CERRADA. El prompt del RAG no necesita reescribirse para Luna: mapa de los 58 fallos de la ronda visible leido; lo unico de las respuestas que fallaba era la puerta del origen (arreglada, ORIGEN_CONSERVA_RESPUESTA, mini-ronda 92,6 -> 97,0 %). El resto: flujo de reserva (17), origen/extraccion (s4-28), busqueda menor, criterios (decisiones de Gadea). RAG_FICHA_DEL_SERVICIO re-medido con Luna: sin ganancia, +0,8 s, sigue apagado. HISTORY 0.31.1-0.31.2."
-      }
-    },
-    {
-      "coleccion": "log",
-      "operacion": "set",
-      "doc_id": "l-1008-alvaro-s431-cierre",
-      "campos": {
-        "at": "2026-10-08T22:00:00Z",
-        "byLabel": "Alvaro (con Claude)",
-        "text": "8-oct cierre: s4-31 CERRADA, el prompt del RAG no necesita reescribirse para Luna (mapa de fallos leido; arreglada la puerta del origen). Siguiente: s4-33 (el revisor a Luna), decisiones de Gadea sobre 5 criterios, s4-28 (origen/extraccion), flujo de reserva. HISTORY 0.31.2."
-      }
-    },
-    {
-      "coleccion": "log",
-      "operacion": "set",
-      "doc_id": "l-1008-alvaro-decisiones-gadea",
-      "campos": {
-        "at": "2026-10-08T22:10:00Z",
-        "byLabel": "Alvaro (con Claude)",
-        "text": "PARA GADEA, 6 decisiones PENDIENTES DE DECIDIR (nada tocado en el bot hasta que decidas). Negocio (bot y golden piden cosas distintas): 1) ¿total de grupo (personas x precio)? 2) ¿hoteles base con acceso en lancha y recogida incluida, sin dudar? 3) ¿fin del dia 1 del Open Water: 12:00-13:00 (base) o 4:30 (criterio)? 4) ¿propina de fotos al catalogo o fuera del criterio de importes? 5) acompanante en lancha: ¿lo confirma el bot o asesor? Tecnica: 6) el revisor (s4-33): Luna con instrucciones nuevas no pasa con 142 juicios reales; ¿etiquetar los 142, medir Luna con razonamiento bajo, medir gpt-4.1-mini o dejar gpt-4.1? Siguen pendientes de antes: criterio Open Water en manual-duracion-curso y privacidad de OpenRouter. Detalle: session-handoff.md, bloque 'PARA GADEA'."
-      }
-    },
-    {
-      "coleccion": "tasks",
-      "operacion": "update",
-      "doc_id": "s4-33",
-      "campos": {
-        "status": "en curso",
-        "note": "8-oct noche (Alvaro): instrucciones del revisor para Luna hechas (juez_v3_luna, apagado). Banco etiquetado: mejor que gpt-4.1 (ciego: inventos colados 5/28 -> 1/28). Pero re-juzgando 142 juicios REALES de PRE tumba 42 frente a 13, casi todos falsos rechazos de respuestas escritas por Luna: no pasa el escalon 0, no se lanza ronda, el revisor sigue en gpt-4.1. Opciones: etiquetar los 142 y ajustar con ellos; Luna con razonamiento bajo; o gpt-4.1-mini con el v3. HISTORY 0.31.3."
-      }
-    },
-    {
-      "coleccion": "log",
-      "operacion": "set",
-      "doc_id": "l-1008-alvaro-s433",
-      "campos": {
-        "at": "2026-10-08T23:30:00Z",
-        "byLabel": "Alvaro (con Claude)",
-        "text": "8-oct noche: s4-33 en curso. Luna como revisor: con el banco etiquetado caza mas inventos que gpt-4.1, pero con 142 juicios reales de PRE rechaza 3 veces mas, casi todo falsos rechazos (Luna escribe distinto que el modelo del banco). No pasa el escalon 0; el revisor sigue en gpt-4.1. HISTORY 0.31.3."
-      }
-    },
-    {
-      "coleccion": "log",
-      "operacion": "set",
-      "doc_id": "l-1008-alvaro-cierre-sesion",
-      "campos": {
-        "at": "2026-10-08T23:50:00Z",
-        "byLabel": "Alvaro (con Claude)",
-        "text": "8-oct cierre de sesion (Alvaro): integrada la rama de Gadea (Luna con respaldo); ronda visible con Luna 92,8 % (reales 88,7 %); s4-31 CERRADA (prompt de Luna sin reescribir; ORIGEN_CONSERVA_RESPUESTA promocionado); s4-33 en curso (Luna como revisor no pasa con juicios reales; JUEZ_V3_LUNA apagado). 6 decisiones pendientes para Gadea en el handoff. Gasto OpenAI del dia ~17 $. HISTORY 0.31.1-0.31.3."
-      }
-    }
-  ]
+ "que_es": "Cola de cambios PENDIENTES DE APLICAR a la pagina Plan Coral. NO es una copia de su base de datos (eso es plan-coral.json, que se regenera exportando). Aqui se deja lo que alguien no ha podido escribir en la pagina, listo para volcarlo tal cual.",
+ "pagina": "https://claude.ai/artifact/XiGd3kguTNwwqTnH7mQwgi",
+ "por_que_existe": "En la sesion de Claude Code de Gonzalo la herramienta ArtifactData NO aparece: buscada 6 veces (select:ArtifactData, select:artifact_data/ArtifactDB/ArtifactStore/ArtifactCollections y 2 busquedas por descripcion) y siempre 'No matching deferred tools found'. No es cuenta ni permisos: esa misma sesion SI tiene DesignSync y RemoteTrigger, que autentican con el login de claude.ai, y la config tiene oauthAccount con organizationRole admin, sin ninguna ANTHROPIC_API_KEY. Si la herramienta existiera pero estuviera capada por no ser propietario, apareceria en la lista y fallaria AL LLAMARLA; no aparece en absoluto. Tampoco se intento republicar el HTML en ningun momento. Hipotesis viva: diferencia de version de Claude Code (pedir a Gadea la suya y comparar).",
+ "como_aplicar": {
+  "con_claude": "Con la herramienta ArtifactData (NO con Artifact, y sin republicar el HTML): leer el documento, y hacer update pasando su version como if_version. Coleccion tasks -> doc_id = el id de la tarea. Coleccion log -> documentos nuevos.",
+  "a_mano": "Abrir la pagina con sesion iniciada y copiar cada campo en su tarea o en la bitacora.",
+  "al_terminar": "Dejar 'pendientes' como lista vacia, poner la fecha en 'aplicado_el' y quien lo aplico en 'aplicado_por', todo en el MISMO commit. Si esta lista se queda llena, el repo y la pagina han divergido: esa es la senal."
+ },
+ "aplicado_el": "2026-10-09",
+ "aplicado_por": "Gadea (con Claude): 7 entradas de Álvaro del 8-oct (s4-31 hecha, s4-33 en curso, 5 de bitácora)",
+ "pendientes": []
 }

@@ -521,8 +521,21 @@ def catalog_facts(lang: str) -> str:
                 f"- Refresher (review for certified divers with more than 2 years without diving; booked as "
                 f"'{svc.get('name_en')}'): {price} online."
             )
+    from src.config import settings  # lazy
+
     comp = COMPANION_PRICE
     companion = money.usd_cop(comp["usd_online"], comp["cop_online"])
+    # 9-oct (Gadea, flag `catalogo_hoteles_base`): en los hoteles base la recogida no depende del acceso maritimo. Con
+    # solo "si tiene acceso maritimo" en el catalogo, el RAG (y RAG_CONDICIONES) dudaba tambien de Cocoliso: "el equipo
+    # confirma si Cocoliso tiene acceso maritimo" (paquete-5-buceos-islas-residente-sin-recogida).
+    islas_es = ("Si ya estás en las Islas del Rosario (recogida en tu hotel si tiene acceso marítimo; en nuestros "
+                "hoteles base, San Pedro de Majagua y Cocoliso, en Isla Grande, la recogida está confirmada e "
+                "incluida):" if settings.catalogo_hoteles_base else
+                "Si ya estás en las Islas del Rosario (recogida en tu hotel si tiene acceso marítimo):")
+    islas_en = ("If already on the Rosario Islands (pickup at your hotel if it has boat access; at our base hotels, "
+                "San Pedro de Majagua and Cocoliso on Isla Grande, pickup is confirmed and included):"
+                if settings.catalogo_hoteles_base else
+                "If already on the Rosario Islands (pickup at your hotel if it has boat access):")
     companion_normal = money.usd_cop(comp["usd_normal"], comp["cop_normal"])
     if es:
         head = ("CATÁLOGO OFICIAL (fuente de verdad; precios por persona, 'online' = con el 10% de "
@@ -530,7 +543,7 @@ def catalog_facts(lang: str) -> str:
         out = [head, "Saliendo desde Cartagena:", *groups[False],
                f"- Acompañante (no bucea, va en la lancha con el grupo): {companion} online, {companion_normal} normal; "
                "incluye lancha, almuerzo, seguro y entrada al Parque Nacional Natural.",
-               "Si ya estás en las Islas del Rosario (recogida en tu hotel si tiene acceso marítimo):",
+               islas_es,
                *groups[True],
                f"- Acompañante - ya en las islas (no bucea, va en la lancha con el grupo): {companion} online, "
                f"{companion_normal} normal (el mismo precio); incluye seguro y entrada al Parque Nacional Natural; "
@@ -554,7 +567,7 @@ def catalog_facts(lang: str) -> str:
         out = [head, "Departing from Cartagena:", *groups[False],
                f"- Companion (doesn't dive, rides the boat with the group): {companion} online, {companion_normal} "
                "regular; includes boat, lunch, insurance and the National Natural Park entrance fee.",
-               "If already on the Rosario Islands (pickup at your hotel if it has boat access):",
+               islas_en,
                *groups[True],
                f"- Companion - already on the islands (doesn't dive, rides the boat with the group): {companion} online, "
                f"{companion_normal} regular (the same price); includes insurance and the National Natural Park entrance "

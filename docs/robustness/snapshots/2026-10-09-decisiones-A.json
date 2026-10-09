@@ -1,0 +1,207 @@
+{
+  "label": "2026-10-09-decisiones-A",
+  "source": "turn_metrics (log de PRE)",
+  "taken_at": "2026-10-09T08:01:33+00:00",
+  "run_at": "2026-10-09T08:01:00Z",
+  "commit": "f05dd2c",
+  "environment": "staging",
+  "window": {
+    "from": "2026-10-09T07:44:30Z",
+    "to": "2026-10-09T08:03:09Z",
+    "first_turn": "2026-10-09T07:49:21Z",
+    "last_turn": "2026-10-09T08:01:00Z"
+  },
+  "all": {
+    "turns": 71,
+    "latency_p50": 3.125,
+    "latency_p95": 5.698,
+    "latency_avg": 3.158,
+    "llm_calls_avg": 3.2,
+    "llm_calls_p95": 5.0,
+    "llm_calls_max": 7,
+    "embeddings_avg": 1.46,
+    "llm_share": 1.144,
+    "tokens_avg": 0,
+    "cost_avg_usd": 0
+  },
+  "by_type": {
+    "reserva": {
+      "turns": 35,
+      "latency_p50": 1.943,
+      "latency_p95": 4.385,
+      "latency_avg": 2.214,
+      "llm_calls_avg": 2.8,
+      "llm_calls_p95": 5.3,
+      "llm_calls_max": 7,
+      "embeddings_avg": 1.51,
+      "llm_share": 1.172,
+      "tokens_avg": 0,
+      "cost_avg_usd": 0
+    },
+    "rag": {
+      "turns": 36,
+      "latency_p50": 4.0,
+      "latency_p95": 5.816,
+      "latency_avg": 4.076,
+      "llm_calls_avg": 3.58,
+      "llm_calls_p95": 5.0,
+      "llm_calls_max": 6,
+      "embeddings_avg": 1.42,
+      "llm_share": 1.129,
+      "tokens_avg": 0,
+      "cost_avg_usd": 0
+    }
+  },
+  "by_turn_type": {
+    "rag": {
+      "turns": 36,
+      "latency_p50": 4.0,
+      "latency_p95": 5.816,
+      "latency_avg": 4.076,
+      "llm_calls_avg": 3.58,
+      "llm_calls_p95": 5.0,
+      "llm_calls_max": 6,
+      "embeddings_avg": 1.42,
+      "llm_share": 1.129,
+      "tokens_avg": 0,
+      "cost_avg_usd": 0
+    },
+    "reserva": {
+      "turns": 34,
+      "latency_p50": 2.007,
+      "latency_p95": 4.411,
+      "latency_avg": 2.26,
+      "llm_calls_avg": 2.88,
+      "llm_calls_p95": 5.35,
+      "llm_calls_max": 7,
+      "embeddings_avg": 1.56,
+      "llm_share": 1.182,
+      "tokens_avg": 0,
+      "cost_avg_usd": 0
+    },
+    "saludo": {
+      "turns": 1,
+      "latency_p50": 0.664,
+      "latency_p95": 0.664,
+      "latency_avg": 0.664,
+      "llm_calls_avg": 0.0,
+      "llm_calls_p95": 0.0,
+      "llm_calls_max": 0,
+      "embeddings_avg": 0,
+      "llm_share": 0.0,
+      "tokens_avg": 0,
+      "cost_avg_usd": 0
+    }
+  },
+  "turns_with_summary": 71,
+  "business": {
+    "conversations": 13,
+    "turns": 71,
+    "turns_per_conversation": 5.46,
+    "funnel": {
+      "hablan": {
+        "conversations": 13,
+        "pct": 100.0
+      },
+      "eligen_actividad": {
+        "conversations": 1,
+        "pct": 7.7
+      },
+      "carrito_con_personas": {
+        "conversations": 1,
+        "pct": 7.7
+      },
+      "link_de_pago": {
+        "conversations": 6,
+        "pct": 46.2
+      }
+    },
+    "escalation_rate_pct": 0.0,
+    "fallback_turns": 0,
+    "fallback_pct_of_turns": 0.0,
+    "by_turn_type": {
+      "rag": 36,
+      "reserva": 34,
+      "saludo": 1
+    }
+  },
+  "nodes": {
+    "changes": {
+      "n": 1,
+      "p50": 2.78,
+      "p95": 2.78
+    },
+    "booking": {
+      "n": 70,
+      "p50": 2.169,
+      "p95": 4.792
+    },
+    "slotfill_close": {
+      "n": 69,
+      "p50": 0.838,
+      "p95": 4.705
+    },
+    "extraction": {
+      "n": 70,
+      "p50": 0.624,
+      "p95": 1.903
+    },
+    "router": {
+      "n": 71,
+      "p50": 0.571,
+      "p95": 1.905
+    },
+    "setup": {
+      "n": 70,
+      "p50": 0.016,
+      "p95": 0.034
+    },
+    "routing": {
+      "n": 70,
+      "p50": 0.008,
+      "p95": 0.015
+    },
+    "availability": {
+      "n": 70,
+      "p50": 0.005,
+      "p95": 0.01
+    }
+  },
+  "router": {
+    "by_backend": {
+      "jev": 61,
+      "llm_uncertain": 10
+    },
+    "ms_p50": 538.0,
+    "ms_p95": 742.5
+  },
+  "models": {
+    "gpt-4o-mini": 147,
+    "gpt-6-luna": 42,
+    "gpt-4.1": 38
+  },
+  "rag_adelantado": {
+    "resultados": {
+      "descartado": 35,
+      "aprovechado": 36
+    },
+    "latencia_turnos_rag": {
+      "aprovechado": {
+        "n": 36,
+        "p50": 4.0,
+        "p95": 5.816
+      }
+    },
+    "rehecho_por": {}
+  },
+  "run_file": "docs/robustness/synthetic-runs/2026-10-09-decisiones-A.jsonl",
+  "client_latency": {
+    "turns": 71,
+    "conversations": 13,
+    "no_reply": 0,
+    "multi_bubble": 0,
+    "latency_p50": 3.0,
+    "latency_p95": 6.0,
+    "latency_max": 7
+  }
+}

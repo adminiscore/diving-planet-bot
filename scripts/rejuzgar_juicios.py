@@ -32,6 +32,7 @@ async def main() -> None:
     ap.add_argument("--modelo", default=settings.grounding_v3_model)
     ap.add_argument("--flag", action="append", default=[], help="interruptor de settings a encender (repetible)")
     ap.add_argument("--concurrencia", type=int, default=6)
+    ap.add_argument("--salida", help="JSONL con cada juicio entero (respuesta, contexto, los dos veredictos); para etiquetar")
     a = ap.parse_args()
     settings.grounding_v3_model = a.modelo
     for f in a.flag:
@@ -67,6 +68,8 @@ async def main() -> None:
             print(f"  respuesta: {j['answer'][:400]!r}")
             print(f"  PRE:   {(j.get('why') or '')[:300]}")
             print(f"  nuevo: {j['nuevo_motivo'][:300]}")
+    if a.salida:
+        Path(a.salida).write_text("".join(json.dumps(j, ensure_ascii=False) + "\n" for j in juicios), encoding="utf-8")
 
 
 if __name__ == "__main__":
