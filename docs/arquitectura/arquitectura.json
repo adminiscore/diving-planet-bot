@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-09T11:26:03+00:00",
-  "commit": "2ad4c7c",
+  "generado": "2026-10-09T12:44:27+00:00",
+  "commit": "96c0f9b",
   "rama": "feature/l1_gonzalo"
  },
  "vistas": {
@@ -157,9 +157,9 @@
    ],
    "marca": "openrouter",
    "tiempos": {
-    "n": 30,
-    "p50": 0.576,
-    "p95": 1.882
+    "n": 44,
+    "p50": 0.602,
+    "p95": 1.784
    }
   },
   {
@@ -172,12 +172,7 @@
    "que_hace": "Datos personales, links rotos, temas delicados o cuando hace falta una persona: pasa el caso a un asesor.",
    "donde": "src/agents/escalation_agent.py:escalation_node",
    "modelos": [],
-   "interruptores": [],
-   "tiempos": {
-    "n": 3,
-    "p50": 0.003,
-    "p95": 0.003
-   }
+   "interruptores": []
   },
   {
    "id": "changes",
@@ -189,12 +184,7 @@
    "que_hace": "Cancelar, cambiar de fecha o de número de personas: explica la política y ofrece botones.",
    "donde": "src/agents/changes_agent.py:changes_node",
    "modelos": [],
-   "interruptores": [],
-   "tiempos": {
-    "n": 1,
-    "p50": 3.057,
-    "p95": 3.057
-   }
+   "interruptores": []
   },
   {
    "id": "deflection",
@@ -220,7 +210,12 @@
    "donde": "src/agents/info_agent.py:info_node",
    "nota": "Por esta ruta solo llegan las preguntas que no son de reserva. La mayoría de las preguntas se contestan desde la Reserva («contesta y sigue»), así que el RAG trabaja muchas más veces de las que pasa un mensaje por aquí.",
    "modelos": [],
-   "interruptores": []
+   "interruptores": [],
+   "tiempos": {
+    "n": 2,
+    "p50": 1.523,
+    "p95": 2.874
+   }
   },
   {
    "id": "booking",
@@ -235,9 +230,9 @@
    "modelos": [],
    "interruptores": [],
    "tiempos": {
-    "n": 26,
-    "p50": 2.369,
-    "p95": 4.929
+    "n": 42,
+    "p50": 1.786,
+    "p95": 5.938
    }
   },
   {
@@ -438,9 +433,9 @@
    "interruptores": [],
    "marca": "openai",
    "tiempos": {
-    "n": 26,
-    "p50": 0.007,
-    "p95": 0.057
+    "n": 42,
+    "p50": 0.028,
+    "p95": 0.042
    }
   },
   {
@@ -470,9 +465,9 @@
    ],
    "modelos": [],
    "tiempos": {
-    "n": 26,
-    "p50": 0.005,
-    "p95": 0.011
+    "n": 42,
+    "p50": 0.006,
+    "p95": 0.01
    }
   },
   {
@@ -509,9 +504,9 @@
    ],
    "marca": "openai",
    "tiempos": {
-    "n": 26,
-    "p50": 0.006,
-    "p95": 0.022
+    "n": 42,
+    "p50": 0.009,
+    "p95": 0.017
    }
   },
   {
@@ -536,9 +531,9 @@
    "interruptores": [],
    "marca": "openai",
    "tiempos": {
-    "n": 26,
-    "p50": 0.85,
-    "p95": 1.768
+    "n": 42,
+    "p50": 0.759,
+    "p95": 1.801
    }
   },
   {
@@ -568,9 +563,9 @@
    ],
    "marca": "openai",
    "tiempos": {
-    "n": 26,
-    "p50": 1.521,
-    "p95": 4.728
+    "n": 39,
+    "p50": 0.01,
+    "p95": 5.608
    }
   },
   {
@@ -672,9 +667,9 @@
    "modelos": [],
    "interruptores": [],
    "conteo": {
-    "n": 14,
+    "n": 21,
     "que": "preguntas",
-    "fuente": "2026-10-09-equipo-B.json"
+    "fuente": "2026-10-09-s428-A.json"
    }
   },
   {
@@ -838,9 +833,9 @@
    },
    "marca": "openai",
    "conteo": {
-    "n": 15,
+    "n": 23,
     "que": "veces",
-    "fuente": "logs-pre-2026-10-09-equipo-B.txt"
+    "fuente": "logs-pre-2026-10-09-s428-A.txt"
    }
   },
   {
@@ -854,9 +849,9 @@
    "interruptores": [],
    "modelos": [],
    "conteo": {
-    "n": 15,
+    "n": 23,
     "que": "veces",
-    "fuente": "logs-pre-2026-10-09-equipo-B.txt"
+    "fuente": "logs-pre-2026-10-09-s428-A.txt"
    }
   },
   {
@@ -924,9 +919,9 @@
    },
    "marca": "openai",
    "conteo": {
-    "n": 15,
+    "n": 23,
     "que": "veces",
-    "fuente": "logs-pre-2026-10-09-equipo-B.txt"
+    "fuente": "logs-pre-2026-10-09-s428-A.txt"
    }
   },
   {
@@ -948,9 +943,9 @@
    ],
    "modelos": [],
    "conteo": {
-    "n": 1,
+    "n": 2,
     "que": "veces",
-    "fuente": "logs-pre-2026-10-09-equipo-B.txt"
+    "fuente": "logs-pre-2026-10-09-s428-A.txt"
    }
   },
   {
@@ -966,7 +961,7 @@
    "conteo": {
     "n": 0,
     "que": "veces",
-    "fuente": "logs-pre-2026-10-09-equipo-B.txt"
+    "fuente": "logs-pre-2026-10-09-s428-A.txt"
    }
   },
   {
@@ -979,9 +974,9 @@
    "modelos": [],
    "interruptores": [],
    "conteo": {
-    "n": 14,
+    "n": 21,
     "que": "veces",
-    "fuente": "logs-pre-2026-10-09-equipo-B.txt"
+    "fuente": "logs-pre-2026-10-09-s428-A.txt"
    }
   }
  ],
@@ -1480,7 +1475,7 @@
    "de": "r_revisor",
    "a": "r_salida",
    "etiqueta": "todo SÍ",
-   "peso": 0.9333,
+   "peso": 0.913,
    "origen": "curada",
    "estilo": "normal",
    "vista": "info",
@@ -1491,7 +1486,7 @@
    "a": "r_reintento",
    "etiqueta": "algún NO",
    "estilo": "bucle",
-   "peso": 0.0667,
+   "peso": 0.087,
    "origen": "curada",
    "vista": "info",
    "peso_fuente": "medido"
@@ -2283,7 +2278,7 @@
     "b_acuse"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 56
+   "llamadas_ultima_ronda": 100
   },
   {
    "ajuste": "grounding_v3_model",
@@ -2293,7 +2288,7 @@
     "r_revisor"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 15
+   "llamadas_ultima_ronda": 25
   },
   {
    "ajuste": "jev_model",
@@ -2305,7 +2300,7 @@
    ],
    "proveedor": "OpenRouter",
    "llamadas_ultima_ronda": null,
-   "nota": "Decidió solo 27 de 30 mensajes; en los otros 3 decidió el LLM de respaldo (sus llamadas cuentan en gpt-4o-mini)."
+   "nota": "Decidió solo 36 de 44 mensajes; en los otros 8 decidió el LLM de respaldo (sus llamadas cuentan en gpt-4o-mini)."
   },
   {
    "ajuste": "openai_embedding_model",
@@ -2328,7 +2323,7 @@
     "r_reescribir"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 56
+   "llamadas_ultima_ronda": 100
   },
   {
    "ajuste": "openai_transcription_model",
@@ -2348,67 +2343,68 @@
     "r_escribir"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 20
+   "llamadas_ultima_ronda": 24
   }
  ],
  "ronda": {
-  "etiqueta": "2026-10-09-equipo-B",
-  "run_at": "2026-10-09T10:17:55Z",
-  "fichero": "2026-10-09-equipo-B.json",
-  "commit": "a134ee5",
+  "etiqueta": "2026-10-09-s428-A",
+  "run_at": "2026-10-09T11:34:54Z",
+  "fichero": "2026-10-09-s428-A.json",
+  "commit": "2ad4c7c",
   "por_tipo": {
    "reserva": {
-    "turns": 16,
-    "latency_p50": 2.124,
-    "latency_p95": 3.769,
-    "latency_avg": 2.046,
-    "llm_calls_avg": 2.31,
+    "turns": 23,
+    "latency_p50": 1.599,
+    "latency_p95": 3.439,
+    "latency_avg": 1.897,
+    "llm_calls_avg": 2.52,
     "llm_calls_p95": 4.0,
     "llm_calls_max": 4,
-    "embeddings_avg": 1.44,
-    "llm_share": 1.08,
+    "embeddings_avg": 1.48,
+    "llm_share": 1.126,
     "tokens_avg": 0,
     "cost_avg_usd": 0
    },
    "rag": {
-    "turns": 14,
-    "latency_p50": 4.416,
-    "latency_p95": 8.457,
-    "latency_avg": 4.916,
-    "llm_calls_avg": 3.86,
-    "llm_calls_p95": 6.35,
+    "turns": 21,
+    "latency_p50": 4.201,
+    "latency_p95": 8.595,
+    "latency_avg": 5.119,
+    "llm_calls_avg": 4.38,
+    "llm_calls_p95": 7.0,
     "llm_calls_max": 7,
     "embeddings_avg": 1.57,
-    "llm_share": 1.126,
+    "llm_share": 1.083,
     "tokens_avg": 0,
     "cost_avg_usd": 0
    }
   },
   "enrutador": {
    "by_backend": {
-    "jev": 27,
-    "llm_uncertain": 3
+    "jev": 36,
+    "llm_uncertain": 8
    },
-   "ms_p50": 544.5,
-   "ms_p95": 654.1
+   "ms_p50": 557.5,
+   "ms_p95": 637.0
   },
   "cliente": {
-   "turns": 30,
+   "turns": 44,
    "conversations": 8,
    "no_reply": 0,
    "multi_bubble": 0,
    "latency_p50": 3.0,
-   "latency_p95": 6.0,
+   "latency_p95": 7.85,
    "latency_max": 14
   },
   "llamadas_por_modelo": {
-   "gpt-4o-mini": 56,
-   "gpt-6-luna": 20,
-   "gpt-4.1": 15
+   "gpt-4o-mini": 100,
+   "gpt-4.1": 25,
+   "gpt-6-luna": 24,
+   "gpt-4.1-mini": 1
   },
   "calidad": {
-   "criteria_pass_pct": 96.4,
-   "dialogues_passed": 6,
+   "criteria_pass_pct": 83.3,
+   "dialogues_passed": 1,
    "dialogues": 8,
    "model": "gpt-5-mini (medium)"
   }
