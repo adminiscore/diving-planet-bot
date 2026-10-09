@@ -1,6 +1,13 @@
 History
 =======
 
+0.31.7 - (2026-10-09)
+----------------------
+* **Estudio del regex del bot y FASE NUEVA EX "Entender con IA: el regex deja de decidir"** (Gadea con Claude; solo docs y herramientas, sin cambios del bot).
+  - **Inventario** (`scripts/inventario_regex.py`, nuevo; `docs/robustness/regex/inventario.json`): ~855 patrones; **668 (84 %) para entender al cliente** (`intent_detector` 401, `supervisor` 136, `conversational_core` 84, `rag_agent` 28, `vector_store` 19); guardas de la respuesta 49, atajos apagados 28 (código muerto), atajos activos 28, formato 13, privacidad 8; más 114 palabras clave de escalado.
+  - **Datos:** logs de PRE del 9-oct (202 turnos): una red corrige al regex en **42 turnos (1 de cada 5)**; el regex manda y el LLM "nunca lo corrige"; la extracción ya tarda p50 0,81 s porque casi siempre llama a un LLM → que el LLM extraiga primero no añade latencia. Estudio: `docs/robustness/regex/estudio-regex-2026-10-09.md`.
+  - **Decisión de Gadea:** fase EX en Plan Coral (ex-0 banco con vocabulario real → ex-1 borrar atajos muertos, ex-2 escalado solo emergencias, ex-3 atajos activos → ex-4 extractor "LLM primero" → ex-5 ubicación, ex-6 certificación, ex-7 grupo, ex-8 actividad/nacionalidad/idioma → ex-9 retirar lo viejo → ex-10 ronda completa con el oculto). Metas: reales 88,7 → ≥ 92 %, fallos de flujo 17 → ≤ 6, latencia no peor. Absorbe s4-28 (resto, s4-28 cerrada), s4-3 y s4-4. Plan: `docs/robustness/regex/plan-ex-entender-con-ia.md`.
+
 0.31.6 - (2026-10-09)
 ----------------------
 * **El catálogo dice si cada plan incluye el equipo — `CATALOGO_EQUIPO_INCLUIDO` PROMOCIONADO** (Gadea con Claude).

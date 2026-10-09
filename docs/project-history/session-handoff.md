@@ -62,7 +62,14 @@ Mapa de Coral v22.
 | Equipo incluido en cada plan del catálogo (el Dive Master no) | mini-ronda `equipo-A/B`: 94,5 → 96,4 %, 2 mejoras, 0 regresiones, p95 6,6 → 5,4 s | HISTORY 0.31.6 |
 | Hechos nuevos del negocio (Gadea), en FAQs curadas | 2 inmersiones en 2 puntos distintos (si hay que cambiar, decide el instructor), 40-50 min cada una, el precio no cambia por el punto, sin código de descuento, el acompañante puede quedarse en la isla, ningún plan incluye alojamiento | `data/knowledge_base/curada/faqs.json` |
 
-**Siguiente (en orden):**
+**🆕 PLAN NUEVO (Gadea, 9-oct, al cierre): FASE EX "Entender con IA: el regex deja de decidir".** Estudio:
+`docs/robustness/regex/estudio-regex-2026-10-09.md`; **plan detallado: `docs/robustness/regex/plan-ex-entender-con-ia.md`**;
+fase EX y tareas ex-0…ex-10 en Plan Coral. El 84 % del regex (668 patrones) intenta entender al cliente y en 1 de cada 5
+turnos una red tiene que corregirlo. **EX sustituye a los puntos 1 y 2 de abajo:** s4-28 (resto) → ex-5; los fallos del
+flujo por no entender → ex-5…ex-8. **Empezad por ex-0 (banco de extracción con vocabulario real)**; ex-1, ex-2 y ex-3 son
+independientes y pueden ir en paralelo.
+
+**Siguiente (en orden, ANTES del plan EX; ver arriba):**
 1. **s4-28:** el origen dado a entender tarde (`precio-desde-islas`: "desde ese hotel") y el extractor que se inventa
    `location` con la pregunta del origen pendiente (`[LLM_EXTRACTOR][COMBINED] filled ... location`, ver 0.31.1).
 2. **Los 17 fallos del flujo de reserva** (`fallos-por-causa-2026-10-08-luna-visible.json`, causa flujo). Visto hoy en

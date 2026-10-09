@@ -509,6 +509,10 @@ medias (u3-1 ✅, u3-4 ✅ promocionada, u3-5 🟡); PRE con u3-4 encendido. Sui
 > `RAG_BUSQUEDA_DOBLE` y `JUEZ_SEGUNDA_OPINION`; **después, la ronda COMPLETA con el examen oculto**, una sola vez, como
 > cierre del bloque RAG. Detalle: `session-handoff.md`, "RETOMAR AQUÍ" del 1-oct tarde.
 
+> **9-oct (cierre, Gadea): fase NUEVA EX "Entender con IA"** (Plan Coral, antes de S4): el LLM extrae, Jev decide si el
+> cliente lo afirma y el regex queda como pista; por dominios con flag y mini-ronda. Sustituye a s4-28 (resto) y a los
+> fallos de flujo por no entender. Plan: `docs/robustness/regex/plan-ex-entender-con-ia.md`.
+
 > **Estado al 9-oct (Gadea), fase S4:** modelos: respuesta del RAG en GPT-6 Luna con respaldo (0.31.0); el **revisor se
 > queda en gpt-4.1** (s4-33 cerrada: Luna, medida con 142 juicios reales etiquetados, tumba demasiadas verdades;
 > 0.31.5). Decisiones de negocio de Gadea aplicadas (sin totales de grupo, hoteles base con recogida, horarios,
