@@ -3956,25 +3956,10 @@ async def _availability_phase(
     return None
 
 
-async def _routing_phase(
-    state: ConversationState, message: str, routing_signals: dict, greeting: str,
-) -> str | dict:
-    """Fase 3.3d — routing interno del turno de booking (carryover → pregunta/
-    recall → deliberación), extraído de `_body_phase`. Toma los snapshots
-    `prev_*` (ANTES de que `_apply_short_answer` mute el estado) + `resolved_
-    short`, y ejecuta los gates de early-return. Si un gate resuelve el turno
-    devuelve la RESPUESTA (str); si no, devuelve el `carry` (dict con los
-    `prev_*`/`resolved_short`) para `_extract_close_phase`. Lo llama la cascada
-    (vía `maybe_handle_turn`) y el nodo `routing` del subgrafo — misma fuente de
-    verdad, equivalencia por construcción."""
-
-    # Confirmación deíctica de un paquete multi-día ("quiero este paquete")
-    # ANTES de tomar snapshots/decidir la ruta del turno -- corre pase lo que
-    # pase con el "?" (ver `_maybe_apply_confirmed_package`), para que un
-    # mensaje como "...que podria hacer esos dos dias?" no deje el carrito
-    # pegado al paquete de 1 día que se armó antes de esta conversación.
-    _maybe_apply_confirmed_package(state, message)
-
+def sembrar_senales_del_turno(state: ConversationState, routing_signals: dict) -> None:
+    """Lo que Jev contestó en ESTE turno (misma llamada del router), guardado en el estado para las puertas
+    de la extracción. Función aparte (ex-0, 12-oct) para que el banco de extracción
+    (`scripts.run_extraction_eval --banco ex0`) siembre el turno EXACTAMENTE igual que producción."""
     # u3-4/u3-5: lo que Jev contestó en ESTE turno sobre si el cliente AFIRMA cada dato o solo lo
     # nombra. Se guarda en CADA turno (y se vacía si no hay señal), así nunca se usa la de un turno
     # anterior. Lo usan la puerta del turno con pregunta (`_question_turn_fields`), el relleno con
@@ -3999,6 +3984,28 @@ async def _routing_phase(
     state._jev_adds_person = routing_signals.get("adds_person")
     # s4-28: dónde está / desde dónde sale el cliente según Jev ({choice, confidence}); ausente = no lo sabemos.
     state._jev_lugar = routing_signals.get("customer_place")
+
+
+async def _routing_phase(
+    state: ConversationState, message: str, routing_signals: dict, greeting: str,
+) -> str | dict:
+    """Fase 3.3d — routing interno del turno de booking (carryover → pregunta/
+    recall → deliberación), extraído de `_body_phase`. Toma los snapshots
+    `prev_*` (ANTES de que `_apply_short_answer` mute el estado) + `resolved_
+    short`, y ejecuta los gates de early-return. Si un gate resuelve el turno
+    devuelve la RESPUESTA (str); si no, devuelve el `carry` (dict con los
+    `prev_*`/`resolved_short`) para `_extract_close_phase`. Lo llama la cascada
+    (vía `maybe_handle_turn`) y el nodo `routing` del subgrafo — misma fuente de
+    verdad, equivalencia por construcción."""
+
+    # Confirmación deíctica de un paquete multi-día ("quiero este paquete")
+    # ANTES de tomar snapshots/decidir la ruta del turno -- corre pase lo que
+    # pase con el "?" (ver `_maybe_apply_confirmed_package`), para que un
+    # mensaje como "...que podria hacer esos dos dias?" no deje el carrito
+    # pegado al paquete de 1 día que se armó antes de esta conversación.
+    _maybe_apply_confirmed_package(state, message)
+
+    sembrar_senales_del_turno(state, routing_signals)
 
     # COMPRENDER (carryover PRIMERO): si hay un slot pendiente y este mensaje
     # lo RESUELVE, el carryover gana aunque el mensaje "parezca pregunta" por

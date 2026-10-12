@@ -1,6 +1,13 @@
 History
 =======
 
+0.31.9 - (2026-10-12)
+----------------------
+* **EX-0 HECHO: banco de extracción con vocabulario real y línea base** (Gadea con Claude). `docs/robustness/regex/banco-ex0/`.
+  - **Banco:** 368 turnos de cliente de la ronda visible con Luna (nunca el oculto), con su conversación previa y la pregunta pendiente, etiquetados a mano: solo lo que el cliente AFIRMA. 342 válidos (diseño 200 / ciego 142, por diálogo); 136 con datos y **206 sin ninguno, para medir INVENTOS** (el eval-set de antes no los medía y salía en buena parte de los tests del regex).
+  - **Evaluador:** `run_extraction_eval --banco ex0 --modo regex|actual --grupo …`; cada caso arranca con lo ya dicho en su diálogo; acierto / equivocado / perdido / **inventado**. `conversational_core.sembrar_senales_del_turno` (la siembra de las señales de Jev, sacada de `_routing_phase` sin cambiar nada) la usan producción y el evaluador. Tests: `tests/test_banco_ex0.py`.
+  - **Línea base:** regex solo 75,5 % de datos acertados, inventa en 15,8 % de los casos; **producción (regex + Jev + redes LLM) 81,4 %, pero inventa en 22,8 %**: el relleno LLM saca datos del HISTORIAL ("gracias" → buceo certificado; "Muchas gracias!" → colombiano; "Para el sábado" → sale de Cartagena). Meta de ex-4 en el ciego: acierto ≥ 81,4 % e inventos claramente < 15,8 %, extracción p50 ≤ 0,9 s.
+
 0.31.8 - (2026-10-09)
 ----------------------
 * **s4-28 casos 2 y 3 + un fallo del flujo de reserva: `ORIGEN_DEL_CLIENTE` y `GRUPO_POR_EDADES` PROMOCIONADOS** (Gonzalo). Evidencia: `docs/robustness/s4-28/README.md`.
