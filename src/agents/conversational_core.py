@@ -2013,6 +2013,10 @@ def _recommend_inferred_minicourse(intent, state: ConversationState, message: st
     elegirlo. Solo la actividad principal y solo si aun no hay ninguna."""
     if not settings.recommend_inferred_minicourse or intent.activity != "minicourse" or state.detected_activity:
         return
+    if getattr(intent, "_actividad_elegida", False):
+        # ex-8: lo eligió el cliente según el extractor ("buceo para principiantes"); solo se recomienda el deducido.
+        state.suggested_activity = None
+        return
     if _EXPLICIT_MINICOURSE_NAME_RE.search(message):
         state.suggested_activity = None
         return
@@ -2078,11 +2082,18 @@ def _lugar_por_jev(intent, state: ConversationState) -> None:
 
 
 _CAMPOS_LUGAR = ("location", "island", "hotel")
+_CAMPOS_ACTIVIDAD = ("activity", "service_id", "is_colombian")
 
 
 def campos_del_extractor() -> tuple[str, ...]:
-    """Campos que decide el extractor "LLM primero" (fase EX) en vez del regex, según sus flags. ex-5: la ubicación."""
-    return _CAMPOS_LUGAR if settings.extraccion_llm_ubicacion else ()
+    """Campos que decide el extractor "LLM primero" (fase EX) en vez del regex, según sus flags. ex-5: la ubicación;
+    ex-8: la actividad (con su servicio) y la nacionalidad."""
+    campos: tuple[str, ...] = ()
+    if settings.extraccion_llm_ubicacion:
+        campos += _CAMPOS_LUGAR
+    if settings.extraccion_llm_actividad:
+        campos += _CAMPOS_ACTIVIDAD
+    return campos
 
 
 def _pista_del_regex(intent) -> dict:
@@ -2107,25 +2118,49 @@ def _quitar_provisional(intent, pista: dict) -> None:
     intent.overwrite = [f for f in intent.overwrite if f not in campos_del_extractor()]
 
 
-async def _ubicacion_del_extractor(intent, state: ConversationState, message: str, pista: dict) -> None:
-    """ex-5: la ubicación del turno es la del extractor (con cita comprobada que nombra un lugar). Si se aloja en las
-    islas, el hotel y la isla que leyó el regex (lista cerrada) se conservan para la recogida. Si el cliente da OTRO
-    origen que el guardado, se confirma como cualquier corrección. Si la llamada falló, lo de hoy."""
+def _pasa_la_puerta_de_hoy(state: ConversationState, campo: str) -> bool:
+    """Si el extractor falla, lo del regex vale con la puerta de siempre: en un turno con pregunta (u3-4) solo si Jev dice
+    que el cliente lo afirma; en cualquier turno, nunca si Jev dice que NO lo afirma."""
+    afirma = (getattr(state, "_answer_affirms", None) or {}).get(campo)
+    return not ((_has_pending_answer(state) and afirma is not True) or _jev_says_not_affirmed(state, campo))
+
+
+async def _aplicar_extractor(intent, state: ConversationState, message: str, pista: dict) -> None:
+    """Fase EX: los campos de los dominios encendidos los pone el extractor "LLM primero" (cita comprobada), en vez de
+    lo provisional del regex. Va ANTES de las reglas que trabajan sobre el intent (reparto, cert-o-curso, recomendar el
+    minicurso), para que vean el valor final. Si la llamada falla, lo de hoy con su puerta, campo a campo."""
     datos = await datos_del_extractor(state, message)
     _quitar_provisional(intent, pista)
     if datos is None:
-        # La llamada falló: lo de hoy, con su puerta. En un turno con pregunta (u3-4) el dato del regex solo vale si
-        # Jev dice que el cliente lo afirma; en cualquier turno, nunca si Jev dice que NO lo afirma.
-        afirma = (getattr(state, "_answer_affirms", None) or {}).get("location")
-        if (_has_pending_answer(state) and afirma is not True) or _jev_says_not_affirmed(state, "location"):
-            logger.info(f"[EXTRACT][EX5] el extractor falló y la puerta no deja la pista del regex: {pista!r}")
-            return
-        for campo, valor in pista.items():
-            setattr(intent, campo, valor)
-            if campo not in intent.detected_fields:
-                intent.detected_fields.append(campo)
-        _lugar_por_jev(intent, state)
+        for dominio, campo_puerta in ((_CAMPOS_LUGAR, "location"), (_CAMPOS_ACTIVIDAD, None)):
+            for campo in dominio:
+                if campo not in pista or campo not in campos_del_extractor():
+                    continue
+                if not _pasa_la_puerta_de_hoy(state, campo_puerta or ("is_colombian" if campo == "is_colombian"
+                                                                     else "activity")):
+                    logger.info(f"[EXTRACT][EX] el extractor falló y la puerta no deja {campo}={pista[campo]!r}")
+                    continue
+                guardado = _known_field_values(state).get(campo)
+                if campo in _CORRECTABLE_FIELDS and guardado not in (None, [], {}) and guardado != pista[campo]:
+                    # Como hoy: lo que contradice lo guardado se confirma (o se acepta con una señal de corrección).
+                    _route_contradictions(state, message, intent, {campo: pista[campo]})
+                    continue
+                setattr(intent, campo, pista[campo])
+                if campo != "service_id" and campo not in intent.detected_fields:
+                    intent.detected_fields.append(campo)
+        if settings.extraccion_llm_ubicacion and intent.location:
+            _lugar_por_jev(intent, state)
         return
+    if settings.extraccion_llm_ubicacion:
+        _poner_ubicacion(intent, state, message, datos, pista)
+    if settings.extraccion_llm_actividad:
+        _poner_actividad(intent, datos, pista)
+        _poner_nacionalidad(intent, state, message, datos)
+
+
+def _poner_ubicacion(intent, state: ConversationState, message: str, datos: dict, pista: dict) -> None:
+    """ex-5: la ubicación es la del extractor (cita que nombra un lugar). Si se aloja en las islas, el hotel y la isla del
+    regex (lista cerrada) se conservan para la recogida. Un origen distinto del guardado se confirma."""
     lugar = datos.get("location")
     guardado = state.location or state.detected_location
     if not lugar:
@@ -2150,6 +2185,51 @@ async def _ubicacion_del_extractor(intent, state: ConversationState, message: st
     if lugar == "island":
         _conservar_hotel(intent, pista)
     logger.info(f"[EXTRACT][EX5] location={lugar!r} (regex: {pista.get('location')!r}, guardado: {guardado!r})")
+
+
+def _poner_actividad(intent, datos: dict, pista: dict) -> None:
+    """ex-8: la actividad es la que el cliente ELIGE (extractor). La última elegida manda, como hoy. El servicio sale
+    del registro. Si no eligió ninguna pero el regex DEDUJO el minicurso ("es mi primera vez"), se pasa solo para que la
+    regla de u3-5 (`_recommend_inferred_minicourse`) lo convierta en recomendación; si no se convierte, no se guarda
+    (decisión de Gadea, 27-sep: se recomienda, lo confirma el cliente)."""
+    actividad = datos.get("activity")
+    if actividad and dom.by_id(actividad) is not None:
+        intent.activity = actividad
+        intent.service_id = dom.base_service_id(actividad)
+        intent._actividad_elegida = True
+        if "activity" not in intent.detected_fields:
+            intent.detected_fields.append("activity")
+        logger.info(f"[EXTRACT][EX8] activity={actividad!r} (regex: {pista.get('activity')!r})")
+        return
+    if pista.get("activity"):
+        logger.info(f"[EXTRACT][EX8] el regex leía activity={pista['activity']!r}; el cliente no la elige")
+    if pista.get("activity") == "minicourse":
+        intent.activity = "minicourse"
+        intent._minicurso_deducido = True
+
+
+def _poner_nacionalidad(intent, state: ConversationState, message: str, datos: dict) -> None:
+    """ex-8: la nacionalidad es la del extractor (nunca deducida del idioma). Grupo mezclado: todo en USD (decisión de
+    Gadea, 14-sep). Un valor distinto del guardado se confirma."""
+    if datos.get("mixed_nationality") is True:
+        intent.is_colombian = False
+        for listado in (intent.detected_fields, intent.overwrite):
+            if "is_colombian" not in listado:
+                listado.append("is_colombian")
+        state.mixed_nationality_notice = True
+        logger.info("[EXTRACT][EX8] grupo con nacionalidades mezcladas: USD")
+        return
+    nacional = datos.get("is_colombian")
+    if nacional is None:
+        return
+    guardado = state.is_colombian
+    if guardado is not None and guardado != nacional:
+        logger.info(f"[EXTRACT][EX8] el cliente cambia la nacionalidad {guardado!r} -> {nacional!r}: se confirma")
+        _route_contradictions(state, message, intent, {"is_colombian": nacional})
+        return
+    intent.is_colombian = nacional
+    if "is_colombian" not in intent.detected_fields:
+        intent.detected_fields.append("is_colombian")
 
 
 def _asks_for_a_course(message: str) -> bool:
@@ -2476,7 +2556,9 @@ async def _understand(state: ConversationState, message: str, *, answered_pendin
             question_turn_fields = [f for f in question_turn_fields if f not in campos_del_extractor()]
     # Grupo con nacionalidades mixtas (hallazgo A, owner: que lo lea el LLM): viaja en la
     # peticion que el turno ya hace, solo si el mensaje habla de los dos lados del grupo.
-    extra_fields = ("mixed_nationality",) if mentions_writer_and_others(message) else ()
+    extra_fields = (
+        ("mixed_nationality",) if mentions_writer_and_others(message) and not settings.extraccion_llm_actividad else ()
+    )
     # Con la ubicacion o el total pendientes, la cita de cada booleano (hallazgo B).
     if _asks_for_evidence(state.core_pending_slot):
         extra_fields += ("evidence",)
@@ -2908,13 +2990,17 @@ async def _understand(state: ConversationState, message: str, *, answered_pendin
     # esta completo (regex + veto + relleno) y aun no se ha escrito al estado.
     # Ponerla aqui la hace valida para cualquier fuente del reparto, presente o
     # futura, en vez de repetir la comprobacion en cada una.
+    if campos_del_extractor():
+        await _aplicar_extractor(intent, state, message, pista_lugar)
     supervisor.enforce_group_allocation_consistency(intent, state, message)
     _take_undecided_members(intent, state)
     _flag_cert_or_course(intent, state, message)
     _recommend_inferred_minicourse(intent, state, message)
-    if campos_del_extractor():
-        await _ubicacion_del_extractor(intent, state, message, pista_lugar)
-    else:
+    if getattr(intent, "_minicurso_deducido", False) and intent.activity == "minicourse":
+        # ex-8: deducido y no convertido en recomendación (ya había actividad, grupo…): no se guarda como elegido.
+        intent.activity = intent.service_id = None
+        intent.detected_fields = [f for f in intent.detected_fields if f != "activity"]
+    if not settings.extraccion_llm_ubicacion:
         _lugar_por_jev(intent, state)
     supervisor._apply_detected_intent(intent, state, message)
 

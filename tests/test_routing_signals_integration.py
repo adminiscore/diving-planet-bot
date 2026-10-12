@@ -644,16 +644,36 @@ async def test_group_size_not_overwritten_without_correction_cue():
 
 
 @pytest.mark.asyncio
-async def test_mixed_nationality_gets_advisor_explanation_end_to_end():
+async def test_mixed_nationality_gets_advisor_explanation_end_to_end(monkeypatch):
     """Grupo con nacionalidades mixtas -> explicacion de pago en USD + botones asesor/menu.
     Hallazgo A (2026-09-15): lo lee el LLM (`mixed_nationality`, en la peticion que el turno
     ya hace) en vez de una lista de fraseos que no conocia gentilicios ("mi amigo es aleman")
     y marcaba mixto "mi amigo es colombiano y yo tambien". Un solo camino, el nucleo, para la
-    cascada y el grafo."""
+    cascada y el grafo. Camino de antes de ex-8 (con ex-8 lo dice el extractor: test de abajo)."""
+    from src.config import settings as _flags
+
+    monkeypatch.setattr(_flags, "extraccion_llm_actividad", False)
     state = make_state()
     with patch("src.agents.supervisor.detect_routing_signals", new=AsyncMock(return_value={})),          patch("src.agents.conversational_core.extract_and_verify",
                new=AsyncMock(side_effect=lambda *a, **k: ({"mixed_nationality": True}, {}))),          patch("src.agents.conversational_core.fill_gaps",
                new=AsyncMock(side_effect=lambda *a, **k: {"mixed_nationality": True})):
+        resp = await route_message(state, "somos colombianos pero mi amigo es aleman")
+    assert "nacionalidades mixtas" in resp.lower()
+    assert state.is_colombian is False
+    assert state.quick_replies
+
+
+@pytest.mark.asyncio
+async def test_mixed_nationality_gets_advisor_explanation_end_to_end_with_ex8(monkeypatch):
+    """ex-8: el grupo mezclado lo dice el extractor "LLM primero" (`mixed_nationality`) y la explicación de pago en USD
+    con los botones de asesor/menú llega igual que antes."""
+    from src.agents import conversational_core as _core
+    from src.config import settings as _flags
+
+    monkeypatch.setattr(_flags, "extraccion_llm_actividad", True)
+    monkeypatch.setattr(_core, "datos_del_extractor", AsyncMock(return_value={"mixed_nationality": True}))
+    state = make_state()
+    with patch("src.agents.supervisor.detect_routing_signals", new=AsyncMock(return_value={})),          patch("src.agents.conversational_core.extract_and_verify", new=AsyncMock(return_value=({}, {}))),          patch("src.agents.conversational_core.fill_gaps", new=AsyncMock(return_value={})):
         resp = await route_message(state, "somos colombianos pero mi amigo es aleman")
     assert "nacionalidades mixtas" in resp.lower()
     assert state.is_colombian is False

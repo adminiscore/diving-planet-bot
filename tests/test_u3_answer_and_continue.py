@@ -47,6 +47,8 @@ def _offline(monkeypatch):
     # Estos tests prueban el camino de u3-4 en el que la ubicación del REGEX se verifica con el LLM. Con ex-5
     # (`extraccion_llm_ubicacion`) la ubicación la decide el extractor (tests/test_ex5_ubicacion_extractor.py).
     monkeypatch.setattr(settings, "extraccion_llm_ubicacion", False)
+    # Igual con ex-8 (`extraccion_llm_actividad`): actividad y nacionalidad (tests/test_ex8_actividad_nacionalidad.py).
+    monkeypatch.setattr(settings, "extraccion_llm_actividad", False)
 
 
 @pytest.fixture

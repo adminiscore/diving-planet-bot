@@ -13,6 +13,15 @@ from src.agents import conversational_core as core
 from src.flows.state import ConversationState
 from src.prompts.booking import EVIDENCE_FIELDS, extraction_tool
 
+
+@pytest.fixture(autouse=True)
+def _camino_viejo_de_actividad(monkeypatch):
+    """Estos tests prueban el camino viejo (regex + veto/relleno). Con ex-8 (`extraccion_llm_actividad`) la actividad y
+    la nacionalidad las decide el extractor "LLM primero": tests/test_ex8_actividad_nacionalidad.py."""
+    from src.config import settings as _settings
+
+    monkeypatch.setattr(_settings, "extraccion_llm_actividad", False)
+
 LOC = core.SLOT_LOCATION
 
 

@@ -20,6 +20,15 @@ from src.agents import supervisor
 from src.flows.state import ConversationState
 
 
+@pytest.fixture(autouse=True)
+def _camino_viejo_de_actividad(monkeypatch):
+    """Estos tests prueban el camino viejo (regex + veto/relleno). Con ex-8 (`extraccion_llm_actividad`) la actividad y
+    la nacionalidad las decide el extractor "LLM primero": tests/test_ex8_actividad_nacionalidad.py."""
+    from src.config import settings as _settings
+
+    monkeypatch.setattr(_settings, "extraccion_llm_actividad", False)
+
+
 @pytest.mark.parametrize("message, people", [
     ("mi amigo tiene licencia, yo no", 2),
     ("soy certificado y mi hijo no", 2),              # quien escribe va en el verbo

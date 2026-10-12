@@ -461,7 +461,7 @@ async def run_ex0(modo: str, grupo: str, modelo: str | None = None) -> None:
         print(f"Tiempo por llamada: p50 {ts[len(ts) // 2]:.2f}s · p90 {ts[int(0.9 * len(ts))]:.2f}s · máx {ts[-1]:.2f}s")
     from src.config import settings
 
-    flags = [f for f in ("extraccion_llm_ubicacion",) if getattr(settings, f, False)]
+    flags = [f for f in ("extraccion_llm_ubicacion", "extraccion_llm_actividad") if getattr(settings, f, False)]
     sufijo = (f"-{modelo.replace('/', '_')}" if modelo else "") + "".join(f"-{f}" for f in flags)
     salida = BANCO_EX0 / f"resultado-{modo}{sufijo}-{grupo}.json"
     salida.write_text(json.dumps({"modo": modo, "grupo": grupo, "casos": len(filas), "por_campo": por_campo,

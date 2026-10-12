@@ -23,6 +23,7 @@ import time
 from openai import AsyncOpenAI
 
 from src.config import settings
+from src.domain import activities as dom
 from src.llm_client import trace_openai
 from src.utils.text import strip_accents
 
@@ -30,8 +31,16 @@ logger = logging.getLogger("uvicorn.error")
 
 CAMPOS = ("activity", "is_certified", "group_size", "group_allocation", "location", "is_colombian",
           "last_dive_over_2_years")
-ACTIVIDADES = ("certified_diving", "minicourse", "snorkel", "padi_open_water", "padi_open_water_referral",
-               "padi_advanced", "padi_rescue", "padi_divemaster", "padi_specialty")
+# ex-8: la actividad que el cliente ELIGE sale del registro de actividades (fuente única; sin listas a mano). El
+# refresher (es parte del buceo certificado tras más de 2 años) y el acompañante (no es una actividad para uno mismo)
+# no se eligen aquí.
+ACTIVIDADES = tuple(a for a in dom.activity_ids() if a not in ("refresher", "companion"))
+# El reparto del grupo, con las actividades que se reparten de verdad entre personas.
+ACTIVIDADES_REPARTO = ("certified_diving", "minicourse", "snorkel", "padi_open_water", "padi_open_water_referral",
+                       "padi_advanced", "padi_rescue", "padi_divemaster", "padi_specialty")
+# Hechos del turno que no son campos del estado: el grupo mezclado (paga en USD) y "quiere bucear" (con la
+# certificación decide el buceo certificado, ver `extraer_turno`).
+EXTRAS = ("mixed_nationality", "quiere_bucear")
 # Respuestas cortas a la pregunta del bot ("no", "1", "sí"): la cita es el mensaje entero.
 _CITA_MIN_PALABRAS_SOLAS = 1
 
@@ -50,21 +59,42 @@ def _dato(tipo: dict, descripcion: str) -> dict:
 ESQUEMA = {
     "type": "object",
     "properties": {
+        # Primero: el modelo lo decide antes de pensar en la actividad (con la certificación, ver `extraer_turno`).
+        "quiere_bucear": _dato({"type": "boolean"},
+                               "true si muestra que quiere bucear (de aquí en adelante): pide o quiere coordinar, reservar o agendar "
+                               "inmersiones o buceos, pregunta sus precios o fechas, o contesta a una pregunta del bot "
+                               "sobre su plan de buceo. No hace falta que diga qué actividad."),
         "activity": _dato({"type": "string", "enum": list(ACTIVIDADES)}, "La actividad que el cliente ELIGE para sí."),
         "is_certified": _dato({"type": "boolean"}, "Si quien escribe (o su grupo) YA es buzo certificado."),
         "group_size": _dato({"type": "integer"}, "Cuántas personas van en total en el plan."),
-        "group_allocation": _dato({"type": "object", "properties": {a: {"type": ["integer", "null"]} for a in ACTIVIDADES},
-                                   "required": list(ACTIVIDADES), "additionalProperties": False},
+        "group_allocation": _dato({"type": "object",
+                                   "properties": {a: {"type": ["integer", "null"]} for a in ACTIVIDADES_REPARTO},
+                                   "required": list(ACTIVIDADES_REPARTO), "additionalProperties": False},
                                   "Cuántas personas hacen cada actividad, solo si el grupo se reparte entre VARIAS."),
         "location": _dato({"type": "string", "enum": ["cartagena", "island"]},
                           "Desde dónde SALE el cliente: 'cartagena' si sale de Cartagena; 'island' si ya está alojado "
                           "en las Islas del Rosario."),
         "is_colombian": _dato({"type": "boolean"}, "Si quien escribe es colombiano o residente en Colombia."),
         "last_dive_over_2_years": _dato({"type": "boolean"}, "Si su última inmersión fue hace MÁS de 2 años."),
+        "mixed_nationality": _dato({"type": "boolean"},
+                                   "true si el grupo mezcla colombianos (o residentes en Colombia) con extranjeros."),
     },
-    "required": list(CAMPOS),
+    "required": [*CAMPOS, *EXTRAS],
     "additionalProperties": False,
 }
+
+
+def _actividades(lang: str) -> str:
+    """Una línea por actividad elegible con su nombre del registro (fuente única). No se usa `for_whom`: el de
+    certified_diving dice que es "la opción por DEFECTO cuando alguien pide bucear sin más", lo contrario de la regla de
+    Gadea (14 y 27-sep: no suponer la actividad; recomendar). Corregirlo en el registro es de ex-9, cuando se retire el
+    camino viejo que lo usa."""
+    lineas = []
+    for a in ACTIVIDADES:
+        act = dom.by_id(a)
+        nombre = (act.label.get(lang) or act.label["es"]) if act else a
+        lineas.append(f"  · {a}: {nombre}")
+    return "\n".join(lineas)
 
 
 def _pistas_islas() -> str:
@@ -83,9 +113,12 @@ Reglas:
 - Lo que el cliente dice de OTRA persona que hace algo distinto ("él quiere hacer snorkel") va en group_allocation junto con lo que ya sabemos de quien escribe.
 - Usa la pregunta que el bot acaba de hacer solo para entender una respuesta corta ("no" o "no, hace poco buceé" a "¿han pasado más de 2 años?" = last_dive_over_2_years false; "1" a "¿cuántas personas?" = group_size 1). Nunca saques datos del texto del bot.
 - No repitas lo que ya sabemos salvo que el cliente lo cambie en este mensaje.
-- activity: certified_diving = salidas o paquetes de buceo para buzos certificados (fun dive); minicourse = probar el buceo por primera vez, bautismo, principiante sin certificación; snorkel; padi_open_water = sacarse la certificación, curso básico (o Open Water); padi_open_water_referral = terminar aquí un Open Water empezado en otro centro (referido); padi_advanced = HACER el curso avanzado (si dice que YA es Advanced, eso es is_certified true, no este curso). "Quiero bucear" a secas no elige actividad. Si dice que ya es buzo certificado (u Open Water, Advanced…) y quiere bucear o pide salidas o paquetes de buceo, activity = certified_diving e is_certified = true.
+- activity: la que el cliente ELIGE para sí. Elige cuando nombra o describe una actividad concreta como lo que quiere hacer, reservar o saber su precio, o cuando contesta a la pregunta del bot quedándose con una de las opciones que le ofrece. NO elige cuando habla de bucear en general sin decir cuál ("quiero bucear", "me gustaría un día de buceo", "quiero bucear con mi amigo", "es mi primera vez", "nunca he buceado") ni cuando pregunta qué opciones hay o si algo es posible para él (el bot recomendará). Pedir apuntarse a una actividad que nombra, aunque sea preguntando ("¿hay sitio en el minicurso del sábado?"), sí la elige. Nunca pongas una que tú deducirías para recomendarle. certified_diving: SOLO si nombra ese producto (buceo certificado, fun dives, salidas o inmersiones para buzos certificados, un paquete de N buceos); que un buzo certificado quiera bucear lo decide el bot con quiere_bucear e is_certified, no lo pongas tú en activity. minicourse: nombra el minicurso o el bautismo, o quiere PROBAR el buceo o el buceo para principiantes. padi_open_water: sacarse la certificación, el curso básico o el Open Water. padi_open_water_referral: terminar aquí un Open Water empezado en otro centro (referido). padi_advanced: HACER el curso avanzado (si dice que YA es Advanced, eso es is_certified true, no este curso). padi_course / padi_specialty: un curso PADI o una especialidad sin decir cuál. Actividades posibles (id: nombre):
+{actividades}
 - location: desde dónde sale. Si dice que está, estará, va o viene a Cartagena ("estoy en Cartagena", "vamos a Cartagena", "bucear en Cartagena", "estaremos visitando Cartagena") y no dice que se aloja en las islas → cartagena. Alojado en las islas, en un hotel de las islas o "sin ir de Cartagena" → island (nombrar las islas como el sitio donde se bucea no basta). Llegar mañana sin decir dónde, o preguntar por un hotel, por el punto de encuentro ("¿dónde es el punto de encuentro en Cartagena?") o por de dónde sale la lancha NO es su ubicación. La cita de location tiene que nombrar el lugar (Cartagena, las islas, un hotel).
-- is_colombian: colombiano o residente en Colombia (también si pide para sí el precio "para colombianos"). Un grupo con nacionalidades mezcladas → null.
+- is_certified: true solo si dice que tiene certificación o un nivel de buceo (buzo certificado, Open Water, Advanced…), él o su grupo; false si dice que no la tiene, que nunca ha buceado o que no tiene experiencia. Querer bucear no dice nada de la certificación.
+- quiere_bucear: true si quiere bucear o hacer inmersiones (lo dice, pide buceos, sus precios o una fecha para bucear) o contesta a una pregunta del bot sobre su plan de buceo; no hace falta que diga qué actividad. Preguntar si algo es posible ("¿puedo bucear si…?") o contar buceos que ya hizo no es querer bucear.
+- is_colombian: si dice que es colombiano, de una ciudad de Colombia o residente en Colombia (también si pide para sí el precio "para colombianos" o "en pesos por ser colombiano"). Nunca lo deduzcas del idioma en que escribe ni de su nombre. Si el grupo mezcla colombianos y extranjeros: mixed_nationality true e is_colombian null.
 - group_size: solo si dice CUÁNTAS personas van ("voy solo", "solo yo" = 1; "somos 3" = 3; "mi pareja y yo" = 2). Hablar en primera persona ("yo", "quiero") no dice el tamaño del grupo.
 - last_dive_over_2_years: true solo si su última inmersión fue hace MÁS de 2 años; "1,5 años", "el año pasado" o "hace poco" = false.
 - Si los datos están en partes distintas del mensaje, la cita puede ser varios trozos literales separados por " … ".
@@ -101,9 +134,12 @@ Rules:
 - What the customer says about ANOTHER person doing something different ("he wants to snorkel") goes into group_allocation together with what we already know about the writer.
 - Use the bot's last question only to understand a short answer ("no" or "no, I dove recently" to "has it been more than 2 years?" = last_dive_over_2_years false; "1" to "how many people?" = group_size 1). Never take facts from the bot's text.
 - Do not repeat what we already know unless the customer changes it in this message.
-- activity: certified_diving = dive trips or packages for certified divers (fun dives); minicourse = trying diving for the first time, discover scuba, beginner without certification; snorkel; padi_open_water = getting certified, basic course (Open Water); padi_open_water_referral = finishing here an Open Water started at another center (referral); padi_advanced = TAKING the advanced course (if they say they ARE Advanced, that is is_certified true, not this course). "I want to dive" alone does not choose an activity. If they say they are already a certified diver (or Open Water, Advanced…) and want to dive or ask for dive trips or packages, activity = certified_diving and is_certified = true.
+- activity: the one the customer CHOOSES for themselves. They choose when they name or describe a concrete activity as what they want to do, book or know the price of, or when they answer the bot's question by taking one of the options it offers. They do NOT choose when they talk about diving in general without saying which ("I want to dive", "I'd like a day of diving", "I want to dive with my friend", "it's my first time", "I've never dived") or when they ask what options there are or whether something is possible for them (the bot will recommend). Asking to join an activity they name, even as a question ("is there room in Saturday's mini course?"), does choose it. Never put one you would infer to recommend. certified_diving: ONLY if they name that product (certified diving, fun dives, trips or dives for certified divers, a package of N dives); a certified diver who wants to dive is decided by the bot from quiere_bucear and is_certified, do not put it in activity yourself. minicourse: they name the mini course or discover scuba, or want to TRY diving or beginner diving. padi_open_water: getting certified, the basic course or the Open Water. padi_open_water_referral: finishing here an Open Water started at another center (referral). padi_advanced: TAKING the advanced course (if they say they ARE Advanced, that is is_certified true, not this course). padi_course / padi_specialty: a PADI course or a specialty without saying which. Possible activities (id: name):
+{actividades}
 - location: where they depart from. If they say they are, will be, are going to or are visiting Cartagena ("I'm in Cartagena", "we'll be in Cartagena", "diving in Cartagena") and do not say they stay on the islands → cartagena. Staying on the islands or at an island hotel → island (naming the islands as the place where you dive is not enough). Arriving tomorrow without saying where, or asking about a hotel, the meeting point ("where is the meeting point in Cartagena?") or where the boat leaves from is NOT their location. The location quote must name the place (Cartagena, the islands, a hotel).
-- is_colombian: Colombian or resident of Colombia (also if they ask for themselves the price "for Colombians"). A group of mixed nationalities → null.
+- is_certified: true only if they say they have a certification or a diving level (certified diver, Open Water, Advanced…), themselves or their group; false if they say they don't have one, have never dived or have no experience. Wanting to dive says nothing about certification.
+- quiere_bucear: true if they want to dive or do dives (they say so, ask for dives, their prices or a date to dive) or answer a bot question about their diving plan; they need not say which activity. Asking whether something is possible ("can I dive if…?") or telling about dives already done is not wanting to dive.
+- is_colombian: if they say they are Colombian, from a Colombian city or a resident of Colombia (also if they ask for themselves the price "for Colombians"). Never infer it from the language they write in or from their name. If the group mixes Colombians and foreigners: mixed_nationality true and is_colombian null.
 - group_size: only if they say HOW MANY people go ("just me" = 1; "we are 3" = 3; "my partner and I" = 2). Speaking in first person ("I", "I want") does not give the group size.
 - last_dive_over_2_years: true only if their last dive was MORE than 2 years ago; "1.5 years", "last year" or "recently" = false.
 - If the facts are in different parts of the message, the quote may be several literal pieces separated by " … ".
@@ -171,7 +207,8 @@ async def extraer_turno(mensaje: str, *, history: list[dict] | None = None, sabi
     extraer_turno.ultimo_motivo = {}
     if not mensaje or not mensaje.strip():
         return {}
-    sistema = (SISTEMA_ES if lang == "es" else SISTEMA_EN).replace("{islas}", _pistas_islas())
+    sistema = (SISTEMA_ES if lang == "es" else SISTEMA_EN).replace("{islas}", _pistas_islas()).replace(
+        "{actividades}", _actividades(lang))
     modelo = modelo or settings.extractor_turno_model
     t0 = time.perf_counter()
     try:
@@ -196,7 +233,7 @@ async def extraer_turno(mensaje: str, *, history: list[dict] | None = None, sabi
         return None
     extraer_turno.ultimo_segundos = time.perf_counter() - t0
     salida, descartes = {}, {}
-    for campo in CAMPOS:
+    for campo in (*CAMPOS, *EXTRAS):
         d = datos.get(campo)
         if not isinstance(d, dict) or d.get("valor") in (None, "", [], {}):
             continue
@@ -212,8 +249,15 @@ async def extraer_turno(mensaje: str, *, history: list[dict] | None = None, sabi
             descartes[campo] = f"la cita no nombra un lugar: {cita!r}"
             continue
         salida[campo] = valor
-    # Regla del catálogo: el buceo certificado exige certificación.
-    if salida.get("activity") == "certified_diving" and "is_certified" not in salida:
+    # Regla del negocio (ex-8): un buzo certificado (lo dice ahora o ya se sabe) que quiere bucear y no elige otra cosa
+    # hace buceo certificado. La decide el código con dos hechos que el cliente afirma; el modelo, cuando la deducía,
+    # razonaba al revés ("bucear" ≈ "buceo certificado" → inventaba también la certificación).
+    quiere = salida.pop("quiere_bucear", None)
+    certificado = salida.get("is_certified", (sabido or {}).get("is_certified"))
+    if quiere is True and certificado is True and not salida.get("activity"):
+        salida["activity"] = "certified_diving"
+    # Regla del catálogo: el buceo certificado (nombrado: fun dives, paquetes de buceos) exige certificación.
+    if salida.get("activity") == "certified_diving" and "is_certified" not in salida and certificado is not True:
         salida["is_certified"] = True
     extraer_turno.ultimo_motivo = descartes
     if descartes:

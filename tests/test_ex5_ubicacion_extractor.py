@@ -76,6 +76,7 @@ async def test_si_el_extractor_falla_se_queda_lo_de_hoy(ex5):
 @pytest.mark.asyncio
 async def test_apagado_no_cambia_nada(monkeypatch):
     monkeypatch.setattr(settings, "extraccion_llm_ubicacion", False)
+    monkeypatch.setattr(settings, "extraccion_llm_actividad", False)
     llamada = AsyncMock(return_value={"location": "island"})
     monkeypatch.setattr(core, "datos_del_extractor", llamada)
     st = await _entender("desde cartagena")

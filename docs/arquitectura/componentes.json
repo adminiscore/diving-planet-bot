@@ -349,7 +349,8 @@
         "Fase EX: extractor_turno.extraer_turno (LLM primero, cita comprobada)"
       ],
       "interruptores": [
-        "extraccion_llm_ubicacion"
+        "extraccion_llm_ubicacion",
+        "extraccion_llm_actividad"
       ]
     },
     {
@@ -1166,6 +1167,11 @@
       "area": "Preguntas",
       "titulo": "Sabe qué plan nombra el cliente",
       "texto": "Si el cliente dice cuántas inmersiones quiere ('el precio de las 2 inmersiones') y sabemos desde dónde sale, Coral recibe el plan exacto del catálogo, en vez de confundirlo con un paquete que también trae 2 inmersiones."
+    },
+    "extraccion_llm_actividad": {
+      "area": "Reserva",
+      "titulo": "La actividad y la nacionalidad las entiende la IA (con cita)",
+      "texto": "Qué actividad elige el cliente y si es colombiano lo decide el extractor nuevo de la fase EX: solo lo que el cliente dice con sus palabras. Ya no se da por hecho el buceo certificado al leer 'bucear', ni la nacionalidad por el idioma."
     },
     "extraccion_llm_ubicacion": {
       "area": "Reserva",

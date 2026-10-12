@@ -585,6 +585,8 @@ async def test_gap_fill_logs_in_harvester_format(monkeypatch, caplog):
     from scripts.harvest_cutover_logs import parse_lines
 
     state = make_state("es")
+    # Camino de antes: con ex-8 la actividad ya no se pide al relleno (la decide el extractor).
+    monkeypatch.setattr(settings, "extraccion_llm_actividad", False)
     monkeypatch.setattr(core, "fill_gaps", AsyncMock(return_value={"activity": "snorkel"}))
     # Aislar el test a su propósito (formato de log del harvester): mockear el
     # routing LLM a {} — sin esto, `detect_routing_signals` (real, no mockeado)
