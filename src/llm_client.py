@@ -199,6 +199,18 @@ def tool_arguments(tool_call, tool: dict) -> dict:
         for value in spec.get("enum") or ():
             if isinstance(value, str):
                 owners.setdefault(value, []).append(name)
+    # Enum anidado (12-oct, ronda ex8-B: "hay algun problema de tiempo entre bucear y volar" -> `"sensitive_topic":
+    # {"weather_conditions": true}`, y `sensitive_response_for` reventaba con un dict: turno sin respuesta). Mismo fallo
+    # de forma: un campo de enum que trae un objeto con UN solo valor de su enum a true vuelve a ese valor; cualquier
+    # otro valor que no sea del enum se descarta (nunca llega un tipo que el llamador no espera).
+    for name, spec in properties.items():
+        enum = spec.get("enum")
+        value = args.get(name)
+        if not enum or not isinstance(value, (dict, list)):
+            continue
+        marcados = [k for k, v in value.items() if v is True and k in enum] if isinstance(value, dict) else []
+        args[name] = marcados[0] if len(marcados) == 1 else None
+        logger.info(f"[LLM_TOOL] enum anidado: {name}={value!r} -> {args[name]!r}")
     for key in [k for k in args if k not in properties]:
         fields = owners.get(key, [])
         if (

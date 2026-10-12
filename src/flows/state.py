@@ -213,6 +213,9 @@ class ConversationState:
     # u3-5 (decision de Gadea, 27-sep): actividad RECOMENDADA, no elegida. El minicurso deducido de
     # "es mi primera vez" se recomienda y lo confirma el cliente; hasta entonces no se guarda.
     suggested_activity: str | None = None
+    # ex-8 (ronda ex8-B): el cliente dijo que quiere bucear, en este turno o en uno anterior. Con la certificación (que
+    # suele llegar en otro turno: "quiero bucear" -> "soy certificado") decide el buceo certificado (extractor_turno).
+    quiere_bucear: bool = False
 
     # Nivel PADI nombrado sin decir si ya lo tienen o lo quieren sacar ("hola
     # somos 4 open water"): se pregunta antes de seguir (owner 2026-09-15).
