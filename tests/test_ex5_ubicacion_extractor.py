@@ -47,12 +47,23 @@ async def test_la_ubicacion_la_pone_el_extractor_y_conserva_el_hotel(ex5):
 
 
 @pytest.mark.asyncio
-async def test_un_origen_nuevo_del_cliente_sobrescribe(ex5):
+async def test_un_origen_nuevo_con_correccion_explicita_se_cambia(ex5):
     ex5({"location": "island"})
     st = ConversationState(conversation_id="ex5", language="es")
     st.location = st.detected_location = "cartagena"
-    st = await _entender("al final ya estaremos alojados en las islas", st)
+    st = await _entender("espera, en realidad ya estaremos alojados en las islas", st)
     assert st.location == "island"
+
+
+@pytest.mark.asyncio
+async def test_un_origen_nuevo_sin_correccion_se_confirma(ex5):
+    # Ronda ex5-B: "Ok, están en Isla Grande" (habla de la base) cambiaba Cartagena por las islas en silencio.
+    ex5({"location": "island"})
+    st = ConversationState(conversation_id="ex5", language="es")
+    st.location = st.detected_location = "cartagena"
+    st = await _entender("Ok, estan en isla grande", st)
+    assert st.location == "cartagena"
+    assert (st.pending_correction or {}).get("location") == "island"
 
 
 @pytest.mark.asyncio

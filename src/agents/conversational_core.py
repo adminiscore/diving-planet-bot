@@ -1839,8 +1839,7 @@ def _boolean_patch_is_anchored(
     answered_field = _pending_answer_field(pending_slot)
     if not answered_field:
         return True
-    answered = (getattr(intent, answered_field, None) is not None or patch.get(answered_field) is not None
-                or _contesta_con_pista(intent, answered_field))
+    answered = getattr(intent, answered_field, None) is not None or patch.get(answered_field) is not None
     return not answered
 
 
@@ -1857,8 +1856,7 @@ def _recheck_proposals(state: ConversationState, intent, answered_pending: bool,
     proposals = {f: v for f, v in disagreements.items() if f in recheck}
     pending = state.core_pending_slot
     answered_field = _pending_answer_field(pending)
-    answered = answered_pending or bool(answered_field and getattr(intent, answered_field, None) is not None) \
-        or _contesta_con_pista(intent, answered_field)
+    answered = answered_pending or bool(answered_field and getattr(intent, answered_field, None) is not None)
     if proposals and answered:
         logger.info(f"[CORE] verificacion de campos sabidos descartada (el turno contesto {pending!r}): {proposals}")
         return {}
@@ -1955,7 +1953,8 @@ def _regex_contradictions(state: ConversationState, message: str, intent) -> dic
     known = _known_field_values(state)
     contradicting = {
         f: getattr(intent, f) for f in _CORRECTABLE_FIELDS
-        if f in intent.detected_fields and known.get(f) not in (None, [], {})
+        if f not in campos_del_extractor()  # ex-5: lo decide el extractor al final
+        and f in intent.detected_fields and known.get(f) not in (None, [], {})
         and getattr(intent, f) not in (None, [], {}) and getattr(intent, f) != known[f]
     }
     for field in contradicting:
@@ -2086,32 +2085,25 @@ def campos_del_extractor() -> tuple[str, ...]:
     return _CAMPOS_LUGAR if settings.extraccion_llm_ubicacion else ()
 
 
-def _quitar_campos_del_extractor(intent) -> dict:
-    """Quita del intent del regex los campos que decide el extractor y los devuelve como pista."""
-    pista = {}
+def _pista_del_regex(intent) -> dict:
+    """Lo que leyó el regex en los campos que decide el extractor (una copia; el intent no se toca hasta el final)."""
+    return {c: getattr(intent, c) for c in campos_del_extractor() if getattr(intent, c, None) not in (None, "", [], {})}
+
+
+def _quitar_provisional(intent, pista: dict) -> None:
+    """Saca del intent lo provisional del regex (los campos del extractor) antes de poner lo del extractor."""
     for campo in campos_del_extractor():
-        valor = getattr(intent, campo, None)
-        if valor not in (None, "", [], {}):
-            pista[campo] = valor
-            setattr(intent, campo, None)
-    if pista:
-        intent.detected_fields = [f for f in intent.detected_fields if f not in pista]
-        intent.overwrite = [f for f in intent.overwrite if f not in pista]
-    # Las guardas que miran si el mensaje CONTESTA la pregunta pendiente (`_boolean_patch_is_anchored`,
-    # `_recheck_proposals`) siguen viendo esa respuesta aunque el campo ya no lo decida el regex.
-    intent._pista_extractor = pista
-    return pista
-
-
-def _contesta_con_pista(intent, campo: str | None) -> bool:
-    return bool(campo and (getattr(intent, "_pista_extractor", None) or {}).get(campo))
+        setattr(intent, campo, None)
+    intent.detected_fields = [f for f in intent.detected_fields if f not in campos_del_extractor()]
+    intent.overwrite = [f for f in intent.overwrite if f not in campos_del_extractor()]
 
 
 async def _ubicacion_del_extractor(intent, state: ConversationState, message: str, pista: dict) -> None:
     """ex-5: la ubicación del turno es la del extractor (con cita comprobada que nombra un lugar). Si se aloja en las
     islas, el hotel y la isla que leyó el regex (lista cerrada) se conservan para la recogida. Si el cliente da OTRO
-    origen que el guardado, se sobrescribe (lo ha dicho con todas las letras). Si la llamada falló, lo de hoy."""
+    origen que el guardado, se confirma como cualquier corrección. Si la llamada falló, lo de hoy."""
     datos = await datos_del_extractor(state, message)
+    _quitar_provisional(intent, pista)
     if datos is None:
         # La llamada falló: lo de hoy, con su puerta. En un turno con pregunta (u3-4) el dato del regex solo vale si
         # Jev dice que el cliente lo afirma; en cualquier turno, nunca si Jev dice que NO lo afirma.
@@ -2130,6 +2122,15 @@ async def _ubicacion_del_extractor(intent, state: ConversationState, message: st
         if pista.get("location"):
             logger.info(f"[EXTRACT][EX5] el regex leía location={pista['location']!r}; el cliente no lo afirma")
         return
+    guardado = state.location or state.detected_location
+    if guardado and guardado != lugar:
+        # Cambiar un origen ya guardado pasa por la confirmación de siempre (`_route_contradictions`): con una señal
+        # clara de corrección ("al final…", "en realidad…") se cambia; si no, "¿lo cambio?"; si Jev dice que el
+        # cliente no lo afirma, se queda. Ronda ex5-B: "Ok, están en Isla Grande" (la base, no el cliente) cambiaba
+        # Cartagena por las islas en silencio.
+        logger.info(f"[EXTRACT][EX5] el cliente cambia el origen {guardado!r} -> {lugar!r}: se confirma")
+        _route_contradictions(state, message, intent, {"location": lugar})
+        return
     intent.location = lugar
     nuevos = ["location"]
     if lugar == "island":
@@ -2140,9 +2141,6 @@ async def _ubicacion_del_extractor(intent, state: ConversationState, message: st
     for campo in nuevos:
         if campo not in intent.detected_fields:
             intent.detected_fields.append(campo)
-    guardado = state.location or state.detected_location
-    if guardado and guardado != lugar and "location" not in intent.overwrite:
-        intent.overwrite.append("location")
     logger.info(f"[EXTRACT][EX5] location={lugar!r} (regex: {pista.get('location')!r}, guardado: {guardado!r})")
 
 
@@ -2410,10 +2408,10 @@ async def _understand(state: ConversationState, message: str, *, answered_pendin
 
     intent = _detector.detect(message, state)
     # ex-5 (fase EX, flag `extraccion_llm_ubicacion`): los dominios que entiende el extractor "LLM primero" no los
-    # decide el regex. Lo que leyó queda como PISTA (hotel e isla de la lista cerrada) y el campo sale del turno: ni
-    # contradicciones, ni veto, ni relleno, ni re-comprobación lo vuelven a pedir. Al final lo pone el extractor
-    # (`_ubicacion_del_extractor`), con la cita comprobada en el mensaje.
-    pista_lugar = _quitar_campos_del_extractor(intent)
+    # decide el regex. Lo que leyó se queda en el intent como PROVISIONAL (las guardas que miran si el mensaje
+    # CONTESTA la pregunta pendiente lo siguen viendo, como hoy), pero ni dispara contradicciones, ni va al veto, al
+    # relleno o a la re-comprobación. Al final se sustituye por lo del extractor (`_ubicacion_del_extractor`).
+    pista_lugar = _pista_del_regex(intent)
     # u3-4: turno con pregunta (solo con el flag: nadie lanza la respuesta sin él).
     question_turn_fields = None
     if _has_pending_answer(state):

@@ -37,7 +37,7 @@
    "acierto": 16,
    "equivocado": 0,
    "perdido": 0,
-   "inventado": 8
+   "inventado": 5
   },
   "last_dive_over_2_years": {
    "acierto": 5,
@@ -50,9 +50,9 @@
   "acierto": 102,
   "equivocado": 8,
   "perdido": 9,
-  "inventado": 49
+  "inventado": 46
  },
- "casos_con_invento": 40,
+ "casos_con_invento": 37,
  "excluidos": [],
  "comparable": true,
  "filas": [
@@ -1444,11 +1444,15 @@
    "message": "perfecto, envienme el resumen final",
    "slot": null,
    "esperado": {},
-   "producido": {},
+   "producido": {
+    "is_certified": false
+   },
    "acierto": [],
    "equivocado": [],
    "perdido": [],
-   "inventado": []
+   "inventado": [
+    "is_certified"
+   ]
   },
   {
    "id": "ex0-grupo-cambia-dos-veces-t1",
@@ -1498,7 +1502,6 @@
     "group_size": 3
    },
    "producido": {
-    "is_certified": false,
     "group_size": 3
    },
    "acierto": [
@@ -1506,9 +1509,7 @@
    ],
    "equivocado": [],
    "perdido": [],
-   "inventado": [
-    "is_certified"
-   ]
+   "inventado": []
   },
   {
    "id": "ex0-grupo-cambia-dos-veces-t4",
@@ -1730,7 +1731,7 @@
    "producido": {
     "group_size": 1,
     "group_allocation": {
-     "undecided": 1
+     "snorkel": 1
     }
    },
    "acierto": [
@@ -2417,15 +2418,11 @@
    "message": "Considerando el 10%",
    "slot": "qty",
    "esperado": {},
-   "producido": {
-    "is_colombian": false
-   },
+   "producido": {},
    "acierto": [],
    "equivocado": [],
    "perdido": [],
-   "inventado": [
-    "is_colombian"
-   ]
+   "inventado": []
   },
   {
    "id": "ex0-premisa-falsa-lunes-t1",
@@ -2681,17 +2678,14 @@
     "location": "cartagena"
    },
    "producido": {
-    "location": "cartagena",
-    "is_colombian": false
+    "location": "cartagena"
    },
    "acierto": [
     "location"
    ],
    "equivocado": [],
    "perdido": [],
-   "inventado": [
-    "is_colombian"
-   ]
+   "inventado": []
   },
   {
    "id": "ex0-reserva-completa-saludo-a-pago-t5",
@@ -2802,17 +2796,14 @@
     "location": "cartagena"
    },
    "producido": {
-    "location": "cartagena",
-    "is_colombian": false
+    "location": "cartagena"
    },
    "acierto": [
     "location"
    ],
    "equivocado": [],
    "perdido": [],
-   "inventado": [
-    "is_colombian"
-   ]
+   "inventado": []
   },
   {
    "id": "ex0-reserva-ingles-t4",
