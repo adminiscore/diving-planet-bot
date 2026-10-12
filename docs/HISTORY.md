@@ -1,6 +1,13 @@
 History
 =======
 
+0.31.13 - (2026-10-12)
+----------------------
+* **EX-1 HECHO: borrados los atajos de texto fijo APAGADOS del RAG** (Álvaro con Claude, en paralelo a ex-8 de Gadea; sin conducta nueva, sin ronda). Los 5 atajos que contestaban con texto fijo cuando casaba una palabra (precio genérico, precio de un servicio, paquete multi-día, coste del refresher y comida), apagados desde `RAG_V2`/`S4_FIXES` porque el catálogo entero va al contexto del RAG: código muerto.
+  - Fuera de `rag_agent.py` sus 8 grupos de patrones (28: `FOOD_QUERY_PATTERN`, `DIETARY_QUERY_PATTERN`, `_FOOD_HIJACK_GUARD`, `_PRICE_QUESTION`, `_PRICE_SPECIFIC`, `_PRICE_SINGLE_SERVICE_PATTERNS`, `_PRICE_NON_CATALOG_RE`, `_REFRESHER_COST_QUESTION_RE`), sus funciones y lo que solo usaban ellas (cachés de FAQs y políticas): 1.678 → 1.230 líneas. Se quedan los atajos ACTIVOS (resumen de "¿qué ofrecen para bucear?" con su frase de seguridad, aclaración de un lugar ambiguo): son ex-3.
+  - Comprobado: inventario de regex 802 → 774 patrones y desaparece la categoría "atajo apagado" (`scripts/inventario_regex.py`); el banco ex0 sin LLM (342 turnos) da exactamente lo mismo antes y después; 65 tests del camino antiguo retirados (los que llamaban a esas funciones); el que fijaba que un atajo no gasta LLM ni juez ahora usa el atajo activo ("¿qué ofrecen para bucear?"). Suite 2.972 verde, ruff limpio.
+  - Queda resuelta la decisión pendiente del 16-jul ("lista de exclusión o de permitidos" para `_canonical_price_overview_answer`): el atajo ya no existe.
+
 0.31.12 - (2026-10-12)
 ----------------------
 * **EX-5 CERRADO: `EXTRACCION_LLM_UBICACION` PROMOCIONADO (decisión de Gadea con los resultados de 0.31.11)** (Gadea con Claude). La latencia de los turnos de reserva se vigila en la próxima ronda (A de ex-6, misma franja que su B).

@@ -9,7 +9,6 @@ Los tamanos estaban copiados en el detector, el nucleo y el RAG, y el RAG leia
 import pytest
 
 from src.agents import conversational_core as core
-from src.agents import rag_agent
 from src.agents.intent_detector import detect_cert_day_count, detect_cert_dive_count, dive_counts_in
 from src.domain import activities as dom
 from src.flows.state import ConversationState
@@ -43,22 +42,6 @@ def test_dive_counts_in(text, counts):
 def test_two_packages_named_is_not_a_choice():
     assert detect_cert_dive_count("no se si 4 o 5 inmersiones") is None
     assert detect_cert_day_count("paquete de 5 dias") is None   # no hay paquete de 5 dias
-
-
-@pytest.mark.parametrize("query, service", [
-    ("cuánto cuesta el paquete de 4 días?", "9_dives_4_days"),       # antes: el de 4 inmersiones
-    ("cuánto cuesta el paquete de 3 días?", "7_dives_3_days"),
-    ("how much is a 4-day dive package?", "9_dives_4_days"),
-    ("cuánto cuesta el paquete de cinco inmersiones?", "5_dives_2_days"),
-    ("precio de 9 buceos en 4 días", "9_dives_4_days"),
-    ("cuánto cuesta el paquete de 4 inmersiones en 2 días?", "4_dives_2_days"),
-    ("cuánto cuesta el paquete de 2 días?", None),                   # 4 o 5 inmersiones
-    ("cuánto cuesta el plan de 5 días?", None),                      # antes: el de 5 inmersiones
-    ("cuánto cuesta el paquete de 4 o 5 inmersiones?", None),
-    ("cuánto cuestan 2 inmersiones?", None),                         # de un dia: otro handler
-])
-def test_price_package_service(query, service):
-    assert rag_agent._price_package_service(query) == service
 
 
 @pytest.mark.parametrize("bot_message, dives", [

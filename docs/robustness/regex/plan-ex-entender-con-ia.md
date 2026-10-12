@@ -57,7 +57,7 @@ leer la salida del revisor (2).
 - **Hecho cuando:** banco ≥ 280 casos etiquetados (Gadea resuelve las dudas de negocio), línea base de los 3 modos
   guardada en `docs/robustness/regex/`.
 
-### ex-1 · Borrar los atajos apagados (sin riesgo)
+### ex-1 · Borrar los atajos apagados (sin riesgo) — ✅ HECHO 12-oct (Álvaro, HISTORY 0.31.13)
 - 28 patrones de respuestas fijas de precio, comida y refresher en `rag_agent.py`, apagados con `RAG_V2`/`S4_FIXES`
   (código muerto), y sus tests de "camino antiguo". Es parte del punto 1 de s4-25.
 - **Hecho cuando:** suite verde y foto antes/después sin LLM igual en los mensajes del eval-set. Sin ronda.

@@ -41,6 +41,38 @@ PRE (escritas ya por Luna) tumba 42 frente a 13, casi todo verdades (HISTORY 0.3
 **C. Pendientes de antes:** el criterio del Open Water en `manual-duracion-curso` ✅ (FAQ curada nueva: "sacarse la
 certificación" = Open Water, o el Referido; el Scuba Diver es la parcial). **DeepSeek: FUERA DEL PLAN** (Gadea, 9-oct).
 
+### ▶️ 12-oct noche (Álvaro con Claude), EN PARALELO a ex-8 de Gadea: ex-1 HECHO (sin subir); ex-6 PREPARADO (rama local)
+
+**Estado.** PRE sirve `feature/pre_gadea` @ `31ae492` con ex-8 encendido para su mini-ronda B (Gadea, sesión desatendida).
+**Nadie sube a una rama `feature/pre_*` hasta que Gadea cierre ex-8:** un push despliega PRE y le rompe la ronda. Lo de
+esta sesión está en ramas de Álvaro que NO despliegan:
+- `feature/ex1_alvaro` (sobre `31ae492`): **ex-1 hecho** (HISTORY 0.31.13). Sin conducta nueva; se integra tal cual.
+- `feature/ex6_alvaro` (sobre `4a5b268`, ANTES de ex-8): **ex-6 con su escalón 0, sin mini-rondas.** Toca los mismos
+  ficheros que ex-8 (`extractor_turno.py`, `conversational_core.py`, `config.py`): hay que rehacerlo ENCIMA de ex-8.
+
+| Qué | Resultado | Dónde |
+|---|---|---|
+| ex-1: borrar los atajos apagados del RAG | 5 atajos fuera, 28 patrones, −448 líneas; inventario 802 → 774; banco ex0 sin LLM idéntico (342 turnos); 65 tests del camino antiguo retirados | HISTORY 0.31.13, `feature/ex1_alvaro` |
+| ex-6: la certificación la decide el extractor (`EXTRACCION_LLM_CERTIFICACION`, apagado) | extractor (diseño, 2 pasadas): is_certified 16/20 + 4 inventos → 19/20 + 0; ciego: inventos de certificación 6 → 1. Turno de producción (2 pasadas): certificación inventada 11 → 1, última inmersión 5/6 → 6/6 | `feature/ex6_alvaro`, `docs/robustness/regex/banco-ex0/ex6/` |
+
+**Dos hallazgos de ex-6 para quien lo rehaga:**
+- **El relleno viejo "rellena algo".** En mensajes sin datos ("May 3rd", "me interesa, cómo lo organizamos") el relleno
+  (`extract_and_verify` con historial) devuelve algún campo: con la certificación entre sus huecos inventa "certificado";
+  sin ella, "no colombiano" (5 → 7-11 casos). Con ex-8 la nacionalidad sale del relleno, así que este efecto debería
+  desaparecer: **medir ex-6 después de ex-8.**
+- La regla de certificación del prompt de ex-6 bajó la ACTIVIDAD del extractor 2 de 22 en el ciego (con el prompt de
+  actividad de antes de ex-8). Al rehacerlo sobre el prompt nuevo de ex-8, mirar la actividad en el banco.
+
+**Siguiente (en orden):**
+1. Gadea cierra ex-8 (promocionar o revertir).
+2. Integrar `feature/pre_gadea` y `feature/ex1_alvaro` en `feature/pre_alvaro`.
+3. Rehacer ex-6 sobre ex-8: escalón 0 (gratis salvo ~1 $ de OpenAI, ~1 h) y mini-ronda A/B de las 54 conversaciones
+   visibles donde importa la certificación (criterio fijado antes de medir: un turno del cliente con la certificación o
+   la última inmersión etiquetada, vocabulario de certificación, o producción que la lee; lista en
+   `docs/robustness/regex/banco-ex0/ex6/dialogos-mini-ronda.txt` de la rama `feature/ex6_alvaro`), ~4-6 $.
+4. ex-2 y ex-3: preparación en local; sus rondas, con PRE libre.
+5. ex-7.
+
 ### ▶️ RETOMAR AQUÍ — 12-oct (Gadea con Claude): fase EX — ex-0, ex-4 y ex-5 HECHOS (ex-5 promocionado); siguiente ex-6
 
 **Estado.** PRE sirve `feature/pre_gadea` con `EXTRACCION_LLM_UBICACION` **encendido (promocionado, decisión de Gadea)**.

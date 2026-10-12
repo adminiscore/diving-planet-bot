@@ -13,7 +13,6 @@ from pathlib import Path
 import pytest
 
 from src.agents import conversational_core as core
-from src.agents import rag_agent
 from src.domain import activities as dom
 from src.flows.catalog import SERVICES
 from src.flows.state import ConversationState
@@ -74,18 +73,6 @@ def test_the_closing_note_is_empty_when_the_refresher_was_not_wanted():
     state = _state()
     state.refresher_interested = False
     assert core._refresher_note(state) == ""
-
-
-@pytest.mark.parametrize(("lang", "question"), [
-    ("es", "el refresher tiene costo adicional?"),
-    ("en", "does the refresher cost extra?"),
-])
-def test_rag_answer_gives_both_catalog_prices(lang, question):
-    answer = rag_agent._canonical_refresher_cost_answer(question, lang)
-    assert answer
-    for location in dom.LOCATIONS:
-        assert _cop(_service(location)["price_cop"]) in answer
-    assert not any(claim in answer.lower() for claim in _FREE_CLAIMS)
 
 
 @pytest.mark.parametrize("lang", ["es", "en"])

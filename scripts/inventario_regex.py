@@ -19,7 +19,6 @@ LITERAL = re.compile(r"""(?<![A-Za-z0-9_])[rR][bB]?(?:'''|\"\"\"|'|")""")
 
 ENTENDER = "entender al cliente"
 ATAJO_ON = "atajo de texto fijo (activo)"
-ATAJO_OFF = "atajo de texto fijo (APAGADO: código muerto con RAG_V2/S4_FIXES)"
 GUARDA = "guarda sobre la respuesta del bot"
 LLM = "leer la salida de un LLM"
 FORMATO = "formato y datos internos"
@@ -37,9 +36,6 @@ REGLAS = [
     ("grounding_check.py", "frases", LLM),
     ("grounding_check.py", "*", GUARDA),
     ("vector_store.py", "*", ENTENDER),  # TOPIC_PATTERNS: temas de la pregunta para la búsqueda
-    ("rag_agent.py", ("FOOD_QUERY_PATTERN", "DIETARY_QUERY_PATTERN", "_FOOD_HIJACK_GUARD", "_PRICE_QUESTION",
-                      "_PRICE_SPECIFIC", "_PRICE_SINGLE_SERVICE_PATTERNS", "_PRICE_NON_CATALOG_RE",
-                      "_REFRESHER_COST_QUESTION_RE"), ATAJO_OFF),
     ("rag_agent.py", ("_OVERVIEW_PHRASE", "_OVERVIEW_BARE_WORD_RE", "_OVERVIEW_DIVING_WORD", "_OVERVIEW_EXCLUDE"), ATAJO_ON),
     ("rag_agent.py", "*", ENTENDER),
     ("supervisor.py", ("_ALCOHOL_BEFORE_DIVING_RE", "_ALLERGY_WORD_RE", "_FOOD_ALLERGEN_RE", "_AI_IDENTITY_RE",

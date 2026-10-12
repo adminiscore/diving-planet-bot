@@ -191,8 +191,6 @@ async def test_supervisor_escalates_sensitive_message_before_rag(monkeypatch):
     assert "staff calificado" in response
 
 
-
-
 @pytest.mark.asyncio
 async def test_rag_low_confidence_returns_fallback_without_extra_context(monkeypatch):
     async def fake_search(query, lang="es"):
@@ -599,145 +597,6 @@ async def test_rag_falls_back_when_answer_has_ungrounded_price(monkeypatch):
     assert "asesor" in response.lower()
 
 
-class TestCanonicalPriceNamedServices:
-    """Hallazgo en vivo 2026-08-26 (batería sintética contra PRE, Grupo 5):
-    una pregunta de precio "en frío" (sin contexto de reserva) que nombra un
-    servicio del catálogo fallaba el grounding del RAG (`ungrounded_amount`/
-    `HALLUCINATED`) y caía a "no lo tengo a la mano" — pese a que el precio
-    SÍ está disponible en el mismo catálogo `SERVICES` que ya alimenta la
-    vista general de precios. Respuesta determinista para 1-2 servicios
-    nombrados sin ambigüedad; 3+ o ninguno se deja a RAG/overview."""
-
-    def test_single_known_service_es(self):
-        r = rag_agent._canonical_price_named_services_answer(
-            "cuanto cuesta el buceo certificado en dolares?", "es")
-        assert r and "178" in r and "630.000" in r
-
-    def test_single_known_service_snorkel(self):
-        r = rag_agent._canonical_price_named_services_answer(
-            "cuanto es el snorkel en pesos colombianos?", "es")
-        assert r and "126" in r and "448.000" in r
-
-    def test_two_services_comparison(self):
-        r = rag_agent._canonical_price_named_services_answer(
-            "que es mas barato, snorkel o minicurso?", "es")
-        assert r and "126" in r and "183" in r
-
-    def test_english(self):
-        r = rag_agent._canonical_price_named_services_answer(
-            "how much is diving?", "en")
-        assert r and "178" in r
-
-    def test_non_catalog_service_defers_to_rag(self):
-        """El buceo nocturno, comida, hoteles, multi-día, etc. NO están en el
-        catálogo de 4 servicios — deben seguir yendo a RAG, no inventarse."""
-        for q in (
-            "cuanto cuesta el buceo nocturno?",
-            "cuanto cuesta el paquete multidia?",
-            "cuanto cuesta la comida?",
-            "cuanto cuesta el curso advanced?",
-        ):
-            assert rag_agent._canonical_price_named_services_answer(q, "es") is None
-
-    def test_three_or_more_services_defers(self):
-        """Ambigüedad genuina (3+ servicios nombrados) se deja a RAG/overview,
-        no se adivina cuál importa más."""
-        r = rag_agent._canonical_price_named_services_answer(
-            "cuanto cuesta el buceo, el snorkel y el minicurso?", "es")
-        assert r is None
-
-    def test_non_price_question_returns_none(self):
-        assert rag_agent._canonical_price_named_services_answer(
-            "quiero hacer snorkel manana", "es") is None
-
-
-class TestCanonicalPricePackage:
-    """Hallazgo en vivo 2026-08-26 (batería sintética contra PRE, lote 4):
-    preguntas de precio de paquete multi-día tenían resultado inconsistente
-    y en un caso PELIGROSO — "how much is the 9 dive package?" (EN) RAG
-    respondió con números INVENTADOS ($544.5/$605, ninguno coincide con el
-    precio real $602/$668), mientras que la misma pregunta en español para
-    el paquete de 5 cayó al fallback "no lo tengo a la mano". Respuesta
-    determinista para los 4 paquetes reales (4/5/7/9 inmersiones), mismo
-    patrón que `_canonical_price_named_services_answer`."""
-
-    def test_package_5_dives_es(self):
-        r = rag_agent._canonical_price_package_answer(
-            "cuanto cuesta el paquete de 5 inmersiones?", "es")
-        assert r and "392" in r and "1.429.000" in r
-
-    def test_package_9_dives_en(self):
-        r = rag_agent._canonical_price_package_answer(
-            "how much is the 9 dive package?", "en")
-        assert r and "602" in r and "2.170.000" in r
-        # los números alucinados en vivo NUNCA deben aparecer
-        assert "544" not in r and "605" not in r
-
-    def test_package_4_and_7_dives(self):
-        r4 = rag_agent._canonical_price_package_answer(
-            "cuanto cuesta el paquete de 4 buceos?", "es")
-        assert r4 and "316" in r4
-        r7 = rag_agent._canonical_price_package_answer(
-            "cuanto cuesta el paquete de 7 buceos?", "es")
-        assert r7 and "503" in r7
-
-    def test_non_package_price_question_defers(self):
-        """Precio de un servicio base (no paquete) sigue sin tocar — lo
-        cubre `_canonical_price_named_services_answer`, no este."""
-        assert rag_agent._canonical_price_package_answer(
-            "cuanto cuesta el buceo certificado?", "es") is None
-
-    def test_ambiguous_package_mention_defers(self):
-        """Mención genérica de "paquete" sin número de inmersiones concreto
-        no debe adivinar cuál — se deja a RAG/overview."""
-        assert rag_agent._canonical_price_package_answer(
-            "cuanto cuesta el paquete multidia?", "es") is None
-
-    def test_non_price_question_returns_none(self):
-        assert rag_agent._canonical_price_package_answer(
-            "el paquete de 5 buceos requiere alojamiento?", "es") is None
-
-
-class TestCanonicalRefresherCost:
-    """Hallazgo en vivo 2026-08-26 (batería sintética contra PRE, lote 5,
-    conversaciones largas): "¿el refresher tiene costo adicional?" daba una
-    respuesta distinta a la del flujo de reserva. Se fijó una respuesta
-    determinista... con un dato FALSO ("gratis").
-
-    Corregido 2026-09-14: el owner confirma que el refresher se cobra con la
-    tarifa 2026. La respuesta sigue siendo determinista y única para los dos
-    caminos, pero ahora con el precio del catálogo (ver
-    tests/test_refresher_price.py para el detalle de la fuente)."""
-
-    def test_spanish_question(self):
-        r = rag_agent._canonical_refresher_cost_answer(
-            "el refresher tiene costo adicional?", "es")
-        assert r and "tiene costo" in r.lower()
-        assert "no tiene costo adicional" not in r.lower()
-
-    def test_english_question(self):
-        r = rag_agent._canonical_refresher_cost_answer(
-            "does the refresher cost extra?", "en")
-        assert r and "paid service" in r.lower()
-        assert "no extra cost" not in r.lower()
-
-    def test_unrelated_price_question_returns_none(self):
-        assert rag_agent._canonical_refresher_cost_answer(
-            "cuanto cuesta el buceo certificado?", "es") is None
-
-    @pytest.mark.asyncio
-    async def test_refresher_question_wins_over_generic_overview(self, monkeypatch):
-        from src.config import settings as _flags  # camino antiguo: el flag sigue existiendo
-        monkeypatch.setattr(_flags, "rag_v2", False)
-        """La pregunta específica del refresher debe ganar sobre el
-        overview genérico de precios incluso cuando la frase contiene una
-        palabra que el overview también reconocería ("cost") — el fix se
-        aplicó reordenando los checks para que este vaya primero."""
-        resp = await rag_agent.rag_answer("does the refresher cost extra?", lang="en", history=[])
-        assert "paid service" in resp.lower()
-        assert "reference prices" not in resp.lower()
-
-
 def test_url_guard_accepts_link_present_in_context():
     assert grounding_check.urls_grounded(
         "Reserva aquí: https://divingplanet.org/reservar",
@@ -877,45 +736,7 @@ async def test_rag_falls_back_when_answer_invents_private_tour_capacity(monkeypa
     assert "asesor" in response.lower()
 
 
-@pytest.mark.asyncio
-async def test_rag_food_query_returns_canonical_kb_answer_without_search(monkeypatch):
-    from src.config import settings as _flags  # camino antiguo: el flag sigue existiendo
-    monkeypatch.setattr(_flags, "rag_v2", False)
-    async def fail_search(*args, **kwargs):
-        raise AssertionError("Food queries should use the canonical KB answer before retrieval")
-
-    monkeypatch.setattr(rag_agent, "search_knowledge_base", fail_search)
-
-    response = await rag_agent.rag_answer("¿Qué comida incluye el tour?", lang="es")
-
-    assert "arroz con pollo o arroz con vegetales" in response
-    assert "Pescado a la plancha" not in response
-    assert "Ensaladas frescas" not in response
-    assert "Frutas de temporada" not in response
-
-
 # --- Food canonical must not hijack broader booking queries ------------------
-
-@pytest.mark.parametrize("q", [
-    "¿qué comida incluye el tour?",
-    "el almuerzo es vegetariano?",
-    "hay opción vegana?",
-    "tengo alergia al marisco, pueden atenderme?",
-    "cuánto cuesta el almuerzo?",
-])
-def test_food_canonical_still_fires_for_plain_food_questions(q):
-    assert rag_agent._canonical_food_answer(q, "es") is not None
-
-
-@pytest.mark.parametrize("q", [
-    # A booking/recommendation query that merely mentions a dietary word must NOT
-    # be answered with only the food blurb (owner-found weird-battery bug D1).
-    "Hola, somos 8, 3 con open water y 2 advanced, presupuesto 2000, uno es vegetariano y otro celiaco, ¿qué nos recomiendan y cuánto sale?",
-    "we are 6 divers, one is vegan, which package do you recommend and how much",
-    "quiero reservar para 4 personas, uno tiene alergia, ¿qué me recomiendas?",
-])
-def test_food_canonical_defers_for_broader_booking_query(q):
-    assert rag_agent._canonical_food_answer(q, "es") is None
 
 
 # --- #2: curated "what do you offer for diving?" overview -------------------
@@ -1136,60 +957,6 @@ async def test_rag_diving_overview_served_without_search(monkeypatch):
     assert "Minicurso" in response
 
 
-# --- #BUG1: a bare price question gets a price overview -----------------------
-
-@pytest.mark.parametrize("q", [
-    "cuánto cuesta",
-    "cuánto sería el precio",
-    "precios",
-    "qué precios manejan",
-    "cuánto vale",
-    "cuánto sale",
-])
-def test_price_overview_fires_for_bare_price_question(q):
-    ans = rag_agent._canonical_price_overview_answer(q, "es")
-    assert ans is not None
-    # Real prices from SERVICES, grouped by service.
-    assert "USD" in ans and "COP" in ans
-    assert "Buceo certificado" in ans and "Minicurso" in ans and "Snorkel" in ans
-
-
-@pytest.mark.parametrize("q", [
-    "cuánto cuesta el minicurso",   # names a specific service -> RAG
-    "precio del snorkel",
-    "cuánto el open water",
-    "cuánto cuesta un vuelo",        # off-topic
-    "cuánto cuesta el acompañante",
-    "los paquetes multidía que precio tienen",  # BUG2: plural "paquetes" + multi-day
-    "qué precio tiene el multi-dia",
-    "cuánto cuesta el plan de varios días",
-    "cuánto cuesta el paquete de 5 buceos",
-    "what is the price for the multi-day package",  # EN equivalent
-    # BUG (live PRE, 2026-07-17): "el buceo" bare wasn't recognized as naming
-    # a specific service, so a client mid-flow choosing their certified-diving
-    # plan got the generic 4-service/both-currencies overview instead of a
-    # targeted answer about diving specifically.
-    "¿qué precio tiene el buceo?",
-    "cuánto cuesta bucear",
-    "what is the price of diving",
-    "how much for a dive",
-])
-def test_price_overview_defers_for_specific_or_offtopic(q):
-    assert rag_agent._canonical_price_overview_answer(q, "es") is None
-
-
-@pytest.mark.asyncio
-async def test_rag_bare_price_served_without_search(monkeypatch):
-    from src.config import settings as _flags  # camino antiguo: el flag sigue existiendo
-    monkeypatch.setattr(_flags, "rag_v2", False)
-    async def fail_search(*args, **kwargs):
-        raise AssertionError("Bare price must use the canonical overview before retrieval")
-
-    monkeypatch.setattr(rag_agent, "search_knowledge_base", fail_search)
-    response = await rag_agent.rag_answer("cuánto cuesta", lang="es")
-    assert "USD" in response and "COP" in response
-
-
 # --- #BUG2: multi-day price question must reach real retrieval, not the ------
 # generic bare-price canonical overview (plural "paquetes" + missing multi-day
 # keywords previously made it slip past _PRICE_SPECIFIC).
@@ -1212,17 +979,6 @@ async def test_rag_multiday_price_question_uses_real_search(monkeypatch):
 # canonical shortcut must invite the client to re-ask with more detail, so an
 # uncovered regional phrasing doesn't silently end the conversation.
 
-def test_price_overview_includes_safety_net_es():
-    ans = rag_agent._canonical_price_overview_answer("cuánto cuesta", "es")
-    assert ans is not None
-    assert "más concreto" in ans
-
-
-def test_price_overview_includes_safety_net_en():
-    ans = rag_agent._canonical_price_overview_answer("how much does it cost", "en")
-    assert ans is not None
-    assert "more specific" in ans
-
 
 def test_diving_overview_includes_safety_net_es():
     ans = rag_agent._canonical_diving_overview_answer("¿qué ofrecen para bucear?", "es")
@@ -1234,13 +990,6 @@ def test_diving_overview_includes_safety_net_en():
     ans = rag_agent._canonical_diving_overview_answer("what do you offer for diving?", "en")
     assert ans is not None
     assert "more specific" in ans
-
-
-def test_food_answer_includes_safety_net(monkeypatch):
-    monkeypatch.setattr(rag_agent, "_food_policy_answer", lambda lang: "Política de comida de referencia.")
-    ans = rag_agent._canonical_food_answer("¿qué incluye la comida?", "es")
-    assert ans is not None
-    assert "más concreto" in ans
 
 
 def test_ambiguous_location_helper_detects_ultra_short_place_only_queries():
@@ -1649,8 +1398,6 @@ async def test_adaptive_diving_question_routes_to_rag_not_booking(monkeypatch):
         state.language = "es"
         response = await route_message(state, msg)
         assert response == "INFO DIVE TO HEAL"
-
-
 
 
 @pytest.mark.parametrize("msg", [

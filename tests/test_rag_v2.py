@@ -119,13 +119,6 @@ async def test_un_precio_del_catalogo_pasa_el_guard_de_importes(monkeypatch, rag
     assert price in answer
 
 
-async def test_sin_el_flag_sigue_el_atajo_de_precios(monkeypatch, rag_offline):
-    monkeypatch.setattr(settings, "rag_v2", False)
-    seen = rag_offline("no debería llamarse")
-    answer = await rag_agent.rag_answer("Cuánto tiempo dura ?", lang="es")
-    assert "precios de referencia" in answer and seen == []
-
-
 # ─── Juez v2 ─────────────────────────────────────────────────────────────────
 
 @pytest.mark.parametrize("flag, prompt, model_attr", [

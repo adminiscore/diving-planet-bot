@@ -66,12 +66,6 @@ def test_recall_answer_uses_registry_recall_text(lang):
 
 
 @pytest.mark.parametrize("lang", LANGS)
-def test_price_answer_uses_registry_price_label(lang):
-    answer = rag_agent._canonical_price_named_services_answer("cuanto cuesta el snorkel?", lang)
-    assert dom.text("snorkel", "price_label", lang) in answer
-
-
-@pytest.mark.parametrize("lang", LANGS)
 def test_group_plan_uses_registry_plan_labels(lang):
     text = eligibility.format_group_plan(eligibility.plan_group(noncert_ages=[9]), lang)
     assert dom.text("bubble_makers", "plan_label", lang) in text
