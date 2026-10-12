@@ -2936,6 +2936,7 @@ async def route_message(state: ConversationState, message: str) -> str:
             await_pending_notes,
             cancel_pending_ack,
             cancel_pending_answer,
+            cancelar_extraccion_adelantada,
             cancelar_rag_adelantado,
         )
         if state.pending_escalation_reason == escalation_before:  # un traspaso a persona va solo
@@ -2946,6 +2947,7 @@ async def route_message(state: ConversationState, message: str) -> str:
         cancel_pending_ack(state)
         cancel_pending_answer(state)
         cancelar_rag_adelantado(state)  # rag-5: la respuesta adelantada que nadie usó
+        cancelar_extraccion_adelantada(state)  # ex-5: la extracción adelantada que nadie usó
         await conversation_summarizer.maybe_update_summary(state)
         turn.update(
             reply=response,
@@ -3091,6 +3093,10 @@ async def _shared_turn_handler(
     # del extractor de reserva, el sesgo aquí es escalar/enrutar de más que
     # de menos — el propio prompt se lo pide al LLM.
     if routing_signals is None:
+        # ex-5: sin grafo (cascada), el extractor "LLM primero" arranca aquí, a la vez que el enrutador.
+        from src.agents.conversational_core import lanzar_extraccion_adelantada
+
+        lanzar_extraccion_adelantada(state, message)
         routing_signals = {} if msg_lower.isdigit() else await detect_routing_signals(
             message, lang=state.language, pending_slot=state.core_pending_slot,
         )

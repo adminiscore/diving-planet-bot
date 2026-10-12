@@ -23,6 +23,7 @@ MODELOS = (
     "rag_answer_model",
     "grounding_v3_model",
     "extraction_model",
+    "extractor_turno_model",
     "openai_embedding_model",
     "openai_transcription_model",
     "jev_model",

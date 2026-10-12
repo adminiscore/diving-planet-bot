@@ -38,5 +38,5 @@ class _ClienteRoto:
                 raise RuntimeError("API caída")
 
 
-def test_si_la_api_falla_devuelve_vacio():
-    assert asyncio.run(ex.extraer_turno("somos 3 desde cartagena", client=_ClienteRoto())) == {}
+def test_si_la_api_falla_devuelve_none():
+    assert asyncio.run(ex.extraer_turno("somos 3 desde cartagena", client=_ClienteRoto())) is None

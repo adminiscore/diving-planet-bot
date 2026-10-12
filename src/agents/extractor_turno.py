@@ -164,14 +164,15 @@ def ultima_pregunta_del_bot(history: list[dict] | None, max_chars: int = 300) ->
 
 
 async def extraer_turno(mensaje: str, *, history: list[dict] | None = None, sabido: dict | None = None,
-                        lang: str = "es", modelo: str | None = None, client: AsyncOpenAI | None = None) -> dict:
-    """{campo: valor} con SOLO los datos que el cliente afirma en `mensaje` y cuya cita se verifica en él.
-    En `ultimo_motivo` (atributo de la función) queda qué se descartó y por qué, para el log y la medida."""
+                        lang: str = "es", modelo: str | None = None, client: AsyncOpenAI | None = None) -> dict | None:
+    """{campo: valor} con SOLO los datos que el cliente afirma en `mensaje` y cuya cita se verifica en él; None si la
+    llamada falló (el turno sigue con lo de hoy). Los atributos `ultimo_*` de la función son solo para la medida y
+    el log (globales: no usarlos para decidir, hay turnos a la vez)."""
     extraer_turno.ultimo_motivo = {}
     if not mensaje or not mensaje.strip():
         return {}
     sistema = (SISTEMA_ES if lang == "es" else SISTEMA_EN).replace("{islas}", _pistas_islas())
-    modelo = modelo or settings.extractor_turno_modelo
+    modelo = modelo or settings.extractor_turno_model
     t0 = time.perf_counter()
     try:
         client = client or trace_openai(AsyncOpenAI(api_key=settings.openai_api_key))
@@ -192,7 +193,7 @@ async def extraer_turno(mensaje: str, *, history: list[dict] | None = None, sabi
                                     "salida": getattr(uso, "completion_tokens", 0) or 0}
     except Exception as exc:  # noqa: BLE001 — nunca romper el turno: se sigue con lo de hoy
         logger.warning(f"[LLM_EXTRACTOR][DEGRADED] extractor_turno: {exc}")
-        return {}
+        return None
     extraer_turno.ultimo_segundos = time.perf_counter() - t0
     salida, descartes = {}, {}
     for campo in CAMPOS:

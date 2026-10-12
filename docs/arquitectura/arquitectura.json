@@ -1,8 +1,8 @@
 {
  "meta": {
-  "generado": "2026-10-09T13:11:53+00:00",
-  "commit": "9fff4e8",
-  "rama": "feature/l1_gonzalo"
+  "generado": "2026-10-12T12:40:43+00:00",
+  "commit": "e9b73d9",
+  "rama": "feature/pre_gadea"
  },
  "vistas": {
   "general": {
@@ -157,9 +157,9 @@
    ],
    "marca": "openrouter",
    "tiempos": {
-    "n": 44,
-    "p50": 0.579,
-    "p95": 2.05
+    "n": 205,
+    "p50": 0.563,
+    "p95": 1.718
    }
   },
   {
@@ -172,7 +172,12 @@
    "que_hace": "Datos personales, links rotos, temas delicados o cuando hace falta una persona: pasa el caso a un asesor.",
    "donde": "src/agents/escalation_agent.py:escalation_node",
    "modelos": [],
-   "interruptores": []
+   "interruptores": [],
+   "tiempos": {
+    "n": 1,
+    "p50": 0.002,
+    "p95": 0.002
+   }
   },
   {
    "id": "changes",
@@ -184,7 +189,12 @@
    "que_hace": "Cancelar, cambiar de fecha o de número de personas: explica la política y ofrece botones.",
    "donde": "src/agents/changes_agent.py:changes_node",
    "modelos": [],
-   "interruptores": []
+   "interruptores": [],
+   "tiempos": {
+    "n": 2,
+    "p50": 2.059,
+    "p95": 3.909
+   }
   },
   {
    "id": "deflection",
@@ -212,9 +222,9 @@
    "modelos": [],
    "interruptores": [],
    "tiempos": {
-    "n": 2,
-    "p50": 1.623,
-    "p95": 3.063
+    "n": 4,
+    "p50": 4.817,
+    "p95": 7.613
    }
   },
   {
@@ -230,9 +240,9 @@
    "modelos": [],
    "interruptores": [],
    "tiempos": {
-    "n": 42,
-    "p50": 1.788,
-    "p95": 5.204
+    "n": 198,
+    "p50": 1.595,
+    "p95": 5.129
    }
   },
   {
@@ -433,9 +443,9 @@
    "interruptores": [],
    "marca": "openai",
    "tiempos": {
-    "n": 42,
-    "p50": 0.025,
-    "p95": 0.042
+    "n": 198,
+    "p50": 0.022,
+    "p95": 0.039
    }
   },
   {
@@ -465,9 +475,9 @@
    ],
    "modelos": [],
    "tiempos": {
-    "n": 42,
-    "p50": 0.006,
-    "p95": 0.012
+    "n": 198,
+    "p50": 0.005,
+    "p95": 0.009
    }
   },
   {
@@ -504,8 +514,8 @@
    ],
    "marca": "openai",
    "tiempos": {
-    "n": 42,
-    "p50": 0.009,
+    "n": 198,
+    "p50": 0.007,
     "p95": 0.015
    }
   },
@@ -523,17 +533,31 @@
      "ajuste": "extraction_model",
      "codigo": "gpt-4o-mini",
      "pre": "gpt-4o-mini"
+    },
+    {
+     "ajuste": "extractor_turno_model",
+     "codigo": "gpt-4.1-mini",
+     "pre": "gpt-4.1-mini"
     }
    ],
    "detalle": [
-    "LLM: llm_extractor.extract_and_verify / fill_gaps / verify_fields"
+    "LLM: llm_extractor.extract_and_verify / fill_gaps / verify_fields",
+    "Fase EX: extractor_turno.extraer_turno (LLM primero, cita comprobada)"
    ],
-   "interruptores": [],
+   "interruptores": [
+    {
+     "nombre": "extraccion_llm_ubicacion",
+     "titulo": "La ubicación la entiende la IA (con cita)",
+     "codigo": true,
+     "pre": true,
+     "sin_efecto": false
+    }
+   ],
    "marca": "openai",
    "tiempos": {
-    "n": 42,
-    "p50": 0.675,
-    "p95": 1.981
+    "n": 198,
+    "p50": 0.778,
+    "p95": 1.719
    }
   },
   {
@@ -563,9 +587,9 @@
    ],
    "marca": "openai",
    "tiempos": {
-    "n": 40,
-    "p50": 0.672,
-    "p95": 3.96
+    "n": 197,
+    "p50": 0.641,
+    "p95": 4.116
    }
   },
   {
@@ -667,9 +691,9 @@
    "modelos": [],
    "interruptores": [],
    "conteo": {
-    "n": 21,
+    "n": 77,
     "que": "preguntas",
-    "fuente": "2026-10-09-s428-B.json"
+    "fuente": "2026-10-12-ex5-A.json"
    }
   },
   {
@@ -833,9 +857,9 @@
    },
    "marca": "openai",
    "conteo": {
-    "n": 21,
+    "n": 82,
     "que": "veces",
-    "fuente": "logs-pre-2026-10-09-s428-B.txt"
+    "fuente": "logs-pre-2026-10-12-ex5-A.txt"
    }
   },
   {
@@ -849,9 +873,9 @@
    "interruptores": [],
    "modelos": [],
    "conteo": {
-    "n": 21,
+    "n": 82,
     "que": "veces",
-    "fuente": "logs-pre-2026-10-09-s428-B.txt"
+    "fuente": "logs-pre-2026-10-12-ex5-A.txt"
    }
   },
   {
@@ -919,9 +943,9 @@
    },
    "marca": "openai",
    "conteo": {
-    "n": 21,
+    "n": 81,
     "que": "veces",
-    "fuente": "logs-pre-2026-10-09-s428-B.txt"
+    "fuente": "logs-pre-2026-10-12-ex5-A.txt"
    }
   },
   {
@@ -943,9 +967,9 @@
    ],
    "modelos": [],
    "conteo": {
-    "n": 0,
+    "n": 3,
     "que": "veces",
-    "fuente": "logs-pre-2026-10-09-s428-B.txt"
+    "fuente": "logs-pre-2026-10-12-ex5-A.txt"
    }
   },
   {
@@ -961,7 +985,7 @@
    "conteo": {
     "n": 0,
     "que": "veces",
-    "fuente": "logs-pre-2026-10-09-s428-B.txt"
+    "fuente": "logs-pre-2026-10-12-ex5-A.txt"
    }
   },
   {
@@ -974,9 +998,9 @@
    "modelos": [],
    "interruptores": [],
    "conteo": {
-    "n": 21,
+    "n": 79,
     "que": "veces",
-    "fuente": "logs-pre-2026-10-09-s428-B.txt"
+    "fuente": "logs-pre-2026-10-12-ex5-A.txt"
    }
   }
  ],
@@ -1455,7 +1479,7 @@
    "de": "r_guardas",
    "a": "r_revisor",
    "etiqueta": "pasa",
-   "peso": 1.0,
+   "peso": 0.9878,
    "origen": "curada",
    "estilo": "normal",
    "vista": "info",
@@ -1466,7 +1490,7 @@
    "a": "r_reintento",
    "etiqueta": "falla",
    "estilo": "bucle",
-   "peso": 0.0,
+   "peso": 0.0122,
    "origen": "curada",
    "vista": "info",
    "peso_fuente": "medido"
@@ -1475,7 +1499,7 @@
    "de": "r_revisor",
    "a": "r_salida",
    "etiqueta": "todo SÍ",
-   "peso": 1.0,
+   "peso": 0.9753,
    "origen": "curada",
    "estilo": "normal",
    "vista": "info",
@@ -1486,7 +1510,7 @@
    "a": "r_reintento",
    "etiqueta": "algún NO",
    "estilo": "bucle",
-   "peso": 0.0,
+   "peso": 0.0247,
    "origen": "curada",
    "vista": "info",
    "peso_fuente": "medido"
@@ -1496,7 +1520,7 @@
    "a": "r_escribir",
    "etiqueta": "quita esto",
    "estilo": "bucle",
-   "peso": 0.0,
+   "peso": 1.0,
    "origen": "curada",
    "vista": "info",
    "peso_fuente": "medido"
@@ -1645,6 +1669,19 @@
    "fijado_en_pre": true,
    "usado_por": [
     "b_routing"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "extraccion_llm_ubicacion",
+   "area": "Reserva",
+   "titulo": "La ubicación la entiende la IA (con cita)",
+   "texto": "Desde dónde sale el cliente lo decide el extractor nuevo de la fase EX: solo si el cliente lo dice con sus palabras y nombra el lugar. El regex queda como pista.",
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
+   "usado_por": [
+    "b_extraction"
    ],
    "sin_efecto": null
   },
@@ -2278,7 +2315,17 @@
     "b_acuse"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 99
+   "llamadas_ultima_ronda": 475
+  },
+  {
+   "ajuste": "extractor_turno_model",
+   "codigo": "gpt-4.1-mini",
+   "pre": "gpt-4.1-mini",
+   "usado_por": [
+    "b_extraction"
+   ],
+   "proveedor": "OpenAI",
+   "llamadas_ultima_ronda": 2
   },
   {
    "ajuste": "grounding_v3_model",
@@ -2288,7 +2335,7 @@
     "r_revisor"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 21
+   "llamadas_ultima_ronda": 81
   },
   {
    "ajuste": "jev_model",
@@ -2300,7 +2347,7 @@
    ],
    "proveedor": "OpenRouter",
    "llamadas_ultima_ronda": null,
-   "nota": "Decidió solo 36 de 44 mensajes; en los otros 8 decidió el LLM de respaldo (sus llamadas cuentan en gpt-4o-mini)."
+   "nota": "Decidió solo 187 de 205 mensajes; en los otros 18 decidió el LLM de respaldo (sus llamadas cuentan en gpt-4o-mini)."
   },
   {
    "ajuste": "openai_embedding_model",
@@ -2323,7 +2370,7 @@
     "r_reescribir"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 99
+   "llamadas_ultima_ronda": 475
   },
   {
    "ajuste": "openai_transcription_model",
@@ -2343,70 +2390,67 @@
     "r_escribir"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 23
+   "llamadas_ultima_ronda": 96
   }
  ],
  "ronda": {
-  "etiqueta": "2026-10-09-s428-B",
-  "run_at": "2026-10-09T12:59:19Z",
-  "fichero": "2026-10-09-s428-B.json",
-  "commit": "9fff4e8",
+  "etiqueta": "2026-10-12-ex5-A",
+  "run_at": "2026-10-12T12:39:08Z",
+  "fichero": "2026-10-12-ex5-A.json",
+  "commit": "e9b73d9",
   "por_tipo": {
    "reserva": {
-    "turns": 23,
-    "latency_p50": 1.947,
-    "latency_p95": 3.993,
-    "latency_avg": 2.041,
-    "llm_calls_avg": 2.57,
+    "turns": 128,
+    "latency_p50": 1.645,
+    "latency_p95": 3.218,
+    "latency_avg": 1.908,
+    "llm_calls_avg": 2.77,
     "llm_calls_p95": 4.0,
-    "llm_calls_max": 5,
-    "embeddings_avg": 1.52,
-    "llm_share": 1.173,
+    "llm_calls_max": 7,
+    "embeddings_avg": 1.69,
+    "llm_share": 1.224,
     "tokens_avg": 0,
     "cost_avg_usd": 0
    },
    "rag": {
-    "turns": 21,
-    "latency_p50": 3.996,
-    "latency_p95": 6.143,
-    "latency_avg": 4.264,
-    "llm_calls_avg": 4.0,
-    "llm_calls_p95": 5.0,
-    "llm_calls_max": 6,
-    "embeddings_avg": 1.38,
-    "llm_share": 1.226,
+    "turns": 77,
+    "latency_p50": 4.34,
+    "latency_p95": 6.229,
+    "latency_avg": 4.559,
+    "llm_calls_avg": 3.88,
+    "llm_calls_p95": 6.0,
+    "llm_calls_max": 9,
+    "embeddings_avg": 1.55,
+    "llm_share": 1.163,
     "tokens_avg": 0,
     "cost_avg_usd": 0
    }
   },
   "enrutador": {
    "by_backend": {
-    "jev": 36,
-    "llm_uncertain": 8
+    "jev": 187,
+    "llm_uncertain": 17,
+    "llm": 1
    },
-   "ms_p50": 546.0,
-   "ms_p95": 583.1
+   "ms_p50": 539.0,
+   "ms_p95": 617.5
   },
   "cliente": {
-   "turns": 44,
-   "conversations": 8,
+   "turns": 205,
+   "conversations": 39,
    "no_reply": 0,
-   "multi_bubble": 0,
-   "latency_p50": 4.0,
-   "latency_p95": 5.85,
-   "latency_max": 7
+   "multi_bubble": 1,
+   "latency_p50": 3.0,
+   "latency_p95": 6.0,
+   "latency_max": 9
   },
   "llamadas_por_modelo": {
-   "gpt-4o-mini": 99,
-   "gpt-6-luna": 23,
-   "gpt-4.1": 21
+   "gpt-4o-mini": 475,
+   "gpt-6-luna": 96,
+   "gpt-4.1": 81,
+   "gpt-4.1-mini": 2
   },
-  "calidad": {
-   "criteria_pass_pct": 83.6,
-   "dialogues_passed": 2,
-   "dialogues": 8,
-   "model": "gpt-5-mini (medium)"
-  }
+  "calidad": null
  },
  "pesos_fuente": "Los % del enrutador y de las fases de la reserva salen de la foto de la ronda; los del revisor y el reintento, de los logs de PRE de la misma ronda. La cascada y los textos fijos no dejan rastro medible: se animan con una estimación y no llevan porcentaje."
 }

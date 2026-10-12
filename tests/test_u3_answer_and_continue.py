@@ -44,6 +44,9 @@ def _offline(monkeypatch):
     monkeypatch.setattr(core, "compose_acknowledgement", AsyncMock(return_value=""))
     monkeypatch.setattr(settings, "notes_in_parallel", False)
     monkeypatch.setattr(settings, "ack_in_parallel", False)
+    # Estos tests prueban el camino de u3-4 en el que la ubicación del REGEX se verifica con el LLM. Con ex-5
+    # (`extraccion_llm_ubicacion`) la ubicación la decide el extractor (tests/test_ex5_ubicacion_extractor.py).
+    monkeypatch.setattr(settings, "extraccion_llm_ubicacion", False)
 
 
 @pytest.fixture

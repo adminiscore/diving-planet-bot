@@ -34,7 +34,12 @@ class Settings(BaseSettings):
     # ex-4 (fase EX, 12-oct): modelo del extractor "LLM primero" (src/agents/extractor_turno.py). Medido en PRE con el
     # banco ex0: gpt-4.1-mini 88-89 % de datos y 4,5 % de casos con invento en diseño; en el CIEGO 90,6 % y 5,6 % (hoy
     # 90,6 % y 21,8 %), p50 ~1,0 s. gpt-4o-mini parecido y algo peor; Luna inventa menos pero tarda 2,1-2,4 s.
-    extractor_turno_modelo: str = "gpt-4.1-mini"
+    extractor_turno_model: str = "gpt-4.1-mini"
+    # ex-5 (fase EX): la UBICACION (location/island/hotel) la decide el extractor "LLM primero" (cita comprobada que
+    # nombra un lugar), lanzado a la vez que el enrutador; el regex queda como pista (hotel e isla de la lista cerrada)
+    # y ni el veto, ni el relleno, ni la re-comprobacion la tocan. Si la llamada falla, lo de hoy (regex + Jev).
+    # conversational_core._ubicacion_del_extractor. Revert = False aqui y en el compose.
+    extraccion_llm_ubicacion: bool = True
     # Model for the RAG answer-generation call only (rag_agent.py
     # `_answer_with_llm`). Kept SEPARATE from `openai_model` (used broadly
     # across the bot) so we can trial a stronger model for JUST this call --

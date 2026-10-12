@@ -64,6 +64,8 @@ def extractor_inventa_cartagena(monkeypatch):
 @pytest.mark.parametrize("flag,queda", [(True, None), (False, "cartagena")])
 async def test_may_3rd_no_se_vuelve_cartagena(monkeypatch, extractor_inventa_cartagena, flag, queda):
     monkeypatch.setattr(settings, "origen_del_cliente", flag)
+    # El relleno de antes (con ex-5 la ubicación ya no sale del relleno: tests/test_ex5_ubicacion_extractor.py).
+    monkeypatch.setattr(settings, "extraccion_llm_ubicacion", False)
     st = ConversationState(conversation_id="may-3rd", language="en")
     await route_message(st, "Hi, I want to book 2 dives for my family, we are all certified")
     await route_message(st, "May 3rd")

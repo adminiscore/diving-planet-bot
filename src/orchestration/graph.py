@@ -95,9 +95,10 @@ async def _router_node(state: BotState) -> dict:
         conv.kids_mention_detected = True
 
     # rag-5: el RAG arranca ya, a la vez que el enrutador; la reserva lo aprovecha si el contexto no cambió.
-    from src.agents.conversational_core import lanzar_rag_adelantado
+    from src.agents.conversational_core import lanzar_extraccion_adelantada, lanzar_rag_adelantado
 
     lanzar_rag_adelantado(conv, message)
+    lanzar_extraccion_adelantada(conv, message)  # ex-5: el extractor "LLM primero", también a la vez
 
     msg_lower = message.strip().lower()
     signals = {} if msg_lower.isdigit() else await detect_routing_signals(

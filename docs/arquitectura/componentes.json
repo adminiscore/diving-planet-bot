@@ -341,10 +341,15 @@
       "que_hace": "Saca del mensaje actividad, personas, fechas, certificación, origen y nacionalidad: primero con reglas y luego con un LLM que rellena y comprueba.",
       "donde": "src/agents/conversational_core.py:_extraction_phase",
       "modelos": [
-        "extraction_model"
+        "extraction_model",
+        "extractor_turno_model"
       ],
       "detalle": [
-        "LLM: llm_extractor.extract_and_verify / fill_gaps / verify_fields"
+        "LLM: llm_extractor.extract_and_verify / fill_gaps / verify_fields",
+        "Fase EX: extractor_turno.extraer_turno (LLM primero, cita comprobada)"
+      ],
+      "interruptores": [
+        "extraccion_llm_ubicacion"
       ]
     },
     {
@@ -1161,6 +1166,11 @@
       "area": "Preguntas",
       "titulo": "Sabe qué plan nombra el cliente",
       "texto": "Si el cliente dice cuántas inmersiones quiere ('el precio de las 2 inmersiones') y sabemos desde dónde sale, Coral recibe el plan exacto del catálogo, en vez de confundirlo con un paquete que también trae 2 inmersiones."
+    },
+    "extraccion_llm_ubicacion": {
+      "area": "Reserva",
+      "titulo": "La ubicación la entiende la IA (con cita)",
+      "texto": "Desde dónde sale el cliente lo decide el extractor nuevo de la fase EX: solo si el cliente lo dice con sus palabras y nombra el lugar. El regex queda como pista."
     },
     "catalogo_equipo_incluido": {
       "area": "Preguntas",

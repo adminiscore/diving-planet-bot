@@ -12,6 +12,7 @@ import pytest
 
 from src.agents import conversational_core as core
 from src.agents.supervisor import route_message
+from src.config import settings
 from src.flows.state import ConversationState, Step
 
 
@@ -629,6 +630,8 @@ async def test_understand_requests_only_state_missing_fields(monkeypatch):
     """Cuando SÍ hay huecos, la llamada pide SOLO los campos que el estado no
     conoce (ej. real de los logs de PRE: 'Cartagena' disparaba una llamada que
     rellenaba activity/is_certified/group_size — los tres ya conocidos)."""
+    # Camino de antes: con ex-5 la ubicación ya no se pide al relleno (la decide el extractor).
+    monkeypatch.setattr(settings, "extraccion_llm_ubicacion", False)
     captured = {}
 
     async def _capturing_fill_gaps(message, intent, **kwargs):

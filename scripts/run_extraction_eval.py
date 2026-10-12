@@ -366,7 +366,7 @@ async def _turno_ex0(caso: dict, modo: str, detector: IntentDetector, modelo: st
         datos = await extraer_turno(caso["message"], history=caso.get("history"), sabido=sabido, lang=caso["lang"],
                                     modelo=modelo)
         TIEMPOS_EX0.append(extraer_turno.ultimo_segundos)
-        return {f: v for f, v in datos.items() if v != sabido.get(f)}
+        return {f: v for f, v in (datos or {}).items() if v != sabido.get(f)}
     state = _estado_ex0(caso)
     antes = _state_values(state)
     msg = caso["message"]
@@ -459,7 +459,10 @@ async def run_ex0(modo: str, grupo: str, modelo: str | None = None) -> None:
     if TIEMPOS_EX0:
         ts = sorted(TIEMPOS_EX0)
         print(f"Tiempo por llamada: p50 {ts[len(ts) // 2]:.2f}s · p90 {ts[int(0.9 * len(ts))]:.2f}s · máx {ts[-1]:.2f}s")
-    sufijo = f"-{modelo.replace('/', '_')}" if modelo else ""
+    from src.config import settings
+
+    flags = [f for f in ("extraccion_llm_ubicacion",) if getattr(settings, f, False)]
+    sufijo = (f"-{modelo.replace('/', '_')}" if modelo else "") + "".join(f"-{f}" for f in flags)
     salida = BANCO_EX0 / f"resultado-{modo}{sufijo}-{grupo}.json"
     salida.write_text(json.dumps({"modo": modo, "grupo": grupo, "casos": len(filas), "por_campo": por_campo,
                                   "total": tot, "casos_con_invento": con_invento, "excluidos": contaminados,
@@ -474,6 +477,11 @@ if __name__ == "__main__":
         modo = args[args.index("--modo") + 1] if "--modo" in args else "actual"
         grupo = args[args.index("--grupo") + 1] if "--grupo" in args else "todos"
         modelo = args[args.index("--modelo") + 1] if "--modelo" in args else None
+        from src.config import settings
+
+        for i, a in enumerate(args):  # --flag X: enciende un interruptor de settings solo en este proceso (repetible)
+            if a == "--flag":
+                setattr(settings, args[i + 1], True)
         asyncio.run(run_ex0(modo, grupo, modelo))
     else:
         asyncio.run(run(core="--core" in args))
