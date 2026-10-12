@@ -31,6 +31,10 @@ class Settings(BaseSettings):
     # and faster per call. Revert to "gpt-4o" here if ever needed. See
     # docs/robustness/progress-log.md (Fase 4).
     extraction_model: str = "gpt-4o-mini"
+    # ex-4 (fase EX, 12-oct): modelo del extractor "LLM primero" (src/agents/extractor_turno.py). Medido en PRE con el
+    # banco ex0: gpt-4.1-mini 88-89 % de datos y 4,5 % de casos con invento en diseño; en el CIEGO 90,6 % y 5,6 % (hoy
+    # 90,6 % y 21,8 %), p50 ~1,0 s. gpt-4o-mini parecido y algo peor; Luna inventa menos pero tarda 2,1-2,4 s.
+    extractor_turno_modelo: str = "gpt-4.1-mini"
     # Model for the RAG answer-generation call only (rag_agent.py
     # `_answer_with_llm`). Kept SEPARATE from `openai_model` (used broadly
     # across the bot) so we can trial a stronger model for JUST this call --

@@ -34,17 +34,33 @@ dice desde dónde sale; "sacarme la certificación" = Open Water. Campos: `activ
 
 ## Línea base (12-oct, todos los casos)
 
+Corregida el mismo día: si el cliente repite algo que ya se sabía, no tocarlo cuenta como acierto (la primera versión
+lo contaba como perdido en los tres modos).
+
 | | Regex solo | Producción (regex + Jev + redes LLM) |
 |---|---|---|
-| Datos acertados | 154/204 (75,5 %) | **166/204 (81,4 %)** |
-| Equivocados / perdidos | 17 / 33 | 15 / 23 |
+| Datos acertados | 157/204 (77,0 %) | **179/204 (87,7 %)** |
 | Casos con algún invento | 54/342 (15,8 %) | **78/342 (22,8 %)** |
 
-- Las redes LLM recuperan datos (+6 puntos) pero **se inventan más**: 31 casos con inventos que el regex solo no
+- Las redes LLM recuperan datos (+10,7 puntos) pero **se inventan más**: 31 casos con inventos que el regex solo no
   tenía, sacados del HISTORIAL y no del mensaje ("gracias" → buceo certificado; "Muchas gracias!" → colombiano;
   "Para el sábado, 30/05" → sale de Cartagena; "Just completed the waivers" → 2 personas en las islas).
 - El regex se inventa sobre todo actividad y ubicación por palabras sueltas ("el contacto del hotel Cocoliso" → en las
   islas; "where is the meeting point in cartagena?" → sale de Cartagena).
 
-**Meta de ex-4 (extractor "LLM primero", en el grupo CIEGO):** acierto ≥ 81,4 % y casos con invento claramente por
-debajo del 15,8 % (lo mejor de los dos de hoy), con la extracción en p50 ≤ 0,9 s.
+## ex-4: el extractor "LLM primero" (`src/agents/extractor_turno.py`)
+
+Una llamada por turno; el modelo ve el mensaje, la última pregunta del bot y lo ya sabido (nunca el historial como
+turnos de chat); cada dato trae su CITA y el código comprueba que está en el mensaje (y que la de la ubicación nombra un
+lugar). Ajustado SOLO con el grupo de diseño (v1 → v2); medido dentro de PRE con el código local
+(`--modo llm-primero --modelo …`).
+
+| Diseño (200), dentro de PRE | Aciertos | Casos con invento | p50 / p90 | Coste / 1.000 turnos |
+|---|---|---|---|---|
+| Producción hoy | 85,7 % | 23,5 % | ~0,8 s tras el enrutador | ~0,25-0,50 $ + redes |
+| **gpt-4.1-mini** (2 pasadas) | 88,2 / 89,1 % | 4,5 % | 1,0 / 1,5 s | 0,65 $ |
+| gpt-4o-mini (2 pasadas) | 89,9 / 87,4 % | 5,5-6,0 % | 1,1 / 1,6 s | 0,22 $ |
+| Luna sin razonamiento (2 pasadas) | 86,6 / 87,4 % | 2,0-2,5 % | 2,1-2,4 / 3,7-4,7 s | 0,05 $ |
+
+**CIEGO (142, una vez, gpt-4.1-mini, decisión de Gadea):** regex 76,5 % / 13,4 %; producción 90,6 % / 21,8 %;
+**LLM primero 90,6 % / 5,6 %**, p50 0,97 s. Coste medido con 30 casos (1.809 tokens de entrada, ~65 de salida).

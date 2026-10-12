@@ -1,6 +1,15 @@
 History
 =======
 
+0.31.10 - (2026-10-12)
+----------------------
+* **EX-4 HECHO: el extractor "LLM primero" pasa el examen ciego — mismos datos que producción y CUATRO veces menos inventos** (Gadea con Claude). `src/agents/extractor_turno.py` (aún NO conectado al turno: eso es ex-5…ex-8, con flag y mini-ronda). Detalle: `docs/robustness/regex/banco-ex0/README.md`.
+  - **Diseño:** una llamada por turno; el modelo ve el mensaje, la última pregunta del bot (para respuestas cortas) y lo ya sabido, nunca el historial como turnos de chat; cada dato trae su CITA y **el código comprueba que la cita está en el mensaje** (y que la de la ubicación nombra un lugar de la lista cerrada, como `ORIGEN_DEL_CLIENTE`); "buceo certificado" ⇒ certificado. Si la API falla devuelve {} (degradación).
+  - **Corrección de la línea base de ex-0:** repetir algo ya sabido contaba como "perdido" en los tres modos; corregido: regex 77,0 %, producción **87,7 %** (inventos sin cambios: 15,8 % y 22,8 %).
+  - **Diseño (200 casos, dentro de PRE, 2 pasadas):** gpt-4.1-mini 88-89 % y 4,5 % de casos con invento, p50 1,0 s / p90 1,5 s, 0,65 $ por 1.000 turnos; gpt-4o-mini 87-90 %, 5,5-6 %, 1,1 s, 0,22 $; Luna sin razonamiento 87 %, 2-2,5 %, **2,1-2,4 s** (colas de 8 s), 0,05 $; producción 85,7 % y 23,5 %. **Decisión de Gadea: gpt-4.1-mini** (`extractor_turno_modelo`).
+  - **CIEGO (142, una vez):** regex 76,5 % / 13,4 %; producción 90,6 % / 21,8 %; **LLM primero 90,6 % / 5,6 %**, p50 0,97 s. Irá en paralelo con el enrutador (hoy la extracción va después: ~0,58 + 0,81 s).
+  - Herramientas: `run_extraction_eval --modo llm-primero --modelo …`; tests `tests/test_extractor_turno.py`.
+
 0.31.9 - (2026-10-12)
 ----------------------
 * **EX-0 HECHO: banco de extracción con vocabulario real y línea base** (Gadea con Claude). `docs/robustness/regex/banco-ex0/`.

@@ -353,9 +353,20 @@ def _cambios(antes: dict, despues: dict) -> dict:
     return {f: despues[f] for f in CAMPOS_EX0 if despues.get(f) != antes.get(f) and despues.get(f) not in (None, [], {})}
 
 
-async def _turno_ex0(caso: dict, modo: str, detector: IntentDetector) -> dict:
+TIEMPOS_EX0: list[float] = []
+
+
+async def _turno_ex0(caso: dict, modo: str, detector: IntentDetector, modelo: str | None = None) -> dict:
     from src.agents import conversational_core  # lazy
 
+    if modo == "llm-primero":
+        from src.agents.extractor_turno import extraer_turno  # lazy
+
+        sabido = caso.get("sabido") or {}
+        datos = await extraer_turno(caso["message"], history=caso.get("history"), sabido=sabido, lang=caso["lang"],
+                                    modelo=modelo)
+        TIEMPOS_EX0.append(extraer_turno.ultimo_segundos)
+        return {f: v for f, v in datos.items() if v != sabido.get(f)}
     state = _estado_ex0(caso)
     antes = _state_values(state)
     msg = caso["message"]
@@ -401,23 +412,25 @@ def puntuar_ex0(producido: dict, esperado: dict, sabido: dict | None = None) -> 
     for f in CAMPOS_EX0:
         got = producido.get(f)
         if f in esperado:
-            r["acierto" if got == esperado[f] else "perdido" if got is None else "equivocado"].append(f)
+            # Si el cliente repite algo que ya se sabia, no tocarlo es acertar (los modos solo devuelven CAMBIOS).
+            ya_sabido = got is None and esperado[f] == (sabido or {}).get(f)
+            r["acierto" if got == esperado[f] or ya_sabido else "perdido" if got is None else "equivocado"].append(f)
         elif got is not None and got != (sabido or {}).get(f) and not _tolerado(f, got, esperado, sabido):
             r["inventado"].append(f)
     return r
 
 
-async def run_ex0(modo: str, grupo: str) -> None:
+async def run_ex0(modo: str, grupo: str, modelo: str | None = None) -> None:
     casos = casos_ex0(grupo)
     detector = IntentDetector()
     watcher = _install_watcher()
     por_campo: dict[str, dict[str, int]] = {f: {"acierto": 0, "equivocado": 0, "perdido": 0, "inventado": 0}
                                             for f in CAMPOS_EX0}
     filas, contaminados = [], []
-    print(f"Banco ex0 · modo {modo} · grupo {grupo} · {len(casos)} casos")
+    print(f"Banco ex0 · modo {modo}{f' ({modelo})' if modelo else ''} · grupo {grupo} · {len(casos)} casos")
     for caso in casos:
         antes_degradado = watcher.degraded
-        producido = await _turno_ex0(caso, modo, detector)
+        producido = await _turno_ex0(caso, modo, detector, modelo)
         if watcher.rate_limited:
             print(f"\n!! ABORTADO en {caso['id']!r}: rate-limit de la API (ver el modo de siempre).", file=sys.stderr)
             sys.exit(2)
@@ -443,7 +456,11 @@ async def run_ex0(modo: str, grupo: str) -> None:
     print(f"\nDatos acertados: {tot['acierto']}/{esperados} ({tot['acierto'] / esperados:.1%}) · equivocados "
           f"{tot['equivocado']} · perdidos {tot['perdido']} · inventados {tot['inventado']} "
           f"(en {con_invento} de {len(filas)} casos, {con_invento / len(filas):.1%})")
-    salida = BANCO_EX0 / f"resultado-{modo}-{grupo}.json"
+    if TIEMPOS_EX0:
+        ts = sorted(TIEMPOS_EX0)
+        print(f"Tiempo por llamada: p50 {ts[len(ts) // 2]:.2f}s · p90 {ts[int(0.9 * len(ts))]:.2f}s · máx {ts[-1]:.2f}s")
+    sufijo = f"-{modelo.replace('/', '_')}" if modelo else ""
+    salida = BANCO_EX0 / f"resultado-{modo}{sufijo}-{grupo}.json"
     salida.write_text(json.dumps({"modo": modo, "grupo": grupo, "casos": len(filas), "por_campo": por_campo,
                                   "total": tot, "casos_con_invento": con_invento, "excluidos": contaminados,
                                   "comparable": not contaminados, "filas": filas}, ensure_ascii=False, indent=1),
@@ -456,6 +473,7 @@ if __name__ == "__main__":
     if "--banco" in args and args[args.index("--banco") + 1] == "ex0":
         modo = args[args.index("--modo") + 1] if "--modo" in args else "actual"
         grupo = args[args.index("--grupo") + 1] if "--grupo" in args else "todos"
-        asyncio.run(run_ex0(modo, grupo))
+        modelo = args[args.index("--modelo") + 1] if "--modelo" in args else None
+        asyncio.run(run_ex0(modo, grupo, modelo))
     else:
         asyncio.run(run(core="--core" in args))
