@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-12T14:09:49+00:00",
-  "commit": "e431a1c",
+  "generado": "2026-10-12T15:47:10+00:00",
+  "commit": "3e718ce",
   "rama": "feature/pre_gadea"
  },
  "vistas": {
@@ -158,8 +158,8 @@
    "marca": "openrouter",
    "tiempos": {
     "n": 205,
-    "p50": 0.59,
-    "p95": 1.836
+    "p50": 0.594,
+    "p95": 1.713
    }
   },
   {
@@ -175,8 +175,8 @@
    "interruptores": [],
    "tiempos": {
     "n": 1,
-    "p50": 0.002,
-    "p95": 0.002
+    "p50": 0.003,
+    "p95": 0.003
    }
   },
   {
@@ -192,8 +192,8 @@
    "interruptores": [],
    "tiempos": {
     "n": 2,
-    "p50": 1.064,
-    "p95": 2.019
+    "p50": 2.022,
+    "p95": 3.839
    }
   },
   {
@@ -223,8 +223,8 @@
    "interruptores": [],
    "tiempos": {
     "n": 4,
-    "p50": 4.268,
-    "p95": 5.641
+    "p50": 3.797,
+    "p95": 6.621
    }
   },
   {
@@ -241,8 +241,8 @@
    "interruptores": [],
    "tiempos": {
     "n": 198,
-    "p50": 1.682,
-    "p95": 5.514
+    "p50": 1.774,
+    "p95": 5.737
    }
   },
   {
@@ -445,7 +445,7 @@
    "tiempos": {
     "n": 198,
     "p50": 0.022,
-    "p95": 0.041
+    "p95": 0.044
    }
   },
   {
@@ -477,7 +477,7 @@
    "tiempos": {
     "n": 198,
     "p50": 0.005,
-    "p95": 0.01
+    "p95": 0.009
    }
   },
   {
@@ -548,16 +548,16 @@
     {
      "nombre": "extraccion_llm_ubicacion",
      "titulo": "La ubicación la entiende la IA (con cita)",
-     "codigo": true,
-     "pre": true,
+     "codigo": false,
+     "pre": false,
      "sin_efecto": false
     }
    ],
    "marca": "openai",
    "tiempos": {
     "n": 198,
-    "p50": 0.782,
-    "p95": 1.991
+    "p50": 0.844,
+    "p95": 1.963
    }
   },
   {
@@ -588,8 +588,8 @@
    "marca": "openai",
    "tiempos": {
     "n": 196,
-    "p50": 0.66,
-    "p95": 4.53
+    "p50": 0.677,
+    "p95": 4.625
    }
   },
   {
@@ -693,7 +693,7 @@
    "conteo": {
     "n": 78,
     "que": "preguntas",
-    "fuente": "2026-10-12-ex5-B.json"
+    "fuente": "2026-10-12-ex5-B2.json"
    }
   },
   {
@@ -859,7 +859,7 @@
    "conteo": {
     "n": 83,
     "que": "veces",
-    "fuente": "logs-pre-2026-10-12-ex5-B.txt"
+    "fuente": "logs-pre-2026-10-12-ex5-B2.txt"
    }
   },
   {
@@ -875,7 +875,7 @@
    "conteo": {
     "n": 83,
     "que": "veces",
-    "fuente": "logs-pre-2026-10-12-ex5-B.txt"
+    "fuente": "logs-pre-2026-10-12-ex5-B2.txt"
    }
   },
   {
@@ -945,7 +945,7 @@
    "conteo": {
     "n": 83,
     "que": "veces",
-    "fuente": "logs-pre-2026-10-12-ex5-B.txt"
+    "fuente": "logs-pre-2026-10-12-ex5-B2.txt"
    }
   },
   {
@@ -967,9 +967,9 @@
    ],
    "modelos": [],
    "conteo": {
-    "n": 5,
+    "n": 3,
     "que": "veces",
-    "fuente": "logs-pre-2026-10-12-ex5-B.txt"
+    "fuente": "logs-pre-2026-10-12-ex5-B2.txt"
    }
   },
   {
@@ -985,7 +985,7 @@
    "conteo": {
     "n": 0,
     "que": "veces",
-    "fuente": "logs-pre-2026-10-12-ex5-B.txt"
+    "fuente": "logs-pre-2026-10-12-ex5-B2.txt"
    }
   },
   {
@@ -998,9 +998,9 @@
    "modelos": [],
    "interruptores": [],
    "conteo": {
-    "n": 78,
+    "n": 80,
     "que": "veces",
-    "fuente": "logs-pre-2026-10-12-ex5-B.txt"
+    "fuente": "logs-pre-2026-10-12-ex5-B2.txt"
    }
   }
  ],
@@ -1499,7 +1499,7 @@
    "de": "r_revisor",
    "a": "r_salida",
    "etiqueta": "todo SÍ",
-   "peso": 0.9398,
+   "peso": 0.9639,
    "origen": "curada",
    "estilo": "normal",
    "vista": "info",
@@ -1510,7 +1510,7 @@
    "a": "r_reintento",
    "etiqueta": "algún NO",
    "estilo": "bucle",
-   "peso": 0.0602,
+   "peso": 0.0361,
    "origen": "curada",
    "vista": "info",
    "peso_fuente": "medido"
@@ -1677,8 +1677,8 @@
    "area": "Reserva",
    "titulo": "La ubicación la entiende la IA (con cita)",
    "texto": "Desde dónde sale el cliente lo decide el extractor nuevo de la fase EX: solo si el cliente lo dice con sus palabras y nombra el lugar. El regex queda como pista.",
-   "codigo": true,
-   "pre": true,
+   "codigo": false,
+   "pre": false,
    "fijado_en_pre": true,
    "usado_por": [
     "b_extraction"
@@ -2315,7 +2315,7 @@
     "b_acuse"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 471
+   "llamadas_ultima_ronda": 475
   },
   {
    "ajuste": "extractor_turno_model",
@@ -2325,7 +2325,7 @@
     "b_extraction"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 206
+   "llamadas_ultima_ronda": 203
   },
   {
    "ajuste": "grounding_v3_model",
@@ -2335,7 +2335,7 @@
     "r_revisor"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 83
+   "llamadas_ultima_ronda": 84
   },
   {
    "ajuste": "jev_model",
@@ -2347,7 +2347,7 @@
    ],
    "proveedor": "OpenRouter",
    "llamadas_ultima_ronda": null,
-   "nota": "Decidió solo 184 de 205 mensajes; en los otros 21 decidió el LLM de respaldo (sus llamadas cuentan en gpt-4o-mini)."
+   "nota": "Decidió solo 186 de 205 mensajes; en los otros 19 decidió el LLM de respaldo (sus llamadas cuentan en gpt-4o-mini)."
   },
   {
    "ajuste": "openai_embedding_model",
@@ -2370,7 +2370,7 @@
     "r_reescribir"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 471
+   "llamadas_ultima_ronda": 475
   },
   {
    "ajuste": "openai_transcription_model",
@@ -2390,50 +2390,51 @@
     "r_escribir"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 98
+   "llamadas_ultima_ronda": 96
   }
  ],
  "ronda": {
-  "etiqueta": "2026-10-12-ex5-B",
-  "run_at": "2026-10-12T13:27:50Z",
-  "fichero": "2026-10-12-ex5-B.json",
-  "commit": "e431a1c",
+  "etiqueta": "2026-10-12-ex5-B2",
+  "run_at": "2026-10-12T14:53:51Z",
+  "fichero": "2026-10-12-ex5-B2.json",
+  "commit": "3e718ce",
   "por_tipo": {
    "reserva": {
     "turns": 127,
-    "latency_p50": 1.901,
-    "latency_p95": 3.607,
-    "latency_avg": 2.031,
-    "llm_calls_avg": 3.77,
+    "latency_p50": 2.026,
+    "latency_p95": 3.324,
+    "latency_avg": 2.092,
+    "llm_calls_avg": 3.8,
     "llm_calls_p95": 5.7,
-    "llm_calls_max": 7,
-    "embeddings_avg": 1.73,
-    "llm_share": 1.732,
+    "llm_calls_max": 8,
+    "embeddings_avg": 1.77,
+    "llm_share": 1.728,
     "tokens_avg": 0,
     "cost_avg_usd": 0
    },
    "rag": {
     "turns": 78,
-    "latency_p50": 4.559,
-    "latency_p95": 7.501,
-    "latency_avg": 4.886,
-    "llm_calls_avg": 4.86,
+    "latency_p50": 4.204,
+    "latency_p95": 7.37,
+    "latency_avg": 4.547,
+    "llm_calls_avg": 4.81,
     "llm_calls_p95": 7.0,
-    "llm_calls_max": 9,
-    "embeddings_avg": 1.51,
-    "llm_share": 1.345,
+    "llm_calls_max": 10,
+    "embeddings_avg": 1.5,
+    "llm_share": 1.363,
     "tokens_avg": 0,
     "cost_avg_usd": 0
    }
   },
   "enrutador": {
    "by_backend": {
-    "jev": 184,
-    "llm_uncertain": 20,
+    "jev": 186,
+    "llm_fallback": 1,
+    "llm_uncertain": 17,
     "llm": 1
    },
-   "ms_p50": 565.0,
-   "ms_p95": 686.95
+   "ms_p50": 564.5,
+   "ms_p95": 671.85
   },
   "cliente": {
    "turns": 205,
@@ -2442,17 +2443,17 @@
    "multi_bubble": 1,
    "latency_p50": 3.0,
    "latency_p95": 6.0,
-   "latency_max": 12
+   "latency_max": 11
   },
   "llamadas_por_modelo": {
-   "gpt-4o-mini": 471,
-   "gpt-4.1-mini": 206,
-   "gpt-6-luna": 98,
-   "gpt-4.1": 83
+   "gpt-4o-mini": 475,
+   "gpt-4.1-mini": 203,
+   "gpt-6-luna": 96,
+   "gpt-4.1": 84
   },
   "calidad": {
-   "criteria_pass_pct": 90.1,
-   "dialogues_passed": 18,
+   "criteria_pass_pct": 89.5,
+   "dialogues_passed": 17,
    "dialogues": 39,
    "model": "gpt-5-mini (medium)"
   }

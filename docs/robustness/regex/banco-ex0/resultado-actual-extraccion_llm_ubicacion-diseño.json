@@ -7,7 +7,7 @@
    "acierto": 21,
    "equivocado": 7,
    "perdido": 1,
-   "inventado": 27
+   "inventado": 28
   },
   "is_certified": {
    "acierto": 16,
@@ -28,16 +28,16 @@
    "inventado": 1
   },
   "location": {
-   "acierto": 19,
+   "acierto": 21,
    "equivocado": 0,
    "perdido": 1,
-   "inventado": 0
+   "inventado": 1
   },
   "is_colombian": {
    "acierto": 16,
    "equivocado": 0,
    "perdido": 0,
-   "inventado": 5
+   "inventado": 6
   },
   "last_dive_over_2_years": {
    "acierto": 5,
@@ -47,12 +47,12 @@
   }
  },
  "total": {
-  "acierto": 102,
+  "acierto": 104,
   "equivocado": 8,
   "perdido": 9,
-  "inventado": 46
+  "inventado": 49
  },
- "casos_con_invento": 37,
+ "casos_con_invento": 39,
  "excluidos": [],
  "comparable": true,
  "filas": [
@@ -920,16 +920,19 @@
    "slot": null,
    "esperado": {
     "group_size": 2,
-    "is_certified": false
+    "is_certified": false,
+    "location": "cartagena"
    },
    "producido": {
     "activity": "certified_diving",
     "is_certified": false,
-    "group_size": 2
+    "group_size": 2,
+    "location": "cartagena"
    },
    "acierto": [
     "is_certified",
-    "group_size"
+    "group_size",
+    "location"
    ],
    "equivocado": [],
    "perdido": [],
@@ -1068,14 +1071,16 @@
    "esperado": {},
    "producido": {
     "activity": "certified_diving",
-    "is_certified": true
+    "is_certified": true,
+    "location": "cartagena"
    },
    "acierto": [],
    "equivocado": [],
    "perdido": [],
    "inventado": [
     "activity",
-    "is_certified"
+    "is_certified",
+    "location"
    ]
   },
   {
@@ -2204,14 +2209,17 @@
    "esperado": {
     "group_size": 2,
     "is_certified": true,
-    "activity": "certified_diving"
+    "activity": "certified_diving",
+    "location": "cartagena"
    },
    "producido": {
     "activity": "padi_advanced",
-    "group_size": 2
+    "group_size": 2,
+    "location": "cartagena"
    },
    "acierto": [
-    "group_size"
+    "group_size",
+    "location"
    ],
    "equivocado": [
     "activity"
@@ -2418,11 +2426,15 @@
    "message": "Considerando el 10%",
    "slot": "qty",
    "esperado": {},
-   "producido": {},
+   "producido": {
+    "is_colombian": false
+   },
    "acierto": [],
    "equivocado": [],
    "perdido": [],
-   "inventado": []
+   "inventado": [
+    "is_colombian"
+   ]
   },
   {
    "id": "ex0-premisa-falsa-lunes-t1",
@@ -2458,11 +2470,15 @@
    "message": "perfecto, entonces reservo para el martes",
    "slot": "certification",
    "esperado": {},
-   "producido": {},
+   "producido": {
+    "activity": "certified_diving"
+   },
    "acierto": [],
    "equivocado": [],
    "perdido": [],
-   "inventado": []
+   "inventado": [
+    "activity"
+   ]
   },
   {
    "id": "ex0-premisa-falsa-lunes-t4",

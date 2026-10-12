@@ -39,7 +39,7 @@ class Settings(BaseSettings):
     # nombra un lugar), lanzado a la vez que el enrutador; el regex queda como pista (hotel e isla de la lista cerrada)
     # y ni el veto, ni el relleno, ni la re-comprobacion la tocan. Si la llamada falla, lo de hoy (regex + Jev).
     # conversational_core._ubicacion_del_extractor. Revert = False aqui y en el compose.
-    extraccion_llm_ubicacion: bool = True
+    extraccion_llm_ubicacion: bool = False
     # Model for the RAG answer-generation call only (rag_agent.py
     # `_answer_with_llm`). Kept SEPARATE from `openai_model` (used broadly
     # across the bot) so we can trial a stronger model for JUST this call --

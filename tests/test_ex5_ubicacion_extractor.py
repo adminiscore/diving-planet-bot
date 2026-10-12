@@ -82,3 +82,13 @@ async def test_apagado_no_cambia_nada(monkeypatch):
     assert st.location == "cartagena"
     llamada.assert_not_called()
     assert core.campos_del_extractor() == ()
+
+
+@pytest.mark.asyncio
+async def test_en_las_islas_el_hotel_se_conserva_aunque_no_repita_la_ubicacion(ex5):
+    # Ronda ex5-B2: "una noche en Coral Sand y la otra en Majagua" se perdía y el bot volvía a preguntar el hotel.
+    ex5({})
+    st = ConversationState(conversation_id="ex5", language="es")
+    st.location = st.detected_location = "island"
+    st = await _entender("una noche en el cocoliso", st)
+    assert st.hotel or st.detected_hotel

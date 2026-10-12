@@ -2090,6 +2090,15 @@ def _pista_del_regex(intent) -> dict:
     return {c: getattr(intent, c) for c in campos_del_extractor() if getattr(intent, c, None) not in (None, "", [], {})}
 
 
+def _conservar_hotel(intent, pista: dict) -> None:
+    """El hotel y la isla que leyó el regex (lista cerrada) se quedan cuando el cliente está en las islas."""
+    for campo in ("island", "hotel"):
+        if pista.get(campo):
+            setattr(intent, campo, pista[campo])
+            if campo not in intent.detected_fields:
+                intent.detected_fields.append(campo)
+
+
 def _quitar_provisional(intent, pista: dict) -> None:
     """Saca del intent lo provisional del regex (los campos del extractor) antes de poner lo del extractor."""
     for campo in campos_del_extractor():
@@ -2118,11 +2127,15 @@ async def _ubicacion_del_extractor(intent, state: ConversationState, message: st
         _lugar_por_jev(intent, state)
         return
     lugar = datos.get("location")
+    guardado = state.location or state.detected_location
     if not lugar:
         if pista.get("location"):
             logger.info(f"[EXTRACT][EX5] el regex leía location={pista['location']!r}; el cliente no lo afirma")
+        if guardado == "island":
+            # Ya se sabe que está en las islas y no lo repite: el hotel o la isla que nombra (lista cerrada) sirven para
+            # la recogida (ronda ex5-B2: "una noche en Coral Sand y la otra en Majagua" se perdía y se repreguntaba).
+            _conservar_hotel(intent, pista)
         return
-    guardado = state.location or state.detected_location
     if guardado and guardado != lugar:
         # Cambiar un origen ya guardado pasa por la confirmación de siempre (`_route_contradictions`): con una señal
         # clara de corrección ("al final…", "en realidad…") se cambia; si no, "¿lo cambio?"; si Jev dice que el
@@ -2132,15 +2145,10 @@ async def _ubicacion_del_extractor(intent, state: ConversationState, message: st
         _route_contradictions(state, message, intent, {"location": lugar})
         return
     intent.location = lugar
-    nuevos = ["location"]
+    if "location" not in intent.detected_fields:
+        intent.detected_fields.append("location")
     if lugar == "island":
-        for campo in ("island", "hotel"):
-            if pista.get(campo):
-                setattr(intent, campo, pista[campo])
-                nuevos.append(campo)
-    for campo in nuevos:
-        if campo not in intent.detected_fields:
-            intent.detected_fields.append(campo)
+        _conservar_hotel(intent, pista)
     logger.info(f"[EXTRACT][EX5] location={lugar!r} (regex: {pista.get('location')!r}, guardado: {guardado!r})")
 
 

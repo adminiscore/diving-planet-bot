@@ -1,6 +1,14 @@
 History
 =======
 
+0.31.11 - (2026-10-12)
+----------------------
+* **EX-5 EN CURSO: la ubicación la decide el extractor "LLM primero" (`EXTRACCION_LLM_UBICACION`, APAGADO hasta medir A/B en la misma franja)** (Gadea con Claude).
+  - **Cómo entra en el turno:** el extractor arranca a la vez que el enrutador (`lanzar_extraccion_adelantada`, en el grafo y en la cascada) y `_understand` lo espera al final (`datos_del_extractor`). La ubicación del regex queda PROVISIONAL (las guardas que miran si el mensaje CONTESTA la pregunta pendiente la siguen viendo) pero no dispara contradicciones ni va al veto, al relleno o a la re-comprobación; justo antes de guardar se sustituye por la del extractor (`_ubicacion_del_extractor`). Un cambio de un origen ya guardado se confirma ("¿lo cambio?", `_route_contradictions`). El hotel e isla de la lista cerrada se conservan si el cliente está en las islas. Si la llamada falla: lo de hoy, con la puerta de u3-4/Jev. Modelo `EXTRACTOR_TURNO_MODEL=gpt-4.1-mini` fijado en el compose.
+  - **Mini-rondas del 12-oct (39 diálogos visibles con origen u hotel):** A (14:40) 90,5 %; B 90,1 %; B2 (18:00) 89,5 %. Mejoras de ubicación en las dos (Cocoliso con recogida incluida, sin origen inventado en el contacto de un hotel; 18 orígenes del regex que el cliente no dijo, descartados). Regresiones de la integración, arregladas por causa: "desde cartagena, voy solo" perdía el "voy solo" (lo provisional), "Ok, están en Isla Grande" cambiaba el origen en silencio (confirmación), mi regla de Cartagena contradecía la de s4-28 ("bucear en Cartagena" = sale de Cartagena; las islas necesitan alojarse allí; 4 etiquetas del banco corregidas a esa regla) y el hotel se perdía si no repetía la ubicación. El resto: variación del RAG u otros dominios. **Latencia sin conclusión** (reserva p50 1,65 → 1,90-2,03 s, pero A y B2 en franjas distintas).
+  - **Escalón 0 final (banco ex0, diseño):** ubicación 20/22 → 21/22 aciertos e inventada 11 → 1; casos con algún invento 23,0 → 19,5 %.
+  - **Siguiente:** ronda A (flag apagado, como está PRE) y B3 (encendido) en la MISMA franja; si no empeora, promocionar. La B3 sirve de A para ex-6. Tests: `tests/test_ex5_ubicacion_extractor.py`.
+
 0.31.10 - (2026-10-12)
 ----------------------
 * **EX-4 HECHO: el extractor "LLM primero" pasa el examen ciego — mismos datos que producción y CUATRO veces menos inventos** (Gadea con Claude). `src/agents/extractor_turno.py` (aún NO conectado al turno: eso es ex-5…ex-8, con flag y mini-ronda). Detalle: `docs/robustness/regex/banco-ex0/README.md`.
