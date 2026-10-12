@@ -38,8 +38,9 @@ class Settings(BaseSettings):
     # ex-5 (fase EX): la UBICACION (location/island/hotel) la decide el extractor "LLM primero" (cita comprobada que
     # nombra un lugar), lanzado a la vez que el enrutador; el regex queda como pista (hotel e isla de la lista cerrada)
     # y ni el veto, ni el relleno, ni la re-comprobacion la tocan. Si la llamada falla, lo de hoy (regex + Jev).
-    # conversational_core._ubicacion_del_extractor. Revert = False aqui y en el compose.
-    extraccion_llm_ubicacion: bool = False
+    # conversational_core._ubicacion_del_extractor. PROMOCIONADO 12-oct (decision de Gadea; HISTORY 0.31.12): banco ex0
+    # ubicacion inventada 11 -> 1. Revert = False aqui y en el compose.
+    extraccion_llm_ubicacion: bool = True
     # Model for the RAG answer-generation call only (rag_agent.py
     # `_answer_with_llm`). Kept SEPARATE from `openai_model` (used broadly
     # across the bot) so we can trial a stronger model for JUST this call --

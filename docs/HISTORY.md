@@ -1,6 +1,16 @@
 History
 =======
 
+0.31.12 - (2026-10-12)
+----------------------
+* **EX-5 CERRADO: `EXTRACCION_LLM_UBICACION` PROMOCIONADO (decisión de Gadea con los resultados de 0.31.11)** (Gadea con Claude). La latencia de los turnos de reserva se vigila en la próxima ronda (A de ex-6, misma franja que su B).
+  - **Estudio de los inventos que QUEDAN con ex-5 (banco ex0, diseño: 39 de 200 casos, 50 datos inventados):** ~30 vienen del REGEX y ~20 de las REDES de IA del camino viejo; ninguno del extractor nuevo salvo 1 de ubicación discutible ("complete the certification in Cartagena", coherente con la regla de s4-28).
+    - **Actividad (28; 23 del regex):** cualquier "bucear / buceo / dive" se lee como buceo certificado ("hi, i want to book a dive", "estoy embarazada, ¿puedo bucear?", "¿tienen buceo el lunes?", "I am a beginner"); va contra "recomendar, no suponer". Las otras 5, del relleno leyendo el historial ("Amazing! Thank you so much!", "perfecto, reservo para el martes"). → ex-8.
+    - **Nacionalidad (6, todas de las redes):** el relleno deduce "no colombiano" del idioma o del historial ("Frances", "Amazing! Thank you so much!", "Considerando el 10%"). → ex-8.
+    - **Certificación (7; 4 del regex):** "Open Water Diver" dentro de "I want to take the Open Water Diver course" se lee como YA certificado; 3 del relleno ("gracias", "perfecto, envíenme el resumen"). → ex-6.
+    - **Grupo (6; 4 de las redes):** el relleno saca el total del historial ("Just completed the waivers" → 2); el regex lee "soy buza advanced" como grupo de 1. → ex-7.
+  - Conclusión: los inventos que quedan son exactamente los de los dominios que todavía no pasan por el extractor; con ex-6/7/8 deberían bajar hacia el ~5 % que el extractor dio solo (ex-4).
+
 0.31.11 - (2026-10-12)
 ----------------------
 * **EX-5 EN CURSO: la ubicación la decide el extractor "LLM primero" (`EXTRACCION_LLM_UBICACION`, APAGADO hasta medir A/B en la misma franja)** (Gadea con Claude).

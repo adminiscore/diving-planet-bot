@@ -41,10 +41,10 @@ PRE (escritas ya por Luna) tumba 42 frente a 13, casi todo verdades (HISTORY 0.3
 **C. Pendientes de antes:** el criterio del Open Water en `manual-duracion-curso` ✅ (FAQ curada nueva: "sacarse la
 certificación" = Open Water, o el Referido; el Scuba Diver es la parcial). **DeepSeek: FUERA DEL PLAN** (Gadea, 9-oct).
 
-### ▶️ RETOMAR AQUÍ — 12-oct (Gadea con Claude): fase EX — ex-0 y ex-4 HECHOS, ex-5 EN CURSO (falta su A/B en la misma franja)
+### ▶️ RETOMAR AQUÍ — 12-oct (Gadea con Claude): fase EX — ex-0, ex-4 y ex-5 HECHOS (ex-5 promocionado); siguiente ex-6
 
-**Estado.** PRE sirve `feature/pre_gadea` con `EXTRACCION_LLM_UBICACION` **apagado** (el código de ex-5 está; listo
-para la ronda A). Integrad `feature/pre_gadea` antes de subir. HISTORY 0.31.9-0.31.11.
+**Estado.** PRE sirve `feature/pre_gadea` con `EXTRACCION_LLM_UBICACION` **encendido (promocionado, decisión de Gadea)**.
+Integrad `feature/pre_gadea` antes de subir. HISTORY 0.31.9-0.31.12 (0.31.12: de dónde salen los inventos que quedan).
 
 | Qué | Resultado | Dónde |
 |---|---|---|
@@ -53,11 +53,10 @@ para la ronda A). Integrad `feature/pre_gadea` antes de subir. HISTORY 0.31.9-0.
 | ex-5: la ubicación, conectada al turno | escalón 0: ubicación inventada 11 → 1; mini-rondas planas (90,5 / 90,1 / 89,5 %) con mejoras de ubicación y fallos de integración ya arreglados | HISTORY 0.31.11 |
 
 **Siguiente (en orden):**
-1. **ex-5, medida final:** con PRE como está (flag apagado) `run_synthetic_pre --name ex5-A2 --sample golden --ids <los 39 de
-   ex-5, en HISTORY 0.31.11 / logs>`; luego flag ENCENDIDO en config.py y compose, subir, y `--name ex5-B3` en la MISMA
-   franja; juzgar las dos y `ab_judge_compare`. Mirar p50/p95/máx de los turnos de reserva (el extractor va en paralelo
-   con el enrutador). Si no empeora → promocionar.
-2. **ex-6 (certificación y nivel):** añadir sus campos a `campos_del_extractor()` con su flag; la B3 de ex-5 sirve de A.
+1. **ex-6 (certificación y nivel):** añadir `is_certified` / `last_dive_over_2_years` (y el nivel) a `campos_del_extractor()`
+   con su flag, como ex-5. Hacer la ronda A (con ex-5 ya encendido) y la B en la MISMA franja, y mirar ahí también la
+   latencia de los turnos de reserva (pendiente de ex-5). Inventos a cazar (HISTORY 0.31.12): "Open Water Diver course" =
+   ya certificado (regex); "gracias" / "envíenme el resumen" → certificado (relleno).
 3. ex-7 (grupo), ex-8 (actividad/nacionalidad/idioma); ex-1/ex-2/ex-3 en paralelo (Álvaro/Gonzalo); ex-9, ex-10.
 
 **Avisos:** el banco se ajusta SOLO con diseño; el ciego se usó una vez (ex-4). Una regla del extractor que contradiga una
