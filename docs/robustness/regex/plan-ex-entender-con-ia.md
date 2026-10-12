@@ -62,7 +62,7 @@ leer la salida del revisor (2).
   (código muerto), y sus tests de "camino antiguo". Es parte del punto 1 de s4-25.
 - **Hecho cuando:** suite verde y foto antes/después sin LLM igual en los mensajes del eval-set. Sin ronda.
 
-### ex-2 · Escalado: palabras clave solo para emergencias
+### ex-2 · Escalado: palabras clave solo para emergencias — 🟡 escalón 0 HECHO 12-oct (Álvaro, HISTORY 0.31.14); falta la mini-ronda
 - Hoy 114 palabras clave pasan a un asesor ANTES de que opine la IA (falsos positivos reales: "timo" en "último").
 - Dejar como red rápida solo emergencias médicas y de seguridad; quejas, incidencias y tiempo → la señal
   `sensitive_topic` de Jev (ya existe en la misma llamada). Flag `ESCALADO_SOLO_EMERGENCIAS`.

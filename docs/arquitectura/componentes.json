@@ -107,7 +107,10 @@
       "titulo": "Seguridad",
       "nodo_grafo": "safety",
       "que_hace": "Datos personales, links rotos, temas delicados o cuando hace falta una persona: pasa el caso a un asesor.",
-      "donde": "src/agents/escalation_agent.py:escalation_node"
+      "donde": "src/agents/escalation_agent.py:escalation_node",
+      "interruptores": [
+        "escalado_solo_emergencias"
+      ]
     },
     {
       "id": "changes",
@@ -1167,6 +1170,11 @@
       "area": "Preguntas",
       "titulo": "Sabe qué plan nombra el cliente",
       "texto": "Si el cliente dice cuántas inmersiones quiere ('el precio de las 2 inmersiones') y sabemos desde dónde sale, Coral recibe el plan exacto del catálogo, en vez de confundirlo con un paquete que también trae 2 inmersiones."
+    },
+    "escalado_solo_emergencias": {
+      "area": "Enrutador",
+      "titulo": "Solo las emergencias pasan a un asesor por palabra clave",
+      "texto": "La lista de palabras que pasa el caso a un asesor antes de que opine la IA se queda con las emergencias y los problemas en tiempo real (pago que falla, cupo para mañana). Las preguntas médicas, el tiempo y las quejas los decide Jev leyendo la frase entera: así 'ya llenamos el formulario médico' o 'mi amigo es abogado' dejan de pasar a un asesor."
     },
     "extraccion_llm_actividad": {
       "area": "Reserva",

@@ -1,8 +1,8 @@
 {
  "meta": {
-  "generado": "2026-10-12T19:04:50+00:00",
-  "commit": "4a5b268",
-  "rama": "feature/pre_gadea"
+  "generado": "2026-10-12T21:05:23+00:00",
+  "commit": "f4b43e1",
+  "rama": "feature/ex2_alvaro"
  },
  "vistas": {
   "general": {
@@ -171,8 +171,16 @@
    "nodo_grafo": "safety",
    "que_hace": "Datos personales, links rotos, temas delicados o cuando hace falta una persona: pasa el caso a un asesor.",
    "donde": "src/agents/escalation_agent.py:escalation_node",
+   "interruptores": [
+    {
+     "nombre": "escalado_solo_emergencias",
+     "titulo": "Solo las emergencias pasan a un asesor por palabra clave",
+     "codigo": false,
+     "pre": false,
+     "sin_efecto": false
+    }
+   ],
    "modelos": [],
-   "interruptores": [],
    "tiempos": {
     "n": 10,
     "p50": 0.003,
@@ -1676,6 +1684,19 @@
    "fijado_en_pre": true,
    "usado_por": [
     "b_routing"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "escalado_solo_emergencias",
+   "area": "Enrutador",
+   "titulo": "Solo las emergencias pasan a un asesor por palabra clave",
+   "texto": "La lista de palabras que pasa el caso a un asesor antes de que opine la IA se queda con las emergencias y los problemas en tiempo real (pago que falla, cupo para mañana). Las preguntas médicas, el tiempo y las quejas los decide Jev leyendo la frase entera: así 'ya llenamos el formulario médico' o 'mi amigo es abogado' dejan de pasar a un asesor.",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": true,
+   "usado_por": [
+    "safety"
    ],
    "sin_efecto": null
   },

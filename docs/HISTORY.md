@@ -1,6 +1,15 @@
 History
 =======
 
+0.31.14 - (2026-10-12)
+----------------------
+* **EX-2 PREPARADO: solo las emergencias (y las incidencias) pasan a un asesor por palabra clave; lo médico, el tiempo y las quejas los decide Jev** (`ESCALADO_SOLO_EMERGENCIAS`, APAGADO hasta su mini-ronda; Álvaro con Claude, en paralelo a ex-8). Hoy la lista de 114 palabras (`escalation.SENSITIVE_RULES`) pasa el caso a un asesor ANTES de que opine la IA, aunque Jev diga que no hace falta.
+  - Con el flag la lista se queda con las emergencias (`EMERGENCY_KEYWORDS`: emergencia, accidente, no respira, se desmayó, sangrando…) y las incidencias en tiempo real ("hay cupo mañana", "no puedo pagar": frases concretas, 0 falsas alarmas en el banco; Jev solo marca los fallos, no "¿hay cupo mañana?"). Lo médico, el tiempo y las quejas pasan por `sensitive_topic` de Jev, que ya va en la llamada del enrutador.
+  - **Banco nuevo** `docs/robustness/escalado/banco-ex2.json` (76 frases: 4 reales del golden visible y 72 escritas para cada categoría y para las falsas alarmas; `scripts/banco_escalado.py`, Jev encendido como en PRE). Dos rondas de 2 pasadas: **falsas alarmas 32-33 → 11-12**; pasos a asesor perdidos 4-5 → 5-7, y la diferencia es solo del TIEMPO ("hoy hace mucho viento, ¿igual sale la lancha?": la palabra "viento" lo cogía, Jev no). Médico, emergencias y quejas: ninguna perdida que hoy se coja. Falsa alarma real del golden que desaparece: "We have both completed the **medical** form… confirm the meeting location?" (`recogida-ubuntu-comida-y-certificacion`), que hoy recibe el mensaje de preguntas médicas.
+  - Variantes medidas: solo emergencias (pierde "hay cupo mañana", "available tomorrow", "can't book": 11 perdidas) y emergencias + lista médica (21 falsas alarmas: "he oído que…", "medical form", "heart of the islands", "medicine student"). Se queda emergencias + incidencias.
+  - Mini-ronda pendiente (PRE ocupado por ex-8): las 12 conversaciones de `docs/robustness/escalado/dialogos-mini-ronda.txt`.
+* **Arreglo (sin flag): la señal anidada del router LLM de respaldo rompía el turno.** Cuando Jev duda y decide el router LLM, a veces devuelve `sensitive_topic` como `{"weather_conditions": true}` (1 de 152 llamadas del banco ex2) y `sensitive_response_for` lo usaba como clave de diccionario: TypeError. Ahora vale si trae una sola categoría conocida a true. Tests en `tests/test_ex2_escalado.py`.
+
 0.31.13 - (2026-10-12)
 ----------------------
 * **EX-1 HECHO: borrados los atajos de texto fijo APAGADOS del RAG** (Álvaro con Claude, en paralelo a ex-8 de Gadea; sin conducta nueva, sin ronda). Los 5 atajos que contestaban con texto fijo cuando casaba una palabra (precio genérico, precio de un servicio, paquete multi-día, coste del refresher y comida), apagados desde `RAG_V2`/`S4_FIXES` porque el catálogo entero va al contexto del RAG: código muerto.

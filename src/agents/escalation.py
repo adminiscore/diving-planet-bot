@@ -99,6 +99,30 @@ SENSITIVE_RULES = {
 }
 
 
+# ex-2 (fase EX, flag `escalado_solo_emergencias`): la lista que pasa a un asesor ANTES de que opine la IA se queda
+# con las EMERGENCIAS (red rápida: perder una es grave; una falsa alarma cuesta poco) y las INCIDENCIAS en tiempo real
+# ("hay cupo mañana", "no puedo pagar": frases concretas, 0 falsas alarmas en el banco, y Jev solo marca los fallos, no
+# "¿hay cupo mañana?"). Lo médico, el tiempo y las quejas los decide Jev con `sensitive_topic` (la misma llamada del
+# enrutador), que lee la frase entera: con la lista, "completed the medical form", "he oído que…" o "mi amigo es
+# abogado" pasaban a un asesor. Banco ex2 (2 rondas de 2 pasadas): falsas alarmas 32-33 -> 11-12; perdidas 4-5 ->
+# 5-7, la diferencia solo en el tiempo ("hoy hace mucho viento, ¿sale la lancha?": Jev no lo marca).
+EMERGENCY_KEYWORDS = {
+    "emergencia", "emergencias", "accidente", "urgencia", "no respira", "inconsciente", "se desmayó",
+    "se desmayo", "sangrando", "sangra", "ahogando", "ahogó", "ahogo",
+    "emergency", "accident", "unconscious", "not breathing", "can't breathe", "cant breathe", "bleeding",
+    "fainted", "passed out", "drowning",
+}
+
+
+def _active_rules() -> dict:
+    """Las reglas de palabras clave que pasan a un asesor: todas, o (ex-2) las emergencias y las incidencias."""
+    if not settings.escalado_solo_emergencias:
+        return SENSITIVE_RULES
+    emergencias = SENSITIVE_RULES["complaints_or_emergencies"]
+    return {"complaints_or_emergencies": {**emergencias, "keywords": EMERGENCY_KEYWORDS},
+            "real_time_issues": SENSITIVE_RULES["real_time_issues"]}
+
+
 def _rule_message(rule: dict, lang: str) -> str:
     key = "es" if lang == "es" else "en"
     if settings.s4_fixes and f"{key}_v2" in rule:
@@ -140,7 +164,7 @@ def detect_sensitive_escalation(message: str, lang: str = "es") -> tuple[str, st
     scrubbed = msg_lower
     for idiom in _MEDICAL_IDIOM_EXCLUSIONS:
         scrubbed = scrubbed.replace(idiom, " ")
-    for reason, rule in SENSITIVE_RULES.items():
+    for reason, rule in _active_rules().items():
         haystack = scrubbed if reason == "medical_questions" else msg_lower
         if _matches_any_keyword(haystack, rule["keywords"]):
             return reason, _rule_message(rule, lang)
@@ -151,6 +175,14 @@ def sensitive_response_for(category: str, lang: str = "es") -> tuple[str, str] |
     """El mismo (reason, texto) que devolvería detect_sensitive_escalation para
     esta categoría — usado por la red de precisión LLM (detect_routing_signals)
     para que ambos caminos (keyword y LLM) den exactamente la misma respuesta."""
+    if isinstance(category, dict):
+        # ex-2 (12-oct): el router LLM de respaldo a veces devuelve la categoría anidada
+        # (`{"weather_conditions": true}`, 1 de 152 llamadas del banco ex2) y como clave de diccionario
+        # rompía el turno (TypeError). Vale si trae UNA categoría conocida a true.
+        marcadas = [k for k, v in category.items() if v is True and k in SENSITIVE_RULES]
+        category = marcadas[0] if len(marcadas) == 1 else None
+    if not isinstance(category, str):
+        return None
     rule = SENSITIVE_RULES.get(category)
     if not rule:
         return None

@@ -41,18 +41,22 @@ PRE (escritas ya por Luna) tumba 42 frente a 13, casi todo verdades (HISTORY 0.3
 **C. Pendientes de antes:** el criterio del Open Water en `manual-duracion-curso` ✅ (FAQ curada nueva: "sacarse la
 certificación" = Open Water, o el Referido; el Scuba Diver es la parcial). **DeepSeek: FUERA DEL PLAN** (Gadea, 9-oct).
 
-### ▶️ 12-oct noche (Álvaro con Claude), EN PARALELO a ex-8 de Gadea: ex-1 HECHO (sin subir); ex-6 PREPARADO (rama local)
+### ▶️ 12-oct noche (Álvaro con Claude), EN PARALELO a ex-8 de Gadea: ex-1 HECHO, ex-2 y ex-6 PREPARADOS (ramas locales, sin subir)
 
 **Estado.** PRE sirve `feature/pre_gadea` @ `31ae492` con ex-8 encendido para su mini-ronda B (Gadea, sesión desatendida).
 **Nadie sube a una rama `feature/pre_*` hasta que Gadea cierre ex-8:** un push despliega PRE y le rompe la ronda. Lo de
 esta sesión está en ramas de Álvaro que NO despliegan:
 - `feature/ex1_alvaro` (sobre `31ae492`): **ex-1 hecho** (HISTORY 0.31.13). Sin conducta nueva; se integra tal cual.
+- `feature/ex2_alvaro` (sobre `feature/ex1_alvaro`): **ex-2 con su escalón 0** (HISTORY 0.31.14), `ESCALADO_SOLO_EMERGENCIAS`
+  apagado; falta la mini-ronda de 12 conversaciones (`docs/robustness/escalado/dialogos-mini-ronda.txt`). Lleva además
+  un arreglo sin flag: la señal anidada del router LLM de respaldo rompía el turno (TypeError).
 - `feature/ex6_alvaro` (sobre `4a5b268`, ANTES de ex-8): **ex-6 con su escalón 0, sin mini-rondas.** Toca los mismos
   ficheros que ex-8 (`extractor_turno.py`, `conversational_core.py`, `config.py`): hay que rehacerlo ENCIMA de ex-8.
 
 | Qué | Resultado | Dónde |
 |---|---|---|
 | ex-1: borrar los atajos apagados del RAG | 5 atajos fuera, 28 patrones, −448 líneas; inventario 802 → 774; banco ex0 sin LLM idéntico (342 turnos); 65 tests del camino antiguo retirados | HISTORY 0.31.13, `feature/ex1_alvaro` |
+| ex-2: solo las emergencias e incidencias pasan a un asesor por palabra clave (`ESCALADO_SOLO_EMERGENCIAS`, apagado) | banco de 76 frases, 2×2 pasadas: falsas alarmas 32-33 → 11-12; perdidas 4-5 → 5-7, solo del tiempo ("hoy hace mucho viento") | `feature/ex2_alvaro`, `docs/robustness/escalado/` |
 | ex-6: la certificación la decide el extractor (`EXTRACCION_LLM_CERTIFICACION`, apagado) | extractor (diseño, 2 pasadas): is_certified 16/20 + 4 inventos → 19/20 + 0; ciego: inventos de certificación 6 → 1. Turno de producción (2 pasadas): certificación inventada 11 → 1, última inmersión 5/6 → 6/6 | `feature/ex6_alvaro`, `docs/robustness/regex/banco-ex0/ex6/` |
 
 **Dos hallazgos de ex-6 para quien lo rehaga:**
@@ -70,7 +74,8 @@ esta sesión está en ramas de Álvaro que NO despliegan:
    visibles donde importa la certificación (criterio fijado antes de medir: un turno del cliente con la certificación o
    la última inmersión etiquetada, vocabulario de certificación, o producción que la lee; lista en
    `docs/robustness/regex/banco-ex0/ex6/dialogos-mini-ronda.txt` de la rama `feature/ex6_alvaro`), ~4-6 $.
-4. ex-2 y ex-3: preparación en local; sus rondas, con PRE libre.
+4. Mini-ronda A/B de ex-2 (12 conversaciones; mirar sobre todo el tiempo y que médico/quejas sigan pasando a un asesor).
+   ex-3: preparación en local; sus rondas, con PRE libre.
 5. ex-7.
 
 ### ▶️ RETOMAR AQUÍ — 12-oct (Gadea con Claude): fase EX — ex-0, ex-4 y ex-5 HECHOS (ex-5 promocionado); siguiente ex-6

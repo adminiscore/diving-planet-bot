@@ -47,6 +47,12 @@ class Settings(BaseSettings):
     # conversational_core._aplicar_extractor. Escalon 0 (banco ex0, diseno): actividad inventada 28 -> 0, nacionalidad
     # 6 -> 0. ENCENDIDO para la mini-ronda ex8-B. Revert = False aqui y en el compose.
     extraccion_llm_actividad: bool = True
+    # ex-2 (fase EX): las palabras clave que pasan a un asesor ANTES de que opine la IA se quedan con las EMERGENCIAS
+    # (escalation.EMERGENCY_KEYWORDS) y las incidencias en tiempo real; lo medico, el tiempo y las quejas los decide
+    # Jev (`sensitive_topic`). Con la lista entera, "completed the medical form" o "mi amigo es abogado" pasaban a un
+    # asesor. Escalon 0 (docs/robustness/escalado/, scripts/banco_escalado.py): falsas alarmas 32-33 -> 11-12,
+    # perdidas 4-5 -> 5-7 (solo del tiempo). APAGADO hasta su mini-ronda.
+    escalado_solo_emergencias: bool = False
     # Model for the RAG answer-generation call only (rag_agent.py
     # `_answer_with_llm`). Kept SEPARATE from `openai_model` (used broadly
     # across the bot) so we can trial a stronger model for JUST this call --
