@@ -1,6 +1,18 @@
 History
 =======
 
+0.31.13 - (2026-10-13)
+----------------------
+* **EX-8 HECHO: la actividad y la nacionalidad las decide el extractor "LLM primero" (`EXTRACCION_LLM_ACTIVIDAD`, PROMOCIONADO)** (Gadea con Claude; Gadea dio permiso para llevarlo hasta el final).
+  - **Qué cambia:** solo cuenta la actividad que el cliente ELIGE (decisión de Gadea 14/27-sep): la nombra o la describe como lo que quiere hacer, reservar, ya tiene reservado o de la que pide precio; contesta a la pregunta del bot con una opción; o es la de otra persona por la que pregunta el bot. "Quiero bucear" a secas, "es mi primera vez" o preguntar si algo es posible no eligen (el bot recomienda; el minicurso deducido sigue siendo recomendación de u3-5). La nacionalidad nunca sale del idioma ni del nombre; grupo mezclado → USD (`mixed_nationality` del extractor); un cambio se confirma. Si el extractor falla: lo de hoy con su puerta y su confirmación.
+  - **Buceo certificado = regla del negocio en el código, no del modelo.** El modelo, al deducirla, razonaba al revés ("bucear" ≈ "Buceo certificado" → elegía la actividad e INVENTABA la certificación). Ahora el modelo solo extrae dos hechos con cita, `is_certified` y `quiere_bucear`, y el código decide: certificado (ahora o ya sabido) + quiere bucear (ahora o en un turno anterior: `ConversationState.quiere_bucear`) + sin otra actividad → buceo certificado.
+  - **Escalón 0 (banco ex0, diseño, turno completo):** datos acertados 104 → **109/122**; actividad 21 aciertos / 7 equivocadas / 28 inventadas → **26 / 0 / 0**; nacionalidad inventada 6 → **0**; casos con algún invento 19,5 % → **4,5 %**.
+  - **Mini-rondas (69 diálogos visibles con actividad o nacionalidad):** A (ex-8 apagado, 20:04) **92,1 %**, 39/69 sin fallos; B (21:10) **88,6 %**, 29/69; B2 (23:25, tras arreglar la B) **91,5 %, 41/69** → plana. La B repreguntaba la actividad: "quiero bucear" y "soy certificado" en turnos distintos (memoria de `quiere_bucear`), productos nombrados no elegidos ("plan de 5 buceos", "bucear certificado"), y en un grupo repartido se borraba la actividad del reparto. Arreglado por causa.
+  - **Latencia (A y B en la misma franja; también cierra la duda de ex-5):** turnos de reserva p50 1,77 → 1,57 s, p95 3,17 → 2,84 s, llamadas por turno 3,89 → 3,75 (el relleno ya no pide actividad ni nacionalidad). B2: 1,71 / 3,26 s. El extractor corre en paralelo con el enrutador y no suma.
+  - **Arreglo aparte (fallo previo, visto en B):** "hay algún problema de tiempo entre bucear y volar" quedaba SIN RESPUESTA: el router LLM devolvió `"sensitive_topic": {"weather_conditions": true}` y `sensitive_response_for` reventaba. `llm_client.tool_arguments` (lector único de tools) reencaja un enum anidado así y descarta cualquier otro valor fuera del enum.
+  - **Quedan (siguiente):** (1) variación del extractor: "¿cuánto cuesta el buceo certificado?" a veces no cuenta como elegido; (2) de FLUJO, no de extracción: en posventa ("fotos de los buceos", "cambiar la fecha de nuestro buceo") el bot ofrece actividades; antes lo tapaba el regex inventando buceo certificado; (3) el idioma ("Frances" = responder en francés) sigue fuera.
+  - Tests: `tests/test_ex8_actividad_nacionalidad.py`, `tests/test_extractor_turno.py` (regla `quiere_bucear`), `tests/test_tool_arguments_schema.py` (enum anidado); los del camino viejo fijan el flag apagado.
+
 0.31.12 - (2026-10-12)
 ----------------------
 * **EX-5 CERRADO: `EXTRACCION_LLM_UBICACION` PROMOCIONADO (decisión de Gadea con los resultados de 0.31.11)** (Gadea con Claude). La latencia de los turnos de reserva se vigila en la próxima ronda (A de ex-6, misma franja que su B).

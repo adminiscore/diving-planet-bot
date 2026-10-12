@@ -41,7 +41,30 @@ PRE (escritas ya por Luna) tumba 42 frente a 13, casi todo verdades (HISTORY 0.3
 **C. Pendientes de antes:** el criterio del Open Water en `manual-duracion-curso` ✅ (FAQ curada nueva: "sacarse la
 certificación" = Open Water, o el Referido; el Scuba Diver es la parcial). **DeepSeek: FUERA DEL PLAN** (Gadea, 9-oct).
 
-### ▶️ RETOMAR AQUÍ — 12-oct (Gadea con Claude): fase EX — ex-0, ex-4 y ex-5 HECHOS (ex-5 promocionado); siguiente ex-6
+### ▶️ RETOMAR AQUÍ — 13-oct (Gadea con Claude): fase EX — ex-8 HECHO (actividad y nacionalidad, promocionado); siguiente ex-6
+
+**Estado.** PRE sirve `feature/pre_gadea` con `EXTRACCION_LLM_UBICACION` y `EXTRACCION_LLM_ACTIVIDAD` **encendidos
+(promocionados)**. Integrad `feature/pre_gadea` antes de subir. Detalle en HISTORY 0.31.13.
+
+| Qué | Resultado |
+|---|---|
+| Escalón 0 (banco ex0, diseño) | datos 104 → 109/122; actividad inventada 28 → 0; nacionalidad inventada 6 → 0; casos con invento 19,5 → 4,5 % |
+| Mini-rondas (69 diálogos) | A 92,1 % · B 88,6 % (repreguntaba la actividad; arreglado) · B2 91,5 %, 41/69 sin fallos → plana |
+| Latencia reserva (A/B misma franja) | p50 1,77 → 1,57 s · p95 3,17 → 2,84 s |
+
+**Siguiente (en orden):**
+1. **ex-6 (certificación y nivel):** igual que ex-5/ex-8, con flag propio y A/B en la misma franja. Ojo: `is_certified`
+   ya lo extrae el extractor (lo usa la regla del buceo certificado de ex-8); ex-6 lo conecta como campo.
+2. Restos de ex-8: (a) "¿cuánto cuesta el buceo certificado?" a veces no cuenta como elegido (variación); (b) FLUJO:
+   en posventa (fotos, cambio de fecha de un buceo ya reservado) el bot no debería ofrecer actividades; (c) idioma
+   ("Frances" = responder en francés).
+3. ex-7 (grupo); ex-1/ex-2/ex-3 en paralelo; ex-9 (incluye corregir el `for_whom` "DEFECTO" del registro), ex-10.
+
+**Avisos:** el juez cuesta ~1,3 $ por ronda de 69 diálogos (gpt-5-mini) y tarda ~65 min. Una regla de negocio que
+dependa de varios turnos (como "certificado + quiere bucear") va en el código con hechos guardados en el estado, no en
+el prompt.
+
+### ▶️ (anterior) 12-oct (Gadea con Claude): fase EX — ex-0, ex-4 y ex-5 HECHOS (ex-5 promocionado); siguiente ex-6
 
 **Estado.** PRE sirve `feature/pre_gadea` con `EXTRACCION_LLM_UBICACION` **encendido (promocionado, decisión de Gadea)**.
 Integrad `feature/pre_gadea` antes de subir. HISTORY 0.31.9-0.31.12 (0.31.12: de dónde salen los inventos que quedan).
