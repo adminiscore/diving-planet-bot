@@ -216,6 +216,10 @@ class ConversationState:
     # ex-8 (ronda ex8-B): el cliente dijo que quiere bucear, en este turno o en uno anterior. Con la certificación (que
     # suele llegar en otro turno: "quiero bucear" -> "soy certificado") decide el buceo certificado (extractor_turno).
     quiere_bucear: bool = False
+    # 13-oct (flag `posventa_sin_vender`): el cliente YA tiene una reserva con nosotros o ya hizo la actividad (Jev,
+    # `ya_reservado`). Mientras valga, el bot contesta lo que pregunte pero no hace preguntas de la reserva; se quita si
+    # el cliente elige una actividad nueva (`conversational_core._modo_posventa`).
+    ya_reservado: bool = False
 
     # Nivel PADI nombrado sin decir si ya lo tienen o lo quieren sacar ("hola
     # somos 4 open water"): se pregunta antes de seguir (owner 2026-09-15).

@@ -422,10 +422,30 @@ _NAME_STOPWORDS = frozenset({
 })
 
 
+# 13-oct (flag `nombre_por_extractor`): con el flag, la regex solo captura las formas SIN ambigüedad ("me llamo",
+# "mi nombre es", "my name is"); "soy X" lo decide el extractor con su cita (`_nombre_del_extractor`): "yo soy gringo"
+# saludaba "¡Hola, Gringo!" y el nombre se arrastraba a los acuses y al resumen para el asesor.
+_NAME_TRIGGER_SIN_SOY_RE = re.compile(
+    r"\b(?:me\s+llamo|mi\s+nombre\s+es|my\s+name\s+is)\s+([a-záéíóúñ]{2,20})\b",
+    re.IGNORECASE,
+)
+
+
+def _nombre_del_extractor(state: ConversationState, datos: dict | None) -> None:
+    """El nombre que el extractor leyó con cita (solo con el flag y si aún no lo sabemos)."""
+    if not settings.nombre_por_extractor or state.client_name or not datos:
+        return
+    nombre = (datos.get("nombre") or "").strip().split()
+    if not nombre or not nombre[0].isalpha() or nombre[0].lower() in _NAME_STOPWORDS:
+        return
+    state.client_name = nombre[0][:1].upper() + nombre[0][1:].lower()
+    logger.info(f"[CORE] nombre del cliente (extractor) -> {state.client_name}")
+
+
 def _capture_client_name(state: ConversationState, message: str) -> None:
     if state.client_name:
         return
-    m = _NAME_TRIGGER_RE.search(message)
+    m = (_NAME_TRIGGER_SIN_SOY_RE if settings.nombre_por_extractor else _NAME_TRIGGER_RE).search(message)
     if not m:
         return
     word = m.group(1)
@@ -2137,6 +2157,7 @@ async def _aplicar_extractor(intent, state: ConversationState, message: str, pis
     minicurso), para que vean el valor final. Si la llamada falla, lo de hoy con su puerta, campo a campo."""
     datos = await datos_del_extractor(state, message)
     _quitar_provisional(intent, pista)
+    _nombre_del_extractor(state, datos)
     if datos is None:
         for dominio, campo_puerta in ((_CAMPOS_LUGAR, "location"), (_CAMPOS_ACTIVIDAD, None),
                                       (_CAMPOS_CERTIFICACION, "is_certified"), (_CAMPOS_GRUPO, None)):
@@ -4215,6 +4236,58 @@ def _courtesy_after_handoff(state: ConversationState, routing_signals: dict, gre
     return response
 
 
+def _modo_posventa(state: ConversationState, routing_signals: dict) -> bool:
+    """13-oct (flag `posventa_sin_vender`): ¿el cliente ya tiene una reserva o ya hizo la actividad? Lo dice Jev
+    (`ya_reservado`, en la misma llamada del enrutador) y se recuerda; se olvida si en un turno sin ese dato el cliente
+    AFIRMA una actividad (quiere reservar algo nuevo)."""
+    if not settings.posventa_sin_vender:
+        return False
+    ahora = routing_signals.get("ya_reservado")
+    if ahora is True:
+        if not state.ya_reservado:
+            logger.info("[CORE] posventa: el cliente ya tiene una reserva (Jev) -> sin preguntas de la reserva")
+        state.ya_reservado = True
+    elif state.ya_reservado and routing_signals.get("affirms_activity") is True:
+        state.ya_reservado = False
+        logger.info("[CORE] posventa: el cliente elige una actividad nueva -> vuelve la reserva")
+    return state.ya_reservado
+
+
+async def _tras_el_pase(
+    state: ConversationState, message: str, routing_signals: dict, greeting: str, *, posventa: bool = False,
+) -> str:
+    """13-oct (flag `tras_pase_sin_vender`): con la conversación ya pasada a una persona, el bot no vuelve a vender.
+
+    Antes solo una cortesía pura recibía la respuesta corta (`_courtesy_after_handoff`); en cuanto el cliente daba un
+    dato volvía la reserva: tras pasar al asesor "my husband has food poisoning… move our dive to Tuesday?", el bot
+    preguntaba "Which one are you leaning toward — diving, a mini-course…?" a cada dato siguiente
+    (cambio-fecha-por-enfermedad, rondas ex8-B2 y ex7-B). Ahora contesta lo que se pregunte (el RAG) y, si no hay
+    pregunta, deja una nota corta: la persona ve toda la conversación."""
+    cancel_pending_ack(state)
+    state.quick_replies = []
+    answer = None
+    if _turn_has_question(message, routing_signals):
+        answer = await rag_con_adelantado(state, message, list(state.history))
+    if (not answer or _is_rag_fallback(answer)) and posventa:
+        answer = (
+            "¡Perfecto, gracias! 🙌 Si necesitas algo de tu reserva, cuéntame; y si hay que cambiar algo, te paso con "
+            "un asesor del equipo." if state.language == "es" else
+            "Perfect, thank you! 🙌 If you need anything about your booking, just tell me; and if something needs to "
+            "change, I'll pass you to an advisor from the team."
+        )
+    elif not answer or _is_rag_fallback(answer):
+        answer = (
+            "Anotado 🙌 Ya le pasé tu caso a un asesor del equipo: lo ve todo en esta conversación y te escribe por "
+            "aquí enseguida." if state.language == "es" else
+            "Noted 🙌 I've already passed your case to an advisor from the team: they can see this whole conversation "
+            "and will write to you here shortly."
+        )
+    response = greeting + answer
+    state.history.append({"role": "assistant", "content": response})
+    logger.info(f"[CORE] {'posventa' if posventa else 'tras el pase a una persona'}: sin pregunta de la reserva")
+    return response
+
+
 async def _availability_phase(
     state: ConversationState, message: str, routing_signals: dict, greeting: str,
 ) -> str | None:
@@ -4232,6 +4305,10 @@ async def _availability_phase(
     reubicarla en el cutover (Fase 5.2)."""
     from src.agents import supervisor  # lazy
 
+    if settings.tras_pase_sin_vender and state.step == Step.ESCALATE:
+        return await _tras_el_pase(state, message, routing_signals, greeting)
+    if _modo_posventa(state, routing_signals):
+        return await _tras_el_pase(state, message, routing_signals, greeting, posventa=True)
     courtesy = _courtesy_after_handoff(state, routing_signals, greeting)
     if courtesy is not None:
         return courtesy

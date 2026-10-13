@@ -63,6 +63,37 @@ class Settings(BaseSettings):
     # Alvaro; HISTORY 0.31.19: ronda ex7 90,6 -> 91,2 %, 13 mejoras, 8 regresiones ajenas). Revert = False aqui y en
     # el compose.
     extraccion_llm_grupo: bool = True
+    # 13-oct (Gonzalo): el NOMBRE del cliente lo lee el extractor con su cita (campo `nombre`, solo con este flag; con
+    # el flag apagado la llamada al extractor es la de antes). La regex se queda con las formas sin ambiguedad ("me
+    # llamo", "mi nombre es", "my name is"). Caso: "yo soy gringo" -> "¡Hola, Gringo!" (HISTORY 0.31.18).
+    # ENCENDIDO para su mini-ronda B (atencion-B, 13-oct); si no pasa, False aqui y quitar la linea del compose.
+    nombre_por_extractor: bool = True
+    # 13-oct (Gonzalo): el grupo privado / evento de empresa contesta "Te paso con un asesor…" y ahora MARCA el pase
+    # (motivo + resumen para el asesor, como el link roto o needs_staff). Antes no se marcaba: solo llegaba a una persona
+    # si el cliente respondia "si/ok" justo despues (HISTORY 0.31.17). ENCENDIDO para su mini-ronda B (atencion-B,
+    # 13-oct); si no pasa, False aqui y quitar la linea del compose.
+    grupo_privado_pase: bool = True
+    # 13-oct (Gonzalo): en las instrucciones del extractor, la regla general daba "¿cuanto cuesta el buceo certificado?"
+    # como algo que NO es un dato y la de `activity` dice que preguntar el precio de un producto SI lo elige (Gadea
+    # 14/27-sep). Con el flag el ejemplo vale solo para la certificacion (extractor_turno.GENERAL_PRECIO_*_V2).
+    # Caso: regateo-grupo-6 repreguntaba "¿buceo, minicurso, snorkel o curso?". ENCENDIDO para su mini-ronda B (atencion-B,
+    # 13-oct); si no pasa, False aqui y quitar la linea del compose.
+    extractor_precio_elige: bool = True
+    # 13-oct (Gonzalo): con la conversacion ya pasada a una persona (Step.ESCALATE), el bot no vuelve a hacer preguntas
+    # de la reserva: contesta lo que se pregunte y si no, una nota corta. Caso: cambio-fecha-por-enfermedad (tras el
+    # pase por la intoxicacion, "Which one are you leaning toward — diving, a mini-course…?" en 3 turnos).
+    # ENCENDIDO para su mini-ronda B (atencion-B, 13-oct); si no pasa, False aqui y quitar la linea del compose.
+    tras_pase_sin_vender: bool = True
+    # 13-oct (Gonzalo): el aviso medico pasa la conversacion a una persona pero no lo decia; con el flag anade "Te paso
+    # ahora con alguien del equipo, que te escribe por aqui enseguida" (escalation._PASE_MEDICO). ENCENDIDO para su mini-ronda B (atencion-B,
+    # 13-oct); si no pasa, False aqui y quitar la linea del compose.
+    aviso_medico_dice_pase: bool = True
+    # 13-oct (Gonzalo): posventa. Jev (`ya_reservado`, misma llamada) dice si el cliente YA tiene una reserva o ya hizo la
+    # actividad; mientras valga, el bot contesta lo que pregunte pero no hace preguntas de la reserva ni ofrece el menu
+    # de actividades. Casos: cambio-fecha-por-enfermedad ("Just completed the waivers" -> "Which one are you leaning
+    # toward…?"), pedir-fotos-postventa ("Fueron muy buenos buceos" -> "¿Con cual te animas?"). ENCENDIDO para su mini-ronda B (atencion-B,
+    # 13-oct); si no pasa, False aqui y quitar la linea del compose.
+    posventa_sin_vender: bool = True
     # ex-2 (fase EX): las palabras clave que pasan a un asesor ANTES de que opine la IA se quedan con las EMERGENCIAS
     # (escalation.EMERGENCY_KEYWORDS) y las incidencias en tiempo real; lo medico, el tiempo y las quejas los decide
     # Jev (`sensitive_topic`). Con la lista entera, "completed the medical form" o "mi amigo es abogado" pasaban a un

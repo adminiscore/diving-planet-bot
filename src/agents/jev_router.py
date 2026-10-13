@@ -300,6 +300,28 @@ _CHANGES_DATE_Q = {
     ),
 }
 
+# 13-oct (Gonzalo, flag `posventa_sin_vender`): ¿el cliente YA tiene una reserva con nosotros o YA hizo la actividad?
+# Con una reserva hecha el bot seguía vendiendo: "we'll be meeting at the pier at 8am… diving with your team on Monday"
+# y "Just completed the waivers" recibían "Which one are you leaning toward — diving, a mini-course…?"
+# (cambio-fecha-por-enfermedad); "Fueron muy buenos buceos" recibía "¿Con cuál te animas?" (pedir-fotos-postventa).
+# `needs_staff` es otra cosa: lo que solo puede resolver una persona (comprobar un pago, cambios); un cliente con reserva
+# que pregunta qué llevar no necesita persona, pero tampoco que le vendan.
+YA_RESERVADO = "ya_reservado"
+YA_RESERVADO_MIN = 0.7
+_YA_RESERVADO_Q = {
+    "type": "noul",
+    "instructions": (
+        "The customer ALREADY has a booking with this dive center or has ALREADY done an activity with them: they "
+        "mention their booked day or plan as something already arranged ('we'll be meeting at the pier on Monday', "
+        "'our dive is on Saturday'), a booking or payment already made, forms or waivers already completed, the "
+        "dives they did with the center, or photos from those dives. It is FALSE when they are still asking, "
+        "comparing, planning or making a booking (even if they give a date), when they talk about dives done "
+        "elsewhere or their diving experience in general, and ALSO FALSE whenever the message asks to book "
+        "something new or another day, even if they already dived with the center ('we loved it, we'd like to book "
+        "another day')."
+    ),
+}
+
 # u3-6 (paso 7, promocionado el 27-sep): ¿el mensaje mete a OTRA persona en la reserva? Filtro previo de
 # `detect_special_signals`: por debajo de COMPANION_NONE_MAX (Jev seguro de que no) no se llama al
 # LLM. Calibrado con `scripts/sonda_acompanante.py`.
@@ -426,7 +448,7 @@ def pending_answer_value(slot: str, answer: dict) -> dict:
 _U34_QUESTIONS = (
     ASKS_QUESTION, AFFIRMS_LOCATION, AFFIRMS_ACTIVITY, ACTIVITY_HYPOTHESIS,
     AFFIRMS_CERTIFICATION, AFFIRMS_GROUP, AFFIRMS_NATIONALITY, CORRECTS, ASKS_RECALL, NEEDS_STAFF,
-    CHANGES_DATE, COMPANION_JOINS, PENDING_ANSWER, SHARES_OPEN_FACT, ADDS_PERSON, CUSTOMER_PLACE,
+    CHANGES_DATE, COMPANION_JOINS, PENDING_ANSWER, SHARES_OPEN_FACT, ADDS_PERSON, CUSTOMER_PLACE, YA_RESERVADO,
 )
 
 
@@ -465,6 +487,8 @@ def _questions_for_turn(pending_slot: str | None = None) -> dict:
     q[COMPANION_JOINS] = _COMPANION_JOINS_Q
     if settings.jev_persona_ya_contada:
         q[ADDS_PERSON] = _ADDS_PERSON_Q
+    if settings.posventa_sin_vender:
+        q[YA_RESERVADO] = _YA_RESERVADO_Q
     if settings.jev_lugar_cliente:
         q[CUSTOMER_PLACE] = _CUSTOMER_PLACE_Q
     if settings.notas_puerta_jev:
@@ -530,6 +554,8 @@ def answers_to_signals(answers: dict, threshold: float = THRESHOLD) -> dict:
         out[SHARES_OPEN_FACT] = (answers.get(SHARES_OPEN_FACT) or {}).get("noul", 1.0)
     if CHANGES_DATE in answers:
         out[CHANGES_DATE] = (answers.get(CHANGES_DATE) or {}).get("noul", 0.0) >= CHANGES_DATE_MIN
+    if YA_RESERVADO in answers:
+        out[YA_RESERVADO] = (answers.get(YA_RESERVADO) or {}).get("noul", 0.0) >= YA_RESERVADO_MIN
     for name in (AFFIRMS_LOCATION, AFFIRMS_CERTIFICATION, AFFIRMS_GROUP, AFFIRMS_NATIONALITY):
         if name in answers:
             out[name] = (answers.get(name) or {}).get("noul", 0.0) >= AFFIRMS_MIN
@@ -575,7 +601,7 @@ async def detect_routing_signals_jev(message: str, *, lang: str = "es") -> dict 
 # Señales de u3-4/u3-5 que NO son del router: viajan aparte (ver `detect_routing_signals_jev_full`).
 _TURN_SIGNALS = (
     AFFIRMS_LOCATION, AFFIRMS_ACTIVITY, AFFIRMS_CERTIFICATION, AFFIRMS_GROUP, AFFIRMS_NATIONALITY, CORRECTS,
-    ASKS_RECALL, NEEDS_STAFF, CHANGES_DATE, COMPANION_JOINS, SHARES_OPEN_FACT,
+    ASKS_RECALL, NEEDS_STAFF, CHANGES_DATE, COMPANION_JOINS, SHARES_OPEN_FACT, YA_RESERVADO,
 )  # AFFIRMS_P y PENDING_ANSWER se anaden a mano en `detect_routing_signals_jev_full`
 
 

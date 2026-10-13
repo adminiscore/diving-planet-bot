@@ -51,9 +51,9 @@ async def info_node(state: BotState) -> dict:
         _PRIVATE_GROUP_EVENT_RE,
         _alcohol_and_food_policy_answer,
         _maybe_answer_age_eligibility,
-        _private_group_event_answer,
         _shared_turn_handler,
         fixed_same_price_answer,
+        private_group_event_reply,
     )
 
     conv = state["conv_state"]
@@ -79,7 +79,7 @@ async def info_node(state: BotState) -> dict:
     #     retomar; respuesta determinista, redactada para no filtrar el
     #     número de WhatsApp de la política cruda.
     if _PRIVATE_GROUP_EVENT_RE.search(msg_lower):
-        answer = _private_group_event_answer(conv.language)
+        answer = private_group_event_reply(conv)  # 13-oct: con `grupo_privado_pase` marca también el pase
         logger.info("[NODE:info] Private/corporate group event -> real deterministic answer")
         conv.history.append({"role": "user", "content": message})
         conv.history.append({"role": "assistant", "content": answer})

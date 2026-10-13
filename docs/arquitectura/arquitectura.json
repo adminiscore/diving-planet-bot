@@ -1,8 +1,8 @@
 {
  "meta": {
-  "generado": "2026-10-13T14:22:41+00:00",
-  "commit": "b01ab72",
-  "rama": "feature/pre_alvaro"
+  "generado": "2026-10-13T15:01:57+00:00",
+  "commit": "999b091",
+  "rama": "feature/l1_gonzalo"
  },
  "vistas": {
   "general": {
@@ -1705,6 +1705,17 @@
    "sin_efecto": null
   },
   {
+   "nombre": "aviso_medico_dice_pase",
+   "area": "Respuestas fijas",
+   "titulo": "El aviso médico dice el pase",
+   "texto": "El aviso médico dice que pasa la conversación a alguien del equipo, que es lo que hace.",
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
+   "usado_por": [],
+   "sin_efecto": null
+  },
+  {
    "nombre": "catalogo_equipo_incluido",
    "area": "Preguntas",
    "titulo": "El catálogo dice si el equipo va incluido",
@@ -1833,6 +1844,17 @@
    "sin_efecto": null
   },
   {
+   "nombre": "extractor_precio_elige",
+   "area": "Reserva",
+   "titulo": "Preguntar el precio es elegir",
+   "texto": "'¿Cuánto cuesta el buceo certificado?' cuenta como elegir esa actividad; el bot ya no vuelve a preguntar '¿buceo, minicurso, snorkel o curso?'.",
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
+   "usado_por": [],
+   "sin_efecto": null
+  },
+  {
    "nombre": "formato_whatsapp",
    "area": "Chat",
    "titulo": "Formato de WhatsApp",
@@ -1861,6 +1883,17 @@
    "area": "Reserva",
    "titulo": "Cada edad es una persona",
    "texto": "Si el cliente lista a su grupo con edades ('2 adults (ages 42, 19), 1 youth (age 17)…'), Coral cuenta a cada uno y guarda el reparto, en vez de preguntar '¿cuántos serían?'.",
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
+   "usado_por": [],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "grupo_privado_pase",
+   "area": "Respuestas fijas",
+   "titulo": "Grupo privado: pase real",
+   "texto": "Un grupo privado o un evento de empresa recibe su respuesta y, además, la conversación pasa de verdad a un asesor con el resumen.",
    "codigo": true,
    "pre": true,
    "fijado_en_pre": true,
@@ -2178,6 +2211,17 @@
    "sin_efecto": null
   },
   {
+   "nombre": "nombre_por_extractor",
+   "area": "Reserva",
+   "titulo": "El nombre lo lee la IA",
+   "texto": "El nombre del cliente sale del extractor con su cita: 'soy gringo' o 'soy paisa' ya no se toman como nombre ('¡Hola, Gringo!').",
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
+   "usado_por": [],
+   "sin_efecto": null
+  },
+  {
    "nombre": "notas_puerta_jev",
    "area": "Reserva",
    "titulo": "Solo apuntar notas si hay algo que apuntar",
@@ -2232,6 +2276,17 @@
    "area": "Reserva",
    "titulo": "El origen lo dice el cliente",
    "texto": "Si el extractor deduce desde dónde sale el cliente, solo se guarda si el cliente nombró algún lugar: una fecha como 'May 3rd' ya no se vuelve 'sale desde Cartagena' por lo que preguntó el bot.",
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
+   "usado_por": [],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "posventa_sin_vender",
+   "area": "Reserva",
+   "titulo": "Posventa: no vende",
+   "texto": "Si el cliente ya tiene una reserva o ya buceó con nosotros (lo dice la IA), Coral le atiende sin ofrecerle actividades ni hacer preguntas de la reserva.",
    "codigo": true,
    "pre": true,
    "fijado_en_pre": true,
@@ -2445,6 +2500,17 @@
     "router",
     "b_availability"
    ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "tras_pase_sin_vender",
+   "area": "Reserva",
+   "titulo": "Tras el pase, no vende",
+   "texto": "Con la conversación ya pasada a una persona, Coral contesta lo que le pregunten pero no vuelve a las preguntas de la reserva.",
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
+   "usado_por": [],
    "sin_efecto": null
   }
  ],

@@ -86,6 +86,46 @@ ESQUEMA = {
     "additionalProperties": False,
 }
 
+# 13-oct (Gonzalo, flag `nombre_por_extractor`): el NOMBRE con que se presenta quien escribe, con su cita. Lo leía una
+# regex ("soy X" con una lista de palabras excluidas) y "yo soy gringo" saludaba "¡Hola, Gringo!" (hallazgo de ex-3,
+# HISTORY 0.31.18): añadir "gringo" a la lista sería un parche (mañana "soy paisa", "soy argentino"). Con el flag
+# apagado la llamada es exactamente la de antes (ni el campo ni su regla).
+ESQUEMA_CON_NOMBRE = {
+    **ESQUEMA,
+    "properties": {**ESQUEMA["properties"],
+                   "nombre": _dato({"type": "string"},
+                                   "El nombre propio con que se presenta quien escribe.")},
+    "required": [*ESQUEMA["required"], "nombre"],
+}
+# 13-oct (Gonzalo, flag `extractor_precio_elige`): la regla general ponía "¿cuánto cuesta el buceo certificado?" como
+# ejemplo de algo que NO es un dato, y la de `activity` dice que preguntar el precio de un producto nombrado SÍ lo elige
+# (decisión de Gadea 14/27-sep). Dos órdenes contrarias: de ahí la variación de ex-8 ("a veces no cuenta como
+# elegido") y las repreguntas "¿buceo, minicurso, snorkel o curso?" de regateo-grupo-6 (rondas ex8-B2 y ex7-B). El
+# ejemplo vale para la CERTIFICACIÓN (preguntar ese precio no dice que sea buzo), no para la actividad.
+GENERAL_PRECIO_ES = ('Una pregunta ("¿puedo bucear embarazada?", "¿cuánto cuesta el buceo certificado?"), una hipótesis '
+                     '("si decidiera hacer el curso…") o algo que nombra sin elegirlo no es un dato.')
+GENERAL_PRECIO_ES_V2 = ('Una pregunta ("¿puedo bucear embarazada?") no dice que esté embarazada ni que vaya a bucear; '
+                        'preguntar el precio de un producto ("¿cuánto cuesta el buceo certificado?") no dice que el '
+                        'cliente sea buzo certificado, pero SÍ elige esa actividad (ver activity). Una hipótesis ("si '
+                        'decidiera hacer el curso…") o algo que nombra sin elegirlo no es un dato.')
+GENERAL_PRECIO_EN = ('A question ("can I dive pregnant?", "how much is certified diving?"), a hypothesis ("in case I '
+                     'decided to do the course…") or something they mention without choosing it is not a fact.')
+GENERAL_PRECIO_EN_V2 = ('A question ("can I dive pregnant?") does not say they are pregnant or will dive; asking the '
+                        'price of a product ("how much is certified diving?") does not say the customer is a certified '
+                        'diver, but it DOES choose that activity (see activity). A hypothesis ("in case I decided to do '
+                        'the course…") or something they mention without choosing it is not a fact.')
+
+REGLA_NOMBRE_ES = (
+    "\n- nombre: solo el nombre propio con que se presenta quien escribe (\"me llamo Ana\", \"soy Rocío\", \"I'm Tom\"). "
+    "Una nacionalidad, un origen, una profesión o una descripción NO son nombres (\"soy gringo\", \"soy paisa\", "
+    "\"soy argentina\", \"soy buzo\", \"soy principiante\", \"soy el papá de…\"). Si dudas, null."
+)
+REGLA_NOMBRE_EN = (
+    "\n- nombre: only the proper first name the writer introduces themselves with (\"my name is Ana\", \"I'm Tom\", "
+    "\"soy Rocío\"). A nationality, origin, job or description is NOT a name (\"I'm a gringo\", \"I'm Canadian\", "
+    "\"I'm a diver\", \"I'm a beginner\", \"I'm the dad of…\"). If unsure, null."
+)
+
 
 def _actividades(lang: str) -> str:
     """Una línea por actividad elegible con su nombre del registro (fuente única). No se usa `for_whom`: el de
@@ -239,6 +279,11 @@ async def extraer_turno(mensaje: str, *, history: list[dict] | None = None, sabi
         return {}
     sistema = (SISTEMA_ES if lang == "es" else SISTEMA_EN).replace("{islas}", _pistas_islas()).replace(
         "{actividades}", _actividades(lang))
+    if settings.extractor_precio_elige:
+        sistema = sistema.replace(GENERAL_PRECIO_ES, GENERAL_PRECIO_ES_V2).replace(GENERAL_PRECIO_EN, GENERAL_PRECIO_EN_V2)
+    con_nombre = settings.nombre_por_extractor
+    if con_nombre:
+        sistema += REGLA_NOMBRE_ES if lang == "es" else REGLA_NOMBRE_EN
     modelo = modelo or settings.extractor_turno_model
     t0 = time.perf_counter()
     try:
@@ -248,7 +293,8 @@ async def extraer_turno(mensaje: str, *, history: list[dict] | None = None, sabi
             messages=[{"role": "system", "content": sistema},
                       {"role": "user", "content": _contexto(mensaje, ultima_pregunta_del_bot(history), sabido or {}, lang)}],
             response_format={"type": "json_schema",
-                             "json_schema": {"name": "datos_del_turno", "strict": True, "schema": ESQUEMA}},
+                             "json_schema": {"name": "datos_del_turno", "strict": True,
+                                             "schema": ESQUEMA_CON_NOMBRE if con_nombre else ESQUEMA}},
             temperature=0.0,
             max_tokens=400,
         )
@@ -263,7 +309,7 @@ async def extraer_turno(mensaje: str, *, history: list[dict] | None = None, sabi
         return None
     extraer_turno.ultimo_segundos = time.perf_counter() - t0
     salida, descartes = {}, {}
-    for campo in (*CAMPOS, *EXTRAS):
+    for campo in (*CAMPOS, *EXTRAS, *(("nombre",) if con_nombre else ())):
         d = datos.get(campo)
         if not isinstance(d, dict) or d.get("valor") in (None, "", [], {}):
             continue

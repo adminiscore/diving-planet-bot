@@ -1,0 +1,153 @@
+{
+ "about": "Banco de calibración de la pregunta de Jev `ya_reservado` (13-oct). si = el cliente YA tiene una reserva con nosotros o ya hizo la actividad; no = planea, pregunta o reserva algo nuevo, o habla de buceos en otro sitio. Frases del golden VISIBLE (nunca el oculto) y escritas a mano para las trampas.",
+ "casos": [
+  {
+   "m": "Hello! My husband and I arrived in Cartagena last night and are so excited for diving with your team on Monday. I just want to confirm that we will be meeting at the pier at 8am, then staying overnight on the island",
+   "si": true,
+   "origen": "golden cambio-fecha-por-enfermedad t1"
+  },
+  {
+   "m": "Just completed the waivers. Thank you!",
+   "si": true,
+   "origen": "golden cambio-fecha-por-enfermedad t2"
+  },
+  {
+   "m": "Los guias sacaron fotos. Podran pasarnos algunas ?",
+   "si": true,
+   "origen": "golden pedir-fotos-postventa t2"
+  },
+  {
+   "m": "Fueron muy buenos buceos, excelente organización de todo el grupo. Muchas gracias",
+   "si": true,
+   "origen": "golden pedir-fotos-postventa t3"
+  },
+  {
+   "m": "Hello! We just booked a 5 dive package with you for April 13th. On the morning of the 13th we will be checking out of our Airbnb",
+   "si": true,
+   "origen": "golden equipaje-mochilas t1"
+  },
+  {
+   "m": "el sábado pasado nosotros hicimos 2 buceos con uds y los registramos en la app",
+   "si": true,
+   "origen": "golden aprobacion-logs-padi t2"
+  },
+  {
+   "m": "ya pagué la reserva por la web, ¿a qué hora es la salida mañana?",
+   "si": true,
+   "origen": "escrita"
+  },
+  {
+   "m": "We have both completed the medical form, can you confirm the meeting location?",
+   "si": true,
+   "origen": "golden recogida-ubuntu (parafraseada)"
+  },
+  {
+   "m": "nuestro buceo es el sábado, ¿hay que llevar toalla?",
+   "si": true,
+   "origen": "escrita"
+  },
+  {
+   "m": "quiero reservar 2 inmersiones para el sábado",
+   "si": false,
+   "origen": "escrita: planea con fecha"
+  },
+  {
+   "m": "hice 20 inmersiones el año pasado en Bonaire, soy advanced",
+   "si": false,
+   "origen": "escrita: buceos en otro sitio"
+  },
+  {
+   "m": "¿cuánto cuesta el minicurso? somos 2",
+   "si": false,
+   "origen": "escrita"
+  },
+  {
+   "m": "We are thinking of diving on Monday, is there availability?",
+   "si": false,
+   "origen": "escrita: planea"
+  },
+  {
+   "m": "Hi, how do I pay for the refresher?",
+   "si": false,
+   "origen": "escrita: cómo pagar (aún no pagó)"
+  },
+  {
+   "m": "we loved the dives last week! we'd like to book another day, maybe Thursday",
+   "si": false,
+   "origen": "escrita: reserva algo NUEVO"
+  },
+  {
+   "m": "Hola, buen día, quisiera información del curso open water",
+   "si": false,
+   "origen": "escrita"
+  },
+  {
+   "m": "my friend dove with you last year and recommended you, how much is the 2 dive trip?",
+   "si": false,
+   "origen": "escrita: otra persona, otro año"
+  },
+  {
+   "m": "ok perfecto, reservo para el martes entonces",
+   "si": false,
+   "origen": "escrita: está reservando ahora"
+  }
+ ],
+ "ciego": [
+  {
+   "m": "Hi! Our booking is for tomorrow at 8, is parking available near the pier?",
+   "si": true
+  },
+  {
+   "m": "Buenas, tengo reserva para el domingo pero mi esposa se torció el tobillo",
+   "si": true
+  },
+  {
+   "m": "Thanks for today, the night dive was amazing!",
+   "si": true
+  },
+  {
+   "m": "Ya llené el formulario médico que me mandaron, ¿necesitan algo más?",
+   "si": true
+  },
+  {
+   "m": "I paid the deposit yesterday, did you get it?",
+   "si": true
+  },
+  {
+   "m": "mañana nos vemos en la bodeguita, ¿llevamos efectivo para propina?",
+   "si": true
+  },
+  {
+   "m": "Can I still get the photos from our snorkel trip on Friday?",
+   "si": true
+  },
+  {
+   "m": "somos 4, queremos el paquete de 5 buceos para la semana que viene",
+   "si": false
+  },
+  {
+   "m": "I dove in Thailand last month, is a refresher needed?",
+   "si": false
+  },
+  {
+   "m": "¿el minicurso sale todos los días?",
+   "si": false
+  },
+  {
+   "m": "what time does the boat leave if we book for saturday?",
+   "si": false
+  },
+  {
+   "m": "after our trip last month we want to come back with friends, can we book for 6 people in May?",
+   "si": false
+  },
+  {
+   "m": "hola, me recomendaron ustedes, quiero hacer el open water",
+   "si": false
+  },
+  {
+   "m": "vale, me quedo con el plan de 2 inmersiones, ¿cómo pago?",
+   "si": false
+  }
+ ]
+}
