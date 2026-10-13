@@ -2837,7 +2837,12 @@ async def _understand(state: ConversationState, message: str, *, answered_pendin
         except Exception as exc:  # noqa: BLE001
             logger.warning(f"[EXTRACT][RECHECK] failed, degrading to regex-only: {exc}")
     else:
-        await supervisor._maybe_veto_resolved_fields_via_llm(message, intent, state)
+        # ex-9 (ronda atencion-B2): los campos que decide el extractor tampoco van al veto por esta rama; la llamada
+        # (en serie, ~1 s) se hacía y su resultado se tiraba al poner lo del extractor.
+        solo = None if not campos_del_extractor() else [
+            f for f in supervisor._eligible_veto_fields(message, intent, state) if f not in campos_del_extractor()
+        ]
+        await supervisor._maybe_veto_resolved_fields_via_llm(message, intent, state, only_fields=solo)
     # Fase 3.4 (reducir llamadas/turno): un saludo puro no tiene slots que
     # extraer → se salta `fill_gaps` (misma rama que "pregunta" o "sin gaps": no
     # se aplica patch). Ahorra 1 llamada LLM en el saludo, el turno más común,
@@ -4236,6 +4241,18 @@ def _courtesy_after_handoff(state: ConversationState, routing_signals: dict, gre
     return response
 
 
+def _reserva_nueva_en_curso(state: ConversationState) -> bool:
+    """En esta conversación el cliente ya eligió una actividad (en turnos anteriores) y aún no se le ha mandado el
+    enlace de reserva: está reservando algo nuevo."""
+    from src.observability import BOOKING_LINK  # lazy
+
+    if not state.detected_activity:
+        return False
+    return not any(
+        t.get("role") == "assistant" and BOOKING_LINK in (t.get("content") or "") for t in (state.history or [])
+    )
+
+
 def _modo_posventa(state: ConversationState, routing_signals: dict) -> bool:
     """13-oct (flag `posventa_sin_vender`): ¿el cliente ya tiene una reserva o ya hizo la actividad? Lo dice Jev
     (`ya_reservado`, en la misma llamada del enrutador) y se recuerda; se olvida si en un turno sin ese dato el cliente
@@ -4243,6 +4260,12 @@ def _modo_posventa(state: ConversationState, routing_signals: dict) -> bool:
     if not settings.posventa_sin_vender:
         return False
     ahora = routing_signals.get("ya_reservado")
+    if ahora is True and not state.ya_reservado and _reserva_nueva_en_curso(state):
+        # Ronda atencion-B2 (snorkel-precio-residente-y-pago-link): a mitad de reservar snorkel para dos, "ok ya he
+        # buceado con ustedes" (cliente que vuelve) pasaba a posventa y "dame la cuenta y transfiero" recibía "si
+        # necesitas algo de tu reserva…" sin el enlace de pago. Lo que esta conversación ya está reservando manda.
+        logger.info("[CORE] posventa: Jev dice ya_reservado, pero hay una reserva nueva en curso -> se sigue con ella")
+        return False
     if ahora is True:
         if not state.ya_reservado:
             logger.info("[CORE] posventa: el cliente ya tiene una reserva (Jev) -> sin preguntas de la reserva")

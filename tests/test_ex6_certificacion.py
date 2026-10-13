@@ -89,3 +89,21 @@ async def test_apagado_no_cambia_nada(monkeypatch):
     monkeypatch.setattr(core, "datos_del_extractor", llamada)
     await _entender("I'm a certified diver")
     llamada.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_los_campos_del_extractor_no_van_al_veto(monkeypatch):
+    """ex-9 (ronda atencion-B2): con los dominios del extractor encendidos, el veto del camino viejo no se pide para
+    sus campos (la llamada iba en serie y su resultado se tiraba)."""
+    from src.agents import supervisor
+
+    for flag in ("extraccion_llm_ubicacion", "extraccion_llm_actividad", "extraccion_llm_certificacion",
+                 "extraccion_llm_grupo"):
+        monkeypatch.setattr(settings, flag, True)
+    monkeypatch.setattr(core, "datos_del_extractor", AsyncMock(return_value={}))
+    verificar = AsyncMock(return_value={})
+    monkeypatch.setattr(supervisor, "verify_fields", verificar)
+    monkeypatch.setattr(core, "verify_fields", verificar, raising=False)
+    await _entender("Hi, I am looking to book 2 dives and snorkeling for 6 people, all PADI certified")
+    for llamada in verificar.await_args_list:
+        assert not set(llamada.args[0]) & set(core.campos_del_extractor()), llamada.args[0]

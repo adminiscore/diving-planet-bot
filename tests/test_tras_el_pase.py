@@ -95,3 +95,17 @@ async def test_posventa_no_vende(monkeypatch, offline, flag):
     resp = await route_message(st, "Just completed the waivers. Thank you!")
     vende = any(p in resp.lower() for p in ("leaning toward", "mini-course", "what would you like to experience"))
     assert vende is (not flag), resp
+
+
+def test_posventa_no_corta_una_reserva_nueva_en_curso(monkeypatch):
+    """Ronda atencion-B2: a mitad de reservar snorkel, "ok ya he buceado con ustedes" (Jev: ya_reservado) no pasa a
+    posventa; sin actividad elegida (cambio de fecha, fotos) sí; y tras mandar el enlace, también."""
+    monkeypatch.setattr(settings, "posventa_sin_vender", True)
+    st = ConversationState(conversation_id="posventa")
+    st.detected_activity = "snorkel"
+    assert core._modo_posventa(st, {"ya_reservado": True}) is False
+    st.history = [{"role": "assistant", "content": "Reserva aquí: https://book.divingplanet.org/snorkel"}]
+    assert core._modo_posventa(st, {"ya_reservado": True}) is True
+    nuevo = ConversationState(conversation_id="posventa2")
+    assert core._modo_posventa(nuevo, {"ya_reservado": True}) is True
+

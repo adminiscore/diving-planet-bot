@@ -1,6 +1,16 @@
 History
 =======
 
+0.31.21 - (2026-10-13)
+----------------------
+* **Ronda atención-B2 (los 6 arreglos de Gonzalo, con Jev funcionando): 82,6 → 88,7 %, 13 → 18/41 sin fallos; 32 mejoras, 9 regresiones; 1 regresión real del flag de posventa, arreglada** (Gadea con Claude; OpenRouter recargado por Gadea).
+  - **Ojo con la comparación:** la `atencion-A` de Gonzalo ya iba casi sin Jev (enrutador de respaldo en 163 de 209 turnos: el crédito de OpenRouter se acababa), y en B2 Jev contesta en todos. Parte de la mejora puede ser de Jev; las mejoras que cuentan son las del mecanismo de cada flag: posventa sin vender (`pedir-fotos`, `equipaje`, `cambio-fecha`, `aprobacion-logs`: sin "¿con cuál te animas?"), el precio que elige la actividad (`precios-y-disponibilidad`, `precio-fundive`), pases a una persona que se cumplen.
+  - **Fichero:** la ronda se añadió al final del fichero de la B inválida (mismo nombre en la misma fecha); separada en `2026-10-13-atencion-B2.jsonl` y la B de Gonzalo restaurada tal cual.
+  - **Regresión real arreglada (`POSVENTA_SIN_VENDER`):** a mitad de reservar snorkel para dos, "ok ya he buceado con ustedes" (cliente que vuelve) pasaba a posventa y "dame la cuenta y transfiero" recibía "si necesitas algo de tu reserva…" sin el enlace de pago. Ahora lo que esta conversación ya está reservando manda: con una actividad elegida en turnos anteriores y sin el enlace mandado, el `ya_reservado` de Jev no pasa a posventa (`_reserva_nueva_en_curso`). Cambio de fecha, fotos o "we just booked a package" empiezan sin actividad elegida: no cambian.
+  - **El resto de regresiones no son de los flags:** el "paquete de 3 inmersiones" y el "¡Claro que sí!" de las fotos los dice el RAG igual en A y B2 (ruido del juez); "¿más de 2 años?" repetido 3 turnos seguidos sin respuesta (para la fase de flujo: no repetir la misma pregunta en bucle); el criterio de idioma (portugués) sigue pendiente de Gadea.
+  - **ex-9, primer hallazgo arreglado:** en una rama de `_understand` el veto del camino viejo se pedía SIN quitar los campos del extractor: una llamada en serie (~1 s) cuyo resultado se tiraba (9 de 209 turnos de la ronda). Ahora esa rama filtra igual que la otra. Test en `tests/test_ex6_certificacion.py`.
+  - Latencia de reserva p50 2,46 → 1,65 s, p95 3,69 → 2,85 s (sobre todo por Jev).
+
 0.31.20 - (2026-10-13)
 ----------------------
 * **Estudio de las 45 regresiones de EX y 6 arreglos de atención, ENCENDIDOS EN PRE PERO SIN MEDIR del todo** (Gonzalo). Estudio: `docs/robustness/regresiones-ex-2026-10-13.md`.
