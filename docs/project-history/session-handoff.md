@@ -41,7 +41,66 @@ PRE (escritas ya por Luna) tumba 42 frente a 13, casi todo verdades (HISTORY 0.3
 **C. Pendientes de antes:** el criterio del Open Water en `manual-duracion-curso` ✅ (FAQ curada nueva: "sacarse la
 certificación" = Open Water, o el Referido; el Scuba Diver es la parcial). **DeepSeek: FUERA DEL PLAN** (Gadea, 9-oct).
 
-### ▶️ RETOMAR AQUÍ — 13-oct mediodía (Gadea con Claude): ex-6 HECHO (certificación, promocionado); PRE para Álvaro (ex-2/ex-3); luego ex-7
+### ▶️ RETOMAR AQUÍ — 13-oct, CIERRE (Álvaro con Claude) → para Gonzalo: fase EX con ex-0…ex-8 hechos; siguiente, los restos y ex-9
+
+**Estado.** PRE sirve `feature/pre_alvaro` (último commit del 13-oct, sana; `check_deploy` en verde). Lleva TODO
+`feature/pre_gadea` (ex-5, ex-6, ex-8) y `feature/l1_gonzalo`: **partid de `feature/pre_alvaro`** e integradla antes de
+subir. Cualquier push a una rama `feature/pre_*` despliega PRE y gana el último.
+
+**Interruptores de la fase EX en PRE:**
+
+| Encendidos (promocionados) | Paso | Quién |
+|---|---|---|
+| `EXTRACCION_LLM_UBICACION` | ex-5 | Gadea |
+| `EXTRACCION_LLM_CERTIFICACION` | ex-6 | Gadea |
+| `EXTRACCION_LLM_GRUPO` | ex-7 | Álvaro (HISTORY 0.31.19) |
+| `EXTRACCION_LLM_ACTIVIDAD` | ex-8 | Gadea |
+| `ESCALADO_SOLO_EMERGENCIAS` | ex-2 | Álvaro (0.31.16, 0.31.18) |
+| `ATAJO_RESUMEN_POR_RAG`, `ATAJO_NACIONALIDAD_POR_RAG` | ex-3 | Álvaro (0.31.17, 0.31.18) |
+
+Apagado: `ATAJO_ALERGIA_POR_RAG` (no pasó su escalón 0: la alergia acababa en el aviso médico).
+
+**Qué se hizo en esta sesión (12-13 oct, Álvaro):**
+
+| Paso | Resultado | HISTORY |
+|---|---|---|
+| ex-1: borrar los atajos apagados del RAG | 28 patrones y 448 líneas fuera; banco ex0 sin LLM idéntico | 0.31.15 |
+| ex-2: solo emergencias e incidencias pasan a un asesor por palabra clave | banco de 76 frases: falsas alarmas 33 → 12; mini-ronda ex23 95,3 → 95,3 % ("medical form" ya no recibe el aviso médico) | 0.31.16, 0.31.18 |
+| ex-3: respuestas fijas activas al RAG (resumen y nacionalidad) | el buzo certificado ya no recibe "¿nunca has buceado?"; el grupo mixto recibe su regla (USD) | 0.31.17, 0.31.18 |
+| ex-7: el grupo y su reparto, por el extractor | mini-ronda ex7 (47 diálogos) 90,6 → 91,2 %, 13 mejoras / 8 regresiones ajenas; "1 buzo avanzado y 2 para bautismo" = 3 personas; "él quiere hacer snorkel" ya no cobra el snorkel a 2 | 0.31.19 |
+| Integración | ex-6 y ex-8 de Gadea dentro, sin conflictos de código | — |
+
+**Siguiente (en orden):**
+1. **Restos del extractor (sobre todo de ex-8):** (a) "1 buzo avanzado" se lee como el curso Advanced (debe ser
+   certificado + buceo; por eso `grupo-mixto-precio-cop-total` repregunta la última inmersión); (b) a veces no fija el
+   buceo certificado ya pedido (`regateo-grupo-6`, `pareja-certificados-cop-descuento-almuerzo`, variación); (c) idioma
+   ("Frances" = francés; "Busco el seguinte… família" = portugués); (d) en posventa no ofrecer actividades; (e) "quiero
+   bucear con mi amigo" debería contar 2.
+2. **Hallazgos sueltos para decidir:** (a) el saludo toma "soy gringo" por un nombre ("¡Hola, Gringo!"); (b) el grupo
+   privado/empresa promete "te paso con un asesor" y no marca el pase (pasarlo de verdad o dejarlo a `needs_staff`);
+   (c) en el banco ex0 la regla de ex-6/ex-8 "paquete de buceos ⇒ certificado" cuenta como invento con las etiquetas
+   (8 casos en el ciego): decidir con Gadea si se re-etiqueta o se cambia la regla.
+3. **ex-9: retirar el camino viejo** (regex de entender, veto, relleno, re-comprobación, flags viejos; partir
+   `conversational_core`/`supervisor`). Los tests del camino antiguo están fijados con fixtures autouse
+   (`_camino_antiguo_ex2_ex3`, `_grupo_camino_antiguo` y los de Gadea): al retirar, quitarlos o pasarlos al camino nuevo.
+4. **Fase corta de flujo y repreguntas** (`sin-repreguntas` es el criterio que más falla; recomendación de Gadea).
+5. **ex-10:** ronda completa con el examen oculto (una vez).
+
+**Cómo medir (herramientas nuevas):** `scripts/banco_escalado.py` (ex-2), `scripts/sonda_atajos_pre.py` (ex-3, dentro
+de PRE), `scripts/banco_grupo.py` (ex-7, turno de producción con lo ya sabido), `run_extraction_eval --banco ex0 --modo
+llm-primero|actual [--flag X]`. Mini-ronda: A con el código nuevo y el flag APAGADO, B encendido, misma franja;
+guardad los logs de PRE y `turn_metrics` ANTES de subir; juez ~0,9 $ por 47 diálogos; `ab_judge_compare A B`. **Leed a
+mano las regresiones y los importes:** el juez dio por buena la ex7-A que cobraba el snorkel a 2 personas.
+
+**Avisos:**
+- El 12-13 oct Gadea y Álvaro hicieron ex-6 a la vez sin saberlo (la de Álvaro, `feature/ex6_alvaro`, quedó obsoleta).
+  **Antes de empezar un paso, confirmad quién lo lleva.** PRE es uno solo: antes de subir o lanzar una ronda, mirad si
+  alguien mide (`docker logs --since 30m dp-pre-bot | grep -c TURN_METRICS`).
+- `check_deploy` mira la rama en la que estás: lanzadlo desde `feature/pre_alvaro`.
+- Gasto OpenAI del 13-oct ≈ 6 $ (bancos, sonda y dos pares de mini-rondas con juez).
+- `.agents/` no se sube.
+
+### ▶️ (anterior) 13-oct mediodía (Gadea con Claude): ex-6 HECHO (certificación, promocionado); PRE para Álvaro (ex-2/ex-3); luego ex-7
 
 **Estado.** PRE sirve `feature/pre_gadea` con `EXTRACCION_LLM_UBICACION`, `EXTRACCION_LLM_ACTIVIDAD` y
 `EXTRACCION_LLM_CERTIFICACION` **encendidos (promocionados)**. HISTORY 0.31.14.
@@ -77,7 +136,7 @@ certificación" = Open Water, o el Referido; el Scuba Diver es la parcial). **De
 dependa de varios turnos (como "certificado + quiere bucear") va en el código con hechos guardados en el estado, no en
 el prompt.
 
-### ▶️ RETOMAR AQUÍ — 13-oct tarde (Álvaro con Claude): ex-1, ex-2 y ex-3 CERRADOS (promocionados); siguiente ex-7
+### ▶️ (anterior) 13-oct tarde (Álvaro con Claude): ex-1, ex-2 y ex-3 CERRADOS (promocionados); siguiente ex-7
 
 **Estado.** PRE sirve `feature/pre_alvaro` (lleva todo `feature/pre_gadea`: ex-5, ex-6 y ex-8) con
 `ESCALADO_SOLO_EMERGENCIAS`, `ATAJO_RESUMEN_POR_RAG` y `ATAJO_NACIONALIDAD_POR_RAG` **encendidos (promocionados, decisión

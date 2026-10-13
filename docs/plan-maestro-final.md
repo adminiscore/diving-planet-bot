@@ -452,6 +452,11 @@ medias (u3-1 ✅, u3-4 ✅ promocionada, u3-5 🟡); PRE con u3-4 encendido. Sui
 | **11** | R6: robustez de producción | r6-2 (guardrails), g-5 (carga) | el bot nunca deja sin respuesta; inyección medida; p95 con N clientes a la vez |
 | **12** | Q5: calidad continua y entrega | q5-1, g-3, g-4, g-4b, g-6, m0-4, q5-2 | gate en CI; simulador; bucle producción → golden; testers reales; SOAK; entrega |
 
+> **Estado al 13-oct, cierre de la sesión de Álvaro:** fase EX (sustituye a s4-28 y a los fallos de flujo por no entender)
+> con ex-0, ex-1, ex-2, ex-3, ex-4, ex-5, ex-6, ex-7 y ex-8 HECHOS y promocionados (HISTORY 0.31.9-0.31.19; Gadea ex-0/4/5/6/8,
+> Álvaro ex-1/2/3/7). Quedan los restos de ex-8, ex-9 (retirar el camino viejo), una fase corta de flujo y repreguntas y
+> ex-10 (ronda completa con el examen oculto). Detalle y orden en `session-handoff.md` (RETOMAR AQUÍ).
+
 > **Estado al 8-oct, cierre de la sesión de Álvaro:** **s4-31 CERRADA** (el prompt del RAG no necesita reescribirse para
 > Luna; la puerta del origen conserva el resto de la respuesta, `ORIGEN_CONSERVA_RESPUESTA` promocionado; ronda visible
 > con Luna 92,8 %, reales 88,7 %). **s4-33 EN CURSO:** Luna como revisor no pasa con 142 juicios reales (tumba 42 frente

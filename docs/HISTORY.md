@@ -1,6 +1,16 @@
 History
 =======
 
+0.31.19 - (2026-10-13)
+----------------------
+* **EX-7 CERRADO: `EXTRACCION_LLM_GRUPO` PROMOCIONADO (decisión de Álvaro): cuántos van y cómo se reparten los decide el extractor "LLM primero"** (Álvaro con Claude). `conversational_core._poner_grupo`.
+  - **Extractor:** clave `undecided` en el reparto (decisión del owner, 15-sep: "uno no está certificado" no es un minicurso, se le recomiendan opciones); el reparto cuenta a quien ya iba ("viene también uno que hace snorkel"); "con mi amigo" = 2. La cita vale también en trozos literales del mensaje sin separador (una lista en varias líneas se descartaba y el grupo de 6 se perdía).
+  - **Código (el código valida):** un reparto que solo SUMA personas al de antes es un añadido, sin "¿lo cambio?" ("3 of us will dive and 3 will snorkel" sobre buceo de 3); una corrección explícita se aplica aunque el "¿lo afirma?" de Jev diga que no; otro cambio se confirma. `_reparto_valido`: una cifra de más de una persona tiene que estar en el mensaje ("mis amigos hacen snorkel" no dice cuántos: se pregunta) y una actividad que el mensaje no nombra queda sin decidir. El atajo de acompañante ya no vuelve a sumar a quien puso el extractor. El grupo va antes que la actividad (la regla de ex-8 del grupo repartido mira el reparto).
+  - **Escalón 0:** banco nuevo `docs/robustness/regex/banco-ex7/` (30 frases de grupo con la conversación previa, `scripts/banco_grupo.py`, Jev encendido): frases con fallo 18 → 8 y repartos 11 → 22/22 (2 pasadas); banco ex0 (diseño, bot entero) 110 → 111/122 datos e inventos 3 → 1; extractor ciego sin cambios en el grupo.
+  - **Mini-ronda ex7-A/B** (47 conversaciones visibles de grupo, `docs/robustness/regex/banco-ex7/dialogos-mini-ronda.txt`, misma franja; ex7-A con el código nuevo y el flag apagado): criterios 90,6 → 91,2 %, 25 → 26/47 sin fallos, 13 mejoras y 8 regresiones, ninguna del grupo. "1 buzo avanzado y 2 para bautismo" se guarda como 3 personas (antes 1, y "¿Cuántos serían para buceo certificado?" ×4); "él quiere hacer snorkel" ya no cobra el snorkel a 2 (A: 2 × 126 USD; el juez no lo vio). Repreguntas "¿cuántos?/¿lo cambio?" 16 → 9. Reserva p50 1,61 → 1,55 s, p95 2,94 → 2,97 s.
+  - **Restos que quedan (no son de ex-7):** "1 buzo avanzado" se lee como el curso Advanced (ex-8); a veces no fija el buceo certificado ya pedido (ex-8, variación); "quiero bucear con mi amigo" no cuenta 2; en el banco ciego la regla "paquete de buceos ⇒ certificado" (ex-6/ex-8) cuenta como invento con las etiquetas de ex0.
+  - Los tests del camino antiguo del grupo fijan el flag apagado (fixture autouse); lo nuevo en `tests/test_ex7_grupo.py` (12).
+
 0.31.18 - (2026-10-13)
 ----------------------
 * **EX-2 y EX-3 CERRADOS: `ESCALADO_SOLO_EMERGENCIAS`, `ATAJO_RESUMEN_POR_RAG` y `ATAJO_NACIONALIDAD_POR_RAG` PROMOCIONADOS (decisión de Álvaro)**; `ATAJO_ALERGIA_POR_RAG` se queda APAGADO (Álvaro con Claude, integrado con ex-6/ex-8 de Gadea).

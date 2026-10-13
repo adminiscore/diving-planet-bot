@@ -94,7 +94,7 @@ leer la salida del revisor (2).
   bucle "¿Sois buzos certificados?" y el "no están certificados" inventado de `paquete-5-buceos-islas-residente-...`.
 - Flag `EXTRACCION_LLM_CERTIFICACION`.
 
-### ex-7 · Dominio 3: GRUPO Y REPARTO
+### ex-7 · Dominio 3: GRUPO Y REPARTO — ✅ PROMOCIONADO 13-oct (Álvaro, HISTORY 0.31.19)
 - `group_size`, `group_allocation`, acompañantes ("1 buzo avanzado y 2 para bautismo", "3 buzos (2 adultos + 1
   joven)", jerga). Hoy hay 3 redes solo para esto (`_mentions_person`, `adds_person`, `companion_joins`).
 - Flag `EXTRACCION_LLM_GRUPO`.
