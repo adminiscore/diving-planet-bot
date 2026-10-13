@@ -41,7 +41,38 @@ PRE (escritas ya por Luna) tumba 42 frente a 13, casi todo verdades (HISTORY 0.3
 **C. Pendientes de antes:** el criterio del Open Water en `manual-duracion-curso` ✅ (FAQ curada nueva: "sacarse la
 certificación" = Open Water, o el Referido; el Scuba Diver es la parcial). **DeepSeek: FUERA DEL PLAN** (Gadea, 9-oct).
 
-### ▶️ RETOMAR AQUÍ — 13-oct, 23:45 (Gadea con Claude): atención MEDIDA y cerrada; siguiente ex-9
+### ▶️ RETOMAR AQUÍ — 14-oct, 00:30 (Gadea con Claude): decisiones de Gadea y hallazgos como tareas; siguiente G-9
+
+**Estado.** Sin cambios de código desde 9c28e2e (PRE la sirve, sana). Nada a medias en local.
+
+**Decisiones de Gadea (14-oct):**
+1. **Idioma:** el bot atiende en español e inglés; si el cliente escribe en OTRO idioma (portugués, francés…) responde
+   en **inglés**. Unas palabras sueltas de otro idioma dentro de un mensaje en español ("Busco el seguinte… família")
+   no cambian el idioma; "Frances" como idioma del acompañante tampoco. Con esta regla se reescribe el criterio
+   `global:idioma` del juez y se comprueba la conducta del bot (flag si cambia). Tarea **G-10**.
+2. **Políticas en el RAG:** se aprueba probar las políticas SIEMPRE en el contexto del RAG (como el catálogo), con su
+   flag, midiendo tokens y latencia en el escalón 0 y una mini-ronda A/B; se promociona solo si no empeora. Tarea
+   **EX-RAG-1** (origen: `equipaje-mochilas-y-almacenamiento`, el RAG no recupera `luggage_policy`).
+
+**Hallazgos subidos al Plan Coral como tareas (14-oct):** EX-FLUJO-1 (no repetir la misma pregunta en bucle),
+EX-RAG-1 (políticas), EX-RAG-2 (el RAG atribuye al cliente un servicio que no dijo: "3-dive package" en
+`cambio-fecha-por-enfermedad`), G-9 (separar el ruido del juez), G-10 (idioma).
+
+**Siguiente, en orden (plan acordado, ~7 h y ~2 $ de juez):**
+1. **G-9 (sin PRE):** `scripts/ab_judge_compare.py` → (a) `cumple ↔ no_aplica` en una lista aparte "no comparables";
+   (b) si la `evidencia_bot` del fallo en B también está en la conversación de A (donde cumplía), "sospecha de ruido";
+   (c) `--rejuzgar N`: cada criterio que cambia se juzga N veces más en A y en B sin caché (funciones de
+   `judge_golden_set`: `criteria_for`, `evaluate_criterion`, `counted_failures`, `discount_counted`,
+   `latest_conversations`, `load_reference`; el resultado trae `run_file`, `model`, `effort`, `referencia`) y cuenta
+   la mayoría; si la mayoría coincide, "ruido del juez". Por defecto solo las regresiones (céntimos).
+2. **G-10** (idioma), 3. **EX-RAG-1 y EX-RAG-2** (cada uno con su flag), 4. **EX-FLUJO-1** (flag).
+5. Una mini-ronda A/B con los diálogos que tocan esas tareas, juzgada con el comparador de G-9.
+6. Después: ex-9 (retirar el camino viejo) y ex-10 (examen oculto).
+
+**Aviso:** `run_synthetic_pre` AÑADE al fichero si ya existe uno con el mismo `--name` en la misma fecha (pasó con
+`atencion-B`): usad un nombre nuevo para cada ronda.
+
+### ▶️ (anterior) 13-oct, 23:45 (Gadea con Claude): atención MEDIDA y cerrada; siguiente ex-9
 
 **Estado.** PRE sirve `feature/pre_gadea` (7fb2370, sana), que lleva TODO lo de `pre_alvaro`/`l1_gonzalo`: **partid de
 `feature/pre_gadea`**. OpenRouter recargado (15 $; Jev funciona). HISTORY 0.31.21.
