@@ -1,6 +1,16 @@
 History
 =======
 
+0.31.14 - (2026-10-13)
+----------------------
+* **EX-6 HECHO: la certificación y la última inmersión las decide el extractor "LLM primero" (`EXTRACCION_LLM_CERTIFICACION`, PROMOCIONADO)** (Gadea con Claude).
+  - **Qué cambia:** `is_certified` y `last_dive_over_2_years` salen del extractor (cita del cliente); lo del regex queda como pista. "Take the PADI Open Water Diver course" ya no es "ya certificado" y el relleno ya no saca la certificación de un "gracias". Un valor que contradice lo guardado se confirma. Un nivel nombrado sin decir si lo tiene o lo quiere sacar ("somos 4 open water") y sin cita del extractor se sigue preguntando (`_flag_cert_or_course`); con cita, no. La confirmación por producto nombrado (regex) la sustituye la regla del catálogo del extractor (buceo certificado nombrado ⇒ certificado).
+  - **Escalón 0 (banco ex0, diseño, turno completo, con ex-5 y ex-8):** certificación inventada 6 → **0**; última inmersión 5/6 → **6/6**; datos acertados 109 → **111/122 (91,0 %)**; casos con algún invento 4,5 → **2,0 %** (los que quedan son de grupo, ex-7, y 1 de ubicación).
+  - **Mini-rondas (41 diálogos visibles con certificación o última inmersión):** A (09:38, ex-6 apagado) **89,4 %**, 23/41 sin fallos; B (10:20) **92,9 %, 26/41**. 18 mejoras (refresher bien ofrecido y sin repreguntas, sin inventos de certificación, precios de 2 buceos) y 7 regresiones ajenas a ex-6 (variación del RAG: San Bernardo, Barú, texto del refresher; "solo backpacker" = grupo, ex-7; "Frances" = idioma, resto de ex-8).
+  - **Latencia (misma franja):** reserva p50 1,60 → 1,72 s, p95 2,78 → 2,91 s (ruido), menos llamadas por turno (3,78 → 3,66). Sin turnos sin respuesta ni errores. En PRE: 40 datos de certificación puestos por el extractor, 8 lecturas del regex descartadas, 2 cambios confirmados.
+  - **PRE pasa a Álvaro** para probar ex-2 y ex-3 (decisión de Gadea): no lanzar rondas hasta que acabe. Siguiente nuestro: ex-7 (grupo).
+  - Tests: `tests/test_ex6_certificacion.py`; los del camino viejo fijan el flag apagado.
+
 0.31.13 - (2026-10-13)
 ----------------------
 * **EX-8 HECHO: la actividad y la nacionalidad las decide el extractor "LLM primero" (`EXTRACCION_LLM_ACTIVIDAD`, PROMOCIONADO)** (Gadea con Claude; Gadea dio permiso para llevarlo hasta el final).

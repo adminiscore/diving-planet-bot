@@ -53,7 +53,8 @@ class Settings(BaseSettings):
     # el relleno sacaba "certificado" de un "gracias". Un valor que contradice lo guardado se confirma; nivel nombrado
     # sin decir si lo tiene o lo quiere sacar y sin cita del extractor -> se pregunta, como hoy (`_flag_cert_or_course`).
     # conversational_core._aplicar_extractor. Escalon 0 (banco ex0, diseno): certificacion inventada 6 -> 0, casos con
-    # invento 4,5 -> 2,0 %. ENCENDIDO para la mini-ronda ex6-B. Revert = False aqui y en el compose.
+    # invento 4,5 -> 2,0 %. PROMOCIONADO 13-oct (HISTORY 0.31.14: rondas ex6-A/B 89,4 -> 92,9 %). Revert = False aqui
+    # y en el compose.
     extraccion_llm_certificacion: bool = True
     # Model for the RAG answer-generation call only (rag_agent.py
     # `_answer_with_llm`). Kept SEPARATE from `openai_model` (used broadly

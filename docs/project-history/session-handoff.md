@@ -41,7 +41,20 @@ PRE (escritas ya por Luna) tumba 42 frente a 13, casi todo verdades (HISTORY 0.3
 **C. Pendientes de antes:** el criterio del Open Water en `manual-duracion-curso` ✅ (FAQ curada nueva: "sacarse la
 certificación" = Open Water, o el Referido; el Scuba Diver es la parcial). **DeepSeek: FUERA DEL PLAN** (Gadea, 9-oct).
 
-### ▶️ RETOMAR AQUÍ — 13-oct (Gadea con Claude): fase EX — ex-8 HECHO (actividad y nacionalidad, promocionado); siguiente ex-6
+### ▶️ RETOMAR AQUÍ — 13-oct mediodía (Gadea con Claude): ex-6 HECHO (certificación, promocionado); PRE para Álvaro (ex-2/ex-3); luego ex-7
+
+**Estado.** PRE sirve `feature/pre_gadea` con `EXTRACCION_LLM_UBICACION`, `EXTRACCION_LLM_ACTIVIDAD` y
+`EXTRACCION_LLM_CERTIFICACION` **encendidos (promocionados)**. HISTORY 0.31.14.
+
+- **PRE es de Álvaro** mientras prueba ex-2 y ex-3 (decisión de Gadea, 13-oct): nadie lanza rondas ni sube a `pre_*`
+  hasta que acabe. Álvaro: integra `feature/pre_gadea` antes de subir lo tuyo.
+- ex-6: escalón 0 certificación inventada 6 → 0, datos 111/122 (91,0 %), casos con invento 2,0 %; mini-rondas A 89,4 %
+  → B 92,9 % (41 diálogos); latencia igual.
+- **Siguiente nuestro: ex-7 (grupo y reparto)**, cuando Álvaro libere PRE. Los inventos que quedan en el banco son de
+  grupo ("soy buza advanced" → grupo de 1; el total sacado del historial; "solo backpacker" repreguntado). Restos de ex-8
+  en el bloque de abajo.
+
+### ▶️ (anterior) 13-oct (Gadea con Claude): fase EX — ex-8 HECHO (actividad y nacionalidad, promocionado); siguiente ex-6
 
 **Estado.** PRE sirve `feature/pre_gadea` con `EXTRACCION_LLM_UBICACION` y `EXTRACCION_LLM_ACTIVIDAD` **encendidos
 (promocionados)**. Integrad `feature/pre_gadea` antes de subir. Detalle en HISTORY 0.31.13.
