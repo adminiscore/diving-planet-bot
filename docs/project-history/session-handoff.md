@@ -41,7 +41,30 @@ PRE (escritas ya por Luna) tumba 42 frente a 13, casi todo verdades (HISTORY 0.3
 **C. Pendientes de antes:** el criterio del Open Water en `manual-duracion-curso` ✅ (FAQ curada nueva: "sacarse la
 certificación" = Open Water, o el Referido; el Scuba Diver es la parcial). **DeepSeek: FUERA DEL PLAN** (Gadea, 9-oct).
 
-### ▶️ RETOMAR AQUÍ — 13-oct, CIERRE (Álvaro con Claude) → para Gonzalo: fase EX con ex-0…ex-8 hechos; siguiente, los restos y ex-9
+### ▶️ RETOMAR AQUÍ — 13-oct noche (Gonzalo): 6 arreglos de atención ENCENDIDOS en PRE, su ronda B pendiente (sin crédito de OpenRouter)
+
+**Estado.** PRE sirve `feature/pre_alvaro` con los 6 flags de la tabla **encendidos pero sin medir del todo** (HISTORY
+0.31.20). **Antes de nada: recargar el crédito de OpenRouter** (Jev da "402 Payment Required"; el bot sigue con el
+router de respaldo, pero sin Jev no funcionan bien `POSVENTA_SIN_VENDER`, ni la puerta de muchos datos).
+
+| Flag | Qué arregla | Prueba hecha |
+|---|---|---|
+| `NOMBRE_POR_EXTRACTOR` | "soy gringo" ya no es un nombre ("¡Hola, Gringo!") | sonda 9/9; banco ex0 sin empeorar |
+| `GRUPO_PRIVADO_PASE` | el grupo privado / empresa pasa de verdad a un asesor | tests |
+| `EXTRACTOR_PRECIO_ELIGE` | preguntar el precio de un producto lo elige (no repregunta la actividad) | sonda 0/15 → 15/15 |
+| `TRAS_PASE_SIN_VENDER` | tras pasar a una persona no vuelve a vender | tests |
+| `AVISO_MEDICO_DICE_PASE` | el aviso médico dice que pasa a una persona | tests |
+| `POSVENTA_SIN_VENDER` | a quien ya reservó o ya buceó no se le vende (Jev `ya_reservado`) | banco 36/36, ciego 14/14 |
+
+**Siguiente, en orden:**
+1. Recargar OpenRouter. Repetir la ronda B: `run_synthetic_pre --name atencion-B --sample golden --ids <los 41 de
+   docs/robustness/posventa/dialogos-mini-ronda.txt>` frente a `2026-10-13-atencion-A` (82,6 %, ya juzgada). Leer cada
+   regresión; el flag que empeore algo, apagado.
+2. Para Gadea: criterio de idioma del juez y "Muelle de la Bodeguita" en inglés (ver el estudio).
+3. Pendientes: `acompanante-goteo`, `precio-desde-islas`, y lo de antes de Álvaro (abajo). ex-9 sigue esperando.
+- Estudio de las 45 regresiones: `docs/robustness/regresiones-ex-2026-10-13.md`.
+
+### ▶️ (anterior) RETOMAR AQUÍ — 13-oct, CIERRE (Álvaro con Claude) → para Gonzalo: fase EX con ex-0…ex-8 hechos; siguiente, los restos y ex-9
 
 **Estado.** PRE sirve `feature/pre_alvaro` (último commit del 13-oct, sana; `check_deploy` en verde). Lleva TODO
 `feature/pre_gadea` (ex-5, ex-6, ex-8) y `feature/l1_gonzalo`: **partid de `feature/pre_alvaro`** e integradla antes de

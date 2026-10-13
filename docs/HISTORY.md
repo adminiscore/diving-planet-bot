@@ -1,6 +1,24 @@
 History
 =======
 
+0.31.20 - (2026-10-13)
+----------------------
+* **Estudio de las 45 regresiones de EX y 6 arreglos de atención, ENCENDIDOS EN PRE PERO SIN MEDIR del todo** (Gonzalo). Estudio: `docs/robustness/regresiones-ex-2026-10-13.md`.
+
+  | Flag | Qué arregla | Prueba hecha |
+  |---|---|---|
+  | `NOMBRE_POR_EXTRACTOR` | "yo soy gringo" ya no saluda "¡Hola, Gringo!": el nombre lo lee el extractor con su cita; la regex solo "me llamo / mi nombre es / my name is" | sonda 9/9; banco ex0 111 → 110/122, inventos 3 → 2 (ruido) |
+  | `GRUPO_PRIVADO_PASE` | el grupo privado / empresa decía "te paso con un asesor" y no pasaba: ahora marca el pase (motivo + resumen) | tests |
+  | `EXTRACTOR_PRECIO_ELIGE` | las instrucciones del extractor se contradecían ("¿cuánto cuesta el buceo certificado?" no era un dato y a la vez elegía la actividad): de ahí "¿buceo, minicurso, snorkel o curso?" repetido | sonda: eligen la actividad 0/15 → 15/15 |
+  | `TRAS_PASE_SIN_VENDER` | tras pasar a una persona, en cuanto el cliente daba un dato volvía a vender ("Which one are you leaning toward…?") | tests |
+  | `AVISO_MEDICO_DICE_PASE` | el aviso médico pasaba a una persona pero no lo decía | tests |
+  | `POSVENTA_SIN_VENDER` | a quien ya tiene una reserva o ya buceó se le ofrecían actividades ("Fueron muy buenos buceos" → "¿Con cuál te animas?"); pregunta nueva de Jev `ya_reservado` | banco diseño 36/36, ciego 14/14 |
+
+  - **Sin arreglar, para Gadea (no son del bot):** el criterio de idioma del juez ("Frances" es el idioma del acompañante; "Busco el seguinte… família" son dos palabras sueltas) y "Muelle de la Bodeguita" dentro de una respuesta en inglés.
+  - **Pendiente de la siguiente sesión:** `acompanante-goteo`, `precio-desde-islas` ("¿lo cambio?" a "quedándonos en el hotel"), el RAG que a veces no dice "pasadas las 4:30 se reserva por la web" (el dato está en la base).
+  - **Medida:** mini-ronda `atencion-A` (41 diálogos, flags apagados) **82,6 %**, 13/41 sin fallos. **`atencion-B` NO VALE**: se acabó el crédito de OpenRouter (Jev, "402 Payment Required" en todas las llamadas; el bot siguió con el router de respaldo) y la ronda se cortó a los 16 turnos. **Hay que recargar OpenRouter y repetir B** con los 41 de `docs/robustness/posventa/dialogos-mini-ronda.txt` frente a `atencion-A`; si algo empeora, apagar su flag (False en config.py y quitar su línea del compose).
+  - Tests: `test_nombre_y_grupo_privado.py`, `test_tras_el_pase.py`; los del camino antiguo fijan sus flags apagados. Suite local 3.046 en verde (los 5 que fallaban por los flags nuevos, ya ajustados).
+
 0.31.19 - (2026-10-13)
 ----------------------
 * **EX-7 CERRADO: `EXTRACCION_LLM_GRUPO` PROMOCIONADO (decisión de Álvaro): cuántos van y cómo se reparten los decide el extractor "LLM primero"** (Álvaro con Claude). `conversational_core._poner_grupo`.

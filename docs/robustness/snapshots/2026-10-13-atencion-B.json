@@ -1,0 +1,219 @@
+{
+ "label": "2026-10-13-atencion-B",
+ "source": "turn_metrics (log de PRE)",
+ "taken_at": "2026-10-13T16:55:17+00:00",
+ "run_at": "2026-10-13T16:36:56Z",
+ "commit": "4abc7b0",
+ "environment": "staging",
+ "window": {
+  "from": "2026-10-13T16:29:17Z",
+  "to": "2026-10-13T16:38:53Z",
+  "first_turn": "2026-10-13T16:31:55Z",
+  "last_turn": "2026-10-13T16:36:56Z"
+ },
+ "all": {
+  "turns": 17,
+  "latency_p50": 2.555,
+  "latency_p95": 4.337,
+  "latency_avg": 2.856,
+  "llm_calls_avg": 5.06,
+  "llm_calls_p95": 6.2,
+  "llm_calls_max": 7,
+  "embeddings_avg": 2.12,
+  "llm_share": 1.93,
+  "tokens_avg": 0,
+  "cost_avg_usd": 0
+ },
+ "by_type": {
+  "reserva": {
+   "turns": 16,
+   "latency_p50": 2.539,
+   "latency_p95": 3.425,
+   "latency_avg": 2.721,
+   "llm_calls_avg": 4.94,
+   "llm_calls_p95": 6.0,
+   "llm_calls_max": 6,
+   "embeddings_avg": 2.06,
+   "llm_share": 1.964,
+   "tokens_avg": 0,
+   "cost_avg_usd": 0
+  },
+  "rag": {
+   "turns": 1,
+   "latency_p50": 5.008,
+   "latency_p95": 5.008,
+   "latency_avg": 5.008,
+   "llm_calls_avg": 7.0,
+   "llm_calls_p95": 7.0,
+   "llm_calls_max": 7,
+   "embeddings_avg": 3,
+   "llm_share": 1.632,
+   "tokens_avg": 0,
+   "cost_avg_usd": 0
+  }
+ },
+ "by_turn_type": {
+  "rag": {
+   "turns": 1,
+   "latency_p50": 5.008,
+   "latency_p95": 5.008,
+   "latency_avg": 5.008,
+   "llm_calls_avg": 7.0,
+   "llm_calls_p95": 7.0,
+   "llm_calls_max": 7,
+   "embeddings_avg": 3,
+   "llm_share": 1.632,
+   "tokens_avg": 0,
+   "cost_avg_usd": 0
+  },
+  "reserva": {
+   "turns": 15,
+   "latency_p50": 2.522,
+   "latency_p95": 3.021,
+   "latency_avg": 2.624,
+   "llm_calls_avg": 5.07,
+   "llm_calls_p95": 6.0,
+   "llm_calls_max": 6,
+   "embeddings_avg": 2,
+   "llm_share": 2.078,
+   "tokens_avg": 0,
+   "cost_avg_usd": 0
+  },
+  "saludo": {
+   "turns": 1,
+   "latency_p50": 4.169,
+   "latency_p95": 4.169,
+   "latency_avg": 4.169,
+   "llm_calls_avg": 3.0,
+   "llm_calls_p95": 3.0,
+   "llm_calls_max": 3,
+   "embeddings_avg": 3,
+   "llm_share": 0.885,
+   "tokens_avg": 0,
+   "cost_avg_usd": 0
+  }
+ },
+ "turns_with_summary": 17,
+ "business": {
+  "conversations": 3,
+  "turns": 17,
+  "turns_per_conversation": 5.67,
+  "funnel": {
+   "hablan": {
+    "conversations": 3,
+    "pct": 100.0
+   },
+   "eligen_actividad": {
+    "conversations": 2,
+    "pct": 66.7
+   },
+   "carrito_con_personas": {
+    "conversations": 2,
+    "pct": 66.7
+   },
+   "link_de_pago": {
+    "conversations": 2,
+    "pct": 66.7
+   }
+  },
+  "escalation_rate_pct": 0.0,
+  "fallback_turns": 0,
+  "fallback_pct_of_turns": 0.0,
+  "by_turn_type": {
+   "reserva": 15,
+   "saludo": 1,
+   "rag": 1
+  }
+ },
+ "nodes": {
+  "router": {
+   "n": 17,
+   "p50": 1.669,
+   "p95": 2.196
+  },
+  "booking": {
+   "n": 17,
+   "p50": 0.849,
+   "p95": 1.8
+  },
+  "extraction": {
+   "n": 17,
+   "p50": 0.492,
+   "p95": 0.992
+  },
+  "setup": {
+   "n": 17,
+   "p50": 0.034,
+   "p95": 0.058
+  },
+  "routing": {
+   "n": 17,
+   "p50": 0.005,
+   "p95": 0.008
+  },
+  "availability": {
+   "n": 17,
+   "p50": 0.005,
+   "p95": 0.007
+  },
+  "slotfill_close": {
+   "n": 17,
+   "p50": 0.002,
+   "p95": 1.214
+  }
+ },
+ "router": {
+  "by_backend": {
+   "llm_fallback": 17
+  },
+  "ms_p50": 145.0,
+  "ms_p95": 498.6
+ },
+ "models": {
+  "gpt-4o-mini": 67,
+  "gpt-4.1-mini": 17,
+  "gpt-6-luna": 1,
+  "gpt-4.1": 1
+ },
+ "rag_adelantado": {
+  "resultados": {
+   "descartado": 16,
+   "aprovechado": 1
+  },
+  "latencia_turnos_rag": {
+   "aprovechado": {
+    "n": 1,
+    "p50": 5.008,
+    "p95": 5.008
+   }
+  },
+  "rehecho_por": {}
+ },
+ "run_file": "docs/robustness/synthetic-runs/2026-10-13-atencion-B.jsonl",
+ "client_latency": {
+  "turns": 16,
+  "conversations": 3,
+  "no_reply": 0,
+  "multi_bubble": 0,
+  "latency_p50": 3.0,
+  "latency_p95": 4.25,
+  "latency_max": 5
+ },
+ "quality": {
+  "results_file": "docs/robustness/golden-set/results/2026-10-13-atencion-B__gpt-5-mini-medium.json",
+  "model": "gpt-5-mini (medium)",
+  "referencia": "curada",
+  "dialogues": 3,
+  "dialogues_passed": 2,
+  "dialogues_pass_pct": 66.7,
+  "criteria_judged": 23,
+  "criteria_failed": 1,
+  "criteria_pass_pct": 95.7,
+  "not_applicable": 2,
+  "to_review": 0,
+  "errors": 0,
+  "by_category": {
+   "reserva": 95.7
+  }
+ }
+}

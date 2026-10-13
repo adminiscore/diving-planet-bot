@@ -1,0 +1,456 @@
+/app/src/main.py:38: DeprecationWarning: 
+        on_event is deprecated, use lifespan event handlers instead.
+
+        Read more about it in the
+        [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+        
+  @app.on_event("startup")
+/app/src/main.py:43: DeprecationWarning: 
+        on_event is deprecated, use lifespan event handlers instead.
+
+        Read more about it in the
+        [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+        
+  @app.on_event("shutdown")
+INFO:     Started server process [1]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     127.0.0.1:60958 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39400 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58762 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50010 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45386 - "GET /health HTTP/1.1" 200 OK
+INFO:     [WEBHOOK] Event: conversation_created, message_type: None
+INFO:     [WEBHOOK] New conversation: 4470
+INFO:     172.18.0.9:38898 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     [WEBHOOK] Event: message_created, message_type: incoming
+INFO:     [BOT] Incoming from Synth reserva-completa-saludo-a-pago: hola buenas
+WARNING:  [ROUTER][JEV] fallo en 1276 ms, se usa el router LLM: HTTPStatusError: Client error '402 Payment Required' for url 'https://openrouter.ai/api/alpha/decisions'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/402
+INFO:     [RAG][REWRITE] original=hola buenas... rewritten=¿Hola, buenas?...
+INFO:     [RAG][RETRIEVAL] query_topics=[] candidates=48 preview=[{'source': 'policies', 'id': 36469, 'score': 0.3356, 'score_final': 0.352, 'branches': ['vector']}, {'source': 'faqs', 'id': 36223, 'score': 0.3267, 'score_final': 0.3428, 'branches': ['vector']}, {'source': 'policies', 'id': 36405, 'score': 0.3263, 'score_final': 0.3422, 'branches': ['vector']}, {'source': 'faqs', 'id': 36311, 'score': 0.3233, 'score_final': 0.3389, 'branches': ['vector']}, {'source': 'policies', 'id': 36401, 'score': 0.3073, 'score_final': 0.3227, 'branches': ['vector']}, {'source': 'faqs', 'id': 36275, 'score': 0.3069, 'score_final': 0.3221, 'branches': ['vector']}, {'source': 'faqs', 'id': 36239, 'score': 0.306, 'score_final': 0.3209, 'branches': ['vector']}, {'source': 'policies', 'id': 36427, 'score': 0.3024, 'score_final': 0.3172, 'branches': ['vector']}]
+INFO:     [RAG][RETRIEVAL] query_topics=[] candidates=48 preview=[{'source': 'policies', 'id': 36469, 'score': 0.2951, 'score_final': 0.3115, 'branches': ['vector']}, {'source': 'faqs', 'id': 36223, 'score': 0.2775, 'score_final': 0.2937, 'branches': ['vector']}, {'source': 'faqs', 'id': 36311, 'score': 0.2717, 'score_final': 0.2876, 'branches': ['vector']}, {'source': 'faqs', 'id': 36291, 'score': 0.2594, 'score_final': 0.2751, 'branches': ['vector']}, {'source': 'policies', 'id': 36423, 'score': 0.259, 'score_final': 0.2744, 'branches': ['vector']}, {'source': 'faqs', 'id': 36229, 'score': 0.2559, 'score_final': 0.271, 'branches': ['vector']}, {'source': 'services', 'id': 36109, 'score': 0.2548, 'score_final': 0.2698, 'branches': ['vector']}, {'source': 'policies', 'id': 36437, 'score': 0.2538, 'score_final': 0.2685, 'branches': ['vector']}]
+INFO:     [RAG][RETRIEVAL] query_topics=[] candidates=48 preview=[{'source': 'policies', 'id': 36469, 'score': 0.3361, 'score_final': 0.3525, 'branches': ['vector']}, {'source': 'policies', 'id': 36405, 'score': 0.3155, 'score_final': 0.3316, 'branches': ['vector']}, {'source': 'faqs', 'id': 36311, 'score': 0.3122, 'score_final': 0.3281, 'branches': ['vector']}, {'source': 'policies', 'id': 36449, 'score': 0.3104, 'score_final': 0.326, 'branches': ['vector']}, {'source': 'faqs', 'id': 36369, 'score': 0.3073, 'score_final': 0.3227, 'branches': ['vector']}, {'source': 'faqs', 'id': 36223, 'score': 0.2959, 'score_final': 0.3111, 'branches': ['vector']}, {'source': 'faqs', 'id': 36181, 'score': 0.2945, 'score_final': 0.3094, 'branches': ['vector']}, {'source': 'faqs', 'id': 36291, 'score': 0.2932, 'score_final': 0.3079, 'branches': ['vector']}]
+INFO:     [RAG] Low confidence query=hola buenas... retrieval_query=hola buenas
+¿Hola, buenas?... top_score=0.353 min_cosine=0.400 min_bm25=0.050 sources=['policies', 'policies', 'faqs', 'policies', 'faqs', 'faqs', 'faqs', 'faqs', 'policies', 'faqs', 'services', 'policies']
+2026-10-13 16:31:58 [info     ] knowledge_loaded               file=brand_tone.json items=1
+INFO:     [ESCALATION][ROUTING_SIGNALS] detected={'wants_human': False, 'wants_menu_or_restart': False, 'sensitive_topic': False, 'adaptive_diving_topic': False, 'booking_change_topic': False, 'asks_for_contact_number': False, 'broken_link_complaint': False, 'availability_question': False, 'comparing_options': False} msg='hola buenas'
+INFO:     [GRAPH] conv=4470 route=booking
+INFO:     [TURN_METRICS] {"conv": "4470", "start": "2026-10-13T16:31:55Z", "latency": 4.169, "turn_type": "saludo", "route": "booking", "rag_used": false, "language": "es", "step": "free_text", "activity_chosen": false, "cart_items": 0, "booking_link_sent": false, "escalated": false, "fallback": false, "error": null, "router": "llm_fallback", "router_ms": 1277, "llm_calls": 3, "embeddings": 3, "llm_seconds": 3.69, "models": {"gpt-4o-mini": 2, "gpt-4.1-mini": 1}, "nodes": {"router": 3.0726, "setup": 0.0121, "availability": 0.0039, "routing": 0.0079, "extraction": 0.0486, "slotfill_close": 0.0011, "booking": 0.1029}, "rag_adelantado": "descartado"}
+INFO:     [BOT] Sending Chatwoot message conv=4470 url=http://dp-chatwoot:3000/api/v1/accounts/1/conversations/4470/messages
+INFO:     [BOT] Message sent to conversation 4470
+INFO:     172.18.0.9:49678 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     [WEBHOOK] Event: message_created, message_type: outgoing
+INFO:     [WEBHOOK] Skipping non-actionable message_type=outgoing
+INFO:     172.18.0.9:38898 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+Failed to export spans batch code: 403, reason: Forbidden
+INFO:     127.0.0.1:46794 - "GET /health HTTP/1.1" 200 OK
+Failed to export spans batch code: 403, reason: Forbidden
+INFO:     127.0.0.1:56130 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49358 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37022 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49194 - "GET /health HTTP/1.1" 200 OK
+INFO:     [WEBHOOK] Event: message_created, message_type: incoming
+INFO:     [BOT] Incoming from Synth reserva-completa-saludo-a-pago: quiero bucear, ya soy certificado
+WARNING:  [ROUTER][JEV] fallo en 303 ms, se usa el router LLM: HTTPStatusError: Client error '402 Payment Required' for url 'https://openrouter.ai/api/alpha/decisions'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/402
+INFO:     [RAG][REWRITE] original=quiero bucear, ya soy certificado... rewritten=¿Puedo bucear, ya que soy certificado?...
+INFO:     [RAG][RETRIEVAL] query_topics=['certification'] candidates=48 preview=[{'source': 'faqs', 'id': 36231, 'score': 0.7471, 'score_final': 0.7635, 'branches': ['vector']}, {'source': 'faqs', 'id': 36239, 'score': 0.725, 'score_final': 0.7412, 'branches': ['vector']}, {'source': 'faqs', 'id': 36243, 'score': 0.7098, 'score_final': 0.7257, 'branches': ['vector']}, {'source': 'policies', 'id': 36437, 'score': 0.705, 'score_final': 0.7206, 'branches': ['vector']}, {'source': 'faqs', 'id': 36211, 'score': 0.7045, 'score_final': 0.7199, 'branches': ['vector']}, {'source': 'faqs', 'id': 36187, 'score': 0.7036, 'score_final': 0.7187, 'branches': ['vector']}, {'source': 'faqs', 'id': 36289, 'score': 0.7031, 'score_final': 0.718, 'branches': ['vector']}, {'source': 'faqs', 'id': 36337, 'score': 0.703, 'score_final': 0.7177, 'branches': ['vector']}]
+INFO:     [RAG][RETRIEVAL] query_topics=['certification'] candidates=48 preview=[{'source': 'faqs', 'id': 36389, 'score': 0.6817, 'score_final': 0.698, 'branches': ['vector']}, {'source': 'faqs', 'id': 36231, 'score': 0.6708, 'score_final': 0.687, 'branches': ['vector']}, {'source': 'faqs', 'id': 36337, 'score': 0.6517, 'score_final': 0.6676, 'branches': ['vector']}, {'source': 'policies', 'id': 36437, 'score': 0.6508, 'score_final': 0.6664, 'branches': ['vector']}, {'source': 'faqs', 'id': 36243, 'score': 0.6484, 'score_final': 0.6637, 'branches': ['vector']}, {'source': 'faqs', 'id': 36215, 'score': 0.6449, 'score_final': 0.6601, 'branches': ['vector']}, {'source': 'policies', 'id': 36401, 'score': 0.6434, 'score_final': 0.6584, 'branches': ['vector']}, {'source': 'faqs', 'id': 36289, 'score': 0.6427, 'score_final': 0.6574, 'branches': ['vector']}]
+INFO:     [ESCALATION][ROUTING_SIGNALS] detected={'wants_human': False, 'wants_menu_or_restart': False, 'sensitive_topic': False, 'adaptive_diving_topic': False, 'booking_change_topic': False, 'asks_for_contact_number': False, 'broken_link_complaint': False, 'availability_question': False, 'comparing_options': False} msg='quiero bucear, ya soy certificado'
+INFO:     [GRAPH] conv=4470 route=booking
+INFO:     [EXTRACT][EX7] el regex leía group_size=1; el cliente no lo afirma
+INFO:     [EXTRACT][EX8] activity='certified_diving' (regex: 'certified_diving')
+INFO:     [EXTRACT][EX6] is_certified=True (regex: True)
+INFO:     [INTENT] Activity updated to: certified_diving (service: 2_dives_1_day)
+INFO:     [TURN_METRICS] {"conv": "4470", "start": "2026-10-13T16:34:19Z", "latency": 2.948, "turn_type": "reserva", "route": "booking", "rag_used": false, "language": "es", "step": "free_text", "activity_chosen": false, "cart_items": 0, "booking_link_sent": false, "escalated": false, "fallback": false, "error": null, "router": "llm_fallback", "router_ms": 304, "llm_calls": 6, "embeddings": 2, "llm_seconds": 6.483, "models": {"gpt-4o-mini": 5, "gpt-4.1-mini": 1}, "nodes": {"router": 1.9773, "setup": 0.0458, "availability": 0.0046, "routing": 0.0043, "extraction": 0.8796, "slotfill_close": 0.0023, "booking": 0.955}, "rag_adelantado": "descartado"}
+INFO:     [BOT] Sending Chatwoot message conv=4470 url=http://dp-chatwoot:3000/api/v1/accounts/1/conversations/4470/messages
+INFO:     [BOT] Message sent to conversation 4470
+INFO:     [WEBHOOK] Event: message_created, message_type: outgoing
+INFO:     [WEBHOOK] Skipping non-actionable message_type=outgoing
+INFO:     172.18.0.9:36042 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     172.18.0.9:36034 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+Failed to export spans batch code: 403, reason: Forbidden
+INFO:     [WEBHOOK] Event: message_created, message_type: incoming
+INFO:     [BOT] Incoming from Synth reserva-completa-saludo-a-pago: voy solo
+WARNING:  [ROUTER][JEV] fallo en 129 ms, se usa el router LLM: HTTPStatusError: Client error '402 Payment Required' for url 'https://openrouter.ai/api/alpha/decisions'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/402
+INFO:     [RAG][REWRITE] original=voy solo... rewritten=¿Voy solo?...
+INFO:     [RAG][RETRIEVAL] query_topics=[] candidates=48 preview=[{'source': 'faqs', 'id': 36289, 'score': 0.4336, 'score_final': 0.45, 'branches': ['vector']}, {'source': 'policies', 'id': 36441, 'score': 0.4209, 'score_final': 0.4371, 'branches': ['vector']}, {'source': 'faqs', 'id': 36335, 'score': 0.4158, 'score_final': 0.4317, 'branches': ['vector']}, {'source': 'faqs', 'id': 36381, 'score': 0.4098, 'score_final': 0.4254, 'branches': ['vector']}, {'source': 'faqs', 'id': 36395, 'score': 0.4012, 'score_final': 0.4166, 'branches': ['vector']}, {'source': 'policies', 'id': 36461, 'score': 0.3816, 'score_final': 0.3968, 'branches': ['vector']}, {'source': 'policies', 'id': 36439, 'score': 0.3758, 'score_final': 0.3907, 'branches': ['vector']}, {'source': 'policies', 'id': 36473, 'score': 0.3736, 'score_final': 0.3883, 'branches': ['vector']}]
+INFO:     [RAG][RETRIEVAL] query_topics=[] candidates=48 preview=[{'source': 'policies', 'id': 36441, 'score': 0.3273, 'score_final': 0.3437, 'branches': ['vector']}, {'source': 'faqs', 'id': 36335, 'score': 0.3218, 'score_final': 0.3379, 'branches': ['vector']}, {'source': 'faqs', 'id': 36381, 'score': 0.3031, 'score_final': 0.319, 'branches': ['vector']}, {'source': 'policies', 'id': 36435, 'score': 0.3026, 'score_final': 0.3182, 'branches': ['vector']}, {'source': 'faqs', 'id': 36289, 'score': 0.3014, 'score_final': 0.3168, 'branches': ['vector']}, {'source': 'policies', 'id': 36461, 'score': 0.2842, 'score_final': 0.2993, 'branches': ['vector']}, {'source': 'policies', 'id': 36467, 'score': 0.2835, 'score_final': 0.2984, 'branches': ['vector']}, {'source': 'services', 'id': 36157, 'score': 0.2821, 'score_final': 0.2968, 'branches': ['vector']}]
+Failed to export spans batch code: 403, reason: Forbidden
+INFO:     [ESCALATION][ROUTING_SIGNALS] detected={'wants_human': False, 'wants_menu_or_restart': False, 'sensitive_topic': False, 'adaptive_diving_topic': False, 'booking_change_topic': False, 'asks_for_contact_number': False, 'broken_link_complaint': False, 'availability_question': False, 'comparing_options': False} msg='voy solo'
+INFO:     [GRAPH] conv=4470 route=booking
+INFO:     [EXTRACT][EX4] descartado sin cita verificable: {'activity': "cita no está en el mensaje: 'ya estás certificado para bucear'", 'is_certified': "cita no está en el mensaje: 'ya estás certificado para bucear'", 'quiere_bucear': "cita no está en el mensaje: 'ya estás certificado para bucear'"}
+INFO:     [EXTRACT][EX7] group_size=1 (regex: None)
+INFO:     [INTENT] Detected group size: 1
+INFO:     [TURN_METRICS] {"conv": "4470", "start": "2026-10-13T16:34:29Z", "latency": 2.667, "turn_type": "reserva", "route": "booking", "rag_used": false, "language": "es", "step": "free_text", "activity_chosen": false, "cart_items": 0, "booking_link_sent": false, "escalated": false, "fallback": false, "error": null, "router": "llm_fallback", "router_ms": 129, "llm_calls": 4, "embeddings": 2, "llm_seconds": 5.19, "models": {"gpt-4o-mini": 3, "gpt-4.1-mini": 1}, "nodes": {"router": 1.7335, "setup": 0.0241, "availability": 0.004, "routing": 0.0055, "extraction": 0.0587, "slotfill_close": 0.8175, "booking": 0.9248}, "rag_adelantado": "descartado"}
+INFO:     [BOT] Sending Chatwoot message conv=4470 url=http://dp-chatwoot:3000/api/v1/accounts/1/conversations/4470/messages
+INFO:     [BOT] Message sent to conversation 4470
+INFO:     [WEBHOOK] Event: message_created, message_type: outgoing
+INFO:     [WEBHOOK] Skipping non-actionable message_type=outgoing
+INFO:     172.18.0.9:45568 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     172.18.0.9:45554 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54522 - "GET /health HTTP/1.1" 200 OK
+Failed to export spans batch code: 403, reason: Forbidden
+INFO:     [WEBHOOK] Event: message_created, message_type: incoming
+INFO:     [BOT] Incoming from Synth reserva-completa-saludo-a-pago: desde cartagena
+WARNING:  [ROUTER][JEV] fallo en 140 ms, se usa el router LLM: HTTPStatusError: Client error '402 Payment Required' for url 'https://openrouter.ai/api/alpha/decisions'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/402
+INFO:     [RAG][REWRITE] original=desde cartagena... rewritten=¿Me recogerían desde Cartagena?...
+INFO:     [RAG][RETRIEVAL] query_topics=[] candidates=48 preview=[{'source': 'policies', 'id': 36417, 'score': 0.6428, 'score_final': 0.6592, 'branches': ['vector']}, {'source': 'faqs', 'id': 36207, 'score': 0.6193, 'score_final': 0.6355, 'branches': ['vector']}, {'source': 'faqs', 'id': 36179, 'score': 0.581, 'score_final': 0.5969, 'branches': ['vector']}, {'source': 'faqs', 'id': 36347, 'score': 0.541, 'score_final': 0.5566, 'branches': ['vector']}, {'source': 'faqs', 'id': 36381, 'score': 0.5217, 'score_final': 0.5371, 'branches': ['vector']}, {'source': 'policies', 'id': 36445, 'score': 0.5186, 'score_final': 0.5338, 'branches': ['vector']}, {'source': 'services', 'id': 36169, 'score': 0.5134, 'score_final': 0.5283, 'branches': ['vector']}, {'source': 'policies', 'id': 36465, 'score': 0.5049, 'score_final': 0.5196, 'branches': ['vector']}]
+INFO:     [RAG][RETRIEVAL] query_topics=[] candidates=58 preview=[{'source': 'faqs', 'id': 36313, 'score': 1.0, 'score_final': 1.0273, 'branches': ['bm25', 'vector']}, {'source': 'faqs', 'id': 36381, 'score': 0.8763, 'score_final': 0.908, 'branches': ['bm25', 'vector']}, {'source': 'services', 'id': 36169, 'score': 0.4986, 'score_final': 0.5261, 'branches': ['bm25', 'vector']}, {'source': 'services', 'id': 36137, 'score': 0.4819, 'score_final': 0.512, 'branches': ['bm25', 'vector']}, {'source': 'faqs', 'id': 36175, 'score': 0.4928, 'score_final': 0.5089, 'branches': ['vector']}, {'source': 'faqs', 'id': 36325, 'score': 0.4806, 'score_final': 0.5076, 'branches': ['bm25', 'vector']}, {'source': 'faqs', 'id': 36179, 'score': 0.4911, 'score_final': 0.507, 'branches': ['vector']}, {'source': 'services', 'id': 36139, 'score': 0.4619, 'score_final': 0.4922, 'branches': ['bm25', 'vector']}]
+INFO:     [ESCALATION][ROUTING_SIGNALS] detected={'wants_human': False, 'wants_menu_or_restart': False, 'sensitive_topic': False, 'adaptive_diving_topic': False, 'booking_change_topic': False, 'asks_for_contact_number': False, 'broken_link_complaint': False, 'availability_question': False, 'comparing_options': False} msg='desde cartagena'
+INFO:     [GRAPH] conv=4470 route=booking
+Failed to export spans batch code: 403, reason: Forbidden
+INFO:     [EXTRACT][EX5] location='cartagena' (regex: 'cartagena', guardado: 'cartagena')
+INFO:     [TURN_METRICS] {"conv": "4470", "start": "2026-10-13T16:34:38Z", "latency": 2.954, "turn_type": "reserva", "route": "booking", "rag_used": false, "language": "es", "step": "free_text", "activity_chosen": false, "cart_items": 0, "booking_link_sent": false, "escalated": false, "fallback": false, "error": null, "router": "llm_fallback", "router_ms": 140, "llm_calls": 5, "embeddings": 2, "llm_seconds": 5.491, "models": {"gpt-4o-mini": 4, "gpt-4.1-mini": 1}, "nodes": {"router": 1.7668, "setup": 0.0241, "availability": 0.006, "routing": 0.0046, "extraction": 1.1274, "slotfill_close": 0.0012, "booking": 1.178}, "rag_adelantado": "descartado"}
+INFO:     [BOT] Sending Chatwoot message conv=4470 url=http://dp-chatwoot:3000/api/v1/accounts/1/conversations/4470/messages
+INFO:     [BOT] Message sent to conversation 4470
+INFO:     [WEBHOOK] Event: message_created, message_type: outgoing
+INFO:     [WEBHOOK] Skipping non-actionable message_type=outgoing
+INFO:     172.18.0.9:49712 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     172.18.0.9:49700 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+Failed to export spans batch code: 403, reason: Forbidden
+INFO:     [WEBHOOK] Event: message_created, message_type: incoming
+INFO:     [BOT] Incoming from Synth reserva-completa-saludo-a-pago: no, buceé hace poco
+WARNING:  [ROUTER][JEV] fallo en 148 ms, se usa el router LLM: HTTPStatusError: Client error '402 Payment Required' for url 'https://openrouter.ai/api/alpha/decisions'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/402
+INFO:     [RAG][REWRITE] original=no, buceé hace poco... rewritten=No, buceé hace poco....
+INFO:     [RAG][RETRIEVAL] query_topics=[] candidates=48 preview=[{'source': 'services', 'id': 36169, 'score': 0.4751, 'score_final': 0.4915, 'branches': ['vector']}, {'source': 'services', 'id': 36137, 'score': 0.4531, 'score_final': 0.4692, 'branches': ['vector']}, {'source': 'services', 'id': 36171, 'score': 0.4329, 'score_final': 0.4488, 'branches': ['vector']}, {'source': 'policies', 'id': 36429, 'score': 0.4243, 'score_final': 0.4399, 'branches': ['vector']}, {'source': 'services', 'id': 36165, 'score': 0.4228, 'score_final': 0.4382, 'branches': ['vector']}, {'source': 'services', 'id': 36099, 'score': 0.4214, 'score_final': 0.4365, 'branches': ['vector']}, {'source': 'services', 'id': 36163, 'score': 0.4207, 'score_final': 0.4357, 'branches': ['vector']}, {'source': 'faqs', 'id': 36177, 'score': 0.4204, 'score_final': 0.4351, 'branches': ['vector']}]
+INFO:     [RAG][RETRIEVAL] query_topics=[] candidates=48 preview=[{'source': 'services', 'id': 36169, 'score': 0.49, 'score_final': 0.5064, 'branches': ['vector']}, {'source': 'services', 'id': 36137, 'score': 0.4616, 'score_final': 0.4777, 'branches': ['vector']}, {'source': 'services', 'id': 36171, 'score': 0.4379, 'score_final': 0.4537, 'branches': ['vector']}, {'source': 'services', 'id': 36099, 'score': 0.4362, 'score_final': 0.4518, 'branches': ['vector']}, {'source': 'services', 'id': 36165, 'score': 0.4356, 'score_final': 0.451, 'branches': ['vector']}, {'source': 'faqs', 'id': 36177, 'score': 0.4354, 'score_final': 0.4506, 'branches': ['vector']}, {'source': 'services', 'id': 36161, 'score': 0.43, 'score_final': 0.445, 'branches': ['vector']}, {'source': 'services', 'id': 36163, 'score': 0.4279, 'score_final': 0.4426, 'branches': ['vector']}]
+INFO:     [ESCALATION][ROUTING_SIGNALS] detected={'wants_human': False, 'wants_menu_or_restart': False, 'sensitive_topic': False, 'adaptive_diving_topic': False, 'booking_change_topic': False, 'asks_for_contact_number': False, 'broken_link_complaint': False, 'availability_question': False, 'comparing_options': False} msg='no, buceé hace poco'
+INFO:     [GRAPH] conv=4470 route=booking
+INFO:     [EXTRACT][EX8] el regex leía activity='certified_diving'; el cliente no la elige
+INFO:     [EXTRACT][EX6] last_dive_over_2_years=False (regex: False)
+INFO:     [INTENT] Detected last dive: False
+INFO:     [NOTES_EXTRACTOR] captured=['buceó hace poco'] msg='no, buceé hace poco'
+INFO:     [CORE] notes captured -> ['buceó hace poco']
+INFO:     [TURN_METRICS] {"conv": "4470", "start": "2026-10-13T16:34:48Z", "latency": 2.495, "turn_type": "reserva", "route": "booking", "rag_used": false, "language": "es", "step": "free_text", "activity_chosen": false, "cart_items": 0, "booking_link_sent": false, "escalated": false, "fallback": false, "error": null, "router": "llm_fallback", "router_ms": 148, "llm_calls": 5, "embeddings": 2, "llm_seconds": 5.516, "models": {"gpt-4o-mini": 4, "gpt-4.1-mini": 1}, "nodes": {"router": 1.6375, "setup": 0.041, "availability": 0.0051, "routing": 0.004, "extraction": 0.0053, "slotfill_close": 0.7776, "booking": 0.849}, "rag_adelantado": "descartado"}
+INFO:     [BOT] Sending Chatwoot message conv=4470 url=http://dp-chatwoot:3000/api/v1/accounts/1/conversations/4470/messages
+INFO:     [BOT] Message sent to conversation 4470
+INFO:     [WEBHOOK] Event: message_created, message_type: outgoing
+INFO:     [WEBHOOK] Skipping non-actionable message_type=outgoing
+INFO:     172.18.0.9:39010 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     172.18.0.9:39008 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+Failed to export spans batch code: 403, reason: Forbidden
+Failed to export spans batch code: 403, reason: Forbidden
+INFO:     [WEBHOOK] Event: message_created, message_type: incoming
+INFO:     [BOT] Incoming from Synth reserva-completa-saludo-a-pago: no soy colombiano
+WARNING:  [ROUTER][JEV] fallo en 156 ms, se usa el router LLM: HTTPStatusError: Client error '402 Payment Required' for url 'https://openrouter.ai/api/alpha/decisions'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/402
+INFO:     [RAG][REWRITE] original=no soy colombiano... rewritten=¿Eres colombiano o residente en Colombia? No soy colombiano....
+INFO:     [RAG][RETRIEVAL] query_topics=[] candidates=48 preview=[{'source': 'policies', 'id': 36413, 'score': 0.4799, 'score_final': 0.4963, 'branches': ['vector']}, {'source': 'policies', 'id': 36475, 'score': 0.4788, 'score_final': 0.4949, 'branches': ['vector']}, {'source': 'faqs', 'id': 36203, 'score': 0.4631, 'score_final': 0.479, 'branches': ['vector']}, {'source': 'faqs', 'id': 36355, 'score': 0.456, 'score_final': 0.4717, 'branches': ['vector']}, {'source': 'policies', 'id': 36457, 'score': 0.4426, 'score_final': 0.458, 'branches': ['vector']}, {'source': 'faqs', 'id': 36351, 'score': 0.418, 'score_final': 0.4331, 'branches': ['vector']}, {'source': 'services', 'id': 36169, 'score': 0.3917, 'score_final': 0.4066, 'branches': ['vector']}, {'source': 'faqs', 'id': 36357, 'score': 0.3887, 'score_final': 0.4034, 'branches': ['vector']}]
+INFO:     [RAG][RETRIEVAL] query_topics=[] candidates=48 preview=[{'source': 'policies', 'id': 36413, 'score': 0.5536, 'score_final': 0.57, 'branches': ['vector']}, {'source': 'policies', 'id': 36475, 'score': 0.5322, 'score_final': 0.5483, 'branches': ['vector']}, {'source': 'faqs', 'id': 36355, 'score': 0.5235, 'score_final': 0.5393, 'branches': ['vector']}, {'source': 'faqs', 'id': 36203, 'score': 0.5116, 'score_final': 0.5273, 'branches': ['vector']}, {'source': 'policies', 'id': 36457, 'score': 0.4667, 'score_final': 0.4821, 'branches': ['vector']}, {'source': 'faqs', 'id': 36357, 'score': 0.4603, 'score_final': 0.4755, 'branches': ['vector']}, {'source': 'faqs', 'id': 36351, 'score': 0.4439, 'score_final': 0.4588, 'branches': ['vector']}, {'source': 'policies', 'id': 36415, 'score': 0.4358, 'score_final': 0.4505, 'branches': ['vector']}]
+INFO:     [ESCALATION][ROUTING_SIGNALS] detected={'wants_human': False, 'wants_menu_or_restart': False, 'sensitive_topic': False, 'adaptive_diving_topic': False, 'booking_change_topic': False, 'asks_for_contact_number': False, 'broken_link_complaint': False, 'availability_question': False, 'comparing_options': False} msg='no soy colombiano'
+INFO:     [GRAPH] conv=4470 route=booking
+INFO:     [INTENT] Detected nationality is_colombian=False
+INFO:     [NOTES_EXTRACTOR] captured=['no es colombiano'] msg='no soy colombiano'
+INFO:     [CORE] notes captured -> ['no es colombiano']
+INFO:     [TURN_METRICS] {"conv": "4470", "start": "2026-10-13T16:34:57Z", "latency": 2.495, "turn_type": "reserva", "route": "booking", "rag_used": false, "language": "es", "step": "free_text", "activity_chosen": true, "cart_items": 1, "booking_link_sent": true, "escalated": false, "fallback": false, "error": null, "router": "llm_fallback", "router_ms": 157, "llm_calls": 5, "embeddings": 2, "llm_seconds": 5.132, "models": {"gpt-4o-mini": 4, "gpt-4.1-mini": 1}, "nodes": {"router": 1.6071, "setup": 0.0257, "availability": 0.0031, "routing": 0.0067, "extraction": 0.0055, "slotfill_close": 0.66, "booking": 0.714}, "rag_adelantado": "descartado"}
+INFO:     [BOT] Lead note sent conv=4470
+INFO:     [BOT] Sending Chatwoot message conv=4470 url=http://dp-chatwoot:3000/api/v1/accounts/1/conversations/4470/messages
+INFO:     172.18.0.9:47262 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     [WEBHOOK] Event: message_created, message_type: outgoing
+INFO:     [WEBHOOK] Skipping non-actionable message_type=outgoing
+INFO:     [BOT] Message sent to conversation 4470
+INFO:     172.18.0.9:47262 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     [WEBHOOK] Event: message_created, message_type: outgoing
+INFO:     [WEBHOOK] Skipping non-actionable message_type=outgoing
+INFO:     172.18.0.9:47248 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+Failed to export spans batch code: 403, reason: Forbidden
+INFO:     127.0.0.1:33986 - "GET /health HTTP/1.1" 200 OK
+INFO:     [WEBHOOK] Event: message_created, message_type: incoming
+INFO:     [BOT] Incoming from Synth reserva-completa-saludo-a-pago: cuanto cuesta
+WARNING:  [ROUTER][JEV] fallo en 129 ms, se usa el router LLM: HTTPStatusError: Client error '402 Payment Required' for url 'https://openrouter.ai/api/alpha/decisions'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/402
+INFO:     [RAG][REWRITE] original=cuanto cuesta... rewritten=¿Cuánto cuesta?...
+INFO:     [RAG][RETRIEVAL] query_topics=['pricing'] candidates=48 preview=[{'source': 'faqs', 'id': 36379, 'score': 1.0, 'score_final': 1.0307, 'branches': ['bm25', 'vector']}, {'source': 'faqs', 'id': 36363, 'score': 0.516, 'score_final': 0.5483, 'branches': ['bm25', 'vector']}, {'source': 'policies', 'id': 36441, 'score': 0.4889, 'score_final': 0.5207, 'branches': ['bm25', 'vector']}, {'source': 'faqs', 'id': 36357, 'score': 0.4889, 'score_final': 0.5206, 'branches': ['bm25', 'vector']}, {'source': 'policies', 'id': 36435, 'score': 0.4889, 'score_final': 0.5184, 'branches': ['bm25', 'vector']}, {'source': 'faqs', 'id': 36393, 'score': 0.4217, 'score_final': 0.4374, 'branches': ['vector']}, {'source': 'policies', 'id': 36413, 'score': 0.4169, 'score_final': 0.4323, 'branches': ['vector']}, {'source': 'policies', 'id': 36415, 'score': 0.411, 'score_final': 0.4261, 'branches': ['vector']}]
+INFO:     [RAG][RETRIEVAL] query_topics=[] candidates=48 preview=[{'source': 'services', 'id': 36169, 'score': 0.5215, 'score_final': 0.5379, 'branches': ['vector']}, {'source': 'policies', 'id': 36413, 'score': 0.5114, 'score_final': 0.5275, 'branches': ['vector']}, {'source': 'faqs', 'id': 36203, 'score': 0.4945, 'score_final': 0.5104, 'branches': ['vector']}, {'source': 'faqs', 'id': 36355, 'score': 0.4837, 'score_final': 0.4993, 'branches': ['vector']}, {'source': 'policies', 'id': 36475, 'score': 0.4768, 'score_final': 0.4922, 'branches': ['vector']}, {'source': 'faqs', 'id': 36357, 'score': 0.4617, 'score_final': 0.4769, 'branches': ['vector']}, {'source': 'policies', 'id': 36417, 'score': 0.4565, 'score_final': 0.4715, 'branches': ['vector']}, {'source': 'services', 'id': 36165, 'score': 0.4527, 'score_final': 0.4674, 'branches': ['vector']}]
+INFO:     [RAG][RETRIEVAL] query_topics=[] candidates=48 preview=[{'source': 'policies', 'id': 36413, 'score': 0.516, 'score_final': 0.5324, 'branches': ['vector']}, {'source': 'services', 'id': 36169, 'score': 0.5152, 'score_final': 0.5313, 'branches': ['vector']}, {'source': 'faqs', 'id': 36203, 'score': 0.4961, 'score_final': 0.512, 'branches': ['vector']}, {'source': 'faqs', 'id': 36355, 'score': 0.4899, 'score_final': 0.5055, 'branches': ['vector']}, {'source': 'faqs', 'id': 36357, 'score': 0.4877, 'score_final': 0.503, 'branches': ['vector']}, {'source': 'policies', 'id': 36417, 'score': 0.4761, 'score_final': 0.4912, 'branches': ['vector']}, {'source': 'policies', 'id': 36475, 'score': 0.4753, 'score_final': 0.4902, 'branches': ['vector']}, {'source': 'services', 'id': 36149, 'score': 0.4599, 'score_final': 0.4746, 'branches': ['vector']}]
+INFO:     [ESCALATION][ROUTING_SIGNALS] detected={'wants_human': False, 'wants_menu_or_restart': False, 'sensitive_topic': False, 'adaptive_diving_topic': False, 'availability_question': False, 'broken_link_complaint': False, 'asks_for_contact_number': False, 'comparing_options': False, 'booking_change_topic': False} msg='cuanto cuesta'
+INFO:     [GRAPH] conv=4470 route=booking
+INFO:     [CORE][RAG5] respuesta adelantada aprovechada
+Failed to export spans batch code: 403, reason: Forbidden
+INFO:     [RAG][GROUNDING] grounded=True verdict=GROUNDED
+INFO:     [RAG] Query: cuanto cuesta... | Docs: 9 | Tokens: 10889 | Cached: 7716 | Sources: ['policies', 'services', 'faqs', 'faqs', 'faqs', 'policies', 'policies', 'services', 'services']
+INFO:     [CORE][S4-26] cierre igual al ya enviado: va solo la respuesta
+INFO:     [TURN_METRICS] {"conv": "4470", "start": "2026-10-13T16:35:07Z", "latency": 5.008, "turn_type": "rag", "route": "booking", "rag_used": true, "language": "es", "step": "free_text", "activity_chosen": true, "cart_items": 1, "booking_link_sent": true, "escalated": false, "fallback": false, "error": null, "router": "llm_fallback", "router_ms": 131, "llm_calls": 7, "embeddings": 3, "llm_seconds": 8.173, "models": {"gpt-4o-mini": 4, "gpt-4.1-mini": 1, "gpt-6-luna": 1, "gpt-4.1": 1}, "nodes": {"router": 1.5639, "setup": 0.0338, "availability": 0.0068, "routing": 0.0081, "extraction": 0.6694, "slotfill_close": 2.6936, "booking": 3.434}, "rag_adelantado": "aprovechado", "rag_respaldo": "principal", "rag_respaldo_s": 2.07}
+INFO:     [BOT] Lead note sent conv=4470
+INFO:     [BOT] Sending Chatwoot message conv=4470 url=http://dp-chatwoot:3000/api/v1/accounts/1/conversations/4470/messages
+INFO:     [BOT] Message sent to conversation 4470
+INFO:     [WEBHOOK] Event: message_created, message_type: outgoing
+INFO:     [WEBHOOK] Skipping non-actionable message_type=outgoing
+INFO:     172.18.0.9:43546 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     [WEBHOOK] Event: message_created, message_type: outgoing
+INFO:     [WEBHOOK] Skipping non-actionable message_type=outgoing
+INFO:     172.18.0.9:43546 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+Failed to export spans batch code: 403, reason: Forbidden
+INFO:     [WEBHOOK] Event: message_created, message_type: incoming
+INFO:     [BOT] Incoming from Synth reserva-completa-saludo-a-pago: perfecto, como pago
+WARNING:  [ROUTER][JEV] fallo en 145 ms, se usa el router LLM: HTTPStatusError: Client error '402 Payment Required' for url 'https://openrouter.ai/api/alpha/decisions'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/402
+INFO:     [RAG][REWRITE] original=perfecto, como pago... rewritten=¿Me puedes indicar cómo puedo realizar el pago?...
+INFO:     [RAG][RETRIEVAL] query_topics=[] candidates=48 preview=[{'source': 'policies', 'id': 36457, 'score': 0.5795, 'score_final': 0.5959, 'branches': ['vector']}, {'source': 'faqs', 'id': 36357, 'score': 0.5569, 'score_final': 0.573, 'branches': ['vector']}, {'source': 'faqs', 'id': 36351, 'score': 0.5491, 'score_final': 0.565, 'branches': ['vector']}, {'source': 'faqs', 'id': 36353, 'score': 0.5418, 'score_final': 0.5574, 'branches': ['vector']}, {'source': 'faqs', 'id': 36355, 'score': 0.5415, 'score_final': 0.5569, 'branches': ['vector']}, {'source': 'policies', 'id': 36413, 'score': 0.5232, 'score_final': 0.5383, 'branches': ['vector']}, {'source': 'policies', 'id': 36475, 'score': 0.5205, 'score_final': 0.5355, 'branches': ['vector']}, {'source': 'faqs', 'id': 36359, 'score': 0.5196, 'score_final': 0.5343, 'branches': ['vector']}]
+INFO:     [RAG][RETRIEVAL] query_topics=[] candidates=48 preview=[{'source': 'policies', 'id': 36457, 'score': 0.5192, 'score_final': 0.5356, 'branches': ['vector']}, {'source': 'faqs', 'id': 36353, 'score': 0.4905, 'score_final': 0.5067, 'branches': ['vector']}, {'source': 'faqs', 'id': 36351, 'score': 0.488, 'score_final': 0.5038, 'branches': ['vector']}, {'source': 'faqs', 'id': 36355, 'score': 0.4743, 'score_final': 0.4899, 'branches': ['vector']}, {'source': 'policies', 'id': 36413, 'score': 0.4709, 'score_final': 0.4863, 'branches': ['vector']}, {'source': 'faqs', 'id': 36203, 'score': 0.4613, 'score_final': 0.4764, 'branches': ['vector']}, {'source': 'policies', 'id': 36475, 'score': 0.4574, 'score_final': 0.4723, 'branches': ['vector']}, {'source': 'faqs', 'id': 36357, 'score': 0.45, 'score_final': 0.4647, 'branches': ['vector']}]
+INFO:     [EXTRACT][EX4] descartado sin cita verificable: {'location': "la cita no nombra un lugar: 'perfecto'"}
+INFO:     [ESCALATION][ROUTING_SIGNALS] detected={'wants_human': False, 'wants_menu_or_restart': False, 'sensitive_topic': False, 'adaptive_diving_topic': False, 'booking_change_topic': False, 'asks_for_contact_number': False, 'broken_link_complaint': False, 'availability_question': False, 'comparing_options': False} msg='perfecto, como pago'
+INFO:     [GRAPH] conv=4470 route=booking
+INFO:     [EXTRACT][EX7] group_size=1 (regex: None)
+INFO:     [EXTRACT][EX8] activity='certified_diving' (regex: None)
+INFO:     [EXTRACT][EX6] is_certified=True (regex: None)
+INFO:     [TURN_METRICS] {"conv": "4470", "start": "2026-10-13T16:35:19Z", "latency": 2.508, "turn_type": "reserva", "route": "booking", "rag_used": false, "language": "es", "step": "free_text", "activity_chosen": true, "cart_items": 1, "booking_link_sent": true, "escalated": false, "fallback": false, "error": null, "router": "llm_fallback", "router_ms": 145, "llm_calls": 6, "embeddings": 2, "llm_seconds": 5.985, "models": {"gpt-4o-mini": 5, "gpt-4.1-mini": 1}, "nodes": {"router": 1.7529, "setup": 0.0507, "availability": 0.0077, "routing": 0.0048, "extraction": 0.6258, "slotfill_close": 0.0175, "booking": 0.7276}, "rag_adelantado": "descartado"}
+INFO:     [BOT] Lead note sent conv=4470
+INFO:     [BOT] Sending Chatwoot message conv=4470 url=http://dp-chatwoot:3000/api/v1/accounts/1/conversations/4470/messages
+INFO:     172.18.0.9:40830 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     [WEBHOOK] Event: message_created, message_type: outgoing
+INFO:     [WEBHOOK] Skipping non-actionable message_type=outgoing
+INFO:     [BOT] Message sent to conversation 4470
+Failed to export spans batch code: 403, reason: Forbidden
+INFO:     [WEBHOOK] Event: message_created, message_type: outgoing
+INFO:     [WEBHOOK] Skipping non-actionable message_type=outgoing
+INFO:     172.18.0.9:40830 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     172.18.0.9:40828 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+Failed to export spans batch code: 403, reason: Forbidden
+INFO:     [WEBHOOK] Event: conversation_created, message_type: None
+INFO:     [WEBHOOK] New conversation: 4471
+INFO:     172.18.0.9:60344 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     [WEBHOOK] Event: message_created, message_type: incoming
+INFO:     [BOT] Incoming from Synth reserva-solo-link: quiero bucear certificado
+WARNING:  [ROUTER][JEV] fallo en 123 ms, se usa el router LLM: HTTPStatusError: Client error '402 Payment Required' for url 'https://openrouter.ai/api/alpha/decisions'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/402
+INFO:     [RAG][REWRITE] original=quiero bucear certificado... rewritten=¿Puedo bucear con certificado?...
+INFO:     [RAG][RETRIEVAL] query_topics=['certification'] candidates=48 preview=[{'source': 'faqs', 'id': 36389, 'score': 1.0, 'score_final': 1.0328, 'branches': ['bm25', 'vector']}, {'source': 'faqs', 'id': 36231, 'score': 0.6558, 'score_final': 0.6719, 'branches': ['vector']}, {'source': 'policies', 'id': 36437, 'score': 0.6425, 'score_final': 0.6584, 'branches': ['vector']}, {'source': 'faqs', 'id': 36337, 'score': 0.6281, 'score_final': 0.6437, 'branches': ['vector']}, {'source': 'faqs', 'id': 36243, 'score': 0.6181, 'score_final': 0.6335, 'branches': ['vector']}, {'source': 'policies', 'id': 36403, 'score': 0.6121, 'score_final': 0.6273, 'branches': ['vector']}, {'source': 'faqs', 'id': 36215, 'score': 0.6049, 'score_final': 0.6198, 'branches': ['vector']}, {'source': 'policies', 'id': 36455, 'score': 0.6003, 'score_final': 0.615, 'branches': ['vector']}]
+INFO:     [RAG][RETRIEVAL] query_topics=['certification'] candidates=48 preview=[{'source': 'faqs', 'id': 36243, 'score': 1.0, 'score_final': 1.0323, 'branches': ['bm25', 'vector']}, {'source': 'faqs', 'id': 36231, 'score': 0.7604, 'score_final': 0.7768, 'branches': ['vector']}, {'source': 'policies', 'id': 36437, 'score': 0.7262, 'score_final': 0.7423, 'branches': ['vector']}, {'source': 'faqs', 'id': 36337, 'score': 0.7148, 'score_final': 0.7305, 'branches': ['vector']}, {'source': 'faqs', 'id': 36389, 'score': 0.7126, 'score_final': 0.728, 'branches': ['vector']}, {'source': 'policies', 'id': 36403, 'score': 0.7107, 'score_final': 0.7259, 'branches': ['vector']}, {'source': 'faqs', 'id': 36239, 'score': 0.7029, 'score_final': 0.7178, 'branches': ['vector']}, {'source': 'faqs', 'id': 36211, 'score': 0.6994, 'score_final': 0.7142, 'branches': ['vector']}]
+INFO:     [ESCALATION][ROUTING_SIGNALS] detected={'wants_human': False, 'wants_menu_or_restart': False, 'sensitive_topic': False, 'adaptive_diving_topic': False, 'booking_change_topic': False, 'asks_for_contact_number': False, 'broken_link_complaint': False, 'availability_question': False, 'comparing_options': False} msg='quiero bucear certificado'
+INFO:     [GRAPH] conv=4471 route=booking
+INFO:     [EXTRACT][EX8] activity='certified_diving' (regex: 'certified_diving')
+INFO:     [EXTRACT][EX6] is_certified=True (regex: True)
+INFO:     [INTENT] Activity updated to: certified_diving (service: 2_dives_1_day)
+INFO:     [TURN_METRICS] {"conv": "4471", "start": "2026-10-13T16:35:30Z", "latency": 2.289, "turn_type": "reserva", "route": "booking", "rag_used": false, "language": "es", "step": "free_text", "activity_chosen": false, "cart_items": 0, "booking_link_sent": false, "escalated": false, "fallback": false, "error": null, "router": "llm_fallback", "router_ms": 123, "llm_calls": 4, "embeddings": 2, "llm_seconds": 4.465, "models": {"gpt-4o-mini": 3, "gpt-4.1-mini": 1}, "nodes": {"router": 1.6691, "setup": 0.0205, "availability": 0.0038, "routing": 0.0031, "extraction": 0.0068, "slotfill_close": 0.0007, "booking": 0.0488}, "rag_adelantado": "descartado"}
+INFO:     [BOT] Sending Chatwoot message conv=4471 url=http://dp-chatwoot:3000/api/v1/accounts/1/conversations/4471/messages
+INFO:     [BOT] Message sent to conversation 4471
+INFO:     [WEBHOOK] Event: message_created, message_type: outgoing
+INFO:     [WEBHOOK] Skipping non-actionable message_type=outgoing
+INFO:     172.18.0.9:60348 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     172.18.0.9:60344 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+Failed to export spans batch code: 403, reason: Forbidden
+INFO:     127.0.0.1:34508 - "GET /health HTTP/1.1" 200 OK
+Failed to export spans batch code: 403, reason: Forbidden
+INFO:     [WEBHOOK] Event: message_created, message_type: incoming
+INFO:     [BOT] Incoming from Synth reserva-solo-link: solo yo
+WARNING:  [ROUTER][JEV] fallo en 121 ms, se usa el router LLM: HTTPStatusError: Client error '402 Payment Required' for url 'https://openrouter.ai/api/alpha/decisions'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/402
+INFO:     [RAG][REWRITE] original=solo yo... rewritten=¿Voy a bucear solo?...
+INFO:     [RAG][RETRIEVAL] query_topics=[] candidates=48 preview=[{'source': 'faqs', 'id': 36381, 'score': 0.2626, 'score_final': 0.279, 'branches': ['vector']}, {'source': 'faqs', 'id': 36335, 'score': 0.2316, 'score_final': 0.2477, 'branches': ['vector']}, {'source': 'policies', 'id': 36473, 'score': 0.2302, 'score_final': 0.2461, 'branches': ['vector']}, {'source': 'policies', 'id': 36467, 'score': 0.2244, 'score_final': 0.2401, 'branches': ['vector']}, {'source': 'services', 'id': 36157, 'score': 0.2224, 'score_final': 0.2378, 'branches': ['vector']}, {'source': 'policies', 'id': 36411, 'score': 0.2219, 'score_final': 0.237, 'branches': ['vector']}, {'source': 'policies', 'id': 36437, 'score': 0.2189, 'score_final': 0.2338, 'branches': ['vector']}, {'source': 'faqs', 'id': 36289, 'score': 0.2168, 'score_final': 0.2315, 'branches': ['vector']}]
+INFO:     [RAG][RETRIEVAL] query_topics=[] candidates=48 preview=[{'source': 'faqs', 'id': 36289, 'score': 0.6934, 'score_final': 0.7098, 'branches': ['vector']}, {'source': 'faqs', 'id': 36239, 'score': 0.6473, 'score_final': 0.6635, 'branches': ['vector']}, {'source': 'faqs', 'id': 36185, 'score': 0.6278, 'score_final': 0.6437, 'branches': ['vector']}, {'source': 'faqs', 'id': 36231, 'score': 0.6263, 'score_final': 0.6419, 'branches': ['vector']}, {'source': 'faqs', 'id': 36233, 'score': 0.6222, 'score_final': 0.6376, 'branches': ['vector']}, {'source': 'faqs', 'id': 36261, 'score': 0.5952, 'score_final': 0.6103, 'branches': ['vector']}, {'source': 'faqs', 'id': 36257, 'score': 0.5932, 'score_final': 0.6081, 'branches': ['vector']}, {'source': 'faqs', 'id': 36225, 'score': 0.5921, 'score_final': 0.6068, 'branches': ['vector']}]
+INFO:     [ESCALATION][ROUTING_SIGNALS] detected={'wants_human': False, 'wants_menu_or_restart': False, 'sensitive_topic': False, 'adaptive_diving_topic': False, 'booking_change_topic': False, 'asks_for_contact_number': False, 'broken_link_complaint': False, 'availability_question': False, 'comparing_options': False} msg='solo yo'
+INFO:     [GRAPH] conv=4471 route=booking
+INFO:     [EXTRACT][EX7] group_size=1 (regex: 1)
+INFO:     [INTENT] Detected group size: 1
+INFO:     [TURN_METRICS] {"conv": "4471", "start": "2026-10-13T16:35:38Z", "latency": 2.682, "turn_type": "reserva", "route": "booking", "rag_used": false, "language": "es", "step": "free_text", "activity_chosen": false, "cart_items": 0, "booking_link_sent": false, "escalated": false, "fallback": false, "error": null, "router": "llm_fallback", "router_ms": 121, "llm_calls": 5, "embeddings": 2, "llm_seconds": 5.444, "models": {"gpt-4o-mini": 4, "gpt-4.1-mini": 1}, "nodes": {"router": 1.6804, "setup": 0.0255, "availability": 0.0046, "routing": 0.0074, "extraction": 0.933, "slotfill_close": 0.0009, "booking": 0.9911}, "rag_adelantado": "descartado"}
+INFO:     [BOT] Sending Chatwoot message conv=4471 url=http://dp-chatwoot:3000/api/v1/accounts/1/conversations/4471/messages
+INFO:     [BOT] Message sent to conversation 4471
+INFO:     [WEBHOOK] Event: message_created, message_type: outgoing
+INFO:     [WEBHOOK] Skipping non-actionable message_type=outgoing
+INFO:     172.18.0.9:59158 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     172.18.0.9:59146 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+Failed to export spans batch code: 403, reason: Forbidden
+INFO:     [WEBHOOK] Event: message_created, message_type: incoming
+INFO:     [BOT] Incoming from Synth reserva-solo-link: cartagena
+WARNING:  [ROUTER][JEV] fallo en 133 ms, se usa el router LLM: HTTPStatusError: Client error '402 Payment Required' for url 'https://openrouter.ai/api/alpha/decisions'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/402
+INFO:     [RAG][REWRITE] original=cartagena... rewritten=¿Saldría desde Cartagena?...
+INFO:     [RAG][RETRIEVAL] query_topics=[] candidates=48 preview=[{'source': 'faqs', 'id': 36179, 'score': 0.6291, 'score_final': 0.6455, 'branches': ['vector']}, {'source': 'faqs', 'id': 36381, 'score': 0.6049, 'score_final': 0.6211, 'branches': ['vector']}, {'source': 'services', 'id': 36169, 'score': 0.5971, 'score_final': 0.6129, 'branches': ['vector']}, {'source': 'services', 'id': 36139, 'score': 0.5892, 'score_final': 0.6048, 'branches': ['vector']}, {'source': 'services', 'id': 36099, 'score': 0.5639, 'score_final': 0.5792, 'branches': ['vector']}, {'source': 'services', 'id': 36137, 'score': 0.5602, 'score_final': 0.5754, 'branches': ['vector']}, {'source': 'policies', 'id': 36417, 'score': 0.5571, 'score_final': 0.572, 'branches': ['vector']}, {'source': 'services', 'id': 36163, 'score': 0.5528, 'score_final': 0.5675, 'branches': ['vector']}]
+INFO:     [RAG][RETRIEVAL] query_topics=[] candidates=53 preview=[{'source': 'services', 'id': 36139, 'score': 1.0, 'score_final': 1.0313, 'branches': ['bm25', 'vector']}, {'source': 'services', 'id': 36137, 'score': 1.0, 'score_final': 1.031, 'branches': ['bm25', 'vector']}, {'source': 'services', 'id': 36099, 'score': 1.0, 'score_final': 1.0299, 'branches': ['bm25', 'vector']}, {'source': 'services', 'id': 36153, 'score': 1.0, 'score_final': 1.0283, 'branches': ['bm25', 'vector']}, {'source': 'services', 'id': 36171, 'score': 1.0, 'score_final': 1.0266, 'branches': ['bm25', 'vector']}, {'source': 'services', 'id': 36145, 'score': 0.8571, 'score_final': 0.8848, 'branches': ['bm25', 'vector']}, {'source': 'services', 'id': 36103, 'score': 0.8571, 'score_final': 0.8847, 'branches': ['bm25', 'vector']}, {'source': 'services', 'id': 36143, 'score': 0.8571, 'score_final': 0.8844, 'branches': ['bm25', 'vector']}]
+INFO:     [ESCALATION][ROUTING_SIGNALS] detected={'wants_human': False, 'wants_menu_or_restart': False, 'sensitive_topic': False, 'adaptive_diving_topic': False, 'booking_change_topic': False, 'asks_for_contact_number': False, 'broken_link_complaint': False, 'availability_question': False, 'comparing_options': False} msg='cartagena'
+INFO:     [GRAPH] conv=4471 route=booking
+INFO:     [TURN_METRICS] {"conv": "4471", "start": "2026-10-13T16:35:47Z", "latency": 2.338, "turn_type": "reserva", "route": "booking", "rag_used": false, "language": "es", "step": "free_text", "activity_chosen": false, "cart_items": 0, "booking_link_sent": false, "escalated": false, "fallback": false, "error": null, "router": "llm_fallback", "router_ms": 133, "llm_calls": 4, "embeddings": 2, "llm_seconds": 4.95, "models": {"gpt-4o-mini": 3, "gpt-4.1-mini": 1}, "nodes": {"router": 1.5275, "setup": 0.0222, "availability": 0.0034, "routing": 0.0059, "extraction": 0.0036, "slotfill_close": 0.7525, "booking": 0.8019}, "rag_adelantado": "descartado"}
+INFO:     [BOT] Sending Chatwoot message conv=4471 url=http://dp-chatwoot:3000/api/v1/accounts/1/conversations/4471/messages
+INFO:     [BOT] Message sent to conversation 4471
+INFO:     172.18.0.9:60460 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     [WEBHOOK] Event: message_created, message_type: outgoing
+INFO:     [WEBHOOK] Skipping non-actionable message_type=outgoing
+INFO:     172.18.0.9:60456 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+Failed to export spans batch code: 403, reason: Forbidden
+INFO:     [WEBHOOK] Event: message_created, message_type: incoming
+INFO:     [BOT] Incoming from Synth reserva-solo-link: no, buceé hace poco
+WARNING:  [ROUTER][JEV] fallo en 148 ms, se usa el router LLM: HTTPStatusError: Client error '402 Payment Required' for url 'https://openrouter.ai/api/alpha/decisions'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/402
+INFO:     [RAG][REWRITE] original=no, buceé hace poco... rewritten=¿Han pasado más de 2 años desde mi última inmersión? No, buc...
+INFO:     [RAG][RETRIEVAL] query_topics=[] candidates=48 preview=[{'source': 'policies', 'id': 36401, 'score': 0.6254, 'score_final': 0.6418, 'branches': ['vector']}, {'source': 'faqs', 'id': 36209, 'score': 0.6225, 'score_final': 0.6387, 'branches': ['vector']}, {'source': 'faqs', 'id': 36215, 'score': 0.5989, 'score_final': 0.6148, 'branches': ['vector']}, {'source': 'faqs', 'id': 36349, 'score': 0.5715, 'score_final': 0.5871, 'branches': ['vector']}, {'source': 'services', 'id': 36099, 'score': 0.5585, 'score_final': 0.5739, 'branches': ['vector']}, {'source': 'services', 'id': 36163, 'score': 0.5559, 'score_final': 0.571, 'branches': ['vector']}, {'source': 'services', 'id': 36171, 'score': 0.551, 'score_final': 0.5659, 'branches': ['vector']}, {'source': 'services', 'id': 36161, 'score': 0.5471, 'score_final': 0.5618, 'branches': ['vector']}]
+INFO:     [RAG][RETRIEVAL] query_topics=[] candidates=48 preview=[{'source': 'services', 'id': 36169, 'score': 0.49, 'score_final': 0.5064, 'branches': ['vector']}, {'source': 'services', 'id': 36137, 'score': 0.4616, 'score_final': 0.4777, 'branches': ['vector']}, {'source': 'services', 'id': 36171, 'score': 0.4379, 'score_final': 0.4537, 'branches': ['vector']}, {'source': 'services', 'id': 36099, 'score': 0.4362, 'score_final': 0.4518, 'branches': ['vector']}, {'source': 'services', 'id': 36165, 'score': 0.4356, 'score_final': 0.451, 'branches': ['vector']}, {'source': 'faqs', 'id': 36177, 'score': 0.4354, 'score_final': 0.4506, 'branches': ['vector']}, {'source': 'services', 'id': 36161, 'score': 0.43, 'score_final': 0.445, 'branches': ['vector']}, {'source': 'services', 'id': 36163, 'score': 0.4279, 'score_final': 0.4426, 'branches': ['vector']}]
+INFO:     [ESCALATION][ROUTING_SIGNALS] detected={'wants_human': False, 'wants_menu_or_restart': False, 'sensitive_topic': False, 'adaptive_diving_topic': False, 'booking_change_topic': False, 'asks_for_contact_number': False, 'broken_link_complaint': False, 'availability_question': False, 'comparing_options': False} msg='no, buceé hace poco'
+INFO:     [GRAPH] conv=4471 route=booking
+INFO:     [EXTRACT][EX4] descartado sin cita verificable: {'location': "la cita no nombra un lugar: 'no, buceé hace poco'"}
+INFO:     [EXTRACT][EX7] group_size=1 (regex: None)
+INFO:     [EXTRACT][EX8] activity='certified_diving' (regex: 'certified_diving')
+INFO:     [EXTRACT][EX6] is_certified=True (regex: None)
+INFO:     [EXTRACT][EX6] last_dive_over_2_years=False (regex: False)
+INFO:     [INTENT] Detected last dive: False
+INFO:     [NOTES_EXTRACTOR] captured=['buceó hace poco'] msg='no, buceé hace poco'
+INFO:     [CORE] notes captured -> ['buceó hace poco']
+Failed to export spans batch code: 403, reason: Forbidden
+INFO:     [TURN_METRICS] {"conv": "4471", "start": "2026-10-13T16:35:56Z", "latency": 3.177, "turn_type": "reserva", "route": "booking", "rag_used": false, "language": "es", "step": "free_text", "activity_chosen": false, "cart_items": 0, "booking_link_sent": false, "escalated": false, "fallback": false, "error": null, "router": "llm_fallback", "router_ms": 149, "llm_calls": 5, "embeddings": 2, "llm_seconds": 6.089, "models": {"gpt-4o-mini": 4, "gpt-4.1-mini": 1}, "nodes": {"router": 1.7758, "setup": 0.027, "availability": 0.0062, "routing": 0.0052, "extraction": 0.4925, "slotfill_close": 0.8447, "booking": 1.3918}, "rag_adelantado": "descartado"}
+INFO:     [BOT] Sending Chatwoot message conv=4471 url=http://dp-chatwoot:3000/api/v1/accounts/1/conversations/4471/messages
+INFO:     [BOT] Message sent to conversation 4471
+INFO:     [WEBHOOK] Event: message_created, message_type: outgoing
+INFO:     [WEBHOOK] Skipping non-actionable message_type=outgoing
+INFO:     172.18.0.9:44906 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     172.18.0.9:60466 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+Failed to export spans batch code: 403, reason: Forbidden
+INFO:     127.0.0.1:43248 - "GET /health HTTP/1.1" 200 OK
+Failed to export spans batch code: 403, reason: Forbidden
+INFO:     [WEBHOOK] Event: message_created, message_type: incoming
+INFO:     [BOT] Incoming from Synth reserva-solo-link: no soy colombiano
+WARNING:  [ROUTER][JEV] fallo en 136 ms, se usa el router LLM: HTTPStatusError: Client error '402 Payment Required' for url 'https://openrouter.ai/api/alpha/decisions'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/402
+INFO:     [RAG][REWRITE] original=no soy colombiano... rewritten=¿Eres colombiano o residente en Colombia? No soy colombiano....
+INFO:     [RAG][RETRIEVAL] query_topics=[] candidates=48 preview=[{'source': 'policies', 'id': 36413, 'score': 0.5536, 'score_final': 0.57, 'branches': ['vector']}, {'source': 'policies', 'id': 36475, 'score': 0.5322, 'score_final': 0.5483, 'branches': ['vector']}, {'source': 'faqs', 'id': 36355, 'score': 0.5235, 'score_final': 0.5393, 'branches': ['vector']}, {'source': 'faqs', 'id': 36203, 'score': 0.5116, 'score_final': 0.5273, 'branches': ['vector']}, {'source': 'policies', 'id': 36457, 'score': 0.4667, 'score_final': 0.4821, 'branches': ['vector']}, {'source': 'faqs', 'id': 36357, 'score': 0.4603, 'score_final': 0.4755, 'branches': ['vector']}, {'source': 'faqs', 'id': 36351, 'score': 0.4439, 'score_final': 0.4588, 'branches': ['vector']}, {'source': 'policies', 'id': 36415, 'score': 0.4358, 'score_final': 0.4505, 'branches': ['vector']}]
+INFO:     [RAG][RETRIEVAL] query_topics=[] candidates=48 preview=[{'source': 'policies', 'id': 36413, 'score': 0.4799, 'score_final': 0.4963, 'branches': ['vector']}, {'source': 'policies', 'id': 36475, 'score': 0.4788, 'score_final': 0.4949, 'branches': ['vector']}, {'source': 'faqs', 'id': 36203, 'score': 0.4631, 'score_final': 0.479, 'branches': ['vector']}, {'source': 'faqs', 'id': 36355, 'score': 0.456, 'score_final': 0.4717, 'branches': ['vector']}, {'source': 'policies', 'id': 36457, 'score': 0.4426, 'score_final': 0.458, 'branches': ['vector']}, {'source': 'faqs', 'id': 36351, 'score': 0.418, 'score_final': 0.4331, 'branches': ['vector']}, {'source': 'services', 'id': 36169, 'score': 0.3917, 'score_final': 0.4066, 'branches': ['vector']}, {'source': 'faqs', 'id': 36357, 'score': 0.3887, 'score_final': 0.4034, 'branches': ['vector']}]
+Failed to export spans batch code: 403, reason: Forbidden
+INFO:     [ESCALATION][ROUTING_SIGNALS] detected={'wants_human': False, 'wants_menu_or_restart': False, 'sensitive_topic': False, 'adaptive_diving_topic': False, 'booking_change_topic': False, 'asks_for_contact_number': False, 'broken_link_complaint': False, 'availability_question': False, 'comparing_options': False} msg='no soy colombiano'
+INFO:     [GRAPH] conv=4471 route=booking
+INFO:     [INTENT] Detected nationality is_colombian=False
+INFO:     [NOTES_EXTRACTOR] captured=['no es colombiano'] msg='no soy colombiano'
+INFO:     [CORE] notes captured -> ['no es colombiano']
+INFO:     [TURN_METRICS] {"conv": "4471", "start": "2026-10-13T16:36:18Z", "latency": 2.491, "turn_type": "reserva", "route": "booking", "rag_used": false, "language": "es", "step": "free_text", "activity_chosen": true, "cart_items": 1, "booking_link_sent": true, "escalated": false, "fallback": false, "error": null, "router": "llm_fallback", "router_ms": 136, "llm_calls": 5, "embeddings": 2, "llm_seconds": 5.044, "models": {"gpt-4o-mini": 4, "gpt-4.1-mini": 1}, "nodes": {"router": 1.7177, "setup": 0.0351, "availability": 0.0053, "routing": 0.0038, "extraction": 0.0048, "slotfill_close": 0.5741, "booking": 0.6387}, "rag_adelantado": "descartado"}
+INFO:     [BOT] Lead note sent conv=4471
+INFO:     [BOT] Sending Chatwoot message conv=4471 url=http://dp-chatwoot:3000/api/v1/accounts/1/conversations/4471/messages
+INFO:     [WEBHOOK] Event: message_created, message_type: outgoing
+INFO:     [WEBHOOK] Skipping non-actionable message_type=outgoing
+INFO:     172.18.0.9:33072 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     [BOT] Message sent to conversation 4471
+INFO:     [WEBHOOK] Event: message_created, message_type: outgoing
+INFO:     [WEBHOOK] Skipping non-actionable message_type=outgoing
+INFO:     172.18.0.9:33072 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     172.18.0.9:33062 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+Failed to export spans batch code: 403, reason: Forbidden
+INFO:     [WEBHOOK] Event: message_created, message_type: incoming
+INFO:     [BOT] Incoming from Synth reserva-solo-link: listo, como pago
+WARNING:  [ROUTER][JEV] fallo en 119 ms, se usa el router LLM: HTTPStatusError: Client error '402 Payment Required' for url 'https://openrouter.ai/api/alpha/decisions'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/402
+INFO:     [RAG][REWRITE] original=listo, como pago... rewritten=¿Me puedes indicar cómo realizar el pago?...
+INFO:     [RAG][RETRIEVAL] query_topics=[] candidates=48 preview=[{'source': 'policies', 'id': 36457, 'score': 0.5396, 'score_final': 0.556, 'branches': ['vector']}, {'source': 'faqs', 'id': 36353, 'score': 0.5312, 'score_final': 0.5473, 'branches': ['vector']}, {'source': 'faqs', 'id': 36351, 'score': 0.5218, 'score_final': 0.5377, 'branches': ['vector']}, {'source': 'faqs', 'id': 36355, 'score': 0.4896, 'score_final': 0.5052, 'branches': ['vector']}, {'source': 'policies', 'id': 36413, 'score': 0.4834, 'score_final': 0.4988, 'branches': ['vector']}, {'source': 'faqs', 'id': 36203, 'score': 0.4772, 'score_final': 0.4924, 'branches': ['vector']}, {'source': 'policies', 'id': 36475, 'score': 0.4707, 'score_final': 0.4856, 'branches': ['vector']}, {'source': 'faqs', 'id': 36357, 'score': 0.4622, 'score_final': 0.4769, 'branches': ['vector']}]
+INFO:     [RAG][RETRIEVAL] query_topics=[] candidates=48 preview=[{'source': 'policies', 'id': 36457, 'score': 0.579, 'score_final': 0.5954, 'branches': ['vector']}, {'source': 'faqs', 'id': 36357, 'score': 0.5527, 'score_final': 0.5688, 'branches': ['vector']}, {'source': 'faqs', 'id': 36351, 'score': 0.5513, 'score_final': 0.5671, 'branches': ['vector']}, {'source': 'faqs', 'id': 36353, 'score': 0.5505, 'score_final': 0.5661, 'branches': ['vector']}, {'source': 'faqs', 'id': 36355, 'score': 0.547, 'score_final': 0.5624, 'branches': ['vector']}, {'source': 'policies', 'id': 36413, 'score': 0.5277, 'score_final': 0.5429, 'branches': ['vector']}, {'source': 'policies', 'id': 36475, 'score': 0.5221, 'score_final': 0.537, 'branches': ['vector']}, {'source': 'faqs', 'id': 36359, 'score': 0.5147, 'score_final': 0.5294, 'branches': ['vector']}]
+INFO:     [ESCALATION][ROUTING_SIGNALS] detected={'wants_human': False, 'wants_menu_or_restart': False, 'sensitive_topic': False, 'adaptive_diving_topic': False, 'booking_change_topic': False, 'asks_for_contact_number': False, 'broken_link_complaint': False, 'availability_question': False, 'comparing_options': False} msg='listo, como pago'
+INFO:     [GRAPH] conv=4471 route=booking
+Failed to export spans batch code: 403, reason: Forbidden
+INFO:     [TURN_METRICS] {"conv": "4471", "start": "2026-10-13T16:36:27Z", "latency": 2.522, "turn_type": "reserva", "route": "booking", "rag_used": false, "language": "es", "step": "free_text", "activity_chosen": true, "cart_items": 1, "booking_link_sent": true, "escalated": false, "fallback": false, "error": null, "router": "llm_fallback", "router_ms": 119, "llm_calls": 6, "embeddings": 2, "llm_seconds": 5.847, "models": {"gpt-4o-mini": 5, "gpt-4.1-mini": 1}, "nodes": {"router": 1.5251, "setup": 0.0652, "availability": 0.0055, "routing": 0.0067, "extraction": 0.888, "slotfill_close": 0.0016, "booking": 0.9845}, "rag_adelantado": "descartado"}
+INFO:     [BOT] Lead note sent conv=4471
+INFO:     [BOT] Sending Chatwoot message conv=4471 url=http://dp-chatwoot:3000/api/v1/accounts/1/conversations/4471/messages
+INFO:     172.18.0.9:34810 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     [WEBHOOK] Event: message_created, message_type: outgoing
+INFO:     [WEBHOOK] Skipping non-actionable message_type=outgoing
+INFO:     [BOT] Message sent to conversation 4471
+INFO:     [WEBHOOK] Event: message_created, message_type: outgoing
+INFO:     [WEBHOOK] Skipping non-actionable message_type=outgoing
+INFO:     172.18.0.9:34810 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     172.18.0.9:34798 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+Failed to export spans batch code: 403, reason: Forbidden
+INFO:     127.0.0.1:37512 - "GET /health HTTP/1.1" 200 OK
+INFO:     [WEBHOOK] Event: conversation_created, message_type: None
+INFO:     [WEBHOOK] New conversation: 4472
+INFO:     172.18.0.9:34812 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     [WEBHOOK] Event: message_created, message_type: incoming
+INFO:     [BOT] Incoming from Synth reserva-ingles: hi, i want to book a dive
+WARNING:  [ROUTER][JEV] fallo en 147 ms, se usa el router LLM: HTTPStatusError: Client error '402 Payment Required' for url 'https://openrouter.ai/api/alpha/decisions'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/402
+INFO:     [RAG][REWRITE] original=hi, i want to book a dive... rewritten=I would like to book a dive....
+INFO:     [RAG][RETRIEVAL] query_topics=['booking'] candidates=48 preview=[{'source': 'faqs', 'id': 36336, 'score': 0.5567, 'score_final': 0.5731, 'branches': ['vector']}, {'source': 'faqs', 'id': 36338, 'score': 0.5472, 'score_final': 0.5634, 'branches': ['vector']}, {'source': 'faqs', 'id': 36226, 'score': 0.5382, 'score_final': 0.5541, 'branches': ['vector']}, {'source': 'faqs', 'id': 36384, 'score': 0.5299, 'score_final': 0.5455, 'branches': ['vector']}, {'source': 'policies', 'id': 36410, 'score': 0.5262, 'score_final': 0.5416, 'branches': ['vector']}, {'source': 'faqs', 'id': 36380, 'score': 0.5213, 'score_final': 0.5365, 'branches': ['vector']}, {'source': 'services', 'id': 36116, 'score': 0.5205, 'score_final': 0.5355, 'branches': ['vector']}, {'source': 'services', 'id': 36110, 'score': 0.5157, 'score_final': 0.5304, 'branches': ['vector']}]
+INFO:     [RAG][RETRIEVAL] query_topics=['booking'] candidates=48 preview=[{'source': 'faqs', 'id': 36336, 'score': 0.546, 'score_final': 0.5624, 'branches': ['vector']}, {'source': 'policies', 'id': 36410, 'score': 0.541, 'score_final': 0.5571, 'branches': ['vector']}, {'source': 'faqs', 'id': 36338, 'score': 0.5285, 'score_final': 0.5443, 'branches': ['vector']}, {'source': 'faqs', 'id': 36380, 'score': 0.5276, 'score_final': 0.5433, 'branches': ['vector']}, {'source': 'faqs', 'id': 36350, 'score': 0.5269, 'score_final': 0.5422, 'branches': ['vector']}, {'source': 'services', 'id': 36116, 'score': 0.5208, 'score_final': 0.5359, 'branches': ['vector']}, {'source': 'services', 'id': 36138, 'score': 0.518, 'score_final': 0.5329, 'branches': ['vector']}, {'source': 'faqs', 'id': 36234, 'score': 0.5165, 'score_final': 0.5312, 'branches': ['vector']}]
+INFO:     [ESCALATION][ROUTING_SIGNALS] detected={'wants_human': False, 'wants_menu_or_restart': False, 'sensitive_topic': False, 'adaptive_diving_topic': False, 'booking_change_topic': False, 'asks_for_contact_number': False, 'broken_link_complaint': False, 'availability_question': False, 'comparing_options': False} msg='hi, i want to book a dive'
+INFO:     [GRAPH] conv=4472 route=booking
+INFO:     [EXTRACT][EX8] el regex leía activity='certified_diving'; el cliente no la elige
+Failed to export spans batch code: 403, reason: Forbidden
+INFO:     [TURN_METRICS] {"conv": "4472", "start": "2026-10-13T16:36:37Z", "latency": 2.909, "turn_type": "reserva", "route": "booking", "rag_used": false, "language": "en", "step": "free_text", "activity_chosen": false, "cart_items": 0, "booking_link_sent": false, "escalated": false, "fallback": false, "error": null, "router": "llm_fallback", "router_ms": 147, "llm_calls": 4, "embeddings": 2, "llm_seconds": 4.803, "models": {"gpt-4o-mini": 3, "gpt-4.1-mini": 1}, "nodes": {"router": 1.6682, "setup": 0.0346, "availability": 0.0044, "routing": 0.0095, "extraction": 0.0084, "slotfill_close": 0.0014, "booking": 0.0751}, "rag_adelantado": "descartado"}
+INFO:     [BOT] Sending Chatwoot message conv=4472 url=http://dp-chatwoot:3000/api/v1/accounts/1/conversations/4472/messages
+INFO:     [BOT] Message sent to conversation 4472
+INFO:     [WEBHOOK] Event: message_created, message_type: outgoing
+INFO:     [WEBHOOK] Skipping non-actionable message_type=outgoing
+INFO:     172.18.0.9:51160 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     172.18.0.9:34812 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+Failed to export spans batch code: 403, reason: Forbidden
+INFO:     [WEBHOOK] Event: message_created, message_type: incoming
+INFO:     [BOT] Incoming from Synth reserva-ingles: i'm certified, just me
+WARNING:  [ROUTER][JEV] fallo en 152 ms, se usa el router LLM: HTTPStatusError: Client error '402 Payment Required' for url 'https://openrouter.ai/api/alpha/decisions'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/402
+INFO:     [RAG][REWRITE] original=i'm certified, just me... rewritten=I am a certified diver and will be booking for just myself....
+INFO:     [RAG][RETRIEVAL] query_topics=['booking'] candidates=48 preview=[{'source': 'faqs', 'id': 36338, 'score': 0.576, 'score_final': 0.5923, 'branches': ['vector']}, {'source': 'policies', 'id': 36438, 'score': 0.5586, 'score_final': 0.5747, 'branches': ['vector']}, {'source': 'faqs', 'id': 36336, 'score': 0.5302, 'score_final': 0.5461, 'branches': ['vector']}, {'source': 'faqs', 'id': 36230, 'score': 0.5212, 'score_final': 0.5368, 'branches': ['vector']}, {'source': 'faqs', 'id': 36390, 'score': 0.5204, 'score_final': 0.5357, 'branches': ['vector']}, {'source': 'faqs', 'id': 36226, 'score': 0.5133, 'score_final': 0.5285, 'branches': ['vector']}, {'source': 'services', 'id': 36108, 'score': 0.5106, 'score_final': 0.5255, 'branches': ['vector']}, {'source': 'services', 'id': 36110, 'score': 0.5076, 'score_final': 0.5223, 'branches': ['vector']}]
+INFO:     [RAG][RETRIEVAL] query_topics=['depth'] candidates=48 preview=[{'source': 'faqs', 'id': 36338, 'score': 0.3535, 'score_final': 0.3699, 'branches': ['vector']}, {'source': 'faqs', 'id': 36390, 'score': 0.3527, 'score_final': 0.3688, 'branches': ['vector']}, {'source': 'faqs', 'id': 36372, 'score': 0.3399, 'score_final': 0.3558, 'branches': ['vector']}, {'source': 'faqs', 'id': 36232, 'score': 0.3356, 'score_final': 0.3513, 'branches': ['vector']}, {'source': 'policies', 'id': 36438, 'score': 0.3196, 'score_final': 0.335, 'branches': ['vector']}, {'source': 'policies', 'id': 36456, 'score': 0.3076, 'score_final': 0.3227, 'branches': ['vector']}, {'source': 'faqs', 'id': 36216, 'score': 0.3009, 'score_final': 0.3158, 'branches': ['vector']}, {'source': 'policies', 'id': 36404, 'score': 0.2856, 'score_final': 0.3003, 'branches': ['vector']}]
+INFO:     [ESCALATION][ROUTING_SIGNALS] detected={'wants_human': False, 'wants_menu_or_restart': False, 'sensitive_topic': False, 'adaptive_diving_topic': False, 'booking_change_topic': False, 'asks_for_contact_number': False, 'broken_link_complaint': False, 'availability_question': False, 'comparing_options': False} msg="i'm certified, just me"
+INFO:     [GRAPH] conv=4472 route=booking
+INFO:     [NOTES_EXTRACTOR] captured=['customer is a certified diver', 'solo diver'] msg="i'm certified, just me"
+INFO:     [CORE] notes captured -> ['customer is a certified diver', 'solo diver']
+INFO:     [EXTRACT][EX7] group_size=1 (regex: 1)
+INFO:     [EXTRACT][EX8] activity='certified_diving' (regex: 'certified_diving')
+INFO:     [EXTRACT][EX6] is_certified=True (regex: True)
+INFO:     [INTENT] Activity updated to: certified_diving (service: 2_dives_1_day)
+INFO:     [INTENT] Detected group size: 1
+INFO:     [TURN_METRICS] {"conv": "4472", "start": "2026-10-13T16:36:47Z", "latency": 2.337, "turn_type": "reserva", "route": "booking", "rag_used": false, "language": "en", "step": "free_text", "activity_chosen": false, "cart_items": 0, "booking_link_sent": false, "escalated": false, "fallback": false, "error": null, "router": "llm_fallback", "router_ms": 152, "llm_calls": 6, "embeddings": 2, "llm_seconds": 5.83, "models": {"gpt-4o-mini": 5, "gpt-4.1-mini": 1}, "nodes": {"router": 1.5118, "setup": 0.0562, "availability": 0.0038, "routing": 0.0048, "extraction": 0.733, "slotfill_close": 0.0017, "booking": 0.8166}, "rag_adelantado": "descartado"}
+INFO:     [BOT] Sending Chatwoot message conv=4472 url=http://dp-chatwoot:3000/api/v1/accounts/1/conversations/4472/messages
+INFO:     [BOT] Message sent to conversation 4472
+INFO:     [WEBHOOK] Event: message_created, message_type: outgoing
+INFO:     [WEBHOOK] Skipping non-actionable message_type=outgoing
+INFO:     172.18.0.9:52226 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     172.18.0.9:51170 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+Failed to export spans batch code: 403, reason: Forbidden
+INFO:     [WEBHOOK] Event: message_created, message_type: incoming
+INFO:     [BOT] Incoming from Synth reserva-ingles: from cartagena please
+WARNING:  [ROUTER][JEV] fallo en 147 ms, se usa el router LLM: HTTPStatusError: Client error '402 Payment Required' for url 'https://openrouter.ai/api/alpha/decisions'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/402
+INFO:     [RAG][REWRITE] original=from cartagena please... rewritten=Can you arrange pickup from Cartagena, please?...
+INFO:     [RAG][RETRIEVAL] query_topics=[] candidates=48 preview=[{'source': 'services', 'id': 36170, 'score': 0.5527, 'score_final': 0.5691, 'branches': ['vector']}, {'source': 'faqs', 'id': 36382, 'score': 0.5437, 'score_final': 0.5598, 'branches': ['vector']}, {'source': 'faqs', 'id': 36176, 'score': 0.5392, 'score_final': 0.5551, 'branches': ['vector']}, {'source': 'faqs', 'id': 36180, 'score': 0.5354, 'score_final': 0.551, 'branches': ['vector']}, {'source': 'services', 'id': 36140, 'score': 0.5235, 'score_final': 0.5389, 'branches': ['vector']}, {'source': 'services', 'id': 36162, 'score': 0.5122, 'score_final': 0.5274, 'branches': ['vector']}, {'source': 'services', 'id': 36160, 'score': 0.5112, 'score_final': 0.5261, 'branches': ['vector']}, {'source': 'policies', 'id': 36466, 'score': 0.5067, 'score_final': 0.5214, 'branches': ['vector']}]
+INFO:     [RAG][RETRIEVAL] query_topics=[] candidates=48 preview=[{'source': 'policies', 'id': 36418, 'score': 0.6197, 'score_final': 0.6361, 'branches': ['vector']}, {'source': 'faqs', 'id': 36208, 'score': 0.5869, 'score_final': 0.6031, 'branches': ['vector']}, {'source': 'faqs', 'id': 36180, 'score': 0.5587, 'score_final': 0.5746, 'branches': ['vector']}, {'source': 'services', 'id': 36170, 'score': 0.5578, 'score_final': 0.5734, 'branches': ['vector']}, {'source': 'faqs', 'id': 36382, 'score': 0.5527, 'score_final': 0.568, 'branches': ['vector']}, {'source': 'faqs', 'id': 36332, 'score': 0.5477, 'score_final': 0.5628, 'branches': ['vector']}, {'source': 'services', 'id': 36140, 'score': 0.5282, 'score_final': 0.5432, 'branches': ['vector']}, {'source': 'faqs', 'id': 36176, 'score': 0.5154, 'score_final': 0.5301, 'branches': ['vector']}]
+INFO:     [ESCALATION][ROUTING_SIGNALS] detected={'wants_human': False, 'wants_menu_or_restart': False, 'sensitive_topic': False, 'adaptive_diving_topic': False, 'booking_change_topic': False, 'asks_for_contact_number': False, 'broken_link_complaint': False, 'availability_question': False, 'comparing_options': False} msg='from cartagena please'
+INFO:     [GRAPH] conv=4472 route=booking
+INFO:     [EXTRACT][EX4] descartado sin cita verificable: {'activity': "cita no está en el mensaje: 'certified diver'", 'is_certified': "cita no está en el mensaje: 'certified diver'", 'group_size': "cita no está en el mensaje: 'going solo'", 'quiere_bucear': "cita no está en el mensaje: 'going solo'"}
+INFO:     [NOTES_EXTRACTOR] captured=['customer is departing from Cartagena'] msg='from cartagena please'
+INFO:     [CORE] notes captured -> ['customer is departing from Cartagena']
+INFO:     [EXTRACT][EX5] location='cartagena' (regex: 'cartagena', guardado: 'cartagena')
+INFO:     [TURN_METRICS] {"conv": "4472", "start": "2026-10-13T16:36:56Z", "latency": 2.555, "turn_type": "reserva", "route": "booking", "rag_used": false, "language": "en", "step": "free_text", "activity_chosen": false, "cart_items": 0, "booking_link_sent": false, "escalated": false, "fallback": false, "error": null, "router": "llm_fallback", "router_ms": 149, "llm_calls": 6, "embeddings": 2, "llm_seconds": 5.546, "models": {"gpt-4o-mini": 5, "gpt-4.1-mini": 1}, "nodes": {"router": 1.5026, "setup": 0.0479, "availability": 0.0046, "routing": 0.0064, "extraction": 0.9586, "slotfill_close": 0.0014, "booking": 1.0389}, "rag_adelantado": "descartado"}
+INFO:     [BOT] Sending Chatwoot message conv=4472 url=http://dp-chatwoot:3000/api/v1/accounts/1/conversations/4472/messages
+INFO:     [BOT] Message sent to conversation 4472
+INFO:     [WEBHOOK] Event: message_created, message_type: outgoing
+INFO:     [WEBHOOK] Skipping non-actionable message_type=outgoing
+INFO:     172.18.0.9:55354 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+INFO:     172.18.0.9:52232 - "POST /webhooks/chatwoot HTTP/1.1" 200 OK
+Failed to export spans batch code: 403, reason: Forbidden
+INFO:     127.0.0.1:54216 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44942 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48674 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58958 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48802 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46838 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56326 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40928 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46936 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50996 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58634 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39012 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:35362 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52550 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46854 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55590 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56740 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46524 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:36094 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50882 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42892 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48616 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:35584 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51446 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54234 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51896 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53380 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42712 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:36032 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:43312 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54984 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39750 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52712 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39772 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44252 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:35192 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45958 - "GET /health HTTP/1.1" 200 OK

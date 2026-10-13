@@ -203,9 +203,13 @@ async def test_con_el_flag_el_rag_tiene_los_links_de_reserva(on, monkeypatch):
     assert url in answer
 
 
-async def test_tras_el_pase_a_una_persona_un_gracias_no_vuelve_a_vender(on):
+async def test_tras_el_pase_a_una_persona_un_gracias_no_vuelve_a_vender(on, monkeypatch):
     from src.agents import conversational_core as core
     from src.flows.state import Step
+
+    # La cortesía de s4-20 (con `tras_pase_sin_vender` cualquier turno tras el pase se atiende sin vender:
+    # tests/test_tras_el_pase.py).
+    monkeypatch.setattr(core.settings, "tras_pase_sin_vender", False)
 
     st = _state(step=Step.ESCALATE)
     quiet = {"asks_question": False, "needs_staff": False, "affirms_location": False, "affirms_activity": False}

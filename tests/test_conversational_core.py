@@ -987,13 +987,17 @@ async def test_recall_refresher_field_not_yet_known_falls_back():
     # se capturaba como nombre -> saludo "¡Hola, Del!".
     ("soy del equipo de pruebas del sistema", None),
 ])
-def test_capture_client_name(msg, expected):
+def test_capture_client_name(monkeypatch, msg, expected):
+    # El camino de la regex con "soy X" (con `nombre_por_extractor` ese caso lo decide el extractor:
+    # tests/test_nombre_y_grupo_privado.py).
+    monkeypatch.setattr(core.settings, "nombre_por_extractor", False)
     st = ConversationState(conversation_id="name")
     core._capture_client_name(st, msg)
     assert st.client_name == expected
 
 
-def test_capture_client_name_first_wins():
+def test_capture_client_name_first_wins(monkeypatch):
+    monkeypatch.setattr(core.settings, "nombre_por_extractor", False)
     st = ConversationState(conversation_id="name2")
     core._capture_client_name(st, "soy Rocio")
     core._capture_client_name(st, "en realidad soy Ana")
