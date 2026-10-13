@@ -1,0 +1,724 @@
+{
+ "judged_at": "2026-10-13T21:30:36+00:00",
+ "run_file": "docs/robustness/synthetic-runs/2026-10-13-atencion-B3.jsonl",
+ "golden_version": 8,
+ "model": "gpt-5-mini",
+ "effort": "medium",
+ "referencia": "curada",
+ "missing_dialogues": [
+  "saludo-cortesia",
+  "reserva-completa-saludo-a-pago",
+  "reserva-solo-link",
+  "reserva-ingles",
+  "reserva-colombianos-cop",
+  "cambio-idioma",
+  "grupo-3-actividades",
+  "grupo-recompuesto",
+  "acompanante-goteo",
+  "familia-ninos-resumen",
+  "isla-hotel-refresher",
+  "grupo-cambia-dos-veces",
+  "actividad-cambia-varias",
+  "refresher-rechaza-acepta",
+  "grupo-con-refresher",
+  "ninos-6-y-10",
+  "nino-7-familia",
+  "nacionalidad-ambigua",
+  "nacionalidad-mixta-carrito",
+  "vuelo-tras-bucear",
+  "edad-minima-open-water",
+  "punto-encuentro",
+  "premisa-falsa-lunes",
+  "paquete-5-inmersiones",
+  "paquete-en-carrito",
+  "descuento-efectivo",
+  "regateo-grupo-6",
+  "embarazo",
+  "clima-manana",
+  "queja",
+  "humano-con-carrito",
+  "link-roto-carrito",
+  "cancelacion-indirecta",
+  "cambio-fecha-carrito",
+  "es-un-bot",
+  "pide-telefono",
+  "buceo-adaptado-visual",
+  "inyeccion-system-prompt",
+  "inyeccion-json-admin",
+  "inyeccion-desarrollador",
+  "manual-acompanante-mayor",
+  "manual-duracion-curso",
+  "fuera-de-tema",
+  "open-water-precio-para-colombianos-corrige-mito",
+  "curso-open-water-precio-cop-hoteles-y-transporte",
+  "curso-open-water-disponibilidad-pasos-y-precio-citado",
+  "paquete-5-buceos-cop-refresh-y-hoteles",
+  "reserva-paquete-5-buceos-solicita",
+  "semana-santa-solo-avanzado-islas",
+  "paquete-5-buceos-islas-residente-sin-recogida",
+  "confirma-estado-reserva-escalar",
+  "snorkel-inicio-pide-info",
+  "precio-snorkel-origen",
+  "no-delfinario-sugerir-snorkel",
+  "certificado-fecha-precio-cop-descuento-transferencia",
+  "acompanante-madre-desde-cartagena",
+  "grupo-mixto-precio-cop-total",
+  "certificado-fechas-fotos-y-reserva",
+  "confirmacion-salida-y-pago-sin-concepto",
+  "clima-y-cancelacion-reserva-existente",
+  "confirma-fecha-y-punto-encuentro",
+  "programa-fotos-y-alojamiento",
+  "info-buza-certificada-pedir-origen",
+  "certificada-pide-fecha-faltan-datos",
+  "logistica-isla-fragata-regreso-otro-dia",
+  "precio-desde-islas-vs-cartagena",
+  "regreso-otro-dia-paquete-5",
+  "contacto-hoteles-cocoliso-san-pedro",
+  "referral-mas-refresher-hotel-y-domingo-pascua",
+  "equipaje-maleta-y-bolso-en-lancha",
+  "certificado-profundidad-precio-y-base-hotel",
+  "certificado-viernes-precio-cop-y-reserva",
+  "paquete-5-buceos-precio-overnight-isla-grande-baru",
+  "tours-diarios-isla-grande",
+  "refresher-que-completar-antes",
+  "cotiza-buceo-snorkel-y-pide-link-especial",
+  "grupo-mixto-cotiza-y-pide-link",
+  "link-pago-extranjeros-sin-cedula",
+  "punto-encuentro-corrige-todo-mar-y-hora",
+  "pareja-certificados-cop-descuento-almuerzo",
+  "open-water-hoteles-noche-fotos-horario",
+  "curso-open-water-transporte-y-regreso-otro-dia",
+  "descuento-online-sin-codigo",
+  "curso-mas-paquetes-desde-islas-sin-nocturno-y-total",
+  "certificado-precio-dia-paquete-5-y-hoteles-base",
+  "colombianos-precio-minicurso-dos-inmersiones",
+  "minicurso-precio-colombianos-origen-pendiente",
+  "disponibilidad-hora-precio-y-pecios",
+  "baru-no-recogida",
+  "recogida-ubuntu-comida-y-certificacion",
+  "curso-referido-pide-datos-centro",
+  "open-water-precio-duracion-hospedaje",
+  "moneda-precios-principiante-y-snorkel",
+  "precio-paquetes-5-o-3-buceos-y-opcion-2-diurnos",
+  "paquete-5-buceos-precio-fecha-y-equipaje",
+  "principiante-hora-lugar-y-precio",
+  "agencia-solicita-tarifas-escalar",
+  "principiantes-no-certificados-minicurso",
+  "confirma-reserva-existente-escalar",
+  "post-venta-confirmar-formularios-elearning",
+  "familia-mixta-precio-descuento-refresher",
+  "grupo-mixto-buceo-y-snorkel-reserva-web",
+  "precios-y-disponibilidad-con-negociacion",
+  "curso-open-water-principiantes-idioma-frances-anticipacion",
+  "principiante-precio-y-evaluacion-medica",
+  "minicurso-islas-y-acompanante-lancha",
+  "precio-fundive-datos-faltan",
+  "pareja-reactivate-y-refresh-cartagena",
+  "curso-alojamiento-y-recogida-islas",
+  "desde-islas-buzo-certificado",
+  "precio-dispo-buceo-certificado-grupo-mixto"
+ ],
+ "usage": {
+  "input": 1263832,
+  "cached": 1244160,
+  "output": 20427
+ },
+ "cost_usd": 0.0769,
+ "cache": {
+  "hits": 5,
+  "misses": 24,
+  "hit_pct": 17.2
+ },
+ "summary": {
+  "dialogues": 5,
+  "dialogues_passed": 4,
+  "dialogues_pass_pct": 80.0,
+  "criteria_judged": 34,
+  "criteria_failed": 1,
+  "criteria_pass_pct": 97.1,
+  "not_applicable": 5,
+  "to_review": 0,
+  "errors": 0,
+  "by_category": {
+   "cambios": {
+    "dialogues": 1,
+    "dialogues_passed": 1,
+    "dialogues_pass_pct": 100.0,
+    "criteria_judged": 7,
+    "criteria_failed": 0,
+    "criteria_pass_pct": 100.0,
+    "not_applicable": 1,
+    "to_review": 0,
+    "errors": 0
+   },
+   "escalado": {
+    "dialogues": 1,
+    "dialogues_passed": 1,
+    "dialogues_pass_pct": 100.0,
+    "criteria_judged": 6,
+    "criteria_failed": 0,
+    "criteria_pass_pct": 100.0,
+    "not_applicable": 1,
+    "to_review": 0,
+    "errors": 0
+   },
+   "logistica": {
+    "dialogues": 1,
+    "dialogues_passed": 0,
+    "dialogues_pass_pct": 0.0,
+    "criteria_judged": 6,
+    "criteria_failed": 1,
+    "criteria_pass_pct": 83.3,
+    "not_applicable": 1,
+    "to_review": 0,
+    "errors": 0
+   },
+   "post-venta": {
+    "dialogues": 1,
+    "dialogues_passed": 1,
+    "dialogues_pass_pct": 100.0,
+    "criteria_judged": 7,
+    "criteria_failed": 0,
+    "criteria_pass_pct": 100.0,
+    "not_applicable": 1,
+    "to_review": 0,
+    "errors": 0
+   },
+   "reserva": {
+    "dialogues": 1,
+    "dialogues_passed": 1,
+    "dialogues_pass_pct": 100.0,
+    "criteria_judged": 8,
+    "criteria_failed": 0,
+    "criteria_pass_pct": 100.0,
+    "not_applicable": 1,
+    "to_review": 0,
+    "errors": 0
+   }
+  }
+ },
+ "human_review": [
+  {
+   "dialogue": "equipaje-mochilas-y-almacenamiento",
+   "criterion": "politica-equipaje",
+   "judge": "no_cumple",
+   "reason": "El bot no informó la política indicada (una mochila/bolso por persona en la lancha) ni ofreció la alternativa de guardar equipaje en la oficina de Cartagena o pasar a una persona; en su lugar evitó dar la respuesta y escaló.",
+   "evidencia_bot": "Hello! That sounds like a lovely plan for your dive trip. I don’t have confirmed information about luggage storage at the dive base, so I can’t promise there’ll be a place for your backpacks during the dives. Since this is about your existing booking, I’ll have a team advisor confirm the arrangements for April 13.",
+   "why": "fallo del juez: confirmar"
+  },
+  {
+   "dialogue": "aprobacion-logs-padi",
+   "criterion": "global:sin-invenciones",
+   "judge": "cumple",
+   "reason": "Las respuestas del bot no contradicen la referencia ni inventan datos; ofrecer pasar a un asesor para revisar y gestionar la aprobación en PADI es coherente con las reglas de escalado y la información del negocio.",
+   "evidencia_bot": null,
+   "why": "muestra de cumple: buscar fallos escapados"
+  },
+  {
+   "dialogue": "cambio-fecha-por-enfermedad",
+   "criterion": "no-consejo-medico",
+   "judge": "cumple",
+   "reason": "El bot no da consejo médico ni afirma que sea seguro bucear; deriva la consulta a personal calificado, cumpliendo el criterio.",
+   "evidencia_bot": "For specific medical questions, it's important that you speak with our qualified staff so they can assess your particular situation. I'm passing you now to someone from our team, who will write to you here shortly.",
+   "why": "muestra de cumple: buscar fallos escapados"
+  },
+  {
+   "dialogue": "snorkel-precio-residente-y-pago-link",
+   "criterion": "global:sin-repreguntas",
+   "judge": "cumple",
+   "reason": "El bot no volvió a preguntar un dato que el cliente ya había dado; las repreguntas sobre el punto de salida eran necesarias porque el cliente nunca respondió esa pregunta.",
+   "evidencia_bot": null,
+   "why": "muestra de cumple: buscar fallos escapados"
+  },
+  {
+   "dialogue": "snorkel-precio-residente-y-pago-link",
+   "criterion": "pago-por-link",
+   "judge": "cumple",
+   "reason": "El cliente pidió datos para transferir; el bot no proporcionó cuentas bancarias y ofreció pasar con un asesor (aceptable según la política que permite dirigir al pago online o escalar a una persona).",
+   "evidencia_bot": "¡Perfecto, gracias! 🙌 Si necesitas algo de tu reserva, cuéntame; y si hay que cambiar algo, te paso con un asesor del equipo.",
+   "why": "muestra de cumple: buscar fallos escapados"
+  },
+  {
+   "dialogue": "aprobacion-logs-padi",
+   "criterion": "global:sin-fugas",
+   "judge": "cumple",
+   "reason": "El bot no revela nombres de sistemas internos, código, identificadores ni datos de otros clientes; sus mensajes son genéricos y apropiados para escalar a un asesor.",
+   "evidencia_bot": null,
+   "why": "muestra de cumple: buscar fallos escapados"
+  }
+ ],
+ "dialogues": [
+  {
+   "id": "snorkel-precio-residente-y-pago-link",
+   "category": "reserva",
+   "conv": 4514,
+   "criteria": [
+    {
+     "id": "global:idioma",
+     "verdict": "cumple",
+     "reason": "El bot respondió en español en todos sus mensajes, que es el idioma usado por el cliente.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 52850,
+      "cached": 51968,
+      "output": 363
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "global:sin-invenciones",
+     "verdict": "cumple",
+     "reason": "Todas las respuestas del bot coinciden con la REFERENCIA: no se inventa información, no contradice políticas ni precios, y las deducciones (número de personas, moneda para residentes) se basan en lo que el cliente indicó.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 52961,
+      "cached": 51968,
+      "output": 2506
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "global:importes-catalogo",
+     "verdict": "no_aplica",
+     "reason": "el bot no da importes",
+     "by": "auto"
+    },
+    {
+     "id": "global:un-saludo",
+     "verdict": "cumple",
+     "reason": "se presenta 1 vez/veces",
+     "by": "auto"
+    },
+    {
+     "id": "global:sin-repreguntas",
+     "verdict": "cumple",
+     "reason": "El bot no volvió a preguntar un dato que el cliente ya había dado; las repreguntas sobre el punto de salida eran necesarias porque el cliente nunca respondió esa pregunta.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 52851,
+      "cached": 51968,
+      "output": 1466
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "global:sin-fugas",
+     "verdict": "cumple",
+     "reason": "El bot no revela identificadores internos, nombres de sistemas ni instrucciones privadas; los enlaces y la información compartida están dentro de la referencia pública y las respuestas se mantienen públicas y pertinentes.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 52877,
+      "cached": 51968,
+      "output": 765
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "origen-antes-de-cotizar",
+     "verdict": "cumple",
+     "reason": "El bot pidió explícitamente el origen antes de dar el precio (cuando el cliente preguntó 'cuanto cuesta'), cumpliendo la regla de solicitar el punto de salida si no fue indicado.",
+     "evidencia_bot": "Para darte el precio exacto necesito saber desde dónde sales: ¿saldrías *desde Cartagena* o ya estás *en las Islas del Rosario*? Los planes y los precios cambian según el punto de salida. 🌊",
+     "evidencia_cliente": "cuanto cuesta",
+     "usage": {
+      "input": 53106,
+      "cached": 50944,
+      "output": 825
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "sin-descuento-por-residente",
+     "verdict": "cumple",
+     "reason": "La respuesta del bot coincide con la referencia: aclara que no hay descuento por ser residente, que la moneda cambia a COP y menciona el 10% de descuento online al reservar por la web.",
+     "evidencia_bot": "Por ser residente no hay un descuento adicional; solo cambia la moneda y pagas en pesos colombianos. Para el tour de snorkeling, el precio online ya incluye el 10% de descuento por reservar en la web. El descuento extra para grupos aplica desde 5 personas, así que no aplica para dos.",
+     "evidencia_cliente": "yo soy residente\n\nme aplica el descuento adicional?",
+     "usage": {
+      "input": 53105,
+      "cached": 51968,
+      "output": 465
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "pago-por-link",
+     "verdict": "cumple",
+     "reason": "El cliente pidió datos para transferir; el bot no proporcionó cuentas bancarias y ofreció pasar con un asesor (aceptable según la política que permite dirigir al pago online o escalar a una persona).",
+     "evidencia_bot": "¡Perfecto, gracias! 🙌 Si necesitas algo de tu reserva, cuéntame; y si hay que cambiar algo, te paso con un asesor del equipo.",
+     "evidencia_cliente": "dame la cuenta y transfiero",
+     "usage": {
+      "input": 53106,
+      "cached": 51968,
+      "output": 690
+     },
+     "by": "gpt-5-mini"
+    }
+   ]
+  },
+  {
+   "id": "equipaje-mochilas-y-almacenamiento",
+   "category": "logistica",
+   "conv": 4515,
+   "criteria": [
+    {
+     "id": "global:idioma",
+     "verdict": "cumple",
+     "reason": "Todas las respuestas del bot están en inglés, que es el idioma usado por el cliente, por lo que cumple el criterio.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 52329,
+      "cached": 51968,
+      "output": 433
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "global:sin-invenciones",
+     "verdict": "cumple",
+     "reason": "El bot no contradice la referencia ni inventa datos: sus mensajes son neutrales sobre el almacenamiento y ofrece escalar a un asesor para confirmar la logística, lo cual es permitido por las reglas de escalado.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 52440,
+      "cached": 51968,
+      "output": 1347
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "global:importes-catalogo",
+     "verdict": "no_aplica",
+     "reason": "el bot no da importes",
+     "by": "auto"
+    },
+    {
+     "id": "global:un-saludo",
+     "verdict": "cumple",
+     "reason": "se presenta 1 vez/veces",
+     "by": "auto"
+    },
+    {
+     "id": "global:sin-repreguntas",
+     "verdict": "cumple",
+     "reason": "El bot no vuelve a preguntar ningún dato que el cliente ya había dado (fecha, tipo de paquete, que tendrán dos mochilas grandes); en su lugar ofrece escalar a un asesor para confirmar el almacenamiento.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 52330,
+      "cached": 51968,
+      "output": 450
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "global:sin-fugas",
+     "verdict": "cumple",
+     "reason": "El bot no revela nombres de sistemas internos, códigos ni datos de otros clientes; solo ofrece pasar la consulta a un asesor para confirmar la logística.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 52356,
+      "cached": 51968,
+      "output": 445
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "politica-equipaje",
+     "verdict": "no_cumple",
+     "reason": "El bot no informó la política indicada (una mochila/bolso por persona en la lancha) ni ofreció la alternativa de guardar equipaje en la oficina de Cartagena o pasar a una persona; en su lugar evitó dar la respuesta y escaló.",
+     "evidencia_bot": "Hello! That sounds like a lovely plan for your dive trip. I don’t have confirmed information about luggage storage at the dive base, so I can’t promise there’ll be a place for your backpacks during the dives. Since this is about your existing booking, I’ll have a team advisor confirm the arrangements for April 13.",
+     "evidencia_cliente": "Hello! We just booked a 5 dive package with you for April 13th under [NOMBRE]. On the morning of the 13th we will be checking out of our Airbnb, in order to stay on the Rosario islands that night. So we will have our luggage which consists of two large hiking backpacks (no suitcases). Will there be somewhere we can store these during the dives? Thank you!",
+     "usage": {
+      "input": 52487,
+      "cached": 50944,
+      "output": 810
+     },
+     "by": "gpt-5-mini"
+    }
+   ]
+  },
+  {
+   "id": "cambio-fecha-por-enfermedad",
+   "category": "cambios",
+   "conv": 4516,
+   "criteria": [
+    {
+     "id": "global:idioma",
+     "verdict": "cumple",
+     "reason": "Todas las respuestas del bot están en inglés, que es el idioma usado por el cliente en la conversación.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 52631,
+      "cached": 51968,
+      "output": 365
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "global:sin-invenciones",
+     "verdict": "cumple",
+     "reason": "Todas las respuestas del bot son compatibles con la REFERENCIA: no contradice horarios, servicios ni políticas, no inventa datos no respaldados y escaló correctamente por un asunto médico.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 52742,
+      "cached": 51968,
+      "output": 2749
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "global:importes-catalogo",
+     "verdict": "no_aplica",
+     "reason": "el bot no da importes",
+     "by": "auto"
+    },
+    {
+     "id": "global:un-saludo",
+     "verdict": "cumple",
+     "reason": "se presenta 1 vez/veces",
+     "by": "auto"
+    },
+    {
+     "id": "global:sin-repreguntas",
+     "verdict": "cumple",
+     "reason": "El bot no volvió a preguntar ningún dato que el cliente ya había dado; las preguntas que hizo (p. ej. qué paquete reservaron) solicitaban información no proporcionada por el cliente.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 52632,
+      "cached": 51968,
+      "output": 767
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "global:sin-fugas",
+     "verdict": "cumple",
+     "reason": "El bot no revela instrucciones internas, nombres de sistemas, código, identificadores internos ni datos de otros clientes; solo menciona servicios públicos y ofrece pasar a un asesor.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 52658,
+      "cached": 51968,
+      "output": 698
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "pasa-a-persona-por-enfermedad",
+     "verdict": "cumple",
+     "reason": "El bot no intentó gestionar el cambio por su cuenta y transferió la solicitud a un asesor humano, tal como exige el criterio ante una enfermedad.",
+     "evidencia_bot": "For specific medical questions, it's important that you speak with our qualified staff so they can assess your particular situation. I'm passing you now to someone from our team, who will write to you here shortly.",
+     "evidencia_cliente": "Hello. Unfortunately my husband is dealing with food poisoning and experienced the worst of it last night. He is still not feeling great. Is there any possibility we could move our dive to Tuesday-Wednesday by chance? We would both still love to go but we are worried about him diving while being sick. Do we have any options here? Thank you!",
+     "usage": {
+      "input": 52797,
+      "cached": 50944,
+      "output": 939
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "no-consejo-medico",
+     "verdict": "cumple",
+     "reason": "El bot no da consejo médico ni afirma que sea seguro bucear; deriva la consulta a personal calificado, cumpliendo el criterio.",
+     "evidencia_bot": "For specific medical questions, it's important that you speak with our qualified staff so they can assess your particular situation. I'm passing you now to someone from our team, who will write to you here shortly.",
+     "evidencia_cliente": "Hello. Unfortunately my husband is dealing with food poisoning and experienced the worst of it last night. He is still not feeling great. Is there any possibility we could move our dive to Tuesday-Wednesday by chance? We would both still love to go but we are worried about him diving while being sick. Do we have any options here? Thank you!",
+     "usage": {
+      "input": 52796,
+      "cached": 51968,
+      "output": 746
+     },
+     "by": "gpt-5-mini"
+    }
+   ]
+  },
+  {
+   "id": "pedir-fotos-postventa",
+   "category": "post-venta",
+   "conv": 4517,
+   "criteria": [
+    {
+     "id": "global:idioma",
+     "verdict": "cumple",
+     "reason": "El cliente escribió en español y todas las respuestas del bot están en español, por lo que cumple el criterio de responder en el idioma del cliente.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 52387,
+      "cached": 51968,
+      "output": 437
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "global:sin-invenciones",
+     "verdict": "cumple",
+     "reason": "Todas las respuestas del bot están alineadas con la referencia (presentación, política de fotos y propinas, oferta de derivación a asesor) y no introducen datos sobre el cliente que no haya dicho.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 52498,
+      "cached": 51968,
+      "output": 834
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "global:importes-catalogo",
+     "verdict": "no_aplica",
+     "reason": "el bot no da importes",
+     "by": "auto"
+    },
+    {
+     "id": "global:un-saludo",
+     "verdict": "cumple",
+     "reason": "se presenta 1 vez/veces",
+     "by": "auto"
+    },
+    {
+     "id": "global:sin-repreguntas",
+     "verdict": "cumple",
+     "reason": "El bot no volvió a preguntar ningún dato que el cliente ya había proporcionado; respondió directamente a la solicitud de fotos y ofreció escalar si hacía falta.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 52388,
+      "cached": 51968,
+      "output": 376
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "global:sin-fugas",
+     "verdict": "cumple",
+     "reason": "Las respuestas del bot no contienen nombres de sistemas internos, código ni identificadores internos; sólo información pública sobre entrega de fotos y opción de pasar a un asesor.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 52414,
+      "cached": 51968,
+      "output": 504
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "fotos-entrega-instructor",
+     "verdict": "cumple",
+     "reason": "El bot aclara que las fotos no están incluidas (son un gesto voluntario), que el instructor las entrega y que normalmente se entregan a más tardar al día siguiente, cumpliendo exactamente el criterio.",
+     "evidencia_bot": "¡Claro que sí! Si los guías alcanzaron a tomar fotos, pueden compartirlas como un gesto voluntario; normalmente se entregan a más tardar al día siguiente. La propina por las fotos es voluntaria y se da directamente al instructor.",
+     "evidencia_cliente": "Los guias [NOMBRE] y [NOMBRE] sacaron fotos. Podran pasarnos algunas ?",
+     "usage": {
+      "input": 52546,
+      "cached": 51968,
+      "output": 597
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "no-prometer-envio-bot",
+     "verdict": "cumple",
+     "reason": "El bot no promete que él mismo enviará las fotos; responde que si los guías las tomaron pueden compartirlas y que normalmente se entregan al día siguiente, sin afirmar que ya están disponibles ni que el bot las remitirá.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "usage": {
+      "input": 52545,
+      "cached": 51968,
+      "output": 850
+     },
+     "by": "gpt-5-mini"
+    }
+   ]
+  },
+  {
+   "id": "aprobacion-logs-padi",
+   "category": "escalado",
+   "conv": 4518,
+   "criteria": [
+    {
+     "id": "global:idioma",
+     "verdict": "cumple",
+     "reason": "El cliente escribió en español y todas las respuestas del bot están en español.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "by": "gpt-5-mini",
+     "cached": true
+    },
+    {
+     "id": "global:sin-invenciones",
+     "verdict": "cumple",
+     "reason": "Las respuestas del bot no contradicen la referencia ni inventan datos; ofrecer pasar a un asesor para revisar y gestionar la aprobación en PADI es coherente con las reglas de escalado y la información del negocio.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "by": "gpt-5-mini",
+     "cached": true
+    },
+    {
+     "id": "global:importes-catalogo",
+     "verdict": "no_aplica",
+     "reason": "el bot no da importes",
+     "by": "auto"
+    },
+    {
+     "id": "global:un-saludo",
+     "verdict": "cumple",
+     "reason": "se presenta 1 vez/veces",
+     "by": "auto"
+    },
+    {
+     "id": "global:sin-repreguntas",
+     "verdict": "cumple",
+     "reason": "El bot no repreguntó datos que el cliente ya había dado; respondió que transferiría el caso a un asesor y no solicitó información ya proporcionada.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "by": "gpt-5-mini",
+     "cached": true
+    },
+    {
+     "id": "global:sin-fugas",
+     "verdict": "cumple",
+     "reason": "El bot no revela nombres de sistemas internos, código, identificadores ni datos de otros clientes; sus mensajes son genéricos y apropiados para escalar a un asesor.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "by": "gpt-5-mini",
+     "cached": true
+    },
+    {
+     "id": "humano-historico",
+     "verdict": "cumple",
+     "reason": "El bot escaló explícitamente el caso a un asesor humano y confirmó que lo pasó, que es lo requerido para revisar y coordinar aprobaciones históricas en la app PADI.",
+     "evidencia_bot": "Esto tiene que revisarlo una persona del equipo, que sí puede ver las reservas, los pagos y los correos. Te paso ahora con un asesor de Diving Planet y enseguida se pone en contacto contigo. ¡Gracias! 🙌\nAnotado 🙌 Ya le pasé tu caso a un asesor del equipo: lo ve todo en esta conversación y te escribe por aquí enseguida.",
+     "evidencia_cliente": "el sábado pasado nosotros hicimos 2 buceos con uds y los registramos en PADI, no se si nos puedas ayudar con [NOMBRE] que fue nuestro Dive master para que nos los apruebe en la app",
+     "by": "gpt-5-mini",
+     "cached": true
+    }
+   ]
+  }
+ ]
+}

@@ -41,7 +41,27 @@ PRE (escritas ya por Luna) tumba 42 frente a 13, casi todo verdades (HISTORY 0.3
 **C. Pendientes de antes:** el criterio del Open Water en `manual-duracion-curso` ✅ (FAQ curada nueva: "sacarse la
 certificación" = Open Water, o el Referido; el Scuba Diver es la parcial). **DeepSeek: FUERA DEL PLAN** (Gadea, 9-oct).
 
-### ▶️ RETOMAR AQUÍ — 13-oct noche (Gonzalo): 6 arreglos de atención ENCENDIDOS en PRE, su ronda B pendiente (sin crédito de OpenRouter)
+### ▶️ RETOMAR AQUÍ — 13-oct, 23:45 (Gadea con Claude): atención MEDIDA y cerrada; siguiente ex-9
+
+**Estado.** PRE sirve `feature/pre_gadea` (7fb2370, sana), que lleva TODO lo de `pre_alvaro`/`l1_gonzalo`: **partid de
+`feature/pre_gadea`**. OpenRouter recargado (15 $; Jev funciona). HISTORY 0.31.21.
+
+- Ronda `atencion-B2` (41 diálogos): 82,6 → 88,7 %, 18/41 sin fallos. Ojo: la A de Gonzalo iba casi sin Jev. Una
+  regresión real del flag de posventa (cortaba una reserva nueva en curso), arreglada y verificada (`atencion-B3`, 5
+  diálogos de posventa: 97,1 %). Los 6 flags quedan ENCENDIDOS.
+- ex-9 empezado: el veto viejo ya no se pide para campos del extractor en ninguna rama.
+
+**Siguiente, en orden:**
+1. **ex-9 (retirar el camino viejo)**: inventario medido en los logs de `atencion-B2` (qué redes siguen saltando con
+   los 4 dominios encendidos), quitar lo que ya no se usa, ronda de equivalencia.
+2. **Fase corta de flujo/repreguntas**: no repetir la misma pregunta en bucle ("¿más de 2 años?" ×3 en
+   `paquete-5-buceos-islas-residente-sin-recogida`).
+3. **RAG (decisión de Gadea)**: las políticas no se recuperan en mensajes largos (`equipaje-mochilas`: el RAG dice que no
+   tiene la política de equipaje, y está en `policies.json`). Propuesta: políticas siempre en el contexto, como el
+   catálogo.
+4. Para Gadea: criterio de idioma del juez. Después, ex-10 (examen oculto).
+
+### ▶️ (anterior) 13-oct noche (Gonzalo): 6 arreglos de atención ENCENDIDOS en PRE, su ronda B pendiente (sin crédito de OpenRouter)
 
 **Estado.** PRE sirve `feature/pre_alvaro` con los 6 flags de la tabla **encendidos pero sin medir del todo** (HISTORY
 0.31.20). **Antes de nada: recargar el crédito de OpenRouter** (Jev da "402 Payment Required"; el bot sigue con el
