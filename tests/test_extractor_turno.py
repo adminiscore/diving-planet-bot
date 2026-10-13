@@ -69,16 +69,18 @@ def test_buzo_certificado_que_quiere_bucear_hace_buceo_certificado():
     msg = "somos Advanced y queremos coordinar inmersiones"
     cliente = _cliente_que_devuelve({"is_certified": _si("somos Advanced"),
                                      "quiere_bucear": _si("queremos coordinar inmersiones")})
-    assert asyncio.run(ex.extraer_turno(msg, client=cliente)) == {"is_certified": True, "activity": "certified_diving"}
+    assert asyncio.run(ex.extraer_turno(msg, client=cliente)) == {
+        "is_certified": True, "quiere_bucear": True, "activity": "certified_diving"}
 
 
 def test_la_certificacion_ya_sabida_cuenta():
     cliente = _cliente_que_devuelve({"quiere_bucear": _si("valores de dos buceos")})
     salida = asyncio.run(ex.extraer_turno("valores de dos buceos", sabido={"is_certified": True}, client=cliente))
-    assert salida == {"activity": "certified_diving"}
+    assert salida == {"quiere_bucear": True, "activity": "certified_diving"}
 
 
 def test_querer_bucear_sin_certificacion_no_elige_actividad():
-    """Decisión de Gadea (14/27-sep): sin actividad elegida, el bot recomienda; "quiere_bucear" no viaja al estado."""
+    """Decisión de Gadea (14/27-sep): sin actividad elegida, el bot recomienda."""
     cliente = _cliente_que_devuelve({"quiere_bucear": _si("quiero bucear")})
-    assert asyncio.run(ex.extraer_turno("quiero bucear con mi amigo", client=cliente)) == {}
+    # Viaja "quiere_bucear" (el núcleo lo guarda en el estado para el turno de la certificación), sin actividad.
+    assert asyncio.run(ex.extraer_turno("quiero bucear con mi amigo", client=cliente)) == {"quiere_bucear": True}

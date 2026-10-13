@@ -2154,7 +2154,9 @@ async def _aplicar_extractor(intent, state: ConversationState, message: str, pis
     if settings.extraccion_llm_ubicacion:
         _poner_ubicacion(intent, state, message, datos, pista)
     if settings.extraccion_llm_actividad:
-        _poner_actividad(intent, datos, pista)
+        if datos.get("quiere_bucear") is True:
+            state.quiere_bucear = True
+        _poner_actividad(intent, state, datos, pista)
         _poner_nacionalidad(intent, state, message, datos)
 
 
@@ -2187,7 +2189,7 @@ def _poner_ubicacion(intent, state: ConversationState, message: str, datos: dict
     logger.info(f"[EXTRACT][EX5] location={lugar!r} (regex: {pista.get('location')!r}, guardado: {guardado!r})")
 
 
-def _poner_actividad(intent, datos: dict, pista: dict) -> None:
+def _poner_actividad(intent, state: ConversationState, datos: dict, pista: dict) -> None:
     """ex-8: la actividad es la que el cliente ELIGE (extractor). La última elegida manda, como hoy. El servicio sale
     del registro. Si no eligió ninguna pero el regex DEDUJO el minicurso ("es mi primera vez"), se pasa solo para que la
     regla de u3-5 (`_recommend_inferred_minicourse`) lo convierta en recomendación; si no se convierte, no se guarda
@@ -2200,6 +2202,15 @@ def _poner_actividad(intent, datos: dict, pista: dict) -> None:
         if "activity" not in intent.detected_fields:
             intent.detected_fields.append("activity")
         logger.info(f"[EXTRACT][EX8] activity={actividad!r} (regex: {pista.get('activity')!r})")
+        return
+    reparto = intent.group_allocation or state.detected_group_allocation or {}
+    if pista.get("activity") and len(reparto) > 1 and pista["activity"] in reparto:
+        # Grupo repartido ("2 bucean certificados, 2 minicurso y 2 snorkel"): el extractor no pone una actividad
+        # principal y la del regex es una de las del reparto, que el cliente sí eligió (ronda ex8-B: se repreguntaba).
+        intent.activity, intent.service_id = pista["activity"], pista.get("service_id")
+        intent._actividad_elegida = True
+        if "activity" not in intent.detected_fields:
+            intent.detected_fields.append("activity")
         return
     if pista.get("activity"):
         logger.info(f"[EXTRACT][EX8] el regex leía activity={pista['activity']!r}; el cliente no la elige")
@@ -5454,6 +5465,16 @@ async def rag_con_adelantado(state: ConversationState, message: str, history: li
     return answer
 
 
+def _sabido_para_extractor(state: ConversationState) -> dict:
+    """Lo que el extractor ya sabe: los datos guardados y si el cliente dijo en un turno anterior que quiere bucear."""
+    from src.agents.extractor_turno import CAMPOS  # lazy
+
+    sabido = {k: v for k, v in _known_field_values(state).items() if k in CAMPOS and v not in (None, [], {})}
+    if state.quiere_bucear:
+        sabido["quiere_bucear"] = True
+    return sabido
+
+
 def lanzar_extraccion_adelantada(state: ConversationState, message: str) -> None:
     """ex-5 (fase EX): el extractor "LLM primero" arranca con el turno, a la vez que el enrutador (no depende de
     Jev), como el RAG adelantado. `_understand` lo espera (`datos_del_extractor`); si el turno no llega, se cancela."""
@@ -5462,10 +5483,10 @@ def lanzar_extraccion_adelantada(state: ConversationState, message: str) -> None
     texto = (message or "").strip()
     if not texto or texto.isdigit():
         return
-    from src.agents.extractor_turno import CAMPOS, extraer_turno  # lazy
+    from src.agents.extractor_turno import extraer_turno  # lazy
     from src.flows.catalog import _detect_language_from_text  # lazy
 
-    sabido = {k: v for k, v in _known_field_values(state).items() if k in CAMPOS and v not in (None, [], {})}
+    sabido = _sabido_para_extractor(state)
     lang = state.language or _detect_language_from_text(message) or "es"
     state._extraccion_adelantada = asyncio.create_task(
         extraer_turno(message, history=list(state.history or []), sabido=sabido, lang=lang))
@@ -5474,7 +5495,7 @@ def lanzar_extraccion_adelantada(state: ConversationState, message: str) -> None
 async def datos_del_extractor(state: ConversationState, message: str) -> dict | None:
     """Lo que el extractor sacó de ESTE mensaje (lanzado con el turno; si no se lanzó, se pide ahora). None = la
     llamada falló o no hay extractor: el turno sigue con lo de hoy."""
-    from src.agents.extractor_turno import CAMPOS, extraer_turno  # lazy
+    from src.agents.extractor_turno import extraer_turno  # lazy
 
     tarea = getattr(state, "_extraccion_adelantada", None)
     state._extraccion_adelantada = None
@@ -5482,7 +5503,7 @@ async def datos_del_extractor(state: ConversationState, message: str) -> dict | 
         if tarea is not None:
             datos = await tarea
         else:
-            sabido = {k: v for k, v in _known_field_values(state).items() if k in CAMPOS and v not in (None, [], {})}
+            sabido = _sabido_para_extractor(state)
             datos = await extraer_turno(message, history=list(state.history or []), sabido=sabido,
                                         lang=state.language or "es")
     except (asyncio.CancelledError, Exception) as exc:  # noqa: BLE001

@@ -91,3 +91,33 @@ async def test_el_minicurso_elegido_no_se_convierte_en_recomendacion(ex8, monkey
     st = await _entender("Buceo para principiantes")
     assert st.detected_activity == "minicourse"
     assert st.suggested_activity is None
+
+
+@pytest.mark.asyncio
+async def test_quiere_bucear_se_recuerda_para_el_turno_de_la_certificacion(ex8):
+    """Ronda ex8-B: "quiero bucear" (T1) y "soy certificado" (T3) llegan en turnos distintos; lo ya sabido lleva el
+    "quiere bucear" al extractor, que con la certificación decide el buceo certificado."""
+    ex8({"quiere_bucear": True})
+    st = await _entender("hola quiero bucear, ya estoy en las islas")
+    assert st.quiere_bucear is True and st.detected_activity is None
+    assert core._sabido_para_extractor(st)["quiere_bucear"] is True
+
+
+def test_la_regla_del_buceo_certificado_usa_lo_ya_sabido():
+    import asyncio
+
+    from src.agents import extractor_turno as ex
+    from tests.test_extractor_turno import _cliente_que_devuelve, _si
+
+    cliente = _cliente_que_devuelve({"is_certified": _si("soy certificado")})
+    salida = asyncio.run(ex.extraer_turno("soy certificado, voy solo", sabido={"quiere_bucear": True}, client=cliente))
+    assert salida["activity"] == "certified_diving"
+
+
+@pytest.mark.asyncio
+async def test_en_un_grupo_repartido_se_conserva_la_actividad_del_reparto(ex8):
+    """Ronda ex8-B: "somos 6: 2 bucean certificados, 2 hacen minicurso y 2 snorkel" -> sin actividad principal, se
+    repreguntaba la actividad."""
+    ex8({"group_size": 6})
+    st = await _entender("somos 6: 2 bucean certificados, 2 hacen minicurso y 2 snorkel")
+    assert st.detected_activity in ("certified_diving", "minicourse", "snorkel")

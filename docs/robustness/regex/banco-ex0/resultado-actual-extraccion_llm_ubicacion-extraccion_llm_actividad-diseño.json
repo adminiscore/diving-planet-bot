@@ -4,16 +4,16 @@
  "casos": 200,
  "por_campo": {
   "activity": {
-   "acierto": 24,
+   "acierto": 26,
    "equivocado": 0,
-   "perdido": 5,
+   "perdido": 3,
    "inventado": 0
   },
   "is_certified": {
    "acierto": 17,
    "equivocado": 1,
    "perdido": 2,
-   "inventado": 7
+   "inventado": 6
   },
   "group_size": {
    "acierto": 22,
@@ -25,34 +25,34 @@
    "acierto": 1,
    "equivocado": 1,
    "perdido": 1,
-   "inventado": 1
+   "inventado": 0
   },
   "location": {
-   "acierto": 20,
+   "acierto": 21,
    "equivocado": 0,
-   "perdido": 2,
+   "perdido": 1,
    "inventado": 1
   },
   "is_colombian": {
-   "acierto": 15,
+   "acierto": 17,
    "equivocado": 0,
-   "perdido": 2,
-   "inventado": 0
+   "perdido": 0,
+   "inventado": 1
   },
   "last_dive_over_2_years": {
    "acierto": 5,
    "equivocado": 0,
    "perdido": 1,
-   "inventado": 0
+   "inventado": 1
   }
  },
  "total": {
-  "acierto": 104,
+  "acierto": 109,
   "equivocado": 3,
-  "perdido": 15,
+  "perdido": 10,
   "inventado": 11
  },
- "casos_con_invento": 10,
+ "casos_con_invento": 9,
  "excluidos": [],
  "comparable": true,
  "filas": [
@@ -168,6 +168,7 @@
     "last_dive_over_2_years": false
    },
    "producido": {
+    "activity": "certified_diving",
     "last_dive_over_2_years": false
    },
    "acierto": [
@@ -397,13 +398,15 @@
    "slot": null,
    "esperado": {},
    "producido": {
-    "is_certified": true
+    "is_certified": true,
+    "last_dive_over_2_years": false
    },
    "acierto": [],
    "equivocado": [],
    "perdido": [],
    "inventado": [
-    "is_certified"
+    "is_certified",
+    "last_dive_over_2_years"
    ]
   },
   {
@@ -884,16 +887,16 @@
    },
    "producido": {
     "is_certified": false,
-    "group_size": 2
+    "group_size": 2,
+    "location": "cartagena"
    },
    "acierto": [
     "is_certified",
-    "group_size"
-   ],
-   "equivocado": [],
-   "perdido": [
+    "group_size",
     "location"
    ],
+   "equivocado": [],
+   "perdido": [],
    "inventado": []
   },
   {
@@ -1227,6 +1230,7 @@
    "slot": "qty",
    "esperado": {},
    "producido": {
+    "activity": "certified_diving",
     "is_certified": true
    },
    "acierto": [],
@@ -1246,7 +1250,9 @@
      "snorkel": 3
     }
    },
-   "producido": {},
+   "producido": {
+    "activity": "certified_diving"
+   },
    "acierto": [
     "group_size",
     "group_allocation"
@@ -1276,6 +1282,7 @@
     "last_dive_over_2_years": false
    },
    "producido": {
+    "activity": "certified_diving",
     "last_dive_over_2_years": false
    },
    "acierto": [
@@ -1296,7 +1303,10 @@
    },
    "producido": {
     "activity": "snorkel",
-    "group_size": 4
+    "group_size": 4,
+    "group_allocation": {
+     "snorkel": 4
+    }
    },
    "acierto": [
     "activity",
@@ -1418,7 +1428,6 @@
     "group_size": 3
    },
    "producido": {
-    "is_certified": false,
     "group_size": 3
    },
    "acierto": [
@@ -1426,9 +1435,7 @@
    ],
    "equivocado": [],
    "perdido": [],
-   "inventado": [
-    "is_certified"
-   ]
+   "inventado": []
   },
   {
    "id": "ex0-grupo-cambia-dos-veces-t4",
@@ -1626,17 +1633,17 @@
     "is_certified": false
    },
    "producido": {
+    "activity": "minicourse",
     "is_certified": false,
     "location": "island"
    },
    "acierto": [
+    "activity",
     "is_certified",
     "location"
    ],
    "equivocado": [],
-   "perdido": [
-    "activity"
-   ],
+   "perdido": [],
    "inventado": []
   },
   {
@@ -1756,12 +1763,14 @@
    "esperado": {
     "is_colombian": true
    },
-   "producido": {},
-   "acierto": [],
-   "equivocado": [],
-   "perdido": [
+   "producido": {
+    "is_colombian": true
+   },
+   "acierto": [
     "is_colombian"
    ],
+   "equivocado": [],
+   "perdido": [],
    "inventado": []
   },
   {
@@ -1797,10 +1806,6 @@
     "is_colombian": false
    },
    "producido": {
-    "group_allocation": {
-     "certified_diving": 2,
-     "undecided": 1
-    },
     "is_colombian": false
    },
    "acierto": [
@@ -1808,9 +1813,7 @@
    ],
    "equivocado": [],
    "perdido": [],
-   "inventado": [
-    "group_allocation"
-   ]
+   "inventado": []
   },
   {
    "id": "ex0-open-water-hoteles-noche-fotos-horario-t1",
@@ -1939,15 +1942,15 @@
     "is_colombian": true
    },
    "producido": {
-    "activity": "padi_open_water"
+    "activity": "padi_open_water",
+    "is_colombian": true
    },
    "acierto": [
-    "activity"
-   ],
-   "equivocado": [],
-   "perdido": [
+    "activity",
     "is_colombian"
    ],
+   "equivocado": [],
+   "perdido": [],
    "inventado": []
   },
   {
@@ -2111,7 +2114,8 @@
    "producido": {
     "activity": "certified_diving",
     "group_size": 2,
-    "location": "cartagena"
+    "location": "cartagena",
+    "is_colombian": false
    },
    "acierto": [
     "activity",
@@ -2122,7 +2126,9 @@
    "perdido": [
     "is_certified"
    ],
-   "inventado": []
+   "inventado": [
+    "is_colombian"
+   ]
   },
   {
    "id": "ex0-precio-desde-islas-vs-cartagena-t2",
@@ -2874,17 +2880,17 @@
     "activity": "certified_diving"
    },
    "producido": {
+    "activity": "certified_diving",
     "is_certified": true,
     "group_size": 1
    },
    "acierto": [
+    "activity",
     "is_certified",
     "group_size"
    ],
    "equivocado": [],
-   "perdido": [
-    "activity"
-   ],
+   "perdido": [],
    "inventado": []
   },
   {

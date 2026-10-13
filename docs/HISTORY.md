@@ -1,7 +1,7 @@
 History
 =======
 
-0.31.15 - (2026-10-13)
+0.31.16 - (2026-10-13)
 ----------------------
 * **EX-3 PREPARADO: inventario de las respuestas de texto fijo ACTIVAS y tres de ellas, con su flag, pasan al RAG** (APAGADOS hasta medirlos en PRE; Álvaro con Claude, en paralelo a ex-8). Detalle: `docs/robustness/atajos/inventario-ex3.md`.
   - **Al RAG, cada una con su flag:** el resumen de "¿qué ofrecen para bucear?" (`ATAJO_RESUMEN_POR_RAG`), "¿cambia el precio si es colombiano?" (`ATAJO_NACIONALIDAD_POR_RAG`) y la alergia a un alimento sin alcohol en el mensaje (`ATAJO_ALERGIA_POR_RAG`; el enrutador la sigue mandando a info, no al aviso médico). La base del RAG ya lo tiene: el catálogo entero, la regla de moneda y las FAQs curadas 14, 100 y 116.
@@ -9,7 +9,7 @@ History
   - **Se quedan, justificadas:** alcohol antes de bucear (la política no está en la base del RAG), "¿eres una IA?" (texto literal de s4-15) y grupo privado/empresa. **Hallazgo:** el grupo privado contesta "Te paso con un asesor…" pero no marca el pase; solo llega a un asesor si el cliente responde "sí/ok" justo después. Propuesta aparte.
   - Para medir: `scripts/sonda_atajos_pre.py` con `docs/robustness/atajos/preguntas-ex3.json` (16 preguntas) dentro de PRE, flags apagados y encendidos (~0,4 $). Tests en `tests/test_ex3_atajos.py`.
 
-0.31.14 - (2026-10-12)
+0.31.15 - (2026-10-12)
 ----------------------
 * **EX-2 PREPARADO: solo las emergencias (y las incidencias) pasan a un asesor por palabra clave; lo médico, el tiempo y las quejas los decide Jev** (`ESCALADO_SOLO_EMERGENCIAS`, APAGADO hasta su mini-ronda; Álvaro con Claude, en paralelo a ex-8). Hoy la lista de 114 palabras (`escalation.SENSITIVE_RULES`) pasa el caso a un asesor ANTES de que opine la IA, aunque Jev diga que no hace falta.
   - Con el flag la lista se queda con las emergencias (`EMERGENCY_KEYWORDS`: emergencia, accidente, no respira, se desmayó, sangrando…) y las incidencias en tiempo real ("hay cupo mañana", "no puedo pagar": frases concretas, 0 falsas alarmas en el banco; Jev solo marca los fallos, no "¿hay cupo mañana?"). Lo médico, el tiempo y las quejas pasan por `sensitive_topic` de Jev, que ya va en la llamada del enrutador.
@@ -18,12 +18,23 @@ History
   - Mini-ronda pendiente (PRE ocupado por ex-8): las 12 conversaciones de `docs/robustness/escalado/dialogos-mini-ronda.txt`.
 * **Arreglo (sin flag): la señal anidada del router LLM de respaldo rompía el turno.** Cuando Jev duda y decide el router LLM, a veces devuelve `sensitive_topic` como `{"weather_conditions": true}` (1 de 152 llamadas del banco ex2) y `sensitive_response_for` lo usaba como clave de diccionario: TypeError. Ahora vale si trae una sola categoría conocida a true. Tests en `tests/test_ex2_escalado.py`.
 
-0.31.13 - (2026-10-12)
+0.31.14 - (2026-10-12)
 ----------------------
 * **EX-1 HECHO: borrados los atajos de texto fijo APAGADOS del RAG** (Álvaro con Claude, en paralelo a ex-8 de Gadea; sin conducta nueva, sin ronda). Los 5 atajos que contestaban con texto fijo cuando casaba una palabra (precio genérico, precio de un servicio, paquete multi-día, coste del refresher y comida), apagados desde `RAG_V2`/`S4_FIXES` porque el catálogo entero va al contexto del RAG: código muerto.
   - Fuera de `rag_agent.py` sus 8 grupos de patrones (28: `FOOD_QUERY_PATTERN`, `DIETARY_QUERY_PATTERN`, `_FOOD_HIJACK_GUARD`, `_PRICE_QUESTION`, `_PRICE_SPECIFIC`, `_PRICE_SINGLE_SERVICE_PATTERNS`, `_PRICE_NON_CATALOG_RE`, `_REFRESHER_COST_QUESTION_RE`), sus funciones y lo que solo usaban ellas (cachés de FAQs y políticas): 1.678 → 1.230 líneas. Se quedan los atajos ACTIVOS (resumen de "¿qué ofrecen para bucear?" con su frase de seguridad, aclaración de un lugar ambiguo): son ex-3.
   - Comprobado: inventario de regex 802 → 774 patrones y desaparece la categoría "atajo apagado" (`scripts/inventario_regex.py`); el banco ex0 sin LLM (342 turnos) da exactamente lo mismo antes y después; 65 tests del camino antiguo retirados (los que llamaban a esas funciones); el que fijaba que un atajo no gasta LLM ni juez ahora usa el atajo activo ("¿qué ofrecen para bucear?"). Suite 2.972 verde, ruff limpio.
   - Queda resuelta la decisión pendiente del 16-jul ("lista de exclusión o de permitidos" para `_canonical_price_overview_answer`): el atajo ya no existe.
+0.31.13 - (2026-10-13)
+----------------------
+* **EX-8 HECHO: la actividad y la nacionalidad las decide el extractor "LLM primero" (`EXTRACCION_LLM_ACTIVIDAD`, PROMOCIONADO)** (Gadea con Claude; Gadea dio permiso para llevarlo hasta el final).
+  - **Qué cambia:** solo cuenta la actividad que el cliente ELIGE (decisión de Gadea 14/27-sep): la nombra o la describe como lo que quiere hacer, reservar, ya tiene reservado o de la que pide precio; contesta a la pregunta del bot con una opción; o es la de otra persona por la que pregunta el bot. "Quiero bucear" a secas, "es mi primera vez" o preguntar si algo es posible no eligen (el bot recomienda; el minicurso deducido sigue siendo recomendación de u3-5). La nacionalidad nunca sale del idioma ni del nombre; grupo mezclado → USD (`mixed_nationality` del extractor); un cambio se confirma. Si el extractor falla: lo de hoy con su puerta y su confirmación.
+  - **Buceo certificado = regla del negocio en el código, no del modelo.** El modelo, al deducirla, razonaba al revés ("bucear" ≈ "Buceo certificado" → elegía la actividad e INVENTABA la certificación). Ahora el modelo solo extrae dos hechos con cita, `is_certified` y `quiere_bucear`, y el código decide: certificado (ahora o ya sabido) + quiere bucear (ahora o en un turno anterior: `ConversationState.quiere_bucear`) + sin otra actividad → buceo certificado.
+  - **Escalón 0 (banco ex0, diseño, turno completo):** datos acertados 104 → **109/122**; actividad 21 aciertos / 7 equivocadas / 28 inventadas → **26 / 0 / 0**; nacionalidad inventada 6 → **0**; casos con algún invento 19,5 % → **4,5 %**.
+  - **Mini-rondas (69 diálogos visibles con actividad o nacionalidad):** A (ex-8 apagado, 20:04) **92,1 %**, 39/69 sin fallos; B (21:10) **88,6 %**, 29/69; B2 (23:25, tras arreglar la B) **91,5 %, 41/69** → plana. La B repreguntaba la actividad: "quiero bucear" y "soy certificado" en turnos distintos (memoria de `quiere_bucear`), productos nombrados no elegidos ("plan de 5 buceos", "bucear certificado"), y en un grupo repartido se borraba la actividad del reparto. Arreglado por causa.
+  - **Latencia (A y B en la misma franja; también cierra la duda de ex-5):** turnos de reserva p50 1,77 → 1,57 s, p95 3,17 → 2,84 s, llamadas por turno 3,89 → 3,75 (el relleno ya no pide actividad ni nacionalidad). B2: 1,71 / 3,26 s. El extractor corre en paralelo con el enrutador y no suma.
+  - **Arreglo aparte (fallo previo, visto en B):** "hay algún problema de tiempo entre bucear y volar" quedaba SIN RESPUESTA: el router LLM devolvió `"sensitive_topic": {"weather_conditions": true}` y `sensitive_response_for` reventaba. `llm_client.tool_arguments` (lector único de tools) reencaja un enum anidado así y descarta cualquier otro valor fuera del enum.
+  - **Quedan (siguiente):** (1) variación del extractor: "¿cuánto cuesta el buceo certificado?" a veces no cuenta como elegido; (2) de FLUJO, no de extracción: en posventa ("fotos de los buceos", "cambiar la fecha de nuestro buceo") el bot ofrece actividades; antes lo tapaba el regex inventando buceo certificado; (3) el idioma ("Frances" = responder en francés) sigue fuera.
+  - Tests: `tests/test_ex8_actividad_nacionalidad.py`, `tests/test_extractor_turno.py` (regla `quiere_bucear`), `tests/test_tool_arguments_schema.py` (enum anidado); los del camino viejo fijan el flag apagado.
 
 0.31.12 - (2026-10-12)
 ----------------------

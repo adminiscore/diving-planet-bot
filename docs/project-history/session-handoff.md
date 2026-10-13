@@ -41,23 +41,46 @@ PRE (escritas ya por Luna) tumba 42 frente a 13, casi todo verdades (HISTORY 0.3
 **C. Pendientes de antes:** el criterio del Open Water en `manual-duracion-curso` ✅ (FAQ curada nueva: "sacarse la
 certificación" = Open Water, o el Referido; el Scuba Diver es la parcial). **DeepSeek: FUERA DEL PLAN** (Gadea, 9-oct).
 
+### ▶️ RETOMAR AQUÍ — 13-oct (Gadea con Claude): fase EX — ex-8 HECHO (actividad y nacionalidad, promocionado); siguiente ex-6
+
+**Estado.** PRE sirve `feature/pre_gadea` con `EXTRACCION_LLM_UBICACION` y `EXTRACCION_LLM_ACTIVIDAD` **encendidos
+(promocionados)**. Integrad `feature/pre_gadea` antes de subir. Detalle en HISTORY 0.31.13.
+
+| Qué | Resultado |
+|---|---|
+| Escalón 0 (banco ex0, diseño) | datos 104 → 109/122; actividad inventada 28 → 0; nacionalidad inventada 6 → 0; casos con invento 19,5 → 4,5 % |
+| Mini-rondas (69 diálogos) | A 92,1 % · B 88,6 % (repreguntaba la actividad; arreglado) · B2 91,5 %, 41/69 sin fallos → plana |
+| Latencia reserva (A/B misma franja) | p50 1,77 → 1,57 s · p95 3,17 → 2,84 s |
+
+**Siguiente (en orden):**
+1. **ex-6 (certificación y nivel):** igual que ex-5/ex-8, con flag propio y A/B en la misma franja. Ojo: `is_certified`
+   ya lo extrae el extractor (lo usa la regla del buceo certificado de ex-8); ex-6 lo conecta como campo.
+2. Restos de ex-8: (a) "¿cuánto cuesta el buceo certificado?" a veces no cuenta como elegido (variación); (b) FLUJO:
+   en posventa (fotos, cambio de fecha de un buceo ya reservado) el bot no debería ofrecer actividades; (c) idioma
+   ("Frances" = responder en francés).
+3. ex-7 (grupo); ex-1/ex-2/ex-3 en paralelo; ex-9 (incluye corregir el `for_whom` "DEFECTO" del registro), ex-10.
+
+**Avisos:** el juez cuesta ~1,3 $ por ronda de 69 diálogos (gpt-5-mini) y tarda ~65 min. Una regla de negocio que
+dependa de varios turnos (como "certificado + quiere bucear") va en el código con hechos guardados en el estado, no en
+el prompt.
+
 ### ▶️ 12-oct noche (Álvaro con Claude), EN PARALELO a ex-8 de Gadea: ex-1 HECHO, ex-2, ex-3 y ex-6 PREPARADOS (ramas locales, sin subir)
 
 **Estado.** PRE sirve `feature/pre_gadea` @ `31ae492` con ex-8 encendido para su mini-ronda B (Gadea, sesión desatendida).
 **Nadie sube a una rama `feature/pre_*` hasta que Gadea cierre ex-8:** un push despliega PRE y le rompe la ronda. Lo de
 esta sesión está en ramas de Álvaro que NO despliegan:
-- `feature/ex1_alvaro` (sobre `31ae492`): **ex-1 hecho** (HISTORY 0.31.13). Sin conducta nueva; se integra tal cual.
-- `feature/ex2_alvaro` (sobre `feature/ex1_alvaro`): **ex-2 con su escalón 0** (HISTORY 0.31.14), `ESCALADO_SOLO_EMERGENCIAS`
+- `feature/ex1_alvaro` (sobre `31ae492`): **ex-1 hecho** (HISTORY 0.31.14). Sin conducta nueva; se integra tal cual.
+- `feature/ex2_alvaro` (sobre `feature/ex1_alvaro`): **ex-2 con su escalón 0** (HISTORY 0.31.15), `ESCALADO_SOLO_EMERGENCIAS`
   apagado; falta la mini-ronda de 12 conversaciones (`docs/robustness/escalado/dialogos-mini-ronda.txt`). Lleva además
   un arreglo sin flag: la señal anidada del router LLM de respaldo rompía el turno (TypeError).
-- `feature/ex3_alvaro` (sobre `feature/ex2_alvaro`): **ex-3 inventario y 3 flags** (HISTORY 0.31.15), apagados; falta
+- `feature/ex3_alvaro` (sobre `feature/ex2_alvaro`): **ex-3 inventario y 3 flags** (HISTORY 0.31.16), apagados; falta
   el escalón 0 en PRE (`scripts/sonda_atajos_pre.py`, 16 preguntas, ~0,4 $). Es la rama MÁS NUEVA: lleva ex-1 y ex-2.
 - `feature/ex6_alvaro` (sobre `4a5b268`, ANTES de ex-8): **ex-6 con su escalón 0, sin mini-rondas.** Toca los mismos
   ficheros que ex-8 (`extractor_turno.py`, `conversational_core.py`, `config.py`): hay que rehacerlo ENCIMA de ex-8.
 
 | Qué | Resultado | Dónde |
 |---|---|---|
-| ex-1: borrar los atajos apagados del RAG | 5 atajos fuera, 28 patrones, −448 líneas; inventario 802 → 774; banco ex0 sin LLM idéntico (342 turnos); 65 tests del camino antiguo retirados | HISTORY 0.31.13, `feature/ex1_alvaro` |
+| ex-1: borrar los atajos apagados del RAG | 5 atajos fuera, 28 patrones, −448 líneas; inventario 802 → 774; banco ex0 sin LLM idéntico (342 turnos); 65 tests del camino antiguo retirados | HISTORY 0.31.14, `feature/ex1_alvaro` |
 | ex-2: solo las emergencias e incidencias pasan a un asesor por palabra clave (`ESCALADO_SOLO_EMERGENCIAS`, apagado) | banco de 76 frases, 2×2 pasadas: falsas alarmas 32-33 → 11-12; perdidas 4-5 → 5-7, solo del tiempo ("hoy hace mucho viento") | `feature/ex2_alvaro`, `docs/robustness/escalado/` |
 | ex-3: respuestas fijas activas al RAG, una por flag (`ATAJO_RESUMEN_POR_RAG`, `ATAJO_NACIONALIDAD_POR_RAG`, `ATAJO_ALERGIA_POR_RAG`) | inventario: el resumen solo saltaba con un buzo certificado que da fechas (falsa alarma que llega al cliente); alcohol, "¿eres una IA?" y grupo privado se quedan. Hallazgo: el grupo privado promete "te paso con un asesor" y no lo pasa | `feature/ex3_alvaro`, `docs/robustness/atajos/inventario-ex3.md` |
 | ex-6: la certificación la decide el extractor (`EXTRACCION_LLM_CERTIFICACION`, apagado) | extractor (diseño, 2 pasadas): is_certified 16/20 + 4 inventos → 19/20 + 0; ciego: inventos de certificación 6 → 1. Turno de producción (2 pasadas): certificación inventada 11 → 1, última inmersión 5/6 → 6/6 | `feature/ex6_alvaro`, `docs/robustness/regex/banco-ex0/ex6/` |
@@ -82,7 +105,7 @@ esta sesión está en ramas de Álvaro que NO despliegan:
    mini-ronda si hace falta. Decidir qué hacer con el grupo privado que promete un pase que no hace.
 5. ex-7.
 
-### ▶️ RETOMAR AQUÍ — 12-oct (Gadea con Claude): fase EX — ex-0, ex-4 y ex-5 HECHOS (ex-5 promocionado); siguiente ex-6
+### ▶️ (anterior) 12-oct (Gadea con Claude): fase EX — ex-0, ex-4 y ex-5 HECHOS (ex-5 promocionado); siguiente ex-6
 
 **Estado.** PRE sirve `feature/pre_gadea` con `EXTRACCION_LLM_UBICACION` **encendido (promocionado, decisión de Gadea)**.
 Integrad `feature/pre_gadea` antes de subir. HISTORY 0.31.9-0.31.12 (0.31.12: de dónde salen los inventos que quedan).

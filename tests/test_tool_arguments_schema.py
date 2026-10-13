@@ -104,3 +104,17 @@ def test_repeated_key_without_a_real_value_stays_as_json():
     assert tool_arguments(_raw('{"sensitive_topic":false,"sensitive_topic":false}'), ROUTING_TOOL) == {
         "sensitive_topic": False
     }
+
+
+def test_nested_enum_flag_goes_back_to_its_value():
+    """Ronda ex8-B (12-oct): "hay algun problema de tiempo entre bucear y volar" -> `"sensitive_topic":
+    {"weather_conditions": true}`; `sensitive_response_for` reventaba con el dict y el cliente se quedaba sin respuesta."""
+    args = tool_arguments(_call({"sensitive_topic": {"weather_conditions": True}}), ROUTING_TOOL)
+    assert args["sensitive_topic"] == "weather_conditions"
+
+
+def test_a_value_outside_the_enum_never_reaches_the_caller():
+    args = tool_arguments(_call({"sensitive_topic": {"weather_conditions": True, "medical_questions": True}}),
+                          ROUTING_TOOL)
+    assert args["sensitive_topic"] is None
+    assert escalation.sensitive_response_for(args["sensitive_topic"] or "", "es") is None
