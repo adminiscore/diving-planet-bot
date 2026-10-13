@@ -1,0 +1,2549 @@
+[
+ {
+  "id": "g01",
+  "modo": "hoy",
+  "pasada": 0,
+  "texto": "somos 3: 2 adultos y 1 joven",
+  "esperado": {
+   "group_size": 3
+  },
+  "producido": {
+   "group_size": 3
+  },
+  "acierto": [
+   "group_size"
+  ],
+  "equivocado": [],
+  "perdido": [],
+  "inventado": []
+ },
+ {
+  "id": "g02",
+  "modo": "hoy",
+  "pasada": 0,
+  "texto": "1 buzo avanzado y 2 para bautismo",
+  "esperado": {
+   "group_size": 3,
+   "group_allocation": {
+    "certified_diving": 1,
+    "minicourse": 2
+   }
+  },
+  "producido": {
+   "activity": "padi_advanced",
+   "is_certified": true,
+   "group_size": 1
+  },
+  "acierto": [],
+  "equivocado": [
+   "group_size"
+  ],
+  "perdido": [
+   "group_allocation"
+  ],
+  "inventado": [
+   "activity"
+  ]
+ },
+ {
+  "id": "g03",
+  "modo": "hoy",
+  "pasada": 0,
+  "texto": "3 of us will dive and 3 will snorkel",
+  "esperado": {
+   "group_size": 6,
+   "group_allocation": {
+    "certified_diving": 3,
+    "snorkel": 3
+   }
+  },
+  "producido": {
+   "group_size": 6,
+   "group_allocation": {
+    "certified_diving": 3,
+    "snorkel": 3
+   }
+  },
+  "acierto": [
+   "group_size",
+   "group_allocation"
+  ],
+  "equivocado": [],
+  "perdido": [],
+  "inventado": []
+ },
+ {
+  "id": "g04",
+  "modo": "hoy",
+  "pasada": 0,
+  "texto": "el quiere hacer snorkel",
+  "esperado": {
+   "group_allocation": {
+    "certified_diving": 1,
+    "snorkel": 1
+   }
+  },
+  "producido": {},
+  "acierto": [],
+  "equivocado": [],
+  "perdido": [
+   "group_allocation"
+  ],
+  "inventado": []
+ },
+ {
+  "id": "g05",
+  "modo": "hoy",
+  "pasada": 0,
+  "texto": "esperate, somos 4 al final, se sumo uno mas",
+  "esperado": {
+   "group_size": 4
+  },
+  "producido": {
+   "group_size": 4
+  },
+  "acierto": [
+   "group_size"
+  ],
+  "equivocado": [],
+  "perdido": [],
+  "inventado": []
+ },
+ {
+  "id": "g06",
+  "modo": "hoy",
+  "pasada": 0,
+  "texto": "voy solo",
+  "esperado": {
+   "group_size": 1
+  },
+  "producido": {
+   "group_size": 1
+  },
+  "acierto": [
+   "group_size"
+  ],
+  "equivocado": [],
+  "perdido": [],
+  "inventado": []
+ },
+ {
+  "id": "g07",
+  "modo": "hoy",
+  "pasada": 0,
+  "texto": "mi pareja y yo",
+  "esperado": {
+   "group_size": 2
+  },
+  "producido": {
+   "group_size": 2
+  },
+  "acierto": [
+   "group_size"
+  ],
+  "equivocado": [],
+  "perdido": [],
+  "inventado": []
+ },
+ {
+  "id": "g08",
+  "modo": "hoy",
+  "pasada": 0,
+  "texto": "viene también uno que hace snorkel",
+  "esperado": {
+   "group_size": 3,
+   "group_allocation": {
+    "certified_diving": 2,
+    "snorkel": 1
+   }
+  },
+  "producido": {},
+  "acierto": [],
+  "equivocado": [],
+  "perdido": [
+   "group_size",
+   "group_allocation"
+  ],
+  "inventado": []
+ },
+ {
+  "id": "g09",
+  "modo": "hoy",
+  "pasada": 0,
+  "texto": "somos 6 personas, todos certificados",
+  "esperado": {
+   "group_size": 6,
+   "is_certified": true
+  },
+  "producido": {
+   "is_certified": true,
+   "group_size": 6,
+   "group_allocation": {
+    "certified_diving": 6
+   }
+  },
+  "acierto": [
+   "is_certified",
+   "group_size"
+  ],
+  "equivocado": [],
+  "perdido": [],
+  "inventado": []
+ },
+ {
+  "id": "g10",
+  "modo": "hoy",
+  "pasada": 0,
+  "texto": "Hola! Como estan? Me llamo Ana soy buza advanced",
+  "esperado": {
+   "is_certified": true
+  },
+  "producido": {
+   "is_certified": true
+  },
+  "acierto": [
+   "is_certified"
+  ],
+  "equivocado": [],
+  "perdido": [],
+  "inventado": []
+ },
+ {
+  "id": "g11",
+  "modo": "hoy",
+  "pasada": 0,
+  "texto": "quiero bucear, ya soy certificado",
+  "esperado": {
+   "is_certified": true,
+   "activity": "certified_diving"
+  },
+  "producido": {
+   "activity": "certified_diving",
+   "is_certified": true
+  },
+  "acierto": [
+   "activity",
+   "is_certified"
+  ],
+  "equivocado": [],
+  "perdido": [],
+  "inventado": []
+ },
+ {
+  "id": "g12",
+  "modo": "hoy",
+  "pasada": 0,
+  "texto": "My husband and I are certified divers and our 2 kids will snorkel",
+  "esperado": {
+   "group_size": 4,
+   "group_allocation": {
+    "certified_diving": 2,
+    "snorkel": 2
+   },
+   "is_certified": true
+  },
+  "producido": {
+   "activity": "certified_diving",
+   "is_certified": true,
+   "group_size": 2,
+   "group_allocation": {
+    "certified_diving": 2
+   }
+  },
+  "acierto": [
+   "is_certified"
+  ],
+  "equivocado": [
+   "group_size",
+   "group_allocation"
+  ],
+  "perdido": [],
+  "inventado": []
+ },
+ {
+  "id": "g13",
+  "modo": "hoy",
+  "pasada": 0,
+  "texto": "seremos 5 en total",
+  "esperado": {
+   "group_size": 5
+  },
+  "producido": {
+   "group_size": 5
+  },
+  "acierto": [
+   "group_size"
+  ],
+  "equivocado": [],
+  "perdido": [],
+  "inventado": []
+ },
+ {
+  "id": "g14",
+  "modo": "hoy",
+  "pasada": 0,
+  "texto": "2",
+  "esperado": {
+   "group_size": 2
+  },
+  "producido": {
+   "group_size": 2
+  },
+  "acierto": [
+   "group_size"
+  ],
+  "equivocado": [],
+  "perdido": [],
+  "inventado": []
+ },
+ {
+  "id": "g15",
+  "modo": "hoy",
+  "pasada": 0,
+  "texto": "solo yo y mi hermano",
+  "esperado": {
+   "group_size": 2
+  },
+  "producido": {
+   "group_size": 2
+  },
+  "acierto": [
+   "group_size"
+  ],
+  "equivocado": [],
+  "perdido": [],
+  "inventado": []
+ },
+ {
+  "id": "g16",
+  "modo": "hoy",
+  "pasada": 0,
+  "texto": "Just completed the waivers. Thank you!",
+  "esperado": {},
+  "producido": {},
+  "acierto": [],
+  "equivocado": [],
+  "perdido": [],
+  "inventado": []
+ },
+ {
+  "id": "g17",
+  "modo": "hoy",
+  "pasada": 0,
+  "texto": "Hello. Unfortunately my husband is dealing with food poisoning and experienced the worst of it last night. Is there any way to move our dive to another day?",
+  "esperado": {},
+  "producido": {
+   "is_certified": true
+  },
+  "acierto": [],
+  "equivocado": [],
+  "perdido": [],
+  "inventado": [
+   "is_certified"
+  ]
+ },
+ {
+  "id": "g18",
+  "modo": "hoy",
+  "pasada": 0,
+  "texto": "4 certificados y 2 minicurso",
+  "esperado": {
+   "group_size": 6,
+   "group_allocation": {
+    "certified_diving": 4,
+    "minicourse": 2
+   }
+  },
+  "producido": {
+   "activity": "minicourse",
+   "is_certified": true,
+   "group_size": 6,
+   "group_allocation": {
+    "certified_diving": 4,
+    "minicourse": 2
+   }
+  },
+  "acierto": [
+   "group_size",
+   "group_allocation"
+  ],
+  "equivocado": [],
+  "perdido": [],
+  "inventado": []
+ },
+ {
+  "id": "g19",
+  "modo": "hoy",
+  "pasada": 0,
+  "texto": "perdón, en realidad son 3 certificados y 3 minicurso",
+  "esperado": {
+   "group_allocation": {
+    "certified_diving": 3,
+    "minicourse": 3
+   }
+  },
+  "producido": {
+   "activity": "minicourse"
+  },
+  "acierto": [],
+  "equivocado": [],
+  "perdido": [
+   "group_allocation"
+  ],
+  "inventado": []
+ },
+ {
+  "id": "g20",
+  "modo": "hoy",
+  "pasada": 0,
+  "texto": "We're a group of 8 friends",
+  "esperado": {
+   "group_size": 8
+  },
+  "producido": {
+   "group_size": 8
+  },
+  "acierto": [
+   "group_size"
+  ],
+  "equivocado": [],
+  "perdido": [],
+  "inventado": []
+ },
+ {
+  "id": "g21",
+  "modo": "hoy",
+  "pasada": 0,
+  "texto": "mi novia hace el minicurso y yo buceo certificado",
+  "esperado": {
+   "group_size": 2,
+   "group_allocation": {
+    "certified_diving": 1,
+    "minicourse": 1
+   },
+   "is_certified": true
+  },
+  "producido": {
+   "activity": "certified_diving",
+   "is_certified": true,
+   "group_size": 2,
+   "group_allocation": {
+    "certified_diving": 1,
+    "minicourse": 1
+   }
+  },
+  "acierto": [
+   "is_certified",
+   "group_size",
+   "group_allocation"
+  ],
+  "equivocado": [],
+  "perdido": [],
+  "inventado": []
+ },
+ {
+  "id": "g22",
+  "modo": "hoy",
+  "pasada": 0,
+  "texto": "2 adults (ages 42, 19) and 1 youth (age 17), all snorkeling",
+  "esperado": {
+   "group_size": 3,
+   "activity": "snorkel"
+  },
+  "producido": {
+   "activity": "snorkel",
+   "group_size": 3,
+   "group_allocation": {
+    "snorkel": 3
+   }
+  },
+  "acierto": [
+   "activity",
+   "group_size"
+  ],
+  "equivocado": [],
+  "perdido": [],
+  "inventado": []
+ },
+ {
+  "id": "g23",
+  "modo": "hoy",
+  "pasada": 0,
+  "texto": "somos una pareja",
+  "esperado": {
+   "group_size": 2
+  },
+  "producido": {
+   "group_size": 2
+  },
+  "acierto": [
+   "group_size"
+  ],
+  "equivocado": [],
+  "perdido": [],
+  "inventado": []
+ },
+ {
+  "id": "g24",
+  "modo": "hoy",
+  "pasada": 0,
+  "texto": "el sábado pasado nosotros hicimos 2 buceos con uds y los registramos en PADI",
+  "esperado": {},
+  "producido": {
+   "last_dive_over_2_years": false
+  },
+  "acierto": [],
+  "equivocado": [],
+  "perdido": [],
+  "inventado": [
+   "last_dive_over_2_years"
+  ]
+ },
+ {
+  "id": "g25",
+  "modo": "hoy",
+  "pasada": 0,
+  "texto": "quiero bucear con mi amigo",
+  "esperado": {
+   "group_size": 2
+  },
+  "producido": {},
+  "acierto": [],
+  "equivocado": [],
+  "perdido": [
+   "group_size"
+  ],
+  "inventado": []
+ },
+ {
+  "id": "g26",
+  "modo": "hoy",
+  "pasada": 0,
+  "texto": "somos 3, uno no está certificado",
+  "esperado": {
+   "group_size": 3,
+   "group_allocation": {
+    "certified_diving": 2,
+    "undecided": 1
+   }
+  },
+  "producido": {
+   "group_size": 3,
+   "group_allocation": {
+    "certified_diving": 2,
+    "undecided": 1
+   }
+  },
+  "acierto": [
+   "group_size",
+   "group_allocation"
+  ],
+  "equivocado": [],
+  "perdido": [],
+  "inventado": []
+ },
+ {
+  "id": "g27",
+  "modo": "hoy",
+  "pasada": 0,
+  "texto": "mi amigo no es buzo, yo sí",
+  "esperado": {
+   "group_allocation": {
+    "certified_diving": 1,
+    "undecided": 1
+   },
+   "is_certified": true
+  },
+  "producido": {
+   "is_certified": true,
+   "group_allocation": {
+    "certified_diving": 1,
+    "undecided": 1
+   }
+  },
+  "acierto": [
+   "is_certified",
+   "group_allocation"
+  ],
+  "equivocado": [],
+  "perdido": [],
+  "inventado": []
+ },
+ {
+  "id": "g28",
+  "modo": "hoy",
+  "pasada": 0,
+  "texto": "yo buceo y mis amigos hacen snorkel",
+  "esperado": {
+   "is_certified": true
+  },
+  "producido": {
+   "activity": "certified_diving"
+  },
+  "acierto": [
+   "is_certified"
+  ],
+  "equivocado": [],
+  "perdido": [],
+  "inventado": [
+   "activity"
+  ]
+ },
+ {
+  "id": "g29",
+  "modo": "hoy",
+  "pasada": 0,
+  "texto": "We are 3 divers (2 adults + 1 teen)",
+  "esperado": {
+   "group_size": 3
+  },
+  "producido": {
+   "group_size": 3
+  },
+  "acierto": [
+   "group_size"
+  ],
+  "equivocado": [],
+  "perdido": [],
+  "inventado": []
+ },
+ {
+  "id": "g30",
+  "modo": "hoy",
+  "pasada": 0,
+  "texto": "ahora somos 5, se suman 2 amigos que hacen snorkel",
+  "esperado": {
+   "group_size": 5,
+   "group_allocation": {
+    "certified_diving": 3,
+    "snorkel": 2
+   }
+  },
+  "producido": {
+   "group_size": 5
+  },
+  "acierto": [
+   "group_size"
+  ],
+  "equivocado": [],
+  "perdido": [
+   "group_allocation"
+  ],
+  "inventado": []
+ },
+ {
+  "id": "g01",
+  "modo": "ex7",
+  "pasada": 0,
+  "texto": "somos 3: 2 adultos y 1 joven",
+  "esperado": {
+   "group_size": 3
+  },
+  "producido": {
+   "group_size": 3
+  },
+  "acierto": [
+   "group_size"
+  ],
+  "equivocado": [],
+  "perdido": [],
+  "inventado": []
+ },
+ {
+  "id": "g02",
+  "modo": "ex7",
+  "pasada": 0,
+  "texto": "1 buzo avanzado y 2 para bautismo",
+  "esperado": {
+   "group_size": 3,
+   "group_allocation": {
+    "certified_diving": 1,
+    "minicourse": 2
+   }
+  },
+  "producido": {
+   "activity": "padi_advanced",
+   "is_certified": true,
+   "group_size": 3,
+   "group_allocation": {
+    "certified_diving": 1,
+    "minicourse": 2
+   }
+  },
+  "acierto": [
+   "group_size",
+   "group_allocation"
+  ],
+  "equivocado": [],
+  "perdido": [],
+  "inventado": [
+   "activity"
+  ]
+ },
+ {
+  "id": "g03",
+  "modo": "ex7",
+  "pasada": 0,
+  "texto": "3 of us will dive and 3 will snorkel",
+  "esperado": {
+   "group_size": 6,
+   "group_allocation": {
+    "certified_diving": 3,
+    "snorkel": 3
+   }
+  },
+  "producido": {
+   "group_size": 6,
+   "group_allocation": {
+    "certified_diving": 3,
+    "snorkel": 3
+   }
+  },
+  "acierto": [
+   "group_size",
+   "group_allocation"
+  ],
+  "equivocado": [],
+  "perdido": [],
+  "inventado": []
+ },
+ {
+  "id": "g04",
+  "modo": "ex7",
+  "pasada": 0,
+  "texto": "el quiere hacer snorkel",
+  "esperado": {
+   "group_allocation": {
+    "certified_diving": 1,
+    "snorkel": 1
+   }
+  },
+  "producido": {
+   "group_allocation": {
+    "certified_diving": 1,
+    "snorkel": 1
+   }
+  },
+  "acierto": [
+   "group_allocation"
+  ],
+  "equivocado": [],
+  "perdido": [],
+  "inventado": []
+ },
+ {
+  "id": "g05",
+  "modo": "ex7",
+  "pasada": 0,
+  "texto": "esperate, somos 4 al final, se sumo uno mas",
+  "esperado": {
+   "group_size": 4
+  },
+  "producido": {
+   "group_size": 4
+  },
+  "acierto": [
+   "group_size"
+  ],
+  "equivocado": [],
+  "perdido": [],
+  "inventado": []
+ },
+ {
+  "id": "g06",
+  "modo": "ex7",
+  "pasada": 0,
+  "texto": "voy solo",
+  "esperado": {
+   "group_size": 1
+  },
+  "producido": {
+   "group_size": 1
+  },
+  "acierto": [
+   "group_size"
+  ],
+  "equivocado": [],
+  "perdido": [],
+  "inventado": []
+ },
+ {
+  "id": "g07",
+  "modo": "ex7",
+  "pasada": 0,
+  "texto": "mi pareja y yo",
+  "esperado": {
+   "group_size": 2
+  },
+  "producido": {
+   "group_size": 2
+  },
+  "acierto": [
+   "group_size"
+  ],
+  "equivocado": [],
+  "perdido": [],
+  "inventado": []
+ },
+ {
+  "id": "g08",
+  "modo": "ex7",
+  "pasada": 0,
+  "texto": "viene también uno que hace snorkel",
+  "esperado": {
+   "group_size": 3,
+   "group_allocation": {
+    "certified_diving": 2,
+    "snorkel": 1
+   }
+  },
+  "producido": {
+   "group_size": 3,
+   "group_allocation": {
+    "certified_diving": 2,
+    "snorkel": 1
+   }
+  },
+  "acierto": [
+   "group_size",
+   "group_allocation"
+  ],
+  "equivocado": [],
+  "perdido": [],
+  "inventado": []
+ },
+ {
+  "id": "g09",
+  "modo": "ex7",
+  "pasada": 0,
+  "texto": "somos 6 personas, todos certificados",
+  "esperado": {
+   "group_size": 6,
+   "is_certified": true
+  },
+  "producido": {
+   "is_certified": true,
+   "group_size": 6
+  },
+  "acierto": [
+   "is_certified",
+   "group_size"
+  ],
+  "equivocado": [],
+  "perdido": [],
+  "inventado": []
+ },
+ {
+  "id": "g10",
+  "modo": "ex7",
+  "pasada": 0,
+  "texto": "Hola! Como estan? Me llamo Ana soy buza advanced",
+  "esperado": {
+   "is_certified": true
+  },
+  "producido": {
+   "is_certified": true
+  },
+  "acierto": [
+   "is_certified"
+  ],
+  "equivocado": [],
+  "perdido": [],
+  "inventado": []
+ },
+ {
+  "id": "g11",
+  "modo": "ex7",
+  "pasada": 0,
+  "texto": "quiero bucear, ya soy certificado",
+  "esperado": {
+   "is_certified": true,
+   "activity": "certified_diving"
+  },
+  "producido": {
+   "activity": "certified_diving",
+   "is_certified": true
+  },
+  "acierto": [
+   "activity",
+   "is_certified"
+  ],
+  "equivocado": [],
+  "perdido": [],
+  "inventado": []
+ },
+ {
+  "id": "g12",
+  "modo": "ex7",
+  "pasada": 0,
+  "texto": "My husband and I are certified divers and our 2 kids will snorkel",
+  "esperado": {
+   "group_size": 4,
+   "group_allocation": {
+    "certified_diving": 2,
+    "snorkel": 2
+   },
+   "is_certified": true
+  },
+  "producido": {
+   "activity": "certified_diving",
+   "is_certified": true,
+   "group_size": 4,
+   "group_allocation": {
+    "certified_diving": 2,
+    "snorkel": 2
+   }
+  },
+  "acierto": [
+   "is_certified",
+   "group_size",
+   "group_allocation"
+  ],
+  "equivocado": [],
+  "perdido": [],
+  "inventado": []
+ },
+ {
+  "id": "g13",
+  "modo": "ex7",
+  "pasada": 0,
+  "texto": "seremos 5 en total",
+  "esperado": {
+   "group_size": 5
+  },
+  "producido": {
+   "group_size": 5
+  },
+  "acierto": [
+   "group_size"
+  ],
+  "equivocado": [],
+  "perdido": [],
+  "inventado": []
+ },
+ {
+  "id": "g14",
+  "modo": "ex7",
+  "pasada": 0,
+  "texto": "2",
+  "esperado": {
+   "group_size": 2
+  },
+  "producido": {
+   "group_size": 2
+  },
+  "acierto": [
+   "group_size"
+  ],
+  "equivocado": [],
+  "perdido": [],
+  "inventado": []
+ },
+ {
+  "id": "g15",
+  "modo": "ex7",
+  "pasada": 0,
+  "texto": "solo yo y mi hermano",
+  "esperado": {
+   "group_size": 2
+  },
+  "producido": {
+   "group_size": 2
+  },
+  "acierto": [
+   "group_size"
+  ],
+  "equivocado": [],
+  "perdido": [],
+  "inventado": []
+ },
+ {
+  "id": "g16",
+  "modo": "ex7",
+  "pasada": 0,
+  "texto": "Just completed the waivers. Thank you!",
+  "esperado": {},
+  "producido": {},
+  "acierto": [],
+  "equivocado": [],
+  "perdido": [],
+  "inventado": []
+ },
+ {
+  "id": "g17",
+  "modo": "ex7",
+  "pasada": 0,
+  "texto": "Hello. Unfortunately my husband is dealing with food poisoning and experienced the worst of it last night. Is there any way to move our dive to another day?",
+  "esperado": {},
+  "producido": {
+   "is_certified": true
+  },
+  "acierto": [],
+  "equivocado": [],
+  "perdido": [],
+  "inventado": [
+   "is_certified"
+  ]
+ },
+ {
+  "id": "g18",
+  "modo": "ex7",
+  "pasada": 0,
+  "texto": "4 certificados y 2 minicurso",
+  "esperado": {
+   "group_size": 6,
+   "group_allocation": {
+    "certified_diving": 4,
+    "minicourse": 2
+   }
+  },
+  "producido": {
+   "is_certified": true,
+   "group_size": 6,
+   "group_allocation": {
+    "certified_diving": 4,
+    "minicourse": 2
+   }
+  },
+  "acierto": [
+   "group_size",
+   "group_allocation"
+  ],
+  "equivocado": [],
+  "perdido": [],
+  "inventado": []
+ },
+ {
+  "id": "g19",
+  "modo": "ex7",
+  "pasada": 0,
+  "texto": "perdón, en realidad son 3 certificados y 3 minicurso",
+  "esperado": {
+   "group_allocation": {
+    "certified_diving": 3,
+    "minicourse": 3
+   }
+  },
+  "producido": {
+   "activity": "minicourse",
+   "group_allocation": {
+    "certified_diving": 3,
+    "minicourse": 3
+   }
+  },
+  "acierto": [
+   "group_allocation"
+  ],
+  "equivocado": [],
+  "perdido": [],
+  "inventado": []
+ },
+ {
+  "id": "g20",
+  "modo": "ex7",
+  "pasada": 0,
+  "texto": "We're a group of 8 friends",
+  "esperado": {
+   "group_size": 8
+  },
+  "producido": {
+   "group_size": 8
+  },
+  "acierto": [
+   "group_size"
+  ],
+  "equivocado": [],
+  "perdido": [],
+  "inventado": []
+ },
+ {
+  "id": "g21",
+  "modo": "ex7",
+  "pasada": 0,
+  "texto": "mi novia hace el minicurso y yo buceo certificado",
+  "esperado": {
+   "group_size": 2,
+   "group_allocation": {
+    "certified_diving": 1,
+    "minicourse": 1
+   },
+   "is_certified": true
+  },
+  "producido": {
+   "activity": "certified_diving",
+   "is_certified": true,
+   "group_size": 2,
+   "group_allocation": {
+    "certified_diving": 1,
+    "minicourse": 1
+   }
+  },
+  "acierto": [
+   "is_certified",
+   "group_size",
+   "group_allocation"
+  ],
+  "equivocado": [],
+  "perdido": [],
+  "inventado": []
+ },
+ {
+  "id": "g22",
+  "modo": "ex7",
+  "pasada": 0,
+  "texto": "2 adults (ages 42, 19) and 1 youth (age 17), all snorkeling",
+  "esperado": {
+   "group_size": 3,
+   "activity": "snorkel"
+  },
+  "producido": {
+   "activity": "snorkel",
+   "group_size": 3
+  },
+  "acierto": [
+   "activity",
+   "group_size"
+  ],
+  "equivocado": [],
+  "perdido": [],
+  "inventado": []
+ },
+ {
+  "id": "g23",
+  "modo": "ex7",
+  "pasada": 0,
+  "texto": "somos una pareja",
+  "esperado": {
+   "group_size": 2
+  },
+  "producido": {
+   "group_size": 2
+  },
+  "acierto": [
+   "group_size"
+  ],
+  "equivocado": [],
+  "perdido": [],
+  "inventado": []
+ },
+ {
+  "id": "g24",
+  "modo": "ex7",
+  "pasada": 0,
+  "texto": "el sábado pasado nosotros hicimos 2 buceos con uds y los registramos en PADI",
+  "esperado": {},
+  "producido": {},
+  "acierto": [],
+  "equivocado": [],
+  "perdido": [],
+  "inventado": []
+ },
+ {
+  "id": "g25",
+  "modo": "ex7",
+  "pasada": 0,
+  "texto": "quiero bucear con mi amigo",
+  "esperado": {
+   "group_size": 2
+  },
+  "producido": {},
+  "acierto": [],
+  "equivocado": [],
+  "perdido": [
+   "group_size"
+  ],
+  "inventado": []
+ },
+ {
+  "id": "g26",
+  "modo": "ex7",
+  "pasada": 0,
+  "texto": "somos 3, uno no está certificado",
+  "esperado": {
+   "group_size": 3,
+   "group_allocation": {
+    "certified_diving": 2,
+    "undecided": 1
+   }
+  },
+  "producido": {
+   "group_size": 3,
+   "group_allocation": {
+    "certified_diving": 2,
+    "undecided": 1
+   }
+  },
+  "acierto": [
+   "group_size",
+   "group_allocation"
+  ],
+  "equivocado": [],
+  "perdido": [],
+  "inventado": []
+ },
+ {
+  "id": "g27",
+  "modo": "ex7",
+  "pasada": 0,
+  "texto": "mi amigo no es buzo, yo sí",
+  "esperado": {
+   "group_allocation": {
+    "certified_diving": 1,
+    "undecided": 1
+   },
+   "is_certified": true
+  },
+  "producido": {
+   "is_certified": true,
+   "group_allocation": {
+    "certified_diving": 1,
+    "undecided": 1
+   }
+  },
+  "acierto": [
+   "is_certified",
+   "group_allocation"
+  ],
+  "equivocado": [],
+  "perdido": [],
+  "inventado": []
+ },
+ {
+  "id": "g28",
+  "modo": "ex7",
+  "pasada": 0,
+  "texto": "yo buceo y mis amigos hacen snorkel",
+  "esperado": {
+   "is_certified": true
+  },
+  "producido": {
+   "activity": "certified_diving"
+  },
+  "acierto": [
+   "is_certified"
+  ],
+  "equivocado": [],
+  "perdido": [],
+  "inventado": [
+   "activity"
+  ]
+ },
+ {
+  "id": "g29",
+  "modo": "ex7",
+  "pasada": 0,
+  "texto": "We are 3 divers (2 adults + 1 teen)",
+  "esperado": {
+   "group_size": 3
+  },
+  "producido": {
+   "group_size": 3
+  },
+  "acierto": [
+   "group_size"
+  ],
+  "equivocado": [],
+  "perdido": [],
+  "inventado": []
+ },
+ {
+  "id": "g30",
+  "modo": "ex7",
+  "pasada": 0,
+  "texto": "ahora somos 5, se suman 2 amigos que hacen snorkel",
+  "esperado": {
+   "group_size": 5,
+   "group_allocation": {
+    "certified_diving": 3,
+    "snorkel": 2
+   }
+  },
+  "producido": {
+   "group_size": 5,
+   "group_allocation": {
+    "certified_diving": 3,
+    "snorkel": 2
+   }
+  },
+  "acierto": [
+   "group_size",
+   "group_allocation"
+  ],
+  "equivocado": [],
+  "perdido": [],
+  "inventado": []
+ },
+ {
+  "id": "g01",
+  "modo": "hoy",
+  "pasada": 1,
+  "texto": "somos 3: 2 adultos y 1 joven",
+  "esperado": {
+   "group_size": 3
+  },
+  "producido": {
+   "group_size": 3
+  },
+  "acierto": [
+   "group_size"
+  ],
+  "equivocado": [],
+  "perdido": [],
+  "inventado": []
+ },
+ {
+  "id": "g02",
+  "modo": "hoy",
+  "pasada": 1,
+  "texto": "1 buzo avanzado y 2 para bautismo",
+  "esperado": {
+   "group_size": 3,
+   "group_allocation": {
+    "certified_diving": 1,
+    "minicourse": 2
+   }
+  },
+  "producido": {
+   "activity": "minicourse",
+   "group_size": 3,
+   "group_allocation": {
+    "certified_diving": 1,
+    "minicourse": 2
+   }
+  },
+  "acierto": [
+   "group_size",
+   "group_allocation"
+  ],
+  "equivocado": [],
+  "perdido": [],
+  "inventado": []
+ },
+ {
+  "id": "g03",
+  "modo": "hoy",
+  "pasada": 1,
+  "texto": "3 of us will dive and 3 will snorkel",
+  "esperado": {
+   "group_size": 6,
+   "group_allocation": {
+    "certified_diving": 3,
+    "snorkel": 3
+   }
+  },
+  "producido": {
+   "group_size": 6,
+   "group_allocation": {
+    "certified_diving": 3,
+    "snorkel": 3
+   }
+  },
+  "acierto": [
+   "group_size",
+   "group_allocation"
+  ],
+  "equivocado": [],
+  "perdido": [],
+  "inventado": []
+ },
+ {
+  "id": "g04",
+  "modo": "hoy",
+  "pasada": 1,
+  "texto": "el quiere hacer snorkel",
+  "esperado": {
+   "group_allocation": {
+    "certified_diving": 1,
+    "snorkel": 1
+   }
+  },
+  "producido": {},
+  "acierto": [],
+  "equivocado": [],
+  "perdido": [
+   "group_allocation"
+  ],
+  "inventado": []
+ },
+ {
+  "id": "g05",
+  "modo": "hoy",
+  "pasada": 1,
+  "texto": "esperate, somos 4 al final, se sumo uno mas",
+  "esperado": {
+   "group_size": 4
+  },
+  "producido": {
+   "group_size": 4
+  },
+  "acierto": [
+   "group_size"
+  ],
+  "equivocado": [],
+  "perdido": [],
+  "inventado": []
+ },
+ {
+  "id": "g06",
+  "modo": "hoy",
+  "pasada": 1,
+  "texto": "voy solo",
+  "esperado": {
+   "group_size": 1
+  },
+  "producido": {
+   "group_size": 1
+  },
+  "acierto": [
+   "group_size"
+  ],
+  "equivocado": [],
+  "perdido": [],
+  "inventado": []
+ },
+ {
+  "id": "g07",
+  "modo": "hoy",
+  "pasada": 1,
+  "texto": "mi pareja y yo",
+  "esperado": {
+   "group_size": 2
+  },
+  "producido": {
+   "group_size": 2
+  },
+  "acierto": [
+   "group_size"
+  ],
+  "equivocado": [],
+  "perdido": [],
+  "inventado": []
+ },
+ {
+  "id": "g08",
+  "modo": "hoy",
+  "pasada": 1,
+  "texto": "viene también uno que hace snorkel",
+  "esperado": {
+   "group_size": 3,
+   "group_allocation": {
+    "certified_diving": 2,
+    "snorkel": 1
+   }
+  },
+  "producido": {},
+  "acierto": [],
+  "equivocado": [],
+  "perdido": [
+   "group_size",
+   "group_allocation"
+  ],
+  "inventado": []
+ },
+ {
+  "id": "g09",
+  "modo": "hoy",
+  "pasada": 1,
+  "texto": "somos 6 personas, todos certificados",
+  "esperado": {
+   "group_size": 6,
+   "is_certified": true
+  },
+  "producido": {
+   "is_certified": true,
+   "group_size": 6,
+   "group_allocation": {
+    "certified_diving": 6
+   }
+  },
+  "acierto": [
+   "is_certified",
+   "group_size"
+  ],
+  "equivocado": [],
+  "perdido": [],
+  "inventado": []
+ },
+ {
+  "id": "g10",
+  "modo": "hoy",
+  "pasada": 1,
+  "texto": "Hola! Como estan? Me llamo Ana soy buza advanced",
+  "esperado": {
+   "is_certified": true
+  },
+  "producido": {
+   "is_certified": true
+  },
+  "acierto": [
+   "is_certified"
+  ],
+  "equivocado": [],
+  "perdido": [],
+  "inventado": []
+ },
+ {
+  "id": "g11",
+  "modo": "hoy",
+  "pasada": 1,
+  "texto": "quiero bucear, ya soy certificado",
+  "esperado": {
+   "is_certified": true,
+   "activity": "certified_diving"
+  },
+  "producido": {
+   "activity": "certified_diving",
+   "is_certified": true
+  },
+  "acierto": [
+   "activity",
+   "is_certified"
+  ],
+  "equivocado": [],
+  "perdido": [],
+  "inventado": []
+ },
+ {
+  "id": "g12",
+  "modo": "hoy",
+  "pasada": 1,
+  "texto": "My husband and I are certified divers and our 2 kids will snorkel",
+  "esperado": {
+   "group_size": 4,
+   "group_allocation": {
+    "certified_diving": 2,
+    "snorkel": 2
+   },
+   "is_certified": true
+  },
+  "producido": {
+   "activity": "certified_diving",
+   "is_certified": true,
+   "group_size": 2,
+   "group_allocation": {
+    "certified_diving": 2
+   }
+  },
+  "acierto": [
+   "is_certified"
+  ],
+  "equivocado": [
+   "group_size",
+   "group_allocation"
+  ],
+  "perdido": [],
+  "inventado": []
+ },
+ {
+  "id": "g13",
+  "modo": "hoy",
+  "pasada": 1,
+  "texto": "seremos 5 en total",
+  "esperado": {
+   "group_size": 5
+  },
+  "producido": {
+   "group_size": 5
+  },
+  "acierto": [
+   "group_size"
+  ],
+  "equivocado": [],
+  "perdido": [],
+  "inventado": []
+ },
+ {
+  "id": "g14",
+  "modo": "hoy",
+  "pasada": 1,
+  "texto": "2",
+  "esperado": {
+   "group_size": 2
+  },
+  "producido": {
+   "group_size": 2
+  },
+  "acierto": [
+   "group_size"
+  ],
+  "equivocado": [],
+  "perdido": [],
+  "inventado": []
+ },
+ {
+  "id": "g15",
+  "modo": "hoy",
+  "pasada": 1,
+  "texto": "solo yo y mi hermano",
+  "esperado": {
+   "group_size": 2
+  },
+  "producido": {
+   "group_size": 2
+  },
+  "acierto": [
+   "group_size"
+  ],
+  "equivocado": [],
+  "perdido": [],
+  "inventado": []
+ },
+ {
+  "id": "g16",
+  "modo": "hoy",
+  "pasada": 1,
+  "texto": "Just completed the waivers. Thank you!",
+  "esperado": {},
+  "producido": {},
+  "acierto": [],
+  "equivocado": [],
+  "perdido": [],
+  "inventado": []
+ },
+ {
+  "id": "g17",
+  "modo": "hoy",
+  "pasada": 1,
+  "texto": "Hello. Unfortunately my husband is dealing with food poisoning and experienced the worst of it last night. Is there any way to move our dive to another day?",
+  "esperado": {},
+  "producido": {
+   "is_certified": true
+  },
+  "acierto": [],
+  "equivocado": [],
+  "perdido": [],
+  "inventado": [
+   "is_certified"
+  ]
+ },
+ {
+  "id": "g18",
+  "modo": "hoy",
+  "pasada": 1,
+  "texto": "4 certificados y 2 minicurso",
+  "esperado": {
+   "group_size": 6,
+   "group_allocation": {
+    "certified_diving": 4,
+    "minicourse": 2
+   }
+  },
+  "producido": {
+   "activity": "minicourse",
+   "is_certified": true,
+   "group_size": 6,
+   "group_allocation": {
+    "certified_diving": 4,
+    "minicourse": 2
+   }
+  },
+  "acierto": [
+   "group_size",
+   "group_allocation"
+  ],
+  "equivocado": [],
+  "perdido": [],
+  "inventado": []
+ },
+ {
+  "id": "g19",
+  "modo": "hoy",
+  "pasada": 1,
+  "texto": "perdón, en realidad son 3 certificados y 3 minicurso",
+  "esperado": {
+   "group_allocation": {
+    "certified_diving": 3,
+    "minicourse": 3
+   }
+  },
+  "producido": {
+   "activity": "minicourse"
+  },
+  "acierto": [],
+  "equivocado": [],
+  "perdido": [
+   "group_allocation"
+  ],
+  "inventado": []
+ },
+ {
+  "id": "g20",
+  "modo": "hoy",
+  "pasada": 1,
+  "texto": "We're a group of 8 friends",
+  "esperado": {
+   "group_size": 8
+  },
+  "producido": {
+   "group_size": 8
+  },
+  "acierto": [
+   "group_size"
+  ],
+  "equivocado": [],
+  "perdido": [],
+  "inventado": []
+ },
+ {
+  "id": "g21",
+  "modo": "hoy",
+  "pasada": 1,
+  "texto": "mi novia hace el minicurso y yo buceo certificado",
+  "esperado": {
+   "group_size": 2,
+   "group_allocation": {
+    "certified_diving": 1,
+    "minicourse": 1
+   },
+   "is_certified": true
+  },
+  "producido": {
+   "activity": "certified_diving",
+   "is_certified": true,
+   "group_size": 2,
+   "group_allocation": {
+    "certified_diving": 1,
+    "minicourse": 1
+   }
+  },
+  "acierto": [
+   "is_certified",
+   "group_size",
+   "group_allocation"
+  ],
+  "equivocado": [],
+  "perdido": [],
+  "inventado": []
+ },
+ {
+  "id": "g22",
+  "modo": "hoy",
+  "pasada": 1,
+  "texto": "2 adults (ages 42, 19) and 1 youth (age 17), all snorkeling",
+  "esperado": {
+   "group_size": 3,
+   "activity": "snorkel"
+  },
+  "producido": {
+   "activity": "snorkel",
+   "group_size": 3,
+   "group_allocation": {
+    "snorkel": 3
+   }
+  },
+  "acierto": [
+   "activity",
+   "group_size"
+  ],
+  "equivocado": [],
+  "perdido": [],
+  "inventado": []
+ },
+ {
+  "id": "g23",
+  "modo": "hoy",
+  "pasada": 1,
+  "texto": "somos una pareja",
+  "esperado": {
+   "group_size": 2
+  },
+  "producido": {
+   "group_size": 2
+  },
+  "acierto": [
+   "group_size"
+  ],
+  "equivocado": [],
+  "perdido": [],
+  "inventado": []
+ },
+ {
+  "id": "g24",
+  "modo": "hoy",
+  "pasada": 1,
+  "texto": "el sábado pasado nosotros hicimos 2 buceos con uds y los registramos en PADI",
+  "esperado": {},
+  "producido": {},
+  "acierto": [],
+  "equivocado": [],
+  "perdido": [],
+  "inventado": []
+ },
+ {
+  "id": "g25",
+  "modo": "hoy",
+  "pasada": 1,
+  "texto": "quiero bucear con mi amigo",
+  "esperado": {
+   "group_size": 2
+  },
+  "producido": {},
+  "acierto": [],
+  "equivocado": [],
+  "perdido": [
+   "group_size"
+  ],
+  "inventado": []
+ },
+ {
+  "id": "g26",
+  "modo": "hoy",
+  "pasada": 1,
+  "texto": "somos 3, uno no está certificado",
+  "esperado": {
+   "group_size": 3,
+   "group_allocation": {
+    "certified_diving": 2,
+    "undecided": 1
+   }
+  },
+  "producido": {
+   "group_size": 3,
+   "group_allocation": {
+    "certified_diving": 2,
+    "undecided": 1
+   }
+  },
+  "acierto": [
+   "group_size",
+   "group_allocation"
+  ],
+  "equivocado": [],
+  "perdido": [],
+  "inventado": []
+ },
+ {
+  "id": "g27",
+  "modo": "hoy",
+  "pasada": 1,
+  "texto": "mi amigo no es buzo, yo sí",
+  "esperado": {
+   "group_allocation": {
+    "certified_diving": 1,
+    "undecided": 1
+   },
+   "is_certified": true
+  },
+  "producido": {
+   "is_certified": true,
+   "group_allocation": {
+    "certified_diving": 1,
+    "undecided": 1
+   }
+  },
+  "acierto": [
+   "is_certified",
+   "group_allocation"
+  ],
+  "equivocado": [],
+  "perdido": [],
+  "inventado": []
+ },
+ {
+  "id": "g28",
+  "modo": "hoy",
+  "pasada": 1,
+  "texto": "yo buceo y mis amigos hacen snorkel",
+  "esperado": {
+   "is_certified": true
+  },
+  "producido": {
+   "activity": "certified_diving"
+  },
+  "acierto": [
+   "is_certified"
+  ],
+  "equivocado": [],
+  "perdido": [],
+  "inventado": [
+   "activity"
+  ]
+ },
+ {
+  "id": "g29",
+  "modo": "hoy",
+  "pasada": 1,
+  "texto": "We are 3 divers (2 adults + 1 teen)",
+  "esperado": {
+   "group_size": 3
+  },
+  "producido": {
+   "group_size": 3
+  },
+  "acierto": [
+   "group_size"
+  ],
+  "equivocado": [],
+  "perdido": [],
+  "inventado": []
+ },
+ {
+  "id": "g30",
+  "modo": "hoy",
+  "pasada": 1,
+  "texto": "ahora somos 5, se suman 2 amigos que hacen snorkel",
+  "esperado": {
+   "group_size": 5,
+   "group_allocation": {
+    "certified_diving": 3,
+    "snorkel": 2
+   }
+  },
+  "producido": {
+   "group_size": 5
+  },
+  "acierto": [
+   "group_size"
+  ],
+  "equivocado": [],
+  "perdido": [
+   "group_allocation"
+  ],
+  "inventado": []
+ },
+ {
+  "id": "g01",
+  "modo": "ex7",
+  "pasada": 1,
+  "texto": "somos 3: 2 adultos y 1 joven",
+  "esperado": {
+   "group_size": 3
+  },
+  "producido": {
+   "group_size": 3
+  },
+  "acierto": [
+   "group_size"
+  ],
+  "equivocado": [],
+  "perdido": [],
+  "inventado": []
+ },
+ {
+  "id": "g02",
+  "modo": "ex7",
+  "pasada": 1,
+  "texto": "1 buzo avanzado y 2 para bautismo",
+  "esperado": {
+   "group_size": 3,
+   "group_allocation": {
+    "certified_diving": 1,
+    "minicourse": 2
+   }
+  },
+  "producido": {
+   "activity": "minicourse",
+   "is_certified": true,
+   "group_size": 3,
+   "group_allocation": {
+    "certified_diving": 1,
+    "minicourse": 2
+   }
+  },
+  "acierto": [
+   "group_size",
+   "group_allocation"
+  ],
+  "equivocado": [],
+  "perdido": [],
+  "inventado": []
+ },
+ {
+  "id": "g03",
+  "modo": "ex7",
+  "pasada": 1,
+  "texto": "3 of us will dive and 3 will snorkel",
+  "esperado": {
+   "group_size": 6,
+   "group_allocation": {
+    "certified_diving": 3,
+    "snorkel": 3
+   }
+  },
+  "producido": {
+   "group_size": 6,
+   "group_allocation": {
+    "certified_diving": 3,
+    "snorkel": 3
+   }
+  },
+  "acierto": [
+   "group_size",
+   "group_allocation"
+  ],
+  "equivocado": [],
+  "perdido": [],
+  "inventado": []
+ },
+ {
+  "id": "g04",
+  "modo": "ex7",
+  "pasada": 1,
+  "texto": "el quiere hacer snorkel",
+  "esperado": {
+   "group_allocation": {
+    "certified_diving": 1,
+    "snorkel": 1
+   }
+  },
+  "producido": {
+   "group_allocation": {
+    "certified_diving": 1,
+    "snorkel": 1
+   }
+  },
+  "acierto": [
+   "group_allocation"
+  ],
+  "equivocado": [],
+  "perdido": [],
+  "inventado": []
+ },
+ {
+  "id": "g05",
+  "modo": "ex7",
+  "pasada": 1,
+  "texto": "esperate, somos 4 al final, se sumo uno mas",
+  "esperado": {
+   "group_size": 4
+  },
+  "producido": {
+   "group_size": 4
+  },
+  "acierto": [
+   "group_size"
+  ],
+  "equivocado": [],
+  "perdido": [],
+  "inventado": []
+ },
+ {
+  "id": "g06",
+  "modo": "ex7",
+  "pasada": 1,
+  "texto": "voy solo",
+  "esperado": {
+   "group_size": 1
+  },
+  "producido": {
+   "group_size": 1
+  },
+  "acierto": [
+   "group_size"
+  ],
+  "equivocado": [],
+  "perdido": [],
+  "inventado": []
+ },
+ {
+  "id": "g07",
+  "modo": "ex7",
+  "pasada": 1,
+  "texto": "mi pareja y yo",
+  "esperado": {
+   "group_size": 2
+  },
+  "producido": {
+   "group_size": 2
+  },
+  "acierto": [
+   "group_size"
+  ],
+  "equivocado": [],
+  "perdido": [],
+  "inventado": []
+ },
+ {
+  "id": "g08",
+  "modo": "ex7",
+  "pasada": 1,
+  "texto": "viene también uno que hace snorkel",
+  "esperado": {
+   "group_size": 3,
+   "group_allocation": {
+    "certified_diving": 2,
+    "snorkel": 1
+   }
+  },
+  "producido": {
+   "group_size": 3,
+   "group_allocation": {
+    "certified_diving": 2,
+    "snorkel": 1
+   }
+  },
+  "acierto": [
+   "group_size",
+   "group_allocation"
+  ],
+  "equivocado": [],
+  "perdido": [],
+  "inventado": []
+ },
+ {
+  "id": "g09",
+  "modo": "ex7",
+  "pasada": 1,
+  "texto": "somos 6 personas, todos certificados",
+  "esperado": {
+   "group_size": 6,
+   "is_certified": true
+  },
+  "producido": {
+   "is_certified": true,
+   "group_size": 6
+  },
+  "acierto": [
+   "is_certified",
+   "group_size"
+  ],
+  "equivocado": [],
+  "perdido": [],
+  "inventado": []
+ },
+ {
+  "id": "g10",
+  "modo": "ex7",
+  "pasada": 1,
+  "texto": "Hola! Como estan? Me llamo Ana soy buza advanced",
+  "esperado": {
+   "is_certified": true
+  },
+  "producido": {
+   "is_certified": true
+  },
+  "acierto": [
+   "is_certified"
+  ],
+  "equivocado": [],
+  "perdido": [],
+  "inventado": []
+ },
+ {
+  "id": "g11",
+  "modo": "ex7",
+  "pasada": 1,
+  "texto": "quiero bucear, ya soy certificado",
+  "esperado": {
+   "is_certified": true,
+   "activity": "certified_diving"
+  },
+  "producido": {
+   "activity": "certified_diving",
+   "is_certified": true
+  },
+  "acierto": [
+   "activity",
+   "is_certified"
+  ],
+  "equivocado": [],
+  "perdido": [],
+  "inventado": []
+ },
+ {
+  "id": "g12",
+  "modo": "ex7",
+  "pasada": 1,
+  "texto": "My husband and I are certified divers and our 2 kids will snorkel",
+  "esperado": {
+   "group_size": 4,
+   "group_allocation": {
+    "certified_diving": 2,
+    "snorkel": 2
+   },
+   "is_certified": true
+  },
+  "producido": {
+   "activity": "certified_diving",
+   "is_certified": true,
+   "group_size": 4,
+   "group_allocation": {
+    "certified_diving": 2,
+    "snorkel": 2
+   }
+  },
+  "acierto": [
+   "is_certified",
+   "group_size",
+   "group_allocation"
+  ],
+  "equivocado": [],
+  "perdido": [],
+  "inventado": []
+ },
+ {
+  "id": "g13",
+  "modo": "ex7",
+  "pasada": 1,
+  "texto": "seremos 5 en total",
+  "esperado": {
+   "group_size": 5
+  },
+  "producido": {
+   "group_size": 5
+  },
+  "acierto": [
+   "group_size"
+  ],
+  "equivocado": [],
+  "perdido": [],
+  "inventado": []
+ },
+ {
+  "id": "g14",
+  "modo": "ex7",
+  "pasada": 1,
+  "texto": "2",
+  "esperado": {
+   "group_size": 2
+  },
+  "producido": {
+   "group_size": 2
+  },
+  "acierto": [
+   "group_size"
+  ],
+  "equivocado": [],
+  "perdido": [],
+  "inventado": []
+ },
+ {
+  "id": "g15",
+  "modo": "ex7",
+  "pasada": 1,
+  "texto": "solo yo y mi hermano",
+  "esperado": {
+   "group_size": 2
+  },
+  "producido": {
+   "group_size": 2
+  },
+  "acierto": [
+   "group_size"
+  ],
+  "equivocado": [],
+  "perdido": [],
+  "inventado": []
+ },
+ {
+  "id": "g16",
+  "modo": "ex7",
+  "pasada": 1,
+  "texto": "Just completed the waivers. Thank you!",
+  "esperado": {},
+  "producido": {},
+  "acierto": [],
+  "equivocado": [],
+  "perdido": [],
+  "inventado": []
+ },
+ {
+  "id": "g17",
+  "modo": "ex7",
+  "pasada": 1,
+  "texto": "Hello. Unfortunately my husband is dealing with food poisoning and experienced the worst of it last night. Is there any way to move our dive to another day?",
+  "esperado": {},
+  "producido": {
+   "is_certified": true
+  },
+  "acierto": [],
+  "equivocado": [],
+  "perdido": [],
+  "inventado": [
+   "is_certified"
+  ]
+ },
+ {
+  "id": "g18",
+  "modo": "ex7",
+  "pasada": 1,
+  "texto": "4 certificados y 2 minicurso",
+  "esperado": {
+   "group_size": 6,
+   "group_allocation": {
+    "certified_diving": 4,
+    "minicourse": 2
+   }
+  },
+  "producido": {
+   "is_certified": true,
+   "group_size": 6,
+   "group_allocation": {
+    "certified_diving": 4,
+    "minicourse": 2
+   }
+  },
+  "acierto": [
+   "group_size",
+   "group_allocation"
+  ],
+  "equivocado": [],
+  "perdido": [],
+  "inventado": []
+ },
+ {
+  "id": "g19",
+  "modo": "ex7",
+  "pasada": 1,
+  "texto": "perdón, en realidad son 3 certificados y 3 minicurso",
+  "esperado": {
+   "group_allocation": {
+    "certified_diving": 3,
+    "minicourse": 3
+   }
+  },
+  "producido": {
+   "activity": "minicourse",
+   "is_certified": true,
+   "group_allocation": {
+    "certified_diving": 3,
+    "minicourse": 3
+   }
+  },
+  "acierto": [
+   "group_allocation"
+  ],
+  "equivocado": [],
+  "perdido": [],
+  "inventado": []
+ },
+ {
+  "id": "g20",
+  "modo": "ex7",
+  "pasada": 1,
+  "texto": "We're a group of 8 friends",
+  "esperado": {
+   "group_size": 8
+  },
+  "producido": {
+   "group_size": 8
+  },
+  "acierto": [
+   "group_size"
+  ],
+  "equivocado": [],
+  "perdido": [],
+  "inventado": []
+ },
+ {
+  "id": "g21",
+  "modo": "ex7",
+  "pasada": 1,
+  "texto": "mi novia hace el minicurso y yo buceo certificado",
+  "esperado": {
+   "group_size": 2,
+   "group_allocation": {
+    "certified_diving": 1,
+    "minicourse": 1
+   },
+   "is_certified": true
+  },
+  "producido": {
+   "activity": "minicourse",
+   "is_certified": true,
+   "group_size": 2,
+   "group_allocation": {
+    "certified_diving": 1,
+    "minicourse": 1
+   }
+  },
+  "acierto": [
+   "is_certified",
+   "group_size",
+   "group_allocation"
+  ],
+  "equivocado": [],
+  "perdido": [],
+  "inventado": []
+ },
+ {
+  "id": "g22",
+  "modo": "ex7",
+  "pasada": 1,
+  "texto": "2 adults (ages 42, 19) and 1 youth (age 17), all snorkeling",
+  "esperado": {
+   "group_size": 3,
+   "activity": "snorkel"
+  },
+  "producido": {
+   "activity": "snorkel",
+   "group_size": 3
+  },
+  "acierto": [
+   "activity",
+   "group_size"
+  ],
+  "equivocado": [],
+  "perdido": [],
+  "inventado": []
+ },
+ {
+  "id": "g23",
+  "modo": "ex7",
+  "pasada": 1,
+  "texto": "somos una pareja",
+  "esperado": {
+   "group_size": 2
+  },
+  "producido": {
+   "group_size": 2
+  },
+  "acierto": [
+   "group_size"
+  ],
+  "equivocado": [],
+  "perdido": [],
+  "inventado": []
+ },
+ {
+  "id": "g24",
+  "modo": "ex7",
+  "pasada": 1,
+  "texto": "el sábado pasado nosotros hicimos 2 buceos con uds y los registramos en PADI",
+  "esperado": {},
+  "producido": {
+   "is_certified": true
+  },
+  "acierto": [],
+  "equivocado": [],
+  "perdido": [],
+  "inventado": [
+   "is_certified"
+  ]
+ },
+ {
+  "id": "g25",
+  "modo": "ex7",
+  "pasada": 1,
+  "texto": "quiero bucear con mi amigo",
+  "esperado": {
+   "group_size": 2
+  },
+  "producido": {},
+  "acierto": [],
+  "equivocado": [],
+  "perdido": [
+   "group_size"
+  ],
+  "inventado": []
+ },
+ {
+  "id": "g26",
+  "modo": "ex7",
+  "pasada": 1,
+  "texto": "somos 3, uno no está certificado",
+  "esperado": {
+   "group_size": 3,
+   "group_allocation": {
+    "certified_diving": 2,
+    "undecided": 1
+   }
+  },
+  "producido": {
+   "group_size": 3,
+   "group_allocation": {
+    "certified_diving": 2,
+    "undecided": 1
+   }
+  },
+  "acierto": [
+   "group_size",
+   "group_allocation"
+  ],
+  "equivocado": [],
+  "perdido": [],
+  "inventado": []
+ },
+ {
+  "id": "g27",
+  "modo": "ex7",
+  "pasada": 1,
+  "texto": "mi amigo no es buzo, yo sí",
+  "esperado": {
+   "group_allocation": {
+    "certified_diving": 1,
+    "undecided": 1
+   },
+   "is_certified": true
+  },
+  "producido": {
+   "is_certified": true,
+   "group_allocation": {
+    "certified_diving": 1,
+    "undecided": 1
+   }
+  },
+  "acierto": [
+   "is_certified",
+   "group_allocation"
+  ],
+  "equivocado": [],
+  "perdido": [],
+  "inventado": []
+ },
+ {
+  "id": "g28",
+  "modo": "ex7",
+  "pasada": 1,
+  "texto": "yo buceo y mis amigos hacen snorkel",
+  "esperado": {
+   "is_certified": true
+  },
+  "producido": {
+   "activity": "certified_diving"
+  },
+  "acierto": [
+   "is_certified"
+  ],
+  "equivocado": [],
+  "perdido": [],
+  "inventado": [
+   "activity"
+  ]
+ },
+ {
+  "id": "g29",
+  "modo": "ex7",
+  "pasada": 1,
+  "texto": "We are 3 divers (2 adults + 1 teen)",
+  "esperado": {
+   "group_size": 3
+  },
+  "producido": {
+   "group_size": 3
+  },
+  "acierto": [
+   "group_size"
+  ],
+  "equivocado": [],
+  "perdido": [],
+  "inventado": []
+ },
+ {
+  "id": "g30",
+  "modo": "ex7",
+  "pasada": 1,
+  "texto": "ahora somos 5, se suman 2 amigos que hacen snorkel",
+  "esperado": {
+   "group_size": 5,
+   "group_allocation": {
+    "certified_diving": 3,
+    "snorkel": 2
+   }
+  },
+  "producido": {
+   "group_size": 5,
+   "group_allocation": {
+    "certified_diving": 3,
+    "snorkel": 2
+   }
+  },
+  "acierto": [
+   "group_size",
+   "group_allocation"
+  ],
+  "equivocado": [],
+  "perdido": [],
+  "inventado": []
+ }
+]

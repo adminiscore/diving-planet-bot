@@ -38,6 +38,9 @@ ACTIVIDADES = tuple(a for a in dom.activity_ids() if a not in ("refresher", "com
 # El reparto del grupo, con las actividades que se reparten de verdad entre personas.
 ACTIVIDADES_REPARTO = ("certified_diving", "minicourse", "snorkel", "padi_open_water", "padi_open_water_referral",
                        "padi_advanced", "padi_rescue", "padi_divemaster", "padi_specialty")
+# ex-7: más las personas del grupo que no han elegido actividad (decisión del owner, 15-sep: si solo se dice que no
+# están certificadas, quedan "sin decidir" y el bot les recomienda opciones; `_take_undecided_members`).
+CLAVES_REPARTO = (*ACTIVIDADES_REPARTO, "undecided")
 # Hechos del turno que no son campos del estado: el grupo mezclado (paga en USD) y "quiere bucear" (con la
 # certificación decide el buceo certificado, ver `extraer_turno`).
 EXTRAS = ("mixed_nationality", "quiere_bucear")
@@ -68,8 +71,8 @@ ESQUEMA = {
         "is_certified": _dato({"type": "boolean"}, "Si quien escribe (o su grupo) YA es buzo certificado."),
         "group_size": _dato({"type": "integer"}, "Cuántas personas van en total en el plan."),
         "group_allocation": _dato({"type": "object",
-                                   "properties": {a: {"type": ["integer", "null"]} for a in ACTIVIDADES_REPARTO},
-                                   "required": list(ACTIVIDADES_REPARTO), "additionalProperties": False},
+                                   "properties": {a: {"type": ["integer", "null"]} for a in CLAVES_REPARTO},
+                                   "required": list(CLAVES_REPARTO), "additionalProperties": False},
                                   "Cuántas personas hacen cada actividad, solo si el grupo se reparte entre VARIAS."),
         "location": _dato({"type": "string", "enum": ["cartagena", "island"]},
                           "Desde dónde SALE el cliente: 'cartagena' si sale de Cartagena; 'island' si ya está alojado "
@@ -119,7 +122,8 @@ Reglas:
 - is_certified: true solo si dice que tiene certificación o un nivel de buceo (buzo certificado, Open Water, Advanced…), él o su grupo; false si dice que no la tiene, que nunca ha buceado o que no tiene experiencia. Querer bucear no dice nada de la certificación.
 - quiere_bucear: true si quiere bucear o hacer inmersiones (lo dice, pide buceos, sus precios o una fecha para bucear) o contesta a una pregunta del bot sobre su plan de buceo; no hace falta que diga qué actividad. Preguntar si algo es posible ("¿puedo bucear si…?") o contar buceos que ya hizo no es querer bucear.
 - is_colombian: si dice que es colombiano, de una ciudad de Colombia o residente en Colombia (también si pide para sí el precio "para colombianos" o "en pesos por ser colombiano"). Nunca lo deduzcas del idioma en que escribe ni de su nombre. Si el grupo mezcla colombianos y extranjeros: mixed_nationality true e is_colombian null.
-- group_size: solo si dice CUÁNTAS personas van ("voy solo", "solo yo" = 1; "somos 3" = 3; "mi pareja y yo" = 2). Hablar en primera persona ("yo", "quiero") no dice el tamaño del grupo.
+- group_size: solo si dice CUÁNTAS personas van ("voy solo", "solo yo" = 1; "somos 3" = 3; "mi pareja y yo", "con mi amigo", "con mi novia" = 2). Hablar en primera persona ("yo", "quiero") no dice el tamaño del grupo.
+- group_allocation: cuántas personas hacen cada actividad cuando el grupo se reparte entre VARIAS, contando a quien escribe (con lo que ya sabemos de él). Si ya sabemos cuántos van y el cliente suma a alguien ("viene también uno que hace snorkel"), el reparto incluye a los que ya iban con su actividad. Usa undecided para las personas del grupo de las que el mensaje no dice qué harán, por ejemplo cuando solo dice que no están certificadas ("somos 3, uno no está certificado" = certified_diving 2, undecided 1); nunca conviertas un dato de certificación en minicourse o snorkel. Si un lado del grupo no tiene número ("yo buceo y mis amigos snorkel"), no pongas el reparto: el bot preguntará cuántos son.
 - last_dive_over_2_years: true solo si su última inmersión fue hace MÁS de 2 años; "1,5 años", "el año pasado" o "hace poco" = false.
 - Si los datos están en partes distintas del mensaje, la cita puede ser varios trozos literales separados por " … ".
 - La cita debe ser texto copiado literalmente del mensaje del cliente.
@@ -140,7 +144,8 @@ Rules:
 - is_certified: true only if they say they have a certification or a diving level (certified diver, Open Water, Advanced…), themselves or their group; false if they say they don't have one, have never dived or have no experience. Wanting to dive says nothing about certification.
 - quiere_bucear: true if they want to dive or do dives (they say so, ask for dives, their prices or a date to dive) or answer a bot question about their diving plan; they need not say which activity. Asking whether something is possible ("can I dive if…?") or telling about dives already done is not wanting to dive.
 - is_colombian: if they say they are Colombian, from a Colombian city or a resident of Colombia (also if they ask for themselves the price "for Colombians"). Never infer it from the language they write in or from their name. If the group mixes Colombians and foreigners: mixed_nationality true and is_colombian null.
-- group_size: only if they say HOW MANY people go ("just me" = 1; "we are 3" = 3; "my partner and I" = 2). Speaking in first person ("I", "I want") does not give the group size.
+- group_size: only if they say HOW MANY people go ("just me" = 1; "we are 3" = 3; "my partner and I", "with my friend", "with my girlfriend" = 2). Speaking in first person ("I", "I want") does not give the group size.
+- group_allocation: how many people do each activity when the group splits across SEVERAL, counting the writer (with what we already know about them). If we already know how many are going and the customer adds someone ("one more is coming to snorkel"), the split includes those already going with their activity. Use undecided for people in the group whose activity the message does not say, e.g. when it only says they are not certified ("we are 3, one is not certified" = certified_diving 2, undecided 1); never turn a certification fact into minicourse or snorkel. If one side of the group has no number ("I dive and my friends snorkel"), leave the split out: the bot will ask how many.
 - last_dive_over_2_years: true only if their last dive was MORE than 2 years ago; "1.5 years", "last year" or "recently" = false.
 - If the facts are in different parts of the message, the quote may be several literal pieces separated by " … ".
 - The quote must be text copied literally from the customer's message.
@@ -158,12 +163,37 @@ def _trozo_en(c: list[str], m: list[str]) -> bool:
 
 def cita_verificable(cita: str, mensaje: str) -> bool:
     """La cita está de verdad en el mensaje del cliente: sus palabras, en orden y seguidas (ignorando mayúsculas,
-    tildes y puntuación); puede venir en varios trozos separados por "…" o "...", y cada trozo tiene que estar. Una
-    cita vacía o que no aparece = el dato no sale del mensaje."""
+    tildes y puntuación); puede venir en varios trozos separados por "…" o "...", y cada trozo tiene que estar. ex-7:
+    también vale sin esos separadores si se parte en trozos literales del mensaje, en orden y de al menos 2 palabras
+    (una lista en varias líneas: "2 adults (ages 42, 19) 1 youth (age 17) 1 Adult (Age 43)…" saltándose la línea
+    "Snorkeling" se descartaba). Una cita vacía o que no aparece = el dato no sale del mensaje."""
     m = _norm(mensaje)
     trozos = [_norm(t) for t in re.split(r"…|\.\.\.", cita or "")]
     trozos = [t for t in trozos if t]
-    return bool(trozos) and all(len(t) >= _CITA_MIN_PALABRAS_SOLAS and _trozo_en(t, m) for t in trozos)
+    if bool(trozos) and all(len(t) >= _CITA_MIN_PALABRAS_SOLAS and _trozo_en(t, m) for t in trozos):
+        return True
+    return bool(trozos) and all(_en_trozos_seguidos(t, m) for t in trozos)
+
+
+_TROZO_MIN_PALABRAS = 2
+
+
+def _en_trozos_seguidos(c: list[str], m: list[str]) -> bool:
+    """¿Se parte la cita `c` en trozos seguidos del mensaje `m`, en orden, de al menos `_TROZO_MIN_PALABRAS` palabras?
+    Voraz: en cada paso, el trozo más largo que empieza donde va la cita (palabras sueltas no cosen una cita)."""
+    i = j = 0
+    while i < len(c):
+        mejor, desde = 0, -1
+        for k in range(j, len(m)):
+            largo = 0
+            while i + largo < len(c) and k + largo < len(m) and m[k + largo] == c[i + largo]:
+                largo += 1
+            if largo > mejor:
+                mejor, desde = largo, k
+        if mejor < _TROZO_MIN_PALABRAS:
+            return False
+        i, j = i + mejor, desde + mejor
+    return True
 
 
 def _lugares() -> set[str]:

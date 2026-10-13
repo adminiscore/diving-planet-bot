@@ -354,7 +354,8 @@
       "interruptores": [
         "extraccion_llm_ubicacion",
         "extraccion_llm_actividad",
-        "extraccion_llm_certificacion"
+        "extraccion_llm_certificacion",
+        "extraccion_llm_grupo"
       ]
     },
     {
@@ -1201,6 +1202,11 @@
       "area": "Reserva",
       "titulo": "La actividad y la nacionalidad las entiende la IA (con cita)",
       "texto": "Qué actividad elige el cliente y si es colombiano lo decide el extractor nuevo de la fase EX: solo lo que el cliente dice con sus palabras. Ya no se da por hecho el buceo certificado al leer 'bucear', ni la nacionalidad por el idioma."
+    },
+    "extraccion_llm_grupo": {
+      "area": "Reserva",
+      "titulo": "El grupo lo entiende la IA (con cita)",
+      "texto": "Cuántos van y qué hace cada uno lo decide el extractor nuevo de la fase EX, con las palabras del cliente: 'él quiere hacer snorkel' ya no se cuenta dos veces, '3 bucean y 3 hacen snorkel' se suma al grupo sin preguntar '¿lo cambio?', y quien no ha elegido actividad queda 'sin decidir' para recomendarle opciones."
     },
     "extraccion_llm_certificacion": {
       "area": "Reserva",

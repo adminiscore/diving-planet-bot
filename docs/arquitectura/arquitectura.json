@@ -1,8 +1,8 @@
 {
  "meta": {
-  "generado": "2026-10-13T10:30:38+00:00",
-  "commit": "aabb3ce",
-  "rama": "feature/pre_alvaro"
+  "generado": "2026-10-13T11:38:43+00:00",
+  "commit": "2049549",
+  "rama": "feature/ex7_alvaro"
  },
  "vistas": {
   "general": {
@@ -562,6 +562,13 @@
      "titulo": "La certificación la entiende la IA (con cita)",
      "codigo": true,
      "pre": true,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "extraccion_llm_grupo",
+     "titulo": "El grupo lo entiende la IA (con cita)",
+     "codigo": false,
+     "pre": false,
      "sin_efecto": false
     }
    ],
@@ -1778,6 +1785,19 @@
    "texto": "Si el cliente ya es buzo certificado y si su última inmersión fue hace más de 2 años lo decide el extractor nuevo de la fase EX, con sus palabras. 'Quiero sacarme el Open Water Diver' ya no se lee como 'ya es certificado', ni un 'gracias' como certificación.",
    "codigo": true,
    "pre": true,
+   "fijado_en_pre": true,
+   "usado_por": [
+    "b_extraction"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "extraccion_llm_grupo",
+   "area": "Reserva",
+   "titulo": "El grupo lo entiende la IA (con cita)",
+   "texto": "Cuántos van y qué hace cada uno lo decide el extractor nuevo de la fase EX, con las palabras del cliente: 'él quiere hacer snorkel' ya no se cuenta dos veces, '3 bucean y 3 hacen snorkel' se suma al grupo sin preguntar '¿lo cambio?', y quien no ha elegido actividad queda 'sin decidir' para recomendarle opciones.",
+   "codigo": false,
+   "pre": false,
    "fijado_en_pre": true,
    "usado_por": [
     "b_extraction"

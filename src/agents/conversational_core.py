@@ -2084,11 +2084,12 @@ def _lugar_por_jev(intent, state: ConversationState) -> None:
 _CAMPOS_LUGAR = ("location", "island", "hotel")
 _CAMPOS_ACTIVIDAD = ("activity", "service_id", "is_colombian")
 _CAMPOS_CERTIFICACION = ("is_certified", "last_dive_over_2_years")
+_CAMPOS_GRUPO = ("group_size", "group_allocation")
 
 
 def campos_del_extractor() -> tuple[str, ...]:
     """Campos que decide el extractor "LLM primero" (fase EX) en vez del regex, según sus flags. ex-5: la ubicación;
-    ex-8: la actividad (con su servicio) y la nacionalidad."""
+    ex-8: la actividad (con su servicio) y la nacionalidad; ex-6: la certificación; ex-7: el grupo y su reparto."""
     campos: tuple[str, ...] = ()
     if settings.extraccion_llm_ubicacion:
         campos += _CAMPOS_LUGAR
@@ -2096,6 +2097,8 @@ def campos_del_extractor() -> tuple[str, ...]:
         campos += _CAMPOS_ACTIVIDAD
     if settings.extraccion_llm_certificacion:
         campos += _CAMPOS_CERTIFICACION
+    if settings.extraccion_llm_grupo:
+        campos += _CAMPOS_GRUPO
     return campos
 
 
@@ -2136,11 +2139,12 @@ async def _aplicar_extractor(intent, state: ConversationState, message: str, pis
     _quitar_provisional(intent, pista)
     if datos is None:
         for dominio, campo_puerta in ((_CAMPOS_LUGAR, "location"), (_CAMPOS_ACTIVIDAD, None),
-                                      (_CAMPOS_CERTIFICACION, "is_certified")):
+                                      (_CAMPOS_CERTIFICACION, "is_certified"), (_CAMPOS_GRUPO, None)):
             for campo in dominio:
                 if campo not in pista or campo not in campos_del_extractor():
                     continue
-                if not _pasa_la_puerta_de_hoy(state, campo_puerta or ("is_colombian" if campo == "is_colombian"
+                if not _pasa_la_puerta_de_hoy(state, campo_puerta or (campo if campo in _CAMPOS_GRUPO
+                                                                     else "is_colombian" if campo == "is_colombian"
                                                                      else "activity")):
                     logger.info(f"[EXTRACT][EX] el extractor falló y la puerta no deja {campo}={pista[campo]!r}")
                     continue
@@ -2164,6 +2168,109 @@ async def _aplicar_extractor(intent, state: ConversationState, message: str, pis
         _poner_nacionalidad(intent, state, message, datos)
     if settings.extraccion_llm_certificacion:
         _poner_certificacion(intent, state, message, datos, pista)
+    if settings.extraccion_llm_grupo:
+        _poner_grupo(intent, state, message, datos, pista)
+
+
+def _reparto_guardado(state: ConversationState) -> dict:
+    """El reparto que ya sabe la conversación: el guardado o, si solo hay una actividad y un total, esa actividad para
+    todos ("buceo certificado, somos 3" = {certified_diving: 3})."""
+    if state.detected_group_allocation:
+        return {k: v for k, v in state.detected_group_allocation.items() if isinstance(v, int) and v > 0}
+    if state.detected_activity and state.detected_group_size:
+        return {state.detected_activity: state.detected_group_size}
+    return {}
+
+
+def _amplia(nuevo: dict, antes: dict) -> bool:
+    """¿El reparto nuevo solo SUMA personas al de antes (nadie de antes cambia de actividad)?"""
+    return bool(antes) and all(nuevo.get(act, 0) >= n for act, n in antes.items()) and nuevo != antes
+
+
+# Clave del reparto -> categoría de `intent_detector.matched_activity_categories` (la lista cerrada de nombres).
+_CATEGORIA_DEL_REPARTO = {"minicourse": "minicourse", "snorkel": "snorkel", "padi_specialty": "specialty"}
+
+
+def _reparto_valido(reparto: dict | None, message: str, state: ConversationState) -> dict | None:
+    """Lo que el código comprueba del reparto del extractor antes de usarlo (fase EX: el código valida):
+    (1) una cifra de más de una persona tiene que estar en el mensaje o saberse ya: "yo buceo y mis amigos hacen
+        snorkel" no dice cuántos, así que no hay reparto y el bot lo pregunta (banco ex7: inventaba 2);
+    (2) una actividad que el mensaje no nombra (minicurso, snorkel o un curso; el buceo certificado lo dicen la
+        certificación y "buzo") no se le pone a nadie: esas personas quedan sin decidir (decisión del owner, 15-sep:
+        "mi amigo no es buzo, yo sí" no es un minicurso ni un snorkel; banco ex7 los inventaba)."""
+    from src.agents.intent_detector import matched_activity_categories  # lazy
+
+    if not reparto:
+        return None
+    conocidas = set(_reparto_guardado(state).values()) | {state.detected_group_size}
+    if not _EXPLICIT_NUMBER_RE.search(message) and any(n > 1 and n not in conocidas for n in reparto.values()):
+        logger.info(f"[EXTRACT][EX7] reparto sin cifras en el mensaje, no se usa: {reparto!r}")
+        return None
+    nombradas = matched_activity_categories(message)
+    valido: dict = {}
+    for act, n in reparto.items():
+        categoria = "padi_course" if act.startswith("padi_") and act != "padi_specialty" else _CATEGORIA_DEL_REPARTO.get(act)
+        nombrada = categoria is None or categoria in nombradas or act == state.detected_activity
+        clave = act if nombrada else "undecided"
+        if not nombrada:
+            logger.info(f"[EXTRACT][EX7] {act!r} no se nombra en el mensaje: {n} sin decidir")
+        valido[clave] = valido.get(clave, 0) + n
+    return valido if len(valido) > 1 else None
+
+
+def _poner_grupo(intent, state: ConversationState, message: str, datos: dict, pista: dict) -> None:
+    """ex-7: cuántos van y cómo se reparten, según el extractor (cita del cliente). Lo que leía el regex queda como
+    pista ("soy buza advanced" no dice que vaya sola). Un reparto que AMPLÍA el que ya se sabía (se suman personas,
+    nadie cambia de actividad: "3 of us will dive and 3 will snorkel" sobre {buceo: 3}) es un añadido: se guarda con su
+    total sin preguntar. Cualquier otro cambio del total o del reparto se confirma, como hoy (`_route_contradictions`),
+    salvo con una señal clara de corrección ("perdón, en realidad son 3 y 3"): el dato trae su cita comprobada en el
+    mensaje y se cambia (banco ex7: el "¿lo afirma?" de Jev descartaba la corrección). El atajo de acompañante de
+    `_understand` no vuelve a sumar a quien el extractor ya puso en el reparto."""
+    guardado = _known_field_values(state)
+    corrige = _has_correction_cue(state, message)
+    reparto, total = _reparto_valido(datos.get("group_allocation"), message, state), datos.get("group_size")
+    if reparto:
+        suma = sum(v for v in reparto.values() if isinstance(v, int) and v > 0)
+        antes = _reparto_guardado(state)
+        intent._reparto_del_extractor = set(reparto)
+        if _amplia(reparto, antes):
+            intent.group_allocation, intent.group_size = dict(reparto), suma
+            for campo in _CAMPOS_GRUPO:
+                for listado in (intent.detected_fields, intent.overwrite):
+                    if campo not in listado:
+                        listado.append(campo)
+            logger.info(f"[EXTRACT][EX7] el reparto amplía el de antes {antes!r} -> {reparto!r} (total {suma})")
+            return
+        if guardado.get("group_allocation") and guardado["group_allocation"] != reparto and not corrige:
+            logger.info(f"[EXTRACT][EX7] el cliente cambia el reparto {guardado['group_allocation']!r} -> {reparto!r}")
+            _route_contradictions(state, message, intent, {"group_allocation": reparto})
+        elif guardado.get("group_allocation") and guardado["group_allocation"] != reparto:
+            logger.info(f"[EXTRACT][EX7] corrección del reparto {guardado['group_allocation']!r} -> {reparto!r}")
+            intent.group_allocation = dict(reparto)
+            for listado in (intent.detected_fields, intent.overwrite):
+                if "group_allocation" not in listado:
+                    listado.append("group_allocation")
+        else:
+            intent.group_allocation = dict(reparto)
+            if "group_allocation" not in intent.detected_fields:
+                intent.detected_fields.append("group_allocation")
+        total = total if isinstance(total, int) and total >= suma else suma
+    elif pista.get("group_allocation"):
+        logger.info(f"[EXTRACT][EX7] el regex leía group_allocation={pista['group_allocation']!r}; el cliente no lo afirma")
+    if total is None:
+        if pista.get("group_size") is not None:
+            logger.info(f"[EXTRACT][EX7] el regex leía group_size={pista['group_size']!r}; el cliente no lo afirma")
+        return
+    if guardado.get("group_size") is not None and guardado["group_size"] != total and not corrige:
+        logger.info(f"[EXTRACT][EX7] el cliente cambia el total {guardado['group_size']!r} -> {total!r}: se confirma")
+        _route_contradictions(state, message, intent, {"group_size": total})
+        return
+    intent.group_size = total
+    if "group_size" not in intent.detected_fields:
+        intent.detected_fields.append("group_size")
+    if corrige and guardado.get("group_size") not in (None, total) and "group_size" not in intent.overwrite:
+        intent.overwrite.append("group_size")
+    logger.info(f"[EXTRACT][EX7] group_size={total!r} (regex: {pista.get('group_size')!r})")
 
 
 def _poner_certificacion(intent, state: ConversationState, message: str, datos: dict, pista: dict) -> None:
@@ -3097,6 +3204,9 @@ async def _understand(state: ConversationState, message: str, *, answered_pendin
         and turn_act in _ACTIVITY_TO_CART_TYPE
         and prev_activity in _ACTIVITY_TO_CART_TYPE
         and _ADDED_PERSON_RE.search(message)
+        # ex-7: si el extractor ya puso a esa persona en el reparto, el atajo no la vuelve a sumar ("él quiere hacer
+        # snorkel" sobre buceo de 1 acababa en {snorkel: 2}).
+        and turn_act not in (getattr(intent, "_reparto_del_extractor", None) or ())
     ):
         explicit_qty = (intent.group_allocation or {}).get(turn_act)
         # `intent.group_allocation` puede venir del gap-fill LLM (`fill_gaps`,
