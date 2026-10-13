@@ -13,6 +13,15 @@ from src.config import settings
 from src.flows.state import ConversationState
 
 
+@pytest.fixture(autouse=True)
+def _grupo_camino_antiguo(monkeypatch):
+    """Estos tests fijan el grupo por el camino de antes de ex-7 (regex y redes LLM); con `extraccion_llm_grupo` lo
+    decide el extractor (tests/test_ex7_grupo.py)."""
+    from src.config import settings as _flags
+
+    monkeypatch.setattr(_flags, "extraccion_llm_grupo", False)
+
+
 @pytest.fixture
 def ex5(monkeypatch):
     monkeypatch.setattr(settings, "extraccion_llm_ubicacion", True)

@@ -120,6 +120,17 @@ async def test_sin_cifras_no_se_inventa_cuantos(ex7):
     assert not st.detected_group_allocation
 
 
+@pytest.mark.asyncio
+async def test_con_ex8_el_grupo_repartido_conserva_su_actividad(ex7, monkeypatch):
+    # El grupo va antes que la actividad: la regla de ex-8 del grupo repartido mira el reparto del turno, que ahora pone
+    # el extractor (sin esto se repreguntaba la actividad, como en la ronda ex8-B).
+    monkeypatch.setattr(settings, "extraccion_llm_actividad", True)
+    ex7({"group_size": 6, "group_allocation": {"certified_diving": 2, "minicourse": 2, "snorkel": 2}})
+    st = await _entender("somos 6: 2 bucean certificados, 2 hacen minicurso y 2 snorkel")
+    assert st.detected_group_allocation == {"certified_diving": 2, "minicourse": 2, "snorkel": 2}
+    assert st.detected_activity in ("certified_diving", "minicourse", "snorkel")
+
+
 def test_una_cita_de_varias_lineas_sin_separador_vale_si_son_trozos_del_mensaje():
     # Banco ex0 (familia-mixta-precio-descuento-refresher t1): la lista de personas en varias líneas, saltándose la
     # línea "Snorkeling", se descartaba y el grupo de 6 se perdía. Palabras sueltas no cosen una cita.

@@ -59,8 +59,8 @@ class Settings(BaseSettings):
     # ex-7 (fase EX): el GRUPO (group_size, group_allocation) lo decide el extractor "LLM primero" (cita comprobada),
     # con "undecided" para quien no ha elegido actividad (decision del owner, 15-sep). Un reparto que solo SUMA
     # personas al de antes es un añadido (sin "¿lo cambio?"); otro cambio se confirma. El atajo de acompañante no
-    # vuelve a sumar a quien ya puso el extractor. conversational_core._poner_grupo. APAGADO hasta su mini-ronda A/B.
-    extraccion_llm_grupo: bool = False
+    # vuelve a sumar a quien ya puso el extractor. conversational_core._poner_grupo. ENCENDIDO para la mini-ronda ex7-B.
+    extraccion_llm_grupo: bool = True
     # ex-2 (fase EX): las palabras clave que pasan a un asesor ANTES de que opine la IA se quedan con las EMERGENCIAS
     # (escalation.EMERGENCY_KEYWORDS) y las incidencias en tiempo real; lo medico, el tiempo y las quejas los decide
     # Jev (`sensitive_topic`). Con la lista entera, "completed the medical form" o "mi amigo es abogado" pasaban a un

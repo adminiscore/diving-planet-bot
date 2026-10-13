@@ -17,6 +17,15 @@ from src.flows.state import ConversationState, Step
 
 
 @pytest.fixture(autouse=True)
+def _grupo_camino_antiguo(monkeypatch):
+    """Estos tests fijan el grupo por el camino de antes de ex-7 (regex y redes LLM); con `extraccion_llm_grupo` lo
+    decide el extractor (tests/test_ex7_grupo.py)."""
+    from src.config import settings as _flags
+
+    monkeypatch.setattr(_flags, "extraccion_llm_grupo", False)
+
+
+@pytest.fixture(autouse=True)
 def _camino_antiguo_ex2_ex3(monkeypatch):
     """Estos tests fijan el camino de antes de ex-2/ex-3 (lista entera de palabras clave y respuestas fijas); lo nuevo
     lo cubren tests/test_ex2_escalado.py y tests/test_ex3_atajos.py."""

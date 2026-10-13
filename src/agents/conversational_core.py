@@ -2161,6 +2161,9 @@ async def _aplicar_extractor(intent, state: ConversationState, message: str, pis
         return
     if settings.extraccion_llm_ubicacion:
         _poner_ubicacion(intent, state, message, datos, pista)
+    if settings.extraccion_llm_grupo:
+        # ex-7: el grupo antes que la actividad: la regla de ex-8 del grupo repartido mira el reparto del turno.
+        _poner_grupo(intent, state, message, datos, pista)
     if settings.extraccion_llm_actividad:
         if datos.get("quiere_bucear") is True:
             state.quiere_bucear = True
@@ -2168,8 +2171,6 @@ async def _aplicar_extractor(intent, state: ConversationState, message: str, pis
         _poner_nacionalidad(intent, state, message, datos)
     if settings.extraccion_llm_certificacion:
         _poner_certificacion(intent, state, message, datos, pista)
-    if settings.extraccion_llm_grupo:
-        _poner_grupo(intent, state, message, datos, pista)
 
 
 def _reparto_guardado(state: ConversationState) -> dict:

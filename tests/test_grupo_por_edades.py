@@ -16,6 +16,15 @@ from src.agents.supervisor import route_message
 from src.config import settings
 from src.flows.state import ConversationState
 
+
+@pytest.fixture(autouse=True)
+def _grupo_camino_antiguo(monkeypatch):
+    """Estos tests fijan el grupo por el camino de antes de ex-7 (regex y redes LLM); con `extraccion_llm_grupo` lo
+    decide el extractor (tests/test_ex7_grupo.py)."""
+    from src.config import settings as _flags
+
+    monkeypatch.setattr(_flags, "extraccion_llm_grupo", False)
+
 FAMILIA = ("Hi There,\nI am looking to book 2 dives and snorkeling sessions for the following people.\n"
            "2 diving sessions - All PADI certified for open water.\n2 adults (ages 42, 19)\n1 youth (age 17)\n"
            "Snorkeling\n1 Adult (Age 43)\n2 kids (Ages 14, 10)\nCan you provide information and total price please")
