@@ -1,7 +1,7 @@
 # ex-3 · Respuestas de texto fijo ACTIVAS: inventario y decisión (12-oct-2026, Álvaro con Claude)
 
 Fase EX (`../regex/plan-ex-entender-con-ia.md`). Las respuestas fijas contestan con un texto cerrado cuando una frase
-casa con un patrón, sin pasar por el RAG. Las APAGADAS se borraron en ex-1 (HISTORY 0.31.14). Aquí van las que siguen
+casa con un patrón, sin pasar por el RAG. Las APAGADAS se borraron en ex-1 (HISTORY 0.31.15). Aquí van las que siguen
 activas: qué las dispara, si la base del RAG ya tiene lo necesario para contestar igual, cuántas veces saltan de
 verdad, y qué hacer con cada una.
 

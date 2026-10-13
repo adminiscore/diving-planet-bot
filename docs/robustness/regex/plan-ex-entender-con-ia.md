@@ -57,12 +57,12 @@ leer la salida del revisor (2).
 - **Hecho cuando:** banco ≥ 280 casos etiquetados (Gadea resuelve las dudas de negocio), línea base de los 3 modos
   guardada en `docs/robustness/regex/`.
 
-### ex-1 · Borrar los atajos apagados (sin riesgo) — ✅ HECHO 12-oct (Álvaro, HISTORY 0.31.14)
+### ex-1 · Borrar los atajos apagados (sin riesgo) — ✅ HECHO 12-oct (Álvaro, HISTORY 0.31.15)
 - 28 patrones de respuestas fijas de precio, comida y refresher en `rag_agent.py`, apagados con `RAG_V2`/`S4_FIXES`
   (código muerto), y sus tests de "camino antiguo". Es parte del punto 1 de s4-25.
 - **Hecho cuando:** suite verde y foto antes/después sin LLM igual en los mensajes del eval-set. Sin ronda.
 
-### ex-2 · Escalado: palabras clave solo para emergencias — 🟡 escalón 0 HECHO 12-oct (Álvaro, HISTORY 0.31.15); falta la mini-ronda
+### ex-2 · Escalado: palabras clave solo para emergencias — 🟡 escalón 0 HECHO 12-oct (Álvaro, HISTORY 0.31.16); falta la mini-ronda
 - Hoy 114 palabras clave pasan a un asesor ANTES de que opine la IA (falsos positivos reales: "timo" en "último").
 - Dejar como red rápida solo emergencias médicas y de seguridad; quejas, incidencias y tiempo → la señal
   `sensitive_topic` de Jev (ya existe en la misma llamada). Flag `ESCALADO_SOLO_EMERGENCIAS`.
@@ -70,7 +70,7 @@ leer la salida del revisor (2).
 - **Hecho cuando:** ninguna emergencia perdida en el banco, menos falsos escalados; mini-ronda de los diálogos de
   escalado/queja sin regresiones.
 
-### ex-3 · Atajos de texto fijo activos (28) — 🟡 inventario y flags HECHOS 13-oct (Álvaro, HISTORY 0.31.16, `docs/robustness/atajos/inventario-ex3.md`); falta medir
+### ex-3 · Atajos de texto fijo activos (28) — 🟡 inventario y flags HECHOS 13-oct (Álvaro, HISTORY 0.31.17, `docs/robustness/atajos/inventario-ex3.md`); falta medir
 - "Qué ofrecen para bucear" (`_OVERVIEW_*`), alcohol/alergias, "¿eres una IA?", "mismo precio por nacionalidad":
   contestan con texto fijo cuando casa una palabra. Uno a uno, con flag: ¿el RAG lo contesta igual o mejor con la
   base? Los que sean política obligatoria (texto que el negocio quiere literal) se quedan, pero decididos por Jev.

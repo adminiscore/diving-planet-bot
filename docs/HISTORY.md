@@ -1,7 +1,7 @@
 History
 =======
 
-0.31.16 - (2026-10-13)
+0.31.17 - (2026-10-13)
 ----------------------
 * **EX-3 PREPARADO: inventario de las respuestas de texto fijo ACTIVAS y tres de ellas, con su flag, pasan al RAG** (APAGADOS hasta medirlos en PRE; Álvaro con Claude, en paralelo a ex-8). Detalle: `docs/robustness/atajos/inventario-ex3.md`.
   - **Al RAG, cada una con su flag:** el resumen de "¿qué ofrecen para bucear?" (`ATAJO_RESUMEN_POR_RAG`), "¿cambia el precio si es colombiano?" (`ATAJO_NACIONALIDAD_POR_RAG`) y la alergia a un alimento sin alcohol en el mensaje (`ATAJO_ALERGIA_POR_RAG`; el enrutador la sigue mandando a info, no al aviso médico). La base del RAG ya lo tiene: el catálogo entero, la regla de moneda y las FAQs curadas 14, 100 y 116.
@@ -9,7 +9,7 @@ History
   - **Se quedan, justificadas:** alcohol antes de bucear (la política no está en la base del RAG), "¿eres una IA?" (texto literal de s4-15) y grupo privado/empresa. **Hallazgo:** el grupo privado contesta "Te paso con un asesor…" pero no marca el pase; solo llega a un asesor si el cliente responde "sí/ok" justo después. Propuesta aparte.
   - Para medir: `scripts/sonda_atajos_pre.py` con `docs/robustness/atajos/preguntas-ex3.json` (16 preguntas) dentro de PRE, flags apagados y encendidos (~0,4 $). Tests en `tests/test_ex3_atajos.py`.
 
-0.31.15 - (2026-10-12)
+0.31.16 - (2026-10-12)
 ----------------------
 * **EX-2 PREPARADO: solo las emergencias (y las incidencias) pasan a un asesor por palabra clave; lo médico, el tiempo y las quejas los decide Jev** (`ESCALADO_SOLO_EMERGENCIAS`, APAGADO hasta su mini-ronda; Álvaro con Claude, en paralelo a ex-8). Hoy la lista de 114 palabras (`escalation.SENSITIVE_RULES`) pasa el caso a un asesor ANTES de que opine la IA, aunque Jev diga que no hace falta.
   - Con el flag la lista se queda con las emergencias (`EMERGENCY_KEYWORDS`: emergencia, accidente, no respira, se desmayó, sangrando…) y las incidencias en tiempo real ("hay cupo mañana", "no puedo pagar": frases concretas, 0 falsas alarmas en el banco; Jev solo marca los fallos, no "¿hay cupo mañana?"). Lo médico, el tiempo y las quejas pasan por `sensitive_topic` de Jev, que ya va en la llamada del enrutador.
@@ -18,12 +18,22 @@ History
   - Mini-ronda pendiente (PRE ocupado por ex-8): las 12 conversaciones de `docs/robustness/escalado/dialogos-mini-ronda.txt`.
 * **Arreglo (sin flag): la señal anidada del router LLM de respaldo rompía el turno.** Cuando Jev duda y decide el router LLM, a veces devuelve `sensitive_topic` como `{"weather_conditions": true}` (1 de 152 llamadas del banco ex2) y `sensitive_response_for` lo usaba como clave de diccionario: TypeError. Ahora vale si trae una sola categoría conocida a true. Tests en `tests/test_ex2_escalado.py`.
 
-0.31.14 - (2026-10-12)
+0.31.15 - (2026-10-12)
 ----------------------
 * **EX-1 HECHO: borrados los atajos de texto fijo APAGADOS del RAG** (Álvaro con Claude, en paralelo a ex-8 de Gadea; sin conducta nueva, sin ronda). Los 5 atajos que contestaban con texto fijo cuando casaba una palabra (precio genérico, precio de un servicio, paquete multi-día, coste del refresher y comida), apagados desde `RAG_V2`/`S4_FIXES` porque el catálogo entero va al contexto del RAG: código muerto.
   - Fuera de `rag_agent.py` sus 8 grupos de patrones (28: `FOOD_QUERY_PATTERN`, `DIETARY_QUERY_PATTERN`, `_FOOD_HIJACK_GUARD`, `_PRICE_QUESTION`, `_PRICE_SPECIFIC`, `_PRICE_SINGLE_SERVICE_PATTERNS`, `_PRICE_NON_CATALOG_RE`, `_REFRESHER_COST_QUESTION_RE`), sus funciones y lo que solo usaban ellas (cachés de FAQs y políticas): 1.678 → 1.230 líneas. Se quedan los atajos ACTIVOS (resumen de "¿qué ofrecen para bucear?" con su frase de seguridad, aclaración de un lugar ambiguo): son ex-3.
   - Comprobado: inventario de regex 802 → 774 patrones y desaparece la categoría "atajo apagado" (`scripts/inventario_regex.py`); el banco ex0 sin LLM (342 turnos) da exactamente lo mismo antes y después; 65 tests del camino antiguo retirados (los que llamaban a esas funciones); el que fijaba que un atajo no gasta LLM ni juez ahora usa el atajo activo ("¿qué ofrecen para bucear?"). Suite 2.972 verde, ruff limpio.
   - Queda resuelta la decisión pendiente del 16-jul ("lista de exclusión o de permitidos" para `_canonical_price_overview_answer`): el atajo ya no existe.
+0.31.14 - (2026-10-13)
+----------------------
+* **EX-6 HECHO: la certificación y la última inmersión las decide el extractor "LLM primero" (`EXTRACCION_LLM_CERTIFICACION`, PROMOCIONADO)** (Gadea con Claude).
+  - **Qué cambia:** `is_certified` y `last_dive_over_2_years` salen del extractor (cita del cliente); lo del regex queda como pista. "Take the PADI Open Water Diver course" ya no es "ya certificado" y el relleno ya no saca la certificación de un "gracias". Un valor que contradice lo guardado se confirma. Un nivel nombrado sin decir si lo tiene o lo quiere sacar ("somos 4 open water") y sin cita del extractor se sigue preguntando (`_flag_cert_or_course`); con cita, no. La confirmación por producto nombrado (regex) la sustituye la regla del catálogo del extractor (buceo certificado nombrado ⇒ certificado).
+  - **Escalón 0 (banco ex0, diseño, turno completo, con ex-5 y ex-8):** certificación inventada 6 → **0**; última inmersión 5/6 → **6/6**; datos acertados 109 → **111/122 (91,0 %)**; casos con algún invento 4,5 → **2,0 %** (los que quedan son de grupo, ex-7, y 1 de ubicación).
+  - **Mini-rondas (41 diálogos visibles con certificación o última inmersión):** A (09:38, ex-6 apagado) **89,4 %**, 23/41 sin fallos; B (10:20) **92,9 %, 26/41**. 18 mejoras (refresher bien ofrecido y sin repreguntas, sin inventos de certificación, precios de 2 buceos) y 7 regresiones ajenas a ex-6 (variación del RAG: San Bernardo, Barú, texto del refresher; "solo backpacker" = grupo, ex-7; "Frances" = idioma, resto de ex-8).
+  - **Latencia (misma franja):** reserva p50 1,60 → 1,72 s, p95 2,78 → 2,91 s (ruido), menos llamadas por turno (3,78 → 3,66). Sin turnos sin respuesta ni errores. En PRE: 40 datos de certificación puestos por el extractor, 8 lecturas del regex descartadas, 2 cambios confirmados.
+  - **PRE pasa a Álvaro** para probar ex-2 y ex-3 (decisión de Gadea): no lanzar rondas hasta que acabe. Siguiente nuestro: ex-7 (grupo).
+  - Tests: `tests/test_ex6_certificacion.py`; los del camino viejo fijan el flag apagado.
+
 0.31.13 - (2026-10-13)
 ----------------------
 * **EX-8 HECHO: la actividad y la nacionalidad las decide el extractor "LLM primero" (`EXTRACCION_LLM_ACTIVIDAD`, PROMOCIONADO)** (Gadea con Claude; Gadea dio permiso para llevarlo hasta el final).

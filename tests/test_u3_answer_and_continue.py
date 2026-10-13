@@ -49,6 +49,7 @@ def _offline(monkeypatch):
     monkeypatch.setattr(settings, "extraccion_llm_ubicacion", False)
     # Igual con ex-8 (`extraccion_llm_actividad`): actividad y nacionalidad (tests/test_ex8_actividad_nacionalidad.py).
     monkeypatch.setattr(settings, "extraccion_llm_actividad", False)
+    monkeypatch.setattr(settings, "extraccion_llm_certificacion", False)  # ex-6: tests/test_ex6_certificacion.py
 
 
 @pytest.fixture

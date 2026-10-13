@@ -25,6 +25,7 @@ def _camino_viejo_de_actividad(monkeypatch):
     from src.config import settings as _settings
 
     monkeypatch.setattr(_settings, "extraccion_llm_actividad", False)
+    monkeypatch.setattr(_settings, "extraccion_llm_certificacion", False)  # ex-6: tests/test_ex6_certificacion.py
 
 
 def _closed(allocation=None, colombian=True):
