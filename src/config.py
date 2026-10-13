@@ -60,18 +60,19 @@ class Settings(BaseSettings):
     # (escalation.EMERGENCY_KEYWORDS) y las incidencias en tiempo real; lo medico, el tiempo y las quejas los decide
     # Jev (`sensitive_topic`). Con la lista entera, "completed the medical form" o "mi amigo es abogado" pasaban a un
     # asesor. Escalon 0 (docs/robustness/escalado/, scripts/banco_escalado.py): falsas alarmas 32-33 -> 11-12,
-    # perdidas 4-5 -> 5-7 (solo del tiempo). APAGADO hasta su mini-ronda.
-    escalado_solo_emergencias: bool = False
+    # perdidas 4-5 -> 5-7 (solo del tiempo). ENCENDIDO para la mini-ronda ex23-B (13-oct).
+    escalado_solo_emergencias: bool = True
     # ex-3 (fase EX): respuestas de texto fijo ACTIVAS que pasan al RAG, una por flag (inventario y motivos:
     # docs/robustness/atajos/inventario-ex3.md). APAGADOS hasta medirlos.
     # - resumen de "¿qué ofrecen para bucear?" (rag_agent._canonical_diving_overview_answer): en las 38 rondas guardadas
     #   de PRE solo saltó con un buzo certificado que daba fechas ("soy open… no sé qué tienen"), al que le contestaba
     #   "¿Nunca has buceado? → minicurso". El catálogo entero ya va en el contexto del RAG.
-    atajo_resumen_por_rag: bool = False
+    atajo_resumen_por_rag: bool = True  # ENCENDIDO para ex23-B; escalón 0 (sonda, 16 preguntas): mejor
     # - "¿cambia el precio si es colombiano?": la regla de moneda va en el catálogo y en 2 FAQs curadas.
-    atajo_nacionalidad_por_rag: bool = False
+    atajo_nacionalidad_por_rag: bool = True  # ENCENDIDO para ex23-B (no toca su golden); escalón 0: igual o mejor
     # - alergia a un alimento (sin alcohol en el mensaje): la FAQ curada "Soy vegetariano o tengo una alergia" lo
-    #   cubre. El enrutador la sigue mandando a info (no al aviso médico).
+    #   cubre. NO PASA el escalón 0 (13-oct): con el flag la alergia acaba en el aviso médico ("Para preguntas médicas…");
+    #   se queda la respuesta fija. APAGADO.
     atajo_alergia_por_rag: bool = False
     # Model for the RAG answer-generation call only (rag_agent.py
     # `_answer_with_llm`). Kept SEPARATE from `openai_model` (used broadly

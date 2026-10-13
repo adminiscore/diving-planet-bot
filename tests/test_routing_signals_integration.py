@@ -15,6 +15,17 @@ from src.agents.supervisor import route_message
 from src.flows.state import ConversationState, Step
 
 
+@pytest.fixture(autouse=True)
+def _camino_antiguo_ex2_ex3(monkeypatch):
+    """Estos tests fijan el camino de antes de ex-2/ex-3 (lista entera de palabras clave y respuestas fijas); lo nuevo
+    lo cubren tests/test_ex2_escalado.py y tests/test_ex3_atajos.py."""
+    from src.config import settings as _flags
+
+    monkeypatch.setattr(_flags, "escalado_solo_emergencias", False)
+    monkeypatch.setattr(_flags, "atajo_resumen_por_rag", False)
+    monkeypatch.setattr(_flags, "atajo_nacionalidad_por_rag", False)
+
+
 def make_state(lang: str = "es", step: Step = Step.FREE_TEXT) -> ConversationState:
     s = ConversationState(conversation_id="routing-test")
     s.language = lang

@@ -31,8 +31,8 @@ def test_las_falsas_alarmas_de_la_lista_ya_no_pasan_a_un_asesor(ex2, mensaje):
     "We have both completed the medical form, could you confirm the meeting location?",
     "mi amigo es abogado y también quiere bucear, somos 3",
 ])
-def test_apagado_la_lista_entera_sigue_como_hoy(mensaje):
-    assert settings.escalado_solo_emergencias is False
+def test_apagado_la_lista_entera_sigue_como_hoy(monkeypatch, mensaje):
+    monkeypatch.setattr(settings, "escalado_solo_emergencias", False)
     assert detect_sensitive_escalation(mensaje, "es") is not None
 
 
