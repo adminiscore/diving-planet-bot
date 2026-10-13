@@ -144,6 +144,10 @@ services:
       EXTRACCION_LLM_ACTIVIDAD: "true"
       # ex-2 (fase EX): solo las emergencias pasan a un asesor por palabra clave; el resto lo decide Jev. APAGADO.
       ESCALADO_SOLO_EMERGENCIAS: "false"
+      # ex-3 (fase EX): respuestas de texto fijo activas que pasan al RAG, una por flag. APAGADOS hasta medirlos.
+      ATAJO_RESUMEN_POR_RAG: "false"
+      ATAJO_NACIONALIDAD_POR_RAG: "false"
+      ATAJO_ALERGIA_POR_RAG: "false"
       # g-7 paso 4 (24-sep): los chats antiguos (conversations.json) y el few-shot
       # se borraron del codigo y del indice, asi que RAG_EXCLUDE_SOURCES y
       # RAG_FEWSHOT_ENABLED ya no hacen falta. l1-1 (juez de grounding unico) es

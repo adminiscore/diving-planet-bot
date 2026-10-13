@@ -70,7 +70,7 @@ leer la salida del revisor (2).
 - **Hecho cuando:** ninguna emergencia perdida en el banco, menos falsos escalados; mini-ronda de los diálogos de
   escalado/queja sin regresiones.
 
-### ex-3 · Atajos de texto fijo activos (28)
+### ex-3 · Atajos de texto fijo activos (28) — 🟡 inventario y flags HECHOS 13-oct (Álvaro, HISTORY 0.31.15, `docs/robustness/atajos/inventario-ex3.md`); falta medir
 - "Qué ofrecen para bucear" (`_OVERVIEW_*`), alcohol/alergias, "¿eres una IA?", "mismo precio por nacionalidad":
   contestan con texto fijo cuando casa una palabra. Uno a uno, con flag: ¿el RAG lo contesta igual o mejor con la
   base? Los que sean política obligatoria (texto que el negocio quiere literal) se quedan, pero decididos por Jev.

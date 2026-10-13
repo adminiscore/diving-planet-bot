@@ -1,0 +1,23 @@
+{
+  "que_es": "Preguntas del escalón 0 de ex-3 (fase EX, 12-oct): para cada respuesta fija candidata a pasar al RAG, las frases que hoy la disparan, otras formas de preguntar lo mismo y una falsa alarma real. 'debe' es lo que tiene que contener una buena respuesta (se lee a mano). Se pasan con scripts/sonda_atajos_pre.py dentro de PRE, con los flags de ex-3 apagados y encendidos.",
+  "preguntas": [
+    {"id": "r1", "atajo": "resumen", "idioma": "es", "texto": "¿qué ofrecen para bucear?", "debe": "Las opciones según su situación (nunca ha buceado: minicurso; certificado: salidas y paquetes; quiere titularse: cursos; sin bucear: snorkel), sin inventar precios."},
+    {"id": "r2", "atajo": "resumen", "idioma": "en", "texto": "what do you offer for diving?", "debe": "Same options by situation, in English, no invented prices."},
+    {"id": "r3", "atajo": "resumen", "idioma": "es", "texto": "¿qué opciones de buceo tienen?", "debe": "Las opciones según su situación."},
+    {"id": "r4", "atajo": "resumen", "idioma": "es", "texto": "hola, qué planes tienen para hacer buceo en las islas?", "debe": "Las opciones según su situación."},
+    {"id": "r5", "atajo": "resumen", "idioma": "es", "texto": "Hola, buenos días. Deca del centro de buceo. Me recomendaron a ustedes para bucear en Cartagena. Yo voy a estar entre el 5 y el 7 por allá. Entonces quería ver si tienen alguna salida programada. Yo soy open y me gustaría salir un día y tal. No sé qué tienen. Muchas gracias.", "debe": "Falsa alarma real (golden certificado-fechas-fotos-y-reserva t1): tratarle como buzo certificado (salida de 2 inmersiones / paquetes), NO preguntarle si nunca ha buceado."},
+    {"id": "r6", "atajo": "resumen", "idioma": "en", "texto": "I'm an advanced diver, what dive trips do you have?", "debe": "Salidas y paquetes para certificados; no el resumen de principiantes."},
+
+    {"id": "n1", "atajo": "nacionalidad", "idioma": "es", "texto": "lo mismo pero para mi amigo que es colombiano, cambia algo?", "debe": "No cambia el precio; solo la moneda: COP para colombianos y residentes, USD para el resto; sin descuento por nacionalidad. Sin inventar otro precio."},
+    {"id": "n2", "atajo": "nacionalidad", "idioma": "es", "texto": "¿el precio es el mismo para colombianos y extranjeros?", "debe": "Mismo precio; cambia la moneda (COP / USD)."},
+    {"id": "n3", "atajo": "nacionalidad", "idioma": "en", "texto": "is it the same price for colombians and foreigners?", "debe": "Same price; only the currency changes (COP / USD)."},
+    {"id": "n4", "atajo": "nacionalidad", "idioma": "es", "texto": "si soy extranjero pago diferente?", "debe": "Mismo precio en USD; los colombianos y residentes en COP."},
+    {"id": "n5", "atajo": "nacionalidad", "idioma": "es", "texto": "mi novia es colombiana y yo soy gringo, pagamos distinto?", "debe": "Mismo precio; la moneda depende de cada uno (grupo mezclado: lo que diga la regla de moneda del catálogo)."},
+
+    {"id": "a1", "atajo": "alergia", "idioma": "es", "texto": "soy alérgico a los mariscos, ¿pueden atenderme con la comida?", "debe": "Sí: almuerzo de arroz con pollo o con vegetales; avisar la alergia al reservar. Sin pasar al aviso médico."},
+    {"id": "a2", "atajo": "alergia", "idioma": "en", "texto": "I have a peanut allergy, is the lunch safe for me?", "debe": "Lunch options and to tell the team about the allergy when booking. No medical escalation."},
+    {"id": "a3", "atajo": "alergia", "idioma": "es", "texto": "mi hija es celíaca y alérgica al gluten, ¿hay algo para ella en el almuerzo?", "debe": "Celíacos reciben arroz con vegetales; avisar al reservar."},
+    {"id": "a4", "atajo": "alergia", "idioma": "es", "texto": "tengo alergia a la lactosa, qué incluye el almuerzo?", "debe": "Qué incluye el almuerzo y avisar la alergia al reservar."},
+    {"id": "a5", "atajo": "alergia", "idioma": "es", "texto": "queremos bucear mañana, anoche tomamos alcohol y uno es alérgico a los mariscos", "debe": "Con alcohol: la política de alcohol Y la de comida juntas (texto fijo, también con el flag)."}
+  ]
+}

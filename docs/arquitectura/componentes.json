@@ -439,7 +439,12 @@
       "tipo": "agente",
       "titulo": "Textos fijos y atajos",
       "que_hace": "Bloquea datos personales y contesta con texto fijo lo que ya tiene respuesta cerrada (políticas, vista general del buceo).",
-      "donde": "src/agents/info_agent.py:info_node"
+      "donde": "src/agents/info_agent.py:info_node",
+      "interruptores": [
+        "atajo_resumen_por_rag",
+        "atajo_nacionalidad_por_rag",
+        "atajo_alergia_por_rag"
+      ]
     },
     {
       "id": "r_reescribir",
@@ -1000,6 +1005,21 @@
       "area": "Preguntas",
       "titulo": "Contestar la parte que sabe",
       "texto": "Decir lo que sí se sabe antes de decir que falta el resto. Medido el 29-sep: empeora."
+    },
+    "atajo_resumen_por_rag": {
+      "area": "Respuestas fijas",
+      "titulo": "«¿Qué ofrecen para bucear?» lo contesta el RAG",
+      "texto": "Sin el resumen fijo de opciones: en las pruebas solo saltaba con un buzo certificado que daba fechas, al que le preguntaba si nunca había buceado. El RAG tiene el catálogo entero."
+    },
+    "atajo_nacionalidad_por_rag": {
+      "area": "Respuestas fijas",
+      "titulo": "«¿Cambia el precio si es colombiano?» lo contesta el RAG",
+      "texto": "Sin el texto fijo: la regla de la moneda (mismo precio, COP para colombianos y residentes, USD para el resto) ya va en el catálogo y en las FAQs."
+    },
+    "atajo_alergia_por_rag": {
+      "area": "Respuestas fijas",
+      "titulo": "La alergia a un alimento la contesta el RAG",
+      "texto": "Sin el texto fijo de la política de comida (salvo si el mensaje también habla de alcohol): la FAQ de vegetarianos y alergias lo cubre. Sigue sin pasar al aviso médico."
     },
     "s4_fixes": {
       "area": "Respuestas fijas",

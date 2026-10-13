@@ -53,6 +53,17 @@ class Settings(BaseSettings):
     # asesor. Escalon 0 (docs/robustness/escalado/, scripts/banco_escalado.py): falsas alarmas 32-33 -> 11-12,
     # perdidas 4-5 -> 5-7 (solo del tiempo). APAGADO hasta su mini-ronda.
     escalado_solo_emergencias: bool = False
+    # ex-3 (fase EX): respuestas de texto fijo ACTIVAS que pasan al RAG, una por flag (inventario y motivos:
+    # docs/robustness/atajos/inventario-ex3.md). APAGADOS hasta medirlos.
+    # - resumen de "¿qué ofrecen para bucear?" (rag_agent._canonical_diving_overview_answer): en las 38 rondas guardadas
+    #   de PRE solo saltó con un buzo certificado que daba fechas ("soy open… no sé qué tienen"), al que le contestaba
+    #   "¿Nunca has buceado? → minicurso". El catálogo entero ya va en el contexto del RAG.
+    atajo_resumen_por_rag: bool = False
+    # - "¿cambia el precio si es colombiano?": la regla de moneda va en el catálogo y en 2 FAQs curadas.
+    atajo_nacionalidad_por_rag: bool = False
+    # - alergia a un alimento (sin alcohol en el mensaje): la FAQ curada "Soy vegetariano o tengo una alergia" lo
+    #   cubre. El enrutador la sigue mandando a info (no al aviso médico).
+    atajo_alergia_por_rag: bool = False
     # Model for the RAG answer-generation call only (rag_agent.py
     # `_answer_with_llm`). Kept SEPARATE from `openai_model` (used broadly
     # across the bot) so we can trial a stronger model for JUST this call --

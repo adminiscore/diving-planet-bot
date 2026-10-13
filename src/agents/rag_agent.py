@@ -981,7 +981,8 @@ async def rag_answer(
         else:
             extra_context = f"{extra_context}\n\n{facts}" if extra_context else facts
 
-    diving_overview = _canonical_diving_overview_answer(query, lang)
+    # ex-3 (`atajo_resumen_por_rag`): con el flag, la pregunta abierta la contesta el RAG con el catálogo.
+    diving_overview = None if settings.atajo_resumen_por_rag else _canonical_diving_overview_answer(query, lang)
     if diving_overview:
         logger.info(f"[RAG][CANONICAL_SHORTCUT] shortcut=diving_overview query={query!r} lang={lang}")
         return diving_overview

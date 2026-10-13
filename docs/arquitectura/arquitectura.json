@@ -1,8 +1,8 @@
 {
  "meta": {
-  "generado": "2026-10-12T21:05:23+00:00",
-  "commit": "f4b43e1",
-  "rama": "feature/ex2_alvaro"
+  "generado": "2026-10-13T07:40:12+00:00",
+  "commit": "f4c0126",
+  "rama": "feature/ex3_alvaro"
  },
  "vistas": {
   "general": {
@@ -719,8 +719,30 @@
    "titulo": "Textos fijos y atajos",
    "que_hace": "Bloquea datos personales y contesta con texto fijo lo que ya tiene respuesta cerrada (políticas, vista general del buceo).",
    "donde": "src/agents/info_agent.py:info_node",
-   "modelos": [],
-   "interruptores": []
+   "interruptores": [
+    {
+     "nombre": "atajo_resumen_por_rag",
+     "titulo": "«¿Qué ofrecen para bucear?» lo contesta el RAG",
+     "codigo": false,
+     "pre": false,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "atajo_nacionalidad_por_rag",
+     "titulo": "«¿Cambia el precio si es colombiano?» lo contesta el RAG",
+     "codigo": false,
+     "pre": false,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "atajo_alergia_por_rag",
+     "titulo": "La alergia a un alimento la contesta el RAG",
+     "codigo": false,
+     "pre": false,
+     "sin_efecto": false
+    }
+   ],
+   "modelos": []
   },
   {
    "id": "r_reescribir",
@@ -1621,6 +1643,45 @@
    "usado_por": [
     "b_routing",
     "b_pregunta"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "atajo_alergia_por_rag",
+   "area": "Respuestas fijas",
+   "titulo": "La alergia a un alimento la contesta el RAG",
+   "texto": "Sin el texto fijo de la política de comida (salvo si el mensaje también habla de alcohol): la FAQ de vegetarianos y alergias lo cubre. Sigue sin pasar al aviso médico.",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": true,
+   "usado_por": [
+    "r_reglas"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "atajo_nacionalidad_por_rag",
+   "area": "Respuestas fijas",
+   "titulo": "«¿Cambia el precio si es colombiano?» lo contesta el RAG",
+   "texto": "Sin el texto fijo: la regla de la moneda (mismo precio, COP para colombianos y residentes, USD para el resto) ya va en el catálogo y en las FAQs.",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": true,
+   "usado_por": [
+    "r_reglas"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "atajo_resumen_por_rag",
+   "area": "Respuestas fijas",
+   "titulo": "«¿Qué ofrecen para bucear?» lo contesta el RAG",
+   "texto": "Sin el resumen fijo de opciones: en las pruebas solo saltaba con un buzo certificado que daba fechas, al que le preguntaba si nunca había buceado. El RAG tiene el catálogo entero.",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": true,
+   "usado_por": [
+    "r_reglas"
    ],
    "sin_efecto": null
   },

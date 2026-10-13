@@ -279,7 +279,10 @@ def _alcohol_and_food_policy_answer(msg_lower: str, lang: str) -> str | None:
         text = (policies.get("no_alcohol_policy") or {}).get(lang, "")
         if text:
             parts.append(text)
-    if _ALLERGY_WORD_RE.search(msg_lower) and _FOOD_ALLERGEN_RE.search(msg_lower):
+    # ex-3 (`atajo_alergia_por_rag`): la alergia sola la contesta el RAG (FAQ curada); con alcohol en el mismo
+    # mensaje va junta, como hoy (la política de alcohol no está en la base del RAG).
+    alergia_por_rag = settings.atajo_alergia_por_rag and not parts
+    if not alergia_por_rag and _ALLERGY_WORD_RE.search(msg_lower) and _FOOD_ALLERGEN_RE.search(msg_lower):
         text = (policies.get("food_policy") or {}).get(lang, "")
         if text:
             parts.append(text)
@@ -350,6 +353,14 @@ _SAME_PRICE_DIFFERENT_NATIONALITY_RE = re.compile(
     r"same\s+(?:price|thing).{0,40}(?:colombian|foreign)",
     re.IGNORECASE,
 )
+
+
+def fixed_same_price_answer(msg_lower: str, lang: str) -> str | None:
+    """La respuesta fija de "¿cambia el precio por nacionalidad?", o None si no aplica o (ex-3,
+    `atajo_nacionalidad_por_rag`) la contesta el RAG con la regla de moneda del catálogo."""
+    if settings.atajo_nacionalidad_por_rag or not _SAME_PRICE_DIFFERENT_NATIONALITY_RE.search(msg_lower):
+        return None
+    return _same_price_different_nationality_answer(lang)
 
 
 def _same_price_different_nationality_answer(lang: str) -> str:
@@ -3064,9 +3075,10 @@ async def _shared_turn_handler(
     # depende del paquete), sin pasar por RAG (que alucinaba un precio
     # equivocado al intentar re-generar el numero). Ver
     # _same_price_different_nationality_answer.
-    if _SAME_PRICE_DIFFERENT_NATIONALITY_RE.search(msg_lower):
+    same_price = fixed_same_price_answer(msg_lower, state.language)
+    if same_price is not None:
         logger.info("[SUPERVISOR] Same price, different nationality question -> real deterministic answer")
-        return _same_price_different_nationality_answer(state.language)
+        return same_price
 
     # SAFETY FIRST: broken-link complaints and sensitive topics (medical,
     # weather, complaints) must escalate BEFORE the intent detector runs.

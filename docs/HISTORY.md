@@ -1,6 +1,14 @@
 History
 =======
 
+0.31.15 - (2026-10-13)
+----------------------
+* **EX-3 PREPARADO: inventario de las respuestas de texto fijo ACTIVAS y tres de ellas, con su flag, pasan al RAG** (APAGADOS hasta medirlos en PRE; Álvaro con Claude, en paralelo a ex-8). Detalle: `docs/robustness/atajos/inventario-ex3.md`.
+  - **Al RAG, cada una con su flag:** el resumen de "¿qué ofrecen para bucear?" (`ATAJO_RESUMEN_POR_RAG`), "¿cambia el precio si es colombiano?" (`ATAJO_NACIONALIDAD_POR_RAG`) y la alergia a un alimento sin alcohol en el mensaje (`ATAJO_ALERGIA_POR_RAG`; el enrutador la sigue mandando a info, no al aviso médico). La base del RAG ya lo tiene: el catálogo entero, la regla de moneda y las FAQs curadas 14, 100 y 116.
+  - **Hallazgo del resumen:** en las 38 rondas guardadas de PRE solo saltó con un mensaje, el de un buzo certificado que da fechas ("soy open… No sé qué tienen", golden `certificado-fechas-fotos-y-reserva`), y le llegaba "¿Nunca has buceado? → minicurso". El juez no lo veía: ningún criterio mira ese turno.
+  - **Se quedan, justificadas:** alcohol antes de bucear (la política no está en la base del RAG), "¿eres una IA?" (texto literal de s4-15) y grupo privado/empresa. **Hallazgo:** el grupo privado contesta "Te paso con un asesor…" pero no marca el pase; solo llega a un asesor si el cliente responde "sí/ok" justo después. Propuesta aparte.
+  - Para medir: `scripts/sonda_atajos_pre.py` con `docs/robustness/atajos/preguntas-ex3.json` (16 preguntas) dentro de PRE, flags apagados y encendidos (~0,4 $). Tests en `tests/test_ex3_atajos.py`.
+
 0.31.14 - (2026-10-12)
 ----------------------
 * **EX-2 PREPARADO: solo las emergencias (y las incidencias) pasan a un asesor por palabra clave; lo médico, el tiempo y las quejas los decide Jev** (`ESCALADO_SOLO_EMERGENCIAS`, APAGADO hasta su mini-ronda; Álvaro con Claude, en paralelo a ex-8). Hoy la lista de 114 palabras (`escalation.SENSITIVE_RULES`) pasa el caso a un asesor ANTES de que opine la IA, aunque Jev diga que no hace falta.
