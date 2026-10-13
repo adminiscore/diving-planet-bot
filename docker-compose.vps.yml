@@ -145,9 +145,11 @@ services:
       # ex-6 (fase EX): la certificacion y la ultima inmersion las decide el extractor "LLM primero". PROMOCIONADO
       # 13-oct (HISTORY 0.31.14). Revert = "false" aqui y en config.py.
       EXTRACCION_LLM_CERTIFICACION: "true"
-      # ex-2 (fase EX): solo las emergencias pasan a un asesor por palabra clave; el resto lo decide Jev. APAGADO.
+      # ex-2 (fase EX): solo emergencias e incidencias pasan a un asesor por palabra clave; el resto lo decide Jev.
+      # PROMOCIONADO 13-oct (Alvaro, HISTORY 0.31.18). Revert = "false" aqui y en config.py.
       ESCALADO_SOLO_EMERGENCIAS: "true"
-      # ex-3 (fase EX): respuestas de texto fijo activas que pasan al RAG, una por flag. APAGADOS hasta medirlos.
+      # ex-3 (fase EX): respuestas fijas que pasan al RAG. Resumen y nacionalidad PROMOCIONADOS 13-oct (HISTORY
+      # 0.31.18); alergia no paso su escalon 0 (acababa en el aviso medico): APAGADO.
       ATAJO_RESUMEN_POR_RAG: "true"
       ATAJO_NACIONALIDAD_POR_RAG: "true"
       ATAJO_ALERGIA_POR_RAG: "false"

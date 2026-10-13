@@ -77,10 +77,12 @@ certificación" = Open Water, o el Referido; el Scuba Diver es la parcial). **De
 dependa de varios turnos (como "certificado + quiere bucear") va en el código con hechos guardados en el estado, no en
 el prompt.
 
-### ▶️ 12-13 oct (Álvaro con Claude), en paralelo a Gadea: ex-1 HECHO; ex-2 y ex-3 PREPARADOS (flags apagados)
+### ▶️ RETOMAR AQUÍ — 13-oct tarde (Álvaro con Claude): ex-1, ex-2 y ex-3 CERRADOS (promocionados); siguiente ex-7
 
-**Estado.** Integrado con ex-6 y ex-8 de Gadea en `feature/pre_alvaro` (13-oct). ex-1 no cambia la conducta; ex-2 y ex-3
-van con sus flags APAGADOS hasta medirlos en PRE. La rama `feature/ex6_alvaro` queda OBSOLETA: ex-6 lo hizo Gadea
+**Estado.** PRE sirve `feature/pre_alvaro` (lleva todo `feature/pre_gadea`: ex-5, ex-6 y ex-8) con
+`ESCALADO_SOLO_EMERGENCIAS`, `ATAJO_RESUMEN_POR_RAG` y `ATAJO_NACIONALIDAD_POR_RAG` **encendidos (promocionados, decisión
+de Álvaro, HISTORY 0.31.18)**; `ATAJO_ALERGIA_POR_RAG` apagado (no pasó su escalón 0). Integrad `feature/pre_alvaro`
+antes de subir. La rama `feature/ex6_alvaro` queda OBSOLETA: ex-6 lo hizo Gadea
 (HISTORY 0.31.14); sus medidas (`docs/robustness/regex/banco-ex0/ex6/` en esa rama) solo sirven de referencia.
 
 | Qué | Resultado | Dónde |
@@ -89,12 +91,14 @@ van con sus flags APAGADOS hasta medirlos en PRE. La rama `feature/ex6_alvaro` q
 | ex-2: solo las emergencias e incidencias pasan a un asesor por palabra clave (`ESCALADO_SOLO_EMERGENCIAS`, apagado) | banco de 76 frases, 2×2 pasadas: falsas alarmas 32-33 → 11-12; perdidas 4-5 → 5-7, solo del tiempo ("hoy hace mucho viento") | `feature/ex2_alvaro`, `docs/robustness/escalado/` |
 | ex-3: respuestas fijas activas al RAG, una por flag (`ATAJO_RESUMEN_POR_RAG`, `ATAJO_NACIONALIDAD_POR_RAG`, `ATAJO_ALERGIA_POR_RAG`) | inventario: el resumen solo saltaba con un buzo certificado que da fechas (falsa alarma que llega al cliente); alcohol, "¿eres una IA?" y grupo privado se quedan. Hallazgo: el grupo privado promete "te paso con un asesor" y no lo pasa | `feature/ex3_alvaro`, `docs/robustness/atajos/inventario-ex3.md` |
 
+| Cierre de ex-2/ex-3 | sonda de ex-3 en PRE (16 preguntas): resumen y nacionalidad mejor o igual, alergia NO; mini-ronda ex23 (13 diálogos) 95,3 → 95,3 %, 2 mejoras, 1 regresión ajena | HISTORY 0.31.18 |
+
 **Siguiente (en orden):**
-1. ex-3: escalón 0 en PRE con `scripts/sonda_atajos_pre.py` (16 preguntas, leer cada respuesta frente a su `debe`).
-2. ex-2: mini-ronda A/B de las 12 conversaciones de `docs/robustness/escalado/dialogos-mini-ronda.txt` (mirar el
-   tiempo y que médico/quejas sigan pasando a un asesor).
-3. Decidir qué hacer con el grupo privado, que promete "te paso con un asesor" y no marca el pase (HISTORY 0.31.17).
-4. ex-7, ex-9 y ex-10 (plan de Gadea).
+1. ex-7 (grupo y reparto): igual que ex-5/ex-6/ex-8, con flag propio, banco y A/B en la misma franja.
+2. Restos: el saludo que toma "gringo" por un nombre; el grupo privado que promete un pase que no hace; restos de ex-8
+   (posventa que ofrece actividades, idioma "Frances").
+3. ex-9 (retirar el camino viejo), una fase corta de flujo y repreguntas (recomendación de Gadea) y ex-10 con el
+   examen oculto.
 
 ### ▶️ (anterior) 12-oct (Gadea con Claude): fase EX — ex-0, ex-4 y ex-5 HECHOS (ex-5 promocionado); siguiente ex-6
 

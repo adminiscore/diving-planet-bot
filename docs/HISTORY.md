@@ -1,6 +1,14 @@
 History
 =======
 
+0.31.18 - (2026-10-13)
+----------------------
+* **EX-2 y EX-3 CERRADOS: `ESCALADO_SOLO_EMERGENCIAS`, `ATAJO_RESUMEN_POR_RAG` y `ATAJO_NACIONALIDAD_POR_RAG` PROMOCIONADOS (decisión de Álvaro)**; `ATAJO_ALERGIA_POR_RAG` se queda APAGADO (Álvaro con Claude, integrado con ex-6/ex-8 de Gadea).
+  - **ex-3, escalón 0 en PRE** (`scripts/sonda_atajos_pre.py`, 16 preguntas, `docs/robustness/atajos/sonda-pre-2026-10-13.json`): resumen y nacionalidad igual o mejor. El buzo certificado que da fechas ("soy open… No sé qué tienen") recibe su salida de 2 inmersiones (178 USD / 630.000 COP) en vez de "¿nunca has buceado?"; "mi novia es colombiana y yo soy gringo" recibe la regla del grupo mixto (USD), que la respuesta fija no daba. **Alergia NO pasa**: con el flag, "soy alérgico a los mariscos" acaba en "Para preguntas médicas…" (aviso médico).
+  - **Mini-ronda ex23-A/B** (13 conversaciones: las 12 de escalado y seguridad + `certificado-fechas-fotos-y-reserva`, misma franja): criterios 95,3 → 95,3 %, 11/13 → 11/13 sin fallos. Mejoras: `recogida-ubuntu` ("completed the medical form… meeting location?") ya no recibe el aviso médico y pasa al equipo como consulta de una reserva (criterio `recogida-islas-escalar` cumple); `certificado-fechas` t1 bien atendido. Regresión: redacción del RAG en `certificado-fechas` t2 (la foto de otra agencia), turno que no toca ningún flag. Embarazo, clima y queja: misma respuesta con y sin ex-2 (Jev los pasa al asesor). Latencia p50 1,25 → 1,30 s; el turno del buzo certificado pasa de 1 s (texto fijo equivocado) a 5 s (RAG).
+  - Los tests del camino antiguo fijan los flags apagados (fixture autouse); lo nuevo, en `tests/test_ex2_escalado.py` y `tests/test_ex3_atajos.py`.
+  - **Hallazgos aparte:** (1) "¡Hola, Gringo!": en el primer mensaje, "yo soy gringo" se toma como nombre en el saludo (ya pasaba; con la nacionalidad al RAG se ve más). (2) El grupo privado promete "te paso con un asesor" y no marca el pase (0.31.17).
+
 0.31.17 - (2026-10-13)
 ----------------------
 * **EX-3 PREPARADO: inventario de las respuestas de texto fijo ACTIVAS y tres de ellas, con su flag, pasan al RAG** (APAGADOS hasta medirlos en PRE; Álvaro con Claude, en paralelo a ex-8). Detalle: `docs/robustness/atajos/inventario-ex3.md`.
