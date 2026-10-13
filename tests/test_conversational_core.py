@@ -444,9 +444,10 @@ async def test_snorkel_companion_added_after_close():
 
 
 @pytest.mark.asyncio
-async def test_companion_beginner_added_mid_flow():
+async def test_companion_beginner_added_mid_flow(monkeypatch):
     """Acompañante minicurso mencionado ANTES del cierre: se acumula en el
     reparto y el carrito final tiene ambos ítems."""
+    monkeypatch.setattr(settings, "extraccion_llm_certificacion", False)  # camino de antes de ex-6
     state = make_state("es")
     await route_message(state, "soy buzo certificado, quiero bucear desde cartagena, voy solo")
     assert state.core_pending_slot == core.SLOT_SAFETY
@@ -632,6 +633,7 @@ async def test_understand_requests_only_state_missing_fields(monkeypatch):
     """Cuando SÍ hay huecos, la llamada pide SOLO los campos que el estado no
     conoce (ej. real de los logs de PRE: 'Cartagena' disparaba una llamada que
     rellenaba activity/is_certified/group_size — los tres ya conocidos)."""
+    monkeypatch.setattr(settings, "extraccion_llm_certificacion", False)  # camino de antes de ex-6
     # Camino de antes: con ex-5 la ubicación ya no se pide al relleno (la decide el extractor).
     monkeypatch.setattr(settings, "extraccion_llm_ubicacion", False)
     captured = {}
@@ -1092,7 +1094,7 @@ def test_full_booking_recap_none_when_nothing_resolved():
 
 
 @pytest.mark.asyncio
-async def test_price_question_naming_certified_diving_does_not_reask_certification():
+async def test_price_question_naming_certified_diving_does_not_reask_certification(monkeypatch):
     """Hallazgo en vivo (bateria sintetica contra PRE, lote 9, 2026-09-02):
     "how much for 2 people, certified diving?" respondia el precio
     correctamente pero volvia a preguntar "Are you a certified diver?" pegado
@@ -1103,6 +1105,7 @@ async def test_price_question_naming_certified_diving_does_not_reask_certificati
     en None y `next_missing_slot` lo pedia de nuevo. Fix: `_answer_question`
     ahora reconoce que el propio mensaje respalda certified_diving
     textualmente y fija `is_certified=True` antes de decidir si re-preguntar."""
+    monkeypatch.setattr(settings, "extraccion_llm_certificacion", False)  # camino de antes de ex-6
     state = make_state("en")
     state.detected_activity = "certified_diving"
     state.is_certified = None
@@ -1736,7 +1739,7 @@ async def test_closing_affirmation_without_person_mention_does_not_reopen_with_p
 
 
 @pytest.mark.asyncio
-async def test_slang_companion_with_different_activity_still_trusts_llm():
+async def test_slang_companion_with_different_activity_still_trusts_llm(monkeypatch):
     """Regresion/estrictez del fix anterior: la condicion de "misma
     actividad" es justo lo que preserva el caso de jerga regional que
     motivo confiar en el LLM en primer lugar (hallazgo en vivo 2026-07-22,
@@ -1746,6 +1749,7 @@ async def test_slang_companion_with_different_activity_still_trusts_llm():
     atribuye al companero una actividad DISTINTA (minicourse) de la del
     grupo (certified_diving), la señal real de un acompañante genuino con
     necesidades propias -- este caso NO debe suprimirse."""
+    monkeypatch.setattr(settings, "extraccion_llm_certificacion", False)  # camino de antes de ex-6
     state = make_state("es")
     state.detected_activity = "certified_diving"
     state.is_certified = True
@@ -2350,6 +2354,7 @@ async def test_location_resolver_ignored_when_message_switches_activity(monkeypa
     ubicación que el cliente nunca dio. Fix: se descarta el valor resuelto
     cuando ESTE MISMO turno cambió la actividad principal — la ubicación
     debe seguir pendiente y volver a preguntarse."""
+    monkeypatch.setattr(settings, "extraccion_llm_certificacion", False)  # camino de antes de ex-6
     monkeypatch.setattr(core, "resolve_slot_answer",
                         AsyncMock(return_value={"value": "cartagena"}))
     state = _at_location_stage()

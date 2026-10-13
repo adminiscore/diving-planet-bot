@@ -76,6 +76,7 @@ async def test_grupo_mezclado_paga_en_usd(ex8):
 async def test_apagado_no_cambia_nada(monkeypatch):
     monkeypatch.setattr(settings, "extraccion_llm_actividad", False)
     monkeypatch.setattr(settings, "extraccion_llm_ubicacion", False)
+    monkeypatch.setattr(settings, "extraccion_llm_certificacion", False)
     llamada = AsyncMock(return_value={"activity": "snorkel"})
     monkeypatch.setattr(core, "datos_del_extractor", llamada)
     st = await _entender("quiero bucear certificado")

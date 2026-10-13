@@ -142,6 +142,9 @@ services:
       # ex-8 (fase EX): la actividad y la nacionalidad las decide el extractor "LLM primero". PROMOCIONADO
       # 13-oct (HISTORY 0.31.13). Revert = "false" aqui y en config.py.
       EXTRACCION_LLM_ACTIVIDAD: "true"
+      # ex-6 (fase EX): la certificacion y la ultima inmersion las decide el extractor "LLM primero". ENCENDIDO
+      # para la mini-ronda ex6-B (A = apagado, misma franja). Revert = "false" aqui y en config.py.
+      EXTRACCION_LLM_CERTIFICACION: "true"
       # g-7 paso 4 (24-sep): los chats antiguos (conversations.json) y el few-shot
       # se borraron del codigo y del indice, asi que RAG_EXCLUDE_SOURCES y
       # RAG_FEWSHOT_ENABLED ya no hacen falta. l1-1 (juez de grounding unico) es

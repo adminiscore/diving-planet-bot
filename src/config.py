@@ -48,6 +48,13 @@ class Settings(BaseSettings):
     # 6 -> 0. PROMOCIONADO 13-oct (HISTORY 0.31.13: rondas ex8-A/B/B2, 92,1 / 88,6 / 91,5 %, plana tras arreglar la B).
     # Revert = False aqui y en el compose.
     extraccion_llm_actividad: bool = True
+    # ex-6 (fase EX): la CERTIFICACION (`is_certified`) y si la ultima inmersion fue hace mas de 2 anos las decide el
+    # extractor "LLM primero" (cita comprobada). El regex leia "take the Open Water Diver course" como YA certificado y
+    # el relleno sacaba "certificado" de un "gracias". Un valor que contradice lo guardado se confirma; nivel nombrado
+    # sin decir si lo tiene o lo quiere sacar y sin cita del extractor -> se pregunta, como hoy (`_flag_cert_or_course`).
+    # conversational_core._aplicar_extractor. Escalon 0 (banco ex0, diseno): certificacion inventada 6 -> 0, casos con
+    # invento 4,5 -> 2,0 %. ENCENDIDO para la mini-ronda ex6-B. Revert = False aqui y en el compose.
+    extraccion_llm_certificacion: bool = True
     # Model for the RAG answer-generation call only (rag_agent.py
     # `_answer_with_llm`). Kept SEPARATE from `openai_model` (used broadly
     # across the bot) so we can trial a stronger model for JUST this call --

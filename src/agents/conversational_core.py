@@ -2083,6 +2083,7 @@ def _lugar_por_jev(intent, state: ConversationState) -> None:
 
 _CAMPOS_LUGAR = ("location", "island", "hotel")
 _CAMPOS_ACTIVIDAD = ("activity", "service_id", "is_colombian")
+_CAMPOS_CERTIFICACION = ("is_certified", "last_dive_over_2_years")
 
 
 def campos_del_extractor() -> tuple[str, ...]:
@@ -2093,6 +2094,8 @@ def campos_del_extractor() -> tuple[str, ...]:
         campos += _CAMPOS_LUGAR
     if settings.extraccion_llm_actividad:
         campos += _CAMPOS_ACTIVIDAD
+    if settings.extraccion_llm_certificacion:
+        campos += _CAMPOS_CERTIFICACION
     return campos
 
 
@@ -2132,7 +2135,8 @@ async def _aplicar_extractor(intent, state: ConversationState, message: str, pis
     datos = await datos_del_extractor(state, message)
     _quitar_provisional(intent, pista)
     if datos is None:
-        for dominio, campo_puerta in ((_CAMPOS_LUGAR, "location"), (_CAMPOS_ACTIVIDAD, None)):
+        for dominio, campo_puerta in ((_CAMPOS_LUGAR, "location"), (_CAMPOS_ACTIVIDAD, None),
+                                      (_CAMPOS_CERTIFICACION, "is_certified")):
             for campo in dominio:
                 if campo not in pista or campo not in campos_del_extractor():
                     continue
@@ -2158,6 +2162,30 @@ async def _aplicar_extractor(intent, state: ConversationState, message: str, pis
             state.quiere_bucear = True
         _poner_actividad(intent, state, datos, pista)
         _poner_nacionalidad(intent, state, message, datos)
+    if settings.extraccion_llm_certificacion:
+        _poner_certificacion(intent, state, message, datos, pista)
+
+
+def _poner_certificacion(intent, state: ConversationState, message: str, datos: dict, pista: dict) -> None:
+    """ex-6: si ya es buzo certificado y si su última inmersión fue hace más de 2 años, según el extractor (cita del
+    cliente). Lo que leía el regex queda como pista ("take the Open Water Diver course" no es estar certificado). Un
+    valor distinto del guardado se confirma, como hoy."""
+    for campo in _CAMPOS_CERTIFICACION:
+        valor = datos.get(campo)
+        if valor is None:
+            if pista.get(campo) is not None:
+                logger.info(f"[EXTRACT][EX6] el regex leía {campo}={pista[campo]!r}; el cliente no lo afirma")
+            continue
+        intent._certificacion_del_extractor = True
+        guardado = _known_field_values(state).get(campo)
+        if guardado is not None and guardado != valor:
+            logger.info(f"[EXTRACT][EX6] el cliente cambia {campo} {guardado!r} -> {valor!r}: se confirma")
+            _route_contradictions(state, message, intent, {campo: valor})
+            continue
+        setattr(intent, campo, valor)
+        if campo not in intent.detected_fields:
+            intent.detected_fields.append(campo)
+        logger.info(f"[EXTRACT][EX6] {campo}={valor!r} (regex: {pista.get(campo)!r})")
 
 
 def _poner_ubicacion(intent, state: ConversationState, message: str, datos: dict, pista: dict) -> None:
@@ -3165,6 +3193,9 @@ def _flag_cert_or_course(intent, state: ConversationState, message: str) -> None
     """Nivel PADI nombrado sin decir si lo tienen o lo quieren: no se da por buena la
     lectura del regex ni la del LLM (curso o buceo certificado) y se pregunta."""
     if state.needs_cert_or_course or state.is_certified is not None:
+        return
+    if getattr(intent, "_certificacion_del_extractor", False):
+        # ex-6: el extractor ya leyó con cita si lo tiene o lo quiere sacar; solo se pregunta si no lo dice.
         return
     if not course_level_is_ambiguous(message):
         return
@@ -5286,6 +5317,9 @@ def _named_certified_product_confirms_certification(state: ConversationState, me
     se fija. u3-4: con `answer_and_continue` la pregunta SI pasa por la extraccion, pero lo
     que lee el regex en ella se deja al LLM (`_leave_question_fields_to_llm`); esta regla,
     medida, se aplica igual en los dos caminos."""
+    if settings.extraccion_llm_certificacion:
+        # ex-6: lo decide el extractor (la regla del catálogo: el buceo certificado nombrado exige certificación).
+        return
     pending = state.core_pending_slot or next_missing_slot(state)
     if (
         pending == SLOT_CERTIFICATION
