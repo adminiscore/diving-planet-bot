@@ -41,7 +41,22 @@ PRE (escritas ya por Luna) tumba 42 frente a 13, casi todo verdades (HISTORY 0.3
 **C. Pendientes de antes:** el criterio del Open Water en `manual-duracion-curso` ✅ (FAQ curada nueva: "sacarse la
 certificación" = Open Water, o el Referido; el Scuba Diver es la parcial). **DeepSeek: FUERA DEL PLAN** (Gadea, 9-oct).
 
-### ▶️ RETOMAR AQUÍ — 14-oct, 18:45 (Gadea con Claude): EX-EST-2 primera parte hecha; queda el RAG que escribe datos mal; luego ex-9
+### ▶️ RETOMAR AQUÍ — 14-oct, 21:00 (Gadea con Claude): est3-B 91,3 %, 16/29; ACUSE_SOLO_EL_MENSAJE y EST2_DATOS promocionados; queda el resto de EX-EST-2
+
+**Estado.** PRE sirve `feature/pre_gadea` con `ACUSE_SOLO_EL_MENSAJE` y `EST2_DATOS` promocionados. HISTORY 0.31.25.
+Ronda est3-B frente a est2-B: 88,8 → 91,3 %, 12 → 16/29 sin fallos; 14 mejoras reales; 4 regresiones reales, ninguna
+de los flags. Dos se arreglan en la base (fotos: sin fotos solo en el minicurso; descuento de grupo: aplica a buceo
+recreativo, minicurso y snorkel), a medir en la siguiente ronda.
+
+**Siguiente, lo que queda de EX-EST-2 (una tanda, una ronda):**
+- **Moneda en el flujo:** "tengo extranjería" se guarda como "no colombiano" y el bot dice USD (la política ya dice COP). El
+  arreglo en el prompt del extractor movía otros campos (ver 0.31.24): buscar el arreglo por causa sin tocar el resto.
+- **Curso Referido:** repregunta la actividad en t5 ("Full name of dive center…") y no siempre da el punto de encuentro al
+  pedir los datos del centro.
+- **El revisor:** ampliar `scripts/banco_revisor.py` con respuestas REALES de las rondas (contexto completo).
+- Después, **ex-9** y **ex-10**.
+
+### ▶️ (anterior) 14-oct, 18:45 (Gadea con Claude): EX-EST-2 primera parte hecha; queda el RAG que escribe datos mal; luego ex-9
 
 **Estado.** PRE sirve `feature/pre_gadea` con `RECOMENDAR_A_CERTIFICADOS` promocionado. HISTORY 0.31.24. La base ya
 recoge las decisiones de Gadea del 14-oct (el Curso Referido duerme en las islas; pasadas las 4:30, web para el siguiente

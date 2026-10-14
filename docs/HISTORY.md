@@ -1,6 +1,18 @@
 History
 =======
 
+0.31.25 - (2026-10-14)
+----------------------
+* **EX-EST-2 (segunda parte): `ACUSE_SOLO_EL_MENSAJE` y `EST2_DATOS` PROMOCIONADOS tras la ronda est3-B: 88,8 → 91,3 %, 12 → 16/29 sin fallos; dos políticas de la base aclaradas** (Gadea con Claude; una sola ronda con los dos flags, medida contra est2-B ya juzgada y re-juzgando 2 veces lo que cambia).
+  - **`ACUSE_SOLO_EL_MENSAJE`:** el acuse ("Entendido, …") reconoce solo lo que dice el mensaje; ante "gracias" o una fecha suelta, nada. `scripts/banco_acuse.py`: inventaba en 33/40 casos reales ("tienes una reserva para el sábado").
+  - **`EST2_DATOS`:** "ida y vuelta el mismo día" solo si se sabe que el plan es de un día; siempre hay disponibilidad (salvo 25-dic, 1-ene y mal tiempo; la fecha se elige en el enlace); si encajan varios planes se nombran todos; políticas de zona de buceo y de la cédula de extranjería (residente → COP).
+  - **Ronda est3-B (29 diálogos, PRE 0fb684b):** 15 mejoras (14 reales): 8 inventos menos (`sin-invenciones`), el pernocte y el precio del paquete en Isla Grande/Barú, la moneda de la cédula de extranjería en el RAG, menos repreguntas. 5 regresiones, 1 ruido del juez; **ninguna de las 4 reales viene de los flags**:
+    - extranjería → USD: el flujo guarda "tengo extranjería" como "no colombiano" (A ya decía USD; el juez lo dejó pasar 2 de 3 veces). Pendiente en EX-EST-2 (moneda en el flujo).
+    - fotos en el Open Water: la política decía "no se hacen fotos en minicursos ni primeras experiencias" y el bot lo aplicaba al Open Water → **base aclarada**: sin fotos solo en el minicurso; en los cursos PADI y las salidas de certificados, la regla general (no incluidas, el instructor puede hacerlas).
+    - descuento de grupo "no aplica al snorkel": el texto del descuento no decía a qué aplica (solo un campo que el RAG no lee) → **base aclarada** en `discounts.json` y `pricing.json`: buceo recreativo, minicurso y snorkel; no cursos PADI.
+    - Curso Referido sin el punto de encuentro al pedir "los datos del centro" (A sí lo dio; variación del RAG) y repregunta de la actividad en t5 (ya en A). Pendiente en EX-EST-2.
+  - Las dos aclaraciones de la base se miden en la siguiente ronda (la base v2 se regenera en el deploy).
+
 0.31.24 - (2026-10-14)
 ----------------------
 * **EX-EST-2 (primera parte): la base y los criterios con las decisiones de Gadea; `RECOMENDAR_A_CERTIFICADOS` PROMOCIONADO; el acuse ya no toma un dato vacío por un "no"** (Gadea con Claude; tanda única, medida contra la ronda B3 ya juzgada para ir más rápido).
