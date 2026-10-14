@@ -1,6 +1,17 @@
 History
 =======
 
+0.31.22 - (2026-10-14)
+----------------------
+* **G-9, G-10, EX-RAG-1 y EX-RAG-2 HECHOS: comparador A/B que separa el ruido del juez; otro idioma → inglés; políticas siempre en el contexto del RAG; el RAG no supone la reserva. Los tres flags PROMOCIONADOS** (Gadea con Claude; decisiones de Gadea del 14-oct).
+  - **G-9 (`scripts/ab_judge_compare.py`):** `cumple ↔ no_aplica` va a "no comparables"; "sospecha de ruido" si la cita del fallo también está en la otra ronda; `--rejuzgar N` juzga N veces más cada criterio que cambia (en A y en B, sin caché) y cuenta la mayoría. Con `atencion-A/B2`, 3 de 7 regresiones eran ruido del juez; con `g10-A/B`, 2 de 11 (~0,1 $ cada vez).
+  - **G-10 (`IDIOMA_OTRO_EN_INGLES`):** si el cliente escribe en otro idioma, el bot contesta en inglés. El idioma principal del mensaje lo dice el extractor de la fase EX (campo `idioma`, misma llamada; en el primer turno se mira la extracción ya lanzada, antes del saludo). Criterio `global:idioma` del juez reescrito con la regla. **Sonda en PRE (`scripts/sonda_idioma_pre.py`): 5/5** (portugués y francés → inglés; "Busco el seguinte… família" → español).
+  - **EX-RAG-1 (`RAG_POLITICAS_EN_CONTEXTO`):** las 34 políticas van siempre en el prefijo fijo del RAG (`catalog.policies_facts`), como el catálogo; el juez de grounding también las ve. `equipaje-mochilas` ya contesta la política de equipaje (fallaba en A, B2 y B3). +1.850 tokens por llamada del RAG, casi todos en caché.
+  - **EX-RAG-2 (`RAG_NO_SUPONE_RESERVA`):** regla del RAG: no atribuir al cliente un servicio o una reserva que no dijo. `cambio-fecha-por-enfermedad` t1 ya no dice "For the 3-dive package…": pregunta qué actividad reservó. Vigilar: en `curso-referido-pide-datos-centro` t6 contestó "no quiero adivinar" a los datos del centro (posible exceso de prudencia).
+  - **Mini-ronda g10-A/B (46 diálogos visibles, misma franja; uno del examen oculto quitado de la lista):** **89,8 → 91,2 %, 23 → 24/46 sin fallos; 16 mejoras, 11 regresiones (2 ruido del juez al re-juzgar)**. Latencia igual (RAG p50 4,11 → 4,08 s; reserva 1,32 → 1,33 s).
+  - **Las regresiones no son de los flags (revisadas a mano):** variación del RAG (San Bernardo, que ya salió sin los flags; redacción de las fotos); el **extractor varía con el mismo mensaje** ("Buzos certificados" → buceo certificado 2 de 4 veces; "sin ir de Cartagena" → islas 2 de 4); el **juez de grounding rechazó como inventada** la respuesta correcta "los colombianos pagan en COP, mismo precio" (`minicurso-precio-colombianos`); el juez aplica a veces mal el criterio de idioma nuevo.
+  - Tests: `tests/test_ab_judge_compare.py`, `tests/test_g10_idioma.py`; snapshot de prompts con `RAG_NO_SUPONE_*`.
+
 0.31.21 - (2026-10-13)
 ----------------------
 * **Ronda atención-B2 (los 6 arreglos de Gonzalo, con Jev funcionando): 82,6 → 88,7 %, 13 → 18/41 sin fallos; 32 mejoras, 9 regresiones; 1 regresión real del flag de posventa, arreglada** (Gadea con Claude; OpenRouter recargado por Gadea).

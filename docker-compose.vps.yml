@@ -145,13 +145,13 @@ services:
       # ex-6 (fase EX): la certificacion y la ultima inmersion las decide el extractor "LLM primero". PROMOCIONADO
       # 13-oct (HISTORY 0.31.14). Revert = "false" aqui y en config.py.
       EXTRACCION_LLM_CERTIFICACION: "true"
-      # G-10: si el cliente escribe en otro idioma (no espanol ni ingles), el bot contesta en ingles. ENCENDIDO
-      # para la mini-ronda g10-B (A = apagado). Revert = "false" aqui y en config.py.
+      # G-10: si el cliente escribe en otro idioma (no espanol ni ingles), el bot contesta en ingles. PROMOCIONADO
+      # 14-oct (HISTORY 0.31.22). Revert = "false" aqui y en config.py.
       IDIOMA_OTRO_EN_INGLES: "true"
-      # EX-RAG-1: las politicas siempre en el contexto del RAG. ENCENDIDO para g10-B. Revert = "false" aqui y en
+      # EX-RAG-1: las politicas siempre en el contexto del RAG. PROMOCIONADO 14-oct. Revert = "false" aqui y en
       # config.py.
       RAG_POLITICAS_EN_CONTEXTO: "true"
-      # EX-RAG-2: el RAG no atribuye al cliente un servicio que no dijo. ENCENDIDO para g10-B. Revert = "false" aqui
+      # EX-RAG-2: el RAG no atribuye al cliente un servicio que no dijo. PROMOCIONADO 14-oct. Revert = "false" aqui
       # y en config.py.
       RAG_NO_SUPONE_RESERVA: "true"
       # ex-7 (fase EX): el grupo y su reparto los decide el extractor "LLM primero". PROMOCIONADO 13-oct (Alvaro,

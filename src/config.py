@@ -59,14 +59,14 @@ class Settings(BaseSettings):
     # G-10 (decision de Gadea, 14-oct): el bot atiende en espanol e ingles; si el cliente escribe en OTRO idioma
     # (portugues, frances...) contesta en INGLES. El idioma principal del mensaje lo dice el extractor de la fase EX
     # (misma llamada, sin coste); unas palabras sueltas de otro idioma no cuentan. conversational_core.
-    # _otro_idioma_en_ingles. ENCENDIDO para la mini-ronda g10-B. Revert = False aqui y en el compose.
+    # _otro_idioma_en_ingles. PROMOCIONADO 14-oct (HISTORY 0.31.22: g10-A/B 89,8 -> 91,2 %). Revert = False aqui y en el compose.
     idioma_otro_en_ingles: bool = True
     # EX-RAG-1 (aprobado por Gadea el 14-oct para medir): las politicas del negocio enteras van SIEMPRE en el contexto
     # del RAG, como el catalogo (prefijo fijo, cacheable; ~2.000 tokens). El RAG no recuperaba la de equipaje en un
-    # mensaje largo. rag_agent (bloque rag_v2). ENCENDIDO para la mini-ronda g10-B. Revert = False aqui y en el compose.
+    # mensaje largo. rag_agent (bloque rag_v2). PROMOCIONADO 14-oct (HISTORY 0.31.22: g10-A/B 89,8 -> 91,2 %). Revert = False aqui y en el compose.
     rag_politicas_en_contexto: bool = True
     # EX-RAG-2 (14-oct): regla del RAG: no atribuir al cliente un servicio o una reserva que no dijo ('For the 3-dive
-    # package...' a quien solo dijo que dormia en la isla). rag_agent.build_system_prompt. ENCENDIDO para la mini-ronda g10-B.
+    # package...' a quien solo dijo que dormia en la isla). rag_agent.build_system_prompt. PROMOCIONADO 14-oct (HISTORY 0.31.22: g10-A/B 89,8 -> 91,2 %).
     # Revert = False aqui y en el compose.
     rag_no_supone_reserva: bool = True
     # ex-7 (fase EX): el GRUPO (group_size, group_allocation) lo decide el extractor "LLM primero" (cita comprobada),

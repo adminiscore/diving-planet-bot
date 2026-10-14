@@ -41,7 +41,26 @@ PRE (escritas ya por Luna) tumba 42 frente a 13, casi todo verdades (HISTORY 0.3
 **C. Pendientes de antes:** el criterio del Open Water en `manual-duracion-curso` ✅ (FAQ curada nueva: "sacarse la
 certificación" = Open Water, o el Referido; el Scuba Diver es la parcial). **DeepSeek: FUERA DEL PLAN** (Gadea, 9-oct).
 
-### ▶️ RETOMAR AQUÍ — 14-oct, 00:30 (Gadea con Claude): decisiones de Gadea y hallazgos como tareas; siguiente G-9
+### ▶️ RETOMAR AQUÍ — 14-oct, 12:15 (Gadea con Claude): G-9, G-10, EX-RAG-1 y EX-RAG-2 HECHOS y promocionados
+
+**Estado.** PRE sirve `feature/pre_gadea` con `IDIOMA_OTRO_EN_INGLES`, `RAG_POLITICAS_EN_CONTEXTO` y
+`RAG_NO_SUPONE_RESERVA` **encendidos (promocionados)**. HISTORY 0.31.22. Mini-ronda g10-A/B (46 diálogos):
+89,8 → 91,2 %, latencia igual; sonda de idioma 5/5.
+
+- **Para comparar A/B a partir de ahora:** `ENV_FILE=.env.dev python -m scripts.ab_judge_compare A B --rejuzgar 2`
+  (separa el ruido del juez y las conversaciones que no llegan al punto; ~0,1 $).
+- **Antes de elegir los diálogos de una mini-ronda**, quitad los del examen oculto: en `golden-dialogues.json` llevan
+  `"suite": "oculto"` (hoy se coló uno, `paquete-5-buceos-precio-fecha-y-equipaje`, y se quitó a tiempo).
+
+**Siguiente, en orden:**
+1. **EX-FLUJO-1 (necesita decisión de Gadea):** qué hace el bot si el cliente no contesta una pregunta de la reserva
+   (cotizar con la salvedad, retomarla más tarde, pasar a una persona…) en vez de repetirla igual.
+2. **EX-EXTRACTOR-1:** el extractor da resultados distintos al mismo mensaje ("Buzos certificados", "sin ir de
+   Cartagena": 2 de 4). Medir la estabilidad en el banco ex0 y probar mayoría de pasadas / otro modelo / ejemplos.
+3. **EX-RAG-3:** el juez de grounding rechazó como inventada una respuesta correcta (COP para colombianos).
+4. ex-9 (retirar el camino viejo) y ex-10 (examen oculto).
+
+### ▶️ (anterior) 14-oct, 00:30 (Gadea con Claude): decisiones de Gadea y hallazgos como tareas; siguiente G-9
 
 **Estado.** Sin cambios de código desde 9c28e2e (PRE la sirve, sana). Nada a medias en local.
 
