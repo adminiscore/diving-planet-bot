@@ -82,8 +82,11 @@ class Settings(BaseSettings):
     # EX-RAG-3 (14-oct): cuando el juez de grounding rechaza, cada frase rechazada tiene que traer la cita literal del
     # contexto que la respalda (el codigo comprueba la cita y que sus cifras y enlaces estan en el contexto); si todas
     # la traen, la respuesta pasa. El juez rechazaba ~6 % de respuestas, varias correctas (politicas). Solo corre al
-    # rechazar. juez_segunda_opinion.respaldadas_con_cita. ENCENDIDO para flujo1-B. Revert = False aqui y en el compose.
-    juez_revisa_con_cita: bool = True
+    # rechazar. juez_segunda_opinion.respaldadas_con_cita. DESCARTADO 14-oct (APAGADO): el banco del revisor
+    # (scripts/banco_revisor.py) mostro que deja pasar inventos: con la cita se escapan 12/30 errores sembrados
+    # (sin ella 0/30), porque una cita real que respalda solo PARTE de la frase la daba por buena ("en un grupo mixto
+    # los colombianos pagan en pesos" con la cita "pagan en pesos los colombianos"). Sin la cita: 0/30 rechazos injustos.
+    juez_revisa_con_cita: bool = False
     # ex-7 (fase EX): el GRUPO (group_size, group_allocation) lo decide el extractor "LLM primero" (cita comprobada),
     # con "undecided" para quien no ha elegido actividad (decision del owner, 15-sep). Un reparto que solo SUMA
     # personas al de antes es un añadido (sin "¿lo cambio?"); otro cambio se confirma. El atajo de acompañante no

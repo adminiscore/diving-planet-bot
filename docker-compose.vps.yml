@@ -160,9 +160,8 @@ services:
       # EX-EXTRACTOR-1: regla de la ubicacion del extractor con la negacion primero ("sin ir de Cartagena").
       # ENCENDIDO para flujo1-B2. Revert = "false" aqui y en config.py.
       EXTRACTOR_ACLARACIONES: "true"
-      # EX-RAG-3: si el juez de grounding rechaza, la frase con cita literal del contexto pasa. ENCENDIDO para
-      # flujo1-B. Revert = "false" aqui y en config.py.
-      JUEZ_REVISA_CON_CITA: "true"
+      # EX-RAG-3: DESCARTADO 14-oct (deja pasar inventos: 12/30 errores sembrados; ver config.py).
+      JUEZ_REVISA_CON_CITA: "false"
       # ex-7 (fase EX): el grupo y su reparto los decide el extractor "LLM primero". PROMOCIONADO 13-oct (Alvaro,
       # HISTORY 0.31.19). Revert = "false" aqui y en config.py.
       EXTRACCION_LLM_GRUPO: "true"
