@@ -5886,7 +5886,7 @@ async def guardar_lo_dicho_en_el_pase(state: ConversationState) -> None:
     state._extraccion_adelantada = None
     try:
         datos = await asyncio.wait_for(tarea, timeout=4)
-    except (asyncio.CancelledError, asyncio.TimeoutError, Exception):  # noqa: BLE001 — el pase no se rompe por esto
+    except (TimeoutError, asyncio.CancelledError, Exception):  # noqa: BLE001 — el pase no se rompe por esto
         return
     sabido = _known_field_values(state)
     guardados = {}
