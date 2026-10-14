@@ -1,6 +1,15 @@
 History
 =======
 
+0.31.24 - (2026-10-14)
+----------------------
+* **EX-EST-2 (primera parte): la base y los criterios con las decisiones de Gadea; `RECOMENDAR_A_CERTIFICADOS` PROMOCIONADO; el acuse ya no toma un dato vacío por un "no"** (Gadea con Claude; tanda única, medida contra la ronda B3 ya juzgada para ir más rápido).
+  - **Decisiones de Gadea (14-oct):** el **Curso Referido duerme en las islas** como el Open Water (services.json `overnight: required` en los dos servicios, itinerario del día 1, política de los cursos de 2 días; el test que guardaba la decisión anterior, a la nueva; foto de fichas regenerada: 4 fichas). **Pasadas las 4:30 se reserva por la web para el siguiente día disponible** (fuera de `escalation_rules`; criterio `cutoff-430pm` reescrito). Criterio `sin-repreguntas`: escribir desde otro país no dice la nacionalidad.
+  - **Acuse:** la frase "acaba de responder que NO…" salía también con el dato VACÍO ("cartagena" tras "¿más de 2 años?" → "tienes experiencia reciente"). Sin respuesta, sin frase (certificación, nacionalidad y refresher igual).
+  - **`RECOMENDAR_A_CERTIFICADOS`:** a quien ya dijo que es buzo certificado y no eligió actividad se le proponen la salida de 2 inmersiones, los paquetes o un curso avanzado (regla de Gadea: recomendar según el contexto), no el menú con minicurso y snorkel.
+  - **Probado y deshecho:** "cédula de extranjería = residente" en el prompt del extractor lo arreglaba (10/10) pero movía otros campos ("quiero bucear certificado" 10 → 7/10).
+  - **Ronda est2-B (29 diálogos) frente a B3:** 89,6 → 88,8 %, 13 → 12/29 (ruido). **Las mejoras son las buscadas** (cutoff-430pm, el Referido sin invento y con punto de encuentro, "desde Argentina", el menú repetido a certificados). Las 7 regresiones reales son del contenido que escribe el RAG y varía de ronda a ronda (precio "desde ese hotel", descripción de paquetes, carta del Referido): lo que queda de EX-EST-2.
+
 0.31.23 - (2026-10-14)
 ----------------------
 * **EX-FLUJO-1 y EX-EXTRACTOR-1 PROMOCIONADOS; EX-RAG-3 DESCARTADO (dejaba pasar inventos); EX-EST-1 hecho (estabilidad del extractor)** (Gadea con Claude; Gadea autorizó medir los tres cambios juntos, cada uno con su flag).

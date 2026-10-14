@@ -89,7 +89,7 @@ class Settings(BaseSettings):
     juez_revisa_con_cita: bool = False
     # EX-EST-2 (14-oct): a quien ya dijo que es buzo certificado y no ha elegido actividad se le recomiendan SUS opciones
     # (salida de 2 inmersiones, paquetes, curso avanzado) en vez del menu entero con minicurso y snorkel (regla de
-    # Gadea: recomendar segun el contexto). conversational_core.ask_slot. ENCENDIDO para la mini-ronda est2-B.
+    # Gadea: recomendar segun el contexto). conversational_core.ask_slot. PROMOCIONADO 14-oct (HISTORY 0.31.24).
     # Revert = False aqui y en el compose.
     recomendar_a_certificados: bool = True
     # ex-7 (fase EX): el GRUPO (group_size, group_allocation) lo decide el extractor "LLM primero" (cita comprobada),

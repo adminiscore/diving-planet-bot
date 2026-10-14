@@ -41,7 +41,22 @@ PRE (escritas ya por Luna) tumba 42 frente a 13, casi todo verdades (HISTORY 0.3
 **C. Pendientes de antes:** el criterio del Open Water en `manual-duracion-curso` ✅ (FAQ curada nueva: "sacarse la
 certificación" = Open Water, o el Referido; el Scuba Diver es la parcial). **DeepSeek: FUERA DEL PLAN** (Gadea, 9-oct).
 
-### ▶️ RETOMAR AQUÍ — 14-oct, 17:15 (Gadea con Claude): EX-FLUJO-1 y EX-EXTRACTOR-1 promocionados, EX-RAG-3 descartado, EX-EST-1 hecho; siguiente EX-EST-2
+### ▶️ RETOMAR AQUÍ — 14-oct, 18:45 (Gadea con Claude): EX-EST-2 primera parte hecha; queda el RAG que escribe datos mal; luego ex-9
+
+**Estado.** PRE sirve `feature/pre_gadea` con `RECOMENDAR_A_CERTIFICADOS` promocionado. HISTORY 0.31.24. La base ya
+recoge las decisiones de Gadea del 14-oct (el Curso Referido duerme en las islas; pasadas las 4:30, web para el siguiente
+día disponible); el CI recarga la base v2 en cada deploy.
+
+**Siguiente: lo que queda de EX-EST-2, el RAG que escribe datos mal** (las regresiones que se repiten ronda a ronda:
+el precio "desde ese hotel", la descripción de paquetes, la carta del Referido, "ida y vuelta el mismo día" para un plan
+con noche). `scripts/banco_revisor.py` da 0/30 escapados con el contexto limpio: ampliar el banco con respuestas REALES de
+las rondas (su contexto completo) para ver dónde falla el revisor, y endurecerlo sin subir los rechazos injustos. Después,
+**ex-9** y **ex-10**.
+
+**Ritmo (pedido de Gadea):** primero bancos y tests en local; a PRE una sola ronda por tanda, con todos los cambios
+juntos (cada uno con su flag) y comparando con la última ronda ya juzgada; solo los diálogos afectados.
+
+### ▶️ (anterior) 14-oct, 17:15 (Gadea con Claude): EX-FLUJO-1 y EX-EXTRACTOR-1 promocionados, EX-RAG-3 descartado, EX-EST-1 hecho; siguiente EX-EST-2
 
 **Estado.** PRE sirve `feature/pre_gadea` con `APLAZAR_PREGUNTA_SIN_RESPUESTA` y `EXTRACTOR_ACLARACIONES` encendidos
 (promocionados) y `JUEZ_REVISA_CON_CITA` APAGADO (descartado: deja pasar inventos). HISTORY 0.31.23.
