@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-14T18:27:16+00:00",
-  "commit": "0fb684b",
+  "generado": "2026-10-14T20:36:04+00:00",
+  "commit": "83ffc0a",
   "rama": "feature/pre_gadea"
  },
  "vistas": {
@@ -591,6 +591,13 @@
     {
      "nombre": "extractor_aclaraciones",
      "titulo": "El extractor entiende las negaciones",
+     "codigo": true,
+     "pre": true,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "extractor_todo_lo_dicho",
+     "titulo": "El extractor no se salta lo ya sabido",
      "codigo": true,
      "pre": true,
      "sin_efecto": false
@@ -1962,6 +1969,19 @@
    "pre": true,
    "fijado_en_pre": true,
    "usado_por": [],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "extractor_todo_lo_dicho",
+   "area": "Reserva",
+   "titulo": "El extractor no se salta lo ya sabido",
+   "texto": "El extractor de la fase EX saca todo lo que el cliente dice, aunque ya lo supiéramos: 'Un solo buzo avanzado' con la actividad ya elegida no daba el número de personas y el bot preguntaba '¿cuántas personas?' varias veces.",
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
+   "usado_por": [
+    "b_extraction"
+   ],
    "sin_efecto": null
   },
   {

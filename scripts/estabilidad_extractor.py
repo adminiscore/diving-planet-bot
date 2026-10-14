@@ -73,7 +73,7 @@ async def main_async(args) -> int:
 
     t0 = time.perf_counter()
     todas = await asyncio.gather(*[pasadas(c) for c in casos])
-    estables, modal_filas, peor_filas, detalle = 0, [], [], []
+    estables, modal_filas, peor_filas, detalle, con_invento = 0, [], [], [], []
     for caso, res in zip(casos, todas, strict=True):
         cuenta = Counter(_clave(r) for r in res)
         modal = json.loads(cuenta.most_common(1)[0][0])
@@ -83,6 +83,10 @@ async def main_async(args) -> int:
         peor = min(puntos, key=lambda p: (len(p["acierto"]) - len(p["inventado"]) - len(p["equivocado"])))
         modal_filas.append(p_modal)
         peor_filas.append(peor)
+        if p_modal["inventado"] or p_modal["equivocado"] or p_modal["perdido"]:
+            con_invento.append({"id": caso["id"], "message": caso["message"][:160], "sabido": caso.get("sabido"),
+                                "esperado": caso["expected"], "modal": modal, "inventado": p_modal["inventado"],
+                                "equivocado": p_modal["equivocado"], "perdido": p_modal["perdido"]})
         if len(cuenta) > 1:
             detalle.append({"id": caso["id"], "message": caso["message"][:160], "esperado": caso["expected"],
                             "resultados": dict(cuenta)})
@@ -99,7 +103,7 @@ async def main_async(args) -> int:
     print(json.dumps(resumen, ensure_ascii=False, indent=1))
     etiqueta = args.etiqueta or f"{resumen['modelo']}-{args.pasadas}x{'-coinciden' + str(args.coinciden) if args.coinciden > 1 else ''}"
     salida = BANCO_EX0 / f"estabilidad-{etiqueta.replace('/', '_')}.json"
-    salida.write_text(json.dumps({**resumen, "inestables": detalle}, ensure_ascii=False, indent=1), encoding="utf-8")
+    salida.write_text(json.dumps({**resumen, "inestables": detalle, "fallos_modales": con_invento}, ensure_ascii=False, indent=1), encoding="utf-8")
     print(f"(detalle en {salida})")
     return 0
 

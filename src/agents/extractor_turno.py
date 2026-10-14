@@ -291,6 +291,13 @@ async def extraer_turno(mensaje: str, *, history: list[dict] | None = None, sabi
     if settings.extractor_aclaraciones:
         # EX-EXTRACTOR-1: la regla de la ubicación con la negación primero (ver UBICACION_NEGACION_*).
         sistema = sistema.replace(UBICACION_HOY_ES, UBICACION_NEGACION_ES).replace(UBICACION_HOY_EN, UBICACION_NEGACION_EN)
+    if settings.extractor_todo_lo_dicho:
+        # EX-EST-2: extraer también lo ya sabido (ver TODO_LO_DICHO_*).
+        sistema = sistema.replace(TODO_LO_DICHO_HOY_ES, TODO_LO_DICHO_ES).replace(TODO_LO_DICHO_HOY_EN, TODO_LO_DICHO_EN)
+        sistema = sistema.replace(GRUPO_HOY_ES, GRUPO_NUMERO_ES).replace(GRUPO_HOY_EN, GRUPO_NUMERO_EN)
+        sistema = sistema.replace(ACTIVIDAD_EJEMPLOS_HOY_ES, ACTIVIDAD_EJEMPLOS_ES).replace(
+            ACTIVIDAD_EJEMPLOS_HOY_EN, ACTIVIDAD_EJEMPLOS_EN)
+        sistema = sistema.replace(RESIDENTE_HOY_ES, RESIDENTE_ES).replace(RESIDENTE_HOY_EN, RESIDENTE_EN)
     con_nombre = settings.nombre_por_extractor
     if con_nombre:
         sistema += REGLA_NOMBRE_ES if lang == "es" else REGLA_NOMBRE_EN
@@ -380,3 +387,52 @@ UBICACION_NEGACION_EN = (
     "\"without leaving Cartagena\" or \"we're not going to Cartagena\" means they do NOT depart from Cartagena (if they "
     "are on the islands → island; if they don't say, null). If there is no negation and they say they are"
 )
+
+
+# EX-EST-2 (flag `extractor_todo_lo_dicho`, 14-oct). Ronda est3-B, `semana-santa-solo-avanzado-islas`: "Un solo buzo
+# avanzado" con la actividad ya sabida no daba el grupo (0/10 con "Lo que ya sabemos: activity"; 10/10 sin ello): la
+# regla "no repitas lo que ya sabemos" hacía que el modelo saltara la frase entera, y el bot preguntaba "¿cuántas
+# personas?" tres veces. La misma regla explica las citas sacadas del bloque "Lo que ya sabemos" (descartadas). El
+# código ya compara cada dato con lo guardado (igual = nada cambia; distinto = se confirma), así que se extrae todo.
+TODO_LO_DICHO_HOY_ES = "- No repitas lo que ya sabemos salvo que el cliente lo cambie en este mensaje."
+TODO_LO_DICHO_ES = (
+    "- Extrae TODO lo que el cliente afirma en este mensaje, aunque ya lo sepamos (el sistema lo compara con lo que ya "
+    "sabemos). La cita es siempre del MENSAJE DEL CLIENTE, nunca del texto del bot ni de \"Lo que ya sabemos\": si "
+    "contesta aceptando o eligiendo una opción que le propuso el bot (\"nos gusta\", \"esa\", \"la primera\"), el "
+    "valor es esa opción y la cita es su respuesta."
+)
+TODO_LO_DICHO_HOY_EN = "- Do not repeat what we already know unless the customer changes it in this message."
+TODO_LO_DICHO_EN = (
+    "- Extract EVERYTHING the customer states in this message, even if we already know it (the system compares it with "
+    "what we know). The quote always comes from the CUSTOMER MESSAGE, never from the bot's text or from \"What we "
+    "already know\": if they answer by accepting or choosing an option the bot proposed (\"we like it\", \"that one\", "
+    "\"the first one\"), the value is that option and the quote is their answer."
+)
+
+# El mismo flag: la regla del grupo con la clase general "número + personas" (en est3-B, "Un solo buzo avanzado" con la
+# actividad sabida: el modelo dudaba si "un solo buzo" es una persona; 1/10).
+GRUPO_HOY_ES = '("voy solo", "solo yo" = 1; "somos 3" = 3; "mi pareja y yo", "con mi amigo", "con mi novia" = 2)'
+GRUPO_NUMERO_ES = ('("voy solo", "solo yo", "un solo buzo" = 1; "somos 3", "3 buzos" = 3; "mi pareja y yo", "con mi amigo", '
+                   '"con mi novia", "dos adultos" = 2)')
+GRUPO_HOY_EN = '("just me" = 1; "we are 3" = 3; "my partner and I", "with my friend", "with my girlfriend" = 2)'
+GRUPO_NUMERO_EN = ('("just me", "a single diver" = 1; "we are 3", "3 divers" = 3; "my partner and I", "with my friend", '
+                   '"with my girlfriend", "two adults" = 2)')
+
+# El mismo flag: el ejemplo "quiero bucear con mi amigo" de la regla de actividad (NO elige actividad) hacía que el
+# modelo tampoco diera el grupo; con cualquier otro cambio del prompt, "con mi amigo" = 2 caía de 8/10 a 0/10.
+ACTIVIDAD_EJEMPLOS_HOY_ES = '"quiero bucear con mi amigo", "es mi primera vez", "nunca he buceado")'
+ACTIVIDAD_EJEMPLOS_ES = ('"quiero bucear con mi amigo", "es mi primera vez", "nunca he buceado"; esos mensajes sí pueden '
+                         'dar otros datos: "con mi amigo" dice group_size 2)')
+ACTIVIDAD_EJEMPLOS_HOY_EN = "\"I want to dive with my friend\", \"it's my first time\", \"I've never dived\")"
+ACTIVIDAD_EJEMPLOS_EN = ("\"I want to dive with my friend\", \"it's my first time\", \"I've never dived\"; those messages can "
+                         "still give other data: \"with my friend\" gives group_size 2)")
+
+# El mismo flag: la cédula de extranjería es un documento de RESIDENTE en Colombia (paga en COP, política
+# colombian_pricing). "Yo tengo extrangeria" a "¿eres colombiano o residente?" daba is_colombian false 8/8 y el bot
+# cotizaba en USD (est3-B, certificado-fecha-precio-cop-descuento-transferencia). Dentro de la definición de residente.
+RESIDENTE_HOY_ES = "- is_colombian: si dice que es colombiano, de una ciudad de Colombia o residente en Colombia ("
+RESIDENTE_ES = ("- is_colombian: si dice que es colombiano, de una ciudad de Colombia o residente en Colombia (tener "
+                "cédula de extranjería es ser residente; ")
+RESIDENTE_HOY_EN = "- is_colombian: if they say they are Colombian, from a Colombian city or a resident of Colombia ("
+RESIDENTE_EN = ("- is_colombian: if they say they are Colombian, from a Colombian city or a resident of Colombia (having a "
+                "cédula de extranjería means being a resident; ")

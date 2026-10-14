@@ -357,7 +357,8 @@
         "extraccion_llm_certificacion",
         "idioma_otro_en_ingles",
         "extraccion_llm_grupo",
-        "extractor_aclaraciones"
+        "extractor_aclaraciones",
+        "extractor_todo_lo_dicho"
       ]
     },
     {
@@ -1221,6 +1222,11 @@
       "area": "Reserva",
       "titulo": "El extractor entiende las negaciones",
       "texto": "El extractor de la fase EX lee primero las negaciones del lugar: 'sin ir de Cartagena' quiere decir que NO sale de Cartagena (antes lo leía como Cartagena)."
+    },
+    "extractor_todo_lo_dicho": {
+      "area": "Reserva",
+      "titulo": "El extractor no se salta lo ya sabido",
+      "texto": "El extractor de la fase EX saca todo lo que el cliente dice, aunque ya lo supiéramos: 'Un solo buzo avanzado' con la actividad ya elegida no daba el número de personas y el bot preguntaba '¿cuántas personas?' varias veces."
     },
     "juez_revisa_con_cita": {
       "area": "Preguntas",
