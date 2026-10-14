@@ -306,7 +306,9 @@ async def extraer_turno(mensaje: str, *, history: list[dict] | None = None, sabi
                              "json_schema": {"name": "datos_del_turno", "strict": True,
                                              "schema": ESQUEMA_CON_NOMBRE if con_nombre else ESQUEMA}},
             temperature=0.0,
-            max_tokens=400,
+            # EX-EST-1 (14-oct): con los campos nuevos (idioma, nombre, quiere_bucear...) 400 cortaba el JSON (2 de
+            # cada 1.000 llamadas en el banco: "Unterminated string" -> el turno caía al camino viejo).
+            max_tokens=700,
         )
         datos = json.loads(resp.choices[0].message.content or "{}")
         uso = getattr(resp, "usage", None)

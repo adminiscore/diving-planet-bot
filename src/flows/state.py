@@ -219,6 +219,8 @@ class ConversationState:
     # EX-FLUJO-1 (decisión de Gadea, 14-oct): preguntas de la reserva que el cliente no contestó; no se repiten en el
     # turno siguiente y vuelven justo antes del resumen (conversational_core._siguiente_pregunta).
     preguntas_aplazadas: list[str] = field(default_factory=list)
+    # Veces seguidas que la pregunta pendiente quedó sin contestar (a la segunda se aplaza).
+    veces_sin_respuesta: int = 0
     # 13-oct (flag `posventa_sin_vender`): el cliente YA tiene una reserva con nosotros o ya hizo la actividad (Jev,
     # `ya_reservado`). Mientras valga, el bot contesta lo que pregunte pero no hace preguntas de la reserva; se quita si
     # el cliente elige una actividad nueva (`conversational_core._modo_posventa`).

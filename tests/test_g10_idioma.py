@@ -19,14 +19,14 @@ from src.flows.state import ConversationState
 def test_otro_idioma_en_ingles(monkeypatch, idioma, antes, despues):
     monkeypatch.setattr(settings, "idioma_otro_en_ingles", True)
     st = ConversationState(conversation_id="g10", language=antes)
-    asyncio.run(core._otro_idioma_en_ingles(st, {"idioma": idioma} if idioma else {}))
+    asyncio.run(core._otro_idioma_en_ingles(st, {"idioma": idioma} if idioma else {}, "Olá, quero fazer mergulho"))
     assert st.language == despues
 
 
 def test_apagado_no_cambia(monkeypatch):
     monkeypatch.setattr(settings, "idioma_otro_en_ingles", False)
     st = ConversationState(conversation_id="g10", language="es")
-    asyncio.run(core._otro_idioma_en_ingles(st, {"idioma": "pt"}))
+    asyncio.run(core._otro_idioma_en_ingles(st, {"idioma": "pt"}, "Olá, quero fazer mergulho"))
     assert st.language == "es"
 
 
@@ -40,7 +40,7 @@ def test_primer_turno_mira_la_extraccion_ya_lanzada_sin_consumirla(monkeypatch):
             return {"idioma": "pt"}
 
         st._extraccion_adelantada = asyncio.ensure_future(extraccion())
-        await core._otro_idioma_en_ingles(st)
+        await core._otro_idioma_en_ingles(st, message="Olá, quero fazer mergulho")
         assert st.language == "en" and st.detected_language == "en"
         assert st._extraccion_adelantada is not None  # _understand la vuelve a esperar
         assert (await st._extraccion_adelantada) == {"idioma": "pt"}
@@ -72,3 +72,20 @@ def test_regla_de_no_suponer_en_el_prompt_del_rag(monkeypatch, lang):
     assert regla not in build_system_prompt(lang)
     monkeypatch.setattr(settings, "rag_no_supone_reserva", True)
     assert regla in build_system_prompt(lang)
+
+
+def test_una_o_dos_palabras_no_cambian_el_idioma(monkeypatch):
+    """Ronda flujo1-B2: "Frances" (contesta "¿sois colombianos?") pasaba la conversación a inglés."""
+    monkeypatch.setattr(settings, "idioma_otro_en_ingles", True)
+    st = ConversationState(conversation_id="g10", language="es")
+    asyncio.run(core._otro_idioma_en_ingles(st, {"idioma": "fr"}, "Frances"))
+    assert st.language == "es"
+
+
+def test_una_respuesta_corta_no_es_un_nombre(monkeypatch):
+    monkeypatch.setattr(settings, "nombre_por_extractor", True)
+    st = ConversationState(conversation_id="g10", language="es")
+    st.core_pending_slot = "nationality"
+    core._nombre_del_extractor(st, {"nombre": "Frances"}, "Frances")
+    assert st.client_name is None
+

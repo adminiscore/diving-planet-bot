@@ -401,6 +401,13 @@ def next_missing_slot(state: ConversationState, saltar: frozenset[str] | set[str
     return None
 
 
+def _es_la_ultima_pregunta(state: ConversationState) -> bool:
+    """La nacionalidad es la última pregunta salvo que haya otra aplazada aún sin contestar (EX-FLUJO-1)."""
+    if not settings.aplazar_pregunta_sin_respuesta or not state.preguntas_aplazadas:
+        return True
+    return next_missing_slot(state, saltar=frozenset({SLOT_NATIONALITY})) in (None, SLOT_NATIONALITY)
+
+
 def _siguiente_pregunta(state: ConversationState, prev_pending: str | None) -> str | None:
     """EX-FLUJO-1 (flag `aplazar_pregunta_sin_respuesta`, decisión de Gadea, 14-oct): si el cliente no contestó la
     pregunta del turno anterior (sigue faltando ese dato), no se repite: se aplaza y se pregunta otra cosa; las
@@ -409,9 +416,14 @@ def _siguiente_pregunta(state: ConversationState, prev_pending: str | None) -> s
     nxt = next_missing_slot(state)
     if not settings.aplazar_pregunta_sin_respuesta or nxt is None:
         return nxt
-    if nxt == prev_pending and nxt in _SLOTS_APLAZABLES and nxt not in state.preguntas_aplazadas:
+    # Ronda flujo1-B2: aplazar a la PRIMERA pregunta sin contestar reordenaba casi todas las conversaciones ("Última
+    # cosa… ¿sois colombianos?" demasiado pronto; el acuse tomaba la respuesta a una aplazada por la de la pendiente).
+    # El problema era el bucle: se pregunta como mucho dos veces seguidas y a la tercera se aplaza.
+    state.veces_sin_respuesta = state.veces_sin_respuesta + 1 if nxt == prev_pending else 0
+    if (nxt == prev_pending and state.veces_sin_respuesta >= 2 and nxt in _SLOTS_APLAZABLES
+            and nxt not in state.preguntas_aplazadas):
         state.preguntas_aplazadas.append(nxt)
-        logger.info(f"[CORE][APLAZA] el cliente no contestó {nxt!r}: se pregunta antes del resumen")
+        logger.info(f"[CORE][APLAZA] el cliente no contestó {nxt!r} dos veces: se pregunta antes del resumen")
     otro = next_missing_slot(state, saltar=set(state.preguntas_aplazadas))
     return otro if otro is not None else nxt
 
@@ -456,9 +468,13 @@ _NAME_TRIGGER_SIN_SOY_RE = re.compile(
 )
 
 
-def _nombre_del_extractor(state: ConversationState, datos: dict | None) -> None:
-    """El nombre que el extractor leyó con cita (solo con el flag y si aún no lo sabemos)."""
+def _nombre_del_extractor(state: ConversationState, datos: dict | None, message: str = "") -> None:
+    """El nombre que el extractor leyó con cita (solo con el flag y si aún no lo sabemos). Una respuesta de una o dos
+    palabras a una pregunta del bot no es presentarse (ronda flujo1-B2: "Frances", a "¿sois colombianos?", saludaba
+    "Thank you…, Frances!")."""
     if not settings.nombre_por_extractor or state.client_name or not datos:
+        return
+    if state.core_pending_slot and len((message or "").split()) <= 2:
         return
     nombre = (datos.get("nombre") or "").strip().split()
     if not nombre or not nombre[0].isalpha() or nombre[0].lower() in _NAME_STOPWORDS:
@@ -829,11 +845,15 @@ def ask_slot(state: ConversationState, slot: str, *, reasking: bool = False) -> 
                 "¿sois colombianos o residentes en Colombia?" if plural
                 else "¿eres colombiano o residente en Colombia?"
             )
+            if not _es_la_ultima_pregunta(state):
+                return f"Para darte el precio y el link correctos: {pregunta}"
             return f"Última cosa para darte el precio y el link correctos: {pregunta}"
         pregunta_en = (
             "are you Colombian or residents of Colombia?" if plural
             else "are you Colombian or a resident of Colombia?"
         )
+        if not _es_la_ultima_pregunta(state):
+            return f"So I can give you the right price and link: {pregunta_en}"
         return f"One last thing so I can give you the right price and link: {pregunta_en}"
     raise ValueError(f"unknown slot {slot!r}")
 
@@ -2169,12 +2189,16 @@ def _quitar_provisional(intent, pista: dict) -> None:
     intent.overwrite = [f for f in intent.overwrite if f not in campos_del_extractor()]
 
 
-async def _otro_idioma_en_ingles(state: ConversationState, datos: dict | None = None) -> None:
+async def _otro_idioma_en_ingles(state: ConversationState, datos: dict | None = None, message: str = "") -> None:
     """G-10 (decisión de Gadea, 14-oct): si el mensaje está escrito en un idioma que no es español ni inglés, el bot
     contesta en inglés. El idioma principal lo dice el extractor de la fase EX (misma llamada; unas palabras sueltas no
     cuentan). En el primer turno se mira la extracción ya lanzada con el enrutador, antes del saludo (sin consumirla:
     `_understand` la vuelve a esperar y ya está hecha)."""
     if not settings.idioma_otro_en_ingles:
+        return
+    if len((message or "").split()) < 3:
+        # Ronda flujo1-B2: "Frances" (contesta la nacionalidad) pasó la conversación a inglés. Una o dos palabras no
+        # dicen en qué idioma escribe el cliente.
         return
     if datos is None:
         tarea = getattr(state, "_extraccion_adelantada", None)
@@ -2202,9 +2226,9 @@ async def _aplicar_extractor(intent, state: ConversationState, message: str, pis
     lo provisional del regex. Va ANTES de las reglas que trabajan sobre el intent (reparto, cert-o-curso, recomendar el
     minicurso), para que vean el valor final. Si la llamada falla, lo de hoy con su puerta, campo a campo."""
     datos = await datos_del_extractor(state, message)
-    await _otro_idioma_en_ingles(state, datos)
+    await _otro_idioma_en_ingles(state, datos, message)
     _quitar_provisional(intent, pista)
-    _nombre_del_extractor(state, datos)
+    _nombre_del_extractor(state, datos, message)
     if datos is None:
         for dominio, campo_puerta in ((_CAMPOS_LUGAR, "location"), (_CAMPOS_ACTIVIDAD, None),
                                       (_CAMPOS_CERTIFICACION, "is_certified"), (_CAMPOS_GRUPO, None)):
@@ -4165,7 +4189,7 @@ async def _setup_phase(
         # mezcladas. Fijar `detected_language` aquí también evita ese
         # pisado sobre la detección ya resuelta y más fiable.
         state.detected_language = state.language
-        await _otro_idioma_en_ingles(state)
+        await _otro_idioma_en_ingles(state, message=message)
         state.step = Step.FREE_TEXT
         state.quick_replies = []
     elif _SWITCH_TO_EN_RE.search(message) and state.language != "en":

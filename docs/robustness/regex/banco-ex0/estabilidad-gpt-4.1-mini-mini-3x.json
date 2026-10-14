@@ -1,0 +1,40 @@
+{
+ "modelo": "gpt-4.1-mini",
+ "flags": [],
+ "pasadas": 3,
+ "coinciden": 1,
+ "grupo": "diseño",
+ "casos": 200,
+ "estables_pct": 99.5,
+ "modal": {
+  "acierto": 112,
+  "equivocado": 0,
+  "perdido": 10,
+  "inventado": 5,
+  "pct": 91.8,
+  "casos_con_invento": 5
+ },
+ "peor": {
+  "acierto": 112,
+  "equivocado": 0,
+  "perdido": 10,
+  "inventado": 5,
+  "pct": 91.8,
+  "casos_con_invento": 5
+ },
+ "latencia_p50": 1.89,
+ "latencia_p95": 2.87,
+ "segundos": 206,
+ "inestables": [
+  {
+   "id": "ex0-acompanante-goteo-t3",
+   "message": "el no es certificado",
+   "esperado": {},
+   "resultados": {
+    "{\"group_allocation\": {\"certified_diving\": 1, \"snorkel\": 1}}": 1,
+    "{\"group_allocation\": {\"certified_diving\": 1, \"undecided\": 1}}": 1,
+    "{}": 1
+   }
+  }
+ ]
+}

@@ -25,7 +25,10 @@ def flag(monkeypatch):
 def test_sin_contestar_se_pregunta_otra_cosa_y_vuelve_al_final(flag):
     st = _estado(detected_group_size=2)  # faltan: última inmersión (safety) y nacionalidad
     assert core.next_missing_slot(st) == core.SLOT_SAFETY
-    # El bot preguntó la última inmersión y el cliente habló de otra cosa: no se repite.
+    # El bot preguntó la última inmersión y el cliente habló de otra cosa: se repite una vez (como hoy)…
+    assert core._siguiente_pregunta(st, prev_pending=core.SLOT_SAFETY) == core.SLOT_SAFETY
+    assert st.preguntas_aplazadas == []
+    # …y si tampoco la contesta, no se repite una tercera: se aplaza.
     assert core._siguiente_pregunta(st, prev_pending=core.SLOT_SAFETY) == core.SLOT_NATIONALITY
     assert st.preguntas_aplazadas == [core.SLOT_SAFETY]
     # Contesta la nacionalidad: ya no falta nada más -> vuelve la aplazada, justo antes del resumen.
@@ -48,7 +51,16 @@ def test_la_actividad_no_se_aplaza(flag):
 
 def test_si_es_la_unica_que_falta_se_pregunta(flag):
     st = _estado(detected_group_size=2, is_colombian=False)  # solo falta la última inmersión
-    assert core._siguiente_pregunta(st, prev_pending=core.SLOT_SAFETY) == core.SLOT_SAFETY
+    for _ in range(3):
+        assert core._siguiente_pregunta(st, prev_pending=core.SLOT_SAFETY) == core.SLOT_SAFETY
+
+
+def test_ultima_cosa_solo_si_es_la_ultima(flag):
+    st = _estado(detected_group_size=2)
+    st.preguntas_aplazadas = [core.SLOT_SAFETY]  # la última inmersión, aplazada y sin contestar
+    assert "Última cosa" not in core.ask_slot(st, core.SLOT_NATIONALITY)
+    st.last_dive_over_2_years = False
+    assert "Última cosa" in core.ask_slot(st, core.SLOT_NATIONALITY)
 
 
 def test_apagado_repite_como_hoy(monkeypatch):

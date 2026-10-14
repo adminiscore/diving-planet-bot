@@ -1,0 +1,96 @@
+{
+ "modelo": "gpt-4.1",
+ "flags": [],
+ "pasadas": 3,
+ "coinciden": 1,
+ "grupo": "diseño",
+ "casos": 200,
+ "estables_pct": 97.5,
+ "modal": {
+  "acierto": 108,
+  "equivocado": 0,
+  "perdido": 14,
+  "inventado": 6,
+  "pct": 88.5,
+  "casos_con_invento": 4
+ },
+ "peor": {
+  "acierto": 107,
+  "equivocado": 0,
+  "perdido": 15,
+  "inventado": 6,
+  "pct": 87.7,
+  "casos_con_invento": 4
+ },
+ "latencia_p50": 1.94,
+ "latencia_p95": 2.88,
+ "segundos": 209,
+ "inestables": [
+  {
+   "id": "ex0-curso-open-water-principiantes-idioma-frances-anticipacion-t1",
+   "message": "Hola!\nMe gustaria tener mas informacion acerca de los cursos de buceo en Cartagena (especificamente en Islas del Rosario)\nSomos dos personas y es la pirmera vez",
+   "esperado": {
+    "group_size": 2,
+    "is_certified": false,
+    "location": "cartagena"
+   },
+   "resultados": {
+    "{\"group_size\": 2, \"is_certified\": false}": 2,
+    "{\"group_size\": 2, \"is_certified\": false, \"location\": \"cartagena\"}": 1
+   }
+  },
+  {
+   "id": "ex0-familia-mixta-precio-descuento-refresher-t1",
+   "message": "Hi There,\nI am looking to book 2 dives and snorkeling sessions for the following people.\n2 diving sessions - All PADI certified for open water.\n2 adults (ages 4",
+   "esperado": {
+    "group_size": 6,
+    "group_allocation": {
+     "certified_diving": 3,
+     "snorkel": 3
+    }
+   },
+   "resultados": {
+    "{\"activity\": \"certified_diving\", \"group_allocation\": {\"certified_diving\": 3, \"snorkel\": 3}, \"group_size\": 6, \"is_certified\": true}": 1,
+    "{\"group_allocation\": {\"certified_diving\": 3, \"snorkel\": 3}, \"group_size\": 6}": 2
+   }
+  },
+  {
+   "id": "ex0-link-roto-carrito-t1",
+   "message": "quiero minicurso, somos 3",
+   "esperado": {
+    "activity": "minicourse",
+    "group_size": 3
+   },
+   "resultados": {
+    "{\"activity\": \"minicourse\", \"group_size\": 3}": 2,
+    "{\"activity\": \"minicourse\", \"group_size\": 3, \"is_certified\": false}": 1
+   }
+  },
+  {
+   "id": "ex0-minicurso-islas-y-acompanante-lancha-t1",
+   "message": "Buena Tardes quería preguntarte estaremos en islas del rosario en junio y quería regalarle a mi esposo una experiencia del buceo no tiene experiencia en buceo, ",
+   "esperado": {
+    "location": "island",
+    "activity": "minicourse",
+    "is_certified": false
+   },
+   "resultados": {
+    "{\"is_certified\": false}": 1,
+    "{\"is_certified\": false, \"location\": \"island\"}": 2
+   }
+  },
+  {
+   "id": "ex0-pareja-certificados-cop-descuento-almuerzo-t2",
+   "message": "nos gusta, somos 2 personas y queremos el de saliendo de cartagena, además somos colombianos",
+   "esperado": {
+    "group_size": 2,
+    "location": "cartagena",
+    "is_colombian": true
+   },
+   "resultados": {
+    "{\"group_size\": 2, \"location\": \"cartagena\"}": 2,
+    "{\"group_size\": 2, \"is_colombian\": true, \"location\": \"cartagena\"}": 1
+   }
+  }
+ ]
+}

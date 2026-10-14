@@ -1,0 +1,130 @@
+{
+ "modelo": "gpt-4.1-mini",
+ "flags": [],
+ "pasadas": 5,
+ "coinciden": 1,
+ "grupo": "diseño",
+ "casos": 200,
+ "estables_pct": 95.5,
+ "modal": {
+  "acierto": 112,
+  "equivocado": 0,
+  "perdido": 10,
+  "inventado": 5,
+  "pct": 91.8,
+  "casos_con_invento": 5
+ },
+ "peor": {
+  "acierto": 111,
+  "equivocado": 1,
+  "perdido": 10,
+  "inventado": 9,
+  "pct": 91.0,
+  "casos_con_invento": 7
+ },
+ "latencia_p50": 2.56,
+ "latencia_p95": 3.79,
+ "segundos": 340,
+ "inestables": [
+  {
+   "id": "ex0-acompanante-goteo-t3",
+   "message": "el no es certificado",
+   "esperado": {},
+   "resultados": {
+    "{\"group_allocation\": {\"certified_diving\": 1, \"undecided\": 1}}": 3,
+    "{\"group_allocation\": {\"certified_diving\": 1, \"snorkel\": 1}}": 2
+   }
+  },
+  {
+   "id": "ex0-agencia-solicita-tarifas-escalar-t5",
+   "message": "Solicitud tarifas 2026 - Tucaya Colombia - Diving Planet",
+   "esperado": {},
+   "resultados": {
+    "{}": 4,
+    "{\"is_colombian\": true}": 1
+   }
+  },
+  {
+   "id": "ex0-aprobacion-logs-padi-t2",
+   "message": "el sábado pasado nosotros hicimos 2 buceos con uds y los registramos en PADI, no se si nos puedas ayudar con [NOMBRE] que fue nuestro Dive master para que nos l",
+   "esperado": {},
+   "resultados": {
+    "{\"group_size\": 2, \"is_certified\": true}": 1,
+    "{\"group_size\": 2}": 1,
+    "{\"is_certified\": true}": 2,
+    "{}": 1
+   }
+  },
+  {
+   "id": "ex0-curso-open-water-principiantes-idioma-frances-anticipacion-t1",
+   "message": "Hola!\nMe gustaria tener mas informacion acerca de los cursos de buceo en Cartagena (especificamente en Islas del Rosario)\nSomos dos personas y es la pirmera vez",
+   "esperado": {
+    "group_size": 2,
+    "is_certified": false,
+    "location": "cartagena"
+   },
+   "resultados": {
+    "{\"group_size\": 2, \"location\": \"cartagena\"}": 4,
+    "{\"group_size\": 2}": 1
+   }
+  },
+  {
+   "id": "ex0-curso-open-water-principiantes-idioma-frances-anticipacion-t2",
+   "message": "Es decir en dos dias tendriamos el certificado haciendo nuestro curso en linea . La persona que me acompana no habla ni ingles ni espanol pero yo seria la \"inte",
+   "esperado": {
+    "activity": "padi_open_water"
+   },
+   "resultados": {
+    "{\"activity\": \"padi_open_water\"}": 2,
+    "{}": 3
+   }
+  },
+  {
+   "id": "ex0-curso-referido-pide-datos-centro-t6",
+   "message": "And full [NOMBRE] infos to fill the form transfer to complete the certification in Cartagena",
+   "esperado": {},
+   "resultados": {
+    "{\"location\": \"cartagena\"}": 4,
+    "{}": 1
+   }
+  },
+  {
+   "id": "ex0-familia-mixta-precio-descuento-refresher-t4",
+   "message": "We are a family of 6 and 3 of us will dive and 3 will snorkeling",
+   "esperado": {
+    "group_size": 6,
+    "group_allocation": {
+     "certified_diving": 3,
+     "snorkel": 3
+    }
+   },
+   "resultados": {
+    "{}": 3,
+    "{\"activity\": \"certified_diving\", \"is_certified\": true}": 2
+   }
+  },
+  {
+   "id": "ex0-minicurso-islas-y-acompanante-lancha-t1",
+   "message": "Buena Tardes quería preguntarte estaremos en islas del rosario en junio y quería regalarle a mi esposo una experiencia del buceo no tiene experiencia en buceo, ",
+   "esperado": {
+    "location": "island",
+    "activity": "minicourse",
+    "is_certified": false
+   },
+   "resultados": {
+    "{\"activity\": \"minicourse\", \"is_certified\": false, \"location\": \"island\"}": 1,
+    "{\"is_certified\": false, \"location\": \"island\"}": 3,
+    "{\"activity\": \"snorkel\", \"is_certified\": false, \"location\": \"island\"}": 1
+   }
+  },
+  {
+   "id": "ex0-paquete-5-inmersiones-t1",
+   "message": "hola, cuanto cuesta el paquete de 5 inmersiones?",
+   "esperado": {},
+   "resultados": {
+    "{\"activity\": \"certified_diving\", \"is_certified\": true}": 2,
+    "{}": 3
+   }
+  }
+ ]
+}

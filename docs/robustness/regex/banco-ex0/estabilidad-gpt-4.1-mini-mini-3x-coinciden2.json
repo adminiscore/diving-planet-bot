@@ -1,0 +1,84 @@
+{
+ "modelo": "gpt-4.1-mini",
+ "flags": [],
+ "pasadas": 3,
+ "coinciden": 2,
+ "grupo": "diseño",
+ "casos": 200,
+ "estables_pct": 97.5,
+ "modal": {
+  "acierto": 111,
+  "equivocado": 0,
+  "perdido": 11,
+  "inventado": 4,
+  "pct": 91.0,
+  "casos_con_invento": 4
+ },
+ "peor": {
+  "acierto": 108,
+  "equivocado": 0,
+  "perdido": 14,
+  "inventado": 5,
+  "pct": 88.5,
+  "casos_con_invento": 5
+ },
+ "latencia_p50": 2.8,
+ "latencia_p95": 4.07,
+ "segundos": 366,
+ "inestables": [
+  {
+   "id": "ex0-acompanante-goteo-t1",
+   "message": "hola quiero bucear con mi amigo",
+   "esperado": {
+    "group_size": 2
+   },
+   "resultados": {
+    "{}": 2,
+    "{\"group_size\": 2}": 1
+   }
+  },
+  {
+   "id": "ex0-acompanante-goteo-t3",
+   "message": "el no es certificado",
+   "esperado": {},
+   "resultados": {
+    "{}": 2,
+    "{\"group_allocation\": {\"certified_diving\": 1, \"undecided\": 1}}": 1
+   }
+  },
+  {
+   "id": "ex0-aprobacion-logs-padi-t2",
+   "message": "el sábado pasado nosotros hicimos 2 buceos con uds y los registramos en PADI, no se si nos puedas ayudar con [NOMBRE] que fue nuestro Dive master para que nos l",
+   "esperado": {},
+   "resultados": {
+    "{}": 1,
+    "{\"is_certified\": true}": 2
+   }
+  },
+  {
+   "id": "ex0-curso-open-water-principiantes-idioma-frances-anticipacion-t1",
+   "message": "Hola!\nMe gustaria tener mas informacion acerca de los cursos de buceo en Cartagena (especificamente en Islas del Rosario)\nSomos dos personas y es la pirmera vez",
+   "esperado": {
+    "group_size": 2,
+    "is_certified": false,
+    "location": "cartagena"
+   },
+   "resultados": {
+    "{\"group_size\": 2}": 1,
+    "{\"group_size\": 2, \"location\": \"cartagena\"}": 2
+   }
+  },
+  {
+   "id": "ex0-reserva-solo-link-t1",
+   "message": "quiero bucear certificado",
+   "esperado": {
+    "activity": "certified_diving",
+    "is_certified": true
+   },
+   "resultados": {
+    "{\"activity\": \"certified_diving\", \"is_certified\": true}": 2,
+    "{}": 1
+   }
+  }
+ ]
+}
