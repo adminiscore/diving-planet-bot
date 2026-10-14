@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-14T14:42:20+00:00",
-  "commit": "e64c118",
+  "generado": "2026-10-14T15:14:29+00:00",
+  "commit": "02412d0",
   "rama": "feature/pre_gadea"
  },
  "vistas": {
@@ -630,6 +630,13 @@
     {
      "nombre": "aplazar_pregunta_sin_respuesta",
      "titulo": "No repite la pregunta que el cliente no contestó",
+     "codigo": true,
+     "pre": true,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "recomendar_a_certificados",
+     "titulo": "A un buzo certificado le recomienda sus opciones",
      "codigo": true,
      "pre": true,
      "sin_efecto": false
@@ -2576,6 +2583,19 @@
    "usado_por": [
     "b_availability",
     "r_catalogo"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "recomendar_a_certificados",
+   "area": "Reserva",
+   "titulo": "A un buzo certificado le recomienda sus opciones",
+   "texto": "Si el cliente ya dijo que es buzo certificado y no ha elegido actividad, Coral le propone la salida de 2 inmersiones, los paquetes de varios días o un curso avanzado, en vez del menú entero con minicurso y snorkel (regla de Gadea: recomendar según el contexto).",
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
+   "usado_por": [
+    "b_slotfill_close"
    ],
    "sin_efecto": null
   },

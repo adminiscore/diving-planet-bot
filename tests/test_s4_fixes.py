@@ -276,14 +276,15 @@ async def test_corregir_el_precio_que_cita_el_cliente_no_acaba_en_no_lo_tengo(on
     assert "2.450.000" in answer
 
 
-def test_el_curso_referido_no_obliga_a_dormir_pero_no_es_de_un_dia(on):
-    """Ronda B de u3-6: "necesitas quedarte en las islas" contradecia la referencia del Referido (el dia 1
-    se puede volver a Cartagena). services.json lo marca con "overnight": "optional"."""
+def test_el_curso_referido_duerme_en_las_islas(on):
+    """Decisión de Gadea (14-oct): el Curso Referido, como el Open Water, duerme en las islas el día 1 (antes la base
+    decía que se podía volver a Cartagena y la política de los cursos de 2 días decía lo contrario: el RAG se
+    contradecía). services.json lo marca con "overnight": "required"."""
     from src.agents import conversational_core as core
     from src.flows.catalog import OVERNIGHT_SERVICES, catalog_facts
 
-    assert "referral" not in OVERNIGHT_SERVICES and "mindful_diving" in OVERNIGHT_SERVICES
+    assert "referral" in OVERNIGHT_SERVICES and "mindful_diving" in OVERNIGHT_SERVICES
     st = _state(detected_activity="padi_open_water_referral")
-    assert not core._plan_needs_overnight(st) and not core._plan_is_single_day(st)
+    assert core._plan_needs_overnight(st) and not core._plan_is_single_day(st)
     assert "mismo día" not in core.ask_slot(st, core.SLOT_LOCATION)
-    assert "puedes volver a Cartagena o dormir en las islas" in catalog_facts("es")
+    assert "puedes volver a Cartagena o dormir en las islas" not in catalog_facts("es")

@@ -581,6 +581,34 @@ def ask_slot(state: ConversationState, slot: str, *, reasking: bool = False) -> 
             "with an instructor, no experience needed. If you want to get certified, there's the *PADI Open "
             "Water course*. Shall we go for the mini-course? 🤿"
         )
+    if slot == SLOT_ACTIVITY and settings.recomendar_a_certificados and state.is_certified is True:
+        # 14-oct (ronda flujo1-B3): a quien ya dijo que es buzo certificado se le ofrecía el menú entero (minicurso,
+        # snorkel…) y el juez lo marcaba como repregunta. Regla de Gadea (14/27-sep): recomendar según el contexto, y
+        # que elija el cliente: para un certificado, la salida de 2 inmersiones, los paquetes o un curso avanzado.
+        state.quick_replies = (
+            [{"title": "🤿 Salida de 2 inmersiones", "value": "buceo certificado"},
+             {"title": "📅 Paquete de varios días", "value": "paquete de buceos"},
+             {"title": "🎓 Curso avanzado", "value": "curso advanced"}]
+            if lang == "es" else
+            [{"title": "🤿 2-dive trip", "value": "certified diving"},
+             {"title": "📅 Multi-day package", "value": "dive package"},
+             {"title": "🎓 Advanced course", "value": "advanced course"}]
+        )
+        if reasking:
+            return (
+                "¿Te animas con la *salida de 2 inmersiones*, un *paquete de varios días* o un *curso avanzado*? 🌊"
+                if lang == "es" else
+                "Shall we go for the *2-dive trip*, a *multi-day package* or an *advanced course*? 🌊"
+            )
+        return (
+            "Como ya eres buzo certificado, te propongo la *salida de 2 inmersiones* en las Islas del Rosario; si "
+            "quieres más días, hay *paquetes de varias inmersiones*, y si buscas subir de nivel, el *curso Advanced* "
+            "o una especialidad. ¿Cuál te interesa? 🤿"
+            if lang == "es" else
+            "Since you're already a certified diver, I'd suggest the *2-dive trip* in the Rosario Islands; for more "
+            "days there are *multi-dive packages*, and to level up, the *Advanced course* or a specialty. Which one "
+            "interests you? 🤿"
+        )
     if slot == SLOT_ACTIVITY:
         # `reasking=True`: se re-ancla la actividad tras una respuesta de info
         # (RAG). Repetir el bloque entero de 4 bullets que ya se mostró al
@@ -4078,21 +4106,23 @@ def _colombian_summary_lines(state: ConversationState) -> str:
 
 # Frase legible por slot booleano para `_booking_context_summary`'s
 # `just_answered` — ver hallazgo en vivo debajo.
+# 14-oct (ronda flujo1-B3): un dato que sigue VACÍO no es un "no" ("cartagena" tras "¿más de 2 años?" daba "acaba de
+# responder que NO ha pasado más de 2 años" y el acuse inventaba "tienes experiencia reciente"). Sin respuesta, None.
 _JUST_ANSWERED_PHRASE = {
-    SLOT_SAFETY: lambda s: (
+    SLOT_SAFETY: lambda s: None if s.last_dive_over_2_years is None else (
         "acaba de responder que SÍ ha pasado más de 2 años desde la última inmersión"
         if s.last_dive_over_2_years else
         "acaba de responder que NO ha pasado más de 2 años desde la última inmersión"
     ),
-    SLOT_CERTIFICATION: lambda s: (
+    SLOT_CERTIFICATION: lambda s: None if s.is_certified is None else (
         "acaba de confirmar que SÍ está certificado" if s.is_certified else
         "acaba de responder que NO está certificado"
     ),
-    SLOT_NATIONALITY: lambda s: (
+    SLOT_NATIONALITY: lambda s: None if s.is_colombian is None else (
         "acaba de responder que SÍ es colombiano/residente" if s.is_colombian else
         "acaba de responder que NO es colombiano/residente"
     ),
-    SLOT_REFRESHER: lambda s: (
+    SLOT_REFRESHER: lambda s: None if s.refresher_interested is None else (
         "acaba de responder que SÍ quiere el refresher" if s.refresher_interested else
         "acaba de responder que NO quiere el refresher"
     ),
@@ -4121,8 +4151,9 @@ def _booking_context_summary(state: ConversationState, *, just_answered_slot: st
     parts: list[str] = []
     if just_answered_slot:
         phrase_fn = _JUST_ANSWERED_PHRASE.get(just_answered_slot)
-        if phrase_fn:
-            parts.append(phrase_fn(state))
+        frase = phrase_fn(state) if phrase_fn else None
+        if frase:
+            parts.append(frase)
     if state.detected_activity:
         parts.append(f"actividad principal: {state.detected_activity}")
     alloc = state.detected_group_allocation or {}

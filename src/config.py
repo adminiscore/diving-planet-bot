@@ -87,6 +87,11 @@ class Settings(BaseSettings):
     # (sin ella 0/30), porque una cita real que respalda solo PARTE de la frase la daba por buena ("en un grupo mixto
     # los colombianos pagan en pesos" con la cita "pagan en pesos los colombianos"). Sin la cita: 0/30 rechazos injustos.
     juez_revisa_con_cita: bool = False
+    # EX-EST-2 (14-oct): a quien ya dijo que es buzo certificado y no ha elegido actividad se le recomiendan SUS opciones
+    # (salida de 2 inmersiones, paquetes, curso avanzado) en vez del menu entero con minicurso y snorkel (regla de
+    # Gadea: recomendar segun el contexto). conversational_core.ask_slot. ENCENDIDO para la mini-ronda est2-B.
+    # Revert = False aqui y en el compose.
+    recomendar_a_certificados: bool = True
     # ex-7 (fase EX): el GRUPO (group_size, group_allocation) lo decide el extractor "LLM primero" (cita comprobada),
     # con "undecided" para quien no ha elegido actividad (decision del owner, 15-sep). Un reparto que solo SUMA
     # personas al de antes es un añadido (sin "¿lo cambio?"); otro cambio se confirma. El atajo de acompañante no
