@@ -347,7 +347,8 @@ async def test_multi_slot_message_absorbed_in_one_turn():
 # ---------------------------------------------------------------------------
 
 @pytest.mark.asyncio
-async def test_question_mid_flow_answers_and_reasks_pending_slot():
+async def test_question_mid_flow_answers_and_reasks_pending_slot(monkeypatch):
+    monkeypatch.setattr(settings, "aplazar_pregunta_sin_respuesta", False)  # camino de antes de EX-FLUJO-1
     state = make_state("es")
     await route_message(state, "quiero bucear, soy certificado, desde cartagena")
     assert state.core_pending_slot == core.SLOT_SAFETY
@@ -402,11 +403,12 @@ async def test_colombian_checkout_escalates_no_direct_link():
 # ---------------------------------------------------------------------------
 
 @pytest.mark.asyncio
-async def test_reask_does_not_repeat_plan_recommendation():
+async def test_reask_does_not_repeat_plan_recommendation(monkeypatch):
     """Cuando la respuesta del cliente no resuelve el slot pendiente pero
     aporta otro dato ("desde cartagena" respondiendo a la pregunta de
     seguridad), la re-pregunta NO debe repetir la recomendación del plan —
     en vivo se veía 3 veces el mismo bloque entero."""
+    monkeypatch.setattr(settings, "aplazar_pregunta_sin_respuesta", False)  # camino de antes de EX-FLUJO-1
     state = make_state("es")
     await route_message(state, "hola soy rocio, tengo el open water y quiero hacer buceo")
     assert state.core_pending_slot == core.SLOT_LOCATION
@@ -467,6 +469,7 @@ async def test_snorkel_companion_added_after_close():
 async def test_companion_beginner_added_mid_flow(monkeypatch):
     """Acompañante minicurso mencionado ANTES del cierre: se acumula en el
     reparto y el carrito final tiene ambos ítems."""
+    monkeypatch.setattr(settings, "aplazar_pregunta_sin_respuesta", False)  # camino de antes de EX-FLUJO-1
     monkeypatch.setattr(settings, "extraccion_llm_certificacion", False)  # camino de antes de ex-6
     state = make_state("es")
     await route_message(state, "soy buzo certificado, quiero bucear desde cartagena, voy solo")
@@ -875,6 +878,7 @@ async def test_qty_un_par_resolved_by_slot_resolver(monkeypatch):
 async def test_slot_resolver_abstains_no_infinite_state_change(monkeypatch):
     """Si el resolutor se abstiene ({}), el slot NO cambia y se re-pregunta —
     igual que antes, nunca peor (no se inventa un valor)."""
+    monkeypatch.setattr(settings, "aplazar_pregunta_sin_respuesta", False)  # camino de antes de EX-FLUJO-1
     resolver = AsyncMock(return_value={})
     monkeypatch.setattr(core, "resolve_slot_answer", resolver)
     state = make_state("es")
@@ -1591,7 +1595,7 @@ def test_activity_has_textual_backing_certification_claim_backs_certified_diving
 
 
 @pytest.mark.asyncio
-async def test_companion_activity_ambiguity_defers_instead_of_burying_pending_slot():
+async def test_companion_activity_ambiguity_defers_instead_of_burying_pending_slot(monkeypatch):
     """Hallazgo en vivo 2026-08-26 (batería sintética contra PRE, conv 190 y
     210): cuando la ambigüedad de actividad del acompañante aparecía MIENTRAS
     todavía había una pregunta obligatoria pendiente (seguridad, en este
@@ -1602,6 +1606,7 @@ async def test_companion_activity_ambiguity_defers_instead_of_burying_pending_sl
     colombianos") que en realidad respondía a otra cosa. Ahora se difiere: se
     sigue preguntando lo que tocaba (seguridad), y el acompañante se retoma
     justo antes de cerrar, sin perderse ni bloquear nada por el medio."""
+    monkeypatch.setattr(settings, "aplazar_pregunta_sin_respuesta", False)  # camino de antes de EX-FLUJO-1
     state = make_state("es")
     state.detected_activity = "certified_diving"
     state.is_certified = True
@@ -2357,6 +2362,7 @@ async def test_location_resolver_island_value(monkeypatch):
 async def test_location_resolver_abstains_reasks(monkeypatch):
     """Si el resolutor se abstiene, la ubicación NO se inventa y se re-pregunta
     (nunca peor que hoy)."""
+    monkeypatch.setattr(settings, "aplazar_pregunta_sin_respuesta", False)  # camino de antes de EX-FLUJO-1
     monkeypatch.setattr(core, "resolve_slot_answer", AsyncMock(return_value={}))
     state = _at_location_stage()
     with patch("src.agents.supervisor.detect_routing_signals",
@@ -2378,6 +2384,7 @@ async def test_location_resolver_ignored_when_message_switches_activity(monkeypa
     ubicación que el cliente nunca dio. Fix: se descarta el valor resuelto
     cuando ESTE MISMO turno cambió la actividad principal — la ubicación
     debe seguir pendiente y volver a preguntarse."""
+    monkeypatch.setattr(settings, "aplazar_pregunta_sin_respuesta", False)  # camino de antes de EX-FLUJO-1
     monkeypatch.setattr(settings, "extraccion_llm_certificacion", False)  # camino de antes de ex-6
     monkeypatch.setattr(core, "resolve_slot_answer",
                         AsyncMock(return_value={"value": "cartagena"}))
@@ -3143,10 +3150,11 @@ def test_language_switch_regex_detects_explicit_requests_only():
 
 
 @pytest.mark.asyncio
-async def test_explicit_language_switch_mid_conversation_is_honored():
+async def test_explicit_language_switch_mid_conversation_is_honored(monkeypatch):
     """El mismo hallazgo, de punta a punta: pedir explícitamente cambiar de
     idioma a mitad de conversación debe surtir efecto YA MISMO, en la
     respuesta de ese mismo turno."""
+    monkeypatch.setattr(settings, "aplazar_pregunta_sin_respuesta", False)  # camino de antes de EX-FLUJO-1
     state = make_state("es")
     state.step = Step.WELCOME
     with patch("src.agents.supervisor.detect_routing_signals", new=AsyncMock(return_value={})):

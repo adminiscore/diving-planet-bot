@@ -69,6 +69,21 @@ class Settings(BaseSettings):
     # package...' a quien solo dijo que dormia en la isla). rag_agent.build_system_prompt. PROMOCIONADO 14-oct (HISTORY 0.31.22: g10-A/B 89,8 -> 91,2 %).
     # Revert = False aqui y en el compose.
     rag_no_supone_reserva: bool = True
+    # EX-FLUJO-1 (decision de Gadea, 14-oct, opcion 2): si el cliente no contesta una pregunta de la reserva, no se
+    # repite en el turno siguiente: se aplaza y vuelve justo antes del resumen. Solo las preguntas de datos que no
+    # condicionan a otras (origen, hotel, cuantos, ultima inmersion, refresher, edades, nacionalidad).
+    # conversational_core._siguiente_pregunta. ENCENDIDO para la mini-ronda flujo1-B. Revert = False aqui y en el compose.
+    aplazar_pregunta_sin_respuesta: bool = True
+    # EX-EXTRACTOR-1 (14-oct): dos aclaraciones al prompt del extractor (una negacion invierte el lugar: 'sin ir de
+    # Cartagena' = no sale de Cartagena; presentarse como buzos certificados = quiere bucear). Medido aparte: 0/6 -> 6/6
+    # en los dos casos y controles iguales. extractor_turno.ACLARACIONES_*. ENCENDIDO para la mini-ronda flujo1-B.
+    # Revert = False aqui y en el compose.
+    extractor_aclaraciones: bool = True
+    # EX-RAG-3 (14-oct): cuando el juez de grounding rechaza, cada frase rechazada tiene que traer la cita literal del
+    # contexto que la respalda (el codigo comprueba la cita y que sus cifras y enlaces estan en el contexto); si todas
+    # la traen, la respuesta pasa. El juez rechazaba ~6 % de respuestas, varias correctas (politicas). Solo corre al
+    # rechazar. juez_segunda_opinion.respaldadas_con_cita. ENCENDIDO para flujo1-B. Revert = False aqui y en el compose.
+    juez_revisa_con_cita: bool = True
     # ex-7 (fase EX): el GRUPO (group_size, group_allocation) lo decide el extractor "LLM primero" (cita comprobada),
     # con "undecided" para quien no ha elegido actividad (decision del owner, 15-sep). Un reparto que solo SUMA
     # personas al de antes es un añadido (sin "¿lo cambio?"); otro cambio se confirma. El atajo de acompañante no

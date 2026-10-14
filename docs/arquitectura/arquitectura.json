@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-14T09:41:41+00:00",
-  "commit": "02faa1d",
+  "generado": "2026-10-14T10:20:51+00:00",
+  "commit": "c3e1ca5",
   "rama": "feature/pre_gadea"
  },
  "vistas": {
@@ -157,9 +157,9 @@
    ],
    "marca": "openrouter",
    "tiempos": {
-    "n": 221,
-    "p50": 0.413,
-    "p95": 1.614
+    "n": 65,
+    "p50": 0.42,
+    "p95": 1.279
    }
   },
   {
@@ -180,12 +180,7 @@
      "sin_efecto": false
     }
    ],
-   "modelos": [],
-   "tiempos": {
-    "n": 6,
-    "p50": 0.003,
-    "p95": 0.005
-   }
+   "modelos": []
   },
   {
    "id": "changes",
@@ -197,12 +192,7 @@
    "que_hace": "Cancelar, cambiar de fecha o de número de personas: explica la política y ofrece botones.",
    "donde": "src/agents/changes_agent.py:changes_node",
    "modelos": [],
-   "interruptores": [],
-   "tiempos": {
-    "n": 1,
-    "p50": 2.706,
-    "p95": 2.706
-   }
+   "interruptores": []
   },
   {
    "id": "deflection",
@@ -230,9 +220,9 @@
    "modelos": [],
    "interruptores": [],
    "tiempos": {
-    "n": 3,
-    "p50": 6.218,
-    "p95": 6.521
+    "n": 1,
+    "p50": 3.988,
+    "p95": 3.988
    }
   },
   {
@@ -248,9 +238,9 @@
    "modelos": [],
    "interruptores": [],
    "tiempos": {
-    "n": 211,
-    "p50": 2.399,
-    "p95": 5.472
+    "n": 64,
+    "p50": 2.654,
+    "p95": 6.15
    }
   },
   {
@@ -451,9 +441,9 @@
    "interruptores": [],
    "marca": "openai",
    "tiempos": {
-    "n": 211,
-    "p50": 0.029,
-    "p95": 0.901
+    "n": 64,
+    "p50": 0.031,
+    "p95": 0.956
    }
   },
   {
@@ -483,9 +473,9 @@
    ],
    "modelos": [],
    "tiempos": {
-    "n": 211,
+    "n": 64,
     "p50": 0.006,
-    "p95": 0.031
+    "p95": 0.012
    }
   },
   {
@@ -522,9 +512,9 @@
    ],
    "marca": "openai",
    "tiempos": {
-    "n": 194,
-    "p50": 0.007,
-    "p95": 0.016
+    "n": 62,
+    "p50": 0.009,
+    "p95": 0.015
    }
   },
   {
@@ -587,13 +577,20 @@
      "codigo": true,
      "pre": true,
      "sin_efecto": false
+    },
+    {
+     "nombre": "extractor_aclaraciones",
+     "titulo": "El extractor entiende las negaciones",
+     "codigo": true,
+     "pre": true,
+     "sin_efecto": false
     }
    ],
    "marca": "openai",
    "tiempos": {
-    "n": 194,
-    "p50": 0.656,
-    "p95": 1.487
+    "n": 62,
+    "p50": 0.649,
+    "p95": 1.582
    }
   },
   {
@@ -619,13 +616,20 @@
      "codigo": true,
      "pre": true,
      "sin_efecto": false
+    },
+    {
+     "nombre": "aplazar_pregunta_sin_respuesta",
+     "titulo": "No repite la pregunta que el cliente no contestó",
+     "codigo": true,
+     "pre": true,
+     "sin_efecto": false
     }
    ],
    "marca": "openai",
    "tiempos": {
-    "n": 194,
-    "p50": 1.372,
-    "p95": 5.044
+    "n": 62,
+    "p50": 1.968,
+    "p95": 5.425
    }
   },
   {
@@ -727,9 +731,9 @@
    "modelos": [],
    "interruptores": [],
    "conteo": {
-    "n": 116,
+    "n": 39,
     "que": "preguntas",
-    "fuente": "2026-10-14-g10-B.json"
+    "fuente": "2026-10-14-flujo1-A2.json"
    }
   },
   {
@@ -929,9 +933,9 @@
    },
    "marca": "openai",
    "conteo": {
-    "n": 123,
+    "n": 84,
     "que": "veces",
-    "fuente": "logs-pre-2026-10-14-g10-B.txt"
+    "fuente": "logs-pre-2026-10-14-flujo1-A2.txt"
    }
   },
   {
@@ -945,9 +949,9 @@
    "interruptores": [],
    "modelos": [],
    "conteo": {
-    "n": 123,
+    "n": 84,
     "que": "veces",
-    "fuente": "logs-pre-2026-10-14-g10-B.txt"
+    "fuente": "logs-pre-2026-10-14-flujo1-A2.txt"
    }
   },
   {
@@ -1007,6 +1011,13 @@
      "codigo": false,
      "pre": false,
      "sin_efecto": false
+    },
+    {
+     "nombre": "juez_revisa_con_cita",
+     "titulo": "El revisor pide la cita antes de rechazar",
+     "codigo": true,
+     "pre": true,
+     "sin_efecto": false
     }
    ],
    "tiempo_medido": {
@@ -1015,9 +1026,9 @@
    },
    "marca": "openai",
    "conteo": {
-    "n": 123,
+    "n": 83,
     "que": "veces",
-    "fuente": "logs-pre-2026-10-14-g10-B.txt"
+    "fuente": "logs-pre-2026-10-14-flujo1-A2.txt"
    }
   },
   {
@@ -1039,9 +1050,9 @@
    ],
    "modelos": [],
    "conteo": {
-    "n": 7,
+    "n": 5,
     "que": "veces",
-    "fuente": "logs-pre-2026-10-14-g10-B.txt"
+    "fuente": "logs-pre-2026-10-14-flujo1-A2.txt"
    }
   },
   {
@@ -1057,7 +1068,7 @@
    "conteo": {
     "n": 0,
     "que": "veces",
-    "fuente": "logs-pre-2026-10-14-g10-B.txt"
+    "fuente": "logs-pre-2026-10-14-flujo1-A2.txt"
    }
   },
   {
@@ -1070,9 +1081,9 @@
    "modelos": [],
    "interruptores": [],
    "conteo": {
-    "n": 116,
+    "n": 79,
     "que": "veces",
-    "fuente": "logs-pre-2026-10-14-g10-B.txt"
+    "fuente": "logs-pre-2026-10-14-flujo1-A2.txt"
    }
   }
  ],
@@ -1551,7 +1562,7 @@
    "de": "r_guardas",
    "a": "r_revisor",
    "etiqueta": "pasa",
-   "peso": 1.0,
+   "peso": 0.9881,
    "origen": "curada",
    "estilo": "normal",
    "vista": "info",
@@ -1562,7 +1573,7 @@
    "a": "r_reintento",
    "etiqueta": "falla",
    "estilo": "bucle",
-   "peso": 0.0,
+   "peso": 0.0119,
    "origen": "curada",
    "vista": "info",
    "peso_fuente": "medido"
@@ -1571,7 +1582,7 @@
    "de": "r_revisor",
    "a": "r_salida",
    "etiqueta": "todo SÍ",
-   "peso": 0.9431,
+   "peso": 0.9518,
    "origen": "curada",
    "estilo": "normal",
    "vista": "info",
@@ -1582,7 +1593,7 @@
    "a": "r_reintento",
    "etiqueta": "algún NO",
    "estilo": "bucle",
-   "peso": 0.0569,
+   "peso": 0.0482,
    "origen": "curada",
    "vista": "info",
    "peso_fuente": "medido"
@@ -1678,6 +1689,19 @@
    "usado_por": [
     "b_routing",
     "b_pregunta"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "aplazar_pregunta_sin_respuesta",
+   "area": "Reserva",
+   "titulo": "No repite la pregunta que el cliente no contestó",
+   "texto": "Si el cliente no contesta una pregunta de la reserva (origen, cuántos, última inmersión, nacionalidad…), Coral no la repite en el turno siguiente: sigue con lo que falta y la vuelve a hacer justo antes del resumen (decisión de Gadea, 14-oct).",
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
+   "usado_por": [
+    "b_slotfill_close"
    ],
    "sin_efecto": null
   },
@@ -1860,6 +1884,19 @@
    "sin_efecto": null
   },
   {
+   "nombre": "extractor_aclaraciones",
+   "area": "Reserva",
+   "titulo": "El extractor entiende las negaciones",
+   "texto": "Dos aclaraciones al extractor de la fase EX: 'sin ir de Cartagena' quiere decir que NO sale de Cartagena, y escribir 'Buzos certificados' a la escuela es querer bucear. Antes el mismo mensaje se entendía distinto de una vez a otra.",
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
+   "usado_por": [
+    "b_extraction"
+   ],
+   "sin_efecto": null
+  },
+  {
    "nombre": "extractor_precio_elige",
    "area": "Reserva",
    "titulo": "Preguntar el precio es elegir",
@@ -2018,6 +2055,19 @@
    "area": "Preguntas",
    "titulo": "El revisor ve los precios completos",
    "texto": "Los datos personales se tapan frase a frase: una mención de 'pasaporte' en una pregunta frecuente ya no borra los precios del catálogo que el revisor necesita comprobar.",
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
+   "usado_por": [
+    "r_revisor"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "juez_revisa_con_cita",
+   "area": "Preguntas",
+   "titulo": "El revisor pide la cita antes de rechazar",
+   "texto": "Cuando el revisor de las respuestas del RAG rechaza una frase, se le pide la cita literal de la base que la respalda; si la trae (y sus cifras y enlaces están en la base), la respuesta pasa. Antes rechazaba respuestas correctas y la que se regeneraba salía peor.",
    "codigo": true,
    "pre": true,
    "fijado_en_pre": true,
@@ -2583,7 +2633,7 @@
     "b_acuse"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 302
+   "llamadas_ultima_ronda": 99
   },
   {
    "ajuste": "extractor_turno_model",
@@ -2593,7 +2643,7 @@
     "b_extraction"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 210
+   "llamadas_ultima_ronda": 65
   },
   {
    "ajuste": "grounding_v3_model",
@@ -2603,7 +2653,7 @@
     "r_revisor"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 123
+   "llamadas_ultima_ronda": 41
   },
   {
    "ajuste": "jev_model",
@@ -2615,7 +2665,7 @@
    ],
    "proveedor": "OpenRouter",
    "llamadas_ultima_ronda": null,
-   "nota": "Decidió solo 206 de 221 mensajes; en los otros 15 decidió el LLM de respaldo (sus llamadas cuentan en gpt-4o-mini)."
+   "nota": "Decidió solo 61 de 65 mensajes; en los otros 4 decidió el LLM de respaldo (sus llamadas cuentan en gpt-4o-mini)."
   },
   {
    "ajuste": "openai_embedding_model",
@@ -2638,7 +2688,7 @@
     "r_reescribir"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 302
+   "llamadas_ultima_ronda": 99
   },
   {
    "ajuste": "openai_transcription_model",
@@ -2658,71 +2708,66 @@
     "r_escribir"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 138
+   "llamadas_ultima_ronda": 45
   }
  ],
  "ronda": {
-  "etiqueta": "2026-10-14-g10-B",
-  "run_at": "2026-10-14T08:54:05Z",
-  "fichero": "2026-10-14-g10-B.json",
-  "commit": "02faa1d",
+  "etiqueta": "2026-10-14-flujo1-A2",
+  "run_at": "2026-10-14T10:20:21Z",
+  "fichero": "2026-10-14-flujo1-A2.json",
+  "commit": "c3e1ca5",
   "por_tipo": {
    "reserva": {
-    "turns": 105,
-    "latency_p50": 1.279,
-    "latency_p95": 2.543,
-    "latency_avg": 1.462,
-    "llm_calls_avg": 2.45,
-    "llm_calls_p95": 4.0,
-    "llm_calls_max": 6,
-    "embeddings_avg": 1.45,
-    "llm_share": 1.546,
+    "turns": 26,
+    "latency_p50": 1.274,
+    "latency_p95": 2.544,
+    "latency_avg": 1.511,
+    "llm_calls_avg": 2.85,
+    "llm_calls_p95": 4.75,
+    "llm_calls_max": 7,
+    "embeddings_avg": 1.58,
+    "llm_share": 1.704,
     "tokens_avg": 0,
     "cost_avg_usd": 0
    },
    "rag": {
-    "turns": 116,
-    "latency_p50": 4.078,
-    "latency_p95": 7.501,
-    "latency_avg": 4.435,
-    "llm_calls_avg": 4.45,
+    "turns": 39,
+    "latency_p50": 4.039,
+    "latency_p95": 6.993,
+    "latency_avg": 4.457,
+    "llm_calls_avg": 4.51,
     "llm_calls_p95": 6.0,
-    "llm_calls_max": 7,
-    "embeddings_avg": 1.58,
-    "llm_share": 1.334,
+    "llm_calls_max": 6,
+    "embeddings_avg": 1.56,
+    "llm_share": 1.371,
     "tokens_avg": 0,
     "cost_avg_usd": 0
    }
   },
   "enrutador": {
    "by_backend": {
-    "jev": 206,
-    "llm_uncertain": 15
+    "jev": 61,
+    "llm_uncertain": 4
    },
-   "ms_p50": 386.0,
-   "ms_p95": 465.0
+   "ms_p50": 393.0,
+   "ms_p95": 432.2
   },
   "cliente": {
-   "turns": 221,
-   "conversations": 46,
+   "turns": 38,
+   "conversations": 6,
    "no_reply": 0,
    "multi_bubble": 0,
-   "latency_p50": 3.0,
-   "latency_p95": 7.0,
-   "latency_max": 13
+   "latency_p50": 4.0,
+   "latency_p95": 5.15,
+   "latency_max": 7
   },
   "llamadas_por_modelo": {
-   "gpt-4o-mini": 302,
-   "gpt-4.1-mini": 210,
-   "gpt-6-luna": 138,
-   "gpt-4.1": 123
+   "gpt-4o-mini": 99,
+   "gpt-4.1-mini": 65,
+   "gpt-6-luna": 45,
+   "gpt-4.1": 41
   },
-  "calidad": {
-   "criteria_pass_pct": 91.2,
-   "dialogues_passed": 24,
-   "dialogues": 46,
-   "model": "gpt-5-mini (medium)"
-  }
+  "calidad": null
  },
  "pesos_fuente": "Los % del enrutador y de las fases de la reserva salen de la foto de la ronda; los del revisor y el reintento, de los logs de PRE de la misma ronda. La cascada y los textos fijos no dejan rastro medible: se animan con una estimación y no llevan porcentaje."
 }

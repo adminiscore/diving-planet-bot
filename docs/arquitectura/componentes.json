@@ -356,7 +356,8 @@
         "extraccion_llm_actividad",
         "extraccion_llm_certificacion",
         "idioma_otro_en_ingles",
-        "extraccion_llm_grupo"
+        "extraccion_llm_grupo",
+        "extractor_aclaraciones"
       ]
     },
     {
@@ -372,7 +373,8 @@
         "extraction_model"
       ],
       "interruptores": [
-        "recommend_inferred_minicourse"
+        "recommend_inferred_minicourse",
+        "aplazar_pregunta_sin_respuesta"
       ]
     },
     {
@@ -556,7 +558,8 @@
         "juez_segunda_opinion",
         "juez_presentacion",
         "juez_privacidad_por_linea",
-        "juez_v3_luna"
+        "juez_v3_luna",
+        "juez_revisa_con_cita"
       ],
       "tiempo_medido": {
         "p50": 1.2,
@@ -1211,7 +1214,22 @@
       "titulo": "El grupo lo entiende la IA (con cita)",
       "texto": "Cuántos van y qué hace cada uno lo decide el extractor nuevo de la fase EX, con las palabras del cliente: 'él quiere hacer snorkel' ya no se cuenta dos veces, '3 bucean y 3 hacen snorkel' se suma al grupo sin preguntar '¿lo cambio?', y quien no ha elegido actividad queda 'sin decidir' para recomendarle opciones."
     },
-    "rag_no_supone_reserva": {
+    "extractor_aclaraciones": {
+      "area": "Reserva",
+      "titulo": "El extractor entiende las negaciones",
+      "texto": "Dos aclaraciones al extractor de la fase EX: 'sin ir de Cartagena' quiere decir que NO sale de Cartagena, y escribir 'Buzos certificados' a la escuela es querer bucear. Antes el mismo mensaje se entendía distinto de una vez a otra."
+    },
+    "juez_revisa_con_cita": {
+      "area": "Preguntas",
+      "titulo": "El revisor pide la cita antes de rechazar",
+      "texto": "Cuando el revisor de las respuestas del RAG rechaza una frase, se le pide la cita literal de la base que la respalda; si la trae (y sus cifras y enlaces están en la base), la respuesta pasa. Antes rechazaba respuestas correctas y la que se regeneraba salía peor."
+    },
+    "aplazar_pregunta_sin_respuesta": {
+      "area": "Reserva",
+      "titulo": "No repite la pregunta que el cliente no contestó",
+      "texto": "Si el cliente no contesta una pregunta de la reserva (origen, cuántos, última inmersión, nacionalidad…), Coral no la repite en el turno siguiente: sigue con lo que falta y la vuelve a hacer justo antes del resumen (decisión de Gadea, 14-oct)."
+    },
+        "rag_no_supone_reserva": {
       "area": "Preguntas",
       "titulo": "No da por hecho lo que el cliente no dijo",
       "texto": "Si el cliente habla de su reserva sin decir qué servicio tiene, Coral no lo adivina ('tu paquete de 3 inmersiones'): contesta con la información general y, si hace falta, le pregunta."

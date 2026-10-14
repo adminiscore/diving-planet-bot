@@ -59,6 +59,7 @@ def _offline(monkeypatch):
     # Igual con ex-8 (`extraccion_llm_actividad`): actividad y nacionalidad (tests/test_ex8_actividad_nacionalidad.py).
     monkeypatch.setattr(settings, "extraccion_llm_actividad", False)
     monkeypatch.setattr(settings, "extraccion_llm_certificacion", False)  # ex-6: tests/test_ex6_certificacion.py
+    monkeypatch.setattr(settings, "aplazar_pregunta_sin_respuesta", False)  # EX-FLUJO-1: test_ex_flujo1_aplazar.py
 
 
 @pytest.fixture

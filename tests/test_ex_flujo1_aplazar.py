@@ -1,0 +1,58 @@
+"""EX-FLUJO-1 (decisión de Gadea, 14-oct, opción 2; flag `aplazar_pregunta_sin_respuesta`): si el cliente no contesta
+una pregunta de la reserva, no se repite en el turno siguiente; se aplaza y vuelve justo antes del resumen."""
+import pytest
+
+from src.agents import conversational_core as core
+from src.config import settings
+from src.flows.state import ConversationState
+
+
+def _estado(**kw) -> ConversationState:
+    st = ConversationState(conversation_id="flujo1", language="es")
+    st.detected_activity = "certified_diving"
+    st.is_certified = True
+    st.location = "cartagena"
+    for k, v in kw.items():
+        setattr(st, k, v)
+    return st
+
+
+@pytest.fixture
+def flag(monkeypatch):
+    monkeypatch.setattr(settings, "aplazar_pregunta_sin_respuesta", True)
+
+
+def test_sin_contestar_se_pregunta_otra_cosa_y_vuelve_al_final(flag):
+    st = _estado(detected_group_size=2)  # faltan: última inmersión (safety) y nacionalidad
+    assert core.next_missing_slot(st) == core.SLOT_SAFETY
+    # El bot preguntó la última inmersión y el cliente habló de otra cosa: no se repite.
+    assert core._siguiente_pregunta(st, prev_pending=core.SLOT_SAFETY) == core.SLOT_NATIONALITY
+    assert st.preguntas_aplazadas == [core.SLOT_SAFETY]
+    # Contesta la nacionalidad: ya no falta nada más -> vuelve la aplazada, justo antes del resumen.
+    st.is_colombian = False
+    assert core._siguiente_pregunta(st, prev_pending=core.SLOT_NATIONALITY) == core.SLOT_SAFETY
+
+
+def test_contestada_no_se_aplaza(flag):
+    st = _estado(detected_group_size=2)
+    assert core._siguiente_pregunta(st, prev_pending=core.SLOT_QTY) == core.SLOT_SAFETY
+    assert st.preguntas_aplazadas == []
+
+
+def test_la_actividad_no_se_aplaza(flag):
+    """La actividad condiciona todo lo demás: si no la contesta, se sigue preguntando."""
+    st = ConversationState(conversation_id="flujo1", language="es")
+    assert core._siguiente_pregunta(st, prev_pending=core.SLOT_ACTIVITY) == core.SLOT_ACTIVITY
+    assert st.preguntas_aplazadas == []
+
+
+def test_si_es_la_unica_que_falta_se_pregunta(flag):
+    st = _estado(detected_group_size=2, is_colombian=False)  # solo falta la última inmersión
+    assert core._siguiente_pregunta(st, prev_pending=core.SLOT_SAFETY) == core.SLOT_SAFETY
+
+
+def test_apagado_repite_como_hoy(monkeypatch):
+    monkeypatch.setattr(settings, "aplazar_pregunta_sin_respuesta", False)
+    st = _estado(detected_group_size=2)
+    assert core._siguiente_pregunta(st, prev_pending=core.SLOT_SAFETY) == core.SLOT_SAFETY
+    assert st.preguntas_aplazadas == []

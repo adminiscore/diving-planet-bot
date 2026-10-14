@@ -154,6 +154,15 @@ services:
       # EX-RAG-2: el RAG no atribuye al cliente un servicio que no dijo. PROMOCIONADO 14-oct. Revert = "false" aqui
       # y en config.py.
       RAG_NO_SUPONE_RESERVA: "true"
+      # EX-FLUJO-1: una pregunta de la reserva sin contestar no se repite: vuelve antes del resumen. ENCENDIDO
+      # para la mini-ronda flujo1-B (A = apagado). Revert = "false" aqui y en config.py.
+      APLAZAR_PREGUNTA_SIN_RESPUESTA: "true"
+      # EX-EXTRACTOR-1: aclaraciones del extractor (negaciones del lugar; "buzos certificados" = quiere bucear).
+      # ENCENDIDO para flujo1-B. Revert = "false" aqui y en config.py.
+      EXTRACTOR_ACLARACIONES: "true"
+      # EX-RAG-3: si el juez de grounding rechaza, la frase con cita literal del contexto pasa. ENCENDIDO para
+      # flujo1-B. Revert = "false" aqui y en config.py.
+      JUEZ_REVISA_CON_CITA: "true"
       # ex-7 (fase EX): el grupo y su reparto los decide el extractor "LLM primero". PROMOCIONADO 13-oct (Alvaro,
       # HISTORY 0.31.19). Revert = "false" aqui y en config.py.
       EXTRACCION_LLM_GRUPO: "true"

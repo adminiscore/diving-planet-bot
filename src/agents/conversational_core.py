@@ -338,9 +338,19 @@ def _companion_activity_options(state: ConversationState) -> list[str]:
     return [o for o in options if dom.by_id(o) is not None]
 
 
-def next_missing_slot(state: ConversationState) -> str | None:
+# EX-FLUJO-1 (decisión de Gadea, 14-oct): las preguntas que se pueden dejar para antes del resumen si el cliente no
+# las contesta. No condicionan a otras; la actividad, la certificación y las confirmaciones sí, y no se aplazan.
+_SLOTS_APLAZABLES = frozenset({
+    SLOT_LOCATION, SLOT_HOTEL, SLOT_QTY, SLOT_SAFETY, SLOT_REFRESHER, SLOT_AGES, SLOT_NATIONALITY,
+})
+
+
+def next_missing_slot(state: ConversationState, saltar: frozenset[str] | set[str] = frozenset()) -> str | None:
     """El ÚNICO slot obligatorio que falta, o None si la reserva está lista
-    para el resumen + links. Lógica pura: no muta el estado."""
+    para el resumen + links. Lógica pura: no muta el estado. `saltar`: slots
+    aplazados (EX-FLUJO-1) que no se preguntan mientras falte otro; solo los de
+    `_SLOTS_APLAZABLES`."""
+    saltar = frozenset(saltar) & _SLOTS_APLAZABLES
     act = state.detected_activity
     if act is None:
         return SLOT_ACTIVITY
@@ -365,9 +375,9 @@ def next_missing_slot(state: ConversationState) -> str | None:
         # Un reparto explícito ("3 certificados y 2 snorkel") ya dice quién está
         # certificado — la pregunta genérica sobraría.
         return SLOT_CERTIFICATION
-    if not state.location:
+    if not state.location and SLOT_LOCATION not in saltar:
         return SLOT_LOCATION
-    if state.location == "island" and not state.hotel:
+    if state.location == "island" and not state.hotel and SLOT_HOTEL not in saltar:
         return SLOT_HOTEL
     # Plan: no se pregunta — se recomienda el más popular (decisión owner
     # v0.20.27) y el cliente puede cambiarlo por texto en cualquier momento.
@@ -377,18 +387,33 @@ def next_missing_slot(state: ConversationState) -> str | None:
     # cuántos son, la pregunta de los 2 años ya sabe si dirigirse en singular o
     # en plural en vez de adivinar — en vivo se veía "¿tu última inmersión?" a
     # un grupo cuyo tamaño aún no se había preguntado.
-    if not state.detected_group_size and not state.detected_group_allocation:
+    if not state.detected_group_size and not state.detected_group_allocation and SLOT_QTY not in saltar:
         return SLOT_QTY
     if _cart_will_include_cert(state):
-        if state.last_dive_over_2_years is None:
+        if state.last_dive_over_2_years is None and SLOT_SAFETY not in saltar:
             return SLOT_SAFETY
-        if state.last_dive_over_2_years and state.refresher_interested is None:
+        if state.last_dive_over_2_years and state.refresher_interested is None and SLOT_REFRESHER not in saltar:
             return SLOT_REFRESHER
-    if state.kids_mention_detected and not state.detected_ages:
+    if state.kids_mention_detected and not state.detected_ages and SLOT_AGES not in saltar:
         return SLOT_AGES
-    if state.is_colombian is None:
+    if state.is_colombian is None and SLOT_NATIONALITY not in saltar:
         return SLOT_NATIONALITY
     return None
+
+
+def _siguiente_pregunta(state: ConversationState, prev_pending: str | None) -> str | None:
+    """EX-FLUJO-1 (flag `aplazar_pregunta_sin_respuesta`, decisión de Gadea, 14-oct): si el cliente no contestó la
+    pregunta del turno anterior (sigue faltando ese dato), no se repite: se aplaza y se pregunta otra cosa; las
+    aplazadas vuelven justo antes del resumen, cuando no falta nada más. Ronda atencion-B2: "¿Ha pasado más de 2 años
+    desde la última inmersión?" salía tres turnos seguidos mientras el cliente daba fechas y su regreso."""
+    nxt = next_missing_slot(state)
+    if not settings.aplazar_pregunta_sin_respuesta or nxt is None:
+        return nxt
+    if nxt == prev_pending and nxt in _SLOTS_APLAZABLES and nxt not in state.preguntas_aplazadas:
+        state.preguntas_aplazadas.append(nxt)
+        logger.info(f"[CORE][APLAZA] el cliente no contestó {nxt!r}: se pregunta antes del resumen")
+    otro = next_missing_slot(state, saltar=set(state.preguntas_aplazadas))
+    return otro if otro is not None else nxt
 
 
 # ─── Persona: saludo del primer turno (Coral, cálida, sin "asistente"/"bot") ───
@@ -5408,6 +5433,7 @@ async def _slotfill_close_phase(
                 # _finalize_tree_response — aquí el equivalente).
                 supervisor._maybe_build_pending_note(state)
         else:
+            nxt = _siguiente_pregunta(state, prev_pending)
             response = ask_slot(state, nxt, reasking=(nxt == prev_pending))
             state.step = Step.FREE_TEXT
 
