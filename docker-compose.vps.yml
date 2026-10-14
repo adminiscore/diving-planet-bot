@@ -154,11 +154,11 @@ services:
       # EX-RAG-2: el RAG no atribuye al cliente un servicio que no dijo. PROMOCIONADO 14-oct. Revert = "false" aqui
       # y en config.py.
       RAG_NO_SUPONE_RESERVA: "true"
-      # EX-FLUJO-1: una pregunta de la reserva sin contestar no se repite: vuelve antes del resumen. ENCENDIDO
-      # para la mini-ronda flujo1-B (A = apagado). Revert = "false" aqui y en config.py.
+      # EX-FLUJO-1: una pregunta de la reserva sin contestar no se repite: vuelve antes del resumen (a la tercera vez).
+      # PROMOCIONADO 14-oct (HISTORY 0.31.23). Revert = "false" aqui y en config.py.
       APLAZAR_PREGUNTA_SIN_RESPUESTA: "true"
       # EX-EXTRACTOR-1: regla de la ubicacion del extractor con la negacion primero ("sin ir de Cartagena").
-      # ENCENDIDO para flujo1-B2. Revert = "false" aqui y en config.py.
+      # PROMOCIONADO 14-oct (HISTORY 0.31.23). Revert = "false" aqui y en config.py.
       EXTRACTOR_ACLARACIONES: "true"
       # EX-RAG-3: DESCARTADO 14-oct (deja pasar inventos: 12/30 errores sembrados; ver config.py).
       JUEZ_REVISA_CON_CITA: "false"

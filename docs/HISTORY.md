@@ -1,6 +1,17 @@
 History
 =======
 
+0.31.23 - (2026-10-14)
+----------------------
+* **EX-FLUJO-1 y EX-EXTRACTOR-1 PROMOCIONADOS; EX-RAG-3 DESCARTADO (dejaba pasar inventos); EX-EST-1 hecho (estabilidad del extractor)** (Gadea con Claude; Gadea autorizó medir los tres cambios juntos, cada uno con su flag).
+  - **EX-FLUJO-1 (`APLAZAR_PREGUNTA_SIN_RESPUESTA`, decisión de Gadea: opción 2):** una pregunta de la reserva que el cliente no contesta se repite como mucho dos veces seguidas; a la tercera se aplaza y vuelve justo antes del resumen (solo las de datos que no condicionan a otras). La primera versión (aplazar a la PRIMERA) reordenaba las conversaciones: "Última cosa… ¿sois colombianos?" demasiado pronto y el acuse tomaba la respuesta a una aplazada por la de la pendiente ("tienes experiencia reciente"). Además, "Última cosa" solo si de verdad es la última.
+  - **EX-EXTRACTOR-1 (`EXTRACTOR_ACLARACIONES`):** la regla de la ubicación del extractor con la NEGACIÓN primero ("sin ir de Cartagena" = no sale de Cartagena: 0 → 10/10). La primera versión (un bloque de aclaraciones al final) movía otros campos: "quiero bucear certificado" sin actividad 4/10 (de ahí `reserva-solo-link` sin enlace en la ronda flujo1-B). Lección: el extractor es frágil al texto añadido; todo cambio de su prompt se mide con varias llamadas.
+  - **EX-RAG-3 (`JUEZ_REVISA_CON_CITA`, DESCARTADO):** pedir la cita literal antes de rechazar salvó 4 frases correctas en la ronda, pero el banco del revisor (`scripts/banco_revisor.py`: 20 respuestas, la mitad con un error sembrado) mostró que deja pasar inventos: **12/30 errores escapados con la cita, 0/30 sin ella** (una cita real que respalda solo parte de la frase: "en un grupo mixto los colombianos pagan en pesos"). Sin la cita, 0/30 rechazos injustos.
+  - **EX-EST-1 (`scripts/estabilidad_extractor.py`, banco ex0 de diseño, cada caso N veces):** gpt-4.1-mini con una llamada, 95,5-99,5 % de casos estables y 91,8 % de datos; dos llamadas que tienen que coincidir 91,0 % y más lento; gpt-4.1 88,5 % (~5× coste). Se queda gpt-4.1-mini. El JSON se cortaba con 400 tokens (2 de cada 1.000 llamadas): 700.
+  - **Otros arreglos (globales):** una o dos palabras no cambian el idioma ni son presentarse ("Frances", que contestaba la nacionalidad, pasaba a inglés y saludaba "Thank you…, Frances!").
+  - **Rondas (29 diálogos visibles, los del bucle de preguntas + controles + los de rechazos del revisor):** base A+A2 89,2 %, 12/29; B 89,8 %; B2 87,6 % (la v1 del aplazamiento y del extractor: regresiones arregladas); **B3 89,6 %, 13/29**. Mejoras: menos repreguntas, vuelven los enlaces de pago, "sin ir de Cartagena" cotiza las islas, el idioma del francés. Regresiones de B3 explicadas: dos contradicciones de la BASE pendientes de Gadea (pernocte del Curso Referido; reservar pasadas las 4:30), "te contacto desde Argentina" → el bot pregunta la nacionalidad (correcto: los colombianos pagan en COP vivan donde vivan; el criterio del juez se equivoca), y en PRE el extractor no devolvió el grupo de "Un solo buzo avanzado" (fuera de PRE 10/10: a mirar en EX-EST-2). Latencia igual.
+  - El crédito de OpenAI se acabó a media tarde (Gadea lo recargó); la ronda B2 terminó antes y es válida.
+
 0.31.22 - (2026-10-14)
 ----------------------
 * **G-9, G-10, EX-RAG-1 y EX-RAG-2 HECHOS: comparador A/B que separa el ruido del juez; otro idioma → inglés; políticas siempre en el contexto del RAG; el RAG no supone la reserva. Los tres flags PROMOCIONADOS** (Gadea con Claude; decisiones de Gadea del 14-oct).

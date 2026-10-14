@@ -41,7 +41,25 @@ PRE (escritas ya por Luna) tumba 42 frente a 13, casi todo verdades (HISTORY 0.3
 **C. Pendientes de antes:** el criterio del Open Water en `manual-duracion-curso` ✅ (FAQ curada nueva: "sacarse la
 certificación" = Open Water, o el Referido; el Scuba Diver es la parcial). **DeepSeek: FUERA DEL PLAN** (Gadea, 9-oct).
 
-### ▶️ RETOMAR AQUÍ — 14-oct, 12:15 (Gadea con Claude): G-9, G-10, EX-RAG-1 y EX-RAG-2 HECHOS y promocionados
+### ▶️ RETOMAR AQUÍ — 14-oct, 17:15 (Gadea con Claude): EX-FLUJO-1 y EX-EXTRACTOR-1 promocionados, EX-RAG-3 descartado, EX-EST-1 hecho; siguiente EX-EST-2
+
+**Estado.** PRE sirve `feature/pre_gadea` con `APLAZAR_PREGUNTA_SIN_RESPUESTA` y `EXTRACTOR_ACLARACIONES` encendidos
+(promocionados) y `JUEZ_REVISA_CON_CITA` APAGADO (descartado: deja pasar inventos). HISTORY 0.31.23.
+
+**ORDEN ACORDADO con Gadea (también en el Plan Coral):** (1) EX-EST-2 → (2) ex-9 → (3) ex-10 (examen oculto, una vez).
+
+**EX-EST-2 (siguiente):**
+- **Pendiente de Gadea (la base se contradice):** (a) ¿el Curso Referido puede volver a Cartagena el día 1? (services.json
+  dice pernocte 'optional'; la política `courses_overnight_requirement` dice que los cursos de 2 días duermen en las islas);
+  (b) reservar para mañana pasadas las 4:30: ¿web (FAQ) o asesor (escalation_rules y criterio `cutoff-430pm`)?
+- **El revisor:** `scripts/banco_revisor.py` da 0/30 escapados con el contexto limpio, pero en las rondas el RAG coló "en
+  ambos casos la recogida está incluida". Ampliar el banco con respuestas REALES (su contexto completo de los logs).
+- **En PRE** el extractor no devolvió el grupo de "Un solo buzo avanzado" (`semana-santa`, B3), fuera de PRE 10/10.
+
+**Herramientas nuevas:** `scripts/estabilidad_extractor.py` (cada caso del banco N veces: estabilidad, aciertos,
+inventos), `scripts/banco_revisor.py` (errores sembrados frente al revisor), `scripts/ab_judge_compare --rejuzgar 2`.
+
+### ▶️ (anterior) 14-oct, 12:15 (Gadea con Claude): G-9, G-10, EX-RAG-1 y EX-RAG-2 HECHOS y promocionados
 
 **Estado.** PRE sirve `feature/pre_gadea` con `IDIOMA_OTRO_EN_INGLES`, `RAG_POLITICAS_EN_CONTEXTO` y
 `RAG_NO_SUPONE_RESERVA` **encendidos (promocionados)**. HISTORY 0.31.22. Mini-ronda g10-A/B (46 diálogos):
