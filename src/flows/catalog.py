@@ -585,7 +585,8 @@ def catalog_facts(lang: str) -> str:
                "5% si el cliente trae su equipo COMPLETO, solo en buceo recreativo y cursos (no en snorkel ni "
                "minicurso); 10% el segundo día de buceo (buceo recreativo y cursos).",
                "Moneda: los colombianos (vivan donde vivan) y los residentes en Colombia pagan en COP; el resto, en "
-               "USD; es el mismo precio en las dos monedas: el precio en COP de cada plan es el que pagan los "
+               "USD (en un grupo mixto de colombianos o residentes y extranjeros, toda la reserva en USD); es el "
+               "mismo precio en las dos monedas: el precio en COP de cada plan es el que pagan los "
                "colombianos. NO existe descuento ni tarifa rebajada para colombianos: si el cliente cree que la hay, "
                "díselo claramente (solo cambia la moneda). Si no sabes la nacionalidad del cliente, da las dos "
                "monedas. No sumes ni calcules totales. Si el cliente "
@@ -608,8 +609,8 @@ def catalog_facts(lang: str) -> str:
                "recreational diving, mini course and snorkeling (not PADI courses; not automatic: the team applies "
                "it); 5% if the customer brings their COMPLETE gear, only for recreational diving and courses (not "
                "snorkeling or the mini course); 10% on the second day of diving (recreational diving and courses).",
-               "Currency: Colombians (wherever they live) and residents of Colombia pay in COP; everyone else in USD; "
-               "it is the same price in both currencies: each plan's COP price is what Colombians pay. There is NO "
+               "Currency: Colombians (wherever they live) and residents of Colombia pay in COP; everyone else in USD "
+               "(in a mixed group of Colombians or residents and foreigners, the whole booking in USD); it is the same price in both currencies: each plan's COP price is what Colombians pay. There is NO "
                "discount or reduced rate for Colombians: if the customer thinks there is one, say so clearly (only "
                "the currency changes). If you don't know the customer's nationality, give both currencies. Do not "
                "add up or compute totals. If the "
@@ -625,12 +626,12 @@ def catalog_facts(lang: str) -> str:
 # el precio COP correcto en cuanto la respuesta decía "para colombianos" (14 de 54 rechazos); con el hecho en el
 # texto del que redacta, el bot dejaba de corregir el mito (1/4). Cada uno recibe la suya.
 _MONEDA_PARA_EL_JUEZ = {
-    "es": ("Moneda: los colombianos (vivan donde vivan) y los residentes en Colombia pagan en COP y el resto en USD; "
-           "es el mismo precio en las dos monedas. El precio en COP de cada plan es el precio para colombianos: una "
+    "es": ("Moneda: los colombianos (vivan donde vivan) y los residentes en Colombia pagan en COP y el resto en USD "
+           "(en un grupo mixto de colombianos o residentes y extranjeros, toda la reserva en USD); es el mismo precio en las dos monedas. El precio en COP de cada plan es el precio para colombianos: una "
            "respuesta que da ese precio 'para colombianos' es correcta. Lo que no existe es un descuento ni una "
            "tarifa rebajada para colombianos."),
-    "en": ("Currency: Colombians (wherever they live) and residents of Colombia pay in COP and everyone else in USD; "
-           "it is the same price in both currencies. Each plan's COP price is the price for Colombians: a response "
+    "en": ("Currency: Colombians (wherever they live) and residents of Colombia pay in COP and everyone else in USD "
+           "(in a mixed group of Colombians or residents and foreigners, the whole booking in USD); it is the same price in both currencies. Each plan's COP price is the price for Colombians: a response "
            "that gives that price 'for Colombians' is correct. What does not exist is a discount or a reduced rate "
            "for Colombians."),
 }

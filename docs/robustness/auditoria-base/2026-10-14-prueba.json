@@ -1,0 +1,74 @@
+{
+  "nombre": "prueba",
+  "modelo": "gpt-5",
+  "modelo_idiomas": "gpt-4.1",
+  "temas": [
+    "schedule",
+    "meeting_point"
+  ],
+  "uso_tokens": {
+    "temas": {
+      "entrada": 46042,
+      "salida": 14032
+    },
+    "idiomas": {}
+  },
+  "contradicciones": [
+    {
+      "que": "Punto de encuentro del plan 'ya en las islas'",
+      "doc_a": "ficha:referral_already_on_island",
+      "cita_a": "Dia 1: punto de encuentro en Muelle de la Bodeguita a las 8:00 a.m.",
+      "doc_b": "faq:103",
+      "cita_b": "Si ya estás en las islas, la recogida y regreso en lancha están incluidos",
+      "explicacion": "El plan es para quienes ya están en las islas, por lo que el encuentro debe ser en su hotel/punto en las islas, no en el muelle de Cartagena a las 8:00 a.m.",
+      "gravedad": "alta",
+      "tema": "meeting_point",
+      "citas_comprobadas": true
+    },
+    {
+      "que": "Almuerzo del día 2 en Curso de Rescate + EFR",
+      "doc_a": "ficha:rescue",
+      "cita_a": "Dia 2: continuacion de practicas de rescate y EFR + almuerzo (incluido)",
+      "doc_b": "catalogo",
+      "cita_b": "almuerzo solo el día 1",
+      "explicacion": "El D27 indica que el día 2 incluye almuerzo, pero el catálogo oficial especifica que solo se incluye el almuerzo del día 1.",
+      "gravedad": "alta",
+      "tema": "schedule",
+      "citas_comprobadas": true
+    },
+    {
+      "que": "Punto de encuentro/traslado en plan “ya en las islas” (Curso Referido)",
+      "doc_a": "ficha:referral_already_on_island",
+      "cita_a": "Dia 1: punto de encuentro en Muelle de la Bodeguita a las 8:00 a.m.",
+      "doc_b": "catalogo",
+      "cita_b": "recogida en tu hotel si tiene acceso marítimo",
+      "explicacion": "El D29 (ya en las islas) indica encuentro en el muelle de Cartagena, mientras el catálogo establece que para planes en islas la recogida es en el hotel en las islas.",
+      "gravedad": "alta",
+      "tema": "schedule",
+      "citas_comprobadas": true
+    },
+    {
+      "que": "Hora de recogida desde islas antes del horario de operación (Open Water ya en islas)",
+      "doc_a": "ficha:open_water_already_on_island",
+      "cita_a": "Dia 2: recogida en tu hotel a las 7:30",
+      "doc_b": "politica:operating_hours",
+      "cita_b": "Desde las islas: 8:00 a.m. a 4:00 p.m.",
+      "explicacion": "El D14 fija la recogida a las 7:30 a.m. pero la política dice que desde las islas el horario de actividad diurna inicia a las 8:00 a.m.",
+      "gravedad": "media",
+      "tema": "schedule",
+      "citas_comprobadas": true
+    },
+    {
+      "que": "Hora de recogida desde islas antes del horario de operación (Advanced ya en islas)",
+      "doc_a": "ficha:advanced_already_on_island",
+      "cita_a": "Dia 2: recogida en tu hotel a las 7:30",
+      "doc_b": "politica:operating_hours",
+      "cita_b": "Desde las islas: 8:00 a.m. a 4:00 p.m.",
+      "explicacion": "El D15 fija la recogida a las 7:30 a.m., anterior al inicio de operación diurna desde islas establecido a las 8:00 a.m.",
+      "gravedad": "media",
+      "tema": "schedule",
+      "citas_comprobadas": true
+    }
+  ],
+  "diferencias_idioma": []
+}

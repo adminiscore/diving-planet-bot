@@ -83,6 +83,10 @@ _REFRESHER = {
            "The refresher is the SAME activity as the Dive Mini Course: same information, itinerary, requirements and "
            "price. It is booked as '{nombre}'. Below is that mini course's sheet."),
 }
+_REFRESHER_PARA = {"es": "Repaso para buzos certificados que llevan más de 2 años sin bucear.",
+                   "en": "Review for certified divers who haven't dived in more than 2 years."}
+_REFRESHER_CERT = {"es": ("sin certificación previa", "para buzos ya certificados"),
+                   "en": ("no prior certification", "for already-certified divers")}
 
 
 def fichas_refresher(services: dict) -> list[dict]:
@@ -105,6 +109,14 @@ def fichas_refresher(services: dict) -> list[dict]:
             ficha = service_fact_sheet(sid, lang, {**services[sid], f"name_{lang}": "Refresher"})
             separador = "\n\n"
             cuerpo = ficha.split(separador, 1)[1] if separador in ficha else ficha  # sin el título del minicurso
+            # EX-EST-2 (14-oct, auditoría de la base): la ficha del minicurso decía "plan para principiantes" y "sin
+            # certificación previa", que en el refresher contradice su título (es para buzos certificados).
+            desc = services[sid].get(f"description_{lang}") or ""
+            if desc and desc in cuerpo:
+                resto = desc[desc.find("("):] if "(" in desc else ""
+                cuerpo = cuerpo.replace(desc, f"{_REFRESHER_PARA[lang].rstrip('.')} {resto}".strip() if resto
+                                        else _REFRESHER_PARA[lang])
+            cuerpo = cuerpo.replace(*_REFRESHER_CERT[lang])
             texto = separador.join([titulo.format(origen=_T[lang]["islas" if origen == "islas" else "desde"]),
                                     nota.format(nombre=services[sid].get(f"name_{lang}") or sid), cuerpo])
             docs.append({"content": texto, "metadata": {

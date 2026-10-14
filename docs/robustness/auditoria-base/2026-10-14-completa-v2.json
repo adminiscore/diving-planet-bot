@@ -1,0 +1,307 @@
+{
+  "nombre": "completa-v2",
+  "modelo": "gpt-5",
+  "modelo_idiomas": "gpt-4.1",
+  "temas": [
+    "location_islands",
+    "schedule",
+    "certification",
+    "booking",
+    "equipment",
+    "meeting_point",
+    "accommodation",
+    "depth",
+    "pricing",
+    "discount_colombian",
+    "refresher",
+    "reschedule",
+    "forms_waiver",
+    "availability"
+  ],
+  "uso_tokens": {
+    "temas": {
+      "entrada": 277698,
+      "salida": 87766
+    },
+    "idiomas": {
+      "entrada": 85314,
+      "salida": 316
+    }
+  },
+  "contradicciones": [
+    {
+      "que": "Precio del plan de acompañante según salga de Cartagena o ya esté en las islas",
+      "doc_a": "faq:16",
+      "cita_a": "Estos planes tienen precios diferentes porque no incluyen transporte desde Cartagena ni almuerzo.",
+      "doc_b": "faq:acompanante",
+      "cita_b": "El precio es el mismo saliendo desde Cartagena o ya en las islas",
+      "explicacion": "D38 afirma en general que los planes para quienes ya están en las islas tienen precio diferente; sin embargo, D47 especifica que el plan de acompañante cuesta lo mismo en ambos casos. Para ese plan concreto, ambas afirmaciones se contradicen.",
+      "gravedad": "alta",
+      "tema": "accommodation",
+      "citas_comprobadas": true
+    },
+    {
+      "que": "Hora de inicio desde las islas (7:30 a.m. vs 8:00 a.m.)",
+      "doc_a": "ficha:open_water_already_on_island",
+      "cita_a": "Dia 2: recogida en tu hotel a las 7:30 (si tiene acceso por lancha)",
+      "doc_b": "faq:101",
+      "cita_b": "Desde las islas, el horario de actividad diurna es de 8:00 a.m. a 4:00 p.m.",
+      "explicacion": "El horario oficial para actividades diurnas desde las islas inicia a las 8:00 a.m., pero este itinerario fija la recogida a las 7:30 a.m. para un curso en islas.",
+      "gravedad": "alta",
+      "tema": "booking",
+      "citas_comprobadas": true
+    },
+    {
+      "que": "Hora de inicio desde las islas (7:30 a.m. vs 8:00 a.m.)",
+      "doc_a": "ficha:advanced_already_on_island",
+      "cita_a": "Dia 2: recogida en tu hotel a las 7:30 (si tiene acceso por lancha)",
+      "doc_b": "faq:101",
+      "cita_b": "Desde las islas, el horario de actividad diurna es de 8:00 a.m. a 4:00 p.m.",
+      "explicacion": "El itinerario del Avanzado en islas indica recogida a las 7:30 a.m., fuera del horario diurno oficial (8:00 a.m.).",
+      "gravedad": "alta",
+      "tema": "booking",
+      "citas_comprobadas": true
+    },
+    {
+      "que": "Hora de inicio desde las islas (7:30 a.m. vs 8:00 a.m.)",
+      "doc_a": "ficha:referral_already_on_island",
+      "cita_a": "Dia 2: recogida en tu hotel a las 7:30 (si tiene acceso por lancha)",
+      "doc_b": "faq:101",
+      "cita_b": "Desde las islas, el horario de actividad diurna es de 8:00 a.m. a 4:00 p.m.",
+      "explicacion": "El segundo día del curso Referido en islas programa recogida a las 7:30 a.m., antes del horario diurno oficial (8:00 a.m.).",
+      "gravedad": "alta",
+      "tema": "booking",
+      "citas_comprobadas": true
+    },
+    {
+      "que": "Hora de inicio de actividades desde las islas",
+      "doc_a": "ficha:advanced_already_on_island",
+      "cita_a": "Dia 2: recogida en tu hotel a las 7:30",
+      "doc_b": "faq:101",
+      "cita_b": "Desde las islas, el horario de actividad diurna es de 8:00 a.m. a 4:00 p.m.",
+      "explicacion": "Programar recogida a las 7:30 a.m. contradice el horario oficial de inicio (8:00 a.m.) para actividades diurnas desde las islas.",
+      "gravedad": "alta",
+      "tema": "depth",
+      "citas_comprobadas": true
+    },
+    {
+      "que": "Horario de operación desde las islas vs recogida 7:30",
+      "doc_a": "politica:operating_hours",
+      "cita_a": "Desde las islas: 8:00 a.m. a 4:00 p.m.",
+      "doc_b": "ficha:open_water_already_on_island",
+      "cita_b": "Dia 2: recogida en tu hotel a las 7:30",
+      "explicacion": "Si el horario operativo desde las islas inicia a las 8:00 a.m., no debería programarse una recogida a las 7:30 a.m. para ese plan.",
+      "gravedad": "alta",
+      "tema": "location_islands",
+      "citas_comprobadas": true
+    },
+    {
+      "que": "Punto de encuentro (lugar)",
+      "doc_a": "faq:24",
+      "cita_a": "El punto de encuentro es el Muelle de la Bodeguita, a 5 minutos del centro histórico, a las 8:00 a.m.",
+      "doc_b": "ficha:naturalist_specialty",
+      "cita_b": "Punto de encuentro: Marina Turistica a las 8:00 a.m.",
+      "explicacion": "Unos documentos fijan el encuentro en “Muelle de la Bodeguita” y este indica “Marina Turística”. Si no es el mismo sitio, el cliente iría al lugar equivocado.",
+      "gravedad": "alta",
+      "tema": "meeting_point",
+      "citas_comprobadas": true
+    },
+    {
+      "que": "Punto de encuentro (lugar)",
+      "doc_a": "faq:24",
+      "cita_a": "El punto de encuentro es el Muelle de la Bodeguita, a 5 minutos del centro histórico, a las 8:00 a.m.",
+      "doc_b": "ficha:fish_identification_specialty",
+      "cita_b": "Punto de encuentro: Marina Turistica a las 8:00 a.m.",
+      "explicacion": "Indica “Marina Turística” en lugar de “Muelle de la Bodeguita”; son lugares distintos y no pueden ser ambos a la vez.",
+      "gravedad": "alta",
+      "tema": "meeting_point",
+      "citas_comprobadas": true
+    },
+    {
+      "que": "Punto de encuentro (lugar)",
+      "doc_a": "faq:24",
+      "cita_a": "El punto de encuentro es el Muelle de la Bodeguita, a 5 minutos del centro histórico, a las 8:00 a.m.",
+      "doc_b": "ficha:buoyancy_specialty",
+      "cita_b": "Punto de encuentro: Marina Turistica a las 8:00 a.m.",
+      "explicacion": "Contradicción de lugar de encuentro: “Muelle de la Bodeguita” vs “Marina Turística”.",
+      "gravedad": "alta",
+      "tema": "meeting_point",
+      "citas_comprobadas": true
+    },
+    {
+      "que": "Punto de encuentro (lugar)",
+      "doc_a": "faq:24",
+      "cita_a": "El punto de encuentro es el Muelle de la Bodeguita, a 5 minutos del centro histórico, a las 8:00 a.m.",
+      "doc_b": "ficha:nitrox_specialty",
+      "cita_b": "Punto de encuentro: Marina Turistica a las 8:00 a.m.",
+      "explicacion": "El punto oficial es “Muelle de la Bodeguita”; aquí se indica “Marina Turística”, generando información operativa contradictoria.",
+      "gravedad": "alta",
+      "tema": "meeting_point",
+      "citas_comprobadas": true
+    },
+    {
+      "que": "Hora de inicio desde las islas",
+      "doc_a": "faq:101",
+      "cita_a": "Desde las islas, el horario de actividad diurna es de 8:00 a.m. a 4:00 p.m.",
+      "doc_b": "ficha:open_water_already_on_island",
+      "cita_b": "Dia 2: recogida en tu hotel a las 7:30",
+      "explicacion": "La política fija el inicio de actividades diurnas en islas a las 8:00 a.m., pero el itinerario del curso Open Water (ya en las islas) programa recogida a las 7:30 a.m. No pueden ser ambos ciertos para el mismo origen (islas).",
+      "gravedad": "alta",
+      "tema": "schedule",
+      "citas_comprobadas": true
+    },
+    {
+      "que": "Fin y orden del Día 1 en paquetes/cursos con noche (saliendo desde Cartagena)",
+      "doc_a": "politica:activity_schedule",
+      "cita_a": "el día 1 también termina hacia las 12:00-13:00 y después vas a tu hotel",
+      "doc_b": "ficha:5_dives_2_days",
+      "cita_b": "Dia 1: 1 buceo nocturno",
+      "explicacion": "La política indica que el Día 1 termina al mediodía y luego se va al hotel, pero el itinerario del paquete de 5 inmersiones incluye buceo nocturno en el Día 1 y el traslado al hotel después. Ambas descripciones del mismo Día 1 se contradicen.",
+      "gravedad": "alta",
+      "tema": "schedule",
+      "citas_comprobadas": true
+    },
+    {
+      "que": "Edad mínima para el Curso Avanzado PADI",
+      "doc_a": "ficha:advanced_already_on_island",
+      "cita_a": "2 días; incluye un buceo nocturno; almuerzo NO incluido; requiere certificación; edad mínima 10.",
+      "doc_b": "faq:60",
+      "cita_b": "la edad mínima habitual es de 12 años.",
+      "explicacion": "D15 fija la edad mínima en 10 años para Advanced, mientras D40 indica que la edad mínima habitual es 12; no pueden ser ambas a la vez.",
+      "gravedad": "media",
+      "tema": "accommodation",
+      "citas_comprobadas": true
+    },
+    {
+      "que": "Edad mínima para el Curso Avanzado PADI",
+      "doc_a": "ficha:advanced_already_on_island",
+      "cita_a": "2 días; incluye un buceo nocturno; almuerzo NO incluido; requiere certificación; edad mínima 10.",
+      "doc_b": "faq:60",
+      "cita_b": "Requiere ser Open Water Diver y la edad mínima habitual es de 12 años.",
+      "explicacion": "La ficha del curso Avanzado permite participación desde 10 años, mientras que el FAQ indica que la edad mínima habitual es 12. No pueden ser ambas reglas a la vez para el mismo curso.",
+      "gravedad": "media",
+      "tema": "certification",
+      "citas_comprobadas": true
+    },
+    {
+      "que": "Tiempo mínimo antes de volar tras bucear",
+      "doc_a": "ficha:minicourse",
+      "cita_a": "Despues de bucear, esperar minimo 12 horas antes de tomar un vuelo",
+      "doc_b": "ficha:2_dives_1_day",
+      "cita_b": "Despues de bucear, esperar minimo 18 horas antes de tomar un vuelo",
+      "explicacion": "La misma política de post-buceo indica 12 h en el minicurso y 18 h en salidas para certificados; no pueden ser ambas correctas como regla general.",
+      "gravedad": "media",
+      "tema": "depth",
+      "citas_comprobadas": true
+    },
+    {
+      "que": "Formulario requerido en el Refresher (buzos certificados)",
+      "doc_a": "ficha:refresher:minicourse",
+      "cita_a": "Completar el formulario médico (obligatorio en cursos y minicursos): https://form.jotform.com/divingplanetcartagena/exoneracion-curso-en-espanol",
+      "doc_b": "politica:medical_restrictions",
+      "cita_b": "tu formulario de exoneracion es el de buzo certificado: https://form.jotform.com/divingplanetcartagena/exoneracion-buzo-en-espanol",
+      "explicacion": "Para el refresher (solo certificados) D3 exige el formulario médico de cursos, mientras la política indica que los certificados deben usar el formulario de buzo certificado, no el de curso.",
+      "gravedad": "media",
+      "tema": "forms_waiver",
+      "citas_comprobadas": true
+    },
+    {
+      "que": "Formulario requerido en el Refresher (ya en las islas, buzos certificados)",
+      "doc_a": "ficha:refresher:minicourse_already_on_island",
+      "cita_a": "Completar el formulario médico (obligatorio en cursos y minicursos): https://form.jotform.com/divingplanetcartagena/exoneracion-curso-en-espanol",
+      "doc_b": "politica:medical_restrictions",
+      "cita_b": "Si eres buzo certificado, no hay restricciones medicas adicionales; tu formulario de exoneracion es el de buzo certificado",
+      "explicacion": "D4 pide el formulario médico de curso para refresher de certificados en islas, pero la política dice que los buzos certificados usan el formulario de buzo certificado y no el médico de curso.",
+      "gravedad": "media",
+      "tema": "forms_waiver",
+      "citas_comprobadas": true
+    },
+    {
+      "que": "Edad mínima Curso Avanzado PADI",
+      "doc_a": "ficha:advanced_already_on_island",
+      "cita_a": "requiere certificación; edad mínima 10.",
+      "doc_b": "faq:60",
+      "cita_b": "la edad mínima habitual es de 12 años.",
+      "explicacion": "Para el mismo curso Advanced, un documento fija mínima 10 años y otro 12; no pueden ser ambas válidas a la vez.",
+      "gravedad": "media",
+      "tema": "location_islands",
+      "citas_comprobadas": true
+    },
+    {
+      "que": "Moneda de pago en grupos mixtos (colombianos y extranjeros)",
+      "doc_a": "faq:14",
+      "cita_a": "Los colombianos (vivan donde vivan) y los residentes en Colombia pagan en pesos colombianos (COP).",
+      "doc_b": "politica:mixed_nationality_group",
+      "cita_b": "toda la reserva del grupo se paga en dólares (USD)",
+      "explicacion": "D39 establece que los colombianos pagan en COP, mientras D52 indica que si el grupo es mixto toda la reserva debe pagarse en USD. En un grupo mixto, ambas reglas no pueden cumplirse a la vez.",
+      "gravedad": "media",
+      "tema": "pricing",
+      "citas_comprobadas": true
+    },
+    {
+      "que": "Requisito de certificación en Refresher vs Minicurso (ya en las islas)",
+      "doc_a": "ficha:refresher:minicourse_already_on_island",
+      "cita_a": "El refresher es la MISMA actividad que el Minicurso de Buceo: misma información, itinerario, requisitos y precio.",
+      "doc_b": "catalogo",
+      "cita_b": "Minicurso de Buceo (ya en las islas): 134 USD / 475.000 COP online, 149 USD / 528.000 COP normal; 1 día; almuerzo NO incluido; sin certificación previa; equipo incluido.",
+      "explicacion": "D11 sostiene que Refresher y Minicurso (islas) comparten requisitos, pero el catálogo especifica que el Minicurso no requiere certificación previa. No pueden ser simultáneamente iguales en requisitos si uno exige certificación y el otro no.",
+      "gravedad": "media",
+      "tema": "refresher",
+      "citas_comprobadas": true
+    },
+    {
+      "que": "Edad mínima para Refresher (ya en las islas)",
+      "doc_a": "ficha:refresher:minicourse_already_on_island",
+      "cita_a": "para buzos ya certificados; edad mínima 10.",
+      "doc_b": "ficha:refresher:minicourse_already_on_island",
+      "cita_b": "Tener mas de 10 anos de edad",
+      "explicacion": "En la misma ficha se establece edad mínima 10 (permite a los de 10 años) y a la vez \"más de 10 años\" (excluye a los de 10). Son condiciones incompatibles.",
+      "gravedad": "media",
+      "tema": "refresher",
+      "citas_comprobadas": true
+    },
+    {
+      "que": "Edad mínima del Curso Avanzado PADI",
+      "doc_a": "ficha:advanced_already_on_island",
+      "cita_a": "Datos de Curso Avanzado PADI - ya en las islas: ... edad mínima 10.",
+      "doc_b": "faq:60",
+      "cita_b": "la edad mínima habitual es de 12 años.",
+      "explicacion": "Hablan del mismo curso (Advanced Open Water). Un documento indica edad mínima 10, mientras el otro afirma que la edad mínima habitual es 12. No pueden ser ciertas a la vez para el mismo plan y generan confusión sobre si menores de 12 pueden inscribirse.",
+      "gravedad": "media",
+      "tema": "equipment",
+      "citas_comprobadas": false
+    },
+    {
+      "que": "Formulario para buzos con asma",
+      "doc_a": "faq:18",
+      "cita_a": "es necesario completar el formulario médico antes de la actividad. Formulario: https://form.jotform.com/divingplanetcartagena/exoneracion-curso-en-espanol",
+      "doc_b": "politica:medical_restrictions",
+      "cita_b": "Si eres buzo certificado... tu formulario de exoneracion es el de buzo certificado",
+      "explicacion": "D5 dirige a completar el formulario médico de curso para condiciones como asma, incluso si el interesado fuera certificado, lo que contradice la política que indica que los certificados usan el formulario de buzo certificado.",
+      "gravedad": "media",
+      "tema": "forms_waiver",
+      "citas_comprobadas": false
+    },
+    {
+      "que": "Requisito de certificación en Refresher vs Minicurso (Cartagena)",
+      "doc_a": "ficha:refresher:minicourse",
+      "cita_a": "El refresher es la MISMA actividad que el Minicurso de Buceo: misma información, itinerario, requisitos y precio.",
+      "doc_b": "catalogo",
+      "cita_b": "Minicurso de Buceo: 183 USD / 655.000 COP online, 204 USD / 727.000 COP normal; 1 día; ida y vuelta desde Cartagena el mismo día; almuerzo incluido; sin certificación previa; equipo incluido.",
+      "explicacion": "D10 afirma que Refresher y Minicurso tienen los mismos requisitos, pero el catálogo indica que el Minicurso no requiere certificación previa. No pueden ser iguales en requisitos si uno exige estar certificado y el otro no.",
+      "gravedad": "media",
+      "tema": "refresher",
+      "citas_comprobadas": false
+    }
+  ],
+  "diferencias_idioma": [
+    {
+      "par": "P6",
+      "cita_es": "Más información: https://divingplanet.org/tours-buceo-snorkel-cartagena/",
+      "cita_en": "More info: https://divingplanet.org/en/fun-dives-snorkeling-cartagena/",
+      "explicacion": "El enlace de información adicional es diferente en español y en inglés; el contenido puede variar según el idioma.",
+      "doc": "faq:21",
+      "citas_comprobadas": true
+    }
+  ]
+}
