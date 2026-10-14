@@ -358,7 +358,8 @@
         "idioma_otro_en_ingles",
         "extraccion_llm_grupo",
         "extractor_aclaraciones",
-        "extractor_todo_lo_dicho"
+        "extractor_todo_lo_dicho",
+        "est4_flujo"
       ]
     },
     {
@@ -1223,10 +1224,15 @@
       "titulo": "El extractor entiende las negaciones",
       "texto": "El extractor de la fase EX lee primero las negaciones del lugar: 'sin ir de Cartagena' quiere decir que NO sale de Cartagena (antes lo leía como Cartagena)."
     },
+    "est4_flujo": {
+      "area": "Reserva",
+      "titulo": "Arreglos del flujo de la tanda est5",
+      "texto": "Lo que el cliente dice en el mensaje que se pasa a una persona ya no se pierde: si dijo que se aloja en un hotel de las islas, el bot no le vuelve a preguntar desde dónde sale."
+    },
     "extractor_todo_lo_dicho": {
       "area": "Reserva",
-      "titulo": "El extractor no se salta lo ya sabido",
-      "texto": "El extractor de la fase EX saca todo lo que el cliente dice, aunque ya lo supiéramos: 'Un solo buzo avanzado' con la actividad ya elegida no daba el número de personas y el bot preguntaba '¿cuántas personas?' varias veces."
+      "titulo": "El extractor entiende mejor grupo, aceptación y residencia",
+      "texto": "Arreglos del extractor de la fase EX: 'Un solo buzo avanzado' con la actividad ya elegida da el número de personas (antes el bot preguntaba '¿cuántas personas?' varias veces), 'con mi amigo' cuenta 2, aceptar la opción que propone el bot es elegirla y la cédula de extranjería es ser residente (paga en COP)."
     },
     "juez_revisa_con_cita": {
       "area": "Preguntas",

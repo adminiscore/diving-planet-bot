@@ -298,6 +298,7 @@ async def extraer_turno(mensaje: str, *, history: list[dict] | None = None, sabi
         sistema = sistema.replace(ACTIVIDAD_EJEMPLOS_HOY_ES, ACTIVIDAD_EJEMPLOS_ES).replace(
             ACTIVIDAD_EJEMPLOS_HOY_EN, ACTIVIDAD_EJEMPLOS_EN)
         sistema = sistema.replace(RESIDENTE_HOY_ES, RESIDENTE_ES).replace(RESIDENTE_HOY_EN, RESIDENTE_EN)
+        sistema = sistema.replace(ELIGE_HOY_ES, ELIGE_ES).replace(ELIGE_HOY_EN, ELIGE_EN)
     con_nombre = settings.nombre_por_extractor
     if con_nombre:
         sistema += REGLA_NOMBRE_ES if lang == "es" else REGLA_NOMBRE_EN
@@ -396,17 +397,13 @@ UBICACION_NEGACION_EN = (
 # código ya compara cada dato con lo guardado (igual = nada cambia; distinto = se confirma), así que se extrae todo.
 TODO_LO_DICHO_HOY_ES = "- No repitas lo que ya sabemos salvo que el cliente lo cambie en este mensaje."
 TODO_LO_DICHO_ES = (
-    "- Extrae TODO lo que el cliente afirma en este mensaje, aunque ya lo sepamos (el sistema lo compara con lo que ya "
-    "sabemos). La cita es siempre del MENSAJE DEL CLIENTE, nunca del texto del bot ni de \"Lo que ya sabemos\": si "
-    "contesta aceptando o eligiendo una opción que le propuso el bot (\"nos gusta\", \"esa\", \"la primera\"), el "
-    "valor es esa opción y la cita es su respuesta."
+    "- No repitas lo que ya sabemos salvo que el cliente lo cambie en este mensaje. La cita es siempre del mensaje del "
+    "cliente, nunca del texto del bot ni de \"Lo que ya sabemos\"."
 )
 TODO_LO_DICHO_HOY_EN = "- Do not repeat what we already know unless the customer changes it in this message."
 TODO_LO_DICHO_EN = (
-    "- Extract EVERYTHING the customer states in this message, even if we already know it (the system compares it with "
-    "what we know). The quote always comes from the CUSTOMER MESSAGE, never from the bot's text or from \"What we "
-    "already know\": if they answer by accepting or choosing an option the bot proposed (\"we like it\", \"that one\", "
-    "\"the first one\"), the value is that option and the quote is their answer."
+    "- Do not repeat what we already know unless the customer changes it in this message. The quote always comes from "
+    "the customer's message, never from the bot's text or from \"What we already know\"."
 )
 
 # El mismo flag: la regla del grupo con la clase general "número + personas" (en est3-B, "Un solo buzo avanzado" con la
@@ -436,3 +433,12 @@ RESIDENTE_ES = ("- is_colombian: si dice que es colombiano, de una ciudad de Col
 RESIDENTE_HOY_EN = "- is_colombian: if they say they are Colombian, from a Colombian city or a resident of Colombia ("
 RESIDENTE_EN = ("- is_colombian: if they say they are Colombian, from a Colombian city or a resident of Colombia (having a "
                 "cédula de extranjería means being a resident; ")
+
+# El mismo flag: aceptar la opción que propone el bot es elegirla (est3-B, pareja-certificados: "nos gusta, somos 2…"
+# tras "te propongo la salida de 2 inmersiones" citaba el texto del bot y se descartaba; el bot repetía el menú).
+ELIGE_HOY_ES = "o cuando contesta a la pregunta del bot quedándose con una de las opciones que le ofrece."
+ELIGE_ES = ("o cuando contesta a la pregunta del bot quedándose con una de las opciones que le ofrece o aceptando la que "
+            "le propone (\"nos gusta\", \"esa\", \"la primera\": el valor es esa opción y la cita, su respuesta).")
+ELIGE_HOY_EN = "or when they answer the bot's question by taking one of the options it offers."
+ELIGE_EN = ("or when they answer the bot's question by taking one of the options it offers or accepting the one it "
+            "proposes (\"we like it\", \"that one\", \"the first one\": the value is that option and the quote, their answer).")

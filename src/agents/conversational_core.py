@@ -5865,6 +5865,45 @@ async def datos_del_extractor(state: ConversationState, message: str) -> dict | 
     return datos  # None = la llamada falló (degradado)
 
 
+# Campo del extractor -> atributo del estado donde se guarda lo dicho en un turno de pase a una persona.
+_CAMPOS_DEL_PASE = {"location": "detected_location", "group_size": "detected_group_size",
+                    "is_certified": "detected_is_certified", "activity": "detected_activity",
+                    "is_colombian": "is_colombian"}
+
+
+async def guardar_lo_dicho_en_el_pase(state: ConversationState) -> None:
+    """EX-EST-2 (flag `est4_flujo`, 14-oct): en un turno que acaba en el pase a una persona el núcleo no corre y la
+    extracción adelantada se cancelaba sin usar, así que lo que el cliente decía en ESE mensaje se perdía. Ronda
+    est3-B (`recogida-ubuntu-comida-y-certificacion`): "I just booked… We are staying at the Ubuntu Hotel" pasaba al
+    asesor (bien) y en el turno siguiente el bot preguntaba "Where will you be joining us from?". Aquí se espera la
+    extracción (ya lanzada con el turno) y se guardan sus datos con cita comprobada, solo en los campos que la
+    conversación aún no sabe (nunca se pisa nada)."""
+    if not settings.est4_flujo:
+        return
+    tarea = getattr(state, "_extraccion_adelantada", None)
+    if tarea is None:
+        return
+    state._extraccion_adelantada = None
+    try:
+        datos = await asyncio.wait_for(tarea, timeout=4)
+    except (asyncio.CancelledError, asyncio.TimeoutError, Exception):  # noqa: BLE001 — el pase no se rompe por esto
+        return
+    sabido = _known_field_values(state)
+    guardados = {}
+    for campo, atributo in _CAMPOS_DEL_PASE.items():
+        valor = (datos or {}).get(campo)
+        if valor is None or sabido.get(campo) is not None:
+            continue
+        if campo == "location" and valor not in ("cartagena", "island"):
+            continue
+        if campo == "group_size" and not (isinstance(valor, int) and valor > 0):
+            continue
+        setattr(state, atributo, valor)
+        guardados[campo] = valor
+    if guardados:
+        logger.info(f"[EXTRACT][PASE] lo dicho en el turno del pase se guarda: {guardados}")
+
+
 def cancelar_extraccion_adelantada(state: ConversationState) -> None:
     """Cierre del turno: una extracción adelantada que el turno no usó se cancela."""
     tarea = getattr(state, "_extraccion_adelantada", None)

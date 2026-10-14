@@ -160,9 +160,12 @@ services:
       # EX-EXTRACTOR-1: regla de la ubicacion del extractor con la negacion primero ("sin ir de Cartagena").
       # PROMOCIONADO 14-oct (HISTORY 0.31.23). Revert = "false" aqui y en config.py.
       EXTRACTOR_ACLARACIONES: "true"
-      # EX-EST-2: el extractor saca todo lo que el cliente afirma, aunque ya se sepa (ver config.py). ENCENDIDO para
-      # la ronda est4-B. Revert = "false" aqui y en config.py.
+      # EX-EST-2: arreglos del prompt del extractor (v3 tras est4-B; ver config.py). ENCENDIDO para la ronda est5-B.
+      # Revert = "false" aqui y en config.py.
       EXTRACTOR_TODO_LO_DICHO: "true"
+      # EX-EST-2: arreglos del flujo de la tanda est5 (ver config.py). ENCENDIDO para la ronda est5-B. Revert = "false"
+      # aqui y en config.py.
+      EST4_FLUJO: "true"
       # EX-RAG-3: DESCARTADO 14-oct (deja pasar inventos: 12/30 errores sembrados; ver config.py).
       JUEZ_REVISA_CON_CITA: "false"
       # EX-EST-2: a un buzo certificado sin actividad elegida se le recomiendan sus opciones. PROMOCIONADO 14-oct.

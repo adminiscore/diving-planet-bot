@@ -1,6 +1,14 @@
 History
 =======
 
+0.31.27 - (2026-10-15)
+----------------------
+* **Ronda est4-B (base limpia + extractor v1): 91,3 → 92,2 %; el extractor pasa a v3; lo dicho en el turno del pase ya no se pierde (`EST4_FLUJO`)** (Gadea con Claude; noche autorizada por Gadea).
+  - **est4-B frente a est3-B (29 diálogos, re-juzgado 2 veces):** 10 mejoras reales, todas las buscadas: cédula de extranjería en COP, fotos del Open Water, descuento de grupo con snorkel, la hora de fin del día 1 (12:00-13:00), "un solo buzo" sin repreguntar, la pareja que acepta la salida, la comida desde las islas, el idioma francés, el cierre de las 4:30, el refresher. 7 regresiones reales: **1 del flag** ("Frances" a la nacionalidad dejaba de leerse: la v1 "extrae todo aunque ya se sepa" hacía que el modelo copiara lo sabido y se perdiera con respuestas cortas, 4/8 → 0/8); 1 del revisor de grounding (rechazó como inventado "los colombianos pagan en pesos, mismo precio"; se devuelve su texto de moneda al de antes, la regla del grupo mixto la ve en las políticas); el resto, omisiones del RAG que varían de ronda a ronda (Barú, "sin coste extra", "sin descuento por residente") y ruido del juez.
+  - **Extractor v3 (`EXTRACTOR_TODO_LO_DICHO`):** se queda la regla de hoy ("no repitas lo que ya sabemos") + la cita siempre del cliente + aceptar la opción que propone el bot es elegirla (en la regla de la actividad) + grupo ("un solo buzo") + "con mi amigo" + cédula de extranjería. Banco ex0 3 pasadas: aciertos 91,8 % (igual que sin flag), casos con invento 5 → 3, peor caso 89,3 → 91,0 %; "Frances" 5/8 (sin flag 4/8). Queda sin resolver "nos gusta, somos 2… el de Cartagena" (mensaje compuesto que acepta la propuesta).
+  - **`EST4_FLUJO` (lo dicho en el turno del pase a una persona):** en ese turno el núcleo no corre y la extracción se cancelaba; ahora se espera y se guarda solo en los campos vacíos (`recogida-ubuntu`: "staying at the Ubuntu Hotel" y luego "Where will you be joining us from?"). Tests `tests/test_est5_flujo.py`.
+  - **Pendiente con UNA causa, para ex-9 (revisión del enrutador):** una petición en imperativo ("dame la cuenta y transfiero", "Full name of dive center, location, dates") no se trata como pregunta: no va al RAG y recibe la pregunta de la reserva o la respuesta fija de posventa. Y Jev no distingue "vuelvo como cliente" de "ya reservé" (posventa).
+
 0.31.26 - (2026-10-14)
 ----------------------
 * **EX-EST-2 (tercera parte): la base sin contradicciones (`scripts/auditoria_base.py`, idea de Gadea) y `EXTRACTOR_TODO_LO_DICHO` (ENCENDIDO para la ronda est4-B)** (Gadea con Claude).

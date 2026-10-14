@@ -626,12 +626,12 @@ def catalog_facts(lang: str) -> str:
 # el precio COP correcto en cuanto la respuesta decía "para colombianos" (14 de 54 rechazos); con el hecho en el
 # texto del que redacta, el bot dejaba de corregir el mito (1/4). Cada uno recibe la suya.
 _MONEDA_PARA_EL_JUEZ = {
-    "es": ("Moneda: los colombianos (vivan donde vivan) y los residentes en Colombia pagan en COP y el resto en USD "
-           "(en un grupo mixto de colombianos o residentes y extranjeros, toda la reserva en USD); es el mismo precio en las dos monedas. El precio en COP de cada plan es el precio para colombianos: una "
+    "es": ("Moneda: los colombianos (vivan donde vivan) y los residentes en Colombia pagan en COP y el resto en USD; "
+           "es el mismo precio en las dos monedas. El precio en COP de cada plan es el precio para colombianos: una "
            "respuesta que da ese precio 'para colombianos' es correcta. Lo que no existe es un descuento ni una "
            "tarifa rebajada para colombianos."),
-    "en": ("Currency: Colombians (wherever they live) and residents of Colombia pay in COP and everyone else in USD "
-           "(in a mixed group of Colombians or residents and foreigners, the whole booking in USD); it is the same price in both currencies. Each plan's COP price is the price for Colombians: a response "
+    "en": ("Currency: Colombians (wherever they live) and residents of Colombia pay in COP and everyone else in USD; "
+           "it is the same price in both currencies. Each plan's COP price is the price for Colombians: a response "
            "that gives that price 'for Colombians' is correct. What does not exist is a discount or a reduced rate "
            "for Colombians."),
 }

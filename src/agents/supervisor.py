@@ -2965,6 +2965,7 @@ async def route_message(state: ConversationState, message: str) -> str:
             cancel_pending_answer,
             cancelar_extraccion_adelantada,
             cancelar_rag_adelantado,
+            guardar_lo_dicho_en_el_pase,
         )
         if state.pending_escalation_reason == escalation_before:  # un traspaso a persona va solo
             response = await attach_unused_answer(state, response)
@@ -2974,6 +2975,8 @@ async def route_message(state: ConversationState, message: str) -> str:
         cancel_pending_ack(state)
         cancel_pending_answer(state)
         cancelar_rag_adelantado(state)  # rag-5: la respuesta adelantada que nadie usó
+        if state.pending_escalation_reason not in (None, escalation_before):
+            await guardar_lo_dicho_en_el_pase(state)  # EX-EST-2: lo que dijo en el turno del pase no se pierde
         cancelar_extraccion_adelantada(state)  # ex-5: la extracción adelantada que nadie usó
         await conversation_summarizer.maybe_update_summary(state)
         turn.update(

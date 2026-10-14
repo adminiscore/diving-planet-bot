@@ -79,15 +79,21 @@ class Settings(BaseSettings):
     # ronda flujo1-B) movia otros campos y se cambio. extractor_turno.UBICACION_NEGACION_*. PROMOCIONADO 14-oct (HISTORY 0.31.23).
     # Revert = False aqui y en el compose.
     extractor_aclaraciones: bool = True
-    # EX-EST-2 (14-oct): cuatro arreglos del prompt del extractor, por causa (est3-B): (1) saca TODO lo que el cliente
-    # afirma aunque ya se sepa, con la cita siempre del cliente (aceptar una propuesta del bot, 'nos gusta', es elegirla):
-    # 'Un solo buzo avanzado' con la actividad sabida 0 -> 10/10 de grupo, 'nos gusta… el de Cartagena' 0 -> 7/8;
-    # (2) la regla del grupo con 'un solo buzo', 'dos adultos'; (3) el ejemplo 'quiero bucear con mi amigo' (no elige
-    # actividad) ya no le quita el grupo (8 -> 10/10); (4) la cedula de extranjeria es ser residente (0 -> 8/8 COP).
-    # Banco ex0 3 pasadas: 91,8 -> 92,6 %, peor caso 89,3 -> 90,2 %, casos con invento 5 -> 4.
-    # extractor_turno.TODO_LO_DICHO_*, GRUPO_*, ACTIVIDAD_EJEMPLOS_*, RESIDENTE_*. ENCENDIDO para la ronda est4-B.
+    # EX-EST-2 (14-oct): arreglos del prompt del extractor por causa (est3-B), version v3 tras la ronda est4-B: (1) la
+    # cita siempre del cliente, nunca del bot ni de 'Lo que ya sabemos'; aceptar la opcion que propone el bot es elegirla;
+    # (2) 'un solo buzo', 'dos adultos' en los ejemplos del grupo ('Un solo buzo avanzado' con la actividad sabida 0 ->
+    # 10/10); (3) el ejemplo 'quiero bucear con mi amigo' (no elige actividad) ya no le quita el grupo (8 -> 10/10);
+    # (4) la cedula de extranjeria es ser residente (0 -> 8/8 COP). La v1 ('extrae todo aunque ya se sepa') rompia las
+    # respuestas cortas ('Frances' a la nacionalidad 4/8 -> 0/8, regresion de est4-B) y repetia lo sabido.
+    # Banco ex0 3 pasadas (v3): aciertos 91,8 % (igual), casos con invento 5 -> 3, peor caso 89,3 -> 91,0 %.
+    # extractor_turno.TODO_LO_DICHO_*, GRUPO_*, ACTIVIDAD_EJEMPLOS_*, RESIDENTE_*, ELIGE_*. ENCENDIDO para la ronda est5-B.
     # Revert = False aqui y en el compose.
     extractor_todo_lo_dicho: bool = True
+    # EX-EST-2 (14-oct, tanda est5): arreglos del flujo por causa. (1) Lo que el cliente dice en el turno que acaba en
+    # el pase a una persona se guarda (antes la extraccion se cancelaba: 'staying at the Ubuntu Hotel' y luego 'Where will
+    # you be joining us from?'). conversational_core.guardar_lo_dicho_en_el_pase. ENCENDIDO para la ronda est5-B.
+    # Revert = False aqui y en el compose.
+    est4_flujo: bool = True
     # EX-RAG-3 (14-oct): cuando el juez de grounding rechaza, cada frase rechazada tiene que traer la cita literal del
     # contexto que la respalda (el codigo comprueba la cita y que sus cifras y enlaces estan en el contexto); si todas
     # la traen, la respuesta pasa. El juez rechazaba ~6 % de respuestas, varias correctas (politicas). Solo corre al

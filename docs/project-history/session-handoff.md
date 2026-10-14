@@ -41,7 +41,32 @@ PRE (escritas ya por Luna) tumba 42 frente a 13, casi todo verdades (HISTORY 0.3
 **C. Pendientes de antes:** el criterio del Open Water en `manual-duracion-curso` ✅ (FAQ curada nueva: "sacarse la
 certificación" = Open Water, o el Referido; el Scuba Diver es la parcial). **DeepSeek: FUERA DEL PLAN** (Gadea, 9-oct).
 
-### ▶️ RETOMAR AQUÍ — 14-oct, 21:00 (Gadea con Claude): est3-B 91,3 %, 16/29; ACUSE_SOLO_EL_MENSAJE y EST2_DATOS promocionados; queda el resto de EX-EST-2
+### ▶️ RETOMAR AQUÍ — 14-oct, 23:00 (Gadea con Claude): base auditada y limpia + EXTRACTOR_TODO_LO_DICHO; ronda est4-B en marcha
+
+**Estado.** PRE sirve `feature/pre_gadea` f178d7c (base sin contradicciones + `EXTRACTOR_TODO_LO_DICHO` ENCENDIDO para
+est4-B). HISTORY 0.31.26. Ronda `2026-10-14-est4-B` (los MISMOS 29 diálogos que est3-B) lanzada a las ~23:00 con su juez.
+
+**Al retomar:** si la ronda y el juez terminaron, comparar
+`ENV_FILE=.env.dev python -m scripts.ab_judge_compare 2026-10-14-est3-B 2026-10-14-est4-B --rejuzgar 2`, clasificar
+las regresiones (¿vienen del flag o de la base nueva?), promocionar o no `EXTRACTOR_TODO_LO_DICHO` y commitear la
+ronda (jsonl, snapshot, logs, juez, judge-cache).
+
+**Herramientas nuevas:** `scripts/auditoria_base.py` (contradicciones de la base con cita comprobada; ~2 $ la completa,
+`--temas` para una parte); `scripts/estabilidad_extractor.py` guarda ahora los fallos por caso (`fallos_modales`).
+Cualquier cambio del prompt del extractor: sonda de 10 llamadas de los casos afectados + banco ex0 con 3 pasadas
+(el extractor es frágil: un cambio cualquiera tiraba "con mi amigo" = 2 de 8/10 a 0/10).
+
+**Plan de la noche (autorizado por Gadea, 14-oct 23:05):** cerrar est4-B → resto de EX-EST-2 (una ronda) → ex-9 →
+ex-10 (examen oculto, UNA vez, sin tocar nada después). Tras ex-9, regenerar y republicar el mapa de Coral; tras ex-10,
+Plan Coral a fondo con las estadísticas de la fase EX (rondas, mejoras/regresiones, tiempos, coste, examen oculto).
+Tope de gasto OpenAI ~25 $. Si se acaba el crédito: subir todo (commit, push, Plan Coral, relevo) y apagar el ordenador.
+
+**Siguiente tanda de EX-EST-2:** "ya he buceado con ustedes" pasa a posventa (Jev no distingue "vuelvo" de "ya
+reservé"; la guarda cuenta cualquier enlace del RAG como reserva hecha); lo que el cliente dice en el turno del pase a
+una persona no se guarda (Ubuntu); reservar para OTRA persona no fija la actividad (Referido); el banco del revisor
+con respuestas reales. Después, ex-9 y ex-10.
+
+### ▶️ (anterior) 14-oct, 21:00 (Gadea con Claude): est3-B 91,3 %, 16/29; ACUSE_SOLO_EL_MENSAJE y EST2_DATOS promocionados; queda el resto de EX-EST-2
 
 **Estado.** PRE sirve `feature/pre_gadea` con `ACUSE_SOLO_EL_MENSAJE` y `EST2_DATOS` promocionados. HISTORY 0.31.25.
 Ronda est3-B frente a est2-B: 88,8 → 91,3 %, 12 → 16/29 sin fallos; 14 mejoras reales; 4 regresiones reales, ninguna
