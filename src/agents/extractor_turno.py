@@ -81,8 +81,13 @@ ESQUEMA = {
         "last_dive_over_2_years": _dato({"type": "boolean"}, "Si su última inmersión fue hace MÁS de 2 años."),
         "mixed_nationality": _dato({"type": "boolean"},
                                    "true si el grupo mezcla colombianos (o residentes en Colombia) con extranjeros."),
+        # G-10 (decisión de Gadea, 14-oct): en qué idioma está escrito el mensaje; si no es español ni inglés, el bot
+        # contesta en inglés (conversational_core._otro_idioma_en_ingles).
+        "idioma": {"type": "string",
+                   "description": "Código ISO 639-1 del idioma PRINCIPAL en que está escrito el mensaje (es, en, pt, "
+                                  "fr, de, it…). Unas palabras sueltas de otro idioma no lo cambian."},
     },
-    "required": [*CAMPOS, *EXTRAS],
+    "required": [*CAMPOS, *EXTRAS, "idioma"],
     "additionalProperties": False,
 }
 
@@ -165,6 +170,7 @@ Reglas:
 - group_size: solo si dice CUÁNTAS personas van ("voy solo", "solo yo" = 1; "somos 3" = 3; "mi pareja y yo", "con mi amigo", "con mi novia" = 2). Hablar en primera persona ("yo", "quiero") no dice el tamaño del grupo.
 - group_allocation: cuántas personas hacen cada actividad cuando el grupo se reparte entre VARIAS, contando a quien escribe (con lo que ya sabemos de él). Si ya sabemos cuántos van y el cliente suma a alguien ("viene también uno que hace snorkel"), el reparto incluye a los que ya iban con su actividad. Usa undecided para las personas del grupo de las que el mensaje no dice qué harán, por ejemplo cuando solo dice que no están certificadas ("somos 3, uno no está certificado" = certified_diving 2, undecided 1); nunca conviertas un dato de certificación en minicourse o snorkel. Si un lado del grupo no tiene número ("yo buceo y mis amigos snorkel"), no pongas el reparto: el bot preguntará cuántos son.
 - last_dive_over_2_years: true solo si su última inmersión fue hace MÁS de 2 años; "1,5 años", "el año pasado" o "hace poco" = false.
+- idioma: el idioma en que está escrito la mayor parte del mensaje (código ISO 639-1). Unas palabras sueltas de otro idioma dentro de un mensaje en español siguen siendo "es"; nombrar un idioma ("mi amigo habla francés") no es escribir en él.
 - Si los datos están en partes distintas del mensaje, la cita puede ser varios trozos literales separados por " … ".
 - La cita debe ser texto copiado literalmente del mensaje del cliente.
 
@@ -187,6 +193,7 @@ Rules:
 - group_size: only if they say HOW MANY people go ("just me" = 1; "we are 3" = 3; "my partner and I", "with my friend", "with my girlfriend" = 2). Speaking in first person ("I", "I want") does not give the group size.
 - group_allocation: how many people do each activity when the group splits across SEVERAL, counting the writer (with what we already know about them). If we already know how many are going and the customer adds someone ("one more is coming to snorkel"), the split includes those already going with their activity. Use undecided for people in the group whose activity the message does not say, e.g. when it only says they are not certified ("we are 3, one is not certified" = certified_diving 2, undecided 1); never turn a certification fact into minicourse or snorkel. If one side of the group has no number ("I dive and my friends snorkel"), leave the split out: the bot will ask how many.
 - last_dive_over_2_years: true only if their last dive was MORE than 2 years ago; "1.5 years", "last year" or "recently" = false.
+- idioma: the language most of the message is written in (ISO 639-1 code). A few loose words of another language inside a Spanish message are still "es"; naming a language ("my friend speaks French") is not writing in it.
 - If the facts are in different parts of the message, the quote may be several literal pieces separated by " … ".
 - The quote must be text copied literally from the customer's message.
 
@@ -336,6 +343,9 @@ async def extraer_turno(mensaje: str, *, history: list[dict] | None = None, sabi
     # Regla del catálogo: el buceo certificado (nombrado: fun dives, paquetes de buceos) exige certificación.
     if salida.get("activity") == "certified_diving" and "is_certified" not in salida and certificado is not True:
         salida["is_certified"] = True
+    idioma = datos.get("idioma")
+    if isinstance(idioma, str) and idioma.strip():
+        salida["idioma"] = idioma.strip().lower()[:2]
     extraer_turno.ultimo_motivo = descartes
     if descartes:
         logger.info(f"[EXTRACT][EX4] descartado sin cita verificable: {descartes}")

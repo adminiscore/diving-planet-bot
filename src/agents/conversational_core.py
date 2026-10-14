@@ -2144,6 +2144,27 @@ def _quitar_provisional(intent, pista: dict) -> None:
     intent.overwrite = [f for f in intent.overwrite if f not in campos_del_extractor()]
 
 
+async def _otro_idioma_en_ingles(state: ConversationState, datos: dict | None = None) -> None:
+    """G-10 (decisión de Gadea, 14-oct): si el mensaje está escrito en un idioma que no es español ni inglés, el bot
+    contesta en inglés. El idioma principal lo dice el extractor de la fase EX (misma llamada; unas palabras sueltas no
+    cuentan). En el primer turno se mira la extracción ya lanzada con el enrutador, antes del saludo (sin consumirla:
+    `_understand` la vuelve a esperar y ya está hecha)."""
+    if not settings.idioma_otro_en_ingles:
+        return
+    if datos is None:
+        tarea = getattr(state, "_extraccion_adelantada", None)
+        if tarea is None:
+            return
+        try:
+            datos = await tarea
+        except (asyncio.CancelledError, Exception):  # noqa: BLE001 — sin dato, el idioma de siempre
+            return
+    idioma = (datos or {}).get("idioma")
+    if idioma and idioma not in ("es", "en") and state.language != "en":
+        logger.info(f"[CORE][IDIOMA] el cliente escribe en {idioma!r}: se contesta en inglés")
+        state.language = state.detected_language = "en"
+
+
 def _pasa_la_puerta_de_hoy(state: ConversationState, campo: str) -> bool:
     """Si el extractor falla, lo del regex vale con la puerta de siempre: en un turno con pregunta (u3-4) solo si Jev dice
     que el cliente lo afirma; en cualquier turno, nunca si Jev dice que NO lo afirma."""
@@ -2156,6 +2177,7 @@ async def _aplicar_extractor(intent, state: ConversationState, message: str, pis
     lo provisional del regex. Va ANTES de las reglas que trabajan sobre el intent (reparto, cert-o-curso, recomendar el
     minicurso), para que vean el valor final. Si la llamada falla, lo de hoy con su puerta, campo a campo."""
     datos = await datos_del_extractor(state, message)
+    await _otro_idioma_en_ingles(state, datos)
     _quitar_provisional(intent, pista)
     _nombre_del_extractor(state, datos)
     if datos is None:
@@ -4118,6 +4140,7 @@ async def _setup_phase(
         # mezcladas. Fijar `detected_language` aquí también evita ese
         # pisado sobre la detección ya resuelta y más fiable.
         state.detected_language = state.language
+        await _otro_idioma_en_ingles(state)
         state.step = Step.FREE_TEXT
         state.quick_replies = []
     elif _SWITCH_TO_EN_RE.search(message) and state.language != "en":

@@ -498,6 +498,18 @@ def _parte_equipo(service_id: str, lang: str) -> list[str]:
     return []
 
 
+def policies_facts(lang: str) -> str:
+    """EX-RAG-1 (flag `rag_politicas_en_contexto`, aprobado por Gadea el 14-oct para medir): las políticas del negocio
+    enteras (data/knowledge_base/policies.json, ~2.000 tokens), para que vayan SIEMPRE en el contexto del RAG como el
+    catálogo. Ronda atencion-B2: un mensaje que mezclaba el paquete de 5 buceos, el check-out y el equipaje solo
+    recuperaba FAQs y servicios, y el RAG contestaba que no tenía la política de equipaje."""
+    path = Path(__file__).resolve().parents[2] / "data" / "knowledge_base" / "policies.json"
+    policies = json.loads(path.read_text(encoding="utf-8"))["policies"]
+    head = "Políticas de Diving Planet:" if lang == "es" else "Diving Planet policies:"
+    lines = [f"- {text.get(lang) or text.get('es', '')}" for text in policies.values() if isinstance(text, dict)]
+    return "\n".join([head, *[ln for ln in lines if ln.strip() != "-"]])
+
+
 def catalog_facts(lang: str) -> str:
     """Paso 5 (RAG, flag `rag_v2`): el catalogo entero como hechos compactos para el contexto
     del RAG — precio online y normal, duracion, si obliga a dormir en las islas y si pide

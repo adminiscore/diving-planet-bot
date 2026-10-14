@@ -532,3 +532,20 @@ Under each sentence of type fact, write every claim about Diving Planet it conta
 If the sentence says several things, each one is a separate claim with its own verdict (for example, "the team sends you a link to pay by transfer, but that method has no discount" is two claims). "YES" if the context states it or it follows directly from it; "NO" if the context does not state it or contradicts it. A figure written with other separators is the same (1.429.000 = 1,429,000 = 1429000), and a claim counts as supported even if its parts are in different sentences of the context.
 
 On the last line write ONLY one word: HALLUCINATED if any claim has "NO"; GROUNDED otherwise."""
+
+
+# EX-RAG-2 (flag `rag_no_supone_reserva`, 14-oct). Ronda atencion-B2 (cambio-fecha-por-enfermedad t1): "we will be
+# meeting at the pier at 8am, then staying overnight on the island" recibía "For the 3-dive package…": el RAG deducía
+# el servicio reservado. Pasaba igual con el flag de posventa apagado y encendido.
+RAG_NO_SUPONE_ES = (
+    "No atribuyas al cliente datos que no ha dicho: si habla de su reserva o de su plan sin decir qué servicio, "
+    "cuántas inmersiones o qué día reservó, no lo deduzcas ni lo nombres como si lo supieras (no digas «tu paquete de "
+    "3 inmersiones» si él no lo dijo). Contesta lo que pregunta con la información general y, si para responder hace "
+    "falta saber su servicio, pregúntaselo."
+)
+RAG_NO_SUPONE_EN = (
+    "Do not attribute to the customer anything they have not said: if they talk about their booking or plan without "
+    "saying which service, how many dives or which day they booked, do not infer it or name it as if you knew it "
+    "(don't say \"your 3-dive package\" unless they said so). Answer what they ask with the general information and, "
+    "if you need to know their service to answer, ask them."
+)

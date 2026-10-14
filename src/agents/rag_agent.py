@@ -179,6 +179,11 @@ def build_system_prompt(lang: str, query: str | None = None) -> str:
         prompt = prompt.replace(RAG_NO_TENGO_OLD_ES, RAG_NO_TENGO_V2_ES).replace(
             RAG_NO_TENGO_OLD_EN, RAG_NO_TENGO_V2_EN
         )
+    if settings.rag_no_supone_reserva:
+        # EX-RAG-2: no atribuir al cliente un servicio o una reserva que no dijo.
+        from src.prompts.info import RAG_NO_SUPONE_EN, RAG_NO_SUPONE_ES  # lazy
+
+        prompt = f"{prompt}\n\n{RAG_NO_SUPONE_ES if lang == 'es' else RAG_NO_SUPONE_EN}"
     if settings.rag_condiciones_abiertas:
         from src.prompts.info import RAG_CONDICIONES_EN, RAG_CONDICIONES_ES  # lazy
 
@@ -973,6 +978,12 @@ async def rag_answer(
             from src.flows.catalog import catalog_booking_links  # lazy
 
             facts += "\n" + catalog_booking_links(lang)
+        if settings.rag_politicas_en_contexto:
+            # EX-RAG-1: las políticas, siempre (como el catálogo); en el prefijo fijo, cacheable, y el juez también
+            # las ve (una política citada en la respuesta queda respaldada).
+            from src.flows.catalog import policies_facts  # lazy
+
+            facts += "\n\n" + policies_facts(lang)
         if settings.rag_prompt_cache:
             # Paso 9 (l2-2): al prompt del sistema y a la cabeza del contexto del juez (prefijos fijos
             # que OpenAI cachea); en el mensaje del usuario, detras del historial, nunca se cacheaba.

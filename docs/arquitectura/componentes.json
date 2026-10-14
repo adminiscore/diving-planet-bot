@@ -355,6 +355,7 @@
         "extraccion_llm_ubicacion",
         "extraccion_llm_actividad",
         "extraccion_llm_certificacion",
+        "idioma_otro_en_ingles",
         "extraccion_llm_grupo"
       ]
     },
@@ -502,7 +503,8 @@
         "rag_v2",
         "rag_prompt_cache",
         "catalogo_hoteles_base",
-        "catalogo_equipo_incluido"
+        "catalogo_equipo_incluido",
+        "rag_politicas_en_contexto"
       ]
     },
     {
@@ -519,7 +521,8 @@
       "interruptores": [
         "rag_concise",
         "rag_origen_pregunta",
-        "origen_conserva_respuesta"
+        "origen_conserva_respuesta",
+        "rag_no_supone_reserva"
       ],
       "tiempo_medido": {
         "p50": 1.9,
@@ -1207,6 +1210,21 @@
       "area": "Reserva",
       "titulo": "El grupo lo entiende la IA (con cita)",
       "texto": "Cuántos van y qué hace cada uno lo decide el extractor nuevo de la fase EX, con las palabras del cliente: 'él quiere hacer snorkel' ya no se cuenta dos veces, '3 bucean y 3 hacen snorkel' se suma al grupo sin preguntar '¿lo cambio?', y quien no ha elegido actividad queda 'sin decidir' para recomendarle opciones."
+    },
+    "rag_no_supone_reserva": {
+      "area": "Preguntas",
+      "titulo": "No da por hecho lo que el cliente no dijo",
+      "texto": "Si el cliente habla de su reserva sin decir qué servicio tiene, Coral no lo adivina ('tu paquete de 3 inmersiones'): contesta con la información general y, si hace falta, le pregunta."
+    },
+        "rag_politicas_en_contexto": {
+      "area": "Preguntas",
+      "titulo": "Las políticas siempre a mano",
+      "texto": "Las políticas del negocio (equipaje, recogida, idiomas de instrucción, cambios…) van siempre enteras en el contexto del RAG, como el catálogo. Antes dependían de que la búsqueda las encontrara y en un mensaje largo podían quedarse fuera."
+    },
+    "idioma_otro_en_ingles": {
+      "area": "Reserva",
+      "titulo": "Otro idioma: contesta en inglés",
+      "texto": "Coral atiende en español e inglés. Si el cliente escribe en otro idioma (portugués, francés…), contesta en inglés. Unas palabras sueltas de otro idioma dentro de un mensaje en español no cambian el idioma. Lo dice el extractor de la fase EX, en la misma llamada."
     },
     "extraccion_llm_certificacion": {
       "area": "Reserva",
