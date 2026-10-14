@@ -72,7 +72,7 @@ def test_aclaraciones_del_extractor_con_el_flag(monkeypatch):
 
     monkeypatch.setattr(settings, "extractor_aclaraciones", True)
     asyncio.run(ex.extraer_turno("Va quiero comprar sin ir de cartagena", client=_Cliente()))
-    assert ex.ACLARACIONES_ES in capturado["sistema"]
+    assert ex.UBICACION_NEGACION_ES in capturado["sistema"]
     monkeypatch.setattr(settings, "extractor_aclaraciones", False)
     asyncio.run(ex.extraer_turno("Va quiero comprar sin ir de cartagena", client=_Cliente()))
-    assert ex.ACLARACIONES_ES not in capturado["sistema"]
+    assert ex.UBICACION_NEGACION_ES not in capturado["sistema"]

@@ -289,7 +289,8 @@ async def extraer_turno(mensaje: str, *, history: list[dict] | None = None, sabi
     if settings.extractor_precio_elige:
         sistema = sistema.replace(GENERAL_PRECIO_ES, GENERAL_PRECIO_ES_V2).replace(GENERAL_PRECIO_EN, GENERAL_PRECIO_EN_V2)
     if settings.extractor_aclaraciones:
-        sistema += ACLARACIONES_ES if lang == "es" else ACLARACIONES_EN
+        # EX-EXTRACTOR-1: la regla de la ubicación con la negación primero (ver UBICACION_NEGACION_*).
+        sistema = sistema.replace(UBICACION_HOY_ES, UBICACION_NEGACION_ES).replace(UBICACION_HOY_EN, UBICACION_NEGACION_EN)
     con_nombre = settings.nombre_por_extractor
     if con_nombre:
         sistema += REGLA_NOMBRE_ES if lang == "es" else REGLA_NOMBRE_EN
@@ -359,24 +360,21 @@ extraer_turno.ultimo_segundos = 0.0
 extraer_turno.ultimo_uso = {}
 
 
-# EX-EXTRACTOR-1 (flag `extractor_aclaraciones`, 14-oct). Ronda g10-A/B: el mismo mensaje daba resultados distintos de
-# una llamada a otra y, medido aparte, el modelo se quedaba en la lectura equivocada: "Va quiero comprar sin ir de
-# cartagena" -> cartagena (la regla "va a Cartagena" ganaba a la negación) y "Buzos certificados" como primer mensaje
-# -> no quiere bucear. Con estas aclaraciones, 6/6 bien en los dos y sin cambios en los controles ("Estamos en
-# Cartagena y no queremos ir a las islas" -> cartagena; "¿puedo bucear embarazada?" -> no es querer bucear).
-ACLARACIONES_ES = (
-    "\n\nACLARACIONES (prevalecen sobre las reglas de arriba):\n"
-    "- Una NEGACIÓN invierte el lugar: \"sin ir de Cartagena\", \"sin salir de Cartagena\", \"no vamos a Cartagena\" "
-    "significa que NO sale de Cartagena (si está o estará en las islas → island; si no lo dice, location null). "
-    "Nombrar Cartagena dentro de una negación no es salir de Cartagena.\n"
-    "- Escribir a esta escuela de buceo presentándose como buzos o buzos certificados (\"Buzos certificados\", "
-    "\"somos buzos Advanced\"), sin preguntar otra cosa, es querer bucear: quiere_bucear true."
+# EX-EXTRACTOR-1 (flag `extractor_aclaraciones`, 14-oct). Ronda g10-A/B: "Va quiero comprar sin ir de cartagena" se leía
+# como cartagena (la regla "va a Cartagena" ganaba a la negación, 0/10). Primera versión (ronda flujo1-B): un bloque de
+# aclaraciones al final del prompt arreglaba la negación pero movía otros campos ("quiero bucear certificado" sin
+# actividad 4/10; "¿puedo bucear embarazada?" como querer bucear 6/10). La que se queda: la MISMA regla de la ubicación
+# con la negación primero. Medido con 10 llamadas: "sin ir de Cartagena" 0 -> 10/10, "quiero bucear certificado"
+# 10/10, embarazada sin querer bucear 8/10 (base 10/10), "estoy en Cartagena" y "no queremos ir a las islas" iguales.
+UBICACION_HOY_ES = "- location: desde dónde sale. Si dice que está"
+UBICACION_NEGACION_ES = (
+    "- location: desde dónde sale. Primero, una NEGACIÓN invierte el lugar: \"sin ir de Cartagena\", \"sin salir de "
+    "Cartagena\" o \"no vamos a Cartagena\" quiere decir que NO sale de Cartagena (si está en las islas → island; si no "
+    "lo dice, null). Si no hay negación y dice que está"
 )
-ACLARACIONES_EN = (
-    "\n\nCLARIFICATIONS (they override the rules above):\n"
-    "- A NEGATION inverts the place: \"without going from Cartagena\", \"without leaving Cartagena\", \"we're not "
-    "going to Cartagena\" means they do NOT depart from Cartagena (if they are or will be on the islands → island; "
-    "if they don't say, location null). Naming Cartagena inside a negation is not departing from Cartagena.\n"
-    "- Writing to this dive school introducing themselves as divers or certified divers (\"Certified divers\", "
-    "\"we're Advanced divers\"), without asking anything else, is wanting to dive: quiere_bucear true."
+UBICACION_HOY_EN = "- location: where they depart from. If they say they are"
+UBICACION_NEGACION_EN = (
+    "- location: where they depart from. First, a NEGATION inverts the place: \"without going from Cartagena\", "
+    "\"without leaving Cartagena\" or \"we're not going to Cartagena\" means they do NOT depart from Cartagena (if they "
+    "are on the islands → island; if they don't say, null). If there is no negation and they say they are"
 )

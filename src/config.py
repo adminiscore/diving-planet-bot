@@ -74,9 +74,9 @@ class Settings(BaseSettings):
     # condicionan a otras (origen, hotel, cuantos, ultima inmersion, refresher, edades, nacionalidad).
     # conversational_core._siguiente_pregunta. ENCENDIDO para la mini-ronda flujo1-B. Revert = False aqui y en el compose.
     aplazar_pregunta_sin_respuesta: bool = True
-    # EX-EXTRACTOR-1 (14-oct): dos aclaraciones al prompt del extractor (una negacion invierte el lugar: 'sin ir de
-    # Cartagena' = no sale de Cartagena; presentarse como buzos certificados = quiere bucear). Medido aparte: 0/6 -> 6/6
-    # en los dos casos y controles iguales. extractor_turno.ACLARACIONES_*. ENCENDIDO para la mini-ronda flujo1-B.
+    # EX-EXTRACTOR-1 (14-oct): la regla de la ubicacion del extractor con la NEGACION primero ('sin ir de Cartagena' =
+    # no sale de Cartagena: 0 -> 10/10, sin mover otros campos). La primera version (un bloque de aclaraciones al final,
+    # ronda flujo1-B) movia otros campos y se cambio. extractor_turno.UBICACION_NEGACION_*. ENCENDIDO para flujo1-B2.
     # Revert = False aqui y en el compose.
     extractor_aclaraciones: bool = True
     # EX-RAG-3 (14-oct): cuando el juez de grounding rechaza, cada frase rechazada tiene que traer la cita literal del
