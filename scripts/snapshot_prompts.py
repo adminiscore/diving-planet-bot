@@ -154,6 +154,8 @@ def _collect() -> dict[str, str]:
     for lang in LANGS:
         add(f"booking/acknowledgement.system.{lang}.noname", booking.acknowledgement_system_prompt(lang, None))
         add(f"booking/acknowledgement.system.{lang}.named", booking.acknowledgement_system_prompt(lang, "Sofía"))
+    add("booking/acuse_solo_mensaje.es", booking.ACUSE_SOLO_MENSAJE_ES)
+    add("booking/acuse_solo_mensaje.en", booking.ACUSE_SOLO_MENSAJE_EN)
 
     # ── booking/setup · detección de idioma ──────────────────────────────────
     add("booking/language_detect.prompt.template", booking.LANGUAGE_DETECT_PROMPT)
@@ -201,6 +203,12 @@ def _collect() -> dict[str, str]:
     add("info/rag_condiciones.en", info.RAG_CONDICIONES_EN)
     add("info/rag_no_supone.es", info.RAG_NO_SUPONE_ES)
     add("info/rag_no_supone.en", info.RAG_NO_SUPONE_EN)
+    add("info/rag_disponibilidad_vieja.es", info.RAG_DISPONIBILIDAD_VIEJA_ES)
+    add("info/rag_disponibilidad_vieja.en", info.RAG_DISPONIBILIDAD_VIEJA_EN)
+    add("info/rag_disponibilidad_nueva.es", info.RAG_DISPONIBILIDAD_NUEVA_ES)
+    add("info/rag_disponibilidad_nueva.en", info.RAG_DISPONIBILIDAD_NUEVA_EN)
+    add("info/rag_varios_planes.es", info.RAG_VARIOS_PLANES_ES)
+    add("info/rag_varios_planes.en", info.RAG_VARIOS_PLANES_EN)
     add("info/rag_intro.long_es", info.RAG_INTRO_LONG_ES)
     add("info/rag_intro.short_es", info.RAG_INTRO_SHORT_ES)
     add("info/rag_intro.long_en", info.RAG_INTRO_LONG_EN)

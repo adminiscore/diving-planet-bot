@@ -549,3 +549,40 @@ RAG_NO_SUPONE_EN = (
     "(don't say \"your 3-dive package\" unless they said so). Answer what they ask with the general information and, "
     "if you need to know their service to answer, ask them."
 )
+
+
+# EX-EST-2 (flag `est2_datos`, 14-oct). Rondas del 13-14 oct: (1) "no puedo confirmar cupos, el equipo debe verificar"
+# contradecía la decisión del negocio del 17-sep ("siempre hay disponibilidad"; availability.json); (2) a "2 day dive
+# package" el RAG cotizaba solo el paquete de 4 inmersiones, cuando el catálogo tiene DOS de 2 días (4, o 5 con nocturna).
+RAG_DISPONIBILIDAD_VIEJA_ES = (
+    "- NUNCA confirmes disponibilidad o cupo para una fecha concreta (\"mañana\", \"el sábado\"): tú no ves el "
+    "calendario real. Si en el contexto una situación pasada dice \"tenemos cupos\" o \"se confirma cupo\", eso fue "
+    "OTRO día con OTRO cliente — no aplica hoy. Responde con el horario/proceso general y deriva la confirmación de "
+    "cupo al asesor."
+)
+RAG_DISPONIBILIDAD_NUEVA_ES = (
+    "- Disponibilidad: SIEMPRE hay disponibilidad (decisión del negocio); solo se cierra el 25 de diciembre y el 1 de "
+    "enero, y una salida puede suspenderse por mal tiempo. Dilo así y que elija fecha y personas en el enlace de "
+    "reserva; no digas que no puedes confirmar cupos ni que el equipo debe verificarlos. Lo que no confirmas es el "
+    "estado de una reserva concreta ya hecha (eso lo ve el equipo)."
+)
+RAG_DISPONIBILIDAD_VIEJA_EN = (
+    "- NEVER confirm availability or open slots for a specific date (\"tomorrow\", \"Saturday\"): you cannot see the "
+    "real calendar. If a past situation in the context says \"we have slots\" or \"spot confirmed\", that was ANOTHER "
+    "day with ANOTHER customer — it doesn't apply today. Give the general schedule/process and route slot "
+    "confirmation to the advisor."
+)
+RAG_DISPONIBILIDAD_NUEVA_EN = (
+    "- Availability: there is ALWAYS availability (business decision); we only close on December 25 and January 1, "
+    "and a trip can be suspended due to bad weather. Say so, and let them pick date and people in the booking link; "
+    "don't say you can't confirm slots or that the team must check them. What you don't confirm is the status of a "
+    "specific booking already made (the team sees that)."
+)
+RAG_VARIOS_PLANES_ES = (
+    "Si lo que pide el cliente encaja con VARIOS planes del catálogo (por ejemplo, \"un paquete de 2 días\": el de 4 "
+    "inmersiones y el de 5 con nocturna), nombra las opciones con su precio en vez de elegir tú una."
+)
+RAG_VARIOS_PLANES_EN = (
+    "If what the customer asks for matches SEVERAL plans in the catalog (for example, \"a 2-day package\": the 4-dive "
+    "one and the 5-dive one with a night dive), name the options with their price instead of picking one yourself."
+)

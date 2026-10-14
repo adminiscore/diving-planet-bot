@@ -92,6 +92,13 @@ class Settings(BaseSettings):
     # Gadea: recomendar segun el contexto). conversational_core.ask_slot. PROMOCIONADO 14-oct (HISTORY 0.31.24).
     # Revert = False aqui y en el compose.
     recomendar_a_certificados: bool = True
+    # EX-EST-2 (14-oct): el acuse reconoce SOLO lo que dice el mensaje (el resumen de la reserva no se repite; ante
+    # 'gracias' o una fecha suelta, nada). Banco scripts/banco_acuse.py: inventaba en 33/40 casos reales
+    # ('tienes una reserva para el sabado'). prompts/booking.ACUSE_SOLO_MENSAJE_*. Revert = False aqui y en el compose.
+    acuse_solo_el_mensaje: bool = True
+    # EX-EST-2 (14-oct): arreglos de datos de la tanda est3 (la pregunta del origen solo dice 'ida y vuelta el mismo dia'
+    # si se SABE que el plan es de un dia; ...). Revert = False aqui y en el compose.
+    est2_datos: bool = True
     # ex-7 (fase EX): el GRUPO (group_size, group_allocation) lo decide el extractor "LLM primero" (cita comprobada),
     # con "undecided" para quien no ha elegido actividad (decision del owner, 15-sep). Un reparto que solo SUMA
     # personas al de antes es un añadido (sin "¿lo cambio?"); otro cambio se confirma. El atajo de acompañante no

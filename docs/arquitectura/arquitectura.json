@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-14T16:39:54+00:00",
-  "commit": "27987dd",
+  "generado": "2026-10-14T16:54:27+00:00",
+  "commit": "45b8115",
   "rama": "feature/pre_gadea"
  },
  "vistas": {
@@ -640,6 +640,13 @@
      "codigo": true,
      "pre": true,
      "sin_efecto": false
+    },
+    {
+     "nombre": "acuse_solo_el_mensaje",
+     "titulo": "El acuse no se inventa nada",
+     "codigo": true,
+     "pre": true,
+     "sin_efecto": false
     }
    ],
    "marca": "openai",
@@ -892,6 +899,13 @@
     {
      "nombre": "rag_politicas_en_contexto",
      "titulo": "Las políticas siempre a mano",
+     "codigo": true,
+     "pre": true,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "est2_datos",
+     "titulo": "Datos que el RAG decía mal",
      "codigo": true,
      "pre": true,
      "sin_efecto": false
@@ -1683,6 +1697,19 @@
    "sin_efecto": null
   },
   {
+   "nombre": "acuse_solo_el_mensaje",
+   "area": "Reserva",
+   "titulo": "El acuse no se inventa nada",
+   "texto": "La frase corta con la que Coral reconoce lo que dijo el cliente ('Entendido, …') solo repite lo que dice el mensaje: ya no convierte una fecha en 'tu reserva' ni un 'gracias' en 'tu actividad de Advanced'.",
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
+   "usado_por": [
+    "b_slotfill_close"
+   ],
+   "sin_efecto": null
+  },
+  {
    "nombre": "agent_arch",
    "area": "Arquitectura",
    "titulo": "Grafo de agentes",
@@ -1845,6 +1872,19 @@
    "fijado_en_pre": true,
    "usado_por": [
     "safety"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "est2_datos",
+   "area": "Preguntas",
+   "titulo": "Datos que el RAG decía mal",
+   "texto": "Siempre hay disponibilidad (decisión del negocio): Coral ya no dice 'no puedo confirmar cupos'. Si lo que pide el cliente encaja con varios planes (un paquete de 2 días: 4 o 5 inmersiones), los nombra todos. Y la pregunta del origen solo dice 'ida y vuelta el mismo día' si se sabe que el plan es de un día.",
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
+   "usado_por": [
+    "r_catalogo"
    ],
    "sin_efecto": null
   },

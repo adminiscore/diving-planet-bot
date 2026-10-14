@@ -179,6 +179,20 @@ def build_system_prompt(lang: str, query: str | None = None) -> str:
         prompt = prompt.replace(RAG_NO_TENGO_OLD_ES, RAG_NO_TENGO_V2_ES).replace(
             RAG_NO_TENGO_OLD_EN, RAG_NO_TENGO_V2_EN
         )
+    if settings.est2_datos:
+        # EX-EST-2: siempre hay disponibilidad (decisión del negocio) y, si encajan varios planes, se nombran todos.
+        from src.prompts.info import (  # lazy
+            RAG_DISPONIBILIDAD_NUEVA_EN,
+            RAG_DISPONIBILIDAD_NUEVA_ES,
+            RAG_DISPONIBILIDAD_VIEJA_EN,
+            RAG_DISPONIBILIDAD_VIEJA_ES,
+            RAG_VARIOS_PLANES_EN,
+            RAG_VARIOS_PLANES_ES,
+        )
+
+        prompt = prompt.replace(RAG_DISPONIBILIDAD_VIEJA_ES, RAG_DISPONIBILIDAD_NUEVA_ES).replace(
+            RAG_DISPONIBILIDAD_VIEJA_EN, RAG_DISPONIBILIDAD_NUEVA_EN)
+        prompt = f"{prompt}\n\n{RAG_VARIOS_PLANES_ES if lang == 'es' else RAG_VARIOS_PLANES_EN}"
     if settings.rag_no_supone_reserva:
         # EX-RAG-2: no atribuir al cliente un servicio o una reserva que no dijo.
         from src.prompts.info import RAG_NO_SUPONE_EN, RAG_NO_SUPONE_ES  # lazy

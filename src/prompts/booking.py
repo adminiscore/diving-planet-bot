@@ -1279,6 +1279,25 @@ def slot_resolver_tool(slot: str) -> dict:
 
 # ── Acuse cálido de una frase · `llm_extractor.compose_acknowledgement` ─────
 
+# EX-EST-2 (flag `acuse_solo_el_mensaje`, 14-oct). Banco scripts/banco_acuse.py: ante mensajes sin nada que reconocer
+# ("Muchas gracias!", "May 3rd", "Para el sábado 30/05") el acuse rellenaba con el resumen de la reserva e inventaba
+# ("tienes una reserva para el sábado", "has reservado dos minicursos"): 33/40 inventos en los casos reales.
+ACUSE_SOLO_MENSAJE_ES = (
+    " REGLA MÁS IMPORTANTE — reconoce SOLO lo que dice el MENSAJE del cliente: el contexto de la reserva es para que "
+    "no te contradigas, NO para repetirlo ni resumirlo. No afirmes nada que el mensaje no diga: ni que tiene o hizo una "
+    "reserva (no uses 'reserva' ni 'reservado' si él no lo dijo), ni qué actividad hará, ni cuántos son, ni de dónde "
+    "sale, ni su experiencia. Si el mensaje no trae un dato que reconocer (un 'gracias', un 'ok', una fecha suelta, una "
+    "pregunta), responde con una cadena vacía."
+)
+ACUSE_SOLO_MENSAJE_EN = (
+    " MOST IMPORTANT RULE — acknowledge ONLY what the customer's MESSAGE says: the booking context is there so you "
+    "don't contradict it, NOT to repeat or summarize it. Don't state anything the message doesn't say: not that they "
+    "have or made a booking (don't use 'booking' or 'reservation' unless they did), nor which activity they'll do, how "
+    "many they are, where they depart from, or their experience. If the message carries no fact to acknowledge (a "
+    "'thanks', an 'ok', a bare date, a question), reply with an empty string."
+)
+
+
 def acknowledgement_system_prompt(lang: str, client_name: str | None) -> str:
     name_es = f" El cliente se llama {client_name}; salúdalo/nómbralo con naturalidad de vez en cuando (no en cada mensaje)." if client_name else ""
     name_en = f" The customer's name is {client_name}; address them by name naturally now and then (not every message)." if client_name else ""

@@ -87,3 +87,20 @@ def test_a_un_certificado_se_le_recomiendan_sus_opciones(monkeypatch):
     assert "2 inmersiones" in texto and "minicurso" not in texto.lower() and "snorkel" not in texto.lower()
     st2 = ConversationState(conversation_id="flujo1", language="es")
     assert "Minicurso" in core.ask_slot(st2, core.SLOT_ACTIVITY)  # sin certificación: el menú de siempre
+
+
+def test_mismo_dia_solo_si_se_sabe(monkeypatch):
+    """EX-EST-2: "el plan de 5 buceos para el finde" (buceo certificado sin duración) recibía "ida y vuelta el mismo día"."""
+    monkeypatch.setattr(settings, "est2_datos", True)
+    st = ConversationState(conversation_id="flujo1", language="es")
+    st.detected_activity = "certified_diving"
+    assert "mismo día" not in core.ask_slot(st, core.SLOT_LOCATION)
+    st.detected_duration = "single_day"
+    assert "mismo día" in core.ask_slot(st, core.SLOT_LOCATION)
+
+
+def test_politicas_nuevas_siempre_en_el_contexto():
+    from src.flows.catalog import policies_facts
+
+    es = policies_facts("es")
+    assert "San Bernardo" in es and "Siempre hay disponibilidad" in es and "cédula de extranjería" in es

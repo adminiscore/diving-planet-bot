@@ -912,6 +912,10 @@ def _plan_is_single_day(state: ConversationState) -> bool:
     if state.detected_service_id:
         return state.detected_service_id not in not_single
     if state.detected_activity == "certified_diving":
+        if settings.est2_datos:
+            # EX-EST-2 (14-oct): "el plan de 5 buceos para el finde" sin duración detectada recibía "ida y vuelta el mismo
+            # día". Solo se afirma un día si se SABE.
+            return state.detected_duration == "single_day"
         return state.detected_duration != "multi_day"
     act = dom.by_id(state.detected_activity) if state.detected_activity else None
     services = act.all_services() if act else ()

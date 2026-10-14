@@ -570,6 +570,15 @@ async def resolve_slot_answer(
 # devuelve "" ante cualquier fallo (el bot sigue respondiendo con lo determinista).
 
 
+def _regla_solo_mensaje(lang: str) -> str:
+    """EX-EST-2 (flag `acuse_solo_el_mensaje`): el acuse reconoce solo lo que dice el mensaje (ver ACUSE_SOLO_MENSAJE_*)."""
+    if not settings.acuse_solo_el_mensaje:
+        return ""
+    from src.prompts.booking import ACUSE_SOLO_MENSAJE_EN, ACUSE_SOLO_MENSAJE_ES  # lazy
+
+    return ACUSE_SOLO_MENSAJE_ES if lang == "es" else ACUSE_SOLO_MENSAJE_EN
+
+
 async def compose_acknowledgement(
     message: str,
     *,
@@ -587,7 +596,7 @@ async def compose_acknowledgement(
         response = await client.chat.completions.create(
             model=settings.extraction_model,
             messages=[
-                {"role": "system", "content": acknowledgement_system_prompt(lang, client_name)},
+                {"role": "system", "content": acknowledgement_system_prompt(lang, client_name) + _regla_solo_mensaje(lang)},
                 {"role": "user", "content": user_content},
             ],
             temperature=0.4,

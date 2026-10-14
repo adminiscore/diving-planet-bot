@@ -375,7 +375,8 @@
       "interruptores": [
         "recommend_inferred_minicourse",
         "aplazar_pregunta_sin_respuesta",
-        "recomendar_a_certificados"
+        "recomendar_a_certificados",
+        "acuse_solo_el_mensaje"
       ]
     },
     {
@@ -507,7 +508,8 @@
         "rag_prompt_cache",
         "catalogo_hoteles_base",
         "catalogo_equipo_incluido",
-        "rag_politicas_en_contexto"
+        "rag_politicas_en_contexto",
+        "est2_datos"
       ]
     },
     {
@@ -1225,7 +1227,17 @@
       "titulo": "El revisor pide la cita antes de rechazar",
       "texto": "Cuando el revisor de las respuestas del RAG rechaza una frase, se le pide la cita literal de la base que la respalda; si la trae (y sus cifras y enlaces están en la base), la respuesta pasa. Antes rechazaba respuestas correctas y la que se regeneraba salía peor."
     },
-    "recomendar_a_certificados": {
+    "est2_datos": {
+      "area": "Preguntas",
+      "titulo": "Datos que el RAG decía mal",
+      "texto": "Siempre hay disponibilidad (decisión del negocio): Coral ya no dice 'no puedo confirmar cupos'. Si lo que pide el cliente encaja con varios planes (un paquete de 2 días: 4 o 5 inmersiones), los nombra todos. Y la pregunta del origen solo dice 'ida y vuelta el mismo día' si se sabe que el plan es de un día."
+    },
+    "acuse_solo_el_mensaje": {
+      "area": "Reserva",
+      "titulo": "El acuse no se inventa nada",
+      "texto": "La frase corta con la que Coral reconoce lo que dijo el cliente ('Entendido, …') solo repite lo que dice el mensaje: ya no convierte una fecha en 'tu reserva' ni un 'gracias' en 'tu actividad de Advanced'."
+    },
+        "recomendar_a_certificados": {
       "area": "Reserva",
       "titulo": "A un buzo certificado le recomienda sus opciones",
       "texto": "Si el cliente ya dijo que es buzo certificado y no ha elegido actividad, Coral le propone la salida de 2 inmersiones, los paquetes de varios días o un curso avanzado, en vez del menú entero con minicurso y snorkel (regla de Gadea: recomendar según el contexto)."
