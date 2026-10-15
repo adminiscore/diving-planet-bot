@@ -1,6 +1,14 @@
 History
 =======
 
+0.31.29 - (2026-10-15)
+----------------------
+* **Ronda est5-B: `EXTRACTOR_TODO_LO_DICHO` (v3) y `EST4_FLUJO` PROMOCIONADOS; 91,3 % (est4-B 92,2 %), 15/29 sin fallos en las dos** (Gadea con Claude).
+  - **Mejoras reales (6):** la repregunta de "Frances" (lo que rompía la v1), el punto de encuentro del Referido, el refresher a 1,5 años, el cierre de las 4:30, el grupo mixto, "sin descuento por residente".
+  - **Regresiones reales (9), ninguna de los dos flags:** "Buzos certificados" a secas toma la actividad 3 de 10 veces con y sin el flag (azar del extractor: esa vez el bot preguntó el origen en vez de recomendar y el RAG repreguntó la fecha); el RAG supone la hora ("ya pasó esa hora" de las 4:30) y deja datos (comprar comida en el hotel, el paquete de 2 días); "como se hospedan en San Pedro de Majagua" sale del HOTEL que lee el regex de "o en majagua" (ex-9b: el hotel al extractor); "tu reserva" de la posventa (la causa única de las peticiones en imperativo). Una "regresión" es error del juez (un precio del minicurso que el bot no dio).
+  - **Probado y deshecho:** aclarar en la regla del extractor que "buzos certificados" describe a las personas: lo estabilizaba (0/10) pero el banco ex0 bajaba 91,8 → 89,3 % ("Un solo buzo avanzado" contestando al menú perdía la actividad, "Frances" 0/8).
+  - **Incidencias de la noche:** el lint de CI (ruff UP041) paró un deploy; la ronda se guarda con la fecha UTC; una caída de conexión con OpenAI cortó el juez (relanzado con su caché); el ordenador se suspendió de ~01:20 a 08:55.
+
 0.31.28 - (2026-10-15)
 ----------------------
 * **ex-9 (primera parte): fuera las redes del camino viejo que ya no tenían campos; los cuatro dominios del extractor sin flag** (Gadea con Claude; noche autorizada por Gadea).

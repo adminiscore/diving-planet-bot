@@ -65,12 +65,14 @@ class Settings(BaseSettings):
     # (4) la cedula de extranjeria es ser residente (0 -> 8/8 COP). La v1 ('extrae todo aunque ya se sepa') rompia las
     # respuestas cortas ('Frances' a la nacionalidad 4/8 -> 0/8, regresion de est4-B) y repetia lo sabido.
     # Banco ex0 3 pasadas (v3): aciertos 91,8 % (igual), casos con invento 5 -> 3, peor caso 89,3 -> 91,0 %.
-    # extractor_turno.TODO_LO_DICHO_*, GRUPO_*, ACTIVIDAD_EJEMPLOS_*, RESIDENTE_*, ELIGE_*. ENCENDIDO para la ronda est5-B.
+    # extractor_turno.TODO_LO_DICHO_*, GRUPO_*, ACTIVIDAD_EJEMPLOS_*, RESIDENTE_*, ELIGE_*. Ronda est5-B: arregla la repregunta
+    # de 'Frances'; ninguna regresion suya. PROMOCIONADO 15-oct (HISTORY 0.31.29).
     # Revert = False aqui y en el compose.
     extractor_todo_lo_dicho: bool = True
     # EX-EST-2 (14-oct, tanda est5): arreglos del flujo por causa. (1) Lo que el cliente dice en el turno que acaba en
     # el pase a una persona se guarda (antes la extraccion se cancelaba: 'staying at the Ubuntu Hotel' y luego 'Where will
-    # you be joining us from?'). conversational_core.guardar_lo_dicho_en_el_pase. ENCENDIDO para la ronda est5-B.
+    # you be joining us from?'). conversational_core.guardar_lo_dicho_en_el_pase. Ronda est5-B: sin regresiones suyas.
+    # PROMOCIONADO 15-oct (HISTORY 0.31.29).
     # Revert = False aqui y en el compose.
     est4_flujo: bool = True
     # EX-RAG-3 (14-oct): cuando el juez de grounding rechaza, cada frase rechazada tiene que traer la cita literal del
