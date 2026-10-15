@@ -135,16 +135,6 @@ services:
       # rationale as Fases 1-3. Off elsewhere by default (src/config.py).
       # Revert = remove this line + redeploy.
       LLM_EXTRACTION_CUTOVER_LOGISTICS: "true"
-      # ex-5 (fase EX, 12-oct): la ubicacion la decide el extractor "LLM primero" (cita comprobada). PROMOCIONADO 12-oct
-      # (decision de Gadea; HISTORY 0.31.12).
-      # Revert = "false" aqui y en config.py.
-      EXTRACCION_LLM_UBICACION: "true"
-      # ex-8 (fase EX): la actividad y la nacionalidad las decide el extractor "LLM primero". PROMOCIONADO
-      # 13-oct (HISTORY 0.31.13). Revert = "false" aqui y en config.py.
-      EXTRACCION_LLM_ACTIVIDAD: "true"
-      # ex-6 (fase EX): la certificacion y la ultima inmersion las decide el extractor "LLM primero". PROMOCIONADO
-      # 13-oct (HISTORY 0.31.14). Revert = "false" aqui y en config.py.
-      EXTRACCION_LLM_CERTIFICACION: "true"
       # G-10: si el cliente escribe en otro idioma (no espanol ni ingles), el bot contesta en ingles. PROMOCIONADO
       # 14-oct (HISTORY 0.31.22). Revert = "false" aqui y en config.py.
       IDIOMA_OTRO_EN_INGLES: "true"
@@ -177,9 +167,6 @@ services:
       # EX-EST-2: arreglos de datos de la tanda est3 (ver config.py). PROMOCIONADO 14-oct (est3-B). Revert = "false" aqui y
       # en config.py.
       EST2_DATOS: "true"
-      # ex-7 (fase EX): el grupo y su reparto los decide el extractor "LLM primero". PROMOCIONADO 13-oct (Alvaro,
-      # HISTORY 0.31.19). Revert = "false" aqui y en config.py.
-      EXTRACCION_LLM_GRUPO: "true"
       # 13-oct (Gonzalo): atencion al cliente tras el pase y en posventa, el nombre y el grupo privado. ENCENDIDOS para
       # su mini-ronda B (atencion-B): el nombre lo lee el extractor ("soy gringo" no es un nombre); el grupo privado o
       # empresa marca el pase; preguntar el precio de un producto lo elige; tras pasar a una persona y con una reserva ya
@@ -332,11 +319,10 @@ services:
       # plan del catalogo es (precio-desde-islas: 124 USD 3/3, hoy 0/3). Ronda core s427-B: 95,2 -> 96,0 %, sin
       # regresiones suyas -> PROMOCIONADO. Revert = quitar esta linea y False en config.py.
       RAG_PLAN_NOMBRADO: "true"
-      # s4-28 y flujo de reserva (9-oct, Gonzalo): el origen que rellena el extractor solo vale si el cliente nombro un
-      # lugar ("May 3rd" ya no se vuelve Cartagena); cada edad del mensaje cuenta como una persona para el reparto del
-      # grupo y se lee "age 17" en singular (familia-mixta: ya no repregunta "¿cuantos?"). Mini-ronda s428-A/B:
-      # 83,3 -> 83,6 %, ninguna regresion suya -> PROMOCIONADOS. Revert = quitar estas lineas y False en config.py.
-      ORIGEN_DEL_CLIENTE: "true"
+      # Flujo de reserva (9-oct, Gonzalo): cada edad del mensaje cuenta como una persona para el reparto del grupo y se
+      # lee "age 17" en singular (familia-mixta: ya no repregunta "¿cuantos?"). Mini-ronda s428-A/B: 83,3 -> 83,6 %,
+      # ninguna regresion suya -> PROMOCIONADO. Revert = quitar esta linea y False en config.py. (ORIGEN_DEL_CLIENTE se
+      # quito en ex-9: el origen ya no sale del relleno sino del extractor, con su cita.)
       GRUPO_POR_EDADES: "true"
       # s4-27 (8-oct): la ubicacion deducida de un HOTEL se declara y pasa por la puerta de Jev ("¿me pasas el contacto
       # del hotel Cocoliso?" ya no deja al cliente en las islas). PROMOCIONADO 8-oct (mini-ronda hotel: 79,7 -> 85,3 %).

@@ -24,18 +24,12 @@ from src.flows.state import ConversationState
 def _grupo_camino_antiguo(monkeypatch):
     """Estos tests fijan el grupo por el camino de antes de ex-7 (regex y redes LLM); con `extraccion_llm_grupo` lo
     decide el extractor (tests/test_ex7_grupo.py)."""
-    from src.config import settings as _flags
-
-    monkeypatch.setattr(_flags, "extraccion_llm_grupo", False)
 
 
 @pytest.fixture(autouse=True)
 def _camino_viejo_de_actividad(monkeypatch):
     """Estos tests prueban el camino viejo (regex + veto/relleno). Con ex-8 (`extraccion_llm_actividad`) la actividad y
     la nacionalidad las decide el extractor "LLM primero": tests/test_ex8_actividad_nacionalidad.py."""
-    from src.config import settings as _settings
-
-    monkeypatch.setattr(_settings, "extraccion_llm_actividad", False)
 
 
 @pytest.mark.parametrize("message, people", [
@@ -95,7 +89,7 @@ async def _understand_with_llm(message, llm_patch, combined=None, **state_fields
     for name, value in state_fields.items():
         setattr(state, name, value)
     with (
-        patch.object(cc, "extract_and_verify", fake_extract),
+        patch.object(cc, "extract_and_verify", fake_extract, create=True),
         patch.object(cc, "fill_gaps", fake_fill),
         patch.object(supervisor.settings, "llm_group_size_veto_cutover", True),
         patch.object(supervisor.settings, "llm_group_allocation_veto_cutover", True),
@@ -146,50 +140,6 @@ async def test_vague_plural_still_needs_a_number():
 
 
 @pytest.mark.asyncio
-async def test_group_fields_lost_by_the_merged_request_are_asked_alone():
-    # "mi esposo bucea, yo prefiero snorkel": el regex resuelve una actividad que se
-    # verifica (peticion fusionada), y la fusionada vuelve sin reparto.
-    state, calls = await _understand_with_llm(
-        "mi esposo bucea, yo prefiero snorkel",
-        {"group_allocation": {"certified_diving": 1, "snorkel": 1}},
-        combined={},
-    )
-    assert "extract_and_verify" in calls
-    assert ("fill_gaps", ("group_size", "group_allocation")) in calls
-    assert state.detected_group_allocation == {"certified_diving": 1, "snorkel": 1}
-    assert state.detected_group_size == 2
-
-
-@pytest.mark.asyncio
-async def test_group_fields_lost_among_many_gaps_are_asked_alone():
-    # Sin campo que verificar (solo `fill_gaps`), con muchos huecos el LLM devolvio 1/2
-    # solo `is_certified` para "mi amigo tiene licencia, yo no". Dos personas nombradas:
-    # se piden los campos del grupo solos. Ese mensaje ya lo reparte el detector (frase
-    # eliptica, hallazgo I, 2026-09-15); el mecanismo se sigue probando con uno que el
-    # detector no puede repartir.
-    calls = []
-
-    async def fake_fill(*args, **kwargs):
-        only = tuple(kwargs.get("only_fields") or ())
-        calls.append(only)
-        if only == ("group_size", "group_allocation"):
-            return {"group_size": 2, "group_allocation": {"certified_diving": 1, "undecided": 1}}
-        return {"is_certified": False}
-
-    state = ConversationState(conversation_id="many-gaps")
-    state.language = "es"
-    with (
-        patch.object(cc, "fill_gaps", fake_fill),
-        patch.object(supervisor.settings, "llm_group_size_veto_cutover", True),
-        patch.object(supervisor.settings, "llm_group_allocation_veto_cutover", True),
-    ):
-        await cc._understand(state, "mi amigo tiene licencia y yo estoy aprendiendo")
-    assert calls[-1] == ("group_size", "group_allocation")
-    assert state.detected_group_allocation == {"certified_diving": 1}
-    assert state.detected_group_size == 2
-
-
-@pytest.mark.asyncio
 async def test_a_level_someone_holds_is_not_the_course_in_the_split():
     # "mi pareja tiene el advanced": el LLM puso 1/2 {padi_advanced: 1}.
     state, _ = await _understand_with_llm(
@@ -198,15 +148,6 @@ async def test_a_level_someone_holds_is_not_the_course_in_the_split():
     )
     assert state.detected_group_allocation == {"certified_diving": 1}
     assert state.detected_group_size == 2
-
-
-@pytest.mark.asyncio
-async def test_wanting_the_course_keeps_the_course_in_the_split():
-    state, _ = await _understand_with_llm(
-        "yo tengo el open water y mi hijo quiere hacer el open water",
-        {"group_size": 2, "group_allocation": {"certified_diving": 1, "padi_open_water": 1}},
-    )
-    assert state.detected_group_allocation == {"certified_diving": 1, "padi_open_water": 1}
 
 
 @pytest.mark.asyncio
@@ -241,9 +182,3 @@ async def test_no_second_request_while_the_cert_or_course_question_is_pending():
     assert state.needs_cert_or_course is True
 
 
-@pytest.mark.asyncio
-async def test_no_second_request_without_a_group_signal():
-    # Pasa por la peticion fusionada (actividad ambigua que verificar) pero no nombra
-    # personas ni cifras: no se gasta una segunda peticion.
-    state, calls = await _understand_with_llm("quiero bucear y hacer snorkel", {}, combined={})
-    assert calls == ["extract_and_verify"]

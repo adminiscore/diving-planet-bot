@@ -9,12 +9,9 @@ guarda (`supervisor._apply_detected_intent`). Antes cada detector ponia el suyo:
   de "nitrox_specialty"), con el mismo resultado.
 """
 
-import asyncio
-from unittest.mock import AsyncMock, patch
 
 import pytest
 
-from src.agents import conversational_core as core
 from src.agents import supervisor
 from src.agents.intent_detector import DetectedIntent, IntentDetector
 from src.domain import activities as dom
@@ -26,9 +23,6 @@ from src.flows.state import ConversationState
 def _camino_viejo_de_actividad(monkeypatch):
     """Estos tests prueban el camino viejo (regex + veto/relleno). Con ex-8 (`extraccion_llm_actividad`) la actividad y
     la nacionalidad las decide el extractor "LLM primero": tests/test_ex8_actividad_nacionalidad.py."""
-    from src.config import settings as _settings
-
-    monkeypatch.setattr(_settings, "extraccion_llm_actividad", False)
 
 
 def _detect(message):
@@ -80,20 +74,3 @@ def test_generic_activity_has_no_service_until_the_level_is_decided():
     assert state.detected_service_id is None
 
 
-def test_llm_filled_activity_reaches_the_state_with_its_service():
-    """Reproduce el fallo por el camino real del turno (LLM simulado)."""
-    message = "quisiera sacarme la licencia de buzo"
-    assert _detect(message).activity is None  # el regex no lo resuelve
-    state = ConversationState(conversation_id="svc-llm")
-    state.language = "es"
-    patch_llm = {"activity": "padi_open_water"}
-
-    async def run():
-        with patch.object(core, "extract_and_verify", new=AsyncMock(return_value=(dict(patch_llm), {}))), \
-             patch.object(core, "fill_gaps", new=AsyncMock(return_value=dict(patch_llm))), \
-             patch.object(supervisor, "verify_fields", new=AsyncMock(return_value={})):
-            await core._understand(state, message)
-
-    asyncio.run(run())
-    assert state.detected_activity == "padi_open_water"
-    assert state.detected_service_id == "open_water"

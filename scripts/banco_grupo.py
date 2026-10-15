@@ -46,8 +46,8 @@ async def main() -> None:
     detector = IntentDetector()
     filas = []
     for pasada in range(a.pasadas):
-        for modo in ("hoy", "ex7"):
-            settings.extraccion_llm_grupo = modo == "ex7"
+        # ex-9 (15-oct): el camino viejo ("hoy") ya no existe: el grupo lo decide siempre el extractor.
+        for modo in ("ex7",):
             for c in casos:
                 caso = _caso(c)
                 try:
@@ -57,8 +57,7 @@ async def main() -> None:
                 r = puntuar_ex0({k: v for k, v in producido.items() if k in CAMPOS_EX0}, c["esperado"], caso["sabido"])
                 filas.append({"id": c["id"], "modo": modo, "pasada": pasada, "texto": c["texto"],
                               "esperado": c["esperado"], "producido": producido, **r})
-    settings.extraccion_llm_grupo = False
-    for modo in ("hoy", "ex7"):
+    for modo in ("ex7",):
         fs = [x for x in filas if x["modo"] == modo]
         por = {f: {t: sum(f in x[t] for x in fs) for t in ("acierto", "equivocado", "perdido", "inventado")}
                for f in ("group_size", "group_allocation", "activity", "is_certified")}

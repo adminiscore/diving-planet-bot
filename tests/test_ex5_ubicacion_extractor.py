@@ -9,7 +9,6 @@ from unittest.mock import AsyncMock
 import pytest
 
 from src.agents import conversational_core as core
-from src.config import settings
 from src.flows.state import ConversationState
 
 
@@ -17,14 +16,10 @@ from src.flows.state import ConversationState
 def _grupo_camino_antiguo(monkeypatch):
     """Estos tests fijan el grupo por el camino de antes de ex-7 (regex y redes LLM); con `extraccion_llm_grupo` lo
     decide el extractor (tests/test_ex7_grupo.py)."""
-    from src.config import settings as _flags
-
-    monkeypatch.setattr(_flags, "extraccion_llm_grupo", False)
 
 
 @pytest.fixture
 def ex5(monkeypatch):
-    monkeypatch.setattr(settings, "extraccion_llm_ubicacion", True)
 
     def con(datos):
         monkeypatch.setattr(core, "datos_del_extractor", AsyncMock(return_value=datos))
@@ -80,19 +75,6 @@ async def test_si_el_extractor_falla_se_queda_lo_de_hoy(ex5):
     ex5(None)
     st = await _entender("desde cartagena")
     assert st.location == "cartagena"
-
-
-@pytest.mark.asyncio
-async def test_apagado_no_cambia_nada(monkeypatch):
-    monkeypatch.setattr(settings, "extraccion_llm_ubicacion", False)
-    monkeypatch.setattr(settings, "extraccion_llm_actividad", False)
-    monkeypatch.setattr(settings, "extraccion_llm_certificacion", False)
-    llamada = AsyncMock(return_value={"location": "island"})
-    monkeypatch.setattr(core, "datos_del_extractor", llamada)
-    st = await _entender("desde cartagena")
-    assert st.location == "cartagena"
-    llamada.assert_not_called()
-    assert core.campos_del_extractor() == ()
 
 
 @pytest.mark.asyncio

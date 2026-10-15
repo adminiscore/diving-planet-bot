@@ -83,9 +83,9 @@ async def test_llm_fill_does_not_take_a_dive_count_as_the_group_total():
     state.location = state.detected_location = "cartagena"
     state.is_certified = state.detected_is_certified = True
     fill = {"group_size": 2}
-    with patch.object(core, "extract_and_verify", new=AsyncMock(return_value=(fill, {}))), \
+    with patch.object(core, "extract_and_verify", create=True, new=AsyncMock(return_value=(fill, {}))), \
          patch.object(core, "fill_gaps", new=AsyncMock(return_value=fill)), \
-         patch.object(core, "verify_fields", new=AsyncMock(return_value={})), \
+         patch.object(core, "verify_fields", create=True, new=AsyncMock(return_value={})), \
          patch("src.agents.supervisor._maybe_veto_resolved_fields_via_llm", new=AsyncMock(return_value=None)):
         await core._understand(state, "2 inmersiones")
     assert state.detected_group_size is None
@@ -104,9 +104,9 @@ async def test_boolean_riding_on_an_invalid_answer_to_the_pending_question_is_dr
     state.location = state.detected_location = "cartagena"
     state.is_certified = state.detected_is_certified = True
     fill = {"group_size": 2, "is_colombian": False}
-    with patch.object(core, "extract_and_verify", new=AsyncMock(return_value=(dict(fill), {}))), \
+    with patch.object(core, "extract_and_verify", create=True, new=AsyncMock(return_value=(dict(fill), {}))), \
          patch.object(core, "fill_gaps", new=AsyncMock(return_value=dict(fill))), \
-         patch.object(core, "verify_fields", new=AsyncMock(return_value={})), \
+         patch.object(core, "verify_fields", create=True, new=AsyncMock(return_value={})), \
          patch("src.agents.supervisor._maybe_veto_resolved_fields_via_llm", new=AsyncMock(return_value=None)):
         await core._understand(state, "2 inmersiones")
     assert state.detected_group_size is None

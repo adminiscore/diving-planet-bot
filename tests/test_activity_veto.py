@@ -38,9 +38,7 @@ from src.flows.state import ConversationState
 def _camino_viejo_de_actividad(monkeypatch):
     """Estos tests prueban el camino viejo (regex + veto/relleno). Con ex-8 (`extraccion_llm_actividad`) la actividad y
     la nacionalidad las decide el extractor "LLM primero": tests/test_ex8_actividad_nacionalidad.py."""
-    from src.config import settings as _settings
 
-    monkeypatch.setattr(_settings, "extraccion_llm_actividad", False)
 
 _AMBIGUOUS_MSG = "Me gustaria sacarme el open water, pero nunca he buceado"
 _UNAMBIGUOUS_MSG = "quiero hacer snorkel"
@@ -183,42 +181,9 @@ def _veto_returns(disagreements: dict, gaps_patch: dict | None = None):
 
     with patch.object(supervisor, "verify_fields",
                       new=AsyncMock(return_value=disagreements)), \
-         patch.object(cc, "extract_and_verify",
+         patch.object(cc, "extract_and_verify", create=True,
                       new=AsyncMock(return_value=(gaps_patch or {}, disagreements))):
         yield
-
-
-@pytest.mark.asyncio
-async def test_real_bug_message_end_to_end_via_understand():
-    """Reproduce el flujo real (_understand, conversational_core.py) con el
-    mensaje real del hallazgo en vivo -- con el veto en cutover, la actividad
-    final debe ser padi_open_water/open_water, no minicourse."""
-    from src.agents.conversational_core import _understand
-
-    state = ConversationState(conversation_id="veto-e2e-test")
-    with patch.object(supervisor.settings, "llm_activity_veto_cutover", True), \
-         _veto_returns({"activity": "padi_open_water"}):
-        intent, _carry = await _understand(state, _AMBIGUOUS_MSG)
-    assert intent.activity == "padi_open_water"
-    assert intent.service_id == "open_water"
-
-
-@pytest.mark.asyncio
-async def test_real_conv_913_message_end_to_end_via_understand():
-    """Conversacion real 913 (2026-09-10): 'primer nivel de buceo' solo
-    matcheaba 1 categoria de `matched_activity_categories` (la incorrecta) --
-    el veto ANTIGUO (trigger de ambiguedad) nunca se disparaba para este
-    mensaje. El nuevo trigger ('resuelto este turno') si lo cubre."""
-    from src.agents.conversational_core import _understand
-
-    state = ConversationState(conversation_id="veto-conv913-test")
-    msg = "Pues me gustaria sacarme el primer nivel de buceo"
-    with patch.object(supervisor.settings, "llm_activity_veto_cutover", True), \
-         _veto_returns({"activity": "padi_open_water"}):
-        intent, _carry = await _understand(state, msg)
-    assert intent.activity == "padi_open_water"
-    assert intent.service_id == "open_water"
-
 
 
 # Nota: los tests que fijaban "el prompt enumera el enum de `activity`" vivieron

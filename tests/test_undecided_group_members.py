@@ -18,9 +18,6 @@ from src.flows.state import ConversationState
 def _grupo_camino_antiguo(monkeypatch):
     """Estos tests fijan el grupo por el camino de antes de ex-7 (regex y redes LLM); con `extraccion_llm_grupo` lo
     decide el extractor (tests/test_ex7_grupo.py)."""
-    from src.config import settings as _flags
-
-    monkeypatch.setattr(_flags, "extraccion_llm_grupo", False)
 
 
 def _state():
@@ -34,7 +31,7 @@ async def test_undecided_member_is_not_assumed_and_rest_follow_main_activity():
     state = _state()
     llm = {"group_allocation": {"undecided": 1}}
     with patch.object(core, "fill_gaps", new=AsyncMock(return_value=llm)), \
-         patch.object(core, "extract_and_verify", new=AsyncMock(return_value=(llm, {}))):
+         patch.object(core, "extract_and_verify", create=True, new=AsyncMock(return_value=(llm, {}))):
         await core._understand(state, "somos 3, uno no está certificado")
     assert state.detected_group_allocation == {"certified_diving": 2}
     assert state.pending_undecided_qty == 1
@@ -69,7 +66,7 @@ async def test_invented_undecided_quantity_is_ignored():
     state = _state()
     llm = {"group_allocation": {"undecided": 2}}
     with patch.object(core, "fill_gaps", new=AsyncMock(return_value=llm)), \
-         patch.object(core, "extract_and_verify", new=AsyncMock(return_value=(llm, {}))):
+         patch.object(core, "extract_and_verify", create=True, new=AsyncMock(return_value=(llm, {}))):
         await core._understand(state, "uno de nosotros no está certificado")
     assert state.pending_undecided_qty is None
     assert state.needs_companion_activity is False
@@ -85,20 +82,6 @@ def test_regex_marks_attribute_only_split_as_undecided():
         assert intent.group_allocation.get("undecided"), message
     intent = IntentDetector().detect("uno certificado y dos minicurso", _state())
     assert intent.group_allocation == {"certified_diving": 1, "minicourse": 2}
-
-
-@pytest.mark.asyncio
-async def test_without_known_total_the_main_group_is_not_guessed():
-    """Sin total del grupo no hay aritmetica: no se inventa el tramo principal, pero
-    la recomendacion para quien no eligio sigue pendiente."""
-    state = _state()
-    llm = {"group_allocation": {"undecided": 1}}
-    with patch.object(core, "fill_gaps", new=AsyncMock(return_value=llm)), \
-         patch.object(core, "extract_and_verify", new=AsyncMock(return_value=(llm, {}))):
-        await core._understand(state, "uno de nosotros no está certificado")
-    assert not state.detected_group_allocation
-    assert state.pending_undecided_qty == 1
-    assert state.needs_companion_activity is True
 
 
 def test_recommendation_speaks_to_the_uncertified_group_members():

@@ -51,21 +51,15 @@ from src.agents.intent_detector import (
     course_level_is_ambiguous,
     courses_mentioned,
     dive_counts_in,
-    holds_padi_cert,
     matched_activity_categories,
     mentions_other_person_subject,
-    mentions_writer_and_others,
-    other_person_certification,
 )
 from src.agents.llm_extractor import (
     compose_acknowledgement,
     detect_special_signals,
-    disagreements_with,
-    extract_and_verify,
     fill_gaps,
     missing_fields,
     resolve_slot_answer,
-    verify_fields,
 )
 from src.agents.notes_extractor import extract_notes
 from src.config import settings
@@ -1868,20 +1862,6 @@ _LUGAR_DE_CARTAGENA_RE = re.compile(
 )
 
 
-def _cliente_nombra_un_lugar(state: ConversationState, message: str) -> bool:
-    """¿Nombra algún mensaje del CLIENTE (el de ahora o uno anterior) un lugar que el detector reconoce? Lo que dice
-    el bot no cuenta: su saludo y su pregunta del origen nombran Cartagena y las islas (s4-28)."""
-    textos = [h.get("content") or "" for h in (state.history or []) if h.get("role") == "user"] + [message or ""]
-    for texto in textos:
-        # las mismas pistas que la puerta del origen (Barú, Tierra Bomba…) y los muelles/barrios de Cartagena
-        if _PISTA_ORIGEN_RE.search(texto) or _LUGAR_DE_CARTAGENA_RE.search(texto):
-            return True
-        leido = _detector.detect(texto, ConversationState(conversation_id="lugar"))
-        if leido.location or getattr(leido, "hotel", None) or getattr(leido, "island", None):
-            return True
-    return False
-
-
 def _quote_backs_boolean(field: str, pending_slot: str | None, message: str, evidence: dict) -> bool:
     """Respuesta doble (hallazgo B, 2026-09-15): "desde cartagena, somos paisas" con la
     ubicacion pendiente. El extractor cita, en la misma peticion, las palabras del mensaje
@@ -2185,18 +2165,10 @@ _CAMPOS_GRUPO = ("group_size", "group_allocation")
 
 
 def campos_del_extractor() -> tuple[str, ...]:
-    """Campos que decide el extractor "LLM primero" (fase EX) en vez del regex, según sus flags. ex-5: la ubicación;
-    ex-8: la actividad (con su servicio) y la nacionalidad; ex-6: la certificación; ex-7: el grupo y su reparto."""
-    campos: tuple[str, ...] = ()
-    if settings.extraccion_llm_ubicacion:
-        campos += _CAMPOS_LUGAR
-    if settings.extraccion_llm_actividad:
-        campos += _CAMPOS_ACTIVIDAD
-    if settings.extraccion_llm_certificacion:
-        campos += _CAMPOS_CERTIFICACION
-    if settings.extraccion_llm_grupo:
-        campos += _CAMPOS_GRUPO
-    return campos
+    """Campos que decide el extractor "LLM primero" (fase EX) en vez del regex: ex-5 la ubicación; ex-8 la actividad
+    (con su servicio) y la nacionalidad; ex-6 la certificación; ex-7 el grupo y su reparto. ex-9 (15-oct): los cuatro
+    dominios ya no tienen flag (promocionados del 1 al 13-oct)."""
+    return _CAMPOS_LUGAR + _CAMPOS_ACTIVIDAD + _CAMPOS_CERTIFICACION + _CAMPOS_GRUPO
 
 
 def _pista_del_regex(intent) -> dict:
@@ -2280,21 +2252,17 @@ async def _aplicar_extractor(intent, state: ConversationState, message: str, pis
                 setattr(intent, campo, pista[campo])
                 if campo != "service_id" and campo not in intent.detected_fields:
                     intent.detected_fields.append(campo)
-        if settings.extraccion_llm_ubicacion and intent.location:
+        if intent.location:
             _lugar_por_jev(intent, state)
         return
-    if settings.extraccion_llm_ubicacion:
-        _poner_ubicacion(intent, state, message, datos, pista)
-    if settings.extraccion_llm_grupo:
-        # ex-7: el grupo antes que la actividad: la regla de ex-8 del grupo repartido mira el reparto del turno.
-        _poner_grupo(intent, state, message, datos, pista)
-    if settings.extraccion_llm_actividad:
-        if datos.get("quiere_bucear") is True:
-            state.quiere_bucear = True
-        _poner_actividad(intent, state, datos, pista)
-        _poner_nacionalidad(intent, state, message, datos)
-    if settings.extraccion_llm_certificacion:
-        _poner_certificacion(intent, state, message, datos, pista)
+    _poner_ubicacion(intent, state, message, datos, pista)
+    # ex-7: el grupo antes que la actividad: la regla de ex-8 del grupo repartido mira el reparto del turno.
+    _poner_grupo(intent, state, message, datos, pista)
+    if datos.get("quiere_bucear") is True:
+        state.quiere_bucear = True
+    _poner_actividad(intent, state, datos, pista)
+    _poner_nacionalidad(intent, state, message, datos)
+    _poner_certificacion(intent, state, message, datos, pista)
 
 
 def _reparto_guardado(state: ConversationState) -> dict:
@@ -2766,7 +2734,7 @@ async def _understand(state: ConversationState, message: str, *, answered_pendin
     prev_refresher = state.refresher_interested
 
     intent = _detector.detect(message, state)
-    # ex-5 (fase EX, flag `extraccion_llm_ubicacion`): los dominios que entiende el extractor "LLM primero" no los
+    # ex-5 (fase EX): los dominios que entiende el extractor "LLM primero" no los
     # decide el regex. Lo que leyó se queda en el intent como PROVISIONAL (las guardas que miran si el mensaje
     # CONTESTA la pregunta pendiente lo siguen viendo, como hoy), pero ni dispara contradicciones, ni va al veto, al
     # relleno o a la re-comprobación. Al final se sustituye por lo del extractor (`_ubicacion_del_extractor`).
@@ -2775,499 +2743,48 @@ async def _understand(state: ConversationState, message: str, *, answered_pendin
     question_turn_fields = None
     if _has_pending_answer(state):
         question_turn_fields = _question_turn_fields(intent, state)
-        _named_certified_product_confirms_certification(state, message)
     else:
         _drop_regex_fields_jev_denies(intent, state)
     state.mixed_nationality_notice = False
-    # Un dato del mensaje que contradice lo guardado (tarea 7b): ver `_regex_contradictions`.
-    regex_candidates = _regex_contradictions(state, message, intent)
-    # Hallazgo en vivo (conversacion real "purple-sun-590", 2026-09-03, y
-    # conversacion real 913, 2026-09-10): el regex puede resolver un campo
-    # (activity/is_certified/is_colombian/location) con una frase que no
-    # conoce, sin que ningun mecanismo existente lo corrija (`fill_gaps`/el
-    # cutover por dominio solo rellenan huecos, nunca tocan un campo que el
-    # regex ya resolvio). Un LLM verifica INDEPENDIENTEMENTE cada campo que
-    # se resolvio en ESTE turno y lo corrige si discrepa -- gateado por un
-    # par de flags shadow/cutover POR CAMPO, todos off por defecto. Ver
-    # `supervisor._VETO_FIELD_SPECS`/`_maybe_veto_resolved_field_via_llm`.
-    # UNA sola peticion para todos los campos a verificar (medido en vivo
-    # 2026-09-10): antes era una peticion por campo -- primero en serie
-    # (+1.78s con solo 2 campos), luego en paralelo (+0.53s con 3). Pero al
-    # agotar el limite diario de OpenAI se vio que el recurso escaso son las
-    # PETICIONES/dia (RPD), no los tokens (que seguian intactos): N campos en
-    # N peticiones gastaba justo el recurso limitado. Agrupados en una sola
-    # llamada dan la misma informacion por 1 peticion y 1 ida y vuelta.
-    # FUSION de las dos peticiones del turno (2026-09-12). Antes esto eran dos
-    # llamadas encadenadas: el veto primero y `fill_gaps` despues. Usan el
-    # mismo modelo y la MISMA tool, y en el eval-set el 61% de los turnos
-    # disparan las dos -- con el recurso escaso siendo las peticiones/dia
-    # (RPD), eso era 1 peticion tirada en 6 de cada 10 turnos.
-    #
-    # Se pueden pedir a la vez porque el conjunto de huecos NO depende del
-    # resultado del veto: el veto solo cambia el VALOR de campos que el regex
-    # YA habia resuelto, y `_relevant_gaps`/`missing_fields` miran justo los
-    # que siguen en None/[]. Por eso `gaps` se puede calcular antes del veto
-    # sin que cambie respecto a calcularlo despues.
-    veto_fields = supervisor._eligible_veto_fields(message, intent, state)
-    if question_turn_fields is not None:
-        # u3-4 arreglo 2: en un turno con pregunta se verifica TODO lo que el regex leyó,
-        # saltándose el trigger propio de cada campo. Esos triggers («¿hay ambigüedad
-        # real?») están calibrados para un mensaje que AFIRMA; aquí el riesgo es otro y
-        # está en el propio mensaje: una pregunta convierte cualquier palabra suelta en
-        # hipótesis. Fuera del turno con pregunta no cambia nada, así que el hundimiento
-        # del 89 % al 73 % que documenta `supervisor._activity_should_verify` (veto de
-        # actividad en TODO turno) no aplica: ahí se llamaba al LLM en mensajes escuetos
-        # que afirmaban, y aquí solo en los que preguntan.
-        veto_fields = sorted(set(veto_fields) | set(question_turn_fields))
-    gaps = _relevant_gaps(state, intent, message)
-    if campos_del_extractor():
-        veto_fields = [f for f in veto_fields if f not in campos_del_extractor()]
-        gaps = [f for f in gaps if f not in campos_del_extractor()]
-        if question_turn_fields is not None:
-            question_turn_fields = [f for f in question_turn_fields if f not in campos_del_extractor()]
-    # Grupo con nacionalidades mixtas (hallazgo A, owner: que lo lea el LLM): viaja en la
-    # peticion que el turno ya hace, solo si el mensaje habla de los dos lados del grupo.
-    extra_fields = (
-        ("mixed_nationality",) if mentions_writer_and_others(message) and not settings.extraccion_llm_actividad else ()
+    # ex-9 (15-oct): con los cuatro dominios en el extractor "LLM primero" (ex-5…ex-8), lo único que el relleno LLM de
+    # siempre (`fill_gaps`) aún decide son las EDADES de los menores. El veto, la re-comprobación de lo sabido, la
+    # verificación del turno con pregunta, las contradicciones del regex y las guardas del parche (grupo, booleanos,
+    # origen, grupo mixto) se quedaban sin campos y se quitaron (HISTORY 0.31.28).
+    gaps = [f for f in _relevant_gaps(state, intent, message) if f not in campos_del_extractor()]
+    rellenar = (
+        gaps if question_turn_fields is None and not _skips_gaps_as_question(message) and not _is_greeting_only(message)
+        else []
     )
-    # Con la ubicacion o el total pendientes, la cita de cada booleano (hallazgo B).
-    if _asks_for_evidence(state.core_pending_slot):
-        extra_fields += ("evidence",)
-    # u3-4 arreglo 2: en un turno con pregunta NO se rellenan huecos. Rellenar es una
-    # pregunta abierta al LLM e invita a suponer: "in case I decided to do the Open Water
-    # course?" acababa guardado como dato (escalón 1, 24-sep). Lo que el cliente afirma de
-    # verdad lo recoge el regex y lo confirma la verificación de arriba.
-    _wants_gaps = (
-        bool(gaps)
-        and question_turn_fields is None
-        and not _skips_gaps_as_question(message)
-        and not _is_greeting_only(message)
-    )
-    # u3-4 paso 3 (26-sep): relleno CON PUERTA en el turno con pregunta. Sin rellenar se perdían
-    # datos que el cliente sí dice y el regex no lee ("costo de un fundive", "completé el curso
-    # básico el 3 de abril"; 4 de las 12 pérdidas de v5 y una regresión de la ronda B2). Se
-    # rellenan SOLO los huecos que Jev dice que el cliente afirma en este mensaje, y SIN
-    # historial: Jev solo ve el mensaje, así que su "sí" solo avala valores de este mensaje.
-    _gated_gaps = []
+    rellenar_sin_historial = []
     if question_turn_fields is not None and not _is_greeting_only(message):
-        _afirma = getattr(state, "_answer_affirms", None) or {}
-        _gated_gaps = [
+        # u3-4 paso 3: en el turno con pregunta, solo los huecos que Jev dice que el cliente afirma en ESTE mensaje, y
+        # sin historial (Jev solo ve el mensaje).
+        afirma = getattr(state, "_answer_affirms", None) or {}
+        rellenar_sin_historial = [
             f for f in _relevant_gaps(state, intent, message, keep_pending_bool=True)
-            if _afirma.get(f) is True and f not in campos_del_extractor()
+            if afirma.get(f) is True and f not in campos_del_extractor()
         ]
-    # Campos ya sabidos que el mensaje podria corregir con palabras que el regex no lee
-    # ("ah no, somos gringos", "cambio de plan, estamos en barú") (tarea 7b, 2026-09-15).
-    # Viajan en la peticion del turno (como campos a rellenar si hay huecos, hallazgo J; si
-    # no, en una verificacion propia) y se comparan con el valor GUARDADO, que el LLM no
-    # ve; solo hay discrepancia si el mensaje dice otra cosa. Medido con el LLM real: 24/24, se
-    # abstiene en "perfecto, gracias", en el mismo valor y si habla de otra persona.
-    # Owner: en la peticion que el turno ya hace, y tras el cierre en una propia.
-    known = _known_field_values(state)
-    recheck = [
-        f for f in _CORRECTABLE_FIELDS
-        if known.get(f) not in (None, [], {}) and f not in veto_fields
-        and f not in intent.overwrite and f not in (state.pending_correction or {})
-        and f not in campos_del_extractor()
-    ]
-    regex_values = {f: getattr(intent, f, None) for f in veto_fields}
-    verify_values = {**regex_values, **{f: known[f] for f in recheck}}
-    _combined_patch = None
-    if (veto_fields or recheck) and _wants_gaps:
-        try:
-            # Los campos sabidos viajan como campos a RELLENAR, no a verificar (hallazgo J,
-            # 2026-09-15): con el prompt combinado, "vale perfecto" rellenaba
-            # is_certified=False 5/8 (0/8 antes de 7b) y la verificacion re-derivaba totales
-            # del historial ("perfecto, gracias" -> group_size 4). La contradiccion sale de
-            # comparar lo rellenado con lo guardado, que el LLM tampoco ve. Sonda con el LLM
-            # real: 36/39 frente a 25/39. Lo que resolvio el regex ESTE turno se sigue
-            # verificando (veto).
-            _combined_patch, _disagreements = await extract_and_verify(
-                gaps + recheck, veto_fields, message, regex_values,
-                history=state.history, lang=state.language, extra_fields=extra_fields,
-            )
-            supervisor.apply_veto_disagreements(_disagreements, intent, message, regex_values)
-            _known_disagreements = disagreements_with(_combined_patch, recheck, known)
-            for known_field in recheck:
-                _combined_patch.pop(known_field, None)
-            _route_contradictions(
-                state, message, intent, _recheck_proposals(state, intent, answered_pending, _known_disagreements, recheck)
-            )
-        except Exception as exc:  # noqa: BLE001
-            # Mismo contrato defensivo que las dos funciones que sustituye:
-            # nunca dejar el turno peor que con solo el regex.
-            logger.warning(f"[EXTRACT][COMBINED] failed, degrading to regex-only: {exc}")
-            _combined_patch = None
-    elif question_turn_fields:
-        # u3-4 arreglo 2: turno con pregunta. Se pide la respuesta del LLM TAL CUAL
-        # (`as_answers`), no el diff, porque el diff no distingue "lo confirma" de "no
-        # opina": los dos son "no discrepa". Y aquí la diferencia es justo la regla —
-        # un campo que el LLM no devuelve es un campo que el cliente no afirmó.
-        try:
-            answers = await verify_fields(
-                question_turn_fields + recheck, message, verify_values,
-                history=state.history, lang=state.language, as_answers=True,
-            )
-        except Exception as exc:  # noqa: BLE001
-            logger.warning(f"[EXTRACT][U3-4] verificación falló, se queda el regex: {exc}")
-            answers = None
-        if answers is not None:
-            _apply_question_turn_answers(intent, question_turn_fields, answers, message)
-            _route_contradictions(
-                state, message, intent,
-                _recheck_proposals(
-                    state, intent, answered_pending,
-                    disagreements_with(answers, recheck, known), recheck,
-                ),
-            )
-        # `answers is None` = la llamada falló. No se toca nada: contrato de siempre,
-        # nunca dejar el turno peor que con solo el regex.
-    elif recheck and (
-        regex_candidates
-        or (state.mixed_cart and not _is_greeting_only(message) and not _is_short_ack(message))
-    ):
-        # Sin huecos que pedir: la verificacion va en su propia peticion, solo si el regex
-        # leyo una contradiccion o si la reserva ya se cerro.
-        try:
-            _disagreements = await verify_fields(
-                veto_fields + recheck, message, verify_values, history=state.history, lang=state.language,
-            )
-            supervisor.apply_veto_disagreements(
-                {f: v for f, v in _disagreements.items() if f in veto_fields}, intent, message, regex_values
-            )
-            _route_contradictions(
-                state, message, intent, _recheck_proposals(state, intent, answered_pending, _disagreements, recheck)
-            )
-        except Exception as exc:  # noqa: BLE001
-            logger.warning(f"[EXTRACT][RECHECK] failed, degrading to regex-only: {exc}")
-    else:
-        # ex-9 (ronda atencion-B2): los campos que decide el extractor tampoco van al veto por esta rama; la llamada
-        # (en serie, ~1 s) se hacía y su resultado se tiraba al poner lo del extractor.
-        solo = None if not campos_del_extractor() else [
-            f for f in supervisor._eligible_veto_fields(message, intent, state) if f not in campos_del_extractor()
-        ]
-        await supervisor._maybe_veto_resolved_fields_via_llm(message, intent, state, only_fields=solo)
-    # Fase 3.4 (reducir llamadas/turno): un saludo puro no tiene slots que
-    # extraer → se salta `fill_gaps` (misma rama que "pregunta" o "sin gaps": no
-    # se aplica patch). Ahorra 1 llamada LLM en el saludo, el turno más común,
-    # sin cambiar conducta (fill_gaps devolvía `{}` para un saludo).
-    # `_wants_gaps` es la MISMA condición que decidía arriba si la petición fusionada
-    # pedía huecos; estaba escrita dos veces y con u3-4 (arreglo 2) divergían: el turno
-    # con pregunta dejaba de pedir huecos arriba y los pedía igualmente aquí.
-    if _wants_gaps or _gated_gaps:
-        # Turno normal: los huecos de siempre, con historial. Turno con pregunta (u3-4 paso 3):
-        # solo los huecos con el "sí" de Jev, y sin historial (ver `_gated_gaps` arriba).
-        if not _wants_gaps:
-            gaps = _gated_gaps
-        _fill_history = state.history if _wants_gaps else None
-        # Si hubo peticion fusionada arriba, su patch se usa tal cual y NO se
-        # repite la llamada. Ojo: cuando la API falla, `extract_and_verify`
-        # devuelve `({}, {})` (no None), asi que el turno sigue con solo el regex
-        # y el bot pregunta lo que falte. Es deliberado (decidido 2026-09-14): una
-        # segunda peticion contra la misma API que acaba de fallar fallaria igual
-        # y gastaria RPD. `fill_gaps` solo se pide si no hubo fusion (solo huecos)
-        # o si la fusion lanzo una excepcion inesperada (`_combined_patch = None`).
-        patch = (
-            _combined_patch if _combined_patch is not None
-            else await fill_gaps(
-                message, intent, history=_fill_history, lang=state.language, only_fields=gaps,
-                extra_fields=extra_fields,
-            )
+    if rellenar or rellenar_sin_historial:
+        patch = await fill_gaps(
+            message, intent, history=state.history if rellenar else None, lang=state.language,
+            only_fields=rellenar or rellenar_sin_historial,
         )
-        evidence = patch.pop("evidence", None) or {}
-        if settings.corrections_v2 and question_turn_fields is None:
-            # u3-5 paso 3: la puerta de Jev tambien para lo que RELLENA el LLM fuera de los turnos
-            # con pregunta. "Vamos en família a Cartagena. 1 buzo avanzado y 2 para bautismo" (en
-            # portugues) acababa con is_colombian=False: el relleno deducia la nacionalidad del
-            # idioma, y Jev decia que el mensaje no la afirma (0,0x). Solo lo que Jev dice que NO se
-            # afirma en ESTE mensaje; sin señal, lo de siempre.
-            # Solo la NACIONALIDAD: es el unico dato que el relleno deduce del idioma. Los demas puede
-            # recuperarlos legitimamente del historial ("Just completed the waivers" -> 2 personas,
-            # dichas en el turno 1), y Jev solo ve el mensaje: aplicarlo a todos perdia 8 datos buenos
-            # en el replay del 27-sep.
-            dropped = [f for f in patch if f == "is_colombian" and _jev_says_not_affirmed(state, f)]
-            for f in dropped:
-                patch.pop(f)
-            if dropped:
-                logger.info(f"[EXTRACT][U3-5] relleno descartado por Jev (no lo afirma): {dropped}")
-        # Los campos del grupo se pierden cuando viajan con muchos otros (2026-09-15,
-        # medido con el LLM real): con un campo que verificar (peticion fusionada), "mi
-        # esposo bucea, yo prefiero snorkel", "somos 2, mi amigo es buzo y yo no" o "2
-        # adultos bucean y 2 ninos hacen snorkel" vuelven sin reparto 2/2, y pedidos solos
-        # salen bien 2/2 (efecto de recencia, ver `combined_extraction_system_prompt`); con
-        # muchos huecos, "mi amigo tiene licencia, yo no" vuelve sin reparto 1/2. Se piden
-        # solos si no volvieron y el mensaje trae una senal de grupo que el regex no
-        # resolvio. En la peticion fusionada, que vuelve vacia del todo: 2+ personas
-        # nombradas o 2+ cifras. Con `fill_gaps` a solas, solo si el LLM SI contesto otros
-        # campos pero no el grupo, con 2+ personas: si no contesto nada, no habia nada que
-        # sacar ("con mi pareja, tenemos un presupuesto ajustado"), y repetirlo siempre
-        # subia el peor caso de +13% a +27% peticiones.
-        group_gaps = [f for f in gaps if f in ("group_size", "group_allocation")]
-        people = _named_people(message)[1]
-        numbers = sum(_message_numbers(message).values())
-        merged = _combined_patch is not None
-        # No si el mensaje nombra un nivel PADI sin decir si lo tienen o lo quieren ("2
-        # open water y 3 snorkel"): el bot pregunta primero (decision del owner) y la
-        # segunda peticion guardaba un reparto con el curso antes de la respuesta (b05).
-        if (
-            group_gaps and len(group_gaps) < len(gaps)
-            and not any(f in patch for f in group_gaps)
-            and not intent.group_allocation
-            and ((merged and (people >= 2 or numbers >= 2)) or (not merged and patch and people >= 2))
-            and not course_level_is_ambiguous(message)
-        ):
-            group_patch = await fill_gaps(
-                message, intent, history=_fill_history, lang=state.language, only_fields=group_gaps
-            )
-            patch = {**patch, **{f: v for f, v in group_patch.items() if f in group_gaps}}
-        # Verificado en vivo (2026-07-23): con el historial REAL de la
-        # conversación por delante, fill_gaps puede alucinar un
-        # group_allocation/group_size completo para un mensaje de "se añade
-        # un acompañante" sin ningún número real ("también vienen mis parces
-        # a hacer snorkel" con 5 turnos previos devolvió {cert:1, snorkel:3}
-        # o {cert:1, snorkel:6} según la corrida — nada respaldado por el
-        # texto). `_apply_detected_intent` (más abajo) aplica estos campos
-        # SIN verificación alguna, antes de que el fast-path o la red de
-        # precisión LLM (que sí tienen el respaldo `_EXPLICIT_NUMBER_RE`)
-        # puedan intervenir.
-        #
-        # Ampliado (auditoría multi-ítem 2026-07-23): la guarda original solo
-        # se activaba si `_ADDED_PERSON_RE` (lista cerrada: "mi amigo", nunca
-        # "mis amigos" plural) coincidía con el mensaje ENTERO, y entonces
-        # tiraba TODO group_allocation. "2 bucean, mis amigos hacen snorkel, y
-        # uno hace el minicurso" no matchea esa lista (posesivo plural), así
-        # que el guard viejo no se disparaba y snorkel colaba una cantidad
-        # inventada sin más. Ahora se valida CADA actividad del reparto por
-        # separado contra `_message_numbers` (¿su cantidad tiene un número
-        # real en el texto?) — se descarta solo la entrada sin respaldo, no
-        # el reparto entero, para no perder las que sí son correctas.
-        alloc_patch = patch.get("group_allocation")
-        if isinstance(alloc_patch, dict) and alloc_patch:
-            # Decision del owner (2026-09-15): quien solo se describe sin actividad
-            # elegida ("uno no esta certificado") no se asume en ninguna (el LLM
-            # suponia snorkel 3/3). El LLM lo marca `undecided` y el bot le
-            # recomienda opciones (F6).
-            undecided_qty = alloc_patch.pop("undecided", None)
-            # Un nivel PADI que alguien del grupo YA tiene no es el curso (2026-09-15):
-            # "mi pareja tiene el advanced y yo no tengo nada" volvia 1/2 como
-            # {padi_advanced: 1}. Misma fuente que la actividad del detector
-            # (`holds_padi_cert`, que ya descarta a quien quiere sacarlo).
-            if holds_padi_cert(message, about_writer=False):
-                for key in [k for k in alloc_patch if getattr(dom.by_id(k), "course_level", None)]:
-                    alloc_patch["certified_diving"] = alloc_patch.get("certified_diving", 0) + alloc_patch.pop(key)
-            # Auditoría 2026-07-23 (segunda pasada, más allá de la cantidad):
-            # una actividad sin NINGÚN respaldo textual (ni siquiera la
-            # palabra del producto aparece en el mensaje) es un problema de
-            # ACTIVIDAD, no de cantidad — "mi amigo no está certificado" (sin
-            # decir bucear/snorkel/minicurso) hacía que fill_gaps adivinara
-            # snorkel o minicurso indistintamente para la MISMA frase
-            # ambigua (otro extractor, detect_special_signals, adivinaba lo
-            # contrario). Reforzar el prompt para que se abstenga NO
-            # funcionó (medido 3/3 sigue adivinando) — verificación
-            # determinista igual que el resto de este bloque. No aplica a la
-            # actividad PRINCIPAL ya conocida (`prev_activity`), que puede
-            # restatearse sin repetir la palabra en este turno.
-            # RETIRADA (2026-09-14) la guarda de vocabulario de actividad que iba
-            # aquí: tiraba tramos correctos que su lista no conocía ("4 con título",
-            # "3 brevetados", "2 minicourse"), el reparto dejaba de sumar y la
-            # invariante lo descartaba entero. Batería de grupo (config PRE, 2
-            # repeticiones): correctos 7/10 -> 9/10, total 12/13 -> 13/13, riesgo
-            # 10/10 y 0 parciales/inventados con y sin ella. El caso para el que
-            # nació ("mi amigo no está certificado", r11-r13) queda cubierto por la
-            # comprobación de cifras de abajo y la invariante de la suma.
-            # Counter con consumo, no un set de presencia (auditoría
-            # 2026-07-23): un mismo número no puede "avalar" dos actividades
-            # distintas solo porque aparece una vez en el texto para otra.
-            wants_undecided = isinstance(undecided_qty, int) and undecided_qty > 0
-
-            def _back(counts: Counter) -> tuple[dict, bool]:
-                kept = {act: qty for act, qty in alloc_patch.items() if _consume_number(counts, qty)}
-                return kept, wants_undecided and _consume_number(counts, undecided_qty)
-
-            cleaned, undecided_backed = _back(_message_numbers(message))
-            # Personas nombradas como respaldo (2026-09-15, ver `_named_people`), todo o
-            # nada: solo si respaldan TODAS las cifras. "soy certificado y mi hijo no"
-            # nombra una sola persona (la primera va en el verbo) y dejaba un reparto
-            # parcial con total 1 en vez de preguntar.
-            main_act = intent.activity or state.detected_activity
-            if len(cleaned) + undecided_backed < len(alloc_patch) + wants_undecided:
-                with_people, undecided_with_people = _back(_message_numbers(message) + _named_people(message))
-                people = _named_people(message)[1]
-                if settings.grupo_por_edades:
-                    # 9-oct (familia-mixta): "2 adults (ages 42, 19) / 1 youth (age 17) / Snorkeling / 1 Adult
-                    # (Age 43) / 2 kids (Ages 14, 10)": el reparto {buceo 3, snorkel 3} es correcto pero ningún
-                    # "3" está escrito, y la guarda lo tiraba y preguntaba "¿cuántos serían?". Cada edad que el
-                    # mensaje da es una persona, igual que una persona nombrada. Se cuentan sobre el MENSAJE (el
-                    # detector, sin llamadas): en el turno con pregunta la puerta de u3-4 ya quitó las edades del
-                    # intent (no se pueden verificar).
-                    edades = _detector.detect(message, ConversationState(conversation_id="edades")).ages or []
-                    people = max(people, len(edades))
-                # Total que dijo el mensaje o la conversacion, nunca el del LLM.
-                known_total = intent.group_size or state.detected_group_size
-                if len(with_people) + undecided_with_people == len(alloc_patch) + wants_undecided:
-                    cleaned, undecided_backed = with_people, undecided_with_people
-                elif people and sum(alloc_patch.values()) + (undecided_qty if wants_undecided else 0) == people:
-                    # Las cifras reparten a las personas nombradas (F.2, 2026-09-15): "mi
-                    # pareja y yo buceamos y mi suegra hace snorkel" nombra a 3 y {2, 1} las
-                    # cubre a todas. Cada persona respalda un 1, pero un tramo de 2 no tenia
-                    # respaldo y la guarda tiraba un reparto correcto (y el total con el).
-                    cleaned, undecided_backed = dict(alloc_patch), wants_undecided
-                elif (
-                    known_total and undecided_with_people == wants_undecided
-                    and [a for a in alloc_patch if a not in with_people] == [main_act]
-                ):
-                    # Solo falta respaldo para la actividad principal y el total ya se sabe:
-                    # su cifra es el resto (hallazgo H, 2026-09-15), no una cantidad inventada.
-                    cleaned = _with_main_rest(with_people, main_act, known_total, undecided_qty if wants_undecided else 0)
-                    undecided_backed = wants_undecided
-                    patch["group_allocation"] = dict(cleaned)
-            if undecided_backed:
-                # El resto del grupo hace la actividad principal: aritmetica con el
-                # total conocido, no una suposicion ("somos 3, uno no esta
-                # certificado" + buceo certificado -> 2 certificados). El tramo
-                # `undecided` sigue en el reparto hasta `_take_undecided_members`.
-                total = patch.get("group_size") or intent.group_size or state.detected_group_size
-                if main_act and main_act not in cleaned and total:
-                    cleaned = _with_main_rest(cleaned, main_act, total, undecided_qty)
-                cleaned["undecided"] = undecided_qty
-                patch["group_allocation"] = dict(cleaned)
-            dropped = [act for act in alloc_patch if act not in cleaned]
-            if dropped:
-                # No se descarta en silencio — se pregunta (mismo principio
-                # que el resto del núcleo): cada actividad sin respaldo
-                # numérico real se encola para preguntarla, en vez de
-                # perderse o de facturar una cantidad inventada.
-                #
-                # Excepción (bug en vivo 2026-07-23): en un turno MID-FLOW de
-                # "añadir acompañante" (ya había `prev_activity` establecido
-                # antes de este mensaje), fill_gaps puede RESTATEAR la
-                # actividad principal dentro del mismo group_allocation
-                # alucinado ("viene también un amigo que quiere hacer
-                # snorkel" → {certified_diving:1, snorkel:1}, sin ningún
-                # número real en el texto para ninguna de las dos). Si esa
-                # restatement se descarta por falta de respaldo, encolarla iba
-                # a preguntar por la actividad PRINCIPAL ya confirmada
-                # ("¿Cuántos serían para buceo certificado?") en vez de por el
-                # acompañante real — sin sentido, y pisa la pregunta correcta
-                # que el fast-path regex de más abajo (`_ADDED_PERSON_RE` +
-                # `_SINGULAR_COMPANION_RE`) ya sabe resolver sin preguntar. No
-                # aplica al mensaje de apertura (`prev_activity` es None ahí),
-                # donde la actividad principal SÍ puede ser un sub-grupo
-                # legítimo por confirmar.
-                # Con el total ya sabido, los tramos que se preguntan son de ESE grupo: la
-                # respuesta se reparte dentro del total y la principal no se pregunta, se
-                # queda con el resto (hallazgo H, 2026-09-15: "uno" sumaba encima de 3).
-                known_total = intent.group_size or state.detected_group_size
-                for act in dropped:
-                    if act == prev_activity or (known_total and act == main_act):
-                        continue
-                    if act not in state.pending_companion_queue:
-                        state.pending_companion_queue.append(act)
-                if known_total and state.pending_companion_queue:
-                    state.pending_split_total = known_total
-                if cleaned:
-                    patch["group_allocation"] = cleaned
-                else:
-                    patch.pop("group_allocation", None)
-                # El total (group_size) ya no es de fiar si el reparto que lo
-                # sustenta tenía una entrada inventada.
-                patch.pop("group_size", None)
-        elif _ADDED_PERSON_RE.search(message) and not _EXPLICIT_NUMBER_RE.search(message):
-            patch.pop("group_allocation", None)
-            # Un total que cuadra con las personas nombradas una a una no esta inventado
-            # (2026-09-15): "mi novia es buza certificada y yo nunca he buceado" volvio con
-            # total 2 y sin reparto, y se tiraba el total. Solo si la conversacion aun no
-            # tiene total: "tambien viene un amigo" a mitad no puede pisar el que ya habia.
-            if state.detected_group_size or patch.get("group_size") != _named_people(message)[1]:
-                patch.pop("group_size", None)
-        # GUARDA (b) — anclaje de los booleanos (ver `_boolean_patch_is_anchored`):
-        # un booleano que viaja pegado a la respuesta de OTRA pregunta pendiente
-        # no se acepta. Se descarta y el slot sigue pendiente → se pregunta.
-        unbacked_bools = [
-            f for f in patch
-            if f in _BOOL_PATCH_FIELDS
-            and not _boolean_patch_is_anchored(
-                f, state.core_pending_slot, intent, patch, gated_by_jev=not _wants_gaps and f in _gated_gaps,
-            )
-            and not _quote_backs_boolean(f, state.core_pending_slot, message, evidence)
-        ]
-        # La certificacion que el mensaje dice de OTRA persona no es la del cliente
-        # (2026-09-15): "somos 2, mi amigo es buzo y yo no" -> el LLM devolvia
-        # is_certified=True. Solo si coincide con lo que se dice del otro y quien escribe no
-        # dice nada propio: el False de "I am not" en "my wife is certified and I am not" se
-        # conserva.
-        if (
-            "is_certified" in patch and "is_certified" not in unbacked_bools
-            and patch["is_certified"] == other_person_certification(message)
-            and certification_claim(message) is None
-        ):
-            unbacked_bools.append("is_certified")
-        for field_name in unbacked_bools:
-            patch.pop(field_name, None)
-        if unbacked_bools:
-            logger.info(
-                f"[CORE] gap-fill booleans dropped (pegados a otra respuesta): "
-                f"{unbacked_bools} msg={supervisor._log_safe_message(message)!r}"
-            )
-        # Un total del relleno LLM que el detector lee como otra magnitud no son personas
-        # (hallazgo G, 2026-09-15): con "¿para cuantas personas?" pendiente, "2
-        # inmersiones" volvia con group_size=2 2/2. Misma regla que en el resolutor del slot.
-        # Va DESPUES de la guarda (b): aunque el total no valga, el LLM trato el mensaje
-        # como respuesta a la pregunta pendiente, y lo que viaja con ese intento no es de
-        # fiar. Medido con el LLM real e historial completo: el mismo patch traia
-        # `is_colombian: false` 2/2, y con esta guarda antes de la (b) entraba al estado.
-        if isinstance(patch.get("group_size"), int) and _number_of_something_else(state, message, patch["group_size"]):
-            logger.info(
-                f"[CORE] group_size del relleno descartado (numero de otra magnitud): "
-                f"{patch['group_size']} msg={supervisor._log_safe_message(message)!r}"
-            )
-            patch.pop("group_size")
-        # s4-28 (9-oct, flag `origen_del_cliente`): con la pregunta del origen pendiente, "May 3rd" volvía con
-        # `location=cartagena` (familia-mixta, 1 de 3 en PRE; ronda conserva-B): ningún mensaje del cliente nombra un
-        # lugar, así que solo pudo salir del texto del BOT ("¿saldrías desde Cartagena…?"), y el bot contestaba la
-        # pregunta guardada con el precio de Cartagena. Un origen del relleno vale si algún mensaje del cliente nombra
-        # un lugar (el detector de siempre: Cartagena y sus apodos, las islas, los hoteles) o si Jev dice que ESTE
-        # mensaje lo afirma.
-        if (
-            settings.origen_del_cliente and "location" in patch
-            and (getattr(state, "_answer_affirms", None) or {}).get("location") is not True
-            and not _cliente_nombra_un_lugar(state, message)
-        ):
-            logger.info(
-                f"[CORE] location del relleno descartada (ningún mensaje del cliente nombra un lugar): "
-                f"{patch['location']!r} msg={supervisor._log_safe_message(message)!r}"
-            )
-            patch.pop("location")
-        for campo in campos_del_extractor():
-            patch.pop(campo, None)
-        # Solo cuenta si se pidio (dos lados del grupo en el mensaje), venga de donde venga el patch.
-        mixed_nationality = patch.pop("mixed_nationality", None) is True and bool(extra_fields)
+        patch = {
+            f: v for f, v in patch.items()
+            if f not in campos_del_extractor() and f not in ("evidence", "mixed_nationality")
+        }
         for field_name, value in patch.items():
             setattr(intent, field_name, value)
             if field_name not in intent.detected_fields:
                 intent.detected_fields.append(field_name)
-        if mixed_nationality:
-            # Decision del owner (2026-09-14): el grupo mixto paga todo en USD, aunque el
-            # regex leyera "colombianos" en una de las frases.
-            intent.is_colombian = False
-            for listed in (intent.detected_fields, intent.overwrite):
-                if "is_colombian" not in listed:
-                    listed.append("is_colombian")
-            state.mixed_nationality_notice = True
         if patch:
-            # (Fix A del handoff) Mismo tag y formato que el cutover legacy —
-            # es lo que scripts/harvest_cutover_logs.py parsea para el bucle de
-            # datos reales (Fase 6): valores incluidos y mensaje completo vía
-            # _log_safe_message (nunca message[:60], bug documentado).
-            logger.info(
-                f"[EXTRACT][CUTOVER] applied={patch} "
-                f"msg={supervisor._log_safe_message(message)!r}"
-            )
+            # (Fix A del handoff) El tag que parsea scripts/harvest_cutover_logs.py.
+            logger.info(f"[EXTRACT][CUTOVER] applied={patch} msg={supervisor._log_safe_message(message)!r}")
     # Invariante del reparto, en el UNICO punto donde el intent del turno ya
     # esta completo (regex + veto + relleno) y aun no se ha escrito al estado.
     # Ponerla aqui la hace valida para cualquier fuente del reparto, presente o
     # futura, en vez de repetir la comprobacion en cada una.
-    if campos_del_extractor():
-        await _aplicar_extractor(intent, state, message, pista_lugar)
+    await _aplicar_extractor(intent, state, message, pista_lugar)
     supervisor.enforce_group_allocation_consistency(intent, state, message)
     _take_undecided_members(intent, state)
     _flag_cert_or_course(intent, state, message)
@@ -3276,8 +2793,6 @@ async def _understand(state: ConversationState, message: str, *, answered_pendin
         # ex-8: deducido y no convertido en recomendación (ya había actividad, grupo…): no se guarda como elegido.
         intent.activity = intent.service_id = None
         intent.detected_fields = [f for f in intent.detected_fields if f != "activity"]
-    if not settings.extraccion_llm_ubicacion:
-        _lugar_por_jev(intent, state)
     supervisor._apply_detected_intent(intent, state, message)
 
     # Circuit-breaker (portado 2026-09-01, hallazgo en vivo, batería de
@@ -5606,7 +5121,6 @@ async def _answer_question(
     if _es_pregunta_de_origen(answer):
         _fijar_origen_antes_del_precio(state, message)
         return answer
-    _named_certified_product_confirms_certification(state, message)
     pending = state.core_pending_slot or next_missing_slot(state)
     # No re-anclar el slot si la propia respuesta RAG ya cierra con una
     # pregunta (una recomendación/comparación termina invitando a elegir): el
@@ -5622,30 +5136,6 @@ async def _answer_question(
     state.core_pending_slot = pending
     state.quick_replies = []
     return answer
-
-
-def _named_certified_product_confirms_certification(state: ConversationState, message: str) -> None:
-    """Nombrar el producto de buceo certificado confirma la certificación.
-
-    Hallazgo en vivo (lote 9, bateria sintetica contra PRE, 2026-09-02): un mensaje con
-    "?" nunca pasaba por la extraccion -- asi que "how much for 2 people, certified
-    diving?" respondia el precio pero volvia a preguntar "Are you a certified diver?"
-    pese a que el propio mensaje nombra el producto certified_diving (lo que YA confirma
-    certificacion por la regla de negocio de `_activity_has_textual_backing`/
-    `certification_claim`). Si lo pendiente es la certificacion y el mensaje la respalda,
-    se fija. u3-4: con `answer_and_continue` la pregunta SI pasa por la extraccion, pero lo
-    que lee el regex en ella se deja al LLM (`_leave_question_fields_to_llm`); esta regla,
-    medida, se aplica igual en los dos caminos."""
-    if settings.extraccion_llm_certificacion:
-        # ex-6: lo decide el extractor (la regla del catálogo: el buceo certificado nombrado exige certificación).
-        return
-    pending = state.core_pending_slot or next_missing_slot(state)
-    if (
-        pending == SLOT_CERTIFICATION
-        and state.is_certified is None
-        and _activity_has_textual_backing("certified_diving", message)
-    ):
-        state.is_certified = True
 
 
 async def _rag_answer(

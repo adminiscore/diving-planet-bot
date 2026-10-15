@@ -9,7 +9,6 @@ from unittest.mock import AsyncMock
 import pytest
 
 from src.agents import conversational_core as core
-from src.config import settings
 from src.flows.state import ConversationState
 
 
@@ -17,14 +16,10 @@ from src.flows.state import ConversationState
 def _grupo_camino_antiguo(monkeypatch):
     """Estos tests fijan el grupo por el camino de antes de ex-7 (regex y redes LLM); con `extraccion_llm_grupo` lo
     decide el extractor (tests/test_ex7_grupo.py)."""
-    from src.config import settings as _flags
-
-    monkeypatch.setattr(_flags, "extraccion_llm_grupo", False)
 
 
 @pytest.fixture
 def ex6(monkeypatch):
-    monkeypatch.setattr(settings, "extraccion_llm_certificacion", True)
 
     def con(datos):
         monkeypatch.setattr(core, "datos_del_extractor", AsyncMock(return_value=datos))
@@ -81,25 +76,11 @@ async def test_nivel_nombrado_con_cita_no_se_pregunta(ex6):
 
 
 @pytest.mark.asyncio
-async def test_apagado_no_cambia_nada(monkeypatch):
-    monkeypatch.setattr(settings, "extraccion_llm_certificacion", False)
-    monkeypatch.setattr(settings, "extraccion_llm_actividad", False)
-    monkeypatch.setattr(settings, "extraccion_llm_ubicacion", False)
-    llamada = AsyncMock(return_value={"is_certified": False})
-    monkeypatch.setattr(core, "datos_del_extractor", llamada)
-    await _entender("I'm a certified diver")
-    llamada.assert_not_called()
-
-
-@pytest.mark.asyncio
 async def test_los_campos_del_extractor_no_van_al_veto(monkeypatch):
     """ex-9 (ronda atencion-B2): con los dominios del extractor encendidos, el veto del camino viejo no se pide para
     sus campos (la llamada iba en serie y su resultado se tiraba)."""
     from src.agents import supervisor
 
-    for flag in ("extraccion_llm_ubicacion", "extraccion_llm_actividad", "extraccion_llm_certificacion",
-                 "extraccion_llm_grupo"):
-        monkeypatch.setattr(settings, flag, True)
     monkeypatch.setattr(core, "datos_del_extractor", AsyncMock(return_value={}))
     verificar = AsyncMock(return_value={})
     monkeypatch.setattr(supervisor, "verify_fields", verificar)

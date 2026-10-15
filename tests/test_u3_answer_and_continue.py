@@ -33,9 +33,6 @@ from src.flows.state import ConversationState
 def _grupo_camino_antiguo(monkeypatch):
     """Estos tests fijan el grupo por el camino de antes de ex-7 (regex y redes LLM); con `extraccion_llm_grupo` lo
     decide el extractor (tests/test_ex7_grupo.py)."""
-    from src.config import settings as _flags
-
-    monkeypatch.setattr(_flags, "extraccion_llm_grupo", False)
 
 
 def _state() -> ConversationState:
@@ -55,10 +52,7 @@ def _offline(monkeypatch):
     monkeypatch.setattr(settings, "ack_in_parallel", False)
     # Estos tests prueban el camino de u3-4 en el que la ubicación del REGEX se verifica con el LLM. Con ex-5
     # (`extraccion_llm_ubicacion`) la ubicación la decide el extractor (tests/test_ex5_ubicacion_extractor.py).
-    monkeypatch.setattr(settings, "extraccion_llm_ubicacion", False)
     # Igual con ex-8 (`extraccion_llm_actividad`): actividad y nacionalidad (tests/test_ex8_actividad_nacionalidad.py).
-    monkeypatch.setattr(settings, "extraccion_llm_actividad", False)
-    monkeypatch.setattr(settings, "extraccion_llm_certificacion", False)  # ex-6: tests/test_ex6_certificacion.py
     monkeypatch.setattr(settings, "aplazar_pregunta_sin_respuesta", False)  # EX-FLUJO-1: test_ex_flujo1_aplazar.py
 
 
@@ -118,24 +112,7 @@ def _llm_reads(monkeypatch, message, patch):
         return (dict(patch) if msg == message else {}), {}
 
     monkeypatch.setattr(core, "fill_gaps", _fill)
-    monkeypatch.setattr(core, "extract_and_verify", _combined)
-
-
-async def test_con_flag_contesta_y_guarda_el_dato(monkeypatch, signals, rag):
-    monkeypatch.setattr(settings, "answer_and_continue", True)
-    # rag-5: desde el 1-oct el primer mensaje también lanza el RAG adelantado (y aquí se descarta); se cuenta la
-    # respuesta de ESTE turno.
-    monkeypatch.setattr(settings, "rag_adelantado", False)
-    _llm_reads(monkeypatch, "somos 3, ¿qué incluye el precio?", {"group_size": 3})
-    st = _state()
-    await route_message(st, "queremos bucear, somos certificados, desde cartagena")
-    resp = await route_message(st, "somos 3, ¿qué incluye el precio?")
-    assert resp.startswith("RESPUESTA_RAG")  # primero la respuesta
-    assert st.detected_group_size == 3  # el dato no se pierde
-    assert st.core_pending_slot == core.SLOT_SAFETY  # y la reserva sigue
-    assert "2 años" in resp
-    assert len(rag) == 1
-    assert st.history[-1] == {"role": "assistant", "content": resp}
+    monkeypatch.setattr(core, "extract_and_verify", _combined, raising=False)
 
 
 async def test_con_flag_y_jev_contesta_sin_interrogacion(monkeypatch, signals, rag):
@@ -191,21 +168,6 @@ async def test_recordar_sigue_con_su_respuesta_fija(monkeypatch, signals, rag):
     assert "RESPUESTA_RAG" not in resp
     assert "2" in resp
     assert getattr(st, "_pending_answer", None) is None
-
-
-async def test_si_el_rag_falla_la_reserva_sigue(monkeypatch, signals):
-    monkeypatch.setattr(settings, "answer_and_continue", True)
-
-    async def _boom(message, **_k):
-        raise RuntimeError("rag caído")
-
-    monkeypatch.setattr(supervisor, "rag_answer", _boom)
-    _llm_reads(monkeypatch, "somos 3, ¿qué incluye el precio?", {"group_size": 3})
-    st = _state()
-    await route_message(st, "queremos bucear, somos certificados, desde cartagena")
-    resp = await route_message(st, "somos 3, ¿qué incluye el precio?")
-    assert st.detected_group_size == 3
-    assert "2 años" in resp
 
 
 async def test_el_rag_ve_la_foto_del_historial(monkeypatch, rag):
@@ -430,7 +392,7 @@ def verificador(monkeypatch):
             return {f: v for f, v in box["afirma"].items() if f in fields}
         return {}
 
-    monkeypatch.setattr(core, "verify_fields", _verify)
+    monkeypatch.setattr(core, "verify_fields", _verify, raising=False)
     return calls, box
 
 
@@ -448,7 +410,7 @@ def no_rellena(monkeypatch):
         return {}, {}
 
     monkeypatch.setattr(core, "fill_gaps", _fill)
-    monkeypatch.setattr(core, "extract_and_verify", _combined)
+    monkeypatch.setattr(core, "extract_and_verify", _combined, raising=False)
     return calls
 
 
@@ -468,43 +430,6 @@ async def test_en_un_turno_con_pregunta_no_se_rellenan_huecos(
     )
 
 
-async def test_lo_que_el_cliente_afirma_se_verifica_y_se_guarda(
-    monkeypatch, signals, rag, verificador, no_rellena
-):
-    """"reservaremos hotel en la isla" SÍ es un dato: el regex lo lee y el LLM lo confirma
-    (no discrepa), así que se guarda."""
-    monkeypatch.setattr(settings, "answer_and_continue", True)
-    calls, box = verificador
-    box["afirma"] = {"location": "island"}
-    st = _state()
-    await route_message(st, "queremos bucear, somos certificados")
-
-    await route_message(st, "reservaremos hotel en la isla, ¿el transporte está incluido?")
-
-    assert calls, "el turno con pregunta tiene que pasar por la verificación"
-    assert "location" in calls[-1]["fields"], "se verifica lo que leyó el regex"
-    assert (st.location or st.detected_location) == "island"
-
-
-async def test_si_el_llm_dice_que_no_lo_afirma_el_dato_no_se_guarda(
-    monkeypatch, signals, rag, verificador, no_rellena
-):
-    """La hipótesis del escalón 1: "in case I decided to..." no es un dato. El regex lo
-    lee, el LLM discrepa y el valor se cae."""
-    monkeypatch.setattr(settings, "answer_and_continue", True)
-    calls, box = verificador
-    box["afirma"] = {}  # no lo afirma nadie
-    st = _state()
-    await route_message(st, "queremos bucear, somos certificados")
-
-    await route_message(
-        st, "is transportation to rosario included, in case I decided to do the course?"
-    )
-
-    assert calls, "tiene que haberse consultado"
-    assert st.location is None and st.detected_location is None
-
-
 async def test_lo_que_no_se_puede_verificar_no_se_guarda(monkeypatch, signals, rag, verificador):
     """`hotel`/`island`/`ages`/`last_dive_over_2_years` no tienen verificador en
     `_VETO_FIELD_SPECS`. La regla del arreglo es "solo lo que el cliente afirma Y el LLM
@@ -521,19 +446,6 @@ async def test_lo_que_no_se_puede_verificar_no_se_guarda(monkeypatch, signals, r
     await route_message(st, "¿me podéis recoger en el hotel Pao Pao?")
 
     assert st.hotel is None, "un hotel nombrado dentro de una pregunta no es dónde se aloja"
-
-
-async def test_sin_pregunta_se_siguen_rellenando_huecos(monkeypatch, signals, rag, no_rellena):
-    """Control: el arreglo 2 solo toca los turnos CON pregunta. Sin este test, los de
-    arriba pasarían aunque hubiéramos apagado el relleno en todos los turnos."""
-    monkeypatch.setattr(settings, "answer_and_continue", True)
-    st = _state()
-    await route_message(st, "queremos bucear, somos certificados")
-    no_rellena.clear()
-
-    await route_message(st, "somos 3")
-
-    assert no_rellena, "en un turno normal se siguen pidiendo los huecos"
 
 
 # --- La pregunta que faltaba: ¿lo AFIRMA o solo lo NOMBRA en su pregunta? (u3-4, 25-sep) ---
@@ -609,100 +521,6 @@ def test_la_actividad_la_deciden_las_dos_preguntas():
     assert sin_hipotesis[jev_router.AFFIRMS_ACTIVITY] is False
     assert con_hipotesis_baja[jev_router.AFFIRMS_ACTIVITY] is True
     assert jev_router.ACTIVITY_HYPOTHESIS not in con_hipotesis_baja, "no es una señal para el núcleo"
-
-
-async def test_si_jev_dice_que_no_lo_afirma_el_dato_se_cae_sin_preguntar_al_llm(
-    monkeypatch, signals, rag, verificador, no_rellena
-):
-    """El caso del escalón 0 que el verificador NO arreglaba: el regex lee `island`, el
-    verificador lo CONFIRMA (vuelve a extraer, y la isla está en la frase) y el dato inventado
-    sobrevivía. Jev dice que no lo afirma → se cae, y encima se ahorra la verificación.
-
-    El contraste se hace con **el mismo mensaje** a los dos lados: si se usaran mensajes
-    distintos, la diferencia podría venir del mensaje y no de la señal, y el test pasaría sin
-    probar nada.
-    """
-    monkeypatch.setattr(settings, "answer_and_continue", True)
-    calls, box = verificador
-    box["afirma"] = {"location": "island"}  # el verificador SÍ lo confirmaría: da igual
-    msg = "¿el transporte está incluido si nos quedamos en la isla?"
-
-    signals["value"] = {}  # -- lado A: sin la respuesta de Jev, la conducta de antes
-    antes = _state()
-    await route_message(antes, "queremos bucear, somos certificados")
-    await route_message(antes, msg)
-    assert (antes.location or antes.detected_location) == "island", (
-        "el control: sin Jev el dato SÍ se guardaba (si no, el test de abajo no prueba nada)"
-    )
-
-    calls.clear()
-    signals["value"] = {"affirms_location": False}  # -- lado B: Jev dice que no lo afirma
-    st = _state()
-    await route_message(st, "queremos bucear, somos certificados")
-    await route_message(st, msg)
-
-    assert st.location is None and st.detected_location is None
-    assert all("location" not in c["fields"] for c in calls), "no hace falta verificar lo descartado"
-
-
-async def test_si_jev_dice_que_si_lo_afirma_el_dato_sigue_su_camino(
-    monkeypatch, signals, rag, verificador, no_rellena
-):
-    """Control del test anterior: sin él pasaría igual con un mecanismo que borrase SIEMPRE."""
-    monkeypatch.setattr(settings, "answer_and_continue", True)
-    calls, box = verificador
-    box["afirma"] = {"location": "island"}
-    signals["value"] = {"affirms_location": True}
-    st = _state()
-    await route_message(st, "queremos bucear, somos certificados")
-
-    await route_message(st, "reservaremos hotel en la isla, ¿el transporte está incluido?")
-
-    assert (st.location or st.detected_location) == "island"
-    assert any("location" in c["fields"] for c in calls), "se sigue verificando el valor"
-
-
-async def test_si_jev_no_contesta_se_sigue_con_la_conducta_de_hoy(
-    monkeypatch, signals, rag, verificador, no_rellena
-):
-    """Jev apagado, o dudó en una señal del router: la respuesta no llega. AUSENTE no es
-    `False` — se verifica como antes, en vez de tirar el dato."""
-    monkeypatch.setattr(settings, "answer_and_continue", True)
-    calls, box = verificador
-    box["afirma"] = {"location": "island"}
-    signals["value"] = {}  # ninguna afirmación en las señales
-    st = _state()
-    await route_message(st, "queremos bucear, somos certificados")
-
-    await route_message(st, "reservaremos hotel en la isla, ¿el transporte está incluido?")
-
-    assert (st.location or st.detected_location) == "island"
-    assert any("location" in c["fields"] for c in calls)
-
-
-async def test_si_el_llm_no_contesta_no_se_tira_nada(monkeypatch, signals, rag, no_rellena):
-    """El otro lado del contrato defensivo: si la verificación FALLA (API caída, 401, red),
-    `verify_fields` devuelve `None` y no se toca nada — un corte de red no puede tirar datos
-    buenos. El precio es que el dato hipotético sobrevive ese turno, y es a propósito.
-
-    Con Jev contestando no hace falta llegar aquí: su `False` descarta el campo sin LLM (ver
-    `test_si_jev_dice_que_no_lo_afirma_el_dato_se_cae_sin_preguntar_al_llm`), así que el
-    mecanismo nuevo cubre también el turno degradado.
-    """
-    monkeypatch.setattr(settings, "answer_and_continue", True)
-
-    async def _falla(*_a, **kwargs):
-        return None if kwargs.get("as_answers") else {}
-
-    monkeypatch.setattr(core, "verify_fields", _falla)
-    st = _state()
-    await route_message(st, "queremos bucear, somos certificados")
-
-    await route_message(st, "¿el transporte está incluido si nos quedamos en la isla?")
-
-    assert (st.location or st.detected_location) == "island", (
-        "con la verificación caída se conserva lo que leyó el regex, no se tira"
-    )
 
 
 # ---------------------------------------------------------------------------
@@ -828,26 +646,8 @@ def relleno(monkeypatch):
         return {}, {}
 
     monkeypatch.setattr(core, "fill_gaps", _fill)
-    monkeypatch.setattr(core, "extract_and_verify", _combined)
+    monkeypatch.setattr(core, "extract_and_verify", _combined, raising=False)
     return calls, box
-
-
-async def test_con_el_si_de_jev_se_rellena_solo_ese_campo_y_sin_historial(
-    monkeypatch, signals, rag, verificador, relleno
-):
-    """"costo de un fundive": el regex no lo lee y en un turno con pregunta no se rellenaba."""
-    monkeypatch.setattr(settings, "answer_and_continue", True)
-    calls, box = relleno
-    st = _state()
-    await route_message(st, "hola")
-    calls.clear()
-    box["patch"] = {"activity": "certified_diving"}
-    signals["value"] = {"asks_question": True, "affirms_activity": True}
-    await route_message(st, "quería averiguar por el costo de un fundive para este finde")
-    assert calls, "tenía que pedir el relleno"
-    assert all(c["fields"] == ["activity"] for c in calls), calls
-    assert all(c["history"] is None for c in calls), "solo el mensaje actual: Jev no ve el historial"
-    assert st.detected_activity == "certified_diving"
 
 
 async def test_con_el_no_de_jev_no_se_rellena(monkeypatch, signals, rag, verificador, relleno):
@@ -861,41 +661,6 @@ async def test_con_el_no_de_jev_no_se_rellena(monkeypatch, signals, rag, verific
     await route_message(st, "in case I decided to do the Open Water course, is transport included?")
     assert calls == []
     assert st.detected_activity is None
-
-
-async def test_el_si_de_un_campo_no_abre_la_puerta_a_los_demas(monkeypatch, signals, rag, verificador, relleno):
-    """Control: con el "sí" solo para la actividad, grupo y nacionalidad no viajan al relleno."""
-    monkeypatch.setattr(settings, "answer_and_continue", True)
-    calls, box = relleno
-    st = _state()
-    await route_message(st, "hola")
-    calls.clear()
-    box["patch"] = {"activity": "certified_diving", "group_size": 2, "is_colombian": True}
-    signals["value"] = {"asks_question": True, "affirms_activity": True}
-    await route_message(st, "cuánto cuesta un fundive para colombianos, para 2?")
-    assert calls and all(c["fields"] == ["activity"] for c in calls), calls
-    assert st.detected_group_size is None
-
-
-async def test_el_si_de_jev_rellena_tambien_el_dato_que_el_bot_acaba_de_preguntar(
-    monkeypatch, signals, rag, verificador, relleno
-):
-    """Ronda B2: con "¿eres buzo certificado?" pendiente, "completé el curso básico el 3 de abril,
-    ¿tengo que hacer algo especial?" se perdía: la guarda (a) no deja pedir al relleno el dato
-    recién preguntado, y la respuesta corta y el resolutor se saltan los mensajes con pregunta.
-    El relleno con puerta va sin historial y con el "sí" de Jev, así que sí puede."""
-    monkeypatch.setattr(settings, "answer_and_continue", True)
-    monkeypatch.setattr(settings, "llm_extraction_cutover_certification", True)  # como en PRE
-    calls, box = relleno
-    st = _state()
-    await route_message(st, "quiero hacer el paquete de 5 buceos")
-    assert st.core_pending_slot == core.SLOT_CERTIFICATION
-    calls.clear()
-    box["patch"] = {"is_certified": True}
-    signals["value"] = {"asks_question": True, "affirms_certification": True}
-    await route_message(st, "completé el curso básico el 3 de abril, ¿tengo que hacer algo especial?")
-    assert any("is_certified" in c["fields"] and c["history"] is None for c in calls), calls
-    assert st.is_certified is True
 
 
 # Paso 5 (flag `rag_v2`): Jev decide si el mensaje pide de verdad recordar algo. En la ronda A el

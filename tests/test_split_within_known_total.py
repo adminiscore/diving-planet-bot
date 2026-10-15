@@ -20,15 +20,12 @@ from src.flows.state import ConversationState
 def _grupo_camino_antiguo(monkeypatch):
     """Estos tests fijan el grupo por el camino de antes de ex-7 (regex y redes LLM); con `extraccion_llm_grupo` lo
     decide el extractor (tests/test_ex7_grupo.py)."""
-    from src.config import settings as _flags
-
-    monkeypatch.setattr(_flags, "extraccion_llm_grupo", False)
 
 
 async def _understand(state, message, patch_value):
-    with patch.object(core, "extract_and_verify", new=AsyncMock(return_value=(patch_value, {}))), \
+    with patch.object(core, "extract_and_verify", create=True, new=AsyncMock(return_value=(patch_value, {}))), \
          patch.object(core, "fill_gaps", new=AsyncMock(return_value=patch_value)), \
-         patch.object(core, "verify_fields", new=AsyncMock(return_value={})), \
+         patch.object(core, "verify_fields", create=True, new=AsyncMock(return_value={})), \
          patch("src.agents.supervisor._maybe_veto_resolved_fields_via_llm", new=AsyncMock(return_value=None)):
         await core._understand(state, message)
 
@@ -37,54 +34,6 @@ def _new():
     state = ConversationState(conversation_id="split")
     state.language = "es"
     return state
-
-
-@pytest.mark.asyncio
-async def test_split_that_partitions_the_named_people_is_kept():
-    state = _new()
-    await _understand(state, "vamos 3, mi pareja y yo buceamos y mi suegra hace snorkel",
-                      {"group_size": 3, "group_allocation": {"certified_diving": 2, "snorkel": 1}})
-    assert state.detected_group_allocation == {"certified_diving": 2, "snorkel": 1}
-    assert state.detected_group_size == 3
-    assert state.pending_companion_queue == []
-
-
-@pytest.mark.asyncio
-async def test_named_people_partition_keeps_the_total_with_undecided_members():
-    """F.3: "my wife and i dive" con dos hijos: el total 4 ya no se tira con el reparto."""
-    state = _new()
-    await _understand(state, "my daughter is 9 and my son is 12, my wife and i dive",
-                      {"group_size": 4, "group_allocation": {"certified_diving": 2, "undecided": 2}})
-    assert state.detected_group_size == 4
-    assert state.detected_group_allocation == {"certified_diving": 2}
-    assert state.pending_undecided_qty == 2
-
-
-@pytest.mark.asyncio
-async def test_main_activity_takes_the_rest_of_a_known_total():
-    """Solo la principal no tiene respaldo ("mis amigos bucean"): con "vamos 4", es el resto."""
-    state = _new()
-    await _understand(state, "vamos 4, mis amigos bucean y mi hermana hace snorkel",
-                      {"group_size": 4, "group_allocation": {"certified_diving": 3, "snorkel": 1}})
-    assert state.detected_group_allocation == {"certified_diving": 3, "snorkel": 1}
-    assert state.detected_group_size == 4
-
-
-@pytest.mark.asyncio
-async def test_queued_shares_of_a_known_total_do_not_add_on_top():
-    """Tramos sin respaldo con el total sabido: no se pregunta la principal y la respuesta se
-    reparte dentro del total."""
-    state = _new()
-    await _understand(state, "vamos 5, mis amigos bucean y mis primos hacen snorkel",
-                      {"group_size": 5, "group_allocation": {"certified_diving": 3, "snorkel": 2}})
-    assert state.pending_companion_queue == ["snorkel"]
-    assert state.pending_split_total == 5
-    state.pending_companion_activity = state.pending_companion_queue.pop(0)
-    state.core_pending_slot = core.SLOT_COMPANION_QTY
-    assert core._apply_short_answer(state, "2")
-    assert state.detected_group_allocation == {"snorkel": 2, "certified_diving": 3}
-    assert state.detected_group_size == 5
-    assert state.pending_split_total is None
 
 
 def test_a_share_larger_than_the_total_asks_whether_someone_joins():

@@ -18,9 +18,7 @@ from src.prompts.booking import EVIDENCE_FIELDS, extraction_tool
 def _camino_viejo_de_actividad(monkeypatch):
     """Estos tests prueban el camino viejo (regex + veto/relleno). Con ex-8 (`extraccion_llm_actividad`) la actividad y
     la nacionalidad las decide el extractor "LLM primero": tests/test_ex8_actividad_nacionalidad.py."""
-    from src.config import settings as _settings
 
-    monkeypatch.setattr(_settings, "extraccion_llm_actividad", False)
 
 LOC = core.SLOT_LOCATION
 
@@ -67,19 +65,9 @@ async def _understand(state, message, returned):
         return dict(returned)
 
     from unittest.mock import patch
-    with patch.object(core, "extract_and_verify", fake), patch.object(core, "fill_gaps", fake_fill):
+    with patch.object(core, "extract_and_verify", fake, create=True), patch.object(core, "fill_gaps", fake_fill):
         await core._understand(state, message)
     return calls
-
-
-@pytest.mark.asyncio
-async def test_double_answer_keeps_the_quoted_boolean():
-    state = _waiting_location()
-    calls = await _understand(state, "desde cartagena, somos paisas",
-                              {"is_colombian": True, "evidence": {"is_colombian": "somos paisas"}})
-    assert any("evidence" in c for c in calls)
-    assert state.location == "cartagena"
-    assert state.is_colombian is True
 
 
 @pytest.mark.asyncio
@@ -90,10 +78,3 @@ async def test_boolean_quoting_the_pending_answer_is_still_dropped():
     assert state.is_colombian is None
 
 
-@pytest.mark.asyncio
-async def test_no_quote_requested_without_a_pending_question():
-    state = ConversationState(conversation_id="apertura")
-    state.language = "es"
-    calls = await _understand(state, "soy paisa", {"is_colombian": True})
-    assert calls and all("evidence" not in c for c in calls)
-    assert state.is_colombian is True

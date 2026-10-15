@@ -22,9 +22,6 @@ from src.prompts.booking import EXTRACTION_TOOL, extraction_tool
 def _camino_viejo_de_actividad(monkeypatch):
     """Estos tests prueban el camino viejo (regex + veto/relleno). Con ex-8 (`extraccion_llm_actividad`) la actividad y
     la nacionalidad las decide el extractor "LLM primero": tests/test_ex8_actividad_nacionalidad.py."""
-    from src.config import settings as _settings
-
-    monkeypatch.setattr(_settings, "extraccion_llm_actividad", False)
 
 
 @pytest.mark.parametrize("message", [
@@ -76,24 +73,9 @@ async def _understand(message, returned):
 
     state = ConversationState(conversation_id="mixed")
     state.language = "es"
-    with patch.object(core, "fill_gaps", fake_fill), patch.object(core, "extract_and_verify", fake_extract):
+    with patch.object(core, "fill_gaps", fake_fill), patch.object(core, "extract_and_verify", fake_extract, create=True):
         await core._understand(state, message)
     return state, calls
-
-
-@pytest.mark.asyncio
-async def test_mixed_group_pays_in_usd_even_if_the_regex_read_colombian():
-    state, calls = await _understand("somos colombianos pero mi amigo es aleman", {"mixed_nationality": True})
-    assert ("mixed_nationality",) in calls
-    assert state.is_colombian is False
-    assert state.mixed_nationality_notice is True
-
-
-@pytest.mark.asyncio
-async def test_one_sided_message_does_not_ask_for_the_mix():
-    state, calls = await _understand("mi novio es aleman y quiere hacer snorkel", {"mixed_nationality": True})
-    assert calls and all("mixed_nationality" not in c for c in calls)
-    assert state.mixed_nationality_notice is False
 
 
 @pytest.mark.asyncio

@@ -22,19 +22,12 @@ from src.flows.state import ConversationState
 def _grupo_camino_antiguo(monkeypatch):
     """Estos tests fijan el grupo por el camino de antes de ex-7 (regex y redes LLM); con `extraccion_llm_grupo` lo
     decide el extractor (tests/test_ex7_grupo.py)."""
-    from src.config import settings as _flags
-
-    monkeypatch.setattr(_flags, "extraccion_llm_grupo", False)
 
 
 @pytest.fixture(autouse=True)
 def _camino_viejo_de_actividad(monkeypatch):
     """Estos tests prueban el camino viejo (regex + veto/relleno). Con ex-8 (`extraccion_llm_actividad`) la actividad y
     la nacionalidad las decide el extractor "LLM primero": tests/test_ex8_actividad_nacionalidad.py."""
-    from src.config import settings as _settings
-
-    monkeypatch.setattr(_settings, "extraccion_llm_actividad", False)
-    monkeypatch.setattr(_settings, "extraccion_llm_certificacion", False)  # ex-6: tests/test_ex6_certificacion.py
 
 
 def _closed(allocation=None, colombian=True):
@@ -58,9 +51,9 @@ async def _send(state, message, verify=None):
     # contradiccion sale de compararlo con lo guardado (hallazgo J, 2026-09-15).
     with patch("src.agents.supervisor.detect_routing_signals", new=AsyncMock(return_value={})), \
          patch.object(core, "fill_gaps", new=AsyncMock(return_value={})), \
-         patch.object(core, "extract_and_verify",
+         patch.object(core, "extract_and_verify", create=True,
                       new=AsyncMock(side_effect=lambda *a, **k: (dict(verify or {}), {}))), \
-         patch.object(core, "verify_fields", new=AsyncMock(return_value=verify or {})), \
+         patch.object(core, "verify_fields", create=True, new=AsyncMock(return_value=verify or {})), \
          patch.object(core, "detect_special_signals", new=AsyncMock(return_value={})), \
          patch.object(core, "compose_acknowledgement", new=AsyncMock(return_value="")), \
          patch.object(core, "resolve_slot_answer", new=AsyncMock(return_value={})), \
@@ -78,59 +71,10 @@ async def test_explicit_correction_after_the_price_changes_the_currency():
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("answer, colombian, currency", [("sí, cámbialo", False, "USD"), ("no, lo de antes", True, "COP")])
-async def test_slang_correction_without_cue_is_confirmed(answer, colombian, currency):
-    state = _closed()
-    await _send(state, "ah no, somos gringos", verify={"is_colombian": False})
-    assert state.is_colombian is True
-    assert state.core_pending_slot == core.SLOT_CONFIRM_CORRECTION
-    assert [b["value"] for b in state.quick_replies] == ["sí", "no"]
-    await _send(state, answer)
-    assert state.is_colombian is colombian
-    assert state.mixed_display_currency == currency
-    assert state.pending_correction is None
-
-
-@pytest.mark.asyncio
-async def test_split_change_is_confirmed_and_repriced():
-    state = _closed(allocation={"certified_diving": 2, "snorkel": 1})
-    await _send(state, "al final mi suegra tambien bucea, no hace snorkel",
-                verify={"group_allocation": {"certified_diving": 3}})
-    assert state.core_pending_slot == core.SLOT_CONFIRM_CORRECTION
-    await _send(state, "sí")
-    assert state.detected_group_allocation == {"certified_diving": 3}
-    assert {item["type"]: item["qty"] for item in state.mixed_cart} == {"cert": 3}
-
-
-@pytest.mark.asyncio
 async def test_same_value_does_not_ask():
     state = _closed()
     await _send(state, "somos colombianos, sí")
     assert state.pending_correction is None
-
-
-@pytest.mark.parametrize("message", [
-    "mi novia no es buzo, ella viene y hace el minicurso",   # otra persona
-    "mejor pensandolo bien quiero el minicurso",              # deducido del minicurso
-])
-def test_regex_does_not_take_inferences_or_other_people_as_the_writers_correction(message):
-    state = ConversationState(conversation_id="t7b-regex")
-    state.detected_activity = "certified_diving"
-    state.is_certified = state.detected_is_certified = True
-    intent = core._detector.detect(message, state)
-    assert core._regex_contradictions(state, message, intent) == {}
-    assert state.pending_correction is None
-    assert intent.is_certified is None
-
-
-def test_regex_correction_with_a_cue_is_accepted_in_the_same_turn():
-    state = ConversationState(conversation_id="t7b-cue")
-    state.is_colombian = True
-    message = "espera, en realidad no somos colombianos"
-    intent = core._detector.detect(message, state)
-    assert core._regex_contradictions(state, message, intent) == {}
-    assert intent.is_colombian is False
-    assert "is_colombian" in intent.overwrite
 
 
 def _waiting_location():
@@ -157,14 +101,6 @@ async def test_known_field_proposals_riding_on_the_answer_to_another_question_ar
 
 
 @pytest.mark.asyncio
-async def test_known_field_proposal_that_does_not_answer_the_pending_question_is_kept():
-    state = _waiting_location()
-    await _send(state, "ah no, somos gringos", verify={"is_colombian": False})
-    assert state.pending_correction == {"is_colombian": False}
-    assert state.core_pending_slot == core.SLOT_CONFIRM_CORRECTION
-
-
-@pytest.mark.asyncio
 async def test_split_with_an_ambiguous_course_level_waits_for_the_answer():
     """b05 (owner): "2 open water y 3 snorkel" no dice si tienen el nivel o lo quieren;
     se pregunta y no se guarda el reparto con el curso aunque el LLM lo rellene."""
@@ -172,7 +108,7 @@ async def test_split_with_an_ambiguous_course_level_waits_for_the_answer():
     state.language = "es"
     state.detected_group_size = 5
     split = {"group_allocation": {"padi_open_water": 2, "snorkel": 3}}
-    with patch.object(core, "extract_and_verify", new=AsyncMock(return_value=(split, {}))), \
+    with patch.object(core, "extract_and_verify", create=True, new=AsyncMock(return_value=(split, {}))), \
          patch.object(core, "fill_gaps", new=AsyncMock(return_value=split)), \
          patch("src.agents.supervisor._maybe_veto_resolved_fields_via_llm", new=AsyncMock(return_value=None)):
         await core._understand(state, "2 open water y 3 snorkel")

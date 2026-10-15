@@ -18,9 +18,6 @@ from src.flows.state import ConversationState, Step
 def _grupo_camino_antiguo(monkeypatch):
     """Estos tests fijan el grupo por el camino de antes de ex-7 (regex y redes LLM); con `extraccion_llm_grupo` lo
     decide el extractor (tests/test_ex7_grupo.py)."""
-    from src.config import settings as _flags
-
-    monkeypatch.setattr(_flags, "extraccion_llm_grupo", False)
 
 
 def make_state(**over) -> ConversationState:
@@ -79,11 +76,3 @@ async def test_greeting_only_skips_fill_gaps(monkeypatch):
     fake.assert_not_awaited()  # saludo puro → sin llamada LLM de extracción
 
 
-@pytest.mark.asyncio
-async def test_message_with_content_still_calls_fill_gaps(monkeypatch):
-    fake = AsyncMock(return_value={})
-    monkeypatch.setattr(core, "fill_gaps", fake)
-    # Mensaje con intención de reserva pero sin reparto explícito → hay gaps que
-    # el regex no cierra, así que fill_gaps DEBE correr.
-    await _understand(make_state(), "hola, nos gustaría explorar el mundo submarino")
-    fake.assert_awaited()

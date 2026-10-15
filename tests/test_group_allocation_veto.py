@@ -354,7 +354,7 @@ async def test_invariant_runs_in_the_real_turn_path():
 
     state = ConversationState(conversation_id="ga-invariante-e2e")
     state.detected_group_size = 6
-    with patch.object(cc, "extract_and_verify",
+    with patch.object(cc, "extract_and_verify", create=True,
                       new=AsyncMock(return_value=({"group_allocation": {"snorkel": 2}}, {}))), \
          patch.object(cc, "fill_gaps",
                       new=AsyncMock(return_value={"group_allocation": {"snorkel": 2}})):
@@ -462,7 +462,7 @@ async def test_a_misread_turn_total_cannot_carry_a_partial_split_into_the_state(
     state = ConversationState(conversation_id="ga-total-mal-leido-e2e")
     state.detected_group_size = 7
     partial = {"group_allocation": {"certified_diving": 4}}
-    with patch.object(cc, "extract_and_verify", new=AsyncMock(return_value=(partial, {}))), \
+    with patch.object(cc, "extract_and_verify", create=True, new=AsyncMock(return_value=(partial, {}))), \
          patch.object(cc, "fill_gaps", new=AsyncMock(return_value=dict(partial))), \
          patch.object(supervisor, "verify_fields", new=AsyncMock(return_value={})):
         await cc._understand(state, "4 certificados")

@@ -108,7 +108,7 @@ async def test_conversation_asks_the_course_and_continues_after_the_choice():
         "detect_special_signals": AsyncMock(return_value={}),
     }
     with patch.object(core, "fill_gaps", new=no_llm["fill_gaps"]), \
-         patch.object(core, "extract_and_verify", new=no_llm["extract_and_verify"]), \
+         patch.object(core, "extract_and_verify", create=True, new=no_llm["extract_and_verify"]), \
          patch.object(core, "detect_special_signals", new=no_llm["detect_special_signals"]):
         first = await route_message(state, "quiero hacer un curso PADI")
         assert state.detected_activity == "padi_course"

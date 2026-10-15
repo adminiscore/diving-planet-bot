@@ -1,6 +1,15 @@
 History
 =======
 
+0.31.28 - (2026-10-15)
+----------------------
+* **ex-9 (primera parte): fuera las redes del camino viejo que ya no tenían campos; los cuatro dominios del extractor sin flag** (Gadea con Claude; noche autorizada por Gadea).
+  - **Por qué estaban muertas:** con ubicación, actividad/nacionalidad, certificación y grupo en el extractor "LLM primero" (ex-5…ex-8, promocionados del 12 al 13-oct), todos los campos corregibles los decide el extractor. El **veto** (re-verificar con un LLM lo que leyó el regex), la **re-comprobación** de lo sabido, la **verificación del turno con pregunta**, las **contradicciones del regex** y las guardas del **relleno** (`fill_gaps`: grupo, booleanos con cita, origen "May 3rd", grupo mixto, segunda petición del grupo) corrían con listas vacías o tiraban su resultado al final. El relleno de siempre ya solo decide las **edades** de los menores.
+  - **Quitado:** ~570 líneas del núcleo (`_understand`: veto, re-comprobación, verificación y guardas del parche; `_regex_contradictions`; `_named_certified_product_confirms_certification`, que con ex-6 ya no hacía nada; `_cliente_nombra_un_lugar`); los flags `EXTRACCION_LLM_UBICACION/ACTIVIDAD/CERTIFICACION/GRUPO` (config, compose, mapa) y `ORIGEN_DEL_CLIENTE` (la guarda del origen del relleno; el origen sale del extractor con su cita). `scripts/banco_grupo.py` ya solo mide el camino del extractor.
+  - **Tests:** 42 funciones de test del camino viejo borradas (las que fijaban los flags apagados o probaban el veto, la re-comprobación o el relleno de campos del extractor; el camino nuevo tiene los suyos en `test_ex5…ex8`, `test_ex7_grupo`) y `tests/test_s4_28_origen_del_cliente.py`. Los mocks de funciones quitadas en tests que siguen valiendo, con `create=True`. Suite: 3026 pasan.
+  - **Queda para ex-9b (1-2 días):** el regex de "entender al cliente" sigue en 86,7 % (673 patrones): hotel, isla, edades, duración y fechas aún los lee el regex; quitar el respaldo del regex cuando el extractor falla; partir los módulos grandes (núcleo 5.698 líneas, supervisor 3.486). Y la causa única de dos pendientes: una petición en imperativo ("dame la cuenta", "Full name of dive center") no se trata como pregunta.
+  - **Medida:** ronda core de equivalencia ex9-A (código de antes, en PRE) frente a ex9-B (con ex-9).
+
 0.31.27 - (2026-10-15)
 ----------------------
 * **Ronda est4-B (base limpia + extractor v1): 91,3 → 92,2 %; el extractor pasa a v3; lo dicho en el turno del pase ya no se pierde (`EST4_FLUJO`)** (Gadea con Claude; noche autorizada por Gadea).

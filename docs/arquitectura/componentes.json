@@ -352,11 +352,7 @@
         "Fase EX: extractor_turno.extraer_turno (LLM primero, cita comprobada)"
       ],
       "interruptores": [
-        "extraccion_llm_ubicacion",
-        "extraccion_llm_actividad",
-        "extraccion_llm_certificacion",
         "idioma_otro_en_ingles",
-        "extraccion_llm_grupo",
         "extractor_aclaraciones",
         "extractor_todo_lo_dicho",
         "est4_flujo"
@@ -1189,11 +1185,6 @@
       "titulo": "No repite la tarjeta de la reserva",
       "texto": "Con la reserva ya cerrada y sin cambios, una pregunta como '¿cuánto dura?' se contesta sola, sin volver a pegar el precio y el link."
     },
-    "origen_del_cliente": {
-      "area": "Reserva",
-      "titulo": "El origen lo dice el cliente",
-      "texto": "Si el extractor deduce desde dónde sale el cliente, solo se guarda si el cliente nombró algún lugar: una fecha como 'May 3rd' ya no se vuelve 'sale desde Cartagena' por lo que preguntó el bot."
-    },
     "grupo_por_edades": {
       "area": "Reserva",
       "titulo": "Cada edad es una persona",
@@ -1208,16 +1199,6 @@
       "area": "Enrutador",
       "titulo": "Solo las emergencias pasan a un asesor por palabra clave",
       "texto": "La lista de palabras que pasa el caso a un asesor antes de que opine la IA se queda con las emergencias y los problemas en tiempo real (pago que falla, cupo para mañana). Las preguntas médicas, el tiempo y las quejas los decide Jev leyendo la frase entera: así 'ya llenamos el formulario médico' o 'mi amigo es abogado' dejan de pasar a un asesor."
-    },
-    "extraccion_llm_actividad": {
-      "area": "Reserva",
-      "titulo": "La actividad y la nacionalidad las entiende la IA (con cita)",
-      "texto": "Qué actividad elige el cliente y si es colombiano lo decide el extractor nuevo de la fase EX: solo lo que el cliente dice con sus palabras. Ya no se da por hecho el buceo certificado al leer 'bucear', ni la nacionalidad por el idioma."
-    },
-    "extraccion_llm_grupo": {
-      "area": "Reserva",
-      "titulo": "El grupo lo entiende la IA (con cita)",
-      "texto": "Cuántos van y qué hace cada uno lo decide el extractor nuevo de la fase EX, con las palabras del cliente: 'él quiere hacer snorkel' ya no se cuenta dos veces, '3 bucean y 3 hacen snorkel' se suma al grupo sin preguntar '¿lo cambio?', y quien no ha elegido actividad queda 'sin decidir' para recomendarle opciones."
     },
     "extractor_aclaraciones": {
       "area": "Reserva",
@@ -1249,22 +1230,22 @@
       "titulo": "El acuse no se inventa nada",
       "texto": "La frase corta con la que Coral reconoce lo que dijo el cliente ('Entendido, …') solo repite lo que dice el mensaje: ya no convierte una fecha en 'tu reserva' ni un 'gracias' en 'tu actividad de Advanced'."
     },
-        "recomendar_a_certificados": {
+    "recomendar_a_certificados": {
       "area": "Reserva",
       "titulo": "A un buzo certificado le recomienda sus opciones",
       "texto": "Si el cliente ya dijo que es buzo certificado y no ha elegido actividad, Coral le propone la salida de 2 inmersiones, los paquetes de varios días o un curso avanzado, en vez del menú entero con minicurso y snorkel (regla de Gadea: recomendar según el contexto)."
     },
-        "aplazar_pregunta_sin_respuesta": {
+    "aplazar_pregunta_sin_respuesta": {
       "area": "Reserva",
       "titulo": "No repite la pregunta que el cliente no contestó",
       "texto": "Si el cliente no contesta una pregunta de la reserva (origen, cuántos, última inmersión, nacionalidad…), Coral no la repite en el turno siguiente: sigue con lo que falta y la vuelve a hacer justo antes del resumen (decisión de Gadea, 14-oct)."
     },
-        "rag_no_supone_reserva": {
+    "rag_no_supone_reserva": {
       "area": "Preguntas",
       "titulo": "No da por hecho lo que el cliente no dijo",
       "texto": "Si el cliente habla de su reserva sin decir qué servicio tiene, Coral no lo adivina ('tu paquete de 3 inmersiones'): contesta con la información general y, si hace falta, le pregunta."
     },
-        "rag_politicas_en_contexto": {
+    "rag_politicas_en_contexto": {
       "area": "Preguntas",
       "titulo": "Las políticas siempre a mano",
       "texto": "Las políticas del negocio (equipaje, recogida, idiomas de instrucción, cambios…) van siempre enteras en el contexto del RAG, como el catálogo. Antes dependían de que la búsqueda las encontrara y en un mensaje largo podían quedarse fuera."
@@ -1273,16 +1254,6 @@
       "area": "Reserva",
       "titulo": "Otro idioma: contesta en inglés",
       "texto": "Coral atiende en español e inglés. Si el cliente escribe en otro idioma (portugués, francés…), contesta en inglés. Unas palabras sueltas de otro idioma dentro de un mensaje en español no cambian el idioma. Lo dice el extractor de la fase EX, en la misma llamada."
-    },
-    "extraccion_llm_certificacion": {
-      "area": "Reserva",
-      "titulo": "La certificación la entiende la IA (con cita)",
-      "texto": "Si el cliente ya es buzo certificado y si su última inmersión fue hace más de 2 años lo decide el extractor nuevo de la fase EX, con sus palabras. 'Quiero sacarme el Open Water Diver' ya no se lee como 'ya es certificado', ni un 'gracias' como certificación."
-    },
-    "extraccion_llm_ubicacion": {
-      "area": "Reserva",
-      "titulo": "La ubicación la entiende la IA (con cita)",
-      "texto": "Desde dónde sale el cliente lo decide el extractor nuevo de la fase EX: solo si el cliente lo dice con sus palabras y nombra el lugar. El regex queda como pista."
     },
     "catalogo_equipo_incluido": {
       "area": "Preguntas",

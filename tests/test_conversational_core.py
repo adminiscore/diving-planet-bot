@@ -20,9 +20,6 @@ from src.flows.state import ConversationState, Step
 def _grupo_camino_antiguo(monkeypatch):
     """Estos tests fijan el grupo por el camino de antes de ex-7 (regex y redes LLM); con `extraccion_llm_grupo` lo
     decide el extractor (tests/test_ex7_grupo.py)."""
-    from src.config import settings as _flags
-
-    monkeypatch.setattr(_flags, "extraccion_llm_grupo", False)
 
 
 @pytest.fixture(autouse=True)
@@ -465,25 +462,6 @@ async def test_snorkel_companion_added_after_close():
     assert "norkel" in resp  # el resumen re-emitido incluye la actividad nueva
 
 
-@pytest.mark.asyncio
-async def test_companion_beginner_added_mid_flow(monkeypatch):
-    """Acompañante minicurso mencionado ANTES del cierre: se acumula en el
-    reparto y el carrito final tiene ambos ítems."""
-    monkeypatch.setattr(settings, "aplazar_pregunta_sin_respuesta", False)  # camino de antes de EX-FLUJO-1
-    monkeypatch.setattr(settings, "extraccion_llm_certificacion", False)  # camino de antes de ex-6
-    state = make_state("es")
-    await route_message(state, "soy buzo certificado, quiero bucear desde cartagena, voy solo")
-    assert state.core_pending_slot == core.SLOT_SAFETY
-    await route_message(state, "mi novia no es buzo, ella viene y hace el minicurso")
-    # sigue pendiente la seguridad (del subgrupo cert), sin perder el añadido
-    assert state.core_pending_slot == core.SLOT_SAFETY
-    await route_message(state, "no")
-    await route_message(state, "no somos colombianos")
-    types = {it["type"]: it["qty"] for it in state.mixed_cart}
-    assert types.get("cert") == 1
-    assert types.get("beginner") == 1
-
-
 # ---------------------------------------------------------------------------
 # Fase 3 — cursos PADI + checkout completo (menores/edades, lead note)
 # ---------------------------------------------------------------------------
@@ -602,32 +580,6 @@ async def test_sensitive_medical_still_escalates_before_core():
 # parsea para el bucle de datos reales (Fase 6 de robustez, hoy bloqueada).
 # ---------------------------------------------------------------------------
 
-@pytest.mark.asyncio
-async def test_gap_fill_logs_in_harvester_format(monkeypatch, caplog):
-    import logging as _logging
-
-    from scripts.harvest_cutover_logs import parse_lines
-
-    state = make_state("es")
-    # Camino de antes: con ex-8 la actividad ya no se pide al relleno (la decide el extractor).
-    monkeypatch.setattr(settings, "extraccion_llm_actividad", False)
-    monkeypatch.setattr(core, "fill_gaps", AsyncMock(return_value={"activity": "snorkel"}))
-    # Aislar el test a su propósito (formato de log del harvester): mockear el
-    # routing LLM a {} — sin esto, `detect_routing_signals` (real, no mockeado)
-    # devolvía `availability_question=True` para el "mañana" del mensaje y el
-    # gate de disponibilidad interceptaba ANTES de que corriera el gap-fill, así
-    # que no se logueaba nada (test intermitente/roto). No cambia comportamiento
-    # de producto — solo fija la dependencia externa que el test no aislaba.
-    monkeypatch.setattr("src.agents.supervisor.detect_routing_signals", AsyncMock(return_value={}))
-    with caplog.at_level(_logging.INFO, logger="uvicorn.error"):
-        await route_message(state, "me gustaría hacer alguna actividad en el mar mañana")
-
-    lines = [rec.getMessage() for rec in caplog.records]
-    records = parse_lines(lines)
-    assert records, f"el harvester no parseó ninguna línea de: {lines}"
-    assert records[0]["patch"] == {"activity": "snorkel"}
-    assert records[0]["message"] == "me gustaría hacer alguna actividad en el mar mañana"
-
 
 # ---------------------------------------------------------------------------
 # Fix B del handoff: no pedirle al LLM campos que el ESTADO ya conoce — los
@@ -649,46 +601,6 @@ async def test_understand_skips_llm_when_state_knows_driving_fields(monkeypatch)
     monkeypatch.setattr(core, "fill_gaps",
                         AsyncMock(side_effect=AssertionError("LLM must not be called")))
     await core._understand(state, "genial entonces nos vemos pronto por allá")
-
-
-@pytest.mark.asyncio
-async def test_understand_requests_only_state_missing_fields(monkeypatch):
-    """Cuando SÍ hay huecos, la llamada pide SOLO los campos que el estado no
-    conoce (ej. real de los logs de PRE: 'Cartagena' disparaba una llamada que
-    rellenaba activity/is_certified/group_size — los tres ya conocidos)."""
-    monkeypatch.setattr(settings, "extraccion_llm_certificacion", False)  # camino de antes de ex-6
-    # Camino de antes: con ex-5 la ubicación ya no se pide al relleno (la decide el extractor).
-    monkeypatch.setattr(settings, "extraccion_llm_ubicacion", False)
-    captured = {}
-
-    async def _capturing_fill_gaps(message, intent, **kwargs):
-        captured.update(kwargs)
-        return {}
-
-    state = make_state("es")
-    state.detected_activity = "certified_diving"
-    state.is_certified = state.detected_is_certified = True
-    state.detected_group_size = 2
-    # location aún desconocida → único hueco conductor
-    async def _capturing_extract_and_verify(gaps, verify, message, values, **kwargs):
-        # Con campos ya sabidos, esos campos viajan en la MISMA peticion como campos a
-        # rellenar y se comparan con lo guardado (tarea 7b; forma de relleno, hallazgo J).
-        captured.update(only_fields=gaps, verify=verify, values=values)
-        return {"is_certified": True, "group_size": 2}, {}
-
-    monkeypatch.setattr(core, "fill_gaps", _capturing_fill_gaps)
-    monkeypatch.setattr(core, "extract_and_verify", _capturing_extract_and_verify)
-    await core._understand(state, "pues estamos por el centro histórico ahora mismo")
-
-    only = captured.get("only_fields")
-    assert only is not None
-    assert "location" in only
-    assert "activity" not in only                        # no es corregible: no se pide
-    assert {"is_certified", "group_size"} <= set(only)   # sabidos y corregibles
-    assert "is_certified" not in (captured.get("verify") or [])
-    assert "group_size" not in (captured.get("values") or {})   # el LLM nunca ve lo guardado
-    assert state.pending_correction is None                     # mismo valor: nada que corregir
-    assert state.detected_group_size == 2
 
 
 @pytest.mark.asyncio
@@ -1121,34 +1033,6 @@ def test_full_booking_recap_none_when_nothing_resolved():
     assert core._full_booking_recap(st) is None
 
 
-@pytest.mark.asyncio
-async def test_price_question_naming_certified_diving_does_not_reask_certification(monkeypatch):
-    """Hallazgo en vivo (bateria sintetica contra PRE, lote 9, 2026-09-02):
-    "how much for 2 people, certified diving?" respondia el precio
-    correctamente pero volvia a preguntar "Are you a certified diver?" pegado
-    a la respuesta -- pese a que el propio mensaje ya nombra el producto
-    certified_diving. Causa raiz real: un mensaje con "?" nunca pasa por
-    `_understand()`/extraccion ese turno (`_routing_phase` responde con RAG
-    directamente ANTES de extraccion), asi que `state.is_certified` seguia
-    en None y `next_missing_slot` lo pedia de nuevo. Fix: `_answer_question`
-    ahora reconoce que el propio mensaje respalda certified_diving
-    textualmente y fija `is_certified=True` antes de decidir si re-preguntar."""
-    monkeypatch.setattr(settings, "extraccion_llm_certificacion", False)  # camino de antes de ex-6
-    state = make_state("en")
-    state.detected_activity = "certified_diving"
-    state.is_certified = None
-    state.location = "cartagena"
-    state.detected_group_size = 2
-    state.core_pending_slot = None
-
-    with patch.object(core, "detect_special_signals", new=AsyncMock(return_value={})), \
-         patch("src.agents.supervisor.rag_answer", new=AsyncMock(return_value="Certified diving: $178 USD per person.")):
-        resp = await route_message(state, "how much for 2 people, certified diving?")
-
-    assert state.is_certified is True
-    assert "certified diver" not in resp.lower()
-
-
 # ---------------------------------------------------------------------------
 # Recall rico end-to-end (Prioridad 2, punto 1 — pendiente del handoff de
 # Álvaro: "_full_booking_recap existe, falta validar vía maybe_handle_turn").
@@ -1261,68 +1145,6 @@ async def test_three_activities_all_explicit_merge_without_asking():
 
 
 @pytest.mark.asyncio
-async def test_vague_plural_in_other_companions_asks_instead_of_guessing():
-    """Verificado en vivo (auditoría 2026-07-23, caso D de la matriz), mensaje
-    de apertura describiendo el grupo mixto de una vez: "2 bucean, mis amigos
-    hacen snorkel, y uno hace el minicurso". El sub-grupo de snorkel es un
-    plural vago sin número real — aunque fill_gaps (el extractor principal,
-    NO la señal de acompañante) invente snorkel=2, el guard de
-    group_allocation debe descartar esa entrada concreta y preguntar, sin
-    perder las otras dos (respaldadas por "2" y "uno" reales)."""
-    state = make_state("es")
-    # Con los vetos en cutover por defecto (2026-09-14) el turno va por la
-    # peticion FUSIONADA: se simulan las dos vias con el mismo relleno.
-    with patch.object(core, "fill_gaps", new=AsyncMock(return_value={
-        "group_allocation": {"certified_diving": 2, "minicourse": 1, "snorkel": 2},
-        "group_size": 5, "is_certified": True,
-    })), \
-         patch.object(core, "extract_and_verify", new=AsyncMock(return_value=({
-        "group_allocation": {"certified_diving": 2, "minicourse": 1, "snorkel": 2},
-        "group_size": 5, "is_certified": True,
-    }, {}))), \
-         patch.object(core, "detect_special_signals", new=AsyncMock(return_value={})):
-        resp = await route_message(state, "2 bucean, mis amigos hacen snorkel, y uno hace el minicurso")
-    assert state.core_pending_slot == core.SLOT_COMPANION_QTY
-    assert state.pending_companion_activity == "snorkel"
-    assert "snorkel" in resp.lower()
-    # El principal (respaldado por "2") y el minicurso (respaldado por "uno")
-    # SÍ se fusionaron; solo snorkel (sin número real propio) queda pendiente.
-    alloc = state.detected_group_allocation or {}
-    assert alloc.get("certified_diving") == 2
-    assert alloc.get("minicourse") == 1
-    assert "snorkel" not in alloc
-
-
-@pytest.mark.asyncio
-async def test_vague_plural_in_other_companions_then_answer_completes_booking():
-    """Continuación del test anterior: al responder la cantidad preguntada,
-    se fusiona y el carrito final queda con las 3 actividades, ninguna
-    perdida ni inventada."""
-    state = make_state("es")
-    with patch.object(core, "fill_gaps", new=AsyncMock(return_value={
-        "group_allocation": {"certified_diving": 2, "minicourse": 1, "snorkel": 2},
-        "group_size": 5, "is_certified": True,
-    })), \
-         patch.object(core, "extract_and_verify", new=AsyncMock(return_value=({
-        "group_allocation": {"certified_diving": 2, "minicourse": 1, "snorkel": 2},
-        "group_size": 5, "is_certified": True,
-    }, {}))), \
-         patch.object(core, "detect_special_signals", new=AsyncMock(return_value={})):
-        await route_message(state, "2 bucean, mis amigos hacen snorkel, y uno hace el minicurso")
-    assert state.core_pending_slot == core.SLOT_COMPANION_QTY
-
-    with patch.object(core, "fill_gaps", new=AsyncMock(return_value={})), \
-         patch.object(core, "extract_and_verify", new=AsyncMock(return_value=({}, {}))), \
-         patch.object(core, "detect_special_signals", new=AsyncMock(return_value={})):
-        await route_message(state, "4")
-    alloc = state.detected_group_allocation
-    assert alloc.get("certified_diving") == 2
-    assert alloc.get("minicourse") == 1
-    assert alloc.get("snorkel") == 4
-    assert state.core_pending_slot != core.SLOT_COMPANION_QTY  # avanzó, no se quedó preguntando
-
-
-@pytest.mark.asyncio
 async def test_other_companions_post_close_asks_before_adding_unconfirmed_item():
     """Tras el cierre, un mensaje con un sub-grupo nuevo confirmado (snorkel,
     con número real) y otro sin respaldo (minicurso, "otro" no es un número)
@@ -1359,48 +1181,6 @@ async def test_other_companions_post_close_asks_before_adding_unconfirmed_item()
     assert types2.get("snorkel") == 2
     assert types2.get("beginner") == 1
     assert "norkel" in resp2
-
-
-@pytest.mark.asyncio
-async def test_correctly_abstained_activity_is_not_silently_lost():
-    """Hallazgo en vivo 2026-07-23: "tres bucean, mis amigos hacen snorkel, y
-    dos hacen el minicurso" hace que fill_gaps se ABSTENGA correctamente de
-    "snorkel" (no incluye la clave en absoluto, tal y como se le pide ante un
-    plural sin número propio) — pero eso significaba que la mención se perdía
-    en silencio, sin preguntar nunca. La red debe detectar que el texto
-    menciona "snorkel" y no aparece en ningún sitio del estado, y preguntar."""
-    state = make_state("es")
-    state.detected_activity = "certified_diving"
-    state.is_certified = True
-    state.core_pending_slot = core.SLOT_LOCATION
-
-    with patch.object(core, "fill_gaps", new=AsyncMock(return_value={
-        "group_size": 5,
-        "group_allocation": {"certified_diving": 3, "minicourse": 2},
-    })), \
-         patch.object(core, "extract_and_verify", new=AsyncMock(return_value=({
-        "group_size": 5,
-        "group_allocation": {"certified_diving": 3, "minicourse": 2},
-    }, {}))):
-        resp = await route_message(
-            state, "tres bucean, mis amigos hacen snorkel, y dos hacen el minicurso"
-        )
-
-    assert state.detected_group_allocation.get("certified_diving") == 3
-    assert state.detected_group_allocation.get("minicourse") == 2
-    assert "snorkel" not in state.detected_group_allocation, (
-        "snorkel no debe aparecer con una cantidad inventada"
-    )
-    assert state.core_pending_slot == core.SLOT_COMPANION_QTY
-    assert state.pending_companion_activity == "snorkel"
-    assert "norkel" in resp.lower()
-
-    # Al responder con el número real, snorkel se registra sin inventar nada.
-    with patch.object(core, "fill_gaps", new=AsyncMock(return_value={})), \
-         patch.object(core, "detect_special_signals", new=AsyncMock(return_value={})):
-        await route_message(state, "somos 2 para snorkel")
-    assert state.detected_group_allocation.get("snorkel") == 2
-    assert not state.pending_companion_queue
 
 
 @pytest.mark.asyncio
@@ -1765,36 +1545,6 @@ async def test_closing_affirmation_without_person_mention_does_not_reopen_with_p
     assert state.pending_companion_activity is None
     assert state.core_pending_slot != core.SLOT_COMPANION_ACTIVITY
     assert "acompañante" not in resp.lower()
-
-
-@pytest.mark.asyncio
-async def test_slang_companion_with_different_activity_still_trusts_llm(monkeypatch):
-    """Regresion/estrictez del fix anterior: la condicion de "misma
-    actividad" es justo lo que preserva el caso de jerga regional que
-    motivo confiar en el LLM en primer lugar (hallazgo en vivo 2026-07-22,
-    `_mentions_person` no reconoce "parce"/"cuate"/"pana"/"carnal"). Aqui el
-    mensaje SI menciona "certificado" y
-    NO tiene respaldo textual de persona segun el regex -- pero el LLM
-    atribuye al companero una actividad DISTINTA (minicourse) de la del
-    grupo (certified_diving), la señal real de un acompañante genuino con
-    necesidades propias -- este caso NO debe suprimirse."""
-    monkeypatch.setattr(settings, "extraccion_llm_certificacion", False)  # camino de antes de ex-6
-    state = make_state("es")
-    state.detected_activity = "certified_diving"
-    state.is_certified = True
-    state.location = "cartagena"
-    state.detected_group_size = 2
-    state.last_dive_over_2_years = False
-    state.is_colombian = False
-    state.core_pending_slot = None
-
-    with patch.object(core, "fill_gaps", new=AsyncMock(return_value={})), \
-         patch.object(core, "detect_special_signals", new=AsyncMock(return_value={
-             "companion_activity": "minicourse", "mentions_other_person": True,
-             "companion_is_singular": True,
-         })):
-        await route_message(state, "mi parce no esta certificado")
-    assert state.core_pending_slot == core.SLOT_COMPANION_ACTIVITY
 
 
 @pytest.mark.asyncio
@@ -2370,35 +2120,6 @@ async def test_location_resolver_abstains_reasks(monkeypatch):
         await route_message(state, "uff qué pregunta tan complicada")
     assert state.location is None
     assert state.core_pending_slot == core.SLOT_LOCATION
-
-
-@pytest.mark.asyncio
-async def test_location_resolver_ignored_when_message_switches_activity(monkeypatch):
-    """Hallazgo en vivo (batería sintética contra PRE, 2026-08-26, lote 5,
-    conversación larga con cambio de actividad a mitad de flujo): "mejor
-    pensándolo bien quiero el minicurso" (sin mencionar ubicación en
-    absoluto) no avanza `next_missing_slot` (sigue faltando location), así
-    que la red anti-bucle le preguntaba al LLM "¿qué respondió para
-    location?" — el LLM alucinaba "cartagena" con confianza pese a que el
-    mensaje no dice nada de ubicación. La reserva avanzaba con una
-    ubicación que el cliente nunca dio. Fix: se descarta el valor resuelto
-    cuando ESTE MISMO turno cambió la actividad principal — la ubicación
-    debe seguir pendiente y volver a preguntarse."""
-    monkeypatch.setattr(settings, "aplazar_pregunta_sin_respuesta", False)  # camino de antes de EX-FLUJO-1
-    monkeypatch.setattr(settings, "extraccion_llm_certificacion", False)  # camino de antes de ex-6
-    monkeypatch.setattr(core, "resolve_slot_answer",
-                        AsyncMock(return_value={"value": "cartagena"}))
-    state = _at_location_stage()
-    state.detected_activity = "certified_diving"
-    with patch("src.agents.supervisor.detect_routing_signals",
-               new=AsyncMock(return_value={})):
-        await route_message(state, "mejor pensandolo bien quiero el minicurso")
-    assert state.location is None, (
-        "un cambio de actividad no debe hacer que se invente una ubicación "
-        "que el cliente nunca dio"
-    )
-    assert state.core_pending_slot == core.SLOT_LOCATION
-    assert state.detected_activity == "minicourse"
 
 
 def test_apply_resolved_slot_value_location():

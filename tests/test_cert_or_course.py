@@ -47,7 +47,7 @@ def _state():
 async def test_ambiguous_level_asks_before_quoting():
     state = _state()
     with patch.object(core, "fill_gaps", new=AsyncMock(return_value={"is_certified": True})), \
-         patch.object(core, "extract_and_verify", new=AsyncMock(return_value=({"is_certified": True}, {}))):
+         patch.object(core, "extract_and_verify", create=True, new=AsyncMock(return_value=({"is_certified": True}, {}))):
         await core._understand(state, "hola somos 4 open water")
     assert state.needs_cert_or_course is True
     assert state.is_certified is None          # no se da por buena la suposicion del LLM

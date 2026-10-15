@@ -172,7 +172,7 @@ async def test_la_nacionalidad_que_jev_no_ve_afirmada_no_se_rellena(monkeypatch)
         return {f: v for f, v in {"is_colombian": False, "location": "cartagena"}.items() if f in fields}, {}
 
     monkeypatch.setattr(core, "fill_gaps", _fill)
-    monkeypatch.setattr(core, "extract_and_verify", _combined)
+    monkeypatch.setattr(core, "extract_and_verify", _combined, raising=False)
 
     async def _signals(message, **_k):
         return {"affirms_nationality": False, "affirms_location": True}

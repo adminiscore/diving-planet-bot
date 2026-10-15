@@ -11,13 +11,11 @@ from unittest.mock import AsyncMock
 import pytest
 
 from src.agents import conversational_core as core
-from src.config import settings
 from src.flows.state import ConversationState
 
 
 @pytest.fixture
 def ex7(monkeypatch):
-    monkeypatch.setattr(settings, "extraccion_llm_grupo", True)
 
     def con(datos):
         monkeypatch.setattr(core, "datos_del_extractor", AsyncMock(return_value=datos))
@@ -124,7 +122,6 @@ async def test_sin_cifras_no_se_inventa_cuantos(ex7):
 async def test_con_ex8_el_grupo_repartido_conserva_su_actividad(ex7, monkeypatch):
     # El grupo va antes que la actividad: la regla de ex-8 del grupo repartido mira el reparto del turno, que ahora pone
     # el extractor (sin esto se repreguntaba la actividad, como en la ronda ex8-B).
-    monkeypatch.setattr(settings, "extraccion_llm_actividad", True)
     ex7({"group_size": 6, "group_allocation": {"certified_diving": 2, "minicourse": 2, "snorkel": 2}})
     st = await _entender("somos 6: 2 bucean certificados, 2 hacen minicurso y 2 snorkel")
     assert st.detected_group_allocation == {"certified_diving": 2, "minicourse": 2, "snorkel": 2}
@@ -142,10 +139,3 @@ def test_una_cita_de_varias_lineas_sin_separador_vale_si_son_trozos_del_mensaje(
     assert not ex.cita_verificable("buzo certificado", "gracias")
 
 
-@pytest.mark.asyncio
-async def test_apagado_el_grupo_no_lo_decide_el_extractor(monkeypatch):
-    monkeypatch.setattr(settings, "extraccion_llm_grupo", False)
-    monkeypatch.setattr(core, "datos_del_extractor", AsyncMock(return_value={"group_size": 9}))
-    st = await _entender("somos 3")
-    assert st.detected_group_size == 3
-    assert "group_size" not in core.campos_del_extractor()

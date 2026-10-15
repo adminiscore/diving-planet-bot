@@ -37,7 +37,7 @@ def _two_divers_waiting_nationality():
 async def _send(state, message, signals):
     with patch("src.agents.supervisor.detect_routing_signals", new=AsyncMock(return_value={})), \
          patch.object(core, "fill_gaps", new=AsyncMock(return_value={})), \
-         patch.object(core, "extract_and_verify", new=AsyncMock(return_value=({}, {}))), \
+         patch.object(core, "extract_and_verify", create=True, new=AsyncMock(return_value=({}, {}))), \
          patch.object(core, "detect_special_signals", new=AsyncMock(return_value=signals)), \
          patch.object(core, "compose_acknowledgement", new=AsyncMock(return_value="")), \
          patch.object(core, "resolve_slot_answer", new=AsyncMock(return_value={})), \

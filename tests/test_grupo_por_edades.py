@@ -12,7 +12,6 @@ import pytest
 
 from src.agents import conversational_core as core
 from src.agents import supervisor
-from src.agents.supervisor import route_message
 from src.config import settings
 from src.flows.state import ConversationState
 
@@ -21,9 +20,7 @@ from src.flows.state import ConversationState
 def _grupo_camino_antiguo(monkeypatch):
     """Estos tests fijan el grupo por el camino de antes de ex-7 (regex y redes LLM); con `extraccion_llm_grupo` lo
     decide el extractor (tests/test_ex7_grupo.py)."""
-    from src.config import settings as _flags
 
-    monkeypatch.setattr(_flags, "extraccion_llm_grupo", False)
 
 FAMILIA = ("Hi There,\nI am looking to book 2 dives and snorkeling sessions for the following people.\n"
            "2 diving sessions - All PADI certified for open water.\n2 adults (ages 42, 19)\n1 youth (age 17)\n"
@@ -67,12 +64,3 @@ def extractor_reparte(monkeypatch):
     monkeypatch.setattr(supervisor, "rag_answer", AsyncMock(return_value="RESPUESTA_RAG"))
 
 
-@pytest.mark.parametrize("flag,reparto", [
-    (True, {"certified_diving": 3, "snorkel": 3}),
-    (False, None),  # sin el flag la guarda lo tira (no hay un "3" escrito)
-])
-async def test_el_reparto_lo_respaldan_las_edades(monkeypatch, extractor_reparte, flag, reparto):
-    monkeypatch.setattr(settings, "grupo_por_edades", flag)
-    st = ConversationState(conversation_id="familia", language="en")
-    await route_message(st, FAMILIA)
-    assert (st.detected_group_allocation or None) == reparto

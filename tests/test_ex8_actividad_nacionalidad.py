@@ -18,14 +18,10 @@ from src.flows.state import ConversationState
 def _grupo_camino_antiguo(monkeypatch):
     """Estos tests fijan el grupo por el camino de antes de ex-7 (regex y redes LLM); con `extraccion_llm_grupo` lo
     decide el extractor (tests/test_ex7_grupo.py)."""
-    from src.config import settings as _flags
-
-    monkeypatch.setattr(_flags, "extraccion_llm_grupo", False)
 
 
 @pytest.fixture
 def ex8(monkeypatch):
-    monkeypatch.setattr(settings, "extraccion_llm_actividad", True)
 
     def con(datos):
         monkeypatch.setattr(core, "datos_del_extractor", AsyncMock(return_value=datos))
@@ -82,18 +78,6 @@ async def test_grupo_mezclado_paga_en_usd(ex8):
 
 
 @pytest.mark.asyncio
-async def test_apagado_no_cambia_nada(monkeypatch):
-    monkeypatch.setattr(settings, "extraccion_llm_actividad", False)
-    monkeypatch.setattr(settings, "extraccion_llm_ubicacion", False)
-    monkeypatch.setattr(settings, "extraccion_llm_certificacion", False)
-    llamada = AsyncMock(return_value={"activity": "snorkel"})
-    monkeypatch.setattr(core, "datos_del_extractor", llamada)
-    st = await _entender("quiero bucear certificado")
-    assert st.detected_activity == "certified_diving"
-    llamada.assert_not_called()
-
-
-@pytest.mark.asyncio
 async def test_el_minicurso_elegido_no_se_convierte_en_recomendacion(ex8, monkeypatch):
     """Escalón 0 de ex-8: "Buceo para principiantes" (lo elige, según el extractor) acababa como recomendación de u3-5."""
     monkeypatch.setattr(settings, "recommend_inferred_minicourse", True)
@@ -128,6 +112,7 @@ def test_la_regla_del_buceo_certificado_usa_lo_ya_sabido():
 async def test_en_un_grupo_repartido_se_conserva_la_actividad_del_reparto(ex8):
     """Ronda ex8-B: "somos 6: 2 bucean certificados, 2 hacen minicurso y 2 snorkel" -> sin actividad principal, se
     repreguntaba la actividad."""
-    ex8({"group_size": 6})
+    # ex-9: el grupo lo decide siempre el extractor, que devuelve el reparto (antes lo leía el regex por el camino viejo).
+    ex8({"group_size": 6, "group_allocation": {"certified_diving": 2, "minicourse": 2, "snorkel": 2}})
     st = await _entender("somos 6: 2 bucean certificados, 2 hacen minicurso y 2 snorkel")
     assert st.detected_activity in ("certified_diving", "minicourse", "snorkel")

@@ -35,27 +35,6 @@ class Settings(BaseSettings):
     # banco ex0: gpt-4.1-mini 88-89 % de datos y 4,5 % de casos con invento en diseño; en el CIEGO 90,6 % y 5,6 % (hoy
     # 90,6 % y 21,8 %), p50 ~1,0 s. gpt-4o-mini parecido y algo peor; Luna inventa menos pero tarda 2,1-2,4 s.
     extractor_turno_model: str = "gpt-4.1-mini"
-    # ex-5 (fase EX): la UBICACION (location/island/hotel) la decide el extractor "LLM primero" (cita comprobada que
-    # nombra un lugar), lanzado a la vez que el enrutador; el regex queda como pista (hotel e isla de la lista cerrada)
-    # y ni el veto, ni el relleno, ni la re-comprobacion la tocan. Si la llamada falla, lo de hoy (regex + Jev).
-    # conversational_core._aplicar_extractor. PROMOCIONADO 12-oct (decision de Gadea; HISTORY 0.31.12): banco ex0
-    # ubicacion inventada 11 -> 1. Revert = False aqui y en el compose.
-    extraccion_llm_ubicacion: bool = True
-    # ex-8 (fase EX): la ACTIVIDAD (y su servicio) y la NACIONALIDAD las decide el extractor "LLM primero" (cita
-    # comprobada), como la ubicacion de ex-5. Solo la actividad que el cliente ELIGE (decision de Gadea 14/27-sep: no
-    # suponerla; el minicurso deducido se recomienda); la nacionalidad nunca se deduce del idioma; grupo mezclado -> USD.
-    # conversational_core._aplicar_extractor. Escalon 0 (banco ex0, diseno): actividad inventada 28 -> 0, nacionalidad
-    # 6 -> 0. PROMOCIONADO 13-oct (HISTORY 0.31.13: rondas ex8-A/B/B2, 92,1 / 88,6 / 91,5 %, plana tras arreglar la B).
-    # Revert = False aqui y en el compose.
-    extraccion_llm_actividad: bool = True
-    # ex-6 (fase EX): la CERTIFICACION (`is_certified`) y si la ultima inmersion fue hace mas de 2 anos las decide el
-    # extractor "LLM primero" (cita comprobada). El regex leia "take the Open Water Diver course" como YA certificado y
-    # el relleno sacaba "certificado" de un "gracias". Un valor que contradice lo guardado se confirma; nivel nombrado
-    # sin decir si lo tiene o lo quiere sacar y sin cita del extractor -> se pregunta, como hoy (`_flag_cert_or_course`).
-    # conversational_core._aplicar_extractor. Escalon 0 (banco ex0, diseno): certificacion inventada 6 -> 0, casos con
-    # invento 4,5 -> 2,0 %. PROMOCIONADO 13-oct (HISTORY 0.31.14: rondas ex6-A/B 89,4 -> 92,9 %). Revert = False aqui
-    # y en el compose.
-    extraccion_llm_certificacion: bool = True
     # G-10 (decision de Gadea, 14-oct): el bot atiende en espanol e ingles; si el cliente escribe en OTRO idioma
     # (portugues, frances...) contesta en INGLES. El idioma principal del mensaje lo dice el extractor de la fase EX
     # (misma llamada, sin coste); unas palabras sueltas de otro idioma no cuentan. conversational_core.
@@ -117,13 +96,6 @@ class Settings(BaseSettings):
     # si se SABE que el plan es de un dia; ...). PROMOCIONADO 14-oct tras est3-B (HISTORY 0.31.25).
     # Revert = False aqui y en el compose.
     est2_datos: bool = True
-    # ex-7 (fase EX): el GRUPO (group_size, group_allocation) lo decide el extractor "LLM primero" (cita comprobada),
-    # con "undecided" para quien no ha elegido actividad (decision del owner, 15-sep). Un reparto que solo SUMA
-    # personas al de antes es un añadido (sin "¿lo cambio?"); otro cambio se confirma. El atajo de acompañante no
-    # vuelve a sumar a quien ya puso el extractor. conversational_core._poner_grupo. PROMOCIONADO 13-oct (decision de
-    # Alvaro; HISTORY 0.31.19: ronda ex7 90,6 -> 91,2 %, 13 mejoras, 8 regresiones ajenas). Revert = False aqui y en
-    # el compose.
-    extraccion_llm_grupo: bool = True
     # 13-oct (Gonzalo): el NOMBRE del cliente lo lee el extractor con su cita (campo `nombre`, solo con este flag; con
     # el flag apagado la llamada al extractor es la de antes). La regex se queda con las formas sin ambiguedad ("me
     # llamo", "mi nombre es", "my name is"). Caso: "yo soy gringo" -> "¡Hola, Gringo!" (HISTORY 0.31.18).
@@ -450,13 +422,6 @@ class Settings(BaseSettings):
     # duda, ningun mensaje nombra inmersiones), latencia igual. PROMOCIONADO: ENCENDIDO. Revert = False aqui y quitar
     # la linea del compose.
     rag_plan_nombrado: bool = True
-    # s4-28 (9-oct, Gonzalo): el origen (`location`) que rellena el extractor LLM solo vale si algun mensaje del CLIENTE
-    # nombra un lugar (el detector de siempre) o si Jev dice que este mensaje lo afirma
-    # (`conversational_core._cliente_nombra_un_lugar`). Caso: con la pregunta del origen pendiente, "May 3rd" volvia con
-    # location=cartagena sacado del texto del bot (familia-mixta-precio-descuento-refresher, 1/3 en PRE).
-    # Escalon 0 en PRE (codigo local, 8 reps del turno 2): el invento sale 1/8 y se descarta. Mini-ronda s428-A/B
-    # (8 dialogos, misma franja): 83,3 -> 83,6 %, 1 -> 2/8 sin fallos, 1 regresion ajena. PROMOCIONADO: ENCENDIDO.
-    origen_del_cliente: bool = True
     # 9-oct (Gonzalo, fallos del flujo de reserva): cada EDAD que da el mensaje cuenta como una persona para respaldar
     # el reparto del grupo, como una persona nombrada; y el detector lee tambien "age 17" en singular (no "minimum
     # age"). Caso: familia-mixta-precio-descuento-refresher ("2 adults (ages 42, 19) / 1 youth (age 17) / Snorkeling /

@@ -24,7 +24,7 @@ def _mock_llm(merged=None, fill=None):
         return None
 
     return (
-        patch.object(cc, "extract_and_verify", new=fake_merged),
+        patch.object(cc, "extract_and_verify", create=True, new=fake_merged),
         patch.object(cc, "fill_gaps", new=fake_fill),
         patch("src.agents.supervisor._maybe_veto_resolved_fields_via_llm", new=fake_veto),
     )
