@@ -355,7 +355,8 @@
         "idioma_otro_en_ingles",
         "extractor_aclaraciones",
         "extractor_todo_lo_dicho",
-        "est4_flujo"
+        "est4_flujo",
+        "jev_pide_algo"
       ]
     },
     {
@@ -525,7 +526,8 @@
         "rag_concise",
         "rag_origen_pregunta",
         "origen_conserva_respuesta",
-        "rag_no_supone_reserva"
+        "rag_no_supone_reserva",
+        "rag_sin_hora"
       ],
       "tiempo_medido": {
         "p50": 1.9,
@@ -1205,6 +1207,11 @@
       "titulo": "El extractor entiende las negaciones",
       "texto": "El extractor de la fase EX lee primero las negaciones del lugar: 'sin ir de Cartagena' quiere decir que NO sale de Cartagena (antes lo leía como Cartagena)."
     },
+    "jev_pide_algo": {
+      "area": "Reserva",
+      "titulo": "Una petición también se contesta",
+      "texto": "El enrutador (Jev) cuenta como algo que contestar una petición escrita como orden, sin interrogación: 'dame la cuenta y transfiero', 'send me the payment link', 'full name of the dive center'. Antes recibían la pregunta de la reserva o la respuesta fija de posventa."
+    },
     "est4_flujo": {
       "area": "Reserva",
       "titulo": "Arreglos del flujo de la tanda est5",
@@ -1239,6 +1246,11 @@
       "area": "Reserva",
       "titulo": "No repite la pregunta que el cliente no contestó",
       "texto": "Si el cliente no contesta una pregunta de la reserva (origen, cuántos, última inmersión, nacionalidad…), Coral no la repite en el turno siguiente: sigue con lo que falta y la vuelve a hacer justo antes del resumen (decisión de Gadea, 14-oct)."
+    },
+    "rag_sin_hora": {
+      "area": "Preguntas",
+      "titulo": "El RAG no supone la hora",
+      "texto": "Regla del RAG: no sabe la fecha ni la hora de hoy, así que no dice 'ya pasó esa hora' ni 'todavía estás a tiempo' con el cierre de las 4:30; da la regla completa."
     },
     "rag_no_supone_reserva": {
       "area": "Preguntas",

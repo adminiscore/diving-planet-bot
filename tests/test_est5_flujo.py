@@ -56,3 +56,28 @@ async def test_sin_el_flag_no_hace_nada(monkeypatch):
     await guardar_lo_dicho_en_el_pase(state)
     assert state.detected_location is None
     state._extraccion_adelantada.cancel()
+
+
+@pytest.mark.parametrize("flag", [True, False])
+def test_jev_cuenta_las_peticiones_en_imperativo_solo_con_el_flag(monkeypatch, flag):
+    """`jev_pide_algo`: "dame la cuenta y transfiero" o "send me the payment link" también son algo que contestar."""
+    from src.agents import jev_router
+
+    monkeypatch.setattr(settings, "answer_and_continue", True)
+    monkeypatch.setattr(settings, "jev_pide_algo", flag)
+    pregunta = jev_router._questions_for_turn()[jev_router.ASKS_QUESTION]
+    esperada = jev_router._ASKS_QUESTION_Q_V2 if flag else jev_router._ASKS_QUESTION_Q
+    assert pregunta is esperada
+    assert ("send me the link" in pregunta["instructions"]) is flag
+
+
+@pytest.mark.parametrize("lang", ["es", "en"])
+@pytest.mark.parametrize("flag", [True, False])
+def test_el_rag_no_supone_la_hora_solo_con_el_flag(monkeypatch, flag, lang):
+    """`rag_sin_hora`: "ya pasó esa hora" sobre el cierre de las 4:30 sin que el cliente dijera la hora."""
+    from src.agents.rag_agent import build_system_prompt
+    from src.prompts.info import RAG_SIN_HORA_EN, RAG_SIN_HORA_ES
+
+    monkeypatch.setattr(settings, "rag_sin_hora", flag)
+    regla = RAG_SIN_HORA_ES if lang == "es" else RAG_SIN_HORA_EN
+    assert (regla in build_system_prompt(lang)) is flag

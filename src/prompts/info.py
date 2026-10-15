@@ -549,6 +549,18 @@ RAG_NO_SUPONE_EN = (
     "(don't say \"your 3-dive package\" unless they said so). Answer what they ask with the general information and, "
     "if you need to know their service to answer, ask them."
 )
+# EX-EST-2 (15-oct, flag `rag_sin_hora`): el RAG no sabe la hora ni la fecha de hoy. Rondas est4-B/est5-B: "ya pasó esa
+# hora" o "como todavía estás a tiempo" sobre el cierre de las 4:30, sin que el cliente dijera la hora.
+RAG_SIN_HORA_ES = (
+    "No sabes la fecha ni la hora de hoy: no digas que ya pasó una hora o una fecha, ni que el cliente todavía está a "
+    "tiempo. Si la respuesta depende de la hora (por ejemplo, el cierre de reservas de las 4:30 p. m. del día anterior), "
+    "da la regla completa."
+)
+RAG_SIN_HORA_EN = (
+    "You do not know today's date or the current time: do not say that a time or a date has already passed, or that the "
+    "customer is still in time. If the answer depends on the time (for example, the booking cutoff at 4:30 p.m. the day "
+    "before), give the full rule."
+)
 
 
 # EX-EST-2 (flag `est2_datos`, 14-oct). Rondas del 13-14 oct: (1) "no puedo confirmar cupos, el equipo debe verificar"

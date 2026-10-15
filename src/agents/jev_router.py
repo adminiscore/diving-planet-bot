@@ -106,6 +106,23 @@ _ASKS_QUESTION_Q = {
         "or thanks."
     ),
 }
+# EX-EST-2 (15-oct, flag `jev_pide_algo`): una PETICIÓN en imperativo también hay que contestarla. Rondas est3-B/est5-B:
+# "dame la cuenta y transfiero" (0,53), "send me the payment link" (0,43) y "Full name of dive center, location, dates
+# etc" (0,45) no llegaban a 0,7: no iban al RAG y recibían la pregunta de la reserva o la respuesta fija de posventa
+# ("si necesitas algo de tu reserva…"). Banco de 257 mensajes del golden (`docs/robustness/u3-4/preguntas-etiquetadas
+# .json`, sin examen oculto; decisión = regex O Jev >= 0,7): ve 140 -> 146 de 157, falsas alarmas 3 -> 5 de 100
+# ("Quiero quedarme en las islas", "Porque el paquete es saliendo un dia y regresando…"); sonda de imperativos 20 -> 23/23.
+_ASKS_QUESTION_Q_V2 = {
+    "type": "noul",
+    "instructions": (
+        "The customer's message contains a QUESTION or a REQUEST that the booking assistant must ANSWER or act on, even "
+        "when it is phrased as an instruction and has no question mark (\"send me the link\", \"give me the bank "
+        "details\", \"I need the dive center's address\", \"full name of the center and location\"): for example about "
+        "prices, what is included, schedules, hotels, discounts, policies, logistics, how to pay, or how something works. "
+        "It is FALSE if the message only gives booking details (dates, number of people, where they are, an activity "
+        "choice), only answers the assistant's previous question, or is small talk or thanks."
+    ),
+}
 
 
 # u3-4 (25-sep): la pregunta que NO existía en el sistema — ¿el cliente AFIRMA el dato, o
@@ -476,7 +493,8 @@ def _questions_for_turn(pending_slot: str | None = None) -> dict:
     if pending_q:
         q[PENDING_ANSWER] = pending_q
     if settings.answer_and_continue:
-        q.update({ASKS_QUESTION: _ASKS_QUESTION_Q, **_AFFIRMS_QUESTIONS})
+        q.update({ASKS_QUESTION: _ASKS_QUESTION_Q_V2 if settings.jev_pide_algo else _ASKS_QUESTION_Q,
+                  **_AFFIRMS_QUESTIONS})
     if settings.corrections_v2:
         q[CORRECTS] = _CORRECTS_Q
     if settings.rag_v2:

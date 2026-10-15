@@ -75,6 +75,15 @@ class Settings(BaseSettings):
     # PROMOCIONADO 15-oct (HISTORY 0.31.29).
     # Revert = False aqui y en el compose.
     est4_flujo: bool = True
+    # EX-EST-2 (15-oct): la señal de Jev "¿hay algo que CONTESTAR?" (`asks_question`) cuenta también las peticiones en
+    # imperativo ('dame la cuenta y transfiero', 'send me the payment link', 'Full name of dive center…'): antes no
+    # llegaban al RAG. Banco de 257 mensajes: ve 140 -> 146/157, falsas alarmas 3 -> 5/100. jev_router._ASKS_QUESTION_Q_V2.
+    # ENCENDIDO para la ronda est6-B. Revert = False aqui y en el compose.
+    jev_pide_algo: bool = True
+    # EX-EST-2 (15-oct): regla del RAG: no sabe la fecha ni la hora de hoy ('ya pasó esa hora', 'como todavía estás a
+    # tiempo' sobre el cierre de las 4:30, rondas est4-B/est5-B). prompts/info.RAG_SIN_HORA_*. ENCENDIDO para la ronda
+    # est6-B. Revert = False aqui y en el compose.
+    rag_sin_hora: bool = True
     # EX-RAG-3 (14-oct): cuando el juez de grounding rechaza, cada frase rechazada tiene que traer la cita literal del
     # contexto que la respalda (el codigo comprueba la cita y que sus cifras y enlaces estan en el contexto); si todas
     # la traen, la respuesta pasa. El juez rechazaba ~6 % de respuestas, varias correctas (politicas). Solo corre al
