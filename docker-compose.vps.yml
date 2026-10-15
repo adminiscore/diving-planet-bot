@@ -156,12 +156,11 @@ services:
       # EX-EST-2: arreglos del flujo de la tanda est5 (ver config.py). PROMOCIONADO 15-oct (est5-B). Revert = "false"
       # aqui y en config.py.
       EST4_FLUJO: "true"
-      # EX-EST-2: Jev cuenta las peticiones en imperativo como algo que contestar (ver config.py). ENCENDIDO para la
-      # ronda est6-B. Revert = "false" aqui y en config.py.
+      # EX-EST-2: Jev cuenta las peticiones en imperativo como algo que contestar (ver config.py). PROMOCIONADO
+      # 15-oct (est6-B). Revert = "false" aqui y en config.py.
       JEV_PIDE_ALGO: "true"
-      # EX-EST-2: el RAG no supone la fecha ni la hora de hoy (ver config.py). ENCENDIDO para la ronda est6-B.
-      # Revert = "false" aqui y en config.py.
-      RAG_SIN_HORA: "true"
+      # EX-EST-2: el RAG no supone la fecha ni la hora de hoy. DESCARTADO 15-oct (ver config.py).
+      RAG_SIN_HORA: "false"
       # EX-RAG-3: DESCARTADO 14-oct (deja pasar inventos: 12/30 errores sembrados; ver config.py).
       JUEZ_REVISA_CON_CITA: "false"
       # EX-EST-2: a un buzo certificado sin actividad elegida se le recomiendan sus opciones. PROMOCIONADO 14-oct.

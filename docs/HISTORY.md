@@ -1,6 +1,12 @@
 History
 =======
 
+0.31.31 - (2026-10-15)
+----------------------
+* **Ronda est6-B: 93,7 %, 18/29 sin fallos (la mejor de la fase; est5-B 91,3 %, 15/29). `JEV_PIDE_ALGO` PROMOCIONADO; `RAG_SIN_HORA` DESCARTADO** (Gadea con Claude).
+  - **Mejoras reales (7):** sin repreguntas en certificado-fecha, Referido y minicurso-colombianos; sin inventos en minicurso-islas (ni "se hospedan en Majagua"), paquete-5 Isla Grande/Barú y precios-y-disponibilidad (ya no "ya pasó esa hora"). **"dame la cuenta y transfiero" ya se contesta** con la forma de pago (antes: "si necesitas algo de tu reserva…").
+  - **Regresiones (8 reales, 4 ruido):** la del flag de la hora: sin fecha, el RAG calculó igual "desde el 3 de abril de 2025 ya pasó más de dos años" (falso) → `RAG_SIN_HORA` apagado; el arreglo por causa es darle al RAG la fecha y la hora de hoy (ex-9b). El resto, del RAG que varía (precio de las islas con lancha y almuerzo, opciones de 1 día, precio de Cartagena sin el origen en el turno 1) y 4 criterios "a revisar" del juez (evidencia del cliente no encontrada).
+
 0.31.30 - (2026-10-15)
 ----------------------
 * **EX-EST-2 (tanda est6): dos arreglos que ve el cliente, ENCENDIDOS para la ronda est6-B** (Gadea con Claude; decisión de Gadea: los pendientes que ve el cliente, antes del examen oculto).
