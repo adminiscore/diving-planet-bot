@@ -41,7 +41,20 @@ PRE (escritas ya por Luna) tumba 42 frente a 13, casi todo verdades (HISTORY 0.3
 **C. Pendientes de antes:** el criterio del Open Water en `manual-duracion-curso` ✅ (FAQ curada nueva: "sacarse la
 certificación" = Open Water, o el Referido; el Scuba Diver es la parcial). **DeepSeek: FUERA DEL PLAN** (Gadea, 9-oct).
 
-### ▶️ RETOMAR AQUÍ — 15-oct noche (Gonzalo): CAL-0 HECHO (banco de fallos y por qué falla cada uno); siguiente CAL-B
+### ▶️ RETOMAR AQUÍ — 15-oct, más tarde (Gonzalo): CAL-B en curso, flag APAGADO; SIN CRÉDITO DE OPENAI
+
+**Estado.** PRE sirve `feature/pre_gadea`; el código de CAL-B está subido con su flag `MONEDA_SIN_NACIONALIDAD_USD`
+**apagado** (PRE se comporta igual). **El crédito de OpenAI se acabó** a mitad de la mini-ronda `calb-A`: PRE no
+contesta hasta recargar. HISTORY 0.31.34.
+
+**Al retomar (con crédito):**
+1. Repetir `calb-A` (como está PRE) y `calb-B` (con `MONEDA_SIN_NACIONALIDAD_USD` encendido) con los 24 diálogos de
+   `docs/robustness/cal/dialogos-calb.txt`; juzgar, comparar, leer regresiones, decidir.
+2. Gadea: los criterios de moneda propuestos (`docs/robustness/cal/criterios-moneda-propuestos.md`) y el choque
+   moneda/origen (¿preguntar el origen o dar los dos precios en COP rotulados?).
+3. Luego CAL-A (con el diseño de Gadea: plan → redacción, completitud en el revisor) y CAL-C.
+
+### ▶️ (anterior) 15-oct noche (Gonzalo): CAL-0 HECHO (banco de fallos y por qué falla cada uno); siguiente CAL-B
 
 **Estado.** PRE sirve `feature/pre_gadea` sin cambios de código (solo documentos y `scripts/banco_fallos.py`). HISTORY
 0.31.33. **Leer:** `docs/robustness/cal/README.md`.

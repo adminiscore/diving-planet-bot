@@ -111,3 +111,37 @@ los 17 que no son del RAG, leídos a mano) y corrige a mano lo que el verificado
 **Orden que sale de los dos:** CAL-B (moneda en código + actualizar los 4 criterios) → CAL-A con el diseño de Gadea
 (plan → redacción, completitud en el revisor) → CAL-C (el menú de actividades y las clases de frase) → CAL-E →
 CAL-F, midiendo cada paso con ≥ 3 repeticiones sobre el banco.
+
+# CAL-B — moneda (15-oct noche, Gonzalo) — EN CURSO
+
+**Causa encontrada:** la regla de moneda del catálogo que lee el RAG decía *"Si no sabes la nacionalidad del cliente,
+da las dos monedas"*, lo contrario de la decisión de Gadea del 15-oct (sin nacionalidad → USD), y el resumen del estado
+no decía nada cuando no se sabe la nacionalidad: el modelo tenía que deducir la moneda solo.
+
+**Arreglo** (flag `MONEDA_SIN_NACIONALIDAD_USD`, **APAGADO**): la regla del catálogo pasa a "da el precio en USD (si te
+dice que es colombiano o residente, en COP)" (`catalog.MONEDA_SIN_NACIONALIDAD`; la caché del catálogo distingue el
+flag) y el resumen del estado lleva la moneda ya resuelta ("Aún no sabemos la nacionalidad: si das un precio, en USD").
+El grupo mixto ya quedaba como "no colombiano" → USD. Tests: `tests/test_calb_moneda.py` (8).
+
+**Medida en el banco de fallos** (`banco_fallos medir --tarea CAL-B --reps 3`, nuevo: repeticiones, flags y código
+local; el verificador usa el criterio corregido si lo hay):
+
+| | Repeticiones que fallan (8 casos × 3) |
+|---|---|
+| A (PRE hoy) | **12/24** |
+| B (código local + flag) | **7/24** |
+
+Mejora en `refresher-rechaza-acepta` (2 → 0), `paquete-5-buceos-precio-overnight` (1 → 0) y
+`colombianos-precio-minicurso` (3 → 1); ninguno empeora. **6 de los 7 que quedan no son de moneda**: en
+`open-water-precio-para-colombianos` y `curso-open-water-precio-cop` la cliente colombiana pide el precio en COP pero
+nunca dice desde dónde sale, y la puerta del origen (opción C) pregunta el origen: **choque entre dos decisiones**, para
+Gadea.
+
+**Criterios:** `criterios-moneda-propuestos.md` — 6 criterios del golden piden preguntar la nacionalidad antes de
+cotizar (de antes de la decisión del 15-oct) y 2 chocan con la regla del origen. **Propuesta para Gadea, sin tocar el
+golden**; el banco ya mide con la versión nueva (`pedia_corregido`).
+
+**Mini-ronda `calb-A` (24 diálogos visibles con moneda): NO VALE** — a mitad se acabó el crédito de OpenAI (715 errores
+"no credits remaining" en PRE; PRE no contestaba). Sus ficheros no se suben. **Siguiente:** recargar OpenAI, repetir
+`calb-A` (flag apagado, como PRE) y `calb-B` (flag encendido) con `docs/robustness/cal/dialogos-calb.txt`, comparar y
+decidir. Gadea: los criterios propuestos.

@@ -1,6 +1,14 @@
 History
 =======
 
+0.31.34 - (2026-10-15)
+----------------------
+* **CAL-B (moneda) EN CURSO: la regla de Gadea en el código, `MONEDA_SIN_NACIONALIDAD_USD` APAGADO; su mini-ronda se quedó sin crédito de OpenAI** (Gonzalo). Detalle: `docs/robustness/cal/README.md`.
+  - **Causa:** la regla del catálogo decía "si no sabes la nacionalidad, da las dos monedas" (lo contrario de la decisión del 15-oct) y el resumen del estado no daba la moneda. Con el flag: la regla del catálogo es la de Gadea y el resumen lleva la moneda resuelta.
+  - **Banco de fallos (8 casos × 3):** fallan 12/24 → 7/24; 6 de los 7 que quedan son el choque con la regla del origen (la cliente pide COP sin decir el origen). `scripts/banco_fallos.py medir` (repeticiones, flags, código local; criterio corregido).
+  - **Para Gadea:** `docs/robustness/cal/criterios-moneda-propuestos.md` (6 criterios que piden preguntar la nacionalidad y 2 que chocan con la regla del origen).
+  - **Mini-ronda `calb-A` inválida:** se acabó el crédito de OpenAI a mitad (PRE no contestaba). Hay que recargar y repetir A y B.
+
 0.31.33 - (2026-10-15)
 ----------------------
 * **CAL-0 HECHO: el banco de los 73 fallos de ex-10, reproducible, y POR QUÉ falla cada uno** (Gonzalo). Detalle: `docs/robustness/cal/README.md`.

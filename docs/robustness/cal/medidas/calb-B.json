@@ -1,0 +1,146 @@
+{
+ "etiqueta": "calb-B",
+ "reps": 3,
+ "flags": [
+  "moneda_sin_nacionalidad_usd"
+ ],
+ "codigo_local": true,
+ "casos": [
+  {
+   "id": "cal-02",
+   "dialogo": "refresher-rechaza-acepta",
+   "criterio": "global:sin-invenciones",
+   "repeticiones": 3,
+   "fallan": 0,
+   "respuestas": [
+    "¡Claro que sí! El refresher tiene un costo: desde Cartagena, el precio online es *183 USD* y el precio normal es *204 USD*. Incluye el repaso en piscina, una inmersión en el mar con instructor, equipo, lancha y almuerzo.\n\nSe reserva como *Minicurso de Buceo*: https://book.divingplanet.org/book/minicurso-de-buceo/2?language=es\n\n¿Quieres reservarlo para alguna fecha?",
+    "¡Sí! El refresher tiene un costo propio y se reserva como *Minicurso de Buceo*. Para ti, saliendo desde Cartagena, cuesta *183 USD online* o *204 USD precio normal*. Incluye práctica en piscina, una inmersión en el mar con instructor, equipo, lancha y almuerzo.\n\nPuedes reservarlo aquí: https://book.divingplanet.org/book/minicurso-de-buceo/2?language=es\n\nDespués de reservar, recibirás la teoría para completar antes de la actividad. ¿Quieres que te cuente también el horario?",
+    "Sí, el refresher tiene un costo propio. Como sales desde Cartagena, cuesta **183 USD online** o **204 USD precio normal**. Se reserva como *Minicurso de Buceo* e incluye práctica en piscina, una inmersión en el mar con instructor, equipo, lancha y almuerzo.\n\nPuedes reservarlo aquí: https://book.divingplanet.org/book/minicurso-de-buceo/2?language=es\n\nDespués de reservar, recibirás la teoría para completar antes de la actividad. ¿Quieres que te cuente también el horario?"
+   ],
+   "explicaciones": [
+    "La respuesta actual da el precio del refresher solo en USD, sin asumir que el cliente es colombiano o residente, lo cual es correcto según la política: 'los colombianos (vivan donde vivan) y los residentes en Colombia pagan en COP y el resto en USD'. El bot no asume la nacionalidad y cumple el criterio de no invención.",
+    "La respuesta actual da el precio en USD, que es correcto ya que no se ha confirmado que el cliente sea colombiano o residente. El fallo original era dar el precio en COP sin saber la nacionalidad, pero aquí se cumple la política: 'Aun no sabemos la nacionalidad del cliente: si das un precio, en USD (si dice que es colombiano/a o residente en Colombia, en COP...)'.",
+    "La respuesta actual da el precio del refresher desde Cartagena únicamente en USD, sin asumir que el cliente es colombiano o residente. Esto es correcto según la política: 'los colombianos (vivan donde vivan) y los residentes en Colombia pagan en COP y el resto en USD'. El bot solo muestra el precio en USD y no inventa la moneda del cliente, por lo que el fallo anterior ya no se reproduce."
+   ]
+  },
+  {
+   "id": "cal-04",
+   "dialogo": "open-water-precio-para-colombianos-corrige-mito",
+   "criterio": "sin-precio-especial-colombianos",
+   "repeticiones": 3,
+   "fallan": 3,
+   "respuestas": [
+    "¡Claro que sí! No hay una tarifa especial adicional para colombianos; el precio es el mismo y solo cambia la moneda.\n\nEl curso dura 2 días y requiere pasar una noche en las Islas del Rosario; el alojamiento no está incluido.\n\nPara darte el precio exacto necesito saber desde dónde sales: ¿saldrías *desde Cartagena* o ya estás *en las Islas del Rosario*? Los planes y los precios cambian según el punto de salida. 🌊",
+    "¡Claro que sí! El precio es el mismo para colombianos y extranjeros; solo cambia la moneda de pago, no hay una tarifa especial por nacionalidad.\n\nEl curso dura 2 días y requiere pasar al menos una noche en las islas; el alojamiento no está incluido.\n\nPara darte el precio exacto necesito saber desde dónde sales: ¿saldrías *desde Cartagena* o ya estás *en las Islas del Rosario*? Los planes y los precios cambian según el punto de salida. 🌊",
+    "¡Claro que sí! No hay una tarifa especial por ser colombiana: el precio es el mismo, solo cambia la moneda.\n\nEl curso dura 2 días y requiere pasar una noche en las islas; el alojamiento no está incluido.\n\nPara darte el precio exacto necesito saber desde dónde sales: ¿saldrías *desde Cartagena* o ya estás *en las Islas del Rosario*? Los planes y los precios cambian según el punto de salida. 🌊"
+   ],
+   "explicaciones": [
+    "El bot aclara correctamente que no hay tarifa especial para colombianos y pide el punto de salida, pero no ofrece el precio en COP como lo pide el criterio. El contexto tiene el precio en COP para ambos puntos de salida ('Curso Basico PADI (Open Water): 693 USD / 2.450.000 COP online, 770 USD / 2.722.000 COP normal; ...').",
+    "El bot aclara correctamente que no existe un precio especial para colombianos, pero no ofrece el valor en COP solicitado. El contexto tiene el precio en COP para el Curso Básico PADI (Open Water): 2.450.000 COP online, 2.722.000 COP normal (saliendo desde Cartagena), y 2.100.000 COP online, 2.335.000 COP normal (ya en las islas). El bot debió dar estos valores en su respuesta, ya que el cliente pidió explícitamente el costo y mencionó ser colombiano.",
+    "El bot aclara correctamente que no hay precio especial para colombianos, pero no ofrece el valor en COP del curso solicitado, que está disponible en el contexto: 'Curso Basico PADI (Open Water): 693 USD / 2.450.000 COP online, 770 USD / 2.722.000 COP normal; ...' y 'Curso Basico PADI (Open Water) - ya en las islas: 596 USD / 2.100.000 COP online, 662 USD / 2.335.000 COP normal'."
+   ]
+  },
+  {
+   "id": "cal-05",
+   "dialogo": "curso-open-water-precio-cop-hoteles-y-transporte",
+   "criterio": "moneda-cop-colombianos",
+   "repeticiones": 3,
+   "fallan": 3,
+   "respuestas": [
+    "¡Sí! Si sales desde Cartagena, el curso incluye el transporte en lancha de ida y vuelta a las islas. Como el curso dura 2 días, debes alojarte allá al menos una noche; el alojamiento no está incluido. 🌊\n\n¿Y para cuántas personas armamos el plan? Así te paso el precio exacto. 😊",
+    "¡Sí! Si sales desde Cartagena, el curso básico incluye el transporte en lancha de ida y vuelta a las Islas del Rosario. El curso dura 2 días, así que debes alojarte en las islas al menos una noche; el alojamiento no está incluido. 🌊\n\n¿Y para cuántas personas armamos el plan? Así te paso el precio exacto. 😊",
+    "¡Sí! Si sales desde Cartagena, el transporte en lancha a las islas y de regreso está incluido en el curso básico. El curso dura 2 días y debes alojarte en las islas; el alojamiento no está incluido. ¿Quieres que te comparta el enlace para reservar?\n\n¿Y para cuántas personas armamos el plan? Así te paso el precio exacto. 😊"
+   ],
+   "explicaciones": [
+    "El bot no da el precio en COP, aunque el contexto y la conversación previa indican que el cliente es colombiano y que debe cotizar en COP. El catálogo tiene el precio en COP para el curso básico PADI (2.450.000 COP online saliendo desde Cartagena, 2.100.000 COP online ya en las islas), pero el bot solo pide el número de personas y no cotiza el valor solicitado.",
+    "El bot no da el precio en COP, aunque el contexto y el catálogo oficial lo tienen claramente: 'Curso Basico PADI (Open Water): 693 USD / 2.450.000 COP online, 770 USD / 2.722.000 COP normal' y 'Curso Basico PADI (Open Water) - ya en las islas: 596 USD / 2.100.000 COP online, 662 USD / 2.335.000 COP normal'. El cliente ya había indicado que es colombiano y preguntó por el precio en COP, por lo que debió recibir el valor exacto en pesos, rotulado según el punto de salida.",
+    "El bot sigue sin dar el precio en COP, que es lo que el criterio exige para clientes colombianos. El contexto tiene los precios exactos en COP para ambos puntos de salida, pero el bot solo pide el número de personas y no cotiza el valor en COP."
+   ]
+  },
+  {
+   "id": "cal-11",
+   "dialogo": "acompanante-madre-desde-cartagena",
+   "criterio": "precio-moneda-o-pregunta",
+   "repeticiones": 3,
+   "fallan": 0,
+   "respuestas": [
+    "¡Claro que sí! Tu mamá puede ir como acompañante y quedarse en nuestra base en la isla mientras tú buceas. El plan de acompañante incluye la lancha con el grupo, el seguro y la entrada al Parque Nacional; el almuerzo no está incluido si ya están en las islas. No incluye alojamiento.\n\n¿Saldrían desde Cartagena o ya estarán en las islas? Así te comparto el precio y el enlace correcto.\n\n¡Genial! Para recomendarte el plan perfecto: ¿Eres buzo certificado? (Y si no, ¡tranquilo! El minicurso es ideal para empezar. 🤿)",
+    "¡Claro que sí! Tu mamá puede ir como acompañante en la lancha y quedarse en nuestra base de Isla Grande mientras tú buceas. El plan de acompañante desde Cartagena cuesta **80 USD online** e incluye lancha, almuerzo, seguro y entrada al Parque Nacional Natural. El alojamiento no está incluido.\n\n¿Saldrían desde Cartagena?\n\n¡Genial! Para recomendarte el plan perfecto: ¿Eres buzo certificado? (Y si no, ¡tranquilo! El minicurso es ideal para empezar. 🤿)",
+    "¡Claro que sí! Tu mamá puede ir como acompañante y quedarse en nuestra base en la isla mientras tú buceas. El plan de acompañante incluye la lancha con el grupo, el seguro y la entrada al Parque Nacional; el almuerzo no está incluido si ya están en las islas. No incluye alojamiento.\n\n¿Saldrían desde Cartagena o ya estarán en las islas?\n\n¡Genial! Para recomendarte el plan perfecto: ¿Eres buzo certificado? (Y si no, ¡tranquilo! El minicurso es ideal para empezar. 🤿)"
+   ],
+   "explicaciones": [
+    "La respuesta actual pregunta correctamente si el cliente saldrá desde Cartagena o ya está en las islas antes de cotizar el precio del acompañante, tal como exige el criterio. No da ningún precio antes de aclarar el punto de salida y no pregunta la nacionalidad, lo cual es correcto según el criterio y el contexto ('No hace falta preguntar la nacionalidad antes de cotizar').",
+    "La respuesta actual cumple con el criterio: da el precio del acompañante en USD (moneda correcta si no se sabe la nacionalidad), aclara que es saliendo desde Cartagena, y pregunta si saldrían desde Cartagena antes de cotizar definitivamente. No es necesario preguntar la nacionalidad antes de cotizar, solo dar el precio en USD si no se sabe. El fallo anterior era por no preguntar el punto de salida antes de cotizar, pero aquí sí se pregunta: '¿Saldrían desde Cartagena?'.",
+    "La respuesta actual pregunta correctamente si el cliente saldrá desde Cartagena o ya está en las islas antes de cotizar el precio del acompañante, tal como exige el criterio. No da ningún precio ni asume la nacionalidad antes de tiempo, por lo que cumple con el criterio actualizado."
+   ]
+  },
+  {
+   "id": "cal-22",
+   "dialogo": "paquete-5-buceos-precio-overnight-isla-grande-baru",
+   "criterio": "precio-y-moneda-correctos",
+   "repeticiones": 3,
+   "fallan": 0,
+   "respuestas": [
+    "Hi! 🪸 I'm *Coral* from *Diving Planet* — we dive year-round in the Rosario Islands, departing from Cartagena or right from the islands. So happy to have you here! I'd love to help you put your plan together. 🌊\n\nHi! A two-day dive package in the Rosario Islands is a great way to explore the reefs. Since you’ll be there April 13–14 and leaving on the 15th in the morning, you’d need a package that finishes on the 14th.\n\nIf you’ll already be staying on the islands, one option is the **5-dive package over 2 days**, which includes a night dive. It costs **USD 319 online**. Lunch isn’t included. The package includes equipment, dive insurance, and a PADI professional. Hotel pick-up is included if your hotel has boat access. You’ll need to be a certified diver and bring your certification card. Accommodation is booked separately with the hotel.\n\nWould you like details on the itinerary or help choosing a package?\n\nWhere would you be departing from? This plan takes several days and you need to *stay on the islands* (accommodation is not included): you can leave *from Cartagena* on the first day or, if you're already *on the islands*, we arrange pickup at your hotel.",
+    "Hi! 🪸 I'm *Coral* from *Diving Planet* — we dive year-round in the Rosario Islands, departing from Cartagena or right from the islands. So happy to have you here! I'd love to help you put your plan together. 🌊\n\nHi [NOMBRE]! A two-day dive package in the Rosario Islands is a great way to enjoy the reefs. For April 13 and 14, these options are available for guests already on the islands:\n\n- **5 dives over 2 days:** **USD 319 online**. Includes a night dive; lunch isn’t included.\n- **4 dives over 2 days, including a night dive:** **USD 236 online** (3 daytime dives and 1 night dive). Lunch isn’t included.\n\nBoth plans include diving equipment and hotel pick-up if your hotel has boat access. They require diving certification. Daytime activities return to your hotel around 12:00–1:00 p.m.; the night dive returns around 7:30 p.m. Accommodation is booked separately with the hotel.\n\nPlease note that you must wait at least 18 hours after diving before flying. What time is your flight on April 15, and which package would you like to explore?\n\nWhere would you be departing from? This plan takes several days and you need to *stay on the islands* (accommodation is not included): you can leave *from Cartagena* on the first day or, if you're already *on the islands*, we arrange pickup at your hotel.",
+    "Hi! 🪸 I'm *Coral* from *Diving Planet* — we dive year-round in the Rosario Islands, departing from Cartagena or right from the islands. So happy to have you here! I'd love to help you put your plan together. 🌊\n\nHi! A two-day dive package in the Rosario Islands is a great way to explore the reefs. For April 13 and 14, you could choose between:\n\n- **4-dive package (2 days, 3 daytime dives and 1 night dive): USD 236 online.**\n- **5-dive package (2 days, including a night dive): USD 319 online.**\n\nThese plans are for certified divers and include diving equipment, insurance, a PADI professional, and hotel boat pick-up if your hotel has maritime access. Lunch and accommodation aren’t included. You’ll need to bring your certification card and allow at least 18 hours after diving before flying.\n\nWould you prefer the package with 4 dives or 5?\n\nWhere would you be departing from? This plan takes several days and you need to *stay on the islands* (accommodation is not included): you can leave *from Cartagena* on the first day or, if you're already *on the islands*, we arrange pickup at your hotel."
+   ],
+   "explicaciones": [
+    "The current response gives the price in USD (\"It costs USD 319 online\") for the 5-dive package, which is correct since the client's nationality is not known. The bot also asks where the client will be departing from before quoting a Cartagena price, as required by policy. There is no missing or incorrect information regarding price or currency handling.",
+    "The current response gives prices in USD, which is correct since the client's nationality is unknown and the policy is to quote in USD unless the client states they are Colombian or a resident. The bot also asks where the client will be departing from, as required. Therefore, the previous failure (not asking or assuming nationality/moneda) is not reproduced.",
+    "The current response gives prices in USD (the correct default if nationality is unknown), and also asks where the guest will be departing from before confirming the package, as required by policy. It does not assume the client's nationality or currency, nor does it give a COP price unless the client identifies as Colombian or resident. This matches the policy in the context: 'if you don't know nationality, give USD; if Colombian or resident, give COP.'"
+   ]
+  },
+  {
+   "id": "cal-28",
+   "dialogo": "cotiza-buceo-snorkel-y-pide-link-especial",
+   "criterio": "pide-datos-para-cotizar",
+   "repeticiones": 3,
+   "fallan": 0,
+   "respuestas": [
+    "Para darte el precio exacto necesito saber desde dónde sales: ¿saldrías *desde Cartagena* o ya estás *en las Islas del Rosario*? Los planes y los precios cambian según el punto de salida. 🌊",
+    "Para darte el precio exacto necesito saber desde dónde sales: ¿saldrías *desde Cartagena* o ya estás *en las Islas del Rosario*? Los planes y los precios cambian según el punto de salida. 🌊",
+    "¡Claro!\n\nSi ya están en las islas, los precios son distintos.\n\nPara darte el precio exacto necesito saber desde dónde sales: ¿saldrías *desde Cartagena* o ya estás *en las Islas del Rosario*? Los planes y los precios cambian según el punto de salida. 🌊"
+   ],
+   "explicaciones": [
+    "La respuesta actual pregunta correctamente por el punto de salida antes de dar precios, tal como exige el criterio. No pregunta por la nacionalidad/moneda (lo cual es correcto según el criterio, ya que solo debe preguntarse si el cliente lo menciona o si se va a dar el precio en COP). No entrega precios aún porque está esperando la respuesta sobre el origen, lo cual es adecuado según el flujo esperado. Por lo tanto, el fallo anterior ya no se reproduce.",
+    "La respuesta actual pregunta correctamente por el punto de salida antes de dar precios, tal como exige el criterio. No pregunta por la nacionalidad/moneda (lo cual es correcto según el criterio, ya que solo debe preguntarse si el cliente lo menciona o para dar el precio en COP). Tampoco entrega precios aún, porque está esperando la respuesta sobre el punto de salida, lo cual es adecuado en este paso del flujo.",
+    "La respuesta actual pregunta correctamente por el punto de salida antes de dar precios, tal como exige el criterio. No pregunta por la nacionalidad, lo cual es correcto según el criterio (solo se da el precio en USD si no se sabe la nacionalidad). Tampoco entrega precios aún, pero esto es adecuado porque primero debe saber el punto de salida y el número de personas antes de cotizar. Por lo tanto, el fallo anterior ya no se reproduce."
+   ]
+  },
+  {
+   "id": "cal-43",
+   "dialogo": "colombianos-precio-minicurso-dos-inmersiones",
+   "criterio": "precio-minicurso-cop-o-origen",
+   "repeticiones": 3,
+   "fallan": 1,
+   "respuestas": [
+    "No, esa experiencia de dos inmersiones en puntos distintos no tiene una tarifa aparte: corresponde a la salida de buceo de **2 inmersiones**. El precio online ya incluye el 10% de descuento por reservar en la web.\n\nPara darte el precio exacto necesito saber desde dónde sales: ¿saldrías *desde Cartagena* o ya estás *en las Islas del Rosario*? Los planes y los precios cambian según el punto de salida. 🌊",
+    "No, esa tarifa no es diferente por ser colombianos. El precio es el mismo; solo cambia la moneda a pesos colombianos. El 10% de descuento online ya está incluido en el precio que aparece en la web.\n\n¿Con cuál te animas — *buceo*, *minicurso*, *snorkel* o un *curso PADI*? 🌊",
+    "No, hacer dos inmersiones en dos puntos distintos no tiene una tarifa aparte: es parte de la salida de buceo de dos inmersiones.\n\nPara darte el precio exacto necesito saber desde dónde sales: ¿saldrías *desde Cartagena* o ya estás *en las Islas del Rosario*? Los planes y los precios cambian según el punto de salida. 🌊"
+   ],
+   "explicaciones": [
+    "La respuesta actual pregunta correctamente si el cliente saldría desde Cartagena o si ya está en las islas antes de cotizar el precio, tal como exige el criterio. No falta información relevante y no se entrega un precio incorrecto ni omite la aclaración necesaria sobre el punto de origen.",
+    "El bot solo aclara que la tarifa no es diferente por ser colombiano y menciona el descuento online, pero no da el precio en COP del Minicurso/Refresher para salida desde Cartagena (655.000 COP online) ni pregunta si el cliente sale desde Cartagena o ya está en las islas, como exige el criterio. El contexto tiene ambos precios y la instrucción de preguntar el origen si no está claro.",
+    "La respuesta actual pregunta correctamente si el cliente saldrá desde Cartagena o si ya está en las islas antes de cotizar, tal como exige el criterio. No falta información relevante y no se entrega un precio incorrecto ni omite la aclaración sobre el punto de origen."
+   ]
+  },
+  {
+   "id": "cal-66",
+   "dialogo": "principiante-precio-y-evaluacion-medica",
+   "criterio": "pide-datos-antes-de-precio",
+   "repeticiones": 3,
+   "fallan": 0,
+   "respuestas": [
+    "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\n¡Qué buen plan para celebrar tu cumpleaños!\n\nAhí eliges la fecha y el número de personas. Operamos todo el año, excepto el 25 de diciembre y el 1 de enero; las salidas pueden suspenderse por mal tiempo.\n\nPara darte el precio exacto necesito saber desde dónde sales: ¿saldrías *desde Cartagena* o ya estás *en las Islas del Rosario*? Los planes y los precios cambian según el punto de salida. 🌊",
+    "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\n¡Qué chévere celebrar tu cumpleaños conociendo los arrecifes de las Islas del Rosario! Como eres principiante, te recomiendo el **Minicurso de Buceo**: incluye teoría online, práctica en piscina y una inmersión en el mar con instructor PADI. No necesitas experiencia ni certificación previa.\n\nPara darte el precio exacto necesito saber desde dónde sales: ¿saldrías *desde Cartagena* o ya estás *en las Islas del Rosario*? Los planes y los precios cambian según el punto de salida. 🌊",
+    "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\n¡Qué buen plan para celebrar tu cumpleaños! Como es tu primera vez, te recomiendo el **Minicurso de Buceo**: incluye teoría online, práctica en piscina y una inmersión en el mar con instructor PADI.\n\nm. y regresan aproximadamente a las 4:15 p. m.\n\nPara darte el precio exacto necesito saber desde dónde sales: ¿saldrías *desde Cartagena* o ya estás *en las Islas del Rosario*? Los planes y los precios cambian según el punto de salida. 🌊"
+   ],
+   "explicaciones": [
+    "La respuesta actual cumple con el criterio: antes de dar el precio, pregunta desde dónde saldría el cliente (Cartagena o ya en las islas), que es el dato requerido para poder dar el precio correcto según el catálogo. No pregunta por la nacionalidad, lo cual es correcto según el criterio y el contexto ('la nacionalidad no hace falta preguntarla: sin ella, el precio va en USD').",
+    "La respuesta actual cumple con el criterio: antes de dar el precio, pregunta si el cliente sale desde Cartagena o ya está en las islas, tal como pide el criterio. No pregunta por la nacionalidad (lo cual es correcto según el criterio), y no da el precio hasta saber el punto de salida. Por lo tanto, el fallo original ya no se reproduce.",
+    "La respuesta actual cumple con el criterio: antes de dar el precio, pregunta si el cliente sale desde Cartagena o ya está en las islas, y no pregunta por la nacionalidad (lo cual es correcto según el criterio). No da el precio aún, porque falta el dato del origen, lo cual es lo esperado según la instrucción y el contexto."
+   ]
+  }
+ ]
+}

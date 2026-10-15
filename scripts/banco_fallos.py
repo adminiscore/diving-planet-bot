@@ -107,15 +107,17 @@ def _turnos_del_caso(f: dict) -> list[str]:
     return [h["content"] for h in f["historial"] if h["role"] == "user"] + [f["mensaje_cliente"]]
 
 
-def _reproducir_en_pre(turnos: list[str]) -> dict | None:
-    """Reproduce la conversación DENTRO de PRE (1 vez) y devuelve el último turno: respuesta y contexto del revisor."""
+def _reproducir_en_pre(turnos: list[str], *, reps: int = 1, flags: list[str] | None = None,
+                       codigo: str | None = None) -> list[dict]:
+    """Reproduce la conversación DENTRO de PRE `reps` veces y devuelve el último turno de cada una: respuesta y
+    contexto del revisor. `flags`: interruptores encendidos solo en ese proceso; `codigo`: la copia del código local."""
     from scripts.pre_access import docker_python, pre_ssh
     from scripts.reproducir_juez_pre import _REMOTO
 
-    script = f"TURNOS_JSON = {json.dumps(turnos, ensure_ascii=False)!r}\nN_REPS = 1\nFLAGS = []\n{_REMOTO}"
-    r = pre_ssh(docker_python({}), input_text=script, timeout=240 + 60 * len(turnos))
+    script = f"TURNOS_JSON = {json.dumps(turnos, ensure_ascii=False)!r}\nN_REPS = {reps}\nFLAGS = {flags or []!r}\n{_REMOTO}"
+    r = pre_ssh(docker_python({}, codigo_local=codigo), input_text=script, timeout=240 + 60 * len(turnos) * reps)
     filas = [json.loads(ln) for ln in (r.stdout or "").splitlines() if ln.startswith("{")]
-    return filas[-1] if filas and filas[-1]["turn"] == len(turnos) else None
+    return [f for f in filas if f["turn"] == len(turnos)]
 
 
 async def _verificar(f: dict, hoy: dict) -> dict:
@@ -124,7 +126,8 @@ async def _verificar(f: dict, hoy: dict) -> dict:
     from src.config import settings
 
     contexto = "\n\n".join(j["context"] for j in hoy.get("juicios") or []) or "(el turno no pasó por el revisor: sin contexto)"
-    usuario = (f"CRITERIO: {f['criterio']}\nLO QUE PEDÍA: {f['pedia']}\nPOR QUÉ FALLÓ EN LA RONDA: {f['motivo_juez']}\n\n"
+    usuario = (f"CRITERIO: {f['criterio']}\nLO QUE PEDÍA: {f.get('pedia_corregido') or f['pedia']}\n"
+               f"POR QUÉ FALLÓ EN LA RONDA: {f['motivo_juez']}\n\n"
                f"MENSAJE DEL CLIENTE: {f['mensaje_cliente']}\n\nRESPUESTA DE HOY: {hoy['reply']}\n\n"
                f"CONTEXTO QUE TENÍA (cortado a 60.000 caracteres):\n{contexto[:60000]}")
     resp = await AsyncOpenAI(api_key=settings.openai_api_key).chat.completions.create(
@@ -148,7 +151,7 @@ def diagnosticar(ids: list[str] | None) -> None:
     for f in datos["fallos"]:
         if f["pieza"] != "rag" or not f["turno"] or (ids and f["id"] not in ids):
             continue
-        hoy = _reproducir_en_pre(_turnos_del_caso(f))
+        hoy = (_reproducir_en_pre(_turnos_del_caso(f)) or [None])[0]
         if hoy is None:
             f["diagnostico"] = {"causa_medida": "error_reproduccion"}
             print(f"  {f['id']} {f['dialogo'][:40]}: no se pudo reproducir")
@@ -160,12 +163,54 @@ def diagnosticar(ids: list[str] | None) -> None:
         BANCO.write_text(json.dumps(datos, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")  # sobre la marcha
 
 
+def medir(etiqueta: str, ids: list[str] | None, tarea: str | None, reps: int, flags: list[str],
+          codigo_local: bool) -> None:
+    """Mide un arreglo de CAL sobre el banco: cada caso `reps` veces en PRE (con `flags` y, si se pide, el código
+    local) y el verificador dice si el fallo se repite. Usa `pedia_corregido` si lo hay (criterio actualizado a una
+    decisión de Gadea). Salida: `docs/robustness/cal/medidas/<etiqueta>.json` y, por pantalla, cuántas veces falla."""
+    import asyncio
+
+    from scripts.pre_access import subir_codigo_local
+
+    datos = json.loads(BANCO.read_text(encoding="utf-8"))
+    casos = [f for f in datos["fallos"] if f["turno"] and (not ids or f["id"] in ids) and (not tarea or f.get("tarea") == tarea)]
+    codigo = subir_codigo_local() if codigo_local else None
+    salida = {"etiqueta": etiqueta, "reps": reps, "flags": flags, "codigo_local": codigo_local, "casos": []}
+    fallan_total = 0
+    for f in casos:
+        filas = _reproducir_en_pre(_turnos_del_caso(f), reps=reps, flags=flags, codigo=codigo)
+        async def _todas(f=f, filas=filas):  # un solo bucle por caso (antes: "Event loop is closed" al cerrar clientes)
+            return await asyncio.gather(*(_verificar(f, hoy) for hoy in filas))
+
+        veredictos = asyncio.run(_todas())
+        fallan = sum(1 for v in veredictos if v.get("se_reproduce") in ("si", "parcial"))
+        fallan_total += fallan
+        salida["casos"].append({"id": f["id"], "dialogo": f["dialogo"], "criterio": f["criterio"], "repeticiones": len(filas),
+                                "fallan": fallan, "respuestas": [h["reply"] for h in filas],
+                                "explicaciones": [v.get("explicacion", "") for v in veredictos]})
+        print(f"  {f['id']} {f['dialogo'][:40]:40} {f['criterio'][:28]:28} falla {fallan}/{len(filas)}")
+    destino = CAL / "medidas" / f"{etiqueta}.json"
+    destino.parent.mkdir(parents=True, exist_ok=True)
+    destino.write_text(json.dumps(salida, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
+    total = sum(c["repeticiones"] for c in salida["casos"])
+    print(f"{etiqueta}: fallan {fallan_total}/{total} repeticiones en {len(casos)} casos → {destino.relative_to(ROOT)}")
+
+
 def main() -> None:
     sys.stdout.reconfigure(encoding="utf-8")
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
-    ap.add_argument("accion", choices=["construir", "diagnosticar"])
+    ap.add_argument("accion", choices=["construir", "diagnosticar", "medir"])
     ap.add_argument("--ids", help="solo estos casos (cal-01,cal-05…)")
+    ap.add_argument("--tarea", help="medir: solo los casos de esta tarea (CAL-B…)")
+    ap.add_argument("--etiqueta", help="medir: nombre de la medida")
+    ap.add_argument("--reps", type=int, default=3)
+    ap.add_argument("--flag", action="append", default=[], help="medir: interruptor encendido solo en ese proceso")
+    ap.add_argument("--codigo-local", action="store_true", help="medir: con el código local (sin desplegar)")
     args = ap.parse_args()
+    if args.accion == "medir":
+        medir(args.etiqueta or "medida", args.ids.split(",") if args.ids else None, args.tarea, args.reps, args.flag,
+              args.codigo_local)
+        return
     if args.accion == "construir":
         banco = construir()
         sin_turno = [b["id"] for b in banco if not b["turno"]]

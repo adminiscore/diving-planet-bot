@@ -522,9 +522,11 @@ def catalog_facts(lang: str) -> str:
     de 2 dias "ida y vuelta el mismo dia", el paquete de 3 inmersiones "en 1 dia"). Con estos
     hechos siempre en el contexto el LLM contesta la pregunta real y el precio sale del catalogo
     (el guard de importes sigue exigiendo que cada cifra este en el contexto)."""
-    if lang in _FACTS_CACHE:
-        return _FACTS_CACHE[lang]
     from src.config import settings  # lazy
+
+    clave = f"{lang}|{settings.moneda_sin_nacionalidad_usd}"
+    if clave in _FACTS_CACHE:
+        return _FACTS_CACHE[clave]
 
     es = lang == "es"
     catalogo_equipo = settings.catalogo_equipo_incluido
@@ -616,8 +618,25 @@ def catalog_facts(lang: str) -> str:
                "add up or compute totals. If the "
                "customer quotes a price that doesn't match the catalog, give the catalog price without repeating theirs."]
     text = chr(10).join(out)
-    _FACTS_CACHE[lang] = text
+    if settings.moneda_sin_nacionalidad_usd:
+        # CAL-B (15-oct, decisión de Gadea): sin saber la nacionalidad, el precio va en USD, no en las dos monedas.
+        text = text.replace(MONEDA_SIN_NACIONALIDAD["es"][0], MONEDA_SIN_NACIONALIDAD["es"][1]).replace(
+            MONEDA_SIN_NACIONALIDAD["en"][0], MONEDA_SIN_NACIONALIDAD["en"][1])
+    _FACTS_CACHE[clave] = text
     return text
+
+
+# CAL-B (15-oct, flag `moneda_sin_nacionalidad_usd`; decisión de Gadea del 15-oct): "si el cliente pide precio y no
+# sabemos su nacionalidad → precio en USD (no las dos monedas)". La regla del catálogo decía lo contrario ("da las dos
+# monedas"): de ahí parte de los 16 fallos de moneda de ex-10 (docs/robustness/cal/README.md).
+MONEDA_SIN_NACIONALIDAD = {
+    "es": ("Si no sabes la nacionalidad del cliente, da las dos monedas.",
+           "Si no sabes la nacionalidad del cliente, da el precio en USD (si te dice que es colombiano o residente en "
+           "Colombia, en COP)."),
+    "en": ("If you don't know the customer's nationality, give both currencies.",
+           "If you don't know the customer's nationality, give the price in USD (if they tell you they are Colombian "
+           "or a resident of Colombia, in COP)."),
+}
 
 
 # 1-oct (análisis del juez, `docs/robustness/juez/README.md`): el juez y el que redacta leen el mismo catálogo pero

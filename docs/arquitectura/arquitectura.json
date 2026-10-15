@@ -1,8 +1,8 @@
 {
  "meta": {
-  "generado": "2026-10-15T12:25:22+00:00",
-  "commit": "21d4356",
-  "rama": "feature/pre_gadea"
+  "generado": "2026-10-15T16:37:56+00:00",
+  "commit": "d99af7a",
+  "rama": "feature/l1_gonzalo"
  },
  "vistas": {
   "general": {
@@ -2332,6 +2332,17 @@
    "area": "Solo pruebas",
    "titulo": "Corrección de nacionalidad en sombra",
    "texto": "Apunta lo que corregiría el LLM, sin cambiar nada.",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
+   "usado_por": [],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "moneda_sin_nacionalidad_usd",
+   "area": "Preguntas",
+   "titulo": "Sin nacionalidad, en dólares",
+   "texto": "Si el cliente pide un precio y no sabemos si es colombiano, Coral lo da en USD (decisión de Gadea); en COP si dice que es colombiano o residente, y en USD para un grupo mixto.",
    "codigo": false,
    "pre": false,
    "fijado_en_pre": false,

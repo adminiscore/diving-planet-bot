@@ -1893,6 +1893,11 @@ def _build_extra_context(state: ConversationState) -> str | None:
         parts.append("El cliente indico que es colombiano/a (mostrar precios en COP, no hay descuento especial por ser colombiano).")
     elif getattr(state, "is_colombian", None) is False:
         parts.append("El cliente indico que no es colombiano/a (mostrar precios en USD).")
+    elif settings.moneda_sin_nacionalidad_usd:
+        # CAL-B (15-oct, decisión de Gadea): la moneda la decide el código con el estado, no el modelo. Sin
+        # nacionalidad, USD; antes no se decía nada y el modelo daba las dos monedas o cotizaba en COP.
+        parts.append("Aun no sabemos la nacionalidad del cliente: si das un precio, en USD (si dice que es colombiano/a "
+                     "o residente en Colombia, en COP; no hay descuento especial por ser colombiano).")
 
     # Inactividad y refresher
     if getattr(state, "last_dive_over_2_years", None) is True:

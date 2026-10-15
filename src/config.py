@@ -140,6 +140,12 @@ class Settings(BaseSettings):
     # toward…?"), pedir-fotos-postventa ("Fueron muy buenos buceos" -> "¿Con cual te animas?"). ENCENDIDO para su mini-ronda B (atencion-B,
     # 13-oct); si no pasa, False aqui y quitar la linea del compose.
     posventa_sin_vender: bool = True
+    # CAL-B (15-oct, Gonzalo; decision de Gadea del 15-oct): sin saber la nacionalidad, el precio va en USD. La regla del
+    # catalogo decia "si no sabes la nacionalidad, da las dos monedas" (catalog.MONEDA_SIN_NACIONALIDAD) y el resumen del
+    # estado no decia nada: con el flag, la regla del catalogo es la de Gadea y el resumen da la moneda ya resuelta.
+    # Banco de fallos (8 casos x 3): fallan 12/24 -> 7/24 (6 de los 7 son del choque con la regla del origen).
+    # APAGADO: su mini-ronda A (calb-A, 15-oct) se quedo sin credito de OpenAI a mitad y no vale; repetir A y B.
+    moneda_sin_nacionalidad_usd: bool = False
     # ex-2 (fase EX): las palabras clave que pasan a un asesor ANTES de que opine la IA se quedan con las EMERGENCIAS
     # (escalation.EMERGENCY_KEYWORDS) y las incidencias en tiempo real; lo medico, el tiempo y las quejas los decide
     # Jev (`sensitive_topic`). Con la lista entera, "completed the medical form" o "mi amigo es abogado" pasaban a un
