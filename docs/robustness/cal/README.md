@@ -77,3 +77,37 @@ especial", el teléfono, "cotiza sin origen"). Los 5 de búsqueda, comprobados u
 
 Banco: `banco-fallos.json` (73 casos con `causa_final`, `tarea` y `nota`; los del RAG con `diagnostico`: respuesta de
 hoy, ¿se reproduce?, el dato y si estaba en el contexto). Coste del diagnóstico ≈ 1,5 $.
+
+## Cruce con la investigación de Gadea (mismo día, `docs/robustness/investigacion/diagnostico-73-fallos.md`)
+
+Los dos estudios se hicieron a la vez sin saberlo y miden lo mismo con método distinto: el de Gadea repite **2 veces**
+los 45 turnos del RAG y mira solo si el dato estaba en el contexto; este repite **1 vez**, clasifica los 73 (también
+los 17 que no son del RAG, leídos a mano) y corrige a mano lo que el verificador confundía.
+
+| | Gadea (2 repeticiones) | Este (1 repetición + revisión) |
+|---|---|---|
+| Fallos en turnos del RAG | 56 de 73 (77 %) | 56 de 73 |
+| El dato estaba en el contexto | 50 de 56 (89 %) | 14 redacción + 9 entendimiento + 5 regla + 17 que hoy no fallan |
+| Búsqueda (el dato no llegó) | 3 | 5 (comprobados en la base: los 5 datos están) |
+| Azar / no se reproduce | 18 | 17 |
+
+**Coinciden en lo importante:**
+1. **La búsqueda pesa poco (3-5 de 56).** El dato llega casi siempre; lo que falla es que el modelo no lo usa todo.
+2. **El azar es grande (17-18).** Medir con repeticiones.
+
+**Lo que añade cada uno:**
+- **Gadea:** los mecanismos (contesta lo literal y no aplica las reglas transversales; no usa el historial; no conecta
+  implicaciones; se queda corto) y las causas de diseño (una sola llamada con 50 reglas; el revisor castiga inventar y
+  nunca omitir; reglas deterministas escritas como prosa; nadie hace la lista de qué contestar; temperatura 0,3). Su
+  propuesta para CAL: **responder en dos pasos** (plan → redacción), **el revisor comprueba completitud**, **lo
+  determinista en código** (precio, moneda, origen) y temperatura 0.
+- **Este:** (1) **4 criterios de moneda del golden son de antes de la decisión del 15-oct** (piden preguntar la
+  nacionalidad cuando la regla ya es "sin nacionalidad → USD"): Gadea los cuenta como redacción; son criterios a
+  actualizar. (2) **De los 17 que no son del RAG, 6 son el menú de actividades que sale cuando no toca** ("5
+  inmersiones", "no estamos certificados", "Muchas gracias!" sabiendo ya que quiere bucear): es del flujo, no del RAG, y
+  la propuesta de los dos pasos no lo arregla. (3) Un banco reproducible caso a caso (`scripts/banco_fallos.py
+  diagnosticar --ids …`) para medir cada arreglo de CAL contra los mismos 73.
+
+**Orden que sale de los dos:** CAL-B (moneda en código + actualizar los 4 criterios) → CAL-A con el diseño de Gadea
+(plan → redacción, completitud en el revisor) → CAL-C (el menú de actividades y las clases de frase) → CAL-E →
+CAL-F, midiendo cada paso con ≥ 3 repeticiones sobre el banco.

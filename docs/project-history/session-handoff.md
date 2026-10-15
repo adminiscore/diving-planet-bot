@@ -50,6 +50,10 @@ certificación" = Open Water, o el Referido; el Scuba Diver es la parcial). **De
 toca), 17 de azar (no se repiten), 14 de redacción del RAG (el dato estaba), 9 de reglas o criterios desfasados, 5 de
 búsqueda. Por tarea: CAL-C 21, CAL-A 18, CAL-B 10, CAL-E 6.
 
+**Ojo: Gadea hizo a la vez la misma investigación** (`docs/robustness/investigacion/diagnostico-73-fallos.md`, 2
+repeticiones): coinciden en que la búsqueda pesa poco y el azar mucho; ella propone el diseño para CAL-A (responder
+en dos pasos, completitud en el revisor, lo determinista en código). El cruce de los dos, en `docs/robustness/cal/README.md`.
+
 **Siguiente, en orden (el del plan):**
 1. **CAL-B moneda.** Lo primero: **actualizar los 4 criterios del golden** que piden preguntar la nacionalidad
    (`acompanante-madre-desde-cartagena/precio-moneda-o-pregunta`,
