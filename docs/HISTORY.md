@@ -1,6 +1,16 @@
 History
 =======
 
+0.31.32 - (2026-10-15)
+----------------------
+* **ex-10 HECHA: examen completo con el oculto. Visible 94,5 % (base 8-oct 92,8 %), reales 91,0 % (88,7 %), sintéticos 99,0 %; el EXAMEN OCULTO queda PLANO (83,0 → 82,7 %). Nueva fase CAL "Lo que está en la base no falla"** (Gadea con Claude).
+  - **Ronda `2026-10-15-ex10-completa`** (PRE `21d4356`, 116 diálogos, ~465 turnos; juez 0,7 $ + 1,6 $). Oculto del 2-oct **re-juzgado con el juez de hoy** (`2026-10-02-oculto-rejuicio`): 76,5 → 83,0 % solo por el cambio de juez del 7-oct; la comparación justa es 83,0 → 82,7 %.
+  - **Metas:** reales ≥ 92 % ❌ (91,0 % visibles, 88,5 % con el oculto); latencia ✅ (p50 2,79 → 2,69 s; p95 6,53 → 6,76 s; reserva p95 3,82 → 2,64 s); redes ✅ (ex-9). Enlace de pago 25,3 → 32,8 % de las conversaciones.
+  - **73 fallos por causa** (`docs/robustness/ex10/fallos-ex10-por-causa.json`, clasificados con gpt-4.1 y revisados): RAG que omite información de la base 19, moneda/nacionalidad 16, repregunta la actividad 8, supone 8, repregunta otros datos 6, no pide un dato 5, datos falsos 4, sueltos 7. **El oculto falla por las mismas causas que lo visible**: son causas generales sin cerrar.
+  - **Decisiones de Gadea:** sin nacionalidad → precio en USD (no las dos monedas); teléfono o contacto → pasar a una persona.
+  - **Fase CAL** (Plan Coral): CAL-0 banco de fallos → CAL-B moneda → CAL-A el RAG contesta TODO (completitud en el revisor) → CAL-C entender sin repreguntar ni suponer (extractor por clases, hotel/isla, fecha al RAG, sin origen no hay precio) → CAL-D el revisor comprueba el plan exacto → CAL-E sueltos → CAL-F medir. Soluciones genéricas, sin regex ni parches. Informe completo: `docs/robustness/ex10/informe-ex10-y-plan-cal.md`.
+  - **Herramienta nueva:** `scripts/resumen_por_grupo.py` (cualquier ronda partida en visible/oculto × real/sintético, mismas cuentas que el juez).
+
 0.31.31 - (2026-10-15)
 ----------------------
 * **Ronda est6-B: 93,7 %, 18/29 sin fallos (la mejor de la fase; est5-B 91,3 %, 15/29). `JEV_PIDE_ALGO` PROMOCIONADO; `RAG_SIN_HORA` DESCARTADO** (Gadea con Claude).

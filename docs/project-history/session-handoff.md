@@ -41,7 +41,29 @@ PRE (escritas ya por Luna) tumba 42 frente a 13, casi todo verdades (HISTORY 0.3
 **C. Pendientes de antes:** el criterio del Open Water en `manual-duracion-curso` ✅ (FAQ curada nueva: "sacarse la
 certificación" = Open Water, o el Referido; el Scuba Diver es la parcial). **DeepSeek: FUERA DEL PLAN** (Gadea, 9-oct).
 
-### ▶️ RETOMAR AQUÍ — 14-oct, 23:00 (Gadea con Claude): base auditada y limpia + EXTRACTOR_TODO_LO_DICHO; ronda est4-B en marcha
+### ▶️ RETOMAR AQUÍ — 15-oct, 15:00 (Gadea con Claude): FASE EX CERRADA con el examen ex-10; siguiente, la fase CAL
+
+**Estado.** PRE sirve `feature/pre_gadea` `21d4356` (todo promocionado; `RAG_SIN_HORA` apagado). HISTORY 0.31.32.
+Examen ex-10: visible 94,5 % (66/95), reales 91,0 % (26/52), sintéticos 99,0 %; **examen oculto PLANO** (82,7 %, 6/21,
+frente al 83,0 % del 2-oct re-juzgado con el juez de hoy). El oculto ya está GASTADO.
+
+**LEER ANTES DE EMPEZAR:** `docs/robustness/ex10/informe-ex10-y-plan-cal.md` (resultados, referencias, los 73 fallos
+uno a uno por causa y el plan). En Plan Coral: fase **CAL "Lo que está en la base no falla"** con sus 7 tareas.
+
+**Siguiente, en orden (cualquiera del equipo puede coger un frente):** CAL-0 banco de fallos (los 73 reproducibles en
+local; primero POR QUÉ falla cada uno: búsqueda, redacción o entendimiento) → CAL-B moneda (decisión de Gadea: sin
+nacionalidad → USD; colombiano/residente → COP; grupo mixto → USD) → CAL-A el RAG contesta TODO lo que se pregunta
+(completitud en el revisor) → CAL-C entender sin repreguntar ni suponer (extractor por clases de frase, hotel/isla al
+extractor, la fecha y la hora de hoy al RAG, sin origen no hay precio) → CAL-D el revisor comprueba el plan exacto →
+CAL-E sueltos (teléfono → pasar a persona; idioma; un enlace por plan) → CAL-F medir (banco + golden visible + oculto
+NUEVO). **Regla de Gadea: soluciones genéricas, por causa; nunca conversación a conversación; sin regex ni parches.**
+
+**Herramientas:** `scripts/resumen_por_grupo.py` (ronda partida en visible/oculto × real/sintético),
+`scripts/auditoria_base.py`, `scripts/rag_piezas.py`, `scripts/estabilidad_extractor.py` (guarda `fallos_modales`),
+`scripts/ab_judge_compare --rejuzgar 2`. Las rondas se guardan con la fecha UTC: las cadenas buscan el fichero por nombre.
+Antes de cada push: `python -m ruff check src` (el CI lo exige).
+
+### ▶️ (anterior) 14-oct, 23:00 (Gadea con Claude): base auditada y limpia + EXTRACTOR_TODO_LO_DICHO; ronda est4-B en marcha
 
 **Estado.** PRE sirve `feature/pre_gadea` f178d7c (base sin contradicciones + `EXTRACTOR_TODO_LO_DICHO` ENCENDIDO para
 est4-B). HISTORY 0.31.26. Ronda `2026-10-14-est4-B` (los MISMOS 29 diálogos que est3-B) lanzada a las ~23:00 con su juez.
