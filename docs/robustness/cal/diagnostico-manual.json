@@ -1,0 +1,22 @@
+{
+ "about": "CAL-0 (15-oct, Gonzalo): diagnóstico leído a mano de los fallos que NO son de un turno del RAG (reserva, escalado, deflexión, sin cita). Se junta con banco-fallos.json. causa_medida: entendimiento (el flujo no entiende o pregunta mal), regla (falta aplicar una decisión de negocio), escalado (el pase o su texto), rag_omite (lo omitió un turno que no se pudo situar).",
+ "casos": {
+  "cal-03": {"causa_medida": "regla", "tarea": "CAL-E", "nota": "Pide un teléfono: da el WhatsApp y añade 'solo mensajes, no llamadas' (no está en la base). Decisión de Gadea (15-oct): pedir un teléfono = pasar a una persona, sin dar el número."},
+  "cal-12": {"causa_medida": "regla", "tarea": "CAL-E", "nota": "Mensaje en portugués ('Busco el seguinte… família'). Decisión de Gadea (14-oct, criterio global:idioma): otro idioma que no es español ni inglés → responder en inglés. Hoy responde en español."},
+  "cal-13": {"causa_medida": "rag_omite", "tarea": "CAL-A", "nota": "Sin cita: deriva a un asesor sin decir que operamos todos los días y que solo se suspende por el tiempo."},
+  "cal-16": {"causa_medida": "entendimiento", "tarea": "CAL-C", "nota": "Con la fecha dada, solo repite la pregunta del origen; no pide personas ni nacionalidad. Es la pregunta fija de la reserva (una a una, y la del origen repetida)."},
+  "cal-17": {"causa_medida": "entendimiento", "tarea": "CAL-C", "nota": "Menú de actividades tras 'Me parece super!!!' cuando el cliente ya cotizaba una buceada para un buzo certificado."},
+  "cal-19": {"causa_medida": "regla", "tarea": "CAL-B", "nota": "Sin cita: cotiza USD y COP sin nacionalidad. Decisión de Gadea: sin nacionalidad → USD."},
+  "cal-23": {"causa_medida": "rag_omite", "tarea": "CAL-A", "nota": "Sin cita: confirma que Isla Grande es de las Islas del Rosario pero no aclara que Barú no lo es ni que no operamos allí."},
+  "cal-34": {"causa_medida": "entendimiento", "tarea": "CAL-C", "nota": "'queremos el de saliendo de cartagena' contesta a los planes que ofreció el bot y el bot vuelve a ofrecer los planes."},
+  "cal-35": {"causa_medida": "entendimiento", "tarea": "CAL-C", "nota": "El mismo turno que cal-34: al no tomar el plan elegido no llega a cotizar en COP (no es la regla de moneda)."},
+  "cal-38": {"causa_medida": "escalado", "tarea": "CAL-E", "nota": "'the discount of 10% is not showing up. what is the code?' se trata como enlace roto ('Sorry the link didn't work') y se pasa a un asesor."},
+  "cal-39": {"causa_medida": "escalado", "tarea": "CAL-E", "nota": "El mismo turno: por el pase no explica que el 10 % online es automático, sin código (está en la base)."},
+  "cal-45": {"causa_medida": "entendimiento", "tarea": "CAL-C", "nota": "Menú de actividades tras 'Muchas gracias!' cuando el cliente ya quería 'un par de inmersiones': sabiendo que quiere bucear, lo que falta es la certificación, no la actividad."},
+  "cal-51": {"causa_medida": "regla", "tarea": "CAL-B", "nota": "Sin cita: cotiza Cartagena e islas en COP y USD sin nacionalidad. Decisión de Gadea: sin nacionalidad → USD; y sin origen, no hay precio de un origen concreto (CAL-C)."},
+  "cal-54": {"causa_medida": "entendimiento", "tarea": "CAL-C", "nota": "'5 inmersiones' → menú de actividades. Clase de frase de CAL-C: 'N inmersiones' = buceo certificado."},
+  "cal-55": {"causa_medida": "entendimiento", "tarea": "CAL-A", "nota": "'En baru y Rosario' → 'Entiendo que estás en Barú y Rosario' + menú; no aclara que no operamos en Barú (turno de la reserva, sin RAG)."},
+  "cal-57": {"causa_medida": "entendimiento", "tarea": "CAL-C", "nota": "'I am a beginner (I have made 4/5 divings before)' → pregunta el origen; el criterio pide aclarar si es certificado o recomendar el minicurso."},
+  "cal-60": {"causa_medida": "entendimiento", "tarea": "CAL-C", "nota": "'no estamos certificados' → menú de actividades; debe recomendar el minicurso (clase de frase de CAL-C)."}
+ }
+}

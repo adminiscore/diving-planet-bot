@@ -1,6 +1,14 @@
 History
 =======
 
+0.31.33 - (2026-10-15)
+----------------------
+* **CAL-0 HECHO: el banco de los 73 fallos de ex-10, reproducible, y POR QUÉ falla cada uno** (Gonzalo). Detalle: `docs/robustness/cal/README.md`.
+  - **Herramienta nueva** `scripts/banco_fallos.py`: `construir` (sin API) junta cada fallo con su turno y pieza (`fallos_por_turno`), lo que pedía el criterio (también los globales), la causa de Gadea y la conversación real hasta ese turno; `diagnosticar` reproduce DENTRO de PRE los de turnos del RAG hasta el turno que falla y un verificador (gpt-4.1) dice si se repite hoy y si el dato estaba en el contexto. Los otros 17, leídos a mano (`diagnostico-manual.json`). Revisado a mano lo que el verificador clasificó como búsqueda (8 corregidos).
+  - **Resultado (73):** entendimiento del flujo **22**, no se reproduce (variación) **17**, redacción del RAG (el dato estaba) **14**, regla o criterio desfasado **9**, búsqueda (el dato está en la base y no llegó) **5**, escalado 3, otros 3. Por tarea: **CAL-C 21, CAL-A 18, CAL-B 10, CAL-E 6**, variación 17.
+  - **Conclusiones:** (1) lo que más pesa es entender sin repreguntar (el menú de actividades que sale cuando no toca: "5 inmersiones", "no estamos certificados", "Muchas gracias!" sabiendo ya que quiere bucear) y que el RAG use todo lo que tiene; la búsqueda pesa poco. (2) **4 criterios de moneda del golden son de antes de la decisión del 15-oct** (piden preguntar la nacionalidad; hoy, sin nacionalidad → USD): hay que actualizarlos al empezar CAL-B. (3) **1 de cada 4 fallos es variación**: medir CAL con ≥ 3 repeticiones por caso.
+  - Gasto ≈ 1,5 $.
+
 0.31.32 - (2026-10-15)
 ----------------------
 * **ex-10 HECHA: examen completo con el oculto. Visible 94,5 % (base 8-oct 92,8 %), reales 91,0 % (88,7 %), sintéticos 99,0 %; el EXAMEN OCULTO queda PLANO (83,0 → 82,7 %). Nueva fase CAL "Lo que está en la base no falla"** (Gadea con Claude).

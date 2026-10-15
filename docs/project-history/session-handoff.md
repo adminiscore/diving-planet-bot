@@ -41,7 +41,27 @@ PRE (escritas ya por Luna) tumba 42 frente a 13, casi todo verdades (HISTORY 0.3
 **C. Pendientes de antes:** el criterio del Open Water en `manual-duracion-curso` ✅ (FAQ curada nueva: "sacarse la
 certificación" = Open Water, o el Referido; el Scuba Diver es la parcial). **DeepSeek: FUERA DEL PLAN** (Gadea, 9-oct).
 
-### ▶️ RETOMAR AQUÍ — 15-oct, 15:00 (Gadea con Claude): FASE EX CERRADA con el examen ex-10; siguiente, la fase CAL
+### ▶️ RETOMAR AQUÍ — 15-oct noche (Gonzalo): CAL-0 HECHO (banco de fallos y por qué falla cada uno); siguiente CAL-B
+
+**Estado.** PRE sirve `feature/pre_gadea` sin cambios de código (solo documentos y `scripts/banco_fallos.py`). HISTORY
+0.31.33. **Leer:** `docs/robustness/cal/README.md`.
+
+**CAL-0 en una frase:** de los 73 fallos, 22 son de entender (sobre todo el menú de actividades que sale cuando no
+toca), 17 de azar (no se repiten), 14 de redacción del RAG (el dato estaba), 9 de reglas o criterios desfasados, 5 de
+búsqueda. Por tarea: CAL-C 21, CAL-A 18, CAL-B 10, CAL-E 6.
+
+**Siguiente, en orden (el del plan):**
+1. **CAL-B moneda.** Lo primero: **actualizar los 4 criterios del golden** que piden preguntar la nacionalidad
+   (`acompanante-madre-desde-cartagena/precio-moneda-o-pregunta`,
+   `paquete-5-buceos-precio-overnight-isla-grande-baru/precio-y-moneda-correctos`,
+   `cotiza-buceo-snorkel-y-pide-link-especial/pide-datos-para-cotizar`,
+   `principiante-precio-y-evaluacion-medica/pide-datos-antes-de-precio`) a la decisión del 15-oct (sin nacionalidad →
+   USD) — cambio de criterios: con el visto bueno de Gadea. Luego la regla en un solo sitio.
+2. CAL-A, CAL-C, CAL-D + CAL-E, CAL-F (como en el bloque de abajo).
+- **Medir con ≥ 3 repeticiones por caso**: casi 1 de cada 4 fallos es variación. `python -m scripts.banco_fallos
+  diagnosticar --ids …` repasa los casos que se quieran.
+
+### ▶️ (anterior) 15-oct, 15:00 (Gadea con Claude): FASE EX CERRADA con el examen ex-10; siguiente, la fase CAL
 
 **Estado.** PRE sirve `feature/pre_gadea` `21d4356` (todo promocionado; `RAG_SIN_HORA` apagado). HISTORY 0.31.32.
 Examen ex-10: visible 94,5 % (66/95), reales 91,0 % (26/52), sintéticos 99,0 %; **examen oculto PLANO** (82,7 %, 6/21,
