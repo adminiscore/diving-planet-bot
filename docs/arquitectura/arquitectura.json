@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-16T12:14:12+00:00",
-  "commit": "9e3270e",
+  "generado": "2026-10-16T12:38:19+00:00",
+  "commit": "7e7f794",
   "rama": "feature/pre_alvaro"
  },
  "vistas": {
@@ -951,6 +951,20 @@
      "codigo": false,
      "pre": false,
      "sin_efecto": false
+    },
+    {
+     "nombre": "rag_temperatura_cero",
+     "titulo": "La respuesta se redacta sin azar (temperatura 0)",
+     "codigo": false,
+     "pre": false,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "rag_plan_primero",
+     "titulo": "Primero la lista de lo que pregunta el cliente",
+     "codigo": false,
+     "pre": false,
+     "sin_efecto": false
     }
    ],
    "tiempo_medido": {
@@ -1041,6 +1055,13 @@
     {
      "nombre": "juez_revisa_con_cita",
      "titulo": "El revisor pide la cita antes de rechazar",
+     "codigo": false,
+     "pre": false,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "rag_revisor_completitud",
+     "titulo": "El revisor también mira que no falte nada",
      "codigo": false,
      "pre": false,
      "sin_efecto": false
@@ -2556,6 +2577,19 @@
    "sin_efecto": null
   },
   {
+   "nombre": "rag_plan_primero",
+   "area": "Preguntas",
+   "titulo": "Primero la lista de lo que pregunta el cliente",
+   "texto": "Antes de escribir, una llamada rápida saca cada cosa que pregunta o pide el cliente, y la respuesta las contesta todas punto por punto. Antes una sola llamada lo hacía todo a la vez y se dejaba cosas.",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
+   "usado_por": [
+    "r_escribir"
+   ],
+   "sin_efecto": null
+  },
+  {
    "nombre": "rag_politicas_en_contexto",
    "area": "Preguntas",
    "titulo": "Las políticas siempre a mano",
@@ -2595,6 +2629,19 @@
    "sin_efecto": null
   },
   {
+   "nombre": "rag_revisor_completitud",
+   "area": "Preguntas",
+   "titulo": "El revisor también mira que no falte nada",
+   "texto": "Además de comprobar que la respuesta no inventa, se comprueba que contesta cada punto que preguntó el cliente. Si falta alguno se reescribe una vez; si la reescritura sale peor, se queda la primera.",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
+   "usado_por": [
+    "r_revisor"
+   ],
+   "sin_efecto": null
+  },
+  {
    "nombre": "rag_sin_hora",
    "area": "Preguntas",
    "titulo": "El RAG no supone la hora",
@@ -2602,6 +2649,19 @@
    "codigo": false,
    "pre": false,
    "fijado_en_pre": true,
+   "usado_por": [
+    "r_escribir"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "rag_temperatura_cero",
+   "area": "Preguntas",
+   "titulo": "La respuesta se redacta sin azar (temperatura 0)",
+   "texto": "La misma pregunta con el mismo contexto da siempre la misma respuesta. En el examen ex-10, 18 de los 56 fallos del RAG eran azar: unas veces lo decía y otras no.",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
    "usado_por": [
     "r_escribir"
    ],
@@ -2774,6 +2834,14 @@
    ],
    "proveedor": "OpenAI",
    "llamadas_ultima_ronda": 93
+  },
+  {
+   "ajuste": "rag_plan_model",
+   "codigo": "gpt-4.1-mini",
+   "pre": "gpt-4.1-mini",
+   "usado_por": [],
+   "proveedor": "OpenAI",
+   "llamadas_ultima_ronda": 142
   }
  ],
  "ronda": {

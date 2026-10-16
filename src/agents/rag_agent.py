@@ -909,7 +909,10 @@ async def generar_con_respaldo(client, messages: list[dict]):
     respaldo, espera = settings.rag_respaldo_modelo, settings.rag_respaldo_segundos
 
     def llamar(model: str):
-        return client.chat.completions.create(model=model, messages=messages, temperature=0.3, max_tokens=500)
+        # CAL-A1 (`rag_temperatura_cero`): 18 de los 56 fallos del RAG en ex-10 eran azar (mismo contexto, unas veces
+        # sí y otras no; diagnóstico de Gadea): con temperatura 0 la redacción es estable.
+        temperatura = 0.0 if settings.rag_temperatura_cero else 0.3
+        return client.chat.completions.create(model=model, messages=messages, temperature=temperatura, max_tokens=500)
 
     if not respaldo or espera <= 0 or respaldo == principal:
         return await llamar(principal)
@@ -1126,6 +1129,14 @@ async def rag_answer(
             # Si ya tenemos contexto KB y ademas extra_context, lo anexamos explicito
             user_content += f"\n\nContexto adicional de la situacion: {extra_context}"
         user_content += f"\n\nPregunta del cliente: {redact_pii(query)}"
+        # CAL-A2 (`rag_plan_primero`): la lista de lo que el cliente pregunta, para contestarla punto por punto.
+        puntos: list[str] = []
+        if settings.rag_plan_primero or settings.rag_revisor_completitud:
+            from src.agents.rag_plan import bloque_de_puntos, planificar  # lazy
+
+            puntos = await planificar(redact_pii(query), history, lang) or []
+            if puntos and settings.rag_plan_primero:
+                user_content += "\n\n" + bloque_de_puntos(puntos, lang)
 
         messages.append({"role": "user", "content": user_content})
 
@@ -1154,6 +1165,7 @@ async def rag_answer(
         # when any guard rejects: a fresh sample is usually grounded, turning a
         # false fallback into a real answer. Only fall back if both tries fail.
         last_reject = ""
+        respuesta_buena = None  # CAL-A3: la respuesta aprobada a la que solo le faltaba algún punto
         for attempt in range(2):
             try:
                 response = await generar_con_respaldo(client, messages)
@@ -1195,6 +1207,18 @@ async def rag_answer(
                 return answer
             else:
                 grounded, reason = await _verify_grounding(answer, grounding_context, lang=lang)
+                if grounded and settings.rag_revisor_completitud and puntos and attempt == 0:
+                    # CAL-A3: el revisor de siempre solo castiga inventar; aquí también dejarse algo. Si falta un
+                    # punto se reintenta UNA vez con lo que falta; si el reintento sale peor, vale esta.
+                    from src.agents.rag_plan import feedback_de_faltan, puntos_sin_cubrir  # lazy
+
+                    faltan = await puntos_sin_cubrir(puntos, answer, lang)
+                    if faltan:
+                        respuesta_buena = answer
+                        messages = [*messages, {"role": "assistant", "content": answer},
+                                    {"role": "user", "content": feedback_de_faltan(faltan, lang)}]
+                        logger.info(f"[RAG][COMPLETITUD] reintento: faltan {len(faltan)} de {len(puntos)}")
+                        continue
                 if grounded:
                     logger.info(
                         f"[RAG] Query: {query[:60]}... | Docs: {len(docs) if docs else 0} | "
@@ -1212,6 +1236,9 @@ async def rag_answer(
                     messages = [*messages, {"role": "assistant", "content": answer},
                                 {"role": "user", "content": feedback}]
 
+        if respuesta_buena is not None:
+            logger.info("[RAG][COMPLETITUD] el reintento no pasó: se queda la primera respuesta aprobada")
+            return respuesta_buena
         logger.warning(
             f"[RAG][GROUNDING] Rejecting after 2 attempts query={query[:60]}... reason={last_reject}"
         )

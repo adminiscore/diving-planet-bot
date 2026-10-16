@@ -527,7 +527,9 @@
         "rag_origen_pregunta",
         "origen_conserva_respuesta",
         "rag_no_supone_reserva",
-        "rag_sin_hora"
+        "rag_sin_hora",
+        "rag_temperatura_cero",
+        "rag_plan_primero"
       ],
       "tiempo_medido": {
         "p50": 1.9,
@@ -562,7 +564,8 @@
         "juez_presentacion",
         "juez_privacidad_por_linea",
         "juez_v3_luna",
-        "juez_revisa_con_cita"
+        "juez_revisa_con_cita",
+        "rag_revisor_completitud"
       ],
       "tiempo_medido": {
         "p50": 1.2,
@@ -976,6 +979,21 @@
       "area": "Preguntas",
       "titulo": "Base de conocimiento curada",
       "texto": "La búsqueda usa la base nueva: una ficha por servicio y preguntas frecuentes limpias."
+    },
+    "rag_plan_primero": {
+      "area": "Preguntas",
+      "titulo": "Primero la lista de lo que pregunta el cliente",
+      "texto": "Antes de escribir, una llamada rápida saca cada cosa que pregunta o pide el cliente, y la respuesta las contesta todas punto por punto. Antes una sola llamada lo hacía todo a la vez y se dejaba cosas."
+    },
+    "rag_revisor_completitud": {
+      "area": "Preguntas",
+      "titulo": "El revisor también mira que no falte nada",
+      "texto": "Además de comprobar que la respuesta no inventa, se comprueba que contesta cada punto que preguntó el cliente. Si falta alguno se reescribe una vez; si la reescritura sale peor, se queda la primera."
+    },
+    "rag_temperatura_cero": {
+      "area": "Preguntas",
+      "titulo": "La respuesta se redacta sin azar (temperatura 0)",
+      "texto": "La misma pregunta con el mismo contexto da siempre la misma respuesta. En el examen ex-10, 18 de los 56 fallos del RAG eran azar: unas veces lo decía y otras no."
     },
     "rag_ficha_del_servicio": {
       "area": "Preguntas",

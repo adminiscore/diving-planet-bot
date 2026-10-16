@@ -307,6 +307,17 @@ class Settings(BaseSettings):
     # salto en el 10 % y corto las colas de 11-13 s. Revert = rag_answer_model "gpt-4.1-mini" y esto vacio.
     rag_respaldo_modelo: str = "gpt-4.1-mini"
     rag_respaldo_segundos: float = 3.0
+    # CAL-A1 (16-oct): la respuesta del RAG se redacta a temperatura 0 (hoy 0,3). 18 de los 56 fallos del RAG en ex-10
+    # eran azar (docs/robustness/investigacion/diagnostico-73-fallos.md). APAGADO hasta medirlo (banco de fallos, 3 reps).
+    rag_temperatura_cero: bool = False
+    # CAL-A2 (16-oct): antes de redactar, un PLAN (src/agents/rag_plan.py) saca la lista de lo que el cliente pregunta y la
+    # redacción la contesta punto por punto. APAGADO hasta medirlo.
+    rag_plan_primero: bool = False
+    # CAL-A3 (16-oct): tras el revisor de siempre, se comprueba que la respuesta cubre cada punto del plan; si falta
+    # alguno, se reintenta una vez (y si el reintento sale peor, vale la primera). APAGADO hasta medirlo.
+    rag_revisor_completitud: bool = False
+    # Modelo del plan y de la comprobación de completitud (llamadas cortas, temperatura 0).
+    rag_plan_model: str = "gpt-4.1-mini"
     # 8-oct (prueba de DeepSeek): un modelo con prefijo de proveedor ("deepseek/deepseek-v4.1-flash") sale por
     # OpenRouter (`llm_client.parametros_openrouter`), solo por estos proveedores (separados por comas, por latencia,
     # sin retención de datos). "deepseek" = la API oficial (servidores en China: solo para pruebas sin datos de

@@ -112,6 +112,8 @@ services:
       EXTRACTION_MODEL: "gpt-4o-mini"
       # ex-4 (12-oct): el extractor "LLM primero" de la fase EX (src/agents/extractor_turno.py).
       EXTRACTOR_TURNO_MODEL: "gpt-4.1-mini"
+      # CAL-A2/A3 (16-oct): el plan del RAG y la comprobacion de completitud (src/agents/rag_plan.py; flags apagados).
+      RAG_PLAN_MODEL: "gpt-4.1-mini"
       OPENAI_EMBEDDING_MODEL: "text-embedding-3-small"
       OPENAI_TRANSCRIPTION_MODEL: "gpt-4o-mini-transcribe"
       JEV_MODEL: "typesafe/jev-1.13"

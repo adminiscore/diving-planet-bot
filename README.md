@@ -58,6 +58,7 @@ Changing a model means changing both, and measuring it. (Until 2026-09-25 the de
 | Setting | PRE | Code default | Used by | Verified |
 |---|---|---|---|---|
 | `OPENAI_MODEL` | `gpt-4o-mini` | same | `condense_query`, grounding judge (`is_grounded`), language detector, conversation summary; RAG answer if `RAG_ANSWER_MODEL` is empty | PRE container + `[TURN_METRICS]` snapshots |
+| `RAG_PLAN_MODEL` | `gpt-4.1-mini` | same | CAL-A (flags `RAG_PLAN_PRIMERO`, `RAG_REVISOR_COMPLETITUD`, off): the list of what the customer asks and the completeness check (`rag_plan.py`) | PRE container |
 | `RAG_ANSWER_MODEL` | `gpt-4.1-mini` | same | the RAG answer (`rag_agent._answer_with_llm`) | PRE container + snapshots |
 | `EXTRACTION_MODEL` | `gpt-4o-mini` | same | router fallback (`detect_routing_signals`), `fill_gaps`, `verify_fields`, `extract_and_verify`, `detect_special_signals`, `resolve_slot_answer`, warm acknowledgement, notes | PRE container + snapshots |
 | `OPENAI_EMBEDDING_MODEL` | `text-embedding-3-small` | same | retrieval and `scripts/load_embeddings.py` (must match the index) | PRE container |
