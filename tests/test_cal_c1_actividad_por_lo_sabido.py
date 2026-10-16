@@ -36,8 +36,16 @@ def test_quiere_bucear_sin_certificacion_recomienda_el_minicurso(flag):
     texto = ask_slot(st, SLOT_ACTIVITY, reasking=True)
     assert "te recomiendo el *minicurso*" in texto and MENU not in texto
     assert st.suggested_activity == "minicourse"
-    # ya recomendado: la siguiente vez, la versión corta
+    # ya dicha: la siguiente vez, la versión corta
+    st.history = [{"role": "assistant", "content": texto}]
     assert "te recomiendo" not in ask_slot(st, SLOT_ACTIVITY, reasking=True)
+
+
+def test_recomendacion_apuntada_antes_pero_no_dicha_se_dice_entera(flag):
+    # cal-60: la recomendación se había apuntado en un turno anterior y el bot enseñó el menú; ahora, entera.
+    st = _estado(quiere_bucear=True, is_certified=False, suggested_activity="minicourse",
+                 history=[{"role": "assistant", "content": "¿Con cuál te animas — *buceo*, *minicurso*…?"}])
+    assert "te recomiendo el *minicurso*" in ask_slot(st, SLOT_ACTIVITY, reasking=True)
     assert st.core_pending_slot == SLOT_ACTIVITY
 
 

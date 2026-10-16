@@ -514,6 +514,13 @@ def _greeting(state: ConversationState) -> str:
 
 # ─── RESPONDER: redactor de slot (determinista, ES/EN, cierre a conversión) ───
 
+def _minicurso_ya_recomendado(state: ConversationState) -> bool:
+    """CAL-C1: si algún mensaje del bot ya trae la recomendación entera del minicurso."""
+    marcas = ("te recomiendo el *minicurso*", "I'd recommend the *mini-course*")
+    return any(m in (t.get("content") or "") for t in (state.history or []) if t.get("role") == "assistant"
+               for m in marcas)
+
+
 def ask_slot(state: ConversationState, slot: str, *, reasking: bool = False) -> str:
     """Pregunta natural por el slot que falta. Un solo mensaje, UNA pregunta,
     quick-replies solo donde el plan lo permite (ubicación / sí-no).
@@ -534,11 +541,14 @@ def ask_slot(state: ConversationState, slot: str, *, reasking: bool = False) -> 
         # certificación: sin certificación se recomienda el minicurso (lo confirma el cliente); sin saberla, se pregunta.
         certificado = _known_field_values(state).get("is_certified")
         if certificado is False and settings.recommend_inferred_minicourse:
-            # La recomendación entera la primera vez (la corta "¿minicurso u Open Water?" no recomendaba: cal-60).
             state.suggested_activity = "minicourse"
-            reasking = False
         elif certificado is None:
             return ask_slot(state, SLOT_CERTIFICATION, reasking=reasking)
+    if (slot == SLOT_ACTIVITY and settings.actividad_por_lo_sabido and state.suggested_activity == "minicourse"
+            and reasking and not _minicurso_ya_recomendado(state)):
+        # La recomendación entera la primera vez que se hace (la corta "¿minicurso u Open Water?" no recomendaba:
+        # cal-60, también cuando la recomendación se había apuntado en un turno anterior sin llegar a decirse).
+        reasking = False
 
     if slot == SLOT_ACTIVITY and settings.recommend_inferred_minicourse and state.suggested_activity == "padi_open_water":
         # Quien pide un curso desde cero: se recomienda el Open Water y el minicurso queda como opcion.
