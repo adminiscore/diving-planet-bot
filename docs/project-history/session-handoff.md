@@ -41,7 +41,38 @@ PRE (escritas ya por Luna) tumba 42 frente a 13, casi todo verdades (HISTORY 0.3
 **C. Pendientes de antes:** el criterio del Open Water en `manual-duracion-curso` ✅ (FAQ curada nueva: "sacarse la
 certificación" = Open Water, o el Referido; el Scuba Diver es la parcial). **DeepSeek: FUERA DEL PLAN** (Gadea, 9-oct).
 
-### ▶️ RETOMAR AQUÍ — 16-oct (Álvaro con Claude): CAL-B CERRADA (moneda promocionada); siguiente CAL-A
+### ▶️ RETOMAR AQUÍ — 16-oct tarde (Álvaro con Claude): CAL-A CERRADA (medido, no mejora, todo apagado); siguiente CAL-C
+
+**Estado.** PRE sirve `feature/pre_alvaro` con `MONEDA_SIN_NACIONALIDAD_USD` encendido (CAL-B). El código de CAL-A
+está en la rama con sus 4 flags **APAGADOS** (PRE se comporta igual). HISTORY 0.31.36. **Integrad `feature/pre_alvaro`
+antes de subir.**
+
+| Medida (banco de fallos, 16 casos × 3 = 48) | Fallan | Qué se vio |
+|---|---|---|
+| A0 hoy (`cala-A0-base`) | 47 | fallos fijos, no azar |
+| A1 temperatura 0 (`RAG_TEMPERATURA_CERO`) | 44 | ruido |
+| A2 plan antes de redactar (`RAG_PLAN_PRIMERO`) | 46 | contesta mejor lo preguntado, pero no avisa |
+| A3 plan + revisor de completitud (`RAG_REVISOR_COMPLETITUD`) | 45 | ruido |
+| A4 revisor de avisos (`RAG_REVISOR_AVISOS`) | 42 | mejora fotos, refresher y curso referido, pero añade avisos que no tocan |
+
+**Lo que aprendimos.** Los fallos de CAL-A no son preguntas sin contestar: son AVISOS que el cliente necesita y no
+pregunta (no le da tiempo con sus fechas, sin cédula paga en USD, el curso referido pide la carta). El plan no los puede
+saber (no lee la base) y el revisor de avisos con gpt-4.1-mini los elige mal y mete relleno. Si se retoma: probar el
+revisor de avisos con gpt-4.1 (≈2 $ por medida) vigilando la longitud de las respuestas.
+
+**PARA GADEA (criterios dudosos del banco):** cal-72 `precio-dispo-buceo-certificado-grupo-mix/mixto-moneda-usd` (la
+clienta nunca dice que sea grupo mixto: ¿criterio mal colocado en t1?) y cal-36
+`pareja-certificados-cop-descuento-almuer…/descuentos-vigentes` (a "¿incluye el almuerzo?" pide los descuentos).
+
+**Siguiente (en orden):**
+1. **CAL-C** (entender sin repreguntar). Entran además 3 casos de CAL-A que ni llegan a la redacción del RAG: cal-55
+   (Barú: debe decir que no operamos allí), cal-69/70 (crucero: sale el menú de actividades en vez de contestar).
+2. CAL-D (el plan exacto: cotizó el paquete de 4 en vez del de 5) + CAL-E, CAL-F.
+3. CAL-G (al final): prueba de paralelización (búsqueda y cálculos del código a la vez). Detalle en
+   `docs/robustness/ex10/informe-ex10-y-plan-cal.md`.
+- Gasto de OpenAI del 16-oct: 5 medidas del banco + mini-ronda calb ≈ 8-10 $ (estimado). Mirad el saldo antes de lanzar.
+
+### ▶️ (anterior) 16-oct (Álvaro con Claude): CAL-B CERRADA (moneda promocionada); siguiente CAL-A
 
 **Estado.** PRE sirve `feature/pre_alvaro` (lleva todo `feature/pre_gadea` y `feature/l1_gonzalo` del 15-oct) con
 `MONEDA_SIN_NACIONALIDAD_USD` **encendido (promocionado, decisión de Álvaro)**. Crédito de OpenAI recargado el 16-oct.

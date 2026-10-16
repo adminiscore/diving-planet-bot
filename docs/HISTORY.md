@@ -1,6 +1,31 @@
 History
 =======
 
+0.31.36 - (2026-10-16)
+----------------------
+* **CAL-A CERRADO: MEDIDO, NO MEJORA (decisión de Álvaro); todo APAGADO** — el diseño de Gadea (plan → redacción →
+  completitud) y un revisor de avisos, cada uno tras su flag, medidos en PRE con el banco de fallos
+  (`scripts/banco_fallos.py medir --tarea CAL-A --reps 3 --codigo-local`; `docs/robustness/cal/medidas/cala-*.json`).
+
+| Medida (banco de fallos, 16 casos × 3 = 48) | Fallan | Qué se vio |
+|---|---|---|
+| A0 hoy (`cala-A0-base`) | 47 | fallos fijos, no azar |
+| A1 temperatura 0 (`RAG_TEMPERATURA_CERO`) | 44 | ruido |
+| A2 plan antes de redactar (`RAG_PLAN_PRIMERO`) | 46 | contesta mejor lo preguntado, pero no avisa |
+| A3 plan + revisor de completitud (`RAG_REVISOR_COMPLETITUD`) | 45 | ruido |
+| A4 revisor de avisos (`RAG_REVISOR_AVISOS`) | 42 | mejora fotos, refresher y curso referido, pero añade avisos que no tocan |
+
+  - **Por qué no funciona:** estos fallos no son preguntas sin contestar, sino AVISOS que el cliente necesita y no
+    pregunta ("os vais mañana a mediodía: no os da tiempo a certificar"; "sin cédula pagas en USD"). El plan no los puede
+    saber (no lee la base); el revisor de avisos (gpt-4.1-mini) los elige mal y mete relleno (a "¿incluye el almuerzo?",
+    el punto de encuentro).
+  - **3 casos ni pasan por la redacción del RAG** (cal-55 Barú, cal-69/70 crucero): sale el menú de actividades o una
+    frase de trámite → son de entender, pasan a **CAL-C**.
+  - **Criterios dudosos, para Gadea:** cal-72 `mixto-moneda-usd` (la clienta nunca dice que sea grupo mixto) y cal-36
+    `descuentos-vigentes` (a "¿incluye el almuerzo?" pide los descuentos).
+  - Código nuevo: `src/agents/rag_plan.py` (plan, completitud, avisos), cableado en `rag_agent._answer_with_llm`;
+    `RAG_PLAN_MODEL` gpt-4.1-mini fijado en el compose. Tests `tests/test_cal_a_rag_plan.py` (14); suite 3053 verde.
+
 0.31.35 - (2026-10-16)
 ----------------------
 * **CAL-B CERRADO: `MONEDA_SIN_NACIONALIDAD_USD` PROMOCIONADO (decisión de Álvaro)** — sin saber la nacionalidad, el precio va en USD; colombiano o residente, COP; grupo mixto, USD (Álvaro con Claude, sobre el trabajo de Gonzalo del 15-oct).
