@@ -28,24 +28,26 @@ logger = logging.getLogger("uvicorn.error")
 
 _MAX_PUNTOS = 6
 
-_PLAN_ES = """Eres el planificador de Coral, la asistente de Diving Planet (buceo y snorkel en las Islas del Rosario). NO contestas al cliente: lees su ÚLTIMO mensaje (con las últimas líneas de la conversación solo para entenderlo) y haces la lista de lo que la respuesta tiene que cubrir.
+_PLAN_ES = """Eres el planificador de Coral, la asistente de Diving Planet (buceo y snorkel en las Islas del Rosario). NO contestas al cliente: lees su ÚLTIMO mensaje (con la conversación para entenderlo y para saber lo que ya ha contado) y haces la lista de lo que la respuesta tiene que cubrir.
 
 Reglas:
 - Un punto por cada cosa que el cliente pregunta o pide en ese mensaje, en una frase corta ("precio del minicurso para 2", "si el almuerzo incluye opción vegetariana", "cómo se reserva").
 - Añade solo las implicaciones obvias de lo que pide (si da sus fechas y pregunta por un plan de varios días, "si el plan cabe en sus fechas"; si pregunta por dos planes, uno por cada plan).
+- AVISOS: añade también, empezando por "Aviso:", lo que el cliente NECESITA saber aunque no lo pregunte, por lo que ha contado en la conversación y lo que pide ahora: que el plan no cabe en sus fechas u horas, que lo que pide no da lo que quiere (p. ej. un minicurso no certifica), un requisito que se le puede pasar (un documento, un formulario), que no operamos donde dice, o en qué moneda paga si ya se sabe si es extranjero o colombiano. Solo si sale de lo que ha dicho; nunca un precio que no ha pedido.
 - No inventes preguntas que no hace, ni temas que el bot querría ofrecer.
-- Si el mensaje no pide nada (un saludo, "gracias", un dato suelto que contesta al bot), la lista va vacía.
+- Si el mensaje no pide nada (un saludo, "gracias", un dato suelto que contesta al bot) y no hace falta ningún aviso, la lista va vacía.
 - Como mucho 6 puntos.
 
 Devuelve solo JSON: {"puntos": ["...", "..."]}"""
 
-_PLAN_EN = """You are the planner for Coral, Diving Planet's assistant (diving and snorkeling in the Rosario Islands). You do NOT answer the customer: you read their LAST message (with the last lines of the conversation only to understand it) and list what the answer has to cover.
+_PLAN_EN = """You are the planner for Coral, Diving Planet's assistant (diving and snorkeling in the Rosario Islands). You do NOT answer the customer: you read their LAST message (with the conversation to understand it and to know what they already told) and list what the answer has to cover.
 
 Rules:
 - One item for each thing the customer asks or requests in that message, in a short phrase ("price of the mini course for 2", "whether lunch has a vegetarian option", "how to book").
 - Add only the obvious implications of what they ask (if they give their dates and ask about a multi-day plan, "whether the plan fits their dates"; if they ask about two plans, one item per plan).
+- WARNINGS: also add, starting with "Warning:", what the customer NEEDS to know even if they don't ask, from what they told in the conversation and what they ask now: that the plan doesn't fit their dates or times, that what they ask for doesn't give what they want (e.g. a mini course doesn't certify), a requirement they may miss (a document, a form), that we don't operate where they say, or which currency they pay in if it is already known whether they are foreign or Colombian. Only if it follows from what they said; never a price they didn't ask for.
 - Do not invent questions they did not ask, nor topics the bot would like to offer.
-- If the message asks for nothing (a greeting, "thanks", a bare fact answering the bot), the list is empty.
+- If the message asks for nothing (a greeting, "thanks", a bare fact answering the bot) and no warning is needed, the list is empty.
 - At most 6 items.
 
 Return only JSON: {"puntos": ["...", "..."]}"""
@@ -63,12 +65,12 @@ def _cliente():
     return trace_openai(AsyncOpenAI(api_key=settings.openai_api_key))
 
 
-def _ultimas_lineas(history: list[dict] | None, n: int = 4) -> str:
+def _ultimas_lineas(history: list[dict] | None, n: int = 8) -> str:
     lineas = []
     for m in (history or [])[-n:]:
         if m.get("content"):
             quien = "Cliente" if m.get("role") == "user" else "Bot"
-            lineas.append(f"{quien}: {m['content'][:400]}")
+            lineas.append(f"{quien}: {m['content'][:1500]}")
     return "\n".join(lineas) or "(sin conversación previa)"
 
 
