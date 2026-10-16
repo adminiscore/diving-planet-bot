@@ -356,6 +356,13 @@ class Settings(BaseSettings):
     # especial para una agencia, una factura, una salida privada por cotizar) o quiere hablar con alguien, se pasa a un
     # asesor. Con el flag, la señal `needs_staff` incluye esa clase (cal-29). APAGADO hasta medirlo.
     pase_si_pide_fuera_del_sistema: bool = False
+    # CAL-D (16-oct): la consulta de búsqueda de un mensaje referido no nombra el asunto. Medido con
+    # `scripts/sonda_senales.py`: el reescritor dejaba "And how much is per a day" en "How much is the price per day?"
+    # (arregla la gramática, no el contenido) y la búsqueda traía los paquetes de varios días en vez de la ficha del
+    # plan de un día (cal-42); "Vale, en concepto le coloco otros?" no traía nada de cómo se confirma la reserva
+    # (cal-14). Con el flag, el reescritor recibe lo que ya sabemos del cliente (actividad, origen, nacionalidad: los
+    # mismos hechos del estado que eligen los avisos) y la regla de no dejar elipsis. APAGADO hasta medirlo.
+    consulta_con_lo_sabido: bool = False
     # Modelo del plan y de la comprobación de completitud (llamadas cortas, temperatura 0).
     rag_plan_model: str = "gpt-4.1-mini"
     # 8-oct (prueba de DeepSeek): un modelo con prefijo de proveedor ("deepseek/deepseek-v4.1-flash") sale por

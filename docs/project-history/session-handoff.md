@@ -41,7 +41,46 @@ PRE (escritas ya por Luna) tumba 42 frente a 13, casi todo verdades (HISTORY 0.3
 **C. Pendientes de antes:** el criterio del Open Water en `manual-duracion-curso` ✅ (FAQ curada nueva: "sacarse la
 certificación" = Open Water, o el Referido; el Scuba Diver es la parcial). **DeepSeek: FUERA DEL PLAN** (Gadea, 9-oct).
 
-### ▶️ RETOMAR AQUÍ — 16-oct noche (Gadea con Claude): CAL-A5 HECHA Y MEDIDA (47/48 → 37/48), APAGADA; siguiente CAL-E y CAL-D
+### ▶️ RETOMAR AQUÍ — 17-oct madrugada (Gadea con Claude): CAL-A5 y CAL-E hechas y medidas; TODO APAGADO; falta SUBIR LA RAMA
+
+**⚠️ LO PRIMERO: la rama `feature/pre_gadea` NO está subida.** Hay 3 commits locales (CAL-A5, CAL-E y la decisión del
+contacto) con la suite verde y todos los flags apagados. El `git push` quedó bloqueado por el clasificador de permisos
+de la sesión. **Sin desplegar no hay ronda A/B del golden** (el golden entra por Chatwoot y usa el código de PRE, no el
+local), y tampoco entra en PRE el cambio de la base (el deploy reindexa solo).
+
+**DECISIÓN DE GADEA (16-oct): el chatbot NO da números de teléfono ni de WhatsApp.** Quien pide un número o quiere
+hablar con alguien, se pasa a un asesor. Sustituye a la decisión del 17-sep (dar el WhatsApp oficial). Hecho:
+- flag `CONTACTO_PASA_A_PERSONA` (apagado): la petición de contacto escala con el mismo mecanismo que la posventa;
+- **la base ya no reparte el número**: 28 menciones fuera de `faqs.json` (13 preguntas frecuentes, es/en);
+- **criterios actualizados**: el criterio `contacto-real` del golden pedía lo contrario, y cal-03 y cal-33 del banco
+  llevan `pedia_corregido` (mismo patrón que los 7 criterios de moneda de CAL-B);
+- queda en la base el número solo en `escalation_rules.json` (dato de la empresa para el pase, no se le da al cliente).
+
+**Lo medido con el banco** (todo con `--codigo-local`, PRE sin tocar):
+
+| Tarea | Medida | Resultado |
+|---|---|---|
+| CAL-A5 avisos con condiciones | banco CAL-A 16×3 | 47/48 → **37/48**; 3/3 en cal-15, cal-32 y cal-48 |
+| CAL-E contacto, enlace especial, referidos | banco CAL-E | base 12/18; **cal-03, cal-29 y cal-33 a 0/3** |
+| CAL-E idioma (cal-12) | banco CAL-E | **sigue fallando a propósito**: el extractor lee ese portugués como español y no se toca su prompt por un caso |
+
+**Flags nuevos, todos APAGADOS**: `AVISOS_CONDICIONADOS`, `CONTACTO_PASA_A_PERSONA`, `JEV_CON_CONTEXTO`,
+`PASE_SI_PIDE_FUERA_DEL_SISTEMA`, `IDIOMA_DEL_EXTRACTOR`, `QUEJA_SOLO_SI_ALGO_FALLA` (este último sin caso que lo
+demuestre: cal-38 y cal-39 ya pasan solos).
+
+**Siguiente, en este orden:**
+1. **Subir la rama** y comprobar el deploy (`python -m scripts.check_deploy --branch feature/pre_gadea`).
+2. **Ronda A/B del golden** (Gadea ya la autorizó): A = PRE con los flags apagados; B = `AVISOS_CONDICIONADOS` y
+   `CONTACTO_PASA_A_PERSONA` encendidos en `docker-compose.vps.yml`. Los de Jev (`JEV_CON_CONTEXTO`,
+   `PASE_SI_PIDE_FUERA_DEL_SISTEMA`) van en una SEGUNDA ronda: tocan todas las señales y mezclarlos no deja atribuir.
+3. **CAL-D** (ya empezada): en cal-42 el RAG cotiza el paquete de 5 inmersiones cuando piden el precio por día, y en
+   cal-14, cal-49 y cal-64 la política que contesta no entra entre los primeros documentos. Se diagnostica con
+   `scripts/sonda_avisos.py` (enseña los documentos recuperados en orden con su puntuación).
+
+**Herramientas nuevas**: `scripts/sonda_avisos.py` (hechos, documentos y avisos elegidos) y `scripts/sonda_senales.py`
+(señales del enrutador, idioma y traza). Las dos corren dentro de PRE **sin juez**: no gastan el verificador.
+
+### ▶️ (anterior) 16-oct noche (Gadea con Claude): CAL-A5 HECHA Y MEDIDA (47/48 → 37/48), APAGADA; siguiente CAL-E y CAL-D
 
 **CAL-A5 "avisos con condiciones"** (commit en `feature/pre_gadea`, flag `AVISOS_CONDICIONADOS` **APAGADO**: PRE se
 comporta igual). Documento: `docs/robustness/cal/cal-a5-avisos-condicionados.md`. HISTORY 0.31.38.

@@ -1025,7 +1025,9 @@ async def rag_answer(
         logger.info(f"[RAG][CANONICAL_SHORTCUT] shortcut=diving_overview query={query!r} lang={lang}")
         return diving_overview
 
-    condensed_query = await condense_query(query, history=history, lang=lang)
+    # CAL-D (`consulta_con_lo_sabido`): el reescritor recibe lo que ya sabemos del cliente para que la consulta nombre
+    # el asunto (sin esto deja la elipsis: "per day", "en concepto").
+    condensed_query = await condense_query(query, history=history, lang=lang, hechos=avisos_hechos)
     ambiguous_location_clarification = _ambiguous_location_clarification(condensed_query, lang)
     if ambiguous_location_clarification:
         logger.info(f"[RAG][CANONICAL_SHORTCUT] shortcut=ambiguous_location query={query!r} lang={lang}")

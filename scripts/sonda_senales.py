@@ -45,7 +45,8 @@ traza = []
 class _Traza(logging.Handler):
     def emit(self, rec):
         m = rec.getMessage()
-        if any(t in m for t in ("[ROUTER]", "[EXTRACT]", "[CORE][IDIOMA]", "[SUPERVISOR]", "[AVISOS]")):
+        if any(t in m for t in ("[ROUTER]", "[EXTRACT]", "[CORE][IDIOMA]", "[SUPERVISOR]", "[AVISOS]",
+                                "[RAG][REWRITE]", "[RAG][GROUNDING]", "[RAG][COMPLETITUD]", "[RAG][CANONICAL")):
             traza.append(m[:300])
 logging.getLogger().addHandler(_Traza())
 logging.getLogger().setLevel(logging.INFO)

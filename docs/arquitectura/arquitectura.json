@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-16T21:14:45+00:00",
-  "commit": "9ed57f5",
+  "generado": "2026-10-16T21:37:31+00:00",
+  "commit": "e4750ae",
   "rama": "feature/pre_gadea"
  },
  "vistas": {
@@ -847,7 +847,15 @@
      "pre": "gpt-4o-mini"
     }
    ],
-   "interruptores": [],
+   "interruptores": [
+    {
+     "nombre": "consulta_con_lo_sabido",
+     "titulo": "La búsqueda sabe de qué va la pregunta",
+     "codigo": false,
+     "pre": false,
+     "sin_efecto": false
+    }
+   ],
    "marca": "openai"
   },
   {
@@ -1954,6 +1962,19 @@
    "pre": true,
    "fijado_en_pre": true,
    "usado_por": [],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "consulta_con_lo_sabido",
+   "area": "Preguntas",
+   "titulo": "La búsqueda sabe de qué va la pregunta",
+   "texto": "Cuando el cliente dice '¿y por día?' o '¿en concepto qué pongo?', antes se buscaba eso tal cual y salían cosas de otros planes. Ahora la búsqueda usa lo que ya sabemos de él (qué quiere hacer, desde dónde sale) para buscar la pregunta completa.",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
+   "usado_por": [
+    "r_reescribir"
+   ],
    "sin_efecto": null
   },
   {

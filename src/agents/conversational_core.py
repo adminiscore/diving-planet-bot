@@ -5230,7 +5230,8 @@ def _entradas_rag(state: ConversationState, history: list, message: str = "") ->
         entradas["origin"] = state.location
     # CAL-A5 (`avisos_condicionados`): los hechos del estado con los que el código elige los avisos que la respuesta
     # tiene que dar. "dados" es la lista DEL ESTADO (el mismo objeto), así que lo que se avisa se apunta solo.
-    if settings.avisos_condicionados:
+    # CAL-D (`consulta_con_lo_sabido`) usa los mismos hechos para que la consulta de búsqueda nombre el asunto.
+    if settings.avisos_condicionados or settings.consulta_con_lo_sabido:
         from src.flows import avisos as avisos_mod  # lazy
 
         hechos = avisos_mod.hechos_del_estado(state)

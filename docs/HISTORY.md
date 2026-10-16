@@ -1,6 +1,34 @@
 History
 =======
 
+0.31.39 - (2026-10-17)
+----------------------
+* **CAL-E y CAL-D: la decisión del contacto de Gadea, y que la búsqueda sepa de qué va la pregunta** (Gadea con
+  Claude). Todos los flags **APAGADOS**: PRE se comporta igual. Documentos:
+  `docs/robustness/cal/cal-e-sueltos.md` y `docs/robustness/cal/cal-d-busqueda.md`.
+  - **DECISIÓN DE GADEA (16-oct): el chatbot NO da números de teléfono ni de WhatsApp**; quien pide un número o quiere
+    hablar con alguien se pasa a un asesor (`CONTACTO_PASA_A_PERSONA`). Sustituye a la del 17-sep. La base ya no
+    reparte el número: **28 menciones fuera de `faqs.json`** (13 preguntas frecuentes, es/en). El criterio
+    `contacto-real` del golden pedía lo contrario y se actualizó, igual que los 7 de moneda en CAL-B.
+  - **CAL-E, medido** (banco 6 casos ×3): base 12/18. **cal-03, cal-29 y cal-33 a 0/3**. cal-38 y cal-39 ya pasaban
+    solos (el fallo de ex-10 no se reproduce). **cal-12 sigue fallando a propósito**: el extractor lee "Busco el
+    seguinte: Vamos en família a Cartagena" como español, y tocar su prompt por un caso es lo que la norma prohíbe.
+  - Causas de CAL-E, cada una en UN sitio: `PASE_SI_PIDE_FUERA_DEL_SISTEMA` (un enlace a medida, una factura o una
+    salida privada los hace una persona), `JEV_CON_CONTEXTO` (las señales se contestaban viendo solo el mensaje del
+    turno; con los dos últimos, "me lo podrías compartir" sube a 0,63, y **el mismo contexto le faltaba al enrutador
+    LLM de respaldo**, que era la mitad del arreglo), `IDIOMA_DEL_EXTRACTOR` (el idioma del primer turno lo decidía una
+    lista de palabras vacías) y `QUEJA_SOLO_SI_ALGO_FALLA` (lo que el cliente esperaba ver y no ve es una pregunta, no
+    una avería; queda sin caso que lo demuestre).
+  - **CAL-D `CONSULTA_CON_LO_SABIDO`, medido** (banco CAL-A 16×3): **36/48**, frente a 37/48 con los avisos y 47/48 de
+    base. **cal-42 arreglado 3 de 3**: "And how much is per a day" cotizaba el paquete de 5 inmersiones y ahora da el
+    precio del día (2 inmersiones desde Cartagena, 178 USD online). La causa, medida con la sonda: el reescritor de
+    consultas arreglaba la gramática y dejaba la elipsis. Ahora recibe lo que ya sabemos del cliente (los mismos
+    hechos del estado que eligen los avisos) y la regla de no dejar elipsis. Ni una llamada de más.
+  - **Herramientas nuevas**: `scripts/sonda_avisos.py` y `scripts/sonda_senales.py`, las dos dentro de PRE y **sin
+    juez** (no gastan el verificador). Fueron las que dieron todas las causas de esta noche.
+  - **Pendiente**: subir la rama (el `git push` quedó bloqueado por los permisos de la sesión) y las dos rondas A/B del
+    golden que Gadea autorizó. Sin desplegar no hay ronda, y el cambio de la base no entra en PRE (el deploy reindexa).
+
 0.31.38 - (2026-10-16)
 ----------------------
 * **CAL-A5: los AVISOS que el cliente necesita y no pregunta, como datos con condiciones que elige el CÓDIGO**
