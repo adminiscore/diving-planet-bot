@@ -336,7 +336,9 @@ class Settings(BaseSettings):
     # daño es de desplazamiento: los avisos obligatorios ocupan el sitio de lo que la respuesta ya tenía que decir (la
     # peor regresión: se queda sin dar el enlace de reserva) y desdibujan datos ("varios días" por 2 días, "tu
     # reserva" sin reserva). Ver docs/robustness/cal/cal-a5-avisos-condicionados.md §9.
-    avisos_condicionados: bool = False
+    # **ENCENDIDO 17-oct para la RONDA B2** con los avisos refinados (banco 38/48, el enlace de reserva vuelve en los
+    # diálogos que habían regresado). Si la ronda no lo sostiene, revert = "false" aquí y quitar la línea del compose.
+    avisos_condicionados: bool = True
     # CAL-E1 (DECISIÓN DE GADEA del 16-oct, que sustituye a la del 17-sep): esto es un chatbot y NO da números de
     # teléfono ni de WhatsApp. Si el cliente pide un número o quiere hablar con alguien, la conversación se PASA A UN
     # ASESOR (mismo pase que `needs_staff`). De paso desaparece la invención que el juez marcaba en cal-03: el texto
