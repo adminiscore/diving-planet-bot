@@ -93,7 +93,35 @@ async def test_c2_cambia_el_prompt_solo_con_el_flag(monkeypatch, lang):
         monkeypatch.setattr(settings, "extractor_cita_del_cliente", valor)
         await ex.extraer_turno("nos gusta", lang=lang, client=cliente)
     sin, con = sistemas
-    nuevo = ex.CITA_ACEPTA_ES if lang == "es" else ex.CITA_ACEPTA_EN
     quiere = ex.QUIERE_ES if lang == "es" else ex.QUIERE_EN
-    assert nuevo not in sin and quiere not in sin
-    assert nuevo in con and quiere in con
+    assert quiere not in sin and quiere in con
+
+
+def _cliente_que_devuelve(datos: dict):
+    import json as _json
+
+    class _C:
+        async def create(self, **kw):
+            msg = type("M", (), {"content": _json.dumps(datos)})()
+            return type("R", (), {"choices": [type("C", (), {"message": msg})()], "usage": None})()
+
+    return type("O", (), {"chat": type("Ch", (), {"completions": _C()})()})()
+
+
+@pytest.mark.asyncio
+async def test_c2_actividad_citada_de_la_propuesta_del_bot(monkeypatch):
+    from src.agents import extractor_turno as ex
+
+    historia = [{"role": "assistant", "content": "Te propongo la *salida de 2 inmersiones*. ¿Cuál te interesa?"}]
+    datos = {"activity": {"valor": "certified_diving", "cita": "la *salida de 2 inmersiones*"},
+             "group_size": {"valor": 2, "cita": "el de la salida"}}
+    cliente = _cliente_que_devuelve(datos)
+    monkeypatch.setattr(settings, "extractor_cita_del_cliente", False)
+    assert "activity" not in await ex.extraer_turno("nos gusta, somos 2", history=historia, lang="es", client=cliente)
+    monkeypatch.setattr(settings, "extractor_cita_del_cliente", True)
+    out = await ex.extraer_turno("nos gusta, somos 2", history=historia, lang="es", client=cliente)
+    assert out["activity"] == "certified_diving"
+    assert "group_size" not in out  # los demás campos siguen exigiendo la cita en el mensaje
+    # una cita que no está ni en el mensaje ni en la pregunta del bot se sigue descartando
+    otra = _cliente_que_devuelve({"activity": {"valor": "minicourse", "cita": "el minicurso"}})
+    assert "activity" not in await ex.extraer_turno("nos gusta", history=historia, lang="es", client=otra)

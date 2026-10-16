@@ -300,8 +300,7 @@ async def extraer_turno(mensaje: str, *, history: list[dict] | None = None, sabi
         sistema = sistema.replace(RESIDENTE_HOY_ES, RESIDENTE_ES).replace(RESIDENTE_HOY_EN, RESIDENTE_EN)
         sistema = sistema.replace(ELIGE_HOY_ES, ELIGE_ES).replace(ELIGE_HOY_EN, ELIGE_EN)
     if settings.extractor_cita_del_cliente:
-        # CAL-C2 (ver CITA_ACEPTA_*): la aceptación se cita con las palabras del cliente; reservar es querer bucear.
-        sistema = sistema.replace(CITA_ACEPTA_HOY_ES, CITA_ACEPTA_ES).replace(CITA_ACEPTA_HOY_EN, CITA_ACEPTA_EN)
+        # CAL-C2 (ver QUIERE_*): reservar o apartar un cupo hablando de buceo es querer bucear.
         sistema = sistema.replace(QUIERE_HOY_ES, QUIERE_ES).replace(QUIERE_HOY_EN, QUIERE_EN)
     con_nombre = settings.nombre_por_extractor
     if con_nombre:
@@ -343,6 +342,14 @@ async def extraer_turno(mensaje: str, *, history: list[dict] | None = None, sabi
             if len(valor) < 2:  # un reparto de una sola actividad no es un reparto
                 continue
         if not cita_verificable(cita, mensaje):
+            if (campo == "activity" and settings.extractor_cita_del_cliente and history
+                    and cita_verificable(cita, ultima_pregunta_del_bot(history) or "")):
+                # CAL-C2: aceptar lo que propone el bot ("nos gusta" tras "te propongo la salida de 2 inmersiones") se
+                # citaba con el texto del BOT 2 de 3 veces y se descartaba. Solo la actividad, y solo si la cita está
+                # en la última pregunta del bot (la opción existe; que la acepta lo decide el modelo, como hoy).
+                salida[campo] = valor
+                logger.info(f"[EXTRACT][CAL-C2] actividad citada de la propuesta del bot: {cita!r}")
+                continue
             descartes[campo] = f"cita no está en el mensaje: {cita!r}"
             continue
         if campo == "location" and not nombra_un_lugar(cita):
@@ -448,16 +455,9 @@ ELIGE_EN = ("or when they answer the bot's question by taking one of the options
             "proposes (\"we like it\", \"that one\", \"the first one\": the value is that option and the quote, their answer).")
 
 
-# CAL-C2 (16-oct, flag `extractor_cita_del_cliente`). Banco CAL: "nos gusta, somos 2 personas y queremos el de saliendo
-# de cartagena" tras "te propongo la salida de 2 inmersiones…": el modelo entendía la aceptación pero 2 de 3 veces
-# citaba el texto del BOT ("la *salida de 2 inmersiones*") y la comprobación de la cita la descartaba → menú otra vez.
-# Y "¿cómo sería para apartar un cupo para el viernes?" (certificado, hablando de buceo) no era querer bucear.
-CITA_ACEPTA_HOY_ES = "el valor es esa opción y la cita, su respuesta)."
-CITA_ACEPTA_ES = ("el valor es esa opción y la cita, las palabras del CLIENTE que la aceptan, como \"nos gusta\"; nunca el "
-                  "texto del bot).")
-CITA_ACEPTA_HOY_EN = "the value is that option and the quote, their answer)."
-CITA_ACEPTA_EN = ("the value is that option and the quote, the CUSTOMER's words accepting it, like \"we like it\"; never the "
-                  "bot's text).")
+# CAL-C2 (16-oct, flag `extractor_cita_del_cliente`). Banco CAL: "¿cómo sería para apartar un cupo para el viernes?"
+# (certificado, hablando de buceo) no era querer bucear. (La aceptación citada con el texto del bot se arregla en la
+# comprobación de la cita, no en el prompt: cambiar ESA frase movía otros campos del banco ex0, 5 → 8 inventos.)
 QUIERE_HOY_ES = "(lo dice, pide buceos, sus precios o una fecha para bucear)"
 QUIERE_ES = ("(lo dice, pide buceos, sus precios o una fecha para bucear, o pide reservar o apartar un cupo mientras se "
              "habla de buceo)")
