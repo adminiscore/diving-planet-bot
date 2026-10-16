@@ -11,6 +11,11 @@ nunca dejarse algo: decir menos es lo más seguro. Aquí:
   que la respuesta cubre cada punto (con un dato o diciendo que no lo tiene); si falta alguno, se reintenta una vez
   con lo que falta.
 
+- `avisos_que_faltan` (A4, flag `rag_revisor_avisos`): las medidas A0-A3 enseñaron que estos fallos no son preguntas sin
+  contestar sino AVISOS que el cliente necesita y no pregunta ("os vais mañana: no os da tiempo a certificar"). El plan
+  no puede saberlos (no lee la información de la empresa); este revisor lee lo mismo que el juez de siempre y busca como
+  mucho 2 avisos imprescindibles que falten. Si falta alguno, se reintenta una vez con ellos.
+
 Si una llamada falla, se sigue como hoy (sin lista, o sin la comprobación). CAL-G medirá lanzar el plan en paralelo
 con la búsqueda.
 """
@@ -119,6 +124,50 @@ async def puntos_sin_cubrir(puntos: list[str], answer: str, lang: str) -> list[s
     if faltan:
         logger.info(f"[RAG][COMPLETITUD] faltan {faltan}")
     return faltan
+
+
+_AVISOS_ES = """Revisas una respuesta de Coral, la asistente de Diving Planet (buceo y snorkel en las Islas del Rosario), ANTES de enviarla. Recibes la INFORMACIÓN de la empresa (con la conversación), el ÚLTIMO MENSAJE del cliente y la RESPUESTA.
+
+Busca solo AVISOS IMPRESCINDIBLES que falten: un dato que está en la INFORMACIÓN y que el cliente necesita por lo que ha contado o pregunta, porque si no lo sabe le va a salir mal. Por ejemplo: con sus fechas u horas no le da tiempo; lo que pide no le da lo que quiere (un minicurso no certifica); tiene que traer o completar un documento o formulario; no operamos donde dice; en qué moneda paga si ya se sabe si es extranjero o colombiano; una condición de la empresa que cambia la respuesta a lo que pregunta.
+
+NO cuentan: precios u ofertas que no pidió, otros planes, detalles agradables, cosas que la respuesta ya dice o que la INFORMACIÓN no trae. Si dudas, no falta. Como mucho 2.
+
+Devuelve solo JSON: {"faltan": ["el aviso en una frase, con el dato de la INFORMACIÓN"]} (lista vacía si no falta nada)."""
+
+_AVISOS_EN = """You review an answer from Coral, Diving Planet's assistant (diving and snorkeling in the Rosario Islands), BEFORE it is sent. You get the company INFORMATION (with the conversation), the customer's LAST MESSAGE and the ANSWER.
+
+Look only for ESSENTIAL WARNINGS that are missing: a fact that is in the INFORMATION and that the customer needs given what they told or ask, because without it things will go wrong for them. For example: their dates or times don't leave enough time; what they ask for doesn't give what they want (a mini course doesn't certify); they must bring or complete a document or form; we don't operate where they say; which currency they pay in if it is already known whether they are foreign or Colombian; a company condition that changes the answer to what they ask.
+
+These do NOT count: prices or offers they didn't ask for, other plans, nice-to-have details, things the answer already says or that the INFORMATION doesn't contain. If in doubt, it is not missing. At most 2.
+
+Return only JSON: {"faltan": ["the warning in one sentence, with the fact from the INFORMATION"]} (empty list if nothing is missing)."""
+
+
+async def avisos_que_faltan(query: str, informacion: str, answer: str, lang: str) -> list[str]:
+    """Los avisos imprescindibles que la respuesta no da ([] si no falta ninguno o si la llamada falló)."""
+    try:
+        resp = await _cliente().chat.completions.create(
+            model=settings.rag_plan_model, temperature=0, max_tokens=250, response_format={"type": "json_object"},
+            messages=[{"role": "system", "content": _AVISOS_ES if lang == "es" else _AVISOS_EN},
+                      {"role": "user", "content": f"INFORMACIÓN:\n{informacion[-40000:]}\n\n"
+                                                  f"ÚLTIMO MENSAJE DEL CLIENTE:\n{query}\n\nRESPUESTA:\n{answer}"}])
+        faltan = json.loads(resp.choices[0].message.content or "{}").get("faltan") or []
+    except Exception as exc:  # noqa: BLE001
+        logger.warning(f"[RAG][AVISOS] falló, no se comprueba: {exc}")
+        return []
+    faltan = [str(p).strip() for p in faltan if str(p).strip()][:2]
+    if faltan:
+        logger.info(f"[RAG][AVISOS] faltan {faltan}")
+    return faltan
+
+
+def feedback_de_avisos(faltan: list[str], lang: str) -> str:
+    lista = "\n".join(f"- {p}" for p in faltan)
+    if lang == "es":
+        return ("A tu respuesta le falta avisar al cliente de esto, que está en el contexto y necesita saber:\n" + lista
+                + "\nReescríbela añadiéndolo en una frase, con el dato del contexto, sin quitar lo que ya estaba bien.")
+    return ("Your answer is missing this warning, which is in the context and the customer needs to know:\n" + lista
+            + "\nRewrite it adding it in one sentence, with the fact from the context, keeping what was already right.")
 
 
 def feedback_de_faltan(faltan: list[str], lang: str) -> str:

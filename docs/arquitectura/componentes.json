@@ -565,7 +565,8 @@
         "juez_privacidad_por_linea",
         "juez_v3_luna",
         "juez_revisa_con_cita",
-        "rag_revisor_completitud"
+        "rag_revisor_completitud",
+        "rag_revisor_avisos"
       ],
       "tiempo_medido": {
         "p50": 1.2,
@@ -984,6 +985,11 @@
       "area": "Preguntas",
       "titulo": "Primero la lista de lo que pregunta el cliente",
       "texto": "Antes de escribir, una llamada rápida saca cada cosa que pregunta o pide el cliente, y la respuesta las contesta todas punto por punto. Antes una sola llamada lo hacía todo a la vez y se dejaba cosas."
+    },
+    "rag_revisor_avisos": {
+      "area": "Preguntas",
+      "titulo": "El revisor busca avisos que faltan",
+      "texto": "Lee la misma información que el revisor de siempre y mira si a la respuesta le falta algo que el cliente necesita saber aunque no lo pregunte (no le da tiempo, el minicurso no certifica, tiene que traer un documento). Si falta, se reescribe una vez."
     },
     "rag_revisor_completitud": {
       "area": "Preguntas",

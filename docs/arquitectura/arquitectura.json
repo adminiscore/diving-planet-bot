@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-16T12:38:19+00:00",
-  "commit": "7e7f794",
+  "generado": "2026-10-16T13:22:39+00:00",
+  "commit": "e68968a",
   "rama": "feature/pre_alvaro"
  },
  "vistas": {
@@ -1062,6 +1062,13 @@
     {
      "nombre": "rag_revisor_completitud",
      "titulo": "El revisor también mira que no falte nada",
+     "codigo": false,
+     "pre": false,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "rag_revisor_avisos",
+     "titulo": "El revisor busca avisos que faltan",
      "codigo": false,
      "pre": false,
      "sin_efecto": false
@@ -2625,6 +2632,19 @@
    "fijado_en_pre": true,
    "usado_por": [
     "r_reintento"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "rag_revisor_avisos",
+   "area": "Preguntas",
+   "titulo": "El revisor busca avisos que faltan",
+   "texto": "Lee la misma información que el revisor de siempre y mira si a la respuesta le falta algo que el cliente necesita saber aunque no lo pregunte (no le da tiempo, el minicurso no certifica, tiene que traer un documento). Si falta, se reescribe una vez.",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
+   "usado_por": [
+    "r_revisor"
    ],
    "sin_efecto": null
   },

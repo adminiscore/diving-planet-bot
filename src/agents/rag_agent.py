@@ -1207,17 +1207,24 @@ async def rag_answer(
                 return answer
             else:
                 grounded, reason = await _verify_grounding(answer, grounding_context, lang=lang)
-                if grounded and settings.rag_revisor_completitud and puntos and attempt == 0:
-                    # CAL-A3: el revisor de siempre solo castiga inventar; aquí también dejarse algo. Si falta un
-                    # punto se reintenta UNA vez con lo que falta; si el reintento sale peor, vale esta.
-                    from src.agents.rag_plan import feedback_de_faltan, puntos_sin_cubrir  # lazy
+                if grounded and attempt == 0 and (
+                        (settings.rag_revisor_completitud and puntos) or settings.rag_revisor_avisos):
+                    # CAL-A3/A4: el revisor de siempre solo castiga inventar; aquí también dejarse algo (A3: un punto
+                    # del plan; A4: un aviso que el cliente necesita). Si falta, se reintenta UNA vez con lo que
+                    # falta; si el reintento sale peor, vale esta.
+                    from src.agents import rag_plan  # lazy
 
-                    faltan = await puntos_sin_cubrir(puntos, answer, lang)
-                    if faltan:
+                    faltan = await rag_plan.puntos_sin_cubrir(puntos, answer, lang) if (
+                        settings.rag_revisor_completitud and puntos) else []
+                    avisos = await rag_plan.avisos_que_faltan(redact_pii(query), grounding_context, answer, lang) if (
+                        settings.rag_revisor_avisos) else []
+                    if faltan or avisos:
+                        partes = ([rag_plan.feedback_de_faltan(faltan, lang)] if faltan else []) + (
+                            [rag_plan.feedback_de_avisos(avisos, lang)] if avisos else [])
                         respuesta_buena = answer
                         messages = [*messages, {"role": "assistant", "content": answer},
-                                    {"role": "user", "content": feedback_de_faltan(faltan, lang)}]
-                        logger.info(f"[RAG][COMPLETITUD] reintento: faltan {len(faltan)} de {len(puntos)}")
+                                    {"role": "user", "content": "\n\n".join(partes)}]
+                        logger.info(f"[RAG][COMPLETITUD] reintento: faltan {len(faltan)} puntos, {len(avisos)} avisos")
                         continue
                 if grounded:
                     logger.info(

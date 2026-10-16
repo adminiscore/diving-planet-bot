@@ -45,7 +45,7 @@ def rag(monkeypatch):
 
     monkeypatch.setattr(rag_agent, "search_knowledge_base", fake_search)
     monkeypatch.setattr(rag_agent.settings, "rag_min_score", 0.5)
-    for flag in ("rag_temperatura_cero", "rag_plan_primero", "rag_revisor_completitud"):
+    for flag in ("rag_temperatura_cero", "rag_plan_primero", "rag_revisor_completitud", "rag_revisor_avisos"):
         monkeypatch.setattr(rag_agent.settings, flag, False)
     llamadas = []
     veredictos = []
@@ -191,3 +191,57 @@ async def test_puntos_sin_cubrir(monkeypatch):
     assert await rag_plan.puntos_sin_cubrir([], "respuesta", "es") == []
     _cliente_falso(monkeypatch, "no es json", [])
     assert await rag_plan.puntos_sin_cubrir(["a"], "respuesta", "en") == []
+
+
+# --- A4 `rag_revisor_avisos`: el aviso que el cliente necesita y no pregunta ---
+
+@pytest.fixture
+def avisos(monkeypatch):
+    estado = {"avisos": [], "llamadas": []}
+
+    async def que_faltan(query, informacion, answer, lang):
+        estado["llamadas"].append(informacion)
+        return estado["avisos"] if len(estado["llamadas"]) == 1 else []
+
+    monkeypatch.setattr(rag_plan, "avisos_que_faltan", que_faltan)
+    return estado
+
+
+@pytest.mark.asyncio
+async def test_avisos_reintenta_con_el_aviso(rag, avisos, monkeypatch):
+    monkeypatch.setattr(rag_agent.settings, "rag_revisor_avisos", True)
+    avisos["avisos"] = ["el minicurso no certifica"]
+    llamadas = rag([CORTA, COMPLETA], [OK, OK])
+    assert await rag_agent.rag_answer(PREGUNTA, lang="es") == COMPLETA
+    segunda = llamadas[1]["messages"]
+    assert segunda[-2] == {"role": "assistant", "content": CORTA}
+    assert "- el minicurso no certifica\n" in segunda[-1]["content"]
+    # lee lo mismo que el revisor de siempre: el contexto de la búsqueda
+    assert "Minicurso: 120 USD" in avisos["llamadas"][0]
+
+
+@pytest.mark.asyncio
+async def test_avisos_sin_falta_no_reintenta_y_sin_flag_no_llama(rag, avisos, monkeypatch):
+    llamadas = rag([CORTA], [OK])
+    assert await rag_agent.rag_answer(PREGUNTA, lang="es") == CORTA
+    assert avisos["llamadas"] == []
+    monkeypatch.setattr(rag_agent.settings, "rag_revisor_avisos", True)
+    llamadas = rag([CORTA, CORTA], [OK])  # la lista de llamadas es la misma: la segunda respuesta es la de esta vuelta
+    assert await rag_agent.rag_answer(PREGUNTA, lang="es") == CORTA
+    assert len(llamadas) == 2 and len(avisos["llamadas"]) == 1  # 1 de la ronda anterior + 1 de esta
+
+
+@pytest.mark.asyncio
+async def test_avisos_reintento_rechazado_vale_la_primera(rag, avisos, monkeypatch):
+    monkeypatch.setattr(rag_agent.settings, "rag_revisor_avisos", True)
+    avisos["avisos"] = ["el minicurso no certifica"]
+    rag([CORTA, "El minicurso certifica en 1 hora."], [OK, NO])
+    assert await rag_agent.rag_answer(PREGUNTA, lang="es") == CORTA
+
+
+@pytest.mark.asyncio
+async def test_avisos_que_faltan_corta_a_dos_y_falla_en_silencio(monkeypatch):
+    _cliente_falso(monkeypatch, json.dumps({"faltan": ["a", "b", "c"]}), [])
+    assert await rag_plan.avisos_que_faltan("q", "info", "resp", "es") == ["a", "b"]
+    _cliente_falso(monkeypatch, RuntimeError("429"), [])
+    assert await rag_plan.avisos_que_faltan("q", "info", "resp", "en") == []
