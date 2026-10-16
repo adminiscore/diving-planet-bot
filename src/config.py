@@ -144,7 +144,9 @@ class Settings(BaseSettings):
     # catalogo decia "si no sabes la nacionalidad, da las dos monedas" (catalog.MONEDA_SIN_NACIONALIDAD) y el resumen del
     # estado no decia nada: con el flag, la regla del catalogo es la de Gadea y el resumen da la moneda ya resuelta.
     # Banco de fallos (8 casos x 3): fallan 12/24 -> 7/24 (6 de los 7 son del choque con la regla del origen).
-    # La calb-A del 15-oct se quedo sin credito a mitad; repetida el 16-oct (calb-A2). ENCENDIDO para la mini-ronda calb-B2.
+    # Mini-ronda calb-A2/B2 (16-oct, 24 dialogos, con credito): 92,7 -> 95,4 %, 12 -> 17/24 sin fallos, 9 mejoras / 5
+    # regresiones (2 por criterios desfasados o el choque con el origen, 3 ajenas). PROMOCIONADO 16-oct (decision de Alvaro;
+    # HISTORY 0.31.35). Revert = False aqui.
     moneda_sin_nacionalidad_usd: bool = True
     # ex-2 (fase EX): las palabras clave que pasan a un asesor ANTES de que opine la IA se quedan con las EMERGENCIAS
     # (escalation.EMERGENCY_KEYWORDS) y las incidencias en tiempo real; lo medico, el tiempo y las quejas los decide

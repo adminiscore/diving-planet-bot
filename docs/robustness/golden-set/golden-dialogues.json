@@ -1802,7 +1802,7 @@
     },
     {
      "id": "precio-moneda-o-pregunta",
-     "check": "Da el precio del catálogo para acompañante saliendo desde Cartagena en la moneda que corresponda según su nacionalidad, o pregunta nacionalidad y si sale desde Cartagena o ya está en islas antes de cotizar."
+     "check": "Da el precio del catálogo del acompañante saliendo desde Cartagena: en COP si el cliente es colombiano o residente, si no (o si no lo ha dicho) en USD; o pregunta si sale desde Cartagena o ya está en las islas antes de cotizar. No hace falta preguntar la nacionalidad antes de cotizar."
     }
    ],
    "source": {
@@ -2431,7 +2431,7 @@
     },
     {
      "id": "precio-cartagena-moneda",
-     "check": "Da el precio del catálogo para 1 buzo certificado (2 inmersiones, 1 día) saliendo desde Cartagena, en la moneda que corresponda a la nacionalidad; si no han dicho su nacionalidad, lo pregunta antes de cotizar."
+     "check": "Da el precio del catálogo para 1 buzo certificado (2 inmersiones, 1 día) saliendo desde Cartagena: en COP si es colombiano o residente; si no ha dicho su nacionalidad, en USD (no hace falta preguntarla antes de cotizar)."
     },
     {
      "id": "base-en-islas",
@@ -2521,7 +2521,7 @@
     },
     {
      "id": "precio-y-moneda-correctos",
-     "check": "Da el precio del catálogo del paquete de 5 buceos desde Cartagena (y, si aplica, desde islas) en la moneda correcta según nacionalidad; o pregunta la nacionalidad/moneda si falta. También confirma si sale desde Cartagena o ya está en las islas antes de cotizar."
+     "check": "Da el precio del catálogo del paquete de 5 buceos desde Cartagena (y, si aplica, desde islas): en COP si es colombiano o residente; si no ha dicho su nacionalidad, en USD (no hace falta preguntarla). También confirma si sale desde Cartagena o ya está en las islas antes de cotizar."
     },
     {
      "id": "geografia-rosario-vs-baru",
@@ -2631,7 +2631,7 @@
    "criteria": [
     {
      "id": "pide-datos-para-cotizar",
-     "check": "Antes de dar precios, pide si salen desde Cartagena o ya están en las islas y la nacionalidad (moneda). Si el cliente da esos datos, entrega el precio del catálogo correspondiente para buceo certificado y snorkeling."
+     "check": "Antes de dar precios, pide si salen desde Cartagena o ya están en las islas (la nacionalidad no hace falta preguntarla: sin ella, el precio va en USD). Con el origen, entrega el precio del catálogo correspondiente para buceo certificado y snorkeling."
     },
     {
      "id": "link-especial-escalar",
@@ -3289,7 +3289,7 @@
    "criteria": [
     {
      "id": "precio-moneda-origen",
-     "check": "Da el precio del catálogo para el Curso Open Water saliendo desde Cartagena y para el mismo curso si ya está en las islas; la moneda depende de la nacionalidad. Si el cliente no dijo su nacionalidad, el bot debe preguntarla antes de cotizar."
+     "check": "Da el precio del catálogo para el Curso Open Water saliendo desde Cartagena y para el mismo curso si ya está en las islas: en COP si es colombiano o residente; si no ha dicho su nacionalidad, en USD (no hace falta preguntarla antes de cotizar)."
     },
     {
      "id": "duracion-2-dias",
@@ -3622,7 +3622,7 @@
    "criteria": [
     {
      "id": "precio-mixto-cartagena-o-pregunta-faltantes",
-     "check": "Da el precio del catálogo para 3 buzos certificados (2 inmersiones) y 3 snorkelers (2 salidas) desde Cartagena en la moneda según nacionalidad; si falta saber desde dónde salen o la nacionalidad, lo pregunta antes de cotizar."
+     "check": "Da el precio del catálogo para 3 buzos certificados (2 inmersiones) y 3 snorkelers (2 salidas) desde Cartagena: en COP si son colombianos o residentes; en USD si no han dicho la nacionalidad o el grupo es mixto (decisión de moneda del 15-oct). Si falta saber desde dónde salen, lo pregunta antes de cotizar."
     },
     {
      "id": "descuento-online-sin-cupon",
@@ -3788,7 +3788,7 @@
    "criteria": [
     {
      "id": "pide-datos-antes-de-precio",
-     "check": "Antes de dar un precio, pregunta si sale desde Cartagena o si ya está en las islas y su nacionalidad (moneda). Si ya los tuviera, da el precio del catálogo para el minicurso acorde a ese origen y moneda."
+     "check": "Antes de dar un precio, pregunta si sale desde Cartagena o si ya está en las islas (la nacionalidad no hace falta preguntarla: sin ella, el precio va en USD). Con el origen, da el precio del catálogo para el minicurso."
     },
     {
      "id": "no-consejo-medico",
