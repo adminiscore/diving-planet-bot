@@ -231,6 +231,7 @@ flag → banco en local (varias pasadas) → una ronda en PRE por tanda.
 | **CAL-D** | Datos falsos (4) | El revisor comprueba el PLAN exacto (nº de inmersiones, noche o no, edad) contra la ficha del catálogo. | 0,5 d |
 | **CAL-E** | Sueltos (7) | Teléfono → pasar a persona; el idioma del cliente siempre; un enlace por plan; "link especial" → asesor. | 0,5 d |
 | **CAL-F** | Medir | Banco de fallos entero + UNA ronda del golden visible completo (95) en PRE + examen oculto NUEVO cuando haya conversaciones reales no vistas. | 0,5 d |
+| **CAL-G** | Prueba de paralelización (16-oct, decisión de Álvaro: AL FINAL) | Con CAL-A hecho (plan → redacción → revisor de completitud): lanzar a la vez el PLAN, la BÚSQUEDA y los cálculos del código (precio, moneda, origen), que no dependen entre sí; la redacción sigue siendo UNA llamada (no por puntos: más cara y el tono queda a trozos). Medir latencia p50/p95/máx A/B en la misma franja; meta p95 ≤ 7 s. | 0,5 d |
 
 **Metas:** banco de fallos: **todo lo que está en la base, 100 %**. Golden visible: **reales ≥ 95 %**, sintéticos ≥ 99 %.
-Oculto nuevo: ≥ 90 %. Latencia p95 ≤ 7 s. Orden: CAL-0 → CAL-B → CAL-A → CAL-C → CAL-D + CAL-E → CAL-F (~4–5 días).
+Oculto nuevo: ≥ 90 %. Latencia p95 ≤ 7 s. Orden: CAL-0 → CAL-B → CAL-A → CAL-C → CAL-D + CAL-E → CAL-F → CAL-G (~4–5 días + 0,5).

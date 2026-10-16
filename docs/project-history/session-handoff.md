@@ -59,6 +59,8 @@ HISTORY 0.31.35. **Integrad `feature/pre_alvaro` antes de subir.**
    (`minicurso-precio-colombianos-origen-pendiente`, t1).
 2. CAL-C (entender sin repreguntar: el menú de actividades que sale cuando no toca), CAL-D (el plan exacto: cotizó el
    paquete de 4 en vez del de 5) + CAL-E, CAL-F.
+3. **CAL-G (al final, decisión de Álvaro 16-oct): prueba de paralelización** — plan, búsqueda y cálculos del código
+   a la vez; la redacción, una sola llamada. Medir latencia (p95 ≤ 7 s). Detalle en `docs/robustness/ex10/informe-ex10-y-plan-cal.md`.
 - Medir cada arreglo con ≥ 3 repeticiones por caso (`scripts/banco_fallos.py`); mini-ronda A con el código nuevo y el
   flag apagado, B encendido. **Mirad el saldo de OpenAI antes de lanzar** (el 15-oct se acabó a mitad).
 
