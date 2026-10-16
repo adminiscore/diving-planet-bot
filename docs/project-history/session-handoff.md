@@ -41,7 +41,32 @@ PRE (escritas ya por Luna) tumba 42 frente a 13, casi todo verdades (HISTORY 0.3
 **C. Pendientes de antes:** el criterio del Open Water en `manual-duracion-curso` ✅ (FAQ curada nueva: "sacarse la
 certificación" = Open Water, o el Referido; el Scuba Diver es la parcial). **DeepSeek: FUERA DEL PLAN** (Gadea, 9-oct).
 
-### ▶️ RETOMAR AQUÍ — 16-oct noche, más tarde (Gadea con Claude): PLAN CORAL NUEVO, decisiones de Gadea, CAL-A reabierta
+### ▶️ RETOMAR AQUÍ — 16-oct noche (Gadea con Claude): CAL-A5 HECHA Y MEDIDA (47/48 → 37/48), APAGADA; siguiente CAL-E y CAL-D
+
+**CAL-A5 "avisos con condiciones"** (commit en `feature/pre_gadea`, flag `AVISOS_CONDICIONADOS` **APAGADO**: PRE se
+comporta igual). Documento: `docs/robustness/cal/cal-a5-avisos-condicionados.md`. HISTORY 0.31.38.
+
+- **Los avisos son DATOS**: `data/knowledge_base/avisos.json` (18 avisos, su fuente y sus condiciones). **Lo edita el
+  negocio**, como `policies.json`. Los elige el **código** (`src/flows/avisos.py`) con los HECHOS del estado y con los
+  documentos que trajo la búsqueda; van al RAG como puntos obligatorios y el revisor de completitud (A3) comprueba que
+  estén. **Ningún modelo elige** (eso era A4, que metía relleno) y **ninguna lista de nombres ni de palabras**.
+- **Medida** (banco CAL-A, 16 casos ×3, `docs/robustness/cal/medidas/cala-A5-final.json`): **A0 47/48 → A4 42/48 →
+  A5 37/48**. Arreglados **3 de 3**: cal-15 (fotos), cal-32 (sin cédula, USD) y cal-48 (el minicurso no certifica);
+  cal-26 a 1/3. Falsos positivos: sonda sobre los 21 casos de CAL-C, avisos en 3 conversaciones y pertinentes.
+- **Lo que queda APAGADO y por qué**: falta la **ronda A/B del golden visible**, que necesita desplegar (el golden
+  entra por Chatwoot y usa el código de PRE, no el local). **Decisión de Gadea.**
+- **Herramienta nueva**: `scripts/sonda_avisos.py` (hechos, documentos recuperados y avisos elegidos dentro de PRE,
+  SIN juez: no gasta el verificador). Es lo que dio las causas de los dos defectos de la primera versión.
+- **Los 12 casos que siguen fallando no son de los avisos**: 4 los contesta el flujo guiado con el menú (los avisos
+  solo viven en el RAG: continuación natural de CAL-A, pero necesita CAL-C antes), 4 no tienen el dato en el estado
+  (CAL-C / plan EX), 3 la búsqueda no trae la fuente entre las primeras (CAL-D) y 2 el criterio pide otra cosa.
+
+**Siguiente (Gadea):** CAL-E (6 casos en el banco: teléfono → persona, idioma, "link especial" → asesor, el 10 % sin
+código) y CAL-D ampliada (la búsqueda no trae lo que pide la pregunta: cal-42, cal-14, cal-49, cal-64). Antes de
+empezar, medir CAL-E con el flag de avisos: cal-38 y cal-39 son del descuento del 10 %, que ya tiene su aviso, y
+**sirven de prueba de que CAL-A5 generaliza a casos con los que no se diseñó**.
+
+### ▶️ (anterior) 16-oct noche (Gadea con Claude): PLAN CORAL NUEVO, decisiones de Gadea, CAL-A reabierta
 
 **Plan Coral tiene URL NUEVA: https://claude.ai/artifact/Pe2aLn7xr9FKduRnD9jhAd** (la de antes quedó inaccesible desde
 la cuenta `admin.iscore`; la copia se reconstruyó desde el repo con todo lo del 15 y 16-oct y la cola aplicada). Gadea

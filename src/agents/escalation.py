@@ -202,6 +202,7 @@ def sensitive_response_for(category: str, lang: str = "es") -> tuple[str, str] |
 
 async def detect_routing_signals(
     message: str, *, lang: str = "es", client: AsyncOpenAI | None = None, pending_slot: str | None = None,
+    history: list[dict] | None = None,
 ) -> dict:
     """Red de precisión para los 3 gates de arriba — solo se llama cuando las
     listas de palabras clave NO encontraron nada (ver supervisor.py). Nunca
@@ -218,7 +219,8 @@ async def detect_routing_signals(
         from src.observability import note_turn
 
         t0 = time.perf_counter()
-        jev, turn_signals = await detect_routing_signals_jev_full(message, lang=lang, pending_slot=pending_slot)
+        jev, turn_signals = await detect_routing_signals_jev_full(
+            message, lang=lang, pending_slot=pending_slot, history=history)
         if isinstance(turn_signals, bool):  # contrato anterior (solo asks_question)
             turn_signals = {ASKS_QUESTION: True} if turn_signals else {}
         router = "jev" if isinstance(jev, dict) else ("llm_uncertain" if jev == UNCERTAIN else "llm_fallback")

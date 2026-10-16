@@ -2,7 +2,8 @@
 condiciones que elige el CÓDIGO (`src/flows/avisos.py`), no un modelo.
 
 Se fija:
-1. los hechos salen de campos ESTRUCTURADOS del estado (actividad, origen, nacionalidad, zona), nunca del texto;
+1. los hechos salen de campos ESTRUCTURADOS del estado (actividad, origen, nacionalidad), nunca del texto, y no hay
+   ninguna lista de nombres ni de palabras;
 2. el tema sale de los documentos que trajo la BÚSQUEDA (su clave, y los `topics` solo de los primeros), no del
    mensaje del cliente;
 3. un aviso solo aplica si se cumplen TODAS sus condiciones, y los de `una_vez` no se repiten; el que NO depende de
@@ -58,11 +59,18 @@ def test_la_nacionalidad_mixta_manda_sobre_la_de_quien_escribe():
     assert av.hechos_del_estado(_estado())["nacionalidad"] is None
 
 
-def test_la_zona_sale_del_hotel_o_la_isla_del_estado():
-    assert av.hechos_del_estado(_estado(island="Isla Barú"))["zona"] == "baru"
-    assert av.hechos_del_estado(_estado(hotel="Playa Tranquila"))["zona"] == "baru"
-    assert av.hechos_del_estado(_estado(island="Isla Grande"))["zona"] is None
-    assert av.hechos_del_estado(_estado())["zona"] is None
+def test_no_hay_listas_de_nombres_de_lugares_ni_de_palabras():
+    """Norma del proyecto (Gadea): soluciones genéricas, nunca patrones que acierten unas conversaciones y fallen
+    otras. La primera versión tenía una tabla con cuatro nombres de hoteles de Barú sacados del golden: fuera. Un
+    aviso que depende de dónde está el cliente espera a que el dato esté en el estado; el de "solo operamos en
+    Rosario" depende de que la búsqueda traiga su propia fuente."""
+    datos = json.loads(av.AVISOS_PATH.read_text(encoding="utf-8-sig"))
+    assert "zonas" not in datos, "una tabla de nombres de lugares es un parche: el lugar lo da el estado"
+    hechos = av.hechos_del_estado(_estado(island="Isla Barú"))
+    assert "zona" not in hechos
+    por_la_fuente = [a["id"] for a in av.seleccionar(hechos, set(), {"dive_area"})]
+    assert "solo-operamos-en-rosario" in por_la_fuente
+    assert "solo-operamos-en-rosario" not in [a["id"] for a in av.seleccionar(hechos, set(), {"food_policy"})]
 
 
 # ---------------------------------------------------------------- 2. el tema, de los documentos recuperados
@@ -165,11 +173,19 @@ def test_el_almuerzo_solo_se_avisa_a_quien_sale_de_las_islas():
 
 def test_nunca_mas_de_dos_avisos_en_un_turno():
     """Con muchas condiciones cumplidas la respuesta seguiría siendo una respuesta, no una lista de advertencias."""
-    hechos = av.hechos_del_estado(_estado(location="island", is_colombian=False, detected_activity="minicourse",
-                                          island="Isla Barú"))
+    hechos = av.hechos_del_estado(_estado(location="island", is_colombian=False, detected_activity="minicourse"))
     todas = set(av._temas())
     fuentes = {av._fuente(a) for a in av.avisos()}
     assert len(av.seleccionar(hechos, todas, fuentes)) <= av.MAX_AVISOS == 2
+
+
+def test_con_mas_de_dos_avisos_ganan_los_mas_relacionados_con_la_pregunta():
+    """Los dos huecos no se los queda el orden del fichero: primero los avisos cuya propia fuente está entre los
+    primeros documentos que trajo la búsqueda."""
+    hechos = av.hechos_del_estado(_estado(location="island", is_colombian=False, detected_activity="minicourse"))
+    elegidos = [a["id"] for a in av.seleccionar(hechos, set(av._temas()), {"food_policy", "island_pickup"})]
+    assert len(elegidos) == 2
+    assert set(elegidos) <= {"almuerzo-desde-islas", "recogida-en-hotel-islas"}, elegidos
 
 
 def test_sin_hechos_ni_temas_no_hay_aviso_que_dependa_de_ellos():
@@ -307,7 +323,7 @@ def test_el_fichero_de_avisos_es_valido():
     servicios = set(_de_la_base("services.json", "services"))
     ids = [a["id"] for a in datos["avisos"]]
     assert len(ids) == len(set(ids)), "ids repetidos"
-    campos_validos = {"actividad", "actividad_tambien", "origen", "nacionalidad", "zona", "tema",
+    campos_validos = {"actividad", "actividad_tambien", "origen", "nacionalidad", "tema",
                       "inactivo_mas_de_2_anos", "estancia_menor_que_plan"}
     actividades = set(dom.activity_ids())
     for aviso in datos["avisos"]:
@@ -323,8 +339,6 @@ def test_el_fichero_de_avisos_es_valido():
                 assert set(valor) <= actividades, f"{aviso['id']}: actividad fuera del registro"
             if campo == "tema":
                 assert set(valor) <= set(av._temas()), f"{aviso['id']}: tema sin definir"
-            if campo == "zona":
-                assert valor in av._zonas(), f"{aviso['id']}: zona sin definir"
             if campo == "origen":
                 assert valor in ("cartagena", "island"), f"{aviso['id']}: origen desconocido"
             if campo == "nacionalidad":

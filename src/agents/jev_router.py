@@ -487,8 +487,27 @@ def activity_affirmed(p_affirms: float, p_hypothesis: float | None) -> bool:
     return p_affirms >= 0.4 and p_hypothesis < 0.5
 
 
+# CAL-E2 (16-oct, flag `queja_solo_si_algo_falla`): "the discount of 10% is not showing up. what is the code?" se
+# tomaba por un problema del sistema de reservas y el turno acababa en un pase a una persona diciendo "sorry the link
+# didn't work" (dos cosas que el cliente no dijo: cal-38 y cal-39). Lo que el cliente esperaba ver y no ve es una
+# PREGUNTA que contesta la base (el 10 % es automático y no hay código), no un fallo técnico. Es la frontera de la
+# clase, no el caso: vale para el descuento, el precio, una opción o un código que no aparecen.
+_NO_APARECE_NO_ES_FALLO = (
+    "Nothing is reported as failing when the customer only says that something they EXPECTED to see is not there "
+    "— a discount, a price, an option or a code that 'is not showing up', 'no me aparece', 'no me sale' — or asks "
+    "how to get it ('what is the code?'). That is a normal question about how it works, answered from the catalog "
+    "and the policies, and it is neither a technical failure nor a real-time problem."
+)
+
+
 def _questions_for_turn(pending_slot: str | None = None) -> dict:
     q = dict(_QUESTIONS)
+    if settings.queja_solo_si_algo_falla:
+        for nombre in ("sensitive_topic", "broken_link_complaint"):
+            pregunta = q.get(nombre)
+            if pregunta:
+                q[nombre] = {**pregunta,
+                             "instructions": f"{pregunta['instructions']} {_NO_APARECE_NO_ES_FALLO}"}
     pending_q = pending_answer_question(pending_slot)
     if pending_q:
         q[PENDING_ANSWER] = pending_q
@@ -606,6 +625,30 @@ def _http() -> httpx.AsyncClient:
 
 UNCERTAIN = "uncertain"  # Jev respondió pero duda: el turno lo decide el router LLM
 
+# CAL-E5 (16-oct, flag `jev_con_contexto`): Jev contestaba las señales viendo SOLO el mensaje del turno, así que un
+# mensaje que se refiere a lo anterior perdía a qué se refiere: "Me lo podrías compartir por favor" (tras "se me perdió
+# el número de [NOMBRE]") no era una petición de contacto, y "Pero un link especial" no era algo que solo pueda hacer
+# una persona. Con el flag viajan los dos últimos mensajes como REFERENCIA, dejando claro que las preguntas son sobre
+# el último mensaje del cliente. No es una lista de frases: es el contexto que le faltaba.
+_CONTEXTO_TURNOS = 2
+_CONTEXTO_CARACTERES = 400
+
+
+def _estado_para_jev(message: str, history: list[dict] | None = None) -> str:
+    """Lo que Jev lee: el contexto fijo, los últimos turnos (solo con el flag) y el mensaje de este turno."""
+    sin_contexto = f"{_CONTEXT}\n\nCustomer message: {message}"
+    if not (settings.jev_con_contexto and history):
+        return sin_contexto
+    ultimos = [h for h in history if (h or {}).get("content")][-_CONTEXTO_TURNOS:]
+    if not ultimos:
+        return sin_contexto
+    lineas = "\n".join(
+        f"{'Customer' if h.get('role') == 'user' else 'Assistant'}: {str(h['content'])[:_CONTEXTO_CARACTERES]}"
+        for h in ultimos)
+    return (f"{_CONTEXT}\n\nHow the conversation ended, only so you can tell what the customer is referring to:\n"
+            f"{lineas}\n\nEvery question below is about THIS last message of the customer, not about the lines "
+            f"above.\n\nCustomer message: {message}")
+
 
 async def detect_routing_signals_jev(message: str, *, lang: str = "es") -> dict | str | None:
     """Las 9 señales con Jev.
@@ -624,7 +667,7 @@ _TURN_SIGNALS = (
 
 
 async def detect_routing_signals_jev_full(
-    message: str, *, lang: str = "es", pending_slot: str | None = None,
+    message: str, *, lang: str = "es", pending_slot: str | None = None, history: list[dict] | None = None,
 ) -> tuple[dict | str | None, dict]:
     """Como `detect_routing_signals_jev`, y además las señales de u3-4/u3-5 (solo con
     `answer_and_continue`): `asks_question` y los `affirms_*`. Van en el segundo valor
@@ -645,7 +688,7 @@ async def detect_routing_signals_jev_full(
             headers={"Authorization": f"Bearer {key}"},
             json={
                 "model": settings.jev_model,
-                "state": f"{_CONTEXT}\n\nCustomer message: {message}",
+                "state": _estado_para_jev(message, history),
                 "questions": _questions_for_turn(pending_slot),
             },
             timeout=settings.jev_timeout_seconds,

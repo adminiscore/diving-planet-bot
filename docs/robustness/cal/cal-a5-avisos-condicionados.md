@@ -28,7 +28,7 @@ Así que el mecanismo de A4 se queda y **la elección pasa al código**.
    contexto. Lo edita el negocio como `policies.json`, sin tocar código.
 2. **Las condiciones son sobre datos, nunca sobre el texto del cliente** (`src/flows/avisos.py`):
    - `hechos_del_estado(state)`: actividad (del árbol, del extractor, del carrito o del reparto del grupo), origen,
-     nacionalidad (mixto manda), zona del hotel o isla, inactividad de más de 2 años.
+     nacionalidad (mixto manda), inactividad de más de 2 años. **Ninguna lista de nombres ni de palabras**: ver §4.
    - `temas_de_los_docs(docs)`: de qué va la pregunta según **los documentos que trajo la búsqueda**: la CLAVE de todos
      ellos y los `topics` solo de los dos primeros (ver §3: por qué así).
    - `fuentes_recuperadas(docs)`: las claves de los **4 primeros** documentos, lo que la búsqueda considera más
@@ -63,12 +63,18 @@ tal cual (cal-32, "sin cédula pagas en USD, la tarifa es la misma"). El problem
 
 - No hay un aviso por caso del banco: son las reglas del negocio que ya están en `policies.json`, con la condición en
   la que un asesor las diría. Los 16 casos del banco son la medida, no la lista.
+- **Ninguna lista de nombres ni de palabras.** La primera versión traía una tabla con cuatro nombres de hoteles de Barú
+  (`playa tranquila`, `cholón`…) sacados de los casos del golden: eso acierta esas conversaciones y falla las demás,
+  justo lo que la norma del proyecto prohíbe. Se quitó. El aviso pasó a depender de que la búsqueda traiga su propia
+  política (`dive_area`), que es una señal del buscador, y un aviso que depende de DÓNDE está el cliente espera a que
+  el dato esté en el estado (plan EX), en vez de adivinarlo del texto. Un test lo fija
+  (`test_no_hay_listas_de_nombres_de_lugares_ni_de_palabras`).
 - La decisión la toma el código con campos estructurados: lo mismo que la moneda en CAL-B. Cada decisión que sale del
   modelo es una fuente de azar menos (el 23 % de los fallos no se reproducía).
 - Lo que diga un buen asesor deja de vivir solo en los criterios del juez (en el examen) y pasa al producto. Por eso el
   examen oculto no mejoraba: arreglábamos respuestas, no el conocimiento.
 
-## 5. La medida (16-oct, `cala-A5-avisos-datos`)
+## 5. La medida (16-oct, `cala-A5-final`)
 
 Los 16 casos de CAL-A del banco ×3, con el código local dentro de PRE (PRE no cambia: el flag va solo en ese proceso).
 
@@ -76,10 +82,14 @@ Los 16 casos de CAL-A del banco ×3, con el código local dentro de PRE (PRE no 
 |---|---|---|
 | A0 base | 47/48 | el suelo |
 | A4 revisor de avisos (modelo elige) | 42/48 | lo mejor de Álvaro |
-| **A5 avisos con condiciones (código elige)** | **39/48** | **lo mejor hasta ahora** |
+| **A5 avisos con condiciones (código elige)** | **37/48** | **lo mejor hasta ahora** |
 
-Arreglados **3 de 3** (la regla de promoción): **cal-15** (las fotos no están incluidas) y **cal-48** (el minicurso no
-certifica, y el Open Water son 2 días con noche en las islas). A medias: cal-26 (3 → 1) y cal-32 (3 → 2).
+Arreglados **3 de 3** (la regla de promoción): **cal-15** (las fotos no están incluidas), **cal-32** (sin cédula se
+paga en USD, misma tarifa) y **cal-48** (el minicurso no certifica, y el Open Water son 2 días con noche en las
+islas). **cal-26** a 1/3 (el formulario médico se dice, pero a veces lo coloca antes de reservar).
+
+Son tres medidas seguidas, con los ajustes que dio la sonda entre ellas: 39/48 → 37/48 → **37/48 con el código
+final** (`cala-A5-avisos-datos`, `-v2`, `cala-A5-final`). La de referencia es la última.
 
 **Por qué fallan los 12 que siguen fallando** (leído caso a caso, no son cosa de los avisos):
 
@@ -112,9 +122,11 @@ que necesita desplegar (el golden entra por Chatwoot y usa el código de PRE, no
 - **`plan-no-cabe-en-la-estancia` no puede cumplirse todavía**: las fechas del cliente no están en el estado (campo del
   extractor, CAL-C). Hasta entonces, `estancia_menor_que_plan` es siempre falso. Afecta a cal-48 en parte ("se van
   mañana al mediodía").
-- **La zona depende de que el hotel o la isla consten en el estado**: `intent_detector.island_patterns` no tiene id
-  para Barú, así que "Playa Tranquila en Isla Barú" dicho de paso no llega a `state.island`. El camino correcto no es
-  un patrón nuevo: es el **plan EX** (el LLM extrae el lugar, el código decide). Afecta a cal-23 y cal-55.
+- **Nadie sabe que el cliente habla de Barú**: `intent_detector.island_patterns` no tiene id para Barú, así que
+  "Playa Tranquila en Isla Barú" dicho de paso no llega a `state.island`. La primera versión lo tapaba con una tabla de
+  cuatro nombres de hoteles sacados del golden y se quitó (§4): hoy el aviso "solo operamos en las Islas del Rosario"
+  se da cuando la búsqueda trae su política, y el camino bueno para el lugar es el **plan EX** (el LLM extrae el lugar,
+  el código decide). Afecta a cal-23 y cal-55.
 - **El estado llega tarde o no llega**: la sonda vio turnos donde el aviso correcto no podía saltar porque el estado
   no tenía el dato que lo condiciona (cal-26: el cliente dice "I'm gonna need a little refresher" y no queda ni
   `refresher_interested` ni la actividad; cal-47: está alojado en las islas y `location` sigue vacío). Eso es CAL-C

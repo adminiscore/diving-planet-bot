@@ -10,7 +10,8 @@ Aquí la elección la hace el código y los avisos son DATOS (`data/knowledge_ba
 `policies.json`):
 
 - `hechos_del_estado(state)`: lo que ya sabemos del cliente en campos estructurados (actividad elegida o detectada,
-  origen, nacionalidad, zona del hotel, inactividad), nunca leyendo el texto del mensaje con patrones.
+  origen, nacionalidad, inactividad), nunca leyendo el texto del mensaje con patrones. NO hay listas de nombres de
+  lugares ni de palabras: un aviso que depende de dónde está el cliente espera a que el dato esté en el estado.
 - `temas_de_los_docs(docs)`: de qué va la pregunta según los documentos que la BÚSQUEDA recuperó (sus `topics` y su
   clave de política o ficha), no según el texto del cliente.
 - `seleccionar(hechos, temas)`: los avisos cuyas condiciones se cumplen todas; los de `una_vez` solo si no se han dado.
@@ -27,8 +28,6 @@ import json
 import logging
 from functools import lru_cache
 from pathlib import Path
-
-from src.utils.text import strip_accents
 
 logger = logging.getLogger("uvicorn.error")
 
@@ -55,14 +54,6 @@ def avisos() -> list[dict]:
 
 def _temas() -> dict[str, list[str]]:
     return {k: v for k, v in (_datos().get("temas") or {}).items() if not k.startswith("_")}
-
-
-def _zonas() -> dict[str, list[str]]:
-    return {k: v for k, v in (_datos().get("zonas") or {}).items() if not k.startswith("_")}
-
-
-def _normalizar(texto: str) -> str:
-    return strip_accents(texto or "").lower()
 
 
 def _actividades_del_estado(state) -> set[str]:
@@ -113,20 +104,6 @@ def _nacionalidad(state) -> str | None:
     return None
 
 
-def _zona(state) -> str | None:
-    """La zona que el cliente dio como alojamiento (hotel o isla del estado, no el texto del mensaje): 'baru' si lo que
-    dijo es Barú o una de sus playas. Sirve para avisar de que allí no operamos."""
-    dicho = " ".join(_normalizar(x) for x in (getattr(state, "island", None), getattr(state, "hotel", None),
-                                              getattr(state, "detected_island", None),
-                                              getattr(state, "detected_hotel", None)) if x)
-    if not dicho:
-        return None
-    for zona, lugares in _zonas().items():
-        if any(_normalizar(lugar) in dicho for lugar in lugares):
-            return zona
-    return None
-
-
 def hechos_del_estado(state) -> dict:
     """Lo que ya sabemos del cliente, en los campos del estado, para decidir qué avisos aplican."""
     inactivo = getattr(state, "last_dive_over_2_years", None)
@@ -136,7 +113,6 @@ def hechos_del_estado(state) -> dict:
         "actividades": _actividades_del_estado(state),
         "origen": getattr(state, "location", None),
         "nacionalidad": _nacionalidad(state),
-        "zona": _zona(state),
         "inactivo_mas_de_2_anos": bool(inactivo),
         # Pendiente: las fechas del cliente no están en el estado (campo del extractor, CAL-C), así que el aviso de
         # "el plan no cabe en tu estancia" todavía no puede cumplirse.
@@ -205,7 +181,7 @@ def _cumple(aviso: dict, hechos: dict, temas: set[str], fuentes: set[str]) -> bo
         elif campo == "tema":
             if not (set(esperado) & temas):
                 return False
-        elif campo in ("origen", "nacionalidad", "zona"):
+        elif campo in ("origen", "nacionalidad"):
             if hechos.get(campo) != esperado:
                 return False
         elif campo in ("inactivo_mas_de_2_anos", "estancia_menor_que_plan"):
@@ -230,8 +206,12 @@ def seleccionar(hechos: dict, temas: set[str], fuentes: set[str] | None = None) 
     """Los avisos que aplican a este turno: se cumplen TODAS sus condiciones y, si son de `una_vez`, no se han dado.
     `fuentes`: las claves de los primeros documentos recuperados (ver `fuentes_recuperadas`)."""
     dados = set(hechos.get("dados") or [])
+    fuentes = fuentes or set()
     elegidos = [a for a in avisos()
-                if not (a.get("una_vez") and a["id"] in dados) and _cumple(a, hechos, temas, fuentes or set())]
+                if not (a.get("una_vez") and a["id"] in dados) and _cumple(a, hechos, temas, fuentes)]
+    # Si aplican más de `MAX_AVISOS`, primero los que la BÚSQUEDA señala como más relacionados con la pregunta (su
+    # fuente está entre los primeros documentos): así los dos huecos no se los queda el orden del fichero.
+    elegidos.sort(key=lambda a: _fuente(a) not in fuentes)
     if elegidos:
         logger.info(f"[AVISOS] {len(elegidos)} aplican: {[a['id'] for a in elegidos[:MAX_AVISOS]]}")
     return elegidos[:MAX_AVISOS]

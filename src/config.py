@@ -332,6 +332,20 @@ class Settings(BaseSettings):
     # (`src/flows/avisos.py`), no un modelo: A4 los elegía mal (metía relleno) con el mecanismo bueno. Van al RAG como
     # puntos obligatorios y el revisor de completitud comprueba que estén. APAGADO hasta medirlo (banco, 3 reps).
     avisos_condicionados: bool = False
+    # CAL-E1 (16-oct): el texto que da el WhatsApp oficial decía "(solo mensajes de WhatsApp, no llamadas)", una
+    # restricción que NO está en la base: el juez lo marca como invención (cal-03). Con el flag, la aclaración sale de
+    # la base (`escalation_rules.json`, `handoff_protocol.contact_info.nota_es`/`nota_en`) y, si no está, no se dice
+    # nada. Si de verdad es solo mensajes, el negocio lo añade a la base. APAGADO hasta medirlo.
+    contacto_solo_lo_de_la_base: bool = False
+    # CAL-E5 (16-oct): Jev contesta las señales del router viendo solo el mensaje del turno, así que un mensaje que se
+    # refiere a lo anterior pierde a qué se refiere ("me lo podrías compartir" tras "se me perdió el número",
+    # "pero un link especial"). Con el flag le viajan los 2 últimos mensajes como referencia. APAGADO hasta medirlo.
+    jev_con_contexto: bool = False
+    # CAL-E2 (16-oct): "the discount of 10% is not showing up. what is the code?" se tomaba por un problema del
+    # sistema de reservas y acababa en un pase a una persona diciendo "sorry the link didn't work" (cal-38, cal-39).
+    # Con el flag, las señales de queja y de tema sensible dicen que lo que el cliente esperaba ver y no ve es una
+    # PREGUNTA que contesta la base, no un fallo. Frontera de la clase, no del caso. APAGADO hasta medirlo.
+    queja_solo_si_algo_falla: bool = False
     # Modelo del plan y de la comprobación de completitud (llamadas cortas, temperatura 0).
     rag_plan_model: str = "gpt-4.1-mini"
     # 8-oct (prueba de DeepSeek): un modelo con prefijo de proveedor ("deepseek/deepseek-v4.1-flash") sale por

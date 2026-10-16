@@ -102,7 +102,7 @@ async def _router_node(state: BotState) -> dict:
 
     msg_lower = message.strip().lower()
     signals = {} if msg_lower.isdigit() else await detect_routing_signals(
-        message, lang=conv.language, pending_slot=conv.core_pending_slot,
+        message, lang=conv.language, pending_slot=conv.core_pending_slot, history=conv.history,
     )
     route = classify_route(conv, message, signals)
     logger.info(f"[GRAPH] conv={conv.conversation_id} route={route}")

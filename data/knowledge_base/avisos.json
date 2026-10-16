@@ -4,7 +4,7 @@
     "id": "identificador",
     "fuente": "política (policies.json) o ficha (ficha:<id de services.json>) de la que sale",
     "aviso_es": "qué hay que decir (resumen; el RAG lo redacta con la fuente, en el idioma del cliente)",
-    "cuando": "TODAS las condiciones tienen que cumplirse; dentro de una lista basta con una. Campos: actividad (ids del registro de actividades; el cliente la eligió, la detectó el extractor, está en el carrito o en el reparto del grupo), actividad_tambien (otra actividad que TAMBIÉN tiene que estar), origen ('cartagena'|'island'), nacionalidad ('colombiano'|'extranjero'|'mixto'), zona (clave de `zonas`: sale del hotel o isla que dijo el cliente), inactivo_mas_de_2_anos (bool), tema (claves de `temas`: los documentos que la búsqueda recuperó para esta pregunta), estancia_menor_que_plan (bool; aún sin dato en el estado: nunca se cumple)",
+    "cuando": "TODAS las condiciones tienen que cumplirse; dentro de una lista basta con una. Campos: actividad (ids del registro de actividades; el cliente la eligió, la detectó el extractor, está en el carrito o en el reparto del grupo), actividad_tambien (otra actividad que TAMBIÉN tiene que estar), origen ('cartagena'|'island'), nacionalidad ('colombiano'|'extranjero'|'mixto'), inactivo_mas_de_2_anos (bool), tema (claves de `temas`: los documentos que la búsqueda recuperó para esta pregunta), estancia_menor_que_plan (bool; aún sin dato en el estado: nunca se cumple)",
     "una_vez": "si true, el aviso se da una sola vez por conversación"
   },
   "temas": {
@@ -23,14 +23,10 @@
     "requisitos": ["forms_waiver", "medical_restrictions", "waiver_form", "insurance_form_requirement", "requirements"],
     "refresher": ["refresher", "refresh_requirement"]
   },
-  "zonas": {
-    "_about": "Lugares que el cliente puede dar como hotel o isla y que NO son las Islas del Rosario (donde operamos). Se compara con el hotel/isla guardado en el estado, sin tildes ni mayúsculas.",
-    "baru": ["baru", "playa blanca", "playa tranquila", "cholon", "cholón"]
-  },
   "avisos": [
     {"id": "minicurso-no-certifica", "fuente": "minicourse_scope", "aviso_es": "El minicurso es una experiencia guiada y NO certifica; para certificarse está el Open Water (2 días, con noche en las islas).", "cuando": {"actividad": ["minicourse"], "tema": ["certificacion"]}, "una_vez": true},
     {"id": "plan-no-cabe-en-la-estancia", "fuente": "courses_overnight_requirement", "aviso_es": "El plan dura más que la estancia que ha dicho el cliente (p. ej. Open Water = 2 días y se va mañana): avisarlo y proponer el plan que sí cabe.", "cuando": {"estancia_menor_que_plan": true}, "una_vez": true, "nota": "necesita las fechas del cliente en el estado (campo del extractor pendiente, CAL-C); hasta entonces no se cumple nunca"},
-    {"id": "no-operamos-en-baru", "fuente": "dive_area", "aviso_es": "Buceamos en las Islas del Rosario; Barú no es lo mismo (es una península unida a tierra) y no operamos allí.", "cuando": {"zona": "baru"}, "una_vez": true},
+    {"id": "solo-operamos-en-rosario", "fuente": "dive_area", "aviso_es": "Buceamos solo en las Islas del Rosario; Barú es otro destino (una península unida a tierra) y allí no operamos.", "cuando": {}, "una_vez": true},
     {"id": "formulario-medico-tras-reservar", "fuente": "medical_restrictions", "aviso_es": "Para el minicurso, el refresher y los cursos hace falta el formulario médico; se envía después de reservar.", "cuando": {"actividad": ["minicourse", "refresher", "padi_open_water", "padi_open_water_referral", "padi_advanced"], "tema": ["reservar", "requisitos"]}, "una_vez": true},
     {"id": "carta-de-referido", "fuente": "ficha:referral", "aviso_es": "El curso referido exige la carta/formato de referido PADI firmado por el instructor de origen; el plan es el 'Curso Referido Open Water', no una salida normal.", "cuando": {"actividad": ["padi_open_water_referral"]}, "una_vez": true},
     {"id": "grupo-mixto-todo-usd", "fuente": "mixed_nationality_group", "aviso_es": "Con colombianos o residentes y extranjeros en el grupo, toda la reserva se paga en USD (mismo precio, cambia la moneda).", "cuando": {"nacionalidad": "mixto", "tema": ["precio", "pago"]}, "una_vez": true},

@@ -835,6 +835,18 @@ def _official_whatsapp() -> str | None:
     return info.get("whatsapp") or None
 
 
+def _nota_del_whatsapp(lang: str) -> str:
+    """CAL-E1: la aclaración del WhatsApp oficial, SOLO si está en la base (`contact_info.nota_es`/`nota_en`). Vacío
+    si no está: el bot no afirma una restricción que la base no respalda. Si es verdad, el negocio la añade ahí."""
+    from src.knowledge.loader import load_json
+
+    try:
+        info = load_json("escalation_rules.json").get("handoff_protocol", {}).get("contact_info", {})
+    except Exception:  # noqa: BLE001 — sin la base, sin nota
+        return ""
+    return str(info.get("nota_es" if lang == "es" else "nota_en") or "").strip()
+
+
 def _contact_number_deflection(lang: str) -> str:
     """Deflexión honesta para una petición de número/contacto directo: límite +
     lo que SÍ se puede + redirección a la reserva (no escala, no inventa).
@@ -843,16 +855,21 @@ def _contact_number_deflection(lang: str) -> str:
     piden, se da el WhatsApp OFICIAL (solo mensajes), sacado de la base de conocimiento."""
     number = _official_whatsapp() if settings.s4_fixes else None
     if number:
+        # CAL-E1 (flag `contacto_solo_lo_de_la_base`): la aclaración entre paréntesis ("solo mensajes de WhatsApp, no
+        # llamadas") no está en la base y el juez la marca como invención (cal-03). Con el flag sale de la base y, si
+        # la base no la trae, no se dice: una respuesta no afirma nada que la base no respalde.
+        nota = _nota_del_whatsapp(lang) if settings.contacto_solo_lo_de_la_base else (
+            "solo mensajes de WhatsApp, no llamadas" if lang == "es" else "WhatsApp messages only, no calls")
+        entre_parentesis = f" ({nota})" if nota else ""
         if lang == "es":
             return (
-                f"¡Claro! 😊 Nuestro WhatsApp oficial es *{number}* (solo mensajes de WhatsApp, no "
-                "llamadas). Y si quieres, aquí mismo te ayudo con todo: te armo la reserva o te paso con un "
-                "asesor del equipo. ¿Seguimos? 🌊"
+                f"¡Claro! 😊 Nuestro WhatsApp oficial es *{number}*{entre_parentesis}. Y si quieres, aquí mismo te "
+                "ayudo con todo: te armo la reserva o te paso con un asesor del equipo. ¿Seguimos? 🌊"
             )
         return (
-            f"Sure! 😊 Our official WhatsApp is *{number}* (WhatsApp messages only, no calls). And if you "
-            "like, I can help you with everything right here: I'll put your booking together or pass you to "
-            "an advisor from the team. Shall we continue? 🌊"
+            f"Sure! 😊 Our official WhatsApp is *{number}*{entre_parentesis}. And if you like, I can help you with "
+            "everything right here: I'll put your booking together or pass you to an advisor from the team. "
+            "Shall we continue? 🌊"
         )
     if lang == "es":
         return (
@@ -3134,7 +3151,7 @@ async def _shared_turn_handler(
 
         lanzar_extraccion_adelantada(state, message)
         routing_signals = {} if msg_lower.isdigit() else await detect_routing_signals(
-            message, lang=state.language, pending_slot=state.core_pending_slot,
+            message, lang=state.language, pending_slot=state.core_pending_slot, history=state.history,
         )
 
     # Respaldo LLM del gate de LINK ROTO (Bloque 2.3): el detector por keyword
