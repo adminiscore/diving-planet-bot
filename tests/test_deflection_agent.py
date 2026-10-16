@@ -28,20 +28,41 @@ def make_state(**over) -> ConversationState:
 
 @pytest.mark.asyncio
 async def test_node_contact_number(monkeypatch):
-    from src.config import settings as _flags  # camino antiguo: el flag sigue existiendo
+    """CAL-E1 (decisión de Gadea, 16-oct): el chatbot no da números y quien pide un contacto PASA con un asesor.
+    PRE sirve el grafo (`agent_arch`), así que el pase tiene que estar también en este nodo: el test de equivalencia
+    grafo/cascada fue justo lo que cazó que solo estaba en la cascada."""
+    from src.config import settings as _flags
+
+    monkeypatch.setattr(_flags, "contacto_pasa_a_persona", True)
+    monkeypatch.setattr(_flags, "s4_fixes", True)
+    conv = make_state()
+    result = await deflection_node({"conv_state": conv, "message": "dame tu whatsapp", "signals": {}})
+    assert "320" not in result["reply"] and "+57" not in result["reply"], "ningún número"
+    assert "asesor" in result["reply"]
+    assert conv.step == Step.ESCALATE
+    assert conv.pending_escalation_reason
+    assert conv.history[-1]["role"] == "assistant"
+
+
+@pytest.mark.asyncio
+async def test_node_contact_number_camino_antiguo(monkeypatch):
+    """Con el flag apagado, la deflexión de siempre (es el revert si la ronda no sostiene el cambio)."""
+    from src.config import settings as _flags
+
+    monkeypatch.setattr(_flags, "contacto_pasa_a_persona", False)
     monkeypatch.setattr(_flags, "s4_fixes", False)
     conv = make_state()
     result = await deflection_node({"conv_state": conv, "message": "dame tu whatsapp", "signals": {}})
-    assert "🔒" in result["reply"]          # deflexión de contacto (fija el límite)
+    assert "🔒" in result["reply"]
     assert conv.step == Step.FREE_TEXT
     assert conv.quick_replies == []
-    assert conv.history[-1]["role"] == "assistant"
 
 
 @pytest.mark.asyncio
 async def test_node_contact_number_via_signal(monkeypatch):
     from src.config import settings as _flags  # camino antiguo: el flag sigue existiendo
     monkeypatch.setattr(_flags, "s4_fixes", False)
+    monkeypatch.setattr(_flags, "contacto_pasa_a_persona", False)
     """La señal LLM `asks_for_contact_number` también dispara la deflexión de
     contacto, aunque la keyword no matchee."""
     conv = make_state()

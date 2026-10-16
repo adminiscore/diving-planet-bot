@@ -380,6 +380,7 @@ async def test_normal_group_size_mid_flow_does_not_trigger_modify_headcount():
 async def test_contact_number_request_deflects_by_keyword(monkeypatch):
     from src.config import settings as _flags  # camino antiguo: el flag sigue existiendo
     monkeypatch.setattr(_flags, "s4_fixes", False)
+    monkeypatch.setattr(_flags, "contacto_pasa_a_persona", False)
     """"dame tu whatsapp" (keyword) → deflexión con límite + redirección, sin
     escalar."""
     state = make_state()
@@ -390,9 +391,23 @@ async def test_contact_number_request_deflects_by_keyword(monkeypatch):
 
 
 @pytest.mark.asyncio
+async def test_pedir_un_numero_pasa_a_una_persona(monkeypatch):
+    """DECISIÓN DE GADEA (16-oct): el chatbot no da números; la conversación pasa a un asesor. De punta a punta."""
+    from src.config import settings as _flags
+
+    monkeypatch.setattr(_flags, "contacto_pasa_a_persona", True)
+    state = make_state()
+    with patch("src.agents.supervisor.detect_routing_signals", new=AsyncMock(return_value={})):
+        resp = await route_message(state, "dame tu whatsapp porfa")
+    assert "asesor" in resp and "+57" not in resp
+    assert state.step == Step.ESCALATE
+
+
+@pytest.mark.asyncio
 async def test_contact_number_request_deflects_by_llm_signal_when_keyword_misses(monkeypatch):
     from src.config import settings as _flags  # camino antiguo: el flag sigue existiendo
     monkeypatch.setattr(_flags, "s4_fixes", False)
+    monkeypatch.setattr(_flags, "contacto_pasa_a_persona", False)
     """Una frase indirecta que la lista no caza pero el LLM marca
     asks_for_contact_number → misma deflexión."""
     state = make_state()

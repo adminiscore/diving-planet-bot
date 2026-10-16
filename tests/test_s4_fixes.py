@@ -53,7 +53,17 @@ def on(monkeypatch):
 
 # ─── Respuestas fijas ────────────────────────────────────────────────────────
 
-def test_si_piden_telefono_se_da_el_whatsapp_oficial(on):
+def test_si_piden_telefono_NO_se_da_el_numero(on, monkeypatch):
+    """DECISIÓN DE GADEA del 16-oct, que sustituye a la del 17-sep (dar el WhatsApp oficial): esto es un chatbot y no
+    da números; quien pide un contacto directo pasa con un asesor (`contacto_pasa_a_persona`, flag de CAL-E1)."""
+    monkeypatch.setattr(settings, "contacto_pasa_a_persona", True)
+    assert "+57" not in supervisor._contact_number_deflection("es")
+    assert "+57" not in supervisor._contact_number_deflection("en")
+
+
+def test_con_el_flag_apagado_se_da_el_whatsapp_como_antes(on, monkeypatch):
+    """El camino de antes sigue entero: es el revert si la ronda del golden no sostiene el cambio."""
+    monkeypatch.setattr(settings, "contacto_pasa_a_persona", False)
     number = supervisor._official_whatsapp()
     assert number and number.startswith("+57")
     assert number in supervisor._contact_number_deflection("es")

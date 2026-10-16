@@ -42,6 +42,7 @@ from __future__ import annotations
 
 import logging
 
+from src.config import settings
 from src.flows.state import Step
 from src.orchestration.state import BotState
 
@@ -54,6 +55,7 @@ async def deflection_node(state: BotState) -> dict:
         _asks_about_ai_identity,
         _asks_for_contact_number,
         _contact_number_deflection,
+        _contacto_pasa_a_persona,
         _infer_language,
         _shared_turn_handler,
     )
@@ -72,6 +74,15 @@ async def deflection_node(state: BotState) -> dict:
     effective_lang = conv.language if conv.detected_language else _infer_language(message, conv.language)
 
     if _asks_for_contact_number(msg_lower) or signals.get("asks_for_contact_number"):
+        if settings.contacto_pasa_a_persona:
+            # CAL-E1 (decisión de Gadea, 16-oct): el chatbot no da números; quien pide un contacto directo pasa con un
+            # asesor. El pase deja el estado como la posventa (paso, motivo y nota), así que aquí se devuelve ya: no
+            # vale el efecto de estado de una deflexión normal (que vuelve a texto libre).
+            response = _contacto_pasa_a_persona(conv, effective_lang)
+            conv.history.append({"role": "user", "content": message})
+            conv.history.append({"role": "assistant", "content": response})
+            logger.info("[NODE:deflection] petición de contacto -> pase a una persona")
+            return {"reply": response}
         response = _contact_number_deflection(effective_lang)
         logger.info("[NODE:deflection] contact-number request -> límite + redirige (sin escalar)")
     elif _asks_about_ai_identity(msg_lower):

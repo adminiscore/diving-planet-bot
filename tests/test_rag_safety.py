@@ -1394,7 +1394,7 @@ async def test_adaptive_diving_question_routes_to_rag_not_booking(monkeypatch):
     """v0.17.2: disability / DIVE TO HEAL questions must be ANSWERED via RAG
     (the documented exception), not hijacked by the booking IntentDetector into
     the certification question."""
-    async def fake_rag(message, lang="es", history=None, extra_context=None):
+    async def fake_rag(message, lang="es", history=None, extra_context=None, **kwargs):
         return "INFO DIVE TO HEAL"
 
     monkeypatch.setattr("src.agents.supervisor.rag_answer", fake_rag)

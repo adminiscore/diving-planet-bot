@@ -330,14 +330,18 @@ class Settings(BaseSettings):
     # CAL-A5 (16-oct, CAL-A reabierta por Gadea): los AVISOS que el cliente necesita y no pregunta, como DATOS con
     # condiciones (`data/knowledge_base/avisos.json`) que elige el CÓDIGO con el estado de la conversación
     # (`src/flows/avisos.py`), no un modelo: A4 los elegía mal (metía relleno) con el mecanismo bueno. Van al RAG como
-    # puntos obligatorios y el revisor de completitud comprueba que estén. APAGADO hasta medirlo (banco, 3 reps).
-    avisos_condicionados: bool = False
+    # puntos obligatorios y el revisor de completitud comprueba que estén. Banco CAL-A 16×3: 47/48 → 37/48, tres
+    # casos arreglados 3 de 3. **ENCENDIDO 17-oct para la RONDA B** del golden core (autorizada por Gadea); si la
+    # ronda no lo sostiene, revert = "false" aquí y quitar la línea de `docker-compose.vps.yml`.
+    avisos_condicionados: bool = True
     # CAL-E1 (DECISIÓN DE GADEA del 16-oct, que sustituye a la del 17-sep): esto es un chatbot y NO da números de
     # teléfono ni de WhatsApp. Si el cliente pide un número o quiere hablar con alguien, la conversación se PASA A UN
     # ASESOR (mismo pase que `needs_staff`). De paso desaparece la invención que el juez marcaba en cal-03: el texto
     # añadía "(solo mensajes, no llamadas)", que la base no dice. Criterio del golden `contacto-real` y casos cal-03 y
-    # cal-33 del banco actualizados a esta decisión. APAGADO hasta medirlo.
-    contacto_pasa_a_persona: bool = False
+    # cal-33 del banco actualizados a esta decisión. Banco: cal-03 3/3 → 0/3. **ENCENDIDO 17-oct para la RONDA B**
+    # del golden core (autorizada por Gadea); si la ronda no lo sostiene, revert = "false" aquí y quitar la línea del
+    # compose. La base ya no reparte el número (28 menciones fuera de `faqs.json`).
+    contacto_pasa_a_persona: bool = True
     # CAL-E5 (16-oct): Jev contesta las señales del router viendo solo el mensaje del turno, así que un mensaje que se
     # refiere a lo anterior pierde a qué se refiere ("me lo podrías compartir" tras "se me perdió el número",
     # "pero un link especial"). Con el flag le viajan los 2 últimos mensajes como referencia. APAGADO hasta medirlo.
