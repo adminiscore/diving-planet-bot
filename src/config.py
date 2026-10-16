@@ -331,16 +331,19 @@ class Settings(BaseSettings):
     # condiciones (`data/knowledge_base/avisos.json`) que elige el CÓDIGO con el estado de la conversación
     # (`src/flows/avisos.py`), no un modelo: A4 los elegía mal (metía relleno) con el mecanismo bueno. Van al RAG como
     # puntos obligatorios y el revisor de completitud comprueba que estén. Banco CAL-A 16×3: 47/48 → 37/48, tres
-    # casos arreglados 3 de 3. **ENCENDIDO 17-oct para la RONDA B** del golden core (autorizada por Gadea); si la
-    # ronda no lo sostiene, revert = "false" aquí y quitar la línea de `docker-compose.vps.yml`.
-    avisos_condicionados: bool = True
+    # casos arreglados 3 de 3. **REVERTIDO 17-oct tras la ronda A/B del core** (`2026-10-16-cal-A` vs `-cal-B`): el
+    # banco mejora pero el golden EMPEORA (97,4 % → 96,0 % de criterios; 2 mejoras reales y 6 regresiones reales). El
+    # daño es de desplazamiento: los avisos obligatorios ocupan el sitio de lo que la respuesta ya tenía que decir (la
+    # peor regresión: se queda sin dar el enlace de reserva) y desdibujan datos ("varios días" por 2 días, "tu
+    # reserva" sin reserva). Ver docs/robustness/cal/cal-a5-avisos-condicionados.md §9.
+    avisos_condicionados: bool = False
     # CAL-E1 (DECISIÓN DE GADEA del 16-oct, que sustituye a la del 17-sep): esto es un chatbot y NO da números de
     # teléfono ni de WhatsApp. Si el cliente pide un número o quiere hablar con alguien, la conversación se PASA A UN
     # ASESOR (mismo pase que `needs_staff`). De paso desaparece la invención que el juez marcaba en cal-03: el texto
     # añadía "(solo mensajes, no llamadas)", que la base no dice. Criterio del golden `contacto-real` y casos cal-03 y
     # cal-33 del banco actualizados a esta decisión. Banco: cal-03 3/3 → 0/3. **ENCENDIDO 17-oct para la RONDA B**
-    # del golden core (autorizada por Gadea); si la ronda no lo sostiene, revert = "false" aquí y quitar la línea del
-    # compose. La base ya no reparte el número (28 menciones fuera de `faqs.json`).
+    # del golden core. **PROMOCIONADO 17-oct**: en la ronda no causó ninguna regresión (las 6 son de la respuesta del
+    # RAG, por los avisos). La base ya no reparte el número (28 menciones fuera de `faqs.json`).
     contacto_pasa_a_persona: bool = True
     # CAL-E5 (16-oct): Jev contesta las señales del router viendo solo el mensaje del turno, así que un mensaje que se
     # refiere a lo anterior pierde a qué se refiere ("me lo podrías compartir" tras "se me perdió el número",

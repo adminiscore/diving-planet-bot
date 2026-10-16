@@ -353,12 +353,9 @@ services:
       # ROLLBACK instantáneo = quitar esta línea + redeploy (vuelve a la cascada,
       # sin cambio de código).
       AGENT_ARCH: "true"
-      # RONDA B de CAL (17-oct, autorizada por Gadea). Los dos cambios de comportamiento que mide esta ronda; los
-      # demás flags de CAL-A/D/E siguen apagados a propósito (los de Jev van en una SEGUNDA ronda: tocan todas las
-      # señales y mezclarlos no dejaría atribuir el resultado). Revert = quitar estas dos líneas + redeploy.
-      # CAL-A5: los avisos que el cliente necesita y no pregunta, elegidos por el código con el estado y la búsqueda.
-      # Banco CAL-A 16×3: 47/48 → 37/48, tres casos arreglados 3 de 3.
-      AVISOS_CONDICIONADOS: "true"
+      # CAL-E1 PROMOCIONADO 17-oct tras la ronda A/B del core (`2026-10-16-cal-A` vs `-cal-B`): ninguna regresión suya.
+      # Los avisos (`AVISOS_CONDICIONADOS`) se REVIRTIERON en la misma ronda: 97,4 % → 96,0 % de criterios, 6
+      # regresiones reales (la peor: la respuesta dejaba de dar el enlace de reserva). Revert = quitar esta línea.
       # CAL-E1 (decisión de Gadea, 16-oct): el chatbot no da números; quien pide un contacto pasa con un asesor.
       # Banco: cal-03 3/3 → 0/3. La base ya no reparte el número (28 menciones fuera de faqs.json).
       CONTACTO_PASA_A_PERSONA: "true"

@@ -148,3 +148,45 @@ que necesita desplegar (el golden entra por Chatwoot y usa el código de PRE, no
 | `src/agents/conversational_core.py` | `_entradas_rag` pasa los hechos; la respuesta adelantada (rag-5) no apunta avisos que luego se tiran |
 | `src/flows/state.py` | `avisos_dados`: los de `una_vez` ya dados |
 | `tests/test_cal_a5_avisos_condicionados.py` | 17 tests: hechos, temas, selección, cableado y validez del fichero |
+
+## 9. La ronda A/B del golden: REVERTIDO (17-oct)
+
+`2026-10-16-cal-A` (todo apagado) frente a `2026-10-16-cal-B` (avisos + contacto), muestra core, 32 conversaciones:
+
+| | A | B |
+|---|---|---|
+| criterios cumplidos | **97,4 %** (6 fallos de 227) | 96,0 % (9 fallos) |
+| diálogos sin ningún fallo | **27/32** | 25/32 |
+| p50 / p95 / máx | 3,0 / 6,4 / 9 s | 3,0 / 7,0 / 12 s |
+| turnos de RAG, p50 | 4,02 s | 4,08 s |
+
+Comparación criterio a criterio con re-juicio de lo que cambia (`ab_judge_compare --rejuzgar 2`): **2 mejoras reales y
+6 regresiones reales**. Decisión (regla de Gadea: promocionar solo si la calidad mejora o se mantiene): **los avisos se
+revierten**; `contacto_pasa_a_persona` se promociona, porque ninguna regresión es suya.
+
+**Las mejoras** (las dos en el mismo diálogo, `moneda-precios-principiante-y-snorkel`): deja de repreguntar la
+actividad y pregunta la nacionalidad antes de la moneda.
+
+**Las regresiones, y lo que enseñan:**
+
+| Diálogo / criterio | Qué pasó |
+|---|---|
+| `reserva-ingles` / **link** | la respuesta **deja de dar el enlace de reserva**: el aviso le ocupó el sitio |
+| `manual-acompanante-mayor` / sin invenciones | habla de "tu reserva" cuando no hay ninguna (el aviso de "la reserva se confirma al pagar", fuera de sitio) |
+| `descuento-online-sin-codigo` / sin invenciones | "el plan toma varios días" donde el curso son **2 días** |
+| `refresher-que-completar-antes` / formulario médico | da el formulario pero pierde que **se envía tras reservar**, que es justo lo que decía el aviso |
+| `pedir-fotos-postventa` / sin repreguntas | pregunta si ya pasó el día de la actividad, que el cliente ya había dicho |
+| `referral-…-pascua` / sin invenciones | da 18 horas antes de volar donde el refresher son 12 |
+
+**El hallazgo, que vale más que la medida:** el banco pregunta *¿dice lo que faltaba?* y el golden pregunta *¿cómo
+quedó la respuesta entera?*. Dos avisos obligatorios **desplazan** lo que la respuesta ya tenía que decir y
+**desdibujan** los datos al resumirlos. Mejorar el banco a costa del golden no es mejorar.
+
+**Qué probar después (en este orden, con el banco primero y una mini-ronda de los 6 diálogos que regresaron):**
+1. **Un aviso como máximo** por turno (hoy dos), y nunca en el turno en el que la respuesta tiene que dar un enlace o
+   un precio: primero lo que el cliente pidió.
+2. **Exigir la fuente propia entre las primeras a TODOS los avisos**, no solo a los que no dependen del cliente: que
+   el aviso vaya del tema central de la pregunta, no de un dato lateral del estado.
+3. **No resumir**: el aviso obliga a decirlo *con la frase de la fuente*, que está en el contexto, en vez de con el
+   resumen del fichero (de ahí "varios días" y las 18 horas).
+4. Medir las dos cosas siempre juntas: banco (¿lo dice?) y los 6 diálogos (¿se mantiene lo demás?).
