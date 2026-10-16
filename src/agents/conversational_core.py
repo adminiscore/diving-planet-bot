@@ -583,6 +583,15 @@ def ask_slot(state: ConversationState, slot: str, *, reasking: bool = False) -> 
             [{"title": "✅ Yes, the mini-course", "value": "mini course"},
              {"title": "🎓 The Open Water course", "value": "open water course"}]
         )
+        if reasking and settings.actividad_por_lo_sabido:
+            # CAL-C1: la corta también recomienda (cal-60: "¿minicurso u Open Water?" no se leía como recomendación).
+            return (
+                "Para empezar, lo ideal es el *minicurso*: no hace falta experiencia ni certificación. ¿Te animas? "
+                "(Si prefieres certificarte, está el *curso Open Water*.) 🤿"
+                if lang == "es" else
+                "To start, the *mini-course* is the ideal choice: no experience or certification needed. Shall we go "
+                "for it? (If you'd rather get certified, there's the *Open Water course*.) 🤿"
+            )
         if reasking:
             return (
                 "¿Te animas con el *minicurso* (ideal para la primera vez) o prefieres el *curso Open Water*? 🌊"

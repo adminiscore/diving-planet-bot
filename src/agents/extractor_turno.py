@@ -299,9 +299,6 @@ async def extraer_turno(mensaje: str, *, history: list[dict] | None = None, sabi
             ACTIVIDAD_EJEMPLOS_HOY_EN, ACTIVIDAD_EJEMPLOS_EN)
         sistema = sistema.replace(RESIDENTE_HOY_ES, RESIDENTE_ES).replace(RESIDENTE_HOY_EN, RESIDENTE_EN)
         sistema = sistema.replace(ELIGE_HOY_ES, ELIGE_ES).replace(ELIGE_HOY_EN, ELIGE_EN)
-    if settings.extractor_cita_del_cliente:
-        # CAL-C2 (ver QUIERE_*): reservar o apartar un cupo hablando de buceo es querer bucear.
-        sistema = sistema.replace(QUIERE_HOY_ES, QUIERE_ES).replace(QUIERE_HOY_EN, QUIERE_EN)
     con_nombre = settings.nombre_por_extractor
     if con_nombre:
         sistema += REGLA_NOMBRE_ES if lang == "es" else REGLA_NOMBRE_EN
@@ -346,7 +343,9 @@ async def extraer_turno(mensaje: str, *, history: list[dict] | None = None, sabi
                     and cita_verificable(cita, ultima_pregunta_del_bot(history) or "")):
                 # CAL-C2: aceptar lo que propone el bot ("nos gusta" tras "te propongo la salida de 2 inmersiones") se
                 # citaba con el texto del BOT 2 de 3 veces y se descartaba. Solo la actividad, y solo si la cita está
-                # en la última pregunta del bot (la opción existe; que la acepta lo decide el modelo, como hoy).
+                # en la última pregunta del bot (la opción existe; que la acepta lo decide el modelo, como hoy). No se
+                # toca el prompt: cambiarlo movía otros campos (banco ex0 5 → 8 inventos; el tío certificado de cal-17
+                # perdía la certificación 3 de 4 con "reservar o apartar un cupo es querer bucear").
                 salida[campo] = valor
                 logger.info(f"[EXTRACT][CAL-C2] actividad citada de la propuesta del bot: {cita!r}")
                 continue
@@ -454,13 +453,3 @@ ELIGE_HOY_EN = "or when they answer the bot's question by taking one of the opti
 ELIGE_EN = ("or when they answer the bot's question by taking one of the options it offers or accepting the one it "
             "proposes (\"we like it\", \"that one\", \"the first one\": the value is that option and the quote, their answer).")
 
-
-# CAL-C2 (16-oct, flag `extractor_cita_del_cliente`). Banco CAL: "¿cómo sería para apartar un cupo para el viernes?"
-# (certificado, hablando de buceo) no era querer bucear. (La aceptación citada con el texto del bot se arregla en la
-# comprobación de la cita, no en el prompt: cambiar ESA frase movía otros campos del banco ex0, 5 → 8 inventos.)
-QUIERE_HOY_ES = "(lo dice, pide buceos, sus precios o una fecha para bucear)"
-QUIERE_ES = ("(lo dice, pide buceos, sus precios o una fecha para bucear, o pide reservar o apartar un cupo mientras se "
-             "habla de buceo)")
-QUIERE_HOY_EN = "(they say so, ask for dives, their prices or a date to dive)"
-QUIERE_EN = ("(they say so, ask for dives, their prices or a date to dive, or ask to book or hold a spot while the "
-             "conversation is about diving)")

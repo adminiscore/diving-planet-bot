@@ -69,8 +69,8 @@ class Settings(BaseSettings):
     # de 'Frances'; ninguna regresion suya. PROMOCIONADO 15-oct (HISTORY 0.31.29).
     # Revert = False aqui y en el compose.
     extractor_todo_lo_dicho: bool = True
-    # CAL-C2 (16-oct): la aceptación de lo que propone el bot se cita con las palabras del CLIENTE (citaba el texto
-    # del bot y la comprobación la descartaba), y reservar o apartar un cupo hablando de buceo es querer bucear.
+    # CAL-C2 (16-oct): aceptar lo que propone el bot ("nos gusta") se citaba con el texto del BOT y la comprobación
+    # de la cita lo descartaba; ahora, para la actividad, vale una cita que esté en la última pregunta del bot.
     # APAGADO hasta medirlo.
     extractor_cita_del_cliente: bool = False
     # EX-EST-2 (14-oct, tanda est5): arreglos del flujo por causa. (1) Lo que el cliente dice en el turno que acaba en

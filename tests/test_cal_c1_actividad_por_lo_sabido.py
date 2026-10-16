@@ -36,9 +36,10 @@ def test_quiere_bucear_sin_certificacion_recomienda_el_minicurso(flag):
     texto = ask_slot(st, SLOT_ACTIVITY, reasking=True)
     assert "te recomiendo el *minicurso*" in texto and MENU not in texto
     assert st.suggested_activity == "minicourse"
-    # ya dicha: la siguiente vez, la versión corta
+    # ya dicha: la siguiente vez, la versión corta, que también recomienda
     st.history = [{"role": "assistant", "content": texto}]
-    assert "te recomiendo" not in ask_slot(st, SLOT_ACTIVITY, reasking=True)
+    corta = ask_slot(st, SLOT_ACTIVITY, reasking=True)
+    assert "te recomiendo" not in corta and "lo ideal es el *minicurso*" in corta
 
 
 def test_recomendacion_apuntada_antes_pero_no_dicha_se_dice_entera(flag):
@@ -82,28 +83,6 @@ def test_la_certificacion_conocida_por_el_campo_detectado(flag):
 
 
 # --- CAL-C2 `extractor_cita_del_cliente`: el prompt del extractor ---
-
-@pytest.mark.asyncio
-@pytest.mark.parametrize("lang", ["es", "en"])
-async def test_c2_cambia_el_prompt_solo_con_el_flag(monkeypatch, lang):
-    from src.agents import extractor_turno as ex
-
-    sistemas = []
-
-    class _C:
-        async def create(self, **kw):
-            sistemas.append(kw["messages"][0]["content"])
-            raise RuntimeError("sin red")
-
-    cliente = type("O", (), {"chat": type("Ch", (), {"completions": _C()})()})()
-    monkeypatch.setattr(settings, "extractor_todo_lo_dicho", True)
-    for valor in (False, True):
-        monkeypatch.setattr(settings, "extractor_cita_del_cliente", valor)
-        await ex.extraer_turno("nos gusta", lang=lang, client=cliente)
-    sin, con = sistemas
-    quiere = ex.QUIERE_ES if lang == "es" else ex.QUIERE_EN
-    assert quiere not in sin and quiere in con
-
 
 def _cliente_que_devuelve(datos: dict):
     import json as _json
