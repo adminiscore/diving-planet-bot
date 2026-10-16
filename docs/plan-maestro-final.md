@@ -7,7 +7,7 @@
 > (`docs/multi-agent-refactor-plan.md`, `docs/robustness/plan.md`).
 
 > **Estado M0 a 2026-09-17 (Gadea → equipo; tareas de cualquiera).** Seguimiento vivo en la página
-> "Plan Coral" (https://claude.ai/artifact/XiGd3kguTNwwqTnH7mQwgi) y detalle en
+> "Plan Coral" (https://claude.ai/artifact/Pe2aLn7xr9FKduRnD9jhAd) y detalle en
 > `docs/project-history/session-handoff.md` (banner 2026-09-17).
 > - ✅ m0-3 golden-set + LLM-juez calibrado (gpt-5-mini medium + revisión humana); ronda 1: 95,1 %.
 > - ✅ m0-6 fotos de Langfuse + página; ✅ m0-8 saludo verificado en vivo.

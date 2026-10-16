@@ -41,7 +41,23 @@ PRE (escritas ya por Luna) tumba 42 frente a 13, casi todo verdades (HISTORY 0.3
 **C. Pendientes de antes:** el criterio del Open Water en `manual-duracion-curso` ✅ (FAQ curada nueva: "sacarse la
 certificación" = Open Water, o el Referido; el Scuba Diver es la parcial). **DeepSeek: FUERA DEL PLAN** (Gadea, 9-oct).
 
-### ▶️ RETOMAR AQUÍ — 16-oct noche (Álvaro con Claude): CAL-C EN CURSO — C1 y C2 hechos y APAGADOS; siguiente C3
+### ▶️ RETOMAR AQUÍ — 16-oct noche, más tarde (Gadea con Claude): PLAN CORAL NUEVO, decisiones de Gadea, CAL-A reabierta
+
+**Plan Coral tiene URL NUEVA: https://claude.ai/artifact/Pe2aLn7xr9FKduRnD9jhAd** (la de antes quedó inaccesible desde
+la cuenta `admin.iscore`; la copia se reconstruyó desde el repo con todo lo del 15 y 16-oct y la cola aplicada). Gadea
+la comparte con edición desde el menú Compartir. Quien no tenga `ArtifactData`, sigue con la cola del repo.
+
+**Decisiones de Gadea (16-oct):** (1) **CAL-A REABIERTA** como "avisos con condiciones" (la lleva Gadea; ver
+`docs/robustness/cal/revision-plan-2026-10-16.md` §2 y `avisos-propuesta.json`); (2) ratificada la opción (a) de Álvaro
+en moneda/origen, CAL-B cerrada; (3) **PRE es nuestro PRO**: no se monta infra PRO; piloto, g-4b y R6 van sobre PRE; (4) la
+tanda nueva de conversaciones a Diving Planet se pide al final, con algo sólido que enseñar: el examen oculto nuevo
+saldrá de testers (g-6) o del simulador (g-3); (5) promocionar solo lo que pasa 3 de 3 repeticiones; métrica principal: %
+de conversaciones sin ningún error.
+
+**Ramas:** `feature/pre_gadea` = `feature/pre_alvaro` (041fc3d) + documentos; suite 3061 verde. PRE sirve el mismo código
+sea cual sea la rama. Álvaro sigue en CAL-C (C3); Gadea empieza CAL-A (avisos) sin tocar el flujo de CAL-C.
+
+### ▶️ (anterior) 16-oct noche (Álvaro con Claude): CAL-C EN CURSO — C1 y C2 hechos y APAGADOS; siguiente C3
 
 **Estado.** PRE sirve `feature/pre_alvaro` con `MONEDA_SIN_NACIONALIDAD_USD` encendido (CAL-B); todo lo de CAL-A y
 CAL-C está en la rama con sus flags **APAGADOS** (PRE se comporta igual que con CAL-B). HISTORY 0.31.37. Suite verde.

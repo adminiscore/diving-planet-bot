@@ -20,7 +20,7 @@ OUT = Path(__file__).parent / "data" / "plan-coral.json"
 def consolidate(export_dir: Path) -> dict:
     data = {
         "exported_at": datetime.now(UTC).isoformat(timespec="seconds"),
-        "source": "https://claude.ai/artifact/XiGd3kguTNwwqTnH7mQwgi",
+        "source": "https://claude.ai/artifact/Pe2aLn7xr9FKduRnD9jhAd",
         "about": (
             "Copia de la base de datos de la página Plan Coral (fases, tareas, fotos, capas, bitácora). "
             "La página la usa como respaldo de solo lectura si no puede conectar con su base de datos; "

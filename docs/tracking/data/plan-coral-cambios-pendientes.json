@@ -1,87 +1,13 @@
 {
-  "que_es": "Cola de cambios PENDIENTES DE APLICAR a la pagina Plan Coral. NO es una copia de su base de datos (eso es plan-coral.json, que se regenera exportando). Aqui se deja lo que alguien no ha podido escribir en la pagina, listo para volcarlo tal cual.",
-  "pagina": "https://claude.ai/artifact/XiGd3kguTNwwqTnH7mQwgi",
+  "que_es": "Cola de cambios PENDIENTES DE APLICAR a la pagina Plan Coral. NO es una copia de su base de datos (eso es plan-coral.json, que se regenera exportando). Aqui se deja lo que alguien no ha podido escribir en la pagina, listo para volcarlo tal cual. | 16-oct-2026: la pagina es la COPIA NUEVA (la original quedo inaccesible desde la cuenta admin.iscore; solo la cuenta personal de Gadea la abria). Los datos se reconstruyeron desde el repo (copia del 28-sep + cola historica + exportaciones y escrituras del 15-oct); ver bitacora l-1016-gadea-decisiones.",
+  "pagina": "https://claude.ai/artifact/Pe2aLn7xr9FKduRnD9jhAd",
   "por_que_existe": "En la sesion de Claude Code de Gonzalo la herramienta ArtifactData NO aparece: buscada 6 veces (select:ArtifactData, select:artifact_data/ArtifactDB/ArtifactStore/ArtifactCollections y 2 busquedas por descripcion) y siempre 'No matching deferred tools found'. No es cuenta ni permisos: esa misma sesion SI tiene DesignSync y RemoteTrigger, que autentican con el login de claude.ai, y la config tiene oauthAccount con organizationRole admin, sin ninguna ANTHROPIC_API_KEY. Si la herramienta existiera pero estuviera capada por no ser propietario, apareceria en la lista y fallaria AL LLAMARLA; no aparece en absoluto. Tampoco se intento republicar el HTML en ningun momento. Hipotesis viva: diferencia de version de Claude Code (pedir a Gadea la suya y comparar).",
   "como_aplicar": {
     "con_claude": "Con la herramienta ArtifactData (NO con Artifact, y sin republicar el HTML): leer el documento, y hacer update pasando su version como if_version. Coleccion tasks -> doc_id = el id de la tarea. Coleccion log -> documentos nuevos.",
     "a_mano": "Abrir la pagina con sesion iniciada y copiar cada campo en su tarea o en la bitacora.",
     "al_terminar": "Dejar 'pendientes' como lista vacia, poner la fecha en 'aplicado_el' y quien lo aplico en 'aplicado_por', todo en el MISMO commit. Si esta lista se queda llena, el repo y la pagina han divergido: esa es la senal."
   },
-  "aplicado_el": "2026-10-14",
-  "aplicado_por": "Gadea (con Claude): 5 bitácoras de Álvaro (ex-1/2/3/7), ex-1/2/3/7 marcadas hechas, bitácora y tarea ex-atencion de Gonzalo",
-  "pendientes": [
-    {
-      "coleccion": "log",
-      "operacion": "set",
-      "doc_id": "l-1015-gonzalo-cal0",
-      "campos": {
-        "at": "2026-10-15T21:00:00Z",
-        "byLabel": "Gonzalo (con Claude)",
-        "text": "15-oct noche: CAL-0 HECHO. Banco de los 73 fallos de ex-10 reproducible (scripts/banco_fallos.py) y por que falla cada uno (reproducidos en PRE + verificador + revision a mano): entendimiento 22, variacion 17, redaccion del RAG 14, regla/criterio desfasado 9, busqueda 5, escalado 3. Por tarea: CAL-C 21, CAL-A 18, CAL-B 10, CAL-E 6. Hallazgos: 4 criterios de moneda del golden son de antes de la decision del 15-oct (actualizarlos al empezar CAL-B); 1 de cada 4 fallos es variacion (medir con >= 3 repeticiones). Detalle: docs/robustness/cal/README.md, HISTORY 0.31.33."
-      }
-    },
-    {
-      "coleccion": "log",
-      "operacion": "set",
-      "doc_id": "l-1015-gonzalo-calb",
-      "campos": {
-        "at": "2026-10-15T23:30:00Z",
-        "byLabel": "Gonzalo (con Claude)",
-        "text": "15-oct: CAL-B en curso. Causa: la regla del catalogo decia 'si no sabes la nacionalidad, da las dos monedas' (contra la decision del 15-oct). Arreglo MONEDA_SIN_NACIONALIDAD_USD (apagado): banco de fallos 12/24 -> 7/24 (6 de los 7 son el choque con la regla del origen). Criterios propuestos para Gadea en docs/robustness/cal/criterios-moneda-propuestos.md. La mini-ronda calb-A se quedo sin credito de OpenAI: recargar y repetir A y B. HISTORY 0.31.34."
-      }
-    },
-    {
-      "coleccion": "log",
-      "operacion": "set",
-      "doc_id": "l-1016-alvaro-calb",
-      "campos": {
-        "at": "2026-10-16T12:00:00Z",
-        "byLabel": "Alvaro (con Claude)",
-        "text": "16-oct: CAL-B CERRADA. MONEDA_SIN_NACIONALIDAD_USD PROMOCIONADO (decision de Alvaro): mini-ronda calb 92,7 -> 95,4 %, 12 -> 17/24 sin fallos. 7 criterios de moneda del golden actualizados (sin nacionalidad -> USD); choque moneda/origen: opcion (a), se pregunta el origen. Marcar CAL-B como hecha. Siguiente CAL-A. HISTORY 0.31.35."
-      }
-    },
-    {
-      "coleccion": "log",
-      "operacion": "set",
-      "doc_id": "l-1016-alvaro-cala",
-      "campos": {
-        "at": "2026-10-16T15:50:00Z",
-        "byLabel": "Alvaro (con Claude)",
-        "text": "16-oct: CAL-A CERRADA, medido y no mejora (decision de Alvaro). Banco de fallos 16 casos x 3: A0 47/48, temperatura 0 44, plan 46, plan+completitud 45, revisor de avisos 42 (mete relleno). Todo APAGADO. Los fallos son avisos que el cliente necesita y no pregunta; 3 casos van a CAL-C; 2 criterios dudosos para Gadea (cal-72, cal-36). Marcar CAL-A como hecha. Siguiente CAL-C. HISTORY 0.31.36."
-      }
-    },
-    {
-      "coleccion": "log",
-      "operacion": "set",
-      "doc_id": "l-1016-alvaro-calc",
-      "campos": {
-        "at": "2026-10-16T19:20:00Z",
-        "byLabel": "Alvaro (con Claude)",
-        "text": "16-oct noche: CAL-C EN CURSO. C1 (sin menu de actividades si ya quiere bucear: recomendar minicurso o preguntar la certificacion) y C2 (aceptar la propuesta del bot cuenta) hechos y APAGADOS. Banco de fallos 24 casos x3: 66 -> 56/72. Siguiente C3 (no repreguntar lo que ya se sabe); mini-ronda A/B al final de CAL-C. Marcar CAL-C como en curso. HISTORY 0.31.37."
-      }
-    },
-    {
-      "coleccion": "log",
-      "operacion": "set",
-      "doc_id": "l-1016-gadea-revision",
-      "campos": {
-        "at": "2026-10-16T21:00:00Z",
-        "byLabel": "Gadea (con Claude)",
-        "text": "16-oct noche: REVISIÓN del plan tras CAL-0/B/A/C (docs/robustness/cal/revision-plan-2026-10-16.md). CAL-0 y CAL-B muy bien (moneda +2,7 puntos). CAL-A: el hallazgo de Álvaro es correcto (son AVISOS que el cliente no pregunta) pero el plan que se probó no leía la base; el revisor de avisos (A4) fue lo único que mejoró. Propuesta: avisos como DATOS de la base con condiciones sobre el estado, elegidos por código (docs/robustness/cal/avisos-propuesta.json, 18 de partida). Correcciones: PRE es el PRO (no se monta PRO); no hay clientes: examen oculto nuevo de conversaciones históricas de Diving Planet o testers. Pendiente de Gadea: reabrir CAL-A así, ratificar la opción (a) de moneda/origen, pedir conversaciones a Diving Planet, Plan Coral (exportar o duplicar)."
-      }
-    },
-    {
-      "coleccion": "phases",
-      "operacion": "update",
-      "doc_id": "CAL",
-      "campo": "goal",
-      "anteponer_a_la_nota": "REVISIÓN 16-oct (Gadea): docs/robustness/cal/revision-plan-2026-10-16.md. PRE es el PRO (no se monta PRO aparte); no hay clientes: el examen oculto nuevo sale de conversaciones históricas de Diving Planet o de testers. CAL-A: propuesta de reabrirla como 'avisos con condiciones' (docs/robustness/cal/avisos-propuesta.json), pendiente de decisión. Promocionar solo lo que pasa 3 de 3 repeticiones. Métrica principal: % de conversaciones sin ningún error."
-    },
-    {
-      "coleccion": "tasks",
-      "operacion": "update",
-      "doc_id": "cal-a",
-      "anteponer_a_la_nota": "16-oct (Gadea, revisión): PROPUESTA de reabrirla como 'avisos con condiciones' (los avisos como datos de la base con condiciones sobre el estado, elegidos por código; el mecanismo A4 de Álvaro con la elección hecha por datos). Ver docs/robustness/cal/revision-plan-2026-10-16.md §2 y avisos-propuesta.json. Estado sin cambiar hasta que Gadea decida."
-    }
-  ]
+  "aplicado_el": "2026-10-16",
+  "aplicado_por": "Gadea (con Claude): las 8 entradas (5 bitácoras de Gonzalo y Álvaro de CAL-0/B/A/C, la revisión de Gadea y las notas de CAL y cal-a) aplicadas al sembrar la copia nueva",
+  "pendientes": []
 }

@@ -6,7 +6,7 @@ Claude (herramienta ArtifactData).
 
 | Fichero | Página publicada | Para qué |
 |---|---|---|
-| `plan-coral.html` | https://claude.ai/artifact/XiGd3kguTNwwqTnH7mQwgi | Seguimiento del plan maestro: fases y tareas, bitácora, gráficos de latencia y calidad por ejecución (fotos de `scripts/langfuse_snapshot.py` + nota del golden-set) |
+| `plan-coral.html` | https://claude.ai/artifact/Pe2aLn7xr9FKduRnD9jhAd | Seguimiento del plan maestro: fases y tareas, bitácora, gráficos de latencia y calidad por ejecución (fotos de `scripts/langfuse_snapshot.py` + nota del golden-set) |
 | `calibracion-juez.html` | https://claude.ai/artifact/4kDXumzu3QT7KpTQvuenHf | Etiquetado humano para calibrar el LLM-juez del golden-set (`scripts/calibrate_judge.py`). Cerrada tras la calibración del 2026-09-17 |
 
 ## Cola de cambios cuando no se puede escribir en la página (2026-09-23)

@@ -80,7 +80,7 @@ En `docs/project-history/session-handoff.md`:
   puede haber UN "RETOMAR AQUÍ" (compruébalo con `grep -c "RETOMAR AQUÍ"`).
 - Si el orden del plan cambió, añade o actualiza el bloque "Estado al <fecha>" de la PARTE 8 del plan maestro.
 
-## 8. Plan Coral (https://claude.ai/artifact/XiGd3kguTNwwqTnH7mQwgi)
+## 8. Plan Coral (https://claude.ai/artifact/Pe2aLn7xr9FKduRnD9jhAd)
 
 - **Si tienes la herramienta `ArtifactData`:** primero aplica la cola `docs/tracking/data/plan-coral-cambios-pendientes.json`
   si tiene entradas (lee antes cada tarea: NO apliques un estado que la página ya tenga superado —p. ej. devolver a
