@@ -6,9 +6,10 @@ Se fija:
    ninguna lista de nombres ni de palabras;
 2. el tema sale de los documentos que trajo la BÚSQUEDA (su clave, y los `topics` solo de los primeros), no del
    mensaje del cliente;
-3. un aviso solo aplica si se cumplen TODAS sus condiciones, y los de `una_vez` no se repiten; el que NO depende de
+3. un aviso solo aplica si se cumplen TODAS sus condiciones y los de `una_vez` no se repiten; el que NO depende de
    nada del cliente (las fotos, los horarios) necesita además que la búsqueda haya traído SU fuente entre las
-   primeras, o salía en cualquier turno;
+   primeras, o salía en cualquier turno. Exigírselo a TODOS se probó el 17-oct y el banco lo tumbó (41/48 frente a
+   36/48): la fuente no siempre entra entre las primeras aunque la pregunta vaya de eso;
 4. con el flag, los avisos elegidos van al mensaje de la redacción como puntos obligatorios y, si la respuesta no los
    da, se reintenta una vez; sin el flag, el turno es el de siempre (ni un token más);
 5. los avisos del fichero son válidos: id único, fuente que existe en la base y condiciones conocidas.
@@ -140,52 +141,58 @@ def test_el_aviso_que_no_depende_del_cliente_necesita_su_propia_fuente():
 def test_el_aviso_necesita_todas_sus_condiciones():
     """minicurso-no-certifica: la actividad es el minicurso Y la pregunta va de certificarse."""
     hechos = av.hechos_del_estado(_estado(detected_activity="minicourse"))
-    elegidos = [a["id"] for a in av.seleccionar(hechos, {"certificacion"})]
+    fuente = {"minicourse_scope"}
+    elegidos = [a["id"] for a in av.seleccionar(hechos, {"certificacion"}, fuente)]
     assert "minicurso-no-certifica" in elegidos
     # Sin el tema (pregunta por el precio), ese aviso no toca.
-    assert "minicurso-no-certifica" not in [a["id"] for a in av.seleccionar(hechos, {"precio"})]
+    assert "minicurso-no-certifica" not in [a["id"] for a in av.seleccionar(hechos, {"precio"}, fuente)]
     # Sin la actividad (no se sabe qué quiere), tampoco.
     assert "minicurso-no-certifica" not in [
-        a["id"] for a in av.seleccionar(av.hechos_del_estado(_estado()), {"certificacion"})]
+        a["id"] for a in av.seleccionar(av.hechos_del_estado(_estado()), {"certificacion"}, fuente)]
+    # Este depende del cliente (la actividad), así que NO se le exige su fuente entre las primeras: medido el 17-oct,
+    # exigirlo perdía el caso (su política salía en la posición 6 de 8).
+    assert "minicurso-no-certifica" in [a["id"] for a in av.seleccionar(hechos, {"certificacion"}, {"food_policy"})]
 
 
 def test_los_avisos_de_una_vez_no_se_repiten():
     hechos = av.hechos_del_estado(_estado(detected_activity="minicourse"))
-    assert "minicurso-no-certifica" in [a["id"] for a in av.seleccionar(hechos, {"certificacion"})]
+    fuente = {"minicourse_scope"}
+    assert "minicurso-no-certifica" in [a["id"] for a in av.seleccionar(hechos, {"certificacion"}, fuente)]
     hechos["dados"] = ["minicurso-no-certifica"]
-    assert "minicurso-no-certifica" not in [a["id"] for a in av.seleccionar(hechos, {"certificacion"})]
+    assert "minicurso-no-certifica" not in [a["id"] for a in av.seleccionar(hechos, {"certificacion"}, fuente)]
 
 
 def test_el_extranjero_sin_cedula_paga_en_usd_y_el_colombiano_no_tiene_descuento():
+    fuente = {"colombian_pricing"}
     extranjero = av.hechos_del_estado(_estado(is_colombian=False))
-    assert "extranjero-paga-en-usd" in [a["id"] for a in av.seleccionar(extranjero, {"pago"})]
+    assert "extranjero-paga-en-usd" in [a["id"] for a in av.seleccionar(extranjero, {"pago"}, fuente)]
     colombiano = av.hechos_del_estado(_estado(is_colombian=True))
-    assert "extranjero-paga-en-usd" not in [a["id"] for a in av.seleccionar(colombiano, {"pago"})]
-    assert "sin-precio-especial-colombianos" in [a["id"] for a in av.seleccionar(colombiano, {"descuentos"})]
+    assert "extranjero-paga-en-usd" not in [a["id"] for a in av.seleccionar(colombiano, {"pago"}, fuente)]
+    assert "sin-precio-especial-colombianos" in [a["id"] for a in av.seleccionar(colombiano, {"descuentos"}, fuente)]
 
 
 def test_el_almuerzo_solo_se_avisa_a_quien_sale_de_las_islas():
+    fuente = {"food_policy"}
     islas = av.hechos_del_estado(_estado(location="island"))
-    assert "almuerzo-desde-islas" in [a["id"] for a in av.seleccionar(islas, {"comida"})]
+    assert "almuerzo-desde-islas" in [a["id"] for a in av.seleccionar(islas, {"comida"}, fuente)]
     cartagena = av.hechos_del_estado(_estado(location="cartagena"))
-    assert "almuerzo-desde-islas" not in [a["id"] for a in av.seleccionar(cartagena, {"comida"})]
+    assert "almuerzo-desde-islas" not in [a["id"] for a in av.seleccionar(cartagena, {"comida"}, fuente)]
 
 
-def test_nunca_mas_de_dos_avisos_en_un_turno():
-    """Con muchas condiciones cumplidas la respuesta seguiría siendo una respuesta, no una lista de advertencias."""
+def test_nunca_mas_de_un_aviso_en_un_turno():
+    """Desde la ronda A/B del 17-oct: con dos, la respuesta desplazaba lo que ya tenía que decir (un diálogo se quedó
+    sin el enlace de reserva). Un aviso de más nunca vale lo que cuesta perder la respuesta."""
     hechos = av.hechos_del_estado(_estado(location="island", is_colombian=False, detected_activity="minicourse"))
     todas = set(av._temas())
     fuentes = {av._fuente(a) for a in av.avisos()}
-    assert len(av.seleccionar(hechos, todas, fuentes)) <= av.MAX_AVISOS == 2
+    assert len(av.seleccionar(hechos, todas, fuentes)) <= av.MAX_AVISOS == 1
 
 
-def test_con_mas_de_dos_avisos_ganan_los_mas_relacionados_con_la_pregunta():
-    """Los dos huecos no se los queda el orden del fichero: primero los avisos cuya propia fuente está entre los
-    primeros documentos que trajo la búsqueda."""
+def test_el_hueco_se_lo_queda_un_aviso_de_la_pregunta_no_el_primero_del_fichero():
     hechos = av.hechos_del_estado(_estado(location="island", is_colombian=False, detected_activity="minicourse"))
     elegidos = [a["id"] for a in av.seleccionar(hechos, set(av._temas()), {"food_policy", "island_pickup"})]
-    assert len(elegidos) == 2
-    assert set(elegidos) <= {"almuerzo-desde-islas", "recogida-en-hotel-islas"}, elegidos
+    assert len(elegidos) == 1
+    assert elegidos[0] in ("almuerzo-desde-islas", "recogida-en-hotel-islas"), elegidos
 
 
 def test_sin_hechos_ni_temas_no_hay_aviso_que_dependa_de_ellos():
@@ -259,7 +266,8 @@ async def test_con_el_flag_el_aviso_va_en_el_mensaje_de_la_redaccion(rag, monkey
     hechos = av.hechos_del_estado(_estado(detected_activity="minicourse"))
     await rag_agent.rag_answer("¿el minicurso me certifica?", lang="es", avisos_hechos=hechos)
     primera = _mensaje_del_usuario(llamadas[0])
-    assert "AVISOS QUE TU RESPUESTA TIENE QUE DAR" in primera
+    assert "AVISO QUE EL CLIENTE NECESITA" in primera
+    assert "PRIMERO contesta" in primera, "lo que pidió el cliente va antes que el aviso (ronda A/B del 17-oct)"
     assert "NO certifica" in primera
     # El aviso queda apuntado: no se repite en el turno siguiente.
     assert hechos["dados"] == ["minicurso-no-certifica"]

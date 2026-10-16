@@ -33,9 +33,11 @@ logger = logging.getLogger("uvicorn.error")
 
 AVISOS_PATH = Path(__file__).resolve().parents[2] / "data" / "knowledge_base" / "avisos.json"
 
-# Cuántos avisos como máximo van en un turno: con más, la respuesta deja de ser una respuesta y se lee como un folleto
-# (visto el 16-oct con tres avisos pegados al final). A4 usaba 2.
-MAX_AVISOS = 2
+# Cuántos avisos como máximo van en un turno. Empezó en 3, bajó a 2 (se leía como un folleto) y está en UNO desde la
+# ronda A/B del golden core del 17-oct: con dos, la respuesta DESPLAZABA lo que ya tenía que decir y en un diálogo se
+# quedó sin dar el enlace de reserva (docs/robustness/cal/cal-a5-avisos-condicionados.md §9). Un aviso de más nunca
+# vale lo que cuesta perder la respuesta.
+MAX_AVISOS = 1
 
 
 @lru_cache(maxsize=1)
@@ -194,6 +196,11 @@ def _cumple(aviso: dict, hechos: dict, temas: set[str], fuentes: set[str]) -> bo
         # Avisos que solo dependen de la pregunta (las fotos, los horarios, el cierre del sistema): el tema del montón
         # de documentos los hacía salir en cualquier turno (medido el 16-oct). Hace falta que la búsqueda haya traído
         # su propia fuente entre las primeras: entonces la pregunta va de eso.
+        #
+        # 17-oct: se probó exigírselo a TODOS los avisos (hipótesis de la ronda A/B) y el banco lo tumbó: 41/48 frente
+        # a 36/48, porque la fuente del aviso no siempre entra entre las 4 primeras aunque la pregunta vaya de eso
+        # (`minicourse_scope` salía en la posición 6 en cal-48, y en cal-32 el aviso de la moneda ni se recupera: lo
+        # trae el tema desde `foreign_card_payment`). La exigencia se queda solo aquí.
         return _fuente(aviso) in fuentes
     return True
 
@@ -222,14 +229,25 @@ def textos(elegidos: list[dict]) -> list[str]:
 
 
 def bloque_de_avisos(elegidos: list[dict], lang: str) -> str:
-    """Lo que se añade al mensaje de la redacción: lo que hay que avisar, con su fuente, en el idioma del cliente."""
+    """Lo que se añade al mensaje de la redacción.
+
+    Reescrito el 17-oct con lo que enseñó la ronda A/B del golden core (§9 del documento de CAL-A5): la versión
+    anterior decía "tu respuesta TIENE QUE darlo" y el modelo lo metía a costa de lo demás (un diálogo se quedó sin el
+    enlace de reserva) y resumía mal los datos ("varios días" donde el curso son 2). Ahora: PRIMERO lo que el cliente
+    pidió; el aviso va con la frase de SU FUENTE, que está en el contexto, no con este resumen; y si no cabe en una
+    frase sin quitar nada, no se dice (se dará en otro turno)."""
     lista = "\n".join(f"- {a['aviso_es']} (fuente: {a.get('fuente', '')})" for a in elegidos)
     if lang == "es":
-        return ("AVISOS QUE TU RESPUESTA TIENE QUE DAR (el cliente los necesita aunque no los pregunte): "
-                "dilos DENTRO de lo que contestas, cada uno en una frase y con el dato del contexto, donde encajen "
-                "con lo que está preguntando. No los pongas como lista ni como párrafos aparte al final, y no cambies "
-                "lo que ya contestabas bien:\n" + lista)
-    return ("WARNINGS YOUR ANSWER MUST GIVE (the customer needs them even if they don't ask): say them INSIDE what "
-            "you answer, one sentence each, with the fact from the context, where they fit what they are asking. Not "
-            "as a list or as separate paragraphs at the end, and without changing what you already answered well. "
-            "They are written in Spanish for you; say them in English:\n" + lista)
+        return ("AVISO QUE EL CLIENTE NECESITA Y NO HA PREGUNTADO (abajo). Reglas, en este orden: (1) PRIMERO contesta "
+                "entero lo que ha pedido, con su precio y su enlace si los pedía: eso no se toca ni se acorta; (2) "
+                "añade el aviso en UNA frase donde encaje, no como párrafo aparte ni como lista; (3) dilo con el DATO "
+                "EXACTO de su fuente tal como está en el contexto (el texto de abajo es un resumen para ti, no para "
+                "copiarlo: no cambies días, horas ni cifras); (4) si no cabe sin quitar algo de lo que pidió, NO lo "
+                "digas: se dirá en otro turno.\n" + lista)
+    return ("A WARNING THE CUSTOMER NEEDS AND DID NOT ASK FOR (below). Rules, in this order: (1) FIRST answer in full "
+            "what they asked, with the price and the link if they asked for those: that is not shortened or dropped; "
+            "(2) add the warning in ONE sentence where it fits, not as a separate paragraph or a list; (3) say it with "
+            "the EXACT fact from its source as it appears in the context (the text below is a summary for you, not to "
+            "copy: do not change days, hours or figures); (4) if it does not fit without dropping something they "
+            "asked for, DO NOT say it: it can be said in another turn. It is written in Spanish for you; say it in "
+            "English:\n" + lista)
