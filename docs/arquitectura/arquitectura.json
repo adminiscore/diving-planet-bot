@@ -1,8 +1,8 @@
 {
  "meta": {
-  "generado": "2026-10-16T16:49:13+00:00",
-  "commit": "193edf6",
-  "rama": "feature/pre_alvaro"
+  "generado": "2026-10-16T19:34:42+00:00",
+  "commit": "83d7e99",
+  "rama": "feature/pre_gadea"
  },
  "vistas": {
   "general": {
@@ -979,6 +979,13 @@
      "codigo": false,
      "pre": false,
      "sin_efecto": false
+    },
+    {
+     "nombre": "avisos_condicionados",
+     "titulo": "Avisos que el cliente necesita y no pregunta",
+     "codigo": false,
+     "pre": false,
+     "sin_efecto": false
     }
    ],
    "tiempo_medido": {
@@ -1847,6 +1854,19 @@
    "pre": true,
    "fijado_en_pre": true,
    "usado_por": [],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "avisos_condicionados",
+   "area": "Preguntas",
+   "titulo": "Avisos que el cliente necesita y no pregunta",
+   "texto": "La empresa tiene escrito qué hay que avisar y cuándo (el minicurso no certifica, sin cédula se paga en USD, en Barú no operamos). El programa mira lo que ya sabemos del cliente y de qué va su pregunta, y la respuesta tiene que decir los avisos que le toquen.",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
+   "usado_por": [
+    "r_escribir"
+   ],
    "sin_efecto": null
   },
   {

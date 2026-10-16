@@ -1,6 +1,33 @@
 History
 =======
 
+0.31.38 - (2026-10-16)
+----------------------
+* **CAL-A5: los AVISOS que el cliente necesita y no pregunta, como datos con condiciones que elige el CÓDIGO**
+  (Gadea con Claude; CAL-A reabierta por decisión suya del 16-oct). Flag `AVISOS_CONDICIONADOS`, **APAGADO**: PRE se
+  comporta igual. Documento: `docs/robustness/cal/cal-a5-avisos-condicionados.md`.
+  - **Los avisos son datos**: `data/knowledge_base/avisos.json`, 18 avisos con su fuente (una política o una ficha) y
+    las condiciones en las que un asesor los daría. **Lo edita el negocio**, como `policies.json`.
+  - **Las condiciones son sobre datos, nunca sobre el texto del cliente** (`src/flows/avisos.py`): los HECHOS salen de
+    campos estructurados del estado (actividad del árbol, del extractor, del carrito o del reparto; origen;
+    nacionalidad, donde "mixto" manda; zona del hotel o isla; inactividad) y el TEMA sale de los documentos que trajo
+    la búsqueda. Van al RAG como puntos obligatorios y el revisor de completitud de A3 comprueba que estén (si falta
+    alguno, un reintento con ellos). Es el mecanismo de A4 con la elección hecha por datos: ningún modelo elige.
+  - **MEDIDA (banco CAL-A, 16 casos ×3, `cala-A5-avisos-datos`): 39/48 fallan, frente a 47/48 de A0 y 42/48 de A4.**
+    Arreglados 3 de 3: cal-15 (las fotos no están incluidas) y cal-48 (el minicurso no certifica; el Open Water son 2
+    días con noche en las islas). A medias: cal-26 (3 → 1) y cal-32 (3 → 2).
+  - **La primera versión elegía mal y la sonda nueva dio la causa** (`scripts/sonda_avisos.py`, enseña hechos,
+    documentos recuperados y avisos elegidos sin gastar el verificador): el tema salía de los `topics` de los 8-12
+    documentos recuperados, que juntos cubren 10 de los 13 temas (en una pregunta por el enlace de pago salían "las
+    fotos no están incluidas" y "operamos todos los días"), y ninguna clave de política casaba porque vienen
+    prefijadas (`politica:food_policy`). Arreglado por causa: la clave cuenta sin prefijo, los `topics` solo en los 2
+    primeros documentos, un aviso que no depende de nada del cliente exige **su propia fuente** entre los 4 primeros,
+    y como mucho 2 avisos por turno, dichos DENTRO de la respuesta y no pegados al final.
+  - **Los 12 casos que siguen fallando no son cosa de los avisos**: 4 los contesta el flujo guiado con el menú (los
+    avisos solo viven en el RAG: continuación natural de CAL-A), 4 no tienen el dato en el estado (CAL-C y el plan EX),
+    3 la búsqueda no trae la fuente entre las primeras (CAL-D/E) y 2 el criterio pide otra cosa.
+  - Tests: `tests/test_cal_a5_avisos_condicionados.py` (21). Suite verde. Mapa de arquitectura regenerado.
+
 0.31.37 - (2026-10-16)
 ----------------------
 * **CAL-C EN CURSO: C1 y C2 hechos y medidos, APAGADOS hasta la mini-ronda A/B del final de CAL-C** (Álvaro con Claude).

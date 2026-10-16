@@ -1,0 +1,50 @@
+{
+  "_about": "CAL-A (16-oct, Gadea con Claude; flag `avisos_condicionados`): los avisos que un buen asesor da sin que se los pidan, como DATOS con las condiciones en las que aplican. Sale del hallazgo de CAL-A (Álvaro): los fallos del RAG no son preguntas sin contestar sino avisos que faltan ('el minicurso no certifica', 'sin cédula pagas en USD'); elegirlos con un modelo (A4) metía relleno, así que los elige el CÓDIGO con el estado de la conversación (src/flows/avisos.py). Las condiciones son sobre campos estructurados del estado (actividad, origen, nacionalidad, zona del hotel, inactividad) y sobre los documentos que la búsqueda recuperó para la pregunta (tema), nunca sobre el texto del cliente. Cada aviso enlaza con la política o ficha de la que sale (una regla, un sitio): el texto final lo redacta el RAG con ese documento (están en su contexto), el aviso solo obliga a decirlo. Lo edita el negocio como policies.json. Ver docs/robustness/cal/revision-plan-2026-10-16.md.",
+  "_esquema": {
+    "id": "identificador",
+    "fuente": "política (policies.json) o ficha (ficha:<id de services.json>) de la que sale",
+    "aviso_es": "qué hay que decir (resumen; el RAG lo redacta con la fuente, en el idioma del cliente)",
+    "cuando": "TODAS las condiciones tienen que cumplirse; dentro de una lista basta con una. Campos: actividad (ids del registro de actividades; el cliente la eligió, la detectó el extractor, está en el carrito o en el reparto del grupo), actividad_tambien (otra actividad que TAMBIÉN tiene que estar), origen ('cartagena'|'island'), nacionalidad ('colombiano'|'extranjero'|'mixto'), zona (clave de `zonas`: sale del hotel o isla que dijo el cliente), inactivo_mas_de_2_anos (bool), tema (claves de `temas`: los documentos que la búsqueda recuperó para esta pregunta), estancia_menor_que_plan (bool; aún sin dato en el estado: nunca se cumple)",
+    "una_vez": "si true, el aviso se da una sola vez por conversación"
+  },
+  "temas": {
+    "_about": "Cada tema son los temas (metadata.topics, scripts/load_embeddings.TOPIC_PATTERNS) y las claves de política o de ficha de los documentos que la búsqueda recuperó. Un aviso con tema aplica si ALGÚN documento recuperado trae alguno.",
+    "certificacion": ["certification", "certification_required", "packages_certification_requirement", "minicourse_scope", "courses_overnight_requirement"],
+    "reservar": ["booking", "how_to_book", "booking_system_info"],
+    "pago": ["payment", "foreign_card_payment", "payment_fallback", "colombian_pricing", "mixed_nationality_group"],
+    "precio": ["pricing", "colombian_pricing"],
+    "descuentos": ["discount", "discount_colombian"],
+    "fotos": ["photos_media", "photos_videos_policy"],
+    "comida": ["food_policy", "included"],
+    "recogida": ["meeting_point", "island_pickup", "island_pickup_free", "other_island_hotels"],
+    "alojamiento": ["accommodation", "location_islands"],
+    "profundidad": ["depth"],
+    "disponibilidad": ["availability", "availability_always", "operating_hours", "activity_schedule", "closed_days", "schedule"],
+    "requisitos": ["forms_waiver", "medical_restrictions", "waiver_form", "insurance_form_requirement", "requirements"],
+    "refresher": ["refresher", "refresh_requirement"]
+  },
+  "zonas": {
+    "_about": "Lugares que el cliente puede dar como hotel o isla y que NO son las Islas del Rosario (donde operamos). Se compara con el hotel/isla guardado en el estado, sin tildes ni mayúsculas.",
+    "baru": ["baru", "playa blanca", "playa tranquila", "cholon", "cholón"]
+  },
+  "avisos": [
+    {"id": "minicurso-no-certifica", "fuente": "minicourse_scope", "aviso_es": "El minicurso es una experiencia guiada y NO certifica; para certificarse está el Open Water (2 días, con noche en las islas).", "cuando": {"actividad": ["minicourse"], "tema": ["certificacion"]}, "una_vez": true},
+    {"id": "plan-no-cabe-en-la-estancia", "fuente": "courses_overnight_requirement", "aviso_es": "El plan dura más que la estancia que ha dicho el cliente (p. ej. Open Water = 2 días y se va mañana): avisarlo y proponer el plan que sí cabe.", "cuando": {"estancia_menor_que_plan": true}, "una_vez": true, "nota": "necesita las fechas del cliente en el estado (campo del extractor pendiente, CAL-C); hasta entonces no se cumple nunca"},
+    {"id": "no-operamos-en-baru", "fuente": "dive_area", "aviso_es": "Buceamos en las Islas del Rosario; Barú no es lo mismo (es una península unida a tierra) y no operamos allí.", "cuando": {"zona": "baru"}, "una_vez": true},
+    {"id": "formulario-medico-tras-reservar", "fuente": "medical_restrictions", "aviso_es": "Para el minicurso, el refresher y los cursos hace falta el formulario médico; se envía después de reservar.", "cuando": {"actividad": ["minicourse", "refresher", "padi_open_water", "padi_open_water_referral", "padi_advanced"], "tema": ["reservar", "requisitos"]}, "una_vez": true},
+    {"id": "carta-de-referido", "fuente": "ficha:referral", "aviso_es": "El curso referido exige la carta/formato de referido PADI firmado por el instructor de origen; el plan es el 'Curso Referido Open Water', no una salida normal.", "cuando": {"actividad": ["padi_open_water_referral"]}, "una_vez": true},
+    {"id": "grupo-mixto-todo-usd", "fuente": "mixed_nationality_group", "aviso_es": "Con colombianos o residentes y extranjeros en el grupo, toda la reserva se paga en USD (mismo precio, cambia la moneda).", "cuando": {"nacionalidad": "mixto", "tema": ["precio", "pago"]}, "una_vez": true},
+    {"id": "extranjero-paga-en-usd", "fuente": "colombian_pricing", "aviso_es": "Al no ser colombiano ni residente (sin cédula), el pago es en USD con tarjeta; misma tarifa, cambia la moneda.", "cuando": {"nacionalidad": "extranjero", "tema": ["pago"]}, "una_vez": true},
+    {"id": "sin-precio-especial-colombianos", "fuente": "colombian_pricing", "aviso_es": "No hay descuento ni tarifa especial por ser colombiano: el precio es el mismo, solo cambia la moneda (COP).", "cuando": {"nacionalidad": "colombiano", "tema": ["descuentos"]}, "una_vez": true},
+    {"id": "descuento-online-automatico", "fuente": "booking_system_info", "aviso_es": "El 10 % online se aplica solo al reservar en la web y es automático: no hay código.", "cuando": {"tema": ["descuentos"]}, "una_vez": true},
+    {"id": "profundidad-segun-nivel", "fuente": "certification_required", "aviso_es": "La profundidad depende del nivel: Open Water hasta 18 m, Advanced hasta 30 m; si no se sabe el nivel, preguntarlo.", "cuando": {"actividad": ["certified_diving"], "tema": ["profundidad"]}, "una_vez": true},
+    {"id": "refresh-tras-dos-anos", "fuente": "refresh_requirement", "aviso_es": "Tras más de 2 años sin bucear, normalmente hace falta un refresh (refresher) antes de la salida.", "cuando": {"actividad": ["certified_diving"], "tema": ["refresher"]}, "una_vez": true},
+    {"id": "fotos-no-incluidas", "fuente": "photos_videos_policy", "aviso_es": "Las fotos y vídeos no están incluidos; el instructor puede hacerlas voluntariamente (propina voluntaria). En el minicurso no se hacen.", "cuando": {"tema": ["fotos"]}, "una_vez": true},
+    {"id": "almuerzo-desde-islas", "fuente": "food_policy", "aviso_es": "Desde las islas el almuerzo no está incluido: se puede comer en el hotel o traer comida; desde Cartagena va incluido.", "cuando": {"origen": "island", "tema": ["comida"]}, "una_vez": true},
+    {"id": "recogida-en-hotel-islas", "fuente": "island_pickup", "aviso_es": "Alojado en las islas, recogida y regreso en el hotel si tiene acceso marítimo; hace falta el nombre del hotel para confirmarlo.", "cuando": {"origen": "island", "tema": ["recogida", "alojamiento"]}, "una_vez": true},
+    {"id": "operamos-todos-los-dias", "fuente": "closed_days", "aviso_es": "Operamos todos los días salvo el 25 de diciembre y el 1 de enero; una salida solo se suspende por mal tiempo (no hay garantía absoluta).", "cuando": {"tema": ["disponibilidad"]}, "una_vez": true},
+    {"id": "cierre-430-siguiente-dia", "fuente": "booking_system_info", "aviso_es": "El sistema cierra a las 4:30 p. m. del día anterior; pasada esa hora se reserva por la web para el siguiente día disponible.", "cuando": {"tema": ["disponibilidad", "reservar"]}, "una_vez": true},
+    {"id": "reserva-confirmada-al-pagar", "fuente": "how_to_book", "aviso_es": "La reserva queda confirmada al completar el pago por el enlace online (sin instrucciones de transferencia salvo que falle el pago online).", "cuando": {"tema": ["pago"]}, "una_vez": true},
+    {"id": "refresher-y-certificado-juntos", "fuente": "mixed_group_boat", "aviso_es": "Un refresher y un buzo certificado pueden ir juntos en la misma salida.", "cuando": {"actividad": ["refresher"], "actividad_tambien": ["certified_diving"]}, "una_vez": true}
+  ]
+}

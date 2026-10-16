@@ -1,0 +1,49 @@
+{
+ "etiqueta": "cala-A5-prueba",
+ "reps": 1,
+ "flags": [
+  "avisos_condicionados"
+ ],
+ "codigo_local": true,
+ "casos": [
+  {
+   "id": "cal-32",
+   "dialogo": "link-pago-extranjeros-sin-cedula",
+   "criterio": "moneda-extranjeros",
+   "repeticiones": 1,
+   "fallan": 1,
+   "respuestas": [
+    "¡Claro! Si no tienes cédula, puedes usar tu pasaporte como documento de identificación al pagar con una tarjeta extranjera en la web. Si eres colombiano o residente en Colombia, cuéntame y te indico cómo aplica el pago en tu caso.\n\nLas fotos y videos no están incluidos; el instructor puede hacerlos voluntariamente y la propina es opcional. En el minicurso no se toman fotos ni videos.\n\nOperamos todos los días, excepto el 25 de diciembre y el 1 de enero; una salida puede suspenderse por mal tiempo. ¿Qué actividad quieres reservar para enviarte el enlace correcto?"
+   ],
+   "explicaciones": [
+    "El bot solo menciona que puede usar el pasaporte y pagar con tarjeta extranjera, pero no aclara explícitamente que, por no tener cédula (es decir, no ser colombiano ni residente), el pago es en USD, con la misma tarifa. El contexto lo indica claramente: 'Pagan en pesos colombianos (COP) los colombianos (vivan donde vivan) y los residentes en Colombia... El resto de clientes internacionales paga en dólares (USD). El precio es el mismo: solo cambia la moneda'."
+   ]
+  },
+  {
+   "id": "cal-47",
+   "dialogo": "recogida-ubuntu-comida-y-certificacion",
+   "criterio": "comida-desde-islas",
+   "repeticiones": 1,
+   "fallan": 1,
+   "respuestas": [
+    "Yes, lunch is included for trips departing from Cartagena: it’s rice with chicken or rice with vegetables, plus water during the day and coconut candy between dives. You’re welcome to bring your own food if you prefer; please let us know in advance about any food allergies. If you’re already on the islands, lunch isn’t included, so you’ll need to arrange your own.\n\nWe operate every day except December 25 and January 1; trips may also be suspended due to bad weather.\n\nThe booking system closes at 4:30 p.m. the day before; after that, you can book online for the next available day.\n\nFor the mini-course, refresher, and courses, a medical form is required and is sent after booking."
+   ],
+   "explicaciones": [
+    "El bot solo menciona que si ya están en las islas deben 'arrange your own' y pueden traer su propia comida, pero no aclara que también pueden comprar comida en su hotel, como indica el criterio y como aparece en el contexto: 'guests staying on the islands return to their hotel around 12:00-1:00 p.m. for lunch (lunch not included)'."
+   ]
+  },
+  {
+   "id": "cal-48",
+   "dialogo": "recogida-ubuntu-comida-y-certificacion",
+   "criterio": "minicurso-no-certifica",
+   "repeticiones": 1,
+   "fallan": 1,
+   "respuestas": [
+    "Of course! Your son can take a PADI course. The PADI Open Water course is for beginners and requires no prior certification; the minimum age is 10. If he’s already certified, the Advanced course is available from age 12.\n\nHow old is your son, and is he new to diving or already certified?"
+   ],
+   "explicaciones": [
+    "The bot does not clarify that the mini-course does NOT grant PADI certification, nor does it explain that the Open Water course requires 2 days and overnight stay on the islands. This information is present in the context: 'The mini-course is a one-day try-dive, an introduction to diving: it does not certify, does not count as part of any PADI course...' and 'Two-day courses (Open Water, Referral Course, Advanced) require accommodation on the islands. There is no option to commute from Cartagena on both days.'"
+   ]
+  }
+ ]
+}
