@@ -269,6 +269,9 @@ class Settings(BaseSettings):
     # "MINI CURSOS" en plural no contaba como nombrarlo, y con acompanante la recomendacion no se llegaba
     # a mostrar). ENCENDIDO por defecto (= PRE, paso 10).
     recommend_inferred_minicourse: bool = True
+    # CAL-C1 (16-oct): quien ya dijo que quiere bucear no recibe el menú de actividades; sin certificación se le
+    # recomienda el minicurso y, sin saberla, se le pregunta (regla de Gadea). APAGADO hasta medirlo.
+    actividad_por_lo_sabido: bool = False
 
     # Paso 5 (RAG, l1-6 + l1-7, 27-sep): (a) el catalogo entero como hechos en el contexto del RAG
     # en vez de los atajos de precio por regex, que contestaban preguntas que no eran de precio;

@@ -526,6 +526,18 @@ def ask_slot(state: ConversationState, slot: str, *, reasking: bool = False) -> 
     state.core_pending_slot = slot
     state.quick_replies = []
 
+    if (slot == SLOT_ACTIVITY and settings.actividad_por_lo_sabido and state.quiere_bucear
+            and not state.suggested_activity and not state.detected_group_allocation):
+        # CAL-C1 (16-oct; regla de Gadea 14/27-sep: recomendar según lo que se sabe). Quien ya dijo que quiere bucear
+        # recibía el menú entero ("5 inmersiones", "Muchas gracias!", "no estamos certificados" → "¿Con cuál te
+        # animas — buceo, minicurso, snorkel…?"; banco CAL, 10 casos). Sabiendo que quiere bucear, lo que falta es la
+        # certificación: sin certificación se recomienda el minicurso (lo confirma el cliente); sin saberla, se pregunta.
+        certificado = _known_field_values(state).get("is_certified")
+        if certificado is False and settings.recommend_inferred_minicourse:
+            state.suggested_activity = "minicourse"
+        elif certificado is None:
+            return ask_slot(state, SLOT_CERTIFICATION, reasking=reasking)
+
     if slot == SLOT_ACTIVITY and settings.recommend_inferred_minicourse and state.suggested_activity == "padi_open_water":
         # Quien pide un curso desde cero: se recomienda el Open Water y el minicurso queda como opcion.
         state.quick_replies = (

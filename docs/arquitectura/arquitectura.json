@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-16T13:22:39+00:00",
-  "commit": "e68968a",
+  "generado": "2026-10-16T14:29:49+00:00",
+  "commit": "97264aa",
   "rama": "feature/pre_alvaro"
  },
  "vistas": {
@@ -613,6 +613,13 @@
      "titulo": "Recomendar el minicurso",
      "codigo": true,
      "pre": true,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "actividad_por_lo_sabido",
+     "titulo": "Sin menú si ya quiere bucear",
+     "codigo": false,
+     "pre": false,
      "sin_efecto": false
     },
     {
@@ -1716,6 +1723,19 @@
    "fijado_en_pre": true,
    "usado_por": [
     "b_acuse"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "actividad_por_lo_sabido",
+   "area": "Reserva",
+   "titulo": "Sin menú si ya quiere bucear",
+   "texto": "Si el cliente ya dijo que quiere bucear, no se le enseña el menú de actividades: si no está certificado se le recomienda el minicurso y, si no se sabe, se le pregunta si es buzo certificado.",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
+   "usado_por": [
+    "b_slotfill_close"
    ],
    "sin_efecto": null
   },
