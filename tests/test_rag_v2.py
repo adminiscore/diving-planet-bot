@@ -81,7 +81,7 @@ def rag_offline(monkeypatch):
     async def _sin_expandir(docs, lang="es"):
         return docs
 
-    async def _sin_reescribir(query, history=None, lang="es"):
+    async def _sin_reescribir(query, history=None, lang="es", hechos=None):
         return query
 
     async def _juez(answer, context, lang="es"):
@@ -236,7 +236,7 @@ async def test_con_cache_el_catalogo_va_al_prompt_del_sistema(monkeypatch):
     async def _busqueda(*a, **k):
         return [{"content": "El curso dura 2 dias.", "score": 0.99, "metadata": {"source": "faqs"}}]
 
-    async def _same(q, history=None, lang="es"):
+    async def _same(q, history=None, lang="es", hechos=None):
         return q
 
     async def _docs_back(docs, lang="es"):
@@ -274,7 +274,7 @@ async def test_el_juez_ve_la_presentacion_tras_el_catalogo(monkeypatch):
         async def _busqueda(*a, **k):
             return [{"content": "El curso dura 2 dias.", "score": 0.99, "metadata": {"source": "faqs"}}]
 
-        async def _same(q, history=None, lang="es"):
+        async def _same(q, history=None, lang="es", hechos=None):
             return q
 
         async def _docs_back(docs, lang="es"):

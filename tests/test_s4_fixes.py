@@ -173,7 +173,7 @@ async def test_con_el_flag_el_rag_tiene_los_links_de_reserva(on, monkeypatch):
     async def _no_docs(*a, **k):
         return []
 
-    async def _same(q, history=None, lang="es"):
+    async def _same(q, history=None, lang="es", hechos=None):
         return q
 
     class _Resp:
@@ -246,7 +246,7 @@ async def test_corregir_el_precio_que_cita_el_cliente_no_acaba_en_no_lo_tengo(on
     async def _docs(*a, **k):
         return [{"content": "Curso Basico PADI: 2.450.000 COP online.", "score": 0.99, "metadata": {"source": "faqs"}}]
 
-    async def _same(q, history=None, lang="es"):
+    async def _same(q, history=None, lang="es", hechos=None):
         return q
 
     async def _docs_back(docs, lang="es"):

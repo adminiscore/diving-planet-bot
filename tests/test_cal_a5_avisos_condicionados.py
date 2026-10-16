@@ -227,7 +227,7 @@ def rag(monkeypatch):
     async def fake_expand(docs, lang):
         return docs
 
-    async def fake_condense(query, history=None, lang="es"):
+    async def fake_condense(query, history=None, lang="es", hechos=None):
         return query
 
     async def fake_verify(answer, context, lang="es"):

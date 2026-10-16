@@ -94,7 +94,7 @@ async def _responder(monkeypatch, respuesta: str, contexto: str) -> str:
     async def _sin_expandir(docs, lang="es"):
         return docs
 
-    async def _sin_reescribir(query, history=None, lang="es"):
+    async def _sin_reescribir(query, history=None, lang="es", hechos=None):
         return query
 
     monkeypatch.setattr(rag_agent, "search_knowledge_base", _busqueda)
