@@ -1,4 +1,8 @@
-# CAL-B: criterios del golden a actualizar a la decisión de moneda del 15-oct (PROPUESTA para Gadea)
+# CAL-B: criterios del golden a actualizar a la decisión de moneda del 15-oct
+
+> **APLICADO el 16-oct (decisión de Álvaro):** los 6 criterios de abajo y además
+> `familia-mixta-precio-descuento-refresher/precio-mixto-cartagena-o-pregunta-faltantes`. Choque moneda/origen:
+> **opción (a)**, se pregunta el origen antes de cotizar (con el texto de `pedia_corregido` del banco). HISTORY 0.31.35.
 
 Decisión de Gadea (15-oct): si el cliente pide precio y no sabemos su nacionalidad → precio en **USD** (no las dos
 monedas); colombiano o residente → COP; grupo mixto → USD. Estos 6 criterios se escribieron antes y piden PREGUNTAR

@@ -41,7 +41,28 @@ PRE (escritas ya por Luna) tumba 42 frente a 13, casi todo verdades (HISTORY 0.3
 **C. Pendientes de antes:** el criterio del Open Water en `manual-duracion-curso` ✅ (FAQ curada nueva: "sacarse la
 certificación" = Open Water, o el Referido; el Scuba Diver es la parcial). **DeepSeek: FUERA DEL PLAN** (Gadea, 9-oct).
 
-### ▶️ RETOMAR AQUÍ — 15-oct, más tarde (Gonzalo): CAL-B en curso, flag APAGADO; SIN CRÉDITO DE OPENAI
+### ▶️ RETOMAR AQUÍ — 16-oct (Álvaro con Claude): CAL-B CERRADA (moneda promocionada); siguiente CAL-A
+
+**Estado.** PRE sirve `feature/pre_alvaro` (lleva todo `feature/pre_gadea` y `feature/l1_gonzalo` del 15-oct) con
+`MONEDA_SIN_NACIONALIDAD_USD` **encendido (promocionado, decisión de Álvaro)**. Crédito de OpenAI recargado el 16-oct.
+HISTORY 0.31.35. **Integrad `feature/pre_alvaro` antes de subir.**
+
+| Qué | Resultado |
+|---|---|
+| Mini-ronda calb-A2/B2 (24 diálogos de moneda) | 92,7 → 95,4 %, 12 → 17/24 sin fallos, 9 mejoras / 5 regresiones (ninguna de la moneda en sí) |
+| Criterios de moneda del golden | 7 actualizados a "sin nacionalidad → USD" (los 6 de Gonzalo + `familia-mixta`) |
+| Choque moneda/origen | **opción (a)**: sin origen se pregunta antes de cotizar, también al colombiano que pide pesos (2 criterios) |
+
+**Siguiente (en orden, el del plan CAL):**
+1. **CAL-A:** que el RAG conteste TODO lo que se pregunta (diseño de Gadea: plan → redacción, completitud en el
+   revisor). Incluir el hallazgo de CAL-B: el RAG ofrece precios que nadie pidió antes de saber el origen
+   (`minicurso-precio-colombianos-origen-pendiente`, t1).
+2. CAL-C (entender sin repreguntar: el menú de actividades que sale cuando no toca), CAL-D (el plan exacto: cotizó el
+   paquete de 4 en vez del de 5) + CAL-E, CAL-F.
+- Medir cada arreglo con ≥ 3 repeticiones por caso (`scripts/banco_fallos.py`); mini-ronda A con el código nuevo y el
+  flag apagado, B encendido. **Mirad el saldo de OpenAI antes de lanzar** (el 15-oct se acabó a mitad).
+
+### ▶️ (anterior) 15-oct, más tarde (Gonzalo): CAL-B en curso, flag APAGADO; SIN CRÉDITO DE OPENAI
 
 **Estado.** PRE sirve `feature/pre_gadea`; el código de CAL-B está subido con su flag `MONEDA_SIN_NACIONALIDAD_USD`
 **apagado** (PRE se comporta igual). **El crédito de OpenAI se acabó** a mitad de la mini-ronda `calb-A`: PRE no

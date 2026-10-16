@@ -1,6 +1,14 @@
 History
 =======
 
+0.31.35 - (2026-10-16)
+----------------------
+* **CAL-B CERRADO: `MONEDA_SIN_NACIONALIDAD_USD` PROMOCIONADO (decisión de Álvaro)** — sin saber la nacionalidad, el precio va en USD; colombiano o residente, COP; grupo mixto, USD (Álvaro con Claude, sobre el trabajo de Gonzalo del 15-oct).
+  - **Mini-ronda calb-A2/B2** (16-oct, con crédito; las 24 conversaciones de `docs/robustness/cal/dialogos-calb.txt`, misma franja): criterios 92,7 → 95,4 %, 12 → 17/24 sin fallos, 9 mejoras / 5 regresiones. Respuestas solo en USD 13 → 25; con las dos monedas 9 → 6. Latencia p50 3,25 → 3,54 s, p95 igual (5,75 → 5,78 s).
+  - Regresiones leídas: 2 por criterios desfasados o el choque con el origen (ya resueltos abajo), 2 del RAG que cotiza el paquete de 4 en vez del de 5 (CAL-D) y 1 de menú de actividades (CAL-C).
+  - **Criterios del golden actualizados a la decisión del 15-oct (decisión de Álvaro):** los 6 de `docs/robustness/cal/criterios-moneda-propuestos.md` y `familia-mixta-precio-descuento-refresher/precio-mixto-cartagena-o-pregunta-faltantes` ya no piden preguntar la nacionalidad. **Choque moneda/origen, opción (a):** sin origen se pregunta antes de cotizar, también al colombiano que pide pesos (opción C del 7-oct); `open-water-precio-para-colombianos-corrige-mito` y `curso-open-water-precio-cop-hoteles-y-transporte` lo aceptan.
+  - **Hallazgo para CAL-A:** el RAG ofreció un precio que nadie pidió ("si ya tienes certificación, 178 USD…") antes de saber el origen (`minicurso-precio-colombianos-origen-pendiente`, t1 de B; en A no). La puerta del origen solo actúa cuando el cliente pide el precio.
+
 0.31.34 - (2026-10-15)
 ----------------------
 * **CAL-B (moneda) EN CURSO: la regla de Gadea en el código, `MONEDA_SIN_NACIONALIDAD_USD` APAGADO; su mini-ronda se quedó sin crédito de OpenAI** (Gonzalo). Detalle: `docs/robustness/cal/README.md`.
