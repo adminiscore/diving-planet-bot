@@ -346,11 +346,6 @@ class Settings(BaseSettings):
     # refiere a lo anterior pierde a qué se refiere ("me lo podrías compartir" tras "se me perdió el número",
     # "pero un link especial"). Con el flag le viajan los 2 últimos mensajes como referencia. APAGADO hasta medirlo.
     jev_con_contexto: bool = False
-    # CAL-E2 (16-oct): "the discount of 10% is not showing up. what is the code?" se tomaba por un problema del
-    # sistema de reservas y acababa en un pase a una persona diciendo "sorry the link didn't work" (cal-38, cal-39).
-    # Con el flag, las señales de queja y de tema sensible dicen que lo que el cliente esperaba ver y no ve es una
-    # PREGUNTA que contesta la base, no un fallo. Frontera de la clase, no del caso. APAGADO hasta medirlo.
-    queja_solo_si_algo_falla: bool = False
     # CAL-E4 (16-oct): el idioma del PRIMER turno lo decidía una lista de palabras vacías, que corta la cadena antes
     # del LLM: un mensaje en portugués con muchas palabras iguales al español ("Busco el seguinte: Vamos en família a
     # Cartagena") se contestaba en español (cal-12). Con el flag lo dice el EXTRACTOR, que ya va lanzado en paralelo

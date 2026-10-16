@@ -6,10 +6,9 @@ Las causas, leídas en el banco (`docs/robustness/cal/banco-fallos.json`):
    esto es un chatbot y **no da números** de teléfono ni de WhatsApp. Quien pide un número o quiere hablar con
    alguien, pasa con un asesor. Así desaparece también la invención que el juez marcaba ("solo mensajes, no
    llamadas", que la base no dice). El criterio del golden `contacto-real` y los casos del banco se actualizaron.
-2. **E2 `queja_solo_si_algo_falla`** (cal-38, cal-39): "the discount of 10% is not showing up. what is the code?" se
-   tomaba por un problema del sistema y el turno acababa en un pase a una persona diciendo "sorry the link didn't
-   work". Lo que el cliente esperaba ver y no ve es una PREGUNTA que contesta la base. Se arregla en la frontera de
-   las señales (queja de enlace y tema sensible), para toda la clase.
+2. **E2, DESCARTADO el 17-oct** (ver §4): decía que lo que el cliente esperaba ver y no ve no es una avería, pero el
+   criterio `escala-si-no-aparece` del golden pide justo que se ofrezca un asesor, y cal-38 y cal-39 ya pasan solos.
+   Se quitó el flag y su código.
 3. **E5 `jev_con_contexto`** (cal-29, cal-33): Jev contestaba las señales viendo solo el mensaje del turno, así que un
    mensaje referido perdía a qué se refiere ("Me lo podrías compartir por favor" tras "se me perdió el número";
    "Pero un link especial"). Con el flag le viajan los dos últimos mensajes como referencia.
@@ -58,29 +57,6 @@ def test_sin_el_flag_el_comportamiento_es_el_de_hoy(monkeypatch):
     monkeypatch.setattr(sv, "_official_whatsapp", lambda: "+57 320 231515")
     monkeypatch.setattr(settings, "contacto_pasa_a_persona", False)
     assert "+57 320 231515" in sv._contact_number_deflection("es")
-
-
-# ---------------------------------------------------------------- E2: lo que no aparece no es un fallo
-
-
-def test_sin_el_flag_las_senales_son_las_de_hoy(monkeypatch):
-    monkeypatch.setattr(settings, "queja_solo_si_algo_falla", False)
-    preguntas = jr._questions_for_turn()
-    assert "is not showing up" not in preguntas["broken_link_complaint"]["instructions"]
-    assert "is not showing up" not in preguntas["sensitive_topic"]["instructions"]
-
-
-def test_con_el_flag_lo_que_el_cliente_esperaba_ver_no_es_un_fallo(monkeypatch):
-    """cal-38/cal-39: el descuento que no aparece no es un enlace roto ni un problema en tiempo real."""
-    monkeypatch.setattr(settings, "queja_solo_si_algo_falla", True)
-    preguntas = jr._questions_for_turn()
-    for nombre in ("broken_link_complaint", "sensitive_topic"):
-        instrucciones = preguntas[nombre]["instructions"]
-        assert "is not showing up" in instrucciones
-        assert "normal question about how it works" in instrucciones
-    # La frontera vale para la clase (descuento, precio, opción, código), no para un caso.
-    for palabra in ("discount", "a price", "an option", "a code"):
-        assert palabra in jr._NO_APARECE_NO_ES_FALLO
 
 
 # ---------------------------------------------------------------- E3: lo que el sistema no da, lo hace una persona

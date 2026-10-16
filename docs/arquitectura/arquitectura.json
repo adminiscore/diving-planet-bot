@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-16T22:08:35+00:00",
-  "commit": "b7d0284",
+  "generado": "2026-10-16T22:43:11+00:00",
+  "commit": "95cba85",
   "rama": "feature/pre_gadea"
  },
  "vistas": {
@@ -157,13 +157,6 @@
      "sin_efecto": false
     },
     {
-     "nombre": "queja_solo_si_algo_falla",
-     "titulo": "Lo que el cliente esperaba ver no es una avería",
-     "codigo": false,
-     "pre": false,
-     "sin_efecto": false
-    },
-    {
      "nombre": "pase_si_pide_fuera_del_sistema",
      "titulo": "Lo que la web no puede dar lo arregla una persona",
      "codigo": false,
@@ -178,9 +171,9 @@
    ],
    "marca": "openrouter",
    "tiempos": {
-    "n": 144,
-    "p50": 0.431,
-    "p95": 1.41
+    "n": 93,
+    "p50": 0.412,
+    "p95": 1.82
    }
   },
   {
@@ -201,7 +194,12 @@
      "sin_efecto": false
     }
    ],
-   "modelos": []
+   "modelos": [],
+   "tiempos": {
+    "n": 8,
+    "p50": 0.003,
+    "p95": 0.006
+   }
   },
   {
    "id": "changes",
@@ -216,8 +214,8 @@
    "interruptores": [],
    "tiempos": {
     "n": 1,
-    "p50": 2.941,
-    "p95": 2.941
+    "p50": 0.006,
+    "p95": 0.006
    }
   },
   {
@@ -238,7 +236,12 @@
      "sin_efecto": false
     }
    ],
-   "modelos": []
+   "modelos": [],
+   "tiempos": {
+    "n": 1,
+    "p50": 0.002,
+    "p95": 0.002
+   }
   },
   {
    "id": "info",
@@ -254,9 +257,9 @@
    "modelos": [],
    "interruptores": [],
    "tiempos": {
-    "n": 2,
-    "p50": 4.653,
-    "p95": 5.285
+    "n": 4,
+    "p50": 4.237,
+    "p95": 4.298
    }
   },
   {
@@ -272,9 +275,9 @@
    "modelos": [],
    "interruptores": [],
    "tiempos": {
-    "n": 141,
-    "p50": 2.948,
-    "p95": 5.309
+    "n": 79,
+    "p50": 1.987,
+    "p95": 6.266
    }
   },
   {
@@ -483,9 +486,9 @@
    ],
    "marca": "openai",
    "tiempos": {
-    "n": 141,
-    "p50": 0.028,
-    "p95": 0.928
+    "n": 79,
+    "p50": 0.032,
+    "p95": 1.138
    }
   },
   {
@@ -515,9 +518,9 @@
    ],
    "modelos": [],
    "tiempos": {
-    "n": 141,
+    "n": 79,
     "p50": 0.005,
-    "p95": 0.012
+    "p95": 0.015
    }
   },
   {
@@ -554,7 +557,7 @@
    ],
    "marca": "openai",
    "tiempos": {
-    "n": 139,
+    "n": 74,
     "p50": 0.007,
     "p95": 0.014
    }
@@ -630,9 +633,9 @@
    ],
    "marca": "openai",
    "tiempos": {
-    "n": 139,
-    "p50": 0.687,
-    "p95": 1.591
+    "n": 74,
+    "p50": 0.55,
+    "p95": 1.22
    }
   },
   {
@@ -690,9 +693,9 @@
    ],
    "marca": "openai",
    "tiempos": {
-    "n": 139,
-    "p50": 1.996,
-    "p95": 4.368
+    "n": 74,
+    "p50": 1.422,
+    "p95": 5.114
    }
   },
   {
@@ -794,9 +797,9 @@
    "modelos": [],
    "interruptores": [],
    "conteo": {
-    "n": 82,
+    "n": 46,
     "que": "preguntas",
-    "fuente": "2026-10-16-calb-B2.json"
+    "fuente": "2026-10-16-cal-B.json"
    }
   },
   {
@@ -1037,12 +1040,7 @@
     "p50": 1.9,
     "fuente": "medido dentro de PRE el 28-sep (8 preguntas, HISTORY 0.29.65)"
    },
-   "marca": "openai",
-   "conteo": {
-    "n": 85,
-    "que": "veces",
-    "fuente": "logs-pre-2026-10-16-calb-B2.txt"
-   }
+   "marca": "openai"
   },
   {
    "id": "r_guardas",
@@ -1053,12 +1051,7 @@
    "que_hace": "Sin LLM: ningún precio, link, cupo o teléfono que no esté en la información; nunca pedir datos personales.",
    "donde": "src/agents/grounding_check.py:currency_amounts_grounded",
    "interruptores": [],
-   "modelos": [],
-   "conteo": {
-    "n": 85,
-    "que": "veces",
-    "fuente": "logs-pre-2026-10-16-calb-B2.txt"
-   }
+   "modelos": []
   },
   {
    "id": "r_revisor",
@@ -1144,12 +1137,7 @@
     "p50": 1.2,
     "fuente": "medido dentro de PRE el 28-sep (8 preguntas, HISTORY 0.29.65)"
    },
-   "marca": "openai",
-   "conteo": {
-    "n": 85,
-    "que": "veces",
-    "fuente": "logs-pre-2026-10-16-calb-B2.txt"
-   }
+   "marca": "openai"
   },
   {
    "id": "r_reintento",
@@ -1168,12 +1156,7 @@
      "sin_efecto": false
     }
    ],
-   "modelos": [],
-   "conteo": {
-    "n": 3,
-    "que": "veces",
-    "fuente": "logs-pre-2026-10-16-calb-B2.txt"
-   }
+   "modelos": []
   },
   {
    "id": "r_nolotengo",
@@ -1184,12 +1167,7 @@
    "que_hace": "Si el reintento también falla, un mensaje honesto que ofrece un asesor.",
    "donde": "src/agents/rag_agent.py:FALLBACK_ES",
    "modelos": [],
-   "interruptores": [],
-   "conteo": {
-    "n": 0,
-    "que": "veces",
-    "fuente": "logs-pre-2026-10-16-calb-B2.txt"
-   }
+   "interruptores": []
   },
   {
    "id": "r_salida",
@@ -1199,12 +1177,7 @@
    "titulo": "Respuesta aprobada",
    "que_hace": "La respuesta que pasó el revisor vuelve a la ruta que preguntó.",
    "modelos": [],
-   "interruptores": [],
-   "conteo": {
-    "n": 82,
-    "que": "veces",
-    "fuente": "logs-pre-2026-10-16-calb-B2.txt"
-   }
+   "interruptores": []
   }
  ],
  "aristas": [
@@ -1682,61 +1655,61 @@
    "de": "r_guardas",
    "a": "r_revisor",
    "etiqueta": "pasa",
-   "peso": 1.0,
+   "peso": 0.97,
    "origen": "curada",
    "estilo": "normal",
    "vista": "info",
-   "peso_fuente": "medido"
+   "peso_fuente": "estimado"
   },
   {
    "de": "r_guardas",
    "a": "r_reintento",
    "etiqueta": "falla",
    "estilo": "bucle",
-   "peso": 0.0,
+   "peso": 0.03,
    "origen": "curada",
    "vista": "info",
-   "peso_fuente": "medido"
+   "peso_fuente": "estimado"
   },
   {
    "de": "r_revisor",
    "a": "r_salida",
    "etiqueta": "todo SÍ",
-   "peso": 0.9647,
+   "peso": 0.85,
    "origen": "curada",
    "estilo": "normal",
    "vista": "info",
-   "peso_fuente": "medido"
+   "peso_fuente": "estimado"
   },
   {
    "de": "r_revisor",
    "a": "r_reintento",
    "etiqueta": "algún NO",
    "estilo": "bucle",
-   "peso": 0.0353,
+   "peso": 0.15,
    "origen": "curada",
    "vista": "info",
-   "peso_fuente": "medido"
+   "peso_fuente": "estimado"
   },
   {
    "de": "r_reintento",
    "a": "r_escribir",
    "etiqueta": "quita esto",
    "estilo": "bucle",
-   "peso": 1.0,
+   "peso": 0.8,
    "origen": "curada",
    "vista": "info",
-   "peso_fuente": "medido"
+   "peso_fuente": "estimado"
   },
   {
    "de": "r_reintento",
    "a": "r_nolotengo",
    "etiqueta": "2º NO",
    "estilo": "bucle",
-   "peso": 0.0,
+   "peso": 0.2,
    "origen": "curada",
    "vista": "info",
-   "peso_fuente": "medido"
+   "peso_fuente": "estimado"
   },
   {
    "de": "router",
@@ -2610,19 +2583,6 @@
    "sin_efecto": null
   },
   {
-   "nombre": "queja_solo_si_algo_falla",
-   "area": "Enrutador",
-   "titulo": "Lo que el cliente esperaba ver no es una avería",
-   "texto": "Si dice que el descuento, un precio o una opción no le aparecen, es una pregunta de cómo funciona (el 10 % es automático y no hay código), no un enlace roto ni un problema del sistema: se contesta en vez de pasar con una persona.",
-   "codigo": false,
-   "pre": false,
-   "fijado_en_pre": false,
-   "usado_por": [
-    "router"
-   ],
-   "sin_efecto": null
-  },
-  {
    "nombre": "rag_adelantado",
    "area": "Preguntas",
    "titulo": "Empezar a contestar mientras se clasifica",
@@ -2961,7 +2921,7 @@
     "b_acuse"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 212
+   "llamadas_ultima_ronda": 116
   },
   {
    "ajuste": "extractor_turno_model",
@@ -2971,7 +2931,7 @@
     "b_extraction"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 142
+   "llamadas_ultima_ronda": 95
   },
   {
    "ajuste": "grounding_v3_model",
@@ -2981,7 +2941,7 @@
     "r_revisor"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 85
+   "llamadas_ultima_ronda": 51
   },
   {
    "ajuste": "jev_model",
@@ -2993,7 +2953,7 @@
    ],
    "proveedor": "OpenRouter",
    "llamadas_ultima_ronda": null,
-   "nota": "Decidió solo 133 de 144 mensajes; en los otros 11 decidió el LLM de respaldo (sus llamadas cuentan en gpt-4o-mini)."
+   "nota": "Decidió solo 82 de 93 mensajes; en los otros 11 decidió el LLM de respaldo (sus llamadas cuentan en gpt-4o-mini)."
   },
   {
    "ajuste": "openai_embedding_model",
@@ -3016,7 +2976,7 @@
     "r_reescribir"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 212
+   "llamadas_ultima_ronda": 116
   },
   {
    "ajuste": "openai_transcription_model",
@@ -3036,7 +2996,7 @@
     "r_escribir"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 93
+   "llamadas_ultima_ronda": 57
   },
   {
    "ajuste": "rag_plan_model",
@@ -3044,71 +3004,67 @@
    "pre": "gpt-4.1-mini",
    "usado_por": [],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 142
+   "llamadas_ultima_ronda": 95
   }
  ],
  "ronda": {
-  "etiqueta": "2026-10-16-calb-B2",
-  "run_at": "2026-10-16T11:35:01Z",
-  "fichero": "2026-10-16-calb-B2.json",
-  "commit": "4de5769",
+  "etiqueta": "cal-B (core, avisos + contacto)",
+  "run_at": "2026-10-16T22:37:34Z",
+  "fichero": "2026-10-16-cal-B.json",
+  "commit": "95cba85",
   "por_tipo": {
    "reserva": {
-    "turns": 62,
-    "latency_p50": 1.622,
-    "latency_p95": 2.692,
-    "latency_avg": 1.733,
-    "llm_calls_avg": 2.87,
+    "turns": 47,
+    "latency_p50": 1.203,
+    "latency_p95": 2.744,
+    "latency_avg": 1.583,
+    "llm_calls_avg": 2.4,
     "llm_calls_p95": 4.0,
-    "llm_calls_max": 5,
-    "embeddings_avg": 1.66,
-    "llm_share": 1.543,
+    "llm_calls_max": 7,
+    "embeddings_avg": 1.26,
+    "llm_share": 1.48,
     "tokens_avg": 0,
     "cost_avg_usd": 0
    },
    "rag": {
-    "turns": 82,
-    "latency_p50": 4.329,
-    "latency_p95": 6.536,
-    "latency_avg": 4.966,
-    "llm_calls_avg": 4.32,
-    "llm_calls_p95": 6.0,
+    "turns": 46,
+    "latency_p50": 4.079,
+    "latency_p95": 7.497,
+    "latency_avg": 4.474,
+    "llm_calls_avg": 4.48,
+    "llm_calls_p95": 6.75,
     "llm_calls_max": 7,
-    "embeddings_avg": 1.59,
-    "llm_share": 1.209,
+    "embeddings_avg": 1.61,
+    "llm_share": 1.294,
     "tokens_avg": 0,
     "cost_avg_usd": 0
    }
   },
   "enrutador": {
    "by_backend": {
-    "jev": 133,
-    "llm_uncertain": 11
+    "jev": 82,
+    "llm_uncertain": 10,
+    "llm": 1
    },
-   "ms_p50": 400.5,
-   "ms_p95": 483.55
+   "ms_p50": 384.0,
+   "ms_p95": 454.8
   },
   "cliente": {
-   "turns": 144,
-   "conversations": 24,
+   "turns": 93,
+   "conversations": 32,
    "no_reply": 0,
    "multi_bubble": 0,
-   "latency_p50": 4.0,
-   "latency_p95": 6.0,
-   "latency_max": 45
+   "latency_p50": 3.0,
+   "latency_p95": 7.0,
+   "latency_max": 12
   },
   "llamadas_por_modelo": {
-   "gpt-4o-mini": 212,
-   "gpt-4.1-mini": 142,
-   "gpt-6-luna": 93,
-   "gpt-4.1": 85
+   "gpt-4o-mini": 116,
+   "gpt-4.1-mini": 95,
+   "gpt-6-luna": 57,
+   "gpt-4.1": 51
   },
-  "calidad": {
-   "criteria_pass_pct": 95.4,
-   "dialogues_passed": 17,
-   "dialogues": 24,
-   "model": "gpt-5-mini (medium)"
-  }
+  "calidad": null
  },
  "pesos_fuente": "Los % del enrutador y de las fases de la reserva salen de la foto de la ronda; los del revisor y el reintento, de los logs de PRE de la misma ronda. La cascada y los textos fijos no dejan rastro medible: se animan con una estimación y no llevan porcentaje."
 }

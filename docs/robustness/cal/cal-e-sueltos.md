@@ -52,13 +52,27 @@ del extractor por un caso es lo que la norma prohíbe.
 Cuentas finales: **cal-03, cal-29 y cal-33 arreglados 3 de 3** (medidas `cale-E135-pase` y `cale-E145-con-respaldo`),
 cal-38 y cal-39 ya pasaban, **cal-12 sigue fallando** por una decisión del modelo que no vamos a forzar.
 
-## 4. Decisión pendiente de Gadea
+## 4. E2 choca con un criterio del golden: hay que decidirlo (17-oct)
+
+El juez de la **ronda A del core** (`2026-10-16-cal-A`, 97,4 % de criterios) saca un fallo que toca justo esto:
+
+> `descuento-online-sin-codigo` / **`escala-si-no-aparece`**: "El cliente reportó que el descuento no aparece en el
+> checkout, pero el bot no ofreció pasar a un asesor ni mencionó la opción de escalamiento".
+
+O sea: el golden pide **las dos cosas** (explicar que el 10 % es automático y sin código **y** ofrecer un asesor si
+sigue sin aparecer), y mi arreglo E2 dice que "lo que el cliente esperaba ver y no ve" **no** es una avería, así que no
+escalaría. E2 ya estaba sin caso que lo demuestre (cal-38 y cal-39 pasan solos). **Recomendación: quitar E2**; el
+comportamiento bueno es el que ya tiene PRE (explica el descuento y ofrece el asesor). Queda para que lo confirme
+Gadea, porque es una decisión de negocio: *¿si el descuento no le aparece al cliente en la web, se le pasa con una
+persona?* Hoy el examen dice que sí.
+
+## 5. Decisión pendiente de Gadea
 
 **¿El WhatsApp oficial es solo para mensajes?** Si lo es, se añade a la base como `contact_info.nota_es` /
 `nota_en` y el bot vuelve a decirlo, esta vez respaldado. Si no, se queda sin decir. Hoy el código lo afirmaba sin
 que nadie lo hubiera escrito en la base.
 
-## 5. Cómo repetirlo
+## 6. Cómo repetirlo
 
 ```
 ENV_FILE=.env.dev python -m scripts.banco_fallos medir --tarea CAL-E --reps 3 --codigo-local --etiqueta cale-E0-base
@@ -70,7 +84,7 @@ ENV_FILE=.env.dev python -m scripts.banco_fallos medir --tarea CAL-E --reps 3 --
 Los cuatro flags van juntos porque atacan casos distintos: qué arregla cada uno se lee en qué caso cambia. `jev_con_contexto`
 toca TODAS las señales, así que antes de promocionarlo hace falta una ronda del golden (como el flag de los avisos).
 
-## 6. Ficheros
+## 7. Ficheros
 
 | Fichero | Qué |
 |---|---|

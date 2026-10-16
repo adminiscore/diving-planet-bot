@@ -487,19 +487,6 @@ def activity_affirmed(p_affirms: float, p_hypothesis: float | None) -> bool:
     return p_affirms >= 0.4 and p_hypothesis < 0.5
 
 
-# CAL-E2 (16-oct, flag `queja_solo_si_algo_falla`): "the discount of 10% is not showing up. what is the code?" se
-# tomaba por un problema del sistema de reservas y el turno acababa en un pase a una persona diciendo "sorry the link
-# didn't work" (dos cosas que el cliente no dijo: cal-38 y cal-39). Lo que el cliente esperaba ver y no ve es una
-# PREGUNTA que contesta la base (el 10 % es automático y no hay código), no un fallo técnico. Es la frontera de la
-# clase, no el caso: vale para el descuento, el precio, una opción o un código que no aparecen.
-_NO_APARECE_NO_ES_FALLO = (
-    "Nothing is reported as failing when the customer only says that something they EXPECTED to see is not there "
-    "— a discount, a price, an option or a code that 'is not showing up', 'no me aparece', 'no me sale' — or asks "
-    "how to get it ('what is the code?'). That is a normal question about how it works, answered from the catalog "
-    "and the policies, and it is neither a technical failure nor a real-time problem."
-)
-
-
 # CAL-E3 (16-oct, flag `pase_si_pide_fuera_del_sistema`): "Pero un link especial" (una agencia que quiere un enlace
 # para que sus clientes paguen) no era "algo que solo puede hacer una persona" para la señal, así que el bot explicaba
 # que no existe y nombraba al asesor sin ofrecer el pase (cal-29). Decisión de Gadea del 16-oct: quien necesita algo
@@ -514,12 +501,6 @@ _FUERA_DEL_SISTEMA = (
 
 def _questions_for_turn(pending_slot: str | None = None) -> dict:
     q = dict(_QUESTIONS)
-    if settings.queja_solo_si_algo_falla:
-        for nombre in ("sensitive_topic", "broken_link_complaint"):
-            pregunta = q.get(nombre)
-            if pregunta:
-                q[nombre] = {**pregunta,
-                             "instructions": f"{pregunta['instructions']} {_NO_APARECE_NO_ES_FALLO}"}
     pending_q = pending_answer_question(pending_slot)
     if pending_q:
         q[PENDING_ANSWER] = pending_q
