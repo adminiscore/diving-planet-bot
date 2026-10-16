@@ -200,6 +200,23 @@ def sensitive_response_for(category: str, lang: str = "es") -> tuple[str, str] |
     return category, _rule_message(rule, lang)
 
 
+def _mensaje_con_contexto(message: str, history: list[dict] | None) -> str:
+    """CAL-E5: lo que lee el enrutador LLM de respaldo. Con el flag, los dos últimos mensajes como referencia (para
+    que un mensaje referido no pierda a qué se refiere) y después el mensaje de este turno; sin el flag, el mensaje
+    tal cual, como siempre."""
+    from src.config import settings as _settings
+
+    if not (_settings.jev_con_contexto and history):
+        return message
+    ultimos = [h for h in history if (h or {}).get("content")][-2:]
+    if not ultimos:
+        return message
+    lineas = "\n".join(
+        f"{'Cliente' if h.get('role') == 'user' else 'Bot'}: {str(h['content'])[:400]}" for h in ultimos)
+    return (f"Así acabó la conversación, solo para saber a qué se refiere el cliente:\n{lineas}\n\n"
+            f"Clasifica SOLO este último mensaje del cliente:\n{message}")
+
+
 async def detect_routing_signals(
     message: str, *, lang: str = "es", client: AsyncOpenAI | None = None, pending_slot: str | None = None,
     history: list[dict] | None = None,
@@ -233,7 +250,11 @@ async def detect_routing_signals(
             model=settings.extraction_model,
             messages=[
                 {"role": "system", "content": routing_system_prompt(lang)},
-                {"role": "user", "content": message},
+                # CAL-E5 (flag `jev_con_contexto`): el mismo contexto que Jev. Medido el 16-oct con
+                # `scripts/sonda_senales.py`: con los últimos turnos, "Me lo podrías compartir por favor" (tras "se me
+                # perdió el número") sube a 0,63 en Jev, cae en la zona de duda y la decide este enrutador, que veía
+                # solo el mensaje y decía que no. La mitad del arreglo estaba aquí.
+                {"role": "user", "content": _mensaje_con_contexto(message, history)},
             ],
             tools=[ROUTING_TOOL],
             tool_choice={"type": "function", "function": {"name": "detect_routing_signals"}},

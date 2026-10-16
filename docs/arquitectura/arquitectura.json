@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-16T20:46:02+00:00",
-  "commit": "b95621c",
+  "generado": "2026-10-16T21:14:45+00:00",
+  "commit": "9ed57f5",
   "rama": "feature/pre_gadea"
  },
  "vistas": {
@@ -162,6 +162,13 @@
      "codigo": false,
      "pre": false,
      "sin_efecto": false
+    },
+    {
+     "nombre": "pase_si_pide_fuera_del_sistema",
+     "titulo": "Lo que la web no puede dar lo arregla una persona",
+     "codigo": false,
+     "pre": false,
+     "sin_efecto": false
     }
    ],
    "detalle": [
@@ -224,8 +231,8 @@
    "donde": "src/agents/deflection_agent.py:deflection_node",
    "interruptores": [
     {
-     "nombre": "contacto_solo_lo_de_la_base",
-     "titulo": "El WhatsApp se da sin añadir condiciones que no constan",
+     "nombre": "contacto_pasa_a_persona",
+     "titulo": "Quien pide un teléfono pasa con un asesor",
      "codigo": false,
      "pre": false,
      "sin_efecto": false
@@ -1950,10 +1957,10 @@
    "sin_efecto": null
   },
   {
-   "nombre": "contacto_solo_lo_de_la_base",
+   "nombre": "contacto_pasa_a_persona",
    "area": "Respuestas fijas",
-   "titulo": "El WhatsApp se da sin añadir condiciones que no constan",
-   "texto": "Al dar el WhatsApp oficial se decía '(solo mensajes, no llamadas)', y eso no está escrito en la información de la empresa. Ahora la aclaración sale de ahí: si está, se dice; si no, no se dice nada.",
+   "titulo": "Quien pide un teléfono pasa con un asesor",
+   "texto": "Decisión del dueño (16-oct): esto es un chat y no damos números. Si el cliente pide un teléfono o quiere hablar con alguien, la conversación pasa a un asesor del equipo, que se pone en contacto con él.",
    "codigo": false,
    "pre": false,
    "fijado_en_pre": false,
@@ -2554,6 +2561,19 @@
    "fijado_en_pre": true,
    "usado_por": [
     "r_escribir"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "pase_si_pide_fuera_del_sistema",
+   "area": "Enrutador",
+   "titulo": "Lo que la web no puede dar lo arregla una persona",
+   "texto": "Un enlace de pago a medida, una factura, tarifas especiales o una salida privada por cotizar no los puede dar la reserva online: esas conversaciones pasan a un asesor en vez de explicar que no existe.",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
+   "usado_por": [
+    "router"
    ],
    "sin_efecto": null
   },

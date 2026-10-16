@@ -22,7 +22,8 @@ correcta, pero **no tiene un caso que lo demuestre**: eso hay que decirlo y no c
 
 | Flag | Caso | Causa | Arreglo |
 |---|---|---|---|
-| `contacto_solo_lo_de_la_base` | cal-03 | el texto del pase trae una restricción escrita en el código, no en la base | la aclaración sale de `escalation_rules.json` (`contact_info.nota_es`/`nota_en`); si no está, **no se dice nada**. El número se sigue dando (decisión de Gadea del 17-sep) |
+| `contacto_pasa_a_persona` | cal-03, cal-33 | **DECISIÓN DE GADEA del 16-oct** (sustituye a la del 17-sep): esto es un chatbot y **no da números**. Antes daba el WhatsApp y le añadía "(solo mensajes, no llamadas)", que la base no dice | quien pide un número o quiere hablar con alguien **pasa con un asesor**, con el mismo pase que la posventa (paso, motivo y nota del lead). Criterio del golden `contacto-real` y casos cal-03 y cal-33 del banco actualizados; y **28 menciones del número salieron de las respuestas de la base** (13 preguntas frecuentes, es/en): ninguna manda ya escribir a un número, todas pasan con un asesor |
+| `pase_si_pide_fuera_del_sistema` | cal-29 | "Pero un link especial" no era, para la señal, algo que solo pueda hacer una persona, así que el bot explicaba que no existe sin ofrecer el pase | la señal `needs_staff` incluye la clase: un enlace de pago a medida, una factura, tarifas especiales o una salida privada por cotizar |
 | `idioma_del_extractor` | cal-12 | el idioma del primer turno lo decide una **lista de palabras vacías** que corta la cadena antes del LLM; un portugués con muchas palabras iguales al español sale "es" | lo dice el **extractor** (campo `idioma`), que ya va lanzado en paralelo con el enrutador: ni una llamada más ni una lista de palabras. "es"/"en" tal cual, cualquier otro → inglés (G-10) |
 | `jev_con_contexto` | cal-29, cal-33 | **Jev contesta las señales viendo solo el mensaje del turno**: un mensaje referido pierde a qué se refiere ("Me lo podrías compartir por favor" tras "se me perdió el número"; "Pero un link especial") | le viajan los **dos últimos mensajes** como referencia, dejando claro que las preguntas son sobre el último. Beneficia a TODAS las señales |
 | `queja_solo_si_algo_falla` | (cal-38, cal-39: ya pasan) | lo que el cliente esperaba ver y no ve se tomaba por avería | frontera de la clase en las señales de queja de enlace y tema sensible: un descuento, un precio, una opción o un código que no aparecen son una **pregunta** que contesta la base |
@@ -35,16 +36,21 @@ lo podrías compartir").
 
 | Caso | Base | Con los flags | Qué pasó |
 |---|---|---|---|
-| cal-03 | 3/3 | **0/3** | E1 arreglado: el número se da sin la restricción que no está en la base |
+| cal-03 | 3/3 | **0/3** | E1: no da número y pasa con un asesor |
 | cal-12 | 3/3 | 3/3 | **E4 no mueve el caso**: hay que ver si el extractor también dice "es" en ese portugués mezclado |
-| cal-29 | 3/3 | 3/3 | **E5 no mueve el caso**: hay que ver si la señal salta y el turno va por otro camino |
-| cal-33 | 3/3 | 3/3 | igual que cal-29 |
+| cal-29 | 3/3 | **0/3** | E3: la señal ve que un enlace a medida lo hace una persona, y pasa |
+| cal-33 | 3/3 | **0/3** con el contexto completo | E5: con los últimos turnos la señal sube a 0,63, cae en la zona de duda y **decide el enrutador de respaldo, que veía solo el mensaje**: la mitad del arreglo estaba ahí |
 | cal-38, cal-39 | 0/3 | 0/3 | ya pasaban |
 
-Así que de los cuatro arreglos, **uno está demostrado** (E1), **dos están hechos y sin efecto medible** (E4, E5) y
-**uno no tiene caso** (E2). Lo que toca es diagnosticar, no apretar la tuerca: `scripts/sonda_senales.py` (nueva)
-reproduce el caso dentro de PRE y enseña, turno a turno, las señales del enrutador, el idioma del estado y la traza de
-las líneas que deciden, sin gastar el verificador.
+**El diagnóstico fue lo que los arregló.** `scripts/sonda_senales.py` (nueva) reproduce el caso dentro de PRE y
+enseña, turno a turno, las señales del enrutador, el idioma del estado y la traza de las líneas que deciden, sin
+gastar el verificador. Con ella se vio que (1) en cal-33 la señal SÍ subía con el contexto, pero caía en la zona de
+duda y la decidía el enrutador de respaldo, que no tenía contexto; (2) en cal-12 el extractor lee ese mensaje como
+español, así que el mecanismo funciona y el caso no se mueve. **cal-12 sigue fallando y se deja así**: tocar el prompt
+del extractor por un caso es lo que la norma prohíbe.
+
+Cuentas finales: **cal-03, cal-29 y cal-33 arreglados 3 de 3** (medidas `cale-E135-pase` y `cale-E145-con-respaldo`),
+cal-38 y cal-39 ya pasaban, **cal-12 sigue fallando** por una decisión del modelo que no vamos a forzar.
 
 ## 4. Decisión pendiente de Gadea
 

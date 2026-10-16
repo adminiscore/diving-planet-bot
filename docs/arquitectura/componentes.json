@@ -93,7 +93,8 @@
         "jev_router_enabled",
         "s4_fixes",
         "jev_con_contexto",
-        "queja_solo_si_algo_falla"
+        "queja_solo_si_algo_falla",
+        "pase_si_pide_fuera_del_sistema"
       ],
       "detalle": [
         "Jev: jev_router.detect_routing_signals_jev_full (OpenRouter)",
@@ -134,7 +135,7 @@
       "que_hace": "Preguntas que tienen respuesta fija: '¿me das un teléfono?', '¿eres un bot?'.",
       "donde": "src/agents/deflection_agent.py:deflection_node",
       "interruptores": [
-        "contacto_solo_lo_de_la_base"
+        "contacto_pasa_a_persona"
       ]
     },
     {
@@ -1382,15 +1383,20 @@
       "titulo": "Lo que el cliente esperaba ver no es una avería",
       "texto": "Si dice que el descuento, un precio o una opción no le aparecen, es una pregunta de cómo funciona (el 10 % es automático y no hay código), no un enlace roto ni un problema del sistema: se contesta en vez de pasar con una persona."
     },
-    "contacto_solo_lo_de_la_base": {
-      "area": "Respuestas fijas",
-      "titulo": "El WhatsApp se da sin añadir condiciones que no constan",
-      "texto": "Al dar el WhatsApp oficial se decía '(solo mensajes, no llamadas)', y eso no está escrito en la información de la empresa. Ahora la aclaración sale de ahí: si está, se dice; si no, no se dice nada."
-    },
     "idioma_del_extractor": {
       "area": "Chat",
       "titulo": "El idioma del primer mensaje lo dice quien lee el mensaje",
       "texto": "Antes lo decidía una lista de palabras corrientes, y un mensaje en portugués con muchas palabras iguales al español se contestaba en español. Ahora lo dice la misma lectura del mensaje que saca los datos, que ya se está haciendo a la vez."
+    },
+    "contacto_pasa_a_persona": {
+      "area": "Respuestas fijas",
+      "titulo": "Quien pide un teléfono pasa con un asesor",
+      "texto": "Decisión del dueño (16-oct): esto es un chat y no damos números. Si el cliente pide un teléfono o quiere hablar con alguien, la conversación pasa a un asesor del equipo, que se pone en contacto con él."
+    },
+    "pase_si_pide_fuera_del_sistema": {
+      "area": "Enrutador",
+      "titulo": "Lo que la web no puede dar lo arregla una persona",
+      "texto": "Un enlace de pago a medida, una factura, tarifas especiales o una salida privada por cotizar no los puede dar la reserva online: esas conversaciones pasan a un asesor en vez de explicar que no existe."
     }
   },
   "areas": [

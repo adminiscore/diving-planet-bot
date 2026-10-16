@@ -835,16 +835,28 @@ def _official_whatsapp() -> str | None:
     return info.get("whatsapp") or None
 
 
-def _nota_del_whatsapp(lang: str) -> str:
-    """CAL-E1: la aclaración del WhatsApp oficial, SOLO si está en la base (`contact_info.nota_es`/`nota_en`). Vacío
-    si no está: el bot no afirma una restricción que la base no respalda. Si es verdad, el negocio la añade ahí."""
-    from src.knowledge.loader import load_json
+def _contacto_pasa_a_persona(state: ConversationState, lang: str) -> str:
+    """CAL-E1 (decisión de Gadea del 16-oct, flag `contacto_pasa_a_persona`): el bot no da números de teléfono ni de
+    WhatsApp. Ante una petición de número o de hablar con alguien, la conversación se pasa a un asesor, igual que
+    `_needs_staff_handoff`: mismo efecto en el estado (paso, nota del lead y motivo) para que el pase sea uno solo.
 
-    try:
-        info = load_json("escalation_rules.json").get("handoff_protocol", {}).get("contact_info", {})
-    except Exception:  # noqa: BLE001 — sin la base, sin nota
-        return ""
-    return str(info.get("nota_es" if lang == "es" else "nota_en") or "").strip()
+    Antes (17-sep) se daba el WhatsApp oficial de la base, y el texto le añadía "(solo mensajes, no llamadas)", que la
+    base no dice: el juez lo marcaba como invención (cal-03). Ahora no hay número que afirmar."""
+    razon = "el cliente pide un número o contacto directo: lo atiende una persona"
+    state.step = Step.ESCALATE
+    state.quick_replies = []
+    state.pending_escalation_reason = razon
+    state.pending_note = build_lead_summary(state, escalation_reason=razon)
+    logger.info("[SUPERVISOR] petición de contacto -> pase a una persona (decisión de Gadea 16-oct)")
+    if lang == "es":
+        return (
+            "Por aquí no manejo números de teléfono 🔒, pero te paso ahora con un asesor de Diving Planet para que "
+            "hable contigo directamente. Enseguida se pone en contacto. ¡Gracias! 🙌"
+        )
+    return (
+        "I don't hand out phone numbers here 🔒, but I'm passing you to a Diving Planet advisor so they can talk to "
+        "you directly. They'll get in touch shortly. Thanks! 🙌"
+    )
 
 
 def _contact_number_deflection(lang: str) -> str:
@@ -853,21 +865,19 @@ def _contact_number_deflection(lang: str) -> str:
 
     s4-14 (flag `s4_fixes`, decision de Gadea del 17-sep que sustituye a la del 20-jul): si lo
     piden, se da el WhatsApp OFICIAL (solo mensajes), sacado de la base de conocimiento."""
-    number = _official_whatsapp() if settings.s4_fixes else None
+    # CAL-E1 (decisión de Gadea del 16-oct, que sustituye a la del 17-sep): esto es un chatbot y NO da números. Si el
+    # cliente pide un número o quiere hablar con alguien, la conversación se PASA A UN ASESOR. El texto y el efecto en
+    # el estado los pone `_contacto_pasa_a_persona` (una sola puerta); aquí solo queda el caso sin el flag.
+    number = None if settings.contacto_pasa_a_persona else (_official_whatsapp() if settings.s4_fixes else None)
     if number:
-        # CAL-E1 (flag `contacto_solo_lo_de_la_base`): la aclaración entre paréntesis ("solo mensajes de WhatsApp, no
-        # llamadas") no está en la base y el juez la marca como invención (cal-03). Con el flag sale de la base y, si
-        # la base no la trae, no se dice: una respuesta no afirma nada que la base no respalde.
-        nota = _nota_del_whatsapp(lang) if settings.contacto_solo_lo_de_la_base else (
-            "solo mensajes de WhatsApp, no llamadas" if lang == "es" else "WhatsApp messages only, no calls")
-        entre_parentesis = f" ({nota})" if nota else ""
+        nota = "solo mensajes de WhatsApp, no llamadas" if lang == "es" else "WhatsApp messages only, no calls"
         if lang == "es":
             return (
-                f"¡Claro! 😊 Nuestro WhatsApp oficial es *{number}*{entre_parentesis}. Y si quieres, aquí mismo te "
+                f"¡Claro! 😊 Nuestro WhatsApp oficial es *{number}* ({nota}). Y si quieres, aquí mismo te "
                 "ayudo con todo: te armo la reserva o te paso con un asesor del equipo. ¿Seguimos? 🌊"
             )
         return (
-            f"Sure! 😊 Our official WhatsApp is *{number}*{entre_parentesis}. And if you like, I can help you with "
+            f"Sure! 😊 Our official WhatsApp is *{number}* ({nota}). And if you like, I can help you with "
             "everything right here: I'll put your booking together or pass you to an advisor from the team. "
             "Shall we continue? 🌊"
         )
@@ -3247,6 +3257,12 @@ async def _shared_turn_handler(
     # `state.language` de forma permanente.
     if _asks_for_contact_number(msg_lower) or routing_signals.get("asks_for_contact_number"):
         effective_lang = state.language if state.detected_language else _infer_language(message, state.language)
+        if settings.contacto_pasa_a_persona:
+            # Decisión de Gadea (16-oct): el chatbot no da números; quien quiere un contacto directo pasa con un asesor.
+            response = _contacto_pasa_a_persona(state, effective_lang)
+            state.history.append({"role": "user", "content": message})
+            state.history.append({"role": "assistant", "content": response})
+            return response
         response = _contact_number_deflection(effective_lang)
         state.step = Step.FREE_TEXT
         state.quick_replies = []

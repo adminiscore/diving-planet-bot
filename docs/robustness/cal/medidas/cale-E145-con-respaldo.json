@@ -1,0 +1,63 @@
+{
+ "etiqueta": "cale-E145-con-respaldo",
+ "reps": 3,
+ "flags": [
+  "contacto_solo_lo_de_la_base",
+  "idioma_del_extractor",
+  "jev_con_contexto"
+ ],
+ "codigo_local": true,
+ "casos": [
+  {
+   "id": "cal-12",
+   "dialogo": "grupo-mixto-precio-cop-total",
+   "criterio": "global:idioma",
+   "repeticiones": 3,
+   "fallan": 3,
+   "respuestas": [
+    "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\nTe recomiendo el plan de *2 inmersiones en 1 día* en las Islas del Rosario. (Si prefieres un *paquete multi-día* de 3 o más inmersiones, dímelo.)\n\n¿Ha pasado *más de 2 años* desde la última inmersión de alguno del grupo?",
+    "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\nTe recomiendo el plan de *2 inmersiones en 1 día* en las Islas del Rosario. (Si prefieres un *paquete multi-día* de 3 o más inmersiones, dímelo.)\n\n¿Ha pasado *más de 2 años* desde la última inmersión de alguno del grupo?",
+    "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\nTe recomiendo el plan de *2 inmersiones en 1 día* en las Islas del Rosario. (Si prefieres un *paquete multi-día* de 3 o más inmersiones, dímelo.)\n\n¿Ha pasado *más de 2 años* desde la última inmersión de alguno del grupo?"
+   ],
+   "explicaciones": [
+    "El cliente escribió en portugués, pero la respuesta del bot fue en español. Según el criterio, debía responder en inglés cuando el mensaje inicial es en portugués.",
+    "El cliente escribió en portugués, pero la respuesta del bot fue en español. Según el criterio, debía responder en inglés cuando el mensaje inicial es en portugués.",
+    "El cliente escribió en portugués, pero la respuesta del bot fue en español. Según el criterio, debía responder en inglés cuando el mensaje inicial es en portugués."
+   ]
+  },
+  {
+   "id": "cal-29",
+   "dialogo": "cotiza-buceo-snorkel-y-pide-link-especial",
+   "criterio": "link-especial-escalar",
+   "repeticiones": 3,
+   "fallan": 3,
+   "respuestas": [
+    "Sí, te entiendo: buscas un enlace especial para que tus clientes paguen. No tenemos un link de pago personalizado; cada persona puede reservar y pagar en el enlace de la actividad, eligiendo su fecha y cantidad de participantes.\n\nSi necesitas una salida privada o un grupo cerrado, un asesor del equipo puede preparar una cotización.\n\nPara darte el precio exacto necesito saber desde dónde sales: ¿saldrías *desde Cartagena* o ya estás *en las Islas del Rosario*? Los planes y los precios cambian según el punto de salida. 🌊",
+    "¡Claro! Si te refieres a un enlace especial para tus clientes, no tenemos uno distinto: pueden reservar directamente en el enlace de la actividad y elegir la fecha y cuántas personas van.\n\nSi buscas una salida privada o un grupo cerrado, eso sí se cotiza según el grupo y la fecha.\n\nPara darte el precio exacto necesito saber desde dónde sales: ¿saldrías *desde Cartagena* o ya estás *en las Islas del Rosario*? Los planes y los precios cambian según el punto de salida. 🌊",
+    "¡Claro! La reserva se hace en el enlace online de la actividad; ahí tus clientes eligen la fecha y la cantidad de personas, y el precio online ya incluye el 10% de descuento.\n\nPara una salida regular de buceo desde Cartagena, pueden reservar aquí: https://book.divingplanet.org/book/salidas-de-buceo/1?language=es\n\nSi buscan una salida privada o cerrada para el grupo, un asesor puede preparar una cotización según la fecha y el grupo. ¿Les interesa una salida regular o privada?\n\n¿Y para cuántas personas armamos el plan? Así te paso el precio exacto. 😊"
+   ],
+   "explicaciones": [
+    "El bot menciona que un asesor puede preparar una cotización para salidas privadas o grupos cerrados, pero no ofrece explícitamente pasar la conversación con un asesor humano para coordinar el 'link especial', como exige el criterio. El contexto (ver [12]) indica que para servicios especiales debe intervenir un asesor.",
+    "El bot explica que no existe un enlace especial y menciona que para salidas privadas o grupos cerrados se cotiza según grupo y fecha, pero no ofrece explícitamente pasar con un asesor humano para coordinar esa logística, como exige la política: 'Un asesor del equipo prepara la cotización y coordina un instructor disponible para la fecha solicitada.'",
+    "El bot explica que la reserva regular se hace por el enlace online y que un asesor puede preparar una cotización para salidas privadas, pero NO ofrece explícitamente pasar o conectar con un asesor humano para gestionar el 'link especial' solicitado, como exige el criterio. El contexto indica que para servicios privados o logística especial, un asesor debe intervenir ('Un asesor del equipo prepara la cotización y coordina un instructor disponible para la fecha solicitada')."
+   ]
+  },
+  {
+   "id": "cal-33",
+   "dialogo": "punto-encuentro-corrige-todo-mar-y-hora",
+   "criterio": "global:sin-invenciones",
+   "repeticiones": 3,
+   "fallan": 0,
+   "respuestas": [
+    "¡Claro! 😊 Nuestro WhatsApp oficial es *+57 320 231515*. Y si quieres, aquí mismo te ayudo con todo: te armo la reserva o te paso con un asesor del equipo. ¿Seguimos? 🌊",
+    "¡Claro! 😊 Nuestro WhatsApp oficial es *+57 320 231515*. Y si quieres, aquí mismo te ayudo con todo: te armo la reserva o te paso con un asesor del equipo. ¿Seguimos? 🌊",
+    "¡Claro! 😊 Nuestro WhatsApp oficial es *+57 320 231515*. Y si quieres, aquí mismo te ayudo con todo: te armo la reserva o te paso con un asesor del equipo. ¿Seguimos? 🌊"
+   ],
+   "explicaciones": [
+    "La respuesta actual sí proporciona el WhatsApp oficial (+57 320 231515) como indica la referencia, por lo que ya no se comete el fallo de antes.",
+    "La respuesta actual sí proporciona el WhatsApp oficial (+57 320 231515) como indica la referencia, corrigiendo el fallo anterior donde el bot se negó a compartirlo.",
+    "La respuesta actual sí proporciona el WhatsApp oficial (+57 320 231515) como indica la referencia, corrigiendo el fallo anterior donde el bot se negó a compartirlo."
+   ]
+  }
+ ]
+}

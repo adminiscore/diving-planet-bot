@@ -2,9 +2,10 @@
 
 Las causas, leídas en el banco (`docs/robustness/cal/banco-fallos.json`):
 
-1. **E1 `contacto_solo_lo_de_la_base`** (cal-03): al dar el WhatsApp oficial, el texto añadía "(solo mensajes de
-   WhatsApp, no llamadas)", una restricción que NO está en la base: el juez la marca como invención. La aclaración
-   sale de la base o no se dice. Si es verdad, el negocio la añade.
+1. **E1 `contacto_pasa_a_persona`** (cal-03, cal-33): DECISIÓN DE GADEA del 16-oct, que sustituye a la del 17-sep:
+   esto es un chatbot y **no da números** de teléfono ni de WhatsApp. Quien pide un número o quiere hablar con
+   alguien, pasa con un asesor. Así desaparece también la invención que el juez marcaba ("solo mensajes, no
+   llamadas", que la base no dice). El criterio del golden `contacto-real` y los casos del banco se actualizaron.
 2. **E2 `queja_solo_si_algo_falla`** (cal-38, cal-39): "the discount of 10% is not showing up. what is the code?" se
    tomaba por un problema del sistema y el turno acababa en un pase a una persona diciendo "sorry the link didn't
    work". Lo que el cliente esperaba ver y no ve es una PREGUNTA que contesta la base. Se arregla en la frontera de
@@ -22,49 +23,41 @@ from src.agents import jev_router as jr
 from src.agents import supervisor as sv
 from src.config import settings
 
-# ---------------------------------------------------------------- E1: el contacto dice solo lo que está en la base
+# ---------------------------------------------------------------- E1: el contacto pasa a una persona
 
 
-@pytest.fixture
-def con_whatsapp(monkeypatch):
+def test_con_el_flag_la_peticion_de_contacto_pasa_a_un_asesor(monkeypatch):
+    """Decisión de Gadea (16-oct): esto es un chatbot y no da números. Quien pide un número o quiere hablar con
+    alguien, pasa con un asesor. De paso desaparece la invención de cal-03 ("solo mensajes, no llamadas", que la base
+    no dice): ya no hay número que afirmar."""
+    from src.flows.state import ConversationState, Step
+
+    monkeypatch.setattr(settings, "contacto_pasa_a_persona", True)
+    monkeypatch.setattr(sv, "build_lead_summary", lambda state, escalation_reason=None: "resumen")
+    st = ConversationState(conversation_id="t")
+    es = sv._contacto_pasa_a_persona(st, "es")
+    assert "asesor" in es
+    assert "320" not in es and "+57" not in es, "ningún número"
+    assert "llamadas" not in es, "ninguna condición que la base no diga"
+    assert st.step is Step.ESCALATE
+    assert st.pending_escalation_reason and st.pending_note == "resumen"
+    en = sv._contacto_pasa_a_persona(ConversationState(conversation_id="t2"), "en")
+    assert "advisor" in en and "+57" not in en
+
+
+def test_con_el_flag_el_texto_de_antes_no_da_el_numero(monkeypatch):
     monkeypatch.setattr(settings, "s4_fixes", True)
     monkeypatch.setattr(sv, "_official_whatsapp", lambda: "+57 320 231515")
-    return monkeypatch
+    monkeypatch.setattr(settings, "contacto_pasa_a_persona", True)
+    assert "+57" not in sv._contact_number_deflection("es")
 
 
-def test_sin_el_flag_el_texto_del_whatsapp_es_el_de_hoy(con_whatsapp):
-    con_whatsapp.setattr(settings, "contacto_solo_lo_de_la_base", False)
-    assert "solo mensajes de WhatsApp, no llamadas" in sv._contact_number_deflection("es")
-
-
-def test_con_el_flag_no_se_afirma_lo_que_la_base_no_dice(con_whatsapp):
-    """cal-03: la restricción no está en la base y el juez la marca como invención."""
-    con_whatsapp.setattr(settings, "contacto_solo_lo_de_la_base", True)
-    con_whatsapp.setattr(sv, "_nota_del_whatsapp", lambda lang: "")
-    es = sv._contact_number_deflection("es")
-    assert "+57 320 231515" in es, "el número sí se da (decisión de Gadea del 17-sep)"
-    assert "llamadas" not in es and "(" not in es.split("*")[-1]
-    en = sv._contact_number_deflection("en")
-    assert "calls" not in en
-
-
-def test_si_la_base_trae_la_aclaracion_se_dice(con_whatsapp):
-    """El negocio la añade a `escalation_rules.json` (`contact_info.nota_es`/`nota_en`) y entonces sí se dice."""
-    con_whatsapp.setattr(settings, "contacto_solo_lo_de_la_base", True)
-    con_whatsapp.setattr(sv, "_nota_del_whatsapp", lambda lang: "solo mensajes" if lang == "es" else "messages only")
-    assert "(solo mensajes)" in sv._contact_number_deflection("es")
-    assert "(messages only)" in sv._contact_number_deflection("en")
-
-
-def test_la_nota_del_whatsapp_sale_de_la_base(monkeypatch):
-    from src.knowledge import loader
-
-    monkeypatch.setattr(loader, "load_json", lambda nombre: {
-        "handoff_protocol": {"contact_info": {"whatsapp": "+57 1", "nota_es": "solo mensajes", "nota_en": "msgs"}}})
-    assert sv._nota_del_whatsapp("es") == "solo mensajes"
-    assert sv._nota_del_whatsapp("en") == "msgs"
-    monkeypatch.setattr(loader, "load_json", lambda nombre: {"handoff_protocol": {"contact_info": {}}})
-    assert sv._nota_del_whatsapp("es") == ""
+def test_sin_el_flag_el_comportamiento_es_el_de_hoy(monkeypatch):
+    """Hasta medirlo, PRE sigue dando el WhatsApp (decisión del 17-sep)."""
+    monkeypatch.setattr(settings, "s4_fixes", True)
+    monkeypatch.setattr(sv, "_official_whatsapp", lambda: "+57 320 231515")
+    monkeypatch.setattr(settings, "contacto_pasa_a_persona", False)
+    assert "+57 320 231515" in sv._contact_number_deflection("es")
 
 
 # ---------------------------------------------------------------- E2: lo que no aparece no es un fallo
@@ -88,6 +81,24 @@ def test_con_el_flag_lo_que_el_cliente_esperaba_ver_no_es_un_fallo(monkeypatch):
     # La frontera vale para la clase (descuento, precio, opción, código), no para un caso.
     for palabra in ("discount", "a price", "an option", "a code"):
         assert palabra in jr._NO_APARECE_NO_ES_FALLO
+
+
+# ---------------------------------------------------------------- E3: lo que el sistema no da, lo hace una persona
+
+
+def test_con_el_flag_lo_que_el_sistema_no_da_pasa_a_una_persona(monkeypatch):
+    """cal-29: "Pero un link especial" (una agencia que quiere un enlace para sus clientes) no era, para la señal,
+    algo que solo pueda hacer una persona, así que el bot lo explicaba sin ofrecer el pase."""
+    monkeypatch.setattr(settings, "s4_fixes", True)
+    monkeypatch.setattr(settings, "pase_si_pide_fuera_del_sistema", False)
+    assert "special" not in jr._questions_for_turn()["needs_staff"]["instructions"]
+    monkeypatch.setattr(settings, "pase_si_pide_fuera_del_sistema", True)
+    instrucciones = jr._questions_for_turn()["needs_staff"]["instructions"]
+    assert "'special' payment link" in instrucciones
+    assert "only a person can" in instrucciones
+    # Clase, no caso: la factura, las tarifas y la salida privada entran igual.
+    for palabra in ("invoice", "private", "outside the website"):
+        assert palabra in jr._FUERA_DEL_SISTEMA
 
 
 # ---------------------------------------------------------------- E4: el idioma lo dice el extractor
@@ -188,6 +199,21 @@ def test_el_contexto_son_los_ultimos_turnos_y_va_cortado(monkeypatch):
     estado = jr._estado_para_jev("y ahora?", largo)
     assert "mensaje 9" in estado and "mensaje 7" not in estado, "solo los dos últimos"
     assert len(estado) < 2000, "el turno largo va cortado"
+
+
+def test_el_enrutador_de_respaldo_tambien_ve_los_ultimos_turnos(monkeypatch):
+    """La otra mitad de E5, medida con la sonda: con contexto Jev sube a 0,63, cae en la zona de duda y decide el
+    enrutador LLM, que veía solo el mensaje. Si el contexto no llega también aquí, el arreglo no sirve."""
+    from src.agents import escalation
+
+    monkeypatch.setattr(settings, "jev_con_contexto", False)
+    assert escalation._mensaje_con_contexto("Me lo podrías compartir", _HISTORIAL) == "Me lo podrías compartir"
+    monkeypatch.setattr(settings, "jev_con_contexto", True)
+    con = escalation._mensaje_con_contexto("Me lo podrías compartir", _HISTORIAL)
+    assert "Se me perdió el número" in con
+    assert con.rstrip().endswith("Me lo podrías compartir")
+    assert "SOLO este último mensaje" in con
+    assert escalation._mensaje_con_contexto("hola", None) == "hola"
 
 
 def test_sin_historial_el_estado_es_el_de_siempre(monkeypatch):

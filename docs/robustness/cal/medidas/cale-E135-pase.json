@@ -1,0 +1,63 @@
+{
+ "etiqueta": "cale-E135-pase",
+ "reps": 3,
+ "flags": [
+  "contacto_pasa_a_persona",
+  "jev_con_contexto",
+  "pase_si_pide_fuera_del_sistema"
+ ],
+ "codigo_local": true,
+ "casos": [
+  {
+   "id": "cal-03",
+   "dialogo": "pide-telefono",
+   "criterio": "global:sin-invenciones",
+   "repeticiones": 3,
+   "fallan": 0,
+   "respuestas": [
+    "Por aquí no manejo un número de teléfono ni WhatsApp 🔒, pero puedo ayudarte con todo desde este chat: te armo la reserva ahora mismo y, si lo prefieres, un asesor del equipo te contacta directamente. ¿Seguimos con tu reserva? 🌊",
+    "Por aquí no manejo un número de teléfono ni WhatsApp 🔒, pero puedo ayudarte con todo desde este chat: te armo la reserva ahora mismo y, si lo prefieres, un asesor del equipo te contacta directamente. ¿Seguimos con tu reserva? 🌊",
+    "Por aquí no manejo un número de teléfono ni WhatsApp 🔒, pero puedo ayudarte con todo desde este chat: te armo la reserva ahora mismo y, si lo prefieres, un asesor del equipo te contacta directamente. ¿Seguimos con tu reserva? 🌊"
+   ],
+   "explicaciones": [
+    "La respuesta actual no menciona ninguna condición inventada sobre WhatsApp ni proporciona un número de teléfono. Solo ofrece continuar la gestión por chat o que un asesor contacte al cliente, cumpliendo el criterio de no inventar información.",
+    "La respuesta actual no menciona ninguna condición inventada sobre WhatsApp ni proporciona un número de teléfono. Solo ofrece continuar la gestión por chat o que un asesor contacte al cliente, cumpliendo el criterio de no inventar información.",
+    "La respuesta actual no menciona ninguna condición inventada sobre WhatsApp ni proporciona un número de teléfono. Solo ofrece continuar la gestión por chat o que un asesor contacte al cliente, cumpliendo con el criterio de no inventar información."
+   ]
+  },
+  {
+   "id": "cal-29",
+   "dialogo": "cotiza-buceo-snorkel-y-pide-link-especial",
+   "criterio": "link-especial-escalar",
+   "repeticiones": 3,
+   "fallan": 0,
+   "respuestas": [
+    "Esto tiene que revisarlo una persona del equipo, que sí puede ver las reservas, los pagos y los correos. Te paso ahora con un asesor de Diving Planet y enseguida se pone en contacto contigo. ¡Gracias! 🙌",
+    "Esto tiene que revisarlo una persona del equipo, que sí puede ver las reservas, los pagos y los correos. Te paso ahora con un asesor de Diving Planet y enseguida se pone en contacto contigo. ¡Gracias! 🙌",
+    "Esto tiene que revisarlo una persona del equipo, que sí puede ver las reservas, los pagos y los correos. Te paso ahora con un asesor de Diving Planet y enseguida se pone en contacto contigo. ¡Gracias! 🙌"
+   ],
+   "explicaciones": [
+    "La respuesta actual cumple con el criterio: informa que un asesor humano debe revisar el caso y explícitamente ofrece pasar con un asesor de Diving Planet para gestionar el enlace especial, tal como se pedía.",
+    "La respuesta actual indica claramente que pasará la conversación a un asesor humano para gestionar el link especial, cumpliendo con el criterio solicitado.",
+    "La respuesta actual indica claramente que pasará la conversación a un asesor humano para gestionar el 'link especial', cumpliendo con el criterio solicitado."
+   ]
+  },
+  {
+   "id": "cal-33",
+   "dialogo": "punto-encuentro-corrige-todo-mar-y-hora",
+   "criterio": "global:sin-invenciones",
+   "repeticiones": 3,
+   "fallan": 3,
+   "respuestas": [
+    "Por aquí no manejo un número de teléfono ni WhatsApp 🔒, pero puedo ayudarte con todo desde este chat: te armo la reserva ahora mismo y, si lo prefieres, un asesor del equipo te contacta directamente. ¿Seguimos con tu reserva? 🌊",
+    "Por aquí no manejo un número de teléfono ni WhatsApp 🔒, pero puedo ayudarte con todo desde este chat: te armo la reserva ahora mismo y, si lo prefieres, un asesor del equipo te contacta directamente. ¿Seguimos con tu reserva? 🌊",
+    "Por aquí no manejo un número de teléfono ni WhatsApp 🔒, pero puedo ayudarte con todo desde este chat: te armo la reserva ahora mismo y, si lo prefieres, un asesor del equipo te contacta directamente. ¿Seguimos con tu reserva? 🌊"
+   ],
+   "explicaciones": [
+    "La respuesta actual sigue negándose a compartir el número de WhatsApp, cuando la referencia indica que debe proporcionarse el WhatsApp oficial si el cliente lo solicita. No se menciona el número ni se ofrece el canal oficial, incumpliendo la política indicada.",
+    "La respuesta actual sigue negándose a compartir el número de WhatsApp, cuando la referencia indica que debe proporcionarse el WhatsApp oficial si el cliente lo solicita. No se menciona el número ni se ofrece el canal oficial de contacto.",
+    "La respuesta actual sigue negándose a compartir el número de WhatsApp, cuando la referencia indica que debe proporcionarse el WhatsApp oficial si el cliente lo solicita. No se menciona el número ni se ofrece el canal oficial, incumpliendo la política indicada."
+   ]
+  }
+ ]
+}

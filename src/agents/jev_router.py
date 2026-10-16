@@ -500,6 +500,18 @@ _NO_APARECE_NO_ES_FALLO = (
 )
 
 
+# CAL-E3 (16-oct, flag `pase_si_pide_fuera_del_sistema`): "Pero un link especial" (una agencia que quiere un enlace
+# para que sus clientes paguen) no era "algo que solo puede hacer una persona" para la señal, así que el bot explicaba
+# que no existe y nombraba al asesor sin ofrecer el pase (cal-29). Decisión de Gadea del 16-oct: quien necesita algo
+# que el sistema no da, o hablar con alguien, se pasa a un asesor. Es la frontera de la clase, no el caso.
+_FUERA_DEL_SISTEMA = (
+    "It is ALSO true when the customer asks for something the online booking cannot give and only a person can "
+    "arrange: a custom or 'special' payment link (for several customers, for an agency, or one that skips choosing "
+    "the date), an invoice or special rates, a closed/private departure to be quoted, or coordinating the booking "
+    "outside the website."
+)
+
+
 def _questions_for_turn(pending_slot: str | None = None) -> dict:
     q = dict(_QUESTIONS)
     if settings.queja_solo_si_algo_falla:
@@ -519,7 +531,9 @@ def _questions_for_turn(pending_slot: str | None = None) -> dict:
     if settings.rag_v2:
         q[ASKS_RECALL] = _ASKS_RECALL_Q
     if settings.s4_fixes:
-        q[NEEDS_STAFF] = _NEEDS_STAFF_Q
+        q[NEEDS_STAFF] = ({**_NEEDS_STAFF_Q,
+                           "instructions": f"{_NEEDS_STAFF_Q['instructions']} {_FUERA_DEL_SISTEMA}"}
+                          if settings.pase_si_pide_fuera_del_sistema else _NEEDS_STAFF_Q)
         q[CHANGES_DATE] = _CHANGES_DATE_Q
     q[COMPANION_JOINS] = _COMPANION_JOINS_Q
     if settings.jev_persona_ya_contada:

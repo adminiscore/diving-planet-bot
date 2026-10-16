@@ -332,11 +332,12 @@ class Settings(BaseSettings):
     # (`src/flows/avisos.py`), no un modelo: A4 los elegía mal (metía relleno) con el mecanismo bueno. Van al RAG como
     # puntos obligatorios y el revisor de completitud comprueba que estén. APAGADO hasta medirlo (banco, 3 reps).
     avisos_condicionados: bool = False
-    # CAL-E1 (16-oct): el texto que da el WhatsApp oficial decía "(solo mensajes de WhatsApp, no llamadas)", una
-    # restricción que NO está en la base: el juez lo marca como invención (cal-03). Con el flag, la aclaración sale de
-    # la base (`escalation_rules.json`, `handoff_protocol.contact_info.nota_es`/`nota_en`) y, si no está, no se dice
-    # nada. Si de verdad es solo mensajes, el negocio lo añade a la base. APAGADO hasta medirlo.
-    contacto_solo_lo_de_la_base: bool = False
+    # CAL-E1 (DECISIÓN DE GADEA del 16-oct, que sustituye a la del 17-sep): esto es un chatbot y NO da números de
+    # teléfono ni de WhatsApp. Si el cliente pide un número o quiere hablar con alguien, la conversación se PASA A UN
+    # ASESOR (mismo pase que `needs_staff`). De paso desaparece la invención que el juez marcaba en cal-03: el texto
+    # añadía "(solo mensajes, no llamadas)", que la base no dice. Criterio del golden `contacto-real` y casos cal-03 y
+    # cal-33 del banco actualizados a esta decisión. APAGADO hasta medirlo.
+    contacto_pasa_a_persona: bool = False
     # CAL-E5 (16-oct): Jev contesta las señales del router viendo solo el mensaje del turno, así que un mensaje que se
     # refiere a lo anterior pierde a qué se refiere ("me lo podrías compartir" tras "se me perdió el número",
     # "pero un link especial"). Con el flag le viajan los 2 últimos mensajes como referencia. APAGADO hasta medirlo.
@@ -351,6 +352,10 @@ class Settings(BaseSettings):
     # Cartagena") se contestaba en español (cal-12). Con el flag lo dice el EXTRACTOR, que ya va lanzado en paralelo
     # (campo `idioma`): ni una llamada más ni una lista de palabras. APAGADO hasta medirlo.
     idioma_del_extractor: bool = False
+    # CAL-E3 (16-oct, decisión de Gadea): quien pide algo que el sistema de reservas no da (un enlace de pago
+    # especial para una agencia, una factura, una salida privada por cotizar) o quiere hablar con alguien, se pasa a un
+    # asesor. Con el flag, la señal `needs_staff` incluye esa clase (cal-29). APAGADO hasta medirlo.
+    pase_si_pide_fuera_del_sistema: bool = False
     # Modelo del plan y de la comprobación de completitud (llamadas cortas, temperatura 0).
     rag_plan_model: str = "gpt-4.1-mini"
     # 8-oct (prueba de DeepSeek): un modelo con prefijo de proveedor ("deepseek/deepseek-v4.1-flash") sale por
