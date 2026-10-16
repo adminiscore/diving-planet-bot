@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-16T14:29:49+00:00",
-  "commit": "97264aa",
+  "generado": "2026-10-16T16:22:27+00:00",
+  "commit": "6eb9a71",
   "rama": "feature/pre_alvaro"
  },
  "vistas": {
@@ -567,6 +567,13 @@
      "titulo": "El extractor entiende mejor grupo, aceptación y residencia",
      "codigo": true,
      "pre": true,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "extractor_cita_del_cliente",
+     "titulo": "Aceptar la propuesta del bot cuenta",
+     "codigo": false,
+     "pre": false,
      "sin_efecto": false
     },
     {
@@ -1952,6 +1959,19 @@
    "codigo": true,
    "pre": true,
    "fijado_en_pre": true,
+   "usado_por": [
+    "b_extraction"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "extractor_cita_del_cliente",
+   "area": "Reserva",
+   "titulo": "Aceptar la propuesta del bot cuenta",
+   "texto": "Cuando el cliente acepta el plan que le propone el bot ('nos gusta'), el extractor lo apunta con las palabras del cliente (antes copiaba las del bot y el control antiinventos lo tiraba). Y pedir reservar o apartar un cupo hablando de buceo es querer bucear.",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
    "usado_por": [
     "b_extraction"
    ],

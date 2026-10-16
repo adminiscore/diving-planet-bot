@@ -69,6 +69,10 @@ class Settings(BaseSettings):
     # de 'Frances'; ninguna regresion suya. PROMOCIONADO 15-oct (HISTORY 0.31.29).
     # Revert = False aqui y en el compose.
     extractor_todo_lo_dicho: bool = True
+    # CAL-C2 (16-oct): la aceptación de lo que propone el bot se cita con las palabras del CLIENTE (citaba el texto
+    # del bot y la comprobación la descartaba), y reservar o apartar un cupo hablando de buceo es querer bucear.
+    # APAGADO hasta medirlo.
+    extractor_cita_del_cliente: bool = False
     # EX-EST-2 (14-oct, tanda est5): arreglos del flujo por causa. (1) Lo que el cliente dice en el turno que acaba en
     # el pase a una persona se guarda (antes la extraccion se cancelaba: 'staying at the Ubuntu Hotel' y luego 'Where will
     # you be joining us from?'). conversational_core.guardar_lo_dicho_en_el_pase. Ronda est5-B: sin regresiones suyas.

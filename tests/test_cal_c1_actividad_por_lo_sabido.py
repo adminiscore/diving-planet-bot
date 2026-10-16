@@ -34,8 +34,10 @@ def _estado(**campos) -> ConversationState:
 def test_quiere_bucear_sin_certificacion_recomienda_el_minicurso(flag):
     st = _estado(quiere_bucear=True, is_certified=False)
     texto = ask_slot(st, SLOT_ACTIVITY, reasking=True)
-    assert "minicurso" in texto and MENU not in texto
+    assert "te recomiendo el *minicurso*" in texto and MENU not in texto
     assert st.suggested_activity == "minicourse"
+    # ya recomendado: la siguiente vez, la versión corta
+    assert "te recomiendo" not in ask_slot(st, SLOT_ACTIVITY, reasking=True)
     assert st.core_pending_slot == SLOT_ACTIVITY
 
 
@@ -69,3 +71,29 @@ def test_la_certificacion_conocida_por_el_campo_detectado(flag):
     st = _estado(quiere_bucear=True, detected_is_certified=False)
     assert core._known_field_values(st).get("is_certified") is False
     assert "minicurso" in ask_slot(st, SLOT_ACTIVITY, reasking=True)
+
+
+# --- CAL-C2 `extractor_cita_del_cliente`: el prompt del extractor ---
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("lang", ["es", "en"])
+async def test_c2_cambia_el_prompt_solo_con_el_flag(monkeypatch, lang):
+    from src.agents import extractor_turno as ex
+
+    sistemas = []
+
+    class _C:
+        async def create(self, **kw):
+            sistemas.append(kw["messages"][0]["content"])
+            raise RuntimeError("sin red")
+
+    cliente = type("O", (), {"chat": type("Ch", (), {"completions": _C()})()})()
+    monkeypatch.setattr(settings, "extractor_todo_lo_dicho", True)
+    for valor in (False, True):
+        monkeypatch.setattr(settings, "extractor_cita_del_cliente", valor)
+        await ex.extraer_turno("nos gusta", lang=lang, client=cliente)
+    sin, con = sistemas
+    nuevo = ex.CITA_ACEPTA_ES if lang == "es" else ex.CITA_ACEPTA_EN
+    quiere = ex.QUIERE_ES if lang == "es" else ex.QUIERE_EN
+    assert nuevo not in sin and quiere not in sin
+    assert nuevo in con and quiere in con

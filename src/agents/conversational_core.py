@@ -534,7 +534,9 @@ def ask_slot(state: ConversationState, slot: str, *, reasking: bool = False) -> 
         # certificación: sin certificación se recomienda el minicurso (lo confirma el cliente); sin saberla, se pregunta.
         certificado = _known_field_values(state).get("is_certified")
         if certificado is False and settings.recommend_inferred_minicourse:
+            # La recomendación entera la primera vez (la corta "¿minicurso u Open Water?" no recomendaba: cal-60).
             state.suggested_activity = "minicourse"
+            reasking = False
         elif certificado is None:
             return ask_slot(state, SLOT_CERTIFICATION, reasking=reasking)
 

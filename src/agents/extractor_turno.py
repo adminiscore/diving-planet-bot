@@ -299,6 +299,10 @@ async def extraer_turno(mensaje: str, *, history: list[dict] | None = None, sabi
             ACTIVIDAD_EJEMPLOS_HOY_EN, ACTIVIDAD_EJEMPLOS_EN)
         sistema = sistema.replace(RESIDENTE_HOY_ES, RESIDENTE_ES).replace(RESIDENTE_HOY_EN, RESIDENTE_EN)
         sistema = sistema.replace(ELIGE_HOY_ES, ELIGE_ES).replace(ELIGE_HOY_EN, ELIGE_EN)
+    if settings.extractor_cita_del_cliente:
+        # CAL-C2 (ver CITA_ACEPTA_*): la aceptación se cita con las palabras del cliente; reservar es querer bucear.
+        sistema = sistema.replace(CITA_ACEPTA_HOY_ES, CITA_ACEPTA_ES).replace(CITA_ACEPTA_HOY_EN, CITA_ACEPTA_EN)
+        sistema = sistema.replace(QUIERE_HOY_ES, QUIERE_ES).replace(QUIERE_HOY_EN, QUIERE_EN)
     con_nombre = settings.nombre_por_extractor
     if con_nombre:
         sistema += REGLA_NOMBRE_ES if lang == "es" else REGLA_NOMBRE_EN
@@ -442,3 +446,21 @@ ELIGE_ES = ("o cuando contesta a la pregunta del bot quedándose con una de las 
 ELIGE_HOY_EN = "or when they answer the bot's question by taking one of the options it offers."
 ELIGE_EN = ("or when they answer the bot's question by taking one of the options it offers or accepting the one it "
             "proposes (\"we like it\", \"that one\", \"the first one\": the value is that option and the quote, their answer).")
+
+
+# CAL-C2 (16-oct, flag `extractor_cita_del_cliente`). Banco CAL: "nos gusta, somos 2 personas y queremos el de saliendo
+# de cartagena" tras "te propongo la salida de 2 inmersiones…": el modelo entendía la aceptación pero 2 de 3 veces
+# citaba el texto del BOT ("la *salida de 2 inmersiones*") y la comprobación de la cita la descartaba → menú otra vez.
+# Y "¿cómo sería para apartar un cupo para el viernes?" (certificado, hablando de buceo) no era querer bucear.
+CITA_ACEPTA_HOY_ES = "el valor es esa opción y la cita, su respuesta)."
+CITA_ACEPTA_ES = ("el valor es esa opción y la cita, las palabras del CLIENTE que la aceptan, como \"nos gusta\"; nunca el "
+                  "texto del bot).")
+CITA_ACEPTA_HOY_EN = "the value is that option and the quote, their answer)."
+CITA_ACEPTA_EN = ("the value is that option and the quote, the CUSTOMER's words accepting it, like \"we like it\"; never the "
+                  "bot's text).")
+QUIERE_HOY_ES = "(lo dice, pide buceos, sus precios o una fecha para bucear)"
+QUIERE_ES = ("(lo dice, pide buceos, sus precios o una fecha para bucear, o pide reservar o apartar un cupo mientras se "
+             "habla de buceo)")
+QUIERE_HOY_EN = "(they say so, ask for dives, their prices or a date to dive)"
+QUIERE_EN = ("(they say so, ask for dives, their prices or a date to dive, or ask to book or hold a spot while the "
+             "conversation is about diving)")
