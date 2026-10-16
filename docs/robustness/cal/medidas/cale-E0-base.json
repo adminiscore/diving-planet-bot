@@ -1,0 +1,110 @@
+{
+ "etiqueta": "cale-E0-base",
+ "reps": 3,
+ "flags": [],
+ "codigo_local": true,
+ "casos": [
+  {
+   "id": "cal-03",
+   "dialogo": "pide-telefono",
+   "criterio": "global:sin-invenciones",
+   "repeticiones": 3,
+   "fallan": 3,
+   "respuestas": [
+    "¡Claro! 😊 Nuestro WhatsApp oficial es *+57 320 231515* (solo mensajes de WhatsApp, no llamadas). Y si quieres, aquí mismo te ayudo con todo: te armo la reserva o te paso con un asesor del equipo. ¿Seguimos? 🌊",
+    "¡Claro! 😊 Nuestro WhatsApp oficial es *+57 320 231515* (solo mensajes de WhatsApp, no llamadas). Y si quieres, aquí mismo te ayudo con todo: te armo la reserva o te paso con un asesor del equipo. ¿Seguimos? 🌊",
+    "¡Claro! 😊 Nuestro WhatsApp oficial es *+57 320 231515* (solo mensajes de WhatsApp, no llamadas). Y si quieres, aquí mismo te ayudo con todo: te armo la reserva o te paso con un asesor del equipo. ¿Seguimos? 🌊"
+   ],
+   "explicaciones": [
+    "El bot sigue añadiendo la frase 'solo mensajes de WhatsApp, no llamadas' al dar el número, pero en la referencia no se indica que el WhatsApp sea solo para mensajes y no para llamadas, por lo que esto es una invención.",
+    "El bot sigue añadiendo la frase 'solo mensajes de WhatsApp, no llamadas' al dar el número, pero en la referencia no se indica esa restricción, por lo que es una invención.",
+    "El bot sigue añadiendo la frase 'solo mensajes de WhatsApp, no llamadas' al dar el número, pero en la referencia no se indica esa restricción, por lo que es una invención."
+   ]
+  },
+  {
+   "id": "cal-12",
+   "dialogo": "grupo-mixto-precio-cop-total",
+   "criterio": "global:idioma",
+   "repeticiones": 3,
+   "fallan": 3,
+   "respuestas": [
+    "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\nTe recomiendo el plan de *2 inmersiones en 1 día* en las Islas del Rosario. (Si prefieres un *paquete multi-día* de 3 o más inmersiones, dímelo.)\n\n¿Ha pasado *más de 2 años* desde la última inmersión de alguno del grupo?",
+    "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\nTe recomiendo el plan de *2 inmersiones en 1 día* en las Islas del Rosario. (Si prefieres un *paquete multi-día* de 3 o más inmersiones, dímelo.)\n\n¿Ha pasado *más de 2 años* desde la última inmersión de alguno del grupo?",
+    "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\nTe recomiendo el plan de *2 inmersiones en 1 día* en las Islas del Rosario. (Si prefieres un *paquete multi-día* de 3 o más inmersiones, dímelo.)\n\n¿Ha pasado *más de 2 años* desde la última inmersión de alguno del grupo?"
+   ],
+   "explicaciones": [
+    "El cliente escribió en portugués, pero la respuesta del bot fue en español. Según el criterio, debía responder en inglés cuando el mensaje inicial es en portugués.",
+    "El cliente escribió en portugués, pero la respuesta del bot fue en español. Según el criterio, debía responder en inglés cuando el mensaje inicial es en portugués.",
+    "El cliente escribió en portugués, pero la respuesta del bot fue en español. Según el criterio, debía responder en inglés cuando el mensaje inicial es en portugués."
+   ]
+  },
+  {
+   "id": "cal-29",
+   "dialogo": "cotiza-buceo-snorkel-y-pide-link-especial",
+   "criterio": "link-especial-escalar",
+   "repeticiones": 3,
+   "fallan": 3,
+   "respuestas": [
+    "¡Claro! Si te refieres a un enlace especial para que tus clientes paguen juntos, no tenemos un link de pago personalizado. Cada persona puede reservar y pagar en línea desde el enlace de la actividad, eligiendo la fecha y la cantidad de personas.\n\nSi buscas una salida privada o cerrada para el grupo, un asesor puede cotizarla según la fecha y el grupo.\n\nPara darte el precio exacto necesito saber desde dónde sales: ¿saldrías *desde Cartagena* o ya estás *en las Islas del Rosario*? Los planes y los precios cambian según el punto de salida. 🌊",
+    "¡Claro! Si te refieres a un enlace especial para que tus clientes paguen como grupo, no tenemos un link especial fijo. Cada persona puede reservar y pagar en línea desde el enlace de la actividad; el precio online ya incluye el 10% de descuento.\n\nPara buceo desde Cartagena, el enlace de la salida de 2 inmersiones es:  \nhttps://book.divingplanet.org/book/salidas-de-buceo/1?language=es\n\nSi buscas una salida privada o cerrada para el grupo, un asesor prepara una cotización según la fecha y el grupo. ¿Te interesa esa opción?",
+    "¡Claro! Si te refieres a un enlace exclusivo para que tus clientes paguen como grupo, no hay un link especial de pago: cada persona reserva y paga en línea desde el enlace del servicio. El descuento online se aplica automáticamente.\n\nSi buscas una salida privada o cerrada solo para el grupo, sí se puede organizar; la cotización depende del grupo y la fecha, y la prepara un asesor. ¿Te refieres a una reserva normal para el grupo o a una salida privada?"
+   ],
+   "explicaciones": [
+    "El bot explica que no existe un link de pago personalizado y menciona que un asesor puede cotizar una salida privada, pero no ofrece explícitamente pasar la conversación con un asesor humano para coordinar el enlace especial, como exige el criterio y como se indica en el contexto: 'Un asesor del equipo prepara la cotización y coordina un instructor disponible para la fecha solicitada.'",
+    "El bot explica que no existe un link especial fijo y sugiere que un asesor puede preparar una cotización para salidas privadas, pero no ofrece explícitamente pasar la conversación con un asesor humano para coordinar la logística de un enlace especial, como exige el criterio. El contexto incluye que para servicios privados o grupos cerrados, un asesor prepara la cotización y coordina la logística.",
+    "El bot explica correctamente que no existe un link especial de pago y que cada persona debe reservar y pagar en línea, pero aunque menciona que un asesor prepara la cotización para salidas privadas, no ofrece explícitamente pasar o conectar con un asesor humano para gestionar un enlace especial, como exige el criterio. El fallo no es de falta de información objetiva, sino de no ofrecer el traspaso a un humano para coordinar la logística especial."
+   ]
+  },
+  {
+   "id": "cal-33",
+   "dialogo": "punto-encuentro-corrige-todo-mar-y-hora",
+   "criterio": "global:sin-invenciones",
+   "repeticiones": 3,
+   "fallan": 3,
+   "respuestas": [
+    "¡Claro! No puedo compartir números de teléfono, pero puedo pedirle al equipo que se ponga en contacto contigo. ¿Quieres que les pase tu solicitud?\n\nTe recomiendo el plan de *2 inmersiones en 1 día* en las Islas del Rosario. (Si prefieres un *paquete multi-día* de 3 o más inmersiones, dímelo.)\n\n¿Ha pasado *más de 2 años* desde la última inmersión de alguno del grupo?",
+    "¡Claro! No puedo compartir números de teléfono por aquí, pero puedo pedirle al equipo que se ponga en contacto contigo. ¿Quieres que te ayude con eso?\n\nTe recomiendo el plan de *2 inmersiones en 1 día* en las Islas del Rosario. (Si prefieres un *paquete multi-día* de 3 o más inmersiones, dímelo.)\n\n¿Ha pasado *más de 2 años* desde la última inmersión de alguno del grupo?",
+    "¡Claro! No puedo compartir números de teléfono por aquí, pero puedo pedirle al equipo que se ponga en contacto contigo. ¿Quieres que les pase tu solicitud?\n\nTe recomiendo el plan de *2 inmersiones en 1 día* en las Islas del Rosario. (Si prefieres un *paquete multi-día* de 3 o más inmersiones, dímelo.)\n\n¿Ha pasado *más de 2 años* desde la última inmersión de alguno del grupo?"
+   ],
+   "explicaciones": [
+    "El bot sigue negándose a compartir el número de WhatsApp oficial cuando el cliente lo solicita, a pesar de que la referencia indica que debe proporcionarlo. El contexto no incluye el número explícitamente, pero la política es clara en que debe compartirse si el cliente lo pide.",
+    "El bot vuelve a negar el número de teléfono, cuando la referencia indica que debe compartir el WhatsApp oficial si el cliente lo pide. No hay en el contexto el número, pero la política es clara en que debe proporcionarse.",
+    "El bot sigue negándose a compartir el número de WhatsApp oficial cuando el cliente lo solicita, a pesar de que la referencia indica que debe proporcionarse. El contexto no incluye el número, pero la política es clara en que debe compartirse si el cliente lo pide."
+   ]
+  },
+  {
+   "id": "cal-38",
+   "dialogo": "descuento-online-sin-codigo",
+   "criterio": "global:sin-invenciones",
+   "repeticiones": 3,
+   "fallan": 0,
+   "respuestas": [
+    "Hi! 🪸 I'm *Coral* from *Diving Planet* — we dive year-round in the Rosario Islands, departing from Cartagena or right from the islands. So happy to have you here! I'd love to help you put your plan together. 🌊\n\nThere’s no discount code—the 10% online discount is applied automatically when you book directly through our website, and the online price already includes it. PADI courses aren’t eligible for the additional group discount. Are you booking from Cartagena or already on the Rosario Islands?",
+    "Hi! 🪸 I'm *Coral* from *Diving Planet* — we dive year-round in the Rosario Islands, departing from Cartagena or right from the islands. So happy to have you here! I'd love to help you put your plan together. 🌊\n\nThere’s no discount code—the 10% online discount is applied automatically when you book directly through our website, and the online price already includes it. PADI courses aren’t eligible for the additional group discount. Are you booking from Cartagena or already staying on the Rosario Islands?",
+    "Hi! 🪸 I'm *Coral* from *Diving Planet* — we dive year-round in the Rosario Islands, departing from Cartagena or right from the islands. So happy to have you here! I'd love to help you put your plan together. 🌊\n\nThere’s no discount code—the 10% online discount is applied automatically when you book directly through our website. It doesn’t apply to PADI courses booked through third-party sites. Are you booking through our website or through PADI?\n\nWhere would you be departing from? This plan takes several days and you need to *stay on the islands* (accommodation is not included): you can leave *from Cartagena* on the first day or, if you're already *on the islands*, we arrange pickup at your hotel."
+   ],
+   "explicaciones": [
+    "La respuesta actual ya no inventa que 'el link no funcionó'. Solo explica correctamente que el 10% de descuento se aplica automáticamente al reservar en la web y que no hay código de descuento, alineándose con la referencia y sin introducir fallos técnicos no mencionados por el cliente.",
+    "La respuesta actual ya no afirma que 'el link no funcionó' ni introduce un fallo técnico no declarado por el cliente. Solo explica correctamente que el 10% de descuento se aplica automáticamente y que no hay código, alineándose con la información oficial y la consulta real del cliente.",
+    "La respuesta actual ya no inventa que 'el link no funcionó'. Solo explica que el 10% de descuento se aplica automáticamente al reservar en la web y pregunta si el cliente está reservando en la web o a través de PADI, lo cual es correcto y no supone ningún fallo técnico no declarado por el cliente."
+   ]
+  },
+  {
+   "id": "cal-39",
+   "dialogo": "descuento-online-sin-codigo",
+   "criterio": "descuento-automatico-sin-codigo",
+   "repeticiones": 3,
+   "fallan": 0,
+   "respuestas": [
+    "Hi! 🪸 I'm *Coral* from *Diving Planet* — we dive year-round in the Rosario Islands, departing from Cartagena or right from the islands. So happy to have you here! I'd love to help you put your plan together. 🌊\n\nThere’s no discount code—the 10% online discount is applied automatically when you book directly through our website. The online price already includes it, and it doesn’t apply to bookings through third parties like PADI.\n\nAre you booking from Cartagena or already staying on the Rosario Islands? I can share the correct course link.",
+    "Hi! 🪸 I'm *Coral* from *Diving Planet* — we dive year-round in the Rosario Islands, departing from Cartagena or right from the islands. So happy to have you here! I'd love to help you put your plan together. 🌊\n\nThere’s no discount code—the 10% online discount is applied automatically when you book directly through our website. It doesn’t apply to PADI courses booked through third parties. Are you booking through our website or through PADI?\n\nWhere would you be departing from? This plan takes several days and you need to *stay on the islands* (accommodation is not included): you can leave *from Cartagena* on the first day or, if you're already *on the islands*, we arrange pickup at your hotel.",
+    "Hi! 🪸 I'm *Coral* from *Diving Planet* — we dive year-round in the Rosario Islands, departing from Cartagena or right from the islands. So happy to have you here! I'd love to help you put your plan together. 🌊\n\nThere’s no discount code—the 10% online discount is applied automatically when you book directly through our website, and the online price already includes it. PADI courses aren’t eligible for the additional group discount. Are you booking through our website or through PADI?\n\nWhere would you be departing from? This plan takes several days and you need to *stay on the islands* (accommodation is not included): you can leave *from Cartagena* on the first day or, if you're already *on the islands*, we arrange pickup at your hotel."
+   ],
+   "explicaciones": [
+    "The current response clearly explains that there is no discount code, that the 10% online discount is applied automatically when booking directly through the website, and that the online price already includes it. This matches the required criterion and addresses the customer's question directly.",
+    "The current response clearly states: 'There’s no discount code—the 10% online discount is applied automatically when you book directly through our website.' This directly addresses the criterion by explaining that the discount is automatic and no code is needed, which was missing in the previous version.",
+    "La respuesta actual explica claramente que no se necesita código y que el 10% de descuento online se aplica automáticamente al reservar en la web, cumpliendo el criterio. Dice: 'There’s no discount code—the 10% online discount is applied automatically when you book directly through our website, and the online price already includes it.'"
+   ]
+  }
+ ]
+}

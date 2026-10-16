@@ -2226,6 +2226,30 @@ def _quitar_provisional(intent, pista: dict) -> None:
     intent.overwrite = [f for f in intent.overwrite if f not in campos_del_extractor()]
 
 
+async def _idioma_del_extractor(state: ConversationState, message: str) -> str | None:
+    """CAL-E4 (flag `idioma_del_extractor`): el idioma del PRIMER turno según el extractor, que ya va lanzado con el
+    enrutador. "es" o "en" tal cual; cualquier otro idioma, inglés (regla G-10 de Gadea). None si el flag está apagado,
+    el mensaje es muy corto (una o dos palabras no dicen el idioma) o la extracción no está: entonces, la cadena de
+    siempre."""
+    if not (settings.idioma_del_extractor and settings.idioma_otro_en_ingles):
+        return None
+    if len((message or "").split()) < 3:
+        return None
+    tarea = getattr(state, "_extraccion_adelantada", None)
+    if tarea is None:
+        return None
+    try:
+        datos = await tarea
+    except (asyncio.CancelledError, Exception):  # noqa: BLE001 — sin dato, la cadena de siempre
+        return None
+    idioma = (datos or {}).get("idioma")
+    if not idioma:
+        return None
+    elegido = idioma if idioma in ("es", "en") else "en"
+    logger.info(f"[CORE][IDIOMA] el extractor dice {idioma!r}: la conversación va en {elegido!r}")
+    return elegido
+
+
 async def _otro_idioma_en_ingles(state: ConversationState, datos: dict | None = None, message: str = "") -> None:
     """G-10 (decisión de Gadea, 14-oct): si el mensaje está escrito en un idioma que no es español ni inglés, el bot
     contesta en inglés. El idioma principal lo dice el extractor de la fase EX (misma llamada; unas palabras sueltas no
@@ -3752,8 +3776,13 @@ async def _setup_phase(
         # detecta nada; evita preguntar "Español/English" ante un mensaje que
         # revela el idioma con palabras fuera de la lista curada) → heurística de
         # hints. El `or` corta: el LLM solo se llama si la primera devuelve None.
+        # CAL-E4 (16-oct, flag `idioma_del_extractor`): la heurística de palabras vacías decide PRIMERO y corta la
+        # cadena, así que un mensaje en portugués con muchas palabras iguales al español ("Busco el seguinte: Vamos en
+        # família a Cartagena") se contestaba en español (cal-12). El idioma lo dice el EXTRACTOR, que ya va lanzado en
+        # paralelo con el enrutador (campo `idioma`, G-10): no cuesta una llamada más y no es una lista de palabras.
         state.language = (
-            _detect_language_from_text(message)
+            await _idioma_del_extractor(state, message)
+            or _detect_language_from_text(message)
             or await detect_language_llm(message)
             or supervisor._infer_language(message, state.language)
         )

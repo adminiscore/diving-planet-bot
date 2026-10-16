@@ -346,6 +346,11 @@ class Settings(BaseSettings):
     # Con el flag, las señales de queja y de tema sensible dicen que lo que el cliente esperaba ver y no ve es una
     # PREGUNTA que contesta la base, no un fallo. Frontera de la clase, no del caso. APAGADO hasta medirlo.
     queja_solo_si_algo_falla: bool = False
+    # CAL-E4 (16-oct): el idioma del PRIMER turno lo decidía una lista de palabras vacías, que corta la cadena antes
+    # del LLM: un mensaje en portugués con muchas palabras iguales al español ("Busco el seguinte: Vamos en família a
+    # Cartagena") se contestaba en español (cal-12). Con el flag lo dice el EXTRACTOR, que ya va lanzado en paralelo
+    # (campo `idioma`): ni una llamada más ni una lista de palabras. APAGADO hasta medirlo.
+    idioma_del_extractor: bool = False
     # Modelo del plan y de la comprobación de completitud (llamadas cortas, temperatura 0).
     rag_plan_model: str = "gpt-4.1-mini"
     # 8-oct (prueba de DeepSeek): un modelo con prefijo de proveedor ("deepseek/deepseek-v4.1-flash") sale por

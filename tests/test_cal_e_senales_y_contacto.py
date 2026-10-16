@@ -90,6 +90,74 @@ def test_con_el_flag_lo_que_el_cliente_esperaba_ver_no_es_un_fallo(monkeypatch):
         assert palabra in jr._NO_APARECE_NO_ES_FALLO
 
 
+# ---------------------------------------------------------------- E4: el idioma lo dice el extractor
+
+
+@pytest.mark.asyncio
+async def test_el_idioma_del_primer_turno_lo_dice_el_extractor(monkeypatch):
+    """cal-12: "Busco el seguinte: Vamos en família a Cartagena" tiene tantas palabras iguales al español que la
+    heurística de palabras vacías dice "es" y corta la cadena. El extractor (ya lanzado con el enrutador) dice `pt`,
+    y la regla G-10 de Gadea manda contestar en inglés."""
+    import asyncio
+
+    from src.agents import conversational_core as core
+    from src.flows.state import ConversationState
+
+    monkeypatch.setattr(settings, "idioma_del_extractor", True)
+    monkeypatch.setattr(settings, "idioma_otro_en_ingles", True)
+    st = ConversationState(conversation_id="t")
+
+    async def extraccion():
+        return {"idioma": "pt"}
+
+    st._extraccion_adelantada = asyncio.create_task(extraccion())
+    mensaje = "Busco el seguinte: Vamos en família a Cartagena. 1 buzo avanzado y 2 para bautismo"
+    assert await core._idioma_del_extractor(st, mensaje) == "en"
+
+
+@pytest.mark.asyncio
+async def test_el_extractor_no_cambia_el_espanol_ni_el_ingles(monkeypatch):
+    import asyncio
+
+    from src.agents import conversational_core as core
+    from src.flows.state import ConversationState
+
+    monkeypatch.setattr(settings, "idioma_del_extractor", True)
+    monkeypatch.setattr(settings, "idioma_otro_en_ingles", True)
+    for idioma, esperado in (("es", "es"), ("en", "en"), ("fr", "en")):
+        st = ConversationState(conversation_id="t")
+
+        async def extraccion(i=idioma):
+            return {"idioma": i}
+
+        st._extraccion_adelantada = asyncio.create_task(extraccion())
+        assert await core._idioma_del_extractor(st, "hola quiero bucear en las islas") == esperado
+
+
+@pytest.mark.asyncio
+async def test_sin_el_flag_o_sin_extraccion_decide_la_cadena_de_siempre(monkeypatch):
+    import asyncio
+
+    from src.agents import conversational_core as core
+    from src.flows.state import ConversationState
+
+    monkeypatch.setattr(settings, "idioma_otro_en_ingles", True)
+    st = ConversationState(conversation_id="t")
+
+    async def extraccion():
+        return {"idioma": "pt"}
+
+    st._extraccion_adelantada = asyncio.create_task(extraccion())
+    monkeypatch.setattr(settings, "idioma_del_extractor", False)
+    assert await core._idioma_del_extractor(st, "un mensaje largo en portugues brasileiro") is None
+    # Con el flag pero sin extracción (o con un mensaje de dos palabras), tampoco decide.
+    monkeypatch.setattr(settings, "idioma_del_extractor", True)
+    vacio = ConversationState(conversation_id="t2")
+    assert await core._idioma_del_extractor(vacio, "un mensaje largo de verdad") is None
+    assert await core._idioma_del_extractor(st, "bom dia") is None
+    st._extraccion_adelantada.cancel()
+
+
 # ---------------------------------------------------------------- E5: Jev con los últimos turnos
 
 

@@ -306,6 +306,9 @@
       "donde": "src/agents/conversational_core.py:_setup_phase",
       "modelos": [
         "openai_model"
+      ],
+      "interruptores": [
+        "idioma_del_extractor"
       ]
     },
     {
@@ -1383,6 +1386,11 @@
       "area": "Respuestas fijas",
       "titulo": "El WhatsApp se da sin añadir condiciones que no constan",
       "texto": "Al dar el WhatsApp oficial se decía '(solo mensajes, no llamadas)', y eso no está escrito en la información de la empresa. Ahora la aclaración sale de ahí: si está, se dice; si no, no se dice nada."
+    },
+    "idioma_del_extractor": {
+      "area": "Chat",
+      "titulo": "El idioma del primer mensaje lo dice quien lee el mensaje",
+      "texto": "Antes lo decidía una lista de palabras corrientes, y un mensaje en portugués con muchas palabras iguales al español se contestaba en español. Ahora lo dice la misma lectura del mensaje que saca los datos, que ya se está haciendo a la vez."
     }
   },
   "areas": [
