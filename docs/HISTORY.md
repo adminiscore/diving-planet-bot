@@ -1,6 +1,36 @@
 History
 =======
 
+0.31.37 - (2026-10-16)
+----------------------
+* **CAL-C EN CURSO: C1 y C2 hechos y medidos, APAGADOS hasta la mini-ronda A/B del final de CAL-C** (Álvaro con Claude).
+  - **C1 `ACTIVIDAD_POR_LO_SABIDO`** (`conversational_core.ask_slot`): quien ya dijo que quiere bucear no recibe el menú
+    de actividades ("¿Con cuál te animas — buceo, minicurso, snorkel…?"). Regla de Gadea: sin certificación se
+    recomienda el minicurso (entero la primera vez; la versión corta también recomienda) y, sin saberla, se pregunta
+    "¿Eres buzo certificado?".
+  - **C2 `EXTRACTOR_CITA_DEL_CLIENTE`** (`extractor_turno`): "nos gusta" tras "te propongo la salida de 2 inmersiones"
+    → el modelo lo entendía pero citaba el texto del BOT y la comprobación de la cita lo tiraba (2 de 3). Ahora, solo
+    para la actividad, vale una cita que esté en la última pregunta del bot. **Sin tocar el prompt:** cambiarlo movía
+    otros campos (banco ex0 5 → 8 inventos; el tío certificado de cal-17 perdía la certificación 3 de 4 con "apartar un
+    cupo es querer bucear", que se quitó). Banco ex0 diseño con C2 final: 112 aciertos / 3 inventos (sin C2 114 / 5).
+  - Banco de fallos, 24 casos (21 de CAL-C + cal-55/69/70 de CAL-A), `docs/robustness/cal/medidas/calc-*.json`:
+
+| Caso del banco (3 repeticiones) | C0 base | C1 | C1+C2 final | Qué contesta ahora |
+|---|---|---|---|---|
+| cal-45 "Muchas gracias!" | 3 | 0 | **0** | "¿Eres buzo certificado?" en vez del menú |
+| cal-54 "5 inmersiones" | 3 | 0 | **0** | igual |
+| cal-01 "quiero bucear certificado" | 3 | – | 1 | |
+| cal-21 "¿cómo aparto un cupo para el viernes?" | 2 | 3 | 1 | |
+| cal-52 (moneda) / cal-46 (Ubuntu) | 3 / 3 | – | 1 / 2 | no los toca: variación |
+| cal-34 "nos gusta… el de Cartagena" | 3 | 3 | 3 | **ya bien en el fondo**: recomienda la salida de 2 inmersiones y sigue; el verificador lo marca por "(si prefieres un paquete, dímelo)" |
+| cal-60 "no estamos certificados" | 3 | 3 | 3 | **ya bien en el fondo**: "Para empezar, lo ideal es el *minicurso*…"; el verificador lo marca solo por no dar el enlace |
+| cal-17 "Me parece super!!!" (cotiza para su tío) | 1 | 0 | 2 | ⚠️ VIGILAR: a veces el menú (el que bucea es el tío, no quien escribe; varía de una vez a otra) |
+| Los otros 15 | | | igual | ni C1 ni C2 los tocan (siguen para C3…) |
+| **Total (24 casos × 3)** | **66/72** | | **56/72** | |
+
+  - Herramienta: `scripts/reproducir_juez_pre.py` guarda también `quiere_bucear` y `suggested_activity` en la traza.
+    Tests `tests/test_cal_c1_actividad_por_lo_sabido.py` (10).
+
 0.31.36 - (2026-10-16)
 ----------------------
 * **CAL-A CERRADO: MEDIDO, NO MEJORA (decisión de Álvaro); todo APAGADO** — el diseño de Gadea (plan → redacción →

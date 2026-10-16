@@ -41,7 +41,62 @@ PRE (escritas ya por Luna) tumba 42 frente a 13, casi todo verdades (HISTORY 0.3
 **C. Pendientes de antes:** el criterio del Open Water en `manual-duracion-curso` ✅ (FAQ curada nueva: "sacarse la
 certificación" = Open Water, o el Referido; el Scuba Diver es la parcial). **DeepSeek: FUERA DEL PLAN** (Gadea, 9-oct).
 
-### ▶️ RETOMAR AQUÍ — 16-oct tarde (Álvaro con Claude): CAL-A CERRADA (medido, no mejora, todo apagado); siguiente CAL-C
+### ▶️ RETOMAR AQUÍ — 16-oct noche (Álvaro con Claude): CAL-C EN CURSO — C1 y C2 hechos y APAGADOS; siguiente C3
+
+**Estado.** PRE sirve `feature/pre_alvaro` con `MONEDA_SIN_NACIONALIDAD_USD` encendido (CAL-B); todo lo de CAL-A y
+CAL-C está en la rama con sus flags **APAGADOS** (PRE se comporta igual que con CAL-B). HISTORY 0.31.37. Suite verde.
+**Integrad `feature/pre_alvaro` antes de subir.** No hay nada a medias: no corre ninguna medida.
+
+**Qué es CAL-C** (plan: `docs/robustness/ex10/informe-ex10-y-plan-cal.md`): que el bot entienda sin repreguntar ni
+suponer. Se mide con el banco de fallos (`scripts/banco_fallos.py medir --ids <24 casos> --reps 3 --codigo-local
+--flag …`); los 24 casos = los 21 con `tarea == "CAL-C"` en `docs/robustness/cal/banco-fallos.json` más cal-55, cal-69 y
+cal-70 de CAL-A. Base `calc-C0-base`: 66/72. Las causas, leídas caso a caso (estado + traza en PRE):
+
+| Grupo | Casos | Qué pasa | Estado |
+|---|---|---|---|
+| 1. Menú de actividades cuando ya se sabe | cal-17, 21, 34, 35, 45, 54, 55, 60, 69, 70 | "5 inmersiones", "Muchas gracias!", "no estamos certificados" → "¿Con cuál te animas — buceo, minicurso…?" | **C1 + C2** (abajo) |
+| 2. Pregunta lo que ya sabe, o no la que toca | cal-01, 08, 10, 16, 25, 41, 46, 52, 57, 71, 73 | se aloja en Isla Mulata → "¿en qué hotel?"; dice "certificado" → "¿tienes certificación?"; dos preguntas iguales seguidas ("¿En qué hotel de las islas se alojan? ¿En qué hotel o isla te hospedas?"); "beginner (4/5 dives)" tomado como certificado | **siguiente: C3** |
+| 3. Idioma | cal-40 | escribe en inglés empezando por "Hola!" → contesta en español | pendiente |
+| 4. Otros | cal-50, 59 | "cursos para certificarme" → lista todos los cursos; la agencia → "cuéntame qué necesitas" otra vez | pendiente |
+
+**Hecho (flags APAGADOS):**
+- **C1 `ACTIVIDAD_POR_LO_SABIDO`**: si `state.quiere_bucear` y no hay actividad, en vez del menú: sin certificación →
+  recomendar el minicurso; sin saberla → "¿Eres buzo certificado?".
+- **C2 `EXTRACTOR_CITA_DEL_CLIENTE`**: la actividad aceptada de la propuesta del bot se da por buena aunque el modelo cite
+  el texto del bot (solo si la cita está en la última pregunta del bot). **Lección: NO tocar el prompt del extractor
+  para un caso**; cualquier frase nueva mueve otros campos (medirlo siempre con `scripts/estabilidad_extractor.py
+  --grupo diseño --pasadas 3`, con y sin el flag).
+
+| Caso del banco (3 repeticiones) | C0 base | C1 | C1+C2 final | Qué contesta ahora |
+|---|---|---|---|---|
+| cal-45 "Muchas gracias!" | 3 | 0 | **0** | "¿Eres buzo certificado?" en vez del menú |
+| cal-54 "5 inmersiones" | 3 | 0 | **0** | igual |
+| cal-01 "quiero bucear certificado" | 3 | – | 1 | |
+| cal-21 "¿cómo aparto un cupo para el viernes?" | 2 | 3 | 1 | |
+| cal-52 (moneda) / cal-46 (Ubuntu) | 3 / 3 | – | 1 / 2 | no los toca: variación |
+| cal-34 "nos gusta… el de Cartagena" | 3 | 3 | 3 | **ya bien en el fondo**: recomienda la salida de 2 inmersiones y sigue; el verificador lo marca por "(si prefieres un paquete, dímelo)" |
+| cal-60 "no estamos certificados" | 3 | 3 | 3 | **ya bien en el fondo**: "Para empezar, lo ideal es el *minicurso*…"; el verificador lo marca solo por no dar el enlace |
+| cal-17 "Me parece super!!!" (cotiza para su tío) | 1 | 0 | 2 | ⚠️ VIGILAR: a veces el menú (el que bucea es el tío, no quien escribe; varía de una vez a otra) |
+| Los otros 15 | | | igual | ni C1 ni C2 los tocan (siguen para C3…) |
+| **Total (24 casos × 3)** | **66/72** | | **56/72** | |
+
+**Siguiente (en orden):**
+1. **C3: no repreguntar lo que ya se sabe** (grupo 2). Pistas de las trazas: la respuesta del RAG pregunta el origen o
+   la certificación aunque el estado ya los tiene (cal-01, cal-46), y luego el flujo añade su propia pregunta
+   (pregunta doble en cal-71/73); "Isla Mulata" no se reconoce como hotel (cal-41); "beginner (4/5 dives)" →
+   `is_certified` true (cal-57). Para ver estado y traza de cada caso, ver la nota técnica de abajo.
+2. Grupos 3 y 4 (idioma, cal-50, cal-59) y cal-55 (Barú: decir que no operamos allí).
+3. **Mini-ronda A/B al final de CAL-C** con todos los flags de C juntos (decisión pendiente de Álvaro; recomendado así
+   para no gastar dos veces): A = código nuevo con flags apagados, B = encendidos, misma franja. Diálogos: los del
+   banco CAL-C que no son del examen oculto gastado + los que pasan por la pregunta de la actividad.
+4. Después CAL-D (el plan exacto) + CAL-E, CAL-F, CAL-G (paralelización, al final).
+- ⚠️ VIGILAR cal-17 (cotiza para su tío certificado): a veces sale el menú; con C1 solo, 0/3; con C1+C2, 2/3.
+- **Nota técnica:** `reproducir_juez_pre.py` se niega con diálogos del examen oculto, pero el banco de fallos sí los
+  usa (examen gastado en ex-10, decisión de Gadea): para ver estado y traza de un caso del banco, llamar a
+  `scripts.banco_fallos._reproducir_en_pre(_turnos_del_caso(caso), reps=1)` (devuelve `estado` y `traza`).
+- Gasto de OpenAI del 16-oct: ≈ 15-18 $ en total (CAL-B, CAL-A y CAL-C; estimado). Mirad el saldo antes de lanzar.
+
+### ▶️ (anterior) 16-oct tarde (Álvaro con Claude): CAL-A CERRADA (medido, no mejora, todo apagado); siguiente CAL-C
 
 **Estado.** PRE sirve `feature/pre_alvaro` con `MONEDA_SIN_NACIONALIDAD_USD` encendido (CAL-B). El código de CAL-A
 está en la rama con sus 4 flags **APAGADOS** (PRE se comporta igual). HISTORY 0.31.36. **Integrad `feature/pre_alvaro`
