@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-17T15:09:10+00:00",
-  "commit": "9d9c2c2",
+  "generado": "2026-10-17T15:17:10+00:00",
+  "commit": "71cc1ec",
   "rama": "feature/pre_alvaro"
  },
  "vistas": {
@@ -714,6 +714,13 @@
     {
      "nombre": "red_menciones_solo_sin_extractor",
      "titulo": "La red de palabras clave, solo si falla el extractor",
+     "codigo": false,
+     "pre": false,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "hotel_del_catalogo_da_isla",
+     "titulo": "Un hotel de las islas dice que está en las islas",
      "codigo": false,
      "pre": false,
      "sin_efecto": false
@@ -2244,6 +2251,19 @@
    "pre": true,
    "fijado_en_pre": true,
    "usado_por": [],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "hotel_del_catalogo_da_isla",
+   "area": "Reserva",
+   "titulo": "Un hotel de las islas dice que está en las islas",
+   "texto": "Si el hotel que nombra el cliente está en el catálogo de hoteles de las islas (por ejemplo, Ubuntu), el bot sabe que está en las islas y en qué isla; y el hotel se guarda aunque ese mensaje acabe pasándose a un asesor.",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
+   "usado_por": [
+    "b_slotfill_close"
+   ],
    "sin_efecto": null
   },
   {

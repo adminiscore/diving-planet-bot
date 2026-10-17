@@ -251,3 +251,39 @@ def test_c5_la_red_de_menciones_solo_si_el_extractor_no_leyo(monkeypatch):
     assert core._menciones_para_la_red(st, msg) == hoy
     st._extractor_leyo = "otro mensaje"  # lo que leyó era de otro turno
     assert core._menciones_para_la_red(st, msg) == hoy
+
+
+# --- CAL-C3e `hotel_del_catalogo_da_isla`: un hotel del catálogo de las islas da su isla; también en el pase ---
+
+def test_c3e_hotel_del_catalogo():
+    assert core._hotel_del_catalogo("the Ubuntu Hotel") == ("ubuntu", "isla_marina")
+    assert core._hotel_del_catalogo("Bodegas de Santa Clara") is None
+
+
+def test_c3e_turno_normal_da_isla_y_origen(monkeypatch):
+    monkeypatch.setattr(settings, "hotel_por_extractor", True)
+    monkeypatch.setattr(settings, "hotel_del_catalogo_da_isla", True)
+    it = type("I", (), {"hotel": None, "island": None, "location": None, "detected_fields": []})()
+    core._poner_hotel(it, ConversationState(conversation_id="c3e"), {"hotel": "Ubuntu Hotel"})
+    assert (it.hotel, it.island, it.location) == ("ubuntu", "isla_marina", "island")
+    monkeypatch.setattr(settings, "hotel_del_catalogo_da_isla", False)
+    it2 = type("I", (), {"hotel": None, "island": None, "location": None, "detected_fields": []})()
+    core._poner_hotel(it2, ConversationState(conversation_id="c3e"), {"hotel": "Ubuntu Hotel"})
+    assert (it2.hotel, it2.location) == ("Ubuntu Hotel", None)
+
+
+@pytest.mark.asyncio
+async def test_c3e_el_hotel_se_guarda_en_el_turno_del_pase(monkeypatch):
+    import asyncio
+
+    monkeypatch.setattr(settings, "est4_flujo", True)
+
+    async def datos():
+        return {"hotel": "Ubuntu Hotel"}
+
+    for flag, esperado in ((False, (None, None)), (True, ("ubuntu", "island"))):
+        monkeypatch.setattr(settings, "hotel_del_catalogo_da_isla", flag)
+        st = ConversationState(conversation_id="c3e")
+        st._extraccion_adelantada = asyncio.ensure_future(datos())
+        await core.guardar_lo_dicho_en_el_pase(st)
+        assert (st.hotel, st.location) == esperado

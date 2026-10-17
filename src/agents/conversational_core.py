@@ -2493,6 +2493,15 @@ def _jev_dice_que_no_lo_dice(state: ConversationState) -> bool:
     return lugar.get("choice") == "none" and (lugar.get("confidence") or 0.0) >= CUSTOMER_PLACE_MIN
 
 
+def _hotel_del_catalogo(nombre: str) -> tuple[str, str | None] | None:
+    """CAL-C3e: (hotel_id, isla) si el hotel que nombra el cliente está en el catálogo de hoteles de las islas que ya usa
+    el detector (`IntentDetector._detect_location`: 'ubuntu' → isla_marina…); None si no. Se le pasa SOLO el nombre
+    (cita comprobada por el extractor), así que solo puede encontrar ese hotel, como `_departure_place`."""
+    intent = DetectedIntent()
+    _detector._detect_location((nombre or "").lower(), intent)
+    return (intent.hotel, intent.island) if intent.hotel else None
+
+
 def _poner_hotel(intent, state: ConversationState, datos: dict) -> None:
     """CAL-C3 (`hotel_por_extractor`): el hotel que el cliente nombra (cita comprobada, sin lista cerrada) se guarda si
     la conversación aún no tiene uno, para no preguntarle "¿En qué hotel o isla te hospedas?" (cal-41, cal-67/68). El
@@ -2504,6 +2513,16 @@ def _poner_hotel(intent, state: ConversationState, datos: dict) -> None:
     if "hotel" not in intent.detected_fields:
         intent.detected_fields.append("hotel")
     logger.info(f"[EXTRACT][CAL-C3] hotel={hotel!r} (nombrado por el cliente)")
+    del_catalogo = _hotel_del_catalogo(hotel) if settings.hotel_del_catalogo_da_isla else None
+    if del_catalogo:
+        intent.hotel, isla = del_catalogo
+        if isla and not intent.island:
+            intent.island = isla
+            intent.detected_fields.append("island")
+        if not intent.location and not (state.location or state.detected_location):
+            intent.location = "island"
+            intent.detected_fields.append("location")
+        logger.info(f"[EXTRACT][CAL-C3e] {hotel!r} es del catálogo de las islas: {del_catalogo}")
 
 
 def _poner_actividad(intent, state: ConversationState, datos: dict, pista: dict) -> None:
@@ -5536,6 +5555,19 @@ async def guardar_lo_dicho_en_el_pase(state: ConversationState) -> None:
             continue
         setattr(state, atributo, valor)
         guardados[campo] = valor
+    hotel = (datos or {}).get("hotel")
+    if settings.hotel_del_catalogo_da_isla and hotel and not (state.hotel or state.detected_hotel):
+        # CAL-C3e (17-oct): "I just booked… We are staying at the Ubuntu Hotel" acababa en el pase y el hotel se perdía;
+        # en el turno siguiente el RAG preguntaba "Are you departing from Cartagena or staying on the islands?" (cal-46).
+        del_catalogo = _hotel_del_catalogo(hotel)
+        state.hotel = state.detected_hotel = del_catalogo[0] if del_catalogo else hotel
+        guardados["hotel"] = state.hotel
+        if del_catalogo:
+            if del_catalogo[1] and not state.detected_island:
+                state.island = state.detected_island = del_catalogo[1]
+            if not (state.location or state.detected_location):
+                state.location = state.detected_location = "island"
+                guardados["location"] = "island"
     if guardados:
         logger.info(f"[EXTRACT][PASE] lo dicho en el turno del pase se guarda: {guardados}")
 

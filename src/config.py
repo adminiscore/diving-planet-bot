@@ -299,6 +299,10 @@ class Settings(BaseSettings):
     # "¿cuántos para X?") solo actúa si el extractor no pudo leer el mensaje: "We snorkeled in Roatan yesterday"
     # preguntaba por snorkel (cal-69/70). APAGADO hasta medirlo.
     red_menciones_solo_sin_extractor: bool = False
+    # CAL-C3e (17-oct, propuesta de Gadea): el hotel que lee el extractor, si está en el catálogo de hoteles de las islas
+    # del detector, da su isla y "está en las islas"; y también se guarda en el turno que acaba en el pase a una
+    # persona (cal-46: "staying at the Ubuntu Hotel" se perdía). APAGADO hasta medirlo.
+    hotel_del_catalogo_da_isla: bool = False
 
     # Paso 5 (RAG, l1-6 + l1-7, 27-sep): (a) el catalogo entero como hechos en el contexto del RAG
     # en vez de los atajos de precio por regex, que contestaban preguntas que no eran de precio;
