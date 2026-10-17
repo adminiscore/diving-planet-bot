@@ -1,0 +1,35 @@
+{
+ "etiqueta": "diag-robusto",
+ "reps": 1,
+ "flags": [],
+ "codigo_local": true,
+ "casos": [
+  {
+   "id": "cal-10",
+   "dialogo": "snorkel-precio-residente-y-pago-link",
+   "criterio": "global:sin-invenciones",
+   "repeticiones": 1,
+   "fallan": 0,
+   "respuestas": [
+    "Sí, para las dos pueden reservar el tour de snorkeling. Como son 2 personas, no aplica el descuento adicional para grupos, que es para 5 o más. 🪸\n\nPara darte el precio exacto necesito saber desde dónde sales: ¿saldrías *desde Cartagena* o ya estás *en las Islas del Rosario*? Los planes y los precios cambian según el punto de salida. 🌊"
+   ],
+   "explicaciones": [
+    "La respuesta actual no asume que ambas personas son residentes, solo menciona que para 2 personas no aplica el descuento de grupo y pide aclarar el punto de salida para dar el precio exacto. No hay ninguna invención sobre la condición de residencia de la segunda persona."
+   ]
+  },
+  {
+   "id": "cal-11",
+   "dialogo": "acompanante-madre-desde-cartagena",
+   "criterio": "precio-moneda-o-pregunta",
+   "repeticiones": 1,
+   "fallan": 0,
+   "respuestas": [
+    "¡Claro que sí! Tu mamá puede ir como acompañante en la lancha y quedarse en nuestra base en la isla mientras tú buceas. El plan de acompañante no incluye alojamiento.\n\nSi salen desde Cartagena, incluye lancha de ida y vuelta, almuerzo, seguro y entrada al Parque Nacional Natural: **80 USD online**. Si ya están en las islas, incluye seguro y entrada, pero no almuerzo; el precio online es el mismo.\n\n¿Saldrían desde Cartagena o ya estarían en las islas?\n\n¡Genial! Para recomendarte el plan perfecto: ¿Eres buzo certificado? (Y si no, ¡tranquilo! El minicurso es ideal para empezar. 🤿)"
+   ],
+   "explicaciones": [
+    "La respuesta actual cumple con el criterio: da el precio del acompañante en USD (ya que no se conoce la nacionalidad del cliente), explica qué incluye el plan según el punto de salida, y pregunta si salen desde Cartagena o ya están en las islas antes de cotizar definitivamente. No pregunta la nacionalidad antes de cotizar, lo cual es correcto según el criterio."
+   ]
+  }
+ ],
+ "sin_medir": []
+}

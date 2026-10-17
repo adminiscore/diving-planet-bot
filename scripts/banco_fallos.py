@@ -117,7 +117,15 @@ def _reproducir_en_pre(turnos: list[str], *, reps: int = 1, flags: list[str] | N
     script = f"TURNOS_JSON = {json.dumps(turnos, ensure_ascii=False)!r}\nN_REPS = {reps}\nFLAGS = {flags or []!r}\n{_REMOTO}"
     r = pre_ssh(docker_python({}, codigo_local=codigo), input_text=script, timeout=240 + 60 * len(turnos) * reps)
     filas = [json.loads(ln) for ln in (r.stdout or "").splitlines() if ln.startswith("{")]
-    return [f for f in filas if f["turn"] == len(turnos)]
+    ultimos = [f for f in filas if f["turn"] == len(turnos)]
+    if not ultimos:
+        # 17-oct: sin esto, una medida que fallaba (la conexión, el contenedor, un error dentro de PRE) devolvía una
+        # lista vacía y el caso quedaba como "falla 0/0", indistinguible de un caso que pasa: en la medida del banco
+        # entero, 62 de 71 casos salieron así y el total (3/9) parecía buenísimo. Un fallo de medida tiene que verse.
+        raise RuntimeError(
+            f"la reproducción en PRE no devolvió ningún turno (código {r.returncode}): "
+            f"{((r.stderr or r.stdout) or '').strip()[-400:]}")
+    return ultimos
 
 
 async def _verificar(f: dict, hoy: dict) -> dict:
@@ -177,8 +185,15 @@ def medir(etiqueta: str, ids: list[str] | None, tarea: str | None, reps: int, fl
     codigo = subir_codigo_local() if codigo_local else None
     salida = {"etiqueta": etiqueta, "reps": reps, "flags": flags, "codigo_local": codigo_local, "casos": []}
     fallan_total = 0
+    roto: list[str] = []
     for f in casos:
-        filas = _reproducir_en_pre(_turnos_del_caso(f), reps=reps, flags=flags, codigo=codigo)
+        try:
+            filas = _reproducir_en_pre(_turnos_del_caso(f), reps=reps, flags=flags, codigo=codigo)
+        except RuntimeError as exc:
+            # El caso se queda SIN medir y se dice al final: no cuenta como 0 fallos (17-oct).
+            print(f"  {f['id']} NO MEDIDO: {exc}")
+            roto.append(f["id"])
+            continue
         async def _todas(f=f, filas=filas):  # un solo bucle por caso (antes: "Event loop is closed" al cerrar clientes)
             return await asyncio.gather(*(_verificar(f, hoy) for hoy in filas))
 
@@ -193,7 +208,13 @@ def medir(etiqueta: str, ids: list[str] | None, tarea: str | None, reps: int, fl
     destino.parent.mkdir(parents=True, exist_ok=True)
     destino.write_text(json.dumps(salida, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
     total = sum(c["repeticiones"] for c in salida["casos"])
-    print(f"{etiqueta}: fallan {fallan_total}/{total} repeticiones en {len(casos)} casos → {destino.relative_to(ROOT)}")
+    salida["sin_medir"] = roto
+    destino.write_text(json.dumps(salida, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
+    medidos = len(casos) - len(roto)
+    print(f"{etiqueta}: fallan {fallan_total}/{total} repeticiones en {medidos} casos medidos "
+          f"→ {destino.relative_to(ROOT)}")
+    if roto:
+        print(f"  ⚠️  {len(roto)} casos SIN MEDIR (no cuentan como buenos): {', '.join(roto)}")
 
 
 def main() -> None:

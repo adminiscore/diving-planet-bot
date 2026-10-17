@@ -8,21 +8,49 @@ import os
 import subprocess
 from pathlib import Path
 
+# 17-oct: una medida del banco ENTERO (71 casos = 71 conexiones seguidas) empezó a fallar a partir del caso 10 y los
+# fallos NO se vieron: `_reproducir_en_pre` devolvía una lista vacía y el caso quedaba como "0/0", o sea igual que un
+# caso que pasa. El servidor corta las conexiones seguidas (sshd las limita), así que aquí se reintenta con espera.
+_REINTENTOS = 3
+_ESPERAS = (5, 15, 30)
+_FALLO_DE_CONEXION = ("connection refused", "connection reset", "connection closed", "broken pipe",
+                      "timed out", "temporary failure", "too many authentication", "kex_exchange")
+
+
+def _es_fallo_de_conexion(r: subprocess.CompletedProcess) -> bool:
+    if r.returncode == 0:
+        return False
+    err = (r.stderr or "").lower()
+    return any(t in err for t in _FALLO_DE_CONEXION) or r.returncode == 255
+
 
 def pre_ssh(cmd: str, *, input_text: str | None = None, timeout: int = 60,
             stdin_bytes: bytes | None = None) -> subprocess.CompletedProcess:
     """Ejecuta `cmd` en el VPS de PRE y devuelve el resultado (stdout/stderr en texto). `stdin_bytes` manda
-    datos binarios por la entrada (p. ej. un .tgz); si no, `input_text`."""
+    datos binarios por la entrada (p. ej. un .tgz); si no, `input_text`.
+
+    Reintenta hasta 3 veces (5, 15 y 30 s) si la CONEXIÓN falla: con muchas llamadas seguidas (una medida del banco
+    entero son 71) el servidor empieza a rechazarlas, y antes eso se veía como un caso sin fallos."""
+    import time
+
     key = os.environ.get("PRE_SSH_KEY") or str(Path.home() / ".ssh" / "dp_pre_vps")
     host = os.environ.get("PRE_SSH_HOST") or "root@89.167.4.161"
     args = ["ssh", "-i", key, "-o", "ConnectTimeout=15", "-o", "BatchMode=yes", host, cmd]
-    if stdin_bytes is not None:
-        r = subprocess.run(args, input=stdin_bytes, capture_output=True, timeout=timeout)
-        return subprocess.CompletedProcess(r.args, r.returncode, r.stdout.decode("utf-8", "replace"),
-                                           r.stderr.decode("utf-8", "replace"))
-    return subprocess.run(
-        args, input=input_text, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=timeout,
-    )
+    ultimo = None
+    for intento in range(_REINTENTOS):
+        if stdin_bytes is not None:
+            r = subprocess.run(args, input=stdin_bytes, capture_output=True, timeout=timeout)
+            ultimo = subprocess.CompletedProcess(r.args, r.returncode, r.stdout.decode("utf-8", "replace"),
+                                                 r.stderr.decode("utf-8", "replace"))
+        else:
+            ultimo = subprocess.run(args, input=input_text, capture_output=True, text=True, encoding="utf-8",
+                                    errors="replace", timeout=timeout)
+        if not _es_fallo_de_conexion(ultimo) or intento == _REINTENTOS - 1:
+            return ultimo
+        espera = _ESPERAS[min(intento, len(_ESPERAS) - 1)]
+        print(f"  [pre_ssh] la conexión falló ({(ultimo.stderr or '').strip()[:80]}): reintento en {espera} s")
+        time.sleep(espera)
+    return ultimo
 
 
 def _carpeta_del_codigo() -> str:

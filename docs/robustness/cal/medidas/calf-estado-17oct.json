@@ -1,0 +1,683 @@
+{
+ "etiqueta": "calf-estado-17oct",
+ "reps": 1,
+ "flags": [],
+ "codigo_local": true,
+ "casos": [
+  {
+   "id": "cal-01",
+   "dialogo": "cambio-idioma",
+   "criterio": "global:sin-repreguntas",
+   "repeticiones": 1,
+   "fallan": 1,
+   "respuestas": [
+    "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\n¡Hola! ¡Qué chévere que quieras bucear en las Islas del Rosario! Si ya tienes certificación, puedes hacer la salida de buceo de 2 inmersiones desde Cartagena: cuesta **178 USD online** e incluye equipo, lancha y almuerzo. Debes presentar tu carné de buzo certificado.\n\nPuedes ver los detalles y reservar aquí: https://divingplanet.org/tours-buceo-snorkel-cartagena/2-buceos-1-dia/\n\n¿Ya tienes tu certificación Open Water?\n\n¿Desde dónde saldrías? Podemos recogerte saliendo *desde Cartagena* (ida y vuelta el mismo día) o, si ya estás *en las islas*, coordinamos la recogida en tu hotel."
+   ],
+   "explicaciones": [
+    "El bot vuelve a preguntar '¿Ya tienes tu certificación Open Water?' aunque el cliente ya indicó que quiere 'bucear certificado', lo que implica que ya tiene certificación. El fallo es de comprensión del mensaje del cliente, no de falta de información en la respuesta."
+   ]
+  },
+  {
+   "id": "cal-02",
+   "dialogo": "refresher-rechaza-acepta",
+   "criterio": "global:sin-invenciones",
+   "repeticiones": 1,
+   "fallan": 0,
+   "respuestas": [
+    "¡Claro, mejor prevenir! El refresher tiene un costo propio y se reserva como *Minicurso de Buceo*. Desde Cartagena, el precio online es *183 USD*; incluye entrenamiento en piscina, una inmersión en el mar con instructor, equipo, lancha y almuerzo. El precio normal es *204 USD*.\n\nPuedes reservarlo aquí: https://book.divingplanet.org/book/minicurso-de-buceo/2?language=es\n\nDespués de reservar, recibirás la teoría para completar antes de la práctica. ¿Quieres que te cuente algo más del refresher?"
+   ],
+   "explicaciones": [
+    "La respuesta actual da el precio en USD, que es correcto porque el cliente no ha confirmado ser colombiano o residente. El fallo original era dar el precio en COP sin esa confirmación, pero aquí se cumple la política: 'Aun no sabemos la nacionalidad del cliente: si das un precio, en USD (si dice que es colombiano/a o residente en Colombia, en COP)'."
+   ]
+  },
+  {
+   "id": "cal-03",
+   "dialogo": "pide-telefono",
+   "criterio": "global:sin-invenciones",
+   "repeticiones": 1,
+   "fallan": 0,
+   "respuestas": [
+    "Por aquí no manejo números de teléfono 🔒, pero te paso ahora con un asesor de Diving Planet para que hable contigo directamente. Enseguida se pone en contacto. ¡Gracias! 🙌"
+   ],
+   "explicaciones": [
+    "La respuesta actual no menciona condiciones inventadas sobre WhatsApp ni proporciona ningún número. Simplemente informa que no maneja números de teléfono y pasa la conversación a un asesor, cumpliendo con el criterio establecido."
+   ]
+  },
+  {
+   "id": "cal-04",
+   "dialogo": "open-water-precio-para-colombianos-corrige-mito",
+   "criterio": "sin-precio-especial-colombianos",
+   "repeticiones": 1,
+   "fallan": 0,
+   "respuestas": [
+    "¡Claro que sí! No hay un precio especial por nacionalidad: para colombianos y residentes en Colombia el precio se muestra en pesos; el descuento online aplica al reservar por la web.\n\nEl curso dura 2 días y requiere pasar una noche en las Islas del Rosario; el alojamiento no está incluido.\n\nPara darte el precio exacto necesito saber desde dónde sales: ¿saldrías *desde Cartagena* o ya estás *en las Islas del Rosario*? Los planes y los precios cambian según el punto de salida. 🌊"
+   ],
+   "explicaciones": [
+    "La respuesta actual aclara correctamente que no existe un precio especial para colombianos y explica que solo cambia la moneda. Además, antes de cotizar, solicita el dato de origen (Cartagena o Islas), cumpliendo la regla del origen. No falta dar el precio en COP porque aún no sabe desde dónde sale el cliente, por lo que la respuesta es completa y adecuada según el criterio."
+   ]
+  },
+  {
+   "id": "cal-05",
+   "dialogo": "curso-open-water-precio-cop-hoteles-y-transporte",
+   "criterio": "moneda-cop-colombianos",
+   "repeticiones": 1,
+   "fallan": 1,
+   "respuestas": [
+    "¡Sí! Si sales desde Cartagena, el curso incluye el transporte en lancha de ida y regreso. Ten en cuenta que dura 2 días y debes alojarte una noche en las islas; el alojamiento no está incluido.\n\nSi ya estás en las islas, la recogida y el regreso desde tu hotel también están incluidos si tiene acceso marítimo. ¿Desde dónde harías el curso?\n\n¿Y para cuántas personas armamos el plan? Así te paso el precio exacto. 😊"
+   ],
+   "explicaciones": [
+    "El cliente ya indicó que es colombiano y pidió el precio en COP, pero el bot solo volvió a preguntar origen y número de personas sin cotizar el precio en COP ni dar una referencia de precios en COP. El contexto tiene los precios en COP para ambos orígenes y la política de moneda para colombianos."
+   ]
+  },
+  {
+   "id": "cal-06",
+   "dialogo": "reserva-paquete-5-buceos-solicita",
+   "criterio": "origen-cartagena-o-islas",
+   "repeticiones": 1,
+   "fallan": 0,
+   "respuestas": [
+    "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\n¡Buenos días! ¡Claro que sí! El paquete de 5 inmersiones es para buzos certificados con nivel mínimo Open Water.\n\n¿Saldrías desde Cartagena o ya estás en las Islas del Rosario? Desde Cartagena son 2 días y debes alojarte una noche en las islas; cuesta **392 USD online**. Si ya estás en las islas, cuesta **319 USD online** y no incluye almuerzo.\n\nDime cuál opción te sirve y te comparto el enlace para reservar."
+   ],
+   "explicaciones": [
+    "La respuesta actual primero pregunta claramente si el cliente saldría desde Cartagena o si ya está en las islas antes de compartir el enlace de reserva, y explica que los precios y condiciones cambian según el origen. No cotiza ni envía el link hasta saber el origen, cumpliendo el criterio."
+   ]
+  },
+  {
+   "id": "cal-07",
+   "dialogo": "semana-santa-solo-avanzado-islas",
+   "criterio": "global:sin-repreguntas",
+   "repeticiones": 1,
+   "fallan": 0,
+   "respuestas": [
+    "¡Sí, hay disponibilidad! Operamos todos los días, salvo el 25 de diciembre y el 1 de enero; la salida podría suspenderse si el clima afecta la seguridad.\n\nPara tus fechas, del 17 al 20 de abril, elige la fecha y una persona en el calendario del plan. Si te hospedas en un hotel con acceso marítimo en las islas, la recogida está incluida. ¿Quieres que te comparta el enlace para reservar los 5 buceos desde las islas?\n\nPara darte el precio y el link correctos: ¿eres colombiano o residente en Colombia?"
+   ],
+   "explicaciones": [
+    "El bot no repregunta por las fechas (17 al 20 de abril), solo las menciona para confirmar el contexto y avanza a preguntar por la nacionalidad/residencia, que es necesario para dar el precio en la moneda correcta. No hay repregunta sobre las fechas, por lo que el fallo original ya no se reproduce."
+   ]
+  },
+  {
+   "id": "cal-08",
+   "dialogo": "paquete-5-buceos-islas-residente-sin-recogida",
+   "criterio": "global:sin-invenciones",
+   "repeticiones": 1,
+   "fallan": 1,
+   "respuestas": [
+    "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\n¡Claro que sí! Operamos todos los días, salvo el 25 de diciembre y el 1 de enero; el plan de 5 buceos está disponible para elegir en el calendario de reserva. Ten en cuenta que dura 2 días, incluye una noche en las islas y requiere certificación; el alojamiento no está incluido.\n\nEl precio online es **392 USD por persona**. Puedes elegir la fecha y el número de personas aquí: https://book.divingplanet.org/book/2-days-5-dives/9?language=es\n\n¿Te refieres al 27–30 de junio de 2027?\n\n¿Desde dónde saldrías? Podemos recogerte saliendo *desde Cartagena* (ida y vuelta el mismo día) o, si ya estás *en las islas*, coordinamos la recogida en tu hotel."
+   ],
+   "explicaciones": [
+    "La respuesta del bot dice: 'Podemos recogerte saliendo *desde Cartagena* (ida y vuelta el mismo día)', lo cual contradice la referencia oficial, que especifica que el paquete de 5 buceos (2 días) requiere pasar una noche en las islas y no es ida y vuelta el mismo día. El fallo no es por falta de información sino por inventar una opción que no existe según el catálogo oficial."
+   ]
+  },
+  {
+   "id": "cal-09",
+   "dialogo": "paquete-5-buceos-islas-residente-sin-recogida",
+   "criterio": "global:sin-repreguntas",
+   "repeticiones": 1,
+   "fallan": 0,
+   "respuestas": [
+    "Sí, como residente en Colombia pagas en pesos colombianos. El paquete de 5 inmersiones ya en las islas cuesta **1.000.000 COP por persona reservando online**; no hay un descuento adicional por residencia, solo cambia la moneda. Para dos personas, cada una reserva en el enlace: https://book.divingplanet.org/book/package-of-5-dives-already-on-island/21?language=es\n\n¿Ha pasado *más de 2 años* desde la última inmersión de alguno del grupo?"
+   ],
+   "explicaciones": [
+    "El bot ya no repregunta si el cliente es residente o colombiano, sino que asume correctamente que paga en COP y solo pregunta si ha pasado más de 2 años desde la última inmersión, lo cual es relevante y no es una repregunta de datos ya dados."
+   ]
+  },
+  {
+   "id": "cal-10",
+   "dialogo": "snorkel-precio-residente-y-pago-link",
+   "criterio": "global:sin-invenciones",
+   "repeticiones": 0,
+   "fallan": 0,
+   "respuestas": [],
+   "explicaciones": []
+  },
+  {
+   "id": "cal-11",
+   "dialogo": "acompanante-madre-desde-cartagena",
+   "criterio": "precio-moneda-o-pregunta",
+   "repeticiones": 0,
+   "fallan": 0,
+   "respuestas": [],
+   "explicaciones": []
+  },
+  {
+   "id": "cal-12",
+   "dialogo": "grupo-mixto-precio-cop-total",
+   "criterio": "global:idioma",
+   "repeticiones": 0,
+   "fallan": 0,
+   "respuestas": [],
+   "explicaciones": []
+  },
+  {
+   "id": "cal-14",
+   "dialogo": "confirmacion-salida-y-pago-sin-concepto",
+   "criterio": "confirmacion-por-pago-enlace",
+   "repeticiones": 0,
+   "fallan": 0,
+   "respuestas": [],
+   "explicaciones": []
+  },
+  {
+   "id": "cal-15",
+   "dialogo": "programa-fotos-y-alojamiento",
+   "criterio": "fotos-politica",
+   "repeticiones": 0,
+   "fallan": 0,
+   "respuestas": [],
+   "explicaciones": []
+  },
+  {
+   "id": "cal-16",
+   "dialogo": "certificada-pide-fecha-faltan-datos",
+   "criterio": "pide-datos-faltantes",
+   "repeticiones": 0,
+   "fallan": 0,
+   "respuestas": [],
+   "explicaciones": []
+  },
+  {
+   "id": "cal-17",
+   "dialogo": "certificado-profundidad-precio-y-base-hotel",
+   "criterio": "global:sin-repreguntas",
+   "repeticiones": 0,
+   "fallan": 0,
+   "respuestas": [],
+   "explicaciones": []
+  },
+  {
+   "id": "cal-18",
+   "dialogo": "certificado-profundidad-precio-y-base-hotel",
+   "criterio": "profundidad-segun-nivel",
+   "repeticiones": 0,
+   "fallan": 0,
+   "respuestas": [],
+   "explicaciones": []
+  },
+  {
+   "id": "cal-20",
+   "dialogo": "certificado-viernes-precio-cop-y-reserva",
+   "criterio": "global:sin-invenciones",
+   "repeticiones": 0,
+   "fallan": 0,
+   "respuestas": [],
+   "explicaciones": []
+  },
+  {
+   "id": "cal-21",
+   "dialogo": "certificado-viernes-precio-cop-y-reserva",
+   "criterio": "precio-cop-cartagena",
+   "repeticiones": 0,
+   "fallan": 0,
+   "respuestas": [],
+   "explicaciones": []
+  },
+  {
+   "id": "cal-22",
+   "dialogo": "paquete-5-buceos-precio-overnight-isla-grande-baru",
+   "criterio": "precio-y-moneda-correctos",
+   "repeticiones": 0,
+   "fallan": 0,
+   "respuestas": [],
+   "explicaciones": []
+  },
+  {
+   "id": "cal-24",
+   "dialogo": "tours-diarios-isla-grande",
+   "criterio": "pickup-islas",
+   "repeticiones": 0,
+   "fallan": 0,
+   "respuestas": [],
+   "explicaciones": []
+  },
+  {
+   "id": "cal-25",
+   "dialogo": "refresher-que-completar-antes",
+   "criterio": "valida-tiempo-sin-bucear",
+   "repeticiones": 0,
+   "fallan": 0,
+   "respuestas": [],
+   "explicaciones": []
+  },
+  {
+   "id": "cal-26",
+   "dialogo": "refresher-que-completar-antes",
+   "criterio": "formulario-medico-refresher",
+   "repeticiones": 0,
+   "fallan": 0,
+   "respuestas": [],
+   "explicaciones": []
+  },
+  {
+   "id": "cal-27",
+   "dialogo": "cotiza-buceo-snorkel-y-pide-link-especial",
+   "criterio": "global:sin-invenciones",
+   "repeticiones": 0,
+   "fallan": 0,
+   "respuestas": [],
+   "explicaciones": []
+  },
+  {
+   "id": "cal-28",
+   "dialogo": "cotiza-buceo-snorkel-y-pide-link-especial",
+   "criterio": "pide-datos-para-cotizar",
+   "repeticiones": 0,
+   "fallan": 0,
+   "respuestas": [],
+   "explicaciones": []
+  },
+  {
+   "id": "cal-29",
+   "dialogo": "cotiza-buceo-snorkel-y-pide-link-especial",
+   "criterio": "link-especial-escalar",
+   "repeticiones": 0,
+   "fallan": 0,
+   "respuestas": [],
+   "explicaciones": []
+  },
+  {
+   "id": "cal-30",
+   "dialogo": "grupo-mixto-cotiza-y-pide-link",
+   "criterio": "global:sin-repreguntas",
+   "repeticiones": 0,
+   "fallan": 0,
+   "respuestas": [],
+   "explicaciones": []
+  },
+  {
+   "id": "cal-31",
+   "dialogo": "grupo-mixto-cotiza-y-pide-link",
+   "criterio": "moneda-segun-nacionalidad",
+   "repeticiones": 0,
+   "fallan": 0,
+   "respuestas": [],
+   "explicaciones": []
+  },
+  {
+   "id": "cal-32",
+   "dialogo": "link-pago-extranjeros-sin-cedula",
+   "criterio": "moneda-extranjeros",
+   "repeticiones": 0,
+   "fallan": 0,
+   "respuestas": [],
+   "explicaciones": []
+  },
+  {
+   "id": "cal-33",
+   "dialogo": "punto-encuentro-corrige-todo-mar-y-hora",
+   "criterio": "global:sin-invenciones",
+   "repeticiones": 0,
+   "fallan": 0,
+   "respuestas": [],
+   "explicaciones": []
+  },
+  {
+   "id": "cal-34",
+   "dialogo": "pareja-certificados-cop-descuento-almuerzo",
+   "criterio": "global:sin-repreguntas",
+   "repeticiones": 0,
+   "fallan": 0,
+   "respuestas": [],
+   "explicaciones": []
+  },
+  {
+   "id": "cal-35",
+   "dialogo": "pareja-certificados-cop-descuento-almuerzo",
+   "criterio": "precio-moneda-cartagena-cop",
+   "repeticiones": 0,
+   "fallan": 0,
+   "respuestas": [],
+   "explicaciones": []
+  },
+  {
+   "id": "cal-36",
+   "dialogo": "pareja-certificados-cop-descuento-almuerzo",
+   "criterio": "descuentos-vigentes",
+   "repeticiones": 0,
+   "fallan": 0,
+   "respuestas": [],
+   "explicaciones": []
+  },
+  {
+   "id": "cal-37",
+   "dialogo": "open-water-hoteles-noche-fotos-horario",
+   "criterio": "pernocta-obligatoria",
+   "repeticiones": 0,
+   "fallan": 0,
+   "respuestas": [],
+   "explicaciones": []
+  },
+  {
+   "id": "cal-38",
+   "dialogo": "descuento-online-sin-codigo",
+   "criterio": "global:sin-invenciones",
+   "repeticiones": 0,
+   "fallan": 0,
+   "respuestas": [],
+   "explicaciones": []
+  },
+  {
+   "id": "cal-39",
+   "dialogo": "descuento-online-sin-codigo",
+   "criterio": "descuento-automatico-sin-codigo",
+   "repeticiones": 0,
+   "fallan": 0,
+   "respuestas": [],
+   "explicaciones": []
+  },
+  {
+   "id": "cal-40",
+   "dialogo": "curso-mas-paquetes-desde-islas-sin-nocturno-y-total",
+   "criterio": "global:idioma",
+   "repeticiones": 0,
+   "fallan": 0,
+   "respuestas": [],
+   "explicaciones": []
+  },
+  {
+   "id": "cal-41",
+   "dialogo": "curso-mas-paquetes-desde-islas-sin-nocturno-y-total",
+   "criterio": "global:sin-repreguntas",
+   "repeticiones": 0,
+   "fallan": 0,
+   "respuestas": [],
+   "explicaciones": []
+  },
+  {
+   "id": "cal-42",
+   "dialogo": "certificado-precio-dia-paquete-5-y-hoteles-base",
+   "criterio": "precio-dia-cartagena",
+   "repeticiones": 0,
+   "fallan": 0,
+   "respuestas": [],
+   "explicaciones": []
+  },
+  {
+   "id": "cal-43",
+   "dialogo": "colombianos-precio-minicurso-dos-inmersiones",
+   "criterio": "precio-minicurso-cop-o-origen",
+   "repeticiones": 0,
+   "fallan": 0,
+   "respuestas": [],
+   "explicaciones": []
+  },
+  {
+   "id": "cal-44",
+   "dialogo": "minicurso-precio-colombianos-origen-pendiente",
+   "criterio": "moneda-colombianos",
+   "repeticiones": 0,
+   "fallan": 0,
+   "respuestas": [],
+   "explicaciones": []
+  },
+  {
+   "id": "cal-45",
+   "dialogo": "disponibilidad-hora-precio-y-pecios",
+   "criterio": "global:sin-repreguntas",
+   "repeticiones": 0,
+   "fallan": 0,
+   "respuestas": [],
+   "explicaciones": []
+  },
+  {
+   "id": "cal-46",
+   "dialogo": "recogida-ubuntu-comida-y-certificacion",
+   "criterio": "global:sin-repreguntas",
+   "repeticiones": 0,
+   "fallan": 0,
+   "respuestas": [],
+   "explicaciones": []
+  },
+  {
+   "id": "cal-47",
+   "dialogo": "recogida-ubuntu-comida-y-certificacion",
+   "criterio": "comida-desde-islas",
+   "repeticiones": 0,
+   "fallan": 0,
+   "respuestas": [],
+   "explicaciones": []
+  },
+  {
+   "id": "cal-48",
+   "dialogo": "recogida-ubuntu-comida-y-certificacion",
+   "criterio": "minicurso-no-certifica",
+   "repeticiones": 0,
+   "fallan": 0,
+   "respuestas": [],
+   "explicaciones": []
+  },
+  {
+   "id": "cal-49",
+   "dialogo": "curso-referido-pide-datos-centro",
+   "criterio": "referido-requisito-carta",
+   "repeticiones": 0,
+   "fallan": 0,
+   "respuestas": [],
+   "explicaciones": []
+  },
+  {
+   "id": "cal-50",
+   "dialogo": "open-water-precio-duracion-hospedaje",
+   "criterio": "global:sin-repreguntas",
+   "repeticiones": 0,
+   "fallan": 0,
+   "respuestas": [],
+   "explicaciones": []
+  },
+  {
+   "id": "cal-52",
+   "dialogo": "moneda-precios-principiante-y-snorkel",
+   "criterio": "moneda-por-nacionalidad",
+   "repeticiones": 0,
+   "fallan": 0,
+   "respuestas": [],
+   "explicaciones": []
+  },
+  {
+   "id": "cal-53",
+   "dialogo": "paquete-5-buceos-precio-fecha-y-equipaje",
+   "criterio": "global:sin-invenciones",
+   "repeticiones": 0,
+   "fallan": 0,
+   "respuestas": [],
+   "explicaciones": []
+  },
+  {
+   "id": "cal-54",
+   "dialogo": "paquete-5-buceos-precio-fecha-y-equipaje",
+   "criterio": "global:sin-repreguntas",
+   "repeticiones": 0,
+   "fallan": 0,
+   "respuestas": [],
+   "explicaciones": []
+  },
+  {
+   "id": "cal-55",
+   "dialogo": "paquete-5-buceos-precio-fecha-y-equipaje",
+   "criterio": "no-operamos-en-baru",
+   "repeticiones": 0,
+   "fallan": 0,
+   "respuestas": [],
+   "explicaciones": []
+  },
+  {
+   "id": "cal-56",
+   "dialogo": "principiante-hora-lugar-y-precio",
+   "criterio": "global:sin-invenciones",
+   "repeticiones": 0,
+   "fallan": 0,
+   "respuestas": [],
+   "explicaciones": []
+  },
+  {
+   "id": "cal-57",
+   "dialogo": "principiante-hora-lugar-y-precio",
+   "criterio": "aclarar-actividad",
+   "repeticiones": 0,
+   "fallan": 0,
+   "respuestas": [],
+   "explicaciones": []
+  },
+  {
+   "id": "cal-58",
+   "dialogo": "agencia-solicita-tarifas-escalar",
+   "criterio": "global:un-saludo",
+   "repeticiones": 0,
+   "fallan": 0,
+   "respuestas": [],
+   "explicaciones": []
+  },
+  {
+   "id": "cal-59",
+   "dialogo": "agencia-solicita-tarifas-escalar",
+   "criterio": "global:sin-repreguntas",
+   "repeticiones": 0,
+   "fallan": 0,
+   "respuestas": [],
+   "explicaciones": []
+  },
+  {
+   "id": "cal-60",
+   "dialogo": "principiantes-no-certificados-minicurso",
+   "criterio": "recomienda-minicurso",
+   "repeticiones": 0,
+   "fallan": 0,
+   "respuestas": [],
+   "explicaciones": []
+  },
+  {
+   "id": "cal-61",
+   "dialogo": "familia-mixta-precio-descuento-refresher",
+   "criterio": "precio-mixto-cartagena-o-pregunta-faltantes",
+   "repeticiones": 0,
+   "fallan": 0,
+   "respuestas": [],
+   "explicaciones": []
+  },
+  {
+   "id": "cal-62",
+   "dialogo": "grupo-mixto-buceo-y-snorkel-reserva-web",
+   "criterio": "links-reserva-web",
+   "repeticiones": 0,
+   "fallan": 0,
+   "respuestas": [],
+   "explicaciones": []
+  },
+  {
+   "id": "cal-63",
+   "dialogo": "precios-y-disponibilidad-con-negociacion",
+   "criterio": "global:sin-invenciones",
+   "repeticiones": 0,
+   "fallan": 0,
+   "respuestas": [],
+   "explicaciones": []
+  },
+  {
+   "id": "cal-64",
+   "dialogo": "curso-open-water-principiantes-idioma-frances-anticipacion",
+   "criterio": "anticipacion-cierre-sistema",
+   "repeticiones": 0,
+   "fallan": 0,
+   "respuestas": [],
+   "explicaciones": []
+  },
+  {
+   "id": "cal-65",
+   "dialogo": "principiante-precio-y-evaluacion-medica",
+   "criterio": "global:sin-invenciones",
+   "repeticiones": 0,
+   "fallan": 0,
+   "respuestas": [],
+   "explicaciones": []
+  },
+  {
+   "id": "cal-66",
+   "dialogo": "principiante-precio-y-evaluacion-medica",
+   "criterio": "pide-datos-antes-de-precio",
+   "repeticiones": 0,
+   "fallan": 0,
+   "respuestas": [],
+   "explicaciones": []
+  },
+  {
+   "id": "cal-67",
+   "dialogo": "pareja-reactivate-y-refresh-cartagena",
+   "criterio": "global:sin-invenciones",
+   "repeticiones": 0,
+   "fallan": 0,
+   "respuestas": [],
+   "explicaciones": []
+  },
+  {
+   "id": "cal-68",
+   "dialogo": "pareja-reactivate-y-refresh-cartagena",
+   "criterio": "global:sin-repreguntas",
+   "repeticiones": 0,
+   "fallan": 0,
+   "respuestas": [],
+   "explicaciones": []
+  },
+  {
+   "id": "cal-69",
+   "dialogo": "pareja-reactivate-y-refresh-cartagena",
+   "criterio": "politica-refresh",
+   "repeticiones": 0,
+   "fallan": 0,
+   "respuestas": [],
+   "explicaciones": []
+  },
+  {
+   "id": "cal-70",
+   "dialogo": "pareja-reactivate-y-refresh-cartagena",
+   "criterio": "grupo-mixto-permitido",
+   "repeticiones": 0,
+   "fallan": 0,
+   "respuestas": [],
+   "explicaciones": []
+  },
+  {
+   "id": "cal-71",
+   "dialogo": "precio-dispo-buceo-certificado-grupo-mixto",
+   "criterio": "global:sin-invenciones",
+   "repeticiones": 0,
+   "fallan": 0,
+   "respuestas": [],
+   "explicaciones": []
+  },
+  {
+   "id": "cal-72",
+   "dialogo": "precio-dispo-buceo-certificado-grupo-mixto",
+   "criterio": "mixto-moneda-usd",
+   "repeticiones": 0,
+   "fallan": 0,
+   "respuestas": [],
+   "explicaciones": []
+  },
+  {
+   "id": "cal-73",
+   "dialogo": "precio-dispo-buceo-certificado-grupo-mixto",
+   "criterio": "origen-cartagena-o-islas",
+   "repeticiones": 0,
+   "fallan": 0,
+   "respuestas": [],
+   "explicaciones": []
+  },
+  {
+   "id": "cal-74",
+   "dialogo": "descuento-online-sin-codigo",
+   "criterio": "duracion-exacta-del-plan",
+   "repeticiones": 0,
+   "fallan": 0,
+   "respuestas": [],
+   "explicaciones": []
+  },
+  {
+   "id": "cal-75",
+   "dialogo": "inyeccion-json-admin",
+   "criterio": "global:idioma",
+   "repeticiones": 0,
+   "fallan": 0,
+   "respuestas": [],
+   "explicaciones": []
+  }
+ ]
+}
