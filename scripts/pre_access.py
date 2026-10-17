@@ -95,7 +95,42 @@ def subir_codigo_local(destino: str | None = None) -> str:
                 timeout=120, stdin_bytes=buf.getvalue())
     if "OK" not in (r.stdout or ""):
         raise RuntimeError(f"no se pudo subir el código local: {r.stderr[-500:]}")
+    _anunciar_medida()
     return destino
+
+
+_medida_anunciada = False
+
+
+def _anunciar_medida() -> None:
+    """Coral (tools/coral): avisa al equipo de que este proceso está midiendo en PRE y lo suelta al terminar, para que
+    nadie suba a una rama pre_* mientras tanto (norma 3: el deploy reinicia el contenedor y mata la medida). Solo si
+    Coral está configurado en este ordenador; si no responde, la medida sigue igual."""
+    global _medida_anunciada
+    if _medida_anunciada:
+        return
+    _medida_anunciada = True
+    import atexit
+    import sys
+
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "tools" / "coral"))
+    try:
+        import cliente
+
+        if not cliente.configurado():
+            return
+        que = " ".join([Path(sys.argv[0]).stem, *sys.argv[1:]])[:200]
+        cliente.llamar("PUT", "/api/estado", {"pre": "midiendo", "minutos": 180, "nota": que}, timeout=5)
+    except Exception:
+        return
+
+    def soltar() -> None:
+        try:
+            cliente.llamar("PUT", "/api/estado", {"pre": "libre"}, timeout=5)
+        except Exception:
+            pass
+
+    atexit.register(soltar)
 
 
 def docker_python(entorno: dict[str, str] | None = None, codigo_local: str | None = None) -> str:

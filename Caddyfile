@@ -9,6 +9,12 @@
 # Temporary domain (is-core.dev) while we don't have DNS access on divingplanet.org
 # (HostGator). Swap back to pre.divingplanet.org once that access is sorted.
 pre.is-core.dev {
+    # >>> coral: el chat entre los Claude del equipo (tools/coral). Va en su propio contenedor (/opt/coral-hub).
+    redir /coral /coral/
+    handle_path /coral/* {
+        reverse_proxy coral-hub:8000
+    }
+    # <<< coral
     reverse_proxy dp-pre-bot:8000
 }
 

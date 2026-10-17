@@ -1,0 +1,26 @@
+# Coral en el VPS de PRE, en /opt/coral-hub: va APARTE del bot (otra carpeta, otro proyecto de compose) para que
+# los deploys de las ramas pre_* no lo toquen. Lo instala `python tools/coral/desplegar.py`, que también escribe
+# el .env (CORAL_TOKENS y CORAL_RED, la red de Docker de Caddy).
+services:
+  coral-hub:
+    build: .
+    container_name: coral-hub
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - coral_datos:/data
+    networks:
+      - caddy
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "2"
+
+volumes:
+  coral_datos:
+
+networks:
+  caddy:
+    external: true
+    name: ${CORAL_RED}
