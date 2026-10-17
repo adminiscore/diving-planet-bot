@@ -1,8 +1,8 @@
 {
  "meta": {
-  "generado": "2026-10-17T15:34:26+00:00",
+  "generado": "2026-10-17T15:43:55+00:00",
   "commit": "fa6f163",
-  "rama": "ronda-calc2-b-local"
+  "rama": "feature/pre_gadea"
  },
  "estructura": {
   "componentes": [
@@ -73,7 +73,8 @@
     ],
     "interruptores": [
      "notes_in_parallel",
-     "notas_puerta_jev"
+     "notas_puerta_jev",
+     "memoria_sin_ordenes_del_cliente"
     ]
    },
    {
@@ -1002,8 +1003,8 @@
     "pre": true
    },
    "hotel_del_catalogo_da_isla": {
-    "codigo": true,
-    "pre": true
+    "codigo": false,
+    "pre": false
    },
    "hotel_por_extractor": {
     "codigo": true,
@@ -1142,8 +1143,12 @@
     "pre": true
    },
    "lugar_desconocido_al_rag": {
-    "codigo": true,
-    "pre": true
+    "codigo": false,
+    "pre": false
+   },
+   "memoria_sin_ordenes_del_cliente": {
+    "codigo": false,
+    "pre": false
    },
    "moneda_sin_nacionalidad_usd": {
     "codigo": true,
@@ -1274,8 +1279,8 @@
     "pre": true
    },
    "red_menciones_solo_sin_extractor": {
-    "codigo": true,
-    "pre": true
+    "codigo": false,
+    "pre": false
    },
    "s4_fixes": {
     "codigo": true,
@@ -1347,9 +1352,7 @@
   "flechas_nuevas": [],
   "flechas_quitadas": [],
   "interruptores": [
-   "hotel_del_catalogo_da_isla",
-   "lugar_desconocido_al_rag",
-   "red_menciones_solo_sin_extractor"
+   "memoria_sin_ordenes_del_cliente"
   ],
   "modelos": []
  }

@@ -397,6 +397,12 @@ services:
       # Revert = quitar estas dos líneas y poner los defaults de src/config.py en False.
       CATALOGO_PROFUNDIDAD: "true"
       AVISOS_AL_FINAL: "true"
+      # r6-2 PROMOCIONADO 17-oct (Gadea con Claude): la memoria (resumen y notas del asesor) no guarda como hecho lo que el
+      # cliente ordena o dice que otro autorizó. Revert = quitar esta línea y poner el default de src/config.py en False.
+      MEMORIA_SIN_ORDENES_DEL_CLIENTE: "true"
+      # r6-2 PROMOCIONADO 17-oct (decisión de Gadea): pedir datos de OTROS clientes recibe una negativa de privacidad,
+      # no el pase a un asesor. Revert = quitar esta línea y poner el default de src/config.py en False.
+      DATOS_AJENOS_SE_NIEGAN: "true"
     depends_on:
       dp-pre-postgres:
         condition: service_healthy

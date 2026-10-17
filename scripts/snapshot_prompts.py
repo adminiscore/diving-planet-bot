@@ -172,6 +172,10 @@ def _collect() -> dict[str, str]:
     # ── memoria · resumen de conversación ────────────────────────────────────
     add("memory/summary.system.es", memory.SUMMARY_SYSTEM_ES)
     add("memory/summary.system.en", memory.SUMMARY_SYSTEM_EN)
+    add("memory/seguridad.notas.es", memory.MEMORIA_SEGURA_NOTAS_ES)
+    add("memory/seguridad.notas.en", memory.MEMORIA_SEGURA_NOTAS_EN)
+    add("memory/seguridad.resumen.es", memory.MEMORIA_SEGURA_RESUMEN_ES)
+    add("memory/seguridad.resumen.en", memory.MEMORIA_SEGURA_RESUMEN_EN)
 
     # ── info · reescritura de query (RAG) ────────────────────────────────────
     add("info/query_rewrite.system.es", info.QUERY_REWRITE_ES)
