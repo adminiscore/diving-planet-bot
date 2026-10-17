@@ -4,6 +4,7 @@ from openai import AsyncOpenAI
 
 from src.config import settings
 from src.llm_client import trace_openai
+from src.observability import con_pieza_llm
 from src.privacy import redact_pii
 from src.prompts.info import QUERY_REWRITE_EN, QUERY_REWRITE_ES
 
@@ -77,6 +78,7 @@ def lo_sabido(hechos: dict | None, lang: str) -> str:
     return "; ".join(partes)
 
 
+@con_pieza_llm("reescritura")
 async def condense_query(
     query: str,
     history: list[dict] | None = None,

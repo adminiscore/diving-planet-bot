@@ -67,6 +67,7 @@ def parse_lines(lines) -> list[dict]:
             "llm_seconds": m.get("llm_seconds") or 0,
             "models": Counter(m.get("models") or {}),
             "nodes": m.get("nodes") or {},
+            "llamadas": m.get("llamadas") or [],
             "router": m.get("router"),
             "router_ms": m.get("router_ms"),
             "rag_adelantado": m.get("rag_adelantado"),
@@ -109,7 +110,21 @@ def build(turns: list[dict], label: str, start: str, end: str) -> dict:
         "router": {"by_backend": dict(routers), "ms_p50": _pct(router_ms, 50), "ms_p95": _pct(router_ms, 95)},
         "models": dict(models.most_common()),
         "rag_adelantado": rag_adelantado(turns),
+        "por_pieza": por_pieza(turns),
     }
+
+
+def por_pieza(turns: list[dict]) -> dict:
+    """r6-1: duración de las llamadas al LLM por pieza del bot (y modelo), en todos los turnos de la ronda."""
+    tiempos: dict[str, list[float]] = defaultdict(list)
+    modelos: dict[str, Counter] = defaultdict(Counter)
+    for t in turns:
+        for c in t.get("llamadas") or []:
+            tiempos[c.get("p") or "?"].append(c.get("s") or 0.0)
+            if c.get("m"):
+                modelos[c.get("p") or "?"][c["m"]] += 1
+    return {p: {"n": len(v), "p50": _pct(v, 50), "p95": _pct(v, 95), "modelos": dict(modelos[p])}
+            for p, v in sorted(tiempos.items(), key=lambda kv: -len(kv[1]))}
 
 
 def rag_adelantado(turns: list[dict]) -> dict:

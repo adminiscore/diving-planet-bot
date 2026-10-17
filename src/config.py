@@ -303,6 +303,10 @@ class Settings(BaseSettings):
     # del detector, da su isla y "está en las islas"; y también se guarda en el turno que acaba en el pase a una
     # persona (cal-46: "staying at the Ubuntu Hotel" se perdía). APAGADO hasta medirlo.
     hotel_del_catalogo_da_isla: bool = True  # PROMOCIONADO 17-oct (CAL-C, ronda core calc2-A/B)
+    # r6-1(b) (17-oct): si en un turno NINGUNA llamada a OpenAI funciona (sin saldo, clave inválida, caído), el bot dice
+    # que hay un problema técnico y pasa a un asesor (motivo = alerta en Chatwoot), en vez de "no lo tengo a la mano".
+    # APAGADO hasta medirlo.
+    aviso_si_openai_falla: bool = False
 
     # Paso 5 (RAG, l1-6 + l1-7, 27-sep): (a) el catalogo entero como hechos en el contexto del RAG
     # en vez de los atajos de precio por regex, que contestaban preguntas que no eran de precio;
@@ -341,6 +345,9 @@ class Settings(BaseSettings):
     # salto en el 10 % y corto las colas de 11-13 s. Revert = rag_answer_model "gpt-4.1-mini" y esto vacio.
     rag_respaldo_modelo: str = "gpt-4.1-mini"
     rag_respaldo_segundos: float = 3.0
+    # r6-1(d) (17-oct, salir de gpt-4.1; acordado con Gadea): el respaldo del RAG es otra petición al MISMO modelo
+    # (Luna) a los `rag_respaldo_segundos`, en vez de gpt-4.1-mini. APAGADO hasta medir latencia (p95/máx) y calidad.
+    respaldo_mismo_modelo: bool = False
     # CAL-A1 (16-oct): la respuesta del RAG se redacta a temperatura 0 (hoy 0,3). 18 de los 56 fallos del RAG en ex-10
     # eran azar (docs/robustness/investigacion/diagnostico-73-fallos.md). APAGADO hasta medirlo (banco de fallos, 3 reps).
     rag_temperatura_cero: bool = False

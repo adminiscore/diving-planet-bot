@@ -28,6 +28,7 @@ from openai import AsyncOpenAI
 
 from src.config import settings
 from src.llm_client import tool_arguments, trace_openai
+from src.observability import con_pieza_llm
 from src.prompts.router import ROUTING_TOOL, routing_system_prompt
 
 logger = structlog.get_logger()
@@ -217,6 +218,7 @@ def _mensaje_con_contexto(message: str, history: list[dict] | None) -> str:
             f"Clasifica SOLO este último mensaje del cliente:\n{message}")
 
 
+@con_pieza_llm("senales_router")
 async def detect_routing_signals(
     message: str, *, lang: str = "es", client: AsyncOpenAI | None = None, pending_slot: str | None = None,
     history: list[dict] | None = None,

@@ -25,6 +25,7 @@ from openai import AsyncOpenAI
 from src.config import settings
 from src.domain import activities as dom
 from src.llm_client import trace_openai
+from src.observability import pieza_llm
 from src.utils.text import strip_accents
 
 logger = logging.getLogger("uvicorn.error")
@@ -337,18 +338,19 @@ async def extraer_turno(mensaje: str, *, history: list[dict] | None = None, sabi
     t0 = time.perf_counter()
     try:
         client = client or trace_openai(AsyncOpenAI(api_key=settings.openai_api_key))
-        resp = await client.chat.completions.create(
-            model=modelo,
-            messages=[{"role": "system", "content": sistema},
-                      {"role": "user", "content": _contexto(mensaje, ultima_pregunta_del_bot(history), sabido or {}, lang)}],
-            response_format={"type": "json_schema",
-                             "json_schema": {"name": "datos_del_turno", "strict": True,
-                                             "schema": _esquema(con_nombre, con_hotel)}},
-            temperature=0.0,
-            # EX-EST-1 (14-oct): con los campos nuevos (idioma, nombre, quiere_bucear...) 400 cortaba el JSON (2 de
-            # cada 1.000 llamadas en el banco: "Unterminated string" -> el turno caía al camino viejo).
-            max_tokens=700,
-        )
+        with pieza_llm("extractor"):  # r6-1: la llamada sale etiquetada en [TURN_METRICS]
+            resp = await client.chat.completions.create(
+                model=modelo,
+                messages=[{"role": "system", "content": sistema},
+                          {"role": "user", "content": _contexto(mensaje, ultima_pregunta_del_bot(history), sabido or {}, lang)}],
+                response_format={"type": "json_schema",
+                                 "json_schema": {"name": "datos_del_turno", "strict": True,
+                                                 "schema": _esquema(con_nombre, con_hotel)}},
+                temperature=0.0,
+                # EX-EST-1 (14-oct): con los campos nuevos (idioma, nombre, quiere_bucear...) 400 cortaba el JSON (2 de
+                # cada 1.000 llamadas en el banco: "Unterminated string" -> el turno caía al camino viejo).
+                max_tokens=700,
+            )
         datos = json.loads(resp.choices[0].message.content or "{}")
         uso = getattr(resp, "usage", None)
         detalle = getattr(uso, "prompt_tokens_details", None)

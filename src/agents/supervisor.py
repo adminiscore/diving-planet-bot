@@ -3079,7 +3079,36 @@ async def route_message(state: ConversationState, message: str) -> str:
             cart_items=sum(int(item.get("qty") or 0) for item in state.mixed_cart) if state.mixed_cart else 0,
             fallback=is_fallback_answer(response),
         )
+        if settings.aviso_si_openai_falla:
+            from src.observability import fallo_de_openai_en_el_turno
+
+            codigo = fallo_de_openai_en_el_turno()
+            if codigo is not None:
+                response = _respuesta_fallo_tecnico(state, codigo)
+                turn.update(reply=response, escalated=True, fallo_openai=codigo)
         return response
+
+
+# r6-1(b) (17-oct, flag `aviso_si_openai_falla`): con OpenAI caído (sin saldo, clave inválida, saturado), cada pieza se
+# degradaba por su cuenta y el bot contestaba "ese detalle no lo tengo a la mano" a todo, incluso al punto de
+# encuentro: el cliente creía que el bot no sabía y nadie del equipo se enteraba (esta semana PRE se quedó así dos
+# veces). Si en un turno NINGUNA llamada a OpenAI funcionó, se dice la verdad y se pasa a una persona; el motivo del
+# pase es la alerta para el equipo en Chatwoot.
+_FALLO_TECNICO_ES = ("Perdona, estoy teniendo un problema técnico y ahora mismo no puedo responderte bien. Ya he avisado "
+                     "a un asesor del equipo, que te escribe por aquí en cuanto pueda. 🙏")
+_FALLO_TECNICO_EN = ("Sorry, I'm having a technical problem and can't answer you properly right now. I've already let an "
+                     "advisor from the team know, and they'll write to you here as soon as they can. 🙏")
+
+
+def _respuesta_fallo_tecnico(state: ConversationState, codigo: int) -> str:
+    motivo = {401: "clave inválida", 429: "sin saldo o saturado"}.get(codigo, "no responde")
+    reason = f"⚠️ FALLO TÉCNICO: OpenAI {motivo} (código {codigo}) — revisar saldo y clave de OpenAI"
+    state.step = Step.ESCALATE
+    state.quick_replies = []
+    state.pending_escalation_reason = reason
+    state.pending_note = build_lead_summary(state, escalation_reason=reason)
+    logger.error(f"[ALERTA][OPENAI] ningún modelo de OpenAI respondió en el turno (código {codigo}): pase a un asesor")
+    return _FALLO_TECNICO_ES if state.language == "es" else _FALLO_TECNICO_EN
 
 
 async def _shared_turn_handler(

@@ -903,18 +903,26 @@ async def generar_con_respaldo(client, messages: list[dict]):
     modelos-B). Si el modelo principal no ha terminado en `rag_respaldo_segundos`, se lanza la MISMA petición al
     modelo de respaldo (`rag_respaldo_modelo`, gpt-4.1-mini) en paralelo y se usa la primera que termine; la otra
     se cancela. Si el principal falla, contesta el respaldo. Sin respaldo configurado, la llamada de siempre."""
-    from src.observability import note_turn  # lazy
+    from src.observability import note_turn, pieza_llm  # lazy
 
     principal = settings.rag_answer_model or settings.openai_model
     respaldo, espera = settings.rag_respaldo_modelo, settings.rag_respaldo_segundos
+    if settings.respaldo_mismo_modelo:
+        # r6-1(d) (17-oct, salir de gpt-4.1; acordado con Gadea por Coral): el respaldo es OTRA petición al mismo modelo
+        # ("hedging"). La cola de Luna (~8 % de llamadas a 6-13 s) es azar de cada petición: una segunda lanzada a los
+        # `rag_respaldo_segundos` suele volver antes. gpt-5-mini/nano se descartaron el 8-oct por latencia.
+        respaldo = principal
 
-    def llamar(model: str):
+    async def llamar(model: str, es_respaldo: bool = False):
         # CAL-A1 (`rag_temperatura_cero`): 18 de los 56 fallos del RAG en ex-10 eran azar (mismo contexto, unas veces
         # sí y otras no; diagnóstico de Gadea): con temperatura 0 la redacción es estable.
         temperatura = 0.0 if settings.rag_temperatura_cero else 0.3
-        return client.chat.completions.create(model=model, messages=messages, temperature=temperatura, max_tokens=500)
+        # r6-1: el escritor y el respaldo salen por separado en [TURN_METRICS] (CAL-G).
+        with pieza_llm("rag_respaldo" if es_respaldo or model != principal else "rag_escritor"):
+            return await client.chat.completions.create(model=model, messages=messages, temperature=temperatura,
+                                                        max_tokens=500)
 
-    if not respaldo or espera <= 0 or respaldo == principal:
+    if not respaldo or espera <= 0 or (respaldo == principal and not settings.respaldo_mismo_modelo):
         return await llamar(principal)
     t0 = asyncio.get_running_loop().time()
     t_principal = asyncio.ensure_future(llamar(principal))
@@ -925,8 +933,8 @@ async def generar_con_respaldo(client, messages: list[dict]):
     if t_principal.done():  # el principal falló antes de la espera: contesta el respaldo
         logger.warning(f"[RAG][RESPALDO] {principal} falló ({t_principal.exception()}): contesta {respaldo}")
         note_turn(rag_respaldo="error_principal", rag_respaldo_s=round(asyncio.get_running_loop().time() - t0, 2))
-        return await llamar(respaldo)
-    t_respaldo = asyncio.ensure_future(llamar(respaldo))
+        return await llamar(respaldo, es_respaldo=True)
+    t_respaldo = asyncio.ensure_future(llamar(respaldo, es_respaldo=True))
     pendientes = {t_principal, t_respaldo}
     while pendientes:
         hechas, pendientes = await asyncio.wait(pendientes, return_when=asyncio.FIRST_COMPLETED)

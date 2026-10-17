@@ -1,8 +1,8 @@
 {
  "meta": {
-  "generado": "2026-10-17T16:46:29+00:00",
-  "commit": "df4016a",
-  "rama": "ronda-calc2-b-local"
+  "generado": "2026-10-17T18:05:47+00:00",
+  "commit": "506259b",
+  "rama": "feature/pre_alvaro"
  },
  "vistas": {
   "general": {
@@ -108,6 +108,13 @@
      "titulo": "Grafo de agentes",
      "codigo": true,
      "pre": true,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "aviso_si_openai_falla",
+     "titulo": "Si OpenAI cae, decir la verdad y pasar a un asesor",
+     "codigo": false,
+     "pre": false,
      "sin_efecto": false
     }
    ],
@@ -1114,6 +1121,13 @@
      "sin_efecto": false
     },
     {
+     "nombre": "respaldo_mismo_modelo",
+     "titulo": "El respaldo del RAG, otra petición a Luna",
+     "codigo": false,
+     "pre": false,
+     "sin_efecto": false
+    },
+    {
      "nombre": "rag_plan_primero",
      "titulo": "Primero la lista de lo que pregunta el cliente",
      "codigo": false,
@@ -1976,6 +1990,19 @@
    "pre": true,
    "fijado_en_pre": true,
    "usado_por": [],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "aviso_si_openai_falla",
+   "area": "Arquitectura",
+   "titulo": "Si OpenAI cae, decir la verdad y pasar a un asesor",
+   "texto": "Si en un mensaje ninguna llamada a OpenAI funciona (sin saldo, clave mala o caído), el bot dice que tiene un problema técnico y pasa la conversación a un asesor; el motivo del pase avisa al equipo de que revise el saldo. Antes contestaba 'no lo tengo a la mano' a todo.",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
+   "usado_por": [
+    "route_message"
+   ],
    "sin_efecto": null
   },
   {
@@ -3125,6 +3152,19 @@
    "fijado_en_pre": true,
    "usado_por": [
     "b_slotfill_close"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "respaldo_mismo_modelo",
+   "area": "Preguntas",
+   "titulo": "El respaldo del RAG, otra petición a Luna",
+   "texto": "Si Luna tarda más de 3 segundos en escribir la respuesta, se lanza otra petición igual a Luna en vez de a gpt-4.1-mini, y gana la primera que termine. Es para dejar de depender de gpt-4.1.",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
+   "usado_por": [
+    "r_escribir"
    ],
    "sin_efecto": null
   },

@@ -5,6 +5,7 @@ from openai import AsyncOpenAI
 
 from src.config import settings
 from src.llm_client import trace_openai
+from src.observability import con_pieza_llm
 from src.privacy import redact_pii, redact_pii_por_lineas
 from src.prompts.info import (
     GROUNDING_VERIFY_EN,
@@ -291,6 +292,7 @@ def urls_grounded(answer: str, context: str) -> bool:
     return True
 
 
+@con_pieza_llm("revisor")
 async def is_grounded(answer: str, context: str, lang: str = "es") -> tuple[bool, str]:
     if not answer.strip() or not context.strip():
         return False, "empty_answer_or_context"

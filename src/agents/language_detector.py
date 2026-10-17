@@ -16,11 +16,13 @@ from openai import AsyncOpenAI
 
 from src.config import settings
 from src.llm_client import trace_openai
+from src.observability import con_pieza_llm
 from src.prompts.booking import LANGUAGE_DETECT_PROMPT
 
 logger = logging.getLogger("uvicorn.error")
 
 
+@con_pieza_llm("idioma")
 async def detect_language_llm(message: str) -> str | None:
     """Return "es" or "en", or None if detection fails / is inconclusive."""
     if not message or not message.strip():
