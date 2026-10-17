@@ -102,7 +102,7 @@ _PREGUNTA_SOLA_EN = ("Write in English, faithfully, only the QUESTION (or questi
                      "nothing, return all of it. Return only that.")
 
 
-@con_pieza_llm("reescritura")
+@con_pieza_llm("pregunta_sola")
 async def pregunta_sola(query: str, lang: str) -> str | None:
     """G3-05 (flag `busqueda_con_la_pregunta_sola`): la PREGUNTA del mensaje, sola y en el idioma de la respuesta, para
     la búsqueda doble (hace de "pregunta tal cual"). None, sin llamada, si el mensaje es corto y está en el idioma de la

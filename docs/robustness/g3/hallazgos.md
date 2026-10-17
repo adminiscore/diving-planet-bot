@@ -151,3 +151,21 @@ snorkel". Se reindexa al desplegar (`kb_v2 --yes`): medir `g3-07b` tras el próx
 
 Bien en esta charla: el cambio de snorkel a minicurso (turno 2) se entiende a la primera, con precio en COP, punto de
 encuentro, teoría online y formulario médico.
+
+## G3-08 · Grupo de 6 del Reino Unido (4 certificados + 2 snorkel) — conv 5574 (17-oct)
+
+Turno 1 bien: combina buceo y snorkel en la misma salida, el 10 % de grupo (5 o más) que aplica el equipo, precios
+por persona desde Cartagena, punto de encuentro, recomienda la salida de 2 inmersiones y pregunta por los 2 años.
+
+Turno 2 ("no, we all dived last year… how do we get the group discount if we book online? do we pay first and get
+refunded?"):
+- **Aviso fuera de lugar**: "After more than 2 years without diving, a refresher is normally needed…", justo después
+  de que el cliente diga que todos bucearon el año pasado. En la sonda (repetición en PRE) no salió: a medir 3 veces
+  cuando haya crédito (banco `g3-08`). Sospecha: el revisor del final (A6) no ve que la condición es falsa.
+- **Afirma lo que la base no dice**: "No refund is needed" (salió también en la sonda). La base solo dice que el 10 %
+  de grupo no es automático y lo aplica el equipo; cómo se aplica a una reserva ya pagada online no consta. Pregunta de
+  negocio para Gadea: si un grupo reserva y paga online, ¿el 10 % de grupo se devuelve después o hay que pedirlo antes
+  de pagar?
+- Repite los enlaces (texto "¿te los vuelvo a pasar?" + tarjeta con los dos enlaces) y la tarjeta da totales (G3-02).
+
+Medida sin hacer: el crédito de OpenAI se agotó a las 21:31 (429 `credit_balance_exhausted`, también en PRE).
