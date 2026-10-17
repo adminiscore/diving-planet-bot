@@ -276,6 +276,9 @@ class Settings(BaseSettings):
     # CAL-C1 (16-oct): quien ya dijo que quiere bucear no recibe el menú de actividades; sin certificación se le
     # recomienda el minicurso y, sin saberla, se le pregunta (regla de Gadea). APAGADO hasta medirlo.
     actividad_por_lo_sabido: bool = False
+    # CAL-C3 (17-oct): el extractor lee también el HOTEL donde se aloja (con su cita, sin lista cerrada) y no se le
+    # vuelve a preguntar (cal-41 "Isla Mulata", cal-67/68 "Bodegas de Santa Clara"). APAGADO hasta medirlo.
+    hotel_por_extractor: bool = False
 
     # Paso 5 (RAG, l1-6 + l1-7, 27-sep): (a) el catalogo entero como hechos en el contexto del RAG
     # en vez de los atajos de precio por regex, que contestaban preguntas que no eran de precio;

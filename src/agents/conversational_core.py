@@ -2313,6 +2313,7 @@ async def _aplicar_extractor(intent, state: ConversationState, message: str, pis
             _lugar_por_jev(intent, state)
         return
     _poner_ubicacion(intent, state, message, datos, pista)
+    _poner_hotel(intent, state, datos)
     # ex-7: el grupo antes que la actividad: la regla de ex-8 del grupo repartido mira el reparto del turno.
     _poner_grupo(intent, state, message, datos, pista)
     if datos.get("quiere_bucear") is True:
@@ -2472,6 +2473,19 @@ def _poner_ubicacion(intent, state: ConversationState, message: str, datos: dict
     if lugar == "island":
         _conservar_hotel(intent, pista)
     logger.info(f"[EXTRACT][EX5] location={lugar!r} (regex: {pista.get('location')!r}, guardado: {guardado!r})")
+
+
+def _poner_hotel(intent, state: ConversationState, datos: dict) -> None:
+    """CAL-C3 (`hotel_por_extractor`): el hotel que el cliente nombra (cita comprobada, sin lista cerrada) se guarda si
+    la conversación aún no tiene uno, para no preguntarle "¿En qué hotel o isla te hospedas?" (cal-41, cal-67/68). El
+    del regex (lista cerrada, con su isla) manda si lo hay: sirve para la recogida."""
+    hotel = (datos or {}).get("hotel")
+    if not settings.hotel_por_extractor or not hotel or intent.hotel or state.hotel or state.detected_hotel:
+        return
+    intent.hotel = hotel
+    if "hotel" not in intent.detected_fields:
+        intent.detected_fields.append("hotel")
+    logger.info(f"[EXTRACT][CAL-C3] hotel={hotel!r} (nombrado por el cliente)")
 
 
 def _poner_actividad(intent, state: ConversationState, datos: dict, pista: dict) -> None:
