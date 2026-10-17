@@ -1,6 +1,20 @@
 History
 =======
 
+0.31.48 - (2026-10-17)
+----------------------
+* **r6-1 en PRE y G3-01 arreglado en local** (Álvaro con Claude).
+  - **r6-1 (815d201, en PRE):** cada llamada al LLM en `[TURN_METRICS]` con su pieza y su tiempo (para CAL-G); si
+    ninguna llamada a OpenAI funciona, mensaje honesto y pase a un asesor (`AVISO_SI_OPENAI_FALLA`, APAGADO); vigilante
+    de saldo cada hora (GitHub Actions, al llegar a `main`); respaldo del RAG = otra petición a Luna
+    (`RESPALDO_MISMO_MODELO`, APAGADO, acordado con Gadea).
+  - **Extractor a Luna, aparcado:** en ex0, Luna se inventa 11-12 datos frente a 3 de gpt-4.1-mini, y unas reglas
+    "no deduzcas" solo para Luna no lo arreglan.
+  - **G3-01 (1c4b801, sin subir):** la familia con 2 buzos certificados y dos hijos (minicurso y snorkel) nunca llegaba
+    al precio. 3 flags APAGADOS: `LO_DICHO_EN_RESPUESTA_FIJA`, `REPARTO_PARCIAL_CON_LO_SABIDO` y
+    `ACTIVIDAD_PRINCIPAL_EN_EL_REPARTO`. PRE con el código local: sin ellos 0/2, con ellos 3/3.
+  - A las 21:31 se agota el crédito de OpenAI; el vigilante lo detecta en local.
+
 0.31.47 - (2026-10-17)
 ----------------------
 * **CAL-C CERRADA: C4, C5 y C3e PROMOCIONADOS** (Álvaro con Claude; ronda propuesta por el Claude de Gadea por Coral).
