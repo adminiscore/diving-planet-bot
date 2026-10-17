@@ -67,8 +67,8 @@ core calc-A 96,9 % 25/32 vs calc-B 96,5 % 25/32, latencia igual; ninguna regresi
 
 **Quedan de CAL-C (Álvaro):** cal-55 (Barú: decir que no operamos allí, sin listas de nombres) y cal-69/70 (el grupo
 "my wife ... and I": "and I" no está en el mensaje, el extractor junta palabras; diseñar sin abrir la puerta a
-inventos). **De la zona de Gadea** (avisado por Coral): cal-32 (la respuesta no dice USD), cal-46/25, cal-08, y "llega
-10-15 min antes" (3/3 sin flags, para el banco).
+inventos). **De la zona de Gadea** (avisado por Coral): cal-32 (la respuesta no dice USD), cal-46/25 y cal-08. ("Llega 10-15 min antes"
+NO es un invento: está en `faqs.json:750`; el juez del golden se equivocó. Corrección de Gadea, 17-oct.)
 
 **Siguiente (Álvaro):** (1) cal-55 y cal-69/70; (2) **extractor a Luna**: adaptar sus instrucciones (deduce de más) y
 medir con `estabilidad_extractor --modelo gpt-6-luna`; (3) **r6-1**: alerta de saldo de OpenAI, respaldo del RAG que

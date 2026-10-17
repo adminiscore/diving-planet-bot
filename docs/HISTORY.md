@@ -31,7 +31,8 @@ History
     calc-B **96,5 %**, 25/32, p95 5,0 s. 3 mejoras reales, 4 regresiones repetidas 3× con y sin los flags
     (`reproducir_juez_pre --reps 3 --codigo-local [--env FLAG=false]`): la del idioma era de E4 (en el PRIMER turno el
     extractor decidía el idioma influido por el de sus instrucciones, en español por defecto: arreglado en 104b10f, 3/3
-    en inglés); "llega 10-15 min antes" sale 3/3 SIN los flags (defecto del RAG); las otras dos, azar.
+    en inglés); "llega 10-15 min antes" sale 3/3 SIN los flags y NO es un invento (CORRECCIÓN 17-oct, Gadea: está en
+    `faqs.json:750`; el juez del golden se equivocó al marcarlo); las otras dos, azar.
   - **Luna (para dejar gpt-4.1):** extractor con `gpt-6-luna` en el banco ex0: 113 = 113 aciertos y más rápido (p50
     2,3 s frente a 3,6), pero **11 inventos frente a 4** (deduce de más: "paquete de 5 inmersiones" → certificado) →
     hay que adaptar sus instrucciones antes. **Verificador del banco** gpt-4.1 vs Luna sobre las MISMAS respuestas:

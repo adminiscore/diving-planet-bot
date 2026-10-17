@@ -2307,6 +2307,8 @@ async def _aplicar_extractor(intent, state: ConversationState, message: str, pis
     lo provisional del regex. Va ANTES de las reglas que trabajan sobre el intent (reparto, cert-o-curso, recomendar el
     minicurso), para que vean el valor final. Si la llamada falla, lo de hoy con su puerta, campo a campo."""
     datos = await datos_del_extractor(state, message)
+    # CAL-C5: de este mensaje, ¿leyó el extractor? (la red de menciones por palabras solo actúa si no; ver abajo)
+    state._extractor_leyo = message if datos is not None else None
     await _otro_idioma_en_ingles(state, datos, message)
     _quitar_provisional(intent, pista)
     _nombre_del_extractor(state, datos, message)
@@ -2511,6 +2513,15 @@ def _jev_dice_que_no_lo_dice(state: ConversationState) -> bool:
     return lugar.get("choice") == "none" and (lugar.get("confidence") or 0.0) >= CUSTOMER_PLACE_MIN
 
 
+def _hotel_del_catalogo(nombre: str) -> tuple[str, str | None] | None:
+    """CAL-C3e: (hotel_id, isla) si el hotel que nombra el cliente está en el catálogo de hoteles de las islas que ya usa
+    el detector (`IntentDetector._detect_location`: 'ubuntu' → isla_marina…); None si no. Se le pasa SOLO el nombre
+    (cita comprobada por el extractor), así que solo puede encontrar ese hotel, como `_departure_place`."""
+    intent = DetectedIntent()
+    _detector._detect_location((nombre or "").lower(), intent)
+    return (intent.hotel, intent.island) if intent.hotel else None
+
+
 def _poner_hotel(intent, state: ConversationState, datos: dict) -> None:
     """CAL-C3 (`hotel_por_extractor`): el hotel que el cliente nombra (cita comprobada, sin lista cerrada) se guarda si
     la conversación aún no tiene uno, para no preguntarle "¿En qué hotel o isla te hospedas?" (cal-41, cal-67/68). El
@@ -2522,6 +2533,16 @@ def _poner_hotel(intent, state: ConversationState, datos: dict) -> None:
     if "hotel" not in intent.detected_fields:
         intent.detected_fields.append("hotel")
     logger.info(f"[EXTRACT][CAL-C3] hotel={hotel!r} (nombrado por el cliente)")
+    del_catalogo = _hotel_del_catalogo(hotel) if settings.hotel_del_catalogo_da_isla else None
+    if del_catalogo:
+        intent.hotel, isla = del_catalogo
+        if isla and not intent.island:
+            intent.island = isla
+            intent.detected_fields.append("island")
+        if not intent.location and not (state.location or state.detected_location):
+            intent.location = "island"
+            intent.detected_fields.append("location")
+        logger.info(f"[EXTRACT][CAL-C3e] {hotel!r} es del catálogo de las islas: {del_catalogo}")
 
 
 def _poner_actividad(intent, state: ConversationState, datos: dict, pista: dict) -> None:
@@ -4333,6 +4354,22 @@ async def _extraction_phase(
     return await _prepend_parallel_answer(state, response, greeting)
 
 
+def _menciones_para_la_red(state: ConversationState, message: str) -> list[str]:
+    """Las actividades que nombra el mensaje para la red de menciones de última instancia (ver su uso)."""
+    mentioned = _mentioned_product_activities(message)
+    if settings.red_menciones_con_principal:
+        mentioned = _menciones_de_otro_producto(state, message, mentioned)
+    if settings.red_menciones_solo_sin_extractor and getattr(state, "_extractor_leyo", None) == message:
+        # CAL-C5 (17-oct): "We snorkeled in Roatan yesterday" (lo que ya hicieron) metía snorkel en la cola de
+        # acompañantes y el bot preguntaba "How many people would that be for snorkeling?" (cal-69/70). Con el
+        # extractor de la fase EX (LLM primero, grupo y reparto con cita), esta red de palabras clave es la de
+        # última instancia: solo cuando el extractor no pudo leer el mensaje.
+        if mentioned:
+            logger.info(f"[CORE][CAL-C5] el extractor leyó el mensaje: la red de menciones no añade {mentioned}")
+        return []
+    return mentioned
+
+
 async def _extraction_phase_body(
     state: ConversationState, message: str, routing_signals: dict,
     greeting: str, carry: dict,
@@ -4847,9 +4884,7 @@ async def _extraction_phase_body(
     # entrar en la estructura del LLM. Acotado a mensajes que mencionan a
     # otra persona (`_mentions_person`) para no disparar en cada mención
     # suelta.
-    mentioned = _mentioned_product_activities(message)
-    if settings.red_menciones_con_principal:
-        mentioned = _menciones_de_otro_producto(state, message, mentioned)
+    mentioned = _menciones_para_la_red(state, message)
     if mentioned and _menciona_a_alguien(state, message) and not state.pending_companion_queue:
         accounted = set((state.detected_group_allocation or {}).keys())
         main_act = _effective_activity(state)
@@ -5540,6 +5575,19 @@ async def guardar_lo_dicho_en_el_pase(state: ConversationState) -> None:
             continue
         setattr(state, atributo, valor)
         guardados[campo] = valor
+    hotel = (datos or {}).get("hotel")
+    if settings.hotel_del_catalogo_da_isla and hotel and not (state.hotel or state.detected_hotel):
+        # CAL-C3e (17-oct): "I just booked… We are staying at the Ubuntu Hotel" acababa en el pase y el hotel se perdía;
+        # en el turno siguiente el RAG preguntaba "Are you departing from Cartagena or staying on the islands?" (cal-46).
+        del_catalogo = _hotel_del_catalogo(hotel)
+        state.hotel = state.detected_hotel = del_catalogo[0] if del_catalogo else hotel
+        guardados["hotel"] = state.hotel
+        if del_catalogo:
+            if del_catalogo[1] and not state.detected_island:
+                state.island = state.detected_island = del_catalogo[1]
+            if not (state.location or state.detected_location):
+                state.location = state.detected_location = "island"
+                guardados["location"] = "island"
     if guardados:
         logger.info(f"[EXTRACT][PASE] lo dicho en el turno del pase se guarda: {guardados}")
 
