@@ -328,6 +328,9 @@ async def extraer_turno(mensaje: str, *, history: list[dict] | None = None, sabi
     if con_nombre:
         sistema += REGLA_NOMBRE_ES if lang == "es" else REGLA_NOMBRE_EN
     con_hotel = settings.hotel_por_extractor
+    if settings.sin_cedula_extranjero:
+        # CAL-C (17-oct, decisión de Álvaro): sin cédula colombiana → no es colombiano (paga en USD). Ver SIN_CEDULA_*.
+        sistema = sistema.replace(SIN_CEDULA_HOY_ES, SIN_CEDULA_ES).replace(SIN_CEDULA_HOY_EN, SIN_CEDULA_EN)
     if con_hotel:
         sistema += REGLA_HOTEL_ES if lang == "es" else REGLA_HOTEL_EN
     modelo = modelo or settings.extractor_turno_model
@@ -484,3 +487,13 @@ ELIGE_HOY_EN = "or when they answer the bot's question by taking one of the opti
 ELIGE_EN = ("or when they answer the bot's question by taking one of the options it offers or accepting the one it "
             "proposes (\"we like it\", \"that one\", \"the first one\": the value is that option and the quote, their answer).")
 
+# CAL-C (17-oct, flag `sin_cedula_extranjero`, DECISIÓN DE ÁLVARO): "que no tenga cedula" (cal-32, para pagar) no
+# guardaba is_colombian=False, así que la regla de moneda no saltaba y el bot nunca decía que paga en USD. La regla
+# decía cuándo ES colombiano y no cuándo NO lo es. Decisión del owner: sin cédula colombiana (ni de extranjería), o
+# extranjero/turista, = no colombiano → USD.
+SIN_CEDULA_HOY_ES = "Nunca lo deduzcas del idioma en que escribe ni de su nombre."
+SIN_CEDULA_ES = ("false si dice que no tiene cédula colombiana (ni de extranjería) o que es extranjero o turista. Nunca "
+                 "lo deduzcas del idioma en que escribe ni de su nombre.")
+SIN_CEDULA_HOY_EN = "Never infer it from the language they write in or from their name."
+SIN_CEDULA_EN = ("false if they say they have no Colombian ID (cédula, nor a cédula de extranjería) or that they are a "
+                 "foreigner or tourist. Never infer it from the language they write in or from their name.")

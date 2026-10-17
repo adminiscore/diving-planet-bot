@@ -286,6 +286,9 @@ class Settings(BaseSettings):
     # CAL-C3c (17-oct): el origen del extractor se guarda solo si Jev no está seguro de que el mensaje NO lo dice
     # ("bucear en islas del rosario" ≠ estar en las islas: cal-71/73). APAGADO hasta medirlo.
     lugar_con_dos_lectores: bool = False
+    # CAL-C (17-oct, DECISIÓN DE ÁLVARO): quien dice que no tiene cédula colombiana (ni de extranjería), o que es
+    # extranjero, no es colombiano y paga en USD (cal-32: "que no tenga cedula"). APAGADO hasta medirlo.
+    sin_cedula_extranjero: bool = False
 
     # Paso 5 (RAG, l1-6 + l1-7, 27-sep): (a) el catalogo entero como hechos en el contexto del RAG
     # en vez de los atajos de precio por regex, que contestaban preguntas que no eran de precio;

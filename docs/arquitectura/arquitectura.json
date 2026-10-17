@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-17T09:35:30+00:00",
-  "commit": "c2b02c6",
+  "generado": "2026-10-17T10:36:13+00:00",
+  "commit": "941b6ca",
   "rama": "feature/pre_alvaro"
  },
  "vistas": {
@@ -626,6 +626,13 @@
     {
      "nombre": "lugar_con_dos_lectores",
      "titulo": "El origen, con dos lectores de acuerdo",
+     "codigo": false,
+     "pre": false,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "sin_cedula_extranjero",
+     "titulo": "Sin cédula, paga en dólares",
      "codigo": false,
      "pre": false,
      "sin_efecto": false
@@ -2939,6 +2946,19 @@
    "usado_por": [
     "router",
     "b_availability"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "sin_cedula_extranjero",
+   "area": "Reserva",
+   "titulo": "Sin cédula, paga en dólares",
+   "texto": "Decisión de Álvaro: si el cliente dice que no tiene cédula colombiana (ni de extranjería) o que es extranjero, no es colombiano y paga en dólares.",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
+   "usado_por": [
+    "b_extraction"
    ],
    "sin_efecto": null
   },

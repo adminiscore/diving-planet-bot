@@ -149,3 +149,18 @@ def test_c3c_un_origen_dicho_antes_sigue_contando(monkeypatch):
     st.history = [{"role": "user", "content": "estamos en Cartagena"}, {"role": "user", "content": "y el precio?"}]
     st._jev_lugar = {"choice": "none", "confidence": 0.98}
     assert core._origen_antes_del_precio(st, "y el precio?", "Son 178 USD.") is None
+
+
+# --- CAL-C `sin_cedula_extranjero` (decisión de Álvaro, 17-oct): sin cédula colombiana → no colombiano (USD) ---
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("lang", ["es", "en"])
+async def test_sin_cedula_cambia_la_regla_solo_con_el_flag(monkeypatch, lang):
+    sistemas = []
+    for valor in (False, True):
+        monkeypatch.setattr(settings, "sin_cedula_extranjero", valor)
+        llamadas = []
+        await ex.extraer_turno("que no tenga cedula", lang=lang, client=_cliente({}, llamadas))
+        sistemas.append(llamadas[0]["messages"][0]["content"])
+    nueva = ex.SIN_CEDULA_ES if lang == "es" else ex.SIN_CEDULA_EN
+    assert nueva not in sistemas[0] and nueva in sistemas[1]
