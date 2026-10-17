@@ -59,6 +59,39 @@ integrar la rama del otro y suite en verde, porque en PRE gana el último; (3) *
 despliegue reinicia el contenedor y mata la medida del otro (avisar en el registro de Plan Coral con la hora de fin).
 Las doce normas, con su porqué, están en el documento.
 
+### ▶️ RETOMAR AQUÍ — 17-oct, 21:45 (Gadea con Claude, en autonomía): G3 en directo (G3-04…08), G3-05 arreglado con flag; SIN CRÉDITO DE OPENAI
+
+**Bloqueo:** el crédito de OpenAI se agotó a las 21:31 (429 `credit_balance_exhausted`, también en PRE). Hay que
+recargar (Gadea o Álvaro; Claude no toca claves). El juez de CAL-F quedó a medias (la caché guarda lo juzgado):
+relanzar `ENV_FILE=.env.dev python -m scripts.judge_golden_set --run docs/robustness/synthetic-runs/2026-10-17-calf-completa.jsonl`
+SIN `timeout` (la primera vez se cortó a los 50 min por el `timeout 3000`).
+
+**Commits locales sin subir** (feature/pre_gadea; los anteriores a 95f1659 también están en `origin/feature/gadea-g3`,
+que no despliega): 310ecb2 G3-05, 1479d7e G3-06, 0845d7b G3-07b, b59fed9 G3-08, 93c9ff4 aviso del refresh. Subir
+agrupado y avisando por Coral (Álvaro medía g3-01 en PRE).
+
+**G3 (`docs/robustness/g3/hallazgos.md`, banco `docs/robustness/g3/banco-g3.json`):**
+- **G3-05 ARREGLADO con flag `BUSQUEDA_CON_LA_PREGUNTA_SOLA` (APAGADO):** si el cliente da datos y pregunta a la vez
+  ("salimos de Cartagena el 30. ¿hace falta saber nadar?") la búsqueda no traía la FAQ ("no tengo ese dato", 3/3 en
+  es, en y pt). La búsqueda doble usa la pregunta sola (gpt-4o-mini, a la vez que la búsqueda principal, solo
+  mensajes de 8+ palabras o en otro idioma). Banco 9/9 → 1/9. Falta: latencia (pieza `pregunta_sola` en TURN_METRICS)
+  en la ronda core B, junto con `RAG_OFRECE_EL_PASE` (G3-03).
+- **G3-06 (Barú):** Barú queda como `location=island` y el bot dice a la vez "en Barú no operamos" y "la recogida está
+  incluida"; además cotiza un paquete con nocturna que nadie pidió (2/3). **Pregunta para Gadea:** ¿recogéis en
+  hoteles de Barú con acceso al mar, y a qué precio?
+- **G3-07a (dos monedas en el mismo mensaje, 3/3):** el RAG adelantado (rag-5) se adopta antes de que el flujo aplique
+  la extracción. Tres opciones con coste de latencia, a decidir con Álvaro y Gadea (en hallazgos.md).
+- **G3-07b ARREGLADO en datos:** el 5 % por equipo propio no aplica al minicurso ni al snorkel (discounts.json); se
+  reindexa al desplegar: medir `g3-07b` después.
+- **G3-08:** aviso del refresh tras "we all dived last year" (condición real puesta en avisos.json, a medir) y "No
+  refund is needed" sin base. **Pregunta para Gadea:** si un grupo paga online, ¿el 10 % de grupo se devuelve después o
+  se pide antes?
+- **BM25 casi muerto:** `websearch_to_tsquery` exige todas las palabras; casi nunca devuelve nada. Medir con
+  `rag_piezas` antes de tocarlo.
+
+**Siguiente:** recargar → juez de CAL-F → medir g3-08 y la latencia de G3-05 → ronda core B con los flags de G3 →
+CAL-G → G9 una vez.
+
 ### ▶️ RETOMAR AQUÍ — 17-oct, 19:00 (Gadea con Claude): CAL-A y CAL-D cerradas, r6-2 hecha, G9 congelado; PLAN HASTA ANDRÉS
 
 **Plan decidido por Gadea (Plan Coral, log `l-1017-plan-andres`):** no se piden conversaciones a Andrés (dueño de Diving
