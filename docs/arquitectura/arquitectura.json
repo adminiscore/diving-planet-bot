@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-16T22:43:11+00:00",
-  "commit": "95cba85",
+  "generado": "2026-10-17T01:21:22+00:00",
+  "commit": "eb65d44",
   "rama": "feature/pre_gadea"
  },
  "vistas": {
@@ -152,15 +152,15 @@
     {
      "nombre": "jev_con_contexto",
      "titulo": "El clasificador rápido ve los últimos mensajes",
-     "codigo": false,
-     "pre": false,
+     "codigo": true,
+     "pre": true,
      "sin_efecto": false
     },
     {
      "nombre": "pase_si_pide_fuera_del_sistema",
      "titulo": "Lo que la web no puede dar lo arregla una persona",
-     "codigo": false,
-     "pre": false,
+     "codigo": true,
+     "pre": true,
      "sin_efecto": false
     }
    ],
@@ -172,8 +172,8 @@
    "marca": "openrouter",
    "tiempos": {
     "n": 93,
-    "p50": 0.412,
-    "p95": 1.82
+    "p50": 0.415,
+    "p95": 1.504
    }
   },
   {
@@ -196,9 +196,9 @@
    ],
    "modelos": [],
    "tiempos": {
-    "n": 8,
-    "p50": 0.003,
-    "p95": 0.006
+    "n": 7,
+    "p50": 0.002,
+    "p95": 0.004
    }
   },
   {
@@ -213,9 +213,9 @@
    "modelos": [],
    "interruptores": [],
    "tiempos": {
-    "n": 1,
-    "p50": 0.006,
-    "p95": 0.006
+    "n": 2,
+    "p50": 0.003,
+    "p95": 0.003
    }
   },
   {
@@ -258,8 +258,8 @@
    "interruptores": [],
    "tiempos": {
     "n": 4,
-    "p50": 4.237,
-    "p95": 4.298
+    "p50": 3.367,
+    "p95": 3.72
    }
   },
   {
@@ -276,8 +276,8 @@
    "interruptores": [],
    "tiempos": {
     "n": 79,
-    "p50": 1.987,
-    "p95": 6.266
+    "p50": 1.803,
+    "p95": 4.724
    }
   },
   {
@@ -479,16 +479,16 @@
     {
      "nombre": "idioma_del_extractor",
      "titulo": "El idioma del primer mensaje lo dice quien lee el mensaje",
-     "codigo": false,
-     "pre": false,
+     "codigo": true,
+     "pre": true,
      "sin_efecto": false
     }
    ],
    "marca": "openai",
    "tiempos": {
     "n": 79,
-    "p50": 0.032,
-    "p95": 1.138
+    "p50": 0.026,
+    "p95": 1.086
    }
   },
   {
@@ -520,7 +520,7 @@
    "tiempos": {
     "n": 79,
     "p50": 0.005,
-    "p95": 0.015
+    "p95": 0.017
    }
   },
   {
@@ -558,8 +558,8 @@
    "marca": "openai",
    "tiempos": {
     "n": 74,
-    "p50": 0.007,
-    "p95": 0.014
+    "p50": 0.006,
+    "p95": 0.013
    }
   },
   {
@@ -634,8 +634,8 @@
    "marca": "openai",
    "tiempos": {
     "n": 74,
-    "p50": 0.55,
-    "p95": 1.22
+    "p50": 0.517,
+    "p95": 1.008
    }
   },
   {
@@ -694,8 +694,8 @@
    "marca": "openai",
    "tiempos": {
     "n": 74,
-    "p50": 1.422,
-    "p95": 5.114
+    "p50": 0.805,
+    "p95": 3.746
    }
   },
   {
@@ -799,7 +799,7 @@
    "conteo": {
     "n": 46,
     "que": "preguntas",
-    "fuente": "2026-10-16-cal-B.json"
+    "fuente": "2026-10-17-cal-C.json"
    }
   },
   {
@@ -854,8 +854,8 @@
     {
      "nombre": "consulta_con_lo_sabido",
      "titulo": "La búsqueda sabe de qué va la pregunta",
-     "codigo": false,
-     "pre": false,
+     "codigo": true,
+     "pre": true,
      "sin_efecto": false
     }
    ],
@@ -1031,8 +1031,8 @@
     {
      "nombre": "avisos_condicionados",
      "titulo": "Avisos que el cliente necesita y no pregunta",
-     "codigo": true,
-     "pre": true,
+     "codigo": false,
+     "pre": false,
      "sin_efecto": false
     }
    ],
@@ -1879,9 +1879,9 @@
    "area": "Preguntas",
    "titulo": "Avisos que el cliente necesita y no pregunta",
    "texto": "La empresa tiene escrito qué hay que avisar y cuándo (el minicurso no certifica, sin cédula se paga en USD, en Barú no operamos). El programa mira lo que ya sabemos del cliente y de qué va su pregunta, y la respuesta tiene que decir los avisos que le toquen.",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
    "usado_por": [
     "r_escribir"
    ],
@@ -1942,9 +1942,9 @@
    "area": "Preguntas",
    "titulo": "La búsqueda sabe de qué va la pregunta",
    "texto": "Cuando el cliente dice '¿y por día?' o '¿en concepto qué pongo?', antes se buscaba eso tal cual y salían cosas de otros planes. Ahora la búsqueda usa lo que ya sabemos de él (qué quiere hacer, desde dónde sale) para buscar la pregunta completa.",
-   "codigo": false,
-   "pre": false,
-   "fijado_en_pre": false,
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
    "usado_por": [
     "r_reescribir"
    ],
@@ -2127,9 +2127,9 @@
    "area": "Chat",
    "titulo": "El idioma del primer mensaje lo dice quien lee el mensaje",
    "texto": "Antes lo decidía una lista de palabras corrientes, y un mensaje en portugués con muchas palabras iguales al español se contestaba en español. Ahora lo dice la misma lectura del mensaje que saca los datos, que ya se está haciendo a la vez.",
-   "codigo": false,
-   "pre": false,
-   "fijado_en_pre": false,
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
    "usado_por": [
     "b_setup"
    ],
@@ -2164,9 +2164,9 @@
    "area": "Enrutador",
    "titulo": "El clasificador rápido ve los últimos mensajes",
    "texto": "Antes solo leía el mensaje del momento, así que un 'me lo podrías compartir' o un 'pero un link especial' no decían nada por sí solos. Ahora ve también los dos mensajes anteriores, solo para saber a qué se refiere el cliente.",
-   "codigo": false,
-   "pre": false,
-   "fijado_en_pre": false,
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
    "usado_por": [
     "router"
    ],
@@ -2563,9 +2563,9 @@
    "area": "Enrutador",
    "titulo": "Lo que la web no puede dar lo arregla una persona",
    "texto": "Un enlace de pago a medida, una factura, tarifas especiales o una salida privada por cotizar no los puede dar la reserva online: esas conversaciones pasan a un asesor en vez de explicar que no existe.",
-   "codigo": false,
-   "pre": false,
-   "fijado_en_pre": false,
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
    "usado_por": [
     "router"
    ],
@@ -2921,7 +2921,7 @@
     "b_acuse"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 116
+   "llamadas_ultima_ronda": 115
   },
   {
    "ajuste": "extractor_turno_model",
@@ -2931,7 +2931,7 @@
     "b_extraction"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 95
+   "llamadas_ultima_ronda": 85
   },
   {
    "ajuste": "grounding_v3_model",
@@ -2941,7 +2941,7 @@
     "r_revisor"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 51
+   "llamadas_ultima_ronda": 47
   },
   {
    "ajuste": "jev_model",
@@ -2953,7 +2953,7 @@
    ],
    "proveedor": "OpenRouter",
    "llamadas_ultima_ronda": null,
-   "nota": "Decidió solo 82 de 93 mensajes; en los otros 11 decidió el LLM de respaldo (sus llamadas cuentan en gpt-4o-mini)."
+   "nota": "Decidió solo 81 de 93 mensajes; en los otros 12 decidió el LLM de respaldo (sus llamadas cuentan en gpt-4o-mini)."
   },
   {
    "ajuste": "openai_embedding_model",
@@ -2976,7 +2976,7 @@
     "r_reescribir"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 116
+   "llamadas_ultima_ronda": 115
   },
   {
    "ajuste": "openai_transcription_model",
@@ -2996,7 +2996,7 @@
     "r_escribir"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 57
+   "llamadas_ultima_ronda": 53
   },
   {
    "ajuste": "rag_plan_model",
@@ -3004,50 +3004,50 @@
    "pre": "gpt-4.1-mini",
    "usado_por": [],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 95
+   "llamadas_ultima_ronda": 85
   }
  ],
  "ronda": {
-  "etiqueta": "cal-B (core, avisos + contacto)",
-  "run_at": "2026-10-16T22:37:34Z",
-  "fichero": "2026-10-16-cal-B.json",
-  "commit": "95cba85",
+  "etiqueta": "cal-C (core, consulta con lo sabido)",
+  "run_at": "2026-10-17T00:36:32Z",
+  "fichero": "2026-10-17-cal-C.json",
+  "commit": "e4d5411",
   "por_tipo": {
    "reserva": {
     "turns": 47,
-    "latency_p50": 1.203,
-    "latency_p95": 2.744,
-    "latency_avg": 1.583,
-    "llm_calls_avg": 2.4,
+    "latency_p50": 1.199,
+    "latency_p95": 2.291,
+    "latency_avg": 1.37,
+    "llm_calls_avg": 2.26,
     "llm_calls_p95": 4.0,
-    "llm_calls_max": 7,
+    "llm_calls_max": 4,
     "embeddings_avg": 1.26,
-    "llm_share": 1.48,
+    "llm_share": 1.451,
     "tokens_avg": 0,
     "cost_avg_usd": 0
    },
    "rag": {
     "turns": 46,
-    "latency_p50": 4.079,
-    "latency_p95": 7.497,
-    "latency_avg": 4.474,
-    "llm_calls_avg": 4.48,
-    "llm_calls_p95": 6.75,
-    "llm_calls_max": 7,
+    "latency_p50": 3.729,
+    "latency_p95": 6.392,
+    "latency_avg": 3.83,
+    "llm_calls_avg": 4.22,
+    "llm_calls_p95": 6.0,
+    "llm_calls_max": 6,
     "embeddings_avg": 1.61,
-    "llm_share": 1.294,
+    "llm_share": 1.34,
     "tokens_avg": 0,
     "cost_avg_usd": 0
    }
   },
   "enrutador": {
    "by_backend": {
-    "jev": 82,
-    "llm_uncertain": 10,
+    "jev": 81,
+    "llm_uncertain": 11,
     "llm": 1
    },
-   "ms_p50": 384.0,
-   "ms_p95": 454.8
+   "ms_p50": 380.5,
+   "ms_p95": 458.2
   },
   "cliente": {
    "turns": 93,
@@ -3055,16 +3055,21 @@
    "no_reply": 0,
    "multi_bubble": 0,
    "latency_p50": 3.0,
-   "latency_p95": 7.0,
-   "latency_max": 12
+   "latency_p95": 6.0,
+   "latency_max": 8
   },
   "llamadas_por_modelo": {
-   "gpt-4o-mini": 116,
-   "gpt-4.1-mini": 95,
-   "gpt-6-luna": 57,
-   "gpt-4.1": 51
+   "gpt-4o-mini": 115,
+   "gpt-4.1-mini": 85,
+   "gpt-6-luna": 53,
+   "gpt-4.1": 47
   },
-  "calidad": null
+  "calidad": {
+   "criteria_pass_pct": 96.1,
+   "dialogues_passed": 26,
+   "dialogues": 32,
+   "model": "gpt-5-mini (medium)"
+  }
  },
  "pesos_fuente": "Los % del enrutador y de las fases de la reserva salen de la foto de la ronda; los del revisor y el reintento, de los logs de PRE de la misma ronda. La cascada y los textos fijos no dejan rastro medible: se animan con una estimación y no llevan porcentaje."
 }
