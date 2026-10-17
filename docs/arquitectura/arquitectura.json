@@ -1,8 +1,8 @@
 {
  "meta": {
-  "generado": "2026-10-17T18:05:47+00:00",
-  "commit": "506259b",
-  "rama": "feature/pre_alvaro"
+  "generado": "2026-10-17T18:34:51+00:00",
+  "commit": "893cac0",
+  "rama": "feature/pre_gadea"
  },
  "vistas": {
   "general": {
@@ -185,9 +185,9 @@
    ],
    "marca": "openrouter",
    "tiempos": {
-    "n": 93,
-    "p50": 0.439,
-    "p95": 1.599
+    "n": 465,
+    "p50": 0.435,
+    "p95": 1.739
    }
   },
   {
@@ -210,9 +210,9 @@
    ],
    "modelos": [],
    "tiempos": {
-    "n": 7,
-    "p50": 0.002,
-    "p95": 0.003
+    "n": 22,
+    "p50": 0.003,
+    "p95": 0.005
    }
   },
   {
@@ -227,9 +227,9 @@
    "modelos": [],
    "interruptores": [],
    "tiempos": {
-    "n": 2,
-    "p50": 0.003,
-    "p95": 0.003
+    "n": 4,
+    "p50": 0.006,
+    "p95": 4.252
    }
   },
   {
@@ -252,9 +252,9 @@
    ],
    "modelos": [],
    "tiempos": {
-    "n": 1,
-    "p50": 0.003,
-    "p95": 0.003
+    "n": 3,
+    "p50": 0.001,
+    "p95": 0.002
    }
   },
   {
@@ -271,9 +271,9 @@
    "modelos": [],
    "interruptores": [],
    "tiempos": {
-    "n": 4,
-    "p50": 3.243,
-    "p95": 4.203
+    "n": 8,
+    "p50": 3.887,
+    "p95": 4.9
    }
   },
   {
@@ -289,9 +289,9 @@
    "modelos": [],
    "interruptores": [],
    "tiempos": {
-    "n": 79,
-    "p50": 2.513,
-    "p95": 4.971
+    "n": 428,
+    "p50": 2.269,
+    "p95": 5.376
    }
   },
   {
@@ -500,9 +500,9 @@
    ],
    "marca": "openai",
    "tiempos": {
-    "n": 79,
-    "p50": 0.028,
-    "p95": 1.241
+    "n": 428,
+    "p50": 0.029,
+    "p95": 0.983
    }
   },
   {
@@ -532,9 +532,9 @@
    ],
    "modelos": [],
    "tiempos": {
-    "n": 79,
+    "n": 428,
     "p50": 0.005,
-    "p95": 0.072
+    "p95": 0.019
    }
   },
   {
@@ -571,9 +571,9 @@
    ],
    "marca": "openai",
    "tiempos": {
-    "n": 74,
-    "p50": 0.006,
-    "p95": 0.016
+    "n": 397,
+    "p50": 0.007,
+    "p95": 0.015
    }
   },
   {
@@ -668,9 +668,9 @@
    ],
    "marca": "openai",
    "tiempos": {
-    "n": 74,
-    "p50": 0.536,
-    "p95": 1.034
+    "n": 396,
+    "p50": 0.628,
+    "p95": 1.351
    }
   },
   {
@@ -763,9 +763,9 @@
    ],
    "marca": "openai",
    "tiempos": {
-    "n": 74,
-    "p50": 1.727,
-    "p95": 4.113
+    "n": 394,
+    "p50": 1.291,
+    "p95": 4.573
    }
   },
   {
@@ -882,9 +882,9 @@
    ],
    "modelos": [],
    "conteo": {
-    "n": 46,
+    "n": 231,
     "que": "preguntas",
-    "fuente": "2026-10-17-calc2-B.json"
+    "fuente": "2026-10-17-calf-completa.json"
    }
   },
   {
@@ -1137,6 +1137,13 @@
     {
      "nombre": "avisos_condicionados",
      "titulo": "Avisos que el cliente necesita y no pregunta",
+     "codigo": false,
+     "pre": false,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "rag_ofrece_el_pase",
+     "titulo": "El bot ofrece pasar con una persona, no dice que ya lo ha hecho",
      "codigo": false,
      "pre": false,
      "sin_efecto": false
@@ -2953,6 +2960,19 @@
    "sin_efecto": null
   },
   {
+   "nombre": "rag_ofrece_el_pase",
+   "area": "Preguntas",
+   "titulo": "El bot ofrece pasar con una persona, no dice que ya lo ha hecho",
+   "texto": "La respuesta decía 'te paso con el equipo' aunque nadie recibía el caso, y el cliente se quedaba esperando. Ahora pregunta '¿quieres que te pase con un asesor?' y el pase lo hace el sistema si el cliente dice que sí.",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
+   "usado_por": [
+    "r_escribir"
+   ],
+   "sin_efecto": null
+  },
+  {
    "nombre": "rag_origen_pregunta",
    "area": "Preguntas",
    "titulo": "Pregunta el origen antes de dar precio",
@@ -3242,7 +3262,7 @@
     "r_revisor"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 97
+   "llamadas_ultima_ronda": 522
   },
   {
    "ajuste": "extraction_model",
@@ -3257,7 +3277,7 @@
     "b_acuse"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 112
+   "llamadas_ultima_ronda": 603
   },
   {
    "ajuste": "extractor_turno_model",
@@ -3267,7 +3287,7 @@
     "b_extraction"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 87
+   "llamadas_ultima_ronda": 447
   },
   {
    "ajuste": "grounding_v3_model",
@@ -3277,7 +3297,7 @@
     "r_revisor"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 46
+   "llamadas_ultima_ronda": 241
   },
   {
    "ajuste": "jev_model",
@@ -3289,7 +3309,7 @@
    ],
    "proveedor": "OpenRouter",
    "llamadas_ultima_ronda": null,
-   "nota": "Decidió solo 82 de 93 mensajes; en los otros 11 decidió el LLM de respaldo (sus llamadas cuentan en gpt-4o-mini)."
+   "nota": "Decidió solo 421 de 465 mensajes; en los otros 44 decidió el LLM de respaldo (sus llamadas cuentan en gpt-4o-mini)."
   },
   {
    "ajuste": "openai_embedding_model",
@@ -3312,7 +3332,7 @@
     "r_reescribir"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 112
+   "llamadas_ultima_ronda": 603
   },
   {
    "ajuste": "openai_transcription_model",
@@ -3332,7 +3352,7 @@
     "r_escribir"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 97
+   "llamadas_ultima_ronda": 522
   },
   {
    "ajuste": "rag_plan_model",
@@ -3340,65 +3360,65 @@
    "pre": "gpt-4.1-mini",
    "usado_por": [],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 87
+   "llamadas_ultima_ronda": 447
   }
  ],
  "ronda": {
-  "etiqueta": "calc2-B 17-oct (C3e/C4/C5 encendidos)",
-  "run_at": "2026-10-17T16:10:02Z",
-  "fichero": "2026-10-17-calc2-B.json",
-  "commit": "df4016a",
+  "etiqueta": "CAL-F golden visible completo (461ca75)",
+  "run_at": "2026-10-17T18:16:17Z",
+  "fichero": "2026-10-17-calf-completa.json",
+  "commit": "ed52f1f",
   "por_tipo": {
    "reserva": {
-    "turns": 47,
-    "latency_p50": 1.266,
-    "latency_p95": 2.252,
-    "latency_avg": 1.408,
-    "llm_calls_avg": 2.21,
-    "llm_calls_p95": 3.0,
-    "llm_calls_max": 5,
-    "embeddings_avg": 1.36,
-    "llm_share": 1.395,
+    "turns": 234,
+    "latency_p50": 1.408,
+    "latency_p95": 2.478,
+    "latency_avg": 1.559,
+    "llm_calls_avg": 2.53,
+    "llm_calls_p95": 4.0,
+    "llm_calls_max": 6,
+    "embeddings_avg": 1.5,
+    "llm_share": 1.501,
     "tokens_avg": 0,
     "cost_avg_usd": 0
    },
    "rag": {
-    "turns": 46,
-    "latency_p50": 4.193,
-    "latency_p95": 6.936,
-    "latency_avg": 4.437,
-    "llm_calls_avg": 5.17,
+    "turns": 231,
+    "latency_p50": 4.069,
+    "latency_p95": 6.756,
+    "latency_avg": 4.352,
+    "llm_calls_avg": 5.29,
     "llm_calls_p95": 7.0,
-    "llm_calls_max": 7,
-    "embeddings_avg": 1.61,
-    "llm_share": 1.5,
+    "llm_calls_max": 10,
+    "embeddings_avg": 1.52,
+    "llm_share": 1.539,
     "tokens_avg": 0,
     "cost_avg_usd": 0
    }
   },
   "enrutador": {
    "by_backend": {
-    "jev": 82,
-    "llm_uncertain": 10,
+    "jev": 421,
+    "llm_uncertain": 43,
     "llm": 1
    },
-   "ms_p50": 413.5,
-   "ms_p95": 566.0
+   "ms_p50": 405.0,
+   "ms_p95": 483.0
   },
   "cliente": {
-   "turns": 93,
-   "conversations": 32,
+   "turns": 465,
+   "conversations": 116,
    "no_reply": 0,
-   "multi_bubble": 0,
+   "multi_bubble": 1,
    "latency_p50": 3.0,
    "latency_p95": 6.0,
    "latency_max": 9
   },
   "llamadas_por_modelo": {
-   "gpt-4o-mini": 112,
-   "gpt-6-luna": 97,
-   "gpt-4.1-mini": 87,
-   "gpt-4.1": 46
+   "gpt-4o-mini": 603,
+   "gpt-6-luna": 522,
+   "gpt-4.1-mini": 447,
+   "gpt-4.1": 241
   },
   "calidad": null
  },

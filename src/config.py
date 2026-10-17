@@ -402,6 +402,10 @@ class Settings(BaseSettings):
     # el resto igual) y ningún falso positivo en 240 mensajes reales de las rondas y del banco (contar plazas o
     # preguntar si hay sitio no cuenta). Revert = False aquí y quitar la línea del compose.
     datos_ajenos_se_niegan: bool = True
+    # G3-03 (17-oct, Claude contra el chatbot): el RAG escribía "te paso con el equipo" sin que el sistema pasara el caso
+    # a nadie (conv 5569, escalated=False) y el cliente se quedaba esperando. Con el flag, el RAG no lo da por hecho:
+    # lo OFRECE como pregunta y el pase lo hace el sistema si el cliente acepta. APAGADO hasta medirlo.
+    rag_ofrece_el_pase: bool = False
     # Modelo del revisor de `avisos_al_final` (vacío = `rag_plan_model`). Va a la vez que el juez de grounding.
     # Medido en local (17-oct, 5 casos del banco + los 93 turnos de la ronda core cal-D): gpt-4.1-mini acierta 4 de 5
     # pero añade aviso en 64 de 93 turnos (relleno); gpt-4.1 y GPT-6 Luna (sin razonamiento) aciertan 4 de 5 y añaden

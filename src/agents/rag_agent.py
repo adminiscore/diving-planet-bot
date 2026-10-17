@@ -198,6 +198,11 @@ def build_system_prompt(lang: str, query: str | None = None) -> str:
         from src.prompts.info import RAG_NO_SUPONE_EN, RAG_NO_SUPONE_ES  # lazy
 
         prompt = f"{prompt}\n\n{RAG_NO_SUPONE_ES if lang == 'es' else RAG_NO_SUPONE_EN}"
+    if settings.rag_ofrece_el_pase:
+        # G3-03: el RAG no puede pasar el caso a una persona; lo OFRECE como pregunta (ver RAG_PASE_OFRECIDO_*).
+        from src.prompts.info import RAG_PASE_OFRECIDO_EN, RAG_PASE_OFRECIDO_ES  # lazy
+
+        prompt = f"{prompt}\n\n{RAG_PASE_OFRECIDO_ES if lang == 'es' else RAG_PASE_OFRECIDO_EN}"
     if settings.rag_sin_hora:
         # EX-EST-2: el RAG no sabe la hora ni la fecha de hoy (ver RAG_SIN_HORA_*).
         from src.prompts.info import RAG_SIN_HORA_EN, RAG_SIN_HORA_ES  # lazy

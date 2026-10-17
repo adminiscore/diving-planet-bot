@@ -1,0 +1,32 @@
+{
+ "about": "G3: casos de las charlas en directo (Claude contra el chatbot), mismo formato que el banco de fallos; se mide con banco_fallos medir --banco docs/robustness/g3/banco-g3.json.",
+ "fallos": [
+  {
+   "id": "g3-03a",
+   "tarea": "G3",
+   "dialogo": "islas-refresh-coral-sand",
+   "criterio": "no-promete-pase",
+   "pedia": "No dice que pasa la conversación a una persona ni que el equipo le va a contactar ('te paso con el equipo', 'un asesor te contactará') como algo ya hecho: si algo lo tiene que confirmar una persona, lo OFRECE como pregunta.",
+   "motivo_juez": "En directo (conv 5569) escribió 'Te paso con el equipo para que te orienten' sin pase real (escalated=False) y siguió preguntando por cuántas personas.",
+   "turno": 1,
+   "mensaje_cliente": "hola, estoy en el hotel coral sand en isla grande. soy open water pero no buceo desde 2022, puedo bucear mañana?",
+   "historial": []
+  },
+  {
+   "id": "g3-03b",
+   "tarea": "G3",
+   "dialogo": "islas-refresh-coral-sand",
+   "criterio": "no-promete-pase",
+   "pedia": "No dice que pasa la conversación a una persona ni que el equipo le va a contactar ('te paso con el equipo', 'un asesor te contactará') como algo ya hecho: si algo lo tiene que confirmar una persona, lo OFRECE como pregunta.",
+   "motivo_juez": "En directo (conv 5569, turno 2) escribió 'Te paso con ellos para confirmar la logística de mañana' sin pase real.",
+   "turno": 2,
+   "mensaje_cliente": "solo yo. y si hago el refresh mañana, a que hora me recogen en el hotel y cuanto cuesta?",
+   "historial": [
+    {
+     "role": "user",
+     "content": "hola, estoy en el hotel coral sand en isla grande. soy open water pero no buceo desde 2022, puedo bucear mañana?"
+    }
+   ]
+  }
+ ]
+}

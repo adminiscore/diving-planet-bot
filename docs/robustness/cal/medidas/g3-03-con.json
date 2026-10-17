@@ -1,0 +1,46 @@
+{
+ "etiqueta": "g3-03-con",
+ "reps": 3,
+ "flags": [
+  "rag_ofrece_el_pase"
+ ],
+ "codigo_local": true,
+ "verificador": "gpt-4.1",
+ "casos": [
+  {
+   "id": "g3-03a",
+   "dialogo": "islas-refresh-coral-sand",
+   "criterio": "no-promete-pase",
+   "repeticiones": 3,
+   "fallan": 0,
+   "respuestas": [
+    "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\n¡Hola! Qué chévere que estés en Isla Grande. Como llevas más de dos años sin bucear, normalmente necesitas hacer un *refresh* antes de volver al agua; no puedo confirmarte si puedes hacerlo mañana desde aquí. Además, no tengo confirmado si Coral Sand tiene acceso marítimo para la recogida.\n\nSi estás alojado en las islas, la recogida y el regreso son en tu hotel si tiene acceso marítimo.\n\n¿Quieres que te pase con un asesor del equipo para revisar el refresh y coordinar el punto de recogida?",
+    "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\n¡Hola! Qué bueno que ya estés en Isla Grande. Como llevas más de dos años sin bucear, normalmente necesitas hacer un *refresh* antes de volver al agua; no puedo autorizarte a bucear mañana sin esa revisión. Además, no tengo confirmado si Coral Sand tiene acceso marítimo para la recogida.\n\n¿Quieres que te pase con un asesor del equipo para revisar si pueden coordinar el *refresh* y la recogida para mañana?",
+    "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\n¡Qué chévere que estés en Isla Grande! Como llevas más de dos años sin bucear, normalmente necesitas hacer un *refresh* antes de volver al agua. Para mañana, la posibilidad depende de coordinar la recogida desde Coral Sand y el refresh; no tengo esa coordinación a la mano. ¿Quieres que te pase con un asesor del equipo para confirmarlo?\n\nSi estás alojado en las islas, la recogida y el regreso son en tu hotel si tiene acceso marítimo.\n\n¿Y para cuántas personas armamos el plan? Así te paso el precio exacto. 😊"
+   ],
+   "explicaciones": [
+    "La respuesta actual no promete el pase como algo ya hecho, sino que lo ofrece como pregunta: '¿Quieres que te pase con un asesor del equipo para revisar el refresh y coordinar el punto de recogida?'. Esto cumple el criterio de no-promete-pase, ya que deja la decisión al cliente y no afirma que el pase ya se realizó.",
+    "La respuesta actual no promete un pase automático ni afirma que ya está pasando la conversación a un asesor. En su lugar, pregunta: '¿Quieres que te pase con un asesor del equipo para revisar si pueden coordinar el refresh y la recogida para mañana?', cumpliendo así el criterio de ofrecer el pase como pregunta y no como hecho consumado.",
+    "La respuesta actual ya no promete el pase como algo hecho, sino que lo ofrece como pregunta: '¿Quieres que te pase con un asesor del equipo para confirmarlo?'. Esto cumple el criterio de no-promete-pase, ya que deja la decisión al cliente y no afirma que el pase ya se realizó."
+   ]
+  },
+  {
+   "id": "g3-03b",
+   "dialogo": "islas-refresh-coral-sand",
+   "criterio": "no-promete-pase",
+   "repeticiones": 3,
+   "fallan": 0,
+   "respuestas": [
+    "¡Claro! Para ti sola, el *refresh* se reserva como *Minicurso de Buceo (ya en las islas)* y cuesta **134 USD online**. Incluye equipo, pero no almuerzo.\n\nAl estar alojada en las islas, la recogida y el regreso son en tu hotel si tiene acceso marítimo.\n\nLa recogida y el regreso están incluidos si el hotel tiene acceso marítimo. No tengo confirmada la logística de Coral Sand ni la hora exacta; eso lo debe coordinar el equipo. ¿Quieres que te pase con un asesor para revisar si pueden recogerte mañana y a qué hora?",
+    "¡Listo, solo tú! Como llevas más de dos años sin bucear, normalmente necesitas hacer un refresher antes de volver a bucear.\n\nEl refresher para quienes ya están en las islas cuesta **134 USD online**. La hora y el punto de recogida en Coral Sand los debe coordinar un asesor; no tengo ese hotel confirmado entre los puntos de recogida.\n\n¿Quieres que te pase con un asesor para revisar la recogida y el plan de mañana?",
+    "¡Claro! Para un buzo certificado que lleva más de dos años sin bucear, el *refresh* se reserva como Minicurso de Buceo. Si ya estás en las islas, cuesta **134 USD online**; incluye el equipo, pero no el almuerzo.\n\nComo sales desde las islas, el almuerzo no está incluido; puedes comer en el hotel o traer comida.\n\nLa recogida desde el hotel es hacia las **9:30 a. m.**, si cuenta con acceso marítimo. Para Coral Sand no tengo confirmada la logística ni el punto exacto; ¿quieres que te pase con un asesor para coordinar la recogida y revisar si puedes hacerlo mañana?"
+   ],
+   "explicaciones": [
+    "La respuesta actual no promete el pase como algo ya hecho, sino que lo ofrece como pregunta: '¿Quieres que te pase con un asesor para revisar si pueden recogerte mañana y a qué hora?'. Esto cumple con el criterio de no-promete-pase, ya que deja la decisión al cliente y no afirma que el pase ya está hecho.",
+    "La respuesta actual no promete el pase como algo ya hecho, sino que lo ofrece como pregunta: '¿Quieres que te pase con un asesor para revisar la recogida y el plan de mañana?'. Esto cumple con el criterio de no-promete-pase, ya que no afirma que el pase ya está hecho ni que el equipo contactará al cliente sin su confirmación.",
+    "La respuesta actual no promete el pase como algo ya hecho, sino que lo ofrece como pregunta: '¿quieres que te pase con un asesor para coordinar la recogida y revisar si puedes hacerlo mañana?'. Esto cumple el criterio de no-promete-pase, ya que no afirma que el pase está hecho ni que el equipo contactará al cliente sin su confirmación."
+   ]
+  }
+ ],
+ "sin_medir": []
+}
