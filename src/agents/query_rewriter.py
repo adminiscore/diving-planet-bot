@@ -27,7 +27,21 @@ _NOMBRA_EL_ASUNTO_EN = (
 )
 
 
-def _should_condense(query: str, history: list[dict] | None) -> bool:
+def _otro_idioma(query: str, lang: str) -> bool:
+    """G3-05 (flag `busqueda_con_la_pregunta_sola`): el mensaje no parece escrito en el idioma de la respuesta.
+    Entonces se REESCRIBE siempre (la consulta, en el idioma de la respuesta) y la pregunta sola se traduce: un cliente
+    en portugués o francés se contesta en inglés, y su mensaje, buscado tal cual contra la base en español e inglés,
+    traía fichas al azar ("Precisa saber nadar?" no encontraba la FAQ de saber nadar, conv 5571). La heurística de
+    palabras marca esos idiomas como "es", así que con la respuesta en inglés salta; con la conversación en español, un
+    mensaje en español no la dispara."""
+    from src.flows.catalog import _detect_language_from_text  # lazy
+
+    return settings.busqueda_con_la_pregunta_sola and _detect_language_from_text(query or "") not in (None, lang)
+
+
+def _should_condense(query: str, history: list[dict] | None, lang: str = "es") -> bool:
+    if query and _otro_idioma(query, lang):
+        return True
     if not query or not history:
         return False
     if len(query.split()) >= 8:
@@ -78,6 +92,49 @@ def lo_sabido(hechos: dict | None, lang: str) -> str:
     return "; ".join(partes)
 
 
+_PREGUNTA_SOLA_ES = ("Escribe en español, fielmente, solo la PREGUNTA (o preguntas) del mensaje del cliente, "
+                     "traducida si viene en otro idioma: sin los datos que da (fechas, desde dónde sale, cuántos son), "
+                     "sin nada de la conversación y sin responderla. Si el mensaje no pregunta nada, devuélvelo entero. "
+                     "Devuelve solo eso.")
+_PREGUNTA_SOLA_EN = ("Write in English, faithfully, only the QUESTION (or questions) in the customer's message, translated "
+                     "if it comes in another language: leave out the facts they give (dates, where they depart from, how "
+                     "many they are), add nothing from the conversation and do not answer it. If the message asks "
+                     "nothing, return all of it. Return only that.")
+
+
+@con_pieza_llm("reescritura")
+async def pregunta_sola(query: str, lang: str) -> str | None:
+    """G3-05 (flag `busqueda_con_la_pregunta_sola`): la PREGUNTA del mensaje, sola y en el idioma de la respuesta, para
+    la búsqueda doble (hace de "pregunta tal cual"). None, sin llamada, si el mensaje es corto y está en el idioma de la
+    respuesta: entonces el mensaje ya es la pregunta.
+
+    Medido en la búsqueda de PRE (17-oct): "Do you need to know how to swim?" trae la FAQ de nadar la primera (1,03) y
+    "We left Cartagena on the 30th. Do you need to know how to swim?" no la trae entre las 8 primeras: el origen y la
+    fecha la tapan con las fichas que salen desde Cartagena. Igual en español ("salimos de Cartagena el día 30. ¿Hace
+    falta saber nadar?"), y la consulta reescrita, que nombra el asunto (CAL-D), tampoco la trae. En portugués o
+    francés, además, buscar el mensaje tal cual no encuentra nada (conv 5571). En el banco G3, el bot contestaba "no
+    tengo ese dato" 3 de 3 en los tres idiomas."""
+    if not settings.busqueda_con_la_pregunta_sola or not query:
+        return None
+    if not _otro_idioma(query, lang) and len(query.split()) < 8:
+        return None
+    try:
+        client = trace_openai(AsyncOpenAI(api_key=settings.openai_api_key))
+        response = await client.chat.completions.create(
+            model=settings.openai_model,
+            messages=[
+                {"role": "system", "content": _PREGUNTA_SOLA_ES if lang == "es" else _PREGUNTA_SOLA_EN},
+                {"role": "user", "content": redact_pii(query)},
+            ],
+            temperature=0,
+            max_tokens=80,
+        )
+        return (response.choices[0].message.content or "").strip() or None
+    except Exception as exc:
+        logger.warning(f"[RAG][PREGUNTA_SOLA] failed: {exc}")
+        return None
+
+
 @con_pieza_llm("reescritura")
 async def condense_query(
     query: str,
@@ -85,7 +142,7 @@ async def condense_query(
     lang: str = "es",
     hechos: dict | None = None,
 ) -> str:
-    if not _should_condense(query, history):
+    if not _should_condense(query, history, lang):
         return query
 
     system = QUERY_REWRITE_ES if lang == "es" else QUERY_REWRITE_EN
@@ -94,6 +151,10 @@ async def condense_query(
         # CAL-D: la consulta tiene que NOMBRAR el asunto. Sin esto, el reescritor arregla la frase y deja la elipsis
         # ("per day", "en concepto"), que es justo lo que la búsqueda no sabe buscar.
         system = f"{system} {_NOMBRA_EL_ASUNTO_ES if lang == 'es' else _NOMBRA_EL_ASUNTO_EN}"
+    if _otro_idioma(query, lang):
+        # G3-05: la consulta, en el idioma de la base y de la respuesta (si no, se busca en portugués o francés).
+        system = (f"{system} La consulta, SIEMPRE en español aunque el cliente escriba en otro idioma." if lang == "es"
+                  else f"{system} Write the query ALWAYS in English, even if the customer writes in another language.")
     history_block = _format_history_for_prompt(history or [], lang=lang)
     safe_query = redact_pii(query)
 

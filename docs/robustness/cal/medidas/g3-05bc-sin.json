@@ -1,0 +1,44 @@
+{
+ "etiqueta": "g3-05bc-sin",
+ "reps": 3,
+ "flags": [],
+ "codigo_local": true,
+ "verificador": "gpt-4.1",
+ "casos": [
+  {
+   "id": "g3-05b",
+   "dialogo": "pareja-bautismo-es",
+   "criterio": "nadar-faq",
+   "repeticiones": 3,
+   "fallan": 3,
+   "respuestas": [
+    "¡Qué bueno que lo preguntes! Para el minicurso de bautismo, el contexto no especifica si es obligatorio saber nadar, así que no quiero darte un dato equivocado. Como me cuentas que no saben nadar, te ayudo a consultarlo con el equipo antes de que reserven. El día 30 pueden elegirlo en el enlace del minicurso: https://book.divingplanet.org/book/minicurso-de-buceo/2?language=es",
+    "¡Qué chévere que salgan desde Cartagena! Para el minicurso, que es ideal si nunca han buceado, el contexto no especifica si es obligatorio saber nadar. No quiero darte un dato equivocado; puedo ayudarte a confirmarlo con el equipo.\n\nEl minicurso incluye práctica en piscina, una inmersión en el mar con instructor, equipo, lancha y almuerzo. Cuesta **183 USD por persona reservando online**: https://book.divingplanet.org/book/minicurso-de-buceo/2?language=es\n\n¿Quieres que te ayude a consultar el requisito de natación para la fecha 30?",
+    "¡Qué chévere que salgan desde Cartagena! Para el minicurso, el contexto no especifica si es obligatorio saber nadar. Sí incluye práctica en piscina y una inmersión en el mar con instructor PADI, con el equipo incluido.\n\nEl minicurso cuesta **183 USD por persona reservando online** e incluye lancha ida y vuelta, almuerzo, seguro y equipo. El día 30, el encuentro es a las **8:00 a. m. en el Muelle de la Bodeguita**. ¿Quieres que te comparta el enlace para reservar?"
+   ],
+   "explicaciones": [
+    "La respuesta actual no brinda la información de la FAQ sobre si es necesario saber nadar para bucear. El contexto no contiene la FAQ ni una política explícita sobre el requisito de saber nadar, pero la expectativa es que el bot explique que no es necesario ser un nadador experto, que basta con sentirse cómodo en el agua y que el instructor acompaña todo el tiempo. En vez de eso, el bot dice que el contexto no especifica y que consultará, lo cual no cumple con el criterio esperado.",
+    "La respuesta actual sigue diciendo que el contexto no especifica si es obligatorio saber nadar y ofrece consultar, pero no entrega la información de la FAQ que aclara que no es necesario ser un nadador experto, solo sentirse cómodo en el agua y que el instructor acompaña todo el tiempo. Esta información no está en el contexto proporcionado, pero es parte de la FAQ oficial que el criterio exige citar.",
+    "La respuesta actual no responde la pregunta sobre si hace falta saber nadar, sino que dice que el contexto no especifica si es obligatorio. No menciona que no es necesario ser un nadador experto, que basta con sentirse cómodo en el agua y que el instructor acompaña todo el tiempo, como indica la FAQ. Esta información no está en el contexto proporcionado, por lo que el fallo persiste."
+   ]
+  },
+  {
+   "id": "g3-05c",
+   "dialogo": "pareja-bautismo-en",
+   "criterio": "nadar-faq",
+   "repeticiones": 3,
+   "fallan": 3,
+   "respuestas": [
+    "The Discover Scuba Mini Course is a great first-time experience, and you don’t need prior certification. It includes pool practice, one ocean dive with an instructor, equipment, boat transport from Cartagena, park entrance, insurance, and lunch.\n\nThe online price is **USD 183 per person**. I don’t have the swimming requirement detail handy, but I can have a team advisor confirm it for you. Would you like me to connect you?",
+    "For the Discover Scuba Mini Course, you don’t need prior diving experience or certification. However, participants should be comfortable in the water; I don’t have a specific swimming requirement to confirm. The course includes pool practice and one ocean dive with an instructor, equipment, boat transport from Cartagena, park entrance fee, insurance, and lunch.\n\nThe online price is **USD 183 per person**. You can book for the 30th here: https://book.divingplanet.org/book/minicurso-de-buceo/2?language=en\n\nWould you like me to help with anything else about the experience?",
+    "The mini-course is a lovely first experience, and you don’t need any prior diving experience or certification. It includes pool practice and one ocean dive with an instructor.\n\nI don’t have a swimming requirement specified, so I can’t confirm that detail. Would you like me to help you continue with the mini-course booking for the 30th?"
+   ],
+   "explicaciones": [
+    "The bot says 'I don’t have the swimming requirement detail handy, but I can have a team advisor confirm it for you,' which is incorrect: the FAQ and business rule are clear that you do NOT need to be an expert swimmer, just comfortable in the water, and the instructor is always with you. This reassurance is missing, and the bot incorrectly implies the information is unavailable.",
+    "The bot says 'participants should be comfortable in the water' but fails to clarify that you do NOT need to be an expert swimmer and that the instructor is with you at all times, as required by the FAQ. It also incorrectly says 'I don’t have a specific swimming requirement to confirm,' which is misleading: the FAQ answer is clear and should be given proactively.",
+    "The bot says 'I don’t have a swimming requirement specified, so I can’t confirm that detail,' which is incorrect. The FAQ (not present in the provided context but required by the criterion) states you do not need to be an expert swimmer, just comfortable in the water, and the instructor is always with you. The bot should have reassured the customer with this information instead of saying it can't confirm."
+   ]
+  }
+ ],
+ "sin_medir": []
+}

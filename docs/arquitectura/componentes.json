@@ -488,7 +488,8 @@
         "openai_model"
       ],
       "interruptores": [
-        "consulta_con_lo_sabido"
+        "consulta_con_lo_sabido",
+        "busqueda_con_la_pregunta_sola"
       ]
     },
     {
@@ -1504,6 +1505,11 @@
       "area": "Preguntas",
       "titulo": "El bot ofrece pasar con una persona, no dice que ya lo ha hecho",
       "texto": "La respuesta decía 'te paso con el equipo' aunque nadie recibía el caso, y el cliente se quedaba esperando. Ahora pregunta '¿quieres que te pase con un asesor?' y el pase lo hace el sistema si el cliente dice que sí."
+    },
+    "busqueda_con_la_pregunta_sola": {
+      "area": "Preguntas",
+      "titulo": "Se busca también la pregunta sola, sin los datos que da el cliente",
+      "texto": "Si el cliente da datos y pregunta en el mismo mensaje (\"salimos de Cartagena el día 30. ¿Hace falta saber nadar?\"), el origen y la fecha tapaban la pregunta y la búsqueda no traía la pregunta frecuente: el bot decía que no tenía el dato. Ahora también se busca la pregunta sola, traducida si el cliente escribe en portugués o francés."
     }
   },
   "areas": [

@@ -27,6 +27,54 @@
      "content": "hola, estoy en el hotel coral sand en isla grande. soy open water pero no buceo desde 2022, puedo bucear mañana?"
     }
    ]
+  },
+  {
+   "id": "g3-05",
+   "tarea": "G3",
+   "dialogo": "brasilenos-bautismo",
+   "criterio": "nadar-faq",
+   "pedia": "Answers in English that you don't need to be an expert swimmer, it's recommended to be comfortable in the water and the instructor guides at all times (FAQ '¿Necesito saber nadar para bucear?'); does not say it doesn't have the information.",
+   "motivo_juez": "En directo (conv 5571) contestó 'I don't have that specific requirement handy' aunque la FAQ lo dice.",
+   "turno": 2,
+   "mensaje_cliente": "saímos de Cartagena, dia 30. Precisa saber nadar?",
+   "historial": [
+    {
+     "role": "user",
+     "content": "Olá! Somos dois brasileiros, nunca mergulhamos. Quanto custa o batismo e o que está incluído?"
+    }
+   ]
+  },
+  {
+   "id": "g3-05b",
+   "tarea": "G3",
+   "dialogo": "pareja-bautismo-es",
+   "criterio": "nadar-faq",
+   "pedia": "Responde que no hace falta ser un experto nadador, que se recomienda sentirse cómodo en el agua y que el instructor acompaña todo el tiempo (FAQ '¿Necesito saber nadar para bucear?'); no dice que no tiene el dato.",
+   "motivo_juez": "Variante en español de G3-05: el mensaje da datos (origen y fecha) y pregunta; la búsqueda con el mensaje entero no trae la FAQ (medido en la búsqueda de PRE).",
+   "turno": 2,
+   "mensaje_cliente": "salimos de Cartagena el día 30. ¿Hace falta saber nadar?",
+   "historial": [
+    {
+     "role": "user",
+     "content": "¡Hola! Somos dos y nunca hemos buceado. ¿Cuánto cuesta el bautismo y qué incluye?"
+    }
+   ]
+  },
+  {
+   "id": "g3-05c",
+   "tarea": "G3",
+   "dialogo": "pareja-bautismo-en",
+   "criterio": "nadar-faq",
+   "pedia": "Answers that you don't need to be an expert swimmer, it's recommended to be comfortable in the water and the instructor guides at all times (FAQ 'Do I need to know how to swim?'); does not say it doesn't have the information.",
+   "motivo_juez": "Variante en inglés de G3-05: el mensaje da datos (origen y fecha) y pregunta.",
+   "turno": 2,
+   "mensaje_cliente": "we leave from Cartagena on the 30th. Do we need to know how to swim?",
+   "historial": [
+    {
+     "role": "user",
+     "content": "Hi! There are two of us and we've never dived. How much is the discover dive and what's included?"
+    }
+   ]
   }
  ]
 }

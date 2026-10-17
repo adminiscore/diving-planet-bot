@@ -25,7 +25,7 @@ from src.agents.grounding_check import (
     urls_grounded,
 )
 from src.agents.intent_detector import certification_status
-from src.agents.query_rewriter import condense_query
+from src.agents.query_rewriter import condense_query, pregunta_sola
 from src.config import settings
 from src.knowledge.loader import load_brand_tone
 from src.knowledge.vector_store import get_pool, search_knowledge_base
@@ -1040,9 +1040,14 @@ async def rag_answer(
 
     # CAL-D (`consulta_con_lo_sabido`): el reescritor recibe lo que ya sabemos del cliente para que la consulta nombre
     # el asunto (sin esto deja la elipsis: "per day", "en concepto").
+    # G3-05 (`busqueda_con_la_pregunta_sola`): a la vez, la pregunta sola (sin los datos que da el cliente y en el
+    # idioma de la respuesta), que hace de "pregunta tal cual" en la búsqueda doble. Sin llamada si el mensaje es corto
+    # y está en el idioma de la respuesta. Se espera justo antes de la segunda búsqueda.
+    tarea_pregunta = asyncio.create_task(pregunta_sola(query, lang))
     condensed_query = await condense_query(query, history=history, lang=lang, hechos=avisos_hechos)
     ambiguous_location_clarification = _ambiguous_location_clarification(condensed_query, lang)
     if ambiguous_location_clarification:
+        tarea_pregunta.cancel()
         logger.info(f"[RAG][CANONICAL_SHORTCUT] shortcut=ambiguous_location query={query!r} lang={lang}")
         return ambiguous_location_clarification
 
@@ -1101,22 +1106,20 @@ async def rag_answer(
     # `docs/robustness/juez/README.md`). Las dos búsquedas van a la vez. Solo si la reescritura CAMBIÓ la pregunta, y
     # la original lleva la misma marca de origen: en rag_piezas, con la reescrita idéntica, la única diferencia era
     # la marca y la búsqueda sin ella sacaba del top-8 una pieza buena.
+    # G3-05: la búsqueda principal arranca ya; la segunda, en cuanto llega la pregunta sola (si la hay).
     sufijo_origen = retrieval_query[len(antes_del_origen):]
-    reescrita_distinta = query.strip() != condensed_query.strip()
-    original_q = redact_pii(query + sufijo_origen) if settings.rag_busqueda_doble and reescrita_distinta else ""
-    buscar_original = bool(original_q.strip()) and original_q not in (safe_query, bare_safe_query)
-    originales = None
+    principal = None
     if bare_docs is not None and safe_query == bare_safe_query:
         docs = bare_docs
-        if buscar_original:
-            originales = await search_knowledge_base(original_q, lang=lang, **buscar_kw)
-    elif buscar_original:
-        docs, originales = await asyncio.gather(
-            search_knowledge_base(safe_query, lang=lang, **buscar_kw),
-            search_knowledge_base(original_q, lang=lang, **buscar_kw),
-        )
     else:
-        docs = await search_knowledge_base(safe_query, lang=lang, **buscar_kw)
+        principal = asyncio.create_task(search_knowledge_base(safe_query, lang=lang, **buscar_kw))
+    tal_cual = await tarea_pregunta or query
+    reescrita_distinta = tal_cual.strip() != condensed_query.strip()
+    original_q = redact_pii(tal_cual + sufijo_origen) if settings.rag_busqueda_doble and reescrita_distinta else ""
+    buscar_original = bool(original_q.strip()) and original_q not in (safe_query, bare_safe_query)
+    originales = await search_knowledge_base(original_q, lang=lang, **buscar_kw) if buscar_original else None
+    if principal is not None:
+        docs = await principal
     if originales:
         docs = fusionar_busquedas(docs, originales)
 

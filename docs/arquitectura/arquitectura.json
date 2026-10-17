@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-17T18:34:51+00:00",
-  "commit": "893cac0",
+  "generado": "2026-10-17T19:03:25+00:00",
+  "commit": "95f1659",
   "rama": "feature/pre_gadea"
  },
  "vistas": {
@@ -941,6 +941,13 @@
      "titulo": "La búsqueda sabe de qué va la pregunta",
      "codigo": true,
      "pre": true,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "busqueda_con_la_pregunta_sola",
+     "titulo": "Se busca también la pregunta sola, sin los datos que da el cliente",
+     "codigo": false,
+     "pre": false,
      "sin_efecto": false
     }
    ],
@@ -2035,6 +2042,19 @@
    "fijado_en_pre": false,
    "usado_por": [
     "r_escribir"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "busqueda_con_la_pregunta_sola",
+   "area": "Preguntas",
+   "titulo": "Se busca también la pregunta sola, sin los datos que da el cliente",
+   "texto": "Si el cliente da datos y pregunta en el mismo mensaje (\"salimos de Cartagena el día 30. ¿Hace falta saber nadar?\"), el origen y la fecha tapaban la pregunta y la búsqueda no traía la pregunta frecuente: el bot decía que no tenía el dato. Ahora también se busca la pregunta sola, traducida si el cliente escribe en portugués o francés.",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
+   "usado_por": [
+    "r_reescribir"
    ],
    "sin_efecto": null
   },
