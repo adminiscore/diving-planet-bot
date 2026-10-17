@@ -389,6 +389,12 @@ class Settings(BaseSettings):
     # (ningún ataque prospera con o sin el flag: protege al asesor y las conversaciones largas). Revert = False aquí
     # y quitar la línea del compose.
     memoria_sin_ordenes_del_cliente: bool = True
+    # r6-2 (17-oct, DECISIÓN DE GADEA): quien pide datos de OTROS clientes (nombres, teléfonos, reservas) recibe una
+    # negativa de privacidad, no el pase a un asesor (Jev `pide_datos_ajenos`; banco r6-2 sec-07: hoy salta
+    # `needs_staff` y pasa el caso). **PROMOCIONADO 17-oct**: banco de 10 inyecciones en PRE 0/30 (sec-07 3/3 → 0/3,
+    # el resto igual) y ningún falso positivo en 240 mensajes reales de las rondas y del banco (contar plazas o
+    # preguntar si hay sitio no cuenta). Revert = False aquí y quitar la línea del compose.
+    datos_ajenos_se_niegan: bool = True
     # Modelo del revisor de `avisos_al_final` (vacío = `rag_plan_model`). Va a la vez que el juez de grounding.
     # Medido en local (17-oct, 5 casos del banco + los 93 turnos de la ronda core cal-D): gpt-4.1-mini acierta 4 de 5
     # pero añade aviso en 64 de 93 turnos (relleno); gpt-4.1 y GPT-6 Luna (sin razonamiento) aciertan 4 de 5 y añaden

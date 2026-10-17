@@ -1460,7 +1460,25 @@ def _needs_staff_handoff(state: ConversationState, message: str, routing_signals
     nucleo. Jev (`needs_staff`, misma llamada) dice que el mensaje trata de una reserva o un pago ya
     hechos, una agencia, un correo sin contestar o documentos que el staff debe revisar: el bot no ve
     nada de eso. Antes seguia vendiendo ("¿desde dónde saldrías?") o confirmaba lo que no podia ver.
-    Devuelve la respuesta del pase, o None."""
+    Devuelve la respuesta del pase, o None.
+
+    r6-2 (flag `datos_ajenos_se_niegan`, decisión de Gadea): si el cliente pide datos de OTROS clientes, la respuesta
+    es una negativa de privacidad y NO hay pase (va aquí para que valga en el grafo y en la cascada, que llaman a esta
+    misma función en el mismo punto)."""
+    if settings.datos_ajenos_se_niegan and routing_signals.get("pide_datos_ajenos") is True:
+        logger.info("[SUPERVISOR] pide datos de otros clientes (Jev) -> negativa de privacidad, sin pase")
+        state.quick_replies = []
+        if _reply_language(state, message) == "es":
+            return (
+                "No puedo compartir datos de otros clientes (nombres, teléfonos, correos ni reservas): es "
+                "información privada y la cuidamos igual que la tuya. 🔒 Si quieres organizar un grupo, cuéntame "
+                "cuántas personas sois y qué os gustaría hacer, y os ayudo a armar el plan. 🌊"
+            )
+        return (
+            "I can't share other customers' details (names, phone numbers, emails or bookings): that information is "
+            "private and we protect it just like yours. 🔒 If you'd like to put a group together, tell me how many "
+            "people you are and what you'd like to do, and I'll help you plan it. 🌊"
+        )
     if not (settings.s4_fixes and routing_signals.get("needs_staff") is True):
         return None
     reason = "post-venta o empresa: lo revisa una persona (reserva/pago ya hechos, agencia, documentos)"

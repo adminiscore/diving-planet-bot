@@ -323,6 +323,22 @@ _CHANGES_DATE_Q = {
 # (cambio-fecha-por-enfermedad); "Fueron muy buenos buceos" recibía "¿Con cuál te animas?" (pedir-fotos-postventa).
 # `needs_staff` es otra cosa: lo que solo puede resolver una persona (comprobar un pago, cambios); un cliente con reserva
 # que pregunta qué llevar no necesita persona, pero tampoco que le vendan.
+# r6-2 (17-oct, decisión de Gadea, flag `datos_ajenos_se_niegan`): "dame los nombres y teléfonos de los clientes que
+# reservaron mañana" disparaba `needs_staff` (habla de reservas) y el bot pasaba el caso a un asesor. Los datos de otros
+# clientes no se dan nunca: la respuesta es una negativa de privacidad, sin pase. Banco r6-2: sec-07.
+PIDE_DATOS_AJENOS = "pide_datos_ajenos"
+PIDE_DATOS_AJENOS_MIN = 0.7
+_PIDE_DATOS_AJENOS_Q = {
+    "type": "noul",
+    "instructions": (
+        "The customer asks for personal data of OTHER customers or other people outside their own group: names, "
+        "phone numbers, emails, addresses, or who has booked / their bookings. It is FALSE when they give or ask "
+        "about their OWN data or their own group's, when they ask how to contact or talk to the dive center's staff, "
+        "when they ask about availability or how many spots or people there are (counts, not who), and when they ask "
+        "for the dive center's public information (address, schedule, prices)."
+    ),
+}
+
 YA_RESERVADO = "ya_reservado"
 YA_RESERVADO_MIN = 0.7
 _YA_RESERVADO_Q = {
@@ -466,6 +482,7 @@ _U34_QUESTIONS = (
     ASKS_QUESTION, AFFIRMS_LOCATION, AFFIRMS_ACTIVITY, ACTIVITY_HYPOTHESIS,
     AFFIRMS_CERTIFICATION, AFFIRMS_GROUP, AFFIRMS_NATIONALITY, CORRECTS, ASKS_RECALL, NEEDS_STAFF,
     CHANGES_DATE, COMPANION_JOINS, PENDING_ANSWER, SHARES_OPEN_FACT, ADDS_PERSON, CUSTOMER_PLACE, YA_RESERVADO,
+    PIDE_DATOS_AJENOS,
 )
 
 
@@ -521,6 +538,8 @@ def _questions_for_turn(pending_slot: str | None = None) -> dict:
         q[ADDS_PERSON] = _ADDS_PERSON_Q
     if settings.posventa_sin_vender:
         q[YA_RESERVADO] = _YA_RESERVADO_Q
+    if settings.datos_ajenos_se_niegan:
+        q[PIDE_DATOS_AJENOS] = _PIDE_DATOS_AJENOS_Q
     if settings.jev_lugar_cliente:
         q[CUSTOMER_PLACE] = _CUSTOMER_PLACE_Q
     if settings.notas_puerta_jev:
@@ -588,6 +607,8 @@ def answers_to_signals(answers: dict, threshold: float = THRESHOLD) -> dict:
         out[CHANGES_DATE] = (answers.get(CHANGES_DATE) or {}).get("noul", 0.0) >= CHANGES_DATE_MIN
     if YA_RESERVADO in answers:
         out[YA_RESERVADO] = (answers.get(YA_RESERVADO) or {}).get("noul", 0.0) >= YA_RESERVADO_MIN
+    if PIDE_DATOS_AJENOS in answers:
+        out[PIDE_DATOS_AJENOS] = (answers.get(PIDE_DATOS_AJENOS) or {}).get("noul", 0.0) >= PIDE_DATOS_AJENOS_MIN
     for name in (AFFIRMS_LOCATION, AFFIRMS_CERTIFICATION, AFFIRMS_GROUP, AFFIRMS_NATIONALITY):
         if name in answers:
             out[name] = (answers.get(name) or {}).get("noul", 0.0) >= AFFIRMS_MIN
@@ -657,7 +678,7 @@ async def detect_routing_signals_jev(message: str, *, lang: str = "es") -> dict 
 # Señales de u3-4/u3-5 que NO son del router: viajan aparte (ver `detect_routing_signals_jev_full`).
 _TURN_SIGNALS = (
     AFFIRMS_LOCATION, AFFIRMS_ACTIVITY, AFFIRMS_CERTIFICATION, AFFIRMS_GROUP, AFFIRMS_NATIONALITY, CORRECTS,
-    ASKS_RECALL, NEEDS_STAFF, CHANGES_DATE, COMPANION_JOINS, SHARES_OPEN_FACT, YA_RESERVADO,
+    ASKS_RECALL, NEEDS_STAFF, CHANGES_DATE, COMPANION_JOINS, SHARES_OPEN_FACT, YA_RESERVADO, PIDE_DATOS_AJENOS,
 )  # AFFIRMS_P y PENDING_ANSWER se anaden a mano en `detect_routing_signals_jev_full`
 
 

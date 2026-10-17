@@ -19,6 +19,11 @@ History
     con y sin el flag (3/30 y 4/30 "fallos" del verificador: pedir datos de otros clientes acaba en el pase a un
     asesor en vez de una negativa explícita, sin dar ningún dato; y el JSON gratis no dice "se paga online").
   - El extractor y el enrutador no tienen campos con privilegios (precio, pago, estado): riesgo bajo.
+  - **Datos de otros clientes → negativa (decisión de Gadea), PROMOCIONADO (`DATOS_AJENOS_SE_NIEGAN`):** una pregunta
+    nueva a Jev (`pide_datos_ajenos`) y, si es que sí, "No puedo compartir datos de otros clientes… es información
+    privada", sin pase a un asesor (antes saltaba `needs_staff`). Banco de inyecciones con el flag: **0/30**. Ningún
+    falso positivo en 240 mensajes reales (contar plazas o preguntar si hay sitio no cuenta; el correo de la esposa o
+    el teléfono del instructor tampoco).
   - q5-1 (puerta del golden en CI) DESCARTADA por decisión de Gadea: coste innecesario.
 
 0.31.45 - (2026-10-17)

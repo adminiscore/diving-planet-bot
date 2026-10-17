@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-17T16:16:10+00:00",
-  "commit": "66001c1",
+  "generado": "2026-10-17T16:37:05+00:00",
+  "commit": "e5b1682",
   "rama": "feature/pre_gadea"
  },
  "vistas": {
@@ -159,6 +159,13 @@
     {
      "nombre": "pase_si_pide_fuera_del_sistema",
      "titulo": "Lo que la web no puede dar lo arregla una persona",
+     "codigo": true,
+     "pre": true,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "datos_ajenos_se_niegan",
+     "titulo": "Los datos de otros clientes se niegan, sin pasar a un asesor",
      "codigo": true,
      "pre": true,
      "sin_efecto": false
@@ -2122,6 +2129,19 @@
    "fijado_en_pre": true,
    "usado_por": [
     "b_routing"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "datos_ajenos_se_niegan",
+   "area": "Enrutador",
+   "titulo": "Los datos de otros clientes se niegan, sin pasar a un asesor",
+   "texto": "Si alguien pide nombres, teléfonos o reservas de otros clientes, el bot contesta que esa información es privada y ofrece ayudar con su propio plan. Antes pasaba el caso a un asesor porque la petición hablaba de reservas.",
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
+   "usado_por": [
+    "router"
    ],
    "sin_efecto": null
   },
