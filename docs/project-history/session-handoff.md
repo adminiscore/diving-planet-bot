@@ -95,7 +95,18 @@ del banco y seguir cada rareza. La base de hoy se comprobó: 21 casos medidos, n
   guarda is_colombian=False y no dice que paga en USD), cal-36 (el bono: "Entiendo que mencionas un bono adicional" +
   el menú, dos veces; la pregunta se pierde, patrón de C1/C3). Sonda sin juez:
   `ENV_FILE=.env.dev python -m scripts.sonda_senales --ids cal-32,cal-36,cal-55,cal-69,cal-70 --codigo-local --solo-ultimo`.
-- **Siguiente:** la mini-ronda A/B del golden con los 6 flags de CAL-C juntos (A = código nuevo apagado, B = encendidos, misma franja) y, si la diferencia es pequeña, repetir 3× los diálogos que cambian (`docs/robustness/protocolo-medicion.md`). Después r6-1 (robustez de PRE: mensaje de respaldo, 429, **alerta de saldo**).
+- **Tarde del 17-oct (decisiones de Álvaro):** datos DE UNO EN UNO (criterio de cal-16 actualizado); sin cédula = USD
+  (`SIN_CEDULA_EXTRANJERO`, apagado: el estado lo guarda, pero la respuesta del RAG no dice USD → Gadea); C3d
+  `TRAS_PASE_RECUERDA_EL_PASE` (apagado) arregla cal-59 3/3 → 0/3. cal-36 ya está bien en PRE (lo mide el banco en el
+  turno equivocado → Gadea). Quedan míos: cal-55 (Barú) y cal-69/70 (el grupo "my wife ... and I": "and I" no está en
+  el mensaje). **Flags de CAL-C para la mini-ronda: 8** (`ACTIVIDAD_POR_LO_SABIDO`, `EXTRACTOR_CITA_DEL_CLIENTE`,
+  `HOTEL_POR_EXTRACTOR`, `UNA_SOLA_PREGUNTA`, `LUGAR_CON_DOS_LECTORES`, `IDIOMA_DEL_EXTRACTOR`, `SIN_CEDULA_EXTRANJERO`,
+  `TRAS_PASE_RECUERDA_EL_PASE`).
+- **PARA GADEA (de Álvaro, 17-oct tarde):** (1) cal-32: con `SIN_CEDULA_EXTRANJERO` el estado sabe que no es colombiano,
+  pero la respuesta no dice "pagas en USD" al hablar del pago; (2) cal-36: el bono se contesta bien en el turno 3 y el
+  banco mide el turno 4; (3) cal-46/cal-25: la respuesta pregunta el origen ya sabido / no pregunta hace cuánto no bucea;
+  (4) cal-08: "el plan de 5 buceos" se queda en buceo de 1 día (plan exacto, CAL-D).
+- **Siguiente:** la mini-ronda A/B del golden con los 8 flags de CAL-C juntos (A = código nuevo apagado, B = encendidos, misma franja) y, si la diferencia es pequeña, repetir 3× los diálogos que cambian (`docs/robustness/protocolo-medicion.md`). Después r6-1 (robustez de PRE: mensaje de respaldo, 429, **alerta de saldo**).
 
 ### ▶️ (anterior) 17-oct madrugada (Gadea con Claude): CUATRO RONDAS del core medidas, 2 cambios PROMOCIONADOS y los avisos DESCARTADOS
 

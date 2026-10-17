@@ -30,6 +30,21 @@ History
 | **Total** | **49/63** | **28/63** (34 en la medida conjunta − 6 de cal-71/73 tras el último arreglo) | |
 
   - Tests `tests/test_cal_c3_hotel_por_extractor.py` (14). Gasto del 17-oct en CAL-C ≈ 8 $ (estimado).
+  - **Tarde (decisiones de Álvaro, 17-oct): (1) PRE libre → subido 941b6ca, healthy; (2) los datos se piden DE UNO EN
+    UNO → criterio `pide-datos-faltantes` (cal-16) actualizado en el golden y en el banco; (3) sin cédula = USD.**
+  - **`SIN_CEDULA_EXTRANJERO` (APAGADO):** "que no tenga cedula" → `is_colombian=False` (cal-32 3/3 en local; trampas
+    "¿necesito cédula?" y "soy colombiana pero no tengo la cédula a mano" bien). La frase va al FINAL de la regla: en medio
+    movía el extractor (estables 98 → 95,5 %); al final 96,5 %, inventos 4 = 4, pierde 2 datos frágiles ("solo yo",
+    "un solo buzo avanzado"). En PRE el estado ya guarda `is_colombian=False`, pero **la respuesta del RAG no dice USD**
+    cuando el cliente habla de pagar (área de Gadea): cal-32 sigue 3/3.
+  - **C3d `TRAS_PASE_RECUERDA_EL_PASE` (APAGADO):** con la conversación ya pasada a un asesor, el RAG lo sabe y no pide
+    repetir el caso: cal-59 3/3 → **0/3** ("El asesor del equipo ya tiene tu caso y te escribirá por aquí").
+  - **cal-36 (el bono) ya está bien en PRE** con lo promocionado anoche (turno 3: "el precio online ya incluye el 10 %…
+    no hay bono extra por ser colombianos"); el banco lo mide en el turno 4 ("¿incluye el almuerzo?"): defecto del
+    INSTRUMENTO, para Gadea (dueña del banco).
+  - cal-69/70: "My wife ... and I" no es una cita mala del control: "and I" NO está en el mensaje (el extractor junta
+    palabras). Pendiente de diseño sin abrir la puerta a inventos. cal-55 (Barú): pendiente.
+  - Gasto total del 17-oct en CAL-C ≈ 9,5 $ (estimado). 8 flags de CAL-C, todos APAGADOS hasta la mini-ronda A/B.
 
 0.31.40 - (2026-10-17)
 ----------------------
