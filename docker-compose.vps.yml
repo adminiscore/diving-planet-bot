@@ -385,6 +385,12 @@ services:
       IDIOMA_DEL_EXTRACTOR: "true"
       SIN_CEDULA_EXTRANJERO: "true"
       TRAS_PASE_RECUERDA_EL_PASE: "true"
+      # CAL-C PROMOCIONADO 17-oct: C4, C5 y C3e. Ronda core calc2-A 94,7 % 24/32 vs calc2-B 96,9 % 27/32, p95 6,4 → 6,0 s;
+      # 8 mejoras y 3 regresiones, repetidas 3x con y sin los flags: ninguna suya. Banco: cal-55 y cal-46 a 0/3, y la
+      # pregunta del snorkel de cal-69/70 desaparece. Revert = quitar estas líneas y poner los defaults en False.
+      LUGAR_DESCONOCIDO_AL_RAG: "true"
+      RED_MENCIONES_SOLO_SIN_EXTRACTOR: "true"
+      HOTEL_DEL_CATALOGO_DA_ISLA: "true"
       # CAL-A PROMOCIONADO 17-oct (Gadea con Claude): la profundidad por certificación en el catálogo (banco: cal-18
       # 3/3 → 0/3) y el aviso que falta AÑADIDO AL FINAL (A6, revisor GPT-6 Luna). Ronda core cala6-B frente a calc-B:
       # 96,5 % = 96,5 %, 27/32 frente a 25/32 diálogos sin fallo; ninguna regresión suya (repetidas 3x con y sin).

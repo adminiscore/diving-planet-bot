@@ -1,8 +1,8 @@
 {
  "meta": {
-  "generado": "2026-10-17T16:37:05+00:00",
-  "commit": "e5b1682",
-  "rama": "feature/pre_gadea"
+  "generado": "2026-10-17T16:46:29+00:00",
+  "commit": "df4016a",
+  "rama": "ronda-calc2-b-local"
  },
  "vistas": {
   "general": {
@@ -179,8 +179,8 @@
    "marca": "openrouter",
    "tiempos": {
     "n": 93,
-    "p50": 0.434,
-    "p95": 1.665
+    "p50": 0.439,
+    "p95": 1.599
    }
   },
   {
@@ -222,7 +222,7 @@
    "tiempos": {
     "n": 2,
     "p50": 0.003,
-    "p95": 0.004
+    "p95": 0.003
    }
   },
   {
@@ -246,8 +246,8 @@
    "modelos": [],
    "tiempos": {
     "n": 1,
-    "p50": 0.001,
-    "p95": 0.001
+    "p50": 0.003,
+    "p95": 0.003
    }
   },
   {
@@ -265,8 +265,8 @@
    "interruptores": [],
    "tiempos": {
     "n": 4,
-    "p50": 3.414,
-    "p95": 3.623
+    "p50": 3.243,
+    "p95": 4.203
    }
   },
   {
@@ -283,8 +283,8 @@
    "interruptores": [],
    "tiempos": {
     "n": 79,
-    "p50": 2.04,
-    "p95": 5.038
+    "p50": 2.513,
+    "p95": 4.971
    }
   },
   {
@@ -494,8 +494,8 @@
    "marca": "openai",
    "tiempos": {
     "n": 79,
-    "p50": 0.03,
-    "p95": 1.245
+    "p50": 0.028,
+    "p95": 1.241
    }
   },
   {
@@ -527,7 +527,7 @@
    "tiempos": {
     "n": 79,
     "p50": 0.005,
-    "p95": 0.01
+    "p95": 0.072
    }
   },
   {
@@ -564,8 +564,8 @@
    ],
    "marca": "openai",
    "tiempos": {
-    "n": 75,
-    "p50": 0.007,
+    "n": 74,
+    "p50": 0.006,
     "p95": 0.016
    }
   },
@@ -661,9 +661,9 @@
    ],
    "marca": "openai",
    "tiempos": {
-    "n": 75,
-    "p50": 0.44,
-    "p95": 0.985
+    "n": 74,
+    "p50": 0.536,
+    "p95": 1.034
    }
   },
   {
@@ -714,22 +714,22 @@
     {
      "nombre": "lugar_desconocido_al_rag",
      "titulo": "Un lugar desconocido se pregunta a la base",
-     "codigo": false,
-     "pre": false,
+     "codigo": true,
+     "pre": true,
      "sin_efecto": false
     },
     {
      "nombre": "red_menciones_solo_sin_extractor",
      "titulo": "La red de palabras clave, solo si falla el extractor",
-     "codigo": false,
-     "pre": false,
+     "codigo": true,
+     "pre": true,
      "sin_efecto": false
     },
     {
      "nombre": "hotel_del_catalogo_da_isla",
      "titulo": "Un hotel de las islas dice que está en las islas",
-     "codigo": false,
-     "pre": false,
+     "codigo": true,
+     "pre": true,
      "sin_efecto": false
     },
     {
@@ -757,8 +757,8 @@
    "marca": "openai",
    "tiempos": {
     "n": 74,
-    "p50": 1.593,
-    "p95": 4.155
+    "p50": 1.727,
+    "p95": 4.113
    }
   },
   {
@@ -875,9 +875,9 @@
    ],
    "modelos": [],
    "conteo": {
-    "n": 45,
+    "n": 46,
     "que": "preguntas",
-    "fuente": "2026-10-17-cala6-B.json"
+    "fuente": "2026-10-17-calc2-B.json"
    }
   },
   {
@@ -2285,9 +2285,9 @@
    "area": "Reserva",
    "titulo": "Un hotel de las islas dice que está en las islas",
    "texto": "Si el hotel que nombra el cliente está en el catálogo de hoteles de las islas (por ejemplo, Ubuntu), el bot sabe que está en las islas y en qué isla; y el hotel se guarda aunque ese mensaje acabe pasándose a un asesor.",
-   "codigo": false,
-   "pre": false,
-   "fijado_en_pre": false,
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
    "usado_por": [
     "b_slotfill_close"
    ],
@@ -2699,9 +2699,9 @@
    "area": "Reserva",
    "titulo": "Un lugar desconocido se pregunta a la base",
    "texto": "Si el cliente dice que está en un sitio que no es Cartagena ni las Islas del Rosario (por ejemplo, Barú), el bot se lo pregunta a la base de conocimiento, que sabe dónde no operamos, en vez de solo repetir el lugar.",
-   "codigo": false,
-   "pre": false,
-   "fijado_en_pre": false,
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
    "usado_por": [
     "b_slotfill_close"
    ],
@@ -3120,9 +3120,9 @@
    "area": "Reserva",
    "titulo": "La red de palabras clave, solo si falla el extractor",
    "texto": "Una red antigua buscaba nombres de actividades en el mensaje y preguntaba por ellas ('We snorkeled yesterday' → '¿cuántos para snorkel?'). Ahora el reparto del grupo lo decide el extractor y la red solo actúa si el extractor no pudo leer el mensaje.",
-   "codigo": false,
-   "pre": false,
-   "fijado_en_pre": false,
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
    "usado_por": [
     "b_slotfill_close"
    ],
@@ -3202,7 +3202,7 @@
     "r_revisor"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 100
+   "llamadas_ultima_ronda": 97
   },
   {
    "ajuste": "extraction_model",
@@ -3217,7 +3217,7 @@
     "b_acuse"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 115
+   "llamadas_ultima_ronda": 112
   },
   {
    "ajuste": "extractor_turno_model",
@@ -3227,7 +3227,7 @@
     "b_extraction"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 82
+   "llamadas_ultima_ronda": 87
   },
   {
    "ajuste": "grounding_v3_model",
@@ -3237,7 +3237,7 @@
     "r_revisor"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 47
+   "llamadas_ultima_ronda": 46
   },
   {
    "ajuste": "jev_model",
@@ -3249,7 +3249,7 @@
    ],
    "proveedor": "OpenRouter",
    "llamadas_ultima_ronda": null,
-   "nota": "Decidió solo 79 de 93 mensajes; en los otros 14 decidió el LLM de respaldo (sus llamadas cuentan en gpt-4o-mini)."
+   "nota": "Decidió solo 82 de 93 mensajes; en los otros 11 decidió el LLM de respaldo (sus llamadas cuentan en gpt-4o-mini)."
   },
   {
    "ajuste": "openai_embedding_model",
@@ -3272,7 +3272,7 @@
     "r_reescribir"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 115
+   "llamadas_ultima_ronda": 112
   },
   {
    "ajuste": "openai_transcription_model",
@@ -3292,7 +3292,7 @@
     "r_escribir"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 100
+   "llamadas_ultima_ronda": 97
   },
   {
    "ajuste": "rag_plan_model",
@@ -3300,50 +3300,50 @@
    "pre": "gpt-4.1-mini",
    "usado_por": [],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 82
+   "llamadas_ultima_ronda": 87
   }
  ],
  "ronda": {
-  "etiqueta": "cala6-B (profundidad + avisos al final, Luna) sobre calc-B",
-  "run_at": "2026-10-17T13:48:58Z",
-  "fichero": "2026-10-17-cala6-B.json",
-  "commit": "4b33898",
+  "etiqueta": "calc2-B 17-oct (C3e/C4/C5 encendidos)",
+  "run_at": "2026-10-17T16:10:02Z",
+  "fichero": "2026-10-17-calc2-B.json",
+  "commit": "df4016a",
   "por_tipo": {
    "reserva": {
-    "turns": 48,
-    "latency_p50": 1.254,
-    "latency_p95": 2.442,
-    "latency_avg": 1.425,
-    "llm_calls_avg": 2.06,
+    "turns": 47,
+    "latency_p50": 1.266,
+    "latency_p95": 2.252,
+    "latency_avg": 1.408,
+    "llm_calls_avg": 2.21,
     "llm_calls_p95": 3.0,
     "llm_calls_max": 5,
-    "embeddings_avg": 1.23,
-    "llm_share": 1.352,
+    "embeddings_avg": 1.36,
+    "llm_share": 1.395,
     "tokens_avg": 0,
     "cost_avg_usd": 0
    },
    "rag": {
-    "turns": 45,
-    "latency_p50": 4.05,
-    "latency_p95": 7.32,
-    "latency_avg": 4.39,
-    "llm_calls_avg": 5.44,
-    "llm_calls_p95": 7.8,
-    "llm_calls_max": 9,
-    "embeddings_avg": 1.62,
-    "llm_share": 1.552,
+    "turns": 46,
+    "latency_p50": 4.193,
+    "latency_p95": 6.936,
+    "latency_avg": 4.437,
+    "llm_calls_avg": 5.17,
+    "llm_calls_p95": 7.0,
+    "llm_calls_max": 7,
+    "embeddings_avg": 1.61,
+    "llm_share": 1.5,
     "tokens_avg": 0,
     "cost_avg_usd": 0
    }
   },
   "enrutador": {
    "by_backend": {
-    "jev": 79,
-    "llm_uncertain": 13,
+    "jev": 82,
+    "llm_uncertain": 10,
     "llm": 1
    },
-   "ms_p50": 406.0,
-   "ms_p95": 496.7
+   "ms_p50": 413.5,
+   "ms_p95": 566.0
   },
   "cliente": {
    "turns": 93,
@@ -3352,13 +3352,13 @@
    "multi_bubble": 0,
    "latency_p50": 3.0,
    "latency_p95": 6.0,
-   "latency_max": 10
+   "latency_max": 9
   },
   "llamadas_por_modelo": {
-   "gpt-4o-mini": 115,
-   "gpt-6-luna": 100,
-   "gpt-4.1-mini": 82,
-   "gpt-4.1": 47
+   "gpt-4o-mini": 112,
+   "gpt-6-luna": 97,
+   "gpt-4.1-mini": 87,
+   "gpt-4.1": 46
   },
   "calidad": null
  },

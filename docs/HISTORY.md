@@ -1,6 +1,22 @@
 History
 =======
 
+0.31.47 - (2026-10-17)
+----------------------
+* **CAL-C CERRADA: C4, C5 y C3e PROMOCIONADOS** (Álvaro con Claude; ronda propuesta por el Claude de Gadea por Coral).
+  - **C4 `LUGAR_DESCONOCIDO_AL_RAG`:** un lugar que el cliente afirma y que Jev, seguro, no reconoce como Cartagena ni las
+    islas se pregunta a la base. cal-55 "En baru y Rosario" 3/3 → 0/3 ("no hacemos salidas de buceo en Barú").
+  - **C5 `RED_MENCIONES_SOLO_SIN_EXTRACTOR`:** la red de menciones por palabras clave solo actúa si el extractor no leyó el
+    mensaje. cal-69/70: "We snorkeled in Roatan yesterday" ya no pregunta "¿cuántos para snorkel?" (6/6); el resto del
+    caso es contenido del RAG (Gadea).
+  - **C3e `HOTEL_DEL_CATALOGO_DA_ISLA`** (propuesta de Gadea): el hotel que lee el extractor, si está en el catálogo de
+    hoteles de las islas del detector, da su isla y "está en las islas"; y se guarda también en el turno del pase.
+    cal-46 (Ubuntu) 3/3 → 0/3. "Mulata" no está en ese catálogo (dato de la base, para Gadea).
+  - **Ronda core** (misma franja; A = fa6f163 con los 3 apagados): calc2-A **94,7 %**, 24/32, p95 6,4 s; calc2-B
+    **96,9 %**, **27/32**, p95 6,0 s. 8 mejoras, 3 regresiones repetidas 3× con y sin los flags: ninguna suya ("¿reservas
+    por la web?" 1/3 con, 2/3 sin; "refresher de un día" 3/3 y 2/3, y es cierto; el formulario médico 0/3 en los dos).
+  - Integrado `feature/gadea-r6-2` (memoria sin órdenes del cliente y negativa a datos ajenos, HISTORY 0.31.46).
+
 0.31.46 - (2026-10-17)
 ----------------------
 * **r6-2 (Gadea con Claude): defensas contra la inyección de prompts. La MEMORIA se tragaba las inyecciones; arreglado
