@@ -1,6 +1,33 @@
 History
 =======
 
+0.31.42 - (2026-10-17)
+----------------------
+* **CAL-A (Gadea con Claude), tarde del 17-oct: la profundidad arregla cal-18 y el aviso que falta se añade AL FINAL
+  (CAL-A6); los dos APAGADOS y candidatos a la ronda core B.** Rama integrada con la de Álvaro (en local, sin subir).
+
+  | Cambio | Flag | Medido | Estado |
+  |---|---|---|---|
+  | El catálogo dice hasta dónde certifica cada curso (Open Water 18 m, Advanced 30 m) | `catalogo_profundidad` | banco: cal-18 3/3 → **0/3** (dos medidas) | candidato |
+  | **A6**: tras redactar, a la vez que el juez, un revisor (GPT-6 Luna, decisión de Gadea) lee la conversación y la lista cerrada de avisos y, si falta UNO que evita un error del cliente, se AÑADE una frase sin rehacer la respuesta | `avisos_al_final` (+ `avisos_al_final_model`) | banco con la profundidad: 35/45 = base, pero el control de ruido (cal-26/42/64/69 sin flags: 6/12) deja la base en ~39/45; cal-49 3 → 1, cal-15 y cal-48 3 → 2. Ronda core SIMULADA (respuestas de cal-D + la frase, juez con caché): 220 = 220 criterios, 0 mejoras y 0 regresiones. Latencia añadida (Luna): p50 0,4 s, p90 0,8 s | candidato |
+  | La preparación de los 18 productos en el catálogo, siempre | `catalogo_preparacion` | arregla cal-49 pero rompe cal-26 y cal-64 (41/48 frente a 38/48) | DESCARTADO |
+  | Nota del RAG tras pasar el caso a una persona | `contexto_tras_el_pase` | cal-14 2/3 y 1/3: no fiable | APAGADO (ver `TRAS_PASE_RECUERDA_EL_PASE` de Álvaro: quedarse con uno) |
+  | Quitar el límite de 8 palabras del reescritor de la búsqueda | — | en local: +1,05 s por mensaje largo y no nombra el asunto | DESCARTADO, sin flag |
+
+  - **Cómo se llegó a A6 sin gastar en PRE** (`docs/robustness/cal/cal-a6-avisos-al-final.md`): banco local del
+    revisor (5 casos que necesitan aviso + los 93 turnos de la ronda cal-D). gpt-4.1-mini metía aviso en 64 de 93
+    turnos (relleno); gpt-4.1 y Luna, en 20-27. Los arreglos, todos genéricos: el código exige dos citas reales del
+    cliente (la condición y su último mensaje); la frase no pide datos ni afirma del cliente lo que no dijo; los textos
+    de `avisos.json` dicen lo que dice la base ("confirmada al pagar" contradecía la FAQ: el pago se concilia después);
+    y **`"al_final": false`** para la información general (cierre de las 4:30, operamos todos los días, formulario
+    médico…), que eran 19 de 33 avisos. Con eso, 12 de 93 turnos, todos de los que evitan un error.
+  - **Ronda simulada**: una forma barata de medir un cambio que solo AÑADE texto: las respuestas reales de una ronda
+    con el añadido, juzgadas con la caché del juez (~0,2-0,3 USD) y comparadas con `ab_judge_compare --rejuzgar 2`.
+    Sin ruido del bot: lo que cambia es del añadido.
+  - **`--flag no:X`** (scripts del banco y sondas): apaga X solo en el proceso de la medida, para medir igual que la
+    base aunque PRE sirva la rama de otro con sus flags encendidos.
+  - **Coste del día en pruebas de CAL-A**: ~5 USD (local + banco en PRE + 3 rondas simuladas).
+
 0.31.41 - (2026-10-17)
 ----------------------
 * **CAL-C (Álvaro con Claude): C3 hecho y todo CAL-C medido con el banco reparado — 49 → 28/63, flags APAGADOS** hasta

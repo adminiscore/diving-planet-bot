@@ -59,7 +59,26 @@ integrar la rama del otro y suite en verde, porque en PRE gana el último; (3) *
 despliegue reinicia el contenedor y mata la medida del otro (avisar en el registro de Plan Coral con la hora de fin).
 Las doce normas, con su porqué, están en el documento.
 
-### ▶️ RETOMAR AQUÍ — 17-oct mediodía (Álvaro con Claude): CAL-C — C3 hecho, banco reparado 49 → 28/63, todo APAGADO
+### ▶️ RETOMAR AQUÍ — 17-oct tarde (Gadea con Claude): CAL-A — profundidad y avisos al final (A6) medidos, APAGADOS, candidatos a la ronda core B
+
+- **Hecho** (HISTORY 0.31.42, `docs/robustness/cal/cal-a6-avisos-al-final.md`): `catalogo_profundidad` arregla cal-18
+  (3/3 → 0/3); `avisos_al_final` (revisor con GPT-6 Luna, decisión de Gadea) arregla en parte cal-49, cal-15 y cal-48 y
+  en la ronda core simulada no cambia ningún criterio. Descartados: la preparación en el catálogo y quitar el límite de 8
+  palabras del reescritor.
+- **Rama**: `feature/pre_gadea` lleva en LOCAL la integración de `feature/pre_alvaro` (merge dea2bf0, suite en verde);
+  el compose sigue como lo dejó Álvaro para su ronda B (sus 8 flags de CAL-C encendidos). **Sin subir**: subir despliega
+  PRE y Álvaro estaba midiendo.
+- **Siguiente**: la ronda core B con `CATALOGO_PROFUNDIDAD` y `AVISOS_AL_FINAL` encendidos. Opción 1 (recomendada): con
+  los flags de Álvaro también encendidos y SU ronda B como A (no se paga otra A; hace falta su fichero juzgado). Opción 2:
+  sus flags apagados y cal-D como A. Pendiente de Gadea y Álvaro.
+- **Para Gadea (dueña del banco)**: cal-36 se mide en el turno 4 y lo que pide pasa en el 3 (lo vio Álvaro): corregir el
+  turno del caso. cal-32: con `SIN_CEDULA_EXTRANJERO` el estado sabe que es extranjero; con A6, el aviso del USD puede
+  darlo (por medir juntos).
+- **En esta carpeta trabaja también otra sesión de Gadea** (`tools/coral`, `.mcp.json`, `Caddyfile`,
+  `scripts/pre_access.py`): el canal para que los Claude de Gadea y Álvaro se hablen. No es de esta sesión: no se
+  toca ni se mete en sus commits.
+
+### ▶️ (anterior) 17-oct mediodía (Álvaro con Claude): CAL-C — C3 hecho, banco reparado 49 → 28/63, todo APAGADO
 
 **Estado.** `feature/pre_alvaro` = `feature/pre_gadea` (121ce14, avance limpio) + el trabajo de CAL-C de hoy. Los 6 flags
 de CAL-C están **APAGADOS**: `ACTIVIDAD_POR_LO_SABIDO` (C1), `EXTRACTOR_CITA_DEL_CLIENTE` (C2), `HOTEL_POR_EXTRACTOR`
