@@ -2459,6 +2459,14 @@ def _poner_ubicacion(intent, state: ConversationState, message: str, datos: dict
             # la recogida (ronda ex5-B2: "una noche en Coral Sand y la otra en Majagua" se perdía y se repreguntaba).
             _conservar_hotel(intent, pista)
         return
+    if settings.lugar_con_dos_lectores and _jev_dice_que_no_lo_dice(state):
+        # CAL-C3c (17-oct): "bucear el lunes festivo en islas del rosario" → el extractor ponía island 3 de 3 (su regla
+        # dice que nombrar las islas como sitio de buceo no basta, y no la sigue) y el bot cotizaba solo "ya en las
+        # islas" (cal-71/73). El origen decide precio y enlace: se guarda solo si los dos lectores no se contradicen.
+        # Jev seguro de que el mensaje NO dice dónde está → el origen queda sin saber y la reserva lo pregunta.
+        logger.info(f"[EXTRACT][CAL-C3c] el extractor dice location={lugar!r} y Jev, seguro, que el mensaje no lo "
+                    "dice: no se guarda")
+        return
     if guardado and guardado != lugar:
         # Cambiar un origen ya guardado pasa por la confirmación de siempre (`_route_contradictions`): con una señal
         # clara de corrección ("al final…", "en realidad…") se cambia; si no, "¿lo cambio?"; si Jev dice que el
@@ -2473,6 +2481,14 @@ def _poner_ubicacion(intent, state: ConversationState, message: str, datos: dict
     if lugar == "island":
         _conservar_hotel(intent, pista)
     logger.info(f"[EXTRACT][EX5] location={lugar!r} (regex: {pista.get('location')!r}, guardado: {guardado!r})")
+
+
+def _jev_dice_que_no_lo_dice(state: ConversationState) -> bool:
+    """CAL-C3c: ¿Jev está seguro (≥ `CUSTOMER_PLACE_MIN`) de que el mensaje no dice dónde está el cliente?"""
+    from src.agents.jev_router import CUSTOMER_PLACE_MIN  # lazy
+
+    lugar = getattr(state, "_jev_lugar", None) or {}
+    return lugar.get("choice") == "none" and (lugar.get("confidence") or 0.0) >= CUSTOMER_PLACE_MIN
 
 
 def _poner_hotel(intent, state: ConversationState, datos: dict) -> None:

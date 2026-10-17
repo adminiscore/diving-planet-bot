@@ -103,3 +103,24 @@ def test_una_sola_pregunta_para_cualquier_dato(monkeypatch):
     assert not core._answer_replaces_the_booking_question(st, afirmacion)
     # con el cierre de la reserva (resumen + enlace) en el turno, el cierre se manda igual
     assert not core._answer_replaces_the_booking_question(st, pregunta, finalized=True)
+
+
+# --- CAL-C3c `lugar_con_dos_lectores`: el origen solo si Jev no dice, seguro, que el mensaje no lo dice ---
+
+def _intent_lugar():
+    return type("I", (), {"location": None, "hotel": None, "island": None, "detected_fields": []})()
+
+
+@pytest.mark.parametrize("jev, flag, guardado", [
+    ({"choice": "none", "confidence": 0.98}, True, None),        # cal-71: Jev seguro de que no lo dice → sin origen
+    ({"choice": "none", "confidence": 0.98}, False, "island"),   # sin el flag, como hoy
+    ({"choice": "none", "confidence": 0.40}, True, "island"),    # Jev duda → vale el extractor
+    ({"choice": "islands", "confidence": 0.99}, True, "island"),  # de acuerdo
+    (None, True, "island"),                                       # sin Jev → como hoy
+])
+def test_origen_con_dos_lectores(monkeypatch, jev, flag, guardado):
+    monkeypatch.setattr(settings, "lugar_con_dos_lectores", flag)
+    st, it = ConversationState(conversation_id="c3c"), _intent_lugar()
+    st._jev_lugar = jev
+    core._poner_ubicacion(it, st, "bucear en islas del rosario", {"location": "island"}, {})
+    assert it.location == guardado

@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-17T09:31:03+00:00",
-  "commit": "47ebade",
+  "generado": "2026-10-17T09:35:30+00:00",
+  "commit": "c2b02c6",
   "rama": "feature/pre_alvaro"
  },
  "vistas": {
@@ -619,6 +619,13 @@
     {
      "nombre": "hotel_por_extractor",
      "titulo": "El extractor entiende el hotel",
+     "codigo": false,
+     "pre": false,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "lugar_con_dos_lectores",
+     "titulo": "El origen, con dos lectores de acuerdo",
      "codigo": false,
      "pre": false,
      "sin_efecto": false
@@ -2511,6 +2518,19 @@
    "pre": false,
    "fijado_en_pre": false,
    "usado_por": [],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "lugar_con_dos_lectores",
+   "area": "Reserva",
+   "titulo": "El origen, con dos lectores de acuerdo",
+   "texto": "Desde dónde sale el cliente (Cartagena o las islas) decide el precio y el enlace. Se guarda solo si el extractor y Jev no se contradicen: 'quiero bucear en islas del Rosario' no es estar alojado en las islas, y si Jev está seguro de que el mensaje no lo dice, el bot lo pregunta.",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
+   "usado_por": [
+    "b_extraction"
+   ],
    "sin_efecto": null
   },
   {
