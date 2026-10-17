@@ -365,7 +365,11 @@ class Settings(BaseSettings):
     # conversación y no los campos del estado porque en los casos que quedan la condición está en lo que dijo el cliente
     # y no en el estado (cal-49 habla del curso referido sin "elegirlo"; cal-47 no consta que se aloja en las islas).
     # APAGADO hasta medirlo.
-    avisos_al_final: bool = False
+    # **PROMOCIONADO 17-oct** con la ronda core cala6-B (A = calc-B de Álvaro): 96,5 % = 96,5 % de criterios, 27/32
+    # diálogos sin fallo frente a 25/32, latencia del servidor +0,06 s p50. Las 5 regresiones de la ronda, repetidas 3
+    # veces con y sin el flag, no son suyas (la del clima la decide Jev antes del RAG). Revert = "False" aquí y quitar
+    # la línea del compose.
+    avisos_al_final: bool = True
     # Modelo del revisor de `avisos_al_final` (vacío = `rag_plan_model`). Va a la vez que el juez de grounding.
     # Medido en local (17-oct, 5 casos del banco + los 93 turnos de la ronda core cal-D): gpt-4.1-mini acierta 4 de 5
     # pero añade aviso en 64 de 93 turnos (relleno); gpt-4.1 y GPT-6 Luna (sin razonamiento) aciertan 4 de 5 y añaden
@@ -500,7 +504,11 @@ class Settings(BaseSettings):
     # CAL (17-oct): el catálogo del RAG pinta hasta qué profundidad certifica cada curso (`max_depth_m`: Open Water
     # 18 m, Advanced 30 m, lo que dice el registro de actividades) y una línea general de profundidad por certificación
     # (cal-18: "¿cuántos metros bajan?" no tenía el dato en nada que viera el RAG). APAGADO hasta medirlo.
-    catalogo_profundidad: bool = False
+    # **PROMOCIONADO 17-oct** con la ronda core cala6-B (A = calc-B de Álvaro): 96,5 % = 96,5 % de criterios, 27/32
+    # diálogos sin fallo frente a 25/32, latencia del servidor +0,06 s p50. Las 5 regresiones de la ronda, repetidas 3
+    # veces con y sin el flag, no son suyas (la del clima la decide Jev antes del RAG). Revert = "False" aquí y quitar
+    # la línea del compose.
+    catalogo_profundidad: bool = True
     # CAL (17-oct): la preparación de cada producto (`preparation_*`, 18 de 36) en el catálogo, SIEMPRE. MEDIDO: arregla
     # cal-49 (la carta de referido) pero rompe cal-26 y cal-64 (banco CAL-A 41/48 frente a 38/48): dieciocho párrafos
     # en todos los turnos compiten con lo que hace falta en cada uno. APAGADO; la preparación va mejor en la ficha del

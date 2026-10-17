@@ -385,10 +385,10 @@ services:
       IDIOMA_DEL_EXTRACTOR: "true"
       SIN_CEDULA_EXTRANJERO: "true"
       TRAS_PASE_RECUERDA_EL_PASE: "true"
-      # RONDA cala6-B de CAL-A (17-oct, Gadea con Claude): la profundidad por certificación en el catálogo (banco:
-      # cal-18 3/3 → 0/3) y el aviso que falta AÑADIDO AL FINAL (A6, revisor GPT-6 Luna; ronda core simulada 220 = 220
-      # criterios). Se miden contra la ronda calc-B de Álvaro (mismo código con sus 8 flags, sin estos dos).
-      # Revert = quitar estas dos líneas.
+      # CAL-A PROMOCIONADO 17-oct (Gadea con Claude): la profundidad por certificación en el catálogo (banco: cal-18
+      # 3/3 → 0/3) y el aviso que falta AÑADIDO AL FINAL (A6, revisor GPT-6 Luna). Ronda core cala6-B frente a calc-B:
+      # 96,5 % = 96,5 %, 27/32 frente a 25/32 diálogos sin fallo; ninguna regresión suya (repetidas 3x con y sin).
+      # Revert = quitar estas dos líneas y poner los defaults de src/config.py en False.
       CATALOGO_PROFUNDIDAD: "true"
       AVISOS_AL_FINAL: "true"
     depends_on:

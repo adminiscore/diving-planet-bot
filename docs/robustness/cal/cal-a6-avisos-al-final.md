@@ -90,3 +90,16 @@ colombianos, las fotos, la carta del referido, la recogida y el almuerzo en las 
 - La ronda simulada v4 (Luna, con todo lo anterior) contra la A.
 - El banco CAL-A en PRE (16×3) con `avisos_al_final` y `catalogo_profundidad`, contra la base del 17-oct (38/48).
 - Si las dos salen bien: la ronda core B en PRE (la A es cal-D) y promocionar.
+
+## 6. La ronda core B real y la decisión: PROMOCIONADO (17-oct)
+
+| Ronda | Criterios | Diálogos sin fallo | Servidor p50 / p95 | Llamadas LLM/turno |
+|---|---|---|---|---|
+| A: `2026-10-17-calc-B` (8 flags de CAL-C) | 96,5 % | 25/32 | 2,70 / 5,41 s | 3,3 |
+| B: `2026-10-17-cala6-B` (+ profundidad + A6 con Luna) | 96,5 % | 27/32 | 2,76 / 5,56 s | 3,7 |
+
+Las 5 regresiones reales de `ab_judge_compare --rejuzgar 2`, repetidas 3 veces con y sin los dos flags (mini-rondas
+`2026-10-17-cala6-rep{0,1,2}-{con,sin}`, juzgadas con el juez del golden): ninguna es de los flags. La del clima
+(`clima-escalar`, 2/3 con y 0/3 sin) la decide Jev antes de que el RAG conteste: con la señal `weather_conditions` en la
+duda (0,55-0,56) el router de respaldo no ve el clima; ya fallaba en cal-D sin los flags.
+

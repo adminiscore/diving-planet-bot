@@ -251,6 +251,8 @@ def rag(monkeypatch):
     monkeypatch.setattr(settings, "rag_plan_primero", False)
     monkeypatch.setattr(settings, "rag_revisor_completitud", False)
     monkeypatch.setattr(settings, "rag_revisor_avisos", False)
+    # A6 (`avisos_al_final`, promocionado el 17-oct) añade su propia llamada: aquí se mide A5 solo.
+    monkeypatch.setattr(settings, "avisos_al_final", False)
     monkeypatch.setattr(settings, "rag_respaldo_modelo", "")
     return rag_agent, llamadas
 

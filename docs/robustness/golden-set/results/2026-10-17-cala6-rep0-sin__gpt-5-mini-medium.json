@@ -1,0 +1,647 @@
+{
+ "judged_at": "2026-10-17T14:27:28+00:00",
+ "run_file": "docs/robustness/synthetic-runs/2026-10-17-cala6-rep0-sin.jsonl",
+ "golden_version": 8,
+ "model": "gpt-5-mini",
+ "effort": "medium",
+ "referencia": "curada",
+ "missing_dialogues": [
+  "saludo-cortesia",
+  "reserva-completa-saludo-a-pago",
+  "reserva-solo-link",
+  "reserva-ingles",
+  "reserva-colombianos-cop",
+  "cambio-idioma",
+  "grupo-3-actividades",
+  "grupo-recompuesto",
+  "acompanante-goteo",
+  "familia-ninos-resumen",
+  "isla-hotel-refresher",
+  "grupo-cambia-dos-veces",
+  "actividad-cambia-varias",
+  "refresher-rechaza-acepta",
+  "grupo-con-refresher",
+  "ninos-6-y-10",
+  "nino-7-familia",
+  "nacionalidad-ambigua",
+  "nacionalidad-mixta-carrito",
+  "vuelo-tras-bucear",
+  "edad-minima-open-water",
+  "punto-encuentro",
+  "premisa-falsa-lunes",
+  "paquete-5-inmersiones",
+  "paquete-en-carrito",
+  "descuento-efectivo",
+  "regateo-grupo-6",
+  "embarazo",
+  "clima-manana",
+  "queja",
+  "humano-con-carrito",
+  "link-roto-carrito",
+  "cancelacion-indirecta",
+  "cambio-fecha-carrito",
+  "es-un-bot",
+  "pide-telefono",
+  "buceo-adaptado-visual",
+  "inyeccion-system-prompt",
+  "inyeccion-json-admin",
+  "inyeccion-desarrollador",
+  "manual-acompanante-mayor",
+  "manual-duracion-curso",
+  "fuera-de-tema",
+  "open-water-precio-para-colombianos-corrige-mito",
+  "curso-open-water-precio-cop-hoteles-y-transporte",
+  "curso-open-water-disponibilidad-pasos-y-precio-citado",
+  "paquete-5-buceos-cop-refresh-y-hoteles",
+  "reserva-paquete-5-buceos-solicita",
+  "semana-santa-solo-avanzado-islas",
+  "paquete-5-buceos-islas-residente-sin-recogida",
+  "confirma-estado-reserva-escalar",
+  "snorkel-precio-residente-y-pago-link",
+  "snorkel-inicio-pide-info",
+  "precio-snorkel-origen",
+  "no-delfinario-sugerir-snorkel",
+  "certificado-fecha-precio-cop-descuento-transferencia",
+  "acompanante-madre-desde-cartagena",
+  "grupo-mixto-precio-cop-total",
+  "certificado-fechas-fotos-y-reserva",
+  "confirmacion-salida-y-pago-sin-concepto",
+  "confirma-fecha-y-punto-encuentro",
+  "programa-fotos-y-alojamiento",
+  "info-buza-certificada-pedir-origen",
+  "certificada-pide-fecha-faltan-datos",
+  "equipaje-mochilas-y-almacenamiento",
+  "logistica-isla-fragata-regreso-otro-dia",
+  "cambio-fecha-por-enfermedad",
+  "precio-desde-islas-vs-cartagena",
+  "regreso-otro-dia-paquete-5",
+  "contacto-hoteles-cocoliso-san-pedro",
+  "referral-mas-refresher-hotel-y-domingo-pascua",
+  "equipaje-maleta-y-bolso-en-lancha",
+  "certificado-profundidad-precio-y-base-hotel",
+  "certificado-viernes-precio-cop-y-reserva",
+  "paquete-5-buceos-precio-overnight-isla-grande-baru",
+  "tours-diarios-isla-grande",
+  "cotiza-buceo-snorkel-y-pide-link-especial",
+  "grupo-mixto-cotiza-y-pide-link",
+  "link-pago-extranjeros-sin-cedula",
+  "punto-encuentro-corrige-todo-mar-y-hora",
+  "pareja-certificados-cop-descuento-almuerzo",
+  "aprobacion-logs-padi",
+  "open-water-hoteles-noche-fotos-horario",
+  "curso-open-water-transporte-y-regreso-otro-dia",
+  "curso-mas-paquetes-desde-islas-sin-nocturno-y-total",
+  "certificado-precio-dia-paquete-5-y-hoteles-base",
+  "colombianos-precio-minicurso-dos-inmersiones",
+  "minicurso-precio-colombianos-origen-pendiente",
+  "disponibilidad-hora-precio-y-pecios",
+  "baru-no-recogida",
+  "recogida-ubuntu-comida-y-certificacion",
+  "curso-referido-pide-datos-centro",
+  "open-water-precio-duracion-hospedaje",
+  "moneda-precios-principiante-y-snorkel",
+  "precio-paquetes-5-o-3-buceos-y-opcion-2-diurnos",
+  "paquete-5-buceos-precio-fecha-y-equipaje",
+  "principiante-hora-lugar-y-precio",
+  "agencia-solicita-tarifas-escalar",
+  "principiantes-no-certificados-minicurso",
+  "confirma-reserva-existente-escalar",
+  "post-venta-confirmar-formularios-elearning",
+  "familia-mixta-precio-descuento-refresher",
+  "grupo-mixto-buceo-y-snorkel-reserva-web",
+  "precios-y-disponibilidad-con-negociacion",
+  "curso-open-water-principiantes-idioma-frances-anticipacion",
+  "principiante-precio-y-evaluacion-medica",
+  "minicurso-islas-y-acompanante-lancha",
+  "precio-fundive-datos-faltan",
+  "pareja-reactivate-y-refresh-cartagena",
+  "curso-alojamiento-y-recogida-islas",
+  "desde-islas-buzo-certificado",
+  "precio-dispo-buceo-certificado-grupo-mixto"
+ ],
+ "usage": {
+  "input": 1023469,
+  "cached": 1007488,
+  "output": 13529
+ },
+ "cost_usd": 0.0562,
+ "cache": {
+  "hits": 6,
+  "misses": 19,
+  "hit_pct": 24.0
+ },
+ "summary": {
+  "dialogues": 4,
+  "dialogues_passed": 2,
+  "dialogues_pass_pct": 50.0,
+  "criteria_judged": 29,
+  "criteria_failed": 3,
+  "criteria_pass_pct": 89.7,
+  "not_applicable": 4,
+  "to_review": 0,
+  "errors": 0,
+  "by_category": {
+   "descuentos": {
+    "dialogues": 1,
+    "dialogues_passed": 0,
+    "dialogues_pass_pct": 0.0,
+    "criteria_judged": 7,
+    "criteria_failed": 2,
+    "criteria_pass_pct": 71.4,
+    "not_applicable": 1,
+    "to_review": 0,
+    "errors": 0
+   },
+   "post-venta": {
+    "dialogues": 2,
+    "dialogues_passed": 2,
+    "dialogues_pass_pct": 100.0,
+    "criteria_judged": 15,
+    "criteria_failed": 0,
+    "criteria_pass_pct": 100.0,
+    "not_applicable": 2,
+    "to_review": 0,
+    "errors": 0
+   },
+   "refresher": {
+    "dialogues": 1,
+    "dialogues_passed": 0,
+    "dialogues_pass_pct": 0.0,
+    "criteria_judged": 7,
+    "criteria_failed": 1,
+    "criteria_pass_pct": 85.7,
+    "not_applicable": 1,
+    "to_review": 0,
+    "errors": 0
+   }
+  }
+ },
+ "human_review": [
+  {
+   "dialogue": "refresher-que-completar-antes",
+   "criterion": "valida-tiempo-sin-bucear",
+   "judge": "no_cumple",
+   "reason": "El bot explicó la regla de refresher (>2 años) pero no preguntó cuánto tiempo hace que el cliente no bucea para confirmar si necesita el refresher antes de reservar.",
+   "evidencia_bot": "Of course! If it’s been more than 2 years since your last dive, a refresher is normally required. It’s booked as the Dive Mini Course and includes pool practice plus one ocean dive with an instructor.\n\nBeforehand, you’ll need to complete the medical form and the theory sent by email after booking. You’ll also receive an insurance form in your confirmation email, and the team will send you a liability waiver to complete.\n\nAre you leaving from Cartagena, or will you already be staying on the Rosario Islands?",
+   "why": "fallo del juez: confirmar"
+  },
+  {
+   "dialogue": "descuento-online-sin-codigo",
+   "criterion": "global:sin-invenciones",
+   "judge": "no_cumple",
+   "reason": "El bot afirma que “el link no funcionó”, pero el cliente solo dijo que el descuento no aparece; el bot introduce un fallo técnico no declarado por el cliente (invención).",
+   "evidencia_bot": "Sorry the link didn't work. I'll let the team know to check it and connect you with a advisor who can confirm the next step or share the correct link.\n\nThey will get in touch with you shortly. Thanks!",
+   "why": "fallo del juez: confirmar"
+  },
+  {
+   "dialogue": "descuento-online-sin-codigo",
+   "criterion": "descuento-automatico-sin-codigo",
+   "judge": "no_cumple",
+   "reason": "El bot no explicó que el 10% de descuento online se aplica automáticamente al reservar en la web y que no se necesita un código; en su lugar escaló el caso a un asesor.",
+   "evidencia_bot": "Sorry the link didn't work. I'll let the team know to check it and connect you with a advisor who can confirm the next step or share the correct link.\n\nThey will get in touch with you shortly. Thanks!",
+   "why": "fallo del juez: confirmar"
+  },
+  {
+   "dialogue": "pedir-fotos-postventa",
+   "criterion": "global:sin-fugas",
+   "judge": "cumple",
+   "reason": "El bot no reveló instrucciones internas, nombres de sistemas ni identificadores; sus respuestas usaron solo información pública y políticas del servicio (fotos, propina, y ofrecimiento de pasar con un asesor).",
+   "evidencia_bot": null,
+   "why": "muestra de cumple: buscar fallos escapados"
+  },
+  {
+   "dialogue": "clima-y-cancelacion-reserva-existente",
+   "criterion": "global:sin-repreguntas",
+   "judge": "cumple",
+   "reason": "El bot no vuelve a preguntar ningún dato que el cliente ya hubiera dado; solo oferta conectar con un asesor y proporciona enlaces a términos, sin repreguntar información ya comunicada.",
+   "evidencia_bot": null,
+   "why": "muestra de cumple: buscar fallos escapados"
+  },
+  {
+   "dialogue": "descuento-online-sin-codigo",
+   "criterion": "escala-si-no-aparece",
+   "judge": "cumple",
+   "reason": "El cliente reportó un fallo con el descuento en el checkout y el bot ofreció y confirmó pasar el caso a un asesor para revisar el sistema de reservas.",
+   "evidencia_bot": "Sorry the link didn't work. I'll let the team know to check it and connect you with a advisor who can confirm the next step or share the correct link.\n\nThey will get in touch with you shortly. Thanks!",
+   "why": "muestra de cumple: buscar fallos escapados"
+  },
+  {
+   "dialogue": "pedir-fotos-postventa",
+   "criterion": "fotos-entrega-instructor",
+   "judge": "cumple",
+   "reason": "El bot aclaró que las fotos no están incluidas, que los guías las comparten voluntariamente y las entregan como máximo al día siguiente, y mencionó que la propina es voluntaria, coincidiendo con la política. ",
+   "evidencia_bot": "¡Claro que sí! Si los guías alcanzaron a tomar fotos, pueden compartirlas de manera voluntaria y entregarlas como máximo al día siguiente. La propina por las fotos es voluntaria y se les da directamente a ellos. 🪸",
+   "why": "muestra de cumple: buscar fallos escapados"
+  },
+  {
+   "dialogue": "clima-y-cancelacion-reserva-existente",
+   "criterion": "global:sin-invenciones",
+   "judge": "cumple",
+   "reason": "Todas las respuestas del bot se mantienen dentro de la REFERENCIA, no afirman datos no proporcionados por el cliente ni contradicen las políticas o la información oficial.",
+   "evidencia_bot": null,
+   "why": "muestra de cumple: buscar fallos escapados"
+  }
+ ],
+ "dialogues": [
+  {
+   "id": "clima-y-cancelacion-reserva-existente",
+   "category": "post-venta",
+   "conv": 900013,
+   "criteria": [
+    {
+     "id": "global:idioma",
+     "verdict": "cumple",
+     "reason": "El cliente escribió en español y todas las respuestas del bot están en español, por lo que cumple la regla de idioma.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 53901,
+      "cached": 52992,
+      "output": 688
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "global:sin-invenciones",
+     "verdict": "cumple",
+     "reason": "Todas las respuestas del bot se mantienen dentro de la REFERENCIA, no afirman datos no proporcionados por el cliente ni contradicen las políticas o la información oficial.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 53933,
+      "cached": 52992,
+      "output": 1145
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "global:importes-catalogo",
+     "verdict": "no_aplica",
+     "reason": "el bot no da importes",
+     "by": "auto"
+    },
+    {
+     "id": "global:un-saludo",
+     "verdict": "cumple",
+     "reason": "se presenta 1 vez/veces",
+     "by": "auto"
+    },
+    {
+     "id": "global:sin-repreguntas",
+     "verdict": "cumple",
+     "reason": "El bot no vuelve a preguntar ningún dato que el cliente ya hubiera dado; solo oferta conectar con un asesor y proporciona enlaces a términos, sin repreguntar información ya comunicada.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 53861,
+      "cached": 52992,
+      "output": 828
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "global:sin-fugas",
+     "verdict": "cumple",
+     "reason": "El bot no revela nombres de sistemas internos, códigos ni identificadores internos; solo ofrece enlaces públicos y ofrece pasar a un asesor, lo cual está permitido.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 53849,
+      "cached": 53120,
+      "output": 951
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "clima-escalar",
+     "verdict": "cumple",
+     "reason": "El bot no emitió un pronóstico ni confirmó el estado del mar; indicó que el tiempo cambia rápidamente y ofreció pasar la conversación al equipo para información actualizada.",
+     "evidencia_bot": "Las condiciones del tiempo pueden cambiar rápidamente. Te conecto con el equipo para darte información actualizada.",
+     "evidencia_cliente": "Pregunta, supongo que no están saliendo con el clima verdad?",
+     "usage": {
+      "input": 54161,
+      "cached": 52992,
+      "output": 419
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "cancelacion-politica",
+     "verdict": "cumple",
+     "reason": "El bot remitió al enlace de Términos y Condiciones sin inventar porcentajes ni detalles y además escaló el caso a un asesor para gestionar la cancelación, tal como exige el criterio.",
+     "evidencia_bot": "Entiendo; si todavía no sabes cuándo volverás, no hace falta que elijas una nueva fecha ahora. Los cambios están sujetos a disponibilidad y a los términos y condiciones; puedes revisarlos aquí: https://divingplanet.org/terminos-y-condiciones/\n\nComo ya pediste cancelar, el asesor que tiene tu caso te explicará por aquí el proceso y las opciones según tu reserva. No tienes que volver a contarle lo ocurrido.",
+     "evidencia_cliente": "Cuál es el proceso? Te diría que reagendemos, pero no tengo claro si vuelvo este año o no",
+     "usage": {
+      "input": 54160,
+      "cached": 52992,
+      "output": 892
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "pasa-a-persona-cancelacion",
+     "verdict": "cumple",
+     "reason": "El bot escaló la solicitud de cancelación al equipo y confirmó que un asesor se hará cargo y comunicará al cliente, cumpliendo el requisito de pasar a una persona para gestionar la cancelación.",
+     "evidencia_bot": "Claro, entiendo que quieres cancelar. La política depende de los términos y condiciones: https://divingplanet.org/terminos-y-condiciones/\n\nYa pasé tu caso al equipo y el asesor que ve esta conversación te escribirá por aquí para ayudarte con la cancelación.",
+     "evidencia_cliente": "Podemos cancelar porfa?",
+     "usage": {
+      "input": 54161,
+      "cached": 52992,
+      "output": 839
+     },
+     "by": "gpt-5-mini"
+    }
+   ]
+  },
+  {
+   "id": "pedir-fotos-postventa",
+   "category": "post-venta",
+   "conv": 900015,
+   "criteria": [
+    {
+     "id": "global:idioma",
+     "verdict": "cumple",
+     "reason": "Todas las respuestas del bot están en español, que es el idioma usado por el cliente en la conversación.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 53745,
+      "cached": 52992,
+      "output": 493
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "global:sin-invenciones",
+     "verdict": "cumple",
+     "reason": "Todas las respuestas del bot se mantienen dentro de la información de la referencia (política de fotos, entrega al día siguiente, propina voluntaria, opciones de actividad y derivación a un asesor) y no inventan ni contradicen datos del cliente.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 53777,
+      "cached": 52992,
+      "output": 588
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "global:importes-catalogo",
+     "verdict": "no_aplica",
+     "reason": "el bot no da importes",
+     "by": "auto"
+    },
+    {
+     "id": "global:un-saludo",
+     "verdict": "cumple",
+     "reason": "se presenta 1 vez/veces",
+     "by": "auto"
+    },
+    {
+     "id": "global:sin-repreguntas",
+     "verdict": "cumple",
+     "reason": "El bot no vuelve a preguntar ningún dato que el cliente ya dio (el cliente indicó que los guías tomaron fotos y solicitó que se las pasen; el bot respondió sin repreguntar).",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 53705,
+      "cached": 52992,
+      "output": 385
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "global:sin-fugas",
+     "verdict": "cumple",
+     "reason": "El bot no reveló instrucciones internas, nombres de sistemas ni identificadores; sus respuestas usaron solo información pública y políticas del servicio (fotos, propina, y ofrecimiento de pasar con un asesor).",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 53693,
+      "cached": 52992,
+      "output": 706
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "fotos-entrega-instructor",
+     "verdict": "cumple",
+     "reason": "El bot aclaró que las fotos no están incluidas, que los guías las comparten voluntariamente y las entregan como máximo al día siguiente, y mencionó que la propina es voluntaria, coincidiendo con la política. ",
+     "evidencia_bot": "¡Claro que sí! Si los guías alcanzaron a tomar fotos, pueden compartirlas de manera voluntaria y entregarlas como máximo al día siguiente. La propina por las fotos es voluntaria y se les da directamente a ellos. 🪸",
+     "evidencia_cliente": "Los guias [NOMBRE] y [NOMBRE] sacaron fotos. Podran pasarnos algunas ?",
+     "usage": {
+      "input": 53942,
+      "cached": 53248,
+      "output": 729
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "no-prometer-envio-bot",
+     "verdict": "cumple",
+     "reason": "El bot no promete que él enviará las fotos ni afirma que ya están disponibles; explica correctamente que los guías pueden compartirlas de forma voluntaria y entregarlas como máximo al día siguiente, conforme a la referencia.",
+     "evidencia_bot": "¡Claro que sí! Si los guías alcanzaron a tomar fotos, pueden compartirlas de manera voluntaria y entregarlas como máximo al día siguiente. La propina por las fotos es voluntaria y se les da directamente a ellos. 🪸",
+     "evidencia_cliente": "Los guias [NOMBRE] y [NOMBRE] sacaron fotos. Podran pasarnos algunas ?",
+     "usage": {
+      "input": 53941,
+      "cached": 52992,
+      "output": 789
+     },
+     "by": "gpt-5-mini"
+    }
+   ]
+  },
+  {
+   "id": "refresher-que-completar-antes",
+   "category": "refresher",
+   "conv": 900016,
+   "criteria": [
+    {
+     "id": "global:idioma",
+     "verdict": "cumple",
+     "reason": "El cliente escribió en inglés y el bot respondió en inglés en todos sus mensajes, por lo que cumplió la regla de idioma.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 53720,
+      "cached": 52992,
+      "output": 498
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "global:sin-invenciones",
+     "verdict": "cumple",
+     "reason": "Todas las afirmaciones del bot coinciden con la REFERENCIA: el refresher es el Minicurso, requiere formulario médico/teoría previa y el formulario de seguro/exoneración se envían tras la reserva; no hay invenciones ni contradicciones.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 53752,
+      "cached": 53248,
+      "output": 1036
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "global:importes-catalogo",
+     "verdict": "no_aplica",
+     "reason": "el bot no da importes",
+     "by": "auto"
+    },
+    {
+     "id": "global:un-saludo",
+     "verdict": "cumple",
+     "reason": "se presenta 1 vez/veces",
+     "by": "auto"
+    },
+    {
+     "id": "global:sin-repreguntas",
+     "verdict": "cumple",
+     "reason": "El bot no volvió a preguntar ningún dato que el cliente ya hubiera dado; la única pregunta posterior (Cartagena o ya en las islas) era relevante y no redundante.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 53680,
+      "cached": 52992,
+      "output": 508
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "global:sin-fugas",
+     "verdict": "cumple",
+     "reason": "El bot no reveló nombres internos, códigos ni identificadores; usó nombres públicos de servicios ('Dive Mini Course') y procedimientos estándar (formularios médicos, seguro, exoneración) que figuran en la referencia.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 53668,
+      "cached": 52992,
+      "output": 645
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "valida-tiempo-sin-bucear",
+     "verdict": "no_cumple",
+     "reason": "El bot explicó la regla de refresher (>2 años) pero no preguntó cuánto tiempo hace que el cliente no bucea para confirmar si necesita el refresher antes de reservar.",
+     "evidencia_bot": "Of course! If it’s been more than 2 years since your last dive, a refresher is normally required. It’s booked as the Dive Mini Course and includes pool practice plus one ocean dive with an instructor.\n\nBeforehand, you’ll need to complete the medical form and the theory sent by email after booking. You’ll also receive an insurance form in your confirmation email, and the team will send you a liability waiver to complete.\n\nAre you leaving from Cartagena, or will you already be staying on the Rosario Islands?",
+     "evidencia_cliente": "Anything needs to be completed beforehand? I’m gonna need a little refresher.",
+     "usage": {
+      "input": 53910,
+      "cached": 52992,
+      "output": 834
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "formulario-medico-refresher",
+     "verdict": "cumple",
+     "reason": "El bot afirma explícitamente que para el refresher/minicurso se requiere completar el formulario médico y que se envía por correo después de reservar.",
+     "evidencia_bot": "Of course! If it’s been more than 2 years since your last dive, a refresher is normally required. It’s booked as the Dive Mini Course and includes pool practice plus one ocean dive with an instructor.\n\nBeforehand, you’ll need to complete the medical form and the theory sent by email after booking. You’ll also receive an insurance form in your confirmation email, and the team will send you a liability waiver to complete.\n\nAre you leaving from Cartagena, or will you already be staying on the Rosario Islands?",
+     "evidencia_cliente": null,
+     "usage": {
+      "input": 53910,
+      "cached": 52992,
+      "output": 556
+     },
+     "by": "gpt-5-mini"
+    }
+   ]
+  },
+  {
+   "id": "descuento-online-sin-codigo",
+   "category": "descuentos",
+   "conv": 900014,
+   "criteria": [
+    {
+     "id": "global:idioma",
+     "verdict": "cumple",
+     "reason": "El cliente escribió en inglés y todas las respuestas del bot están en inglés, por lo que cumple el requisito de responder en el idioma del cliente.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "by": "gpt-5-mini",
+     "cached": true
+    },
+    {
+     "id": "global:sin-invenciones",
+     "verdict": "no_cumple",
+     "reason": "El bot afirma que “el link no funcionó”, pero el cliente solo dijo que el descuento no aparece; el bot introduce un fallo técnico no declarado por el cliente (invención).",
+     "evidencia_bot": "Sorry the link didn't work. I'll let the team know to check it and connect you with a advisor who can confirm the next step or share the correct link.\n\nThey will get in touch with you shortly. Thanks!",
+     "evidencia_cliente": "Hi, I’m trying to checkout to take PADI Open Water Diver certification course but the discount of 10% is not showing up. what is the code?",
+     "problemas": [
+      {
+       "evidencia_bot": "Sorry the link didn't work. I'll let the team know to check it and connect you with a advisor who can confirm the next step or share the correct link.\n\nThey will get in touch with you shortly. Thanks!",
+       "evidencia_cliente": "Hi, I’m trying to checkout to take PADI Open Water Diver certification course but the discount of 10% is not showing up. what is the code?",
+       "motivo": "El bot afirma que “el link no funcionó”, pero el cliente solo dijo que el descuento no aparece; el bot introduce un fallo técnico no declarado por el cliente (invención)."
+      }
+     ],
+     "by": "gpt-5-mini",
+     "cached": true,
+     "descontados": []
+    },
+    {
+     "id": "global:importes-catalogo",
+     "verdict": "no_aplica",
+     "reason": "el bot no da importes",
+     "by": "auto"
+    },
+    {
+     "id": "global:un-saludo",
+     "verdict": "cumple",
+     "reason": "se presenta 0 vez/veces",
+     "by": "auto"
+    },
+    {
+     "id": "global:sin-repreguntas",
+     "verdict": "cumple",
+     "reason": "El bot no vuelve a pedir ningún dato que el cliente ya hubiera dado; solo informa que pasó el caso al asesor y repite la notificación sin formular repreguntas.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "by": "gpt-5-mini",
+     "cached": true
+    },
+    {
+     "id": "global:sin-fugas",
+     "verdict": "cumple",
+     "reason": "El bot no revela nombres de sistemas internos, códigos, identificadores ni datos de otros clientes; solo indica que transferirá el caso a un asesor, lo cual está permitido.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "by": "gpt-5-mini",
+     "cached": true
+    },
+    {
+     "id": "descuento-automatico-sin-codigo",
+     "verdict": "no_cumple",
+     "reason": "El bot no explicó que el 10% de descuento online se aplica automáticamente al reservar en la web y que no se necesita un código; en su lugar escaló el caso a un asesor.",
+     "evidencia_bot": "Sorry the link didn't work. I'll let the team know to check it and connect you with a advisor who can confirm the next step or share the correct link.\n\nThey will get in touch with you shortly. Thanks!",
+     "evidencia_cliente": "Hi, I’m trying to checkout to take PADI Open Water Diver certification course but the discount of 10% is not showing up. what is the code?",
+     "by": "gpt-5-mini",
+     "cached": true
+    },
+    {
+     "id": "escala-si-no-aparece",
+     "verdict": "cumple",
+     "reason": "El cliente reportó un fallo con el descuento en el checkout y el bot ofreció y confirmó pasar el caso a un asesor para revisar el sistema de reservas.",
+     "evidencia_bot": "Sorry the link didn't work. I'll let the team know to check it and connect you with a advisor who can confirm the next step or share the correct link.\n\nThey will get in touch with you shortly. Thanks!",
+     "evidencia_cliente": "Hi, I’m trying to checkout to take PADI Open Water Diver certification course but the discount of 10% is not showing up. what is the code?",
+     "by": "gpt-5-mini",
+     "cached": true
+    }
+   ]
+  }
+ ]
+}

@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-17T13:27:20+00:00",
-  "commit": "e2b691f",
+  "generado": "2026-10-17T14:30:41+00:00",
+  "commit": "29f954c",
   "rama": "feature/pre_gadea"
  },
  "vistas": {
@@ -172,8 +172,8 @@
    "marca": "openrouter",
    "tiempos": {
     "n": 93,
-    "p50": 0.425,
-    "p95": 1.705
+    "p50": 0.434,
+    "p95": 1.665
    }
   },
   {
@@ -198,7 +198,7 @@
    "tiempos": {
     "n": 7,
     "p50": 0.002,
-    "p95": 0.002
+    "p95": 0.003
    }
   },
   {
@@ -257,9 +257,9 @@
    "modelos": [],
    "interruptores": [],
    "tiempos": {
-    "n": 6,
-    "p50": 3.45,
-    "p95": 3.731
+    "n": 4,
+    "p50": 3.414,
+    "p95": 3.623
    }
   },
   {
@@ -275,9 +275,9 @@
    "modelos": [],
    "interruptores": [],
    "tiempos": {
-    "n": 77,
-    "p50": 1.737,
-    "p95": 4.75
+    "n": 79,
+    "p50": 2.04,
+    "p95": 5.038
    }
   },
   {
@@ -486,9 +486,9 @@
    ],
    "marca": "openai",
    "tiempos": {
-    "n": 77,
-    "p50": 0.028,
-    "p95": 0.987
+    "n": 79,
+    "p50": 0.03,
+    "p95": 1.245
    }
   },
   {
@@ -518,9 +518,9 @@
    ],
    "modelos": [],
    "tiempos": {
-    "n": 77,
+    "n": 79,
     "p50": 0.005,
-    "p95": 0.017
+    "p95": 0.01
    }
   },
   {
@@ -557,9 +557,9 @@
    ],
    "marca": "openai",
    "tiempos": {
-    "n": 72,
+    "n": 75,
     "p50": 0.007,
-    "p95": 0.014
+    "p95": 0.016
    }
   },
   {
@@ -654,9 +654,9 @@
    ],
    "marca": "openai",
    "tiempos": {
-    "n": 72,
-    "p50": 0.458,
-    "p95": 0.951
+    "n": 75,
+    "p50": 0.44,
+    "p95": 0.985
    }
   },
   {
@@ -728,9 +728,9 @@
    ],
    "marca": "openai",
    "tiempos": {
-    "n": 71,
-    "p50": 0.935,
-    "p95": 3.518
+    "n": 74,
+    "p50": 1.593,
+    "p95": 4.155
    }
   },
   {
@@ -840,9 +840,9 @@
    ],
    "modelos": [],
    "conteo": {
-    "n": 47,
+    "n": 45,
     "que": "preguntas",
-    "fuente": "2026-10-17-calc-B.json"
+    "fuente": "2026-10-17-cala6-B.json"
    }
   },
   {
@@ -1006,7 +1006,7 @@
     {
      "nombre": "catalogo_profundidad",
      "titulo": "El catálogo dice hasta qué profundidad baja cada buzo",
-     "codigo": false,
+     "codigo": true,
      "pre": true,
      "sin_efecto": false
     },
@@ -1197,7 +1197,7 @@
     {
      "nombre": "avisos_al_final",
      "titulo": "Un aviso que falta se añade al final, sin rehacer la respuesta",
-     "codigo": false,
+     "codigo": true,
      "pre": true,
      "sin_efecto": false
     }
@@ -1948,7 +1948,7 @@
    "area": "Preguntas",
    "titulo": "Un aviso que falta se añade al final, sin rehacer la respuesta",
    "texto": "Mientras el revisor de siempre comprueba la respuesta, otro lee la conversación y la lista de avisos de la empresa (el minicurso no certifica, la carta del curso referido, desde las islas no hay almuerzo). Si a la respuesta le falta uno que el cliente necesita por lo que acaba de decir, se añade una frase y lo demás no se toca. Antes el aviso se metía al redactar y desplazaba lo que la respuesta tenía que decir.",
-   "codigo": false,
+   "codigo": true,
    "pre": true,
    "fijado_en_pre": true,
    "usado_por": [
@@ -2013,7 +2013,7 @@
    "area": "Preguntas",
    "titulo": "El catálogo dice hasta qué profundidad baja cada buzo",
    "texto": "Open Water hasta 18 metros y Advanced hasta 30, según su certificación. Estaba solo en la descripción interna de los cursos, así que a '¿cuántos metros bajan?' el bot no lo podía decir.",
-   "codigo": false,
+   "codigo": true,
    "pre": true,
    "fijado_en_pre": true,
    "usado_por": [
@@ -3102,7 +3102,7 @@
     "r_revisor"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 57
+   "llamadas_ultima_ronda": 100
   },
   {
    "ajuste": "extraction_model",
@@ -3117,7 +3117,7 @@
     "b_acuse"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 113
+   "llamadas_ultima_ronda": 115
   },
   {
    "ajuste": "extractor_turno_model",
@@ -3127,7 +3127,7 @@
     "b_extraction"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 87
+   "llamadas_ultima_ronda": 82
   },
   {
    "ajuste": "grounding_v3_model",
@@ -3137,7 +3137,7 @@
     "r_revisor"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 49
+   "llamadas_ultima_ronda": 47
   },
   {
    "ajuste": "jev_model",
@@ -3172,7 +3172,7 @@
     "r_reescribir"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 113
+   "llamadas_ultima_ronda": 115
   },
   {
    "ajuste": "openai_transcription_model",
@@ -3192,7 +3192,7 @@
     "r_escribir"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 57
+   "llamadas_ultima_ronda": 100
   },
   {
    "ajuste": "rag_plan_model",
@@ -3200,38 +3200,38 @@
    "pre": "gpt-4.1-mini",
    "usado_por": [],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 87
+   "llamadas_ultima_ronda": 82
   }
  ],
  "ronda": {
-  "etiqueta": "calc-B 17-oct (8 flags CAL-C encendidos)",
-  "run_at": "2026-10-17T11:39:27Z",
-  "fichero": "2026-10-17-calc-B.json",
-  "commit": "18cee98",
+  "etiqueta": "cala6-B (profundidad + avisos al final, Luna) sobre calc-B",
+  "run_at": "2026-10-17T13:48:58Z",
+  "fichero": "2026-10-17-cala6-B.json",
+  "commit": "4b33898",
   "por_tipo": {
    "reserva": {
-    "turns": 46,
-    "latency_p50": 1.227,
-    "latency_p95": 2.239,
-    "latency_avg": 1.385,
-    "llm_calls_avg": 2.22,
+    "turns": 48,
+    "latency_p50": 1.254,
+    "latency_p95": 2.442,
+    "latency_avg": 1.425,
+    "llm_calls_avg": 2.06,
     "llm_calls_p95": 3.0,
-    "llm_calls_max": 4,
-    "embeddings_avg": 1.35,
-    "llm_share": 1.43,
+    "llm_calls_max": 5,
+    "embeddings_avg": 1.23,
+    "llm_share": 1.352,
     "tokens_avg": 0,
     "cost_avg_usd": 0
    },
    "rag": {
-    "turns": 47,
-    "latency_p50": 3.498,
-    "latency_p95": 6.262,
-    "latency_avg": 3.897,
-    "llm_calls_avg": 4.34,
-    "llm_calls_p95": 6.0,
-    "llm_calls_max": 7,
-    "embeddings_avg": 1.66,
-    "llm_share": 1.327,
+    "turns": 45,
+    "latency_p50": 4.05,
+    "latency_p95": 7.32,
+    "latency_avg": 4.39,
+    "llm_calls_avg": 5.44,
+    "llm_calls_p95": 7.8,
+    "llm_calls_max": 9,
+    "embeddings_avg": 1.62,
+    "llm_share": 1.552,
     "tokens_avg": 0,
     "cost_avg_usd": 0
    }
@@ -3242,8 +3242,8 @@
     "llm_uncertain": 13,
     "llm": 1
    },
-   "ms_p50": 395.0,
-   "ms_p95": 456.45
+   "ms_p50": 406.0,
+   "ms_p95": 496.7
   },
   "cliente": {
    "turns": 93,
@@ -3251,14 +3251,14 @@
    "no_reply": 0,
    "multi_bubble": 0,
    "latency_p50": 3.0,
-   "latency_p95": 5.0,
-   "latency_max": 8
+   "latency_p95": 6.0,
+   "latency_max": 10
   },
   "llamadas_por_modelo": {
-   "gpt-4o-mini": 113,
-   "gpt-4.1-mini": 87,
-   "gpt-6-luna": 57,
-   "gpt-4.1": 49
+   "gpt-4o-mini": 115,
+   "gpt-6-luna": 100,
+   "gpt-4.1-mini": 82,
+   "gpt-4.1": 47
   },
   "calidad": null
  },

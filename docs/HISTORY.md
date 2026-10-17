@@ -1,6 +1,25 @@
 History
 =======
 
+0.31.44 - (2026-10-17)
+----------------------
+* **CAL-A PROMOCIONADO (Gadea con Claude): `CATALOGO_PROFUNDIDAD` y `AVISOS_AL_FINAL` (A6, revisor GPT-6 Luna) se
+  quedan ENCENDIDOS**, encima de los 8 de CAL-C (0.31.43). Defaults a `True` en `src/config.py` (arregla
+  `test_flags_pinned`, que falló en 4b33898 por subir el compose sin el código: lo vio el Claude de Álvaro por Coral).
+  - **Ronda core cala6-B frente a calc-B** (A = la de Álvaro, mismo código sin estos dos): **96,5 % = 96,5 %** de
+    criterios, **27/32 frente a 25/32** diálogos sin fallo; latencia del servidor p50 2,76 / p95 5,56 s (A 2,70 / 5,41);
+    3,7 llamadas al LLM por turno (A 3,3: la del revisor). 4 mejoras reales (una, el idioma de `inyeccion-json-admin`,
+    es el arreglo E4 de Álvaro) y 5 regresiones reales.
+  - **Las 5 regresiones, repetidas 3 veces con y sin los dos flags** (`reproducir_juez_pre --codigo-local --flag no:…`
+    y juzgadas con el juez del golden): ninguna es de ellos. `pasa-a-persona-cancelacion` y `pedir-fotos` 0/3 en los
+    dos lados; `refresher` 1/3 frente a 0/3 y `descuento-automatico` 0/3 frente a 1/3 (ruido); `escala-si-no-aparece`
+    3/3 frente a 2/3 (de siempre). **`clima-escalar` 2/3 frente a 0/3 lo decide Jev ANTES del RAG**: cuando duda
+    (`weather_conditions` a 0,55-0,56) el router de respaldo no ve el clima y contesta el RAG sin ofrecer el pase;
+    cuando está seguro, pasa a una persona. Ya fallaba en cal-D sin estos flags: defecto de la señal del clima en el
+    umbral de Jev, para el banco.
+  - **Banco CAL-A** (0.31.42): cal-18 3/3 → 0/3; cal-49 3 → 1, cal-15 y cal-48 3 → 2.
+  - Los tests de A5 se aíslan de la llamada de A6 (`avisos_al_final` apagado en su fixture).
+
 0.31.43 - (2026-10-17)
 ----------------------
 * **CAL-C PROMOCIONADO (decisión de Álvaro): los 8 flags de "entender sin repreguntar" se quedan ENCENDIDOS en PRE**
