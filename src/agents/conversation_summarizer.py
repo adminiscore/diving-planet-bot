@@ -17,7 +17,12 @@ from src.config import settings
 from src.flows.state import ConversationState
 from src.llm_client import trace_openai
 from src.privacy import redact_pii
-from src.prompts.memory import SUMMARY_SYSTEM_EN, SUMMARY_SYSTEM_ES
+from src.prompts.memory import (
+    MEMORIA_SEGURA_RESUMEN_EN,
+    MEMORIA_SEGURA_RESUMEN_ES,
+    SUMMARY_SYSTEM_EN,
+    SUMMARY_SYSTEM_ES,
+)
 
 logger = logging.getLogger("uvicorn.error")
 
@@ -45,7 +50,9 @@ def _format_turns(turns: list[dict], lang: str) -> str:
 
 
 async def _generate_summary(existing_summary: str | None, new_turns_text: str, lang: str) -> str:
-    system = SUMMARY_SYSTEM_ES if lang == "es" else SUMMARY_SYSTEM_EN
+    system = (SUMMARY_SYSTEM_ES if lang == "es" else SUMMARY_SYSTEM_EN) + (
+        (MEMORIA_SEGURA_RESUMEN_ES if lang == "es" else MEMORIA_SEGURA_RESUMEN_EN)
+        if settings.memoria_sin_ordenes_del_cliente else "")  # r6-2: lo que ordena el cliente, atribuido
     previous_label = "Resumen anterior" if lang == "es" else "Previous summary"
     segment_label = "Tramo nuevo de la conversación" if lang == "es" else "New conversation segment"
     user_content = (

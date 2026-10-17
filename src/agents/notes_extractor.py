@@ -28,9 +28,21 @@ from openai import AsyncOpenAI
 
 from src.config import settings
 from src.llm_client import tool_arguments, trace_openai
-from src.prompts.memory import NOTES_TOOL, notes_system_prompt
+from src.prompts.memory import (
+    MEMORIA_SEGURA_NOTAS_EN,
+    MEMORIA_SEGURA_NOTAS_ES,
+    NOTES_TOOL,
+    notes_system_prompt,
+)
 
 logger = logging.getLogger("uvicorn.error")
+
+
+def _seguridad(lang: str) -> str:
+    """r6-2 (`memoria_sin_ordenes_del_cliente`): las órdenes, pagos y autorizaciones que diga el cliente no son notas."""
+    if not settings.memoria_sin_ordenes_del_cliente:
+        return ""
+    return MEMORIA_SEGURA_NOTAS_ES if lang == "es" else MEMORIA_SEGURA_NOTAS_EN
 
 
 async def extract_notes(
@@ -49,7 +61,7 @@ async def extract_notes(
     existing = existing_notes or []
     existing_lower = {n.strip().lower() for n in existing}
 
-    messages: list[dict] = [{"role": "system", "content": notes_system_prompt(lang, existing)}]
+    messages: list[dict] = [{"role": "system", "content": notes_system_prompt(lang, existing) + _seguridad(lang)}]
     for turn in (history or [])[-settings.history_retrieval_enrichment_window:]:
         role = turn.get("role")
         content = turn.get("content")
