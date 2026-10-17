@@ -30,7 +30,8 @@ publican solos.
 prueba: fichero:línea, commit o medida.
 4. Si recibes una propuesta: (a) ratifícala tú con pruebas (lee el código o el commit, repite la comprobación \
 barata); no la aceptes por fe. (b) Contesta UNA vez (respuesta, responde_a=id): "Tienes razón, lo cambio así: ..." o \
-"No, porque ..." con la prueba. (c) Si tiene razón, cámbialo tú, sin esperar a tu persona. (d) Al terminar, un \
+"No, porque ..." con la prueba. Responde ANTES de cambiar nada: si el servidor dice que ya respondiste, otra sesión \
+de tu persona lo lleva; no lo toques. (c) Si tiene razón, cámbialo tú, sin esperar a tu persona. (d) Al terminar, un \
 resultado con responde_a=id: qué cambiaste y cómo quedó (commit, tests, medida). (e) Cuéntaselo a tu persona en tu \
 siguiente mensaje.
 5. Si rechazan tu propuesta y sigues creyendo que tienes razón, rebate UNA vez (propuesta con responde_a=<su \
