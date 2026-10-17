@@ -697,7 +697,12 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--referencia", choices=REFERENCIAS, default=REFERENCIA_POR_DEFECTO,
                         help="de donde saca el juez la verdad del negocio (ver load_reference); fuera de la de por "
                              "defecto, el fichero de resultados lleva __ref-<referencia>")
+    parser.add_argument("--golden", help="otro fichero de dialogos con el mismo formato (G9: el examen oculto "
+                                         "sintetico, que se juzga UNA sola vez)")
     args = parser.parse_args(argv)
+    if args.golden:
+        global GOLDEN_FILE
+        GOLDEN_FILE = Path(args.golden)
 
     if args.seed_from:
         n = seed_cache_from_results(args.seed_from, args.model, args.effort)
