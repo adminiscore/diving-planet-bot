@@ -5580,11 +5580,26 @@ def _has_pending_answer(state: ConversationState) -> bool:
     return getattr(state, "_pending_answer", None) is not None
 
 
+def _lugar_desconocido(routing_signals: dict) -> bool:
+    """CAL-C4 (`lugar_desconocido_al_rag`): ¿el cliente afirma un lugar que Jev, seguro, no reconoce como Cartagena ni
+    las islas? ("En baru y Rosario", cal-55). Sin lista de nombres: lo que se sabe de ese lugar lo dice la base."""
+    from src.agents.jev_router import CUSTOMER_PLACE_MIN  # lazy
+
+    lugar = routing_signals.get("customer_place") or {}
+    return (bool(routing_signals.get("affirms_location")) and lugar.get("choice") == "none"
+            and (lugar.get("confidence") or 0.0) >= CUSTOMER_PLACE_MIN)
+
+
 def _maybe_launch_answer(state: ConversationState, message: str, routing_signals: dict) -> None:
     if not settings.answer_and_continue or _has_pending_answer(state):
         return
     if not _turn_has_question(message, routing_signals):
-        return
+        if not (settings.lugar_desconocido_al_rag and _lugar_desconocido(routing_signals)):
+            return
+        # CAL-C4 (17-oct): "En baru y Rosario" contestaba "Entiendo que te encuentras en Barú y Rosario" y nadie le
+        # decía que en Barú no operamos (cal-55): el turno era una respuesta a la reserva y no llegaba a la base. Un
+        # lugar afirmado que no es Cartagena ni las islas se le pregunta a la base, como una pregunta más.
+        logger.info("[CORE][CAL-C4] lugar afirmado que no es Cartagena ni las islas: se consulta la base")
     # La foto del historial se toma AQUÍ (lección de la carrera de l1-4): la tarea puede no
     # arrancar hasta después de que el bot meta otra cosa en el historial.
     history = list(state.history)
