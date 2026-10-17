@@ -78,11 +78,20 @@ cambio (barato, sin juez). Si el fallo sale en los dos lados, **al banco como ca
 - `scripts/sonda_senales.py`: señales del enrutador, idioma y traza de las líneas que deciden.
 - `reproducir_juez_pre` ahora también traza las líneas de los avisos.
 
-#### Siguiente
+#### La ronda D, cerrada: dos promociones más
 
-1. **Ronda D** (lanzada esta madrugada): la familia de Jev (`JEV_CON_CONTEXTO`, `PASE_SI_PIDE_FUERA_DEL_SISTEMA`,
-   `IDIOMA_DEL_EXTRACTOR`), encendida en PRE mientras se mide, contra la ronda C. En el banco arreglaron cal-03, cal-29
-   y cal-33 (3/3 cada uno). Si la ronda no caza una regresión GRANDE, se promocionan; las pequeñas, por repetición.
+| Ronda | Criterios | Diálogos | p50 / p95 / máx |
+|---|---|---|---|
+| A (suelo) | 97,4 % | 27/32 | 3,0 / 6,4 / 9 s |
+| C (consulta) | 96,1 % | 26/32 | 3,0 / 6,0 / 8 s |
+| **D (contexto de Jev + pase)** | **96,5 %** | 25/32 | 3,0 / **5,0** / **7 s** |
+
+`JEV_CON_CONTEXTO` y `PASE_SI_PIDE_FUERA_DEL_SISTEMA` **PROMOCIONADOS**: 3 mejoras reales (las tres de no repreguntar
+lo que el cliente ya dijo, que es lo que hace el contexto) y la mejor latencia de la noche. Sus 3 "regresiones" se
+demostraron ajenas repitiendo 3 veces cada lado. `IDIOMA_DEL_EXTRACTOR` **no entra**: no arregla su caso y no mejora
+nada medible; el código se queda apagado.
+
+#### Siguiente
 2. **CAL-D segunda parte**: cal-74 (nuevo: "varios días" donde la ficha dice 2, reproducible 3/3), cal-14, cal-49 y
    cal-64, donde la fuente que contesta no entra entre los primeros documentos. Es índice y reranking.
 3. **CAL-F**: el banco entero y una ronda del golden visible completo (95), que es la meta de la fase.

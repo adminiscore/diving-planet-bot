@@ -1,6 +1,39 @@
 History
 =======
 
+0.31.40 - (2026-10-17)
+----------------------
+* **Cuatro rondas del golden core en una noche: 4 cambios promocionados, 3 descartados y una regla de medición nueva**
+  (Gadea con Claude; Gadea autorizó las rondas y delegó la decisión). PRE sirve lo promocionado.
+
+  | Flag | Decisión | Por qué |
+  |---|---|---|
+  | `CONTACTO_PASA_A_PERSONA` | **PROMOCIONADO** | decisión de negocio de Gadea (el chatbot no da números); banco cal-03 3/3 → 0/3 y ninguna regresión suya |
+  | `CONSULTA_CON_LO_SABIDO` | **PROMOCIONADO** | banco cal-42 3/3 → 0/3; sus 3 "regresiones" se demostraron ajenas repitiendo |
+  | `JEV_CON_CONTEXTO` | **PROMOCIONADO** | ronda D 96,5 % con 3 mejoras reales de no repreguntar; **p95 5,0 s** (el suelo era 6,4) |
+  | `PASE_SI_PIDE_FUERA_DEL_SISTEMA` | **PROMOCIONADO** | banco cal-29 3/3 → 0/3; la regresión del clima no se reproduce (3/3 bien en los dos lados) |
+  | `AVISOS_CONDICIONADOS` | **DESCARTADO** | 3 rondas: 97,4 % (apagado) → 96,0 % y 96,1 %. El banco mejora y el golden empeora |
+  | `IDIOMA_DEL_EXTRACTOR` | **no entra** | no arregla su caso y no mejora nada medible (tampoco rompe nada) |
+  | `QUEJA_SOLO_SI_ALGO_FALLA` | **borrado** | el criterio `escala-si-no-aparece` del golden pide lo contrario |
+
+* **📏 LA REGLA NUEVA (`docs/robustness/protocolo-medicion.md`): una ronda suelta del core NO atribuye diferencias de
+  menos de ~3 criterios.** `ab_judge_compare --rejuzgar N` quita el ruido del JUEZ, no el del BOT (temperatura 0,3).
+  Demostrado tres veces esta noche: las regresiones de las rondas C y D se repitieron 3 veces con el cambio y 3 sin él
+  y ninguna era del cambio. **Antes de promocionar o revertir por una diferencia pequeña:
+  `reproducir_juez_pre <dialogo> --reps 3 --codigo-local [--flag …]` en los dos lados** (barato, sin juez). Si el fallo
+  sale en los dos, es un defecto de siempre y va al banco.
+* **Tres defectos nuevos en el banco, que el golden tenía y el banco no**: cal-74 ("varios días" donde la ficha dice 2
+  días) y cal-75 (un mensaje en inglés contestado en español), los dos reproducibles 3/3 y ajenos a cualquier flag.
+* **Lo que enseñaron los avisos** (`docs/robustness/cal/cal-a5-avisos-condicionados.md` §§9-10): el banco pregunta
+  "¿dice lo que faltaba?" y el golden "¿cómo quedó la respuesta entera?". Un aviso obligatorio **compite por el sitio**
+  con lo que la respuesta ya tenía que decir: en un diálogo se quedó **sin el enlace de reserva**. Mejorar el banco a
+  costa del golden no es mejorar. Qué probar si se retoma, en la §10.
+* **Herramientas**: `scripts/sonda_avisos.py` y `scripts/sonda_senales.py` (hechos, documentos, señales, idioma y
+  traza dentro de PRE, **sin juez**: no gastan el verificador) y `reproducir_juez_pre` traza ya los avisos.
+* **Arreglo de contención real**: dos medidas con `--codigo-local` a la vez subían a la misma carpeta y la segunda
+  borraba la copia que la primera estaba importando (`ModuleNotFoundError` en un módulo que sí existe). Ahora cada
+  proceso sube a `/tmp/codigo-local-<usuario>-<pid>`. Afectaba a cualquiera del equipo midiendo a la vez.
+
 0.31.39 - (2026-10-17)
 ----------------------
 * **CAL-E y CAL-D: la decisión del contacto de Gadea, y que la búsqueda sepa de qué va la pregunta** (Gadea con
