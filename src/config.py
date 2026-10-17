@@ -467,12 +467,20 @@ class Settings(BaseSettings):
     # (decisiones-B). flows/catalog._parte_equipo (solo el catalogo; la ficha de la base v2 no cambia). PROMOCIONADO 9-oct
     # (mini-ronda equipo-A/B: 94,5 -> 96,4 %, 2 mejoras, 0 regresiones; HISTORY 0.31.6). Revert = False aqui y en el compose.
     catalogo_equipo_incluido: bool = True
-    # CAL (17-oct): el catálogo del RAG pinta también lo que la FICHA de cada producto ya dice y no se mostraba: hasta
-    # qué profundidad certifica (`max_depth_m`: Open Water 18 m, Advanced 30 m, como dice el registro de actividades)
-    # y qué preparación pide antes de empezar (`preparation_*`, en 18 de 36 productos: la carta de referido, la teoría
-    # del Open Water...). Sin esto el RAG no podía decirlo (cal-18: "¿cuántos metros bajan?"; cal-49: la carta de
-    # referido) porque no estaba en nada que viera. Datos, no reglas del prompt. APAGADO hasta medirlo.
-    catalogo_fichas_completas: bool = False
+    # CAL (17-oct): el catálogo del RAG pinta hasta qué profundidad certifica cada curso (`max_depth_m`: Open Water
+    # 18 m, Advanced 30 m, lo que dice el registro de actividades) y una línea general de profundidad por certificación
+    # (cal-18: "¿cuántos metros bajan?" no tenía el dato en nada que viera el RAG). APAGADO hasta medirlo.
+    catalogo_profundidad: bool = False
+    # CAL (17-oct): la preparación de cada producto (`preparation_*`, 18 de 36) en el catálogo, SIEMPRE. MEDIDO: arregla
+    # cal-49 (la carta de referido) pero rompe cal-26 y cal-64 (banco CAL-A 41/48 frente a 38/48): dieciocho párrafos
+    # en todos los turnos compiten con lo que hace falta en cada uno. APAGADO; la preparación va mejor en la ficha del
+    # producto del que se habla.
+    catalogo_preparacion: bool = False
+    # CAL (17-oct): cuando la conversación YA está con una persona (paso ESCALATE), el contexto del RAG lo dice. Una
+    # pregunta tras el pase seguía el flujo normal y el RAG improvisaba sobre la reserva o el pago concreto, que no ve
+    # (cal-14: explicaba qué poner en el concepto de una transferencia, contra la política). Lo general se contesta
+    # igual; lo del caso concreto lo confirma el asesor. APAGADO hasta medirlo.
+    contexto_tras_el_pase: bool = False
     # Punto 4 (s4-26, 7-oct): si Jev esta SEGURO de que el mensaje no mete a otra persona (companion_joins <
     # COMPANION_NONE_MAX, la misma puerta de u3-6), la regex de "menciona a alguien" (`_mentions_person`) no puede
     # contradecirlo. "Si cuantos dias son?" casaba "son" (hijo, en ingles) y el flujo preguntaba la actividad de un

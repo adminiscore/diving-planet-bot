@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-17T09:52:34+00:00",
-  "commit": "9d92954",
+  "generado": "2026-10-17T10:12:45+00:00",
+  "commit": "0e412a2",
   "rama": "feature/pre_gadea"
  },
  "vistas": {
@@ -794,8 +794,16 @@
    "tipo": "entrada",
    "titulo": "Llega una pregunta",
    "que_hace": "Desde la ruta Información o desde la reserva ('contesta y sigue').",
+   "interruptores": [
+    {
+     "nombre": "contexto_tras_el_pase",
+     "titulo": "Tras pasar el caso a una persona, el bot no improvisa sobre él",
+     "codigo": false,
+     "pre": false,
+     "sin_efecto": false
+    }
+   ],
    "modelos": [],
-   "interruptores": [],
    "conteo": {
     "n": 47,
     "que": "preguntas",
@@ -961,8 +969,15 @@
      "sin_efecto": false
     },
     {
-     "nombre": "catalogo_fichas_completas",
-     "titulo": "El catálogo enseña lo que pide cada plan y hasta dónde certifica",
+     "nombre": "catalogo_profundidad",
+     "titulo": "El catálogo dice hasta qué profundidad baja cada buzo",
+     "codigo": false,
+     "pre": false,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "catalogo_preparacion",
+     "titulo": "El catálogo enseña la preparación de cada plan (apagado: medido y empeora)",
      "codigo": false,
      "pre": false,
      "sin_efecto": false
@@ -1908,10 +1923,23 @@
    "sin_efecto": null
   },
   {
-   "nombre": "catalogo_fichas_completas",
+   "nombre": "catalogo_hoteles_base",
    "area": "Preguntas",
-   "titulo": "El catálogo enseña lo que pide cada plan y hasta dónde certifica",
-   "texto": "Cada plan ya tenía escrito en su ficha qué hay que traer o hacer antes (la carta de referido, la teoría del curso) y, en los cursos, hasta qué profundidad certifican. El catálogo que lee el bot no lo mostraba, así que no lo podía decir. Ahora sí.",
+   "titulo": "Recogida confirmada en los hoteles base",
+   "texto": "El catálogo dice que en nuestros hoteles base de Isla Grande (San Pedro de Majagua y Cocoliso) la recogida está confirmada e incluida; en el resto de hoteles depende de que tengan acceso por lancha.",
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
+   "usado_por": [
+    "r_catalogo"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "catalogo_preparacion",
+   "area": "Preguntas",
+   "titulo": "El catálogo enseña la preparación de cada plan (apagado: medido y empeora)",
+   "texto": "Lo que hay que traer o hacer antes de cada plan (la carta de referido, la teoría). Medido: arregla un caso y rompe dos, porque dieciocho párrafos en todos los turnos distraen. Mejor solo cuando se habla de ese plan.",
    "codigo": false,
    "pre": false,
    "fijado_en_pre": false,
@@ -1921,13 +1949,13 @@
    "sin_efecto": null
   },
   {
-   "nombre": "catalogo_hoteles_base",
+   "nombre": "catalogo_profundidad",
    "area": "Preguntas",
-   "titulo": "Recogida confirmada en los hoteles base",
-   "texto": "El catálogo dice que en nuestros hoteles base de Isla Grande (San Pedro de Majagua y Cocoliso) la recogida está confirmada e incluida; en el resto de hoteles depende de que tengan acceso por lancha.",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
+   "titulo": "El catálogo dice hasta qué profundidad baja cada buzo",
+   "texto": "Open Water hasta 18 metros y Advanced hasta 30, según su certificación. Estaba solo en la descripción interna de los cursos, así que a '¿cuántos metros bajan?' el bot no lo podía decir.",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
    "usado_por": [
     "r_catalogo"
    ],
@@ -1980,6 +2008,19 @@
    "fijado_en_pre": true,
    "usado_por": [
     "deflection"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "contexto_tras_el_pase",
+   "area": "Preguntas",
+   "titulo": "Tras pasar el caso a una persona, el bot no improvisa sobre él",
+   "texto": "Cuando la conversación ya está con un asesor, el bot lo sabe: sigue contestando lo general (planes, precios, horarios), pero si el cliente pregunta por su reserva o su pago concreto, que el bot no puede ver, le dice que el asesor que tiene su caso se lo confirma en vez de inventar instrucciones.",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
+   "usado_por": [
+    "r_entrada"
    ],
    "sin_efecto": null
   },

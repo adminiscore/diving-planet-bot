@@ -3332,7 +3332,7 @@
    "causa_gadea": "rag_omite",
    "resumen": "No aclaró política de pago en USD para grupos mixtos.",
    "motivo_juez": "La referencia exige aclarar que en grupos mixtos (colombianos/residentes y extranjeros) toda la reserva se paga en USD; el bot no mencionó esa política en ninguna de sus respuestas.",
-   "turno": 1,
+   "turno": null,
    "pieza": "rag",
    "mensaje_cliente": "Hola! Estoy interesada en bucear el lunes festivo en islas del rosario. Solo dos buzos open water. Que precio tiene y que disponibilidad tienen?",
    "respuesta_ex10": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\n¡Hola! Bucear en las Islas del Rosario en un festivo es un plan buenísimo 🐠 Para dos buzos Open Water que ya están en las islas, la salida de *2 inmersiones* cuesta *124 USD por persona online* (o *138 USD precio normal*). No incluye almuerzo y la recogida está incluida si su hotel tiene acceso marítimo.\n\nOperamos los festivos; siempre hay disponibilidad, salvo cierres el 25 de diciembre y el 1 de enero, y las salidas pueden suspenderse por mal tiempo. Elijan la fecha y las ",
@@ -3350,7 +3350,8 @@
    },
    "causa_final": "redaccion",
    "tarea": "CAL-A",
-   "nota": "En grupos mixtos (colombianos/residentes y extranjeros), toda la reserva se paga en USD al mismo precio equivalente."
+   "nota": "17-oct: RETIRADO DE LAS MEDIDAS. El criterio (grupo mixto -> todo en USD) depende de que el cliente revele que el grupo es mixto, y en la conversación real lo hace contestando ('yo sí y mi compañero no') a una pregunta de nacionalidad que hizo la PERSONA de Diving Planet. Nuestro bot no hace esa pregunta (pregunta el hotel), así que el criterio no se puede alcanzar y el caso medía otra cosa. El fallo real que se ve en ese diálogo pasa a cal-76. En grupos mixtos (colombianos/residentes y extranjeros), toda la reserva se paga en USD al mismo precio equivalente.",
+   "turno_original": 1
   },
   {
    "id": "cal-73",
@@ -3430,6 +3431,26 @@
    "causa_gadea": null,
    "causa_final": "entendimiento",
    "nota": "ENCONTRADO el 17-oct con el protocolo de repetición: se repitió 3 veces CON y 3 SIN `idioma_del_extractor` y sale en español 3/3 en los dos lados, así que NO es del flag: es un defecto de siempre. La ronda C lo daba por bueno y la D por malo: muestra suelta."
+  },
+  {
+   "id": "cal-76",
+   "tarea": "CAL-C",
+   "dialogo": "precio-dispo-buceo-certificado-grupo-mixto",
+   "criterio": "destino-no-es-alojamiento",
+   "grupo": "entender",
+   "turno": 1,
+   "turnos_dialogo": 2,
+   "pieza": "extractor",
+   "mensaje_cliente": "Hola! Estoy interesada en bucear el lunes festivo en islas del rosario. Solo dos buzos open water. Que precio tiene y que disponibilidad tienen?",
+   "historial": [],
+   "pedia": "'Bucear en las Islas del Rosario' es el DESTINO, no dónde se aloja el cliente: el bot no da por hecho que ya está en las islas (no cotiza el plan de 'ya en las islas' ni le pide el hotel para la recogida) sin saber desde dónde sale; si no lo sabe, lo pregunta o da los dos orígenes rotulados. Y no hace la misma pregunta dos veces seguidas.",
+   "motivo_juez": "Visto en la ronda ex-10 (respuesta del bot al primer mensaje): cotiza 'Para dos buzos Open Water que ya están en las islas, la salida de 2 inmersiones cuesta 124 USD' y termina con '¿En qué hotel de las islas se alojan?' y '¿En qué hotel o isla te hospedas?'. El cliente solo dijo que quería bucear en las Islas del Rosario.",
+   "respuesta_ex10": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\n¡Hola! Bucear en las Islas del Rosario en un festivo es un plan buenísimo 🐠 Para dos buzos Open Water que ya están en las islas, la salida de *2 inmersiones* cuesta *124 USD por persona online* (o *138 USD precio normal*). No incluye almuerzo y la recogida está incluida si su hotel tiene acceso marítimo.\n\nOperamos los festivos; siempre hay disponibilidad, salvo cierres el 25 de diciembre y el 1 de enero, y las salidas pueden suspenderse por mal tiempo. Elijan la fecha y las ",
+   "resumen": "Toma el destino del buceo por el lugar de alojamiento y pregunta el hotel dos veces.",
+   "veredicto": "no_cumple",
+   "causa_gadea": null,
+   "causa_final": "entendimiento",
+   "nota": "17-oct: AÑADIDO al revisar cal-72. La sonda lo confirma: el enrutador (Jev) dice que el cliente NO afirma el lugar, pero el extractor EX5 guarda location='island' igualmente. Para Álvaro (CAL-C, extractor): el lugar donde se bucea no es el lugar donde se aloja."
   }
  ]
 }

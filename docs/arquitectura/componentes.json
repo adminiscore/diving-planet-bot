@@ -446,7 +446,10 @@
       "carril": "flujo",
       "tipo": "entrada",
       "titulo": "Llega una pregunta",
-      "que_hace": "Desde la ruta Información o desde la reserva ('contesta y sigue')."
+      "que_hace": "Desde la ruta Información o desde la reserva ('contesta y sigue').",
+      "interruptores": [
+        "contexto_tras_el_pase"
+      ]
     },
     {
       "id": "r_reglas",
@@ -522,7 +525,8 @@
         "catalogo_equipo_incluido",
         "rag_politicas_en_contexto",
         "est2_datos",
-        "catalogo_fichas_completas"
+        "catalogo_profundidad",
+        "catalogo_preparacion"
       ]
     },
     {
@@ -1401,10 +1405,20 @@
       "titulo": "La búsqueda sabe de qué va la pregunta",
       "texto": "Cuando el cliente dice '¿y por día?' o '¿en concepto qué pongo?', antes se buscaba eso tal cual y salían cosas de otros planes. Ahora la búsqueda usa lo que ya sabemos de él (qué quiere hacer, desde dónde sale) para buscar la pregunta completa."
     },
-    "catalogo_fichas_completas": {
+    "contexto_tras_el_pase": {
       "area": "Preguntas",
-      "titulo": "El catálogo enseña lo que pide cada plan y hasta dónde certifica",
-      "texto": "Cada plan ya tenía escrito en su ficha qué hay que traer o hacer antes (la carta de referido, la teoría del curso) y, en los cursos, hasta qué profundidad certifican. El catálogo que lee el bot no lo mostraba, así que no lo podía decir. Ahora sí."
+      "titulo": "Tras pasar el caso a una persona, el bot no improvisa sobre él",
+      "texto": "Cuando la conversación ya está con un asesor, el bot lo sabe: sigue contestando lo general (planes, precios, horarios), pero si el cliente pregunta por su reserva o su pago concreto, que el bot no puede ver, le dice que el asesor que tiene su caso se lo confirma en vez de inventar instrucciones."
+    },
+    "catalogo_profundidad": {
+      "area": "Preguntas",
+      "titulo": "El catálogo dice hasta qué profundidad baja cada buzo",
+      "texto": "Open Water hasta 18 metros y Advanced hasta 30, según su certificación. Estaba solo en la descripción interna de los cursos, así que a '¿cuántos metros bajan?' el bot no lo podía decir."
+    },
+    "catalogo_preparacion": {
+      "area": "Preguntas",
+      "titulo": "El catálogo enseña la preparación de cada plan (apagado: medido y empeora)",
+      "texto": "Lo que hay que traer o hacer antes de cada plan (la carta de referido, la teoría). Medido: arregla un caso y rompe dos, porque dieciocho párrafos en todos los turnos distraen. Mejor solo cuando se habla de ese plan."
     }
   },
   "areas": [

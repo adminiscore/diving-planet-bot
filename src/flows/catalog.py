@@ -499,27 +499,53 @@ def _parte_equipo(service_id: str, lang: str) -> list[str]:
 
 
 def _parte_ficha(service_id: str, lang: str) -> list[str]:
-    """CAL (17-oct, flag `catalogo_fichas_completas`): lo que la FICHA del producto ya dice y el catálogo no pintaba.
+    """CAL (17-oct): lo que la FICHA del producto ya dice y el catálogo no pintaba, cada cosa con su flag.
 
-    - Hasta qué profundidad certifica (`max_depth_m`: Open Water 18 m, Advanced 30 m, lo que la base dice en el
-      registro de actividades). Sin esto, a "¿cuántos metros bajan?" de un buzo certificado el RAG solo podía decir
-      "depende de la certificación": el dato no estaba en ningún sitio que viera (cal-18).
-    - Qué preparación pide antes de empezar (`preparation_*`, en 18 de 36 productos: la carta de referido firmada, la
-      teoría del Open Water, las 4 horas del Advanced...). Estaba solo en una pregunta frecuente que la búsqueda no
-      siempre trae (cal-49: "traer la carta de referido firmada por un instructor PADI").
+    - `catalogo_profundidad`: hasta qué profundidad certifica (`max_depth_m`: Open Water 18 m, Advanced 30 m, lo que
+      la base dice en el registro de actividades). Sin esto, a "¿cuántos metros bajan?" el RAG solo podía decir
+      "depende de la certificación": el dato no estaba en nada que viera (cal-18).
+    - `catalogo_preparacion`: qué preparación pide antes de empezar (`preparation_*`, en 18 de 36 productos).
+      **MEDIDO el 17-oct (banco CAL-A 16x3): arregla cal-49 (la carta de referido, 3/3 -> 0/3) pero rompe cal-26
+      (0/3 -> 3/3: el refresher se vende como minicurso y la preparación del minicurso, "completar la teoría", se
+      mezcla con el formulario médico) y cal-64 (0/3 -> 2/3). Total 41/48 frente a 38/48.** Dieciocho párrafos en el
+      contexto de TODOS los turnos compiten con lo que hace falta en cada uno (lo mismo que enseñaron los avisos):
+      se queda APAGADO. La preparación tiene sentido solo cuando se habla de ese producto.
 
-    Va en el catálogo y no en una regla del prompt: es un dato de cada producto, sale de su ficha y vale para todas
-    las preguntas sobre él. Y como el juez lee el mismo catálogo, también puede comprobar lo que el bot diga de ello."""
+    Va en el catálogo y no en una regla del prompt: es un dato de cada producto y sale de su ficha. Como el juez lee
+    el mismo catálogo, también puede comprobar lo que el bot diga de ello."""
+    from src.config import settings  # lazy
+
     svc = RAW_SERVICES.get(service_id, {})
     es = lang == "es"
     partes: list[str] = []
     metros = svc.get("max_depth_m")
-    if metros:
+    if metros and settings.catalogo_profundidad:
         partes.append(f"certifica para bucear hasta {metros} m" if es else f"certifies you to dive down to {metros} m")
     preparacion = (svc.get("preparation_es" if es else "preparation_en") or "").strip().rstrip(".")
-    if preparacion:
+    if preparacion and settings.catalogo_preparacion:
         partes.append(("preparación: " if es else "preparation: ") + preparacion)
     return partes
+
+
+def _profundidad_por_certificacion(lang: str) -> str | None:
+    """CAL (17-oct, flag `catalogo_profundidad`): la profundidad máxima de cada buzo la marca su certificación,
+    como una línea general del catálogo (junto a la edad mínima o los días que operamos). Los números salen de las
+    fichas de los cursos que certifican (`max_depth_m`), no se escriben aquí: un solo origen."""
+    es = lang == "es"
+    por_curso: dict[str, int] = {}
+    for sid, svc in RAW_SERVICES.items():
+        metros = svc.get("max_depth_m")
+        if not metros or sid.endswith("_already_on_island"):
+            continue
+        por_curso[svc.get("name_es" if es else "name_en") or sid] = metros
+    if not por_curso:
+        return None
+    orden = sorted(por_curso.items(), key=lambda par: par[1])
+    if es:
+        cursos = "; ".join(f"{nombre}: hasta {metros} m" for nombre, metros in orden)
+        return f"Profundidad máxima de cada buzo según su certificación (también en las salidas de buceo): {cursos}."
+    cursos = "; ".join(f"{nombre}: down to {metros} m" for nombre, metros in orden)
+    return f"Maximum depth for each diver according to their certification (also on dive trips): {cursos}."
 
 
 def policies_facts(lang: str) -> str:
@@ -551,13 +577,13 @@ def catalog_facts(lang: str) -> str:
     # 17-oct: la clave lleva TODOS los flags que cambian el texto. Antes solo llevaba la moneda, así que cambiar
     # otro flag en el mismo proceso (los tests, o una medida que enciende un flag) devolvía el catálogo de antes.
     clave = (f"{lang}|{settings.moneda_sin_nacionalidad_usd}|{settings.catalogo_equipo_incluido}|"
-             f"{settings.catalogo_hoteles_base}|{settings.catalogo_fichas_completas}")
+             f"{settings.catalogo_hoteles_base}|{settings.catalogo_profundidad}|{settings.catalogo_preparacion}")
     if clave in _FACTS_CACHE:
         return _FACTS_CACHE[clave]
 
     es = lang == "es"
     catalogo_equipo = settings.catalogo_equipo_incluido
-    catalogo_fichas = settings.catalogo_fichas_completas
+    catalogo_fichas = settings.catalogo_profundidad or settings.catalogo_preparacion
     groups: dict[bool, list[str]] = {False: [], True: []}
     for service_id, svc in SERVICES.items():
         if svc.get("category") == "private":
@@ -648,6 +674,12 @@ def catalog_facts(lang: str) -> str:
                "add up or compute totals. If the "
                "customer quotes a price that doesn't match the catalog, give the catalog price without repeating theirs."]
     text = chr(10).join(out)
+    if settings.catalogo_profundidad:
+        # La profundidad también como regla general: "certifica hasta 18 m" en la línea del CURSO no le llegaba a quien
+        # pregunta por una SALIDA siendo ya buzo certificado (cal-18 siguió 3/3 con solo la parte de la ficha).
+        profundidad = _profundidad_por_certificacion(lang)
+        if profundidad:
+            text += chr(10) + profundidad
     if settings.moneda_sin_nacionalidad_usd:
         # CAL-B (15-oct, decisión de Gadea): sin saber la nacionalidad, el precio va en USD, no en las dos monedas.
         text = text.replace(MONEDA_SIN_NACIONALIDAD["es"][0], MONEDA_SIN_NACIONALIDAD["es"][1]).replace(
