@@ -41,6 +41,24 @@ PRE (escritas ya por Luna) tumba 42 frente a 13, casi todo verdades (HISTORY 0.3
 **C. Pendientes de antes:** el criterio del Open Water en `manual-duracion-curso` ✅ (FAQ curada nueva: "sacarse la
 certificación" = Open Water, o el Referido; el Scuba Diver es la parcial). **DeepSeek: FUERA DEL PLAN** (Gadea, 9-oct).
 
+### ⚠️ DESDE EL 17-OCT SE TRABAJA EN PARALELO — leer `docs/trabajo-en-paralelo.md` antes de tocar nada
+
+**Reparto (decidido por Gadea):** Álvaro lleva **CAL-C** y la robustez de PRE (`r6-1`); Gadea con Claude lleva
+**CAL-A, CAL-D, CAL-F y CAL-G**; el simulador de usuario (`g-3`) y la puerta en CI (`q5-1`) están libres. La limpieza
+del camino antiguo va DESPUÉS de CAL.
+
+**Lo primero, Álvaro (✅ HECHO el 17-oct a las 11:20):** tu rama `feature/pre_alvaro` estaba **25 commits por detrás** de `feature/pre_gadea`. Si la subes
+así, PRE vuelve a tu código del 16-oct y se deshacen sin avisar los cambios promocionados del 17-oct. Antes de nada:
+
+```
+git fetch origin && git checkout feature/pre_alvaro && git merge --ff-only origin/feature/pre_gadea
+```
+
+**Las tres normas que más importan:** (1) reclamar la tarea en Plan Coral antes de empezar; (2) antes de subir,
+integrar la rama del otro y suite en verde, porque en PRE gana el último; (3) **no subir mientras alguien mide**: el
+despliegue reinicia el contenedor y mata la medida del otro (avisar en el registro de Plan Coral con la hora de fin).
+Las doce normas, con su porqué, están en el documento.
+
 ### ▶️ RETOMAR AQUÍ — 17-oct mediodía (Álvaro con Claude): CAL-C — C3 hecho, banco reparado 49 → 28/63, todo APAGADO
 
 **Estado.** `feature/pre_alvaro` = `feature/pre_gadea` (121ce14, avance limpio) + el trabajo de CAL-C de hoy. Los 6 flags
