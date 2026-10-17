@@ -233,5 +233,20 @@ flag → banco en local (varias pasadas) → una ronda en PRE por tanda.
 | **CAL-F** | Medir | Banco de fallos entero + UNA ronda del golden visible completo (95) en PRE + examen oculto NUEVO cuando haya conversaciones reales no vistas. | 0,5 d |
 | **CAL-G** | Prueba de paralelización (16-oct, decisión de Álvaro: AL FINAL) | (CAL-A no adoptó el plan: queda solo si se recupera.) Lanzar a la vez el PLAN, la BÚSQUEDA y los cálculos del código (precio, moneda, origen), que no dependen entre sí; la redacción sigue siendo UNA llamada (no por puntos: más cara y el tono queda a trozos). Medir latencia p50/p95/máx A/B en la misma franja; meta p95 ≤ 7 s. | 0,5 d |
 
+**Reparto y orden acordados con Gadea el 17-oct (todo lo que queda de CAL lo cierra Gadea con Claude):**
+
+1. **Los 13 casos de los grupos 2 y 3** del desglose de CAL-A (el bot no contesta lo que el cliente pregunta, o se va
+   por otro camino). Empezando por cal-69 y cal-70, que huelen a una señal que se dispara mal.
+2. **Lo que Álvaro dejó de CAL-C** (17 casos: C3 "no repreguntar lo sabido", el idioma y dos sueltos). **Se reclama en
+   Plan Coral y en el relevo antes de empezar**, y se mira su rama: ya hubo dos duplicaciones en esta fase.
+3. **El revisor del plan exacto contra la ficha** (lo que queda de CAL-D; es lo que cazaría cal-74).
+4. **CAL-F**: una ronda del golden visible COMPLETO (95), no la muestra core de 32.
+5. **CAL-G**, redefinida el 17-oct: su premisa era paralelizar el PLAN, y el plan murió con CAL-A; la búsqueda y el
+   extractor ya van en paralelo (rag-5, ex-5). Queda **medir dónde se va el tiempo y paralelizar lo que siga siendo
+   secuencial** (reescribir la consulta y luego buscar). Ojo: la meta de latencia **ya está cumplida** (p95 5,0 s
+   frente a 7), así que CAL-G no rescata nada, baja lo que quede.
+6. **El examen oculto nuevo**, al final. El material (otra tanda de conversaciones de Diving Planet) **se pide ya**,
+   porque tarda en llegar y si no nos quedamos parados al cerrar CAL.
+
 **Metas:** banco de fallos: **todo lo que está en la base, 100 %**. Golden visible: **reales ≥ 95 %**, sintéticos ≥ 99 %.
 Oculto nuevo: ≥ 90 %. Latencia p95 ≤ 7 s. Orden: CAL-0 → CAL-B → CAL-A → CAL-C → CAL-D + CAL-E → CAL-F → CAL-G (~4–5 días + 0,5).
