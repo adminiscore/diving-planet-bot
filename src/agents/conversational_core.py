@@ -5245,6 +5245,17 @@ async def _rag_answer(
     return _origen_antes_del_precio(state, message, answer) or answer
 
 
+# CAL-C3d (17-oct, flag `tras_pase_recuerda_el_pase`): tras pasar la conversación a un asesor, "¿me podrías ayudar con
+# este tema?" (cal-59, la agencia con un correo sin respuesta) llegaba al RAG sin saber que ya había un pase, y contestaba
+# "Cuéntame, ¿qué tema tienes en mente?". El RAG recibe el estado; ahora también este hecho.
+_PASE_HECHO_ES = ("Esta conversación YA está pasada a un asesor del equipo, que la ve entera y escribirá por este chat. "
+                  "Si el cliente pide ayuda con lo que ya contó, no le pidas que lo repita: dile que el asesor ya tiene "
+                  "su caso y le escribe por aquí.")
+_PASE_HECHO_EN = ("This conversation has ALREADY been passed to an advisor from the team, who sees all of it and will "
+                  "write in this chat. If the customer asks for help with what they already told, do not ask them to "
+                  "repeat it: tell them the advisor already has their case and will write here.")
+
+
 def _entradas_rag(state: ConversationState, history: list, message: str = "") -> dict:
     """Lo que recibe el RAG además de la pregunta: idioma, historial, resumen del estado y (rag-3, con su flag)
     el origen. Una sola fuente para la llamada normal y para la adelantada de rag-5, que compara sus huellas."""
@@ -5254,6 +5265,9 @@ def _entradas_rag(state: ConversationState, history: list, message: str = "") ->
     plan = _plan_nombrado(state, message)
     if plan:
         extra = f"{extra}\n\n{plan}" if extra else plan
+    if settings.tras_pase_recuerda_el_pase and state.step == Step.ESCALATE:
+        pase = _PASE_HECHO_ES if state.language == "es" else _PASE_HECHO_EN
+        extra = f"{extra}\n\n{pase}" if extra else pase
     entradas = {"lang": state.language, "history": history, "extra_context": extra}
     # rag-3: el origen va solo con el flag (con el flag apagado la llamada es la de siempre).
     if settings.rag_busqueda_origen and state.location:

@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-17T10:36:13+00:00",
-  "commit": "941b6ca",
+  "generado": "2026-10-17T10:46:40+00:00",
+  "commit": "72e0967",
   "rama": "feature/pre_alvaro"
  },
  "vistas": {
@@ -693,6 +693,13 @@
     {
      "nombre": "una_sola_pregunta",
      "titulo": "Una sola pregunta por turno",
+     "codigo": false,
+     "pre": false,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "tras_pase_recuerda_el_pase",
+     "titulo": "Tras pasar a un asesor, no pedir que repita",
      "codigo": false,
      "pre": false,
      "sin_efecto": false
@@ -2959,6 +2966,19 @@
    "fijado_en_pre": false,
    "usado_por": [
     "b_extraction"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "tras_pase_recuerda_el_pase",
+   "area": "Reserva",
+   "titulo": "Tras pasar a un asesor, no pedir que repita",
+   "texto": "Cuando la conversación ya está pasada a un asesor, la respuesta lo sabe: si el cliente insiste en que le ayuden con lo que ya contó, se le dice que el asesor ya tiene su caso, en vez de pedirle que lo cuente otra vez.",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
+   "usado_por": [
+    "b_slotfill_close"
    ],
    "sin_efecto": null
   },

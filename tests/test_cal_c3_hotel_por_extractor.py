@@ -164,3 +164,18 @@ async def test_sin_cedula_cambia_la_regla_solo_con_el_flag(monkeypatch, lang):
         sistemas.append(llamadas[0]["messages"][0]["content"])
     nueva = ex.SIN_CEDULA_ES if lang == "es" else ex.SIN_CEDULA_EN
     assert nueva not in sistemas[0] and nueva in sistemas[1]
+
+
+# --- CAL-C3d `tras_pase_recuerda_el_pase`: el RAG sabe que ya hubo un pase a un asesor ---
+
+def test_c3d_el_rag_sabe_que_ya_hubo_pase(monkeypatch):
+    from src.flows.state import Step
+
+    st = ConversationState(conversation_id="c3d", language="es")
+    st.step = Step.ESCALATE
+    monkeypatch.setattr(settings, "tras_pase_recuerda_el_pase", False)
+    assert core._PASE_HECHO_ES not in (core._entradas_rag(st, [], "¿me ayudas con este tema?")["extra_context"] or "")
+    monkeypatch.setattr(settings, "tras_pase_recuerda_el_pase", True)
+    assert core._PASE_HECHO_ES in core._entradas_rag(st, [], "¿me ayudas con este tema?")["extra_context"]
+    st.step = Step.FREE_TEXT  # sin pase, nada
+    assert core._PASE_HECHO_ES not in (core._entradas_rag(st, [], "hola")["extra_context"] or "")
