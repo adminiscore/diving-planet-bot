@@ -5739,7 +5739,10 @@ def _origen_antes_del_precio(state: ConversationState, message: str, answer: str
     if not (_PIDE_PRECIO_RE.search(texto) or state.pregunta_precio_pendiente):
         return None
     del_cliente = [h.get("content") or "" for h in (state.history or []) if h.get("role") == "user"]
-    if any(_PISTA_ORIGEN_RE.search(t) for t in [*del_cliente, texto]):
+    este = [] if settings.lugar_con_dos_lectores and _jev_dice_que_no_lo_dice(state) else [texto]
+    # CAL-C3c: "bucear en islas del rosario" nombra las islas sin decir dónde está el cliente (cal-71/73); si Jev está
+    # seguro de que ESTE mensaje no dice su origen, sus palabras no cuentan como pista y se pregunta antes de cotizar.
+    if any(_PISTA_ORIGEN_RE.search(t) for t in [*del_cliente, *este]):
         return None
     pregunta = ORIGEN_ANTES_DEL_PRECIO_ES if state.language == "es" else ORIGEN_ANTES_DEL_PRECIO_EN
     if settings.origen_conserva_respuesta:
