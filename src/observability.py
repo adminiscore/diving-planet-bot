@@ -173,12 +173,14 @@ def con_pieza_llm(nombre: str):
 
 
 def record_llm_call(kind: str, seconds: float, model: str | None = None, *, pieza: str | None = None,
-                    inicio: float | None = None) -> None:
+                    inicio: float | None = None, status: int | None = None) -> None:
     """Apunta una llamada al LLM (`chat` o `embedding`) en el turno en curso: tipo, duración, modelo y, si se saben,
     la pieza que la hizo y cuándo empezó (segundos desde el inicio del turno)."""
     current = _TURN_FACTS.get()
     if current is not None:
         llamada = {"kind": kind, "s": round(seconds, 4), "model": model, "pieza": pieza or _LLM_PIEZA.get()}
+        if status is not None and status >= 400:
+            llamada["error"] = status  # r6-1(b): 401 clave, 429 sin saldo o saturado, 5xx caído
         t0_turno = _TURN_T0.get()
         if inicio is not None and t0_turno is not None:
             llamada["t"] = round(inicio - t0_turno, 3)
@@ -204,7 +206,7 @@ async def _on_response(response) -> None:
         except Exception:  # noqa: BLE001
             pass
         record_llm_call(kind, time.perf_counter() - t0, model, pieza=request.extensions.get("coral_pieza"),
-                        inicio=t0)
+                        inicio=t0, status=response.status_code)
     except Exception:  # noqa: BLE001 — medir nunca rompe una llamada
         pass
 
@@ -263,6 +265,16 @@ def current_turn_facts() -> dict | None:
     return _TURN_FACTS.get()
 
 
+def fallo_de_openai_en_el_turno() -> int | None:
+    """r6-1(b): el código de error si en el turno en curso NINGUNA llamada de chat a OpenAI funcionó y al menos una
+    falló (clave inválida, sin saldo, saturado, caído); None si alguna funcionó o no hubo llamadas. Los reintentos del
+    SDK pasan por aquí: un 429 suelto seguido de un éxito no cuenta."""
+    chats = [c for c in (_TURN_FACTS.get() or {}).get("_llm") or [] if c["kind"] == "chat"]
+    if not chats or any("error" not in c for c in chats):
+        return None
+    return chats[-1]["error"]
+
+
 def turn_metrics_line(conversation_id: str, facts: dict, started_at: str, seconds: float) -> str:
     """La línea `[TURN_METRICS]` del turno: el resumen (sin texto) + llamadas + nodos."""
     calls = facts.get("_llm") or []
@@ -282,8 +294,10 @@ def turn_metrics_line(conversation_id: str, facts: dict, started_at: str, second
         "models": models,
         "nodes": facts.get("_nodes") or {},
         # r6-1: cada llamada (pieza, modelo, inicio en el turno, duración), para ver qué va en serie y qué en paralelo.
-        "llamadas": [{"p": c.get("pieza") or c["kind"], "m": c.get("model"), "t": c.get("t"), "s": c["s"]}
+        "llamadas": [{"p": c.get("pieza") or c["kind"], "m": c.get("model"), "t": c.get("t"), "s": c["s"],
+                      **({"e": c["error"]} if c.get("error") else {})}
                      for c in calls],
+        "llm_errores": sum(1 for c in calls if c.get("error")),
     }
     if facts.get("rag_adelantado"):
         payload["rag_adelantado"] = facts["rag_adelantado"]  # rag-5: aprovechado / rehecho / descartado

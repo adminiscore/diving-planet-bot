@@ -119,3 +119,39 @@ async def test_el_respaldo_del_rag_etiqueta_escritor_y_respaldo(monkeypatch):
     monkeypatch.setattr(settings, "rag_respaldo_segundos", 0.05)
     assert await rag_agent.generar_con_respaldo(cliente, [{"role": "user", "content": "hola"}]) == "rapido"
     assert sorted(vistas) == [("lento", "rag_escritor"), ("rapido", "rag_respaldo")]
+
+
+# --- r6-1(b) `aviso_si_openai_falla`: si ninguna llamada a OpenAI funciona, se dice y se pasa a un asesor ---
+
+async def test_fallo_de_openai_solo_si_ninguna_llamada_funciono():
+    async with obs.turn_trace(_S(), "4", "hola"):
+        assert obs.fallo_de_openai_en_el_turno() is None  # sin llamadas
+        obs.record_llm_call("chat", 0.1, "gpt-6-luna", status=429)
+        assert obs.fallo_de_openai_en_el_turno() == 429
+        obs.record_llm_call("chat", 0.1, "gpt-6-luna", status=200)  # el reintento del SDK funcionó
+        assert obs.fallo_de_openai_en_el_turno() is None
+
+
+async def test_con_openai_caido_el_bot_lo_dice_y_pasa_a_un_asesor(monkeypatch):
+    from src.agents import supervisor
+    from src.config import settings
+    from src.flows.state import ConversationState, Step
+
+    async def turno_degradado(state, message, routing_signals=None):
+        obs.record_llm_call("chat", 0.1, "gpt-4.1-mini", status=429)
+        obs.record_llm_call("chat", 0.1, "gpt-6-luna", status=429)
+        return "Ese detalle en concreto no lo tengo a la mano."
+
+    monkeypatch.setattr(settings, "agent_arch", False)
+    monkeypatch.setattr(supervisor, "_shared_turn_handler", turno_degradado)
+    for flag in (False, True):
+        monkeypatch.setattr(settings, "aviso_si_openai_falla", flag)
+        st = ConversationState(conversation_id="r61b", language="es")
+        respuesta = await supervisor.route_message(st, "¿dónde es el punto de encuentro?")
+        if not flag:
+            assert respuesta == "Ese detalle en concreto no lo tengo a la mano."
+            assert st.pending_escalation_reason is None
+        else:
+            assert "problema técnico" in respuesta
+            assert st.step == Step.ESCALATE
+            assert "FALLO TÉCNICO" in st.pending_escalation_reason and "429" in st.pending_escalation_reason

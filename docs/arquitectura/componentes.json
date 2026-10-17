@@ -73,7 +73,8 @@
       "que_hace": "Abre la traza del turno y manda el mensaje al grafo de agentes. Al final recoge las tareas en paralelo.",
       "donde": "src/agents/supervisor.py:route_message",
       "interruptores": [
-        "agent_arch"
+        "agent_arch",
+        "aviso_si_openai_falla"
       ]
     },
     {
@@ -976,6 +977,11 @@
       "area": "Reserva",
       "titulo": "Correcciones sin repetir",
       "texto": "Cuando un dato cambia, pregunta «¿lo cambio?» una sola vez, y nunca por un cambio que se lee igual."
+    },
+    "aviso_si_openai_falla": {
+      "area": "Arquitectura",
+      "titulo": "Si OpenAI cae, decir la verdad y pasar a un asesor",
+      "texto": "Si en un mensaje ninguna llamada a OpenAI funciona (sin saldo, clave mala o caído), el bot dice que tiene un problema técnico y pasa la conversación a un asesor; el motivo del pase avisa al equipo de que revise el saldo. Antes contestaba 'no lo tengo a la mano' a todo."
     },
     "hotel_del_catalogo_da_isla": {
       "area": "Reserva",
