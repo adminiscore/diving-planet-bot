@@ -384,6 +384,12 @@ services:
       IDIOMA_DEL_EXTRACTOR: "true"
       SIN_CEDULA_EXTRANJERO: "true"
       TRAS_PASE_RECUERDA_EL_PASE: "true"
+      # RONDA cala6-B de CAL-A (17-oct, Gadea con Claude): la profundidad por certificación en el catálogo (banco:
+      # cal-18 3/3 → 0/3) y el aviso que falta AÑADIDO AL FINAL (A6, revisor GPT-6 Luna; ronda core simulada 220 = 220
+      # criterios). Se miden contra la ronda calc-B de Álvaro (mismo código con sus 8 flags, sin estos dos).
+      # Revert = quitar estas dos líneas.
+      CATALOGO_PROFUNDIDAD: "true"
+      AVISOS_AL_FINAL: "true"
     depends_on:
       dp-pre-postgres:
         condition: service_healthy
