@@ -128,19 +128,27 @@ def _reproducir_en_pre(turnos: list[str], *, reps: int = 1, flags: list[str] | N
     return ultimos
 
 
-async def _verificar(f: dict, hoy: dict) -> dict:
+# 17-oct (Álvaro, a propuesta de Gadea): el verificador es lo que más gasta de cada medida (hasta 60.000 caracteres de
+# contexto por respuesta con gpt-4.1). `--verificador` elige el modelo y `--comparar-verificador` juzga las MISMAS
+# respuestas con un segundo modelo y dice en cuántas coinciden: cambiar de verificador cambia el instrumento, así que
+# antes se mide que diga lo mismo.
+VERIFICADOR_MODELO = "gpt-4.1"
+
+
+async def _verificar(f: dict, hoy: dict, modelo: str = VERIFICADOR_MODELO) -> dict:
     from openai import AsyncOpenAI
 
     from src.config import settings
+    from src.llm_client import adaptar_parametros
 
     contexto = "\n\n".join(j["context"] for j in hoy.get("juicios") or []) or "(el turno no pasó por el revisor: sin contexto)"
     usuario = (f"CRITERIO: {f['criterio']}\nLO QUE PEDÍA: {f.get('pedia_corregido') or f['pedia']}\n"
                f"POR QUÉ FALLÓ EN LA RONDA: {f['motivo_juez']}\n\n"
                f"MENSAJE DEL CLIENTE: {f['mensaje_cliente']}\n\nRESPUESTA DE HOY: {hoy['reply']}\n\n"
                f"CONTEXTO QUE TENÍA (cortado a 60.000 caracteres):\n{contexto[:60000]}")
-    resp = await AsyncOpenAI(api_key=settings.openai_api_key).chat.completions.create(
-        model="gpt-4.1", temperature=0, response_format={"type": "json_object"},
-        messages=[{"role": "system", "content": VERIFICADOR}, {"role": "user", "content": usuario}])
+    resp = await AsyncOpenAI(api_key=settings.openai_api_key).chat.completions.create(**adaptar_parametros(dict(
+        model=modelo, temperature=0, response_format={"type": "json_object"},
+        messages=[{"role": "system", "content": VERIFICADOR}, {"role": "user", "content": usuario}])))
     return json.loads(resp.choices[0].message.content or "{}")
 
 
@@ -172,7 +180,7 @@ def diagnosticar(ids: list[str] | None) -> None:
 
 
 def medir(etiqueta: str, ids: list[str] | None, tarea: str | None, reps: int, flags: list[str],
-          codigo_local: bool) -> None:
+          codigo_local: bool, verificador: str = VERIFICADOR_MODELO, comparar: str | None = None) -> None:
     """Mide un arreglo de CAL sobre el banco: cada caso `reps` veces en PRE (con `flags` y, si se pide, el código
     local) y el verificador dice si el fallo se repite. Usa `pedia_corregido` si lo hay (criterio actualizado a una
     decisión de Gadea). Salida: `docs/robustness/cal/medidas/<etiqueta>.json` y, por pantalla, cuántas veces falla."""
@@ -183,8 +191,12 @@ def medir(etiqueta: str, ids: list[str] | None, tarea: str | None, reps: int, fl
     datos = json.loads(BANCO.read_text(encoding="utf-8"))
     casos = [f for f in datos["fallos"] if f["turno"] and (not ids or f["id"] in ids) and (not tarea or f.get("tarea") == tarea)]
     codigo = subir_codigo_local() if codigo_local else None
-    salida = {"etiqueta": etiqueta, "reps": reps, "flags": flags, "codigo_local": codigo_local, "casos": []}
+    salida = {"etiqueta": etiqueta, "reps": reps, "flags": flags, "codigo_local": codigo_local,
+              "verificador": verificador, "casos": []}
+    if comparar:
+        salida["verificador_comparado"] = comparar
     fallan_total = 0
+    coinciden = comparados = fallan_otro_total = 0
     roto: list[str] = []
     for f in casos:
         try:
@@ -208,20 +220,40 @@ def medir(etiqueta: str, ids: list[str] | None, tarea: str | None, reps: int, fl
                 roto.append(f["id"])
                 continue
         async def _todas(f=f, filas=filas):  # un solo bucle por caso (antes: "Event loop is closed" al cerrar clientes)
-            return await asyncio.gather(*(_verificar(f, hoy) for hoy in filas))
+            principal = asyncio.gather(*(_verificar(f, hoy, verificador) for hoy in filas))
+            if not comparar:
+                return await principal, None
+            otro = asyncio.gather(*(_verificar(f, hoy, comparar) for hoy in filas))
+            return await asyncio.gather(principal, otro)
 
-        veredictos = asyncio.run(_todas())
-        fallan = sum(1 for v in veredictos if v.get("se_reproduce") in ("si", "parcial"))
+        veredictos, otros = asyncio.run(_todas())
+        falla = [v.get("se_reproduce") in ("si", "parcial") for v in veredictos]
+        fallan = sum(falla)
         fallan_total += fallan
-        salida["casos"].append({"id": f["id"], "dialogo": f["dialogo"], "criterio": f["criterio"], "repeticiones": len(filas),
-                                "fallan": fallan, "respuestas": [h["reply"] for h in filas],
-                                "explicaciones": [v.get("explicacion", "") for v in veredictos]})
-        print(f"  {f['id']} {f['dialogo'][:40]:40} {f['criterio'][:28]:28} falla {fallan}/{len(filas)}")
+        caso = {"id": f["id"], "dialogo": f["dialogo"], "criterio": f["criterio"], "repeticiones": len(filas),
+                "fallan": fallan, "respuestas": [h["reply"] for h in filas],
+                "explicaciones": [v.get("explicacion", "") for v in veredictos]}
+        linea = f"  {f['id']} {f['dialogo'][:40]:40} {f['criterio'][:28]:28} falla {fallan}/{len(filas)}"
+        if otros is not None:
+            falla_otro = [v.get("se_reproduce") in ("si", "parcial") for v in otros]
+            caso["fallan_comparado"] = sum(falla_otro)
+            caso["explicaciones_comparado"] = [v.get("explicacion", "") for v in otros]
+            fallan_otro_total += sum(falla_otro)
+            coinciden += sum(a == b for a, b in zip(falla, falla_otro))
+            comparados += len(falla)
+            linea += f"  ({comparar}: {sum(falla_otro)}/{len(filas)})"
+        salida["casos"].append(caso)
+        print(linea)
     destino = CAL / "medidas" / f"{etiqueta}.json"
     destino.parent.mkdir(parents=True, exist_ok=True)
     destino.write_text(json.dumps(salida, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
     total = sum(c["repeticiones"] for c in salida["casos"])
     salida["sin_medir"] = roto
+    if comparar and comparados:
+        salida["coincidencia_verificadores"] = {"coinciden": coinciden, "de": comparados,
+                                                "fallan_principal": fallan_total, "fallan_comparado": fallan_otro_total}
+        print(f"verificadores: {verificador} y {comparar} coinciden en {coinciden}/{comparados} veredictos "
+              f"(fallan {fallan_total} con {verificador}, {fallan_otro_total} con {comparar})")
     destino.write_text(json.dumps(salida, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
     medidos = len(casos) - len(roto)
     print(f"{etiqueta}: fallan {fallan_total}/{total} repeticiones en {medidos} casos medidos "
@@ -240,10 +272,12 @@ def main() -> None:
     ap.add_argument("--reps", type=int, default=3)
     ap.add_argument("--flag", action="append", default=[], help="medir: interruptor encendido solo en ese proceso")
     ap.add_argument("--codigo-local", action="store_true", help="medir: con el código local (sin desplegar)")
+    ap.add_argument("--verificador", default=VERIFICADOR_MODELO, help="medir: modelo del verificador (gpt-4.1)")
+    ap.add_argument("--comparar-verificador", help="medir: juzga las mismas respuestas también con este modelo")
     args = ap.parse_args()
     if args.accion == "medir":
         medir(args.etiqueta or "medida", args.ids.split(",") if args.ids else None, args.tarea, args.reps, args.flag,
-              args.codigo_local)
+              args.codigo_local, args.verificador, args.comparar_verificador)
         return
     if args.accion == "construir":
         banco = construir()
