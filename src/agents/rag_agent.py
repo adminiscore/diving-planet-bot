@@ -1193,6 +1193,23 @@ async def rag_answer(
                     dados.append(aviso["id"])
 
         last_reject = ""
+        def _con_aviso_al_final(answer: str, aviso: tuple[str, str]) -> str:
+            """CAL-A6: la respuesta con la frase del aviso, si la frase pasa las mismas guardas deterministas que la
+            respuesta (ni importes, ni enlaces, ni teléfonos, ni datos personales que no estén en el contexto). El
+            aviso queda apuntado como dado en la lista del estado, como los de A5."""
+            from src.agents import rag_plan  # lazy
+
+            aviso_id, frase = aviso
+            if not (is_coherent_text(frase) and currency_amounts_grounded(frase, amounts_context)
+                    and urls_grounded(frase, grounding_context) and not contains_phone_number(frase)
+                    and not requests_personal_data(frase)):
+                logger.info(f"[RAG][AVISO_FINAL] {aviso_id}: la frase no pasa las guardas, no se añade")
+                return answer
+            dados = (avisos_hechos or {}).get("dados")
+            if isinstance(dados, list) and aviso_id not in dados:
+                dados.append(aviso_id)
+            return rag_plan.insertar_frase(answer, frase)
+
         respuesta_buena = None  # CAL-A3: la respuesta aprobada a la que solo le faltaba algún punto
         for attempt in range(2):
             try:
@@ -1235,7 +1252,18 @@ async def rag_answer(
                 _apuntar_avisos()
                 return answer
             else:
-                grounded, reason = await _verify_grounding(answer, grounding_context, lang=lang)
+                aviso_final = None
+                if settings.avisos_al_final:
+                    # CAL-A6: el revisor de avisos va A LA VEZ que el juez de siempre (no suma latencia si tarda menos
+                    # que él); lo que diga solo cuenta si la respuesta pasa.
+                    from src.agents import rag_plan  # lazy
+
+                    (grounded, reason), aviso_final = await asyncio.gather(
+                        _verify_grounding(answer, grounding_context, lang=lang),
+                        rag_plan.aviso_al_final(history, redact_pii(query), answer, lang,
+                                                dados=(avisos_hechos or {}).get("dados")))
+                else:
+                    grounded, reason = await _verify_grounding(answer, grounding_context, lang=lang)
                 if grounded and attempt == 0 and (
                         (settings.rag_revisor_completitud and puntos) or settings.rag_revisor_avisos
                         or avisos_elegidos):
@@ -1265,6 +1293,8 @@ async def rag_answer(
                         continue
                 if grounded:
                     _apuntar_avisos()
+                    if aviso_final:
+                        answer = _con_aviso_al_final(answer, aviso_final)
                     logger.info(
                         f"[RAG] Query: {query[:60]}... | Docs: {len(docs) if docs else 0} | "
                         f"Tokens: {response.usage.total_tokens} | "

@@ -92,3 +92,18 @@ medido:
 
 Mi recomendación: la 1, porque es barata de probar (el revisor de completitud ya existe) y porque el diagnóstico dice
 que el problema era el desplazamiento, no el aviso.
+
+## 8. El límite de 8 palabras del reescritor (17-oct): probado y descartado
+
+`query_rewriter._should_condense` no reescribe los mensajes de 8 palabras o más (los da por autosuficientes). 46 de
+los 76 casos del banco tienen mensajes así, y varios son de seguimiento ("Ese es el precio para ciudadanos
+colombianos?", el formulario del curso referido de cal-49). Se probó quitar el límite, en local y solo el reescritor
+(21 mensajes largos del banco):
+
+- **+1,05 s de mediana** por mensaje largo (p90 1,26 s): reescribir un mensaje largo es escribirlo entero otra vez.
+- **No nombra el asunto donde hacía falta**: cal-49 queda en "Can you provide the full information needed to fill out
+  the form for the transfer to complete the certification in Cartagena?", sin "curso referido"; "Ese es el precio…"
+  y "el precio que está allí…" se quedan con su "ese" y su "allí".
+
+No compensa: no se añadió el flag. Lo de cal-49 (la carta de referido) es un aviso que falta, no una búsqueda: va por
+CAL-A6 (`cal-a6-avisos-al-final.md`).

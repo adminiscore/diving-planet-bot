@@ -1,0 +1,28 @@
+{
+ "etiqueta": "cala-tras-el-pase-v2",
+ "reps": 3,
+ "flags": [
+  "contexto_tras_el_pase"
+ ],
+ "codigo_local": true,
+ "casos": [
+  {
+   "id": "cal-14",
+   "dialogo": "confirmacion-salida-y-pago-sin-concepto",
+   "criterio": "confirmacion-por-pago-enlace",
+   "repeticiones": 3,
+   "fallan": 3,
+   "respuestas": [
+    "Si te refieres al campo “concepto” de tu pago, no quiero indicarte algo distinto a lo que corresponde a tu reserva. El asesor que lleva tu caso te confirma qué debes poner.",
+    "Sí, si el campo “concepto” te pide describir el motivo del pago, puedes colocar “otros”. Como el asesor del equipo lleva tu caso, también puedes confirmarlo con él para asegurarte de que quede registrado correctamente.",
+    "¡Sí, puedes poner “Otros” en el concepto! De todas formas, como el asesor tiene tu caso, te confirma si necesita algún dato específico."
+   ],
+   "explicaciones": [
+    "La respuesta actual solo deriva al asesor y no informa que la reserva queda confirmada al completar el pago por el enlace online, ni sugiere pagar por el enlace como indica la política general ('Se reserva por la página web, en el enlace de cada actividad...'). Esta información está en el contexto y debía mencionarse junto con la derivación al asesor.",
+    "La respuesta actual solo indica que puede poner 'otros' en el campo concepto y que puede confirmarlo con el asesor, pero no menciona que la reserva queda confirmada al completar el pago por el enlace online, que es la política general de la empresa según el contexto ('Se reserva por la página web, en el enlace de cada actividad...').",
+    "La respuesta actual solo dice que el asesor tiene el caso y no menciona que la reserva queda confirmada al completar el pago por el enlace online, ni sugiere explícitamente pagar por el enlace. El contexto indica claramente que la reserva se confirma al pagar por el enlace online y que solo si falla el sistema se paga por transferencia."
+   ]
+  }
+ ],
+ "sin_medir": []
+}

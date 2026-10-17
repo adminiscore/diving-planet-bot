@@ -1,0 +1,270 @@
+{
+ "etiqueta": "cala-A6-luna-profundidad",
+ "reps": 3,
+ "flags": [
+  "avisos_al_final",
+  "catalogo_profundidad",
+  "no:actividad_por_lo_sabido",
+  "no:extractor_cita_del_cliente",
+  "no:idioma_del_extractor"
+ ],
+ "codigo_local": true,
+ "casos": [
+  {
+   "id": "cal-14",
+   "dialogo": "confirmacion-salida-y-pago-sin-concepto",
+   "criterio": "confirmacion-por-pago-enlace",
+   "repeticiones": 3,
+   "fallan": 3,
+   "respuestas": [
+    "¡Claro! Si el formulario te pide el concepto y no encuentras una opción que corresponda a tu actividad, puedes seleccionar “Otros”. ¿En qué formulario estás?",
+    "¡Claro! Si el formulario te pide el concepto y tu opción no aparece, puedes seleccionar “Otros”. ¿En qué formulario estás para orientarte mejor?",
+    "¡Claro! En el campo «concepto» puedes poner «Otros». ¿Te aparece algún otro campo que te genere duda?"
+   ],
+   "explicaciones": [
+    "La respuesta actual solo aclara que puede seleccionar 'Otros' en el formulario, pero no menciona que la reserva se confirma al completar el pago por el enlace online, ni sugiere explícitamente pagar por el enlace. El contexto indica claramente que la reserva se confirma al pagar online y que no se deben inventar instrucciones de transferencia.",
+    "La respuesta actual solo aclara que puede seleccionar 'Otros' en el formulario, pero no menciona que la reserva se confirma al completar el pago por el enlace online, ni sugiere explícitamente pagar por el enlace o, si requiere otra forma, ofrece pasar con un asesor. El contexto indica claramente que la reserva se confirma al pagar online y que solo en caso de fallo del sistema se ofrece transferencia.",
+    "La respuesta solo indica que en el campo 'concepto' puede poner 'Otros', pero no aclara que la reserva se confirma al completar el pago por el enlace online ni sugiere explícitamente pagar por el enlace. Tampoco ofrece pasar con un asesor si requiere otra forma de pago. El contexto no contiene instrucciones sobre el campo 'concepto', pero sí deja claro que la reserva se confirma al pagar online y que solo en caso de fallo del sistema se paga por transferencia."
+   ]
+  },
+  {
+   "id": "cal-15",
+   "dialogo": "programa-fotos-y-alojamiento",
+   "criterio": "fotos-politica",
+   "repeticiones": 3,
+   "fallan": 2,
+   "respuestas": [
+    "¡Ay, ojalá! Yo no puedo ver si el instructor ya te las envió. Como me comentaste que se te perdió al salir, puedo ayudarte a pasarle el mensaje al equipo para que te contacten y revisen. ¿Quieres que lo haga?",
+    "¡Ojalá sí! Pero desde aquí no puedo ver si el instructor ya las envió. Como te comentó que te las iba a compartir, lo mejor es que un asesor del equipo te ayude a ubicarlo y consultarlo.\n\nLas fotos y los videos no están incluidos; el instructor puede tomarlos voluntariamente y cualquier propina es voluntaria.",
+    "¡Ay, no me aparece aquí si el instructor ya te las envió. Como me comentaste que se te perdió en la salida, lo mejor es que te pongas en contacto con el equipo para que te ayuden a ubicarlo."
+   ],
+   "explicaciones": [
+    "La respuesta actual no aclara que las fotos/videos no están incluidas ni que dependen de la voluntad del instructor, solo ofrece pasar el mensaje al equipo. El contexto contiene la política: 'Las fotos y videos no se ofrecen proactivamente ni estan incluidas en el precio. El instructor puede hacerlas voluntariamente...'.",
+    "La respuesta actual sí explica que las fotos y videos no están incluidos, que dependen de que el instructor las haga voluntariamente y que la propina es voluntaria. No promete recuperarlas ni asume que el equipo las puede conseguir, cumpliendo así con el criterio y la política descrita en el contexto ('Las fotos y videos no se ofrecen proactivamente ni estan incluidas en el precio. El instructor puede hacerlas voluntariamente...').",
+    "La respuesta actual solo indica que no puede ver si el instructor ya envió las fotos y sugiere contactar al equipo, pero no aclara la política: que las fotos/videos no están incluidas, que dependen de la voluntad del instructor y que no se garantizan. Esta información está en el contexto (por ejemplo: 'Las fotos y videos no se ofrecen proactivamente ni estan incluidas en el precio. El instructor puede hacerlas voluntariamente...')."
+   ]
+  },
+  {
+   "id": "cal-18",
+   "dialogo": "certificado-profundidad-precio-y-base-hotel",
+   "criterio": "profundidad-segun-nivel",
+   "repeticiones": 3,
+   "fallan": 0,
+   "respuestas": [
+    "¡Qué chévere que tu tío ya sea buzo certificado! Las Islas del Rosario tienen arrecifes muy bonitos, y hay opciones para hacer una o varias inmersiones.\n\nSi sale desde Cartagena, el plan de un día incluye **2 inmersiones** y dura la jornada: salimos a las 8:00 a. m. y regresamos aproximadamente a las 4:15 p. m. Cuesta **178 USD online** e incluye lancha, equipo y almuerzo. También hay paquetes de varios días, algunos con buceo nocturno.\n\nSi ya está alojado en las islas, puede hacer **1 o 2 inmersiones** en un día; con acceso marítimo, lo recogen en el hotel y regresa hacia las 12:00–1:00 p. m. El plan de 2 inmersiones cuesta **124 USD online**. También hay paquetes de varios días y opciones con inmersión nocturna.\n\nBuceamos en las Islas del Rosario, dentro del Parque Nacional Natural, pero no tengo el detalle de los puntos específicos de buceo ni una profundidad fija: depende del sitio y de los límites de su certificación. Como referencia, Open Water permite hasta 18 m y Advanced hasta 30 m.\n\n¿Tu tío saldría desde Cartagena o ya está en las islas? Así te comparto el plan y enlace que le corresponden.\n\nLa profundidad depende del nivel: Open Water hasta 18 m y Advanced hasta 30 m; si no sabemos su nivel, habría que confirmarlo.",
+    "¡Qué chévere que tu tío ya sea buzo certificado! Las Islas del Rosario tienen arrecifes muy bonitos para explorar. 🪸\n\nSi sale desde Cartagena, ofrecemos salidas recreativas de **2 inmersiones en un día** y paquetes de **3 inmersiones en un día** o de **4, 5, 7 y 9 inmersiones en 2, 2, 3 y 4 días**, respectivamente. Los paquetes de varios días requieren alojarse en las islas; el alojamiento no está incluido.\n\nTambién hay planes para quienes ya están alojados en las islas. Para las salidas desde Cartagena, el plan de 2 inmersiones incluye lancha de ida y vuelta y almuerzo. El equipo está incluido y debe presentar su carné de buzo certificado.\n\nBuceamos en las Islas del Rosario, pero no tengo a la mano los nombres de los puntos específicos ni la profundidad de cada sitio. La profundidad máxima depende de su certificación: Open Water, hasta **18 m**; Advanced, hasta **30 m**. Siempre se respetan los límites de su nivel.\n\n¿Tu tío saldría desde Cartagena o ya estará alojado en las islas? Así te comparto las opciones y precios que corresponden.",
+    "¡Qué chévere que tu tío ya sea buzo certificado! Las Islas del Rosario tienen arrecifes muy bonitos para explorar. 🪸\n\nSi sale desde Cartagena, estas son las opciones recreativas:\n\n- **2 inmersiones en un día:** salida desde Cartagena a las 8:00 a. m. y regreso aproximadamente a las 4:15 p. m. Incluye lancha, equipo y almuerzo. Precio online: **178 USD**.  \n- **3 inmersiones en un día:** 2 diurnas y 1 nocturna. Hay que alojarse en las islas; el alojamiento no está incluido. Precio online: **287 USD**.  \n- **Paquetes de varios días:** 4 inmersiones en 2 días, 5 en 2 días, 7 en 3 días o 9 en 4 días. Los paquetes de 5, 7 y 9 incluyen una nocturna. Requieren alojamiento en las islas, que se reserva aparte.\n\nEn todos los planes se bucea con equipo incluido y se requiere presentar el carné de buzo certificado. La profundidad depende de su certificación: hasta **18 m con Open Water** y hasta **30 m con Advanced**. No tengo el detalle de los puntos de buceo específicos de cada salida; eso te lo puede confirmar el equipo.\n\n¿Tu tío saldría desde Cartagena o ya estará alojado en las islas? Así te paso las opciones y el enlace que corresponden."
+   ],
+   "explicaciones": [
+    "La respuesta actual sí explica que la profundidad depende del nivel de certificación (Open Water hasta 18 m; Advanced hasta 30 m) y lo menciona explícitamente: 'Como referencia, Open Water permite hasta 18 m y Advanced hasta 30 m.' Además, aclara que depende del sitio y de los límites de su certificación, cumpliendo el criterio. No falta información relevante y no se evita la respuesta ni se remite solo a un asesor.",
+    "La respuesta actual sí explica que la profundidad máxima depende del nivel de certificación (Open Water hasta 18 m; Advanced hasta 30 m) y menciona que siempre se respetan los límites del nivel del buzo. Además, aunque asume que el tío es buzo certificado, lo hace porque el cliente lo indicó explícitamente. Por lo tanto, cumple con el criterio y no omite información relevante sobre la profundidad según el nivel.",
+    "La respuesta actual sí explica que la profundidad depende del nivel de certificación (hasta 18 m con Open Water y hasta 30 m con Advanced), y aunque no pregunta explícitamente por el nivel del tío, asume que es buzo certificado y da la información correcta según el criterio. El contexto confirma que esa es la política y el límite según el nivel."
+   ]
+  },
+  {
+   "id": "cal-24",
+   "dialogo": "tours-diarios-isla-grande",
+   "criterio": "pickup-islas",
+   "repeticiones": 3,
+   "fallan": 3,
+   "respuestas": [
+    "Yes! Isla Grande is part of the Rosario Islands, and our dive base is located there at Hotel San Pedro de Majagua and Hotel Cocoliso. Are you already staying on Isla Grande?",
+    "Yes! Isla Grande is one of the Rosario Islands. Our dive base is there, at Hotel San Pedro de Majagua and Hotel Cocoliso. Are you already staying on Isla Grande?",
+    "Yes! Isla Grande is one of the Rosario Islands, and our dive base is there at Hotel San Pedro de Majagua and Hotel Cocoliso. Are you staying on Isla Grande and looking for a dive or snorkeling tour?"
+   ],
+   "explicaciones": [
+    "The bot only confirms Isla Grande is part of the Rosario Islands and mentions the base hotels, but does not inform the client that pick-up can be coordinated at their hotel if it has maritime access, nor does it ask for the hotel name to confirm. This information is present in the context: 'If you are already on the Rosario Islands, we coordinate pick-up and drop-off from hotels with maritime access... the pick-up point and time are coordinated by a team advisor.'",
+    "The bot confirms Isla Grande is part of the Rosario Islands and asks if the guest is staying there, but does not mention that pick-up is coordinated at hotels with maritime access or request the hotel name to confirm pick-up, as required by the criterion. This information is present in the context: 'If you are already on the Rosario Islands, we coordinate pick-up and drop-off from hotels with maritime access... please provide your hotel name to confirm.'",
+    "The bot confirms Isla Grande is part of the Rosario Islands and asks if the client is staying there, but does not mention that pick-up is coordinated at hotels with maritime access or ask for the hotel name to confirm pick-up. This information is present in the context: 'If you are already on the Rosario Islands, we coordinate pick-up and drop-off from hotels with maritime access... please share your hotel name to confirm.'"
+   ]
+  },
+  {
+   "id": "cal-26",
+   "dialogo": "refresher-que-completar-antes",
+   "criterio": "formulario-medico-refresher",
+   "repeticiones": 3,
+   "fallan": 2,
+   "respuestas": [
+    "Of course! If it’s been more than two years since your last dive, a refresher is normally required. It’s booked as the Dive Mini Course and includes pool practice plus one ocean dive with an instructor.\n\nBeforehand, you’ll need to complete the medical form and the theory sent by email after booking. The insurance form and liability waiver are also completed through the booking follow-up. Since you’re arriving tomorrow, you can book online for the next available date; the system closes bookings for the following day at 4:30 p.m.\n\nAre you departing from Cartagena or already staying on the Rosario Islands?",
+    "Of course! If it’s been more than two years since your last dive, a refresher is normally required. It’s booked as the Dive Mini Course and includes pool practice plus one ocean dive with an instructor.\n\nBeforehand, you’ll need to complete the medical form, the theory sent after booking, and the insurance form from your confirmation email. The team also sends you a liability waiver. Since you’re arriving tomorrow, are you departing from Cartagena or already staying on the Rosario Islands? I can share the right booking link.\n\nA refresher and a certified diver can go together on the same trip.\n\nWhich one are you leaning toward — *diving*, a *mini-course*, *snorkeling* or a *PADI course*? 🌊",
+    "Absolutely! If it’s been more than two years since your last dive, a refresher is normally required. It’s a one-day review with pool practice and one ocean dive, and it’s booked as the Dive Mini Course.\n\nBeforehand, you’ll need to complete the medical form. After booking, you’ll receive the theory by email and need to finish it before the practical session. The insurance form and liability waiver are also completed through the booking follow-up.\n\nAre you departing from Cartagena or already staying on the Rosario Islands? I can share the right booking link."
+   ],
+   "explicaciones": [
+    "The current response states: 'Beforehand, you’ll need to complete the medical form and the theory sent by email after booking.' This clearly indicates that the medical form is sent after booking, which fulfills the criterion that the bot must specify the medical form is required and is sent after reservation. The previous failure was not mentioning that the medical form is sent after booking, but now this is explicitly stated.",
+    "The bot says: 'Beforehand, you’ll need to complete the medical form, the theory sent after booking, and the insurance form from your confirmation email.' This implies the medical form is to be completed before booking, but per context ('The medical form is required for courses or mini-courses... Complete the form sent in the confirmation email to process the insurance'), the medical form is sent after booking, not before. The bot should clarify that the medical form is sent after booking, not that it must be completed beforehand.",
+    "The bot says 'Beforehand, you’ll need to complete the medical form,' but does not clarify that the medical form is sent after booking, as required by the criterion. The context (see 'Requirements for Refresher' and 'Before the activity for Refresher') specifies that the medical form is sent in the confirmation email after booking. The bot does correctly state that the insurance form and liability waiver are completed after booking, but omits this timing for the medical form."
+   ]
+  },
+  {
+   "id": "cal-32",
+   "dialogo": "link-pago-extranjeros-sin-cedula",
+   "criterio": "moneda-extranjeros",
+   "repeticiones": 3,
+   "fallan": 3,
+   "respuestas": [
+    "¡Claro! Si no tienes cédula y eres cliente extranjero, puedes pagar el total con tarjeta en la página web y usar tu pasaporte como documento de identificación. ¿Qué actividad quieres reservar para pasarte el enlace correcto?",
+    "¡Claro! Si no tienes cédula y eres cliente extranjero, puedes pagar el 100% con tarjeta en la página web; para identificarte usas tu pasaporte. ¿Qué actividad quieres reservar para pasarte el enlace correcto?",
+    "¡Claro! Si no tienes cédula, puedes usar tu pasaporte como documento de identificación al reservar y pagar con tarjeta extranjera. En ese caso, el pago se hace completo en la página web. ¿Qué actividad quieres reservar para enviarte el enlace correcto?"
+   ],
+   "explicaciones": [
+    "La respuesta actual solo menciona que el cliente puede pagar con tarjeta y usar el pasaporte, pero no aclara que, al no tener cédula y ser extranjero, el pago se realiza en USD (misma tarifa, solo cambia la moneda). Esta información está explícitamente indicada en el contexto: 'los colombianos (vivan donde vivan) y los residentes en Colombia pagan en COP y el resto en USD; es el mismo precio en las dos monedas'.",
+    "El bot solo explica el método de pago y el uso del pasaporte, pero no aclara que el pago se realiza en dólares estadounidenses (USD) para extranjeros sin cédula, aunque el precio es el mismo que en COP. Esta información está explícitamente en el contexto: 'Pagan en pesos colombianos (COP) los colombianos (vivan donde vivan) y los residentes en Colombia... El resto de clientes internacionales paga en dólares (USD). El precio es el mismo: solo cambia la moneda.'",
+    "El bot solo menciona que puede pagar con tarjeta extranjera y usar el pasaporte, pero no aclara que el pago se realiza en USD (misma tarifa, solo cambia la moneda), como exige la política: 'Pagan en pesos colombianos (COP) los colombianos (vivan donde vivan) y los residentes en Colombia... El resto de clientes internacionales paga en dólares (USD). El precio es el mismo: solo cambia la moneda.'"
+   ]
+  },
+  {
+   "id": "cal-36",
+   "dialogo": "pareja-certificados-cop-descuento-almuerzo",
+   "criterio": "descuentos-vigentes",
+   "repeticiones": 3,
+   "fallan": 3,
+   "respuestas": [
+    "¡Sí! El plan de 2 inmersiones saliendo desde Cartagena incluye almuerzo en las islas. También incluye la lancha de ida y vuelta y el equipo de buceo. 🐠\n\n¿Ha pasado *más de 2 años* desde la última inmersión de alguno del grupo?",
+    "¡Sí! El plan de 2 inmersiones saliendo desde Cartagena incluye almuerzo en las islas. También incluye agua durante el día y dulces de coco entre inmersiones. 🥥\n\n¿Ha pasado *más de 2 años* desde la última inmersión de alguno del grupo?",
+    "¡Sí! El plan de *2 inmersiones saliendo desde Cartagena* incluye almuerzo en las islas. 🐠 ¿Quieres que te comparta el enlace para reservar?\n\n¿Ha pasado *más de 2 años* desde la última inmersión de alguno del grupo?"
+   ],
+   "explicaciones": [
+    "El bot solo confirma que el almuerzo está incluido, pero no menciona que el precio mostrado ya tiene el 10% de descuento online, ni aclara que no hay descuento especial por ser colombiano, ni informa sobre los descuentos vigentes (equipo propio completo, grupo 5+). Toda esta información está en el contexto y es relevante para la consulta del cliente.",
+    "La respuesta solo confirma que el almuerzo está incluido, pero no aclara que el precio mostrado ya tiene el 10% de descuento online, ni que no hay descuento especial por ser colombiano, ni menciona los descuentos vigentes (equipo propio completo, grupo 5+). Esta información está en el contexto y es relevante para la consulta del cliente, especialmente porque ya indicó que es colombiano y el bot debe aclarar que no hay descuento adicional por nacionalidad.",
+    "La respuesta solo confirma que el almuerzo está incluido, pero no menciona que el precio mostrado ya tiene el 10% de descuento online, ni aclara que no hay descuento especial por ser colombiano, ni informa sobre los descuentos vigentes (como el de equipo propio o grupo 5+). Toda esta información está en el contexto y es relevante para la consulta del cliente."
+   ]
+  },
+  {
+   "id": "cal-42",
+   "dialogo": "certificado-precio-dia-paquete-5-y-hoteles-base",
+   "criterio": "precio-dia-cartagena",
+   "repeticiones": 3,
+   "fallan": 1,
+   "respuestas": [
+    "For certified diving from Cartagena, the **2-dive day trip is USD 197 per day**, or **USD 178 when booked online**. Since you’re planning to dive on two days, there’s also a **10% discount on the second day of diving**; the exact total is shown in the booking checkout.\n\nThe trip includes two dives at different sites, boat transport, equipment, and lunch. You can see the details and book here: https://divingplanet.org/tours-buceo-snorkel-cartagena/2-buceos-1-dia/\n\nHas it been *more than 2 years* since your last dive?",
+    "For two days from Cartagena, the **4-dive package** is **$316 USD online** or **$351 USD regular**—that’s 2 daytime dives each day, with one night on the islands required (accommodation not included). Lunch is included on day one only.\n\nThere’s also a **5-dive package** for **$392 USD online** or **$436 USD regular**, which includes a night dive and also requires an overnight stay on the islands. The online prices include the 10% online discount. Would you prefer daytime dives only, or a package with a night dive?\n\nHas it been *more than 2 years* since any diver in the group last dived?",
+    "For certified dives departing from Cartagena, the **2-dive day trip is USD 197 per day at the regular price, or USD 178 when booked online**. The two dives are at different sites, and boat transport and lunch are included.\n\nFor two consecutive days, the 4-dive package is **USD 351 regular or USD 316 online**. It requires an overnight stay on the islands; accommodation isn’t included. The 10% second-day discount applies to recreational diving, but I can’t calculate a combined discounted total here.\n\nWould you like the booking link for the one-day trip or the two-day package?\n\nHas it been *more than 2 years* since your last dive?"
+   ],
+   "explicaciones": [
+    "La respuesta actual da el precio correcto por persona para buzo certificado (2 inmersiones, 1 día) saliendo desde Cartagena en USD (197 USD regular, 178 USD online), y menciona el descuento del 10% para el segundo día. No era necesario preguntar la nacionalidad porque el criterio permite dar el precio en USD si no se sabe aún. El contexto confirma que el precio es correcto y que el cliente sale desde Cartagena.",
+    "The bot only gives prices for the 4-dive and 5-dive, 2-day packages, but the customer asked for the price per day. The context includes the correct 1-day, 2-dive price (178 USD online, 197 USD regular) for certified divers departing from Cartagena, but the bot does not mention it or ask about nationality to define the currency, as required by the criterion.",
+    "The current response gives the correct price per person for the 2-dive, 1-day trip for certified divers departing from Cartagena (USD 197 regular, USD 178 online), as required by the criterion. It also clarifies what is included and does not assume the customer's nationality, but gives the price in USD as instructed. The previous failure (giving the 5-dive/2-day price instead of the 2-dive/1-day price) is not present here."
+   ]
+  },
+  {
+   "id": "cal-47",
+   "dialogo": "recogida-ubuntu-comida-y-certificacion",
+   "criterio": "comida-desde-islas",
+   "repeticiones": 3,
+   "fallan": 3,
+   "respuestas": [
+    "Yes, lunch is included for tours departing from Cartagena: it’s rice with chicken or rice with vegetables, plus water and coconut candy. If you’re already on the islands, lunch isn’t included, so you’re welcome to bring your own food. If you have a food allergy, please let us know before the tour.",
+    "Of course! Lunch is included for guests departing from Cartagena: it’s rice with chicken or rice with vegetables, plus water throughout the day and coconut candy between dives. You’re welcome to bring your own food if you have a special diet or allergy—please let us know before the tour. If you’re already on the islands, lunch isn’t included. Are you departing from Cartagena or staying on the islands?",
+    "Yes, lunch is included for tours departing from Cartagena: it’s rice with chicken or rice with vegetables, plus water during the day and coconut candy between dives. If you’re already on the islands, lunch isn’t included, so you’re welcome to bring your own food. Do you know where you’ll be departing from?"
+   ],
+   "explicaciones": [
+    "The response says guests on the islands can bring their own food but omits that they can also buy lunch at their hotel, as stated in the context: 'guests staying on the islands return to their hotel around 12:00-1:00 p.m. for lunch (lunch not included)'.",
+    "El bot solo menciona que los huéspedes en las islas pueden traer su propia comida, pero no aclara que también pueden comprar comida en su hotel, como indica la política: 'guests staying on the islands return to their hotel around 12:00-1:00 p.m. for lunch (lunch not included)'.",
+    "El bot solo menciona que los huéspedes en las islas pueden traer su propia comida, pero no aclara que también pueden comprar el almuerzo en su hotel, como indica el criterio y como se menciona en el contexto: 'guests staying on the islands return to their hotel around 12:00-1:00 p.m. for lunch (lunch not included)'."
+   ]
+  },
+  {
+   "id": "cal-48",
+   "dialogo": "recogida-ubuntu-comida-y-certificacion",
+   "criterio": "minicurso-no-certifica",
+   "repeticiones": 3,
+   "fallan": 2,
+   "respuestas": [
+    "Of course! If you mean getting a PADI certification for your son, the PADI Open Water course is available from age 10 and certifies divers to 18 m. It takes 2 days and requires staying overnight on the islands; accommodation isn’t included.\n\nHow old is your son, and are you departing from Cartagena or already staying on the islands?",
+    "Absolutely! Your son can earn a PADI certification through our Open Water course, which requires no prior certification and certifies divers to a maximum depth of 18 m. The course is for ages 10 and up, and requires staying overnight on the Rosario Islands; accommodation isn’t included.  \n\nHow old is your son, and are you departing from Cartagena or already staying on the islands?",
+    "Hi! The mini-course is a great first experience, but it **doesn’t provide a PADI certification**—it’s a one-day introduction with pool practice and one ocean dive.\n\nThe mini-course is a guided experience and does not certify; to get certified, he would need to take the Open Water course, which takes 2 days and includes an overnight stay on the islands.\n\nIf your son would like to earn a PADI certification, the **PADI Open Water Course** is the beginner course that certifies divers to dive down to 18 m. Would you like information about that course?"
+   ],
+   "explicaciones": [
+    "The bot correctly explains that the PADI Open Water course takes 2 days and requires staying overnight on the islands, but it does not clarify that the Dive Mini Course does NOT grant PADI certification. The context states: 'The mini-course is a one-day try-dive, an introduction to diving: it does not certify, does not count as part of any PADI course and requires nothing from PADI beforehand.'",
+    "The bot does not clarify that the mini-course does NOT provide PADI certification, nor does it explain that the Open Water course requires 2 days and an overnight stay on the islands, making it impossible if the client leaves before midday. This information is present in the context: 'The mini-course is a one-day try-dive, an introduction to diving: it does not certify, does not count as part of any PADI course...' and 'Two-day courses (Open Water, Referral Course, Advanced) require accommodation on the islands. There is no option to commute from Cartagena on both days.'",
+    "The current response clearly states that the mini-course does not provide a PADI certification and explains that the Open Water course (which certifies) takes 2 days and requires an overnight stay on the islands. This matches the required information from the criterion and context, and addresses the customer's implied time constraint by noting the course duration and overnight requirement."
+   ]
+  },
+  {
+   "id": "cal-49",
+   "dialogo": "curso-referido-pide-datos-centro",
+   "criterio": "referido-requisito-carta",
+   "repeticiones": 3,
+   "fallan": 1,
+   "respuestas": [
+    "Sure. For the transfer form, the original dive center will need to provide [NOMBRE]’s training and referral details—such as the theory and pool training completed, along with the instructor’s signed referral paperwork. I don’t have [NOMBRE]’s personal or course details, so I can’t fill those in or verify them.\n\nPlease ask the original center to complete and sign the referral documents, then share them with our team for review. The Open Water Referral Course in Cartagena takes 2 days and requires an overnight stay on the islands; accommodation isn’t included. Would you like me to connect you with a team advisor to help with the transfer paperwork?",
+    "Sure. For the transfer form, the receiving dive center is **Diving Planet**, a **PADI 5-Star Dive Center** in Cartagena. The practical training takes place in the Rosario Islands, with departure from **Muelle de la Bodeguita at 8:00 a.m.**\n\nI don’t have the specific receiving-center details required by the form—such as the center’s address or PADI identification details—so I don’t want to guess. Please ask the team to provide the exact information for the transfer form. Also, the Open Water Referral requires the e-learning **and pool sessions** to be completed before the referral dives. Would you like me to connect you with a team advisor for the form details?",
+    "Sure. For the transfer form, the original PADI instructor or dive center needs to provide [NOMBRE]’s referral paperwork, confirming which parts of the Open Water course are completed. I don’t have the form’s exact fields or [NOMBRE]’s details, so I can’t fill them in here. Please ask the original center to complete and sign the referral documents; don’t send personal ID details in this chat.\n\nDiving Planet is a PADI 5-Star Dive Center in Cartagena. The practical referral training takes place in the Rosario Islands, departing from Muelle de la Bodeguita. The Open Water Referral Course is a 2-day course and requires an overnight stay on the islands; accommodation is booked separately. The exact dates are selected through the booking calendar.\n\nWould you like the booking link for the Open Water Referral Course?"
+   ],
+   "explicaciones": [
+    "La respuesta actual sí aclara que el centro original debe proporcionar los detalles de entrenamiento y el 'referral paperwork' firmado por el instructor, y que el plan correcto es el Open Water Referral Course. Dice: 'the instructor’s signed referral paperwork' y 'Please ask the original center to complete and sign the referral documents, then share them with our team for review.' Esto cumple con el criterio de aclarar el requisito obligatorio de la carta de referido PADI firmada y el plan correcto.",
+    "La respuesta actual no menciona explícitamente que es obligatorio traer la carta/formato de referido PADI firmada por el instructor original, que es un requisito indispensable para completar el curso referido. Solo menciona que se requieren e-learning y pool sessions, pero omite la necesidad del documento firmado.",
+    "La respuesta actual sí aclara que el cliente debe traer la 'referral paperwork' (carta de referido PADI) firmada por el instructor original, y que el plan correcto es el 'Open Water Referral Course', no una salida normal. Dice: 'the original PADI instructor or dive center needs to provide [NOMBRE]’s referral paperwork, confirming which parts of the Open Water course are completed' y 'Please ask the original center to complete and sign the referral documents'. Esto cumple el criterio y no falta información relevante."
+   ]
+  },
+  {
+   "id": "cal-55",
+   "dialogo": "paquete-5-buceos-precio-fecha-y-equipaje",
+   "criterio": "no-operamos-en-baru",
+   "repeticiones": 3,
+   "fallan": 3,
+   "respuestas": [
+    "Entiendo que estás en Barú y Rosario.\n\n¿Con cuál te animas — *buceo*, *minicurso*, *snorkel* o un *curso PADI*? 🌊",
+    "Entiendo que te encuentras en Barú y Rosario.\n\n¿Con cuál te animas — *buceo*, *minicurso*, *snorkel* o un *curso PADI*? 🌊",
+    "Entiendo que estás en Barú y Rosario.\n\nSolo para confirmar, ¿lo cambio?\n• en las islas → *salida desde Cartagena*"
+   ],
+   "explicaciones": [
+    "La respuesta actual solo repite la ubicación mencionada por el cliente y no aclara que Diving Planet no opera en Barú ni que las salidas son en las Islas del Rosario, como exige el criterio.",
+    "La respuesta actual solo repite la ubicación mencionada por el cliente y no aclara que Diving Planet no opera en Barú ni que las salidas son en las Islas del Rosario, como exige el criterio.",
+    "La respuesta actual solo repite la ubicación mencionada por el cliente y no aclara que Diving Planet no opera en Barú ni que las salidas son en las Islas del Rosario, como exige el criterio."
+   ]
+  },
+  {
+   "id": "cal-64",
+   "dialogo": "curso-open-water-principiantes-idioma-frances-anticipacion",
+   "criterio": "anticipacion-cierre-sistema",
+   "repeticiones": 3,
+   "fallan": 3,
+   "respuestas": [
+    "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\n¡Hola! Las Islas del Rosario son una experiencia muy bonita para conocer los arrecifes del Caribe. Como es su primera vez y tienen poco tiempo, les recomiendo el **Minicurso de Buceo**: dura un día, incluye teoría online, práctica en piscina y una inmersión en el mar con instructor PADI. Salen desde Cartagena a las 8:00 a. m. y regresan aproximadamente a las 4:15 p. m.\n\nEl precio online es **183 USD por persona** e incluye lancha, equipo, almuerzo y seguro. No certifica, pero no necesitan experiencia previa. Después de reservar reciben por correo la teoría, que deben completar antes de la actividad.\n\nPueden reservar y pagar directamente en la página:  \nhttps://book.divingplanet.org/book/minicurso-de-buceo/2?language=es\n\nOperamos todos los días, excepto el 25 de diciembre y el 1 de enero; el sistema permite elegir la fecha y las personas en el enlace. Para reservar para el día siguiente, hay que hacerlo antes de las 4:30 p. m. También pueden reservar para una fecha posterior. ¿Les gustaría hacer el minicurso de un día?",
+    "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\n¡Hola! Las Islas del Rosario son una experiencia muy linda para conocer los arrecifes caribeños. Como es su primera vez y tienen poco tiempo, les recomiendo el **Minicurso de Buceo**: dura un día, incluye teoría online, práctica en piscina y una inmersión en el mar con instructor. Salen desde Cartagena a las 8:00 a. m. y regresan aproximadamente a las 4:15 p. m.\n\nEl precio online es **183 USD por persona** e incluye lancha, equipo y almuerzo. Para reservar, pueden hacerlo directamente en la página; el sistema permite elegir la fecha y la cantidad de personas. Operamos todos los días, excepto el 25 de diciembre y el 1 de enero, y para reservar para el día siguiente hay que hacerlo antes de las 4:30 p. m. El pago se realiza en línea al reservar.\n\n[Reservar el Minicurso de Buceo](https://book.divingplanet.org/book/minicurso-de-buceo/2?language=es)\n\nDespués de reservar recibirán por correo las instrucciones para completar la teoría antes de la actividad. ¿Les gustaría hacer el minicurso en una fecha cercana?",
+    "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\n¡Hola! ¡Qué chévere que quieran conocer el buceo en las Islas del Rosario! Para una primera experiencia y si tienen poco tiempo, les recomiendo el **Minicurso de Buceo**: es de un día, no requiere experiencia previa e incluye teoría online, práctica en piscina y una inmersión en el mar con instructor PADI. Salen desde Cartagena a las 8:00 a. m. y regresan aproximadamente a las 4:15 p. m.\n\nEl precio online es **183 USD por persona** e incluye lancha, equipo, almuerzo, seguro y entrada al parque. Para reservar, pueden elegir la fecha y las dos personas directamente en la página:  \nhttps://book.divingplanet.org/book/minicurso-de-buceo/2?language=es\n\nLa reserva y el pago se hacen por la web. Operamos todos los días, excepto el 25 de diciembre y el 1 de enero; para reservar para el día siguiente, hay que hacerlo antes de las 4:30 p. m. Después de reservar recibirán por correo las instrucciones para completar la teoría antes de la actividad. ¿Les gustaría hacer el minicurso?"
+   ],
+   "explicaciones": [
+    "La respuesta menciona correctamente que para reservar para el día siguiente hay que hacerlo antes de las 4:30 p.m., pero no aclara que pasada esa hora se puede seguir reservando por la web, solo que será para el siguiente día disponible. El contexto lo indica claramente: 'El sistema de reservas online cierra automáticamente a las 4:30 p.m. del día anterior; pasada esa hora, se puede reservar por la web para el siguiente día disponible.'",
+    "La respuesta menciona correctamente que para reservar para el día siguiente hay que hacerlo antes de las 4:30 p.m., pero omite aclarar que después de esa hora se puede seguir reservando por la web para el siguiente día disponible. Esta información está en el contexto: 'El sistema de reservas online cierra automáticamente a las 4:30 p.m. del día anterior; pasada esa hora, se puede reservar por la web para el siguiente día disponible.'",
+    "La respuesta menciona correctamente que para reservar para el día siguiente hay que hacerlo antes de las 4:30 p.m., pero omite aclarar que después de esa hora se puede seguir reservando por la web para el siguiente día disponible. El contexto lo indica claramente: 'Sistema de reservas online cierra a las 4:30 p.m. del dia anterior; pasada esa hora se reserva por la web para el siguiente día disponible.'"
+   ]
+  },
+  {
+   "id": "cal-69",
+   "dialogo": "pareja-reactivate-y-refresh-cartagena",
+   "criterio": "politica-refresh",
+   "repeticiones": 3,
+   "fallan": 3,
+   "respuestas": [
+    "That sounds like a lovely plan for your June stay! The Rosario Islands are a beautiful place to get back in the water. 🌊\n\nSince your wife wasn’t able to complete the skills assessment, I can’t determine here whether she needs a refresher or another course. A refresher is normally recommended if it’s been more than two years since the last dive, and the instructor can review her skills and comfort in the water. Her fitness and swimming are great to hear about, but they don’t replace that in-water assessment.\n\nAre you staying at Bodegas de Santa Clara in Cartagena or on the Rosario Islands? The options and pickup arrangements depend on that. Also, could you confirm the year for June 6–13?\n\nHow many people would that be for snorkeling? That way I can give you the exact plan. 😊",
+    "That sounds like a lovely plan for your stay in Cartagena! Your wife’s fitness and swimming experience are great, but they can’t determine whether she’s ready to dive; because she couldn’t complete the skills test and had mask difficulties, our team should review the best next step with her.\n\nFor you, since you’ve completed your PADI Reactivate course, please bring proof of it. For your wife, a refresher is normally required after more than two years without diving. It’s a one-day activity from Cartagena with pool practice and one reef dive, and costs **USD 183 online**. You’ll both need to present your certification cards for recreational dives.\n\nYour hotel is in Cartagena, so the island-hotel pickup option wouldn’t apply. What year do you mean for June 6–13? I can help you continue planning once we confirm the dates.\n\nHow many people would that be for snorkeling? That way I can give you the exact plan. 😊",
+    "That sounds like a lovely plan for your June stay. Your wife’s fitness and swimming are great, but they don’t determine whether she’s ready to dive; since she couldn’t complete the skills test and had mask difficulties, our team should review her situation and advise on the safest next step. I can’t confirm her eligibility to dive here.\n\nFor certified divers who haven’t dived in over two years, a refresher is normally required. It’s a one-day activity from Cartagena with pool practice and one reef dive, and costs **USD 183 online**. You’ll need to complete the required medical form and theory beforehand. After diving, wait at least **12 hours before flying**.\n\nYour stay at Bodegas de Santa Clara may affect pickup: island pickup is included only if the hotel has boat access, so that detail needs to be checked. June 6–13 is a great window to plan your visit; we operate year-round except December 25 and January 1, weather permitting.\n\nSince you’ll be staying on the islands, pickup and return are at your hotel if it has boat access.\n\nWould you like me to connect you with a team advisor to review your wife’s situation and the pickup from your hotel?\n\nHow many people would that be for snorkeling? That way I can give you the exact plan. 😊"
+   ],
+   "explicaciones": [
+    "La respuesta actual menciona que 'A refresher is normally recommended if it’s been more than two years since the last dive', pero no lo presenta como una política clara del centro ni lo hace suficientemente explícito. Tampoco valida ni confirma que el cliente ya completó su Reactivate, solo lo asume. El contexto y el mensaje del cliente sí permiten validar que él ya hizo el Reactivate, pero el bot no lo confirma ni lo menciona explícitamente.",
+    "The bot now proposes a refresher for the wife and asks for proof of the customer's Reactivate, but it still does not clearly state the explicit policy: 'after more than 2 years without diving, a refresher is normally required.' The phrase 'a refresher is normally required after more than two years without diving' is present, but it is only applied to the wife, not as a general policy. The bot also does not validate/confirm that the customer already completed his Reactivate (it just asks for proof), so the full requirement of the criterion is only partially met.",
+    "La respuesta actual sí menciona la política ('For certified divers who haven’t dived in over two years, a refresher is normally required'), pero no valida ni confirma explícitamente que el cliente ya completó su Reactivate, ni explica que esa política es la razón por la que se requiere refresher para la esposa. El contexto muestra que el cliente ya dijo que completó su Reactivate, pero el bot no lo reconoce ni lo valida en la respuesta."
+   ]
+  },
+  {
+   "id": "cal-70",
+   "dialogo": "pareja-reactivate-y-refresh-cartagena",
+   "criterio": "grupo-mixto-permitido",
+   "repeticiones": 3,
+   "fallan": 3,
+   "respuestas": [
+    "That sounds like a lovely plan for your June stay. And it’s great that you’ve both been enjoying the water. 🌊\n\nSince your wife didn’t complete the skills test, we can’t determine from here whether a refresher or another course is the right fit. Her fitness and swimming ability are helpful context, but they don’t replace the required in-water assessment. A Diving Planet advisor should review her course records and situation and recommend the appropriate option. I also can’t confirm whether Bodegas de Santa Clara has boat access for pickup.\n\nFor guests staying on the islands, pickup and return are at their hotel if it has sea access.\n\nFor you, if it has been more than two years since your last dive, a refresher is normally required; the team reviews very experienced divers with 500+ dives individually. What year is your June 6–13 visit, and when was your most recent dive?\n\nHow many people would that be for snorkeling? That way I can give you the exact plan. 😊",
+    "That sounds like a lovely plan for your June stay! Your swimming and snorkeling experience are helpful background, but fitness alone can’t determine whether someone is ready to dive. Since your wife couldn’t complete the skills assessment and felt nervous, our team should review her situation and advise on the safest next step—she may need a refresher before joining a dive.\n\nA refresher from Cartagena is a one-day session with pool practice and one reef dive with an instructor. It’s listed at **USD 183 online** and includes equipment, lunch, insurance, and boat transport. The activity departs at 8:00 a.m. from Muelle de la Bodeguita and returns to Cartagena around 4:15 p.m. Your hotel is in Cartagena, so this would be the relevant option.\n\nIf you’re staying on the islands, pickup and return are at your hotel if it has maritime access.\n\nI can’t confirm whether the cruise course counts as a completed Reactivate course or whether your wife can join a dive; a team advisor will need to review that with you. Would you like me to connect you with one?\n\nHow many people would that be for snorkeling? That way I can give you the exact plan. 😊",
+    "That sounds like a lovely plan for your stay in Cartagena! And it’s great that you’ve both been enjoying the water. 🌊\n\nSince your wife didn’t complete the skills test, I can’t confirm that a refresher is the right option for her. A refresher is for certified divers, and personal diving readiness can’t be assessed from fitness or swimming ability alone. I’d recommend having our team review her certification status and the course she completed before choosing an activity. Her mask concerns are also worth discussing with them so they can advise on the right next step.\n\nFor you, since you’ve just completed your PADI Reactivate course, you can look at our certified-diver fun dives. From Cartagena, the 2-dive trip is **USD 178 online** and includes round-trip boat transport, equipment, and lunch. The meeting point is Muelle de la Bodeguita at 8:00 a.m. Your hotel is in Cartagena, so the Cartagena departure plan is the relevant one.\n\nAfter more than 2 years without diving, a refresher is normally needed before the dive.\n\nPlease note that you must wait at least **18 hours after diving before flying**. What year is your June 6–13 stay, and would you like me to connect you with a team advisor to review your wife’s options and help with the booking?\n\nHow many people would that be for snorkeling? That way I can give you the exact plan. 😊"
+   ],
+   "explicaciones": [
+    "El bot no confirma explícitamente que ambos pueden ir juntos en el mismo tour combinando refresher (para ella) y buceo certificado (para él), aunque el contexto y la política lo permiten. El contexto indica que el refresher se realiza como el Dive Mini Course y que los grupos mixtos de refresher y fun dives pueden compartir la misma salida. El bot solo menciona que un asesor debe revisar el caso de la esposa y no da la confirmación requerida.",
+    "El bot no confirma explícitamente que ambos pueden ir juntos en el mismo tour, combinando el refresher para ella y buceo certificado para él. Solo explica el refresher y pide revisión del caso de la esposa, pero no aclara que ambos pueden compartir la salida (como permite la política: ambos pueden ir juntos, cada uno en su modalidad).",
+    "The bot still does not confirm that both can join the same tour with a refresher for her and fun dives for him. Instead, it focuses on reviewing her certification and does not clarify that mixed groups (refresher + certified diver) can go together on the same trip. This is a failure of understanding the customer's need for confirmation, not a missing policy or factual information from the context."
+   ]
+  }
+ ],
+ "sin_medir": []
+}

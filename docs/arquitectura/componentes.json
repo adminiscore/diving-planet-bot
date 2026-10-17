@@ -574,7 +574,8 @@
       "que_hace": "Repasa cada dato de la respuesta y marca SÍ si la información lo dice o NO si no. Con un solo NO, la respuesta no se envía (~1,2 s).",
       "donde": "src/agents/grounding_check.py:is_grounded",
       "modelos": [
-        "grounding_v3_model"
+        "grounding_v3_model",
+        "avisos_al_final_model"
       ],
       "interruptores": [
         "grounding_v3",
@@ -585,7 +586,8 @@
         "juez_v3_luna",
         "juez_revisa_con_cita",
         "rag_revisor_completitud",
-        "rag_revisor_avisos"
+        "rag_revisor_avisos",
+        "avisos_al_final"
       ],
       "tiempo_medido": {
         "p50": 1.2,
@@ -1419,6 +1421,11 @@
       "area": "Preguntas",
       "titulo": "El catálogo enseña la preparación de cada plan (apagado: medido y empeora)",
       "texto": "Lo que hay que traer o hacer antes de cada plan (la carta de referido, la teoría). Medido: arregla un caso y rompe dos, porque dieciocho párrafos en todos los turnos distraen. Mejor solo cuando se habla de ese plan."
+    },
+    "avisos_al_final": {
+      "area": "Preguntas",
+      "titulo": "Un aviso que falta se añade al final, sin rehacer la respuesta",
+      "texto": "Mientras el revisor de siempre comprueba la respuesta, otro lee la conversación y la lista de avisos de la empresa (el minicurso no certifica, la carta del curso referido, desde las islas no hay almuerzo). Si a la respuesta le falta uno que el cliente necesita por lo que acaba de decir, se añade una frase y lo demás no se toca. Antes el aviso se metía al redactar y desplazaba lo que la respuesta tenía que decir."
     }
   },
   "areas": [

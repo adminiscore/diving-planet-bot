@@ -16,6 +16,12 @@ nunca dejarse algo: decir menos es lo más seguro. Aquí:
   no puede saberlos (no lee la información de la empresa); este revisor lee lo mismo que el juez de siempre y busca como
   mucho 2 avisos imprescindibles que falten. Si falta alguno, se reintenta una vez con ellos.
 
+- `aviso_al_final` (A6, flag `avisos_al_final`, 17-oct): lo que A4 y A5 enseñaron juntos. A4 (un modelo busca avisos
+  en TODA la información) metía avisos que no tocaban; A5 (los elige el código con el estado) no ve las condiciones
+  que el estado no tiene, y como iba en la redacción desplazaba lo que la respuesta tenía que decir. A6: la lista
+  cerrada de avisos de A5, con sus condiciones en palabras, la juzga un modelo leyendo la CONVERSACIÓN; y si falta uno,
+  se AÑADE una frase sin reescribir la respuesta (`insertar_frase`). Va a la vez que el juez de siempre.
+
 Si una llamada falla, se sigue como hoy (sin lista, o sin la comprobación). CAL-G medirá lanzar el plan en paralelo
 con la búsqueda.
 """
@@ -177,3 +183,107 @@ def feedback_de_faltan(faltan: list[str], lang: str) -> str:
                 "con el contexto (o di que no tienes ese dato), sin quitar lo que ya estaba bien.")
     return ("Your answer does not cover these items the customer asked about:\n" + lista + "\nRewrite it adding "
             "them from the context (or say you don't have that fact), keeping what was already right.")
+
+
+_AVISO_FINAL_ES = """Revisas una respuesta de Coral, la asistente de Diving Planet (buceo y snorkel en las Islas del Rosario), ANTES de enviarla. Recibes una lista cerrada de AVISOS (lo que un buen asesor le dice al cliente aunque no lo pregunte, cada uno con cuándo aplica), la CONVERSACIÓN, el ÚLTIMO MENSAJE del cliente y la RESPUESTA.
+
+Decide si a la RESPUESTA le falta UNO de esos avisos. Falta solo si se cumplen las tres cosas:
+1. APLICA a este cliente: su condición se cumple con lo que el CLIENTE ha dicho (no lo que dice el bot, ni lo que podría pasar). Tienes que poder citar sus palabras. De dónde sale, su nacionalidad, su nivel o sus fechas solo cuentan si el cliente LO DICE: nunca los deduzcas por el idioma en que escribe ni por lo que es probable.
+2. Tiene que ver con su ÚLTIMO MENSAJE (lo que pregunta o cuenta ahora): sin el aviso, la respuesta a ESE mensaje le deja una idea equivocada o se le pasa algo que necesita. Un aviso que solo está relacionado con la conversación en general no falta.
+3. Ni la RESPUESTA ni los mensajes anteriores del bot lo dicen ya, aunque sea con otras palabras.
+Si un aviso tiene varias condiciones, tienen que cumplirse TODAS. Si las palabras del cliente pueden significar otra cosa (un "cierre" que puede ser del puerto o del sistema de reservas), no falta. Si dudas, no falta. Lo normal es que no falte ninguno. Como mucho UNO: el que más necesita el cliente.
+
+Si falta, escribe la frase que se añadirá a la respuesta: UNA frase en el IDIOMA indicado, con el tono de Coral, que diga el aviso con sus datos exactos (sin cambiar días, horas ni cifras) y nada más: sin saludos, sin preguntas, sin pedirle datos (ni el hotel, ni el nivel, ni fechas: si el aviso lo menciona, dilo como información), sin precios y sin ofrecer otros planes. No afirmes nada del cliente que no haya dicho tal cual (si dijo "no soy colombiano", no digas que tampoco es residente): lo que dependa de eso, dilo como regla o con un "si".
+
+Devuelve solo JSON: {"aviso": "<id del aviso>" o null, "cita_del_cliente": "las palabras exactas del cliente que cumplen la condición" o null, "cita_del_ultimo_mensaje": "las palabras exactas de su ÚLTIMO MENSAJE con las que tiene que ver el aviso" o null, "frase": "<la frase>" o null}"""
+
+_AVISO_FINAL_EN = """You review an answer from Coral, Diving Planet's assistant (diving and snorkeling in the Rosario Islands), BEFORE it is sent. You get a closed list of NOTICES (what a good advisor tells the customer even if they don't ask, each with when it applies; they are written in Spanish), the CONVERSATION, the customer's LAST MESSAGE and the ANSWER.
+
+Decide whether the ANSWER is missing ONE of those notices. It is missing only if all three hold:
+1. It APPLIES to this customer: its condition is met by what the CUSTOMER has said (not what the bot says, nor what could happen). You must be able to quote their words. Where they depart from, their nationality, their level or their dates only count if the customer SAYS them: never infer them from the language they write in or from what is likely.
+2. It is about their LAST MESSAGE (what they ask or tell now): without the notice, the answer to THAT message leaves them with a wrong idea or misses something they need. A notice that is only related to the conversation in general is not missing.
+3. Neither the ANSWER nor the bot's earlier messages already say it, even in other words.
+If a notice has several conditions, ALL of them must hold. If the customer's words can mean something else (a "closure" that may be the port's or the booking system's), it is not missing. If in doubt, it is not missing. Usually none is missing. At most ONE: the one the customer needs most.
+
+If one is missing, write the sentence that will be added to the answer: ONE sentence in the LANGUAGE given, in Coral's tone, stating the notice with its exact facts (without changing days, times or figures) and nothing else: no greetings, no questions, no asking them for data (not the hotel, the level or dates: if the notice mentions it, state it as information), no prices and no offering other plans. Do not state anything about the customer they did not say as such (if they said "I'm not Colombian", do not say they are not a resident either): whatever depends on it, state it as a rule or with an "if".
+
+Return only JSON: {"aviso": "<notice id>" or null, "cita_del_cliente": "the customer's exact words that meet the condition" or null, "cita_del_ultimo_mensaje": "the exact words of their LAST MESSAGE the notice is about" or null, "frase": "<the sentence>" or null}"""
+
+_IDIOMAS = {"es": ("español", "Spanish"), "en": ("inglés", "English"), "pt": ("portugués", "Portuguese"),
+            "fr": ("francés", "French"), "de": ("alemán", "German"), "it": ("italiano", "Italian")}
+
+
+def _normalizado(texto: str) -> str:
+    return " ".join("".join(c.lower() if c.isalnum() else " " for c in texto).split())
+
+
+def _lo_dijo_el_cliente(cita: str, history: list[dict] | None, query: str) -> bool:
+    """Que la cita sea de verdad del cliente (sus mensajes o el último), sin contar mayúsculas ni signos: si el
+    revisor no puede citarle, la condición no sale de lo que dijo."""
+    cita_n = _normalizado(cita)
+    if len(cita_n) < 3:
+        return False
+    dicho = " | ".join(_normalizado(m.get("content") or "") for m in (history or []) if m.get("role") == "user")
+    return cita_n in dicho or cita_n in _normalizado(query)
+
+
+async def aviso_al_final(history: list[dict] | None, query: str, answer: str, lang: str,
+                         dados: list[str] | None = None) -> tuple[str, str] | None:
+    """CAL-A6: (id del aviso, frase que añadir) si a la respuesta le falta uno de la lista cerrada; None si no falta
+    ninguno, si el modelo nombra uno que no está en la lista o ya dado, si no cita palabras reales del cliente, o si
+    la llamada falla (nunca rompe el turno)."""
+    from src.flows import avisos as avisos_mod  # lazy
+    from src.privacy import redact_pii  # lazy
+
+    lista = avisos_mod.lista_para_el_revisor(dados)
+    if not lista or not answer.strip():
+        return None
+    es = lang == "es"
+    idioma = _IDIOMAS.get(lang, (lang, lang))[0 if es else 1]
+    conversacion = redact_pii(_ultimas_lineas(history))
+    contenido = (f"AVISOS:\n{lista}\n\nCONVERSACIÓN:\n{conversacion}\n\nÚLTIMO MENSAJE DEL CLIENTE:\n{query}\n\n"
+                 f"RESPUESTA:\n{answer}\n\nIDIOMA DE LA FRASE: {idioma}" if es else
+                 f"NOTICES:\n{lista}\n\nCONVERSATION:\n{conversacion}\n\nCUSTOMER'S LAST MESSAGE:\n{query}\n\n"
+                 f"ANSWER:\n{answer}\n\nLANGUAGE OF THE SENTENCE: {idioma}")
+    try:
+        resp = await _cliente().chat.completions.create(
+            model=settings.avisos_al_final_model or settings.rag_plan_model, temperature=0, max_tokens=250,
+            response_format={"type": "json_object"},
+            messages=[{"role": "system", "content": _AVISO_FINAL_ES if es else _AVISO_FINAL_EN},
+                      {"role": "user", "content": contenido}])
+        datos = json.loads(resp.choices[0].message.content or "{}")
+    except Exception as exc:  # noqa: BLE001 — nunca romper el turno
+        logger.warning(f"[RAG][AVISO_FINAL] falló, no se añade nada: {exc}")
+        return None
+    aviso_id = str(datos.get("aviso") or "").strip()
+    frase = str(datos.get("frase") or "").strip()
+    cita = str(datos.get("cita_del_cliente") or "").strip()
+    cita_ultimo = str(datos.get("cita_del_ultimo_mensaje") or "").strip()
+    aviso = avisos_mod.por_id(aviso_id) if aviso_id else None
+    if not aviso or not frase:
+        if aviso_id:
+            logger.info(f"[RAG][AVISO_FINAL] descartado: {aviso_id!r} no está en la lista o viene sin frase")
+        return None
+    if aviso.get("una_vez") and aviso_id in set(dados or []):
+        return None
+    if not _lo_dijo_el_cliente(cita, history, query):
+        logger.info(f"[RAG][AVISO_FINAL] descartado {aviso_id}: la cita no es del cliente ({cita[:80]!r})")
+        return None
+    if not _lo_dijo_el_cliente(cita_ultimo, [], query):
+        logger.info(f"[RAG][AVISO_FINAL] descartado {aviso_id}: no sale de su último mensaje ({cita_ultimo[:80]!r})")
+        return None
+    logger.info(f"[RAG][AVISO_FINAL] {aviso_id} (cita: {cita[:80]!r}): {frase[:160]}")
+    return aviso_id, frase
+
+
+def insertar_frase(answer: str, frase: str) -> str:
+    """La frase del aviso en su propio párrafo, sin tocar nada más: antes del último párrafo si este pregunta algo al
+    cliente (la pregunta sigue siendo lo último que lee), y si no, al final."""
+    frase = frase.strip()
+    texto = answer.rstrip()
+    if not frase:
+        return answer
+    parrafos = texto.split("\n\n")
+    if len(parrafos) > 1 and parrafos[-1].rstrip().endswith("?"):
+        return "\n\n".join([*parrafos[:-1], frase, parrafos[-1]])
+    return f"{texto}\n\n{frase}"

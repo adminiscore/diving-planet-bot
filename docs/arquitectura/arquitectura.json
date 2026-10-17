@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-17T10:12:45+00:00",
-  "commit": "0e412a2",
+  "generado": "2026-10-17T11:27:27+00:00",
+  "commit": "6b9cd02",
   "rama": "feature/pre_gadea"
  },
  "vistas": {
@@ -1088,6 +1088,11 @@
      "ajuste": "grounding_v3_model",
      "codigo": "gpt-4.1",
      "pre": "gpt-4.1"
+    },
+    {
+     "ajuste": "avisos_al_final_model",
+     "codigo": "gpt-6-luna",
+     "pre": "gpt-6-luna"
     }
    ],
    "interruptores": [
@@ -1150,6 +1155,13 @@
     {
      "nombre": "rag_revisor_avisos",
      "titulo": "El revisor busca avisos que faltan",
+     "codigo": false,
+     "pre": false,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "avisos_al_final",
+     "titulo": "Un aviso que falta se añade al final, sin rehacer la respuesta",
      "codigo": false,
      "pre": false,
      "sin_efecto": false
@@ -1894,6 +1906,19 @@
    "pre": true,
    "fijado_en_pre": true,
    "usado_por": [],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "avisos_al_final",
+   "area": "Preguntas",
+   "titulo": "Un aviso que falta se añade al final, sin rehacer la respuesta",
+   "texto": "Mientras el revisor de siempre comprueba la respuesta, otro lee la conversación y la lista de avisos de la empresa (el minicurso no certifica, la carta del curso referido, desde las islas no hay almuerzo). Si a la respuesta le falta uno que el cliente necesita por lo que acaba de decir, se añade una frase y lo demás no se toca. Antes el aviso se metía al redactar y desplazaba lo que la respuesta tenía que decir.",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
+   "usado_por": [
+    "r_revisor"
+   ],
    "sin_efecto": null
   },
   {
@@ -2969,6 +2994,16 @@
   }
  ],
  "modelos": [
+  {
+   "ajuste": "avisos_al_final_model",
+   "codigo": "gpt-6-luna",
+   "pre": "gpt-6-luna",
+   "usado_por": [
+    "r_revisor"
+   ],
+   "proveedor": "OpenAI",
+   "llamadas_ultima_ronda": 55
+  },
   {
    "ajuste": "extraction_model",
    "codigo": "gpt-4o-mini",

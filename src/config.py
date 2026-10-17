@@ -342,6 +342,20 @@ class Settings(BaseSettings):
     # respuesta ya tenía que decir. Se queda APAGADO y el código se conserva con las tres medidas apuntadas; lo que
     # habría que probar está en docs/robustness/cal/cal-a5-avisos-condicionados.md §10.
     avisos_condicionados: bool = False
+    # CAL-A6 (17-oct): lo que §10 de cal-a5-avisos-condicionados.md dejó por probar. El aviso ya NO va en la redacción
+    # (ahí desplazaba lo que la respuesta tenía que decir): tras redactar, A LA VEZ que el juez de siempre, un revisor
+    # lee la CONVERSACIÓN, la respuesta y la lista de avisos con sus condiciones en palabras, y decide si falta UNO. Si
+    # falta, se AÑADE una frase (antes de la pregunta final, si la hay), sin tocar el resto. Lo decide leyendo la
+    # conversación y no los campos del estado porque en los casos que quedan la condición está en lo que dijo el cliente
+    # y no en el estado (cal-49 habla del curso referido sin "elegirlo"; cal-47 no consta que se aloja en las islas).
+    # APAGADO hasta medirlo.
+    avisos_al_final: bool = False
+    # Modelo del revisor de `avisos_al_final` (vacío = `rag_plan_model`). Va a la vez que el juez de grounding.
+    # Medido en local (17-oct, 5 casos del banco + los 93 turnos de la ronda core cal-D): gpt-4.1-mini acierta 4 de 5
+    # pero añade aviso en 64 de 93 turnos (relleno); gpt-4.1 y GPT-6 Luna (sin razonamiento) aciertan 4 de 5 y añaden
+    # en 20-24 y 24-27. Latencia, a la vez que el juez: gpt-4.1 no añade nada (p50 0,0 s) y Luna p50 0,4 s / p90 0,8 s.
+    # DECISIÓN DE GADEA (17-oct): Luna, el último modelo y el más barato.
+    avisos_al_final_model: str = "gpt-6-luna"
     # CAL-E1 (DECISIÓN DE GADEA del 16-oct, que sustituye a la del 17-sep): esto es un chatbot y NO da números de
     # teléfono ni de WhatsApp. Si el cliente pide un número o quiere hablar con alguien, la conversación se PASA A UN
     # ASESOR (mismo pase que `needs_staff`). De paso desaparece la invención que el juez marcaba en cal-03: el texto

@@ -29,8 +29,8 @@ from src.agents import rag_agent, supervisor
 from src.config import settings
 from src.flows.state import ConversationState
 TURNOS, REPS = json.loads(TURNOS_JSON), N_REPS
-for _f in FLAGS:
-    setattr(settings, _f, True)
+for _f in FLAGS:  # "no:X" APAGA X solo en este proceso (17-oct: medir con PRE en la rama de otro)
+    setattr(settings, _f.removeprefix("no:"), not _f.startswith("no:"))
 juicios = []
 _orig = rag_agent.is_grounded
 async def _spy(answer, context, lang="es"):

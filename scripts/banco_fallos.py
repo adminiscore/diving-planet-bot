@@ -238,7 +238,9 @@ def main() -> None:
     ap.add_argument("--tarea", help="medir: solo los casos de esta tarea (CAL-B…)")
     ap.add_argument("--etiqueta", help="medir: nombre de la medida")
     ap.add_argument("--reps", type=int, default=3)
-    ap.add_argument("--flag", action="append", default=[], help="medir: interruptor encendido solo en ese proceso")
+    ap.add_argument("--flag", action="append", default=[],
+                    help="medir: interruptor encendido solo en ese proceso ('no:X' lo APAGA: para medir igual que la "
+                         "base aunque PRE sirva la rama de otro con sus flags encendidos)")
     ap.add_argument("--codigo-local", action="store_true", help="medir: con el código local (sin desplegar)")
     args = ap.parse_args()
     if args.accion == "medir":

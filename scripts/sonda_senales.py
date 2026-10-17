@@ -29,8 +29,8 @@ from src.agents import escalation, supervisor
 from src.config import settings
 from src.flows.state import ConversationState
 CASOS = json.loads(CASOS_JSON)
-for _f in FLAGS:
-    setattr(settings, _f, True)
+for _f in FLAGS:  # "no:X" APAGA X solo en este proceso (17-oct: medir con PRE en la rama de otro)
+    setattr(settings, _f.removeprefix("no:"), not _f.startswith("no:"))
 
 senales = []
 _orig = escalation.detect_routing_signals
@@ -46,7 +46,7 @@ class _Traza(logging.Handler):
     def emit(self, rec):
         m = rec.getMessage()
         if any(t in m for t in ("[ROUTER]", "[EXTRACT]", "[CORE][IDIOMA]", "[SUPERVISOR]", "[AVISOS]",
-                                "[RAG][REWRITE]", "[RAG][GROUNDING]", "[RAG][COMPLETITUD]", "[RAG][CANONICAL")):
+                                "[RAG][REWRITE]", "[RAG][GROUNDING]", "[RAG][COMPLETITUD]", "[RAG][CANONICAL", "[RAG][AVISO_FINAL]")):
             traza.append(m[:300])
 logging.getLogger().addHandler(_Traza())
 logging.getLogger().setLevel(logging.INFO)

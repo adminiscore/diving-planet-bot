@@ -29,8 +29,8 @@ from src.config import settings
 from src.flows import avisos as av
 from src.flows.state import ConversationState
 CASOS = json.loads(CASOS_JSON)
-for _f in FLAGS:
-    setattr(settings, _f, True)
+for _f in FLAGS:  # "no:X" APAGA X solo en este proceso (17-oct: medir con PRE en la rama de otro)
+    setattr(settings, _f.removeprefix("no:"), not _f.startswith("no:"))
 
 ultima_busqueda = []
 _buscar = rag_agent.search_knowledge_base

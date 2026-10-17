@@ -1614,8 +1614,9 @@ def _build_extra_context(state: ConversationState) -> str | None:
                 "Esta conversación ya se pasó a una persona del equipo de Diving Planet, que tiene el caso del "
                 "cliente. Tú no ves sus reservas, sus pagos ni sus correos: si pregunta por un detalle de SU reserva "
                 "o de SU pago (si está confirmada, qué rellenar, cómo completar un pago), no lo deduzcas ni des "
-                "instrucciones nuevas; dile que el asesor que tiene su caso se lo confirma y, si sirve, dale la "
-                "información general de la empresa sobre ese tema. Las preguntas generales (planes, precios, "
+                "instrucciones nuevas; dile que el asesor que tiene su caso se lo confirma y dale también la "
+                "información general de la empresa sobre ese tema (cómo se reserva, cómo se paga). Las preguntas "
+                "generales (planes, precios, "
                 "horarios) contéstalas con normalidad."
             )
         else:
@@ -1624,7 +1625,8 @@ def _build_extra_context(state: ConversationState) -> str | None:
                 "customer's case. You cannot see their bookings, payments or emails: if they ask about a detail of "
                 "THEIR booking or THEIR payment (whether it is confirmed, what to fill in, how to complete a "
                 "payment), do not infer it or give new instructions; tell them the advisor handling their case will "
-                "confirm it and, if useful, give the company's general information on that topic. Answer general "
+                "confirm it, and also give the company's general information on that topic (how booking works, how "
+                "payment works). Answer general "
                 "questions (plans, prices, schedules) as usual."
             )
 
