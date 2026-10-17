@@ -91,6 +91,24 @@ lo que el cliente ya dijo, que es lo que hace el contexto) y la mejor latencia d
 demostraron ajenas repitiendo 3 veces cada lado. `IDIOMA_DEL_EXTRACTOR` **no entra**: no arregla su caso y no mejora
 nada medible; el código se queda apagado.
 
+#### 📊 CAL-F, el estado del banco entero (17-oct 05:40, `calf-estado-17oct`, 71 casos × 1)
+
+**40 de 71 casos siguen fallando; 31 pasan.** El banco se construyó con los 73 fallos del examen ex-10, así que al
+empezar fallaban todos. Medido con lo que PRE sirve ahora (y con los 71 casos medidos de verdad, `sin_medir: []`).
+
+| Tarea | Fallan | De | Quién y estado |
+|---|---|---|---|
+| CAL-A (el RAG no dice lo que tiene) | 14 | 16 | **cerrada sin promocionar**: los avisos empeoran el golden. Lo que queda es la decisión de la §7 de `cal-d-busqueda.md` |
+| CAL-B (moneda) | 2 | 8 | cerrada por Gonzalo y Álvaro (`MONEDA_SIN_NACIONALIDAD_USD` en PRE) |
+| CAL-C (entender sin repreguntar) | 17 | 21 | **de Álvaro, EN CURSO**: C1 y C2 hechos y APAGADOS; con ellos el banco de CAL-C iba de 66 a 56/72. Es el bloque más grande que queda |
+| CAL-D (datos exactos) | 1 | 1 | cal-74, el defecto nuevo de esta noche ("varios días" donde la ficha dice 2) |
+| CAL-E (sueltos) | 1 | 7 | cerrada: solo queda cal-12 (idioma), a propósito |
+| (variación) | 4 | 17 | casos de control, no de una tarea |
+
+**Lo que dice este número:** el trabajo que queda en el banco es, sobre todo, **CAL-C (17 casos, de Álvaro)** y la
+familia de CAL-A (14 casos), que es la que necesita tu decisión porque forzar los avisos empeora la respuesta entera.
+Con una sola repetición por caso, los números tienen ruido: para promocionar algo siguen valiendo 3 repeticiones.
+
 #### Siguiente
 2. **CAL-D segunda parte**: cal-74 (nuevo: "varios días" donde la ficha dice 2, reproducible 3/3), cal-14, cal-49 y
    cal-64, donde la fuente que contesta no entra entre los primeros documentos. Es índice y reranking.

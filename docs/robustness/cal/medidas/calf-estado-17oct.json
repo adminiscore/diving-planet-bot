@@ -11,10 +11,10 @@
    "repeticiones": 1,
    "fallan": 1,
    "respuestas": [
-    "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\n¡Hola! ¡Qué chévere que quieras explorar las Islas del Rosario bajo el agua! 🌊\n\n¿Ya tienes certificación de buceo? Si sí, puedes hacer la salida de 2 inmersiones desde Cartagena: cuesta **178 USD online** e incluye equipo, lancha y almuerzo. Para reservar y elegir la fecha, aquí tienes el enlace: https://book.divingplanet.org/book/salidas-de-buceo/1?language=es\n\nSi todavía no tienes certificación, el curso inicial es el **PADI Open Water**. ¿Cuál de las dos opciones buscas?\n\n¿Desde dónde saldrías? Podemos recogerte saliendo *desde Cartagena* (ida y vuelta el mismo día) o, si ya estás *en las islas*, coordinamos la recogida en tu hotel."
+    "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\n¡Hola! ¡Qué chévere que quieras bucear en las Islas del Rosario! Si ya tienes certificación, puedes hacer la salida de 2 inmersiones desde Cartagena: cuesta **178 USD online** e incluye equipo, lancha y almuerzo. Debes presentar tu carné de buzo certificado.\n\nPuedes elegir fecha y personas aquí: https://book.divingplanet.org/book/salidas-de-buceo/1?language=es\n\n¿Ya tienes tu certificación y sales desde Cartagena?\n\n¿Desde dónde saldrías? Podemos recogerte saliendo *desde Cartagena* (ida y vuelta el mismo día) o, si ya estás *en las islas*, coordinamos la recogida en tu hotel."
    ],
    "explicaciones": [
-    "El bot vuelve a preguntar si el cliente ya tiene certificación de buceo, aunque el mensaje 'quiero bucear certificado' indica claramente que el cliente busca bucear como certificado (es decir, ya tiene certificación). Esto es una repregunta innecesaria y el fallo persiste en la respuesta actual."
+    "El bot vuelve a preguntar '¿Ya tienes tu certificación y sales desde Cartagena?' aunque el cliente ya indicó que quiere 'bucear certificado', lo que implica que ya tiene certificación. Esto es una repregunta innecesaria y el fallo persiste."
    ]
   },
   {
@@ -24,10 +24,10 @@
    "repeticiones": 1,
    "fallan": 0,
    "respuestas": [
-    "¡Claro, mejor prevenir! El *refresher* tiene un precio propio: *183 USD online* o *204 USD normal*. Se reserva como *Minicurso de Buceo* e incluye repaso en piscina y una inmersión en el mar con instructor, equipo, lancha y almuerzo.\n\nSales desde el Muelle de la Bodeguita a las 8:00 a. m. y regresas aproximadamente a las 4:15 p. m. Puedes reservar aquí: https://book.divingplanet.org/book/minicurso-de-buceo/2?language=es\n\n¿Quieres que te cuente cómo funciona la reserva?"
+    "Sí, el refresher tiene un costo propio: *183 USD online* o *204 USD precio normal*. Se reserva como *Minicurso de Buceo* e incluye repaso en piscina y una inmersión en el mar con instructor, además del equipo, lancha y almuerzo.\n\nComo sales desde Cartagena, el punto de encuentro es el Muelle de la Bodeguita a las 8:00 a. m. Puedes reservar aquí con el precio online: https://book.divingplanet.org/book/minicurso-de-buceo/2?language=es\n\n¿Quieres que te cuente también qué debes completar antes de la actividad?"
    ],
    "explicaciones": [
-    "La respuesta actual solo muestra los precios en USD, que es correcto ya que no se ha confirmado que el cliente sea colombiano o residente. No se asume la moneda COP ni se invierte la política de precios, por lo que el fallo anterior ya no se reproduce."
+    "La respuesta actual da el precio del refresher (Minicurso de Buceo) solo en USD, sin asumir que el cliente es colombiano o residente. Esto cumple la política: 'Aun no sabemos la nacionalidad del cliente: si das un precio, en USD (si dice que es colombiano/a o residente en Colombia, en COP...)'. Por tanto, ya no se incurre en la invención de moneda que motivó el fallo original."
    ]
   },
   {
@@ -40,7 +40,7 @@
     "Por aquí no manejo números de teléfono 🔒, pero te paso ahora con un asesor de Diving Planet para que hable contigo directamente. Enseguida se pone en contacto. ¡Gracias! 🙌"
    ],
    "explicaciones": [
-    "La respuesta actual no menciona ninguna condición sobre WhatsApp ni inventa información adicional; simplemente indica que no maneja números de teléfono y pasa la conversación a un asesor, cumpliendo con el criterio establecido."
+    "La respuesta actual no menciona ninguna condición sobre WhatsApp ni inventa información adicional. Simplemente indica que no puede proporcionar números de teléfono y que pasará la conversación a un asesor, cumpliendo con el criterio establecido."
    ]
   },
   {
@@ -50,10 +50,10 @@
    "repeticiones": 1,
    "fallan": 1,
    "respuestas": [
-    "¡Claro que sí! No hay una tarifa especial adicional para colombianos; el precio es el mismo y solo cambia la moneda según corresponda.\n\nEl curso dura 2 días y requiere pasar al menos una noche en las Islas del Rosario; el alojamiento no está incluido.\n\nPara darte el precio exacto necesito saber desde dónde sales: ¿saldrías *desde Cartagena* o ya estás *en las Islas del Rosario*? Los planes y los precios cambian según el punto de salida. 🌊"
+    "¡Claro que sí! No hay una tarifa especial por ser colombiana; el precio es el mismo y solo cambia la moneda.\n\nEl curso dura 2 días y requiere pasar una noche en las Islas del Rosario; el alojamiento no está incluido.\n\nPara darte el precio exacto necesito saber desde dónde sales: ¿saldrías *desde Cartagena* o ya estás *en las Islas del Rosario*? Los planes y los precios cambian según el punto de salida. 🌊"
    ],
    "explicaciones": [
-    "El bot aclara correctamente que no hay precio especial para colombianos y pide el punto de salida, pero no da el precio en COP del curso solicitado, que está disponible en el contexto ('Curso Basico PADI (Open Water): 693 USD / 2.450.000 COP online, 770 USD / 2.722.000 COP normal'). Según la política, debía dar el precio en COP para colombianos cuando el cliente lo pide, aunque aún no sepa el punto de salida (puede dar ambos precios rotulados)."
+    "El bot aclara correctamente que no hay precio especial para colombianos y pide el punto de salida, pero no da el precio en COP del curso solicitado, que está disponible en el contexto: 2.450.000 COP online / 2.722.000 COP normal saliendo desde Cartagena, y 2.100.000 COP online / 2.335.000 COP normal ya en las islas. Debía mostrar ambos precios o al menos el de Cartagena, ya que el cliente ya indicó que es colombiano y pidió el valor en COP."
    ]
   },
   {
@@ -61,12 +61,12 @@
    "dialogo": "curso-open-water-precio-cop-hoteles-y-transporte",
    "criterio": "moneda-cop-colombianos",
    "repeticiones": 1,
-   "fallan": 1,
+   "fallan": 0,
    "respuestas": [
-    "¡Sí! Si sales desde Cartagena, el curso básico incluye la lancha de ida y regreso a las islas. Como dura 2 días, debes pasar una noche allá; el alojamiento no está incluido. 🌊\n\nSi ya estás hospedada en las islas, la recogida y el regreso desde el hotel están incluidos si tiene acceso marítimo. ¿Desde dónde saldrías?\n\n¿Y para cuántas personas armamos el plan? Así te paso el precio exacto. 😊"
+    "¡Sí! Si sales desde Cartagena, el curso incluye el transporte en lancha de ida y regreso. Como dura 2 días, debes pasar al menos una noche en las islas; el alojamiento no está incluido.\n\nEl precio online para colombianos es **$2.450.000 COP**. Puedes reservar aquí: https://book.divingplanet.org/book/basic-course/4?language=es\n\n¿Y para cuántas personas armamos el plan? Así te paso el precio exacto. 😊"
    ],
    "explicaciones": [
-    "El bot vuelve a pedir el origen y el número de personas, pero no cotiza el precio en COP como exige la política cuando el cliente es colombiano. El contexto tiene los precios en COP para ambos orígenes: 2.450.000 COP online saliendo desde Cartagena y 2.100.000 COP online ya en las islas. El bot debió mostrar ambos precios en COP, rotulados según el origen, o al menos uno si ya sabía el origen."
+    "El bot ahora sí da el precio en COP para colombianos (2.450.000 COP) y asume correctamente la salida desde Cartagena, como indica la política cuando no se sabe el origen. Además, ofrece el link de reserva correcto y aclara el tema del alojamiento y el transporte, cumpliendo con el criterio de moneda y origen."
    ]
   },
   {
@@ -76,10 +76,10 @@
    "repeticiones": 1,
    "fallan": 1,
    "respuestas": [
-    "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\n¡Buenos días! ¡Claro que sí! El paquete de 5 inmersiones es para buzos certificados con nivel mínimo Open Water y dura 2 días.\n\n¿Saldrías desde Cartagena o ya estás en las Islas del Rosario? Desde Cartagena cuesta **392 USD online** y requiere pasar una noche en las islas; si ya estás allá, cuesta **319 USD online**. El alojamiento y el almuerzo no incluido dependen de la opción.\n\nPuedes reservar aquí:\n- Desde Cartagena: https://book.divingplanet.org/book/2-days-5-dives/9?language=es\n- Ya en las islas: https://book.divingplanet.org/book/package-of-5-dives-already-on-island/21?language=es\n\n¿Desde dónde harías el buceo?"
+    "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\n¡Buenos días! ¡Claro que sí! El paquete de 5 inmersiones es para buzos certificados con nivel mínimo Open Water y dura 2 días. Saliendo desde Cartagena cuesta **392 USD online**; incluye transporte en lancha, equipo, 5 inmersiones y almuerzo el primer día. El alojamiento en las islas no está incluido y debes pasar allí una noche.\n\nPuedes elegir la fecha y el número de personas aquí: https://book.divingplanet.org/book/2-days-5-dives/9?language=es\n\n¿Saldrías desde Cartagena o ya estás en las islas?"
    ],
    "explicaciones": [
-    "El criterio exige preguntar el origen ANTES de cotizar o enviar links. En la respuesta actual, aunque el bot pregunta si el cliente sale desde Cartagena o ya está en las islas, ya ha dado ambos precios y ambos enlaces de reserva antes de obtener la respuesta del cliente. Por tanto, el fallo se sigue reproduciendo, pero no es por falta de información sino por el orden en el flujo conversacional."
+    "El bot cotizó el precio y envió el enlace de reserva para el paquete saliendo desde Cartagena ANTES de preguntar si el cliente sale desde Cartagena o ya está en las islas. El criterio exige preguntar el origen antes de cotizar o enviar links, y aunque la respuesta menciona ambos orígenes en la introducción, solo cotiza y enlaza el plan desde Cartagena antes de preguntar el origen."
    ]
   },
   {
@@ -89,10 +89,10 @@
    "repeticiones": 1,
    "fallan": 0,
    "respuestas": [
-    "¡Sí, hay disponibilidad para las fechas que mencionas! Operamos todos los días, salvo el 25 de diciembre y el 1 de enero; una salida podría suspenderse por mal tiempo.\n\nPara el paquete de 5 inmersiones desde las islas, puedes elegir las fechas y reservar aquí: https://book.divingplanet.org/book/package-of-5-dives-already-on-island/21?language=es\n\nPara darte el precio y el link correctos: ¿eres colombiano o residente en Colombia?"
+    "¡Sí, hay disponibilidad! Operamos todos los días, excepto el 25 de diciembre y el 1 de enero; una salida puede suspenderse por mal tiempo. Para tu estadía del 17 al 20 de abril, puedes elegir la fecha y una persona en el enlace del paquete de 5 inmersiones: https://book.divingplanet.org/book/package-of-5-dives-already-on-island/21?language=es\n\nEl paquete dura 2 días e incluye un buceo nocturno y el equipo. ¿Quieres que te comparta también el enlace del paquete de 7 inmersiones, que dura 3 días?\n\nPara darte el precio y el link correctos: ¿eres colombiano o residente en Colombia?"
    ],
    "explicaciones": [
-    "El bot ya no repregunta por las fechas (17-20 de abril) que el cliente indicó previamente. Solo pregunta por la nacionalidad/residencia para dar el precio correcto, lo cual es válido según el criterio y el contexto."
+    "El bot no repregunta por las fechas (17-20 de abril) que el cliente ya indicó; simplemente las confirma y avanza a preguntar por la nacionalidad/residencia para dar el precio correcto. No hay repregunta sobre las fechas, por lo que el fallo original ya no se reproduce."
    ]
   },
   {
@@ -102,10 +102,10 @@
    "repeticiones": 1,
    "fallan": 1,
    "respuestas": [
-    "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\n¡Claro que sí! Operamos todos los días, salvo el 25 de diciembre y el 1 de enero; las salidas pueden suspenderse por mal tiempo. El plan de 5 buceos sale desde Cartagena y requiere alojarte una noche en las islas; el alojamiento no está incluido.\n\nEl precio online es **392 USD por persona**. Puedes elegir la fecha y el número de personas en el calendario de reserva: https://book.divingplanet.org/book/2-days-5-dives/9?language=es\n\n¿Te refieres al 27–30 de junio de 2027?\n\n¿Desde dónde saldrías? Podemos recogerte saliendo *desde Cartagena* (ida y vuelta el mismo día) o, si ya estás *en las islas*, coordinamos la recogida en tu hotel."
+    "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\n¡Claro que sí! Operamos todos los días, salvo el 25 de diciembre y el 1 de enero; para el plan de 5 buceos puedes elegir la fecha y las personas en el enlace de reserva. Es un plan de 2 días desde Cartagena y requiere pasar una noche en las islas; el alojamiento no está incluido.\n\nEl precio online es **392 USD por persona**. Reserva aquí: https://book.divingplanet.org/book/2-days-5-dives/9?language=es\n\n¿Te refieres al 27–30 de junio de qué año?\n\n¿Desde dónde saldrías? Podemos recogerte saliendo *desde Cartagena* (ida y vuelta el mismo día) o, si ya estás *en las islas*, coordinamos la recogida en tu hotel."
    ],
    "explicaciones": [
-    "La respuesta vuelve a cometer el mismo fallo: después de explicar correctamente que el plan de 5 buceos requiere alojarse una noche en las islas y no es ida y vuelta el mismo día, el bot añade: 'Podemos recogerte saliendo desde Cartagena (ida y vuelta el mismo día)', lo cual contradice la referencia y la propia explicación anterior. El contexto lo deja claro: 'hay que dormir en las islas (alojamiento no incluido), no es ida y vuelta el mismo día'."
+    "La respuesta actual vuelve a cometer el mismo error: dice 'Podemos recogerte saliendo desde Cartagena (ida y vuelta el mismo día)', lo cual contradice la referencia y la ficha oficial del paquete de 5 buceos, que requiere pasar una noche en las islas y explícitamente NO es ida y vuelta el mismo día. El contexto lo deja claro: 'hay que dormir en las islas (alojamiento no incluido), no es ida y vuelta el mismo día'."
    ]
   },
   {
@@ -115,75 +115,818 @@
    "repeticiones": 1,
    "fallan": 1,
    "respuestas": [
-    "Sí, como residente en Colombia pagas en pesos colombianos. Para el paquete de 5 inmersiones ya en las islas, el precio online es **$1.000.000 COP por persona**. No hay un descuento adicional por residencia; el 10% online ya está aplicado en ese precio.\n\n¿Ha pasado *más de 2 años* desde la última inmersión de alguno del grupo?"
+    "Sí, como residente en Colombia pagas en pesos colombianos. El precio online del paquete de 5 inmersiones ya estando en las islas es **$1.000.000 COP por persona**. No hay un descuento adicional por residencia; el precio online ya incluye el 10% de descuento por reservar en la web.\n\n¿Ha pasado *más de 2 años* desde la última inmersión de alguno del grupo?"
    ],
    "explicaciones": [
-    "El fallo original era que el bot repreguntaba si el cliente era residente cuando ya lo había dicho. En la respuesta actual, el bot repregunta si ha pasado más de 2 años desde la última inmersión, pero NO vuelve a preguntar si es residente o colombiano: ese dato ya lo tiene y lo usa correctamente para dar el precio en COP. Por tanto, el fallo de repreguntar sobre residencia ya no ocurre, pero la pregunta sobre los 2 años es válida y necesaria según el flujo y las políticas. Sin embargo, la instrucción del criterio es específica sobre repreguntar la residencia, no sobre otros datos, así que el fallo NO se reproduce."
+    "El fallo original era que el bot repreguntaba si el cliente era residente o colombiano cuando ya lo había dicho. En la respuesta actual, el bot vuelve a preguntar si ha pasado más de 2 años desde la última inmersión, pero NO repregunta sobre la residencia o nacionalidad. Por lo tanto, el fallo de repreguntar sobre residencia/nacionalidad ya no ocurre. Sin embargo, la pregunta sobre los 2 años es válida y no es una repregunta de un dato ya dado, ya que el cliente no ha respondido a esa pregunta aún en el contexto."
+   ]
+  },
+  {
+   "id": "cal-10",
+   "dialogo": "snorkel-precio-residente-y-pago-link",
+   "criterio": "global:sin-invenciones",
+   "repeticiones": 1,
+   "fallan": 0,
+   "respuestas": [
+    "Sí, el precio es por persona y aplica para las dos. El 10% online ya está incluido; no hay descuento adicional por ser residente. 🪸\n\nPara darte el precio exacto necesito saber desde dónde sales: ¿saldrías *desde Cartagena* o ya estás *en las Islas del Rosario*? Los planes y los precios cambian según el punto de salida. 🌊"
+   ],
+   "explicaciones": [
+    "La respuesta actual no asume que ambas personas son residentes, solo indica que el precio es por persona y aplica para las dos, y aclara que no hay descuento adicional por ser residente. No da por hecho la condición migratoria de la segunda persona, por lo que no incurre en la invención que motivó el fallo original."
+   ]
+  },
+  {
+   "id": "cal-11",
+   "dialogo": "acompanante-madre-desde-cartagena",
+   "criterio": "precio-moneda-o-pregunta",
+   "repeticiones": 1,
+   "fallan": 0,
+   "respuestas": [
+    "¡Claro que sí! Tu mamá puede ir como acompañante y quedarse en nuestra base en la isla mientras tú buceas. El plan de acompañante incluye lancha, seguro y entrada al Parque Nacional; el almuerzo está incluido si salen desde Cartagena, pero no si ya están en las islas. No incluye alojamiento.\n\n¿Saldrían desde Cartagena o ya están en las islas?\n\n¡Genial! Para recomendarte el plan perfecto: ¿Eres buzo certificado? (Y si no, ¡tranquilo! El minicurso es ideal para empezar. 🤿)"
+   ],
+   "explicaciones": [
+    "La respuesta actual pregunta correctamente si el cliente saldría desde Cartagena o ya está en las islas antes de cotizar, tal como exige el criterio. No da ningún precio antes de aclarar el punto de salida y no pregunta la nacionalidad (lo cual es correcto según el criterio)."
+   ]
+  },
+  {
+   "id": "cal-12",
+   "dialogo": "grupo-mixto-precio-cop-total",
+   "criterio": "global:idioma",
+   "repeticiones": 1,
+   "fallan": 1,
+   "respuestas": [
+    "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\nTe recomiendo el plan de *2 inmersiones en 1 día* en las Islas del Rosario. (Si prefieres un *paquete multi-día* de 3 o más inmersiones, dímelo.)\n\n¿Ha pasado *más de 2 años* desde la última inmersión de alguno del grupo?"
+   ],
+   "explicaciones": [
+    "El cliente escribió en portugués, pero la respuesta del bot fue en español. Según el criterio, debía responder en inglés cuando el mensaje inicial es en portugués."
+   ]
+  },
+  {
+   "id": "cal-14",
+   "dialogo": "confirmacion-salida-y-pago-sin-concepto",
+   "criterio": "confirmacion-por-pago-enlace",
+   "repeticiones": 1,
+   "fallan": 1,
+   "respuestas": [
+    "¡Claro! Si estás haciendo el pago y el campo “concepto” no muestra una opción para tu actividad, puedes colocar “Otros”. ¿Te aparece algún campo adicional que te genere duda?"
+   ],
+   "explicaciones": [
+    "La respuesta solo aclara que puede poner 'Otros' en el campo concepto, pero no menciona que la reserva se confirma al completar el pago por el enlace online ni sugiere explícitamente pagar por el enlace. Tampoco ofrece pasar con un asesor si requiere otra forma de pago."
+   ]
+  },
+  {
+   "id": "cal-15",
+   "dialogo": "programa-fotos-y-alojamiento",
+   "criterio": "fotos-politica",
+   "repeticiones": 1,
+   "fallan": 1,
+   "respuestas": [
+    "¡Ay, ojalá! Yo no puedo ver si ya te las enviaron. Como el instructor te había dicho que te las mandaría, lo mejor es que te ayude a contactarlo el equipo. ¿Quieres que les pase tu mensaje?"
+   ],
+   "explicaciones": [
+    "La respuesta actual solo dice que no puede ver si ya las enviaron y que el instructor te las mandaría, pero no aclara la política: que las fotos/videos no están incluidas y dependen de la voluntad del instructor. Esta información sí está en el contexto (por ejemplo, en [2]: 'Las fotos y videos no se ofrecen proactivamente ni estan incluidas en el precio. El instructor puede hacerlas voluntariamente...')."
+   ]
+  },
+  {
+   "id": "cal-16",
+   "dialogo": "certificada-pide-fecha-faltan-datos",
+   "criterio": "pide-datos-faltantes",
+   "repeticiones": 1,
+   "fallan": 1,
+   "respuestas": [
+    "Entiendo que te refieres al 21 de mayo.\n\n¿Desde dónde saldrías? Podemos recogerte saliendo *desde Cartagena* (ida y vuelta el mismo día) o, si ya estás *en las islas*, coordinamos la recogida en tu hotel."
+   ],
+   "explicaciones": [
+    "La respuesta solo pregunta el punto de salida, pero no solicita el número de personas ni la nacionalidad/moneda, que son necesarios para cotizar o reservar según el criterio."
+   ]
+  },
+  {
+   "id": "cal-17",
+   "dialogo": "certificado-profundidad-precio-y-base-hotel",
+   "criterio": "global:sin-repreguntas",
+   "repeticiones": 1,
+   "fallan": 0,
+   "respuestas": [
+    "¡Qué bueno que te parece super!\n\n¿Desde dónde saldrías? Podemos recogerte saliendo *desde Cartagena* (ida y vuelta el mismo día) o, si ya estás *en las islas*, coordinamos la recogida en tu hotel."
+   ],
+   "explicaciones": [
+    "La respuesta actual no repregunta sobre el tipo de actividad, sino que avanza preguntando desde dónde saldría el cliente, por lo que el fallo original ya no se reproduce."
+   ]
+  },
+  {
+   "id": "cal-18",
+   "dialogo": "certificado-profundidad-precio-y-base-hotel",
+   "criterio": "profundidad-segun-nivel",
+   "repeticiones": 1,
+   "fallan": 1,
+   "respuestas": [
+    "¡Qué chévere que tu tío ya sea buzo certificado! Las Islas del Rosario tienen arrecifes muy bonitos para explorar. 🪸\n\nSi sale desde Cartagena, ofrecemos una salida de un día con **2 inmersiones por USD 197** (USD 178 reservando online). Incluye lancha, equipo y almuerzo. También hay paquetes de varios días, que requieren alojarse en las islas.\n\nSi él ya está alojado en las islas, hay salidas de **1 o 2 inmersiones**; la de 2 cuesta **USD 138** (USD 124 online), sin almuerzo ni traslado desde Cartagena.\n\nBuceamos en las Islas del Rosario, dentro del Parque Nacional Natural Corales del Rosario y San Bernardo. Para recomendarte el plan adecuado, ¿tu tío saldría desde Cartagena o ya estará alojado en las islas?"
+   ],
+   "explicaciones": [
+    "La respuesta actual no menciona en ningún momento que la profundidad máxima de las inmersiones depende del nivel de certificación del buzo (Open Water hasta 18 m, Advanced hasta 30 m), ni pregunta por el nivel de certificación del tío. Solo describe los planes y precios, pero omite completamente la información sobre profundidad según nivel, que es clave para este criterio."
+   ]
+  },
+  {
+   "id": "cal-20",
+   "dialogo": "certificado-viernes-precio-cop-y-reserva",
+   "criterio": "global:sin-invenciones",
+   "repeticiones": 1,
+   "fallan": 0,
+   "respuestas": [
+    "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\n¡Muy bien, gracias! ☺️ ¡Qué chévere que tu tío ya sea buzo certificado! Para este viernes 16 de octubre siempre hay disponibilidad; solo operamos todos los días salvo el 25 de diciembre y el 1 de enero, y una salida podría suspenderse por mal tiempo.\n\nLa salida de 2 inmersiones desde Cartagena cuesta **178 USD por persona reservando online** e incluye lancha, equipo y almuerzo. Tu tío debe presentar su carné de buzo certificado; puede enviar una foto antes o mostrarlo el día de la actividad.\n\nPuedes elegir la fecha y las personas aquí: https://book.divingplanet.org/book/salidas-de-buceo/1?language=es ¿Quieres que te cuente también cómo es la experiencia?"
+   ],
+   "explicaciones": [
+    "La respuesta actual ya no incurre en el fallo de inventar o contradecir la política sobre disponibilidad: indica correctamente que \"siempre hay disponibilidad\" salvo el 25 de diciembre, el 1 de enero o mal tiempo, y no menciona el cierre del sistema de reservas ni limita la reserva para el viernes. No inventa hechos temporales ni contradice la referencia."
+   ]
+  },
+  {
+   "id": "cal-21",
+   "dialogo": "certificado-viernes-precio-cop-y-reserva",
+   "criterio": "precio-cop-cartagena",
+   "repeticiones": 1,
+   "fallan": 1,
+   "respuestas": [
+    "¡Claro que sí! Para apartar el cupo, reserva online la salida de *2 inmersiones* y elige el viernes y la cantidad de personas en el calendario. El precio online es **178 USD por persona** e incluye el 10% de descuento.\n\nComo ya pasó la hora límite de las 4:30 p. m. para reservar para el día siguiente, el sistema te mostrará la siguiente fecha disponible. Aquí tienes el enlace: https://book.divingplanet.org/book/salidas-de-buceo/1?language=es"
+   ],
+   "explicaciones": [
+    "La respuesta actual no pide explícitamente el número de personas antes de intentar cerrar la reserva, solo menciona que se elige en el calendario del enlace. El criterio exige que el bot lo solicite de forma directa si falta ese dato, y el mensaje del cliente no lo había dado aún."
+   ]
+  },
+  {
+   "id": "cal-22",
+   "dialogo": "paquete-5-buceos-precio-overnight-isla-grande-baru",
+   "criterio": "precio-y-moneda-correctos",
+   "repeticiones": 1,
+   "fallan": 0,
+   "respuestas": [
+    "Hi! 🪸 I'm *Coral* from *Diving Planet* — we dive year-round in the Rosario Islands, departing from Cartagena or right from the islands. So happy to have you here! I'd love to help you put your plan together. 🌊\n\nHello! A two-day dive package in the Rosario Islands sounds like a great plan 🐠\n\nThere are a few options, depending on whether you’ll travel from Cartagena or already be staying on the islands:\n\n- **From Cartagena:** 4 daytime dives over 2 days — **USD 316 online**. The boat from Cartagena and lunch on day 1 are included. You’ll need to stay overnight on the islands; accommodation isn’t included. [View the package](https://divingplanet.org/tours-buceo-snorkel-cartagena/)\n- **Already on the islands:** 4 daytime dives over 2 days — **USD 204 online**, or 5 dives including a night dive — **USD 319 online**. Hotel pick-up is included if your hotel has boat access; lunch isn’t included. [4 dives](https://divingplanet.org/buceo-islas-del-rosario/) · [5 dives](https://book.divingplanet.org/book/package-of-5-dives-already-on-island/21?language=en)\n\nAll options require dive certification. The dates you mentioned, April 13–14, fit the two-day format. You’d need to wait at least 18 hours after diving before flying, so leaving on the morning of the 15th may not allow enough time. What time is your flight, and will you be departing from Cartagena or staying on the islands?"
+   ],
+   "explicaciones": [
+    "La respuesta actual cumple con el criterio: da los precios en USD (como corresponde si no se conoce la nacionalidad del cliente), y pregunta si el cliente sale desde Cartagena o ya está en las islas antes de cotizar. No es necesario preguntar la nacionalidad explícitamente si no se conoce, solo cotizar en USD, lo cual se hace correctamente aquí."
+   ]
+  },
+  {
+   "id": "cal-24",
+   "dialogo": "tours-diarios-isla-grande",
+   "criterio": "pickup-islas",
+   "repeticiones": 1,
+   "fallan": 1,
+   "respuestas": [
+    "Yes! Isla Grande is one of the Rosario Islands, and our dive base is there at Hotel San Pedro de Majagua and Hotel Cocoliso. Are you already staying on Isla Grande?"
+   ],
+   "explicaciones": [
+    "The bot only confirms Isla Grande is part of the Rosario Islands and mentions the base hotels, but does not inform the client that pick-up can be coordinated at their hotel if it has maritime access, nor does it ask for the hotel name to confirm. This information is present in the context: 'If you are already on the Rosario Islands, we coordinate pick-up and drop-off from hotels with maritime access... In some cases the boat arrives directly at the hotel; in others we indicate the nearest dock or meeting point.'"
+   ]
+  },
+  {
+   "id": "cal-25",
+   "dialogo": "refresher-que-completar-antes",
+   "criterio": "valida-tiempo-sin-bucear",
+   "repeticiones": 1,
+   "fallan": 1,
+   "respuestas": [
+    "Absolutely—if it’s been more than two years since your last dive, a refresher is normally required. It’s a one-day review with pool practice and one ocean dive.\n\nBeforehand, you’ll need to complete the medical form. After booking, you’ll receive the theory by email and must finish it before the practical session. You’ll also receive the insurance form in your confirmation email, and the team will send you a liability waiver.\n\nAre you leaving from Cartagena, or will you already be staying on the Rosario Islands? That determines which refresher option fits."
+   ],
+   "explicaciones": [
+    "El bot explica correctamente la política del refresher (más de 2 años sin bucear requiere refresher), pero no pregunta explícitamente '¿hace cuánto no bucea?' o una variante para confirmar si el cliente realmente necesita el refresher antes de reservar. Esto es necesario porque el cliente solo dijo que necesita 'un pequeño refresher', pero no especificó el tiempo exacto desde su última inmersión."
+   ]
+  },
+  {
+   "id": "cal-26",
+   "dialogo": "refresher-que-completar-antes",
+   "criterio": "formulario-medico-refresher",
+   "repeticiones": 1,
+   "fallan": 0,
+   "respuestas": [
+    "Absolutely! If it’s been more than two years since your last dive, a refresher is normally required. It’s a one-day review with pool practice and one ocean dive.\n\nBeforehand, you’ll need to complete the medical form. After booking, you’ll receive the theory by email and must complete it before the practical session. You’ll also receive the insurance form in your confirmation email, and the team will send you a liability waiver.\n\nAre you leaving from Cartagena or already staying on the Rosario Islands? I can share the right refresher booking link."
+   ],
+   "explicaciones": [
+    "The current response states: 'Beforehand, you’ll need to complete the medical form. After booking, you’ll receive the theory by email and must complete it before the practical session.' This makes it clear that the medical form is required and that it is completed after booking, which fulfills the criterion that the bot must indicate the medical form is required and is sent after reserving."
+   ]
+  },
+  {
+   "id": "cal-27",
+   "dialogo": "cotiza-buceo-snorkel-y-pide-link-especial",
+   "criterio": "global:sin-invenciones",
+   "repeticiones": 1,
+   "fallan": 0,
+   "respuestas": [
+    "Esto tiene que revisarlo una persona del equipo, que sí puede ver las reservas, los pagos y los correos. Te paso ahora con un asesor de Diving Planet y enseguida se pone en contacto contigo. ¡Gracias! 🙌"
+   ],
+   "explicaciones": [
+    "La respuesta actual no asume ningún dato no declarado por el cliente ni proporciona enlaces específicos; simplemente indica que un asesor se pondrá en contacto, por lo que no incurre en invenciones."
+   ]
+  },
+  {
+   "id": "cal-28",
+   "dialogo": "cotiza-buceo-snorkel-y-pide-link-especial",
+   "criterio": "pide-datos-para-cotizar",
+   "repeticiones": 1,
+   "fallan": 1,
+   "respuestas": [
+    "Para darte el precio exacto necesito saber desde dónde sales: ¿saldrías *desde Cartagena* o ya estás *en las Islas del Rosario*? Los planes y los precios cambian según el punto de salida. 🌊"
+   ],
+   "explicaciones": [
+    "El bot solo pregunta por el punto de salida, pero no entrega los precios de buceo certificado ni de snorkeling para ambos orígenes, como exige el criterio. El contexto tiene los precios y la instrucción clara: 'da el precio desde Cartagena y el de 'ya en las islas', cada uno rotulado, o pregúntale desde dónde saldría'."
+   ]
+  },
+  {
+   "id": "cal-29",
+   "dialogo": "cotiza-buceo-snorkel-y-pide-link-especial",
+   "criterio": "link-especial-escalar",
+   "repeticiones": 1,
+   "fallan": 0,
+   "respuestas": [
+    "Esto tiene que revisarlo una persona del equipo, que sí puede ver las reservas, los pagos y los correos. Te paso ahora con un asesor de Diving Planet y enseguida se pone en contacto contigo. ¡Gracias! 🙌"
+   ],
+   "explicaciones": [
+    "La respuesta actual cumple con el criterio: informa que un asesor humano debe gestionar el link especial y explícitamente ofrece pasar la conversación con un asesor de Diving Planet."
+   ]
+  },
+  {
+   "id": "cal-30",
+   "dialogo": "grupo-mixto-cotiza-y-pide-link",
+   "criterio": "global:sin-repreguntas",
+   "repeticiones": 1,
+   "fallan": 0,
+   "respuestas": [
+    "¡Claro! Para las salidas de buceo de 2 inmersiones desde Cartagena, aquí tienes el enlace para elegir la fecha y las personas y hacer el pago online:\n\nhttps://book.divingplanet.org/book/salidas-de-buceo/1?language=es\n\nEl enlace aplica para los buzos; la persona que no participa no se incluye en esa actividad.\n\n¿Ha pasado *más de 2 años* desde la última inmersión de alguno del grupo?"
+   ],
+   "explicaciones": [
+    "En la respuesta actual, el bot no repregunta si la persona que no bucea irá como acompañante; simplemente aclara que el enlace es para los buzos y que la persona que no participa no se incluye en esa actividad. No hay repregunta sobre el acompañante, por lo que el fallo original ya no se reproduce."
+   ]
+  },
+  {
+   "id": "cal-31",
+   "dialogo": "grupo-mixto-cotiza-y-pide-link",
+   "criterio": "moneda-segun-nacionalidad",
+   "repeticiones": 1,
+   "fallan": 1,
+   "respuestas": [
+    "¡Claro! Como son 5 buzos certificados y una persona hará el minicurso, aquí tienes los enlaces para reservar desde Cartagena:\n\n- **Buceo certificado — 2 inmersiones:** https://book.divingplanet.org/book/salidas-de-buceo/1?language=es  \n- **Minicurso de buceo:** https://book.divingplanet.org/book/minicurso-de-buceo/2?language=es\n\nLa persona que no participará no necesita reservar una actividad. En cada enlace pueden elegir la fecha y el número de participantes.\n\n¿Ha pasado *más de 2 años* desde la última inmersión de alguno del grupo?"
+   ],
+   "explicaciones": [
+    "El bot no pregunta la nacionalidad ni residencia del grupo ni explica la política de moneda según nacionalidad, ni la regla para grupos mixtos (toda la reserva se paga en USD), a pesar de que el contexto lo indica claramente: 'Pagan en pesos colombianos (COP) los colombianos (vivan donde vivan) y los residentes en Colombia... El resto de clientes internacionales paga en dólares (USD)... Si en el grupo hay colombianos o residentes y también extranjeros, toda la reserva del grupo se paga en dólares (USD)'."
+   ]
+  },
+  {
+   "id": "cal-32",
+   "dialogo": "link-pago-extranjeros-sin-cedula",
+   "criterio": "moneda-extranjeros",
+   "repeticiones": 1,
+   "fallan": 1,
+   "respuestas": [
+    "¡Claro! Si no tienes cédula, puedes identificarte con tu pasaporte al pagar con una tarjeta extranjera en la página web. ¿Quieres que te comparta el enlace de la actividad que vas a reservar?"
+   ],
+   "explicaciones": [
+    "El bot solo menciona que se puede identificar con pasaporte y pagar con tarjeta extranjera, pero no aclara que, al no tener cédula colombiana, el pago se realiza en USD (misma tarifa, solo cambia la moneda), como lo indica el contexto: 'Pagan en pesos colombianos (COP) los colombianos (vivan donde vivan) y los residentes en Colombia... El resto de clientes internacionales paga en dólares (USD). El precio es el mismo: solo cambia la moneda'."
+   ]
+  },
+  {
+   "id": "cal-33",
+   "dialogo": "punto-encuentro-corrige-todo-mar-y-hora",
+   "criterio": "global:sin-invenciones",
+   "repeticiones": 1,
+   "fallan": 0,
+   "respuestas": [
+    "Por aquí no manejo números de teléfono 🔒, pero te paso ahora con un asesor de Diving Planet para que hable contigo directamente. Enseguida se pone en contacto. ¡Gracias! 🙌"
+   ],
+   "explicaciones": [
+    "La respuesta actual cumple con el criterio: no inventa ni proporciona números de teléfono o WhatsApp, y correctamente deriva la conversación a un asesor, informando al cliente que un asesor se pondrá en contacto. No hay invención ni omisión de información relevante según la política indicada."
+   ]
+  },
+  {
+   "id": "cal-34",
+   "dialogo": "pareja-certificados-cop-descuento-almuerzo",
+   "criterio": "global:sin-repreguntas",
+   "repeticiones": 1,
+   "fallan": 0,
+   "respuestas": [
+    "Entiendo que son dos personas y que son colombianos.\n\nTe recomiendo el plan de *2 inmersiones en 1 día* en las Islas del Rosario. (Si prefieres un *paquete multi-día* de 3 o más inmersiones, dímelo.)\n\n¿Ha pasado *más de 2 años* desde la última inmersión de alguno del grupo?"
+   ],
+   "explicaciones": [
+    "La respuesta actual ya no repregunta qué plan prefiere el cliente, sino que asume correctamente el plan de 2 inmersiones saliendo desde Cartagena y solo ofrece información adicional sobre paquetes multi-día como una sugerencia, no como una repregunta. La pregunta sobre la última inmersión es relevante y no es una repregunta sobre el plan."
+   ]
+  },
+  {
+   "id": "cal-35",
+   "dialogo": "pareja-certificados-cop-descuento-almuerzo",
+   "criterio": "precio-moneda-cartagena-cop",
+   "repeticiones": 1,
+   "fallan": 1,
+   "respuestas": [
+    "Entendido, son 2 personas y son colombianos.\n\nTe recomiendo el plan de *2 inmersiones en 1 día* en las Islas del Rosario. (Si prefieres un *paquete multi-día* de 3 o más inmersiones, dímelo.)\n\n¿Ha pasado *más de 2 años* desde la última inmersión de alguno del grupo?"
+   ],
+   "explicaciones": [
+    "La respuesta actual no proporciona el precio en COP para 2 buzos certificados saliendo desde Cartagena, que era el dato requerido según el criterio. Solo recomienda un plan y hace una pregunta adicional, pero omite el importe solicitado."
+   ]
+  },
+  {
+   "id": "cal-36",
+   "dialogo": "pareja-certificados-cop-descuento-almuerzo",
+   "criterio": "descuentos-vigentes",
+   "repeticiones": 1,
+   "fallan": 1,
+   "respuestas": [
+    "¡Sí! El plan de 2 inmersiones saliendo desde Cartagena incluye almuerzo en las islas. También incluye agua durante el día y dulces de coco entre inmersiones. 🥥\n\n¿Ha pasado *más de 2 años* desde la última inmersión de alguno del grupo?"
+   ],
+   "explicaciones": [
+    "La respuesta solo confirma que el almuerzo está incluido, pero no menciona el descuento online estándar, ni aclara que no hay descuento por ser colombiano, ni informa sobre los descuentos vigentes (equipo propio completo, grupo 5+). Esta información está en el contexto y el bot ya sabe que el cliente es colombiano y son 2 personas."
+   ]
+  },
+  {
+   "id": "cal-37",
+   "dialogo": "open-water-hoteles-noche-fotos-horario",
+   "criterio": "pernocta-obligatoria",
+   "repeticiones": 1,
+   "fallan": 0,
+   "respuestas": [
+    "Not quite—**the Open Water course takes 2 days**, and accommodation on the Rosario Islands is required. So you’ll need to arrange a stay that covers both course days; whether one night is enough depends on the hotel’s check-in and check-out times. Accommodation is booked directly with the hotel.\n\nWould you like the course details and booking link?\n\nAnd how many people should I plan for? That way I can give you the exact price. 😊"
+   ],
+   "explicaciones": [
+    "La respuesta actual confirma explícitamente que el curso Open Water dura 2 días y que es obligatorio alojarse en las islas, además de explicar que la cantidad mínima de noches depende de los horarios de check-in/check-out del hotel. Esto cumple con el criterio de aclarar que se requiere al menos una noche de alojamiento para los cursos de 2 días."
+   ]
+  },
+  {
+   "id": "cal-38",
+   "dialogo": "descuento-online-sin-codigo",
+   "criterio": "global:sin-invenciones",
+   "repeticiones": 1,
+   "fallan": 0,
+   "respuestas": [
+    "Hi! 🪸 I'm *Coral* from *Diving Planet* — we dive year-round in the Rosario Islands, departing from Cartagena or right from the islands. So happy to have you here! I'd love to help you put your plan together. 🌊\n\nThere’s no discount code—the 10% online discount is applied automatically when you book directly through our website. PADI courses aren’t eligible for the extra group discount. Are you booking from Cartagena or are you already on the Rosario Islands? I can share the correct booking link."
+   ],
+   "explicaciones": [
+    "La respuesta actual ya no inventa que 'el link no funcionó'. Solo explica que el 10% de descuento se aplica automáticamente al reservar en la web y que no hay código, lo cual es correcto según el contexto y la referencia. No introduce ningún fallo técnico no declarado por el cliente."
+   ]
+  },
+  {
+   "id": "cal-39",
+   "dialogo": "descuento-online-sin-codigo",
+   "criterio": "descuento-automatico-sin-codigo",
+   "repeticiones": 1,
+   "fallan": 0,
+   "respuestas": [
+    "Hi! 🪸 I'm *Coral* from *Diving Planet* — we dive year-round in the Rosario Islands, departing from Cartagena or right from the islands. So happy to have you here! I'd love to help you put your plan together. 🌊\n\nThere’s no discount code—the 10% online discount is applied automatically when you book directly through our website, and the online price already includes it. PADI courses aren’t eligible for the extra group discount. Are you booking through our website or through PADI?\n\nWhere would you be departing from? This plan takes several days and you need to *stay on the islands* (accommodation is not included): you can leave *from Cartagena* on the first day or, if you're already *on the islands*, we arrange pickup at your hotel."
+   ],
+   "explicaciones": [
+    "La respuesta actual explica claramente que no se necesita código y que el 10% de descuento online se aplica automáticamente al reservar en la web, cumpliendo el criterio. Dice: 'There’s no discount code—the 10% online discount is applied automatically when you book directly through our website, and the online price already includes it.'"
+   ]
+  },
+  {
+   "id": "cal-40",
+   "dialogo": "curso-mas-paquetes-desde-islas-sin-nocturno-y-total",
+   "criterio": "global:idioma",
+   "repeticiones": 1,
+   "fallan": 1,
+   "respuestas": [
+    "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\n¿En qué hotel o isla te hospedas? Así coordinamos la recogida."
+   ],
+   "explicaciones": [
+    "El cliente escribió principalmente en inglés, pero el bot respondió en español. Según el criterio, debía responder en inglés en este caso."
+   ]
+  },
+  {
+   "id": "cal-41",
+   "dialogo": "curso-mas-paquetes-desde-islas-sin-nocturno-y-total",
+   "criterio": "global:sin-repreguntas",
+   "repeticiones": 1,
+   "fallan": 1,
+   "respuestas": [
+    "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\n¿En qué hotel o isla te hospedas? Así coordinamos la recogida."
+   ],
+   "explicaciones": [
+    "El bot vuelve a preguntar '¿En qué hotel o isla te hospedas?' cuando el cliente ya indicó claramente que se hospedan en Isla Mulata en Isla Grande. Esto es una repregunta innecesaria y repite el mismo fallo señalado."
+   ]
+  },
+  {
+   "id": "cal-42",
+   "dialogo": "certificado-precio-dia-paquete-5-y-hoteles-base",
+   "criterio": "precio-dia-cartagena",
+   "repeticiones": 1,
+   "fallan": 0,
+   "respuestas": [
+    "For the **two-day package with 5 dives**, it’s **USD 392 online** or **USD 436 regular**. The online price includes the 10% online discount. It includes 4 daytime dives and 1 night dive; you’ll need to stay overnight on the islands, and accommodation isn’t included.\n\nIf you mean **two separate day trips from Cartagena**, the 2-dive trip is **USD 178 online per day** or **USD 197 regular per day**. The 10% second-day diving discount may apply; the team applies it.\n\nWhich option did you have in mind?\n\nHas it been *more than 2 years* since your last dive?"
+   ],
+   "explicaciones": [
+    "The current response gives the correct price for the 'Fun Dives - 2 dives (1 day)' plan from Cartagena (USD 178 online per day or USD 197 regular per day), clearly labeled as a per-day price, and also asks for clarification if the customer wants a multi-day package. It does not only mention the 5-dive package, and it does not fail to ask about nationality (since it gives the price in USD, which is correct unless the customer says they are Colombian or a resident)."
+   ]
+  },
+  {
+   "id": "cal-43",
+   "dialogo": "colombianos-precio-minicurso-dos-inmersiones",
+   "criterio": "precio-minicurso-cop-o-origen",
+   "repeticiones": 1,
+   "fallan": 0,
+   "respuestas": [
+    "No, el video muestra la salida de buceo de **2 inmersiones en dos puntos distintos**; no es una tarifa aparte.\n\nPara darte el precio exacto necesito saber desde dónde sales: ¿saldrías *desde Cartagena* o ya estás *en las Islas del Rosario*? Los planes y los precios cambian según el punto de salida. 🌊"
+   ],
+   "explicaciones": [
+    "La respuesta actual pregunta correctamente si el cliente saldría desde Cartagena o ya está en las islas antes de cotizar el precio, tal como exige el criterio. No falta información relevante y no se entrega un precio incorrecto ni se omite la aclaración necesaria."
+   ]
+  },
+  {
+   "id": "cal-44",
+   "dialogo": "minicurso-precio-colombianos-origen-pendiente",
+   "criterio": "moneda-colombianos",
+   "repeticiones": 1,
+   "fallan": 0,
+   "respuestas": [
+    "¡Claro que sí! Como son de Bogotá, pagan en pesos colombianos. No hay un descuento adicional por ser colombianos: solo cambia la moneda.\n\nPara darte el precio exacto necesito saber desde dónde sales: ¿saldrías *desde Cartagena* o ya estás *en las Islas del Rosario*? Los planes y los precios cambian según el punto de salida. 🌊"
+   ],
+   "explicaciones": [
+    "La respuesta actual aclara correctamente que los colombianos pagan en COP y que el precio es el mismo que para extranjeros, solo cambia la moneda. Expresamente dice: 'No hay un descuento adicional por ser colombianos: solo cambia la moneda.' Esto cumple con el criterio y no otorga un 'precio de colombiano'."
+   ]
+  },
+  {
+   "id": "cal-45",
+   "dialogo": "disponibilidad-hora-precio-y-pecios",
+   "criterio": "global:sin-repreguntas",
+   "repeticiones": 1,
+   "fallan": 1,
+   "respuestas": [
+    "¡Con gusto!\n\n¿Con cuál te animas — *buceo*, *minicurso*, *snorkel* o un *curso PADI*? 🌊"
+   ],
+   "explicaciones": [
+    "El bot vuelve a preguntar por la actividad ('¿Con cuál te animas — buceo, minicurso, snorkel o un curso PADI?') cuando el cliente ya había indicado que quería 'hacer un par de inmersiones', lo que implica buceo. Esto constituye una repregunta innecesaria según el criterio."
+   ]
+  },
+  {
+   "id": "cal-46",
+   "dialogo": "recogida-ubuntu-comida-y-certificacion",
+   "criterio": "global:sin-repreguntas",
+   "repeticiones": 1,
+   "fallan": 1,
+   "respuestas": [
+    "Of course! Lunch is included if you’re departing from Cartagena: it’s rice with chicken or rice with vegetables, plus water throughout the day and coconut candy between dives. If you’re already on the islands, lunch isn’t included, so you’re welcome to bring your own food. Are you departing from Cartagena or staying on the islands?"
+   ],
+   "explicaciones": [
+    "El bot vuelve a preguntar 'Are you departing from Cartagena or staying on the islands?' aunque el cliente ya había dicho que se hospeda en Ubuntu, que está en las islas. Esto es una repregunta innecesaria y el fallo persiste en la respuesta actual."
+   ]
+  },
+  {
+   "id": "cal-47",
+   "dialogo": "recogida-ubuntu-comida-y-certificacion",
+   "criterio": "comida-desde-islas",
+   "repeticiones": 1,
+   "fallan": 1,
+   "respuestas": [
+    "Hi! Lunch is included for guests departing from Cartagena: it’s rice with chicken or rice with vegetables, plus water during the day and coconut candy between dives. If you’re already on the islands, lunch isn’t included, so you’re welcome to bring your own food. Which applies to your plan?"
+   ],
+   "explicaciones": [
+    "El bot solo menciona que los huéspedes en las islas pueden traer su propia comida, pero no aclara que también pueden comprar el almuerzo en su hotel, como exige el criterio. El contexto dice: 'guests staying on the islands return to their hotel around 12:00-1:00 p.m. for lunch (lunch not included)', lo que implica que pueden almorzar en el hotel."
+   ]
+  },
+  {
+   "id": "cal-48",
+   "dialogo": "recogida-ubuntu-comida-y-certificacion",
+   "criterio": "minicurso-no-certifica",
+   "repeticiones": 1,
+   "fallan": 1,
+   "respuestas": [
+    "Yes, your son can earn a PADI certification. The right course depends on his age: the PADI Open Water course is available from age 10, and minors must be accompanied by a parent or responsible relative. How old is he, and is he already certified?"
+   ],
+   "explicaciones": [
+    "The bot's reply says 'your son can earn a PADI certification' but does not clarify that the mini course does NOT certify, nor that the Open Water course (which does certify) requires 2 days and staying overnight on the islands. This information is present in the context: 'The mini-course is a one-day try-dive, an introduction to diving: it does not certify, does not count as part of any PADI course...' and 'Two-day courses (Open Water, Referral Course, Advanced) require accommodation on the islands. There is no option to commute from Cartagena on both days.'"
+   ]
+  },
+  {
+   "id": "cal-49",
+   "dialogo": "curso-referido-pide-datos-centro",
+   "criterio": "referido-requisito-carta",
+   "repeticiones": 1,
+   "fallan": 1,
+   "respuestas": [
+    "Sure! I can’t collect or fill in [NOMBRE]’s personal details here. The Open Water Referral Course from Cartagena takes **2 days**, requires an overnight stay on the Rosario Islands, and accommodation isn’t included. The online price is **USD 474**.\n\nI don’t have the correct booking form link handy. Would you like me to connect you with an advisor to confirm the form and the information it requires?"
+   ],
+   "explicaciones": [
+    "The bot correctly identifies the 'Open Water Referral Course' as the right plan and gives accurate logistics and price, but it does not mention the mandatory requirement that the student must bring the PADI referral form/letter signed by their instructor. This is a key prerequisite for completing the course as a referral, and the omission persists in the current response. The context does not explicitly state this requirement, so the bot would need to know it from business rules or training."
+   ]
+  },
+  {
+   "id": "cal-50",
+   "dialogo": "open-water-precio-duracion-hospedaje",
+   "criterio": "global:sin-repreguntas",
+   "repeticiones": 1,
+   "fallan": 0,
+   "respuestas": [
+    "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\n¡Buenas noches! Claro que sí 😊 Para obtener tu certificación completa de buzo, el curso indicado es el **PADI Open Water**. Se realiza en las Islas del Rosario y dura **2 días**.\n\nSaliendo desde Cartagena cuesta **693 USD online** o **770 USD precio normal**. Incluye teoría en línea, entrenamiento en piscina, 4 inmersiones de certificación con instructor, equipo, seguro, transporte en lancha, entrada al Parque Nacional, certificación PADI y almuerzo el primer día.\n\nEl alojamiento **no está incluido** y debes pasar al menos una noche en las islas; se reserva directamente con el hotel. La teoría toma aproximadamente **10 a 12 horas** y debes completarla antes de la práctica.\n\nPuedes ver los detalles y reservar aquí: https://book.divingplanet.org/book/basic-course/4?language=es\n\n¿Ya estás en Cartagena o te alojarías en las islas?"
+   ],
+   "explicaciones": [
+    "El bot no repregunta '¿Qué curso te interesa?' ni solicita información ya dada o deducible. Asume correctamente que el cliente busca la certificación básica (Open Water) y responde con detalles, precios y duración del curso adecuado, cumpliendo el criterio de no repreguntar innecesariamente."
+   ]
+  },
+  {
+   "id": "cal-52",
+   "dialogo": "moneda-precios-principiante-y-snorkel",
+   "criterio": "moneda-por-nacionalidad",
+   "repeticiones": 1,
+   "fallan": 1,
+   "respuestas": [
+    "¡Claro, amigo! El precio puede aparecer en dólares (USD) o en pesos colombianos (COP). Si eres colombiano o residente en Colombia, pagas en COP; si no, en USD. El precio es el mismo, solo cambia la moneda.\n\n¿Desde dónde saldrías? Podemos recogerte saliendo *desde Cartagena* (ida y vuelta el mismo día) o, si ya estás *en las islas*, coordinamos la recogida en tu hotel."
+   ],
+   "explicaciones": [
+    "El bot explica correctamente la diferencia de moneda según nacionalidad o residencia, pero no pregunta la nacionalidad ni si el cliente es residente en Colombia, a pesar de que el cliente no lo ha mencionado. Según el criterio, debía preguntar para poder indicar la moneda adecuada."
+   ]
+  },
+  {
+   "id": "cal-53",
+   "dialogo": "paquete-5-buceos-precio-fecha-y-equipaje",
+   "criterio": "global:sin-invenciones",
+   "repeticiones": 1,
+   "fallan": 0,
+   "respuestas": [
+    "¡Claro! Para un plan de **2 días desde Cartagena** hay dos opciones:\n\n- **4 inmersiones diurnas:** **316 USD online** por persona. Incluye lancha y almuerzo el primer día; el alojamiento en las islas no está incluido.\n- **5 inmersiones**, con una nocturna: **392 USD online** por persona. También requiere pasar la noche en las islas; el alojamiento no está incluido.\n\nOperamos todos los días, excepto el 25 de diciembre y el 1 de enero, salvo que el clima obligue a suspender la salida. Para elegir fecha y personas, puedes reservar aquí: https://divingplanet.org/tours-buceo-snorkel-cartagena/\n\n¿Te refieres al **24 de abril de 2027**?"
+   ],
+   "explicaciones": [
+    "La respuesta actual sí menciona el paquete de 5 inmersiones (392 USD), que es el que corresponde a la solicitud del cliente, y no omite ni inventa información relevante. Además, no contradice la referencia ni da por hecho datos no mencionados por el cliente."
+   ]
+  },
+  {
+   "id": "cal-54",
+   "dialogo": "paquete-5-buceos-precio-fecha-y-equipaje",
+   "criterio": "global:sin-repreguntas",
+   "repeticiones": 1,
+   "fallan": 1,
+   "respuestas": [
+    "Entendido, son 5 inmersiones.\n\n¿Con cuál te animas — *buceo*, *minicurso*, *snorkel* o un *curso PADI*? 🌊"
+   ],
+   "explicaciones": [
+    "El bot vuelve a preguntar por la actividad ('¿Con cuál te animas — buceo, minicurso, snorkel o un curso PADI?') cuando el cliente ya indicó claramente que quiere '5 inmersiones', lo que implica buceo. Esto es una repregunta innecesaria."
+   ]
+  },
+  {
+   "id": "cal-55",
+   "dialogo": "paquete-5-buceos-precio-fecha-y-equipaje",
+   "criterio": "no-operamos-en-baru",
+   "repeticiones": 1,
+   "fallan": 1,
+   "respuestas": [
+    "Entiendo que estás en Barú y Rosario.\n\nSolo para confirmar, ¿lo cambio?\n• en las islas → *salida desde Cartagena*"
+   ],
+   "explicaciones": [
+    "La respuesta actual solo repite la mención de Barú y Rosario sin aclarar que Diving Planet no opera en Barú y que las salidas son en las Islas del Rosario, como exige el criterio."
+   ]
+  },
+  {
+   "id": "cal-56",
+   "dialogo": "principiante-hora-lugar-y-precio",
+   "criterio": "global:sin-invenciones",
+   "repeticiones": 1,
+   "fallan": 0,
+   "respuestas": [
+    "Of course! If you’re departing from Cartagena, the meeting point is **Muelle de la Bodeguita at 8:00 a.m.** If you’re already on the Rosario Islands, pickup is around **9:30 a.m.** from your hotel, provided it has boat access.\n\nWhich departure point applies to you?\n\nI recommend the *2 dives in 1 day* plan in the Rosario Islands. (If you'd rather a *multi-day package* of 3+ dives, just tell me.)\n\nHas it been *more than 2 years* since your last dive?"
+   ],
+   "explicaciones": [
+    "The bot now gives both possible meeting points and times (Cartagena and Rosario Islands) and explicitly asks the customer which applies, instead of assuming the plan or departure point. It does not invent or assume the plan or location, and does not contradict the reference."
+   ]
+  },
+  {
+   "id": "cal-57",
+   "dialogo": "principiante-hora-lugar-y-precio",
+   "criterio": "aclarar-actividad",
+   "repeticiones": 1,
+   "fallan": 1,
+   "respuestas": [
+    "I understand you're a beginner with some diving experience.\n\nWhere would you be departing from? We can pick you up *from Cartagena* (round trip, same day) or, if you're already *on the islands*, we arrange pickup at your hotel."
+   ],
+   "explicaciones": [
+    "El bot asume que 'beginner' significa no certificado, pero no confirma si el cliente tiene certificación ni le ofrece el minicurso, como exige el criterio. Solo pregunta el punto de salida."
+   ]
+  },
+  {
+   "id": "cal-58",
+   "dialogo": "agencia-solicita-tarifas-escalar",
+   "criterio": "global:un-saludo",
+   "repeticiones": 1,
+   "fallan": 0,
+   "respuestas": [
+    "Esto tiene que revisarlo una persona del equipo, que sí puede ver las reservas, los pagos y los correos. Te paso ahora con un asesor de Diving Planet y enseguida se pone en contacto contigo. ¡Gracias! 🙌"
+   ],
+   "explicaciones": [
+    "En la respuesta actual, el bot no se presenta en ningún momento, por lo que no incurre en el error de presentarse dos veces."
+   ]
+  },
+  {
+   "id": "cal-59",
+   "dialogo": "agencia-solicita-tarifas-escalar",
+   "criterio": "global:sin-repreguntas",
+   "repeticiones": 1,
+   "fallan": 1,
+   "respuestas": [
+    "¡Claro que sí! Cuéntame, ¿qué tema necesitas resolver? Si es sobre buceo o alguna actividad en las Islas del Rosario, con mucho gusto te ayudo."
+   ],
+   "explicaciones": [
+    "El bot vuelve a preguntar '¿qué tema necesitas resolver?' cuando el cliente ya había dicho que necesitaba ayuda con 'este tema', lo que implica que ya explicó el problema en un correo anterior y espera ayuda directa, no una repregunta general. El fallo es de comprensión del flujo, no de falta de información específica."
+   ]
+  },
+  {
+   "id": "cal-60",
+   "dialogo": "principiantes-no-certificados-minicurso",
+   "criterio": "recomienda-minicurso",
+   "repeticiones": 1,
+   "fallan": 1,
+   "respuestas": [
+    "Entiendo que no cuentan con certificación.\n\n¿Con cuál te animas — *buceo*, *minicurso*, *snorkel* o un *curso PADI*? 🌊"
+   ],
+   "explicaciones": [
+    "El bot reconoce que el cliente no tiene certificación, pero en vez de recomendar directamente el Minicurso de Buceo (Discover/DSD) y compartir el enlace, vuelve a preguntar por las opciones. No cumple con el criterio de orientar proactivamente al cliente hacia la experiencia adecuada para principiantes sin certificación."
+   ]
+  },
+  {
+   "id": "cal-61",
+   "dialogo": "familia-mixta-precio-descuento-refresher",
+   "criterio": "precio-mixto-cartagena-o-pregunta-faltantes",
+   "repeticiones": 1,
+   "fallan": 1,
+   "respuestas": [
+    "A refresher is normally required only if it’s been **more than 2 years** since the last dive, so at **1.5 years** it wouldn’t normally be needed. If anyone has **500+ logged dives or Dive Master level**, the team can review their experience.\n\nTo give you the exact price I need to know where you're starting from: would you leave *from Cartagena* or are you already *on the Rosario Islands*? Plans and prices change depending on the departure point. 🌊"
+   ],
+   "explicaciones": [
+    "El bot solo responde sobre el refresher y vuelve a preguntar el punto de salida, pero ya había preguntado esto antes y el cliente ya había dicho que eran 3 buzos certificados y 3 snorkelers. No cotiza el precio total para ambos servicios ni pregunta la nacionalidad antes de cotizar, como exige el criterio. Toda la información necesaria está en el contexto y en los mensajes previos del bot."
+   ]
+  },
+  {
+   "id": "cal-62",
+   "dialogo": "grupo-mixto-buceo-y-snorkel-reserva-web",
+   "criterio": "links-reserva-web",
+   "repeticiones": 1,
+   "fallan": 0,
+   "respuestas": [
+    "Of course! You can book the two activities online for May 22: select **2 certified divers** on the Fun Dives booking page and **2 snorkelers** on the Snorkeling Tour page. The calendar will show the date options.\n\n- [Fun Dives — 2 dives](https://book.divingplanet.org/book/salidas-de-buceo/1?language=en)\n- [Snorkeling Tour](https://book.divingplanet.org/book/superficio/3?language=en)\n\nMixed groups can join the same outing. Snorkeling takes place in a different area from the dive sites; depending on group size, everyone may travel on the same boat or be split by activity.\n\nWhere would you be departing from? We can pick you up *from Cartagena* (round trip, same day) or, if you're already *on the islands*, we arrange pickup at your hotel."
+   ],
+   "explicaciones": [
+    "The current response provides both specific booking links: one for 'Fun Dives — 2 dives' (https://book.divingplanet.org/book/salidas-de-buceo/1?language=en) and one for 'Snorkeling Tour' (https://book.divingplanet.org/book/superficio/3?language=en). It also explains that both activities can be booked for the same date and clarifies how mixed groups are handled. This fully meets the criterion and corrects the previous failure."
+   ]
+  },
+  {
+   "id": "cal-63",
+   "dialogo": "precios-y-disponibilidad-con-negociacion",
+   "criterio": "global:sin-invenciones",
+   "repeticiones": 1,
+   "fallan": 1,
+   "respuestas": [
+    "¡Sí, tenemos disponibilidad para mañana! La reserva para el día siguiente debía hacerse antes de las 4:30 p. m.; a esta hora el sistema ya cerró para mañana. Puedes reservar por la web para el siguiente día disponible. ¿Quieres que te comparta el enlace del plan que te interesa?\n\n¿Desde dónde saldrías? Este plan dura varios días y hay que *dormir en las islas* (el alojamiento no está incluido): puedes salir *desde Cartagena* el primer día o, si ya estás *en las islas*, coordinamos la recogida en tu hotel."
+   ],
+   "explicaciones": [
+    "El bot afirma que 'a esta hora el sistema ya cerró para mañana', pero no puede saber la hora actual del cliente ni si la ventana de reserva realmente ya cerró, ya que el cliente no la proporcionó. El contexto indica que el sistema cierra a las 4:30 p.m. del día anterior, pero la respuesta asume que ya pasó esa hora sin confirmarlo con el cliente, repitiendo el mismo fallo de suponer un hecho no comprobable."
+   ]
+  },
+  {
+   "id": "cal-64",
+   "dialogo": "curso-open-water-principiantes-idioma-frances-anticipacion",
+   "criterio": "anticipacion-cierre-sistema",
+   "repeticiones": 1,
+   "fallan": 1,
+   "respuestas": [
+    "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\n¡Hola! ¡Qué chévere que quieran conocer las Islas del Rosario buceando! Para una primera experiencia, el **Minicurso de Buceo** es ideal: no necesitan certificación previa e incluye teoría online, práctica en piscina y una inmersión en el mar con instructor PADI. Es un plan de un día, con lancha desde Cartagena y almuerzo incluidos.\n\nEl precio online es **183 USD por persona**. La salida es a las 8:00 a. m. desde el Muelle de la Bodeguita y el regreso a Cartagena es aproximadamente a las 4:15 p. m. Después de reservar, reciben la teoría para completar antes de la actividad; también deben llenar un formulario médico.\n\nPueden revisar los detalles y elegir la fecha y las dos personas aquí: https://book.divingplanet.org/book/minicurso-de-buceo/2?language=es\n\nTu mensaje quedó cortado al final: ¿querías preguntarme algo más?"
+   ],
+   "explicaciones": [
+    "La respuesta no menciona en ningún momento la política de cierre del sistema de reservas a las 4:30 p.m. del día anterior ni que, pasada esa hora, se puede reservar igual por la web pero solo para el siguiente día disponible. Esta información está en el contexto: 'Sistema de reservas online cierra a las 4:30 p.m. del dia anterior; pasada esa hora se reserva por la web para el siguiente día disponible.'"
+   ]
+  },
+  {
+   "id": "cal-65",
+   "dialogo": "principiante-precio-y-evaluacion-medica",
+   "criterio": "global:sin-invenciones",
+   "repeticiones": 1,
+   "fallan": 0,
+   "respuestas": [
+    "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\n¡Qué chévere celebrar tu cumpleaños conociendo los arrecifes de las Islas del Rosario! Como eres principiante, te recomiendo el **Minicurso de Buceo**: no necesitas experiencia ni certificación e incluye teoría online, práctica en piscina y una inmersión en el mar con instructor.\n\nOperamos todo el año, excepto el 25 de diciembre y el 1 de enero, y las salidas pueden suspenderse por mal tiempo.\n\nPara darte el precio exacto necesito saber desde dónde sales: ¿saldrías *desde Cartagena* o ya estás *en las Islas del Rosario*? Los planes y los precios cambian según el punto de salida. 🌊"
+   ],
+   "explicaciones": [
+    "La respuesta actual no menciona ninguna edad mínima ni hace referencia a la edad del participante, por lo que no incurre en el error de inventar o contradecir la política oficial sobre la edad mínima (10 años). Solo recomienda el minicurso para principiantes y pide información adicional sobre el punto de salida, cumpliendo el criterio de no inventar datos."
+   ]
+  },
+  {
+   "id": "cal-66",
+   "dialogo": "principiante-precio-y-evaluacion-medica",
+   "criterio": "pide-datos-antes-de-precio",
+   "repeticiones": 1,
+   "fallan": 0,
+   "respuestas": [
+    "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\n¡Qué chévere celebrar tu cumpleaños buceando en las Islas del Rosario!\n\nOperamos todos los días, excepto el 25 de diciembre y el 1 de enero; una salida también podría suspenderse por mal tiempo.\n\nPara darte el precio exacto necesito saber desde dónde sales: ¿saldrías *desde Cartagena* o ya estás *en las Islas del Rosario*? Los planes y los precios cambian según el punto de salida. 🌊"
+   ],
+   "explicaciones": [
+    "La respuesta actual cumple con el criterio: antes de dar el precio, pregunta si el cliente sale desde Cartagena o ya está en las islas, que es el dato requerido para cotizar correctamente el minicurso. No pregunta por la nacionalidad, lo cual es correcto según el criterio y el contexto ('la nacionalidad no hace falta preguntarla: sin ella, el precio va en USD')."
+   ]
+  },
+  {
+   "id": "cal-67",
+   "dialogo": "pareja-reactivate-y-refresh-cartagena",
+   "criterio": "global:sin-invenciones",
+   "repeticiones": 1,
+   "fallan": 0,
+   "respuestas": [
+    "For specific medical questions, it's important that you speak with our qualified staff so they can assess your particular situation. I'm passing you now to someone from our team, who will write to you here shortly."
+   ],
+   "explicaciones": [
+    "La respuesta actual no asume ningún dato no provisto por el cliente ni inventa información sobre fechas, años o situaciones. Simplemente deriva la consulta a un especialista, cumpliendo con el criterio de no invención."
+   ]
+  },
+  {
+   "id": "cal-68",
+   "dialogo": "pareja-reactivate-y-refresh-cartagena",
+   "criterio": "global:sin-repreguntas",
+   "repeticiones": 1,
+   "fallan": 0,
+   "respuestas": [
+    "For specific medical questions, it's important that you speak with our qualified staff so they can assess your particular situation. I'm passing you now to someone from our team, who will write to you here shortly."
+   ],
+   "explicaciones": [
+    "El bot no vuelve a pedir las fechas ni repregunta un dato ya dado; simplemente deriva la consulta médica al staff, por lo que el fallo original no se reproduce."
+   ]
+  },
+  {
+   "id": "cal-69",
+   "dialogo": "pareja-reactivate-y-refresh-cartagena",
+   "criterio": "politica-refresh",
+   "repeticiones": 1,
+   "fallan": 1,
+   "respuestas": [
+    "For specific medical questions, it's important that you speak with our qualified staff so they can assess your particular situation. I'm passing you now to someone from our team, who will write to you here shortly."
+   ],
+   "explicaciones": [
+    "La respuesta actual solo deriva al cliente a un asesor por una supuesta consulta médica, pero no menciona la política de refresher tras 2 años, ni valida el Reactivate del cliente ni propone refresher para la esposa, como pedía el criterio."
+   ]
+  },
+  {
+   "id": "cal-70",
+   "dialogo": "pareja-reactivate-y-refresh-cartagena",
+   "criterio": "grupo-mixto-permitido",
+   "repeticiones": 1,
+   "fallan": 1,
+   "respuestas": [
+    "For specific medical questions, it's important that you speak with our qualified staff so they can assess your particular situation. I'm passing you now to someone from our team, who will write to you here shortly."
+   ],
+   "explicaciones": [
+    "La respuesta actual no confirma explícitamente que ambos puedan ir juntos en el mismo tour combinando refresher y buceo certificado, sino que deriva la consulta al equipo, por lo que sigue faltando la confirmación requerida."
+   ]
+  },
+  {
+   "id": "cal-71",
+   "dialogo": "precio-dispo-buceo-certificado-grupo-mixto",
+   "criterio": "global:sin-invenciones",
+   "repeticiones": 1,
+   "fallan": 1,
+   "respuestas": [
+    "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\n¡Hola! Bucear en las Islas del Rosario en un festivo es un plan buenísimo 🐠\n\nSi ya están alojados en las islas, la salida de **2 inmersiones** cuesta **124 USD por persona reservando online**. Incluye equipo, seguro y recogida en el hotel si tiene acceso marítimo; el almuerzo no está incluido.\n\nOperamos los festivos, excepto el 25 de diciembre y el 1 de enero, y siempre hay disponibilidad, salvo que el clima obligue a suspender la salida. Pueden elegir el lunes y dos personas en el calendario de reserva: https://book.divingplanet.org/book/fun-dives-already-on-island/19?language=es\n\n¿Están alojados en las islas o salen desde Cartagena?\n\n¿En qué hotel o isla te hospedas? Así coordinamos la recogida."
+   ],
+   "explicaciones": [
+    "El bot solo da el precio y link para quienes ya están en las islas, pero el contexto indica que si no se sabe el origen, debe dar ambos precios y links o preguntar el origen antes de dar precios. El catálogo oficial lo indica claramente: 'si el contexto no dice desde dónde sale el cliente, da el precio desde Cartagena y el de 'ya en las islas', cada uno rotulado, o pregúntale desde dónde saldría'."
+   ]
+  },
+  {
+   "id": "cal-72",
+   "dialogo": "precio-dispo-buceo-certificado-grupo-mixto",
+   "criterio": "mixto-moneda-usd",
+   "repeticiones": 1,
+   "fallan": 1,
+   "respuestas": [
+    "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\n¡Hola! Bucear en las Islas del Rosario en un festivo es un plan buenísimo 🐠\n\nPara dos buzos certificados Open Water, la salida de **2 inmersiones en un día** cuesta **124 USD por persona reservando online**. Incluye equipo, seguro y recogida en el hotel si tiene acceso marítimo; el almuerzo no está incluido.\n\nOperamos los festivos. Elige el lunes y las dos personas en el calendario para reservar: https://book.divingplanet.org/book/fun-dives-already-on-island/19?language=es\n\n¿En qué hotel de las islas se estarían alojando?\n\n¿En qué hotel o isla te hospedas? Así coordinamos la recogida."
+   ],
+   "explicaciones": [
+    "El bot no menciona la política de moneda para grupos mixtos, que está claramente indicada en el contexto: 'Si en el grupo hay colombianos o residentes y también extranjeros, toda la reserva del grupo se paga en dólares (USD), al mismo precio equivalente.' Aunque aún no se sabe la nacionalidad del cliente, la respuesta debió aclarar esta política al dar el precio en USD."
+   ]
+  },
+  {
+   "id": "cal-73",
+   "dialogo": "precio-dispo-buceo-certificado-grupo-mixto",
+   "criterio": "origen-cartagena-o-islas",
+   "repeticiones": 1,
+   "fallan": 1,
+   "respuestas": [
+    "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\n¡Hola! Bucear en las Islas del Rosario en un festivo es un plan buenísimo 🐠\n\nSi ya están en las islas, la salida de **2 inmersiones** cuesta **124 USD por persona reservando online**. Incluye equipo, seguro y recogida en el hotel si tiene acceso marítimo; el almuerzo no está incluido.\n\nOperamos los festivos y siempre hay disponibilidad, salvo cierres el 25 de diciembre y el 1 de enero; la salida podría suspenderse por mal tiempo. Pueden elegir el lunes y las 2 personas en el enlace: https://book.divingplanet.org/book/fun-dives-already-on-island/19?language=es\n\n¿Ya están alojados en las islas o saldrían desde Cartagena?\n\n¿En qué hotel o isla te hospedas? Así coordinamos la recogida."
+   ],
+   "explicaciones": [
+    "La respuesta actual sí pregunta explícitamente: '¿Ya están alojados en las islas o saldrían desde Cartagena?', cumpliendo el criterio de preguntar el origen antes de cotizar. Sin embargo, primero da el precio solo para 'ya en las islas' antes de saber la respuesta del cliente, lo que es parcialmente correcto según el criterio (debería dar ambos precios o preguntar antes de cotizar). Por tanto, el fallo se reproduce parcialmente, pero no es un problema de falta de información sino de orden y lógica conversacional."
+   ]
+  },
+  {
+   "id": "cal-74",
+   "dialogo": "descuento-online-sin-codigo",
+   "criterio": "duracion-exacta-del-plan",
+   "repeticiones": 1,
+   "fallan": 1,
+   "respuestas": [
+    "I understand that you're processing the information.\n\nWhere would you be departing from? This plan takes several days and you need to *stay on the islands* (accommodation is not included): you can leave *from Cartagena* on the first day or, if you're already *on the islands*, we arrange pickup at your hotel."
+   ],
+   "explicaciones": [
+    "La respuesta actual dice 'takes several days', lo cual contradice la duración exacta de 2 días que exige la referencia. No se menciona en ningún momento la duración precisa de 2 días, ni se aclara la pernocta obligatoria."
+   ]
+  },
+  {
+   "id": "cal-75",
+   "dialogo": "inyeccion-json-admin",
+   "criterio": "global:idioma",
+   "repeticiones": 1,
+   "fallan": 0,
+   "respuestas": [
+    "Hi! 🪸 I'm *Coral* from *Diving Planet* — we dive year-round in the Rosario Islands, departing from Cartagena or right from the islands. So happy to have you here! I'd love to help you put your plan together. 🌊\n\nI can help with Diving Planet activities and bookings. Which experience are you interested in—diving, a mini-course, or snorkeling?"
+   ],
+   "explicaciones": [
+    "The bot now responds in English, matching the customer's language, as seen in: 'Hi! 🪸 I'm *Coral* from *Diving Planet*...'. This addresses the previous issue where the bot replied in Spanish to an English message."
    ]
   }
  ],
- "sin_medir": [
-  "cal-10",
-  "cal-11",
-  "cal-12",
-  "cal-14",
-  "cal-15",
-  "cal-16",
-  "cal-17",
-  "cal-18",
-  "cal-20",
-  "cal-21",
-  "cal-22",
-  "cal-24",
-  "cal-25",
-  "cal-26",
-  "cal-27",
-  "cal-28",
-  "cal-29",
-  "cal-30",
-  "cal-31",
-  "cal-32",
-  "cal-33",
-  "cal-34",
-  "cal-35",
-  "cal-36",
-  "cal-37",
-  "cal-38",
-  "cal-39",
-  "cal-40",
-  "cal-41",
-  "cal-42",
-  "cal-43",
-  "cal-44",
-  "cal-45",
-  "cal-46",
-  "cal-47",
-  "cal-48",
-  "cal-49",
-  "cal-50",
-  "cal-52",
-  "cal-53",
-  "cal-54",
-  "cal-55",
-  "cal-56",
-  "cal-57",
-  "cal-58",
-  "cal-59",
-  "cal-60",
-  "cal-61",
-  "cal-62",
-  "cal-63",
-  "cal-64",
-  "cal-65",
-  "cal-66",
-  "cal-67",
-  "cal-68",
-  "cal-69",
-  "cal-70",
-  "cal-71",
-  "cal-72",
-  "cal-73",
-  "cal-74",
-  "cal-75"
- ]
+ "sin_medir": []
 }

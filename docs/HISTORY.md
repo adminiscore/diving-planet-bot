@@ -28,6 +28,14 @@ History
   "¿dice lo que faltaba?" y el golden "¿cómo quedó la respuesta entera?". Un aviso obligatorio **compite por el sitio**
   con lo que la respuesta ya tenía que decir: en un diálogo se quedó **sin el enlace de reserva**. Mejorar el banco a
   costa del golden no es mejorar. Qué probar si se retoma, en la §10.
+* **CAL-F, estado del banco entero** (`calf-estado-17oct`, 71 casos, los 71 medidos): **40 fallan, 31 pasan**, de los
+  73 con los que se construyó. Lo que queda es sobre todo **CAL-C (17 casos, de Álvaro, en curso)** y la familia de
+  **CAL-A (14)**, que necesita una decisión de negocio porque forzar los avisos empeora la respuesta entera.
+* **Dos fallos de MEDIDA arreglados, más peligrosos que cualquier regresión**: (1) un caso que no se podía medir se
+  contaba como "0 fallos" — la primera medida del banco entero dijo "3/9 en 71 casos" con **62 casos sin medir**;
+  ahora se lanza error, se listan al final y van en `sin_medir`; (2) un deploy a mitad de medida reinicia el
+  contenedor y borra la copia del código de `--codigo-local` (pasó dos veces por lanzar el push y la medida juntos):
+  ahora se vuelve a subir y se reintenta el caso, y el protocolo dice que no se mide con un deploy en vuelo.
 * **Herramientas**: `scripts/sonda_avisos.py` y `scripts/sonda_senales.py` (hechos, documentos, señales, idioma y
   traza dentro de PRE, **sin juez**: no gastan el verificador) y `reproducir_juez_pre` traza ya los avisos.
 * **Arreglo de contención real**: dos medidas con `--codigo-local` a la vez subían a la misma carpeta y la segunda
