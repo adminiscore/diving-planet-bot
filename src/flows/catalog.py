@@ -498,6 +498,30 @@ def _parte_equipo(service_id: str, lang: str) -> list[str]:
     return []
 
 
+def _parte_ficha(service_id: str, lang: str) -> list[str]:
+    """CAL (17-oct, flag `catalogo_fichas_completas`): lo que la FICHA del producto ya dice y el catálogo no pintaba.
+
+    - Hasta qué profundidad certifica (`max_depth_m`: Open Water 18 m, Advanced 30 m, lo que la base dice en el
+      registro de actividades). Sin esto, a "¿cuántos metros bajan?" de un buzo certificado el RAG solo podía decir
+      "depende de la certificación": el dato no estaba en ningún sitio que viera (cal-18).
+    - Qué preparación pide antes de empezar (`preparation_*`, en 18 de 36 productos: la carta de referido firmada, la
+      teoría del Open Water, las 4 horas del Advanced...). Estaba solo en una pregunta frecuente que la búsqueda no
+      siempre trae (cal-49: "traer la carta de referido firmada por un instructor PADI").
+
+    Va en el catálogo y no en una regla del prompt: es un dato de cada producto, sale de su ficha y vale para todas
+    las preguntas sobre él. Y como el juez lee el mismo catálogo, también puede comprobar lo que el bot diga de ello."""
+    svc = RAW_SERVICES.get(service_id, {})
+    es = lang == "es"
+    partes: list[str] = []
+    metros = svc.get("max_depth_m")
+    if metros:
+        partes.append(f"certifica para bucear hasta {metros} m" if es else f"certifies you to dive down to {metros} m")
+    preparacion = (svc.get("preparation_es" if es else "preparation_en") or "").strip().rstrip(".")
+    if preparacion:
+        partes.append(("preparación: " if es else "preparation: ") + preparacion)
+    return partes
+
+
 def policies_facts(lang: str) -> str:
     """EX-RAG-1 (flag `rag_politicas_en_contexto`, aprobado por Gadea el 14-oct para medir): las políticas del negocio
     enteras (data/knowledge_base/policies.json, ~2.000 tokens), para que vayan SIEMPRE en el contexto del RAG como el
@@ -524,12 +548,16 @@ def catalog_facts(lang: str) -> str:
     (el guard de importes sigue exigiendo que cada cifra este en el contexto)."""
     from src.config import settings  # lazy
 
-    clave = f"{lang}|{settings.moneda_sin_nacionalidad_usd}"
+    # 17-oct: la clave lleva TODOS los flags que cambian el texto. Antes solo llevaba la moneda, así que cambiar
+    # otro flag en el mismo proceso (los tests, o una medida que enciende un flag) devolvía el catálogo de antes.
+    clave = (f"{lang}|{settings.moneda_sin_nacionalidad_usd}|{settings.catalogo_equipo_incluido}|"
+             f"{settings.catalogo_hoteles_base}|{settings.catalogo_fichas_completas}")
     if clave in _FACTS_CACHE:
         return _FACTS_CACHE[clave]
 
     es = lang == "es"
     catalogo_equipo = settings.catalogo_equipo_incluido
+    catalogo_fichas = settings.catalogo_fichas_completas
     groups: dict[bool, list[str]] = {False: [], True: []}
     for service_id, svc in SERVICES.items():
         if svc.get("category") == "private":
@@ -539,6 +567,8 @@ def catalog_facts(lang: str) -> str:
         parts = service_fact_parts(service_id, lang)
         if catalogo_equipo:
             parts += _parte_equipo(service_id, lang)
+        if catalogo_fichas:
+            parts += _parte_ficha(service_id, lang)
         groups[island].append(f"- {name}: " + "; ".join(parts) + ".")
     # El refresher se vende con el servicio que le da el registro de actividades (hoy el minicurso). Paso 8
     # (28-sep): sin el atajo fijo del refresher, el RAG decia "el refresh no esta listado con precio".

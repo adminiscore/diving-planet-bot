@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-17T02:11:30+00:00",
-  "commit": "e593e8c",
+  "generado": "2026-10-17T09:52:34+00:00",
+  "commit": "9d92954",
   "rama": "feature/pre_gadea"
  },
  "vistas": {
@@ -959,6 +959,13 @@
      "codigo": true,
      "pre": true,
      "sin_efecto": false
+    },
+    {
+     "nombre": "catalogo_fichas_completas",
+     "titulo": "El catálogo enseña lo que pide cada plan y hasta dónde certifica",
+     "codigo": false,
+     "pre": false,
+     "sin_efecto": false
     }
    ],
    "modelos": []
@@ -1895,6 +1902,19 @@
    "codigo": true,
    "pre": true,
    "fijado_en_pre": true,
+   "usado_por": [
+    "r_catalogo"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "catalogo_fichas_completas",
+   "area": "Preguntas",
+   "titulo": "El catálogo enseña lo que pide cada plan y hasta dónde certifica",
+   "texto": "Cada plan ya tenía escrito en su ficha qué hay que traer o hacer antes (la carta de referido, la teoría del curso) y, en los cursos, hasta qué profundidad certifican. El catálogo que lee el bot no lo mostraba, así que no lo podía decir. Ahora sí.",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
    "usado_por": [
     "r_catalogo"
    ],
