@@ -92,6 +92,9 @@ hay un niño de 8 (precio igual). G3-06 (Barú guardado como `location=island`, 
 hasta que Gadea conteste si recogéis en hoteles de Barú. G3-07a (dos monedas: el RAG adelantado se adopta antes de la
 extracción): decidir mañana con Gadea; mi propuesta, la opción 3 (con tarjeta, el texto no da el precio: sin latencia).
 Antes de subir: integrar `origin/feature/pre_gadea` (los dos tocamos config.py, componentes.json y arquitectura.json).
+De CAL-F parcial (Gadea, 417e7f0, mi zona): `grupo-mixto-precio-cop-total` lee "1 buzo avanzado" como el curso
+Advanced y vuelve a preguntar si los del bautismo están certificados; `refresher-rechaza-acepta`: el plan final no
+incluye el refresher que el cliente aceptó. Reproducir cuando haya crédito.
 
 ### ▶️ (anterior) 17-oct noche (Álvaro con Claude): CAL-C CERRADA (C4, C5, C3e promocionados); siguiente r6-1
 
