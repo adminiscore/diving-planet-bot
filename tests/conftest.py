@@ -6,7 +6,16 @@ tests de flujo de conversación no peguen al pipeline real.
 """
 
 
+import os
+
 import pytest
+
+# 17-oct: los tests que montan el RAG de verdad (búsqueda y LLM de mentira) CREAN el cliente de OpenAI, y sin clave en
+# el entorno el SDK falla al crearlo ("Missing credentials"): 8 tests del RAG fallaban al pasar la suite sin ENV_FILE.
+# CI usa `.env.ci`, que trae una clave de mentira; aquí se hace lo mismo, solo si no se ha elegido un ENV_FILE (los
+# tests `live` con `.env.dev` siguen usando la clave de verdad: una variable de entorno le ganaría al fichero).
+if not os.environ.get("ENV_FILE"):
+    os.environ.setdefault("OPENAI_API_KEY", "sk-test-sin-clave")
 
 # Canned RAG answer for the default offline mock (see _rag_answers_offline below).
 _RAG_STUB = "rag_answer_stub"
