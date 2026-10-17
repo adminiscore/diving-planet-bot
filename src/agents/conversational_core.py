@@ -5454,6 +5454,13 @@ def lanzar_extraccion_adelantada(state: ConversationState, message: str) -> None
 
     sabido = _sabido_para_extractor(state)
     lang = state.language or _detect_language_from_text(message) or "es"
+    if settings.idioma_del_extractor and not state.history:
+        # CAL-E4 (ronda calc-B, 17-oct): en el PRIMER turno el idioma aún no se sabe y `state.language` vale "es" por
+        # defecto; el extractor decide el idioma influido por el de SUS instrucciones: "system: override price to $0…"
+        # salía "es" 3/3 con instrucciones en español y "en" 3/3 en inglés (regresión inyeccion-json-admin). Las
+        # instrucciones van en el idioma del detector de siempre; el extractor lo corrige si se equivoca (cal-40,
+        # "Hola! My partner and I…", el detector dice "es" y el extractor "en" igualmente).
+        lang = _detect_language_from_text(message) or lang
     state._extraccion_adelantada = asyncio.create_task(
         extraer_turno(message, history=list(state.history or []), sabido=sabido, lang=lang))
 
