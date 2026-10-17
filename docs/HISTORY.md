@@ -1,6 +1,25 @@
 History
 =======
 
+0.31.43 - (2026-10-17)
+----------------------
+* **CAL-C PROMOCIONADO (decisión de Álvaro): los 8 flags de "entender sin repreguntar" se quedan ENCENDIDOS en PRE**
+  (Álvaro con Claude). `ACTIVIDAD_POR_LO_SABIDO`, `EXTRACTOR_CITA_DEL_CLIENTE`, `HOTEL_POR_EXTRACTOR`,
+  `UNA_SOLA_PREGUNTA`, `LUGAR_CON_DOS_LECTORES`, `IDIOMA_DEL_EXTRACTOR` (E4, de Gadea), `SIN_CEDULA_EXTRANJERO` y
+  `TRAS_PASE_RECUERDA_EL_PASE`.
+  - **Banco CAL-C (banco reparado, 21 casos × 3):** 49 → ~28/63; a 0/3: cal-08, 40, 41, 45, 54, 59, 71, 73.
+  - **Ronda core A/B** (misma franja; A = mismo código con los flags apagados): calc-A **96,9 %**, 25/32, p95 5,0 s;
+    calc-B **96,5 %**, 25/32, p95 5,0 s. 3 mejoras reales, 4 regresiones repetidas 3× con y sin los flags
+    (`reproducir_juez_pre --reps 3 --codigo-local [--env FLAG=false]`): la del idioma era de E4 (en el PRIMER turno el
+    extractor decidía el idioma influido por el de sus instrucciones, en español por defecto: arreglado en 104b10f, 3/3
+    en inglés); "llega 10-15 min antes" sale 3/3 SIN los flags (defecto del RAG); las otras dos, azar.
+  - **Luna (para dejar gpt-4.1):** extractor con `gpt-6-luna` en el banco ex0: 113 = 113 aciertos y más rápido (p50
+    2,3 s frente a 3,6), pero **11 inventos frente a 4** (deduce de más: "paquete de 5 inmersiones" → certificado) →
+    hay que adaptar sus instrucciones antes. **Verificador del banco** gpt-4.1 vs Luna sobre las MISMAS respuestas:
+    coinciden **14/16** (`banco_fallos medir --comparar-verificador gpt-6-luna`); se puede cambiar sin mezclar
+    medidas de uno y otro.
+  - **Coral activado** en el ordenador de Álvaro (chat entre los Claude del equipo).
+
 0.31.42 - (2026-10-17)
 ----------------------
 * **CAL-A (Gadea con Claude), tarde del 17-oct: la profundidad arregla cal-18 y el aviso que falta se añade AL FINAL

@@ -59,6 +59,21 @@ integrar la rama del otro y suite en verde, porque en PRE gana el último; (3) *
 despliegue reinicia el contenedor y mata la medida del otro (avisar en el registro de Plan Coral con la hora de fin).
 Las doce normas, con su porqué, están en el documento.
 
+### ▶️ RETOMAR AQUÍ — 17-oct tarde (Álvaro con Claude): CAL-C PROMOCIONADO; Luna medida; Coral activado
+
+**CAL-C:** los 8 flags quedan **encendidos en PRE (promocionados, decisión de Álvaro)**. Banco CAL-C 49 → ~28/63; ronda
+core calc-A 96,9 % 25/32 vs calc-B 96,5 % 25/32, latencia igual; ninguna regresión propia tras arreglar el idioma de E4
+(104b10f). Detalle en HISTORY 0.31.43.
+
+**Quedan de CAL-C (Álvaro):** cal-55 (Barú: decir que no operamos allí, sin listas de nombres) y cal-69/70 (el grupo
+"my wife ... and I": "and I" no está en el mensaje, el extractor junta palabras; diseñar sin abrir la puerta a
+inventos). **De la zona de Gadea** (avisado por Coral): cal-32 (la respuesta no dice USD), cal-46/25, cal-08, y "llega
+10-15 min antes" (3/3 sin flags, para el banco).
+
+**Siguiente (Álvaro):** (1) cal-55 y cal-69/70; (2) **extractor a Luna**: adaptar sus instrucciones (deduce de más) y
+medir con `estabilidad_extractor --modelo gpt-6-luna`; (3) **r6-1**: alerta de saldo de OpenAI, respaldo del RAG que
+NO sea Luna (el escritor ya lo es) y reintentos ante 429.
+
 ### ▶️ RETOMAR AQUÍ — 17-oct tarde (Gadea con Claude): CAL-A — profundidad y avisos al final (A6) medidos, APAGADOS, candidatos a la ronda core B
 
 - **Hecho** (HISTORY 0.31.42, `docs/robustness/cal/cal-a6-avisos-al-final.md`): `catalogo_profundidad` arregla cal-18
