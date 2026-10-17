@@ -1,6 +1,22 @@
 History
 =======
 
+0.31.45 - (2026-10-17)
+----------------------
+* **CAL-D y casos de la zona de Gadea (Gadea con Claude), coordinado con Álvaro por Coral.** Medidos en PRE con
+  `--codigo-local`, 3 repeticiones; sin flag (son correcciones de un dato o de una frase fija).
+  - **cal-74 2/3 → 0/3**: la pregunta del origen de un plan con noche decía "Este plan dura **varios días**" (frase
+    fija); ahora dice los días de la ficha (`duration_days`): "This plan takes 2 days". "Varios días" solo si aún no se
+    sabe el plan (un paquete sin concretar va de 2 a 4). `conversational_core._dias_del_plan`, acordado con Álvaro.
+  - **cal-32 3/3 → 0/3**: el aviso del USD (A6) no saltaba con "no tengo cédula" porque su condición era "es
+    extranjero"; su `cuando_texto` incluye ahora "no tiene cédula colombiana" (decisión de Álvaro: sin cédula = USD).
+  - **ReActivate (decisión de Gadea, cal-69)**: un refresh o un PADI ReActivate hecho en otro centro cuenta como su
+    refresh y puede bucear directamente. En `policies.json` (`refresh_requirement`), la FAQ curada y el aviso.
+  - **"Llega 10-15 min antes" NO es invento**: `faqs.json:750` y la referencia curada del juez lo dicen.
+  - cal-08 ya está bien (1/3: dice "2 días con noche"); cal-46 lo arregló Álvaro en el estado (C3e, apagado);
+    cal-70 ("pueden ir juntos") A6 lo da a veces (un aviso por turno); cal-25 es el orden de las preguntas.
+  - Integradas C4, C5 y C3e de Álvaro (apagadas). Suite 3188 en verde.
+
 0.31.44 - (2026-10-17)
 ----------------------
 * **CAL-A PROMOCIONADO (Gadea con Claude): `CATALOGO_PROFUNDIDAD` y `AVISOS_AL_FINAL` (A6, revisor GPT-6 Luna) se
