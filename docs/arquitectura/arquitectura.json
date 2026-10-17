@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-17T12:15:36+00:00",
-  "commit": "be0bc70",
+  "generado": "2026-10-17T13:19:28+00:00",
+  "commit": "11417e9",
   "rama": "feature/pre_gadea"
  },
  "vistas": {
@@ -172,8 +172,8 @@
    "marca": "openrouter",
    "tiempos": {
     "n": 93,
-    "p50": 0.413,
-    "p95": 1.744
+    "p50": 0.425,
+    "p95": 1.705
    }
   },
   {
@@ -196,9 +196,9 @@
    ],
    "modelos": [],
    "tiempos": {
-    "n": 8,
+    "n": 7,
     "p50": 0.002,
-    "p95": 0.01
+    "p95": 0.002
    }
   },
   {
@@ -214,8 +214,8 @@
    "interruptores": [],
    "tiempos": {
     "n": 2,
-    "p50": 0.005,
-    "p95": 0.005
+    "p50": 0.003,
+    "p95": 0.004
    }
   },
   {
@@ -239,8 +239,8 @@
    "modelos": [],
    "tiempos": {
     "n": 1,
-    "p50": 0.005,
-    "p95": 0.005
+    "p50": 0.001,
+    "p95": 0.001
    }
   },
   {
@@ -257,9 +257,9 @@
    "modelos": [],
    "interruptores": [],
    "tiempos": {
-    "n": 4,
-    "p50": 3.271,
-    "p95": 3.829
+    "n": 6,
+    "p50": 3.45,
+    "p95": 3.731
    }
   },
   {
@@ -275,9 +275,9 @@
    "modelos": [],
    "interruptores": [],
    "tiempos": {
-    "n": 78,
-    "p50": 1.893,
-    "p95": 4.179
+    "n": 77,
+    "p50": 1.737,
+    "p95": 4.75
    }
   },
   {
@@ -486,9 +486,9 @@
    ],
    "marca": "openai",
    "tiempos": {
-    "n": 78,
-    "p50": 0.031,
-    "p95": 1.213
+    "n": 77,
+    "p50": 0.028,
+    "p95": 0.987
    }
   },
   {
@@ -518,9 +518,9 @@
    ],
    "modelos": [],
    "tiempos": {
-    "n": 78,
+    "n": 77,
     "p50": 0.005,
-    "p95": 0.34
+    "p95": 0.017
    }
   },
   {
@@ -559,7 +559,7 @@
    "tiempos": {
     "n": 72,
     "p50": 0.007,
-    "p95": 0.015
+    "p95": 0.014
    }
   },
   {
@@ -655,8 +655,8 @@
    "marca": "openai",
    "tiempos": {
     "n": 72,
-    "p50": 0.512,
-    "p95": 0.986
+    "p50": 0.458,
+    "p95": 0.951
    }
   },
   {
@@ -729,8 +729,8 @@
    "marca": "openai",
    "tiempos": {
     "n": 71,
-    "p50": 0.842,
-    "p95": 3.326
+    "p50": 0.935,
+    "p95": 3.518
    }
   },
   {
@@ -840,9 +840,9 @@
    ],
    "modelos": [],
    "conteo": {
-    "n": 44,
+    "n": 47,
     "que": "preguntas",
-    "fuente": "2026-10-17-calc-A.json"
+    "fuente": "2026-10-17-calc-B.json"
    }
   },
   {
@@ -3102,7 +3102,7 @@
     "r_revisor"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 52
+   "llamadas_ultima_ronda": 57
   },
   {
    "ajuste": "extraction_model",
@@ -3117,7 +3117,7 @@
     "b_acuse"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 110
+   "llamadas_ultima_ronda": 113
   },
   {
    "ajuste": "extractor_turno_model",
@@ -3127,7 +3127,7 @@
     "b_extraction"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 83
+   "llamadas_ultima_ronda": 87
   },
   {
    "ajuste": "grounding_v3_model",
@@ -3137,7 +3137,7 @@
     "r_revisor"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 46
+   "llamadas_ultima_ronda": 49
   },
   {
    "ajuste": "jev_model",
@@ -3149,7 +3149,7 @@
    ],
    "proveedor": "OpenRouter",
    "llamadas_ultima_ronda": null,
-   "nota": "Decidió solo 83 de 93 mensajes; en los otros 10 decidió el LLM de respaldo (sus llamadas cuentan en gpt-4o-mini)."
+   "nota": "Decidió solo 79 de 93 mensajes; en los otros 14 decidió el LLM de respaldo (sus llamadas cuentan en gpt-4o-mini)."
   },
   {
    "ajuste": "openai_embedding_model",
@@ -3172,7 +3172,7 @@
     "r_reescribir"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 110
+   "llamadas_ultima_ronda": 113
   },
   {
    "ajuste": "openai_transcription_model",
@@ -3192,7 +3192,7 @@
     "r_escribir"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 52
+   "llamadas_ultima_ronda": 57
   },
   {
    "ajuste": "rag_plan_model",
@@ -3200,50 +3200,50 @@
    "pre": "gpt-4.1-mini",
    "usado_por": [],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 83
+   "llamadas_ultima_ronda": 87
   }
  ],
  "ronda": {
-  "etiqueta": "calc-A 17-oct (CAL-C flags apagados)",
-  "run_at": "2026-10-17T11:18:53Z",
-  "fichero": "2026-10-17-calc-A.json",
-  "commit": "12d71fd",
+  "etiqueta": "calc-B 17-oct (8 flags CAL-C encendidos)",
+  "run_at": "2026-10-17T11:39:27Z",
+  "fichero": "2026-10-17-calc-B.json",
+  "commit": "18cee98",
   "por_tipo": {
    "reserva": {
-    "turns": 49,
-    "latency_p50": 1.221,
-    "latency_p95": 2.478,
-    "latency_avg": 1.341,
-    "llm_calls_avg": 2.1,
+    "turns": 46,
+    "latency_p50": 1.227,
+    "latency_p95": 2.239,
+    "latency_avg": 1.385,
+    "llm_calls_avg": 2.22,
     "llm_calls_p95": 3.0,
-    "llm_calls_max": 5,
-    "embeddings_avg": 1.33,
-    "llm_share": 1.399,
+    "llm_calls_max": 4,
+    "embeddings_avg": 1.35,
+    "llm_share": 1.43,
     "tokens_avg": 0,
     "cost_avg_usd": 0
    },
    "rag": {
-    "turns": 44,
-    "latency_p50": 3.629,
-    "latency_p95": 6.459,
-    "latency_avg": 3.805,
-    "llm_calls_avg": 4.27,
-    "llm_calls_p95": 5.85,
+    "turns": 47,
+    "latency_p50": 3.498,
+    "latency_p95": 6.262,
+    "latency_avg": 3.897,
+    "llm_calls_avg": 4.34,
+    "llm_calls_p95": 6.0,
     "llm_calls_max": 7,
-    "embeddings_avg": 1.61,
-    "llm_share": 1.308,
+    "embeddings_avg": 1.66,
+    "llm_share": 1.327,
     "tokens_avg": 0,
     "cost_avg_usd": 0
    }
   },
   "enrutador": {
    "by_backend": {
-    "jev": 83,
-    "llm_uncertain": 9,
+    "jev": 79,
+    "llm_uncertain": 13,
     "llm": 1
    },
-   "ms_p50": 387.0,
-   "ms_p95": 479.9
+   "ms_p50": 395.0,
+   "ms_p95": 456.45
   },
   "cliente": {
    "turns": 93,
@@ -3252,13 +3252,13 @@
    "multi_bubble": 0,
    "latency_p50": 3.0,
    "latency_p95": 5.0,
-   "latency_max": 9
+   "latency_max": 8
   },
   "llamadas_por_modelo": {
-   "gpt-4o-mini": 110,
-   "gpt-4.1-mini": 83,
-   "gpt-6-luna": 52,
-   "gpt-4.1": 46
+   "gpt-4o-mini": 113,
+   "gpt-4.1-mini": 87,
+   "gpt-6-luna": 57,
+   "gpt-4.1": 49
   },
   "calidad": null
  },

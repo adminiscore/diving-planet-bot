@@ -1,0 +1,177 @@
+{
+ "etiqueta": "verificador-luna-vs-41",
+ "reps": 2,
+ "flags": [],
+ "codigo_local": false,
+ "verificador": "gpt-4.1",
+ "casos": [
+  {
+   "id": "cal-01",
+   "dialogo": "cambio-idioma",
+   "criterio": "global:sin-repreguntas",
+   "repeticiones": 2,
+   "fallan": 2,
+   "respuestas": [
+    "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\n¡Hola! ¡Qué chévere que quieras explorar las Islas del Rosario bajo el agua! Si ya tienes certificación, puedes hacer la salida de buceo de 2 inmersiones desde Cartagena: cuesta **178 USD reservando online** e incluye equipo, lancha y almuerzo.\n\nReserva aquí: https://book.divingplanet.org/book/salidas-de-buceo/1?language=es\n\nPara participar, debes presentar tu carné de buzo certificado. ¿Quieres que te cuente también qué necesitas llevar?",
+    "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\n¡Hola! ¡Qué chévere que quieras bucear en las Islas del Rosario! 🌊\n\nSi ya tienes certificación, puedes hacer la salida de buceo recreativo de 2 inmersiones desde Cartagena: cuesta **178 USD reservando online** e incluye equipo, lancha y almuerzo. Debes presentar tu carné de buzo; puedes mostrarlo el día de la actividad o enviar una foto antes.\n\nPuedes ver los detalles y reservar aquí: https://divingplanet.org/tours-buceo-snorkel-cartagena/2-buceos-1-dia/\n\n¿Hace cuánto fue tu última inmersión?"
+   ],
+   "explicaciones": [
+    "El bot asume que el cliente ya es buzo certificado por decir 'quiero bucear certificado', pero luego pregunta 'Si ya tienes certificación...' y menciona que debe presentar el carné, lo que implica una duda sobre si el cliente está certificado. El criterio indica que no debe repreguntar si el cliente ya dio el dato con claridad, y aquí el cliente ya expresó que quiere bucear como certificado, por lo que no corresponde condicionar la respuesta a 'si ya tienes certificación'.",
+    "El bot vuelve a preguntar si el cliente ya tiene certificación ('Si ya tienes certificación...'), aunque el cliente ya indicó que quiere 'bucear certificado', lo que implica que ya es buzo certificado. Esto es una repregunta innecesaria y el fallo persiste."
+   ],
+   "fallan_comparado": 0,
+   "explicaciones_comparado": [
+    "No vuelve a preguntar si el cliente tiene certificación: interpreta «bucear certificado» como que ya la tiene y le informa que debe presentar el carné. Esto no repite la pregunta que causó el fallo anterior.",
+    "El cliente dijo que quiere bucear certificado y la respuesta no vuelve a preguntarle si tiene certificación; le ofrece la salida para buzos certificados. Preguntar cuánto hace de su última inmersión no repite un dato que el cliente ya haya dado."
+   ]
+  },
+  {
+   "id": "cal-16",
+   "dialogo": "certificada-pide-fecha-faltan-datos",
+   "criterio": "pide-datos-faltantes",
+   "repeticiones": 2,
+   "fallan": 2,
+   "respuestas": [
+    "Entendido, el 21 de mayo.\n\n¿Desde dónde saldrías? Podemos recogerte saliendo *desde Cartagena* (ida y vuelta el mismo día) o, si ya estás *en las islas*, coordinamos la recogida en tu hotel.",
+    "Entendido, el 21 de mayo.\n\n¿Desde dónde saldrías? Podemos recogerte saliendo *desde Cartagena* (ida y vuelta el mismo día) o, si ya estás *en las islas*, coordinamos la recogida en tu hotel."
+   ],
+   "explicaciones": [
+    "El bot solo pregunta el punto de salida, pero no solicita el número de personas ni la nacionalidad/moneda, que son necesarios para cotizar o reservar según el criterio.",
+    "El bot solo pregunta el punto de salida, pero no solicita el número de personas ni la nacionalidad/moneda, que son necesarios para cotizar o reservar según el criterio."
+   ],
+   "fallan_comparado": 2,
+   "explicaciones_comparado": [
+    "La respuesta vuelve a preguntar únicamente el punto de salida y no solicita el siguiente dato faltante, como cuántas personas son. No hay contexto disponible para determinar qué datos ya se habían proporcionado.",
+    "La respuesta vuelve a preguntar el punto de salida, pero no solicita el siguiente dato faltante, como cuántas personas son. No hay contexto disponible para determinar qué datos ya se habían proporcionado."
+   ]
+  },
+  {
+   "id": "cal-25",
+   "dialogo": "refresher-que-completar-antes",
+   "criterio": "valida-tiempo-sin-bucear",
+   "repeticiones": 2,
+   "fallan": 2,
+   "respuestas": [
+    "Absolutely—if it’s been more than two years since your last dive, a refresher is normally required. It’s booked as the Dive Mini Course and includes pool practice plus one ocean dive with an instructor.\n\nBeforehand, you’ll need to complete the medical form, and after booking you’ll receive the theory by email to finish before the activity. The insurance form and liability waiver are also completed through the instructions sent after booking.\n\nAre you leaving from Cartagena or already staying on the Rosario Islands? I can share the right booking link and price.",
+    "Absolutely—if it’s been more than two years since your last dive, a refresher is normally required. It’s a great way to get comfortable again: it includes a pool review and one ocean dive with an instructor.\n\nBeforehand, you’ll need to complete the medical form. After booking, you’ll receive the theory by email to complete before the practical session, plus an insurance form in your confirmation email. The team will also send you a liability waiver.\n\nAre you leaving from Cartagena, or will you already be staying on the Rosario Islands?"
+   ],
+   "explicaciones": [
+    "El bot explica correctamente la política del refresher (más de 2 años sin bucear requiere refresher) y describe el proceso, pero no pregunta explícitamente '¿hace cuánto no bucea?' para confirmar si el cliente realmente necesita el refresher antes de reservar. Esto es exactamente el mismo fallo que el criterio señala.",
+    "El bot explica correctamente la política del refresher (más de 2 años sin bucear requiere refresher), pero no pregunta explícitamente '¿hace cuánto no bucea?' o una variante para confirmar si el cliente realmente necesita el refresher antes de reservar. El mensaje del cliente solo dice que necesita 'un pequeño refresher', pero no especifica el tiempo exacto desde su última inmersión, por lo que la pregunta sigue siendo necesaria según el criterio."
+   ],
+   "fallan_comparado": 2,
+   "explicaciones_comparado": [
+    "La respuesta explica que el refresher suele ser necesario si han pasado más de dos años, pero no pregunta cuánto tiempo lleva el cliente sin bucear. El contexto indica que el cliente necesita un refresher, pero no dice cuándo fue su última inmersión.",
+    "La respuesta explica que normalmente se requiere un refresher si han pasado más de dos años, pero no pregunta cuánto tiempo ha pasado desde la última inmersión para confirmar si aplica."
+   ]
+  },
+  {
+   "id": "cal-35",
+   "dialogo": "pareja-certificados-cop-descuento-almuerzo",
+   "criterio": "precio-moneda-cartagena-cop",
+   "repeticiones": 2,
+   "fallan": 2,
+   "respuestas": [
+    "Entendido, son 2 personas y son colombianos.\n\nTe recomiendo el plan de *2 inmersiones en 1 día* en las Islas del Rosario. (Si prefieres un *paquete multi-día* de 3 o más inmersiones, dímelo.)\n\n¿Ha pasado *más de 2 años* desde la última inmersión de alguno del grupo?",
+    "Entendido, son 2 personas y son colombianos.\n\nTe recomiendo el plan de *2 inmersiones en 1 día* en las Islas del Rosario. (Si prefieres un *paquete multi-día* de 3 o más inmersiones, dímelo.)\n\n¿Ha pasado *más de 2 años* desde la última inmersión de alguno del grupo?"
+   ],
+   "explicaciones": [
+    "La respuesta actual no proporciona el precio en COP para 2 buzos certificados saliendo desde Cartagena, que era el dato requerido según el criterio. Solo recomienda un plan y hace una pregunta adicional, pero omite el importe solicitado.",
+    "La respuesta actual no proporciona el precio en COP para 2 buzos certificados saliendo desde Cartagena, que era el dato requerido según el criterio. Solo recomienda un plan y hace una pregunta adicional, pero omite el importe solicitado."
+   ],
+   "fallan_comparado": 2,
+   "explicaciones_comparado": [
+    "La respuesta no da ningún precio y tampoco confirma que sean buzos certificados. El contexto disponible está indicado como «sin contexto», así que no contiene el precio solicitado.",
+    "La respuesta no proporciona ningún precio en COP para el caso solicitado. El contexto disponible está indicado como “sin contexto”, así que no contiene el dato del catálogo."
+   ]
+  },
+  {
+   "id": "cal-45",
+   "dialogo": "disponibilidad-hora-precio-y-pecios",
+   "criterio": "global:sin-repreguntas",
+   "repeticiones": 2,
+   "fallan": 0,
+   "respuestas": [
+    "¡Con gusto!\n\n¡Genial! Para recomendarte el plan perfecto: ¿Eres buzo certificado? (Y si no, ¡tranquilo! El minicurso es ideal para empezar. 🤿)",
+    "¡Con gusto!\n\n¡Genial! Para recomendarte el plan perfecto: ¿Eres buzo certificado? (Y si no, ¡tranquilo! El minicurso es ideal para empezar. 🤿)"
+   ],
+   "explicaciones": [
+    "La respuesta actual no repregunta sobre la actividad, sino que avanza preguntando si el cliente es buzo certificado, lo cual es relevante para recomendar el plan adecuado. No vuelve a preguntar qué actividad desea realizar.",
+    "La respuesta actual no repregunta sobre la actividad, sino que avanza preguntando si el cliente es buzo certificado, lo cual es relevante para recomendar el plan adecuado. No vuelve a preguntar qué actividad desea realizar."
+   ],
+   "fallan_comparado": 0,
+   "explicaciones_comparado": [
+    "La respuesta de hoy no vuelve a preguntar qué actividad quiere realizar; pregunta si es buzo certificado, un dato distinto. El contexto está indicado como ausente.",
+    "La respuesta de hoy no vuelve a preguntar qué actividad quiere realizar; pregunta si es buzo certificado, un dato distinto. No hay contexto disponible para evaluar si ese dato ya se había dado."
+   ]
+  },
+  {
+   "id": "cal-52",
+   "dialogo": "moneda-precios-principiante-y-snorkel",
+   "criterio": "moneda-por-nacionalidad",
+   "repeticiones": 2,
+   "fallan": 2,
+   "respuestas": [
+    "¡Claro, amigo! El precio puede mostrarse en dólares o en pesos colombianos: si eres colombiano o residente en Colombia, pagas en COP; si no, en USD. El valor es el mismo, solo cambia la moneda. ¿Qué actividad o precio estás viendo: minicurso o snorkel?",
+    "¡Claro, amigo! Los precios pueden aparecer en *USD o COP*: si eres colombiano o residente en Colombia, pagas en pesos; si no, en dólares. El precio es el mismo, solo cambia la moneda.\n\nComo eres principiante y también te interesa el snorkel, ¿desde Cartagena o ya en las islas harías la actividad? Así te comparto los precios que corresponden."
+   ],
+   "explicaciones": [
+    "El bot explica correctamente la diferencia de moneda según nacionalidad o residencia, pero no pregunta explícitamente la nacionalidad o si el cliente es residente en Colombia, que es necesario para poder indicarle la moneda correcta. El cliente no ha dado ese dato en la conversación previa, por lo que el bot debía preguntarlo antes de avanzar.",
+    "El bot explica correctamente la diferencia de moneda según nacionalidad o residencia, pero NO pregunta la nacionalidad ni residencia del cliente, que es necesario cuando no se ha proporcionado, para poder indicar la moneda correcta. El contexto no indica que el cliente ya haya dado ese dato, por lo que debía preguntarlo explícitamente antes de avanzar."
+   ],
+   "fallan_comparado": 2,
+   "explicaciones_comparado": [
+    "La respuesta explica la moneda según nacionalidad o residencia, pero no pregunta cuál aplica al cliente, que aún no lo ha indicado. El contexto adicional confirma que su nacionalidad sigue siendo desconocida.",
+    "Aunque explica correctamente que colombianos o residentes pagan en COP y los demás en USD, no pregunta si el cliente es colombiano o residente para indicarle cuál moneda le corresponde, tal como pedía el criterio."
+   ]
+  },
+  {
+   "id": "cal-60",
+   "dialogo": "principiantes-no-certificados-minicurso",
+   "criterio": "recomienda-minicurso",
+   "repeticiones": 2,
+   "fallan": 2,
+   "respuestas": [
+    "Entiendo que no cuentan con certificación.\n\nPara empezar, lo ideal es el *minicurso*: no hace falta experiencia ni certificación. ¿Te animas? (Si prefieres certificarte, está el *curso Open Water*.) 🤿",
+    "Entiendo que no cuentan con certificación.\n\nPara empezar, lo ideal es el *minicurso*: no hace falta experiencia ni certificación. ¿Te animas? (Si prefieres certificarte, está el *curso Open Water*.) 🤿"
+   ],
+   "explicaciones": [
+    "La respuesta actual sí recomienda el Minicurso de Buceo para principiantes sin certificación, pero no comparte el enlace de detalles como pedía el criterio. El fallo original era doble: no recomendar el minicurso y no dar el enlace; ahora solo falta el enlace.",
+    "La respuesta actual sí recomienda el Minicurso de Buceo para principiantes sin certificación, pero no comparte el enlace de detalles como pedía el criterio. El contexto no muestra que el enlace esté disponible o haya sido compartido."
+   ],
+   "fallan_comparado": 2,
+   "explicaciones_comparado": [
+    "La respuesta sí recomienda el minicurso para quienes no tienen certificación, pero no comparte ningún enlace. El contexto disponible está indicado como «sin contexto», así que no contiene el enlace.",
+    "La respuesta sí recomienda el minicurso y aclara que no requiere certificación, pero no comparte ningún enlace. El contexto disponible indica que no había contexto."
+   ]
+  },
+  {
+   "id": "cal-73",
+   "dialogo": "precio-dispo-buceo-certificado-grupo-mixto",
+   "criterio": "origen-cartagena-o-islas",
+   "repeticiones": 2,
+   "fallan": 0,
+   "respuestas": [
+    "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\n¡Hola!\n\nOperamos los festivos; solo cerramos el 25 de diciembre y el 1 de enero, y una salida puede suspenderse por mal tiempo.\n\nPara darte el precio exacto necesito saber desde dónde sales: ¿saldrías *desde Cartagena* o ya estás *en las Islas del Rosario*? Los planes y los precios cambian según el punto de salida. 🌊",
+    "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\nPara darte el precio exacto necesito saber desde dónde sales: ¿saldrías *desde Cartagena* o ya estás *en las Islas del Rosario*? Los planes y los precios cambian según el punto de salida. 🌊"
+   ],
+   "explicaciones": [
+    "La respuesta actual pregunta explícitamente si el cliente saldrá desde Cartagena o si ya está en las islas antes de cotizar, cumpliendo el criterio de origen-cartagena-o-islas. No da un precio hasta saber el punto de salida, como exige el criterio.",
+    "La respuesta actual pregunta explícitamente si el cliente saldrá desde Cartagena o si ya está en las islas antes de cotizar, cumpliendo así el criterio de origen-cartagena-o-islas. No falta información relevante y la pregunta es clara y suficiente según el contexto."
+   ],
+   "fallan_comparado": 0,
+   "explicaciones_comparado": [
+    "La respuesta pregunta explícitamente si saldría desde Cartagena o si ya está en las Islas del Rosario, tal como pedía el criterio. No cotiza antes de conocer el origen.",
+    "La respuesta pregunta explícitamente si saldría desde Cartagena o si ya está en las Islas del Rosario, tal como pide el criterio, antes de cotizar."
+   ]
+  }
+ ],
+ "verificador_comparado": "gpt-6-luna",
+ "sin_medir": [],
+ "coincidencia_verificadores": {
+  "coinciden": 14,
+  "de": 16,
+  "fallan_principal": 12,
+  "fallan_comparado": 10
+ }
+}
