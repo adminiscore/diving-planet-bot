@@ -41,7 +41,55 @@ PRE (escritas ya por Luna) tumba 42 frente a 13, casi todo verdades (HISTORY 0.3
 **C. Pendientes de antes:** el criterio del Open Water en `manual-duracion-curso` ✅ (FAQ curada nueva: "sacarse la
 certificación" = Open Water, o el Referido; el Scuba Diver es la parcial). **DeepSeek: FUERA DEL PLAN** (Gadea, 9-oct).
 
-### ▶️ RETOMAR AQUÍ — 17-oct madrugada (Gadea con Claude): CAL-A5 y CAL-E hechas y medidas; TODO APAGADO; falta SUBIR LA RAMA
+### ▶️ RETOMAR AQUÍ — 17-oct madrugada (Gadea con Claude): CUATRO RONDAS del core medidas, 2 cambios PROMOCIONADOS y los avisos DESCARTADOS
+
+**Todo subido y PRE desplegado.** La rama `feature/pre_gadea` está al día; PRE sirve lo promocionado.
+
+#### Lo que está ENCENDIDO en PRE (promocionado esta noche)
+
+| Flag | Qué hace | Por qué se promocionó |
+|---|---|---|
+| `CONTACTO_PASA_A_PERSONA` | **Decisión de Gadea**: el chatbot no da números; quien pide un contacto pasa con un asesor | banco cal-03 3/3 → 0/3; ninguna regresión suya en la ronda B. La base ya no reparte el número (28 menciones fuera de `faqs.json`) y el criterio `contacto-real` del golden, actualizado |
+| `CONSULTA_CON_LO_SABIDO` | CAL-D: la consulta de búsqueda nombra el asunto con lo que ya sabemos del cliente | banco cal-42 3/3 → 0/3 y la **mejor latencia** de las 4 rondas (p95 6,0 s). Sus 3 "regresiones" se demostraron ajenas repitiendo (abajo) |
+
+#### Lo que se DESCARTÓ, con el por qué
+
+**Los avisos con condiciones (`AVISOS_CONDICIONADOS`), tras 3 rondas:** A (apagado) 97,4 % de criterios y 27/32
+diálogos; B (2 avisos) 96,0 % y 25/32; B2 (1 aviso, refinado) 96,1 % y 24/32. **El banco mejora (47/48 → 37/48) y el
+golden empeora**: un aviso obligatorio compite por el sitio con lo que la respuesta ya tenía que decir (en un diálogo
+se quedó **sin el enlace de reserva**). El código se queda apagado con sus 23 tests y las tres medidas apuntadas; qué
+probar si se retoma está en `docs/robustness/cal/cal-a5-avisos-condicionados.md` §10.
+
+**El arreglo E2** ("lo que el cliente esperaba ver y no ve no es una avería"): el criterio `escala-si-no-aparece` del
+golden pide justo lo contrario y no había ningún caso a favor. Flag y código borrados.
+
+#### 📏 LO MÁS IMPORTANTE DE LA NOCHE: cómo medir (ya en `docs/robustness/protocolo-medicion.md`)
+
+**Una ronda suelta del core NO atribuye diferencias de menos de ~3 criterios.** `ab_judge_compare --rejuzgar N` quita
+el ruido **del juez**, no el **del bot** (temperatura 0,3). Demostrado: las 3 regresiones de la ronda C se repitieron
+3 veces con el flag y 3 sin él → "varios días" en el Open Water sale **3/3 en los dos lados** (defecto de siempre, que
+la ronda A no sacaba) y la de la ventana de reserva **0/3 en los dos** (azar). Regla nueva: antes de promocionar o
+revertir por una diferencia pequeña, `reproducir_juez_pre <dialogo> --reps 3 --codigo-local [--flag …]` con y sin el
+cambio (barato, sin juez). Si el fallo sale en los dos lados, **al banco como caso nuevo**.
+
+#### Herramientas nuevas (las tres sin juez: no gastan el verificador)
+
+- `scripts/sonda_avisos.py`: hechos del estado, documentos recuperados con su puntuación y avisos elegidos.
+- `scripts/sonda_senales.py`: señales del enrutador, idioma y traza de las líneas que deciden.
+- `reproducir_juez_pre` ahora también traza las líneas de los avisos.
+
+#### Siguiente
+
+1. **Ronda D** (lanzada esta madrugada): la familia de Jev (`JEV_CON_CONTEXTO`, `PASE_SI_PIDE_FUERA_DEL_SISTEMA`,
+   `IDIOMA_DEL_EXTRACTOR`), encendida en PRE mientras se mide, contra la ronda C. En el banco arreglaron cal-03, cal-29
+   y cal-33 (3/3 cada uno). Si la ronda no caza una regresión GRANDE, se promocionan; las pequeñas, por repetición.
+2. **CAL-D segunda parte**: cal-74 (nuevo: "varios días" donde la ficha dice 2, reproducible 3/3), cal-14, cal-49 y
+   cal-64, donde la fuente que contesta no entra entre los primeros documentos. Es índice y reranking.
+3. **CAL-F**: el banco entero y una ronda del golden visible completo (95), que es la meta de la fase.
+4. **Pendiente de Gadea**: nada bloqueante. Si el WhatsApp de verdad no recibe llamadas, se puede añadir a la base
+   como `contact_info.nota_es`, pero ya no hace falta: el bot no da el número.
+
+### ▶️ (anterior) 17-oct madrugada: CAL-A5 y CAL-E hechas y medidas; TODO APAGADO; falta SUBIR LA RAMA
 
 **⚠️ LO PRIMERO: la rama `feature/pre_gadea` NO está subida.** Hay 3 commits locales (CAL-A5, CAL-E y la decisión del
 contacto) con la suite verde y todos los flags apagados. El `git push` quedó bloqueado por el clasificador de permisos

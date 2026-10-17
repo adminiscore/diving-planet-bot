@@ -25,16 +25,33 @@ def pre_ssh(cmd: str, *, input_text: str | None = None, timeout: int = 60,
     )
 
 
-CODIGO_LOCAL = "/tmp/codigo-local"
+def _carpeta_del_codigo() -> str:
+    """Una carpeta DISTINTA por proceso dentro del contenedor.
+
+    17-oct: dos medidas con `--codigo-local` a la vez (dos procesos míos, o Álvaro y yo) se pisaban, porque las dos
+    subían a `/tmp/codigo-local` y la subida empieza por `rm -rf`: la segunda borró la copia que la primera estaba
+    importando y el turno murió con `ModuleNotFoundError: src.agents.grounding_check`. Con el pid en el nombre, dos
+    medidas en paralelo no se tocan. `PRE_CODIGO_DIR` lo fija a mano si hace falta repetir con la misma copia."""
+    a_mano = os.environ.get("PRE_CODIGO_DIR")
+    if a_mano:
+        return a_mano
+    quien = (os.environ.get("USER") or os.environ.get("USERNAME") or "local").lower()
+    quien = "".join(c for c in quien if c.isalnum()) or "local"
+    return f"/tmp/codigo-local-{quien}-{os.getpid()}"
 
 
-def subir_codigo_local(destino: str = CODIGO_LOCAL) -> str:
+CODIGO_LOCAL = "/tmp/codigo-local"  # compatibilidad: quien pase un destino a mano sigue funcionando
+
+
+def subir_codigo_local(destino: str | None = None) -> str:
     """rag-2: copia el código LOCAL (src, scripts, data; lo versionado y lo nuevo sin versionar) a una carpeta
     temporal DENTRO de `dp-pre-bot`, para medir un cambio con la base, claves y modelos de PRE sin desplegar. El
-    bot que está corriendo no lo ve (sigue en /app). Devuelve la carpeta."""
+    bot que está corriendo no lo ve (sigue en /app). Devuelve la carpeta, que es propia de este proceso."""
     import io
     import tarfile
 
+    destino = destino or _carpeta_del_codigo()
+    tgz = f"{destino}.tgz"
     raiz = Path(__file__).resolve().parent.parent
     ficheros = subprocess.run(
         ["git", "ls-files", "--cached", "--others", "--exclude-standard", "src", "scripts", "data"],
@@ -44,9 +61,9 @@ def subir_codigo_local(destino: str = CODIGO_LOCAL) -> str:
         for f in ficheros:
             if (raiz / f).is_file():
                 tar.add(raiz / f, arcname=f)
-    r = pre_ssh(f"rm -rf /tmp/codigo-local.tgz && cat > /tmp/codigo-local.tgz && docker exec dp-pre-bot rm -rf {destino} "
-                f"&& docker exec dp-pre-bot mkdir -p {destino} && docker cp /tmp/codigo-local.tgz dp-pre-bot:/tmp/c.tgz "
-                f"&& docker exec dp-pre-bot tar xzf /tmp/c.tgz -C {destino} && rm /tmp/codigo-local.tgz && echo OK",
+    r = pre_ssh(f"rm -rf {tgz} && cat > {tgz} && docker exec dp-pre-bot rm -rf {destino} "
+                f"&& docker exec dp-pre-bot mkdir -p {destino} && docker cp {tgz} dp-pre-bot:{tgz} "
+                f"&& docker exec dp-pre-bot tar xzf {tgz} -C {destino} && rm {tgz} && echo OK",
                 timeout=120, stdin_bytes=buf.getvalue())
     if "OK" not in (r.stdout or ""):
         raise RuntimeError(f"no se pudo subir el código local: {r.stderr[-500:]}")
