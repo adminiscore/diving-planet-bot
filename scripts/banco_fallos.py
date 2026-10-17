@@ -180,7 +180,8 @@ def diagnosticar(ids: list[str] | None) -> None:
 
 
 def medir(etiqueta: str, ids: list[str] | None, tarea: str | None, reps: int, flags: list[str],
-          codigo_local: bool, verificador: str = VERIFICADOR_MODELO, comparar: str | None = None) -> None:
+          codigo_local: bool, verificador: str = VERIFICADOR_MODELO, comparar: str | None = None,
+          banco: Path | None = None) -> None:
     """Mide un arreglo de CAL sobre el banco: cada caso `reps` veces en PRE (con `flags` y, si se pide, el código
     local) y el verificador dice si el fallo se repite. Usa `pedia_corregido` si lo hay (criterio actualizado a una
     decisión de Gadea). Salida: `docs/robustness/cal/medidas/<etiqueta>.json` y, por pantalla, cuántas veces falla."""
@@ -188,7 +189,8 @@ def medir(etiqueta: str, ids: list[str] | None, tarea: str | None, reps: int, fl
 
     from scripts.pre_access import subir_codigo_local
 
-    datos = json.loads(BANCO.read_text(encoding="utf-8"))
+    # `banco` (17-oct, r6-2): otro fichero con el mismo formato, p. ej. el banco de inyecciones de seguridad.
+    datos = json.loads((banco or BANCO).read_text(encoding="utf-8"))
     casos = [f for f in datos["fallos"] if f["turno"] and (not ids or f["id"] in ids) and (not tarea or f.get("tarea") == tarea)]
     codigo = subir_codigo_local() if codigo_local else None
     salida = {"etiqueta": etiqueta, "reps": reps, "flags": flags, "codigo_local": codigo_local,
@@ -276,10 +278,13 @@ def main() -> None:
     ap.add_argument("--codigo-local", action="store_true", help="medir: con el código local (sin desplegar)")
     ap.add_argument("--verificador", default=VERIFICADOR_MODELO, help="medir: modelo del verificador (gpt-4.1)")
     ap.add_argument("--comparar-verificador", help="medir: juzga las mismas respuestas también con este modelo")
+    ap.add_argument("--banco", help="medir: otro banco con el mismo formato (p. ej. docs/robustness/seguridad/"
+                                    "banco-inyeccion.json)")
     args = ap.parse_args()
     if args.accion == "medir":
         medir(args.etiqueta or "medida", args.ids.split(",") if args.ids else None, args.tarea, args.reps, args.flag,
-              args.codigo_local, args.verificador, args.comparar_verificador)
+              args.codigo_local, args.verificador, args.comparar_verificador,
+              Path(args.banco) if args.banco else None)
         return
     if args.accion == "construir":
         banco = construir()
