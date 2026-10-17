@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-17T18:05:47+00:00",
-  "commit": "506259b",
+  "generado": "2026-10-17T19:01:01+00:00",
+  "commit": "815d201",
   "rama": "feature/pre_alvaro"
  },
  "vistas": {
@@ -737,6 +737,27 @@
      "titulo": "Un hotel de las islas dice que está en las islas",
      "codigo": true,
      "pre": true,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "lo_dicho_en_respuesta_fija",
+     "titulo": "Lo que dice el cliente no se pierde con una respuesta fija",
+     "codigo": false,
+     "pre": false,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "actividad_principal_en_el_reparto",
+     "titulo": "La actividad de los hijos no sustituye a la de los padres",
+     "codigo": false,
+     "pre": false,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "reparto_parcial_con_lo_sabido",
+     "titulo": "Los que no se nombran siguen con lo que tenían",
+     "codigo": false,
+     "pre": false,
      "sin_efecto": false
     },
     {
@@ -1890,6 +1911,19 @@
    "sin_efecto": null
   },
   {
+   "nombre": "actividad_principal_en_el_reparto",
+   "area": "Reserva",
+   "titulo": "La actividad de los hijos no sustituye a la de los padres",
+   "texto": "En una familia en la que los padres ya eligieron bucear, 'el de 12 minicurso y el de 8 snorkel' añade a los hijos al plan sin cambiar la actividad principal. Antes el minicurso pasaba a ser la actividad principal y, al decir 'mi esposo bucea conmigo', el bot movía al hijo del minicurso a las inmersiones.",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
+   "usado_por": [
+    "b_slotfill_close"
+   ],
+   "sin_efecto": null
+  },
+  {
    "nombre": "acuse_solo_el_mensaje",
    "area": "Reserva",
    "titulo": "El acuse no se inventa nada",
@@ -2709,6 +2743,19 @@
    "sin_efecto": null
   },
   {
+   "nombre": "lo_dicho_en_respuesta_fija",
+   "area": "Reserva",
+   "titulo": "Lo que dice el cliente no se pierde con una respuesta fija",
+   "texto": "Si el bot contesta con una respuesta fija (por ejemplo, qué puede hacer cada niño según su edad), lo que el cliente dijo en ese mensaje también se guarda: 'la salida de 2 inmersiones para nosotros dos. ¿y los niños?' ya no pierde la actividad elegida. Solo rellena datos que aún no se sabían.",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
+   "usado_por": [
+    "b_slotfill_close"
+   ],
+   "sin_efecto": null
+  },
+  {
    "nombre": "lugar_con_dos_lectores",
    "area": "Reserva",
    "titulo": "El origen, con dos lectores de acuerdo",
@@ -3150,6 +3197,19 @@
    "codigo": true,
    "pre": true,
    "fijado_en_pre": true,
+   "usado_por": [
+    "b_slotfill_close"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "reparto_parcial_con_lo_sabido",
+   "area": "Reserva",
+   "titulo": "Los que no se nombran siguen con lo que tenían",
+   "texto": "Si el cliente dice qué hace solo una parte del grupo ('el de 12 minicurso y el de 8 snorkel'), los demás siguen con la actividad que ya habían elegido (la salida de 2 inmersiones de los padres). Antes el bot descartaba ese reparto y cotizaba el minicurso a casi todos.",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
    "usado_por": [
     "b_slotfill_close"
    ],

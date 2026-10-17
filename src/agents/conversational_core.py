@@ -5555,6 +5555,23 @@ async def guardar_lo_dicho_en_el_pase(state: ConversationState) -> None:
     conversación aún no sabe (nunca se pisa nada)."""
     if not settings.est4_flujo:
         return
+    await _guardar_lo_dicho(state, "PASE")
+
+
+async def guardar_lo_dicho_sin_nucleo(state: ConversationState) -> None:
+    """G3-01 (flag `lo_dicho_en_respuesta_fija`, 17-oct): lo mismo que en el turno del pase, en cualquier turno que
+    contestó SIN el núcleo (una respuesta fija). Charla G3 de Gadea, conv 5567: "la salida de 2 inmersiones para
+    nosotros dos. y los niños qué pueden hacer?" lo contestaba la respuesta fija de edades (bien), pero la actividad
+    elegida se perdía y el bot acababa ofreciendo el menú al marido certificado. Que la extracción adelantada siga sin
+    usar al final del turno es la señal de que el núcleo no corrió."""
+    if not settings.lo_dicho_en_respuesta_fija:
+        return
+    await _guardar_lo_dicho(state, "SIN_NUCLEO")
+
+
+async def _guardar_lo_dicho(state: ConversationState, motivo: str) -> None:
+    """Espera la extracción adelantada del turno y guarda sus datos (cita comprobada) solo en los campos que la
+    conversación aún no sabe: nunca se pisa nada."""
     tarea = getattr(state, "_extraccion_adelantada", None)
     if tarea is None:
         return
@@ -5589,7 +5606,7 @@ async def guardar_lo_dicho_en_el_pase(state: ConversationState) -> None:
                 state.location = state.detected_location = "island"
                 guardados["location"] = "island"
     if guardados:
-        logger.info(f"[EXTRACT][PASE] lo dicho en el turno del pase se guarda: {guardados}")
+        logger.info(f"[EXTRACT][{motivo}] lo dicho en este turno (sin el núcleo) se guarda: {guardados}")
 
 
 def cancelar_extraccion_adelantada(state: ConversationState) -> None:

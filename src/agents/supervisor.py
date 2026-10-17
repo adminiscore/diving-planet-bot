@@ -2706,6 +2706,21 @@ def enforce_group_allocation_consistency(
         return
     # suma < total: al reparto le FALTA gente. Nunca se guarda asi -- el bot
     # pregunta, que sale gratis, en vez de tarificar de menos en silencio.
+    principal = state.detected_activity if state is not None else None
+    if (settings.reparto_parcial_con_lo_sabido and principal and not state.detected_group_allocation
+            and principal in dom.cart_activity_ids()):
+        # G3-01 (17-oct): sin reparto guardado, todo el grupo hace la actividad principal (así se tarifica). "el de 12
+        # minicurso y el de 8 snorkel" en una familia de 4 cuyos padres ya eligieron la salida de 2 inmersiones dice
+        # qué hacen DOS: los otros siguen con lo que tenían. Antes se descartaba y la actividad del turno pasaba a ser
+        # la de todos (3 × minicurso + Bubble Makers, y pase a un asesor).
+        completo = dict(allocation)
+        completo[principal] = completo.get(principal, 0) + total - suma
+        logger.info(
+            f"[EXTRACT][GROUP_ALLOCATION_CON_LO_SABIDO] {allocation!r} + el resto ({total - suma}) en {principal} "
+            f"-> {completo!r} msg={_log_safe_message(message)!r}"
+        )
+        regex_intent.group_allocation = completo
+        return
     logger.info(
         f"[EXTRACT][GROUP_ALLOCATION_INCOMPLETO] descartado={allocation!r} "
         f"suma={suma} total={total} msg={_log_safe_message(message)!r}"
@@ -2860,6 +2875,21 @@ _CORRECTION_CUE_RE = re.compile(
 )
 
 
+def _principal_sigue_en_el_reparto(intent, state: ConversationState) -> bool:
+    """G3-01 (flag `actividad_principal_en_el_reparto`, 17-oct): "el de 12 minicurso y el de 8 snorkel" en una familia
+    cuyos padres ya eligieron la salida de 2 inmersiones da el reparto {certified_diving: 2, minicourse: 1, snorkel: 1}
+    y la actividad "minicourse". La regla de "la última actividad gana" ponía el minicurso como principal; luego "mi
+    esposo bucea conmigo" movía a uno del minicurso a las inmersiones ({certified_diving: 3, snorkel: 1}). Si la
+    actividad principal sigue en el reparto con gente, la nueva es la de otra parte del grupo: no la sustituye."""
+    if not settings.actividad_principal_en_el_reparto:
+        return False
+    principal, reparto = state.detected_activity, getattr(intent, "group_allocation", None)
+    return bool(
+        principal and intent.activity and intent.activity != principal and isinstance(reparto, dict)
+        and (reparto.get(principal) or 0) > 0 and intent.activity in reparto
+    )
+
+
 def _apply_detected_intent(intent, state: ConversationState, message: str | None = None) -> None:
     if intent.language and not state.detected_language:
         state.detected_language = intent.language
@@ -2871,7 +2901,10 @@ def _apply_detected_intent(intent, state: ConversationState, message: str | None
     # activity stuck forever (write-once), so after talking about Bubble Makers /
     # a minicurso, clicking "🤿 Reservar" still routed them into the CERTIFIED
     # diving flow. Now a newly-detected activity replaces the stale one.
-    if intent.activity and intent.activity != state.detected_activity:
+    if _principal_sigue_en_el_reparto(intent, state):
+        logger.info(f"[INTENT][G3-01] la actividad principal {state.detected_activity} sigue en el reparto "
+                    f"{intent.group_allocation}: {intent.activity} es de otra parte del grupo")
+    elif intent.activity and intent.activity != state.detected_activity:
         state.detected_activity = intent.activity
         # El servicio SIEMPRE sale del registro de actividades, aqui, en el unico
         # punto que guarda la actividad (F4 de docs/robustness/activity-domain-plan.md).
@@ -3056,6 +3089,7 @@ async def route_message(state: ConversationState, message: str) -> str:
             cancelar_extraccion_adelantada,
             cancelar_rag_adelantado,
             guardar_lo_dicho_en_el_pase,
+            guardar_lo_dicho_sin_nucleo,
         )
         if state.pending_escalation_reason == escalation_before:  # un traspaso a persona va solo
             response = await attach_unused_answer(state, response)
@@ -3067,6 +3101,7 @@ async def route_message(state: ConversationState, message: str) -> str:
         cancelar_rag_adelantado(state)  # rag-5: la respuesta adelantada que nadie usó
         if state.pending_escalation_reason not in (None, escalation_before):
             await guardar_lo_dicho_en_el_pase(state)  # EX-EST-2: lo que dijo en el turno del pase no se pierde
+        await guardar_lo_dicho_sin_nucleo(state)  # G3-01: ni en un turno con respuesta fija (núcleo sin correr)
         cancelar_extraccion_adelantada(state)  # ex-5: la extracción adelantada que nadie usó
         await conversation_summarizer.maybe_update_summary(state)
         turn.update(
