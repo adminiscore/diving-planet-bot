@@ -823,7 +823,7 @@
    "motivo_juez": "El bot no explicó que la profundidad depende del nivel (Open Water hasta 18 m; Advanced hasta 30 m) ni preguntó por el nivel de certificación del tío; en vez de eso evitó dar la información y remitió a un asesor.",
    "turno": 2,
    "pieza": "rag",
-   "mensaje_cliente": "Espero te encuentres super bien! Realmente estoy cotizando una buceada para mi tio! El es buzo certificado y ya con bastante experiencia y queria saber que planes ofrecen!! A que partes de las islas v",
+   "mensaje_cliente": "Espero te encuentres super bien! Realmente estoy cotizando una buceada para mi tio! El es buzo certificado y ya con bastante experiencia y queria saber que planes ofrecen!! A que partes de las islas van, cuanto tiempo dura el plan, cantidad de inmersiones, cuantos metros bajan, y toda la cuestion!!",
    "respuesta_ex10": "¡Qué bueno que tu tío quiera bucear con nosotros en las Islas del Rosario! 🌊 Buceamos dentro del Parque Nacional Natural Corales del Rosario y San Bernardo, donde hay arrecifes y mucha vida marina.\n\nPara buzos certificados hay salidas de 1 o 2 inmersiones en un día, y paquetes de varios días que pueden incluir un buceo nocturno. Si ya está alojado en las islas, la salida de 2 inmersiones incluye recogida en su hotel si tiene acceso marítimo; el regreso es hacia las 12:00–13:00. El equipo completo y un profesional PADI acompañando la actividad están incluidos. Debe presentar su carné de buzo certificado.\n\nLa profundidad exacta de las inmersiones no la tengo a la mano; un asesor del equipo pue",
    "historial": [
     {
@@ -848,7 +848,7 @@
    },
    "causa_final": "busqueda",
    "tarea": "CAL-A",
-   "nota": "La profundidad máxima de las inmersiones depende del nivel de certificación: Open Water hasta 18 m, Advanced hasta 30 m; si no se conoce el nivel, hay que preguntarlo. (comprobado: el dato ESTÁ en la base —FAQ curada o ficha del servicio— y no llegó al contexto)"
+   "nota": "17-oct: el mensaje del cliente estaba CORTADO a 200 caracteres (lo cortaba `fallos_por_turno.py`) y el caso se medía sin la pregunta; repuesto entero desde la conversación de la ronda. La profundidad máxima de las inmersiones depende del nivel de certificación: Open Water hasta 18 m, Advanced hasta 30 m; si no se conoce el nivel, hay que preguntarlo. (comprobado: el dato ESTÁ en la base —FAQ curada o ficha del servicio— y no llegó al contexto)"
   },
   {
    "id": "cal-19",
@@ -1017,7 +1017,7 @@
    "motivo_juez": "El bot dio precios en USD del paquete de 5 buceos sin preguntar la nacionalidad/moneda del cliente antes de cotizar; la política exige preguntar la nacionalidad (para decidir COP vs USD) si no se conoce, o dar la moneda correcta según la nacionalidad.",
    "turno": 1,
    "pieza": "rag",
-   "mensaje_cliente": "Hello My name is [NOMBRE], i'd like to inquiry about the modalities for a 2 day dive package at the rosario islands. i'll be heading in on april 13th and 14th leaving on the 15th in the morning. What ",
+   "mensaje_cliente": "Hello My name is [NOMBRE], i'd like to inquiry about the modalities for a 2 day dive package at the rosario islands. i'll be heading in on april 13th and 14th leaving on the 15th in the morning. What do i need to bring. i<ll be in Cartagena, is it hard to get to your location, any advice?",
    "respuesta_ex10": "Hi! 🪸 I'm *Coral* from *Diving Planet* — we dive year-round in the Rosario Islands, departing from Cartagena or right from the islands. So happy to have you here! I'd love to help you put your plan together. 🌊\n\nHi [NOMBRE]! A two-day dive trip in the Rosario Islands is a great way to enjoy the reefs. Since you’ll be departing from Cartagena, there are two options:\n\n- *4-dive package:* 4 daytime dives over two days — *USD 316 online* or *USD 351 regular*. You’ll need to stay one night on the islands.\n- *5-dive package:* 4 daytime dives plus 1 night dive over two days — *USD 392 online* or *USD 436 regular*. This also requires one night on the islands.\n\nBoth include boat transport from Cartage",
    "historial": [],
    "turnos_dialogo": 6,
@@ -1033,7 +1033,7 @@
    },
    "causa_final": "regla",
    "tarea": "CAL-B",
-   "nota": "Igual: dio solo USD sin nacionalidad, que es la decisión del 15-oct; el criterio pedía preguntarla. Criterio a actualizar.",
+   "nota": "17-oct: el mensaje del cliente estaba CORTADO a 200 caracteres (lo cortaba `fallos_por_turno.py`) y el caso se medía sin la pregunta; repuesto entero desde la conversación de la ronda. Igual: dio solo USD sin nacionalidad, que es la decisión del 15-oct; el criterio pedía preguntarla. Criterio a actualizar.",
    "pedia_corregido": "Da el precio del catálogo del paquete de 5 buceos desde Cartagena (y, si aplica, desde islas): en COP si es colombiano o residente; si no ha dicho su nacionalidad, en USD (no hace falta preguntarla). También confirma si sale desde Cartagena o ya está en las islas antes de cotizar.",
    "pedia_corregido_estado": "APLICADO en el golden el 16-oct (decisión de Álvaro)"
   },
@@ -1900,7 +1900,7 @@
    "motivo_juez": "El bot respondió en español aunque el cliente se expresó principalmente en inglés.",
    "turno": 1,
    "pieza": "rag",
-   "mensaje_cliente": "Hola! My partner and I are staying at Isla Mulata on Isla Grande and would\nLike to dive. My husband needs to have Open Water Certification but I have advanced open water certification. We will be here",
+   "mensaje_cliente": "Hola! My partner and I are staying at Isla Mulata on Isla Grande and would\nLike to dive. My husband needs to have Open Water Certification but I have advanced open water certification. We will be here until April 14. I would like to dive the training dives as well and 2 days of diving as well so four days of diving total with open water certification for one person. Is this possible?",
    "respuesta_ex10": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\n¡Hola! ¡Qué chévere que estén en Isla Grande; bucear en las Islas del Rosario es una experiencia muy bonita! Isla Mulata aparece entre los hoteles con acceso marítimo, así que podemos coordinar la recogida para las actividades que correspondan.\n\nPara tu esposo, el curso Open Water desde las islas dura 2 días e incluye piscina y 4 inmersiones de certificación. Para ti, con Advanced Open Water, hay opciones de buceo recreativo para buzos certificados. Como quieren combinar el ",
    "historial": [],
    "turnos_dialogo": 7,
@@ -1915,7 +1915,7 @@
    },
    "causa_final": "entendimiento",
    "tarea": "CAL-C",
-   "nota": ""
+   "nota": "17-oct: el mensaje del cliente estaba CORTADO a 200 caracteres (lo cortaba `fallos_por_turno.py`) y el caso se medía sin la pregunta; repuesto entero desde la conversación de la ronda."
   },
   {
    "id": "cal-41",
@@ -1929,7 +1929,7 @@
    "motivo_juez": "El bot vuelve a preguntar el hotel cuando el cliente ya indicó claramente que se hospedan en Isla Mulata (Isla Grande).",
    "turno": 1,
    "pieza": "rag",
-   "mensaje_cliente": "Hola! My partner and I are staying at Isla Mulata on Isla Grande and would\nLike to dive. My husband needs to have Open Water Certification but I have advanced open water certification. We will be here",
+   "mensaje_cliente": "Hola! My partner and I are staying at Isla Mulata on Isla Grande and would\nLike to dive. My husband needs to have Open Water Certification but I have advanced open water certification. We will be here until April 14. I would like to dive the training dives as well and 2 days of diving as well so four days of diving total with open water certification for one person. Is this possible?",
    "respuesta_ex10": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\n¡Hola! ¡Qué chévere que estén en Isla Grande; bucear en las Islas del Rosario es una experiencia muy bonita! Isla Mulata aparece entre los hoteles con acceso marítimo, así que podemos coordinar la recogida para las actividades que correspondan.\n\nPara tu esposo, el curso Open Water desde las islas dura 2 días e incluye piscina y 4 inmersiones de certificación. Para ti, con Advanced Open Water, hay opciones de buceo recreativo para buzos certificados. Como quieren combinar el ",
    "historial": [],
    "turnos_dialogo": 7,
@@ -1944,7 +1944,7 @@
    },
    "causa_final": "entendimiento",
    "tarea": "CAL-C",
-   "nota": ""
+   "nota": "17-oct: el mensaje del cliente estaba CORTADO a 200 caracteres (lo cortaba `fallos_por_turno.py`) y el caso se medía sin la pregunta; repuesto entero desde la conversación de la ronda."
   },
   {
    "id": "cal-42",
@@ -2355,7 +2355,7 @@
    "motivo_juez": "[evidencia del cliente no encontrada] Después de que el cliente dijo 'Quiero certificarme', el bot vuelve a preguntar '¿Qué curso te interesa?', repregunta de un dato ya dado o deducible (Open Water para principiante).",
    "turno": 1,
    "pieza": "rag",
-   "mensaje_cliente": "Buenas noches, podrias brindarme informacion acerca de los cursos padi para certificarse como buzo? Que precio tienen? Cuanto dura? Que traen? Ofrecen hospedaje ya que tengi entendido es en islas del ",
+   "mensaje_cliente": "Buenas noches, podrias brindarme informacion acerca de los cursos padi para certificarse como buzo? Que precio tienen? Cuanto dura? Que traen? Ofrecen hospedaje ya que tengi entendido es en islas del rosario? Cuéntamelo todo por favor y gracias :)",
    "respuesta_ex10": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\n¡Buenas noches! Claro que sí 😊 Si quieres certificarte desde cero, el curso indicado es el *PADI Open Water*. Es una experiencia muy chévere para aprender y explorar los arrecifes de las Islas del Rosario.\n\n*Duración:* 2 días de práctica, más la teoría en línea, que toma aproximadamente 10–12 horas y debes completar antes de empezar.\n\n*Incluye:* transporte en lancha ida y vuelta desde Cartagena, entrada al Parque Nacional, seguro, equipo, entrenamiento en piscina y 4 inmersi",
    "historial": [],
    "turnos_dialogo": 6,
@@ -2370,7 +2370,7 @@
    },
    "causa_final": "entendimiento",
    "tarea": "CAL-C",
-   "nota": ""
+   "nota": "17-oct: el mensaje del cliente estaba CORTADO a 200 caracteres (lo cortaba `fallos_por_turno.py`) y el caso se medía sin la pregunta; repuesto entero desde la conversación de la ronda."
   },
   {
    "id": "cal-51",
@@ -3028,7 +3028,7 @@
    "motivo_juez": "El bot sí menciona el cierre a las 4:30 p.m., pero no aclara que después de esa hora se sigue reservando por la web para el siguiente día disponible (es decir, no comunica la parte 'después de esa hora se reserva igual por la web para el siguiente día disponible').",
    "turno": 1,
    "pieza": "rag",
-   "mensaje_cliente": "Hola!\nMe gustaria tener mas informacion acerca de los cursos de buceo en Cartagena (especificamente en Islas del Rosario)\nSomos dos personas y es la pirmera vez que vamos hacer buceo y sobretodo no te",
+   "mensaje_cliente": "Hola!\nMe gustaria tener mas informacion acerca de los cursos de buceo en Cartagena (especificamente en Islas del Rosario)\nSomos dos personas y es la pirmera vez que vamos hacer buceo y sobretodo no tenemos mucho tiempo.\nComo se hace para reservar ? con que tiempo de anticipacion ? el pago lo hacemos directo por la pagina web o directmente con ustedes en Cartagena ?\nGracias.",
    "respuesta_ex10": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\n¡Hola! Las Islas del Rosario son una experiencia preciosa para conocer los arrecifes caribeños. Como es su primera vez y tienen poco tiempo, les recomiendo el *Minicurso de Buceo*: es de un día, no requiere experiencia previa e incluye teoría online, práctica en piscina y una inmersión en el mar con instructor PADI.\n\nSaliendo desde Cartagena, cuesta *183 USD por persona* o *655.000 COP por persona* al reservar online. Incluye lancha, equipo y almuerzo. La salida es a las 8:0",
    "historial": [],
    "turnos_dialogo": 4,
@@ -3044,7 +3044,7 @@
    },
    "causa_final": "redaccion",
    "tarea": "CAL-A",
-   "nota": "Después de las 4:30 p.m. se puede seguir reservando por la web, pero solo para el siguiente día disponible (no para el día siguiente inmediato)."
+   "nota": "17-oct: el mensaje del cliente estaba CORTADO a 200 caracteres (lo cortaba `fallos_por_turno.py`) y el caso se medía sin la pregunta; repuesto entero desde la conversación de la ronda. Después de las 4:30 p.m. se puede seguir reservando por la web, pero solo para el siguiente día disponible (no para el día siguiente inmediato)."
   },
   {
    "id": "cal-65",
@@ -3058,7 +3058,7 @@
    "motivo_juez": "El bot afirma 'mayores de 10 años', lo que implica >10; la REFERENCIA indica edad mínima 10 años (>=10), por lo que la redacción del bot contradice la edad mínima oficial.",
    "turno": 1,
    "pieza": "rag",
-   "mensaje_cliente": "Hola entre a su pagina web y me gustaria hacer un dia de buceo el dia de mis cumpleaños el 11 de Mayo, me gustaria saber qué precio tiene y si hay q reservar con anterioridad. Soy principiante y no se",
+   "mensaje_cliente": "Hola entre a su pagina web y me gustaria hacer un dia de buceo el dia de mis cumpleaños el 11 de Mayo, me gustaria saber qué precio tiene y si hay q reservar con anterioridad. Soy principiante y no se nadar.  Gracias",
    "respuesta_ex10": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\n¡Qué lindo plan para tu cumpleaños! Para tu primera experiencia te recomiendo el *Minicurso de Buceo*: no necesitas experiencia ni certificación; incluye teoría previa, práctica en piscina y una inmersión en el mar con instructor.\n\nNo saber nadar es importante comentarlo antes de reservar para que el equipo te oriente sobre tu caso; no puedo confirmarte por aquí si podrás realizar la actividad.\n\nSí, reserva con anticipación en la página.\n\nEl minicurso es para mayores de 10 a",
    "historial": [],
    "turnos_dialogo": 3,
@@ -3073,7 +3073,7 @@
    },
    "causa_final": "no_se_reproduce",
    "tarea": "(variación)",
-   "nota": ""
+   "nota": "17-oct: el mensaje del cliente estaba CORTADO a 200 caracteres (lo cortaba `fallos_por_turno.py`) y el caso se medía sin la pregunta; repuesto entero desde la conversación de la ronda."
   },
   {
    "id": "cal-66",
@@ -3087,7 +3087,7 @@
    "motivo_juez": "El cliente preguntó el precio; el bot solo preguntó el punto de salida pero no pidió la nacionalidad/moneda requerida por el criterio antes de dar el precio (además no llegó a dar un precio).",
    "turno": 1,
    "pieza": "rag",
-   "mensaje_cliente": "Hola entre a su pagina web y me gustaria hacer un dia de buceo el dia de mis cumpleaños el 11 de Mayo, me gustaria saber qué precio tiene y si hay q reservar con anterioridad. Soy principiante y no se",
+   "mensaje_cliente": "Hola entre a su pagina web y me gustaria hacer un dia de buceo el dia de mis cumpleaños el 11 de Mayo, me gustaria saber qué precio tiene y si hay q reservar con anterioridad. Soy principiante y no se nadar.  Gracias",
    "respuesta_ex10": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\n¡Qué lindo plan para tu cumpleaños! Para tu primera experiencia te recomiendo el *Minicurso de Buceo*: no necesitas experiencia ni certificación; incluye teoría previa, práctica en piscina y una inmersión en el mar con instructor.\n\nNo saber nadar es importante comentarlo antes de reservar para que el equipo te oriente sobre tu caso; no puedo confirmarte por aquí si podrás realizar la actividad.\n\nSí, reserva con anticipación en la página.\n\nEl minicurso es para mayores de 10 a",
    "historial": [],
    "turnos_dialogo": 3,
@@ -3103,7 +3103,7 @@
    },
    "causa_final": "regla",
    "tarea": "CAL-B",
-   "nota": "Criterio de antes del 15-oct (preguntar la nacionalidad).",
+   "nota": "17-oct: el mensaje del cliente estaba CORTADO a 200 caracteres (lo cortaba `fallos_por_turno.py`) y el caso se medía sin la pregunta; repuesto entero desde la conversación de la ronda. Criterio de antes del 15-oct (preguntar la nacionalidad).",
    "pedia_corregido": "Antes de dar un precio, pregunta si sale desde Cartagena o si ya está en las islas (la nacionalidad no hace falta preguntarla: sin ella, el precio va en USD). Con el origen, da el precio del catálogo para el minicurso.",
    "pedia_corregido_estado": "APLICADO en el golden el 16-oct (decisión de Álvaro)"
   },
@@ -3119,7 +3119,7 @@
    "motivo_juez": "El cliente no especificó el año; el bot afirma sin base que esas fechas \"ya pasaron\", asumiendo el año y por tanto inventando un hecho no provisto por el cliente.",
    "turno": 3,
    "pieza": "rag",
-   "mensaje_cliente": "I was able to complete my PADI reactivate course on board a royal Caribbean cruise that I am on now.  My wife seemed to be very nervous and had mask problems and could not complete her skills test on ",
+   "mensaje_cliente": "I was able to complete my PADI reactivate course on board a royal Caribbean cruise that I am on now.  My wife seemed to be very nervous and had mask problems and could not complete her skills test on the boat.   We snorkeled in Roatan yesterday and swam in Costa Maya today. I am a competitive masters swimmer and swim 12k per week.  She is a fit 5’6 115 lb active and in shape lady..  we want to look into completing her reactivate course and dive when we are there.  We will be staying at Bodegas de Santa Clara. June 6-13",
    "respuesta_ex10": "That sounds like a lovely plan for your June stay. Since your wife wasn’t able to complete the skills during the cruise, the best next step is for our team to review what she completed and advise whether a refresher or another course is appropriate. Fitness and swimming ability are great, but they can’t determine course eligibility or replace the required skills.\n\nA refresher is a one-day pool review and one reef dive with an instructor. From Cartagena, it’s *$183 USD online per person* and includes boat transport and lunch. You can book it here: https://book.divingplanet.org/book/minicurso-de-buceo/2?language=en\n\nYou mentioned staying at Bodegas de Santa Clara; I can’t confirm whether it ha",
    "historial": [
     {
@@ -3151,7 +3151,7 @@
    },
    "causa_final": "no_se_reproduce",
    "tarea": "(variación)",
-   "nota": ""
+   "nota": "17-oct: el mensaje del cliente estaba CORTADO a 200 caracteres (lo cortaba `fallos_por_turno.py`) y el caso se medía sin la pregunta; repuesto entero desde la conversación de la ronda."
   },
   {
    "id": "cal-68",
@@ -3165,7 +3165,7 @@
    "motivo_juez": "El cliente ya dio fechas (June 6-13); el bot vuelve a pedir las fechas en lugar de confirmar solo el año si era necesario.",
    "turno": 3,
    "pieza": "rag",
-   "mensaje_cliente": "I was able to complete my PADI reactivate course on board a royal Caribbean cruise that I am on now.  My wife seemed to be very nervous and had mask problems and could not complete her skills test on ",
+   "mensaje_cliente": "I was able to complete my PADI reactivate course on board a royal Caribbean cruise that I am on now.  My wife seemed to be very nervous and had mask problems and could not complete her skills test on the boat.   We snorkeled in Roatan yesterday and swam in Costa Maya today. I am a competitive masters swimmer and swim 12k per week.  She is a fit 5’6 115 lb active and in shape lady..  we want to look into completing her reactivate course and dive when we are there.  We will be staying at Bodegas de Santa Clara. June 6-13",
    "respuesta_ex10": "That sounds like a lovely plan for your June stay. Since your wife wasn’t able to complete the skills during the cruise, the best next step is for our team to review what she completed and advise whether a refresher or another course is appropriate. Fitness and swimming ability are great, but they can’t determine course eligibility or replace the required skills.\n\nA refresher is a one-day pool review and one reef dive with an instructor. From Cartagena, it’s *$183 USD online per person* and includes boat transport and lunch. You can book it here: https://book.divingplanet.org/book/minicurso-de-buceo/2?language=en\n\nYou mentioned staying at Bodegas de Santa Clara; I can’t confirm whether it ha",
    "historial": [
     {
@@ -3197,7 +3197,7 @@
    },
    "causa_final": "no_se_reproduce",
    "tarea": "(variación)",
-   "nota": ""
+   "nota": "17-oct: el mensaje del cliente estaba CORTADO a 200 caracteres (lo cortaba `fallos_por_turno.py`) y el caso se medía sin la pregunta; repuesto entero desde la conversación de la ronda."
   },
   {
    "id": "cal-69",
@@ -3211,7 +3211,7 @@
    "motivo_juez": "El bot propuso un refresher y ofrecer pasar a un asesor, pero no aclaró la política explícita de que tras más de 2 años sin bucear normalmente se requiere refresh, ni validó/confirmó que el cliente ya completó su Reactivate; por eso no cumple el criterio.",
    "turno": 3,
    "pieza": "rag",
-   "mensaje_cliente": "I was able to complete my PADI reactivate course on board a royal Caribbean cruise that I am on now.  My wife seemed to be very nervous and had mask problems and could not complete her skills test on ",
+   "mensaje_cliente": "I was able to complete my PADI reactivate course on board a royal Caribbean cruise that I am on now.  My wife seemed to be very nervous and had mask problems and could not complete her skills test on the boat.   We snorkeled in Roatan yesterday and swam in Costa Maya today. I am a competitive masters swimmer and swim 12k per week.  She is a fit 5’6 115 lb active and in shape lady..  we want to look into completing her reactivate course and dive when we are there.  We will be staying at Bodegas de Santa Clara. June 6-13",
    "respuesta_ex10": "That sounds like a lovely plan for your June stay. Since your wife wasn’t able to complete the skills during the cruise, the best next step is for our team to review what she completed and advise whether a refresher or another course is appropriate. Fitness and swimming ability are great, but they can’t determine course eligibility or replace the required skills.\n\nA refresher is a one-day pool review and one reef dive with an instructor. From Cartagena, it’s *$183 USD online per person* and includes boat transport and lunch. You can book it here: https://book.divingplanet.org/book/minicurso-de-buceo/2?language=en\n\nYou mentioned staying at Bodegas de Santa Clara; I can’t confirm whether it ha",
    "historial": [
     {
@@ -3244,7 +3244,7 @@
    },
    "causa_final": "busqueda",
    "tarea": "CAL-A",
-   "nota": "Tras más de 2 años sin bucear, normalmente se requiere un refresh; validar que el cliente ya hizo su Reactivate y proponer refresher para la esposa. (comprobado: el dato ESTÁ en la base —FAQ curada o ficha del servicio— y no llegó al contexto)"
+   "nota": "17-oct: el mensaje del cliente estaba CORTADO a 200 caracteres (lo cortaba `fallos_por_turno.py`) y el caso se medía sin la pregunta; repuesto entero desde la conversación de la ronda. Tras más de 2 años sin bucear, normalmente se requiere un refresh; validar que el cliente ya hizo su Reactivate y proponer refresher para la esposa. (comprobado: el dato ESTÁ en la base —FAQ curada o ficha del servicio— y no llegó al contexto)"
   },
   {
    "id": "cal-70",
@@ -3258,7 +3258,7 @@
    "motivo_juez": "El bot no confirma explícitamente que puedan ir juntos en el mismo tour combinando un refresher para la esposa y buceo certificado para él; en su lugar pide revisión por el equipo y no da la confirmación requerida.",
    "turno": 3,
    "pieza": "rag",
-   "mensaje_cliente": "I was able to complete my PADI reactivate course on board a royal Caribbean cruise that I am on now.  My wife seemed to be very nervous and had mask problems and could not complete her skills test on ",
+   "mensaje_cliente": "I was able to complete my PADI reactivate course on board a royal Caribbean cruise that I am on now.  My wife seemed to be very nervous and had mask problems and could not complete her skills test on the boat.   We snorkeled in Roatan yesterday and swam in Costa Maya today. I am a competitive masters swimmer and swim 12k per week.  She is a fit 5’6 115 lb active and in shape lady..  we want to look into completing her reactivate course and dive when we are there.  We will be staying at Bodegas de Santa Clara. June 6-13",
    "respuesta_ex10": "That sounds like a lovely plan for your June stay. Since your wife wasn’t able to complete the skills during the cruise, the best next step is for our team to review what she completed and advise whether a refresher or another course is appropriate. Fitness and swimming ability are great, but they can’t determine course eligibility or replace the required skills.\n\nA refresher is a one-day pool review and one reef dive with an instructor. From Cartagena, it’s *$183 USD online per person* and includes boat transport and lunch. You can book it here: https://book.divingplanet.org/book/minicurso-de-buceo/2?language=en\n\nYou mentioned staying at Bodegas de Santa Clara; I can’t confirm whether it ha",
    "historial": [
     {
@@ -3291,7 +3291,7 @@
    },
    "causa_final": "busqueda",
    "tarea": "CAL-A",
-   "nota": "Confirmar que pueden ir juntos en el mismo tour combinando refresher para ella y buceo certificado para él. (comprobado: el dato ESTÁ en la base —FAQ curada o ficha del servicio— y no llegó al contexto)"
+   "nota": "17-oct: el mensaje del cliente estaba CORTADO a 200 caracteres (lo cortaba `fallos_por_turno.py`) y el caso se medía sin la pregunta; repuesto entero desde la conversación de la ronda. Confirmar que pueden ir juntos en el mismo tour combinando refresher para ella y buceo certificado para él. (comprobado: el dato ESTÁ en la base —FAQ curada o ficha del servicio— y no llegó al contexto)"
   },
   {
    "id": "cal-71",

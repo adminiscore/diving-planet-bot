@@ -76,7 +76,10 @@ def fallos(ronda: str) -> list[dict]:
                 "tipo": m.get("turn_type") or ("sin_cita" if not t else "?"),
                 "motivo": (c.get("reason") or "")[:400],
                 "cita": (c.get("evidencia_bot") or "")[:300],
-                "mensaje_cliente": (t["msg"][:200] if t else ""),
+                # 17-oct: SIN cortar. Esto no es una etiqueta para leer, es el texto que el banco de fallos
+                # REPRODUCE como mensaje del cliente: cortado a 200, 12 casos se median sin la pregunta
+                # (cal-64 perdia "con que tiempo de anticipacion?", que era justo el criterio que fallaba).
+                "mensaje_cliente": (t["msg"] if t else ""),
                 "respuesta": (t["reply"][:700] if t else ""),
             })
     return salida
