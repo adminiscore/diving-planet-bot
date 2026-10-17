@@ -1,8 +1,8 @@
 {
  "meta": {
-  "generado": "2026-10-17T15:18:53+00:00",
-  "commit": "6358680",
-  "rama": "feature/pre_gadea"
+  "generado": "2026-10-17T15:34:26+00:00",
+  "commit": "fa6f163",
+  "rama": "ronda-calc2-b-local"
  },
  "vistas": {
   "general": {
@@ -707,22 +707,22 @@
     {
      "nombre": "lugar_desconocido_al_rag",
      "titulo": "Un lugar desconocido se pregunta a la base",
-     "codigo": false,
-     "pre": false,
+     "codigo": true,
+     "pre": true,
      "sin_efecto": false
     },
     {
      "nombre": "red_menciones_solo_sin_extractor",
      "titulo": "La red de palabras clave, solo si falla el extractor",
-     "codigo": false,
-     "pre": false,
+     "codigo": true,
+     "pre": true,
      "sin_efecto": false
     },
     {
      "nombre": "hotel_del_catalogo_da_isla",
      "titulo": "Un hotel de las islas dice que está en las islas",
-     "codigo": false,
-     "pre": false,
+     "codigo": true,
+     "pre": true,
      "sin_efecto": false
     },
     {
@@ -2258,9 +2258,9 @@
    "area": "Reserva",
    "titulo": "Un hotel de las islas dice que está en las islas",
    "texto": "Si el hotel que nombra el cliente está en el catálogo de hoteles de las islas (por ejemplo, Ubuntu), el bot sabe que está en las islas y en qué isla; y el hotel se guarda aunque ese mensaje acabe pasándose a un asesor.",
-   "codigo": false,
-   "pre": false,
-   "fijado_en_pre": false,
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
    "usado_por": [
     "b_slotfill_close"
    ],
@@ -2672,9 +2672,9 @@
    "area": "Reserva",
    "titulo": "Un lugar desconocido se pregunta a la base",
    "texto": "Si el cliente dice que está en un sitio que no es Cartagena ni las Islas del Rosario (por ejemplo, Barú), el bot se lo pregunta a la base de conocimiento, que sabe dónde no operamos, en vez de solo repetir el lugar.",
-   "codigo": false,
-   "pre": false,
-   "fijado_en_pre": false,
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
    "usado_por": [
     "b_slotfill_close"
    ],
@@ -3080,9 +3080,9 @@
    "area": "Reserva",
    "titulo": "La red de palabras clave, solo si falla el extractor",
    "texto": "Una red antigua buscaba nombres de actividades en el mensaje y preguntaba por ellas ('We snorkeled yesterday' → '¿cuántos para snorkel?'). Ahora el reparto del grupo lo decide el extractor y la red solo actúa si el extractor no pudo leer el mensaje.",
-   "codigo": false,
-   "pre": false,
-   "fijado_en_pre": false,
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
    "usado_por": [
     "b_slotfill_close"
    ],
