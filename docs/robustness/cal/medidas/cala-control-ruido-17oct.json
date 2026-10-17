@@ -1,0 +1,81 @@
+{
+ "etiqueta": "cala-control-ruido-17oct",
+ "reps": 3,
+ "flags": [
+  "no:actividad_por_lo_sabido",
+  "no:extractor_cita_del_cliente",
+  "no:idioma_del_extractor"
+ ],
+ "codigo_local": true,
+ "casos": [
+  {
+   "id": "cal-26",
+   "dialogo": "refresher-que-completar-antes",
+   "criterio": "formulario-medico-refresher",
+   "repeticiones": 3,
+   "fallan": 1,
+   "respuestas": [
+    "Absolutely—if it’s been more than two years since your last dive, a refresher is normally required. It’s a one-day review with pool practice and one ocean dive.\n\nBeforehand, you’ll need to complete the medical form. After booking, you’ll receive the theory by email and must finish it before the practical session. The insurance form and liability waiver are also completed through the booking follow-up.\n\nAre you departing from Cartagena, or will you already be staying on the Rosario Islands? That determines which refresher option fits.",
+    "Absolutely—if it’s been more than two years since your last dive, a refresher is normally required. It includes a pool review and one ocean dive with an instructor.\n\nBeforehand, you’ll need to complete the medical form. After booking, you’ll receive the theory by email and must finish it before the practical session. The insurance form and liability waiver are also completed through the booking follow-up.\n\nAre you leaving from Cartagena, or will you already be staying on the Rosario Islands? That determines the right refresher option and booking link.",
+    "Of course! If it’s been more than two years since your last dive, a refresher is normally required. It’s a one-day review with pool practice and one ocean dive.\n\nBeforehand, you’ll need to complete the medical form. After booking, you’ll receive the theory by email and must complete it before the practical session. The insurance form and liability waiver are also completed through the booking follow-up.\n\nAre you departing from Cartagena, or will you already be staying on the Rosario Islands? That determines the right refresher option and booking link."
+   ],
+   "explicaciones": [
+    "The current response states: 'Beforehand, you’ll need to complete the medical form. After booking, you’ll receive the theory by email and must finish it before the practical session.' This makes it clear that the medical form is required and that it is completed after booking, which fulfills the criterion that the form is sent after reserving. The insurance form and liability waiver are also mentioned as being completed through the booking follow-up. Therefore, the previous omission has been corrected.",
+    "The bot says 'Beforehand, you’ll need to complete the medical form,' which implies it must be done before booking, but the policy is clear: 'Complete the medical form (required for courses and mini-courses)' and 'the form sent in the confirmation email to process the insurance' (see [4] and [5]). The correct process is that the medical form is sent after booking, not before. This information is present in the context, but the bot does not state it.",
+    "The current response states: 'Beforehand, you’ll need to complete the medical form. After booking, you’ll receive the theory by email and must complete it before the practical session.' This makes it clear that the medical form is required and that it is completed after booking, which fulfills the criterion that the form is sent after reserving. The insurance form and liability waiver are also mentioned as being completed through the booking follow-up. Therefore, the previous omission has been corrected."
+   ]
+  },
+  {
+   "id": "cal-42",
+   "dialogo": "certificado-precio-dia-paquete-5-y-hoteles-base",
+   "criterio": "precio-dia-cartagena",
+   "repeticiones": 3,
+   "fallan": 1,
+   "respuestas": [
+    "For a two-day plan from Cartagena, there are two options:\n\n- **4 dives over 2 days:** $316 USD online or $351 USD regular.\n- **5 dives over 2 days, including a night dive:** $392 USD online or $436 USD regular.\n\nBoth require an overnight stay on the islands; accommodation isn’t included. The prices are for the full package, not per day. Would you prefer daytime dives only, or a package with a night dive?\n\nHas it been *more than 2 years* since your last dive?",
+    "For a certified diver departing from Cartagena, the **2-dive day trip is $197 USD per day** at the regular price, or **$178 USD online** (includes the 10% online discount). The two dives are at different sites, and boat transport and lunch are included.\n\nFor two days, the catalog also has a **4-dive package for $316 USD online** or a **5-dive package, including a night dive, for $392 USD online**. Both require an overnight stay on the islands; accommodation isn’t included. Which option are you considering?\n\nHas it been *more than 2 years* since your last dive?",
+    "For a certified diver departing from Cartagena, the **2-dive day trip is $197 USD per day** at the regular price, or **$178 USD online** (which includes the 10% online discount). It includes boat transport and lunch.\n\nFor two days, the catalog lists a **4-dive package for $316 USD online** or **$351 USD regular**. Would you like the link for the two-day package?\n\nHas it been *more than 2 years* since any diver in the group last dived?"
+   ],
+   "explicaciones": [
+    "The bot again fails to provide the required price for the 1-day, 2-dive plan from Cartagena (178 USD online, 197 USD regular), which is clearly listed in the context. Instead, it only gives prices for 2-day packages and does not ask for nationality to clarify the currency if needed.",
+    "The current response gives the correct price per person for the 2-dive, 1-day trip from Cartagena in USD ($197 regular, $178 online), as required by the criterion. It also labels the price clearly, includes what is covered, and does not give the price for a multi-day package instead. The bot does not need to ask for nationality unless the customer is Colombian or a resident, which is not indicated here.",
+    "The current response gives the correct per-day price for a certified diver for the 2-dive, 1-day trip from Cartagena in USD ($197 regular, $178 online), as required by the criterion. It also labels the price as per day and does not confuse it with multi-day packages. The response does not need to ask for nationality unless the customer is Colombian, which is not indicated here."
+   ]
+  },
+  {
+   "id": "cal-64",
+   "dialogo": "curso-open-water-principiantes-idioma-frances-anticipacion",
+   "criterio": "anticipacion-cierre-sistema",
+   "repeticiones": 3,
+   "fallan": 1,
+   "respuestas": [
+    "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\n¡Hola! Las Islas del Rosario son una experiencia preciosa para empezar a bucear. Como es su primera vez y tienen poco tiempo, les recomiendo el **Minicurso de Buceo**: es de un día, no requiere experiencia previa e incluye teoría online, práctica en piscina y una inmersión en el mar con instructor. Salen desde Cartagena a las 8:00 a. m. y regresan aproximadamente a las 4:15 p. m.\n\nEl precio online es **183 USD por persona** e incluye lancha, equipo y almuerzo. El minicurso es una iniciación y no otorga certificación.\n\nPueden reservar directamente en la página y elegir allí la fecha y el número de personas: https://book.divingplanet.org/book/minicurso-de-buceo/2?language=es. La reserva se paga online; el sistema permite reservar hasta las 4:30 p. m. del día anterior. Operamos todos los días, excepto el 25 de diciembre y el 1 de enero, y las salidas pueden suspenderse por mal tiempo.\n\n¿Les sirve un plan de un día como este?",
+    "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\n¡Hola! Las Islas del Rosario son una experiencia preciosa para empezar a bucear. Como es su primera vez y tienen poco tiempo, les recomiendo el **Minicurso de Buceo**: es de un día, no requiere experiencia previa e incluye teoría online, práctica en piscina y una inmersión en el mar con instructor PADI. Salen desde el Muelle de la Bodeguita a las 8:00 a. m. y regresan a Cartagena aproximadamente a las 4:15 p. m.\n\nEl precio online es **183 USD por persona** e incluye lancha, equipo y almuerzo. Para reservar, pueden elegir la fecha y el número de personas directamente en la página y pagar allí:  \nhttps://book.divingplanet.org/book/minicurso-de-buceo/2?language=es\n\nOperamos todos los días, excepto el 25 de diciembre y el 1 de enero; una salida también puede suspenderse por mal tiempo. Para el día siguiente, la reserva online debe hacerse antes de las 4:30 p. m.; si no, pueden reservar para el siguiente día disponible. Después de reservar, recibirán por correo la teoría, que deben completar antes de la actividad. También hay que completar un formulario médico obligatorio: https://form.jotform.com/divingplanetcartagena/exoneracion-curso-en-espanol\n\n¿Les gustaría hacer el minicurso en una fecha cercana?",
+    "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\n¡Hola! ¡Qué chévere que quieran conocer el buceo en las Islas del Rosario! Como es su primera vez y tienen poco tiempo, el **Minicurso de Buceo** les queda perfecto: es de un día, incluye teoría online, práctica en piscina y una inmersión en el mar con instructor PADI. Salen desde Cartagena y regresan el mismo día.\n\nEl precio online es **183 USD por persona** e incluye lancha, equipo, almuerzo, seguro y entrada al parque. Para reservar, elijan la fecha y las dos personas en este enlace:  \nhttps://book.divingplanet.org/book/minicurso-de-buceo/2?language=es\n\nLa reserva y el pago se hacen directamente en la página. Pueden reservar hasta las **4:30 p. m. del día anterior** para salir al día siguiente; si ya pasó esa hora, pueden reservar para el siguiente día disponible. La salida es a las **8:00 a. m. desde el Muelle de la Bodeguita** y el regreso a Cartagena es aproximadamente a las **4:15 p. m.** ¿Qué fecha tienen en mente?"
+   ],
+   "explicaciones": [
+    "La respuesta menciona que el sistema permite reservar hasta las 4:30 p.m. del día anterior, pero no aclara que pasada esa hora se puede reservar igual por la web para el siguiente día disponible. El contexto lo indica claramente: 'Sistema de reservas ROVERD (en la página web). Se cierra automáticamente a las 4:30 PM del día anterior: pasada esa hora ya no se puede reservar para el día siguiente, y se reserva igual por la web para el siguiente día disponible.'",
+    "La respuesta actual sí menciona que después de las 4:30 p.m. se puede reservar por la web para el siguiente día disponible: 'Para el día siguiente, la reserva online debe hacerse antes de las 4:30 p. m.; si no, pueden reservar para el siguiente día disponible.' Esto cumple con el criterio de anticipación y cierre del sistema, incluyendo la política de reserva posterior al cierre.",
+    "La respuesta actual sí menciona que después de las 4:30 p.m. se puede reservar para el siguiente día disponible por la web: 'si ya pasó esa hora, pueden reservar para el siguiente día disponible'. Esto cumple con el criterio de anticipación-cierre-sistema y comunica correctamente la política de reservas según el contexto."
+   ]
+  },
+  {
+   "id": "cal-69",
+   "dialogo": "pareja-reactivate-y-refresh-cartagena",
+   "criterio": "politica-refresh",
+   "repeticiones": 3,
+   "fallan": 3,
+   "respuestas": [
+    "That sounds like a lovely plan for your June stay! Since your wife wasn’t able to complete the Reactivate skills, the best next step is for our team to review what she completed and advise which activity fits her situation. I can’t determine that from fitness or swimming ability alone, and I can’t assess whether she’s medically cleared to dive.\n\nYou’ll be staying at Bodegas de Santa Clara in Cartagena, so the Cartagena departure options may suit you. A refresher is a one-day activity with pool practice and one reef dive with an instructor; it’s booked as the Dive Mini Course. The online price is **USD 183 per person**, and it includes equipment, boat transport, lunch, and insurance. Your wife would need to complete the required medical form and theory beforehand. [View the booking page](https://book.divingplanet.org/book/minicurso-de-buceo/2?language=en)\n\nBecause this involves her incomplete skills assessment, I can connect you with a team advisor to review her course record and recommend the right option. What year do you mean for June 6–13?\n\nHow many people would that be for snorkeling? That way I can give you the exact plan. 😊",
+    "That sounds like a lovely plan for your stay in Cartagena! The Rosario Islands are a beautiful place to get back in the water. 🌊\n\nFor your wife, since she wasn’t able to complete the skills assessment, our team would need to review her situation and advise whether a refresher or another option is appropriate. Fitness and swimming ability are great, but they can’t determine dive readiness on their own. I can’t assess or authorize her to dive based on health or personal details here.\n\nFor you, if you’ve completed your Reactivate course and are certified, the 2-dive trip from Cartagena is **USD 178 online**. It includes equipment, boat transport and lunch. Your hotel is in Cartagena, so the Cartagena departure would be the relevant option.\n\nWould you like me to connect you with a team advisor to discuss your wife’s refresher and plan your dives for June 6–13?\n\nHow many people would that be for snorkeling? That way I can give you the exact plan. 😊",
+    "Great to hear you completed your reactivation, and that your wife wants to finish hers and dive in the Rosario Islands! The Refresher course—booked as the Dive Mini Course—includes pool practice and one ocean dive with an instructor. It’s designed for certified divers who haven’t dived in more than two years, and the online price is **USD 183 per person**. You can book it here: https://book.divingplanet.org/book/minicurso-de-buceo/2?language=en\n\nThe course departs from Cartagena, includes boat transport and lunch, and requires completing the theory and medical form before the practical session. After diving, wait at least 12 hours before flying.\n\nWould you like to look at the booking link for another dive option during your stay as well?\n\nHow many people would that be for snorkeling? That way I can give you the exact plan. 😊"
+   ],
+   "explicaciones": [
+    "The bot does not explicitly state the policy that after more than 2 years without diving, a refresher is normally required, nor does it confirm that the client already completed their Reactivate (it only discusses the wife's situation). The context includes this policy: 'If it's been more than 2 years since your last dive, a refresher is normally required; very experienced divers (500+ dives, Dive Master) are reviewed by a member of our team.'",
+    "The bot does not explicitly state the policy that after more than 2 years without diving, a refresher is normally required, as found in the context: 'If it's been more than 2 years since your last dive, a refresher is normally required; very experienced divers (500+ dives, Dive Master) are reviewed by a member of our team.' It also does not clearly validate that the customer already completed their Reactivate, only referencing it indirectly.",
+    "The bot does not explicitly state the policy that after more than 2 years without diving, a refresher is normally required, nor does it confirm that the customer already completed their Reactivate (it just congratulates them). The context includes this policy: 'If it's been more than 2 years since your last dive, a refresher is normally required; very experienced divers (500+ dives, Dive Master) are reviewed by a member of our team.'"
+   ]
+  }
+ ],
+ "sin_medir": []
+}
