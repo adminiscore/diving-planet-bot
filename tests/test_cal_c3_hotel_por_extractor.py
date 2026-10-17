@@ -132,6 +132,7 @@ def test_c3c_islas_como_sitio_de_buceo_no_desactiva_la_puerta_del_origen(monkeyp
     msg = "Estoy interesada en bucear el lunes festivo en islas del rosario. Que precio tiene?"
     respuesta = "El precio es 124 USD por persona."
     st = ConversationState(conversation_id="c3c", language="es")
+    st.history = [{"role": "user", "content": msg}]  # como en el turno real: ya está en el historial
     st._jev_lugar = {"choice": "none", "confidence": 0.98}
     monkeypatch.setattr(settings, "lugar_con_dos_lectores", False)
     assert core._origen_antes_del_precio(st, msg, respuesta) is None
@@ -139,3 +140,12 @@ def test_c3c_islas_como_sitio_de_buceo_no_desactiva_la_puerta_del_origen(monkeyp
     assert core.ORIGEN_ANTES_DEL_PRECIO_ES in core._origen_antes_del_precio(st, msg, respuesta)
     st._jev_lugar = {"choice": "islands", "confidence": 0.95}  # Jev dice que sí está en las islas → como hoy
     assert core._origen_antes_del_precio(st, msg, respuesta) is None
+
+
+def test_c3c_un_origen_dicho_antes_sigue_contando(monkeypatch):
+    monkeypatch.setattr(settings, "rag_origen_pregunta", True)
+    monkeypatch.setattr(settings, "lugar_con_dos_lectores", True)
+    st = ConversationState(conversation_id="c3c", language="es")
+    st.history = [{"role": "user", "content": "estamos en Cartagena"}, {"role": "user", "content": "y el precio?"}]
+    st._jev_lugar = {"choice": "none", "confidence": 0.98}
+    assert core._origen_antes_del_precio(st, "y el precio?", "Son 178 USD.") is None
