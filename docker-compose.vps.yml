@@ -371,6 +371,17 @@ services:
       # CAL-E1 (decisión de Gadea, 16-oct): el chatbot no da números; quien pide un contacto pasa con un asesor.
       # Banco: cal-03 3/3 → 0/3. La base ya no reparte el número (28 menciones fuera de faqs.json).
       CONTACTO_PASA_A_PERSONA: "true"
+      # RONDA calc-B de CAL-C (17-oct, autorizada por Álvaro): los 8 flags de CAL-C encendidos para medir la ronda B del
+      # core contra la A (mismo código, flags apagados). Banco CAL-C: 49 → ~28/63. Revert = quitar estas líneas y
+      # poner los defaults de src/config.py en False.
+      ACTIVIDAD_POR_LO_SABIDO: "true"
+      EXTRACTOR_CITA_DEL_CLIENTE: "true"
+      HOTEL_POR_EXTRACTOR: "true"
+      UNA_SOLA_PREGUNTA: "true"
+      LUGAR_CON_DOS_LECTORES: "true"
+      IDIOMA_DEL_EXTRACTOR: "true"
+      SIN_CEDULA_EXTRANJERO: "true"
+      TRAS_PASE_RECUERDA_EL_PASE: "true"
     depends_on:
       dp-pre-postgres:
         condition: service_healthy

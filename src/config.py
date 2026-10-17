@@ -72,7 +72,7 @@ class Settings(BaseSettings):
     # CAL-C2 (16-oct): aceptar lo que propone el bot ("nos gusta") se citaba con el texto del BOT y la comprobación
     # de la cita lo descartaba; ahora, para la actividad, vale una cita que esté en la última pregunta del bot.
     # APAGADO hasta medirlo.
-    extractor_cita_del_cliente: bool = False
+    extractor_cita_del_cliente: bool = True  # RONDA calc-B (17-oct): encendido para medir; revert = False
     # EX-EST-2 (14-oct, tanda est5): arreglos del flujo por causa. (1) Lo que el cliente dice en el turno que acaba en
     # el pase a una persona se guarda (antes la extraccion se cancelaba: 'staying at the Ubuntu Hotel' y luego 'Where will
     # you be joining us from?'). conversational_core.guardar_lo_dicho_en_el_pase. Ronda est5-B: sin regresiones suyas.
@@ -275,23 +275,23 @@ class Settings(BaseSettings):
     recommend_inferred_minicourse: bool = True
     # CAL-C1 (16-oct): quien ya dijo que quiere bucear no recibe el menú de actividades; sin certificación se le
     # recomienda el minicurso y, sin saberla, se le pregunta (regla de Gadea). APAGADO hasta medirlo.
-    actividad_por_lo_sabido: bool = False
+    actividad_por_lo_sabido: bool = True  # RONDA calc-B (17-oct): encendido para medir; revert = False
     # CAL-C3 (17-oct): el extractor lee también el HOTEL donde se aloja (con su cita, sin lista cerrada) y no se le
     # vuelve a preguntar (cal-41 "Isla Mulata", cal-67/68 "Bodegas de Santa Clara"). APAGADO hasta medirlo.
-    hotel_por_extractor: bool = False
+    hotel_por_extractor: bool = True  # RONDA calc-B (17-oct): encendido para medir; revert = False
     # CAL-C3b (17-oct): si la respuesta a la pregunta del cliente ya acaba preguntando, no se le pega detrás la
     # pregunta de la reserva (cualquier dato, no solo la actividad): una sola pregunta por turno (cal-71/73).
     # APAGADO hasta medirlo.
-    una_sola_pregunta: bool = False
+    una_sola_pregunta: bool = True  # RONDA calc-B (17-oct): encendido para medir; revert = False
     # CAL-C3c (17-oct): el origen del extractor se guarda solo si Jev no está seguro de que el mensaje NO lo dice
     # ("bucear en islas del rosario" ≠ estar en las islas: cal-71/73). APAGADO hasta medirlo.
-    lugar_con_dos_lectores: bool = False
+    lugar_con_dos_lectores: bool = True  # RONDA calc-B (17-oct): encendido para medir; revert = False
     # CAL-C (17-oct, DECISIÓN DE ÁLVARO): quien dice que no tiene cédula colombiana (ni de extranjería), o que es
     # extranjero, no es colombiano y paga en USD (cal-32: "que no tenga cedula"). APAGADO hasta medirlo.
-    sin_cedula_extranjero: bool = False
+    sin_cedula_extranjero: bool = True  # RONDA calc-B (17-oct): encendido para medir; revert = False
     # CAL-C3d (17-oct): con la conversación ya pasada a un asesor, el RAG lo sabe y no pide al cliente que repita su
     # caso (cal-59: "¿me podrías ayudar con este tema?" → "Cuéntame, ¿qué tema?"). APAGADO hasta medirlo.
-    tras_pase_recuerda_el_pase: bool = False
+    tras_pase_recuerda_el_pase: bool = True  # RONDA calc-B (17-oct): encendido para medir; revert = False
 
     # Paso 5 (RAG, l1-6 + l1-7, 27-sep): (a) el catalogo entero como hechos en el contexto del RAG
     # en vez de los atajos de precio por regex, que contestaban preguntas que no eran de precio;
@@ -381,7 +381,7 @@ class Settings(BaseSettings):
     # extractor lee ese portugués como español) y tampoco rompe nada (la regresión de idioma de la ronda sale en
     # español 3/3 CON el flag y 3/3 SIN él: es cal-75, un defecto de siempre). Un flag que no mide nada no entra: el
     # código se queda apagado porque la idea es buena (quita una lista de palabras de la decisión) y le falta un caso.
-    idioma_del_extractor: bool = False
+    idioma_del_extractor: bool = True  # RONDA calc-B (17-oct): encendido para medir; revert = False
     # CAL-E3 (16-oct, decisión de Gadea): quien pide algo que el sistema de reservas no da (un enlace de pago
     # especial para una agencia, una factura, una salida privada por cotizar) o quiere hablar con alguien, se pasa a un
     # asesor. Con el flag, la señal `needs_staff` incluye esa clase (cal-29). APAGADO hasta medirlo.

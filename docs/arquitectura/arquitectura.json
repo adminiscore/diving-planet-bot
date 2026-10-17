@@ -1,8 +1,8 @@
 {
  "meta": {
-  "generado": "2026-10-17T10:46:40+00:00",
-  "commit": "72e0967",
-  "rama": "feature/pre_alvaro"
+  "generado": "2026-10-17T10:59:17+00:00",
+  "commit": "cbe6288",
+  "rama": "ronda-calc-b-local"
  },
  "vistas": {
   "general": {
@@ -479,8 +479,8 @@
     {
      "nombre": "idioma_del_extractor",
      "titulo": "El idioma del primer mensaje lo dice quien lee el mensaje",
-     "codigo": false,
-     "pre": false,
+     "codigo": true,
+     "pre": true,
      "sin_efecto": false
     }
    ],
@@ -612,29 +612,29 @@
     {
      "nombre": "extractor_cita_del_cliente",
      "titulo": "Aceptar la propuesta del bot cuenta",
-     "codigo": false,
-     "pre": false,
+     "codigo": true,
+     "pre": true,
      "sin_efecto": false
     },
     {
      "nombre": "hotel_por_extractor",
      "titulo": "El extractor entiende el hotel",
-     "codigo": false,
-     "pre": false,
+     "codigo": true,
+     "pre": true,
      "sin_efecto": false
     },
     {
      "nombre": "lugar_con_dos_lectores",
      "titulo": "El origen, con dos lectores de acuerdo",
-     "codigo": false,
-     "pre": false,
+     "codigo": true,
+     "pre": true,
      "sin_efecto": false
     },
     {
      "nombre": "sin_cedula_extranjero",
      "titulo": "Sin cédula, paga en dólares",
-     "codigo": false,
-     "pre": false,
+     "codigo": true,
+     "pre": true,
      "sin_efecto": false
     },
     {
@@ -686,22 +686,22 @@
     {
      "nombre": "actividad_por_lo_sabido",
      "titulo": "Sin menú si ya quiere bucear",
-     "codigo": false,
-     "pre": false,
+     "codigo": true,
+     "pre": true,
      "sin_efecto": false
     },
     {
      "nombre": "una_sola_pregunta",
      "titulo": "Una sola pregunta por turno",
-     "codigo": false,
-     "pre": false,
+     "codigo": true,
+     "pre": true,
      "sin_efecto": false
     },
     {
      "nombre": "tras_pase_recuerda_el_pase",
      "titulo": "Tras pasar a un asesor, no pedir que repita",
-     "codigo": false,
-     "pre": false,
+     "codigo": true,
+     "pre": true,
      "sin_efecto": false
     },
     {
@@ -1798,9 +1798,9 @@
    "area": "Reserva",
    "titulo": "Sin menú si ya quiere bucear",
    "texto": "Si el cliente ya dijo que quiere bucear, no se le enseña el menú de actividades: si no está certificado se le recomienda el minicurso y, si no se sabe, se le pregunta si es buzo certificado.",
-   "codigo": false,
-   "pre": false,
-   "fijado_en_pre": false,
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
    "usado_por": [
     "b_slotfill_close"
    ],
@@ -2068,9 +2068,9 @@
    "area": "Reserva",
    "titulo": "Aceptar la propuesta del bot cuenta",
    "texto": "Cuando el cliente acepta el plan que le propone el bot ('nos gusta'), el extractor lo apunta aunque cite el texto de la propuesta del bot (antes el control antiinventos lo tiraba).",
-   "codigo": false,
-   "pre": false,
-   "fijado_en_pre": false,
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
    "usado_por": [
     "b_extraction"
    ],
@@ -2151,9 +2151,9 @@
    "area": "Reserva",
    "titulo": "El extractor entiende el hotel",
    "texto": "El extractor apunta el hotel donde se aloja el cliente tal como lo escribe, aunque no esté en la lista de hoteles de las islas ('Isla Mulata', 'Bodegas de Santa Clara'), y así no se le vuelve a preguntar en qué hotel está.",
-   "codigo": false,
-   "pre": false,
-   "fijado_en_pre": false,
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
    "usado_por": [
     "b_extraction"
    ],
@@ -2175,9 +2175,9 @@
    "area": "Chat",
    "titulo": "El idioma del primer mensaje lo dice quien lee el mensaje",
    "texto": "Antes lo decidía una lista de palabras corrientes, y un mensaje en portugués con muchas palabras iguales al español se contestaba en español. Ahora lo dice la misma lectura del mensaje que saca los datos, que ya se está haciendo a la vez.",
-   "codigo": false,
-   "pre": false,
-   "fijado_en_pre": false,
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
    "usado_por": [
     "b_setup"
    ],
@@ -2539,9 +2539,9 @@
    "area": "Reserva",
    "titulo": "El origen, con dos lectores de acuerdo",
    "texto": "Desde dónde sale el cliente (Cartagena o las islas) decide el precio y el enlace. Se guarda solo si el extractor y Jev no se contradicen: 'quiero bucear en islas del Rosario' no es estar alojado en las islas, y si Jev está seguro de que el mensaje no lo dice, el bot lo pregunta.",
-   "codigo": false,
-   "pre": false,
-   "fijado_en_pre": false,
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
    "usado_por": [
     "b_extraction"
    ],
@@ -2961,9 +2961,9 @@
    "area": "Reserva",
    "titulo": "Sin cédula, paga en dólares",
    "texto": "Decisión de Álvaro: si el cliente dice que no tiene cédula colombiana (ni de extranjería) o que es extranjero, no es colombiano y paga en dólares.",
-   "codigo": false,
-   "pre": false,
-   "fijado_en_pre": false,
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
    "usado_por": [
     "b_extraction"
    ],
@@ -2974,9 +2974,9 @@
    "area": "Reserva",
    "titulo": "Tras pasar a un asesor, no pedir que repita",
    "texto": "Cuando la conversación ya está pasada a un asesor, la respuesta lo sabe: si el cliente insiste en que le ayuden con lo que ya contó, se le dice que el asesor ya tiene su caso, en vez de pedirle que lo cuente otra vez.",
-   "codigo": false,
-   "pre": false,
-   "fijado_en_pre": false,
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
    "usado_por": [
     "b_slotfill_close"
    ],
@@ -2998,9 +2998,9 @@
    "area": "Reserva",
    "titulo": "Una sola pregunta por turno",
    "texto": "Si la respuesta a lo que preguntó el cliente ya acaba con una pregunta, no se le pega detrás la pregunta de la reserva: esa espera al turno siguiente. Antes salían dos preguntas seguidas ('¿En qué hotel de las islas se alojan? ¿En qué hotel o isla te hospedas?').",
-   "codigo": false,
-   "pre": false,
-   "fijado_en_pre": false,
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
    "usado_por": [
     "b_slotfill_close"
    ],
