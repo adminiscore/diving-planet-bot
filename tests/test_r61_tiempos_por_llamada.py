@@ -155,3 +155,30 @@ async def test_con_openai_caido_el_bot_lo_dice_y_pasa_a_un_asesor(monkeypatch):
             assert "problema técnico" in respuesta
             assert st.step == Step.ESCALATE
             assert "FALLO TÉCNICO" in st.pending_escalation_reason and "429" in st.pending_escalation_reason
+
+
+async def test_respaldo_mismo_modelo_lanza_otra_peticion_a_luna(monkeypatch):
+    from src.agents import rag_agent
+    from src.config import settings
+
+    vistas = []
+
+    class _Completions:
+        async def create(self, *, model, **kw):
+            pieza = obs._LLM_PIEZA.get()
+            vistas.append((model, pieza))
+            await asyncio.sleep(0.2 if pieza == "rag_escritor" else 0.0)  # la primera petición se queda en la cola
+            return pieza
+
+    cliente = type("C", (), {"chat": type("Ch", (), {"completions": _Completions()})()})()
+    monkeypatch.setattr(settings, "rag_answer_model", "gpt-6-luna")
+    monkeypatch.setattr(settings, "rag_respaldo_modelo", "gpt-4.1-mini")
+    monkeypatch.setattr(settings, "rag_respaldo_segundos", 0.05)
+    monkeypatch.setattr(settings, "respaldo_mismo_modelo", True)
+    assert await rag_agent.generar_con_respaldo(cliente, [{"role": "user", "content": "hola"}]) == "rag_respaldo"
+    assert sorted(vistas) == [("gpt-6-luna", "rag_escritor"), ("gpt-6-luna", "rag_respaldo")]
+    # sin el flag, el respaldo es gpt-4.1-mini, como hoy
+    vistas.clear()
+    monkeypatch.setattr(settings, "respaldo_mismo_modelo", False)
+    await rag_agent.generar_con_respaldo(cliente, [{"role": "user", "content": "hola"}])
+    assert ("gpt-4.1-mini", "rag_respaldo") in vistas
