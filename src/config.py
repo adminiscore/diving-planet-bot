@@ -295,6 +295,10 @@ class Settings(BaseSettings):
     # CAL-C4 (17-oct): si el cliente afirma un lugar que Jev, seguro, no reconoce como Cartagena ni las islas ("En baru
     # y Rosario", cal-55), se le pregunta a la base, que sabe dónde no operamos. APAGADO hasta medirlo.
     lugar_desconocido_al_rag: bool = False
+    # CAL-C5 (17-oct): la red de menciones por palabras clave (actividades nombradas que no están en el reparto →
+    # "¿cuántos para X?") solo actúa si el extractor no pudo leer el mensaje: "We snorkeled in Roatan yesterday"
+    # preguntaba por snorkel (cal-69/70). APAGADO hasta medirlo.
+    red_menciones_solo_sin_extractor: bool = False
 
     # Paso 5 (RAG, l1-6 + l1-7, 27-sep): (a) el catalogo entero como hechos en el contexto del RAG
     # en vez de los atajos de precio por regex, que contestaban preguntas que no eran de precio;

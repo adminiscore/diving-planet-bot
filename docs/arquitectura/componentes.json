@@ -389,6 +389,7 @@
         "una_sola_pregunta",
         "tras_pase_recuerda_el_pase",
         "lugar_desconocido_al_rag",
+        "red_menciones_solo_sin_extractor",
         "aplazar_pregunta_sin_respuesta",
         "recomendar_a_certificados",
         "acuse_solo_el_mensaje"
@@ -972,6 +973,11 @@
       "area": "Reserva",
       "titulo": "Correcciones sin repetir",
       "texto": "Cuando un dato cambia, pregunta «¿lo cambio?» una sola vez, y nunca por un cambio que se lee igual."
+    },
+    "red_menciones_solo_sin_extractor": {
+      "area": "Reserva",
+      "titulo": "La red de palabras clave, solo si falla el extractor",
+      "texto": "Una red antigua buscaba nombres de actividades en el mensaje y preguntaba por ellas ('We snorkeled yesterday' → '¿cuántos para snorkel?'). Ahora el reparto del grupo lo decide el extractor y la red solo actúa si el extractor no pudo leer el mensaje."
     },
     "lugar_desconocido_al_rag": {
       "area": "Reserva",

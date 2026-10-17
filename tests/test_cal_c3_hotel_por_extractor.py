@@ -229,3 +229,25 @@ def test_c4_lanza_la_respuesta_solo_con_el_flag(monkeypatch):
         st = ConversationState(conversation_id="c4", language="es")
         core._maybe_launch_answer(st, "En baru y Rosario", senales)
         assert len(lanzadas) == n
+
+
+# --- CAL-C5 `red_menciones_solo_sin_extractor`: la red de palabras clave solo si el extractor no leyó ---
+
+def test_c5_la_red_de_menciones_solo_si_el_extractor_no_leyo(monkeypatch):
+    from pathlib import Path
+
+    banco = json.loads((Path(__file__).resolve().parents[1] / "docs/robustness/cal/banco-fallos.json").read_text(
+        encoding="utf-8"))
+    msg = next(f["mensaje_cliente"] for f in banco["fallos"] if f["id"] == "cal-69")  # "We snorkeled in Roatan…"
+    st = ConversationState(conversation_id="c5", language="en", detected_activity="certified_diving",
+                           detected_group_size=2, detected_group_allocation={"certified_diving": 1, "minicourse": 1})
+    monkeypatch.setattr(settings, "red_menciones_solo_sin_extractor", False)
+    st._extractor_leyo = msg
+    hoy = core._menciones_para_la_red(st, msg)
+    assert "snorkel" in hoy  # lo que pasaba en cal-69/70
+    monkeypatch.setattr(settings, "red_menciones_solo_sin_extractor", True)
+    assert core._menciones_para_la_red(st, msg) == []
+    st._extractor_leyo = None  # el extractor falló en este mensaje → la red de siempre
+    assert core._menciones_para_la_red(st, msg) == hoy
+    st._extractor_leyo = "otro mensaje"  # lo que leyó era de otro turno
+    assert core._menciones_para_la_red(st, msg) == hoy

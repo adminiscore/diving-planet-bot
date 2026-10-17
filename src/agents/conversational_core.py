@@ -2287,6 +2287,8 @@ async def _aplicar_extractor(intent, state: ConversationState, message: str, pis
     lo provisional del regex. Va ANTES de las reglas que trabajan sobre el intent (reparto, cert-o-curso, recomendar el
     minicurso), para que vean el valor final. Si la llamada falla, lo de hoy con su puerta, campo a campo."""
     datos = await datos_del_extractor(state, message)
+    # CAL-C5: de este mensaje, ¿leyó el extractor? (la red de menciones por palabras solo actúa si no; ver abajo)
+    state._extractor_leyo = message if datos is not None else None
     await _otro_idioma_en_ingles(state, datos, message)
     _quitar_provisional(intent, pista)
     _nombre_del_extractor(state, datos, message)
@@ -4313,6 +4315,22 @@ async def _extraction_phase(
     return await _prepend_parallel_answer(state, response, greeting)
 
 
+def _menciones_para_la_red(state: ConversationState, message: str) -> list[str]:
+    """Las actividades que nombra el mensaje para la red de menciones de última instancia (ver su uso)."""
+    mentioned = _mentioned_product_activities(message)
+    if settings.red_menciones_con_principal:
+        mentioned = _menciones_de_otro_producto(state, message, mentioned)
+    if settings.red_menciones_solo_sin_extractor and getattr(state, "_extractor_leyo", None) == message:
+        # CAL-C5 (17-oct): "We snorkeled in Roatan yesterday" (lo que ya hicieron) metía snorkel en la cola de
+        # acompañantes y el bot preguntaba "How many people would that be for snorkeling?" (cal-69/70). Con el
+        # extractor de la fase EX (LLM primero, grupo y reparto con cita), esta red de palabras clave es la de
+        # última instancia: solo cuando el extractor no pudo leer el mensaje.
+        if mentioned:
+            logger.info(f"[CORE][CAL-C5] el extractor leyó el mensaje: la red de menciones no añade {mentioned}")
+        return []
+    return mentioned
+
+
 async def _extraction_phase_body(
     state: ConversationState, message: str, routing_signals: dict,
     greeting: str, carry: dict,
@@ -4827,9 +4845,7 @@ async def _extraction_phase_body(
     # entrar en la estructura del LLM. Acotado a mensajes que mencionan a
     # otra persona (`_mentions_person`) para no disparar en cada mención
     # suelta.
-    mentioned = _mentioned_product_activities(message)
-    if settings.red_menciones_con_principal:
-        mentioned = _menciones_de_otro_producto(state, message, mentioned)
+    mentioned = _menciones_para_la_red(state, message)
     if mentioned and _menciona_a_alguien(state, message) and not state.pending_companion_queue:
         accounted = set((state.detected_group_allocation or {}).keys())
         main_act = _effective_activity(state)
