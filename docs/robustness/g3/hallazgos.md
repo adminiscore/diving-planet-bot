@@ -122,8 +122,12 @@ reescritura de CAL-D y la pregunta sola de G3-05 en una llamada; medir la latenc
 `_bm25_search` usa `websearch_to_tsquery('simple', …)`, que exige TODAS las palabras: en la búsqueda de PRE, "¿cuánto
 cuesta el minicurso?" → 1 documento; "what time does the boat leave?" → 0; un mensaje largo → 0. Además, cuando la
 consulta lleva el marcador de origen, BM25 busca solo la última línea (`[origen_cliente]=ya en las islas` → 0). En la
-práctica, la búsqueda es solo por vector y la fusión RRF no aporta. Cambiarlo (OR, o `plainto_tsquery` con `|`)
-mueve todos los rankings: medir con el banco de piezas (`rag_piezas`) antes, como CAL-D segunda parte.
+práctica, la búsqueda es solo por vector y la fusión RRF no aporta.
+
+Medido sin gastar (SQL en la base de PRE, las 51 preguntas de `rag_piezas`, solo BM25): con TODAS las palabras, 48/51
+preguntas sin ningún documento y 4/97 datos en el top-8; con CUALQUIER palabra (OR), 0/51 vacías y 53/97. Preparado
+tras el flag `BM25_CUALQUIER_PALABRA` (APAGADO), que además hace que BM25 busque la pregunta y no la marca de origen.
+Cambia todos los rankings: medir con `rag_piezas --solo-busqueda` (céntimos) con y sin el flag cuando haya crédito.
 
 ## G3-07 · Pareja de Bogotá, snorkel → minicurso — conv 5573 (17-oct)
 

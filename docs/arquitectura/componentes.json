@@ -505,7 +505,8 @@
       ],
       "interruptores": [
         "rag_busqueda_origen",
-        "rag_busqueda_doble"
+        "rag_busqueda_doble",
+        "bm25_cualquier_palabra"
       ],
       "tiempo_medido": {
         "p50": 0.4,
@@ -1510,6 +1511,11 @@
       "area": "Preguntas",
       "titulo": "Se busca también la pregunta sola, sin los datos que da el cliente",
       "texto": "Si el cliente da datos y pregunta en el mismo mensaje (\"salimos de Cartagena el día 30. ¿Hace falta saber nadar?\"), el origen y la fecha tapaban la pregunta y la búsqueda no traía la pregunta frecuente: el bot decía que no tenía el dato. Ahora también se busca la pregunta sola, traducida si el cliente escribe en portugués o francés."
+    },
+    "bm25_cualquier_palabra": {
+      "area": "Preguntas",
+      "titulo": "La búsqueda por palabras acepta cualquier palabra de la pregunta",
+      "texto": "La base se busca de dos formas: por significado y por palabras. La de palabras exigía que un documento tuviera TODAS las palabras de la pregunta y casi nunca encontraba nada (48 de 51 preguntas de prueba, ningún documento). Con este interruptor basta con alguna, y las dos búsquedas vuelven a sumar."
     }
   },
   "areas": [

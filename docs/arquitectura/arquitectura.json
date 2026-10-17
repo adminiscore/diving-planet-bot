@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-17T19:03:25+00:00",
-  "commit": "95f1659",
+  "generado": "2026-10-17T19:39:53+00:00",
+  "commit": "fe30a1d",
   "rama": "feature/pre_gadea"
  },
  "vistas": {
@@ -981,6 +981,13 @@
      "titulo": "Buscar también con la pregunta tal cual",
      "codigo": true,
      "pre": true,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "bm25_cualquier_palabra",
+     "titulo": "La búsqueda por palabras acepta cualquier palabra de la pregunta",
+     "codigo": false,
+     "pre": false,
      "sin_efecto": false
     }
    ],
@@ -2042,6 +2049,19 @@
    "fijado_en_pre": false,
    "usado_por": [
     "r_escribir"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "bm25_cualquier_palabra",
+   "area": "Preguntas",
+   "titulo": "La búsqueda por palabras acepta cualquier palabra de la pregunta",
+   "texto": "La base se busca de dos formas: por significado y por palabras. La de palabras exigía que un documento tuviera TODAS las palabras de la pregunta y casi nunca encontraba nada (48 de 51 preguntas de prueba, ningún documento). Con este interruptor basta con alguna, y las dos búsquedas vuelven a sumar.",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
+   "usado_por": [
+    "r_buscar"
    ],
    "sin_efecto": null
   },
