@@ -190,10 +190,23 @@ def medir(etiqueta: str, ids: list[str] | None, tarea: str | None, reps: int, fl
         try:
             filas = _reproducir_en_pre(_turnos_del_caso(f), reps=reps, flags=flags, codigo=codigo)
         except RuntimeError as exc:
-            # El caso se queda SIN medir y se dice al final: no cuenta como 0 fallos (17-oct).
-            print(f"  {f['id']} NO MEDIDO: {exc}")
-            roto.append(f["id"])
-            continue
+            # 17-oct: un DEPLOY a PRE a mitad de medida reinicia el contenedor y se lleva por delante la copia del
+            # codigo en /tmp ("chdir to cwd ... no such file or directory"): la medida moria y 62 casos se quedaban
+            # sin medir. Si la copia ya no esta, se vuelve a subir y se reintenta el caso una vez.
+            if codigo and "no such file or directory" in str(exc):
+                print(f"  {f['id']}: la copia del codigo ya no esta (deploy a mitad?): la subo otra vez")
+                try:
+                    codigo = subir_codigo_local()
+                    filas = _reproducir_en_pre(_turnos_del_caso(f), reps=reps, flags=flags, codigo=codigo)
+                except RuntimeError as otra:
+                    print(f"  {f['id']} NO MEDIDO: {otra}")
+                    roto.append(f["id"])
+                    continue
+            else:
+                # El caso se queda SIN medir y se dice al final: no cuenta como 0 fallos (17-oct).
+                print(f"  {f['id']} NO MEDIDO: {exc}")
+                roto.append(f["id"])
+                continue
         async def _todas(f=f, filas=filas):  # un solo bucle por caso (antes: "Event loop is closed" al cerrar clientes)
             return await asyncio.gather(*(_verificar(f, hoy) for hoy in filas))
 

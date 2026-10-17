@@ -112,3 +112,23 @@ unos **3 criterios (±1,3 puntos)**. Por debajo de eso:
 3. Si no se reproduce en ninguno, es azar y no cuenta.
 4. El número de la ronda sirve para lo grande (una regresión de 6 criterios como la de los avisos, §9 de
    `cal-a5-avisos-condicionados.md`) y para la latencia, que con 144 turnos sí tiene muestra.
+
+## No medir mientras hay un deploy en vuelo (17-oct-2026, dos veces el mismo tropiezo)
+
+Un `git push` a una rama `pre_*` despliega PRE, y el deploy **reinicia el contenedor**, que se lleva por delante la
+copia del código de `--codigo-local` (vive en `/tmp` dentro del contenedor). Si la medida está corriendo:
+
+```
+OCI runtime exec failed: chdir to cwd ("/tmp/codigo-local-usuario-8800") failed: no such file or directory
+```
+
+Pasó dos veces la misma noche porque lancé el push y la medida en el mismo comando. La primera vez **no se vio**: los
+casos sin medir se contaban como "0 fallos" y el total parecía buenísimo (ver abajo). Tres cosas para que no vuelva:
+
+1. **No se mide con un deploy en vuelo.** Si hay que subir algo, primero `check_deploy` y luego medir.
+2. `banco_fallos medir` **vuelve a subir la copia y reintenta el caso** si la carpeta ha desaparecido.
+3. Un caso que no se puede medir **no cuenta como 0 fallos**: se lanza el error, se lista al final con un aviso y
+   queda en `sin_medir` del JSON. El total dice "casos medidos".
+
+**La lección general:** en este flujo, un fallo de medida que se ve como un resultado bueno es más peligroso que
+cualquier regresión del bot. Si un número sale redondo de repente, hay que mirar cuántos casos se midieron.
