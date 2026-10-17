@@ -358,12 +358,13 @@ services:
       # ronda A ya hecha. Revert = quitar esta línea.
       # (Los AVISOS se quedaron FUERA: dos rondas medidas, 97,4 % → 96,0 % y 96,1 %. Ver cal-a5-avisos-condicionados.md)
       CONSULTA_CON_LO_SABIDO: "true"
-      # RONDA D (17-oct): la familia de Jev. Banco CAL-E: cal-03, cal-29 y cal-33 arreglados 3 de 3. `JEV_CON_CONTEXTO`
-      # toca TODAS las señales, así que la ronda sirve para cazar una regresión GRANDE; las pequeñas se comprueban
-      # repitiendo los diálogos que cambien (protocolo del 17-oct). Revert = quitar estas tres líneas.
+      # PROMOCIONADOS 17-oct (ronda D del core, 96,5 % frente al 96,1 % de la C): 3 mejoras reales, todas de no
+      # repreguntar lo que el cliente ya dijo, y la mejor latencia de la noche (p95 5,0 s frente a 6,4 del suelo). Sus
+      # 3 "regresiones" se demostraron ajenas repitiendo 3 veces con y sin los flags. Revert = quitar estas dos líneas.
+      # `IDIOMA_DEL_EXTRACTOR` se queda FUERA: no arregla su caso (el extractor lee ese portugués como español) y no
+      # mejora nada medible, así que no entra en PRE aunque tampoco rompa nada.
       JEV_CON_CONTEXTO: "true"
       PASE_SI_PIDE_FUERA_DEL_SISTEMA: "true"
-      IDIOMA_DEL_EXTRACTOR: "true"
       # CAL-E1 PROMOCIONADO 17-oct tras la ronda A/B del core (`2026-10-16-cal-A` vs `-cal-B`): ninguna regresión suya.
       # Los avisos (`AVISOS_CONDICIONADOS`) se REVIRTIERON en la misma ronda: 97,4 % → 96,0 % de criterios, 6
       # regresiones reales (la peor: la respuesta dejaba de dar el enlace de reserva). Revert = quitar esta línea.

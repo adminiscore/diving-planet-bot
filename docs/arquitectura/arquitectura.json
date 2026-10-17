@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-17T01:21:22+00:00",
-  "commit": "eb65d44",
+  "generado": "2026-10-17T02:11:30+00:00",
+  "commit": "e593e8c",
   "rama": "feature/pre_gadea"
  },
  "vistas": {
@@ -172,8 +172,8 @@
    "marca": "openrouter",
    "tiempos": {
     "n": 93,
-    "p50": 0.415,
-    "p95": 1.504
+    "p50": 0.409,
+    "p95": 1.505
    }
   },
   {
@@ -196,9 +196,9 @@
    ],
    "modelos": [],
    "tiempos": {
-    "n": 7,
+    "n": 6,
     "p50": 0.002,
-    "p95": 0.004
+    "p95": 0.003
    }
   },
   {
@@ -214,8 +214,8 @@
    "interruptores": [],
    "tiempos": {
     "n": 2,
-    "p50": 0.003,
-    "p95": 0.003
+    "p50": 0.004,
+    "p95": 0.004
    }
   },
   {
@@ -239,8 +239,8 @@
    "modelos": [],
    "tiempos": {
     "n": 1,
-    "p50": 0.002,
-    "p95": 0.002
+    "p50": 0.001,
+    "p95": 0.001
    }
   },
   {
@@ -258,8 +258,8 @@
    "interruptores": [],
    "tiempos": {
     "n": 4,
-    "p50": 3.367,
-    "p95": 3.72
+    "p50": 3.248,
+    "p95": 3.836
    }
   },
   {
@@ -275,9 +275,9 @@
    "modelos": [],
    "interruptores": [],
    "tiempos": {
-    "n": 79,
-    "p50": 1.803,
-    "p95": 4.724
+    "n": 80,
+    "p50": 1.863,
+    "p95": 4.077
    }
   },
   {
@@ -479,16 +479,16 @@
     {
      "nombre": "idioma_del_extractor",
      "titulo": "El idioma del primer mensaje lo dice quien lee el mensaje",
-     "codigo": true,
-     "pre": true,
+     "codigo": false,
+     "pre": false,
      "sin_efecto": false
     }
    ],
    "marca": "openai",
    "tiempos": {
-    "n": 79,
-    "p50": 0.026,
-    "p95": 1.086
+    "n": 80,
+    "p50": 0.03,
+    "p95": 1.016
    }
   },
   {
@@ -518,9 +518,9 @@
    ],
    "modelos": [],
    "tiempos": {
-    "n": 79,
+    "n": 80,
     "p50": 0.005,
-    "p95": 0.017
+    "p95": 0.013
    }
   },
   {
@@ -557,9 +557,9 @@
    ],
    "marca": "openai",
    "tiempos": {
-    "n": 74,
+    "n": 76,
     "p50": 0.006,
-    "p95": 0.013
+    "p95": 0.017
    }
   },
   {
@@ -633,9 +633,9 @@
    ],
    "marca": "openai",
    "tiempos": {
-    "n": 74,
-    "p50": 0.517,
-    "p95": 1.008
+    "n": 76,
+    "p50": 0.42,
+    "p95": 0.971
    }
   },
   {
@@ -693,9 +693,9 @@
    ],
    "marca": "openai",
    "tiempos": {
-    "n": 74,
-    "p50": 0.805,
-    "p95": 3.746
+    "n": 75,
+    "p50": 1.268,
+    "p95": 3.263
    }
   },
   {
@@ -797,9 +797,9 @@
    "modelos": [],
    "interruptores": [],
    "conteo": {
-    "n": 46,
+    "n": 47,
     "que": "preguntas",
-    "fuente": "2026-10-17-cal-C.json"
+    "fuente": "2026-10-17-cal-D.json"
    }
   },
   {
@@ -2127,9 +2127,9 @@
    "area": "Chat",
    "titulo": "El idioma del primer mensaje lo dice quien lee el mensaje",
    "texto": "Antes lo decidía una lista de palabras corrientes, y un mensaje en portugués con muchas palabras iguales al español se contestaba en español. Ahora lo dice la misma lectura del mensaje que saca los datos, que ya se está haciendo a la vez.",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
    "usado_por": [
     "b_setup"
    ],
@@ -2921,7 +2921,7 @@
     "b_acuse"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 115
+   "llamadas_ultima_ronda": 118
   },
   {
    "ajuste": "extractor_turno_model",
@@ -2953,7 +2953,7 @@
    ],
    "proveedor": "OpenRouter",
    "llamadas_ultima_ronda": null,
-   "nota": "Decidió solo 81 de 93 mensajes; en los otros 12 decidió el LLM de respaldo (sus llamadas cuentan en gpt-4o-mini)."
+   "nota": "Decidió solo 79 de 93 mensajes; en los otros 14 decidió el LLM de respaldo (sus llamadas cuentan en gpt-4o-mini)."
   },
   {
    "ajuste": "openai_embedding_model",
@@ -2976,7 +2976,7 @@
     "r_reescribir"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 115
+   "llamadas_ultima_ronda": 118
   },
   {
    "ajuste": "openai_transcription_model",
@@ -2996,7 +2996,7 @@
     "r_escribir"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 53
+   "llamadas_ultima_ronda": 55
   },
   {
    "ajuste": "rag_plan_model",
@@ -3008,46 +3008,46 @@
   }
  ],
  "ronda": {
-  "etiqueta": "cal-C (core, consulta con lo sabido)",
-  "run_at": "2026-10-17T00:36:32Z",
-  "fichero": "2026-10-17-cal-C.json",
-  "commit": "e4d5411",
+  "etiqueta": "cal-D (core, familia de Jev)",
+  "run_at": "2026-10-17T01:41:29Z",
+  "fichero": "2026-10-17-cal-D.json",
+  "commit": "4492991",
   "por_tipo": {
    "reserva": {
-    "turns": 47,
-    "latency_p50": 1.199,
-    "latency_p95": 2.291,
-    "latency_avg": 1.37,
+    "turns": 46,
+    "latency_p50": 1.145,
+    "latency_p95": 2.281,
+    "latency_avg": 1.353,
     "llm_calls_avg": 2.26,
-    "llm_calls_p95": 4.0,
-    "llm_calls_max": 4,
-    "embeddings_avg": 1.26,
-    "llm_share": 1.451,
+    "llm_calls_p95": 3.75,
+    "llm_calls_max": 5,
+    "embeddings_avg": 1.37,
+    "llm_share": 1.452,
     "tokens_avg": 0,
     "cost_avg_usd": 0
    },
    "rag": {
-    "turns": 46,
-    "latency_p50": 3.729,
-    "latency_p95": 6.392,
-    "latency_avg": 3.83,
-    "llm_calls_avg": 4.22,
+    "turns": 47,
+    "latency_p50": 3.624,
+    "latency_p95": 5.383,
+    "latency_avg": 3.743,
+    "llm_calls_avg": 4.28,
     "llm_calls_p95": 6.0,
     "llm_calls_max": 6,
-    "embeddings_avg": 1.61,
-    "llm_share": 1.34,
+    "embeddings_avg": 1.62,
+    "llm_share": 1.325,
     "tokens_avg": 0,
     "cost_avg_usd": 0
    }
   },
   "enrutador": {
    "by_backend": {
-    "jev": 81,
-    "llm_uncertain": 11,
+    "jev": 79,
+    "llm_uncertain": 13,
     "llm": 1
    },
    "ms_p50": 380.5,
-   "ms_p95": 458.2
+   "ms_p95": 448.45
   },
   "cliente": {
    "turns": 93,
@@ -3055,18 +3055,18 @@
    "no_reply": 0,
    "multi_bubble": 0,
    "latency_p50": 3.0,
-   "latency_p95": 6.0,
-   "latency_max": 8
+   "latency_p95": 5.0,
+   "latency_max": 7
   },
   "llamadas_por_modelo": {
-   "gpt-4o-mini": 115,
+   "gpt-4o-mini": 118,
    "gpt-4.1-mini": 85,
-   "gpt-6-luna": 53,
+   "gpt-6-luna": 55,
    "gpt-4.1": 47
   },
   "calidad": {
-   "criteria_pass_pct": 96.1,
-   "dialogues_passed": 26,
+   "criteria_pass_pct": 96.5,
+   "dialogues_passed": 25,
    "dialogues": 32,
    "model": "gpt-5-mini (medium)"
   }

@@ -353,20 +353,24 @@ class Settings(BaseSettings):
     # CAL-E5 (16-oct): Jev contesta las señales del router viendo solo el mensaje del turno, así que un mensaje que se
     # refiere a lo anterior pierde a qué se refiere ("me lo podrías compartir" tras "se me perdió el número",
     # "pero un link especial"). Con el flag le viajan los 2 últimos mensajes como referencia. APAGADO hasta medirlo.
-    # **ENCENDIDO 17-oct para la RONDA D** (banco CAL-E: cal-33 arreglado 3 de 3 con el contexto también en el
-    # enrutador de respaldo). Revert = "false" aquí y quitar la línea del compose.
+    # **PROMOCIONADO 17-oct** (ronda D del core: 96,5 % frente al 96,1 % de la C, con 3 mejoras reales de no
+    # repreguntar y el p95 más bajo de la noche, 5,0 s). Banco CAL-E: cal-33 arreglado 3 de 3 con el contexto también
+    # en el enrutador de respaldo. Revert = "false" aquí y quitar la línea del compose.
     jev_con_contexto: bool = True
     # CAL-E4 (16-oct): el idioma del PRIMER turno lo decidía una lista de palabras vacías, que corta la cadena antes
     # del LLM: un mensaje en portugués con muchas palabras iguales al español ("Busco el seguinte: Vamos en família a
     # Cartagena") se contestaba en español (cal-12). Con el flag lo dice el EXTRACTOR, que ya va lanzado en paralelo
     # (campo `idioma`): ni una llamada más ni una lista de palabras. APAGADO hasta medirlo.
-    # **ENCENDIDO 17-oct para la RONDA D**. El caso del banco (cal-12) NO lo arregla, porque el extractor lee ese
-    # portugués como español; se mide igual porque quita una lista de palabras de la decisión del idioma.
-    idioma_del_extractor: bool = True
+    # **NO PROMOCIONADO 17-oct**: medido en la ronda D y NO mejora nada (su caso, cal-12, sigue fallando porque el
+    # extractor lee ese portugués como español) y tampoco rompe nada (la regresión de idioma de la ronda sale en
+    # español 3/3 CON el flag y 3/3 SIN él: es cal-75, un defecto de siempre). Un flag que no mide nada no entra: el
+    # código se queda apagado porque la idea es buena (quita una lista de palabras de la decisión) y le falta un caso.
+    idioma_del_extractor: bool = False
     # CAL-E3 (16-oct, decisión de Gadea): quien pide algo que el sistema de reservas no da (un enlace de pago
     # especial para una agencia, una factura, una salida privada por cotizar) o quiere hablar con alguien, se pasa a un
     # asesor. Con el flag, la señal `needs_staff` incluye esa clase (cal-29). APAGADO hasta medirlo.
-    # **ENCENDIDO 17-oct para la RONDA D** (banco CAL-E: cal-29 arreglado 3 de 3).
+    # **PROMOCIONADO 17-oct** con la ronda D (banco CAL-E: cal-29 arreglado 3 de 3). La "regresión" del diálogo del
+    # clima no se reproduce: 3 de 3 ofrecen el pase y hablan del estado del mar, con los tres flags y con uno solo.
     pase_si_pide_fuera_del_sistema: bool = True
     # CAL-D (16-oct): la consulta de búsqueda de un mensaje referido no nombra el asunto. Medido con
     # `scripts/sonda_senales.py`: el reescritor dejaba "And how much is per a day" en "How much is the price per day?"
