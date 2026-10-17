@@ -5621,6 +5621,11 @@ def _answer_replaces_the_booking_question(
     """
     if _is_rag_fallback(answer):
         return True
+    if settings.una_sola_pregunta and not finalized and _answer_already_asks(answer):
+        # CAL-C3b (17-oct): la regla vale para cualquier dato pendiente, como en el camino antiguo
+        # (`_answer_question`). "¿En qué hotel de las islas se alojan? ¿En qué hotel o isla te hospedas?"
+        # (cal-71/73): dos preguntas seguidas; la de la reserva queda pendiente para el turno siguiente.
+        return True
     return not finalized and state.core_pending_slot == SLOT_ACTIVITY and _answer_already_asks(answer)
 
 

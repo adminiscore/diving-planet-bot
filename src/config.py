@@ -279,6 +279,10 @@ class Settings(BaseSettings):
     # CAL-C3 (17-oct): el extractor lee también el HOTEL donde se aloja (con su cita, sin lista cerrada) y no se le
     # vuelve a preguntar (cal-41 "Isla Mulata", cal-67/68 "Bodegas de Santa Clara"). APAGADO hasta medirlo.
     hotel_por_extractor: bool = False
+    # CAL-C3b (17-oct): si la respuesta a la pregunta del cliente ya acaba preguntando, no se le pega detrás la
+    # pregunta de la reserva (cualquier dato, no solo la actividad): una sola pregunta por turno (cal-71/73).
+    # APAGADO hasta medirlo.
+    una_sola_pregunta: bool = False
 
     # Paso 5 (RAG, l1-6 + l1-7, 27-sep): (a) el catalogo entero como hechos en el contexto del RAG
     # en vez de los atajos de precio por regex, que contestaban preguntas que no eran de precio;

@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-17T09:27:53+00:00",
-  "commit": "121ce14",
+  "generado": "2026-10-17T09:31:03+00:00",
+  "commit": "47ebade",
   "rama": "feature/pre_alvaro"
  },
  "vistas": {
@@ -672,6 +672,13 @@
     {
      "nombre": "actividad_por_lo_sabido",
      "titulo": "Sin menú si ya quiere bucear",
+     "codigo": false,
+     "pre": false,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "una_sola_pregunta",
+     "titulo": "Una sola pregunta por turno",
      "codigo": false,
      "pre": false,
      "sin_efecto": false
@@ -2924,6 +2931,19 @@
    "pre": true,
    "fijado_en_pre": true,
    "usado_por": [],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "una_sola_pregunta",
+   "area": "Reserva",
+   "titulo": "Una sola pregunta por turno",
+   "texto": "Si la respuesta a lo que preguntó el cliente ya acaba con una pregunta, no se le pega detrás la pregunta de la reserva: esa espera al turno siguiente. Antes salían dos preguntas seguidas ('¿En qué hotel de las islas se alojan? ¿En qué hotel o isla te hospedas?').",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
+   "usado_por": [
+    "b_slotfill_close"
+   ],
    "sin_efecto": null
   }
  ],

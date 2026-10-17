@@ -87,3 +87,19 @@ def test_manda_el_hotel_que_ya_hay_y_sin_flag_nada(monkeypatch):
     it3 = _intent()
     core._poner_hotel(it3, ConversationState(conversation_id="c3"), {"hotel": "Isla Mulata"})
     assert it3.hotel is None
+
+
+# --- CAL-C3b `una_sola_pregunta`: si la respuesta ya pregunta, no se pega la de la reserva ---
+
+def test_una_sola_pregunta_para_cualquier_dato(monkeypatch):
+    st = ConversationState(conversation_id="c3b")
+    st.core_pending_slot = core.SLOT_HOTEL
+    pregunta = "Puedes reservar aquí: https://x. ¿En qué hotel de las islas se alojan?"
+    afirmacion = "Puedes reservar aquí: https://x."
+    monkeypatch.setattr(settings, "una_sola_pregunta", False)
+    assert not core._answer_replaces_the_booking_question(st, pregunta)
+    monkeypatch.setattr(settings, "una_sola_pregunta", True)
+    assert core._answer_replaces_the_booking_question(st, pregunta)
+    assert not core._answer_replaces_the_booking_question(st, afirmacion)
+    # con el cierre de la reserva (resumen + enlace) en el turno, el cierre se manda igual
+    assert not core._answer_replaces_the_booking_question(st, pregunta, finalized=True)
