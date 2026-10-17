@@ -903,16 +903,19 @@ async def generar_con_respaldo(client, messages: list[dict]):
     modelos-B). Si el modelo principal no ha terminado en `rag_respaldo_segundos`, se lanza la MISMA petición al
     modelo de respaldo (`rag_respaldo_modelo`, gpt-4.1-mini) en paralelo y se usa la primera que termine; la otra
     se cancela. Si el principal falla, contesta el respaldo. Sin respaldo configurado, la llamada de siempre."""
-    from src.observability import note_turn  # lazy
+    from src.observability import note_turn, pieza_llm  # lazy
 
     principal = settings.rag_answer_model or settings.openai_model
     respaldo, espera = settings.rag_respaldo_modelo, settings.rag_respaldo_segundos
 
-    def llamar(model: str):
+    async def llamar(model: str):
         # CAL-A1 (`rag_temperatura_cero`): 18 de los 56 fallos del RAG en ex-10 eran azar (mismo contexto, unas veces
         # sí y otras no; diagnóstico de Gadea): con temperatura 0 la redacción es estable.
         temperatura = 0.0 if settings.rag_temperatura_cero else 0.3
-        return client.chat.completions.create(model=model, messages=messages, temperature=temperatura, max_tokens=500)
+        # r6-1: el escritor y el respaldo salen por separado en [TURN_METRICS] (CAL-G).
+        with pieza_llm("rag_escritor" if model == principal else "rag_respaldo"):
+            return await client.chat.completions.create(model=model, messages=messages, temperature=temperatura,
+                                                        max_tokens=500)
 
     if not respaldo or espera <= 0 or respaldo == principal:
         return await llamar(principal)

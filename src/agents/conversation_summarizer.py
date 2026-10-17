@@ -16,6 +16,7 @@ from openai import AsyncOpenAI
 from src.config import settings
 from src.flows.state import ConversationState
 from src.llm_client import trace_openai
+from src.observability import con_pieza_llm
 from src.privacy import redact_pii
 from src.prompts.memory import (
     MEMORIA_SEGURA_RESUMEN_EN,
@@ -49,6 +50,7 @@ def _format_turns(turns: list[dict], lang: str) -> str:
     return "\n".join(lines)
 
 
+@con_pieza_llm("resumen")
 async def _generate_summary(existing_summary: str | None, new_turns_text: str, lang: str) -> str:
     system = (SUMMARY_SYSTEM_ES if lang == "es" else SUMMARY_SYSTEM_EN) + (
         (MEMORIA_SEGURA_RESUMEN_ES if lang == "es" else MEMORIA_SEGURA_RESUMEN_EN)

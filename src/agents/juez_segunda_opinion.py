@@ -19,6 +19,7 @@ import logging
 import re
 
 from src.config import settings
+from src.observability import con_pieza_llm
 
 logger = logging.getLogger("uvicorn.error")
 
@@ -102,6 +103,7 @@ def _cifras_y_enlaces(texto: str) -> set[str]:
     return {s for s in salida if s}
 
 
+@con_pieza_llm("segunda_opinion")
 async def respaldadas_con_cita(frases: list[str], contexto: str, lang: str = "es") -> bool:
     """True solo si TODAS las frases rechazadas traen una cita literal del contexto y sus cifras y enlaces están en él."""
     import json

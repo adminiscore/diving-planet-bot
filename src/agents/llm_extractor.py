@@ -23,6 +23,7 @@ from openai import AsyncOpenAI, OpenAIError
 from src.agents.intent_detector import DetectedIntent
 from src.config import settings
 from src.llm_client import tool_arguments, trace_openai
+from src.observability import con_pieza_llm
 from src.prompts.booking import (
     EXTRACTION_TOOL,
     SIGNALS_TOOL,
@@ -110,6 +111,7 @@ def _strip_schema_nulls(args: dict) -> dict:
     return args
 
 
+@con_pieza_llm("red_fill_gaps")
 async def fill_gaps(
     message: str,
     regex_intent: DetectedIntent,
@@ -231,6 +233,7 @@ def disagreements_with(values: dict, fields, reference: dict) -> dict:
     return out
 
 
+@con_pieza_llm("red_verify_fields")
 async def verify_fields(
     fields: list[str],
     message: str,
@@ -313,6 +316,7 @@ async def verify_fields(
     return disagreements_with(args, fields, regex_values)
 
 
+@con_pieza_llm("red_extract_and_verify")
 async def extract_and_verify(
     gaps: list[str],
     verify: list[str],
@@ -443,6 +447,7 @@ def compare_with_ground_truth(patch: dict, expected: dict) -> dict:
     return {"agree": agree, "disagree": disagree, "missed": missed}
 
 
+@con_pieza_llm("red_detect_special_signals")
 async def detect_special_signals(
     message: str,
     *,
@@ -517,6 +522,7 @@ async def detect_special_signals(
 # fallo (el bot cae al re-preguntar de siempre, nunca peor que hoy).
 
 
+@con_pieza_llm("red_resolve_slot_answer")
 async def resolve_slot_answer(
     slot: str,
     message: str,
@@ -579,6 +585,7 @@ def _regla_solo_mensaje(lang: str) -> str:
     return ACUSE_SOLO_MENSAJE_ES if lang == "es" else ACUSE_SOLO_MENSAJE_EN
 
 
+@con_pieza_llm("acuse")
 async def compose_acknowledgement(
     message: str,
     *,

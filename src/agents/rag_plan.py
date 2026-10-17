@@ -34,6 +34,7 @@ from openai import AsyncOpenAI
 
 from src.config import settings
 from src.llm_client import trace_openai
+from src.observability import con_pieza_llm
 
 logger = logging.getLogger("uvicorn.error")
 
@@ -85,6 +86,7 @@ def _ultimas_lineas(history: list[dict] | None, n: int = 8) -> str:
     return "\n".join(lineas) or "(sin conversación previa)"
 
 
+@con_pieza_llm("rag_plan")
 async def planificar(query: str, history: list[dict] | None, lang: str) -> list[str] | None:
     """Los puntos que la respuesta tiene que cubrir, o None si la llamada falló (se sigue sin lista)."""
     try:
@@ -112,6 +114,7 @@ def bloque_de_puntos(puntos: list[str], lang: str) -> str:
             "don't have the fact for one, say so for that item and answer the rest):\n" + lista)
 
 
+@con_pieza_llm("rag_plan")
 async def puntos_sin_cubrir(puntos: list[str], answer: str, lang: str) -> list[str]:
     """Los puntos de la lista que la respuesta no cubre ([] si están todos o si la llamada falló)."""
     if not puntos:
@@ -149,6 +152,7 @@ These do NOT count: prices or offers they didn't ask for, other plans, nice-to-h
 Return only JSON: {"faltan": ["the warning in one sentence, with the fact from the INFORMATION"]} (empty list if nothing is missing)."""
 
 
+@con_pieza_llm("rag_plan")
 async def avisos_que_faltan(query: str, informacion: str, answer: str, lang: str) -> list[str]:
     """Los avisos imprescindibles que la respuesta no da ([] si no falta ninguno o si la llamada falló)."""
     try:
@@ -227,6 +231,7 @@ def _lo_dijo_el_cliente(cita: str, history: list[dict] | None, query: str) -> bo
     return cita_n in dicho or cita_n in _normalizado(query)
 
 
+@con_pieza_llm("aviso_final")
 async def aviso_al_final(history: list[dict] | None, query: str, answer: str, lang: str,
                          dados: list[str] | None = None) -> tuple[str, str] | None:
     """CAL-A6: (id del aviso, frase que añadir) si a la respuesta le falta uno de la lista cerrada; None si no falta

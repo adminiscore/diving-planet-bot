@@ -28,6 +28,7 @@ from openai import AsyncOpenAI
 
 from src.config import settings
 from src.llm_client import tool_arguments, trace_openai
+from src.observability import con_pieza_llm
 from src.prompts.memory import (
     MEMORIA_SEGURA_NOTAS_EN,
     MEMORIA_SEGURA_NOTAS_ES,
@@ -45,6 +46,7 @@ def _seguridad(lang: str) -> str:
     return MEMORIA_SEGURA_NOTAS_ES if lang == "es" else MEMORIA_SEGURA_NOTAS_EN
 
 
+@con_pieza_llm("notas")
 async def extract_notes(
     message: str,
     *,
