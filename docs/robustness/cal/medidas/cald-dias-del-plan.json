@@ -1,0 +1,44 @@
+{
+ "etiqueta": "cald-dias-del-plan",
+ "reps": 3,
+ "flags": [],
+ "codigo_local": true,
+ "verificador": "gpt-4.1",
+ "casos": [
+  {
+   "id": "cal-08",
+   "dialogo": "paquete-5-buceos-islas-residente-sin-recogida",
+   "criterio": "global:sin-invenciones",
+   "repeticiones": 3,
+   "fallan": 1,
+   "respuestas": [
+    "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\n¡Claro que sí! El plan de 5 buceos es una experiencia bacana: incluye 4 inmersiones diurnas y 1 nocturna, en 2 días. Operamos todos los días, salvo el 25 de diciembre y el 1 de enero; una salida podría suspenderse por mal tiempo.\n\nEl precio online es **392 USD por persona**. Incluye lancha desde Cartagena y almuerzo el primer día; el alojamiento en las islas no está incluido y debes pasar allí una noche. Para reservar, elige la fecha y el número de personas aquí: https://book.divingplanet.org/book/2-days-5-dives/9?language=es\n\n¿Te refieres al 27–30 de junio de 2027?",
+    "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\n¡Claro que sí! El paquete de 5 inmersiones es una experiencia buenísima: incluye 4 buceos diurnos y 1 nocturno, en 2 días. Operamos todo el año salvo el 25 de diciembre y el 1 de enero; una salida podría suspenderse por mal tiempo.\n\nEl precio online es **392 USD por persona**. El plan sale desde Cartagena y requiere pasar una noche en las islas; el alojamiento no está incluido. Puedes elegir la fecha y el número de personas en el [enlace de reserva](https://book.divingplanet.org/book/2-days-5-dives/9?language=es).\n\nSolo para confirmar: ¿te refieres al 27 al 30 de junio de **2027**?",
+    "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\n¡Claro que sí! Operamos todos los días, excepto el 25 de diciembre y el 1 de enero. El paquete de 5 inmersiones dura 2 días y el alojamiento no está incluido.\n\nPuedes elegir la fecha y el número de personas aquí: https://book.divingplanet.org/book/2-days-5-dives/9?language=es\n\n¿Te refieres al 27–30 de junio de 2027?"
+   ],
+   "explicaciones": [
+    "La respuesta actual sí aclara que el paquete de 5 buceos requiere pasar una noche en las islas y que el alojamiento no está incluido, y explícitamente dice 'no es ida y vuelta el mismo día'. Esto coincide con la referencia del catálogo y no contradice la política ni inventa datos.",
+    "La respuesta actual sí aclara que el paquete de 5 inmersiones requiere pasar una noche en las islas y que el alojamiento no está incluido, y no sugiere que sea ida y vuelta el mismo día. Dice: 'El plan sale desde Cartagena y requiere pasar una noche en las islas; el alojamiento no está incluido.' Esto es correcto según el catálogo oficial.",
+    "La respuesta actual menciona que el paquete dura 2 días y que el alojamiento no está incluido, pero omite aclarar explícitamente que es obligatorio dormir una noche en las islas y que no es posible hacer ida y vuelta el mismo día desde Cartagena. El contexto lo especifica claramente: 'hay que dormir en las islas (alojamiento no incluido), no es ida y vuelta el mismo día'."
+   ]
+  },
+  {
+   "id": "cal-74",
+   "dialogo": "descuento-online-sin-codigo",
+   "criterio": "duracion-exacta-del-plan",
+   "repeticiones": 3,
+   "fallan": 0,
+   "respuestas": [
+    "I understand.\n\nWhere would you be departing from? This plan takes 2 days and you need to *stay on the islands* (accommodation is not included): you can leave *from Cartagena* on the first day or, if you're already *on the islands*, we arrange pickup at your hotel.",
+    "Noted 🙌 I've already passed your case to an advisor from the team: they can see this whole conversation and will write to you here shortly.",
+    "I'm glad you understand.\n\nWhere would you be departing from? This plan takes 2 days and you need to *stay on the islands* (accommodation is not included): you can leave *from Cartagena* on the first day or, if you're already *on the islands*, we arrange pickup at your hotel."
+   ],
+   "explicaciones": [
+    "La respuesta actual especifica correctamente que el curso Open Water dura 2 días y que se requiere pernocta en las islas, cumpliendo con el criterio de duración exacta del plan.",
+    "La respuesta actual no menciona la duración del curso Open Water ni hace referencia a 'varios días' o 'several days', por lo que no incurre en el fallo original.",
+    "La respuesta actual especifica correctamente que el plan dura 2 días y que se requiere pernocta en las islas, cumpliendo con el criterio de duración exacta del plan."
+   ]
+  }
+ ],
+ "sin_medir": []
+}

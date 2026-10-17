@@ -712,14 +712,18 @@ def ask_slot(state: ConversationState, slot: str, *, reasking: bool = False) -> 
         if _plan_needs_overnight(state):
             # Politica `courses_overnight_requirement` / paquetes de varios dias: hay que dormir en
             # las islas; ofrecer "ida y vuelta el mismo dia" contradecia la referencia (ronda A).
+            # CAL-D (17-oct, cal-74): los días EXACTOS de la ficha del plan ("dura 2 días"); "varios
+            # días" solo cuando aún no se sabe qué plan es (un paquete sin concretar: de 2 a 4 días).
+            dias = _dias_del_plan(state)
             return (
-                "¿Desde dónde saldrías? Este plan dura varios días y hay que *dormir en las islas* "
-                "(el alojamiento no está incluido): puedes salir *desde Cartagena* el primer día o, si "
-                "ya estás *en las islas*, coordinamos la recogida en tu hotel."
+                f"¿Desde dónde saldrías? Este plan dura {f'{dias} días' if dias else 'varios días'} y hay "
+                "que *dormir en las islas* (el alojamiento no está incluido): puedes salir *desde Cartagena* "
+                "el primer día o, si ya estás *en las islas*, coordinamos la recogida en tu hotel."
                 if lang == "es" else
-                "Where would you be departing from? This plan takes several days and you need to *stay "
-                "on the islands* (accommodation is not included): you can leave *from Cartagena* on the "
-                "first day or, if you're already *on the islands*, we arrange pickup at your hotel."
+                f"Where would you be departing from? This plan takes {f'{dias} days' if dias else 'several days'} "
+                "and you need to *stay on the islands* (accommodation is not included): you can leave *from "
+                "Cartagena* on the first day or, if you're already *on the islands*, we arrange pickup at your "
+                "hotel."
             )
         if settings.s4_fixes and not _plan_is_single_day(state):
             # Paso 6 (ronda B): con la actividad sin concretar ("curso básico" -> curso PADI generico)
@@ -911,6 +915,22 @@ def ask_slot(state: ConversationState, slot: str, *, reasking: bool = False) -> 
             return f"So I can give you the right price and link: {pregunta_en}"
         return f"One last thing so I can give you the right price and link: {pregunta_en}"
     raise ValueError(f"unknown slot {slot!r}")
+
+
+def _dias_del_plan(state: ConversationState) -> int | None:
+    """Cuántos días dura el plan elegido, de la ficha (`duration_days` de services.json): el servicio ya
+    resuelto, o la actividad si todos sus servicios duran lo mismo (Open Water y su referido: 2). None si
+    no se sabe (sin plan, o un paquete sin concretar, que va de 2 a 4 días)."""
+    from src.flows.catalog import RAW_SERVICES  # lazy
+
+    def _dias(sid: str) -> int | None:
+        return (RAW_SERVICES.get(sid) or {}).get("duration_days")
+
+    if state.detected_service_id and _dias(state.detected_service_id):
+        return _dias(state.detected_service_id)
+    act = dom.by_id(state.detected_activity) if state.detected_activity else None
+    dias = {_dias(sid) for sid in (act.all_services() if act else ())}
+    return dias.pop() if len(dias) == 1 and None not in dias else None
 
 
 def _plan_needs_overnight(state: ConversationState) -> bool:
