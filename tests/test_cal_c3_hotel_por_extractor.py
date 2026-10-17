@@ -200,3 +200,32 @@ async def test_e4_primer_turno_instrucciones_en_el_idioma_del_detector(monkeypat
         core.lanzar_extraccion_adelantada(st, msg)
         await st._extraccion_adelantada
         assert llamadas[-1] == esperado
+
+
+# --- CAL-C4 `lugar_desconocido_al_rag`: un lugar que no es Cartagena ni las islas se pregunta a la base ---
+
+@pytest.mark.parametrize("senales, esperado", [
+    ({"affirms_location": True, "customer_place": {"choice": "none", "confidence": 0.79}}, True),   # cal-55
+    ({"affirms_location": True, "customer_place": {"choice": "none", "confidence": 0.40}}, False),  # Jev duda
+    ({"affirms_location": True, "customer_place": {"choice": "islands", "confidence": 0.9}}, False),  # lo reconoce
+    ({"affirms_location": False, "customer_place": {"choice": "none", "confidence": 0.99}}, False),  # no afirma lugar
+])
+def test_c4_lugar_desconocido(senales, esperado):
+    assert core._lugar_desconocido(senales) is esperado
+
+
+def test_c4_lanza_la_respuesta_solo_con_el_flag(monkeypatch):
+    lanzadas = []
+
+    async def falso(state, message, history=None, **kw):
+        return "En Barú no operamos."
+
+    monkeypatch.setattr(core, "_rag_answer", falso)
+    monkeypatch.setattr(core.asyncio, "create_task", lambda coro: (lanzadas.append(1), coro.close())[1])
+    monkeypatch.setattr(settings, "answer_and_continue", True)
+    senales = {"affirms_location": True, "customer_place": {"choice": "none", "confidence": 0.79}}
+    for flag, n in ((False, 0), (True, 1)):
+        monkeypatch.setattr(settings, "lugar_desconocido_al_rag", flag)
+        st = ConversationState(conversation_id="c4", language="es")
+        core._maybe_launch_answer(st, "En baru y Rosario", senales)
+        assert len(lanzadas) == n

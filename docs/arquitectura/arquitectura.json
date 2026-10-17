@@ -1,8 +1,8 @@
 {
  "meta": {
-  "generado": "2026-10-17T14:30:41+00:00",
-  "commit": "29f954c",
-  "rama": "feature/pre_gadea"
+  "generado": "2026-10-17T15:01:02+00:00",
+  "commit": "4c5de55",
+  "rama": "feature/pre_alvaro"
  },
  "vistas": {
   "general": {
@@ -702,6 +702,13 @@
      "titulo": "Tras pasar a un asesor, no pedir que repita",
      "codigo": true,
      "pre": true,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "lugar_desconocido_al_rag",
+     "titulo": "Un lugar desconocido se pregunta a la base",
+     "codigo": false,
+     "pre": false,
      "sin_efecto": false
     },
     {
@@ -2630,6 +2637,19 @@
    "fijado_en_pre": true,
    "usado_por": [
     "b_extraction"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "lugar_desconocido_al_rag",
+   "area": "Reserva",
+   "titulo": "Un lugar desconocido se pregunta a la base",
+   "texto": "Si el cliente dice que está en un sitio que no es Cartagena ni las Islas del Rosario (por ejemplo, Barú), el bot se lo pregunta a la base de conocimiento, que sabe dónde no operamos, en vez de solo repetir el lugar.",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
+   "usado_por": [
+    "b_slotfill_close"
    ],
    "sin_efecto": null
   },

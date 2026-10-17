@@ -292,6 +292,9 @@ class Settings(BaseSettings):
     # CAL-C3d (17-oct): con la conversación ya pasada a un asesor, el RAG lo sabe y no pide al cliente que repita su
     # caso (cal-59: "¿me podrías ayudar con este tema?" → "Cuéntame, ¿qué tema?"). APAGADO hasta medirlo.
     tras_pase_recuerda_el_pase: bool = True  # PROMOCIONADO 17-oct (CAL-C, ronda core calc-A/B; decisión de Álvaro)
+    # CAL-C4 (17-oct): si el cliente afirma un lugar que Jev, seguro, no reconoce como Cartagena ni las islas ("En baru
+    # y Rosario", cal-55), se le pregunta a la base, que sabe dónde no operamos. APAGADO hasta medirlo.
+    lugar_desconocido_al_rag: bool = False
 
     # Paso 5 (RAG, l1-6 + l1-7, 27-sep): (a) el catalogo entero como hechos en el contexto del RAG
     # en vez de los atajos de precio por regex, que contestaban preguntas que no eran de precio;
