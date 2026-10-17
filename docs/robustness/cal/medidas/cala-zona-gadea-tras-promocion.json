@@ -1,0 +1,61 @@
+{
+ "etiqueta": "cala-zona-gadea-tras-promocion",
+ "reps": 3,
+ "flags": [],
+ "codigo_local": true,
+ "verificador": "gpt-4.1",
+ "casos": [
+  {
+   "id": "cal-25",
+   "dialogo": "refresher-que-completar-antes",
+   "criterio": "valida-tiempo-sin-bucear",
+   "repeticiones": 3,
+   "fallan": 3,
+   "respuestas": [
+    "Absolutely—if it’s been more than two years since your last dive, a refresher is normally required. It’s a great way to get comfortable again, with a pool review and one ocean dive with a PADI professional.\n\nBeforehand, you’ll need to complete the medical form and the theory sent by email after booking. The insurance form and liability waiver are also completed through the instructions you receive after booking. Since you’re arriving tomorrow, are you departing from Cartagena or already staying on the Rosario Islands?",
+    "Absolutely—if it’s been more than two years since your last dive, a refresher is normally required. It’s a great way to get comfortable again, with a pool review and one ocean dive with a PADI professional.\n\nBeforehand, you’ll need to complete the medical form and the theory sent by email after booking. The insurance form and liability waiver are also completed through the instructions you receive after booking. Since you’re arriving tomorrow, are you departing from Cartagena or already staying on the Rosario Islands?",
+    "Absolutely—if it’s been more than two years since your last dive, a refresher is normally required. It’s booked as the Dive Mini Course and includes pool practice plus one ocean dive with an instructor.\n\nA refresher and a certified diver can go together on the same trip.\n\nBeforehand, you’ll need to complete the medical form and the theory sent by email after booking. The insurance form and liability waiver are also completed through the booking follow-up. Since you’re arriving tomorrow, are you departing from Cartagena or already staying on the Rosario Islands?"
+   ],
+   "explicaciones": [
+    "The bot explains the refresher policy correctly but does not ask the client how long it has been since their last dive, which is necessary to confirm if the refresher is required. The context does not indicate that the client has already specified the time since their last dive, so the bot should explicitly ask this question.",
+    "El bot explica correctamente la política del refresher (más de 2 años sin bucear requiere refresher) pero NO pregunta explícitamente '¿hace cuánto no bucea?' o 'How long has it been since your last dive?' para confirmar si el cliente realmente necesita el refresher antes de reservar. Esto es exactamente el mismo fallo que el criterio señala.",
+    "The bot explains the refresher policy (required if it's been more than two years) but does not ask the client how long it has been since their last dive, which is necessary to confirm if the refresher is actually needed before proceeding with the booking."
+   ]
+  },
+  {
+   "id": "cal-32",
+   "dialogo": "link-pago-extranjeros-sin-cedula",
+   "criterio": "moneda-extranjeros",
+   "repeticiones": 3,
+   "fallan": 3,
+   "respuestas": [
+    "¡Claro! Si no tienes cédula y eres cliente extranjero, puedes pagar el 100 % con tarjeta en la página web y usar tu pasaporte como documento de identificación. ¿Qué actividad quieres reservar para pasarte el enlace correcto?",
+    "¡Claro! Si no tienes cédula, puedes usar tu pasaporte como documento de identificación al pagar con una tarjeta extranjera en la página web. El pago para clientes extranjeros es del 100% con tarjeta. ¿Qué actividad quieres reservar para pasarte el enlace correcto?",
+    "¡Claro! Si no tienes cédula, puedes usar tu pasaporte como documento de identificación al pagar con tarjeta extranjera en la página web. El pago para clientes extranjeros es del 100% en línea.\n\n¿Ya sabes qué actividad quieres reservar para pasarte el enlace correcto?"
+   ],
+   "explicaciones": [
+    "La respuesta actual solo menciona que los extranjeros pueden pagar el 100% con tarjeta y usar el pasaporte, pero no aclara que el pago se realiza en USD (misma tarifa, solo cambia la moneda), como exige la política: 'los colombianos (vivan donde vivan) y los residentes en Colombia pagan en COP y el resto en USD; es el mismo precio en las dos monedas'.",
+    "El bot solo menciona que el pago es del 100% con tarjeta extranjera y que se usa el pasaporte, pero no aclara que, al no tener cédula y ser extranjero, el pago se realiza en USD (misma tarifa, solo cambia la moneda). Esta información está explícitamente en el contexto: 'Pagan en pesos colombianos (COP) los colombianos (vivan donde vivan) y los residentes en Colombia... El resto de clientes internacionales paga en dólares (USD). El precio es el mismo: solo cambia la moneda (no hay descuento por ser colombiano)'.",
+    "El bot solo menciona que el pago es 100% en línea con tarjeta extranjera y que se usa el pasaporte, pero no aclara que, al no tener cédula, el pago se realiza en USD (misma tarifa, solo cambia la moneda), como exige la política: 'Pagan en pesos colombianos (COP) los colombianos (vivan donde vivan) y los residentes en Colombia... El resto de clientes internacionales paga en dólares (USD). El precio es el mismo: solo cambia la moneda'."
+   ]
+  },
+  {
+   "id": "cal-46",
+   "dialogo": "recogida-ubuntu-comida-y-certificacion",
+   "criterio": "global:sin-repreguntas",
+   "repeticiones": 3,
+   "fallan": 2,
+   "respuestas": [
+    "Of course! Lunch is included for tours departing from Cartagena: it’s rice with chicken or rice with vegetables, plus water throughout the day and coconut candy between dives. You’re welcome to bring your own food too. If you’re already on the islands, lunch isn’t included, so you’d need to arrange your own food. Where will you be joining us from?",
+    "Of course! Lunch is included for tours departing from Cartagena: rice with chicken or rice with vegetables, plus water throughout the day and coconut candy between dives. You’re also welcome to bring your own food. If you’re already on the islands, lunch isn’t included, so you’ll need to arrange your own. Which activity are you planning, and where will you be departing from?",
+    "Of course! If you’re departing from Cartagena, lunch is included in the tour, along with water throughout the day and coconut candy between dives. Lunch is rice with chicken or rice with vegetables; you’re also welcome to bring your own food. If you’re already on the islands, lunch isn’t included, so you’d need to arrange your own. Are you departing from Cartagena or staying on the islands?"
+   ],
+   "explicaciones": [
+    "El bot vuelve a preguntar 'Where will you be joining us from?' aunque el cliente ya había dicho que se hospeda en Ubuntu, que está en las islas. Esto es una repregunta innecesaria, ya que la información sobre la ubicación del cliente estaba clara en el mensaje original.",
+    "The current response does not ask if the customer is departing from Cartagena or already on the islands; instead, it explains both scenarios and only asks which activity they are planning and where they will be departing from. Since the customer's original message did not specify their location (the Ubuntu hotel is not mentioned in this context), the bot's question is appropriate and not a repregunta.",
+    "El bot vuelve a preguntar 'Are you departing from Cartagena or staying on the islands?' aunque el cliente ya había dicho que se hospeda en Ubuntu, que está en las islas. Esto es una repregunta innecesaria y el fallo original persiste."
+   ]
+  }
+ ],
+ "sin_medir": []
+}

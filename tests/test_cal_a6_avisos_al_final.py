@@ -30,6 +30,9 @@ def test_la_lista_lleva_cada_aviso_con_su_condicion_en_palabras():
     # Su `cuando_texto`, escrito a mano: el cliente describe el curso referido sin nombrarlo (cal-49).
     assert "aplica si: se habla de terminar aquí un Open Water empezado en otro centro PADI" in linea
     assert "carta/formato de referido PADI" in linea
+    # "Sin cédula" cuenta como extranjero (decisión de Álvaro del 17-oct): sin esto el aviso del USD no saltaba en cal-32.
+    usd = next(ln for ln in lista.splitlines() if ln.startswith("- extranjero-paga-en-usd"))
+    assert "no tiene cédula colombiana" in usd
     minicurso = next(ln for ln in lista.splitlines() if ln.startswith("- minicurso-no-certifica"))
     # Varias condiciones: tienen que cumplirse TODAS (con "; y " el revisor tomaba una sola: "quiero bucear
     # certificado" bastaba para el aviso de la profundidad).
