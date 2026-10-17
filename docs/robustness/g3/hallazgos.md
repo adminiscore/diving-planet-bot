@@ -88,3 +88,39 @@ contexto. Coste: una llamada de gpt-4o-mini en los turnos del RAG con mensaje la
 mensajes tienen 8 palabras o más; 4 vienen en otro idioma). Va a la vez que la búsqueda principal, así que añade lo
 que tarde de más que ella (estimado 0,3-0,5 s en esos turnos): a medir en la ronda core B y en CAL-G antes de
 promocionar.
+
+## G3-06 · Tres amigos alojados en Barú: Barú tratado como las islas y un plan que nadie pidió — conv 5572 (17-oct)
+
+"estamos en un hotel en baru, somos 3 amigos. 2 nunca han buceado y yo tengo advanced. también vamos a san andrés…"
+
+1. Turno 1: bien que diga que no operamos en San Andrés ni en Barú, pero en la misma respuesta "como ya están en Barú,
+   la recogida depende de que el hotel tenga acceso marítimo; ¿me dices el nombre del hotel?". El estado queda
+   `location=island, hotel=baru` (el flujo acepta "Barú" como isla sin nombre, `conversational_core.py:166`).
+2. "estamos en el hotel las islas, en baru. ¿nos pueden recoger ahí?" → "¡Claro! La recogida en lancha está incluida si
+   el hotel tiene acceso marítimo", cuando la FAQ dice que eso es para quien ya está **en las Islas del Rosario**.
+3. "¿cuánto cuesta todo para los 3? sería el jueves. somos colombianos" → cotiza "el plan de buceo certificado que
+   mencionamos" = **paquete de 3 inmersiones con nocturna** (665.000 COP, ya en las islas), que nadie mencionó, y dice
+   que no tiene el precio del minicurso "para hacerlo desde el Hotel Las Islas" (el catálogo, que va entero en el
+   contexto, sí lo tiene: 475.000 COP ya en las islas). Banco `g3-06`, en PRE: **2/3** (la otra da la salida de 2
+   inmersiones, 440.000 COP).
+
+Por qué el plan equivocado: el estado no tiene plan elegido (solo `certified_diving` y el reparto 1 + 2 minicurso) y
+la búsqueda trae primero paquetes "ya en las islas" al azar: el mensaje es largo (no pasa por la reescritura de CAL-D,
+que solo corre en mensajes cortos, así que no nombra las actividades) y lleva al final el marcador
+`[origen_cliente]=ya en las islas`, que en el vector empuja cualquier ficha de las islas. Las reglas RAG_NO_SUPONE
+("no digas «tu paquete de 3 inmersiones» si él no lo dijo") y RAG_VARIOS_PLANES ya están encendidas y no bastan.
+
+**Pregunta de negocio para Gadea** (antes de tocar nada de Barú): ¿recogéis en hoteles de Barú con acceso al mar
+(p. ej. Hotel Las Islas)? Si sí, ¿con el precio "ya en las islas" (sin almuerzo) o con otro? Si no, ¿qué se le dice:
+salir desde Cartagena? Hoy el bot dice a la vez "en Barú no operamos" y "la recogida está incluida".
+
+Siguiente (zona Gadea, búsqueda): que los mensajes largos también nombren el asunto con lo sabido, juntando la
+reescritura de CAL-D y la pregunta sola de G3-05 en una llamada; medir la latencia antes de decidir.
+
+## Búsqueda por palabras (BM25) casi muerta — visto al investigar G3-06 (17-oct)
+
+`_bm25_search` usa `websearch_to_tsquery('simple', …)`, que exige TODAS las palabras: en la búsqueda de PRE, "¿cuánto
+cuesta el minicurso?" → 1 documento; "what time does the boat leave?" → 0; un mensaje largo → 0. Además, cuando la
+consulta lleva el marcador de origen, BM25 busca solo la última línea (`[origen_cliente]=ya en las islas` → 0). En la
+práctica, la búsqueda es solo por vector y la fusión RRF no aporta. Cambiarlo (OR, o `plainto_tsquery` con `|`)
+mueve todos los rankings: medir con el banco de piezas (`rag_piezas`) antes, como CAL-D segunda parte.
