@@ -369,8 +369,11 @@ class Settings(BaseSettings):
     # plan de un día (cal-42); "Vale, en concepto le coloco otros?" no traía nada de cómo se confirma la reserva
     # (cal-14). Con el flag, el reescritor recibe lo que ya sabemos del cliente (actividad, origen, nacionalidad: los
     # mismos hechos del estado que eligen los avisos) y la regla de no dejar elipsis. APAGADO hasta medirlo.
-    # **ENCENDIDO 17-oct para la RONDA C** (banco: cal-42 arreglado 3 de 3). Si la ronda no lo sostiene, revert =
-    # "false" aquí y quitar la línea del compose.
+    # **PROMOCIONADO 17-oct** (ronda C del core, `2026-10-17-cal-C`). La ronda dio 96,1 % frente al 97,4 % de la A,
+    # pero sus 3 regresiones NO son de este flag y se demostró repitiendo: "varios días" en el Open Water sale 3 de 3
+    # CON el flag y 3 de 3 SIN él (defecto de siempre, ahora en el banco como cal-74) y la de la ventana de reserva no
+    # se reproduce ninguna de 3. A favor: cal-42 arreglado 3 de 3 en el banco y la MEJOR latencia de las cuatro rondas
+    # (p95 6,0 s frente a 6,4 de la A). Revert = "false" aquí y quitar la línea del compose.
     consulta_con_lo_sabido: bool = True
     # Modelo del plan y de la comprobación de completitud (llamadas cortas, temperatura 0).
     rag_plan_model: str = "gpt-4.1-mini"

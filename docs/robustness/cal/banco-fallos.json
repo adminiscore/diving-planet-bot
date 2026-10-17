@@ -3381,6 +3381,35 @@
    "causa_final": "entendimiento",
    "tarea": "CAL-C",
    "nota": "Cotiza 'ya en las islas' sin saber el origen: regla única de CAL-C, sin origen no hay precio de un origen concreto."
+  },
+  {
+   "id": "cal-74",
+   "tarea": "CAL-D",
+   "dialogo": "descuento-online-sin-codigo",
+   "criterio": "duracion-exacta-del-plan",
+   "grupo": "datos falsos",
+   "turno": 2,
+   "turnos_dialogo": 3,
+   "pieza": "rag",
+   "mensaje_cliente": "ah I see.",
+   "historial": [
+    {
+     "role": "user",
+     "content": "Hi, I’m trying to checkout to take PADI Open Water Diver certification course but the discount of 10% is not showing up. what is the code?"
+    },
+    {
+     "role": "assistant",
+     "content": "There’s no discount code—the 10% online discount is applied automatically when you book directly through our website."
+    }
+   ],
+   "pedia": "Al hablar de la duración del Open Water dice los días EXACTOS de la ficha (2 días, con pernocta en las islas), no 'varios días' ni 'several days'.",
+   "motivo_juez": "La referencia indica que el Curso Open Water dura 2 días; afirmar que 'takes several days' contradice la duración especificada.",
+   "respuesta_ex10": "Got it. Where would you be departing from? This plan takes several days and you need to stay on the islands (accommodation is not included).",
+   "resumen": "El RAG resume la duración del plan en vez de darla: 'varios días' donde la ficha dice 2 días.",
+   "veredicto": "no_cumple",
+   "causa_gadea": null,
+   "causa_final": "redaccion",
+   "nota": "ENCONTRADO el 17-oct comparando las rondas A, B y C del core: la ronda A no lo sacaba y las otras dos sí, con flags distintos. Repetido 3 veces CON y SIN `consulta_con_lo_sabido`: sale 3/3 en los dos lados, así que no es de ningún flag, es un defecto de siempre. Es justo lo que CAL-D venía a arreglar (el plan exacto contra la ficha del catálogo)."
   }
  ]
 }

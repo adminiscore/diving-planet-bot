@@ -90,3 +90,25 @@ Reglas que se mantienen:
 ---
 
 Detalle y cifras: `docs/HISTORY.md` (0.29.15 en adelante) y la bitácora de la página Plan Coral.
+
+## Una ronda suelta no atribuye diferencias pequeñas (17-oct-2026, medido)
+
+Las cuatro rondas del core de esta noche (32 conversaciones cada una) dieron 97,4 %, 96,0 %, 96,1 % y 96,1 % de
+criterios. Parecían tres regresiones distintas. Al repetir los diálogos afectados **3 veces con el flag y 3 veces sin
+él** (como hace el banco de fallos):
+
+| Fallo | Con el flag | Sin el flag | Conclusión |
+|---|---|---|---|
+| "varios días" en el Open Water (`descuento-online-sin-codigo`) | 3/3 | **3/3** | no es del flag: **defecto de siempre** que la ronda A no sacó (ahora en el banco, cal-74) |
+| "la ventana de reserva ya cerró" (`refresher-que-completar-antes`) | 0/3 | 0/3 | **no se reproduce**: azar del bot |
+
+**La regla que sale de aquí:** `ab_judge_compare --rejuzgar N` quita el ruido **del juez**, no el **del bot**, que
+escribe a temperatura 0,3. Con 32 conversaciones y una muestra por lado, la resolución de una ronda del core es de
+unos **3 criterios (±1,3 puntos)**. Por debajo de eso:
+
+1. **No se promociona ni se revierte por el número de la ronda.** Se cogen los diálogos que cambian y se repiten
+   3 veces CON y SIN el cambio (`reproducir_juez_pre <dialogo> --reps 3 --codigo-local [--flag …]`): barato, sin juez.
+2. Si el fallo sale en los dos lados, **no es del cambio**: es un defecto de siempre y va al banco como caso nuevo.
+3. Si no se reproduce en ninguno, es azar y no cuenta.
+4. El número de la ronda sirve para lo grande (una regresión de 6 criterios como la de los avisos, §9 de
+   `cal-a5-avisos-condicionados.md`) y para la latencia, que con 144 turnos sí tiene muestra.
