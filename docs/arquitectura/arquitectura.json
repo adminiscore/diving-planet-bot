@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-17T11:27:27+00:00",
-  "commit": "6b9cd02",
+  "generado": "2026-10-17T12:15:36+00:00",
+  "commit": "be0bc70",
   "rama": "feature/pre_gadea"
  },
  "vistas": {
@@ -172,8 +172,8 @@
    "marca": "openrouter",
    "tiempos": {
     "n": 93,
-    "p50": 0.409,
-    "p95": 1.505
+    "p50": 0.413,
+    "p95": 1.744
    }
   },
   {
@@ -196,9 +196,9 @@
    ],
    "modelos": [],
    "tiempos": {
-    "n": 6,
+    "n": 8,
     "p50": 0.002,
-    "p95": 0.003
+    "p95": 0.01
    }
   },
   {
@@ -214,8 +214,8 @@
    "interruptores": [],
    "tiempos": {
     "n": 2,
-    "p50": 0.004,
-    "p95": 0.004
+    "p50": 0.005,
+    "p95": 0.005
    }
   },
   {
@@ -239,8 +239,8 @@
    "modelos": [],
    "tiempos": {
     "n": 1,
-    "p50": 0.001,
-    "p95": 0.001
+    "p50": 0.005,
+    "p95": 0.005
    }
   },
   {
@@ -258,8 +258,8 @@
    "interruptores": [],
    "tiempos": {
     "n": 4,
-    "p50": 3.248,
-    "p95": 3.836
+    "p50": 3.271,
+    "p95": 3.829
    }
   },
   {
@@ -275,9 +275,9 @@
    "modelos": [],
    "interruptores": [],
    "tiempos": {
-    "n": 80,
-    "p50": 1.863,
-    "p95": 4.077
+    "n": 78,
+    "p50": 1.893,
+    "p95": 4.179
    }
   },
   {
@@ -479,16 +479,16 @@
     {
      "nombre": "idioma_del_extractor",
      "titulo": "El idioma del primer mensaje lo dice quien lee el mensaje",
-     "codigo": false,
-     "pre": false,
+     "codigo": true,
+     "pre": true,
      "sin_efecto": false
     }
    ],
    "marca": "openai",
    "tiempos": {
-    "n": 80,
-    "p50": 0.03,
-    "p95": 1.016
+    "n": 78,
+    "p50": 0.031,
+    "p95": 1.213
    }
   },
   {
@@ -518,9 +518,9 @@
    ],
    "modelos": [],
    "tiempos": {
-    "n": 80,
+    "n": 78,
     "p50": 0.005,
-    "p95": 0.013
+    "p95": 0.34
    }
   },
   {
@@ -557,9 +557,9 @@
    ],
    "marca": "openai",
    "tiempos": {
-    "n": 76,
-    "p50": 0.006,
-    "p95": 0.017
+    "n": 72,
+    "p50": 0.007,
+    "p95": 0.015
    }
   },
   {
@@ -612,8 +612,29 @@
     {
      "nombre": "extractor_cita_del_cliente",
      "titulo": "Aceptar la propuesta del bot cuenta",
-     "codigo": false,
-     "pre": false,
+     "codigo": true,
+     "pre": true,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "hotel_por_extractor",
+     "titulo": "El extractor entiende el hotel",
+     "codigo": true,
+     "pre": true,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "lugar_con_dos_lectores",
+     "titulo": "El origen, con dos lectores de acuerdo",
+     "codigo": true,
+     "pre": true,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "sin_cedula_extranjero",
+     "titulo": "Sin cédula, paga en dólares",
+     "codigo": true,
+     "pre": true,
      "sin_efecto": false
     },
     {
@@ -633,9 +654,9 @@
    ],
    "marca": "openai",
    "tiempos": {
-    "n": 76,
-    "p50": 0.42,
-    "p95": 0.971
+    "n": 72,
+    "p50": 0.512,
+    "p95": 0.986
    }
   },
   {
@@ -665,8 +686,22 @@
     {
      "nombre": "actividad_por_lo_sabido",
      "titulo": "Sin menú si ya quiere bucear",
-     "codigo": false,
-     "pre": false,
+     "codigo": true,
+     "pre": true,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "una_sola_pregunta",
+     "titulo": "Una sola pregunta por turno",
+     "codigo": true,
+     "pre": true,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "tras_pase_recuerda_el_pase",
+     "titulo": "Tras pasar a un asesor, no pedir que repita",
+     "codigo": true,
+     "pre": true,
      "sin_efecto": false
     },
     {
@@ -693,9 +728,9 @@
    ],
    "marca": "openai",
    "tiempos": {
-    "n": 75,
-    "p50": 1.268,
-    "p95": 3.263
+    "n": 71,
+    "p50": 0.842,
+    "p95": 3.326
    }
   },
   {
@@ -805,9 +840,9 @@
    ],
    "modelos": [],
    "conteo": {
-    "n": 47,
+    "n": 44,
     "que": "preguntas",
-    "fuente": "2026-10-17-cal-D.json"
+    "fuente": "2026-10-17-calc-A.json"
    }
   },
   {
@@ -1797,9 +1832,9 @@
    "area": "Reserva",
    "titulo": "Sin menú si ya quiere bucear",
    "texto": "Si el cliente ya dijo que quiere bucear, no se le enseña el menú de actividades: si no está certificado se le recomienda el minicurso y, si no se sabe, se le pregunta si es buzo certificado.",
-   "codigo": false,
-   "pre": false,
-   "fijado_en_pre": false,
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
    "usado_por": [
     "b_slotfill_close"
    ],
@@ -2119,9 +2154,9 @@
    "area": "Reserva",
    "titulo": "Aceptar la propuesta del bot cuenta",
    "texto": "Cuando el cliente acepta el plan que le propone el bot ('nos gusta'), el extractor lo apunta aunque cite el texto de la propuesta del bot (antes el control antiinventos lo tiraba).",
-   "codigo": false,
-   "pre": false,
-   "fijado_en_pre": false,
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
    "usado_por": [
     "b_extraction"
    ],
@@ -2198,6 +2233,19 @@
    "sin_efecto": null
   },
   {
+   "nombre": "hotel_por_extractor",
+   "area": "Reserva",
+   "titulo": "El extractor entiende el hotel",
+   "texto": "El extractor apunta el hotel donde se aloja el cliente tal como lo escribe, aunque no esté en la lista de hoteles de las islas ('Isla Mulata', 'Bodegas de Santa Clara'), y así no se le vuelve a preguntar en qué hotel está.",
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
+   "usado_por": [
+    "b_extraction"
+   ],
+   "sin_efecto": null
+  },
+  {
    "nombre": "hotel_ubicacion_declarada",
    "area": "Reserva",
    "titulo": "Nombrar un hotel no es estar allí",
@@ -2213,9 +2261,9 @@
    "area": "Chat",
    "titulo": "El idioma del primer mensaje lo dice quien lee el mensaje",
    "texto": "Antes lo decidía una lista de palabras corrientes, y un mensaje en portugués con muchas palabras iguales al español se contestaba en español. Ahora lo dice la misma lectura del mensaje que saca los datos, que ya se está haciendo a la vez.",
-   "codigo": false,
-   "pre": false,
-   "fijado_en_pre": false,
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
    "usado_por": [
     "b_setup"
    ],
@@ -2570,6 +2618,19 @@
    "pre": false,
    "fijado_en_pre": false,
    "usado_por": [],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "lugar_con_dos_lectores",
+   "area": "Reserva",
+   "titulo": "El origen, con dos lectores de acuerdo",
+   "texto": "Desde dónde sale el cliente (Cartagena o las islas) decide el precio y el enlace. Se guarda solo si el extractor y Jev no se contradicen: 'quiero bucear en islas del Rosario' no es estar alojado en las islas, y si Jev está seguro de que el mensaje no lo dice, el bot lo pregunta.",
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
+   "usado_por": [
+    "b_extraction"
+   ],
    "sin_efecto": null
   },
   {
@@ -2982,6 +3043,32 @@
    "sin_efecto": null
   },
   {
+   "nombre": "sin_cedula_extranjero",
+   "area": "Reserva",
+   "titulo": "Sin cédula, paga en dólares",
+   "texto": "Decisión de Álvaro: si el cliente dice que no tiene cédula colombiana (ni de extranjería) o que es extranjero, no es colombiano y paga en dólares.",
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
+   "usado_por": [
+    "b_extraction"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "tras_pase_recuerda_el_pase",
+   "area": "Reserva",
+   "titulo": "Tras pasar a un asesor, no pedir que repita",
+   "texto": "Cuando la conversación ya está pasada a un asesor, la respuesta lo sabe: si el cliente insiste en que le ayuden con lo que ya contó, se le dice que el asesor ya tiene su caso, en vez de pedirle que lo cuente otra vez.",
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
+   "usado_por": [
+    "b_slotfill_close"
+   ],
+   "sin_efecto": null
+  },
+  {
    "nombre": "tras_pase_sin_vender",
    "area": "Reserva",
    "titulo": "Tras el pase, no vende",
@@ -2990,6 +3077,19 @@
    "pre": true,
    "fijado_en_pre": true,
    "usado_por": [],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "una_sola_pregunta",
+   "area": "Reserva",
+   "titulo": "Una sola pregunta por turno",
+   "texto": "Si la respuesta a lo que preguntó el cliente ya acaba con una pregunta, no se le pega detrás la pregunta de la reserva: esa espera al turno siguiente. Antes salían dos preguntas seguidas ('¿En qué hotel de las islas se alojan? ¿En qué hotel o isla te hospedas?').",
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
+   "usado_por": [
+    "b_slotfill_close"
+   ],
    "sin_efecto": null
   }
  ],
@@ -3002,7 +3102,7 @@
     "r_revisor"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 55
+   "llamadas_ultima_ronda": 52
   },
   {
    "ajuste": "extraction_model",
@@ -3017,7 +3117,7 @@
     "b_acuse"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 118
+   "llamadas_ultima_ronda": 110
   },
   {
    "ajuste": "extractor_turno_model",
@@ -3027,7 +3127,7 @@
     "b_extraction"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 85
+   "llamadas_ultima_ronda": 83
   },
   {
    "ajuste": "grounding_v3_model",
@@ -3037,7 +3137,7 @@
     "r_revisor"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 47
+   "llamadas_ultima_ronda": 46
   },
   {
    "ajuste": "jev_model",
@@ -3049,7 +3149,7 @@
    ],
    "proveedor": "OpenRouter",
    "llamadas_ultima_ronda": null,
-   "nota": "Decidió solo 79 de 93 mensajes; en los otros 14 decidió el LLM de respaldo (sus llamadas cuentan en gpt-4o-mini)."
+   "nota": "Decidió solo 83 de 93 mensajes; en los otros 10 decidió el LLM de respaldo (sus llamadas cuentan en gpt-4o-mini)."
   },
   {
    "ajuste": "openai_embedding_model",
@@ -3072,7 +3172,7 @@
     "r_reescribir"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 118
+   "llamadas_ultima_ronda": 110
   },
   {
    "ajuste": "openai_transcription_model",
@@ -3092,7 +3192,7 @@
     "r_escribir"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 55
+   "llamadas_ultima_ronda": 52
   },
   {
    "ajuste": "rag_plan_model",
@@ -3100,50 +3200,50 @@
    "pre": "gpt-4.1-mini",
    "usado_por": [],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 85
+   "llamadas_ultima_ronda": 83
   }
  ],
  "ronda": {
-  "etiqueta": "cal-D (core, familia de Jev)",
-  "run_at": "2026-10-17T01:41:29Z",
-  "fichero": "2026-10-17-cal-D.json",
-  "commit": "4492991",
+  "etiqueta": "calc-A 17-oct (CAL-C flags apagados)",
+  "run_at": "2026-10-17T11:18:53Z",
+  "fichero": "2026-10-17-calc-A.json",
+  "commit": "12d71fd",
   "por_tipo": {
    "reserva": {
-    "turns": 46,
-    "latency_p50": 1.145,
-    "latency_p95": 2.281,
-    "latency_avg": 1.353,
-    "llm_calls_avg": 2.26,
-    "llm_calls_p95": 3.75,
+    "turns": 49,
+    "latency_p50": 1.221,
+    "latency_p95": 2.478,
+    "latency_avg": 1.341,
+    "llm_calls_avg": 2.1,
+    "llm_calls_p95": 3.0,
     "llm_calls_max": 5,
-    "embeddings_avg": 1.37,
-    "llm_share": 1.452,
+    "embeddings_avg": 1.33,
+    "llm_share": 1.399,
     "tokens_avg": 0,
     "cost_avg_usd": 0
    },
    "rag": {
-    "turns": 47,
-    "latency_p50": 3.624,
-    "latency_p95": 5.383,
-    "latency_avg": 3.743,
-    "llm_calls_avg": 4.28,
-    "llm_calls_p95": 6.0,
-    "llm_calls_max": 6,
-    "embeddings_avg": 1.62,
-    "llm_share": 1.325,
+    "turns": 44,
+    "latency_p50": 3.629,
+    "latency_p95": 6.459,
+    "latency_avg": 3.805,
+    "llm_calls_avg": 4.27,
+    "llm_calls_p95": 5.85,
+    "llm_calls_max": 7,
+    "embeddings_avg": 1.61,
+    "llm_share": 1.308,
     "tokens_avg": 0,
     "cost_avg_usd": 0
    }
   },
   "enrutador": {
    "by_backend": {
-    "jev": 79,
-    "llm_uncertain": 13,
+    "jev": 83,
+    "llm_uncertain": 9,
     "llm": 1
    },
-   "ms_p50": 380.5,
-   "ms_p95": 448.45
+   "ms_p50": 387.0,
+   "ms_p95": 479.9
   },
   "cliente": {
    "turns": 93,
@@ -3152,20 +3252,15 @@
    "multi_bubble": 0,
    "latency_p50": 3.0,
    "latency_p95": 5.0,
-   "latency_max": 7
+   "latency_max": 9
   },
   "llamadas_por_modelo": {
-   "gpt-4o-mini": 118,
-   "gpt-4.1-mini": 85,
-   "gpt-6-luna": 55,
-   "gpt-4.1": 47
+   "gpt-4o-mini": 110,
+   "gpt-4.1-mini": 83,
+   "gpt-6-luna": 52,
+   "gpt-4.1": 46
   },
-  "calidad": {
-   "criteria_pass_pct": 96.5,
-   "dialogues_passed": 25,
-   "dialogues": 32,
-   "model": "gpt-5-mini (medium)"
-  }
+  "calidad": null
  },
  "pesos_fuente": "Los % del enrutador y de las fases de la reserva salen de la foto de la ronda; los del revisor y el reintento, de los logs de PRE de la misma ronda. La cascada y los textos fijos no dejan rastro medible: se animan con una estimación y no llevan porcentaje."
 }

@@ -47,7 +47,7 @@ certificación" = Open Water, o el Referido; el Scuba Diver es la parcial). **De
 **CAL-A, CAL-D, CAL-F y CAL-G**; el simulador de usuario (`g-3`) y la puerta en CI (`q5-1`) están libres. La limpieza
 del camino antiguo va DESPUÉS de CAL.
 
-**Lo primero, Álvaro:** tu rama `feature/pre_alvaro` está **25 commits por detrás** de `feature/pre_gadea`. Si la subes
+**Lo primero, Álvaro (✅ HECHO el 17-oct a las 11:20):** tu rama `feature/pre_alvaro` estaba **25 commits por detrás** de `feature/pre_gadea`. Si la subes
 así, PRE vuelve a tu código del 16-oct y se deshacen sin avisar los cambios promocionados del 17-oct. Antes de nada:
 
 ```
@@ -59,7 +59,56 @@ integrar la rama del otro y suite en verde, porque en PRE gana el último; (3) *
 despliegue reinicia el contenedor y mata la medida del otro (avisar en el registro de Plan Coral con la hora de fin).
 Las doce normas, con su porqué, están en el documento.
 
-### ▶️ RETOMAR AQUÍ — 17-oct madrugada (Gadea con Claude): CUATRO RONDAS del core medidas, 2 cambios PROMOCIONADOS y los avisos DESCARTADOS
+### ▶️ RETOMAR AQUÍ — 17-oct mediodía (Álvaro con Claude): CAL-C — C3 hecho, banco reparado 49 → 28/63, todo APAGADO
+
+**Estado.** `feature/pre_alvaro` = `feature/pre_gadea` (121ce14, avance limpio) + el trabajo de CAL-C de hoy. Los 6 flags
+de CAL-C están **APAGADOS**: `ACTIVIDAD_POR_LO_SABIDO` (C1), `EXTRACTOR_CITA_DEL_CLIENTE` (C2), `HOTEL_POR_EXTRACTOR`
+(C3a), `UNA_SOLA_PREGUNTA` (C3b), `LUGAR_CON_DOS_LECTORES` (C3c) e `IDIOMA_DEL_EXTRACTOR` (E4, de Gadea). HISTORY
+0.31.41. Reparto y normas: `docs/trabajo-en-paralelo.md` (rama `docs/trabajo-en-paralelo-17oct`).
+
+**Lección (Álvaro, 17-oct):** CAL-A se cerró el 16-oct midiendo con mensajes CORTADOS a 200 caracteres (las pistas
+estaban: "tu mensaje quedó cortado", el del crucero acababa a media palabra). Antes de concluir, comprobar las entradas
+del banco y seguir cada rareza. La base de hoy se comprobó: 21 casos medidos, ningún mensaje cortado.
+
+| Caso (21 de CAL-C, 3 repeticiones; banco REPARADO) | Base `calc-base-reparado` | Todo junto `calc-todo-17oct` | Arreglo |
+|---|---|---|---|
+| cal-40 "Hola! My partner and I…" → contestaba en español | 3 | **0** | E4 `IDIOMA_DEL_EXTRACTOR` (de Gadea: era el caso que le faltaba) |
+| cal-41 "staying at Isla Mulata" → "¿en qué hotel?" | 3 | **0** | C3a `HOTEL_POR_EXTRACTOR` |
+| cal-45 "Muchas gracias!" / cal-54 "5 inmersiones" → menú | 3 / 3 | **0 / 0** | C1 `ACTIVIDAD_POR_LO_SABIDO` |
+| cal-08 "ida y vuelta el mismo día" en el plan de 5 buceos | 3 | **0** | (de rebote; no se buscó: vigilar) |
+| cal-71 / cal-73 "bucear en islas del rosario" → cotizaba "ya en las islas" + pregunta doble | 3 / 3 | **0 / 0** (`calc-todo-71-73b`) | C3c `LUGAR_CON_DOS_LECTORES` + C3b `UNA_SOLA_PREGUNTA` |
+| cal-46 (Ubuntu) | 3 | 2 | parcial: lo que queda es el RAG preguntando el origen ya sabido (Gadea) |
+| cal-01, 10, 21, 57 | 2, 2, 2, 1 | igual | varían de una vez a otra |
+| cal-17 | 0 | 1 | vigilar (variación) |
+| cal-16, 25, 35, 52, 59, 60 | 3 | 3 | ver "lo que queda" |
+| **Total** | **49/63** | **28/63** (34 en la medida conjunta − 6 de cal-71/73 tras el último arreglo) | |
+
+**Lo que queda de CAL-C y de quién es:**
+- **Decisión de Álvaro/Gadea — una pregunta o varias:** cal-16 ("El 21 de mayo" → el criterio quiere que pida personas, origen y nacionalidad a la vez; el bot pregunta UNA cosa por turno, norma de diseño) y cal-35/52 (con todo dicho, el bot pregunta "¿más de 2 años sin bucear?" o la actividad en vez de dar el precio en COP / preguntar la nacionalidad).
+- **Del RAG (área de Gadea):** cal-46 (la respuesta pregunta "¿sales de Cartagena o estás en las islas?" con el origen ya sabido), cal-25 (no pregunta hace cuánto no bucea), cal-10. Y cal-08 era del **plan exacto** (CAL-D): "el plan de 5 buceos" se queda en buceo certificado genérico de 1 día; hoy pasa de rebote, no por un arreglo.
+- **Del verificador:** cal-60 ya recomienda el minicurso entero ("Para empezar, lo ideal es el *minicurso*…") y falla solo por no dar el enlace.
+- **Pendiente mío:** cal-59 (la agencia tras el pase a un asesor: "¿qué tema necesitas resolver?").
+- **5 casos de CAL-A que pasan a CAL-C (Gadea, 17-oct: son de extractor y flujo; los otros 7 de CAL-A, del RAG, los
+  lleva ella):** cal-55 ("En baru y Rosario" → location island y pregunta el hotel; Barú no es Rosario, sin listas),
+  cal-69/70 (crucero: el extractor descarta el grupo porque cita "My wife ... and I" con puntos suspensivos, y el hotel
+  — C3a lo arregla —; sin el grupo no propone refresher para ella y buceo para él), cal-32 ("que no tenga cedula" → no
+  guarda is_colombian=False y no dice que paga en USD), cal-36 (el bono: "Entiendo que mencionas un bono adicional" +
+  el menú, dos veces; la pregunta se pierde, patrón de C1/C3). Sonda sin juez:
+  `ENV_FILE=.env.dev python -m scripts.sonda_senales --ids cal-32,cal-36,cal-55,cal-69,cal-70 --codigo-local --solo-ultimo`.
+- **Tarde del 17-oct (decisiones de Álvaro):** datos DE UNO EN UNO (criterio de cal-16 actualizado); sin cédula = USD
+  (`SIN_CEDULA_EXTRANJERO`, apagado: el estado lo guarda, pero la respuesta del RAG no dice USD → Gadea); C3d
+  `TRAS_PASE_RECUERDA_EL_PASE` (apagado) arregla cal-59 3/3 → 0/3. cal-36 ya está bien en PRE (lo mide el banco en el
+  turno equivocado → Gadea). Quedan míos: cal-55 (Barú) y cal-69/70 (el grupo "my wife ... and I": "and I" no está en
+  el mensaje). **Flags de CAL-C para la mini-ronda: 8** (`ACTIVIDAD_POR_LO_SABIDO`, `EXTRACTOR_CITA_DEL_CLIENTE`,
+  `HOTEL_POR_EXTRACTOR`, `UNA_SOLA_PREGUNTA`, `LUGAR_CON_DOS_LECTORES`, `IDIOMA_DEL_EXTRACTOR`, `SIN_CEDULA_EXTRANJERO`,
+  `TRAS_PASE_RECUERDA_EL_PASE`).
+- **PARA GADEA (de Álvaro, 17-oct tarde):** (1) cal-32: con `SIN_CEDULA_EXTRANJERO` el estado sabe que no es colombiano,
+  pero la respuesta no dice "pagas en USD" al hablar del pago; (2) cal-36: el bono se contesta bien en el turno 3 y el
+  banco mide el turno 4; (3) cal-46/cal-25: la respuesta pregunta el origen ya sabido / no pregunta hace cuánto no bucea;
+  (4) cal-08: "el plan de 5 buceos" se queda en buceo de 1 día (plan exacto, CAL-D).
+- **Siguiente:** la mini-ronda A/B del golden con los 8 flags de CAL-C juntos (A = código nuevo apagado, B = encendidos, misma franja) y, si la diferencia es pequeña, repetir 3× los diálogos que cambian (`docs/robustness/protocolo-medicion.md`). Después r6-1 (robustez de PRE: mensaje de respaldo, 429, **alerta de saldo**).
+
+### ▶️ (anterior) 17-oct madrugada (Gadea con Claude): CUATRO RONDAS del core medidas, 2 cambios PROMOCIONADOS y los avisos DESCARTADOS
 
 **Todo subido y PRE desplegado.** La rama `feature/pre_gadea` está al día; PRE sirve lo promocionado.
 

@@ -2313,6 +2313,7 @@ async def _aplicar_extractor(intent, state: ConversationState, message: str, pis
             _lugar_por_jev(intent, state)
         return
     _poner_ubicacion(intent, state, message, datos, pista)
+    _poner_hotel(intent, state, datos)
     # ex-7: el grupo antes que la actividad: la regla de ex-8 del grupo repartido mira el reparto del turno.
     _poner_grupo(intent, state, message, datos, pista)
     if datos.get("quiere_bucear") is True:
@@ -2458,6 +2459,14 @@ def _poner_ubicacion(intent, state: ConversationState, message: str, datos: dict
             # la recogida (ronda ex5-B2: "una noche en Coral Sand y la otra en Majagua" se perdía y se repreguntaba).
             _conservar_hotel(intent, pista)
         return
+    if settings.lugar_con_dos_lectores and _jev_dice_que_no_lo_dice(state):
+        # CAL-C3c (17-oct): "bucear el lunes festivo en islas del rosario" → el extractor ponía island 3 de 3 (su regla
+        # dice que nombrar las islas como sitio de buceo no basta, y no la sigue) y el bot cotizaba solo "ya en las
+        # islas" (cal-71/73). El origen decide precio y enlace: se guarda solo si los dos lectores no se contradicen.
+        # Jev seguro de que el mensaje NO dice dónde está → el origen queda sin saber y la reserva lo pregunta.
+        logger.info(f"[EXTRACT][CAL-C3c] el extractor dice location={lugar!r} y Jev, seguro, que el mensaje no lo "
+                    "dice: no se guarda")
+        return
     if guardado and guardado != lugar:
         # Cambiar un origen ya guardado pasa por la confirmación de siempre (`_route_contradictions`): con una señal
         # clara de corrección ("al final…", "en realidad…") se cambia; si no, "¿lo cambio?"; si Jev dice que el
@@ -2472,6 +2481,27 @@ def _poner_ubicacion(intent, state: ConversationState, message: str, datos: dict
     if lugar == "island":
         _conservar_hotel(intent, pista)
     logger.info(f"[EXTRACT][EX5] location={lugar!r} (regex: {pista.get('location')!r}, guardado: {guardado!r})")
+
+
+def _jev_dice_que_no_lo_dice(state: ConversationState) -> bool:
+    """CAL-C3c: ¿Jev está seguro (≥ `CUSTOMER_PLACE_MIN`) de que el mensaje no dice dónde está el cliente?"""
+    from src.agents.jev_router import CUSTOMER_PLACE_MIN  # lazy
+
+    lugar = getattr(state, "_jev_lugar", None) or {}
+    return lugar.get("choice") == "none" and (lugar.get("confidence") or 0.0) >= CUSTOMER_PLACE_MIN
+
+
+def _poner_hotel(intent, state: ConversationState, datos: dict) -> None:
+    """CAL-C3 (`hotel_por_extractor`): el hotel que el cliente nombra (cita comprobada, sin lista cerrada) se guarda si
+    la conversación aún no tiene uno, para no preguntarle "¿En qué hotel o isla te hospedas?" (cal-41, cal-67/68). El
+    del regex (lista cerrada, con su isla) manda si lo hay: sirve para la recogida."""
+    hotel = (datos or {}).get("hotel")
+    if not settings.hotel_por_extractor or not hotel or intent.hotel or state.hotel or state.detected_hotel:
+        return
+    intent.hotel = hotel
+    if "hotel" not in intent.detected_fields:
+        intent.detected_fields.append("hotel")
+    logger.info(f"[EXTRACT][CAL-C3] hotel={hotel!r} (nombrado por el cliente)")
 
 
 def _poner_actividad(intent, state: ConversationState, datos: dict, pista: dict) -> None:
@@ -5215,6 +5245,17 @@ async def _rag_answer(
     return _origen_antes_del_precio(state, message, answer) or answer
 
 
+# CAL-C3d (17-oct, flag `tras_pase_recuerda_el_pase`): tras pasar la conversación a un asesor, "¿me podrías ayudar con
+# este tema?" (cal-59, la agencia con un correo sin respuesta) llegaba al RAG sin saber que ya había un pase, y contestaba
+# "Cuéntame, ¿qué tema tienes en mente?". El RAG recibe el estado; ahora también este hecho.
+_PASE_HECHO_ES = ("Esta conversación YA está pasada a un asesor del equipo, que la ve entera y escribirá por este chat. "
+                  "Si el cliente pide ayuda con lo que ya contó, no le pidas que lo repita: dile que el asesor ya tiene "
+                  "su caso y le escribe por aquí.")
+_PASE_HECHO_EN = ("This conversation has ALREADY been passed to an advisor from the team, who sees all of it and will "
+                  "write in this chat. If the customer asks for help with what they already told, do not ask them to "
+                  "repeat it: tell them the advisor already has their case and will write here.")
+
+
 def _entradas_rag(state: ConversationState, history: list, message: str = "") -> dict:
     """Lo que recibe el RAG además de la pregunta: idioma, historial, resumen del estado y (rag-3, con su flag)
     el origen. Una sola fuente para la llamada normal y para la adelantada de rag-5, que compara sus huellas."""
@@ -5224,6 +5265,9 @@ def _entradas_rag(state: ConversationState, history: list, message: str = "") ->
     plan = _plan_nombrado(state, message)
     if plan:
         extra = f"{extra}\n\n{plan}" if extra else plan
+    if settings.tras_pase_recuerda_el_pase and state.step == Step.ESCALATE:
+        pase = _PASE_HECHO_ES if state.language == "es" else _PASE_HECHO_EN
+        extra = f"{extra}\n\n{pase}" if extra else pase
     entradas = {"lang": state.language, "history": history, "extra_context": extra}
     # rag-3: el origen va solo con el flag (con el flag apagado la llamada es la de siempre).
     if settings.rag_busqueda_origen and state.location:
@@ -5607,6 +5651,11 @@ def _answer_replaces_the_booking_question(
     """
     if _is_rag_fallback(answer):
         return True
+    if settings.una_sola_pregunta and not finalized and _answer_already_asks(answer):
+        # CAL-C3b (17-oct): la regla vale para cualquier dato pendiente, como en el camino antiguo
+        # (`_answer_question`). "¿En qué hotel de las islas se alojan? ¿En qué hotel o isla te hospedas?"
+        # (cal-71/73): dos preguntas seguidas; la de la reserva queda pendiente para el turno siguiente.
+        return True
     return not finalized and state.core_pending_slot == SLOT_ACTIVITY and _answer_already_asks(answer)
 
 
@@ -5704,7 +5753,15 @@ def _origen_antes_del_precio(state: ConversationState, message: str, answer: str
     if not (_PIDE_PRECIO_RE.search(texto) or state.pregunta_precio_pendiente):
         return None
     del_cliente = [h.get("content") or "" for h in (state.history or []) if h.get("role") == "user"]
-    if any(_PISTA_ORIGEN_RE.search(t) for t in [*del_cliente, texto]):
+    este = [texto]
+    if settings.lugar_con_dos_lectores and _jev_dice_que_no_lo_dice(state):
+        # CAL-C3c: "bucear en islas del rosario" nombra las islas sin decir dónde está el cliente (cal-71/73); si Jev
+        # está seguro de que ESTE mensaje no dice su origen, sus palabras no cuentan como pista y se pregunta antes de
+        # cotizar. El mensaje ya está en el historial cuando contesta el RAG: se quita de ahí también.
+        este = []
+        if del_cliente and del_cliente[-1] == texto:
+            del_cliente = del_cliente[:-1]
+    if any(_PISTA_ORIGEN_RE.search(t) for t in [*del_cliente, *este]):
         return None
     pregunta = ORIGEN_ANTES_DEL_PRECIO_ES if state.language == "es" else ORIGEN_ANTES_DEL_PRECIO_EN
     if settings.origen_conserva_respuesta:

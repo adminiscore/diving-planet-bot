@@ -1,6 +1,51 @@
 History
 =======
 
+0.31.41 - (2026-10-17)
+----------------------
+* **CAL-C (Álvaro con Claude): C3 hecho y todo CAL-C medido con el banco reparado — 49 → 28/63, flags APAGADOS** hasta
+  la mini-ronda A/B. Rama al día con `feature/pre_gadea` (avance limpio, 25 commits).
+  - **C3a `HOTEL_POR_EXTRACTOR`:** el extractor lee el hotel donde se aloja, tal como lo escribe y con su cita, SIN
+    lista cerrada ("Isla Mulata", "Bodegas de Santa Clara", "Hotel Caribe"); no da hotel en "¿qué hotel me
+    recomiendan?" ni en "aún no sabemos". Banco ex0 diseño (3 pasadas): 113 = 113 aciertos, inventos 4 → 5 (ruido).
+  - **C3b `UNA_SOLA_PREGUNTA`:** si la respuesta ya acaba preguntando, la pregunta de la reserva espera al turno
+    siguiente (cualquier dato, como ya hacía el camino antiguo; no con el cierre de la reserva).
+  - **C3c `LUGAR_CON_DOS_LECTORES`:** el origen del extractor se guarda solo si Jev no está seguro (≥ 0,6) de que el
+    mensaje NO lo dice; y en la puerta "sin origen no hay precio", la palabra "islas" del mensaje actual (que ya está
+    en el historial cuando contesta el RAG) deja de contar como pista. "Bucear en islas del rosario" ≠ estar en las
+    islas. Banco ex0 en modo producción: location 21/22 con y sin.
+  - **E4 `IDIOMA_DEL_EXTRACTOR` (de Gadea):** cal-40 era el caso que le faltaba: 3/3 → 0/3.
+
+| Caso (21 de CAL-C, 3 repeticiones; banco REPARADO) | Base `calc-base-reparado` | Todo junto `calc-todo-17oct` | Arreglo |
+|---|---|---|---|
+| cal-40 "Hola! My partner and I…" → contestaba en español | 3 | **0** | E4 `IDIOMA_DEL_EXTRACTOR` (de Gadea: era el caso que le faltaba) |
+| cal-41 "staying at Isla Mulata" → "¿en qué hotel?" | 3 | **0** | C3a `HOTEL_POR_EXTRACTOR` |
+| cal-45 "Muchas gracias!" / cal-54 "5 inmersiones" → menú | 3 / 3 | **0 / 0** | C1 `ACTIVIDAD_POR_LO_SABIDO` |
+| cal-08 "ida y vuelta el mismo día" en el plan de 5 buceos | 3 | **0** | (de rebote; no se buscó: vigilar) |
+| cal-71 / cal-73 "bucear en islas del rosario" → cotizaba "ya en las islas" + pregunta doble | 3 / 3 | **0 / 0** (`calc-todo-71-73b`) | C3c `LUGAR_CON_DOS_LECTORES` + C3b `UNA_SOLA_PREGUNTA` |
+| cal-46 (Ubuntu) | 3 | 2 | parcial: lo que queda es el RAG preguntando el origen ya sabido (Gadea) |
+| cal-01, 10, 21, 57 | 2, 2, 2, 1 | igual | varían de una vez a otra |
+| cal-17 | 0 | 1 | vigilar (variación) |
+| cal-16, 25, 35, 52, 59, 60 | 3 | 3 | ver "lo que queda" |
+| **Total** | **49/63** | **28/63** (34 en la medida conjunta − 6 de cal-71/73 tras el último arreglo) | |
+
+  - Tests `tests/test_cal_c3_hotel_por_extractor.py` (14). Gasto del 17-oct en CAL-C ≈ 8 $ (estimado).
+  - **Tarde (decisiones de Álvaro, 17-oct): (1) PRE libre → subido 941b6ca, healthy; (2) los datos se piden DE UNO EN
+    UNO → criterio `pide-datos-faltantes` (cal-16) actualizado en el golden y en el banco; (3) sin cédula = USD.**
+  - **`SIN_CEDULA_EXTRANJERO` (APAGADO):** "que no tenga cedula" → `is_colombian=False` (cal-32 3/3 en local; trampas
+    "¿necesito cédula?" y "soy colombiana pero no tengo la cédula a mano" bien). La frase va al FINAL de la regla: en medio
+    movía el extractor (estables 98 → 95,5 %); al final 96,5 %, inventos 4 = 4, pierde 2 datos frágiles ("solo yo",
+    "un solo buzo avanzado"). En PRE el estado ya guarda `is_colombian=False`, pero **la respuesta del RAG no dice USD**
+    cuando el cliente habla de pagar (área de Gadea): cal-32 sigue 3/3.
+  - **C3d `TRAS_PASE_RECUERDA_EL_PASE` (APAGADO):** con la conversación ya pasada a un asesor, el RAG lo sabe y no pide
+    repetir el caso: cal-59 3/3 → **0/3** ("El asesor del equipo ya tiene tu caso y te escribirá por aquí").
+  - **cal-36 (el bono) ya está bien en PRE** con lo promocionado anoche (turno 3: "el precio online ya incluye el 10 %…
+    no hay bono extra por ser colombianos"); el banco lo mide en el turno 4 ("¿incluye el almuerzo?"): defecto del
+    INSTRUMENTO, para Gadea (dueña del banco).
+  - cal-69/70: "My wife ... and I" no es una cita mala del control: "and I" NO está en el mensaje (el extractor junta
+    palabras). Pendiente de diseño sin abrir la puerta a inventos. cal-55 (Barú): pendiente.
+  - Gasto total del 17-oct en CAL-C ≈ 9,5 $ (estimado). 8 flags de CAL-C, todos APAGADOS hasta la mini-ronda A/B.
+
 0.31.40 - (2026-10-17)
 ----------------------
 * **Cuatro rondas del golden core en una noche: 4 cambios promocionados, 3 descartados y una regla de medición nueva**

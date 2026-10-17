@@ -102,6 +102,31 @@ ESQUEMA_CON_NOMBRE = {
                                    "El nombre propio con que se presenta quien escribe.")},
     "required": [*ESQUEMA["required"], "nombre"],
 }
+# CAL-C3 (17-oct, flag `hotel_por_extractor`): el HOTEL donde se aloja, con su cita. Lo leía solo el regex con la lista
+# cerrada de hoteles de las islas: "staying at Isla Mulata on Isla Grande" (cal-41) y "We will be staying at Bodegas de
+# Santa Clara" (cal-67/68, un hotel de Cartagena) se perdían y el bot preguntaba "¿En qué hotel o isla te hospedas?".
+# Sin lista: vale el nombre tal como lo escribe el cliente si está en su mensaje. Con el flag apagado, ni el campo ni
+# su regla (la llamada es exactamente la de antes).
+CAMPO_HOTEL = _dato({"type": "string"},
+                    "El nombre del hotel, hostal o casa donde se aloja o se alojará quien escribe, tal como lo escribe.")
+REGLA_HOTEL_ES = (
+    "\n- hotel: el nombre del sitio donde se aloja o se alojará quien escribe (\"nos quedamos en el Hotel Caribe\", "
+    "\"staying at Isla Mulata\"), tal como lo escribe. Preguntar por un hotel, recomendarlo o \"aún no lo sabemos\" NO es "
+    "su hotel. El hotel no dice por sí solo desde dónde sale (location)."
+)
+REGLA_HOTEL_EN = (
+    "\n- hotel: the name of the place where the writer stays or will stay (\"we're staying at Hotel Caribe\", \"staying at "
+    "Isla Mulata\"), as they write it. Asking about a hotel, recommending one or \"we don't know yet\" is NOT their hotel. "
+    "The hotel alone does not say where they depart from (location)."
+)
+
+
+def _esquema(con_nombre: bool, con_hotel: bool) -> dict:
+    """El esquema de la llamada con los campos opcionales encendidos (sin ellos, el de siempre)."""
+    if not con_hotel:
+        return ESQUEMA_CON_NOMBRE if con_nombre else ESQUEMA
+    base = ESQUEMA_CON_NOMBRE if con_nombre else ESQUEMA
+    return {**base, "properties": {**base["properties"], "hotel": CAMPO_HOTEL}, "required": [*base["required"], "hotel"]}
 # 13-oct (Gonzalo, flag `extractor_precio_elige`): la regla general ponía "¿cuánto cuesta el buceo certificado?" como
 # ejemplo de algo que NO es un dato, y la de `activity` dice que preguntar el precio de un producto nombrado SÍ lo elige
 # (decisión de Gadea 14/27-sep). Dos órdenes contrarias: de ahí la variación de ex-8 ("a veces no cuenta como
@@ -302,6 +327,12 @@ async def extraer_turno(mensaje: str, *, history: list[dict] | None = None, sabi
     con_nombre = settings.nombre_por_extractor
     if con_nombre:
         sistema += REGLA_NOMBRE_ES if lang == "es" else REGLA_NOMBRE_EN
+    con_hotel = settings.hotel_por_extractor
+    if settings.sin_cedula_extranjero:
+        # CAL-C (17-oct, decisión de Álvaro): sin cédula colombiana → no es colombiano (paga en USD). Ver SIN_CEDULA_*.
+        sistema = sistema.replace(SIN_CEDULA_HOY_ES, SIN_CEDULA_ES).replace(SIN_CEDULA_HOY_EN, SIN_CEDULA_EN)
+    if con_hotel:
+        sistema += REGLA_HOTEL_ES if lang == "es" else REGLA_HOTEL_EN
     modelo = modelo or settings.extractor_turno_model
     t0 = time.perf_counter()
     try:
@@ -312,7 +343,7 @@ async def extraer_turno(mensaje: str, *, history: list[dict] | None = None, sabi
                       {"role": "user", "content": _contexto(mensaje, ultima_pregunta_del_bot(history), sabido or {}, lang)}],
             response_format={"type": "json_schema",
                              "json_schema": {"name": "datos_del_turno", "strict": True,
-                                             "schema": ESQUEMA_CON_NOMBRE if con_nombre else ESQUEMA}},
+                                             "schema": _esquema(con_nombre, con_hotel)}},
             temperature=0.0,
             # EX-EST-1 (14-oct): con los campos nuevos (idioma, nombre, quiere_bucear...) 400 cortaba el JSON (2 de
             # cada 1.000 llamadas en el banco: "Unterminated string" -> el turno caía al camino viejo).
@@ -329,7 +360,7 @@ async def extraer_turno(mensaje: str, *, history: list[dict] | None = None, sabi
         return None
     extraer_turno.ultimo_segundos = time.perf_counter() - t0
     salida, descartes = {}, {}
-    for campo in (*CAMPOS, *EXTRAS, *(("nombre",) if con_nombre else ())):
+    for campo in (*CAMPOS, *EXTRAS, *(("nombre",) if con_nombre else ()), *(("hotel",) if con_hotel else ())):
         d = datos.get(campo)
         if not isinstance(d, dict) or d.get("valor") in (None, "", [], {}):
             continue
@@ -353,6 +384,9 @@ async def extraer_turno(mensaje: str, *, history: list[dict] | None = None, sabi
             continue
         if campo == "location" and not nombra_un_lugar(cita):
             descartes[campo] = f"la cita no nombra un lugar: {cita!r}"
+            continue
+        if campo == "hotel" and not (isinstance(valor, str) and cita_verificable(valor, mensaje)):
+            descartes[campo] = f"el nombre del hotel no está en el mensaje: {valor!r}"
             continue
         salida[campo] = valor
     # Regla del negocio (ex-8): un buzo certificado (lo dice ahora o ya se sabe) que quiere bucear y no elige otra cosa
@@ -453,3 +487,14 @@ ELIGE_HOY_EN = "or when they answer the bot's question by taking one of the opti
 ELIGE_EN = ("or when they answer the bot's question by taking one of the options it offers or accepting the one it "
             "proposes (\"we like it\", \"that one\", \"the first one\": the value is that option and the quote, their answer).")
 
+# CAL-C (17-oct, flag `sin_cedula_extranjero`, DECISIÓN DE ÁLVARO): "que no tenga cedula" (cal-32, para pagar) no
+# guardaba is_colombian=False, así que la regla de moneda no saltaba y el bot nunca decía que paga en USD. La regla
+# decía cuándo ES colombiano y no cuándo NO lo es. Decisión del owner: sin cédula colombiana (ni de extranjería), o
+# extranjero/turista, = no colombiano → USD.
+# Va al FINAL de la regla: en medio movía otros campos del banco ex0 (estables 98 → 95,5 %, inventos peor pasada 4 → 8).
+SIN_CEDULA_HOY_ES = "mixed_nationality true e is_colombian null."
+SIN_CEDULA_ES = ("mixed_nationality true e is_colombian null. Si dice que no tiene cédula colombiana (ni de extranjería) o "
+                 "que es extranjero o turista: false.")
+SIN_CEDULA_HOY_EN = "mixed_nationality true and is_colombian null."
+SIN_CEDULA_EN = ("mixed_nationality true and is_colombian null. If they say they have no Colombian ID (cédula, nor a "
+                 "cédula de extranjería) or that they are a foreigner or tourist: false.")

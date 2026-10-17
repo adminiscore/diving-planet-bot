@@ -1,0 +1,50 @@
+{
+ "etiqueta": "calc-todo-71-73b",
+ "reps": 3,
+ "flags": [
+  "actividad_por_lo_sabido",
+  "extractor_cita_del_cliente",
+  "hotel_por_extractor",
+  "una_sola_pregunta",
+  "lugar_con_dos_lectores",
+  "idioma_del_extractor"
+ ],
+ "codigo_local": true,
+ "casos": [
+  {
+   "id": "cal-71",
+   "dialogo": "precio-dispo-buceo-certificado-grupo-mixto",
+   "criterio": "global:sin-invenciones",
+   "repeticiones": 3,
+   "fallan": 0,
+   "respuestas": [
+    "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\n¡Hola!\n\nOperamos los festivos también. Siempre hay disponibilidad, salvo cierres el 25 de diciembre y el 1 de enero, y posibles suspensiones por mal tiempo.\n\nPara darte el precio exacto necesito saber desde dónde sales: ¿saldrías *desde Cartagena* o ya estás *en las Islas del Rosario*? Los planes y los precios cambian según el punto de salida. 🌊",
+    "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\n¡Hola!\n\nOperamos los festivos; siempre hay disponibilidad, salvo cierres el 25 de diciembre y el 1 de enero, y las salidas pueden suspenderse por mal tiempo.\n\nPara darte el precio exacto necesito saber desde dónde sales: ¿saldrías *desde Cartagena* o ya estás *en las Islas del Rosario*? Los planes y los precios cambian según el punto de salida. 🌊",
+    "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\nPara darte el precio exacto necesito saber desde dónde sales: ¿saldrías *desde Cartagena* o ya estás *en las Islas del Rosario*? Los planes y los precios cambian según el punto de salida. 🌊"
+   ],
+   "explicaciones": [
+    "La respuesta actual no asume el origen del cliente, sino que explícitamente pregunta si saldría desde Cartagena o si ya está en las islas, tal como exige el criterio y el contexto: 'Para darte el precio exacto necesito saber desde dónde sales: ¿saldrías *desde Cartagena* o ya estás *en las Islas del Rosario*?'. Por lo tanto, no se reproduce el fallo de asumir el origen sin confirmación.",
+    "La respuesta actual no asume el origen del cliente, sino que explícitamente pregunta si saldría desde Cartagena o si ya está en las islas, aclarando que los precios y planes cambian según el punto de salida. Esto cumple con el criterio de no inventar ni asumir datos no proporcionados por el cliente.",
+    "La respuesta actual no asume el origen del cliente, sino que pregunta explícitamente si saldría desde Cartagena o si ya está en las islas, tal como exige el criterio y el contexto ('Para darte el precio exacto necesito saber desde dónde sales: ¿saldrías desde Cartagena o ya estás en las Islas del Rosario?'). Por tanto, no hay invención ni asunción indebida."
+   ]
+  },
+  {
+   "id": "cal-73",
+   "dialogo": "precio-dispo-buceo-certificado-grupo-mixto",
+   "criterio": "origen-cartagena-o-islas",
+   "repeticiones": 3,
+   "fallan": 0,
+   "respuestas": [
+    "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\n¡Hola! ¡Qué buen plan para disfrutar los arrecifes de las Islas del Rosario!\n\nOperamos los festivos; solo cerramos el 25 de diciembre y el 1 de enero, aunque una salida puede suspenderse por mal tiempo.\n\nPara darte el precio exacto necesito saber desde dónde sales: ¿saldrías *desde Cartagena* o ya estás *en las Islas del Rosario*? Los planes y los precios cambian según el punto de salida. 🌊",
+    "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\n¡Hola! ¡Qué buen plan para disfrutar los arrecifes de las Islas del Rosario!\n\nOperamos los festivos también. Siempre hay disponibilidad, salvo el 25 de diciembre y el 1 de enero, y la salida podría suspenderse por mal tiempo.\n\nPara darte el precio exacto necesito saber desde dónde sales: ¿saldrías *desde Cartagena* o ya estás *en las Islas del Rosario*? Los planes y los precios cambian según el punto de salida. 🌊",
+    "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\n¡Hola!\n\nOperamos los festivos; solo cerramos el 25 de diciembre y el 1 de enero, y una salida puede suspenderse por mal tiempo.\n\nPara darte el precio exacto necesito saber desde dónde sales: ¿saldrías *desde Cartagena* o ya estás *en las Islas del Rosario*? Los planes y los precios cambian según el punto de salida. 🌊"
+   ],
+   "explicaciones": [
+    "La respuesta actual pregunta explícitamente si el cliente saldrá desde Cartagena o si ya está en las islas antes de cotizar, cumpliendo así el criterio de origen-cartagena-o-islas. No da un precio sin antes aclarar el punto de salida, por lo que el fallo original ya no se reproduce.",
+    "La respuesta actual pregunta explícitamente si el cliente saldría desde Cartagena o si ya está en las Islas del Rosario antes de cotizar el precio, cumpliendo así el criterio de origen-cartagena-o-islas. Ejemplo: 'Para darte el precio exacto necesito saber desde dónde sales: ¿saldrías desde Cartagena o ya estás en las Islas del Rosario? Los planes y los precios cambian según el punto de salida.'",
+    "La respuesta actual pregunta explícitamente si el cliente saldrá desde Cartagena o si ya está en las islas antes de cotizar, cumpliendo el criterio de origen-cartagena-o-islas. No falta información relevante y no se asume el origen del cliente."
+   ]
+  }
+ ],
+ "sin_medir": []
+}

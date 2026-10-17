@@ -364,6 +364,9 @@
         "extractor_aclaraciones",
         "extractor_todo_lo_dicho",
         "extractor_cita_del_cliente",
+        "hotel_por_extractor",
+        "lugar_con_dos_lectores",
+        "sin_cedula_extranjero",
         "est4_flujo",
         "jev_pide_algo"
       ]
@@ -383,6 +386,8 @@
       "interruptores": [
         "recommend_inferred_minicourse",
         "actividad_por_lo_sabido",
+        "una_sola_pregunta",
+        "tras_pase_recuerda_el_pase",
         "aplazar_pregunta_sin_respuesta",
         "recomendar_a_certificados",
         "acuse_solo_el_mensaje"
@@ -967,6 +972,16 @@
       "titulo": "Correcciones sin repetir",
       "texto": "Cuando un dato cambia, pregunta «¿lo cambio?» una sola vez, y nunca por un cambio que se lee igual."
     },
+    "tras_pase_recuerda_el_pase": {
+      "area": "Reserva",
+      "titulo": "Tras pasar a un asesor, no pedir que repita",
+      "texto": "Cuando la conversación ya está pasada a un asesor, la respuesta lo sabe: si el cliente insiste en que le ayuden con lo que ya contó, se le dice que el asesor ya tiene su caso, en vez de pedirle que lo cuente otra vez."
+    },
+    "una_sola_pregunta": {
+      "area": "Reserva",
+      "titulo": "Una sola pregunta por turno",
+      "texto": "Si la respuesta a lo que preguntó el cliente ya acaba con una pregunta, no se le pega detrás la pregunta de la reserva: esa espera al turno siguiente. Antes salían dos preguntas seguidas ('¿En qué hotel de las islas se alojan? ¿En qué hotel o isla te hospedas?')."
+    },
     "actividad_por_lo_sabido": {
       "area": "Reserva",
       "titulo": "Sin menú si ya quiere bucear",
@@ -1271,6 +1286,21 @@
       "area": "Reserva",
       "titulo": "Arreglos del flujo de la tanda est5",
       "texto": "Lo que el cliente dice en el mensaje que se pasa a una persona ya no se pierde: si dijo que se aloja en un hotel de las islas, el bot no le vuelve a preguntar desde dónde sale."
+    },
+    "sin_cedula_extranjero": {
+      "area": "Reserva",
+      "titulo": "Sin cédula, paga en dólares",
+      "texto": "Decisión de Álvaro: si el cliente dice que no tiene cédula colombiana (ni de extranjería) o que es extranjero, no es colombiano y paga en dólares."
+    },
+    "lugar_con_dos_lectores": {
+      "area": "Reserva",
+      "titulo": "El origen, con dos lectores de acuerdo",
+      "texto": "Desde dónde sale el cliente (Cartagena o las islas) decide el precio y el enlace. Se guarda solo si el extractor y Jev no se contradicen: 'quiero bucear en islas del Rosario' no es estar alojado en las islas, y si Jev está seguro de que el mensaje no lo dice, el bot lo pregunta."
+    },
+    "hotel_por_extractor": {
+      "area": "Reserva",
+      "titulo": "El extractor entiende el hotel",
+      "texto": "El extractor apunta el hotel donde se aloja el cliente tal como lo escribe, aunque no esté en la lista de hoteles de las islas ('Isla Mulata', 'Bodegas de Santa Clara'), y así no se le vuelve a preguntar en qué hotel está."
     },
     "extractor_cita_del_cliente": {
       "area": "Reserva",
