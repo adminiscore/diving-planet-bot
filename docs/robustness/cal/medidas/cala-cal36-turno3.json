@@ -1,0 +1,36 @@
+{
+ "etiqueta": "cala-cal36-turno3",
+ "reps": 3,
+ "flags": [
+  "no:actividad_por_lo_sabido",
+  "no:extractor_cita_del_cliente",
+  "no:hotel_por_extractor",
+  "no:una_sola_pregunta",
+  "no:lugar_con_dos_lectores",
+  "no:idioma_del_extractor",
+  "no:sin_cedula_extranjero",
+  "no:tras_pase_recuerda_el_pase"
+ ],
+ "codigo_local": true,
+ "verificador": "gpt-4.1",
+ "casos": [
+  {
+   "id": "cal-36",
+   "dialogo": "pareja-certificados-cop-descuento-almuerzo",
+   "criterio": "descuentos-vigentes",
+   "repeticiones": 3,
+   "fallan": 3,
+   "respuestas": [
+    "¡Ah, ya entiendo! Si te refieres a un bono o descuento adicional, no tenemos un bono especial por ser colombianos; solo cambia la moneda y pagan en COP.\n\nEl precio online ya incluye el 10% de descuento por reservar en la web. Para la salida de 2 inmersiones desde Cartagena, es de *$630.000 COP por persona*. ¿Te referías a algún bono que viste anunciado?\n\n¿Ha pasado *más de 2 años* desde la última inmersión de alguno del grupo?",
+    "¡Claro! El precio online ya incluye un *10% de descuento* por reservar en la web. No hay un bono adicional automático para un grupo de 2; el descuento extra para grupos aplica desde 5 personas en buceo recreativo.\n\nPara la salida de 2 inmersiones desde Cartagena, el precio online es *$630.000 COP por persona*. Puedes revisar la fecha y reservar aquí: https://book.divingplanet.org/book/salidas-de-buceo/1?language=es\n\n¿Ha pasado *más de 2 años* desde la última inmersión de alguno del grupo?",
+    "¡Claro! Si te refieres a un *bono o descuento adicional*, no tenemos un bono con código. El precio online ya incluye el 10% de descuento por reservar en la web. Para el plan de 2 inmersiones saliendo de Cartagena, el precio online es *$630.000 COP por persona*.\n\nHay un 10% extra para grupos de 5 o más, así que no aplica para ustedes dos. ¿Quieres que te comparta el enlace para reservar?\n\n¿Ha pasado *más de 2 años* desde la última inmersión de alguno del grupo?"
+   ],
+   "explicaciones": [
+    "La respuesta actual aclara correctamente que no hay descuento especial por ser colombiano y que el precio online ya incluye el 10% de descuento por reservar en la web. Sin embargo, no menciona el descuento del 5% por traer equipo propio completo ni el descuento del 10% para grupos de 5 o más personas, que son los otros descuentos vigentes aplicables según el contexto ('Descuentos: 10% online...; 10% extra para grupos de 5 o más...; 5% si el cliente trae su equipo COMPLETO...').",
+    "La respuesta actual aclara correctamente que el precio online ya incluye el 10% de descuento por reservar en la web y que no hay descuento especial por ser colombiano, y menciona que el descuento por grupo aplica desde 5 personas. Sin embargo, omite mencionar el descuento vigente del 5% si los buzos traen su equipo propio completo, que es relevante y está en el contexto ('5% si el cliente trae su equipo COMPLETO, solo en buceo recreativo y cursos').",
+    "La respuesta actual aclara correctamente que el precio online ya incluye el 10% de descuento por reservar en la web, que no hay bono/código adicional y que no hay descuento especial por ser colombiano. También menciona el descuento por grupo de 5+ personas. Sin embargo, omite mencionar el descuento vigente del 5% si el cliente trae su equipo propio completo, que es relevante y está en el contexto: '5% si el cliente trae su equipo COMPLETO, solo en buceo recreativo y cursos'."
+   ]
+  }
+ ],
+ "sin_medir": []
+}

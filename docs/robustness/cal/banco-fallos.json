@@ -1759,10 +1759,10 @@
    "causa_gadea": "rag_omite",
    "resumen": "No menciona descuentos vigentes ni aclara ausencia de descuento colombiano.",
    "motivo_juez": "El bot confirmó el almuerzo pero no aclaró el descuento online estándar ni que no hay descuento por ser colombiano, ni mencionó los descuentos aplicables (equipo propio completo o descuento por grupo 5+).",
-   "turno": 4,
+   "turno": 3,
    "pieza": "rag",
-   "mensaje_cliente": "incluye el almuerzo?",
-   "respuesta_ex10": "¡Sí! Para la salida de buceo de 2 inmersiones desde Cartagena, el almuerzo está incluido. También incluyen agua durante el día y dulces de coco entre inmersiones. 🥥\n\n¿Te animas con la *salida de 2 inmersiones*, un *paquete de varios días* o un *curso avanzado*? 🌊",
+   "mensaje_cliente": "dice que hay un bono aadicional",
+   "respuesta_ex10": "Entiendo que mencionas un bono adicional.\n\n¿Te animas con la *salida de 2 inmersiones*, un *paquete de varios días* o un *curso avanzado*? 🌊",
    "historial": [
     {
      "role": "user",
@@ -1779,14 +1779,6 @@
     {
      "role": "assistant",
      "content": "Entendido, son 2 personas y son colombianos.\n\n¿Te animas con la *salida de 2 inmersiones*, un *paquete de varios días* o un *curso avanzado*? 🌊"
-    },
-    {
-     "role": "user",
-     "content": "dice que hay un bono aadicional"
-    },
-    {
-     "role": "assistant",
-     "content": "Entiendo que mencionas un bono adicional.\n\n¿Te animas con la *salida de 2 inmersiones*, un *paquete de varios días* o un *curso avanzado*? 🌊"
     }
    ],
    "turnos_dialogo": 4,
@@ -1802,7 +1794,8 @@
    },
    "causa_final": "redaccion",
    "tarea": "CAL-A",
-   "nota": "Aclarar que aplica el 10% de descuento online al reservar por la web, que no hay descuento especial por ser colombiano, y mencionar los descuentos vigentes aplicables (equipo propio completo, grupo 5+ si correspondiera)."
+   "nota": "Aclarar que aplica el 10% de descuento online al reservar por la web, que no hay descuento especial por ser colombiano, y mencionar los descuentos vigentes aplicables (equipo propio completo, grupo 5+ si correspondiera). · 17-oct (lo vio Álvaro): el banco medía el turno 4 ('incluye el almuerzo?') y el criterio va de la pregunta del bono del turno 3 ('dice que hay un bono adicional'): ninguna respuesta sobre el almuerzo podía cumplirlo. Defecto del instrumento; se mide el turno 3. Medido en el turno 3 (cala-cal36-turno3): las respuestas ya dicen que no hay bono por ser colombianos, que el 10 % online va incluido y el de grupo desde 5; falla 3/3 porque no nombran el 5 % por traer el equipo propio completo, que el criterio cuenta entre los descuentos vigentes.",
+   "turno_original": 4
   },
   {
    "id": "cal-37",
