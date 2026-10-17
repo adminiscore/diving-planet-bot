@@ -59,7 +59,31 @@ integrar la rama del otro y suite en verde, porque en PRE gana el último; (3) *
 despliegue reinicia el contenedor y mata la medida del otro (avisar en el registro de Plan Coral con la hora de fin).
 Las doce normas, con su porqué, están en el documento.
 
-### ▶️ RETOMAR AQUÍ — 17-oct tarde (Álvaro con Claude): CAL-C PROMOCIONADO; Luna medida; Coral activado
+### ▶️ RETOMAR AQUÍ — 17-oct, 19:00 (Gadea con Claude): CAL-A y CAL-D cerradas, r6-2 hecha, G9 congelado; PLAN HASTA ANDRÉS
+
+**Plan decidido por Gadea (Plan Coral, log `l-1017-plan-andres`):** no se piden conversaciones a Andrés (dueño de Diving
+Planet) hasta tener el bot robusto. Orden: (1) cerrar lo en vuelo (CAL-C de Álvaro, r6-2); (2) **G9**, examen oculto
+sintético CONGELADO; (3) **CAL-F**, golden visible completo; (4) **G3**, Claude contra el chatbot en directo
+(`scripts/charla_pre.py`), los fallos al banco y arreglo por causa; (5) CAL-G si hay margen; (6) **G9 una sola vez**
+(`run_synthetic_pre --sample golden --golden docs/robustness/golden-set/examen-sintetico-g9.json` y
+`judge_golden_set --golden …`); si sale bien, a Andrés.
+
+- **Promocionado hoy (en PRE):** `CATALOGO_PROFUNDIDAD`, `AVISOS_AL_FINAL` (A6, revisor Luna), cal-74 (días del plan),
+  cal-32 (USD sin cédula), ReActivate = refresh (decisión de Gadea), `MEMORIA_SIN_ORDENES_DEL_CLIENTE` y
+  `DATOS_AJENOS_SE_NIEGAN` (r6-2). HISTORY 0.31.42, 0.31.44-0.31.46.
+- **r6-2:** banco de 10 inyecciones de punta a punta (`docs/robustness/seguridad/banco-inyeccion.json`, `banco_fallos
+  medir --banco …`): 0/30.
+- **G9 congelado:** `docs/robustness/golden-set/examen-sintetico-g9.json` (72 conversaciones, gpt-4.1, sha256
+  b4231cfb…). NADIE lo abre para ajustar el bot ni lo mete en bancos.
+- **Decisiones de Gadea de hoy:** el chatbot no da teléfonos (pasa a un asesor); los datos de otros clientes se niegan
+  (no pase); un refresh o ReActivate hecho en otro centro cuenta; revisor A6 con Luna; q5-1 (puerta del golden en CI)
+  DESCARTADA por coste.
+- **Reparto con Álvaro (por Coral):** él cierra CAL-C (C3e/C4/C5) y sigue con r6-1 (tiempos por llamada para CAL-G,
+  429/timeouts, alerta de saldo, salir de gpt-4.1); los fallos de G3 por zonas (flujo/extractor él, RAG/datos Gadea).
+- **Coral** (`tools/coral`): el chat entre los Claude; cada sesión arma la escucha con Monitor al empezar. Las carpetas
+  `/tmp/codigo-local-plaza-*` del contenedor son de Álvaro; `…-usuario-*`, de Gadea.
+
+### ▶️ (anterior) — 17-oct tarde (Álvaro con Claude): CAL-C PROMOCIONADO; Luna medida; Coral activado
 
 **CAL-C:** los 8 flags quedan **encendidos en PRE (promocionados, decisión de Álvaro)**. Banco CAL-C 49 → ~28/63; ronda
 core calc-A 96,9 % 25/32 vs calc-B 96,5 % 25/32, latencia igual; ninguna regresión propia tras arreglar el idioma de E4
@@ -74,7 +98,7 @@ NO es un invento: está en `faqs.json:750`; el juez del golden se equivocó. Cor
 medir con `estabilidad_extractor --modelo gpt-6-luna`; (3) **r6-1**: alerta de saldo de OpenAI, respaldo del RAG que
 NO sea Luna (el escritor ya lo es) y reintentos ante 429.
 
-### ▶️ RETOMAR AQUÍ — 17-oct tarde (Gadea con Claude): CAL-A — profundidad y avisos al final (A6) medidos, APAGADOS, candidatos a la ronda core B
+### ▶️ (anterior) 17-oct tarde (Gadea con Claude): CAL-A — profundidad y avisos al final (A6) medidos, APAGADOS, candidatos a la ronda core B
 
 - **Hecho** (HISTORY 0.31.42, `docs/robustness/cal/cal-a6-avisos-al-final.md`): `catalogo_profundidad` arregla cal-18
   (3/3 → 0/3); `avisos_al_final` (revisor con GPT-6 Luna, decisión de Gadea) arregla en parte cal-49, cal-15 y cal-48 y
