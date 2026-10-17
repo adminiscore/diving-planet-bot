@@ -491,9 +491,10 @@ ELIGE_EN = ("or when they answer the bot's question by taking one of the options
 # guardaba is_colombian=False, así que la regla de moneda no saltaba y el bot nunca decía que paga en USD. La regla
 # decía cuándo ES colombiano y no cuándo NO lo es. Decisión del owner: sin cédula colombiana (ni de extranjería), o
 # extranjero/turista, = no colombiano → USD.
-SIN_CEDULA_HOY_ES = "Nunca lo deduzcas del idioma en que escribe ni de su nombre."
-SIN_CEDULA_ES = ("false si dice que no tiene cédula colombiana (ni de extranjería) o que es extranjero o turista. Nunca "
-                 "lo deduzcas del idioma en que escribe ni de su nombre.")
-SIN_CEDULA_HOY_EN = "Never infer it from the language they write in or from their name."
-SIN_CEDULA_EN = ("false if they say they have no Colombian ID (cédula, nor a cédula de extranjería) or that they are a "
-                 "foreigner or tourist. Never infer it from the language they write in or from their name.")
+# Va al FINAL de la regla: en medio movía otros campos del banco ex0 (estables 98 → 95,5 %, inventos peor pasada 4 → 8).
+SIN_CEDULA_HOY_ES = "mixed_nationality true e is_colombian null."
+SIN_CEDULA_ES = ("mixed_nationality true e is_colombian null. Si dice que no tiene cédula colombiana (ni de extranjería) o "
+                 "que es extranjero o turista: false.")
+SIN_CEDULA_HOY_EN = "mixed_nationality true and is_colombian null."
+SIN_CEDULA_EN = ("mixed_nationality true and is_colombian null. If they say they have no Colombian ID (cédula, nor a "
+                 "cédula de extranjería) or that they are a foreigner or tourist: false.")
