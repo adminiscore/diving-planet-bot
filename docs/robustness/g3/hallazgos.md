@@ -124,3 +124,30 @@ cuesta el minicurso?" → 1 documento; "what time does the boat leave?" → 0; u
 consulta lleva el marcador de origen, BM25 busca solo la última línea (`[origen_cliente]=ya en las islas` → 0). En la
 práctica, la búsqueda es solo por vector y la fusión RRF no aporta. Cambiarlo (OR, o `plainto_tsquery` con `|`)
 mueve todos los rankings: medir con el banco de piezas (`rag_piezas`) antes, como CAL-D segunda parte.
+
+## G3-07 · Pareja de Bogotá, snorkel → minicurso — conv 5573 (17-oct)
+
+**G3-07a · Dos monedas en el mismo mensaje (turno 1).** "somos una pareja de bogota… queremos hacer snorkel un día,
+¿cuánto vale?" → el texto dice "126 USD por persona" y la tarjeta del mismo mensaje "2 × 448.000 COP" ("Como sois
+colombianos/residentes…"). Banco `g3-07a`, PRE: **3/3**. Causa (TURN_METRICS del turno: `rag_adelantado:
+aprovechado`): el RAG adelantado (rag-5) arranca con el estado vacío y se ADOPTA en el enrutado, antes de que el flujo
+aplique la extracción (el extractor acaba a 1,9 s, el RAG a 2,7 s); la tarjeta sale después, con `is_colombian=True`.
+La sonda lo confirma: el RAG contestó con `hechos: {}` y aplicó "sin nacionalidad, USD". Zona compartida (rag-5 de
+Gadea, orden del turno de Álvaro). Opciones, todas con coste de latencia en esos turnos: (1) comparar la huella
+también al RECOGER la respuesta y rehacerla si cambió la nacionalidad o el origen (+2,5 s); (2) lanzar un segundo RAG en
+cuanto acaba la extracción si cambia esos hechos (+1,3 s); (3) en contesta-y-sigue con tarjeta, que el texto no dé el
+precio (la tarjeta ya lo da; también quita la repetición de G3-02). A decidir con Álvaro y Gadea.
+Además en este turno: "como sois" (España) en la plantilla, la tarjeta da un TOTAL (2 × 448.000 = 896.000, pendiente
+de la decisión "sin totales"), y pasa al asesor a la vez que el texto pregunta "¿qué día les gustaría ir?".
+
+**G3-07b · El 5 % por equipo propio, mal aplicado al minicurso (turno 3) — ARREGLADO en los datos.** "¿hay algún
+descuento? tenemos nuestras propias máscaras" (minicurso) → "el 5 % por equipo propio aplica solo si llevan el equipo
+completo; con las máscaras no aplica": da a entender que con el equipo completo el minicurso sí lo tendría, y no lo
+tiene nunca. Banco `g3-07b`, PRE: **3/3**. Causa: la ficha indexada (`descuento:own_equipment_discount`, de
+`discounts.json`) no decía la exclusión; solo el campo `applicability` ("buceo recreativo y cursos", que el escritor
+lee como "minicurso" = curso) y el catálogo escrito a mano (`catalog.py:643`, "no en snorkel ni minicurso"). Arreglo:
+la descripción y la nota de `pricing.json` dicen "solo en buceo recreativo y cursos PADI: no aplica al minicurso ni al
+snorkel". Se reindexa al desplegar (`kb_v2 --yes`): medir `g3-07b` tras el próximo push.
+
+Bien en esta charla: el cambio de snorkel a minicurso (turno 2) se entiende a la primera, con precio en COP, punto de
+encuentro, teoría online y formulario médico.

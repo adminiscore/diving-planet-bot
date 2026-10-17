@@ -103,6 +103,45 @@
      "content": "¡Claro! La recogida en lancha está incluida si el hotel tiene acceso marítimo. No tengo a la mano la información específica sobre la recogida en el Hotel Las Islas; un asesor del equipo puede confirmarte el punto y la logística. ¿Quieres que te ponga en contacto con el equipo?"
     }
    ]
+  },
+  {
+   "id": "g3-07a",
+   "tarea": "G3",
+   "dialogo": "pareja-bogota-snorkel",
+   "criterio": "una-sola-moneda",
+   "pedia": "Toda la respuesta da el precio en la misma moneda: si la tarjeta del plan da COP porque son de Bogotá (colombianos/residentes), el texto no da USD (y al revés).",
+   "motivo_juez": "En directo (conv 5573): el RAG dijo '126 USD por persona' y la tarjeta del mismo mensaje '448.000 COP' ('como sois colombianos').",
+   "turno": 1,
+   "mensaje_cliente": "buenas tardes, somos una pareja de bogota, vamos a estar en cartagena del 12 al 15. queremos hacer snorkel un dia, cuanto vale?",
+   "historial": []
+  },
+  {
+   "id": "g3-07b",
+   "tarea": "G3",
+   "dialogo": "pareja-bogota-snorkel",
+   "criterio": "descuento-equipo-no-aplica-minicurso",
+   "pedia": "Dice que el descuento del 5 % por equipo propio no aplica al minicurso (solo a buceo recreativo y cursos); no da a entender que con el equipo completo sí aplicaría.",
+   "motivo_juez": "En directo (conv 5573): 'El descuento del 5% por equipo propio aplica solo si llevan el equipo completo; por traer únicamente las máscaras no aplica', para el minicurso.",
+   "turno": 3,
+   "mensaje_cliente": "hay algun descuento? tenemos nuestras propias mascaras jaja. y me mandas el link para reservar el minicurso?",
+   "historial": [
+    {
+     "role": "user",
+     "content": "buenas tardes, somos una pareja de bogota, vamos a estar en cartagena del 12 al 15. queremos hacer snorkel un dia, cuanto vale?"
+    },
+    {
+     "role": "assistant",
+     "content": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\n¡Buenas tardes! ¡Qué chévere plan para disfrutar los arrecifes de las Islas del Rosario! El tour de snorkel desde Cartagena cuesta *126 USD por persona reservando online*. Incluye lancha ida y vuelta, equipo, dos salidas guiadas y almuerzo.\n\nSe encuentran en el Muelle de la Bodeguita a las 8:00 a. m. y regresan a Cartagena aproximadamente a las 4:15 p. m. Puedes elegir la fecha y las dos personas al reservar aquí: https://book.divingplanet.org/book/superficio/3?language=es\n\n¿Ya tienen en mente qué día entre el 12 y el 15 les gustaría ir?\n\n🤿 *Tour de Snorkeling*\n💰 2 × 448.000 COP p.p. = *896.000 COP*\n\nComo sois colombianos/residentes, el pago es en pesos (COP): puedes pagar *100% online* o *50% online + 50% en persona*. Te paso con un asesor para confirmar disponibilidad y coordinar el pago — enseguida se pone en contacto contigo. 🌊"
+    },
+    {
+     "role": "user",
+     "content": "mmm y si mejor hacemos el minicurso de buceo? nunca hemos buceado. seria el 13"
+    },
+    {
+     "role": "assistant",
+     "content": "¡Claro que sí! El minicurso es ideal para una primera experiencia: incluye teoría online, práctica en piscina y una inmersión en el mar con instructor PADI. Cuesta *655.000 COP por persona reservando online* e incluye lancha ida y vuelta desde Cartagena, equipo, seguro y almuerzo.\n\nPara el día 13, el punto de encuentro es a las *8:00 a. m. en el Muelle de la Bodeguita*; el regreso a Cartagena es aproximadamente a las *4:15 p. m.* Después de reservar reciben por correo la teoría, que deben completar antes de la actividad. También es obligatorio llenar este formulario médico: https://form.jotform.com/divingplanetcartagena/exoneracion-curso-en-espanol\n\nEl asesor ya tiene el contexto de su plan y les escribe por aquí para ayudarles con la reserva."
+    }
+   ]
   }
  ]
 }
