@@ -59,7 +59,24 @@ integrar la rama del otro y suite en verde, porque en PRE gana el último; (3) *
 despliegue reinicia el contenedor y mata la medida del otro (avisar en el registro de Plan Coral con la hora de fin).
 Las doce normas, con su porqué, están en el documento.
 
-### ▶️ RETOMAR AQUÍ — 17-oct tarde (Álvaro con Claude): CAL-C PROMOCIONADO; Luna medida; Coral activado
+### ▶️ RETOMAR AQUÍ — 17-oct noche (Álvaro con Claude): CAL-C CERRADA (C4, C5, C3e promocionados); siguiente r6-1
+
+**CAL-C cerrada.** Además de los 8 flags de la mañana, quedan PROMOCIONADOS C4 `LUGAR_DESCONOCIDO_AL_RAG` (cal-55
+Barú), C5 `RED_MENCIONES_SOLO_SIN_EXTRACTOR` (la pregunta del snorkel de cal-69/70) y C3e `HOTEL_DEL_CATALOGO_DA_ISLA`
+(cal-46 Ubuntu). Ronda core calc2-A 94,7 % 24/32 → calc2-B 96,9 % 27/32, latencia igual; ninguna regresión suya.
+HISTORY 0.31.47. Integrado `feature/gadea-r6-2`.
+
+**Plan acordado con Gadea (Coral, 17-oct; log `l-1017-plan-andres` en Plan Coral):** (1) cerrar lo en vuelo (hecho);
+(2) G9: Gadea genera y CONGELA un examen oculto sintético (60-80 conversaciones); (3) CAL-F: golden visible completo
+(Gadea); (4) G3: Claude contra el bot en directo, fallos por zonas (flujo/extractor: Álvaro; RAG/datos: Gadea);
+(5) CAL-G si hay margen; (6) G9 una vez y entonces conversaciones a Andrés.
+
+**Siguiente (Álvaro): r6-1** — (a) tiempos por llamada al LLM en `[TURN_METRICS]` (los pide Gadea para CAL-G);
+(b) 429/timeouts con reintento y mensaje de respaldo; (c) alerta de saldo de OpenAI; (d) salir de gpt-4.1: el respaldo
+del RAG no puede ser Luna si el escritor ya lo es, y el extractor a Luna necesita adaptar su prompt (ex0: 11 inventos
+frente a 4).
+
+### ▶️ (anterior) 17-oct tarde (Álvaro con Claude): CAL-C PROMOCIONADO; Luna medida; Coral activado
 
 **CAL-C:** los 8 flags quedan **encendidos en PRE (promocionados, decisión de Álvaro)**. Banco CAL-C 49 → ~28/63; ronda
 core calc-A 96,9 % 25/32 vs calc-B 96,5 % 25/32, latencia igual; ninguna regresión propia tras arreglar el idioma de E4

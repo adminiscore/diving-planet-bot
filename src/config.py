@@ -294,15 +294,15 @@ class Settings(BaseSettings):
     tras_pase_recuerda_el_pase: bool = True  # PROMOCIONADO 17-oct (CAL-C, ronda core calc-A/B; decisión de Álvaro)
     # CAL-C4 (17-oct): si el cliente afirma un lugar que Jev, seguro, no reconoce como Cartagena ni las islas ("En baru
     # y Rosario", cal-55), se le pregunta a la base, que sabe dónde no operamos. APAGADO hasta medirlo.
-    lugar_desconocido_al_rag: bool = True  # RONDA calc2-B (17-oct): encendido para medir; revert = False
+    lugar_desconocido_al_rag: bool = True  # PROMOCIONADO 17-oct (CAL-C, ronda core calc2-A/B)
     # CAL-C5 (17-oct): la red de menciones por palabras clave (actividades nombradas que no están en el reparto →
     # "¿cuántos para X?") solo actúa si el extractor no pudo leer el mensaje: "We snorkeled in Roatan yesterday"
     # preguntaba por snorkel (cal-69/70). APAGADO hasta medirlo.
-    red_menciones_solo_sin_extractor: bool = True  # RONDA calc2-B (17-oct): encendido para medir; revert = False
+    red_menciones_solo_sin_extractor: bool = True  # PROMOCIONADO 17-oct (CAL-C, ronda core calc2-A/B)
     # CAL-C3e (17-oct, propuesta de Gadea): el hotel que lee el extractor, si está en el catálogo de hoteles de las islas
     # del detector, da su isla y "está en las islas"; y también se guarda en el turno que acaba en el pase a una
     # persona (cal-46: "staying at the Ubuntu Hotel" se perdía). APAGADO hasta medirlo.
-    hotel_del_catalogo_da_isla: bool = True  # RONDA calc2-B (17-oct): encendido para medir; revert = False
+    hotel_del_catalogo_da_isla: bool = True  # PROMOCIONADO 17-oct (CAL-C, ronda core calc2-A/B)
 
     # Paso 5 (RAG, l1-6 + l1-7, 27-sep): (a) el catalogo entero como hechos en el contexto del RAG
     # en vez de los atajos de precio por regex, que contestaban preguntas que no eran de precio;
