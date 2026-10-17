@@ -336,9 +336,12 @@ class Settings(BaseSettings):
     # daño es de desplazamiento: los avisos obligatorios ocupan el sitio de lo que la respuesta ya tenía que decir (la
     # peor regresión: se queda sin dar el enlace de reserva) y desdibujan datos ("varios días" por 2 días, "tu
     # reserva" sin reserva). Ver docs/robustness/cal/cal-a5-avisos-condicionados.md §9.
-    # **ENCENDIDO 17-oct para la RONDA B2** con los avisos refinados (banco 38/48, el enlace de reserva vuelve en los
-    # diálogos que habían regresado). Si la ronda no lo sostiene, revert = "false" aquí y quitar la línea del compose.
-    avisos_condicionados: bool = True
+    # **NO PROMOCIONADO (17-oct), con DOS rondas del golden core medidas**: A (apagado) 97,4 % de criterios y 27/32
+    # diálogos sin fallo; B (2 avisos) 96,0 % y 25/32; B2 (refinados: 1 aviso, primero lo que pidió el cliente) 96,1 %
+    # y 24/32. El banco mejora (47/48 → 37/48) y el golden empeora: el aviso obligatorio compite con lo que la
+    # respuesta ya tenía que decir. Se queda APAGADO y el código se conserva con las tres medidas apuntadas; lo que
+    # habría que probar está en docs/robustness/cal/cal-a5-avisos-condicionados.md §10.
+    avisos_condicionados: bool = False
     # CAL-E1 (DECISIÓN DE GADEA del 16-oct, que sustituye a la del 17-sep): esto es un chatbot y NO da números de
     # teléfono ni de WhatsApp. Si el cliente pide un número o quiere hablar con alguien, la conversación se PASA A UN
     # ASESOR (mismo pase que `needs_staff`). De paso desaparece la invención que el juez marcaba en cal-03: el texto
@@ -366,7 +369,9 @@ class Settings(BaseSettings):
     # plan de un día (cal-42); "Vale, en concepto le coloco otros?" no traía nada de cómo se confirma la reserva
     # (cal-14). Con el flag, el reescritor recibe lo que ya sabemos del cliente (actividad, origen, nacionalidad: los
     # mismos hechos del estado que eligen los avisos) y la regla de no dejar elipsis. APAGADO hasta medirlo.
-    consulta_con_lo_sabido: bool = False
+    # **ENCENDIDO 17-oct para la RONDA C** (banco: cal-42 arreglado 3 de 3). Si la ronda no lo sostiene, revert =
+    # "false" aquí y quitar la línea del compose.
+    consulta_con_lo_sabido: bool = True
     # Modelo del plan y de la comprobación de completitud (llamadas cortas, temperatura 0).
     rag_plan_model: str = "gpt-4.1-mini"
     # 8-oct (prueba de DeepSeek): un modelo con prefijo de proveedor ("deepseek/deepseek-v4.1-flash") sale por

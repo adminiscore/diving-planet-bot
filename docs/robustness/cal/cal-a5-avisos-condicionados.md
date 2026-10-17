@@ -190,3 +190,44 @@ quedó la respuesta entera?*. Dos avisos obligatorios **desplazan** lo que la re
 3. **No resumir**: el aviso obliga a decirlo *con la frase de la fuente*, que está en el contexto, en vez de con el
    resumen del fichero (de ahí "varios días" y las 18 horas).
 4. Medir las dos cosas siempre juntas: banco (¿lo dice?) y los 6 diálogos (¿se mantiene lo demás?).
+
+## 10. Segunda ronda (B2) y decisión final: NO se promociona (17-oct)
+
+Se refinó por la causa (§9) y se volvió a medir. Tres hipótesis, cada una en el banco:
+
+| Versión | Banco CAL-A (16×3) |
+|---|---|
+| 2 avisos, dos niveles, instrucción "tiene que decirlo" | 36/48 |
+| 1 aviso, **fuente propia exigida a TODOS**, instrucción nueva | 41/48 → **descartada** |
+| 1 aviso, dos niveles, instrucción nueva | **38/48** |
+
+La hipótesis descartada perdía cal-48 y cal-32: `minicourse_scope` sale en la **posición 6 de 8** aunque la pregunta
+vaya justo de eso, y el aviso de la moneda ni se recupera (lo trae el tema desde `foreign_card_payment`). Queda
+escrito en el código y en un test.
+
+Con la versión buena (1 aviso, "primero lo que pidió el cliente", el dato exacto de la fuente), en los diálogos que
+habían regresado **el enlace de reserva vuelve**. Pero la ronda:
+
+| Ronda | Criterios | Diálogos sin fallo | p50 / p95 / máx |
+|---|---|---|---|
+| A (apagado) | **97,4 %** | **27/32** | 3,0 / 6,4 / 9 s |
+| B (2 avisos) | 96,0 % | 25/32 | 3,0 / 7,0 / 12 s |
+| B2 (1 aviso, refinado) | 96,1 % | 24/32 | 3,0 / **6,0** / 9 s |
+
+B2 frente a A, criterio a criterio con re-juicio: **1 mejora real y 2 regresiones reales** (otras 2 eran ruido del
+juez). Las dos regresiones reales son del mismo tipo: la respuesta **deja de decir algo que antes decía**
+(`sin-precio-especial-colombianos`, que es justo uno de los avisos) o **afirma de más** (que el refresher incluye el
+regreso en lancha sin saber de dónde sale el cliente).
+
+**DECISIÓN (17-oct, con el permiso de Gadea para decidir): los avisos NO se promocionan.** Dos rondas medidas y las
+dos peores que el suelo. El código se queda (apagado, con sus 23 tests y las tres medidas apuntadas) porque el
+diagnóstico vale: **el banco mejora y el golden empeora**, y eso dice que el problema no es qué avisos se eligen, sino
+que un aviso obligatorio **compite por el sitio** con lo que la respuesta ya tenía que decir.
+
+**Lo que habría que probar, si se retoma:**
+1. Que el aviso NO sea obligatorio en el mensaje de la redacción, sino una **comprobación posterior**: si la respuesta
+   ya está bien y le falta el aviso, pedirle que lo añada **sin reescribir** (la regla 4 de la instrucción, "si no cabe
+   no lo digas", es sospechosa: puede ser lo que hizo perder `sin-precio-especial-colombianos`).
+2. Subir el techo de la respuesta (hoy `max_tokens` 500) solo en los turnos con aviso, y medir latencia aparte.
+3. Avisos **por turno de la conversación**, no por respuesta: decirlos cuando el turno es corto (una confirmación, un
+   "gracias"), donde no compiten con nada.
