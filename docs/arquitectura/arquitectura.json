@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-18T14:02:33+00:00",
-  "commit": "0ef4c9f",
+  "generado": "2026-10-18T15:29:16+00:00",
+  "commit": "85b52fb",
   "rama": "feature/pre_gadea"
  },
  "vistas": {
@@ -193,8 +193,8 @@
    "marca": "openrouter",
    "tiempos": {
     "n": 93,
-    "p50": 0.44,
-    "p95": 1.564
+    "p50": 0.442,
+    "p95": 1.693
    }
   },
   {
@@ -217,7 +217,7 @@
    ],
    "modelos": [],
    "tiempos": {
-    "n": 8,
+    "n": 7,
     "p50": 0.002,
     "p95": 0.004
    }
@@ -235,8 +235,8 @@
    "interruptores": [],
    "tiempos": {
     "n": 2,
-    "p50": 0.003,
-    "p95": 0.004
+    "p50": 0.005,
+    "p95": 0.005
    }
   },
   {
@@ -260,8 +260,8 @@
    "modelos": [],
    "tiempos": {
     "n": 1,
-    "p50": 0.004,
-    "p95": 0.004
+    "p50": 0.002,
+    "p95": 0.002
    }
   },
   {
@@ -279,8 +279,8 @@
    "interruptores": [],
    "tiempos": {
     "n": 4,
-    "p50": 3.508,
-    "p95": 3.957
+    "p50": 3.408,
+    "p95": 4.919
    }
   },
   {
@@ -296,9 +296,9 @@
    "modelos": [],
    "interruptores": [],
    "tiempos": {
-    "n": 78,
-    "p50": 2.366,
-    "p95": 5.214
+    "n": 79,
+    "p50": 2.742,
+    "p95": 4.938
    }
   },
   {
@@ -507,9 +507,9 @@
    ],
    "marca": "openai",
    "tiempos": {
-    "n": 78,
-    "p50": 0.034,
-    "p95": 1.007
+    "n": 79,
+    "p50": 0.032,
+    "p95": 1.642
    }
   },
   {
@@ -539,9 +539,9 @@
    ],
    "modelos": [],
    "tiempos": {
-    "n": 78,
+    "n": 79,
     "p50": 0.005,
-    "p95": 0.412
+    "p95": 0.069
    }
   },
   {
@@ -578,9 +578,9 @@
    ],
    "marca": "openai",
    "tiempos": {
-    "n": 72,
-    "p50": 0.006,
-    "p95": 0.015
+    "n": 74,
+    "p50": 0.007,
+    "p95": 0.016
    }
   },
   {
@@ -675,9 +675,9 @@
    ],
    "marca": "openai",
    "tiempos": {
-    "n": 72,
-    "p50": 0.532,
-    "p95": 0.943
+    "n": 74,
+    "p50": 0.963,
+    "p95": 1.859
    }
   },
   {
@@ -826,9 +826,9 @@
    ],
    "marca": "openai",
    "tiempos": {
-    "n": 72,
-    "p50": 1.928,
-    "p95": 4.182
+    "n": 74,
+    "p50": 1.275,
+    "p95": 4.112
    }
   },
   {
@@ -947,7 +947,7 @@
    "conteo": {
     "n": 45,
     "que": "preguntas",
-    "fuente": "2026-10-18-mod-C.json"
+    "fuente": "2026-10-18-mod-D.json"
    }
   },
   {
@@ -1179,8 +1179,8 @@
     {
      "nombre": "rag_no_adivina",
      "titulo": "No adivina ningún dato del cliente",
-     "codigo": false,
-     "pre": false,
+     "codigo": true,
+     "pre": true,
      "sin_efecto": false
     },
     {
@@ -3126,9 +3126,9 @@
    "area": "Preguntas",
    "titulo": "No adivina ningún dato del cliente",
    "texto": "La regla anterior ampliada a todo lo que el cliente no ha dicho: desde dónde sale, su nacionalidad (el país desde el que escribe no la dice), si está certificado, cuántos son y las fechas. Coral contesta con la información general y, si la respuesta depende de ese dato, lo pregunta.",
-   "codigo": false,
-   "pre": false,
-   "fijado_en_pre": false,
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
    "usado_por": [
     "r_escribir"
    ],
@@ -3502,7 +3502,7 @@
     "r_revisor"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 96
+   "llamadas_ultima_ronda": 194
   },
   {
    "ajuste": "extraction_model",
@@ -3517,7 +3517,7 @@
     "b_acuse"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 64
+   "llamadas_ultima_ronda": 11
   },
   {
    "ajuste": "extractor_turno_model",
@@ -3527,7 +3527,7 @@
     "b_extraction"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 93
+   "llamadas_ultima_ronda": null
   },
   {
    "ajuste": "grounding_v3_model",
@@ -3537,7 +3537,7 @@
     "r_revisor"
    ],
    "proveedor": "OpenRouter",
-   "llamadas_ultima_ronda": 136
+   "llamadas_ultima_ronda": 144
   },
   {
    "ajuste": "idioma_model",
@@ -3545,7 +3545,7 @@
    "pre": "deepseek/deepseek-v4.1-flash",
    "usado_por": [],
    "proveedor": "OpenRouter",
-   "llamadas_ultima_ronda": 136
+   "llamadas_ultima_ronda": 144
   },
   {
    "ajuste": "jev_model",
@@ -3557,7 +3557,7 @@
    ],
    "proveedor": "OpenRouter",
    "llamadas_ultima_ronda": null,
-   "nota": "Decidió solo 82 de 93 mensajes; en los otros 11 decidió el LLM de respaldo (sus llamadas cuentan en gpt-4o-mini)."
+   "nota": "Decidió solo 83 de 93 mensajes; en los otros 10 decidió el LLM de respaldo (sus llamadas cuentan en gpt-4o-mini)."
   },
   {
    "ajuste": "openai_embedding_model",
@@ -3580,7 +3580,7 @@
     "r_reescribir"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 64
+   "llamadas_ultima_ronda": 11
   },
   {
    "ajuste": "openai_transcription_model",
@@ -3598,7 +3598,7 @@
    "pre": "deepseek/deepseek-v4.1-flash",
    "usado_por": [],
    "proveedor": "OpenRouter",
-   "llamadas_ultima_ronda": 136
+   "llamadas_ultima_ronda": 144
   },
   {
    "ajuste": "rag_answer_model",
@@ -3608,7 +3608,7 @@
     "r_escribir"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 96
+   "llamadas_ultima_ronda": 194
   },
   {
    "ajuste": "rag_plan_model",
@@ -3616,7 +3616,7 @@
    "pre": "gpt-4.1-mini",
    "usado_por": [],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 93
+   "llamadas_ultima_ronda": null
   },
   {
    "ajuste": "reescritura_model",
@@ -3624,7 +3624,7 @@
    "pre": "deepseek/deepseek-v4.1-flash",
    "usado_por": [],
    "proveedor": "OpenRouter",
-   "llamadas_ultima_ronda": 136
+   "llamadas_ultima_ronda": 144
   },
   {
    "ajuste": "resumen_model",
@@ -3632,65 +3632,57 @@
    "pre": "deepseek/deepseek-v4.1-flash",
    "usado_por": [],
    "proveedor": "OpenRouter",
-   "llamadas_ultima_ronda": 136
+   "llamadas_ultima_ronda": 144
   }
  ],
  "ronda": {
-  "etiqueta": "mod-C",
-  "run_at": "2026-10-18T12:52:26Z",
-  "fichero": "2026-10-18-mod-C.json",
-  "commit": "d2d6803",
+  "etiqueta": "mod-D (ronda core de Alvaro, PRE 0ca8d46; foto por ventana, sin el JSONL)",
+  "run_at": "2026-10-18T14:56:14Z",
+  "fichero": "2026-10-18-mod-D.json",
+  "commit": "18ca825",
   "por_tipo": {
    "reserva": {
     "turns": 48,
-    "latency_p50": 1.19,
-    "latency_p95": 2.069,
-    "latency_avg": 1.388,
-    "llm_calls_avg": 2.48,
-    "llm_calls_p95": 3.65,
-    "llm_calls_max": 4,
-    "embeddings_avg": 1.62,
-    "llm_share": 1.362,
+    "latency_p50": 1.952,
+    "latency_p95": 3.089,
+    "latency_avg": 2.067,
+    "llm_calls_avg": 2.62,
+    "llm_calls_p95": 4.0,
+    "llm_calls_max": 5,
+    "embeddings_avg": 1.67,
+    "llm_share": 1.388,
     "tokens_avg": 0,
     "cost_avg_usd": 0
    },
    "rag": {
     "turns": 45,
-    "latency_p50": 4.179,
-    "latency_p95": 7.568,
-    "latency_avg": 4.44,
-    "llm_calls_avg": 6.0,
-    "llm_calls_p95": 9.0,
+    "latency_p50": 4.031,
+    "latency_p95": 7.005,
+    "latency_avg": 4.469,
+    "llm_calls_avg": 6.02,
+    "llm_calls_p95": 8.8,
     "llm_calls_max": 9,
-    "embeddings_avg": 2.31,
-    "llm_share": 1.395,
+    "embeddings_avg": 2.33,
+    "llm_share": 1.556,
     "tokens_avg": 0,
     "cost_avg_usd": 0
    }
   },
   "enrutador": {
    "by_backend": {
-    "jev": 82,
-    "llm_uncertain": 10,
+    "jev": 83,
+    "llm_uncertain": 9,
     "llm": 1
    },
-   "ms_p50": 411.0,
-   "ms_p95": 483.45
+   "ms_p50": 415.0,
+   "ms_p95": 497.1
   },
-  "cliente": {
-   "turns": 93,
-   "conversations": 32,
-   "no_reply": 0,
-   "multi_bubble": 0,
-   "latency_p50": 3.0,
-   "latency_p95": 6.4,
-   "latency_max": 8
-  },
+  "cliente": null,
   "llamadas_por_modelo": {
-   "deepseek/deepseek-v4.1-flash": 136,
-   "gpt-6-luna": 96,
-   "gpt-4.1-mini": 93,
-   "gpt-4o-mini": 64
+   "gpt-6-luna": 194,
+   "deepseek/deepseek-v4.1-flash": 144,
+   "gpt-5.4-mini": 48,
+   "gpt-4o-mini": 11
   },
   "calidad": null
  },

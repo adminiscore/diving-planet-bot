@@ -56,7 +56,7 @@ class Settings(BaseSettings):
     # 18-oct (decision de Gadea: no adivinar nada que el cliente no haya dicho): la regla de EX-RAG-2 ampliada a origen,
     # nacionalidad, certificacion, cuantos son y fechas; la sustituye. Fallos estables de CAL-F (zona RAG).
     # rag_agent.build_system_prompt, prompts/info.RAG_NO_ADIVINA_*. APAGADO.
-    rag_no_adivina: bool = False
+    rag_no_adivina: bool = True  # RONDA mod-E (18-oct): encendido para medir; revert = False
     # EX-FLUJO-1 (decision de Gadea, 14-oct, opcion 2): si el cliente no contesta una pregunta de la reserva, no se
     # repite en el turno siguiente: se aplaza y vuelve justo antes del resumen. Solo las preguntas de datos que no
     # condicionan a otras (origen, hotel, cuantos, ultima inmersion, refresher, edades, nacionalidad).
@@ -388,7 +388,7 @@ class Settings(BaseSettings):
     # PROMOCIONADO 8-oct: ronda respaldo-A/B (misma franja): calidad 95,6 -> 94,7 % (ruido: las regresiones son del
     # flujo y del juez), turnos p50 +0,07 s, p95 +0,6 s, maximo 9,7 -> 7,6 s; turnos de RAG p50 +0,8 s; el respaldo
     # salto en el 10 % y corto las colas de 11-13 s. Revert = rag_answer_model "gpt-4.1-mini" y esto vacio.
-    rag_respaldo_modelo: str = "gpt-4.1-mini"
+    rag_respaldo_modelo: str = "deepseek/deepseek-v4.1-flash"  # RONDA mod-E (18-oct, mod-5); revert = "gpt-4.1-mini"
     rag_respaldo_segundos: float = 3.0
     # r6-1(d) (17-oct, salir de gpt-4.1; acordado con Gadea): el respaldo del RAG es otra petición al MISMO modelo
     # (Luna) a los `rag_respaldo_segundos`, en vez de gpt-4.1-mini. APAGADO hasta medir latencia (p95/máx) y calidad.
