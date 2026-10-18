@@ -3,6 +3,17 @@
 La familia gpt-4 se retira en enero. Cada pieza que la usa se mide con su banco frente a candidatos sin razonamiento,
 recientes y más baratos, y se promociona tras una ronda core A/B. Plan y reparto: Plan Coral, fase MOD.
 
+## Método (mod-0)
+
+Cada pieza se mide con SU banco y su camino real, no con un script genérico: lo que cambia entre piezas es qué cuenta
+como acierto. Herramientas: `scripts/mod_reescritura.py`, `scripts/mod_resumen_idioma.py`,
+`scripts/mod_transcripcion.py`, `banco_juez_reales` (el revisor), `rag_piezas` (la respuesta del RAG), `banco_fallos
+--comparar-verificador` (los verificadores) y, para probar un modelo en PRE sin desplegar, `--env CLAVE=modelo` en
+`banco_fallos`, `sonda_avisos`, `rag_piezas` y `reproducir_juez_pre`. Los modelos con proveedor (`deepseek/…`) salen
+por OpenRouter con las condiciones de mod-7 (`llm_client.parametros_openrouter`). Candidatos: gpt-6-luna y
+gpt-5.4-mini sin razonamiento, deepseek/deepseek-v4.1-flash; Haiku y Qwen no están en los proveedores de EE. UU.
+permitidos. Veredicto siempre con ronda core A/B y atribución con 3 reps.
+
 ## Hecho
 
 **PROMOCIONADO 18-oct (HISTORY 0.31.53)**, rondas core: mod-A (todo apagado) 97,4 % y 27/32; mod-B (G3) 96,5 % y
