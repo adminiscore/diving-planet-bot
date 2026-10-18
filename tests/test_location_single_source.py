@@ -37,6 +37,10 @@ from src.flows.state import ConversationState
     ("vamos de cartagena a baru", "cartagena"),
 ])
 def test_departure_place_answer(message, place):
+    from src.config import settings
+
+    if message == "Barú" and settings.baru_no_es_rosario:
+        place = None  # G3-06 (decisión de Gadea, 18-oct): Barú no es Islas del Rosario
     assert core._departure_place(message) == place
 
 

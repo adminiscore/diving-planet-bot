@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-18T11:30:09+00:00",
-  "commit": "c6a592d",
+  "generado": "2026-10-18T11:44:08+00:00",
+  "commit": "be1ea2e",
   "rama": "feature/pre_gadea"
  },
  "vistas": {
@@ -791,8 +791,8 @@
     {
      "nombre": "baru_no_es_rosario",
      "titulo": "Barú no es las Islas del Rosario",
-     "codigo": false,
-     "pre": false,
+     "codigo": true,
+     "pre": true,
      "sin_efecto": false
     },
     {
@@ -1002,8 +1002,8 @@
     {
      "nombre": "busqueda_con_la_pregunta_sola",
      "titulo": "Se busca también la pregunta sola, sin los datos que da el cliente",
-     "codigo": false,
-     "pre": false,
+     "codigo": true,
+     "pre": true,
      "sin_efecto": false
     }
    ],
@@ -1214,8 +1214,8 @@
     {
      "nombre": "rag_sin_precio_con_tarjeta",
      "titulo": "Una sola moneda por mensaje: si va la tarjeta del plan, el texto no da precio",
-     "codigo": false,
-     "pre": false,
+     "codigo": true,
+     "pre": true,
      "sin_efecto": false
     }
    ],
@@ -2139,9 +2139,9 @@
    "area": "Reserva",
    "titulo": "Barú no es las Islas del Rosario",
    "texto": "Quien se aloja en Barú o en Playa Blanca ya no queda como 'ya en las islas': allí no operamos (es una península unida a tierra). El bot le dice dónde buceamos en vez de prometerle la recogida en su hotel con precios de las islas.",
-   "codigo": false,
-   "pre": false,
-   "fijado_en_pre": false,
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
    "usado_por": [
     "b_slotfill_close"
    ],
@@ -2152,9 +2152,9 @@
    "area": "Preguntas",
    "titulo": "Se busca también la pregunta sola, sin los datos que da el cliente",
    "texto": "Si el cliente da datos y pregunta en el mismo mensaje (\"salimos de Cartagena el día 30. ¿Hace falta saber nadar?\"), el origen y la fecha tapaban la pregunta y la búsqueda no traía la pregunta frecuente: el bot decía que no tenía el dato. Ahora también se busca la pregunta sola, traducida si el cliente escribe en portugués o francés.",
-   "codigo": false,
-   "pre": false,
-   "fijado_en_pre": false,
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
    "usado_por": [
     "r_reescribir"
    ],
@@ -3264,9 +3264,9 @@
    "area": "Preguntas",
    "titulo": "Una sola moneda por mensaje: si va la tarjeta del plan, el texto no da precio",
    "texto": "Cuando la respuesta lleva la tarjeta del plan (precio por persona en la moneda del cliente y enlace), el texto no repite el precio. Antes podía salir '126 USD' en el texto y '448.000 COP' en la tarjeta del mismo mensaje, porque el texto se escribía antes de saber que el cliente era colombiano.",
-   "codigo": false,
-   "pre": false,
-   "fijado_en_pre": false,
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
    "usado_por": [
     "r_escribir"
    ],

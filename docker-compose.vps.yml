@@ -113,6 +113,11 @@ services:
       RAG_RESPALDO_SEGUNDOS: "3.0"
       # Juez de grounding v3 (flag GROUNDING_V3, 28-sep): gpt-4.1 (con gpt-4.1-mini el v3 era inestable).
       GROUNDING_V3_MODEL: "gpt-4.1"
+      # RONDA mod-B (18-oct, Gadea y Álvaro): G3 encendido para medir contra mod-A (a7d4e65, los mismos flags
+      # apagados). Revert = quitar estas tres líneas y poner los defaults en False.
+      BARU_NO_ES_ROSARIO: "true"
+      BUSQUEDA_CON_LA_PREGUNTA_SOLA: "true"
+      RAG_SIN_PRECIO_CON_TARJETA: "true"
       EXTRACTION_MODEL: "gpt-4o-mini"
       # ex-4 (12-oct): el extractor "LLM primero" de la fase EX (src/agents/extractor_turno.py).
       EXTRACTOR_TURNO_MODEL: "gpt-4.1-mini"

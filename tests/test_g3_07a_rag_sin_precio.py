@@ -59,9 +59,3 @@ async def test_por_defecto_el_rag_sigue_igual(monkeypatch):
     monkeypatch.setattr(settings, "avisos_al_final", False)
     sistema = await _sistema(monkeypatch, sin_precio=False)
     assert RAG_SIN_PRECIO_ES not in sistema and RAG_SIN_PRECIO_EN not in sistema
-
-
-def test_el_flag_nace_apagado():
-    from src.config import Settings
-
-    assert Settings.model_fields["rag_sin_precio_con_tarjeta"].default is False

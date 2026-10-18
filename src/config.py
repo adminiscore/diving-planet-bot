@@ -337,7 +337,7 @@ class Settings(BaseSettings):
     # G3-06 (18-oct, decisión de Gadea): Barú y Playa Blanca NO son Islas del Rosario (península unida a tierra, donde no
     # operamos). Quien se aloja allí no queda como "ya en las islas" (Jev, el extractor de respaldo, el resolutor de la
     # pregunta del origen); el lugar se le pregunta a la base, que da el aviso. APAGADO.
-    baru_no_es_rosario: bool = False
+    baru_no_es_rosario: bool = True  # RONDA mod-B (18-oct): encendido para medir; revert = False
     # r6-1(b) (17-oct): si en un turno NINGUNA llamada a OpenAI funciona (sin saldo, clave inválida, caído), el bot dice
     # que hay un problema técnico y pasa a un asesor (motivo = alerta en Chatwoot), en vez de "no lo tengo a la mano".
     # PROMOCIONADO 18-oct (decisión de Álvaro, tras la 2.ª caída por saldo en un día): comprobado en PRE con una clave
@@ -453,11 +453,11 @@ class Settings(BaseSettings):
     # 18-oct: banco G3 9/9 -> 1/9, rag_piezas sin pérdidas, core sin regresiones atribuidas, pero +0,7 s de mediana en
     # los turnos del RAG con gpt-4o-mini (que además no traducía el portugués). APAGADO hasta que Gadea elija el
     # modelo (`pregunta_sola_model`): gpt-4.1-nano 0,5-0,6 s (familia 4.1, que Álvaro quiere dejar) o Luna 0,98 s.
-    busqueda_con_la_pregunta_sola: bool = False
+    busqueda_con_la_pregunta_sola: bool = True  # RONDA mod-B (18-oct): encendido para medir; revert = False
     # G3-07a (18-oct, decisión de Gadea: en un mismo mensaje, una sola moneda): cuando el turno lleva la tarjeta del plan
     # (precio en su moneda y enlace), el flujo pide al RAG la respuesta SIN precio (`rag_answer(sin_precio=True)`). El
     # RAG lo hace Gadea; el punto de decisión del flujo, Álvaro. APAGADO hasta medirlo con g3-07a y g3-02.
-    rag_sin_precio_con_tarjeta: bool = False
+    rag_sin_precio_con_tarjeta: bool = True  # RONDA mod-B (18-oct): encendido para medir; revert = False
     # Modelo del revisor de `avisos_al_final` (vacío = `rag_plan_model`). Va a la vez que el juez de grounding.
     # Medido en local (17-oct, 5 casos del banco + los 93 turnos de la ronda core cal-D): gpt-4.1-mini acierta 4 de 5
     # pero añade aviso en 64 de 93 turnos (relleno); gpt-4.1 y GPT-6 Luna (sin razonamiento) aciertan 4 de 5 y añaden
