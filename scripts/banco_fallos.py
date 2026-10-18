@@ -133,7 +133,9 @@ def _reproducir_en_pre(turnos: list[str], *, reps: int = 1, flags: list[str] | N
 # contexto por respuesta con gpt-4.1). `--verificador` elige el modelo y `--comparar-verificador` juzga las MISMAS
 # respuestas con un segundo modelo y dice en cuántas coinciden: cambiar de verificador cambia el instrumento, así que
 # antes se mide que diga lo mismo.
-VERIFICADOR_MODELO = "gpt-4.1"
+# mod-8 (18-oct, acordado con Álvaro): Luna coincide con gpt-4.1 en 27/30 veredictos y es igual de exigente (14 fallos
+# frente a 15; DeepSeek, 12: benévolo). Las medidas anteriores dicen en su JSON qué verificador usaron.
+VERIFICADOR_MODELO = "gpt-6-luna"
 
 
 async def _verificar(f: dict, hoy: dict, modelo: str = VERIFICADOR_MODELO) -> dict:
@@ -287,7 +289,7 @@ def main() -> None:
                     help="medir: interruptor encendido solo en ese proceso ('no:X' lo APAGA: para medir igual que la "
                          "base aunque PRE sirva la rama de otro con sus flags encendidos)")
     ap.add_argument("--codigo-local", action="store_true", help="medir: con el código local (sin desplegar)")
-    ap.add_argument("--verificador", default=VERIFICADOR_MODELO, help="medir: modelo del verificador (gpt-4.1)")
+    ap.add_argument("--verificador", default=VERIFICADOR_MODELO, help="medir: modelo del verificador (gpt-6-luna)")
     ap.add_argument("--comparar-verificador", action="append", default=[],
                     help="medir: juzga las mismas respuestas también con este modelo (repetible)")
     ap.add_argument("--banco", help="medir: otro banco con el mismo formato (p. ej. docs/robustness/seguridad/"
