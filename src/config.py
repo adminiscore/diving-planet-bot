@@ -329,6 +329,10 @@ class Settings(BaseSettings):
     # varios ("dos buceos o el pack de 5 en 2 días"), el plan no está elegido: la pregunta del origen es la neutra, sin
     # "dura 1 día y hay que dormir en las islas". APAGADO.
     origen_neutro_con_dos_planes: bool = True  # PROMOCIONADO 18-oct (CAL-F, decisión de Álvaro)
+    # G3-06 (18-oct, decisión de Gadea): Barú y Playa Blanca NO son Islas del Rosario (península unida a tierra, donde no
+    # operamos). Quien se aloja allí no queda como "ya en las islas" (Jev, el extractor de respaldo, el resolutor de la
+    # pregunta del origen); el lugar se le pregunta a la base, que da el aviso. APAGADO.
+    baru_no_es_rosario: bool = False
     # r6-1(b) (17-oct): si en un turno NINGUNA llamada a OpenAI funciona (sin saldo, clave inválida, caído), el bot dice
     # que hay un problema técnico y pasa a un asesor (motivo = alerta en Chatwoot), en vez de "no lo tengo a la mano".
     # APAGADO hasta medirlo.

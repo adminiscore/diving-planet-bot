@@ -149,6 +149,11 @@ def _collect() -> dict[str, str]:
                 booking.slot_resolver_prompt(slot, lang),
             )
         add_json(f"booking/slot_resolver.tool.{slot}", booking.slot_resolver_tool(slot))
+    # G3-06 (flag `baru_no_es_rosario`): los textos de lugar sin Barú entre "las islas".
+    for lang in LANGS:
+        add(f"booking/slot_resolver.system.location.{lang}.sin_baru",
+            booking.lugar_sin_baru(booking.slot_resolver_prompt("location", lang)))
+    add_json("booking/extraction.tool.sin_baru", booking.tool_sin_baru(booking.EXTRACTION_TOOL))
 
     # ── booking · acuse cálido (compose_acknowledgement) ─────────────────────
     for lang in LANGS:

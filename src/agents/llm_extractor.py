@@ -37,6 +37,17 @@ from src.prompts.booking import (
     slot_resolver_prompt,
     slot_resolver_tool,
 )
+from src.prompts.booking import lugar_sin_baru as _lugar_sin_baru
+from src.prompts.booking import tool_sin_baru as _tool_sin_baru
+
+
+def _sin_baru(texto: str) -> str:
+    """G3-06 (flag `baru_no_es_rosario`): los textos de lugar de estos prompts, sin Barú entre "las islas"."""
+    return _lugar_sin_baru(texto) if settings.baru_no_es_rosario else texto
+
+
+def _tool(tool: dict) -> dict:
+    return _tool_sin_baru(tool) if settings.baru_no_es_rosario else tool
 
 logger = logging.getLogger("uvicorn.error")
 
@@ -143,9 +154,9 @@ async def fill_gaps(
     # Campos que no salen del detector y solo viajan cuando se piden, con su propia
     # variante del tool (`extraction_tool`, hallazgo A): nunca abren una peticion solos.
     missing = missing + [f for f in extra_fields if f not in missing]
-    tool = extraction_tool(extra_fields)
+    tool = _tool(extraction_tool(extra_fields))
 
-    messages: list[dict] = [{"role": "system", "content": extraction_system_prompt(lang, missing)}]
+    messages: list[dict] = [{"role": "system", "content": _sin_baru(extraction_system_prompt(lang, missing))}]
     for turn in (history or [])[-settings.history_retrieval_enrichment_window:]:
         role = turn.get("role")
         content = turn.get("content")
@@ -279,7 +290,7 @@ async def verify_fields(
         return {} if not as_answers else None
     log_tag = "_".join(f.upper() for f in fields) if len(fields) == 1 else "FIELDS"
     messages: list[dict] = [
-        {"role": "system", "content": fields_verification_system_prompt(fields, lang)}
+        {"role": "system", "content": _sin_baru(fields_verification_system_prompt(fields, lang))}
     ]
     for turn in (history or [])[-settings.history_retrieval_enrichment_window:]:
         role = turn.get("role")
@@ -293,7 +304,7 @@ async def verify_fields(
         response = await client.chat.completions.create(
             model=settings.extraction_model,
             messages=messages,
-            tools=[EXTRACTION_TOOL],
+            tools=[_tool(EXTRACTION_TOOL)],
             tool_choice={"type": "function", "function": {"name": "extract_fields"}},
             temperature=0.0,
             # Escala con el numero de campos pedidos (antes 100 fijo para 1).
@@ -351,7 +362,7 @@ async def extract_and_verify(
         return {}, {}
     # Extras de relleno con su variante del tool (ver `fill_gaps`).
     gaps = list(gaps) + [f for f in extra_fields if f not in gaps]
-    tool = extraction_tool(extra_fields)
+    tool = _tool(extraction_tool(extra_fields))
     # Un solo camino de peticion para los tres casos; lo unico que cambia es
     # que prompt se monta. Asi no hay dos implementaciones del mismo reparto
     # de resultados que puedan desincronizarse.
@@ -361,7 +372,7 @@ async def extract_and_verify(
         system = extraction_system_prompt(lang, gaps)
     else:
         system = fields_verification_system_prompt(verify, lang)
-    messages = _build_messages(system, message, history)
+    messages = _build_messages(_sin_baru(system), message, history)
     try:
         client = client or trace_openai(AsyncOpenAI(api_key=settings.openai_api_key))
         response = await client.chat.completions.create(
@@ -541,7 +552,7 @@ async def resolve_slot_answer(
         response = await client.chat.completions.create(
             model=settings.extraction_model,
             messages=[
-                {"role": "system", "content": slot_resolver_prompt(slot, lang)},
+                {"role": "system", "content": _sin_baru(slot_resolver_prompt(slot, lang))},
                 {"role": "user", "content": message},
             ],
             tools=[slot_resolver_tool(slot)],

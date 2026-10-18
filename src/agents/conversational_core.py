@@ -171,7 +171,10 @@ def _departure_place(message: str) -> str | None:
     _detector._detect_location(text, intent)
     if intent.location:
         return intent.location
-    return "island" if _GENERIC_ISLAND_RE.search(text) else None
+    isla = _GENERIC_ISLAND_RE.search(text)
+    if isla and settings.baru_no_es_rosario and strip_accents(isla.group(0).lower()) == "baru":
+        return None  # G3-06: Barú no es una isla del Rosario (ver `lugar_sin_baru`)
+    return "island" if isla else None
 
 # Auditoría 2026-08-26 (batería sintética contra PRE, Grupo 4, portado de
 # pre_gadea v0.21.4): una petición EXPLÍCITA de cambiar de idioma a mitad de
