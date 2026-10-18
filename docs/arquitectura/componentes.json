@@ -61,7 +61,8 @@
         "openai_transcription_model"
       ],
       "interruptores": [
-        "chatwoot_typing_indicator"
+        "chatwoot_typing_indicator",
+        "transcripcion_con_vocabulario"
       ]
     },
     {
@@ -1564,6 +1565,11 @@
       "area": "Preguntas",
       "titulo": "Una sola moneda por mensaje: si va la tarjeta del plan, el texto no da precio",
       "texto": "Cuando la respuesta lleva la tarjeta del plan (precio por persona en la moneda del cliente y enlace), el texto no repite el precio. Antes podía salir '126 USD' en el texto y '448.000 COP' en la tarjeta del mismo mensaje, porque el texto se escribía antes de saber que el cliente era colombiano."
+    },
+    "transcripcion_con_vocabulario": {
+      "area": "Chat",
+      "titulo": "Las notas de voz se transcriben con el vocabulario del negocio",
+      "texto": "Al pasar a texto una nota de voz se le da al modelo la lista de nombres del negocio (Muelle de la Bodeguita, Isla Grande, Majagua, Getsemaní…). Sin ella escribía 'muelle la Destesa'."
     }
   },
   "areas": [

@@ -199,6 +199,10 @@ class Settings(BaseSettings):
     # src/channels/audio.py). gpt-4o-mini-transcribe is cheaper/better than
     # whisper-1; switch to "whisper-1" if an older SDK is in play.
     openai_transcription_model: str = "gpt-4o-mini-transcribe"
+    # MOD-6 (18-oct): la pista de vocabulario del negocio en la transcripción (src/channels/audio.py). Con
+    # gpt-transcribe (fuera de la familia gpt-4o): 3,2 % de palabras mal frente al 3,7 % de hoy. APAGADO hasta decidir el
+    # modelo de transcripción (docs/robustness/mod/README.md, mod-6).
+    transcripcion_con_vocabulario: bool = False
     rag_top_k: int = 8
     rag_min_score: float = 0.40
     # Minimum raw ts_rank_cd score for a BM25-only hit to count as "confident".

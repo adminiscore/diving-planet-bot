@@ -34,6 +34,9 @@ TEXTOS = [
     ("en", "echo", "We are coming from Barú, is lunch included in the trip?"),
 ]
 CANDIDATOS = ["gpt-4o-mini-transcribe", "gpt-transcribe", "whisper-1"]
+# Pista de vocabulario del negocio (parámetro `prompt` de la API de transcripción): con --vocabulario.
+VOCABULARIO = ("Diving Planet, Muelle de la Bodeguita, Islas del Rosario, Isla Grande, Barú, Hotel San Pedro de Majagua, "
+               "Cocoliso, Getsemaní, Bocagrande, minicurso, snorkel, Open Water, PADI, refresher, buzo certificado.")
 
 
 def normalizar(t: str) -> list[str]:
@@ -70,7 +73,9 @@ def main() -> None:
             f = carpeta / f"nota-{i:02d}.mp3"
             t0 = time.perf_counter()
             try:
-                out = cli.audio.transcriptions.create(model=modelo, file=(f.name, f.read_bytes())).text.strip()
+                extra = {"prompt": VOCABULARIO} if "--vocabulario" in sys.argv else {}
+                out = cli.audio.transcriptions.create(model=modelo, file=(f.name, f.read_bytes()),
+                                                      **extra).text.strip()
             except Exception as exc:  # noqa: BLE001
                 out = f"ERROR {str(exc)[:120]}"
             ts.append(time.perf_counter() - t0)

@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-18T12:23:04+00:00",
-  "commit": "267f27d",
+  "generado": "2026-10-18T12:46:43+00:00",
+  "commit": "acca0bf",
   "rama": "feature/pre_gadea"
  },
  "vistas": {
@@ -89,6 +89,13 @@
      "titulo": "“Escribiendo…” en el chat",
      "codigo": true,
      "pre": true,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "transcripcion_con_vocabulario",
+     "titulo": "Las notas de voz se transcriben con el vocabulario del negocio",
+     "codigo": false,
+     "pre": false,
      "sin_efecto": false
     }
    ],
@@ -3412,6 +3419,19 @@
    "fijado_en_pre": true,
    "usado_por": [
     "b_extraction"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "transcripcion_con_vocabulario",
+   "area": "Chat",
+   "titulo": "Las notas de voz se transcriben con el vocabulario del negocio",
+   "texto": "Al pasar a texto una nota de voz se le da al modelo la lista de nombres del negocio (Muelle de la Bodeguita, Isla Grande, Majagua, Getsemaní…). Sin ella escribía 'muelle la Destesa'.",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
+   "usado_por": [
+    "preparacion"
    ],
    "sin_efecto": null
   },
