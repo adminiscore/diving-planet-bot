@@ -50,3 +50,25 @@ coletilla ("no se han dado datos de grupo…"): más larga, no dañina.
 
 **Candidato para las tres piezas de mod-4 (reescritura, resumen, idioma): DeepSeek v4.1 Flash.** Falta la ronda core
 (la reescritura es la que más pesa en ella; el resumen salta cada 24 mensajes).
+
+## mod-6 · la transcripción de las notas de voz (gpt-4o-mini-transcribe), 18-oct
+
+`python -m scripts.mod_transcripcion <carpeta_audios> <salida.json>` (`docs/robustness/mod/mod6-transcripcion.json`): 10
+notas de voz SINTÉTICAS (tts-1; en el repo no hay audios de clientes) en es/en con importes, fechas, hoteles y el
+muelle; el mismo camino que el bot, sin pista de idioma.
+
+| Modelo | Error por palabra (WER) | p50 |
+|---|---|---|
+| **gpt-4o-mini-transcribe (PRE)** | **3,7 %** | 0,53 s |
+| gpt-transcribe | 5,7 % | 0,58 s |
+| whisper-1 | 7,2 % | 1,10 s |
+
+Todos fallan en "Muelle de la Bodeguita" ("muelle la Destesa / La Destreza"). Siguientes: (1) confirmar si
+gpt-4o-mini-transcribe entra en la retirada de enero (si no, se queda: es el mejor); (2) probar a pasar un `prompt` con
+el vocabulario del negocio (Bodeguita, Majagua, Isla Grande, minicurso…), que la API de transcripción admite.
+
+## mod-8 · las herramientas de medida en gpt-4.1
+
+`banco_fallos` ya puede verificar con un modelo de OpenRouter (`_verificar` va por el cliente del bot) y tiene
+`--comparar-verificador <modelo>`: juzga las mismas respuestas con los dos y da la coincidencia. Medida pendiente
+(cuando PRE no esté en una ronda).

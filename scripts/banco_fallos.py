@@ -140,16 +140,18 @@ async def _verificar(f: dict, hoy: dict, modelo: str = VERIFICADOR_MODELO) -> di
     from openai import AsyncOpenAI
 
     from src.config import settings
-    from src.llm_client import adaptar_parametros
+    from src.llm_client import trace_openai
 
     contexto = "\n\n".join(j["context"] for j in hoy.get("juicios") or []) or "(el turno no pasó por el revisor: sin contexto)"
     usuario = (f"CRITERIO: {f['criterio']}\nLO QUE PEDÍA: {f.get('pedia_corregido') or f['pedia']}\n"
                f"POR QUÉ FALLÓ EN LA RONDA: {f['motivo_juez']}\n\n"
                f"MENSAJE DEL CLIENTE: {f['mensaje_cliente']}\n\nRESPUESTA DE HOY: {hoy['reply']}\n\n"
                f"CONTEXTO QUE TENÍA (cortado a 60.000 caracteres):\n{contexto[:60000]}")
-    resp = await AsyncOpenAI(api_key=settings.openai_api_key).chat.completions.create(**adaptar_parametros(dict(
+    # MOD-8 (18-oct): por el cliente del bot (`trace_openai`), que adapta los parámetros al modelo y saca por OpenRouter
+    # los modelos con proveedor ("deepseek/…"): así se puede comparar el verificador con candidatos fuera de gpt-4.
+    resp = await trace_openai(AsyncOpenAI(api_key=settings.openai_api_key)).chat.completions.create(
         model=modelo, temperature=0, response_format={"type": "json_object"},
-        messages=[{"role": "system", "content": VERIFICADOR}, {"role": "user", "content": usuario}])))
+        messages=[{"role": "system", "content": VERIFICADOR}, {"role": "user", "content": usuario}])
     return json.loads(resp.choices[0].message.content or "{}")
 
 
