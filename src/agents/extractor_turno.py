@@ -198,6 +198,20 @@ _PRECIO_NO_ELIGE = (
     ("(they say so, ask for dives, their prices or a date to dive)",
      "(they say so, ask for dives or a date to dive; only asking a price does not)"),
 )
+# 19-oct (ronda mod-G, flag `certificado_solo_si_lo_dice`): sin la regla del código "buceo certificado ⇒ certificado",
+# el extractor no veía la certificación en lo que también la dice: «completé el curso básico» (paquete-5-buceos) o
+# «I'm gonna need a little refresher» (el repaso es para quien YA está certificado). Con el flag, la regla de
+# is_certified nombra esas formas de decirlo. Sigue sin deducirse de pedir buceos o fun dives (decisión de Gadea).
+IS_CERTIFIED_HOY_ES = "- is_certified: true solo si dice que tiene certificación o un nivel de buceo (buzo certificado, Open Water, Advanced…), él o su grupo;"
+IS_CERTIFIED_DICHO_ES = ("- is_certified: true solo si dice que tiene certificación o un nivel de buceo (buzo certificado, "
+                         "Open Water, Advanced…), que ya terminó un curso de certificación («completé el curso básico», "
+                         "«me certifiqué en…»), que tiene inmersiones registradas o que necesita un refresher (el repaso es "
+                         "para quien ya está certificado), él o su grupo;")
+IS_CERTIFIED_HOY_EN = "- is_certified: true only if they say they have a certification or a diving level (certified diver, Open Water, Advanced…), themselves or their group;"
+IS_CERTIFIED_DICHO_EN = ("- is_certified: true only if they say they have a certification or a diving level (certified diver, "
+                         "Open Water, Advanced…), that they already finished a certification course (\"I completed the basic "
+                         "course\", \"I got certified in…\"), that they have logged dives or that they need a refresher (a "
+                         "refresher is for someone already certified), themselves or their group;")
 _QUIERE_BUCEAR_PRECIO = "pregunta sus precios o fechas,"
 _QUIERE_BUCEAR_SIN_PRECIO = "pregunta sus fechas (preguntar solo un precio no),"
 
@@ -388,6 +402,9 @@ async def extraer_turno(mensaje: str, *, history: list[dict] | None = None, sabi
             sistema = sistema.replace(antes, despues)
     elif settings.extractor_precio_elige:
         sistema = sistema.replace(GENERAL_PRECIO_ES, GENERAL_PRECIO_ES_V2).replace(GENERAL_PRECIO_EN, GENERAL_PRECIO_EN_V2)
+    if settings.certificado_solo_si_lo_dice:
+        # 19-oct: sin la regla del código, que is_certified vea todas las formas de decirlo (ver IS_CERTIFIED_DICHO_*).
+        sistema = sistema.replace(IS_CERTIFIED_HOY_ES, IS_CERTIFIED_DICHO_ES).replace(IS_CERTIFIED_HOY_EN, IS_CERTIFIED_DICHO_EN)
     if settings.extractor_aclaraciones:
         # EX-EXTRACTOR-1: la regla de la ubicación con la negación primero (ver UBICACION_NEGACION_*).
         sistema = sistema.replace(UBICACION_HOY_ES, UBICACION_NEGACION_ES).replace(UBICACION_HOY_EN, UBICACION_NEGACION_EN)
