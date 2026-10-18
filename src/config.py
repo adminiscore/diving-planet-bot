@@ -22,9 +22,9 @@ class Settings(BaseSettings):
     openai_model: str = "gpt-4o-mini"
     # MOD (18-oct): cada pieza de `openai_model` con su modelo, para medirlas y cambiarlas una a una (la familia gpt-4 se
     # retira en enero). Mismo valor que `openai_model` mientras no se promocione otro.
-    reescritura_model: str = "gpt-4o-mini"
-    resumen_model: str = "gpt-4o-mini"
-    idioma_model: str = "gpt-4o-mini"
+    reescritura_model: str = "deepseek/deepseek-v4.1-flash"  # RONDA mod-C (18-oct); revert = "gpt-4o-mini"
+    resumen_model: str = "deepseek/deepseek-v4.1-flash"  # RONDA mod-C (18-oct); revert = "gpt-4o-mini"
+    idioma_model: str = "deepseek/deepseek-v4.1-flash"  # RONDA mod-C (18-oct); revert = "gpt-4o-mini"
     # Model for the narrow, structured LLM gap-filler extractor
     # (src/agents/llm_extractor.py, robustness Fases 1-3). Kept SEPARATE from
     # openai_model (then used by the action orchestrator, retired in 308488d): the extraction is a small
@@ -357,7 +357,7 @@ class Settings(BaseSettings):
     # 30 años", "debes haber completado la teoría", "hay barcos hundidos"); +0,25 s de mediana. ENCENDIDO por defecto (= PRE, paso 10).
     # 28-sep (HISTORY 0.29.66): v3 con gpt-4.1-mini 48/70 y gpt-4o-mini 37/70 frente a 70/70, y NO más rápidos: se queda gpt-4.1.
     grounding_v3: bool = True
-    grounding_v3_model: str = "gpt-4.1"
+    grounding_v3_model: str = "deepseek/deepseek-v4.1-flash"  # RONDA mod-C (18-oct); revert = "gpt-4.1"
     # 1-oct (docs/robustness/juez/README.md): juez v4. Una linea por frase con su tipo (dato / no_lo_tengo / asesor /
     # otro) y el veredicto lo saca el codigo (solo cuenta un NO en un dato). El v3 se saltaba su propio filtro en
     # cuanto la respuesta traia un dato y ponia SI/NO al azar a "no lo tengo a la mano, un asesor te lo confirma".
@@ -537,7 +537,7 @@ class Settings(BaseSettings):
     # GROUNDING_VERIFY_V3_LUNA_*): el v3 entero + 3 aclaraciones (lo que dice el cliente de si mismo no se comprueba;
     # valoraciones y ofertas de ayuda no son datos; las deducciones directas del contexto cuentan). Va con
     # GROUNDING_V3_MODEL=gpt-6-luna. APAGADO hasta medirlo (banco sonda_juez_modelo, escalon 0, A/B core).
-    juez_v3_luna: bool = False
+    juez_v3_luna: bool = True  # RONDA mod-C (18-oct): encendido para medir; revert = False
     # s4-33 (9-oct): razonamiento de GPT-6 Luna cuando hace de juez de grounding ("none" = como el resto de llamadas a
     # gpt-6; "low"/"medium" = razona antes de la lista y el tope de salida sube 4000 tokens, como el juez gpt-5/o).
     # Se mide con scripts/banco_juez_reales.py --ajuste juez_luna_razonamiento=low.

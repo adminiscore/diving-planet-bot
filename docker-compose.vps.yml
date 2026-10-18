@@ -105,14 +105,16 @@ services:
       # (ronda respaldo-A/B; HISTORY 0.31.0). Extraccion y secundarias en gpt-4o-mini; juez en gpt-4.1.
       OPENAI_MODEL: "gpt-4o-mini"
       # MOD (18-oct): la reescritura de la consulta, el resumen y el detector de idioma, cada uno con su modelo.
-      REESCRITURA_MODEL: "gpt-4o-mini"
-      RESUMEN_MODEL: "gpt-4o-mini"
-      IDIOMA_MODEL: "gpt-4o-mini"
+      REESCRITURA_MODEL: "deepseek/deepseek-v4.1-flash"
+      RESUMEN_MODEL: "deepseek/deepseek-v4.1-flash"
+      IDIOMA_MODEL: "deepseek/deepseek-v4.1-flash"
       RAG_ANSWER_MODEL: "gpt-6-luna"
       RAG_RESPALDO_MODELO: "gpt-4.1-mini"
       RAG_RESPALDO_SEGUNDOS: "3.0"
       # Juez de grounding v3 (flag GROUNDING_V3, 28-sep): gpt-4.1 (con gpt-4.1-mini el v3 era inestable).
-      GROUNDING_V3_MODEL: "gpt-4.1"
+      # RONDA mod-C (18-oct, MOD-1): el revisor en DeepSeek v4.1 Flash con la aclaración de s4-33 (JUEZ_V3_LUNA).
+      # Revert = "gpt-4.1" y JUEZ_V3_LUNA "false".
+      GROUNDING_V3_MODEL: "deepseek/deepseek-v4.1-flash"
       # RONDA mod-B (18-oct, Gadea y Álvaro): G3 encendido para medir contra mod-A (a7d4e65, los mismos flags
       # apagados). Revert = quitar estas tres líneas y poner los defaults en False.
       BARU_NO_ES_ROSARIO: "true"
@@ -273,7 +275,7 @@ services:
       # -> PROMOCIONADO (vigilar p95: 5,3 -> 7,0 s por las regeneraciones). Revert = "false" + redeploy.
       GROUNDING_V3: "true"
       # s4-33 (8-oct): instrucciones del juez v3 para GPT-6 Luna (va con GROUNDING_V3_MODEL). APAGADO hasta medirlo.
-      JUEZ_V3_LUNA: "false"
+      JUEZ_V3_LUNA: "true"
       # u3-5 (decision de Gadea): el minicurso deducido se RECOMIENDA y lo confirma el cliente; a quien pide
       # un curso se le recomienda el Open Water. Ver HISTORY 0.29.45-0.29.58. Escalon 0 correcto, sin
       # regresiones en la ronda B (no se activa en el core) -> PROMOCIONADO. Revert = "false" + redeploy.
