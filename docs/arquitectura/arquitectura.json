@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-18T12:44:28+00:00",
-  "commit": "a7d4e65",
+  "generado": "2026-10-18T13:48:42+00:00",
+  "commit": "d45da11",
   "rama": "feature/pre_alvaro"
  },
  "vistas": {
@@ -805,6 +805,13 @@
     {
      "nombre": "precio_no_elige",
      "titulo": "Preguntar un precio no es elegir",
+     "codigo": false,
+     "pre": false,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "tarjeta_sin_seguridad",
+     "titulo": "El precio sale aunque falte la pregunta de seguridad",
      "codigo": false,
      "pre": false,
      "sin_efecto": false
@@ -3452,6 +3459,19 @@
    "fijado_en_pre": true,
    "usado_por": [
     "b_extraction"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "tarjeta_sin_seguridad",
+   "area": "Reserva",
+   "titulo": "El precio sale aunque falte la pregunta de seguridad",
+   "texto": "Si solo falta saber si alguien lleva más de 2 años sin bucear y el cliente no lo contesta, el bot da igualmente el precio, con una línea: 'si alguno lleva más de 2 años sin bucear, se añade el refresher (precio)'. Antes repetía la pregunta y el precio no salía nunca.",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
+   "usado_por": [
+    "b_slotfill_close"
    ],
    "sin_efecto": null
   },
