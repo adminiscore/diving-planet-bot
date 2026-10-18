@@ -40,7 +40,7 @@ class Settings(BaseSettings):
     # para medirlas y cambiarlas una a una. Mismo valor que `extraction_model` mientras no se promocione otro.
     senales_model: str = "deepseek/deepseek-v4.1-flash"  # PROMOCIONADO 18-oct (mod-F, HISTORY 0.31.56); revert = "gpt-4o-mini"
     red_extractor_model: str = "gpt-6-luna"  # PROMOCIONADO 18-oct (mod-F, HISTORY 0.31.56); revert = "gpt-4o-mini"
-    resolutor_model: str = "anthropic/claude-haiku-5.5"  # RONDA mod-G2 (18-oct); revert = "gpt-5.4-nano"
+    resolutor_model: str = "anthropic/claude-haiku-5.5"  # PROMOCIONADO 19-oct (mod-G2, HISTORY 0.31.57); revert = "gpt-5.4-nano"
     acuse_model: str = "gpt-5.4-nano"  # PROMOCIONADO 18-oct (mod-F, HISTORY 0.31.56); revert = "gpt-4o-mini"
     notas_model: str = "deepseek/deepseek-v4.1-flash"  # PROMOCIONADO 18-oct (mod-F, HISTORY 0.31.56); revert = "gpt-4o-mini"
     # ex-4 (fase EX, 12-oct): modelo del extractor "LLM primero" (src/agents/extractor_turno.py). Medido en PRE con el
@@ -126,10 +126,10 @@ class Settings(BaseSettings):
     recomendar_a_certificados: bool = True
     # 18-oct (ronda mod-F): el simétrico para quien NO es certificado y no ha elegido: minicurso, snorkel o Open Water en
     # vez del menú entero (que ofrece "buceo", solo para certificados). conversational_core.ask_slot. APAGADO.
-    recomendar_a_no_certificados: bool = True  # RONDA mod-G2 (18-oct): encendido para medir; revert = False
+    recomendar_a_no_certificados: bool = True  # PROMOCIONADO 19-oct (mod-G2, HISTORY 0.31.57); revert = False
     # 18-oct (ronda mod-D, reserva-solo-link): el resolutor no fija un valor con una respuesta que se contradice ("no,
     # buceé hace poco" a "¿Eres buzo certificado?"). prompts/booking.SLOT_RESOLVER_CONTRADICCION. APAGADO.
-    resolutor_sin_contradicciones: bool = True  # RONDA mod-G2 (18-oct): encendido para medir; revert = False
+    resolutor_sin_contradicciones: bool = True  # PROMOCIONADO 19-oct (mod-G2, HISTORY 0.31.57); revert = False
     # EX-EST-2 (14-oct): el acuse reconoce SOLO lo que dice el mensaje (el resumen de la reserva no se repite; ante
     # 'gracias' o una fecha suelta, nada). Banco scripts/banco_acuse.py: inventaba en 33/40 casos reales
     # ('tienes una reserva para el sabado'). prompts/booking.ACUSE_SOLO_MENSAJE_*. Ronda est3-B: 91,3 % (est2-B 88,8 %),
@@ -375,7 +375,7 @@ class Settings(BaseSettings):
     precio_no_elige: bool = False  # mod-G (18-oct): repreguntas en 5 diálogos del core (quita deducciones válidas); a afinar
     # CAL-F (18-oct, decisión de Gadea): la tarjeta con el precio sale aunque el cliente no conteste la pregunta de
     # seguridad (solo si es lo único que falta), con la pregunta una vez dentro y el precio del refresher. APAGADO.
-    tarjeta_sin_seguridad: bool = True  # RONDA mod-G2 (18-oct): encendido para medir; revert = False
+    tarjeta_sin_seguridad: bool = True  # PROMOCIONADO 19-oct (mod-G2, HISTORY 0.31.57); revert = False
     # r6-1(b) (17-oct): si en un turno NINGUNA llamada a OpenAI funciona (sin saldo, clave inválida, caído), el bot dice
     # que hay un problema técnico y pasa a un asesor (motivo = alerta en Chatwoot), en vez de "no lo tengo a la mano".
     # PROMOCIONADO 18-oct (decisión de Álvaro, tras la 2.ª caída por saldo en un día): comprobado en PRE con una clave

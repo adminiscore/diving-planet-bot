@@ -1,6 +1,38 @@
 History
 =======
 
+0.31.57 - (2026-10-19)
+----------------------
+* **Noche del 18 al 19-oct (Gadea con Claude, en autonomía): mod-G2 PROMOCIONADA; las reglas de no adivinar del
+  extractor, APAGADAS por repreguntar; si OpenRouter falla contesta OpenAI; herramientas fuera de gpt-4.1; limpieza
+  s4-25 paso 1.**
+  - **OpenRouter sin crédito** (~22:00, 402 por el límite de la clave): fallaban a la vez Jev, todo lo de DeepSeek y
+    Haiku, y el revisor dejaba pasar las respuestas sin revisar (la ronda mod-G de ese rato no valía). Gadea recargó.
+    **`respaldo_si_openrouter_falla`** (gpt-5.4-mini): si una llamada a OpenRouter falla, la misma petición va por
+    OpenAI, en un solo sitio (`llm_client._por_proveedor`). Lo que agotó el crédito: los bancos del extractor con Haiku.
+  - **mod-G** (F + `PRECIO_NO_ELIGE` + `CERTIFICADO_SOLO_SI_LO_DICE` + `TARJETA_SIN_SEGURIDAD` +
+    `RECOMENDAR_A_NO_CERTIFICADOS` + resolutor Haiku con `RESOLUTOR_SIN_CONTRADICCIONES`): 94,3 % 23/32 frente a mod-F
+    rejuzgada 96,9 % 27/32 → NO. Las dos reglas del extractor repreguntan quitando deducciones válidas («completé el
+    curso básico» → «¿tienes la certificación?»; «refresher» u Open Water → otra vez la actividad): APAGADAS, a afinar
+    con Álvaro (la decisión de Gadea era «bucear certificado» y «fun dives»).
+  - **mod-G2 PROMOCIONADA** (la G sin esas dos): 96,9 % 27/32, igual que mod-F, con mejor latencia (p50 3,25 → 2,50 s,
+    p95 7,05 → 5,40 s); atribución de sus 2 regresiones (3 reps con y sin): ruido. Entran `TARJETA_SIN_SEGURIDAD`
+    (decisión de Gadea), `RECOMENDAR_A_NO_CERTIFICADOS` (sabiendo que no es certificado: minicurso, snorkel u Open Water
+    en vez del menú con «buceo») y el resolutor en **Haiku** con `RESOLUTOR_SIN_CONTRADICCIONES` (banco 33/33; nano no
+    sigue la regla).
+  - El juez del golden sabe ya la decisión de no adivinar (preguntar UNA vez para confirmar no es repregunta); por eso
+    mod-F se rejuzgó con la misma referencia (`2026-10-18-mod-F-ref2`).
+  - **Herramientas fuera de gpt-4.1**: verificador de `rag_piezas` → DeepSeek (192/194 datos iguales sobre las mismas 102
+    respuestas; Luna 184/194); juez de `banco_acuse` → Luna (64/65; con 3 tokens Luna contestaba vacío: ahora 20; nuevo
+    `--comparar-juez`); kb_curar, kb_inventario, auditoria_base e investiga_fallos_rag → Luna. Valores de reserva
+    (`OPENAI_MODEL`, `EXTRACTION_MODEL` → gpt-5.4-mini; `RAG_PLAN_MODEL` → Luna).
+  - **Limpieza s4-25 paso 1** (zona RAG): fuera el camino apagado de 11 flags promocionados antes del 11-oct (rag_v2,
+    grounding_v3, rag_prompt_cache, rag_regen_feedback, rag_kb_v2, rag_busqueda_origen, rag_adelantado,
+    juez_segunda_opinion, rag_busqueda_doble, catalogo_hoteles_base, catalogo_equipo_incluido): −233 líneas en src,
+    −257 en tests, suite 3279 en verde. Ronda de equivalencia frente a mod-G2 en el mismo despliegue.
+  - Los dos fallos de flujo de CAL-F son la misma familia (mensaje que solo se entiende con el turno anterior y Jev no
+    ve como pregunta; ampliar su contexto no lo arregla): documentado para Álvaro.
+
 0.31.56 - (2026-10-18)
 ----------------------
 * **Ronda mod-F PROMOCIONADA: el bot ya no usa NINGÚN modelo de la familia gpt-4** (fase MOD, mod-2 y mod-3; Gadea con
