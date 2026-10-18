@@ -84,8 +84,14 @@ APAGADO. HISTORY 0.31.49.
 4. **G3-08:** si un grupo paga online, ¿el 10 % de grupo se devuelve después o se pide antes?
 5. ¿Una persona con cédula de extranjería (residente) paga en COP y puede dejar el 50 % de anticipo? (CAL-F)
 
-**Siguiente:** atribuir los 36 fallos de CAL-F por zonas (`reproducir_juez_pre`, 3 reps); CAL-G (latencia) con las
-fotos por pieza; y G9 UNA sola vez cuando Gadea lo diga (`run_synthetic_pre --sample golden --golden
+**Hecho después (07:45):** estabilidad de los fallos VISIBLES de CAL-F (3 reps en PRE 08f138e, juez al día): **20
+estables**, 16 ruido, 5 ya no fallan; lista por zonas en `docs/robustness/cal/cal-f-golden-completo.md` (los 9 del examen
+oculto no se repiten ni se listan). El juez ve ya la fecha y hora de Colombia de la conversación (`cuando_fue`), y "Este
+plan dura 1 día" sale en singular (a18f756). Pasado a Álvaro: con dos planes candidatos ("dos buceos o el pack de 5"),
+la pregunta del origen afirma "hay que dormir en las islas" (`_plan_needs_overnight`).
+
+**Siguiente:** arreglar por causa los fallos estables de CAL-F de la zona RAG (lista en el documento); CAL-G (latencia)
+con las fotos por pieza; y G9 UNA sola vez cuando Gadea lo diga (`run_synthetic_pre --sample golden --golden
 docs/robustness/golden-set/examen-sintetico-g9.json` y `judge_golden_set --golden …`, con la referencia de ese momento).
 
 ### ▶️ RETOMAR AQUÍ — 17-oct, 21:45 (Gadea con Claude, en autonomía): G3 en directo (G3-04…08), G3-05 arreglado con flag; SIN CRÉDITO DE OPENAI
