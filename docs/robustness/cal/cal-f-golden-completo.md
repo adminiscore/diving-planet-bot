@@ -106,3 +106,23 @@ precio-desde-islas-vs-cartagena y la repregunta de paquete-5-buceos-…-baru). L
 - grupo-mixto-precio-cop-total: `precio-total-cop-grupo-mixto` 2/3 (cotiza el Curso Avanzado por "1 buzo avanzado").
 - curso-open-water-principiantes-idioma-frances-anticipacion: `global:idioma` 2/3 (el cliente pide francés y el bot
   sigue en español; la regla es inglés).
+
+## Los dos fallos de flujo (18-oct noche, Gadea con Claude en relevo de Álvaro): la misma familia, para Álvaro
+
+Leídos en `docs/robustness/cal/estabilidad/` (3 reps, con la traza de cada turno):
+
+- **contacto-hoteles-cocoliso-san-pedro**, turno 4 «O el San Pedro» (tras «Me pasas el contacto del hotel cocoliso?»
+  y «Muchas gracias»): Jev duda (`comparing@0.35`) → router LLM → se toma como un DATO (el hotel; el regex leía
+  island) → acuse «Entiendo que mencionas el San Pedro» + menú. La pregunta (el contacto del otro hotel) se pierde.
+  Probado directamente con Jev: `asks_question=False` con el contexto de 2 mensajes (hoy) y también con 4 (2 de 2
+  cada uno): **ampliar el contexto no lo arregla**.
+- **recogida-ubuntu-comida-y-certificacion**, turno 4 «We are leaving tomorrow before noon»: el pase a una persona del
+  turno 1 es correcto (pregunta por la recogida de SU reserva: `needs_staff` + `ya_reservado`). En el 4, Jev lo lee
+  como un dato (`shares_open_fact` 0,74, sin pregunta) y el flujo recuerda el pase. Lo que pedía era «¿da tiempo a
+  certificarse?»: el minicurso que reservó no certifica y el Open Water son 2 días.
+
+Familia: **un mensaje que solo se entiende con el turno anterior** (elipsis o pregunta implícita) y que Jev no ve como
+pregunta. No es de contexto (probado) ni de una lista de frases (prohibido). Idea para medir: que la reescritura
+(DeepSeek, ve el historial entero) diga si el mensaje continúa la pregunta anterior, y usarlo como señal del router;
+o una pregunta nueva de Jev («¿continúa una pregunta anterior?») calibrada en el banco. Zona de Álvaro (Jev):
+queda para su vuelta.
