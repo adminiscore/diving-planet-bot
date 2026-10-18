@@ -1,6 +1,28 @@
 History
 =======
 
+0.31.53 - (2026-10-18)
+----------------------
+* **MOD: las rondas mod-B y mod-C PROMOCIONADAS y la transcripción nueva; `RAG_NO_ADIVINA` hecho y APAGADO** (Gadea
+  con Claude).
+  - Ronda core (32 diálogos, 93 turnos, juez gpt-5-mini): **mod-A** (PRE a7d4e65, todo apagado) 97,4 % y 27/32;
+    **mod-B** 96,5 % y 25/32; **mod-C** 97,8 % y 28/32. Latencia de C: p50 2,29 s, p95 6,03 s (B: 2,33 / 5,71); el
+    revisor 0,55 s frente a 0,94 s y la reescritura 0,46 s frente a 0,64 s.
+  - **G3 (B)**: `BARU_NO_ES_ROSARIO`, `BUSQUEDA_CON_LA_PREGUNTA_SOLA` (DeepSeek) y `RAG_SIN_PRECIO_CON_TARJETA`. La
+    regresión que parecía suya (buceo-adaptado-visual vuelve a ofrecer el asesor) era ruido: con B completo 0/3.
+  - **MOD-1 y MOD-4 (C)**: el revisor (`GROUNDING_V3_MODEL`) en DeepSeek v4.1 Flash con `JUEZ_V3_LUNA`; la
+    reescritura, el resumen y el idioma en DeepSeek. Las 3 regresiones de C frente a B fallan igual con los modelos de
+    B (3 reps, mismo código): ninguna es del modelo.
+  - **MOD-6**: transcripción con `gpt-transcribe` y `TRANSCRIPCION_CON_VOCABULARIO` (10 notas sintéticas: 3,2 % de
+    palabras mal frente al 3,7 % de gpt-4o-mini-transcribe; "Muelle de la Bodeguita" bien escrito).
+  - **MOD-7** (decisión de Gadea: OpenRouter con datos reales, con condiciones): todo lo que sale por OpenRouter lleva
+    los datos personales tapados en `llm_client.parametros_openrouter`, para todas las piezas (el detector de idioma
+    mandaba el mensaje tal cual); por líneas, sin tapar precios; el prompt de sistema no se toca.
+  - **`RAG_NO_ADIVINA`** (APAGADO, sin medir): la regla del RAG de no suponer el servicio, ampliada a la decisión de
+    Gadea de no adivinar nada (origen, nacionalidad, certificación, cuántos son, fechas). Para los fallos estables de
+    CAL-F de la zona RAG; se mide después de la ronda mod-D de Álvaro.
+  - `banco_fallos --comparar-verificador` se puede repetir (mod-8: varios candidatos sobre las mismas respuestas).
+
 0.31.52 - (2026-10-18)
 ----------------------
 * **El aviso de "problema técnico" PROMOCIONADO; Barú y una sola moneda, hechos y APAGADOS** (Álvaro con Claude).

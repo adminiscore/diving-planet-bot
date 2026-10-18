@@ -49,23 +49,3 @@ def test_sin_una_moneda_el_precio_de_siempre():
     texto = cart_render.refresher_price_text(_pareja())
     assert "USD" in texto and "COP" in texto
 
-
-# mod-7 (decisión de Gadea): las notas por OpenRouter van sin datos personales ---------------------------------------
-
-@pytest.mark.asyncio
-@pytest.mark.parametrize("modelo, tapado", [("gpt-4o-mini", False), ("deepseek/deepseek-v4.1-flash", True)])
-async def test_las_notas_por_openrouter_van_sin_datos_personales(monkeypatch, modelo, tapado):
-    from src.agents import notes_extractor
-
-    monkeypatch.setattr(settings, "notas_model", modelo)
-    llamadas = []
-
-    class _C:
-        async def create(self, **kw):
-            llamadas.append(kw)
-            raise RuntimeError("fin")
-
-    cliente = type("O", (), {"chat": type("Ch", (), {"completions": _C()})()})()
-    await notes_extractor.extract_notes("mi correo es ana.perez@gmail.com y soy alérgica", client=cliente)
-    texto = llamadas[0]["messages"][-1]["content"]
-    assert ("ana.perez@gmail.com" not in texto) is tapado

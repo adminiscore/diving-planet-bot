@@ -61,7 +61,8 @@
         "openai_transcription_model"
       ],
       "interruptores": [
-        "chatwoot_typing_indicator"
+        "chatwoot_typing_indicator",
+        "transcripcion_con_vocabulario"
       ]
     },
     {
@@ -568,6 +569,7 @@
         "rag_origen_pregunta",
         "origen_conserva_respuesta",
         "rag_no_supone_reserva",
+        "rag_no_adivina",
         "rag_sin_hora",
         "rag_temperatura_cero",
         "respaldo_mismo_modelo",
@@ -1448,6 +1450,11 @@
       "titulo": "No da por hecho lo que el cliente no dijo",
       "texto": "Si el cliente habla de su reserva sin decir qué servicio tiene, Coral no lo adivina ('tu paquete de 3 inmersiones'): contesta con la información general y, si hace falta, le pregunta."
     },
+    "rag_no_adivina": {
+      "area": "Preguntas",
+      "titulo": "No adivina ningún dato del cliente",
+      "texto": "La regla anterior ampliada a todo lo que el cliente no ha dicho: desde dónde sale, su nacionalidad (el país desde el que escribe no la dice), si está certificado, cuántos son y las fechas. Coral contesta con la información general y, si la respuesta depende de ese dato, lo pregunta."
+    },
     "rag_politicas_en_contexto": {
       "area": "Preguntas",
       "titulo": "Las políticas siempre a mano",
@@ -1582,6 +1589,11 @@
       "area": "Preguntas",
       "titulo": "Una sola moneda por mensaje: si va la tarjeta del plan, el texto no da precio",
       "texto": "Cuando la respuesta lleva la tarjeta del plan (precio por persona en la moneda del cliente y enlace), el texto no repite el precio. Antes podía salir '126 USD' en el texto y '448.000 COP' en la tarjeta del mismo mensaje, porque el texto se escribía antes de saber que el cliente era colombiano."
+    },
+    "transcripcion_con_vocabulario": {
+      "area": "Chat",
+      "titulo": "Las notas de voz se transcriben con el vocabulario del negocio",
+      "texto": "Al pasar a texto una nota de voz se le da al modelo la lista de nombres del negocio (Muelle de la Bodeguita, Isla Grande, Majagua, Getsemaní…). Sin ella escribía 'muelle la Destesa'."
     }
   },
   "areas": [

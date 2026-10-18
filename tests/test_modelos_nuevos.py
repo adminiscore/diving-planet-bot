@@ -46,3 +46,18 @@ def test_los_modelos_con_proveedor_salen_por_openrouter(monkeypatch):
     assert out["extra_body"]["provider"] == {"only": ["baseten", "fireworks/us"], "sort": "latency",
                                              "allow_fallbacks": True, "data_collection": "deny"}
     assert out["extra_body"]["reasoning"] == {"enabled": False}
+
+
+def test_nada_sale_por_openrouter_sin_tapar_los_datos_personales():
+    """MOD-7 (decisión de Gadea): todo lo que va a OpenRouter lleva los datos personales tapados, en un solo sitio;
+    los precios del contexto se quedan y el prompt de sistema no se toca."""
+    from src.llm_client import parametros_openrouter
+
+    mensajes = [{"role": "system", "content": "Detecta el idioma."},
+                {"role": "user", "content": "escríbeme al 300 123 4567\nel paquete cuesta 1.429.000 COP"},
+                {"role": "assistant", "content": "Tu cédula es 1.023.456.789"}]
+    out = parametros_openrouter({"model": "deepseek/deepseek-v4.1-flash", "messages": mensajes})
+    assert out["messages"][0] == mensajes[0]
+    assert "300 123 4567" not in out["messages"][1]["content"] and "1.429.000 COP" in out["messages"][1]["content"]
+    assert "1.023.456.789" not in out["messages"][2]["content"]
+    assert mensajes[1]["content"].startswith("escríbeme al 300")  # no cambia la lista de quien llama

@@ -66,8 +66,12 @@ def test_cada_pieza_con_modelo_o_servicio_lleva_un_logo_que_existe():
     for c in datos["componentes"]:
         if c["modelos"]:
             assert c.get("marca") in logos, c["id"]
+    from src.config import settings
+
+    # La marca sale del modelo de PRE: un modelo con proveedor ("deepseek/…") va por OpenRouter (MOD, 18-oct).
+    revisor = "openrouter" if "/" in settings.grounding_v3_model else "openai"
     assert {c["id"]: c["marca"] for c in datos["componentes"] if c["id"] in ("router", "r_revisor")} == {
-        "router": "openrouter", "r_revisor": "openai"}
+        "router": "openrouter", "r_revisor": revisor}
     curado = copy.deepcopy(curado)
     curado["componentes"][0]["marca"] = "logo_inventado"
     assert any("logo_inventado" in e for e in arq.validar(curado, g, bools, modelos))

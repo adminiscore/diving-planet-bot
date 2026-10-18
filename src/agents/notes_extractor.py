@@ -27,9 +27,8 @@ import logging
 from openai import AsyncOpenAI
 
 from src.config import settings
-from src.llm_client import es_de_openrouter, tool_arguments, trace_openai
+from src.llm_client import tool_arguments, trace_openai
 from src.observability import con_pieza_llm
-from src.privacy import redact_pii
 from src.prompts.memory import (
     MEMORIA_SEGURA_NOTAS_EN,
     MEMORIA_SEGURA_NOTAS_ES,
@@ -64,16 +63,13 @@ async def extract_notes(
     existing = existing_notes or []
     existing_lower = {n.strip().lower() for n in existing}
 
-    # mod-7 (18-oct, decisión de Gadea): por OpenRouter solo van textos sin datos personales (`redact_pii`, como el
-    # resumen y la reescritura). Con un modelo de OpenAI, la llamada es la de siempre.
-    tapar = redact_pii if es_de_openrouter(settings.notas_model) else (lambda texto: texto)
     messages: list[dict] = [{"role": "system", "content": notes_system_prompt(lang, existing) + _seguridad(lang)}]
     for turn in (history or [])[-settings.history_retrieval_enrichment_window:]:
         role = turn.get("role")
         content = turn.get("content")
         if role in ("user", "assistant") and content:
-            messages.append({"role": role, "content": tapar(content)})
-    messages.append({"role": "user", "content": tapar(message)})
+            messages.append({"role": role, "content": content})
+    messages.append({"role": "user", "content": message})
 
     try:
         client = client or trace_openai(AsyncOpenAI(api_key=settings.openai_api_key))

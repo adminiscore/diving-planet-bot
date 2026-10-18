@@ -20,6 +20,9 @@ from src.config import Settings
 ROOT = Path(__file__).resolve().parent.parent
 MODELOS = (
     "openai_model",
+    "reescritura_model",
+    "resumen_model",
+    "idioma_model",
     "rag_answer_model",
     "grounding_v3_model",
     "extraction_model",

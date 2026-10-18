@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-18T13:48:42+00:00",
-  "commit": "d45da11",
+  "generado": "2026-10-18T14:10:41+00:00",
+  "commit": "b6e9101",
   "rama": "feature/pre_alvaro"
  },
  "vistas": {
@@ -79,14 +79,21 @@
    "modelos": [
     {
      "ajuste": "openai_transcription_model",
-     "codigo": "gpt-4o-mini-transcribe",
-     "pre": "gpt-4o-mini-transcribe"
+     "codigo": "gpt-transcribe",
+     "pre": "gpt-transcribe"
     }
    ],
    "interruptores": [
     {
      "nombre": "chatwoot_typing_indicator",
      "titulo": "“Escribiendo…” en el chat",
+     "codigo": true,
+     "pre": true,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "transcripcion_con_vocabulario",
+     "titulo": "Las notas de voz se transcriben con el vocabulario del negocio",
      "codigo": true,
      "pre": true,
      "sin_efecto": false
@@ -186,8 +193,8 @@
    "marca": "openrouter",
    "tiempos": {
     "n": 93,
-    "p50": 0.426,
-    "p95": 1.767
+    "p50": 0.44,
+    "p95": 1.564
    }
   },
   {
@@ -210,9 +217,9 @@
    ],
    "modelos": [],
    "tiempos": {
-    "n": 9,
-    "p50": 0.003,
-    "p95": 0.015
+    "n": 8,
+    "p50": 0.002,
+    "p95": 0.004
    }
   },
   {
@@ -228,8 +235,8 @@
    "interruptores": [],
    "tiempos": {
     "n": 2,
-    "p50": 0.004,
-    "p95": 0.005
+    "p50": 0.003,
+    "p95": 0.004
    }
   },
   {
@@ -253,8 +260,8 @@
    "modelos": [],
    "tiempos": {
     "n": 1,
-    "p50": 0.001,
-    "p95": 0.001
+    "p50": 0.004,
+    "p95": 0.004
    }
   },
   {
@@ -272,8 +279,8 @@
    "interruptores": [],
    "tiempos": {
     "n": 4,
-    "p50": 3.783,
-    "p95": 4.753
+    "p50": 3.508,
+    "p95": 3.957
    }
   },
   {
@@ -289,9 +296,9 @@
    "modelos": [],
    "interruptores": [],
    "tiempos": {
-    "n": 77,
-    "p50": 2.199,
-    "p95": 5.481
+    "n": 78,
+    "p50": 2.366,
+    "p95": 5.214
    }
   },
   {
@@ -500,9 +507,9 @@
    ],
    "marca": "openai",
    "tiempos": {
-    "n": 77,
-    "p50": 0.029,
-    "p95": 0.882
+    "n": 78,
+    "p50": 0.034,
+    "p95": 1.007
    }
   },
   {
@@ -532,9 +539,9 @@
    ],
    "modelos": [],
    "tiempos": {
-    "n": 77,
+    "n": 78,
     "p50": 0.005,
-    "p95": 0.017
+    "p95": 0.412
    }
   },
   {
@@ -571,7 +578,7 @@
    ],
    "marca": "openai",
    "tiempos": {
-    "n": 69,
+    "n": 72,
     "p50": 0.006,
     "p95": 0.015
    }
@@ -668,9 +675,9 @@
    ],
    "marca": "openai",
    "tiempos": {
-    "n": 69,
-    "p50": 0.364,
-    "p95": 0.907
+    "n": 72,
+    "p50": 0.532,
+    "p95": 0.943
    }
   },
   {
@@ -791,8 +798,8 @@
     {
      "nombre": "baru_no_es_rosario",
      "titulo": "Barú no es las Islas del Rosario",
-     "codigo": false,
-     "pre": false,
+     "codigo": true,
+     "pre": true,
      "sin_efecto": false
     },
     {
@@ -840,9 +847,9 @@
    ],
    "marca": "openai",
    "tiempos": {
-    "n": 69,
-    "p50": 2.383,
-    "p95": 4.558
+    "n": 72,
+    "p50": 1.928,
+    "p95": 4.182
    }
   },
   {
@@ -959,9 +966,9 @@
    ],
    "modelos": [],
    "conteo": {
-    "n": 44,
+    "n": 45,
     "que": "preguntas",
-    "fuente": "2026-10-18-g3-B.json"
+    "fuente": "2026-10-18-mod-C.json"
    }
   },
   {
@@ -1023,8 +1030,8 @@
     {
      "nombre": "busqueda_con_la_pregunta_sola",
      "titulo": "Se busca también la pregunta sola, sin los datos que da el cliente",
-     "codigo": false,
-     "pre": false,
+     "codigo": true,
+     "pre": true,
      "sin_efecto": false
     }
    ],
@@ -1191,6 +1198,13 @@
      "sin_efecto": false
     },
     {
+     "nombre": "rag_no_adivina",
+     "titulo": "No adivina ningún dato del cliente",
+     "codigo": false,
+     "pre": false,
+     "sin_efecto": false
+    },
+    {
      "nombre": "rag_sin_hora",
      "titulo": "El RAG no supone la hora",
      "codigo": false,
@@ -1235,8 +1249,8 @@
     {
      "nombre": "rag_sin_precio_con_tarjeta",
      "titulo": "Una sola moneda por mensaje: si va la tarjeta del plan, el texto no da precio",
-     "codigo": false,
-     "pre": false,
+     "codigo": true,
+     "pre": true,
      "sin_efecto": false
     }
    ],
@@ -1268,8 +1282,8 @@
    "modelos": [
     {
      "ajuste": "grounding_v3_model",
-     "codigo": "gpt-4.1",
-     "pre": "gpt-4.1"
+     "codigo": "deepseek/deepseek-v4.1-flash",
+     "pre": "deepseek/deepseek-v4.1-flash"
     },
     {
      "ajuste": "avisos_al_final_model",
@@ -1316,8 +1330,8 @@
     {
      "nombre": "juez_v3_luna",
      "titulo": "Instrucciones del revisor para Luna",
-     "codigo": false,
-     "pre": false,
+     "codigo": true,
+     "pre": true,
      "sin_efecto": false
     },
     {
@@ -1353,7 +1367,7 @@
     "p50": 1.2,
     "fuente": "medido dentro de PRE el 28-sep (8 preguntas, HISTORY 0.29.65)"
    },
-   "marca": "openai"
+   "marca": "openrouter"
   },
   {
    "id": "r_reintento",
@@ -2160,9 +2174,9 @@
    "area": "Reserva",
    "titulo": "Barú no es las Islas del Rosario",
    "texto": "Quien se aloja en Barú o en Playa Blanca ya no queda como 'ya en las islas': allí no operamos (es una península unida a tierra). El bot le dice dónde buceamos en vez de prometerle la recogida en su hotel con precios de las islas.",
-   "codigo": false,
-   "pre": false,
-   "fijado_en_pre": false,
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
    "usado_por": [
     "b_slotfill_close"
    ],
@@ -2173,9 +2187,9 @@
    "area": "Preguntas",
    "titulo": "Se busca también la pregunta sola, sin los datos que da el cliente",
    "texto": "Si el cliente da datos y pregunta en el mismo mensaje (\"salimos de Cartagena el día 30. ¿Hace falta saber nadar?\"), el origen y la fecha tapaban la pregunta y la búsqueda no traía la pregunta frecuente: el bot decía que no tenía el dato. Ahora también se busca la pregunta sola, traducida si el cliente escribe en portugués o francés.",
-   "codigo": false,
-   "pre": false,
-   "fijado_en_pre": false,
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
    "usado_por": [
     "r_reescribir"
    ],
@@ -2676,8 +2690,8 @@
    "area": "Preguntas",
    "titulo": "Instrucciones del revisor para Luna",
    "texto": "Con GPT-6 Luna como revisor: lo que el cliente dice de sí mismo no se comprueba, las valoraciones y ofertas de ayuda no son datos, y una deducción directa de la información cuenta como respaldada.",
-   "codigo": false,
-   "pre": false,
+   "codigo": true,
+   "pre": true,
    "fijado_en_pre": true,
    "usado_por": [
     "r_revisor"
@@ -3155,6 +3169,19 @@
    "sin_efecto": null
   },
   {
+   "nombre": "rag_no_adivina",
+   "area": "Preguntas",
+   "titulo": "No adivina ningún dato del cliente",
+   "texto": "La regla anterior ampliada a todo lo que el cliente no ha dicho: desde dónde sale, su nacionalidad (el país desde el que escribe no la dice), si está certificado, cuántos son y las fechas. Coral contesta con la información general y, si la respuesta depende de ese dato, lo pregunta.",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
+   "usado_por": [
+    "r_escribir"
+   ],
+   "sin_efecto": null
+  },
+  {
    "nombre": "rag_no_supone_reserva",
    "area": "Preguntas",
    "titulo": "No da por hecho lo que el cliente no dijo",
@@ -3311,9 +3338,9 @@
    "area": "Preguntas",
    "titulo": "Una sola moneda por mensaje: si va la tarjeta del plan, el texto no da precio",
    "texto": "Cuando la respuesta lleva la tarjeta del plan (precio por persona en la moneda del cliente y enlace), el texto no repite el precio. Antes podía salir '126 USD' en el texto y '448.000 COP' en la tarjeta del mismo mensaje, porque el texto se escribía antes de saber que el cliente era colombiano.",
-   "codigo": false,
-   "pre": false,
-   "fijado_en_pre": false,
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
    "usado_por": [
     "r_escribir"
    ],
@@ -3476,6 +3503,19 @@
    "sin_efecto": null
   },
   {
+   "nombre": "transcripcion_con_vocabulario",
+   "area": "Chat",
+   "titulo": "Las notas de voz se transcriben con el vocabulario del negocio",
+   "texto": "Al pasar a texto una nota de voz se le da al modelo la lista de nombres del negocio (Muelle de la Bodeguita, Isla Grande, Majagua, Getsemaní…). Sin ella escribía 'muelle la Destesa'.",
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
+   "usado_por": [
+    "preparacion"
+   ],
+   "sin_efecto": null
+  },
+  {
    "nombre": "tras_pase_recuerda_el_pase",
    "area": "Reserva",
    "titulo": "Tras pasar a un asesor, no pedir que repita",
@@ -3522,7 +3562,7 @@
     "b_acuse"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 149
+   "llamadas_ultima_ronda": 64
   },
   {
    "ajuste": "avisos_al_final_model",
@@ -3532,7 +3572,7 @@
     "r_revisor"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 93
+   "llamadas_ultima_ronda": 96
   },
   {
    "ajuste": "extraction_model",
@@ -3540,7 +3580,7 @@
    "pre": "gpt-4o-mini",
    "usado_por": [],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 149
+   "llamadas_ultima_ronda": 64
   },
   {
    "ajuste": "extractor_turno_model",
@@ -3550,17 +3590,25 @@
     "b_extraction"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 92
+   "llamadas_ultima_ronda": 93
   },
   {
    "ajuste": "grounding_v3_model",
-   "codigo": "gpt-4.1",
-   "pre": "gpt-4.1",
+   "codigo": "deepseek/deepseek-v4.1-flash",
+   "pre": "deepseek/deepseek-v4.1-flash",
    "usado_por": [
     "r_revisor"
    ],
-   "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 44
+   "proveedor": "OpenRouter",
+   "llamadas_ultima_ronda": 136
+  },
+  {
+   "ajuste": "idioma_model",
+   "codigo": "deepseek/deepseek-v4.1-flash",
+   "pre": "deepseek/deepseek-v4.1-flash",
+   "usado_por": [],
+   "proveedor": "OpenRouter",
+   "llamadas_ultima_ronda": 136
   },
   {
    "ajuste": "jev_model",
@@ -3572,7 +3620,7 @@
    ],
    "proveedor": "OpenRouter",
    "llamadas_ultima_ronda": null,
-   "nota": "Decidió solo 81 de 93 mensajes; en los otros 12 decidió el LLM de respaldo (sus llamadas cuentan en gpt-4o-mini)."
+   "nota": "Decidió solo 82 de 93 mensajes; en los otros 11 decidió el LLM de respaldo (sus llamadas cuentan en gpt-4o-mini)."
   },
   {
    "ajuste": "notas_model",
@@ -3582,7 +3630,7 @@
     "b_notas"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 149
+   "llamadas_ultima_ronda": 64
   },
   {
    "ajuste": "openai_embedding_model",
@@ -3605,12 +3653,12 @@
     "r_reescribir"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 149
+   "llamadas_ultima_ronda": 64
   },
   {
    "ajuste": "openai_transcription_model",
-   "codigo": "gpt-4o-mini-transcribe",
-   "pre": "gpt-4o-mini-transcribe",
+   "codigo": "gpt-transcribe",
+   "pre": "gpt-transcribe",
    "usado_por": [
     "preparacion"
    ],
@@ -3623,7 +3671,7 @@
    "pre": "deepseek/deepseek-v4.1-flash",
    "usado_por": [],
    "proveedor": "OpenRouter",
-   "llamadas_ultima_ronda": null
+   "llamadas_ultima_ronda": 136
   },
   {
    "ajuste": "rag_answer_model",
@@ -3633,7 +3681,7 @@
     "r_escribir"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 93
+   "llamadas_ultima_ronda": 96
   },
   {
    "ajuste": "rag_plan_model",
@@ -3641,7 +3689,7 @@
    "pre": "gpt-4.1-mini",
    "usado_por": [],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 92
+   "llamadas_ultima_ronda": 93
   },
   {
    "ajuste": "red_extractor_model",
@@ -3651,7 +3699,15 @@
     "b_extraction"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 149
+   "llamadas_ultima_ronda": 64
+  },
+  {
+   "ajuste": "reescritura_model",
+   "codigo": "deepseek/deepseek-v4.1-flash",
+   "pre": "deepseek/deepseek-v4.1-flash",
+   "usado_por": [],
+   "proveedor": "OpenRouter",
+   "llamadas_ultima_ronda": 136
   },
   {
    "ajuste": "resolutor_model",
@@ -3661,7 +3717,15 @@
     "b_slotfill_close"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 149
+   "llamadas_ultima_ronda": 64
+  },
+  {
+   "ajuste": "resumen_model",
+   "codigo": "deepseek/deepseek-v4.1-flash",
+   "pre": "deepseek/deepseek-v4.1-flash",
+   "usado_por": [],
+   "proveedor": "OpenRouter",
+   "llamadas_ultima_ronda": 136
   },
   {
    "ajuste": "senales_model",
@@ -3672,50 +3736,50 @@
     "b_routing"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 149
+   "llamadas_ultima_ronda": 64
   }
  ],
  "ronda": {
-  "etiqueta": "g3-B",
-  "run_at": "2026-10-18T02:23:02Z",
-  "fichero": "2026-10-18-g3-B.json",
-  "commit": "47e9e98",
+  "etiqueta": "mod-C",
+  "run_at": "2026-10-18T12:52:26Z",
+  "fichero": "2026-10-18-mod-C.json",
+  "commit": "d2d6803",
   "por_tipo": {
    "reserva": {
-    "turns": 49,
-    "latency_p50": 1.167,
-    "latency_p95": 2.086,
-    "latency_avg": 1.36,
-    "llm_calls_avg": 2.37,
-    "llm_calls_p95": 4.0,
-    "llm_calls_max": 5,
-    "embeddings_avg": 1.49,
-    "llm_share": 1.446,
+    "turns": 48,
+    "latency_p50": 1.19,
+    "latency_p95": 2.069,
+    "latency_avg": 1.388,
+    "llm_calls_avg": 2.48,
+    "llm_calls_p95": 3.65,
+    "llm_calls_max": 4,
+    "embeddings_avg": 1.62,
+    "llm_share": 1.362,
     "tokens_avg": 0,
     "cost_avg_usd": 0
    },
    "rag": {
-    "turns": 44,
-    "latency_p50": 4.381,
-    "latency_p95": 6.996,
-    "latency_avg": 4.676,
-    "llm_calls_avg": 5.95,
-    "llm_calls_p95": 8.85,
+    "turns": 45,
+    "latency_p50": 4.179,
+    "latency_p95": 7.568,
+    "latency_avg": 4.44,
+    "llm_calls_avg": 6.0,
+    "llm_calls_p95": 9.0,
     "llm_calls_max": 9,
-    "embeddings_avg": 2.36,
-    "llm_share": 1.457,
+    "embeddings_avg": 2.31,
+    "llm_share": 1.395,
     "tokens_avg": 0,
     "cost_avg_usd": 0
    }
   },
   "enrutador": {
    "by_backend": {
-    "jev": 81,
-    "llm_uncertain": 11,
+    "jev": 82,
+    "llm_uncertain": 10,
     "llm": 1
    },
-   "ms_p50": 395.0,
-   "ms_p95": 486.7
+   "ms_p50": 411.0,
+   "ms_p95": 483.45
   },
   "cliente": {
    "turns": 93,
@@ -3723,14 +3787,14 @@
    "no_reply": 0,
    "multi_bubble": 0,
    "latency_p50": 3.0,
-   "latency_p95": 6.0,
+   "latency_p95": 6.4,
    "latency_max": 8
   },
   "llamadas_por_modelo": {
-   "gpt-4o-mini": 149,
-   "gpt-6-luna": 93,
-   "gpt-4.1-mini": 92,
-   "gpt-4.1": 44
+   "deepseek/deepseek-v4.1-flash": 136,
+   "gpt-6-luna": 96,
+   "gpt-4.1-mini": 93,
+   "gpt-4o-mini": 64
   },
   "calidad": null
  },

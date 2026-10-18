@@ -193,7 +193,13 @@ def build_system_prompt(lang: str, query: str | None = None) -> str:
         prompt = prompt.replace(RAG_DISPONIBILIDAD_VIEJA_ES, RAG_DISPONIBILIDAD_NUEVA_ES).replace(
             RAG_DISPONIBILIDAD_VIEJA_EN, RAG_DISPONIBILIDAD_NUEVA_EN)
         prompt = f"{prompt}\n\n{RAG_VARIOS_PLANES_ES if lang == 'es' else RAG_VARIOS_PLANES_EN}"
-    if settings.rag_no_supone_reserva:
+    if settings.rag_no_adivina:
+        # 18-oct: no adivinar ningún dato del cliente (origen, nacionalidad, certificación, cuántos, fechas); sustituye
+        # a la regla de EX-RAG-2, que solo cubría el servicio (ver RAG_NO_ADIVINA_*).
+        from src.prompts.info import RAG_NO_ADIVINA_EN, RAG_NO_ADIVINA_ES  # lazy
+
+        prompt = f"{prompt}\n\n{RAG_NO_ADIVINA_ES if lang == 'es' else RAG_NO_ADIVINA_EN}"
+    elif settings.rag_no_supone_reserva:
         # EX-RAG-2: no atribuir al cliente un servicio o una reserva que no dijo.
         from src.prompts.info import RAG_NO_SUPONE_EN, RAG_NO_SUPONE_ES  # lazy
 
