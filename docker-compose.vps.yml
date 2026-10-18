@@ -130,11 +130,10 @@ services:
       # mod-3 (18-oct): cada pieza de EXTRACTION_MODEL con su modelo (mismo valor hasta promocionar otro).
       SENALES_MODEL: "deepseek/deepseek-v4.1-flash"
       RED_EXTRACTOR_MODEL: "gpt-6-luna"
-      # RONDA mod-G (18-oct): el resolutor en Haiku con la regla de contradicción (banco 33/33 frente a nano 30/33,
+      # RONDA mod-G2 (18-oct; la G con las dos reglas del extractor empeoró: 94,3 %): el resolutor en Haiku con la regla
+      # de contradicción (banco 33/33 frente a nano 30/33,
       # que no la sigue) y las reglas de no adivinar del flujo. Revert = "gpt-5.4-nano" y quitar las de abajo.
       RESOLUTOR_MODEL: "anthropic/claude-haiku-5.5"
-      CERTIFICADO_SOLO_SI_LO_DICE: "true"
-      PRECIO_NO_ELIGE: "true"
       TARJETA_SIN_SEGURIDAD: "true"
       RECOMENDAR_A_NO_CERTIFICADOS: "true"
       RESOLUTOR_SIN_CONTRADICCIONES: "true"
