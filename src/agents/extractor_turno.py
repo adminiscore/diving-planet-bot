@@ -429,6 +429,17 @@ async def extraer_turno(mensaje: str, *, history: list[dict] | None = None, sabi
     certificado = salida.get("is_certified", sabido.get("is_certified"))
     if quiere and certificado is True and not salida.get("activity") and not sabido.get("activity"):
         salida["activity"] = "certified_diving"
+    reparto, actividad = salida.get("group_allocation"), salida.get("activity")
+    if settings.actividad_del_reparto and isinstance(reparto, dict) and actividad and actividad not in reparto:
+        # CAL-F (18-oct, grupo-mixto-precio-cop-total 2/3): "1 buzo avanzado y 2 para bautismo" daba el reparto
+        # {certified_diving: 1, minicourse: 2} (bien) y la actividad padi_advanced: el bot cotizaba el Curso Avanzado.
+        # Si la actividad no es de nadie del reparto, se contradicen; manda el reparto: el buceo certificado si está, y
+        # si no la parte más grande del grupo.
+        decididas = {k: v for k, v in reparto.items() if k != "undecided"}
+        if decididas:
+            nueva = "certified_diving" if "certified_diving" in decididas else max(decididas, key=decididas.get)
+            logger.info(f"[EXTRACT][CAL-F] activity={actividad!r} no está en el reparto {reparto}: {nueva!r}")
+            salida["activity"] = nueva
     # Regla del catálogo: el buceo certificado (nombrado: fun dives, paquetes de buceos) exige certificación.
     if salida.get("activity") == "certified_diving" and "is_certified" not in salida and certificado is not True:
         salida["is_certified"] = True

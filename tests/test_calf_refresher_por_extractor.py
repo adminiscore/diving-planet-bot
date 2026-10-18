@@ -82,3 +82,28 @@ def test_el_nucleo_guarda_lo_ultimo(monkeypatch, flag, antes, dice, queda):
     st.refresher_interested = antes
     core._poner_refresher(st, {"refresher_interested": dice})
     assert st.refresher_interested is queda
+
+
+# CAL-F grupo-mixto-precio-cop-total (flag `actividad_del_reparto`): la actividad que no es de nadie del reparto -----
+
+AVANZADO = {"activity": {"valor": "padi_advanced", "cita": "1 buzo avanzado"},
+            "group_allocation": {"valor": {"certified_diving": 1, "minicourse": 2},
+                                 "cita": "1 buzo avanzado y 2 para bautismo"}}
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("flag, actividad", [(False, "padi_advanced"), (True, "certified_diving")])
+async def test_la_actividad_sale_del_reparto(monkeypatch, flag, actividad):
+    monkeypatch.setattr(settings, "actividad_del_reparto", flag)
+    out = await ex.extraer_turno("Vamos en familia a Cartagena. 1 buzo avanzado y 2 para bautismo",
+                                 client=_cliente(AVANZADO, []))
+    assert out["activity"] == actividad
+
+
+@pytest.mark.asyncio
+async def test_si_la_actividad_esta_en_el_reparto_no_se_toca(monkeypatch):
+    monkeypatch.setattr(settings, "actividad_del_reparto", True)
+    datos = {"activity": {"valor": "minicourse", "cita": "el de 12 minicurso"},
+             "group_allocation": {"valor": {"minicourse": 1, "snorkel": 1}, "cita": "el de 12 minicurso y el de 8 snorkel"}}
+    out = await ex.extraer_turno("el de 12 minicurso y el de 8 snorkel", client=_cliente(datos, []))
+    assert out["activity"] == "minicourse"

@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-18T08:58:05+00:00",
-  "commit": "7c9201a",
+  "generado": "2026-10-18T09:29:06+00:00",
+  "commit": "761677e",
   "rama": "feature/pre_alvaro"
  },
  "vistas": {
@@ -772,6 +772,13 @@
      "titulo": "Si quiere el repaso, se apunta aunque no se le haya preguntado",
      "codigo": true,
      "pre": true,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "actividad_del_reparto",
+     "titulo": "La actividad principal sale del reparto del grupo",
+     "codigo": false,
+     "pre": false,
      "sin_efecto": false
     },
     {
@@ -1922,6 +1929,19 @@
    "fijado_en_pre": true,
    "usado_por": [
     "b_acuse"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "actividad_del_reparto",
+   "area": "Reserva",
+   "titulo": "La actividad principal sale del reparto del grupo",
+   "texto": "Si el cliente reparte el grupo ('1 buzo avanzado y 2 para bautismo') y la actividad principal no es de nadie de ese reparto, manda el reparto: 'buzo avanzado' es un buzo que ya tiene el nivel, no el Curso Avanzado. Antes el bot le cotizaba el curso.",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
+   "usado_por": [
+    "b_slotfill_close"
    ],
    "sin_efecto": null
   },

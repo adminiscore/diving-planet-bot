@@ -398,6 +398,7 @@
         "reparto_parcial_con_lo_sabido",
         "ninos_primero_al_snorkel",
         "refresher_por_extractor",
+        "actividad_del_reparto",
         "aplazar_pregunta_sin_respuesta",
         "recomendar_a_certificados",
         "acuse_solo_el_mensaje"
@@ -995,6 +996,11 @@
       "area": "Arquitectura",
       "titulo": "Si OpenAI cae, decir la verdad y pasar a un asesor",
       "texto": "Si en un mensaje ninguna llamada a OpenAI funciona (sin saldo, clave mala o caído), el bot dice que tiene un problema técnico y pasa la conversación a un asesor; el motivo del pase avisa al equipo de que revise el saldo. Antes contestaba 'no lo tengo a la mano' a todo."
+    },
+    "actividad_del_reparto": {
+      "area": "Reserva",
+      "titulo": "La actividad principal sale del reparto del grupo",
+      "texto": "Si el cliente reparte el grupo ('1 buzo avanzado y 2 para bautismo') y la actividad principal no es de nadie de ese reparto, manda el reparto: 'buzo avanzado' es un buzo que ya tiene el nivel, no el Curso Avanzado. Antes el bot le cotizaba el curso."
     },
     "refresher_por_extractor": {
       "area": "Reserva",
