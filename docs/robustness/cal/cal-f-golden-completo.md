@@ -71,3 +71,39 @@ cliente no lo ha dicho. Es la misma familia que G3-06 (plan que nadie pidió) y 
    la concilia el equipo; otro idioma → inglés; sin totales…). Cambia la clave de la caché: hacerlo DESPUÉS de juzgar
    CAL-F y ANTES de la ronda core B (A y B con la misma referencia).
 2. Golden visible: el criterio `confirmacion-por-pago-enlace` dice lo contrario de la decisión de Gadea.
+
+## Estabilidad de los fallos visibles (18-oct, PRE 08f138e, 3 reps cada diálogo, juez con la referencia al día)
+
+`reproducir_juez_pre` de los 24 diálogos VISIBLES con fallo (los 9 del oculto no se repiten). **20 criterios
+estables** (2-3 de 3), 16 ruido (1 de 3) y 5 que ya no fallan (0 de 3: humano-con-carrito, pide-telefono, reserva-ingles,
+precio-desde-islas-vs-cartagena y la repregunta de paquete-5-buceos-…-baru). Lista de trabajo, por zona:
+
+**RAG / datos (Gadea):**
+- confirmacion-salida-y-pago-sin-concepto: `confirmacion-por-pago-enlace` 3/3 y `operamos-diario-clima` 2/3: el turno
+  acaba en el pase ("esto tiene que revisarlo una persona") y no dice que se paga por el enlace ni que se opera a diario
+  (es cal-14 de CAL-A, sin cerrar).
+- pareja-certificados-cop-descuento-almuerzo: `precio-moneda-cartagena-cop` 3/3 (no da el precio) y
+  `descuentos-vigentes` 3/3 (no nombra el 5 % por equipo completo; criterio exigente).
+- tours-diarios-isla-grande: `pickup-islas` 3/3 (no dice que desde un hotel de las islas se coordina la recogida).
+- recogida-ubuntu-comida-y-certificacion: `minicurso-no-certifica` 3/3 (si se van mañana a mediodía, no dice que no
+  da tiempo a certificarse) y `comida-desde-islas` 2/3 (no menciona comprar comida en el hotel; criterio exigente).
+- refresher-que-completar-antes: `valida-tiempo-sin-bucear` 2/3 (no pregunta hace cuánto no bucea) y
+  `formulario-medico-refresher` 2/3 (no dice que el formulario llega tras reservar).
+- contacto-hoteles-cocoliso-san-pedro: `alojamiento-directo` 2/3 (no dice que el hotel se reserva directamente).
+- descuento-online-sin-codigo: `escala-si-no-aparece` 3/3 (si el descuento no aparece, no ofrece pasar con un asesor;
+  en CAL-E se borró un arreglo que decía lo contrario a este criterio: decidir cuál manda).
+- certificado-fechas-fotos-y-reserva y precios-y-disponibilidad-con-negociacion: `sin-invenciones` 2/3 (pone un mes,
+  una fecha o "a esta hora el sistema ya cerró" que el cliente no dijo).
+- paquete-5-buceos-precio-overnight-isla-grande-baru: `sin-invenciones` 2/3 (llama "certified diver" a quien dijo
+  ser principiante; se contradice sobre si el paquete cabe en la estancia).
+- moneda-precios-principiante-y-snorkel: `moneda-por-nacionalidad` 2/3 (explica la regla pero no pregunta la
+  nacionalidad).
+- certificado-fecha-precio-cop-descuento-transferencia: `sin-invenciones` 2/3 (ofrece el 50 % de anticipo a quien
+  tiene cédula de extranjería: **pregunta de negocio para Gadea**).
+
+**Flujo / extractor (Álvaro):**
+- refresher-rechaza-acepta: `final-con-refresher` 3/3 y `coste` 2/3 (el plan final no lleva la salida además del
+  refresher aceptado; pide el origen en vez de dar el precio).
+- grupo-mixto-precio-cop-total: `precio-total-cop-grupo-mixto` 2/3 (cotiza el Curso Avanzado por "1 buzo avanzado").
+- curso-open-water-principiantes-idioma-frances-anticipacion: `global:idioma` 2/3 (el cliente pide francés y el bot
+  sigue en español; la regla es inglés).
