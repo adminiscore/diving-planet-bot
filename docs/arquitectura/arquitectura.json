@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-18T09:40:06+00:00",
-  "commit": "b431119",
+  "generado": "2026-10-18T09:48:19+00:00",
+  "commit": "d1b9ce9",
   "rama": "feature/pre_alvaro"
  },
  "vistas": {
@@ -777,15 +777,15 @@
     {
      "nombre": "actividad_del_reparto",
      "titulo": "La actividad principal sale del reparto del grupo",
-     "codigo": false,
-     "pre": false,
+     "codigo": true,
+     "pre": true,
      "sin_efecto": false
     },
     {
      "nombre": "origen_neutro_con_dos_planes",
      "titulo": "Si duda entre dos planes, la pregunta del origen es neutra",
-     "codigo": false,
-     "pre": false,
+     "codigo": true,
+     "pre": true,
      "sin_efecto": false
     },
     {
@@ -1944,9 +1944,9 @@
    "area": "Reserva",
    "titulo": "La actividad principal sale del reparto del grupo",
    "texto": "Si el cliente reparte el grupo ('1 buzo avanzado y 2 para bautismo') y la actividad principal no es de nadie de ese reparto, manda el reparto: 'buzo avanzado' es un buzo que ya tiene el nivel, no el Curso Avanzado. Antes el bot le cotizaba el curso.",
-   "codigo": false,
-   "pre": false,
-   "fijado_en_pre": false,
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
    "usado_por": [
     "b_slotfill_close"
    ],
@@ -2952,9 +2952,9 @@
    "area": "Reserva",
    "titulo": "Si duda entre dos planes, la pregunta del origen es neutra",
    "texto": "Si el cliente compara un plan de un día con uno de varios días ('dos buceos o el pack de 5 en 2 días'), el bot pregunta desde dónde sale sin afirmar cuánto dura ni que haya que dormir en las islas. Antes decía 'Este plan dura 1 día y hay que dormir en las islas'.",
-   "codigo": false,
-   "pre": false,
-   "fijado_en_pre": false,
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
    "usado_por": [
     "b_slotfill_close"
    ],

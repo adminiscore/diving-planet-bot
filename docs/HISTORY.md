@@ -1,6 +1,20 @@
 History
 =======
 
+0.31.51 - (2026-10-18)
+----------------------
+* **CAL-F, dos fallos estables de la zona de Álvaro PROMOCIONADOS** (Álvaro con Claude; decisión de Álvaro).
+  - **`ACTIVIDAD_DEL_REPARTO`** (`grupo-mixto-precio-cop-total`): "1 buzo avanzado y 2 para bautismo" daba el reparto
+    {certified_diving 1, minicourse 2} y la actividad padi_advanced, así que se cotizaba el Curso Avanzado. Si la
+    actividad no es de nadie del reparto, manda el reparto. Estado bien 3/3; con ese estado, Gadea midió 0/6 respuestas
+    que citan el curso. Banco ex0 sin cambios atribuibles. Queda del RAG (Gadea): en "para el total" da una sola
+    actividad.
+  - **`ORIGEN_NEUTRO_CON_DOS_PLANES`** (`precios-y-disponibilidad-con-negociacion`): "dos buceos o el pack de 5 en 2
+    días" dejaba el servicio de 1 día y la duración de varios, y la pregunta del origen decía "Este plan dura 1 día y hay
+    que dormir en las islas". Con los dos planes candidatos, la pregunta es la neutra: 0/3.
+  - `curso-open-water-…-idioma-frances`: no era un fallo del bot ("Frances" es el idioma del acompañante); Gadea corrigió
+    el criterio.
+
 0.31.50 - (2026-10-18)
 ----------------------
 * **G3-01 y el refresher de CAL-F PROMOCIONADOS** (Álvaro con Claude; decisión de Álvaro).

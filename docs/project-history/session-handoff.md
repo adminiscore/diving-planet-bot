@@ -159,7 +159,12 @@ sintético CONGELADO; (3) **CAL-F**, golden visible completo; (4) **G3**, Claude
 `REPARTO_PARCIAL_CON_LO_SABIDO`, `ACTIVIDAD_PRINCIPAL_EN_EL_REPARTO`, `NINOS_PRIMERO_AL_SNORKEL`) y
 `REFRESHER_POR_EXTRACTOR`. Integrado `feature/gadea-g3`. El saldo de OpenAI se recargó el 18-oct de madrugada.
 
-**Siguiente (Álvaro), fallos estables de CAL-F en mi zona** (lista de Gadea en `docs/robustness/cal/cal-f-golden-completo.md`):
+**Hecho después (HISTORY 0.31.51):** `ACTIVIDAD_DEL_REPARTO` y `ORIGEN_NEUTRO_CON_DOS_PLANES` PROMOCIONADOS; el
+francés era un fallo del juez (Gadea corrigió el criterio). Visto y pasado a Gadea: con `RAG_OFRECE_EL_PASE`, si el RAG
+ofrece el pase y el cliente contesta otra cosa ("Desde cartagena porfi"), 1/3 acaba en el pase (Jev duda, decide el
+router LLM). Lo mira Gadea.
+
+**(Ya hecho) fallos estables de CAL-F en mi zona** (lista de Gadea en `docs/robustness/cal/cal-f-golden-completo.md`):
 (1) `grupo-mixto-precio-cop-total`: "1 buzo avanzado" se cotiza como el curso Advanced (2/3) y vuelve a preguntar si
 los del bautismo están certificados; (2) `curso-open-water-principiantes-idioma-frances-anticipacion`: el cliente pide
 francés y el bot sigue en español (2/3); (3) `precios-y-disponibilidad-con-negociacion` turno 3: duda entre "dos buceos
