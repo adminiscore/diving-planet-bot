@@ -385,6 +385,13 @@ services:
       IDIOMA_DEL_EXTRACTOR: "true"
       SIN_CEDULA_EXTRANJERO: "true"
       TRAS_PASE_RECUERDA_EL_PASE: "true"
+      # RONDA g301-B de G3-01 (18-oct, autorizada por Álvaro): los 4 flags de la familia encendidos para medir la
+      # ronda B del core contra g301-A (acebb9f, mismo código con los 4 apagados). Revert = quitar estas líneas y
+      # poner los defaults en False.
+      LO_DICHO_EN_RESPUESTA_FIJA: "true"
+      REPARTO_PARCIAL_CON_LO_SABIDO: "true"
+      ACTIVIDAD_PRINCIPAL_EN_EL_REPARTO: "true"
+      NINOS_PRIMERO_AL_SNORKEL: "true"
       # CAL-C PROMOCIONADO 17-oct: C4, C5 y C3e. Ronda core calc2-A 94,7 % 24/32 vs calc2-B 96,9 % 27/32, p95 6,4 → 6,0 s;
       # 8 mejoras y 3 regresiones, repetidas 3x con y sin los flags: ninguna suya. Banco: cal-55 y cal-46 a 0/3, y la
       # pregunta del snorkel de cal-69/70 desaparece. Revert = quitar estas líneas y poner los defaults en False.
