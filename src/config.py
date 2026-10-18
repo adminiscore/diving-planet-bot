@@ -38,19 +38,19 @@ class Settings(BaseSettings):
     extraction_model: str = "gpt-4o-mini"
     # mod-3 (18-oct, fase MOD: la familia gpt-4 se retira en enero): cada pieza de `extraction_model` con su modelo,
     # para medirlas y cambiarlas una a una. Mismo valor que `extraction_model` mientras no se promocione otro.
-    senales_model: str = "deepseek/deepseek-v4.1-flash"  # RONDA mod-F (18-oct); revert = "gpt-4o-mini"
-    red_extractor_model: str = "gpt-6-luna"  # RONDA mod-F (18-oct); revert = "gpt-4o-mini"
-    resolutor_model: str = "gpt-5.4-nano"  # RONDA mod-F (18-oct); revert = "gpt-4o-mini"
-    acuse_model: str = "gpt-5.4-nano"  # RONDA mod-F (18-oct); revert = "gpt-4o-mini"
-    notas_model: str = "deepseek/deepseek-v4.1-flash"  # RONDA mod-F (18-oct); revert = "gpt-4o-mini"
+    senales_model: str = "deepseek/deepseek-v4.1-flash"  # PROMOCIONADO 18-oct (mod-F, HISTORY 0.31.56); revert = "gpt-4o-mini"
+    red_extractor_model: str = "gpt-6-luna"  # PROMOCIONADO 18-oct (mod-F, HISTORY 0.31.56); revert = "gpt-4o-mini"
+    resolutor_model: str = "gpt-5.4-nano"  # PROMOCIONADO 18-oct (mod-F, HISTORY 0.31.56); revert = "gpt-4o-mini"
+    acuse_model: str = "gpt-5.4-nano"  # PROMOCIONADO 18-oct (mod-F, HISTORY 0.31.56); revert = "gpt-4o-mini"
+    notas_model: str = "deepseek/deepseek-v4.1-flash"  # PROMOCIONADO 18-oct (mod-F, HISTORY 0.31.56); revert = "gpt-4o-mini"
     # ex-4 (fase EX, 12-oct): modelo del extractor "LLM primero" (src/agents/extractor_turno.py). Medido en PRE con el
     # banco ex0: gpt-4.1-mini 88-89 % de datos y 4,5 % de casos con invento en diseño; en el CIEGO 90,6 % y 5,6 % (hoy
     # 90,6 % y 21,8 %), p50 ~1,0 s. gpt-4o-mini parecido y algo peor; Luna inventa menos pero tarda 2,1-2,4 s.
-    extractor_turno_model: str = "anthropic/claude-haiku-5.5"  # RONDA mod-F (18-oct); revert = "gpt-4.1-mini"
+    extractor_turno_model: str = "anthropic/claude-haiku-5.5"  # PROMOCIONADO 18-oct (mod-F, HISTORY 0.31.56); revert = "gpt-4.1-mini"
     # 18-oct (mod-2): RESPALDO del extractor (`llm_client.crear_con_respaldo`): si no contesta en estos segundos, la
     # misma petición va a este modelo y gana la primera. Vacío = sin respaldo. Ronda mod-F: Haiku por OpenRouter tuvo
     # 2 colas de 4-5 s en 47 turnos de reserva (p50 1,14 s, p90 1,67 s); gpt-5.4-mini es de OpenAI (otro proveedor).
-    extractor_respaldo_modelo: str = ""
+    extractor_respaldo_modelo: str = "gpt-5.4-mini"  # ENCENDIDO 18-oct con mod-F (HISTORY 0.31.56); revert = ""
     extractor_respaldo_segundos: float = 2.0
     # G-10 (decision de Gadea, 14-oct): el bot atiende en espanol e ingles; si el cliente escribe en OTRO idioma
     # (portugues, frances...) contesta en INGLES. El idioma principal del mensaje lo dice el extractor de la fase EX
@@ -552,7 +552,7 @@ class Settings(BaseSettings):
     # clientes); "baseten,fireworks/us,coreweave" = EE. UU. Vacío = cualquiera, por latencia.
     openrouter_base_url: str = "https://openrouter.ai/api/v1"
     # 18-oct (Gadea: probar Haiku): + Anthropic, Google Vertex y Amazon Bedrock, empresas de EE. UU., con las mismas
-    # condiciones de mod-7 (sin retención ni entrenamiento, datos personales tapados). RONDA mod-F.
+    # condiciones de mod-7 (sin retención ni entrenamiento, datos personales tapados). PROMOCIONADO (HISTORY 0.31.56).
     openrouter_proveedores: str = "baseten,fireworks/us,coreweave,google-vertex,anthropic,amazon-bedrock"
     # OpenRouter solo deja usar la API oficial de DeepSeek si se acepta que ENTRENEN con los datos (su politica "Paid
     # model training"). Apagado = nunca. Solo para pruebas con datos anonimizados; nunca con clientes reales.

@@ -134,10 +134,13 @@ services:
       ACUSE_MODEL: "gpt-5.4-nano"
       NOTAS_MODEL: "deepseek/deepseek-v4.1-flash"
       # ex-4 (12-oct): el extractor "LLM primero" de la fase EX (src/agents/extractor_turno.py).
-      # RONDA mod-F (18-oct, mod-2 y mod-3): el extractor en Haiku 5.5 (Anthropic/Google/Amazon por OpenRouter), su red
-      # en Luna (otro proveedor), las señales y las notas en DeepSeek, el resolutor y el acuse en gpt-5.4-nano.
-      # Revert = gpt-4.1-mini aquí y gpt-4o-mini en las cinco de arriba.
+      # mod-2 y mod-3 (18-oct): el extractor en Haiku 5.5 (Anthropic/Google/Amazon por OpenRouter) con RESPALDO en
+      # gpt-5.4-mini a los 2 s (OpenAI), su red en Luna, las señales y las notas en DeepSeek, el resolutor y el acuse
+      # en gpt-5.4-nano. PROMOCIONADO (HISTORY 0.31.56: ronda core mod-F 97,0 % frente a mod-E 96,9 %, ninguna regresión
+      # atribuida a los modelos). Revert = gpt-4.1-mini aquí, gpt-4o-mini en las cinco de arriba y sin respaldo.
       EXTRACTOR_TURNO_MODEL: "anthropic/claude-haiku-5.5"
+      EXTRACTOR_RESPALDO_MODELO: "gpt-5.4-mini"
+      EXTRACTOR_RESPALDO_SEGUNDOS: "2.0"
       # mod-7 + Haiku (18-oct): solo proveedores de EE. UU. por OpenRouter, sin retención ni entrenamiento.
       OPENROUTER_PROVEEDORES: "baseten,fireworks/us,coreweave,google-vertex,anthropic,amazon-bedrock"
       # CAL-A2/A3 (16-oct): el plan del RAG y la comprobacion de completitud (src/agents/rag_plan.py; flags apagados).

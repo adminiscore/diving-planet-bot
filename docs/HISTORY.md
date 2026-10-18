@@ -1,6 +1,27 @@
 History
 =======
 
+0.31.56 - (2026-10-18)
+----------------------
+* **Ronda mod-F PROMOCIONADA: el bot ya no usa NINGÚN modelo de la familia gpt-4** (fase MOD, mod-2 y mod-3; Gadea con
+  Claude, en relevo de Álvaro). Objetivo de Gadea para hoy.
+  - **Modelos del flujo** (cada uno el mejor de su banco, medidos en las mismas condiciones; `docs/robustness/mod/
+    mod2-mod3.md`): extractor **Haiku 5.5** (108 aciertos / 0 equivocados / 7 inventados, 2,0 s; gpt-4.1-mini 106/1/9,
+    2,4 s) con **respaldo** en gpt-5.4-mini a los 2 s; red del extractor **Luna**; señales del enrutador **DeepSeek**
+    (34/34 válidas); resolutor y acuse **gpt-5.4-nano** (30/30 sin valores equivocados, 1,12 s; acuse 0/40 inventos,
+    la latencia de hoy); notas **DeepSeek**.
+  - **OpenRouter** (decisión de Gadea: probar Haiku): + Anthropic, Google Vertex y Amazon Bedrock, empresas de EE. UU.,
+    con las condiciones de mod-7 (sin retención ni entrenamiento, datos personales tapados). Fijado en el compose.
+  - **Ronda core mod-F** frente a mod-E: 96,9 % 26/32 → **97,0 % 27/32**. 3 mejoras reales (buceo-adaptado-visual,
+    referral-mas-refresher, refresher-que-completar-antes). Atribución (3 reps con los modelos de F y con los de E,
+    mismo código): política de fotos 1/3 frente a 2/3 (no es de los modelos); la repregunta de
+    moneda-precios-principiante-y-snorkel 3/3 en los dos. Visto al leer: con Haiku, "Sería buzo principiante y
+    snorkeling" no saca actividad y el flujo repite el menú (gpt-4.1-mini "adivinaba" minicurso): se arregla en el
+    flujo (recomendar por lo que dijo en vez de repetir el menú).
+  - **Latencia**: el RAG igual; los turnos de reserva p50 1,26 → 1,81 s por 2 colas de Haiku por OpenRouter (4-5 s en
+    47 turnos) → **respaldo común `llm_client.crear_con_respaldo`** (el mecanismo del RAG hecho común; el extractor es el
+    primero en usarlo: si Haiku no contesta en 2 s, va la misma petición a gpt-5.4-mini y gana la primera).
+
 0.31.55 - (2026-10-18)
 ----------------------
 * **Ronda mod-E PROMOCIONADA: `RAG_NO_ADIVINA` y el respaldo del RAG en DeepSeek (mod-5); el verificador de
