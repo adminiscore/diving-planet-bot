@@ -92,6 +92,29 @@ Con la pista (`--vocabulario`, `TRANSCRIPCION_CON_VOCABULARIO`): **gpt-transcrib
 la Bodeguita" bien escrito. Gadea me dejó decidir: **gpt-transcribe con vocabulario, PROMOCIONADO 18-oct** (HISTORY
 0.31.53), fuera de la familia gpt-4o.
 
+## mod-5 · el respaldo del RAG (gpt-4.1-mini), 18-oct
+
+El respaldo escribe la respuesta si Luna no ha terminado a los 3 s o si falla (en la ronda mod-C saltó 1 vez en 43
+respuestas del RAG). Lo que importa es que siga contestando si OpenAI falla o se queda sin crédito (pasó dos veces el
+17-18 oct): otra petición a Luna (`RESPALDO_MISMO_MODELO`, de Álvaro) no cubre eso. `rag_piezas` con el set entero
+(51 preguntas, 92 datos), cada candidato escribiendo TODAS las respuestas y sin respaldo propio
+(`--env RAG_ANSWER_MODEL=<candidato> --env RAG_RESPALDO_MODELO=`), PRE 0ca8d46:
+
+| Escritor | Cobertura | Faltan por redacción | Prohibidas | Rechazos del juez | Redacción (media) | Tokens de salida |
+|---|---|---|---|---|---|---|
+| gpt-4.1-mini (hoy) | 91 % | 8 | 1 | 2 | 1,58 s | 115 |
+| **deepseek/deepseek-v4.1-flash** | **95 %** | 5 | 2 | 1 | 1,57 s | 174 |
+
+Caso a caso: DeepSeek cubre 6 datos que gpt-4.1-mini no (precio del acompañante, precio de 2 buceos en inglés, guardar
+mochilas, 30 m del Advanced…) y gpt-4.1-mini 1 que DeepSeek no. Sus 2 prohibidas, leídas: se contradice con la
+temporada alta ("el 17 de enero cae en plena temporada alta… bueno, justo el 17 ya está un poquito después") y da por
+hecho que el cliente lleva más de 2 años sin bucear (gpt-4.1-mini tiene la misma prohibida en ese caso). Con una
+repetición por lado, 2 frente a 1 es ruido; es más largo (174 tokens) pero igual de rápido.
+
+**Candidato: DeepSeek v4.1 Flash** (otro proveedor, misma latencia, más cobertura). Como el respaldo apenas salta, una
+ronda core casi no lo ejercita: va de pasajero en la siguiente ronda del RAG (`RAG_RESPALDO_MODELO`), con esta medida
+como prueba de calidad. `RESPALDO_MISMO_MODELO` (apagado) pasa a la limpieza.
+
 ## mod-8 · las herramientas de medida en gpt-4.1
 
 `banco_fallos` ya puede verificar con un modelo de OpenRouter (`_verificar` va por el cliente del bot) y tiene
@@ -102,3 +125,18 @@ DeepSeek v4.1 Flash **coinciden en 27/30 veredictos**; DeepSeek es más benévol
 0/2, cal-70 2/2 → 1/2). Para una herramienta de medida importa seguir midiendo igual que antes: comparar también Luna y
 gpt-5.4-mini antes de elegir, y cambiar el verificador entre comparaciones, nunca a mitad de una.
 `--comparar-verificador` se puede repetir: los tres candidatos sobre las mismas respuestas en una sola pasada.
+
+18-oct, los tres candidatos sobre las MISMAS 30 respuestas (mismos 15 casos × 2, PRE 0ca8d46,
+`docs/robustness/cal/medidas/mod8-tres-verificadores.json`):
+
+| Verificador | Coincide con gpt-4.1 | Fallos (gpt-4.1: 15) |
+|---|---|---|
+| deepseek/deepseek-v4.1-flash | 27/30 | 12 (más benévolo, igual que en la primera medida: 16 frente a 19) |
+| **gpt-6-luna** | **27/30** | **14** |
+| gpt-5.4-mini | 24/30 | 11 |
+
+**Candidato: Luna** para `banco_fallos`: coincide como DeepSeek y es casi igual de exigente que gpt-4.1 (un
+instrumento de medida tiene que seguir midiendo igual). DeepSeek se descarta aquí por benévolo en las dos medidas. El
+cambio de `VERIFICADOR_MODELO`, entre comparaciones (acordado con Álvaro, que también usa `banco_fallos`). Quedan el
+verificador de `rag_piezas` (otra tarea: dato a dato; medir su acuerdo antes de cambiarlo) y `generar_examen_sintetico`
+(G9 ya está congelado: no hace falta).
