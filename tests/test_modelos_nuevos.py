@@ -1,6 +1,8 @@
 """Cambio de modelos, fase 0 (8-oct): los modelos de la API nueva (gpt-5/gpt-6/serie o) rechazan `max_tokens` y gpt-6
 razona por defecto. `llm_client.adaptar_parametros` lo traduce en un solo sitio para todas las llamadas del bot."""
 
+import pytest
+
 from src.config import settings
 from src.llm_client import adaptar_parametros
 
@@ -46,6 +48,49 @@ def test_los_modelos_con_proveedor_salen_por_openrouter(monkeypatch):
     assert out["extra_body"]["provider"] == {"only": ["baseten", "fireworks/us"], "sort": "latency",
                                              "allow_fallbacks": True, "data_collection": "deny"}
     assert out["extra_body"]["reasoning"] == {"enabled": False}
+
+
+class _Falso:
+    """Un `create` falso que apunta los modelos con los que se le llama y falla si se le pide."""
+
+    def __init__(self, falla: bool = False):
+        self.modelos, self.falla = [], falla
+
+    async def create(self, *args, **kwargs):
+        self.modelos.append(kwargs["model"])
+        if self.falla:
+            raise RuntimeError("Error code: 402 - key limit exceeded")
+        return f"respuesta de {kwargs['model']}"
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("falla", [False, True])
+async def test_si_openrouter_falla_contesta_el_respaldo_de_openai(monkeypatch, falla):
+    """18-oct (ronda mod-G): con la clave de OpenRouter sin crédito fallaban Jev, DeepSeek y Haiku a la vez, y el
+    revisor dejaba pasar las respuestas sin revisar. Si OpenRouter falla, la misma petición va al modelo de OpenAI."""
+    from src import llm_client
+
+    openrouter, openai = _Falso(falla=falla), _Falso()
+    monkeypatch.setattr(llm_client, "_openrouter", lambda: type("C", (), {"chat": type("Ch", (), {
+        "completions": openrouter})})())
+    monkeypatch.setattr(settings, "respaldo_si_openrouter_falla", "gpt-5.4-mini")
+    r = await llm_client._por_proveedor(openai.create, model="deepseek/deepseek-v4.1-flash", messages=[])
+    if falla:
+        assert r == "respuesta de gpt-5.4-mini" and openai.modelos == ["gpt-5.4-mini"]
+    else:
+        assert r == "respuesta de deepseek/deepseek-v4.1-flash" and openai.modelos == []
+
+
+@pytest.mark.asyncio
+async def test_sin_respaldo_el_fallo_de_openrouter_sube(monkeypatch):
+    from src import llm_client
+
+    openrouter = _Falso(falla=True)
+    monkeypatch.setattr(llm_client, "_openrouter", lambda: type("C", (), {"chat": type("Ch", (), {
+        "completions": openrouter})})())
+    monkeypatch.setattr(settings, "respaldo_si_openrouter_falla", "")
+    with pytest.raises(RuntimeError):
+        await llm_client._por_proveedor(_Falso().create, model="deepseek/deepseek-v4.1-flash", messages=[])
 
 
 def test_nada_sale_por_openrouter_sin_tapar_los_datos_personales():

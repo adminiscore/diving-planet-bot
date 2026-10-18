@@ -563,6 +563,10 @@ class Settings(BaseSettings):
     # OpenRouter solo deja usar la API oficial de DeepSeek si se acepta que ENTRENEN con los datos (su politica "Paid
     # model training"). Apagado = nunca. Solo para pruebas con datos anonimizados; nunca con clientes reales.
     openrouter_permitir_entrenamiento: bool = False
+    # 18-oct (ronda mod-G: la clave de OpenRouter llegó a su límite y el revisor dejaba pasar las respuestas sin
+    # revisar): si una llamada a OpenRouter falla, se repite con este modelo de OpenAI (llm_client._por_proveedor).
+    # Solo actúa cuando OpenRouter falla. Vacío = sube el error como antes.
+    respaldo_si_openrouter_falla: str = "gpt-5.4-mini"
     # J2 (1-oct): segunda opinion de Jev sobre las frases que el juez marca NO (src/agents/juez_segunda_opinion.py).
     # Solo cuando el juez rechaza; si Jev esta seguro de que ninguna afirma nada del negocio, la respuesta pasa.
     # rag_piezas 1-oct (96 respuestas por lado): cobertura 88 -> 90 %, contradicciones 3 -> 1, misma latencia. Calibrado

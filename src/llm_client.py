@@ -136,14 +136,32 @@ def _con_parametros_adaptados(client: _C) -> _C:
         original = completions.create
 
         async def create(*args, **kwargs):
-            if es_de_openrouter(str(kwargs.get("model") or "")):
-                return await _openrouter().chat.completions.create(*args, **parametros_openrouter(kwargs))
-            return await original(*args, **adaptar_parametros(kwargs))
+            return await _por_proveedor(original, *args, **kwargs)
 
         completions.create = create
     except Exception as exc:  # noqa: BLE001 — nunca romper el turno por esto
         logger.warning("[LLM] no se pudieron adaptar los parámetros del cliente: %s", exc)
     return client
+
+
+async def _por_proveedor(original, *args, **kwargs):
+    """Un modelo con prefijo de proveedor sale por OpenRouter; el resto, por OpenAI (`original`).
+
+    18-oct (ronda mod-G): la clave de OpenRouter llegó a su límite (402) y fallaron a la vez Jev, todo lo de DeepSeek y
+    Haiku; el revisor, al fallar, dejaba pasar las respuestas SIN revisar. Con `respaldo_si_openrouter_falla`, si la
+    llamada a OpenRouter falla (crédito, caída, error del proveedor) se repite la MISMA petición con ese modelo de OpenAI,
+    para todas las piezas en un solo sitio. Vacío = sube el error como antes."""
+    modelo = str(kwargs.get("model") or "")
+    if not es_de_openrouter(modelo):
+        return await original(*args, **adaptar_parametros(kwargs))
+    try:
+        return await _openrouter().chat.completions.create(*args, **parametros_openrouter(kwargs))
+    except Exception as exc:  # noqa: BLE001 — el respaldo decide; sin respaldo sube el error
+        respaldo = settings.respaldo_si_openrouter_falla
+        if not respaldo or es_de_openrouter(respaldo):
+            raise
+        logger.warning(f"[LLM][OPENROUTER] {modelo} falló ({str(exc)[:160]}): contesta {respaldo} por OpenAI")
+        return await original(*args, **adaptar_parametros({**kwargs, "model": respaldo}))
 
 
 def _is_empty_for(spec: dict, value) -> bool:
