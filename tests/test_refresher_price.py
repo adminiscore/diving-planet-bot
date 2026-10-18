@@ -50,19 +50,25 @@ def test_the_catalog_service_carries_the_2026_refresh_tariff(location, zone):
     assert float(service["price_usd"]) == float(tariff["usd_online"])
 
 
+# G3-07a (18-oct, decisión de Gadea, `rag_sin_precio_con_tarjeta` PROMOCIONADO): una sola moneda por mensaje: COP a
+# colombianos y residentes; USD al resto o si aún no se sabe.
+@pytest.mark.parametrize("colombiano", [True, None])
 @pytest.mark.parametrize("lang", ["es", "en"])
 @pytest.mark.parametrize("location", ["cartagena", "island"])
-def test_the_booking_flow_question_states_the_catalog_price(lang, location):
-    text = core.ask_slot(_state(lang, location), core.SLOT_REFRESHER)
+def test_the_booking_flow_question_states_the_catalog_price(lang, location, colombiano):
+    state = _state(lang, location)
+    state.is_colombian = colombiano
+    text = core.ask_slot(state, core.SLOT_REFRESHER)
     service = _service(location)
-    assert _cop(service["price_cop"]) in text
-    assert str(int(round(float(service["price_usd"])))) in text
+    cop, usd = _cop(service["price_cop"]) in text, str(int(round(float(service["price_usd"])))) in text
+    assert (cop, usd) == ((True, False) if colombiano else (False, True))
     assert not any(claim in text.lower() for claim in _FREE_CLAIMS)
 
 
 @pytest.mark.parametrize("lang", ["es", "en"])
 def test_the_closing_note_states_the_price_and_never_says_free(lang):
     state = _state(lang, "cartagena")
+    state.is_colombian = True
     state.refresher_interested = True
     note = core._refresher_note(state)
     assert _cop(_service("cartagena")["price_cop"]) in note
