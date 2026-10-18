@@ -24,3 +24,20 @@ como gpt-4.1. gpt-5.4-mini y Luna cazan casi todo pero tumban muchas verdades (c
 Siguiente: confirmar DeepSeek frente a gpt-4.1 en el grupo CIEGO (sin tocar nada) y, si se mantiene, ronda core A/B
 con `GROUNDING_V3_MODEL=deepseek/deepseek-v4.1-flash`. Antes de producción, la decisión de privacidad de OpenRouter
 (mod-7).
+
+## Grupo ciego y la adaptación de s4-33 (18-oct, tarde)
+
+Ciego (sin tocar nada): gpt-4.1 inventos 0/2, verdades 24/24, aprobadas 53/53, 2,04 s; DeepSeek tal cual 0/2, **17/24**,
+52/53, 1,86 s; Haiku 5.5 **2/2**, 17/24, 53/53 (descartado). DeepSeek tal cual tumbaba frases que no son datos del
+negocio ("el equipo te confirma la disponibilidad", "no puedo darte el total por el chat", "la duración la confirma un
+asesor", "no lo tengo a la mano"): justo lo que arregla la aclaración de s4-33 (`juez_v3_luna`, la tercera marca "NO ES
+DATO"; el texto no es de Luna, vale para cualquier modelo).
+
+| Revisor | Diseño: inventos / verdades / aprobadas | Ciego: inventos / verdades / aprobadas | Total inventos que pasan | Total verdades | Mediana |
+|---|---|---|---|---|---|
+| gpt-4.1 (PRE) | 5/8 · 24/30 · 43/43 | 0/2 · 24/24 · 53/53 | 5/10 | 48/54 | 2,0-3,4 s |
+| **DeepSeek v4.1 Flash + `juez_v3_luna`** | 2/8 · 28/30 · 42/43 | 0/2 · 17/24 · 53/53 | **2/10** | 45/54 | **2,0 s** |
+
+DeepSeek con la aclaración caza más inventos (deja pasar 2 de 10 frente a 5) y tumba 3 verdades más de 54; ~30 veces
+más barato y algo más rápido. Siguiente: ronda core A/B con `GROUNDING_V3_MODEL=deepseek/deepseek-v4.1-flash` y
+`JUEZ_V3_LUNA=true` frente a PRE.
