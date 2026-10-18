@@ -24,7 +24,7 @@ from openai import AsyncOpenAI
 
 from src.config import settings
 from src.domain import activities as dom
-from src.llm_client import trace_openai
+from src.llm_client import crear_con_respaldo, trace_openai
 from src.observability import pieza_llm
 from src.utils.text import strip_accents
 
@@ -417,8 +417,13 @@ async def extraer_turno(mensaje: str, *, history: list[dict] | None = None, sabi
     t0 = time.perf_counter()
     try:
         client = client or trace_openai(AsyncOpenAI(api_key=settings.openai_api_key))
-        with pieza_llm("extractor"):  # r6-1: la llamada sale etiquetada en [TURN_METRICS]
-            resp = await client.chat.completions.create(
+        # 18-oct (mod-2): con `extractor_respaldo_modelo`, si el extractor no contesta en `extractor_respaldo_segundos`
+        # la misma petición va al respaldo y gana la primera (ronda mod-F: la cola de Haiku por OpenRouter, 4-5 s en
+        # 2 de 47 turnos). Vacío = la llamada de siempre. r6-1: sale etiquetada en [TURN_METRICS] como "extractor".
+        with pieza_llm("extractor"):
+            resp = await crear_con_respaldo(
+                client, respaldo=settings.extractor_respaldo_modelo, segundos=settings.extractor_respaldo_segundos,
+                pieza="extractor",
                 model=modelo,
                 messages=[{"role": "system", "content": sistema},
                           {"role": "user", "content": _contexto(mensaje, ultima_pregunta_del_bot(history), sabido or {}, lang)}],

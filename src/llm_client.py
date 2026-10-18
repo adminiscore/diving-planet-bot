@@ -234,3 +234,43 @@ def tool_arguments(tool_call, tool: dict) -> dict:
             del args[key]
             logger.info(f"[LLM_TOOL] clave aplanada reencajada: {key}=true -> {fields[0]}={key!r}")
     return args
+
+
+async def crear_con_respaldo(client, *, respaldo: str, segundos: float, pieza: str, **kwargs):
+    """Una llamada con RESPALDO por si el modelo principal se queda en la cola (18-oct, mod-2). Lanza la petición a
+    `kwargs["model"]`; si no ha terminado en `segundos`, lanza la MISMA petición a `respaldo` y usa la primera que
+    termine bien (la otra se cancela). Si el principal falla antes, contesta el respaldo. Sin respaldo, o con el mismo
+    modelo, la llamada de siempre. Es el mecanismo del RAG (`rag_agent.generar_con_respaldo`, 8-oct) hecho común: con
+    un modelo de OpenRouter (Haiku en el extractor) y el respaldo en OpenAI, una caída o una cola de un proveedor no
+    para el turno. Las llamadas salen en [TURN_METRICS] como `pieza` y `<pieza>_respaldo`."""
+    import asyncio
+
+    from src.observability import pieza_llm
+
+    principal = kwargs.get("model")
+
+    async def llamar(modelo: str, etiqueta: str):
+        with pieza_llm(etiqueta):
+            return await client.chat.completions.create(**{**kwargs, "model": modelo})
+
+    if not respaldo or respaldo == principal or segundos <= 0:
+        return await llamar(principal, pieza)
+    t_principal = asyncio.ensure_future(llamar(principal, pieza))
+    await asyncio.wait({t_principal}, timeout=segundos)
+    if t_principal.done() and t_principal.exception() is None:
+        return t_principal.result()
+    if t_principal.done():
+        logger.warning(f"[LLM][RESPALDO] {pieza}: {principal} falló ({t_principal.exception()}): contesta {respaldo}")
+        return await llamar(respaldo, f"{pieza}_respaldo")
+    t_respaldo = asyncio.ensure_future(llamar(respaldo, f"{pieza}_respaldo"))
+    pendientes = {t_principal, t_respaldo}
+    while pendientes:
+        hechas, pendientes = await asyncio.wait(pendientes, return_when=asyncio.FIRST_COMPLETED)
+        buena = next((t for t in hechas if t.exception() is None), None)
+        if buena is not None:
+            for t in pendientes:
+                t.cancel()
+            gana = "principal" if buena is t_principal else "respaldo"
+            logger.info(f"[LLM][RESPALDO] {pieza}: {principal} tardaba más de {segundos:g} s: gana el {gana}")
+            return buena.result()
+    return t_respaldo.result()  # fallaron los dos: sube la excepción del respaldo
