@@ -1,6 +1,23 @@
 History
 =======
 
+0.31.50 - (2026-10-18)
+----------------------
+* **G3-01 y el refresher de CAL-F PROMOCIONADOS** (Álvaro con Claude; decisión de Álvaro).
+  - **G3-01, la familia** (2 buzos certificados, un hijo de 12 al minicurso y uno de 8 al snorkel; charla G3 de Gadea):
+    nunca llegaba al precio. Cuatro flags: `LO_DICHO_EN_RESPUESTA_FIJA` (la respuesta fija de edades ya no pierde la
+    actividad elegida), `REPARTO_PARCIAL_CON_LO_SABIDO` (los que no se nombran siguen con la actividad principal; antes
+    cotizaba 3 × minicurso), `ACTIVIDAD_PRINCIPAL_EN_EL_REPARTO` (el minicurso del hijo no sustituye a la de los padres)
+    y `NINOS_PRIMERO_AL_SNORKEL` (el minicurso del de 12 ya no sale como "Bubble Makers (8-10)"). PRE: 0/2 → 3/3.
+    Ronda core g301-A 95,6 % (218/228) = g301-B 95,6 %; las 3 mejoras y 3 regresiones, repetidas 3× con y sin: ningún
+    flag dispara en ellas.
+  - **`REFRESHER_POR_EXTRACTOR`** (CAL-F `refresher-rechaza-acepta`, fallo estable 3/3): el extractor lee si el cliente
+    quiere o no el refresher, aunque el bot aún no lo haya preguntado, y vale lo último que decide; quererlo siendo
+    certificado es querer bucear. Solo entra si ya se sabe que lleva más de 2 años sin bucear: en todas las llamadas, el
+    banco ex0 bajaba de 99,5 a 96,5 % estable y volvía "paquete de 5 inmersiones" → certificado. PRE: 3/3 cierran con la
+    salida y el refresher.
+  - Integrado `feature/gadea-g3` (G3-03 promocionado, juez con la fecha, "1 día" en singular).
+
 0.31.49 - (2026-10-18)
 ----------------------
 * **CAL-F juzgado, G3 en directo y G3-03 PROMOCIONADO** (Gadea con Claude, en autonomía).

@@ -390,13 +390,16 @@ services:
       # Banco 6/6 -> 0/6; ronda core g301-B 95,6 % -> g3-B 96,5 %, ninguna regresión atribuida. Revert = quitar esta
       # línea y poner el default en False.
       RAG_OFRECE_EL_PASE: "true"
-      # RONDA g301-B de G3-01 (18-oct, autorizada por Álvaro): los 4 flags de la familia encendidos para medir la
-      # ronda B del core contra g301-A (acebb9f, mismo código con los 4 apagados). Revert = quitar estas líneas y
-      # poner los defaults en False.
+      # G3-01 PROMOCIONADO 18-oct (decisión de Álvaro): la familia con 2 certificados e hijos (minicurso y snorkel)
+      # llega al precio (0/2 -> 3/3 en PRE). Ronda core g301-A 95,6 % 218/228 vs g301-B 95,6 % 218/228, p95 cliente
+      # 5,4 -> 6,0 s; las 3 mejoras y 3 regresiones, repetidas 3x con y sin: ningún flag dispara en ellas (ruido).
       LO_DICHO_EN_RESPUESTA_FIJA: "true"
       REPARTO_PARCIAL_CON_LO_SABIDO: "true"
       ACTIVIDAD_PRINCIPAL_EN_EL_REPARTO: "true"
       NINOS_PRIMERO_AL_SNORKEL: "true"
+      # CAL-F PROMOCIONADO 18-oct (decisión de Álvaro): refresher-rechaza-acepta 3/3 cierran con la salida y el refresher;
+      # banco ex0 sin cambios atribuibles (el campo solo entra si ya lleva más de 2 años sin bucear).
+      REFRESHER_POR_EXTRACTOR: "true"
       # CAL-C PROMOCIONADO 17-oct: C4, C5 y C3e. Ronda core calc2-A 94,7 % 24/32 vs calc2-B 96,9 % 27/32, p95 6,4 → 6,0 s;
       # 8 mejoras y 3 regresiones, repetidas 3x con y sin los flags: ninguna suya. Banco: cal-55 y cal-46 a 0/3, y la
       # pregunta del snorkel de cal-69/70 desaparece. Revert = quitar estas líneas y poner los defaults en False.

@@ -153,7 +153,25 @@ sintético CONGELADO; (3) **CAL-F**, golden visible completo; (4) **G3**, Claude
 
 ### ▶️ (anterior) — 17-oct tarde (Álvaro con Claude): CAL-C PROMOCIONADO; Luna medida; Coral activado
 ### ▶️ RETOMAR AQUÍ — 17-oct noche (Álvaro con Claude): CAL-C CERRADA (C4, C5, C3e promocionados); siguiente r6-1
-### ▶️ RETOMAR AQUÍ — 17-oct 21:45 (Álvaro con Claude): r6-1 en PRE; extractor a Luna aparcado; G3-01 arreglado (local)
+### ▶️ RETOMAR AQUÍ — 18-oct mañana (Álvaro con Claude): G3-01 y refresher PROMOCIONADOS
+
+**Promocionados (decisión de Álvaro, HISTORY 0.31.50):** los 4 flags de G3-01 (`LO_DICHO_EN_RESPUESTA_FIJA`,
+`REPARTO_PARCIAL_CON_LO_SABIDO`, `ACTIVIDAD_PRINCIPAL_EN_EL_REPARTO`, `NINOS_PRIMERO_AL_SNORKEL`) y
+`REFRESHER_POR_EXTRACTOR`. Integrado `feature/gadea-g3`. El saldo de OpenAI se recargó el 18-oct de madrugada.
+
+**Siguiente (Álvaro), fallos estables de CAL-F en mi zona** (lista de Gadea en `docs/robustness/cal/cal-f-golden-completo.md`):
+(1) `grupo-mixto-precio-cop-total`: "1 buzo avanzado" se cotiza como el curso Advanced (2/3) y vuelve a preguntar si
+los del bautismo están certificados; (2) `curso-open-water-principiantes-idioma-frances-anticipacion`: el cliente pide
+francés y el bot sigue en español (2/3); (3) `precios-y-disponibilidad-con-negociacion` turno 3: duda entre "dos buceos
+o el pack de 5 en 2 días" → el estado tiene el servicio de 1 día y `detected_duration=multi_day` y el bot dice "dura 1
+día y hay que dormir en las islas"; con dos planes candidatos, la pregunta del origen debería ser la neutra.
+(4) del refresher queda: el precio sale "183 USD / 655.000 COP" a un no colombiano.
+
+**Pendiente de Gadea (cuando haga falta y Gadea esté conectado, decisión de Álvaro):** el modelo de
+`BUSQUEDA_CON_LA_PREGUNTA_SOLA` (gpt-4.1-nano 0,5 s traduce bien; Luna 0,98 s también; gpt-4o-mini no traduce). G3-06
+(Barú) y G3-07a (dos monedas) siguen esperando a Gadea.
+
+### ▶️ (anterior) 17-oct 21:45 (Álvaro con Claude): r6-1 en PRE; extractor a Luna aparcado; G3-01 arreglado (local)
 
 **Sin crédito de OpenAI desde ~21:31** (429 `credit_balance_exhausted`, visto por Gadea y confirmado con
 `scripts.vigilar_saldo_openai`, que lo da como "sin saldo"). Nada que gaste hasta que Álvaro o Gadea recarguen.
