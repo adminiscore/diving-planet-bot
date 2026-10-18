@@ -23,6 +23,13 @@ def test_un_esfuerzo_pedido_por_la_llamada_se_respeta():
     assert out["reasoning_effort"] == "low" and "max_tokens" not in out
 
 
+def test_gpt5_4_en_adelante_sin_razonamiento():
+    """MOD (18-oct): gpt-5.4-mini/nano aceptan "none" y, sin él, razonan (lentos): candidatos de la fase MOD."""
+    out = adaptar_parametros({"model": "gpt-5.4-mini", "max_tokens": 300})
+    assert out == {"model": "gpt-5.4-mini", "max_completion_tokens": 300,
+                   "reasoning_effort": settings.razonamiento_modelos_nuevos}
+
+
 def test_gpt5_traduce_el_tope_pero_no_impone_esfuerzo():
     out = adaptar_parametros({"model": "gpt-5-mini", "max_tokens": 300})
     assert out == {"model": "gpt-5-mini", "max_completion_tokens": 300}

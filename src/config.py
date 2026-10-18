@@ -459,11 +459,12 @@ class Settings(BaseSettings):
     # en 20-24 y 24-27. Latencia, a la vez que el juez: gpt-4.1 no añade nada (p50 0,0 s) y Luna p50 0,4 s / p90 0,8 s.
     # DECISIÓN DE GADEA (17-oct): Luna, el último modelo y el más barato.
     avisos_al_final_model: str = "gpt-6-luna"
-    # G3-05 (18-oct): el modelo de la pregunta sola (`busqueda_con_la_pregunta_sola`). Medido en local con 5 mensajes
-    # x2: gpt-4o-mini 0,80 s de mediana y NO traducía "Precisa saber nadar?"; gpt-4.1-nano 0,59 s y traduce fiel;
-    # gpt-4.1-mini 0,60 s pero añadía detalles ("for diving on Friday"). Va a la vez que la búsqueda principal: lo que
-    # tarde de más que ella es latencia del turno.
-    pregunta_sola_model: str = "gpt-4.1-nano"
+    # G3-05 (18-oct, decisión de Gadea: DeepSeek, el más barato y rápido): el modelo de la pregunta sola
+    # (`busqueda_con_la_pregunta_sola`). La familia gpt-4 se retira en enero. Medido con 12 mensajes en es/en/pt/fr x3 y la
+    # instrucción endurecida: deepseek-v4.1-flash 36/36, 0,45 s de mediana (OpenRouter, proveedores de EE. UU., sin
+    # retención de datos, como Jev); Luna 36/36 0,78 s; gpt-5.4-mini 36/36 0,68 s; Haiku 5.5 36/36 0,79 s; gpt-4o-mini no
+    # traducía el portugués. En PRE (sonda), todos traen la FAQ de nadar: el modelo no cambia la búsqueda, sí la latencia.
+    pregunta_sola_model: str = "deepseek/deepseek-v4.1-flash"
     # CAL-E1 (DECISIÓN DE GADEA del 16-oct, que sustituye a la del 17-sep): esto es un chatbot y NO da números de
     # teléfono ni de WhatsApp. Si el cliente pide un número o quiere hablar con alguien, la conversación se PASA A UN
     # ASESOR (mismo pase que `needs_staff`). De paso desaparece la invención que el juez marcaba en cal-03: el texto

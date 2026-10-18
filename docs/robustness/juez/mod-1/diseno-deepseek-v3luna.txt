@@ -1,0 +1,23 @@
+deepseek/deepseek-v4.1-flash ['juez_v3_luna'] [] · grupo diseño · 70 respuestas
+  diseño: inventos que deja pasar 2/8 (mejor 0) · verdades que pasan 28/30 · aprobadas que pasan 42/43 (mejor todas) · [fuera de contexto que pasan 3/8, no cuenta]
+  tiempo por juicio: mediana 2.01s · p90 3.16s
+
+[falso -> RECHAZA] #53 curso-referido-pide-datos-centro t6
+    respuesta: 'If [NOMBRE] has completed the e-learning **and pool sessions** with a PADI dive center, the relevant option is the **Open Water Referral Course** in Cartagena. They’ll need to bring the referral paperwork signed by their PADI instructor. The practical certification takes 2 days, with 4 instructor-su'
+    juez: HALLUCINATED - The referral paperwork should contain the diver's details and confirmation of completed training: NO
+
+[aprobada -> RECHAZA] #56 open-water-hoteles-noche-fotos-horario t3
+    respuesta: 'Yes, that’s right: the Open Water course takes 2 days and requires an overnight stay on the Rosario Islands, so one night is enough for the course schedule. Accommodation isn’t included, and you’ll need to book it directly with the hotel. Would you like the booking link for the Open Water course?'
+    juez: HALLUCINATED - One night is enough for the course schedule: NO
+
+[falso -> RECHAZA] #66 principiante-hora-lugar-y-precio t1
+    respuesta: 'Hello! A dive trip in the Rosario Islands is a lovely way to explore the reef. You can book for one person, but the website closes bookings for the next day at 4:30 p.m. the day before. Since it’s currently 2:01 p.m. in Cartagena, you can still try booking online for tomorrow; availability is confir'
+    juez: HALLUCINATED - You can book for one person: NO
+
+[invento -> PASA] #139 precio-desde-islas-vs-cartagena t5
+    respuesta: '¡Qué bueno que ya están en las Islas del Rosario! Desde ahí, el plan de 2 inmersiones diurnas solo no está disponible como paquete independiente, pero sí ofrecemos el paquete de 3 inmersiones (2 diurnas + 1 nocturna) por 188 USD online (665.000 COP para colombianos) o 209 USD normal (739.000 COP).\n\n'
+    juez: GROUNDED
+
+[invento -> PASA] #139 precio-desde-islas-vs-cartagena t5
+    respuesta: '¡Qué bueno que ya están en las Islas del Rosario! Desde ahí, el plan de 2 inmersiones diurnas solo no está disponible como paquete independiente, pero sí ofrecemos el paquete de 3 inmersiones (2 diurnas + 1 nocturna) por 188 USD online (665.000 COP para colombianos) o 209 USD normal (739.000 COP).\n\n'
+    juez: GROUNDED

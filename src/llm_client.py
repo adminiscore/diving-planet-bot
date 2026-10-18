@@ -66,6 +66,9 @@ def trace_openai(client: _C) -> _C:
 # latencia. Todas las llamadas del bot usan `max_tokens`, así que el cambio de modelo se hace aquí, en un sitio, y no
 # en cada llamada. Los modelos de antes (gpt-4o-mini, gpt-4.1…) rechazan `reasoning_effort`: a ellos no se les toca.
 _API_NUEVA = ("gpt-5", "gpt-6", "o1", "o3", "o4")
+# MOD (18-oct): los modelos nuevos que aceptan razonamiento "none" y razonan por defecto. gpt-5/gpt-5-mini (ago-2025) no
+# aceptan "none" (solo "minimal"): a ellos no se les impone esfuerzo.
+_SIN_RAZONAR = ("gpt-6", "gpt-5.4", "gpt-5.5", "gpt-5.6")
 
 
 def adaptar_parametros(kwargs: dict) -> dict:
@@ -76,7 +79,7 @@ def adaptar_parametros(kwargs: dict) -> dict:
     kw = dict(kwargs)
     if "max_tokens" in kw:
         kw["max_completion_tokens"] = kw.pop("max_tokens")
-    if model.startswith("gpt-6") and "reasoning_effort" not in kw:
+    if model.startswith(_SIN_RAZONAR) and "reasoning_effort" not in kw:
         kw["reasoning_effort"] = settings.razonamiento_modelos_nuevos
     return kw
 
