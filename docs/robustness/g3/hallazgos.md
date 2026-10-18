@@ -155,7 +155,8 @@ tiene nunca. Banco `g3-07b`, PRE: **3/3**. Causa: la ficha indexada (`descuento:
 `discounts.json`) no decía la exclusión; solo el campo `applicability` ("buceo recreativo y cursos", que el escritor
 lee como "minicurso" = curso) y el catálogo escrito a mano (`catalog.py:643`, "no en snorkel ni minicurso"). Arreglo:
 la descripción y la nota de `pricing.json` dicen "solo en buceo recreativo y cursos PADI: no aplica al minicurso ni al
-snorkel". Se reindexa al desplegar (`kb_v2 --yes`): medir `g3-07b` tras el próximo push.
+snorkel". Medido en PRE tras desplegar b4b0941 (reindexado): **3/3 → 0/3** ("El descuento por equipo propio no
+aplica al minicurso, y llevar solo las máscaras tampoco cuenta como equipo completo").
 
 Bien en esta charla: el cambio de snorkel a minicurso (turno 2) se entiende a la primera, con precio en COP, punto de
 encuentro, teoría online y formulario médico.
@@ -168,8 +169,9 @@ por persona desde Cartagena, punto de encuentro, recomienda la salida de 2 inmer
 Turno 2 ("no, we all dived last year… how do we get the group discount if we book online? do we pay first and get
 refunded?"):
 - **Aviso fuera de lugar**: "After more than 2 years without diving, a refresher is normally needed…", justo después
-  de que el cliente diga que todos bucearon el año pasado. En la sonda (repetición en PRE) no salió: a medir 3 veces
-  cuando haya crédito (banco `g3-08`). Sospecha: el revisor del final (A6) no ve que la condición es falsa.
+  de que el cliente diga que todos bucearon el año pasado. Medido (18-oct, banco `g3-08`, 3 reps): **0/3 sin y 0/3
+  con** la condición escrita en el aviso (`cuando_texto`): no se reproduce. La condición se queda porque es la
+  correcta, sin atribuirle mejora.
 - **Afirma lo que la base no dice**: "No refund is needed" (salió también en la sonda). La base solo dice que el 10 %
   de grupo no es automático y lo aplica el equipo; cómo se aplica a una reserva ya pagada online no consta. Pregunta de
   negocio para Gadea: si un grupo reserva y paga online, ¿el 10 % de grupo se devuelve después o hay que pedirlo antes
