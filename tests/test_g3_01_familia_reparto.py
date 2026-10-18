@@ -109,3 +109,33 @@ def test_un_cambio_de_idea_de_todo_el_grupo_si_sustituye(monkeypatch):
     intent.activity = "snorkel"
     supervisor._apply_detected_intent(intent, st, "mejor todos snorkel")
     assert st.detected_activity == "snorkel"
+
+
+# 4 · G3-01b: el niño que hace snorkel no cambia la etiqueta del minicurso ----------------------------------------
+
+@pytest.mark.parametrize("flag, bubble", [(False, True), (True, False)])
+def test_el_nino_del_snorkel_no_hace_bubble_makers_el_minicurso(monkeypatch, flag, bubble):
+    from src.flows import cart_render
+
+    monkeypatch.setattr(settings, "ninos_primero_al_snorkel", flag)
+    st = _familia()
+    st.language = "es"
+    st.detected_ages = [8, 12]
+    st.kids_under_8_count, st.kids_eight_to_ten_count = 0, 1
+    st.mixed_cart = [{"type": "cert", "qty": 2, "plan": None, "label": "x"},
+                     {"type": "beginner", "qty": 1, "plan": None, "label": "x"},
+                     {"type": "snorkel", "qty": 1, "plan": None, "label": "x"}]
+    etiquetas = [b["label"] for b in cart_render.cart_booking_blocks(st)]
+    assert any("Bubble Makers" in e for e in etiquetas) is bubble
+
+
+def test_sin_snorkel_el_de_8_sigue_en_bubble_makers(monkeypatch):
+    from src.flows import cart_render
+
+    monkeypatch.setattr(settings, "ninos_primero_al_snorkel", True)
+    st = _familia()
+    st.language = "es"
+    st.detected_ages = [8, 12]
+    st.mixed_cart = [{"type": "beginner", "qty": 2, "plan": None, "label": "x"}]
+    etiquetas = [b["label"] for b in cart_render.cart_booking_blocks(st)]
+    assert any("Bubble Makers" in e for e in etiquetas)

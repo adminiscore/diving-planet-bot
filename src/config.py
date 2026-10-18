@@ -316,6 +316,9 @@ class Settings(BaseSettings):
     # familia de 4 con la salida de 2 inmersiones elegida = {certified_diving: 2, minicourse: 1, snorkel: 1}. Antes se
     # descartaba y se cotizaba 3 × minicurso. APAGADO hasta medirlo.
     reparto_parcial_con_lo_sabido: bool = False
+    # G3-01b (17-oct): en la tarjeta del precio, si hay plazas de snorkel, los niños más pequeños van primero ahí; el
+    # niño de 8 que hace snorkel ya no convierte el minicurso del de 12 en "Bubble Makers (8-10)". APAGADO.
+    ninos_primero_al_snorkel: bool = False
     # r6-1(b) (17-oct): si en un turno NINGUNA llamada a OpenAI funciona (sin saldo, clave inválida, caído), el bot dice
     # que hay un problema técnico y pasa a un asesor (motivo = alerta en Chatwoot), en vez de "no lo tengo a la mano".
     # APAGADO hasta medirlo.

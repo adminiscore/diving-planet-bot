@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-17T19:01:01+00:00",
-  "commit": "815d201",
+  "generado": "2026-10-17T23:54:56+00:00",
+  "commit": "b7537e7",
   "rama": "feature/pre_alvaro"
  },
  "vistas": {
@@ -756,6 +756,13 @@
     {
      "nombre": "reparto_parcial_con_lo_sabido",
      "titulo": "Los que no se nombran siguen con lo que tenían",
+     "codigo": false,
+     "pre": false,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "ninos_primero_al_snorkel",
+     "titulo": "El niño que hace snorkel no cambia el minicurso de su hermano",
      "codigo": false,
      "pre": false,
      "sin_efecto": false
@@ -2803,6 +2810,19 @@
    "pre": true,
    "fijado_en_pre": false,
    "usado_por": [],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "ninos_primero_al_snorkel",
+   "area": "Reserva",
+   "titulo": "El niño que hace snorkel no cambia el minicurso de su hermano",
+   "texto": "En el precio, si hay plazas de snorkel, los niños más pequeños se cuentan primero ahí. Así, con un hijo de 12 en el minicurso y uno de 8 en snorkel, el minicurso ya no sale como 'Bubble Makers (8-10 años)'. Solo cambia la etiqueta: el precio es el mismo.",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
+   "usado_por": [
+    "b_slotfill_close"
+   ],
    "sin_efecto": null
   },
   {
