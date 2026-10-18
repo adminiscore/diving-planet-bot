@@ -59,6 +59,29 @@ integrar la rama del otro y suite en verde, porque en PRE gana el último; (3) *
 despliegue reinicia el contenedor y mata la medida del otro (avisar en el registro de Plan Coral con la hora de fin).
 Las doce normas, con su porqué, están en el documento.
 
+### ▶️ RETOMAR AQUÍ — 18-oct, 14:20 (Gadea con Claude): FASE MOD en marcha; rondas core mod-A/B/C; decisiones de Gadea
+
+**Rondas core en curso** (A/B/C, acordadas con Álvaro): **mod-A** = PRE a7d4e65 con todo lo nuevo apagado →
+97,4 % (6 fallos de 227), 27/32. **mod-B** = A + `BARU_NO_ES_ROSARIO` + `BUSQUEDA_CON_LA_PREGUNTA_SOLA` (DeepSeek) +
+`RAG_SIN_PRECIO_CON_TARJETA` (commit de ronda 62aef0b en pre_gadea; revert tras medir). **mod-C** = B +
+`GROUNDING_V3_MODEL=deepseek/deepseek-v4.1-flash` + `JUEZ_V3_LUNA` (script en el scratchpad, `ronda_mod.py C`). Juzgar
+A, B y C con el MISMO código del juez; sacar la foto de `turn_metrics` de cada ronda ANTES del siguiente deploy (el
+deploy recrea el contenedor y se pierden los logs: la de A se perdió). Atribución: 3 reps con y sin en lo que cambie.
+
+**Fase MOD** (Plan Coral; la familia gpt-4 se retira en enero; va ANTES de G9): mod-1 el revisor → DeepSeek + la
+aclaración de s4-33 (inventos que pasan 2/10 frente a 5/10, verdades 45/54 frente a 48/54, ~30 veces más barato;
+`docs/robustness/juez/mod-1/`); mod-4 reescritura → DeepSeek (0,64 s, mejores consultas; `docs/robustness/mod/`),
+faltan resumen e idioma (ya tienen su propio modelo: REESCRITURA_MODEL, RESUMEN_MODEL, IDIOMA_MODEL); mod-2 el extractor
+(Álvaro, ex0). G3-05 (la pregunta sola) ya va con DeepSeek. Candidatos y nombres exactos: Coral #386.
+
+**Decisiones de Gadea de hoy (en la base y en la memoria):** Barú no es Islas del Rosario (Álvaro, flag); el 10 % de
+grupo se pide ANTES de pagar (si no, se pierde); el anticipo del 50 % es para colombianos y residentes; una sola moneda
+por mensaje (modo sin precio del RAG + punto de decisión de Álvaro); **no se adivina nada que el cliente no haya
+dicho** (preguntar el precio no elige la actividad: se apaga EXTRACTOR_PRECIO_ELIGE; "bucear certificado" o "fun dives"
+no dicen que esté certificado; "desde Argentina" no da la nacionalidad; un plural no dice cuántos son).
+
+**Pendiente de Gadea:** mod-7 (privacidad de OpenRouter con datos reales en producción).
+
 ### ▶️ RETOMAR AQUÍ — 18-oct, 06:00 (Gadea con Claude, en autonomía): CAL-F 95,8 %, G3-03 PROMOCIONADO; decisiones pendientes para Gadea
 
 **En PRE** (feature/pre_gadea, con la rama de Álvaro integrada): `RAG_OFRECE_EL_PASE` PROMOCIONADO; los 4 flags de
