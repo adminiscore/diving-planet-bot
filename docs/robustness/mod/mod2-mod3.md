@@ -100,3 +100,11 @@ todo y el más rápido: quita la lentitud de la ronda mod-D, que venía del extr
 **Ronda mod-F** (preparada): solo los modelos, sin las reglas de no adivinar del flujo (esas, en otra ronda, para
 separar causas: la mod-D las mezclaba): extractor Haiku, red Luna, señales y notas DeepSeek, resolutor y acuse
 gpt-5.4-nano. Frente a mod-E.
+
+**El "minicurso a 183 USD" de la ronda mod-D** (`reserva-solo-link`, leído en los JSONL de C, D y E): con
+`CERTIFICADO_SOLO_SI_LO_DICE`, a "quiero bucear certificado" el flujo pregunta "¿eres buzo certificado?" (bien: decisión
+de Gadea). El cliente del golden tiene el guion fijo y no la contesta ("solo yo", "cartagena"), así que se repite; en
+el turno 4, "no, buceé hace poco" (en el guion contestaba a la pregunta de los 2 años) lo toma el resolutor como "no
+soy certificado" → minicurso 183 USD, sin ver que "buceé hace poco" lo contradice. Para la ronda de las reglas de no
+adivinar (después de mod-F): (1) el resolutor no fija un valor con una respuesta que se contradice; (2) el criterio
+`datos` de `reserva-solo-link` tiene que aceptar UNA pregunta de confirmación de la certificación (decisión de Gadea).
