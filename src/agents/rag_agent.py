@@ -963,8 +963,12 @@ async def rag_answer(
     verify_grounding: bool = True,
     origin: str | None = None,
     avisos_hechos: dict | None = None,
+    sin_precio: bool = False,
 ) -> str:
-    """`avisos_hechos` (CAL-A, flag `avisos_condicionados`): lo que ya sabemos del cliente en campos estructurados
+    """`sin_precio` (G3-07a, 18-oct; lo pide el flujo con el flag `rag_sin_precio_con_tarjeta`): el turno lleva la
+    tarjeta del plan con el precio y el enlace, así que el texto no los da (ver RAG_SIN_PRECIO_*).
+
+    `avisos_hechos` (CAL-A, flag `avisos_condicionados`): lo que ya sabemos del cliente en campos estructurados
     (`src/flows/avisos.hechos_del_estado`), para que el CÓDIGO elija los avisos que la respuesta tiene que dar. Su
     clave "dados" es la lista del propio estado: los avisos dados se apuntan ahí y no se repiten.
 
@@ -1139,6 +1143,11 @@ async def rag_answer(
         system_prompt = build_system_prompt(lang, query=condensed_query)
         if catalog_prefix:
             system_prompt = f"{system_prompt}\n\n{catalog_prefix}"
+        if sin_precio:
+            # G3-07a: detrás del catálogo, para no romper el prefijo que OpenAI cachea.
+            from src.prompts.info import RAG_SIN_PRECIO_EN, RAG_SIN_PRECIO_ES  # lazy
+
+            system_prompt = f"{system_prompt}\n\n{RAG_SIN_PRECIO_ES if lang == 'es' else RAG_SIN_PRECIO_EN}"
         messages = [{"role": "system", "content": system_prompt}]
 
         # Add conversation history (settings.history_window_size messages max,

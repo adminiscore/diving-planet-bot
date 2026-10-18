@@ -569,7 +569,8 @@
         "respaldo_mismo_modelo",
         "rag_plan_primero",
         "avisos_condicionados",
-        "rag_ofrece_el_pase"
+        "rag_ofrece_el_pase",
+        "rag_sin_precio_con_tarjeta"
       ],
       "tiempo_medido": {
         "p50": 1.9,
@@ -1552,6 +1553,11 @@
       "area": "Preguntas",
       "titulo": "Se busca también la pregunta sola, sin los datos que da el cliente",
       "texto": "Si el cliente da datos y pregunta en el mismo mensaje (\"salimos de Cartagena el día 30. ¿Hace falta saber nadar?\"), el origen y la fecha tapaban la pregunta y la búsqueda no traía la pregunta frecuente: el bot decía que no tenía el dato. Ahora también se busca la pregunta sola, traducida si el cliente escribe en portugués o francés."
+    },
+    "rag_sin_precio_con_tarjeta": {
+      "area": "Preguntas",
+      "titulo": "Una sola moneda por mensaje: si va la tarjeta del plan, el texto no da precio",
+      "texto": "Cuando la respuesta lleva la tarjeta del plan (precio por persona en la moneda del cliente y enlace), el texto no repite el precio. Antes podía salir '126 USD' en el texto y '448.000 COP' en la tarjeta del mismo mensaje, porque el texto se escribía antes de saber que el cliente era colombiano."
     }
   },
   "areas": [
