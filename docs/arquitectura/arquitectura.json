@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-18T01:51:09+00:00",
-  "commit": "ffd6ddc",
+  "generado": "2026-10-18T02:01:40+00:00",
+  "commit": "94c73a8",
   "rama": "feature/pre_gadea"
  },
  "vistas": {
@@ -974,8 +974,8 @@
     {
      "nombre": "busqueda_con_la_pregunta_sola",
      "titulo": "Se busca también la pregunta sola, sin los datos que da el cliente",
-     "codigo": false,
-     "pre": false,
+     "codigo": true,
+     "pre": true,
      "sin_efecto": false
     }
    ],
@@ -1179,8 +1179,8 @@
     {
      "nombre": "rag_ofrece_el_pase",
      "titulo": "El bot ofrece pasar con una persona, no dice que ya lo ha hecho",
-     "codigo": false,
-     "pre": false,
+     "codigo": true,
+     "pre": true,
      "sin_efecto": false
     }
    ],
@@ -2091,9 +2091,9 @@
    "area": "Preguntas",
    "titulo": "Se busca también la pregunta sola, sin los datos que da el cliente",
    "texto": "Si el cliente da datos y pregunta en el mismo mensaje (\"salimos de Cartagena el día 30. ¿Hace falta saber nadar?\"), el origen y la fecha tapaban la pregunta y la búsqueda no traía la pregunta frecuente: el bot decía que no tenía el dato. Ahora también se busca la pregunta sola, traducida si el cliente escribe en portugués o francés.",
-   "codigo": false,
-   "pre": false,
-   "fijado_en_pre": false,
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
    "usado_por": [
     "r_reescribir"
    ],
@@ -3051,9 +3051,9 @@
    "area": "Preguntas",
    "titulo": "El bot ofrece pasar con una persona, no dice que ya lo ha hecho",
    "texto": "La respuesta decía 'te paso con el equipo' aunque nadie recibía el caso, y el cliente se quedaba esperando. Ahora pregunta '¿quieres que te pase con un asesor?' y el pase lo hace el sistema si el cliente dice que sí.",
-   "codigo": false,
-   "pre": false,
-   "fijado_en_pre": false,
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
    "usado_por": [
     "r_escribir"
    ],

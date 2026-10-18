@@ -421,14 +421,14 @@ class Settings(BaseSettings):
     # G3-03 (17-oct, Claude contra el chatbot): el RAG escribía "te paso con el equipo" sin que el sistema pasara el caso
     # a nadie (conv 5569, escalated=False) y el cliente se quedaba esperando. Con el flag, el RAG no lo da por hecho:
     # lo OFRECE como pregunta y el pase lo hace el sistema si el cliente acepta. APAGADO hasta medirlo.
-    rag_ofrece_el_pase: bool = False
+    rag_ofrece_el_pase: bool = True  # RONDA g3-B (18-oct): encendido para medir; revert = False
     # G3-05 (17-oct, Claude contra el chatbot): "salimos de Cartagena el día 30. ¿Hace falta saber nadar?" recibía "no
     # tengo ese dato" (3 de 3, en español, inglés y portugués) aunque la FAQ existe: buscando el mensaje entero, el
     # origen y la fecha tapan la pregunta con las fichas que salen desde Cartagena; en portugués, además, se buscaba
     # tal cual contra la base en español e inglés. Con el flag, la búsqueda doble usa la PREGUNTA SOLA (sin los datos
     # que da el cliente y en el idioma de la respuesta), una llamada corta a la vez que la búsqueda principal, solo
     # para mensajes largos o en otro idioma. APAGADO hasta medirlo.
-    busqueda_con_la_pregunta_sola: bool = False
+    busqueda_con_la_pregunta_sola: bool = True  # RONDA g3-B (18-oct): encendido para medir; revert = False
     # Modelo del revisor de `avisos_al_final` (vacío = `rag_plan_model`). Va a la vez que el juez de grounding.
     # Medido en local (17-oct, 5 casos del banco + los 93 turnos de la ronda core cal-D): gpt-4.1-mini acierta 4 de 5
     # pero añade aviso en 64 de 93 turnos (relleno); gpt-4.1 y GPT-6 Luna (sin razonamiento) aciertan 4 de 5 y añaden
