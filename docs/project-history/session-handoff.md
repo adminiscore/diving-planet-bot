@@ -59,6 +59,35 @@ integrar la rama del otro y suite en verde, porque en PRE gana el último; (3) *
 despliegue reinicia el contenedor y mata la medida del otro (avisar en el registro de Plan Coral con la hora de fin).
 Las doce normas, con su porqué, están en el documento.
 
+### ▶️ RETOMAR AQUÍ — 18-oct, 06:00 (Gadea con Claude, en autonomía): CAL-F 95,8 %, G3-03 PROMOCIONADO; decisiones pendientes para Gadea
+
+**En PRE** (feature/pre_gadea, con la rama de Álvaro integrada): `RAG_OFRECE_EL_PASE` PROMOCIONADO; los 4 flags de
+G3-01 de Álvaro siguen ENCENDIDOS (su ronda g301-B; promocionarlos lo decide él); `BUSQUEDA_CON_LA_PREGUNTA_SOLA`
+APAGADO. HISTORY 0.31.49.
+
+**Hecho esta noche:**
+- **CAL-F** juzgado entero: 95,8 % (36 fallos de 849), 86/116 sin fallos (`docs/robustness/cal/cal-f-golden-completo.md`;
+  la lista de fallos está ahí, sin atribuir todavía).
+- **Ronda core g3-B** contra g301-B: 96,5 % frente a 95,6 %, 24/32 los dos; atribución con 3 reps con y sin: ninguna
+  regresión de los flags (con ellos 4 fallos, sin ellos 8).
+- **Juez:** referencia al día con las decisiones de Gadea (teléfono, pago conciliado, idioma, datos ajenos). OJO: cambia
+  la clave de la caché; una ronda vieja se juzga desde un worktree en su commit.
+- **Descartado:** BM25 con cualquier palabra (empeora la búsqueda). `rag_piezas` arreglado (fallaba desde CAL-D).
+
+**Decisiones para Gadea:**
+1. **G3-05, pregunta sola:** ¿encender `BUSQUEDA_CON_LA_PREGUNTA_SOLA`? Arregla "no tengo ese dato" cuando el cliente
+   da datos y pregunta a la vez (9/9 → 1/9). Coste: +0,7 s en los turnos del RAG con gpt-4o-mini; con gpt-4.1-nano
+   (ya en config y compose) la llamada baja a 0,5-0,6 s; con Luna, 0,98 s. Álvaro prefiere no sumar piezas a la 4.1.
+2. **G3-06, Barú:** ¿recogéis en hoteles de Barú con acceso al mar? ¿A qué precio?
+3. **G3-07a, dos monedas:** USD en el texto y COP en la tarjeta del mismo mensaje. Opciones en hallazgos.md (con
+   Álvaro).
+4. **G3-08:** si un grupo paga online, ¿el 10 % de grupo se devuelve después o se pide antes?
+5. ¿Una persona con cédula de extranjería (residente) paga en COP y puede dejar el 50 % de anticipo? (CAL-F)
+
+**Siguiente:** atribuir los 36 fallos de CAL-F por zonas (`reproducir_juez_pre`, 3 reps); CAL-G (latencia) con las
+fotos por pieza; y G9 UNA sola vez cuando Gadea lo diga (`run_synthetic_pre --sample golden --golden
+docs/robustness/golden-set/examen-sintetico-g9.json` y `judge_golden_set --golden …`, con la referencia de ese momento).
+
 ### ▶️ RETOMAR AQUÍ — 17-oct, 21:45 (Gadea con Claude, en autonomía): G3 en directo (G3-04…08), G3-05 arreglado con flag; SIN CRÉDITO DE OPENAI
 
 **Bloqueo:** el crédito de OpenAI se agotó a las 21:31 (429 `credit_balance_exhausted`, también en PRE). Hay que
