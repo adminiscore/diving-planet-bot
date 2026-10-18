@@ -16,6 +16,15 @@ from scripts.sonda_respuesta_pendiente import CASOS  # noqa: E402
 from src.agents.llm_extractor import resolve_slot_answer  # noqa: E402
 from src.config import settings  # noqa: E402
 
+# 18-oct (flag `resolutor_sin_contradicciones`): respuestas que se contradicen; el resolutor tiene que abstenerse
+# (ronda mod-D: "no, buceé hace poco" a "¿Eres buzo certificado?" → minicurso). Solo aquí: CASOS es también de Jev.
+CASOS = list(CASOS) + [
+    ("certification", "no, buceé hace poco", None),
+    ("certification", "no, tengo como 40 inmersiones", None),
+    # el dato explícito (5 años) pesa más que el "no", que contestaba a otra cosa: más de 2 años = True
+    ("safety", "no, la última fue hace como 5 años", True),
+]
+
 
 async def main():
     tiempos, bien, equivocados, abstenciones, detalle = [], 0, 0, 0, []

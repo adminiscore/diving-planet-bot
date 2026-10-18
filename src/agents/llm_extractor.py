@@ -27,6 +27,7 @@ from src.observability import con_pieza_llm
 from src.prompts.booking import (
     EXTRACTION_TOOL,
     SIGNALS_TOOL,
+    SLOT_RESOLVER_CONTRADICCION,
     SLOT_RESOLVER_SPEC,
     acknowledgement_system_prompt,
     combined_extraction_system_prompt,
@@ -552,7 +553,8 @@ async def resolve_slot_answer(
         response = await client.chat.completions.create(
             model=settings.resolutor_model,
             messages=[
-                {"role": "system", "content": _sin_baru(slot_resolver_prompt(slot, lang))},
+                {"role": "system", "content": _sin_baru(slot_resolver_prompt(slot, lang))
+                 + (SLOT_RESOLVER_CONTRADICCION if settings.resolutor_sin_contradicciones else "")},
                 {"role": "user", "content": message},
             ],
             tools=[slot_resolver_tool(slot)],

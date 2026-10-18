@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-18T19:14:42+00:00",
-  "commit": "2294d06",
+  "generado": "2026-10-18T19:42:07+00:00",
+  "commit": "27c55ce",
   "rama": "feature/pre_gadea"
  },
  "vistas": {
@@ -692,8 +692,8 @@
    "modelos": [
     {
      "ajuste": "resolutor_model",
-     "codigo": "gpt-5.4-nano",
-     "pre": "gpt-5.4-nano"
+     "codigo": "anthropic/claude-haiku-5.5",
+     "pre": "anthropic/claude-haiku-5.5"
     }
    ],
    "interruptores": [
@@ -805,22 +805,22 @@
     {
      "nombre": "certificado_solo_si_lo_dice",
      "titulo": "Certificado solo si lo dice",
-     "codigo": false,
-     "pre": false,
+     "codigo": true,
+     "pre": true,
      "sin_efecto": false
     },
     {
      "nombre": "precio_no_elige",
      "titulo": "Preguntar un precio no es elegir",
-     "codigo": false,
-     "pre": false,
+     "codigo": true,
+     "pre": true,
      "sin_efecto": false
     },
     {
      "nombre": "tarjeta_sin_seguridad",
      "titulo": "El precio sale aunque falte la pregunta de seguridad",
-     "codigo": false,
-     "pre": false,
+     "codigo": true,
+     "pre": true,
      "sin_efecto": false
     },
     {
@@ -838,6 +838,20 @@
      "sin_efecto": false
     },
     {
+     "nombre": "recomendar_a_no_certificados",
+     "titulo": "A quien no es certificado le recomienda sus opciones",
+     "codigo": true,
+     "pre": true,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "resolutor_sin_contradicciones",
+     "titulo": "Una respuesta que se contradice no fija el dato",
+     "codigo": true,
+     "pre": true,
+     "sin_efecto": false
+    },
+    {
      "nombre": "acuse_solo_el_mensaje",
      "titulo": "El acuse no se inventa nada",
      "codigo": true,
@@ -845,7 +859,7 @@
      "sin_efecto": false
     }
    ],
-   "marca": "openai",
+   "marca": "openrouter",
    "tiempos": {
     "n": 72,
     "p50": 1.198,
@@ -2252,9 +2266,9 @@
    "area": "Reserva",
    "titulo": "Certificado solo si lo dice",
    "texto": "Que el cliente quiera el buceo para certificados ('fun dives') no significa que esté certificado: el bot se lo pregunta. Antes una regla lo daba por hecho.",
-   "codigo": false,
-   "pre": false,
-   "fijado_en_pre": false,
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
    "usado_por": [
     "b_slotfill_close"
    ],
@@ -3064,9 +3078,9 @@
    "area": "Reserva",
    "titulo": "Preguntar un precio no es elegir",
    "texto": "Si el cliente solo pregunta cuánto cuesta algo ('¿cuánto vale el paquete de 5 inmersiones?'), el bot no da por hecho que lo ha elegido ni que es buzo certificado: es una duda. Decir lo que quiere hacer sí lo elige.",
-   "codigo": false,
-   "pre": false,
-   "fijado_en_pre": false,
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
    "usado_por": [
     "b_slotfill_close"
    ],
@@ -3387,6 +3401,19 @@
    "sin_efecto": null
   },
   {
+   "nombre": "recomendar_a_no_certificados",
+   "area": "Reserva",
+   "titulo": "A quien no es certificado le recomienda sus opciones",
+   "texto": "Si sabemos que el cliente no es buzo certificado y no ha elegido actividad, Coral le propone el minicurso para bucear, el snorkel para quedarse en la superficie o el curso Open Water para certificarse, en vez de repetir el menú entero (que ofrece buceo, solo para certificados).",
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
+   "usado_por": [
+    "b_slotfill_close"
+   ],
+   "sin_efecto": null
+  },
+  {
    "nombre": "recommend_inferred_minicourse",
    "area": "Reserva",
    "titulo": "Recomendar el minicurso",
@@ -3450,6 +3477,19 @@
    "sin_efecto": null
   },
   {
+   "nombre": "resolutor_sin_contradicciones",
+   "area": "Reserva",
+   "titulo": "Una respuesta que se contradice no fija el dato",
+   "texto": "Si a la pregunta del bot el cliente contesta algo que se contradice (\"no, buceé hace poco\" a ¿eres buzo certificado?), Coral no da el dato por sabido: vuelve a preguntar en vez de adivinar.",
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
+   "usado_por": [
+    "b_slotfill_close"
+   ],
+   "sin_efecto": null
+  },
+  {
    "nombre": "respaldo_mismo_modelo",
    "area": "Preguntas",
    "titulo": "El respaldo del RAG, otra petición a Luna",
@@ -3494,9 +3534,9 @@
    "area": "Reserva",
    "titulo": "El precio sale aunque falte la pregunta de seguridad",
    "texto": "Si solo falta saber si alguien lleva más de 2 años sin bucear y el cliente no lo contesta, el bot da igualmente el precio, con una línea: 'si alguno lleva más de 2 años sin bucear, se añade el refresher (precio)'. Antes repetía la pregunta y el precio no salía nunca.",
-   "codigo": false,
-   "pre": false,
-   "fijado_en_pre": false,
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
    "usado_por": [
     "b_slotfill_close"
    ],
@@ -3711,13 +3751,13 @@
   },
   {
    "ajuste": "resolutor_model",
-   "codigo": "gpt-5.4-nano",
-   "pre": "gpt-5.4-nano",
+   "codigo": "anthropic/claude-haiku-5.5",
+   "pre": "anthropic/claude-haiku-5.5",
    "usado_por": [
     "b_slotfill_close"
    ],
-   "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 50
+   "proveedor": "OpenRouter",
+   "llamadas_ultima_ronda": 92
   },
   {
    "ajuste": "resumen_model",

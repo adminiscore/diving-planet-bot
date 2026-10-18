@@ -149,6 +149,8 @@ def _collect() -> dict[str, str]:
                 booking.slot_resolver_prompt(slot, lang),
             )
         add_json(f"booking/slot_resolver.tool.{slot}", booking.slot_resolver_tool(slot))
+    # 18-oct (flag `resolutor_sin_contradicciones`): lo que se añade al prompt del resolutor.
+    add("booking/slot_resolver.contradiccion", booking.SLOT_RESOLVER_CONTRADICCION)
     # G3-06 (flag `baru_no_es_rosario`): los textos de lugar sin Barú entre "las islas".
     for lang in LANGS:
         add(f"booking/slot_resolver.system.location.{lang}.sin_baru",

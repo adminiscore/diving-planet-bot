@@ -661,6 +661,36 @@ def ask_slot(state: ConversationState, slot: str, *, reasking: bool = False) -> 
             "days there are *multi-dive packages*, and to level up, the *Advanced course* or a specialty. Which one "
             "interests you? 🤿"
         )
+    if (slot == SLOT_ACTIVITY and settings.recomendar_a_no_certificados and state.is_certified is False
+            and not state.suggested_activity):
+        # 18-oct (ronda mod-F): el simétrico de `recomendar_a_certificados`. A quien sabemos que NO es certificado y no
+        # ha elegido ("Sería buzo principiante y snorkeling": el extractor no elige actividad en un mensaje ambiguo) se
+        # le repetía el menú entero, con "buceo" (solo para certificados) incluido. Regla de Gadea: recomendar según lo
+        # que se sabe y que elija el cliente, sin adivinar la actividad.
+        state.quick_replies = (
+            [{"title": "🤿 Minicurso", "value": "minicurso"},
+             {"title": "🐠 Snorkel", "value": "snorkel"},
+             {"title": "🎓 Curso Open Water", "value": "curso open water"}]
+            if lang == "es" else
+            [{"title": "🤿 Mini-course", "value": "mini course"},
+             {"title": "🐠 Snorkeling", "value": "snorkeling"},
+             {"title": "🎓 Open Water course", "value": "open water course"}]
+        )
+        if reasking:
+            return (
+                "¿Te animas con el *minicurso*, el *snorkel* o el *curso Open Water*? 🌊"
+                if lang == "es" else
+                "Shall we go for the *mini-course*, *snorkeling* or the *Open Water course*? 🌊"
+            )
+        return (
+            "Sin certificación, para bucear lo ideal es el *minicurso*: no hace falta experiencia y vas con un "
+            "instructor. Si prefieres disfrutar el arrecife desde la superficie, está el *snorkel*, y si quieres "
+            "certificarte, el *curso PADI Open Water*. ¿Cuál te interesa? 🤿"
+            if lang == "es" else
+            "Without a certification, the *mini-course* is the ideal way to dive: no experience needed and you go "
+            "with an instructor. To enjoy the reef from the surface there's *snorkeling*, and to get certified, the "
+            "*PADI Open Water course*. Which one interests you? 🤿"
+        )
     if slot == SLOT_ACTIVITY:
         # `reasking=True`: se re-ancla la actividad tras una respuesta de info
         # (RAG). Repetir el bloque entero de 4 bullets que ya se mostró al

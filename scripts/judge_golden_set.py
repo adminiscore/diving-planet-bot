@@ -188,7 +188,11 @@ def load_reference(referencia: str = REFERENCIA_POR_DEFECTO) -> str:
                  "idioma (portugues, frances...), responde en INGLES. Los nombres propios (Muelle de la Bodeguita, "
                  "Isla Grande) no cuentan como cambiar de idioma.\n"
                  "- Datos de otros clientes (decision de Gadea, 17-oct): si alguien pide datos de otros clientes, el bot "
-                 "se niega por privacidad, sin pasar a un asesor.")
+                 "se niega por privacidad, sin pasar a un asesor.\n"
+                 "- No adivinar (decision de Gadea, 18-oct): 'quiero bucear certificado' o 'fun dives' NO confirman que "
+                 "el cliente este certificado; decir desde que pais escribe o viaja NO da su nacionalidad; un plural NO "
+                 "dice cuantos son; preguntar el precio de algo NO es elegir esa actividad. Preguntar UNA vez uno de "
+                 "esos datos para confirmarlo es CORRECTO y no es una repregunta.")
     fichas = [d["content"] for d in build_kb_v2() if d["metadata"]["source"] == "services" and d["metadata"]["lang"] == "es"]
     parts.append("### Fichas de los servicios (base de conocimiento del bot)\n" + "\n\n---\n\n".join(fichas))
     faqs = json.loads((CURADA / "faqs.json").read_text(encoding="utf-8"))["faqs"]

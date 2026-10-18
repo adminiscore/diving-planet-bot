@@ -1283,6 +1283,16 @@ SLOT_RESOLVER_SPEC = {
 }
 
 
+# 18-oct (flag `resolutor_sin_contradicciones`; ronda mod-D, reserva-solo-link): a "¿Eres buzo certificado?" el cliente
+# contestó "no, buceé hace poco" (su "no" era para otra pregunta) y el resolutor fijó "no certificado" → minicurso. Una
+# respuesta que se contradice no fija nada: el bot vuelve a preguntar en vez de adivinar (decisión de Gadea 18-oct).
+SLOT_RESOLVER_CONTRADICCION = (
+    " If the reply contradicts itself — a yes/no next to details that point to the opposite answer (for example "
+    "\"no, I dived recently\" to a question about being certified), or the yes/no seems to answer something else — "
+    "omit `value` (do NOT pick one side)."
+)
+
+
 def slot_resolver_prompt(slot: str, lang: str) -> str:
     spec = SLOT_RESOLVER_SPEC[slot]
     q = spec["question_es"] if lang == "es" else spec["question_en"]
