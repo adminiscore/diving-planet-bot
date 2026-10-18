@@ -709,6 +709,15 @@ def ask_slot(state: ConversationState, slot: str, *, reasking: bool = False) -> 
             [{"title": "🚤 From Cartagena", "value": "cartagena"},
              {"title": "🏝️ Already on the islands", "value": "island"}]
         )
+        if _plan_en_duda(state):
+            # CAL-F (flag `origen_neutro_con_dos_planes`): duda entre dos planes; ninguno se afirma (ver `_plan_en_duda`).
+            return (
+                "¿Desde dónde saldrías? Podemos recogerte saliendo *desde Cartagena* o, si ya estás "
+                "*en las islas*, coordinamos la recogida en tu hotel."
+                if lang == "es" else
+                "Where would you be departing from? We can pick you up *from Cartagena* or, if you're "
+                "already *on the islands*, we arrange pickup at your hotel."
+            )
         if _plan_needs_overnight(state):
             # Politica `courses_overnight_requirement` / paquetes de varios dias: hay que dormir en
             # las islas; ofrecer "ida y vuelta el mismo dia" contradecia la referencia (ronda A).
@@ -931,6 +940,21 @@ def _dias_del_plan(state: ConversationState) -> int | None:
     act = dom.by_id(state.detected_activity) if state.detected_activity else None
     dias = {_dias(sid) for sid in (act.all_services() if act else ())}
     return dias.pop() if len(dias) == 1 and None not in dias else None
+
+
+def _plan_en_duda(state: ConversationState) -> bool:
+    """CAL-F (flag `origen_neutro_con_dos_planes`, 18-oct; precios-y-disponibilidad-con-negociacion, turno 3): "los
+    valores de dos buceos o del pack de 5 buceos en 2 días" dejaba el servicio de un día (el de la actividad) y la
+    duración de varios días (la del pack nombrado). La pregunta del origen mezclaba los dos: "Este plan dura 1 día y hay
+    que dormir en las islas". Si el servicio es de un día y la duración dice varios, el plan no está elegido."""
+    from src.flows.catalog import MULTI_DAY_SERVICES, OVERNIGHT_SERVICES  # lazy
+
+    servicio = state.detected_service_id
+    return bool(
+        settings.origen_neutro_con_dos_planes and state.detected_activity == "certified_diving"
+        and state.detected_duration == "multi_day" and servicio
+        and servicio not in (MULTI_DAY_SERVICES | OVERNIGHT_SERVICES)
+    )
 
 
 def _plan_needs_overnight(state: ConversationState) -> bool:

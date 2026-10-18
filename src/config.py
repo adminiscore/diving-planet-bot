@@ -325,6 +325,10 @@ class Settings(BaseSettings):
     # CAL-F (18-oct, grupo-mixto-precio-cop-total): si la actividad que lee el extractor no es de nadie del reparto que
     # lee a la vez, manda el reparto ("1 buzo avanzado y 2 para bautismo" no es el Curso Avanzado). APAGADO.
     actividad_del_reparto: bool = False
+    # CAL-F (18-oct, precios-y-disponibilidad-con-negociacion): si el servicio guardado es de un día y la duración dice
+    # varios ("dos buceos o el pack de 5 en 2 días"), el plan no está elegido: la pregunta del origen es la neutra, sin
+    # "dura 1 día y hay que dormir en las islas". APAGADO.
+    origen_neutro_con_dos_planes: bool = False
     # r6-1(b) (17-oct): si en un turno NINGUNA llamada a OpenAI funciona (sin saldo, clave inválida, caído), el bot dice
     # que hay un problema técnico y pasa a un asesor (motivo = alerta en Chatwoot), en vez de "no lo tengo a la mano".
     # APAGADO hasta medirlo.

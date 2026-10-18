@@ -107,3 +107,27 @@ async def test_si_la_actividad_esta_en_el_reparto_no_se_toca(monkeypatch):
              "group_allocation": {"valor": {"minicourse": 1, "snorkel": 1}, "cita": "el de 12 minicurso y el de 8 snorkel"}}
     out = await ex.extraer_turno("el de 12 minicurso y el de 8 snorkel", client=_cliente(datos, []))
     assert out["activity"] == "minicourse"
+
+
+# CAL-F precios-y-disponibilidad (flag `origen_neutro_con_dos_planes`): duda entre un plan de 1 día y uno de varios ---
+
+@pytest.mark.parametrize("flag, dormir", [(False, True), (True, False)])
+def test_con_dos_planes_la_pregunta_del_origen_es_neutra(monkeypatch, flag, dormir):
+    monkeypatch.setattr(settings, "origen_neutro_con_dos_planes", flag)
+    st = ConversationState(conversation_id="calf-origen")
+    st.language = "es"
+    st.detected_activity, st.detected_service_id, st.detected_duration = "certified_diving", "2_dives_1_day", "multi_day"
+    texto = core.ask_slot(st, core.SLOT_LOCATION)
+    assert ("dormir en las islas" in texto) is dormir
+    assert "dura 1 día" not in texto or not flag
+
+
+def test_con_el_paquete_elegido_sigue_diciendo_que_hay_que_dormir(monkeypatch):
+    from src.flows.catalog import OVERNIGHT_SERVICES
+
+    monkeypatch.setattr(settings, "origen_neutro_con_dos_planes", True)
+    st = ConversationState(conversation_id="calf-origen")
+    st.language = "es"
+    st.detected_activity, st.detected_duration = "certified_diving", "multi_day"
+    st.detected_service_id = sorted(OVERNIGHT_SERVICES)[0]
+    assert "dormir en las islas" in core.ask_slot(st, core.SLOT_LOCATION)
