@@ -197,7 +197,7 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--name", required=True)
     p.add_argument("--temas", default="", help="temas de los metadatos separados por comas (por defecto, todos)")
     p.add_argument("--modelo", default="gpt-5")
-    p.add_argument("--modelo-idiomas", default="gpt-4.1")
+    p.add_argument("--modelo-idiomas", default="gpt-6-luna")  # mod-8 (18-oct): antes gpt-4.1
     p.add_argument("--sin-idiomas", action="store_true")
     p.add_argument("--paralelo", type=int, default=5)
     return asyncio.run(main_async(p.parse_args(argv)))

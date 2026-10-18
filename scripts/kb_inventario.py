@@ -25,7 +25,7 @@ from scripts.load_embeddings import DATA_DIR, load_knowledge_base
 from src.config import settings
 
 OUT = Path(__file__).resolve().parent.parent / "docs/robustness/rag-2/inventario.json"
-MODEL = "gpt-4.1"
+MODEL = "gpt-6-luna"  # mod-8 (18-oct): fuera de la familia gpt-4, que se retira en enero (antes "gpt-4.1")
 
 TELEFONO = re.compile(r"\+?57\s?3\d{2}|whats\s?app|\b320\s?231", re.I)
 TONO = re.compile(r"escr[ií]b[ea]nos|te paso|cont[aá]ct(a|e)nos|con un asesor|write to us|contact us|message us|an advisor", re.I)

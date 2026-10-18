@@ -4,7 +4,7 @@ En las rondas del 13-14 oct ~15 de 53 inventos que marcó el juez eran del acuse
 ("Muchas gracias!", "May 3rd", "Para el sábado 30/05") rellenaba con el resumen de la reserva y afirmaba cosas que el
 cliente no dijo ("tienes una reserva para el sábado", "has reservado dos minicursos", "tu actividad de PADI Advanced").
 Aquí, los mensajes reales (con un resumen como el que recibía) y controles que hoy salen bien; N pasadas por caso, y un
-juez (gpt-4.1) que dice si la frase afirma algo que el cliente no dijo.
+juez (JUEZ_MODELO, Luna desde el 18-oct) que dice si la frase afirma algo que el cliente no dijo.
 
     ENV_FILE=.env.dev python -m scripts.banco_acuse [--pasadas 5] [--flag acuse_solo_el_mensaje]
 """
@@ -42,7 +42,15 @@ _JUEZ = (
 )
 
 
-async def main_async(pasadas: int, flags: list[str]) -> int:
+# mod-8 (18-oct noche): el juez fuera de gpt-4.1 (`--juez`); `--comparar-juez` juzga las MISMAS frases con otro
+# modelo y da la coincidencia (cambiar de juez cambia el instrumento: antes se mide).
+# Medido el 18-oct noche (mismas 65 frases del acuse en gpt-4o-mini): Luna coincide con gpt-4.1 en 64/65 (10 inventos
+# frente a 9), Haiku 64/65, DeepSeek 57/65 (benévolo: 1). Antes: "gpt-4.1".
+JUEZ_MODELO = "gpt-6-luna"
+
+
+async def main_async(pasadas: int, flags: list[str], juez_modelo: str = JUEZ_MODELO,
+                     comparar: list[str] | None = None) -> int:
     from openai import AsyncOpenAI
 
     from src.agents.llm_extractor import compose_acknowledgement
@@ -50,12 +58,18 @@ async def main_async(pasadas: int, flags: list[str]) -> int:
 
     for f in flags:
         setattr(settings, f, True)
-    juez = AsyncOpenAI(api_key=settings.openai_api_key)
+    from src.llm_client import trace_openai
 
-    async def inventa(mensaje: str, frase: str) -> bool:
+    juez = trace_openai(AsyncOpenAI(api_key=settings.openai_api_key))  # saca los modelos de OpenRouter por allí
+    comparar = comparar or []
+    coinciden = {m: 0 for m in comparar}
+    inventa_otro = {m: 0 for m in comparar}
+    juzgadas = 0
+
+    async def inventa(mensaje: str, frase: str, modelo: str = juez_modelo) -> bool:
         if not frase.strip():
             return False
-        r = await juez.chat.completions.create(model="gpt-4.1", temperature=0, max_tokens=3, messages=[
+        r = await juez.chat.completions.create(model=modelo, temperature=0, max_tokens=20, messages=[  # 3 dejaba vacío a Luna
             {"role": "system", "content": _JUEZ},
             {"role": "user", "content": f"MENSAJE: {mensaje}\nFRASE: {frase}"}])
         return (r.choices[0].message.content or "").strip().lower().startswith("s")
@@ -65,6 +79,11 @@ async def main_async(pasadas: int, flags: list[str]) -> int:
         frases = await asyncio.gather(*[compose_acknowledgement(mensaje, state_summary=resumen, lang=lang)
                                         for _ in range(pasadas)])
         juicios = await asyncio.gather(*[inventa(mensaje, f) for f in frases])
+        juzgadas += len(frases)
+        for m in comparar:
+            otros = await asyncio.gather(*[inventa(mensaje, f, m) for f in frases])
+            coinciden[m] += sum(a == b for a, b in zip(juicios, otros, strict=True))
+            inventa_otro[m] += sum(otros)
         n_inv = sum(juicios)
         vacias += sum(1 for f in frases if not f.strip())
         if real:
@@ -77,6 +96,9 @@ async def main_async(pasadas: int, flags: list[str]) -> int:
         print(f"{'REAL' if real else 'CTRL'} inventa {n_inv}/{pasadas} | {mensaje[:40]!r} -> {ejemplo[:90]!r}")
     print(json.dumps({"flags": flags, "inventos_casos_reales": f"{inv_real}/{tot_real}",
                       "inventos_controles": f"{inv_ctrl}/{tot_ctrl}", "frases_vacias": vacias}, ensure_ascii=False))
+    for m in comparar:
+        print(f"jueces: {juez_modelo} y {m} coinciden en {coinciden[m]}/{juzgadas} frases "
+              f"(inventos {inv_real + inv_ctrl} con {juez_modelo}, {inventa_otro[m]} con {m})")
     return 0
 
 
@@ -85,8 +107,10 @@ def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     p.add_argument("--pasadas", type=int, default=5)
     p.add_argument("--flag", action="append", default=[])
+    p.add_argument("--juez", default=JUEZ_MODELO, help="modelo del juez")
+    p.add_argument("--comparar-juez", action="append", default=[], help="juzga las mismas frases también con este modelo")
     a = p.parse_args(argv)
-    return asyncio.run(main_async(a.pasadas, a.flag))
+    return asyncio.run(main_async(a.pasadas, a.flag, a.juez, a.comparar_juez))
 
 
 if __name__ == "__main__":

@@ -118,7 +118,7 @@ async def _verificar(fallos: list[dict], repes: dict) -> list[dict]:
         resp = "\n\n".join(f"[R{i + 1}] {f['ans']}" for i, f in enumerate(filas))
         async with sem:
             r = await cli.chat.completions.create(
-                model="gpt-4.1", temperature=0, response_format={"type": "json_object"},
+                model="gpt-6-luna", temperature=0, response_format={"type": "json_object"},  # mod-8: antes gpt-4.1
                 messages=[{"role": "system", "content": _VERIFICA},
                           {"role": "user", "content": f"CRITERIO: {x['check']}\nMOTIVO DEL JUEZ: {x['motivo']}\n\n"
                                                       f"MENSAJE DEL CLIENTE: {x.get('mensaje_cliente', '')}\n\n"

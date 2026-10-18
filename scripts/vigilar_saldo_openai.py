@@ -21,7 +21,7 @@ import sys
 import time
 import urllib.request
 
-MODELO = "gpt-4o-mini"
+MODELO = "gpt-5.4-nano"  # mod (18-oct): fuera de gpt-4; antes "gpt-4o-mini"
 REINTENTOS = 3
 
 

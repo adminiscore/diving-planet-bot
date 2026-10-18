@@ -9,7 +9,7 @@ necesita y lo que no debe decir.
 Corre `rag_answer` dentro del contenedor `dp-pre-bot` por SSH (base, catálogo, flags y modelos de PRE; no
 cambia nada para nadie) con el estado del cliente pasado por `_build_extra_context`, igual que en una
 conversación. Espía cada pieza sin tocar el código del bot: la reescritura, cada búsqueda (top-8), el contexto
-exacto que ve el modelo, cada respuesta, el juez y las guardas. Después un verificador (gpt-4.1, temperatura 0)
+exacto que ve el modelo, cada respuesta, el juez y las guardas. Después un verificador (VERIFICADOR_MODELO, temperatura 0)
 marca por dato si la respuesta lo dice, no lo dice o lo contradice.
 
 Por dato, la causa cuando falta:
@@ -43,6 +43,9 @@ ROOT = Path(__file__).resolve().parent.parent
 DIR = ROOT / "docs/robustness/rag-piezas"
 PREGUNTAS = DIR / "preguntas.json"
 GOLDEN = ROOT / "docs/robustness/golden-set/golden-dialogues.json"
+# mod-8 (18-oct noche): el verificador, fuera de gpt-4.1. Sobre las MISMAS 102 respuestas de mod-5, DeepSeek da el
+# mismo veredicto que gpt-4.1 en 192/194 datos y 45/46 prohibidas (Luna 184/194, más estricto). Antes: "gpt-4.1".
+VERIFICADOR_MODELO = "deepseek/deepseek-v4.1-flash"
 
 _REMOTO = r'''
 import asyncio, inspect, json, logging, time, types
@@ -135,8 +138,9 @@ async def verificar(c, respuesta):
     prohibidas = "\n".join(f"- [{i}] {p}" for i, p in enumerate(c.get("no_debe") or []))
     user = (f"PREGUNTA DEL CLIENTE:\n{c['pregunta']}\n\nRESPUESTA DEL ASISTENTE:\n{respuesta}\n\n"
             f"DATOS:\n{datos}\n\nAFIRMACIONES PROHIBIDAS:\n{prohibidas or '(ninguna)'}")
-    cli = AsyncOpenAI(api_key=settings.openai_api_key)
-    r = await cli.chat.completions.create(model="gpt-4.1", temperature=0, response_format={"type": "json_object"},
+    from src.llm_client import trace_openai as _cliente_del_bot  # el de verdad, no el espía: DeepSeek por OpenRouter
+    cli = _cliente_del_bot(AsyncOpenAI(api_key=settings.openai_api_key))
+    r = await cli.chat.completions.create(model=VERIFICADOR_MODELO, temperature=0, response_format={"type": "json_object"},
                                           messages=[{"role": "system", "content": VERIFICADOR}, {"role": "user", "content": user}])
     try:
         return json.loads(r.choices[0].message.content or "{}")
@@ -441,7 +445,8 @@ def main() -> None:
     from scripts.pre_access import docker_python, pre_ssh, subir_codigo_local
 
     script = (f"CASOS_JSON = {json.dumps(casos, ensure_ascii=False)!r}\nSOLO_BUSQUEDA_FLAG = {args.solo_busqueda!r}\n"
-              f"N_REPS = {args.reps}\nVERIFICADOR_PROMPT = {VERIFICADOR_PROMPT!r}\n{_REMOTO}")
+              f"N_REPS = {args.reps}\nVERIFICADOR_PROMPT = {VERIFICADOR_PROMPT!r}\n"
+              f"VERIFICADOR_MODELO = {VERIFICADOR_MODELO!r}\n{_REMOTO}")
     entorno = dict(x.split("=", 1) for x in args.env)
     codigo = subir_codigo_local() if args.codigo_local else None
     r = pre_ssh(docker_python(entorno, codigo), input_text=script, timeout=max(600, 40 * total))

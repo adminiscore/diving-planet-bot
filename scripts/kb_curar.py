@@ -28,7 +28,7 @@ from scripts.load_embeddings import DATA_DIR
 from src.config import settings
 
 OUT_DIR = DATA_DIR / "curada"
-MODEL = "gpt-4.1"
+MODEL = "gpt-6-luna"  # mod-8 (18-oct): fuera de la familia gpt-4, que se retira en enero (antes "gpt-4.1")
 QUITAR = set(FAQ_SERVICIO) | {87, 120, 121}
 
 DECISIONES = """Decisiones de negocio vigentes (29-sep-2026), mandan sobre cualquier texto antiguo:
