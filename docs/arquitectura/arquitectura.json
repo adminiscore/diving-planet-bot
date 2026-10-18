@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-18T14:10:41+00:00",
-  "commit": "b6e9101",
+  "generado": "2026-10-18T14:11:22+00:00",
+  "commit": "36e4a6d",
   "rama": "feature/pre_alvaro"
  },
  "vistas": {
@@ -595,8 +595,8 @@
    "modelos": [
     {
      "ajuste": "extractor_turno_model",
-     "codigo": "gpt-4.1-mini",
-     "pre": "gpt-4.1-mini"
+     "codigo": "gpt-6-luna",
+     "pre": "gpt-6-luna"
     },
     {
      "ajuste": "red_extractor_model",
@@ -692,8 +692,8 @@
    "modelos": [
     {
      "ajuste": "resolutor_model",
-     "codigo": "gpt-4o-mini",
-     "pre": "gpt-4o-mini"
+     "codigo": "gpt-5.4-mini",
+     "pre": "gpt-5.4-mini"
     }
    ],
    "interruptores": [
@@ -805,22 +805,22 @@
     {
      "nombre": "certificado_solo_si_lo_dice",
      "titulo": "Certificado solo si lo dice",
-     "codigo": false,
-     "pre": false,
+     "codigo": true,
+     "pre": true,
      "sin_efecto": false
     },
     {
      "nombre": "precio_no_elige",
      "titulo": "Preguntar un precio no es elegir",
-     "codigo": false,
-     "pre": false,
+     "codigo": true,
+     "pre": true,
      "sin_efecto": false
     },
     {
      "nombre": "tarjeta_sin_seguridad",
      "titulo": "El precio sale aunque falte la pregunta de seguridad",
-     "codigo": false,
-     "pre": false,
+     "codigo": true,
+     "pre": true,
      "sin_efecto": false
     },
     {
@@ -863,8 +863,8 @@
    "modelos": [
     {
      "ajuste": "notas_model",
-     "codigo": "gpt-4o-mini",
-     "pre": "gpt-4o-mini"
+     "codigo": "deepseek/deepseek-v4.1-flash",
+     "pre": "deepseek/deepseek-v4.1-flash"
     }
    ],
    "interruptores": [
@@ -890,7 +890,7 @@
      "sin_efecto": false
     }
    ],
-   "marca": "openai"
+   "marca": "openrouter"
   },
   {
    "id": "b_acuse",
@@ -903,8 +903,8 @@
    "modelos": [
     {
      "ajuste": "acuse_model",
-     "codigo": "gpt-4o-mini",
-     "pre": "gpt-4o-mini"
+     "codigo": "gpt-5.4-mini",
+     "pre": "gpt-5.4-mini"
     }
    ],
    "interruptores": [
@@ -2252,9 +2252,9 @@
    "area": "Reserva",
    "titulo": "Certificado solo si lo dice",
    "texto": "Que el cliente quiera el buceo para certificados ('fun dives') no significa que esté certificado: el bot se lo pregunta. Antes una regla lo daba por hecho.",
-   "codigo": false,
-   "pre": false,
-   "fijado_en_pre": false,
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
    "usado_por": [
     "b_slotfill_close"
    ],
@@ -3064,9 +3064,9 @@
    "area": "Reserva",
    "titulo": "Preguntar un precio no es elegir",
    "texto": "Si el cliente solo pregunta cuánto cuesta algo ('¿cuánto vale el paquete de 5 inmersiones?'), el bot no da por hecho que lo ha elegido ni que es buzo certificado: es una duda. Decir lo que quiere hacer sí lo elige.",
-   "codigo": false,
-   "pre": false,
-   "fijado_en_pre": false,
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
    "usado_por": [
     "b_slotfill_close"
    ],
@@ -3494,9 +3494,9 @@
    "area": "Reserva",
    "titulo": "El precio sale aunque falte la pregunta de seguridad",
    "texto": "Si solo falta saber si alguien lleva más de 2 años sin bucear y el cliente no lo contesta, el bot da igualmente el precio, con una línea: 'si alguno lleva más de 2 años sin bucear, se añade el refresher (precio)'. Antes repetía la pregunta y el precio no salía nunca.",
-   "codigo": false,
-   "pre": false,
-   "fijado_en_pre": false,
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
    "usado_por": [
     "b_slotfill_close"
    ],
@@ -3556,13 +3556,13 @@
  "modelos": [
   {
    "ajuste": "acuse_model",
-   "codigo": "gpt-4o-mini",
-   "pre": "gpt-4o-mini",
+   "codigo": "gpt-5.4-mini",
+   "pre": "gpt-5.4-mini",
    "usado_por": [
     "b_acuse"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 64
+   "llamadas_ultima_ronda": null
   },
   {
    "ajuste": "avisos_al_final_model",
@@ -3584,13 +3584,13 @@
   },
   {
    "ajuste": "extractor_turno_model",
-   "codigo": "gpt-4.1-mini",
-   "pre": "gpt-4.1-mini",
+   "codigo": "gpt-6-luna",
+   "pre": "gpt-6-luna",
    "usado_por": [
     "b_extraction"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 93
+   "llamadas_ultima_ronda": 96
   },
   {
    "ajuste": "grounding_v3_model",
@@ -3624,13 +3624,13 @@
   },
   {
    "ajuste": "notas_model",
-   "codigo": "gpt-4o-mini",
-   "pre": "gpt-4o-mini",
+   "codigo": "deepseek/deepseek-v4.1-flash",
+   "pre": "deepseek/deepseek-v4.1-flash",
    "usado_por": [
     "b_notas"
    ],
-   "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 64
+   "proveedor": "OpenRouter",
+   "llamadas_ultima_ronda": 136
   },
   {
    "ajuste": "openai_embedding_model",
@@ -3711,13 +3711,13 @@
   },
   {
    "ajuste": "resolutor_model",
-   "codigo": "gpt-4o-mini",
-   "pre": "gpt-4o-mini",
+   "codigo": "gpt-5.4-mini",
+   "pre": "gpt-5.4-mini",
    "usado_por": [
     "b_slotfill_close"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 64
+   "llamadas_ultima_ronda": null
   },
   {
    "ajuste": "resumen_model",
