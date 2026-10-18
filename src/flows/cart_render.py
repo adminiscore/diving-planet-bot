@@ -237,6 +237,23 @@ def _format_activity_booking_messages(state: ConversationState) -> list[str]:
     return msgs
 
 
+def _ninos_del_minicurso(state: ConversationState) -> tuple[int, int]:
+    """(menores de 8, de 8 a 10) que caen en el ítem del minicurso. Hoy cuentan todos los niños del grupo.
+
+    G3-01b (flag `ninos_primero_al_snorkel`, 17-oct): familia con hijos de 12 (minicurso) y 8 (snorkel): el niño de 8
+    convertía el minicurso del de 12 en "Minicurso [Bubble Makers] (8-10 años)". Si el carrito ya tiene plazas de
+    snorkel, los niños más pequeños van primero ahí (un menor de 8 solo puede hacer snorkel) y el resto es el del
+    minicurso. Solo cambia la etiqueta: el precio de Bubble Makers es el del minicurso."""
+    from src.config import settings  # lazy
+
+    edades = sorted(a for a in (state.detected_ages or []) if isinstance(a, int) and a < 18)
+    if not (settings.ninos_primero_al_snorkel and edades):
+        return state.kids_under_8_count or 0, state.kids_eight_to_ten_count or 0
+    plazas_snorkel = sum(i.get("qty", 0) for i in state.mixed_cart or [] if i.get("type") == "snorkel")
+    resto = edades[plazas_snorkel:]
+    return len([a for a in resto if a < 8]), len([a for a in resto if 8 <= a <= 10])
+
+
 def _cart_booking_blocks(state: ConversationState) -> list[dict]:
     """One block per bookable activity in the cart (kids split into their real
     activity by age), each with price + booking URL — for the per-activity
@@ -260,8 +277,9 @@ def _cart_booking_blocks(state: ConversationState) -> list[dict]:
             beg = SERVICES.get(_cart_service_id("beginner", None, state)) or {}
             beg_name = beg.get(f"name_{lang}") or ("Minicurso de Buceo" if lang == "es" else "Dive Mini-Course")
             beg_url = _resolve_service_booking_url(beg, state)
-            u8 = min(state.kids_under_8_count or 0, qty)
-            e10 = min(state.kids_eight_to_ten_count or 0, max(0, qty - u8))
+            u8, e10 = _ninos_del_minicurso(state)
+            u8 = min(u8, qty)
+            e10 = min(e10, max(0, qty - u8))
             if u8 > 0 or e10 > 0:
                 adult = max(0, qty - u8 - e10)
                 if adult > 0:

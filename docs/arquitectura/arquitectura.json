@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-17T19:39:53+00:00",
-  "commit": "fe30a1d",
+  "generado": "2026-10-18T01:39:43+00:00",
+  "commit": "417e7f0",
   "rama": "feature/pre_gadea"
  },
  "vistas": {
@@ -185,9 +185,9 @@
    ],
    "marca": "openrouter",
    "tiempos": {
-    "n": 465,
-    "p50": 0.435,
-    "p95": 1.739
+    "n": 93,
+    "p50": 0.41,
+    "p95": 2.163
    }
   },
   {
@@ -210,9 +210,9 @@
    ],
    "modelos": [],
    "tiempos": {
-    "n": 22,
-    "p50": 0.003,
-    "p95": 0.005
+    "n": 8,
+    "p50": 0.002,
+    "p95": 0.003
    }
   },
   {
@@ -227,9 +227,9 @@
    "modelos": [],
    "interruptores": [],
    "tiempos": {
-    "n": 4,
-    "p50": 0.006,
-    "p95": 4.252
+    "n": 2,
+    "p50": 0.003,
+    "p95": 0.005
    }
   },
   {
@@ -252,9 +252,9 @@
    ],
    "modelos": [],
    "tiempos": {
-    "n": 3,
+    "n": 1,
     "p50": 0.001,
-    "p95": 0.002
+    "p95": 0.001
    }
   },
   {
@@ -271,9 +271,9 @@
    "modelos": [],
    "interruptores": [],
    "tiempos": {
-    "n": 8,
-    "p50": 3.887,
-    "p95": 4.9
+    "n": 4,
+    "p50": 3.294,
+    "p95": 3.92
    }
   },
   {
@@ -289,9 +289,9 @@
    "modelos": [],
    "interruptores": [],
    "tiempos": {
-    "n": 428,
-    "p50": 2.269,
-    "p95": 5.376
+    "n": 78,
+    "p50": 1.702,
+    "p95": 4.322
    }
   },
   {
@@ -500,9 +500,9 @@
    ],
    "marca": "openai",
    "tiempos": {
-    "n": 428,
-    "p50": 0.029,
-    "p95": 0.983
+    "n": 78,
+    "p50": 0.032,
+    "p95": 0.807
    }
   },
   {
@@ -532,9 +532,9 @@
    ],
    "modelos": [],
    "tiempos": {
-    "n": 428,
+    "n": 78,
     "p50": 0.005,
-    "p95": 0.019
+    "p95": 0.021
    }
   },
   {
@@ -571,9 +571,9 @@
    ],
    "marca": "openai",
    "tiempos": {
-    "n": 397,
+    "n": 72,
     "p50": 0.007,
-    "p95": 0.015
+    "p95": 0.014
    }
   },
   {
@@ -668,9 +668,9 @@
    ],
    "marca": "openai",
    "tiempos": {
-    "n": 396,
-    "p50": 0.628,
-    "p95": 1.351
+    "n": 72,
+    "p50": 0.479,
+    "p95": 0.987
    }
   },
   {
@@ -740,6 +740,34 @@
      "sin_efecto": false
     },
     {
+     "nombre": "lo_dicho_en_respuesta_fija",
+     "titulo": "Lo que dice el cliente no se pierde con una respuesta fija",
+     "codigo": true,
+     "pre": true,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "actividad_principal_en_el_reparto",
+     "titulo": "La actividad de los hijos no sustituye a la de los padres",
+     "codigo": true,
+     "pre": true,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "reparto_parcial_con_lo_sabido",
+     "titulo": "Los que no se nombran siguen con lo que tenían",
+     "codigo": true,
+     "pre": true,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "ninos_primero_al_snorkel",
+     "titulo": "El niño que hace snorkel no cambia el minicurso de su hermano",
+     "codigo": true,
+     "pre": true,
+     "sin_efecto": false
+    },
+    {
      "nombre": "aplazar_pregunta_sin_respuesta",
      "titulo": "No repite la pregunta que el cliente no contestó",
      "codigo": true,
@@ -763,9 +791,9 @@
    ],
    "marca": "openai",
    "tiempos": {
-    "n": 394,
-    "p50": 1.291,
-    "p95": 4.573
+    "n": 72,
+    "p50": 0.812,
+    "p95": 3.767
    }
   },
   {
@@ -882,9 +910,9 @@
    ],
    "modelos": [],
    "conteo": {
-    "n": 231,
+    "n": 44,
     "que": "preguntas",
-    "fuente": "2026-10-17-calf-completa.json"
+    "fuente": "2026-10-18-g301-A.json"
    }
   },
   {
@@ -1911,6 +1939,19 @@
    "sin_efecto": null
   },
   {
+   "nombre": "actividad_principal_en_el_reparto",
+   "area": "Reserva",
+   "titulo": "La actividad de los hijos no sustituye a la de los padres",
+   "texto": "En una familia en la que los padres ya eligieron bucear, 'el de 12 minicurso y el de 8 snorkel' añade a los hijos al plan sin cambiar la actividad principal. Antes el minicurso pasaba a ser la actividad principal y, al decir 'mi esposo bucea conmigo', el bot movía al hijo del minicurso a las inmersiones.",
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
+   "usado_por": [
+    "b_slotfill_close"
+   ],
+   "sin_efecto": null
+  },
+  {
    "nombre": "acuse_solo_el_mensaje",
    "area": "Reserva",
    "titulo": "El acuse no se inventa nada",
@@ -2756,6 +2797,19 @@
    "sin_efecto": null
   },
   {
+   "nombre": "lo_dicho_en_respuesta_fija",
+   "area": "Reserva",
+   "titulo": "Lo que dice el cliente no se pierde con una respuesta fija",
+   "texto": "Si el bot contesta con una respuesta fija (por ejemplo, qué puede hacer cada niño según su edad), lo que el cliente dijo en ese mensaje también se guarda: 'la salida de 2 inmersiones para nosotros dos. ¿y los niños?' ya no pierde la actividad elegida. Solo rellena datos que aún no se sabían.",
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
+   "usado_por": [
+    "b_slotfill_close"
+   ],
+   "sin_efecto": null
+  },
+  {
    "nombre": "lugar_con_dos_lectores",
    "area": "Reserva",
    "titulo": "El origen, con dos lectores de acuerdo",
@@ -2803,6 +2857,19 @@
    "pre": true,
    "fijado_en_pre": false,
    "usado_por": [],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "ninos_primero_al_snorkel",
+   "area": "Reserva",
+   "titulo": "El niño que hace snorkel no cambia el minicurso de su hermano",
+   "texto": "En el precio, si hay plazas de snorkel, los niños más pequeños se cuentan primero ahí. Así, con un hijo de 12 en el minicurso y uno de 8 en snorkel, el minicurso ya no sale como 'Bubble Makers (8-10 años)'. Solo cambia la etiqueta: el precio es el mismo.",
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
+   "usado_por": [
+    "b_slotfill_close"
+   ],
    "sin_efecto": null
   },
   {
@@ -3216,6 +3283,19 @@
    "sin_efecto": null
   },
   {
+   "nombre": "reparto_parcial_con_lo_sabido",
+   "area": "Reserva",
+   "titulo": "Los que no se nombran siguen con lo que tenían",
+   "texto": "Si el cliente dice qué hace solo una parte del grupo ('el de 12 minicurso y el de 8 snorkel'), los demás siguen con la actividad que ya habían elegido (la salida de 2 inmersiones de los padres). Antes el bot descartaba ese reparto y cotizaba el minicurso a casi todos.",
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
+   "usado_por": [
+    "b_slotfill_close"
+   ],
+   "sin_efecto": null
+  },
+  {
    "nombre": "respaldo_mismo_modelo",
    "area": "Preguntas",
    "titulo": "El respaldo del RAG, otra petición a Luna",
@@ -3302,7 +3382,7 @@
     "r_revisor"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 522
+   "llamadas_ultima_ronda": 96
   },
   {
    "ajuste": "extraction_model",
@@ -3317,7 +3397,7 @@
     "b_acuse"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 603
+   "llamadas_ultima_ronda": 114
   },
   {
    "ajuste": "extractor_turno_model",
@@ -3327,7 +3407,7 @@
     "b_extraction"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 447
+   "llamadas_ultima_ronda": 87
   },
   {
    "ajuste": "grounding_v3_model",
@@ -3337,7 +3417,7 @@
     "r_revisor"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 241
+   "llamadas_ultima_ronda": 45
   },
   {
    "ajuste": "jev_model",
@@ -3349,7 +3429,7 @@
    ],
    "proveedor": "OpenRouter",
    "llamadas_ultima_ronda": null,
-   "nota": "Decidió solo 421 de 465 mensajes; en los otros 44 decidió el LLM de respaldo (sus llamadas cuentan en gpt-4o-mini)."
+   "nota": "Decidió solo 79 de 93 mensajes; en los otros 14 decidió el LLM de respaldo (sus llamadas cuentan en gpt-4o-mini)."
   },
   {
    "ajuste": "openai_embedding_model",
@@ -3372,7 +3452,7 @@
     "r_reescribir"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 603
+   "llamadas_ultima_ronda": 114
   },
   {
    "ajuste": "openai_transcription_model",
@@ -3392,7 +3472,7 @@
     "r_escribir"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 522
+   "llamadas_ultima_ronda": 96
   },
   {
    "ajuste": "rag_plan_model",
@@ -3400,65 +3480,65 @@
    "pre": "gpt-4.1-mini",
    "usado_por": [],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 447
+   "llamadas_ultima_ronda": 87
   }
  ],
  "ronda": {
-  "etiqueta": "CAL-F golden visible completo (461ca75)",
-  "run_at": "2026-10-17T18:16:17Z",
-  "fichero": "2026-10-17-calf-completa.json",
-  "commit": "ed52f1f",
+  "etiqueta": "g301-A",
+  "run_at": "2026-10-18T00:23:30Z",
+  "fichero": "2026-10-18-g301-A.json",
+  "commit": "acebb9f",
   "por_tipo": {
    "reserva": {
-    "turns": 234,
-    "latency_p50": 1.408,
-    "latency_p95": 2.478,
-    "latency_avg": 1.559,
-    "llm_calls_avg": 2.53,
-    "llm_calls_p95": 4.0,
-    "llm_calls_max": 6,
-    "embeddings_avg": 1.5,
-    "llm_share": 1.501,
+    "turns": 49,
+    "latency_p50": 1.207,
+    "latency_p95": 2.388,
+    "latency_avg": 1.353,
+    "llm_calls_avg": 2.24,
+    "llm_calls_p95": 3.0,
+    "llm_calls_max": 4,
+    "embeddings_avg": 1.29,
+    "llm_share": 1.458,
     "tokens_avg": 0,
     "cost_avg_usd": 0
    },
    "rag": {
-    "turns": 231,
-    "latency_p50": 4.069,
-    "latency_p95": 6.756,
-    "latency_avg": 4.352,
-    "llm_calls_avg": 5.29,
+    "turns": 44,
+    "latency_p50": 3.89,
+    "latency_p95": 6.278,
+    "latency_avg": 4.008,
+    "llm_calls_avg": 5.27,
     "llm_calls_p95": 7.0,
-    "llm_calls_max": 10,
-    "embeddings_avg": 1.52,
-    "llm_share": 1.539,
+    "llm_calls_max": 8,
+    "embeddings_avg": 1.61,
+    "llm_share": 1.57,
     "tokens_avg": 0,
     "cost_avg_usd": 0
    }
   },
   "enrutador": {
    "by_backend": {
-    "jev": 421,
-    "llm_uncertain": 43,
+    "jev": 79,
+    "llm_uncertain": 13,
     "llm": 1
    },
-   "ms_p50": 405.0,
-   "ms_p95": 483.0
+   "ms_p50": 380.0,
+   "ms_p95": 480.05
   },
   "cliente": {
-   "turns": 465,
-   "conversations": 116,
+   "turns": 93,
+   "conversations": 32,
    "no_reply": 0,
-   "multi_bubble": 1,
+   "multi_bubble": 0,
    "latency_p50": 3.0,
-   "latency_p95": 6.0,
-   "latency_max": 9
+   "latency_p95": 5.4,
+   "latency_max": 7
   },
   "llamadas_por_modelo": {
-   "gpt-4o-mini": 603,
-   "gpt-6-luna": 522,
-   "gpt-4.1-mini": 447,
-   "gpt-4.1": 241
+   "gpt-4o-mini": 114,
+   "gpt-6-luna": 96,
+   "gpt-4.1-mini": 87,
+   "gpt-4.1": 45
   },
   "calidad": null
  },

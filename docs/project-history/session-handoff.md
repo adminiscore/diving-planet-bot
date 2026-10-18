@@ -118,6 +118,44 @@ sintético CONGELADO; (3) **CAL-F**, golden visible completo; (4) **G3**, Claude
 
 ### ▶️ (anterior) — 17-oct tarde (Álvaro con Claude): CAL-C PROMOCIONADO; Luna medida; Coral activado
 ### ▶️ RETOMAR AQUÍ — 17-oct noche (Álvaro con Claude): CAL-C CERRADA (C4, C5, C3e promocionados); siguiente r6-1
+### ▶️ RETOMAR AQUÍ — 17-oct 21:45 (Álvaro con Claude): r6-1 en PRE; extractor a Luna aparcado; G3-01 arreglado (local)
+
+**Sin crédito de OpenAI desde ~21:31** (429 `credit_balance_exhausted`, visto por Gadea y confirmado con
+`scripts.vigilar_saldo_openai`, que lo da como "sin saldo"). Nada que gaste hasta que Álvaro o Gadea recarguen.
+
+**r6-1 en PRE (815d201, CI verde, healthy):** (a) `[TURN_METRICS]` con `llamadas` por pieza y `turn_metrics.por_pieza`
+(para CAL-G de Gadea); (b) `AVISO_SI_OPENAI_FALLA` (APAGADO: hoy, sin saldo, los clientes reciben "no lo tengo a la
+mano"); (c) vigilante de saldo cada hora (`.github/workflows/vigilar-saldo-openai.yml`): solo corre cada hora desde
+`main`; el aviso en Coral necesita la identidad `vigilante` en `/opt/coral-hub/.env`, que crea Gadea (Jorge);
+(d) `RESPALDO_MISMO_MODELO` (APAGADO, acordado con Gadea): el respaldo del RAG es otra petición a Luna; falta medir
+p95/máx y calidad en una ronda.
+
+**Extractor a Luna: APARCADO (decisión de Álvaro).** ex0 diseño, 3 pasadas, mismo código: gpt-4.1-mini 112 aciertos /
+3 inventos / p50 1,9 s; Luna 112 / 12 / 3,1 s; Luna con reglas "no deduzcas" solo para gpt-6 113 / 11 / 2,2 s (las
+reglas llegan al prompt, comprobado; no arreglan su clase de invento: "certificado" por pedir un paquete, un vídeo o
+inmersiones registradas). Reglas quitadas; medidas en `docs/robustness/regex/banco-ex0/estabilidad-calc-extractor-luna-*.json`.
+Probar Luna con razonamiento solo si hay fecha de retirada de gpt-4.1.
+
+**G3-01 (familia: 2 certificados + hijos de 12 minicurso y 8 snorkel; conv 5567 de Gadea): arreglado en local
+(1c4b801), 3 flags APAGADOS, sin subir.** PRE con `--codigo-local`, los 6 turnos exactos: sin flags 0/2 llegan al
+precio; con los 3, 3/3 con {certified_diving 2, minicourse 1, snorkel 1} y precio. (1) `LO_DICHO_EN_RESPUESTA_FIJA`:
+la respuesta fija de edades contesta sin el núcleo y la actividad elegida se perdía (se guarda como en el pase; NO el
+reparto: el extractor inventa {certified_diving 2, minicourse 2} 1 de 3 veces y luego bloquea la corrección buena);
+(2) `REPARTO_PARCIAL_CON_LO_SABIDO`: un reparto que no suma el total, sin reparto guardado y con la principal elegida,
+se completa con la principal (antes se descartaba y cotizaba 3 × minicurso); (3) `ACTIVIDAD_PRINCIPAL_EN_EL_REPARTO`:
+la actividad del turno no sustituye a la principal si esta sigue en el reparto. Script: scratchpad `g301.py`.
+**Falta antes de encenderlos:** ronda con y sin (el 2 cambia una regla general del reparto) y el OK de Álvaro para subir.
+
+**Pendiente (Álvaro):** G3-01b — el minicurso del de 12 sale como "Bubble Makers (8-10 años)" en la tarjeta porque
+hay un niño de 8 (precio igual). G3-06 (Barú guardado como `location=island`, `conversational_core.py:166`): NO tocar
+hasta que Gadea conteste si recogéis en hoteles de Barú. G3-07a (dos monedas: el RAG adelantado se adopta antes de la
+extracción): decidir mañana con Gadea; mi propuesta, la opción 3 (con tarjeta, el texto no da el precio: sin latencia).
+Antes de subir: integrar `origin/feature/pre_gadea` (los dos tocamos config.py, componentes.json y arquitectura.json).
+De CAL-F parcial (Gadea, 417e7f0, mi zona): `grupo-mixto-precio-cop-total` lee "1 buzo avanzado" como el curso
+Advanced y vuelve a preguntar si los del bautismo están certificados; `refresher-rechaza-acepta`: el plan final no
+incluye el refresher que el cliente aceptó. Reproducir cuando haya crédito.
+
+### ▶️ (anterior) 17-oct noche (Álvaro con Claude): CAL-C CERRADA (C4, C5, C3e promocionados); siguiente r6-1
 
 **CAL-C cerrada.** Además de los 8 flags de la mañana, quedan PROMOCIONADOS C4 `LUGAR_DESCONOCIDO_AL_RAG` (cal-55
 Barú), C5 `RED_MENCIONES_SOLO_SIN_EXTRACTOR` (la pregunta del snorkel de cal-69/70) y C3e `HOTEL_DEL_CATALOGO_DA_ISLA`

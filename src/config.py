@@ -303,6 +303,22 @@ class Settings(BaseSettings):
     # del detector, da su isla y "está en las islas"; y también se guarda en el turno que acaba en el pase a una
     # persona (cal-46: "staying at the Ubuntu Hotel" se perdía). APAGADO hasta medirlo.
     hotel_del_catalogo_da_isla: bool = True  # PROMOCIONADO 17-oct (CAL-C, ronda core calc2-A/B)
+    # G3-01 (17-oct, charla G3 de Gadea, conv 5567): lo que el cliente dice en un turno que contesta una respuesta fija
+    # (p. ej. la de edades) se guarda como en el turno del pase: solo campos aún no sabidos y con cita comprobada.
+    # "la salida de 2 inmersiones para nosotros dos. y los niños qué pueden hacer?" perdía la actividad. APAGADO.
+    lo_dicho_en_respuesta_fija: bool = True  # RONDA g301-B (18-oct): encendido para medir; revert = False
+    # G3-01 (17-oct): si la actividad principal ya elegida sigue en el reparto del grupo con gente, la actividad nueva
+    # del turno es la de otra parte del grupo y no la sustituye ("el de 12 minicurso" no convierte a los padres
+    # certificados en alumnos del minicurso). APAGADO hasta medirlo.
+    actividad_principal_en_el_reparto: bool = True  # RONDA g301-B (18-oct): encendido para medir; revert = False
+    # G3-01 (17-oct): un reparto que no suma el total, sin reparto guardado y con la actividad principal ya elegida, se
+    # completa con ella (sin reparto, todo el grupo hace la principal): "el de 12 minicurso y el de 8 snorkel" en una
+    # familia de 4 con la salida de 2 inmersiones elegida = {certified_diving: 2, minicourse: 1, snorkel: 1}. Antes se
+    # descartaba y se cotizaba 3 × minicurso. APAGADO hasta medirlo.
+    reparto_parcial_con_lo_sabido: bool = True  # RONDA g301-B (18-oct): encendido para medir; revert = False
+    # G3-01b (17-oct): en la tarjeta del precio, si hay plazas de snorkel, los niños más pequeños van primero ahí; el
+    # niño de 8 que hace snorkel ya no convierte el minicurso del de 12 en "Bubble Makers (8-10)". APAGADO.
+    ninos_primero_al_snorkel: bool = True  # RONDA g301-B (18-oct): encendido para medir; revert = False
     # r6-1(b) (17-oct): si en un turno NINGUNA llamada a OpenAI funciona (sin saldo, clave inválida, caído), el bot dice
     # que hay un problema técnico y pasa a un asesor (motivo = alerta en Chatwoot), en vez de "no lo tengo a la mano".
     # APAGADO hasta medirlo.

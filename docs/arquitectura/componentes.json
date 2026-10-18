@@ -393,6 +393,10 @@
         "lugar_desconocido_al_rag",
         "red_menciones_solo_sin_extractor",
         "hotel_del_catalogo_da_isla",
+        "lo_dicho_en_respuesta_fija",
+        "actividad_principal_en_el_reparto",
+        "reparto_parcial_con_lo_sabido",
+        "ninos_primero_al_snorkel",
         "aplazar_pregunta_sin_respuesta",
         "recomendar_a_certificados",
         "acuse_solo_el_mensaje"
@@ -991,6 +995,26 @@
       "area": "Arquitectura",
       "titulo": "Si OpenAI cae, decir la verdad y pasar a un asesor",
       "texto": "Si en un mensaje ninguna llamada a OpenAI funciona (sin saldo, clave mala o caído), el bot dice que tiene un problema técnico y pasa la conversación a un asesor; el motivo del pase avisa al equipo de que revise el saldo. Antes contestaba 'no lo tengo a la mano' a todo."
+    },
+    "ninos_primero_al_snorkel": {
+      "area": "Reserva",
+      "titulo": "El niño que hace snorkel no cambia el minicurso de su hermano",
+      "texto": "En el precio, si hay plazas de snorkel, los niños más pequeños se cuentan primero ahí. Así, con un hijo de 12 en el minicurso y uno de 8 en snorkel, el minicurso ya no sale como 'Bubble Makers (8-10 años)'. Solo cambia la etiqueta: el precio es el mismo."
+    },
+    "reparto_parcial_con_lo_sabido": {
+      "area": "Reserva",
+      "titulo": "Los que no se nombran siguen con lo que tenían",
+      "texto": "Si el cliente dice qué hace solo una parte del grupo ('el de 12 minicurso y el de 8 snorkel'), los demás siguen con la actividad que ya habían elegido (la salida de 2 inmersiones de los padres). Antes el bot descartaba ese reparto y cotizaba el minicurso a casi todos."
+    },
+    "actividad_principal_en_el_reparto": {
+      "area": "Reserva",
+      "titulo": "La actividad de los hijos no sustituye a la de los padres",
+      "texto": "En una familia en la que los padres ya eligieron bucear, 'el de 12 minicurso y el de 8 snorkel' añade a los hijos al plan sin cambiar la actividad principal. Antes el minicurso pasaba a ser la actividad principal y, al decir 'mi esposo bucea conmigo', el bot movía al hijo del minicurso a las inmersiones."
+    },
+    "lo_dicho_en_respuesta_fija": {
+      "area": "Reserva",
+      "titulo": "Lo que dice el cliente no se pierde con una respuesta fija",
+      "texto": "Si el bot contesta con una respuesta fija (por ejemplo, qué puede hacer cada niño según su edad), lo que el cliente dijo en ese mensaje también se guarda: 'la salida de 2 inmersiones para nosotros dos. ¿y los niños?' ya no pierde la actividad elegida. Solo rellena datos que aún no se sabían."
     },
     "hotel_del_catalogo_da_isla": {
       "area": "Reserva",
