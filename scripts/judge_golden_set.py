@@ -202,8 +202,34 @@ def bot_bubbles(record: dict) -> list[str]:
     return [] if record.get("reply") is None else record["reply"].split("\n---\n")
 
 
+_DIAS = ("lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo")
+_MESES = ("enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre",
+          "noviembre", "diciembre")
+
+
+def cuando_fue(records: list[dict]) -> str | None:
+    """18-oct (CAL-F): la fecha y hora de Colombia en que se habló. El bot conoce la hora real (`_build_extra_context`)
+    y el juez no: "a esta hora el sistema ya cerró para mañana" dicho a las 22:00, "mañana es el 18 de octubre" o
+    "¿el 5, 6 o 7 de noviembre?" el 17-oct salían como invenciones (3 de los 20 fallos estables de CAL-F)."""
+    at = next((r.get("at") for r in sorted(records, key=lambda r: r["turn"]) if r.get("at")), None)
+    if not at:
+        return None
+    try:
+        from datetime import timedelta, timezone
+
+        t = datetime.fromisoformat(at).astimezone(timezone(timedelta(hours=-5)))
+    except ValueError:
+        return None
+    return f"{_DIAS[t.weekday()]} {t.day} de {_MESES[t.month - 1]} de {t.year}, {t:%H:%M}"
+
+
 def transcript(records: list[dict]) -> str:
     lines = []
+    cuando = cuando_fue(records)
+    if cuando:
+        lines.append(f"(La conversacion fue el {cuando}, hora de Colombia. El bot conoce la fecha y la hora reales: lo "
+                     "que calcule con ellas -que dia es 'mañana', si ya paso el cierre de las 4:30 p. m. del dia "
+                     "anterior, el mes de 'el 5'- NO es una invencion si cuadra con esta fecha.)")
     for r in sorted(records, key=lambda r: r["turn"]):
         lines.append(f"CLIENTE: {r['msg']}")
         bubbles = bot_bubbles(r)

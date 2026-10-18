@@ -716,11 +716,11 @@ def ask_slot(state: ConversationState, slot: str, *, reasking: bool = False) -> 
             # días" solo cuando aún no se sabe qué plan es (un paquete sin concretar: de 2 a 4 días).
             dias = _dias_del_plan(state)
             return (
-                f"¿Desde dónde saldrías? Este plan dura {f'{dias} días' if dias else 'varios días'} y hay "
+                f"¿Desde dónde saldrías? Este plan dura {(f'{dias} día' if dias == 1 else f'{dias} días') if dias else 'varios días'} y hay "
                 "que *dormir en las islas* (el alojamiento no está incluido): puedes salir *desde Cartagena* "
                 "el primer día o, si ya estás *en las islas*, coordinamos la recogida en tu hotel."
                 if lang == "es" else
-                f"Where would you be departing from? This plan takes {f'{dias} days' if dias else 'several days'} "
+                f"Where would you be departing from? This plan takes {(f'{dias} day' if dias == 1 else f'{dias} days') if dias else 'several days'} "
                 "and you need to *stay on the islands* (accommodation is not included): you can leave *from "
                 "Cartagena* on the first day or, if you're already *on the islands*, we arrange pickup at your "
                 "hotel."
