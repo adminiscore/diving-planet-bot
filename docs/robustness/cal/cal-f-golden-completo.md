@@ -11,16 +11,17 @@ completas anteriores rondaban el 91 % (g10-B 91,2 %, est3-B 91,3 %), aunque con 
 Por categoría, lo más flojo: pago 84,2 %, refresher 86,7 %, deflection 88,9 % (el teléfono: error de la referencia),
 descuentos 92,6 %, nacionalidad 92,7 %.
 
-Fallos (además de la tabla de abajo, que eran los 14 primeros): precio-desde-islas-vs-cartagena,
-contacto-hoteles-cocoliso-san-pedro (alojamiento directo), certificado-profundidad (profundidad según nivel),
-paquete-5-buceos-precio-overnight-isla-grande-baru y curso-mas-paquetes (repreguntas), tours-diarios-isla-grande
-(pickup en las islas), refresher-que-completar-antes (tiempo sin bucear), grupo-mixto-cotiza-y-pide-link y
-link-pago-extranjeros-sin-cedula (enlace), punto-encuentro-corrige-todo-mar-y-hora, pareja-certificados-cop-descuento
+Por suite: **visible 95.8 % (71/95 diálogos sin fallos)**; examen oculto 95.5 % (12/21).
+**9 de los 33 diálogos con fallo son del EXAMEN OCULTO** (gastado): se cuentan en la nota, pero NO se atribuyen ni se
+arreglan (norma; `reproducir_juez_pre` se niega a repetirlos). Sus ids no se listan aquí a propósito.
+
+Fallos de la parte VISIBLE además de la tabla de abajo: precio-desde-islas-vs-cartagena, contacto-hoteles-cocoliso-san-pedro
+(alojamiento directo), paquete-5-buceos-precio-overnight-isla-grande-baru (repregunta), tours-diarios-isla-grande
+(pickup en las islas), refresher-que-completar-antes (tiempo sin bucear), pareja-certificados-cop-descuento
 (descuentos vigentes), open-water-hoteles-noche (pernocta), descuento-online-sin-codigo, minicurso-precio-colombianos
 (origen), recogida-ubuntu (comida desde islas, minicurso no certifica), moneda-precios-principiante-y-snorkel,
-precios-y-disponibilidad-con-negociacion (cierre 4:30), curso-open-water-principiantes-idioma-frances (idioma),
-principiante-precio-y-evaluacion-medica, pareja-reactivate-y-refresh-cartagena (repregunta). Siguiente: atribuir
-cada uno a su zona con `reproducir_juez_pre` (3 reps), empezando por los del RAG que tocan el origen.
+precios-y-disponibilidad-con-negociacion (cierre 4:30), curso-open-water-principiantes-idioma-frances (idioma).
+Estabilidad (18-oct, 3 reps en PRE de cada uno con el juez al día): ver la sección siguiente.
 
 ## Estado (17-oct, histórico)
 
