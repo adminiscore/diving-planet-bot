@@ -2203,8 +2203,8 @@
      "base": "discounts.json: \"10% de descuento... se aplica autom\u0019ticamente al reservar por la web\" / \"not through third parties like PADI\""
     },
     {
-     "id": "escala-si-no-aparece",
-     "check": "Si el cliente indica que el descuento no aparece o hay fallo en checkout, ofrece pasar con un asesor por problema del sistema de reservas.",
+     "id": "solo-explica-si-no-aparece",
+     "check": "Si el cliente indica que el descuento no aparece, explica que el 10% online se aplica solo al reservar en la web, sin código; no hace falta pasarlo con un asesor (decisión de Gadea 18-oct: solo se explica).",
      "base": "escalation_rules.json > booking_system_problems: \"Veo que tienes problemas con el sistema de reservas...\""
     }
    ],

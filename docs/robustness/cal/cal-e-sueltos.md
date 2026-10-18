@@ -66,6 +66,8 @@ comportamiento bueno es el que ya tiene PRE (explica el descuento y ofrece el as
 Gadea, porque es una decisión de negocio: *¿si el descuento no le aparece al cliente en la web, se le pasa con una
 persona?* Hoy el examen dice que sí.
 
+**Decidido por Gadea (18-oct): solo se explica** ("¿para qué va a pasar a una persona?"). El criterio pasa a `solo-explica-si-no-aparece`; el bot ya lo hace (CAL-F 3/3) y no hace falta recuperar E2.
+
 ## 5. Decisión pendiente de Gadea
 
 **¿El WhatsApp oficial es solo para mensajes?** Si lo es, se añade a la base como `contact_info.nota_es` /

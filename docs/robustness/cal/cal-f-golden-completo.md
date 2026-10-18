@@ -90,8 +90,7 @@ precio-desde-islas-vs-cartagena y la repregunta de paquete-5-buceos-…-baru). L
 - refresher-que-completar-antes: `valida-tiempo-sin-bucear` 2/3 (no pregunta hace cuánto no bucea) y
   `formulario-medico-refresher` 2/3 (no dice que el formulario llega tras reservar).
 - contacto-hoteles-cocoliso-san-pedro: `alojamiento-directo` 2/3 (no dice que el hotel se reserva directamente).
-- descuento-online-sin-codigo: `escala-si-no-aparece` 3/3 (si el descuento no aparece, no ofrece pasar con un asesor;
-  en CAL-E se borró un arreglo que decía lo contrario a este criterio: decidir cuál manda).
+- ~~descuento-online-sin-codigo: `escala-si-no-aparece` 3/3~~ **Decidido por Gadea (18-oct): solo se explica** que el 10 % es automático, sin pasar a un asesor. El bot ya lo hace; el criterio pasa a `solo-explica-si-no-aparece`.
 - certificado-fechas-fotos-y-reserva y precios-y-disponibilidad-con-negociacion: `sin-invenciones` 2/3 (pone un mes,
   una fecha o "a esta hora el sistema ya cerró" que el cliente no dijo).
 - paquete-5-buceos-precio-overnight-isla-grande-baru: `sin-invenciones` 2/3 (llama "certified diver" a quien dijo
