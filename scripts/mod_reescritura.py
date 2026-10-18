@@ -7,8 +7,9 @@ import json
 import statistics
 import sys
 import time
+from pathlib import Path
 
-sys.path.insert(0, r"C:\Users\Usuario\Documents\WorkSpace\diving-planet-bot")
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from src.agents import query_rewriter as qr  # noqa: E402
 from src.config import settings  # noqa: E402
 from src.flows.catalog import _detect_language_from_text  # noqa: E402
