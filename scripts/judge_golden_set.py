@@ -173,13 +173,22 @@ def load_reference(referencia: str = REFERENCIA_POR_DEFECTO) -> str:
                  "NO es una fuga ni un identificador interno.\n" + catalog_booking_links("es"))
     # Calibracion del 6-oct (70 veredictos con etiqueta humana): con el catalogo delante, el juez castigaba "buceamos
     # todo el año / operamos todos los dias" por no nombrar los dos cierres (4 fallos falsos; las personas lo dieron
-    # por bueno). Telefono: la decision del dueño del golden (`pide-telefono`: si lo pide, el WhatsApp oficial).
+    # por bueno). 18-oct (CAL-F): las decisiones de Gadea del 14-17 oct que no están en los datos. Con la de antes
+    # ("si pide un teléfono, el WhatsApp oficial"), el juez suspendía `pide-telefono` por hacer lo decidido.
     parts.append("### Aclaraciones del negocio\n"
                  "- Decir que buceamos todo el año o que salimos todos los dias es CORRECTO: los unicos cierres son el 25 "
                  "de diciembre y el 1 de enero, y solo hace falta nombrarlos si el cliente pregunta por esas fechas.\n"
-                 "- Telefono (decision del dueño): si el cliente PIDE un telefono para llamar, el bot le da el WhatsApp "
-                 "oficial de esta referencia; si no lo pide, el bot no da numeros y el contacto con un asesor se "
-                 "gestiona por dentro (ofrecer pasar con un asesor es correcto).")
+                 "- Telefono (decision de Gadea, 15-oct): el bot NUNCA da un numero de telefono ni de WhatsApp, aunque el "
+                 "cliente lo pida: le pasa con una persona del equipo. Negarse a dar el numero y pasar con un asesor es "
+                 "CORRECTO; el contacto de escalation_rules.json es interno.\n"
+                 "- Pago y reserva (decision de Gadea, 17-oct): se reserva y paga por el enlace online; el pago queda "
+                 "registrado al momento y el equipo lo concilia y confirma despues. Decir que la reserva queda confirmada "
+                 "al instante de pagar NO es correcto; decir que el equipo la confirma, si.\n"
+                 "- Idioma (decision de Gadea, 14-oct): el bot atiende en español e ingles; si el cliente escribe en otro "
+                 "idioma (portugues, frances...), responde en INGLES. Los nombres propios (Muelle de la Bodeguita, "
+                 "Isla Grande) no cuentan como cambiar de idioma.\n"
+                 "- Datos de otros clientes (decision de Gadea, 17-oct): si alguien pide datos de otros clientes, el bot "
+                 "se niega por privacidad, sin pasar a un asesor.")
     fichas = [d["content"] for d in build_kb_v2() if d["metadata"]["source"] == "services" and d["metadata"]["lang"] == "es"]
     parts.append("### Fichas de los servicios (base de conocimiento del bot)\n" + "\n\n---\n\n".join(fichas))
     faqs = json.loads((CURADA / "faqs.json").read_text(encoding="utf-8"))["faqs"]
@@ -193,8 +202,34 @@ def bot_bubbles(record: dict) -> list[str]:
     return [] if record.get("reply") is None else record["reply"].split("\n---\n")
 
 
+_DIAS = ("lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo")
+_MESES = ("enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre",
+          "noviembre", "diciembre")
+
+
+def cuando_fue(records: list[dict]) -> str | None:
+    """18-oct (CAL-F): la fecha y hora de Colombia en que se habló. El bot conoce la hora real (`_build_extra_context`)
+    y el juez no: "a esta hora el sistema ya cerró para mañana" dicho a las 22:00, "mañana es el 18 de octubre" o
+    "¿el 5, 6 o 7 de noviembre?" el 17-oct salían como invenciones (3 de los 20 fallos estables de CAL-F)."""
+    at = next((r.get("at") for r in sorted(records, key=lambda r: r["turn"]) if r.get("at")), None)
+    if not at:
+        return None
+    try:
+        from datetime import timedelta, timezone
+
+        t = datetime.fromisoformat(at).astimezone(timezone(timedelta(hours=-5)))
+    except ValueError:
+        return None
+    return f"{_DIAS[t.weekday()]} {t.day} de {_MESES[t.month - 1]} de {t.year}, {t:%H:%M}"
+
+
 def transcript(records: list[dict]) -> str:
     lines = []
+    cuando = cuando_fue(records)
+    if cuando:
+        lines.append(f"(La conversacion fue el {cuando}, hora de Colombia. El bot conoce la fecha y la hora reales: lo "
+                     "que calcule con ellas -que dia es 'mañana', si ya paso el cierre de las 4:30 p. m. del dia "
+                     "anterior, el mes de 'el 5'- NO es una invencion si cuadra con esta fecha.)")
     for r in sorted(records, key=lambda r: r["turn"]):
         lines.append(f"CLIENTE: {r['msg']}")
         bubbles = bot_bubbles(r)
@@ -697,7 +732,12 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--referencia", choices=REFERENCIAS, default=REFERENCIA_POR_DEFECTO,
                         help="de donde saca el juez la verdad del negocio (ver load_reference); fuera de la de por "
                              "defecto, el fichero de resultados lleva __ref-<referencia>")
+    parser.add_argument("--golden", help="otro fichero de dialogos con el mismo formato (G9: el examen oculto "
+                                         "sintetico, que se juzga UNA sola vez)")
     args = parser.parse_args(argv)
+    if args.golden:
+        global GOLDEN_FILE
+        GOLDEN_FILE = Path(args.golden)
 
     if args.seed_from:
         n = seed_cache_from_results(args.seed_from, args.model, args.effort)

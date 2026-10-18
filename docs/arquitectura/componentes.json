@@ -493,7 +493,8 @@
         "openai_model"
       ],
       "interruptores": [
-        "consulta_con_lo_sabido"
+        "consulta_con_lo_sabido",
+        "busqueda_con_la_pregunta_sola"
       ]
     },
     {
@@ -565,7 +566,8 @@
         "rag_temperatura_cero",
         "respaldo_mismo_modelo",
         "rag_plan_primero",
-        "avisos_condicionados"
+        "avisos_condicionados",
+        "rag_ofrece_el_pase"
       ],
       "tiempo_medido": {
         "p50": 1.9,
@@ -1528,6 +1530,16 @@
       "area": "Enrutador",
       "titulo": "Los datos de otros clientes se niegan, sin pasar a un asesor",
       "texto": "Si alguien pide nombres, teléfonos o reservas de otros clientes, el bot contesta que esa información es privada y ofrece ayudar con su propio plan. Antes pasaba el caso a un asesor porque la petición hablaba de reservas."
+    },
+    "rag_ofrece_el_pase": {
+      "area": "Preguntas",
+      "titulo": "El bot ofrece pasar con una persona, no dice que ya lo ha hecho",
+      "texto": "La respuesta decía 'te paso con el equipo' aunque nadie recibía el caso, y el cliente se quedaba esperando. Ahora pregunta '¿quieres que te pase con un asesor?' y el pase lo hace el sistema si el cliente dice que sí."
+    },
+    "busqueda_con_la_pregunta_sola": {
+      "area": "Preguntas",
+      "titulo": "Se busca también la pregunta sola, sin los datos que da el cliente",
+      "texto": "Si el cliente da datos y pregunta en el mismo mensaje (\"salimos de Cartagena el día 30. ¿Hace falta saber nadar?\"), el origen y la fecha tapaban la pregunta y la búsqueda no traía la pregunta frecuente: el bot decía que no tenía el dato. Ahora también se busca la pregunta sola, traducida si el cliente escribe en portugués o francés."
     }
   },
   "areas": [

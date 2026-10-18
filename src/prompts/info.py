@@ -598,3 +598,22 @@ RAG_VARIOS_PLANES_EN = (
     "If what the customer asks for matches SEVERAL plans in the catalog (for example, \"a 2-day package\": the 4-dive "
     "one and the 5-dive one with a night dive), name the options with their price instead of picking one yourself."
 )
+
+
+# ── G3-03 (17-oct, flag `rag_ofrece_el_pase`): el RAG no puede pasar el caso a una persona; lo OFRECE ────────
+# En directo (G3, conv 5569) el RAG escribía "Te paso con el equipo para que te orienten" y en la misma respuesta el
+# flujo seguía preguntando "¿para cuántas personas?": no había pase (TURN_METRICS escalated=False) y el cliente se
+# quedaba esperando a alguien que no llega. Varias reglas de arriba dicen "deriva al asesor", y el modelo lo leía como
+# hacerlo. El pase lo hace el sistema; el RAG solo puede ofrecerlo.
+RAG_PASE_OFRECIDO_ES = (
+    "Pasar con una persona: tú NO puedes pasar la conversación a una persona ni avisar al equipo, así que NUNCA lo des "
+    "por hecho ('te paso con el equipo', 'un asesor te va a contactar', 'ya avisé al equipo'). Cuando algo lo tenga que "
+    "confirmar una persona, dilo y OFRÉCELO como pregunta ('¿Quieres que te pase con un asesor del equipo?'): si el "
+    "cliente acepta, el sistema hace el pase."
+)
+RAG_PASE_OFRECIDO_EN = (
+    "Handing off to a person: you CANNOT hand the conversation to a person or notify the team, so NEVER state it as done "
+    "('I'm passing you to the team', 'an advisor will contact you', 'I've let the team know'). When something must be "
+    "confirmed by a person, say so and OFFER it as a question ('Would you like me to connect you with a team "
+    "advisor?'): if the customer accepts, the system does the handoff."
+)

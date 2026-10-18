@@ -1,0 +1,167 @@
+{
+ "about": "G3: casos de las charlas en directo (Claude contra el chatbot), mismo formato que el banco de fallos; se mide con banco_fallos medir --banco docs/robustness/g3/banco-g3.json.",
+ "fallos": [
+  {
+   "id": "g3-03a",
+   "tarea": "G3",
+   "dialogo": "islas-refresh-coral-sand",
+   "criterio": "no-promete-pase",
+   "pedia": "No dice que pasa la conversación a una persona ni que el equipo le va a contactar ('te paso con el equipo', 'un asesor te contactará') como algo ya hecho: si algo lo tiene que confirmar una persona, lo OFRECE como pregunta.",
+   "motivo_juez": "En directo (conv 5569) escribió 'Te paso con el equipo para que te orienten' sin pase real (escalated=False) y siguió preguntando por cuántas personas.",
+   "turno": 1,
+   "mensaje_cliente": "hola, estoy en el hotel coral sand en isla grande. soy open water pero no buceo desde 2022, puedo bucear mañana?",
+   "historial": []
+  },
+  {
+   "id": "g3-03b",
+   "tarea": "G3",
+   "dialogo": "islas-refresh-coral-sand",
+   "criterio": "no-promete-pase",
+   "pedia": "No dice que pasa la conversación a una persona ni que el equipo le va a contactar ('te paso con el equipo', 'un asesor te contactará') como algo ya hecho: si algo lo tiene que confirmar una persona, lo OFRECE como pregunta.",
+   "motivo_juez": "En directo (conv 5569, turno 2) escribió 'Te paso con ellos para confirmar la logística de mañana' sin pase real.",
+   "turno": 2,
+   "mensaje_cliente": "solo yo. y si hago el refresh mañana, a que hora me recogen en el hotel y cuanto cuesta?",
+   "historial": [
+    {
+     "role": "user",
+     "content": "hola, estoy en el hotel coral sand en isla grande. soy open water pero no buceo desde 2022, puedo bucear mañana?"
+    }
+   ]
+  },
+  {
+   "id": "g3-05",
+   "tarea": "G3",
+   "dialogo": "brasilenos-bautismo",
+   "criterio": "nadar-faq",
+   "pedia": "Answers in English that you don't need to be an expert swimmer, it's recommended to be comfortable in the water and the instructor guides at all times (FAQ '¿Necesito saber nadar para bucear?'); does not say it doesn't have the information.",
+   "motivo_juez": "En directo (conv 5571) contestó 'I don't have that specific requirement handy' aunque la FAQ lo dice.",
+   "turno": 2,
+   "mensaje_cliente": "saímos de Cartagena, dia 30. Precisa saber nadar?",
+   "historial": [
+    {
+     "role": "user",
+     "content": "Olá! Somos dois brasileiros, nunca mergulhamos. Quanto custa o batismo e o que está incluído?"
+    }
+   ]
+  },
+  {
+   "id": "g3-05b",
+   "tarea": "G3",
+   "dialogo": "pareja-bautismo-es",
+   "criterio": "nadar-faq",
+   "pedia": "Responde que no hace falta ser un experto nadador, que se recomienda sentirse cómodo en el agua y que el instructor acompaña todo el tiempo (FAQ '¿Necesito saber nadar para bucear?'); no dice que no tiene el dato.",
+   "motivo_juez": "Variante en español de G3-05: el mensaje da datos (origen y fecha) y pregunta; la búsqueda con el mensaje entero no trae la FAQ (medido en la búsqueda de PRE).",
+   "turno": 2,
+   "mensaje_cliente": "salimos de Cartagena el día 30. ¿Hace falta saber nadar?",
+   "historial": [
+    {
+     "role": "user",
+     "content": "¡Hola! Somos dos y nunca hemos buceado. ¿Cuánto cuesta el bautismo y qué incluye?"
+    }
+   ]
+  },
+  {
+   "id": "g3-05c",
+   "tarea": "G3",
+   "dialogo": "pareja-bautismo-en",
+   "criterio": "nadar-faq",
+   "pedia": "Answers that you don't need to be an expert swimmer, it's recommended to be comfortable in the water and the instructor guides at all times (FAQ 'Do I need to know how to swim?'); does not say it doesn't have the information.",
+   "motivo_juez": "Variante en inglés de G3-05: el mensaje da datos (origen y fecha) y pregunta.",
+   "turno": 2,
+   "mensaje_cliente": "we leave from Cartagena on the 30th. Do we need to know how to swim?",
+   "historial": [
+    {
+     "role": "user",
+     "content": "Hi! There are two of us and we've never dived. How much is the discover dive and what's included?"
+    }
+   ]
+  },
+  {
+   "id": "g3-06",
+   "tarea": "G3",
+   "dialogo": "baru-tres-amigos",
+   "criterio": "plan-certificado-sin-asumir",
+   "pedia": "Para el buzo Advanced da el precio de la salida de buceo de 1 día (2 inmersiones) o le pregunta qué quiere; no elige por él un paquete con inmersión nocturna que nadie pidió. Para los dos que nunca han buceado, el precio del minicurso.",
+   "motivo_juez": "En directo (conv 5572) cotizó 'el plan de buceo certificado que mencionamos' = paquete de 3 inmersiones con nocturna (665.000 COP), que nadie mencionó, y dijo no tener el precio del minicurso.",
+   "turno": 3,
+   "mensaje_cliente": "ok. y cuanto cuesta todo para los 3? seria el jueves. somos colombianos",
+   "historial": [
+    {
+     "role": "user",
+     "content": "hola! estamos en un hotel en baru, somos 3 amigos. 2 nunca han buceado y yo tengo advanced. tambien vamos a san andres la semana siguiente, ahi bucean ustedes?"
+    },
+    {
+     "role": "assistant",
+     "content": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\n¡Hola! ¡Qué buen plan para disfrutar del mar! En Diving Planet buceamos en las Islas del Rosario, no en San Andrés.\n\nBuceamos solo en las Islas del Rosario; Barú es otro destino, una península unida a tierra, y allí no operamos.\n\nPara ustedes, los dos que nunca han buceado pueden hacer el Minicurso de Buceo, y tú puedes hacer una salida para buzos certificados. Se pueden combinar actividades en un mismo tour. Como ya están en Barú, la recogida depende de que el hotel tenga acceso marítimo; ¿me dices el nombre del hotel para orientarte?"
+    },
+    {
+     "role": "user",
+     "content": "estamos en el hotel las islas, en baru. nos pueden recoger ahi?"
+    },
+    {
+     "role": "assistant",
+     "content": "¡Claro! La recogida en lancha está incluida si el hotel tiene acceso marítimo. No tengo a la mano la información específica sobre la recogida en el Hotel Las Islas; un asesor del equipo puede confirmarte el punto y la logística. ¿Quieres que te ponga en contacto con el equipo?"
+    }
+   ]
+  },
+  {
+   "id": "g3-07a",
+   "tarea": "G3",
+   "dialogo": "pareja-bogota-snorkel",
+   "criterio": "una-sola-moneda",
+   "pedia": "Toda la respuesta da el precio en la misma moneda: si la tarjeta del plan da COP porque son de Bogotá (colombianos/residentes), el texto no da USD (y al revés).",
+   "motivo_juez": "En directo (conv 5573): el RAG dijo '126 USD por persona' y la tarjeta del mismo mensaje '448.000 COP' ('como sois colombianos').",
+   "turno": 1,
+   "mensaje_cliente": "buenas tardes, somos una pareja de bogota, vamos a estar en cartagena del 12 al 15. queremos hacer snorkel un dia, cuanto vale?",
+   "historial": []
+  },
+  {
+   "id": "g3-07b",
+   "tarea": "G3",
+   "dialogo": "pareja-bogota-snorkel",
+   "criterio": "descuento-equipo-no-aplica-minicurso",
+   "pedia": "Dice que el descuento del 5 % por equipo propio no aplica al minicurso (solo a buceo recreativo y cursos); no da a entender que con el equipo completo sí aplicaría.",
+   "motivo_juez": "En directo (conv 5573): 'El descuento del 5% por equipo propio aplica solo si llevan el equipo completo; por traer únicamente las máscaras no aplica', para el minicurso.",
+   "turno": 3,
+   "mensaje_cliente": "hay algun descuento? tenemos nuestras propias mascaras jaja. y me mandas el link para reservar el minicurso?",
+   "historial": [
+    {
+     "role": "user",
+     "content": "buenas tardes, somos una pareja de bogota, vamos a estar en cartagena del 12 al 15. queremos hacer snorkel un dia, cuanto vale?"
+    },
+    {
+     "role": "assistant",
+     "content": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\n¡Buenas tardes! ¡Qué chévere plan para disfrutar los arrecifes de las Islas del Rosario! El tour de snorkel desde Cartagena cuesta *126 USD por persona reservando online*. Incluye lancha ida y vuelta, equipo, dos salidas guiadas y almuerzo.\n\nSe encuentran en el Muelle de la Bodeguita a las 8:00 a. m. y regresan a Cartagena aproximadamente a las 4:15 p. m. Puedes elegir la fecha y las dos personas al reservar aquí: https://book.divingplanet.org/book/superficio/3?language=es\n\n¿Ya tienen en mente qué día entre el 12 y el 15 les gustaría ir?\n\n🤿 *Tour de Snorkeling*\n💰 2 × 448.000 COP p.p. = *896.000 COP*\n\nComo sois colombianos/residentes, el pago es en pesos (COP): puedes pagar *100% online* o *50% online + 50% en persona*. Te paso con un asesor para confirmar disponibilidad y coordinar el pago — enseguida se pone en contacto contigo. 🌊"
+    },
+    {
+     "role": "user",
+     "content": "mmm y si mejor hacemos el minicurso de buceo? nunca hemos buceado. seria el 13"
+    },
+    {
+     "role": "assistant",
+     "content": "¡Claro que sí! El minicurso es ideal para una primera experiencia: incluye teoría online, práctica en piscina y una inmersión en el mar con instructor PADI. Cuesta *655.000 COP por persona reservando online* e incluye lancha ida y vuelta desde Cartagena, equipo, seguro y almuerzo.\n\nPara el día 13, el punto de encuentro es a las *8:00 a. m. en el Muelle de la Bodeguita*; el regreso a Cartagena es aproximadamente a las *4:15 p. m.* Después de reservar reciben por correo la teoría, que deben completar antes de la actividad. También es obligatorio llenar este formulario médico: https://form.jotform.com/divingplanetcartagena/exoneracion-curso-en-espanol\n\nEl asesor ya tiene el contexto de su plan y les escribe por aquí para ayudarles con la reserva."
+    }
+   ]
+  },
+  {
+   "id": "g3-08",
+   "tarea": "G3",
+   "dialogo": "grupo-6-uk",
+   "criterio": "sin-aviso-refresh-si-buceo-reciente",
+   "pedia": "No dice que haga falta un refresh por llevar más de 2 años sin bucear: el cliente acaba de decir que todos bucearon el año pasado. Explica que el 10 % de grupo no es automático y lo aplica el equipo, sin afirmar cosas que la base no dice (p. ej. que no hace falta reembolso).",
+   "motivo_juez": "En directo (conv 5574): tras 'no, we all dived last year' añadió 'After more than 2 years without diving, a refresher is normally needed…' y afirmó 'No refund is needed'.",
+   "turno": 2,
+   "mensaje_cliente": "no, we all dived last year. saturday works. how do we get the group discount if we book online? do we pay first and get refunded?",
+   "historial": [
+    {
+     "role": "user",
+     "content": "Hi! We're a group of 6 friends from the UK. 4 of us are PADI open water certified and 2 just want to snorkel. We're staying in Getsemani in Cartagena. Is there a group discount? Thinking of this Saturday."
+    },
+    {
+     "role": "assistant",
+     "content": "Hi! 🪸 I'm *Coral* from *Diving Planet* — we dive year-round in the Rosario Islands, departing from Cartagena or right from the islands. So happy to have you here! I'd love to help you put your plan together. 🌊\n\nHi! That sounds like a lovely day out in the Rosario Islands 🌊 Yes, your group can combine certified diving and snorkeling on the same trip. Snorkeling takes place in a different area from the dive sites, and the group may travel together or be split by activity.\n\nThere’s an extra *10% group discount for groups of 5 or more* on recreational diving and snorkeling; the team applies it. The online prices already include a separate 10% online discount. For reference, from Cartagena, 2 dives are *$178 USD per diver online*, and snorkeling is *$126 USD per person online*.\n\nFor Saturday, choose the date and quantities in the booking links; the system shows the available booking options. You’ll meet at Muelle de la Bodeguita at 8:00 a.m. Getsemaní is close to the historic center, but transport to the dock isn’t included.\n\nBook 2 dives: https://book.divingplanet.org/book/salidas-de-buceo/1?language=en · Book snorkeling: https://book.divingplanet.org/book/superficio/3?language=en\n\nAnyone who is not Colombian or a resident of Colombia (without a Colombian ID) pays in USD by card on the website; the rate is the same, only the currency changes.\n\nI recommend the *2 dives in 1 day* plan in the Rosario Islands. (If you'd rather a *multi-day package* of 3+ dives, just tell me.)\n\nHas it been *more than 2 years* since any diver in the group last dived?"
+    }
+   ]
+  }
+ ]
+}

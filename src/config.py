@@ -421,12 +421,33 @@ class Settings(BaseSettings):
     # el resto igual) y ningún falso positivo en 240 mensajes reales de las rondas y del banco (contar plazas o
     # preguntar si hay sitio no cuenta). Revert = False aquí y quitar la línea del compose.
     datos_ajenos_se_niegan: bool = True
+    # G3-03 (17-oct, Claude contra el chatbot): el RAG escribía "te paso con el equipo" sin que el sistema pasara el caso
+    # a nadie (conv 5569, escalated=False) y el cliente se quedaba esperando. Con el flag, el RAG no lo da por hecho:
+    # lo OFRECE como pregunta y el pase lo hace el sistema si el cliente acepta. APAGADO hasta medirlo.
+    # PROMOCIONADO 18-oct (HISTORY 0.31.49): banco 6/6 -> 0/6; ronda core g301-B 95,6 % -> g3-B 96,5 %, ninguna
+    # regresión atribuida (3 reps con y sin). Revert = False aquí y en el compose.
+    rag_ofrece_el_pase: bool = True
+    # G3-05 (17-oct, Claude contra el chatbot): "salimos de Cartagena el día 30. ¿Hace falta saber nadar?" recibía "no
+    # tengo ese dato" (3 de 3, en español, inglés y portugués) aunque la FAQ existe: buscando el mensaje entero, el
+    # origen y la fecha tapan la pregunta con las fichas que salen desde Cartagena; en portugués, además, se buscaba
+    # tal cual contra la base en español e inglés. Con el flag, la búsqueda doble usa la PREGUNTA SOLA (sin los datos
+    # que da el cliente y en el idioma de la respuesta), una llamada corta a la vez que la búsqueda principal, solo
+    # para mensajes largos o en otro idioma. APAGADO hasta medirlo.
+    # 18-oct: banco G3 9/9 -> 1/9, rag_piezas sin pérdidas, core sin regresiones atribuidas, pero +0,7 s de mediana en
+    # los turnos del RAG con gpt-4o-mini (que además no traducía el portugués). APAGADO hasta que Gadea elija el
+    # modelo (`pregunta_sola_model`): gpt-4.1-nano 0,5-0,6 s (familia 4.1, que Álvaro quiere dejar) o Luna 0,98 s.
+    busqueda_con_la_pregunta_sola: bool = False
     # Modelo del revisor de `avisos_al_final` (vacío = `rag_plan_model`). Va a la vez que el juez de grounding.
     # Medido en local (17-oct, 5 casos del banco + los 93 turnos de la ronda core cal-D): gpt-4.1-mini acierta 4 de 5
     # pero añade aviso en 64 de 93 turnos (relleno); gpt-4.1 y GPT-6 Luna (sin razonamiento) aciertan 4 de 5 y añaden
     # en 20-24 y 24-27. Latencia, a la vez que el juez: gpt-4.1 no añade nada (p50 0,0 s) y Luna p50 0,4 s / p90 0,8 s.
     # DECISIÓN DE GADEA (17-oct): Luna, el último modelo y el más barato.
     avisos_al_final_model: str = "gpt-6-luna"
+    # G3-05 (18-oct): el modelo de la pregunta sola (`busqueda_con_la_pregunta_sola`). Medido en local con 5 mensajes
+    # x2: gpt-4o-mini 0,80 s de mediana y NO traducía "Precisa saber nadar?"; gpt-4.1-nano 0,59 s y traduce fiel;
+    # gpt-4.1-mini 0,60 s pero añadía detalles ("for diving on Friday"). Va a la vez que la búsqueda principal: lo que
+    # tarde de más que ella es latencia del turno.
+    pregunta_sola_model: str = "gpt-4.1-nano"
     # CAL-E1 (DECISIÓN DE GADEA del 16-oct, que sustituye a la del 17-sep): esto es un chatbot y NO da números de
     # teléfono ni de WhatsApp. Si el cliente pide un número o quiere hablar con alguien, la conversación se PASA A UN
     # ASESOR (mismo pase que `needs_staff`). De paso desaparece la invención que el juez marcaba en cal-03: el texto

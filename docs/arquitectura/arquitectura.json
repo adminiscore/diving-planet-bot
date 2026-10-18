@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-18T05:45:35+00:00",
-  "commit": "4cafacd",
+  "generado": "2026-10-18T05:45:56+00:00",
+  "commit": "296b97b",
   "rama": "feature/pre_alvaro"
  },
  "vistas": {
@@ -186,8 +186,8 @@
    "marca": "openrouter",
    "tiempos": {
     "n": 93,
-    "p50": 0.413,
-    "p95": 1.796
+    "p50": 0.426,
+    "p95": 1.767
    }
   },
   {
@@ -210,9 +210,9 @@
    ],
    "modelos": [],
    "tiempos": {
-    "n": 8,
-    "p50": 0.002,
-    "p95": 0.003
+    "n": 9,
+    "p50": 0.003,
+    "p95": 0.015
    }
   },
   {
@@ -228,8 +228,8 @@
    "interruptores": [],
    "tiempos": {
     "n": 2,
-    "p50": 0.002,
-    "p95": 0.003
+    "p50": 0.004,
+    "p95": 0.005
    }
   },
   {
@@ -253,8 +253,8 @@
    "modelos": [],
    "tiempos": {
     "n": 1,
-    "p50": 0.004,
-    "p95": 0.004
+    "p50": 0.001,
+    "p95": 0.001
    }
   },
   {
@@ -272,8 +272,8 @@
    "interruptores": [],
    "tiempos": {
     "n": 4,
-    "p50": 3.514,
-    "p95": 4.045
+    "p50": 3.783,
+    "p95": 4.753
    }
   },
   {
@@ -289,9 +289,9 @@
    "modelos": [],
    "interruptores": [],
    "tiempos": {
-    "n": 78,
-    "p50": 1.924,
-    "p95": 4.745
+    "n": 77,
+    "p50": 2.199,
+    "p95": 5.481
    }
   },
   {
@@ -500,9 +500,9 @@
    ],
    "marca": "openai",
    "tiempos": {
-    "n": 78,
-    "p50": 0.033,
-    "p95": 0.991
+    "n": 77,
+    "p50": 0.029,
+    "p95": 0.882
    }
   },
   {
@@ -532,9 +532,9 @@
    ],
    "modelos": [],
    "tiempos": {
-    "n": 78,
+    "n": 77,
     "p50": 0.005,
-    "p95": 0.487
+    "p95": 0.017
    }
   },
   {
@@ -571,7 +571,7 @@
    ],
    "marca": "openai",
    "tiempos": {
-    "n": 72,
+    "n": 69,
     "p50": 0.006,
     "p95": 0.015
    }
@@ -668,9 +668,9 @@
    ],
    "marca": "openai",
    "tiempos": {
-    "n": 72,
-    "p50": 0.413,
-    "p95": 0.809
+    "n": 69,
+    "p50": 0.364,
+    "p95": 0.907
    }
   },
   {
@@ -798,9 +798,9 @@
    ],
    "marca": "openai",
    "tiempos": {
-    "n": 72,
-    "p50": 0.989,
-    "p95": 4.017
+    "n": 69,
+    "p50": 2.383,
+    "p95": 4.558
    }
   },
   {
@@ -919,7 +919,7 @@
    "conteo": {
     "n": 44,
     "que": "preguntas",
-    "fuente": "2026-10-18-g301-B.json"
+    "fuente": "2026-10-18-g3-B.json"
    }
   },
   {
@@ -976,6 +976,13 @@
      "titulo": "La búsqueda sabe de qué va la pregunta",
      "codigo": true,
      "pre": true,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "busqueda_con_la_pregunta_sola",
+     "titulo": "Se busca también la pregunta sola, sin los datos que da el cliente",
+     "codigo": false,
+     "pre": false,
      "sin_efecto": false
     }
    ],
@@ -1174,6 +1181,13 @@
      "titulo": "Avisos que el cliente necesita y no pregunta",
      "codigo": false,
      "pre": false,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "rag_ofrece_el_pase",
+     "titulo": "El bot ofrece pasar con una persona, no dice que ya lo ha hecho",
+     "codigo": true,
+     "pre": true,
      "sin_efecto": false
     }
    ],
@@ -2076,6 +2090,19 @@
    "fijado_en_pre": false,
    "usado_por": [
     "r_escribir"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "busqueda_con_la_pregunta_sola",
+   "area": "Preguntas",
+   "titulo": "Se busca también la pregunta sola, sin los datos que da el cliente",
+   "texto": "Si el cliente da datos y pregunta en el mismo mensaje (\"salimos de Cartagena el día 30. ¿Hace falta saber nadar?\"), el origen y la fecha tapaban la pregunta y la búsqueda no traía la pregunta frecuente: el bot decía que no tenía el dato. Ahora también se busca la pregunta sola, traducida si el cliente escribe en portugués o francés.",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
+   "usado_por": [
+    "r_reescribir"
    ],
    "sin_efecto": null
   },
@@ -3027,6 +3054,19 @@
    "sin_efecto": null
   },
   {
+   "nombre": "rag_ofrece_el_pase",
+   "area": "Preguntas",
+   "titulo": "El bot ofrece pasar con una persona, no dice que ya lo ha hecho",
+   "texto": "La respuesta decía 'te paso con el equipo' aunque nadie recibía el caso, y el cliente se quedaba esperando. Ahora pregunta '¿quieres que te pase con un asesor?' y el pase lo hace el sistema si el cliente dice que sí.",
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
+   "usado_por": [
+    "r_escribir"
+   ],
+   "sin_efecto": null
+  },
+  {
    "nombre": "rag_origen_pregunta",
    "area": "Preguntas",
    "titulo": "Pregunta el origen antes de dar precio",
@@ -3342,7 +3382,7 @@
     "r_revisor"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 94
+   "llamadas_ultima_ronda": 93
   },
   {
    "ajuste": "extraction_model",
@@ -3357,7 +3397,7 @@
     "b_acuse"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 112
+   "llamadas_ultima_ronda": 149
   },
   {
    "ajuste": "extractor_turno_model",
@@ -3389,7 +3429,7 @@
    ],
    "proveedor": "OpenRouter",
    "llamadas_ultima_ronda": null,
-   "nota": "Decidió solo 82 de 93 mensajes; en los otros 11 decidió el LLM de respaldo (sus llamadas cuentan en gpt-4o-mini)."
+   "nota": "Decidió solo 81 de 93 mensajes; en los otros 12 decidió el LLM de respaldo (sus llamadas cuentan en gpt-4o-mini)."
   },
   {
    "ajuste": "openai_embedding_model",
@@ -3412,7 +3452,7 @@
     "r_reescribir"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 112
+   "llamadas_ultima_ronda": 149
   },
   {
    "ajuste": "openai_transcription_model",
@@ -3425,6 +3465,14 @@
    "llamadas_ultima_ronda": null
   },
   {
+   "ajuste": "pregunta_sola_model",
+   "codigo": "gpt-4.1-nano",
+   "pre": "gpt-4.1-nano",
+   "usado_por": [],
+   "proveedor": "OpenAI",
+   "llamadas_ultima_ronda": null
+  },
+  {
    "ajuste": "rag_answer_model",
    "codigo": "gpt-6-luna",
    "pre": "gpt-6-luna",
@@ -3432,7 +3480,7 @@
     "r_escribir"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 94
+   "llamadas_ultima_ronda": 93
   },
   {
    "ajuste": "rag_plan_model",
@@ -3444,46 +3492,46 @@
   }
  ],
  "ronda": {
-  "etiqueta": "g301-B",
-  "run_at": "2026-10-18T00:51:37Z",
-  "fichero": "2026-10-18-g301-B.json",
-  "commit": "6f09689",
+  "etiqueta": "g3-B",
+  "run_at": "2026-10-18T02:23:02Z",
+  "fichero": "2026-10-18-g3-B.json",
+  "commit": "47e9e98",
   "por_tipo": {
    "reserva": {
     "turns": 49,
-    "latency_p50": 1.175,
-    "latency_p95": 2.055,
-    "latency_avg": 1.341,
-    "llm_calls_avg": 2.29,
-    "llm_calls_p95": 3.0,
+    "latency_p50": 1.167,
+    "latency_p95": 2.086,
+    "latency_avg": 1.36,
+    "llm_calls_avg": 2.37,
+    "llm_calls_p95": 4.0,
     "llm_calls_max": 5,
-    "embeddings_avg": 1.39,
-    "llm_share": 1.418,
+    "embeddings_avg": 1.49,
+    "llm_share": 1.446,
     "tokens_avg": 0,
     "cost_avg_usd": 0
    },
    "rag": {
     "turns": 44,
-    "latency_p50": 3.666,
-    "latency_p95": 5.704,
-    "latency_avg": 3.99,
-    "llm_calls_avg": 5.23,
-    "llm_calls_p95": 7.0,
-    "llm_calls_max": 7,
-    "embeddings_avg": 1.61,
-    "llm_share": 1.522,
+    "latency_p50": 4.381,
+    "latency_p95": 6.996,
+    "latency_avg": 4.676,
+    "llm_calls_avg": 5.95,
+    "llm_calls_p95": 8.85,
+    "llm_calls_max": 9,
+    "embeddings_avg": 2.36,
+    "llm_share": 1.457,
     "tokens_avg": 0,
     "cost_avg_usd": 0
    }
   },
   "enrutador": {
    "by_backend": {
-    "jev": 82,
-    "llm_uncertain": 10,
+    "jev": 81,
+    "llm_uncertain": 11,
     "llm": 1
    },
-   "ms_p50": 389.5,
-   "ms_p95": 469.6
+   "ms_p50": 395.0,
+   "ms_p95": 486.7
   },
   "cliente": {
    "turns": 93,
@@ -3492,11 +3540,11 @@
    "multi_bubble": 0,
    "latency_p50": 3.0,
    "latency_p95": 6.0,
-   "latency_max": 7
+   "latency_max": 8
   },
   "llamadas_por_modelo": {
-   "gpt-4o-mini": 112,
-   "gpt-6-luna": 94,
+   "gpt-4o-mini": 149,
+   "gpt-6-luna": 93,
    "gpt-4.1-mini": 92,
    "gpt-4.1": 44
   },

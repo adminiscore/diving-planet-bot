@@ -80,8 +80,8 @@ asyncio.run(main())
 '''
 
 
-def casos_del_banco(ids: list[str] | None, tarea: str | None) -> list[dict]:
-    datos = json.loads(BANCO.read_text(encoding="utf-8"))
+def casos_del_banco(ids: list[str] | None, tarea: str | None, banco: Path | None = None) -> list[dict]:
+    datos = json.loads((banco or BANCO).read_text(encoding="utf-8"))
     casos = []
     for f in datos["fallos"]:
         if not f["turno"] or (ids and f["id"] not in ids) or (tarea and f.get("tarea") != tarea):
@@ -100,9 +100,11 @@ def main() -> None:
                     help="interruptor encendido solo en ese proceso")
     ap.add_argument("--codigo-local", action="store_true", help="con el código local (sin desplegar)")
     ap.add_argument("--out", help="JSON de salida")
+    ap.add_argument("--banco", help="otro banco con el mismo formato (p. ej. docs/robustness/g3/banco-g3.json)")
     args = ap.parse_args()
 
-    casos = casos_del_banco(args.ids.split(",") if args.ids else None, args.tarea)
+    casos = casos_del_banco(args.ids.split(",") if args.ids else None, args.tarea,
+                            Path(args.banco) if args.banco else None)
     if not casos:
         raise SystemExit("ningún caso con turno para esos filtros")
     print(f"{len(casos)} casos: {', '.join(c['id'] for c in casos)}")

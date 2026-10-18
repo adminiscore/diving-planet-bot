@@ -68,9 +68,9 @@ rag_agent.logger.setLevel(logging.INFO)
 rag_agent.logger.addHandler(_Log())
 
 _condense = rag_agent.condense_query
-async def _spy_condense(query, history=None, lang="es"):
+async def _spy_condense(query, history=None, lang="es", **kw):  # 18-oct: CAL-D pasa `hechos` (sin **kw, ERROR en todo)
     t0 = time.perf_counter()
-    out = await _condense(query, history=history, lang=lang)
+    out = await _condense(query, history=history, lang=lang, **kw)
     T["reescrita"] = out
     T["t_reescritura"] = round(time.perf_counter() - t0, 3)
     return out

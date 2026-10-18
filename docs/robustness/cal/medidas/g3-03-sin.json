@@ -1,0 +1,44 @@
+{
+ "etiqueta": "g3-03-sin",
+ "reps": 3,
+ "flags": [],
+ "codigo_local": true,
+ "verificador": "gpt-4.1",
+ "casos": [
+  {
+   "id": "g3-03a",
+   "dialogo": "islas-refresh-coral-sand",
+   "criterio": "no-promete-pase",
+   "repeticiones": 3,
+   "fallan": 3,
+   "respuestas": [
+    "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\n¡Hola! Las Islas del Rosario son un lugar muy chévere para volver al agua. Como llevas más de dos años sin bucear, normalmente se requiere un *refresh* antes de salir; no puedo confirmarte por aquí si puedes bucear mañana sin esa revisión.\n\nAdemás, no tengo confirmado si Coral Sand tiene acceso marítimo para la recogida. Para revisar el *refresh* y coordinar el punto de encuentro para mañana, te paso con un asesor del equipo.\n\n¿Y para cuántas personas armamos el plan? Así te paso el precio exacto. 😊",
+    "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\n¡Hola! Las Islas del Rosario son un lugar muy chévere para volver al agua. Como llevas más de dos años sin bucear, normalmente necesitas hacer un *refresh* antes de salir; no puedo confirmarte si puedes bucear mañana sin esa revisión. Además, no tengo confirmado si Coral Sand tiene acceso marítimo para la recogida.\n\nTe paso con el equipo para que revise el *refresh* y coordine la recogida para mañana.\n\nSi estás alojado en las islas, la recogida y el regreso son en tu hotel si tiene acceso marítimo.\n\n¿Y para cuántas personas armamos el plan? Así te paso el precio exacto. 😊",
+    "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\n¡Hola! Qué chévere que estés en Isla Grande. Como llevas más de 2 años sin bucear, normalmente necesitas hacer un *refresh* antes de volver al agua. No puedo confirmarte si puedes hacerlo mañana desde el hotel Coral Sand; la recogida depende de que tenga acceso marítimo y el equipo debe coordinar el punto y la hora.\n\nTe paso con un asesor para revisar la logística y ayudarte con la salida de mañana.\n\nComo estás alojado en las islas, la recogida y el regreso son en tu hotel si tiene acceso marítimo.\n\n¿Y para cuántas personas armamos el plan? Así te paso el precio exacto. 😊"
+   ],
+   "explicaciones": [
+    "El bot dice: 'te paso con un asesor del equipo', pero no lo ofrece como pregunta ni espera confirmación del cliente, lo que sigue siendo una promesa de pase no real (no hay escalado ni transferencia efectiva). El fallo original era prometer el pase como hecho, y aquí se repite exactamente igual.",
+    "El bot dice 'Te paso con el equipo para que revise el refresh y coordine la recogida para mañana', lo que implica que ya está haciendo el pase, pero no hay un pase real (escalated=False) y el bot sigue gestionando la conversación. Según el criterio, debe ofrecer el pase como pregunta ('¿quieres que te ponga en contacto con el equipo?') si algo lo tiene que confirmar una persona, no prometerlo como hecho.",
+    "La respuesta dice: 'Te paso con un asesor para revisar la logística y ayudarte con la salida de mañana', lo que implica que el pase ya está hecho, pero el bot sigue interactuando y no realiza un pase real ni lo ofrece como pregunta. Esto reproduce el fallo original del criterio no-promete-pase."
+   ]
+  },
+  {
+   "id": "g3-03b",
+   "dialogo": "islas-refresh-coral-sand",
+   "criterio": "no-promete-pase",
+   "repeticiones": 3,
+   "fallan": 3,
+   "respuestas": [
+    "¡Listo! Como llevas más de dos años sin bucear, normalmente necesitas hacer un *refresh* antes de volver a bucear. Se reserva como *Minicurso de Buceo (ya en las islas)* y cuesta **134 USD online**.\n\nLa recogida en tu hotel depende de que tenga acceso marítimo; el equipo debe confirmarte el punto y la hora exactos. Para mañana, también te paso con el equipo para que revise la logística y te ayude con la reserva.\n\nSi estás alojada en las islas, la recogida y el regreso son en tu hotel si tiene acceso marítimo.\n\nEl *refresher* es una sesión corta de repaso en el agua antes de la inmersión. Tiene un costo de *134 USD / 475.000 COP* por persona que lo necesite. ¿Os interesa?",
+    "¡Claro! Como llevas más de dos años sin bucear, normalmente se requiere un *refresh*. Se reserva como *Minicurso de Buceo (ya en las islas)* y cuesta **134 USD online**; incluye el equipo, pero no el almuerzo.\n\nLa recogida desde Coral Sand depende de que el hotel tenga acceso marítimo. No tengo confirmada la hora ni el punto exacto para ese hotel; un asesor debe coordinarlo contigo. Como quieres hacerlo mañana, te paso con el equipo para que revise la recogida y el horario.\n\nComo sales desde las islas, el almuerzo no está incluido; puedes comer en el hotel o traer comida.\n\nEl *refresher* es una sesión corta de repaso en el agua antes de la inmersión. Tiene un costo de *134 USD / 475.000 COP* por persona que lo necesite. ¿Os interesa?",
+    "¡Claro! Para ti sola, el refresher se reserva como *Minicurso de Buceo (ya en las islas)* y cuesta **134 USD online**. El almuerzo no está incluido.\n\nLa recogida desde tu hotel, Coral Sand, y la hora exacta no las tengo confirmadas; el equipo debe coordinar el punto de encuentro según el acceso marítimo del hotel. Como quieres hacerlo mañana, te paso con el equipo para que confirme la logística y te ayude con la reserva.\n\nComo sales desde las islas, el almuerzo no está incluido; puedes comer en el hotel o traer comida.\n\nEl *refresher* es una sesión corta de repaso en el agua antes de la inmersión. Tiene un costo de *134 USD / 475.000 COP* por persona que lo necesite. ¿Os interesa?"
+   ],
+   "explicaciones": [
+    "La respuesta sigue diciendo 'te paso con el equipo para que revise la logística y te ayude con la reserva', lo que implica que el pase ya está hecho, en vez de ofrecerlo como una pregunta o aclarar que lo puede gestionar si el cliente lo desea. No hay un pase real ni se pregunta si quiere que lo contacten, por lo que el fallo original persiste.",
+    "El bot sigue diciendo 'te paso con el equipo para que revise la recogida y el horario' como si el pase fuera automático, en vez de ofrecerlo como pregunta o explicar que un asesor lo contactará si es necesario. No hay un pase real ni se pregunta si quiere que lo contacten, por lo que el fallo original persiste.",
+    "El bot sigue diciendo 'te paso con el equipo para que confirme la logística y te ayude con la reserva', lo que implica que ya está haciendo el pase, en vez de ofrecerlo como pregunta o pedir confirmación antes de transferir la conversación. No es un problema de falta de información, sino de cómo se comunica el pase: lo presenta como un hecho consumado, igual que en el fallo original."
+   ]
+  }
+ ],
+ "sin_medir": []
+}

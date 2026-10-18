@@ -59,6 +59,100 @@ integrar la rama del otro y suite en verde, porque en PRE gana el último; (3) *
 despliegue reinicia el contenedor y mata la medida del otro (avisar en el registro de Plan Coral con la hora de fin).
 Las doce normas, con su porqué, están en el documento.
 
+### ▶️ RETOMAR AQUÍ — 18-oct, 06:00 (Gadea con Claude, en autonomía): CAL-F 95,8 %, G3-03 PROMOCIONADO; decisiones pendientes para Gadea
+
+**En PRE** (feature/pre_gadea, con la rama de Álvaro integrada): `RAG_OFRECE_EL_PASE` PROMOCIONADO; los 4 flags de
+G3-01 de Álvaro siguen ENCENDIDOS (su ronda g301-B; promocionarlos lo decide él); `BUSQUEDA_CON_LA_PREGUNTA_SOLA`
+APAGADO. HISTORY 0.31.49.
+
+**Hecho esta noche:**
+- **CAL-F** juzgado entero: 95,8 % (36 fallos de 849), 86/116 sin fallos (`docs/robustness/cal/cal-f-golden-completo.md`;
+  la lista de fallos está ahí, sin atribuir todavía).
+- **Ronda core g3-B** contra g301-B: 96,5 % frente a 95,6 %, 24/32 los dos; atribución con 3 reps con y sin: ninguna
+  regresión de los flags (con ellos 4 fallos, sin ellos 8).
+- **Juez:** referencia al día con las decisiones de Gadea (teléfono, pago conciliado, idioma, datos ajenos). OJO: cambia
+  la clave de la caché; una ronda vieja se juzga desde un worktree en su commit.
+- **Descartado:** BM25 con cualquier palabra (empeora la búsqueda). `rag_piezas` arreglado (fallaba desde CAL-D).
+
+**Decisiones para Gadea:**
+1. **G3-05, pregunta sola:** ¿encender `BUSQUEDA_CON_LA_PREGUNTA_SOLA`? Arregla "no tengo ese dato" cuando el cliente
+   da datos y pregunta a la vez (9/9 → 1/9). Coste: +0,7 s en los turnos del RAG con gpt-4o-mini; con gpt-4.1-nano
+   (ya en config y compose) la llamada baja a 0,5-0,6 s; con Luna, 0,98 s. Álvaro prefiere no sumar piezas a la 4.1.
+2. **G3-06, Barú:** ¿recogéis en hoteles de Barú con acceso al mar? ¿A qué precio?
+3. **G3-07a, dos monedas:** USD en el texto y COP en la tarjeta del mismo mensaje. Opciones en hallazgos.md (con
+   Álvaro).
+4. **G3-08:** si un grupo paga online, ¿el 10 % de grupo se devuelve después o se pide antes?
+5. ¿Una persona con cédula de extranjería (residente) paga en COP y puede dejar el 50 % de anticipo? (CAL-F)
+
+**Hecho después (07:45):** estabilidad de los fallos VISIBLES de CAL-F (3 reps en PRE 08f138e, juez al día): **20
+estables**, 16 ruido, 5 ya no fallan; lista por zonas en `docs/robustness/cal/cal-f-golden-completo.md` (los 9 del examen
+oculto no se repiten ni se listan). El juez ve ya la fecha y hora de Colombia de la conversación (`cuando_fue`), y "Este
+plan dura 1 día" sale en singular (a18f756). Pasado a Álvaro: con dos planes candidatos ("dos buceos o el pack de 5"),
+la pregunta del origen afirma "hay que dormir en las islas" (`_plan_needs_overnight`).
+
+**Siguiente:** arreglar por causa los fallos estables de CAL-F de la zona RAG (lista en el documento); CAL-G (latencia)
+con las fotos por pieza; y G9 UNA sola vez cuando Gadea lo diga (`run_synthetic_pre --sample golden --golden
+docs/robustness/golden-set/examen-sintetico-g9.json` y `judge_golden_set --golden …`, con la referencia de ese momento).
+
+### ▶️ RETOMAR AQUÍ — 17-oct, 21:45 (Gadea con Claude, en autonomía): G3 en directo (G3-04…08), G3-05 arreglado con flag; SIN CRÉDITO DE OPENAI
+
+**Bloqueo:** el crédito de OpenAI se agotó a las 21:31 (429 `credit_balance_exhausted`, también en PRE). Hay que
+recargar (Gadea o Álvaro; Claude no toca claves). El juez de CAL-F quedó a medias (la caché guarda lo juzgado):
+relanzar `ENV_FILE=.env.dev python -m scripts.judge_golden_set --run docs/robustness/synthetic-runs/2026-10-17-calf-completa.jsonl`
+SIN `timeout` (la primera vez se cortó a los 50 min por el `timeout 3000`).
+
+**Commits locales sin subir** (feature/pre_gadea; los anteriores a 95f1659 también están en `origin/feature/gadea-g3`,
+que no despliega): 310ecb2 G3-05, 1479d7e G3-06, 0845d7b G3-07b, b59fed9 G3-08, 93c9ff4 aviso del refresh. Subir
+agrupado y avisando por Coral (Álvaro medía g3-01 en PRE).
+
+**G3 (`docs/robustness/g3/hallazgos.md`, banco `docs/robustness/g3/banco-g3.json`):**
+- **G3-05 ARREGLADO con flag `BUSQUEDA_CON_LA_PREGUNTA_SOLA` (APAGADO):** si el cliente da datos y pregunta a la vez
+  ("salimos de Cartagena el 30. ¿hace falta saber nadar?") la búsqueda no traía la FAQ ("no tengo ese dato", 3/3 en
+  es, en y pt). La búsqueda doble usa la pregunta sola (gpt-4o-mini, a la vez que la búsqueda principal, solo
+  mensajes de 8+ palabras o en otro idioma). Banco 9/9 → 1/9. Falta: latencia (pieza `pregunta_sola` en TURN_METRICS)
+  en la ronda core B, junto con `RAG_OFRECE_EL_PASE` (G3-03).
+- **G3-06 (Barú):** Barú queda como `location=island` y el bot dice a la vez "en Barú no operamos" y "la recogida está
+  incluida"; además cotiza un paquete con nocturna que nadie pidió (2/3). **Pregunta para Gadea:** ¿recogéis en
+  hoteles de Barú con acceso al mar, y a qué precio?
+- **G3-07a (dos monedas en el mismo mensaje, 3/3):** el RAG adelantado (rag-5) se adopta antes de que el flujo aplique
+  la extracción. Tres opciones con coste de latencia, a decidir con Álvaro y Gadea (en hallazgos.md).
+- **G3-07b ARREGLADO en datos:** el 5 % por equipo propio no aplica al minicurso ni al snorkel (discounts.json); se
+  reindexa al desplegar: medir `g3-07b` después.
+- **G3-08:** aviso del refresh tras "we all dived last year" (condición real puesta en avisos.json, a medir) y "No
+  refund is needed" sin base. **Pregunta para Gadea:** si un grupo paga online, ¿el 10 % de grupo se devuelve después o
+  se pide antes?
+- **BM25 casi muerto:** `websearch_to_tsquery` exige todas las palabras; casi nunca devuelve nada. Medir con
+  `rag_piezas` antes de tocarlo.
+
+**Siguiente:** recargar → juez de CAL-F → medir g3-08 y la latencia de G3-05 → ronda core B con los flags de G3 →
+CAL-G → G9 una vez.
+
+### ▶️ RETOMAR AQUÍ — 17-oct, 19:00 (Gadea con Claude): CAL-A y CAL-D cerradas, r6-2 hecha, G9 congelado; PLAN HASTA ANDRÉS
+
+**Plan decidido por Gadea (Plan Coral, log `l-1017-plan-andres`):** no se piden conversaciones a Andrés (dueño de Diving
+Planet) hasta tener el bot robusto. Orden: (1) cerrar lo en vuelo (CAL-C de Álvaro, r6-2); (2) **G9**, examen oculto
+sintético CONGELADO; (3) **CAL-F**, golden visible completo; (4) **G3**, Claude contra el chatbot en directo
+(`scripts/charla_pre.py`), los fallos al banco y arreglo por causa; (5) CAL-G si hay margen; (6) **G9 una sola vez**
+(`run_synthetic_pre --sample golden --golden docs/robustness/golden-set/examen-sintetico-g9.json` y
+`judge_golden_set --golden …`); si sale bien, a Andrés.
+
+- **Promocionado hoy (en PRE):** `CATALOGO_PROFUNDIDAD`, `AVISOS_AL_FINAL` (A6, revisor Luna), cal-74 (días del plan),
+  cal-32 (USD sin cédula), ReActivate = refresh (decisión de Gadea), `MEMORIA_SIN_ORDENES_DEL_CLIENTE` y
+  `DATOS_AJENOS_SE_NIEGAN` (r6-2). HISTORY 0.31.42, 0.31.44-0.31.46.
+- **r6-2:** banco de 10 inyecciones de punta a punta (`docs/robustness/seguridad/banco-inyeccion.json`, `banco_fallos
+  medir --banco …`): 0/30.
+- **G9 congelado:** `docs/robustness/golden-set/examen-sintetico-g9.json` (72 conversaciones, gpt-4.1, sha256
+  b4231cfb…). NADIE lo abre para ajustar el bot ni lo mete en bancos.
+- **Decisiones de Gadea de hoy:** el chatbot no da teléfonos (pasa a un asesor); los datos de otros clientes se niegan
+  (no pase); un refresh o ReActivate hecho en otro centro cuenta; revisor A6 con Luna; q5-1 (puerta del golden en CI)
+  DESCARTADA por coste.
+- **Reparto con Álvaro (por Coral):** él cierra CAL-C (C3e/C4/C5) y sigue con r6-1 (tiempos por llamada para CAL-G,
+  429/timeouts, alerta de saldo, salir de gpt-4.1); los fallos de G3 por zonas (flujo/extractor él, RAG/datos Gadea).
+- **Coral** (`tools/coral`): el chat entre los Claude; cada sesión arma la escucha con Monitor al empezar. Las carpetas
+  `/tmp/codigo-local-plaza-*` del contenedor son de Álvaro; `…-usuario-*`, de Gadea.
+
+### ▶️ (anterior) — 17-oct tarde (Álvaro con Claude): CAL-C PROMOCIONADO; Luna medida; Coral activado
+### ▶️ RETOMAR AQUÍ — 17-oct noche (Álvaro con Claude): CAL-C CERRADA (C4, C5, C3e promocionados); siguiente r6-1
 ### ▶️ RETOMAR AQUÍ — 17-oct 21:45 (Álvaro con Claude): r6-1 en PRE; extractor a Luna aparcado; G3-01 arreglado (local)
 
 **Sin crédito de OpenAI desde ~21:31** (429 `credit_balance_exhausted`, visto por Gadea y confirmado con
@@ -128,7 +222,7 @@ NO es un invento: está en `faqs.json:750`; el juez del golden se equivocó. Cor
 medir con `estabilidad_extractor --modelo gpt-6-luna`; (3) **r6-1**: alerta de saldo de OpenAI, respaldo del RAG que
 NO sea Luna (el escritor ya lo es) y reintentos ante 429.
 
-### ▶️ RETOMAR AQUÍ — 17-oct tarde (Gadea con Claude): CAL-A — profundidad y avisos al final (A6) medidos, APAGADOS, candidatos a la ronda core B
+### ▶️ (anterior) 17-oct tarde (Gadea con Claude): CAL-A — profundidad y avisos al final (A6) medidos, APAGADOS, candidatos a la ronda core B
 
 - **Hecho** (HISTORY 0.31.42, `docs/robustness/cal/cal-a6-avisos-al-final.md`): `catalogo_profundidad` arregla cal-18
   (3/3 → 0/3); `avisos_al_final` (revisor con GPT-6 Luna, decisión de Gadea) arregla en parte cal-49, cal-15 y cal-48 y

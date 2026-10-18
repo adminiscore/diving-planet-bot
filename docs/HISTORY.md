@@ -1,6 +1,28 @@
 History
 =======
 
+0.31.49 - (2026-10-18)
+----------------------
+* **CAL-F juzgado, G3 en directo y G3-03 PROMOCIONADO** (Gadea con Claude, en autonomía).
+  - **CAL-F (golden visible completo, 116 diálogos):** 95,8 % de criterios (36 fallos de 849), 86/116 diálogos sin
+    fallos; las rondas completas anteriores rondaban el 91 %. Detalle: `docs/robustness/cal/cal-f-golden-completo.md`.
+  - **G3 (Claude contra el chatbot, `docs/robustness/g3/hallazgos.md`):** 8 charlas; G3-03, G3-05 y G3-07b arreglados;
+    G3-06 (Barú), G3-07a (dos monedas) y G3-08 ("No refund is needed") pendientes de decisión.
+  - **PROMOCIONADO `RAG_OFRECE_EL_PASE` (G3-03):** el RAG ya no dice "te paso con el equipo" sin pase real; lo ofrece
+    como pregunta. Banco 6/6 → 0/6; ronda core g301-B (A) 95,6 % 218/228 → g3-B 96,5 % 218/226, 24/32 los dos; las 4
+    regresiones de la ronda, repetidas 3 veces con y sin: ninguna es del flag (con los flags 4 fallos, sin ellos 8).
+  - **`BUSQUEDA_CON_LA_PREGUNTA_SOLA` (G3-05), APAGADO:** con datos y pregunta a la vez ("salimos de Cartagena el 30.
+    ¿hace falta saber nadar?") la búsqueda no trae la FAQ; con el flag, banco 9/9 → 1/9 (también con gpt-4.1-nano) y
+    rag_piezas sin pérdidas. Coste: +0,7 s de mediana en los turnos del RAG con gpt-4o-mini. **Decisión de Gadea:** el
+    modelo (`PREGUNTA_SOLA_MODEL`): gpt-4.1-nano 0,5-0,6 s o Luna 0,98 s (Álvaro prefiere no sumar piezas a la 4.1).
+  - **Datos:** el 5 % por equipo propio no aplica al minicurso ni al snorkel (g3-07b 3/3 → 0/3); el aviso del refresh
+    lleva su condición real.
+  - **Juez:** su referencia recoge ya las decisiones de Gadea que no estaban en los datos (no se dan teléfonos, el pago
+    lo concilia el equipo, otro idioma → inglés, datos ajenos se niegan) y el criterio del pago del golden está al día.
+    Cambia la clave de la caché: las rondas viejas se juzgan con el código de su commit (worktree).
+  - **Descartado:** BM25 con cualquier palabra (el dato en el top-8 baja del 86 al 65 %). `rag_piezas` fallaba en todo
+    desde CAL-D (16-oct); arreglado.
+
 0.31.48 - (2026-10-17)
 ----------------------
 * **r6-1 en PRE y G3-01 arreglado en local** (Álvaro con Claude).

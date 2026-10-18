@@ -32,3 +32,13 @@ def test_la_pregunta_del_origen_dice_los_dias_exactos():
 def test_sin_plan_concreto_se_queda_en_varios_dias():
     st = _estado("es", detected_activity="certified_diving", detected_duration="multi_day")
     assert "dura varios días" in cc.ask_slot(st, cc.SLOT_LOCATION)
+
+
+def test_un_plan_de_un_dia_con_noche_dice_un_dia_en_singular():
+    """CAL-F (18-oct, precios-y-disponibilidad-con-negociacion): "Este plan dura 1 días y hay que dormir en las islas".
+    Un plan de 1 día puede obligar a dormir (las 3 inmersiones con nocturna); la frase va en singular."""
+    st = _estado("es", detected_activity="certified_diving", detected_service_id="3_dives_1_day")
+    pregunta = cc.ask_slot(st, cc.SLOT_LOCATION)
+    assert "dura 1 día " in pregunta and "1 días" not in pregunta
+    st = _estado("en", detected_activity="certified_diving", detected_service_id="3_dives_1_day")
+    assert "takes 1 day " in cc.ask_slot(st, cc.SLOT_LOCATION)

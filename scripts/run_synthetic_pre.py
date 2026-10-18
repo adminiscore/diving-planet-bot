@@ -195,7 +195,12 @@ def main(argv: list[str] | None = None) -> int:
     group.add_argument("--all", action="store_true")
     parser.add_argument("--ids", help="solo estas etiquetas/dialogos, separados por coma (p. ej. relanzar parte del golden-set)")
     parser.add_argument("--dry", action="store_true", help="solo cuenta conversaciones y turnos")
+    parser.add_argument("--golden", help="con --sample golden: otro fichero de dialogos con el mismo formato (G9: "
+                                         "docs/robustness/golden-set/examen-sintetico-g9.json, UNA sola vez)")
     args = parser.parse_args(argv)
+    if args.golden:
+        global GOLDEN_FILE
+        GOLDEN_FILE = Path(args.golden)
 
     cases = select_cases(load_batches(), args.sample, args.batches.split(",") if args.batches else None)
     if args.ids:

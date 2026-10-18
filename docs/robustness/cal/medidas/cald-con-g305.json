@@ -1,0 +1,46 @@
+{
+ "etiqueta": "cald-con-g305",
+ "reps": 3,
+ "flags": [
+  "consulta_en_el_idioma_de_la_respuesta"
+ ],
+ "codigo_local": true,
+ "verificador": "gpt-4.1",
+ "casos": [
+  {
+   "id": "cal-14",
+   "dialogo": "confirmacion-salida-y-pago-sin-concepto",
+   "criterio": "confirmacion-por-pago-enlace",
+   "repeticiones": 3,
+   "fallan": 3,
+   "respuestas": [
+    "Sí, puedes colocar “Otros” en el concepto. El asesor ya tiene tu caso y te escribe por aquí para ayudarte con el pago.",
+    "Sí, puedes poner **“Otros”** en el concepto. El asesor ya tiene tu caso y te escribe por aquí para ayudarte con lo demás.",
+    "Sí, puedes poner “Otros” en el concepto. El asesor ya tiene tu caso y te escribe por aquí para ayudarte con lo que sigue."
+   ],
+   "explicaciones": [
+    "La respuesta actual solo indica que el asesor tiene el caso y ayudará con el pago, pero no menciona que la reserva se confirma al completar el pago por el enlace online ni sugiere explícitamente pagar por ese medio. Tampoco ofrece la alternativa correcta si el cliente requiere otra forma de pago.",
+    "La respuesta solo indica que puede poner 'Otros' en el concepto y que un asesor le contactará, pero no aclara que la reserva se confirma al completar el pago por el enlace online ni sugiere explícitamente pagar por ese medio. Tampoco ofrece la alternativa correcta si el cliente requiere otra forma de pago.",
+    "La respuesta solo indica que el asesor ya tiene el caso y no menciona que la reserva se confirma al completar el pago por el enlace online, ni sugiere explícitamente pagar por el enlace. Tampoco ofrece pasar con un asesor para otras formas de pago, como pide el criterio."
+   ]
+  },
+  {
+   "id": "cal-42",
+   "dialogo": "certificado-precio-dia-paquete-5-y-hoteles-base",
+   "criterio": "precio-dia-cartagena",
+   "repeticiones": 3,
+   "fallan": 1,
+   "respuestas": [
+    "For a two-day plan departing from Cartagena, the **4-dive package** costs **$351 USD regular or $316 USD online**. It includes four daytime dives, and you’ll need to stay overnight on the islands; accommodation isn’t included.\n\nThere’s also a **5-dive package** for **$436 USD regular or $392 USD online**, including a night dive. I don’t have a separate per-day price handy, but I can share the booking link for either option. Which would you prefer?",
+    "For certified divers departing from Cartagena, the **2-dive trip is $197 USD per day** at the regular price, or **$178 USD online**. It includes two dives at different sites, boat transport, and lunch.\n\nIf you dive on a second day, there’s a **10% discount on that second day**. The exact total is shown in the booking calendar: [view the daily dive options](https://divingplanet.org/tours-buceo-snorkel-cartagena/2-buceos-1-dia/). Would you like to book two daily trips or compare them with a multi-day package?",
+    "For certified divers departing from Cartagena, the **2-dive day trip is $197 USD per person** at the regular price, or **$178 USD online**. It includes two dives at different sites, boat transport, and lunch.\n\nFor two days, the second day has a **10% discount on diving**. The two-day packages are also available: **4 dives over 2 days for $316 USD online**, or **5 dives over 2 days, including a night dive, for $392 USD online**. Both require an overnight stay on the islands; accommodation isn’t included.\n\nWould you like the link for the one-day trip or one of the two-day packages?"
+   ],
+   "explicaciones": [
+    "The bot still does not provide the required per-day price for 'Fun Dives - 2 dives (1 day)' from Cartagena (178 USD online, 197 USD regular), which is clearly listed in the context. Instead, it only gives multi-day package prices and says it doesn't have a per-day price handy, which is incorrect.",
+    "The current response gives the correct per-person price for the 2-dive, 1-day trip for certified divers departing from Cartagena in USD ($197 regular, $178 online), as required by the criterion. It also mentions the 10% discount for a second day and provides the correct booking link. There is no missing or incorrect information regarding the price or currency, and the bot does not assume the client's nationality.",
+    "La respuesta actual da correctamente el precio por persona para buzo certificado (2 inmersiones, 1 día) saliendo desde Cartagena en USD: 'the 2-dive day trip is $197 USD per person at the regular price, or $178 USD online'. No falta información y no hay error de moneda, ya que el contexto indica que si no se sabe la nacionalidad, se debe dar el precio en USD. Además, la respuesta no confunde con el precio de un paquete de 5 inmersiones, sino que lo menciona aparte como opción adicional."
+   ]
+  }
+ ],
+ "sin_medir": []
+}
