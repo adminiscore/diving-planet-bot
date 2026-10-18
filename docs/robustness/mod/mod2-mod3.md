@@ -52,3 +52,51 @@ esposo una experiencia del buceo" (¿minicourse?), "I have my open water certifi
 En las señales, r07/r08/r09 no los acierta ningún modelo: piden comparar cursos concretos y el enum de
 `comparing_options` del ROUTING_TOOL solo tiene `padi_course` (fallo del instrumento, fuera del recuento). La red del
 extractor (`red_extractor_model`) solo actúa si el extractor principal falla: sigue lo que se decida en mod-2.
+
+## 18-oct tarde (Gadea con Claude, en relevo de Álvaro): proveedores de Haiku y gpt-5.4-nano
+
+**Proveedores de Haiku.** Con las condiciones de mod-7 solo se permitían Baseten, Fireworks (EE. UU.) y CoreWeave, que
+no sirven Haiku. Gadea pidió probarlo: por OpenRouter responden Anthropic (0,88 s en una llamada corta), Google Vertex
+(0,81 s) y Amazon Bedrock (1,12 s), las tres empresas de EE. UU., con `data_collection: deny` y los datos personales
+tapados (mod-7, `llm_client.parametros_openrouter`).
+
+**Resolutor** (`scripts/mod3_resolutor.py`, 30 casos × 3, misma tarde):
+
+| Modelo | Bien 3/3 | Valores equivocados | p50 |
+|---|---|---|---|
+| gpt-4o-mini (PRE) | 30/30 | 0/90 | 1,18 s |
+| **gpt-5.4-nano** | **30/30** | **0/90** | **1,12 s** |
+| Haiku 5.5 (Anthropic) | 30/30 | 0/90 | 1,58 s |
+| gpt-5.4-mini | 28/30 | 0/90 (se abstiene en "todavía no" y "just visiting from Canada") | 1,42 s |
+
+**Candidato: gpt-5.4-nano** (igual de bien, el más rápido, OpenAI directo).
+
+**Acuse** (`banco_acuse --pasadas 5 --flag acuse_solo_el_mensaje`, juez gpt-4.1): gpt-5.4-nano inventa 0/40 en los
+casos reales y 1/25 en los controles ("your friend joining for snorkeling is all set"), 0 frases vacías; gpt-5.4-mini
+0/40 · 0/25; gpt-4o-mini 6/40 · 0/25. Latencia con la función real (13 casos × 2): gpt-4o-mini p50 0,90 s / p90 2,82 s;
+**gpt-5.4-nano 0,92 / 1,18 s**; gpt-5.4-mini 1,13 / 1,25 s (los +0,3 s de la ronda mod-D). **Candidato: gpt-5.4-nano**
+(la latencia de hoy y muchos menos inventos).
+
+**Señales del enrutador** (`battery_router_signals.py 3 base`, 37 casos): gpt-4o-mini 33/37, gpt-5.4-nano 30/37.
+Haiku 5.5 en las señales: 28/37 (formato); gpt-6-luna 32/37; **DeepSeek v4.1 Flash 34/37**: solo falla r07/r08/r09, que
+no acierta ningún modelo (fallo del instrumento, ver arriba) → 34/34 de los válidos, y "¿qué pasa si llueve ese día?"
+3/3 sin pase. **Candidato: DeepSeek.**
+
+**Extractor, los cuatro candidatos en las MISMAS condiciones** (misma tarde, seguidos, banco ex0 diseño × 3, con
+`PRECIO_NO_ELIGE` + `CERTIFICADO_SOLO_SI_LO_DICE`; la latencia del banco cambia con la hora, por eso se repiten juntos):
+
+| Modelo | Aciertos | Equivocados | Inventados | Estable | p50 | p95 |
+|---|---|---|---|---|---|---|
+| gpt-4.1-mini (PRE) | 106 | 1 | 9 | 94,5 % | 2,42 s | 3,61 s |
+| gpt-6-luna | 106 | 0 | 7 | 97,5 % | 2,68 s | 4,17 s |
+| gpt-5.4-mini | 107 | 2 | 11 | 95,0 % | 2,35 s | 3,59 s |
+| **anthropic/claude-haiku-5.5** | **108** | **0** | **7** | 96,0 % | **2,01 s** | **3,07 s** |
+
+Con las reglas de hoy (sin los dos flags) Haiku hizo 114 / 0 / 9 / 98,5 % (Álvaro). **Candidato: Haiku** (el mejor en
+todo y el más rápido: quita la lentitud de la ronda mod-D, que venía del extractor en Luna). La red del extractor
+(`red_extractor_model`, solo actúa si el principal falla) en **Luna**: otro proveedor (OpenAI) por si OpenRouter cae, y
+0 equivocados.
+
+**Ronda mod-F** (preparada): solo los modelos, sin las reglas de no adivinar del flujo (esas, en otra ronda, para
+separar causas: la mod-D las mezclaba): extractor Haiku, red Luna, señales y notas DeepSeek, resolutor y acuse
+gpt-5.4-nano. Frente a mod-E.
