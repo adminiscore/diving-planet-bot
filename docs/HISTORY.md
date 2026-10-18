@@ -1,6 +1,29 @@
 History
 =======
 
+0.31.55 - (2026-10-18)
+----------------------
+* **Ronda mod-E PROMOCIONADA: `RAG_NO_ADIVINA` y el respaldo del RAG en DeepSeek (mod-5); el verificador de
+  `banco_fallos` en Luna (mod-8); decisiones de Gadea en la base y el golden** (Gadea con Claude, con el relevo de
+  Álvaro, parado por tokens).
+  - **Ronda core mod-E** (C + `RAG_NO_ADIVINA` + `RAG_RESPALDO_MODELO=deepseek/deepseek-v4.1-flash` + el formulario
+    médico en la base), juzgada con la MISMA referencia que mod-C re-juzgada (la base y dos criterios cambiaron): C 96,5 %
+    27/32 → E 96,9 % 26/32. Latencia por tipo de turno igual (RAG p50 4,18 → 4,28 s; reserva 1,25 → 1,26 s); el respaldo
+    saltó 6 veces y DeepSeek contestó en 0,68 s. 2 mejoras reales (certificado-fechas-fotos-y-reserva: el mes inventado
+    y la política de fotos). Atribución (3 reps con y sin): buceo-adaptado-visual 2/3 con y 2/3 sin (no es suya);
+    referral-mas-refresher 1/3 con y 0/3 sin: la regla hacía dudar del año de una fecha que el cliente sí dio ("I can't
+    verify the year for April 5–6"). Arreglado en el texto (lo que el cliente dio se usa tal cual): 0/3 tras el cambio.
+  - **mod-5**: `rag_piezas` (51 preguntas) con cada candidato escribiendo todas las respuestas: DeepSeek 95 % de
+    cobertura frente a 91 % de gpt-4.1-mini, misma latencia. Otro proveedor: sigue contestando si OpenAI cae.
+  - **mod-8**: los tres verificadores sobre las mismas 30 respuestas: Luna coincide con gpt-4.1 en 27/30 y es igual de
+    exigente (14 fallos frente a 15; DeepSeek 12, benévolo). `VERIFICADOR_MODELO = "gpt-6-luna"` (acordado con Álvaro).
+  - **mod-0** cerrada (el método por pieza, en `docs/robustness/mod/README.md`).
+  - **Decisiones de Gadea**: el formulario médico se puede enviar con el enlace de la reserva y el correo de
+    confirmación lo vuelve a enviar si no se ha completado (base y criterio); si el descuento online no aparece, solo
+    se explica que es automático (criterio `solo-explica-si-no-aparece`; el bot ya lo hacía).
+  - Relevo de Álvaro: integrada `feature/pre_alvaro` (su revert de mod-D, HISTORY 0.31.54); sus tareas siguen con
+    Gadea hasta que vuelva.
+
 0.31.54 - (2026-10-18)
 ----------------------
 * **mod-2 y mod-3 medidos; ronda mod-D corrida y REVERTIDA (sin decidir); dos fallos estables de CAL-F más, con flag**

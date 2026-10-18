@@ -110,8 +110,9 @@ services:
       RESUMEN_MODEL: "deepseek/deepseek-v4.1-flash"
       IDIOMA_MODEL: "deepseek/deepseek-v4.1-flash"
       RAG_ANSWER_MODEL: "gpt-6-luna"
-      # RONDA mod-E (18-oct, mod-5): el respaldo del RAG en DeepSeek (otro proveedor) y RAG_NO_ADIVINA, frente a
-      # mod-C (f3edbe2). Revert = "gpt-4.1-mini" y quitar RAG_NO_ADIVINA.
+      # mod-5 y CAL-F (18-oct): el respaldo del RAG en DeepSeek (otro proveedor) y RAG_NO_ADIVINA. PROMOCIONADOS (HISTORY 0.31.55:
+      # ronda core mod-E 96,9 % frente a mod-C 96,5 %, ninguna regresión atribuida). Revert = "gpt-4.1-mini" y quitar
+      # RAG_NO_ADIVINA.
       RAG_RESPALDO_MODELO: "deepseek/deepseek-v4.1-flash"
       RAG_NO_ADIVINA: "true"
       RAG_RESPALDO_SEGUNDOS: "3.0"

@@ -558,20 +558,22 @@ RAG_NO_ADIVINA_ES = (
     "No atribuyas al cliente ningún dato suyo que no haya dicho ni lo deduzcas de otros. Por ejemplo: qué servicio "
     "quiere o reservó, desde dónde sale (Cartagena o las islas) o dónde duerme, su nacionalidad (el país desde el que "
     "escribe o viaja no la dice), si está certificado (querer bucear o preguntar por inmersiones no lo dice), hace "
-    "cuánto buceó por última vez, cuántos son (un plural no dice el número), fechas, meses u horas. No los nombres como "
-    "si los supieras (no digas «tu paquete de 3 inmersiones», «como sales desde Cartagena» ni «en noviembre» si él no "
-    "lo dijo). Contesta lo que pregunta con la información general y, si la respuesta depende de un dato suyo que no ha "
-    "dicho, pregúntaselo; lo que ya dijo no se pregunta."
+    "cuánto buceó por última vez, cuántos son (un plural no dice el número), o una fecha, un mes o una hora que no dio. "
+    "No los nombres como si los supieras (no digas «tu paquete de 3 inmersiones», «como sales desde Cartagena» ni «en "
+    "noviembre» si él no lo dijo); lo que sí dio se usa tal cual, sin ponerlo en duda (si dice «5 y 6 de abril», son "
+    "esas fechas). Contesta lo que pregunta con la información general y, si la respuesta depende de un dato suyo que "
+    "no ha dicho, pregúntaselo; lo que ya dijo no se pregunta."
 )
 RAG_NO_ADIVINA_EN = (
     "Do not attribute to the customer any detail about them that they have not said, and do not infer it from other "
     "details. For example: which service they want or booked, where they leave from (Cartagena or the islands) or where "
     "they stay, their nationality (the country they write or travel from does not tell it), whether they are certified "
     "(wanting to dive or asking about dives does not tell it), how long since their last dive, how many they are (a "
-    "plural does not tell the number), dates, months or times. Do not name these as if you knew them (don't say \"your "
-    "3-dive package\", \"since you leave from Cartagena\" or \"in November\" unless they said so). Answer what they ask "
-    "with the general information and, if the answer depends on a detail about them they have not said, ask for it; "
-    "never ask for what they already said."
+    "plural does not tell the number), or a date, month or time they did not give. Do not name these as if you knew "
+    "them (don't say \"your 3-dive package\", \"since you leave from Cartagena\" or \"in November\" unless they said "
+    "so); what they did give is used as is, without questioning it (if they say \"April 5 and 6\", those are the "
+    "dates). Answer what they ask with the general information and, if the answer depends on a detail about them they "
+    "have not said, ask for it; never ask for what they already said."
 )
 # EX-EST-2 (15-oct, flag `rag_sin_hora`): el RAG no sabe la hora ni la fecha de hoy. Rondas est4-B/est5-B: "ya pasó esa
 # hora" o "como todavía estás a tiempo" sobre el cierre de las 4:30, sin que el cliente dijera la hora.
