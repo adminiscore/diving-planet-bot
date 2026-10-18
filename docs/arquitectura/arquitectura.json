@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-18T11:17:05+00:00",
-  "commit": "99e06ad",
+  "generado": "2026-10-18T12:44:28+00:00",
+  "commit": "a7d4e65",
   "rama": "feature/pre_alvaro"
  },
  "vistas": {
@@ -136,7 +136,7 @@
      "pre": "typesafe/jev-1.13"
     },
     {
-     "ajuste": "extraction_model",
+     "ajuste": "senales_model",
      "codigo": "gpt-4o-mini",
      "pre": "gpt-4o-mini"
     }
@@ -548,7 +548,7 @@
    "donde": "src/agents/conversational_core.py:_routing_phase",
    "modelos": [
     {
-     "ajuste": "extraction_model",
+     "ajuste": "senales_model",
      "codigo": "gpt-4o-mini",
      "pre": "gpt-4o-mini"
     }
@@ -587,14 +587,14 @@
    "donde": "src/agents/conversational_core.py:_extraction_phase",
    "modelos": [
     {
-     "ajuste": "extraction_model",
-     "codigo": "gpt-4o-mini",
-     "pre": "gpt-4o-mini"
-    },
-    {
      "ajuste": "extractor_turno_model",
      "codigo": "gpt-4.1-mini",
      "pre": "gpt-4.1-mini"
+    },
+    {
+     "ajuste": "red_extractor_model",
+     "codigo": "gpt-4o-mini",
+     "pre": "gpt-4o-mini"
     }
    ],
    "detalle": [
@@ -684,7 +684,7 @@
    "donde": "src/agents/conversational_core.py:_slotfill_close_phase",
    "modelos": [
     {
-     "ajuste": "extraction_model",
+     "ajuste": "resolutor_model",
      "codigo": "gpt-4o-mini",
      "pre": "gpt-4o-mini"
     }
@@ -796,6 +796,20 @@
      "sin_efecto": false
     },
     {
+     "nombre": "certificado_solo_si_lo_dice",
+     "titulo": "Certificado solo si lo dice",
+     "codigo": false,
+     "pre": false,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "precio_no_elige",
+     "titulo": "Preguntar un precio no es elegir",
+     "codigo": false,
+     "pre": false,
+     "sin_efecto": false
+    },
+    {
      "nombre": "aplazar_pregunta_sin_respuesta",
      "titulo": "No repite la pregunta que el cliente no contestó",
      "codigo": true,
@@ -834,7 +848,7 @@
    "donde": "src/agents/notes_extractor.py:extract_notes",
    "modelos": [
     {
-     "ajuste": "extraction_model",
+     "ajuste": "notas_model",
      "codigo": "gpt-4o-mini",
      "pre": "gpt-4o-mini"
     }
@@ -874,7 +888,7 @@
    "donde": "src/agents/llm_extractor.py:compose_acknowledgement",
    "modelos": [
     {
-     "ajuste": "extraction_model",
+     "ajuste": "acuse_model",
      "codigo": "gpt-4o-mini",
      "pre": "gpt-4o-mini"
     }
@@ -2213,6 +2227,19 @@
    "sin_efecto": null
   },
   {
+   "nombre": "certificado_solo_si_lo_dice",
+   "area": "Reserva",
+   "titulo": "Certificado solo si lo dice",
+   "texto": "Que el cliente quiera el buceo para certificados ('fun dives') no significa que esté certificado: el bot se lo pregunta. Antes una regla lo daba por hecho.",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
+   "usado_por": [
+    "b_slotfill_close"
+   ],
+   "sin_efecto": null
+  },
+  {
    "nombre": "chatwoot_typing_indicator",
    "area": "Chat",
    "titulo": "“Escribiendo…” en el chat",
@@ -3012,6 +3039,19 @@
    "sin_efecto": null
   },
   {
+   "nombre": "precio_no_elige",
+   "area": "Reserva",
+   "titulo": "Preguntar un precio no es elegir",
+   "texto": "Si el cliente solo pregunta cuánto cuesta algo ('¿cuánto vale el paquete de 5 inmersiones?'), el bot no da por hecho que lo ha elegido ni que es buzo certificado: es una duda. Decir lo que quiere hacer sí lo elige.",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
+   "usado_por": [
+    "b_slotfill_close"
+   ],
+   "sin_efecto": null
+  },
+  {
    "nombre": "rag_adelantado",
    "area": "Preguntas",
    "titulo": "Empezar a contestar mientras se clasifica",
@@ -3455,6 +3495,16 @@
  ],
  "modelos": [
   {
+   "ajuste": "acuse_model",
+   "codigo": "gpt-4o-mini",
+   "pre": "gpt-4o-mini",
+   "usado_por": [
+    "b_acuse"
+   ],
+   "proveedor": "OpenAI",
+   "llamadas_ultima_ronda": 149
+  },
+  {
    "ajuste": "avisos_al_final_model",
    "codigo": "gpt-6-luna",
    "pre": "gpt-6-luna",
@@ -3468,14 +3518,7 @@
    "ajuste": "extraction_model",
    "codigo": "gpt-4o-mini",
    "pre": "gpt-4o-mini",
-   "usado_por": [
-    "router",
-    "b_routing",
-    "b_extraction",
-    "b_slotfill_close",
-    "b_notas",
-    "b_acuse"
-   ],
+   "usado_por": [],
    "proveedor": "OpenAI",
    "llamadas_ultima_ronda": 149
   },
@@ -3510,6 +3553,16 @@
    "proveedor": "OpenRouter",
    "llamadas_ultima_ronda": null,
    "nota": "Decidió solo 81 de 93 mensajes; en los otros 12 decidió el LLM de respaldo (sus llamadas cuentan en gpt-4o-mini)."
+  },
+  {
+   "ajuste": "notas_model",
+   "codigo": "gpt-4o-mini",
+   "pre": "gpt-4o-mini",
+   "usado_por": [
+    "b_notas"
+   ],
+   "proveedor": "OpenAI",
+   "llamadas_ultima_ronda": 149
   },
   {
    "ajuste": "openai_embedding_model",
@@ -3569,6 +3622,37 @@
    "usado_por": [],
    "proveedor": "OpenAI",
    "llamadas_ultima_ronda": 92
+  },
+  {
+   "ajuste": "red_extractor_model",
+   "codigo": "gpt-4o-mini",
+   "pre": "gpt-4o-mini",
+   "usado_por": [
+    "b_extraction"
+   ],
+   "proveedor": "OpenAI",
+   "llamadas_ultima_ronda": 149
+  },
+  {
+   "ajuste": "resolutor_model",
+   "codigo": "gpt-4o-mini",
+   "pre": "gpt-4o-mini",
+   "usado_por": [
+    "b_slotfill_close"
+   ],
+   "proveedor": "OpenAI",
+   "llamadas_ultima_ronda": 149
+  },
+  {
+   "ajuste": "senales_model",
+   "codigo": "gpt-4o-mini",
+   "pre": "gpt-4o-mini",
+   "usado_por": [
+    "router",
+    "b_routing"
+   ],
+   "proveedor": "OpenAI",
+   "llamadas_ultima_ronda": 149
   }
  ],
  "ronda": {

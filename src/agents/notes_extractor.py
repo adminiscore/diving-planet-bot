@@ -74,7 +74,7 @@ async def extract_notes(
     try:
         client = client or trace_openai(AsyncOpenAI(api_key=settings.openai_api_key))
         response = await client.chat.completions.create(
-            model=settings.extraction_model,
+            model=settings.notas_model,
             messages=messages,
             tools=[NOTES_TOOL],
             tool_choice={"type": "function", "function": {"name": "capture_notes"}},

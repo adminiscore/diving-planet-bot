@@ -1,0 +1,1005 @@
+{
+ "modelo": "deepseek/deepseek-v4.1-flash",
+ "flags": [
+  "precio_no_elige",
+  "certificado_solo_si_lo_dice"
+ ],
+ "pasadas": 3,
+ "coinciden": 1,
+ "grupo": "diseño",
+ "casos": 200,
+ "estables_pct": 89.5,
+ "modal": {
+  "acierto": 100,
+  "equivocado": 3,
+  "perdido": 14,
+  "inventado": 42,
+  "pct": 85.5,
+  "casos_con_invento": 18
+ },
+ "peor": {
+  "acierto": 89,
+  "equivocado": 2,
+  "perdido": 26,
+  "inventado": 49,
+  "pct": 76.1,
+  "casos_con_invento": 22
+ },
+ "latencia_p50": 1.55,
+ "latencia_p95": 3.04,
+ "segundos": 132,
+ "inestables": [
+  {
+   "id": "ex0-acompanante-goteo-t3",
+   "message": "el no es certificado",
+   "esperado": {},
+   "resultados": {
+    "{\"group_allocation\": {\"certified_diving\": 1, \"minicourse\": 1, \"undecided\": 1}}": 2,
+    "{\"group_allocation\": {\"certified_diving\": 1, \"minicourse\": 1, \"padi_advanced\": 1, \"padi_divemaster\": 1, \"padi_open_water\": 1, \"padi_open_water_referral\": 1, \"padi_rescue\": 1, \"padi_specialty\": 1, \"snorkel\": 1, \"undecided\": 1}}": 1
+   }
+  },
+  {
+   "id": "ex0-actividad-cambia-varias-t5",
+   "message": "no soy colombiano",
+   "esperado": {
+    "is_colombian": false
+   },
+   "resultados": {
+    "{\"is_colombian\": false}": 2,
+    "{}": 1
+   }
+  },
+  {
+   "id": "ex0-cambio-fecha-carrito-t1",
+   "message": "quiero hacer snorkel",
+   "esperado": {
+    "activity": "snorkel"
+   },
+   "resultados": {
+    "{\"activity\": \"snorkel\"}": 2,
+    "{}": 1
+   }
+  },
+  {
+   "id": "ex0-cambio-idioma-t1",
+   "message": "hola quiero bucear certificado",
+   "esperado": {
+    "activity": "certified_diving"
+   },
+   "resultados": {
+    "{\"activity\": \"certified_diving\", \"is_certified\": true}": 2,
+    "{\"activity\": \"certified_diving\"}": 1
+   }
+  },
+  {
+   "id": "ex0-colombianos-precio-minicurso-dos-inmersiones-t4",
+   "message": "Yo vi un video en YT de alguien que hizo el paquete con ustedes e hicieron dos inmersiones en dos distintos puntos",
+   "esperado": {},
+   "resultados": {
+    "{}": 2,
+    "{\"activity\": \"certified_diving\", \"is_certified\": true}": 1
+   }
+  },
+  {
+   "id": "ex0-curso-open-water-disponibilidad-pasos-y-precio-citado-t2",
+   "message": "Gracias. Entonces por favor los pasos para hacer la reserva/ curso básico",
+   "esperado": {
+    "activity": "padi_open_water"
+   },
+   "resultados": {
+    "{\"activity\": \"padi_open_water\", \"is_certified\": false}": 2,
+    "{\"activity\": \"padi_open_water\"}": 1
+   }
+  },
+  {
+   "id": "ex0-curso-open-water-transporte-y-regreso-otro-dia-t2",
+   "message": "What if I decide to stay one day longer in rosario, can you provide de transfer back to cartagena?",
+   "esperado": {},
+   "resultados": {
+    "{}": 1,
+    "{\"location\": \"island\"}": 2
+   }
+  },
+  {
+   "id": "ex0-familia-mixta-precio-descuento-refresher-t1",
+   "message": "Hi There,\nI am looking to book 2 dives and snorkeling sessions for the following people.\n2 diving sessions - All PADI certified for open water.\n2 adults (ages 4",
+   "esperado": {
+    "group_size": 6,
+    "group_allocation": {
+     "certified_diving": 3,
+     "snorkel": 3
+    }
+   },
+   "resultados": {
+    "{\"activity\": \"certified_diving\", \"group_allocation\": {\"certified_diving\": 3, \"minicourse\": 1, \"padi_advanced\": 1, \"padi_divemaster\": 1, \"padi_open_water\": 1, \"padi_open_water_referral\": 1, \"padi_rescue\": 1, \"padi_specialty\": 1, \"snorkel\": 2, \"undecided\": 1}, \"group_size\": 6, \"is_certified\": true, \"is_colombian\": false, \"last_dive_over_2_years\": false}": 1,
+    "{\"activity\": \"certified_diving\", \"group_allocation\": {\"certified_diving\": 3, \"minicourse\": 1, \"snorkel\": 2}, \"group_size\": 6, \"is_certified\": true, \"is_colombian\": false, \"last_dive_over_2_years\": false}": 2
+   }
+  },
+  {
+   "id": "ex0-familia-mixta-precio-descuento-refresher-t4",
+   "message": "We are a family of 6 and 3 of us will dive and 3 will snorkeling",
+   "esperado": {
+    "group_size": 6,
+    "group_allocation": {
+     "certified_diving": 3,
+     "snorkel": 3
+    }
+   },
+   "resultados": {
+    "{\"activity\": \"certified_diving\", \"is_certified\": true, \"is_colombian\": false, \"last_dive_over_2_years\": false}": 1,
+    "{\"group_allocation\": {\"certified_diving\": 3, \"minicourse\": 3, \"padi_advanced\": 3, \"padi_divemaster\": 3, \"padi_open_water\": 3, \"padi_open_water_referral\": 3, \"padi_rescue\": 3, \"padi_specialty\": 3, \"snorkel\": 3, \"undecided\": 3}}": 2
+   }
+  },
+  {
+   "id": "ex0-manual-acompanante-mayor-t4",
+   "message": "1",
+   "esperado": {
+    "group_size": 1
+   },
+   "resultados": {
+    "{\"group_size\": 1}": 2,
+    "{}": 1
+   }
+  },
+  {
+   "id": "ex0-minicurso-islas-y-acompanante-lancha-t1",
+   "message": "Buena Tardes quería preguntarte estaremos en islas del rosario en junio y quería regalarle a mi esposo una experiencia del buceo no tiene experiencia en buceo, ",
+   "esperado": {
+    "location": "island",
+    "activity": "minicourse",
+    "is_certified": false
+   },
+   "resultados": {
+    "{}": 1,
+    "{\"is_certified\": false, \"location\": \"island\"}": 2
+   }
+  },
+  {
+   "id": "ex0-open-water-precio-para-colombianos-corrige-mito-t1",
+   "message": "Buenos días. Estoy interesada en el curso básico de buceo. Cuál es el costo para colombianos?",
+   "esperado": {
+    "activity": "padi_open_water",
+    "is_colombian": true
+   },
+   "resultados": {
+    "{\"activity\": \"padi_open_water\", \"is_certified\": false, \"is_colombian\": true}": 2,
+    "{}": 1
+   }
+  },
+  {
+   "id": "ex0-pareja-certificados-cop-descuento-almuerzo-t2",
+   "message": "nos gusta, somos 2 personas y queremos el de saliendo de cartagena, además somos colombianos",
+   "esperado": {
+    "group_size": 2,
+    "location": "cartagena",
+    "is_colombian": true
+   },
+   "resultados": {
+    "{\"group_size\": 2, \"is_colombian\": true, \"last_dive_over_2_years\": false, \"location\": \"cartagena\"}": 1,
+    "{\"group_size\": 2, \"is_colombian\": true, \"location\": \"cartagena\"}": 2
+   }
+  },
+  {
+   "id": "ex0-pedir-fotos-postventa-t3",
+   "message": "Fueron muy buenos buceos,  excelente organización de todo el grupo. Muchas gracias",
+   "esperado": {},
+   "resultados": {
+    "{\"activity\": \"certified_diving\", \"group_size\": 2, \"is_certified\": true, \"is_colombian\": true, \"last_dive_over_2_years\": false}": 1,
+    "{}": 1,
+    "{\"activity\": \"certified_diving\", \"group_size\": 2, \"is_certified\": true, \"last_dive_over_2_years\": false}": 1
+   }
+  },
+  {
+   "id": "ex0-premisa-falsa-lunes-t4",
+   "message": "buceo certificado, solo yo",
+   "esperado": {
+    "activity": "certified_diving",
+    "group_size": 1
+   },
+   "resultados": {
+    "{\"activity\": \"certified_diving\", \"group_size\": 1, \"is_certified\": true, \"is_colombian\": true, \"last_dive_over_2_years\": false}": 1,
+    "{\"activity\": \"certified_diving\", \"group_size\": 1, \"is_certified\": true, \"is_colombian\": false, \"last_dive_over_2_years\": false}": 2
+   }
+  },
+  {
+   "id": "ex0-reserva-completa-saludo-a-pago-t6",
+   "message": "no soy colombiano",
+   "esperado": {
+    "is_colombian": false
+   },
+   "resultados": {
+    "{\"is_colombian\": false}": 2,
+    "{}": 1
+   }
+  },
+  {
+   "id": "ex0-reserva-ingles-t5",
+   "message": "not colombian",
+   "esperado": {
+    "is_colombian": false
+   },
+   "resultados": {
+    "{\"is_colombian\": false}": 2,
+    "{}": 1
+   }
+  },
+  {
+   "id": "ex0-reserva-solo-link-t5",
+   "message": "no soy colombiano",
+   "esperado": {
+    "is_colombian": false
+   },
+   "resultados": {
+    "{}": 1,
+    "{\"is_colombian\": false}": 2
+   }
+  },
+  {
+   "id": "ex0-semana-santa-solo-avanzado-islas-t2",
+   "message": "Un solo buzo avanzado",
+   "esperado": {
+    "is_certified": true,
+    "group_size": 1,
+    "activity": "certified_diving"
+   },
+   "resultados": {
+    "{\"activity\": \"certified_diving\", \"group_size\": 1, \"is_certified\": true, \"is_colombian\": false, \"last_dive_over_2_years\": false}": 2,
+    "{\"activity\": \"certified_diving\", \"group_size\": 1, \"is_certified\": true}": 1
+   }
+  },
+  {
+   "id": "ex0-semana-santa-solo-avanzado-islas-t3",
+   "message": "1. Cuakes son sus costos con equipo?\n2. ⁠tienen disponibilidad?\n3. ⁠tienen algun hospedaje o zona para hospedarme que recomienden centrico a nuestras partidas?",
+   "esperado": {},
+   "resultados": {
+    "{}": 2,
+    "{\"is_colombian\": false, \"last_dive_over_2_years\": false}": 1
+   }
+  },
+  {
+   "id": "ex0-snorkel-precio-residente-y-pago-link-t1",
+   "message": "cupo para snorkeling para dos personas el sábado?",
+   "esperado": {
+    "activity": "snorkel",
+    "group_size": 2
+   },
+   "resultados": {
+    "{}": 1,
+    "{\"activity\": \"snorkel\", \"group_size\": 2}": 2
+   }
+  }
+ ],
+ "fallos_modales": [
+  {
+   "id": "ex0-acompanante-goteo-t3",
+   "message": "el no es certificado",
+   "sabido": {
+    "group_size": 2,
+    "is_certified": true
+   },
+   "esperado": {},
+   "modal": {
+    "group_allocation": {
+     "certified_diving": 1,
+     "minicourse": 1,
+     "undecided": 1
+    }
+   },
+   "inventado": [
+    "group_allocation"
+   ],
+   "equivocado": [],
+   "perdido": []
+  },
+  {
+   "id": "ex0-acompanante-goteo-t4",
+   "message": "el quiere hacer snorkel",
+   "sabido": {
+    "group_size": 2,
+    "is_certified": true
+   },
+   "esperado": {
+    "group_allocation": {
+     "certified_diving": 1,
+     "snorkel": 1
+    }
+   },
+   "modal": {
+    "group_allocation": {
+     "certified_diving": 1,
+     "minicourse": 1,
+     "padi_advanced": 1,
+     "padi_divemaster": 1,
+     "padi_open_water": 1,
+     "padi_open_water_referral": 1,
+     "padi_rescue": 1,
+     "padi_specialty": 1,
+     "snorkel": 1,
+     "undecided": 1
+    }
+   },
+   "inventado": [],
+   "equivocado": [
+    "group_allocation"
+   ],
+   "perdido": []
+  },
+  {
+   "id": "ex0-acompanante-goteo-t7",
+   "message": "no hace poco bucee",
+   "sabido": {
+    "group_size": 2,
+    "is_certified": true,
+    "group_allocation": {
+     "certified_diving": 1,
+     "snorkel": 1
+    },
+    "location": "cartagena"
+   },
+   "esperado": {
+    "last_dive_over_2_years": false
+   },
+   "modal": {
+    "activity": "certified_diving",
+    "group_allocation": {
+     "certified_diving": 1,
+     "minicourse": 1,
+     "padi_advanced": 1,
+     "padi_divemaster": 1,
+     "padi_open_water": 1,
+     "padi_open_water_referral": 1,
+     "padi_rescue": 1,
+     "padi_specialty": 1,
+     "snorkel": 1,
+     "undecided": 1
+    },
+    "is_colombian": false,
+    "last_dive_over_2_years": false
+   },
+   "inventado": [
+    "group_allocation",
+    "is_colombian"
+   ],
+   "equivocado": [],
+   "perdido": []
+  },
+  {
+   "id": "ex0-acompanante-goteo-t8",
+   "message": "no somos colombianos",
+   "sabido": {
+    "group_size": 2,
+    "is_certified": true,
+    "group_allocation": {
+     "certified_diving": 1,
+     "snorkel": 1
+    },
+    "location": "cartagena",
+    "last_dive_over_2_years": false
+   },
+   "esperado": {
+    "is_colombian": false
+   },
+   "modal": {},
+   "inventado": [],
+   "equivocado": [],
+   "perdido": [
+    "is_colombian"
+   ]
+  },
+  {
+   "id": "ex0-actividad-cambia-varias-t1",
+   "message": "hola quiero bucear certificado",
+   "sabido": {},
+   "esperado": {
+    "activity": "certified_diving"
+   },
+   "modal": {
+    "activity": "certified_diving",
+    "is_certified": true
+   },
+   "inventado": [
+    "is_certified"
+   ],
+   "equivocado": [],
+   "perdido": []
+  },
+  {
+   "id": "ex0-cambio-fecha-por-enfermedad-t3",
+   "message": "Hello. Unfortunately my husband is dealing with food poisoning and experienced the worst of it last night. He is still not feeling great. Is there any possibili",
+   "sabido": {},
+   "esperado": {},
+   "modal": {
+    "activity": "certified_diving",
+    "group_size": 2,
+    "is_colombian": false,
+    "last_dive_over_2_years": false
+   },
+   "inventado": [
+    "activity",
+    "group_size",
+    "is_colombian",
+    "last_dive_over_2_years"
+   ],
+   "equivocado": [],
+   "perdido": []
+  },
+  {
+   "id": "ex0-cambio-idioma-t1",
+   "message": "hola quiero bucear certificado",
+   "sabido": {},
+   "esperado": {
+    "activity": "certified_diving"
+   },
+   "modal": {
+    "activity": "certified_diving",
+    "is_certified": true
+   },
+   "inventado": [
+    "is_certified"
+   ],
+   "equivocado": [],
+   "perdido": []
+  },
+  {
+   "id": "ex0-curso-open-water-principiantes-idioma-frances-anticipacion-t1",
+   "message": "Hola!\nMe gustaria tener mas informacion acerca de los cursos de buceo en Cartagena (especificamente en Islas del Rosario)\nSomos dos personas y es la pirmera vez",
+   "sabido": {},
+   "esperado": {
+    "group_size": 2,
+    "is_certified": false,
+    "location": "cartagena"
+   },
+   "modal": {
+    "activity": "padi_course",
+    "group_size": 2,
+    "is_certified": false,
+    "is_colombian": false,
+    "last_dive_over_2_years": false,
+    "location": "cartagena"
+   },
+   "inventado": [
+    "activity",
+    "is_colombian",
+    "last_dive_over_2_years"
+   ],
+   "equivocado": [],
+   "perdido": []
+  },
+  {
+   "id": "ex0-curso-open-water-principiantes-idioma-frances-anticipacion-t2",
+   "message": "Es decir en dos dias tendriamos el certificado haciendo nuestro curso en linea . La persona que me acompana no habla ni ingles ni espanol pero yo seria la \"inte",
+   "sabido": {
+    "group_size": 2,
+    "is_certified": false,
+    "location": "cartagena"
+   },
+   "esperado": {
+    "activity": "padi_open_water"
+   },
+   "modal": {},
+   "inventado": [],
+   "equivocado": [],
+   "perdido": [
+    "activity"
+   ]
+  },
+  {
+   "id": "ex0-curso-open-water-transporte-y-regreso-otro-dia-t2",
+   "message": "What if I decide to stay one day longer in rosario, can you provide de transfer back to cartagena?",
+   "sabido": {},
+   "esperado": {},
+   "modal": {
+    "location": "island"
+   },
+   "inventado": [
+    "location"
+   ],
+   "equivocado": [],
+   "perdido": []
+  },
+  {
+   "id": "ex0-desde-islas-buzo-certificado-t1",
+   "message": "Thank you for contacting us, how may we help? Hii!! I am staying at Isla Grande and I would love to dive here. The hostel recommends your company to go diving h",
+   "sabido": {},
+   "esperado": {
+    "location": "island",
+    "activity": "certified_diving"
+   },
+   "modal": {
+    "activity": "certified_diving",
+    "group_size": 1,
+    "is_certified": true,
+    "is_colombian": false,
+    "last_dive_over_2_years": false,
+    "location": "island"
+   },
+   "inventado": [
+    "is_certified",
+    "group_size",
+    "is_colombian",
+    "last_dive_over_2_years"
+   ],
+   "equivocado": [],
+   "perdido": []
+  },
+  {
+   "id": "ex0-desde-islas-buzo-certificado-t2",
+   "message": "I have my open water certificate and I’m still a beginner :)",
+   "sabido": {
+    "location": "island",
+    "activity": "certified_diving"
+   },
+   "esperado": {
+    "is_certified": true
+   },
+   "modal": {},
+   "inventado": [],
+   "equivocado": [],
+   "perdido": [
+    "is_certified"
+   ]
+  },
+  {
+   "id": "ex0-familia-mixta-precio-descuento-refresher-t1",
+   "message": "Hi There,\nI am looking to book 2 dives and snorkeling sessions for the following people.\n2 diving sessions - All PADI certified for open water.\n2 adults (ages 4",
+   "sabido": {},
+   "esperado": {
+    "group_size": 6,
+    "group_allocation": {
+     "certified_diving": 3,
+     "snorkel": 3
+    }
+   },
+   "modal": {
+    "activity": "certified_diving",
+    "group_allocation": {
+     "certified_diving": 3,
+     "minicourse": 1,
+     "snorkel": 2
+    },
+    "group_size": 6,
+    "is_certified": true,
+    "is_colombian": false,
+    "last_dive_over_2_years": false
+   },
+   "inventado": [
+    "is_colombian",
+    "last_dive_over_2_years"
+   ],
+   "equivocado": [
+    "group_allocation"
+   ],
+   "perdido": []
+  },
+  {
+   "id": "ex0-familia-mixta-precio-descuento-refresher-t4",
+   "message": "We are a family of 6 and 3 of us will dive and 3 will snorkeling",
+   "sabido": {
+    "group_size": 6,
+    "group_allocation": {
+     "certified_diving": 3,
+     "snorkel": 3
+    }
+   },
+   "esperado": {
+    "group_size": 6,
+    "group_allocation": {
+     "certified_diving": 3,
+     "snorkel": 3
+    }
+   },
+   "modal": {
+    "group_allocation": {
+     "certified_diving": 3,
+     "minicourse": 3,
+     "padi_advanced": 3,
+     "padi_divemaster": 3,
+     "padi_open_water": 3,
+     "padi_open_water_referral": 3,
+     "padi_rescue": 3,
+     "padi_specialty": 3,
+     "snorkel": 3,
+     "undecided": 3
+    }
+   },
+   "inventado": [],
+   "equivocado": [
+    "group_allocation"
+   ],
+   "perdido": []
+  },
+  {
+   "id": "ex0-familia-ninos-resumen-t4",
+   "message": "no somos colombianos",
+   "sabido": {
+    "group_size": 4,
+    "activity": "snorkel",
+    "location": "cartagena"
+   },
+   "esperado": {
+    "is_colombian": false
+   },
+   "modal": {},
+   "inventado": [],
+   "equivocado": [],
+   "perdido": [
+    "is_colombian"
+   ]
+  },
+  {
+   "id": "ex0-link-roto-carrito-t1",
+   "message": "quiero minicurso, somos 3",
+   "sabido": {},
+   "esperado": {
+    "activity": "minicourse",
+    "group_size": 3
+   },
+   "modal": {
+    "activity": "minicourse",
+    "group_size": 3,
+    "is_certified": false,
+    "is_colombian": true,
+    "last_dive_over_2_years": false
+   },
+   "inventado": [
+    "is_colombian",
+    "last_dive_over_2_years"
+   ],
+   "equivocado": [],
+   "perdido": []
+  },
+  {
+   "id": "ex0-manual-acompanante-mayor-t5",
+   "message": "no",
+   "sabido": {
+    "activity": "certified_diving",
+    "is_certified": true,
+    "location": "cartagena",
+    "group_size": 1
+   },
+   "esperado": {
+    "last_dive_over_2_years": false
+   },
+   "modal": {},
+   "inventado": [],
+   "equivocado": [],
+   "perdido": [
+    "last_dive_over_2_years"
+   ]
+  },
+  {
+   "id": "ex0-manual-acompanante-mayor-t6",
+   "message": "no",
+   "sabido": {
+    "activity": "certified_diving",
+    "is_certified": true,
+    "location": "cartagena",
+    "group_size": 1,
+    "last_dive_over_2_years": false
+   },
+   "esperado": {
+    "is_colombian": false
+   },
+   "modal": {},
+   "inventado": [],
+   "equivocado": [],
+   "perdido": [
+    "is_colombian"
+   ]
+  },
+  {
+   "id": "ex0-minicurso-islas-y-acompanante-lancha-t1",
+   "message": "Buena Tardes quería preguntarte estaremos en islas del rosario en junio y quería regalarle a mi esposo una experiencia del buceo no tiene experiencia en buceo, ",
+   "sabido": {},
+   "esperado": {
+    "location": "island",
+    "activity": "minicourse",
+    "is_certified": false
+   },
+   "modal": {
+    "is_certified": false,
+    "location": "island"
+   },
+   "inventado": [],
+   "equivocado": [],
+   "perdido": [
+    "activity"
+   ]
+  },
+  {
+   "id": "ex0-minicurso-precio-colombianos-origen-pendiente-t4",
+   "message": "Ese es el precio para ciudadanos colombianos? somos de Bogotá",
+   "sabido": {
+    "activity": "minicourse",
+    "is_certified": false,
+    "group_size": 2
+   },
+   "esperado": {
+    "is_colombian": true
+   },
+   "modal": {},
+   "inventado": [],
+   "equivocado": [],
+   "perdido": [
+    "is_colombian"
+   ]
+  },
+  {
+   "id": "ex0-nacionalidad-ambigua-t1",
+   "message": "naci en colombia pero vivo en miami hace 10 años, cuento como colombiano?",
+   "sabido": {},
+   "esperado": {
+    "is_colombian": true
+   },
+   "modal": {},
+   "inventado": [],
+   "equivocado": [],
+   "perdido": [
+    "is_colombian"
+   ]
+  },
+  {
+   "id": "ex0-nacionalidad-mixta-carrito-t1",
+   "message": "queremos bucear certificado, somos 3",
+   "sabido": {},
+   "esperado": {
+    "activity": "certified_diving",
+    "group_size": 3
+   },
+   "modal": {
+    "activity": "certified_diving",
+    "group_size": 3,
+    "is_certified": true,
+    "is_colombian": true,
+    "last_dive_over_2_years": false
+   },
+   "inventado": [
+    "is_certified",
+    "is_colombian",
+    "last_dive_over_2_years"
+   ],
+   "equivocado": [],
+   "perdido": []
+  },
+  {
+   "id": "ex0-nacionalidad-mixta-carrito-t2",
+   "message": "dos somos colombianos pero uno es extranjero",
+   "sabido": {
+    "activity": "certified_diving",
+    "group_size": 3
+   },
+   "esperado": {
+    "is_colombian": false
+   },
+   "modal": {},
+   "inventado": [],
+   "equivocado": [],
+   "perdido": [
+    "is_colombian"
+   ]
+  },
+  {
+   "id": "ex0-pareja-certificados-cop-descuento-almuerzo-t1",
+   "message": "somos buzos certificados",
+   "sabido": {},
+   "esperado": {
+    "is_certified": true,
+    "activity": "certified_diving"
+   },
+   "modal": {
+    "is_certified": true
+   },
+   "inventado": [],
+   "equivocado": [],
+   "perdido": [
+    "activity"
+   ]
+  },
+  {
+   "id": "ex0-pedir-fotos-postventa-t3",
+   "message": "Fueron muy buenos buceos,  excelente organización de todo el grupo. Muchas gracias",
+   "sabido": {},
+   "esperado": {},
+   "modal": {
+    "activity": "certified_diving",
+    "group_size": 2,
+    "is_certified": true,
+    "is_colombian": true,
+    "last_dive_over_2_years": false
+   },
+   "inventado": [
+    "activity",
+    "is_certified",
+    "group_size",
+    "is_colombian",
+    "last_dive_over_2_years"
+   ],
+   "equivocado": [],
+   "perdido": []
+  },
+  {
+   "id": "ex0-precio-desde-islas-vs-cartagena-t1",
+   "message": "Hola!! Te contacto desde Argentina.  Estaremos visitando Cartagena y queria coordinar inmersiones en Isla del Rosario.  Somos una pareja Advanced O.W.",
+   "sabido": {},
+   "esperado": {
+    "group_size": 2,
+    "is_certified": true,
+    "activity": "certified_diving",
+    "location": "cartagena"
+   },
+   "modal": {
+    "activity": "certified_diving",
+    "group_size": 2,
+    "is_certified": true,
+    "is_colombian": false,
+    "location": "cartagena"
+   },
+   "inventado": [
+    "is_colombian"
+   ],
+   "equivocado": [],
+   "perdido": []
+  },
+  {
+   "id": "ex0-premisa-falsa-lunes-t4",
+   "message": "buceo certificado, solo yo",
+   "sabido": {},
+   "esperado": {
+    "activity": "certified_diving",
+    "group_size": 1
+   },
+   "modal": {
+    "activity": "certified_diving",
+    "group_size": 1,
+    "is_certified": true,
+    "is_colombian": false,
+    "last_dive_over_2_years": false
+   },
+   "inventado": [
+    "is_certified",
+    "is_colombian",
+    "last_dive_over_2_years"
+   ],
+   "equivocado": [],
+   "perdido": []
+  },
+  {
+   "id": "ex0-principiante-hora-lugar-y-precio-t1",
+   "message": "Hello, is it possible to book for a diving cruise tomorrow, for 1 person?",
+   "sabido": {},
+   "esperado": {
+    "group_size": 1
+   },
+   "modal": {
+    "activity": "certified_diving",
+    "group_size": 1,
+    "is_certified": true,
+    "is_colombian": false,
+    "last_dive_over_2_years": false
+   },
+   "inventado": [
+    "activity",
+    "is_certified",
+    "is_colombian",
+    "last_dive_over_2_years"
+   ],
+   "equivocado": [],
+   "perdido": []
+  },
+  {
+   "id": "ex0-principiante-hora-lugar-y-precio-t2",
+   "message": "I am a beginner ( I have made 4/5 divings before)",
+   "sabido": {
+    "group_size": 1
+   },
+   "esperado": {
+    "is_certified": false
+   },
+   "modal": {},
+   "inventado": [],
+   "equivocado": [],
+   "perdido": [
+    "is_certified"
+   ]
+  },
+  {
+   "id": "ex0-reserva-ingles-t2",
+   "message": "i'm certified, just me",
+   "sabido": {},
+   "esperado": {
+    "is_certified": true,
+    "group_size": 1,
+    "activity": "certified_diving"
+   },
+   "modal": {
+    "group_size": 1,
+    "is_certified": true
+   },
+   "inventado": [],
+   "equivocado": [],
+   "perdido": [
+    "activity"
+   ]
+  },
+  {
+   "id": "ex0-reserva-solo-link-t1",
+   "message": "quiero bucear certificado",
+   "sabido": {},
+   "esperado": {
+    "activity": "certified_diving"
+   },
+   "modal": {
+    "activity": "certified_diving",
+    "is_certified": true
+   },
+   "inventado": [
+    "is_certified"
+   ],
+   "equivocado": [],
+   "perdido": []
+  },
+  {
+   "id": "ex0-reserva-solo-link-t4",
+   "message": "no, buceé hace poco",
+   "sabido": {
+    "activity": "certified_diving",
+    "group_size": 1,
+    "location": "cartagena"
+   },
+   "esperado": {
+    "last_dive_over_2_years": false
+   },
+   "modal": {
+    "is_certified": true,
+    "is_colombian": false,
+    "last_dive_over_2_years": false
+   },
+   "inventado": [
+    "is_certified",
+    "is_colombian"
+   ],
+   "equivocado": [],
+   "perdido": []
+  },
+  {
+   "id": "ex0-semana-santa-solo-avanzado-islas-t2",
+   "message": "Un solo buzo avanzado",
+   "sabido": {},
+   "esperado": {
+    "is_certified": true,
+    "group_size": 1,
+    "activity": "certified_diving"
+   },
+   "modal": {
+    "activity": "certified_diving",
+    "group_size": 1,
+    "is_certified": true,
+    "is_colombian": false,
+    "last_dive_over_2_years": false
+   },
+   "inventado": [
+    "is_colombian",
+    "last_dive_over_2_years"
+   ],
+   "equivocado": [],
+   "perdido": []
+  },
+  {
+   "id": "ex0-snorkel-precio-residente-y-pago-link-t5",
+   "message": "yo soy residente",
+   "sabido": {
+    "activity": "snorkel",
+    "group_size": 2
+   },
+   "esperado": {
+    "is_colombian": true
+   },
+   "modal": {},
+   "inventado": [],
+   "equivocado": [],
+   "perdido": [
+    "is_colombian"
+   ]
+  }
+ ]
+}

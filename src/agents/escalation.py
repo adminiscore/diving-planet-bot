@@ -249,7 +249,7 @@ async def detect_routing_signals(
     try:
         client = client or trace_openai(AsyncOpenAI(api_key=settings.openai_api_key))
         response = await client.chat.completions.create(
-            model=settings.extraction_model,
+            model=settings.senales_model,
             messages=[
                 {"role": "system", "content": routing_system_prompt(lang)},
                 # CAL-E5 (flag `jev_con_contexto`): el mismo contexto que Jev. Medido el 16-oct con

@@ -88,7 +88,7 @@
       "donde": "src/orchestration/graph.py:_router_node",
       "modelos": [
         "jev_model",
-        "extraction_model"
+        "senales_model"
       ],
       "interruptores": [
         "jev_router_enabled",
@@ -337,7 +337,7 @@
       "que_hace": "Lee las señales de Jev: respuestas cortas a lo que se preguntó, correcciones, '¿me recuerdas…?'. Si hay una pregunta, lanza la respuesta en paralelo.",
       "donde": "src/agents/conversational_core.py:_routing_phase",
       "modelos": [
-        "extraction_model"
+        "senales_model"
       ],
       "interruptores": [
         "answer_and_continue",
@@ -354,8 +354,8 @@
       "que_hace": "Saca del mensaje actividad, personas, fechas, certificación, origen y nacionalidad: primero con reglas y luego con un LLM que rellena y comprueba.",
       "donde": "src/agents/conversational_core.py:_extraction_phase",
       "modelos": [
-        "extraction_model",
-        "extractor_turno_model"
+        "extractor_turno_model",
+        "red_extractor_model"
       ],
       "detalle": [
         "LLM: llm_extractor.extract_and_verify / fill_gaps / verify_fields",
@@ -383,7 +383,7 @@
       "que_hace": "Si falta un dato, lo pregunta. Si está todo, arma el resumen con el precio y el link de reserva. Pone delante la respuesta a la pregunta del cliente, si la hubo.",
       "donde": "src/agents/conversational_core.py:_slotfill_close_phase",
       "modelos": [
-        "extraction_model"
+        "resolutor_model"
       ],
       "interruptores": [
         "recommend_inferred_minicourse",
@@ -401,6 +401,8 @@
         "actividad_del_reparto",
         "origen_neutro_con_dos_planes",
         "baru_no_es_rosario",
+        "certificado_solo_si_lo_dice",
+        "precio_no_elige",
         "aplazar_pregunta_sin_respuesta",
         "recomendar_a_certificados",
         "acuse_solo_el_mensaje"
@@ -415,7 +417,7 @@
       "que_hace": "Apunta datos sueltos que un asesor querría recordar. Corre mientras el turno sigue.",
       "donde": "src/agents/notes_extractor.py:extract_notes",
       "modelos": [
-        "extraction_model"
+        "notas_model"
       ],
       "interruptores": [
         "notes_in_parallel",
@@ -432,7 +434,7 @@
       "que_hace": "Una frase cálida corta ('¡Qué buen plan!') preparada mientras se entiende el mensaje.",
       "donde": "src/agents/llm_extractor.py:compose_acknowledgement",
       "modelos": [
-        "extraction_model"
+        "acuse_model"
       ],
       "interruptores": [
         "ack_in_parallel"
@@ -999,6 +1001,16 @@
       "area": "Arquitectura",
       "titulo": "Si OpenAI cae, decir la verdad y pasar a un asesor",
       "texto": "Si en un mensaje ninguna llamada a OpenAI funciona (sin saldo, clave mala o caído), el bot dice que tiene un problema técnico y pasa la conversación a un asesor; el motivo del pase avisa al equipo de que revise el saldo. Antes contestaba 'no lo tengo a la mano' a todo."
+    },
+    "precio_no_elige": {
+      "area": "Reserva",
+      "titulo": "Preguntar un precio no es elegir",
+      "texto": "Si el cliente solo pregunta cuánto cuesta algo ('¿cuánto vale el paquete de 5 inmersiones?'), el bot no da por hecho que lo ha elegido ni que es buzo certificado: es una duda. Decir lo que quiere hacer sí lo elige."
+    },
+    "certificado_solo_si_lo_dice": {
+      "area": "Reserva",
+      "titulo": "Certificado solo si lo dice",
+      "texto": "Que el cliente quiera el buceo para certificados ('fun dives') no significa que esté certificado: el bot se lo pregunta. Antes una regla lo daba por hecho."
     },
     "baru_no_es_rosario": {
       "area": "Reserva",

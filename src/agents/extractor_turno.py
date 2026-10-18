@@ -141,9 +141,15 @@ REGLA_REFRESHER_EN = (
 )
 
 
-def _esquema(con_nombre: bool, con_hotel: bool, con_refresher: bool = False) -> dict:
+def _esquema(con_nombre: bool, con_hotel: bool, con_refresher: bool = False, precio_no_elige: bool = False) -> dict:
     """El esquema de la llamada con los campos opcionales encendidos (sin ellos, el de siempre)."""
     base = ESQUEMA_CON_NOMBRE if con_nombre else ESQUEMA
+    if precio_no_elige:  # mod-2: ver `_PRECIO_NO_ELIGE`
+        import copy
+
+        base = copy.deepcopy(base)
+        qb = base["properties"]["quiere_bucear"]
+        qb["description"] = qb["description"].replace(_QUIERE_BUCEAR_PRECIO, _QUIERE_BUCEAR_SIN_PRECIO)
     if not (con_hotel or con_refresher):
         return base
     extra = {**({"hotel": CAMPO_HOTEL} if con_hotel else {}),
@@ -166,6 +172,35 @@ GENERAL_PRECIO_EN_V2 = ('A question ("can I dive pregnant?") does not say they a
                         'price of a product ("how much is certified diving?") does not say the customer is a certified '
                         'diver, but it DOES choose that activity (see activity). A hypothesis ("in case I decided to do '
                         'the course…") or something they mention without choosing it is not a fact.')
+# mod-2 (18-oct, decisión de Gadea: "no se adivina nada que el cliente no haya dicho"; flag `precio_no_elige`):
+# preguntar el precio de un producto es una DUDA: no elige la actividad, no dice que quiera bucear ni que sea buzo
+# certificado. Revoca la del 14/27-sep (`extractor_precio_elige`). Apagar ese flag no bastaba: volvía el texto de antes,
+# que chocaba con la regla de `activity` ("…o del que quiere saber el precio") y el modelo dejaba de elegir también lo
+# que sí elige ("quiero bucear certificado", "trying to checkout to take PADI Open Water"; banco ex0 109 → 101). Las
+# cuatro frases que hablan del precio cambian a la vez, para que digan lo mismo.
+GENERAL_PRECIO_ES_V3 = ('Una pregunta ("¿puedo bucear embarazada?") no dice que esté embarazada ni que vaya a bucear; '
+                        'preguntar el precio de un producto ("¿cuánto cuesta el buceo certificado?", "¿cuánto vale el '
+                        'paquete de 5 inmersiones?") es una duda: no elige esa actividad ni dice que el cliente sea buzo '
+                        'certificado. Una hipótesis ("si decidiera hacer el curso…") o algo que nombra sin elegirlo no es '
+                        'un dato.')
+GENERAL_PRECIO_EN_V3 = ('A question ("can I dive pregnant?") does not say they are pregnant or will dive; asking the '
+                        'price of a product ("how much is certified diving?", "how much is the 5-dive package?") is a '
+                        'doubt: it does not choose that activity nor say the customer is a certified diver. A hypothesis '
+                        '("in case I decided to do the course…") or something they mention without choosing it is not a '
+                        'fact.')
+_PRECIO_NO_ELIGE = (
+    ("como lo que quiere hacer, reservar, ya tiene reservado o del que quiere saber el precio,",
+     "como lo que quiere hacer, reservar o ya tiene reservado (preguntar solo su precio no lo elige),"),
+    ("as what they want to do, book, have already booked or want the price of,",
+     "as what they want to do, book or have already booked (only asking its price does not choose it),"),
+    ("(lo dice, pide buceos, sus precios o una fecha para bucear)",
+     "(lo dice, pide buceos o una fecha para bucear; preguntar solo un precio no)"),
+    ("(they say so, ask for dives, their prices or a date to dive)",
+     "(they say so, ask for dives or a date to dive; only asking a price does not)"),
+)
+_QUIERE_BUCEAR_PRECIO = "pregunta sus precios o fechas,"
+_QUIERE_BUCEAR_SIN_PRECIO = "pregunta sus fechas (preguntar solo un precio no),"
+
 
 REGLA_NOMBRE_ES = (
     "\n- nombre: solo el nombre propio con que se presenta quien escribe (\"me llamo Ana\", \"soy Rocío\", \"I'm Tom\"). "
@@ -346,7 +381,12 @@ async def extraer_turno(mensaje: str, *, history: list[dict] | None = None, sabi
         return {}
     sistema = (SISTEMA_ES if lang == "es" else SISTEMA_EN).replace("{islas}", _pistas_islas()).replace(
         "{actividades}", _actividades(lang))
-    if settings.extractor_precio_elige:
+    if settings.precio_no_elige:
+        # mod-2 (decisión de Gadea, 18-oct): preguntar el precio no elige ni certifica; manda sobre `extractor_precio_elige`.
+        sistema = sistema.replace(GENERAL_PRECIO_ES, GENERAL_PRECIO_ES_V3).replace(GENERAL_PRECIO_EN, GENERAL_PRECIO_EN_V3)
+        for antes, despues in _PRECIO_NO_ELIGE:
+            sistema = sistema.replace(antes, despues)
+    elif settings.extractor_precio_elige:
         sistema = sistema.replace(GENERAL_PRECIO_ES, GENERAL_PRECIO_ES_V2).replace(GENERAL_PRECIO_EN, GENERAL_PRECIO_EN_V2)
     if settings.extractor_aclaraciones:
         # EX-EXTRACTOR-1: la regla de la ubicación con la negación primero (ver UBICACION_NEGACION_*).
@@ -384,7 +424,8 @@ async def extraer_turno(mensaje: str, *, history: list[dict] | None = None, sabi
                           {"role": "user", "content": _contexto(mensaje, ultima_pregunta_del_bot(history), sabido or {}, lang)}],
                 response_format={"type": "json_schema",
                                  "json_schema": {"name": "datos_del_turno", "strict": True,
-                                                 "schema": _esquema(con_nombre, con_hotel, con_refresher)}},
+                                                 "schema": _esquema(con_nombre, con_hotel, con_refresher,
+                                                                    settings.precio_no_elige)}},
                 temperature=0.0,
                 # EX-EST-1 (14-oct): con los campos nuevos (idioma, nombre, quiere_bucear...) 400 cortaba el JSON (2 de
                 # cada 1.000 llamadas en el banco: "Unterminated string" -> el turno caía al camino viejo).
@@ -459,7 +500,10 @@ async def extraer_turno(mensaje: str, *, history: list[dict] | None = None, sabi
             logger.info(f"[EXTRACT][CAL-F] activity={actividad!r} no está en el reparto {reparto}: {nueva!r}")
             salida["activity"] = nueva
     # Regla del catálogo: el buceo certificado (nombrado: fun dives, paquetes de buceos) exige certificación.
-    if salida.get("activity") == "certified_diving" and "is_certified" not in salida and certificado is not True:
+    # mod-2 (18-oct, decisión de Gadea, flag `certificado_solo_si_lo_dice`): que el cliente elija el buceo certificado NO
+    # dice que lo esté ("fun dives"): tiene que confirmarlo; con el flag, la regla no lo deduce.
+    if (not settings.certificado_solo_si_lo_dice and salida.get("activity") == "certified_diving"
+            and "is_certified" not in salida and certificado is not True):
         salida["is_certified"] = True
     idioma = datos.get("idioma")
     if isinstance(idioma, str) and idioma.strip():
