@@ -398,6 +398,28 @@ def next_missing_slot(state: ConversationState, saltar: frozenset[str] | set[str
     return None
 
 
+def _tarjeta_sin_seguridad(state: ConversationState, nxt: str | None, prev_pending: str | None) -> bool:
+    """CAL-F (flag `tarjeta_sin_seguridad`, decisión de Gadea, 18-oct): ¿sale ya la tarjeta con el precio aunque falte la
+    respuesta de seguridad? Sí cuando es lo ÚNICO que falta y el cliente no la contestó en este mensaje (se la hicimos
+    en el anterior). pareja-certificados-cop-descuento-almuerzo (3/3): la pareja preguntaba por un "bono" y por el
+    almuerzo, el bot repetía "¿más de 2 años?" y la tarjeta con el precio no salía nunca. El aplazamiento de EX-FLUJO-1
+    no servía: siendo la última pregunta, el resumen la volvía a hacer en el mismo turno."""
+    return bool(
+        settings.tarjeta_sin_seguridad and nxt == SLOT_SAFETY and prev_pending == SLOT_SAFETY
+        and next_missing_slot(state, saltar=frozenset({SLOT_SAFETY})) is None
+    )
+
+
+def _nota_seguridad(state: ConversationState) -> str:
+    """La pregunta de seguridad, una vez, dentro de la tarjeta, con el precio del refresher (del catálogo)."""
+    precio = cart_render.refresher_price_text(state, una_moneda=True)  # una sola moneda por mensaje (Gadea)
+    if state.language == "es":
+        return ("\n\n⚠️ Si alguno lleva *más de 2 años* sin bucear, se añade el *refresher* (repaso en el agua antes de "
+                f"la inmersión): *{precio}* por persona. ¿Es vuestro caso?")
+    return ("\n\n⚠️ If anyone hasn't dived for *more than 2 years*, a *refresher* is added (a review in the water before "
+            f"the dive): *{precio}* per person. Is that your case?")
+
+
 def _es_la_ultima_pregunta(state: ConversationState) -> bool:
     """La nacionalidad es la última pregunta salvo que haya otra aplazada aún sin contestar (EX-FLUJO-1)."""
     if not settings.aplazar_pregunta_sin_respuesta or not state.preguntas_aplazadas:
@@ -784,7 +806,7 @@ def ask_slot(state: ConversationState, slot: str, *, reasking: bool = False) -> 
             [{"title": "✅ Yes", "value": "yes"}, {"title": "❌ No", "value": "no"}]
         )
         # Se cobra (owner 2026-09-14): precio por persona desde el catalogo.
-        price = cart_render.refresher_price_text(state)
+        price = cart_render.refresher_price_text(state, una_moneda=settings.rag_sin_precio_con_tarjeta)  # G3-07a
         return (
             "El *refresher* es una sesión corta de repaso en el agua antes de la "
             f"inmersión. Tiene un costo de *{price}* por persona que lo necesite. "
@@ -3708,7 +3730,7 @@ def _refresher_note(state: ConversationState) -> str:
     No se inventa cuantos lo necesitan: la pregunta de seguridad es de grupo."""
     if not state.refresher_interested:
         return ""
-    price = cart_render.refresher_price_text(state)
+    price = cart_render.refresher_price_text(state, una_moneda=settings.rag_sin_precio_con_tarjeta)  # G3-07a
     url = None if state.is_colombian else cart_render.refresher_booking_url(state)
     if state.language == "es":
         how = f" Resérvalo aquí: {url}" if url else " El asesor te lo confirma junto con el pago."
@@ -5175,7 +5197,15 @@ async def _slotfill_close_phase(
             state.step = Step.FREE_TEXT
     else:
         nxt = next_missing_slot(state)
-        if nxt is None:
+        if _tarjeta_sin_seguridad(state, nxt, prev_pending):
+            # CAL-F pareja-certificados-cop-descuento-almuerzo (decisión de Gadea, 18-oct): solo falta la seguridad y el
+            # cliente no la contestó; la tarjeta sale igualmente, con la pregunta una vez dentro (ver la función).
+            finalized = True
+            cierre_previo = state.mixed_last_summary
+            response = _finalize(state) + _nota_seguridad(state)
+            state.core_pending_slot = SLOT_SAFETY  # su respuesta, si llega, se recoge como siempre
+            supervisor._maybe_build_pending_note(state)
+        elif nxt is None:
             if state.companion_activity_deferred:
                 # Ya se cerró el hueco que interrumpió la pregunta del
                 # acompañante (seguridad/nacionalidad/etc.) — se retoma

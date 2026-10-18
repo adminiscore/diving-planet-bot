@@ -1,6 +1,27 @@
 History
 =======
 
+0.31.54 - (2026-10-18)
+----------------------
+* **mod-2 y mod-3 medidos; ronda mod-D corrida y REVERTIDA (sin decidir); dos fallos estables de CAL-F más, con flag**
+  (Álvaro con Claude). Parada por falta de tokens: relevo a Gadea en session-handoff.
+  - **mod-2, el extractor** (banco ex0, 3 pasadas), con las reglas coherentes de "no adivinar" (decisiones de Gadea):
+    `PRECIO_NO_ELIGE` (las 4 frases del precio a la vez) y `CERTIFICADO_SOLO_SI_LO_DICE`, más 8 etiquetas de ex0 al
+    día. gpt-4.1-mini 104 aciertos / 8 inventos; **Luna 107 / 8, 0 equivocados**; Haiku 106 / 7; DeepSeek 100 / 42
+    (frágil a la redacción). Candidato: Luna (OpenAI directo).
+  - **mod-3** (cada pieza de `extraction_model` con su ajuste: `SENALES/RED_EXTRACTOR/RESOLUTOR/ACUSE/NOTAS_MODEL`):
+    acuse gpt-5.4-mini (0/40 inventos frente a 6/40); notas DeepSeek (22/24 y 41/44); resolutor gpt-5.4-mini (0
+    valores equivocados); señales siguen en gpt-4o-mini. Detalle: `docs/robustness/mod/mod2-mod3.md`.
+  - **Ronda core mod-D** (A = mod-C de Gadea, f3edbe2; B = 0ca8d46 con los tres flags de arriba + `TARJETA_SIN_SEGURIDAD`
+    y el extractor en Luna, acuse y resolutor en gpt-5.4-mini, notas en DeepSeek): mod-C 97,8 % (221/226), 28/32 diálogos; mod-D 96,5 % (221/229), 25/32 — PEOR. 2 mejoras (politica-fotos, sin-repreguntas en moneda-precios) y 5 regresiones sin atribuir: reserva-solo-link ("quiero bucear certificado" → con CERTIFICADO_SOLO_SI_LO_DICE el bot pregunta si es certificado y el juez lo cuenta como repregunta: la decisión de Gadea choca con ese criterio del golden; y además ofreció el Minicurso a 183 USD en vez de la salida de certificados: fallo serio, investigar), buceo-adaptado-visual (repregunta del pase), referral-mas-refresher (transporte en los planes de las islas), refresher-que-completar-antes (formulario médico: es la decisión de Gadea 61ed9d2, aún sin desplegar). Latencia: servidor p50
+    2,29 → 3,16 s y p95 6,03 → 6,53 s; cliente p50 3 → 4 s, p95 6,4 → 7 s (la meta es p95 ≤ 7 s). Por pieza: el
+    extractor en Luna 1,04 → 1,56 s y el acuse en gpt-5.4-mini 0,55 → 0,85 s. **REVERTIDA** (PRE es producción): sin
+    atribución ni decisión.
+  - **`TARJETA_SIN_SEGURIDAD`** (CAL-F pareja-certificados, decisión de Gadea, APAGADO): si solo falta la seguridad y
+    el cliente no la contesta, la tarjeta sale con la pregunta una vez dentro y el refresher en una moneda. PRE: 3/3.
+  - **`ACTIVIDAD_DEL_REPARTO`** y **`ORIGEN_NEUTRO_CON_DOS_PLANES`** PROMOCIONADOS (0.31.51); `BARU_NO_ES_ROSARIO`
+    promocionado por Gadea con mod-B (0.31.53); `AVISO_SI_OPENAI_FALLA` PROMOCIONADO (0.31.52).
+
 0.31.53 - (2026-10-18)
 ----------------------
 * **MOD: las rondas mod-B y mod-C PROMOCIONADAS y la transcripción nueva; `RAG_NO_ADIVINA` hecho y APAGADO** (Gadea

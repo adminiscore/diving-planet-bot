@@ -126,6 +126,12 @@ services:
       BUSQUEDA_CON_LA_PREGUNTA_SOLA: "true"
       RAG_SIN_PRECIO_CON_TARJETA: "true"
       EXTRACTION_MODEL: "gpt-4o-mini"
+      # mod-3 (18-oct): cada pieza de EXTRACTION_MODEL con su modelo (mismo valor hasta promocionar otro).
+      SENALES_MODEL: "gpt-4o-mini"
+      RED_EXTRACTOR_MODEL: "gpt-4o-mini"
+      RESOLUTOR_MODEL: "gpt-4o-mini"
+      ACUSE_MODEL: "gpt-4o-mini"
+      NOTAS_MODEL: "gpt-4o-mini"
       # ex-4 (12-oct): el extractor "LLM primero" de la fase EX (src/agents/extractor_turno.py).
       EXTRACTOR_TURNO_MODEL: "gpt-4.1-mini"
       # CAL-A2/A3 (16-oct): el plan del RAG y la comprobacion de completitud (src/agents/rag_plan.py; flags apagados).

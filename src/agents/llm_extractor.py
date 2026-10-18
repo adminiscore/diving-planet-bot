@@ -167,7 +167,7 @@ async def fill_gaps(
     try:
         client = client or trace_openai(AsyncOpenAI(api_key=settings.openai_api_key))
         response = await client.chat.completions.create(
-            model=settings.extraction_model,
+            model=settings.red_extractor_model,
             messages=messages,
             tools=[tool],
             tool_choice={"type": "function", "function": {"name": "extract_fields"}},
@@ -302,7 +302,7 @@ async def verify_fields(
     try:
         client = client or trace_openai(AsyncOpenAI(api_key=settings.openai_api_key))
         response = await client.chat.completions.create(
-            model=settings.extraction_model,
+            model=settings.red_extractor_model,
             messages=messages,
             tools=[_tool(EXTRACTION_TOOL)],
             tool_choice={"type": "function", "function": {"name": "extract_fields"}},
@@ -376,7 +376,7 @@ async def extract_and_verify(
     try:
         client = client or trace_openai(AsyncOpenAI(api_key=settings.openai_api_key))
         response = await client.chat.completions.create(
-            model=settings.extraction_model,
+            model=settings.red_extractor_model,
             messages=messages,
             tools=[tool],
             tool_choice={"type": "function", "function": {"name": "extract_fields"}},
@@ -483,7 +483,7 @@ async def detect_special_signals(
     try:
         client = client or trace_openai(AsyncOpenAI(api_key=settings.openai_api_key))
         response = await client.chat.completions.create(
-            model=settings.extraction_model,
+            model=settings.red_extractor_model,
             messages=messages,
             tools=[SIGNALS_TOOL],
             tool_choice={"type": "function", "function": {"name": "detect_signals"}},
@@ -550,7 +550,7 @@ async def resolve_slot_answer(
     try:
         client = client or trace_openai(AsyncOpenAI(api_key=settings.openai_api_key))
         response = await client.chat.completions.create(
-            model=settings.extraction_model,
+            model=settings.resolutor_model,
             messages=[
                 {"role": "system", "content": _sin_baru(slot_resolver_prompt(slot, lang))},
                 {"role": "user", "content": message},
@@ -612,7 +612,7 @@ async def compose_acknowledgement(
     try:
         client = client or trace_openai(AsyncOpenAI(api_key=settings.openai_api_key))
         response = await client.chat.completions.create(
-            model=settings.extraction_model,
+            model=settings.acuse_model,
             messages=[
                 {"role": "system", "content": acknowledgement_system_prompt(lang, client_name) + _regla_solo_mensaje(lang)},
                 {"role": "user", "content": user_content},

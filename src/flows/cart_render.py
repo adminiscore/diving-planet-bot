@@ -62,10 +62,16 @@ def _refresher_service(state: ConversationState) -> dict:
     return (SERVICES.get(ids[0]) or {}) if ids else {}
 
 
-def refresher_price_text(state: ConversationState) -> str:
+def refresher_price_text(state: ConversationState, una_moneda: bool = False) -> str:
     """Precio por persona del refresher, desde el catalogo (tarifa 2026, decision
-    del owner 2026-09-14: se cobra). Nunca una cifra escrita a mano."""
+    del owner 2026-09-14: se cobra). Nunca una cifra escrita a mano. `una_moneda`
+    (G3-07a, decision de Gadea: una sola moneda por mensaje): COP a colombianos y
+    residentes; USD al resto o si no se sabe."""
     service = _refresher_service(state)
+    if una_moneda:
+        if state.is_colombian:
+            return money_fmt.cop(service.get("price_cop")) or money_fmt.usd(service.get("price_usd"))
+        return money_fmt.usd(service.get("price_usd")) or money_fmt.cop(service.get("price_cop"))
     parts = [money_fmt.usd(service.get("price_usd")), money_fmt.cop(service.get("price_cop"))]
     return " / ".join(p for p in parts if p)
 

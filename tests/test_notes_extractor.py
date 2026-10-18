@@ -130,6 +130,6 @@ async def test_uses_extraction_model_and_forced_tool():
 
     from src.config import settings
     await extract_notes("es nuestra luna de miel", client=_CapturingClient())
-    assert captured["model"] == settings.extraction_model
+    assert captured["model"] == settings.notas_model  # mod-3: las notas con su propio modelo
     assert captured["tool_choice"]["function"]["name"] == "capture_notes"
     assert captured["temperature"] == 0.0

@@ -59,7 +59,36 @@ integrar la rama del otro y suite en verde, porque en PRE gana el último; (3) *
 despliegue reinicia el contenedor y mata la medida del otro (avisar en el registro de Plan Coral con la hora de fin).
 Las doce normas, con su porqué, están en el documento.
 
-### ▶️ RETOMAR AQUÍ — 18-oct, 16:20 (Gadea con Claude): mod-B y mod-C PROMOCIONADAS (HISTORY 0.31.53); ronda mod-D de Álvaro
+### ▶️ RETOMAR AQUÍ — 18-oct, 17:15 (Álvaro con Claude): PARADA por tokens; relevo a Gadea hasta que Álvaro vuelva (~1 día)
+
+**Estado de PRE:** sirve lo de Gadea (mod-B y mod-C promocionadas) + lo de Álvaro con la ronda mod-D REVERTIDA (los
+flags de abajo, APAGADOS; los modelos de mod-2/mod-3, los de antes). Todo subido a `feature/pre_alvaro`.
+
+**Ronda mod-D (sin decidir):** mod-C 97,8 % (221/226), 28/32 diálogos; mod-D 96,5 % (221/229), 25/32 — PEOR. 2 mejoras (politica-fotos, sin-repreguntas en moneda-precios) y 5 regresiones sin atribuir: reserva-solo-link ("quiero bucear certificado" → con CERTIFICADO_SOLO_SI_LO_DICE el bot pregunta si es certificado y el juez lo cuenta como repregunta: la decisión de Gadea choca con ese criterio del golden; y además ofreció el Minicurso a 183 USD en vez de la salida de certificados: fallo serio, investigar), buceo-adaptado-visual (repregunta del pase), referral-mas-refresher (transporte en los planes de las islas), refresher-que-completar-antes (formulario médico: es la decisión de Gadea 61ed9d2, aún sin desplegar). A = `2026-10-18-mod-C` (Gadea), B = `2026-10-18-mod-D`
+(`docs/robustness/golden-set/results/`, `docs/robustness/snapshots/2026-10-18-mod-D.json`). B = `PRECIO_NO_ELIGE` +
+`CERTIFICADO_SOLO_SI_LO_DICE` + `TARJETA_SIN_SEGURIDAD` + `EXTRACTOR_TURNO_MODEL=gpt-6-luna` +
+`ACUSE_MODEL/RESOLUTOR_MODEL=gpt-5.4-mini` + `NOTAS_MODEL=deepseek/deepseek-v4.1-flash`. Latencia: servidor p50 2,29 →
+3,16 s, p95 6,03 → 6,53 s (meta p95 ≤ 7 s); el coste es el extractor en Luna (+0,5 s, en el camino de cada mensaje) y el
+acuse en gpt-5.4-mini (+0,3 s). **Falta:** `ab_judge_compare 2026-10-18-mod-C 2026-10-18-mod-D`, atribuir lo que cambie
+(3 reps con y sin, `reproducir_juez_pre --env`) y decidir. Si la latencia pesa, una opción es D sin el acuse nuevo y con
+el extractor en Haiku (1,7 s p50 en el banco, mod-7 ya lo permite) o en gpt-4.1-mini hasta enero.
+
+**Hecho hoy (Álvaro):** G3-01 (familia) y refresher promocionados; `ACTIVIDAD_DEL_REPARTO` y
+`ORIGEN_NEUTRO_CON_DOS_PLANES` promocionados; Barú (promocionado por Gadea con mod-B); punto de decisión de G3-07a
+(una moneda); `AVISO_SI_OPENAI_FALLA` promocionado (conserva el motivo de pase que ya hubiera; en los tests va apagado
+en conftest); mod-2 y mod-3 medidos (`docs/robustness/mod/mod2-mod3.md`, scripts `mod3_notas.py` y `mod3_resolutor.py`);
+etiquetas de ex0 de "no adivinar"; `TARJETA_SIN_SEGURIDAD` (pareja, 3/3, APAGADO).
+
+**Cola de Álvaro, para la vuelta (o para Gadea si avanza):** (1) decidir mod-D; (2) CAL-F estables de la zona flujo que
+pasó Gadea (#461): `contacto-hoteles-cocoliso-san-pedro` («O el San Pedro», la pregunta elíptica se pierde, 3/3) y
+`recogida-ubuntu-comida-y-certificacion` («We are leaving tomorrow before noon» pasa al asesor, 2/3); (3) etiquetas
+dudosas de ex0 para Gadea: "Un solo buzo avanzado", "regalarle a mi esposo una experiencia del buceo", "I have my open
+water certificate and I'm still a beginner"; (4) regateo-grupo-6: con `PRECIO_NO_ELIGE` puede volver la repregunta de
+actividad (arreglarlo dando los precios y preguntando cuál quiere, decisión de Gadea); (5) limpieza: s4-1 y s4-2 después
+de s4-25 de Gadea; ex-9 parte 2. `RESPALDO_MISMO_MODELO` (mío, APAGADO) sobra si mod-5 (respaldo en DeepSeek) se
+promociona: se puede borrar.
+
+### (anterior) RETOMAR AQUÍ — 18-oct, 16:20 (Gadea con Claude): mod-B y mod-C PROMOCIONADAS (HISTORY 0.31.53); ronda mod-D de Álvaro
 
 **PRE sirve f3edbe2 (pre_gadea)**: G3 (Barú, la pregunta sola, una sola moneda), el revisor con `JUEZ_V3_LUNA`, la
 reescritura, el resumen y el idioma en DeepSeek, y la transcripción con `gpt-transcribe` y vocabulario. Core: A 97,4 %
