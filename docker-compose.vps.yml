@@ -104,6 +104,10 @@ services:
       # 8-oct: PROMOCIONADO -- la respuesta del RAG con GPT-6 Luna (sin razonamiento) y respaldo a gpt-4.1-mini a los 3 s
       # (ronda respaldo-A/B; HISTORY 0.31.0). Extraccion y secundarias en gpt-4o-mini; juez en gpt-4.1.
       OPENAI_MODEL: "gpt-4o-mini"
+      # MOD (18-oct): la reescritura de la consulta, el resumen y el detector de idioma, cada uno con su modelo.
+      REESCRITURA_MODEL: "gpt-4o-mini"
+      RESUMEN_MODEL: "gpt-4o-mini"
+      IDIOMA_MODEL: "gpt-4o-mini"
       RAG_ANSWER_MODEL: "gpt-6-luna"
       RAG_RESPALDO_MODELO: "gpt-4.1-mini"
       RAG_RESPALDO_SEGUNDOS: "3.0"

@@ -44,7 +44,7 @@ async def main():
     print(len(casos), "turnos que hoy se reescriben", flush=True)
     res = {}
     for modelo in CANDIDATOS:
-        settings.openai_model = modelo
+        settings.reescritura_model = modelo
         ts, outs = [], []
         for c in casos:
             t0 = time.perf_counter()

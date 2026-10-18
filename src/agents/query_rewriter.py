@@ -176,7 +176,7 @@ async def condense_query(
     try:
         client = trace_openai(AsyncOpenAI(api_key=settings.openai_api_key))
         response = await client.chat.completions.create(
-            model=settings.openai_model,
+            model=settings.reescritura_model,
             messages=[
                 {"role": "system", "content": system},
                 {"role": "user", "content": user_content},

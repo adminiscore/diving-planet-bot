@@ -31,7 +31,7 @@ async def detect_language_llm(message: str) -> str | None:
     try:
         client = trace_openai(AsyncOpenAI(api_key=settings.openai_api_key))
         response = await client.chat.completions.create(
-            model=settings.openai_model,
+            model=settings.idioma_model,
             messages=[{"role": "user", "content": LANGUAGE_DETECT_PROMPT.format(message=message)}],
             temperature=0.0,
             max_tokens=5,

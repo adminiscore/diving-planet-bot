@@ -20,6 +20,11 @@ class Settings(BaseSettings):
     # cambiaba desde el .env.pre del VPS, fuera del repo.
     # Lo usan condense_query, el juez de grounding, el detector de idioma y el resumen.
     openai_model: str = "gpt-4o-mini"
+    # MOD (18-oct): cada pieza de `openai_model` con su modelo, para medirlas y cambiarlas una a una (la familia gpt-4 se
+    # retira en enero). Mismo valor que `openai_model` mientras no se promocione otro.
+    reescritura_model: str = "gpt-4o-mini"
+    resumen_model: str = "gpt-4o-mini"
+    idioma_model: str = "gpt-4o-mini"
     # Model for the narrow, structured LLM gap-filler extractor
     # (src/agents/llm_extractor.py, robustness Fases 1-3). Kept SEPARATE from
     # openai_model (then used by the action orchestrator, retired in 308488d): the extraction is a small

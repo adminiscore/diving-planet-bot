@@ -64,7 +64,7 @@ async def _generate_summary(existing_summary: str | None, new_turns_text: str, l
 
     client = trace_openai(AsyncOpenAI(api_key=settings.openai_api_key))
     response = await client.chat.completions.create(
-        model=settings.openai_model,
+        model=settings.resumen_model,
         messages=[
             {"role": "system", "content": system},
             {"role": "user", "content": user_content},
