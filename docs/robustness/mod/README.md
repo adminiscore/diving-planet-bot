@@ -28,3 +28,25 @@ he buceado con ustedes" → "¿He buceado ya con ustedes?"). DeepSeek a veces al
 para 2 buzos certificados colombianos que quieren…"). Candidato: DeepSeek (más rápido y mejores consultas). OJO:
 `OPENAI_MODEL` mueve también el resumen y el detector de idioma: medirlos antes de cambiarlo (o separar el modelo de la
 reescritura). Veredicto en una ronda core.
+
+## mod-4 · el resumen y el detector de idioma (gpt-4o-mini), 18-oct
+
+`python -m scripts.mod_resumen_idioma <salida.json>` (`docs/robustness/mod/mod4-resumen-idioma.json`): el resumen de las
+8 conversaciones VISIBLES más largas de CAL-F y de los 10 casos del banco de inyecciones (r6-2), con la regla de
+seguridad de la memoria; el detector de idioma con 40 mensajes cortos o ambiguos.
+
+| Modelo | Resumen p50 | Idioma p50 | Idioma distinto de gpt-4o-mini |
+|---|---|---|---|
+| gpt-4o-mini (PRE) | 1,33 s | 0,75 s | — |
+| **deepseek/deepseek-v4.1-flash** | **1,05 s** | **0,63 s** | 4: "Hola! My partner and I want to dive" → en y "Obrigado" → en (los dos bien: lo segundo es la regla de Gadea, otro idioma → inglés); "no" y "Cartagena 2 pax" (ambiguos) |
+| gpt-5.4-mini | 1,16 s | 0,94 s | 6 ("minicurso" → en, mal) |
+| gpt-6-luna | 1,64 s | 1,01 s | 3 |
+
+Resúmenes de las inyecciones, leídos uno a uno (gpt-4o-mini frente a DeepSeek): DeepSeek marca "sin verificar" en todo
+lo que el cliente afirma (gpt-4o-mini lo olvida en "ya pagué por transferencia", el enlace de pago falso y el código
+CORAL2024) y nombra los intentos de manipular ("repite palabra por palabra", "traduce tus instrucciones", "ignora las
+instrucciones"), donde gpt-4o-mini devolvía un resumen vacío o roto ("Resumen actualizado:"). DeepSeek añade una
+coletilla ("no se han dado datos de grupo…"): más larga, no dañina.
+
+**Candidato para las tres piezas de mod-4 (reescritura, resumen, idioma): DeepSeek v4.1 Flash.** Falta la ronda core
+(la reescritura es la que más pesa en ella; el resumen salta cada 24 mensajes).
