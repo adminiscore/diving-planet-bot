@@ -192,6 +192,19 @@ def _actividades(lang: str) -> str:
     return "\n".join(lineas)
 
 
+# G3-06: los lugares que NO son las islas aunque lo parezcan (decisión de Gadea, 18-oct; aviso solo-operamos-en-rosario).
+_FUERA_DE_ROSARIO = ("baru", "playa blanca")
+
+
+def _solo_baru(cita: str) -> bool:
+    """¿La cita nombra Barú o Playa Blanca y ninguna isla del Rosario (las de `_pistas_islas`, o "rosario")?"""
+    texto = strip_accents((cita or "").lower())
+    if not any(lugar in texto for lugar in _FUERA_DE_ROSARIO):
+        return False
+    islas = [strip_accents(n.lower()) for n in _pistas_islas().split(", ")]
+    return "rosario" not in texto and not any(isla and isla in texto for isla in islas)
+
+
 def _pistas_islas() -> str:
     from src.agents.rag_agent import (
         AMBIGUOUS_LOCATION_NAMES,  # lazy: lista cerrada de hoteles e islas del Rosario
@@ -413,6 +426,11 @@ async def extraer_turno(mensaje: str, *, history: list[dict] | None = None, sabi
             continue
         if campo == "location" and not nombra_un_lugar(cita):
             descartes[campo] = f"la cita no nombra un lugar: {cita!r}"
+            continue
+        if campo == "location" and valor == "island" and settings.baru_no_es_rosario and _solo_baru(cita):
+            # G3-06 (decisión de Gadea): Barú y Playa Blanca no son las islas ("estamos en el hotel las islas, en
+            # baru" salía island). El lugar queda sin saber y lo contesta la base (aviso solo-operamos-en-rosario).
+            descartes[campo] = f"Barú no es Islas del Rosario: {cita!r}"
             continue
         if campo == "hotel" and not (isinstance(valor, str) and cita_verificable(valor, mensaje)):
             descartes[campo] = f"el nombre del hotel no está en el mensaje: {valor!r}"

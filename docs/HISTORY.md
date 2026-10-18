@@ -1,6 +1,19 @@
 History
 =======
 
+0.31.52 - (2026-10-18)
+----------------------
+* **El aviso de "problema técnico" PROMOCIONADO; Barú y una sola moneda, hechos y APAGADOS** (Álvaro con Claude).
+  - **`AVISO_SI_OPENAI_FALLA` PROMOCIONADO** (decisión de Álvaro, tras la 2.ª caída por saldo de OpenAI en un día):
+    si en un turno ninguna llamada a OpenAI funciona, el bot dice que tiene un problema técnico y pasa a un asesor, en
+    vez de "no lo tengo a la mano" a todo.
+  - **`BARU_NO_ES_ROSARIO`** (G3-06, decisión de Gadea, APAGADO hasta la ronda compartida con Gadea): Barú y Playa
+    Blanca no son las islas para Jev, el extractor, la red ni el resolutor del origen. PRE, conv 5572: location=island
+    0/9 turnos y precios "desde las islas" 0/9. Queda del RAG (Gadea): 2/3 dicen que la recogida está incluida.
+  - **G3-07a, el punto de decisión** (con `RAG_SIN_PRECIO_CON_TARJETA` de Gadea, APAGADO): si el turno lleva la tarjeta
+    del plan y la respuesta trae un importe, se rehace sin precio. Sin medir: la medida se quedó sin crédito de OpenAI.
+  - Integrado `feature/gadea-g3` (G3-07a modo sin precio, decisiones de Gadea en datos, la pregunta sola en DeepSeek).
+
 0.31.51 - (2026-10-18)
 ----------------------
 * **CAL-F, dos fallos estables de la zona de Álvaro PROMOCIONADOS** (Álvaro con Claude; decisión de Álvaro).

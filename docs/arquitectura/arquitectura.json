@@ -1,8 +1,8 @@
 {
  "meta": {
-  "generado": "2026-10-18T10:32:51+00:00",
-  "commit": "cdaf489",
-  "rama": "feature/pre_gadea"
+  "generado": "2026-10-18T11:17:05+00:00",
+  "commit": "99e06ad",
+  "rama": "feature/pre_alvaro"
  },
  "vistas": {
   "general": {
@@ -113,8 +113,8 @@
     {
      "nombre": "aviso_si_openai_falla",
      "titulo": "Si OpenAI cae, decir la verdad y pasar a un asesor",
-     "codigo": false,
-     "pre": false,
+     "codigo": true,
+     "pre": true,
      "sin_efecto": false
     }
    ],
@@ -786,6 +786,13 @@
      "titulo": "Si duda entre dos planes, la pregunta del origen es neutra",
      "codigo": true,
      "pre": true,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "baru_no_es_rosario",
+     "titulo": "Barú no es las Islas del Rosario",
+     "codigo": false,
+     "pre": false,
      "sin_efecto": false
     },
     {
@@ -2093,9 +2100,9 @@
    "area": "Arquitectura",
    "titulo": "Si OpenAI cae, decir la verdad y pasar a un asesor",
    "texto": "Si en un mensaje ninguna llamada a OpenAI funciona (sin saldo, clave mala o caído), el bot dice que tiene un problema técnico y pasa la conversación a un asesor; el motivo del pase avisa al equipo de que revise el saldo. Antes contestaba 'no lo tengo a la mano' a todo.",
-   "codigo": false,
-   "pre": false,
-   "fijado_en_pre": false,
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
    "usado_por": [
     "route_message"
    ],
@@ -2124,6 +2131,19 @@
    "fijado_en_pre": false,
    "usado_por": [
     "r_escribir"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "baru_no_es_rosario",
+   "area": "Reserva",
+   "titulo": "Barú no es las Islas del Rosario",
+   "texto": "Quien se aloja en Barú o en Playa Blanca ya no queda como 'ya en las islas': allí no operamos (es una península unida a tierra). El bot le dice dónde buceamos en vez de prometerle la recogida en su hotel con precios de las islas.",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
+   "usado_por": [
+    "b_slotfill_close"
    ],
    "sin_efecto": null
   },
@@ -3526,10 +3546,10 @@
   },
   {
    "ajuste": "pregunta_sola_model",
-   "codigo": "gpt-4.1-nano",
-   "pre": "gpt-4.1-nano",
+   "codigo": "deepseek/deepseek-v4.1-flash",
+   "pre": "deepseek/deepseek-v4.1-flash",
    "usado_por": [],
-   "proveedor": "OpenAI",
+   "proveedor": "OpenRouter",
    "llamadas_ultima_ronda": null
   },
   {

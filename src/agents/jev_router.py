@@ -415,6 +415,20 @@ _CUSTOMER_PLACE_Q = {
                 "to, asks a question about a place, or is unclear.",
     },
 }
+# G3-06 (flag `baru_no_es_rosario`, decisión de Gadea): Barú y Playa Blanca no son las islas ni Cartagena: allí no
+# operamos. Quien se aloja allí queda en "none", y el lugar se le pregunta a la base (CAL-C4), que da el aviso.
+_CUSTOMER_PLACE_Q_SIN_BARU = {
+    **_CUSTOMER_PLACE_Q,
+    "criteria": {
+        "cartagena": "They are in, are staying in, or set out from Cartagena (the city).",
+        "islands": "They are staying on, or will already be on, one of the Rosario Islands (Isla Grande, an island "
+                   "hotel...) when they dive. Barú and Playa Blanca are NOT the islands (a peninsula joined to the "
+                   "mainland).",
+        "none": "The message does not say where they are or leave from, or it is somewhere that is neither the city of "
+                "Cartagena nor the Rosario Islands (for example Barú or Playa Blanca): it only names a place to dive, "
+                "visit or go to, asks a question about a place, or is unclear.",
+    },
+}
 
 # rag-5 (1-oct): ¿el mensaje cuenta algo del cliente que haya que APUNTAR como nota? Puerta del extractor de
 # notas (`conversational_core._maybe_capture_notes`): Gonzalo midió el 30-sep que de 26 notas nuevas solo 7
@@ -453,11 +467,13 @@ _NONE = "none"
 
 def pending_answer_question(slot: str | None) -> dict | None:
     """La pregunta de Jev para el slot pendiente, o None si no es de si/no o de lista."""
-    from src.prompts.booking import SLOT_RESOLVER_SPEC  # lazy
+    from src.prompts.booking import SLOT_RESOLVER_SPEC, lugar_sin_baru  # lazy
 
     spec = SLOT_RESOLVER_SPEC.get(slot or "")
     if not spec or spec["type"] == "integer":
         return None
+    if settings.baru_no_es_rosario:  # G3-06
+        spec = {**spec, "value_meaning": lugar_sin_baru(spec["value_meaning"])}
     asked = f"The assistant just asked the customer: \"{spec['question_en']}\""
     if spec["type"] == "boolean":
         criteria = {
@@ -541,7 +557,7 @@ def _questions_for_turn(pending_slot: str | None = None) -> dict:
     if settings.datos_ajenos_se_niegan:
         q[PIDE_DATOS_AJENOS] = _PIDE_DATOS_AJENOS_Q
     if settings.jev_lugar_cliente:
-        q[CUSTOMER_PLACE] = _CUSTOMER_PLACE_Q
+        q[CUSTOMER_PLACE] = _CUSTOMER_PLACE_Q_SIN_BARU if settings.baru_no_es_rosario else _CUSTOMER_PLACE_Q
     if settings.notas_puerta_jev:
         q[SHARES_OPEN_FACT] = _SHARES_OPEN_FACT_Q
     return q

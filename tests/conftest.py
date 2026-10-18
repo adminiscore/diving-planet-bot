@@ -77,3 +77,13 @@ def _no_llm_language_fallback(monkeypatch):
     monkeypatch.setattr("src.agents.language_detector.detect_language_llm", _no_detect)
 
 
+
+
+@pytest.fixture(autouse=True)
+def _sin_aviso_de_openai_caido(monkeypatch):
+    """r6-1(b): `aviso_si_openai_falla` está PROMOCIONADO, pero aquí la clave de OpenAI es falsa y todas las llamadas
+    fallan (401): el aviso saltaría en cada turno y taparía lo que mide cada test. Se apaga por defecto; los tests del
+    aviso (test_r61_tiempos_por_llamada.py) lo encienden ellos."""
+    from src.config import settings
+
+    monkeypatch.setattr(settings, "aviso_si_openai_falla", False)

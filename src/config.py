@@ -329,10 +329,15 @@ class Settings(BaseSettings):
     # varios ("dos buceos o el pack de 5 en 2 días"), el plan no está elegido: la pregunta del origen es la neutra, sin
     # "dura 1 día y hay que dormir en las islas". APAGADO.
     origen_neutro_con_dos_planes: bool = True  # PROMOCIONADO 18-oct (CAL-F, decisión de Álvaro)
+    # G3-06 (18-oct, decisión de Gadea): Barú y Playa Blanca NO son Islas del Rosario (península unida a tierra, donde no
+    # operamos). Quien se aloja allí no queda como "ya en las islas" (Jev, el extractor de respaldo, el resolutor de la
+    # pregunta del origen); el lugar se le pregunta a la base, que da el aviso. APAGADO.
+    baru_no_es_rosario: bool = False
     # r6-1(b) (17-oct): si en un turno NINGUNA llamada a OpenAI funciona (sin saldo, clave inválida, caído), el bot dice
     # que hay un problema técnico y pasa a un asesor (motivo = alerta en Chatwoot), en vez de "no lo tengo a la mano".
-    # APAGADO hasta medirlo.
-    aviso_si_openai_falla: bool = False
+    # PROMOCIONADO 18-oct (decisión de Álvaro, tras la 2.ª caída por saldo en un día): comprobado en PRE con una clave
+    # inválida (mensaje honesto + pase) y sin falsos disparos con la clave buena (4/4).
+    aviso_si_openai_falla: bool = True
 
     # Paso 5 (RAG, l1-6 + l1-7, 27-sep): (a) el catalogo entero como hechos en el contexto del RAG
     # en vez de los atajos de precio por regex, que contestaban preguntas que no eran de precio;

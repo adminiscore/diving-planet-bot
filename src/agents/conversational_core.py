@@ -171,7 +171,10 @@ def _departure_place(message: str) -> str | None:
     _detector._detect_location(text, intent)
     if intent.location:
         return intent.location
-    return "island" if _GENERIC_ISLAND_RE.search(text) else None
+    isla = _GENERIC_ISLAND_RE.search(text)
+    if isla and settings.baru_no_es_rosario and strip_accents(isla.group(0).lower()) == "baru":
+        return None  # G3-06: Barú no es una isla del Rosario (ver `lugar_sin_baru`)
+    return "island" if isla else None
 
 # Auditoría 2026-08-26 (batería sintética contra PRE, Grupo 4, portado de
 # pre_gadea v0.21.4): una petición EXPLÍCITA de cambiar de idioma a mitad de
@@ -5217,6 +5220,16 @@ async def _slotfill_close_phase(
         response = greeting + answer
         state.history.append({"role": "assistant", "content": response})
         return response
+    if (answer and finalized and settings.rag_sin_precio_con_tarjeta and _IMPORTE_RE.search(answer)
+            and not (settings.cierre_sin_repetir and cierre_previo and state.mixed_last_summary == cierre_previo)):
+        # G3-07a (18-oct, decisión de Gadea: una sola moneda por mensaje): el turno lleva la tarjeta del plan con su
+        # precio, y la respuesta (adelantada, escrita antes de saber de dónde es el cliente) traía otro importe: "126
+        # USD" en el texto y "2 × 448.000 COP" en la tarjeta (conv 5573). Se rehace sin precio; solo en este caso.
+        logger.info("[CORE][G3-07a] la respuesta trae un importe y el turno lleva la tarjeta: se rehace sin precio")
+        try:
+            answer = await _rag_answer(state, message, history=list(state.history), sin_precio=True) or answer
+        except Exception as exc:  # noqa: BLE001 — si falla, va la de antes
+            logger.warning(f"[CORE][G3-07a] no se pudo rehacer sin precio: {exc!r}")
     if answer and finalized and settings.s4_fixes and _is_rag_fallback(answer):
         # s4-7 (paso 6): con el cierre de la reserva (resumen + link) en este turno, un "eso no lo
         # tengo a la mano" no aporta nada y, por la regla de arriba, TAPABA el cierre: "great, how do
@@ -5322,6 +5335,7 @@ async def _answer_question(
 
 async def _rag_answer(
     state: ConversationState, message: str, *, rag_query: str | None = None, history: list | None = None,
+    sin_precio: bool = False,
 ) -> str:
     from src.agents import supervisor  # lazy
 
@@ -5329,6 +5343,8 @@ async def _rag_answer(
     # es donde se usan (van dentro del contexto del RAG), así que aquí se espera.
     await await_pending_notes(state)
     entradas = _entradas_rag(state, state.history if history is None else history, message)
+    if sin_precio:  # G3-07a: solo se pasa cuando hace falta (la llamada de siempre no cambia)
+        entradas["sin_precio"] = True
     answer = await supervisor.rag_answer(rag_query or message, **entradas)
     # 7-oct (opción C): si cotiza sin origen, se pregunta el origen; quien la recibe deja el estado preparado
     # (`_fijar_origen_antes_del_precio`).

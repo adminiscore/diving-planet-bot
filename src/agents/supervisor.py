@@ -3138,6 +3138,9 @@ _FALLO_TECNICO_EN = ("Sorry, I'm having a technical problem and can't answer you
 def _respuesta_fallo_tecnico(state: ConversationState, codigo: int) -> str:
     motivo = {401: "clave inválida", 429: "sin saldo o saturado"}.get(codigo, "no responde")
     reason = f"⚠️ FALLO TÉCNICO: OpenAI {motivo} (código {codigo}) — revisar saldo y clave de OpenAI"
+    if state.pending_escalation_reason and "FALLO TÉCNICO" not in state.pending_escalation_reason:
+        # El turno ya pasaba a un asesor por otra cosa ("LINK ROTO"…): ese motivo se conserva y se añade el técnico.
+        reason = f"{state.pending_escalation_reason} | {reason}"
     state.step = Step.ESCALATE
     state.quick_replies = []
     state.pending_escalation_reason = reason

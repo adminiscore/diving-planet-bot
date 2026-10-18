@@ -227,6 +227,48 @@ _FIELD_VERIFY_RULES_ES = {
 }
 
 
+# G3-06 (18-oct, decisión de Gadea, flag `baru_no_es_rosario`): Barú (y Playa Blanca, que está en Barú) NO es Islas del
+# Rosario: es una península unida a tierra, y allí no operamos. Estos textos lo contaban como "las islas", y el bot
+# decía a la vez "en Barú no operamos" y "la recogida está incluida", con precios de las islas (conv 5572).
+_BARU_EN = " Barú and Playa Blanca are NOT the islands: they are a peninsula joined to the mainland, where we do not operate."
+_BARU_ES = " Barú y Playa Blanca NO son las islas: son una península unida a tierra, donde no operamos."
+_SIN_BARU = (
+    ("staying on or coming from the Rosario Islands, Barú, or a specific island/island-hotel.",
+     "staying on or coming from the Rosario Islands or a specific island/island-hotel." + _BARU_EN),
+    ("Islas del Rosario, Barú, o una isla/hotel de isla concreto.",
+     "Islas del Rosario o una isla/hotel de isla concreto." + _BARU_ES),
+    ("se hospeda en o viene de Islas del Rosario, Baru o un hotel de isla",
+     "se hospeda en o viene de Islas del Rosario o un hotel de isla (Barú y Playa Blanca no)"),
+    ("staying on or coming from the Rosario Islands, Baru or an island hotel",
+     "staying on or coming from the Rosario Islands or an island hotel (not Barú or Playa Blanca)"),
+    ("the islands (Barú, Isla Grande, Islas del Rosario, Playa Blanca, an island hotel or eco-hostel).",
+     "the islands (Isla Grande, Islas del Rosario, an island hotel or eco-hostel)." + _BARU_EN),
+    ("(e.g. Isla Grande, Barú, Isla del Sol)", "(e.g. Isla Grande, Isla del Sol)"),
+)
+
+
+def lugar_sin_baru(texto: str) -> str:
+    """Los textos de lugar sin Barú ni Playa Blanca entre "las islas". Lo aplica quien lee el flag `baru_no_es_rosario`
+    (este módulo no importa `src`)."""
+    if not isinstance(texto, str):
+        return texto
+    for antes, despues in _SIN_BARU:
+        texto = texto.replace(antes, despues)
+    return texto
+
+
+def tool_sin_baru(tool: dict) -> dict:
+    """Copia del tool de extracción con las descripciones de lugar sin Barú (ver `lugar_sin_baru`)."""
+    from copy import deepcopy
+
+    tool = deepcopy(tool)
+    props = tool["function"]["parameters"]["properties"]
+    for campo in ("location", "island"):
+        if campo in props:
+            props[campo]["description"] = lugar_sin_baru(props[campo]["description"])
+    return tool
+
+
 def _meaning_rule(field: str, lang: str) -> str:
     """Guia de verificacion de un campo: su definicion unica (la misma del tool) mas, si
     la tiene, la regla que solo aplica al verificar."""
