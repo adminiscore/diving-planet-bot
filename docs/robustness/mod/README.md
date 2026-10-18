@@ -5,10 +5,20 @@ recientes y más baratos, y se promociona tras una ronda core A/B. Plan y repart
 
 ## Hecho
 
+**PROMOCIONADO 18-oct (HISTORY 0.31.53)**, rondas core: mod-A (todo apagado) 97,4 % y 27/32; mod-B (G3) 96,5 % y
+25/32; mod-C (B + los modelos de mod-1 y mod-4) 97,8 % y 28/32. Las 3 regresiones de C frente a B fallan igual con los
+modelos de B (3 reps, mismo código): ninguna es del modelo. Latencia de C: p50 2,29 s, p95 6,03 s.
+
 - **G3-05, la pregunta sola** → DeepSeek v4.1 Flash (12 mensajes × 3: 36/36, 0,45 s). Decisión de Gadea.
-- **mod-1, el revisor (gpt-4.1)** → candidato DeepSeek v4.1 Flash + `juez_v3_luna`: deja pasar 2 de 10 inventos
-  (gpt-4.1 5/10) y aprueba 45/54 verdades (48/54), ~30 veces más barato. Detalle: `docs/robustness/juez/mod-1/`.
-  Falta la ronda core (C).
+- **mod-1, el revisor (gpt-4.1)** → DeepSeek v4.1 Flash + `juez_v3_luna`: deja pasar 2 de 10 inventos (gpt-4.1 5/10)
+  y aprueba 45/54 verdades (48/54), ~30 veces más barato; en la ronda, 0,55 s frente a 0,94 s. Detalle:
+  `docs/robustness/juez/mod-1/`.
+- **mod-4, la reescritura, el resumen y el idioma (gpt-4o-mini)** → DeepSeek v4.1 Flash (abajo); la reescritura en la
+  ronda, 0,46 s frente a 0,64 s.
+- **mod-6, la transcripción** → `gpt-transcribe` con la pista de vocabulario (abajo).
+- **mod-7, privacidad de OpenRouter** (decisión de Gadea): sí con datos reales, solo proveedores de EE. UU.
+  (`openrouter_proveedores`), `data_collection: deny`, sin razonamiento, nunca la API oficial de DeepSeek y los datos
+  personales tapados antes de salir: en `llm_client.parametros_openrouter`, para todas las piezas a la vez.
 
 ## mod-4 · la reescritura de la consulta (gpt-4o-mini), 18-oct
 
@@ -67,6 +77,10 @@ Todos fallan en "Muelle de la Bodeguita" ("muelle la Destesa / La Destreza"). Si
 gpt-4o-mini-transcribe entra en la retirada de enero (si no, se queda: es el mejor); (2) probar a pasar un `prompt` con
 el vocabulario del negocio (Bodeguita, Majagua, Isla Grande, minicurso…), que la API de transcripción admite.
 
+Con la pista (`--vocabulario`, `TRANSCRIPCION_CON_VOCABULARIO`): **gpt-transcribe 3,2 %** de palabras mal y "Muelle de
+la Bodeguita" bien escrito. Gadea me dejó decidir: **gpt-transcribe con vocabulario, PROMOCIONADO 18-oct** (HISTORY
+0.31.53), fuera de la familia gpt-4o.
+
 ## mod-8 · las herramientas de medida en gpt-4.1
 
 `banco_fallos` ya puede verificar con un modelo de OpenRouter (`_verificar` va por el cliente del bot) y tiene
@@ -76,3 +90,4 @@ el vocabulario del negocio (Bodeguita, Majagua, Isla Grande, minicurso…), que 
 DeepSeek v4.1 Flash **coinciden en 27/30 veredictos**; DeepSeek es más benévolo (16 fallos frente a 19: cal-36 2/2 →
 0/2, cal-70 2/2 → 1/2). Para una herramienta de medida importa seguir midiendo igual que antes: comparar también Luna y
 gpt-5.4-mini antes de elegir, y cambiar el verificador entre comparaciones, nunca a mitad de una.
+`--comparar-verificador` se puede repetir: los tres candidatos sobre las mismas respuestas en una sola pasada.
