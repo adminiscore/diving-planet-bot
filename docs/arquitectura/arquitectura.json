@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-18T17:45:39+00:00",
-  "commit": "a8c4054",
+  "generado": "2026-10-18T17:53:00+00:00",
+  "commit": "bedf8a3",
   "rama": "feature/pre_gadea"
  },
  "vistas": {
@@ -144,8 +144,8 @@
     },
     {
      "ajuste": "senales_model",
-     "codigo": "gpt-4o-mini",
-     "pre": "gpt-4o-mini"
+     "codigo": "deepseek/deepseek-v4.1-flash",
+     "pre": "deepseek/deepseek-v4.1-flash"
     }
    ],
    "interruptores": [
@@ -556,8 +556,8 @@
    "modelos": [
     {
      "ajuste": "senales_model",
-     "codigo": "gpt-4o-mini",
-     "pre": "gpt-4o-mini"
+     "codigo": "deepseek/deepseek-v4.1-flash",
+     "pre": "deepseek/deepseek-v4.1-flash"
     }
    ],
    "interruptores": [
@@ -576,7 +576,7 @@
      "sin_efecto": false
     }
    ],
-   "marca": "openai",
+   "marca": "openrouter",
    "tiempos": {
     "n": 74,
     "p50": 0.006,
@@ -595,13 +595,13 @@
    "modelos": [
     {
      "ajuste": "extractor_turno_model",
-     "codigo": "gpt-4.1-mini",
-     "pre": "gpt-4.1-mini"
+     "codigo": "anthropic/claude-haiku-5.5",
+     "pre": "anthropic/claude-haiku-5.5"
     },
     {
      "ajuste": "red_extractor_model",
-     "codigo": "gpt-4o-mini",
-     "pre": "gpt-4o-mini"
+     "codigo": "gpt-6-luna",
+     "pre": "gpt-6-luna"
     }
    ],
    "detalle": [
@@ -673,7 +673,7 @@
      "sin_efecto": false
     }
    ],
-   "marca": "openai",
+   "marca": "openrouter",
    "tiempos": {
     "n": 74,
     "p50": 0.295,
@@ -692,8 +692,8 @@
    "modelos": [
     {
      "ajuste": "resolutor_model",
-     "codigo": "gpt-4o-mini",
-     "pre": "gpt-4o-mini"
+     "codigo": "gpt-5.4-nano",
+     "pre": "gpt-5.4-nano"
     }
    ],
    "interruptores": [
@@ -863,8 +863,8 @@
    "modelos": [
     {
      "ajuste": "notas_model",
-     "codigo": "gpt-4o-mini",
-     "pre": "gpt-4o-mini"
+     "codigo": "deepseek/deepseek-v4.1-flash",
+     "pre": "deepseek/deepseek-v4.1-flash"
     }
    ],
    "interruptores": [
@@ -890,7 +890,7 @@
      "sin_efecto": false
     }
    ],
-   "marca": "openai"
+   "marca": "openrouter"
   },
   {
    "id": "b_acuse",
@@ -903,8 +903,8 @@
    "modelos": [
     {
      "ajuste": "acuse_model",
-     "codigo": "gpt-4o-mini",
-     "pre": "gpt-4o-mini"
+     "codigo": "gpt-5.4-nano",
+     "pre": "gpt-5.4-nano"
     }
    ],
    "interruptores": [
@@ -3556,13 +3556,13 @@
  "modelos": [
   {
    "ajuste": "acuse_model",
-   "codigo": "gpt-4o-mini",
-   "pre": "gpt-4o-mini",
+   "codigo": "gpt-5.4-nano",
+   "pre": "gpt-5.4-nano",
    "usado_por": [
     "b_acuse"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 70
+   "llamadas_ultima_ronda": null
   },
   {
    "ajuste": "avisos_al_final_model",
@@ -3584,13 +3584,13 @@
   },
   {
    "ajuste": "extractor_turno_model",
-   "codigo": "gpt-4.1-mini",
-   "pre": "gpt-4.1-mini",
+   "codigo": "anthropic/claude-haiku-5.5",
+   "pre": "anthropic/claude-haiku-5.5",
    "usado_por": [
     "b_extraction"
    ],
-   "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 92
+   "proveedor": "OpenRouter",
+   "llamadas_ultima_ronda": null
   },
   {
    "ajuste": "grounding_v3_model",
@@ -3624,13 +3624,13 @@
   },
   {
    "ajuste": "notas_model",
-   "codigo": "gpt-4o-mini",
-   "pre": "gpt-4o-mini",
+   "codigo": "deepseek/deepseek-v4.1-flash",
+   "pre": "deepseek/deepseek-v4.1-flash",
    "usado_por": [
     "b_notas"
    ],
-   "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 70
+   "proveedor": "OpenRouter",
+   "llamadas_ultima_ronda": 149
   },
   {
    "ajuste": "openai_embedding_model",
@@ -3693,13 +3693,13 @@
   },
   {
    "ajuste": "red_extractor_model",
-   "codigo": "gpt-4o-mini",
-   "pre": "gpt-4o-mini",
+   "codigo": "gpt-6-luna",
+   "pre": "gpt-6-luna",
    "usado_por": [
     "b_extraction"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 70
+   "llamadas_ultima_ronda": 93
   },
   {
    "ajuste": "reescritura_model",
@@ -3711,13 +3711,13 @@
   },
   {
    "ajuste": "resolutor_model",
-   "codigo": "gpt-4o-mini",
-   "pre": "gpt-4o-mini",
+   "codigo": "gpt-5.4-nano",
+   "pre": "gpt-5.4-nano",
    "usado_por": [
     "b_slotfill_close"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 70
+   "llamadas_ultima_ronda": null
   },
   {
    "ajuste": "resumen_model",
@@ -3729,14 +3729,14 @@
   },
   {
    "ajuste": "senales_model",
-   "codigo": "gpt-4o-mini",
-   "pre": "gpt-4o-mini",
+   "codigo": "deepseek/deepseek-v4.1-flash",
+   "pre": "deepseek/deepseek-v4.1-flash",
    "usado_por": [
     "router",
     "b_routing"
    ],
-   "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 70
+   "proveedor": "OpenRouter",
+   "llamadas_ultima_ronda": 149
   }
  ],
  "ronda": {

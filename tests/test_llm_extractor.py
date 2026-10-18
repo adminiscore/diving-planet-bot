@@ -170,7 +170,7 @@ async def test_fill_gaps_uses_extraction_model_not_orchestrator_model():
 
     intent = DetectedIntent(language="en")
     await fill_gaps("just the two of us", intent, lang="en", client=_CapturingClient())
-    assert captured["model"] == settings.extraction_model
+    assert captured["model"] == settings.red_extractor_model  # mod-3: la red tiene su propio modelo
 
 
 @pytest.mark.asyncio
@@ -536,7 +536,7 @@ async def test_verify_field_uses_extraction_model_not_orchestrator_model():
         "activity", "quiero el open water, nunca he buceado", "minicourse",
         lang="es", client=_Client(),
     )
-    assert captured["model"] == settings.extraction_model
+    assert captured["model"] == settings.red_extractor_model  # mod-3: la red tiene su propio modelo
 
 
 @pytest.mark.asyncio

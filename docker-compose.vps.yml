@@ -128,13 +128,18 @@ services:
       RAG_SIN_PRECIO_CON_TARJETA: "true"
       EXTRACTION_MODEL: "gpt-4o-mini"
       # mod-3 (18-oct): cada pieza de EXTRACTION_MODEL con su modelo (mismo valor hasta promocionar otro).
-      SENALES_MODEL: "gpt-4o-mini"
-      RED_EXTRACTOR_MODEL: "gpt-4o-mini"
-      RESOLUTOR_MODEL: "gpt-4o-mini"
-      ACUSE_MODEL: "gpt-4o-mini"
-      NOTAS_MODEL: "gpt-4o-mini"
+      SENALES_MODEL: "deepseek/deepseek-v4.1-flash"
+      RED_EXTRACTOR_MODEL: "gpt-6-luna"
+      RESOLUTOR_MODEL: "gpt-5.4-nano"
+      ACUSE_MODEL: "gpt-5.4-nano"
+      NOTAS_MODEL: "deepseek/deepseek-v4.1-flash"
       # ex-4 (12-oct): el extractor "LLM primero" de la fase EX (src/agents/extractor_turno.py).
-      EXTRACTOR_TURNO_MODEL: "gpt-4.1-mini"
+      # RONDA mod-F (18-oct, mod-2 y mod-3): el extractor en Haiku 5.5 (Anthropic/Google/Amazon por OpenRouter), su red
+      # en Luna (otro proveedor), las señales y las notas en DeepSeek, el resolutor y el acuse en gpt-5.4-nano.
+      # Revert = gpt-4.1-mini aquí y gpt-4o-mini en las cinco de arriba.
+      EXTRACTOR_TURNO_MODEL: "anthropic/claude-haiku-5.5"
+      # mod-7 + Haiku (18-oct): solo proveedores de EE. UU. por OpenRouter, sin retención ni entrenamiento.
+      OPENROUTER_PROVEEDORES: "baseten,fireworks/us,coreweave,google-vertex,anthropic,amazon-bedrock"
       # CAL-A2/A3 (16-oct): el plan del RAG y la comprobacion de completitud (src/agents/rag_plan.py; flags apagados).
       RAG_PLAN_MODEL: "gpt-4.1-mini"
       # CAL-A6 (17-oct): el revisor que añade el aviso que falta (flag AVISOS_AL_FINAL, apagado). Luna: decision de Gadea.

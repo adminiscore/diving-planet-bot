@@ -38,15 +38,15 @@ class Settings(BaseSettings):
     extraction_model: str = "gpt-4o-mini"
     # mod-3 (18-oct, fase MOD: la familia gpt-4 se retira en enero): cada pieza de `extraction_model` con su modelo,
     # para medirlas y cambiarlas una a una. Mismo valor que `extraction_model` mientras no se promocione otro.
-    senales_model: str = "gpt-4o-mini"  # señales del enrutador (escalation.detect_routing_signals)
-    red_extractor_model: str = "gpt-4o-mini"  # red del extractor (fill_gaps, verify, special signals)
-    resolutor_model: str = "gpt-4o-mini"  # intérprete de la respuesta a la pregunta pendiente (resolve_slot_answer)
-    acuse_model: str = "gpt-4o-mini"  # acuse cálido (compose_acknowledgement)
-    notas_model: str = "gpt-4o-mini"  # notas del cliente (notes_extractor)
+    senales_model: str = "deepseek/deepseek-v4.1-flash"  # RONDA mod-F (18-oct); revert = "gpt-4o-mini"
+    red_extractor_model: str = "gpt-6-luna"  # RONDA mod-F (18-oct); revert = "gpt-4o-mini"
+    resolutor_model: str = "gpt-5.4-nano"  # RONDA mod-F (18-oct); revert = "gpt-4o-mini"
+    acuse_model: str = "gpt-5.4-nano"  # RONDA mod-F (18-oct); revert = "gpt-4o-mini"
+    notas_model: str = "deepseek/deepseek-v4.1-flash"  # RONDA mod-F (18-oct); revert = "gpt-4o-mini"
     # ex-4 (fase EX, 12-oct): modelo del extractor "LLM primero" (src/agents/extractor_turno.py). Medido en PRE con el
     # banco ex0: gpt-4.1-mini 88-89 % de datos y 4,5 % de casos con invento en diseño; en el CIEGO 90,6 % y 5,6 % (hoy
     # 90,6 % y 21,8 %), p50 ~1,0 s. gpt-4o-mini parecido y algo peor; Luna inventa menos pero tarda 2,1-2,4 s.
-    extractor_turno_model: str = "gpt-4.1-mini"
+    extractor_turno_model: str = "anthropic/claude-haiku-5.5"  # RONDA mod-F (18-oct); revert = "gpt-4.1-mini"
     # G-10 (decision de Gadea, 14-oct): el bot atiende en espanol e ingles; si el cliente escribe en OTRO idioma
     # (portugues, frances...) contesta en INGLES. El idioma principal del mensaje lo dice el extractor de la fase EX
     # (misma llamada, sin coste); unas palabras sueltas de otro idioma no cuentan. conversational_core.
@@ -546,7 +546,9 @@ class Settings(BaseSettings):
     # sin retención de datos). "deepseek" = la API oficial (servidores en China: solo para pruebas sin datos de
     # clientes); "baseten,fireworks/us,coreweave" = EE. UU. Vacío = cualquiera, por latencia.
     openrouter_base_url: str = "https://openrouter.ai/api/v1"
-    openrouter_proveedores: str = "baseten,fireworks/us,coreweave"
+    # 18-oct (Gadea: probar Haiku): + Anthropic, Google Vertex y Amazon Bedrock, empresas de EE. UU., con las mismas
+    # condiciones de mod-7 (sin retención ni entrenamiento, datos personales tapados). RONDA mod-F.
+    openrouter_proveedores: str = "baseten,fireworks/us,coreweave,google-vertex,anthropic,amazon-bedrock"
     # OpenRouter solo deja usar la API oficial de DeepSeek si se acepta que ENTRENEN con los datos (su politica "Paid
     # model training"). Apagado = nunca. Solo para pruebas con datos anonimizados; nunca con clientes reales.
     openrouter_permitir_entrenamiento: bool = False
