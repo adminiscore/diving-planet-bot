@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-18T14:11:22+00:00",
-  "commit": "36e4a6d",
+  "generado": "2026-10-18T15:21:53+00:00",
+  "commit": "0ca8d46",
   "rama": "feature/pre_alvaro"
  },
  "vistas": {
@@ -193,8 +193,8 @@
    "marca": "openrouter",
    "tiempos": {
     "n": 93,
-    "p50": 0.44,
-    "p95": 1.564
+    "p50": 0.442,
+    "p95": 1.693
    }
   },
   {
@@ -217,7 +217,7 @@
    ],
    "modelos": [],
    "tiempos": {
-    "n": 8,
+    "n": 7,
     "p50": 0.002,
     "p95": 0.004
    }
@@ -235,8 +235,8 @@
    "interruptores": [],
    "tiempos": {
     "n": 2,
-    "p50": 0.003,
-    "p95": 0.004
+    "p50": 0.005,
+    "p95": 0.005
    }
   },
   {
@@ -260,8 +260,8 @@
    "modelos": [],
    "tiempos": {
     "n": 1,
-    "p50": 0.004,
-    "p95": 0.004
+    "p50": 0.002,
+    "p95": 0.002
    }
   },
   {
@@ -279,8 +279,8 @@
    "interruptores": [],
    "tiempos": {
     "n": 4,
-    "p50": 3.508,
-    "p95": 3.957
+    "p50": 3.408,
+    "p95": 4.919
    }
   },
   {
@@ -296,9 +296,9 @@
    "modelos": [],
    "interruptores": [],
    "tiempos": {
-    "n": 78,
-    "p50": 2.366,
-    "p95": 5.214
+    "n": 79,
+    "p50": 2.742,
+    "p95": 4.938
    }
   },
   {
@@ -507,9 +507,9 @@
    ],
    "marca": "openai",
    "tiempos": {
-    "n": 78,
-    "p50": 0.034,
-    "p95": 1.007
+    "n": 79,
+    "p50": 0.032,
+    "p95": 1.642
    }
   },
   {
@@ -539,9 +539,9 @@
    ],
    "modelos": [],
    "tiempos": {
-    "n": 78,
+    "n": 79,
     "p50": 0.005,
-    "p95": 0.412
+    "p95": 0.069
    }
   },
   {
@@ -578,9 +578,9 @@
    ],
    "marca": "openai",
    "tiempos": {
-    "n": 72,
-    "p50": 0.006,
-    "p95": 0.015
+    "n": 74,
+    "p50": 0.007,
+    "p95": 0.016
    }
   },
   {
@@ -595,8 +595,8 @@
    "modelos": [
     {
      "ajuste": "extractor_turno_model",
-     "codigo": "gpt-6-luna",
-     "pre": "gpt-6-luna"
+     "codigo": "gpt-4.1-mini",
+     "pre": "gpt-4.1-mini"
     },
     {
      "ajuste": "red_extractor_model",
@@ -675,9 +675,9 @@
    ],
    "marca": "openai",
    "tiempos": {
-    "n": 72,
-    "p50": 0.532,
-    "p95": 0.943
+    "n": 74,
+    "p50": 0.963,
+    "p95": 1.859
    }
   },
   {
@@ -692,8 +692,8 @@
    "modelos": [
     {
      "ajuste": "resolutor_model",
-     "codigo": "gpt-5.4-mini",
-     "pre": "gpt-5.4-mini"
+     "codigo": "gpt-4o-mini",
+     "pre": "gpt-4o-mini"
     }
    ],
    "interruptores": [
@@ -805,22 +805,22 @@
     {
      "nombre": "certificado_solo_si_lo_dice",
      "titulo": "Certificado solo si lo dice",
-     "codigo": true,
-     "pre": true,
+     "codigo": false,
+     "pre": false,
      "sin_efecto": false
     },
     {
      "nombre": "precio_no_elige",
      "titulo": "Preguntar un precio no es elegir",
-     "codigo": true,
-     "pre": true,
+     "codigo": false,
+     "pre": false,
      "sin_efecto": false
     },
     {
      "nombre": "tarjeta_sin_seguridad",
      "titulo": "El precio sale aunque falte la pregunta de seguridad",
-     "codigo": true,
-     "pre": true,
+     "codigo": false,
+     "pre": false,
      "sin_efecto": false
     },
     {
@@ -847,9 +847,9 @@
    ],
    "marca": "openai",
    "tiempos": {
-    "n": 72,
-    "p50": 1.928,
-    "p95": 4.182
+    "n": 74,
+    "p50": 1.275,
+    "p95": 4.112
    }
   },
   {
@@ -863,8 +863,8 @@
    "modelos": [
     {
      "ajuste": "notas_model",
-     "codigo": "deepseek/deepseek-v4.1-flash",
-     "pre": "deepseek/deepseek-v4.1-flash"
+     "codigo": "gpt-4o-mini",
+     "pre": "gpt-4o-mini"
     }
    ],
    "interruptores": [
@@ -890,7 +890,7 @@
      "sin_efecto": false
     }
    ],
-   "marca": "openrouter"
+   "marca": "openai"
   },
   {
    "id": "b_acuse",
@@ -903,8 +903,8 @@
    "modelos": [
     {
      "ajuste": "acuse_model",
-     "codigo": "gpt-5.4-mini",
-     "pre": "gpt-5.4-mini"
+     "codigo": "gpt-4o-mini",
+     "pre": "gpt-4o-mini"
     }
    ],
    "interruptores": [
@@ -968,7 +968,7 @@
    "conteo": {
     "n": 45,
     "que": "preguntas",
-    "fuente": "2026-10-18-mod-C.json"
+    "fuente": "2026-10-18-mod-D.json"
    }
   },
   {
@@ -2252,9 +2252,9 @@
    "area": "Reserva",
    "titulo": "Certificado solo si lo dice",
    "texto": "Que el cliente quiera el buceo para certificados ('fun dives') no significa que esté certificado: el bot se lo pregunta. Antes una regla lo daba por hecho.",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
    "usado_por": [
     "b_slotfill_close"
    ],
@@ -3064,9 +3064,9 @@
    "area": "Reserva",
    "titulo": "Preguntar un precio no es elegir",
    "texto": "Si el cliente solo pregunta cuánto cuesta algo ('¿cuánto vale el paquete de 5 inmersiones?'), el bot no da por hecho que lo ha elegido ni que es buzo certificado: es una duda. Decir lo que quiere hacer sí lo elige.",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
    "usado_por": [
     "b_slotfill_close"
    ],
@@ -3494,9 +3494,9 @@
    "area": "Reserva",
    "titulo": "El precio sale aunque falte la pregunta de seguridad",
    "texto": "Si solo falta saber si alguien lleva más de 2 años sin bucear y el cliente no lo contesta, el bot da igualmente el precio, con una línea: 'si alguno lleva más de 2 años sin bucear, se añade el refresher (precio)'. Antes repetía la pregunta y el precio no salía nunca.",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
    "usado_por": [
     "b_slotfill_close"
    ],
@@ -3556,13 +3556,13 @@
  "modelos": [
   {
    "ajuste": "acuse_model",
-   "codigo": "gpt-5.4-mini",
-   "pre": "gpt-5.4-mini",
+   "codigo": "gpt-4o-mini",
+   "pre": "gpt-4o-mini",
    "usado_por": [
     "b_acuse"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": null
+   "llamadas_ultima_ronda": 11
   },
   {
    "ajuste": "avisos_al_final_model",
@@ -3572,7 +3572,7 @@
     "r_revisor"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 96
+   "llamadas_ultima_ronda": 194
   },
   {
    "ajuste": "extraction_model",
@@ -3580,17 +3580,17 @@
    "pre": "gpt-4o-mini",
    "usado_por": [],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 64
+   "llamadas_ultima_ronda": 11
   },
   {
    "ajuste": "extractor_turno_model",
-   "codigo": "gpt-6-luna",
-   "pre": "gpt-6-luna",
+   "codigo": "gpt-4.1-mini",
+   "pre": "gpt-4.1-mini",
    "usado_por": [
     "b_extraction"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 96
+   "llamadas_ultima_ronda": null
   },
   {
    "ajuste": "grounding_v3_model",
@@ -3600,7 +3600,7 @@
     "r_revisor"
    ],
    "proveedor": "OpenRouter",
-   "llamadas_ultima_ronda": 136
+   "llamadas_ultima_ronda": 144
   },
   {
    "ajuste": "idioma_model",
@@ -3608,7 +3608,7 @@
    "pre": "deepseek/deepseek-v4.1-flash",
    "usado_por": [],
    "proveedor": "OpenRouter",
-   "llamadas_ultima_ronda": 136
+   "llamadas_ultima_ronda": 144
   },
   {
    "ajuste": "jev_model",
@@ -3620,17 +3620,17 @@
    ],
    "proveedor": "OpenRouter",
    "llamadas_ultima_ronda": null,
-   "nota": "Decidió solo 82 de 93 mensajes; en los otros 11 decidió el LLM de respaldo (sus llamadas cuentan en gpt-4o-mini)."
+   "nota": "Decidió solo 83 de 93 mensajes; en los otros 10 decidió el LLM de respaldo (sus llamadas cuentan en gpt-4o-mini)."
   },
   {
    "ajuste": "notas_model",
-   "codigo": "deepseek/deepseek-v4.1-flash",
-   "pre": "deepseek/deepseek-v4.1-flash",
+   "codigo": "gpt-4o-mini",
+   "pre": "gpt-4o-mini",
    "usado_por": [
     "b_notas"
    ],
-   "proveedor": "OpenRouter",
-   "llamadas_ultima_ronda": 136
+   "proveedor": "OpenAI",
+   "llamadas_ultima_ronda": 11
   },
   {
    "ajuste": "openai_embedding_model",
@@ -3653,7 +3653,7 @@
     "r_reescribir"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 64
+   "llamadas_ultima_ronda": 11
   },
   {
    "ajuste": "openai_transcription_model",
@@ -3671,7 +3671,7 @@
    "pre": "deepseek/deepseek-v4.1-flash",
    "usado_por": [],
    "proveedor": "OpenRouter",
-   "llamadas_ultima_ronda": 136
+   "llamadas_ultima_ronda": 144
   },
   {
    "ajuste": "rag_answer_model",
@@ -3681,7 +3681,7 @@
     "r_escribir"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 96
+   "llamadas_ultima_ronda": 194
   },
   {
    "ajuste": "rag_plan_model",
@@ -3689,7 +3689,7 @@
    "pre": "gpt-4.1-mini",
    "usado_por": [],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 93
+   "llamadas_ultima_ronda": null
   },
   {
    "ajuste": "red_extractor_model",
@@ -3699,7 +3699,7 @@
     "b_extraction"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 64
+   "llamadas_ultima_ronda": 11
   },
   {
    "ajuste": "reescritura_model",
@@ -3707,17 +3707,17 @@
    "pre": "deepseek/deepseek-v4.1-flash",
    "usado_por": [],
    "proveedor": "OpenRouter",
-   "llamadas_ultima_ronda": 136
+   "llamadas_ultima_ronda": 144
   },
   {
    "ajuste": "resolutor_model",
-   "codigo": "gpt-5.4-mini",
-   "pre": "gpt-5.4-mini",
+   "codigo": "gpt-4o-mini",
+   "pre": "gpt-4o-mini",
    "usado_por": [
     "b_slotfill_close"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": null
+   "llamadas_ultima_ronda": 11
   },
   {
    "ajuste": "resumen_model",
@@ -3725,7 +3725,7 @@
    "pre": "deepseek/deepseek-v4.1-flash",
    "usado_por": [],
    "proveedor": "OpenRouter",
-   "llamadas_ultima_ronda": 136
+   "llamadas_ultima_ronda": 144
   },
   {
    "ajuste": "senales_model",
@@ -3736,65 +3736,65 @@
     "b_routing"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 64
+   "llamadas_ultima_ronda": 11
   }
  ],
  "ronda": {
-  "etiqueta": "mod-C",
-  "run_at": "2026-10-18T12:52:26Z",
-  "fichero": "2026-10-18-mod-C.json",
-  "commit": "d2d6803",
+  "etiqueta": "mod-D",
+  "run_at": "2026-10-18T14:56:14Z",
+  "fichero": "2026-10-18-mod-D.json",
+  "commit": "0ca8d46",
   "por_tipo": {
    "reserva": {
     "turns": 48,
-    "latency_p50": 1.19,
-    "latency_p95": 2.069,
-    "latency_avg": 1.388,
-    "llm_calls_avg": 2.48,
-    "llm_calls_p95": 3.65,
-    "llm_calls_max": 4,
-    "embeddings_avg": 1.62,
-    "llm_share": 1.362,
+    "latency_p50": 1.952,
+    "latency_p95": 3.089,
+    "latency_avg": 2.067,
+    "llm_calls_avg": 2.62,
+    "llm_calls_p95": 4.0,
+    "llm_calls_max": 5,
+    "embeddings_avg": 1.67,
+    "llm_share": 1.388,
     "tokens_avg": 0,
     "cost_avg_usd": 0
    },
    "rag": {
     "turns": 45,
-    "latency_p50": 4.179,
-    "latency_p95": 7.568,
-    "latency_avg": 4.44,
-    "llm_calls_avg": 6.0,
-    "llm_calls_p95": 9.0,
+    "latency_p50": 4.031,
+    "latency_p95": 7.005,
+    "latency_avg": 4.469,
+    "llm_calls_avg": 6.02,
+    "llm_calls_p95": 8.8,
     "llm_calls_max": 9,
-    "embeddings_avg": 2.31,
-    "llm_share": 1.395,
+    "embeddings_avg": 2.33,
+    "llm_share": 1.556,
     "tokens_avg": 0,
     "cost_avg_usd": 0
    }
   },
   "enrutador": {
    "by_backend": {
-    "jev": 82,
-    "llm_uncertain": 10,
+    "jev": 83,
+    "llm_uncertain": 9,
     "llm": 1
    },
-   "ms_p50": 411.0,
-   "ms_p95": 483.45
+   "ms_p50": 415.0,
+   "ms_p95": 497.1
   },
   "cliente": {
    "turns": 93,
    "conversations": 32,
    "no_reply": 0,
-   "multi_bubble": 0,
-   "latency_p50": 3.0,
-   "latency_p95": 6.4,
-   "latency_max": 8
+   "multi_bubble": 1,
+   "latency_p50": 4.0,
+   "latency_p95": 7.0,
+   "latency_max": 10
   },
   "llamadas_por_modelo": {
-   "deepseek/deepseek-v4.1-flash": 136,
-   "gpt-6-luna": 96,
-   "gpt-4.1-mini": 93,
-   "gpt-4o-mini": 64
+   "gpt-6-luna": 194,
+   "deepseek/deepseek-v4.1-flash": 144,
+   "gpt-5.4-mini": 48,
+   "gpt-4o-mini": 11
   },
   "calidad": null
  },

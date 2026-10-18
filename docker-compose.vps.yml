@@ -126,11 +126,11 @@ services:
       # mod-3 (18-oct): cada pieza de EXTRACTION_MODEL con su modelo (mismo valor hasta promocionar otro).
       SENALES_MODEL: "gpt-4o-mini"
       RED_EXTRACTOR_MODEL: "gpt-4o-mini"
-      RESOLUTOR_MODEL: "gpt-5.4-mini"  # RONDA mod-D (18-oct): encendido para medir; revert = "gpt-4o-mini"
-      ACUSE_MODEL: "gpt-5.4-mini"  # RONDA mod-D (18-oct): encendido para medir; revert = "gpt-4o-mini"
-      NOTAS_MODEL: "deepseek/deepseek-v4.1-flash"  # RONDA mod-D (18-oct): encendido para medir; revert = "gpt-4o-mini"
+      RESOLUTOR_MODEL: "gpt-4o-mini"
+      ACUSE_MODEL: "gpt-4o-mini"
+      NOTAS_MODEL: "gpt-4o-mini"
       # ex-4 (12-oct): el extractor "LLM primero" de la fase EX (src/agents/extractor_turno.py).
-      EXTRACTOR_TURNO_MODEL: "gpt-6-luna"  # RONDA mod-D (18-oct): encendido para medir; revert = "gpt-4.1-mini"
+      EXTRACTOR_TURNO_MODEL: "gpt-4.1-mini"
       # CAL-A2/A3 (16-oct): el plan del RAG y la comprobacion de completitud (src/agents/rag_plan.py; flags apagados).
       RAG_PLAN_MODEL: "gpt-4.1-mini"
       # CAL-A6 (17-oct): el revisor que añade el aviso que falta (flag AVISOS_AL_FINAL, apagado). Luna: decision de Gadea.
@@ -425,11 +425,6 @@ services:
       # r6-1(b) PROMOCIONADO 18-oct (decisión de Álvaro): si en un turno ninguna llamada a OpenAI funciona, el bot dice que
       # tiene un problema técnico y pasa a un asesor (en PRE con clave inválida: bien; con la buena: 0 falsos, 4/4).
       AVISO_SI_OPENAI_FALLA: "true"
-      # RONDA mod-D (18-oct, autorizada por Álvaro): no adivinar + tarjeta sin la seguridad (decisiones de Gadea),
-      # con los modelos candidatos de mod-2/mod-3. Revert = quitar estas líneas y los defaults en False.
-      CERTIFICADO_SOLO_SI_LO_DICE: "true"
-      PRECIO_NO_ELIGE: "true"
-      TARJETA_SIN_SEGURIDAD: "true"
       # CAL-F PROMOCIONADOS 18-oct (decisión de Álvaro): la actividad sale del reparto ("1 buzo avanzado y 2 para
       # bautismo" no es el Curso Avanzado; estado bien 3/3, y en la medida de Gadea 0/6 respuestas citan el curso) y la
       # pregunta del origen neutra con dos planes candidatos ("dura 1 día y hay que dormir en las islas" 0/3).

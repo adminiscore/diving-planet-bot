@@ -40,13 +40,13 @@ class Settings(BaseSettings):
     # para medirlas y cambiarlas una a una. Mismo valor que `extraction_model` mientras no se promocione otro.
     senales_model: str = "gpt-4o-mini"  # señales del enrutador (escalation.detect_routing_signals)
     red_extractor_model: str = "gpt-4o-mini"  # red del extractor (fill_gaps, verify, special signals)
-    resolutor_model: str = "gpt-5.4-mini"  # RONDA mod-D (18-oct): encendido para medir; revert = "gpt-4o-mini"
-    acuse_model: str = "gpt-5.4-mini"  # RONDA mod-D (18-oct): encendido para medir; revert = "gpt-4o-mini"
-    notas_model: str = "deepseek/deepseek-v4.1-flash"  # RONDA mod-D (18-oct): encendido para medir; revert = "gpt-4o-mini"
+    resolutor_model: str = "gpt-4o-mini"  # intérprete de la respuesta a la pregunta pendiente (resolve_slot_answer)
+    acuse_model: str = "gpt-4o-mini"  # acuse cálido (compose_acknowledgement)
+    notas_model: str = "gpt-4o-mini"  # notas del cliente (notes_extractor)
     # ex-4 (fase EX, 12-oct): modelo del extractor "LLM primero" (src/agents/extractor_turno.py). Medido en PRE con el
     # banco ex0: gpt-4.1-mini 88-89 % de datos y 4,5 % de casos con invento en diseño; en el CIEGO 90,6 % y 5,6 % (hoy
     # 90,6 % y 21,8 %), p50 ~1,0 s. gpt-4o-mini parecido y algo peor; Luna inventa menos pero tarda 2,1-2,4 s.
-    extractor_turno_model: str = "gpt-6-luna"  # RONDA mod-D (18-oct): encendido para medir; revert = "gpt-4.1-mini"
+    extractor_turno_model: str = "gpt-4.1-mini"
     # G-10 (decision de Gadea, 14-oct): el bot atiende en espanol e ingles; si el cliente escribe en OTRO idioma
     # (portugues, frances...) contesta en INGLES. El idioma principal del mensaje lo dice el extractor de la fase EX
     # (misma llamada, sin coste); unas palabras sueltas de otro idioma no cuentan. conversational_core.
@@ -357,14 +357,14 @@ class Settings(BaseSettings):
     # mod-2 (18-oct, decisión de Gadea): elegir el buceo certificado ("fun dives") no dice que el cliente esté
     # certificado; tiene que confirmarlo. Con el flag, el extractor no lo deduce (la regla del catálogo lo hacía para
     # todos los modelos). APAGADO.
-    certificado_solo_si_lo_dice: bool = True  # RONDA mod-D (18-oct): encendido para medir; revert = False
+    certificado_solo_si_lo_dice: bool = False
     # mod-2 (18-oct, decisión de Gadea, revoca `extractor_precio_elige`): preguntar el precio de un producto es una duda:
     # no elige la actividad, no dice que quiera bucear ni que sea certificado. Cambia a la vez las cuatro frases del
     # extractor que hablan del precio (ver extractor_turno._PRECIO_NO_ELIGE). APAGADO hasta medirlo.
-    precio_no_elige: bool = True  # RONDA mod-D (18-oct): encendido para medir; revert = False
+    precio_no_elige: bool = False
     # CAL-F (18-oct, decisión de Gadea): la tarjeta con el precio sale aunque el cliente no conteste la pregunta de
     # seguridad (solo si es lo único que falta), con la pregunta una vez dentro y el precio del refresher. APAGADO.
-    tarjeta_sin_seguridad: bool = True  # RONDA mod-D (18-oct): encendido para medir; revert = False
+    tarjeta_sin_seguridad: bool = False
     # r6-1(b) (17-oct): si en un turno NINGUNA llamada a OpenAI funciona (sin saldo, clave inválida, caído), el bot dice
     # que hay un problema técnico y pasa a un asesor (motivo = alerta en Chatwoot), en vez de "no lo tengo a la mano".
     # PROMOCIONADO 18-oct (decisión de Álvaro, tras la 2.ª caída por saldo en un día): comprobado en PRE con una clave
