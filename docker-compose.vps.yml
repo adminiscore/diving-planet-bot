@@ -116,6 +116,7 @@ services:
       RAG_PLAN_MODEL: "gpt-4.1-mini"
       # CAL-A6 (17-oct): el revisor que añade el aviso que falta (flag AVISOS_AL_FINAL, apagado). Luna: decision de Gadea.
       AVISOS_AL_FINAL_MODEL: "gpt-6-luna"
+      PREGUNTA_SOLA_MODEL: "gpt-4.1-nano"
       OPENAI_EMBEDDING_MODEL: "text-embedding-3-small"
       OPENAI_TRANSCRIPTION_MODEL: "gpt-4o-mini-transcribe"
       JEV_MODEL: "typesafe/jev-1.13"
@@ -385,10 +386,10 @@ services:
       IDIOMA_DEL_EXTRACTOR: "true"
       SIN_CEDULA_EXTRANJERO: "true"
       TRAS_PASE_RECUERDA_EL_PASE: "true"
-      # RONDA g3-B (18-oct, Gadea): los flags de G3 de Gadea encendidos para medir la ronda B del core contra
-      # g301-B (6f09689, mismo PRE con ellos apagados). Revert = quitar estas líneas y poner los defaults en False.
+      # G3-03 PROMOCIONADO 18-oct (HISTORY 0.31.49): el RAG ofrece pasar con una persona en vez de decir que ya lo hizo.
+      # Banco 6/6 -> 0/6; ronda core g301-B 95,6 % -> g3-B 96,5 %, ninguna regresión atribuida. Revert = quitar esta
+      # línea y poner el default en False.
       RAG_OFRECE_EL_PASE: "true"
-      BUSQUEDA_CON_LA_PREGUNTA_SOLA: "true"
       # RONDA g301-B de G3-01 (18-oct, autorizada por Álvaro): los 4 flags de la familia encendidos para medir la
       # ronda B del core contra g301-A (acebb9f, mismo código con los 4 apagados). Revert = quitar estas líneas y
       # poner los defaults en False.

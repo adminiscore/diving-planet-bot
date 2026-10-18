@@ -121,7 +121,7 @@ async def pregunta_sola(query: str, lang: str) -> str | None:
     try:
         client = trace_openai(AsyncOpenAI(api_key=settings.openai_api_key))
         response = await client.chat.completions.create(
-            model=settings.openai_model,
+            model=settings.pregunta_sola_model,
             messages=[
                 {"role": "system", "content": _PREGUNTA_SOLA_ES if lang == "es" else _PREGUNTA_SOLA_EN},
                 {"role": "user", "content": redact_pii(query)},
