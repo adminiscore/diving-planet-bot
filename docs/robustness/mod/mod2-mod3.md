@@ -28,12 +28,14 @@ Con las etiquetas nuevas (aciertos / inventados / estable / p50):
 |---|---|---|
 | gpt-4.1-mini (PRE) | 109 / 10 / 97,5 % / 2,1 s | 104 / 8 / 94,0 % / 1,8 s |
 | deepseek/deepseek-v4.1-flash | — | 100 / **42** / 89,5 % / 1,6 s |
-| **anthropic/claude-haiku-5.5** | — | **106 / 7 / 98,5 % / 1,7 s** |
+| anthropic/claude-haiku-5.5 | — | 106 / 7 / 98,5 % / 1,7 s (0 equivocados) |
+| **gpt-6-luna** | — | **107 / 8 / 97,5 % / 2,1 s (0 equivocados)** |
+| gpt-5.4-mini | — | 106 / 8 / 95,5 % / 2,0 s (2 equivocados) |
 
 Con las instrucciones de hoy y las etiquetas viejas, los demás candidatos: gpt-5.4-mini 113/16, gpt-5.4-nano 101/8
 (9 equivocados), gpt-6-luna 112/12 (3,1 s), qwen/qwen3.8-flash 110/46 (descartado). DeepSeek es muy sensible a la
 redacción (11 inventos con las de hoy, 42 con las nuevas: rellena `is_colombian=false` y `last_dive=false`); Haiku se
-queda entre 7 y 9 inventos y por encima del 97 % estable en todas las variantes. **Candidato: Haiku 5.5.**
+queda entre 7 y 9 inventos y por encima del 97 % estable en todas las variantes. Luna, que con las reglas viejas inventaba 12 (certificado por pedir un paquete…), con las reglas coherentes de "no adivinar" acierta 107 (más que gpt-4.1-mini) y es igual de estable que Haiku. **Candidato: gpt-6-luna** (OpenAI directo: no depende de mod-7); Haiku, la alternativa si mod-7 lo permite.
 
 Etiquetas dudosas para Gadea: "Un solo buzo avanzado" (¿elige actividad o solo dice su nivel?), "quería regalarle a mi
 esposo una experiencia del buceo" (¿minicourse?), "I have my open water certificate and I'm still a beginner".
