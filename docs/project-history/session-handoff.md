@@ -59,7 +59,24 @@ integrar la rama del otro y suite en verde, porque en PRE gana el último; (3) *
 despliegue reinicia el contenedor y mata la medida del otro (avisar en el registro de Plan Coral con la hora de fin).
 Las doce normas, con su porqué, están en el documento.
 
-### ▶️ RETOMAR AQUÍ — 18-oct, 17:15 (Álvaro con Claude): PARADA por tokens; relevo a Gadea hasta que Álvaro vuelva (~1 día)
+### ▶️ RETOMAR AQUÍ — 18-oct, 21:30 (Gadea con Claude, con las tareas de Álvaro): EL BOT YA NO USA NINGÚN MODELO GPT-4
+
+**PRE sirve 738ca41 (pre_gadea)**, con todo lo de Álvaro integrado. Hoy, en orden: mod-B y mod-C (HISTORY 0.31.53), la
+mod-D de Álvaro revertida (0.31.54), **mod-E** (`RAG_NO_ADIVINA` + respaldo del RAG en DeepSeek, 0.31.55) y **mod-F**
+(0.31.56): extractor Haiku 5.5 con respaldo en gpt-5.4-mini a los 2 s (`llm_client.crear_con_respaldo`, común), red
+Luna, señales y notas DeepSeek, resolutor y acuse gpt-5.4-nano. OpenRouter con Anthropic, Google Vertex y Amazon
+Bedrock además de los de antes (EE. UU., condiciones de mod-7; fijado en el compose). Core: C 97,8 % (con la referencia
+nueva 96,5 %) → E 96,9 % → F 97,0 % 27/32. Tabla de modelos y bancos: `docs/robustness/mod/mod2-mod3.md` y README.
+
+**Siguiente (Gadea, sin Álvaro):** (1) foto de latencia con el respaldo del extractor encendido (en mod-F, los turnos
+de reserva 1,26 → 1,81 s por 2 colas de Haiku); (2) ronda de las reglas de no adivinar del flujo (`PRECIO_NO_ELIGE`,
+`CERTIFICADO_SOLO_SI_LO_DICE`, `TARJETA_SIN_SEGURIDAD`) + el arreglo del flujo "recomendar por lo que dijo en vez de
+repetir el menú" + el resolutor que no fija un valor con una respuesta que se contradice ("no, buceé hace poco") + el
+criterio `datos` de `reserva-solo-link` (una pregunta de confirmación de la certificación vale: decisión de Gadea);
+(3) los dos fallos de flujo de CAL-F (#461); (4) herramientas en gpt-4.1: verificador de `rag_piezas` y juez del
+`banco_acuse`; (5) limpieza (OPENAI_MODEL, EXTRACTION_MODEL, RAG_PLAN_MODEL, RESPALDO_MISMO_MODELO sin uso; s4-25).
+
+### (anterior) RETOMAR AQUÍ — 18-oct, 17:15 (Álvaro con Claude): PARADA por tokens; relevo a Gadea hasta que Álvaro vuelva (~1 día)
 
 **Estado de PRE:** sirve lo de Gadea (mod-B y mod-C promocionadas) + lo de Álvaro con la ronda mod-D REVERTIDA (los
 flags de abajo, APAGADOS; los modelos de mod-2/mod-3, los de antes). Todo subido a `feature/pre_alvaro`.
