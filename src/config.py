@@ -19,7 +19,7 @@ class Settings(BaseSettings):
     # Hasta el 25-sep este valia "gpt-4o" (el del orquestador ya retirado) y PRE lo
     # cambiaba desde el .env.pre del VPS, fuera del repo.
     # Lo usan condense_query, el juez de grounding, el detector de idioma y el resumen.
-    openai_model: str = "gpt-4o-mini"
+    openai_model: str = "gpt-5.4-mini"  # mod (18-oct): fuera de gpt-4; solo valor de reserva (cada pieza tiene su modelo); antes "gpt-4o-mini"
     # MOD (18-oct): cada pieza de `openai_model` con su modelo, para medirlas y cambiarlas una a una (la familia gpt-4 se
     # retira en enero). Mismo valor que `openai_model` mientras no se promocione otro.
     reescritura_model: str = "deepseek/deepseek-v4.1-flash"  # PROMOCIONADO 18-oct (mod-C, HISTORY 0.31.53); revert = "gpt-4o-mini"
@@ -35,7 +35,7 @@ class Settings(BaseSettings):
     # (degrades to "regex-only / ask", never to a wrong value). ~15-30x cheaper
     # and faster per call. Revert to "gpt-4o" here if ever needed. See
     # docs/robustness/progress-log.md (Fase 4).
-    extraction_model: str = "gpt-4o-mini"
+    extraction_model: str = "gpt-5.4-mini"  # mod (18-oct): fuera de gpt-4; solo valor de reserva (cada pieza tiene su modelo); antes "gpt-4o-mini"
     # mod-3 (18-oct, fase MOD: la familia gpt-4 se retira en enero): cada pieza de `extraction_model` con su modelo,
     # para medirlas y cambiarlas una a una. Mismo valor que `extraction_model` mientras no se promocione otro.
     senales_model: str = "deepseek/deepseek-v4.1-flash"  # PROMOCIONADO 18-oct (mod-F, HISTORY 0.31.56); revert = "gpt-4o-mini"
@@ -551,7 +551,7 @@ class Settings(BaseSettings):
     # (p95 6,0 s frente a 6,4 de la A). Revert = "false" aquí y quitar la línea del compose.
     consulta_con_lo_sabido: bool = True
     # Modelo del plan y de la comprobación de completitud (llamadas cortas, temperatura 0).
-    rag_plan_model: str = "gpt-4.1-mini"
+    rag_plan_model: str = "gpt-6-luna"  # mod (18-oct): fuera de gpt-4 (flags del plan apagados); antes "gpt-4.1-mini"
     # 8-oct (prueba de DeepSeek): un modelo con prefijo de proveedor ("deepseek/deepseek-v4.1-flash") sale por
     # OpenRouter (`llm_client.parametros_openrouter`), solo por estos proveedores (separados por comas, por latencia,
     # sin retención de datos). "deepseek" = la API oficial (servidores en China: solo para pruebas sin datos de

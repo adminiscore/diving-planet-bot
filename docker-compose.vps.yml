@@ -103,7 +103,7 @@ services:
       # tests/test_models_pinned.py falla si se separan. Mapa: README "LLM models".
       # 8-oct: PROMOCIONADO -- la respuesta del RAG con GPT-6 Luna (sin razonamiento) y respaldo a gpt-4.1-mini a los 3 s
       # (ronda respaldo-A/B; HISTORY 0.31.0). Extraccion y secundarias en gpt-4o-mini; juez en gpt-4.1.
-      OPENAI_MODEL: "gpt-4o-mini"
+      OPENAI_MODEL: "gpt-5.4-mini"
       # MOD-4 (18-oct): la reescritura de la consulta, el resumen y el detector de idioma, cada uno con su modelo.
       # PROMOCIONADO en DeepSeek (HISTORY 0.31.53). Revert = "gpt-4o-mini".
       REESCRITURA_MODEL: "deepseek/deepseek-v4.1-flash"
@@ -126,7 +126,7 @@ services:
       BARU_NO_ES_ROSARIO: "true"
       BUSQUEDA_CON_LA_PREGUNTA_SOLA: "true"
       RAG_SIN_PRECIO_CON_TARJETA: "true"
-      EXTRACTION_MODEL: "gpt-4o-mini"
+      EXTRACTION_MODEL: "gpt-5.4-mini"
       # mod-3 (18-oct): cada pieza de EXTRACTION_MODEL con su modelo (mismo valor hasta promocionar otro).
       SENALES_MODEL: "deepseek/deepseek-v4.1-flash"
       RED_EXTRACTOR_MODEL: "gpt-6-luna"
@@ -151,7 +151,7 @@ services:
       # mod-7 + Haiku (18-oct): solo proveedores de EE. UU. por OpenRouter, sin retención ni entrenamiento.
       OPENROUTER_PROVEEDORES: "baseten,fireworks/us,coreweave,google-vertex,anthropic,amazon-bedrock"
       # CAL-A2/A3 (16-oct): el plan del RAG y la comprobacion de completitud (src/agents/rag_plan.py; flags apagados).
-      RAG_PLAN_MODEL: "gpt-4.1-mini"
+      RAG_PLAN_MODEL: "gpt-6-luna"
       # CAL-A6 (17-oct): el revisor que añade el aviso que falta (flag AVISOS_AL_FINAL, apagado). Luna: decision de Gadea.
       AVISOS_AL_FINAL_MODEL: "gpt-6-luna"
       PREGUNTA_SOLA_MODEL: "deepseek/deepseek-v4.1-flash"
