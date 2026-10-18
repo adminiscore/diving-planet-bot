@@ -182,3 +182,14 @@ async def test_respaldo_mismo_modelo_lanza_otra_peticion_a_luna(monkeypatch):
     monkeypatch.setattr(settings, "respaldo_mismo_modelo", False)
     await rag_agent.generar_con_respaldo(cliente, [{"role": "user", "content": "hola"}])
     assert ("gpt-4.1-mini", "rag_respaldo") in vistas
+
+
+def test_el_aviso_conserva_el_motivo_del_pase_que_ya_habia():
+    from src.agents import supervisor
+    from src.flows.state import ConversationState
+
+    st = ConversationState(conversation_id="r61-motivo")
+    st.language = "es"
+    st.pending_escalation_reason = "LINK ROTO: el enlace de reserva no abre"
+    supervisor._respuesta_fallo_tecnico(st, 429)
+    assert st.pending_escalation_reason.startswith("LINK ROTO") and "FALLO TÉCNICO" in st.pending_escalation_reason

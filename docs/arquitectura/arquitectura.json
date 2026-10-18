@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-18T10:45:33+00:00",
-  "commit": "4fc2e82",
+  "generado": "2026-10-18T11:10:26+00:00",
+  "commit": "31c1ac7",
   "rama": "feature/pre_alvaro"
  },
  "vistas": {
@@ -113,8 +113,8 @@
     {
      "nombre": "aviso_si_openai_falla",
      "titulo": "Si OpenAI cae, decir la verdad y pasar a un asesor",
-     "codigo": false,
-     "pre": false,
+     "codigo": true,
+     "pre": true,
      "sin_efecto": false
     }
    ],
@@ -2100,9 +2100,9 @@
    "area": "Arquitectura",
    "titulo": "Si OpenAI cae, decir la verdad y pasar a un asesor",
    "texto": "Si en un mensaje ninguna llamada a OpenAI funciona (sin saldo, clave mala o caído), el bot dice que tiene un problema técnico y pasa la conversación a un asesor; el motivo del pase avisa al equipo de que revise el saldo. Antes contestaba 'no lo tengo a la mano' a todo.",
-   "codigo": false,
-   "pre": false,
-   "fijado_en_pre": false,
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
    "usado_por": [
     "route_message"
    ],

@@ -335,8 +335,9 @@ class Settings(BaseSettings):
     baru_no_es_rosario: bool = False
     # r6-1(b) (17-oct): si en un turno NINGUNA llamada a OpenAI funciona (sin saldo, clave inválida, caído), el bot dice
     # que hay un problema técnico y pasa a un asesor (motivo = alerta en Chatwoot), en vez de "no lo tengo a la mano".
-    # APAGADO hasta medirlo.
-    aviso_si_openai_falla: bool = False
+    # PROMOCIONADO 18-oct (decisión de Álvaro, tras la 2.ª caída por saldo en un día): comprobado en PRE con una clave
+    # inválida (mensaje honesto + pase) y sin falsos disparos con la clave buena (4/4).
+    aviso_si_openai_falla: bool = True
 
     # Paso 5 (RAG, l1-6 + l1-7, 27-sep): (a) el catalogo entero como hechos en el contexto del RAG
     # en vez de los atajos de precio por regex, que contestaban preguntas que no eran de precio;

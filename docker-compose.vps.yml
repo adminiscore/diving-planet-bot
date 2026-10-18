@@ -400,6 +400,9 @@ services:
       # CAL-F PROMOCIONADO 18-oct (decisión de Álvaro): refresher-rechaza-acepta 3/3 cierran con la salida y el refresher;
       # banco ex0 sin cambios atribuibles (el campo solo entra si ya lleva más de 2 años sin bucear).
       REFRESHER_POR_EXTRACTOR: "true"
+      # r6-1(b) PROMOCIONADO 18-oct (decisión de Álvaro): si en un turno ninguna llamada a OpenAI funciona, el bot dice que
+      # tiene un problema técnico y pasa a un asesor (en PRE con clave inválida: bien; con la buena: 0 falsos, 4/4).
+      AVISO_SI_OPENAI_FALLA: "true"
       # CAL-F PROMOCIONADOS 18-oct (decisión de Álvaro): la actividad sale del reparto ("1 buzo avanzado y 2 para
       # bautismo" no es el Curso Avanzado; estado bien 3/3, y en la medida de Gadea 0/6 respuestas citan el curso) y la
       # pregunta del origen neutra con dos planes candidatos ("dura 1 día y hay que dormir en las islas" 0/3).
