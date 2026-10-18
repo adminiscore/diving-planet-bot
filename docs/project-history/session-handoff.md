@@ -59,7 +59,27 @@ integrar la rama del otro y suite en verde, porque en PRE gana el último; (3) *
 despliegue reinicia el contenedor y mata la medida del otro (avisar en el registro de Plan Coral con la hora de fin).
 Las doce normas, con su porqué, están en el documento.
 
-### ▶️ RETOMAR AQUÍ — 18-oct, 21:30 (Gadea con Claude, con las tareas de Álvaro): EL BOT YA NO USA NINGÚN MODELO GPT-4
+### ▶️ RETOMAR AQUÍ — 18-oct, 23:50 (Gadea con Claude, en autonomía por la noche): ronda mod-G2 en marcha
+
+**Noche (Gadea durmiendo; permiso para seguir y decidir; si se acaba el saldo de OpenAI u OpenRouter: subir,
+documentar y apagar).** Hecho desde las 21:30:
+- **OpenRouter sin crédito a las ~22:00** (402: el límite de la clave): fallaban Jev, DeepSeek y Haiku, y el revisor
+  dejaba pasar las respuestas SIN revisar. Gadea recargó. Arreglo: `respaldo_si_openrouter_falla` (gpt-5.4-mini):
+  si una llamada a OpenRouter falla, se repite por OpenAI, en un solo sitio (`llm_client._por_proveedor`). Lo que
+  gastó el crédito: mis bancos del extractor con Haiku (no repetir bancos grandes por OpenRouter sin mirar el límite).
+- **mod-G** (las reglas de no adivinar del flujo + `RECOMENDAR_A_NO_CERTIFICADOS` + resolutor Haiku con
+  `RESOLUTOR_SIN_CONTRADICCIONES`): 94,3 % 23/32 frente a mod-F rejuzgada 96,9 % 27/32 → NO. `CERTIFICADO_SOLO_SI_LO_DICE`
+  y `PRECIO_NO_ELIGE` repreguntan quitando deducciones válidas («completé el curso básico», «refresher», Open Water):
+  APAGADOS, a afinar con Álvaro. **mod-G2** (sin esas dos) en marcha frente a mod-F.
+- El juez sabe ya la decisión de no adivinar (preguntar UNA vez para confirmar no es repregunta); por eso F se rejuzgó
+  (`2026-10-18-mod-F-ref2`). Criterio `datos` de reserva-solo-link al día.
+- Herramientas fuera de gpt-4.1: verificador de `rag_piezas` → DeepSeek (192/194 iguales); juez de `banco_acuse` → Luna
+  (64/65; con 3 tokens Luna contestaba vacío: ahora 20); kb_curar, kb_inventario, auditoria_base, investiga_fallos_rag →
+  Luna. Valores de reserva (`OPENAI_MODEL`, `EXTRACTION_MODEL`, `RAG_PLAN_MODEL`) fuera de gpt-4.
+- Los dos fallos de flujo de CAL-F: misma familia (mensaje que solo se entiende con el turno anterior; Jev no lo ve como
+  pregunta, ni con más contexto): documentado en `cal-f-golden-completo.md` para Álvaro.
+
+### (anterior) RETOMAR AQUÍ — 18-oct, 21:30 (Gadea con Claude, con las tareas de Álvaro): EL BOT YA NO USA NINGÚN MODELO GPT-4
 
 **PRE sirve 738ca41 (pre_gadea)**, con todo lo de Álvaro integrado. Hoy, en orden: mod-B y mod-C (HISTORY 0.31.53), la
 mod-D de Álvaro revertida (0.31.54), **mod-E** (`RAG_NO_ADIVINA` + respaldo del RAG en DeepSeek, 0.31.55) y **mod-F**
