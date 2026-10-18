@@ -319,6 +319,9 @@ class Settings(BaseSettings):
     # G3-01b (17-oct): en la tarjeta del precio, si hay plazas de snorkel, los niños más pequeños van primero ahí; el
     # niño de 8 que hace snorkel ya no convierte el minicurso del de 12 en "Bubble Makers (8-10)". APAGADO.
     ninos_primero_al_snorkel: bool = True  # RONDA g301-B (18-oct): encendido para medir; revert = False
+    # CAL-F (18-oct, refresher-rechaza-acepta 3/3 en PRE): el extractor lee si el cliente quiere o no el refresher, con su
+    # cita, aunque el bot no se lo haya preguntado ("en realidad sí lo quiero, mejor prevenir" se perdía). APAGADO.
+    refresher_por_extractor: bool = False
     # r6-1(b) (17-oct): si en un turno NINGUNA llamada a OpenAI funciona (sin saldo, clave inválida, caído), el bot dice
     # que hay un problema técnico y pasa a un asesor (motivo = alerta en Chatwoot), en vez de "no lo tengo a la mano".
     # APAGADO hasta medirlo.

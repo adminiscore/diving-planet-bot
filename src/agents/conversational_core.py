@@ -2336,6 +2336,7 @@ async def _aplicar_extractor(intent, state: ConversationState, message: str, pis
         return
     _poner_ubicacion(intent, state, message, datos, pista)
     _poner_hotel(intent, state, datos)
+    _poner_refresher(state, datos)
     # ex-7: el grupo antes que la actividad: la regla de ex-8 del grupo repartido mira el reparto del turno.
     _poner_grupo(intent, state, message, datos, pista)
     if datos.get("quiere_bucear") is True:
@@ -2520,6 +2521,16 @@ def _hotel_del_catalogo(nombre: str) -> tuple[str, str | None] | None:
     intent = DetectedIntent()
     _detector._detect_location((nombre or "").lower(), intent)
     return (intent.hotel, intent.island) if intent.hotel else None
+
+
+def _poner_refresher(state: ConversationState, datos: dict) -> None:
+    """CAL-F (`refresher_por_extractor`, 18-oct): si el cliente dice que quiere (o no) el refresher, se guarda aunque
+    el bot aún no se lo haya preguntado. Vale lo último que decide: "mejor no" y luego "en realidad sí lo quiero"."""
+    valor = (datos or {}).get("refresher_interested")
+    if not settings.refresher_por_extractor or not isinstance(valor, bool) or state.refresher_interested is valor:
+        return
+    state.refresher_interested = valor
+    logger.info(f"[EXTRACT][CAL-F] refresher_interested={valor} (lo dice el cliente)")
 
 
 def _poner_hotel(intent, state: ConversationState, datos: dict) -> None:

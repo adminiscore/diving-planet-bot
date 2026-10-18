@@ -122,12 +122,33 @@ REGLA_HOTEL_EN = (
 )
 
 
-def _esquema(con_nombre: bool, con_hotel: bool) -> dict:
+# CAL-F (18-oct, flag `refresher_por_extractor`): si quiere o no el REFRESHER, con su cita. Solo se leía como respuesta
+# a la pregunta del refresher; "espera, en realidad sí lo quiero, mejor prevenir" antes de esa pregunta se perdía, y el
+# bot volvía a preguntar "¿Os interesa?" y nunca cerraba el plan con la salida y el refresher (refresher-rechaza-acepta,
+# 3/3 en PRE). Con el flag apagado, ni el campo ni su regla.
+CAMPO_REFRESHER = _dato({"type": "boolean"},
+                        "true si quien escribe dice que SÍ quiere hacer el refresher (repaso) antes de bucear; false si "
+                        "dice que NO lo quiere.")
+REGLA_REFRESHER_ES = (
+    "\n- refresher_interested: true si quien escribe dice que SÍ quiere el refresher (el repaso antes de bucear), false "
+    "si dice que NO lo quiere. Si cambia de idea en el mensaje, vale lo último que decide. Preguntar por el refresher o "
+    "por su precio NO es decidir."
+)
+REGLA_REFRESHER_EN = (
+    "\n- refresher_interested: true if the writer says they DO want the refresher (the review before diving), false if "
+    "they say they do NOT want it. If they change their mind in the message, the last decision counts. Asking about the "
+    "refresher or its price is NOT deciding."
+)
+
+
+def _esquema(con_nombre: bool, con_hotel: bool, con_refresher: bool = False) -> dict:
     """El esquema de la llamada con los campos opcionales encendidos (sin ellos, el de siempre)."""
-    if not con_hotel:
-        return ESQUEMA_CON_NOMBRE if con_nombre else ESQUEMA
     base = ESQUEMA_CON_NOMBRE if con_nombre else ESQUEMA
-    return {**base, "properties": {**base["properties"], "hotel": CAMPO_HOTEL}, "required": [*base["required"], "hotel"]}
+    if not (con_hotel or con_refresher):
+        return base
+    extra = {**({"hotel": CAMPO_HOTEL} if con_hotel else {}),
+             **({"refresher_interested": CAMPO_REFRESHER} if con_refresher else {})}
+    return {**base, "properties": {**base["properties"], **extra}, "required": [*base["required"], *extra]}
 # 13-oct (Gonzalo, flag `extractor_precio_elige`): la regla general ponía "¿cuánto cuesta el buceo certificado?" como
 # ejemplo de algo que NO es un dato, y la de `activity` dice que preguntar el precio de un producto nombrado SÍ lo elige
 # (decisión de Gadea 14/27-sep). Dos órdenes contrarias: de ahí la variación de ex-8 ("a veces no cuenta como
@@ -334,6 +355,11 @@ async def extraer_turno(mensaje: str, *, history: list[dict] | None = None, sabi
         sistema = sistema.replace(SIN_CEDULA_HOY_ES, SIN_CEDULA_ES).replace(SIN_CEDULA_HOY_EN, SIN_CEDULA_EN)
     if con_hotel:
         sistema += REGLA_HOTEL_ES if lang == "es" else REGLA_HOTEL_EN
+    # Solo cuando el refresher importa (ya se sabe que lleva más de 2 años sin bucear): con el campo en todas las
+    # llamadas, el banco ex0 bajaba de 99,5 a 96,5 % estable y volvía "paquete de 5 inmersiones" → certificado.
+    con_refresher = settings.refresher_por_extractor and (sabido or {}).get("last_dive_over_2_years") is True
+    if con_refresher:
+        sistema += REGLA_REFRESHER_ES if lang == "es" else REGLA_REFRESHER_EN
     modelo = modelo or settings.extractor_turno_model
     t0 = time.perf_counter()
     try:
@@ -345,7 +371,7 @@ async def extraer_turno(mensaje: str, *, history: list[dict] | None = None, sabi
                           {"role": "user", "content": _contexto(mensaje, ultima_pregunta_del_bot(history), sabido or {}, lang)}],
                 response_format={"type": "json_schema",
                                  "json_schema": {"name": "datos_del_turno", "strict": True,
-                                                 "schema": _esquema(con_nombre, con_hotel)}},
+                                                 "schema": _esquema(con_nombre, con_hotel, con_refresher)}},
                 temperature=0.0,
                 # EX-EST-1 (14-oct): con los campos nuevos (idioma, nombre, quiere_bucear...) 400 cortaba el JSON (2 de
                 # cada 1.000 llamadas en el banco: "Unterminated string" -> el turno caía al camino viejo).
@@ -362,7 +388,8 @@ async def extraer_turno(mensaje: str, *, history: list[dict] | None = None, sabi
         return None
     extraer_turno.ultimo_segundos = time.perf_counter() - t0
     salida, descartes = {}, {}
-    for campo in (*CAMPOS, *EXTRAS, *(("nombre",) if con_nombre else ()), *(("hotel",) if con_hotel else ())):
+    for campo in (*CAMPOS, *EXTRAS, *(("nombre",) if con_nombre else ()), *(("hotel",) if con_hotel else ()),
+                  *(("refresher_interested",) if con_refresher else ())):
         d = datos.get(campo)
         if not isinstance(d, dict) or d.get("valor") in (None, "", [], {}):
             continue
@@ -396,6 +423,9 @@ async def extraer_turno(mensaje: str, *, history: list[dict] | None = None, sabi
     # razonaba al revés ("bucear" ≈ "buceo certificado" → inventaba también la certificación).
     sabido = sabido or {}
     quiere = salida.get("quiere_bucear") is True or sabido.get("quiere_bucear") is True
+    # CAL-F (`refresher_por_extractor`): el refresher es el repaso ANTES de bucear (parte del buceo certificado tras más
+    # de 2 años): quien dice que lo quiere, quiere bucear ("en realidad sí lo quiero, mejor prevenir").
+    quiere = quiere or salida.get("refresher_interested") is True
     certificado = salida.get("is_certified", sabido.get("is_certified"))
     if quiere and certificado is True and not salida.get("activity") and not sabido.get("activity"):
         salida["activity"] = "certified_diving"

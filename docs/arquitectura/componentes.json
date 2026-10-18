@@ -397,6 +397,7 @@
         "actividad_principal_en_el_reparto",
         "reparto_parcial_con_lo_sabido",
         "ninos_primero_al_snorkel",
+        "refresher_por_extractor",
         "aplazar_pregunta_sin_respuesta",
         "recomendar_a_certificados",
         "acuse_solo_el_mensaje"
@@ -992,6 +993,11 @@
       "area": "Arquitectura",
       "titulo": "Si OpenAI cae, decir la verdad y pasar a un asesor",
       "texto": "Si en un mensaje ninguna llamada a OpenAI funciona (sin saldo, clave mala o caído), el bot dice que tiene un problema técnico y pasa la conversación a un asesor; el motivo del pase avisa al equipo de que revise el saldo. Antes contestaba 'no lo tengo a la mano' a todo."
+    },
+    "refresher_por_extractor": {
+      "area": "Reserva",
+      "titulo": "Si quiere el repaso, se apunta aunque no se le haya preguntado",
+      "texto": "El extractor lee si el cliente quiere o no el refresher (el repaso antes de bucear), aunque el bot todavía no se lo haya preguntado, y vale lo último que decide. Antes, 'mejor no… en realidad sí lo quiero' se perdía y el bot volvía a preguntar '¿Os interesa?' sin cerrar nunca el plan."
     },
     "ninos_primero_al_snorkel": {
       "area": "Reserva",
