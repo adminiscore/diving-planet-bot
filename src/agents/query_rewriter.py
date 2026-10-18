@@ -92,14 +92,16 @@ def lo_sabido(hechos: dict | None, lang: str) -> str:
     return "; ".join(partes)
 
 
-_PREGUNTA_SOLA_ES = ("Escribe en español, fielmente, solo la PREGUNTA (o preguntas) del mensaje del cliente, "
-                     "traducida si viene en otro idioma: sin los datos que da (fechas, desde dónde sale, cuántos son), "
-                     "sin nada de la conversación y sin responderla. Si el mensaje no pregunta nada, devuélvelo entero. "
+_PREGUNTA_SOLA_ES = ("Copia solo la PREGUNTA (o preguntas) del mensaje del cliente, fielmente y SIEMPRE en "
+                     "español: si el mensaje viene en otro idioma (inglés, portugués, francés...), tradúcela. Quita los "
+                     "datos que da (fechas, desde dónde sale, cuántos son, dónde se aloja), no añadas nada de la "
+                     "conversación y NO la respondas. Si el mensaje no pregunta nada, devuélvelo entero traducido. "
                      "Devuelve solo eso.")
-_PREGUNTA_SOLA_EN = ("Write in English, faithfully, only the QUESTION (or questions) in the customer's message, translated "
-                     "if it comes in another language: leave out the facts they give (dates, where they depart from, how "
-                     "many they are), add nothing from the conversation and do not answer it. If the message asks "
-                     "nothing, return all of it. Return only that.")
+_PREGUNTA_SOLA_EN = ("Copy only the QUESTION (or questions) in the customer's message, faithfully and ALWAYS in "
+                     "English: if the message is in another language (Spanish, Portuguese, French...), translate it. "
+                     "Leave out the facts they give (dates, where they depart from, how many they are, where they stay), "
+                     "add nothing from the conversation and do NOT answer it. If the message asks nothing, return all "
+                     "of it translated. Return only that.")
 
 
 @con_pieza_llm("pregunta_sola")

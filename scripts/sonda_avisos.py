@@ -101,6 +101,8 @@ def main() -> None:
     ap.add_argument("--codigo-local", action="store_true", help="con el código local (sin desplegar)")
     ap.add_argument("--out", help="JSON de salida")
     ap.add_argument("--banco", help="otro banco con el mismo formato (p. ej. docs/robustness/g3/banco-g3.json)")
+    ap.add_argument("--env", action="append", default=[], metavar="CLAVE=VALOR",
+                    help="variable de entorno solo para ese proceso (p. ej. PREGUNTA_SOLA_MODEL=...); repetible")
     args = ap.parse_args()
 
     casos = casos_del_banco(args.ids.split(",") if args.ids else None, args.tarea,
@@ -113,7 +115,7 @@ def main() -> None:
 
     codigo = subir_codigo_local() if args.codigo_local else None
     script = (f"CASOS_JSON = {json.dumps(casos, ensure_ascii=False)!r}\nFLAGS = {args.flag!r}\n{_REMOTO}")
-    r = pre_ssh(docker_python({}, codigo_local=codigo), input_text=script,
+    r = pre_ssh(docker_python(dict(e.split("=", 1) for e in args.env), codigo_local=codigo), input_text=script,
                 timeout=240 + 60 * sum(len(c["turnos"]) for c in casos))
     filas = [json.loads(ln) for ln in (r.stdout or "").splitlines() if ln.startswith("{")]
     if not filas:
