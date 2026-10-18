@@ -216,8 +216,7 @@ def rag(monkeypatch):
     monkeypatch.setattr(rag_agent, "condense_query", fake_condense)
     monkeypatch.setattr(rag_agent, "_verify_grounding", fake_verify)
     monkeypatch.setattr(rag_plan, "aviso_al_final", fake_aviso)
-    for flag in ("rag_v2", "rag_prompt_cache", "rag_plan_primero", "rag_revisor_completitud", "rag_revisor_avisos",
-                 "avisos_condicionados"):
+    for flag in ("rag_plan_primero", "rag_revisor_completitud", "rag_revisor_avisos", "avisos_condicionados"):
         monkeypatch.setattr(settings, flag, False)
     monkeypatch.setattr(settings, "rag_respaldo_modelo", "")
     return rag_agent, revisiones, frase

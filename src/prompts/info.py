@@ -231,30 +231,11 @@ ALWAYS answer in English, even if the retrieved context or service names contain
 
 # ── Verificación de grounding de la respuesta · `grounding_check.is_grounded` ────
 
-GROUNDING_VERIFY_ES = """Verifica si la RESPUESTA esta totalmente basada en el CONTEXTO proporcionado.
-
-Reglas:
-- \"GROUNDED\" si cada afirmacion factual de la respuesta aparece literalmente o se infiere directamente del contexto.
-- \"HALLUCINATED\" si la respuesta incluye cualquier dato factual que no este en el contexto.
-- Frases de cortesia, ofrecimientos genericos y reformulaciones del contexto son aceptables.
-
-Responde con UNA palabra: GROUNDED o HALLUCINATED."""
-
-
-GROUNDING_VERIFY_EN = """Verify whether the RESPONSE is fully based on the provided CONTEXT.
-
-Rules:
-- \"GROUNDED\" if every factual claim in the response appears literally or is directly inferable from the context.
-- \"HALLUCINATED\" if the response includes any factual data not present in the context.
-- Politeness, generic offers and rewordings of the context are acceptable.
-
-Reply with ONE word: GROUNDED or HALLUCINATED."""
-
-
-# Paso 5 (flag `rag_v2`, 27-sep). El juez de arriba rechazaba lo que no es un dato ("Hola, soy
-# Coral de Diving Planet, ¿en qué te ayudo?", "sí, te recogemos en tu hotel" con la politica en el
-# contexto) y dejaba pasar datos inventados del negocio ("hay barcos hundidos", "el sistema no
-# genera links separados"). Este mira solo lo que importa: los datos del negocio.
+# Paso 5 (27-sep). El juez v1 rechazaba lo que no es un dato ("Hola, soy Coral de Diving Planet, ¿en
+# qué te ayudo?", "sí, te recogemos en tu hotel" con la politica en el contexto) y dejaba pasar datos
+# inventados del negocio ("hay barcos hundidos", "el sistema no genera links separados"). Este mira
+# solo lo que importa: los datos del negocio. El bot ya no lo usa (juez v3, abajo; el v1 se borró en
+# s4-25); se queda porque lo compara el banco `scripts/sonda_juez_grounding.py`.
 GROUNDING_VERIFY_V2_ES = """Eres el verificador de las respuestas de Coral, la asistente de Diving Planet (centro de buceo en las Islas del Rosario, Cartagena). Decide si la RESPUESTA se apoya en el CONTEXTO.
 
 HALLUCINATED si la respuesta afirma algún DATO DEL NEGOCIO que el contexto no respalda o que lo contradice: precios, descuentos, horarios, lugares o puntos de encuentro, qué incluye o no un plan, duración, si hay que dormir en las islas, requisitos, políticas, disponibilidad o cupos, sitios de buceo y lo que se ve en ellos, servicios que se ofrecen o no, o cómo funcionan la web, los links y los pagos.
@@ -400,7 +381,7 @@ RAG_CONCISE_EN = (
 )
 
 
-# Regenerar CON el motivo del rechazo (28-sep, flag `rag_regen_feedback`). Antes, si el juez o un guard rechazaba
+# Regenerar CON el motivo del rechazo (28-sep). Antes, si el juez o un guard rechazaba
 # la respuesta, se volvía a pedir la MISMA respuesta sin decir qué estaba mal, y el modelo repetía el invento
 # ("llevamos 30 años" 2 de 2, "cada inmersión dura 40-50 min", "el punto de encuentro suele ser el centro"):
 # reproducidos en PRE, los 12 "no lo tengo" de 32 turnos del paso 8 venían todos de ahí. `_answer_with_llm`

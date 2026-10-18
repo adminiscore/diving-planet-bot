@@ -204,7 +204,6 @@ async def test_con_el_flag_el_rag_tiene_los_links_de_reserva(on, monkeypatch):
     async def _judge(answer, context, lang="es"):
         return True, "GROUNDED"
 
-    monkeypatch.setattr(settings, "rag_v2", True)
     monkeypatch.setattr(rag_agent, "search_knowledge_base", _no_docs)
     monkeypatch.setattr(rag_agent, "condense_query", _same)
     monkeypatch.setattr(rag_agent, "AsyncOpenAI", _Cli)

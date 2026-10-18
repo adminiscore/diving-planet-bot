@@ -567,36 +567,6 @@ def test_availability_detector_positive(msg):
 
 
 @pytest.mark.asyncio
-async def test_availability_specific_date_gets_canned_answer_not_hallucination(monkeypatch):
-    from src.config import settings as _flags  # camino antiguo: el flag sigue existiendo
-    monkeypatch.setattr(_flags, "rag_v2", False)
-    """"¿tienen disponibilidad el sábado?" (fecha específica) escapaba el
-    `_AVAILABILITY_PATTERN` y RAG alucinaba "Tenemos disponibilidad para el
-    sábado". Ahora cae al handler canónico (diarias + calendario del link),
-    sin confirmar el cupo de una fecha."""
-    state = make_state()
-    with patch("src.agents.supervisor.detect_routing_signals", new=AsyncMock(return_value={})):
-        resp = await route_message(state, "¿tienen disponibilidad el sábado?")
-    low = resp.lower()
-    assert "diari" in low and ("calendario" in low or "link" in low)
-    assert "tenemos disponibilidad para el sábado" not in low  # sin alucinación
-
-
-@pytest.mark.asyncio
-async def test_availability_signal_routes_when_keyword_misses(monkeypatch):
-    from src.config import settings as _flags  # camino antiguo: el flag sigue existiendo
-    monkeypatch.setattr(_flags, "rag_v2", False)
-    """Frase que la lista no caza pero el LLM marca availability_question →
-    mismo handler canónico, sin alucinar."""
-    state = make_state()
-    with patch("src.agents.supervisor.detect_routing_signals",
-               new=AsyncMock(return_value={"availability_question": True})):
-        resp = await route_message(state, "y para el finde que viene cómo andan?")
-    low = resp.lower()
-    assert "diari" in low and ("calendario" in low or "link" in low)
-
-
-@pytest.mark.asyncio
 async def test_normal_booking_not_treated_as_availability():
     """Regresión: un mensaje de reserva normal no dispara el handler de
     disponibilidad."""

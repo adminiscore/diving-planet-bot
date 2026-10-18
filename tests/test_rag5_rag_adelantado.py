@@ -1,5 +1,5 @@
 """rag-5 (30-sep): el RAG arranca a la vez que el enrutador y solo se aprovecha con el MISMO contexto que tendría
-la llamada de siempre (flag `rag_adelantado`)."""
+la llamada de siempre (el flag `rag_adelantado` se quitó en s4-25: es lo de siempre)."""
 import asyncio
 from unittest.mock import patch
 
@@ -31,7 +31,6 @@ class _RagFalso:
 
 @pytest.fixture
 def flags(monkeypatch):
-    monkeypatch.setattr(settings, "rag_adelantado", True)
     monkeypatch.setattr(settings, "answer_and_continue", True)
     monkeypatch.setattr(settings, "notes_in_parallel", False)
 
@@ -105,13 +104,6 @@ async def test_si_el_turno_no_la_usa_se_cancela_al_cerrarlo(flags):
     assert tarea.cancelled() and state._rag_adelantado is None
 
 
-def test_no_se_adelanta_con_el_flag_apagado(flags, monkeypatch):
-    state = _estado()
-    monkeypatch.setattr(settings, "rag_adelantado", False)
-    core.lanzar_rag_adelantado(state, "¿qué incluye?")
-    assert getattr(state, "_rag_adelantado", None) is None
-
-
 def _primer_turno() -> ConversationState:
     s = ConversationState(conversation_id="rag5-primero")
     s.step = Step.WELCOME
@@ -180,9 +172,8 @@ async def test_el_camino_de_buceo_adaptado_tambien_aprovecha_la_adelantada(flags
 
 
 @pytest.mark.asyncio
-async def test_sin_adelantada_el_camino_de_buceo_adaptado_busca_con_el_origen(flags, monkeypatch):
-    """La llamada de siempre sale de `_entradas_rag`: con `rag_busqueda_origen`, la búsqueda recibe el origen."""
-    monkeypatch.setattr(settings, "rag_busqueda_origen", True)
+async def test_sin_adelantada_el_camino_de_buceo_adaptado_busca_con_el_origen(flags):
+    """La llamada de siempre sale de `_entradas_rag`: la búsqueda recibe el origen del cliente (rag-3)."""
     rag = _RagFalso()
     state = _estado()
     state.location = "cartagena"

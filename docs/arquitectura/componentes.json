@@ -245,11 +245,9 @@
       "modelos": [
         "openai_embedding_model"
       ],
-      "nota": "Postgres + pgvector, tabla kb_v2.kb_documents; se regenera en cada deploy (scripts/kb_v2.py). La base antigua (public.kb_documents, 718 documentos) queda de respaldo si se apaga RAG_KB_V2.",
+      "nota": "Postgres + pgvector, tabla kb_v2.kb_documents; se regenera en cada deploy (scripts/kb_v2.py). La base antigua (public.kb_documents) se sigue cargando en el deploy, pero el bot ya no la lee (s4-25 quitó RAG_KB_V2).",
       "marca": "postgresql",
-      "interruptores": [
-        "rag_kb_v2"
-      ]
+      "interruptores": []
     },
     {
       "id": "catalogo",
@@ -324,7 +322,6 @@
       "que_hace": "Fechas cerradas y preguntas de disponibilidad (estas las contesta el RAG).",
       "donde": "src/agents/conversational_core.py:_availability_phase",
       "interruptores": [
-        "rag_v2",
         "s4_fixes"
       ]
     },
@@ -517,10 +514,7 @@
       "modelos": [
         "openai_embedding_model"
       ],
-      "interruptores": [
-        "rag_busqueda_origen",
-        "rag_busqueda_doble"
-      ],
+      "interruptores": [],
       "tiempo_medido": {
         "p50": 0.4,
         "fuente": "medido dentro de PRE el 28-sep (8 preguntas, HISTORY 0.29.65)"
@@ -545,10 +539,6 @@
       "que_hace": "El catálogo entero va siempre en las instrucciones del bot y en las del revisor.",
       "donde": "src/flows/catalog.py:catalog_facts",
       "interruptores": [
-        "rag_v2",
-        "rag_prompt_cache",
-        "catalogo_hoteles_base",
-        "catalogo_equipo_incluido",
         "rag_politicas_en_contexto",
         "est2_datos",
         "catalogo_profundidad",
@@ -608,9 +598,7 @@
         "avisos_al_final_model"
       ],
       "interruptores": [
-        "grounding_v3",
         "juez_por_tipo",
-        "juez_segunda_opinion",
         "juez_presentacion",
         "juez_privacidad_por_linea",
         "juez_v3_luna",
@@ -632,9 +620,7 @@
       "titulo": "Reintento con motivo",
       "que_hace": "Si el revisor dice NO, se vuelve a escribir diciéndole qué frase quitar. Una sola vez.",
       "donde": "src/agents/rag_agent.py:regen_feedback",
-      "interruptores": [
-        "rag_regen_feedback"
-      ]
+      "interruptores": []
     },
     {
       "id": "r_nolotengo",
@@ -1097,35 +1083,10 @@
       "titulo": "Recomendar el minicurso",
       "texto": "Si el cliente dice que es su primera vez, le recomienda el minicurso y lo confirma con él."
     },
-    "rag_v2": {
-      "area": "Preguntas",
-      "titulo": "Catálogo en cada respuesta",
-      "texto": "El bot ve el catálogo entero al contestar y el revisor solo rechaza datos del negocio sin respaldo."
-    },
-    "grounding_v3": {
-      "area": "Preguntas",
-      "titulo": "Revisor dato a dato",
-      "texto": "El revisor repasa cada dato de la respuesta y lo marca SÍ o NO frente a la información."
-    },
-    "rag_prompt_cache": {
-      "area": "Preguntas",
-      "titulo": "Catálogo en caché",
-      "texto": "El catálogo va en una parte fija de las instrucciones que OpenAI reutiliza: cada respuesta sale más barata."
-    },
     "rag_concise": {
       "area": "Preguntas",
       "titulo": "Respuestas cortas",
       "texto": "Contestar solo lo preguntado en 2-4 frases. Probado el 28-sep: ahorra poco o inventa huecos."
-    },
-    "rag_regen_feedback": {
-      "area": "Preguntas",
-      "titulo": "Reintento con motivo",
-      "texto": "Si el revisor dice NO, el segundo intento sabe qué frase quitar en vez de repetir el invento."
-    },
-    "rag_kb_v2": {
-      "area": "Preguntas",
-      "titulo": "Base de conocimiento curada",
-      "texto": "La búsqueda usa la base nueva: una ficha por servicio y preguntas frecuentes limpias."
     },
     "avisos_condicionados": {
       "area": "Preguntas",
@@ -1166,26 +1127,6 @@
       "area": "Preguntas",
       "titulo": "Revisor que clasifica cada frase",
       "texto": "El revisor marca el tipo de cada frase y solo cuentan los datos. Medido el 1-oct: deja pasar más inventos; apagado."
-    },
-    "juez_segunda_opinion": {
-      "area": "Preguntas",
-      "titulo": "Segunda opinión cuando el revisor rechaza",
-      "texto": "Si el revisor rechaza, el enrutador rápido mira las frases rechazadas; si solo dicen 'no lo tengo' u ofrecen un asesor, la respuesta pasa."
-    },
-    "rag_adelantado": {
-      "area": "Preguntas",
-      "titulo": "Empezar a contestar mientras se clasifica",
-      "texto": "La respuesta a la pregunta empieza a la vez que el enrutador decide qué es el mensaje; si al final no hacía falta o el contexto cambió, se tira."
-    },
-    "rag_busqueda_doble": {
-      "area": "Preguntas",
-      "titulo": "Buscar también con la pregunta tal cual",
-      "texto": "Además de la pregunta reescrita con el contexto, se busca con la que escribió el cliente y se mezclan los dos resultados: la reescritura a veces cambiaba el tema."
-    },
-    "rag_busqueda_origen": {
-      "area": "Preguntas",
-      "titulo": "Buscar según de dónde sale el cliente",
-      "texto": "Si se sabe si sale de Cartagena o ya está en las islas, la búsqueda baja las fichas del otro origen, para no contestar con la versión equivocada del plan."
     },
     "rag_contesta_lo_que_sabe": {
       "area": "Preguntas",
@@ -1476,16 +1417,6 @@
       "area": "Reserva",
       "titulo": "Otro idioma: contesta en inglés",
       "texto": "Coral atiende en español e inglés. Si el cliente escribe en otro idioma (portugués, francés…), contesta en inglés. Unas palabras sueltas de otro idioma dentro de un mensaje en español no cambian el idioma. Lo dice el extractor de la fase EX, en la misma llamada."
-    },
-    "catalogo_equipo_incluido": {
-      "area": "Preguntas",
-      "titulo": "El catálogo dice si el equipo va incluido",
-      "texto": "Cada plan del catálogo indica si incluye el equipo (casi todos) o si hay que traer equipo propio (Dive Master), para que Coral lo diga y el revisor no lo tome por inventado."
-    },
-    "catalogo_hoteles_base": {
-      "area": "Preguntas",
-      "titulo": "Recogida confirmada en los hoteles base",
-      "texto": "El catálogo dice que en nuestros hoteles base de Isla Grande (San Pedro de Majagua y Cocoliso) la recogida está confirmada e incluida; en el resto de hoteles depende de que tengan acceso por lancha."
     },
     "origen_conserva_respuesta": {
       "area": "Preguntas",

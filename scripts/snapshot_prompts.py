@@ -193,8 +193,6 @@ def _collect() -> dict[str, str]:
     add("info/query_rewrite.system.en", info.QUERY_REWRITE_EN)
 
     # ── info · grounding (verificación de respuesta) ─────────────────────────
-    add("info/grounding_verify.system.es", info.GROUNDING_VERIFY_ES)
-    add("info/grounding_verify.system.en", info.GROUNDING_VERIFY_EN)
     add("info/grounding_verify_v2.system.es", info.GROUNDING_VERIFY_V2_ES)
     add("info/grounding_verify_v2.system.en", info.GROUNDING_VERIFY_V2_EN)
     add("info/grounding_verify_v3.system.es", info.GROUNDING_VERIFY_V3_ES)

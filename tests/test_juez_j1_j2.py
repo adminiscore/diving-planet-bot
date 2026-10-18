@@ -1,7 +1,7 @@
 """1-oct (`docs/robustness/juez/README.md`): las dos formas de arreglar el juez que se comparan con el de hoy.
 
 - J1: el juez es un modelo de razonamiento (gpt-5-mini): sin temperatura y con `reasoning_effort`.
-- J2 (`juez_segunda_opinion`): si el juez rechaza, Jev revisa las frases marcadas NO; la respuesta pasa SOLO si
+- J2 (`src/agents/juez_segunda_opinion.py`, siempre activa desde s4-25): si el juez rechaza, Jev revisa las frases marcadas NO; la respuesta pasa SOLO si
   ninguna afirma nada del negocio. Si Jev falla, el rechazo se mantiene.
 """
 from types import SimpleNamespace
@@ -25,7 +25,6 @@ def juez(monkeypatch):
         monkeypatch.setattr(grounding_check, "AsyncOpenAI", lambda **k: cliente)
         monkeypatch.setattr(grounding_check, "trace_openai", lambda c: c)
         return crear
-    monkeypatch.setattr(settings, "grounding_v3", True)
     monkeypatch.setattr(settings, "juez_por_tipo", False)
     return poner
 
@@ -37,7 +36,6 @@ RECHAZO_DATO = "- Se suman impuestos al total NO\nHALLUCINATED"
 @pytest.mark.asyncio
 async def test_j2_si_ninguna_frase_rechazada_afirma_nada_pasa(juez, monkeypatch):
     juez(RECHAZO_ASESOR)
-    monkeypatch.setattr(settings, "juez_segunda_opinion", True)
     vistas = []
 
     async def afirma(frase):
@@ -53,20 +51,9 @@ async def test_j2_si_ninguna_frase_rechazada_afirma_nada_pasa(juez, monkeypatch)
 @pytest.mark.parametrize("p", [0.9, juez_segunda_opinion.SIN_DATOS_MAX, None])
 async def test_j2_si_alguna_afirma_o_jev_no_contesta_el_rechazo_se_mantiene(juez, monkeypatch, p):
     juez(RECHAZO_DATO)
-    monkeypatch.setattr(settings, "juez_segunda_opinion", True)
     monkeypatch.setattr(juez_segunda_opinion, "afirma", AsyncMock(return_value=p))
     ok, motivo = await grounding_check.is_grounded("respuesta", "contexto", "es")
     assert not ok and "impuestos" in motivo
-
-
-@pytest.mark.asyncio
-async def test_j2_apagado_no_pregunta_a_jev(juez, monkeypatch):
-    juez(RECHAZO_ASESOR)
-    monkeypatch.setattr(settings, "juez_segunda_opinion", False)
-    afirma = AsyncMock(return_value=0.0)
-    monkeypatch.setattr(juez_segunda_opinion, "afirma", afirma)
-    ok, _ = await grounding_check.is_grounded("respuesta", "contexto", "es")
-    assert not ok and afirma.await_count == 0
 
 
 @pytest.mark.asyncio

@@ -3,8 +3,8 @@ de PRE (`docs/robustness/paso5-rag/`):
 
 - los atajos de precio por regex contestaban preguntas que no eran de precio ("¿Cuánto tiempo
   dura?" -> lista de precios) y el LLM contradecía reglas del catálogo que la búsqueda no traía
-  (cursos de 2 días "ida y vuelta", el paquete de 3 inmersiones "en 1 día") -> flag `rag_v2`: el
-  catálogo entero como hechos en el contexto;
+  (cursos de 2 días "ida y vuelta", el paquete de 3 inmersiones "en 1 día") -> el catálogo entero
+  como hechos en el contexto (el flag `rag_v2` se quitó en s4-25: es lo de siempre);
 - el juez de grounding mandaba al "no lo tengo a la mano" saludos y respuestas correctas -> juez v2;
 - el texto fijo de disponibilidad se comía el resto del mensaje -> contesta el RAG;
 - "2.215.000" era un "teléfono" y bloqueaba el mensaje por privacidad;
@@ -49,7 +49,7 @@ def test_los_precios_del_catalogo_salen_de_services_json():
     assert "Acompañante (no bucea" in es
 
 
-# ─── rag_answer con el flag ──────────────────────────────────────────────────
+# ─── rag_answer con el catálogo ──────────────────────────────────────────────
 
 class _Resp:
     def __init__(self, content):
@@ -99,41 +99,20 @@ def rag_offline(monkeypatch):
     return _set
 
 
-async def test_cuanto_tiempo_dura_ya_no_recibe_la_lista_de_precios(monkeypatch, rag_offline):
-    from src.config import settings as _flags  # camino antiguo: el flag sigue existiendo
-    monkeypatch.setattr(_flags, "rag_prompt_cache", False)
-    monkeypatch.setattr(settings, "rag_v2", True)
+async def test_cuanto_tiempo_dura_ya_no_recibe_la_lista_de_precios(rag_offline):
     seen = rag_offline("El curso dura 2 días y hay que dormir en las islas.")
     answer = await rag_agent.rag_answer("Cuánto tiempo dura ?", lang="es")
     assert answer.startswith("El curso dura 2 días")
-    user = seen[0]["messages"][-1]["content"]
-    assert "CATÁLOGO OFICIAL" in user
+    # el catálogo va en el prompt del sistema (paso 9, prompt caching), no en el mensaje del usuario
+    assert "CATÁLOGO OFICIAL" in seen[0]["messages"][0]["content"]
 
 
-async def test_un_precio_del_catalogo_pasa_el_guard_de_importes(monkeypatch, rag_offline):
-    monkeypatch.setattr(settings, "rag_v2", True)
+async def test_un_precio_del_catalogo_pasa_el_guard_de_importes(rag_offline):
     svc = SERVICES["open_water"]
     price = money.usd_cop(svc["price_usd"], svc["price_cop"])
     rag_offline(f"El Curso Básico PADI cuesta {price} por persona.")
     answer = await rag_agent.rag_answer("¿cuánto cuesta el curso básico?", lang="es")
     assert price in answer
-
-
-# ─── Juez v2 ─────────────────────────────────────────────────────────────────
-
-@pytest.mark.parametrize("flag, prompt, model_attr", [
-    (True, grounding_check.GROUNDING_VERIFY_V2_ES, "rag_answer_model"),
-    (False, grounding_check.GROUNDING_VERIFY_ES, "openai_model"),
-])
-async def test_el_juez_usa_el_prompt_y_el_modelo_del_flag(monkeypatch, flag, prompt, model_attr):
-    monkeypatch.setattr(settings, "rag_v2", flag)
-    monkeypatch.setattr(settings, "grounding_v3", False)  # compara v2 con v1; el v3 tiene su test
-    seen: list = []
-    monkeypatch.setattr(grounding_check, "AsyncOpenAI", _openai("GROUNDED", seen))
-    grounded, _ = await grounding_check.is_grounded("Hola, soy Coral 🪸", "contexto", lang="es")
-    assert grounded
-    assert seen[0]["messages"][0]["content"] == prompt
-    assert seen[0]["model"] == getattr(settings, model_attr)
 
 
 # ─── Disponibilidad ──────────────────────────────────────────────────────────
@@ -146,14 +125,12 @@ def _state(**kw) -> ConversationState:
     return s
 
 
-async def test_la_pregunta_de_disponibilidad_sigue_al_rag_con_el_flag(monkeypatch):
-    monkeypatch.setattr(settings, "rag_v2", True)
+async def test_la_pregunta_de_disponibilidad_sigue_al_rag():
     msg = "¿Tienen disponibilidad el 6 de febrero? ¿Las fotos tienen precio adicional?"
     assert await core._availability_phase(_state(), msg, {}, "") is None
 
 
-async def test_los_dias_cerrados_se_siguen_contestando_con_la_politica(monkeypatch):
-    monkeypatch.setattr(settings, "rag_v2", True)
+async def test_los_dias_cerrados_se_siguen_contestando_con_la_politica():
     reply = await core._availability_phase(_state(), "¿abren el 25 de diciembre?", {}, "")
     assert reply and "diciembre" in reply.lower()
 
@@ -194,7 +171,7 @@ def test_el_paquete_de_3_inmersiones_obliga_a_dormir():
     assert core._plan_needs_overnight(_state(detected_service_id="3_dives_1_day"))
 
 
-# ─── Juez v3 (flag `grounding_v3`) ───────────────────────────────────────────
+# ─── Juez v3 ─────────────────────────────────────────────────────────────────
 
 def test_el_veredicto_v3_sale_de_las_marcas_de_cada_dato():
     assert not grounding_check.verdict_from_fact_list("- Llevamos 30 años en las islas. NO  \n\nHALLUCINATED")
@@ -205,8 +182,6 @@ def test_el_veredicto_v3_sale_de_las_marcas_de_cada_dato():
 
 
 async def test_el_juez_v3_usa_su_prompt_y_modelo(monkeypatch):
-    monkeypatch.setattr(settings, "rag_v2", True)
-    monkeypatch.setattr(settings, "grounding_v3", True)
     monkeypatch.setattr(settings, "juez_v3_luna", False)  # el v3 tal cual (la aclaración de s4-33 tiene su test)
     seen: list = []
     monkeypatch.setattr(grounding_check, "AsyncOpenAI", _openai("- Llevamos 30 años: NO\nHALLUCINATED", seen))
@@ -226,11 +201,9 @@ def test_el_catalogo_trae_el_precio_del_refresher():
     assert money.usd_cop(svc["price_usd"], svc["price_cop"]) in line
 
 
-# ─── Paso 9 (l2-2, flag `rag_prompt_cache`) ──────────────────────────────────
+# ─── Paso 9 (l2-2, prompt caching) ───────────────────────────────────────────
 
 async def test_con_cache_el_catalogo_va_al_prompt_del_sistema(monkeypatch):
-    monkeypatch.setattr(settings, "rag_v2", True)
-    monkeypatch.setattr(settings, "rag_prompt_cache", True)
     seen: list = []
     judged: list = []
 
@@ -267,8 +240,6 @@ async def test_el_juez_ve_la_presentacion_tras_el_catalogo(monkeypatch):
 
     assert PRESENTACION_ES in RAG_INTRO_ES  # una sola fuente: la misma frase que dice el bot
     for flag in (True, False):
-        monkeypatch.setattr(settings, "rag_v2", True)
-        monkeypatch.setattr(settings, "rag_prompt_cache", True)
         monkeypatch.setattr(settings, "juez_presentacion", flag)
         judged: list = []
 

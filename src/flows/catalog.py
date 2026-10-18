@@ -485,7 +485,7 @@ def service_fact_parts(service_id: str, lang: str) -> list[str]:
 
 
 def _parte_equipo(service_id: str, lang: str) -> list[str]:
-    """9-oct (flag `catalogo_equipo_incluido`): si el plan incluye el equipo, para la línea del CATÁLOGO (no para la
+    """9-oct: si el plan incluye el equipo, para la línea del CATÁLOGO (no para la
     ficha del servicio, que ya lo dice en "Incluye" y cuyo cambio obligaría a regenerar la base v2). El catálogo no lo
     decía (solo una FAQ) y el revisor tumbó "el equipo está incluido en el precio del plan", que es cierto
     (decisiones-B, turno de 15 s). Sale de los datos de cada plan: el Dive Master NO lo incluye (equipo propio)."""
@@ -561,7 +561,7 @@ def policies_facts(lang: str) -> str:
 
 
 def catalog_facts(lang: str) -> str:
-    """Paso 5 (RAG, flag `rag_v2`): el catalogo entero como hechos compactos para el contexto
+    """Paso 5 (RAG, 27-sep): el catalogo entero como hechos compactos para el contexto
     del RAG — precio online y normal, duracion, si obliga a dormir en las islas y si pide
     certificacion, de cada servicio y desde cada origen. Sale de services.json/pricing.json, no
     se escribe a mano.
@@ -576,13 +576,12 @@ def catalog_facts(lang: str) -> str:
 
     # 17-oct: la clave lleva TODOS los flags que cambian el texto. Antes solo llevaba la moneda, así que cambiar
     # otro flag en el mismo proceso (los tests, o una medida que enciende un flag) devolvía el catálogo de antes.
-    clave = (f"{lang}|{settings.moneda_sin_nacionalidad_usd}|{settings.catalogo_equipo_incluido}|"
-             f"{settings.catalogo_hoteles_base}|{settings.catalogo_profundidad}|{settings.catalogo_preparacion}")
+    clave = (f"{lang}|{settings.moneda_sin_nacionalidad_usd}|{settings.catalogo_profundidad}|"
+             f"{settings.catalogo_preparacion}")
     if clave in _FACTS_CACHE:
         return _FACTS_CACHE[clave]
 
     es = lang == "es"
-    catalogo_equipo = settings.catalogo_equipo_incluido
     catalogo_fichas = settings.catalogo_profundidad or settings.catalogo_preparacion
     groups: dict[bool, list[str]] = {False: [], True: []}
     for service_id, svc in SERVICES.items():
@@ -591,8 +590,8 @@ def catalog_facts(lang: str) -> str:
         name = svc.get("name_es" if es else "name_en") or service_id
         island = service_id.endswith("_already_on_island")
         parts = service_fact_parts(service_id, lang)
-        if catalogo_equipo:
-            parts += _parte_equipo(service_id, lang)
+        # 9-oct: cada plan dice si el equipo va incluido (el Dive Master no).
+        parts += _parte_equipo(service_id, lang)
         if catalogo_fichas:
             parts += _parte_ficha(service_id, lang)
         groups[island].append(f"- {name}: " + "; ".join(parts) + ".")
@@ -612,17 +611,14 @@ def catalog_facts(lang: str) -> str:
             )
     comp = COMPANION_PRICE
     companion = money.usd_cop(comp["usd_online"], comp["cop_online"])
-    # 9-oct (Gadea, flag `catalogo_hoteles_base`): en los hoteles base la recogida no depende del acceso maritimo. Con
-    # solo "si tiene acceso maritimo" en el catalogo, el RAG (y RAG_CONDICIONES) dudaba tambien de Cocoliso: "el equipo
-    # confirma si Cocoliso tiene acceso maritimo" (paquete-5-buceos-islas-residente-sin-recogida).
+    # 9-oct (Gadea): en los hoteles base la recogida no depende del acceso maritimo. Con solo "si tiene acceso
+    # maritimo" en el catalogo, el RAG (y RAG_CONDICIONES) dudaba tambien de Cocoliso: "el equipo confirma si Cocoliso
+    # tiene acceso maritimo" (paquete-5-buceos-islas-residente-sin-recogida).
     islas_es = ("Si ya estás en las Islas del Rosario (recogida en tu hotel si tiene acceso marítimo; en nuestros "
                 "hoteles base, San Pedro de Majagua y Cocoliso, en Isla Grande, la recogida está confirmada e "
-                "incluida):" if settings.catalogo_hoteles_base else
-                "Si ya estás en las Islas del Rosario (recogida en tu hotel si tiene acceso marítimo):")
+                "incluida):")
     islas_en = ("If already on the Rosario Islands (pickup at your hotel if it has boat access; at our base hotels, "
-                "San Pedro de Majagua and Cocoliso on Isla Grande, pickup is confirmed and included):"
-                if settings.catalogo_hoteles_base else
-                "If already on the Rosario Islands (pickup at your hotel if it has boat access):")
+                "San Pedro de Majagua and Cocoliso on Isla Grande, pickup is confirmed and included):")
     companion_normal = money.usd_cop(comp["usd_normal"], comp["cop_normal"])
     if es:
         head = ("CATÁLOGO OFICIAL (fuente de verdad; precios por persona, 'online' = con el 10% de "

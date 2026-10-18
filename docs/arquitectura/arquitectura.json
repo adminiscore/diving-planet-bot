@@ -1,8 +1,8 @@
 {
  "meta": {
-  "generado": "2026-10-18T21:38:06+00:00",
-  "commit": "8e4b7f5",
-  "rama": "feature/pre_gadea"
+  "generado": "2026-10-18T22:15:24+00:00",
+  "commit": "e8687a9",
+  "rama": "worktree-agent-a10f673f3932c7284"
  },
  "vistas": {
   "general": {
@@ -411,17 +411,9 @@
      "pre": "text-embedding-3-small"
     }
    ],
-   "nota": "Postgres + pgvector, tabla kb_v2.kb_documents; se regenera en cada deploy (scripts/kb_v2.py). La base antigua (public.kb_documents, 718 documentos) queda de respaldo si se apaga RAG_KB_V2.",
+   "nota": "Postgres + pgvector, tabla kb_v2.kb_documents; se regenera en cada deploy (scripts/kb_v2.py). La base antigua (public.kb_documents) se sigue cargando en el deploy, pero el bot ya no la lee (s4-25 quitó RAG_KB_V2).",
    "marca": "postgresql",
-   "interruptores": [
-    {
-     "nombre": "rag_kb_v2",
-     "titulo": "Base de conocimiento curada",
-     "codigo": true,
-     "pre": true,
-     "sin_efecto": false
-    }
-   ]
+   "interruptores": []
   },
   {
    "id": "catalogo",
@@ -522,13 +514,6 @@
    "que_hace": "Fechas cerradas y preguntas de disponibilidad (estas las contesta el RAG).",
    "donde": "src/agents/conversational_core.py:_availability_phase",
    "interruptores": [
-    {
-     "nombre": "rag_v2",
-     "titulo": "Catálogo en cada respuesta",
-     "codigo": true,
-     "pre": true,
-     "sin_efecto": false
-    },
     {
      "nombre": "s4_fixes",
      "titulo": "Respuestas fijas revisadas",
@@ -1066,22 +1051,7 @@
      "pre": "text-embedding-3-small"
     }
    ],
-   "interruptores": [
-    {
-     "nombre": "rag_busqueda_origen",
-     "titulo": "Buscar según de dónde sale el cliente",
-     "codigo": true,
-     "pre": true,
-     "sin_efecto": false
-    },
-    {
-     "nombre": "rag_busqueda_doble",
-     "titulo": "Buscar también con la pregunta tal cual",
-     "codigo": true,
-     "pre": true,
-     "sin_efecto": false
-    }
-   ],
+   "interruptores": [],
    "tiempo_medido": {
     "p50": 0.4,
     "fuente": "medido dentro de PRE el 28-sep (8 preguntas, HISTORY 0.29.65)"
@@ -1108,34 +1078,6 @@
    "que_hace": "El catálogo entero va siempre en las instrucciones del bot y en las del revisor.",
    "donde": "src/flows/catalog.py:catalog_facts",
    "interruptores": [
-    {
-     "nombre": "rag_v2",
-     "titulo": "Catálogo en cada respuesta",
-     "codigo": true,
-     "pre": true,
-     "sin_efecto": false
-    },
-    {
-     "nombre": "rag_prompt_cache",
-     "titulo": "Catálogo en caché",
-     "codigo": true,
-     "pre": true,
-     "sin_efecto": false
-    },
-    {
-     "nombre": "catalogo_hoteles_base",
-     "titulo": "Recogida confirmada en los hoteles base",
-     "codigo": true,
-     "pre": true,
-     "sin_efecto": false
-    },
-    {
-     "nombre": "catalogo_equipo_incluido",
-     "titulo": "El catálogo dice si el equipo va incluido",
-     "codigo": true,
-     "pre": true,
-     "sin_efecto": false
-    },
     {
      "nombre": "rag_politicas_en_contexto",
      "titulo": "Las políticas siempre a mano",
@@ -1307,24 +1249,10 @@
    ],
    "interruptores": [
     {
-     "nombre": "grounding_v3",
-     "titulo": "Revisor dato a dato",
-     "codigo": true,
-     "pre": true,
-     "sin_efecto": false
-    },
-    {
      "nombre": "juez_por_tipo",
      "titulo": "Revisor que clasifica cada frase",
      "codigo": false,
      "pre": false,
-     "sin_efecto": false
-    },
-    {
-     "nombre": "juez_segunda_opinion",
-     "titulo": "Segunda opinión cuando el revisor rechaza",
-     "codigo": true,
-     "pre": true,
      "sin_efecto": false
     },
     {
@@ -1391,15 +1319,7 @@
    "titulo": "Reintento con motivo",
    "que_hace": "Si el revisor dice NO, se vuelve a escribir diciéndole qué frase quitar. Una sola vez.",
    "donde": "src/agents/rag_agent.py:regen_feedback",
-   "interruptores": [
-    {
-     "nombre": "rag_regen_feedback",
-     "titulo": "Reintento con motivo",
-     "codigo": true,
-     "pre": true,
-     "sin_efecto": false
-    }
-   ],
+   "interruptores": [],
    "modelos": []
   },
   {
@@ -2210,32 +2130,6 @@
    "sin_efecto": null
   },
   {
-   "nombre": "catalogo_equipo_incluido",
-   "area": "Preguntas",
-   "titulo": "El catálogo dice si el equipo va incluido",
-   "texto": "Cada plan del catálogo indica si incluye el equipo (casi todos) o si hay que traer equipo propio (Dive Master), para que Coral lo diga y el revisor no lo tome por inventado.",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [
-    "r_catalogo"
-   ],
-   "sin_efecto": null
-  },
-  {
-   "nombre": "catalogo_hoteles_base",
-   "area": "Preguntas",
-   "titulo": "Recogida confirmada en los hoteles base",
-   "texto": "El catálogo dice que en nuestros hoteles base de Isla Grande (San Pedro de Majagua y Cocoliso) la recogida está confirmada e incluida; en el resto de hoteles depende de que tengan acceso por lancha.",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [
-    "r_catalogo"
-   ],
-   "sin_efecto": null
-  },
-  {
    "nombre": "catalogo_preparacion",
    "area": "Preguntas",
    "titulo": "El catálogo enseña la preparación de cada plan (apagado: medido y empeora)",
@@ -2464,19 +2358,6 @@
    "sin_efecto": null
   },
   {
-   "nombre": "grounding_v3",
-   "area": "Preguntas",
-   "titulo": "Revisor dato a dato",
-   "texto": "El revisor repasa cada dato de la respuesta y lo marca SÍ o NO frente a la información.",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [
-    "r_revisor"
-   ],
-   "sin_efecto": null
-  },
-  {
    "nombre": "grupo_por_edades",
    "area": "Reserva",
    "titulo": "Cada edad es una persona",
@@ -2680,19 +2561,6 @@
    "texto": "Cuando el revisor de las respuestas del RAG rechaza una frase, se le pide la cita literal de la base que la respalda; si la trae (y sus cifras y enlaces están en la base), la respuesta pasa. Antes rechazaba respuestas correctas y la que se regeneraba salía peor.",
    "codigo": false,
    "pre": false,
-   "fijado_en_pre": true,
-   "usado_por": [
-    "r_revisor"
-   ],
-   "sin_efecto": null
-  },
-  {
-   "nombre": "juez_segunda_opinion",
-   "area": "Preguntas",
-   "titulo": "Segunda opinión cuando el revisor rechaza",
-   "texto": "Si el revisor rechaza, el enrutador rápido mira las frases rechazadas; si solo dicen 'no lo tengo' u ofrecen un asesor, la respuesta pasa.",
-   "codigo": true,
-   "pre": true,
    "fijado_en_pre": true,
    "usado_por": [
     "r_revisor"
@@ -3087,43 +2955,6 @@
    "sin_efecto": null
   },
   {
-   "nombre": "rag_adelantado",
-   "area": "Preguntas",
-   "titulo": "Empezar a contestar mientras se clasifica",
-   "texto": "La respuesta a la pregunta empieza a la vez que el enrutador decide qué es el mensaje; si al final no hacía falta o el contexto cambió, se tira.",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [],
-   "sin_efecto": null
-  },
-  {
-   "nombre": "rag_busqueda_doble",
-   "area": "Preguntas",
-   "titulo": "Buscar también con la pregunta tal cual",
-   "texto": "Además de la pregunta reescrita con el contexto, se busca con la que escribió el cliente y se mezclan los dos resultados: la reescritura a veces cambiaba el tema.",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [
-    "r_buscar"
-   ],
-   "sin_efecto": null
-  },
-  {
-   "nombre": "rag_busqueda_origen",
-   "area": "Preguntas",
-   "titulo": "Buscar según de dónde sale el cliente",
-   "texto": "Si se sabe si sale de Cartagena o ya está en las islas, la búsqueda baja las fichas del otro origen, para no contestar con la versión equivocada del plan.",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [
-    "r_buscar"
-   ],
-   "sin_efecto": null
-  },
-  {
    "nombre": "rag_concise",
    "area": "Preguntas",
    "titulo": "Respuestas cortas",
@@ -3167,19 +2998,6 @@
    "pre": false,
    "fijado_en_pre": false,
    "usado_por": [],
-   "sin_efecto": null
-  },
-  {
-   "nombre": "rag_kb_v2",
-   "area": "Preguntas",
-   "titulo": "Base de conocimiento curada",
-   "texto": "La búsqueda usa la base nueva: una ficha por servicio y preguntas frecuentes limpias.",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [
-    "kb"
-   ],
    "sin_efecto": null
   },
   {
@@ -3283,32 +3101,6 @@
    "sin_efecto": null
   },
   {
-   "nombre": "rag_prompt_cache",
-   "area": "Preguntas",
-   "titulo": "Catálogo en caché",
-   "texto": "El catálogo va en una parte fija de las instrucciones que OpenAI reutiliza: cada respuesta sale más barata.",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [
-    "r_catalogo"
-   ],
-   "sin_efecto": null
-  },
-  {
-   "nombre": "rag_regen_feedback",
-   "area": "Preguntas",
-   "titulo": "Reintento con motivo",
-   "texto": "Si el revisor dice NO, el segundo intento sabe qué frase quitar en vez de repetir el invento.",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [
-    "r_reintento"
-   ],
-   "sin_efecto": null
-  },
-  {
    "nombre": "rag_revisor_avisos",
    "area": "Preguntas",
    "titulo": "El revisor busca avisos que faltan",
@@ -3370,20 +3162,6 @@
    "fijado_en_pre": false,
    "usado_por": [
     "r_escribir"
-   ],
-   "sin_efecto": null
-  },
-  {
-   "nombre": "rag_v2",
-   "area": "Preguntas",
-   "titulo": "Catálogo en cada respuesta",
-   "texto": "El bot ve el catálogo entero al contestar y el revisor solo rechaza datos del negocio sin respaldo.",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [
-    "b_availability",
-    "r_catalogo"
    ],
    "sin_efecto": null
   },

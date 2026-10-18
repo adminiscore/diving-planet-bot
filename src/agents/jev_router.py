@@ -260,7 +260,7 @@ _CORRECTS_Q = {
     ),
 }
 
-# Paso 5 (flag `rag_v2`, 27-sep): ¿el cliente pide que le RECORDEMOS algo que él mismo dijo? El
+# Paso 5 (27-sep): ¿el cliente pide que le RECORDEMOS algo que él mismo dijo? El
 # "¿me recuerdas…?" (`recall_field` del detector de señales) contesta con el dato guardado y
 # CANCELA la respuesta del RAG; en la ronda A salió 15 veces y casi ninguna lo era ("could you just
 # confirm at what time and where…?", "Hope you are operating on Easter Sunday?"). Calibrado con
@@ -542,8 +542,7 @@ def _questions_for_turn(pending_slot: str | None = None) -> dict:
                   **_AFFIRMS_QUESTIONS})
     if settings.corrections_v2:
         q[CORRECTS] = _CORRECTS_Q
-    if settings.rag_v2:
-        q[ASKS_RECALL] = _ASKS_RECALL_Q
+    q[ASKS_RECALL] = _ASKS_RECALL_Q
     if settings.s4_fixes:
         q[NEEDS_STAFF] = ({**_NEEDS_STAFF_Q,
                            "instructions": f"{_NEEDS_STAFF_Q['instructions']} {_FUERA_DEL_SISTEMA}"}

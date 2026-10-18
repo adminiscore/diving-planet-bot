@@ -8,10 +8,6 @@ from src.llm_client import trace_openai
 from src.observability import con_pieza_llm
 from src.privacy import redact_pii, redact_pii_por_lineas
 from src.prompts.info import (
-    GROUNDING_VERIFY_EN,
-    GROUNDING_VERIFY_ES,
-    GROUNDING_VERIFY_V2_EN,
-    GROUNDING_VERIFY_V2_ES,
     GROUNDING_VERIFY_V3_EN,
     GROUNDING_VERIFY_V3_ES,
     GROUNDING_VERIFY_V3_LUNA_EN,
@@ -297,18 +293,14 @@ async def is_grounded(answer: str, context: str, lang: str = "es") -> tuple[bool
     if not answer.strip() or not context.strip():
         return False, "empty_answer_or_context"
 
-    por_tipo = settings.grounding_v3 and settings.juez_por_tipo
+    por_tipo = settings.juez_por_tipo
     if por_tipo:
         system = GROUNDING_VERIFY_V4_ES if lang == "es" else GROUNDING_VERIFY_V4_EN
-    elif settings.grounding_v3 and settings.juez_v3_luna:
+    elif settings.juez_v3_luna:
         # s4-33 (8-oct): el v3 con tres aclaraciones para GPT-6 Luna como juez (prompts/info.py).
         system = GROUNDING_VERIFY_V3_LUNA_ES if lang == "es" else GROUNDING_VERIFY_V3_LUNA_EN
-    elif settings.grounding_v3:
-        system = GROUNDING_VERIFY_V3_ES if lang == "es" else GROUNDING_VERIFY_V3_EN
-    elif settings.rag_v2:
-        system = GROUNDING_VERIFY_V2_ES if lang == "es" else GROUNDING_VERIFY_V2_EN
     else:
-        system = GROUNDING_VERIFY_ES if lang == "es" else GROUNDING_VERIFY_EN
+        system = GROUNDING_VERIFY_V3_ES if lang == "es" else GROUNDING_VERIFY_V3_EN
     # 2-oct (flag `juez_privacidad_por_linea`): `redact_pii` tapa TODOS los numeros largos de un texto si en
     # cualquier parte sale "pasaporte", "cuenta", "Bancolombia"... Pensado para un mensaje del cliente; sobre el
     # contexto entero del juez, una FAQ de pagos borraba todos los precios del catalogo >= 1.000.000 COP y el juez
@@ -326,15 +318,9 @@ async def is_grounded(answer: str, context: str, lang: str = "es") -> tuple[bool
             f"RESPONSE:\n{tapar(answer)}"
         )
 
-    # rag_v2: el mismo modelo que escribe la respuesta (gpt-4.1-mini en PRE) sigue la
-    # distincion "dato del negocio / todo lo demas"; gpt-4o-mini fallaba en los dos sentidos.
-    model = (
-        settings.grounding_v3_model if settings.grounding_v3
-        else (settings.rag_answer_model or settings.openai_model) if settings.rag_v2
-        else settings.openai_model
-    )
+    model = settings.grounding_v3_model
     # v4 copia cada frase de la respuesta (con tipo y veredicto): necesita más sitio que la lista de datos.
-    tope = 700 if por_tipo else 300 if settings.grounding_v3 else 30
+    tope = 700 if por_tipo else 300
     if model.startswith("gpt-6") and settings.juez_luna_razonamiento != "none":
         # s4-33 (9-oct): Luna razonando como juez; el razonamiento cuenta en el tope de salida.
         extra = {"reasoning_effort": settings.juez_luna_razonamiento, "max_completion_tokens": tope + 4000}
@@ -357,13 +343,13 @@ async def is_grounded(answer: str, context: str, lang: str = "es") -> tuple[bool
         if por_tipo:
             grounded, unsupported = veredicto_por_tipo(content)
             reason = "GROUNDED" if grounded else "HALLUCINATED " + " | ".join(unsupported)[:200]
-        elif settings.grounding_v3:
+        else:
             grounded = verdict_from_fact_list(content)
             unsupported = [ln.strip() for ln in content.splitlines()
                            if ln.strip().startswith("-") and _FACT_NO.search(ln.strip().rstrip(" ."))]
-            if not grounded and unsupported and settings.juez_segunda_opinion:
+            if not grounded and unsupported:
                 # J2 (1-oct): Jev revisa las frases marcadas NO; si ninguna afirma nada del negocio (solo "no lo
-                # tengo", asesor o cortesía), la respuesta pasa. Ver `juez_segunda_opinion`.
+                # tengo", asesor o cortesía), la respuesta pasa. Ver `src/agents/juez_segunda_opinion.py`.
                 from src.agents.juez_segunda_opinion import ninguna_afirma
 
                 frases = [re.sub(r"[\s:.]*\bNO\b\.?\s*$", "", u.lstrip("- ").strip()) for u in unsupported]
@@ -376,10 +362,6 @@ async def is_grounded(answer: str, context: str, lang: str = "es") -> tuple[bool
                     if await respaldadas_con_cita(frases, context, lang):
                         grounded = True
             reason = "GROUNDED" if grounded else "HALLUCINATED " + " | ".join(unsupported)[:200]
-        else:
-            verdict = content.upper()
-            grounded = verdict.startswith("GROUNDED")
-            reason = verdict if verdict else "empty_verdict"
         logger.info(f"[RAG][GROUNDING] grounded={grounded} verdict={reason}")
         return grounded, reason
     except Exception as exc:
@@ -419,7 +401,7 @@ def veredicto_por_tipo(text: str) -> tuple[bool, list[str]]:
 
 
 def verdict_from_fact_list(text: str) -> bool:
-    """Juez v3 (flag `rag_v2`, 28-sep): el veredicto sale de las MARCAS de cada dato del negocio que
+    """Juez v3 (28-sep): el veredicto sale de las MARCAS de cada dato del negocio que
     enumera el juez ("- dato: SÍ/NO"), no de su ultima palabra, que a veces contradecia su propia
     lista ("- (ninguno)" y luego HALLUCINATED). True = respaldada (ningun dato marcado NO)."""
     facts = [ln.strip() for ln in text.splitlines() if ln.strip().startswith("-")]

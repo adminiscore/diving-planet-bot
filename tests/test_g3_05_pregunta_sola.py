@@ -69,7 +69,6 @@ async def test_la_busqueda_doble_usa_la_pregunta_sola_en_vez_del_mensaje(monkeyp
     monkeypatch.setattr(rag_agent, "search_knowledge_base", buscar)
     monkeypatch.setattr(rag_agent, "condense_query", AsyncMock(side_effect=lambda q, **k: q))
     monkeypatch.setattr(rag_agent, "pregunta_sola", AsyncMock(return_value="¿Hace falta saber nadar?"))
-    monkeypatch.setattr(settings, "rag_busqueda_doble", True)
     mensaje = "salimos de Cartagena el día 30 y somos dos. ¿Hace falta saber nadar?"
     await rag_agent.rag_answer(mensaje, lang="es", verify_grounding=False)
     assert {c.args[0] for c in buscar.await_args_list} == {mensaje, "¿Hace falta saber nadar?"}
@@ -81,6 +80,5 @@ async def test_sin_pregunta_sola_la_busqueda_doble_sigue_con_el_mensaje(monkeypa
     monkeypatch.setattr(rag_agent, "search_knowledge_base", buscar)
     monkeypatch.setattr(rag_agent, "condense_query", AsyncMock(return_value="How do I pay for the Fun Dives?"))
     monkeypatch.setattr(rag_agent, "pregunta_sola", AsyncMock(return_value=None))
-    monkeypatch.setattr(settings, "rag_busqueda_doble", True)
     await rag_agent.rag_answer("great, how do i pay", lang="en", verify_grounding=False)
     assert {c.args[0] for c in buscar.await_args_list} == {"How do I pay for the Fun Dives?", "great, how do i pay"}

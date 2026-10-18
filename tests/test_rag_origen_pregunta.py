@@ -97,7 +97,7 @@ def conversacion(monkeypatch):
     monkeypatch.setattr(settings, "notes_in_parallel", False)
     monkeypatch.setattr(settings, "ack_in_parallel", False)
     monkeypatch.setattr(settings, "answer_and_continue", True)
-    monkeypatch.setattr(settings, "rag_adelantado", False)
+    monkeypatch.setattr(core, "lanzar_rag_adelantado", lambda *a, **k: None)  # rag-5: sin respuesta adelantada
 
     async def _senales(message, **_k):
         return {}

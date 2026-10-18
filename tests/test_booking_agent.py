@@ -53,18 +53,6 @@ def test_booking_subgraph_compiles_with_internal_nodes():
     assert {"setup", "availability", "routing", "extraction", "slotfill_close"} <= set(nodes)
 
 
-@pytest.mark.asyncio
-async def test_availability_question_resolved_by_its_node(monkeypatch):
-    from src.config import settings as _flags  # camino antiguo: el flag sigue existiendo
-    monkeypatch.setattr(_flags, "rag_v2", False)
-    """Una pregunta de disponibilidad la resuelve el nodo `availability`
-    (respuesta canónica anti-alucinación), sin llegar al body/extracción."""
-    monkeypatch.setattr("src.agents.supervisor.detect_routing_signals", AsyncMock(return_value={}))
-    monkeypatch.setattr(settings, "agent_arch", True)
-    reply = (await route_message(make_state(), "¿qué días hay disponibles?"))
-    assert "disponibilidad" in reply.lower() or "availability" in reply.lower()
-
-
 # ── nodo en aislamiento ──
 
 @pytest.mark.asyncio

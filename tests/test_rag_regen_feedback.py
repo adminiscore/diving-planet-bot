@@ -1,9 +1,9 @@
-"""28-sep, flag `rag_regen_feedback`: la segunda muestra del RAG sabe QUÉ se rechazó en la primera.
+"""28-sep (el flag `rag_regen_feedback` se quitó en s4-25): la segunda muestra del RAG sabe QUÉ se rechazó en la primera.
 
 Reproducido en PRE: con la misma petición repetida, el modelo repetía el invento ("llevamos 30 años" 2 de 2) y el
 turno acababa en "no lo tengo". Se fija:
 1. el motivo del juez v3 y de los guards se convierte en una lista legible (sin el "NO" final);
-2. con el flag, la segunda llamada lleva la respuesta rechazada y el motivo; sin él, la misma petición que antes;
+2. la segunda llamada lleva la respuesta rechazada y el motivo;
 3. el juez sigue juzgando la segunda muestra (si también la rechaza, "no lo tengo" como antes);
 4. sin motivo que contar (texto roto), se regenera como antes.
 """
@@ -79,8 +79,7 @@ RECHAZO = (False, "HALLUCINATED - Llevamos 30 años buceando. NO")
 
 
 @pytest.mark.asyncio
-async def test_con_el_flag_la_segunda_muestra_sabe_que_quitar(rag, monkeypatch):
-    monkeypatch.setattr(rag_agent.settings, "rag_regen_feedback", True)
+async def test_la_segunda_muestra_sabe_que_quitar(rag):
     llamadas = rag([INVENTO, BIEN], [RECHAZO, (True, "GROUNDED")])
     assert await rag_agent.rag_answer("¿dónde nos vemos?", lang="es") == BIEN
     assert len(llamadas) == 2
@@ -91,15 +90,6 @@ async def test_con_el_flag_la_segunda_muestra_sabe_que_quitar(rag, monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_sin_el_flag_se_repite_la_misma_peticion(rag, monkeypatch):
-    monkeypatch.setattr(rag_agent.settings, "rag_regen_feedback", False)
-    llamadas = rag([INVENTO, BIEN], [RECHAZO, (True, "GROUNDED")])
-    assert await rag_agent.rag_answer("¿dónde nos vemos?", lang="es") == BIEN
-    assert llamadas[1] == llamadas[0]
-
-
-@pytest.mark.asyncio
-async def test_el_juez_sigue_juzgando_la_segunda(rag, monkeypatch):
-    monkeypatch.setattr(rag_agent.settings, "rag_regen_feedback", True)
+async def test_el_juez_sigue_juzgando_la_segunda(rag):
     rag([INVENTO, INVENTO], [RECHAZO, RECHAZO])
     assert await rag_agent.rag_answer("¿dónde nos vemos?", lang="es") == FALLBACK_ES

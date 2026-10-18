@@ -35,8 +35,8 @@ async def _get_pool() -> asyncpg.Pool:
         return _pool
     async with _pool_lock:
         if _pool is None:
-            # rag-2: con `rag_kb_v2` las consultas sin esquema (`kb_documents`) resuelven a `kb_v2.kb_documents`.
-            server_settings = {"search_path": f"{settings.rag_kb_esquema},public"} if settings.rag_kb_v2 else None
+            # rag-2: las consultas sin esquema (`kb_documents`) resuelven a la base curada (`kb_v2.kb_documents`).
+            server_settings = {"search_path": f"{settings.rag_kb_esquema},public"}
             _pool = await asyncpg.create_pool(
                 settings.database_url, min_size=1, max_size=10, server_settings=server_settings
             )
@@ -89,59 +89,6 @@ def excluded_sources() -> list[str]:
     return [part.strip() for part in raw.split(",") if part.strip()]
 
 
-def source_weight_for_topics(source: str | None, topics: list[str]) -> float:
-    if not source or not topics:
-        return 0.0
-
-    weights_by_topic: dict[str, dict[str, float]] = {
-        "weather_cancellation": {"policies": 0.35, "faqs": 0.12, "services": 0.0},
-        "meeting_point": {"faqs": 0.10, "policies": 0.0, "services": 0.0},
-        "payment": {"faqs": 0.12, "policies": 0.05, "services": 0.0},
-        "availability": {"faqs": 0.08, "services": 0.0, "policies": 0.0},
-        "booking": {"faqs": 0.14, "policies": 0.12, "services": 0.0},
-        "pricing": {"services": 0.18, "faqs": 0.08, "policies": 0.0},
-        "discount": {"services": 0.12, "faqs": 0.10, "policies": 0.0},
-        "equipment": {"faqs": 0.16, "services": 0.06, "policies": 0.0},
-        "certification": {"faqs": 0.14, "services": 0.05, "policies": 0.0},
-        "refresher": {"policies": 0.14, "faqs": 0.12, "services": 0.0},
-        "schedule": {"faqs": 0.12, "services": 0.08, "policies": 0.0},
-        "location_islands": {"faqs": 0.12, "services": 0.06, "policies": 0.0},
-        "accommodation": {"faqs": 0.14, "services": 0.04, "policies": 0.0},
-        "discount_colombian": {"faqs": 0.06, "services": 0.06, "policies": 0.0},
-        "forms_waiver": {"faqs": 0.10, "policies": 0.02, "services": 0.0},
-        "seasickness": {"faqs": 0.12, "services": 0.0, "policies": 0.0},
-        "photos_media": {"faqs": 0.06, "services": 0.0, "policies": 0.0},
-        "reschedule": {"policies": 0.18, "faqs": 0.12, "services": 0.0},
-        "depth": {"faqs": 0.14, "services": 0.0, "policies": 0.0},
-    }
-
-    total = 0.0
-    for t in topics:
-        total += weights_by_topic.get(t, {}).get(source, 0.0)
-    return total
-
-
-# Map a query topic to the service sub-chunk subtype that should answer it.
-# Only `services` docs carry a `subtype`, so this also nudges services up for
-# these detail-oriented intents without overriding strong source signals.
-SUBTYPE_BY_TOPIC: dict[str, str] = {
-    "pricing": "pricing",
-    "discount": "pricing",
-    "discount_colombian": "pricing",
-    "schedule": "itinerary",
-    "equipment": "included",
-    "certification": "requirements",
-    "refresher": "requirements",
-}
-
-
-def subtype_boost_for_topics(subtype: str | None, topics: list[str]) -> float:
-    if not subtype or not topics:
-        return 0.0
-    preferred = {SUBTYPE_BY_TOPIC[t] for t in topics if t in SUBTYPE_BY_TOPIC}
-    return 0.08 if subtype in preferred else 0.0
-
-
 def _coerce_metadata(value: object) -> dict:
     if isinstance(value, dict):
         return value
@@ -192,30 +139,6 @@ def _reciprocal_rank_fusion(rankings: list[list[dict]], k: int = RRF_K) -> list[
         doc["score_final"] = confidence + rrf_score
         fused.append(doc)
     return fused
-
-
-def _apply_topic_and_source_boost(results: list[dict], query_topics: list[str]) -> list[dict]:
-    reranked: list[dict] = []
-    for doc in results:
-        metadata = doc.get("metadata") or {}
-        boost = 0.0
-        doc_topics = metadata.get("topics") or []
-        if query_topics and isinstance(doc_topics, list):
-            overlap = set(query_topics) & {str(topic) for topic in doc_topics}
-            if overlap:
-                boost += 0.05 * len(overlap)
-
-        if query_topics:
-            source = metadata.get("source")
-            boost += source_weight_for_topics(str(source) if source is not None else None, query_topics)
-            subtype = metadata.get("subtype")
-            boost += subtype_boost_for_topics(str(subtype) if subtype is not None else None, query_topics)
-
-        reranked_doc = dict(doc)
-        reranked_doc["score_boosted"] = float(doc.get("score_final", doc.get("score", 0.0)) or 0.0) + boost
-        reranked_doc["score_final"] = reranked_doc["score_boosted"]
-        reranked.append(reranked_doc)
-    return reranked
 
 
 async def _vector_search(query: str, lang: str = "es", k: int = 8) -> list[dict]:
@@ -359,10 +282,7 @@ async def search_knowledge_base(
     # rag-2: con la base curada los empujones por tema/fuente (regex, ajustados para la base v1) enterraban las
     # politicas bajo FAQs genericas: sin ellos, el dato llega al top-8 un 85 % frente al 76 % (29-sep, 47
     # preguntas visibles de rag_piezas). Se ordena solo por vector + palabras (RRF).
-    reranked_results = (fused_results if settings.rag_kb_v2
-                        else _apply_topic_and_source_boost(fused_results, query_topics))
-    if settings.rag_busqueda_origen:
-        reranked_results = penalizar_otro_origen(reranked_results, origin)
+    reranked_results = penalizar_otro_origen(fused_results, origin)
     reranked_results.sort(key=lambda result: result.get("score_final", result.get("score", 0.0)), reverse=True)
 
     top_meta = [

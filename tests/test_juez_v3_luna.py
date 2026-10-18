@@ -42,7 +42,6 @@ async def test_con_el_flag_el_juez_recibe_las_instrucciones_para_luna(monkeypatc
             self.chat = type("Chat", (), {"completions": _Completions()})()
 
     monkeypatch.setattr(grounding_check, "AsyncOpenAI", _OpenAI)
-    monkeypatch.setattr(grounding_check.settings, "grounding_v3", True)
     monkeypatch.setattr(grounding_check.settings, "juez_por_tipo", False)
     monkeypatch.setattr(grounding_check.settings, "juez_v3_luna", flag)
     ok, _ = await grounding_check.is_grounded("Hola, soy Coral.", "CATÁLOGO OFICIAL\n- algo", lang=lang)

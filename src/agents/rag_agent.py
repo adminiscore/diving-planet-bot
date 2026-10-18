@@ -867,7 +867,7 @@ def _build_grounding_context(
 
 
 def regen_feedback(reject_reason: str, lang: str) -> str | None:
-    """Mensaje para la segunda muestra con lo que el juez o el guard rechazó (flag `rag_regen_feedback`).
+    """Mensaje para la segunda muestra con lo que el juez o el guard rechazó (28-sep, regeneración con motivo).
 
     El juez v3 devuelve "HALLUCINATED - dato NO | - dato NO"; los guards, su etiqueta. None = sin motivo que
     contar (se regenera como antes)."""
@@ -978,7 +978,7 @@ async def rag_answer(
     (`src/flows/avisos.hechos_del_estado`), para que el CÓDIGO elija los avisos que la respuesta tiene que dar. Su
     clave "dados" es la lista del propio estado: los avisos dados se apuntan ahí y no se repiten.
 
-    `origin` (rag-3, flag `rag_busqueda_origen`): `state.location` del cliente ("cartagena" / "island"); la
+    `origin` (rag-3): `state.location` del cliente ("cartagena" / "island"); la
     busqueda baja las fichas del otro origen.
 
     `verify_grounding=False` keeps the deterministic price/URL guards but skips
@@ -1005,42 +1005,36 @@ async def rag_answer(
         logger.warning(f"[RAG][PRIVACY] PII detected in query hits={pii_hits}")
         return privacy_block_message(lang)
 
-    catalog_prefix: str | None = None
-    catalog_prefix_juez: str | None = None
-    if settings.rag_v2:
-        # Paso 5: el catalogo va entero al contexto (fuente de verdad de precios, duracion y
-        # pernocta) y los atajos de precio por regex dejan de contestar: se disparaban con
-        # "cuánto" aunque se preguntara otra cosa y no sabian de que servicio se hablaba. ex-1 (fase EX,
-        # 12-oct): esos atajos (precio, paquete, refresher y comida), apagados desde entonces, se borraron.
-        from src.flows.catalog import catalog_facts, para_el_juez  # lazy
+    # Paso 5: el catalogo va entero al contexto (fuente de verdad de precios, duracion y
+    # pernocta) y los atajos de precio por regex dejan de contestar: se disparaban con
+    # "cuánto" aunque se preguntara otra cosa y no sabian de que servicio se hablaba. ex-1 (fase EX,
+    # 12-oct): esos atajos (precio, paquete, refresher y comida), apagados desde entonces, se borraron.
+    from src.flows.catalog import catalog_facts, para_el_juez  # lazy
 
-        facts = catalog_facts(lang)
-        if settings.s4_fixes:
-            # s4-22 (paso 6): cotizaba el precio de Cartagena (o solo el de las islas) sin saber de
-            # donde sale el cliente y sin decirlo. La moneda ya tenia su regla en el catalogo.
-            facts += (
-                "\nOrigen: si el contexto no dice desde dónde sale el cliente, da el precio desde Cartagena "
-                "y el de 'ya en las islas', cada uno rotulado, o pregúntale desde dónde saldría."
-                if lang == "es" else
-                "\nOrigin: if the context doesn't say where the customer departs from, give the price from "
-                "Cartagena and the 'already on the islands' one, each labelled, or ask where they'd leave from."
-            )
-            from src.flows.catalog import catalog_booking_links  # lazy
+    facts = catalog_facts(lang)
+    if settings.s4_fixes:
+        # s4-22 (paso 6): cotizaba el precio de Cartagena (o solo el de las islas) sin saber de
+        # donde sale el cliente y sin decirlo. La moneda ya tenia su regla en el catalogo.
+        facts += (
+            "\nOrigen: si el contexto no dice desde dónde sale el cliente, da el precio desde Cartagena "
+            "y el de 'ya en las islas', cada uno rotulado, o pregúntale desde dónde saldría."
+            if lang == "es" else
+            "\nOrigin: if the context doesn't say where the customer departs from, give the price from "
+            "Cartagena and the 'already on the islands' one, each labelled, or ask where they'd leave from."
+        )
+        from src.flows.catalog import catalog_booking_links  # lazy
 
-            facts += "\n" + catalog_booking_links(lang)
-        if settings.rag_politicas_en_contexto:
-            # EX-RAG-1: las políticas, siempre (como el catálogo); en el prefijo fijo, cacheable, y el juez también
-            # las ve (una política citada en la respuesta queda respaldada).
-            from src.flows.catalog import policies_facts  # lazy
+        facts += "\n" + catalog_booking_links(lang)
+    if settings.rag_politicas_en_contexto:
+        # EX-RAG-1: las políticas, siempre (como el catálogo); en el prefijo fijo, cacheable, y el juez también
+        # las ve (una política citada en la respuesta queda respaldada).
+        from src.flows.catalog import policies_facts  # lazy
 
-            facts += "\n\n" + policies_facts(lang)
-        if settings.rag_prompt_cache:
-            # Paso 9 (l2-2): al prompt del sistema y a la cabeza del contexto del juez (prefijos fijos
-            # que OpenAI cachea); en el mensaje del usuario, detras del historial, nunca se cacheaba.
-            catalog_prefix = facts
-            catalog_prefix_juez = para_el_juez(facts, lang)  # 1-oct: la regla de moneda como hecho
-        else:
-            extra_context = f"{extra_context}\n\n{facts}" if extra_context else facts
+        facts += "\n\n" + policies_facts(lang)
+    # Paso 9 (l2-2): al prompt del sistema y a la cabeza del contexto del juez (prefijos fijos
+    # que OpenAI cachea); en el mensaje del usuario, detras del historial, nunca se cacheaba.
+    catalog_prefix = facts
+    catalog_prefix_juez = para_el_juez(facts, lang)  # 1-oct: la regla de moneda como hecho
 
     # ex-3 (`atajo_resumen_por_rag`): con el flag, la pregunta abierta la contesta el RAG con el catálogo.
     diving_overview = None if settings.atajo_resumen_por_rag else _canonical_diving_overview_answer(query, lang)
@@ -1073,7 +1067,7 @@ async def rag_answer(
     # food FAQs instead — the customer got "no lo tengo a la mano" for a
     # question the KB actually answers well.
     # rag-3: el origen del estado, no leido del resumen (la deteccion por frases de abajo solo casa en espanol).
-    origen_kb = {"cartagena": "cartagena", "island": "islas"}.get(origin or "") if settings.rag_busqueda_origen else None
+    origen_kb = {"cartagena": "cartagena", "island": "islas"}.get(origin or "")
     buscar_kw = {"origin": origen_kb} if origen_kb else {}
 
     bare_docs = None
@@ -1110,7 +1104,7 @@ async def rag_answer(
     # Retrieve relevant documents (parent expansion happens later, only if confident).
     # Reuse the bare-query search above instead of repeating it when nothing
     # (origin bias included) ended up changing the query further.
-    # 1-oct (flag `rag_busqueda_doble`): se busca TAMBIÉN con la pregunta tal cual y se unen los dos rankings. La
+    # 1-oct (búsqueda doble): se busca TAMBIÉN con la pregunta tal cual y se unen los dos rankings. La
     # reescritura mete el servicio de la conversación y a veces se come el tema ("great, how do i pay" -> "How do I
     # pay for the Fun Dives?": las 6 piezas de pago salen con la original y ninguna con la reescrita;
     # `docs/robustness/juez/README.md`). Las dos búsquedas van a la vez. Solo si la reescritura CAMBIÓ la pregunta, y
@@ -1125,7 +1119,7 @@ async def rag_answer(
         principal = asyncio.create_task(search_knowledge_base(safe_query, lang=lang, **buscar_kw))
     tal_cual = await tarea_pregunta or query
     reescrita_distinta = tal_cual.strip() != condensed_query.strip()
-    original_q = redact_pii(tal_cual + sufijo_origen) if settings.rag_busqueda_doble and reescrita_distinta else ""
+    original_q = redact_pii(tal_cual + sufijo_origen) if reescrita_distinta else ""
     buscar_original = bool(original_q.strip()) and original_q not in (safe_query, bare_safe_query)
     originales = await search_knowledge_base(original_q, lang=lang, **buscar_kw) if buscar_original else None
     if principal is not None:
@@ -1336,7 +1330,8 @@ async def rag_answer(
                     return answer
                 last_reject = reason
             logger.info(f"[RAG][GROUNDING] attempt {attempt + 1} rejected ({last_reject}) query={query[:50]}...")
-            if settings.rag_regen_feedback and attempt == 0:
+            if attempt == 0:
+                # 28-sep: la segunda muestra sabe QUÉ se rechazó (antes se repetía la misma petición y el invento).
                 feedback = regen_feedback(last_reject, lang)
                 if feedback:
                     messages = [*messages, {"role": "assistant", "content": answer},

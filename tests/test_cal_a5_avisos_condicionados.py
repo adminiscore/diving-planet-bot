@@ -246,8 +246,6 @@ def rag(monkeypatch):
     monkeypatch.setattr(rag_agent, "_expand_with_parent_context", fake_expand)
     monkeypatch.setattr(rag_agent, "condense_query", fake_condense)
     monkeypatch.setattr(rag_agent, "_verify_grounding", fake_verify)
-    monkeypatch.setattr(settings, "rag_v2", False)
-    monkeypatch.setattr(settings, "rag_prompt_cache", False)
     monkeypatch.setattr(settings, "rag_plan_primero", False)
     monkeypatch.setattr(settings, "rag_revisor_completitud", False)
     monkeypatch.setattr(settings, "rag_revisor_avisos", False)

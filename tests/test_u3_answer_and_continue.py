@@ -148,10 +148,8 @@ async def test_en_una_pregunta_el_regex_no_escribe_datos(monkeypatch, signals, r
 
 
 async def test_sin_pregunta_no_se_lanza_nada(monkeypatch, signals, rag):
-    from src.config import (
-        settings as _flags,  # rag-5: el RAG adelantado se llama y se cancela; aquí se mira el enrutado
-    )
-    monkeypatch.setattr(_flags, "rag_adelantado", False)
+    # rag-5: sin la respuesta adelantada (se llamaría y se cancelaría); aquí se mira el enrutado.
+    monkeypatch.setattr(core, "lanzar_rag_adelantado", lambda *a, **k: None)
     monkeypatch.setattr(settings, "answer_and_continue", True)
     st = _state()
     await route_message(st, "queremos bucear, somos certificados")
@@ -663,12 +661,11 @@ async def test_con_el_no_de_jev_no_se_rellena(monkeypatch, signals, rag, verific
     assert st.detected_activity is None
 
 
-# Paso 5 (flag `rag_v2`): Jev decide si el mensaje pide de verdad recordar algo. En la ronda A el
+# Paso 5: Jev decide si el mensaje pide de verdad recordar algo. En la ronda A el
 # "¿me recuerdas…?" contestó 15 preguntas que no lo eran ("could you just confirm at what time and
 # where…?") y canceló su respuesta.
 async def test_si_jev_dice_que_no_pide_recordar_se_contesta_la_pregunta(monkeypatch, signals, rag):
     monkeypatch.setattr(settings, "answer_and_continue", True)
-    monkeypatch.setattr(settings, "rag_v2", True)
     monkeypatch.setattr(core, "detect_special_signals", AsyncMock(return_value={"recall_field": "booking_recap"}))
     st = _state()
     await route_message(st, "quiero bucear, soy certificado, desde cartagena, somos 2")
@@ -679,7 +676,6 @@ async def test_si_jev_dice_que_no_pide_recordar_se_contesta_la_pregunta(monkeypa
 
 async def test_si_jev_dice_que_pide_recordar_sigue_la_respuesta_fija(monkeypatch, signals, rag):
     monkeypatch.setattr(settings, "answer_and_continue", True)
-    monkeypatch.setattr(settings, "rag_v2", True)
     monkeypatch.setattr(core, "detect_special_signals", AsyncMock(return_value={"recall_field": "group_size"}))
     st = _state()
     await route_message(st, "quiero bucear, soy certificado, desde cartagena, somos 2")
@@ -688,17 +684,13 @@ async def test_si_jev_dice_que_pide_recordar_sigue_la_respuesta_fija(monkeypatch
     assert "RESPUESTA_RAG" not in resp and "2" in resp
 
 
-def test_la_pregunta_de_recordar_solo_va_con_el_flag(monkeypatch):
-    monkeypatch.setattr(settings, "rag_v2", False)
-    assert jev_router.ASKS_RECALL not in jev_router._questions_for_turn()
-    monkeypatch.setattr(settings, "rag_v2", True)
+def test_la_pregunta_de_recordar_va_siempre():
     assert jev_router.ASKS_RECALL in jev_router._questions_for_turn()
     assert jev_router.answers_to_signals({"asks_recall": {"type": "noul", "noul": 0.1}}) == {"asks_recall": False}
 
 
 # u3-6: Jev como filtro previo del LLM de señales.
 def test_el_filtro_de_senales_solo_con_jev_seguro(monkeypatch):
-    monkeypatch.setattr(settings, "rag_v2", True)
     st = _state()
     st._jev_asks_recall = False
     st._jev_companion = 0.04
@@ -717,7 +709,6 @@ def test_el_filtro_de_senales_solo_con_jev_seguro(monkeypatch):
 
 async def test_con_el_filtro_no_se_llama_al_llm_de_senales(monkeypatch, signals, rag):
     monkeypatch.setattr(settings, "answer_and_continue", True)
-    monkeypatch.setattr(settings, "rag_v2", True)
     spy = AsyncMock(return_value={})
     monkeypatch.setattr(core, "detect_special_signals", spy)
     st = _state()

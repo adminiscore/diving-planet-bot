@@ -3453,8 +3453,8 @@ def _jev_rules_out_special_signals(state: ConversationState) -> bool:
 
 
 def _jev_says_no_recall(state: ConversationState) -> bool:
-    """Paso 5 (flag `rag_v2`): Jev dice que el mensaje NO pide recordar nada. Ausente (flag o Jev
-    apagados, o Jev fallo) = no lo sabemos -> la conducta de hoy. En la ronda A el "¿me recuerdas…?"
+    """Paso 5: Jev dice que el mensaje NO pide recordar nada. Ausente (Jev apagado o Jev fallo) = no lo
+    sabemos -> la conducta de hoy. En la ronda A el "¿me recuerdas…?"
     contesto 15 preguntas que no lo eran y cancelo su respuesta; banco
     `scripts/sonda_pide_recordar.py`: 11/12 peticiones reales, 0/14 falsas."""
     return getattr(state, "_jev_asks_recall", None) is False
@@ -4159,13 +4159,11 @@ async def _tras_el_pase(
 async def _availability_phase(
     state: ConversationState, message: str, routing_signals: dict, greeting: str,
 ) -> str | None:
-    """Fase 3.3c — gate de disponibilidad, extraído de `_body_phase`. NO alucina
-    el calendario (Bloque 2.5, portado al núcleo 2026-07-24): "¿tienen
-    disponibilidad el sábado?" recibe la respuesta canónica (salidas diarias +
-    el calendario está en el link) en vez de que RAG confirme un cupo que no
-    conoce. `_AVAILABILITY_PATTERN` (narrow) aplica siempre; la señal amplia
-    solo si NO hay reserva en curso (`detected_activity is None`: "¿algo para
-    más días?" con actividad elegida es una pregunta de PLAN, no de cupo).
+    """Fase 3.3c — gate de disponibilidad, extraído de `_body_phase`. Los días
+    cerrados (25 dic y 1 ene) se contestan con la política; el resto de
+    preguntas de disponibilidad las contesta el RAG (paso 5, 27-sep: el texto
+    fijo de "siempre hay disponibilidad" se comía el resto del mensaje), con la
+    regla de no confirmar cupos en el contexto, y la reserva sigue.
     Devuelve la respuesta o None para continuar al cuerpo.
 
     ⚠️ Patrón B del audit §1.5: hoy la disponibilidad la resuelve el núcleo
@@ -4183,53 +4181,22 @@ async def _availability_phase(
 
     msg_lower = message.strip().lower()
     # Hallazgo (batería sintética contra PRE, 2026-08-26, conv 395, portado
-    # de pre_gadea v0.21.10): "¿abren el 25 de diciembre?" NO matchea
-    # `_AVAILABILITY_PATTERN` ni `_asks_about_availability` (ninguno de los
-    # dos reconoce "abren"/"open on"), así que sin la señal LLM
-    # `availability_question` el mensaje caía derecho a RAG.
-    # `_CLOSED_DATE_RE` sola basta para entrar aquí.
-    if (
-        supervisor._AVAILABILITY_PATTERN.search(msg_lower)
-        or (
-            (supervisor._asks_about_availability(msg_lower)
-             or routing_signals.get("availability_question"))
-            and state.detected_activity is None
+    # de pre_gadea v0.21.10): "¿abren el 25 de diciembre?" recibía el texto
+    # genérico de disponibilidad ("siempre hay disponibilidad") — FALSO para
+    # esos dos días concretos (`policies.json["closed_days"]`: solo cerrado
+    # 25 dic y 1 ene). `_CLOSED_DATE_RE` sola basta para contestar aquí. Esta
+    # fase se ejecuta ANTES que la copia del supervisor; el mismo guard se
+    # aplicó ahí también.
+    if supervisor._CLOSED_DATE_RE.search(msg_lower):
+        from src.knowledge.loader import load_policies
+        policy_text = (load_policies().get("policies", {}).get("closed_days") or {}).get(
+            state.language, ""
         )
-        or supervisor._CLOSED_DATE_RE.search(msg_lower)
-    ):
-        # Hallazgo (batería sintética contra PRE, 2026-08-26, conv 395):
-        # "¿abren el 25 de diciembre?" caía en el canned genérico de abajo
-        # ("siempre hay disponibilidad") — FALSO para esos dos días
-        # concretos (`policies.json["closed_days"]`: solo cerrado 25 dic y
-        # 1 ene). Esta fase es la que realmente responde la mayoría de
-        # mensajes de apertura (se ejecuta ANTES que la copia del
-        # supervisor); el mismo guard se aplicó ahí también.
-        if supervisor._CLOSED_DATE_RE.search(msg_lower):
-            from src.knowledge.loader import load_policies
-            policy_text = (load_policies().get("policies", {}).get("closed_days") or {}).get(
-                state.language, ""
-            )
-            response = greeting + policy_text
-            state.history.append({"role": "assistant", "content": response})
-            return response
-        if settings.rag_v2:
-            # Paso 5: el texto fijo se comia el resto del mensaje ("¿el 6 de febrero ya es fijo que
-            # se sale?", "¿las fotos tienen precio adicional?") y ademas prometia "siempre hay
-            # disponibilidad". La pregunta sigue como cualquier otra: la contesta el RAG (con la
-            # regla de no confirmar cupos en el contexto) y la reserva sigue.
-            return None
-        avail = (
-            "¡Buena noticia! 📅 Las salidas son diarias y siempre hay disponibilidad. "
-            "Vas a poder elegir el día exacto y el número de personas directamente en el "
-            "calendario del link de reserva. 😊"
-            if state.language == "es" else
-            "Good news! 📅 Departures run daily and there's always availability. "
-            "You'll be able to pick the exact date and number of people right in the "
-            "booking link's calendar. 😊"
-        )
-        response = greeting + avail
+        response = greeting + policy_text
         state.history.append({"role": "assistant", "content": response})
         return response
+    # Paso 5 (27-sep): cualquier otra pregunta de disponibilidad ("¿el 6 de febrero ya es fijo que se sale?",
+    # "¿las fotos tienen precio adicional?") sigue como cualquier otra: la contesta el RAG y la reserva sigue.
     return None
 
 
@@ -4252,7 +4219,7 @@ def sembrar_senales_del_turno(state: ConversationState, routing_signals: dict) -
     raw_p = routing_signals.get("affirms_p") or {}
     state._affirms_p = {f: raw_p[sig] for f, sig in _AFFIRMS_SIGNAL_FIELDS if sig in raw_p}
     # Paso 5: ¿pide que le recordemos algo que él dijo? (Jev, misma llamada). Se renueva cada turno.
-    state._jev_asks_recall = routing_signals.get("asks_recall") if settings.rag_v2 else None
+    state._jev_asks_recall = routing_signals.get("asks_recall")
     # u3-6: probabilidad de Jev de que el mensaje meta a otra persona en la reserva (filtro previo del
     # LLM de señales). Ausente = no lo sabemos -> se llama al LLM como hoy.
     state._jev_companion = routing_signals.get("companion_joins")
@@ -5423,8 +5390,8 @@ _PASE_HECHO_EN = ("This conversation has ALREADY been passed to an advisor from 
 
 
 def _entradas_rag(state: ConversationState, history: list, message: str = "") -> dict:
-    """Lo que recibe el RAG además de la pregunta: idioma, historial, resumen del estado y (rag-3, con su flag)
-    el origen. Una sola fuente para la llamada normal y para la adelantada de rag-5, que compara sus huellas."""
+    """Lo que recibe el RAG además de la pregunta: idioma, historial, resumen del estado y (rag-3) el origen.
+    Una sola fuente para la llamada normal y para la adelantada de rag-5, que compara sus huellas."""
     from src.agents import supervisor  # lazy
 
     extra = supervisor._build_extra_context(state)
@@ -5435,8 +5402,8 @@ def _entradas_rag(state: ConversationState, history: list, message: str = "") ->
         pase = _PASE_HECHO_ES if state.language == "es" else _PASE_HECHO_EN
         extra = f"{extra}\n\n{pase}" if extra else pase
     entradas = {"lang": state.language, "history": history, "extra_context": extra}
-    # rag-3: el origen va solo con el flag (con el flag apagado la llamada es la de siempre).
-    if settings.rag_busqueda_origen and state.location:
+    # rag-3: con el origen del cliente, la búsqueda baja las fichas del otro origen.
+    if state.location:
         entradas["origin"] = state.location
     # CAL-A5 (`avisos_condicionados`): los hechos del estado con los que el código elige los avisos que la respuesta
     # tiene que dar. "dados" es la lista DEL ESTADO (el mismo objeto), así que lo que se avisa se apunta solo.
@@ -5517,7 +5484,7 @@ def lanzar_rag_adelantado(state: ConversationState, message: str) -> None:
     `_setup_phase` (sin llamadas) y la foto queda como la dejará él (idioma y paso de conversación libre). Si la
     regla no sabe el idioma (`_setup_phase` preguntaría al LLM), no se adelanta. Si al final decide otra cosa, la
     huella no coincide y se rehace, como siempre."""
-    if not (settings.rag_adelantado and settings.answer_and_continue):
+    if not settings.answer_and_continue:
         return
     texto = (message or "").strip()
     if not texto or texto.isdigit():

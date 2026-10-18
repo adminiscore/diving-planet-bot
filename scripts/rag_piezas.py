@@ -414,7 +414,7 @@ def main() -> None:
     ap.add_argument("--codigo-local", action="store_true",
                     help="corre el código LOCAL (copiado a una carpeta temporal del contenedor) en vez del desplegado")
     ap.add_argument("--env", action="append", default=[], metavar="CLAVE=VALOR",
-                    help="variable de entorno solo para este proceso (p. ej. RAG_KB_V2=true); se puede repetir")
+                    help="variable de entorno solo para este proceso (p. ej. RAG_KB_ESQUEMA=kb_v2_prueba); se puede repetir")
     args = ap.parse_args()
 
     if args.comparar:

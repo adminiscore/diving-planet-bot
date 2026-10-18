@@ -12,7 +12,7 @@ Qué cambia frente a `scripts/load_embeddings.py` (v1, que sigue igual):
 - Sin trozos de precios (los precios están en la ficha y en el catálogo).
 
 Se carga en el esquema `kb_v2` de la misma base (tabla `kb_v2.kb_documents`, mismas columnas e índices): la de hoy
-(`public.kb_documents`) no se toca. El bot la usa solo con el flag `RAG_KB_V2`.
+(`public.kb_documents`) no se toca. Es la que lee el bot (`RAG_KB_V2` se quitó en s4-25: sin vuelta a la antigua).
 
     python -m scripts.kb_v2 --dry-run      # construye y resume, sin tocar nada
     python -m scripts.kb_v2 --yes          # embeddings (céntimos) + carga en kb_v2

@@ -90,18 +90,6 @@ async def test_node_availability_delegates_to_cascade(monkeypatch):
 # flag `agent_arch`).
 
 @pytest.mark.asyncio
-async def test_node_availability_question_gives_canned_answer_directly(monkeypatch):
-    from src.config import settings as _flags  # camino antiguo: el flag sigue existiendo
-    monkeypatch.setattr(_flags, "rag_v2", False)
-    conv = make_state()
-    result = await changes_node(
-        {"conv_state": conv, "message": "¿tienen disponibilidad el sábado?", "signals": {}}
-    )
-    assert "disponibilidad" in result["reply"].lower()
-    assert "siempre hay disponibilidad" in result["reply"].lower()
-
-
-@pytest.mark.asyncio
 async def test_node_closed_date_question_gives_real_policy_directly():
     """Hallazgo (batería sintética contra PRE, 2026-08-26, portado hoy):
     "¿abren el 25 de diciembre?" no debe dar el canned genérico de

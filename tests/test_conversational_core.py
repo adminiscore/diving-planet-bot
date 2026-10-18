@@ -1775,10 +1775,8 @@ async def test_comparing_options_object_routes_to_rag_not_cart(monkeypatch):
     se tomaba como reserva de AMBAS actividades. Con la señal objeto
     comparing_options debe ir a RAG (explicar) y NO construir carrito ni
     encolar cantidades de acompañante."""
-    from src.config import (
-        settings as _flags,  # rag-5: el RAG adelantado se llama y se cancela; aquí se mira el enrutado
-    )
-    monkeypatch.setattr(_flags, "rag_adelantado", False)
+    # rag-5: sin la respuesta adelantada (se llamaría y se cancelaría); aquí se mira el enrutado.
+    monkeypatch.setattr(core, "lanzar_rag_adelantado", lambda *a, **k: None)
     state = _at_activity_stage()
     obj = {"comparing_options": {
         "comparing": True,
@@ -1802,10 +1800,8 @@ async def test_deliberation_backstop_without_llm_signal_routes_to_rag(monkeypatc
     """Aunque la señal LLM no marque nada ({}), el backstop determinista de
     frases de duda ("no sé si … o …") debe enrutar a RAG igual — sin depender
     del "?" (que es lo único que hoy lo salva)."""
-    from src.config import (
-        settings as _flags,  # rag-5: el RAG adelantado se llama y se cancela; aquí se mira el enrutado
-    )
-    monkeypatch.setattr(_flags, "rag_adelantado", False)
+    # rag-5: sin la respuesta adelantada (se llamaría y se cancelaría); aquí se mira el enrutado.
+    monkeypatch.setattr(core, "lanzar_rag_adelantado", lambda *a, **k: None)
     state = _at_activity_stage()
     with patch("src.agents.supervisor.detect_routing_signals",
                new=AsyncMock(return_value={})), \
@@ -2173,23 +2169,6 @@ async def test_companion_qty_resolver_abstains_reasks(monkeypatch):
         resp = await route_message(state, "uff ni idea la verdad")
     assert state.pending_companion_activity == "snorkel"
     assert "snorkel" in resp.lower()
-
-
-@pytest.mark.asyncio
-async def test_availability_question_canned_answer_not_hallucination(monkeypatch):
-    from src.config import settings as _flags  # camino antiguo: el flag sigue existiendo
-    monkeypatch.setattr(_flags, "rag_v2", False)
-    """Bug vivo en PRE (2026-07-24): "¿tienen disponibilidad el sábado?" con el
-    núcleo on alucinaba "Claro que sí, tenemos disponibilidad". El gate del
-    Bloque 2.5 estaba tras el hook; portado al núcleo. Va a RAG NUNCA."""
-    state = make_state("es")
-    with patch("src.agents.supervisor.detect_routing_signals",
-               new=AsyncMock(return_value={"availability_question": True})), \
-         patch("src.agents.supervisor.rag_answer",
-               new=AsyncMock(side_effect=AssertionError("no debe ir a RAG: alucinaría cupo"))):
-        resp = await route_message(state, "y para el finde que viene cómo andan")
-    assert "diaria" in resp.lower()
-    assert "calendario" in resp.lower() or "link" in resp.lower()
 
 
 @pytest.mark.asyncio

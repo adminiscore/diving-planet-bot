@@ -46,7 +46,6 @@ async def test_el_juez_ve_los_precios_con_el_flag(monkeypatch, flag, ve_el_preci
 
     monkeypatch.setattr(grounding_check, "AsyncOpenAI", _OpenAI)
     monkeypatch.setattr(grounding_check.settings, "juez_privacidad_por_linea", flag)
-    monkeypatch.setattr(grounding_check.settings, "juez_segunda_opinion", False)
     await grounding_check.is_grounded("El paquete de 5 cuesta 1.429.000 COP online.", CONTEXTO, lang="es")
     contexto_enviado = visto[0].split("RESPUESTA:")[0]
     assert ("1.429.000" in contexto_enviado) is ve_el_precio

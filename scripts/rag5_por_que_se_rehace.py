@@ -28,8 +28,9 @@ os.environ.update({
     "LLM_EXTRACTION_CUTOVER_CERTIFICATION": "true", "LLM_EXTRACTION_CUTOVER_GROUP": "true",
     "LLM_EXTRACTION_CUTOVER_LOCATION": "true", "LLM_EXTRACTION_CUTOVER_LOGISTICS": "true",
     "JEV_ROUTER_ENABLED": "true", "AGENT_ARCH": "true", "RAG_MIN_SCORE": "0.40",
-    # los interruptores de rag-5 como en PRE (docker-compose.vps.yml)
-    "ANSWER_AND_CONTINUE": "true", "RAG_ADELANTADO": "true", "RAG_BUSQUEDA_ORIGEN": "true",
+    # los interruptores de rag-5 como en PRE (docker-compose.vps.yml); el adelanto y la busqueda por origen ya no
+    # tienen flag (s4-25)
+    "ANSWER_AND_CONTINUE": "true",
     # Como en PRE: con las notas en SERIE se calculan al principio del turno, ANTES de lanzar el adelantado, y
     # la espera que se quiere medir no existe (primera pasada del 30-sep: 99 % aprovechado, falso).
     "NOTES_IN_PARALLEL": "true", "ACK_IN_PARALLEL": "false",
@@ -129,7 +130,6 @@ def _clase(frase: str) -> str:
 
 async def main() -> None:
     settings.answer_and_continue = True
-    settings.rag_adelantado = True
     supervisor.rag_answer = _rag
     core.compose_acknowledgement = lambda *a, **k: asyncio.sleep(0, result="")
     # Notas FIJAS (vacías): descarta su CONTENIDO como causa. `NOTAS_TARDAN` les da la latencia de una llamada

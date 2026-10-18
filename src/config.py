@@ -59,7 +59,7 @@ class Settings(BaseSettings):
     idioma_otro_en_ingles: bool = True
     # EX-RAG-1 (aprobado por Gadea el 14-oct para medir): las politicas del negocio enteras van SIEMPRE en el contexto
     # del RAG, como el catalogo (prefijo fijo, cacheable; ~2.000 tokens). El RAG no recuperaba la de equipaje en un
-    # mensaje largo. rag_agent (bloque rag_v2). PROMOCIONADO 14-oct (HISTORY 0.31.22: g10-A/B 89,8 -> 91,2 %). Revert = False aqui y en el compose.
+    # mensaje largo. rag_agent (bloque del catalogo). PROMOCIONADO 14-oct (HISTORY 0.31.22: g10-A/B 89,8 -> 91,2 %). Revert = False aqui y en el compose.
     rag_politicas_en_contexto: bool = True
     # EX-RAG-2 (14-oct): regla del RAG: no atribuir al cliente un servicio o una reserva que no dijo ('For the 3-dive
     # package...' a quien solo dijo que dormia en la isla). rag_agent.build_system_prompt. PROMOCIONADO 14-oct (HISTORY 0.31.22: g10-A/B 89,8 -> 91,2 %).
@@ -382,19 +382,8 @@ class Settings(BaseSettings):
     # inválida (mensaje honesto + pase) y sin falsos disparos con la clave buena (4/4).
     aviso_si_openai_falla: bool = True
 
-    # Paso 5 (RAG, l1-6 + l1-7, 27-sep): (a) el catalogo entero como hechos en el contexto del RAG
-    # en vez de los atajos de precio por regex, que contestaban preguntas que no eran de precio;
-    # (b) juez de grounding que solo rechaza DATOS DEL NEGOCIO sin respaldo (saludos, cortesia y
-    # "no lo tengo" iban al fallback), con el modelo de la respuesta; (c) la pregunta de
-    # disponibilidad la contesta el RAG entera en vez de un texto fijo que se comia el resto del
-    # mensaje. Ronda A: 37 respuestas acabaron en "no lo tengo a la mano". ENCENDIDO por defecto (= PRE, paso 10).
-    rag_v2: bool = True
-    # Juez de grounding v3 (28-sep): enumera cada dato del negocio de la respuesta y lo marca SÍ/NO frente
-    # al contexto; el veredicto lo calcula el codigo con esas marcas. Con gpt-4.1: banco
-    # `scripts/sonda_juez_grounding.py` 30/30 estable (v2 con gpt-4.1-mini: 21/30, dejaba pasar "llevamos
-    # 30 años", "debes haber completado la teoría", "hay barcos hundidos"); +0,25 s de mediana. ENCENDIDO por defecto (= PRE, paso 10).
-    # 28-sep (HISTORY 0.29.66): v3 con gpt-4.1-mini 48/70 y gpt-4o-mini 37/70 frente a 70/70, y NO más rápidos: se queda gpt-4.1.
-    grounding_v3: bool = True
+    # Modelo del juez de grounding v3 (el de siempre desde s4-25: sin flag). 28-sep (HISTORY 0.29.66): v3 con
+    # gpt-4.1-mini 48/70 y gpt-4o-mini 37/70 frente a 70/70, y NO más rápidos: se quedó gpt-4.1.
     grounding_v3_model: str = "deepseek/deepseek-v4.1-flash"  # PROMOCIONADO 18-oct (mod-C, HISTORY 0.31.53); revert = "gpt-4.1"
     # 1-oct (docs/robustness/juez/README.md): juez v4. Una linea por frase con su tipo (dato / no_lo_tengo / asesor /
     # otro) y el veredicto lo saca el codigo (solo cuenta un NO en un dato). El v3 se saltaba su propio filtro en
@@ -567,16 +556,6 @@ class Settings(BaseSettings):
     # revisar): si una llamada a OpenRouter falla, se repite con este modelo de OpenAI (llm_client._por_proveedor).
     # Solo actúa cuando OpenRouter falla. Vacío = sube el error como antes.
     respaldo_si_openrouter_falla: str = "gpt-5.4-mini"
-    # J2 (1-oct): segunda opinion de Jev sobre las frases que el juez marca NO (src/agents/juez_segunda_opinion.py).
-    # Solo cuando el juez rechaza; si Jev esta seguro de que ninguna afirma nada del negocio, la respuesta pasa.
-    # rag_piezas 1-oct (96 respuestas por lado): cobertura 88 -> 90 %, contradicciones 3 -> 1, misma latencia. Calibrado
-    # (scripts/sonda_juez_jev.py): 0 afirmaciones del negocio colan de 102.
-    # PROMOCIONADO 1-oct (Gonzalo, ronda core 2026-10-01-juez-B, HISTORY 0.29.90): rescata 1, mantiene 3, y el rescate
-    # leido a mano no cuela ningun invento (era "te lo confirma un asesor"). Por construccion nunca empeora nada: solo
-    # convierte un rechazo en aprobado, y solo si Jev esta seguro. Umbral 0,2: en la ronda dejo SIN rescatar "para
-    # proceder con la cancelacion, te paso con un asesor" (p=0,25) y eso costo una regresion — primer dato real para
-    # el umbral, pero un caso no basta para subirlo. Revert = False aqui y en el compose.
-    juez_segunda_opinion: bool = True
     # s4-33 (8-oct, Alvaro): instrucciones del juez de grounding v3 para GPT-6 Luna (prompts/info.py
     # GROUNDING_VERIFY_V3_LUNA_*): el v3 entero + 3 aclaraciones (lo que dice el cliente de si mismo no se comprueba;
     # valoraciones y ofertas de ayuda no son datos; las deducciones directas del contexto cuentan). Va con
@@ -628,17 +607,6 @@ class Settings(BaseSettings):
     # conserva-A/B (9 dialogos, misma franja): 92,6 -> 97,0 %, 5 -> 8/9 sin fallos, 6 mejoras, ninguna regresion del flag.
     # PROMOCIONADO 8-oct (HISTORY 0.31.1). Revert = False aqui y en el compose.
     origen_conserva_respuesta: bool = True
-    # 9-oct (decision de Gadea): en los hoteles base (San Pedro de Majagua y Cocoliso) la recogida esta confirmada e
-    # incluida; el catalogo lo dice en la linea de "ya en las islas" (flows/catalog.catalog_facts), que ven siempre el
-    # RAG y el revisor. Sin esto, la condicion "si tu hotel tiene acceso maritimo" (RAG_CONDICIONES) se aplicaba
-    # tambien a Cocoliso (paquete-5-buceos-islas-residente-sin-recogida). PROMOCIONADO 9-oct (mini-ronda decisiones-A/B:
-    # recogida-islas-incluida revisar -> cumple; HISTORY 0.31.4). Revert = False aqui y en el compose.
-    catalogo_hoteles_base: bool = True
-    # 9-oct: cada plan del catalogo dice si el equipo va incluido (sale de included_es/not_included_es de services.json;
-    # el Dive Master NO). Antes solo lo decia una FAQ y el revisor tumbo "el equipo esta incluido en el precio del plan"
-    # (decisiones-B). flows/catalog._parte_equipo (solo el catalogo; la ficha de la base v2 no cambia). PROMOCIONADO 9-oct
-    # (mini-ronda equipo-A/B: 94,5 -> 96,4 %, 2 mejoras, 0 regresiones; HISTORY 0.31.6). Revert = False aqui y en el compose.
-    catalogo_equipo_incluido: bool = True
     # CAL (17-oct): el catálogo del RAG pinta hasta qué profundidad certifica cada curso (`max_depth_m`: Open Water
     # 18 m, Advanced 30 m, lo que dice el registro de actividades) y una línea general de profundidad por certificación
     # (cal-18: "¿cuántos metros bajan?" no tenía el dato en nada que viera el RAG). APAGADO hasta medirlo.
@@ -720,27 +688,13 @@ class Settings(BaseSettings):
     # en el golden visible el detector solo cambia en ese mensaje. Mini-ronda s428-A/B: mejora la buscada
     # (familia-mixta da el precio), ninguna regresion suya. PROMOCIONADO: ENCENDIDO.
     grupo_por_edades: bool = True
-    # Paso 9 (l2-2, 28-sep): el catalogo va al final del prompt del SISTEMA (fijo por idioma) y el primero en
-    # el contexto del juez, para que el prompt caching de OpenAI lo reutilice entre conversaciones (antes iba
-    # en el mensaje del usuario, detras del historial: nunca se cacheaba). ENCENDIDO por defecto (= PRE, paso 10).
-    rag_prompt_cache: bool = True
     # Latencia del RAG (28-sep): la respuesta contesta SOLO lo preguntado, en 2-4 frases, y ofrece ampliar (la
     # intro cálida se queda, en una frase). Escribir la respuesta crece con la longitud (220 caracteres 1,1 s,
     # 720 caracteres 2,8 s); la mediana era ~680. Decisión del owner. APAGADO hasta su A/B (prompts/info.py).
     # Escalón 0 (HISTORY 0.29.67): con tope de longitud comprime e inventa huecos; la variante suave del código no.
     rag_concise: bool = False
-    # 28-sep: si el juez (o un guard) rechaza la respuesta, la segunda muestra recibe QUÉ se rechazó para quitarlo
-    # y conservar el resto; antes se repetía la misma petición y el modelo repetía el invento (12 de 32 turnos del
-    # paso 8 acababan así en "no lo tengo"). El juez sigue juzgando la segunda. PROMOCIONADO 28-sep (HISTORY 0.29.68):
-    # escalón 0 12 -> 2 "no lo tengo"; core regen-A 93,0 % -> regen-B2 93,3 %, sin regresiones del flag.
-    rag_regen_feedback: bool = True
-    # rag-2 (29-sep, fase RAG de Plan Coral): la busqueda lee la base curada del esquema `kb_v2` (una ficha por
-    # servicio y origen, FAQs sin telefono ni listas de precios, politicas con sus formas de preguntarlas;
-    # `scripts/kb_v2.py`). Apagado = `public.kb_documents` de siempre. PROMOCIONADO 29-sep (HISTORY 0.29.72): core
-    # rag2-A 92,5 % -> rag2-B 94,3 %, sin regresiones atribuibles. Marcha atras: apagarlo (aqui y en el compose).
-    rag_kb_v2: bool = True
-    # Esquema de la base v2 que lee la busqueda con `rag_kb_v2`. Solo para medir una base nueva sin tocar la que usa
-    # PRE (p. ej. RAG_KB_ESQUEMA=kb_v2_prueba con `rag_piezas --codigo-local`); en PRE es siempre "kb_v2".
+    # Esquema de la base curada que lee la busqueda (rag-2, `scripts/kb_v2.py`). Solo para medir una base nueva sin
+    # tocar la que usa PRE (p. ej. RAG_KB_ESQUEMA=kb_v2_prueba con `rag_piezas --codigo-local`); en PRE es siempre "kb_v2".
     rag_kb_esquema: str = "kb_v2"
     # rag-3 (29-sep): si ya se sabe QUE servicio mira el cliente, su ficha entera (la misma que la de la base v2,
     # `catalog.service_fact_sheet`) va SIEMPRE al contexto, en vez de depender de que la busqueda la encuentre.
@@ -750,33 +704,6 @@ class Settings(BaseSettings):
     # encuentro); el problema es de busqueda. Sustituye a la inyeccion parcial de incluye/no incluye, que se
     # quedaba corta. APAGADO hasta su A/B (rag_piezas + ronda core).
     rag_ficha_del_servicio: bool = False
-    # rag-3 (30-sep, Gadea): con el origen del cliente en el estado (Cartagena / ya en las islas), la busqueda baja
-    # las fichas del OTRO origen. Offline (47 preguntas visibles): quita las 10 fichas del origen equivocado que se
-    # colaban en el top-8 sin perder ningun dato. El origen llega del estado (`state.location`), no de leer el
-    # resumen: la deteccion por frases solo funcionaba en espanol. PROMOCIONADO 30-sep (HISTORY 0.29.85).
-    rag_busqueda_origen: bool = True
-    # 1-oct (analisis del juez, docs/robustness/juez/README.md): se busca tambien con la pregunta tal cual y se unen
-    # los dos rankings por posicion. La reescritura se comia el tema en 7 de 54 rechazos del juez ("how do i pay" ->
-    # "How do I pay for the Fun Dives?"). ENCENDIDO para la medida (rag_piezas y ronda core).
-    # SIN DECIDIR tras la ronda core 2026-10-01-juez-B (HISTORY 0.29.90), a proposito: esa ronda cambia a la vez esto,
-    # J2 y los datos nuevos del 1-oct, asi que no aisla su efecto; y rag_piezas no lo ve (mide preguntas sueltas, y la
-    # reescritura depende del historial). Unico indicio a favor: el formulario medico del refresher pasa a cumplir, que
-    # era un fallo de busqueda conocido. Coste: +33 % de busquedas por turno (0,98 -> 1,30), baratas. Para decidir hace
-    # falta una ronda core con SOLO este interruptor cambiado.
-    # 2-oct (Alvaro, paso 4): ronda aislada 2026-10-02-busqueda-simple (APAGADO, todo lo demas igual) frente a
-    # 2026-10-01-privacidad-B (encendido): criterios 94,3 % encendido / 93,4 % apagado (ruido), RAG p50 3,36 / 3,29 s
-    # (igual: las dos busquedas van a la vez), busquedas por turno 1,39 / 1,00. Encendido, 11 de 38 respuestas
-    # reciben 1-4 piezas mas; la que se nota es "how do i pay" (el pago por transferencia si falla el online, el caso
-    # que lo motivo). Ninguna regresion de la ronda apagada viene de la busqueda. PROMOCIONADO 2-oct (HISTORY
-    # 0.29.94). Revert = False aqui y en el compose.
-    rag_busqueda_doble: bool = True
-    # rag-5 (30-sep): el RAG arranca a la vez que el enrutador (Jev) en vez de despues, y se aprovecha solo si su
-    # contexto es exactamente el de la llamada de siempre (si no, se rehace). Estimado: -0,7 s por pregunta, ~+20 %
-    # de coste (los RAG que se descartan en turnos sin pregunta). Medido (rag5-A/B, HISTORY 0.29.86): -1,2 s cuando
-    # se aprovecha, pero solo en el 29 % de los turnos RAG; calidad igual. Con la puerta de notas, el primer mensaje y
-    # el buceo adaptado (ronda rag5-C, HISTORY 0.29.88): aprovechado 36 de 40, RAG p50 5,37 -> 3,44 s, 23/32.
-    # PROMOCIONADO 1-oct. Revert = "false" aqui y en docker-compose.vps.yml.
-    rag_adelantado: bool = True
     # rag-5 (1-oct): puerta de Jev para el extractor de notas. Gonzalo midio el 30-sep que de 26 notas nuevas solo 7
     # eran buenas y 15 eran la pregunta del cliente apuntada como hecho, o inventada; y que son las que hacen rehacer
     # la respuesta adelantada. Con el flag, Jev contesta en la llamada del enrutador "¿cuenta algo del cliente que

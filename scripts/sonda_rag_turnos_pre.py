@@ -9,7 +9,7 @@ respuesta rechazada con su motivo, para saber si un "no lo tengo" viene del juez
 
     # turnos concretos de una ronda (etiqueta#turno), flag apagado y encendido, 2 veces
     python -m scripts.sonda_rag_turnos_pre --run docs/robustness/synthetic-runs/2026-09-27-paso8.jsonl \\
-        --turns "paquete-5-buceos-cop-refresh-y-hoteles#2,principiante-hora-lugar-y-precio#3" --flag rag_regen_feedback --reps 2
+        --turns "paquete-5-buceos-cop-refresh-y-hoteles#2,principiante-hora-lugar-y-precio#3" --flag rag_concise --reps 2
     # todos los turnos que contestó el RAG en una ronda (lee las líneas `[RAG] Query` de sus logs de PRE)
     python -m scripts.sonda_rag_turnos_pre --run docs/robustness/synthetic-runs/2026-09-28-cache-B2.jsonl \\
         --from-log docs/robustness/logs-pre-2026-09-28-cache-B2.txt --flag rag_concise
@@ -130,7 +130,7 @@ def main() -> None:
     grupo = ap.add_mutually_exclusive_group(required=True)
     grupo.add_argument("--turns", help="etiqueta#turno separados por coma")
     grupo.add_argument("--from-log", help="logs de PRE de esa ronda: usa todos los turnos que contestó el RAG")
-    ap.add_argument("--flag", help="setting booleano a comparar apagado/encendido (p. ej. rag_regen_feedback)")
+    ap.add_argument("--flag", help="setting booleano a comparar apagado/encendido (p. ej. rag_concise)")
     ap.add_argument("--reps", type=int, default=1)
     ap.add_argument("--out", help="JSONL de salida (por defecto, junto a la ronda: <ronda>__sonda.jsonl)")
     ap.add_argument("--dry", action="store_true", help="solo lista los casos, sin llamar a PRE")
