@@ -639,7 +639,8 @@ def catalog_facts(lang: str) -> str:
                "Operamos todos los días del año salvo el 25 de diciembre y el 1 de enero. Tú no ves los cupos: "
                "el cliente elige la fecha y el número de personas en el calendario del link de reserva.",
                "Descuentos: 10% online (ya aplicado en el precio 'online'); 10% extra para grupos de 5 o más en "
-               "buceo recreativo, minicurso y snorkel (no en cursos PADI; no es automático: lo aplica el equipo); "
+               "buceo recreativo, minicurso y snorkel (no en cursos PADI; no es automático: se pide al equipo ANTES "
+               "de pagar y, si se paga sin pedirlo, no se devuelve); "
                "5% si el cliente trae su equipo COMPLETO, solo en buceo recreativo y cursos (no en snorkel ni "
                "minicurso); 10% el segundo día de buceo (buceo recreativo y cursos).",
                "Moneda: los colombianos (vivan donde vivan) y los residentes en Colombia pagan en COP; el resto, en "
@@ -664,8 +665,8 @@ def catalog_facts(lang: str) -> str:
                "We operate every day of the year except December 25 and January 1. You can't see open slots: "
                "the customer picks the date and number of people in the booking link's calendar.",
                "Discounts: 10% online (already in the 'online' price); an extra 10% for groups of 5 or more in "
-               "recreational diving, mini course and snorkeling (not PADI courses; not automatic: the team applies "
-               "it); 5% if the customer brings their COMPLETE gear, only for recreational diving and courses (not "
+               "recreational diving, mini course and snorkeling (not PADI courses; not automatic: it is requested "
+               "from the team BEFORE paying and, if paid without requesting it, it is not refunded); 5% if the customer brings their COMPLETE gear, only for recreational diving and courses (not "
                "snorkeling or the mini course); 10% on the second day of diving (recreational diving and courses).",
                "Currency: Colombians (wherever they live) and residents of Colombia pay in COP; everyone else in USD "
                "(in a mixed group of Colombians or residents and foreigners, the whole booking in USD); it is the same price in both currencies: each plan's COP price is what Colombians pay. There is NO "
