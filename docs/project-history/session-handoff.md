@@ -59,7 +59,24 @@ integrar la rama del otro y suite en verde, porque en PRE gana el último; (3) *
 despliegue reinicia el contenedor y mata la medida del otro (avisar en el registro de Plan Coral con la hora de fin).
 Las doce normas, con su porqué, están en el documento.
 
-### ▶️ RETOMAR AQUÍ — 18-oct, 14:20 (Gadea con Claude): FASE MOD en marcha; rondas core mod-A/B/C; decisiones de Gadea
+### ▶️ RETOMAR AQUÍ — 18-oct, 16:20 (Gadea con Claude): mod-B y mod-C PROMOCIONADAS (HISTORY 0.31.53); ronda mod-D de Álvaro
+
+**PRE sirve f3edbe2 (pre_gadea)**: G3 (Barú, la pregunta sola, una sola moneda), el revisor con `JUEZ_V3_LUNA`, la
+reescritura, el resumen y el idioma en DeepSeek, y la transcripción con `gpt-transcribe` y vocabulario. Core: A 97,4 %
+(27/32), B 96,5 % (25/32), C 97,8 % (28/32); ninguna regresión atribuida (atribución de C con los modelos de B, 3 reps:
+fallan igual). **MOD-7**: todo lo que sale por OpenRouter lleva los datos personales tapados en
+`llm_client.parametros_openrouter` (Álvaro quitó su redacción de las notas). Álvaro integró la promoción y va con su
+ronda **mod-D** (PRECIO_NO_ELIGE, CERTIFICADO_SOLO_SI_LO_DICE, TARJETA_SIN_SEGURIDAD, extractor en Luna, acuse y
+resolutor en gpt-5.4-mini, notas en DeepSeek).
+
+**Siguiente mío, cuando Álvaro deje PRE (está avisado):** mod-5 (respaldo del RAG en DeepSeek frente a gpt-4.1-mini,
+`rag_piezas --env RAG_ANSWER_MODEL=… --env RAG_RESPALDO_MODELO=`; en la ronda C el respaldo saltó 1 vez en 43) y mod-8
+(`banco_fallos medir --comparar-verificador` repetible: DeepSeek, Luna y gpt-5.4-mini sobre las mismas respuestas).
+Después, medir `RAG_NO_ADIVINA` (APAGADO; fallos estables de CAL-F del RAG). Pregunta de negocio para Gadea: el
+formulario médico ¿se rellena antes con el enlace público (lo que dice la base) o llega tras reservar (lo que pide el
+criterio de refresher-que-completar-antes)?
+
+### (anterior) RETOMAR AQUÍ — 18-oct, 14:20 (Gadea con Claude): FASE MOD en marcha; rondas core mod-A/B/C; decisiones de Gadea
 
 **Rondas core en curso** (A/B/C, acordadas con Álvaro): **mod-A** = PRE a7d4e65 con todo lo nuevo apagado →
 97,4 % (6 fallos de 227), 27/32. **mod-B** = A + `BARU_NO_ES_ROSARIO` + `BUSQUEDA_CON_LA_PREGUNTA_SOLA` (DeepSeek) +
