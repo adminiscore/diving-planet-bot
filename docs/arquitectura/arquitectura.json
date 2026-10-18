@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-18T10:39:15+00:00",
-  "commit": "5cd493d",
+  "generado": "2026-10-18T10:45:33+00:00",
+  "commit": "4fc2e82",
   "rama": "feature/pre_alvaro"
  },
  "vistas": {
@@ -1209,6 +1209,13 @@
      "titulo": "El bot ofrece pasar con una persona, no dice que ya lo ha hecho",
      "codigo": true,
      "pre": true,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "rag_sin_precio_con_tarjeta",
+     "titulo": "Una sola moneda por mensaje: si va la tarjeta del plan, el texto no da precio",
+     "codigo": false,
+     "pre": false,
      "sin_efecto": false
     }
    ],
@@ -3247,6 +3254,19 @@
    "codigo": false,
    "pre": false,
    "fijado_en_pre": true,
+   "usado_por": [
+    "r_escribir"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "rag_sin_precio_con_tarjeta",
+   "area": "Preguntas",
+   "titulo": "Una sola moneda por mensaje: si va la tarjeta del plan, el texto no da precio",
+   "texto": "Cuando la respuesta lleva la tarjeta del plan (precio por persona en la moneda del cliente y enlace), el texto no repite el precio. Antes podía salir '126 USD' en el texto y '448.000 COP' en la tarjeta del mismo mensaje, porque el texto se escribía antes de saber que el cliente era colombiano.",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
    "usado_por": [
     "r_escribir"
    ],

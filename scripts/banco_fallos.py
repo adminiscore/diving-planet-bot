@@ -108,14 +108,15 @@ def _turnos_del_caso(f: dict) -> list[str]:
 
 
 def _reproducir_en_pre(turnos: list[str], *, reps: int = 1, flags: list[str] | None = None,
-                       codigo: str | None = None) -> list[dict]:
+                       codigo: str | None = None, entorno: dict | None = None) -> list[dict]:
     """Reproduce la conversación DENTRO de PRE `reps` veces y devuelve el último turno de cada una: respuesta y
     contexto del revisor. `flags`: interruptores encendidos solo en ese proceso; `codigo`: la copia del código local."""
     from scripts.pre_access import docker_python, pre_ssh
     from scripts.reproducir_juez_pre import _REMOTO
 
     script = f"TURNOS_JSON = {json.dumps(turnos, ensure_ascii=False)!r}\nN_REPS = {reps}\nFLAGS = {flags or []!r}\n{_REMOTO}"
-    r = pre_ssh(docker_python({}, codigo_local=codigo), input_text=script, timeout=240 + 60 * len(turnos) * reps)
+    r = pre_ssh(docker_python(entorno or {}, codigo_local=codigo), input_text=script,
+                timeout=240 + 60 * len(turnos) * reps)
     filas = [json.loads(ln) for ln in (r.stdout or "").splitlines() if ln.startswith("{")]
     ultimos = [f for f in filas if f["turn"] == len(turnos)]
     if not ultimos:
@@ -181,7 +182,7 @@ def diagnosticar(ids: list[str] | None) -> None:
 
 def medir(etiqueta: str, ids: list[str] | None, tarea: str | None, reps: int, flags: list[str],
           codigo_local: bool, verificador: str = VERIFICADOR_MODELO, comparar: str | None = None,
-          banco: Path | None = None) -> None:
+          banco: Path | None = None, entorno: dict | None = None) -> None:
     """Mide un arreglo de CAL sobre el banco: cada caso `reps` veces en PRE (con `flags` y, si se pide, el código
     local) y el verificador dice si el fallo se repite. Usa `pedia_corregido` si lo hay (criterio actualizado a una
     decisión de Gadea). Salida: `docs/robustness/cal/medidas/<etiqueta>.json` y, por pantalla, cuántas veces falla."""
@@ -193,7 +194,8 @@ def medir(etiqueta: str, ids: list[str] | None, tarea: str | None, reps: int, fl
     datos = json.loads((banco or BANCO).read_text(encoding="utf-8"))
     casos = [f for f in datos["fallos"] if f["turno"] and (not ids or f["id"] in ids) and (not tarea or f.get("tarea") == tarea)]
     codigo = subir_codigo_local() if codigo_local else None
-    salida = {"etiqueta": etiqueta, "reps": reps, "flags": flags, "codigo_local": codigo_local,
+    # 18-oct: `entorno` (--env CLAVE=VALOR), variables solo para ese proceso: probar otro modelo sin desplegar.
+    salida = {"etiqueta": etiqueta, "reps": reps, "flags": flags, "env": entorno or {}, "codigo_local": codigo_local,
               "verificador": verificador, "casos": []}
     if comparar:
         salida["verificador_comparado"] = comparar
@@ -202,7 +204,8 @@ def medir(etiqueta: str, ids: list[str] | None, tarea: str | None, reps: int, fl
     roto: list[str] = []
     for f in casos:
         try:
-            filas = _reproducir_en_pre(_turnos_del_caso(f), reps=reps, flags=flags, codigo=codigo)
+            filas = _reproducir_en_pre(_turnos_del_caso(f), reps=reps, flags=flags, codigo=codigo,
+                                       entorno=entorno)
         except RuntimeError as exc:
             # 17-oct: un DEPLOY a PRE a mitad de medida reinicia el contenedor y se lleva por delante la copia del
             # codigo en /tmp ("chdir to cwd ... no such file or directory"): la medida moria y 62 casos se quedaban
@@ -211,7 +214,8 @@ def medir(etiqueta: str, ids: list[str] | None, tarea: str | None, reps: int, fl
                 print(f"  {f['id']}: la copia del codigo ya no esta (deploy a mitad?): la subo otra vez")
                 try:
                     codigo = subir_codigo_local()
-                    filas = _reproducir_en_pre(_turnos_del_caso(f), reps=reps, flags=flags, codigo=codigo)
+                    filas = _reproducir_en_pre(_turnos_del_caso(f), reps=reps, flags=flags, codigo=codigo,
+                                       entorno=entorno)
                 except RuntimeError as otra:
                     print(f"  {f['id']} NO MEDIDO: {otra}")
                     roto.append(f["id"])
@@ -280,11 +284,13 @@ def main() -> None:
     ap.add_argument("--comparar-verificador", help="medir: juzga las mismas respuestas también con este modelo")
     ap.add_argument("--banco", help="medir: otro banco con el mismo formato (p. ej. docs/robustness/seguridad/"
                                     "banco-inyeccion.json)")
+    ap.add_argument("--env", action="append", default=[], metavar="CLAVE=VALOR",
+                    help="medir: variable de entorno solo para ese proceso (p. ej. PREGUNTA_SOLA_MODEL=...); repetible")
     args = ap.parse_args()
     if args.accion == "medir":
         medir(args.etiqueta or "medida", args.ids.split(",") if args.ids else None, args.tarea, args.reps, args.flag,
               args.codigo_local, args.verificador, args.comparar_verificador,
-              Path(args.banco) if args.banco else None)
+              Path(args.banco) if args.banco else None, dict(e.split("=", 1) for e in args.env))
         return
     if args.accion == "construir":
         banco = construir()

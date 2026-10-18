@@ -179,6 +179,8 @@ def _collect() -> dict[str, str]:
     add("memory/summary.system.en", memory.SUMMARY_SYSTEM_EN)
     add("info/rag.pase_ofrecido.es", info.RAG_PASE_OFRECIDO_ES)
     add("info/rag.pase_ofrecido.en", info.RAG_PASE_OFRECIDO_EN)
+    add("info/rag.sin_precio.es", info.RAG_SIN_PRECIO_ES)
+    add("info/rag.sin_precio.en", info.RAG_SIN_PRECIO_EN)
     add("memory/seguridad.notas.es", memory.MEMORIA_SEGURA_NOTAS_ES)
     add("memory/seguridad.notas.en", memory.MEMORIA_SEGURA_NOTAS_EN)
     add("memory/seguridad.resumen.es", memory.MEMORIA_SEGURA_RESUMEN_ES)

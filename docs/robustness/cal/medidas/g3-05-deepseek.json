@@ -1,0 +1,66 @@
+{
+ "etiqueta": "g3-05-deepseek",
+ "reps": 3,
+ "flags": [
+  "busqueda_con_la_pregunta_sola"
+ ],
+ "env": {
+  "PREGUNTA_SOLA_MODEL": "deepseek/deepseek-v4.1-flash"
+ },
+ "codigo_local": true,
+ "verificador": "gpt-4.1",
+ "casos": [
+  {
+   "id": "g3-05",
+   "dialogo": "brasilenos-bautismo",
+   "criterio": "nadar-faq",
+   "repeticiones": 3,
+   "fallan": 1,
+   "respuestas": [
+    "Great! The mini-course is a lovely first dive, and you don’t need to be an expert swimmer. It’s recommended that you feel comfortable in the water, and your instructor will guide you throughout.\n\nFor your Cartagena departure, meet at Muelle de la Bodeguita at 8:00 a.m. The trip returns around 4:15 p.m. on the 30th. Would you like to continue with the booking link?",
+    "It’s recommended that you feel comfortable in the water, but you don’t need to be an expert swimmer. Your instructor will guide you throughout the mini course. 🌊\n\nSince you’re departing from Cartagena on the 30th, you can choose that date and 2 people in the booking calendar here: https://book.divingplanet.org/book/minicurso-de-buceo/2?language=en\n\n🤿 *Dive Mini Course*\n💰 2 × 183 USD p.p. = *366 USD* (online rate)\n✅ Includes: Cartagena-Islands transport, lunch, gear and insurance.\n📍 Departure from Cartagena (Muelle de la Bodeguita, 8:00 a.m.).\n\n👉 *For more information and to book, click here:*\nhttps://book.divingplanet.org/book/minicurso-de-buceo/2?language=en\n\n_The price is the same in COP or USD, with no extra charge for the currency._\n\nIs there anything else I can help you with? I can *add another activity*, answer questions, or adjust your booking. 🤿",
+    "I don’t have that specific detail handy. Would you like me to connect you with a team advisor to confirm whether swimming is required?\n\nFor your departure from Cartagena, the meeting point is Muelle de la Bodeguita at 8:00 a.m. Would you like the booking link for the 30th?"
+   ],
+   "explicaciones": [
+    "The current response correctly states: 'you don’t need to be an expert swimmer. It’s recommended that you feel comfortable in the water, and your instructor will guide you throughout.' This matches the FAQ guidance and does not say the information is unavailable. The required information is present in the context (see [9] 'It is recommended to feel comfortable in the water, but you do not need to be an expert swimmer to dive. Your instructor will guide you at all times during the activity.') and is now included in the bot's answer.",
+    "The current response correctly states: 'you don’t need to be an expert swimmer. Your instructor will guide you throughout the mini course.' This matches the FAQ: 'It is recommended to feel comfortable in the water, but you do not need to be an expert swimmer to dive. Your instructor will guide you at all times during the activity.' The bot does not say it lacks the information, so the previous failure is resolved.",
+    "The bot says 'I don’t have that specific detail handy' and offers to connect with an advisor, but the FAQ (context [5]) clearly states: 'It is recommended to feel comfortable in the water, but you do not need to be an expert swimmer to dive. Your instructor will guide you at all times during the activity.' This information is present in the context and should have been provided directly."
+   ]
+  },
+  {
+   "id": "g3-05b",
+   "dialogo": "pareja-bautismo-es",
+   "criterio": "nadar-faq",
+   "repeticiones": 3,
+   "fallan": 0,
+   "respuestas": [
+    "¡Qué chévere que se animen con su primer bautismo! No hace falta ser nadador experto, pero sí es recomendable sentirse cómodos en el agua. El instructor los guía durante toda la actividad.\n\nEl minicurso desde Cartagena incluye teoría online, práctica en piscina, una inmersión en el mar con instructor, equipo, lancha y almuerzo. Cuesta **183 USD por persona reservando online**: https://book.divingplanet.org/book/minicurso-de-buceo/2?language=es\n\nEl día 30 operamos; pueden elegir la fecha y las dos personas en el enlace. ¿Quieres que te cuente también cómo es el horario del día?",
+    "¡Qué chévere! Para el bautismo, no hace falta ser un nadador experto; sí es recomendable que te sientas cómodo en el agua. El instructor te guía durante toda la experiencia.\n\nSaliendo de Cartagena, el minicurso incluye práctica en piscina y una inmersión en el mar con instructor PADI. ¿Quieres que te comparta el enlace para reservar para el día 30?",
+    "¡Qué chévere que salgan desde Cartagena el 30! Para el bautismo, **no hace falta ser un nadador experto**, pero sí es recomendable sentirse cómodo en el agua. El instructor les guía durante toda la experiencia.\n\nEl Minicurso incluye teoría online, práctica en piscina, una inmersión en el mar con instructor, equipo, lancha ida y vuelta y almuerzo. El precio online es **183 USD por persona**. Pueden reservar aquí: https://book.divingplanet.org/book/minicurso-de-buceo/2?language=es\n\n¿Quieres que te cuente cómo prepararse para el día?"
+   ],
+   "explicaciones": [
+    "La respuesta actual sí incluye lo que pide la FAQ: aclara que no hace falta ser nadador experto, recomienda sentirse cómodo en el agua y menciona que el instructor acompaña todo el tiempo ('El instructor los guía durante toda la actividad'). No falta información relevante y no se contradice con la base.",
+    "La respuesta actual sí incluye que no hace falta ser un nadador experto, que es recomendable sentirse cómodo en el agua y que el instructor acompaña durante toda la experiencia, tal como indica la FAQ ('¿Necesito saber nadar para bucear?'). No falta información relevante y no se comete el fallo anterior.",
+    "La respuesta actual sí incluye la información correcta de la FAQ: aclara que no hace falta ser un nadador experto, recomienda sentirse cómodo en el agua y menciona que el instructor acompaña durante toda la experiencia. Esto coincide con la FAQ ('Es recomendable sentirse cómodo en el agua, pero no es necesario ser un nadador experto para bucear. El instructor te guiará en todo momento durante la actividad.')."
+   ]
+  },
+  {
+   "id": "g3-05c",
+   "dialogo": "pareja-bautismo-en",
+   "criterio": "nadar-faq",
+   "repeticiones": 3,
+   "fallan": 3,
+   "respuestas": [
+    "For the Mini Course, your instructor will guide you throughout the activity, which includes pool practice and one ocean dive.\n\nFor two people, the online price is **USD 183 per person**. It includes boat transport from Cartagena, diving equipment, the pool session and ocean dive with an instructor, park entrance fee, insurance, and lunch. The meeting point is Muelle de la Bodeguita at 8:00 a.m.\n\nYou can select the 30th and both participants in the booking calendar here: https://book.divingplanet.org/book/minicurso-de-buceo/2?language=en",
+    "Happy to help! 🌊 I don't have that specific detail handy, but I can help you with activities, prices, logistics or putting your booking together. Would you like me to connect you with an advisor for that specific point?",
+    "It’s recommended that you feel comfortable in the water. The Dive Mini Course is a one-day introduction with pool practice and one ocean dive.\n\nThe online price is **USD 183 per person**. It includes boat transport from Cartagena, diving equipment, lunch, mandatory dive insurance, and the National Park entrance fee. Would you like the booking link?"
+   ],
+   "explicaciones": [
+    "The bot's reply does not answer the customer's direct question about swimming ability. The FAQ (context [9]) clearly states: 'It is recommended to feel comfortable in the water, but you do not need to be an expert swimmer to dive. Your instructor will guide you at all times during the activity.' The bot only describes the course and price, omitting this reassurance.",
+    "The bot should have answered the FAQ 'Do I need to know how to swim to dive?' with: 'It is recommended to feel comfortable in the water, but you do not need to be an expert swimmer to dive. Your instructor will guide you at all times during the activity.' This information is present in the context (see [9] in the FAQ section), but the bot instead said it didn't have the information and offered to connect with an advisor, which is incorrect.",
+    "The bot says 'It’s recommended that you feel comfortable in the water' but omits the key reassurance from the FAQ: 'you do not need to be an expert swimmer to dive' and that 'your instructor will guide you at all times during the activity.' This information is present in the context (see FAQ [9]) and is required by the criterion."
+   ]
+  }
+ ],
+ "sin_medir": []
+}

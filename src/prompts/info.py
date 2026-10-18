@@ -617,3 +617,22 @@ RAG_PASE_OFRECIDO_EN = (
     "confirmed by a person, say so and OFFER it as a question ('Would you like me to connect you with a team "
     "advisor?'): if the customer accepts, the system does the handoff."
 )
+
+
+# ── G3-07a (18-oct, decisión de Gadea): en un mismo mensaje, UNA sola moneda ──────────────────────────────────────
+# "somos una pareja de Bogotá… ¿cuánto vale el snorkel?": el texto decía "126 USD" (el RAG aún no sabía que eran
+# colombianos) y la tarjeta del plan, montada después con la extracción del turno, "448.000 COP". Cuando el turno lleva
+# la tarjeta (precio por persona en su moneda y enlace), el texto NO da precio: lo da la tarjeta. Lo pide el flujo con
+# `rag_answer(sin_precio=True)` (flag `rag_sin_precio_con_tarjeta`).
+RAG_SIN_PRECIO_ES = (
+    "En ESTA respuesta no des precios, importes, monedas ni enlaces de reserva: justo después el sistema le enseña al "
+    "cliente la tarjeta de su plan con el precio por persona en su moneda y el enlace. Contesta el resto de lo que "
+    "pregunta (qué incluye, horarios, punto de encuentro, requisitos…) y, si lo único que pregunta es el precio, di en "
+    "una frase que se lo dejas a continuación."
+)
+RAG_SIN_PRECIO_EN = (
+    "In THIS answer do not give prices, amounts, currencies or booking links: right after it the system shows the "
+    "customer the card of their plan with the price per person in their currency and the link. Answer the rest of what "
+    "they ask (what's included, schedule, meeting point, requirements…) and, if the price is all they ask, say in one "
+    "sentence that you're sharing it right below."
+)
