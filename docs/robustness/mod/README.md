@@ -70,5 +70,9 @@ el vocabulario del negocio (Bodeguita, Majagua, Isla Grande, minicurso…), que 
 ## mod-8 · las herramientas de medida en gpt-4.1
 
 `banco_fallos` ya puede verificar con un modelo de OpenRouter (`_verificar` va por el cliente del bot) y tiene
-`--comparar-verificador <modelo>`: juzga las mismas respuestas con los dos y da la coincidencia. Medida pendiente
-(cuando PRE no esté en una ronda).
+`--comparar-verificador <modelo>`: juzga las mismas respuestas con los dos y da la coincidencia.
+
+18-oct, banco CAL-A (16 casos × 2 = 30 respuestas, `docs/robustness/cal/medidas/mod8-verificador.json`): gpt-4.1 y
+DeepSeek v4.1 Flash **coinciden en 27/30 veredictos**; DeepSeek es más benévolo (16 fallos frente a 19: cal-36 2/2 →
+0/2, cal-70 2/2 → 1/2). Para una herramienta de medida importa seguir midiendo igual que antes: comparar también Luna y
+gpt-5.4-mini antes de elegir, y cambiar el verificador entre comparaciones, nunca a mitad de una.
