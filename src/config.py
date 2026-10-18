@@ -322,6 +322,9 @@ class Settings(BaseSettings):
     # CAL-F (18-oct, refresher-rechaza-acepta 3/3 en PRE): el extractor lee si el cliente quiere o no el refresher, con su
     # cita, aunque el bot no se lo haya preguntado ("en realidad sí lo quiero, mejor prevenir" se perdía). APAGADO.
     refresher_por_extractor: bool = True  # PROMOCIONADO 18-oct (CAL-F, decisión de Álvaro)
+    # CAL-F (18-oct, grupo-mixto-precio-cop-total): si la actividad que lee el extractor no es de nadie del reparto que
+    # lee a la vez, manda el reparto ("1 buzo avanzado y 2 para bautismo" no es el Curso Avanzado). APAGADO.
+    actividad_del_reparto: bool = False
     # r6-1(b) (17-oct): si en un turno NINGUNA llamada a OpenAI funciona (sin saldo, clave inválida, caído), el bot dice
     # que hay un problema técnico y pasa a un asesor (motivo = alerta en Chatwoot), en vez de "no lo tengo a la mano".
     # APAGADO hasta medirlo.
