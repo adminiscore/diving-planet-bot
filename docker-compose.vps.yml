@@ -138,6 +138,9 @@ services:
       TARJETA_SIN_SEGURIDAD: "true"
       RECOMENDAR_A_NO_CERTIFICADOS: "true"
       RESOLUTOR_SIN_CONTRADICCIONES: "true"
+      # RONDA mod-H (19-oct): CERTIFICADO_SOLO_SI_LO_DICE con la regla de is_certified que nombra todas las formas de
+      # decirlo (curso terminado, inmersiones, refresher), frente a limpieza-1. Revert = quitar estas líneas.
+      CERTIFICADO_SOLO_SI_LO_DICE: "true"
       ACUSE_MODEL: "gpt-5.4-nano"
       NOTAS_MODEL: "deepseek/deepseek-v4.1-flash"
       # ex-4 (12-oct): el extractor "LLM primero" de la fase EX (src/agents/extractor_turno.py).
