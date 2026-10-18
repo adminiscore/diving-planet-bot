@@ -1,9 +1,28 @@
-# CAL-F · Golden visible completo (17-oct) — RESULTADO PARCIAL
+# CAL-F · Golden visible completo (17-18 oct)
 
 Ronda `docs/robustness/synthetic-runs/2026-10-17-calf-completa.jsonl` (465/465 turnos, PRE con lo promocionado hasta
 CAL-C y r6-2), foto `docs/robustness/snapshots/2026-10-17-calf-completa.json`. Juez del golden (gpt-5-mini, medium).
 
-## Estado
+## Resultado (18-oct, juzgado entero)
+
+**95,8 % de criterios cumplidos (36 fallos de 849), 86/116 diálogos sin fallos**, 6 a revisar
+(`docs/robustness/golden-set/results/2026-10-17-calf-completa__gpt-5-mini-medium.json`; 1,10 $). Las rondas
+completas anteriores rondaban el 91 % (g10-B 91,2 %, est3-B 91,3 %), aunque con otras referencias del juez.
+Por categoría, lo más flojo: pago 84,2 %, refresher 86,7 %, deflection 88,9 % (el teléfono: error de la referencia),
+descuentos 92,6 %, nacionalidad 92,7 %.
+
+Fallos (además de la tabla de abajo, que eran los 14 primeros): precio-desde-islas-vs-cartagena,
+contacto-hoteles-cocoliso-san-pedro (alojamiento directo), certificado-profundidad (profundidad según nivel),
+paquete-5-buceos-precio-overnight-isla-grande-baru y curso-mas-paquetes (repreguntas), tours-diarios-isla-grande
+(pickup en las islas), refresher-que-completar-antes (tiempo sin bucear), grupo-mixto-cotiza-y-pide-link y
+link-pago-extranjeros-sin-cedula (enlace), punto-encuentro-corrige-todo-mar-y-hora, pareja-certificados-cop-descuento
+(descuentos vigentes), open-water-hoteles-noche (pernocta), descuento-online-sin-codigo, minicurso-precio-colombianos
+(origen), recogida-ubuntu (comida desde islas, minicurso no certifica), moneda-precios-principiante-y-snorkel,
+precios-y-disponibilidad-con-negociacion (cierre 4:30), curso-open-water-principiantes-idioma-frances (idioma),
+principiante-precio-y-evaluacion-medica, pareja-reactivate-y-refresh-cartagena (repregunta). Siguiente: atribuir
+cada uno a su zona con `reproducir_juez_pre` (3 reps), empezando por los del RAG que tocan el origen.
+
+## Estado (17-oct, histórico)
 
 El juez quedó **a medias**: la primera vez lo cortó el `timeout 3000` (50 min); la segunda, el crédito de OpenAI
 (21:31, 429 `credit_balance_exhausted`). Juzgados **403 de 703** criterios LLM (más los automáticos).
@@ -21,7 +40,7 @@ cd <dir> && ENV_FILE=<repo>/.env.dev python -m scripts.judge_golden_set --run do
 # después: copiar <dir>/docs/robustness/golden-set/results/* al repo
 ```
 
-## Lo juzgado hasta ahora (403/703, desde la caché, sin gastar)
+## Lo juzgado el 17-oct (403/703, desde la caché, sin gastar)
 
 69 diálogos completos: **58 sin fallos**. 14 fallos en 638 criterios con veredicto.
 
