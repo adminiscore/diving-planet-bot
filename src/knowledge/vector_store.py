@@ -262,26 +262,17 @@ async def _vector_search(query: str, lang: str = "es", k: int = 8) -> list[dict]
     return results
 
 
-# 17-oct (flag `bm25_cualquier_palabra`): `websearch_to_tsquery` exige TODAS las palabras de la pregunta, y una pregunta
-# natural casi nunca las tiene todas en un documento: medido en la base de PRE con las 51 preguntas de rag_piezas, 48
-# no traían ningún documento (4 de 97 datos en el top-8); con CUALQUIER palabra (OR), ninguna vacía y 53 de 97. Sin
-# esto, la fusión RRF es en la práctica solo el vector.
-_TSQ_TODAS = "websearch_to_tsquery('simple', $1)"
-_TSQ_CUALQUIERA = "replace(plainto_tsquery('simple', $1)::text, '&', '|')::tsquery"
-
-
 async def _bm25_search(query: str, lang: str = "es", k: int = 8) -> list[dict]:
-    tsq = _TSQ_CUALQUIERA if settings.bm25_cualquier_palabra else _TSQ_TODAS
     try:
         pool = await _get_pool()
         async with pool.acquire() as conn:
             rows = await conn.fetch(
-                f"""
+                """
                 SELECT id, content, metadata,
-                       ts_rank_cd(content_tsv, {tsq}) AS score
+                       ts_rank_cd(content_tsv, websearch_to_tsquery('simple', $1)) AS score
                 FROM kb_documents
                 WHERE metadata->>'lang' = $2
-                  AND content_tsv @@ {tsq}
+                  AND content_tsv @@ websearch_to_tsquery('simple', $1)
                   AND NOT (COALESCE(metadata->>'source', '') = ANY($4::text[]))
                 ORDER BY score DESC
                 LIMIT $3
@@ -353,11 +344,6 @@ async def search_knowledge_base(
     """
     top_k = top_k or settings.rag_top_k
     last_line = query.splitlines()[-1] if "\n" in query else query
-    if settings.bm25_cualquier_palabra:
-        # La última línea puede ser la marca de origen que añade rag_agent ("[origen_cliente]=ya en las islas"): BM25
-        # buscaba esa marca y no la pregunta. Se usa la última línea que no es una marca nuestra.
-        lineas = [ln for ln in query.splitlines() if ln.strip() and not ln.lstrip().startswith("[")]
-        last_line = lineas[-1] if lineas else last_line
     query_topics = detect_query_topics(last_line)
     candidate_limit = max(top_k * 6, top_k)
 

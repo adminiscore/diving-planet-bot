@@ -429,10 +429,6 @@ class Settings(BaseSettings):
     # que da el cliente y en el idioma de la respuesta), una llamada corta a la vez que la búsqueda principal, solo
     # para mensajes largos o en otro idioma. APAGADO hasta medirlo.
     busqueda_con_la_pregunta_sola: bool = False
-    # BM25 (17-oct, visto en G3-06): la búsqueda por palabras exige TODAS las palabras de la pregunta y casi nunca trae
-    # nada (48 de 51 preguntas de rag_piezas sin ningún documento). Con el flag acepta CUALQUIERA (OR) y la fusión RRF
-    # vuelve a tener dos ramas. Cambia todos los rankings: APAGADO hasta medirlo con rag_piezas --solo-busqueda.
-    bm25_cualquier_palabra: bool = False
     # Modelo del revisor de `avisos_al_final` (vacío = `rag_plan_model`). Va a la vez que el juez de grounding.
     # Medido en local (17-oct, 5 casos del banco + los 93 turnos de la ronda core cal-D): gpt-4.1-mini acierta 4 de 5
     # pero añade aviso en 64 de 93 turnos (relleno); gpt-4.1 y GPT-6 Luna (sin razonamiento) aciertan 4 de 5 y añaden

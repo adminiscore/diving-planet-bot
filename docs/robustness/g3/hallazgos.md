@@ -125,9 +125,13 @@ consulta lleva el marcador de origen, BM25 busca solo la última línea (`[orige
 práctica, la búsqueda es solo por vector y la fusión RRF no aporta.
 
 Medido sin gastar (SQL en la base de PRE, las 51 preguntas de `rag_piezas`, solo BM25): con TODAS las palabras, 48/51
-preguntas sin ningún documento y 4/97 datos en el top-8; con CUALQUIER palabra (OR), 0/51 vacías y 53/97. Preparado
-tras el flag `BM25_CUALQUIER_PALABRA` (APAGADO), que además hace que BM25 busque la pregunta y no la marca de origen.
-Cambia todos los rankings: medir con `rag_piezas --solo-busqueda` (céntimos) con y sin el flag cuando haya crédito.
+preguntas sin ningún documento y 4/97 datos en el top-8; con CUALQUIER palabra (OR), 0/51 vacías y 53/97. Probado
+tras un flag (OR, y BM25 sobre la pregunta y no la marca de origen) y medido con `rag_piezas --solo-busqueda
+--codigo-local` (18-oct): **empeora**. El dato en el top-8 baja del 86 % al 65 % (al primer puesto, del 63 % al 29 %) y
+entran 19 fichas del otro origen: un BM25 que casa por cualquier palabra (con "de", "el", "la") mete ruido en la
+fusión. **DESCARTADO** y el código quitado; la búsqueda por vector sola ya trae el dato el 86 % de las veces.
+(Al medirlo apareció que `rag_piezas` fallaba en todo desde CAL-D, 16-oct: su espía de la reescritura no aceptaba
+`hechos`. Arreglado.)
 
 ## G3-07 · Pareja de Bogotá, snorkel → minicurso — conv 5573 (17-oct)
 
