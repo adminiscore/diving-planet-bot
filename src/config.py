@@ -22,9 +22,9 @@ class Settings(BaseSettings):
     openai_model: str = "gpt-4o-mini"
     # MOD (18-oct): cada pieza de `openai_model` con su modelo, para medirlas y cambiarlas una a una (la familia gpt-4 se
     # retira en enero). Mismo valor que `openai_model` mientras no se promocione otro.
-    reescritura_model: str = "deepseek/deepseek-v4.1-flash"  # RONDA mod-C (18-oct); revert = "gpt-4o-mini"
-    resumen_model: str = "deepseek/deepseek-v4.1-flash"  # RONDA mod-C (18-oct); revert = "gpt-4o-mini"
-    idioma_model: str = "deepseek/deepseek-v4.1-flash"  # RONDA mod-C (18-oct); revert = "gpt-4o-mini"
+    reescritura_model: str = "deepseek/deepseek-v4.1-flash"  # PROMOCIONADO 18-oct (mod-C, HISTORY 0.31.53); revert = "gpt-4o-mini"
+    resumen_model: str = "deepseek/deepseek-v4.1-flash"  # PROMOCIONADO 18-oct (mod-C, HISTORY 0.31.53); revert = "gpt-4o-mini"
+    idioma_model: str = "deepseek/deepseek-v4.1-flash"  # PROMOCIONADO 18-oct (mod-C, HISTORY 0.31.53); revert = "gpt-4o-mini"
     # Model for the narrow, structured LLM gap-filler extractor
     # (src/agents/llm_extractor.py, robustness Fases 1-3). Kept SEPARATE from
     # openai_model (then used by the action orchestrator, retired in 308488d): the extraction is a small
@@ -53,6 +53,10 @@ class Settings(BaseSettings):
     # package...' a quien solo dijo que dormia en la isla). rag_agent.build_system_prompt. PROMOCIONADO 14-oct (HISTORY 0.31.22: g10-A/B 89,8 -> 91,2 %).
     # Revert = False aqui y en el compose.
     rag_no_supone_reserva: bool = True
+    # 18-oct (decision de Gadea: no adivinar nada que el cliente no haya dicho): la regla de EX-RAG-2 ampliada a origen,
+    # nacionalidad, certificacion, cuantos son y fechas; la sustituye. Fallos estables de CAL-F (zona RAG).
+    # rag_agent.build_system_prompt, prompts/info.RAG_NO_ADIVINA_*. APAGADO.
+    rag_no_adivina: bool = False
     # EX-FLUJO-1 (decision de Gadea, 14-oct, opcion 2): si el cliente no contesta una pregunta de la reserva, no se
     # repite en el turno siguiente: se aplaza y vuelve justo antes del resumen. Solo las preguntas de datos que no
     # condicionan a otras (origen, hotel, cuantos, ultima inmersion, refresher, edades, nacionalidad).
@@ -198,11 +202,12 @@ class Settings(BaseSettings):
     # Model used to transcribe incoming customer voice notes (see
     # src/channels/audio.py). gpt-4o-mini-transcribe is cheaper/better than
     # whisper-1; switch to "whisper-1" if an older SDK is in play.
-    openai_transcription_model: str = "gpt-4o-mini-transcribe"
+    # MOD-6 (18-oct, decisión de Gadea: "decide tú"): gpt-transcribe con vocabulario. PROMOCIONADO (HISTORY 0.31.53).
+    openai_transcription_model: str = "gpt-transcribe"
     # MOD-6 (18-oct): la pista de vocabulario del negocio en la transcripción (src/channels/audio.py). Con
     # gpt-transcribe (fuera de la familia gpt-4o): 3,2 % de palabras mal frente al 3,7 % de hoy. APAGADO hasta decidir el
-    # modelo de transcripción (docs/robustness/mod/README.md, mod-6).
-    transcripcion_con_vocabulario: bool = False
+    # modelo de transcripción (docs/robustness/mod/README.md, mod-6). PROMOCIONADO 18-oct (HISTORY 0.31.53); revert = False.
+    transcripcion_con_vocabulario: bool = True
     rag_top_k: int = 8
     rag_min_score: float = 0.40
     # Minimum raw ts_rank_cd score for a BM25-only hit to count as "confident".
@@ -341,7 +346,7 @@ class Settings(BaseSettings):
     # G3-06 (18-oct, decisión de Gadea): Barú y Playa Blanca NO son Islas del Rosario (península unida a tierra, donde no
     # operamos). Quien se aloja allí no queda como "ya en las islas" (Jev, el extractor de respaldo, el resolutor de la
     # pregunta del origen); el lugar se le pregunta a la base, que da el aviso. APAGADO.
-    baru_no_es_rosario: bool = True  # RONDA mod-B (18-oct): encendido para medir; revert = False
+    baru_no_es_rosario: bool = True  # PROMOCIONADO 18-oct (mod-B, HISTORY 0.31.53); revert = False
     # r6-1(b) (17-oct): si en un turno NINGUNA llamada a OpenAI funciona (sin saldo, clave inválida, caído), el bot dice
     # que hay un problema técnico y pasa a un asesor (motivo = alerta en Chatwoot), en vez de "no lo tengo a la mano".
     # PROMOCIONADO 18-oct (decisión de Álvaro, tras la 2.ª caída por saldo en un día): comprobado en PRE con una clave
@@ -361,7 +366,7 @@ class Settings(BaseSettings):
     # 30 años", "debes haber completado la teoría", "hay barcos hundidos"); +0,25 s de mediana. ENCENDIDO por defecto (= PRE, paso 10).
     # 28-sep (HISTORY 0.29.66): v3 con gpt-4.1-mini 48/70 y gpt-4o-mini 37/70 frente a 70/70, y NO más rápidos: se queda gpt-4.1.
     grounding_v3: bool = True
-    grounding_v3_model: str = "deepseek/deepseek-v4.1-flash"  # RONDA mod-C (18-oct); revert = "gpt-4.1"
+    grounding_v3_model: str = "deepseek/deepseek-v4.1-flash"  # PROMOCIONADO 18-oct (mod-C, HISTORY 0.31.53); revert = "gpt-4.1"
     # 1-oct (docs/robustness/juez/README.md): juez v4. Una linea por frase con su tipo (dato / no_lo_tengo / asesor /
     # otro) y el veredicto lo saca el codigo (solo cuenta un NO en un dato). El v3 se saltaba su propio filtro en
     # cuanto la respuesta traia un dato y ponia SI/NO al azar a "no lo tengo a la mano, un asesor te lo confirma".
@@ -457,11 +462,11 @@ class Settings(BaseSettings):
     # 18-oct: banco G3 9/9 -> 1/9, rag_piezas sin pérdidas, core sin regresiones atribuidas, pero +0,7 s de mediana en
     # los turnos del RAG con gpt-4o-mini (que además no traducía el portugués). APAGADO hasta que Gadea elija el
     # modelo (`pregunta_sola_model`): gpt-4.1-nano 0,5-0,6 s (familia 4.1, que Álvaro quiere dejar) o Luna 0,98 s.
-    busqueda_con_la_pregunta_sola: bool = True  # RONDA mod-B (18-oct): encendido para medir; revert = False
+    busqueda_con_la_pregunta_sola: bool = True  # PROMOCIONADO 18-oct (mod-B, HISTORY 0.31.53); revert = False
     # G3-07a (18-oct, decisión de Gadea: en un mismo mensaje, una sola moneda): cuando el turno lleva la tarjeta del plan
     # (precio en su moneda y enlace), el flujo pide al RAG la respuesta SIN precio (`rag_answer(sin_precio=True)`). El
     # RAG lo hace Gadea; el punto de decisión del flujo, Álvaro. APAGADO hasta medirlo con g3-07a y g3-02.
-    rag_sin_precio_con_tarjeta: bool = True  # RONDA mod-B (18-oct): encendido para medir; revert = False
+    rag_sin_precio_con_tarjeta: bool = True  # PROMOCIONADO 18-oct (mod-B, HISTORY 0.31.53); revert = False
     # Modelo del revisor de `avisos_al_final` (vacío = `rag_plan_model`). Va a la vez que el juez de grounding.
     # Medido en local (17-oct, 5 casos del banco + los 93 turnos de la ronda core cal-D): gpt-4.1-mini acierta 4 de 5
     # pero añade aviso en 64 de 93 turnos (relleno); gpt-4.1 y GPT-6 Luna (sin razonamiento) aciertan 4 de 5 y añaden
@@ -541,7 +546,7 @@ class Settings(BaseSettings):
     # GROUNDING_VERIFY_V3_LUNA_*): el v3 entero + 3 aclaraciones (lo que dice el cliente de si mismo no se comprueba;
     # valoraciones y ofertas de ayuda no son datos; las deducciones directas del contexto cuentan). Va con
     # GROUNDING_V3_MODEL=gpt-6-luna. APAGADO hasta medirlo (banco sonda_juez_modelo, escalon 0, A/B core).
-    juez_v3_luna: bool = True  # RONDA mod-C (18-oct): encendido para medir; revert = False
+    juez_v3_luna: bool = True  # PROMOCIONADO 18-oct (mod-C, HISTORY 0.31.53: va con el revisor en DeepSeek); revert = False
     # s4-33 (9-oct): razonamiento de GPT-6 Luna cuando hace de juez de grounding ("none" = como el resto de llamadas a
     # gpt-6; "low"/"medium" = razona antes de la lista y el tope de salida sube 4000 tokens, como el juez gpt-5/o).
     # Se mide con scripts/banco_juez_reales.py --ajuste juez_luna_razonamiento=low.

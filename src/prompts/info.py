@@ -549,6 +549,27 @@ RAG_NO_SUPONE_EN = (
     "(don't say \"your 3-dive package\" unless they said so). Answer what they ask with the general information and, "
     "if you need to know their service to answer, ask them."
 )
+# Flag `rag_no_adivina` (18-oct, decisión de Gadea: "no adivinar nada que el cliente no haya dicho"). Sustituye a
+# RAG_NO_SUPONE_*, que solo cubría el servicio reservado. Fallos estables de CAL-F (3 reps): el origen dado por supuesto
+# ("desde Cartagena", "dormir en las islas"), un mes o una fecha que nadie dijo, "certified diver" a un principiante y
+# la regla de la moneda explicada sin preguntar la nacionalidad.
+RAG_NO_ADIVINA_ES = (
+    "No atribuyas al cliente datos que no ha dicho ni los deduzcas de otros: ni qué servicio quiere o reservó, ni "
+    "desde dónde sale (Cartagena o las islas) ni dónde duerme, ni su nacionalidad (el país desde el que escribe o viaja "
+    "no la dice), ni si está certificado (querer bucear o preguntar por inmersiones no lo dice), ni cuántos son (un "
+    "plural no dice el número), ni fechas, meses u horas. No los nombres como si los supieras (no digas «tu paquete de "
+    "3 inmersiones», «como sales desde Cartagena» ni «en noviembre» si él no lo dijo). Contesta lo que pregunta con la "
+    "información general y, si la respuesta depende de uno de esos datos, pregúntaselo; lo que ya dijo no se pregunta."
+)
+RAG_NO_ADIVINA_EN = (
+    "Do not attribute to the customer anything they have not said, and do not infer it from other details: not which "
+    "service they want or booked, not where they leave from (Cartagena or the islands) or where they stay, not their "
+    "nationality (the country they write or travel from does not tell it), not whether they are certified (wanting to "
+    "dive or asking about dives does not tell it), not how many they are (a plural does not tell the number), and no "
+    "dates, months or times. Do not name these as if you knew them (don't say \"your 3-dive package\", \"since you "
+    "leave from Cartagena\" or \"in November\" unless they said so). Answer what they ask with the general information "
+    "and, if the answer depends on one of these details, ask for it; never ask for what they already said."
+)
 # EX-EST-2 (15-oct, flag `rag_sin_hora`): el RAG no sabe la hora ni la fecha de hoy. Rondas est4-B/est5-B: "ya pasó esa
 # hora" o "como todavía estás a tiempo" sobre el cierre de las 4:30, sin que el cliente dijera la hora.
 RAG_SIN_HORA_ES = (

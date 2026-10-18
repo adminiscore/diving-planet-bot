@@ -104,7 +104,8 @@ services:
       # 8-oct: PROMOCIONADO -- la respuesta del RAG con GPT-6 Luna (sin razonamiento) y respaldo a gpt-4.1-mini a los 3 s
       # (ronda respaldo-A/B; HISTORY 0.31.0). Extraccion y secundarias en gpt-4o-mini; juez en gpt-4.1.
       OPENAI_MODEL: "gpt-4o-mini"
-      # MOD (18-oct): la reescritura de la consulta, el resumen y el detector de idioma, cada uno con su modelo.
+      # MOD-4 (18-oct): la reescritura de la consulta, el resumen y el detector de idioma, cada uno con su modelo.
+      # PROMOCIONADO en DeepSeek (HISTORY 0.31.53). Revert = "gpt-4o-mini".
       REESCRITURA_MODEL: "deepseek/deepseek-v4.1-flash"
       RESUMEN_MODEL: "deepseek/deepseek-v4.1-flash"
       IDIOMA_MODEL: "deepseek/deepseek-v4.1-flash"
@@ -112,11 +113,12 @@ services:
       RAG_RESPALDO_MODELO: "gpt-4.1-mini"
       RAG_RESPALDO_SEGUNDOS: "3.0"
       # Juez de grounding v3 (flag GROUNDING_V3, 28-sep): gpt-4.1 (con gpt-4.1-mini el v3 era inestable).
-      # RONDA mod-C (18-oct, MOD-1): el revisor en DeepSeek v4.1 Flash con la aclaración de s4-33 (JUEZ_V3_LUNA).
-      # Revert = "gpt-4.1" y JUEZ_V3_LUNA "false".
+      # MOD-1 (18-oct): el revisor en DeepSeek v4.1 Flash con la aclaración de s4-33 (JUEZ_V3_LUNA). PROMOCIONADO
+      # (HISTORY 0.31.53: ronda core mod-C 97,8 %, ninguna regresión atribuida al modelo). Revert = "gpt-4.1" y JUEZ_V3_LUNA "false".
       GROUNDING_V3_MODEL: "deepseek/deepseek-v4.1-flash"
-      # RONDA mod-B (18-oct, Gadea y Álvaro): G3 encendido para medir contra mod-A (a7d4e65, los mismos flags
-      # apagados). Revert = quitar estas tres líneas y poner los defaults en False.
+      # G3 (18-oct, Gadea y Álvaro): Barú no es Rosario, la búsqueda con la pregunta sola y una sola moneda.
+      # PROMOCIONADO (HISTORY 0.31.53: ronda core mod-B; la regresión que parecía suya era ruido, 0/3 con los tres).
+      # Revert = quitar estas tres líneas y poner los defaults en False.
       BARU_NO_ES_ROSARIO: "true"
       BUSQUEDA_CON_LA_PREGUNTA_SOLA: "true"
       RAG_SIN_PRECIO_CON_TARJETA: "true"
@@ -129,7 +131,10 @@ services:
       AVISOS_AL_FINAL_MODEL: "gpt-6-luna"
       PREGUNTA_SOLA_MODEL: "deepseek/deepseek-v4.1-flash"
       OPENAI_EMBEDDING_MODEL: "text-embedding-3-small"
-      OPENAI_TRANSCRIPTION_MODEL: "gpt-4o-mini-transcribe"
+      # MOD-6 (18-oct): gpt-transcribe con el vocabulario del negocio. PROMOCIONADO (HISTORY 0.31.53). Revert = "gpt-4o-mini-transcribe"
+      # y quitar TRANSCRIPCION_CON_VOCABULARIO.
+      OPENAI_TRANSCRIPTION_MODEL: "gpt-transcribe"
+      TRANSCRIPCION_CON_VOCABULARIO: "true"
       JEV_MODEL: "typesafe/jev-1.13"
       # Robustness Fase 1 cutover (see docs/robustness/plan.md,
       # docs/robustness/progress-log.md). On in PRE only, to gather real
@@ -274,7 +279,7 @@ services:
       # Ver HISTORY 0.29.57-0.29.58. Ronda B (28-sep): 91,3 -> 93,0 %, 21 -> 23/32, 0 regresiones propias
       # -> PROMOCIONADO (vigilar p95: 5,3 -> 7,0 s por las regeneraciones). Revert = "false" + redeploy.
       GROUNDING_V3: "true"
-      # s4-33 (8-oct): instrucciones del juez v3 para GPT-6 Luna (va con GROUNDING_V3_MODEL). APAGADO hasta medirlo.
+      # s4-33 (8-oct): las aclaraciones del juez v3 (va con GROUNDING_V3_MODEL). PROMOCIONADO con DeepSeek (HISTORY 0.31.53).
       JUEZ_V3_LUNA: "true"
       # u3-5 (decision de Gadea): el minicurso deducido se RECOMIENDA y lo confirma el cliente; a quien pide
       # un curso se le recomienda el Open Water. Ver HISTORY 0.29.45-0.29.58. Escalon 0 correcto, sin

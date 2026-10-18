@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-18T12:46:43+00:00",
-  "commit": "acca0bf",
+  "generado": "2026-10-18T14:02:33+00:00",
+  "commit": "0ef4c9f",
   "rama": "feature/pre_gadea"
  },
  "vistas": {
@@ -79,8 +79,8 @@
    "modelos": [
     {
      "ajuste": "openai_transcription_model",
-     "codigo": "gpt-4o-mini-transcribe",
-     "pre": "gpt-4o-mini-transcribe"
+     "codigo": "gpt-transcribe",
+     "pre": "gpt-transcribe"
     }
    ],
    "interruptores": [
@@ -94,8 +94,8 @@
     {
      "nombre": "transcripcion_con_vocabulario",
      "titulo": "Las notas de voz se transcriben con el vocabulario del negocio",
-     "codigo": false,
-     "pre": false,
+     "codigo": true,
+     "pre": true,
      "sin_efecto": false
     }
    ],
@@ -193,8 +193,8 @@
    "marca": "openrouter",
    "tiempos": {
     "n": 93,
-    "p50": 0.43,
-    "p95": 1.721
+    "p50": 0.44,
+    "p95": 1.564
    }
   },
   {
@@ -235,8 +235,8 @@
    "interruptores": [],
    "tiempos": {
     "n": 2,
-    "p50": 0.004,
-    "p95": 0.005
+    "p50": 0.003,
+    "p95": 0.004
    }
   },
   {
@@ -260,8 +260,8 @@
    "modelos": [],
    "tiempos": {
     "n": 1,
-    "p50": 0.002,
-    "p95": 0.002
+    "p50": 0.004,
+    "p95": 0.004
    }
   },
   {
@@ -279,8 +279,8 @@
    "interruptores": [],
    "tiempos": {
     "n": 4,
-    "p50": 3.221,
-    "p95": 4.085
+    "p50": 3.508,
+    "p95": 3.957
    }
   },
   {
@@ -297,8 +297,8 @@
    "interruptores": [],
    "tiempos": {
     "n": 78,
-    "p50": 2.372,
-    "p95": 5.17
+    "p50": 2.366,
+    "p95": 5.214
    }
   },
   {
@@ -508,8 +508,8 @@
    "marca": "openai",
    "tiempos": {
     "n": 78,
-    "p50": 0.032,
-    "p95": 1.146
+    "p50": 0.034,
+    "p95": 1.007
    }
   },
   {
@@ -541,7 +541,7 @@
    "tiempos": {
     "n": 78,
     "p50": 0.005,
-    "p95": 0.017
+    "p95": 0.412
    }
   },
   {
@@ -578,9 +578,9 @@
    ],
    "marca": "openai",
    "tiempos": {
-    "n": 71,
+    "n": 72,
     "p50": 0.006,
-    "p95": 0.014
+    "p95": 0.015
    }
   },
   {
@@ -675,9 +675,9 @@
    ],
    "marca": "openai",
    "tiempos": {
-    "n": 71,
-    "p50": 0.549,
-    "p95": 1.042
+    "n": 72,
+    "p50": 0.532,
+    "p95": 0.943
    }
   },
   {
@@ -826,9 +826,9 @@
    ],
    "marca": "openai",
    "tiempos": {
-    "n": 71,
-    "p50": 2.046,
-    "p95": 4.454
+    "n": 72,
+    "p50": 1.928,
+    "p95": 4.182
    }
   },
   {
@@ -945,9 +945,9 @@
    ],
    "modelos": [],
    "conteo": {
-    "n": 44,
+    "n": 45,
     "que": "preguntas",
-    "fuente": "2026-10-18-mod-B.json"
+    "fuente": "2026-10-18-mod-C.json"
    }
   },
   {
@@ -1174,6 +1174,13 @@
      "titulo": "No da por hecho lo que el cliente no dijo",
      "codigo": true,
      "pre": true,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "rag_no_adivina",
+     "titulo": "No adivina ningún dato del cliente",
+     "codigo": false,
+     "pre": false,
      "sin_efecto": false
     },
     {
@@ -3115,6 +3122,19 @@
    "sin_efecto": null
   },
   {
+   "nombre": "rag_no_adivina",
+   "area": "Preguntas",
+   "titulo": "No adivina ningún dato del cliente",
+   "texto": "La regla anterior ampliada a todo lo que el cliente no ha dicho: desde dónde sale, su nacionalidad (el país desde el que escribe no la dice), si está certificado, cuántos son y las fechas. Coral contesta con la información general y, si la respuesta depende de ese dato, lo pregunta.",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
+   "usado_por": [
+    "r_escribir"
+   ],
+   "sin_efecto": null
+  },
+  {
    "nombre": "rag_no_supone_reserva",
    "area": "Preguntas",
    "titulo": "No da por hecho lo que el cliente no dijo",
@@ -3427,9 +3447,9 @@
    "area": "Chat",
    "titulo": "Las notas de voz se transcriben con el vocabulario del negocio",
    "texto": "Al pasar a texto una nota de voz se le da al modelo la lista de nombres del negocio (Muelle de la Bodeguita, Isla Grande, Majagua, Getsemaní…). Sin ella escribía 'muelle la Destesa'.",
-   "codigo": false,
-   "pre": false,
-   "fijado_en_pre": false,
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
    "usado_por": [
     "preparacion"
    ],
@@ -3482,7 +3502,7 @@
     "r_revisor"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 93
+   "llamadas_ultima_ronda": 96
   },
   {
    "ajuste": "extraction_model",
@@ -3497,7 +3517,7 @@
     "b_acuse"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 110
+   "llamadas_ultima_ronda": 64
   },
   {
    "ajuste": "extractor_turno_model",
@@ -3507,7 +3527,7 @@
     "b_extraction"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 92
+   "llamadas_ultima_ronda": 93
   },
   {
    "ajuste": "grounding_v3_model",
@@ -3517,7 +3537,7 @@
     "r_revisor"
    ],
    "proveedor": "OpenRouter",
-   "llamadas_ultima_ronda": 44
+   "llamadas_ultima_ronda": 136
   },
   {
    "ajuste": "idioma_model",
@@ -3525,7 +3545,7 @@
    "pre": "deepseek/deepseek-v4.1-flash",
    "usado_por": [],
    "proveedor": "OpenRouter",
-   "llamadas_ultima_ronda": 44
+   "llamadas_ultima_ronda": 136
   },
   {
    "ajuste": "jev_model",
@@ -3537,7 +3557,7 @@
    ],
    "proveedor": "OpenRouter",
    "llamadas_ultima_ronda": null,
-   "nota": "Decidió solo 81 de 93 mensajes; en los otros 12 decidió el LLM de respaldo (sus llamadas cuentan en gpt-4o-mini)."
+   "nota": "Decidió solo 82 de 93 mensajes; en los otros 11 decidió el LLM de respaldo (sus llamadas cuentan en gpt-4o-mini)."
   },
   {
    "ajuste": "openai_embedding_model",
@@ -3560,12 +3580,12 @@
     "r_reescribir"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 110
+   "llamadas_ultima_ronda": 64
   },
   {
    "ajuste": "openai_transcription_model",
-   "codigo": "gpt-4o-mini-transcribe",
-   "pre": "gpt-4o-mini-transcribe",
+   "codigo": "gpt-transcribe",
+   "pre": "gpt-transcribe",
    "usado_por": [
     "preparacion"
    ],
@@ -3578,7 +3598,7 @@
    "pre": "deepseek/deepseek-v4.1-flash",
    "usado_por": [],
    "proveedor": "OpenRouter",
-   "llamadas_ultima_ronda": 44
+   "llamadas_ultima_ronda": 136
   },
   {
    "ajuste": "rag_answer_model",
@@ -3588,7 +3608,7 @@
     "r_escribir"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 93
+   "llamadas_ultima_ronda": 96
   },
   {
    "ajuste": "rag_plan_model",
@@ -3596,7 +3616,7 @@
    "pre": "gpt-4.1-mini",
    "usado_por": [],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 92
+   "llamadas_ultima_ronda": 93
   },
   {
    "ajuste": "reescritura_model",
@@ -3604,7 +3624,7 @@
    "pre": "deepseek/deepseek-v4.1-flash",
    "usado_por": [],
    "proveedor": "OpenRouter",
-   "llamadas_ultima_ronda": 44
+   "llamadas_ultima_ronda": 136
   },
   {
    "ajuste": "resumen_model",
@@ -3612,50 +3632,50 @@
    "pre": "deepseek/deepseek-v4.1-flash",
    "usado_por": [],
    "proveedor": "OpenRouter",
-   "llamadas_ultima_ronda": 44
+   "llamadas_ultima_ronda": 136
   }
  ],
  "ronda": {
-  "etiqueta": "mod-B",
-  "run_at": "2026-10-18T12:21:26Z",
-  "fichero": "2026-10-18-mod-B.json",
-  "commit": "267f27d",
+  "etiqueta": "mod-C",
+  "run_at": "2026-10-18T12:52:26Z",
+  "fichero": "2026-10-18-mod-C.json",
+  "commit": "d2d6803",
   "por_tipo": {
    "reserva": {
-    "turns": 49,
-    "latency_p50": 1.355,
-    "latency_p95": 2.315,
-    "latency_avg": 1.527,
-    "llm_calls_avg": 2.47,
-    "llm_calls_p95": 4.0,
-    "llm_calls_max": 5,
-    "embeddings_avg": 1.67,
-    "llm_share": 1.394,
+    "turns": 48,
+    "latency_p50": 1.19,
+    "latency_p95": 2.069,
+    "latency_avg": 1.388,
+    "llm_calls_avg": 2.48,
+    "llm_calls_p95": 3.65,
+    "llm_calls_max": 4,
+    "embeddings_avg": 1.62,
+    "llm_share": 1.362,
     "tokens_avg": 0,
     "cost_avg_usd": 0
    },
    "rag": {
-    "turns": 44,
-    "latency_p50": 4.136,
-    "latency_p95": 7.614,
-    "latency_avg": 4.508,
-    "llm_calls_avg": 5.95,
-    "llm_calls_p95": 8.0,
+    "turns": 45,
+    "latency_p50": 4.179,
+    "latency_p95": 7.568,
+    "latency_avg": 4.44,
+    "llm_calls_avg": 6.0,
+    "llm_calls_p95": 9.0,
     "llm_calls_max": 9,
-    "embeddings_avg": 2.39,
-    "llm_share": 1.482,
+    "embeddings_avg": 2.31,
+    "llm_share": 1.395,
     "tokens_avg": 0,
     "cost_avg_usd": 0
    }
   },
   "enrutador": {
    "by_backend": {
-    "jev": 81,
-    "llm_uncertain": 11,
+    "jev": 82,
+    "llm_uncertain": 10,
     "llm": 1
    },
-   "ms_p50": 404.0,
-   "ms_p95": 486.55
+   "ms_p50": 411.0,
+   "ms_p95": 483.45
   },
   "cliente": {
    "turns": 93,
@@ -3663,15 +3683,14 @@
    "no_reply": 0,
    "multi_bubble": 0,
    "latency_p50": 3.0,
-   "latency_p95": 6.0,
-   "latency_max": 9
+   "latency_p95": 6.4,
+   "latency_max": 8
   },
   "llamadas_por_modelo": {
-   "gpt-4o-mini": 110,
-   "gpt-6-luna": 93,
-   "gpt-4.1-mini": 92,
-   "gpt-4.1": 44,
-   "deepseek/deepseek-v4.1-flash": 44
+   "deepseek/deepseek-v4.1-flash": 136,
+   "gpt-6-luna": 96,
+   "gpt-4.1-mini": 93,
+   "gpt-4o-mini": 64
   },
   "calidad": null
  },

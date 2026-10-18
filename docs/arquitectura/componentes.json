@@ -566,6 +566,7 @@
         "rag_origen_pregunta",
         "origen_conserva_respuesta",
         "rag_no_supone_reserva",
+        "rag_no_adivina",
         "rag_sin_hora",
         "rag_temperatura_cero",
         "respaldo_mismo_modelo",
@@ -1430,6 +1431,11 @@
       "area": "Preguntas",
       "titulo": "No da por hecho lo que el cliente no dijo",
       "texto": "Si el cliente habla de su reserva sin decir qué servicio tiene, Coral no lo adivina ('tu paquete de 3 inmersiones'): contesta con la información general y, si hace falta, le pregunta."
+    },
+    "rag_no_adivina": {
+      "area": "Preguntas",
+      "titulo": "No adivina ningún dato del cliente",
+      "texto": "La regla anterior ampliada a todo lo que el cliente no ha dicho: desde dónde sale, su nacionalidad (el país desde el que escribe no la dice), si está certificado, cuántos son y las fechas. Coral contesta con la información general y, si la respuesta depende de ese dato, lo pregunta."
     },
     "rag_politicas_en_contexto": {
       "area": "Preguntas",

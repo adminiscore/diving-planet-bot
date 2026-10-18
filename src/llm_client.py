@@ -95,6 +95,16 @@ def parametros_openrouter(kwargs: dict) -> dict:
     entrenamiento (`data_collection: deny`) y sin razonamiento. El modelo y los pesos son los mismos en cada proveedor;
     lo que cambia es DÓNDE se procesan los mensajes y su latencia."""
     kw = dict(kwargs)
+    # MOD-7 (18-oct, decisión de Gadea: OpenRouter con datos reales, con condiciones): nada sale por OpenRouter sin
+    # tapar antes los datos personales de los mensajes del cliente y del bot, para TODAS las piezas en un solo sitio
+    # (el detector de idioma mandaba el mensaje tal cual). Por líneas, para no tapar precios del contexto (ver
+    # `privacy.redact_pii_por_lineas`); el prompt de sistema es nuestro y no se toca.
+    if isinstance(kw.get("messages"), list):
+        from src.privacy import redact_pii_por_lineas
+
+        kw["messages"] = [{**m, "content": redact_pii_por_lineas(m["content"])}
+                          if m.get("role") != "system" and isinstance(m.get("content"), str) else m
+                          for m in kw["messages"]]
     proveedores = [p.strip() for p in settings.openrouter_proveedores.split(",") if p.strip()]
     extra = dict(kw.pop("extra_body", None) or {})
     datos = "allow" if settings.openrouter_permitir_entrenamiento else "deny"

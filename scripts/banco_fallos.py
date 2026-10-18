@@ -183,7 +183,7 @@ def diagnosticar(ids: list[str] | None) -> None:
 
 
 def medir(etiqueta: str, ids: list[str] | None, tarea: str | None, reps: int, flags: list[str],
-          codigo_local: bool, verificador: str = VERIFICADOR_MODELO, comparar: str | None = None,
+          codigo_local: bool, verificador: str = VERIFICADOR_MODELO, comparar: list[str] | None = None,
           banco: Path | None = None, entorno: dict | None = None) -> None:
     """Mide un arreglo de CAL sobre el banco: cada caso `reps` veces en PRE (con `flags` y, si se pide, el código
     local) y el verificador dice si el fallo se repite. Usa `pedia_corregido` si lo hay (criterio actualizado a una
@@ -199,10 +199,13 @@ def medir(etiqueta: str, ids: list[str] | None, tarea: str | None, reps: int, fl
     # 18-oct: `entorno` (--env CLAVE=VALOR), variables solo para ese proceso: probar otro modelo sin desplegar.
     salida = {"etiqueta": etiqueta, "reps": reps, "flags": flags, "env": entorno or {}, "codigo_local": codigo_local,
               "verificador": verificador, "casos": []}
+    # 18-oct (mod-8): `comparar` admite varios modelos; todos juzgan las MISMAS respuestas que el principal.
+    comparar = comparar or []
     if comparar:
-        salida["verificador_comparado"] = comparar
-    fallan_total = 0
-    coinciden = comparados = fallan_otro_total = 0
+        salida["verificadores_comparados"] = comparar
+    fallan_total = comparados = 0
+    coinciden = {m: 0 for m in comparar}
+    fallan_otro_total = {m: 0 for m in comparar}
     roto: list[str] = []
     for f in casos:
         try:
@@ -229,10 +232,9 @@ def medir(etiqueta: str, ids: list[str] | None, tarea: str | None, reps: int, fl
                 continue
         async def _todas(f=f, filas=filas):  # un solo bucle por caso (antes: "Event loop is closed" al cerrar clientes)
             principal = asyncio.gather(*(_verificar(f, hoy, verificador) for hoy in filas))
-            if not comparar:
-                return await principal, None
-            otro = asyncio.gather(*(_verificar(f, hoy, comparar) for hoy in filas))
-            return await asyncio.gather(principal, otro)
+            otros = [asyncio.gather(*(_verificar(f, hoy, m) for hoy in filas)) for m in comparar]
+            todos = await asyncio.gather(principal, *otros)
+            return todos[0], todos[1:]
 
         veredictos, otros = asyncio.run(_todas())
         falla = [v.get("se_reproduce") in ("si", "parcial") for v in veredictos]
@@ -242,14 +244,15 @@ def medir(etiqueta: str, ids: list[str] | None, tarea: str | None, reps: int, fl
                 "fallan": fallan, "respuestas": [h["reply"] for h in filas],
                 "explicaciones": [v.get("explicacion", "") for v in veredictos]}
         linea = f"  {f['id']} {f['dialogo'][:40]:40} {f['criterio'][:28]:28} falla {fallan}/{len(filas)}"
-        if otros is not None:
-            falla_otro = [v.get("se_reproduce") in ("si", "parcial") for v in otros]
-            caso["fallan_comparado"] = sum(falla_otro)
-            caso["explicaciones_comparado"] = [v.get("explicacion", "") for v in otros]
-            fallan_otro_total += sum(falla_otro)
-            coinciden += sum(a == b for a, b in zip(falla, falla_otro))
+        if comparar:
             comparados += len(falla)
-            linea += f"  ({comparar}: {sum(falla_otro)}/{len(filas)})"
+            caso["comparados"] = {}
+        for m, vs in zip(comparar, otros):
+            falla_otro = [v.get("se_reproduce") in ("si", "parcial") for v in vs]
+            caso["comparados"][m] = {"fallan": sum(falla_otro), "explicaciones": [v.get("explicacion", "") for v in vs]}
+            fallan_otro_total[m] += sum(falla_otro)
+            coinciden[m] += sum(a == b for a, b in zip(falla, falla_otro))
+            linea += f"  ({m}: {sum(falla_otro)}/{len(filas)})"
         salida["casos"].append(caso)
         print(linea)
     destino = CAL / "medidas" / f"{etiqueta}.json"
@@ -258,10 +261,12 @@ def medir(etiqueta: str, ids: list[str] | None, tarea: str | None, reps: int, fl
     total = sum(c["repeticiones"] for c in salida["casos"])
     salida["sin_medir"] = roto
     if comparar and comparados:
-        salida["coincidencia_verificadores"] = {"coinciden": coinciden, "de": comparados,
-                                                "fallan_principal": fallan_total, "fallan_comparado": fallan_otro_total}
-        print(f"verificadores: {verificador} y {comparar} coinciden en {coinciden}/{comparados} veredictos "
-              f"(fallan {fallan_total} con {verificador}, {fallan_otro_total} con {comparar})")
+        salida["coincidencia_verificadores"] = {
+            m: {"coinciden": coinciden[m], "de": comparados, "fallan_principal": fallan_total,
+                "fallan_comparado": fallan_otro_total[m]} for m in comparar}
+        for m in comparar:
+            print(f"verificadores: {verificador} y {m} coinciden en {coinciden[m]}/{comparados} veredictos "
+                  f"(fallan {fallan_total} con {verificador}, {fallan_otro_total[m]} con {m})")
     destino.write_text(json.dumps(salida, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
     medidos = len(casos) - len(roto)
     print(f"{etiqueta}: fallan {fallan_total}/{total} repeticiones en {medidos} casos medidos "
@@ -283,7 +288,8 @@ def main() -> None:
                          "base aunque PRE sirva la rama de otro con sus flags encendidos)")
     ap.add_argument("--codigo-local", action="store_true", help="medir: con el código local (sin desplegar)")
     ap.add_argument("--verificador", default=VERIFICADOR_MODELO, help="medir: modelo del verificador (gpt-4.1)")
-    ap.add_argument("--comparar-verificador", help="medir: juzga las mismas respuestas también con este modelo")
+    ap.add_argument("--comparar-verificador", action="append", default=[],
+                    help="medir: juzga las mismas respuestas también con este modelo (repetible)")
     ap.add_argument("--banco", help="medir: otro banco con el mismo formato (p. ej. docs/robustness/seguridad/"
                                     "banco-inyeccion.json)")
     ap.add_argument("--env", action="append", default=[], metavar="CLAVE=VALOR",
