@@ -1,0 +1,391 @@
+{
+  "label": "ex9b-1 (pasos 1, 2, 5 + tope 400)",
+  "source": "turn_metrics (log de PRE)",
+  "taken_at": "2026-10-19T11:26:40+00:00",
+  "run_at": "2026-10-19T11:26:18Z",
+  "commit": "01f08ab",
+  "environment": "staging",
+  "window": {
+    "from": "2026-10-19T11:05:54Z",
+    "to": "2026-10-19T11:28:28Z",
+    "first_turn": "2026-10-19T11:10:18Z",
+    "last_turn": "2026-10-19T11:26:18Z"
+  },
+  "all": {
+    "turns": 94,
+    "latency_p50": 2.843,
+    "latency_p95": 6.601,
+    "latency_avg": 3.25,
+    "llm_calls_avg": 4.21,
+    "llm_calls_p95": 8.0,
+    "llm_calls_max": 10,
+    "embeddings_avg": 1.87,
+    "llm_share": 1.216,
+    "tokens_avg": 0,
+    "cost_avg_usd": 0
+  },
+  "by_type": {
+    "reserva": {
+      "turns": 49,
+      "latency_p50": 1.524,
+      "latency_p95": 2.657,
+      "latency_avg": 1.619,
+      "llm_calls_avg": 2.53,
+      "llm_calls_p95": 4.0,
+      "llm_calls_max": 6,
+      "embeddings_avg": 1.45,
+      "llm_share": 1.161,
+      "tokens_avg": 0,
+      "cost_avg_usd": 0
+    },
+    "rag": {
+      "turns": 45,
+      "latency_p50": 4.446,
+      "latency_p95": 7.732,
+      "latency_avg": 5.025,
+      "llm_calls_avg": 6.04,
+      "llm_calls_p95": 8.8,
+      "llm_calls_max": 10,
+      "embeddings_avg": 2.33,
+      "llm_share": 1.236,
+      "tokens_avg": 0,
+      "cost_avg_usd": 0
+    }
+  },
+  "by_turn_type": {
+    "cambios": {
+      "turns": 1,
+      "latency_p50": 1.262,
+      "latency_p95": 1.262,
+      "latency_avg": 1.262,
+      "llm_calls_avg": 1.0,
+      "llm_calls_p95": 1.0,
+      "llm_calls_max": 1,
+      "embeddings_avg": 1,
+      "llm_share": 0.692,
+      "tokens_avg": 0,
+      "cost_avg_usd": 0
+    },
+    "deflection": {
+      "turns": 1,
+      "latency_p50": 1.976,
+      "latency_p95": 1.976,
+      "latency_avg": 1.976,
+      "llm_calls_avg": 1.0,
+      "llm_calls_p95": 1.0,
+      "llm_calls_max": 1,
+      "embeddings_avg": 0,
+      "llm_share": 0.793,
+      "tokens_avg": 0,
+      "cost_avg_usd": 0
+    },
+    "escalado": {
+      "turns": 8,
+      "latency_p50": 1.462,
+      "latency_p95": 1.902,
+      "latency_avg": 1.533,
+      "llm_calls_avg": 1.88,
+      "llm_calls_p95": 3.0,
+      "llm_calls_max": 3,
+      "embeddings_avg": 1.12,
+      "llm_share": 0.929,
+      "tokens_avg": 0,
+      "cost_avg_usd": 0
+    },
+    "rag": {
+      "turns": 45,
+      "latency_p50": 4.446,
+      "latency_p95": 7.732,
+      "latency_avg": 5.025,
+      "llm_calls_avg": 6.04,
+      "llm_calls_p95": 8.8,
+      "llm_calls_max": 10,
+      "embeddings_avg": 2.33,
+      "llm_share": 1.236,
+      "tokens_avg": 0,
+      "cost_avg_usd": 0
+    },
+    "reserva": {
+      "turns": 35,
+      "latency_p50": 1.537,
+      "latency_p95": 2.646,
+      "latency_avg": 1.632,
+      "llm_calls_avg": 2.8,
+      "llm_calls_p95": 4.0,
+      "llm_calls_max": 6,
+      "embeddings_avg": 1.69,
+      "llm_share": 1.258,
+      "tokens_avg": 0,
+      "cost_avg_usd": 0
+    },
+    "saludo": {
+      "turns": 4,
+      "latency_p50": 1.414,
+      "latency_p95": 2.843,
+      "latency_avg": 1.679,
+      "llm_calls_avg": 2.25,
+      "llm_calls_p95": 2.85,
+      "llm_calls_max": 3,
+      "embeddings_avg": 0.5,
+      "llm_share": 0.958,
+      "tokens_avg": 0,
+      "cost_avg_usd": 0
+    }
+  },
+  "turns_with_summary": 94,
+  "business": {
+    "conversations": 33,
+    "turns": 94,
+    "turns_per_conversation": 2.85,
+    "funnel": {
+      "hablan": {
+        "conversations": 33,
+        "pct": 100.0
+      },
+      "eligen_actividad": {
+        "conversations": 5,
+        "pct": 15.2
+      },
+      "carrito_con_personas": {
+        "conversations": 5,
+        "pct": 15.2
+      },
+      "link_de_pago": {
+        "conversations": 8,
+        "pct": 24.2
+      }
+    },
+    "escalation_rate_pct": 21.2,
+    "fallback_turns": 0,
+    "fallback_pct_of_turns": 0.0,
+    "by_turn_type": {
+      "rag": 45,
+      "reserva": 35,
+      "escalado": 8,
+      "saludo": 4,
+      "cambios": 1,
+      "deflection": 1
+    }
+  },
+  "nodes": {
+    "info": {
+      "n": 4,
+      "p50": 3.512,
+      "p95": 4.425
+    },
+    "booking": {
+      "n": 80,
+      "p50": 3.045,
+      "p95": 6.043
+    },
+    "slotfill_close": {
+      "n": 72,
+      "p50": 1.341,
+      "p95": 5.405
+    },
+    "extraction": {
+      "n": 72,
+      "p50": 0.51,
+      "p95": 1.538
+    },
+    "router": {
+      "n": 94,
+      "p50": 0.43,
+      "p95": 1.195
+    },
+    "setup": {
+      "n": 80,
+      "p50": 0.027,
+      "p95": 0.926
+    },
+    "changes": {
+      "n": 1,
+      "p50": 0.007,
+      "p95": 0.007
+    },
+    "routing": {
+      "n": 72,
+      "p50": 0.006,
+      "p95": 0.018
+    },
+    "availability": {
+      "n": 80,
+      "p50": 0.005,
+      "p95": 0.225
+    },
+    "deflection": {
+      "n": 1,
+      "p50": 0.004,
+      "p95": 0.004
+    },
+    "safety": {
+      "n": 8,
+      "p50": 0.002,
+      "p95": 0.003
+    }
+  },
+  "router": {
+    "by_backend": {
+      "jev": 84,
+      "llm_uncertain": 9,
+      "llm": 1
+    },
+    "ms_p50": 404.0,
+    "ms_p95": 482.8
+  },
+  "models": {
+    "deepseek/deepseek-v4.1-flash": 159,
+    "anthropic/claude-haiku-5.5": 95,
+    "gpt-6-luna": 95,
+    "gpt-5.4-nano": 45,
+    "gpt-5.4-mini": 2
+  },
+  "rag_adelantado": {
+    "resultados": {
+      "descartado": 48,
+      "aprovechado": 39,
+      "rehecho": 6,
+      "sin_adelantar": 1
+    },
+    "latencia_turnos_rag": {
+      "aprovechado": {
+        "n": 39,
+        "p50": 4.367,
+        "p95": 6.578
+      },
+      "rehecho": {
+        "n": 6,
+        "p50": 6.314,
+        "p95": 8.878
+      }
+    },
+    "rehecho_por": {
+      "resumen": 6,
+      "origen": 2
+    }
+  },
+  "por_pieza": {
+    "embedding": {
+      "n": 176,
+      "p50": 0.164,
+      "p95": 0.28,
+      "modelos": {
+        "text-embedding-3-small": 176
+      }
+    },
+    "extractor": {
+      "n": 91,
+      "p50": 0.748,
+      "p95": 1.512,
+      "modelos": {
+        "anthropic/claude-haiku-5.5": 91
+      }
+    },
+    "rag_escritor": {
+      "n": 47,
+      "p50": 1.827,
+      "p95": 3.326,
+      "modelos": {
+        "gpt-6-luna": 47
+      }
+    },
+    "revisor": {
+      "n": 47,
+      "p50": 0.578,
+      "p95": 0.894,
+      "modelos": {
+        "deepseek/deepseek-v4.1-flash": 47
+      }
+    },
+    "aviso_final": {
+      "n": 46,
+      "p50": 1.23,
+      "p95": 2.178,
+      "modelos": {
+        "gpt-6-luna": 46
+      }
+    },
+    "reescritura": {
+      "n": 45,
+      "p50": 0.432,
+      "p95": 0.77,
+      "modelos": {
+        "deepseek/deepseek-v4.1-flash": 45
+      }
+    },
+    "acuse": {
+      "n": 45,
+      "p50": 0.909,
+      "p95": 1.127,
+      "modelos": {
+        "gpt-5.4-nano": 45
+      }
+    },
+    "pregunta_sola": {
+      "n": 45,
+      "p50": 0.43,
+      "p95": 0.767,
+      "modelos": {
+        "deepseek/deepseek-v4.1-flash": 45
+      }
+    },
+    "senales_router": {
+      "n": 9,
+      "p50": 0.512,
+      "p95": 0.779,
+      "modelos": {
+        "deepseek/deepseek-v4.1-flash": 9
+      }
+    },
+    "notas": {
+      "n": 8,
+      "p50": 0.455,
+      "p95": 0.607,
+      "modelos": {
+        "deepseek/deepseek-v4.1-flash": 8
+      }
+    },
+    "rag_respaldo": {
+      "n": 5,
+      "p50": 0.515,
+      "p95": 0.791,
+      "modelos": {
+        "deepseek/deepseek-v4.1-flash": 5
+      }
+    },
+    "red_resolve_slot_answer": {
+      "n": 4,
+      "p50": 0.72,
+      "p95": 0.779,
+      "modelos": {
+        "anthropic/claude-haiku-5.5": 4
+      }
+    },
+    "extractor_respaldo": {
+      "n": 2,
+      "p50": 1.434,
+      "p95": 1.609,
+      "modelos": {
+        "gpt-5.4-mini": 2
+      }
+    },
+    "red_detect_special_signals": {
+      "n": 2,
+      "p50": 1.465,
+      "p95": 1.486,
+      "modelos": {
+        "gpt-6-luna": 2
+      }
+    }
+  },
+  "run_file": "docs/robustness/synthetic-runs/2026-10-19-ex9b-1.jsonl",
+  "client_latency": {
+    "turns": 93,
+    "conversations": 32,
+    "no_reply": 0,
+    "multi_bubble": 1,
+    "latency_p50": 3.0,
+    "latency_p95": 7.0,
+    "latency_max": 14
+  }
+}
