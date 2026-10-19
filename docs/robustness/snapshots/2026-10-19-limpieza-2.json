@@ -1,0 +1,391 @@
+{
+  "label": "limpieza-2 (s4-25 paso 2, flujo; PRE 970641f)",
+  "source": "turn_metrics (log de PRE)",
+  "taken_at": "2026-10-19T01:59:03+00:00",
+  "run_at": "2026-10-19T01:58:39Z",
+  "commit": "970641f",
+  "environment": "staging",
+  "window": {
+    "from": "2026-10-19T01:38:20Z",
+    "to": "2026-10-19T02:00:48Z",
+    "first_turn": "2026-10-19T01:43:12Z",
+    "last_turn": "2026-10-19T01:58:39Z"
+  },
+  "all": {
+    "turns": 93,
+    "latency_p50": 2.942,
+    "latency_p95": 6.157,
+    "latency_avg": 3.197,
+    "llm_calls_avg": 4.39,
+    "llm_calls_p95": 8.0,
+    "llm_calls_max": 13,
+    "embeddings_avg": 1.89,
+    "llm_share": 1.366,
+    "tokens_avg": 0,
+    "cost_avg_usd": 0
+  },
+  "by_type": {
+    "reserva": {
+      "turns": 49,
+      "latency_p50": 1.638,
+      "latency_p95": 3.282,
+      "latency_avg": 1.833,
+      "llm_calls_avg": 2.73,
+      "llm_calls_p95": 4.0,
+      "llm_calls_max": 5,
+      "embeddings_avg": 1.57,
+      "llm_share": 1.295,
+      "tokens_avg": 0,
+      "cost_avg_usd": 0
+    },
+    "rag": {
+      "turns": 44,
+      "latency_p50": 4.487,
+      "latency_p95": 7.358,
+      "latency_avg": 4.717,
+      "llm_calls_avg": 6.23,
+      "llm_calls_p95": 9.0,
+      "llm_calls_max": 13,
+      "embeddings_avg": 2.25,
+      "llm_share": 1.397,
+      "tokens_avg": 0,
+      "cost_avg_usd": 0
+    }
+  },
+  "by_turn_type": {
+    "cambios": {
+      "turns": 2,
+      "latency_p50": 1.327,
+      "latency_p95": 1.476,
+      "latency_avg": 1.328,
+      "llm_calls_avg": 2.0,
+      "llm_calls_p95": 2.9,
+      "llm_calls_max": 3,
+      "embeddings_avg": 1.5,
+      "llm_share": 1.173,
+      "tokens_avg": 0,
+      "cost_avg_usd": 0
+    },
+    "deflection": {
+      "turns": 1,
+      "latency_p50": 1.173,
+      "latency_p95": 1.173,
+      "latency_avg": 1.173,
+      "llm_calls_avg": 1.0,
+      "llm_calls_p95": 1.0,
+      "llm_calls_max": 1,
+      "embeddings_avg": 0,
+      "llm_share": 0.684,
+      "tokens_avg": 0,
+      "cost_avg_usd": 0
+    },
+    "escalado": {
+      "turns": 7,
+      "latency_p50": 1.532,
+      "latency_p95": 1.908,
+      "latency_avg": 1.556,
+      "llm_calls_avg": 1.86,
+      "llm_calls_p95": 3.0,
+      "llm_calls_max": 3,
+      "embeddings_avg": 1.14,
+      "llm_share": 1.096,
+      "tokens_avg": 0,
+      "cost_avg_usd": 0
+    },
+    "rag": {
+      "turns": 44,
+      "latency_p50": 4.487,
+      "latency_p95": 7.358,
+      "latency_avg": 4.717,
+      "llm_calls_avg": 6.23,
+      "llm_calls_p95": 9.0,
+      "llm_calls_max": 13,
+      "embeddings_avg": 2.25,
+      "llm_share": 1.397,
+      "tokens_avg": 0,
+      "cost_avg_usd": 0
+    },
+    "reserva": {
+      "turns": 36,
+      "latency_p50": 1.659,
+      "latency_p95": 2.903,
+      "latency_avg": 1.838,
+      "llm_calls_avg": 2.97,
+      "llm_calls_p95": 4.0,
+      "llm_calls_max": 5,
+      "embeddings_avg": 1.75,
+      "llm_share": 1.395,
+      "tokens_avg": 0,
+      "cost_avg_usd": 0
+    },
+    "saludo": {
+      "turns": 3,
+      "latency_p50": 3.508,
+      "latency_p95": 3.828,
+      "latency_avg": 2.983,
+      "llm_calls_avg": 3.0,
+      "llm_calls_p95": 4.7,
+      "llm_calls_max": 5,
+      "embeddings_avg": 1,
+      "llm_share": 0.92,
+      "tokens_avg": 0,
+      "cost_avg_usd": 0
+    }
+  },
+  "turns_with_summary": 93,
+  "business": {
+    "conversations": 32,
+    "turns": 93,
+    "turns_per_conversation": 2.91,
+    "funnel": {
+      "hablan": {
+        "conversations": 32,
+        "pct": 100.0
+      },
+      "eligen_actividad": {
+        "conversations": 5,
+        "pct": 15.6
+      },
+      "carrito_con_personas": {
+        "conversations": 5,
+        "pct": 15.6
+      },
+      "link_de_pago": {
+        "conversations": 10,
+        "pct": 31.2
+      }
+    },
+    "escalation_rate_pct": 18.8,
+    "fallback_turns": 0,
+    "fallback_pct_of_turns": 0.0,
+    "by_turn_type": {
+      "rag": 44,
+      "reserva": 36,
+      "escalado": 7,
+      "saludo": 3,
+      "cambios": 2,
+      "deflection": 1
+    }
+  },
+  "nodes": {
+    "info": {
+      "n": 2,
+      "p50": 4.489,
+      "p95": 4.503
+    },
+    "booking": {
+      "n": 81,
+      "p50": 2.564,
+      "p95": 5.856
+    },
+    "slotfill_close": {
+      "n": 75,
+      "p50": 1.044,
+      "p95": 4.977
+    },
+    "extraction": {
+      "n": 76,
+      "p50": 0.616,
+      "p95": 1.964
+    },
+    "router": {
+      "n": 93,
+      "p50": 0.424,
+      "p95": 1.573
+    },
+    "setup": {
+      "n": 81,
+      "p50": 0.033,
+      "p95": 1.534
+    },
+    "routing": {
+      "n": 76,
+      "p50": 0.007,
+      "p95": 0.014
+    },
+    "deflection": {
+      "n": 1,
+      "p50": 0.005,
+      "p95": 0.005
+    },
+    "availability": {
+      "n": 81,
+      "p50": 0.005,
+      "p95": 0.024
+    },
+    "changes": {
+      "n": 2,
+      "p50": 0.003,
+      "p95": 0.003
+    },
+    "safety": {
+      "n": 7,
+      "p50": 0.002,
+      "p95": 0.006
+    }
+  },
+  "router": {
+    "by_backend": {
+      "jev": 78,
+      "llm_uncertain": 14,
+      "llm": 1
+    },
+    "ms_p50": 396.0,
+    "ms_p95": 488.65
+  },
+  "models": {
+    "deepseek/deepseek-v4.1-flash": 161,
+    "gpt-6-luna": 102,
+    "anthropic/claude-haiku-5.5": 96,
+    "gpt-5.4-nano": 48,
+    "gpt-5.4-mini": 1
+  },
+  "rag_adelantado": {
+    "resultados": {
+      "descartado": 48,
+      "aprovechado": 39,
+      "rehecho": 5,
+      "sin_adelantar": 1
+    },
+    "latencia_turnos_rag": {
+      "aprovechado": {
+        "n": 39,
+        "p50": 4.236,
+        "p95": 6.427
+      },
+      "rehecho": {
+        "n": 5,
+        "p50": 5.595,
+        "p95": 7.527
+      }
+    },
+    "rehecho_por": {
+      "resumen": 5,
+      "origen": 2
+    }
+  },
+  "por_pieza": {
+    "embedding": {
+      "n": 176,
+      "p50": 0.158,
+      "p95": 0.223,
+      "modelos": {
+        "text-embedding-3-small": 176
+      }
+    },
+    "extractor": {
+      "n": 91,
+      "p50": 0.931,
+      "p95": 1.654,
+      "modelos": {
+        "anthropic/claude-haiku-5.5": 91
+      }
+    },
+    "rag_escritor": {
+      "n": 53,
+      "p50": 1.79,
+      "p95": 2.805,
+      "modelos": {
+        "gpt-6-luna": 53
+      }
+    },
+    "acuse": {
+      "n": 48,
+      "p50": 0.839,
+      "p95": 1.059,
+      "modelos": {
+        "gpt-5.4-nano": 48
+      }
+    },
+    "reescritura": {
+      "n": 46,
+      "p50": 0.804,
+      "p95": 0.987,
+      "modelos": {
+        "deepseek/deepseek-v4.1-flash": 46
+      }
+    },
+    "aviso_final": {
+      "n": 46,
+      "p50": 0.998,
+      "p95": 1.67,
+      "modelos": {
+        "gpt-6-luna": 46
+      }
+    },
+    "revisor": {
+      "n": 46,
+      "p50": 0.583,
+      "p95": 1.447,
+      "modelos": {
+        "deepseek/deepseek-v4.1-flash": 46
+      }
+    },
+    "pregunta_sola": {
+      "n": 44,
+      "p50": 0.694,
+      "p95": 0.873,
+      "modelos": {
+        "deepseek/deepseek-v4.1-flash": 44
+      }
+    },
+    "senales_router": {
+      "n": 14,
+      "p50": 1.017,
+      "p95": 1.955,
+      "modelos": {
+        "deepseek/deepseek-v4.1-flash": 14
+      }
+    },
+    "notas": {
+      "n": 10,
+      "p50": 0.594,
+      "p95": 0.893,
+      "modelos": {
+        "deepseek/deepseek-v4.1-flash": 10
+      }
+    },
+    "red_resolve_slot_answer": {
+      "n": 5,
+      "p50": 0.701,
+      "p95": 0.991,
+      "modelos": {
+        "anthropic/claude-haiku-5.5": 5
+      }
+    },
+    "red_detect_special_signals": {
+      "n": 3,
+      "p50": 1.008,
+      "p95": 1.154,
+      "modelos": {
+        "gpt-6-luna": 3
+      }
+    },
+    "extractor_respaldo": {
+      "n": 1,
+      "p50": 1.177,
+      "p95": 1.177,
+      "modelos": {
+        "gpt-5.4-mini": 1
+      }
+    },
+    "rag_respaldo": {
+      "n": 1,
+      "p50": 1.081,
+      "p95": 1.081,
+      "modelos": {
+        "deepseek/deepseek-v4.1-flash": 1
+      }
+    }
+  },
+  "run_file": "docs/robustness/synthetic-runs/2026-10-19-limpieza-2.jsonl",
+  "client_latency": {
+    "turns": 93,
+    "conversations": 32,
+    "no_reply": 0,
+    "multi_bubble": 1,
+    "latency_p50": 3.0,
+    "latency_p95": 6.4,
+    "latency_max": 9
+  }
+}

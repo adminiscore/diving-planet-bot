@@ -1,6 +1,23 @@
 History
 =======
 
+0.31.59 - (2026-10-19)
+----------------------
+* **Limpieza s4-25 paso 2 (flujo) INTEGRADA y equivalente** (Gadea con Claude, noche, con las tareas de Álvaro; un
+  agente la preparó en `feature/limpieza-paso2-flujo`, 05da039).
+  - Fuera el camino apagado de 10 flags promocionados el 24-28 sep: `answer_and_continue`, `s4_fixes`,
+    `corrections_v2`, `recommend_inferred_minicourse`, `ack_in_parallel`, `notes_in_parallel` y los 4
+    `llm_extraction_cutover_*` (sin efecto desde el 28-jul: `_maybe_apply_llm_extraction_cutover` ya no lo llama nadie;
+    la función y `_maybe_log_llm_extraction_shadow`, código muerto para s4-1/s4-3). src −179 líneas netas, tests −430.
+    El prompt del RAG sale idéntico byte a byte en las 512 combinaciones de sus flags; suite 3258.
+  - **Ronda de equivalencia `limpieza-2`**: 96,1 % 24/32 frente a limpieza-1 97,4 % 27/32; mismas llamadas por turno
+    (4,39 frente a 4,35; la latencia algo más alta es de los proveedores a las 4 de la mañana: reescritura 0,46 → 0,80 s
+    con el mismo código). Las 4 regresiones, repetidas 3 veces con el código de ANTES (0d48ace) y el de DESPUÉS (970641f)
+    por `--codigo-local`: «me pediste…» 0/3 en los dos; el resto 1/3 a un lado o al otro, con respuestas que dicen lo
+    mismo (redacción del modelo y el extractor que a veces pone island con «stay one day longer in rosario»). Ruido.
+  - Sin tocar (promocionados el 13-14 oct, esperar): `escalado_solo_emergencias`, `aplazar_pregunta_sin_respuesta`,
+    `atajo_resumen_por_rag`, `atajo_nacionalidad_por_rag`. `agent_arch` es s4-1 (Álvaro).
+
 0.31.58 - (2026-10-19)
 ----------------------
 * **Limpieza s4-25 paso 1 CONFIRMADA equivalente; `CERTIFICADO_SOLO_SI_LO_DICE` afinado pero sigue APAGADO** (Gadea con
