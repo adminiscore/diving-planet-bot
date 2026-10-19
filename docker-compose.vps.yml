@@ -165,14 +165,9 @@ services:
       # "compiled grammar is too large", y contestaba siempre el respaldo). Se queda el respaldo POR TIEMPO de
       # OpenRouter (5 s): si no contesta en 5 s, la misma petición sale por OpenAI.
       OPENROUTER_RESPALDO_SEGUNDOS: "5.0"
-      # RONDA ex9b-6 (19-oct), EN PRUEBA: el paso 6 (duración, edades, notas) en una SEGUNDA llamada al extractor, a la vez
-      # que la de siempre (decisión de Gadea; todo junto no cabía en Haiku). PLAN_ELEGIDO_POR_EXTRACTOR fuera (ex9b-5:
-      # tomaba la descripción del Open Water por un paquete). Y las cifras de los enlaces ya no se tapan al mandar el texto
-      # a OpenRouter (el enlace de Maps del punto de encuentro llegaba roto). Revert = quitar estas líneas y "False".
-      DURACION_POR_EXTRACTOR: "true"
-      EDADES_POR_EXTRACTOR: "true"
-      NOTAS_RAG_DESDE_ESTADO: "true"
-      PASO6_EN_LLAMADA_APARTE: "true"
+      # El paso 6 de ex-9b NO se promociona (rondas ex9b-5 y ex9b-6 por debajo de ex9b-3; HISTORY 0.31.66): apagado.
+      # RONDA ex9b-7 (19-oct, confirmación antes de G9): las cifras de los enlaces ya no se tapan al mandar el texto a
+      # OpenRouter (el enlace de Maps del punto de encuentro llegaba roto con el respaldo del RAG).
       PII_RESPETA_URLS: "true"
       # CERTIFICADO_SOLO_SI_LO_DICE con «buceé hace poco» = certificado (decisión de Gadea). PROMOCIONADO (HISTORY
       # 0.31.61: mod-H2 97,0 % igual que limpieza-3; reserva-solo-link ya no ofrece el minicurso). Revert = quitar estas líneas.

@@ -1,6 +1,27 @@
 History
 =======
 
+0.31.66 - (2026-10-19)
+----------------------
+* **El paso 6 de ex-9b NO se promociona; arreglo de los enlaces al tapar datos personales; ronda ex9b-7 de
+  confirmación antes de G9** (Gadea con Claude).
+  - **ex9b-5** (paso 6 en una segunda llamada, decisión de Gadea): Haiku ya no falla (92 + 92 llamadas, 1 respaldo).
+    96,6 % 24/32 frente a ex9b-3 97,4 % 28/32. Atribución 3+3: reserva-solo-link y punto-encuentro no se repiten;
+    manual-duracion-curso sí (2/3 frente a 3/3): `PLAN_ELEGIDO_POR_EXTRACTOR` tomaba la descripción del curso Open Water
+    ("4 inmersiones") por la propuesta de un paquete y "para mí" elegía el Curso Referido → APAGADO.
+  - **ex9b-6** (paso 6 sin el plan elegido + `PII_RESPETA_URLS`): 95,2 % 23/32; p95 9,9 s; 5,58 llamadas por turno.
+    Atribución 3+3: reserva-solo-link y descuento-online no se repiten; certificado-fechas-fotos un fallo más con el
+    paso 6 (1/3 frente a 2/3). La repregunta "¿más de 2 años?" de reserva-solo-link sale en las rondas con el paso 6
+    (2 de 2) y nunca sola; aislado, el extractor lee "buceé hace poco" igual con y sin el paso 6 (5/5).
+  - **Decisión (Claude, con el permiso de Gadea): el paso 6 se queda APAGADO** (las tres rondas con él por debajo de
+    ex9b-3, una llamada más por turno y más latencia; sin causa aislada). El código y sus bancos se quedan para
+    retomarlo (duración 16/16, edades 13/13, notas 10/10 en el banco del extractor).
+  - **`PII_RESPETA_URLS`**: al tapar datos personales antes de OpenRouter, las coordenadas del enlace de Maps del punto
+    de encuentro se tapaban como teléfono y el respaldo del RAG (DeepSeek) devolvía el enlace roto. Con el flag no se
+    tapan cifras DENTRO de un enlace, salvo en los de WhatsApp. 5 tests.
+  - Configuración final = ex9b-3 + respaldo por tiempo de OpenRouter + enlaces enteros: ronda ex9b-7 para confirmarla
+    antes de G9.
+
 0.31.65 - (2026-10-19)
 ----------------------
 * **Ronda ex9b-4 (paso 6 de ex-9b) NO promocionada: con los campos nuevos, Anthropic rechaza el esquema del extractor**
