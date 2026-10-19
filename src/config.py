@@ -137,13 +137,13 @@ class Settings(BaseSettings):
     alcohol_detras_de_lo_medico: bool = True
     # ex-9b paso 5 (19-oct): las listas de palabras y regex con su señal de IA (link roto, tema sensible, cancelar/cambiar,
     # contacto, "hablar con", DIVE TO HEAL) solo deciden si la IA calla este turno, en el router, los nodos, `setup` y la
-    # cascada (regla única: `supervisor.regex_decide`). EN PRUEBA en la ronda ex9b-1; revert = False.
+    # cascada (regla única: `supervisor.regex_decide`). PROMOCIONADO 19-oct (ronda ex9b-1, HISTORY 0.31.62); revert = False.
     regex_solo_si_ia_calla: bool = True
     # ex-9b paso 5 (19-oct): "¿trae una pregunta?" y "¿corrige un dato?" en el núcleo los decide Jev cuando contesta
-    # (`asks_question`, `corrects`); el regex de siempre solo si Jev calla. El "?" sigue contando. EN PRUEBA (ex9b-1).
+    # (`asks_question`, `corrects`); el regex de siempre solo si Jev calla. El "?" sigue contando. PROMOCIONADO (ex9b-1).
     pregunta_y_correccion_por_jev: bool = True
     # ex-9b paso 5 (19-oct): preguntas nuevas de Jev en lugar de regex (`jev_router`: NUEVO_CASO, PREGUNTA_SI_ES_IA,
-    # CAMBIA_IDIOMA); el regex solo si Jev calla. EN PRUEBA en la ronda ex9b-2; revert = False.
+    # CAMBIA_IDIOMA); el regex solo si Jev calla. PROMOCIONADOS 19-oct (ronda ex9b-2 97,0 % 26/32, HISTORY 0.31.63).
     reinicio_por_jev: bool = True  # el reinicio de escenario (borra la memoria) solo si Jev dice que es un caso nuevo
     identidad_ia_por_jev: bool = True  # "¿eres un bot?"
     idioma_por_jev: bool = True  # el cambio de idioma a mitad de conversación

@@ -1,6 +1,25 @@
 History
 =======
 
+0.31.63 - (2026-10-19)
+----------------------
+* **Ronda ex9b-2 PROMOCIONADA: preguntas nuevas de Jev, deliberación por la IA y el enrutador de respaldo con "none"**
+  (Gadea con Claude).
+  - `REINICIO_POR_JEV`, `IDENTIDAD_IA_POR_JEV`, `IDIOMA_POR_JEV`, `DELIBERACION_POR_JEV` + la regla del grupo repartido
+    del paso 3 (sin flag) + "none" en `sensitive_topic`/`booking_change_topic` del enrutador de respaldo (608c3bd).
+  - **97,0 % 26/32 frente a ex9b-1 96,1 % 24/32.** Mejora real: descuento-online explica que el 10 % es automático
+    (3/3, la decisión de Gadea del 18-oct). Su única regresión real (certificado-fechas-fotos-y-reserva, "¿te queda
+    mejor el 5 o el 6?") no se repite: atribución 3+3 con los cuatro flags encendidos y apagados, 0 fallos de
+    repregunta. Sí sale, en las dos variantes (2/3 y 1/3), que el RAG dice "al pagar quedas confirmado al instante"
+    cuando el equipo concilia y confirma después: **fallo del RAG pendiente, no de ex-9b**. p50 3,2 s / p95 6,1 s.
+  - **Paso 3, tests:** un agente adaptó los 78 tests que dependían del regex sin saberlo (extractor simulado con
+    `extractor_dice` en `conftest.py`, 22 que pasaban sin probar lo suyo); la suite pasa con `EXTRACTOR_SIN_PISTA`
+    encendido y apagado. Hallazgos: un acompañante nuevo con el grupo ya completo se pierde ("mi hermano también viene,
+    él quiere hacer snorkel": el atajo de grupo completo se salta la red de señales; ya pasaba antes de ex-9b); "mi
+    pareja tiene el advanced" como curso en el reparto NO pasa con el extractor real (0/8).
+  - **`PRECIO_POR_JEV`** (APAGADO, para ex9b-3): la puerta "origen antes del precio" con la pregunta nueva de Jev
+    PIDE_PRECIO (regex 13/16, Jev 16/16): "me quedo en el hotel Caribe" ya no salta la puerta.
+
 0.31.62 - (2026-10-19)
 ----------------------
 * **ex-9 parte 2 (ex-9b), pasos 0, 1, 2 y 5: que entienda la IA y no las listas de palabras; ronda ex9b-1** (Gadea con
