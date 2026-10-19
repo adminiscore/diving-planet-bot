@@ -53,6 +53,7 @@ async def info_node(state: BotState) -> dict:
         _maybe_answer_age_eligibility,
         _shared_turn_handler,
         private_group_event_reply,
+        regex_decide,
     )
 
     conv = state["conv_state"]
@@ -96,7 +97,8 @@ async def info_node(state: BotState) -> dict:
     #     contexto adaptativo igual que la cascada (líneas 2130-2131). El usuario
     #     se añade al historial ANTES de llamar a RAG (para que lo vea), como en
     #     la cascada.
-    adaptive_now = bool(_ADAPTIVE_DIVING_PATTERN.search(message)) or bool(signals.get("adaptive_diving_topic"))
+    adaptive_now = (regex_decide(signals) and bool(_ADAPTIVE_DIVING_PATTERN.search(message))) or bool(
+        signals.get("adaptive_diving_topic"))
     if adaptive_now:
         conv.adaptive_diving_context = True
     # Hallazgo en vivo (batería de frontera contra PRE, 2026-09-01): usar solo

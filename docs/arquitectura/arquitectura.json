@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-19T09:51:51+00:00",
-  "commit": "236600c",
+  "generado": "2026-10-19T10:21:21+00:00",
+  "commit": "1597c73",
   "rama": "feature/pre_gadea"
  },
  "vistas": {
@@ -180,8 +180,8 @@
     {
      "nombre": "regex_solo_si_ia_calla",
      "titulo": "Las listas de palabras solo deciden si la IA calla",
-     "codigo": false,
-     "pre": false,
+     "codigo": true,
+     "pre": true,
      "sin_efecto": false
     }
    ],
@@ -802,6 +802,13 @@
     {
      "nombre": "resolutor_sin_contradicciones",
      "titulo": "Una respuesta que se contradice no fija el dato",
+     "codigo": true,
+     "pre": true,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "pregunta_y_correccion_por_jev",
+     "titulo": "Jev decide si el mensaje pregunta algo o corrige un dato",
      "codigo": true,
      "pre": true,
      "sin_efecto": false
@@ -2794,6 +2801,19 @@
    "sin_efecto": null
   },
   {
+   "nombre": "pregunta_y_correccion_por_jev",
+   "area": "Reserva",
+   "titulo": "Jev decide si el mensaje pregunta algo o corrige un dato",
+   "texto": "Para saber si el cliente pregunta algo (y hay que contestarle) o corrige un dato que ya dio, manda Jev cuando contesta; la lista de palabras solo cuenta si Jev no contesta. Antes «hay un niño de 5 años» se tomaba por una pregunta y «perdón la demora, ¿qué horarios tienen?» por una corrección.",
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
+   "usado_por": [
+    "b_slotfill_close"
+   ],
+   "sin_efecto": null
+  },
+  {
    "nombre": "rag_concise",
    "area": "Preguntas",
    "titulo": "Respuestas cortas",
@@ -3071,10 +3091,10 @@
    "nombre": "regex_solo_si_ia_calla",
    "area": "Enrutador",
    "titulo": "Las listas de palabras solo deciden si la IA calla",
-   "texto": "Para el link roto, los temas sensibles, cancelar o cambiar, pedir un contacto, hablar con una persona y DIVE TO HEAL, si Jev o el enrutador de respaldo han contestado este turno manda lo que dicen ellos; las listas de palabras solo cuentan si la IA no contesta. Corrige «quiero hablar con mi esposa antes de reservar» (no es pedir una persona) o «¿dónde cojo la lancha?» (no es DIVE TO HEAL).",
-   "codigo": false,
-   "pre": false,
-   "fijado_en_pre": false,
+   "texto": "Para el link roto, los temas sensibles, cancelar o cambiar, pedir un contacto, hablar con una persona y DIVE TO HEAL, si Jev o el enrutador de respaldo han contestado este turno manda lo que dicen ellos; las listas de palabras solo cuentan si la IA no contesta. Vale igual en el enrutador, en cada ruta y en la reserva. Corrige «quiero hablar con mi esposa antes de reservar» (no es pedir una persona) o «¿dónde cojo la lancha?» (no es DIVE TO HEAL).",
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
    "usado_por": [
     "router"
    ],
@@ -3097,7 +3117,7 @@
    "nombre": "resolutor_sin_contradicciones",
    "area": "Reserva",
    "titulo": "Una respuesta que se contradice no fija el dato",
-   "texto": "Si a la pregunta del bot el cliente contesta algo que se contradice (\"no, buceé hace poco\" a ¿eres buzo certificado?), Coral no da el dato por sabido: vuelve a preguntar en vez de adivinar.",
+   "texto": "Si a la pregunta del bot el cliente contesta algo que se contradice (\"sí… bueno, en realidad no\" a ¿eres buzo certificado?), Coral no da el dato por sabido: vuelve a preguntar en vez de adivinar.",
    "codigo": true,
    "pre": true,
    "fijado_en_pre": true,

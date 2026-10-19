@@ -58,6 +58,7 @@ async def changes_node(state: BotState) -> dict:
         _in_active_cart_building,
         _jev_changes_date,
         _shared_turn_handler,
+        regex_decide,
     )
 
     conv = state["conv_state"]
@@ -66,7 +67,7 @@ async def changes_node(state: BotState) -> dict:
     msg_lower = message.strip().lower()
 
     # 1 · Cancelación (pre-núcleo).
-    if _detect_cancellation_request(msg_lower) or (
+    if (regex_decide(signals) and _detect_cancellation_request(msg_lower)) or (
         signals.get("booking_change_topic") == "cancellation"
         and not _in_active_cart_building(conv)
     ):
@@ -74,7 +75,7 @@ async def changes_node(state: BotState) -> dict:
         return {"reply": _booking_change_response(conv, message, "cancellation")}
 
     # 2 · Reprogramación (pre-núcleo).
-    if _detect_reschedule_request(msg_lower) or (
+    if (regex_decide(signals) and _detect_reschedule_request(msg_lower)) or (
         signals.get("booking_change_topic") == "reschedule"
         and not _in_active_cart_building(conv)
     ) or _jev_changes_date(signals):
@@ -83,7 +84,7 @@ async def changes_node(state: BotState) -> dict:
 
     # 3 · Modificar headcount de una reserva existente (pre-núcleo, hallazgo G,
     #     portado de pre_gadea v0.21.13 — mismo patrón que cancelación/reprogramación).
-    if _detect_modify_booking_request(msg_lower) or (
+    if (regex_decide(signals) and _detect_modify_booking_request(msg_lower)) or (
         signals.get("booking_change_topic") == "modify_headcount"
         and not _in_active_cart_building(conv)
     ):

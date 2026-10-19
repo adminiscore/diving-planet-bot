@@ -52,6 +52,16 @@ _ADAPTIVE_DIVING_PATTERN = re.compile(
 )
 
 
+def regex_decide(signals: dict | None) -> bool:
+    """ex-9b paso 5 (flag `regex_solo_si_ia_calla`, estudio docs/robustness/regex/estudio-ex9-regex.md): ¿puede decidir
+    este turno una lista de palabras o un regex que tiene su señal de IA (link roto, tema sensible, cancelar/cambiar,
+    contacto, "hablar con", DIVE TO HEAL)? Siempre con el flag apagado; con él, solo si la IA calla (Jev y el router
+    LLM de respaldo no han dejado señales: fallo de los dos o clic de botón). Es la única regla y la usan todos los
+    lectores: el router, los nodos, `setup` y la cascada. Si solo la mirara el router, el nodo de reserva volvía a ver
+    "hablar con" en "quiero hablar con mi esposa antes de reservar" y pasaba igual a una persona."""
+    return not (settings.regex_solo_si_ia_calla and bool(signals))
+
+
 # Afirmacion "a secas" ("si", "dale", "ok") — usada para cumplir una oferta que
 # el propio bot hizo en el turno anterior (p.ej. "¿te paso con un asesor?").
 _BARE_AFFIRMATION_RE = re.compile(
@@ -299,7 +309,7 @@ async def _shared_turn_handler(
     # being handed to human staff. Broken-link runs before sensitive on purpose:
     # phrases like "reserva no funciona" otherwise match the generic
     # real_time_issues rule.
-    if _detect_broken_link_complaint(message, state.history):
+    if regex_decide(routing_signals) and _detect_broken_link_complaint(message, state.history):
         return _broken_link_escalation_response(state, message)
 
     # Respaldo LLM del gate de LINK ROTO (Bloque 2.3): el detector por keyword
@@ -316,7 +326,7 @@ async def _shared_turn_handler(
     # s4-21 (5): en la apertura el idioma aun no esta fijado (ver `escalation_agent`).
     sensitive_lang = _reply_language(state, message)
     sensitive_escalation_early = (
-        None if routing_signals.get("adaptive_diving_topic")
+        None if routing_signals.get("adaptive_diving_topic") or not regex_decide(routing_signals)
         else detect_sensitive_escalation(message, sensitive_lang)
     )
     if sensitive_escalation_early:
@@ -353,14 +363,14 @@ async def _shared_turn_handler(
     # `detect_routing_signals` de arriba (sin coste extra), estricto como
     # wants_human (una pregunta por la política NO lo dispara). Mismo patrón
     # que DIVE TO HEAL (v0.20.58).
-    if _detect_cancellation_request(msg_lower) or (
+    if (regex_decide(routing_signals) and _detect_cancellation_request(msg_lower)) or (
         routing_signals.get("booking_change_topic") == "cancellation"
         and not _in_active_cart_building(state)
     ):
         logger.info("[SUPERVISOR] Cancellation request detected -> policy info + escalate/home buttons")
         return _booking_change_response(state, message, "cancellation")
 
-    if _detect_reschedule_request(msg_lower) or (
+    if (regex_decide(routing_signals) and _detect_reschedule_request(msg_lower)) or (
         routing_signals.get("booking_change_topic") == "reschedule"
         and not _in_active_cart_building(state)
     ) or _jev_changes_date(routing_signals):
@@ -371,7 +381,7 @@ async def _shared_turn_handler(
     # reserva hecha, quiero agregar una persona más" caía al menú genérico de
     # bienvenida, sin ningún reconocimiento — asimetría con cancelación/
     # reprogramación (arriba), que sí se reconocían. Mismo patrón exacto.
-    if _detect_modify_booking_request(msg_lower) or (
+    if (regex_decide(routing_signals) and _detect_modify_booking_request(msg_lower)) or (
         routing_signals.get("booking_change_topic") == "modify_headcount"
         and not _in_active_cart_building(state)
     ):
@@ -393,7 +403,8 @@ async def _shared_turn_handler(
     # es una heurística barata (sin LLM) — se usa aquí solo como mejor
     # estimación local para ESTA respuesta puntual, sin tocar
     # `state.language` de forma permanente.
-    if _asks_for_contact_number(msg_lower) or routing_signals.get("asks_for_contact_number"):
+    if (regex_decide(routing_signals) and _asks_for_contact_number(msg_lower)) or routing_signals.get(
+            "asks_for_contact_number"):
         effective_lang = state.language if state.detected_language else _infer_language(message, state.language)
         if settings.contacto_pasa_a_persona:
             # Decisión de Gadea (16-oct): el chatbot no da números; quien quiere un contacto directo pasa con un asesor.
@@ -445,7 +456,8 @@ async def _shared_turn_handler(
     # medular, sordomuda, "no vidente"... routing_signals ya se calculó arriba
     # (mismo turno, sin llamada extra) y trae adaptive_diving_topic cuando la
     # lista de palabras no encontró nada.
-    adaptive_now = bool(_ADAPTIVE_DIVING_PATTERN.search(message)) or bool(routing_signals.get("adaptive_diving_topic"))
+    adaptive_now = (regex_decide(routing_signals) and bool(_ADAPTIVE_DIVING_PATTERN.search(message))) or bool(
+        routing_signals.get("adaptive_diving_topic"))
     if adaptive_now:
         state.adaptive_diving_context = True
 
@@ -520,7 +532,7 @@ async def _shared_turn_handler(
             return MESSAGES["escalate"][state.language]
 
     # Check for escalation keywords (+ red de precisión LLM, auditoría 2026-07-22)
-    if _matches_escalation_keyword(msg_lower) or routing_signals.get("wants_human"):
+    if (regex_decide(routing_signals) and _matches_escalation_keyword(msg_lower)) or routing_signals.get("wants_human"):
         state.step = Step.ESCALATE
         state.quick_replies = []
         state.pending_escalation_reason = "solicitó asesor"

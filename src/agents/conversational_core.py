@@ -1338,6 +1338,10 @@ def _turn_has_question(message: str, routing_signals: dict) -> bool:
     "?" ni lo ve el regex, y se quedaba sin contestar."""
     if _is_greeting_only(message):
         return False
+    # ex-9b paso 5 (flag `pregunta_y_correccion_por_jev`): si Jev ha contestado, manda Jev (y el "?"); el regex solo si
+    # Jev calla. El regex daba por pregunta "hay un niño de 5 años" (lanzaba el RAG y se saltaba los resolutores).
+    if settings.pregunta_y_correccion_por_jev and "asks_question" in routing_signals:
+        return "?" in message or bool(routing_signals["asks_question"])
     return _looks_like_question(message) or bool(routing_signals.get("asks_question"))
 
 

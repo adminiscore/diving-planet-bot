@@ -140,6 +140,12 @@ services:
       RESOLUTOR_SIN_CONTRADICCIONES: "true"
       # ex-9b paso 2 (19-oct): si Jev dice que es médico, manda la seguridad aunque nombre el alcohol (banco 6/10 → 10/10).
       ALCOHOL_DETRAS_DE_LO_MEDICO: "true"
+      # ex-9b paso 5 (19-oct): las listas de palabras del enrutador solo deciden si la IA calla (banco de classify_route con
+      # la config de PRE 14/17 → 17/17; regla única en supervisor.regex_decide: router, nodos, setup y cascada). EN PRUEBA
+      # en la ronda ex9b-1 (con los pasos 1 y 2). Revert = "false" aquí y en config.py.
+      REGEX_SOLO_SI_IA_CALLA: "true"
+      # ex-9b paso 5: "¿trae una pregunta?" y "¿corrige?" en el núcleo los decide Jev cuando contesta. EN PRUEBA (ex9b-1).
+      PREGUNTA_Y_CORRECCION_POR_JEV: "true"
       # CERTIFICADO_SOLO_SI_LO_DICE con «buceé hace poco» = certificado (decisión de Gadea). PROMOCIONADO (HISTORY
       # 0.31.61: mod-H2 97,0 % igual que limpieza-3; reserva-solo-link ya no ofrece el minicurso). Revert = quitar estas líneas.
       CERTIFICADO_SOLO_SI_LO_DICE: "true"

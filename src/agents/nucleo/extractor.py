@@ -55,9 +55,14 @@ def _has_correction_cue(state: ConversationState, message: str) -> bool:
     corrige un dato ya dado ("esperate, somos 4 al final"; u3-5 paso 2)."""
     from src.agents import supervisor  # lazy
 
+    jev = getattr(state, "_jev_corrects", None)
+    # ex-9b paso 5 (flag `pregunta_y_correccion_por_jev`): si Jev ha contestado, manda Jev; el regex solo si Jev calla.
+    # El regex tomaba "perdón, ¿cuánto cuesta?" por una corrección y aplicaba el dato sin confirmarlo.
+    if settings.pregunta_y_correccion_por_jev and jev is not None:
+        return jev is True
     if supervisor._CORRECTION_CUE_RE.search(message):
         return True
-    return getattr(state, "_jev_corrects", None) is True
+    return jev is True
 
 
 def _route_contradictions(state: ConversationState, message: str, intent, proposed: dict) -> None:

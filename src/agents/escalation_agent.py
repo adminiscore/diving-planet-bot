@@ -80,6 +80,7 @@ async def escalation_node(state: BotState) -> dict:
         detect_pii,
         detect_sensitive_escalation,
         privacy_block_message,
+        regex_decide,
         sensitive_response_for,
     )
 
@@ -98,7 +99,7 @@ async def escalation_node(state: BotState) -> dict:
         return {"reply": privacy_block_message(conv.language)}
 
     # 2 · Link roto por keyword (pre-núcleo).
-    if _detect_broken_link_complaint(message, conv.history):
+    if regex_decide(signals) and _detect_broken_link_complaint(message, conv.history):
         logger.info("[NODE:escalation] link roto (keyword) -> escalado")
         return {"reply": _broken_link_escalation_response(conv, message)}
 
@@ -110,7 +111,7 @@ async def escalation_node(state: BotState) -> dict:
     # 4 · Tema sensible por keyword (suprimido si el turno es DIVE TO HEAL, igual
     #     que la cascada: sensitive_escalation_early es None si adaptive_diving_topic).
     sensitive_early = (
-        None if signals.get("adaptive_diving_topic")
+        None if signals.get("adaptive_diving_topic") or not regex_decide(signals)
         else detect_sensitive_escalation(message, sensitive_lang)
     )
     if sensitive_early:
@@ -143,7 +144,8 @@ async def escalation_node(state: BotState) -> dict:
     #     el contexto adaptativo igual que la cascada (líneas 2130-2146). El router
     #     garantiza que si llegó aquí como SAFETY vía DIVE TO HEAL, hay pregunta de
     #     precio (si no, habría devuelto INFO), así que este gate dispara.
-    adaptive_now = bool(_ADAPTIVE_DIVING_PATTERN.search(message)) or bool(signals.get("adaptive_diving_topic"))
+    adaptive_now = (regex_decide(signals) and bool(_ADAPTIVE_DIVING_PATTERN.search(message))) or bool(
+        signals.get("adaptive_diving_topic"))
     if adaptive_now:
         conv.adaptive_diving_context = True
     if conv.adaptive_diving_context and _PRICE_OR_BOOKING_Q.search(message):

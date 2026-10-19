@@ -59,6 +59,7 @@ async def deflection_node(state: BotState) -> dict:
         _contacto_pasa_a_persona,
         _infer_language,
         _shared_turn_handler,
+        regex_decide,
     )
 
     conv = state["conv_state"]
@@ -74,7 +75,7 @@ async def deflection_node(state: BotState) -> dict:
     # cuenta, duplicado — no pasa por esa cascada).
     effective_lang = conv.language if conv.detected_language else _infer_language(message, conv.language)
 
-    if _asks_for_contact_number(msg_lower) or signals.get("asks_for_contact_number"):
+    if (regex_decide(signals) and _asks_for_contact_number(msg_lower)) or signals.get("asks_for_contact_number"):
         if settings.contacto_pasa_a_persona:
             # CAL-E1 (decisión de Gadea, 16-oct): el chatbot no da números; quien pide un contacto directo pasa con un
             # asesor. El pase deja el estado como la posventa (paso, motivo y nota), así que aquí se devuelve ya: no

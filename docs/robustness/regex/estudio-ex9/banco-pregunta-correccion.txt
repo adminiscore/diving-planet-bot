@@ -1,0 +1,12 @@
+Banco del paso 5 de ex-9b (núcleo), flag PREGUNTA_Y_CORRECCION_POR_JEV: ¿trae una pregunta? (asks_question, + "?")
+y ¿corrige un dato ya dado? (corrects), Jev con la config de PRE frente al regex de hoy. 2 repeticiones, historial
+corto ("somos 2 y queremos bucear" → "¿Ya son buzos certificados?"). Script: scripts/banco_paso5_nucleo.py. 19-oct.
+
+pregunta: regex 6/14 · Jev 14/14
+  regex mal: "perfecto, como pago" y "me dices el horario de salida porfa" (no las ve); "hay un niño de 5 años",
+  "cuando lleguemos te aviso", "como te dije, somos 4", "donde nos quedamos es en Bocagrande", "que bien, gracias",
+  "how nice, we are 4 adults" (las toma por pregunta).
+corrige: regex 4/10 · Jev 10/10
+  regex mal: "esperate, somos 4 al final" (no la ve); "perdón, ¿cuánto cuesta?", "perdón la demora, ¿qué horarios
+  tienen?", "sorry for the late reply…", "realmente queremos ir el sábado", "en realidad me interesa mucho bucear"
+  (las toma por corrección y aplicaría el dato sin confirmarlo).

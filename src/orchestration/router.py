@@ -69,13 +69,13 @@ def classify_route(conv_state: ConversationState, message: str, signals: dict) -
     msg_lower = message.strip().lower()
     history = conv_state.history
     lang = conv_state.language
-    # ex-9b paso 5 (19-oct, flag `regex_solo_si_ia_calla`; estudio docs/robustness/regex/estudio-ex9-regex.md): cuando
+    # ex-9b paso 5 (19-oct, flag `regex_solo_si_ia_calla`, regla única en `supervisor.regex_decide`): cuando
     # la IA ha contestado este turno (Jev o el router LLM de respaldo dejan `signals`), las listas de palabras y regex
     # que tienen su señal de IA (link roto, tema sensible, cancelar/cambiar, contacto, "hablar con", DIVE TO HEAL) ya no
     # deciden por su cuenta: solo si la IA calla (signals vacío). Falsos positivos que corrige: "¿está mal si hago el
     # pago mañana?" = link roto, "quiero hablar con mi esposa antes de reservar" = pase, "me mandas el link por
     # whatsapp?" = pase, "¿Dónde cojo la lancha?" = DIVE TO HEAL.
-    regex_vale = not (settings.regex_solo_si_ia_calla and bool(signals))
+    regex_vale = sup.regex_decide(signals)
 
     # ── SAFETY (safety-first, como la cascada) ──
     if sup.detect_pii(message):

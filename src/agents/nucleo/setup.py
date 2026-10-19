@@ -126,7 +126,8 @@ async def _setup_phase(
     from src.agents import supervisor  # lazy
 
     msg_lower = message.strip().lower()
-    if supervisor._matches_escalation_keyword(msg_lower) or routing_signals.get("wants_human"):
+    if (supervisor.regex_decide(routing_signals) and supervisor._matches_escalation_keyword(msg_lower)) or (
+            routing_signals.get("wants_human")):
         return None
     # (Fase 4, decisión owner 2026-07-28) "menú"/"volver"/"back" = MENSAJE NORMAL:
     # el núcleo los trata como texto conversacional (re-orienta a la reserva) en
