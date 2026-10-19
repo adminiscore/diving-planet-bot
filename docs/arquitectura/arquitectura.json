@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-19T10:47:32+00:00",
-  "commit": "9571e80",
+  "generado": "2026-10-19T10:52:05+00:00",
+  "commit": "a428cd4",
   "rama": "feature/pre_gadea"
  },
  "vistas": {
@@ -832,6 +832,13 @@
      "titulo": "Jev decide si el mensaje pregunta algo o corrige un dato",
      "codigo": true,
      "pre": true,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "deliberacion_por_jev",
+     "titulo": "Jev decide si el cliente duda entre opciones",
+     "codigo": false,
+     "pre": false,
      "sin_efecto": false
     },
     {
@@ -2189,6 +2196,19 @@
    "fijado_en_pre": true,
    "usado_por": [
     "router"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "deliberacion_por_jev",
+   "area": "Reserva",
+   "titulo": "Jev decide si el cliente duda entre opciones",
+   "texto": "Si el cliente nombra dos actividades, Jev decide si está dudando entre ellas (y entonces Coral se las explica) o si las está reservando para distintas personas del grupo. Antes lo decidían frases sueltas y unas reglas de excepción: «somos 3 y no tenemos claro si hacer snorkel o el minicurso» se tomaba como una reserva por llevar una cifra.",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
+   "usado_por": [
+    "b_slotfill_close"
    ],
    "sin_efecto": null
   },

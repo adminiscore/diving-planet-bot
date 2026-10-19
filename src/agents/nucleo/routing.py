@@ -528,6 +528,13 @@ def _is_deliberation_between_options(message: str, routing_signals: dict) -> boo
     actividad."""
     if len(_mentioned_offerings(message)) < 2:
         return False
+    # ex-9b paso 5 (flag `deliberacion_por_jev`): si la IA ha contestado este turno, manda `comparing_options`; la
+    # frase de duda y los vetos de abajo (cifras, sujeto propio, oferta negada, compromiso) solo si la IA calla. Los
+    # vetos se hicieron para el router LLM de antes; Jev ya separa el reparto de la duda. Banco con la config de PRE:
+    # hoy 14/16, solo Jev 15/16 ("somos 3 y no tenemos claro si hacer snorkel o el minicurso": el veto de la cifra).
+    if settings.deliberacion_por_jev and routing_signals:
+        obj = routing_signals.get("comparing_options")
+        return bool(obj.get("comparing")) if isinstance(obj, dict) else False
     if _looks_like_deliberation(message):
         return True
     # Anti-falso-positivo del LLM: un mensaje que ASIGNA actividades a sub-grupos

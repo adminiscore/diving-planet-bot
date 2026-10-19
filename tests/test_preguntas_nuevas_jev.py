@@ -147,3 +147,23 @@ async def test_sin_propuesta_del_regex_no_cambia_nada(monkeypatch, router_sin_re
     st = _con_memoria()
     await graph._router_node({"conv_state": st, "message": "¿a qué hora sale la lancha?"})
     assert st.detected_group_size == 2 and len(llamadas) == 1
+
+
+# ── Deliberación (flag `deliberacion_por_jev`) ───────────────────────────────────────────────────────────────────────
+DUDA_CON_CIFRA = "somos 3 y no tenemos claro si hacer snorkel o el minicurso"
+COMPARA = {"comparing_options": {"comparing": True, "options": []}, "asks_question": False}
+
+
+@pytest.mark.parametrize("encendido, senales, mensaje, delibera", [
+    (False, COMPARA, DUDA_CON_CIFRA, False),                        # hoy: el veto de la cifra gana a la IA
+    (True, COMPARA, DUDA_CON_CIFRA, True),                          # con el flag manda la IA
+    (False, {"asks_question": False}, "no sé si buceo o snorkel", True),  # hoy: la frase de duda basta
+    (True, {"asks_question": False}, "no sé si buceo o snorkel", False),  # la IA contesta y no compara
+    (True, {}, "no sé si buceo o snorkel", True),                   # la IA calla: la frase de duda, como hoy
+    (True, COMPARA, "quiero el minicurso", False),                  # una sola oferta nunca es deliberación
+])
+def test_deliberacion(monkeypatch, encendido, senales, mensaje, delibera):
+    from src.agents.nucleo.routing import _is_deliberation_between_options
+
+    monkeypatch.setattr(settings, "deliberacion_por_jev", encendido)
+    assert _is_deliberation_between_options(mensaje, senales) is delibera

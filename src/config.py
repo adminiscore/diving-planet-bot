@@ -147,6 +147,7 @@ class Settings(BaseSettings):
     reinicio_por_jev: bool = False  # el reinicio de escenario (borra la memoria) solo si Jev dice que es un caso nuevo
     identidad_ia_por_jev: bool = False  # "¿eres un bot?"
     idioma_por_jev: bool = False  # el cambio de idioma a mitad de conversación
+    deliberacion_por_jev: bool = False  # "no sé si buceo o snorkel": `comparing_options` de la IA, sin la frase de duda
     resolutor_sin_contradicciones: bool = True  # PROMOCIONADO 19-oct (mod-G2, HISTORY 0.31.57); revert = False
     # EX-EST-2 (14-oct): el acuse reconoce SOLO lo que dice el mensaje (el resumen de la reserva no se repite; ante
     # 'gracias' o una fecha suelta, nada). Banco scripts/banco_acuse.py: inventaba en 33/40 casos reales

@@ -18,3 +18,9 @@ CAMBIA_IDIOMA (english / spanish / none):
   inglés; "do you have the course material in spanish?" y "el libro del curso viene en español?" → español.
 
 Latencia de Jev con las tres preguntas (8 mensajes × 2, dos tandas): p50 302-314 ms frente a 302 ms sin ellas.
+
+DELIBERACIÓN (flag deliberacion_por_jev, señal que ya existía: comparing_options), 16 frases, 1 repetición:
+  función de hoy (frase de duda + vetos de cifra/sujeto/negación/compromiso + comparing) 14/16 · solo la IA 15/16
+  hoy mal: "somos 3 y no tenemos claro si hacer snorkel o el minicurso" (el veto de la cifra tapa la duda).
+  los dos mal: "mejor el minicurso o el snorkel, cualquiera de los dos nos sirve, reserva el que tenga hueco" (discutible).
+  Script: scripts/banco_paso5_deliberacion.py.
