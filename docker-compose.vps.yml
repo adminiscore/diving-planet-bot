@@ -161,6 +161,14 @@ services:
       NOMBRE_SOLO_POR_EXTRACTOR: "true"
       PRECIO_POR_JEV: "true"
       AVISO_PAGO_AL_RESERVAR: "true"
+      # RONDA ex9b-4 (19-oct), EN PRUEBA: paso 6 (campos nuevos del extractor: duración con los días de BUCEO mandando,
+      # decisión de Gadea; edades; plan elegido si acepta lo que Coral propuso; notas del RAG por persona) y el
+      # respaldo POR TIEMPO de OpenRouter (5 s). REPARTO_AL_SUMARSE_ALGUIEN se queda apagado (banco 7/8 = hoy).
+      DURACION_POR_EXTRACTOR: "true"
+      EDADES_POR_EXTRACTOR: "true"
+      PLAN_ELEGIDO_POR_EXTRACTOR: "true"
+      NOTAS_RAG_DESDE_ESTADO: "true"
+      OPENROUTER_RESPALDO_SEGUNDOS: "5.0"
       # CERTIFICADO_SOLO_SI_LO_DICE con «buceé hace poco» = certificado (decisión de Gadea). PROMOCIONADO (HISTORY
       # 0.31.61: mod-H2 97,0 % igual que limpieza-3; reserva-solo-link ya no ofrece el minicurso). Revert = quitar estas líneas.
       CERTIFICADO_SOLO_SI_LO_DICE: "true"

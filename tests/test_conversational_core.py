@@ -617,6 +617,7 @@ async def test_kids_ages_split_cart_blocks(extractor_dice):
         "queremos el minicurso mi esposa y yo con nuestros hijos, somos 4, desde cartagena":
             {"activity": "minicourse", "group_size": 4, **CARTAGENA},
         "no somos colombianos": {"is_colombian": False},
+        "tienen 7 y 9 años": {"edades": [7, 9]},  # ex-9b paso 6: con `edades_por_extractor` las lee el extractor
     })
     state = make_state("es")
     await route_message(state, "queremos el minicurso mi esposa y yo con nuestros hijos, somos 4, desde cartagena")
@@ -2793,7 +2794,7 @@ def test_extra_context_omits_dive_to_heal_note_on_explicit_override():
     assert ctx_en is None or "dive to heal" not in ctx_en.lower()
 
 
-def test_extra_context_warns_against_uncertified_companion_diving_certified():
+def test_extra_context_warns_against_uncertified_companion_diving_certified(monkeypatch):
     """Hallazgo en vivo (conversación real 831, 2026-09-02): con la nota
     "novia no es buzo certificado" ya en el contexto, el LLM igual confirmó
     que ella podría "bucear junto con él" al día siguiente del minicurso —
@@ -2802,6 +2803,9 @@ def test_extra_context_warns_against_uncertified_companion_diving_certified():
     grounding no lo atrapó (GROUNDED a la primera, no contradice ninguna
     FUENTE recuperada, solo la lógica de negocio real). Tener el hecho en
     las notas no bastaba -- hace falta la regla explícita."""
+    # ex-9b paso 6: prueba la regla escrita a partir de notas/historial (el camino del regex); con
+    # `notas_rag_desde_estado` la dispara el estado que pone el extractor (test_ex9b_paso6.py).
+    monkeypatch.setattr(settings, "notas_rag_desde_estado", False)
     from src.agents.supervisor import _build_extra_context
 
     state = make_state("es")
@@ -2824,13 +2828,16 @@ def test_extra_context_warns_against_uncertified_companion_diving_certified():
     assert ctx_clean is None or "minicurso de buceo es UNA experiencia" not in ctx_clean
 
 
-def test_extra_context_never_dived_note_also_triggers_uncertified_rule():
+def test_extra_context_never_dived_note_also_triggers_uncertified_rule(monkeypatch):
     """Hallazgo en vivo (lote 12, 2026-09-02, conv. real 852): "mi primo
     nunca ha buceado" (tercer perfil en un grupo de 3) no matcheaba el
     regex original de "no certificado" (solo cubría "no es/está
     certificado") -- el LLM confundió al primo con el buzo certificado del
     grupo ("tú y tu primo se unen a ella en las inmersiones"). "Nunca ha
     buceado" debe disparar la misma regla."""
+    # ex-9b paso 6: prueba la regla escrita a partir de notas/historial (el camino del regex); con
+    # `notas_rag_desde_estado` la dispara el estado que pone el extractor (test_ex9b_paso6.py).
+    monkeypatch.setattr(settings, "notas_rag_desde_estado", False)
     from src.agents.supervisor import _build_extra_context
 
     state = make_state("es")
@@ -2840,7 +2847,7 @@ def test_extra_context_never_dived_note_also_triggers_uncertified_rule():
     assert "NO puede sumarse" in ctx
 
 
-def test_extra_context_warns_that_inactive_certified_companion_needs_refresher_not_minicourse():
+def test_extra_context_warns_that_inactive_certified_companion_needs_refresher_not_minicourse(monkeypatch):
     """Hallazgo en vivo (lote 12, 2026-09-02, conv. real 856): "mi amigo se
     certifico hace 8 años y no ha vuelto a bucear" (SÍ certificado, solo
     inactivo) hizo que el LLM le dijera al cliente "tu amigo no podrá
@@ -2850,6 +2857,9 @@ def test_extra_context_warns_that_inactive_certified_companion_needs_refresher_n
     ("amigo no tiene certificación de buceo"), reforzando el error. Alguien
     certificado e inactivo necesita el refresher, no el minicurso -- son
     productos con elegibilidad distinta."""
+    # ex-9b paso 6: prueba la regla escrita a partir de notas/historial (el camino del regex); con
+    # `notas_rag_desde_estado` la dispara el estado que pone el extractor (test_ex9b_paso6.py).
+    monkeypatch.setattr(settings, "notas_rag_desde_estado", False)
     from src.agents.supervisor import _build_extra_context
 
     state = make_state("es")
@@ -2873,7 +2883,7 @@ def test_extra_context_warns_that_inactive_certified_companion_needs_refresher_n
     assert "SIGUE SIENDO un buzo certificado" not in (ctx_clean or "")
 
 
-def test_extra_context_inactive_certified_rule_survives_incomplete_note_paraphrase():
+def test_extra_context_inactive_certified_rule_survives_incomplete_note_paraphrase(monkeypatch):
     """Hallazgo en vivo, 2ª iteración (2026-09-02): verificando en vivo el fix
     de arriba tras desplegarlo, el MISMO repro (conv. 858) seguía fallando --
     `capture_notes` parafraseó el mensaje de forma distinta esta vez
@@ -2884,6 +2894,9 @@ def test_extra_context_inactive_certified_rule_survives_incomplete_note_paraphra
     certificación" de "menciona inactividad" sin exigir proximidad. También
     se corrigió que "se certificó" (verbo) no matcheaba el regex de
     certificación (solo cubría "certificado/a", forma adjetivo)."""
+    # ex-9b paso 6: prueba la regla escrita a partir de notas/historial (el camino del regex); con
+    # `notas_rag_desde_estado` la dispara el estado que pone el extractor (test_ex9b_paso6.py).
+    monkeypatch.setattr(settings, "notas_rag_desde_estado", False)
     from src.agents.supervisor import _build_extra_context
 
     state = make_state("es")
@@ -2900,7 +2913,7 @@ def test_extra_context_inactive_certified_rule_survives_incomplete_note_paraphra
     assert "SIGUE SIENDO un buzo certificado" in ctx
 
 
-def test_extra_context_inactive_certified_rule_matches_infinitive_bucear_form():
+def test_extra_context_inactive_certified_rule_matches_infinitive_bucear_form(monkeypatch):
     """Hallazgo en vivo, 3ª iteración (2026-09-03): reverificando el fix
     anterior con 5 repeticiones, 1/5 seguía fallando. Causa raíz real:
     `_INACTIVE_MENTION_RE` exigía el lexema "bucead" (buceado/buceando), que
@@ -2911,6 +2924,9 @@ def test_extra_context_inactive_certified_rule_matches_infinitive_bucear_form():
     puede fallar en persistir el hecho) y el ÚNICO rastro es el mensaje
     crudo del cliente con la forma infinitiva -- el caso real que fallaba en
     vivo."""
+    # ex-9b paso 6: prueba la regla escrita a partir de notas/historial (el camino del regex); con
+    # `notas_rag_desde_estado` la dispara el estado que pone el extractor (test_ex9b_paso6.py).
+    monkeypatch.setattr(settings, "notas_rag_desde_estado", False)
     from src.agents.supervisor import _build_extra_context
 
     state = make_state("es")

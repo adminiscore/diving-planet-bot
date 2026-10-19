@@ -82,11 +82,15 @@ def test_the_closing_note_is_empty_when_the_refresher_was_not_wanted():
 
 
 @pytest.mark.parametrize("lang", ["es", "en"])
-def test_llm_context_no_longer_says_the_refresher_is_free(lang):
+def test_llm_context_no_longer_says_the_refresher_is_free(lang, monkeypatch):
     """El contexto que se le pasa al LLM para un acompañante certificado pero
     inactivo afirmaba "sin coste adicional"; el LLM lo repetia al cliente."""
     from src.agents import supervisor
+    from src.config import settings
 
+    # ex-9b paso 6: la regla escrita desde el historial (camino del regex); con `notas_rag_desde_estado` la dispara
+    # el estado que pone el extractor (test_ex9b_paso6.py).
+    monkeypatch.setattr(settings, "notas_rag_desde_estado", False)
     state = _state(lang)
     state.history = [{"role": "user", "content": "mi amigo se certifico hace 8 años y no ha vuelto a bucear"}]
     context = supervisor._build_extra_context(state) or ""
