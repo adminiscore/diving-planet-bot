@@ -167,3 +167,47 @@ def test_deliberacion(monkeypatch, encendido, senales, mensaje, delibera):
 
     monkeypatch.setattr(settings, "deliberacion_por_jev", encendido)
     assert _is_deliberation_between_options(mensaje, senales) is delibera
+
+
+# ── Pide precio (flag `precio_por_jev`): la puerta "origen antes del precio" ─────────────────────────────────────────
+CON_HOTEL = "cuánto me sale el plan de 2 inmersiones? me quedo en el hotel Caribe"
+COTIZA = "El plan de 2 inmersiones cuesta 150 USD por persona."
+
+
+def _sin_origen(monkeypatch, encendido: bool, jev):
+    from src.agents import conversational_core as core
+
+    monkeypatch.setattr(settings, "precio_por_jev", encendido)
+    monkeypatch.setattr(settings, "rag_origen_pregunta", True)
+    st = _estado()
+    st._jev_pide_precio = jev
+    return core, st
+
+
+@pytest.mark.parametrize("encendido, jev, pregunta_el_origen", [
+    (False, True, False),  # hoy: "hotel" en el mensaje salta la puerta y se cotiza sin origen
+    (True, True, True),    # con el flag manda Jev: pide el precio de una actividad
+    (True, None, False),   # Jev calla: las listas de siempre
+    (True, False, False),  # Jev dice que no pide precio
+])
+def test_pide_precio_con_un_hotel_en_el_mensaje(monkeypatch, encendido, jev, pregunta_el_origen):
+    core, st = _sin_origen(monkeypatch, encendido, jev)
+    respuesta = core._origen_antes_del_precio(st, CON_HOTEL, COTIZA)
+    assert (respuesta is not None and "desde dónde sales" in respuesta) is pregunta_el_origen
+
+
+def test_pide_precio_solo_se_pregunta_con_su_flag(monkeypatch):
+    monkeypatch.setattr(settings, "precio_por_jev", False)
+    assert j.PIDE_PRECIO not in j._questions_for_turn()
+    monkeypatch.setattr(settings, "precio_por_jev", True)
+    assert j.PIDE_PRECIO in j._questions_for_turn()
+
+
+async def test_el_grafo_guarda_lo_de_jev_en_cada_turno(monkeypatch, router_sin_red):
+    router_sin_red({j.PIDE_PRECIO: True, "asks_question": True})
+    st = _estado()
+    await graph._router_node({"conv_state": st, "message": "cuánto cuesta el minicurso"})
+    assert st._jev_pide_precio is True
+    router_sin_red({})  # turno siguiente: Jev calla
+    await graph._router_node({"conv_state": st, "message": "ok"})
+    assert st._jev_pide_precio is None

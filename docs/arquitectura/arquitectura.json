@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-19T11:27:13+00:00",
-  "commit": "01f08ab",
+  "generado": "2026-10-19T12:39:31+00:00",
+  "commit": "23e72c0",
   "rama": "feature/pre_gadea"
  },
  "vistas": {
@@ -846,6 +846,13 @@
      "titulo": "Jev decide si el cliente duda entre opciones",
      "codigo": true,
      "pre": true,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "precio_por_jev",
+     "titulo": "Jev decide si piden el precio de una actividad",
+     "codigo": false,
+     "pre": false,
      "sin_efecto": false
     },
     {
@@ -2879,6 +2886,19 @@
    "area": "Reserva",
    "titulo": "Preguntar un precio no es elegir",
    "texto": "Si el cliente solo pregunta cuánto cuesta algo ('¿cuánto vale el paquete de 5 inmersiones?'), el bot no da por hecho que lo ha elegido ni que es buzo certificado: es una duda. Decir lo que quiere hacer sí lo elige.",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
+   "usado_por": [
+    "b_slotfill_close"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "precio_por_jev",
+   "area": "Preguntas",
+   "titulo": "Jev decide si piden el precio de una actividad",
+   "texto": "Antes de dar un precio sin saber desde dónde sale el cliente, Coral le pregunta el origen. Para saber si el cliente pide el precio de una actividad (y no el de un hotel o un taxi), ahora manda Jev; antes bastaba con que el mensaje dijera «hotel» en cualquier parte («¿cuánto me sale el plan de 2 inmersiones? me quedo en el hotel Caribe») para cotizar sin preguntar el origen.",
    "codigo": false,
    "pre": false,
    "fijado_en_pre": false,

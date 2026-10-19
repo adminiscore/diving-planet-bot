@@ -1947,9 +1947,18 @@ def _origen_antes_del_precio(state: ConversationState, message: str, answer: str
     if not settings.rag_origen_pregunta or state.location or state.detected_location:
         return None
     texto = message or ""
-    if not answer or not _IMPORTE_RE.search(answer) or _PRECIO_AJENO_RE.search(texto):
+    if not answer or not _IMPORTE_RE.search(answer):
         return None
-    if not (_PIDE_PRECIO_RE.search(texto) or state.pregunta_precio_pendiente):
+    jev = getattr(state, "_jev_pide_precio", None)
+    if settings.precio_por_jev and jev is not None:
+        # ex-9b paso 5: Jev dice si pide el precio de NUESTRAS actividades (el hotel, la noche o un taxi no cuentan);
+        # las palabras sueltas solo si Jev calla. "Me quedo en el hotel Caribe" ya no salta la puerta.
+        pide = jev is True
+    elif _PRECIO_AJENO_RE.search(texto):
+        return None
+    else:
+        pide = bool(_PIDE_PRECIO_RE.search(texto))
+    if not (pide or state.pregunta_precio_pendiente):
         return None
     del_cliente = [h.get("content") or "" for h in (state.history or []) if h.get("role") == "user"]
     este = [texto]

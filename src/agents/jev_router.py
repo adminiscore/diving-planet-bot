@@ -388,6 +388,21 @@ _PREGUNTA_SI_ES_IA_Q = {
         "anything that is not this chat assistant itself."
     ),
 }
+# - PIDE_PRECIO (`precio_por_jev`): la puerta "origen antes del precio" (conversational_core._origen_antes_del_precio)
+#   miraba si el mensaje decía "precio/cuánto" y no "hotel/noche" EN NINGUNA PARTE: "¿cuánto me sale el plan de 2
+#   inmersiones? me quedo en el hotel Caribe" se cotizaba sin saber el origen. Regex 13/16, Jev 16/16.
+PIDE_PRECIO = "pide_precio"
+PIDE_PRECIO_MIN = 0.7
+_PIDE_PRECIO_Q = {
+    "type": "noul",
+    "instructions": (
+        "The customer asks how much one of the dive center's activities, courses or packages costs (price, rate, "
+        "cost, a quote), including asking that price again in another currency or for a different number of people. "
+        "It is FALSE when they ask the price of something the dive center does not sell (a hotel, a room or night, a "
+        "taxi or transport), when they only ask which currencies or payment methods are accepted, and when they ask "
+        "about duration, number of dives or how to book."
+    ),
+}
 CAMBIA_IDIOMA = "cambia_idioma"
 CAMBIA_IDIOMA_MIN = 0.6
 _CAMBIA_IDIOMA_Q = {
@@ -545,7 +560,7 @@ _U34_QUESTIONS = (
     ASKS_QUESTION, AFFIRMS_LOCATION, AFFIRMS_ACTIVITY, ACTIVITY_HYPOTHESIS,
     AFFIRMS_CERTIFICATION, AFFIRMS_GROUP, AFFIRMS_NATIONALITY, CORRECTS, ASKS_RECALL, NEEDS_STAFF,
     CHANGES_DATE, COMPANION_JOINS, PENDING_ANSWER, SHARES_OPEN_FACT, ADDS_PERSON, CUSTOMER_PLACE, YA_RESERVADO,
-    PIDE_DATOS_AJENOS, NUEVO_CASO, PREGUNTA_SI_ES_IA, CAMBIA_IDIOMA,
+    PIDE_DATOS_AJENOS, NUEVO_CASO, PREGUNTA_SI_ES_IA, CAMBIA_IDIOMA, PIDE_PRECIO,
 )
 
 
@@ -609,6 +624,8 @@ def _questions_for_turn(pending_slot: str | None = None) -> dict:
         q[PREGUNTA_SI_ES_IA] = _PREGUNTA_SI_ES_IA_Q
     if settings.idioma_por_jev:
         q[CAMBIA_IDIOMA] = _CAMBIA_IDIOMA_Q
+    if settings.precio_por_jev:
+        q[PIDE_PRECIO] = _PIDE_PRECIO_Q
     return q
 
 
@@ -679,6 +696,8 @@ def answers_to_signals(answers: dict, threshold: float = THRESHOLD) -> dict:
         out[NUEVO_CASO] = (answers.get(NUEVO_CASO) or {}).get("noul", 0.0) >= NUEVO_CASO_MIN
     if PREGUNTA_SI_ES_IA in answers:
         out[PREGUNTA_SI_ES_IA] = (answers.get(PREGUNTA_SI_ES_IA) or {}).get("noul", 0.0) >= PREGUNTA_SI_ES_IA_MIN
+    if PIDE_PRECIO in answers:
+        out[PIDE_PRECIO] = (answers.get(PIDE_PRECIO) or {}).get("noul", 0.0) >= PIDE_PRECIO_MIN
     if CAMBIA_IDIOMA in answers:
         a = answers.get(CAMBIA_IDIOMA) or {}
         out[CAMBIA_IDIOMA] = a.get("choice") if float(a.get("confidence", 0.0)) >= CAMBIA_IDIOMA_MIN else "none"
@@ -752,7 +771,7 @@ async def detect_routing_signals_jev(message: str, *, lang: str = "es") -> dict 
 _TURN_SIGNALS = (
     AFFIRMS_LOCATION, AFFIRMS_ACTIVITY, AFFIRMS_CERTIFICATION, AFFIRMS_GROUP, AFFIRMS_NATIONALITY, CORRECTS,
     ASKS_RECALL, NEEDS_STAFF, CHANGES_DATE, COMPANION_JOINS, SHARES_OPEN_FACT, YA_RESERVADO, PIDE_DATOS_AJENOS,
-    NUEVO_CASO, PREGUNTA_SI_ES_IA, CAMBIA_IDIOMA,
+    NUEVO_CASO, PREGUNTA_SI_ES_IA, CAMBIA_IDIOMA, PIDE_PRECIO,
 )  # AFFIRMS_P y PENDING_ANSWER se anaden a mano en `detect_routing_signals_jev_full`
 
 

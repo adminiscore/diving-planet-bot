@@ -24,3 +24,9 @@ DELIBERACIÓN (flag deliberacion_por_jev, señal que ya existía: comparing_opti
   hoy mal: "somos 3 y no tenemos claro si hacer snorkel o el minicurso" (el veto de la cifra tapa la duda).
   los dos mal: "mejor el minicurso o el snorkel, cualquiera de los dos nos sirve, reserva el que tenga hueco" (discutible).
   Script: scripts/banco_paso5_deliberacion.py.
+
+PIDE_PRECIO (flag precio_por_jev; puerta "origen antes del precio"), 16 frases, 2 repeticiones:
+  regex (_PIDE_PRECIO_RE y no _PRECIO_AJENO_RE) 13/16 · Jev 16/16 (sí 0,79-0,97; no <= 0,05)
+  regex mal: "¿y en pesos?" (lo salva la pregunta pendiente), "cuánto me sale el plan de 2 inmersiones? me quedo en el
+  hotel Caribe" (el "hotel" salta la puerta: se cotizaba sin origen), "hola, quisiera cotizar buceo para 4 personas".
+  Script: scripts/banco_paso5_pide_precio.py.

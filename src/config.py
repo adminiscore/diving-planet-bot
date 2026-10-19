@@ -147,6 +147,7 @@ class Settings(BaseSettings):
     reinicio_por_jev: bool = True  # el reinicio de escenario (borra la memoria) solo si Jev dice que es un caso nuevo
     identidad_ia_por_jev: bool = True  # "¿eres un bot?"
     idioma_por_jev: bool = True  # el cambio de idioma a mitad de conversación
+    precio_por_jev: bool = False  # "origen antes del precio": ¿pide el precio de NUESTRAS actividades? (Jev; regex si calla)
     deliberacion_por_jev: bool = True  # "no sé si buceo o snorkel": `comparing_options` de la IA, sin la frase de duda
     # ex-9b paso 3 (19-oct): el regex deja de ser la "pista" de los campos del extractor (actividad, origen,
     # certificación, grupo y reparto, nacionalidad, última inmersión); se quedan la isla y el hotel del catálogo. Si el
