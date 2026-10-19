@@ -87,3 +87,28 @@ def _sin_aviso_de_openai_caido(monkeypatch):
     from src.config import settings
 
     monkeypatch.setattr(settings, "aviso_si_openai_falla", False)
+
+
+@pytest.fixture
+def extractor_dice(monkeypatch):
+    """ex-9b paso 3 (`extractor_sin_pista`): simula el extractor del turno con lo que el cliente AFIRMA en cada mensaje,
+    como el oráculo del replay del estudio (`parte5`). En los tests no hay red: sin esto el extractor falla siempre y el
+    turno va por la rama "el extractor falló" (con el flag apagado, la pista del regex; encendido, el dato se pregunta y,
+    a los dos fallos seguidos, se pasa a un asesor), que no es el camino de producción.
+
+    Uso: `extractor_dice({"somos 3 para snorkel": {"activity": "snorkel", "group_size": 3}, ...})`, con los datos tal
+    como los devuelve `extractor_turno.extraer_turno` (ya con sus reglas). Un mensaje que no está = el extractor leyó y
+    el mensaje no afirma nada ({}). Se puede llamar varias veces (se suma). Se simula la llamada al modelo, así que el
+    turno corre entero: la extracción adelantada del enrutador, `datos_del_extractor` y lo dicho en el pase. Los datos
+    los escribe cada test; nunca salen del regex del detector (escondería lo que cambia con el flag)."""
+    import copy
+
+    from src.agents import extractor_turno
+
+    oraculo: dict[str, dict] = {}
+
+    async def _extraer_turno(mensaje, **_kw):
+        return copy.deepcopy(oraculo.get((mensaje or "").strip(), {}))
+
+    monkeypatch.setattr(extractor_turno, "extraer_turno", _extraer_turno)
+    return lambda datos_por_mensaje: oraculo.update({m.strip(): d for m, d in datos_por_mensaje.items()})

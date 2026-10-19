@@ -92,7 +92,12 @@ def _offline(monkeypatch):
     monkeypatch.setattr(core_close, "compose_acknowledgement", AsyncMock(return_value=""))
 
 
-async def _cerrada(monkeypatch):
+async def _cerrada(extractor_dice):
+    # ex-9b paso 3: lo que lee el extractor del turno (sin él, en los tests iba por la pista del regex); "para mi" es la
+    # respuesta corta a la cantidad, que resuelve el núcleo.
+    extractor_dice({"quiero hacer el curso open water, estoy en cartagena":
+                    {"activity": "padi_open_water", "location": "cartagena"},
+                    "no soy colombiano": {"is_colombian": False}})
     st = _state()
     for m in ("quiero hacer el curso open water, estoy en cartagena", "para mi", "no soy colombiano"):
         await route_message(st, m)
@@ -101,9 +106,9 @@ async def _cerrada(monkeypatch):
 
 
 @pytest.mark.parametrize("flag, repite", [(True, False), (False, True)])
-async def test_el_cierre_igual_no_se_repite_tras_una_respuesta(monkeypatch, _offline, flag, repite):
+async def test_el_cierre_igual_no_se_repite_tras_una_respuesta(monkeypatch, _offline, extractor_dice, flag, repite):
     monkeypatch.setattr(settings, "cierre_sin_repetir", flag)
-    st = await _cerrada(monkeypatch)
+    st = await _cerrada(extractor_dice)
     r = await route_message(st, "¿Cuánto tiempo dura?")
     assert r.startswith("rag_answer_stub")  # la respuesta del RAG (stub del conftest) va siempre
     assert ("book.divingplanet.org" in r) is repite

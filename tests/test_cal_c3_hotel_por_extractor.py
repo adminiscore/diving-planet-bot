@@ -236,6 +236,8 @@ def test_c4_lanza_la_respuesta_solo_con_el_flag(monkeypatch):
 def test_c5_la_red_de_menciones_solo_si_el_extractor_no_leyo(monkeypatch):
     from pathlib import Path
 
+    monkeypatch.setattr(settings, "extractor_sin_pista", False)  # camino del regex: se va con el borrado del paso 3
+
     banco = json.loads((Path(__file__).resolve().parents[1] / "docs/robustness/cal/banco-fallos.json").read_text(
         encoding="utf-8"))
     msg = next(f["mensaje_cliente"] for f in banco["fallos"] if f["id"] == "cal-69")  # "We snorkeled in Roatan…"

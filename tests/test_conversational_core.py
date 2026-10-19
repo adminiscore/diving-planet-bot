@@ -34,6 +34,14 @@ def _camino_antiguo_ex2_ex3(monkeypatch):
     monkeypatch.setattr(_flags, "atajo_nacionalidad_por_rag", False)
 
 
+# ex-9b paso 3 (`extractor_sin_pista`): lo que el extractor del turno lee de los mensajes de estos tests (fixture
+# `extractor_dice` de conftest). Sin él, en los tests (sin red) el extractor falla y el turno iba por la pista del regex.
+# Con las reglas de `extraer_turno`: quien es buzo y quiere bucear hace buceo certificado.
+BUZO = {"quiere_bucear": True, "is_certified": True, "activity": "certified_diving"}
+CARTAGENA = {"location": "cartagena"}
+ROCIO = "hola soy rocio, tengo el open water y quiero hacer buceo"
+
+
 def make_state(lang: str = "es") -> ConversationState:
     s = ConversationState(conversation_id="core-test")
     s.language = lang
@@ -132,10 +140,12 @@ def test_safety_question_knows_group_size_because_qty_comes_first():
 
 
 @pytest.mark.asyncio
-async def test_solo_signal_infers_one_person_for_diving_too():
+async def test_solo_signal_infers_one_person_for_diving_too(extractor_dice):
     """Decisión owner (2026-07-22): la señal explícita "voy solo" deduce 1
     persona en CUALQUIER actividad, no solo en cursos PADI (antes solo padi_*).
     Sin señal explícita se sigue preguntando (ver el test de abajo)."""
+    # Sin group_size en lo que lee el extractor: lo que se prueba es la regla de "voy solo" de `_understand`.
+    extractor_dice({"soy buzo certificado y quiero bucear, voy solo, desde cartagena": {**BUZO, **CARTAGENA}})
     state = make_state("es")
     await route_message(state, "soy buzo certificado y quiero bucear, voy solo, desde cartagena")
     assert state.detected_group_size == 1
@@ -143,16 +153,18 @@ async def test_solo_signal_infers_one_person_for_diving_too():
 
 
 @pytest.mark.asyncio
-async def test_solo_signal_infers_one_person_for_snorkel():
+async def test_solo_signal_infers_one_person_for_snorkel(extractor_dice):
+    extractor_dice({"quiero hacer snorkel, voy sola, desde cartagena": {"activity": "snorkel", **CARTAGENA}})
     state = make_state("es")
     await route_message(state, "quiero hacer snorkel, voy sola, desde cartagena")
     assert state.detected_group_size == 1
 
 
 @pytest.mark.asyncio
-async def test_no_solo_signal_still_asks_quantity():
+async def test_no_solo_signal_still_asks_quantity(extractor_dice):
     """El caso de Rocío: auto-presentación en singular SIN decir que va sola —
     un jefe de grupo escribiría igual, así que se pregunta (no se asume)."""
+    extractor_dice({ROCIO + " desde cartagena": {**BUZO, **CARTAGENA}})
     state = make_state("es")
     await route_message(state, "hola soy rocio, tengo el open water y quiero hacer buceo desde cartagena")
     assert state.detected_group_size is None
@@ -160,9 +172,12 @@ async def test_no_solo_signal_still_asks_quantity():
 
 
 @pytest.mark.asyncio
-async def test_company_signal_beats_solo_word():
+async def test_company_signal_beats_solo_word(extractor_dice):
     """Guarda conservadora: si hay señal de compañía, aunque aparezca "solo",
     se pregunta la cantidad."""
+    # ex-9b paso 3: sin group_size en lo que lee el extractor, para que decida la guarda de `_understand` (con el flag y
+    # el extractor caído no se leía la actividad y el test pasaba sin llegar a ella).
+    extractor_dice({"quiero bucear, soy certificado, voy con mi novia, desde cartagena": {**BUZO, **CARTAGENA}})
     state = make_state("es")
     await route_message(state, "quiero bucear, soy certificado, voy con mi novia, desde cartagena")
     assert state.detected_group_size != 1 or state.core_pending_slot == core.SLOT_QTY
@@ -206,11 +221,19 @@ def test_slot_order_minors_mentioned_asks_ages():
 # Flujo completo ES (guion Sofía): certificada, 1 persona, Cartagena
 # ---------------------------------------------------------------------------
 
+SOFIA = "hola soy Sofia, ya soy certificada, quiero unas inmersiones desde cartagena"
+
+
 @pytest.mark.asyncio
-async def test_sofia_full_flow_spanish():
+async def test_sofia_full_flow_spanish(extractor_dice):
+    extractor_dice({SOFIA: {**BUZO, **CARTAGENA, "nombre": "Sofia"}})
     state = make_state("es")
-    resp = await route_message(state, "hola soy Sofia, ya soy certificada, quiero unas inmersiones desde cartagena")
-    # activity+cert+location+qty(1, inferencia singular) conocidos → pregunta seguridad
+    resp = await route_message(state, SOFIA)
+    # ex-9b paso 3: "ya soy certificada" no dice cuántos van (el regex deducía 1 de la primera persona; el extractor no,
+    # y el caso de Rocío, `test_no_solo_signal_still_asks_quantity`, pide preguntarlo): se pregunta la cantidad.
+    assert state.core_pending_slot == core.SLOT_QTY
+    resp = await route_message(state, "solo yo")
+    # activity+cert+location+qty conocidos → pregunta seguridad
     assert core.next_missing_slot(state) == core.SLOT_NATIONALITY or state.core_pending_slot == core.SLOT_SAFETY
     assert state.core_pending_slot == core.SLOT_SAFETY
     assert "2 años" in resp or "2 anos" in resp
@@ -231,9 +254,14 @@ async def test_sofia_full_flow_spanish():
 
 
 @pytest.mark.asyncio
-async def test_safety_never_reasked_after_answered():
+async def test_safety_never_reasked_after_answered(extractor_dice):
     """Bug 3-4 de Rocío: la pregunta de seguridad no puede repetirse una vez
     respondida — por construcción del slot-filling."""
+    extractor_dice({
+        "hola soy Rocio, tengo el open water y quiero hacer buceo desde cartagena, soy solo yo":
+            {**BUZO, **CARTAGENA, "group_size": 1},
+        "no somos colombianos": {"is_colombian": False},
+    })
     state = make_state("es")
     await route_message(state, "hola soy Rocio, tengo el open water y quiero hacer buceo desde cartagena, soy solo yo")
     assert state.core_pending_slot == core.SLOT_SAFETY
@@ -249,7 +277,11 @@ async def test_safety_never_reasked_after_answered():
 # ---------------------------------------------------------------------------
 
 @pytest.mark.asyncio
-async def test_full_flow_english():
+async def test_full_flow_english(extractor_dice):
+    extractor_dice({
+        "hi, we are 2 certified divers, from cartagena": {**BUZO, **CARTAGENA, "group_size": 2},
+        "no, we're foreigners": {"is_colombian": False},
+    })
     state = make_state("en")
     await route_message(state, "hi, we are 2 certified divers, from cartagena")
     assert state.core_pending_slot == core.SLOT_SAFETY
@@ -266,16 +298,18 @@ async def test_full_flow_english():
 # ---------------------------------------------------------------------------
 
 @pytest.mark.asyncio
-async def test_first_turn_greets_as_coral_diving_planet():
+async def test_first_turn_greets_as_coral_diving_planet(extractor_dice):
     import re as _re
+    extractor_dice({SOFIA: {**BUZO, **CARTAGENA, "nombre": "Sofia"}})
     state = make_state("es")
-    resp = await route_message(state, "hola soy Sofia, ya soy certificada, quiero unas inmersiones desde cartagena")
+    resp = await route_message(state, SOFIA)
     assert "Coral" in resp
     assert "Diving Planet" in resp
     assert "asistente" not in resp.lower()
     assert not _re.search(r"\bbot\b", resp.lower())
-    # El saludo NO sustituye a la pregunta del slot: sigue avanzando la reserva
-    assert state.core_pending_slot == core.SLOT_SAFETY
+    # El saludo NO sustituye a la pregunta del slot: sigue avanzando la reserva (ex-9b paso 3: la cantidad, que
+    # "ya soy certificada" no dice; ver `test_sofia_full_flow_spanish`)
+    assert state.core_pending_slot == core.SLOT_QTY
 
 
 @pytest.mark.asyncio
@@ -288,7 +322,9 @@ async def test_first_turn_bare_greeting_presents_and_asks_activity():
 
 
 @pytest.mark.asyncio
-async def test_greeting_not_repeated_after_first_turn():
+async def test_greeting_not_repeated_after_first_turn(extractor_dice):
+    # ex-9b paso 3: con el extractor caído dos turnos seguidos se pasa a un asesor (`extractor_sin_pista`).
+    extractor_dice({SOFIA: {**BUZO, **CARTAGENA, "nombre": "Sofia"}})
     state = make_state("es")
     await route_message(state, "hola soy Sofia, ya soy certificada, quiero unas inmersiones desde cartagena")
     resp2 = await route_message(state, "no")
@@ -309,7 +345,9 @@ async def test_first_turn_greeting_english():
 # ---------------------------------------------------------------------------
 
 @pytest.mark.asyncio
-async def test_short_answer_resolves_pending_location():
+async def test_short_answer_resolves_pending_location(extractor_dice):
+    # La respuesta corta ("cartagena") la resuelve el núcleo, no el extractor: lo que se prueba.
+    extractor_dice({"quiero bucear, somos 2 certificados": {**BUZO, "group_size": 2}})
     state = make_state("es")
     await route_message(state, "quiero bucear, somos 2 certificados")
     assert state.core_pending_slot == core.SLOT_LOCATION
@@ -319,7 +357,9 @@ async def test_short_answer_resolves_pending_location():
 
 
 @pytest.mark.asyncio
-async def test_short_answer_island_then_hotel():
+async def test_short_answer_island_then_hotel(extractor_dice):
+    # Las respuestas cortas las resuelve el núcleo, no el extractor: lo que se prueba.
+    extractor_dice({"quiero bucear, somos 2 certificados": {**BUZO, "group_size": 2}})
     state = make_state("es")
     await route_message(state, "quiero bucear, somos 2 certificados")
     await route_message(state, "ya estamos en las islas")
@@ -331,9 +371,11 @@ async def test_short_answer_island_then_hotel():
 
 
 @pytest.mark.asyncio
-async def test_multi_slot_message_absorbed_in_one_turn():
+async def test_multi_slot_message_absorbed_in_one_turn(extractor_dice):
     """Una frase con varios datos rellena varios slots a la vez — nunca se
     re-pregunta lo ya dicho (bug 5 por construcción)."""
+    extractor_dice({"somos 3 certificados desde cartagena, la última inmersión fue hace 1 año":
+                    {**BUZO, **CARTAGENA, "group_size": 3, "last_dive_over_2_years": False}})
     state = make_state("es")
     await route_message(state, "somos 3 certificados desde cartagena, la última inmersión fue hace 1 año")
     assert state.detected_group_size == 3
@@ -347,10 +389,14 @@ async def test_multi_slot_message_absorbed_in_one_turn():
 # ---------------------------------------------------------------------------
 
 @pytest.mark.asyncio
-async def test_question_mid_flow_answers_and_reasks_pending_slot(monkeypatch):
+async def test_question_mid_flow_answers_and_reasks_pending_slot(monkeypatch, extractor_dice):
     monkeypatch.setattr(settings, "aplazar_pregunta_sin_respuesta", False)  # camino de antes de EX-FLUJO-1
+    extractor_dice({"quiero bucear, soy certificado, desde cartagena": {**BUZO, **CARTAGENA}})
     state = make_state("es")
     await route_message(state, "quiero bucear, soy certificado, desde cartagena")
+    # ex-9b paso 3: "soy certificado" no dice cuántos van (el regex deducía 1 de la primera persona): se pregunta.
+    assert state.core_pending_slot == core.SLOT_QTY
+    await route_message(state, "solo yo")
     assert state.core_pending_slot == core.SLOT_SAFETY
     with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock,
                return_value="RESPUESTA_RAG") as mocked:
@@ -367,9 +413,14 @@ async def test_question_mid_flow_answers_and_reasks_pending_slot(monkeypatch):
 # ---------------------------------------------------------------------------
 
 @pytest.mark.asyncio
-async def test_llm_gap_fill_feeds_slots(monkeypatch):
+async def test_llm_gap_fill_feeds_slots(monkeypatch, extractor_dice):
     """El relleno LLM alimenta los slots. El minicurso que deduce no se da por elegido: se recomienda y lo confirma
-    el cliente (u3-5; hasta s4-25 este test apagaba `recommend_inferred_minicourse` y lo veía guardado)."""
+    el cliente (u3-5; hasta s4-25 este test apagaba `recommend_inferred_minicourse` y lo veía guardado).
+
+    ex-9b paso 3: desde ex-9 estos campos los lee el extractor del turno (`fill_gaps` ya no los escribe); con
+    `extractor_sin_pista` la recomendación sale de lo que dice el extractor (CAL-C1)."""
+    extractor_dice({"never been underwater before, wanna give it a try, solo":
+                    {"quiere_bucear": True, "is_certified": False, "group_size": 1}})
     state = make_state("en")
     monkeypatch.setattr(core_extraction, "fill_gaps", AsyncMock(return_value={
         "activity": "minicourse", "is_certified": False, "group_size": 1,
@@ -386,7 +437,12 @@ async def test_llm_gap_fill_feeds_slots(monkeypatch):
 # ---------------------------------------------------------------------------
 
 @pytest.mark.asyncio
-async def test_colombian_checkout_escalates_no_direct_link():
+async def test_colombian_checkout_escalates_no_direct_link(extractor_dice):
+    extractor_dice({
+        "somos 2 buzos certificados desde cartagena, buceamos el mes pasado":
+            {**BUZO, **CARTAGENA, "group_size": 2, "last_dive_over_2_years": False},
+        "sí, somos colombianos": {"is_colombian": True},
+    })
     state = make_state("es")
     await route_message(state, "somos 2 buzos certificados desde cartagena, buceamos el mes pasado")
     assert state.core_pending_slot == core.SLOT_NATIONALITY
@@ -403,12 +459,14 @@ async def test_colombian_checkout_escalates_no_direct_link():
 # ---------------------------------------------------------------------------
 
 @pytest.mark.asyncio
-async def test_reask_does_not_repeat_plan_recommendation(monkeypatch):
+async def test_reask_does_not_repeat_plan_recommendation(monkeypatch, extractor_dice):
     """Cuando la respuesta del cliente no resuelve el slot pendiente pero
     aporta otro dato ("desde cartagena" respondiendo a la pregunta de
     seguridad), la re-pregunta NO debe repetir la recomendación del plan —
     en vivo se veía 3 veces el mismo bloque entero."""
     monkeypatch.setattr(settings, "aplazar_pregunta_sin_respuesta", False)  # camino de antes de EX-FLUJO-1
+    extractor_dice({ROCIO: BUZO, "desde cartagena": CARTAGENA, "soy solo yo": {"group_size": 1},
+                    "somos 3 en realidad": {"group_size": 3}})
     state = make_state("es")
     await route_message(state, "hola soy rocio, tengo el open water y quiero hacer buceo")
     assert state.core_pending_slot == core.SLOT_LOCATION
@@ -431,9 +489,14 @@ async def test_reask_does_not_repeat_plan_recommendation(monkeypatch):
 # ---------------------------------------------------------------------------
 
 @pytest.mark.asyncio
-async def test_mixed_allocation_builds_multi_item_cart():
+async def test_mixed_allocation_builds_multi_item_cart(extractor_dice):
     """"somos 5, 3 certificados y 2 quieren snorkel" → carrito con 2 ítems,
     sin perder a nadie (bug histórico del árbol, por construcción aquí)."""
+    extractor_dice({
+        "somos 5, 3 buceamos certificados y 2 hacen snorkel, desde cartagena":
+            {**BUZO, **CARTAGENA, "group_size": 5, "group_allocation": {"certified_diving": 3, "snorkel": 2}},
+        "no somos colombianos": {"is_colombian": False},
+    })
     state = make_state("es")
     await route_message(state, "somos 5, 3 buceamos certificados y 2 hacen snorkel, desde cartagena")
     # El subgrupo cert existe → la pregunta de seguridad aplica
@@ -447,9 +510,15 @@ async def test_mixed_allocation_builds_multi_item_cart():
 
 
 @pytest.mark.asyncio
-async def test_snorkel_companion_added_after_close():
+async def test_snorkel_companion_added_after_close(extractor_dice):
     """Guion Rocío completo: tras el cierre con links, "viene también uno que
     hace snorkel" añade el ítem al carrito y re-emite el resumen con ambos."""
+    extractor_dice({
+        ROCIO: BUZO, "desde cartagena": CARTAGENA, "soy solo yo": {"group_size": 1},
+        "no soy colombiana": {"is_colombian": False},
+        # El reparto con quien ya iba (regla del extractor: "viene también uno que hace snorkel").
+        "viene tambien uno que hace snorkel": {"group_allocation": {"certified_diving": 1, "snorkel": 1}},
+    })
     state = make_state("es")
     await route_message(state, "hola soy rocio, tengo el open water y quiero hacer buceo")
     await route_message(state, "desde cartagena")
@@ -470,10 +539,12 @@ async def test_snorkel_companion_added_after_close():
 # ---------------------------------------------------------------------------
 
 @pytest.mark.asyncio
-async def test_padi_course_flow_no_cert_no_safety_questions():
+async def test_padi_course_flow_no_cert_no_safety_questions(extractor_dice):
     """Un curso PADI no pregunta certificación ni seguridad (no aplican):
     actividad → ubicación → cantidad → nacionalidad → resumen con el link
     del curso."""
+    extractor_dice({"quiero hacer el curso open water, somos 2": {"activity": "padi_open_water", "group_size": 2},
+                    "desde cartagena": CARTAGENA, "no somos colombianos": {"is_colombian": False}})
     state = make_state("es")
     await route_message(state, "quiero hacer el curso open water, somos 2")
     assert state.core_pending_slot == core.SLOT_LOCATION
@@ -496,7 +567,12 @@ async def test_padi_course_flow_no_cert_no_safety_questions():
 #       maybe_handle_turn — una respuesta que "parece pregunta" ("tienen 7 y 9
 #       años") resuelve el slot; un "?" explícito sigue yendo a RAG.
 @pytest.mark.asyncio
-async def test_padi_course_island_variant_resolved():
+async def test_padi_course_island_variant_resolved(extractor_dice):
+    extractor_dice({
+        "quiero el curso open water, ya estoy en las islas, voy solo":
+            {"activity": "padi_open_water", "location": "island", "group_size": 1},
+        "no soy colombiano": {"is_colombian": False},
+    })
     state = make_state("es")
     await route_message(state, "quiero el curso open water, ya estoy en las islas, voy solo")
     assert state.core_pending_slot == core.SLOT_HOTEL
@@ -506,9 +582,14 @@ async def test_padi_course_island_variant_resolved():
 
 
 @pytest.mark.asyncio
-async def test_divemaster_contact_only_no_direct_link():
+async def test_divemaster_contact_only_no_direct_link(extractor_dice):
     """Divemaster es contact-only: resumen sin link de reserva directa, con
     el copy de asesor."""
+    extractor_dice({
+        "quiero el curso de divemaster, voy solo, desde cartagena":
+            {"activity": "padi_divemaster", "group_size": 1, **CARTAGENA},
+        "no soy colombiano": {"is_colombian": False},
+    })
     state = make_state("es")
     await route_message(state, "quiero el curso de divemaster, voy solo, desde cartagena")
     resp = await route_message(state, "no soy colombiano")
@@ -518,9 +599,14 @@ async def test_divemaster_contact_only_no_direct_link():
 
 
 @pytest.mark.asyncio
-async def test_kids_ages_split_cart_blocks():
+async def test_kids_ages_split_cart_blocks(extractor_dice):
     """Menores con edades explícitas: el checkout separa por edad — <8 va a
     snorkel, 8-10 a Bubble Makers — reutilizando el split del catálogo."""
+    extractor_dice({
+        "queremos el minicurso mi esposa y yo con nuestros hijos, somos 4, desde cartagena":
+            {"activity": "minicourse", "group_size": 4, **CARTAGENA},
+        "no somos colombianos": {"is_colombian": False},
+    })
     state = make_state("es")
     await route_message(state, "queremos el minicurso mi esposa y yo con nuestros hijos, somos 4, desde cartagena")
     assert state.kids_mention_detected
@@ -534,13 +620,18 @@ async def test_kids_ages_split_cart_blocks():
 
 
 @pytest.mark.asyncio
-async def test_lead_note_built_at_close():
+async def test_lead_note_built_at_close(extractor_dice):
     """El cierre no-colombiano deja la nota de lead construida (antes solo
     quedaba el pending_lead_note_reason sin materializar)."""
+    # ex-9b paso 3: con el extractor caído dos turnos seguidos se pasa a un asesor (`extractor_sin_pista`).
+    extractor_dice({"soy buzo certificado, quiero bucear desde cartagena, voy solo":
+                    {**BUZO, **CARTAGENA, "group_size": 1},
+                    "no soy colombiano": {"is_colombian": False}})
     state = make_state("es")
     await route_message(state, "soy buzo certificado, quiero bucear desde cartagena, voy solo")
     await route_message(state, "no")
     await route_message(state, "no soy colombiano")
+    assert state.mixed_cart, "la reserva se cierra (no es el pase por el extractor caído)"
     assert state.pending_note, "la nota de lead debe quedar construida al cierre"
 
 
@@ -607,16 +698,22 @@ async def test_understand_skips_llm_when_state_knows_driving_fields(monkeypatch)
 
 
 @pytest.mark.asyncio
-async def test_understand_still_fills_when_state_is_empty(monkeypatch):
+async def test_understand_still_fills_when_state_is_empty(monkeypatch, extractor_dice):
     """Primer mensaje (estado vacío): el gap-fill sigue funcionando igual (el minicurso deducido queda recomendado,
-    u3-5; hasta s4-25 este test apagaba `recommend_inferred_minicourse` y lo veía guardado)."""
+    u3-5; hasta s4-25 este test apagaba `recommend_inferred_minicourse` y lo veía guardado).
+
+    ex-9b paso 3: estos campos los lee el extractor del turno; con `extractor_sin_pista` no hay minicurso deducido del
+    regex en `_understand`: la recomendación la hace CAL-C1 al preguntar la actividad, con lo que dice el extractor."""
+    extractor_dice({"never tried it before but would love to": {"quiere_bucear": True, "is_certified": False}})
     state = make_state("en")
     monkeypatch.setattr(core_extraction, "fill_gaps", AsyncMock(return_value={
         "activity": "minicourse", "is_certified": False,
     }))
     await core._understand(state, "never tried it before but would love to")
-    assert state.suggested_activity == "minicourse"
     assert state.detected_is_certified is False
+    assert core.next_missing_slot(state) == core.SLOT_ACTIVITY
+    assert "mini-course" in core.ask_slot(state, core.SLOT_ACTIVITY)
+    assert state.suggested_activity == "minicourse"
 
 
 # ---------------------------------------------------------------------------
@@ -679,10 +776,14 @@ async def test_companion_signal_adds_minicourse_not_regex_match():
 
 
 @pytest.mark.asyncio
-async def test_companion_signal_post_close_adds_snorkel_item():
+async def test_companion_signal_post_close_adds_snorkel_item(extractor_dice):
     """"hay un amigo que quiere hacer snorkel" tras el cierre — el regex no
     lo reconoce ('hay un amigo' no matchea _ADDED_PERSON_RE con posesivo);
     la señal LLM sí y el carrito debe quedar con AMBAS actividades."""
+    # El último mensaje sin datos del extractor: lo que se prueba es la señal LLM (`detect_special_signals`).
+    extractor_dice({"soy buzo certificado, quiero bucear desde cartagena, voy solo":
+                    {**BUZO, **CARTAGENA, "group_size": 1},
+                    "no soy colombiano": {"is_colombian": False}})
     state = make_state("es")
     await route_message(state, "soy buzo certificado, quiero bucear desde cartagena, voy solo")
     await route_message(state, "no")
@@ -701,7 +802,7 @@ async def test_companion_signal_post_close_adds_snorkel_item():
 
 
 @pytest.mark.asyncio
-async def test_tengo_n_amigos_counts_once_not_double(monkeypatch):
+async def test_tengo_n_amigos_counts_once_not_double(monkeypatch, extractor_dice):
     """Bug en vivo PRE (2026-07-23, Rocío): 'tengo el AOWD, además tengo 3
     amigos...' — la extracción base (regex, ya arreglado) resuelve group_size=4
     (ella + 3). El gate de acompañante NO debe volver a disparar la red de
@@ -723,6 +824,8 @@ async def test_tengo_n_amigos_counts_once_not_double(monkeypatch):
     state.detected_activity = "certified_diving"
     state.is_certified = True
     state.core_pending_slot = core.SLOT_LOCATION
+    # La extracción base de hoy es la del extractor del turno: ella + 3 amigos.
+    extractor_dice({"tengo 3 amigos que quieren hacer alguna actividad": {"group_size": 4}})
     await route_message(state, "tengo 3 amigos que quieren hacer alguna actividad")
     assert state.detected_group_size == 4, "ella + 3 amigos = 4, nunca 7"
     signals_mock.assert_not_called()
@@ -1168,11 +1271,15 @@ async def test_three_activities_all_explicit_merge_without_asking():
 
 
 @pytest.mark.asyncio
-async def test_other_companions_post_close_asks_before_adding_unconfirmed_item():
+async def test_other_companions_post_close_asks_before_adding_unconfirmed_item(extractor_dice):
     """Tras el cierre, un mensaje con un sub-grupo nuevo confirmado (snorkel,
     con número real) y otro sin respaldo (minicurso, "otro" no es un número)
     — el confirmado se registra pero el carrito NO se toca todavía: primero
     se pregunta el que falta, nunca se factura una cantidad inventada."""
+    # Los mensajes del acompañante sin datos del extractor: lo que se prueba es la señal LLM.
+    extractor_dice({"soy buzo certificado, quiero bucear desde cartagena, voy solo":
+                    {**BUZO, **CARTAGENA, "group_size": 1},
+                    "no soy colombiano": {"is_colombian": False}})
     state = make_state("es")
     await route_message(state, "soy buzo certificado, quiero bucear desde cartagena, voy solo")
     await route_message(state, "no")
@@ -1209,7 +1316,7 @@ async def test_other_companions_post_close_asks_before_adding_unconfirmed_item()
 
 
 @pytest.mark.asyncio
-async def test_hallucinated_main_activity_restatement_is_not_queued_as_companion():
+async def test_hallucinated_main_activity_restatement_is_not_queued_as_companion(extractor_dice):
     """Hallazgo en vivo 2026-07-23 (regresión detectada al verificar el fix
     anterior): en un turno MID-FLOW de "añadir acompañante singular"
     ("viene también un amigo que quiere hacer snorkel", tras una reserva de
@@ -1221,7 +1328,15 @@ async def test_hallucinated_main_activity_restatement_is_not_queued_as_companion
     acompañante nuevo, y el bot preguntaba "¿Cuántos serían para buceo
     certificado?" — sin sentido, además de pisar la resolución correcta del
     fast-path regex (compañero singular inequívoco "un amigo" -> snorkel:1
-    sin preguntar)."""
+    sin preguntar).
+
+    ex-9b paso 3: el reparto lo da hoy el extractor del turno, que (por su regla) incluye a quien ya iba: el mismo
+    {certified_diving: 1, snorkel: 1}, que repite la actividad principal."""
+    extractor_dice({"soy buzo certificado, quiero bucear desde cartagena, voy solo":
+                    {**BUZO, **CARTAGENA, "group_size": 1},
+                    "no soy colombiano": {"is_colombian": False}})
+    extractor_dice({"viene también un amigo que quiere hacer snorkel":
+                    {"group_allocation": {"certified_diving": 1, "snorkel": 1}}})
     state = make_state("es")
     await route_message(state, "soy buzo certificado, quiero bucear desde cartagena, voy solo")
     await route_message(state, "no")
@@ -1304,20 +1419,27 @@ class TestPersonNounSharedVocabulary:
 
 
 @pytest.mark.asyncio
-async def test_companion_qty_answer_mentioning_different_activity_not_misapplied():
+async def test_companion_qty_answer_mentioning_different_activity_not_misapplied(extractor_dice):
     """Hallazgo en vivo 2026-07-23: si se pregunta "¿cuántos para snorkel?"
     y la respuesta menciona OTRA actividad producto distinta ("we are 3 for
     diving"), ese número NO es una respuesta válida para snorkel — aplicarlo
     a ciegas mezclaría el "3" de buceo con snorkel (bug en vivo: snorkel
     acababa con qty=3 cuando el cliente hablaba de buceo). Además, la
     pregunta de snorkel (aún sin responder) no debe perderse: el turno
-    después debe seguir preguntando por snorkel, no saltar a otro slot."""
+    después debe seguir preguntando por snorkel, no saltar a otro slot.
+
+    ex-9b paso 3: el arranque ("my friends dive and other friends do snorkel too" → buceo como actividad principal y
+    "¿cuántos para snorkel?") lo ponían la pista del regex y la red de menciones, que con `extractor_sin_pista` no
+    corren (el extractor no le inventa la actividad a quien escribe: se pregunta). El estado se monta como quedaba
+    tras ese turno; lo que se prueba es el segundo."""
+    extractor_dice({"we are 3 for diving": {"quiere_bucear": True, "group_size": 3}})
     state = make_state("en")
-    with patch.object(core_extraction, "fill_gaps", new=AsyncMock(return_value={
-        "group_allocation": {"certified_diving": 1, "snorkel": 1},
-    })):
-        await route_message(state, "my friends dive and other friends do snorkel too")
-    assert state.core_pending_slot == core.SLOT_COMPANION_QTY
+    state.history = [{"role": "user", "content": "my friends dive and other friends do snorkel too"},
+                     {"role": "assistant", "content": "How many people would that be for snorkeling?"}]
+    state.detected_activity = "certified_diving"
+    state.pending_companion_activity = "snorkel"
+    state.companion_activity_deferred = True
+    state.core_pending_slot = core.SLOT_COMPANION_QTY
     pending_before = state.pending_companion_activity
     assert pending_before in ("certified_diving", "snorkel")
     snorkel_before = (state.detected_group_allocation or {}).get("snorkel")
@@ -1402,7 +1524,7 @@ def test_activity_has_textual_backing_certification_claim_backs_certified_diving
 
 
 @pytest.mark.asyncio
-async def test_companion_activity_ambiguity_defers_instead_of_burying_pending_slot(monkeypatch):
+async def test_companion_activity_ambiguity_defers_instead_of_burying_pending_slot(monkeypatch, extractor_dice):
     """Hallazgo en vivo 2026-08-26 (batería sintética contra PRE, conv 190 y
     210): cuando la ambigüedad de actividad del acompañante aparecía MIENTRAS
     todavía había una pregunta obligatoria pendiente (seguridad, en este
@@ -1414,6 +1536,7 @@ async def test_companion_activity_ambiguity_defers_instead_of_burying_pending_sl
     sigue preguntando lo que tocaba (seguridad), y el acompañante se retoma
     justo antes de cerrar, sin perderse ni bloquear nada por el medio."""
     monkeypatch.setattr(settings, "aplazar_pregunta_sin_respuesta", False)  # camino de antes de EX-FLUJO-1
+    extractor_dice({"no somos colombianos": {"is_colombian": False}})
     state = make_state("es")
     state.detected_activity = "certified_diving"
     state.is_certified = True
@@ -1511,7 +1634,7 @@ async def test_bare_headcount_in_price_question_does_not_spawn_phantom_companion
 
 
 @pytest.mark.asyncio
-async def test_safety_answer_without_person_mention_does_not_spawn_phantom_companion():
+async def test_safety_answer_without_person_mention_does_not_spawn_phantom_companion(extractor_dice):
     """Hallazgo en vivo (bateria sintetica contra PRE, lote 10, conversacion
     LARGA hasta el cierre de reserva, 2026-09-02): "no hace mas de 2 años
     que buceamos" -- una respuesta de SEGURIDAD que no menciona a NADIE mas
@@ -1525,6 +1648,7 @@ async def test_safety_answer_without_person_mention_does_not_spawn_phantom_compa
     "paquete de 5 inmersiones"). Ni el LLM ni el regex tienen respaldo
     textual de una persona distinta aqui -- no debe generarse ningun
     acompañante."""
+    extractor_dice({"no hace mas de 2 años que buceamos": {"last_dive_over_2_years": False}})
     state = make_state("es")
     state.detected_activity = "certified_diving"
     state.is_certified = True
@@ -1748,7 +1872,7 @@ async def test_detect_special_signals_skipped_when_group_already_fully_resolved(
 
 
 @pytest.mark.asyncio
-async def test_companion_attribute_in_opening_message_keeps_main_activity():
+async def test_companion_attribute_in_opening_message_keeps_main_activity(extractor_dice):
     """Hallazgo D (batería sintética contra PRE, conv 265/276): un mensaje de
     APERTURA que establece la actividad principal en primera persona
     ("quiero bucear") y menciona un acompañante SIN certificar en el MISMO
@@ -1760,7 +1884,14 @@ async def test_companion_attribute_in_opening_message_keeps_main_activity():
     pero en la apertura no hay nada previo que proteger, y la restauración
     borraba la actividad legítima que este mismo turno acababa de fijar. El
     bot terminaba preguntando "¿cuántos serían para buceo certificado?" en
-    vez de reconocer al acompañante sin certificar."""
+    vez de reconocer al acompañante sin certificar.
+
+    ex-9b paso 3: "quiero bucear" ya no fija el buceo certificado (era una deducción del regex; el extractor no elige
+    actividad con "quiero bucear con mi amigo" y la reserva pregunta). La apertura nombra la actividad ("bucear
+    certificado") para que la fije el mismo turno, que es lo que se prueba; el extractor no da el total, así que el
+    acompañante entra por la señal LLM, donde se restaura el perfil."""
+    mensaje = "hola quiero bucear certificado, voy con mi amigo pero el no esta certificado"
+    extractor_dice({mensaje: {"quiere_bucear": True, "activity": "certified_diving"}, "desde cartagena": CARTAGENA})
     state = make_state("es")
     _senales = AsyncMock(return_value={
              "companion_activity": "minicourse", "mentions_other_person": True,
@@ -1768,9 +1899,7 @@ async def test_companion_attribute_in_opening_message_keeps_main_activity():
          })
     with patch.object(core_extraction, "fill_gaps", new=AsyncMock(return_value={})), \
          patch.object(core_routing, "detect_special_signals", new=_senales), patch.object(core_extraction, "detect_special_signals", new=_senales):
-        resp = await route_message(
-            state, "hola quiero bucear, voy con mi amigo pero el no esta certificado"
-        )
+        resp = await route_message(state, mensaje)
     assert state.detected_activity == "certified_diving", (
         "la actividad principal detectada este mismo turno no debe perderse "
         "al restaurar el perfil frente a la mención del acompañante"
@@ -1856,10 +1985,11 @@ async def test_deliberation_backstop_without_llm_signal_routes_to_rag(monkeypatc
 
 
 @pytest.mark.asyncio
-async def test_single_activity_selection_not_treated_as_comparing():
+async def test_single_activity_selection_not_treated_as_comparing(extractor_dice):
     """Guard contra falso positivo: una selección clara de UNA sola actividad
     ("quiero el minicurso") NO es deliberación aunque la señal LLM se equivoque
     y diga comparing=True — se necesita mencionar 2+ productos en el texto."""
+    extractor_dice({"quiero el minicurso": {"activity": "minicourse"}})
     state = _at_activity_stage()
     obj = {"comparing_options": {"comparing": True, "options": ["minicourse"],
                                  "who": "self"}}
@@ -2891,11 +3021,15 @@ def test_language_switch_regex_detects_explicit_requests_only():
 
 
 @pytest.mark.asyncio
-async def test_explicit_language_switch_mid_conversation_is_honored(monkeypatch):
+async def test_explicit_language_switch_mid_conversation_is_honored(monkeypatch, extractor_dice):
     """El mismo hallazgo, de punta a punta: pedir explícitamente cambiar de
     idioma a mitad de conversación debe surtir efecto YA MISMO, en la
     respuesta de ese mismo turno."""
     monkeypatch.setattr(settings, "aplazar_pregunta_sin_respuesta", False)  # camino de antes de EX-FLUJO-1
+    # ex-9b paso 3: "quiero bucear certificado" elige el buceo certificado pero no dice que lo esté (mod-2,
+    # `certificado_solo_si_lo_dice`; el regex lo deducía y la siguiente pregunta era el origen): se pregunta la
+    # certificación, ya en inglés.
+    extractor_dice({"hola quiero bucear certificado": {"quiere_bucear": True, "activity": "certified_diving"}})
     state = make_state("es")
     state.step = Step.WELCOME
     with patch("src.agents.supervisor.detect_routing_signals", new=AsyncMock(return_value={})):
@@ -2904,7 +3038,7 @@ async def test_explicit_language_switch_mid_conversation_is_honored(monkeypatch)
     with patch("src.agents.supervisor.detect_routing_signals", new=AsyncMock(return_value={})):
         resp = await route_message(state, "actually can we continue in english")
     assert state.language == "en"
-    assert "?" in resp and ("Where" in resp or "where" in resp)
+    assert "?" in resp and "certified diver" in resp
 
 
 # ── §6.bis: extractores LLM que "contestan de más" ────────────────────────────
@@ -2988,13 +3122,14 @@ async def test_fill_gaps_hallucinated_safety_answer_is_dropped():
 
 
 @pytest.mark.asyncio
-async def test_slot_resolver_discarded_when_turn_answered_another_slot():
+async def test_slot_resolver_discarded_when_turn_answered_another_slot(extractor_dice):
     """Segunda vía de la MISMA familia, encontrada al verificar el fix anterior
     en vivo: la red anti-bucle de Fase C llamaba a
     `resolve_slot_answer("safety", "ninguno colombiano")` y el LLM devolvía
     `{"value": False}` (reproducido 2 de 3 corridas con LLM real). Como este
     turno resolvió la NACIONALIDAD, el mensaje hablaba de ese slot, no del de
     seguridad — se descarta."""
+    extractor_dice({"ninguno colombiano": {"is_colombian": False}})
     state = make_state("es")
     state.detected_activity = "certified_diving"
     state.is_certified = True
@@ -3034,9 +3169,10 @@ async def test_slot_resolver_still_reads_non_canonical_answer_to_pending_slot():
 
 
 @pytest.mark.asyncio
-async def test_regex_last_dive_still_wins_over_the_backing_gate():
+async def test_regex_last_dive_still_wins_over_the_backing_gate(monkeypatch):
     """Sin regresión en la vía legítima: cuando el cliente SÍ habla del tema, el
     detector determinista resuelve el campo y las guardas no lo estorban."""
+    monkeypatch.setattr(settings, "extractor_sin_pista", False)  # camino del regex: se va con el borrado del paso 3
     state = make_state("es")
     state.detected_activity = "certified_diving"
     state.is_certified = True

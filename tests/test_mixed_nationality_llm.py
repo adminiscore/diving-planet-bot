@@ -50,7 +50,10 @@ async def _understand(message, returned):
 
 
 @pytest.mark.asyncio
-async def test_not_mixed_keeps_the_nationality_read():
+async def test_not_mixed_keeps_the_nationality_read(extractor_dice):
+    # ex-9b paso 3: la nacionalidad y el grupo mixto los lee el extractor del turno (`extractor_dice`, conftest); sin él,
+    # en los tests la nacionalidad iba por la pista del regex. No mixto: se queda la nacionalidad leída.
+    extractor_dice({"yo soy colombiano y mi novia tambien": {"is_colombian": True}})
     state, _ = await _understand("yo soy colombiano y mi novia tambien", {})
     assert state.is_colombian is True
     assert state.mixed_nationality_notice is False

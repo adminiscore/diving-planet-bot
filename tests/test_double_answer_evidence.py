@@ -13,6 +13,7 @@ import pytest
 
 from src.agents import conversational_core as core
 from src.agents.nucleo import extraction as core_extraction
+from src.config import settings
 from src.flows.state import ConversationState
 from src.prompts.booking import EVIDENCE_FIELDS, extraction_tool
 
@@ -59,7 +60,8 @@ async def _understand(state, message, returned):
 
 
 @pytest.mark.asyncio
-async def test_boolean_quoting_the_pending_answer_is_still_dropped():
+async def test_boolean_quoting_the_pending_answer_is_still_dropped(monkeypatch):
+    monkeypatch.setattr(settings, "extractor_sin_pista", False)  # camino del regex: se va con el borrado del paso 3
     state = _waiting_location()
     await _understand(state, "Desde Cartagena", {"is_colombian": True, "evidence": {"is_colombian": "Desde Cartagena"}})
     assert state.location == "cartagena"

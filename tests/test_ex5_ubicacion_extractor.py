@@ -10,6 +10,7 @@ import pytest
 
 from src.agents import conversational_core as core
 from src.agents.nucleo import extractor as core_extractor
+from src.config import settings
 from src.flows.state import ConversationState
 
 
@@ -72,7 +73,8 @@ async def test_un_origen_nuevo_sin_correccion_se_confirma(ex5):
 
 
 @pytest.mark.asyncio
-async def test_si_el_extractor_falla_se_queda_lo_de_hoy(ex5):
+async def test_si_el_extractor_falla_se_queda_lo_de_hoy(ex5, monkeypatch):
+    monkeypatch.setattr(settings, "extractor_sin_pista", False)  # camino del regex: se va con el borrado del paso 3
     ex5(None)
     st = await _entender("desde cartagena")
     assert st.location == "cartagena"

@@ -38,6 +38,18 @@ def _grupo_camino_antiguo(monkeypatch):
     decide el extractor (tests/test_ex7_grupo.py)."""
 
 
+# ex-9b paso 3 (`extractor_sin_pista`): lo que el extractor del turno lee de los mensajes de reserva de estos tests
+# (fixture `extractor_dice` de conftest). Sin él, en los tests (sin red) el extractor falla y el turno iba por la pista
+# del regex. Las preguntas no afirman datos ({}).
+BUZOS = {"quiere_bucear": True, "is_certified": True, "activity": "certified_diving"}
+LEE_EL_EXTRACTOR = {
+    "queremos bucear, somos certificados": BUZOS,
+    "quiero bucear, soy certificado, desde cartagena, somos 2": {**BUZOS, "location": "cartagena", "group_size": 2},
+    "desde cartagena": {"location": "cartagena"},
+    "desde cartagena, y me cuentas lo de los hoteles": {"location": "cartagena"},
+}
+
+
 def _state() -> ConversationState:
     s = ConversationState(conversation_id="u3-4")
     s.language = "es"
@@ -99,7 +111,8 @@ def _llm_reads(monkeypatch, message, patch):
     monkeypatch.setattr(core, "extract_and_verify", _combined, raising=False)
 
 
-async def test_con_flag_y_jev_contesta_sin_interrogacion(monkeypatch, signals, rag):
+async def test_con_flag_y_jev_contesta_sin_interrogacion(monkeypatch, signals, rag, extractor_dice):
+    extractor_dice(LEE_EL_EXTRACTOR)
     st = _state()
     await route_message(st, "queremos bucear, somos certificados")
     assert st.core_pending_slot == core.SLOT_LOCATION
@@ -119,6 +132,7 @@ async def test_en_una_pregunta_el_regex_no_escribe_datos(monkeypatch, signals, r
     fallaba. Lo que el test quiere fijar es la conducta CUANDO el LLM se abstiene, no si la
     API responde — ver `test_si_el_llm_no_contesta_no_se_tira_nada` para el otro caso.
     """
+    monkeypatch.setattr(settings, "extractor_sin_pista", False)  # camino del regex: se va con el borrado del paso 3
     _calls, box = verificador
     box["afirma"] = {}  # el LLM se abstiene: nadie afirma la ubicación
     st = _state()
@@ -129,8 +143,9 @@ async def test_en_una_pregunta_el_regex_no_escribe_datos(monkeypatch, signals, r
     assert st.core_pending_slot == core.SLOT_LOCATION
 
 
-async def test_sin_pregunta_no_se_lanza_nada(monkeypatch, signals, rag):
+async def test_sin_pregunta_no_se_lanza_nada(monkeypatch, signals, rag, extractor_dice):
     # rag-5: sin la respuesta adelantada (se llamaría y se cancelaría); aquí se mira el enrutado.
+    extractor_dice(LEE_EL_EXTRACTOR)  # ex-9b paso 3: sin él, al 2.º turno se pasa a un asesor
     monkeypatch.setattr(core, "lanzar_rag_adelantado", lambda *a, **k: None)
     st = _state()
     await route_message(st, "queremos bucear, somos certificados")
@@ -138,7 +153,8 @@ async def test_sin_pregunta_no_se_lanza_nada(monkeypatch, signals, rag):
     assert rag == [] and "RESPUESTA_RAG" not in resp
 
 
-async def test_recordar_sigue_con_su_respuesta_fija(monkeypatch, signals, rag):
+async def test_recordar_sigue_con_su_respuesta_fija(monkeypatch, signals, rag, extractor_dice):
+    extractor_dice(LEE_EL_EXTRACTOR)
     _senales = AsyncMock(return_value={"recall_field": "group_size"})
     monkeypatch.setattr(core_routing, "detect_special_signals", _senales)
     monkeypatch.setattr(core_extraction, "detect_special_signals", _senales)
@@ -289,8 +305,9 @@ def rag_sin_respuesta(monkeypatch):
 
 
 async def test_si_el_rag_no_sabe_no_se_pega_la_pregunta_de_la_reserva(
-    monkeypatch, signals, rag_sin_respuesta
+    monkeypatch, signals, rag_sin_respuesta, extractor_dice
 ):
+    extractor_dice(LEE_EL_EXTRACTOR)
     st = _state()
     await route_message(st, "queremos bucear, somos certificados")
     assert st.core_pending_slot == core.SLOT_LOCATION
@@ -308,11 +325,12 @@ async def test_si_el_rag_no_sabe_no_se_pega_la_pregunta_de_la_reserva(
 
 
 async def test_si_el_rag_si_sabe_la_pregunta_de_la_reserva_sigue_yendo_detras(
-    monkeypatch, signals, rag
+    monkeypatch, signals, rag, extractor_dice
 ):
     """Control del test anterior: el arreglo 1 NO puede cargarse el "y sigue" de
     u3-4, que es justo lo que aporta. Sin él, el test de arriba pasaría aunque la
     pregunta de la reserva no se encadenara nunca."""
+    extractor_dice(LEE_EL_EXTRACTOR)
     st = _state()
     await route_message(st, "queremos bucear, somos certificados")
 
@@ -387,8 +405,9 @@ def no_rellena(monkeypatch):
 
 
 async def test_en_un_turno_con_pregunta_no_se_rellenan_huecos(
-    monkeypatch, signals, rag, verificador, no_rellena
+    monkeypatch, signals, rag, verificador, no_rellena, extractor_dice
 ):
+    extractor_dice(LEE_EL_EXTRACTOR)  # ex-9b paso 3: sin él, al 2.º turno se pasa a un asesor
     st = _state()
     await route_message(st, "queremos bucear, somos certificados")
     no_rellena.clear()
@@ -401,7 +420,7 @@ async def test_en_un_turno_con_pregunta_no_se_rellenan_huecos(
     )
 
 
-async def test_lo_que_no_se_puede_verificar_no_se_guarda(monkeypatch, signals, rag, verificador):
+async def test_lo_que_no_se_puede_verificar_no_se_guarda(monkeypatch, signals, rag, verificador, extractor_dice):
     """`hotel`/`island`/`ages`/`last_dive_over_2_years` no tienen verificador en
     `_VETO_FIELD_SPECS`. La regla del arreglo es "solo lo que el cliente afirma Y el LLM
     confirma": si no se puede confirmar, no se guarda."""
@@ -410,6 +429,7 @@ async def test_lo_que_no_se_puede_verificar_no_se_guarda(monkeypatch, signals, r
     verificables = set(supervisor._VETO_FIELD_SPECS)
     assert "hotel" not in verificables and "island" not in verificables
 
+    extractor_dice(LEE_EL_EXTRACTOR)  # ex-9b paso 3: sin él, al 2.º turno se pasa a un asesor
     st = _state()
     await route_message(st, "queremos bucear, somos certificados")
 
@@ -540,8 +560,9 @@ async def test_el_lo_cambio_fantasma_tambien_se_descarta_en_un_turno_de_cortesia
     assert st.location == "cartagena"
 
 
-async def test_la_senal_de_jev_se_renueva_en_cada_turno(monkeypatch, signals, rag):
+async def test_la_senal_de_jev_se_renueva_en_cada_turno(monkeypatch, signals, rag, extractor_dice):
     """Nunca se usa la señal de un turno anterior: sin señal en este turno, no hay nada."""
+    extractor_dice(LEE_EL_EXTRACTOR)  # ex-9b paso 3: sin él, al 2.º turno se pasa a un asesor
     st = _state()
     signals["value"] = {"affirms_location": False}
     await route_message(st, "queremos bucear, somos certificados")
@@ -559,8 +580,9 @@ async def test_si_jev_dice_que_si_lo_afirma_la_contradiccion_se_confirma(monkeyp
     assert st.pending_correction == {"is_certified": False}
 
 
-async def test_la_puerta_tira_nacionalidad_y_grupo_nombrados_dentro_de_la_pregunta():
+async def test_la_puerta_tira_nacionalidad_y_grupo_nombrados_dentro_de_la_pregunta(monkeypatch):
     """"¿cuál es el precio para colombianos, para 2?" no dice que sean colombianos ni cuántos van."""
+    monkeypatch.setattr(settings, "extractor_sin_pista", False)  # camino del regex: se va con el borrado del paso 3
     st = _con_pregunta(_state(), {"is_colombian": False, "group_size": False, "group_allocation": False})
     intent = core._detector.detect("somos colombianos y vamos 2", st)
     assert intent.is_colombian is True and intent.group_size == 2, "el regex lo lee (control)"
@@ -594,7 +616,8 @@ def relleno(monkeypatch):
     return calls, box
 
 
-async def test_con_el_no_de_jev_no_se_rellena(monkeypatch, signals, rag, verificador, relleno):
+async def test_con_el_no_de_jev_no_se_rellena(monkeypatch, signals, rag, verificador, relleno, extractor_dice):
+    extractor_dice(LEE_EL_EXTRACTOR)  # ex-9b paso 3: sin él, al 2.º turno se pasa a un asesor
     calls, box = relleno
     st = _state()
     await route_message(st, "hola")
@@ -609,7 +632,8 @@ async def test_con_el_no_de_jev_no_se_rellena(monkeypatch, signals, rag, verific
 # Paso 5: Jev decide si el mensaje pide de verdad recordar algo. En la ronda A el
 # "¿me recuerdas…?" contestó 15 preguntas que no lo eran ("could you just confirm at what time and
 # where…?") y canceló su respuesta.
-async def test_si_jev_dice_que_no_pide_recordar_se_contesta_la_pregunta(monkeypatch, signals, rag):
+async def test_si_jev_dice_que_no_pide_recordar_se_contesta_la_pregunta(monkeypatch, signals, rag, extractor_dice):
+    extractor_dice(LEE_EL_EXTRACTOR)
     _senales = AsyncMock(return_value={"recall_field": "booking_recap"})
     monkeypatch.setattr(core_routing, "detect_special_signals", _senales)
     monkeypatch.setattr(core_extraction, "detect_special_signals", _senales)
@@ -620,7 +644,8 @@ async def test_si_jev_dice_que_no_pide_recordar_se_contesta_la_pregunta(monkeypa
     assert "RESPUESTA_RAG" in resp
 
 
-async def test_si_jev_dice_que_pide_recordar_sigue_la_respuesta_fija(monkeypatch, signals, rag):
+async def test_si_jev_dice_que_pide_recordar_sigue_la_respuesta_fija(monkeypatch, signals, rag, extractor_dice):
+    extractor_dice(LEE_EL_EXTRACTOR)
     _senales = AsyncMock(return_value={"recall_field": "group_size"})
     monkeypatch.setattr(core_routing, "detect_special_signals", _senales)
     monkeypatch.setattr(core_extraction, "detect_special_signals", _senales)
@@ -654,7 +679,8 @@ def test_el_filtro_de_senales_solo_con_jev_seguro(monkeypatch):
     assert not core._jev_rules_out_special_signals(st)
 
 
-async def test_con_el_filtro_no_se_llama_al_llm_de_senales(monkeypatch, signals, rag):
+async def test_con_el_filtro_no_se_llama_al_llm_de_senales(monkeypatch, signals, rag, extractor_dice):
+    extractor_dice(LEE_EL_EXTRACTOR)  # ex-9b paso 3: sin él, al 2.º turno se pasa a un asesor
     spy = AsyncMock(return_value={})
     monkeypatch.setattr(core_routing, "detect_special_signals", spy)
     monkeypatch.setattr(core_extraction, "detect_special_signals", spy)

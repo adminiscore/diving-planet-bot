@@ -562,7 +562,7 @@ async def test_closed_date_question_english_gets_real_policy():
 
 
 @pytest.mark.asyncio
-async def test_group_size_correction_with_filler_words_is_applied():
+async def test_group_size_correction_with_filler_words_is_applied(extractor_dice):
     """Observación menor del lote 4 (2026-08-26, conv 429), arreglada:
     "en realidad revisamos y somos 4" no actualizaba `detected_group_size`
     (se quedaba en 5) — `detected_group_size` tiene semántica write-once
@@ -572,7 +572,12 @@ async def test_group_size_correction_with_filler_words_is_applied():
     desde ningún sitio), además de exigir "en realidad" pegado
     directamente a "somos" sin relleno. Fix: cue de corrección explícita
     más tolerante (`_CORRECTION_CUE_RE`) conectado directamente
-    en `_apply_detected_intent`, que sí es parte del pipeline activo."""
+    en `_apply_detected_intent`, que sí es parte del pipeline activo.
+
+    ex-9b paso 3: el total lo lee el extractor del turno (`extractor_dice`, conftest); el cambio con cue de corrección
+    se aplica sin preguntar (`_poner_grupo`)."""
+    extractor_dice({"somos 5 para buceo": {"quiere_bucear": True, "group_size": 5},
+                    "en realidad revisamos y somos 4": {"group_size": 4}})
     state = make_state()
     with patch("src.agents.supervisor.detect_routing_signals", new=AsyncMock(return_value={})):
         await route_message(state, "somos 5 para buceo")
@@ -584,11 +589,16 @@ async def test_group_size_correction_with_filler_words_is_applied():
 
 
 @pytest.mark.asyncio
-async def test_group_size_not_overwritten_without_correction_cue():
+async def test_group_size_not_overwritten_without_correction_cue(extractor_dice):
     """Regresión/estrictez: un número suelto SIN cue de corrección
     explícita ("tengo 25 años y mi amigo también quiere ir") nunca debe
     sobreescribir `detected_group_size` — el fix está acotado al cue
-    léxico, no a cualquier número nuevo en el mensaje."""
+    léxico, no a cualquier número nuevo en el mensaje.
+
+    ex-9b paso 3: el total lo lee el extractor del turno (`extractor_dice`, conftest). Aunque lea otro total (el amigo
+    que se suma), sin cue de corrección no se sobreescribe: se confirma."""
+    extractor_dice({"somos 3 para snorkel": {"activity": "snorkel", "group_size": 3},
+                    "tengo 25 anos y mi amigo tambien quiere ir": {"group_size": 4}})
     state = make_state()
     with patch("src.agents.supervisor.detect_routing_signals", new=AsyncMock(return_value={})):
         await route_message(state, "somos 3 para snorkel")
