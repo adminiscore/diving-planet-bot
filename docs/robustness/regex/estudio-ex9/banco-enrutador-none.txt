@@ -1,0 +1,17 @@
+Enrutador de respaldo (DeepSeek): opción "none" en sensitive_topic y booking_change_topic + exclusión de "precio o
+descuento distinto de lo esperado" en real_time_issues. 19-oct, 3 repeticiones, config de PRE.
+
+Causa (ronda ex9b-1, descuento-online-sin-codigo 0/3 con los flags del paso 5 encendidos y apagados): DeepSeek rellena
+TODOS los campos del tool; sin "none" elegía uno a la fuerza. "Hi, I'm trying to checkout to take PADI Open Water
+Diver certification course but the discount of 10% is not showing up. what is the code?" → real_time_issues +
+cancellation en 8 de 12 (Jev duda en sensitive_topic a 0,42-0,59 y decide el respaldo). En limpieza-4 pasaba por
+suerte: el JSON se cortaba con max_tokens=140 y el turno se quedaba sin señales (arreglado con el tope de 400).
+
+Banco de 16 frases (real_time_issues / médico / clima / queja):
+  DeepSeek solo, antes ............................ 10/13 (sin las 3 nuevas) y cancelaciones inventadas
+  DeepSeek solo, con "none" ....................... 12/16: el descuento sigue en real_time_issues (3/3); cambio = nada
+  DeepSeek solo, con "none" + exclusión precio .... 14/16 (los 2 "mal" son de link roto: broken_link_complaint)
+  Con Jev (config de PRE) ......................... 15/16 ("me cobraron dos veces" → queja: también pasa a persona)
+Batería de las 9 señales (scripts/battery_router_signals.py 3 base): 34/37 (antes 33/37; ruido conocido 29-33).
+Preguntas de Jev: idénticas carácter a carácter (routing_questions sobrescribe su "none").
+Scripts: scratchpad banco_tiempo_real(_jev).py (16 frases de arriba).

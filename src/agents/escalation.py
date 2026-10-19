@@ -273,7 +273,8 @@ async def detect_routing_signals(
         _llm_logger.warning(f"[ESCALATION] routing signals error: {exc}")
         args = {}
 
-    result = {k: v for k, v in (args or {}).items() if v not in (None, "", [], {})}
+    # "none" es la opción "nada" de los enums (ex-9b, 19-oct): para el resto del código, como si no viniera.
+    result = {k: v for k, v in (args or {}).items() if v not in (None, "", [], {}, "none")}
     if turn_signals:
         # u3-4/u3-5: Jev dudó en las señales del router, pero sus respuestas a "¿hay algo que
         # contestar?" y a los "¿lo afirma?" siguen valiendo (son otras preguntas y el router

@@ -85,6 +85,10 @@ ROUTING_TOOL = {
                     "enum": [
                         "medical_questions", "weather_conditions",
                         "real_time_issues", "complaints_or_emergencies",
+                        # ex-9b (19-oct): sin "none", el LLM que rellena todos los campos elegia uno a la fuerza
+                        # ("the discount of 10% is not showing up" -> real_time_issues y cancellation). Jev ya
+                        # tenia su "none" (routing_questions lo sobrescribe): sus preguntas no cambian.
+                        "none",
                     ],
                     "description": (
                         "Set if the message raises a MEDICAL condition or "
@@ -101,7 +105,11 @@ ROUTING_TOOL = {
                         "'puedo pagar con tarjeta', 'what payment methods do "
                         "you take') — that is normal catalog information, "
                         "not a real-time problem, and must be left false "
-                        "here. Do NOT use 'weather_conditions' for a "
+                        "here. The same for a PRICE or DISCOUNT that looks "
+                        "different from what the customer expected (the "
+                        "online discount is already included in the web "
+                        "price, there is no code): a pricing question, not "
+                        "a failure. Do NOT use 'weather_conditions' for a "
                         "hypothetical or POLICY question about what happens "
                         "if the weather turns bad ('¿qué pasa si llueve ese "
                         "día?', '¿cuál es la política de cancelación por mal "
@@ -279,7 +287,7 @@ ROUTING_TOOL = {
                 },
                 "booking_change_topic": {
                     "type": "string",
-                    "enum": ["cancellation", "reschedule", "modify_headcount"],
+                    "enum": ["cancellation", "reschedule", "modify_headcount", "none"],
                     "description": (
                         "Set ONLY when the customer clearly wants to CANCEL, "
                         "CHANGE THE DATE, or CHANGE THE NUMBER OF PEOPLE of "
@@ -335,7 +343,7 @@ def routing_system_prompt(lang: str) -> str:
             "sensitive_topic, o (5) quiere CANCELAR, CAMBIAR LA FECHA o "
             "CAMBIAR EL NÚMERO DE PERSONAS de una reserva que YA tiene "
             "(booking_change_topic) — 'cancellation', 'reschedule' o "
-            "'modify_headcount'. IMPORTANTE: el sesgo de 'ante la duda, márcalo' "
+            "'modify_headcount'; si no aplica, 'none', que es lo normal. IMPORTANTE: el sesgo de 'ante la duda, márcalo' "
             "vale para sensitive_topic Y adaptive_diving_topic (mejor "
             "escalar/enrutar de más). wants_human, wants_menu_or_restart y "
             "booking_change_topic son lo contrario: márcalos SOLO si el "
@@ -366,7 +374,7 @@ def routing_system_prompt(lang: str) -> str:
         "together with sensitive_topic, or (5) wants to CANCEL, CHANGE THE "
         "DATE, or CHANGE THE HEADCOUNT of a booking they ALREADY have "
         "(booking_change_topic — 'cancellation', 'reschedule' or "
-        "'modify_headcount'). IMPORTANT: the 'when unsure, flag "
+        "'modify_headcount'; 'none' when it does not apply, which is the usual case). IMPORTANT: the 'when unsure, flag "
         "it' bias applies to BOTH sensitive_topic and adaptive_diving_topic "
         "(better to over-escalate/over-route). wants_human, "
         "wants_menu_or_restart and booking_change_topic are the opposite: "

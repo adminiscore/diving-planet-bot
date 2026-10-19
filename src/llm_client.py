@@ -191,6 +191,8 @@ def _is_empty_for(spec: dict, value) -> bool:
         return True
     if spec.get("type") == "boolean":
         return False
+    if value == "none" and "none" in (spec.get("enum") or []):
+        return True  # ex-9b (19-oct): la opcion "nada" de un enum (sensitive_topic, booking_change_topic)
     return value is False or value == "" or value == [] or value == {}
 
 
