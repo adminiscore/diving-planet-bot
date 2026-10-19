@@ -31,6 +31,7 @@ import pytest
 
 from src.agents import supervisor
 from src.agents.intent_detector import DetectedIntent
+from src.agents.rutas import booking as sup_booking
 from src.flows.state import ConversationState
 
 
@@ -65,7 +66,7 @@ async def test_both_flags_off_does_not_call_llm():
 
     with patch.object(supervisor.settings, "llm_activity_veto_cutover", False), \
          patch.object(supervisor.settings, "llm_activity_veto_shadow_mode", False), \
-         patch.object(supervisor, "verify_fields", new=AsyncMock(side_effect=AssertionError("must not be called"))):
+         patch.object(sup_booking, "verify_fields", new=AsyncMock(side_effect=AssertionError("must not be called"))):
         await _veto(_AMBIGUOUS_MSG, intent, state)
     assert intent.activity == "minicourse"
 
@@ -78,7 +79,7 @@ async def test_no_activity_resolved_skips_veto():
     state = ConversationState(conversation_id="veto-no-activity-test")
 
     with patch.object(supervisor.settings, "llm_activity_veto_cutover", True), \
-         patch.object(supervisor, "verify_fields", new=AsyncMock(side_effect=AssertionError("must not be called"))):
+         patch.object(sup_booking, "verify_fields", new=AsyncMock(side_effect=AssertionError("must not be called"))):
         await _veto(_AMBIGUOUS_MSG, intent, state)
     assert intent.activity is None
 
@@ -92,7 +93,7 @@ async def test_not_resolved_this_turn_skips_llm_call():
     state = ConversationState(conversation_id="veto-not-this-turn-test")
 
     with patch.object(supervisor.settings, "llm_activity_veto_cutover", True), \
-         patch.object(supervisor, "verify_fields", new=AsyncMock(side_effect=AssertionError("must not be called"))):
+         patch.object(sup_booking, "verify_fields", new=AsyncMock(side_effect=AssertionError("must not be called"))):
         await _veto(_UNAMBIGUOUS_MSG, intent, state)
     assert intent.activity == "snorkel"
 
@@ -109,7 +110,7 @@ async def test_resolved_this_turn_but_not_ambiguous_skips_llm_call():
     state = ConversationState(conversation_id="veto-resolved-not-ambiguous-test")
 
     with patch.object(supervisor.settings, "llm_activity_veto_cutover", True), \
-         patch.object(supervisor, "verify_fields", new=AsyncMock(side_effect=AssertionError("must not be called"))):
+         patch.object(sup_booking, "verify_fields", new=AsyncMock(side_effect=AssertionError("must not be called"))):
         await _veto(_UNAMBIGUOUS_MSG, intent, state)
     assert intent.activity == "snorkel"
 
@@ -121,7 +122,7 @@ async def test_shadow_mode_logs_but_never_mutates():
 
     with patch.object(supervisor.settings, "llm_activity_veto_shadow_mode", True), \
          patch.object(supervisor.settings, "llm_activity_veto_cutover", False), \
-         patch.object(supervisor, "verify_fields", new=AsyncMock(return_value={"activity": "padi_open_water"})):
+         patch.object(sup_booking, "verify_fields", new=AsyncMock(return_value={"activity": "padi_open_water"})):
         await _veto(_AMBIGUOUS_MSG, intent, state)
     assert intent.activity == "minicourse"
     assert intent.service_id == "minicourse"
@@ -133,7 +134,7 @@ async def test_cutover_mode_applies_llm_activity_and_service_id():
     state = ConversationState(conversation_id="veto-cutover-test")
 
     with patch.object(supervisor.settings, "llm_activity_veto_cutover", True), \
-         patch.object(supervisor, "verify_fields", new=AsyncMock(return_value={"activity": "padi_open_water"})):
+         patch.object(sup_booking, "verify_fields", new=AsyncMock(return_value={"activity": "padi_open_water"})):
         await _veto(_AMBIGUOUS_MSG, intent, state)
     assert intent.activity == "padi_open_water"
     assert intent.service_id == "open_water"
@@ -148,7 +149,7 @@ async def test_cutover_mode_no_mutation_when_llm_agrees():
     state = ConversationState(conversation_id="veto-agree-test")
 
     with patch.object(supervisor.settings, "llm_activity_veto_cutover", True), \
-         patch.object(supervisor, "verify_fields", new=AsyncMock(return_value={})):
+         patch.object(sup_booking, "verify_fields", new=AsyncMock(return_value={})):
         await _veto(_AMBIGUOUS_MSG, intent, state)
     assert intent.activity == "minicourse"
     assert intent.service_id == "minicourse"
@@ -160,7 +161,7 @@ async def test_veto_failure_degrades_silently_to_regex_only():
     state = ConversationState(conversation_id="veto-error-test")
 
     with patch.object(supervisor.settings, "llm_activity_veto_cutover", True), \
-         patch.object(supervisor, "verify_fields", new=AsyncMock(side_effect=RuntimeError("boom"))):
+         patch.object(sup_booking, "verify_fields", new=AsyncMock(side_effect=RuntimeError("boom"))):
         await _veto(_AMBIGUOUS_MSG, intent, state)
     assert intent.activity == "minicourse"
     assert intent.service_id == "minicourse"
@@ -179,7 +180,7 @@ def _veto_returns(disagreements: dict, gaps_patch: dict | None = None):
     """
     from src.agents import conversational_core as cc
 
-    with patch.object(supervisor, "verify_fields",
+    with patch.object(sup_booking, "verify_fields",
                       new=AsyncMock(return_value=disagreements)), \
          patch.object(cc, "extract_and_verify", create=True,
                       new=AsyncMock(return_value=(gaps_patch or {}, disagreements))):

@@ -14,6 +14,9 @@ from unittest.mock import AsyncMock, patch
 import pytest
 
 from src.agents import conversational_core as core
+from src.agents.nucleo import extraction as core_extraction
+from src.agents.nucleo import routing as core_routing
+from src.agents.nucleo import slotfill_close as core_close
 from src.agents.supervisor import route_message
 from src.flows.state import ConversationState
 
@@ -49,15 +52,16 @@ def _closed(allocation=None, colombian=True):
 async def _send(state, message, verify=None):
     # En la peticion del turno, el valor de un campo sabido vuelve en el relleno y la
     # contradiccion sale de compararlo con lo guardado (hallazgo J, 2026-09-15).
+    _senales = AsyncMock(return_value={})
     with patch("src.agents.supervisor.detect_routing_signals", new=AsyncMock(return_value={})), \
-         patch.object(core, "fill_gaps", new=AsyncMock(return_value={})), \
+         patch.object(core_extraction, "fill_gaps", new=AsyncMock(return_value={})), \
          patch.object(core, "extract_and_verify", create=True,
                       new=AsyncMock(side_effect=lambda *a, **k: (dict(verify or {}), {}))), \
          patch.object(core, "verify_fields", create=True, new=AsyncMock(return_value=verify or {})), \
-         patch.object(core, "detect_special_signals", new=AsyncMock(return_value={})), \
-         patch.object(core, "compose_acknowledgement", new=AsyncMock(return_value="")), \
-         patch.object(core, "resolve_slot_answer", new=AsyncMock(return_value={})), \
-         patch("src.agents.supervisor._maybe_veto_resolved_fields_via_llm", new=AsyncMock(return_value=None)):
+         patch.object(core_routing, "detect_special_signals", new=_senales), patch.object(core_extraction, "detect_special_signals", new=_senales), \
+         patch.object(core_close, "compose_acknowledgement", new=AsyncMock(return_value="")), \
+         patch.object(core_extraction, "resolve_slot_answer", new=AsyncMock(return_value={})), \
+         patch("src.agents.rutas.booking._maybe_veto_resolved_fields_via_llm", new=AsyncMock(return_value=None)):
         return await route_message(state, message)
 
 
@@ -109,8 +113,8 @@ async def test_split_with_an_ambiguous_course_level_waits_for_the_answer():
     state.detected_group_size = 5
     split = {"group_allocation": {"padi_open_water": 2, "snorkel": 3}}
     with patch.object(core, "extract_and_verify", create=True, new=AsyncMock(return_value=(split, {}))), \
-         patch.object(core, "fill_gaps", new=AsyncMock(return_value=split)), \
-         patch("src.agents.supervisor._maybe_veto_resolved_fields_via_llm", new=AsyncMock(return_value=None)):
+         patch.object(core_extraction, "fill_gaps", new=AsyncMock(return_value=split)), \
+         patch("src.agents.rutas.booking._maybe_veto_resolved_fields_via_llm", new=AsyncMock(return_value=None)):
         await core._understand(state, "2 open water y 3 snorkel")
     assert state.needs_cert_or_course is True
     assert state.detected_group_allocation is None

@@ -18,6 +18,7 @@ import pytest
 
 from src.agents import supervisor
 from src.agents.intent_detector import DetectedIntent
+from src.agents.rutas import booking as sup_booking
 from src.flows.state import ConversationState
 
 # Mensaje ambiguo para `activity` (dispara 2+ categorias, su should_verify)
@@ -36,7 +37,7 @@ def _intent() -> DetectedIntent:
 @pytest.mark.asyncio
 async def test_all_flags_off_makes_no_call_at_all():
     intent, state = _intent(), ConversationState(conversation_id="batch-off")
-    with patch.object(supervisor, "verify_fields",
+    with patch.object(sup_booking, "verify_fields",
                       new=AsyncMock(side_effect=AssertionError("must not be called"))):
         await supervisor._maybe_veto_resolved_fields_via_llm(_MSG, intent, state)
     assert intent.activity == "minicourse"
@@ -51,7 +52,7 @@ async def test_one_call_covers_every_eligible_field():
          patch.object(supervisor.settings, "llm_certification_veto_shadow_mode", True), \
          patch.object(supervisor.settings, "llm_location_veto_shadow_mode", True), \
          patch.object(supervisor.settings, "llm_group_size_veto_cutover", True), \
-         patch.object(supervisor, "verify_fields", new=fake):
+         patch.object(sup_booking, "verify_fields", new=fake):
         await supervisor._maybe_veto_resolved_fields_via_llm(_MSG, intent, state)
 
     assert fake.await_count == 1, "debe ser UNA sola peticion para todos los campos"
@@ -76,7 +77,7 @@ async def test_shadow_and_cutover_fields_in_the_same_call_keep_their_own_semanti
          patch.object(supervisor.settings, "llm_location_veto_shadow_mode", True), \
          patch.object(supervisor.settings, "llm_location_veto_cutover", False), \
          patch.object(supervisor.settings, "llm_group_size_veto_cutover", True), \
-         patch.object(supervisor, "verify_fields", new=AsyncMock(return_value=disagreements)):
+         patch.object(sup_booking, "verify_fields", new=AsyncMock(return_value=disagreements)):
         await supervisor._maybe_veto_resolved_fields_via_llm(_MSG, intent, state)
 
     # Cutover: aplicados (activity ademas arrastra su service_id)
@@ -100,7 +101,7 @@ async def test_only_eligible_fields_are_requested():
     fake = AsyncMock(return_value={})
     with patch.object(supervisor.settings, "llm_activity_veto_cutover", True), \
          patch.object(supervisor.settings, "llm_certification_veto_shadow_mode", True), \
-         patch.object(supervisor, "verify_fields", new=fake):
+         patch.object(sup_booking, "verify_fields", new=fake):
         await supervisor._maybe_veto_resolved_fields_via_llm(_MSG, intent, state)
 
     assert fake.await_args.args[0] == ["activity"]
@@ -111,7 +112,7 @@ async def test_failure_degrades_silently_leaving_every_field_untouched():
     intent, state = _intent(), ConversationState(conversation_id="batch-error")
     with patch.object(supervisor.settings, "llm_activity_veto_cutover", True), \
          patch.object(supervisor.settings, "llm_group_size_veto_cutover", True), \
-         patch.object(supervisor, "verify_fields", new=AsyncMock(side_effect=RuntimeError("boom"))):
+         patch.object(sup_booking, "verify_fields", new=AsyncMock(side_effect=RuntimeError("boom"))):
         await supervisor._maybe_veto_resolved_fields_via_llm(_MSG, intent, state)
     assert intent.activity == "minicourse"
     assert intent.group_size == 2

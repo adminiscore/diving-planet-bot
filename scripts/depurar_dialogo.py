@@ -17,6 +17,7 @@ sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 from scripts.replay_golden_local import _noop, _rag, dialogues  # noqa: E402
 from src.agents import conversational_core as core  # noqa: E402
 from src.agents import escalation, supervisor  # noqa: E402
+from src.agents.nucleo import slotfill_close as core_close  # noqa: E402
 from src.flows.state import ConversationState  # noqa: E402
 
 CAMPOS = ("core_pending_slot", "detected_activity", "detected_group_size", "detected_group_allocation", "location",
@@ -26,7 +27,7 @@ CAMPOS = ("core_pending_slot", "detected_activity", "detected_group_size", "dete
 
 async def main(did: str) -> None:
     supervisor.rag_answer = _rag
-    core.compose_acknowledgement = lambda *a, **k: asyncio.sleep(0, result="")
+    core_close.compose_acknowledgement = lambda *a, **k: asyncio.sleep(0, result="")
     escalation.escalate_to_human = _noop
     supervisor.escalate_to_human = _noop
     turns = dict(dialogues())[did]

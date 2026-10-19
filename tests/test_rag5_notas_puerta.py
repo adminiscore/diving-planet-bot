@@ -18,6 +18,7 @@ import pytest
 
 import src.agents.conversational_core as core
 from src.agents import jev_router
+from src.agents.nucleo import setup as core_setup
 from src.config import settings
 from src.flows.state import ConversationState
 
@@ -45,7 +46,7 @@ def extractor(monkeypatch):
         llamadas.append(message)
 
     monkeypatch.setattr(settings, "notas_puerta_jev", True)
-    monkeypatch.setattr(core, "_maybe_capture_notes", _notas)
+    monkeypatch.setattr(core_setup, "_maybe_capture_notes", _notas)
     return llamadas
 
 

@@ -24,6 +24,7 @@ import pytest
 
 from src.agents import supervisor
 from src.agents.intent_detector import IntentDetector
+from src.agents.rutas import booking as sup_booking
 from src.flows.state import ConversationState
 
 # Caso real del eval-set (docs/robustness/eval-set.json,
@@ -60,7 +61,7 @@ async def test_own_trigger_keeps_the_llm_away_from_the_correct_negation_case():
     # dejara pasar el caso, este mock lo pisaria.
     llm = AsyncMock(return_value={"is_colombian": True})
     with patch.object(supervisor.settings, "llm_nationality_veto_cutover", True), \
-         patch.object(supervisor, "verify_fields", new=llm):
+         patch.object(sup_booking, "verify_fields", new=llm):
         await supervisor._maybe_veto_resolved_field_via_llm("is_colombian", _NEGATION_MSG, intent, state)
 
     # Si esto vuelve a fallar es que alguien quito o ensancho el trigger propio:

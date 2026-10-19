@@ -24,6 +24,9 @@ import pytest
 
 from src.agents import conversational_core as core
 from src.agents import escalation, jev_router, supervisor
+from src.agents.nucleo import extraction as core_extraction
+from src.agents.nucleo import routing as core_routing
+from src.agents.nucleo import slotfill_close as core_close
 from src.agents.supervisor import route_message
 from src.config import settings
 from src.flows.state import ConversationState
@@ -43,11 +46,13 @@ def _state() -> ConversationState:
 
 @pytest.fixture(autouse=True)
 def _offline(monkeypatch):
-    monkeypatch.setattr(core, "fill_gaps", AsyncMock(return_value={}))
-    monkeypatch.setattr(core, "detect_special_signals", AsyncMock(return_value={}))
-    monkeypatch.setattr(core, "resolve_slot_answer", AsyncMock(return_value={}))
+    monkeypatch.setattr(core_extraction, "fill_gaps", AsyncMock(return_value={}))
+    _senales = AsyncMock(return_value={})
+    monkeypatch.setattr(core_routing, "detect_special_signals", _senales)
+    monkeypatch.setattr(core_extraction, "detect_special_signals", _senales)
+    monkeypatch.setattr(core_extraction, "resolve_slot_answer", AsyncMock(return_value={}))
     monkeypatch.setattr(core, "extract_notes", AsyncMock(return_value=[]))
-    monkeypatch.setattr(core, "compose_acknowledgement", AsyncMock(return_value=""))
+    monkeypatch.setattr(core_close, "compose_acknowledgement", AsyncMock(return_value=""))
     # Estos tests prueban el camino de u3-4 en el que la ubicación del REGEX se verifica con el LLM. Con ex-5
     # (`extraccion_llm_ubicacion`) la ubicación la decide el extractor (tests/test_ex5_ubicacion_extractor.py).
     # Igual con ex-8 (`extraccion_llm_actividad`): actividad y nacionalidad (tests/test_ex8_actividad_nacionalidad.py).
@@ -90,7 +95,7 @@ def _llm_reads(monkeypatch, message, patch):
     async def _combined(fields, veto_fields, msg, *_a, **_k):  # huecos + verificación, una petición
         return (dict(patch) if msg == message else {}), {}
 
-    monkeypatch.setattr(core, "fill_gaps", _fill)
+    monkeypatch.setattr(core_extraction, "fill_gaps", _fill)
     monkeypatch.setattr(core, "extract_and_verify", _combined, raising=False)
 
 
@@ -134,7 +139,9 @@ async def test_sin_pregunta_no_se_lanza_nada(monkeypatch, signals, rag):
 
 
 async def test_recordar_sigue_con_su_respuesta_fija(monkeypatch, signals, rag):
-    monkeypatch.setattr(core, "detect_special_signals", AsyncMock(return_value={"recall_field": "group_size"}))
+    _senales = AsyncMock(return_value={"recall_field": "group_size"})
+    monkeypatch.setattr(core_routing, "detect_special_signals", _senales)
+    monkeypatch.setattr(core_extraction, "detect_special_signals", _senales)
     st = _state()
     await route_message(st, "quiero bucear, soy certificado, desde cartagena, somos 2")
     resp = await route_message(st, "¿cuántos te dije que éramos?")
@@ -374,7 +381,7 @@ def no_rellena(monkeypatch):
         calls.append(message)
         return {}, {}
 
-    monkeypatch.setattr(core, "fill_gaps", _fill)
+    monkeypatch.setattr(core_extraction, "fill_gaps", _fill)
     monkeypatch.setattr(core, "extract_and_verify", _combined, raising=False)
     return calls
 
@@ -582,7 +589,7 @@ def relleno(monkeypatch):
         calls.append({"fields": list(fields), "history": "combinada"})
         return {}, {}
 
-    monkeypatch.setattr(core, "fill_gaps", _fill)
+    monkeypatch.setattr(core_extraction, "fill_gaps", _fill)
     monkeypatch.setattr(core, "extract_and_verify", _combined, raising=False)
     return calls, box
 
@@ -603,7 +610,9 @@ async def test_con_el_no_de_jev_no_se_rellena(monkeypatch, signals, rag, verific
 # "¿me recuerdas…?" contestó 15 preguntas que no lo eran ("could you just confirm at what time and
 # where…?") y canceló su respuesta.
 async def test_si_jev_dice_que_no_pide_recordar_se_contesta_la_pregunta(monkeypatch, signals, rag):
-    monkeypatch.setattr(core, "detect_special_signals", AsyncMock(return_value={"recall_field": "booking_recap"}))
+    _senales = AsyncMock(return_value={"recall_field": "booking_recap"})
+    monkeypatch.setattr(core_routing, "detect_special_signals", _senales)
+    monkeypatch.setattr(core_extraction, "detect_special_signals", _senales)
     st = _state()
     await route_message(st, "quiero bucear, soy certificado, desde cartagena, somos 2")
     signals["value"] = {"asks_recall": False}
@@ -612,7 +621,9 @@ async def test_si_jev_dice_que_no_pide_recordar_se_contesta_la_pregunta(monkeypa
 
 
 async def test_si_jev_dice_que_pide_recordar_sigue_la_respuesta_fija(monkeypatch, signals, rag):
-    monkeypatch.setattr(core, "detect_special_signals", AsyncMock(return_value={"recall_field": "group_size"}))
+    _senales = AsyncMock(return_value={"recall_field": "group_size"})
+    monkeypatch.setattr(core_routing, "detect_special_signals", _senales)
+    monkeypatch.setattr(core_extraction, "detect_special_signals", _senales)
     st = _state()
     await route_message(st, "quiero bucear, soy certificado, desde cartagena, somos 2")
     signals["value"] = {"asks_recall": True}
@@ -645,7 +656,8 @@ def test_el_filtro_de_senales_solo_con_jev_seguro(monkeypatch):
 
 async def test_con_el_filtro_no_se_llama_al_llm_de_senales(monkeypatch, signals, rag):
     spy = AsyncMock(return_value={})
-    monkeypatch.setattr(core, "detect_special_signals", spy)
+    monkeypatch.setattr(core_routing, "detect_special_signals", spy)
+    monkeypatch.setattr(core_extraction, "detect_special_signals", spy)
     st = _state()
     await route_message(st, "quiero bucear, soy certificado, desde cartagena, somos 2")
     spy.reset_mock()

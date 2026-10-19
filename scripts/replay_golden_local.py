@@ -30,6 +30,7 @@ os.environ.update({
 from scripts.run_synthetic_pre import GOLDEN_FILE, load_batches  # noqa: E402
 from src.agents import conversational_core as core  # noqa: E402
 from src.agents import escalation, supervisor  # noqa: E402
+from src.agents.nucleo import slotfill_close as core_close  # noqa: E402
 from src.config import settings  # noqa: E402
 from src.flows.state import ConversationState  # noqa: E402
 
@@ -78,7 +79,7 @@ async def replay(did, turns, sem):
 async def main(flag_name: str, side: str, out_dir: Path):
     setattr(settings, flag_name, side == "on")
     supervisor.rag_answer = _rag
-    core.compose_acknowledgement = lambda *a, **k: asyncio.sleep(0, result="")
+    core_close.compose_acknowledgement = lambda *a, **k: asyncio.sleep(0, result="")
     core.extract_notes = lambda *a, **k: asyncio.sleep(0, result=[])
     escalation.escalate_to_human = _noop
     supervisor.escalate_to_human = _noop

@@ -11,6 +11,9 @@ import pytest
 
 from src.agents import conversational_core as core
 from src.agents.conversational_core import _is_greeting_only, _understand
+from src.agents.nucleo import extraction as core_extraction
+from src.agents.nucleo import routing as core_routing
+from src.agents.nucleo import slotfill_close as core_close
 from src.flows.state import ConversationState, Step
 
 
@@ -56,11 +59,14 @@ async def test_greeting_smalltalk_first_turn_does_not_hit_rag(monkeypatch):
     de asesor de RAG ("ese detalle no lo tengo a la mano..."). Un saludo+cortesía
     NO es una pregunta de info → no debe llegar a RAG (`_answer_question`)."""
     answer_q = AsyncMock(return_value="RAG-NO-DEBERIA-LLAMARSE")
-    monkeypatch.setattr(core, "_answer_question", answer_q)
-    monkeypatch.setattr(core, "fill_gaps", AsyncMock(return_value={}))
-    monkeypatch.setattr(core, "detect_special_signals", AsyncMock(return_value={}))
+    monkeypatch.setattr(core_routing, "_answer_question", answer_q)
+    monkeypatch.setattr(core_extraction, "_answer_question", answer_q)
+    monkeypatch.setattr(core_extraction, "fill_gaps", AsyncMock(return_value={}))
+    _senales = AsyncMock(return_value={})
+    monkeypatch.setattr(core_routing, "detect_special_signals", _senales)
+    monkeypatch.setattr(core_extraction, "detect_special_signals", _senales)
     monkeypatch.setattr(core, "extract_notes", AsyncMock(return_value=[]))
-    monkeypatch.setattr(core, "compose_acknowledgement", AsyncMock(return_value=""))
+    monkeypatch.setattr(core_close, "compose_acknowledgement", AsyncMock(return_value=""))
 
     reply = await core.maybe_handle_turn(make_state(step=Step.WELCOME), "hola buenas que tal?",
                                          routing_signals={})
@@ -71,7 +77,7 @@ async def test_greeting_smalltalk_first_turn_does_not_hit_rag(monkeypatch):
 @pytest.mark.asyncio
 async def test_greeting_only_skips_fill_gaps(monkeypatch):
     fake = AsyncMock(return_value={})
-    monkeypatch.setattr(core, "fill_gaps", fake)
+    monkeypatch.setattr(core_extraction, "fill_gaps", fake)
     await _understand(make_state(), "hola")
     fake.assert_not_awaited()  # saludo puro → sin llamada LLM de extracción
 

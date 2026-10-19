@@ -12,6 +12,9 @@ import pytest
 
 from src.agents import conversational_core as core
 from src.agents import supervisor
+from src.agents.nucleo import extraction as core_extraction
+from src.agents.nucleo import routing as core_routing
+from src.agents.nucleo import slotfill_close as core_close
 from src.config import settings
 from src.flows.state import ConversationState
 
@@ -47,12 +50,14 @@ def test_edades_en_singular(monkeypatch, flag, mensaje, edades):
 def extractor_reparte(monkeypatch):
     """La reserva entera sin red; el extractor devuelve el reparto correcto de la familia (3 bucean, 3 snorkel)."""
     reparto = {"group_size": 6, "group_allocation": {"certified_diving": 3, "snorkel": 3}}
-    monkeypatch.setattr(core, "fill_gaps", AsyncMock(return_value=dict(reparto)))
+    monkeypatch.setattr(core_extraction, "fill_gaps", AsyncMock(return_value=dict(reparto)))
     monkeypatch.setattr(core, "extract_and_verify", AsyncMock(return_value=(dict(reparto), {})))
-    monkeypatch.setattr(core, "detect_special_signals", AsyncMock(return_value={}))
-    monkeypatch.setattr(core, "resolve_slot_answer", AsyncMock(return_value={}))
+    _especiales = AsyncMock(return_value={})
+    monkeypatch.setattr(core_routing, "detect_special_signals", _especiales)
+    monkeypatch.setattr(core_extraction, "detect_special_signals", _especiales)
+    monkeypatch.setattr(core_extraction, "resolve_slot_answer", AsyncMock(return_value={}))
     monkeypatch.setattr(core, "extract_notes", AsyncMock(return_value=[]))
-    monkeypatch.setattr(core, "compose_acknowledgement", AsyncMock(return_value=""))
+    monkeypatch.setattr(core_close, "compose_acknowledgement", AsyncMock(return_value=""))
     monkeypatch.setattr(core, "lanzar_rag_adelantado", lambda *a, **k: None)  # rag-5: sin respuesta adelantada
 
     async def _senales(message, **_k):

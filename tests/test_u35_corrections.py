@@ -9,16 +9,20 @@ from unittest.mock import AsyncMock
 import pytest
 
 from src.agents import conversational_core as core
+from src.agents.nucleo import extraction as core_extraction
+from src.agents.nucleo import routing as core_routing
+from src.agents.nucleo import slotfill_close as core_close
 from src.agents.supervisor import route_message
 from src.flows.state import ConversationState
 
 
 @pytest.fixture(autouse=True)
 def _offline(monkeypatch):
-    for name in ("fill_gaps", "detect_special_signals", "resolve_slot_answer"):
-        monkeypatch.setattr(core, name, AsyncMock(return_value={}))
+    for modulo, name in ((core_extraction, "fill_gaps"), (core_routing, "detect_special_signals"),
+                         (core_extraction, "detect_special_signals"), (core_extraction, "resolve_slot_answer")):
+        monkeypatch.setattr(modulo, name, AsyncMock(return_value={}))
     monkeypatch.setattr(core, "extract_notes", AsyncMock(return_value=[]))
-    monkeypatch.setattr(core, "compose_acknowledgement", AsyncMock(return_value=""))
+    monkeypatch.setattr(core_close, "compose_acknowledgement", AsyncMock(return_value=""))
 
 
 def _state(**kw) -> ConversationState:
@@ -138,7 +142,7 @@ async def test_la_nacionalidad_que_jev_no_ve_afirmada_no_se_rellena(monkeypatch)
     async def _combined(fields, veto, msg, *_a, **_k):
         return {f: v for f, v in {"is_colombian": False, "location": "cartagena"}.items() if f in fields}, {}
 
-    monkeypatch.setattr(core, "fill_gaps", _fill)
+    monkeypatch.setattr(core_extraction, "fill_gaps", _fill)
     monkeypatch.setattr(core, "extract_and_verify", _combined, raising=False)
 
     async def _signals(message, **_k):

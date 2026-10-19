@@ -11,6 +11,7 @@ import pytest
 
 from scripts import run_extraction_eval as ev
 from src.agents import conversational_core as cc
+from src.agents.nucleo import extraction as core_extraction
 
 
 def _mock_llm(merged=None, fill=None):
@@ -25,8 +26,8 @@ def _mock_llm(merged=None, fill=None):
 
     return (
         patch.object(cc, "extract_and_verify", create=True, new=fake_merged),
-        patch.object(cc, "fill_gaps", new=fake_fill),
-        patch("src.agents.supervisor._maybe_veto_resolved_fields_via_llm", new=fake_veto),
+        patch.object(core_extraction, "fill_gaps", new=fake_fill),
+        patch("src.agents.rutas.booking._maybe_veto_resolved_fields_via_llm", new=fake_veto),
     )
 
 

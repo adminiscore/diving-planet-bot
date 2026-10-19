@@ -41,6 +41,8 @@ import pytest
 from src.agents import supervisor
 from src.agents.intent_detector import IntentDetector
 from src.agents.llm_extractor import _clean_verified_value, verify_fields
+from src.agents.nucleo import extraction as core_extraction
+from src.agents.rutas import booking as sup_booking
 from src.config import settings
 from src.flows.state import ConversationState
 
@@ -171,7 +173,7 @@ async def test_shadow_mode_measures_without_applying():
     intent, state = _detect(_INCOMPLETE_MSG)
     with patch.object(supervisor.settings, "llm_group_allocation_veto_shadow_mode", True), \
          patch.object(supervisor.settings, "llm_group_allocation_veto_cutover", False), \
-         patch.object(supervisor, "verify_fields",
+         patch.object(sup_booking, "verify_fields",
                       new=AsyncMock(return_value={"group_allocation": _FULL_ALLOCATION})):
         await supervisor._maybe_veto_resolved_fields_via_llm(_INCOMPLETE_MSG, intent, state)
     assert intent.group_allocation == _REGEX_PARTIAL
@@ -181,7 +183,7 @@ async def test_shadow_mode_measures_without_applying():
 async def test_cutover_applies_the_complete_allocation():
     intent, state = _detect(_INCOMPLETE_MSG)
     with patch.object(supervisor.settings, "llm_group_allocation_veto_cutover", True), \
-         patch.object(supervisor, "verify_fields",
+         patch.object(sup_booking, "verify_fields",
                       new=AsyncMock(return_value={"group_allocation": _FULL_ALLOCATION})):
         await supervisor._maybe_veto_resolved_fields_via_llm(_INCOMPLETE_MSG, intent, state)
     assert intent.group_allocation == _FULL_ALLOCATION
@@ -192,7 +194,7 @@ async def test_cutover_applies_the_complete_allocation():
 async def test_llm_failure_degrades_to_the_regex_value():
     intent, state = _detect(_INCOMPLETE_MSG)
     with patch.object(supervisor.settings, "llm_group_allocation_veto_cutover", True), \
-         patch.object(supervisor, "verify_fields",
+         patch.object(sup_booking, "verify_fields",
                       new=AsyncMock(side_effect=RuntimeError("boom"))):
         await supervisor._maybe_veto_resolved_fields_via_llm(_INCOMPLETE_MSG, intent, state)
     assert intent.group_allocation == _REGEX_PARTIAL
@@ -356,7 +358,7 @@ async def test_invariant_runs_in_the_real_turn_path():
     state.detected_group_size = 6
     with patch.object(cc, "extract_and_verify", create=True,
                       new=AsyncMock(return_value=({"group_allocation": {"snorkel": 2}}, {}))), \
-         patch.object(cc, "fill_gaps",
+         patch.object(core_extraction, "fill_gaps",
                       new=AsyncMock(return_value={"group_allocation": {"snorkel": 2}})):
         intent, _carry = await cc._understand(state, "4 con titulo y 2 snorkel")
     assert intent.group_allocation is None, (
@@ -463,8 +465,8 @@ async def test_a_misread_turn_total_cannot_carry_a_partial_split_into_the_state(
     state.detected_group_size = 7
     partial = {"group_allocation": {"certified_diving": 4}}
     with patch.object(cc, "extract_and_verify", create=True, new=AsyncMock(return_value=(partial, {}))), \
-         patch.object(cc, "fill_gaps", new=AsyncMock(return_value=dict(partial))), \
-         patch.object(supervisor, "verify_fields", new=AsyncMock(return_value={})):
+         patch.object(core_extraction, "fill_gaps", new=AsyncMock(return_value=dict(partial))), \
+         patch.object(sup_booking, "verify_fields", new=AsyncMock(return_value={})):
         await cc._understand(state, "4 certificados")
     assert state.detected_group_size == 7
     assert state.detected_group_allocation is None

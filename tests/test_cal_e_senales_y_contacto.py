@@ -20,6 +20,7 @@ import pytest
 
 from src.agents import jev_router as jr
 from src.agents import supervisor as sv
+from src.agents.rutas import deflection as sup_deflection
 from src.config import settings
 
 # ---------------------------------------------------------------- E1: el contacto pasa a una persona
@@ -32,7 +33,7 @@ def test_con_el_flag_la_peticion_de_contacto_pasa_a_un_asesor(monkeypatch):
     from src.flows.state import ConversationState, Step
 
     monkeypatch.setattr(settings, "contacto_pasa_a_persona", True)
-    monkeypatch.setattr(sv, "build_lead_summary", lambda state, escalation_reason=None: "resumen")
+    monkeypatch.setattr(sup_deflection, "build_lead_summary", lambda state, escalation_reason=None: "resumen")
     st = ConversationState(conversation_id="t")
     es = sv._contacto_pasa_a_persona(st, "es")
     assert "asesor" in es
@@ -45,14 +46,14 @@ def test_con_el_flag_la_peticion_de_contacto_pasa_a_un_asesor(monkeypatch):
 
 
 def test_con_el_flag_el_texto_de_antes_no_da_el_numero(monkeypatch):
-    monkeypatch.setattr(sv, "_official_whatsapp", lambda: "+57 320 231515")
+    monkeypatch.setattr(sup_deflection, "_official_whatsapp", lambda: "+57 320 231515")
     monkeypatch.setattr(settings, "contacto_pasa_a_persona", True)
     assert "+57" not in sv._contact_number_deflection("es")
 
 
 def test_sin_el_flag_el_comportamiento_es_el_de_hoy(monkeypatch):
     """Hasta medirlo, PRE sigue dando el WhatsApp (decisión del 17-sep)."""
-    monkeypatch.setattr(sv, "_official_whatsapp", lambda: "+57 320 231515")
+    monkeypatch.setattr(sup_deflection, "_official_whatsapp", lambda: "+57 320 231515")
     monkeypatch.setattr(settings, "contacto_pasa_a_persona", False)
     assert "+57 320 231515" in sv._contact_number_deflection("es")
 

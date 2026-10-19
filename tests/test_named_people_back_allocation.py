@@ -17,6 +17,7 @@ import pytest
 
 from src.agents import conversational_core as cc
 from src.agents import supervisor
+from src.agents.nucleo import extraction as core_extraction
 from src.flows.state import ConversationState
 
 
@@ -90,7 +91,7 @@ async def _understand_with_llm(message, llm_patch, combined=None, **state_fields
         setattr(state, name, value)
     with (
         patch.object(cc, "extract_and_verify", fake_extract, create=True),
-        patch.object(cc, "fill_gaps", fake_fill),
+        patch.object(core_extraction, "fill_gaps", fake_fill),
         patch.object(supervisor.settings, "llm_group_size_veto_cutover", True),
         patch.object(supervisor.settings, "llm_group_allocation_veto_cutover", True),
     ):
