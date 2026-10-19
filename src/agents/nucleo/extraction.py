@@ -71,6 +71,7 @@ from src.agents.llm_extractor import (
 )
 from src.agents.nucleo.extractor import (
     _aplicar_extractor,
+    campos_de_la_pista,
     campos_del_extractor,
 )
 from src.config import settings
@@ -401,6 +402,16 @@ _DRIVING_FIELDS = {
 }
 
 
+def _campos_de_la_puerta() -> set[str]:
+    """Los campos que leyó el regex sobre los que actúa la puerta del turno con pregunta (`_question_turn_fields`). Con
+    `extractor_sin_pista` (ex-9b paso 3) los del extractor ya no traen nada del regex que filtrar (la isla y el hotel de
+    la pista se copian antes de la puerta, así que tampoco cambian): solo quedan las edades, que siguen siendo del
+    regex hasta el paso 6 y que en un turno con pregunta no se guardan (como hoy)."""
+    if settings.extractor_sin_pista:
+        return _DRIVING_FIELDS - set(campos_del_extractor())
+    return _DRIVING_FIELDS
+
+
 # Slots de SÍ/NO y el campo que resuelve cada uno. Hallazgo en vivo
 # (2026-09-01, cierre del problema abierto §6.bis del plan multi-agente,
 # conversación 769 de PRE + repro determinista en local con LLM real): con
@@ -530,8 +541,9 @@ def _recommend_inferred_minicourse(intent, state: ConversationState, message: st
 
 
 def _pista_del_regex(intent) -> dict:
-    """Lo que leyó el regex en los campos que decide el extractor (una copia; el intent no se toca hasta el final)."""
-    return {c: getattr(intent, c) for c in campos_del_extractor() if getattr(intent, c, None) not in (None, "", [], {})}
+    """Lo que leyó el regex en los campos que decide el extractor (una copia; el intent no se toca hasta el final). Con
+    `extractor_sin_pista` (ex-9b paso 3), solo la isla y el hotel del catálogo (`campos_de_la_pista`)."""
+    return {c: getattr(intent, c) for c in campos_de_la_pista() if getattr(intent, c, None) not in (None, "", [], {})}
 
 
 def _asks_for_a_course(message: str) -> bool:
@@ -636,12 +648,16 @@ async def _understand(state: ConversationState, message: str, *, answered_pendin
     # decide el regex. Lo que leyó se queda en el intent como PROVISIONAL (las guardas que miran si el mensaje
     # CONTESTA la pregunta pendiente lo siguen viendo, como hoy), pero ni dispara contradicciones, ni va al veto, al
     # relleno o a la re-comprobación. Al final se sustituye por lo del extractor (`_ubicacion_del_extractor`).
+    # ex-9b paso 3 (`extractor_sin_pista`): la pista solo guarda la isla y el hotel del catálogo; lo demás lo decide el
+    # extractor y, si falla, se pregunta.
     pista_lugar = _pista_del_regex(intent)
     # u3-4: turno con pregunta (la respuesta del RAG ya está lanzada en paralelo).
     question_turn_fields = None
     if _has_pending_answer(state):
         question_turn_fields = _question_turn_fields(intent, state)
-    else:
+    elif not settings.extractor_sin_pista:
+        # ex-9b paso 3: con `extractor_sin_pista` esta puerta no corre. Jev solo dice si el cliente afirma campos del
+        # extractor (`_AFFIRMS_SIGNAL_FIELDS`), y de esos el regex ya no deja nada que filtrar.
         _drop_regex_fields_jev_denies(intent, state)
     state.mixed_nationality_notice = False
     # ex-9 (15-oct): con los cuatro dominios en el extractor "LLM primero" (ex-5…ex-8), lo único que el relleno LLM de
@@ -1018,7 +1034,7 @@ def _question_turn_fields(intent, state: ConversationState) -> list[str]:
     afirma = getattr(state, "_answer_affirms", None) or {}
     verificables = set(supervisor._VETO_FIELD_SPECS)
     a_verificar = []
-    for f in sorted(_DRIVING_FIELDS & set(intent.detected_fields)):
+    for f in sorted(_campos_de_la_puerta() & set(intent.detected_fields)):
         if afirma.get(f) is False:
             # Jev dice que el cliente NO lo afirma: lo nombra dentro de su pregunta.
             logger.info(f"[EXTRACT][U3-4] campo={f} regex={getattr(intent, f, None)!r} descartado por Jev (no lo afirma)")
@@ -1078,6 +1094,12 @@ def _menciones_para_la_red(state: ConversationState, message: str) -> list[str]:
         # última instancia: solo cuando el extractor no pudo leer el mensaje.
         if mentioned:
             logger.info(f"[CORE][CAL-C5] el extractor leyó el mensaje: la red de menciones no añade {mentioned}")
+        return []
+    if settings.extractor_sin_pista:
+        # ex-9b paso 3: tampoco cuando el extractor no pudo leer el mensaje. El reparto y los acompañantes los lee el
+        # extractor con cita; si falla, no se vuelve a las palabras clave: se pregunta (decisión de Gadea).
+        if mentioned:
+            logger.info(f"[CORE][EX9B-3] sin pista del regex: la red de menciones no añade {mentioned}")
         return []
     return mentioned
 

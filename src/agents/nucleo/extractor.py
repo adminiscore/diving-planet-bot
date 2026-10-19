@@ -176,6 +176,21 @@ def campos_del_extractor() -> tuple[str, ...]:
     return _CAMPOS_LUGAR + _CAMPOS_ACTIVIDAD + _CAMPOS_CERTIFICACION + _CAMPOS_GRUPO
 
 
+# La isla y el hotel que lee el regex salen de la lista cerrada del catálogo (clase d del estudio ex-9): no son una
+# lectura de la frase, y su relevo es de los pasos 4 y 6 de ex-9b. Por eso siguen como "pista" con `extractor_sin_pista`.
+_CAMPOS_LISTA_CERRADA = ("island", "hotel")
+
+
+def campos_de_la_pista() -> tuple[str, ...]:
+    """De los campos que decide el extractor, en cuáles se guarda lo que leyó el regex como pista (`_pista_del_regex`):
+    hoy, en todos; con `extractor_sin_pista` (ex-9b paso 3), solo en la isla y el hotel del catálogo. La actividad, el
+    origen, la certificación, el grupo, la nacionalidad y la última inmersión los decide solo el extractor; si falla, la
+    reserva los pregunta."""
+    if settings.extractor_sin_pista:
+        return _CAMPOS_LISTA_CERRADA
+    return campos_del_extractor()
+
+
 def _conservar_hotel(intent, pista: dict) -> None:
     """El hotel y la isla que leyó el regex (lista cerrada) se quedan cuando el cliente está en las islas."""
     for campo in ("island", "hotel"):
@@ -211,6 +226,10 @@ async def _aplicar_extractor(intent, state: ConversationState, message: str, pis
     _quitar_provisional(intent, pista)
     _nombre_del_extractor(state, datos, message)
     if datos is None:
+        if settings.extractor_sin_pista:
+            # ex-9b paso 3 (decisión de Gadea): sin extractor no se vuelve al regex; lo que falte se pregunta. La pista
+            # solo trae la isla y el hotel del catálogo (`campos_de_la_pista`).
+            logger.info("[EXTRACT][EX9B-3] el extractor falló: sin pista del regex, la reserva pregunta lo que falte")
         for dominio, campo_puerta in ((_CAMPOS_LUGAR, "location"), (_CAMPOS_ACTIVIDAD, None),
                                       (_CAMPOS_CERTIFICACION, "is_certified"), (_CAMPOS_GRUPO, None)):
             for campo in dominio:
@@ -465,7 +484,8 @@ def _poner_actividad(intent, state: ConversationState, datos: dict, pista: dict)
     del registro. En un grupo repartido sin actividad elegida, la principal sale del reparto (ex-9b paso 3). Si no eligió
     ninguna pero el regex DEDUJO el minicurso ("es mi primera vez"), se pasa solo para que la regla de u3-5
     (`_recommend_inferred_minicourse`) lo convierta en recomendación; si no se convierte, no se guarda (decisión de
-    Gadea, 27-sep: se recomienda, lo confirma el cliente)."""
+    Gadea, 27-sep: se recomienda, lo confirma el cliente). Con `extractor_sin_pista` no hay minicurso deducido del
+    regex: la recomendación sale de lo que dice el extractor (CAL-C1, `actividad_por_lo_sabido`)."""
     actividad = datos.get("activity")
     if actividad and dom.by_id(actividad) is not None:
         intent.activity = actividad
