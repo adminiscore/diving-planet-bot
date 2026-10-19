@@ -441,11 +441,26 @@ def _poner_hotel(intent, state: ConversationState, datos: dict) -> None:
         logger.info(f"[EXTRACT][CAL-C3e] {hotel!r} es del catálogo de las islas: {del_catalogo}")
 
 
+def _principal_del_grupo_repartido(state: ConversationState, reparto: dict) -> str | None:
+    """ex-9b paso 3 (19-oct, sin flag): la actividad principal de un grupo repartido, cuando el extractor no elige una
+    ("somos 6: 2 bucean certificados, 2 hacen minicurso y 2 snorkel"). Es la regla de CAL-F
+    (`actividad_principal_del_reparto`: el buceo certificado si alguien lo hace; si no, la parte más grande). Antes la
+    ponía el regex con la primera de sus listas que casaba: el minicurso, aunque hubiera buzos certificados en el grupo; y
+    "él quiere hacer snorkel" pasaba la principal de quien bucea al snorkel del acompañante. Una principal ya sabida que
+    sigue en el reparto no se toca. Replay offline del estudio (95 diálogos): solo cambian 6, todos de grupo repartido."""
+    from src.agents.extractor_turno import actividad_principal_del_reparto  # lazy
+
+    if len(reparto) < 2 or state.detected_activity in reparto:
+        return None
+    return actividad_principal_del_reparto(reparto)
+
+
 def _poner_actividad(intent, state: ConversationState, datos: dict, pista: dict) -> None:
     """ex-8: la actividad es la que el cliente ELIGE (extractor). La última elegida manda, como hoy. El servicio sale
-    del registro. Si no eligió ninguna pero el regex DEDUJO el minicurso ("es mi primera vez"), se pasa solo para que la
-    regla de u3-5 (`_recommend_inferred_minicourse`) lo convierta en recomendación; si no se convierte, no se guarda
-    (decisión de Gadea, 27-sep: se recomienda, lo confirma el cliente)."""
+    del registro. En un grupo repartido sin actividad elegida, la principal sale del reparto (ex-9b paso 3). Si no eligió
+    ninguna pero el regex DEDUJO el minicurso ("es mi primera vez"), se pasa solo para que la regla de u3-5
+    (`_recommend_inferred_minicourse`) lo convierta en recomendación; si no se convierte, no se guarda (decisión de
+    Gadea, 27-sep: se recomienda, lo confirma el cliente)."""
     actividad = datos.get("activity")
     if actividad and dom.by_id(actividad) is not None:
         intent.activity = actividad
@@ -455,14 +470,14 @@ def _poner_actividad(intent, state: ConversationState, datos: dict, pista: dict)
             intent.detected_fields.append("activity")
         logger.info(f"[EXTRACT][EX8] activity={actividad!r} (regex: {pista.get('activity')!r})")
         return
-    reparto = intent.group_allocation or state.detected_group_allocation or {}
-    if pista.get("activity") and len(reparto) > 1 and pista["activity"] in reparto:
-        # Grupo repartido ("2 bucean certificados, 2 minicurso y 2 snorkel"): el extractor no pone una actividad
-        # principal y la del regex es una de las del reparto, que el cliente sí eligió (ronda ex8-B: se repreguntaba).
-        intent.activity, intent.service_id = pista["activity"], pista.get("service_id")
+    # Grupo repartido: el extractor no pone una actividad principal (ronda ex8-B: se repreguntaba). Sale del reparto.
+    principal = _principal_del_grupo_repartido(state, intent.group_allocation or state.detected_group_allocation or {})
+    if principal:
+        intent.activity, intent.service_id = principal, dom.base_service_id(principal)
         intent._actividad_elegida = True
         if "activity" not in intent.detected_fields:
             intent.detected_fields.append("activity")
+        logger.info(f"[EXTRACT][EX9B-3] grupo repartido: actividad principal {principal!r} (regex: {pista.get('activity')!r})")
         return
     if pista.get("activity"):
         logger.info(f"[EXTRACT][EX8] el regex leía activity={pista['activity']!r}; el cliente no la elige")

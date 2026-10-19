@@ -387,6 +387,17 @@ def ultima_pregunta_del_bot(history: list[dict] | None, max_chars: int = 300) ->
     return None
 
 
+def actividad_principal_del_reparto(reparto: dict | None) -> str | None:
+    """La actividad principal que dice un reparto del grupo (regla de negocio de CAL-F, 18-oct): el buceo certificado si
+    alguien lo hace y, si no, la parte más grande del grupo. Las personas sin decidir no cuentan. None si nadie del
+    reparto tiene actividad. La usan la contradicción actividad/reparto del extractor (aquí abajo) y la actividad
+    principal de un grupo repartido sin actividad elegida (ex-9b paso 3, `nucleo/extractor._poner_actividad`)."""
+    decididas = {k: v for k, v in (reparto or {}).items() if k != "undecided" and v}
+    if not decididas:
+        return None
+    return "certified_diving" if "certified_diving" in decididas else max(decididas, key=decididas.get)
+
+
 async def extraer_turno(mensaje: str, *, history: list[dict] | None = None, sabido: dict | None = None,
                         lang: str = "es", modelo: str | None = None, client: AsyncOpenAI | None = None) -> dict | None:
     """{campo: valor} con SOLO los datos que el cliente afirma en `mensaje` y cuya cita se verifica en él; None si la
@@ -516,11 +527,9 @@ async def extraer_turno(mensaje: str, *, history: list[dict] | None = None, sabi
     if settings.actividad_del_reparto and isinstance(reparto, dict) and actividad and actividad not in reparto:
         # CAL-F (18-oct, grupo-mixto-precio-cop-total 2/3): "1 buzo avanzado y 2 para bautismo" daba el reparto
         # {certified_diving: 1, minicourse: 2} (bien) y la actividad padi_advanced: el bot cotizaba el Curso Avanzado.
-        # Si la actividad no es de nadie del reparto, se contradicen; manda el reparto: el buceo certificado si está, y
-        # si no la parte más grande del grupo.
-        decididas = {k: v for k, v in reparto.items() if k != "undecided"}
-        if decididas:
-            nueva = "certified_diving" if "certified_diving" in decididas else max(decididas, key=decididas.get)
+        # Si la actividad no es de nadie del reparto, se contradicen; manda el reparto.
+        nueva = actividad_principal_del_reparto(reparto)
+        if nueva:
             logger.info(f"[EXTRACT][CAL-F] activity={actividad!r} no está en el reparto {reparto}: {nueva!r}")
             salida["activity"] = nueva
     # Regla del catálogo: el buceo certificado (nombrado: fun dives, paquetes de buceos) exige certificación.
