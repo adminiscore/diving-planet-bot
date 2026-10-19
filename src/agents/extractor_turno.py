@@ -15,6 +15,7 @@ Si la llamada falla, devuelve {} y el turno sigue con lo de hoy (degradación). 
 """
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 import re
@@ -294,6 +295,30 @@ def edades_citadas(edades, cita: str) -> list[int]:
     return list(dict.fromkeys(validas))
 
 
+# ex-9b (19-oct, flag `reparto_en_pares`): con los campos del paso 6 la llamada a Haiku fallaba SIEMPRE (Anthropic: "The
+# compiled grammar is too large"; ronda ex9b-4, 92 de 92): el reparto, un objeto con un entero opcional por actividad
+# (10), era la parte que más gramática pedía. Como lista de pares {actividad, personas} caben todos los campos; nada más
+# leer se convierte al diccionario de siempre (`_reparto_de_pares`), así que el resto del código no cambia.
+_REPARTO_EN_PARES = _dato(
+    {"type": "array", "items": {"type": "object",
+                                "properties": {"actividad": {"type": "string", "enum": list(CLAVES_REPARTO)},
+                                               "personas": {"type": "integer"}},
+                                "required": ["actividad", "personas"], "additionalProperties": False}},
+    "Cuántas personas hacen cada actividad (una entrada por actividad), solo si el grupo se reparte entre VARIAS.")
+
+
+def _reparto_de_pares(valor):
+    """La lista de pares del reparto -> {actividad: personas} (sumando si una actividad sale dos veces)."""
+    if not isinstance(valor, list):
+        return valor
+    reparto: dict = {}
+    for par in valor:
+        act, n = (par or {}).get("actividad"), (par or {}).get("personas")
+        if act in CLAVES_REPARTO and isinstance(n, int) and not isinstance(n, bool) and n > 0:
+            reparto[act] = reparto.get(act, 0) + n
+    return reparto
+
+
 def _esquema(con_nombre: bool, con_hotel: bool, con_refresher: bool = False, precio_no_elige: bool = False,
              paso6: dict | None = None) -> dict:
     """El esquema de la llamada con los campos opcionales encendidos (sin ellos, el de siempre)."""
@@ -304,6 +329,8 @@ def _esquema(con_nombre: bool, con_hotel: bool, con_refresher: bool = False, pre
         base = copy.deepcopy(base)
         qb = base["properties"]["quiere_bucear"]
         qb["description"] = qb["description"].replace(_QUIERE_BUCEAR_PRECIO, _QUIERE_BUCEAR_SIN_PRECIO)
+    if settings.reparto_en_pares:
+        base = {**base, "properties": {**base["properties"], "group_allocation": _REPARTO_EN_PARES}}
     if not (con_hotel or con_refresher or paso6):
         return base
     extra = {**({"hotel": CAMPO_HOTEL} if con_hotel else {}),
@@ -600,34 +627,59 @@ async def extraer_turno(mensaje: str, *, history: list[dict] | None = None, sabi
         sistema += REGLA_REFRESHER_ES if lang == "es" else REGLA_REFRESHER_EN
     # ex-9b paso 6: los campos nuevos con su regla (ninguno con los flags apagados).
     paso6 = campos_paso6(history)
+    # ex-9b (19-oct, decisión de Gadea, flag `paso6_en_llamada_aparte`): con dos o más campos del paso 6 el esquema
+    # estricto no cabía en Haiku ("compiled grammar is too large": ronda ex9b-4, 92 de 92 llamadas al respaldo).
+    # Con el flag, la llamada de siempre sale con su esquema de siempre y los campos del paso 6 van en OTRA llamada,
+    # a la vez (mismo texto + sus reglas: el principio del prompt sale de la caché). Se juntan al leer.
+    aparte = bool(paso6) and settings.paso6_en_llamada_aparte
+    sistema_paso6 = sistema
     for _esq, regla_es, regla_en in paso6.values():
-        sistema += regla_es if lang == "es" else regla_en
+        sistema_paso6 += regla_es if lang == "es" else regla_en
+    if not aparte:
+        sistema = sistema_paso6
     if settings.reparto_al_sumarse_alguien and ((sabido or {}).get("group_size") or (sabido or {}).get("group_allocation")):
         sistema += REGLA_SUMARSE_ES if lang == "es" else REGLA_SUMARSE_EN
     modelo = modelo or settings.extractor_turno_model
     t0 = time.perf_counter()
-    try:
-        client = client or trace_openai(AsyncOpenAI(api_key=settings.openai_api_key))
+    usuario = _contexto(mensaje, ultima_pregunta_del_bot(history), sabido or {}, lang)
+
+    async def _pedir(sist: str, esquema: dict, pieza: str):
         # 18-oct (mod-2): con `extractor_respaldo_modelo`, si el extractor no contesta en `extractor_respaldo_segundos`
         # la misma petición va al respaldo y gana la primera (ronda mod-F: la cola de Haiku por OpenRouter, 4-5 s en
-        # 2 de 47 turnos). Vacío = la llamada de siempre. r6-1: sale etiquetada en [TURN_METRICS] como "extractor".
-        with pieza_llm("extractor"):
-            resp = await crear_con_respaldo(
+        # 2 de 47 turnos). Vacío = la llamada de siempre. r6-1: sale etiquetada en [TURN_METRICS] como `pieza`.
+        with pieza_llm(pieza):
+            return await crear_con_respaldo(
                 client, respaldo=settings.extractor_respaldo_modelo, segundos=settings.extractor_respaldo_segundos,
-                pieza="extractor",
+                pieza=pieza,
                 model=modelo,
-                messages=[{"role": "system", "content": sistema},
-                          {"role": "user", "content": _contexto(mensaje, ultima_pregunta_del_bot(history), sabido or {}, lang)}],
+                messages=[{"role": "system", "content": sist}, {"role": "user", "content": usuario}],
                 response_format={"type": "json_schema",
-                                 "json_schema": {"name": "datos_del_turno", "strict": True,
-                                                 "schema": _esquema(con_nombre, con_hotel, con_refresher,
-                                                                    settings.precio_no_elige, paso6)}},
+                                 "json_schema": {"name": "datos_del_turno", "strict": True, "schema": esquema}},
                 temperature=0.0,
                 # EX-EST-1 (14-oct): con los campos nuevos (idioma, nombre, quiere_bucear...) 400 cortaba el JSON (2 de
                 # cada 1.000 llamadas en el banco: "Unterminated string" -> el turno caía al camino viejo).
                 max_tokens=700,
             )
-        datos = json.loads(resp.choices[0].message.content or "{}")
+
+    datos_paso6: dict = {}
+    try:
+        client = client or trace_openai(AsyncOpenAI(api_key=settings.openai_api_key))
+        esquema = _esquema(con_nombre, con_hotel, con_refresher, settings.precio_no_elige, None if aparte else paso6)
+        if aparte:
+            esquema_paso6 = {"type": "object", "properties": {c: e for c, (e, _es, _en) in paso6.items()},
+                             "required": list(paso6), "additionalProperties": False}
+            resp, resp6 = await asyncio.gather(_pedir(sistema, esquema, "extractor"),
+                                               _pedir(sistema_paso6, esquema_paso6, "extractor_paso6"),
+                                               return_exceptions=True)
+            if isinstance(resp, BaseException):
+                raise resp
+            if isinstance(resp6, BaseException):
+                logger.warning(f"[LLM_EXTRACTOR] la llamada del paso 6 falló ({resp6}): sin sus campos en este turno")
+            else:
+                datos_paso6 = json.loads(resp6.choices[0].message.content or "{}")
+        else:
+            resp = await _pedir(sistema, esquema, "extractor")
+        datos = {**json.loads(resp.choices[0].message.content or "{}"), **datos_paso6}
         uso = getattr(resp, "usage", None)
         detalle = getattr(uso, "prompt_tokens_details", None)
         extraer_turno.ultimo_uso = {"entrada": getattr(uso, "prompt_tokens", 0) or 0,
@@ -645,7 +697,7 @@ async def extraer_turno(mensaje: str, *, history: list[dict] | None = None, sabi
             continue
         valor, cita = d["valor"], d.get("cita") or ""
         if campo == "group_allocation":
-            valor = {k: v for k, v in valor.items() if v}
+            valor = {k: v for k, v in (_reparto_de_pares(valor) or {}).items() if v}
             if len(valor) < 2:  # un reparto de una sola actividad no es un reparto
                 continue
         if campo in ("dias_de_buceo", "dias_de_estancia") and not (

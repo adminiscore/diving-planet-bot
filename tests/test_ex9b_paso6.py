@@ -37,6 +37,8 @@ PROPUESTA = ("Te propongo el *paquete de 5 inmersiones en 2 días*: sales desde 
 def _apagados(monkeypatch):
     for f in FLAGS6:
         monkeypatch.setattr(settings, f, False)
+    # Los campos en la MISMA llamada (lo que prueban estos tests); la llamada aparte la encienden los suyos (sección 7).
+    monkeypatch.setattr(settings, "paso6_en_llamada_aparte", False)
 
 
 @pytest.fixture
@@ -458,3 +460,68 @@ def test_reexporta_lo_de_siempre():
     intent = DetectedIntent(duration="multi_day")
     supervisor._apply_detected_intent(intent, st, "varios días")
     assert st.detected_duration == "single_day"  # una sola escritura sin el flag
+
+
+# --- 7. los campos del paso 6 en una SEGUNDA llamada (flag `paso6_en_llamada_aparte`, decisión de Gadea 19-oct) ----
+# Ronda ex9b-4: con dos o más campos del paso 6 el esquema estricto no cabía en Haiku ("compiled grammar is too large")
+# y contestaba siempre el respaldo. Con el flag, la llamada de siempre no cambia y los campos nuevos van aparte.
+
+def _cliente_dos(principal: dict, paso6: dict | None, llamadas: list, falla: str | None = None):
+    class _C:
+        async def create(self, **kw):
+            llamadas.append(kw)
+            es_paso6 = "dias_de_buceo" in kw["response_format"]["json_schema"]["schema"]["properties"]
+            if falla == ("paso6" if es_paso6 else "principal"):
+                raise RuntimeError("400 grammar too large")
+            msg = type("M", (), {"content": json.dumps(paso6 if es_paso6 else principal)})()
+            return type("R", (), {"choices": [type("C", (), {"message": msg})()], "usage": None})()
+
+    return type("O", (), {"chat": type("Ch", (), {"completions": _C()})()})()
+
+
+MENSAJE7 = "somos 2, estaré una semana pero solo quiero bucear un día"
+PRINCIPAL7 = {"group_size": {"valor": 2, "cita": "somos 2"}}
+PASO6_7 = {"dias_de_buceo": {"valor": 1, "cita": "solo quiero bucear un día"}, "dias_de_estancia": None}
+
+
+@pytest.fixture
+def aparte(monkeypatch, encender):
+    encender("duracion_por_extractor")
+    monkeypatch.setattr(settings, "paso6_en_llamada_aparte", True)
+    monkeypatch.setattr(settings, "extractor_respaldo_modelo", "")
+
+
+@pytest.mark.asyncio
+async def test_aparte_dos_llamadas_y_se_juntan(aparte):
+    llamadas: list = []
+    out = await ex.extraer_turno(MENSAJE7, history=None, sabido={}, client=_cliente_dos(PRINCIPAL7, PASO6_7, llamadas))
+    assert len(llamadas) == 2
+    principal, paso6 = sorted(llamadas, key=lambda k: "dias_de_buceo" in _campos_del_esquema(k))
+    assert "dias_de_buceo" not in _campos_del_esquema(principal) and "group_size" in _campos_del_esquema(principal)
+    assert _campos_del_esquema(paso6) == {"dias_de_buceo", "dias_de_estancia"}
+    assert ex.REGLA_DURACION_ES not in principal["messages"][0]["content"]
+    assert ex.REGLA_DURACION_ES in paso6["messages"][0]["content"]
+    assert out["group_size"] == 2 and out["dias_de_buceo"] == 1
+
+
+@pytest.mark.asyncio
+async def test_aparte_si_falla_la_del_paso6_quedan_los_demas_datos(aparte):
+    out = await ex.extraer_turno(MENSAJE7, history=None, sabido={},
+                                 client=_cliente_dos(PRINCIPAL7, PASO6_7, [], falla="paso6"))
+    assert out is not None and out["group_size"] == 2 and "dias_de_buceo" not in out
+
+
+@pytest.mark.asyncio
+async def test_aparte_si_falla_la_principal_el_extractor_falla(aparte):
+    out = await ex.extraer_turno(MENSAJE7, history=None, sabido={},
+                                 client=_cliente_dos(PRINCIPAL7, PASO6_7, [], falla="principal"))
+    assert out is None
+
+
+@pytest.mark.asyncio
+async def test_aparte_sin_campos_del_paso6_una_sola_llamada(monkeypatch):
+    monkeypatch.setattr(settings, "paso6_en_llamada_aparte", True)
+    monkeypatch.setattr(settings, "extractor_respaldo_modelo", "")
+    llamadas: list = []
+    await ex.extraer_turno(MENSAJE7, history=None, sabido={}, client=_cliente_dos(PRINCIPAL7, None, llamadas))
+    assert len(llamadas) == 1

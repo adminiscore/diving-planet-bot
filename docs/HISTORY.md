@@ -1,6 +1,28 @@
 History
 =======
 
+0.31.65 - (2026-10-19)
+----------------------
+* **Ronda ex9b-4 (paso 6 de ex-9b) NO promocionada: con los campos nuevos, Anthropic rechaza el esquema del extractor**
+  (Gadea con Claude; el paso 6 lo preparó un agente con las decisiones de Gadea del 19-oct).
+  - Paso 6 (1c76ac6, APAGADO): duración (mandan los días de BUCEO), edades, plan elegido (aceptar lo que Coral
+    propuso), quien se suma al grupo y notas del RAG por persona, al extractor. Banco con IA real, cada campo solo:
+    duración 10/16 → 16/16, edades 7/13 → 13/13, plan 7/11 → 11/11, notas 9/10 → 10/10, reparto 7/8 = hoy.
+  - **En la ronda, las 92 llamadas a Haiku fallaron** ("The compiled grammar is too large… Simplify your tool
+    schemas"): con dos o más campos nuevos el esquema estricto no cabe. Contestó siempre el respaldo (gpt-5.4-mini):
+    5,54 llamadas por turno (antes 4,39). 97,4 % 27/32 frente a ex9b-3 97,4 % 28/32: 3 mejoras reales y 4 regresiones
+    reales (certificado-fechas-fotos inventa un "enlace que no funcionó" y pasa a un asesor sin la política de fotos;
+    reserva-solo-link repregunta el origen). Medía otra configuración (otro extractor): NO se promociona.
+  - Probado: sin "strict" OpenRouter compila la gramática igual; el reparto como lista de pares (`reparto_en_pares`,
+    APAGADO) hace caber todos los campos, pero lee peor el reparto (banco 10×3: 24/30 frente a 28/30; falla siempre
+    "somos 3, uno no está certificado").
+  - **Se queda (PROMOCIONADO)** el respaldo por tiempo de OpenRouter (5 s): en la ronda saltó una vez (la reescritura)
+    y ganó el respaldo. PRE vuelve al estado de ex9b-3 con él.
+  - **Decisión de Gadea: los campos del paso 6 en una SEGUNDA llamada al extractor, a la vez que la de siempre**
+    (`paso6_en_llamada_aparte`): la llamada de siempre no cambia; la otra lleva el mismo texto más las reglas del
+    paso 6 y un esquema solo con sus campos. Haiku: 12/12 con los campos nuevos y el reparto de siempre, 0 fallos;
+    latencia del extractor p50 1,6-2,0 s frente a 1,6-1,7 s (en paralelo). Se mide en la ronda ex9b-5.
+
 0.31.64 - (2026-10-19)
 ----------------------
 * **Ronda ex9b-3 PROMOCIONADA: pasos 3 y 4 de ex-9b, "pide precio" por Jev y el aviso del pago** (Gadea con Claude y

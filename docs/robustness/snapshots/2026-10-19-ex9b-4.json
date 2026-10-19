@@ -1,0 +1,403 @@
+{
+  "label": "ex9b-4 (paso 6, respaldo por tiempo de OpenRouter)",
+  "source": "turn_metrics (log de PRE)",
+  "taken_at": "2026-10-19T16:38:35+00:00",
+  "run_at": "2026-10-19T16:38:20Z",
+  "commit": "0f5f73c",
+  "environment": "staging",
+  "window": {
+    "from": "2026-10-19T16:16:16Z",
+    "to": "2026-10-19T16:40:31Z",
+    "first_turn": "2026-10-19T16:21:06Z",
+    "last_turn": "2026-10-19T16:38:20Z"
+  },
+  "all": {
+    "turns": 93,
+    "latency_p50": 3.862,
+    "latency_p95": 7.734,
+    "latency_avg": 4.34,
+    "llm_calls_avg": 5.54,
+    "llm_calls_p95": 9.4,
+    "llm_calls_max": 12,
+    "embeddings_avg": 1.84,
+    "llm_share": 1.56,
+    "tokens_avg": 0,
+    "cost_avg_usd": 0
+  },
+  "by_type": {
+    "reserva": {
+      "turns": 47,
+      "latency_p50": 2.7,
+      "latency_p95": 4.862,
+      "latency_avg": 2.984,
+      "llm_calls_avg": 3.98,
+      "llm_calls_p95": 7.4,
+      "llm_calls_max": 10,
+      "embeddings_avg": 1.49,
+      "llm_share": 1.493,
+      "tokens_avg": 0,
+      "cost_avg_usd": 0
+    },
+    "rag": {
+      "turns": 46,
+      "latency_p50": 5.391,
+      "latency_p95": 10.451,
+      "latency_avg": 5.726,
+      "llm_calls_avg": 7.13,
+      "llm_calls_p95": 10.0,
+      "llm_calls_max": 12,
+      "embeddings_avg": 2.2,
+      "llm_share": 1.596,
+      "tokens_avg": 0,
+      "cost_avg_usd": 0
+    }
+  },
+  "by_turn_type": {
+    "cambios": {
+      "turns": 1,
+      "latency_p50": 2.43,
+      "latency_p95": 2.43,
+      "latency_avg": 2.43,
+      "llm_calls_avg": 4.0,
+      "llm_calls_p95": 4.0,
+      "llm_calls_max": 4,
+      "embeddings_avg": 1,
+      "llm_share": 1.871,
+      "tokens_avg": 0,
+      "cost_avg_usd": 0
+    },
+    "deflection": {
+      "turns": 1,
+      "latency_p50": 2.526,
+      "latency_p95": 2.526,
+      "latency_avg": 2.526,
+      "llm_calls_avg": 3.0,
+      "llm_calls_p95": 3.0,
+      "llm_calls_max": 3,
+      "embeddings_avg": 0,
+      "llm_share": 1.324,
+      "tokens_avg": 0,
+      "cost_avg_usd": 0
+    },
+    "escalado": {
+      "turns": 8,
+      "latency_p50": 2.485,
+      "latency_p95": 3.034,
+      "latency_avg": 2.494,
+      "llm_calls_avg": 3.25,
+      "llm_calls_p95": 4.0,
+      "llm_calls_max": 4,
+      "embeddings_avg": 1,
+      "llm_share": 1.341,
+      "tokens_avg": 0,
+      "cost_avg_usd": 0
+    },
+    "rag": {
+      "turns": 46,
+      "latency_p50": 5.391,
+      "latency_p95": 10.451,
+      "latency_avg": 5.726,
+      "llm_calls_avg": 7.13,
+      "llm_calls_p95": 10.0,
+      "llm_calls_max": 12,
+      "embeddings_avg": 2.2,
+      "llm_share": 1.596,
+      "tokens_avg": 0,
+      "cost_avg_usd": 0
+    },
+    "reserva": {
+      "turns": 34,
+      "latency_p50": 2.779,
+      "latency_p95": 4.715,
+      "latency_avg": 3.084,
+      "llm_calls_avg": 4.26,
+      "llm_calls_p95": 8.35,
+      "llm_calls_max": 10,
+      "embeddings_avg": 1.71,
+      "llm_share": 1.559,
+      "tokens_avg": 0,
+      "cost_avg_usd": 0
+    },
+    "saludo": {
+      "turns": 3,
+      "latency_p50": 2.7,
+      "latency_p95": 5.024,
+      "latency_avg": 3.487,
+      "llm_calls_avg": 3.0,
+      "llm_calls_p95": 3.0,
+      "llm_calls_max": 3,
+      "embeddings_avg": 1,
+      "llm_share": 1.077,
+      "tokens_avg": 0,
+      "cost_avg_usd": 0
+    }
+  },
+  "turns_with_summary": 93,
+  "business": {
+    "conversations": 32,
+    "turns": 93,
+    "turns_per_conversation": 2.91,
+    "funnel": {
+      "hablan": {
+        "conversations": 32,
+        "pct": 100.0
+      },
+      "eligen_actividad": {
+        "conversations": 4,
+        "pct": 12.5
+      },
+      "carrito_con_personas": {
+        "conversations": 4,
+        "pct": 12.5
+      },
+      "link_de_pago": {
+        "conversations": 8,
+        "pct": 25.0
+      }
+    },
+    "escalation_rate_pct": 21.9,
+    "fallback_turns": 0,
+    "fallback_pct_of_turns": 0.0,
+    "by_turn_type": {
+      "rag": 46,
+      "reserva": 34,
+      "escalado": 8,
+      "saludo": 3,
+      "cambios": 1,
+      "deflection": 1
+    }
+  },
+  "nodes": {
+    "info": {
+      "n": 2,
+      "p50": 4.297,
+      "p95": 4.65
+    },
+    "booking": {
+      "n": 81,
+      "p50": 3.437,
+      "p95": 6.596
+    },
+    "extraction": {
+      "n": 74,
+      "p50": 1.672,
+      "p95": 2.739
+    },
+    "slotfill_close": {
+      "n": 73,
+      "p50": 1.286,
+      "p95": 5.537
+    },
+    "router": {
+      "n": 93,
+      "p50": 0.451,
+      "p95": 1.654
+    },
+    "setup": {
+      "n": 81,
+      "p50": 0.033,
+      "p95": 2.45
+    },
+    "routing": {
+      "n": 74,
+      "p50": 0.006,
+      "p95": 0.019
+    },
+    "availability": {
+      "n": 81,
+      "p50": 0.005,
+      "p95": 3.275
+    },
+    "changes": {
+      "n": 1,
+      "p50": 0.004,
+      "p95": 0.004
+    },
+    "deflection": {
+      "n": 1,
+      "p50": 0.002,
+      "p95": 0.002
+    },
+    "safety": {
+      "n": 8,
+      "p50": 0.001,
+      "p95": 0.004
+    }
+  },
+  "router": {
+    "by_backend": {
+      "jev": 81,
+      "llm_uncertain": 11,
+      "llm": 1
+    },
+    "ms_p50": 419.0,
+    "ms_p95": 577.45
+  },
+  "models": {
+    "deepseek/deepseek-v4.1-flash": 172,
+    "gpt-6-luna": 107,
+    "anthropic/claude-haiku-5.5": 96,
+    "gpt-5.4-mini": 93,
+    "gpt-5.4-nano": 47
+  },
+  "rag_adelantado": {
+    "resultados": {
+      "descartado": 47,
+      "aprovechado": 41,
+      "rehecho": 4,
+      "sin_adelantar": 1
+    },
+    "latencia_turnos_rag": {
+      "aprovechado": {
+        "n": 41,
+        "p50": 5.022,
+        "p95": 7.878
+      },
+      "descartado": {
+        "n": 1,
+        "p50": 11.822,
+        "p95": 11.822
+      },
+      "rehecho": {
+        "n": 4,
+        "p50": 6.293,
+        "p95": 11.414
+      }
+    },
+    "rehecho_por": {
+      "resumen": 4
+    }
+  },
+  "por_pieza": {
+    "embedding": {
+      "n": 171,
+      "p50": 0.169,
+      "p95": 0.319,
+      "modelos": {
+        "text-embedding-3-small": 171
+      }
+    },
+    "extractor": {
+      "n": 92,
+      "p50": 0.754,
+      "p95": 1.185,
+      "modelos": {
+        "anthropic/claude-haiku-5.5": 92
+      }
+    },
+    "extractor_respaldo": {
+      "n": 92,
+      "p50": 1.604,
+      "p95": 2.085,
+      "modelos": {
+        "gpt-5.4-mini": 92
+      }
+    },
+    "rag_escritor": {
+      "n": 55,
+      "p50": 2.014,
+      "p95": 4.316,
+      "modelos": {
+        "gpt-6-luna": 55
+      }
+    },
+    "revisor": {
+      "n": 50,
+      "p50": 0.644,
+      "p95": 1.581,
+      "modelos": {
+        "deepseek/deepseek-v4.1-flash": 50
+      }
+    },
+    "aviso_final": {
+      "n": 50,
+      "p50": 1.22,
+      "p95": 2.242,
+      "modelos": {
+        "gpt-6-luna": 50
+      }
+    },
+    "pregunta_sola": {
+      "n": 50,
+      "p50": 0.728,
+      "p95": 1.305,
+      "modelos": {
+        "deepseek/deepseek-v4.1-flash": 50
+      }
+    },
+    "acuse": {
+      "n": 47,
+      "p50": 0.963,
+      "p95": 1.368,
+      "modelos": {
+        "gpt-5.4-nano": 47
+      }
+    },
+    "reescritura": {
+      "n": 45,
+      "p50": 0.799,
+      "p95": 1.585,
+      "modelos": {
+        "deepseek/deepseek-v4.1-flash": 45
+      }
+    },
+    "senales_router": {
+      "n": 11,
+      "p50": 1.158,
+      "p95": 2.04,
+      "modelos": {
+        "deepseek/deepseek-v4.1-flash": 11
+      }
+    },
+    "notas": {
+      "n": 9,
+      "p50": 0.729,
+      "p95": 1.279,
+      "modelos": {
+        "deepseek/deepseek-v4.1-flash": 9
+      }
+    },
+    "rag_respaldo": {
+      "n": 7,
+      "p50": 1.223,
+      "p95": 1.72,
+      "modelos": {
+        "deepseek/deepseek-v4.1-flash": 7
+      }
+    },
+    "red_resolve_slot_answer": {
+      "n": 4,
+      "p50": 1.017,
+      "p95": 2.673,
+      "modelos": {
+        "anthropic/claude-haiku-5.5": 4
+      }
+    },
+    "red_detect_special_signals": {
+      "n": 2,
+      "p50": 1.357,
+      "p95": 1.424,
+      "modelos": {
+        "gpt-6-luna": 2
+      }
+    },
+    "reescritura_respaldo": {
+      "n": 1,
+      "p50": 1.803,
+      "p95": 1.803,
+      "modelos": {
+        "gpt-5.4-mini": 1
+      }
+    }
+  },
+  "run_file": "docs/robustness/synthetic-runs/2026-10-19-ex9b-4.jsonl",
+  "client_latency": {
+    "turns": 93,
+    "conversations": 32,
+    "no_reply": 0,
+    "multi_bubble": 1,
+    "latency_p50": 4.0,
+    "latency_p95": 8.0,
+    "latency_max": 13
+  }
+}

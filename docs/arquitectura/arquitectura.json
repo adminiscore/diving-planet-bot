@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-19T15:50:37+00:00",
-  "commit": "2bfa952",
+  "generado": "2026-10-19T17:19:54+00:00",
+  "commit": "0f5f73c",
   "rama": "feature/pre_gadea"
  },
  "vistas": {
@@ -214,8 +214,8 @@
    "marca": "openrouter",
    "tiempos": {
     "n": 93,
-    "p50": 0.428,
-    "p95": 1.785
+    "p50": 0.451,
+    "p95": 1.654
    }
   },
   {
@@ -238,9 +238,9 @@
    ],
    "modelos": [],
    "tiempos": {
-    "n": 7,
-    "p50": 0.002,
-    "p95": 0.005
+    "n": 8,
+    "p50": 0.001,
+    "p95": 0.004
    }
   },
   {
@@ -256,8 +256,8 @@
    "interruptores": [],
    "tiempos": {
     "n": 1,
-    "p50": 0.005,
-    "p95": 0.005
+    "p50": 0.004,
+    "p95": 0.004
    }
   },
   {
@@ -281,8 +281,8 @@
    "modelos": [],
    "tiempos": {
     "n": 1,
-    "p50": 0.005,
-    "p95": 0.005
+    "p50": 0.002,
+    "p95": 0.002
    }
   },
   {
@@ -300,8 +300,8 @@
    "interruptores": [],
    "tiempos": {
     "n": 2,
-    "p50": 3.815,
-    "p95": 4.303
+    "p50": 4.297,
+    "p95": 4.65
    }
   },
   {
@@ -317,9 +317,9 @@
    "modelos": [],
    "interruptores": [],
    "tiempos": {
-    "n": 82,
-    "p50": 3.115,
-    "p95": 8.004
+    "n": 81,
+    "p50": 3.437,
+    "p95": 6.596
    }
   },
   {
@@ -527,9 +527,9 @@
    ],
    "marca": "openai",
    "tiempos": {
-    "n": 82,
-    "p50": 0.03,
-    "p95": 1.74
+    "n": 81,
+    "p50": 0.033,
+    "p95": 2.45
    }
   },
   {
@@ -552,9 +552,9 @@
    ],
    "modelos": [],
    "tiempos": {
-    "n": 82,
+    "n": 81,
     "p50": 0.005,
-    "p95": 0.014
+    "p95": 3.275
    }
   },
   {
@@ -591,9 +591,9 @@
    ],
    "marca": "openrouter",
    "tiempos": {
-    "n": 76,
+    "n": 74,
     "p50": 0.006,
-    "p95": 0.233
+    "p95": 0.019
    }
   },
   {
@@ -716,9 +716,9 @@
    ],
    "marca": "openrouter",
    "tiempos": {
-    "n": 76,
-    "p50": 0.823,
-    "p95": 1.92
+    "n": 74,
+    "p50": 1.672,
+    "p95": 2.739
    }
   },
   {
@@ -916,9 +916,9 @@
    ],
    "marca": "openrouter",
    "tiempos": {
-    "n": 75,
-    "p50": 1.393,
-    "p95": 6.525
+    "n": 73,
+    "p50": 1.286,
+    "p95": 5.537
    }
   },
   {
@@ -1019,9 +1019,9 @@
    ],
    "modelos": [],
    "conteo": {
-    "n": 45,
+    "n": 46,
     "que": "preguntas",
-    "fuente": "2026-10-19-ex9b-3.json"
+    "fuente": "2026-10-19-ex9b-4.json"
    }
   },
   {
@@ -3005,6 +3005,17 @@
    "sin_efecto": null
   },
   {
+   "nombre": "paso6_en_llamada_aparte",
+   "area": "Reserva",
+   "titulo": "Los datos nuevos se leen en una segunda consulta a la IA",
+   "texto": "La duración, las edades, el plan elegido y las notas de otras personas se leen en una segunda consulta a la IA, a la vez que la de siempre. Con todo en una sola, el modelo rechazaba la petición por demasiado grande (decisión de Gadea, 19-oct). Cuesta una consulta más por mensaje, pero no hace esperar más: van en paralelo.",
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
+   "usado_por": [],
+   "sin_efecto": null
+  },
+  {
    "nombre": "plan_elegido_por_extractor",
    "area": "Reserva",
    "titulo": "Aceptar el paquete que propone Coral lo elige",
@@ -3381,6 +3392,17 @@
    "sin_efecto": null
   },
   {
+   "nombre": "reparto_en_pares",
+   "area": "Reserva",
+   "titulo": "El reparto del grupo, en un formato más corto para la IA",
+   "texto": "Cómo se reparte el grupo entre actividades se le pide a la IA como una lista de pares (actividad y personas) en lugar de un casillero por cada actividad. Hace falta para que quepan los datos nuevos del paso 6 (duración, edades, notas): con el formato de antes, el modelo rechazaba la petición. Apagado: con él, el reparto se leía algo peor en el banco.",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
+   "usado_por": [],
+   "sin_efecto": null
+  },
+  {
    "nombre": "reparto_parcial_con_lo_sabido",
    "area": "Reserva",
    "titulo": "Los que no se nombran siguen con lo que tenían",
@@ -3518,7 +3540,7 @@
     "b_acuse"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 49
+   "llamadas_ultima_ronda": 47
   },
   {
    "ajuste": "avisos_al_final_model",
@@ -3528,7 +3550,7 @@
     "r_revisor"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 102
+   "llamadas_ultima_ronda": 107
   },
   {
    "ajuste": "extraction_model",
@@ -3536,7 +3558,7 @@
    "pre": "gpt-5.4-mini",
    "usado_por": [],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 4
+   "llamadas_ultima_ronda": 93
   },
   {
    "ajuste": "extractor_turno_model",
@@ -3546,7 +3568,7 @@
     "b_extraction"
    ],
    "proveedor": "OpenRouter",
-   "llamadas_ultima_ronda": 94
+   "llamadas_ultima_ronda": 96
   },
   {
    "ajuste": "grounding_v3_model",
@@ -3556,7 +3578,7 @@
     "r_revisor"
    ],
    "proveedor": "OpenRouter",
-   "llamadas_ultima_ronda": 159
+   "llamadas_ultima_ronda": 172
   },
   {
    "ajuste": "idioma_model",
@@ -3564,7 +3586,7 @@
    "pre": "deepseek/deepseek-v4.1-flash",
    "usado_por": [],
    "proveedor": "OpenRouter",
-   "llamadas_ultima_ronda": 159
+   "llamadas_ultima_ronda": 172
   },
   {
    "ajuste": "jev_model",
@@ -3576,7 +3598,7 @@
    ],
    "proveedor": "OpenRouter",
    "llamadas_ultima_ronda": null,
-   "nota": "Decidió solo 83 de 93 mensajes; en los otros 10 decidió el LLM de respaldo (sus llamadas cuentan en gpt-4o-mini)."
+   "nota": "Decidió solo 81 de 93 mensajes; en los otros 12 decidió el LLM de respaldo (sus llamadas cuentan en gpt-4o-mini)."
   },
   {
    "ajuste": "notas_model",
@@ -3586,7 +3608,7 @@
     "b_notas"
    ],
    "proveedor": "OpenRouter",
-   "llamadas_ultima_ronda": 159
+   "llamadas_ultima_ronda": 172
   },
   {
    "ajuste": "openai_embedding_model",
@@ -3609,7 +3631,7 @@
     "r_reescribir"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 4
+   "llamadas_ultima_ronda": 93
   },
   {
    "ajuste": "openai_transcription_model",
@@ -3627,7 +3649,7 @@
    "pre": "deepseek/deepseek-v4.1-flash",
    "usado_por": [],
    "proveedor": "OpenRouter",
-   "llamadas_ultima_ronda": 159
+   "llamadas_ultima_ronda": 172
   },
   {
    "ajuste": "rag_answer_model",
@@ -3637,7 +3659,7 @@
     "r_escribir"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 102
+   "llamadas_ultima_ronda": 107
   },
   {
    "ajuste": "rag_plan_model",
@@ -3645,7 +3667,7 @@
    "pre": "gpt-6-luna",
    "usado_por": [],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 102
+   "llamadas_ultima_ronda": 107
   },
   {
    "ajuste": "red_extractor_model",
@@ -3655,7 +3677,7 @@
     "b_extraction"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 102
+   "llamadas_ultima_ronda": 107
   },
   {
    "ajuste": "reescritura_model",
@@ -3663,7 +3685,7 @@
    "pre": "deepseek/deepseek-v4.1-flash",
    "usado_por": [],
    "proveedor": "OpenRouter",
-   "llamadas_ultima_ronda": 159
+   "llamadas_ultima_ronda": 172
   },
   {
    "ajuste": "resolutor_model",
@@ -3673,7 +3695,7 @@
     "b_slotfill_close"
    ],
    "proveedor": "OpenRouter",
-   "llamadas_ultima_ronda": 94
+   "llamadas_ultima_ronda": 96
   },
   {
    "ajuste": "resumen_model",
@@ -3681,7 +3703,7 @@
    "pre": "deepseek/deepseek-v4.1-flash",
    "usado_por": [],
    "proveedor": "OpenRouter",
-   "llamadas_ultima_ronda": 159
+   "llamadas_ultima_ronda": 172
   },
   {
    "ajuste": "senales_model",
@@ -3692,50 +3714,50 @@
     "b_routing"
    ],
    "proveedor": "OpenRouter",
-   "llamadas_ultima_ronda": 159
+   "llamadas_ultima_ronda": 172
   }
  ],
  "ronda": {
-  "etiqueta": "ex9b-3 (paso 3, paso 4, pide precio, aviso del pago)",
-  "run_at": "2026-10-19T14:37:49Z",
-  "fichero": "2026-10-19-ex9b-3.json",
-  "commit": "9cd567b",
+  "etiqueta": "ex9b-4 (paso 6, respaldo por tiempo de OpenRouter)",
+  "run_at": "2026-10-19T16:38:20Z",
+  "fichero": "2026-10-19-ex9b-4.json",
+  "commit": "0f5f73c",
   "por_tipo": {
    "reserva": {
-    "turns": 48,
-    "latency_p50": 1.727,
-    "latency_p95": 3.674,
-    "latency_avg": 2.062,
-    "llm_calls_avg": 2.79,
-    "llm_calls_p95": 4.0,
-    "llm_calls_max": 6,
-    "embeddings_avg": 1.5,
-    "llm_share": 1.35,
+    "turns": 47,
+    "latency_p50": 2.7,
+    "latency_p95": 4.862,
+    "latency_avg": 2.984,
+    "llm_calls_avg": 3.98,
+    "llm_calls_p95": 7.4,
+    "llm_calls_max": 10,
+    "embeddings_avg": 1.49,
+    "llm_share": 1.493,
     "tokens_avg": 0,
     "cost_avg_usd": 0
    },
    "rag": {
-    "turns": 45,
-    "latency_p50": 4.977,
-    "latency_p95": 10.117,
-    "latency_avg": 5.974,
-    "llm_calls_avg": 6.09,
-    "llm_calls_p95": 8.0,
-    "llm_calls_max": 9,
-    "embeddings_avg": 2.24,
-    "llm_share": 1.254,
+    "turns": 46,
+    "latency_p50": 5.391,
+    "latency_p95": 10.451,
+    "latency_avg": 5.726,
+    "llm_calls_avg": 7.13,
+    "llm_calls_p95": 10.0,
+    "llm_calls_max": 12,
+    "embeddings_avg": 2.2,
+    "llm_share": 1.596,
     "tokens_avg": 0,
     "cost_avg_usd": 0
    }
   },
   "enrutador": {
    "by_backend": {
-    "jev": 83,
-    "llm_uncertain": 9,
+    "jev": 81,
+    "llm_uncertain": 11,
     "llm": 1
    },
-   "ms_p50": 403.5,
-   "ms_p95": 469.9
+   "ms_p50": 419.0,
+   "ms_p95": 577.45
   },
   "cliente": {
    "turns": 93,
@@ -3743,15 +3765,15 @@
    "no_reply": 0,
    "multi_bubble": 1,
    "latency_p50": 4.0,
-   "latency_p95": 8.4,
-   "latency_max": 34
+   "latency_p95": 8.0,
+   "latency_max": 13
   },
   "llamadas_por_modelo": {
-   "deepseek/deepseek-v4.1-flash": 159,
-   "gpt-6-luna": 102,
-   "anthropic/claude-haiku-5.5": 94,
-   "gpt-5.4-nano": 49,
-   "gpt-5.4-mini": 4
+   "deepseek/deepseek-v4.1-flash": 172,
+   "gpt-6-luna": 107,
+   "anthropic/claude-haiku-5.5": 96,
+   "gpt-5.4-mini": 93,
+   "gpt-5.4-nano": 47
   },
   "calidad": null
  },
