@@ -1,0 +1,1239 @@
+{
+ "jev_suma": {
+  "mi hermano también viene, él quiere hacer snorkel": {
+   "companion_joins": 0.97,
+   "adds_person": 0.76
+  },
+  "se apunta mi cuñada, ella prefiere el minicurso": {
+   "companion_joins": 0.97,
+   "adds_person": 0.84
+  },
+  "mi amigo, el que ya te dije que viene, quiere snorkel": {
+   "companion_joins": 0.95,
+   "adds_person": 0.3
+  }
+ },
+ "versiones_reparto": {
+  "sin_flag": "el extractor de hoy, sin el reparto sabido en 'Lo que ya sabemos': 7/8 en esta pasada (pierde a quien se suma haciendo lo mismo que el grupo); en la exploración previa, 3 de 4 lecturas daban el reparto ampliado",
+  "v1": "con el reparto sabido ({buceo: 2}) y sin regla: 6/8 ('mi hermano también viene…' salió {buceo 1, snorkel 1}; 'se apunta mi cuñada…' sin reparto); sus lecturas, en `ia_primera_version`",
+  "v2": "con la regla de sumarse (primera redacción): 7/8 (preguntar para confirmar cuenta como bien); las 4 que suman a alguien con otra actividad, bien; la de la misma actividad pide confirmar el total (correcto por la regla de negocio); falso positivo: 'mi amigo, el que ya te dije que viene, quiere snorkel' suma a uno",
+  "v3": "la regla afinada ('alguien que no estaba contado'; la que queda): 7/8, igual que v2 (el mismo falso positivo)",
+  "exploracion": "8 llamadas antes del banco (no guardadas): con el reparto guardado en el estado, 'mi hermano…' y 'al final viene mi primo…' daban el reparto ampliado 4/4; sin él, 3/4"
+ },
+ "llamadas_exploracion": 8,
+ "_nota": "Banco del paso 6 de ex-9b: los campos nuevos del extractor del turno, con la IA de verdad (config de PRE), frente al\nregex de hoy. Frases propias (ninguna del golden ni del examen; las del reparto son las dos que describe la tarea).",
+ "modelo": "anthropic/claude-haiku-5.5",
+ "llamadas": 85,
+ "resumen": {
+  "duracion": {
+   "casos": 16,
+   "hoy": 10,
+   "con_el_campo": 16
+  },
+  "edades": {
+   "casos": 13,
+   "hoy": 7,
+   "con_el_campo": 13
+  },
+  "plan": {
+   "casos": 11,
+   "hoy": 7,
+   "con_el_campo": 11
+  },
+  "reparto": {
+   "casos": 8,
+   "hoy": 7,
+   "con_el_campo": 7
+  },
+  "notas": {
+   "casos": 10,
+   "hoy": 9,
+   "con_el_campo": 10
+  }
+ },
+ "casos": [
+  {
+   "bloque": "duracion",
+   "mensaje": "estaré del 5 al 9 en cartagena, pero solo quiero bucear un día",
+   "correcto": "single_day",
+   "regex_hoy": "single_day",
+   "ia": {
+    "activity": "certified_diving",
+    "location": "cartagena",
+    "quiere_bucear": true,
+    "dias_de_buceo": 1,
+    "dias_de_estancia": 5,
+    "idioma": "es"
+   },
+   "ia_sin_flag": null,
+   "decide": "single_day",
+   "ok_con_flag": true,
+   "ok_regex": true
+  },
+  {
+   "bloque": "duracion",
+   "mensaje": "vamos a estar una semana en las islas",
+   "correcto": "multi_day",
+   "regex_hoy": "multi_day",
+   "ia": {
+    "location": "island",
+    "dias_de_estancia": 7,
+    "idioma": "es"
+   },
+   "ia_sin_flag": null,
+   "decide": "multi_day",
+   "ok_con_flag": true,
+   "ok_regex": true
+  },
+  {
+   "bloque": "duracion",
+   "mensaje": "queremos bucear dos días seguidos",
+   "correcto": "multi_day",
+   "regex_hoy": "multi_day",
+   "ia": {
+    "quiere_bucear": true,
+    "dias_de_buceo": 2,
+    "idioma": "es"
+   },
+   "ia_sin_flag": null,
+   "decide": "multi_day",
+   "ok_con_flag": true,
+   "ok_regex": true
+  },
+  {
+   "bloque": "duracion",
+   "mensaje": "solo tenemos el sábado libre para bucear",
+   "correcto": "single_day",
+   "regex_hoy": null,
+   "ia": {
+    "quiere_bucear": true,
+    "dias_de_buceo": 1,
+    "idioma": "es"
+   },
+   "ia_sin_flag": null,
+   "decide": "single_day",
+   "ok_con_flag": true,
+   "ok_regex": false
+  },
+  {
+   "bloque": "duracion",
+   "mensaje": "llegamos el jueves y nos vamos el domingo",
+   "correcto": "multi_day",
+   "regex_hoy": null,
+   "ia": {
+    "dias_de_estancia": 4,
+    "idioma": "es"
+   },
+   "ia_sin_flag": null,
+   "decide": "multi_day",
+   "ok_con_flag": true,
+   "ok_regex": false
+  },
+  {
+   "bloque": "duracion",
+   "mensaje": "I'm in town for three days but only want to dive on one of them",
+   "correcto": "single_day",
+   "regex_hoy": "multi_day",
+   "ia": {
+    "quiere_bucear": true,
+    "dias_de_buceo": 1,
+    "dias_de_estancia": 3,
+    "idioma": "en"
+   },
+   "ia_sin_flag": null,
+   "decide": "single_day",
+   "ok_con_flag": true,
+   "ok_regex": false
+  },
+  {
+   "bloque": "duracion",
+   "mensaje": "we'd like to dive the whole weekend",
+   "correcto": "multi_day",
+   "regex_hoy": "multi_day",
+   "ia": {
+    "quiere_bucear": true,
+    "dias_de_buceo": 2,
+    "idioma": "en"
+   },
+   "ia_sin_flag": null,
+   "decide": "multi_day",
+   "ok_con_flag": true,
+   "ok_regex": true
+  },
+  {
+   "bloque": "duracion",
+   "mensaje": "me interesa el paquete de 7 inmersiones",
+   "correcto": "multi_day",
+   "regex_hoy": "multi_day",
+   "ia": {
+    "activity": "certified_diving",
+    "quiere_bucear": true,
+    "idioma": "es"
+   },
+   "ia_sin_flag": null,
+   "decide": "multi_day",
+   "ok_con_flag": true,
+   "ok_regex": true
+  },
+  {
+   "bloque": "duracion",
+   "mensaje": "tengo 5 meses de embarazo, ¿es seguro hacer snorkel?",
+   "correcto": null,
+   "regex_hoy": "multi_day",
+   "ia": {
+    "idioma": "es"
+   },
+   "ia_sin_flag": null,
+   "decide": null,
+   "ok_con_flag": true,
+   "ok_regex": false
+  },
+  {
+   "bloque": "duracion",
+   "mensaje": "hace 2 semanas que escribí y nadie me contesta",
+   "correcto": null,
+   "regex_hoy": null,
+   "ia": {
+    "idioma": "es"
+   },
+   "ia_sin_flag": null,
+   "decide": null,
+   "ok_con_flag": true,
+   "ok_regex": true
+  },
+  {
+   "bloque": "duracion",
+   "mensaje": "a lo mejor vamos dentro de unos meses",
+   "correcto": null,
+   "regex_hoy": "multi_day",
+   "ia": {
+    "idioma": "es"
+   },
+   "ia_sin_flag": null,
+   "decide": null,
+   "ok_con_flag": true,
+   "ok_regex": false
+  },
+  {
+   "bloque": "duracion",
+   "mensaje": "me operaron de la rodilla hace 3 meses, ¿puedo bucear?",
+   "correcto": null,
+   "regex_hoy": null,
+   "ia": {
+    "idioma": "es"
+   },
+   "ia_sin_flag": null,
+   "decide": null,
+   "ok_con_flag": true,
+   "ok_regex": true
+  },
+  {
+   "bloque": "duracion",
+   "mensaje": "¿cuántos días dura el curso open water?",
+   "correcto": null,
+   "regex_hoy": null,
+   "ia": {
+    "idioma": "es"
+   },
+   "ia_sin_flag": null,
+   "decide": null,
+   "ok_con_flag": true,
+   "ok_regex": true
+  },
+  {
+   "bloque": "duracion",
+   "mensaje": "I've been waiting 3 days for an answer about my booking",
+   "correcto": null,
+   "regex_hoy": "multi_day",
+   "ia": {
+    "idioma": "en"
+   },
+   "ia_sin_flag": null,
+   "decide": null,
+   "ok_con_flag": true,
+   "ok_regex": false
+  },
+  {
+   "bloque": "duracion",
+   "mensaje": "no buceo desde hace 3 años",
+   "correcto": null,
+   "regex_hoy": null,
+   "ia": {
+    "last_dive_over_2_years": true,
+    "idioma": "es"
+   },
+   "ia_sin_flag": null,
+   "decide": null,
+   "ok_con_flag": true,
+   "ok_regex": true
+  },
+  {
+   "bloque": "duracion",
+   "mensaje": "somos 4 y queremos hacer el minicurso",
+   "correcto": null,
+   "regex_hoy": null,
+   "ia": {
+    "activity": "minicourse",
+    "group_size": 4,
+    "quiere_bucear": true,
+    "idioma": "es"
+   },
+   "ia_sin_flag": null,
+   "decide": null,
+   "ok_con_flag": true,
+   "ok_regex": true
+  },
+  {
+   "bloque": "edades",
+   "mensaje": "voy con mis dos hijos, de 8 y 11 años",
+   "correcto": [
+    8,
+    11
+   ],
+   "regex_hoy": [
+    8,
+    11
+   ],
+   "ia": {
+    "edades": [
+     8,
+     11
+    ],
+    "idioma": "es"
+   },
+   "ia_sin_flag": null,
+   "decide": [
+    8,
+    11
+   ],
+   "ok_con_flag": true,
+   "ok_regex": true
+  },
+  {
+   "bloque": "edades",
+   "mensaje": "mi hija tiene nueve",
+   "correcto": [
+    9
+   ],
+   "regex_hoy": [
+    9
+   ],
+   "ia": {
+    "edades": [
+     9
+    ],
+    "idioma": "es"
+   },
+   "ia_sin_flag": null,
+   "decide": [
+    9
+   ],
+   "ok_con_flag": true,
+   "ok_regex": true
+  },
+  {
+   "bloque": "edades",
+   "mensaje": "somos mi esposo (45), yo (41) y nuestro hijo de 13",
+   "correcto": [
+    13,
+    41,
+    45
+   ],
+   "regex_hoy": [
+    13
+   ],
+   "ia": {
+    "group_size": 3,
+    "edades": [
+     45,
+     41,
+     13
+    ],
+    "idioma": "es"
+   },
+   "ia_sin_flag": null,
+   "decide": [
+    13,
+    41,
+    45
+   ],
+   "ok_con_flag": true,
+   "ok_regex": false
+  },
+  {
+   "bloque": "edades",
+   "mensaje": "my son is 12 and my daughter 15",
+   "correcto": [
+    12,
+    15
+   ],
+   "regex_hoy": [
+    12
+   ],
+   "ia": {
+    "edades": [
+     12,
+     15
+    ],
+    "idioma": "en"
+   },
+   "ia_sin_flag": null,
+   "decide": [
+    12,
+    15
+   ],
+   "ok_con_flag": true,
+   "ok_regex": false
+  },
+  {
+   "bloque": "edades",
+   "mensaje": "el pequeño tiene 6 y el grande 10",
+   "correcto": [
+    6,
+    10
+   ],
+   "regex_hoy": [],
+   "ia": {
+    "edades": [
+     6,
+     10
+    ],
+    "idioma": "es"
+   },
+   "ia_sin_flag": null,
+   "decide": [
+    6,
+    10
+   ],
+   "ok_con_flag": true,
+   "ok_regex": false
+  },
+  {
+   "bloque": "edades",
+   "mensaje": "¿mi sobrino de 7 puede hacer snorkel?",
+   "correcto": [
+    7
+   ],
+   "regex_hoy": [],
+   "ia": {
+    "activity": "snorkel",
+    "edades": [
+     7
+    ],
+    "idioma": "es"
+   },
+   "ia_sin_flag": null,
+   "decide": [
+    7
+   ],
+   "ok_con_flag": true,
+   "ok_regex": false
+  },
+  {
+   "bloque": "edades",
+   "mensaje": "6 y 9",
+   "correcto": [
+    6,
+    9
+   ],
+   "regex_hoy": [],
+   "ia": {
+    "edades": [
+     6,
+     9
+    ],
+    "idioma": "es"
+   },
+   "ia_sin_flag": null,
+   "decide": [
+    6,
+    9
+   ],
+   "ok_con_flag": true,
+   "ok_regex": false
+  },
+  {
+   "bloque": "edades",
+   "mensaje": "el mayor 12 y la menor 8",
+   "correcto": [
+    8,
+    12
+   ],
+   "regex_hoy": [],
+   "ia": {
+    "edades": [
+     12,
+     8
+    ],
+    "idioma": "es"
+   },
+   "ia_sin_flag": null,
+   "decide": [
+    8,
+    12
+   ],
+   "ok_con_flag": true,
+   "ok_regex": false
+  },
+  {
+   "bloque": "edades",
+   "mensaje": "¿desde qué edad pueden bucear los niños?",
+   "correcto": [],
+   "regex_hoy": [],
+   "ia": {
+    "idioma": "es"
+   },
+   "ia_sin_flag": null,
+   "decide": [],
+   "ok_con_flag": true,
+   "ok_regex": true
+  },
+  {
+   "bloque": "edades",
+   "mensaje": "no buceo hace 4 años",
+   "correcto": [],
+   "regex_hoy": [],
+   "ia": {
+    "is_certified": true,
+    "last_dive_over_2_years": true,
+    "idioma": "es"
+   },
+   "ia_sin_flag": null,
+   "decide": [],
+   "ok_con_flag": true,
+   "ok_regex": true
+  },
+  {
+   "bloque": "edades",
+   "mensaje": "somos 3 adultos y 2 niños",
+   "correcto": [],
+   "regex_hoy": [],
+   "ia": {
+    "group_size": 5,
+    "idioma": "es"
+   },
+   "ia_sin_flag": null,
+   "decide": [],
+   "ok_con_flag": true,
+   "ok_regex": true
+  },
+  {
+   "bloque": "edades",
+   "mensaje": "llevamos 10 años casados y queremos celebrarlo buceando",
+   "correcto": [],
+   "regex_hoy": [],
+   "ia": {
+    "quiere_bucear": true,
+    "idioma": "es"
+   },
+   "ia_sin_flag": null,
+   "decide": [],
+   "ok_con_flag": true,
+   "ok_regex": true
+  },
+  {
+   "bloque": "edades",
+   "mensaje": "soy residente en Colombia hace 3 años, ¿tengo el precio local?",
+   "correcto": [],
+   "regex_hoy": [],
+   "ia": {
+    "is_colombian": true,
+    "idioma": "es"
+   },
+   "ia_sin_flag": null,
+   "decide": [],
+   "ok_con_flag": true,
+   "ok_regex": true
+  },
+  {
+   "bloque": "plan",
+   "mensaje": "perfecto, ese me sirve",
+   "correcto": true,
+   "regex_hoy": false,
+   "ia": {
+    "acepta_propuesta": true,
+    "idioma": "es"
+   },
+   "ia_sin_flag": null,
+   "decide": true,
+   "ok_con_flag": true,
+   "ok_regex": false
+  },
+  {
+   "bloque": "plan",
+   "mensaje": "vale, vamos con ese",
+   "correcto": true,
+   "regex_hoy": false,
+   "ia": {
+    "activity": "certified_diving",
+    "quiere_bucear": true,
+    "acepta_propuesta": true,
+    "idioma": "es"
+   },
+   "ia_sin_flag": null,
+   "decide": true,
+   "ok_con_flag": true,
+   "ok_regex": false
+  },
+  {
+   "bloque": "plan",
+   "mensaje": "sí, quiero ese paquete",
+   "correcto": true,
+   "regex_hoy": true,
+   "ia": {
+    "acepta_propuesta": true,
+    "idioma": "es"
+   },
+   "ia_sin_flag": null,
+   "decide": true,
+   "ok_con_flag": true,
+   "ok_regex": true
+  },
+  {
+   "bloque": "plan",
+   "mensaje": "me encanta, resérvamelo",
+   "correcto": true,
+   "regex_hoy": false,
+   "ia": {
+    "activity": "certified_diving",
+    "quiere_bucear": true,
+    "acepta_propuesta": true,
+    "idioma": "es"
+   },
+   "ia_sin_flag": null,
+   "decide": true,
+   "ok_con_flag": true,
+   "ok_regex": false
+  },
+  {
+   "bloque": "plan",
+   "mensaje": "great, let's do that one",
+   "correcto": true,
+   "regex_hoy": false,
+   "ia": {
+    "activity": "certified_diving",
+    "quiere_bucear": true,
+    "acepta_propuesta": true,
+    "idioma": "en"
+   },
+   "ia_sin_flag": null,
+   "decide": true,
+   "ok_con_flag": true,
+   "ok_regex": false
+  },
+  {
+   "bloque": "plan",
+   "mensaje": "¿y cuánto cuesta?",
+   "correcto": false,
+   "regex_hoy": false,
+   "ia": {
+    "quiere_bucear": true,
+    "idioma": "es"
+   },
+   "ia_sin_flag": null,
+   "decide": false,
+   "ok_con_flag": true,
+   "ok_regex": true
+  },
+  {
+   "bloque": "plan",
+   "mensaje": "¿qué incluye?",
+   "correcto": false,
+   "regex_hoy": false,
+   "ia": {
+    "idioma": "es"
+   },
+   "ia_sin_flag": null,
+   "decide": false,
+   "ok_con_flag": true,
+   "ok_regex": true
+  },
+  {
+   "bloque": "plan",
+   "mensaje": "mmm prefiero algo de un solo día",
+   "correcto": false,
+   "regex_hoy": false,
+   "ia": {
+    "acepta_propuesta": false,
+    "idioma": "es"
+   },
+   "ia_sin_flag": null,
+   "decide": false,
+   "ok_con_flag": true,
+   "ok_regex": true
+  },
+  {
+   "bloque": "plan",
+   "mensaje": "no gracias, con 2 inmersiones me basta",
+   "correcto": false,
+   "regex_hoy": false,
+   "ia": {
+    "quiere_bucear": true,
+    "acepta_propuesta": false,
+    "idioma": "es"
+   },
+   "ia_sin_flag": null,
+   "decide": false,
+   "ok_con_flag": true,
+   "ok_regex": true
+  },
+  {
+   "bloque": "plan",
+   "mensaje": "lo pienso y te digo",
+   "correcto": false,
+   "regex_hoy": false,
+   "ia": {
+    "idioma": "es"
+   },
+   "ia_sin_flag": null,
+   "decide": false,
+   "ok_con_flag": true,
+   "ok_regex": true
+  },
+  {
+   "bloque": "plan",
+   "mensaje": "¿y el de 7 inmersiones cuánto sale?",
+   "correcto": false,
+   "regex_hoy": false,
+   "ia": {
+    "activity": "certified_diving",
+    "quiere_bucear": true,
+    "idioma": "es"
+   },
+   "ia_sin_flag": null,
+   "decide": false,
+   "ok_con_flag": true,
+   "ok_regex": true
+  },
+  {
+   "bloque": "reparto",
+   "mensaje": "mi hermano también viene, él quiere hacer snorkel",
+   "correcto": 3,
+   "regex_hoy": null,
+   "ia": {
+    "group_size": 3,
+    "group_allocation": {
+     "certified_diving": 2,
+     "snorkel": 1
+    },
+    "idioma": "es"
+   },
+   "ia_sin_flag": {
+    "group_allocation": {
+     "certified_diving": 2,
+     "snorkel": 1
+    },
+    "idioma": "es"
+   },
+   "con_flag": {
+    "total": 3,
+    "reparto": {
+     "certified_diving": 2,
+     "snorkel": 1
+    },
+    "confirma": {}
+   },
+   "sin_flag": {
+    "total": 3,
+    "reparto": {
+     "certified_diving": 2,
+     "snorkel": 1
+    },
+    "confirma": {}
+   },
+   "ok_con_flag": true,
+   "ok_sin_flag": true,
+   "ok_regex": null
+  },
+  {
+   "bloque": "reparto",
+   "mensaje": "al final viene mi primo, que hace snorkel",
+   "correcto": 3,
+   "regex_hoy": null,
+   "ia": {
+    "group_size": 3,
+    "group_allocation": {
+     "certified_diving": 2,
+     "snorkel": 1
+    },
+    "idioma": "es"
+   },
+   "ia_sin_flag": {
+    "group_allocation": {
+     "certified_diving": 2,
+     "snorkel": 1
+    },
+    "idioma": "es"
+   },
+   "con_flag": {
+    "total": 3,
+    "reparto": {
+     "certified_diving": 2,
+     "snorkel": 1
+    },
+    "confirma": {}
+   },
+   "sin_flag": {
+    "total": 3,
+    "reparto": {
+     "certified_diving": 2,
+     "snorkel": 1
+    },
+    "confirma": {}
+   },
+   "ok_con_flag": true,
+   "ok_sin_flag": true,
+   "ok_regex": null
+  },
+  {
+   "bloque": "reparto",
+   "mensaje": "se apunta mi cuñada, ella prefiere el minicurso",
+   "correcto": 3,
+   "regex_hoy": null,
+   "ia": {
+    "activity": "minicourse",
+    "group_size": 3,
+    "group_allocation": {
+     "certified_diving": 2,
+     "minicourse": 1
+    },
+    "idioma": "es"
+   },
+   "ia_sin_flag": {
+    "group_allocation": {
+     "certified_diving": 2,
+     "minicourse": 1
+    },
+    "idioma": "es"
+   },
+   "con_flag": {
+    "total": 3,
+    "reparto": {
+     "certified_diving": 2,
+     "minicourse": 1
+    },
+    "confirma": {}
+   },
+   "sin_flag": {
+    "total": 3,
+    "reparto": {
+     "certified_diving": 2,
+     "minicourse": 1
+    },
+    "confirma": {}
+   },
+   "ok_con_flag": true,
+   "ok_sin_flag": true,
+   "ok_regex": null
+  },
+  {
+   "bloque": "reparto",
+   "mensaje": "one more friend is joining us, she'll snorkel",
+   "correcto": 3,
+   "regex_hoy": null,
+   "ia": {
+    "group_size": 3,
+    "group_allocation": {
+     "certified_diving": 2,
+     "snorkel": 1
+    },
+    "idioma": "en"
+   },
+   "ia_sin_flag": {
+    "group_size": 3,
+    "group_allocation": {
+     "certified_diving": 2,
+     "snorkel": 1
+    },
+    "idioma": "en"
+   },
+   "con_flag": {
+    "total": 3,
+    "reparto": {
+     "certified_diving": 2,
+     "snorkel": 1
+    },
+    "confirma": {}
+   },
+   "sin_flag": {
+    "total": 3,
+    "reparto": {
+     "certified_diving": 2,
+     "snorkel": 1
+    },
+    "confirma": {}
+   },
+   "ok_con_flag": true,
+   "ok_sin_flag": true,
+   "ok_regex": null
+  },
+  {
+   "bloque": "reparto",
+   "mensaje": "también viene mi hermano a bucear, es certificado",
+   "correcto": 3,
+   "regex_hoy": null,
+   "ia": {
+    "is_certified": true,
+    "group_size": 3,
+    "idioma": "es"
+   },
+   "ia_sin_flag": {
+    "is_certified": true,
+    "idioma": "es"
+   },
+   "con_flag": {
+    "total": 2,
+    "reparto": null,
+    "confirma": {
+     "group_size": 3
+    }
+   },
+   "sin_flag": {
+    "total": 2,
+    "reparto": null,
+    "confirma": {}
+   },
+   "ok_con_flag": true,
+   "ok_sin_flag": false,
+   "ok_regex": null
+  },
+  {
+   "bloque": "reparto",
+   "mensaje": "mi pareja prefiere hacer snorkel",
+   "correcto": 2,
+   "regex_hoy": null,
+   "ia": {
+    "group_allocation": {
+     "certified_diving": 1,
+     "snorkel": 1
+    },
+    "idioma": "es"
+   },
+   "ia_sin_flag": {
+    "group_allocation": {
+     "certified_diving": 1,
+     "snorkel": 1
+    },
+    "idioma": "es"
+   },
+   "con_flag": {
+    "total": 2,
+    "reparto": {
+     "certified_diving": 1,
+     "snorkel": 1
+    },
+    "confirma": {}
+   },
+   "sin_flag": {
+    "total": 2,
+    "reparto": {
+     "certified_diving": 1,
+     "snorkel": 1
+    },
+    "confirma": {}
+   },
+   "ok_con_flag": true,
+   "ok_sin_flag": true,
+   "ok_regex": null
+  },
+  {
+   "bloque": "reparto",
+   "mensaje": "los dos tenemos el Advanced",
+   "correcto": 2,
+   "regex_hoy": null,
+   "ia": {
+    "is_certified": true,
+    "idioma": "es"
+   },
+   "ia_sin_flag": {
+    "is_certified": true,
+    "idioma": "es"
+   },
+   "con_flag": {
+    "total": 2,
+    "reparto": null,
+    "confirma": {}
+   },
+   "sin_flag": {
+    "total": 2,
+    "reparto": null,
+    "confirma": {}
+   },
+   "ok_con_flag": true,
+   "ok_sin_flag": true,
+   "ok_regex": null
+  },
+  {
+   "bloque": "reparto",
+   "mensaje": "mi amigo, el que ya te dije que viene, quiere snorkel",
+   "correcto": 2,
+   "regex_hoy": null,
+   "ia": {
+    "group_size": 3,
+    "group_allocation": {
+     "certified_diving": 2,
+     "snorkel": 1
+    },
+    "idioma": "es"
+   },
+   "ia_sin_flag": {
+    "group_allocation": {
+     "certified_diving": 1,
+     "snorkel": 1
+    },
+    "idioma": "es"
+   },
+   "con_flag": {
+    "total": 3,
+    "reparto": {
+     "certified_diving": 2,
+     "snorkel": 1
+    },
+    "confirma": {}
+   },
+   "sin_flag": {
+    "total": 2,
+    "reparto": {
+     "certified_diving": 1,
+     "snorkel": 1
+    },
+    "confirma": {}
+   },
+   "ok_con_flag": false,
+   "ok_sin_flag": true,
+   "ok_regex": null
+  },
+  {
+   "bloque": "notas",
+   "mensaje": "yo soy Open Water pero mi novia nunca ha buceado",
+   "correcto": [
+    true,
+    false
+   ],
+   "regex_hoy": [
+    true,
+    false
+   ],
+   "ia": {
+    "is_certified": true,
+    "otro_sin_certificar": true,
+    "idioma": "es"
+   },
+   "ia_sin_flag": null,
+   "decide": [
+    true,
+    false
+   ],
+   "ok_con_flag": true,
+   "ok_regex": true
+  },
+  {
+   "bloque": "notas",
+   "mensaje": "mi amigo no tiene certificación",
+   "correcto": [
+    true,
+    false
+   ],
+   "regex_hoy": [
+    true,
+    false
+   ],
+   "ia": {
+    "otro_sin_certificar": true,
+    "idioma": "es"
+   },
+   "ia_sin_flag": null,
+   "decide": [
+    true,
+    false
+   ],
+   "ok_con_flag": true,
+   "ok_regex": true
+  },
+  {
+   "bloque": "notas",
+   "mensaje": "my wife isn't certified, I am",
+   "correcto": [
+    true,
+    false
+   ],
+   "regex_hoy": [
+    true,
+    false
+   ],
+   "ia": {
+    "is_certified": true,
+    "otro_sin_certificar": true,
+    "idioma": "en"
+   },
+   "ia_sin_flag": null,
+   "decide": [
+    true,
+    false
+   ],
+   "ok_con_flag": true,
+   "ok_regex": true
+  },
+  {
+   "bloque": "notas",
+   "mensaje": "mi hermano se certificó hace años pero no ha vuelto a bucear",
+   "correcto": [
+    false,
+    true
+   ],
+   "regex_hoy": [
+    false,
+    true
+   ],
+   "ia": {
+    "otro_certificado_inactivo": true,
+    "idioma": "es"
+   },
+   "ia_sin_flag": null,
+   "decide": [
+    false,
+    true
+   ],
+   "ok_con_flag": true,
+   "ok_regex": true
+  },
+  {
+   "bloque": "notas",
+   "mensaje": "my dad has his Advanced but hasn't dived since 2015",
+   "correcto": [
+    false,
+    true
+   ],
+   "regex_hoy": [
+    false,
+    false
+   ],
+   "ia": {
+    "otro_certificado_inactivo": true,
+    "idioma": "en"
+   },
+   "ia_sin_flag": null,
+   "decide": [
+    false,
+    true
+   ],
+   "ok_con_flag": true,
+   "ok_regex": false
+  },
+  {
+   "bloque": "notas",
+   "mensaje": "yo no estoy certificado",
+   "correcto": [
+    false,
+    false
+   ],
+   "regex_hoy": [
+    false,
+    false
+   ],
+   "ia": {
+    "is_certified": false,
+    "idioma": "es"
+   },
+   "ia_sin_flag": null,
+   "decide": [
+    false,
+    false
+   ],
+   "ok_con_flag": true,
+   "ok_regex": true
+  },
+  {
+   "bloque": "notas",
+   "mensaje": "no buceo desde hace 4 años, pero soy certificado",
+   "correcto": [
+    false,
+    false
+   ],
+   "regex_hoy": [
+    false,
+    false
+   ],
+   "ia": {
+    "is_certified": true,
+    "last_dive_over_2_years": true,
+    "idioma": "es"
+   },
+   "ia_sin_flag": null,
+   "decide": [
+    false,
+    false
+   ],
+   "ok_con_flag": true,
+   "ok_regex": true
+  },
+  {
+   "bloque": "notas",
+   "mensaje": "mi amigo es divemaster",
+   "correcto": [
+    false,
+    false
+   ],
+   "regex_hoy": [
+    false,
+    false
+   ],
+   "ia": {
+    "idioma": "es"
+   },
+   "ia_sin_flag": null,
+   "decide": [
+    false,
+    false
+   ],
+   "ok_con_flag": true,
+   "ok_regex": true
+  },
+  {
+   "bloque": "notas",
+   "mensaje": "somos 2 buzos certificados",
+   "correcto": [
+    false,
+    false
+   ],
+   "regex_hoy": [
+    false,
+    false
+   ],
+   "ia": {
+    "is_certified": true,
+    "group_size": 2,
+    "idioma": "es"
+   },
+   "ia_sin_flag": null,
+   "decide": [
+    false,
+    false
+   ],
+   "ok_con_flag": true,
+   "ok_regex": true
+  },
+  {
+   "bloque": "notas",
+   "mensaje": "¿mi hijo necesita estar certificado para el minicurso?",
+   "correcto": [
+    false,
+    false
+   ],
+   "regex_hoy": [
+    false,
+    false
+   ],
+   "ia": {
+    "idioma": "es"
+   },
+   "ia_sin_flag": null,
+   "decide": [
+    false,
+    false
+   ],
+   "ok_con_flag": true,
+   "ok_regex": true
+  }
+ ]
+}
