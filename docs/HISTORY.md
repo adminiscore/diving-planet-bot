@@ -1,6 +1,26 @@
 History
 =======
 
+0.31.68 - (2026-10-20)
+----------------------
+* **ex-9b TERMINADO: ronda ex9b-8 PROMOCIONADA (98,7 % 29/32, la mejor de la serie) y la limpieza de sus flags;
+  después, G9** (Gadea con Claude; Gadea autorizó lanzar G9 cuando solo quedara eso).
+  - **ex9b-8** (paso 6 con su llamada aparte acotada a 1,5 s + quien se suma al grupo por el punto único del
+    acompañante, decidido por Jev + enlaces enteros + respaldo por tiempo de OpenRouter): **98,7 % 29/32** frente a
+    ex9b-7 96,1 % 25/32: 6 mejoras reales (política de fotos, hoteles base, no-recall, referral sin invenciones,
+    moneda-precios y buceo adaptado sin repreguntas) y **0 regresiones**. p50 3,6 s / p95 7,3 s; 5,46 llamadas por turno
+    (la llamada aparte del paso 6). PROMOCIONADO: `DURACION_POR_EXTRACTOR`, `EDADES_POR_EXTRACTOR`,
+    `NOTAS_RAG_DESDE_ESTADO`, `PASO6_EN_LLAMADA_APARTE`, `REPARTO_AL_SUMARSE_ALGUIEN`, `PII_RESPETA_URLS`,
+    `openrouter_respaldo_segundos=5`. Siguen apagados `PLAN_ELEGIDO_POR_EXTRACTOR` (tomaba la descripción del Open
+    Water por un paquete), `DIAS_CERRADOS_POR_RAG` y `REPARTO_EN_PARES`.
+  - **Limpieza ex9b** (agente, 3deb91e → a0b5d88): fuera el camino apagado de los 12 flags de ex-9b promocionados y dos
+    sin lector (`RED_MENCIONES_*`), el pegamento de la pista del regex, `affirms_p` y los vetos de la deliberación que ya
+    no decidían; src +154 −601. Replay de 95 diálogos sin diferencias (oráculo y caído, sobre ad1a05e) y, ya
+    integrada encima del paso 6, 0 diferencias en estado, respuesta y contexto del RAG (368 turnos); 141 prompts y lo que
+    se le manda a Jev idénticos; suite 3230. Los regex de "solo si la IA calla" se quedan (respaldo a propósito).
+  - Inventario "entender al cliente": 776 patrones (64,8 %, mal contado) al empezar ex-9b → 697 (71,6 % con el
+    recuento bueno) con los respaldos de cuando la IA calla; borrables cuando se decida que sin IA se pregunta.
+
 0.31.67 - (2026-10-19)
 ----------------------
 * **El paso 6 vuelve (decisión de Gadea: G9 con todo listo) y quien se suma al grupo, arreglado; ronda ex9b-8**
