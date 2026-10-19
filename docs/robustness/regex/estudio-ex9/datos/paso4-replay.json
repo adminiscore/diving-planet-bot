@@ -1,0 +1,813 @@
+{
+ "turnos": 368,
+ "dialogos": 95,
+ "comparaciones": {
+  "determinismo (base frente a base, oráculo)": {
+   "turnos_estado": 0,
+   "turnos_reply": 0,
+   "turnos_rag": 0,
+   "dialogos_estado": [],
+   "dialogos_reply": [],
+   "dialogos_rag": [],
+   "campos": {},
+   "cambios": []
+  },
+  "flags apagados frente a la base (oráculo)": {
+   "turnos_estado": 0,
+   "turnos_reply": 0,
+   "turnos_rag": 0,
+   "dialogos_estado": [],
+   "dialogos_reply": [],
+   "dialogos_rag": [],
+   "campos": {},
+   "cambios": []
+  },
+  "flags apagados frente a la base (extractor caído)": {
+   "turnos_estado": 0,
+   "turnos_reply": 0,
+   "turnos_rag": 0,
+   "dialogos_estado": [],
+   "dialogos_reply": [],
+   "dialogos_rag": [],
+   "campos": {},
+   "cambios": []
+  },
+  "respuesta_corta_por_ia frente a la base (oráculo)": {
+   "turnos_estado": 48,
+   "turnos_reply": 1,
+   "turnos_rag": 2,
+   "dialogos_estado": [
+    "acompanante-goteo",
+    "actividad-cambia-varias",
+    "confirma-reserva-existente-escalar",
+    "desde-islas-buzo-certificado",
+    "manual-duracion-curso",
+    "minicurso-islas-y-acompanante-lancha",
+    "precios-y-disponibilidad-con-negociacion",
+    "principiante-hora-lugar-y-precio",
+    "refresher-rechaza-acepta",
+    "reserva-completa-saludo-a-pago",
+    "semana-santa-solo-avanzado-islas",
+    "vuelo-tras-bucear"
+   ],
+   "dialogos_reply": [
+    "manual-duracion-curso"
+   ],
+   "dialogos_rag": [
+    "semana-santa-solo-avanzado-islas"
+   ],
+   "campos": {
+    "solo_traveler_confirmed": 43,
+    "core_pending_slot": 1,
+    "island": 1,
+    "hotel": 10
+   },
+   "cambios": [
+    {
+     "id": "reserva-completa-saludo-a-pago",
+     "turno": 2,
+     "msg": "quiero bucear, ya soy certificado",
+     "estado": {
+      "solo_traveler_confirmed": [
+       true,
+       false
+      ]
+     }
+    },
+    {
+     "id": "acompanante-goteo",
+     "turno": 2,
+     "msg": "yo soy certificado",
+     "estado": {
+      "solo_traveler_confirmed": [
+       true,
+       false
+      ]
+     }
+    },
+    {
+     "id": "acompanante-goteo",
+     "turno": 3,
+     "msg": "el no es certificado",
+     "estado": {
+      "solo_traveler_confirmed": [
+       true,
+       false
+      ]
+     }
+    },
+    {
+     "id": "acompanante-goteo",
+     "turno": 4,
+     "msg": "el quiere hacer snorkel",
+     "estado": {
+      "solo_traveler_confirmed": [
+       true,
+       false
+      ]
+     }
+    },
+    {
+     "id": "acompanante-goteo",
+     "turno": 5,
+     "msg": "somos los dos solamente",
+     "estado": {
+      "solo_traveler_confirmed": [
+       true,
+       false
+      ]
+     }
+    },
+    {
+     "id": "acompanante-goteo",
+     "turno": 6,
+     "msg": "desde cartagena",
+     "estado": {
+      "solo_traveler_confirmed": [
+       true,
+       false
+      ]
+     }
+    },
+    {
+     "id": "acompanante-goteo",
+     "turno": 7,
+     "msg": "no hace poco bucee",
+     "estado": {
+      "solo_traveler_confirmed": [
+       true,
+       false
+      ]
+     }
+    },
+    {
+     "id": "acompanante-goteo",
+     "turno": 8,
+     "msg": "no somos colombianos",
+     "estado": {
+      "solo_traveler_confirmed": [
+       true,
+       false
+      ]
+     }
+    },
+    {
+     "id": "actividad-cambia-varias",
+     "turno": 2,
+     "msg": "voy solo",
+     "estado": {
+      "solo_traveler_confirmed": [
+       false,
+       true
+      ]
+     }
+    },
+    {
+     "id": "actividad-cambia-varias",
+     "turno": 3,
+     "msg": "mejor pensandolo bien quiero el minicurso",
+     "estado": {
+      "solo_traveler_confirmed": [
+       false,
+       true
+      ]
+     }
+    },
+    {
+     "id": "actividad-cambia-varias",
+     "turno": 4,
+     "msg": "desde cartagena",
+     "estado": {
+      "solo_traveler_confirmed": [
+       false,
+       true
+      ]
+     }
+    },
+    {
+     "id": "actividad-cambia-varias",
+     "turno": 5,
+     "msg": "no soy colombiano",
+     "estado": {
+      "solo_traveler_confirmed": [
+       false,
+       true
+      ]
+     }
+    },
+    {
+     "id": "actividad-cambia-varias",
+     "turno": 6,
+     "msg": "en realidad prefiero snorkel mejor",
+     "estado": {
+      "solo_traveler_confirmed": [
+       false,
+       true
+      ]
+     }
+    },
+    {
+     "id": "refresher-rechaza-acepta",
+     "turno": 5,
+     "msg": "desde cartagena, voy solo",
+     "estado": {
+      "solo_traveler_confirmed": [
+       false,
+       true
+      ]
+     }
+    },
+    {
+     "id": "refresher-rechaza-acepta",
+     "turno": 6,
+     "msg": "no soy colombiano",
+     "estado": {
+      "solo_traveler_confirmed": [
+       false,
+       true
+      ]
+     }
+    },
+    {
+     "id": "vuelo-tras-bucear",
+     "turno": 4,
+     "msg": "listo, entonces reservo para la manana, buceo certificado solo",
+     "estado": {
+      "solo_traveler_confirmed": [
+       false,
+       true
+      ]
+     }
+    },
+    {
+     "id": "manual-duracion-curso",
+     "turno": 2,
+     "msg": "Para mi",
+     "estado": {
+      "solo_traveler_confirmed": [
+       false,
+       true
+      ]
+     }
+    },
+    {
+     "id": "manual-duracion-curso",
+     "turno": 3,
+     "msg": "no",
+     "estado": {
+      "solo_traveler_confirmed": [
+       false,
+       true
+      ]
+     }
+    },
+    {
+     "id": "manual-duracion-curso",
+     "turno": 4,
+     "msg": "Cuánto tiempo dura ?",
+     "estado": {
+      "solo_traveler_confirmed": [
+       false,
+       true
+      ]
+     }
+    },
+    {
+     "id": "manual-duracion-curso",
+     "turno": 5,
+     "msg": "El curso que te he pedido cuánto tiempo dura ?",
+     "estado": {
+      "solo_traveler_confirmed": [
+       false,
+       true
+      ]
+     }
+    },
+    {
+     "id": "manual-duracion-curso",
+     "turno": 6,
+     "msg": "Si cuantos días son?",
+     "estado": {
+      "core_pending_slot": [
+       "companion_activity_choice",
+       null
+      ],
+      "solo_traveler_confirmed": [
+       false,
+       true
+      ]
+     },
+     "reply_a": "«RAG»\n\n¡Qué bien que venga alguien más! 🌊 Para recomendarle lo que mejor le encaje: ¿van a estar *un solo día* o *varios días*?",
+     "reply_b": "«RAG»"
+    },
+    {
+     "id": "semana-santa-solo-avanzado-islas",
+     "turno": 2,
+     "msg": "Un solo buzo avanzado",
+     "estado": {
+      "solo_traveler_confirmed": [
+       false,
+       true
+      ]
+     }
+    },
+    {
+     "id": "semana-santa-solo-avanzado-islas",
+     "turno": 3,
+     "msg": "1. Cuakes son sus costos con equipo?\n2. ⁠tienen disponibilidad?\n3. ⁠tienen algun hospedaje o zona para hospedarme que recomienden centrico a",
+     "estado": {
+      "solo_traveler_confirmed": [
+       false,
+       true
+      ]
+     }
+    },
+    {
+     "id": "semana-santa-solo-avanzado-islas",
+     "turno": 4,
+     "msg": "Quiero quedarme en las islas",
+     "estado": {
+      "solo_traveler_confirmed": [
+       false,
+       true
+      ]
+     }
+    },
+    {
+     "id": "semana-santa-solo-avanzado-islas",
+     "turno": 5,
+     "msg": "Veo q los 5 buceos serian por 293 pagando en el website",
+     "estado": {
+      "hotel": [
+       "Veo q los 5 buceos serian por 293 pagando en el website",
+       "por confirmar"
+      ],
+      "island": [
+       "Veo q los 5 buceos serian por 293 pagando en el website",
+       "por confirmar"
+      ],
+      "solo_traveler_confirmed": [
+       false,
+       true
+      ]
+     }
+    },
+    {
+     "id": "semana-santa-solo-avanzado-islas",
+     "turno": 6,
+     "msg": "Ustedes cotizan los hoteles san pedro y cocoliso",
+     "estado": {
+      "hotel": [
+       "Veo q los 5 buceos serian por 293 pagando en el website",
+       "por confirmar"
+      ],
+      "solo_traveler_confirmed": [
+       false,
+       true
+      ]
+     }
+    },
+    {
+     "id": "semana-santa-solo-avanzado-islas",
+     "turno": 7,
+     "msg": "Me interesa llegaria el 17 de abril y me iria el 20 de abril",
+     "estado": {
+      "hotel": [
+       "Veo q los 5 buceos serian por 293 pagando en el website",
+       "por confirmar"
+      ],
+      "solo_traveler_confirmed": [
+       false,
+       true
+      ]
+     }
+    },
+    {
+     "id": "semana-santa-solo-avanzado-islas",
+     "turno": 8,
+     "msg": "Hay disponibilidad?",
+     "estado": {
+      "hotel": [
+       "Veo q los 5 buceos serian por 293 pagando en el website",
+       "por confirmar"
+      ],
+      "solo_traveler_confirmed": [
+       false,
+       true
+      ]
+     },
+     "rag": [
+      "-La conversación se esta llevando a cabo en español. El cliente indica que ya esta en las Islas del Rosario. Si pregunta por punto de encuentro, recogida u horarios, responde SOLO con la informacion de recogida en hotel/isla; no menciones la salida desde el Muelle de la Bodeguita en Cartagena salvo que el cliente pregunte explicitamente por ese caso. Se hospeda (o se hospedara) en la isla: isla_grande. Hotel/alojamiento reportado: Veo q los 5 buceos serian por 293 pagando en el website. El cliente marco que es buzo certificado (solo buzos certificados en el grupo). Aun no sabemos la nacionalidad del cliente: si das un precio, en USD (si dice que es colombiano/a o residente en Colombia, en COP; no hay descuento especial por ser colombiano). El cliente ya indico que son 1 persona(s) en total. Paso actual del flujo guiado: free_text.",
+      "+La conversación se esta llevando a cabo en español. El cliente indica que ya esta en las Islas del Rosario. Si pregunta por punto de encuentro, recogida u horarios, responde SOLO con la informacion de recogida en hotel/isla; no menciones la salida desde el Muelle de la Bodeguita en Cartagena salvo que el cliente pregunte explicitamente por ese caso. Se hospeda (o se hospedara) en la isla: isla_grande. Hotel/alojamiento reportado: por confirmar. El cliente marco que es buzo certificado (solo buzos certificados en el grupo). Aun no sabemos la nacionalidad del cliente: si das un precio, en USD (si dice que es colombiano/a o residente en Colombia, en COP; no hay descuento especial por ser colombiano). El cliente ya indico que son 1 persona(s) en total. Paso actual del flujo guiado: free_text."
+     ]
+    },
+    {
+     "id": "semana-santa-solo-avanzado-islas",
+     "turno": 9,
+     "msg": "Uno de los buceos puede ser en wreck?",
+     "estado": {
+      "hotel": [
+       "Veo q los 5 buceos serian por 293 pagando en el website",
+       "por confirmar"
+      ],
+      "solo_traveler_confirmed": [
+       false,
+       true
+      ]
+     },
+     "rag": [
+      "-La conversación se esta llevando a cabo en español. El cliente indica que ya esta en las Islas del Rosario. Si pregunta por punto de encuentro, recogida u horarios, responde SOLO con la informacion de recogida en hotel/isla; no menciones la salida desde el Muelle de la Bodeguita en Cartagena salvo que el cliente pregunte explicitamente por ese caso. Se hospeda (o se hospedara) en la isla: isla_grande. Hotel/alojamiento reportado: Veo q los 5 buceos serian por 293 pagando en el website. El cliente marco que es buzo certificado (solo buzos certificados en el grupo). Aun no sabemos la nacionalidad del cliente: si das un precio, en USD (si dice que es colombiano/a o residente en Colombia, en COP; no hay descuento especial por ser colombiano). El cliente ya indico que son 1 persona(s) en total. Paso actual del flujo guiado: free_text.",
+      "+La conversación se esta llevando a cabo en español. El cliente indica que ya esta en las Islas del Rosario. Si pregunta por punto de encuentro, recogida u horarios, responde SOLO con la informacion de recogida en hotel/isla; no menciones la salida desde el Muelle de la Bodeguita en Cartagena salvo que el cliente pregunte explicitamente por ese caso. Se hospeda (o se hospedara) en la isla: isla_grande. Hotel/alojamiento reportado: por confirmar. El cliente marco que es buzo certificado (solo buzos certificados en el grupo). Aun no sabemos la nacionalidad del cliente: si das un precio, en USD (si dice que es colombiano/a o residente en Colombia, en COP; no hay descuento especial por ser colombiano). El cliente ya indico que son 1 persona(s) en total. Paso actual del flujo guiado: free_text."
+     ]
+    },
+    {
+     "id": "principiante-hora-lugar-y-precio",
+     "turno": 1,
+     "msg": "Hello, is it possible to book for a diving cruise tomorrow, for 1 person?",
+     "estado": {
+      "solo_traveler_confirmed": [
+       false,
+       true
+      ]
+     }
+    },
+    {
+     "id": "principiante-hora-lugar-y-precio",
+     "turno": 2,
+     "msg": "I am a beginner ( I have made 4/5 divings before)",
+     "estado": {
+      "solo_traveler_confirmed": [
+       false,
+       true
+      ]
+     }
+    },
+    {
+     "id": "principiante-hora-lugar-y-precio",
+     "turno": 3,
+     "msg": "OK, could you just confirm at what time and where we make the appointment?",
+     "estado": {
+      "solo_traveler_confirmed": [
+       false,
+       true
+      ]
+     }
+    },
+    {
+     "id": "principiante-hora-lugar-y-precio",
+     "turno": 4,
+     "msg": "And please confirm the price 👌",
+     "estado": {
+      "solo_traveler_confirmed": [
+       false,
+       true
+      ]
+     }
+    },
+    {
+     "id": "principiante-hora-lugar-y-precio",
+     "turno": 5,
+     "msg": "OK I will check thanks",
+     "estado": {
+      "solo_traveler_confirmed": [
+       false,
+       true
+      ]
+     }
+    },
+    {
+     "id": "confirma-reserva-existente-escalar",
+     "turno": 3,
+     "msg": "Hello, I just want to tell you, I just make a reservation for me and [NOMBRE] for diving with you on Monday 11th of May. Him is gonna be lik",
+     "estado": {
+      "solo_traveler_confirmed": [
+       true,
+       false
+      ]
+     }
+    },
+    {
+     "id": "precios-y-disponibilidad-con-negociacion",
+     "turno": 1,
+     "msg": "Hola! Como estan? Me llamo [NOMBRE] soy buza advanced",
+     "estado": {
+      "solo_traveler_confirmed": [
+       true,
+       false
+      ]
+     }
+    },
+    {
+     "id": "precios-y-disponibilidad-con-negociacion",
+     "turno": 2,
+     "msg": "Queria saber los valores de dos buceos o del pack de 5 buceos en 2 dias",
+     "estado": {
+      "solo_traveler_confirmed": [
+       true,
+       false
+      ]
+     }
+    },
+    {
+     "id": "precios-y-disponibilidad-con-negociacion",
+     "turno": 3,
+     "msg": "Tienen disponibilidad para mañana?",
+     "estado": {
+      "solo_traveler_confirmed": [
+       true,
+       false
+      ]
+     }
+    },
+    {
+     "id": "precios-y-disponibilidad-con-negociacion",
+     "turno": 4,
+     "msg": "Desde cartagena porfi",
+     "estado": {
+      "solo_traveler_confirmed": [
+       true,
+       false
+      ]
+     }
+    },
+    {
+     "id": "precios-y-disponibilidad-con-negociacion",
+     "turno": 5,
+     "msg": "Que valor tiene? Y como es el itinerario?",
+     "estado": {
+      "solo_traveler_confirmed": [
+       true,
+       false
+      ]
+     }
+    },
+    {
+     "id": "precios-y-disponibilidad-con-negociacion",
+     "turno": 6,
+     "msg": "Y en el caso de tomar solo el buceo doble?",
+     "estado": {
+      "solo_traveler_confirmed": [
+       true,
+       false
+      ]
+     }
+    },
+    {
+     "id": "precios-y-disponibilidad-con-negociacion",
+     "turno": 7,
+     "msg": "Pucha en realidad me parece un poco caro, quedaria en 160 dolares?",
+     "estado": {
+      "solo_traveler_confirmed": [
+       true,
+       false
+      ]
+     }
+    },
+    {
+     "id": "precios-y-disponibilidad-con-negociacion",
+     "turno": 8,
+     "msg": "Considerando el 10%",
+     "estado": {
+      "solo_traveler_confirmed": [
+       true,
+       false
+      ]
+     }
+    },
+    {
+     "id": "minicurso-islas-y-acompanante-lancha",
+     "turno": 2,
+     "msg": "una noche en coral sand y la otra no lo hemos decidido a un si repetir  o en majagua para mas comodida",
+     "estado": {
+      "hotel": [
+       "una noche en coral sand y la otra no lo hemos decidido a un si repetir  o en majagua para mas comodida",
+       "san_pedro_majagua"
+      ]
+     }
+    },
+    {
+     "id": "minicurso-islas-y-acompanante-lancha",
+     "turno": 3,
+     "msg": "este me interesa",
+     "estado": {
+      "hotel": [
+       "una noche en coral sand y la otra no lo hemos decidido a un si repetir  o en majagua para mas comodida",
+       "san_pedro_majagua"
+      ]
+     }
+    },
+    {
+     "id": "minicurso-islas-y-acompanante-lancha",
+     "turno": 4,
+     "msg": "MINI CURSOS\nRecogida en su hotel en la isla, entrenamiento en piscina y 1 inmersión en los arrecifes.",
+     "estado": {
+      "hotel": [
+       "una noche en coral sand y la otra no lo hemos decidido a un si repetir  o en majagua para mas comodida",
+       "san_pedro_majagua"
+      ]
+     }
+    },
+    {
+     "id": "minicurso-islas-y-acompanante-lancha",
+     "turno": 5,
+     "msg": "pero i ria en el la lancha solo el no hay como pagar para acompañarlo aun que no vallamos a sumergirnos",
+     "estado": {
+      "hotel": [
+       "una noche en coral sand y la otra no lo hemos decidido a un si repetir  o en majagua para mas comodida",
+       "san_pedro_majagua"
+      ]
+     }
+    },
+    {
+     "id": "desde-islas-buzo-certificado",
+     "turno": 3,
+     "msg": "Im staying at el hamaquero",
+     "estado": {
+      "hotel": [
+       "Im staying at el hamaquero",
+       "hamaquero"
+      ]
+     }
+    }
+   ]
+  },
+  "nombre_solo_por_extractor frente a la base (oráculo)": {
+   "turnos_estado": 0,
+   "turnos_reply": 0,
+   "turnos_rag": 0,
+   "dialogos_estado": [],
+   "dialogos_reply": [],
+   "dialogos_rag": [],
+   "campos": {},
+   "cambios": []
+  },
+  "dias_cerrados_por_rag frente a la base (oráculo)": {
+   "turnos_estado": 0,
+   "turnos_reply": 0,
+   "turnos_rag": 0,
+   "dialogos_estado": [],
+   "dialogos_reply": [],
+   "dialogos_rag": [],
+   "campos": {},
+   "cambios": []
+  },
+  "los tres flags frente a la base, IA caída (extractor y Jev)": {
+   "turnos_estado": 0,
+   "turnos_reply": 0,
+   "turnos_rag": 0,
+   "dialogos_estado": [],
+   "dialogos_reply": [],
+   "dialogos_rag": [],
+   "campos": {},
+   "cambios": []
+  },
+  "los tres flags frente a respuesta_corta_por_ia sola (oráculo)": {
+   "turnos_estado": 0,
+   "turnos_reply": 0,
+   "turnos_rag": 0,
+   "dialogos_estado": [],
+   "dialogos_reply": [],
+   "dialogos_rag": [],
+   "campos": {},
+   "cambios": []
+  },
+  "notas del RAG desde el estado (descartado) frente a la base (oráculo)": {
+   "turnos_estado": 0,
+   "turnos_reply": 0,
+   "turnos_rag": 23,
+   "dialogos_estado": [],
+   "dialogos_reply": [],
+   "dialogos_rag": [
+    "curso-alojamiento-y-recogida-islas",
+    "curso-open-water-disponibilidad-pasos-y-precio-citado",
+    "curso-open-water-precio-cop-hoteles-y-transporte",
+    "curso-open-water-principiantes-idioma-frances-anticipacion",
+    "grupo-mixto-precio-cop-total",
+    "manual-duracion-curso",
+    "minicurso-precio-colombianos-origen-pendiente",
+    "open-water-hoteles-noche-fotos-horario",
+    "principiante-hora-lugar-y-precio",
+    "referral-mas-refresher-hotel-y-domingo-pascua",
+    "refresher-rechaza-acepta"
+   ],
+   "campos": {},
+   "cambios": [
+    {
+     "id": "refresher-rechaza-acepta",
+     "turno": 2,
+     "msg": "el refresher tiene costo adicional?"
+    },
+    {
+     "id": "manual-duracion-curso",
+     "turno": 4,
+     "msg": "Cuánto tiempo dura ?"
+    },
+    {
+     "id": "manual-duracion-curso",
+     "turno": 5,
+     "msg": "El curso que te he pedido cuánto tiempo dura ?"
+    },
+    {
+     "id": "manual-duracion-curso",
+     "turno": 6,
+     "msg": "Si cuantos días son?"
+    },
+    {
+     "id": "curso-open-water-precio-cop-hoteles-y-transporte",
+     "turno": 3,
+     "msg": "Gracias. Y en pesos?"
+    },
+    {
+     "id": "curso-open-water-precio-cop-hoteles-y-transporte",
+     "turno": 5,
+     "msg": "Que hoteles recomiendan?"
+    },
+    {
+     "id": "curso-open-water-precio-cop-hoteles-y-transporte",
+     "turno": 6,
+     "msg": "Está incluido el transporte a la isla?"
+    },
+    {
+     "id": "curso-open-water-disponibilidad-pasos-y-precio-citado",
+     "turno": 3,
+     "msg": "Con tarjeta de crédito son los mismos 2.215.000?"
+    },
+    {
+     "id": "grupo-mixto-precio-cop-total",
+     "turno": 4,
+     "msg": "Cual seria el valor en COP?"
+    },
+    {
+     "id": "referral-mas-refresher-hotel-y-domingo-pascua",
+     "turno": 2,
+     "msg": "Ok. Thanks. We will work out the best days. Do you recommend any hotels on the island convenient for the diving?"
+    },
+    {
+     "id": "referral-mas-refresher-hotel-y-domingo-pascua",
+     "turno": 3,
+     "msg": "Great. We will book diving with you on the website and will book our hotel on the island . Hope you are operating on Easter Sunday? We want "
+    },
+    {
+     "id": "open-water-hoteles-noche-fotos-horario",
+     "turno": 2,
+     "msg": "do you have any hotel in Rosario you recommend?"
+    },
+    {
+     "id": "open-water-hoteles-noche-fotos-horario",
+     "turno": 3,
+     "msg": "so, if I understood correctly, booking just for one night will be enough, right?"
+    },
+    {
+     "id": "open-water-hoteles-noche-fotos-horario",
+     "turno": 5,
+     "msg": "2 full days course, right?"
+    },
+    {
+     "id": "open-water-hoteles-noche-fotos-horario",
+     "turno": 6,
+     "msg": "also- I saw pictures and videos are not included...?"
+    },
+    {
+     "id": "open-water-hoteles-noche-fotos-horario",
+     "turno": 7,
+     "msg": "but will have a photographer taking pictures during the divings?"
+    },
+    {
+     "id": "open-water-hoteles-noche-fotos-horario",
+     "turno": 8,
+     "msg": "Sorry again, do you have a more detailed schedule ?\nFor instance, what time does the course finish on the first day?\nBecause I wanted to kno"
+    },
+    {
+     "id": "minicurso-precio-colombianos-origen-pendiente",
+     "turno": 4,
+     "msg": "Ese es el precio para ciudadanos colombianos? somos de Bogotá"
+    },
+    {
+     "id": "principiante-hora-lugar-y-precio",
+     "turno": 3,
+     "msg": "OK, could you just confirm at what time and where we make the appointment?"
+    },
+    {
+     "id": "curso-open-water-principiantes-idioma-frances-anticipacion",
+     "turno": 2,
+     "msg": "Es decir en dos dias tendriamos el certificado haciendo nuestro curso en linea . La persona que me acompana no habla ni ingles ni espanol pe"
+    },
+    {
+     "id": "curso-alojamiento-y-recogida-islas",
+     "turno": 3,
+     "msg": "Donde esta la base de buceo? En que hotel?"
+    },
+    {
+     "id": "curso-alojamiento-y-recogida-islas",
+     "turno": 4,
+     "msg": "Porque quiero saber si me puedo alojar allí directamente o en la misma isla para no tener que quedarme en Cartagena. (soy Cartagenera por ci"
+    },
+    {
+     "id": "curso-alojamiento-y-recogida-islas",
+     "turno": 6,
+     "msg": "Y me recogen si decido quedarme en otro?"
+    }
+   ]
+  }
+ }
+}
