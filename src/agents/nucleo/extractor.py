@@ -222,6 +222,8 @@ async def _aplicar_extractor(intent, state: ConversationState, message: str, pis
     datos = await datos_del_extractor(state, message)
     # CAL-C5: de este mensaje, ¿leyó el extractor? (la red de menciones por palabras solo actúa si no; ver abajo)
     state._extractor_leyo = message if datos is not None else None
+    if settings.extractor_sin_pista:
+        state.extractor_fallos_seguidos = 0 if datos is not None else (state.extractor_fallos_seguidos or 0) + 1
     await _otro_idioma_en_ingles(state, datos, message)
     _quitar_provisional(intent, pista)
     _nombre_del_extractor(state, datos, message)

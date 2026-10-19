@@ -219,6 +219,11 @@ async def route_message(state: ConversationState, message: str) -> str:
             if codigo is not None:
                 response = _respuesta_fallo_tecnico(state, codigo)
                 turn.update(reply=response, escalated=True, fallo_openai=codigo)
+        if (settings.extractor_sin_pista and (state.extractor_fallos_seguidos or 0) >= EXTRACTOR_FALLOS_PARA_PASE
+                and "FALLO TÉCNICO" not in (state.pending_escalation_reason or "")):
+            response = _respuesta_fallo_tecnico(
+                state, None, motivo=f"el extractor no lee los mensajes ({state.extractor_fallos_seguidos} turnos seguidos)")
+            turn.update(reply=response, escalated=True, fallo_extractor=state.extractor_fallos_seguidos)
         return response
 
 
@@ -233,9 +238,19 @@ _FALLO_TECNICO_EN = ("Sorry, I'm having a technical problem and can't answer you
                      "advisor from the team know, and they'll write to you here as soon as they can. 🙏")
 
 
-def _respuesta_fallo_tecnico(state: ConversationState, codigo: int) -> str:
-    motivo = {401: "clave inválida", 429: "sin saldo o saturado"}.get(codigo, "no responde")
-    reason = f"⚠️ FALLO TÉCNICO: OpenAI {motivo} (código {codigo}) — revisar saldo y clave de OpenAI"
+# ex-9b paso 3 (flag `extractor_sin_pista`, decisión de Gadea: sin extractor se pregunta, no se vuelve al regex). El
+# replay con el extractor caído en todos los turnos: el bot no inventa nada, pero repite "¿qué actividad?" hasta 10
+# veces. El primer fallo se resuelve preguntando; al segundo seguido se dice la verdad y se pasa a una persona, como
+# con OpenAI caído.
+EXTRACTOR_FALLOS_PARA_PASE = 2
+
+
+def _respuesta_fallo_tecnico(state: ConversationState, codigo: int | None, motivo: str | None = None) -> str:
+    if motivo is None:
+        motivo = {401: "clave inválida", 429: "sin saldo o saturado"}.get(codigo, "no responde")
+        reason = f"⚠️ FALLO TÉCNICO: OpenAI {motivo} (código {codigo}) — revisar saldo y clave de OpenAI"
+    else:
+        reason = f"⚠️ FALLO TÉCNICO: {motivo} — revisar OpenRouter, OpenAI y los logs del extractor"
     if state.pending_escalation_reason and "FALLO TÉCNICO" not in state.pending_escalation_reason:
         # El turno ya pasaba a un asesor por otra cosa ("LINK ROTO"…): ese motivo se conserva y se añade el técnico.
         reason = f"{state.pending_escalation_reason} | {reason}"
@@ -243,7 +258,7 @@ def _respuesta_fallo_tecnico(state: ConversationState, codigo: int) -> str:
     state.quick_replies = []
     state.pending_escalation_reason = reason
     state.pending_note = build_lead_summary(state, escalation_reason=reason)
-    logger.error(f"[ALERTA][OPENAI] ningún modelo de OpenAI respondió en el turno (código {codigo}): pase a un asesor")
+    logger.error(f"[ALERTA][FALLO TÉCNICO] {reason}: pase a un asesor")
     return _FALLO_TECNICO_ES if state.language == "es" else _FALLO_TECNICO_EN
 
 

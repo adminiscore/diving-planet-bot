@@ -279,3 +279,45 @@ def test_puerta_del_turno_con_pregunta_encendido_solo_mira_las_edades(sin_pista)
     assert core_extraction._question_turn_fields(intent, st) == []
     assert intent.ages == []  # las edades del regex no se pueden verificar en un turno con pregunta (como hoy)
     assert intent.activity == "certified_diving"
+
+
+# --- 5. el extractor falla dos turnos seguidos: se dice y se pasa a un asesor (no se pregunta en bucle) ---------------
+# El replay con el extractor caído en todos los turnos repetía "¿qué actividad?" hasta 10 veces seguidas.
+
+@pytest.mark.asyncio
+async def test_los_fallos_seguidos_se_cuentan_y_se_reinician(sin_pista, extractor):
+    st = _estado()
+    extractor(None)
+    await _entender("queremos bucear el sábado", st)
+    await _entender("somos 4", st)
+    assert st.extractor_fallos_seguidos == 2
+    extractor({"quiere_bucear": True})
+    await _entender("desde cartagena", st)
+    assert st.extractor_fallos_seguidos == 0
+
+
+@pytest.mark.asyncio
+async def test_apagado_no_se_cuentan(con_pista, extractor):
+    st = _estado()
+    extractor(None)
+    await _entender("queremos bucear el sábado", st)
+    assert st.extractor_fallos_seguidos == 0
+
+
+@pytest.mark.parametrize("fallos, pasa", [(1, False), (2, True)])
+@pytest.mark.asyncio
+async def test_al_segundo_fallo_seguido_pasa_a_un_asesor(sin_pista, monkeypatch, fallos, pasa):
+    from src.agents import supervisor
+
+    async def turno(conv_state, message):
+        conv_state.extractor_fallos_seguidos = fallos
+        return "¿Qué actividad te interesa?"
+
+    monkeypatch.setattr("src.orchestration.graph.run_turn_via_graph", turno)
+    st = _estado()
+    respuesta = await supervisor.route_message(st, "somos 4")
+    if pasa:
+        assert "problema técnico" in respuesta and st.step == Step.ESCALATE
+        assert "FALLO TÉCNICO" in st.pending_escalation_reason and "extractor" in st.pending_escalation_reason
+    else:
+        assert respuesta == "¿Qué actividad te interesa?" and st.pending_escalation_reason is None

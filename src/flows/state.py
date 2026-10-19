@@ -157,6 +157,9 @@ class ConversationState:
     # 7-oct (flag `rag_origen_pregunta`, opción C del punto 3): el cliente pidió un precio sin que supiéramos
     # desde dónde sale; el bot le preguntó el origen y guarda aquí la pregunta para contestarla en cuanto lo diga.
     pregunta_precio_pendiente: str | None = None
+    # ex-9b paso 3 (flag `extractor_sin_pista`): turnos seguidos en que el extractor (y su respaldo) no ha leído el
+    # mensaje. Sin la pista del regex lo que falta se pregunta; si vuelve a fallar, se pasa a un asesor (supervisor).
+    extractor_fallos_seguidos: int = 0
 
     # Actividad del acompañante detectada por la red de precisión LLM
     # (detect_special_signals) cuando la cantidad quedó pendiente de preguntar
