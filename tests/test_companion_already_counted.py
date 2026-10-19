@@ -26,7 +26,7 @@ def _two_divers_waiting_nationality(reparto: bool = True):
     """`reparto=False`: el mismo grupo de 2 sin reparto guardado (lo que deja "somos 2 buzos"). ex-9b paso 3: con el
     reparto guardado {certified_diving: 2} el grupo está "entero" y la red de señales no corre
     (`_group_allocation_fully_resolved`); solo corría porque la pista del regex leía "snorkel" como la actividad del
-    turno y la cambiaba. Con `extractor_sin_pista` el regex ya no la lee: la otra persona la ve la señal LLM sin reparto
+    turno y la cambiaba. Sin la pista (ex-9b paso 3) el regex ya no la lee: la otra persona la ve la señal LLM sin reparto
     guardado, o el reparto del extractor (tests/test_ex7_grupo.py)."""
     state = ConversationState(conversation_id="t7a")
     state.language = "es"

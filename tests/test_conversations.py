@@ -1000,7 +1000,7 @@ async def test_detect_kids_mention_covers_grandchildren_and_baby():
 # ---------------------------------------------------------------------------
 # Intent Detection - Smart Free Text Understanding
 # ---------------------------------------------------------------------------
-# ex-9b paso 3 (`extractor_sin_pista`): la actividad, el grupo, el origen y la certificación los lee el extractor del
+# ex-9b paso 3: la actividad, el grupo, el origen y la certificación los lee el extractor del
 # turno (simulado con `extractor_dice`, conftest); sin él, en los tests (sin red) iban por la pista del regex. Lo que
 # prueban: que lo leído llega al estado, con el servicio del registro y el idioma del mensaje.
 

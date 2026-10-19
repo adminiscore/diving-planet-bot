@@ -146,7 +146,7 @@ async def test_end_to_end_long_conversation_recalls_early_detail(monkeypatch, ex
 
     monkeypatch.setattr(conversation_summarizer, "_generate_summary", fake_generate)
     monkeypatch.setattr(conversation_summarizer, "_SUMMARY_TRIGGER_EVERY", 12)
-    # ex-9b paso 3: con el extractor caído dos turnos seguidos se pasa a un asesor (`extractor_sin_pista`).
+    # ex-9b paso 3: con el extractor caído dos turnos seguidos se pasa a un asesor.
     extractor_dice({"Hola, somos 4, mi padre tiene la rodilla operada, mejor evitar planes muy fisicos. Queremos bucear "
                     "2 dias.": {"quiere_bucear": True, "group_size": 4}})
 

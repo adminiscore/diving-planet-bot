@@ -129,49 +129,6 @@ class Settings(BaseSettings):
     recomendar_a_no_certificados: bool = True  # PROMOCIONADO 19-oct (mod-G2, HISTORY 0.31.57); revert = False
     # 18-oct (ronda mod-D, reserva-solo-link): el resolutor no fija un valor con una respuesta que se contradice ("no,
     # buceé hace poco" a "¿Eres buzo certificado?"). prompts/booking.SLOT_RESOLVER_CONTRADICCION. APAGADO.
-    # ex-9b paso 2 (19-oct): si Jev dice que el mensaje es médico, manda la seguridad aunque nombre el alcohol (antes
-    # el atajo del alcohol iba primero: «estoy embarazada, ¿puedo bucear o tomar vino?» = texto fijo del alcohol, sin
-    # pase). orchestration/router.classify_route. Banco de 10 frases con Jev de verdad: 6/10 → 10/10 (las 4 de alcohol
-    # solo siguen con su norma); ningún diálogo visible del golden habla de alcohol. ENCENDIDO 19-oct (va de pasajero en
-    # la ronda de equivalencia de ex-9b paso 1). Revert = False aquí y en el compose.
-    alcohol_detras_de_lo_medico: bool = True
-    # ex-9b paso 5 (19-oct): las listas de palabras y regex con su señal de IA (link roto, tema sensible, cancelar/cambiar,
-    # contacto, "hablar con", DIVE TO HEAL) solo deciden si la IA calla este turno, en el router, los nodos, `setup` y la
-    # cascada (regla única: `supervisor.regex_decide`). PROMOCIONADO 19-oct (ronda ex9b-1, HISTORY 0.31.62); revert = False.
-    regex_solo_si_ia_calla: bool = True
-    # ex-9b paso 5 (19-oct): "¿trae una pregunta?" y "¿corrige un dato?" en el núcleo los decide Jev cuando contesta
-    # (`asks_question`, `corrects`); el regex de siempre solo si Jev calla. El "?" sigue contando. PROMOCIONADO (ex9b-1).
-    pregunta_y_correccion_por_jev: bool = True
-    # ex-9b paso 5 (19-oct): preguntas nuevas de Jev en lugar de regex (`jev_router`: NUEVO_CASO, PREGUNTA_SI_ES_IA,
-    # CAMBIA_IDIOMA); el regex solo si Jev calla. PROMOCIONADOS 19-oct (ronda ex9b-2 97,0 % 26/32, HISTORY 0.31.63).
-    reinicio_por_jev: bool = True  # el reinicio de escenario (borra la memoria) solo si Jev dice que es un caso nuevo
-    identidad_ia_por_jev: bool = True  # "¿eres un bot?"
-    idioma_por_jev: bool = True  # el cambio de idioma a mitad de conversación
-    # ex-9b (19-oct): el aviso "el pago no confirma la reserva al momento" sale también cuando la pregunta va de CÓMO
-    # reservar (`tambien` en avisos.json). El RAG decía "al pagar quedas confirmado" (ronda ex9b-2). APAGADO.
-    aviso_pago_al_reservar: bool = True  # PROMOCIONADO 19-oct (ronda ex9b-3, HISTORY 0.31.64); revert = False
-    precio_por_jev: bool = True  # PROMOCIONADO (ex9b-3); "origen antes del precio": ¿pide el precio de NUESTRAS actividades? (Jev; regex si calla)
-    deliberacion_por_jev: bool = True  # "no sé si buceo o snorkel": `comparing_options` de la IA, sin la frase de duda
-    # ex-9b paso 3 (19-oct): el regex deja de ser la "pista" de los campos del extractor (actividad, origen,
-    # certificación, grupo y reparto, nacionalidad, última inmersión); se quedan la isla y el hotel del catálogo. Si el
-    # extractor falla (Haiku y su respaldo), esos datos quedan sin saber y la reserva los PREGUNTA (decisión de Gadea);
-    # no hay minicurso deducido del regex (lo recomienda CAL-C1 con lo que dice el extractor), la red de menciones por
-    # palabras clave no corre y las puertas de Jev sobre el regex solo miran las edades. La actividad principal de un
-    # grupo repartido ya sale del reparto sin flag (misma rama). nucleo/extraction._understand y nucleo/extractor.
-    # APAGADO hasta medirlo.
-    extractor_sin_pista: bool = True  # PROMOCIONADO 19-oct (ronda ex9b-3, HISTORY 0.31.64); revert = False
-    # ex-9b paso 4 (19-oct): la respuesta corta a la pregunta pendiente del origen, del hotel y de cuántos son la lee la
-    # IA, también con 12 caracteres o menos: el origen, la respuesta de Jev a esa pregunta (`pending_answer`, que ya dice
-    # que delegar = Cartagena) y si no, el extractor y la red anti-bucle; el hotel y el total, el extractor (`hotel`,
-    # `group_size`; sin hotel en la respuesta, "por confirmar" como hoy). "Voy solo" = el `group_size` 1 del extractor.
-    # Los botones y una cifra sola se leen sin IA (formato). El regex de siempre (`_departure_place`, "da igual",
-    # `_HOTEL_UNKNOWN_RE`, `_quantity_answer`, `_COURSE_SOLO_RE`) solo si la IA calla (Jev no contestó y el extractor
-    # falló). nucleo/routing._apply_short_answer y nucleo/extraction. APAGADO hasta medirlo.
-    respuesta_corta_por_ia: bool = True  # PROMOCIONADO 19-oct (ronda ex9b-3, HISTORY 0.31.64); revert = False
-    # ex-9b paso 4: "me llamo X" (`_NAME_TRIGGER_SIN_SOY_RE`) iba antes que el extractor y ganaba; con el flag, si la regex
-    # lo ve, manda el `nombre` del extractor (con `nombre_por_extractor`) y la regex solo si el extractor falla.
-    # nucleo/setup._nombre_del_mensaje. APAGADO hasta medirlo.
-    nombre_solo_por_extractor: bool = True  # PROMOCIONADO 19-oct (ronda ex9b-3, HISTORY 0.31.64); revert = False
     # ex-9b paso 4: los días cerrados (25 de diciembre y 1 de enero) los contesta el RAG, que lleva siempre las políticas
     # (`rag_politicas_en_contexto`), en vez del texto fijo que dispara `_CLOSED_DATE_RE` y se come el resto del mensaje.
     # Replay del golden: 0 cambios (ningún diálogo visible los nombra); pero sin el texto fijo, "quiero bucear el 25 de
@@ -366,10 +323,6 @@ class Settings(BaseSettings):
     # CAL-C4 (17-oct): si el cliente afirma un lugar que Jev, seguro, no reconoce como Cartagena ni las islas ("En baru
     # y Rosario", cal-55), se le pregunta a la base, que sabe dónde no operamos. APAGADO hasta medirlo.
     lugar_desconocido_al_rag: bool = True  # PROMOCIONADO 17-oct (CAL-C, ronda core calc2-A/B)
-    # CAL-C5 (17-oct): la red de menciones por palabras clave (actividades nombradas que no están en el reparto →
-    # "¿cuántos para X?") solo actúa si el extractor no pudo leer el mensaje: "We snorkeled in Roatan yesterday"
-    # preguntaba por snorkel (cal-69/70). APAGADO hasta medirlo.
-    red_menciones_solo_sin_extractor: bool = True  # PROMOCIONADO 17-oct (CAL-C, ronda core calc2-A/B)
     # CAL-C3e (17-oct, propuesta de Gadea): el hotel que lee el extractor, si está en el catálogo de hoteles de las islas
     # del detector, da su isla y "está en las islas"; y también se guarda en el turno que acaba en el pase a una
     # persona (cal-46: "staying at the Ubuntu Hotel" se perdía). APAGADO hasta medirlo.
@@ -682,12 +635,6 @@ class Settings(BaseSettings):
     # (flag o Jev apagados, o fallo) = la regex de hoy.
     # PROMOCIONADO 7-oct (ronda core s426-B frente a origen-c2-B: 93,0 -> 95,6 %, 8 mejoras / 1 regresion ajena, del enrutador; HISTORY 0.30.1). Revert = False aqui y en el compose.
     jev_acompanante_manda: bool = True
-    # Punto 4 (s4-26, 7-oct): la red de "mencion perdida" (palabra clave de una actividad + alguien mencionado) ya no
-    # saca un acompañante de la nada: sin actividad principal la mencion es la del grupo, y con la principal sabida una
-    # mencion GENERICA ("buceo") es contexto del producto principal (la regla que ya se aplicaba con un curso
-    # nombrado). Preguntaba "¿Cuántos serían para buceo certificado?" en minicurso-islas-y-acompanante-lancha y
-    # logistica-isla-fragata-regreso-otro-dia. PROMOCIONADO 7-oct (s426-B; HISTORY 0.30.1).
-    red_menciones_con_principal: bool = True
     # Punto 4 (s4-26, 7-oct): con la reserva ya cerrada (tarjeta con precio y link enviada) y sin cambios en este turno,
     # una pregunta ("¿cuánto dura?") se contesta SOLA; antes se le pegaba detras la tarjeta entera otra vez
     # (manual-duracion-curso: no-lista-precios / sin-repreguntas). PROMOCIONADO 7-oct (s426-B; HISTORY 0.30.1).
@@ -715,11 +662,12 @@ class Settings(BaseSettings):
     # hotel, A/B en la misma franja: 79,7 -> 85,3 %, 2 -> 4/10 sin fallos (HISTORY 0.30.3). Revert = False aqui y en el compose.
     hotel_ubicacion_declarada: bool = True
     # s4-28 (8-oct): una pregunta mas de Jev en la misma llamada (`customer_place`: Cartagena / ya en las islas / no lo
-    # dice). La regex sigue PROPONIENDO que el mensaje trae una ubicacion; QUE lugar es lo decide Jev cuando esta
-    # seguro (>= 0,6). `place_by_role` lo decidia por la preposicion: "visitando Cartagena... coordinar inmersiones EN
-    # Isla del Rosario" salia islas (precio-desde-islas-vs-cartagena). Banco ciego: Jev 12/12, regex 4/12, 0 seguras y
-    # equivocadas. PROMOCIONADO 8-oct: mini-ronda A/B de los 11 dialogos visibles afectados 82,8 -> 85,2 % (HISTORY
-    # 0.30.4). Cartagena solo la cambia Jev por las islas. Revert = False aqui y en el compose.
+    # dice). Nacio para decidir QUE lugar proponia la regex (`place_by_role` lo decidia por la preposicion: "visitando
+    # Cartagena... coordinar inmersiones EN Isla del Rosario" salia islas); banco ciego: Jev 12/12, regex 4/12.
+    # PROMOCIONADO 8-oct (HISTORY 0.30.4). Desde ex-9b paso 3 el origen lo lee solo el extractor (sin pista del regex) y
+    # esa regla (`_lugar_por_jev`) se quito en la limpieza ex9b; la pregunta se queda porque la leen CAL-C3c
+    # (`lugar_con_dos_lectores`: Jev seguro de que el mensaje no dice el origen) y CAL-C4 (`lugar_desconocido_al_rag`).
+    # Revert = False aqui y en el compose.
     jev_lugar_cliente: bool = True
     # s4-27 (7-oct, Gonzalo): si el cliente NOMBRA cuantas inmersiones ("el precio de las 2 inmersiones") y su origen
     # consta, el contexto del RAG dice que plan del catalogo es (`conversational_core._plan_nombrado`). Caso:

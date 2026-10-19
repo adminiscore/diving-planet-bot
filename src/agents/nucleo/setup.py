@@ -50,11 +50,11 @@ _SWITCH_TO_ES_RE = re.compile(
 
 def _idioma_pedido(state: ConversationState, message: str, routing_signals: dict) -> str | None:
     """El idioma al que el cliente pide pasar la conversación ("en"/"es"), o None si no lo pide o ya es ese. ex-9b paso
-    5 (flag `idioma_por_jev`): si Jev contesta (`cambia_idioma`), manda Jev; los regex de siempre solo si Jev calla.
-    Los regex pasaban al inglés con "¿el curso es en inglés?" y al español con "I don't speak spanish"."""
+    5: si Jev contesta (`cambia_idioma`), manda Jev; los regex de siempre solo si Jev calla. Los regex pasaban al
+    inglés con "¿el curso es en inglés?" y al español con "I don't speak spanish"."""
     from src.agents.jev_router import CAMBIA_IDIOMA
 
-    if settings.idioma_por_jev and CAMBIA_IDIOMA in routing_signals:
+    if CAMBIA_IDIOMA in routing_signals:
         pedido = {"english": "en", "spanish": "es"}.get(routing_signals[CAMBIA_IDIOMA])
         return pedido if pedido and pedido != state.language else None
     if _SWITCH_TO_EN_RE.search(message) and state.language != "en":
@@ -102,14 +102,13 @@ def _capture_client_name(state: ConversationState, message: str) -> None:
 
 
 async def _nombre_del_mensaje(state: ConversationState, message: str) -> None:
-    """El nombre con que se presenta el cliente. ex-9b paso 4 (flag `nombre_solo_por_extractor`, con
-    `nombre_por_extractor`): la regex de "me llamo X" iba antes que el extractor y ganaba; ahora, si la ve, manda el
-    `nombre` del extractor (aquí mismo, para que el saludo del primer turno lo lleve; la lectura no se gasta) y la regex
-    solo si el extractor falla. Sin la regex, el nombre lo pone el extractor más adelante en el turno, como hoy."""
+    """El nombre con que se presenta el cliente. ex-9b paso 4 (con `nombre_por_extractor`): la regex de "me llamo X"
+    iba antes que el extractor y ganaba; ahora, si la ve, manda el `nombre` del extractor (aquí mismo, para que el
+    saludo del primer turno lo lleve; la lectura no se gasta) y la regex solo si el extractor falla. Sin la regex, el
+    nombre lo pone el extractor más adelante en el turno, como hoy."""
     if state.client_name:
         return
-    if (settings.nombre_solo_por_extractor and settings.nombre_por_extractor
-            and _NAME_TRIGGER_SIN_SOY_RE.search(message)):
+    if settings.nombre_por_extractor and _NAME_TRIGGER_SIN_SOY_RE.search(message):
         from src.agents.nucleo.extractor import _nombre_del_extractor, lectura_del_extractor  # lazy
 
         datos = await lectura_del_extractor(state, message)

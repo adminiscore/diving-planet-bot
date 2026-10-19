@@ -94,12 +94,7 @@
         "jev_router_enabled",
         "jev_con_contexto",
         "pase_si_pide_fuera_del_sistema",
-        "datos_ajenos_se_niegan",
-        "alcohol_detras_de_lo_medico",
-        "regex_solo_si_ia_calla",
-        "reinicio_por_jev",
-        "identidad_ia_por_jev",
-        "idioma_por_jev"
+        "datos_ajenos_se_niegan"
       ],
       "detalle": [
         "Jev: jev_router.detect_routing_signals_jev_full (OpenRouter)",
@@ -312,8 +307,7 @@
         "openai_model"
       ],
       "interruptores": [
-        "idioma_del_extractor",
-        "nombre_solo_por_extractor"
+        "idioma_del_extractor"
       ]
     },
     {
@@ -342,7 +336,6 @@
         "senales_model"
       ],
       "interruptores": [
-        "respuesta_corta_por_ia",
         "plan_elegido_por_extractor"
       ]
     },
@@ -373,7 +366,6 @@
         "sin_cedula_extranjero",
         "est4_flujo",
         "jev_pide_algo",
-        "extractor_sin_pista",
         "duracion_por_extractor",
         "edades_por_extractor",
         "reparto_al_sumarse_alguien"
@@ -396,7 +388,6 @@
         "una_sola_pregunta",
         "tras_pase_recuerda_el_pase",
         "lugar_desconocido_al_rag",
-        "red_menciones_solo_sin_extractor",
         "hotel_del_catalogo_da_isla",
         "lo_dicho_en_respuesta_fija",
         "actividad_principal_en_el_reparto",
@@ -413,9 +404,6 @@
         "recomendar_a_certificados",
         "recomendar_a_no_certificados",
         "resolutor_sin_contradicciones",
-        "pregunta_y_correccion_por_jev",
-        "deliberacion_por_jev",
-        "precio_por_jev",
         "acuse_solo_el_mensaje"
       ]
     },
@@ -1028,11 +1016,6 @@
       "titulo": "Un hotel de las islas dice que está en las islas",
       "texto": "Si el hotel que nombra el cliente está en el catálogo de hoteles de las islas (por ejemplo, Ubuntu), el bot sabe que está en las islas y en qué isla; y el hotel se guarda aunque ese mensaje acabe pasándose a un asesor."
     },
-    "red_menciones_solo_sin_extractor": {
-      "area": "Reserva",
-      "titulo": "La red de palabras clave, solo si falla el extractor",
-      "texto": "Una red antigua buscaba nombres de actividades en el mensaje y preguntaba por ellas ('We snorkeled yesterday' → '¿cuántos para snorkel?'). Ahora el reparto del grupo lo decide el extractor y la red solo actúa si el extractor no pudo leer el mensaje."
-    },
     "lugar_desconocido_al_rag": {
       "area": "Reserva",
       "titulo": "Un lugar desconocido se pregunta a la base",
@@ -1216,7 +1199,7 @@
     "jev_lugar_cliente": {
       "area": "Reserva",
       "titulo": "Jev decide dónde está el cliente",
-      "texto": "Bucear en las islas no es estar en las islas: 'estamos en Cartagena y queremos bucear en el Rosario' ya no deja al cliente en las islas. Si no está claro, Coral pregunta desde dónde sale."
+      "texto": "Bucear en las islas no es estar en las islas: Jev dice si el mensaje cuenta de verdad desde dónde sale el cliente. Si está seguro de que no lo dice ('quiero bucear en las islas del Rosario'), el origen no se guarda y Coral lo pregunta; y si nombra un sitio que no es Cartagena ni las islas, Coral se lo pregunta a la base."
     },
     "jev_persona_ya_contada": {
       "area": "Reserva",
@@ -1232,11 +1215,6 @@
       "area": "Preguntas",
       "titulo": "Habla del plan, no del carrito",
       "texto": "Lo que el cliente ya eligió se le describe a Coral como 'el plan que está armando': el cliente no ve ningún carrito y Coral ya no le dice 'el curso que tienes en tu carrito'."
-    },
-    "red_menciones_con_principal": {
-      "area": "Reserva",
-      "titulo": "'Buceo' no es un segundo plan",
-      "texto": "Una mención genérica de buceo ya no saca un acompañante de buceo certificado de la nada: sin actividad principal es la del grupo, y con ella es parte del mismo plan."
     },
     "cierre_sin_repetir": {
       "area": "Reserva",
@@ -1323,31 +1301,6 @@
       "titulo": "A quien no es certificado le recomienda sus opciones",
       "texto": "Si sabemos que el cliente no es buzo certificado y no ha elegido actividad, Coral le propone el minicurso para bucear, el snorkel para quedarse en la superficie o el curso Open Water para certificarse, en vez de repetir el menú entero (que ofrece buceo, solo para certificados)."
     },
-    "alcohol_detras_de_lo_medico": {
-      "area": "Enrutador",
-      "titulo": "Lo médico va antes que el atajo del alcohol",
-      "texto": "Si el mensaje habla de alcohol y además de algo médico («estoy embarazada, ¿puedo bucear o tomar vino?», «anoche tomé mucho y me duele el pecho»), Coral lo trata como un tema médico y lo pasa a una persona, en vez de contestar solo la norma del alcohol. La pregunta de alcohol sola sigue con su norma."
-    },
-    "regex_solo_si_ia_calla": {
-      "area": "Enrutador",
-      "titulo": "Las listas de palabras solo deciden si la IA calla",
-      "texto": "Para el link roto, los temas sensibles, cancelar o cambiar, pedir un contacto, hablar con una persona y DIVE TO HEAL, si Jev o el enrutador de respaldo han contestado este turno manda lo que dicen ellos; las listas de palabras solo cuentan si la IA no contesta. Vale igual en el enrutador, en cada ruta y en la reserva. Corrige «quiero hablar con mi esposa antes de reservar» (no es pedir una persona) o «¿dónde cojo la lancha?» (no es DIVE TO HEAL)."
-    },
-    "reinicio_por_jev": {
-      "area": "Enrutador",
-      "titulo": "Solo empieza de cero si Jev ve un caso nuevo",
-      "texto": "Si el cliente saluda y se presenta a mitad de conversación, antes se borraba toda la memoria («Hola, soy Ana, ya hablamos ayer, al final somos 3» perdía la reserva). Ahora la borra solo si Jev, que ve lo hablado antes, dice que es una persona o un caso nuevo; si sigue con lo de antes, se queda todo."
-    },
-    "identidad_ia_por_jev": {
-      "area": "Respuestas fijas",
-      "titulo": "Jev decide si preguntan si Coral es un bot",
-      "texto": "La respuesta fija «soy Coral, la asistente virtual» sale cuando Jev ve que el cliente pregunta si habla con un bot o con una persona. Antes bastaba una palabra como «modelo»: «¿qué modelo de regulador usan?» recibía esa respuesta."
-    },
-    "idioma_por_jev": {
-      "area": "Chat",
-      "titulo": "Jev decide si el cliente pide cambiar de idioma",
-      "texto": "La conversación cambia de idioma cuando Jev ve que el cliente lo pide («can we continue in english?», «no entiendo inglés»). Antes «¿el curso es en inglés?» pasaba la conversación al inglés."
-    },
     "pii_respeta_urls": {
       "area": "Chat",
       "titulo": "Al tapar datos personales, los enlaces quedan enteros",
@@ -1362,41 +1315,6 @@
       "area": "Reserva",
       "titulo": "El reparto del grupo, en un formato más corto para la IA",
       "texto": "Cómo se reparte el grupo entre actividades se le pide a la IA como una lista de pares (actividad y personas) en lugar de un casillero por cada actividad. Hace falta para que quepan los datos nuevos del paso 6 (duración, edades, notas): con el formato de antes, el modelo rechazaba la petición. Apagado: con él, el reparto se leía algo peor en el banco."
-    },
-    "aviso_pago_al_reservar": {
-      "area": "Preguntas",
-      "titulo": "Al explicar cómo reservar, avisa de que el pago no confirma al momento",
-      "texto": "Cuando el cliente pregunta cómo reservar, Coral puede añadir el aviso de que el pago se registra al momento y el equipo lo revisa poco después para confirmar la reserva. Antes ese aviso solo salía si se hablaba de pagos, y al explicar cómo reservar Coral decía «al pagar quedas confirmado», que no es así (decisión de Gadea)."
-    },
-    "precio_por_jev": {
-      "area": "Preguntas",
-      "titulo": "Jev decide si piden el precio de una actividad",
-      "texto": "Antes de dar un precio sin saber desde dónde sale el cliente, Coral le pregunta el origen. Para saber si el cliente pide el precio de una actividad (y no el de un hotel o un taxi), ahora manda Jev; antes bastaba con que el mensaje dijera «hotel» en cualquier parte («¿cuánto me sale el plan de 2 inmersiones? me quedo en el hotel Caribe») para cotizar sin preguntar el origen."
-    },
-    "deliberacion_por_jev": {
-      "area": "Reserva",
-      "titulo": "Jev decide si el cliente duda entre opciones",
-      "texto": "Si el cliente nombra dos actividades, Jev decide si está dudando entre ellas (y entonces Coral se las explica) o si las está reservando para distintas personas del grupo. Antes lo decidían frases sueltas y unas reglas de excepción: «somos 3 y no tenemos claro si hacer snorkel o el minicurso» se tomaba como una reserva por llevar una cifra."
-    },
-    "pregunta_y_correccion_por_jev": {
-      "area": "Reserva",
-      "titulo": "Jev decide si el mensaje pregunta algo o corrige un dato",
-      "texto": "Para saber si el cliente pregunta algo (y hay que contestarle) o corrige un dato que ya dio, manda Jev cuando contesta; la lista de palabras solo cuenta si Jev no contesta. Antes «hay un niño de 5 años» se tomaba por una pregunta y «perdón la demora, ¿qué horarios tienen?» por una corrección."
-    },
-    "extractor_sin_pista": {
-      "area": "Reserva",
-      "titulo": "Los datos del cliente los lee solo la IA",
-      "texto": "La actividad, desde dónde sale, si está certificado, cuántos son y cómo se reparten, la nacionalidad y la última inmersión los lee solo el extractor (la IA que comprueba lo que el cliente dijo de verdad). Hoy, si esa IA falla, Coral los adivina con listas de palabras (que se equivocan: «hola quiero bucear con mi amigo» pasa por elegir el buceo para certificados); con este interruptor los pregunta (decisión de Gadea); si la IA vuelve a fallar en el turno siguiente, Coral dice que tiene un problema técnico y pasa a un asesor, en vez de repetir la pregunta. A quien empieza se le sigue recomendando el minicurso, pero porque la IA lee que quiere bucear y no está certificado, no por las palabras. El hotel y la isla del catálogo se siguen reconociendo como hoy."
-    },
-    "respuesta_corta_por_ia": {
-      "area": "Reserva",
-      "titulo": "La respuesta corta a la pregunta del bot la lee la IA",
-      "texto": "Cuando el bot acaba de preguntar desde dónde sale el cliente, en qué hotel se aloja o cuántos son, la respuesta corta la lee la IA (la respuesta de Jev a esa pregunta y el extractor), también si tiene pocas letras; las listas de palabras solo cuentan si la IA no contesta. Antes «no tengo idea, el Hilton creo» guardaba el hotel «por confirmar» y perdía el Hilton, y una frase cualquiera («ok perfecto») se guardaba como nombre del hotel. «Da igual» o «tú decides» siguen siendo salir desde Cartagena, y un hotel que no se sabe sigue «por confirmar». Los botones y una cifra sola («4») se leen como siempre. «Voy solo» = un grupo de 1, según la IA."
-    },
-    "nombre_solo_por_extractor": {
-      "area": "Reserva",
-      "titulo": "«Me llamo…» tampoco gana a la IA",
-      "texto": "El nombre de quien escribe lo decide siempre el extractor, también cuando el mensaje dice «me llamo» o «mi nombre es»: antes esa frase iba por delante y ganaba, y «me llamo mucho la atención el precio» saludaba «¡Hola, Mucho!». Si la IA no contesta, la frase de siempre."
     },
     "dias_cerrados_por_rag": {
       "area": "Respuestas fijas",

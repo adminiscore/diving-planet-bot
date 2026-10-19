@@ -144,12 +144,10 @@ async def _caso(slot: str, msg: str, esperado, guardado: dict | None = None, res
             jev_extras = {**(senales if isinstance(senales, dict) else {}), **(extras or {})}
         _, hist = _estado(slot)
         datos = await extraer_turno(msg, history=hist, sabido=SABIDO[slot], lang="es")
-    # Hoy (flag apagado): el regex.
-    settings.respuesta_corta_por_ia = False
+    # Hoy (antes del flag `respuesta_corta_por_ia`, ya quitado): el regex, sin la lectura de la IA.
     st_hoy, _ = _estado(slot)
     hoy = _valor(st_hoy, slot, core_routing._apply_short_answer(st_hoy, msg))
-    # Con el flag: la IA (la lectura del extractor ya hecha, sin otra llamada).
-    settings.respuesta_corta_por_ia = True
+    # Con el flag (hoy, sin flag): la IA (la lectura del extractor ya hecha, sin otra llamada).
     core_extractor.lectura_del_extractor = AsyncMock(return_value=datos)
     st_ia, _ = _estado(slot)
     ia = await core_routing._lectura_de_la_ia(st_ia, msg, jev_extras, slot)

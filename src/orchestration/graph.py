@@ -30,7 +30,6 @@ from src.agents.deflection_agent import deflection_node
 from src.agents.escalation_agent import escalation_node
 from src.agents.info_agent import info_node
 from src.agents.jev_router import NUEVO_CASO, PIDE_PRECIO
-from src.config import settings
 from src.orchestration.router import classify_route
 from src.orchestration.state import (
     ALL_ROUTES,
@@ -94,14 +93,13 @@ async def _router_node(state: BotState) -> dict:
 
     # Pre-router: restart de escenario nuevo (limpia memoria) → se clasifica
     # sobre el estado fresco, equivalente al reset+recursión de la cascada.
-    # ex-9b paso 5 (flag `reinicio_por_jev`): el regex (saludo + presentación + memoria) solo PROPONE. Con el flag, en
-    # esos turnos (pocos) se esperan las señales ANTES de borrar y manda Jev (`nuevo_caso`, que ve el historial): "Hola,
-    # soy Ana, ya hablamos ayer, al final somos 3" ya no borra la reserva. Si Jev calla, decide el regex, como hoy.
+    # ex-9b paso 5: el regex (saludo + presentación + memoria) solo PROPONE. En esos turnos (pocos) se esperan las
+    # señales ANTES de borrar y manda Jev (`nuevo_caso`, que ve el historial): "Hola, soy Ana, ya hablamos ayer, al
+    # final somos 3" ya no borra la reserva. Si Jev calla, decide el regex.
     signals: dict | None = None
     if _is_new_scenario_restart(message, conv):
-        if settings.reinicio_por_jev:
-            signals = await _senales()
-        if signals is not None and signals.get(NUEVO_CASO) is False:
+        signals = await _senales()
+        if signals.get(NUEVO_CASO) is False:
             logger.info("[GRAPH] parece un escenario nuevo, pero Jev dice que sigue con lo de antes -> no se borra")
         else:
             logger.info("[GRAPH] restart de escenario nuevo -> limpio memoria")
@@ -118,7 +116,7 @@ async def _router_node(state: BotState) -> dict:
 
     if signals is None:
         signals = await _senales()
-    # ex-9b paso 5 (`precio_por_jev`): lo que Jev dice de ESTE turno (None si calla), para la puerta del origen antes
+    # ex-9b paso 5 (PIDE_PRECIO): lo que Jev dice de ESTE turno (None si calla), para la puerta del origen antes
     # del precio, que corre en la reserva y en info. Se pone en cada turno: nunca queda el de un turno anterior.
     conv._jev_pide_precio = signals.get(PIDE_PRECIO)
     route = classify_route(conv, message, signals)

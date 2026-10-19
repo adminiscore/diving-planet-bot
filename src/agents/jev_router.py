@@ -147,8 +147,6 @@ ACTIVITY_HYPOTHESIS = "activity_hypothesis"
 AFFIRMS_CERTIFICATION = "affirms_certification"
 AFFIRMS_GROUP = "affirms_group"
 AFFIRMS_NATIONALITY = "affirms_nationality"
-AFFIRMS_P = "affirms_p"  # u3-3: probabilidades crudas de los affirms_*
-AFFIRMS_DENY_MAX = 0.2  # u3-3: por debajo, Jev esta SEGURO de que el cliente no lo afirma
 AFFIRMS_MIN = 0.7  # mismo umbral alto que `asks_question`: ante la duda, la conducta de hoy
 _AFFIRMS_QUESTIONS = {
     AFFIRMS_LOCATION: {
@@ -356,14 +354,14 @@ _YA_RESERVADO_Q = {
 }
 
 # ex-9b paso 5 (19-oct): tres preguntas que sustituyen a regex que "entendían" al cliente (estudio
-# docs/robustness/regex/estudio-ex9-regex.md, clase C). Cada una con su flag; el regex sigue solo si Jev calla. Bancos en
-# docs/robustness/regex/estudio-ex9/banco-preguntas-nuevas.txt (2 repeticiones, config de PRE).
-# - NUEVO_CASO (`reinicio_por_jev`): el reinicio de escenario borra TODA la memoria si el mensaje saluda y se presenta
+# docs/robustness/regex/estudio-ex9-regex.md, clase C). El regex sigue solo si Jev calla. Bancos en
+# docs/robustness/regex/estudio-ex9/banco-preguntas-nuevas.txt (2 repeticiones, config de PRE). Promocionadas con la
+# ronda ex9b-2 (PIDE_PRECIO con ex9b-3); sus flags se quitaron en la limpieza ex9b.
+# - NUEVO_CASO: el reinicio de escenario borra TODA la memoria si el mensaje saluda y se presenta
 #   ("Hola, soy Ana, ya hablamos ayer, al final somos 3" lo borraba). Regex 4/10, Jev 10/10 (0,80-0,88 frente a <= 0,07).
-# - PREGUNTA_SI_ES_IA (`identidad_ia_por_jev`): "¿qué modelo de regulador usan?" recibía "soy Coral, la asistente
-#   virtual". Regex 7/13, Jev 13/13.
-# - CAMBIA_IDIOMA (`idioma_por_jev`): "¿el curso es en inglés?" pasaba la conversación al inglés e "I don't speak
-#   spanish" al español. Regex 8/13, Jev 13/13.
+# - PREGUNTA_SI_ES_IA: "¿qué modelo de regulador usan?" recibía "soy Coral, la asistente virtual". Regex 7/13, Jev 13/13.
+# - CAMBIA_IDIOMA: "¿el curso es en inglés?" pasaba la conversación al inglés e "I don't speak spanish" al español.
+#   Regex 8/13, Jev 13/13.
 NUEVO_CASO = "nuevo_caso"
 NUEVO_CASO_MIN = 0.7
 _NUEVO_CASO_Q = {
@@ -388,7 +386,7 @@ _PREGUNTA_SI_ES_IA_Q = {
         "anything that is not this chat assistant itself."
     ),
 }
-# - PIDE_PRECIO (`precio_por_jev`): la puerta "origen antes del precio" (conversational_core._origen_antes_del_precio)
+# - PIDE_PRECIO: la puerta "origen antes del precio" (conversational_core._origen_antes_del_precio)
 #   miraba si el mensaje decía "precio/cuánto" y no "hotel/noche" EN NINGUNA PARTE: "¿cuánto me sale el plan de 2
 #   inmersiones? me quedo en el hotel Caribe" se cotizaba sin saber el origen. Regex 13/16, Jev 16/16.
 PIDE_PRECIO = "pide_precio"
@@ -458,7 +456,9 @@ _ADDS_PERSON_Q = {
 # lo decide por la preposición y lee "estamos en Cartagena y queremos bucear EN las islas" como islas. La regex sigue
 # PROPONIENDO que el mensaje trae una ubicación; Jev decide CUÁL cuando está seguro (>= CUSTOMER_PLACE_MIN). Banco de
 # los tests de place_by_role: 9/10 (1 dudoso, ninguno mal); banco ciego de frases nuevas: 12/12 frente a 4/12 de la
-# regex; 0 respuestas seguras y equivocadas (scripts/sonda_lugar_cliente.py).
+# regex; 0 respuestas seguras y equivocadas (scripts/sonda_lugar_cliente.py). Desde ex-9b paso 3 el origen lo lee solo
+# el extractor y esa regla (`_lugar_por_jev`) se quitó en la limpieza ex9b; la pregunta la siguen leyendo CAL-C3c
+# (`_jev_dice_que_no_lo_dice`) y CAL-C4 (`_lugar_desconocido`).
 CUSTOMER_PLACE = "customer_place"
 CUSTOMER_PLACE_MIN = 0.6
 _CUSTOMER_PLACE_Q = {
@@ -618,14 +618,10 @@ def _questions_for_turn(pending_slot: str | None = None) -> dict:
         q[CUSTOMER_PLACE] = _CUSTOMER_PLACE_Q_SIN_BARU if settings.baru_no_es_rosario else _CUSTOMER_PLACE_Q
     if settings.notas_puerta_jev:
         q[SHARES_OPEN_FACT] = _SHARES_OPEN_FACT_Q
-    if settings.reinicio_por_jev:
-        q[NUEVO_CASO] = _NUEVO_CASO_Q
-    if settings.identidad_ia_por_jev:
-        q[PREGUNTA_SI_ES_IA] = _PREGUNTA_SI_ES_IA_Q
-    if settings.idioma_por_jev:
-        q[CAMBIA_IDIOMA] = _CAMBIA_IDIOMA_Q
-    if settings.precio_por_jev:
-        q[PIDE_PRECIO] = _PIDE_PRECIO_Q
+    q[NUEVO_CASO] = _NUEVO_CASO_Q
+    q[PREGUNTA_SI_ES_IA] = _PREGUNTA_SI_ES_IA_Q
+    q[CAMBIA_IDIOMA] = _CAMBIA_IDIOMA_Q
+    q[PIDE_PRECIO] = _PIDE_PRECIO_Q
     return q
 
 
@@ -667,7 +663,7 @@ def answers_to_signals(answers: dict, threshold: float = THRESHOLD) -> dict:
     # u3-4: estas dos se emiten también en FALSE, a propósito. "ausente" (Jev apagado, o
     # dudó en el router y el turno se fue al LLM) significa "no lo sé" -> conducta de hoy;
     # `False` significa "Jev dice que el cliente NO lo afirma" -> el dato se cae. Son
-    # distintos y el llamante (`_question_turn_fields`) necesita distinguirlos.
+    # distintos y los llamantes (`_jev_says_not_affirmed`, el relleno del turno con pregunta) necesitan distinguirlos.
     if CORRECTS in answers:
         out[CORRECTS] = (answers.get(CORRECTS) or {}).get("noul", 0.0) >= CORRECTS_MIN
     if ASKS_RECALL in answers:
@@ -772,7 +768,7 @@ _TURN_SIGNALS = (
     AFFIRMS_LOCATION, AFFIRMS_ACTIVITY, AFFIRMS_CERTIFICATION, AFFIRMS_GROUP, AFFIRMS_NATIONALITY, CORRECTS,
     ASKS_RECALL, NEEDS_STAFF, CHANGES_DATE, COMPANION_JOINS, SHARES_OPEN_FACT, YA_RESERVADO, PIDE_DATOS_AJENOS,
     NUEVO_CASO, PREGUNTA_SI_ES_IA, CAMBIA_IDIOMA, PIDE_PRECIO,
-)  # AFFIRMS_P y PENDING_ANSWER se anaden a mano en `detect_routing_signals_jev_full`
+)  # ASKS_QUESTION y PENDING_ANSWER se anaden a mano en `detect_routing_signals_jev_full`
 
 
 async def detect_routing_signals_jev_full(
@@ -812,15 +808,6 @@ async def detect_routing_signals_jev_full(
             # y lo necesita la respuesta corta tras el pase a una persona (paso 6). Para el resto del
             # codigo False y ausente se leen igual.
             extras[ASKS_QUESTION] = (answers.get(ASKS_QUESTION) or {}).get("noul", 0.0) >= ASKS_QUESTION_MIN
-        # u3-3: la probabilidad cruda de cada `affirms_*` (el boolean de arriba corta en 0,7, pensado
-        # para turnos con pregunta; en frases normales Jev da falsos "no" entre 0,3 y 0,7).
-        affirms_p = {
-            name: (answers.get(name) or {}).get("noul", 0.0)
-            for name in (AFFIRMS_LOCATION, AFFIRMS_ACTIVITY, AFFIRMS_CERTIFICATION, AFFIRMS_GROUP, AFFIRMS_NATIONALITY)
-            if name in answers
-        }
-        if affirms_p:
-            extras[AFFIRMS_P] = affirms_p
         if pending_slot and PENDING_ANSWER in answers:
             extras[PENDING_ANSWER] = pending_answer_value(pending_slot, answers[PENDING_ANSWER])
     except Exception as exc:  # noqa: BLE001 — cualquier fallo cae al router LLM

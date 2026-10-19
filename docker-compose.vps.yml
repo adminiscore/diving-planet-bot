@@ -138,29 +138,6 @@ services:
       TARJETA_SIN_SEGURIDAD: "true"
       RECOMENDAR_A_NO_CERTIFICADOS: "true"
       RESOLUTOR_SIN_CONTRADICCIONES: "true"
-      # ex-9b paso 2 (19-oct): si Jev dice que es médico, manda la seguridad aunque nombre el alcohol (banco 6/10 → 10/10).
-      ALCOHOL_DETRAS_DE_LO_MEDICO: "true"
-      # ex-9b paso 5 (19-oct): las listas de palabras del enrutador solo deciden si la IA calla (banco de classify_route con
-      # la config de PRE 14/17 → 17/17; regla única en supervisor.regex_decide: router, nodos, setup y cascada).
-      # PROMOCIONADO con la ronda ex9b-1 (HISTORY 0.31.62). Revert = "false" aquí y en config.py.
-      REGEX_SOLO_SI_IA_CALLA: "true"
-      # ex-9b paso 5: "¿trae una pregunta?" y "¿corrige?" en el núcleo los decide Jev cuando contesta. PROMOCIONADO (ex9b-1).
-      PREGUNTA_Y_CORRECCION_POR_JEV: "true"
-      # ex-9b paso 5: preguntas nuevas de Jev (caso nuevo antes de borrar la memoria 4/10 → 10/10, "¿eres un bot?" 7/13 →
-      # 13/13, cambio de idioma 8/13 → 13/13) y la deliberación por la IA (14/16 → 15/16). PROMOCIONADOS con ex9b-2.
-      REINICIO_POR_JEV: "true"
-      IDENTIDAD_IA_POR_JEV: "true"
-      IDIOMA_POR_JEV: "true"
-      DELIBERACION_POR_JEV: "true"
-      # RONDA ex9b-3 (19-oct), PROMOCIONADA (97,4 % 28/32, HISTORY 0.31.64): paso 3 (el regex deja de ser pista del extractor; si el extractor falla se
-      # pregunta y al 2.º fallo seguido pasa a un asesor), paso 4 (respuestas cortas e "me llamo X" por la IA; banco 25/31
-      # → 30/31), "pide precio" por Jev (13/16 → 16/16) y el aviso de que el pago no confirma al momento también al
-      # explicar cómo reservar. Revert = quitar estas líneas y "False" en config.py.
-      EXTRACTOR_SIN_PISTA: "true"
-      RESPUESTA_CORTA_POR_IA: "true"
-      NOMBRE_SOLO_POR_EXTRACTOR: "true"
-      PRECIO_POR_JEV: "true"
-      AVISO_PAGO_AL_RESERVAR: "true"
       # Ronda ex9b-4 (19-oct): el paso 6 NO se promociona (con sus campos, Anthropic rechazaba el esquema del extractor,
       # "compiled grammar is too large", y contestaba siempre el respaldo). Se queda el respaldo POR TIEMPO de
       # OpenRouter (5 s): si no contesta en 5 s, la misma petición sale por OpenAI.
@@ -283,11 +260,11 @@ services:
       # (mini-ronda conserva-A/B: 92,6 -> 97,0 %; HISTORY 0.31.1). Revert = "false" aqui y en config.py.
       ORIGEN_CONSERVA_RESPUESTA: "true"
       # Punto 4 (s4-26, 7-oct), supuestos sueltos de la reserva. PROMOCIONADOS 7-oct (ronda core s426-B: 93,0 -> 95,6 %; HISTORY 0.30.1):
-      # Jev manda sobre la regex de "menciona a alguien"; la red de "mencion perdida"
-      # no saca un acompañante de "buceo"; el cierre sin cambios no se repite tras una respuesta; el RAG no da por
-      # cumplida una condicion del cliente; el contexto del RAG no dice "carrito"; Jev distingue persona nueva de ya contada. Revert = quitar estas lineas y False en config.py.
+      # Jev manda sobre la regex de "menciona a alguien"; el cierre sin cambios no se repite tras una respuesta; el RAG
+      # no da por cumplida una condicion del cliente; el contexto del RAG no dice "carrito"; Jev distingue persona nueva
+      # de ya contada. Revert = quitar estas lineas y False en config.py. (La red de "mencion perdida",
+      # RED_MENCIONES_CON_PRINCIPAL, se quito en la limpieza ex9b: sin la pista del regex ya no corria.)
       JEV_ACOMPANANTE_MANDA: "true"
-      RED_MENCIONES_CON_PRINCIPAL: "true"
       CIERRE_SIN_REPETIR: "true"
       RAG_CONDICIONES_ABIERTAS: "true"
       RAG_PLAN_ELEGIDO: "true"
@@ -366,8 +343,8 @@ services:
       # CAL-C PROMOCIONADO 17-oct: C4, C5 y C3e. Ronda core calc2-A 94,7 % 24/32 vs calc2-B 96,9 % 27/32, p95 6,4 → 6,0 s;
       # 8 mejoras y 3 regresiones, repetidas 3x con y sin los flags: ninguna suya. Banco: cal-55 y cal-46 a 0/3, y la
       # pregunta del snorkel de cal-69/70 desaparece. Revert = quitar estas líneas y poner los defaults en False.
+      # (C5, RED_MENCIONES_SOLO_SIN_EXTRACTOR, se quitó en la limpieza ex9b: sin la pista del regex la red ya no corre.)
       LUGAR_DESCONOCIDO_AL_RAG: "true"
-      RED_MENCIONES_SOLO_SIN_EXTRACTOR: "true"
       HOTEL_DEL_CATALOGO_DA_ISLA: "true"
       # CAL-A PROMOCIONADO 17-oct (Gadea con Claude): la profundidad por certificación en el catálogo (banco: cal-18
       # 3/3 → 0/3) y el aviso que falta AÑADIDO AL FINAL (A6, revisor GPT-6 Luna). Ronda core cala6-B frente a calc-B:

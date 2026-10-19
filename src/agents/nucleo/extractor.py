@@ -56,13 +56,11 @@ def _has_correction_cue(state: ConversationState, message: str) -> bool:
     from src.agents import supervisor  # lazy
 
     jev = getattr(state, "_jev_corrects", None)
-    # ex-9b paso 5 (flag `pregunta_y_correccion_por_jev`): si Jev ha contestado, manda Jev; el regex solo si Jev calla.
-    # El regex tomaba "perdón, ¿cuánto cuesta?" por una corrección y aplicaba el dato sin confirmarlo.
-    if settings.pregunta_y_correccion_por_jev and jev is not None:
+    # ex-9b paso 5: si Jev ha contestado, manda Jev; el regex solo si Jev calla. El regex tomaba "perdón, ¿cuánto
+    # cuesta?" por una corrección y aplicaba el dato sin confirmarlo.
+    if jev is not None:
         return jev is True
-    if supervisor._CORRECTION_CUE_RE.search(message):
-        return True
-    return jev is True
+    return bool(supervisor._CORRECTION_CUE_RE.search(message))
 
 
 def _route_contradictions(state: ConversationState, message: str, intent, proposed: dict) -> None:
@@ -116,53 +114,6 @@ def _route_contradictions(state: ConversationState, message: str, intent, propos
         logger.info(f"[CORE] contradiccion sin cue {field}: {old!r} -> {value!r}, se confirma")
 
 
-def _lugar_por_jev(intent, state: ConversationState) -> None:
-    """s4-28 (flag `jev_lugar_cliente`): la regex PROPONE que el mensaje trae una ubicación; CUÁL es lo decide Jev
-    (`customer_place`). `place_by_role` lo decidía por la preposición: "estamos en Cartagena y queremos bucear EN las
-    islas" salía islas, y "quiero bucear en las islas del rosario" dejaba al cliente "ya en las islas".
-
-    - Un hotel de isla nombrado en el mensaje manda (Jev no conoce los hoteles; la regex sí: "alojados en el San Pedro
-      de Majagua" -> Jev decía Cartagena con 0,8).
-    - Jev de acuerdo: se queda. Jev seguro (>= CUSTOMER_PLACE_MIN) de otra cosa: su lugar, o ninguno si dice que el
-      mensaje no lo dice.
-    - Jev propone OTRO lugar pero duda: la ubicación queda sin saber y la reserva la pregunta (no suponer el
-      origen). Si solo duda de que el mensaje lo diga ("none" sin seguridad), lo de la regex.
-    No rellena lugares que la regex no propuso. Sin respuesta de Jev, lo de la regex, como hoy. Simulado con el
-    detector real en 36 mensajes (bancos de los tests de place_by_role, ciego y de mensajes largos): regex 18/36,
-    esta regla 33/36; empeora 1 ambiguo ("estoy en cartagena pero el hotel es en isla grande" -> se pregunta)."""
-    if not settings.jev_lugar_cliente or intent.location not in ("cartagena", "island"):
-        return
-    if intent.hotel and intent.location == "island":
-        return
-    from src.agents.jev_router import CUSTOMER_PLACE_MIN  # lazy
-
-    lugar = getattr(state, "_jev_lugar", None) or {}
-    choice = lugar.get("choice")
-    if choice not in ("cartagena", "islands", "none"):
-        return
-    jev = {"cartagena": "cartagena", "islands": "island"}.get(choice)
-    if jev == intent.location:
-        return
-    seguro = lugar.get("confidence", 0.0) >= CUSTOMER_PLACE_MIN
-    if jev is None and intent.location == "cartagena":
-        # La pregunta existe porque las islas son donde se bucea: nombrarlas no dice donde esta el cliente. Con
-        # Cartagena no pasa: "cursos de buceo en Cartagena" -> Jev "no lo dice" (0,77) quitaba Cartagena y el bot
-        # preguntaba el origen (repregunta, mini-ronda lugar-B). Cartagena solo la cambia Jev por las islas.
-        return
-    if not seguro and jev is None:
-        return  # Jev solo duda de que el mensaje lo diga: lo de la regex ("estaremos en islas del rosario")
-    nuevo = jev if seguro else None
-    logger.info(f"[EXTRACT][S4-28] lugar: regex={intent.location!r} -> {nuevo!r} (Jev {choice} {lugar.get('confidence', 0.0):.2f})")
-    intent.location = nuevo
-    if nuevo != "island":
-        intent.island = None
-        intent.detected_fields = [f for f in intent.detected_fields if f != "island"]
-    if nuevo is None:
-        intent.detected_fields = [f for f in intent.detected_fields if f != "location"]
-    elif "location" not in intent.detected_fields:
-        intent.detected_fields.append("location")
-
-
 _CAMPOS_LUGAR = ("location", "island", "hotel")
 _CAMPOS_ACTIVIDAD = ("activity", "service_id", "is_colombian")
 _CAMPOS_CERTIFICACION = ("is_certified", "last_dive_over_2_years")
@@ -176,19 +127,11 @@ def campos_del_extractor() -> tuple[str, ...]:
     return _CAMPOS_LUGAR + _CAMPOS_ACTIVIDAD + _CAMPOS_CERTIFICACION + _CAMPOS_GRUPO
 
 
-# La isla y el hotel que lee el regex salen de la lista cerrada del catálogo (clase d del estudio ex-9): no son una
-# lectura de la frase, y su relevo es de los pasos 4 y 6 de ex-9b. Por eso siguen como "pista" con `extractor_sin_pista`.
+# ex-9b paso 3: de los campos que decide el extractor, el regex solo deja como "pista" (`_pista_del_regex`) la isla y el
+# hotel, que salen de la lista cerrada del catálogo (clase d del estudio ex-9): no son una lectura de la frase, y su
+# relevo es de los pasos 4 y 6 de ex-9b. La actividad, el origen, la certificación, el grupo, la nacionalidad y la
+# última inmersión los decide solo el extractor; si falla, la reserva los pregunta.
 _CAMPOS_LISTA_CERRADA = ("island", "hotel")
-
-
-def campos_de_la_pista() -> tuple[str, ...]:
-    """De los campos que decide el extractor, en cuáles se guarda lo que leyó el regex como pista (`_pista_del_regex`):
-    hoy, en todos; con `extractor_sin_pista` (ex-9b paso 3), solo en la isla y el hotel del catálogo. La actividad, el
-    origen, la certificación, el grupo, la nacionalidad y la última inmersión los decide solo el extractor; si falla, la
-    reserva los pregunta."""
-    if settings.extractor_sin_pista:
-        return _CAMPOS_LISTA_CERRADA
-    return campos_del_extractor()
 
 
 def _conservar_hotel(intent, pista: dict) -> None:
@@ -220,56 +163,40 @@ async def _aplicar_extractor(intent, state: ConversationState, message: str, pis
     lo provisional del regex. Va ANTES de las reglas que trabajan sobre el intent (reparto, cert-o-curso, recomendar el
     minicurso), para que vean el valor final. Si la llamada falla, lo de hoy con su puerta, campo a campo."""
     datos = await datos_del_extractor(state, message)
-    # CAL-C5: de este mensaje, ¿leyó el extractor? (la red de menciones por palabras solo actúa si no; ver abajo)
-    state._extractor_leyo = message if datos is not None else None
-    # ex-9b paso 4 (`respuesta_corta_por_ia`): lo mismo, en el intent del turno ("voy solo" lo decide el extractor si leyó).
+    # ex-9b paso 4: ¿leyó el extractor el mensaje? ("voy solo" lo decide el extractor si leyó).
     intent._leido_por_extractor = datos is not None
-    if settings.extractor_sin_pista:
-        state.extractor_fallos_seguidos = 0 if datos is not None else (state.extractor_fallos_seguidos or 0) + 1
+    state.extractor_fallos_seguidos = 0 if datos is not None else (state.extractor_fallos_seguidos or 0) + 1
     await _otro_idioma_en_ingles(state, datos, message)
     _quitar_provisional(intent, pista)
     _nombre_del_extractor(state, datos, message)
     if datos is None:
         _el_extractor_no_leyo(state)
-        if settings.extractor_sin_pista:
-            # ex-9b paso 3 (decisión de Gadea): sin extractor no se vuelve al regex; lo que falte se pregunta. La pista
-            # solo trae la isla y el hotel del catálogo (`campos_de_la_pista`).
-            logger.info("[EXTRACT][EX9B-3] el extractor falló: sin pista del regex, la reserva pregunta lo que falte")
-        for dominio, campo_puerta in ((_CAMPOS_LUGAR, "location"), (_CAMPOS_ACTIVIDAD, None),
-                                      (_CAMPOS_CERTIFICACION, "is_certified"), (_CAMPOS_GRUPO, None)):
-            for campo in dominio:
-                if campo not in pista or campo not in campos_del_extractor():
-                    continue
-                if not _pasa_la_puerta_de_hoy(state, campo_puerta or (campo if campo in _CAMPOS_GRUPO
-                                                                     else "is_colombian" if campo == "is_colombian"
-                                                                     else "activity")):
-                    logger.info(f"[EXTRACT][EX] el extractor falló y la puerta no deja {campo}={pista[campo]!r}")
-                    continue
-                guardado = _known_field_values(state).get(campo)
-                if campo in _CORRECTABLE_FIELDS and guardado not in (None, [], {}) and guardado != pista[campo]:
-                    # Como hoy: lo que contradice lo guardado se confirma (o se acepta con una señal de corrección).
-                    _route_contradictions(state, message, intent, {campo: pista[campo]})
-                    continue
-                setattr(intent, campo, pista[campo])
-                if campo != "service_id" and campo not in intent.detected_fields:
-                    intent.detected_fields.append(campo)
-        if intent.location:
-            _lugar_por_jev(intent, state)
+        # ex-9b paso 3 (decisión de Gadea): sin extractor no se vuelve al regex; lo que falte se pregunta. La pista solo
+        # trae la isla y el hotel del catálogo (`_CAMPOS_LISTA_CERRADA`), con la puerta de siempre del origen.
+        logger.info("[EXTRACT][EX9B-3] el extractor falló: sin pista del regex, la reserva pregunta lo que falte")
+        for campo in _CAMPOS_LISTA_CERRADA:
+            if campo not in pista:
+                continue
+            if not _pasa_la_puerta_de_hoy(state, "location"):
+                logger.info(f"[EXTRACT][EX] el extractor falló y la puerta no deja {campo}={pista[campo]!r}")
+                continue
+            setattr(intent, campo, pista[campo])
+            if campo not in intent.detected_fields:
+                intent.detected_fields.append(campo)
         return
     _poner_ubicacion(intent, state, message, datos, pista)
     _poner_hotel(intent, state, datos)
     _poner_refresher(state, datos)
     # ex-7: el grupo antes que la actividad: la regla de ex-8 del grupo repartido mira el reparto del turno.
-    _poner_grupo(intent, state, message, datos, pista)
-    if settings.respuesta_corta_por_ia:
-        # ex-9b paso 4: "voy solo" / "just me" es el grupo de 1 que lee el extractor con su cita ("voy solo" = 1); el
-        # regex del detector (`solo_confirmed`: "para mí", "soy buzo certificado"…) solo cuenta si el extractor falla.
-        intent.solo_confirmed = intent.group_size == 1 and "group_size" in intent.detected_fields
+    _poner_grupo(intent, state, message, datos)
+    # ex-9b paso 4: "voy solo" / "just me" es el grupo de 1 que lee el extractor con su cita ("voy solo" = 1); el regex
+    # del detector (`solo_confirmed`: "para mí", "soy buzo certificado"…) solo cuenta si el extractor falla.
+    intent.solo_confirmed = intent.group_size == 1 and "group_size" in intent.detected_fields
     if datos.get("quiere_bucear") is True:
         state.quiere_bucear = True
-    _poner_actividad(intent, state, datos, pista)
+    _poner_actividad(intent, state, datos)
     _poner_nacionalidad(intent, state, message, datos)
-    _poner_certificacion(intent, state, message, datos, pista)
+    _poner_certificacion(intent, state, message, datos)
     _poner_duracion(intent, state, datos, message)
     _poner_edades(intent, datos)
     _poner_otras_personas(state, datos)
@@ -415,9 +342,9 @@ def _reparto_valido(reparto: dict | None, message: str, state: ConversationState
     return valido if len(valido) > 1 else None
 
 
-def _poner_grupo(intent, state: ConversationState, message: str, datos: dict, pista: dict) -> None:
-    """ex-7: cuántos van y cómo se reparten, según el extractor (cita del cliente). Lo que leía el regex queda como
-    pista ("soy buza advanced" no dice que vaya sola). Un reparto que AMPLÍA el que ya se sabía (se suman personas,
+def _poner_grupo(intent, state: ConversationState, message: str, datos: dict) -> None:
+    """ex-7: cuántos van y cómo se reparten, según el extractor (cita del cliente); el regex no cuenta ("soy buza
+    advanced" no dice que vaya sola). Un reparto que AMPLÍA el que ya se sabía (se suman personas,
     nadie cambia de actividad: "3 of us will dive and 3 will snorkel" sobre {buceo: 3}) es un añadido: se guarda con su
     total sin preguntar. Cualquier otro cambio del total o del reparto se confirma, como hoy (`_route_contradictions`),
     salvo con una señal clara de corrección ("perdón, en realidad son 3 y 3"): el dato trae su cita comprobada en el
@@ -458,11 +385,7 @@ def _poner_grupo(intent, state: ConversationState, message: str, datos: dict, pi
             if "group_allocation" not in intent.detected_fields:
                 intent.detected_fields.append("group_allocation")
         total = total if isinstance(total, int) and total >= suma else suma
-    elif pista.get("group_allocation"):
-        logger.info(f"[EXTRACT][EX7] el regex leía group_allocation={pista['group_allocation']!r}; el cliente no lo afirma")
     if total is None:
-        if pista.get("group_size") is not None:
-            logger.info(f"[EXTRACT][EX7] el regex leía group_size={pista['group_size']!r}; el cliente no lo afirma")
         return
     if guardado.get("group_size") is not None and guardado["group_size"] != total and not corrige:
         logger.info(f"[EXTRACT][EX7] el cliente cambia el total {guardado['group_size']!r} -> {total!r}: se confirma")
@@ -473,18 +396,16 @@ def _poner_grupo(intent, state: ConversationState, message: str, datos: dict, pi
         intent.detected_fields.append("group_size")
     if corrige and guardado.get("group_size") not in (None, total) and "group_size" not in intent.overwrite:
         intent.overwrite.append("group_size")
-    logger.info(f"[EXTRACT][EX7] group_size={total!r} (regex: {pista.get('group_size')!r})")
+    logger.info(f"[EXTRACT][EX7] group_size={total!r}")
 
 
-def _poner_certificacion(intent, state: ConversationState, message: str, datos: dict, pista: dict) -> None:
+def _poner_certificacion(intent, state: ConversationState, message: str, datos: dict) -> None:
     """ex-6: si ya es buzo certificado y si su última inmersión fue hace más de 2 años, según el extractor (cita del
-    cliente). Lo que leía el regex queda como pista ("take the Open Water Diver course" no es estar certificado). Un
-    valor distinto del guardado se confirma, como hoy."""
+    cliente); el regex no cuenta ("take the Open Water Diver course" no es estar certificado). Un valor distinto del
+    guardado se confirma, como hoy."""
     for campo in _CAMPOS_CERTIFICACION:
         valor = datos.get(campo)
         if valor is None:
-            if pista.get(campo) is not None:
-                logger.info(f"[EXTRACT][EX6] el regex leía {campo}={pista[campo]!r}; el cliente no lo afirma")
             continue
         intent._certificacion_del_extractor = True
         guardado = _known_field_values(state).get(campo)
@@ -495,7 +416,7 @@ def _poner_certificacion(intent, state: ConversationState, message: str, datos: 
         setattr(intent, campo, valor)
         if campo not in intent.detected_fields:
             intent.detected_fields.append(campo)
-        logger.info(f"[EXTRACT][EX6] {campo}={valor!r} (regex: {pista.get(campo)!r})")
+        logger.info(f"[EXTRACT][EX6] {campo}={valor!r}")
 
 
 def _poner_ubicacion(intent, state: ConversationState, message: str, datos: dict, pista: dict) -> None:
@@ -504,8 +425,6 @@ def _poner_ubicacion(intent, state: ConversationState, message: str, datos: dict
     lugar = datos.get("location")
     guardado = state.location or state.detected_location
     if not lugar:
-        if pista.get("location"):
-            logger.info(f"[EXTRACT][EX5] el regex leía location={pista['location']!r}; el cliente no lo afirma")
         if guardado == "island":
             # Ya se sabe que está en las islas y no lo repite: el hotel o la isla que nombra (lista cerrada) sirven para
             # la recogida (ronda ex5-B2: "una noche en Coral Sand y la otra en Majagua" se perdía y se repreguntaba).
@@ -532,7 +451,7 @@ def _poner_ubicacion(intent, state: ConversationState, message: str, datos: dict
         intent.detected_fields.append("location")
     if lugar == "island":
         _conservar_hotel(intent, pista)
-    logger.info(f"[EXTRACT][EX5] location={lugar!r} (regex: {pista.get('location')!r}, guardado: {guardado!r})")
+    logger.info(f"[EXTRACT][EX5] location={lugar!r} (guardado: {guardado!r})")
 
 
 def _hotel_del_catalogo(nombre: str) -> tuple[str, str | None] | None:
@@ -591,13 +510,11 @@ def _principal_del_grupo_repartido(state: ConversationState, reparto: dict) -> s
     return actividad_principal_del_reparto(reparto)
 
 
-def _poner_actividad(intent, state: ConversationState, datos: dict, pista: dict) -> None:
+def _poner_actividad(intent, state: ConversationState, datos: dict) -> None:
     """ex-8: la actividad es la que el cliente ELIGE (extractor). La última elegida manda, como hoy. El servicio sale
-    del registro. En un grupo repartido sin actividad elegida, la principal sale del reparto (ex-9b paso 3). Si no eligió
-    ninguna pero el regex DEDUJO el minicurso ("es mi primera vez"), se pasa solo para que la regla de u3-5
-    (`_recommend_inferred_minicourse`) lo convierta en recomendación; si no se convierte, no se guarda (decisión de
-    Gadea, 27-sep: se recomienda, lo confirma el cliente). Con `extractor_sin_pista` no hay minicurso deducido del
-    regex: la recomendación sale de lo que dice el extractor (CAL-C1, `actividad_por_lo_sabido`)."""
+    del registro. En un grupo repartido sin actividad elegida, la principal sale del reparto (ex-9b paso 3). No hay
+    minicurso deducido del regex ("es mi primera vez"): la recomendación sale de lo que dice el extractor (CAL-C1,
+    `actividad_por_lo_sabido`)."""
     actividad = datos.get("activity")
     if actividad and dom.by_id(actividad) is not None:
         intent.activity = actividad
@@ -605,7 +522,7 @@ def _poner_actividad(intent, state: ConversationState, datos: dict, pista: dict)
         intent._actividad_elegida = True
         if "activity" not in intent.detected_fields:
             intent.detected_fields.append("activity")
-        logger.info(f"[EXTRACT][EX8] activity={actividad!r} (regex: {pista.get('activity')!r})")
+        logger.info(f"[EXTRACT][EX8] activity={actividad!r}")
         return
     # Grupo repartido: el extractor no pone una actividad principal (ronda ex8-B: se repreguntaba). Sale del reparto.
     principal = _principal_del_grupo_repartido(state, intent.group_allocation or state.detected_group_allocation or {})
@@ -614,13 +531,7 @@ def _poner_actividad(intent, state: ConversationState, datos: dict, pista: dict)
         intent._actividad_elegida = True
         if "activity" not in intent.detected_fields:
             intent.detected_fields.append("activity")
-        logger.info(f"[EXTRACT][EX9B-3] grupo repartido: actividad principal {principal!r} (regex: {pista.get('activity')!r})")
-        return
-    if pista.get("activity"):
-        logger.info(f"[EXTRACT][EX8] el regex leía activity={pista['activity']!r}; el cliente no la elige")
-    if pista.get("activity") == "minicourse":
-        intent.activity = "minicourse"
-        intent._minicurso_deducido = True
+        logger.info(f"[EXTRACT][EX9B-3] grupo repartido: actividad principal {principal!r}")
 
 
 def _poner_nacionalidad(intent, state: ConversationState, message: str, datos: dict) -> None:

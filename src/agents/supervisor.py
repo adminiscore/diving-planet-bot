@@ -53,13 +53,13 @@ _ADAPTIVE_DIVING_PATTERN = re.compile(
 
 
 def regex_decide(signals: dict | None) -> bool:
-    """ex-9b paso 5 (flag `regex_solo_si_ia_calla`, estudio docs/robustness/regex/estudio-ex9-regex.md): ¿puede decidir
-    este turno una lista de palabras o un regex que tiene su señal de IA (link roto, tema sensible, cancelar/cambiar,
-    contacto, "hablar con", DIVE TO HEAL)? Siempre con el flag apagado; con él, solo si la IA calla (Jev y el router
-    LLM de respaldo no han dejado señales: fallo de los dos o clic de botón). Es la única regla y la usan todos los
-    lectores: el router, los nodos, `setup` y la cascada. Si solo la mirara el router, el nodo de reserva volvía a ver
-    "hablar con" en "quiero hablar con mi esposa antes de reservar" y pasaba igual a una persona."""
-    return not (settings.regex_solo_si_ia_calla and bool(signals))
+    """ex-9b paso 5 (estudio docs/robustness/regex/estudio-ex9-regex.md): ¿puede decidir este turno una lista de
+    palabras o un regex que tiene su señal de IA (link roto, tema sensible, cancelar/cambiar, contacto, "hablar con",
+    DIVE TO HEAL)? Solo si la IA calla (Jev y el router LLM de respaldo no han dejado señales: fallo de los dos o clic
+    de botón): es el respaldo a propósito. Es la única regla y la usan todos los lectores: el router, los nodos,
+    `setup` y la cascada. Si solo la mirara el router, el nodo de reserva volvía a ver "hablar con" en "quiero hablar
+    con mi esposa antes de reservar" y pasaba igual a una persona."""
+    return not signals
 
 
 # Afirmacion "a secas" ("si", "dale", "ok") — usada para cumplir una oferta que
@@ -219,7 +219,7 @@ async def route_message(state: ConversationState, message: str) -> str:
             if codigo is not None:
                 response = _respuesta_fallo_tecnico(state, codigo)
                 turn.update(reply=response, escalated=True, fallo_openai=codigo)
-        if (settings.extractor_sin_pista and (state.extractor_fallos_seguidos or 0) >= EXTRACTOR_FALLOS_PARA_PASE
+        if ((state.extractor_fallos_seguidos or 0) >= EXTRACTOR_FALLOS_PARA_PASE
                 and "FALLO TÉCNICO" not in (state.pending_escalation_reason or "")):
             response = _respuesta_fallo_tecnico(
                 state, None, motivo=f"el extractor no lee los mensajes ({state.extractor_fallos_seguidos} turnos seguidos)")
@@ -238,7 +238,7 @@ _FALLO_TECNICO_EN = ("Sorry, I'm having a technical problem and can't answer you
                      "advisor from the team know, and they'll write to you here as soon as they can. 🙏")
 
 
-# ex-9b paso 3 (flag `extractor_sin_pista`, decisión de Gadea: sin extractor se pregunta, no se vuelve al regex). El
+# ex-9b paso 3 (decisión de Gadea: sin extractor se pregunta, no se vuelve al regex). El
 # replay con el extractor caído en todos los turnos: el bot no inventa nada, pero repite "¿qué actividad?" hasta 10
 # veces. El primer fallo se resuelve preguntando; al segundo seguido se dice la verdad y se pasa a una persona, como
 # con OpenAI caído.

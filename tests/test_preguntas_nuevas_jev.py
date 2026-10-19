@@ -1,10 +1,13 @@
-"""ex-9b paso 5 (19-oct): tres preguntas nuevas de Jev en lugar de regex que "entendían" al cliente, cada una con su
-flag. Si Jev contesta, manda Jev (también cuando dice que no); el regex solo decide si Jev calla.
+"""ex-9b paso 5 (19-oct): preguntas nuevas de Jev en lugar de regex que "entendían" al cliente. Si Jev contesta, manda
+Jev (también cuando dice que no); el regex solo decide si Jev calla. Sus flags (`reinicio_por_jev`,
+`identidad_ia_por_jev`, `idioma_por_jev`, `deliberacion_por_jev`, `precio_por_jev`) se promocionaron y se quitaron en
+la limpieza ex9b: aquí se prueban los dos lados, Jev contesta y Jev calla.
 
-- `reinicio_por_jev` (NUEVO_CASO): el reinicio de escenario borra toda la memoria. El regex (saludo + presentación +
-  memoria) solo lo propone, y con el flag el grafo espera a Jev antes de borrar.
-- `identidad_ia_por_jev` (PREGUNTA_SI_ES_IA): "¿eres un bot?".
-- `idioma_por_jev` (CAMBIA_IDIOMA): el cambio de idioma a mitad de conversación."""
+- NUEVO_CASO: el reinicio de escenario borra toda la memoria. El regex (saludo + presentación + memoria) solo lo
+  propone, y el grafo espera a Jev antes de borrar.
+- PREGUNTA_SI_ES_IA: "¿eres un bot?".
+- CAMBIA_IDIOMA: el cambio de idioma a mitad de conversación.
+- La deliberación (`comparing_options`) y PIDE_PRECIO (la puerta "origen antes del precio")."""
 
 import pytest
 
@@ -22,13 +25,8 @@ def _estado(lang: str = "es") -> ConversationState:
 
 
 # ── Jev: preguntas, señales y dudas ──────────────────────────────────────────────────────────────────────────────────
-@pytest.mark.parametrize("flag, nombre", [
-    ("reinicio_por_jev", j.NUEVO_CASO), ("identidad_ia_por_jev", j.PREGUNTA_SI_ES_IA), ("idioma_por_jev", j.CAMBIA_IDIOMA),
-])
-def test_cada_pregunta_solo_se_hace_con_su_flag(monkeypatch, flag, nombre):
-    monkeypatch.setattr(settings, flag, False)
-    assert nombre not in j._questions_for_turn()
-    monkeypatch.setattr(settings, flag, True)
+@pytest.mark.parametrize("nombre", [j.NUEVO_CASO, j.PREGUNTA_SI_ES_IA, j.CAMBIA_IDIOMA, j.PIDE_PRECIO])
+def test_las_preguntas_nuevas_se_hacen_en_cada_turno(nombre):
     assert nombre in j._questions_for_turn()
 
 
@@ -58,34 +56,28 @@ def test_la_duda_en_estas_preguntas_no_manda_el_turno_al_router_llm():
 REGULADOR = "qué modelo de regulador usan?"
 
 
-@pytest.mark.parametrize("encendido, senales, es_ia", [
-    (False, {j.PREGUNTA_SI_ES_IA: False}, True),  # hoy: el regex ve "qué modelo"
-    (True, {j.PREGUNTA_SI_ES_IA: False}, False),  # con el flag manda Jev
-    (True, {}, True),                             # Jev calla: el regex de siempre
+@pytest.mark.parametrize("senales, es_ia", [
+    ({j.PREGUNTA_SI_ES_IA: False}, False),  # manda Jev (el regex veía "qué modelo")
+    ({}, True),                             # Jev calla: el regex de siempre
 ])
-def test_pregunta_si_es_ia(monkeypatch, encendido, senales, es_ia):
-    monkeypatch.setattr(settings, "identidad_ia_por_jev", encendido)
+def test_pregunta_si_es_ia(senales, es_ia):
     assert pregunta_si_es_ia(REGULADOR, senales) is es_ia
 
 
-def test_jev_ve_la_pregunta_que_el_regex_no_ve(monkeypatch):
-    monkeypatch.setattr(settings, "identidad_ia_por_jev", True)
+def test_jev_ve_la_pregunta_que_el_regex_no_ve():
     assert pregunta_si_es_ia("¿me atiende un robot?", {j.PREGUNTA_SI_ES_IA: True}) is True
 
 
 # ── Idioma ───────────────────────────────────────────────────────────────────────────────────────────────────────────
-@pytest.mark.parametrize("encendido, senales, pedido", [
-    (False, {j.CAMBIA_IDIOMA: "none"}, "en"),  # hoy: "en inglés" cambia la conversación
-    (True, {j.CAMBIA_IDIOMA: "none"}, None),   # con el flag manda Jev
-    (True, {}, "en"),                          # Jev calla: el regex de siempre
+@pytest.mark.parametrize("senales, pedido", [
+    ({j.CAMBIA_IDIOMA: "none"}, None),  # manda Jev (el regex pasaba la conversación al inglés)
+    ({}, "en"),                         # Jev calla: el regex de siempre
 ])
-def test_el_curso_en_ingles_no_cambia_el_idioma(monkeypatch, encendido, senales, pedido):
-    monkeypatch.setattr(settings, "idioma_por_jev", encendido)
+def test_el_curso_en_ingles_no_cambia_el_idioma(senales, pedido):
     assert _idioma_pedido(_estado("es"), "¿el curso es en inglés?", senales) == pedido
 
 
-def test_no_cambia_si_ya_es_ese_idioma(monkeypatch):
-    monkeypatch.setattr(settings, "idioma_por_jev", True)
+def test_no_cambia_si_ya_es_ese_idioma():
     assert _idioma_pedido(_estado("en"), "can we continue in english please", {j.CAMBIA_IDIOMA: "english"}) is None
     assert _idioma_pedido(_estado("en"), "I don't speak spanish", {j.CAMBIA_IDIOMA: "english"}) is None
     assert _idioma_pedido(_estado("es"), "I don't speak spanish", {j.CAMBIA_IDIOMA: "english"}) == "en"
@@ -124,83 +116,67 @@ def router_sin_red(monkeypatch):
     return poner
 
 
-@pytest.mark.parametrize("encendido, senales, borra", [
-    (False, {j.NUEVO_CASO: False, "asks_question": False}, True),  # hoy: el regex borra la memoria
-    (True, {j.NUEVO_CASO: False, "asks_question": False}, False),  # con el flag manda Jev
-    (True, {j.NUEVO_CASO: True, "asks_question": False}, True),
-    (True, {}, True),                                              # Jev calla: el regex de siempre
+@pytest.mark.parametrize("senales, borra", [
+    ({j.NUEVO_CASO: False, "asks_question": False}, False),  # manda Jev (el regex borraba la memoria)
+    ({j.NUEVO_CASO: True, "asks_question": False}, True),
+    ({}, True),                                              # Jev calla: el regex de siempre
 ])
-async def test_reinicio_de_escenario(monkeypatch, router_sin_red, encendido, senales, borra):
-    monkeypatch.setattr(settings, "reinicio_por_jev", encendido)
+async def test_reinicio_de_escenario(router_sin_red, senales, borra):
     llamadas = router_sin_red(senales)
     st = _con_memoria()
     await graph._router_node({"conv_state": st, "message": VUELVE})
     assert (st.detected_group_size is None) is borra
     assert len(llamadas) == 1  # las señales se piden una sola vez
-    if encendido:
-        assert llamadas[0] == 4  # con el flag, Jev ve el historial de antes de borrar
+    assert llamadas[0] == 4  # Jev ve el historial de antes de borrar
 
 
-async def test_sin_propuesta_del_regex_no_cambia_nada(monkeypatch, router_sin_red):
-    monkeypatch.setattr(settings, "reinicio_por_jev", True)
+async def test_sin_propuesta_del_regex_no_cambia_nada(router_sin_red):
     llamadas = router_sin_red({j.NUEVO_CASO: True, "asks_question": False})
     st = _con_memoria()
     await graph._router_node({"conv_state": st, "message": "¿a qué hora sale la lancha?"})
     assert st.detected_group_size == 2 and len(llamadas) == 1
 
 
-# ── Deliberación (flag `deliberacion_por_jev`) ───────────────────────────────────────────────────────────────────────
+# ── Deliberación ─────────────────────────────────────────────────────────────────────────────────────────────────────
 DUDA_CON_CIFRA = "somos 3 y no tenemos claro si hacer snorkel o el minicurso"
 COMPARA = {"comparing_options": {"comparing": True, "options": []}, "asks_question": False}
 
 
-@pytest.mark.parametrize("encendido, senales, mensaje, delibera", [
-    (False, COMPARA, DUDA_CON_CIFRA, False),                        # hoy: el veto de la cifra gana a la IA
-    (True, COMPARA, DUDA_CON_CIFRA, True),                          # con el flag manda la IA
-    (False, {"asks_question": False}, "no sé si buceo o snorkel", True),  # hoy: la frase de duda basta
-    (True, {"asks_question": False}, "no sé si buceo o snorkel", False),  # la IA contesta y no compara
-    (True, {}, "no sé si buceo o snorkel", True),                   # la IA calla: la frase de duda, como hoy
-    (True, COMPARA, "quiero el minicurso", False),                  # una sola oferta nunca es deliberación
+@pytest.mark.parametrize("senales, mensaje, delibera", [
+    (COMPARA, DUDA_CON_CIFRA, True),                          # manda la IA (antes el veto de la cifra le ganaba)
+    ({"asks_question": False}, "no sé si buceo o snorkel", False),  # la IA contesta y no compara
+    ({}, "no sé si buceo o snorkel", True),                   # la IA calla: la frase de duda
+    (COMPARA, "quiero el minicurso", False),                  # una sola oferta nunca es deliberación
 ])
-def test_deliberacion(monkeypatch, encendido, senales, mensaje, delibera):
+def test_deliberacion(senales, mensaje, delibera):
     from src.agents.nucleo.routing import _is_deliberation_between_options
 
-    monkeypatch.setattr(settings, "deliberacion_por_jev", encendido)
     assert _is_deliberation_between_options(mensaje, senales) is delibera
 
 
-# ── Pide precio (flag `precio_por_jev`): la puerta "origen antes del precio" ─────────────────────────────────────────
+# ── Pide precio: la puerta "origen antes del precio" ─────────────────────────────────────────────────────────────────
 CON_HOTEL = "cuánto me sale el plan de 2 inmersiones? me quedo en el hotel Caribe"
 COTIZA = "El plan de 2 inmersiones cuesta 150 USD por persona."
 
 
-def _sin_origen(monkeypatch, encendido: bool, jev):
+def _sin_origen(monkeypatch, jev):
     from src.agents import conversational_core as core
 
-    monkeypatch.setattr(settings, "precio_por_jev", encendido)
     monkeypatch.setattr(settings, "rag_origen_pregunta", True)
     st = _estado()
     st._jev_pide_precio = jev
     return core, st
 
 
-@pytest.mark.parametrize("encendido, jev, pregunta_el_origen", [
-    (False, True, False),  # hoy: "hotel" en el mensaje salta la puerta y se cotiza sin origen
-    (True, True, True),    # con el flag manda Jev: pide el precio de una actividad
-    (True, None, False),   # Jev calla: las listas de siempre
-    (True, False, False),  # Jev dice que no pide precio
+@pytest.mark.parametrize("jev, pregunta_el_origen", [
+    (True, True),    # manda Jev: pide el precio de una actividad (antes "hotel" saltaba la puerta)
+    (None, False),   # Jev calla: las listas de siempre ("hotel" en el mensaje salta la puerta)
+    (False, False),  # Jev dice que no pide precio
 ])
-def test_pide_precio_con_un_hotel_en_el_mensaje(monkeypatch, encendido, jev, pregunta_el_origen):
-    core, st = _sin_origen(monkeypatch, encendido, jev)
+def test_pide_precio_con_un_hotel_en_el_mensaje(monkeypatch, jev, pregunta_el_origen):
+    core, st = _sin_origen(monkeypatch, jev)
     respuesta = core._origen_antes_del_precio(st, CON_HOTEL, COTIZA)
     assert (respuesta is not None and "desde dónde sales" in respuesta) is pregunta_el_origen
-
-
-def test_pide_precio_solo_se_pregunta_con_su_flag(monkeypatch):
-    monkeypatch.setattr(settings, "precio_por_jev", False)
-    assert j.PIDE_PRECIO not in j._questions_for_turn()
-    monkeypatch.setattr(settings, "precio_por_jev", True)
-    assert j.PIDE_PRECIO in j._questions_for_turn()
 
 
 async def test_el_grafo_guarda_lo_de_jev_en_cada_turno(monkeypatch, router_sin_red):

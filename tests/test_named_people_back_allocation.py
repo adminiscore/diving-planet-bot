@@ -82,7 +82,7 @@ async def _understand_with_llm(message, llm_patch, combined=None, **state_fields
     return state, calls
 
 
-# ex-9b paso 3 (`extractor_sin_pista`): desde ex-9 el grupo y su reparto los lee el extractor del turno (`fill_gaps` ya no
+# ex-9b paso 3: desde ex-9 el grupo y su reparto los lee el extractor del turno (`fill_gaps` ya no
 # los escribe); en estos tests (sin red) el extractor fallaba e iban por la pista del regex. Aquí se simula el extractor
 # (fixture `extractor_dice` de conftest) con el reparto que devolvía el LLM.
 UNO_CERTIFICADO_Y_UNO_SIN_DECIDIR = {"group_size": 2, "group_allocation": {"certified_diving": 1, "undecided": 1}}

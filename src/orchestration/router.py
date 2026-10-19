@@ -48,7 +48,6 @@ detectores migrarán a un módulo propio del router en Fase 3.
 
 from __future__ import annotations
 
-from src.config import settings
 from src.flows.state import ConversationState, Step
 from src.orchestration.state import (
     ROUTE_BOOKING,
@@ -69,7 +68,7 @@ def classify_route(conv_state: ConversationState, message: str, signals: dict) -
     msg_lower = message.strip().lower()
     history = conv_state.history
     lang = conv_state.language
-    # ex-9b paso 5 (19-oct, flag `regex_solo_si_ia_calla`, regla única en `supervisor.regex_decide`): cuando
+    # ex-9b paso 5 (19-oct, regla única en `supervisor.regex_decide`): cuando
     # la IA ha contestado este turno (Jev o el router LLM de respaldo dejan `signals`), las listas de palabras y regex
     # que tienen su señal de IA (link roto, tema sensible, cancelar/cambiar, contacto, "hablar con", DIVE TO HEAL) ya no
     # deciden por su cuenta: solo si la IA calla (signals vacío). Falsos positivos que corrige: "¿está mal si hago el
@@ -87,12 +86,11 @@ def classify_route(conv_state: ConversationState, message: str, signals: dict) -
     # misma prioridad que la cascada (ANTES de cualquier gate de seguridad,
     # justo después de PII). Sin esto el router clasifica estos mensajes
     # como ROUTE_SAFETY vía `detect_sensitive_escalation` más abajo.
-    # ex-9b paso 2 (19-oct, flag `alcohol_detras_de_lo_medico`): si Jev dice que el mensaje es MÉDICO, manda la
-    # seguridad aunque nombre el alcohol ("estoy embarazada, ¿puedo bucear o tomar vino?", "anoche tomé mucho alcohol y
-    # hoy me duele el pecho"): antes contestaba el texto fijo del alcohol sin pasar a una persona. La pregunta de alcohol
-    # sola Jev no la marca médica (sigue el atajo de la política).
-    medico_por_jev = (settings.alcohol_detras_de_lo_medico
-                      and signals.get("sensitive_topic") == "medical_questions")
+    # ex-9b paso 2 (19-oct): si Jev dice que el mensaje es MÉDICO, manda la seguridad aunque nombre el alcohol ("estoy
+    # embarazada, ¿puedo bucear o tomar vino?", "anoche tomé mucho alcohol y hoy me duele el pecho"): antes contestaba
+    # el texto fijo del alcohol sin pasar a una persona. La pregunta de alcohol sola Jev no la marca médica (sigue el
+    # atajo de la política).
+    medico_por_jev = signals.get("sensitive_topic") == "medical_questions"
     if sup._ALCOHOL_BEFORE_DIVING_RE.search(msg_lower) and not medico_por_jev:
         return ROUTE_INFO
     if sup._ALLERGY_WORD_RE.search(msg_lower) and sup._FOOD_ALLERGEN_RE.search(msg_lower):

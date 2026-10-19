@@ -37,7 +37,7 @@ async def _run(case, **llm):
         return (await ev._core_turn(case))[0]
 
 
-# ex-9b paso 3 (`extractor_sin_pista`): los campos los lee el extractor del turno (`extractor_dice`, conftest); sin él, en
+# ex-9b paso 3: los campos los lee el extractor del turno (`extractor_dice`, conftest); sin él, en
 # los tests (sin red) fallaba y el turno iba por la pista del regex. Lo que se prueba es la puntuación del modo --core.
 
 

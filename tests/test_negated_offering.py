@@ -1,49 +1,19 @@
 """Una oferta negada no es una opcion que se sopesa (hallazgo K, 2026-09-15).
 
 "al final mi suegra tambien bucea, no hace snorkel" tras cerrar la reserva: el router
-marcaba `comparing_options` y la puerta de deliberacion lo aceptaba (2 ofertas, sin cifra
-ni "quiero"), asi que el cambio de reparto se iba a RAG a explicar la diferencia (2/2 con
-el LLM real). El snorkel esta negado: se descarta, no se compara. La negacion es la pieza
-del detector (`_is_negated`), sin palabras nuevas.
+marcaba `comparing_options` y la puerta de deliberacion lo aceptaba, asi que el cambio de
+reparto se iba a RAG a explicar la diferencia (2/2 con el LLM real). Se arreglo con un veto
+sobre la señal del router (`_weighed_offerings`). ex-9b paso 5 (`deliberacion_por_jev`,
+promocionado y quitado en la limpieza ex9b): si la IA contesta, manda `comparing_options`
+(ni Jev ni DeepSeek cometen ya este error: 12/12 el 19-oct) y el veto se quito; si la IA
+calla, decide la frase de duda escrita, que se sigue probando aqui.
 """
 
 import pytest
 
 from src.agents import conversational_core as core
 
-
-@pytest.fixture(autouse=True)
-def _camino_de_los_vetos(monkeypatch):
-    """ex-9b paso 5: con `deliberacion_por_jev`, si la IA contesta manda `comparing_options` (hoy ni Jev ni DeepSeek
-    cometen este error: 12/12 el 19-oct). Estos tests prueban los vetos, que siguen valiendo cuando la IA calla."""
-    from src.config import settings
-
-    monkeypatch.setattr(settings, "deliberacion_por_jev", False)
-
 COMPARING = {"comparing_options": {"comparing": True}}
-
-
-@pytest.mark.parametrize("message, weighed", [
-    ("al final mi suegra tambien bucea, no hace snorkel", {"certified_diving"}),
-    ("no quiero snorkel, mejor buceo", {"certified_diving"}),
-    ("prefiero no bucear, snorkel o minicurso", {"snorkel", "minicourse"}),
-    ("mi pareja se lo está pensando, buceo y snorkel", {"certified_diving", "snorkel"}),
-    ("no es que no quiera bucear, pero el snorkel tambien me gusta", {"certified_diving", "snorkel"}),
-    ("no quiero hacer snorkel, mejor bucear", {"certified_diving"}),
-    # Una pregunta subordinada corta el alcance: el "no" niega saber, no las ofertas (control de E).
-    ("mi amigo no sabe si bucear o hacer snorkel", {"certified_diving", "snorkel"}),
-    ("not sure whether to snorkel or dive", {"certified_diving", "snorkel"}),
-])
-def test_negated_offerings_are_not_weighed(message, weighed):
-    assert core._weighed_offerings(message) == weighed
-
-
-@pytest.mark.parametrize("message", [
-    "al final mi suegra tambien bucea, no hace snorkel",
-    "no quiero snorkel, mejor buceo",
-])
-def test_a_discarded_offering_is_not_a_comparison(message):
-    assert core._is_deliberation_between_options(message, COMPARING) is False
 
 
 @pytest.mark.parametrize("message, signals", [

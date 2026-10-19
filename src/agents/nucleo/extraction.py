@@ -14,9 +14,7 @@ from collections import Counter
 
 from src.agents.conversational_core import (
     _ACTIVITY_TO_CART_TYPE,
-    _EXPLICIT_MINICOURSE_NAME_RE,
     _EXPLICIT_NUMBER_RE,
-    _STRONG_CERTIFIED_DIVING_RE,
     SLOT_CERT_OR_COURSE,
     SLOT_CERTIFICATION,
     SLOT_COMPANION_ACTIVITY,
@@ -35,7 +33,6 @@ from src.agents.conversational_core import (
     _companion_activity_options,
     _course_level_options,
     _detector,
-    _effective_activity,
     _group_allocation_fully_resolved,
     _has_pending_answer,
     _is_greeting_only,
@@ -48,7 +45,6 @@ from src.agents.conversational_core import (
     _recall_answer,
     _set_concrete_activity,
     _take_undecided_members,
-    _words,
     ask_slot,
     next_missing_slot,
 )
@@ -70,8 +66,8 @@ from src.agents.llm_extractor import (
     resolve_slot_answer,
 )
 from src.agents.nucleo.extractor import (
+    _CAMPOS_LISTA_CERRADA,
     _aplicar_extractor,
-    campos_de_la_pista,
     campos_del_extractor,
 )
 from src.config import settings
@@ -339,25 +335,6 @@ def _consume_number(counts: Counter, n) -> bool:
     return False
 
 
-def _menciones_de_otro_producto(state: ConversationState, message: str, acts: list) -> list:
-    """s4-26 (flag `red_menciones_con_principal`): lo que la red de "mención perdida" puede tomar por
-    la actividad de un ACOMPAÑANTE. Sin actividad principal no hay "otra" actividad: la mención es la
-    del grupo y la pide su propia pregunta ("My husband and I are booked for the diving excursion" ->
-    "How many people for certified diving?", con el buceo ya descartado por Jev). Con la principal
-    sabida, una mención GENÉRICA (sin su respaldo específico) es contexto del producto principal, la
-    misma regla que `_mentioned_product_activities` aplica cuando se nombra un curso ("regalarle a mi
-    esposo una experiencia de buceo" en un minicurso -> "¿Cuántos serían para buceo certificado?")."""
-    main = _effective_activity(state)
-    if not main:
-        return []
-    out = list(acts)
-    if main != "certified_diving" and "certified_diving" in out and not _STRONG_CERTIFIED_DIVING_RE.search(message):
-        out.remove("certified_diving")
-    if main != "minicourse" and "minicourse" in out and not _EXPLICIT_MINICOURSE_NAME_RE.search(message):
-        out.remove("minicourse")
-    return out
-
-
 # Auditoría 2026-08-26 (batería sintética contra PRE, Grupo 3, portado de
 # pre_gadea v0.21.3): "mi amigo... él es certificado también" respalda
 # `certified_diving` igual que "quiere bucear" — declarar la certificación
@@ -400,16 +377,6 @@ _DRIVING_FIELDS = {
     "location", "island", "hotel", "ages", "last_dive_over_2_years",
     "is_colombian",
 }
-
-
-def _campos_de_la_puerta() -> set[str]:
-    """Los campos que leyó el regex sobre los que actúa la puerta del turno con pregunta (`_question_turn_fields`). Con
-    `extractor_sin_pista` (ex-9b paso 3) los del extractor ya no traen nada del regex que filtrar (la isla y el hotel de
-    la pista se copian antes de la puerta, así que tampoco cambian): solo quedan las edades, que siguen siendo del
-    regex hasta el paso 6 y que en un turno con pregunta no se guardan (como hoy)."""
-    if settings.extractor_sin_pista:
-        return _DRIVING_FIELDS - set(campos_del_extractor())
-    return _DRIVING_FIELDS
 
 
 # Slots de SÍ/NO y el campo que resuelve cada uno. Hallazgo en vivo
@@ -509,54 +476,19 @@ def _state_known_fields(state: ConversationState) -> set[str]:
 
 
 def _recommend_inferred_minicourse(intent, state: ConversationState, message: str) -> None:
-    """u3-5 (decision de Gadea, 27-sep: "debe recomendar el minicurso pero lo confirma el cliente").
-
-    El minicurso DEDUCIDO ("es la primera vez que vamos a hacer buceo", "nunca he buceado, quiero
-    probar": la regla "no certificado + quiere bucear -> minicurso") no se da por elegido: se guarda
-    como recomendacion y la pregunta de la actividad lo recomienda para que el cliente lo confirme
-    ("Me gustaria informacion de los cursos de buceo… es la primera vez" acababa en minicurso sin que
-    lo pidiera, y podia querer el Open Water). Nombrarlo (minicurso, bautismo, discover scuba) SI es
-    elegirlo. Solo la actividad principal y solo si aun no hay ninguna."""
-    if intent.activity != "minicourse" or state.detected_activity:
-        return
-    if getattr(intent, "_actividad_elegida", False):
-        # ex-8: lo eligió el cliente según el extractor ("buceo para principiantes"); solo se recomienda el deducido.
+    """u3-5 (decision de Gadea, 27-sep: "debe recomendar el minicurso pero lo confirma el cliente"). Si el cliente
+    ELIGE el minicurso (el extractor, `_actividad_elegida`) y aun no habia actividad, la recomendacion pendiente se
+    borra. ex-9b paso 3: ya no hay minicurso DEDUCIDO del regex ("es la primera vez que vamos a hacer buceo"), que aqui
+    se convertia en recomendacion; la recomendacion la hace CAL-C1 (`actividad_por_lo_sabido`) con lo que dice el
+    extractor (`quiere_bucear`, `is_certified`)."""
+    if intent.activity == "minicourse" and not state.detected_activity:
         state.suggested_activity = None
-        return
-    if _EXPLICIT_MINICOURSE_NAME_RE.search(message):
-        state.suggested_activity = None
-        return
-    # Con acompanante o reparto del grupo el flujo pregunta otra cosa antes que la actividad y la
-    # recomendacion no llegaba a mostrarse ("regalarle a mi esposo una experiencia de buceo", ronda B).
-    if (intent.group_allocation or state.detected_group_allocation or state.pending_companion_activity
-            or state.pending_companion_queue or _menciona_a_alguien(state, message)):
-        return
-    suggestion = "padi_open_water" if _asks_for_a_course(message) else "minicourse"
-    logger.info(f"[CORE][U3-5] minicurso deducido, no elegido: se recomienda {suggestion} y lo confirma el cliente")
-    state.suggested_activity = suggestion
-    intent.activity = None
-    intent.service_id = None
-    if "activity" in intent.detected_fields:
-        intent.detected_fields.remove("activity")
 
 
 def _pista_del_regex(intent) -> dict:
-    """Lo que leyó el regex en los campos que decide el extractor (una copia; el intent no se toca hasta el final). Con
-    `extractor_sin_pista` (ex-9b paso 3), solo la isla y el hotel del catálogo (`campos_de_la_pista`)."""
-    return {c: getattr(intent, c) for c in campos_de_la_pista() if getattr(intent, c, None) not in (None, "", [], {})}
-
-
-def _asks_for_a_course(message: str) -> bool:
-    """¿El principiante pide un CURSO (certificarse) y no probar? El sustantivo de la familia de cursos
-    del registro ("curso"/"course", tambien en plural) o la intencion de curso que ya ve el detector.
-    28-sep: "Estoy interesada en el curso básico de buceo, es la primera vez" recibia la recomendacion
-    del minicurso (el regex no conoce "curso básico" y aplica "no certificado + bucear -> minicurso")."""
-    from src.agents.intent_detector import _course_family_nouns, matched_activity_categories  # lazy
-
-    nouns = _course_family_nouns()
-    if any(w in nouns or w.rstrip("s") in nouns for w in _words(message)):
-        return True
-    return "padi_course" in matched_activity_categories(message)
+    """Lo que leyó el regex en los campos que decide el extractor (una copia; el intent no se toca hasta el final): solo
+    la isla y el hotel del catálogo (`_CAMPOS_LISTA_CERRADA`, ex-9b paso 3)."""
+    return {c: getattr(intent, c) for c in _CAMPOS_LISTA_CERRADA if getattr(intent, c, None) not in (None, "", [], {})}
 
 
 def _relevant_gaps(state: ConversationState, intent, message: str, *, keep_pending_bool: bool = False) -> list[str]:
@@ -658,17 +590,13 @@ async def _understand(state: ConversationState, message: str, *, answered_pendin
     # decide el regex. Lo que leyó se queda en el intent como PROVISIONAL (las guardas que miran si el mensaje
     # CONTESTA la pregunta pendiente lo siguen viendo, como hoy), pero ni dispara contradicciones, ni va al veto, al
     # relleno o a la re-comprobación. Al final se sustituye por lo del extractor (`_ubicacion_del_extractor`).
-    # ex-9b paso 3 (`extractor_sin_pista`): la pista solo guarda la isla y el hotel del catálogo; lo demás lo decide el
-    # extractor y, si falla, se pregunta.
+    # ex-9b paso 3: la pista solo guarda la isla y el hotel del catálogo; lo demás lo decide el extractor y, si falla,
+    # se pregunta.
     pista_lugar = _pista_del_regex(intent)
     # u3-4: turno con pregunta (la respuesta del RAG ya está lanzada en paralelo).
     question_turn_fields = None
     if _has_pending_answer(state):
         question_turn_fields = _question_turn_fields(intent, state)
-    elif not settings.extractor_sin_pista:
-        # ex-9b paso 3: con `extractor_sin_pista` esta puerta no corre. Jev solo dice si el cliente afirma campos del
-        # extractor (`_AFFIRMS_SIGNAL_FIELDS`), y de esos el regex ya no deja nada que filtrar.
-        _drop_regex_fields_jev_denies(intent, state)
     state.mixed_nationality_notice = False
     # ex-9 (15-oct): con los cuatro dominios en el extractor "LLM primero" (ex-5…ex-8), lo único que el relleno LLM de
     # siempre (`fill_gaps`) aún decide son las EDADES de los menores. El veto, la re-comprobación de lo sabido, la
@@ -717,10 +645,6 @@ async def _understand(state: ConversationState, message: str, *, answered_pendin
     _take_undecided_members(intent, state)
     _flag_cert_or_course(intent, state, message)
     _recommend_inferred_minicourse(intent, state, message)
-    if getattr(intent, "_minicurso_deducido", False) and intent.activity == "minicourse":
-        # ex-8: deducido y no convertido en recomendación (ya había actividad, grupo…): no se guarda como elegido.
-        intent.activity = intent.service_id = None
-        intent.detected_fields = [f for f in intent.detected_fields if f != "activity"]
     supervisor._apply_detected_intent(intent, state, message)
 
     # Circuit-breaker (portado 2026-09-01, hallazgo en vivo, batería de
@@ -746,10 +670,10 @@ async def _understand(state: ConversationState, message: str, *, answered_pendin
     # señal singular EXPLÍCITA ("voy solo"/"just me") y ninguna señal de
     # compañía — una auto-presentación en singular sin más ("tengo el open
     # water") NO basta, porque un jefe de grupo escribe igual: ahí se pregunta.
-    # ex-9b paso 4 (`respuesta_corta_por_ia`): si el extractor leyó el mensaje, "voy solo" es su `group_size` 1 (ya
-    # aplicado arriba); estos regex solo si el extractor falla.
+    # ex-9b paso 4: si el extractor leyó el mensaje, "voy solo" es su `group_size` 1 (ya aplicado arriba); estos regex
+    # solo si el extractor falla.
     if (
-        not (settings.respuesta_corta_por_ia and getattr(intent, "_leido_por_extractor", False))
+        not getattr(intent, "_leido_por_extractor", False)
         and not state.detected_group_size
         and not state.detected_group_allocation
         and state.detected_activity
@@ -1027,86 +951,20 @@ def _apply_question_turn_answers(intent, fields: list[str], answers: dict, messa
 
 
 def _question_turn_fields(intent, state: ConversationState) -> list[str]:
-    """u3-4 arreglo 2: en un turno con pregunta, el regex LEE y el LLM VERIFICA.
+    """u3-4: en un turno con pregunta, lo que leyó el regex no se guarda si no se puede confirmar que el cliente lo
+    afirma ("do you have any hotel in Rosario you recommend?" no es alojarse en la isla). Así nació (24-27 sep): el
+    regex lee palabras sueltas y en una pregunta suelen ser hipotéticas; los campos que Jev sabe verificar
+    (`affirms_*`) los decidía Jev y los demás se borraban.
 
-    Historia, porque el diseño cambió dos veces con datos:
-
-    - Escalón 0 (24-sep): al extraer también en los mensajes con pregunta, casi todos
-      los datos inventados venían del REGEX, que lee palabras sueltas sin entender la
-      frase: "I'm interested in taking PADI Open Water course" -> ya certificado;
-      "do you have any hotel in Rosario you recommend?" -> se aloja en la isla. En una
-      pregunta, las palabras suelen ser hipotéticas.
-    - Primera versión (`_leave_question_fields_to_llm`): borrar lo que leyó el regex y
-      dejar que el LLM **rellenara** esos campos como huecos. Escalón 1 (24-sep): el LLM
-      rellenando también toma la hipótesis por dato — "Transportation to rosario is
-      included, in case I decided to do the Open Water course?" guardaba location=island,
-      y dos turnos después el RAG le decía "como ya estás en las islas...".
-    - Esta versión: el regex conserva lo que leyó y el LLM lo **verifica** (mecanismo de
-      veto), **sin rellenar huecos** ese turno. Verificar es una pregunta cerrada sobre
-      una frase concreta ("¿el cliente AFIRMA esto?"); rellenar es abierta, e invita a
-      suponer. Así "reservaremos hotel en la isla" se guarda (el regex lo lee y el LLM lo
-      confirma) y la hipótesis no.
-
-    - Escalón 0 de esa versión (25-sep): **tampoco cumple**. Verificar NO es una pregunta
-      cerrada: `verify_fields` vuelve a EXTRAER con el prompt de verificación, y para un
-      extractor "¿me recomiendas hoteles en la isla?" es una señal clara de `location=island`
-      (la definición del campo dice justo eso). Los 3 `location` que esa versión añadía eran
-      inventados. Meter el matiz en el prompt falló dos veces, con medida.
-    - Esta versión: la pregunta cerrada la contesta **Jev** (`affirms_location`,
-      `affirms_activity`), en la MISMA llamada del router, a coste 0 de peticiones. Sonda de
-      12 mensajes × 3 (`scripts/sonda_afirma_vs_pregunta.py`): 11/12, separando 0,07-0,48 los
-      que no afirman de 0,75-0,97 los que sí.
-
-    Devuelve los campos a verificar, y por el camino borra del `intent`:
-
-    - los que **Jev dice que el cliente no afirma** (`False`); si Jev está apagado o dudó en
-      alguna señal del router, la respuesta no llega y se sigue con la conducta de hoy —
-      ausente es "no lo sé", que NO es lo mismo que `False`;
-    - los que el regex resolvió y NO se pueden verificar (no están en `_VETO_FIELD_SPECS`:
-      island, hotel, ages, last_dive_over_2_years).
-
-    Si no se puede confirmar que el cliente lo afirma, no se guarda: es la regla entera de
-    este arreglo. Con el flag apagado nada de esto corre.
-    """
-    from src.agents import supervisor  # lazy
-
-    afirma = getattr(state, "_answer_affirms", None) or {}
-    verificables = set(supervisor._VETO_FIELD_SPECS)
-    a_verificar = []
-    for f in sorted(_campos_de_la_puerta() & set(intent.detected_fields)):
-        if afirma.get(f) is False:
-            # Jev dice que el cliente NO lo afirma: lo nombra dentro de su pregunta.
-            logger.info(f"[EXTRACT][U3-4] campo={f} regex={getattr(intent, f, None)!r} descartado por Jev (no lo afirma)")
-        elif f in verificables:
-            a_verificar.append(f)
-            continue
-        setattr(intent, f, [] if f == "ages" else None)
-        intent.detected_fields.remove(f)
-        if f == "activity":
-            intent.service_id = None
-    return a_verificar
-
-
-def _drop_regex_fields_jev_denies(intent, state: ConversationState) -> None:
-    """u3-3: la puerta de u3-4 en los turnos SIN pregunta. El regex lee
-    palabras sueltas ("mi amigo es certificado" -> yo certificado; "¿y si fuera desde la isla?");
-    si Jev (misma llamada del router, `affirms_*`) dice que el cliente NO afirma ese dato, el dato
-    del regex no se guarda. Ausente (Jev apagado o sin contestar) = no lo sabemos -> se guarda como
-    hoy. Solo lo que leyo el REGEX en este mensaje; el relleno del LLM tiene su propia puerta."""
-    from src.agents.jev_router import AFFIRMS_DENY_MAX  # lazy
-
-    # Escalon 0 (27-sep): con el "no" de u3-4 (p < 0,7) se perdian datos buenos en frases normales
-    # ("cartagena, todos extranjeros" -> 0,38-0,45). Aqui solo cuenta "seguro de que no" (p < 0,2).
-    probs = getattr(state, "_affirms_p", None) or {}
-    for f in sorted(_DRIVING_FIELDS & set(intent.detected_fields)):
-        p = probs.get(f)
-        if p is None or p >= AFFIRMS_DENY_MAX:
-            continue
-        logger.info(f"[EXTRACT][U3-3] campo={f} regex={getattr(intent, f, None)!r} descartado por Jev (no lo afirma, {p:.2f})")
-        setattr(intent, f, [] if f == "ages" else None)
-        intent.detected_fields.remove(f)
-        if f == "activity":
-            intent.service_id = None
+    ex-9b paso 3: los campos del extractor ya no traen nada del regex (la isla y el hotel de la pista se copian después,
+    en `_aplicar_extractor`). Solo quedan las EDADES, que siguen siendo del regex hasta el paso 6 y que Jev no
+    verifica: en un turno con pregunta no se guardan. Devuelve los campos a verificar: ninguno (la lista vacía marca el
+    turno con pregunta)."""
+    if "ages" in intent.detected_fields:
+        logger.info(f"[EXTRACT][U3-4] campo=ages regex={intent.ages!r} descartado (turno con pregunta)")
+        intent.ages = []
+        intent.detected_fields.remove("ages")
+    return []
 
 
 async def _extraction_phase(
@@ -1119,28 +977,6 @@ async def _extraction_phase(
     if response is None:
         return None
     return await _prepend_parallel_answer(state, response, greeting)
-
-
-def _menciones_para_la_red(state: ConversationState, message: str) -> list[str]:
-    """Las actividades que nombra el mensaje para la red de menciones de última instancia (ver su uso)."""
-    mentioned = _mentioned_product_activities(message)
-    if settings.red_menciones_con_principal:
-        mentioned = _menciones_de_otro_producto(state, message, mentioned)
-    if settings.red_menciones_solo_sin_extractor and getattr(state, "_extractor_leyo", None) == message:
-        # CAL-C5 (17-oct): "We snorkeled in Roatan yesterday" (lo que ya hicieron) metía snorkel en la cola de
-        # acompañantes y el bot preguntaba "How many people would that be for snorkeling?" (cal-69/70). Con el
-        # extractor de la fase EX (LLM primero, grupo y reparto con cita), esta red de palabras clave es la de
-        # última instancia: solo cuando el extractor no pudo leer el mensaje.
-        if mentioned:
-            logger.info(f"[CORE][CAL-C5] el extractor leyó el mensaje: la red de menciones no añade {mentioned}")
-        return []
-    if settings.extractor_sin_pista:
-        # ex-9b paso 3: tampoco cuando el extractor no pudo leer el mensaje. El reparto y los acompañantes los lee el
-        # extractor con cita; si falla, no se vuelve a las palabras clave: se pregunta (decisión de Gadea).
-        if mentioned:
-            logger.info(f"[CORE][EX9B-3] sin pista del regex: la red de menciones no añade {mentioned}")
-        return []
-    return mentioned
 
 
 async def _extraction_phase_body(
@@ -1639,42 +1475,6 @@ async def _extraction_phase_body(
                 response = greeting + response
                 state.history.append({"role": "assistant", "content": response})
                 return response
-
-    # Multi-ítem, segundo hallazgo (más profundo que el primero, auditoría
-    # 2026-07-23): cuando el LLM se ABSTIENE correctamente ante un plural
-    # vago (no incluye la actividad en group_allocation/other_companions en
-    # absoluto, tal y como se le pide), esa actividad puede desaparecer SIN
-    # QUE NADA LO NOTE — el guard de arriba solo reacciona cuando el LLM SÍ
-    # incluye un valor sin respaldo; si directamente omite la clave, no hay
-    # nada que descartar. "tres bucean, mis amigos hacen snorkel, y dos hacen
-    # el minicurso" hizo que fill_gaps omitiera "snorkel" del todo
-    # (comportamiento correcto del modelo) y la mención se perdía en
-    # silencio. Se compara qué actividades MENCIONA el texto (palabra clave,
-    # independiente de lo que el LLM haya estructurado) contra lo que quedó
-    # registrado en cualquier sitio (tras TODO el procesamiento de arriba,
-    # regex + gap-fill + señales) — si algo se mencionó y no aparece en
-    # ningún sitio, se pregunta. Va DESPUÉS del bloque de señales (no antes)
-    # para dejar que el mecanismo preciso (companion_qty/other_companions,
-    # que sabe distinguir "quién ya quedó confirmado") resuelva primero; esto
-    # es solo la red de última instancia para lo que ni siquiera llegó a
-    # entrar en la estructura del LLM. Acotado a mensajes que mencionan a
-    # otra persona (`_mentions_person`) para no disparar en cada mención
-    # suelta.
-    mentioned = _menciones_para_la_red(state, message)
-    if mentioned and _menciona_a_alguien(state, message) and not state.pending_companion_queue:
-        accounted = set((state.detected_group_allocation or {}).keys())
-        main_act = _effective_activity(state)
-        if main_act:
-            accounted.add(main_act)
-        missing_mentions = [act for act in mentioned if act not in accounted]
-        if missing_mentions:
-            for act in missing_mentions:
-                if act not in state.pending_companion_queue:
-                    state.pending_companion_queue.append(act)
-            state.pending_companion_activity = state.pending_companion_queue.pop(0)
-            response = greeting + ask_slot(state, SLOT_COMPANION_QTY)
-            state.history.append({"role": "assistant", "content": response})
-            return response
 
     # Red anti-BUCLE para SLOT_COMPANION_QTY (2026-07-24): el bloque Fase C de
     # abajo se EXCLUYE a propósito cuando hay `pending_companion_activity`, así
