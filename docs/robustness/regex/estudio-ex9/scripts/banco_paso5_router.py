@@ -12,6 +12,7 @@ os.chdir(REPO)
 sys.path.insert(0, str(REPO))
 sys.stdout.reconfigure(encoding="utf-8")
 from scripts.check_deploy import expected_from_compose  # noqa: E402
+from src.agents import supervisor  # noqa: E402
 from src.agents.supervisor import detect_routing_signals  # noqa: E402
 from src.config import settings  # noqa: E402
 from src.flows.state import ConversationState  # noqa: E402
@@ -47,13 +48,18 @@ CASOS = [
 ]
 
 
+# El flag `regex_solo_si_ia_calla` se promocionó y se quitó (limpieza ex9b): "sin flag" es el regex decidiendo
+# siempre, que es lo que hacía `supervisor.regex_decide` con el flag apagado.
+_REGEX_DECIDE = supervisor.regex_decide
+
+
 async def main():
     bien = {False: 0, True: 0}
     for msg, lang, validas in CASOS:
         sig = await detect_routing_signals(msg, lang=lang, pending_slot=None, history=[])
         fila = []
         for flag in (False, True):
-            settings.regex_solo_si_ia_calla = flag
+            supervisor.regex_decide = _REGEX_DECIDE if flag else (lambda _signals: True)
             ruta = classify_route(ConversationState(conversation_id="b", language=lang), msg, sig or {})
             bien[flag] += ruta in validas
             fila.append(ruta)

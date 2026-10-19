@@ -34,8 +34,8 @@ def _camino_antiguo_ex2_ex3(monkeypatch):
     monkeypatch.setattr(_flags, "atajo_nacionalidad_por_rag", False)
 
 
-# ex-9b paso 3 (`extractor_sin_pista`): lo que el extractor del turno lee de los mensajes de estos tests (fixture
-# `extractor_dice` de conftest). Sin él, en los tests (sin red) el extractor falla y el turno iba por la pista del regex.
+# ex-9b paso 3: lo que el extractor del turno lee de los mensajes de estos tests (fixture `extractor_dice` de
+# conftest). Sin él, en los tests (sin red) el extractor falla y el turno va por la rama "el extractor falló".
 # Con las reglas de `extraer_turno`: quien es buzo y quiere bucear hace buceo certificado.
 BUZO = {"quiere_bucear": True, "is_certified": True, "activity": "certified_diving"}
 CARTAGENA = {"location": "cartagena"}
@@ -140,29 +140,30 @@ def test_safety_question_knows_group_size_because_qty_comes_first():
 
 
 @pytest.mark.asyncio
-async def test_solo_signal_infers_one_person_for_diving_too(extractor_dice, monkeypatch):
+async def test_solo_signal_infers_one_person_for_diving_too(extractor_dice):
     """Decisión owner (2026-07-22): la señal explícita "voy solo" deduce 1
     persona en CUALQUIER actividad, no solo en cursos PADI (antes solo padi_*).
     Sin señal explícita se sigue preguntando (ver el test de abajo)."""
-    # ex-9b paso 4: prueba el camino del regex de la respuesta corta; con `respuesta_corta_por_ia` la lee la IA
-    # (test_ex9b_paso4.py).
-    monkeypatch.setattr(core.settings, "respuesta_corta_por_ia", False)
-    # Sin group_size en lo que lee el extractor: lo que se prueba es la regla de "voy solo" de `_understand`.
-    extractor_dice({"soy buzo certificado y quiero bucear, voy solo, desde cartagena": {**BUZO, **CARTAGENA}})
+    # ex-9b paso 4: si el extractor lee el mensaje, "voy solo" es su group_size 1 (test_ex9b_paso4.py); la regla del
+    # regex de `_understand` (lo que se prueba) solo decide si la IA calla: el extractor falla en este mensaje.
+    extractor_dice({"voy solo": None})
     state = make_state("es")
-    await route_message(state, "soy buzo certificado y quiero bucear, voy solo, desde cartagena")
+    state.detected_activity = "certified_diving"
+    state.is_certified = state.detected_is_certified = True
+    state.location = state.detected_location = "cartagena"
+    await route_message(state, "voy solo")
     assert state.detected_group_size == 1
     assert state.core_pending_slot == core.SLOT_SAFETY  # ya no pregunta cantidad
 
 
 @pytest.mark.asyncio
-async def test_solo_signal_infers_one_person_for_snorkel(extractor_dice, monkeypatch):
-    # ex-9b paso 4: prueba el camino del regex de la respuesta corta; con `respuesta_corta_por_ia` la lee la IA
-    # (test_ex9b_paso4.py).
-    monkeypatch.setattr(core.settings, "respuesta_corta_por_ia", False)
-    extractor_dice({"quiero hacer snorkel, voy sola, desde cartagena": {"activity": "snorkel", **CARTAGENA}})
+async def test_solo_signal_infers_one_person_for_snorkel(extractor_dice):
+    # ex-9b paso 4: la regla del regex de "voy sola" solo decide si la IA calla (el extractor falla en este mensaje).
+    extractor_dice({"voy sola": None})
     state = make_state("es")
-    await route_message(state, "quiero hacer snorkel, voy sola, desde cartagena")
+    state.detected_activity = "snorkel"
+    state.location = state.detected_location = "cartagena"
+    await route_message(state, "voy sola")
     assert state.detected_group_size == 1
 
 
@@ -232,7 +233,7 @@ SOFIA = "hola soy Sofia, ya soy certificada, quiero unas inmersiones desde carta
 
 @pytest.mark.asyncio
 async def test_sofia_full_flow_spanish(extractor_dice):
-    # ex-9b paso 4: "solo yo" a "¿cuántos sois?" lo lee el extractor (group_size 1) con `respuesta_corta_por_ia`.
+    # ex-9b paso 4: "solo yo" a "¿cuántos sois?" lo lee el extractor (group_size 1).
     extractor_dice({SOFIA: {**BUZO, **CARTAGENA, "nombre": "Sofia"}, "solo yo": {"group_size": 1}})
     state = make_state("es")
     resp = await route_message(state, SOFIA)
@@ -330,7 +331,7 @@ async def test_first_turn_bare_greeting_presents_and_asks_activity():
 
 @pytest.mark.asyncio
 async def test_greeting_not_repeated_after_first_turn(extractor_dice):
-    # ex-9b paso 3: con el extractor caído dos turnos seguidos se pasa a un asesor (`extractor_sin_pista`).
+    # ex-9b paso 3: con el extractor caído dos turnos seguidos se pasa a un asesor.
     extractor_dice({SOFIA: {**BUZO, **CARTAGENA, "nombre": "Sofia"}})
     state = make_state("es")
     await route_message(state, "hola soy Sofia, ya soy certificada, quiero unas inmersiones desde cartagena")
@@ -366,9 +367,9 @@ async def test_short_answer_resolves_pending_location(extractor_dice):
 @pytest.mark.asyncio
 async def test_short_answer_island_then_hotel(extractor_dice, monkeypatch):
     # Las respuestas cortas las resuelve el núcleo, no el extractor: lo que se prueba.
-    # ex-9b paso 4: prueba el camino del regex de la respuesta corta; con `respuesta_corta_por_ia` la lee la IA
-    # (test_ex9b_paso4.py).
-    monkeypatch.setattr(core.settings, "respuesta_corta_por_ia", False)
+    # ex-9b paso 4: la respuesta corta al origen y al hotel la lee la IA (test_ex9b_paso4.py); el regex de siempre solo
+    # si la IA calla (Jev no contesta a la pregunta y el extractor falla), que es lo que se simula aquí.
+    monkeypatch.setattr(core_routing, "_lectura_de_la_ia", AsyncMock(return_value=None))
     extractor_dice({"quiero bucear, somos 2 certificados": {**BUZO, "group_size": 2}})
     state = make_state("es")
     await route_message(state, "quiero bucear, somos 2 certificados")
@@ -428,8 +429,8 @@ async def test_llm_gap_fill_feeds_slots(monkeypatch, extractor_dice):
     """El relleno LLM alimenta los slots. El minicurso que deduce no se da por elegido: se recomienda y lo confirma
     el cliente (u3-5; hasta s4-25 este test apagaba `recommend_inferred_minicourse` y lo veía guardado).
 
-    ex-9b paso 3: desde ex-9 estos campos los lee el extractor del turno (`fill_gaps` ya no los escribe); con
-    `extractor_sin_pista` la recomendación sale de lo que dice el extractor (CAL-C1)."""
+    ex-9b paso 3: desde ex-9 estos campos los lee el extractor del turno (`fill_gaps` ya no los escribe); sin la pista
+    del regex la recomendación sale de lo que dice el extractor (CAL-C1)."""
     extractor_dice({"never been underwater before, wanna give it a try, solo":
                     {"quiere_bucear": True, "is_certified": False, "group_size": 1}})
     state = make_state("en")
@@ -635,7 +636,7 @@ async def test_kids_ages_split_cart_blocks(extractor_dice):
 async def test_lead_note_built_at_close(extractor_dice):
     """El cierre no-colombiano deja la nota de lead construida (antes solo
     quedaba el pending_lead_note_reason sin materializar)."""
-    # ex-9b paso 3: con el extractor caído dos turnos seguidos se pasa a un asesor (`extractor_sin_pista`).
+    # ex-9b paso 3: con el extractor caído dos turnos seguidos se pasa a un asesor.
     extractor_dice({"soy buzo certificado, quiero bucear desde cartagena, voy solo":
                     {**BUZO, **CARTAGENA, "group_size": 1},
                     "no soy colombiano": {"is_colombian": False}})
@@ -714,8 +715,8 @@ async def test_understand_still_fills_when_state_is_empty(monkeypatch, extractor
     """Primer mensaje (estado vacío): el gap-fill sigue funcionando igual (el minicurso deducido queda recomendado,
     u3-5; hasta s4-25 este test apagaba `recommend_inferred_minicourse` y lo veía guardado).
 
-    ex-9b paso 3: estos campos los lee el extractor del turno; con `extractor_sin_pista` no hay minicurso deducido del
-    regex en `_understand`: la recomendación la hace CAL-C1 al preguntar la actividad, con lo que dice el extractor."""
+    ex-9b paso 3: estos campos los lee el extractor del turno; sin la pista del regex no hay minicurso deducido en
+    `_understand`: la recomendación la hace CAL-C1 al preguntar la actividad, con lo que dice el extractor."""
     extractor_dice({"never tried it before but would love to": {"quiere_bucear": True, "is_certified": False}})
     state = make_state("en")
     monkeypatch.setattr(core_extraction, "fill_gaps", AsyncMock(return_value={
@@ -1441,8 +1442,8 @@ async def test_companion_qty_answer_mentioning_different_activity_not_misapplied
     después debe seguir preguntando por snorkel, no saltar a otro slot.
 
     ex-9b paso 3: el arranque ("my friends dive and other friends do snorkel too" → buceo como actividad principal y
-    "¿cuántos para snorkel?") lo ponían la pista del regex y la red de menciones, que con `extractor_sin_pista` no
-    corren (el extractor no le inventa la actividad a quien escribe: se pregunta). El estado se monta como quedaba
+    "¿cuántos para snorkel?") lo ponían la pista del regex y la red de menciones, que ya no existen (el extractor no
+    le inventa la actividad a quien escribe: se pregunta). El estado se monta como quedaba
     tras ese turno; lo que se prueba es el segundo."""
     extractor_dice({"we are 3 for diving": {"quiere_bucear": True, "group_size": 3}})
     state = make_state("en")
@@ -2052,15 +2053,13 @@ def test_deliberation_backstop_patterns():
     ("quiero el minicurso", {"comparing_options": {"comparing": True}}, False),
     # selección real doble (sin duda, sin señal LLM)
     ("quiero buceo y snorkel para los dos", {}, False),
-    # selección real doble + LLM sobre-dispara → commitment lo anula
-    ("quiero buceo y snorkel", {"comparing_options": {"comparing": True}}, False),
     # duda de SLOT (ubicación) — no hay 2 ofertas de producto, no se toca
     ("no sé si cartagena o las islas", {}, False),
 ])
-def test_is_deliberation_between_options_matrix(message, signals, expected, monkeypatch):
-    # ex-9b paso 5: la matriz prueba la frase de duda y los vetos; con `deliberacion_por_jev` y la IA contestando
-    # manda `comparing_options` (test_preguntas_nuevas_jev.py).
-    monkeypatch.setattr(core.settings, "deliberacion_por_jev", False)
+def test_is_deliberation_between_options_matrix(message, signals, expected):
+    # ex-9b paso 5 (`deliberacion_por_jev`, promocionado y quitado en la limpieza ex9b): con la IA contestando manda
+    # `comparing_options` (test_preguntas_nuevas_jev.py); si calla, la frase de duda. Los vetos sobre la señal
+    # ("quiero buceo y snorkel" con comparing = selección) se quitaron con el flag.
     assert core._is_deliberation_between_options(message, signals) is expected
 
 
@@ -2116,20 +2115,6 @@ def test_is_deliberation_between_options_real_bug_message_is_false():
     msg = "Me gustaría sacarme el open water, pero nunca he buceado"
     signals = {"comparing_options": {"comparing": True, "options": ["padi_course", "minicourse"], "who": "self"}}
     assert core._is_deliberation_between_options(msg, signals) is False
-
-
-@pytest.mark.parametrize(
-    "message",
-    [
-        "Me gustaría sacarme el open water, pero nunca he buceado",
-        "Quiero certificarme en open water, nunca he practicado buceo",
-        "Me gustaría hacer el curso advanced, no tengo experiencia",
-    ],
-)
-def test_commitment_re_recognizes_me_gustaria(message):
-    """'me gustaría' es el mismo verbo de compromiso que 'quiero' -- debe
-    anular el camino de deliberación basado solo en la señal LLM."""
-    assert core._COMMITMENT_RE.search(message) is not None
 
 
 @pytest.mark.asyncio
@@ -3199,10 +3184,11 @@ async def test_slot_resolver_still_reads_non_canonical_answer_to_pending_slot():
 
 
 @pytest.mark.asyncio
-async def test_regex_last_dive_still_wins_over_the_backing_gate(monkeypatch):
+async def test_regex_last_dive_still_wins_over_the_backing_gate(extractor_dice):
     """Sin regresión en la vía legítima: cuando el cliente SÍ habla del tema, el
-    detector determinista resuelve el campo y las guardas no lo estorban."""
-    monkeypatch.setattr(settings, "extractor_sin_pista", False)  # camino del regex: se va con el borrado del paso 3
+    campo se resuelve y las guardas no lo estorban. ex-9b paso 3: lo lee el extractor del turno (antes, la pista del
+    detector determinista)."""
+    extractor_dice({"hace 3 años que no buceo": {"last_dive_over_2_years": True}})
     state = make_state("es")
     state.detected_activity = "certified_diving"
     state.is_certified = True

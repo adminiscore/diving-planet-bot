@@ -1,15 +1,16 @@
 """ex-9b paso 4: los regex de clase a que ya tienen un lector de IA dejan de decidir.
 
-1. `respuesta_corta_por_ia`: la respuesta corta a la pregunta pendiente del origen, del hotel y de cuántos son la lee la
-   IA (Jev `pending_answer` para el origen; el extractor para el hotel y el total), también con 12 caracteres o menos;
-   los botones y una cifra sola son formato y se leen sin IA; el regex de siempre solo si la IA calla. "Voy solo" es el
+1. La respuesta corta a la pregunta pendiente del origen, del hotel y de cuántos son la lee la IA (Jev
+   `pending_answer` para el origen; el extractor para el hotel y el total), también con 12 caracteres o menos; los
+   botones y una cifra sola son formato y se leen sin IA; el regex de siempre solo si la IA calla. "Voy solo" es el
    `group_size` 1 del extractor.
-2. `nombre_solo_por_extractor`: si la regex ve "me llamo X", manda el `nombre` del extractor.
+2. Si la regex ve "me llamo X", manda el `nombre` del extractor (con `nombre_por_extractor`).
 3. Clase A: el plan de N inmersiones del RAG lee la cifra con `dive_counts_in` (sin flag: replay igual) y los días
    cerrados los contesta el RAG con `dias_cerrados_por_rag` (con flag: sin el texto fijo, "quiero bucear el 25 de
    diciembre" no llega al RAG).
-Con cada flag apagado, la conducta de hoy. (Las notas del RAG desde el estado no se hacen: el estado no tiene lo que
-hace falta; ver el informe del paso 4.)
+Los flags de 1 y 2 (`respuesta_corta_por_ia`, `nombre_solo_por_extractor`) se promocionaron con la ronda ex9b-3 y se
+quitaron en la limpieza ex9b, con sus casos "flag apagado". (Las notas del RAG desde el estado no se hacen: el estado no
+tiene lo que hace falta; ver el informe del paso 4.)
 """
 from unittest.mock import AsyncMock
 
@@ -40,16 +41,6 @@ def _jev(slot: str, value, confidence: float = 0.95) -> dict:
 
 
 @pytest.fixture
-def ia_on(monkeypatch):
-    monkeypatch.setattr(settings, "respuesta_corta_por_ia", True)
-
-
-@pytest.fixture
-def ia_off(monkeypatch):
-    monkeypatch.setattr(settings, "respuesta_corta_por_ia", False)
-
-
-@pytest.fixture
 def extractor(monkeypatch):
     """Lo que lee el extractor de este mensaje (None = falló). Devuelve el mock para ver si se le preguntó."""
 
@@ -67,26 +58,11 @@ async def _respuesta(state: ConversationState, message: str, signals: dict | Non
     return core_routing._apply_short_answer(state, message, ia=ia)
 
 
-# --- 1. respuestas cortas: flag apagado = hoy --------------------------------------------------------------------------
+# --- 1. lee la IA ------------------------------------------------------------------------------------------------------
 
 
 @pytest.mark.asyncio
-async def test_apagado_el_regex_decide_aunque_la_ia_conteste(ia_off, extractor):
-    leer = extractor({"hotel": "Hilton"})
-    st = _estado(SLOT_LOCATION)
-    assert await _respuesta(st, "da igual", _jev(SLOT_LOCATION, "island")) is True
-    assert st.location == "cartagena"  # "da igual" -> Cartagena por el regex, sin mirar a Jev
-    st = _estado(SLOT_HOTEL, location="island")
-    assert await _respuesta(st, "no tengo idea, el Hilton creo") is True
-    assert st.hotel == "por confirmar"  # el fallo de hoy: se pierde el Hilton
-    leer.assert_not_awaited()
-
-
-# --- 2. encendido: lee la IA --------------------------------------------------------------------------------------------
-
-
-@pytest.mark.asyncio
-async def test_origen_delegado_lo_lee_jev(ia_on, extractor):
+async def test_origen_delegado_lo_lee_jev(extractor):
     leer = extractor({})
     st = _estado(SLOT_LOCATION)
     assert await _respuesta(st, "lo que tú me recomiendes", _jev(SLOT_LOCATION, "cartagena")) is True
@@ -97,7 +73,7 @@ async def test_origen_delegado_lo_lee_jev(ia_on, extractor):
 @pytest.mark.asyncio
 @pytest.mark.parametrize("mensaje", ["que solo nos acompañe en la lancha, no se mete al agua",
                                      "no sé si hacer el minicurso o el snorkel"])
-async def test_origen_jev_seguro_de_que_no_contesta(ia_on, extractor, mensaje):
+async def test_origen_jev_seguro_de_que_no_contesta(extractor, mensaje):
     extractor({})
     st = _estado(SLOT_LOCATION)
     assert await _respuesta(st, mensaje, _jev(SLOT_LOCATION, None)) is False
@@ -105,7 +81,7 @@ async def test_origen_jev_seguro_de_que_no_contesta(ia_on, extractor, mensaje):
 
 
 @pytest.mark.asyncio
-async def test_origen_jev_duda_lo_dejan_al_extractor_y_a_la_red(ia_on, extractor):
+async def test_origen_jev_duda_lo_dejan_al_extractor_y_a_la_red(extractor):
     extractor({})
     st = _estado(SLOT_LOCATION)
     assert await _respuesta(st, "da igual", _jev(SLOT_LOCATION, "cartagena", confidence=0.5)) is False
@@ -113,7 +89,7 @@ async def test_origen_jev_duda_lo_dejan_al_extractor_y_a_la_red(ia_on, extractor
 
 
 @pytest.mark.asyncio
-async def test_origen_sin_jev_y_con_extractor_no_decide_el_regex(ia_on, extractor):
+async def test_origen_sin_jev_y_con_extractor_no_decide_el_regex(extractor):
     extractor({"location": "cartagena"})
     st = _estado(SLOT_LOCATION)
     assert await _respuesta(st, "cartagena") is False  # lo aplica `_understand`, como cualquier dato del extractor
@@ -121,7 +97,7 @@ async def test_origen_sin_jev_y_con_extractor_no_decide_el_regex(ia_on, extracto
 
 
 @pytest.mark.asyncio
-async def test_hotel_el_del_extractor_no_se_pierde(ia_on, extractor):
+async def test_hotel_el_del_extractor_no_se_pierde(extractor):
     extractor({"hotel": "Hilton"})
     st = _estado(SLOT_HOTEL, location="island")
     assert await _respuesta(st, "no tengo idea, el Hilton creo") is True
@@ -129,7 +105,7 @@ async def test_hotel_el_del_extractor_no_se_pierde(ia_on, extractor):
 
 
 @pytest.mark.asyncio
-async def test_hotel_del_catalogo_da_su_isla(ia_on, extractor):
+async def test_hotel_del_catalogo_da_su_isla(extractor):
     extractor({"hotel": "el hamaquero"})
     st = _estado(SLOT_HOTEL, location="island")
     assert await _respuesta(st, "Im staying at el hamaquero") is True
@@ -141,7 +117,7 @@ async def test_hotel_del_catalogo_da_su_isla(ia_on, extractor):
     ("en el Ubuntu", "ubuntu", "isla_marina"),          # el extractor no lo trae: el del catálogo que nombra el mensaje
     ("en isla grande, aún no sé el hotel", "por confirmar", "isla_grande"),  # solo la isla
 ])
-async def test_hotel_sin_lectura_del_extractor_vale_la_lista_del_catalogo(ia_on, extractor, mensaje, hotel, isla):
+async def test_hotel_sin_lectura_del_extractor_vale_la_lista_del_catalogo(extractor, mensaje, hotel, isla):
     extractor({})
     st = _estado(SLOT_HOTEL, location="island")
     assert await _respuesta(st, mensaje) is True
@@ -150,7 +126,7 @@ async def test_hotel_sin_lectura_del_extractor_vale_la_lista_del_catalogo(ia_on,
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("mensaje", ["no sé todavía", "Veo q los 5 buceos serian por 293 pagando en el website"])
-async def test_hotel_sin_hotel_en_la_respuesta_es_por_confirmar(ia_on, extractor, mensaje):
+async def test_hotel_sin_hotel_en_la_respuesta_es_por_confirmar(extractor, mensaje):
     extractor({})
     st = _estado(SLOT_HOTEL, location="island")
     assert await _respuesta(st, mensaje) is True
@@ -158,7 +134,7 @@ async def test_hotel_sin_hotel_en_la_respuesta_es_por_confirmar(ia_on, extractor
 
 
 @pytest.mark.asyncio
-async def test_total_lo_lee_el_extractor(ia_on, extractor):
+async def test_total_lo_lee_el_extractor(extractor):
     extractor({"group_size": 1})
     st = _estado(SLOT_QTY, detected_activity="certified_diving")
     assert await _respuesta(st, "solo yo nada más") is True
@@ -166,7 +142,7 @@ async def test_total_lo_lee_el_extractor(ia_on, extractor):
 
 
 @pytest.mark.asyncio
-async def test_total_sin_cifra_del_extractor_no_lo_decide_el_regex(ia_on, extractor):
+async def test_total_sin_cifra_del_extractor_no_lo_decide_el_regex(extractor):
     extractor({})
     st = _estado(SLOT_QTY, detected_activity="certified_diving")
     assert await _respuesta(st, "hace 3 años que no buceo") is False
@@ -180,7 +156,7 @@ async def test_total_sin_cifra_del_extractor_no_lo_decide_el_regex(ia_on, extrac
     (SLOT_LOCATION, "1", "location", "cartagena"),
     (SLOT_LOCATION, "isla", "location", "island"),  # el valor del botón
 ])
-async def test_formato_sin_ia(ia_on, extractor, slot, mensaje, campo, valor):
+async def test_formato_sin_ia(extractor, slot, mensaje, campo, valor):
     leer = extractor({"group_size": 9, "location": "island"})
     st = _estado(slot, detected_activity="certified_diving")
     if slot == SLOT_LOCATION:
@@ -191,7 +167,7 @@ async def test_formato_sin_ia(ia_on, extractor, slot, mensaje, campo, valor):
     leer.assert_not_awaited()
 
 
-# --- 3. la IA calla: el regex de siempre --------------------------------------------------------------------------------
+# --- 2. la IA calla: el regex de siempre --------------------------------------------------------------------------------
 
 
 @pytest.mark.asyncio
@@ -201,7 +177,7 @@ async def test_formato_sin_ia(ia_on, extractor, slot, mensaje, campo, valor):
     (SLOT_HOTEL, "hotel las palmas", "hotel", "hotel las palmas"),
     (SLOT_QTY, "somos 4", "detected_group_size", 4),
 ])
-async def test_la_ia_calla_decide_el_regex(ia_on, extractor, slot, mensaje, campo, valor):
+async def test_la_ia_calla_decide_el_regex(extractor, slot, mensaje, campo, valor):
     extractor(None)
     st = _estado(slot, location="island" if slot == SLOT_HOTEL else None, detected_activity="certified_diving")
     assert await core_routing._lectura_de_la_ia(st, mensaje, {}, slot) is None
@@ -210,7 +186,7 @@ async def test_la_ia_calla_decide_el_regex(ia_on, extractor, slot, mensaje, camp
 
 
 @pytest.mark.asyncio
-async def test_sin_el_campo_hotel_el_extractor_no_lee_hoteles(ia_on, extractor, monkeypatch):
+async def test_sin_el_campo_hotel_el_extractor_no_lee_hoteles(extractor, monkeypatch):
     monkeypatch.setattr(settings, "hotel_por_extractor", False)
     extractor({})
     st = _estado(SLOT_HOTEL, location="island")
@@ -218,20 +194,19 @@ async def test_sin_el_campo_hotel_el_extractor_no_lee_hoteles(ia_on, extractor, 
 
 
 @pytest.mark.asyncio
-async def test_otras_preguntas_no_cambian(ia_on, extractor):
+async def test_otras_preguntas_no_cambian(extractor):
     leer = extractor({})
     st = _estado(SLOT_ACTIVITY)
     assert await core_routing._lectura_de_la_ia(st, "da igual", _jev(SLOT_LOCATION, "cartagena"), SLOT_ACTIVITY) is None
     leer.assert_not_awaited()
 
 
-# --- 4. la respuesta corta resuelta por la IA no se salta `_understand` (≤ 12 caracteres) ------------------------------
+# --- 3. la respuesta corta resuelta por la IA no se salta `_understand` (≤ 12 caracteres) ------------------------------
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("flag,jev,lee", [(True, True, True), (False, True, False), (True, False, False)])
-async def test_respuesta_corta_por_la_ia_pasa_por_el_extractor(monkeypatch, extractor, flag, jev, lee):
-    monkeypatch.setattr(settings, "respuesta_corta_por_ia", flag)
+@pytest.mark.parametrize("jev,lee", [(True, True), (False, False)])
+async def test_respuesta_corta_por_la_ia_pasa_por_el_extractor(monkeypatch, extractor, jev, lee):
     extractor(None)  # sin Jev y con el extractor caído, el regex de "da igual" (como hoy: se salta `_understand`)
     entender = AsyncMock(return_value=(None, False))
     monkeypatch.setattr(core_extraction, "_understand", entender)
@@ -239,14 +214,12 @@ async def test_respuesta_corta_por_la_ia_pasa_por_el_extractor(monkeypatch, extr
     st.history = [{"role": "assistant", "content": "¿Desde dónde saldrías?"}, {"role": "user", "content": "el hilton"}]
     carry = await core_routing._routing_phase(st, "el hilton" if jev else "da igual",
                                               _jev(SLOT_LOCATION, "cartagena") if jev else {}, "")
-    assert carry["resolved_short"] is (flag or not jev) and st.location == ("cartagena" if flag or not jev else None)
-    if not carry["resolved_short"]:
-        return
+    assert carry["resolved_short"] is True and st.location == "cartagena"
     await core_extraction._extraction_phase_body(st, "el hilton" if jev else "da igual", {}, "", carry)
     assert entender.await_count == (1 if lee else 0)
 
 
-# --- 5. "voy solo" -------------------------------------------------------------------------------------------------------
+# --- 4. "voy solo" -------------------------------------------------------------------------------------------------------
 
 
 async def _entender(mensaje: str, **campos) -> ConversationState:
@@ -256,14 +229,7 @@ async def _entender(mensaje: str, **campos) -> ConversationState:
 
 
 @pytest.mark.asyncio
-async def test_voy_solo_apagado_lo_decide_el_regex(ia_off, extractor):
-    extractor({})
-    st = await _entender("voy solo")
-    assert (st.detected_group_size, st.solo_traveler_confirmed) == (1, True)
-
-
-@pytest.mark.asyncio
-async def test_voy_solo_encendido_lo_decide_el_extractor(ia_on, extractor):
+async def test_voy_solo_lo_decide_el_extractor(extractor):
     extractor({"group_size": 1})
     st = await _entender("voy solo")
     assert (st.detected_group_size, st.solo_traveler_confirmed) == (1, True)
@@ -276,34 +242,22 @@ async def test_voy_solo_encendido_lo_decide_el_extractor(ia_on, extractor):
 
 
 @pytest.mark.asyncio
-async def test_voy_solo_con_el_extractor_caido_el_regex(ia_on, extractor):
+async def test_voy_solo_con_el_extractor_caido_el_regex(extractor):
     extractor(None)
     st = await _entender("voy solo")
     assert (st.detected_group_size, st.solo_traveler_confirmed) == (1, True)
 
 
-# --- 6. el nombre ---------------------------------------------------------------------------------------------------------
+# --- 5. el nombre ---------------------------------------------------------------------------------------------------------
 
 
 @pytest.fixture
 def nombre_on(monkeypatch):
     monkeypatch.setattr(settings, "nombre_por_extractor", True)
-    monkeypatch.setattr(settings, "nombre_solo_por_extractor", True)
 
 
 @pytest.mark.asyncio
-async def test_nombre_apagado_gana_la_regex(monkeypatch, extractor):
-    monkeypatch.setattr(settings, "nombre_por_extractor", True)
-    monkeypatch.setattr(settings, "nombre_solo_por_extractor", False)
-    leer = extractor({})
-    st = _estado()
-    await core_setup._nombre_del_mensaje(st, "hola, me llamo Pepe y quiero bucear")
-    assert st.client_name == "Pepe"
-    leer.assert_not_awaited()
-
-
-@pytest.mark.asyncio
-async def test_nombre_encendido_manda_el_extractor(nombre_on, extractor):
+async def test_nombre_manda_el_extractor(nombre_on, extractor):
     extractor({"nombre": "Ana"})
     st = _estado()
     await core_setup._nombre_del_mensaje(st, "hola, mi nombre es ana maría")
@@ -331,7 +285,7 @@ async def test_nombre_sin_la_regex_no_se_espera_al_extractor(nombre_on, extracto
     leer.assert_not_awaited()
 
 
-# --- 7. clase A --------------------------------------------------------------------------------------------------
+# --- 6. clase A --------------------------------------------------------------------------------------------------
 
 
 def test_plan_nombrado_lee_la_cifra_con_dive_counts_in(monkeypatch):

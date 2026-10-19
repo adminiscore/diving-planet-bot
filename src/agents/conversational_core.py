@@ -1338,11 +1338,11 @@ def _turn_has_question(message: str, routing_signals: dict) -> bool:
     "?" ni lo ve el regex, y se quedaba sin contestar."""
     if _is_greeting_only(message):
         return False
-    # ex-9b paso 5 (flag `pregunta_y_correccion_por_jev`): si Jev ha contestado, manda Jev (y el "?"); el regex solo si
-    # Jev calla. El regex daba por pregunta "hay un niño de 5 años" (lanzaba el RAG y se saltaba los resolutores).
-    if settings.pregunta_y_correccion_por_jev and "asks_question" in routing_signals:
+    # ex-9b paso 5: si Jev ha contestado, manda Jev (y el "?"); el regex solo si Jev calla. El regex daba por pregunta
+    # "hay un niño de 5 años" (lanzaba el RAG y se saltaba los resolutores).
+    if "asks_question" in routing_signals:
         return "?" in message or bool(routing_signals["asks_question"])
-    return _looks_like_question(message) or bool(routing_signals.get("asks_question"))
+    return _looks_like_question(message)
 
 
 def _is_greeting_only(message: str) -> bool:
@@ -1950,7 +1950,7 @@ def _origen_antes_del_precio(state: ConversationState, message: str, answer: str
     if not answer or not _IMPORTE_RE.search(answer):
         return None
     jev = getattr(state, "_jev_pide_precio", None)
-    if settings.precio_por_jev and jev is not None:
+    if jev is not None:
         # ex-9b paso 5: Jev dice si pide el precio de NUESTRAS actividades (el hotel, la noche o un taxi no cuentan);
         # las palabras sueltas solo si Jev calla. "Me quedo en el hotel Caribe" ya no salta la puerta.
         pide = jev is True
@@ -2074,9 +2074,7 @@ from src.agents.nucleo.extraction import (  # noqa: E402, F401
     _add_or_ask_companion,
     _apply_question_turn_answers,
     _apply_resolved_slot_value,
-    _asks_for_a_course,
     _consume_number,
-    _drop_regex_fields_jev_denies,
     _extraction_phase,
     _extraction_phase_body,
     _flag_cert_or_course,
@@ -2084,8 +2082,6 @@ from src.agents.nucleo.extraction import (  # noqa: E402, F401
     _jev_pending_answer,
     _jev_rules_out_special_signals,
     _menciona_a_alguien,
-    _menciones_de_otro_producto,
-    _menciones_para_la_red,
     _mentions_person,
     _message_numbers,
     _number_of_something_else,
@@ -2114,7 +2110,6 @@ from src.agents.nucleo.extractor import (  # noqa: E402, F401
     _has_correction_cue,
     _hotel_del_catalogo,
     _jev_says_not_affirmed,
-    _lugar_por_jev,
     _nombre_del_extractor,
     _pasa_la_puerta_de_hoy,
     _poner_actividad,
@@ -2137,7 +2132,6 @@ from src.agents.nucleo.extractor import (  # noqa: E402, F401
     lanzar_extraccion_adelantada,
 )
 from src.agents.nucleo.routing import (  # noqa: E402, F401
-    _COMMITMENT_RE,
     _CONFIRMS_DESCRIBED_PACKAGE_RE,
     _DELIBERATION_RE,
     _HOTEL_UNKNOWN_RE,
@@ -2153,10 +2147,8 @@ from src.agents.nucleo.routing import (  # noqa: E402, F401
     _looks_like_deliberation,
     _maybe_apply_confirmed_package,
     _mentioned_offerings,
-    _offerings_with_own_subject,
     _quantity_answer,
     _routing_phase,
-    _weighed_offerings,
     _with_main_rest,
     _word_ages,
     sembrar_senales_del_turno,

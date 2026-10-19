@@ -56,31 +56,6 @@ def test_con_el_flag_apagado_la_regex_de_siempre(monkeypatch):
     assert core._menciona_a_alguien(st, "Si cuantos días son?")
 
 
-# --- red_menciones_con_principal: "buceo" no es un segundo plan -------------------------------------------------
-
-def test_sin_actividad_principal_la_red_no_saca_acompanante():
-    st = _state()
-    assert core._menciones_de_otro_producto(st, "My husband and I are booked for the diving excursion",
-                                            ["certified_diving"]) == []
-
-
-def test_mencion_generica_de_buceo_es_del_producto_principal():
-    st = _state(detected_activity="minicourse")
-    msg = "quería regalarle a mi esposo una experiencia del buceo, no tiene experiencia"
-    assert "certified_diving" not in core._menciones_de_otro_producto(st, msg, ["certified_diving", "minicourse"])
-
-
-def test_mencion_especifica_de_otro_producto_si_cuenta():
-    st = _state(detected_activity="minicourse")
-    msg = "yo hago el minicurso y mi amigo es buzo certificado"
-    assert "certified_diving" in core._menciones_de_otro_producto(st, msg, ["certified_diving", "minicourse"])
-
-
-def test_snorkel_nombrado_siempre_cuenta():
-    st = _state(detected_activity="certified_diving")
-    assert core._menciones_de_otro_producto(st, "mis amigos hacen snorkel", ["snorkel"]) == ["snorkel"]
-
-
 # --- cierre_sin_repetir: tras el cierre, "¿cuánto dura?" se contesta sola --------------------------------------
 
 @pytest.fixture
@@ -98,7 +73,7 @@ async def _cerrada(extractor_dice):
     extractor_dice({"quiero hacer el curso open water, estoy en cartagena":
                     {"activity": "padi_open_water", "location": "cartagena"},
                     "no soy colombiano": {"is_colombian": False},
-                    "para mi": {"group_size": 1}})  # ex-9b paso 4: con `respuesta_corta_por_ia` la lee el extractor
+                    "para mi": {"group_size": 1}})  # ex-9b paso 4: la respuesta corta la lee el extractor
     st = _state()
     for m in ("quiero hacer el curso open water, estoy en cartagena", "para mi", "no soy colombiano"):
         await route_message(st, m)
@@ -185,59 +160,8 @@ def test_la_ubicacion_del_hotel_se_declara(monkeypatch, flag):
     assert ("location" in intent.detected_fields) is flag
 
 
-def test_con_la_ubicacion_declarada_jev_la_tira_si_nadie_la_afirma(monkeypatch):
-    monkeypatch.setattr(settings, "hotel_ubicacion_declarada", True)
-    st = _state()
-    st._affirms_p = {"location": 0.05}
-    intent = core._detector.detect("me pasas el contacto del hotel cocoliso", st)
-    core._drop_regex_fields_jev_denies(intent, st)
-    assert intent.location is None
-
-
-# --- jev_lugar_cliente (s4-28): la regex propone que hay ubicacion; Jev decide cual ---------------------------
-
-def _intent(msg, st):
-    return core._detector.detect(msg, st)
-
-
-@pytest.mark.parametrize("lugar, esperado", [
-    ({"choice": "cartagena", "confidence": 0.95}, "cartagena"),  # Jev seguro de otro lugar: el suyo
-    ({"choice": "none", "confidence": 0.98}, None),              # Jev seguro de que no lo dice: sin ubicacion
-    ({"choice": "cartagena", "confidence": 0.53}, None),         # otro lugar y Jev duda: se pregunta
-    ({"choice": "none", "confidence": 0.38}, "island"),          # solo duda de que lo diga: la regex
-    ({"choice": "islands", "confidence": 0.40}, "island"),       # de acuerdo: se queda
-    (None, "island"),                                            # sin Jev: la regex, como hoy
-])
-def test_el_lugar_lo_decide_jev(monkeypatch, lugar, esperado):
-    monkeypatch.setattr(settings, "jev_lugar_cliente", True)
-    st = _state()
-    st._jev_lugar = lugar
-    intent = _intent("vamos a estar en cartagena y queremos bucear en las islas del rosario", st)
-    assert intent.location == "island"  # lo que propone la regex por la preposicion
-    core._lugar_por_jev(intent, st)
-    assert intent.location == esperado
-    assert ("location" in intent.detected_fields) is (esperado is not None)
-    if esperado != "island":
-        assert intent.island is None and "island" not in intent.detected_fields
-
-
-def test_un_hotel_de_isla_manda_sobre_jev(monkeypatch):
-    monkeypatch.setattr(settings, "jev_lugar_cliente", True)
-    st = _state()
-    st._jev_lugar = {"choice": "cartagena", "confidence": 0.8}  # Jev no conoce los hoteles
-    intent = _intent("estamos alojados en el hotel san pedro de majagua desde el lunes", st)
-    core._lugar_por_jev(intent, st)
-    assert intent.location == "island"
-
-
-def test_lugar_con_el_flag_apagado(monkeypatch):
-    monkeypatch.setattr(settings, "jev_lugar_cliente", False)
-    st = _state()
-    st._jev_lugar = {"choice": "cartagena", "confidence": 0.95}
-    intent = _intent("vamos a estar en cartagena y queremos bucear en las islas del rosario", st)
-    core._lugar_por_jev(intent, st)
-    assert intent.location == "island"
-
+# --- jev_lugar_cliente (s4-28): la pregunta de Jev (la leen CAL-C3c y CAL-C4; `_lugar_por_jev` se quitó con la
+# pista del regex en la limpieza ex9b) ---------------------------------------------------------------------------
 
 def test_jev_pide_el_lugar_solo_con_el_flag(monkeypatch):
     from src.agents import jev_router
@@ -249,13 +173,3 @@ def test_jev_pide_el_lugar_solo_con_el_flag(monkeypatch):
     assert jev_router.uncertain_answers({jev_router.CUSTOMER_PLACE: {"type": "choice", "choice": "none", "confidence": 0.3}}) == []
     monkeypatch.setattr(settings, "jev_lugar_cliente", False)
     assert jev_router.CUSTOMER_PLACE not in jev_router._questions_for_turn()
-
-
-def test_jev_no_quita_cartagena_si_solo_dice_que_no_consta(monkeypatch):
-    monkeypatch.setattr(settings, "jev_lugar_cliente", True)
-    st = _state()
-    st._jev_lugar = {"choice": "none", "confidence": 0.77}
-    intent = _intent("me gustaria tener mas informacion acerca de los cursos de buceo en cartagena", st)
-    assert intent.location == "cartagena"
-    core._lugar_por_jev(intent, st)
-    assert intent.location == "cartagena"

@@ -93,8 +93,8 @@ def test_la_respuesta_que_ya_pregunta_el_origen_va_sola(monkeypatch, flag, slot,
 def conversacion(monkeypatch, extractor_dice):
     """La reserva entera, sin red: señales vacías, extractores apagados y un RAG falso que apunta sus preguntas.
 
-    ex-9b paso 3 (`extractor_sin_pista`): el extractor del turno, simulado con lo que dicen los mensajes de reserva (sin
-    él, en los tests fallaba y el turno iba por la pista del regex; con el flag, a los dos fallos se pasa a un asesor)."""
+    ex-9b paso 3: el extractor del turno, simulado con lo que dicen los mensajes de reserva (sin él, en los tests falla
+    y, a los dos fallos seguidos, se pasa a un asesor)."""
     extractor_dice({"queremos bucear, somos certificados":
                     {"quiere_bucear": True, "is_certified": True, "activity": "certified_diving"},
                     "desde cartagena": {"location": "cartagena"}})

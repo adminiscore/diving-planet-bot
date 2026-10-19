@@ -174,7 +174,7 @@ class TestConfirmationFlow:
 
     @pytest.mark.asyncio
     async def test_no_after_confirmation_clears_pending_intent(self, extractor_dice):
-        # ex-9b paso 3: con el extractor caído dos turnos seguidos se pasa a un asesor (`extractor_sin_pista`).
+        # ex-9b paso 3: con el extractor caído dos turnos seguidos se pasa a un asesor.
         extractor_dice({_AMBIGUOUS_RESCUE_ES: {"activity": "padi_rescue"}})
         state = make_state("es")
         await route_message(state, _AMBIGUOUS_RESCUE_ES)

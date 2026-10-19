@@ -38,9 +38,8 @@ def _grupo_camino_antiguo(monkeypatch):
     decide el extractor (tests/test_ex7_grupo.py)."""
 
 
-# ex-9b paso 3 (`extractor_sin_pista`): lo que el extractor del turno lee de los mensajes de reserva de estos tests
-# (fixture `extractor_dice` de conftest). Sin él, en los tests (sin red) el extractor falla y el turno iba por la pista
-# del regex. Las preguntas no afirman datos ({}).
+# ex-9b paso 3: lo que el extractor del turno lee de los mensajes de reserva de estos tests (fixture `extractor_dice`
+# de conftest). Sin él, en los tests (sin red) el extractor falla. Las preguntas no afirman datos ({}).
 BUZOS = {"quiere_bucear": True, "is_certified": True, "activity": "certified_diving"}
 LEE_EL_EXTRACTOR = {
     "queremos bucear, somos certificados": BUZOS,
@@ -123,7 +122,7 @@ async def test_con_flag_y_jev_contesta_sin_interrogacion(monkeypatch, signals, r
     assert st.core_pending_slot == core.SLOT_QTY
 
 
-async def test_en_una_pregunta_el_regex_no_escribe_datos(monkeypatch, signals, rag, verificador):
+async def test_en_una_pregunta_el_regex_no_escribe_datos(monkeypatch, signals, rag, verificador, extractor_dice):
     """"¿me recomiendas un hotel en Rosario?" no dice que se aloje allí: el regex leería
     location=island; el LLM (aquí, que se abstiene) es quien decide.
 
@@ -132,7 +131,9 @@ async def test_en_una_pregunta_el_regex_no_escribe_datos(monkeypatch, signals, r
     fallaba. Lo que el test quiere fijar es la conducta CUANDO el LLM se abstiene, no si la
     API responde — ver `test_si_el_llm_no_contesta_no_se_tira_nada` para el otro caso.
     """
-    monkeypatch.setattr(settings, "extractor_sin_pista", False)  # camino del regex: se va con el borrado del paso 3
+    # ex-9b paso 3 (limpieza ex9b): el regex ya no alimenta la ubicación (antes este test apagaba la pista para verla
+    # leída y descartada); la lee el extractor del turno, que en la pregunta no afirma nada.
+    extractor_dice(LEE_EL_EXTRACTOR)
     _calls, box = verificador
     box["afirma"] = {}  # el LLM se abstiene: nadie afirma la ubicación
     st = _state()
@@ -275,11 +276,9 @@ async def test_si_jev_duda_en_el_router_los_afirma_viajan_igual(monkeypatch):
     monkeypatch.setattr(escalation, "AsyncOpenAI", lambda **_k: _NoTool())
     monkeypatch.setattr(escalation, "trace_openai", lambda c: c)
     got = await escalation.detect_routing_signals("Yo soy open y me gustaría salir un día. No sé qué tienen.")
-    assert got == {
-        "asks_question": True, "affirms_activity": True, "affirms_nationality": False,
-        # u3-3 (promocionado el 28-sep): las probabilidades crudas viajan también
-        "affirms_p": {"affirms_activity": 0.93, "affirms_nationality": 0.05},
-    }
+    # (u3-3 mandaba también las probabilidades crudas, `affirms_p`: se quitaron en la limpieza ex9b con su único lector,
+    # la puerta del regex en los turnos sin pregunta.)
+    assert got == {"asks_question": True, "affirms_activity": True, "affirms_nationality": False}
 
 
 # ── Arreglo 1 (25-sep): si el RAG no sabe, su respuesta va SOLA ──────────────
@@ -580,18 +579,6 @@ async def test_si_jev_dice_que_si_lo_afirma_la_contradiccion_se_confirma(monkeyp
     assert st.pending_correction == {"is_certified": False}
 
 
-async def test_la_puerta_tira_nacionalidad_y_grupo_nombrados_dentro_de_la_pregunta(monkeypatch):
-    """"¿cuál es el precio para colombianos, para 2?" no dice que sean colombianos ni cuántos van."""
-    monkeypatch.setattr(settings, "extractor_sin_pista", False)  # camino del regex: se va con el borrado del paso 3
-    st = _con_pregunta(_state(), {"is_colombian": False, "group_size": False, "group_allocation": False})
-    intent = core._detector.detect("somos colombianos y vamos 2", st)
-    assert intent.is_colombian is True and intent.group_size == 2, "el regex lo lee (control)"
-    core._question_turn_fields(intent, st)
-    assert intent.is_colombian is None
-    assert intent.group_size is None
-    assert "is_colombian" not in intent.detected_fields
-
-
 # ---------------------------------------------------------------------------
 # u3-4 paso 3 (26-sep): relleno CON PUERTA en el turno con pregunta. Solo los
 # huecos que Jev dice que el cliente afirma, y solo con el mensaje actual.
@@ -714,23 +701,3 @@ def test_jev_solo_decide_la_respuesta_pendiente_si_esta_seguro(monkeypatch):
     assert core._jev_pending_answer("nationality", doubt) is None  # duda -> LLM
     none = {"pending_answer": {"slot": "nationality", "value": None, "confidence": 0.95}}
     assert core._jev_pending_answer("nationality", none) == {}  # seguro de que no contesta
-
-
-# u3-3: la puerta de Jev sobre el regex también en turnos sin pregunta.
-def test_sin_pregunta_jev_descarta_lo_que_el_cliente_no_afirma(monkeypatch):
-    from src.agents.intent_detector import DetectedIntent
-
-    st = _state()
-    st._affirms_p = {"location": 0.05, "activity": 0.9, "is_colombian": 0.4}  # 0,4: no está seguro
-    intent = DetectedIntent()
-    intent.location = "island"
-    intent.activity = "snorkel"
-    intent.detected_fields = ["location", "activity"]
-    core._drop_regex_fields_jev_denies(intent, st)
-    assert intent.location is None and "location" not in intent.detected_fields
-    assert intent.activity == "snorkel"  # Jev lo ve afirmado
-    st._affirms_p = {}  # Jev no contestó -> como hoy
-    intent.location = "island"
-    intent.detected_fields = ["location"]
-    core._drop_regex_fields_jev_denies(intent, st)
-    assert intent.location == "island"

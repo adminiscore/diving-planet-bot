@@ -71,12 +71,12 @@ def _asks_about_ai_identity(msg_lower: str) -> bool:
 
 
 def pregunta_si_es_ia(msg_lower: str, signals: dict | None) -> bool:
-    """¿Pregunta el cliente si habla con un bot o qué IA hay detrás? ex-9b paso 5 (flag `identidad_ia_por_jev`): si
-    Jev contesta (`pregunta_si_es_ia`, también en False) manda Jev; el regex solo si Jev calla. El regex contestaba
-    "soy Coral, la asistente virtual" a "¿qué modelo de regulador usan?". La usan el router, el nodo y la cascada."""
+    """¿Pregunta el cliente si habla con un bot o qué IA hay detrás? ex-9b paso 5: si Jev contesta
+    (`pregunta_si_es_ia`, también en False) manda Jev; el regex solo si Jev calla. El regex contestaba "soy Coral, la
+    asistente virtual" a "¿qué modelo de regulador usan?". La usan el router, el nodo y la cascada."""
     from src.agents.jev_router import PREGUNTA_SI_ES_IA
 
-    if settings.identidad_ia_por_jev and signals and PREGUNTA_SI_ES_IA in signals:
+    if signals and PREGUNTA_SI_ES_IA in signals:
         return bool(signals[PREGUNTA_SI_ES_IA])
     return _asks_about_ai_identity(msg_lower)
 

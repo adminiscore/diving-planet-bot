@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-19T21:12:09+00:00",
-  "commit": "ad1a05e",
+  "generado": "2026-10-19T21:56:50+00:00",
+  "commit": "bb8f93c",
   "rama": "feature/pre_gadea"
  },
  "vistas": {
@@ -169,41 +169,6 @@
      "codigo": true,
      "pre": true,
      "sin_efecto": false
-    },
-    {
-     "nombre": "alcohol_detras_de_lo_medico",
-     "titulo": "Lo médico va antes que el atajo del alcohol",
-     "codigo": true,
-     "pre": true,
-     "sin_efecto": false
-    },
-    {
-     "nombre": "regex_solo_si_ia_calla",
-     "titulo": "Las listas de palabras solo deciden si la IA calla",
-     "codigo": true,
-     "pre": true,
-     "sin_efecto": false
-    },
-    {
-     "nombre": "reinicio_por_jev",
-     "titulo": "Solo empieza de cero si Jev ve un caso nuevo",
-     "codigo": true,
-     "pre": true,
-     "sin_efecto": false
-    },
-    {
-     "nombre": "identidad_ia_por_jev",
-     "titulo": "Jev decide si preguntan si Coral es un bot",
-     "codigo": true,
-     "pre": true,
-     "sin_efecto": false
-    },
-    {
-     "nombre": "idioma_por_jev",
-     "titulo": "Jev decide si el cliente pide cambiar de idioma",
-     "codigo": true,
-     "pre": true,
-     "sin_efecto": false
     }
    ],
    "detalle": [
@@ -214,8 +179,8 @@
    "marca": "openrouter",
    "tiempos": {
     "n": 93,
-    "p50": 0.42,
-    "p95": 1.488
+    "p50": 0.454,
+    "p95": 1.785
    }
   },
   {
@@ -238,9 +203,9 @@
    ],
    "modelos": [],
    "tiempos": {
-    "n": 9,
+    "n": 7,
     "p50": 0.002,
-    "p95": 0.002
+    "p95": 0.007
    }
   },
   {
@@ -281,8 +246,8 @@
    "modelos": [],
    "tiempos": {
     "n": 1,
-    "p50": 0.002,
-    "p95": 0.002
+    "p50": 0.003,
+    "p95": 0.003
    }
   },
   {
@@ -299,9 +264,9 @@
    "modelos": [],
    "interruptores": [],
    "tiempos": {
-    "n": 2,
-    "p50": 3.594,
-    "p95": 3.924
+    "n": 4,
+    "p50": 4.114,
+    "p95": 5.374
    }
   },
   {
@@ -318,8 +283,8 @@
    "interruptores": [],
    "tiempos": {
     "n": 80,
-    "p50": 2.696,
-    "p95": 6.402
+    "p50": 3.06,
+    "p95": 6.739
    }
   },
   {
@@ -516,20 +481,13 @@
      "codigo": true,
      "pre": true,
      "sin_efecto": false
-    },
-    {
-     "nombre": "nombre_solo_por_extractor",
-     "titulo": "«Me llamo…» tampoco gana a la IA",
-     "codigo": true,
-     "pre": true,
-     "sin_efecto": false
     }
    ],
    "marca": "openai",
    "tiempos": {
     "n": 80,
-    "p50": 0.031,
-    "p95": 1.571
+    "p50": 0.032,
+    "p95": 1.947
    }
   },
   {
@@ -553,8 +511,8 @@
    "modelos": [],
    "tiempos": {
     "n": 80,
-    "p50": 0.006,
-    "p95": 2.744
+    "p50": 0.005,
+    "p95": 0.146
    }
   },
   {
@@ -575,13 +533,6 @@
    ],
    "interruptores": [
     {
-     "nombre": "respuesta_corta_por_ia",
-     "titulo": "La respuesta corta a la pregunta del bot la lee la IA",
-     "codigo": true,
-     "pre": true,
-     "sin_efecto": false
-    },
-    {
      "nombre": "plan_elegido_por_extractor",
      "titulo": "Aceptar el paquete que propone Coral lo elige",
      "codigo": false,
@@ -591,9 +542,9 @@
    ],
    "marca": "openrouter",
    "tiempos": {
-    "n": 72,
+    "n": 74,
     "p50": 0.006,
-    "p95": 0.358
+    "p95": 0.171
    }
   },
   {
@@ -686,13 +637,6 @@
      "sin_efecto": false
     },
     {
-     "nombre": "extractor_sin_pista",
-     "titulo": "Los datos del cliente los lee solo la IA",
-     "codigo": true,
-     "pre": true,
-     "sin_efecto": false
-    },
-    {
      "nombre": "duracion_por_extractor",
      "titulo": "Los días de buceo y de estancia los lee la IA",
      "codigo": true,
@@ -716,9 +660,9 @@
    ],
    "marca": "openrouter",
    "tiempos": {
-    "n": 72,
-    "p50": 0.732,
-    "p95": 1.671
+    "n": 74,
+    "p50": 0.964,
+    "p95": 2.242
    }
   },
   {
@@ -762,13 +706,6 @@
     {
      "nombre": "lugar_desconocido_al_rag",
      "titulo": "Un lugar desconocido se pregunta a la base",
-     "codigo": true,
-     "pre": true,
-     "sin_efecto": false
-    },
-    {
-     "nombre": "red_menciones_solo_sin_extractor",
-     "titulo": "La red de palabras clave, solo si falla el extractor",
      "codigo": true,
      "pre": true,
      "sin_efecto": false
@@ -886,27 +823,6 @@
      "sin_efecto": false
     },
     {
-     "nombre": "pregunta_y_correccion_por_jev",
-     "titulo": "Jev decide si el mensaje pregunta algo o corrige un dato",
-     "codigo": true,
-     "pre": true,
-     "sin_efecto": false
-    },
-    {
-     "nombre": "deliberacion_por_jev",
-     "titulo": "Jev decide si el cliente duda entre opciones",
-     "codigo": true,
-     "pre": true,
-     "sin_efecto": false
-    },
-    {
-     "nombre": "precio_por_jev",
-     "titulo": "Jev decide si piden el precio de una actividad",
-     "codigo": true,
-     "pre": true,
-     "sin_efecto": false
-    },
-    {
      "nombre": "acuse_solo_el_mensaje",
      "titulo": "El acuse no se inventa nada",
      "codigo": true,
@@ -916,9 +832,9 @@
    ],
    "marca": "openrouter",
    "tiempos": {
-    "n": 72,
-    "p50": 1.083,
-    "p95": 5.496
+    "n": 74,
+    "p50": 1.173,
+    "p95": 5.34
    }
   },
   {
@@ -1019,9 +935,9 @@
    ],
    "modelos": [],
    "conteo": {
-    "n": 44,
+    "n": 46,
     "que": "preguntas",
-    "fuente": "2026-10-19-ex9b-7.json"
+    "fuente": "2026-10-19-ex9b-8.json"
    }
   },
   {
@@ -2016,19 +1932,6 @@
    "sin_efecto": null
   },
   {
-   "nombre": "alcohol_detras_de_lo_medico",
-   "area": "Enrutador",
-   "titulo": "Lo médico va antes que el atajo del alcohol",
-   "texto": "Si el mensaje habla de alcohol y además de algo médico («estoy embarazada, ¿puedo bucear o tomar vino?», «anoche tomé mucho y me duele el pecho»), Coral lo trata como un tema médico y lo pasa a una persona, en vez de contestar solo la norma del alcohol. La pregunta de alcohol sola sigue con su norma.",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [
-    "router"
-   ],
-   "sin_efecto": null
-  },
-  {
    "nombre": "aplazar_pregunta_sin_respuesta",
    "area": "Reserva",
    "titulo": "No repite la pregunta que el cliente no contestó",
@@ -2085,17 +1988,6 @@
    "area": "Respuestas fijas",
    "titulo": "El aviso médico dice el pase",
    "texto": "El aviso médico dice que pasa la conversación a alguien del equipo, que es lo que hace.",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [],
-   "sin_efecto": null
-  },
-  {
-   "nombre": "aviso_pago_al_reservar",
-   "area": "Preguntas",
-   "titulo": "Al explicar cómo reservar, avisa de que el pago no confirma al momento",
-   "texto": "Cuando el cliente pregunta cómo reservar, Coral puede añadir el aviso de que el pago se registra al momento y el equipo lo revisa poco después para confirmar la reserva. Antes ese aviso solo salía si se hablaba de pagos, y al explicar cómo reservar Coral decía «al pagar quedas confirmado», que no es así (decisión de Gadea).",
    "codigo": true,
    "pre": true,
    "fijado_en_pre": true,
@@ -2283,19 +2175,6 @@
    "sin_efecto": null
   },
   {
-   "nombre": "deliberacion_por_jev",
-   "area": "Reserva",
-   "titulo": "Jev decide si el cliente duda entre opciones",
-   "texto": "Si el cliente nombra dos actividades, Jev decide si está dudando entre ellas (y entonces Coral se las explica) o si las está reservando para distintas personas del grupo. Antes lo decidían frases sueltas y unas reglas de excepción: «somos 3 y no tenemos claro si hacer snorkel o el minicurso» se tomaba como una reserva por llevar una cifra.",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [
-    "b_slotfill_close"
-   ],
-   "sin_efecto": null
-  },
-  {
    "nombre": "dias_cerrados_por_rag",
    "area": "Respuestas fijas",
    "titulo": "Los días cerrados los contesta el RAG",
@@ -2411,19 +2290,6 @@
    "sin_efecto": null
   },
   {
-   "nombre": "extractor_sin_pista",
-   "area": "Reserva",
-   "titulo": "Los datos del cliente los lee solo la IA",
-   "texto": "La actividad, desde dónde sale, si está certificado, cuántos son y cómo se reparten, la nacionalidad y la última inmersión los lee solo el extractor (la IA que comprueba lo que el cliente dijo de verdad). Hoy, si esa IA falla, Coral los adivina con listas de palabras (que se equivocan: «hola quiero bucear con mi amigo» pasa por elegir el buceo para certificados); con este interruptor los pregunta (decisión de Gadea); si la IA vuelve a fallar en el turno siguiente, Coral dice que tiene un problema técnico y pasa a un asesor, en vez de repetir la pregunta. A quien empieza se le sigue recomendando el minicurso, pero porque la IA lee que quiere bucear y no está certificado, no por las palabras. El hotel y la isla del catálogo se siguen reconociendo como hoy.",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [
-    "b_extraction"
-   ],
-   "sin_efecto": null
-  },
-  {
    "nombre": "extractor_todo_lo_dicho",
    "area": "Reserva",
    "titulo": "El extractor entiende mejor grupo, aceptación y residencia",
@@ -2507,19 +2373,6 @@
    "sin_efecto": null
   },
   {
-   "nombre": "identidad_ia_por_jev",
-   "area": "Respuestas fijas",
-   "titulo": "Jev decide si preguntan si Coral es un bot",
-   "texto": "La respuesta fija «soy Coral, la asistente virtual» sale cuando Jev ve que el cliente pregunta si habla con un bot o con una persona. Antes bastaba una palabra como «modelo»: «¿qué modelo de regulador usan?» recibía esa respuesta.",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [
-    "router"
-   ],
-   "sin_efecto": null
-  },
-  {
    "nombre": "idioma_del_extractor",
    "area": "Chat",
    "titulo": "El idioma del primer mensaje lo dice quien lee el mensaje",
@@ -2542,19 +2395,6 @@
    "fijado_en_pre": true,
    "usado_por": [
     "b_extraction"
-   ],
-   "sin_efecto": null
-  },
-  {
-   "nombre": "idioma_por_jev",
-   "area": "Chat",
-   "titulo": "Jev decide si el cliente pide cambiar de idioma",
-   "texto": "La conversación cambia de idioma cuando Jev ve que el cliente lo pide («can we continue in english?», «no entiendo inglés»). Antes «¿el curso es en inglés?» pasaba la conversación al inglés.",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [
-    "router"
    ],
    "sin_efecto": null
   },
@@ -2586,7 +2426,7 @@
    "nombre": "jev_lugar_cliente",
    "area": "Reserva",
    "titulo": "Jev decide dónde está el cliente",
-   "texto": "Bucear en las islas no es estar en las islas: 'estamos en Cartagena y queremos bucear en el Rosario' ya no deja al cliente en las islas. Si no está claro, Coral pregunta desde dónde sale.",
+   "texto": "Bucear en las islas no es estar en las islas: Jev dice si el mensaje cuenta de verdad desde dónde sale el cliente. Si está seguro de que no lo dice ('quiero bucear en las islas del Rosario'), el origen no se guarda y Coral lo pregunta; y si nombra un sitio que no es Cartagena ni las islas, Coral se lo pregunta a la base.",
    "codigo": true,
    "pre": true,
    "fijado_en_pre": true,
@@ -2916,19 +2756,6 @@
    "sin_efecto": null
   },
   {
-   "nombre": "nombre_solo_por_extractor",
-   "area": "Reserva",
-   "titulo": "«Me llamo…» tampoco gana a la IA",
-   "texto": "El nombre de quien escribe lo decide siempre el extractor, también cuando el mensaje dice «me llamo» o «mi nombre es»: antes esa frase iba por delante y ganaba, y «me llamo mucho la atención el precio» saludaba «¡Hola, Mucho!». Si la IA no contesta, la frase de siempre.",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [
-    "b_setup"
-   ],
-   "sin_efecto": null
-  },
-  {
    "nombre": "notas_puerta_jev",
    "area": "Reserva",
    "titulo": "Solo apuntar notas si hay algo que apuntar",
@@ -3058,32 +2885,6 @@
    "codigo": false,
    "pre": false,
    "fijado_en_pre": false,
-   "usado_por": [
-    "b_slotfill_close"
-   ],
-   "sin_efecto": null
-  },
-  {
-   "nombre": "precio_por_jev",
-   "area": "Preguntas",
-   "titulo": "Jev decide si piden el precio de una actividad",
-   "texto": "Antes de dar un precio sin saber desde dónde sale el cliente, Coral le pregunta el origen. Para saber si el cliente pide el precio de una actividad (y no el de un hotel o un taxi), ahora manda Jev; antes bastaba con que el mensaje dijera «hotel» en cualquier parte («¿cuánto me sale el plan de 2 inmersiones? me quedo en el hotel Caribe») para cotizar sin preguntar el origen.",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [
-    "b_slotfill_close"
-   ],
-   "sin_efecto": null
-  },
-  {
-   "nombre": "pregunta_y_correccion_por_jev",
-   "area": "Reserva",
-   "titulo": "Jev decide si el mensaje pregunta algo o corrige un dato",
-   "texto": "Para saber si el cliente pregunta algo (y hay que contestarle) o corrige un dato que ya dio, manda Jev cuando contesta; la lista de palabras solo cuenta si Jev no contesta. Antes «hay un niño de 5 años» se tomaba por una pregunta y «perdón la demora, ¿qué horarios tienen?» por una corrección.",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
    "usado_por": [
     "b_slotfill_close"
    ],
@@ -3327,30 +3128,6 @@
    "sin_efecto": null
   },
   {
-   "nombre": "red_menciones_con_principal",
-   "area": "Reserva",
-   "titulo": "'Buceo' no es un segundo plan",
-   "texto": "Una mención genérica de buceo ya no saca un acompañante de buceo certificado de la nada: sin actividad principal es la del grupo, y con ella es parte del mismo plan.",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [],
-   "sin_efecto": null
-  },
-  {
-   "nombre": "red_menciones_solo_sin_extractor",
-   "area": "Reserva",
-   "titulo": "La red de palabras clave, solo si falla el extractor",
-   "texto": "Una red antigua buscaba nombres de actividades en el mensaje y preguntaba por ellas ('We snorkeled yesterday' → '¿cuántos para snorkel?'). Ahora el reparto del grupo lo decide el extractor y la red solo actúa si el extractor no pudo leer el mensaje.",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [
-    "b_slotfill_close"
-   ],
-   "sin_efecto": null
-  },
-  {
    "nombre": "refresher_por_extractor",
    "area": "Reserva",
    "titulo": "Si quiere el repaso, se apunta aunque no se le haya preguntado",
@@ -3360,32 +3137,6 @@
    "fijado_en_pre": true,
    "usado_por": [
     "b_slotfill_close"
-   ],
-   "sin_efecto": null
-  },
-  {
-   "nombre": "regex_solo_si_ia_calla",
-   "area": "Enrutador",
-   "titulo": "Las listas de palabras solo deciden si la IA calla",
-   "texto": "Para el link roto, los temas sensibles, cancelar o cambiar, pedir un contacto, hablar con una persona y DIVE TO HEAL, si Jev o el enrutador de respaldo han contestado este turno manda lo que dicen ellos; las listas de palabras solo cuentan si la IA no contesta. Vale igual en el enrutador, en cada ruta y en la reserva. Corrige «quiero hablar con mi esposa antes de reservar» (no es pedir una persona) o «¿dónde cojo la lancha?» (no es DIVE TO HEAL).",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [
-    "router"
-   ],
-   "sin_efecto": null
-  },
-  {
-   "nombre": "reinicio_por_jev",
-   "area": "Enrutador",
-   "titulo": "Solo empieza de cero si Jev ve un caso nuevo",
-   "texto": "Si el cliente saluda y se presenta a mitad de conversación, antes se borraba toda la memoria («Hola, soy Ana, ya hablamos ayer, al final somos 3» perdía la reserva). Ahora la borra solo si Jev, que ve lo hablado antes, dice que es una persona o un caso nuevo; si sigue con lo de antes, se queda todo.",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [
-    "router"
    ],
    "sin_efecto": null
   },
@@ -3449,19 +3200,6 @@
    "fijado_en_pre": false,
    "usado_por": [
     "r_escribir"
-   ],
-   "sin_efecto": null
-  },
-  {
-   "nombre": "respuesta_corta_por_ia",
-   "area": "Reserva",
-   "titulo": "La respuesta corta a la pregunta del bot la lee la IA",
-   "texto": "Cuando el bot acaba de preguntar desde dónde sale el cliente, en qué hotel se aloja o cuántos son, la respuesta corta la lee la IA (la respuesta de Jev a esa pregunta y el extractor), también si tiene pocas letras; las listas de palabras solo cuentan si la IA no contesta. Antes «no tengo idea, el Hilton creo» guardaba el hotel «por confirmar» y perdía el Hilton, y una frase cualquiera («ok perfecto») se guardaba como nombre del hotel. «Da igual» o «tú decides» siguen siendo salir desde Cartagena, y un hotel que no se sabe sigue «por confirmar». Los botones y una cifra sola («4») se leen como siempre. «Voy solo» = un grupo de 1, según la IA.",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [
-    "b_routing"
    ],
    "sin_efecto": null
   },
@@ -3551,7 +3289,7 @@
     "b_acuse"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 45
+   "llamadas_ultima_ronda": 46
   },
   {
    "ajuste": "avisos_al_final_model",
@@ -3561,7 +3299,7 @@
     "r_revisor"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 94
+   "llamadas_ultima_ronda": 106
   },
   {
    "ajuste": "extraction_model",
@@ -3569,7 +3307,7 @@
    "pre": "gpt-5.4-mini",
    "usado_por": [],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": null
+   "llamadas_ultima_ronda": 1
   },
   {
    "ajuste": "extractor_turno_model",
@@ -3579,7 +3317,7 @@
     "b_extraction"
    ],
    "proveedor": "OpenRouter",
-   "llamadas_ultima_ronda": 96
+   "llamadas_ultima_ronda": 187
   },
   {
    "ajuste": "grounding_v3_model",
@@ -3589,7 +3327,7 @@
     "r_revisor"
    ],
    "proveedor": "OpenRouter",
-   "llamadas_ultima_ronda": 163
+   "llamadas_ultima_ronda": 168
   },
   {
    "ajuste": "idioma_model",
@@ -3597,7 +3335,7 @@
    "pre": "deepseek/deepseek-v4.1-flash",
    "usado_por": [],
    "proveedor": "OpenRouter",
-   "llamadas_ultima_ronda": 163
+   "llamadas_ultima_ronda": 168
   },
   {
    "ajuste": "jev_model",
@@ -3619,7 +3357,7 @@
     "b_notas"
    ],
    "proveedor": "OpenRouter",
-   "llamadas_ultima_ronda": 163
+   "llamadas_ultima_ronda": 168
   },
   {
    "ajuste": "openai_embedding_model",
@@ -3642,7 +3380,7 @@
     "r_reescribir"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": null
+   "llamadas_ultima_ronda": 1
   },
   {
    "ajuste": "openai_transcription_model",
@@ -3660,7 +3398,7 @@
    "pre": "deepseek/deepseek-v4.1-flash",
    "usado_por": [],
    "proveedor": "OpenRouter",
-   "llamadas_ultima_ronda": 163
+   "llamadas_ultima_ronda": 168
   },
   {
    "ajuste": "rag_answer_model",
@@ -3670,7 +3408,7 @@
     "r_escribir"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 94
+   "llamadas_ultima_ronda": 106
   },
   {
    "ajuste": "rag_plan_model",
@@ -3678,7 +3416,7 @@
    "pre": "gpt-6-luna",
    "usado_por": [],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 94
+   "llamadas_ultima_ronda": 106
   },
   {
    "ajuste": "red_extractor_model",
@@ -3688,7 +3426,7 @@
     "b_extraction"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 94
+   "llamadas_ultima_ronda": 106
   },
   {
    "ajuste": "reescritura_model",
@@ -3696,7 +3434,7 @@
    "pre": "deepseek/deepseek-v4.1-flash",
    "usado_por": [],
    "proveedor": "OpenRouter",
-   "llamadas_ultima_ronda": 163
+   "llamadas_ultima_ronda": 168
   },
   {
    "ajuste": "resolutor_model",
@@ -3706,7 +3444,7 @@
     "b_slotfill_close"
    ],
    "proveedor": "OpenRouter",
-   "llamadas_ultima_ronda": 96
+   "llamadas_ultima_ronda": 187
   },
   {
    "ajuste": "resumen_model",
@@ -3714,7 +3452,7 @@
    "pre": "deepseek/deepseek-v4.1-flash",
    "usado_por": [],
    "proveedor": "OpenRouter",
-   "llamadas_ultima_ronda": 163
+   "llamadas_ultima_ronda": 168
   },
   {
    "ajuste": "senales_model",
@@ -3725,38 +3463,38 @@
     "b_routing"
    ],
    "proveedor": "OpenRouter",
-   "llamadas_ultima_ronda": 163
+   "llamadas_ultima_ronda": 168
   }
  ],
  "ronda": {
-  "etiqueta": "ex9b-7 (configuracion final antes de G9)",
-  "run_at": "2026-10-19T20:30:55Z",
-  "fichero": "2026-10-19-ex9b-7.json",
-  "commit": "ad1a05e",
+  "etiqueta": "ex9b-8 (paso 6 + quien se suma, final antes de G9)",
+  "run_at": "2026-10-19T21:41:36Z",
+  "fichero": "2026-10-19-ex9b-8.json",
+  "commit": "bb8f93c",
   "por_tipo": {
    "reserva": {
-    "turns": 49,
-    "latency_p50": 1.896,
-    "latency_p95": 3.085,
-    "latency_avg": 1.96,
-    "llm_calls_avg": 2.73,
-    "llm_calls_p95": 4.0,
-    "llm_calls_max": 5,
-    "embeddings_avg": 1.43,
-    "llm_share": 1.297,
+    "turns": 47,
+    "latency_p50": 1.922,
+    "latency_p95": 3.546,
+    "latency_avg": 2.16,
+    "llm_calls_avg": 3.85,
+    "llm_calls_p95": 5.7,
+    "llm_calls_max": 7,
+    "embeddings_avg": 1.51,
+    "llm_share": 1.835,
     "tokens_avg": 0,
     "cost_avg_usd": 0
    },
    "rag": {
-    "turns": 44,
-    "latency_p50": 4.963,
-    "latency_p95": 7.249,
-    "latency_avg": 5.229,
-    "llm_calls_avg": 6.0,
-    "llm_calls_p95": 8.0,
-    "llm_calls_max": 9,
-    "embeddings_avg": 2.18,
-    "llm_share": 1.33,
+    "turns": 46,
+    "latency_p50": 4.814,
+    "latency_p95": 7.836,
+    "latency_avg": 5.117,
+    "llm_calls_avg": 7.11,
+    "llm_calls_p95": 10.0,
+    "llm_calls_max": 10,
+    "embeddings_avg": 2.33,
+    "llm_share": 1.608,
     "tokens_avg": 0,
     "cost_avg_usd": 0
    }
@@ -3767,23 +3505,24 @@
     "llm_uncertain": 10,
     "llm": 1
    },
-   "ms_p50": 398.5,
-   "ms_p95": 470.35
+   "ms_p50": 424.5,
+   "ms_p95": 525.7
   },
   "cliente": {
    "turns": 93,
    "conversations": 32,
    "no_reply": 0,
    "multi_bubble": 1,
-   "latency_p50": 3.0,
-   "latency_p95": 7.0,
+   "latency_p50": 4.0,
+   "latency_p95": 7.4,
    "latency_max": 9
   },
   "llamadas_por_modelo": {
-   "deepseek/deepseek-v4.1-flash": 163,
-   "anthropic/claude-haiku-5.5": 96,
-   "gpt-6-luna": 94,
-   "gpt-5.4-nano": 45
+   "anthropic/claude-haiku-5.5": 187,
+   "deepseek/deepseek-v4.1-flash": 168,
+   "gpt-6-luna": 106,
+   "gpt-5.4-nano": 46,
+   "gpt-5.4-mini": 1
   },
   "calidad": null
  },

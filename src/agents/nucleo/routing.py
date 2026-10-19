@@ -11,7 +11,6 @@ import re
 
 from src.agents.conversational_core import (
     _AFFIRMS_SIGNAL_FIELDS,
-    _EXPLICIT_NUMBER_RE,
     SLOT_ACTIVITY,
     SLOT_AGES,
     SLOT_CERT_OR_COURSE,
@@ -49,13 +48,9 @@ from src.agents.conversational_core import (
     cancel_pending_answer,
 )
 from src.agents.intent_detector import (
-    _CLAUSE_BOUNDARY_RE,
-    _EMBEDDED_QUESTION_WORDS,
     _GENERIC_ISLAND_RE,
     AGE_WORDS,
     DetectedIntent,
-    _is_negated,
-    clause_subject,
 )
 from src.agents.llm_extractor import detect_special_signals
 from src.config import settings
@@ -176,7 +171,7 @@ _LOCATION_DEFER_RE = re.compile(
 )
 
 
-# ex-9b paso 4 (flag `respuesta_corta_por_ia`): las respuestas cortas que lee la IA en vez del regex.
+# ex-9b paso 4: las respuestas cortas que lee la IA en vez del regex.
 _RESPUESTA_LEIDA_POR_LA_IA = frozenset({SLOT_LOCATION, SLOT_HOTEL, SLOT_QTY})
 
 
@@ -211,10 +206,10 @@ def _respuesta_del_paso6(state: ConversationState, slot: str) -> bool:
 
 
 async def _lectura_de_la_ia(state: ConversationState, message: str, routing_signals: dict, slot: str) -> dict | None:
-    """ex-9b paso 4 (flag `respuesta_corta_por_ia`): lo que la IA lee de la respuesta corta a la pregunta pendiente:
+    """ex-9b paso 4: lo que la IA lee de la respuesta corta a la pregunta pendiente:
     {"jev": la respuesta de Jev a ESA pregunta (`pending_answer`, aunque dude), "extractor": lo que leyó el extractor}.
-    None = la conducta de hoy (el regex): flag apagado, otra pregunta, formato, o la IA calla (Jev no contestó a la
-    pregunta y el extractor falló), la misma regla que `supervisor.regex_decide`. Con la respuesta de Jev al origen no
+    None = el regex de siempre: otra pregunta, formato, o la IA calla (Jev no contestó a la pregunta y el extractor
+    falló), la misma regla que `supervisor.regex_decide`. Con la respuesta de Jev al origen no
     hace falta esperar al extractor aquí: lo aplica `_understand` como siempre.
     ex-9b paso 6: también la respuesta a "¿qué edades tienen?" (`edades_por_extractor`) y a "¿un día o varios?" de la
     recomendación para el acompañante (`duracion_por_extractor`), con el extractor; los botones y las cifras solas son
@@ -229,7 +224,7 @@ async def _lectura_de_la_ia(state: ConversationState, message: str, routing_sign
             logger.info(f"[CORE][EX9B-6] la IA calla en la respuesta a {slot!r}: decide el regex de siempre")
             return None
         return {"jev": None, "extractor": datos}
-    if not settings.respuesta_corta_por_ia or slot not in _RESPUESTA_LEIDA_POR_LA_IA:
+    if slot not in _RESPUESTA_LEIDA_POR_LA_IA:
         return None
     if slot == SLOT_HOTEL and not settings.hotel_por_extractor:
         return None  # sin el campo `hotel`, el extractor no lee hoteles
@@ -320,7 +315,7 @@ def _word_ages(message: str) -> list[int]:
 def _apply_short_answer(state: ConversationState, message: str, ia: dict | None = None) -> bool:
     """Contextual slot carryover: interpreta el mensaje como respuesta al slot
     pendiente. Devuelve True si lo resolvió. `ia` (ex-9b paso 4, `_lectura_de_la_ia`): con ella, el origen, el hotel y
-    el total los lee la IA; sin ella (flag apagado, formato o la IA calla), el regex de siempre."""
+    el total los lee la IA; sin ella (formato o la IA calla), el regex de siempre."""
     slot = state.core_pending_slot
     if not slot:
         return False
@@ -577,19 +572,6 @@ _DELIBERATION_RE = re.compile(
     r"|\bwhich\s+(?:one\s+)?(?:is\s+better|do\s+you\s+recommend|should\s+i)\b",
     re.IGNORECASE,
 )
-# Selección/compromiso claro con la(s) actividad(es): anula el camino que
-# depende SOLO de la señal LLM (por si sobre-dispara comparing en un "quiero A
-# y B"). NO anula el patrón de duda determinista. "quiero SABER/CONOCER" es una
-# PREGUNTA, no un compromiso — se excluye con lookahead para que "quiero saber
-# si buceo o snorkel" cuente como duda y vaya a RAG.
-_COMMITMENT_RE = re.compile(
-    # "me gustaría" (2026-09-03, hallazgo en vivo "purple-sun-590"): mismo
-    # verbo de compromiso que "quiero", fraseo real de cliente que faltaba.
-    r"\b(?:quiero|queremos|quisiera|me\s+gustar[ií]a)(?!\s+(?:saber|conocer))\b"
-    r"|\b(?:reserv\w+|me\s+quedo\s+con|nos\s+quedamos\s+con|elijo|elegimos"
-    r"|book|i'?ll\s+take|we'?ll\s+take)\b",
-    re.IGNORECASE,
-)
 
 
 def _looks_like_deliberation(message: str) -> bool:
@@ -661,42 +643,6 @@ def _compose_comparison(offerings: list[str], lang: str) -> str:
             + "\n\nWhich one are you leaning toward? Let's put it together. 🐠")
 
 
-def _weighed_offerings(message: str) -> set:
-    """Ofertas que el mensaje presenta como opciones: las de cada frase, menos las de una
-    frase que las niega ("al final mi suegra tambien bucea, no hace snorkel": el snorkel
-    se descarta, no se sopesa) (hallazgo K, 2026-09-15). Sin vocabulario: la negacion es la
-    del detector (`_is_negated`, con paridad), mirada justo antes de la primera palabra que
-    ya nombra una oferta en la frase. Una pregunta subordinada corta su alcance: en "mi amigo
-    no sabe si bucear o hacer snorkel" el "no" niega saber, no las ofertas."""
-    weighed = set()
-    for clause in _CLAUSE_BOUNDARY_RE.split((message or "").lower()):
-        offerings = _mentioned_offerings(clause)
-        if not offerings:
-            continue
-        words = clause.split()
-        first = next((k for k in range(1, len(words) + 1) if _mentioned_offerings(" ".join(words[:k]))), len(words))
-        prefix = words[:first - 1]
-        start = max((i + 1 for i, word in enumerate(prefix) if word in _EMBEDDED_QUESTION_WORDS), default=0)
-        if not _is_negated(" ".join(prefix[start:])):
-            weighed.update(offerings)
-    return weighed
-
-
-def _offerings_with_own_subject(message: str) -> bool:
-    """¿Cada oferta va con su propio sujeto? "tengo un amigo que quiere bucear y yo hago
-    snorkel", "mi novia hace el minicurso y yo buceo": quien escribe y otra persona, cada
-    uno en su frase con ofertas distintas, es un reparto, no una comparacion (hallazgo E,
-    2026-09-15). Una sola persona que duda ("mi amigo no sabe si bucear o hacer snorkel")
-    tiene un solo sujeto y no cuenta."""
-    owners: dict[str, set] = {}
-    for clause in _CLAUSE_BOUNDARY_RE.split((message or "").lower()):
-        subject = clause_subject(clause)
-        offerings = _mentioned_offerings(clause)
-        if subject and offerings:
-            owners.setdefault(subject, set()).update(offerings)
-    return len(owners) == 2 and owners["writer"] != owners["other"]
-
-
 def _is_deliberation_between_options(message: str, routing_signals: dict) -> bool:
     """True si el mensaje sopesa 2+ ofertas (actividades o cursos) sin decidirse
     — va a RAG en vez de a extracción. Ancla determinista fuerte: exige 2+
@@ -707,36 +653,15 @@ def _is_deliberation_between_options(message: str, routing_signals: dict) -> boo
     actividad."""
     if len(_mentioned_offerings(message)) < 2:
         return False
-    # ex-9b paso 5 (flag `deliberacion_por_jev`): si la IA ha contestado este turno, manda `comparing_options`; la
-    # frase de duda y los vetos de abajo (cifras, sujeto propio, oferta negada, compromiso) solo si la IA calla. Los
-    # vetos se hicieron para el router LLM de antes; Jev ya separa el reparto de la duda. Banco con la config de PRE:
-    # hoy 14/16, solo Jev 15/16 ("somos 3 y no tenemos claro si hacer snorkel o el minicurso": el veto de la cifra).
-    if settings.deliberacion_por_jev and routing_signals:
+    # ex-9b paso 5: si la IA ha contestado este turno, manda `comparing_options`; la frase de duda solo si la IA calla.
+    # Antes la señal pasaba por unos vetos hechos para el router LLM de antes (una cifra, cada oferta con su sujeto, una
+    # oferta negada, "quiero"): Jev ya separa el reparto de la duda. Banco con la config de PRE: con los vetos 14/16,
+    # solo Jev 15/16 ("somos 3 y no tenemos claro si hacer snorkel o el minicurso": el veto de la cifra). Con la IA
+    # callada no hay `comparing_options` que vetar: los vetos se quitaron en la limpieza ex9b.
+    if routing_signals:
         obj = routing_signals.get("comparing_options")
         return bool(obj.get("comparing")) if isinstance(obj, dict) else False
-    if _looks_like_deliberation(message):
-        return True
-    # Anti-falso-positivo del LLM: un mensaje que ASIGNA actividades a sub-grupos
-    # con cantidades ("2 bucean, mis amigos hacen snorkel, y uno hace el
-    # minicurso") es una RESERVA de grupo mixto, no una deliberación entre
-    # opciones — el LLM `comparing_options` lo confunde porque enumera 3
-    # actividades. Discriminador determinista: 2+ ofertas distintas (ya
-    # comprobado) + al menos un número explícito. NO anula la duda EXPLÍCITA
-    # (`_looks_like_deliberation`, comprobada arriba: "somos 2, no sé si buceo o
-    # snorkel" sigue siendo deliberación pese al número). Sin esto, el gate de
-    # deliberación corre ANTES de la extracción y el reparto se pierde a RAG.
-    if _EXPLICIT_NUMBER_RE.search(message):
-        return False
-    # El mismo reparto sin cifras: cada oferta con su propio sujeto (hallazgo E).
-    if _offerings_with_own_subject(message):
-        return False
-    # Una oferta negada no es una opcion que se sopesa (hallazgo K). Solo en el camino que
-    # depende del LLM: la duda escrita ("no se si buceo o snorkel") ya se comprobo arriba.
-    if len(_weighed_offerings(message)) < 2:
-        return False
-    obj = routing_signals.get("comparing_options")
-    llm_comparing = bool(obj.get("comparing")) if isinstance(obj, dict) else False
-    return llm_comparing and not _COMMITMENT_RE.search(message)
+    return _looks_like_deliberation(message)
 
 
 def _accept_pending_correction(state: ConversationState, message: str) -> bool:
@@ -835,9 +760,6 @@ def sembrar_senales_del_turno(state: ConversationState, routing_signals: dict) -
     state._answer_affirms = {f: routing_signals[sig] for f, sig in _AFFIRMS_SIGNAL_FIELDS if sig in routing_signals}
     # u3-5 paso 2: ¿el mensaje corrige un dato ya dado? (Jev, misma llamada). Se renueva cada turno.
     state._jev_corrects = routing_signals.get("corrects")
-    # u3-3: probabilidad cruda de que el cliente afirme cada campo (Jev, misma llamada).
-    raw_p = routing_signals.get("affirms_p") or {}
-    state._affirms_p = {f: raw_p[sig] for f, sig in _AFFIRMS_SIGNAL_FIELDS if sig in raw_p}
     # Paso 5: ¿pide que le recordemos algo que él dijo? (Jev, misma llamada). Se renueva cada turno.
     state._jev_asks_recall = routing_signals.get("asks_recall")
     # u3-6: probabilidad de Jev de que el mensaje meta a otra persona en la reserva (filtro previo del
@@ -894,7 +816,7 @@ async def _routing_phase(
     has_qmark = "?" in message
 
     resolved_short = False
-    # ex-9b paso 4 (`respuesta_corta_por_ia`): la respuesta corta que resolvió la IA no se salta `_understand` aunque
+    # ex-9b paso 4: la respuesta corta que resolvió la IA no se salta `_understand` aunque
     # tenga 12 caracteres o menos (el extractor ya la leyó entera: "el hilton" al origen trae también el hotel).
     respuesta_por_la_ia = False
     if prev_pending and not has_qmark:

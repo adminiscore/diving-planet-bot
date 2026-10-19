@@ -29,8 +29,6 @@ import logging
 from functools import lru_cache
 from pathlib import Path
 
-from src.config import settings
-
 logger = logging.getLogger("uvicorn.error")
 
 AVISOS_PATH = Path(__file__).resolve().parents[2] / "data" / "knowledge_base" / "avisos.json"
@@ -176,11 +174,11 @@ def _depende_del_cliente(aviso: dict) -> bool:
 
 
 def _cuando(aviso: dict) -> dict:
-    """Las condiciones del aviso. ex-9b (19-oct, flag `aviso_pago_al_reservar`): `tambien` añade temas a los de `cuando`
-    (y fuentes, ver `_fuentes`): "el pago no confirma la reserva al momento" tenía que salir también cuando la pregunta
-    va de CÓMO reservar, donde el RAG decía "al pagar quedas confirmado" (ronda ex9b-2, certificado-fechas-fotos)."""
+    """Las condiciones del aviso. ex-9b (19-oct): `tambien` añade temas a los de `cuando` (y fuentes, ver `_fuentes`):
+    "el pago no confirma la reserva al momento" tenía que salir también cuando la pregunta va de CÓMO reservar, donde
+    el RAG decía "al pagar quedas confirmado" (ronda ex9b-2, certificado-fechas-fotos)."""
     cuando = dict(aviso.get("cuando") or {})
-    extra = (aviso.get("tambien") or {}).get("tema") if settings.aviso_pago_al_reservar else None
+    extra = (aviso.get("tambien") or {}).get("tema")
     if extra and "tema" in cuando:
         cuando["tema"] = list(cuando["tema"]) + [t for t in extra if t not in cuando["tema"]]
     return cuando
@@ -223,8 +221,8 @@ def _fuente(aviso: dict) -> str:
 
 
 def _fuentes(aviso: dict) -> set[str]:
-    """Su fuente y, con `aviso_pago_al_reservar`, las de `tambien` (ver `_cuando`)."""
-    extra = (aviso.get("tambien") or {}).get("fuentes") if settings.aviso_pago_al_reservar else None
+    """Su fuente y las de `tambien` (ver `_cuando`)."""
+    extra = (aviso.get("tambien") or {}).get("fuentes")
     return {_fuente(aviso)} | {str(f).split(":")[-1] for f in (extra or [])}
 
 

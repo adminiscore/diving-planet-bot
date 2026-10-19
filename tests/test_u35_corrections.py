@@ -57,8 +57,8 @@ def test_lo_ya_preguntado_no_se_vuelve_a_preguntar(monkeypatch):
     assert not st.pending_correction
 
 
-# ex-9b paso 3 (`extractor_sin_pista`): lo que lee el extractor del turno en los mensajes de reserva de estos tests (fixture
-# `extractor_dice` de conftest); sin él, en los tests (sin red) iban por la pista del regex. Las respuestas cortas ("sí",
+# ex-9b paso 3: lo que lee el extractor del turno en los mensajes de reserva de estos tests (fixture `extractor_dice` de
+# conftest); sin él, en los tests (sin red) el extractor falla. Las respuestas cortas ("sí",
 # "no") las resuelve el núcleo.
 LEE_EL_EXTRACTOR = {
     "queremos bucear, somos certificados, desde cartagena, somos 3":
@@ -164,7 +164,7 @@ async def test_la_nacionalidad_que_jev_no_ve_afirmada_no_se_rellena(monkeypatch,
 
     from src.agents import supervisor
     monkeypatch.setattr(supervisor, "detect_routing_signals", _signals)
-    # ex-9b paso 3: con el extractor caído dos turnos seguidos se pasa a un asesor (`extractor_sin_pista`).
+    # ex-9b paso 3: con el extractor caído dos turnos seguidos se pasa a un asesor.
     extractor_dice({"quiero bucear, soy certificado":
                     {"quiere_bucear": True, "is_certified": True, "activity": "certified_diving"},
                     "vamos en familia a cartagena": {"location": "cartagena"}})
@@ -178,8 +178,8 @@ async def test_la_nacionalidad_que_jev_no_ve_afirmada_no_se_rellena(monkeypatch,
 
 
 async def test_el_minicurso_deducido_se_recomienda_y_no_se_guarda(monkeypatch, extractor_dice):
-    # Con `extractor_sin_pista` la recomendación no sale del minicurso deducido por el regex sino de lo que dice el
-    # extractor (CAL-C1: quiere bucear y no es certificado); la conducta es la misma.
+    # ex-9b paso 3: la recomendación no sale del minicurso deducido por el regex sino de lo que dice el extractor
+    # (CAL-C1: quiere bucear y no es certificado); la conducta es la misma.
     extractor_dice(LEE_EL_EXTRACTOR)
     st = _state()
     resp = await route_message(st, "nunca he buceado y quiero probar, somos 2")
@@ -209,29 +209,15 @@ def test_el_plural_minicursos_tambien_es_nombrarlo():
     assert core._EXPLICIT_MINICOURSE_NAME_RE.search("mini courses for two")
 
 
-def test_con_acompanante_no_se_recomienda(monkeypatch):
-    """Ronda B: con acompañante el flujo pregunta otra cosa y la recomendación no se mostraba."""
+def test_el_minicurso_elegido_borra_la_recomendacion():
+    """ex-9b paso 3 (limpieza ex9b): sin la pista del regex ya no hay minicurso DEDUCIDO ("es la primera vez") que
+    `_recommend_inferred_minicourse` convierta en recomendación (lo recomienda CAL-C1, arriba); el minicurso solo llega
+    ELEGIDO por el cliente (extractor) y entonces la recomendación pendiente se borra."""
+    from src.agents.intent_detector import DetectedIntent
+
     st = _state()
-    msg = "quiero regalarle a mi esposo una experiencia de buceo, nunca ha buceado"
-    intent = core._detector.detect(msg, st)
-    intent.activity = "minicourse"
-    core._recommend_inferred_minicourse(intent, st, msg)
+    st.suggested_activity = "minicourse"
+    intent = DetectedIntent(activity="minicourse")
+    intent._actividad_elegida = True
+    core._recommend_inferred_minicourse(intent, st, "sí, el minicurso")
     assert intent.activity == "minicourse" and st.suggested_activity is None
-
-
-def test_quien_pide_un_curso_recibe_la_recomendacion_del_open_water(monkeypatch):
-    """28-sep: "curso básico… es la primera vez" recibía la recomendación del minicurso."""
-    for msg in ("Estoy interesada en el curso básico de buceo, es la primera vez",
-                "Me gustaria informacion de los cursos de buceo, es la primera vez que buceo",
-                "quiero certificarme, nunca he buceado"):
-        st = _state()
-        intent = core._detector.detect(msg, st)
-        intent.activity = "minicourse"
-        core._recommend_inferred_minicourse(intent, st, msg)
-        assert st.suggested_activity == "padi_open_water", msg
-        assert "Open Water" in core.ask_slot(st, core.SLOT_ACTIVITY)
-    st = _state()
-    msg = "nunca he buceado, quiero probar"
-    intent = core._detector.detect(msg, st)
-    core._recommend_inferred_minicourse(intent, st, msg)
-    assert st.suggested_activity == "minicourse"
