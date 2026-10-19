@@ -141,7 +141,161 @@ REGLA_REFRESHER_EN = (
 )
 
 
-def _esquema(con_nombre: bool, con_hotel: bool, con_refresher: bool = False, precio_no_elige: bool = False) -> dict:
+# ex-9b paso 6 (19-oct): los últimos datos de "entender al cliente" que decidía solo el regex pasan al extractor, cada
+# uno con su flag (APAGADO = ni el campo ni su regla: la llamada es exactamente la de antes). Ver
+# docs/robustness/regex/estudio-ex9-regex.md, fila 6 de "Orden propuesto".
+#
+# 1. `duracion_por_extractor`: los días que quiere BUCEAR y los días que ESTARÁ, por separado (decisión de Gadea,
+#    19-oct: si dice cuántos días quiere bucear, manda eso; si solo dice cuánto estará, se recomienda con la estancia).
+#    El regex (`_detect_duration`) leía cualquier "N días/meses" y "estoy embarazada de 4 meses", "llevo 3 días esperando
+#    respuesta" o "estoy pensando en ir en unos meses" daban "varios días".
+CAMPO_DIAS_DE_BUCEO = _dato({"type": "integer"},
+                            "Cuántos días quiere BUCEAR (o hacer la actividad) quien escribe o su grupo.")
+CAMPO_DIAS_DE_ESTANCIA = _dato({"type": "integer"},
+                               "Cuántos días estará quien escribe en Cartagena o en las islas (su viaje o estancia).")
+REGLA_DURACION_ES = (
+    "\n- dias_de_buceo y dias_de_estancia: cuántos días quiere bucear (o hacer la actividad) y cuántos días estará en la "
+    "zona, cada uno en su campo y en número de días (\"un día\" = 1, \"un fin de semana\" = 2, \"una semana\" = 7, \"del "
+    "5 al 9\" = 5, \"solo hoy\" = 1). \"Estaré una semana pero solo quiero bucear un día\" = dias_de_estancia 7 y "
+    "dias_de_buceo 1. Un plan o paquete que elige y que dice sus días (\"el de 3 días de buceo\") son sus días de buceo. "
+    "Solo cuenta la duración de su viaje o de su plan: el tiempo que ya ha pasado, lo que falta para el viaje, el tiempo "
+    "desde su última inmersión o cualquier otra duración que no sea la de su viaje o su plan NO lo son. Preguntar cuánto "
+    "dura algo tampoco."
+)
+REGLA_DURACION_EN = (
+    "\n- dias_de_buceo and dias_de_estancia: how many days they want to dive (or do the activity) and how many days they "
+    "will be in the area, each in its own field and as a number of days (\"one day\" = 1, \"a weekend\" = 2, \"a week\" "
+    "= 7, \"from the 5th to the 9th\" = 5, \"just today\" = 1). \"I'll be here a week but only want to dive one day\" = "
+    "dias_de_estancia 7 and dias_de_buceo 1. A plan or package they choose that states its days (\"the 3-day dive "
+    "one\") gives their diving days. Only the length of their trip or plan counts: time that has already passed, time "
+    "until the trip, time since their last dive or any other duration that is not their trip or plan do NOT. Asking how "
+    "long something lasts doesn't either."
+)
+# 2. `edades_por_extractor`: las edades con su cita. El regex (`_detect_ages`) solo valida la cifra (`edades_citadas`):
+#    hoy las leía el regex y las completaba `fill_gaps` (que lee el historial y puede suponerlas).
+CAMPO_EDADES = _dato({"type": "array", "items": {"type": "integer"}},
+                     "Las edades, en años, de las personas que van (quien escribe o su grupo) que dice el mensaje.")
+REGLA_EDADES_ES = (
+    "\n- edades: las edades en años de las personas que van, quien escribe o su grupo (\"voy con mis hijos de 7 y 12\" "
+    "= [7, 12]; \"tengo 35\" = [35]), también dentro de una pregunta sobre ellas (\"¿mi hija de 9 puede?\" = [9]). Una "
+    "edad hipotética o de una regla (\"¿desde qué edad se puede bucear?\", \"¿un niño de 5 podría?\") no es de nadie del "
+    "grupo; un tiempo (\"hace 6 años\", \"llevo 4 años sin bucear\") no es una edad."
+)
+REGLA_EDADES_EN = (
+    "\n- edades: the ages in years of the people going, the writer or their group (\"I'm coming with my kids aged 7 "
+    "and 12\" = [7, 12]; \"I'm 35\" = [35]), also inside a question about them (\"can my 9-year-old daughter do it?\" "
+    "= [9]). A hypothetical age or a rule (\"from what age can you dive?\", \"could a 5-year-old?\") is nobody in the "
+    "group; a time span (\"6 years ago\", \"I haven't dived in 4 years\") is not an age."
+)
+# 3. `plan_elegido_por_extractor`: si el mensaje ACEPTA lo que el bot acaba de proponer (decisión de Gadea, 19-oct:
+#    "perfecto, ese me sirve" lo da por elegido y sigue la reserva; preguntar el precio NO es elegir). Lo leía
+#    `_CONFIRMS_DESCRIBED_PACKAGE_RE` ("quiero este paquete"). El campo solo va cuando el bot acaba de proponer UN plan
+#    (`plan_que_propone_el_bot`): es la única propuesta cuyo "sí" cambia algo que el extractor no lee ya.
+CAMPO_ACEPTA = _dato({"type": "boolean"},
+                     "true si el mensaje ACEPTA lo que el bot le acaba de proponer; false si lo rechaza.")
+REGLA_ACEPTA_ES = (
+    "\n- acepta_propuesta: true si el mensaje acepta o elige lo que el bot le acaba de proponer en su último mensaje "
+    "(\"perfecto, ese me sirve\", \"vamos con ese\", \"quiero ese paquete\"); false si lo rechaza (\"no, mejor otra "
+    "cosa\"). Preguntar por la propuesta (su precio, qué incluye, cuándo es) o compararla con otra opción NO es "
+    "aceptarla: null. La cita son las palabras del cliente."
+)
+REGLA_ACEPTA_EN = (
+    "\n- acepta_propuesta: true if the message accepts or chooses what the bot has just proposed in its last message "
+    "(\"perfect, that one works for me\", \"let's go with that\", \"I want that package\"); false if it rejects it "
+    "(\"no, something else\"). Asking about the proposal (its price, what's included, when it is) or comparing it with "
+    "another option is NOT accepting it: null. The quote is the customer's words."
+)
+# 4. `reparto_al_sumarse_alguien`: alguien que se SUMA a un grupo ya sabido. Con "No repitas lo que ya sabemos" y
+#    "group_size solo si dice cuántas personas", el modelo dudaba si la persona era nueva o de las que ya iban: "mi
+#    hermano también viene, él quiere hacer snorkel" sobre 2 buzos salía sin total ni reparto, o {buceo: 1, snorkel: 1}
+#    (banco del paso 6). Solo va cuando ya sabemos el grupo (`sabido` con total o reparto).
+REGLA_SUMARSE_ES = (
+    "\n- Si ya sabemos el grupo y el mensaje dice que se SUMA alguien que no estaba contado (también viene, se apunta, "
+    "se une, al final viene uno más…), esa persona es nueva: group_size = los que ya iban más los que se suman, aunque "
+    "no lo diga con una cifra, y group_allocation = el reparto que ya sabemos más los nuevos con su actividad (undecided "
+    "si no la dice; si hacen lo mismo que el grupo, súmalos a esa actividad). Si habla de alguien que ya venía o ya "
+    "estaba contado, o solo dice lo que hará alguien sin decir que se suma, no es nueva: el total no cambia."
+)
+REGLA_SUMARSE_EN = (
+    "\n- If we already know the group and the message says someone who was not counted JOINS (also coming, signing up, "
+    "joining us, one more is coming in the end…), that person is new: group_size = those already going plus the new "
+    "ones, even without a number, and group_allocation = the split we already know plus the new ones with their "
+    "activity (undecided if not said; if they do the same as the group, add them to that activity). If it talks about "
+    "someone who was already coming or already counted, or only says what someone will do without saying they join, "
+    "they are not new: the total does not change."
+)
+
+# 5. `notas_rag_desde_estado`: dos hechos de OTRA persona del grupo que el RAG necesita para no equivocarse (el minicurso
+#    no certifica; un certificado inactivo sigue siendo certificado y necesita el refresher). Los buscaba un regex por
+#    todo el texto del cliente y las notas (`rutas/contexto_rag`); el extractor solo tenía los datos de quien escribe.
+CAMPO_OTRO_SIN_CERTIFICAR = _dato({"type": "boolean"},
+                                  "true si dice que OTRA persona del grupo (no quien escribe) NO es buzo certificado.")
+CAMPO_OTRO_CERTIFICADO_INACTIVO = _dato({"type": "boolean"},
+                                        "true si dice que OTRA persona del grupo (no quien escribe) SÍ es buzo "
+                                        "certificado pero lleva tiempo sin bucear.")
+REGLA_OTRAS_PERSONAS_ES = (
+    "\n- otro_sin_certificar y otro_certificado_inactivo: solo de OTRA persona del grupo, nunca de quien escribe. "
+    "otro_sin_certificar true si dice que alguien de su grupo no está certificado o nunca ha buceado (\"mi pareja nunca "
+    "ha buceado\"). otro_certificado_inactivo true si dice que alguien de su grupo sí tiene certificación pero hace "
+    "tiempo que no bucea (\"mi hermano es Open Water pero no bucea desde hace años\"). Lo que dice de sí mismo va en "
+    "is_certified y last_dive_over_2_years."
+)
+REGLA_OTRAS_PERSONAS_EN = (
+    "\n- otro_sin_certificar and otro_certificado_inactivo: only about ANOTHER person in the group, never the writer. "
+    "otro_sin_certificar true if they say someone in their group is not certified or has never dived (\"my partner has "
+    "never dived\"). otro_certificado_inactivo true if they say someone in their group is certified but hasn't dived in "
+    "a long time (\"my brother is Open Water but hasn't dived in years\"). What they say about themselves goes in "
+    "is_certified and last_dive_over_2_years."
+)
+
+
+def campos_paso6(history: list[dict] | None) -> dict:
+    """Los campos nuevos del paso 6 que van en ESTA llamada, según sus flags: {campo: (esquema, regla_es, regla_en)}.
+    Vacío con los flags apagados (la llamada de siempre). `acepta_propuesta` solo si el bot acaba de proponer un plan."""
+    campos: dict = {}
+    if settings.duracion_por_extractor:
+        campos["dias_de_buceo"] = (CAMPO_DIAS_DE_BUCEO, REGLA_DURACION_ES, REGLA_DURACION_EN)
+        campos["dias_de_estancia"] = (CAMPO_DIAS_DE_ESTANCIA, "", "")
+    if settings.edades_por_extractor:
+        campos["edades"] = (CAMPO_EDADES, REGLA_EDADES_ES, REGLA_EDADES_EN)
+    if settings.plan_elegido_por_extractor and plan_que_propone_el_bot(history) is not None:
+        campos["acepta_propuesta"] = (CAMPO_ACEPTA, REGLA_ACEPTA_ES, REGLA_ACEPTA_EN)
+    if settings.notas_rag_desde_estado:
+        campos["otro_sin_certificar"] = (CAMPO_OTRO_SIN_CERTIFICAR, REGLA_OTRAS_PERSONAS_ES, REGLA_OTRAS_PERSONAS_EN)
+        campos["otro_certificado_inactivo"] = (CAMPO_OTRO_CERTIFICADO_INACTIVO, "", "")
+    return campos
+
+
+def plan_que_propone_el_bot(history: list[dict] | None) -> int | None:
+    """El paquete de varios días (nº de inmersiones del catálogo) que describe el ÚLTIMO mensaje del bot, si describe
+    uno solo; None si no describe ninguno o compara varios ("este paquete" no diría cuál). Lee el texto del BOT (formato
+    nuestro, no el del cliente), con la misma lectura de cifras que el detector y el RAG (`dive_counts_in`). La usan el
+    extractor (si pregunta `acepta_propuesta`) y `nucleo/routing` (el paquete confirmado)."""
+    from src.agents.intent_detector import dive_counts_in  # lazy
+
+    ultimo = next((h.get("content", "") for h in reversed(history or []) if h.get("role") == "assistant"), "")
+    multi_dia = [n for n in dive_counts_in(ultimo) if dom.dive_packages()[n][0] > 1]
+    return multi_dia[0] if len(multi_dia) == 1 else None
+
+
+def edades_citadas(edades, cita: str) -> list[int]:
+    """Las edades del extractor cuya cifra está en su cita (en dígitos o en palabra, "nueve"): el regex solo valida la
+    cifra, no decide. Entre 1 y 99, sin repetir, en orden."""
+    from src.utils.number_words import number_words  # lazy
+
+    palabras = number_words(1, 19)
+    tokens = _norm(cita)
+    validas = []
+    for edad in edades if isinstance(edades, list) else []:
+        if not isinstance(edad, int) or isinstance(edad, bool) or not 1 <= edad <= 99:
+            continue
+        if str(edad) in tokens or any(palabras.get(t) == edad for t in tokens):
+            validas.append(edad)
+    return list(dict.fromkeys(validas))
+
+
+def _esquema(con_nombre: bool, con_hotel: bool, con_refresher: bool = False, precio_no_elige: bool = False,
+             paso6: dict | None = None) -> dict:
     """El esquema de la llamada con los campos opcionales encendidos (sin ellos, el de siempre)."""
     base = ESQUEMA_CON_NOMBRE if con_nombre else ESQUEMA
     if precio_no_elige:  # mod-2: ver `_PRECIO_NO_ELIGE`
@@ -150,10 +304,11 @@ def _esquema(con_nombre: bool, con_hotel: bool, con_refresher: bool = False, pre
         base = copy.deepcopy(base)
         qb = base["properties"]["quiere_bucear"]
         qb["description"] = qb["description"].replace(_QUIERE_BUCEAR_PRECIO, _QUIERE_BUCEAR_SIN_PRECIO)
-    if not (con_hotel or con_refresher):
+    if not (con_hotel or con_refresher or paso6):
         return base
     extra = {**({"hotel": CAMPO_HOTEL} if con_hotel else {}),
-             **({"refresher_interested": CAMPO_REFRESHER} if con_refresher else {})}
+             **({"refresher_interested": CAMPO_REFRESHER} if con_refresher else {}),
+             **{campo: esquema for campo, (esquema, _es, _en) in (paso6 or {}).items()}}
     return {**base, "properties": {**base["properties"], **extra}, "required": [*base["required"], *extra]}
 # 13-oct (Gonzalo, flag `extractor_precio_elige`): la regla general ponía "¿cuánto cuesta el buceo certificado?" como
 # ejemplo de algo que NO es un dato, y la de `activity` dice que preguntar el precio de un producto nombrado SÍ lo elige
@@ -443,6 +598,12 @@ async def extraer_turno(mensaje: str, *, history: list[dict] | None = None, sabi
     con_refresher = settings.refresher_por_extractor and (sabido or {}).get("last_dive_over_2_years") is True
     if con_refresher:
         sistema += REGLA_REFRESHER_ES if lang == "es" else REGLA_REFRESHER_EN
+    # ex-9b paso 6: los campos nuevos con su regla (ninguno con los flags apagados).
+    paso6 = campos_paso6(history)
+    for _esq, regla_es, regla_en in paso6.values():
+        sistema += regla_es if lang == "es" else regla_en
+    if settings.reparto_al_sumarse_alguien and ((sabido or {}).get("group_size") or (sabido or {}).get("group_allocation")):
+        sistema += REGLA_SUMARSE_ES if lang == "es" else REGLA_SUMARSE_EN
     modelo = modelo or settings.extractor_turno_model
     t0 = time.perf_counter()
     try:
@@ -460,7 +621,7 @@ async def extraer_turno(mensaje: str, *, history: list[dict] | None = None, sabi
                 response_format={"type": "json_schema",
                                  "json_schema": {"name": "datos_del_turno", "strict": True,
                                                  "schema": _esquema(con_nombre, con_hotel, con_refresher,
-                                                                    settings.precio_no_elige)}},
+                                                                    settings.precio_no_elige, paso6)}},
                 temperature=0.0,
                 # EX-EST-1 (14-oct): con los campos nuevos (idioma, nombre, quiere_bucear...) 400 cortaba el JSON (2 de
                 # cada 1.000 llamadas en el banco: "Unterminated string" -> el turno caía al camino viejo).
@@ -478,7 +639,7 @@ async def extraer_turno(mensaje: str, *, history: list[dict] | None = None, sabi
     extraer_turno.ultimo_segundos = time.perf_counter() - t0
     salida, descartes = {}, {}
     for campo in (*CAMPOS, *EXTRAS, *(("nombre",) if con_nombre else ()), *(("hotel",) if con_hotel else ()),
-                  *(("refresher_interested",) if con_refresher else ())):
+                  *(("refresher_interested",) if con_refresher else ()), *paso6):
         d = datos.get(campo)
         if not isinstance(d, dict) or d.get("valor") in (None, "", [], {}):
             continue
@@ -486,6 +647,16 @@ async def extraer_turno(mensaje: str, *, history: list[dict] | None = None, sabi
         if campo == "group_allocation":
             valor = {k: v for k, v in valor.items() if v}
             if len(valor) < 2:  # un reparto de una sola actividad no es un reparto
+                continue
+        if campo in ("dias_de_buceo", "dias_de_estancia") and not (
+                isinstance(valor, int) and not isinstance(valor, bool) and 1 <= valor <= 366):
+            descartes[campo] = f"no es un número de días: {valor!r}"
+            continue
+        if campo == "edades":
+            # ex-9b paso 6: la cifra de cada edad tiene que estar en la cita (el regex valida, no decide).
+            valor = edades_citadas(valor, cita)
+            if not valor:
+                descartes[campo] = f"ninguna edad está en la cita: {d['valor']!r} / {cita!r}"
                 continue
         if not cita_verificable(cita, mensaje):
             if (campo == "activity" and settings.extractor_cita_del_cliente and history

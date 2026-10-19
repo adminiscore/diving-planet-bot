@@ -160,6 +160,16 @@ class ConversationState:
     # ex-9b paso 3 (flag `extractor_sin_pista`): turnos seguidos en que el extractor (y su respaldo) no ha leído el
     # mensaje. Sin la pista del regex lo que falta se pregunta; si vuelve a fallar, se pasa a un asesor (supervisor).
     extractor_fallos_seguidos: int = 0
+    # ex-9b paso 6 (flag `duracion_por_extractor`): `detected_duration` sale de los días que el cliente dijo que quiere
+    # BUCEAR (manda sobre la estancia: decisión de Gadea, 19-oct); False = de su estancia o del regex.
+    duracion_de_buceo: bool = False
+    # ex-9b paso 6 (flag `notas_rag_desde_estado`): el cliente dijo que OTRA persona del grupo no está certificada, o que
+    # sí lo está pero lleva tiempo sin bucear (extractor, con cita). Los leen las notas de reglas del RAG.
+    acompanante_sin_certificar: bool = False
+    acompanante_certificado_inactivo: bool = False
+    # ex-9b paso 6 (`notas_rag_desde_estado`): algún mensaje de esta conversación no lo leyó el extractor (falló): esas
+    # notas vuelven al regex de siempre sobre lo que escribió el cliente (solo si la IA calla).
+    extractor_ha_fallado: bool = False
 
     # Actividad del acompañante detectada por la red de precisión LLM
     # (detect_special_signals) cuando la cantidad quedó pendiente de preguntar

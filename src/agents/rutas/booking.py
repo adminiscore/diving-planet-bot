@@ -798,9 +798,13 @@ def _apply_detected_intent(intent, state: ConversationState, message: str | None
         state.is_colombian = intent.is_colombian
         logger.info(f"[INTENT] Detected nationality is_colombian={intent.is_colombian}")
 
-    if intent.duration and not state.detected_duration:
+    # ex-9b paso 6 (`duracion_por_extractor`): la duración del extractor cambia la guardada (`overwrite`): lo que el
+    # cliente dice ahora de sus días de buceo manda (decisión de Gadea, 19-oct). Sin el flag, una sola escritura.
+    if intent.duration and (not state.detected_duration or "duration" in intent.overwrite):
         state.detected_duration = intent.duration
         logger.info(f"[INTENT] Detected duration: {intent.duration}")
+    if getattr(intent, "_duracion_de_buceo", False):
+        state.duracion_de_buceo = True
 
     if getattr(intent, "cert_dives", None) and not state.detected_cert_dives:
         state.detected_cert_dives = intent.cert_dives

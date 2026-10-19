@@ -56,7 +56,6 @@ from src.agents.intent_detector import (
     DetectedIntent,
     _is_negated,
     clause_subject,
-    dive_counts_in,
 )
 from src.agents.llm_extractor import detect_special_signals
 from src.config import settings
@@ -95,18 +94,47 @@ def _maybe_apply_confirmed_package(state: ConversationState, message: str) -> No
     número de inmersiones concreto en su último mensaje."""
     if not _CONFIRMS_DESCRIBED_PACKAGE_RE.search(message):
         return
-    last_bot_msg = next(
-        (h.get("content", "") for h in reversed(state.history or []) if h.get("role") == "assistant"),
-        "",
-    )
     # Solo si el bot describio UN paquete multi-dia: si comparo varios, "este paquete"
     # no dice cual (2026-09-15, lectura compartida con el detector y el RAG).
-    multi_day = [n for n in dive_counts_in(last_bot_msg) if dom.dive_packages()[n][0] > 1]
-    if len(multi_day) != 1 or multi_day[0] == state.detected_cert_dives:
-        return
-    dives = multi_day[0]
+    _elegir_el_paquete_propuesto(state)
+
+
+def _elegir_el_paquete_propuesto(state: ConversationState) -> bool:
+    """El cliente elige el paquete que el bot acaba de proponer (`plan_que_propone_el_bot`): su nº de inmersiones y el
+    carrito vacío para rehacerlo con él. False si el bot no propuso uno solo o ya era el elegido."""
+    from src.agents.extractor_turno import plan_que_propone_el_bot  # lazy
+
+    dives = plan_que_propone_el_bot(state.history)
+    if dives is None or dives == state.detected_cert_dives:
+        return False
     state.detected_cert_dives = dives
     state.mixed_cart = []
+    return True
+
+
+async def _paquete_confirmado(state: ConversationState, message: str) -> None:
+    """ex-9b paso 6 (`plan_elegido_por_extractor`): si el bot acaba de proponer UN paquete y el extractor lee que el
+    mensaje lo ACEPTA (`acepta_propuesta`, con su cita: "perfecto, ese me sirve"), queda elegido y sigue la reserva
+    (decisión de Gadea, 19-oct). Preguntar su precio no es aceptarlo. Solo espera al extractor cuando hay propuesta (es
+    la única vez que lleva ese campo); si el extractor falla, la frase de siempre (`_CONFIRMS_DESCRIBED_PACKAGE_RE`).
+    Sin el flag, la frase de siempre."""
+    if not settings.plan_elegido_por_extractor:
+        _maybe_apply_confirmed_package(state, message)
+        return
+    from src.agents.extractor_turno import plan_que_propone_el_bot  # lazy
+    from src.agents.nucleo.extractor import lectura_del_extractor  # lazy
+
+    dives = plan_que_propone_el_bot(state.history)
+    if dives is None or dives == state.detected_cert_dives:
+        return
+    datos = await lectura_del_extractor(state, message)
+    if datos is None:
+        logger.info("[CORE][EX9B-6] el extractor falló: el paquete confirmado lo decide la frase de siempre")
+        _maybe_apply_confirmed_package(state, message)
+        return
+    if datos.get("acepta_propuesta") is True and _elegir_el_paquete_propuesto(state):
+        logger.info(f"[CORE][EX9B-6] el cliente acepta el paquete propuesto: {dives} inmersiones")
+
 
 def _departure_place(message: str) -> str | None:
     """Lugar de salida en la RESPUESTA a "¿desde donde saldrias?" (hallazgo C, 2026-09-15).
@@ -164,7 +192,22 @@ def _es_formato(state: ConversationState, slot: str, message: str) -> bool:
         return msg in ("1", "2")
     if slot == SLOT_QTY:
         return len(_words(message)) == 1 and cart_render.parse_quantity(message) is not None
+    if slot == SLOT_COMPANION_ACTIVITY:
+        return msg.isdigit()  # el número de una opción
+    if slot == SLOT_AGES:
+        # Solo cifras ("6 y 9", "8, 10"): la lectura de siempre basta. Con palabras, la lee la IA ("tiene 6 y el otro 9").
+        palabras = _words(message)
+        return any(p.isdigit() for p in palabras) and all(p.isdigit() or p in ("y", "e", "and") for p in palabras)
     return False
+
+
+def _respuesta_del_paso6(state: ConversationState, slot: str) -> bool:
+    """ex-9b paso 6: ¿la respuesta corta a esta pregunta la lee el extractor? Las edades con `edades_por_extractor`; el
+    "¿un día o varios?" del acompañante (primer paso, aún sin duración) con `duracion_por_extractor`."""
+    if slot == SLOT_AGES:
+        return settings.edades_por_extractor
+    return (slot == SLOT_COMPANION_ACTIVITY and settings.duracion_por_extractor
+            and state.detected_duration is None)
 
 
 async def _lectura_de_la_ia(state: ConversationState, message: str, routing_signals: dict, slot: str) -> dict | None:
@@ -172,7 +215,20 @@ async def _lectura_de_la_ia(state: ConversationState, message: str, routing_sign
     {"jev": la respuesta de Jev a ESA pregunta (`pending_answer`, aunque dude), "extractor": lo que leyó el extractor}.
     None = la conducta de hoy (el regex): flag apagado, otra pregunta, formato, o la IA calla (Jev no contestó a la
     pregunta y el extractor falló), la misma regla que `supervisor.regex_decide`. Con la respuesta de Jev al origen no
-    hace falta esperar al extractor aquí: lo aplica `_understand` como siempre."""
+    hace falta esperar al extractor aquí: lo aplica `_understand` como siempre.
+    ex-9b paso 6: también la respuesta a "¿qué edades tienen?" (`edades_por_extractor`) y a "¿un día o varios?" de la
+    recomendación para el acompañante (`duracion_por_extractor`), con el extractor; los botones y las cifras solas son
+    formato y se leen como siempre."""
+    if _respuesta_del_paso6(state, slot):
+        if _es_formato(state, slot, message):
+            return None
+        from src.agents.nucleo.extractor import lectura_del_extractor  # lazy
+
+        datos = await lectura_del_extractor(state, message)
+        if datos is None:
+            logger.info(f"[CORE][EX9B-6] la IA calla en la respuesta a {slot!r}: decide el regex de siempre")
+            return None
+        return {"jev": None, "extractor": datos}
     if not settings.respuesta_corta_por_ia or slot not in _RESPUESTA_LEIDA_POR_LA_IA:
         return None
     if slot == SLOT_HOTEL and not settings.hotel_por_extractor:
@@ -435,7 +491,15 @@ def _apply_short_answer(state: ConversationState, message: str, ia: dict | None 
         # dato se vuelve a preguntar, ahora con las recomendaciones.
         if state.detected_duration is None:
             duration = {"1": "single_day", "2": "multi_day"}.get(msg, msg)
-            if duration not in ("single_day", "multi_day"):
+            if duration not in ("single_day", "multi_day") and ia is not None:
+                # ex-9b paso 6 (`duracion_por_extractor`): la respuesta libre la lee el extractor (días de buceo o, si
+                # no, la estancia); el regex de siempre solo si la IA calla.
+                from src.agents.nucleo.extractor import duracion_del_extractor  # lazy
+
+                duration, de_buceo = duracion_del_extractor(ia.get("extractor"), state)
+                if duration is not None and de_buceo:
+                    state.duracion_de_buceo = True
+            elif duration not in ("single_day", "multi_day"):
                 duration = _detector.detect(message, state).duration
             if duration in ("single_day", "multi_day"):
                 state.detected_duration = duration
@@ -463,6 +527,14 @@ def _apply_short_answer(state: ConversationState, message: str, ia: dict | None 
             return True
         return False
     if slot == SLOT_AGES:
+        if ia is not None:
+            # ex-9b paso 6 (`edades_por_extractor`): las edades las lee el extractor (cifra validada en su cita); sin
+            # edades no se resuelve aquí (las verá `_understand`).
+            ages = list((ia.get("extractor") or {}).get("edades") or [])
+            if ages:
+                state.detected_ages = sorted(set((state.detected_ages or []) + ages))
+                return True
+            return False
         ages = [int(a) for a in re.findall(r"\b(\d{1,2})\b", message) if 0 < int(a) < 100]
         if not ages:  # sin dígitos, probar edades en palabra ("cinco y siete")
             ages = _word_ages(message)
@@ -795,7 +867,7 @@ async def _routing_phase(
     # pase con el "?" (ver `_maybe_apply_confirmed_package`), para que un
     # mensaje como "...que podria hacer esos dos dias?" no deje el carrito
     # pegado al paquete de 1 día que se armó antes de esta conversación.
-    _maybe_apply_confirmed_package(state, message)
+    await _paquete_confirmado(state, message)
 
     sembrar_senales_del_turno(state, routing_signals)
 

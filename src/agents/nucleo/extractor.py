@@ -230,6 +230,7 @@ async def _aplicar_extractor(intent, state: ConversationState, message: str, pis
     _quitar_provisional(intent, pista)
     _nombre_del_extractor(state, datos, message)
     if datos is None:
+        _el_extractor_no_leyo(state)
         if settings.extractor_sin_pista:
             # ex-9b paso 3 (decisión de Gadea): sin extractor no se vuelve al regex; lo que falte se pregunta. La pista
             # solo trae la isla y el hotel del catálogo (`campos_de_la_pista`).
@@ -269,6 +270,92 @@ async def _aplicar_extractor(intent, state: ConversationState, message: str, pis
     _poner_actividad(intent, state, datos, pista)
     _poner_nacionalidad(intent, state, message, datos)
     _poner_certificacion(intent, state, message, datos, pista)
+    _poner_duracion(intent, state, datos, message)
+    _poner_edades(intent, datos)
+    _poner_otras_personas(state, datos)
+
+
+def duracion_del_extractor(datos: dict | None, state: ConversationState) -> tuple[str | None, bool]:
+    """ex-9b paso 6 (`duracion_por_extractor`): (single_day / multi_day, ¿son días de BUCEO?) según lo que dice el
+    cliente. Manda lo que dice que quiere bucear; si solo dice su estancia, la estancia, salvo que ya se sepa cuántos días
+    quiere bucear (decisión de Gadea, 19-oct). (None, False) si no dice nada de días que cambie lo sabido."""
+    dias_buceo, dias_estancia = (datos or {}).get("dias_de_buceo"), (datos or {}).get("dias_de_estancia")
+    if isinstance(dias_buceo, int) and dias_buceo > 0:
+        return ("multi_day" if dias_buceo > 1 else "single_day"), True
+    if isinstance(dias_estancia, int) and dias_estancia > 0 and not state.duracion_de_buceo:
+        return ("multi_day" if dias_estancia > 1 else "single_day"), False
+    return None, False
+
+
+def _paquete_de_varios_dias_nombrado(message: str) -> bool:
+    """¿Nombra el mensaje un paquete del catálogo que dura varios días ("el paquete de 5 buceos")? La cifra y la unidad
+    las lee `dive_counts_in` (clase D del estudio: cifra + unidad del catálogo) y los días son los del catálogo. Sustituye
+    a `_MULTI_DAY_PRODUCT_RE`, que daba varios días con la palabra "paquete" sola ("alguien que hizo el paquete con
+    ustedes", "¿tienen algo como un paquete?")."""
+    from src.agents.intent_detector import dive_counts_in  # lazy
+
+    paquetes = dom.dive_packages()
+    return any(paquetes[n][0] > 1 for n in dive_counts_in(message))
+
+
+def _poner_duracion(intent, state: ConversationState, datos: dict, message: str = "") -> None:
+    """ex-9b paso 6 (`duracion_por_extractor`): la duración es la que dice el extractor con su cita; lo que leía el regex
+    (`_detect_duration`, que tomaba "embarazada de 4 meses" por varios días) no cuenta. Lo que el cliente dice ahora
+    cambia lo guardado (los días de buceo siempre; la estancia, si no se sabía cuántos días quiere bucear). Si no dice
+    días pero nombra un paquete de varios días del catálogo, varios días (como hoy; un plan de un día no se deduce)."""
+    if not settings.duracion_por_extractor:
+        return
+    regex = intent.duration
+    intent.duration = None
+    intent.detected_fields = [f for f in intent.detected_fields if f != "duration"]
+    duracion, de_buceo = duracion_del_extractor(datos, state)
+    if duracion is None and not state.detected_duration and _paquete_de_varios_dias_nombrado(message):
+        duracion = "multi_day"
+        logger.info("[EXTRACT][EX9B-6] sin días dichos, pero nombra un paquete de varios días del catálogo")
+    if duracion is None:
+        if regex:
+            logger.info(f"[EXTRACT][EX9B-6] el regex leía duration={regex!r}; el cliente no lo dice")
+        return
+    intent.duration = duracion
+    intent._duracion_de_buceo = de_buceo
+    intent.detected_fields.append("duration")
+    if duracion != state.detected_duration and "duration" not in intent.overwrite:
+        intent.overwrite.append("duration")
+    logger.info(f"[EXTRACT][EX9B-6] duration={duracion!r} ({'días de buceo' if de_buceo else 'estancia'}; regex: {regex!r})")
+
+
+def _poner_edades(intent, datos: dict) -> None:
+    """ex-9b paso 6 (`edades_por_extractor`): las edades son las del extractor (con la cifra validada en su cita); las del
+    regex no cuentan si el extractor leyó el mensaje."""
+    if not settings.edades_por_extractor:
+        return
+    regex = list(intent.ages or [])
+    edades = [a for a in ((datos or {}).get("edades") or []) if isinstance(a, int) and 1 <= a <= 99]
+    intent.ages = sorted(set(edades))
+    intent.detected_fields = [f for f in intent.detected_fields if f != "ages"] + (["ages"] if edades else [])
+    if edades or regex:
+        logger.info(f"[EXTRACT][EX9B-6] ages={intent.ages} (regex: {regex})")
+
+
+def _el_extractor_no_leyo(state: ConversationState) -> None:
+    """ex-9b paso 6 (`notas_rag_desde_estado`): un mensaje de la conversación se queda sin leer por el extractor; las
+    notas del RAG sobre otras personas vuelven al regex de siempre (`rutas/contexto_rag`), como hoy."""
+    if settings.notas_rag_desde_estado and not state.extractor_ha_fallado:
+        state.extractor_ha_fallado = True
+        logger.info("[EXTRACT][EX9B-6] el extractor no leyó un mensaje: las notas del RAG vuelven al regex")
+
+
+def _poner_otras_personas(state: ConversationState, datos: dict) -> None:
+    """ex-9b paso 6 (`notas_rag_desde_estado`): lo que el cliente dice de OTRA persona del grupo (no certificada; o
+    certificada pero inactiva) se guarda para las notas de reglas del RAG. Una vez dicho, se queda."""
+    if not settings.notas_rag_desde_estado:
+        return
+    if (datos or {}).get("otro_sin_certificar") is True and not state.acompanante_sin_certificar:
+        state.acompanante_sin_certificar = True
+        logger.info("[EXTRACT][EX9B-6] otra persona del grupo no está certificada")
+    if (datos or {}).get("otro_certificado_inactivo") is True and not state.acompanante_certificado_inactivo:
+        state.acompanante_certificado_inactivo = True
+        logger.info("[EXTRACT][EX9B-6] otra persona del grupo está certificada pero inactiva")
 
 
 def _reparto_guardado(state: ConversationState) -> dict:
@@ -284,6 +371,17 @@ def _reparto_guardado(state: ConversationState) -> dict:
 def _amplia(nuevo: dict, antes: dict) -> bool:
     """¿El reparto nuevo solo SUMA personas al de antes (nadie de antes cambia de actividad)?"""
     return bool(antes) and all(nuevo.get(act, 0) >= n for act, n in antes.items()) and nuevo != antes
+
+
+def _jev_dice_que_nadie_se_suma(state: ConversationState) -> bool:
+    """ex-9b paso 6 (`reparto_al_sumarse_alguien`, con `jev_persona_ya_contada`): ¿Jev está SEGURO de que el mensaje no
+    suma a una persona nueva (adds_person < ADDS_PERSON_NOT_MAX, la puerta de s4-26)? Ausente = no lo sabemos."""
+    if not (settings.reparto_al_sumarse_alguien and settings.jev_persona_ya_contada):
+        return False
+    from src.agents.jev_router import ADDS_PERSON_NOT_MAX  # lazy
+
+    p = getattr(state, "_jev_adds_person", None)
+    return p is not None and p < ADDS_PERSON_NOT_MAX
 
 
 # Clave del reparto -> categoría de `intent_detector.matched_activity_categories` (la lista cerrada de nombres).
@@ -328,6 +426,12 @@ def _poner_grupo(intent, state: ConversationState, message: str, datos: dict, pi
     guardado = _known_field_values(state)
     corrige = _has_correction_cue(state, message)
     reparto, total = _reparto_valido(datos.get("group_allocation"), message, state), datos.get("group_size")
+    if reparto and _amplia(reparto, _reparto_guardado(state)) and _jev_dice_que_nadie_se_suma(state):
+        # ex-9b paso 6 (`reparto_al_sumarse_alguien`): el extractor suma a alguien y Jev está seguro de que el mensaje
+        # habla de alguien ya contado (s4-26, `adds_person`). Dos lectores en contra: no se suma a nadie aquí; lo decide
+        # la red de acompañantes con la regla de s4-26 (moverlo en vez de añadirlo).
+        logger.info(f"[EXTRACT][EX9B-6] el extractor amplía el reparto {reparto!r}, pero Jev dice que ya estaba contado")
+        reparto, total = None, None
     if reparto:
         suma = sum(v for v in reparto.values() if isinstance(v, int) and v > 0)
         antes = _reparto_guardado(state)
@@ -550,6 +654,14 @@ def _sabido_para_extractor(state: ConversationState) -> dict:
     sabido = {k: v for k, v in _known_field_values(state).items() if k in CAMPOS and v not in (None, [], {})}
     if state.quiere_bucear:
         sabido["quiere_bucear"] = True
+    if settings.reparto_al_sumarse_alguien and "group_allocation" not in sabido:
+        # ex-9b paso 6: el reparto que ya se sabe aunque no esté guardado ("2 buzos certificados" = {certified_diving:
+        # 2}). Sin él, "mi hermano también viene, hace snorkel" no sabía a quién sumarlo y se perdía la persona (o solo
+        # salía {snorkel: 1}, que no es un reparto). Con él, el extractor devuelve el reparto ampliado y `_poner_grupo`
+        # lo guarda como añadido (`_amplia`).
+        reparto = _reparto_guardado(state)
+        if reparto:
+            sabido["group_allocation"] = reparto
     return sabido
 
 
@@ -652,7 +764,11 @@ async def _guardar_lo_dicho(state: ConversationState, motivo: str) -> None:
     try:
         datos = await asyncio.wait_for(tarea, timeout=4)
     except (TimeoutError, asyncio.CancelledError, Exception):  # noqa: BLE001 — el pase no se rompe por esto
+        datos = None
+    if datos is None:
+        _el_extractor_no_leyo(state)
         return
+    _poner_otras_personas(state, datos)
     sabido = _known_field_values(state)
     guardados = {}
     for campo, atributo in _CAMPOS_DEL_PASE.items():

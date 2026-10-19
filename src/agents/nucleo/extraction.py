@@ -620,6 +620,16 @@ def _relevant_gaps(state: ConversationState, intent, message: str, *, keep_pendi
     return gaps
 
 
+async def _edades_las_lee_el_extractor(state: ConversationState, message: str) -> bool:
+    """ex-9b paso 6 (`edades_por_extractor`): ¿leyó el extractor este mensaje (con su campo `edades`)? Espera la lectura
+    adelantada sin gastarla (`lectura_del_extractor`): ninguna llamada más."""
+    if not settings.edades_por_extractor:
+        return False
+    from src.agents.nucleo.extractor import lectura_del_extractor  # lazy
+
+    return await lectura_del_extractor(state, message) is not None
+
+
 async def _understand(state: ConversationState, message: str, *, answered_pending: bool = False) -> tuple:
     """Regex fast-path + gap-fill LLM sobre los campos que la CONVERSACIÓN aún
     no conoce (Fix B: nunca se piden campos que el estado ya tiene), y volcado
@@ -677,6 +687,11 @@ async def _understand(state: ConversationState, message: str, *, answered_pendin
             f for f in _relevant_gaps(state, intent, message, keep_pending_bool=True)
             if afirma.get(f) is True and f not in campos_del_extractor()
         ]
+    if "ages" in rellenar + rellenar_sin_historial and await _edades_las_lee_el_extractor(state, message):
+        # ex-9b paso 6 (`edades_por_extractor`): las edades las da el extractor con su cita (`_poner_edades`); el relleno
+        # con el historial no las supone. Si el extractor falla, el relleno de siempre.
+        rellenar = [f for f in rellenar if f != "ages"]
+        rellenar_sin_historial = [f for f in rellenar_sin_historial if f != "ages"]
     if rellenar or rellenar_sin_historial:
         patch = await fill_gaps(
             message, intent, history=state.history if rellenar else None, lang=state.language,
@@ -907,6 +922,27 @@ def _add_or_ask_companion(state: ConversationState, message: str, activity: str,
         logger.info(f"[CORE] companion {activity} x{qty}: ¿ya contado en {total}? -> se pregunta el total")
         return
     _merge_companion_activity(state, activity, qty)
+
+
+# ex-9b paso 6 (`reparto_al_sumarse_alguien`): por encima, Jev está SEGURO de que el mensaje mete a otra persona en la
+# reserva (`companion_joins`). En los fallos de "se suma alguien a un grupo ya repartido" Jev daba 0,94-0,97.
+_JEV_SE_SUMA_MIN = 0.8
+
+
+def _jev_seguro_de_que_se_suma(state: ConversationState, companion_ambiguous: bool) -> bool:
+    """ex-9b paso 6 (`reparto_al_sumarse_alguien`): el atajo de "el reparto ya cubre a todo el grupo" se saltaba la red de
+    acompañantes aunque el mensaje sumara a alguien ("mi hermano también viene, él quiere hacer snorkel" sobre {buceo: 2}
+    para 2): la persona se perdía. Se deja pasar el turno solo si el mensaje nombra a otra persona y Jev está seguro de
+    que entra en la reserva; el atajo sigue para todo lo demás (se puso porque el router LLM de antes inventaba
+    acompañantes). Si el extractor ya amplió el reparto en este turno, `companion_ambiguous` es False y no hace falta."""
+    if not settings.reparto_al_sumarse_alguien or not companion_ambiguous:
+        return False
+    p = getattr(state, "_jev_companion", None)
+    if p is None or p < _JEV_SE_SUMA_MIN:
+        return False
+    logger.info(f"[CORE][EX9B-6] reparto completo, pero Jev seguro de que se suma alguien ({p:.2f}): la red de "
+                "acompañantes corre")
+    return True
 
 
 def _jev_dice_ya_contada(state: ConversationState) -> bool:
@@ -1313,7 +1349,9 @@ async def _extraction_phase_body(
     # correcto, con una versión parcial. Si el grupo ya está completamente
     # explicado, no hay ninguna ambigüedad de acompañante que esta llamada
     # pueda resolver — se salta entera (ahorra una llamada LLM de paso).
-    if (not advanced or companion_ambiguous) and not _group_allocation_fully_resolved(state):
+    if (not advanced or companion_ambiguous) and not (
+        _group_allocation_fully_resolved(state) and not _jev_seguro_de_que_se_suma(state, companion_ambiguous)
+    ):
         signals = (
             {} if _jev_rules_out_special_signals(state)
             else await detect_special_signals(message, history=state.history, lang=state.language)

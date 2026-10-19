@@ -178,6 +178,31 @@ class Settings(BaseSettings):
     # diciembre, somos 2" no llega al RAG (Jev: no pregunta nada) y nadie avisa del cierre. nucleo/availability.
     # APAGADO hasta medirlo.
     dias_cerrados_por_rag: bool = False
+    # ex-9b paso 6 (19-oct): los últimos datos de "entender al cliente" que decidía solo el regex, al extractor del turno
+    # (campo nuevo con su cita; APAGADO = ni el campo ni su regla, la llamada de siempre). Si el extractor falla, lo de hoy.
+    # - La duración: los días que quiere BUCEAR y los de su estancia, por separado (`dias_de_buceo`, `dias_de_estancia`).
+    #   Manda lo que dice de bucear ("estaré del 5 al 9 pero solo quiero bucear un día" = un día) y, si solo dice cuánto
+    #   estará, la estancia (decisión de Gadea, 19-oct). El contrato no cambia: `detected_duration` = single_day /
+    #   multi_day. Fuera los falsos positivos del regex ("embarazada de 4 meses", "3 días esperando").
+    #   nucleo/extractor._poner_duracion y la respuesta corta a "¿un día o varios?" (nucleo/routing).
+    duracion_por_extractor: bool = False
+    # - Las edades (`edades`), con su cita; el regex solo valida la cifra. `fill_gaps` ya no las rellena si el extractor
+    #   leyó el mensaje. nucleo/extractor._poner_edades y la respuesta corta a "¿qué edades tienen?".
+    edades_por_extractor: bool = False
+    # - El plan elegido: si el mensaje ACEPTA el paquete que el bot acaba de proponer (`acepta_propuesta`, solo cuando el
+    #   bot propuso uno), se da por elegido y sigue la reserva; preguntar el precio no es aceptar. Antes,
+    #   `_CONFIRMS_DESCRIBED_PACKAGE_RE` ("quiero este paquete"). nucleo/routing._paquete_confirmado.
+    plan_elegido_por_extractor: bool = False
+    # - Alguien que se SUMA a un grupo ya sabido ("mi hermano también viene, hace snorkel" sobre 2 buzos): el extractor
+    #   ve el reparto sabido aunque no esté guardado ({buceo: 2} = la actividad para todos) y devuelve el nuevo; y el atajo
+    #   de "reparto completo" deja pasar la red de acompañantes si Jev está seguro de que se suma alguien
+    #   (`companion_joins`). nucleo/extractor._sabido_para_extractor y nucleo/extraction.
+    reparto_al_sumarse_alguien: bool = False
+    # - Las notas del RAG sobre OTRA persona del grupo ("el minicurso no certifica", "certificado inactivo = refresher")
+    #   salen del estado (`otro_sin_certificar`, `otro_certificado_inactivo` del extractor, con cita) en vez de un regex
+    #   sobre todo lo que escribió el cliente; si el extractor no leyó algún mensaje, el regex de siempre.
+    #   rutas/contexto_rag.
+    notas_rag_desde_estado: bool = False
     resolutor_sin_contradicciones: bool = True  # PROMOCIONADO 19-oct (mod-G2, HISTORY 0.31.57); revert = False
     # EX-EST-2 (14-oct): el acuse reconoce SOLO lo que dice el mensaje (el resumen de la reserva no se repite; ante
     # 'gracias' o una fecha suelta, nada). Banco scripts/banco_acuse.py: inventaba en 33/40 casos reales
