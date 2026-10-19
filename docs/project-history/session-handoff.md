@@ -59,7 +59,24 @@ integrar la rama del otro y suite en verde, porque en PRE gana el último; (3) *
 despliegue reinicia el contenedor y mata la medida del otro (avisar en el registro de Plan Coral con la hora de fin).
 Las doce normas, con su porqué, están en el documento.
 
-### ▶️ RETOMAR AQUÍ — 18-oct, 23:50 (Gadea con Claude, en autonomía por la noche): ronda mod-G2 en marcha
+### ▶️ RETOMAR AQUÍ — 19-oct, 03:15 (Gadea con Claude, noche en autonomía): G2 promocionada, limpieza paso 1 confirmada
+
+**PRE sirve fc53411 (pre_gadea), el estado promocionado**: el bot sin gpt-4 (mod-F), mod-G2 (TARJETA_SIN_SEGURIDAD,
+RECOMENDAR_A_NO_CERTIFICADOS, resolutor Haiku con RESOLUTOR_SIN_CONTRADICCIONES), el respaldo si OpenRouter falla y la
+limpieza s4-25 paso 1 (11 flags del RAG sin su camino apagado). Rondas de la noche: mod-G 94,3 % (NO), **mod-G2 96,9 %
+27/32**, **limpieza-1 97,4 % 27/32** (equivalente: sus regresiones, repetidas con el código de antes y de después, eran
+ruido), mod-H 96,1 % (NO). HISTORY 0.31.57 y 0.31.58. CAL-G hecha: p95 5,5 s (`docs/robustness/cal/cal-g-latencia.md`).
+
+**Apagados y por afinar (con Álvaro):** `PRECIO_NO_ELIGE` (repregunta la actividad) y `CERTIFICADO_SOLO_SI_LO_DICE`
+(afinado en e96c4c5, pero el extractor toma el «no» de «no, buceé hace poco» como no certificado → minicurso a 183 USD
+en reserva-solo-link; falta la regla de contradicción también en el extractor).
+
+**Preguntas para Gadea:** (1) «quiero bucear certificado» + «buceé hace poco»: ¿cuenta como certificado o se pregunta?
+(el golden reserva-solo-link nunca contesta «sí» a la pregunta de la certificación). **Para Álvaro a la vuelta:** el
+paso 2 de la limpieza (flujo) lo prepara un agente en `feature/limpieza-paso2-flujo` (no despliega): revisarlo e
+integrarlo con su ronda de equivalencia; los dos fallos de flujo de CAL-F (`cal-f-golden-completo.md`, al final).
+
+### (anterior) RETOMAR AQUÍ — 18-oct, 23:50 (Gadea con Claude, en autonomía por la noche): ronda mod-G2 en marcha
 
 **Noche (Gadea durmiendo; permiso para seguir y decidir; si se acaba el saldo de OpenAI u OpenRouter: subir,
 documentar y apagar).** Hecho desde las 21:30:
