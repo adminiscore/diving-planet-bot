@@ -138,6 +138,14 @@ class Settings(BaseSettings):
     # ex-9b paso 5 (19-oct): en classify_route, las listas de palabras y regex con su señal de IA (link roto, tema sensible,
     # cancelar/cambiar, contacto, "hablar con", DIVE TO HEAL) solo deciden si la IA calla este turno. APAGADO hasta medirlo.
     regex_solo_si_ia_calla: bool = False
+    # ex-9b paso 3 (19-oct): el regex deja de ser la "pista" de los campos del extractor (actividad, origen,
+    # certificación, grupo y reparto, nacionalidad, última inmersión); se quedan la isla y el hotel del catálogo. Si el
+    # extractor falla (Haiku y su respaldo), esos datos quedan sin saber y la reserva los PREGUNTA (decisión de Gadea);
+    # no hay minicurso deducido del regex (lo recomienda CAL-C1 con lo que dice el extractor), la red de menciones por
+    # palabras clave no corre y las puertas de Jev sobre el regex solo miran las edades. La actividad principal de un
+    # grupo repartido ya sale del reparto sin flag (misma rama). nucleo/extraction._understand y nucleo/extractor.
+    # APAGADO hasta medirlo.
+    extractor_sin_pista: bool = False
     resolutor_sin_contradicciones: bool = True  # PROMOCIONADO 19-oct (mod-G2, HISTORY 0.31.57); revert = False
     # EX-EST-2 (14-oct): el acuse reconoce SOLO lo que dice el mensaje (el resumen de la reserva no se repite; ante
     # 'gracias' o una fecha suelta, nada). Banco scripts/banco_acuse.py: inventaba en 33/40 casos reales

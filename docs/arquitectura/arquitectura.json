@@ -1,8 +1,8 @@
 {
  "meta": {
-  "generado": "2026-10-19T09:51:51+00:00",
-  "commit": "236600c",
-  "rama": "feature/pre_gadea"
+  "generado": "2026-10-19T10:44:19+00:00",
+  "commit": "a3bc56a",
+  "rama": "ex9b-paso-3"
  },
  "vistas": {
   "general": {
@@ -632,6 +632,13 @@
      "titulo": "Una petición también se contesta",
      "codigo": true,
      "pre": true,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "extractor_sin_pista",
+     "titulo": "Los datos del cliente los lee solo la IA",
+     "codigo": false,
+     "pre": false,
      "sin_efecto": false
     }
    ],
@@ -2238,6 +2245,19 @@
    "pre": true,
    "fijado_en_pre": true,
    "usado_por": [],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "extractor_sin_pista",
+   "area": "Reserva",
+   "titulo": "Los datos del cliente los lee solo la IA",
+   "texto": "La actividad, desde dónde sale, si está certificado, cuántos son y cómo se reparten, la nacionalidad y la última inmersión los lee solo el extractor (la IA que comprueba lo que el cliente dijo de verdad). Hoy, si esa IA falla, Coral los adivina con listas de palabras (que se equivocan: «hola quiero bucear con mi amigo» pasa por elegir el buceo para certificados); con este interruptor los pregunta (decisión de Gadea). A quien empieza se le sigue recomendando el minicurso, pero porque la IA lee que quiere bucear y no está certificado, no por las palabras. El hotel y la isla del catálogo se siguen reconociendo como hoy.",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
+   "usado_por": [
+    "b_extraction"
+   ],
    "sin_efecto": null
   },
   {
