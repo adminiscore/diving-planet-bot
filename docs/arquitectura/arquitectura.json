@@ -1,8 +1,8 @@
 {
  "meta": {
-  "generado": "2026-10-19T00:30:02+00:00",
-  "commit": "136a4e4",
-  "rama": "feature/pre_gadea"
+  "generado": "2026-10-19T01:19:06+00:00",
+  "commit": "97e45ea",
+  "rama": "limpieza-paso2-flujo"
  },
  "vistas": {
   "general": {
@@ -153,13 +153,6 @@
      "nombre": "jev_router_enabled",
      "titulo": "Jev decide la ruta",
      "codigo": false,
-     "pre": true,
-     "sin_efecto": false
-    },
-    {
-     "nombre": "s4_fixes",
-     "titulo": "Respuestas fijas revisadas",
-     "codigo": true,
      "pre": true,
      "sin_efecto": false
     },
@@ -513,15 +506,7 @@
    "nodo_grafo": "availability",
    "que_hace": "Fechas cerradas y preguntas de disponibilidad (estas las contesta el RAG).",
    "donde": "src/agents/conversational_core.py:_availability_phase",
-   "interruptores": [
-    {
-     "nombre": "s4_fixes",
-     "titulo": "Respuestas fijas revisadas",
-     "codigo": true,
-     "pre": true,
-     "sin_efecto": false
-    }
-   ],
+   "interruptores": [],
    "modelos": [],
    "tiempos": {
     "n": 78,
@@ -545,22 +530,7 @@
      "pre": "deepseek/deepseek-v4.1-flash"
     }
    ],
-   "interruptores": [
-    {
-     "nombre": "answer_and_continue",
-     "titulo": "Contesta y sigue",
-     "codigo": true,
-     "pre": true,
-     "sin_efecto": false
-    },
-    {
-     "nombre": "corrections_v2",
-     "titulo": "Correcciones sin repetir",
-     "codigo": true,
-     "pre": true,
-     "sin_efecto": false
-    }
-   ],
+   "interruptores": [],
    "marca": "openrouter",
    "tiempos": {
     "n": 69,
@@ -682,13 +652,6 @@
     }
    ],
    "interruptores": [
-    {
-     "nombre": "recommend_inferred_minicourse",
-     "titulo": "Recomendar el minicurso",
-     "codigo": true,
-     "pre": true,
-     "sin_efecto": false
-    },
     {
      "nombre": "actividad_por_lo_sabido",
      "titulo": "Sin menú si ya quiere bucear",
@@ -868,13 +831,6 @@
    ],
    "interruptores": [
     {
-     "nombre": "notes_in_parallel",
-     "titulo": "Notas en paralelo",
-     "codigo": true,
-     "pre": true,
-     "sin_efecto": false
-    },
-    {
      "nombre": "notas_puerta_jev",
      "titulo": "Solo apuntar notas si hay algo que apuntar",
      "codigo": true,
@@ -906,15 +862,7 @@
      "pre": "gpt-5.4-nano"
     }
    ],
-   "interruptores": [
-    {
-     "nombre": "ack_in_parallel",
-     "titulo": "Acuse en paralelo",
-     "codigo": true,
-     "pre": true,
-     "sin_efecto": false
-    }
-   ],
+   "interruptores": [],
    "marca": "openai"
   },
   {
@@ -926,15 +874,7 @@
    "zoom": "info",
    "que_hace": "Si el cliente pregunta algo en mitad de la reserva, el RAG lo contesta a la vez y la respuesta va delante ('contesta y sigue').",
    "donde": "src/agents/conversational_core.py:_maybe_launch_answer",
-   "interruptores": [
-    {
-     "nombre": "answer_and_continue",
-     "titulo": "Contesta y sigue",
-     "codigo": true,
-     "pre": true,
-     "sin_efecto": false
-    }
-   ],
+   "interruptores": [],
    "modelos": []
   },
   {
@@ -1910,19 +1850,6 @@
  ],
  "interruptores": [
   {
-   "nombre": "ack_in_parallel",
-   "area": "Reserva",
-   "titulo": "Acuse en paralelo",
-   "texto": "La frase cálida del principio se prepara mientras se entiende el mensaje.",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [
-    "b_acuse"
-   ],
-   "sin_efecto": null
-  },
-  {
    "nombre": "actividad_del_reparto",
    "area": "Reserva",
    "titulo": "La actividad principal sale del reparto del grupo",
@@ -1984,20 +1911,6 @@
    "fijado_en_pre": true,
    "usado_por": [
     "route_message"
-   ],
-   "sin_efecto": null
-  },
-  {
-   "nombre": "answer_and_continue",
-   "area": "Reserva",
-   "titulo": "Contesta y sigue",
-   "texto": "Si el cliente pregunta algo en mitad de la reserva, se contesta y la reserva sigue en el mismo mensaje.",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [
-    "b_routing",
-    "b_pregunta"
    ],
    "sin_efecto": null
   },
@@ -2228,19 +2141,6 @@
    "fijado_en_pre": false,
    "usado_por": [
     "r_entrada"
-   ],
-   "sin_efecto": null
-  },
-  {
-   "nombre": "corrections_v2",
-   "area": "Reserva",
-   "titulo": "Correcciones sin repetir",
-   "texto": "Cuando un dato cambia, pregunta «¿lo cambio?» una sola vez, y nunca por un cambio que se lee igual.",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [
-    "b_routing"
    ],
    "sin_efecto": null
   },
@@ -2625,50 +2525,6 @@
    "sin_efecto": null
   },
   {
-   "nombre": "llm_extraction_cutover_certification",
-   "area": "Reserva",
-   "titulo": "El LLM completa la certificación",
-   "texto": "Si las reglas no saben si el cliente es buzo certificado, lo deduce el LLM.",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [],
-   "sin_efecto": "Solo lo lee supervisor._maybe_apply_llm_extraction_cutover, que nadie llama."
-  },
-  {
-   "nombre": "llm_extraction_cutover_group",
-   "area": "Reserva",
-   "titulo": "El LLM completa el grupo",
-   "texto": "Si las reglas no saben cuántos son o sus edades, lo deduce el LLM.",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [],
-   "sin_efecto": "Solo lo lee supervisor._maybe_apply_llm_extraction_cutover, que nadie llama."
-  },
-  {
-   "nombre": "llm_extraction_cutover_location",
-   "area": "Reserva",
-   "titulo": "El LLM completa el origen",
-   "texto": "Si las reglas no saben si sale de Cartagena o de las islas, lo deduce el LLM.",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [],
-   "sin_efecto": "Solo lo lee supervisor._maybe_apply_llm_extraction_cutover, que nadie llama."
-  },
-  {
-   "nombre": "llm_extraction_cutover_logistics",
-   "area": "Reserva",
-   "titulo": "El LLM completa el perfil",
-   "texto": "Si las reglas no saben la nacionalidad, los días o si necesita refresh, lo deduce el LLM.",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [],
-   "sin_efecto": "Solo lo lee supervisor._maybe_apply_llm_extraction_cutover, que nadie llama."
-  },
-  {
    "nombre": "llm_extraction_shadow_mode",
    "area": "Solo pruebas",
    "titulo": "Extracción en sombra",
@@ -2859,19 +2715,6 @@
    "area": "Reserva",
    "titulo": "Solo apuntar notas si hay algo que apuntar",
    "texto": "El enrutador rápido dice si el mensaje cuenta algo del cliente (salud, ocasión, límites...). Si está seguro de que no, no se apunta nada: evita notas inventadas a partir de preguntas.",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [
-    "b_notas"
-   ],
-   "sin_efecto": null
-  },
-  {
-   "nombre": "notes_in_parallel",
-   "area": "Reserva",
-   "titulo": "Notas en paralelo",
-   "texto": "Las notas para el asesor se preparan a la vez que el resto del turno, no antes (ahorra ~0,75 s).",
    "codigo": true,
    "pre": true,
    "fijado_en_pre": true,
@@ -3192,19 +3035,6 @@
    "sin_efecto": null
   },
   {
-   "nombre": "recommend_inferred_minicourse",
-   "area": "Reserva",
-   "titulo": "Recomendar el minicurso",
-   "texto": "Si el cliente dice que es su primera vez, le recomienda el minicurso y lo confirma con él.",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [
-    "b_slotfill_close"
-   ],
-   "sin_efecto": null
-  },
-  {
    "nombre": "red_menciones_con_principal",
    "area": "Reserva",
    "titulo": "'Buceo' no es un segundo plan",
@@ -3277,20 +3107,6 @@
    "fijado_en_pre": false,
    "usado_por": [
     "r_escribir"
-   ],
-   "sin_efecto": null
-  },
-  {
-   "nombre": "s4_fixes",
-   "area": "Respuestas fijas",
-   "titulo": "Respuestas fijas revisadas",
-   "texto": "Teléfono oficial, «¿eres un bot?», quejas a una persona y otros textos fijos corregidos.",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [
-    "router",
-    "b_availability"
    ],
    "sin_efecto": null
   },

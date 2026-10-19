@@ -222,7 +222,6 @@ def test_c4_lanza_la_respuesta_solo_con_el_flag(monkeypatch):
 
     monkeypatch.setattr(core, "_rag_answer", falso)
     monkeypatch.setattr(core.asyncio, "create_task", lambda coro: (lanzadas.append(1), coro.close())[1])
-    monkeypatch.setattr(settings, "answer_and_continue", True)
     senales = {"affirms_location": True, "customer_place": {"choice": "none", "confidence": 0.79}}
     for flag, n in ((False, 0), (True, 1)):
         monkeypatch.setattr(settings, "lugar_desconocido_al_rag", flag)

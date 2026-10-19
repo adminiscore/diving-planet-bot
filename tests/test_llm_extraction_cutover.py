@@ -1,10 +1,11 @@
-"""Tests for the Fase 1 real cutover (docs/robustness/plan.md §4, dominio
-certificación): `settings.llm_extraction_cutover_certification`. Unlike the
-Fase 0 shadow probe, this ACTUALLY mutates the regex intent for
-`is_certified`/`activity` when the regex left them unresolved — the critical
-properties to prove: off by default (no LLM call), on but nothing missing in
-scope (no LLM call), on with a real gap (mutates only the 2 in-scope fields,
-never anything else), and any failure degrades silently to regex-only.
+"""Tests for the per-domain real cutover (docs/robustness/plan.md §4): certification, group, location and
+logistics. Unlike the Fase 0 shadow probe, this ACTUALLY mutates the regex intent when the regex left a field
+unresolved; it never overrides a resolved one, and any failure degrades silently to regex-only.
+
+s4-25 removed the per-domain flags (`llm_extraction_cutover_*`, all on) and the tests that pinned a domain off.
+OJO: nothing calls `supervisor._maybe_apply_llm_extraction_cutover` since 308488d (28-jul); only these tests run
+it. The "must not be called" mocks below do not prove much: the cutover swallows any exception (degrades to
+regex-only), AssertionError included.
 """
 
 from unittest.mock import AsyncMock, patch
@@ -17,55 +18,13 @@ from src.flows.state import ConversationState
 
 
 @pytest.mark.asyncio
-async def test_cutover_off_by_default_does_not_call_llm():
-    intent = DetectedIntent()
-    state = ConversationState(conversation_id="cutover-off-test")
-
-    with patch.object(supervisor, "fill_gaps", new=AsyncMock(side_effect=AssertionError("must not be called"))):
-        await supervisor._maybe_apply_llm_extraction_cutover("im not certfied", intent, state)
-    assert intent.is_certified is None
-    assert intent.activity is None
-
-
-@pytest.mark.asyncio
-async def test_cutover_on_fills_only_in_scope_fields(monkeypatch):
-    # Cada dominio por SEPARADO: los otros tres, apagados de forma explicita (en PRE van los cuatro).
-    from src.config import settings as _flags
-    monkeypatch.setattr(_flags, "llm_extraction_cutover_certification", False)
-    monkeypatch.setattr(_flags, "llm_extraction_cutover_group", False)
-    monkeypatch.setattr(_flags, "llm_extraction_cutover_location", False)
-    monkeypatch.setattr(_flags, "llm_extraction_cutover_logistics", False)
-    """Even if the LLM patch includes fields outside the certification domain
-    (group_size, location...), only is_certified/activity get applied — the
-    rest stay for their own future Fase N cutover."""
-    intent = DetectedIntent()
-    state = ConversationState(conversation_id="cutover-on-test")
-
-    with patch.object(supervisor.settings, "llm_extraction_cutover_certification", True), \
-         patch.object(supervisor, "fill_gaps", new=AsyncMock(return_value={
-             "is_certified": False, "activity": "minicourse", "group_size": 2,
-         })) as mocked:
-        await supervisor._maybe_apply_llm_extraction_cutover(
-            "hi i wanna dive, im not certfied tho, just me", intent, state
-        )
-
-    mocked.assert_awaited_once()
-    assert intent.is_certified is False
-    assert intent.activity == "minicourse"
-    assert intent.group_size is None  # out of scope for this domain's cutover
-    assert "is_certified" in intent.detected_fields
-    assert "activity" in intent.detected_fields
-
-
-@pytest.mark.asyncio
 async def test_cutover_on_never_overrides_already_resolved_fields():
-    """Regex already resolved is_certified=True — even with the flag on, the
-    LLM is never even consulted for a field that isn't missing."""
+    """Regex already resolved is_certified=True — the LLM never overrides a
+    field that isn't missing."""
     intent = DetectedIntent(is_certified=True, activity="certified_diving")
     state = ConversationState(conversation_id="cutover-nothing-missing-test")
 
-    with patch.object(supervisor.settings, "llm_extraction_cutover_certification", True), \
-         patch.object(supervisor, "fill_gaps", new=AsyncMock(side_effect=AssertionError("must not be called"))):
+    with patch.object(supervisor, "fill_gaps", new=AsyncMock(side_effect=AssertionError("must not be called"))):
         await supervisor._maybe_apply_llm_extraction_cutover("somos 2", intent, state)
 
     assert intent.is_certified is True
@@ -73,25 +32,11 @@ async def test_cutover_on_never_overrides_already_resolved_fields():
 
 
 @pytest.mark.asyncio
-async def test_cutover_on_skips_llm_when_only_out_of_scope_fields_missing():
-    """is_certified/activity are already resolved; only group_size (a
-    different domain, not yet cut over) is missing — must not call the LLM
-    just for that, since this cutover only covers certification."""
-    intent = DetectedIntent(is_certified=False, activity="minicourse")
-    state = ConversationState(conversation_id="cutover-out-of-scope-test")
-
-    with patch.object(supervisor.settings, "llm_extraction_cutover_certification", True), \
-         patch.object(supervisor, "fill_gaps", new=AsyncMock(side_effect=AssertionError("must not be called"))):
-        await supervisor._maybe_apply_llm_extraction_cutover("cualquier cosa", intent, state)
-
-
-@pytest.mark.asyncio
 async def test_cutover_on_failure_degrades_to_regex_only():
     intent = DetectedIntent()
     state = ConversationState(conversation_id="cutover-failure-test")
 
-    with patch.object(supervisor.settings, "llm_extraction_cutover_certification", True), \
-         patch.object(supervisor, "fill_gaps", new=AsyncMock(side_effect=RuntimeError("boom"))):
+    with patch.object(supervisor, "fill_gaps", new=AsyncMock(side_effect=RuntimeError("boom"))):
         # Must not raise — a cutover failure can never break a real turn, it
         # just leaves the regex result untouched.
         await supervisor._maybe_apply_llm_extraction_cutover("hola", intent, state)
@@ -105,8 +50,7 @@ async def test_cutover_on_empty_llm_patch_leaves_intent_unmutated():
     intent = DetectedIntent()
     state = ConversationState(conversation_id="cutover-empty-patch-test")
 
-    with patch.object(supervisor.settings, "llm_extraction_cutover_certification", True), \
-         patch.object(supervisor, "fill_gaps", new=AsyncMock(return_value={})):
+    with patch.object(supervisor, "fill_gaps", new=AsyncMock(return_value={})):
         await supervisor._maybe_apply_llm_extraction_cutover("hola", intent, state)
 
     assert intent.is_certified is None
@@ -123,8 +67,7 @@ async def test_cutover_result_propagates_to_state_via_apply_detected_intent():
     intent = DetectedIntent()
     state = ConversationState(conversation_id="cutover-propagation-test")
 
-    with patch.object(supervisor.settings, "llm_extraction_cutover_certification", True), \
-         patch.object(supervisor, "fill_gaps", new=AsyncMock(return_value={
+    with patch.object(supervisor, "fill_gaps", new=AsyncMock(return_value={
              "is_certified": False, "activity": "minicourse",
          })):
         await supervisor._maybe_apply_llm_extraction_cutover(
@@ -139,67 +82,16 @@ async def test_cutover_result_propagates_to_state_via_apply_detected_intent():
 
 # ---------------------------------------------------------------------------
 # Fase 2 — dominio grupo/cantidad/edades (group_size/group_allocation/ages).
-# Gated by settings.llm_extraction_cutover_group, independent kill switch from
-# the Fase 1 certification flag. Same properties to prove as Fase 1, plus the
-# generalization: with only the group flag on, certification fields are NOT
-# applied even if the LLM returns them, and vice-versa.
 # ---------------------------------------------------------------------------
-
-@pytest.mark.asyncio
-async def test_group_cutover_off_by_default_does_not_call_llm():
-    intent = DetectedIntent()
-    state = ConversationState(conversation_id="group-cutover-off-test")
-
-    with patch.object(supervisor, "fill_gaps", new=AsyncMock(side_effect=AssertionError("must not be called"))):
-        await supervisor._maybe_apply_llm_extraction_cutover("somos 3, dos bucean y uno snorkel", intent, state)
-    assert intent.group_size is None
-    assert intent.group_allocation is None
-    assert intent.ages == []
-
-
-@pytest.mark.asyncio
-async def test_group_cutover_on_fills_only_group_domain_fields(monkeypatch):
-    # Cada dominio por SEPARADO: los otros tres, apagados de forma explicita (en PRE van los cuatro).
-    from src.config import settings as _flags
-    monkeypatch.setattr(_flags, "llm_extraction_cutover_certification", False)
-    monkeypatch.setattr(_flags, "llm_extraction_cutover_group", False)
-    monkeypatch.setattr(_flags, "llm_extraction_cutover_location", False)
-    monkeypatch.setattr(_flags, "llm_extraction_cutover_logistics", False)
-    """With ONLY the group flag on, even if the LLM patch also carries
-    certification fields, only group_size/group_allocation/ages get applied —
-    is_certified/activity stay for the (independent) Fase 1 flag."""
-    intent = DetectedIntent()
-    state = ConversationState(conversation_id="group-cutover-on-test")
-
-    with patch.object(supervisor.settings, "llm_extraction_cutover_group", True), \
-         patch.object(supervisor, "fill_gaps", new=AsyncMock(return_value={
-             "group_size": 3, "group_allocation": {"certified_diving": 2, "snorkel": 1},
-             "ages": [8, 34], "is_certified": True, "activity": "certified_diving",
-         })) as mocked:
-        await supervisor._maybe_apply_llm_extraction_cutover(
-            "somos 3, dos buceamos certificados y uno hace snorkel, uno tiene 8", intent, state
-        )
-
-    mocked.assert_awaited_once()
-    assert intent.group_size == 3
-    assert intent.group_allocation == {"certified_diving": 2, "snorkel": 1}
-    assert intent.ages == [8, 34]
-    assert intent.is_certified is None  # out of scope: certification flag is off
-    assert intent.activity is None
-    assert "group_size" in intent.detected_fields
-    assert "group_allocation" in intent.detected_fields
-    assert "ages" in intent.detected_fields
 
 
 @pytest.mark.asyncio
 async def test_group_cutover_never_overrides_already_resolved_group_size():
-    """Regex already resolved group_size — with the flag on, the LLM is never
-    consulted if that's the only group field and nothing else is missing."""
+    """Regex already resolved the group fields — the LLM never overrides them."""
     intent = DetectedIntent(group_size=2, group_allocation={"certified_diving": 2}, ages=[30, 32])
     state = ConversationState(conversation_id="group-cutover-resolved-test")
 
-    with patch.object(supervisor.settings, "llm_extraction_cutover_group", True), \
-         patch.object(supervisor, "fill_gaps", new=AsyncMock(side_effect=AssertionError("must not be called"))):
+    with patch.object(supervisor, "fill_gaps", new=AsyncMock(side_effect=AssertionError("must not be called"))):
         await supervisor._maybe_apply_llm_extraction_cutover("somos 2", intent, state)
 
     assert intent.group_size == 2
@@ -208,27 +100,11 @@ async def test_group_cutover_never_overrides_already_resolved_group_size():
 
 
 @pytest.mark.asyncio
-async def test_group_cutover_skips_llm_when_only_out_of_scope_fields_missing():
-    """Only certification fields are missing; the group flag is on but the
-    certification flag is off — must not call the LLM just for a domain that
-    isn't cut over."""
-    intent = DetectedIntent(group_size=2, group_allocation={"certified_diving": 2}, ages=[30])
-    state = ConversationState(conversation_id="group-cutover-out-of-scope-test")
-
-    with patch.object(supervisor.settings, "llm_extraction_cutover_group", True), \
-         patch.object(supervisor, "fill_gaps", new=AsyncMock(side_effect=AssertionError("must not be called"))):
-        await supervisor._maybe_apply_llm_extraction_cutover("no estoy certificado", intent, state)
-
-    assert intent.is_certified is None
-
-
-@pytest.mark.asyncio
 async def test_group_cutover_on_failure_degrades_to_regex_only():
     intent = DetectedIntent()
     state = ConversationState(conversation_id="group-cutover-failure-test")
 
-    with patch.object(supervisor.settings, "llm_extraction_cutover_group", True), \
-         patch.object(supervisor, "fill_gaps", new=AsyncMock(side_effect=RuntimeError("boom"))):
+    with patch.object(supervisor, "fill_gaps", new=AsyncMock(side_effect=RuntimeError("boom"))):
         await supervisor._maybe_apply_llm_extraction_cutover("somos un grupo", intent, state)
 
     assert intent.group_size is None
@@ -241,8 +117,7 @@ async def test_group_cutover_result_propagates_to_state():
     intent = DetectedIntent()
     state = ConversationState(conversation_id="group-cutover-propagation-test")
 
-    with patch.object(supervisor.settings, "llm_extraction_cutover_group", True), \
-         patch.object(supervisor, "fill_gaps", new=AsyncMock(return_value={
+    with patch.object(supervisor, "fill_gaps", new=AsyncMock(return_value={
              "group_size": 4, "group_allocation": {"certified_diving": 2, "snorkel": 2}, "ages": [10, 12],
          })):
         await supervisor._maybe_apply_llm_extraction_cutover(
@@ -257,14 +132,12 @@ async def test_group_cutover_result_propagates_to_state():
 
 @pytest.mark.asyncio
 async def test_both_cutovers_on_applies_both_domains_in_one_call():
-    """Generalization: with BOTH flags on, a single fill_gaps call fills fields
-    from both domains (certification + group) — no double LLM call."""
+    """A single fill_gaps call fills fields from several domains (certification
+    + group) — no double LLM call."""
     intent = DetectedIntent()
     state = ConversationState(conversation_id="both-cutovers-test")
 
-    with patch.object(supervisor.settings, "llm_extraction_cutover_certification", True), \
-         patch.object(supervisor.settings, "llm_extraction_cutover_group", True), \
-         patch.object(supervisor, "fill_gaps", new=AsyncMock(return_value={
+    with patch.object(supervisor, "fill_gaps", new=AsyncMock(return_value={
              "is_certified": False, "activity": "minicourse", "group_size": 2, "ages": [7],
          })) as mocked:
         await supervisor._maybe_apply_llm_extraction_cutover(
@@ -279,52 +152,9 @@ async def test_both_cutovers_on_applies_both_domains_in_one_call():
 
 
 # ---------------------------------------------------------------------------
-# Fase 3 — dominio ubicación (location/island/hotel). Gated by
-# settings.llm_extraction_cutover_location, independent kill switch. `location`
+# Fase 3 — dominio ubicación (location/island/hotel). `location`
 # (cartagena|island) drives logistics routing; island/hotel are display/context.
 # ---------------------------------------------------------------------------
-
-@pytest.mark.asyncio
-async def test_location_cutover_off_by_default_does_not_call_llm():
-    intent = DetectedIntent()
-    state = ConversationState(conversation_id="loc-cutover-off-test")
-
-    with patch.object(supervisor, "fill_gaps", new=AsyncMock(side_effect=AssertionError("must not be called"))):
-        await supervisor._maybe_apply_llm_extraction_cutover("salimos desde bocagrande", intent, state)
-    assert intent.location is None
-    assert intent.island is None
-    assert intent.hotel is None
-
-
-@pytest.mark.asyncio
-async def test_location_cutover_on_fills_only_location_domain_fields(monkeypatch):
-    # Cada dominio por SEPARADO: los otros tres, apagados de forma explicita (en PRE van los cuatro).
-    from src.config import settings as _flags
-    monkeypatch.setattr(_flags, "llm_extraction_cutover_certification", False)
-    monkeypatch.setattr(_flags, "llm_extraction_cutover_group", False)
-    monkeypatch.setattr(_flags, "llm_extraction_cutover_location", False)
-    monkeypatch.setattr(_flags, "llm_extraction_cutover_logistics", False)
-    """With ONLY the location flag on, even if the LLM patch also carries group/
-    certification fields, only location/island/hotel get applied."""
-    intent = DetectedIntent()
-    state = ConversationState(conversation_id="loc-cutover-on-test")
-
-    with patch.object(supervisor.settings, "llm_extraction_cutover_location", True), \
-         patch.object(supervisor, "fill_gaps", new=AsyncMock(return_value={
-             "location": "island", "island": "Barú", "hotel": "Las Islas",
-             "group_size": 4, "is_certified": True,
-         })) as mocked:
-        await supervisor._maybe_apply_llm_extraction_cutover(
-            "estamos en el hotel Las Islas en Barú, somos 4", intent, state
-        )
-
-    mocked.assert_awaited_once()
-    assert intent.location == "island"
-    assert intent.island == "Barú"
-    assert intent.hotel == "Las Islas"
-    assert intent.group_size is None  # out of scope: group flag is off
-    assert intent.is_certified is None
-    assert "location" in intent.detected_fields
 
 
 @pytest.mark.asyncio
@@ -332,8 +162,7 @@ async def test_location_cutover_never_overrides_already_resolved_location():
     intent = DetectedIntent(location="cartagena")
     state = ConversationState(conversation_id="loc-cutover-resolved-test")
 
-    with patch.object(supervisor.settings, "llm_extraction_cutover_location", True), \
-         patch.object(supervisor, "fill_gaps", new=AsyncMock(return_value={"location": "island"})) as mocked:
+    with patch.object(supervisor, "fill_gaps", new=AsyncMock(return_value={"location": "island"})) as mocked:
         await supervisor._maybe_apply_llm_extraction_cutover("estoy en cartagena", intent, state)
 
     # island/hotel were still missing, so the LLM is consulted, but location
@@ -347,8 +176,7 @@ async def test_location_cutover_on_failure_degrades_to_regex_only():
     intent = DetectedIntent()
     state = ConversationState(conversation_id="loc-cutover-failure-test")
 
-    with patch.object(supervisor.settings, "llm_extraction_cutover_location", True), \
-         patch.object(supervisor, "fill_gaps", new=AsyncMock(side_effect=RuntimeError("boom"))):
+    with patch.object(supervisor, "fill_gaps", new=AsyncMock(side_effect=RuntimeError("boom"))):
         await supervisor._maybe_apply_llm_extraction_cutover("estoy en algún sitio", intent, state)
 
     assert intent.location is None
@@ -359,8 +187,7 @@ async def test_location_cutover_result_propagates_to_state():
     intent = DetectedIntent()
     state = ConversationState(conversation_id="loc-cutover-propagation-test")
 
-    with patch.object(supervisor.settings, "llm_extraction_cutover_location", True), \
-         patch.object(supervisor, "fill_gaps", new=AsyncMock(return_value={
+    with patch.object(supervisor, "fill_gaps", new=AsyncMock(return_value={
              "location": "cartagena",
          })):
         await supervisor._maybe_apply_llm_extraction_cutover("salimos desde bocagrande", intent, state)
@@ -372,51 +199,8 @@ async def test_location_cutover_result_propagates_to_state():
 
 # ---------------------------------------------------------------------------
 # Fase 8 — dominio perfil/logística (is_colombian/duration/last_dive_over_2_years).
-# Gated by settings.llm_extraction_cutover_logistics, independent kill switch.
 # is_colombian drives currency + Colombian discount.
 # ---------------------------------------------------------------------------
-
-@pytest.mark.asyncio
-async def test_logistics_cutover_off_by_default_does_not_call_llm():
-    intent = DetectedIntent()
-    state = ConversationState(conversation_id="logi-cutover-off-test")
-
-    with patch.object(supervisor, "fill_gaps", new=AsyncMock(side_effect=AssertionError("must not be called"))):
-        await supervisor._maybe_apply_llm_extraction_cutover("soy paisa", intent, state)
-    assert intent.is_colombian is None
-    assert intent.duration is None
-    assert intent.last_dive_over_2_years is None
-
-
-@pytest.mark.asyncio
-async def test_logistics_cutover_on_fills_only_logistics_fields(monkeypatch):
-    # Cada dominio por SEPARADO: los otros tres, apagados de forma explicita (en PRE van los cuatro).
-    from src.config import settings as _flags
-    monkeypatch.setattr(_flags, "llm_extraction_cutover_certification", False)
-    monkeypatch.setattr(_flags, "llm_extraction_cutover_group", False)
-    monkeypatch.setattr(_flags, "llm_extraction_cutover_location", False)
-    monkeypatch.setattr(_flags, "llm_extraction_cutover_logistics", False)
-    """With ONLY the logistics flag on, other domains' fields in the patch are
-    ignored — only is_colombian/duration/last_dive_over_2_years get applied."""
-    intent = DetectedIntent()
-    state = ConversationState(conversation_id="logi-cutover-on-test")
-
-    with patch.object(supervisor.settings, "llm_extraction_cutover_logistics", True), \
-         patch.object(supervisor, "fill_gaps", new=AsyncMock(return_value={
-             "is_colombian": True, "duration": "multi_day", "last_dive_over_2_years": True,
-             "group_size": 3, "location": "cartagena",
-         })) as mocked:
-        await supervisor._maybe_apply_llm_extraction_cutover(
-            "soy paisa, toda la semana en las islas, hace 4 años que no buceo", intent, state
-        )
-
-    mocked.assert_awaited_once()
-    assert intent.is_colombian is True
-    assert intent.duration == "multi_day"
-    assert intent.last_dive_over_2_years is True
-    assert intent.group_size is None   # out of scope
-    assert intent.location is None
-    assert "is_colombian" in intent.detected_fields
 
 
 @pytest.mark.asyncio
@@ -427,8 +211,7 @@ async def test_logistics_cutover_treats_false_as_resolved_not_a_gap():
     intent = DetectedIntent(is_colombian=False, duration="single_day", last_dive_over_2_years=False)
     state = ConversationState(conversation_id="logi-cutover-false-test")
 
-    with patch.object(supervisor.settings, "llm_extraction_cutover_logistics", True), \
-         patch.object(supervisor, "fill_gaps", new=AsyncMock(side_effect=AssertionError("must not be called"))):
+    with patch.object(supervisor, "fill_gaps", new=AsyncMock(side_effect=AssertionError("must not be called"))):
         await supervisor._maybe_apply_llm_extraction_cutover("cualquier cosa", intent, state)
 
     assert intent.is_colombian is False
@@ -440,8 +223,7 @@ async def test_logistics_cutover_result_propagates_to_state():
     intent = DetectedIntent()
     state = ConversationState(conversation_id="logi-cutover-propagation-test")
 
-    with patch.object(supervisor.settings, "llm_extraction_cutover_logistics", True), \
-         patch.object(supervisor, "fill_gaps", new=AsyncMock(return_value={
+    with patch.object(supervisor, "fill_gaps", new=AsyncMock(return_value={
              "is_colombian": True, "duration": "multi_day",
          })):
         await supervisor._maybe_apply_llm_extraction_cutover("soy de barranquilla, toda la semana", intent, state)
@@ -465,8 +247,7 @@ async def test_cutover_log_line_does_not_truncate_the_message(caplog):
     intent = DetectedIntent()
     state = ConversationState(conversation_id="cutover-log-truncation-test")
 
-    with patch.object(supervisor.settings, "llm_extraction_cutover_certification", True), \
-         patch.object(supervisor, "fill_gaps", new=AsyncMock(return_value={
+    with patch.object(supervisor, "fill_gaps", new=AsyncMock(return_value={
              "is_certified": False, "activity": "minicourse",
          })), \
          caplog.at_level("INFO"):

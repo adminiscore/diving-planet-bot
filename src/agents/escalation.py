@@ -86,7 +86,7 @@ SENSITIVE_RULES = {
         },
         "es": "Voy a transferirte inmediatamente con un miembro de nuestro staff para ayudarte con esta situación.",
         "en": "I'm immediately transferring you to a staff member to help with this situation.",
-        # s4-16 (flag `s4_fixes`): el pase es correcto, pero sin reconocer el problema sonaba frio
+        # s4-16 (paso 6, 27-sep): el pase es correcto, pero sin reconocer el problema sonaba frio
         # (golden `queja`, criterio "empatia"). Vale igual para una emergencia.
         "es_v2": (
             "Siento mucho lo que ha pasado 🙏 y entiendo tu molestia. Voy a pasarte ahora mismo con un "
@@ -135,7 +135,7 @@ _PASE_MEDICO = {
 
 def _rule_message(rule: dict, lang: str) -> str:
     key = "es" if lang == "es" else "en"
-    if settings.s4_fixes and f"{key}_v2" in rule:
+    if f"{key}_v2" in rule:
         return rule[f"{key}_v2"]
     if settings.aviso_medico_dice_pase and rule is SENSITIVE_RULES.get("medical_questions"):
         return rule[key] + _PASE_MEDICO[key]

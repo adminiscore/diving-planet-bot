@@ -565,7 +565,7 @@ def ask_slot(state: ConversationState, slot: str, *, reasking: bool = False) -> 
         # animas — buceo, minicurso, snorkel…?"; banco CAL, 10 casos). Sabiendo que quiere bucear, lo que falta es la
         # certificación: sin certificación se recomienda el minicurso (lo confirma el cliente); sin saberla, se pregunta.
         certificado = _known_field_values(state).get("is_certified")
-        if certificado is False and settings.recommend_inferred_minicourse:
+        if certificado is False:
             state.suggested_activity = "minicourse"
         elif certificado is None:
             return ask_slot(state, SLOT_CERTIFICATION, reasking=reasking)
@@ -575,7 +575,7 @@ def ask_slot(state: ConversationState, slot: str, *, reasking: bool = False) -> 
         # cal-60, también cuando la recomendación se había apuntado en un turno anterior sin llegar a decirse).
         reasking = False
 
-    if slot == SLOT_ACTIVITY and settings.recommend_inferred_minicourse and state.suggested_activity == "padi_open_water":
+    if slot == SLOT_ACTIVITY and state.suggested_activity == "padi_open_water":
         # Quien pide un curso desde cero: se recomienda el Open Water y el minicurso queda como opcion.
         state.quick_replies = (
             [{"title": "✅ Sí, el Open Water", "value": "curso open water"},
@@ -599,7 +599,7 @@ def ask_slot(state: ConversationState, slot: str, *, reasking: bool = False) -> 
             "with online theory, pool and 4 dives. If you'd rather try first, there's the *mini-course*, no "
             "experience needed. Shall we go for the Open Water? 🤿"
         )
-    if slot == SLOT_ACTIVITY and settings.recommend_inferred_minicourse and state.suggested_activity == "minicourse":
+    if slot == SLOT_ACTIVITY and state.suggested_activity == "minicourse":
         # u3-5: recomendar el minicurso a quien empieza, y que lo confirme el cliente (Gadea, 27-sep).
         state.quick_replies = (
             [{"title": "✅ Sí, el minicurso", "value": "minicurso"},
@@ -789,7 +789,7 @@ def ask_slot(state: ConversationState, slot: str, *, reasking: bool = False) -> 
                 "Cartagena* on the first day or, if you're already *on the islands*, we arrange pickup at your "
                 "hotel."
             )
-        if settings.s4_fixes and not _plan_is_single_day(state):
+        if not _plan_is_single_day(state):
             # Paso 6 (ronda B): con la actividad sin concretar ("curso básico" -> curso PADI generico)
             # se ofrecia "ida y vuelta el mismo dia" a un Open Water. Solo se afirma si se sabe.
             return (
@@ -1099,7 +1099,7 @@ def _apply_short_answer(state: ConversationState, message: str) -> bool:
         message = button
     msg = message.strip().lower()
 
-    if slot == SLOT_ACTIVITY and settings.recommend_inferred_minicourse and state.suggested_activity:
+    if slot == SLOT_ACTIVITY and state.suggested_activity:
         # u3-5: "si" / "vale" a la recomendacion del minicurso la confirma. Nombrar otra actividad
         # sigue el camino normal (extraccion).
         first = next(iter(_words(message)), "")
@@ -2086,13 +2086,13 @@ _CORRECTABLE_FIELDS = (
 
 def _has_correction_cue(state: ConversationState, message: str) -> bool:
     """La señal explícita de corrección de la regla del owner (tarea 7b): el regex de siempre
-    ("perdon", "en realidad", "actually"...) o, con `corrections_v2`, Jev seguro (>= 0,7) de que el
-    mensaje cambia o corrige un dato ya dado ("esperate, somos 4 al final"; u3-5 paso 2)."""
+    ("perdon", "en realidad", "actually"...) o Jev seguro (>= 0,7) de que el mensaje cambia o
+    corrige un dato ya dado ("esperate, somos 4 al final"; u3-5 paso 2)."""
     from src.agents import supervisor  # lazy
 
     if supervisor._CORRECTION_CUE_RE.search(message):
         return True
-    return bool(settings.corrections_v2 and getattr(state, "_jev_corrects", None) is True)
+    return getattr(state, "_jev_corrects", None) is True
 
 
 def _route_contradictions(state: ConversationState, message: str, intent, proposed: dict) -> None:
@@ -2120,17 +2120,16 @@ def _route_contradictions(state: ConversationState, message: str, intent, propos
         if _jev_says_not_affirmed(state, field):
             logger.info(f"[CORE] contradiccion descartada {field}: {old!r} -> {value!r} (Jev: no lo afirma)")
             continue
-        if settings.corrections_v2:
-            # u3-5 paso 1a: un cambio que se lee igual para el cliente no es un cambio ("1 buceo
-            # certificado, 1 snorkel -> 1 buceo certificado, 1 snorkel", ronda A del paso 3).
-            if _same_for_customer(field, value, old, state.language or "es"):
-                logger.info(f"[CORE] contradiccion descartada {field}: mismo valor para el cliente")
-                continue
-            # u3-5 paso 1b: lo ya preguntado y no confirmado no se vuelve a preguntar (el LLM lo
-            # re-deducia del historial en cada turno: 6 de los 12 "¿lo cambio?" de la ronda A).
-            if (state.asked_corrections or {}).get(field) == value:
-                logger.info(f"[CORE] contradiccion descartada {field}: ya preguntada y no confirmada")
-                continue
+        # u3-5 paso 1a: un cambio que se lee igual para el cliente no es un cambio ("1 buceo
+        # certificado, 1 snorkel -> 1 buceo certificado, 1 snorkel", ronda A del paso 3).
+        if _same_for_customer(field, value, old, state.language or "es"):
+            logger.info(f"[CORE] contradiccion descartada {field}: mismo valor para el cliente")
+            continue
+        # u3-5 paso 1b: lo ya preguntado y no confirmado no se vuelve a preguntar (el LLM lo
+        # re-deducia del historial en cada turno: 6 de los 12 "¿lo cambio?" de la ronda A).
+        if (state.asked_corrections or {}).get(field) == value:
+            logger.info(f"[CORE] contradiccion descartada {field}: ya preguntada y no confirmada")
+            continue
         if cue:
             setattr(intent, field, value)
             if field not in intent.overwrite:
@@ -2140,8 +2139,7 @@ def _route_contradictions(state: ConversationState, message: str, intent, propos
             logger.info(f"[CORE] correccion aceptada (cue) {field}: {old!r} -> {value!r}")
             continue
         state.pending_correction = {**(state.pending_correction or {}), field: value}
-        if settings.corrections_v2:
-            state.asked_corrections = {**(state.asked_corrections or {}), field: value}
+        state.asked_corrections = {**(state.asked_corrections or {}), field: value}
         setattr(intent, field, None)
         if field in intent.detected_fields:
             intent.detected_fields.remove(field)
@@ -2201,7 +2199,7 @@ def _prune_applied_corrections(state: ConversationState) -> None:
     """u3-5: antes de decidir qué preguntar, fuera las correcciones que ya coinciden con lo guardado.
     Lo propuesto puede haberse aplicado en el MISMO turno por otro camino (el acompañante resuelto:
     "2 buceo" -> "1 buceo, 1 snorkel") y la pregunta salía "X -> X" (replay del 27-sep)."""
-    if not (settings.corrections_v2 and state.pending_correction):
+    if not state.pending_correction:
         return
     known = _known_field_values(state)
     lang = state.language or "es"
@@ -2220,7 +2218,7 @@ def _recommend_inferred_minicourse(intent, state: ConversationState, message: st
     ("Me gustaria informacion de los cursos de buceo… es la primera vez" acababa en minicurso sin que
     lo pidiera, y podia querer el Open Water). Nombrarlo (minicurso, bautismo, discover scuba) SI es
     elegirlo. Solo la actividad principal y solo si aun no hay ninguna."""
-    if not settings.recommend_inferred_minicourse or intent.activity != "minicourse" or state.detected_activity:
+    if intent.activity != "minicourse" or state.detected_activity:
         return
     if getattr(intent, "_actividad_elegida", False):
         # ex-8: lo eligió el cliente según el extractor ("buceo para principiantes"); solo se recomienda el deducido.
@@ -2901,9 +2899,9 @@ async def _maybe_capture_notes(
     gastar una llamada en "sí"/"2"/"cartagena". Cualquier fallo se traga — nunca
     puede romper el turno (mismo principio que el resto del núcleo).
 
-    `snapshot` (l1-4, en paralelo): lo que hay que leer, tomado en `_setup_phase`
-    antes de lanzar la tarea (ver `_notes_snapshot`). Sin él se toma ahora, que en
-    serie es el mismo momento."""
+    `snapshot` (l1-4, en paralelo; sin flag desde s4-25): lo que hay que leer, tomado
+    en `_setup_phase` antes de lanzar la tarea (ver `_notes_snapshot`). Sin él (una
+    llamada directa) se toma ahora."""
     from src.agents import supervisor  # lazy
 
     stripped = message.strip()
@@ -2957,7 +2955,7 @@ async def _understand(state: ConversationState, message: str, *, answered_pendin
     # CONTESTA la pregunta pendiente lo siguen viendo, como hoy), pero ni dispara contradicciones, ni va al veto, al
     # relleno o a la re-comprobación. Al final se sustituye por lo del extractor (`_ubicacion_del_extractor`).
     pista_lugar = _pista_del_regex(intent)
-    # u3-4: turno con pregunta (solo con el flag: nadie lanza la respuesta sin él).
+    # u3-4: turno con pregunta (la respuesta del RAG ya está lanzada en paralelo).
     question_turn_fields = None
     if _has_pending_answer(state):
         question_turn_fields = _question_turn_fields(intent, state)
@@ -2969,10 +2967,9 @@ async def _understand(state: ConversationState, message: str, *, answered_pendin
     # verificación del turno con pregunta, las contradicciones del regex y las guardas del parche (grupo, booleanos,
     # origen, grupo mixto) se quedaban sin campos y se quitaron (HISTORY 0.31.28).
     gaps = [f for f in _relevant_gaps(state, intent, message) if f not in campos_del_extractor()]
-    rellenar = (
-        gaps if question_turn_fields is None and not _skips_gaps_as_question(message) and not _is_greeting_only(message)
-        else []
-    )
+    # u3-4: un mensaje con pregunta ya no se salta el relleno (así nació el núcleo, 22-jul: pregunta -> RAG O dato ->
+    # extracción); el dato que venga junto a la pregunta no se pierde.
+    rellenar = gaps if question_turn_fields is None and not _is_greeting_only(message) else []
     rellenar_sin_historial = []
     if question_turn_fields is not None and not _is_greeting_only(message):
         # u3-4 paso 3: en el turno con pregunta, solo los huecos que Jev dice que el cliente afirma en ESTE mensaje, y
@@ -3533,13 +3530,6 @@ def _looks_like_question(message: str) -> bool:
     return supervisor._looks_like_info_question(message) or "?" in message
 
 
-def _skips_gaps_as_question(message: str) -> bool:
-    """¿Se salta el relleno de huecos por ser una pregunta? Así nació el núcleo (22-jul):
-    un mensaje era pregunta (-> RAG) O dato (-> extracción). Con `answer_and_continue`
-    (u3-4) es las dos cosas: el dato que venga junto a la pregunta ya no se pierde."""
-    return _looks_like_question(message) and not settings.answer_and_continue
-
-
 def _apply_question_turn_answers(intent, fields: list[str], answers: dict, message: str) -> None:
     """u3-4 arreglo 2: en un turno con pregunta se guarda lo que el LLM AFIRMA.
 
@@ -3555,8 +3545,7 @@ def _apply_question_turn_answers(intent, fields: list[str], answers: dict, messa
     propósito: esos flags gobiernan el veto del turno NORMAL, donde la pregunta es
     "¿el regex leyó mal?" y cada campo se midió por separado (`location`,
     `is_certified` e `is_colombian` están en `False`). Aquí la pregunta es otra —
-    "¿el cliente afirma esto o es hipótesis?" — y solo corre en turnos con pregunta
-    y con `answer_and_continue` encendido.
+    "¿el cliente afirma esto o es hipótesis?" — y solo corre en turnos con pregunta.
     """
     for f in fields:
         llm_value = answers.get(f)
@@ -3989,9 +3978,8 @@ async def _setup_phase(
     # l1-4: justo por eso —solo escribe estado— puede salir del turno. Con
     # `defer_background_tasks` la llama el canal tras ENVIAR la respuesta
     # (ver `supervisor.run_deferred_turn_tasks`), y el cliente no la espera.
-    if _jev_sin_nada_que_apuntar(routing_signals):
-        pass  # rag-5: Jev está seguro de que no hay nada que apuntar -> no se llama al extractor
-    elif settings.notes_in_parallel:
+    # rag-5: si Jev está seguro de que no hay nada que apuntar, no se llama al extractor.
+    if not _jev_sin_nada_que_apuntar(routing_signals):
         # l1-4: se lanza y NO se espera aquí. La espera va justo antes de quien las
         # usa (`_build_extra_context`, contexto del RAG) y, como red de seguridad,
         # al cerrar el turno en `supervisor.route_message` — antes del `save_state`.
@@ -4004,8 +3992,6 @@ async def _setup_phase(
         state._pending_notes_task = asyncio.create_task(
             _maybe_capture_notes(state, message, snapshot=_notes_snapshot(state))
         )
-    else:
-        await _maybe_capture_notes(state, message)
     if not first_turn:
         _maybe_launch_ack(state, message)
     return greeting, first_turn
@@ -4018,8 +4004,6 @@ async def _setup_phase(
 # `_JUST_ANSWERED_PHRASE`, el resumen necesita el valor RECIÉN extraído (antes de extraer,
 # un "sí" a "¿eres colombiano?" se leería como el valor viejo) -> ahí sigue en serie, como hoy.
 def _maybe_launch_ack(state: ConversationState, message: str) -> None:
-    if not settings.ack_in_parallel:
-        return
     pending = state.core_pending_slot
     if pending in _JUST_ANSWERED_PHRASE:
         return
@@ -4064,12 +4048,12 @@ def cancel_pending_ack(state: ConversationState) -> None:
 
 
 def _courtesy_after_handoff(state: ConversationState, routing_signals: dict, greeting: str) -> str | None:
-    """s4-20 (paso 6, flag `s4_fixes`): tras pasar la conversacion a una persona, un mensaje que ni
+    """s4-20 (paso 6, 27-sep): tras pasar la conversacion a una persona, un mensaje que ni
     pregunta ni da ningun dato ("gracias", "ok, quedo atento") recibe una respuesta corta en vez de
     volver a vender ("¿Con cuál te animas — buceo, minicurso…?", ronda B del paso 6 tras el pase de
     los logs de PADI). Lo decide Jev con lo que ya contesta en la misma llamada (`asks_question` y los
     `affirms_*`, todos en falso); si Jev no contesto, la conducta de hoy."""
-    if not settings.s4_fixes or state.step != Step.ESCALATE:
+    if state.step != Step.ESCALATE:
         return None
     keys = ("asks_question", "needs_staff", *(sig for _, sig in _AFFIRMS_SIGNAL_FIELDS))
     if "asks_question" not in routing_signals or any(routing_signals.get(k) for k in keys):
@@ -4207,14 +4191,11 @@ def sembrar_senales_del_turno(state: ConversationState, routing_signals: dict) -
     # u3-4/u3-5: lo que Jev contestó en ESTE turno sobre si el cliente AFIRMA cada dato o solo lo
     # nombra. Se guarda en CADA turno (y se vacía si no hay señal), así nunca se usa la de un turno
     # anterior. Lo usan la puerta del turno con pregunta (`_question_turn_fields`), el relleno con
-    # puerta y el filtro de contradicciones (`_route_contradictions`). Un campo AUSENTE (flag o Jev
-    # apagados, o Jev falló) significa "no lo sé" -> la conducta de hoy; `False`, "no lo afirma".
-    state._answer_affirms = (
-        {f: routing_signals[sig] for f, sig in _AFFIRMS_SIGNAL_FIELDS if sig in routing_signals}
-        if settings.answer_and_continue else {}
-    )
+    # puerta y el filtro de contradicciones (`_route_contradictions`). Un campo AUSENTE (Jev apagado o
+    # Jev falló) significa "no lo sé" -> la conducta de hoy; `False`, "no lo afirma".
+    state._answer_affirms = {f: routing_signals[sig] for f, sig in _AFFIRMS_SIGNAL_FIELDS if sig in routing_signals}
     # u3-5 paso 2: ¿el mensaje corrige un dato ya dado? (Jev, misma llamada). Se renueva cada turno.
-    state._jev_corrects = routing_signals.get("corrects") if settings.corrections_v2 else None
+    state._jev_corrects = routing_signals.get("corrects")
     # u3-3: probabilidad cruda de que el cliente afirme cada campo (Jev, misma llamada).
     raw_p = routing_signals.get("affirms_p") or {}
     state._affirms_p = {f: raw_p[sig] for f, sig in _AFFIRMS_SIGNAL_FIELDS if sig in raw_p}
@@ -4276,7 +4257,7 @@ async def _routing_phase(
     resolved_short = False
     if prev_pending and not has_qmark:
         resolved_short = _apply_short_answer(state, message)
-    if settings.corrections_v2 and prev_pending == SLOT_CONFIRM_CORRECTION and not resolved_short:
+    if prev_pending == SLOT_CONFIRM_CORRECTION and not resolved_short:
         # u3-5 paso 1b: la confirmación se pregunta UNA vez. Un "sí" al principio vale aunque el
         # mensaje siga con una pregunta ("sí, ¿y cuánto es?"); cualquier otra cosa = no confirmado:
         # se queda lo guardado y el turno sigue normal (el mensaje puede traer otra cosa).
@@ -5257,7 +5238,7 @@ async def _slotfill_close_phase(
             answer = await _rag_answer(state, message, history=list(state.history), sin_precio=True) or answer
         except Exception as exc:  # noqa: BLE001 — si falla, va la de antes
             logger.warning(f"[CORE][G3-07a] no se pudo rehacer sin precio: {exc!r}")
-    if answer and finalized and settings.s4_fixes and _is_rag_fallback(answer):
+    if answer and finalized and _is_rag_fallback(answer):
         # s4-7 (paso 6): con el cierre de la reserva (resumen + link) en este turno, un "eso no lo
         # tengo a la mano" no aporta nada y, por la regla de arriba, TAPABA el cierre: "great, how do
         # i pay" se quedaba sin el link (ronda B de u3-5). El cierre ya contesta "¿cómo pago?".
@@ -5484,8 +5465,6 @@ def lanzar_rag_adelantado(state: ConversationState, message: str) -> None:
     `_setup_phase` (sin llamadas) y la foto queda como la dejará él (idioma y paso de conversación libre). Si la
     regla no sabe el idioma (`_setup_phase` preguntaría al LLM), no se adelanta. Si al final decide otra cosa, la
     huella no coincide y se rehace, como siempre."""
-    if not settings.answer_and_continue:
-        return
     texto = (message or "").strip()
     if not texto or texto.isdigit():
         return
@@ -5727,15 +5706,13 @@ _AFFIRMS_SIGNAL_FIELDS = (
 
 
 def _jev_says_not_affirmed(state: ConversationState, field: str) -> bool:
-    """¿Dice Jev que el mensaje de ESTE turno NO afirma este campo? Solo con el flag; ausente
-    (Jev apagado o falló) = no lo sabemos -> la conducta de hoy.
+    """¿Dice Jev que el mensaje de ESTE turno NO afirma este campo? Ausente (Jev apagado o
+    falló) = no lo sabemos -> la conducta de hoy.
 
     Vale en todos los turnos, no solo en los que traen pregunta (26-sep): el "¿lo cambio?"
     fantasma también sale en turnos de cortesía ("Just completed the waivers. Thank you!" ->
     "¿lo cambio? salida desde Cartagena -> en las islas", replay del golden), cuando la
     revisión de datos guardados re-deduce desde el historial (hallazgo J, 15-sep)."""
-    if not settings.answer_and_continue:
-        return False
     return (getattr(state, "_answer_affirms", None) or {}).get(field) is False
 
 
@@ -5754,7 +5731,7 @@ def _lugar_desconocido(routing_signals: dict) -> bool:
 
 
 def _maybe_launch_answer(state: ConversationState, message: str, routing_signals: dict) -> None:
-    if not settings.answer_and_continue or _has_pending_answer(state):
+    if _has_pending_answer(state):
         return
     if not _turn_has_question(message, routing_signals):
         if not (settings.lugar_desconocido_al_rag and _lugar_desconocido(routing_signals)):

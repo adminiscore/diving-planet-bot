@@ -208,7 +208,7 @@ class ConversationState:
     # cliente antes de cambiar nada (owner 2026-09-15, tarea 7b).
     pending_correction: dict | None = None
     # u3-5: correcciones ya preguntadas ({campo: valor propuesto}). No se vuelven a preguntar:
-    # si el cliente no las confirmó, se queda lo guardado (con `corrections_v2`).
+    # si el cliente no las confirmó, se queda lo guardado.
     asked_corrections: dict = field(default_factory=dict)
     # u3-5 (decision de Gadea, 27-sep): actividad RECOMENDADA, no elegida. El minicurso deducido de
     # "es mi primera vez" se recomienda y lo confirma el cliente; hasta entonces no se guarda.

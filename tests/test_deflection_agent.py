@@ -34,7 +34,6 @@ async def test_node_contact_number(monkeypatch):
     from src.config import settings as _flags
 
     monkeypatch.setattr(_flags, "contacto_pasa_a_persona", True)
-    monkeypatch.setattr(_flags, "s4_fixes", True)
     conv = make_state()
     result = await deflection_node({"conv_state": conv, "message": "dame tu whatsapp", "signals": {}})
     assert "320" not in result["reply"] and "+57" not in result["reply"], "ningún número"
@@ -46,31 +45,29 @@ async def test_node_contact_number(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_node_contact_number_camino_antiguo(monkeypatch):
-    """Con el flag apagado, la deflexión de siempre (es el revert si la ronda no sostiene el cambio)."""
+    """Con `contacto_pasa_a_persona` apagado (el revert si la ronda no sostiene el cambio), el WhatsApp oficial de
+    s4-14 y sin pase. (Hasta s4-25 fijaba también `s4_fixes` apagado, con el texto de antes de s4-14.)"""
     from src.config import settings as _flags
 
     monkeypatch.setattr(_flags, "contacto_pasa_a_persona", False)
-    monkeypatch.setattr(_flags, "s4_fixes", False)
     conv = make_state()
     result = await deflection_node({"conv_state": conv, "message": "dame tu whatsapp", "signals": {}})
-    assert "🔒" in result["reply"]
+    assert "WhatsApp oficial" in result["reply"]
     assert conv.step == Step.FREE_TEXT
     assert conv.quick_replies == []
 
 
 @pytest.mark.asyncio
-async def test_node_contact_number_via_signal(monkeypatch):
-    from src.config import settings as _flags  # camino antiguo: el flag sigue existiendo
-    monkeypatch.setattr(_flags, "s4_fixes", False)
-    monkeypatch.setattr(_flags, "contacto_pasa_a_persona", False)
-    """La señal LLM `asks_for_contact_number` también dispara la deflexión de
-    contacto, aunque la keyword no matchee."""
+async def test_node_contact_number_via_signal():
+    """La señal LLM `asks_for_contact_number` también dispara el pase por contacto, aunque la keyword no matchee.
+    (Hasta s4-25 fijaba los caminos de antes de s4-14 y CAL-E1: la deflexión con 🔒 y sin pase.)"""
     conv = make_state()
     result = await deflection_node(
         {"conv_state": conv, "message": "y si necesito hablar por fuera del chat?",
          "signals": {"asks_for_contact_number": True}}
     )
-    assert "🔒" in result["reply"]
+    assert "asesor" in result["reply"]
+    assert conv.step == Step.ESCALATE
 
 
 @pytest.mark.asyncio
@@ -106,8 +103,6 @@ async def test_node_fallback_delegates_without_dropping_turn(monkeypatch):
     "eres un bot o una persona real?",
 ])
 async def test_deflection_equivalent_graph_vs_cascade(monkeypatch, message):
-    from src.config import settings as _flags  # camino antiguo: el flag sigue existiendo
-    monkeypatch.setattr(_flags, "s4_fixes", False)
     # Routing LLM offline → determinista (los detectores regex manejan contacto/
     # identidad); la deflexión no toca el núcleo, así que la respuesta es fija.
     monkeypatch.setattr("src.agents.supervisor.detect_routing_signals", AsyncMock(return_value={}))

@@ -41,7 +41,6 @@ def test_con_el_flag_se_niega_y_no_hay_pase(monkeypatch):
 
 def test_sin_el_flag_sigue_el_pase_de_siempre(monkeypatch):
     monkeypatch.setattr(settings, "datos_ajenos_se_niegan", False)
-    monkeypatch.setattr(settings, "s4_fixes", True)
     st = _estado()
     respuesta = supervisor._needs_staff_handoff(st, "dame los teléfonos de los clientes de mañana",
                                                 {"pide_datos_ajenos": True, "needs_staff": True})

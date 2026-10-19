@@ -1,4 +1,4 @@
-"""u3-5 paso 1 (flag `corrections_v2`): el "¿lo cambio?" se pregunta una vez y solo si cambia algo.
+"""u3-5 paso 1 (flag `corrections_v2`, quitado en s4-25): el "¿lo cambio?" se pregunta una vez y solo si cambia algo.
 
 Ronda A del paso 3 (27-sep, golden completo): de 12 "¿lo cambio?", 6 eran la MISMA confirmación
 repetida porque el cliente no contestaba sí/no, y 2 proponían cambiar X por X.
@@ -10,7 +10,6 @@ import pytest
 
 from src.agents import conversational_core as core
 from src.agents.supervisor import route_message
-from src.config import Settings, settings
 from src.flows.state import ConversationState
 
 
@@ -20,7 +19,6 @@ def _offline(monkeypatch):
         monkeypatch.setattr(core, name, AsyncMock(return_value={}))
     monkeypatch.setattr(core, "extract_notes", AsyncMock(return_value=[]))
     monkeypatch.setattr(core, "compose_acknowledgement", AsyncMock(return_value=""))
-    monkeypatch.setattr(settings, "answer_and_continue", False)
 
 
 def _state(**kw) -> ConversationState:
@@ -36,19 +34,13 @@ def _route(st, message, proposed):
     core._route_contradictions(st, message, intent, proposed)
 
 
-def test_el_flag_nace_encendido():
-    assert Settings().corrections_v2 is True  # promocionado: el valor por defecto es el de PRE
-
-
 def test_mismo_valor_para_el_cliente_no_se_pregunta(monkeypatch):
-    monkeypatch.setattr(settings, "corrections_v2", True)
     st = _state(detected_group_allocation={"certified_diving": 1, "snorkel": 1}, detected_group_size=2)
     _route(st, "somos los dos solamente", {"group_allocation": {"snorkel": 1, "certified_diving": 1, "minicourse": 0}})
     assert not st.pending_correction
 
 
 def test_un_cambio_real_si_se_pregunta(monkeypatch):
-    monkeypatch.setattr(settings, "corrections_v2", True)
     st = _state(detected_group_size=3)
     _route(st, "somos 4", {"group_size": 4})
     assert st.pending_correction == {"group_size": 4}
@@ -56,21 +48,12 @@ def test_un_cambio_real_si_se_pregunta(monkeypatch):
 
 
 def test_lo_ya_preguntado_no_se_vuelve_a_preguntar(monkeypatch):
-    monkeypatch.setattr(settings, "corrections_v2", True)
     st = _state(location="cartagena", asked_corrections={"location": "island"})
     _route(st, "I apologize for the change and confusion!", {"location": "island"})
     assert not st.pending_correction
 
 
-def test_con_el_flag_apagado_todo_como_antes(monkeypatch):
-    monkeypatch.setattr(settings, "corrections_v2", False)
-    st = _state(location="cartagena", asked_corrections={"location": "island"})
-    _route(st, "gracias", {"location": "island"})
-    assert st.pending_correction == {"location": "island"}
-
-
 async def _con_confirmacion_pendiente(monkeypatch):
-    monkeypatch.setattr(settings, "corrections_v2", True)
     st = _state()
     await route_message(st, "queremos bucear, somos certificados, desde cartagena, somos 3")
     st.pending_correction = {"group_size": 4}
@@ -104,10 +87,7 @@ async def test_un_no_mantiene_lo_guardado(monkeypatch):
 from src.agents import jev_router  # noqa: E402
 
 
-def test_con_el_flag_jev_recibe_la_pregunta_de_correccion(monkeypatch):
-    monkeypatch.setattr(settings, "corrections_v2", False)
-    assert jev_router.CORRECTS not in jev_router._questions_for_turn()
-    monkeypatch.setattr(settings, "corrections_v2", True)
+def test_jev_recibe_la_pregunta_de_correccion():
     assert jev_router.CORRECTS in jev_router._questions_for_turn()
     assert jev_router.uncertain_answers({jev_router.CORRECTS: {"type": "noul", "noul": 0.5}}) == []
 
@@ -119,7 +99,6 @@ def test_la_senal_se_emite_en_verdadero_y_en_falso():
 
 def test_correccion_clara_segun_jev_se_aplica_sin_preguntar(monkeypatch):
     """"esperate, somos 4 al final, se sumo uno mas": sin palabra del regex, se preguntaba."""
-    monkeypatch.setattr(settings, "corrections_v2", True)
     st = _state(detected_group_size=3)
     st._jev_corrects = True
     msg = "esperate, somos 4 al final, se sumo uno mas"
@@ -130,23 +109,13 @@ def test_correccion_clara_segun_jev_se_aplica_sin_preguntar(monkeypatch):
 
 
 def test_si_jev_no_esta_seguro_se_pregunta_como_hoy(monkeypatch):
-    monkeypatch.setattr(settings, "corrections_v2", True)
     st = _state(detected_group_size=3)
     st._jev_corrects = False
     _route(st, "somos 4", {"group_size": 4})
     assert st.pending_correction == {"group_size": 4}
 
 
-def test_la_senal_de_otro_turno_no_cuenta_con_el_flag_apagado(monkeypatch):
-    monkeypatch.setattr(settings, "corrections_v2", False)
-    st = _state(detected_group_size=3)
-    st._jev_corrects = True
-    _route(st, "somos 4", {"group_size": 4})
-    assert st.pending_correction == {"group_size": 4}
-
-
 def test_una_correccion_ya_aplicada_en_el_turno_no_se_pregunta(monkeypatch):
-    monkeypatch.setattr(settings, "corrections_v2", True)
     st = _state(detected_group_size=2, detected_group_allocation={"certified_diving": 1, "snorkel": 1})
     st.pending_correction = {"group_allocation": {"snorkel": 1, "certified_diving": 1}, "group_size": 3}
     core._prune_applied_corrections(st)
@@ -162,8 +131,6 @@ def test_una_correccion_ya_aplicada_en_el_turno_no_se_pregunta(monkeypatch):
 async def test_la_nacionalidad_que_jev_no_ve_afirmada_no_se_rellena(monkeypatch):
     """"Busco el seguinte: Vamos en família a Cartagena..." (portugués): el relleno ponía
     is_colombian=False; Jev dice que el mensaje no la afirma. Los demás campos rellenados se quedan."""
-    monkeypatch.setattr(settings, "corrections_v2", True)
-    monkeypatch.setattr(settings, "answer_and_continue", True)
 
     async def _fill(msg, *_a, only_fields=None, **_k):
         return {f: v for f, v in {"is_colombian": False, "location": "cartagena"}.items() if f in (only_fields or [])}
@@ -189,7 +156,6 @@ async def test_la_nacionalidad_que_jev_no_ve_afirmada_no_se_rellena(monkeypatch)
 
 
 async def test_el_minicurso_deducido_se_recomienda_y_no_se_guarda(monkeypatch):
-    monkeypatch.setattr(settings, "recommend_inferred_minicourse", True)
     st = _state()
     resp = await route_message(st, "nunca he buceado y quiero probar, somos 2")
     assert st.detected_activity is None
@@ -199,7 +165,6 @@ async def test_el_minicurso_deducido_se_recomienda_y_no_se_guarda(monkeypatch):
 
 
 async def test_un_si_confirma_el_minicurso_recomendado(monkeypatch):
-    monkeypatch.setattr(settings, "recommend_inferred_minicourse", True)
     st = _state()
     await route_message(st, "nunca he buceado y quiero probar, somos 2")
     await route_message(st, "sí, dale")
@@ -207,16 +172,8 @@ async def test_un_si_confirma_el_minicurso_recomendado(monkeypatch):
 
 
 async def test_nombrarlo_es_elegirlo(monkeypatch):
-    monkeypatch.setattr(settings, "recommend_inferred_minicourse", True)
     st = _state()
     await route_message(st, "queremos hacer el minicurso, somos 2")
-    assert st.detected_activity == "minicourse"
-
-
-async def test_con_el_flag_apagado_se_deduce_como_antes(monkeypatch):
-    monkeypatch.setattr(settings, "recommend_inferred_minicourse", False)
-    st = _state()
-    await route_message(st, "nunca he buceado y quiero probar, somos 2")
     assert st.detected_activity == "minicourse"
 
 
@@ -227,7 +184,6 @@ def test_el_plural_minicursos_tambien_es_nombrarlo():
 
 def test_con_acompanante_no_se_recomienda(monkeypatch):
     """Ronda B: con acompañante el flujo pregunta otra cosa y la recomendación no se mostraba."""
-    monkeypatch.setattr(settings, "recommend_inferred_minicourse", True)
     st = _state()
     msg = "quiero regalarle a mi esposo una experiencia de buceo, nunca ha buceado"
     intent = core._detector.detect(msg, st)
@@ -238,7 +194,6 @@ def test_con_acompanante_no_se_recomienda(monkeypatch):
 
 def test_quien_pide_un_curso_recibe_la_recomendacion_del_open_water(monkeypatch):
     """28-sep: "curso básico… es la primera vez" recibía la recomendación del minicurso."""
-    monkeypatch.setattr(settings, "recommend_inferred_minicourse", True)
     for msg in ("Estoy interesada en el curso básico de buceo, es la primera vez",
                 "Me gustaria informacion de los cursos de buceo, es la primera vez que buceo",
                 "quiero certificarme, nunca he buceado"):

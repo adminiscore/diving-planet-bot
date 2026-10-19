@@ -1,4 +1,4 @@
-"""Banco de calibración de la pregunta de Jev `changes_date` (paso 6, s4-6, flag `s4_fixes`, 27-sep).
+"""Banco de calibración de la pregunta de Jev `changes_date` (paso 6, s4-6, 27-sep).
 
 Positivos: cambios de fecha. Negativos: lo que la señal del router confundía con reprogramar mientras
 se arma el carrito ("do it for 3 days instead", "en realidad somos 4") y fechas dichas o preguntadas

@@ -2,8 +2,8 @@
 flag apagado y encendido, con el estado REAL turno a turno (se usó en u3-4, 24-sep).
 
 Uso (dos pasadas, luego `scripts/replay_diff.py`):
-    python -m scripts.replay_golden_local --flag answer_and_continue --side off
-    python -m scripts.replay_golden_local --flag answer_and_continue --side on
+    python -m scripts.replay_golden_local --flag aplazar_pregunta_sin_respuesta --side off
+    python -m scripts.replay_golden_local --flag aplazar_pregunta_sin_respuesta --side on
 Salida: docs/robustness/<dir>/replay-<side>.jsonl (por defecto --dir u3-4).
 Coste: céntimos (solo extracción + Jev; RAG/acuse/notas son respuestas fijas).
 
@@ -20,13 +20,9 @@ from pathlib import Path
 
 os.environ.update({
     "ENV_FILE": ".env.dev", "APP_ENV": "development",
-    "LLM_EXTRACTION_CUTOVER_CERTIFICATION": "true", "LLM_EXTRACTION_CUTOVER_GROUP": "true",
-    "LLM_EXTRACTION_CUTOVER_LOCATION": "true", "LLM_EXTRACTION_CUTOVER_LOGISTICS": "true",
     "JEV_ROUTER_ENABLED": "true", "AGENT_ARCH": "true", "RAG_MIN_SCORE": "0.40",
-    "NOTES_IN_PARALLEL": "false", "ACK_IN_PARALLEL": "false",
-    "ANSWER_AND_CONTINUE": "true",  # encendido en PRE desde el 26-sep (u3-4); --flag lo puede pisar
-    "CORRECTIONS_V2": "true",  # promocionado el 27-sep (u3-5)
-    "S4_FIXES": "true",  # promocionado el 27-sep (paso 6)
+    # s4-25: contesta y sigue (u3-4), las correcciones (u3-5), lo del paso 6 y las notas y el acuse en paralelo ya no
+    # tienen flag; las notas y el acuse, que aqui iban en serie, son respuestas fijas.
     "LANGFUSE_PUBLIC_KEY": "", "LANGFUSE_SECRET_KEY": "",
     "CHATWOOT_API_TOKEN": "", "CHATWOOT_BASE_URL": "http://127.0.0.1:9", "CHATWOOT_API_BASE_URL": "http://127.0.0.1:9",
 })

@@ -39,10 +39,10 @@ def test_as_setting_convierte_como_pydantic(crudo, valor):
 
 
 def test_compare_detecta_lo_distinto_y_lo_que_falta():
-    esperado = {"answer_and_continue": True, "rag_min_score": 0.4, "openai_model": "gpt-4o-mini", "nuevo": 1}
-    en_pre = {"answer_and_continue": False, "rag_min_score": 0.4000000000001, "openai_model": "gpt-4o-mini"}
+    esperado = {"grupo_por_edades": True, "rag_min_score": 0.4, "openai_model": "gpt-4o-mini", "nuevo": 1}
+    en_pre = {"grupo_por_edades": False, "rag_min_score": 0.4000000000001, "openai_model": "gpt-4o-mini"}
     diffs = cd.compare(esperado, en_pre)
-    assert any(d.startswith("answer_and_continue:") for d in diffs)
+    assert any(d.startswith("grupo_por_edades:") for d in diffs)
     assert any(d.startswith("nuevo:") for d in diffs)
     assert not any(d.startswith("rag_min_score") for d in diffs), "un float igual no es una diferencia"
     assert not any(d.startswith("openai_model") for d in diffs)
@@ -78,12 +78,12 @@ def _preparar(monkeypatch, run, estado_pre, jobs=None):
 
     monkeypatch.setattr(cd, "_get", fake_get)
     monkeypatch.setattr(cd, "pre_state", lambda keys: estado_pre)
-    monkeypatch.setattr(cd, "expected_from_compose", lambda: {"answer_and_continue": True, "openai_model": "gpt-4o-mini"})
+    monkeypatch.setattr(cd, "expected_from_compose", lambda: {"grupo_por_edades": True, "openai_model": "gpt-4o-mini"})
 
 
 RUN_OK = {"head_sha": "a8d731dfull", "status": "completed", "conclusion": "success", "html_url": "u", "id": 1}
 PRE_OK = {"sha": "a8d731dfull", "branch": "feature/pre_alvaro", "health": "healthy",
-          "settings": {"answer_and_continue": True, "openai_model": "gpt-4o-mini"}}
+          "settings": {"grupo_por_edades": True, "openai_model": "gpt-4o-mini"}}
 
 
 def test_todo_bien_sale_0(monkeypatch, capsys):
@@ -103,9 +103,9 @@ def test_ci_rojo_sale_1_y_dice_el_paso_que_falla(monkeypatch, capsys):
 
 
 def test_pre_con_otro_ajuste_que_el_repo_sale_1(monkeypatch, capsys):
-    _preparar(monkeypatch, RUN_OK, {**PRE_OK, "settings": {"answer_and_continue": False, "openai_model": "gpt-4o-mini"}})
+    _preparar(monkeypatch, RUN_OK, {**PRE_OK, "settings": {"grupo_por_edades": False, "openai_model": "gpt-4o-mini"}})
     assert cd.main(["--no-wait"]) == 1
-    assert "answer_and_continue" in capsys.readouterr().out
+    assert "grupo_por_edades" in capsys.readouterr().out
 
 
 def test_pre_en_otra_rama_sale_1(monkeypatch):

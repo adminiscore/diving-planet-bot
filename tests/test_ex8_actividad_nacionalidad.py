@@ -52,7 +52,6 @@ async def test_la_actividad_elegida_la_pone_el_extractor(ex8):
 
 @pytest.mark.asyncio
 async def test_el_minicurso_deducido_se_recomienda_no_se_elige(ex8, monkeypatch):
-    monkeypatch.setattr(settings, "recommend_inferred_minicourse", True)
     ex8({"is_certified": False})
     st = await _entender("es la primera vez que voy a hacer buceo")
     assert st.detected_activity is None
@@ -80,7 +79,6 @@ async def test_grupo_mezclado_paga_en_usd(ex8):
 @pytest.mark.asyncio
 async def test_el_minicurso_elegido_no_se_convierte_en_recomendacion(ex8, monkeypatch):
     """Escalón 0 de ex-8: "Buceo para principiantes" (lo elige, según el extractor) acababa como recomendación de u3-5."""
-    monkeypatch.setattr(settings, "recommend_inferred_minicourse", True)
     ex8({"activity": "minicourse"})
     st = await _entender("Buceo para principiantes")
     assert st.detected_activity == "minicourse"

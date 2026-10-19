@@ -29,6 +29,14 @@ def _state() -> ConversationState:
     return s
 
 
+async def _setup(message: str, signals: dict) -> None:
+    """`_setup_phase` y la espera de las notas, que van en paralelo (sin flag desde s4-25; antes este fichero las
+    ponía en serie con `notes_in_parallel` apagado)."""
+    st = _state()
+    await core._setup_phase(st, message, signals)
+    await core.await_pending_notes(st)
+
+
 @pytest.fixture
 def extractor(monkeypatch):
     llamadas = []
@@ -36,7 +44,6 @@ def extractor(monkeypatch):
     async def _notas(state, message, **_):
         llamadas.append(message)
 
-    monkeypatch.setattr(settings, "notes_in_parallel", False)
     monkeypatch.setattr(settings, "notas_puerta_jev", True)
     monkeypatch.setattr(core, "_maybe_capture_notes", _notas)
     return llamadas
@@ -44,27 +51,27 @@ def extractor(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_jev_seguro_de_que_no_hay_nada_no_se_llama_al_extractor(extractor):
-    await core._setup_phase(_state(), "how much would that be", {jev_router.SHARES_OPEN_FACT: 0.03})
+    await _setup("how much would that be", {jev_router.SHARES_OPEN_FACT: 0.03})
     assert extractor == []
 
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("p", [0.97, 0.27, jev_router.NOTES_SKIP_MAX])
 async def test_con_algo_que_apuntar_o_con_duda_se_llama_como_hoy(extractor, p):
-    await core._setup_phase(_state(), "soy epiléptica, puedo bucear?", {jev_router.SHARES_OPEN_FACT: p})
+    await _setup("soy epiléptica, puedo bucear?", {jev_router.SHARES_OPEN_FACT: p})
     assert extractor == ["soy epiléptica, puedo bucear?"]
 
 
 @pytest.mark.asyncio
 async def test_sin_respuesta_de_jev_lo_de_siempre(extractor):
-    await core._setup_phase(_state(), "how much would that be", {})
+    await _setup("how much would that be", {})
     assert extractor == ["how much would that be"]
 
 
 @pytest.mark.asyncio
 async def test_con_el_flag_apagado_lo_de_siempre(extractor, monkeypatch):
     monkeypatch.setattr(settings, "notas_puerta_jev", False)
-    await core._setup_phase(_state(), "how much would that be", {jev_router.SHARES_OPEN_FACT: 0.03})
+    await _setup("how much would that be", {jev_router.SHARES_OPEN_FACT: 0.03})
     assert extractor == ["how much would that be"]
 
 

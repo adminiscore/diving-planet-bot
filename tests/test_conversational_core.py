@@ -365,17 +365,17 @@ async def test_question_mid_flow_answers_and_reasks_pending_slot(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_llm_gap_fill_feeds_slots(monkeypatch):
-    from src.config import settings as _flags  # camino antiguo: el flag sigue existiendo
-    monkeypatch.setattr(_flags, "recommend_inferred_minicourse", False)
+    """El relleno LLM alimenta los slots. El minicurso que deduce no se da por elegido: se recomienda y lo confirma
+    el cliente (u3-5; hasta s4-25 este test apagaba `recommend_inferred_minicourse` y lo veía guardado)."""
     state = make_state("en")
     monkeypatch.setattr(core, "fill_gaps", AsyncMock(return_value={
         "activity": "minicourse", "is_certified": False, "group_size": 1,
     }))
     resp = await route_message(state, "never been underwater before, wanna give it a try, solo")
-    assert state.detected_activity == "minicourse"
-    # minicurso: sin pregunta de seguridad; ubicación es el siguiente slot
-    assert state.core_pending_slot == core.SLOT_LOCATION
-    assert "Cartagena" in resp
+    assert state.detected_activity is None and state.suggested_activity == "minicourse"
+    assert state.detected_is_certified is False
+    assert state.core_pending_slot == core.SLOT_ACTIVITY
+    assert "mini-course" in resp
 
 
 # ---------------------------------------------------------------------------
@@ -605,15 +605,14 @@ async def test_understand_skips_llm_when_state_knows_driving_fields(monkeypatch)
 
 @pytest.mark.asyncio
 async def test_understand_still_fills_when_state_is_empty(monkeypatch):
-    from src.config import settings as _flags  # camino antiguo: el flag sigue existiendo
-    monkeypatch.setattr(_flags, "recommend_inferred_minicourse", False)
-    """Primer mensaje (estado vacío): el gap-fill sigue funcionando igual."""
+    """Primer mensaje (estado vacío): el gap-fill sigue funcionando igual (el minicurso deducido queda recomendado,
+    u3-5; hasta s4-25 este test apagaba `recommend_inferred_minicourse` y lo veía guardado)."""
     state = make_state("en")
     monkeypatch.setattr(core, "fill_gaps", AsyncMock(return_value={
         "activity": "minicourse", "is_certified": False,
     }))
     await core._understand(state, "never tried it before but would love to")
-    assert state.detected_activity == "minicourse"
+    assert state.suggested_activity == "minicourse"
     assert state.detected_is_certified is False
 
 

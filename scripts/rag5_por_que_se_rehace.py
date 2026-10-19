@@ -25,15 +25,11 @@ from collections import Counter
 
 os.environ.update({
     "ENV_FILE": ".env.dev", "APP_ENV": "development",
-    "LLM_EXTRACTION_CUTOVER_CERTIFICATION": "true", "LLM_EXTRACTION_CUTOVER_GROUP": "true",
-    "LLM_EXTRACTION_CUTOVER_LOCATION": "true", "LLM_EXTRACTION_CUTOVER_LOGISTICS": "true",
     "JEV_ROUTER_ENABLED": "true", "AGENT_ARCH": "true", "RAG_MIN_SCORE": "0.40",
-    # los interruptores de rag-5 como en PRE (docker-compose.vps.yml); el adelanto y la busqueda por origen ya no
-    # tienen flag (s4-25)
-    "ANSWER_AND_CONTINUE": "true",
-    # Como en PRE: con las notas en SERIE se calculan al principio del turno, ANTES de lanzar el adelantado, y
-    # la espera que se quiere medir no existe (primera pasada del 30-sep: 99 % aprovechado, falso).
-    "NOTES_IN_PARALLEL": "true", "ACK_IN_PARALLEL": "false",
+    # Los interruptores de rag-5 ya no existen (s4-25): contesta y sigue, el adelanto, la busqueda por origen y las
+    # notas en paralelo son lo de siempre, como en PRE. (Con las notas en SERIE se calculaban al principio del turno,
+    # ANTES de lanzar el adelantado, y la espera que se quiere medir no existia: primera pasada del 30-sep, 99 %
+    # aprovechado, falso.) El acuse, que aqui iba en serie, tambien va en paralelo; es una respuesta fija.
     "LANGFUSE_PUBLIC_KEY": "", "LANGFUSE_SECRET_KEY": "",
     "CHATWOOT_API_TOKEN": "", "CHATWOOT_BASE_URL": "http://127.0.0.1:9", "CHATWOOT_API_BASE_URL": "http://127.0.0.1:9",
 })
@@ -129,11 +125,10 @@ def _clase(frase: str) -> str:
 
 
 async def main() -> None:
-    settings.answer_and_continue = True
     supervisor.rag_answer = _rag
     core.compose_acknowledgement = lambda *a, **k: asyncio.sleep(0, result="")
     # Notas FIJAS (vacías): descarta su CONTENIDO como causa. `NOTAS_TARDAN` les da la latencia de una llamada
-    # real (en PRE van en paralelo, `NOTES_IN_PARALLEL`): si con notas vacías pero lentas se rehace más, la causa no
+    # real (van en paralelo, como en PRE): si con notas vacías pero lentas se rehace más, la causa no
     # es lo que dicen las notas sino la ESPERA, que deja a la extracción cambiar el estado entre las dos huellas.
     retardo = float(os.environ.get("NOTAS_TARDAN", "0"))
     if os.environ.get("NOTAS_REALES") == "1":

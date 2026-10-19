@@ -53,8 +53,6 @@ def extractor_reparte(monkeypatch):
     monkeypatch.setattr(core, "resolve_slot_answer", AsyncMock(return_value={}))
     monkeypatch.setattr(core, "extract_notes", AsyncMock(return_value=[]))
     monkeypatch.setattr(core, "compose_acknowledgement", AsyncMock(return_value=""))
-    monkeypatch.setattr(settings, "notes_in_parallel", False)
-    monkeypatch.setattr(settings, "ack_in_parallel", False)
     monkeypatch.setattr(core, "lanzar_rag_adelantado", lambda *a, **k: None)  # rag-5: sin respuesta adelantada
 
     async def _senales(message, **_k):

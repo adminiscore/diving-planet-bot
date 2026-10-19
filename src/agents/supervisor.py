@@ -675,11 +675,11 @@ def _detect_modify_booking_request(msg_lower: str) -> bool:
 
 
 def _jev_changes_date(signals: dict) -> bool:
-    """s4-6 (paso 6, flag `s4_fixes`): Jev dice que el cliente quiere cambiar el DIA. Vale tambien
+    """s4-6 (paso 6, 27-sep): Jev dice que el cliente quiere cambiar el DIA. Vale tambien
     con el carrito en construccion (decision del owner: sin reserva pagada, un cambio de fecha va a un
     asesor), a diferencia de `booking_change_topic`, que ahi confunde "hazlo para 3 dias" con
     reprogramar. Banco `scripts/sonda_cambia_fecha.py`: 7/8 cambios, 0/12 falsas."""
-    return bool(settings.s4_fixes and signals.get("changes_date") is True)
+    return signals.get("changes_date") is True
 
 
 def _in_active_cart_building(state: ConversationState) -> bool:
@@ -774,30 +774,18 @@ def _asks_about_ai_identity(msg_lower: str) -> bool:
 
 
 def _ai_identity_deflection(lang: str) -> str:
-    if settings.s4_fixes:
-        # s4-15: a "¿eres un bot?" se contesta con claridad que es la asistente virtual (golden
-        # `es-un-bot`, criterio "honesto"), sin revelar la tecnologia y con la persona a mano.
-        if lang == "es":
-            return (
-                "Sí, soy *Coral*, la asistente virtual de Diving Planet 🐠. Te ayudo con todo lo del buceo, "
-                "precios y reservas en las Islas del Rosario, y si en algún momento prefieres hablar con una "
-                "persona del equipo, dímelo y te paso. ¿Te ayudo a armar tu salida? 🌊"
-            )
-        return (
-            "Yes, I'm *Coral*, Diving Planet's virtual assistant 🐠. I can help you with diving, prices and "
-            "bookings in the Rosario Islands, and if at any point you'd rather talk to a person from the team, "
-            "just tell me and I'll pass you over. Shall I help you set up your trip? 🌊"
-        )
+    # s4-15: a "¿eres un bot?" se contesta con claridad que es la asistente virtual (golden
+    # `es-un-bot`, criterio "honesto"), sin revelar la tecnologia y con la persona a mano.
     if lang == "es":
         return (
-            "¡Soy Coral, de Diving Planet! 🐠 Me encanta ayudarte a vivir el buceo en las Islas "
-            "del Rosario. De temas técnicos mejor no te cuento — pero de buceo, precios y "
-            "reservas sé un montón. ¿Te ayudo a armar tu salida? 🌊"
+            "Sí, soy *Coral*, la asistente virtual de Diving Planet 🐠. Te ayudo con todo lo del buceo, "
+            "precios y reservas en las Islas del Rosario, y si en algún momento prefieres hablar con una "
+            "persona del equipo, dímelo y te paso. ¿Te ayudo a armar tu salida? 🌊"
         )
     return (
-        "I'm Coral, from Diving Planet! 🐠 I love helping you experience diving in the Rosario "
-        "Islands. I'll skip the techy stuff — but when it comes to diving, prices and bookings I "
-        "know plenty. Shall I help you set up your trip? 🌊"
+        "Yes, I'm *Coral*, Diving Planet's virtual assistant 🐠. I can help you with diving, prices and "
+        "bookings in the Rosario Islands, and if at any point you'd rather talk to a person from the team, "
+        "just tell me and I'll pass you over. Shall I help you set up your trip? 🌊"
     )
 
 
@@ -863,12 +851,12 @@ def _contact_number_deflection(lang: str) -> str:
     """Deflexión honesta para una petición de número/contacto directo: límite +
     lo que SÍ se puede + redirección a la reserva (no escala, no inventa).
 
-    s4-14 (flag `s4_fixes`, decision de Gadea del 17-sep que sustituye a la del 20-jul): si lo
-    piden, se da el WhatsApp OFICIAL (solo mensajes), sacado de la base de conocimiento."""
+    s4-14 (paso 6, decision de Gadea del 17-sep que sustituye a la del 20-jul): si lo piden, se
+    da el WhatsApp OFICIAL (solo mensajes), sacado de la base de conocimiento."""
     # CAL-E1 (decisión de Gadea del 16-oct, que sustituye a la del 17-sep): esto es un chatbot y NO da números. Si el
     # cliente pide un número o quiere hablar con alguien, la conversación se PASA A UN ASESOR. El texto y el efecto en
     # el estado los pone `_contacto_pasa_a_persona` (una sola puerta); aquí solo queda el caso sin el flag.
-    number = None if settings.contacto_pasa_a_persona else (_official_whatsapp() if settings.s4_fixes else None)
+    number = None if settings.contacto_pasa_a_persona else _official_whatsapp()
     if number:
         nota = "solo mensajes de WhatsApp, no llamadas" if lang == "es" else "WhatsApp messages only, no calls"
         if lang == "es":
@@ -1456,7 +1444,7 @@ def _infer_language(message: str, fallback: str = "es") -> str:
 
 
 def _needs_staff_handoff(state: ConversationState, message: str, routing_signals: dict) -> str | None:
-    """s4-20 (paso 6, flag `s4_fixes`): post-venta y trato de empresa -> pase a una persona ANTES del
+    """s4-20 (paso 6, 27-sep): post-venta y trato de empresa -> pase a una persona ANTES del
     nucleo. Jev (`needs_staff`, misma llamada) dice que el mensaje trata de una reserva o un pago ya
     hechos, una agencia, un correo sin contestar o documentos que el staff debe revisar: el bot no ve
     nada de eso. Antes seguia vendiendo ("¿desde dónde saldrías?") o confirmaba lo que no podia ver.
@@ -1479,7 +1467,7 @@ def _needs_staff_handoff(state: ConversationState, message: str, routing_signals
             "private and we protect it just like yours. 🔒 If you'd like to put a group together, tell me how many "
             "people you are and what you'd like to do, and I'll help you plan it. 🌊"
         )
-    if not (settings.s4_fixes and routing_signals.get("needs_staff") is True):
+    if routing_signals.get("needs_staff") is not True:
         return None
     reason = "post-venta o empresa: lo revisa una persona (reserva/pago ya hechos, agencia, documentos)"
     state.step = Step.ESCALATE
@@ -2285,30 +2273,18 @@ def _finalize_tree_response(state: ConversationState, message: str, response: st
 _MAX_REMEMBERED_NOTES = 8
 
 
-# Per-domain cutover field sets (docs/robustness/plan.md §4). Each domain has
-# its own kill-switch flag (plan.md principle #7); a field is only applied from
-# the LLM patch if its domain's flag is on. Fase 1 = certification, Fase 2 =
-# group/quantity/ages. Future phases add their own entry here.
+# Per-domain cutover field sets (docs/robustness/plan.md §4): Fase 1 = certification, Fase 2 = group/quantity/ages,
+# Fase 3 = location, Fase 8 = profile/logistics. Each domain had its own kill-switch flag
+# (`llm_extraction_cutover_*`, plan.md principle #7), all on since 28-sep; s4-25 removed them, so the four apply.
+# OJO: nothing calls `_maybe_apply_llm_extraction_cutover` since the legacy orchestrator was retired (308488d,
+# 28-jul); only its tests exercise it.
 _CERTIFICATION_CUTOVER_FIELDS = {"is_certified", "activity"}
 _GROUP_CUTOVER_FIELDS = {"group_size", "group_allocation", "ages"}
 _LOCATION_CUTOVER_FIELDS = {"location", "island", "hotel"}
 _LOGISTICS_CUTOVER_FIELDS = {"is_colombian", "duration", "last_dive_over_2_years"}
-
-
-def _active_cutover_fields() -> set[str]:
-    """Union of the cutover field sets whose per-domain flag is currently on.
-    Empty when every domain flag is off (the default everywhere) — in that case
-    the cutover is a no-op and never calls the LLM."""
-    active: set[str] = set()
-    if settings.llm_extraction_cutover_certification:
-        active |= _CERTIFICATION_CUTOVER_FIELDS
-    if settings.llm_extraction_cutover_group:
-        active |= _GROUP_CUTOVER_FIELDS
-    if settings.llm_extraction_cutover_location:
-        active |= _LOCATION_CUTOVER_FIELDS
-    if settings.llm_extraction_cutover_logistics:
-        active |= _LOGISTICS_CUTOVER_FIELDS
-    return active
+_CUTOVER_FIELDS = (
+    _CERTIFICATION_CUTOVER_FIELDS | _GROUP_CUTOVER_FIELDS | _LOCATION_CUTOVER_FIELDS | _LOGISTICS_CUTOVER_FIELDS
+)
 
 
 def _log_safe_message(message: str, limit: int = 500) -> str:
@@ -2329,41 +2305,32 @@ def _log_safe_message(message: str, limit: int = 500) -> str:
 async def _maybe_apply_llm_extraction_cutover(
     message: str, regex_intent: DetectedIntent, state: ConversationState
 ) -> None:
-    """Per-domain real cutover (docs/robustness/plan.md §4). Gated by the
-    per-domain flags (`llm_extraction_cutover_certification` for Fase 1,
-    `llm_extraction_cutover_group` for Fase 2 — all off by default everywhere).
-    When at least one domain is on, and the regex left one of that domain's
-    fields unresolved, asks the LLM gap-filler ONCE and — unlike the Fase 0
-    shadow probe — actually MUTATES `regex_intent` in place, but ONLY for fields
-    belonging to an enabled domain (any other field the LLM returns is
-    discarded and stays shadow-only until its own domain's Fase N is cut over).
-    A single LLM call covers every enabled domain at once (plan.md §3.3, cost/
-    latency control). Must run BEFORE `_apply_detected_intent(intent, state)` so
-    the filled values propagate to conversation state normally.
+    """Per-domain real cutover (docs/robustness/plan.md §4), for the four domains
+    of `_CUTOVER_FIELDS` (their `llm_extraction_cutover_*` flags were removed in
+    s4-25). When the regex left one of those fields unresolved, asks the LLM
+    gap-filler ONCE and — unlike the Fase 0 shadow probe — actually MUTATES
+    `regex_intent` in place, but ONLY for those fields (any other field the LLM
+    returns is discarded). A single LLM call covers every domain at once (plan.md
+    §3.3, cost/latency control). Must run BEFORE `_apply_detected_intent(intent,
+    state)` so the filled values propagate to conversation state normally.
 
     The regex is still the primary/fast path: this only fills a genuine gap,
     never overrides a value the regex already resolved. Any error degrades
     silently to "regex-only", exactly like today — this can never make a reply
     worse than before the cutover existed.
     """
-    active_fields = _active_cutover_fields()
-    if not active_fields:
-        return
     try:
-        relevant_gaps = [f for f in missing_fields(regex_intent) if f in active_fields]
+        relevant_gaps = [f for f in missing_fields(regex_intent) if f in _CUTOVER_FIELDS]
         if not relevant_gaps:
             return
         patch = await fill_gaps(message, regex_intent, history=state.history, lang=state.language)
-        # Auditoría Fase B (2026-07-23): este cutover de extracción (gated por
-        # LLM_EXTRACTION_CUTOVER_*) es el equivalente de la Capa 5 del núcleo
-        # conversacional — y le faltaba el mismo saneamiento
-        # que Gadea añadió allí (commit d3ecdba): con el historial real de la
-        # conversación por delante, `fill_gaps` puede alucinar un
-        # group_allocation/group_size completo para un mensaje de "se añade un
-        # acompañante" sin ningún número real (p. ej. "también vienen mis
-        # amigos a hacer snorkel" → {snorkel: 3} inventado). `LLM_EXTRACTION_
-        # CUTOVER_GROUP` está en `"true"` en `docker-compose.vps.yml` (PRE), así
-        # que este camino SÍ se ejecuta en producción, no es solo teórico.
+        # Auditoría Fase B (2026-07-23): este cutover de extracción es el
+        # equivalente de la Capa 5 del núcleo conversacional — y le faltaba el
+        # mismo saneamiento que Gadea añadió allí (commit d3ecdba): con el
+        # historial real de la conversación por delante, `fill_gaps` puede
+        # alucinar un group_allocation/group_size completo para un mensaje de
+        # "se añade un acompañante" sin ningún número real (p. ej. "también
+        # vienen mis amigos a hacer snorkel" → {snorkel: 3} inventado).
         # Mismos regexes que `conversational_core._understand()` (import
         # perezoso: evita el ciclo módulo-a-módulo, mismo patrón ya usado en
         # este fichero para `conversational_core.maybe_handle_turn`).

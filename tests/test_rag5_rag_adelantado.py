@@ -6,7 +6,6 @@ from unittest.mock import patch
 import pytest
 
 from src.agents import conversational_core as core
-from src.config import settings
 from src.flows.state import ConversationState, Step
 
 
@@ -29,12 +28,6 @@ class _RagFalso:
         return f"respuesta con [{kw.get('extra_context')}]"
 
 
-@pytest.fixture
-def flags(monkeypatch):
-    monkeypatch.setattr(settings, "answer_and_continue", True)
-    monkeypatch.setattr(settings, "notes_in_parallel", False)
-
-
 def _turno_hasta_la_reserva(state, message):
     """Lo que hacen el enrutador (lanza el adelantado) y `_setup_phase` (mete el mensaje en el historial)."""
     core.lanzar_rag_adelantado(state, message)
@@ -42,7 +35,7 @@ def _turno_hasta_la_reserva(state, message):
 
 
 @pytest.mark.asyncio
-async def test_con_el_mismo_contexto_se_aprovecha_y_el_rag_corre_una_sola_vez(flags):
+async def test_con_el_mismo_contexto_se_aprovecha_y_el_rag_corre_una_sola_vez():
     rag = _RagFalso()
     state = _estado()
     with patch("src.agents.supervisor.rag_answer", new=rag), \
@@ -58,7 +51,7 @@ async def test_con_el_mismo_contexto_se_aprovecha_y_el_rag_corre_una_sola_vez(fl
 
 
 @pytest.mark.asyncio
-async def test_la_hora_del_resumen_no_cuenta_para_la_huella(flags):
+async def test_la_hora_del_resumen_no_cuenta_para_la_huella():
     rag = _RagFalso()
     state = _estado()
     horas = iter(["10:00", "10:01"])
@@ -72,7 +65,7 @@ async def test_la_hora_del_resumen_no_cuenta_para_la_huella(flags):
 
 
 @pytest.mark.asyncio
-async def test_si_el_contexto_cambio_entre_medias_se_rehace_con_el_de_verdad(flags):
+async def test_si_el_contexto_cambio_entre_medias_se_rehace_con_el_de_verdad():
     rag = _RagFalso()
     state = _estado()
     resumenes = iter(["antes", "despues"])  # p. ej. una nota nueva de este mensaje
@@ -89,7 +82,7 @@ async def test_si_el_contexto_cambio_entre_medias_se_rehace_con_el_de_verdad(fla
 
 
 @pytest.mark.asyncio
-async def test_si_el_turno_no_la_usa_se_cancela_al_cerrarlo(flags):
+async def test_si_el_turno_no_la_usa_se_cancela_al_cerrarlo():
     state = _estado()
 
     async def lento(query, **kw):
@@ -110,7 +103,7 @@ def _primer_turno() -> ConversationState:
     return s
 
 
-def test_primer_mensaje_sin_idioma_claro_no_se_adelanta(flags):
+def test_primer_mensaje_sin_idioma_claro_no_se_adelanta():
     """Si la regla rápida no sabe el idioma, `_setup_phase` preguntará al LLM: no se adivina."""
     state = _primer_turno()
     core.lanzar_rag_adelantado(state, "👍")
@@ -120,7 +113,7 @@ def test_primer_mensaje_sin_idioma_claro_no_se_adelanta(flags):
 @pytest.mark.asyncio
 @pytest.mark.parametrize("mensaje, idioma", [("hola, cuánto cuesta el minicurso?", "es"),
                                              ("how much is the mini course?", "en")])
-async def test_primer_mensaje_se_adelanta_con_el_idioma_y_el_paso_que_dejara_setup(flags, monkeypatch, mensaje, idioma):
+async def test_primer_mensaje_se_adelanta_con_el_idioma_y_el_paso_que_dejara_setup(monkeypatch, mensaje, idioma):
     """La foto queda como la dejará `_setup_phase` (idioma y conversación libre): la huella coincide y el RAG corre
     una sola vez, en el idioma bueno. El resumen falso depende del idioma y del paso, para que se note si no."""
     async def _sin_notas(*a, **k):
@@ -140,7 +133,7 @@ async def test_primer_mensaje_se_adelanta_con_el_idioma_y_el_paso_que_dejara_set
 
 
 @pytest.mark.asyncio
-async def test_la_adelantada_no_marca_el_turno_como_rag_hasta_que_se_aprovecha(flags):
+async def test_la_adelantada_no_marca_el_turno_como_rag_hasta_que_se_aprovecha():
     from src.agents.rag_agent import RAG_ADELANTADO
 
     vistos = []
@@ -158,7 +151,7 @@ async def test_la_adelantada_no_marca_el_turno_como_rag_hasta_que_se_aprovecha(f
 
 
 @pytest.mark.asyncio
-async def test_el_camino_de_buceo_adaptado_tambien_aprovecha_la_adelantada(flags):
+async def test_el_camino_de_buceo_adaptado_tambien_aprovecha_la_adelantada():
     """1-oct: el nodo `info` (y la cascada) llamaban al RAG por su cuenta y tiraban la adelantada."""
     rag = _RagFalso()
     state = _estado()
@@ -172,7 +165,7 @@ async def test_el_camino_de_buceo_adaptado_tambien_aprovecha_la_adelantada(flags
 
 
 @pytest.mark.asyncio
-async def test_sin_adelantada_el_camino_de_buceo_adaptado_busca_con_el_origen(flags):
+async def test_sin_adelantada_el_camino_de_buceo_adaptado_busca_con_el_origen():
     """La llamada de siempre sale de `_entradas_rag`: la búsqueda recibe el origen del cliente (rag-3)."""
     rag = _RagFalso()
     state = _estado()

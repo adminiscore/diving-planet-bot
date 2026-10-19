@@ -48,7 +48,6 @@ detectores migrarán a un módulo propio del router en Fase 3.
 
 from __future__ import annotations
 
-from src.config import settings
 from src.flows.state import ConversationState, Step
 from src.orchestration.state import (
     ROUTE_BOOKING,
@@ -113,7 +112,7 @@ def classify_route(conv_state: ConversationState, message: str, signals: dict) -
     if signals.get("sensitive_topic") and sup.sensitive_response_for(signals["sensitive_topic"], lang):
         return ROUTE_SAFETY
     # s4-20 (paso 6): post-venta / empresa -> el nodo de escalado hace el pase (`_needs_staff_handoff`).
-    if settings.s4_fixes and signals.get("needs_staff") is True:
+    if signals.get("needs_staff") is True:
         return ROUTE_SAFETY
 
     # ── CHANGE (cancelar / reprogramar) ──

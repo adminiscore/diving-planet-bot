@@ -377,20 +377,6 @@ async def test_normal_group_size_mid_flow_does_not_trigger_modify_headcount():
 # SÍ + redirige), NO escalar ni caer al fallback evasivo.
 
 @pytest.mark.asyncio
-async def test_contact_number_request_deflects_by_keyword(monkeypatch):
-    from src.config import settings as _flags  # camino antiguo: el flag sigue existiendo
-    monkeypatch.setattr(_flags, "s4_fixes", False)
-    monkeypatch.setattr(_flags, "contacto_pasa_a_persona", False)
-    """"dame tu whatsapp" (keyword) → deflexión con límite + redirección, sin
-    escalar."""
-    state = make_state()
-    with patch("src.agents.supervisor.detect_routing_signals", new=AsyncMock(return_value={})):
-        resp = await route_message(state, "dame tu whatsapp porfa")
-    assert "🔒" in resp
-    assert state.step != Step.ESCALATE
-
-
-@pytest.mark.asyncio
 async def test_pedir_un_numero_pasa_a_una_persona(monkeypatch):
     """DECISIÓN DE GADEA (16-oct): el chatbot no da números; la conversación pasa a un asesor. De punta a punta."""
     from src.config import settings as _flags
@@ -404,18 +390,15 @@ async def test_pedir_un_numero_pasa_a_una_persona(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_contact_number_request_deflects_by_llm_signal_when_keyword_misses(monkeypatch):
-    from src.config import settings as _flags  # camino antiguo: el flag sigue existiendo
-    monkeypatch.setattr(_flags, "s4_fixes", False)
-    monkeypatch.setattr(_flags, "contacto_pasa_a_persona", False)
-    """Una frase indirecta que la lista no caza pero el LLM marca
-    asks_for_contact_number → misma deflexión."""
+async def test_contact_number_request_deflects_by_llm_signal_when_keyword_misses():
+    """Una frase indirecta que la lista no caza pero el LLM marca asks_for_contact_number → el mismo pase a una
+    persona. (Hasta s4-25 fijaba los caminos de antes de s4-14 y CAL-E1: la deflexión con 🔒 y sin escalar.)"""
     state = make_state()
     with patch("src.agents.supervisor.detect_routing_signals",
                new=AsyncMock(return_value={"asks_for_contact_number": True})):
         resp = await route_message(state, "y si necesito hablar por fuera del chat?")
-    assert "🔒" in resp
-    assert state.step != Step.ESCALATE
+    assert "asesor" in resp and "+57" not in resp
+    assert state.step == Step.ESCALATE
 
 
 @pytest.mark.asyncio
@@ -428,9 +411,7 @@ async def test_normal_message_does_not_deflect_as_contact_request():
 
 
 @pytest.mark.asyncio
-async def test_contact_deflection_in_english_when_language_not_yet_detected(monkeypatch):
-    from src.config import settings as _flags  # camino antiguo: el flag sigue existiendo
-    monkeypatch.setattr(_flags, "s4_fixes", False)
+async def test_contact_deflection_in_english_when_language_not_yet_detected():
     """Hallazgo en vivo 2026-08-26 (batería sintética contra PRE, Grupo 4/
     hallazgo B): esta deflexión corre ANTES de que `maybe_handle_turn` haga
     su detección de idioma de apertura — en el primer mensaje,
