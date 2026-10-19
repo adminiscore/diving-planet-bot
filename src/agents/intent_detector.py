@@ -167,8 +167,9 @@ def _is_elapsed_time(message: str, match: re.Match) -> bool:
 # Aquí vivían también los gates de tema de certificación y nacionalidad que
 # usaba el núcleo para aceptar o no un booleano del LLM. Se retiraron el
 # 2026-09-14: descartaban el valor correcto en todo lo que su vocabulario no
-# conocía ("soy paisa", "tengo el AOWD"). Ahora el núcleo decide por la
-# estructura del turno (`conversational_core._boolean_patch_is_anchored`).
+# conocía ("soy paisa", "tengo el AOWD"). Los decidió después la estructura
+# del turno (`_boolean_patch_is_anchored`, borrada en ex-9b: hoy los decide el
+# extractor del turno).
 
 # Contexto de buceo — gate original de `_detect_last_dive` (extraído aquí sin
 # cambiarlo): sin él, un "hace un mes" de cualquier otro tema fijaría el campo.
@@ -869,11 +870,6 @@ _OTHER_PERSON_SUBJECT = (
 _OTHER_PERSON_SUBJECT_RE = re.compile(strip_accents(_OTHER_PERSON_SUBJECT), re.IGNORECASE)
 
 
-def mentions_other_person_subject(message: str) -> bool:
-    """True si alguna frase del mensaje tiene de sujeto a OTRA persona ("mi novia no es
-    buzo", "él quiere", "dos no tienen licencia"). Lo usa el nucleo para no tomar como
-    correccion de quien escribe lo que dice de otro (tarea 7b, 2026-09-15)."""
-    return bool(_OTHER_PERSON_SUBJECT_RE.search(strip_accents((message or "").lower())))
 # Sujeto pospuesto (2026-09-15): "no es certificado mi acompañante", "está certificada mi
 # novia". Verbo en tercera persona y, detras en la misma frase, una persona nombrada, sin
 # una preposicion de compania o destino por medio: "quiero bucear con mi pareja" o "es para
@@ -927,22 +923,6 @@ def _other_person_cert_re() -> re.Pattern:
 _ELIDED_NEGATION_RE = re.compile(r"\b(?:no|not|nunca|never)\b|n't\b")
 _ELIDED_AFFIRMATIVE_WORDS = frozenset({"si", "yes", "tambien", "also", "too", "am", "do", "does", "is", "have", "has"})
 _WRITER_SUBJECT_WORDS = frozenset({"yo", "i", "me", "m"})
-
-
-# Primera persona del plural: el pronombre o la desinencia verbal ("somos", "vivimos").
-_FIRST_PERSON_PLURAL_RE = re.compile(r"\b(?:nosotr[oa]s|we|us|our|\w+mos)\b")
-
-
-def mentions_writer_and_others(message: str) -> bool:
-    """¿Habla de quien escribe (o de su grupo) Y de otra persona o parte del grupo? "yo soy
-    colombiano y mi novia extranjera", "dos somos colombianos pero uno es extranjero", "one
-    of us is colombian and the others are not". Puerta para preguntar al LLM si el grupo
-    mezcla nacionalidades (hallazgo A, 2026-09-15): con un solo lado ("mi novio es aleman",
-    "ninguno colombiano") el LLM suponia la otra mitad 2/2."""
-    text = strip_accents((message or "").lower())
-    writer = bool(_WRITER_SUBJECT_WORDS & set(re.findall(r"\w+", text))) or bool(_FIRST_PERSON_PLURAL_RE.search(text))
-    others = bool(_OTHER_PERSON_SUBJECT_RE.search(text) or re.search(_NAMED_OTHER_PERSON, text, re.IGNORECASE))
-    return writer and others
 
 
 def clause_subject(clause: str, person: str = _NAMED_OTHER_PERSON) -> str | None:

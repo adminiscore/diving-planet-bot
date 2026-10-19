@@ -84,8 +84,9 @@ for i, m in enumerate(msgs):
     pub["course_level_is_ambiguous"] = idet.course_level_is_ambiguous(m)
     pub["matched_activity_categories"] = sorted(idet.matched_activity_categories(m))
     pub["courses_mentioned"] = idet.courses_mentioned(m)
-    pub["mentions_other_person_subject"] = idet.mentions_other_person_subject(m)
-    pub["mentions_writer_and_others"] = idet.mentions_writer_and_others(m)
+    for nombre in ("mentions_other_person_subject", "mentions_writer_and_others"):  # ex-9b: borradas, sin llamador
+        if hasattr(idet, nombre):
+            pub[nombre] = getattr(idet, nombre)(m)
     pub["dive_counts_in"] = idet.dive_counts_in(m)
     pub = {k: v for k, v in pub.items() if v is not None and v != [] and not (v is False and k not in ("certification_claim", "certification_claim_otros", "certification_status"))}
     salida_por_msg.append({"i": i, "msg": m, "peso_rondas": pesos.get(m, 0), "detect": res, "publicas": pub})

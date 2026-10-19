@@ -21,7 +21,6 @@ from src.agents.supervisor import (
     _DIVE_TO_HEAL_OVERRIDE_RE,
     _PRIVATE_GROUP_EVENT_RE,
     _private_group_event_answer,
-    _same_price_different_nationality_answer,
     _SAME_PRICE_DIFFERENT_NATIONALITY_RE,
 )
 
@@ -192,9 +191,3 @@ class TestSamePriceDifferentNationality:
 
     def test_negative_unrelated_price_question(self):
         assert not _SAME_PRICE_DIFFERENT_NATIONALITY_RE.search("cuanto cuesta el paquete de 5 inmersiones?")
-
-    def test_answer_says_price_does_not_change(self):
-        """El hallazgo real era RAG inventando un precio nuevo -- la
-        respuesta determinista debe decir explícitamente que no cambia."""
-        text = _same_price_different_nationality_answer("es").lower()
-        assert "no cambia" in text

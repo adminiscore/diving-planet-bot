@@ -141,26 +141,3 @@ async def test_una_respuesta_limpia_si_llega_al_juez(monkeypatch, juez_contador)
 
     assert len(juez_contador) == 1
     assert "178" in respuesta
-
-
-async def test_los_atajos_canonicos_no_gastan_ni_llm_ni_juez(monkeypatch, juez_contador):
-    """Hallazgo al escribir esto (2026-09-23): `rag_answer` tiene atajos canónicos
-    que responden **sin una sola llamada al LLM**. Ya son un ahorro de L1 que no
-    estaba anotado, así que queda fijado: si alguien los desmonta, el coste por
-    turno sube sin que falle nada más. ex-1 (12-oct): los atajos apagados (comida,
-    precios, refresher) se borraron; queda el resumen de "¿qué ofrecen para bucear?"
-    (y la aclaración de un lugar ambiguo), que es el que se fija aquí."""
-
-    def _explota(*args, **kwargs):  # el LLM no debe instanciarse siquiera
-        raise AssertionError("un atajo canónico no puede llamar al LLM")
-
-    async def _busqueda(*args, **kwargs):
-        raise AssertionError("un atajo canónico no puede llegar a recuperar")
-
-    monkeypatch.setattr(rag_agent, "AsyncOpenAI", _explota)
-    monkeypatch.setattr(rag_agent, "search_knowledge_base", _busqueda)
-
-    respuesta = await rag_agent.rag_answer("¿qué ofrecen para bucear?", lang="es")
-
-    assert respuesta, "el atajo debe responder algo"
-    assert juez_contador == []

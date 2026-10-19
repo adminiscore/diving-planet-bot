@@ -10,7 +10,7 @@ import re
 import pytest
 
 from src.agents import conversational_core as core
-from src.agents import rag_agent, supervisor
+from src.agents import supervisor
 from src.agents.intent_detector import _MAX_PACKAGE_DAYS, AGE_WORDS
 from src.domain import activities as dom
 from src.flows import cart_render
@@ -38,12 +38,6 @@ def test_consumers_share_the_source():
 @pytest.mark.parametrize("message, qty", [("dos", 2), ("somos cuatro", 4), ("ten", 10), ("doss", 2)])
 def test_quantity_parsing_unchanged(message, qty):
     assert cart_render.parse_quantity(message) == qty
-
-
-@pytest.mark.parametrize("message", ["three dive and six don't", "tres bucean y seis no"])
-def test_rag_non_divers_same_range_in_both_languages(message):
-    """Rangos alineados (2026-09-15): antes el ingles paraba en "five"."""
-    assert rag_agent._detect_companion_mention(message) == (True, True)
 
 
 def test_package_days_come_from_the_catalog():

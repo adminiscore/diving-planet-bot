@@ -3,7 +3,7 @@ import asyncio
 import json
 from datetime import datetime
 
-from src.knowledge.vector_store import detect_query_topics, search_knowledge_base
+from src.knowledge.vector_store import search_knowledge_base
 
 
 DEFAULT_QUERIES_ES = [
@@ -65,12 +65,10 @@ async def eval_queries(lang: str, top_k: int, candidate_multiplier: int, output_
     results_out: list[dict] = []
 
     for idx, q in enumerate(queries, 1):
-        query_topics = detect_query_topics(q)
         docs = await search_knowledge_base(q, lang=lang, top_k=top_k)
 
         print("=" * 110)
         print(f"[{idx}/{len(queries)}] {q}")
-        print(f"query_topics={query_topics}")
 
         for i, d in enumerate(docs, 1):
             md = d.get("metadata") or {}
@@ -82,7 +80,6 @@ async def eval_queries(lang: str, top_k: int, candidate_multiplier: int, output_
         results_out.append({
             "query": q,
             "lang": lang,
-            "query_topics": query_topics,
             "top_k": top_k,
             "docs": [
                 {

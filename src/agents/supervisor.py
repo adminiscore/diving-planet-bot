@@ -69,65 +69,6 @@ _OFFER_VERB_RE = re.compile(
     re.IGNORECASE,
 )
 
-# General recommendation / interest queries that have no specific activity keyword.
-# "que me recomiendas?", "qué actividades tienen?", "qué ofrecéis?" → route to the
-# booking tree (MIXED_ENTRY) so the bot gathers experience/group info instead of
-# generating a generic RAG text answer. Only fires outside the cart flow and when
-# the cart is empty (mid-flow orchestrator handles these already).
-_GENERAL_INTEREST_PATTERN = re.compile(
-    r"\b("
-    # Recommendation requests (tú/usted/vosotros)
-    r"qu[eé]\s+(?:me|nos)\s+recomend\w*|"
-    r"qu[eé]\s+(?:me|nos)\s+recomiend\w*|"
-    r"qu[eé]\s+recomend\w*|"
-    r"qu[eé]\s+recomiend\w*|"
-    r"(?:me|nos)\s+recomend\w*\s+algo|"
-    # "qué servicios/actividades/opciones/planes tienen/tenéis/hay/ofrecen/hacen/hacéis"
-    r"qu[eé]\s+(?:actividades|opciones|planes|servicios|experiencias?)"
-    r"\s+(?:tienen|ten[eé]is|hay|ofrecen|hac[eé]is|hacen|ofrecéis|ofreceis)|"
-    # "qué hacen/hacéis/ofrecen/ofrecéis [allí/ahí/ustedes]"
-    r"qu[eé]\s+(?:hac[eé]is|hacen|ofrecen|ofrecéis|ofreceis)(?:\s+(?:all[ií]|ah[ií]|ustedes))?|"
-    # "qué actividades/cosas puedo hacer"
-    r"qu[eé]\s+(?:actividades|cosas|experiencias?)\s+puedo\s+(?:hacer|realizar)|"
-    r"qu[eé]\s+puedo?\s+(?:hacer|reservar)(?:\s+(?:all[ií]|ah[ií]))?|"
-    r"qu[eé]\s+podemos\s+(?:hacer|reservar)|"
-    # Generic "qué ofrecen/ofrecéis" family
-    r"qu[eé]\s+ofrec[eé]\w*|"
-    # English equivalents
-    r"what\s+do\s+you\s+(?:recommend|offer|have)|"
-    r"what\s+(?:activities|options|services|experiences?)\s+do\s+you\s+(?:have|offer)|"
-    r"what\s+(?:can|could)\s+(?:i|we)\s+do|"
-    r"any\s+recommendations?|"
-    r"what\s+(?:would\s+you\s+)?recommend"
-    r")\b",
-    re.IGNORECASE,
-)
-
-
-# "¿Cómo reservo?" / "how do I book?" — a question about the booking PROCESS
-# rather than about the service itself. Unlike _looks_like_info_question this
-# is NOT start-anchored: it must also catch "vale y como reservo" (a filler
-# word before the real question), which is exactly the phrasing that exposed
-# the gap this guards (owner report 2026-07-16).
-_BOOKING_PROCESS_QUESTION_RE = re.compile(
-    r"\bc[oó]mo\s+(?:hago\s+(?:para\s+)?|puedo\s+|es\s+(?:el\s+proceso\s+(?:de|para)\s+)?)?reserv[ao]r?\b"
-    r"|\bc[oó]mo\s+(?:se\s+)?hace\s+la\s+reserva\b"
-    r"|\bhow\s+do\s+i\s+(?:book|reserve)\b"
-    r"|\bhow\s+can\s+i\s+(?:book|reserve)\b"
-    r"|\bhow\s+to\s+book\b",
-    re.IGNORECASE,
-)
-
-
-# Keywords that send the user all the way back to the main menu.
-MENU_KEYWORDS = {
-    "menu", "menú", "inicio", "start", "opciones", "options",
-}
-
-# Keywords that take the user one step UP in the decision tree.
-BACK_KEYWORDS = {
-    "volver", "back", "atras", "atrás", "regresar",
-}
 
 # Keywords that indicate escalation to a human
 ESCALATION_KEYWORDS = {
@@ -148,21 +89,6 @@ def _booking_change_buttons(lang: str) -> list[dict]:
     ]
 
 
-# Verbs the LLM uses when offering to hand the user off ("te paso con un asesor",
-# "contactes a un asesor", "connect you with an advisor"...). The exact phrasing
-# varies run to run, so we anchor on advisor-noun + offer-verb + a question
-# rather than fixed phrases.
-_ADVISOR_OFFER_VERBS = (
-    "pasar", "pase ", "paso ", "pasart", "contact", "conect", "hablar",
-    "connect", "speak", "reach out", "put you in touch", "get you in touch",
-)
-
-
-LANGUAGE_SELECTION_KEYWORDS = {
-    "1", "2", "es", "en", "español", "espanol", "spanish", "english",
-}
-
-
 ENGLISH_HINTS = {
     "we", "are", "family", "certified", "divers", "snorkel", "snorkeling",
     "can", "together", "price", "book", "booking", "discount", "payment",
@@ -173,22 +99,6 @@ SPANISH_HINTS = {
     "somos", "familia", "buzos", "certificados", "bucear", "snorkel",
     "precio", "reservar", "reserva", "descuento", "pago", "juntos",
     "punto de encuentro",
-}
-
-# Words that should NOT count as button-title evidence on their own.
-MENU_MATCH_STOP_WORDS = {
-    "de", "la", "el", "y", "o", "para", "con", "en", "un", "una",
-    "los", "las", "del", "al", "que", "es", "se", "lo", "mi", "mis",
-    "and", "or", "the", "to", "in", "for", "with", "an", "is",
-    "i", "me", "my", "you", "your", "we", "our", "do", "have",
-    "quiero", "elijo", "selecciono", "want", "would", "like",
-}
-
-# If any of these appear, treat the message as a question (route to RAG, not the menu).
-MENU_MATCH_QUESTION_WORDS = {
-    "cuánto", "cuanto", "cómo", "como", "qué", "que",
-    "dónde", "donde", "cuándo", "cuando", "cuál", "cual",
-    "how", "what", "when", "where", "why", "which",
 }
 
 
@@ -360,8 +270,8 @@ async def _shared_turn_handler(
     y el gate de escalado de abajo mira exactamente lo mismo.
 
     Los gates pre-núcleo que quedan SÍ se alcanzan desde el grafo: el nodo
-    `info` delega cuando el router lo mandó allí por "mismo precio" (con
-    `atajo_nacionalidad_por_rag` el nodo ya no da esa respuesta fija) sin
+    `info` delega cuando el router lo mandó allí por "mismo precio" (su
+    respuesta fija se borró en ex-9b: la contesta el RAG) sin
     mirar lo que va detrás, o por una pregunta de edad que no lo era; y la
     negativa de datos ajenos de `_needs_staff_handoff` no la mira el router.
 
@@ -715,8 +625,6 @@ from src.agents.rutas.info import (  # noqa: E402, F401
     _looks_like_age_eligibility_question,
     _maybe_answer_age_eligibility,
     _private_group_event_answer,
-    _same_price_different_nationality_answer,
-    fixed_same_price_answer,
     intent_detector,
     private_group_event_reply,
 )

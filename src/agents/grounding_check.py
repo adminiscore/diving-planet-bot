@@ -355,12 +355,6 @@ async def is_grounded(answer: str, context: str, lang: str = "es") -> tuple[bool
                 frases = [re.sub(r"[\s:.]*\bNO\b\.?\s*$", "", u.lstrip("- ").strip()) for u in unsupported]
                 if await ninguna_afirma(frases):
                     grounded = True
-                elif settings.juez_revisa_con_cita:
-                    # EX-RAG-3: si el dato está en el contexto, la frase trae su cita literal y pasa.
-                    from src.agents.juez_segunda_opinion import respaldadas_con_cita
-
-                    if await respaldadas_con_cita(frases, context, lang):
-                        grounded = True
             reason = "GROUNDED" if grounded else "HALLUCINATED " + " | ".join(unsupported)[:200]
         logger.info(f"[RAG][GROUNDING] grounded={grounded} verdict={reason}")
         return grounded, reason

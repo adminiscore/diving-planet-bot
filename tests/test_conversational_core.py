@@ -5,7 +5,6 @@ y RAG usa el stub del conftest (supervisor.rag_answer). El núcleo es el único
 camino de enrutado desde Fase 4.
 """
 
-from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
 
 import pytest
@@ -2945,41 +2944,6 @@ def test_relevant_gaps_still_asks_free_text_slots_while_pending():
 
     intent = core._detector.detect("salimos desde bocagrande", state)
     assert "location" in core._relevant_gaps(state, intent, "salimos desde bocagrande")
-
-
-def test_boolean_patch_anchoring_is_structural_not_vocabulary():
-    """GUARDA (b), medida 2026-09-14 con turnos reales (ver
-    `_boolean_patch_is_anchored`): lo que decide es si el turno RESPONDIÓ otra
-    pregunta pendiente, no si el mensaje contiene una palabra de una lista."""
-    anchored = core._boolean_patch_is_anchored
-    no_regex = SimpleNamespace(location=None, group_size=None, is_certified=None,
-                               is_colombian=None, last_dive_over_2_years=None)
-
-    # Apertura sin pregunta pendiente: vale cualquier forma de decirlo ("soy
-    # paisa", "ya soy sertificado", "tengo el AOWD"...). La lista vieja las tiraba.
-    assert anchored("is_colombian", None, no_regex, {"is_colombian": True}) is True
-    assert anchored("is_certified", None, no_regex, {"is_certified": True}) is True
-
-    # "Desde Cartagena" contestando la ubicación: el is_colombian que viaja pegado
-    # no se acepta, venga la ubicación del regex o del propio LLM.
-    by_regex = SimpleNamespace(**{**vars(no_regex), "location": "cartagena"})
-    assert anchored("is_colombian", core.SLOT_LOCATION, by_regex, {"is_colombian": True}) is False
-    assert anchored("is_colombian", core.SLOT_LOCATION, no_regex,
-                    {"location": "cartagena", "is_colombian": True}) is False
-
-    # Con la ubicación pendiente SIN contestar, el cliente cambió de tema ("ah, y
-    # somos paisas"): se acepta.
-    assert anchored("is_colombian", core.SLOT_LOCATION, no_regex, {"is_colombian": True}) is True
-
-    # GUARDA (a) también en el patch: el booleano pendiente nunca sale del LLM de
-    # huecos ("ninguno colombiano" con la de seguridad pendiente).
-    assert anchored("last_dive_over_2_years", core.SLOT_SAFETY, no_regex,
-                    {"last_dive_over_2_years": False}) is False
-    # ...pero la nacionalidad que sí dijo ese mensaje pasa.
-    assert anchored("is_colombian", core.SLOT_SAFETY, no_regex, {"is_colombian": False}) is True
-
-    # Un campo que no es booleano de esta familia pasa siempre.
-    assert anchored("location", core.SLOT_CERTIFICATION, no_regex, {"location": "cartagena"}) is True
 
 
 @pytest.mark.asyncio

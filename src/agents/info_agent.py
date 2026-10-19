@@ -52,7 +52,6 @@ async def info_node(state: BotState) -> dict:
         _alcohol_and_food_policy_answer,
         _maybe_answer_age_eligibility,
         _shared_turn_handler,
-        fixed_same_price_answer,
         private_group_event_reply,
     )
 
@@ -81,17 +80,6 @@ async def info_node(state: BotState) -> dict:
     if _PRIVATE_GROUP_EVENT_RE.search(msg_lower):
         answer = private_group_event_reply(conv)  # 13-oct: con `grupo_privado_pase` marca también el pase
         logger.info("[NODE:info] Private/corporate group event -> real deterministic answer")
-        conv.history.append({"role": "user", "content": message})
-        conv.history.append({"role": "assistant", "content": answer})
-        return {"reply": answer}
-
-    # 0.ter · "¿cambia el precio si es colombiano?" (hallazgo en vivo, lote
-    #     12, 2026-09-02): respuesta determinista fija (politica de negocio,
-    #     no depende del paquete), sin pasar por RAG (que alucinaba un
-    #     precio equivocado al re-generar el numero desde cero).
-    answer = fixed_same_price_answer(msg_lower, conv.language)  # ex-3: None con `atajo_nacionalidad_por_rag`
-    if answer is not None:
-        logger.info("[NODE:info] Same price, different nationality question -> real deterministic answer")
         conv.history.append({"role": "user", "content": message})
         conv.history.append({"role": "assistant", "content": answer})
         return {"reply": answer}

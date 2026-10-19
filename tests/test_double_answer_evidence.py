@@ -5,6 +5,8 @@
 Cartagena" rellenaba `is_colombian=True` 3/3. El extractor cita ahora, en la misma peticion,
 las palabras del mensaje que dicen cada booleano, y la cita lo respalda si esta en el
 mensaje, no es el mensaje entero y el detector no lee en ella la respuesta pendiente.
+ex-9b: `_quote_backs_boolean` y `_boolean_patch_is_anchored` no tenían llamador desde ex-9 (0.31.28) y se
+borraron con su test.
 """
 
 import pytest
@@ -24,23 +26,8 @@ def _camino_viejo_de_actividad(monkeypatch):
 LOC = core.SLOT_LOCATION
 
 
-@pytest.mark.parametrize("field, pending, message, evidence, backed", [
-    ("is_colombian", LOC, "desde cartagena, somos paisas", {"is_colombian": "somos paisas"}, True),
-    ("is_certified", LOC, "salimos de bocagrande, ya tenemos el AOWD", {"is_certified": "ya tenemos el AOWD"}, True),
-    ("is_colombian", core.SLOT_QTY, "somos 3, todos colombianos", {"is_colombian": "todos colombianos"}, True),
-    ("is_colombian", LOC, "Desde Cartagena", {"is_colombian": "Desde Cartagena"}, False),         # el mensaje entero
-    ("is_colombian", LOC, "desde cartagena, gracias", {"is_colombian": "desde cartagena"}, False),  # es la respuesta pendiente
-    ("is_certified", LOC, "desde cartagena, somos paisas", {"is_certified": "si los dos"}, False),  # cita del historial
-    ("is_colombian", LOC, "desde cartagena, somos paisas", {}, False),                              # sin cita
-    ("is_colombian", None, "desde cartagena, somos paisas", {"is_colombian": "somos paisas"}, False),  # nada pendiente
-    ("is_certified", core.SLOT_CERTIFICATION, "si, somos paisas", {"is_certified": "si"}, False),   # slot booleano: guarda (a)
-])
-def test_quote_backs_boolean(field, pending, message, evidence, backed):
-    assert core._quote_backs_boolean(field, pending, message, evidence) is backed
-
-
 def test_one_list_of_quoted_booleans():
-    assert set(EVIDENCE_FIELDS) == core._BOOL_PATCH_FIELDS
+    assert set(EVIDENCE_FIELDS) == set(core._BOOL_SLOT_FIELD.values())
     assert set(extraction_tool(["evidence"])["function"]["parameters"]["properties"]["evidence"]["properties"]) == set(EVIDENCE_FIELDS)
 
 

@@ -8,7 +8,6 @@ and performing cosine similarity search against stored embeddings.
 import asyncio
 import json
 import logging
-import re
 
 import asyncpg
 from openai import AsyncOpenAI
@@ -46,37 +45,6 @@ async def _get_pool() -> asyncpg.Pool:
 async def get_pool() -> asyncpg.Pool:
     """Public accessor for the shared pool (reused by rag_agent)."""
     return await _get_pool()
-
-
-TOPIC_PATTERNS: list[tuple[str, re.Pattern]] = [
-    ("pricing", re.compile(r"\b(precio|precios|valor|cu[aá]nto cuesta|usd|d[oó]lares|pesos|cop)\b", re.IGNORECASE)),
-    ("discount", re.compile(r"(?:10%|\bdescuento\b|\bdiscount\b|descuento\s*10|discount\s*10)", re.IGNORECASE)),
-    ("availability", re.compile(r"\b(disponibilidad|cupos|hay cupo|available|availability|tomorrow|ma[nñ]ana)\b", re.IGNORECASE)),
-    ("booking", re.compile(r"\b(reservar|reserva|reservas|reservo|reservamos|apartar|booking|book|p[aá]gina|web|online)\b", re.IGNORECASE)),
-    ("meeting_point", re.compile(r"\b(punto de encuentro|muelle|bodeguita|gate|puerta|marina|todo mar)\b", re.IGNORECASE)),
-    ("schedule", re.compile(r"\b(horario|hora|itinerario|schedule|duraci[oó]n|duration|regreso|return)\b", re.IGNORECASE)),
-    ("reschedule", re.compile(r"\b(mover la fecha|cambiar la fecha|cambio de fecha|reprogramar|reagendar|move the date|change the date|reschedule)\b", re.IGNORECASE)),
-    ("certification", re.compile(r"\b(certificaci[oó]n|certificado|open water|advanced|rescue|padi|ssi|logbook)\b", re.IGNORECASE)),
-    ("refresher", re.compile(r"\b(refresh|refresher|refresh requirement|hace a[nñ]os no buceo|hace mucho no buceo|sin bucear|tiempo sin bucear)\b", re.IGNORECASE)),
-    ("location_islands", re.compile(r"\b(isla|islas|rosario|isla grande|cocoliso|majagua|mulata|hotel)\b", re.IGNORECASE)),
-    ("accommodation", re.compile(r"\b(alojamiento|accommodation|hotel|hospedaje|incluye alojamiento|is accommodation included)\b", re.IGNORECASE)),
-    ("discount_colombian", re.compile(r"\b(colombian|colombiano|colombiana|colombianos|colombianas|residente)\b", re.IGNORECASE)),
-    ("payment", re.compile(r"\b(pago|pagar|transferencia|qr|bancolombia|tarjeta|credit|pasarela|link de pago)\b", re.IGNORECASE)),
-    ("forms_waiver", re.compile(r"\b(formulario|exoneraci[oó]n|jotform|carn[eé]|carne|certification photo|foto)\b", re.IGNORECASE)),
-    ("equipment", re.compile(r"\b(equipo|equipment|incluye|include|insurance|seguro|qu[eé]\s+debo\s+llevar|qu[eé]\s+llevar|llevar|traer|bring|towel|toalla|bloqueador|sunscreen)\b", re.IGNORECASE)),
-    ("depth", re.compile(r"\b(profundidad|metros|m\b|maxima|max\s+depth|depth)\b", re.IGNORECASE)),
-    ("weather_cancellation", re.compile(r"\b(clima|weather|cancelaci[oó]n|reembolso|refund|pol[ií]tica)\b", re.IGNORECASE)),
-    ("photos_media", re.compile(r"\b(foto|fotos|photos|video|videos)\b", re.IGNORECASE)),
-    ("seasickness", re.compile(r"\b(mareo|sea sick|seasick|tabletas|pills)\b", re.IGNORECASE)),
-]
-
-
-def detect_query_topics(query: str) -> list[str]:
-    detected: list[str] = []
-    for name, pattern in TOPIC_PATTERNS:
-        if pattern.search(query):
-            detected.append(name)
-    return detected
 
 
 def excluded_sources() -> list[str]:
@@ -267,7 +235,6 @@ async def search_knowledge_base(
     """
     top_k = top_k or settings.rag_top_k
     last_line = query.splitlines()[-1] if "\n" in query else query
-    query_topics = detect_query_topics(last_line)
     candidate_limit = max(top_k * 6, top_k)
 
     vector_task = asyncio.create_task(_vector_search(query, lang=lang, k=candidate_limit))
@@ -296,6 +263,6 @@ async def search_knowledge_base(
         for r in reranked_results[: min(len(reranked_results), 8)]
     ]
     logger.info(
-        f"[RAG][RETRIEVAL] query_topics={query_topics} candidates={len(reranked_results)} preview={top_meta}"
+        f"[RAG][RETRIEVAL] candidates={len(reranked_results)} preview={top_meta}"
     )
     return reranked_results[:top_k]

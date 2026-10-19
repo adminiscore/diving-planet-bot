@@ -10,7 +10,6 @@ Ademas, la peticion fusionada (verificar + rellenar) pierde los campos del grupo
 vuelve sin ellos y el mensaje trae senal de grupo, se piden solos.
 """
 
-from collections import Counter
 from unittest.mock import patch
 
 import pytest
@@ -31,22 +30,6 @@ def _grupo_camino_antiguo(monkeypatch):
 def _camino_viejo_de_actividad(monkeypatch):
     """Estos tests prueban el camino viejo (regex + veto/relleno). Con ex-8 (`extraccion_llm_actividad`) la actividad y
     la nacionalidad las decide el extractor "LLM primero": tests/test_ex8_actividad_nacionalidad.py."""
-
-
-@pytest.mark.parametrize("message, people", [
-    ("mi amigo tiene licencia, yo no", 2),
-    ("soy certificado y mi hijo no", 2),              # quien escribe va en el verbo
-    ("mi hermano tiene el rescue y yo quiero probar", 2),
-    ("vamos 3, mi pareja y yo buceamos y mi suegra hace snorkel", 3),
-    ("my wife is certified and I am not", 2),
-    ("también viene un amigo", 2),
-    ("yo buceo y mis amigos hacen snorkel", 0),       # "mis amigos" es plural: no cuenta
-    ("yo quiero bucear", 0),                          # sin nadie mas no respalda nada
-    ("me gustaría bucear", 0),
-    ("somos 4", 0),
-])
-def test_named_people(message, people):
-    assert cc._named_people(message) == (Counter({1: people}) if people else Counter())
 
 
 def test_one_piece_for_a_singular_person():
