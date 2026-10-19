@@ -308,6 +308,17 @@ def _build_extra_context(state: ConversationState) -> str | None:
         h.get("content", "") for h in (state.history or []) if h.get("role") == "user"
     )
     companion_search_text = " ".join(companion_notes) + " " + user_messages_text
+    nota_sin_certificar = bool(_UNCERTIFIED_COMPANION_NOTE_RE.search(companion_search_text))
+    nota_certificado_inactivo = _mentions_inactive_but_certified_companion(companion_search_text)
+    if settings.notas_rag_desde_estado and not state.extractor_ha_fallado:
+        # ex-9b paso 6: las dos reglas salen del ESTADO, que llena el extractor con cita: OTRA persona del grupo no está
+        # certificada (`acompanante_sin_certificar`) o lo está pero lleva tiempo sin bucear
+        # (`acompanante_certificado_inactivo`). El regex leía todo lo que escribió el cliente y las notas del LLM de
+        # notas: "no ha buceado" de cualquier cosa contaba, y "no estoy certificado" de quien escribe, según el idioma.
+        # Lo de quien escribe ya va arriba (`is_certified`, `last_dive_over_2_years`). Si el extractor no leyó algún
+        # mensaje de la conversación, el regex de siempre (solo si la IA calla).
+        nota_sin_certificar = state.acompanante_sin_certificar
+        nota_certificado_inactivo = state.acompanante_certificado_inactivo
 
     # Hallazgo en vivo (conversación real 831, 2026-09-02): con una
     # nota tipo "novia no es buzo certificado" ya en el contexto, el
@@ -321,7 +332,7 @@ def _build_extra_context(state: ConversationState) -> str | None:
     # REGLA explícita, mismo principio que el fix de DIVE TO HEAL de
     # arriba (verificación/instrucción determinista, no confiar en
     # que el LLM infiera la regla de negocio él solo).
-    if _UNCERTIFIED_COMPANION_NOTE_RE.search(companion_search_text):
+    if nota_sin_certificar:
         if state.language == "es":
             parts.append(
                 "IMPORTANTE — regla de negocio real (no la inventes ni la relajes): un "
@@ -365,7 +376,7 @@ def _build_extra_context(state: ConversationState) -> str | None:
     # conclusión errónea como una nota NUEVA ("amigo no tiene
     # certificación de buceo"), reforzando el error en turnos
     # siguientes -- un bucle de auto-refuerzo de la alucinación.
-    if _mentions_inactive_but_certified_companion(companion_search_text):
+    if nota_certificado_inactivo:
         if state.language == "es":
             parts.append(
                 "IMPORTANTE — regla de negocio real: alguien que SÍ está certificado "
