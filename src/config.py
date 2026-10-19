@@ -135,6 +135,9 @@ class Settings(BaseSettings):
     # solo siguen con su norma); ningún diálogo visible del golden habla de alcohol. ENCENDIDO 19-oct (va de pasajero en
     # la ronda de equivalencia de ex-9b paso 1). Revert = False aquí y en el compose.
     alcohol_detras_de_lo_medico: bool = True
+    # ex-9b paso 5 (19-oct): en classify_route, las listas de palabras y regex con su señal de IA (link roto, tema sensible,
+    # cancelar/cambiar, contacto, "hablar con", DIVE TO HEAL) solo deciden si la IA calla este turno. APAGADO hasta medirlo.
+    regex_solo_si_ia_calla: bool = False
     resolutor_sin_contradicciones: bool = True  # PROMOCIONADO 19-oct (mod-G2, HISTORY 0.31.57); revert = False
     # EX-EST-2 (14-oct): el acuse reconoce SOLO lo que dice el mensaje (el resumen de la reserva no se repite; ante
     # 'gracias' o una fecha suelta, nada). Banco scripts/banco_acuse.py: inventaba en 33/40 casos reales

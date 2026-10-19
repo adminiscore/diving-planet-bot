@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-19T09:32:05+00:00",
-  "commit": "24b23fe",
+  "generado": "2026-10-19T09:51:51+00:00",
+  "commit": "236600c",
   "rama": "feature/pre_gadea"
  },
  "vistas": {
@@ -175,6 +175,13 @@
      "titulo": "Lo médico va antes que el atajo del alcohol",
      "codigo": true,
      "pre": true,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "regex_solo_si_ia_calla",
+     "titulo": "Las listas de palabras solo deciden si la IA calla",
+     "codigo": false,
+     "pre": false,
      "sin_efecto": false
     }
    ],
@@ -3057,6 +3064,19 @@
    "fijado_en_pre": true,
    "usado_por": [
     "b_slotfill_close"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "regex_solo_si_ia_calla",
+   "area": "Enrutador",
+   "titulo": "Las listas de palabras solo deciden si la IA calla",
+   "texto": "Para el link roto, los temas sensibles, cancelar o cambiar, pedir un contacto, hablar con una persona y DIVE TO HEAL, si Jev o el enrutador de respaldo han contestado este turno manda lo que dicen ellos; las listas de palabras solo cuentan si la IA no contesta. Corrige «quiero hablar con mi esposa antes de reservar» (no es pedir una persona) o «¿dónde cojo la lancha?» (no es DIVE TO HEAL).",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
+   "usado_por": [
+    "router"
    ],
    "sin_efecto": null
   },

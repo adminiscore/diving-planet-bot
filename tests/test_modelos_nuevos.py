@@ -106,3 +106,21 @@ def test_nada_sale_por_openrouter_sin_tapar_los_datos_personales():
     assert "300 123 4567" not in out["messages"][1]["content"] and "1.429.000 COP" in out["messages"][1]["content"]
     assert "1.023.456.789" not in out["messages"][2]["content"]
     assert mensajes[1]["content"].startswith("escríbeme al 300")  # no cambia la lista de quien llama
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("estructurada, esperado", [(True, 400), (False, 140)])
+async def test_las_respuestas_estructuradas_tienen_un_tope_minimo(monkeypatch, estructurada, esperado):
+    """19-oct (ex-9b): el router de respaldo pedía 140 tokens y DeepSeek dejaba el JSON sin cerrar (~1 de cada 9 en PRE):
+    sin señales de IA, decidían las listas de palabras. Con herramienta o JSON, al menos 400; el texto libre, como pida."""
+    from src import llm_client
+
+    visto = {}
+
+    async def original(*args, **kwargs):
+        visto.update(kwargs)
+        return "ok"
+
+    extra = {"tools": [{"type": "function"}]} if estructurada else {}
+    await llm_client._por_proveedor(original, model="gpt-4o-mini", max_tokens=140, messages=[], **extra)
+    assert visto["max_tokens"] == esperado

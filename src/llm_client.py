@@ -144,6 +144,24 @@ def _con_parametros_adaptados(client: _C) -> _C:
     return client
 
 
+_TOPE_MINIMO_ESTRUCTURADO = 400
+
+
+def _tope_minimo_estructurado(kwargs: dict) -> dict:
+    """19-oct (ex-9b): una respuesta estructurada (herramienta o JSON) con un tope de salida corto se cortaba a mitad y no
+    se podía leer. El router LLM de respaldo pedía 140 tokens, pensados para gpt-4o-mini; DeepSeek escribe TODOS los
+    campos (también los `false`) y el JSON salía sin cerrar en ~1 de cada 9 llamadas de PRE: el turno se quedaba sin
+    señales de IA y decidían las listas de palabras. El tope es un máximo, no un gasto: en un solo sitio, toda llamada
+    con `tools` o `response_format` tiene al menos `_TOPE_MINIMO_ESTRUCTURADO` tokens de salida."""
+    if not (kwargs.get("tools") or kwargs.get("response_format")):
+        return kwargs
+    for clave in ("max_tokens", "max_completion_tokens"):
+        valor = kwargs.get(clave)
+        if isinstance(valor, int) and valor < _TOPE_MINIMO_ESTRUCTURADO:
+            kwargs = {**kwargs, clave: _TOPE_MINIMO_ESTRUCTURADO}
+    return kwargs
+
+
 async def _por_proveedor(original, *args, **kwargs):
     """Un modelo con prefijo de proveedor sale por OpenRouter; el resto, por OpenAI (`original`).
 
@@ -151,6 +169,7 @@ async def _por_proveedor(original, *args, **kwargs):
     Haiku; el revisor, al fallar, dejaba pasar las respuestas SIN revisar. Con `respaldo_si_openrouter_falla`, si la
     llamada a OpenRouter falla (crédito, caída, error del proveedor) se repite la MISMA petición con ese modelo de OpenAI,
     para todas las piezas en un solo sitio. Vacío = sube el error como antes."""
+    kwargs = _tope_minimo_estructurado(kwargs)
     modelo = str(kwargs.get("model") or "")
     if not es_de_openrouter(modelo):
         return await original(*args, **adaptar_parametros(kwargs))

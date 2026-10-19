@@ -69,6 +69,13 @@ def classify_route(conv_state: ConversationState, message: str, signals: dict) -
     msg_lower = message.strip().lower()
     history = conv_state.history
     lang = conv_state.language
+    # ex-9b paso 5 (19-oct, flag `regex_solo_si_ia_calla`; estudio docs/robustness/regex/estudio-ex9-regex.md): cuando
+    # la IA ha contestado este turno (Jev o el router LLM de respaldo dejan `signals`), las listas de palabras y regex
+    # que tienen su señal de IA (link roto, tema sensible, cancelar/cambiar, contacto, "hablar con", DIVE TO HEAL) ya no
+    # deciden por su cuenta: solo si la IA calla (signals vacío). Falsos positivos que corrige: "¿está mal si hago el
+    # pago mañana?" = link roto, "quiero hablar con mi esposa antes de reservar" = pase, "me mandas el link por
+    # whatsapp?" = pase, "¿Dónde cojo la lancha?" = DIVE TO HEAL.
+    regex_vale = not (settings.regex_solo_si_ia_calla and bool(signals))
 
     # ── SAFETY (safety-first, como la cascada) ──
     if sup.detect_pii(message):
@@ -107,14 +114,14 @@ def classify_route(conv_state: ConversationState, message: str, signals: dict) -
     if sup._SAME_PRICE_DIFFERENT_NATIONALITY_RE.search(msg_lower):
         return ROUTE_INFO
 
-    if sup._detect_broken_link_complaint(message, history):
+    if regex_vale and sup._detect_broken_link_complaint(message, history):
         return ROUTE_SAFETY
     if signals.get("broken_link_complaint") and sup._has_link_tech_context(message, history):
         return ROUTE_SAFETY
     # El tema sensible se suprime si el turno es DIVE TO HEAL (mismo criterio que
     # la cascada: sensitive_escalation_early es None si adaptive_diving_topic).
     adaptive_signal = bool(signals.get("adaptive_diving_topic"))
-    if not adaptive_signal and sup.detect_sensitive_escalation(message, lang):
+    if not adaptive_signal and regex_vale and sup.detect_sensitive_escalation(message, lang):
         return ROUTE_SAFETY
     if signals.get("sensitive_topic") and sup.sensitive_response_for(signals["sensitive_topic"], lang):
         return ROUTE_SAFETY
@@ -123,24 +130,24 @@ def classify_route(conv_state: ConversationState, message: str, signals: dict) -
         return ROUTE_SAFETY
 
     # ── CHANGE (cancelar / reprogramar) ──
-    if sup._detect_cancellation_request(msg_lower) or (
+    if (regex_vale and sup._detect_cancellation_request(msg_lower)) or (
         signals.get("booking_change_topic") == "cancellation"
         and not sup._in_active_cart_building(conv_state)
     ):
         return ROUTE_CHANGE
-    if sup._detect_reschedule_request(msg_lower) or (
+    if (regex_vale and sup._detect_reschedule_request(msg_lower)) or (
         signals.get("booking_change_topic") == "reschedule"
         and not sup._in_active_cart_building(conv_state)
     ) or sup._jev_changes_date(signals):
         return ROUTE_CHANGE
-    if sup._detect_modify_booking_request(msg_lower) or (
+    if (regex_vale and sup._detect_modify_booking_request(msg_lower)) or (
         signals.get("booking_change_topic") == "modify_headcount"
         and not sup._in_active_cart_building(conv_state)
     ):
         return ROUTE_CHANGE
 
     # ── DEFLECT (contacto / identidad IA) ──
-    if sup._asks_for_contact_number(msg_lower) or signals.get("asks_for_contact_number"):
+    if (regex_vale and sup._asks_for_contact_number(msg_lower)) or signals.get("asks_for_contact_number"):
         return ROUTE_DEFLECT
     if sup._asks_about_ai_identity(msg_lower):
         return ROUTE_DEFLECT
@@ -156,7 +163,7 @@ def classify_route(conv_state: ConversationState, message: str, signals: dict) -
         return ROUTE_INFO
 
     # ── SAFETY / INFO (DIVE TO HEAL) ──
-    adaptive_now = bool(sup._ADAPTIVE_DIVING_PATTERN.search(message)) or adaptive_signal
+    adaptive_now = (regex_vale and bool(sup._ADAPTIVE_DIVING_PATTERN.search(message))) or adaptive_signal
     # El contexto adaptativo persiste entre turnos: un "¿cuánto cuesta?" sin
     # palabra de discapacidad, tras haber entrado en DIVE TO HEAL, sigue yendo
     # a asesor. Read-only: leemos el flag persistido O el de este turno (la
@@ -185,7 +192,7 @@ def classify_route(conv_state: ConversationState, message: str, signals: dict) -
         return ROUTE_CHANGE
 
     # ── SAFETY (quiere humano / keyword de escalado) ──
-    if sup._matches_escalation_keyword(msg_lower) or signals.get("wants_human"):
+    if (regex_vale and sup._matches_escalation_keyword(msg_lower)) or signals.get("wants_human"):
         return ROUTE_SAFETY
 
     # ── Default: el núcleo (reserva slot-fill + info vía RAG interno) ──
