@@ -87,7 +87,7 @@ async def test_llm_fill_does_not_take_a_dive_count_as_the_group_total():
     with patch.object(core, "extract_and_verify", create=True, new=AsyncMock(return_value=(fill, {}))), \
          patch.object(core_extraction, "fill_gaps", new=AsyncMock(return_value=fill)), \
          patch.object(core, "verify_fields", create=True, new=AsyncMock(return_value={})), \
-         patch("src.agents.supervisor._maybe_veto_resolved_fields_via_llm", new=AsyncMock(return_value=None)):
+         patch("src.agents.rutas.booking._maybe_veto_resolved_fields_via_llm", new=AsyncMock(return_value=None)):
         await core._understand(state, "2 inmersiones")
     assert state.detected_group_size is None
     assert state.detected_cert_dives == 2
@@ -108,7 +108,7 @@ async def test_boolean_riding_on_an_invalid_answer_to_the_pending_question_is_dr
     with patch.object(core, "extract_and_verify", create=True, new=AsyncMock(return_value=(dict(fill), {}))), \
          patch.object(core_extraction, "fill_gaps", new=AsyncMock(return_value=dict(fill))), \
          patch.object(core, "verify_fields", create=True, new=AsyncMock(return_value={})), \
-         patch("src.agents.supervisor._maybe_veto_resolved_fields_via_llm", new=AsyncMock(return_value=None)):
+         patch("src.agents.rutas.booking._maybe_veto_resolved_fields_via_llm", new=AsyncMock(return_value=None)):
         await core._understand(state, "2 inmersiones")
     assert state.detected_group_size is None
     assert state.is_colombian is None

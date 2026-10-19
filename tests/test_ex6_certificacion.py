@@ -10,6 +10,7 @@ import pytest
 
 from src.agents import conversational_core as core
 from src.agents.nucleo import extractor as core_extractor
+from src.agents.rutas import booking as sup_booking
 from src.flows.state import ConversationState
 
 
@@ -84,7 +85,7 @@ async def test_los_campos_del_extractor_no_van_al_veto(monkeypatch):
 
     monkeypatch.setattr(core_extractor, "datos_del_extractor", AsyncMock(return_value={}))
     verificar = AsyncMock(return_value={})
-    monkeypatch.setattr(supervisor, "verify_fields", verificar)
+    monkeypatch.setattr(sup_booking, "verify_fields", verificar)
     monkeypatch.setattr(core, "verify_fields", verificar, raising=False)
     await _entender("Hi, I am looking to book 2 dives and snorkeling for 6 people, all PADI certified")
     for llamada in verificar.await_args_list:

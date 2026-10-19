@@ -45,7 +45,7 @@ async def _send(state, message, signals):
          patch.object(core_routing, "detect_special_signals", new=_senales), patch.object(core_extraction, "detect_special_signals", new=_senales), \
          patch.object(core_close, "compose_acknowledgement", new=AsyncMock(return_value="")), \
          patch.object(core_extraction, "resolve_slot_answer", new=AsyncMock(return_value={})), \
-         patch("src.agents.supervisor._maybe_veto_resolved_fields_via_llm", new=AsyncMock(return_value=None)):
+         patch("src.agents.rutas.booking._maybe_veto_resolved_fields_via_llm", new=AsyncMock(return_value=None)):
         return await route_message(state, message)
 
 
