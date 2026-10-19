@@ -1,24 +1,24 @@
 {
  "familias": {
+  "lista cerrada o formato": {
+   "grupos": 21,
+   "patrones": 108
+  },
   "entender al cliente": {
-   "grupos": 168,
-   "patrones": 668
+   "grupos": 152,
+   "patrones": 568
   },
   "guarda sobre la respuesta del bot": {
-   "grupos": 26,
-   "patrones": 49
-  },
-  "leer la salida de un LLM": {
-   "grupos": 2,
-   "patrones": 2
+   "grupos": 23,
+   "patrones": 45
   },
   "formato y datos internos": {
-   "grupos": 13,
-   "patrones": 13
+   "grupos": 15,
+   "patrones": 15
   },
-  "atajo de texto fijo (APAGADO: código muerto con RAG_V2/S4_FIXES)": {
-   "grupos": 8,
-   "patrones": 28
+  "leer la salida de un LLM": {
+   "grupos": 4,
+   "patrones": 4
   },
   "atajo de texto fijo (activo)": {
    "grupos": 9,
@@ -32,378 +32,259 @@
  "grupos": [
   {
    "fichero": "src/agents/conversational_core.py",
-   "linea": 138,
-   "nombre": "_CONFIRMS_DESCRIBED_PACKAGE_RE",
-   "patrones": 2,
-   "familia": "entender al cliente"
-  },
-  {
-   "fichero": "src/agents/conversational_core.py",
-   "linea": 190,
-   "nombre": "_SWITCH_TO_EN_RE",
-   "patrones": 4,
-   "familia": "entender al cliente"
-  },
-  {
-   "fichero": "src/agents/conversational_core.py",
-   "linea": 197,
-   "nombre": "_SWITCH_TO_ES_RE",
-   "patrones": 4,
-   "familia": "entender al cliente"
-  },
-  {
-   "fichero": "src/agents/conversational_core.py",
-   "linea": 205,
-   "nombre": "_HOTEL_UNKNOWN_RE",
-   "patrones": 3,
-   "familia": "entender al cliente"
-  },
-  {
-   "fichero": "src/agents/conversational_core.py",
-   "linea": 216,
-   "nombre": "_LOCATION_DEFER_RE",
-   "patrones": 6,
-   "familia": "entender al cliente"
-  },
-  {
-   "fichero": "src/agents/conversational_core.py",
-   "linea": 230,
-   "nombre": "_COURSE_SOLO_RE",
-   "patrones": 3,
-   "familia": "entender al cliente"
-  },
-  {
-   "fichero": "src/agents/conversational_core.py",
-   "linea": 244,
-   "nombre": "_NOT_ALONE_RE",
-   "patrones": 8,
-   "familia": "entender al cliente"
-  },
-  {
-   "fichero": "src/agents/conversational_core.py",
-   "linea": 403,
-   "nombre": "_NAME_TRIGGER_RE",
-   "patrones": 1,
-   "familia": "entender al cliente"
-  },
-  {
-   "fichero": "src/agents/conversational_core.py",
-   "linea": 1125,
-   "nombre": "_ADDITION_CUE",
-   "patrones": 2,
-   "familia": "entender al cliente"
-  },
-  {
-   "fichero": "src/agents/conversational_core.py",
-   "linea": 1129,
-   "nombre": "_ADDITION_CUE_RE",
-   "patrones": 2,
-   "familia": "entender al cliente"
-  },
-  {
-   "fichero": "src/agents/conversational_core.py",
-   "linea": 1130,
-   "nombre": "_ADDED_PERSON_RE",
-   "patrones": 6,
-   "familia": "entender al cliente"
-  },
-  {
-   "fichero": "src/agents/conversational_core.py",
-   "linea": 1154,
-   "nombre": "_MENTIONS_PERSON_RE",
-   "patrones": 6,
-   "familia": "entender al cliente"
-  },
-  {
-   "fichero": "src/agents/conversational_core.py",
-   "linea": 1181,
-   "nombre": "_BARE_HEADCOUNT_RE",
-   "patrones": 1,
-   "familia": "entender al cliente"
-  },
-  {
-   "fichero": "src/agents/conversational_core.py",
-   "linea": 1217,
-   "nombre": "_SINGULAR_COMPANION_RE",
-   "patrones": 2,
-   "familia": "entender al cliente"
-  },
-  {
-   "fichero": "src/agents/conversational_core.py",
-   "linea": 1245,
-   "nombre": "_PLURAL_COMPANION_RE",
-   "patrones": 4,
-   "familia": "entender al cliente"
-  },
-  {
-   "fichero": "src/agents/conversational_core.py",
-   "linea": 1262,
+   "linea": 834,
    "nombre": "_EXPLICIT_NUMBER_RE",
    "patrones": 2,
-   "familia": "entender al cliente"
+   "familia": "lista cerrada o formato"
   },
   {
    "fichero": "src/agents/conversational_core.py",
-   "linea": 1352,
+   "linea": 865,
    "nombre": "_STRONG_CERTIFIED_DIVING_RE",
    "patrones": 3,
    "familia": "entender al cliente"
   },
   {
    "fichero": "src/agents/conversational_core.py",
-   "linea": 1362,
+   "linea": 875,
    "nombre": "_EXPLICIT_MINICOURSE_NAME_RE",
    "patrones": 2,
    "familia": "entender al cliente"
   },
   {
    "fichero": "src/agents/conversational_core.py",
-   "linea": 1456,
-   "nombre": "_DELIBERATION_RE",
-   "patrones": 13,
-   "familia": "entender al cliente"
-  },
-  {
-   "fichero": "src/agents/conversational_core.py",
-   "linea": 1477,
-   "nombre": "_COMMITMENT_RE",
-   "patrones": 3,
-   "familia": "entender al cliente"
-  },
-  {
-   "fichero": "src/agents/conversational_core.py",
-   "linea": 5092,
+   "linea": 1585,
    "nombre": "_N_INMERSIONES_RE",
    "patrones": 2,
    "familia": "entender al cliente"
   },
   {
    "fichero": "src/agents/conversational_core.py",
-   "linea": 5130,
+   "linea": 1623,
    "nombre": "_HORA_DEL_RESUMEN",
    "patrones": 1,
    "familia": "guarda sobre la respuesta del bot"
   },
   {
    "fichero": "src/agents/conversational_core.py",
-   "linea": 5380,
+   "linea": 1886,
    "nombre": "_PREGUNTA_ORIGEN_RE",
    "patrones": 2,
    "familia": "guarda sobre la respuesta del bot"
   },
   {
    "fichero": "src/agents/conversational_core.py",
-   "linea": 5405,
+   "linea": 1911,
    "nombre": "_PIDE_PRECIO_RE",
    "patrones": 2,
-   "familia": "guarda sobre la respuesta del bot"
+   "familia": "entender al cliente"
   },
   {
    "fichero": "src/agents/conversational_core.py",
-   "linea": 5411,
+   "linea": 1917,
    "nombre": "_PRECIO_AJENO_RE",
    "patrones": 1,
-   "familia": "guarda sobre la respuesta del bot"
+   "familia": "entender al cliente"
   },
   {
    "fichero": "src/agents/conversational_core.py",
-   "linea": 5417,
+   "linea": 1923,
    "nombre": "_PISTA_ORIGEN_RE",
    "patrones": 1,
-   "familia": "guarda sobre la respuesta del bot"
+   "familia": "entender al cliente"
   },
   {
    "fichero": "src/agents/conversational_core.py",
-   "linea": 5425,
+   "linea": 1931,
    "nombre": "_IMPORTE_RE",
    "patrones": 1,
    "familia": "guarda sobre la respuesta del bot"
   },
   {
    "fichero": "src/agents/conversational_core.py",
-   "linea": 5460,
+   "linea": 1974,
    "nombre": "_FRASE_RE",
    "patrones": 1,
    "familia": "guarda sobre la respuesta del bot"
   },
   {
    "fichero": "src/agents/conversational_core.py",
-   "linea": 5464,
+   "linea": 1978,
    "nombre": "_DEPENDE_DEL_ORIGEN_RE",
    "patrones": 1,
    "familia": "guarda sobre la respuesta del bot"
   },
   {
    "fichero": "src/agents/conversational_core.py",
-   "linea": 3444,
+   "linea": 1360,
    "nombre": "norm",
    "patrones": 1,
-   "familia": "entender al cliente"
+   "familia": "lista cerrada o formato"
   },
   {
    "fichero": "src/agents/conversational_core.py",
-   "linea": 3445,
+   "linea": 1361,
    "nombre": "norm",
    "patrones": 1,
-   "familia": "entender al cliente"
+   "familia": "lista cerrada o formato"
   },
   {
    "fichero": "src/agents/conversational_core.py",
-   "linea": 5490,
+   "linea": 2004,
    "nombre": "texto",
    "patrones": 1,
-   "familia": "entender al cliente"
+   "familia": "lista cerrada o formato"
   },
   {
-   "fichero": "src/agents/conversational_core.py",
-   "linea": 927,
-   "nombre": "leftover",
+   "fichero": "src/agents/extractor_turno.py",
+   "linea": 329,
+   "nombre": "trozos",
    "patrones": 1,
-   "familia": "entender al cliente"
+   "familia": "formato y datos internos"
   },
   {
-   "fichero": "src/agents/conversational_core.py",
-   "linea": 1064,
-   "nombre": "ages",
+   "fichero": "src/agents/extractor_turno.py",
+   "linea": 385,
+   "nombre": "texto",
    "patrones": 1,
-   "familia": "entender al cliente"
+   "familia": "formato y datos internos"
   },
   {
    "fichero": "src/agents/grounding_check.py",
-   "linea": 25,
+   "linea": 22,
    "nombre": "_NUMBER_TOKEN",
    "patrones": 1,
    "familia": "guarda sobre la respuesta del bot"
   },
   {
    "fichero": "src/agents/grounding_check.py",
-   "linea": 29,
+   "linea": 26,
    "nombre": "_ANSWER_AMOUNT",
    "patrones": 3,
    "familia": "guarda sobre la respuesta del bot"
   },
   {
    "fichero": "src/agents/grounding_check.py",
-   "linea": 80,
+   "linea": 77,
    "nombre": "_PEOPLE_NOUN",
    "patrones": 2,
    "familia": "guarda sobre la respuesta del bot"
   },
   {
    "fichero": "src/agents/grounding_check.py",
-   "linea": 90,
+   "linea": 87,
    "nombre": "_CAP_BEFORE",
    "patrones": 2,
    "familia": "guarda sobre la respuesta del bot"
   },
   {
    "fichero": "src/agents/grounding_check.py",
-   "linea": 94,
+   "linea": 91,
    "nombre": "_CAP_AFTER",
    "patrones": 1,
    "familia": "guarda sobre la respuesta del bot"
   },
   {
    "fichero": "src/agents/grounding_check.py",
-   "linea": 95,
+   "linea": 92,
    "nombre": "_CAPACITY_CLAIM",
    "patrones": 4,
    "familia": "guarda sobre la respuesta del bot"
   },
   {
    "fichero": "src/agents/grounding_check.py",
-   "linea": 131,
+   "linea": 128,
    "nombre": "_INACTIVE_CERTIFIED_RULE_MARKER",
    "patrones": 1,
    "familia": "guarda sobre la respuesta del bot"
   },
   {
    "fichero": "src/agents/grounding_check.py",
-   "linea": 139,
+   "linea": 136,
    "nombre": "_CONTRADICTS_INACTIVE_CERTIFIED_RULE",
    "patrones": 4,
    "familia": "guarda sobre la respuesta del bot"
   },
   {
    "fichero": "src/agents/grounding_check.py",
-   "linea": 177,
+   "linea": 174,
    "nombre": "_PD_REQUEST_VERB",
    "patrones": 5,
    "familia": "guarda sobre la respuesta del bot"
   },
   {
    "fichero": "src/agents/grounding_check.py",
-   "linea": 184,
+   "linea": 181,
    "nombre": "_PD_IDENTITY_NOUN",
    "patrones": 5,
    "familia": "guarda sobre la respuesta del bot"
   },
   {
    "fichero": "src/agents/grounding_check.py",
-   "linea": 192,
+   "linea": 189,
    "nombre": "_PD_REQUEST",
    "patrones": 1,
    "familia": "guarda sobre la respuesta del bot"
   },
   {
    "fichero": "src/agents/grounding_check.py",
-   "linea": 199,
+   "linea": 196,
    "nombre": "_PD_LIST_ITEM",
    "patrones": 1,
    "familia": "guarda sobre la respuesta del bot"
   },
   {
    "fichero": "src/agents/grounding_check.py",
-   "linea": 249,
+   "linea": 246,
    "nombre": "_PHONE_PATTERN",
    "patrones": 4,
    "familia": "guarda sobre la respuesta del bot"
   },
   {
    "fichero": "src/agents/grounding_check.py",
-   "linea": 257,
+   "linea": 254,
    "nombre": "_PHONE_CUE",
    "patrones": 1,
    "familia": "guarda sobre la respuesta del bot"
   },
   {
    "fichero": "src/agents/grounding_check.py",
-   "linea": 271,
+   "linea": 268,
    "nombre": "_URL_PATTERN",
    "patrones": 1,
    "familia": "guarda sobre la respuesta del bot"
   },
   {
    "fichero": "src/agents/grounding_check.py",
-   "linea": 382,
+   "linea": 372,
    "nombre": "_FACT_NO",
    "patrones": 1,
    "familia": "leer la salida de un LLM"
   },
   {
    "fichero": "src/agents/grounding_check.py",
-   "linea": 44,
+   "linea": 41,
    "nombre": "digits_only",
    "patrones": 1,
    "familia": "guarda sobre la respuesta del bot"
   },
   {
    "fichero": "src/agents/grounding_check.py",
-   "linea": 46,
+   "linea": 43,
    "nombre": "trailing_single_zero_decimal",
    "patrones": 1,
    "familia": "guarda sobre la respuesta del bot"
   },
   {
    "fichero": "src/agents/grounding_check.py",
-   "linea": 49,
+   "linea": 46,
    "nombre": "trailing_decimals",
    "patrones": 1,
    "familia": "guarda sobre la respuesta del bot"
   },
   {
    "fichero": "src/agents/grounding_check.py",
-   "linea": 367,
+   "linea": 355,
    "nombre": "frases",
    "patrones": 1,
    "familia": "leer la salida de un LLM"
@@ -784,14 +665,14 @@
    "linea": 412,
    "nombre": "text",
    "patrones": 1,
-   "familia": "entender al cliente"
+   "familia": "lista cerrada o formato"
   },
   {
    "fichero": "src/agents/intent_detector.py",
    "linea": 539,
    "nombre": "words",
    "patrones": 1,
-   "familia": "entender al cliente"
+   "familia": "lista cerrada o formato"
   },
   {
    "fichero": "src/agents/intent_detector.py",
@@ -805,14 +686,14 @@
    "linea": 943,
    "nombre": "writer",
    "patrones": 1,
-   "familia": "entender al cliente"
+   "familia": "lista cerrada o formato"
   },
   {
    "fichero": "src/agents/intent_detector.py",
    "linea": 953,
    "nombre": "writer",
    "patrones": 1,
-   "familia": "entender al cliente"
+   "familia": "lista cerrada o formato"
   },
   {
    "fichero": "src/agents/intent_detector.py",
@@ -875,28 +756,28 @@
    "linea": 348,
    "nombre": "token_sets",
    "patrones": 1,
-   "familia": "entender al cliente"
+   "familia": "lista cerrada o formato"
   },
   {
    "fichero": "src/agents/intent_detector.py",
    "linea": 368,
    "nombre": "alternatives",
    "patrones": 2,
-   "familia": "entender al cliente"
+   "familia": "lista cerrada o formato"
   },
   {
    "fichero": "src/agents/intent_detector.py",
    "linea": 977,
    "nombre": "words",
    "patrones": 1,
-   "familia": "entender al cliente"
+   "familia": "lista cerrada o formato"
   },
   {
    "fichero": "src/agents/intent_detector.py",
    "linea": 1186,
    "nombre": "words",
    "patrones": 1,
-   "familia": "entender al cliente"
+   "familia": "lista cerrada o formato"
   },
   {
    "fichero": "src/agents/intent_detector.py",
@@ -984,52 +865,59 @@
   },
   {
    "fichero": "src/agents/intent_detector.py",
-   "linea": 1971,
+   "linea": 1901,
+   "nombre": "_edad_re",
+   "patrones": 2,
+   "familia": "entender al cliente"
+  },
+  {
+   "fichero": "src/agents/intent_detector.py",
+   "linea": 1978,
    "nombre": "num",
    "patrones": 2,
    "familia": "entender al cliente"
   },
   {
    "fichero": "src/agents/intent_detector.py",
-   "linea": 2138,
+   "linea": 2145,
    "nombre": "island_patterns",
    "patrones": 22,
-   "familia": "entender al cliente"
+   "familia": "lista cerrada o formato"
   },
   {
    "fichero": "src/agents/intent_detector.py",
-   "linea": 2176,
+   "linea": 2183,
    "nombre": "hotel_patterns",
    "patrones": 64,
-   "familia": "entender al cliente"
+   "familia": "lista cerrada o formato"
   },
   {
    "fichero": "src/agents/intent_detector.py",
    "linea": 366,
    "nombre": "name",
    "patrones": 1,
-   "familia": "entender al cliente"
+   "familia": "lista cerrada o formato"
   },
   {
    "fichero": "src/agents/intent_detector.py",
    "linea": 418,
    "nombre": "words",
    "patrones": 1,
-   "familia": "entender al cliente"
+   "familia": "lista cerrada o formato"
   },
   {
    "fichero": "src/agents/intent_detector.py",
    "linea": 986,
    "nombre": "rest",
    "patrones": 1,
-   "familia": "entender al cliente"
+   "familia": "lista cerrada o formato"
   },
   {
    "fichero": "src/agents/intent_detector.py",
    "linea": 1045,
    "nombre": "words",
    "patrones": 1,
-   "familia": "entender al cliente"
+   "familia": "lista cerrada o formato"
   },
   {
    "fichero": "src/agents/intent_detector.py",
@@ -1095,6 +983,13 @@
    "familia": "entender al cliente"
   },
   {
+   "fichero": "src/agents/juez_segunda_opinion.py",
+   "linea": 95,
+   "nombre": "_CIFRA_O_ENLACE",
+   "patrones": 1,
+   "familia": "leer la salida de un LLM"
+  },
+  {
    "fichero": "src/agents/lead_summary.py",
    "linea": 18,
    "nombre": "_BUTTON_NUMBER_RE",
@@ -1102,423 +997,514 @@
    "familia": "formato y datos internos"
   },
   {
-   "fichero": "src/agents/rag_agent.py",
+   "fichero": "src/agents/nucleo/extraction.py",
+   "linea": 104,
+   "nombre": "_COURSE_SOLO_RE",
+   "patrones": 3,
+   "familia": "entender al cliente"
+  },
+  {
+   "fichero": "src/agents/nucleo/extraction.py",
+   "linea": 118,
+   "nombre": "_NOT_ALONE_RE",
+   "patrones": 8,
+   "familia": "entender al cliente"
+  },
+  {
+   "fichero": "src/agents/nucleo/extraction.py",
+   "linea": 171,
+   "nombre": "_ADDITION_CUE",
+   "patrones": 2,
+   "familia": "entender al cliente"
+  },
+  {
+   "fichero": "src/agents/nucleo/extraction.py",
+   "linea": 175,
+   "nombre": "_ADDITION_CUE_RE",
+   "patrones": 2,
+   "familia": "entender al cliente"
+  },
+  {
+   "fichero": "src/agents/nucleo/extraction.py",
+   "linea": 176,
+   "nombre": "_ADDED_PERSON_RE",
+   "patrones": 6,
+   "familia": "entender al cliente"
+  },
+  {
+   "fichero": "src/agents/nucleo/extraction.py",
+   "linea": 200,
+   "nombre": "_MENTIONS_PERSON_RE",
+   "patrones": 6,
+   "familia": "entender al cliente"
+  },
+  {
+   "fichero": "src/agents/nucleo/extraction.py",
    "linea": 227,
-   "nombre": "FOOD_QUERY_PATTERN",
+   "nombre": "_BARE_HEADCOUNT_RE",
    "patrones": 1,
-   "familia": "atajo de texto fijo (APAGADO: código muerto con RAG_V2/S4_FIXES)"
+   "familia": "entender al cliente"
+  },
+  {
+   "fichero": "src/agents/nucleo/extraction.py",
+   "linea": 263,
+   "nombre": "_SINGULAR_COMPANION_RE",
+   "patrones": 2,
+   "familia": "entender al cliente"
+  },
+  {
+   "fichero": "src/agents/nucleo/extraction.py",
+   "linea": 291,
+   "nombre": "_PLURAL_COMPANION_RE",
+   "patrones": 4,
+   "familia": "entender al cliente"
+  },
+  {
+   "fichero": "src/agents/nucleo/extraction.py",
+   "linea": 537,
+   "nombre": "_LUGAR_DE_CARTAGENA_RE",
+   "patrones": 2,
+   "familia": "entender al cliente"
+  },
+  {
+   "fichero": "src/agents/nucleo/routing.py",
+   "linea": 80,
+   "nombre": "_CONFIRMS_DESCRIBED_PACKAGE_RE",
+   "patrones": 2,
+   "familia": "entender al cliente"
+  },
+  {
+   "fichero": "src/agents/nucleo/routing.py",
+   "linea": 129,
+   "nombre": "_HOTEL_UNKNOWN_RE",
+   "patrones": 3,
+   "familia": "entender al cliente"
+  },
+  {
+   "fichero": "src/agents/nucleo/routing.py",
+   "linea": 140,
+   "nombre": "_LOCATION_DEFER_RE",
+   "patrones": 6,
+   "familia": "entender al cliente"
+  },
+  {
+   "fichero": "src/agents/nucleo/routing.py",
+   "linea": 385,
+   "nombre": "_DELIBERATION_RE",
+   "patrones": 13,
+   "familia": "entender al cliente"
+  },
+  {
+   "fichero": "src/agents/nucleo/routing.py",
+   "linea": 406,
+   "nombre": "_COMMITMENT_RE",
+   "patrones": 3,
+   "familia": "entender al cliente"
+  },
+  {
+   "fichero": "src/agents/nucleo/routing.py",
+   "linea": 222,
+   "nombre": "leftover",
+   "patrones": 1,
+   "familia": "entender al cliente"
+  },
+  {
+   "fichero": "src/agents/nucleo/routing.py",
+   "linea": 359,
+   "nombre": "ages",
+   "patrones": 1,
+   "familia": "entender al cliente"
+  },
+  {
+   "fichero": "src/agents/nucleo/setup.py",
+   "linea": 35,
+   "nombre": "_SWITCH_TO_EN_RE",
+   "patrones": 4,
+   "familia": "entender al cliente"
+  },
+  {
+   "fichero": "src/agents/nucleo/setup.py",
+   "linea": 42,
+   "nombre": "_SWITCH_TO_ES_RE",
+   "patrones": 4,
+   "familia": "entender al cliente"
+  },
+  {
+   "fichero": "src/agents/nucleo/setup.py",
+   "linea": 60,
+   "nombre": "_NAME_TRIGGER_RE",
+   "patrones": 1,
+   "familia": "entender al cliente"
+  },
+  {
+   "fichero": "src/agents/nucleo/setup.py",
+   "linea": 69,
+   "nombre": "_NAME_TRIGGER_SIN_SOY_RE",
+   "patrones": 1,
+   "familia": "entender al cliente"
   },
   {
    "fichero": "src/agents/rag_agent.py",
-   "linea": 232,
-   "nombre": "DIETARY_QUERY_PATTERN",
-   "patrones": 1,
-   "familia": "atajo de texto fijo (APAGADO: código muerto con RAG_V2/S4_FIXES)"
-  },
-  {
-   "fichero": "src/agents/rag_agent.py",
-   "linea": 251,
+   "linea": 231,
    "nombre": "_FOLLOW_UP_INDICATORS",
    "patrones": 5,
    "familia": "entender al cliente"
   },
   {
    "fichero": "src/agents/rag_agent.py",
-   "linea": 260,
+   "linea": 240,
    "nombre": "_FOLLOW_UP_PREFIX",
    "patrones": 1,
    "familia": "entender al cliente"
   },
   {
    "fichero": "src/agents/rag_agent.py",
-   "linea": 266,
+   "linea": 246,
    "nombre": "_LOCATION_STATEMENT_PREFIX",
    "patrones": 6,
    "familia": "entender al cliente"
   },
   {
    "fichero": "src/agents/rag_agent.py",
-   "linea": 382,
+   "linea": 362,
    "nombre": "LOCATION_QUERY_INTENT_PATTERN",
    "patrones": 1,
    "familia": "entender al cliente"
   },
   {
    "fichero": "src/agents/rag_agent.py",
-   "linea": 486,
-   "nombre": "_FOOD_HIJACK_GUARD",
-   "patrones": 4,
-   "familia": "atajo de texto fijo (APAGADO: código muerto con RAG_V2/S4_FIXES)"
-  },
-  {
-   "fichero": "src/agents/rag_agent.py",
-   "linea": 538,
+   "linea": 455,
    "nombre": "_OVERVIEW_PHRASE",
    "patrones": 5,
    "familia": "atajo de texto fijo (activo)"
   },
   {
    "fichero": "src/agents/rag_agent.py",
-   "linea": 552,
+   "linea": 469,
    "nombre": "_OVERVIEW_BARE_WORD_RE",
    "patrones": 1,
    "familia": "atajo de texto fijo (activo)"
   },
   {
    "fichero": "src/agents/rag_agent.py",
-   "linea": 556,
+   "linea": 473,
    "nombre": "_OVERVIEW_DIVING_WORD",
    "patrones": 1,
    "familia": "atajo de texto fijo (activo)"
   },
   {
    "fichero": "src/agents/rag_agent.py",
-   "linea": 561,
+   "linea": 478,
    "nombre": "_OVERVIEW_EXCLUDE",
    "patrones": 2,
    "familia": "atajo de texto fijo (activo)"
   },
   {
    "fichero": "src/agents/rag_agent.py",
-   "linea": 572,
+   "linea": 489,
    "nombre": "_MENTIONS_COMPANION_RE",
    "patrones": 1,
    "familia": "entender al cliente"
   },
   {
    "fichero": "src/agents/rag_agent.py",
-   "linea": 575,
+   "linea": 492,
    "nombre": "_NON_DIVER_SINGULAR_RE",
    "patrones": 1,
    "familia": "entender al cliente"
   },
   {
    "fichero": "src/agents/rag_agent.py",
-   "linea": 578,
+   "linea": 495,
    "nombre": "_NON_DIVER_PLURAL_RE",
    "patrones": 1,
    "familia": "entender al cliente"
   },
   {
    "fichero": "src/agents/rag_agent.py",
-   "linea": 585,
+   "linea": 502,
    "nombre": "_NON_DIVER_ELLIPTICAL_ES_RE",
    "patrones": 3,
    "familia": "entender al cliente"
   },
   {
    "fichero": "src/agents/rag_agent.py",
-   "linea": 590,
+   "linea": 507,
    "nombre": "_NON_DIVER_ELLIPTICAL_EN_RE",
    "patrones": 3,
    "familia": "entender al cliente"
   },
   {
    "fichero": "src/agents/rag_agent.py",
-   "linea": 603,
+   "linea": 520,
    "nombre": "_COMPANION_PLURAL_QUANTIFIER_RE",
    "patrones": 4,
    "familia": "entender al cliente"
   },
   {
    "fichero": "src/agents/rag_agent.py",
-   "linea": 785,
-   "nombre": "_PRICE_QUESTION",
-   "patrones": 4,
-   "familia": "atajo de texto fijo (APAGADO: código muerto con RAG_V2/S4_FIXES)"
-  },
-  {
-   "fichero": "src/agents/rag_agent.py",
-   "linea": 797,
-   "nombre": "_PRICE_SPECIFIC",
-   "patrones": 7,
-   "familia": "atajo de texto fijo (APAGADO: código muerto con RAG_V2/S4_FIXES)"
-  },
-  {
-   "fichero": "src/agents/rag_agent.py",
-   "linea": 885,
-   "nombre": "_PRICE_SINGLE_SERVICE_PATTERNS",
-   "patrones": 4,
-   "familia": "atajo de texto fijo (APAGADO: código muerto con RAG_V2/S4_FIXES)"
-  },
-  {
-   "fichero": "src/agents/rag_agent.py",
-   "linea": 897,
-   "nombre": "_PRICE_NON_CATALOG_RE",
-   "patrones": 4,
-   "familia": "atajo de texto fijo (APAGADO: código muerto con RAG_V2/S4_FIXES)"
-  },
-  {
-   "fichero": "src/agents/rag_agent.py",
-   "linea": 1042,
-   "nombre": "_REFRESHER_COST_QUESTION_RE",
-   "patrones": 3,
-   "familia": "atajo de texto fijo (APAGADO: código muerto con RAG_V2/S4_FIXES)"
-  },
-  {
-   "fichero": "src/agents/rag_agent.py",
-   "linea": 396,
+   "linea": 376,
    "nombre": "cleaned",
    "patrones": 1,
    "familia": "entender al cliente"
   },
   {
    "fichero": "src/agents/rag_agent.py",
-   "linea": 1264,
+   "linea": 878,
    "nombre": "item",
+   "patrones": 1,
+   "familia": "leer la salida de un LLM"
+  },
+  {
+   "fichero": "src/agents/rutas/booking.py",
+   "linea": 36,
+   "nombre": "_CLOSED_DATE_RE",
+   "patrones": 4,
+   "familia": "entender al cliente"
+  },
+  {
+   "fichero": "src/agents/rutas/booking.py",
+   "linea": 58,
+   "nombre": "_QUE_CONJUNCION",
    "patrones": 1,
    "familia": "entender al cliente"
   },
   {
+   "fichero": "src/agents/rutas/booking.py",
+   "linea": 59,
+   "nombre": "_INFO_QUESTION_STARTER_PATTERN",
+   "patrones": 9,
+   "familia": "entender al cliente"
+  },
+  {
+   "fichero": "src/agents/rutas/booking.py",
+   "linea": 85,
+   "nombre": "_INFO_REQUEST_ANYWHERE_RE",
+   "patrones": 3,
+   "familia": "entender al cliente"
+  },
+  {
+   "fichero": "src/agents/rutas/booking.py",
+   "linea": 91,
+   "nombre": "_CLAUSE_QUESTION_RE",
+   "patrones": 5,
+   "familia": "entender al cliente"
+  },
+  {
+   "fichero": "src/agents/rutas/booking.py",
+   "linea": 688,
+   "nombre": "_CORRECTION_CUE_RE",
+   "patrones": 2,
+   "familia": "entender al cliente"
+  },
+  {
+   "fichero": "src/agents/rutas/changes.py",
+   "linea": 20,
+   "nombre": "_AVAILABILITY_PATTERN",
+   "patrones": 16,
+   "familia": "entender al cliente"
+  },
+  {
+   "fichero": "src/agents/rutas/changes.py",
+   "linea": 186,
+   "nombre": "_AVAILABILITY_RE",
+   "patrones": 6,
+   "familia": "entender al cliente"
+  },
+  {
+   "fichero": "src/agents/rutas/contexto_rag.py",
+   "linea": 19,
+   "nombre": "_DIVE_TO_HEAL_OVERRIDE_RE",
+   "patrones": 3,
+   "familia": "entender al cliente"
+  },
+  {
+   "fichero": "src/agents/rutas/contexto_rag.py",
+   "linea": 44,
+   "nombre": "_UNCERTIFIED_COMPANION_NOTE_RE",
+   "patrones": 4,
+   "familia": "entender al cliente"
+  },
+  {
+   "fichero": "src/agents/rutas/contexto_rag.py",
+   "linea": 72,
+   "nombre": "_INACTIVE_MENTION_RE",
+   "patrones": 3,
+   "familia": "entender al cliente"
+  },
+  {
+   "fichero": "src/agents/rutas/contexto_rag.py",
+   "linea": 89,
+   "nombre": "_CERTIFIED_MENTION_RE",
+   "patrones": 1,
+   "familia": "entender al cliente"
+  },
+  {
+   "fichero": "src/agents/rutas/deflection.py",
+   "linea": 56,
+   "nombre": "_AI_IDENTITY_RE",
+   "patrones": 8,
+   "familia": "atajo de texto fijo (activo)"
+  },
+  {
+   "fichero": "src/agents/rutas/info.py",
+   "linea": 36,
+   "nombre": "_ALCOHOL_BEFORE_DIVING_RE",
+   "patrones": 4,
+   "familia": "atajo de texto fijo (activo)"
+  },
+  {
+   "fichero": "src/agents/rutas/info.py",
+   "linea": 49,
+   "nombre": "_ALLERGY_WORD_RE",
+   "patrones": 1,
+   "familia": "atajo de texto fijo (activo)"
+  },
+  {
+   "fichero": "src/agents/rutas/info.py",
+   "linea": 50,
+   "nombre": "_FOOD_ALLERGEN_RE",
+   "patrones": 2,
+   "familia": "atajo de texto fijo (activo)"
+  },
+  {
+   "fichero": "src/agents/rutas/info.py",
+   "linea": 101,
+   "nombre": "_PRIVATE_GROUP_EVENT_RE",
+   "patrones": 5,
+   "familia": "entender al cliente"
+  },
+  {
+   "fichero": "src/agents/rutas/info.py",
+   "linea": 158,
+   "nombre": "_SAME_PRICE_DIFFERENT_NATIONALITY_RE",
+   "patrones": 4,
+   "familia": "atajo de texto fijo (activo)"
+  },
+  {
+   "fichero": "src/agents/rutas/info.py",
+   "linea": 193,
+   "nombre": "_AGE_ELIGIBILITY_CUE",
+   "patrones": 9,
+   "familia": "entender al cliente"
+  },
+  {
+   "fichero": "src/agents/rutas/info.py",
+   "linea": 208,
+   "nombre": "_AGE_NUMBER_HINT",
+   "patrones": 1,
+   "familia": "entender al cliente"
+  },
+  {
+   "fichero": "src/agents/rutas/info.py",
+   "linea": 209,
+   "nombre": "_AGE_PERSON_REF",
+   "patrones": 2,
+   "familia": "entender al cliente"
+  },
+  {
+   "fichero": "src/agents/rutas/router.py",
+   "linea": 24,
+   "nombre": "_GREETING_START_RE",
+   "patrones": 2,
+   "familia": "entender al cliente"
+  },
+  {
+   "fichero": "src/agents/rutas/router.py",
+   "linea": 33,
+   "nombre": "_NAME_INTRO_RE",
+   "patrones": 2,
+   "familia": "entender al cliente"
+  },
+  {
+   "fichero": "src/agents/rutas/router.py",
+   "linea": 37,
+   "nombre": "_INTRO_PHRASE_RE",
+   "patrones": 2,
+   "familia": "entender al cliente"
+  },
+  {
+   "fichero": "src/agents/rutas/router.py",
+   "linea": 95,
+   "nombre": "cleaned",
+   "patrones": 1,
+   "familia": "lista cerrada o formato"
+  },
+  {
+   "fichero": "src/agents/rutas/router.py",
+   "linea": 96,
+   "nombre": "cleaned",
+   "patrones": 1,
+   "familia": "lista cerrada o formato"
+  },
+  {
+   "fichero": "src/agents/rutas/router.py",
+   "linea": 99,
+   "nombre": "cleaned",
+   "patrones": 2,
+   "familia": "lista cerrada o formato"
+  },
+  {
+   "fichero": "src/agents/rutas/router.py",
+   "linea": 135,
+   "nombre": "kids_patterns",
+   "patrones": 6,
+   "familia": "entender al cliente"
+  },
+  {
+   "fichero": "src/agents/rutas/safety.py",
+   "linea": 23,
+   "nombre": "_PRICE_OR_BOOKING_Q",
+   "patrones": 3,
+   "familia": "entender al cliente"
+  },
+  {
+   "fichero": "src/agents/rutas/safety.py",
+   "linea": 95,
+   "nombre": "has_link_token_in_msg",
+   "patrones": 2,
+   "familia": "entender al cliente"
+  },
+  {
    "fichero": "src/agents/supervisor.py",
-   "linea": 53,
+   "linea": 40,
    "nombre": "_ADAPTIVE_DIVING_PATTERN",
    "patrones": 10,
    "familia": "entender al cliente"
   },
   {
    "fichero": "src/agents/supervisor.py",
-   "linea": 70,
-   "nombre": "_DIVE_TO_HEAL_OVERRIDE_RE",
-   "patrones": 3,
-   "familia": "entender al cliente"
-  },
-  {
-   "fichero": "src/agents/supervisor.py",
-   "linea": 95,
-   "nombre": "_UNCERTIFIED_COMPANION_NOTE_RE",
-   "patrones": 4,
-   "familia": "entender al cliente"
-  },
-  {
-   "fichero": "src/agents/supervisor.py",
-   "linea": 123,
-   "nombre": "_INACTIVE_MENTION_RE",
-   "patrones": 3,
-   "familia": "entender al cliente"
-  },
-  {
-   "fichero": "src/agents/supervisor.py",
-   "linea": 140,
-   "nombre": "_CERTIFIED_MENTION_RE",
-   "patrones": 1,
-   "familia": "entender al cliente"
-  },
-  {
-   "fichero": "src/agents/supervisor.py",
-   "linea": 159,
-   "nombre": "_PRICE_OR_BOOKING_Q",
-   "patrones": 3,
-   "familia": "entender al cliente"
-  },
-  {
-   "fichero": "src/agents/supervisor.py",
-   "linea": 195,
-   "nombre": "_AVAILABILITY_PATTERN",
-   "patrones": 16,
-   "familia": "entender al cliente"
-  },
-  {
-   "fichero": "src/agents/supervisor.py",
-   "linea": 222,
-   "nombre": "_CLOSED_DATE_RE",
-   "patrones": 4,
-   "familia": "entender al cliente"
-  },
-  {
-   "fichero": "src/agents/supervisor.py",
-   "linea": 243,
-   "nombre": "_ALCOHOL_BEFORE_DIVING_RE",
-   "patrones": 4,
-   "familia": "atajo de texto fijo (activo)"
-  },
-  {
-   "fichero": "src/agents/supervisor.py",
-   "linea": 256,
-   "nombre": "_ALLERGY_WORD_RE",
-   "patrones": 1,
-   "familia": "atajo de texto fijo (activo)"
-  },
-  {
-   "fichero": "src/agents/supervisor.py",
-   "linea": 257,
-   "nombre": "_FOOD_ALLERGEN_RE",
-   "patrones": 2,
-   "familia": "atajo de texto fijo (activo)"
-  },
-  {
-   "fichero": "src/agents/supervisor.py",
-   "linea": 305,
-   "nombre": "_PRIVATE_GROUP_EVENT_RE",
-   "patrones": 5,
-   "familia": "entender al cliente"
-  },
-  {
-   "fichero": "src/agents/supervisor.py",
-   "linea": 346,
-   "nombre": "_SAME_PRICE_DIFFERENT_NATIONALITY_RE",
-   "patrones": 4,
-   "familia": "atajo de texto fijo (activo)"
-  },
-  {
-   "fichero": "src/agents/supervisor.py",
-   "linea": 373,
+   "linea": 57,
    "nombre": "_BARE_AFFIRMATION_RE",
    "patrones": 3,
    "familia": "entender al cliente"
   },
   {
    "fichero": "src/agents/supervisor.py",
-   "linea": 380,
+   "linea": 64,
    "nombre": "_ADVISOR_OFFER_RE",
    "patrones": 1,
    "familia": "entender al cliente"
   },
   {
    "fichero": "src/agents/supervisor.py",
-   "linea": 381,
+   "linea": 65,
    "nombre": "_OFFER_VERB_RE",
    "patrones": 3,
    "familia": "entender al cliente"
   },
   {
    "fichero": "src/agents/supervisor.py",
-   "linea": 393,
+   "linea": 77,
    "nombre": "_GENERAL_INTEREST_PATTERN",
    "patrones": 19,
    "familia": "entender al cliente"
   },
   {
    "fichero": "src/agents/supervisor.py",
-   "linea": 435,
-   "nombre": "_QUE_CONJUNCION",
-   "patrones": 1,
-   "familia": "entender al cliente"
-  },
-  {
-   "fichero": "src/agents/supervisor.py",
-   "linea": 436,
-   "nombre": "_INFO_QUESTION_STARTER_PATTERN",
-   "patrones": 9,
-   "familia": "entender al cliente"
-  },
-  {
-   "fichero": "src/agents/supervisor.py",
-   "linea": 462,
-   "nombre": "_INFO_REQUEST_ANYWHERE_RE",
-   "patrones": 3,
-   "familia": "entender al cliente"
-  },
-  {
-   "fichero": "src/agents/supervisor.py",
-   "linea": 468,
-   "nombre": "_CLAUSE_QUESTION_RE",
-   "patrones": 5,
-   "familia": "entender al cliente"
-  },
-  {
-   "fichero": "src/agents/supervisor.py",
-   "linea": 502,
+   "linea": 112,
    "nombre": "_BOOKING_PROCESS_QUESTION_RE",
    "patrones": 5,
-   "familia": "entender al cliente"
-  },
-  {
-   "fichero": "src/agents/supervisor.py",
-   "linea": 732,
-   "nombre": "_AI_IDENTITY_RE",
-   "patrones": 8,
-   "familia": "atajo de texto fijo (activo)"
-  },
-  {
-   "fichero": "src/agents/supervisor.py",
-   "linea": 785,
-   "nombre": "_AVAILABILITY_RE",
-   "patrones": 6,
-   "familia": "entender al cliente"
-  },
-  {
-   "fichero": "src/agents/supervisor.py",
-   "linea": 989,
-   "nombre": "_GREETING_START_RE",
-   "patrones": 2,
-   "familia": "entender al cliente"
-  },
-  {
-   "fichero": "src/agents/supervisor.py",
-   "linea": 998,
-   "nombre": "_NAME_INTRO_RE",
-   "patrones": 2,
-   "familia": "entender al cliente"
-  },
-  {
-   "fichero": "src/agents/supervisor.py",
-   "linea": 1002,
-   "nombre": "_INTRO_PHRASE_RE",
-   "patrones": 2,
-   "familia": "entender al cliente"
-  },
-  {
-   "fichero": "src/agents/supervisor.py",
-   "linea": 2040,
-   "nombre": "_AGE_ELIGIBILITY_CUE",
-   "patrones": 9,
-   "familia": "entender al cliente"
-  },
-  {
-   "fichero": "src/agents/supervisor.py",
-   "linea": 2055,
-   "nombre": "_AGE_NUMBER_HINT",
-   "patrones": 1,
-   "familia": "entender al cliente"
-  },
-  {
-   "fichero": "src/agents/supervisor.py",
-   "linea": 2056,
-   "nombre": "_AGE_PERSON_REF",
-   "patrones": 2,
-   "familia": "entender al cliente"
-  },
-  {
-   "fichero": "src/agents/supervisor.py",
-   "linea": 2739,
-   "nombre": "_CORRECTION_CUE_RE",
-   "patrones": 2,
-   "familia": "entender al cliente"
-  },
-  {
-   "fichero": "src/agents/supervisor.py",
-   "linea": 1088,
-   "nombre": "cleaned",
-   "patrones": 1,
-   "familia": "entender al cliente"
-  },
-  {
-   "fichero": "src/agents/supervisor.py",
-   "linea": 1089,
-   "nombre": "cleaned",
-   "patrones": 1,
-   "familia": "entender al cliente"
-  },
-  {
-   "fichero": "src/agents/supervisor.py",
-   "linea": 1092,
-   "nombre": "cleaned",
-   "patrones": 2,
-   "familia": "entender al cliente"
-  },
-  {
-   "fichero": "src/agents/supervisor.py",
-   "linea": 1146,
-   "nombre": "kids_patterns",
-   "patrones": 6,
-   "familia": "entender al cliente"
-  },
-  {
-   "fichero": "src/agents/supervisor.py",
-   "linea": 1323,
-   "nombre": "has_link_token_in_msg",
-   "patrones": 2,
    "familia": "entender al cliente"
   },
   {
@@ -1586,14 +1572,14 @@
   },
   {
    "fichero": "src/flows/cart_render.py",
-   "linea": 129,
+   "linea": 135,
    "nombre": "m",
    "patrones": 1,
    "familia": "formato y datos internos"
   },
   {
    "fichero": "src/flows/cart_render.py",
-   "linea": 148,
+   "linea": 154,
    "nombre": "_comp",
    "patrones": 1,
    "familia": "formato y datos internos"
