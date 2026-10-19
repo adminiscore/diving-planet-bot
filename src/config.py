@@ -129,6 +129,12 @@ class Settings(BaseSettings):
     recomendar_a_no_certificados: bool = True  # PROMOCIONADO 19-oct (mod-G2, HISTORY 0.31.57); revert = False
     # 18-oct (ronda mod-D, reserva-solo-link): el resolutor no fija un valor con una respuesta que se contradice ("no,
     # buceé hace poco" a "¿Eres buzo certificado?"). prompts/booking.SLOT_RESOLVER_CONTRADICCION. APAGADO.
+    # ex-9b paso 2 (19-oct): si Jev dice que el mensaje es médico, manda la seguridad aunque nombre el alcohol (antes
+    # el atajo del alcohol iba primero: «estoy embarazada, ¿puedo bucear o tomar vino?» = texto fijo del alcohol, sin
+    # pase). orchestration/router.classify_route. Banco de 10 frases con Jev de verdad: 6/10 → 10/10 (las 4 de alcohol
+    # solo siguen con su norma); ningún diálogo visible del golden habla de alcohol. ENCENDIDO 19-oct (va de pasajero en
+    # la ronda de equivalencia de ex-9b paso 1). Revert = False aquí y en el compose.
+    alcohol_detras_de_lo_medico: bool = True
     resolutor_sin_contradicciones: bool = True  # PROMOCIONADO 19-oct (mod-G2, HISTORY 0.31.57); revert = False
     # EX-EST-2 (14-oct): el acuse reconoce SOLO lo que dice el mensaje (el resumen de la reserva no se repite; ante
     # 'gracias' o una fecha suelta, nada). Banco scripts/banco_acuse.py: inventaba en 33/40 casos reales

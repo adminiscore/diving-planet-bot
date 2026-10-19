@@ -138,6 +138,8 @@ services:
       TARJETA_SIN_SEGURIDAD: "true"
       RECOMENDAR_A_NO_CERTIFICADOS: "true"
       RESOLUTOR_SIN_CONTRADICCIONES: "true"
+      # ex-9b paso 2 (19-oct): si Jev dice que es médico, manda la seguridad aunque nombre el alcohol (banco 6/10 → 10/10).
+      ALCOHOL_DETRAS_DE_LO_MEDICO: "true"
       # CERTIFICADO_SOLO_SI_LO_DICE con «buceé hace poco» = certificado (decisión de Gadea). PROMOCIONADO (HISTORY
       # 0.31.61: mod-H2 97,0 % igual que limpieza-3; reserva-solo-link ya no ofrece el minicurso). Revert = quitar estas líneas.
       CERTIFICADO_SOLO_SI_LO_DICE: "true"
