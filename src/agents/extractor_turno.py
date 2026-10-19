@@ -205,13 +205,15 @@ _PRECIO_NO_ELIGE = (
 IS_CERTIFIED_HOY_ES = "- is_certified: true solo si dice que tiene certificación o un nivel de buceo (buzo certificado, Open Water, Advanced…), él o su grupo;"
 IS_CERTIFIED_DICHO_ES = ("- is_certified: true solo si dice que tiene certificación o un nivel de buceo (buzo certificado, "
                          "Open Water, Advanced…), que ya terminó un curso de certificación («completé el curso básico», "
-                         "«me certifiqué en…»), que tiene inmersiones registradas o que necesita un refresher (el repaso es "
-                         "para quien ya está certificado), él o su grupo;")
+                         "«me certifiqué en…»), que tiene inmersiones registradas, que ha buceado hace poco («buceé hace "
+                         "poco»: true aunque empiece por «no», que contestaba a otra cosa; decisión de Gadea 19-oct) o que "
+                         "necesita un refresher (el repaso es para quien ya está certificado), él o su grupo;")
 IS_CERTIFIED_HOY_EN = "- is_certified: true only if they say they have a certification or a diving level (certified diver, Open Water, Advanced…), themselves or their group;"
 IS_CERTIFIED_DICHO_EN = ("- is_certified: true only if they say they have a certification or a diving level (certified diver, "
                          "Open Water, Advanced…), that they already finished a certification course (\"I completed the basic "
-                         "course\", \"I got certified in…\"), that they have logged dives or that they need a refresher (a "
-                         "refresher is for someone already certified), themselves or their group;")
+                         "course\", \"I got certified in…\"), that they have logged dives, that they dived recently (\"I "
+                         "dived recently\": true even if it starts with \"no\", which was answering something else) or that "
+                         "they need a refresher (a refresher is for someone already certified), themselves or their group;")
 _QUIERE_BUCEAR_PRECIO = "pregunta sus precios o fechas,"
 _QUIERE_BUCEAR_SIN_PRECIO = "pregunta sus fechas (preguntar solo un precio no),"
 
