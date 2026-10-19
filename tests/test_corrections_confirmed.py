@@ -66,7 +66,10 @@ async def _send(state, message, verify=None):
 
 
 @pytest.mark.asyncio
-async def test_explicit_correction_after_the_price_changes_the_currency():
+async def test_explicit_correction_after_the_price_changes_the_currency(extractor_dice):
+    # ex-9b paso 3: la nacionalidad la lee el extractor del turno (`extractor_dice`, conftest); sin él, en los tests iba
+    # por la pista del regex.
+    extractor_dice({"espera, en realidad no somos colombianos": {"is_colombian": False}})
     state = _closed()
     await _send(state, "espera, en realidad no somos colombianos", verify={"is_colombian": False})
     assert state.is_colombian is False
@@ -75,7 +78,10 @@ async def test_explicit_correction_after_the_price_changes_the_currency():
 
 
 @pytest.mark.asyncio
-async def test_same_value_does_not_ask():
+async def test_same_value_does_not_ask(extractor_dice):
+    # ex-9b paso 3: la nacionalidad, leída por el extractor del turno (con el flag y el extractor caído no se leía nada y
+    # el test pasaba sin comparar).
+    extractor_dice({"somos colombianos, sí": {"is_colombian": True}})
     state = _closed()
     await _send(state, "somos colombianos, sí")
     assert state.pending_correction is None
@@ -105,9 +111,12 @@ async def test_known_field_proposals_riding_on_the_answer_to_another_question_ar
 
 
 @pytest.mark.asyncio
-async def test_split_with_an_ambiguous_course_level_waits_for_the_answer():
+async def test_split_with_an_ambiguous_course_level_waits_for_the_answer(extractor_dice):
     """b05 (owner): "2 open water y 3 snorkel" no dice si tienen el nivel o lo quieren;
     se pregunta y no se guarda el reparto con el curso aunque el LLM lo rellene."""
+    # ex-9b paso 3: el mismo reparto, leído por el extractor del turno (con el flag y el extractor caído no se leía
+    # nada y el test pasaba sin probar la guarda).
+    extractor_dice({"2 open water y 3 snorkel": {"group_allocation": {"padi_open_water": 2, "snorkel": 3}}})
     state = ConversationState(conversation_id="t7b-b05")
     state.language = "es"
     state.detected_group_size = 5
@@ -121,7 +130,8 @@ async def test_split_with_an_ambiguous_course_level_waits_for_the_answer():
 
 
 @pytest.mark.asyncio
-async def test_own_change_of_activity_carries_a_single_activity_split():
+async def test_own_change_of_activity_carries_a_single_activity_split(extractor_dice):
+    extractor_dice({"mejor snorkel": {"activity": "snorkel"}})  # ex-9b paso 3: la actividad elegida, del extractor
     state = ConversationState(conversation_id="t7b-mejor")
     state.language = "es"
     state.history = [{"role": "user", "content": "hola"}]

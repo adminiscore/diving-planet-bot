@@ -45,7 +45,10 @@ def _state():
 
 
 @pytest.mark.asyncio
-async def test_ambiguous_level_asks_before_quoting():
+async def test_ambiguous_level_asks_before_quoting(extractor_dice):
+    # ex-9b paso 3: el extractor del turno (`extractor_dice`, conftest) lee el Open Water nombrado como el curso, sin
+    # decir si lo tienen; el núcleo pregunta antes de cotizar. Sin él, en los tests iba por la pista del regex.
+    extractor_dice({"hola somos 4 open water": {"activity": "padi_open_water", "group_size": 4}})
     state = _state()
     with patch.object(core_extraction, "fill_gaps", new=AsyncMock(return_value={"is_certified": True})), \
          patch.object(core, "extract_and_verify", create=True, new=AsyncMock(return_value=({"is_certified": True}, {}))):

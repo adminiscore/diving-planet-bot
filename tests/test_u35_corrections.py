@@ -57,7 +57,21 @@ def test_lo_ya_preguntado_no_se_vuelve_a_preguntar(monkeypatch):
     assert not st.pending_correction
 
 
-async def _con_confirmacion_pendiente(monkeypatch):
+# ex-9b paso 3 (`extractor_sin_pista`): lo que lee el extractor del turno en los mensajes de reserva de estos tests (fixture
+# `extractor_dice` de conftest); sin él, en los tests (sin red) iban por la pista del regex. Las respuestas cortas ("sí",
+# "no") las resuelve el núcleo.
+LEE_EL_EXTRACTOR = {
+    "queremos bucear, somos certificados, desde cartagena, somos 3":
+        {"quiere_bucear": True, "is_certified": True, "activity": "certified_diving", "location": "cartagena",
+         "group_size": 3},
+    # "quiero probar" sin nombrar el minicurso: el extractor no elige actividad (la recomienda el bot).
+    "nunca he buceado y quiero probar, somos 2": {"quiere_bucear": True, "is_certified": False, "group_size": 2},
+    "queremos hacer el minicurso, somos 2": {"activity": "minicourse", "group_size": 2},
+}
+
+
+async def _con_confirmacion_pendiente(extractor_dice):
+    extractor_dice(LEE_EL_EXTRACTOR)
     st = _state()
     await route_message(st, "queremos bucear, somos certificados, desde cartagena, somos 3")
     st.pending_correction = {"group_size": 4}
@@ -66,22 +80,22 @@ async def _con_confirmacion_pendiente(monkeypatch):
     return st
 
 
-async def test_si_no_contesta_si_o_no_se_queda_lo_guardado_y_no_se_repite(monkeypatch):
-    st = await _con_confirmacion_pendiente(monkeypatch)
+async def test_si_no_contesta_si_o_no_se_queda_lo_guardado_y_no_se_repite(monkeypatch, extractor_dice):
+    st = await _con_confirmacion_pendiente(extractor_dice)
     resp = await route_message(st, "Me compartes el link por favor")
     assert st.pending_correction is None
     assert st.detected_group_size == 3
     assert "lo cambio" not in resp
 
 
-async def test_un_si_aunque_siga_una_pregunta_acepta_el_cambio(monkeypatch):
-    st = await _con_confirmacion_pendiente(monkeypatch)
+async def test_un_si_aunque_siga_una_pregunta_acepta_el_cambio(monkeypatch, extractor_dice):
+    st = await _con_confirmacion_pendiente(extractor_dice)
     await route_message(st, "sí, ¿y cuánto sería?")
     assert st.detected_group_size == 4 and st.pending_correction is None
 
 
-async def test_un_no_mantiene_lo_guardado(monkeypatch):
-    st = await _con_confirmacion_pendiente(monkeypatch)
+async def test_un_no_mantiene_lo_guardado(monkeypatch, extractor_dice):
+    st = await _con_confirmacion_pendiente(extractor_dice)
     await route_message(st, "no")
     assert st.detected_group_size == 3 and st.pending_correction is None
 
@@ -132,7 +146,7 @@ def test_una_correccion_ya_aplicada_en_el_turno_no_se_pregunta(monkeypatch):
 # ── u3-5 paso 3: la nacionalidad no se deduce del idioma ─────────────────────────────────────
 
 
-async def test_la_nacionalidad_que_jev_no_ve_afirmada_no_se_rellena(monkeypatch):
+async def test_la_nacionalidad_que_jev_no_ve_afirmada_no_se_rellena(monkeypatch, extractor_dice):
     """"Busco el seguinte: Vamos en família a Cartagena..." (portugués): el relleno ponía
     is_colombian=False; Jev dice que el mensaje no la afirma. Los demás campos rellenados se quedan."""
 
@@ -150,6 +164,10 @@ async def test_la_nacionalidad_que_jev_no_ve_afirmada_no_se_rellena(monkeypatch)
 
     from src.agents import supervisor
     monkeypatch.setattr(supervisor, "detect_routing_signals", _signals)
+    # ex-9b paso 3: con el extractor caído dos turnos seguidos se pasa a un asesor (`extractor_sin_pista`).
+    extractor_dice({"quiero bucear, soy certificado":
+                    {"quiere_bucear": True, "is_certified": True, "activity": "certified_diving"},
+                    "vamos en familia a cartagena": {"location": "cartagena"}})
     st = _state()
     await route_message(st, "quiero bucear, soy certificado")
     await route_message(st, "vamos en familia a cartagena")
@@ -159,7 +177,10 @@ async def test_la_nacionalidad_que_jev_no_ve_afirmada_no_se_rellena(monkeypatch)
 # ── u3-5: el minicurso deducido se recomienda y lo confirma el cliente (Gadea, 27-sep) ─────────
 
 
-async def test_el_minicurso_deducido_se_recomienda_y_no_se_guarda(monkeypatch):
+async def test_el_minicurso_deducido_se_recomienda_y_no_se_guarda(monkeypatch, extractor_dice):
+    # Con `extractor_sin_pista` la recomendación no sale del minicurso deducido por el regex sino de lo que dice el
+    # extractor (CAL-C1: quiere bucear y no es certificado); la conducta es la misma.
+    extractor_dice(LEE_EL_EXTRACTOR)
     st = _state()
     resp = await route_message(st, "nunca he buceado y quiero probar, somos 2")
     assert st.detected_activity is None
@@ -168,14 +189,16 @@ async def test_el_minicurso_deducido_se_recomienda_y_no_se_guarda(monkeypatch):
     assert "minicurso" in resp.lower() and "open water" in resp.lower()
 
 
-async def test_un_si_confirma_el_minicurso_recomendado(monkeypatch):
+async def test_un_si_confirma_el_minicurso_recomendado(monkeypatch, extractor_dice):
+    extractor_dice(LEE_EL_EXTRACTOR)
     st = _state()
     await route_message(st, "nunca he buceado y quiero probar, somos 2")
     await route_message(st, "sí, dale")
     assert st.detected_activity == "minicourse" and st.suggested_activity is None
 
 
-async def test_nombrarlo_es_elegirlo(monkeypatch):
+async def test_nombrarlo_es_elegirlo(monkeypatch, extractor_dice):
+    extractor_dice(LEE_EL_EXTRACTOR)
     st = _state()
     await route_message(st, "queremos hacer el minicurso, somos 2")
     assert st.detected_activity == "minicourse"

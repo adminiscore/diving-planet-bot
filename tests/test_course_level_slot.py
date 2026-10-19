@@ -102,7 +102,10 @@ def test_unknown_certification_keeps_the_generic_course_so_the_bot_asks():
 
 
 @pytest.mark.asyncio
-async def test_conversation_asks_the_course_and_continues_after_the_choice():
+async def test_conversation_asks_the_course_and_continues_after_the_choice(extractor_dice):
+    # ex-9b paso 3: la actividad la lee el extractor del turno (`extractor_dice`, conftest); sin él, en los tests iba por
+    # la pista del regex. La elección del nivel (botón) la resuelve la pregunta pendiente.
+    extractor_dice({"quiero hacer un curso PADI": {"activity": "padi_course"}})
     state = _state("es")
     no_llm = {
         "fill_gaps": AsyncMock(return_value={}),

@@ -65,7 +65,8 @@ RAG_MOCK_EN = "rag_answer_simulated"
 
 
 @pytest.mark.asyncio
-async def test_language_detection_spanish_text():
+async def test_language_detection_spanish_text(extractor_dice):
+    extractor_dice({})  # ex-9b paso 3: sin él, al 2.º turno se pasa a un asesor
     state = make_state()
     await route_message(state, "zzz")
     await route_message(state, "español")
@@ -305,7 +306,8 @@ async def test_escalation_note_includes_service_if_known():
 
 
 @pytest.mark.asyncio
-async def test_escalation_note_includes_language():
+async def test_escalation_note_includes_language(extractor_dice):
+    extractor_dice({})  # ex-9b paso 3: sin él, al 2.º turno se pasa a un asesor
     state = make_state()
     await send(state, "hello", "2")  # english
     await route_message(state, "advisor")
@@ -358,9 +360,10 @@ async def test_escalation_note_includes_language():
 
 
 @pytest.mark.asyncio
-async def test_free_text_in_welcome_step_not_sent_to_rag_if_too_short(monkeypatch):
+async def test_free_text_in_welcome_step_not_sent_to_rag_if_too_short(monkeypatch, extractor_dice):
     # rag-5: sin la respuesta adelantada (se llamaría y se cancelaría); aquí se mira el enrutado.
     monkeypatch.setattr("src.agents.conversational_core.lanzar_rag_adelantado", lambda *a, **k: None)
+    extractor_dice({})  # ex-9b paso 3: sin él, al 2.º turno se pasa a un asesor
     state = make_state()
     await route_message(state, "zzz")  # no language signal -> stays at LANGUAGE step
     with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value=RAG_MOCK) as mock_rag:
@@ -893,8 +896,9 @@ async def test_broken_link_lead_note_has_priority_marker():
 # ---------------------------------------------------------------------------
 
 @pytest.mark.asyncio
-async def test_kids_mention_persists_across_turns():
+async def test_kids_mention_persists_across_turns(extractor_dice):
     """Once kids_mention_detected, stays True for the rest of conversation."""
+    extractor_dice({})  # ex-9b paso 3: sin él, al 2.º turno se pasa a un asesor
     state = make_state()
     await route_message(state, "1")
     await route_message(state, "tengo 3 hijos pequeños")
@@ -996,10 +1000,15 @@ async def test_detect_kids_mention_covers_grandchildren_and_baby():
 # ---------------------------------------------------------------------------
 # Intent Detection - Smart Free Text Understanding
 # ---------------------------------------------------------------------------
+# ex-9b paso 3 (`extractor_sin_pista`): la actividad, el grupo, el origen y la certificación los lee el extractor del
+# turno (simulado con `extractor_dice`, conftest); sin él, en los tests (sin red) iban por la pista del regex. Lo que
+# prueban: que lo leído llega al estado, con el servicio del registro y el idioma del mensaje.
 
 @pytest.mark.asyncio
-async def test_intent_minicourse_skips_certification():
+async def test_intent_minicourse_skips_certification(extractor_dice):
     """'Quiero hacer el minicurso' should detect beginner and skip cert question."""
+    extractor_dice({"Hola quiero hacer el minicurso de buceo, es mi primera vez":
+                    {"activity": "minicourse", "is_certified": False, "quiere_bucear": True}})
     state = make_state()
     await route_message(state, "Hola quiero hacer el minicurso de buceo, es mi primera vez")
 
@@ -1009,8 +1018,9 @@ async def test_intent_minicourse_skips_certification():
 
 
 @pytest.mark.asyncio
-async def test_intent_group_size_detected():
+async def test_intent_group_size_detected(extractor_dice):
     """'Somos tres personas' should detect group size."""
+    extractor_dice({"Hola somos tres personas que queremos hacer snorkel": {"activity": "snorkel", "group_size": 3}})
     state = make_state()
     await route_message(state, "Hola somos tres personas que queremos hacer snorkel")
 
@@ -1019,8 +1029,11 @@ async def test_intent_group_size_detected():
 
 
 @pytest.mark.asyncio
-async def test_intent_location_detected():
+async def test_intent_location_detected(extractor_dice):
     """'Estoy en Cartagena' should detect location."""
+    extractor_dice({"Hola quiero bucear, estoy en Cartagena y soy certificado":
+                    {"quiere_bucear": True, "is_certified": True, "activity": "certified_diving",
+                     "location": "cartagena"}})
     state = make_state()
     await route_message(state, "Hola quiero bucear, estoy en Cartagena y soy certificado")
 
@@ -1030,8 +1043,9 @@ async def test_intent_location_detected():
 
 
 @pytest.mark.asyncio
-async def test_intent_padi_course_detection():
+async def test_intent_padi_course_detection(extractor_dice):
     """'Quiero hacer el curso Open Water' should detect PADI course."""
+    extractor_dice({"Hola quiero hacer el curso PADI Open Water": {"activity": "padi_open_water"}})
     state = make_state()
     await route_message(state, "Hola quiero hacer el curso PADI Open Water")
 
@@ -1041,8 +1055,9 @@ async def test_intent_padi_course_detection():
 
 
 @pytest.mark.asyncio
-async def test_intent_specialty_detection():
+async def test_intent_specialty_detection(extractor_dice):
     """'Quiero hacer el curso de nitrox' should detect specialty."""
+    extractor_dice({"Hola quiero hacer el curso de nitrox": {"activity": "specialty_nitrox"}})
     state = make_state()
     await route_message(state, "Hola quiero hacer el curso de nitrox")
 

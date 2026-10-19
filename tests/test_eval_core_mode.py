@@ -37,11 +37,18 @@ async def _run(case, **llm):
         return (await ev._core_turn(case))[0]
 
 
+# ex-9b paso 3 (`extractor_sin_pista`): los campos los lee el extractor del turno (`extractor_dice`, conftest); sin él, en
+# los tests (sin red) fallaba y el turno iba por la pista del regex. Lo que se prueba es la puntuación del modo --core.
+
+
 @pytest.mark.asyncio
-async def test_a_field_the_state_already_had_is_not_produced_again():
+async def test_a_field_the_state_already_had_is_not_produced_again(extractor_dice):
+    extractor_dice({"desde cartagena": {"location": "cartagena"}})
+    # Con su actividad principal: sin ella, el turno del extractor la saca del reparto ya sabido (ex-9b paso 3,
+    # `_principal_del_grupo_repartido`) y la puntuaría como producida, aunque es otro campo.
     case = {
         "id": "t", "lang": "es", "message": "desde cartagena",
-        "state": {"core_pending_slot": "location", "detected_group_size": 6,
+        "state": {"core_pending_slot": "location", "detected_group_size": 6, "detected_activity": "certified_diving",
                   "detected_group_allocation": {"certified_diving": 2, "minicourse": 2, "snorkel": 2}},
     }
     produced = await _run(case)
@@ -49,7 +56,9 @@ async def test_a_field_the_state_already_had_is_not_produced_again():
 
 
 @pytest.mark.asyncio
-async def test_undecided_members_are_scored_inside_the_allocation():
+async def test_undecided_members_are_scored_inside_the_allocation(extractor_dice):
+    extractor_dice({"somos 3, uno no esta certificado":
+                    {"group_size": 3, "group_allocation": {"certified_diving": 2, "undecided": 1}}})
     case = {"id": "t", "lang": "es", "message": "somos 3, uno no esta certificado"}
     produced = await _run(case, fill={"group_allocation": {"certified_diving": 2, "undecided": 1}})
     assert produced["group_allocation"] == {"certified_diving": 2, "undecided": 1}

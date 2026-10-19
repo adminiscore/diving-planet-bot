@@ -28,7 +28,11 @@ def _state():
 
 
 @pytest.mark.asyncio
-async def test_undecided_member_is_not_assumed_and_rest_follow_main_activity():
+async def test_undecided_member_is_not_assumed_and_rest_follow_main_activity(extractor_dice):
+    # ex-9b paso 3: desde ex-7 el reparto lo lee el extractor del turno (`fill_gaps` ya no escribe el grupo); en los
+    # tests (sin red) fallaba e iba por la pista del regex. Este es el ejemplo de su regla para "undecided".
+    extractor_dice({"somos 3, uno no está certificado":
+                    {"group_size": 3, "group_allocation": {"certified_diving": 2, "undecided": 1}}})
     state = _state()
     llm = {"group_allocation": {"undecided": 1}}
     with patch.object(core_extraction, "fill_gaps", new=AsyncMock(return_value=llm)), \

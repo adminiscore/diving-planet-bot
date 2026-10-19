@@ -82,19 +82,28 @@ async def _understand_with_llm(message, llm_patch, combined=None, **state_fields
     return state, calls
 
 
+# ex-9b paso 3 (`extractor_sin_pista`): desde ex-9 el grupo y su reparto los lee el extractor del turno (`fill_gaps` ya no
+# los escribe); en estos tests (sin red) el extractor fallaba e iban por la pista del regex. Aquí se simula el extractor
+# (fixture `extractor_dice` de conftest) con el reparto que devolvía el LLM.
+UNO_CERTIFICADO_Y_UNO_SIN_DECIDIR = {"group_size": 2, "group_allocation": {"certified_diving": 1, "undecided": 1}}
+
+
 @pytest.mark.asyncio
-async def test_named_people_keep_the_split_and_the_total():
+async def test_named_people_keep_the_split_and_the_total(extractor_dice):
+    extractor_dice({"mi amigo tiene licencia, yo no": {**UNO_CERTIFICADO_Y_UNO_SIN_DECIDIR, "is_certified": False}})
     state, _ = await _understand_with_llm(
         "mi amigo tiene licencia, yo no", {"group_allocation": {"certified_diving": 1, "undecided": 1}},
     )
     assert state.detected_group_allocation == {"certified_diving": 1}
     assert state.pending_undecided_qty == 1
     assert state.detected_group_size == 2        # antes: 1, sin la persona pendiente
-    assert state.is_certified is None            # la licencia es del amigo, no del cliente
+    # la licencia es del amigo, no del cliente (ex-9b paso 3: el extractor lee el "yo no" de quien escribe: False)
+    assert state.is_certified is not True
 
 
 @pytest.mark.asyncio
-async def test_writer_counts_even_without_saying_yo():
+async def test_writer_counts_even_without_saying_yo(extractor_dice):
+    extractor_dice({"soy certificado y mi hijo no": {**UNO_CERTIFICADO_Y_UNO_SIN_DECIDIR, "is_certified": True}})
     state, _ = await _understand_with_llm(
         "soy certificado y mi hijo no", {"group_allocation": {"certified_diving": 1, "undecided": 1}},
     )
@@ -103,9 +112,13 @@ async def test_writer_counts_even_without_saying_yo():
 
 
 @pytest.mark.asyncio
-async def test_partial_backing_never_stores_a_partial_split():
+async def test_partial_backing_never_stores_a_partial_split(extractor_dice):
     # "mis primos" es plural: el 3 de snorkel no tiene respaldo, asi que no se guarda
     # un reparto a medias y el bot pregunta.
+    # ex-9b paso 3: el mismo reparto, leído por el extractor del turno (con el flag y el extractor caído no se leía
+    # nada y el test pasaba sin probar la guarda).
+    extractor_dice({"yo buceo, mi amigo y mis primos hacen snorkel":
+                    {"group_allocation": {"certified_diving": 1, "snorkel": 3}}})
     state, _ = await _understand_with_llm(
         "yo buceo, mi amigo y mis primos hacen snorkel",
         {"group_allocation": {"certified_diving": 1, "snorkel": 3}},
@@ -114,7 +127,10 @@ async def test_partial_backing_never_stores_a_partial_split():
 
 
 @pytest.mark.asyncio
-async def test_vague_plural_still_needs_a_number():
+async def test_vague_plural_still_needs_a_number(extractor_dice):
+    # ex-9b paso 3: el mismo reparto, leído por el extractor del turno (con el flag y el extractor caído no se leía
+    # nada y el test pasaba sin probar la guarda).
+    extractor_dice({"yo buceo y mis amigos hacen snorkel": {"group_allocation": {"certified_diving": 1, "snorkel": 4}}})
     state, _ = await _understand_with_llm(
         "yo buceo y mis amigos hacen snorkel", {"group_allocation": {"certified_diving": 1, "snorkel": 4}},
         detected_group_size=5,
@@ -124,8 +140,13 @@ async def test_vague_plural_still_needs_a_number():
 
 
 @pytest.mark.asyncio
-async def test_a_level_someone_holds_is_not_the_course_in_the_split():
+async def test_a_level_someone_holds_is_not_the_course_in_the_split(extractor_dice):
     # "mi pareja tiene el advanced": el LLM puso 1/2 {padi_advanced: 1}.
+    # ex-9b paso 3: el reparto lo da hoy el extractor, cuya regla dice que quien YA tiene el Advanced es buzo certificado
+    # (no el curso). Si el extractor se equivocara como el LLM de entonces, el núcleo no lo corrige: la guarda era del
+    # relleno de antes de ex-9 y `_reparto_valido` solo mira que la actividad se nombre.
+    extractor_dice({"mi pareja tiene el advanced y yo no tengo nada":
+                    {**UNO_CERTIFICADO_Y_UNO_SIN_DECIDIR, "is_certified": False}})
     state, _ = await _understand_with_llm(
         "mi pareja tiene el advanced y yo no tengo nada",
         {"group_size": 2, "group_allocation": {"padi_advanced": 1, "undecided": 1}},
@@ -135,8 +156,9 @@ async def test_a_level_someone_holds_is_not_the_course_in_the_split():
 
 
 @pytest.mark.asyncio
-async def test_total_backed_by_named_people_is_kept_without_a_split():
+async def test_total_backed_by_named_people_is_kept_without_a_split(extractor_dice):
     # La segunda peticion devolvio solo el total: cuadra con novia + quien escribe.
+    extractor_dice({"mi novia es buza certificada y yo nunca he buceado": {"group_size": 2, "is_certified": False}})
     state, _ = await _understand_with_llm(
         "mi novia es buza certificada y yo nunca he buceado", {"group_size": 2}, combined={},
     )
@@ -144,7 +166,9 @@ async def test_total_backed_by_named_people_is_kept_without_a_split():
 
 
 @pytest.mark.asyncio
-async def test_named_people_never_override_a_known_total():
+async def test_named_people_never_override_a_known_total(extractor_dice):
+    # ex-9b paso 3: el total, leído por el extractor del turno (con el flag y el extractor caído no se leía nada).
+    extractor_dice({"tambien viene un amigo": {"group_size": 2}})
     state, _ = await _understand_with_llm(
         "tambien viene un amigo", {"group_size": 2}, detected_group_size=4,
     )
@@ -152,9 +176,12 @@ async def test_named_people_never_override_a_known_total():
 
 
 @pytest.mark.asyncio
-async def test_no_second_request_while_the_cert_or_course_question_is_pending():
+async def test_no_second_request_while_the_cert_or_course_question_is_pending(extractor_dice):
     # "2 open water y 3 snorkel": nivel PADI sin decir si lo tienen o lo quieren. El bot
     # pregunta primero (owner); la segunda peticion guardaba {padi_open_water: 2, ...} (b05).
+    # ex-9b paso 3: el mismo reparto, leído por el extractor del turno (con el flag y el extractor caído no se leía
+    # nada y el test pasaba sin probar la guarda).
+    extractor_dice({"2 open water y 3 snorkel": {"group_allocation": {"padi_open_water": 2, "snorkel": 3}}})
     state, calls = await _understand_with_llm(
         "2 open water y 3 snorkel",
         {"group_allocation": {"padi_open_water": 2, "snorkel": 3}},

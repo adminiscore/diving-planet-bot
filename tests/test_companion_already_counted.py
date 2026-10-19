@@ -22,7 +22,12 @@ COMPANION_SNORKEL = {"companion_activity": "snorkel", "mentions_other_person": T
                      "companion_is_singular": True, "companion_qty": 1}
 
 
-def _two_divers_waiting_nationality():
+def _two_divers_waiting_nationality(reparto: bool = True):
+    """`reparto=False`: el mismo grupo de 2 sin reparto guardado (lo que deja "somos 2 buzos"). ex-9b paso 3: con el
+    reparto guardado {certified_diving: 2} el grupo está "entero" y la red de señales no corre
+    (`_group_allocation_fully_resolved`); solo corría porque la pista del regex leía "snorkel" como la actividad del
+    turno y la cambiaba. Con `extractor_sin_pista` el regex ya no la lee: la otra persona la ve la señal LLM sin reparto
+    guardado, o el reparto del extractor (tests/test_ex7_grupo.py)."""
     state = ConversationState(conversation_id="t7a")
     state.language = "es"
     state.history = [{"role": "user", "content": "hola, quiero bucear con mi amigo, yo soy certificado"}]
@@ -30,7 +35,7 @@ def _two_divers_waiting_nationality():
     state.detected_service_id = "2_dives_1_day"
     state.is_certified = True
     state.detected_group_size = 2
-    state.detected_group_allocation = {"certified_diving": 2}
+    state.detected_group_allocation = {"certified_diving": 2} if reparto else None
     state.location = state.detected_location = "cartagena"
     state.last_dive_over_2_years = state.detected_last_dive_over_2_years = False
     state.core_pending_slot = core.SLOT_NATIONALITY
@@ -51,11 +56,12 @@ async def _send(state, message, signals):
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("message", ["él quiere hacer snorkel", "mi parce se anima al snorkel", "ella prefiere snorkel"])
-async def test_other_persons_activity_asks_the_total_instead_of_guessing(message):
-    state = _two_divers_waiting_nationality()
+async def test_other_persons_activity_asks_the_total_instead_of_guessing(message, extractor_dice):
+    extractor_dice({})  # el extractor no lee reparto: a la otra persona la ve la señal LLM
+    state = _two_divers_waiting_nationality(reparto=False)
     await _send(state, message, COMPANION_SNORKEL)
     assert state.detected_activity == "certified_diving"
-    assert state.detected_group_allocation == {"certified_diving": 2}
+    assert not state.detected_group_allocation
     assert state.core_pending_slot == core.SLOT_QTY
     assert [b["value"] for b in state.quick_replies] == ["2", "3"]
 
@@ -65,8 +71,9 @@ async def test_other_persons_activity_asks_the_total_instead_of_guessing(message
     ("seguimos siendo 2", {"certified_diving": 1, "snorkel": 1}, 2),
     ("somos 3", {"certified_diving": 2, "snorkel": 1}, 3),
 ])
-async def test_the_total_decides_move_or_add(answer, allocation, total):
-    state = _two_divers_waiting_nationality()
+async def test_the_total_decides_move_or_add(answer, allocation, total, extractor_dice):
+    extractor_dice({})  # el extractor no lee reparto (la señal LLM) y la respuesta corta la resuelve el núcleo
+    state = _two_divers_waiting_nationality(reparto=False)
     await _send(state, "él quiere hacer snorkel", COMPANION_SNORKEL)
     await _send(state, answer, {})
     assert state.detected_group_allocation == allocation
@@ -76,7 +83,10 @@ async def test_the_total_decides_move_or_add(answer, allocation, total):
 
 
 @pytest.mark.asyncio
-async def test_an_explicit_addition_is_added_without_asking():
+async def test_an_explicit_addition_is_added_without_asking(extractor_dice):
+    # ex-9b paso 3: el añadido lo lee el extractor (su reparto incluye a los que ya iban) y amplía el guardado.
+    extractor_dice({"también viene mi hermana que quiere hacer snorkel":
+                    {"group_allocation": {"certified_diving": 2, "snorkel": 1}}})
     state = _two_divers_waiting_nationality()
     await _send(state, "también viene mi hermana que quiere hacer snorkel", COMPANION_SNORKEL)
     assert state.detected_group_allocation == {"certified_diving": 2, "snorkel": 1}

@@ -131,7 +131,7 @@ async def test_build_extra_context_includes_summary_when_present():
 
 
 @pytest.mark.asyncio
-async def test_end_to_end_long_conversation_recalls_early_detail(monkeypatch):
+async def test_end_to_end_long_conversation_recalls_early_detail(monkeypatch, extractor_dice):
     """Full pre/post scenario from docs/memory-context-improvement-plan.md:
     a detail mentioned in turn 1 must still be reachable via extra_context by
     turn 16, even though it has long fallen out of the raw 12-message window.
@@ -146,6 +146,9 @@ async def test_end_to_end_long_conversation_recalls_early_detail(monkeypatch):
 
     monkeypatch.setattr(conversation_summarizer, "_generate_summary", fake_generate)
     monkeypatch.setattr(conversation_summarizer, "_SUMMARY_TRIGGER_EVERY", 12)
+    # ex-9b paso 3: con el extractor caído dos turnos seguidos se pasa a un asesor (`extractor_sin_pista`).
+    extractor_dice({"Hola, somos 4, mi padre tiene la rodilla operada, mejor evitar planes muy fisicos. Queremos bucear "
+                    "2 dias.": {"quiere_bucear": True, "group_size": 4}})
 
     state = make_state()
     with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value="CANNED_RAG_ANSWER"):
