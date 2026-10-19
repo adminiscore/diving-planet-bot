@@ -355,6 +355,53 @@ _YA_RESERVADO_Q = {
     ),
 }
 
+# ex-9b paso 5 (19-oct): tres preguntas que sustituyen a regex que "entendían" al cliente (estudio
+# docs/robustness/regex/estudio-ex9-regex.md, clase C). Cada una con su flag; el regex sigue solo si Jev calla. Bancos en
+# docs/robustness/regex/estudio-ex9/banco-preguntas-nuevas.txt (2 repeticiones, config de PRE).
+# - NUEVO_CASO (`reinicio_por_jev`): el reinicio de escenario borra TODA la memoria si el mensaje saluda y se presenta
+#   ("Hola, soy Ana, ya hablamos ayer, al final somos 3" lo borraba). Regex 4/10, Jev 10/10 (0,80-0,88 frente a <= 0,07).
+# - PREGUNTA_SI_ES_IA (`identidad_ia_por_jev`): "¿qué modelo de regulador usan?" recibía "soy Coral, la asistente
+#   virtual". Regex 7/13, Jev 13/13.
+# - CAMBIA_IDIOMA (`idioma_por_jev`): "¿el curso es en inglés?" pasaba la conversación al inglés e "I don't speak
+#   spanish" al español. Regex 8/13, Jev 13/13.
+NUEVO_CASO = "nuevo_caso"
+NUEVO_CASO_MIN = 0.7
+_NUEVO_CASO_Q = {
+    "type": "noul",
+    "instructions": (
+        "The customer starts a NEW, separate case as if beginning the conversation from scratch: a different person "
+        "introducing themselves, or a fresh request that ignores the booking already being discussed in this chat "
+        "(different activity, dates or group, with nothing that refers back to it). It is FALSE when the message "
+        "continues, updates, corrects or asks about the booking already being discussed, even if it begins with a "
+        "greeting or the person's name ('buenas, soy Luis, ¿les llegó mi pago?', 'hi, it's Sara, can we add one more "
+        "person?'), and FALSE when someone takes over the same booking on behalf of the same group."
+    ),
+}
+PREGUNTA_SI_ES_IA = "pregunta_si_es_ia"
+PREGUNTA_SI_ES_IA_MIN = 0.7
+_PREGUNTA_SI_ES_IA_Q = {
+    "type": "noul",
+    "instructions": (
+        "The customer asks whether they are chatting with a bot, an AI, a machine or a real person, or asks which AI, "
+        "model, technology or company is behind this chat assistant. It is FALSE for questions about diving equipment "
+        "(models or brands of regulators, computers, wetsuits, boats), about the instructors or staff, and about "
+        "anything that is not this chat assistant itself."
+    ),
+}
+CAMBIA_IDIOMA = "cambia_idioma"
+CAMBIA_IDIOMA_MIN = 0.6
+_CAMBIA_IDIOMA_Q = {
+    "type": "choice",
+    "instructions": "Does the customer ask to change the language in which THIS chat conversation is written?",
+    "criteria": {
+        "english": "They ask us to write to them in English from now on, or say they do not understand Spanish.",
+        "spanish": "They ask us to write to them in Spanish from now on, or say they do not understand English.",
+        "none": "They do not ask to change the language of this chat: they ask in which language a course, class, "
+                "guide, instructor or material is given, mention a language for any other reason, or just write in a "
+                "language.",
+    },
+}
+
 # u3-6 (paso 7, promocionado el 27-sep): ¿el mensaje mete a OTRA persona en la reserva? Filtro previo de
 # `detect_special_signals`: por debajo de COMPANION_NONE_MAX (Jev seguro de que no) no se llama al
 # LLM. Calibrado con `scripts/sonda_acompanante.py`.
@@ -498,7 +545,7 @@ _U34_QUESTIONS = (
     ASKS_QUESTION, AFFIRMS_LOCATION, AFFIRMS_ACTIVITY, ACTIVITY_HYPOTHESIS,
     AFFIRMS_CERTIFICATION, AFFIRMS_GROUP, AFFIRMS_NATIONALITY, CORRECTS, ASKS_RECALL, NEEDS_STAFF,
     CHANGES_DATE, COMPANION_JOINS, PENDING_ANSWER, SHARES_OPEN_FACT, ADDS_PERSON, CUSTOMER_PLACE, YA_RESERVADO,
-    PIDE_DATOS_AJENOS,
+    PIDE_DATOS_AJENOS, NUEVO_CASO, PREGUNTA_SI_ES_IA, CAMBIA_IDIOMA,
 )
 
 
@@ -556,6 +603,12 @@ def _questions_for_turn(pending_slot: str | None = None) -> dict:
         q[CUSTOMER_PLACE] = _CUSTOMER_PLACE_Q_SIN_BARU if settings.baru_no_es_rosario else _CUSTOMER_PLACE_Q
     if settings.notas_puerta_jev:
         q[SHARES_OPEN_FACT] = _SHARES_OPEN_FACT_Q
+    if settings.reinicio_por_jev:
+        q[NUEVO_CASO] = _NUEVO_CASO_Q
+    if settings.identidad_ia_por_jev:
+        q[PREGUNTA_SI_ES_IA] = _PREGUNTA_SI_ES_IA_Q
+    if settings.idioma_por_jev:
+        q[CAMBIA_IDIOMA] = _CAMBIA_IDIOMA_Q
     return q
 
 
@@ -621,6 +674,14 @@ def answers_to_signals(answers: dict, threshold: float = THRESHOLD) -> dict:
         out[YA_RESERVADO] = (answers.get(YA_RESERVADO) or {}).get("noul", 0.0) >= YA_RESERVADO_MIN
     if PIDE_DATOS_AJENOS in answers:
         out[PIDE_DATOS_AJENOS] = (answers.get(PIDE_DATOS_AJENOS) or {}).get("noul", 0.0) >= PIDE_DATOS_AJENOS_MIN
+    # ex-9b paso 5: también en FALSE ("Jev dice que no" manda; ausente = Jev calla y decide el regex).
+    if NUEVO_CASO in answers:
+        out[NUEVO_CASO] = (answers.get(NUEVO_CASO) or {}).get("noul", 0.0) >= NUEVO_CASO_MIN
+    if PREGUNTA_SI_ES_IA in answers:
+        out[PREGUNTA_SI_ES_IA] = (answers.get(PREGUNTA_SI_ES_IA) or {}).get("noul", 0.0) >= PREGUNTA_SI_ES_IA_MIN
+    if CAMBIA_IDIOMA in answers:
+        a = answers.get(CAMBIA_IDIOMA) or {}
+        out[CAMBIA_IDIOMA] = a.get("choice") if float(a.get("confidence", 0.0)) >= CAMBIA_IDIOMA_MIN else "none"
     for name in (AFFIRMS_LOCATION, AFFIRMS_CERTIFICATION, AFFIRMS_GROUP, AFFIRMS_NATIONALITY):
         if name in answers:
             out[name] = (answers.get(name) or {}).get("noul", 0.0) >= AFFIRMS_MIN
@@ -691,6 +752,7 @@ async def detect_routing_signals_jev(message: str, *, lang: str = "es") -> dict 
 _TURN_SIGNALS = (
     AFFIRMS_LOCATION, AFFIRMS_ACTIVITY, AFFIRMS_CERTIFICATION, AFFIRMS_GROUP, AFFIRMS_NATIONALITY, CORRECTS,
     ASKS_RECALL, NEEDS_STAFF, CHANGES_DATE, COMPANION_JOINS, SHARES_OPEN_FACT, YA_RESERVADO, PIDE_DATOS_AJENOS,
+    NUEVO_CASO, PREGUNTA_SI_ES_IA, CAMBIA_IDIOMA,
 )  # AFFIRMS_P y PENDING_ANSWER se anaden a mano en `detect_routing_signals_jev_full`
 
 

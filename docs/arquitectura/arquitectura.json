@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-19T10:21:21+00:00",
-  "commit": "1597c73",
+  "generado": "2026-10-19T10:47:32+00:00",
+  "commit": "9571e80",
   "rama": "feature/pre_gadea"
  },
  "vistas": {
@@ -182,6 +182,27 @@
      "titulo": "Las listas de palabras solo deciden si la IA calla",
      "codigo": true,
      "pre": true,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "reinicio_por_jev",
+     "titulo": "Solo empieza de cero si Jev ve un caso nuevo",
+     "codigo": false,
+     "pre": false,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "identidad_ia_por_jev",
+     "titulo": "Jev decide si preguntan si Coral es un bot",
+     "codigo": false,
+     "pre": false,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "idioma_por_jev",
+     "titulo": "Jev decide si el cliente pide cambiar de idioma",
+     "codigo": false,
+     "pre": false,
      "sin_efecto": false
     }
    ],
@@ -2331,6 +2352,19 @@
    "sin_efecto": null
   },
   {
+   "nombre": "identidad_ia_por_jev",
+   "area": "Respuestas fijas",
+   "titulo": "Jev decide si preguntan si Coral es un bot",
+   "texto": "La respuesta fija «soy Coral, la asistente virtual» sale cuando Jev ve que el cliente pregunta si habla con un bot o con una persona. Antes bastaba una palabra como «modelo»: «¿qué modelo de regulador usan?» recibía esa respuesta.",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
+   "usado_por": [
+    "router"
+   ],
+   "sin_efecto": null
+  },
+  {
    "nombre": "idioma_del_extractor",
    "area": "Chat",
    "titulo": "El idioma del primer mensaje lo dice quien lee el mensaje",
@@ -2353,6 +2387,19 @@
    "fijado_en_pre": true,
    "usado_por": [
     "b_extraction"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "idioma_por_jev",
+   "area": "Chat",
+   "titulo": "Jev decide si el cliente pide cambiar de idioma",
+   "texto": "La conversación cambia de idioma cuando Jev ve que el cliente lo pide («can we continue in english?», «no entiendo inglés»). Antes «¿el curso es en inglés?» pasaba la conversación al inglés.",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
+   "usado_por": [
+    "router"
    ],
    "sin_efecto": null
   },
@@ -3095,6 +3142,19 @@
    "codigo": true,
    "pre": true,
    "fijado_en_pre": true,
+   "usado_por": [
+    "router"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "reinicio_por_jev",
+   "area": "Enrutador",
+   "titulo": "Solo empieza de cero si Jev ve un caso nuevo",
+   "texto": "Si el cliente saluda y se presenta a mitad de conversación, antes se borraba toda la memoria («Hola, soy Ana, ya hablamos ayer, al final somos 3» perdía la reserva). Ahora la borra solo si Jev, que ve lo hablado antes, dice que es una persona o un caso nuevo; si sigue con lo de antes, se queda todo.",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
    "usado_por": [
     "router"
    ],

@@ -96,7 +96,10 @@
         "pase_si_pide_fuera_del_sistema",
         "datos_ajenos_se_niegan",
         "alcohol_detras_de_lo_medico",
-        "regex_solo_si_ia_calla"
+        "regex_solo_si_ia_calla",
+        "reinicio_por_jev",
+        "identidad_ia_por_jev",
+        "idioma_por_jev"
       ],
       "detalle": [
         "Jev: jev_router.detect_routing_signals_jev_full (OpenRouter)",
@@ -1316,6 +1319,21 @@
       "area": "Enrutador",
       "titulo": "Las listas de palabras solo deciden si la IA calla",
       "texto": "Para el link roto, los temas sensibles, cancelar o cambiar, pedir un contacto, hablar con una persona y DIVE TO HEAL, si Jev o el enrutador de respaldo han contestado este turno manda lo que dicen ellos; las listas de palabras solo cuentan si la IA no contesta. Vale igual en el enrutador, en cada ruta y en la reserva. Corrige «quiero hablar con mi esposa antes de reservar» (no es pedir una persona) o «¿dónde cojo la lancha?» (no es DIVE TO HEAL)."
+    },
+    "reinicio_por_jev": {
+      "area": "Enrutador",
+      "titulo": "Solo empieza de cero si Jev ve un caso nuevo",
+      "texto": "Si el cliente saluda y se presenta a mitad de conversación, antes se borraba toda la memoria («Hola, soy Ana, ya hablamos ayer, al final somos 3» perdía la reserva). Ahora la borra solo si Jev, que ve lo hablado antes, dice que es una persona o un caso nuevo; si sigue con lo de antes, se queda todo."
+    },
+    "identidad_ia_por_jev": {
+      "area": "Respuestas fijas",
+      "titulo": "Jev decide si preguntan si Coral es un bot",
+      "texto": "La respuesta fija «soy Coral, la asistente virtual» sale cuando Jev ve que el cliente pregunta si habla con un bot o con una persona. Antes bastaba una palabra como «modelo»: «¿qué modelo de regulador usan?» recibía esa respuesta."
+    },
+    "idioma_por_jev": {
+      "area": "Chat",
+      "titulo": "Jev decide si el cliente pide cambiar de idioma",
+      "texto": "La conversación cambia de idioma cuando Jev ve que el cliente lo pide («can we continue in english?», «no entiendo inglés»). Antes «¿el curso es en inglés?» pasaba la conversación al inglés."
     },
     "pregunta_y_correccion_por_jev": {
       "area": "Reserva",

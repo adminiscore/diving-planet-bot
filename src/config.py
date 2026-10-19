@@ -142,6 +142,11 @@ class Settings(BaseSettings):
     # ex-9b paso 5 (19-oct): "¿trae una pregunta?" y "¿corrige un dato?" en el núcleo los decide Jev cuando contesta
     # (`asks_question`, `corrects`); el regex de siempre solo si Jev calla. El "?" sigue contando. EN PRUEBA (ex9b-1).
     pregunta_y_correccion_por_jev: bool = True
+    # ex-9b paso 5 (19-oct): preguntas nuevas de Jev en lugar de regex (`jev_router`: NUEVO_CASO, PREGUNTA_SI_ES_IA,
+    # CAMBIA_IDIOMA); el regex solo si Jev calla. APAGADOS hasta medirlos.
+    reinicio_por_jev: bool = False  # el reinicio de escenario (borra la memoria) solo si Jev dice que es un caso nuevo
+    identidad_ia_por_jev: bool = False  # "¿eres un bot?"
+    idioma_por_jev: bool = False  # el cambio de idioma a mitad de conversación
     resolutor_sin_contradicciones: bool = True  # PROMOCIONADO 19-oct (mod-G2, HISTORY 0.31.57); revert = False
     # EX-EST-2 (14-oct): el acuse reconoce SOLO lo que dice el mensaje (el resumen de la reserva no se repite; ante
     # 'gracias' o una fecha suelta, nada). Banco scripts/banco_acuse.py: inventaba en 33/40 casos reales

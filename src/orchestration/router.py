@@ -149,7 +149,7 @@ def classify_route(conv_state: ConversationState, message: str, signals: dict) -
     # ── DEFLECT (contacto / identidad IA) ──
     if (regex_vale and sup._asks_for_contact_number(msg_lower)) or signals.get("asks_for_contact_number"):
         return ROUTE_DEFLECT
-    if sup._asks_about_ai_identity(msg_lower):
+    if sup.pregunta_si_es_ia(msg_lower, signals):
         return ROUTE_DEFLECT
 
     # ── INFO (elegibilidad por edad) ──

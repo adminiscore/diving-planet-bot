@@ -48,6 +48,22 @@ _SWITCH_TO_ES_RE = re.compile(
 )
 
 
+def _idioma_pedido(state: ConversationState, message: str, routing_signals: dict) -> str | None:
+    """El idioma al que el cliente pide pasar la conversación ("en"/"es"), o None si no lo pide o ya es ese. ex-9b paso
+    5 (flag `idioma_por_jev`): si Jev contesta (`cambia_idioma`), manda Jev; los regex de siempre solo si Jev calla.
+    Los regex pasaban al inglés con "¿el curso es en inglés?" y al español con "I don't speak spanish"."""
+    from src.agents.jev_router import CAMBIA_IDIOMA
+
+    if settings.idioma_por_jev and CAMBIA_IDIOMA in routing_signals:
+        pedido = {"english": "en", "spanish": "es"}.get(routing_signals[CAMBIA_IDIOMA])
+        return pedido if pedido and pedido != state.language else None
+    if _SWITCH_TO_EN_RE.search(message) and state.language != "en":
+        return "en"
+    if _SWITCH_TO_ES_RE.search(message) and state.language != "es":
+        return "es"
+    return None
+
+
 # ─── Persona: saludo del primer turno (Coral, cálida, sin "asistente"/"bot") ───
 
 # Captura del nombre del cliente DEL PROPIO MENSAJE ("hola soy Rocío", "me llamo
@@ -171,16 +187,14 @@ async def _setup_phase(
         await _otro_idioma_en_ingles(state, message=message)
         state.step = Step.FREE_TEXT
         state.quick_replies = []
-    elif _SWITCH_TO_EN_RE.search(message) and state.language != "en":
+    elif pedido := _idioma_pedido(state, message, routing_signals):
         # Petición EXPLÍCITA de cambiar de idioma a mitad de conversación
         # (auditoría 2026-08-26) — fuera del primer turno nada más vuelve a
         # mirar el idioma (a propósito, para no reclasificar cada mensaje),
         # así que sin este chequeo dedicado la petición se ignoraba del
         # todo. `elif` porque en el primer turno la detección de arriba ya
         # decide bien.
-        state.language = state.detected_language = "en"
-    elif _SWITCH_TO_ES_RE.search(message) and state.language != "es":
-        state.language = state.detected_language = "es"
+        state.language = state.detected_language = pedido
     _capture_client_name(state, message)
     greeting = _greeting(state) if first_turn else ""
 

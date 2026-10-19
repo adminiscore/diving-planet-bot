@@ -29,6 +29,8 @@ from src.agents.changes_agent import changes_node
 from src.agents.deflection_agent import deflection_node
 from src.agents.escalation_agent import escalation_node
 from src.agents.info_agent import info_node
+from src.agents.jev_router import NUEVO_CASO
+from src.config import settings
 from src.orchestration.router import classify_route
 from src.orchestration.state import (
     ALL_ROUTES,
@@ -83,11 +85,27 @@ async def _router_node(state: BotState) -> dict:
     conv = state["conv_state"]
     message = state["message"]
 
+    msg_lower = message.strip().lower()
+
+    async def _senales() -> dict:
+        return {} if msg_lower.isdigit() else await detect_routing_signals(
+            message, lang=conv.language, pending_slot=conv.core_pending_slot, history=conv.history,
+        )
+
     # Pre-router: restart de escenario nuevo (limpia memoria) → se clasifica
     # sobre el estado fresco, equivalente al reset+recursión de la cascada.
+    # ex-9b paso 5 (flag `reinicio_por_jev`): el regex (saludo + presentación + memoria) solo PROPONE. Con el flag, en
+    # esos turnos (pocos) se esperan las señales ANTES de borrar y manda Jev (`nuevo_caso`, que ve el historial): "Hola,
+    # soy Ana, ya hablamos ayer, al final somos 3" ya no borra la reserva. Si Jev calla, decide el regex, como hoy.
+    signals: dict | None = None
     if _is_new_scenario_restart(message, conv):
-        logger.info("[GRAPH] restart de escenario nuevo -> limpio memoria")
-        _reset_to_fresh_scenario(conv)
+        if settings.reinicio_por_jev:
+            signals = await _senales()
+        if signals is not None and signals.get(NUEVO_CASO) is False:
+            logger.info("[GRAPH] parece un escenario nuevo, pero Jev dice que sigue con lo de antes -> no se borra")
+        else:
+            logger.info("[GRAPH] restart de escenario nuevo -> limpio memoria")
+            _reset_to_fresh_scenario(conv)
     # Pre-router: detección sticky de niños (persiste el resto de la conversación).
     if not getattr(conv, "kids_mention_detected", False) and _detect_kids_mention(message):
         conv.kids_mention_detected = True
@@ -98,10 +116,8 @@ async def _router_node(state: BotState) -> dict:
     lanzar_rag_adelantado(conv, message)
     lanzar_extraccion_adelantada(conv, message)  # ex-5: el extractor "LLM primero", también a la vez
 
-    msg_lower = message.strip().lower()
-    signals = {} if msg_lower.isdigit() else await detect_routing_signals(
-        message, lang=conv.language, pending_slot=conv.core_pending_slot, history=conv.history,
-    )
+    if signals is None:
+        signals = await _senales()
     route = classify_route(conv, message, signals)
     logger.info(f"[GRAPH] conv={conv.conversation_id} route={route}")
     from src.observability import note_turn

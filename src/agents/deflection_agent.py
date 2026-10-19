@@ -53,12 +53,12 @@ logger = logging.getLogger("uvicorn.error")
 async def deflection_node(state: BotState) -> dict:
     from src.agents.supervisor import (
         _ai_identity_deflection,
-        _asks_about_ai_identity,
         _asks_for_contact_number,
         _contact_number_deflection,
         _contacto_pasa_a_persona,
         _infer_language,
         _shared_turn_handler,
+        pregunta_si_es_ia,
         regex_decide,
     )
 
@@ -87,7 +87,7 @@ async def deflection_node(state: BotState) -> dict:
             return {"reply": response}
         response = _contact_number_deflection(effective_lang)
         logger.info("[NODE:deflection] contact-number request -> límite + redirige (sin escalar)")
-    elif _asks_about_ai_identity(msg_lower):
+    elif pregunta_si_es_ia(msg_lower, signals):
         response = _ai_identity_deflection(effective_lang)
         logger.info("[NODE:deflection] AI/model-identity -> en persona, sin revelar")
     else:

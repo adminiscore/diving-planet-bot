@@ -423,7 +423,7 @@ async def _shared_turn_handler(
     # Dominio blindado (Bloque 2.4): pregunta meta sobre qué IA/modelo/bot es.
     # No se revela nada (el prompt de RAG endurecido ya lo prohíbe); se responde
     # en persona (Coral) y se reconduce al buceo, en vez del fallback evasivo.
-    if _asks_about_ai_identity(msg_lower):
+    if pregunta_si_es_ia(msg_lower, routing_signals):
         effective_lang = state.language if state.detected_language else _infer_language(message, state.language)
         response = _ai_identity_deflection(effective_lang)
         state.step = Step.FREE_TEXT
@@ -623,6 +623,7 @@ from src.agents.rutas.deflection import (  # noqa: E402, F401
     _contact_number_deflection,
     _contacto_pasa_a_persona,
     _official_whatsapp,
+    pregunta_si_es_ia,
 )
 from src.agents.rutas.info import (  # noqa: E402, F401
     _AGE_ELIGIBILITY_CUE,

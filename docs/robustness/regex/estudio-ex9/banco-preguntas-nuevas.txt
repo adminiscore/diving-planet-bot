@@ -1,0 +1,20 @@
+Banco del paso 5 de ex-9b: tres preguntas nuevas de Jev frente a los regex de hoy. Config de PRE (expected_from_compose),
+2 repeticiones, 19-oct. Ejemplos del texto de cada pregunta distintos de las frases del banco (en la 1ª redacción del
+caso nuevo coincidían dos; se cambiaron y el resultado fue el mismo, 10/10).
+
+NUEVO_CASO (reinicio de escenario, borra la memoria), con un historial de reserva en curso:
+  regex 4/10 · Jev 10/10 (casos nuevos 0,80-0,88; sigue con lo de antes <= 0,07)
+  regex mal: "Hola, somos 3 al final, ¿sigue en pie lo del sábado?", "Hola buenos días, soy Ana, ya hablamos ayer, al
+  final somos 3", "Hola! soy María, la que escribió ayer por el buceo del sábado…", "Buenas tardes, me llamo Juan, ¿al
+  final a qué hora sale la lancha el sábado?", "Hi, I'm Tom again, we are 3 now instead of 2" (todas borraban la memoria).
+PREGUNTA_SI_ES_IA ("¿eres un bot?"):
+  regex 7/13 · Jev 13/13 (sí 0,96-0,97; no <= 0,21)
+  regex mal: no ve "¿hablo con una persona real o con una máquina?", "are you an AI?", "¿me atiende un robot?", "estoy
+  hablando con alguien de verdad?"; contesta "soy Coral…" a "qué modelo de regulador usan?" y "what model of dive
+  computer do you rent?".
+CAMBIA_IDIOMA (english / spanish / none):
+  regex 8/13 · Jev 13/13 (confianza 0,98-1)
+  regex mal: "I don't speak spanish" → español; "¿el curso es en inglés?" e "is the instructor fluent in english?" →
+  inglés; "do you have the course material in spanish?" y "el libro del curso viene en español?" → español.
+
+Latencia de Jev con las tres preguntas (8 mensajes × 2, dos tandas): p50 302-314 ms frente a 302 ms sin ellas.
