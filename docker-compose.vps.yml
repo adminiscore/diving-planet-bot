@@ -277,15 +277,6 @@ services:
       # rag-5 (1-oct): Jev decide si el mensaje cuenta algo del cliente que haya que apuntar; si esta seguro de que
       # no, no se llama al extractor de notas. PROMOCIONADO 1-oct (HISTORY 0.29.88). Revert = "false" aqui y en config.py.
       NOTAS_PUERTA_JEV: "true"
-      # Refactor multi-agente (docs/multi-agent-refactor-plan.md) — validación en
-      # PRE antes del corte del legacy (Fase 5.2). STAGE B (ahora): el GRAFO sirve
-      # de verdad (agent_arch on) — router → 5 nodos reales + subgrafo booking. La
-      # cascada queda inactiva pero presente. Equivalencia probada en la suite
-      # (1538 verde) + medición (3.00→2.80 llamadas/turno). El Stage A (deploy con
-      # el código del refactor) arrancó healthy. On en PRE only; PRO intacto.
-      # ROLLBACK instantáneo = quitar esta línea + redeploy (vuelve a la cascada,
-      # sin cambio de código).
-      AGENT_ARCH: "true"
       # RONDA C (17-oct): CAL-D, la consulta de búsqueda con lo que ya sabemos del cliente. Banco: cal-42 arreglado
       # 3 de 3 (daba el paquete de 5 inmersiones cuando pedían el precio por día). Se mide SOLO este flag contra la
       # ronda A ya hecha. Revert = quitar esta línea.

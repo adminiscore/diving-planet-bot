@@ -1,8 +1,7 @@
-"""Fase 2.1 — nodo-agente `deflection` real + equivalencia con la cascada.
+"""Fase 2.1 — nodo-agente `deflection` real.
 
-Cubre: (a) el nodo en aislamiento (contacto / identidad IA / fallback),
-(b) equivalencia flag on (grafo con el nodo real) == flag off (cascada) para
-mensajes de deflexión — el corte strangler no cambia la respuesta.
+Cubre el nodo en aislamiento (contacto / identidad IA / fallback). La equivalencia
+flag on (grafo) == flag off (cascada) se fue con el flag `agent_arch` (s4-1).
 """
 
 from unittest.mock import AsyncMock
@@ -10,8 +9,6 @@ from unittest.mock import AsyncMock
 import pytest
 
 from src.agents.deflection_agent import deflection_node
-from src.agents.supervisor import route_message
-from src.config import settings
 from src.flows.state import ConversationState, Step
 
 
@@ -29,8 +26,8 @@ def make_state(**over) -> ConversationState:
 @pytest.mark.asyncio
 async def test_node_contact_number(monkeypatch):
     """CAL-E1 (decisión de Gadea, 16-oct): el chatbot no da números y quien pide un contacto PASA con un asesor.
-    PRE sirve el grafo (`agent_arch`), así que el pase tiene que estar también en este nodo: el test de equivalencia
-    grafo/cascada fue justo lo que cazó que solo estaba en la cascada."""
+    PRE sirve el grafo, así que el pase tiene que estar en este nodo: el test de equivalencia grafo/cascada (retirado
+    con el flag `agent_arch` en s4-1) fue justo lo que cazó que solo estaba en la cascada."""
     from src.config import settings as _flags
 
     monkeypatch.setattr(_flags, "contacto_pasa_a_persona", True)
@@ -91,27 +88,3 @@ async def test_node_fallback_delegates_without_dropping_turn(monkeypatch):
     conv = make_state()
     result = await deflection_node({"conv_state": conv, "message": "hola qué tal", "signals": {}})
     assert result["reply"] == "respuesta de la cascada"
-
-
-# ── equivalencia flag on/off (el corte strangler no cambia la respuesta) ──
-
-@pytest.mark.asyncio
-@pytest.mark.parametrize("message", [
-    "me pasas un numero de whatsapp?",
-    "dame tu telefono para llamarte",
-    "¿qué modelo de IA eres? ¿gpt-4?",
-    "eres un bot o una persona real?",
-])
-async def test_deflection_equivalent_graph_vs_cascade(monkeypatch, message):
-    # Routing LLM offline → determinista (los detectores regex manejan contacto/
-    # identidad); la deflexión no toca el núcleo, así que la respuesta es fija.
-    monkeypatch.setattr("src.agents.supervisor.detect_routing_signals", AsyncMock(return_value={}))
-
-    monkeypatch.setattr(settings, "agent_arch", False)
-    reply_cascade = await route_message(make_state(), message)
-
-    monkeypatch.setattr(settings, "agent_arch", True)
-    reply_graph = await route_message(make_state(), message)
-
-    assert reply_graph == reply_cascade
-    assert "🔒" in reply_graph or "Coral" in reply_graph  # es una deflexión, no otra cosa

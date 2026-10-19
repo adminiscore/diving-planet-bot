@@ -1,12 +1,11 @@
-"""Fase 2.5 — nodo-agente `booking` real (envuelve el núcleo) + equivalencia.
+"""Fase 2.5 — nodo-agente `booking` real (envuelve el núcleo).
 
 Cubre: (a) el nodo en aislamiento resuelve un turno de reserva vía el núcleo,
-(b) si el núcleo devuelve None el nodo delega en la cascada (resiliencia #10),
-(c) equivalencia flag on == flag off para mensajes de booking.
+(b) si el núcleo devuelve None el nodo delega en la cascada (resiliencia #10).
+La equivalencia flag on == flag off se fue con el flag `agent_arch` (s4-1).
 
-El núcleo (`maybe_handle_turn`) llama a varias redes LLM; para que la
-equivalencia pruebe el ENRUTADO y no la (no-)determinación del LLM, se mockean
-a valores fijos (mismo binding que ven cascada y grafo).
+El núcleo (`maybe_handle_turn`) llama a varias redes LLM; para que los tests
+prueben el ENRUTADO y no la (no-)determinación del LLM, se mockean a valores fijos.
 """
 
 from unittest.mock import AsyncMock
@@ -14,8 +13,6 @@ from unittest.mock import AsyncMock
 import pytest
 
 from src.agents.booking_agent import booking_node
-from src.agents.supervisor import route_message
-from src.config import settings
 from src.flows.state import ConversationState, Step
 
 
@@ -90,27 +87,3 @@ async def test_node_reuses_signals_no_double_routing_call(monkeypatch, _core_llm
     await booking_node({"conv_state": conv, "message": "quiero bucear", "signals": {}})
     # el nodo no llama a detect_routing_signals (lo hace el router antes)
     assert sig_mock.await_count == 0
-
-
-# ── equivalencia flag on/off ──
-
-@pytest.mark.asyncio
-@pytest.mark.parametrize(
-    "step, message",
-    [
-        (Step.WELCOME, "hola"),
-        (Step.MAIN_MENU, "quiero reservar buceo para 2 personas certificados"),
-        (Step.FREE_TEXT, "cuentame sobre los cursos padi"),
-    ],
-)
-async def test_booking_equivalent_graph_vs_cascade(monkeypatch, _core_llm_offline, step, message):
-    monkeypatch.setattr("src.agents.supervisor.detect_routing_signals", AsyncMock(return_value={}))
-
-    monkeypatch.setattr(settings, "agent_arch", False)
-    reply_cascade = await route_message(make_state(step=step), message)
-
-    monkeypatch.setattr(settings, "agent_arch", True)
-    reply_graph = await route_message(make_state(step=step), message)
-
-    assert reply_graph == reply_cascade
-    assert reply_graph

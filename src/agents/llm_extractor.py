@@ -7,10 +7,11 @@ field the regex already resolved. On any error, timeout, or malformed
 response it returns an empty patch — the caller keeps whatever the regex
 already found, so a failure here can never make the bot worse than today.
 
-During Fase 0 this is wired in SHADOW mode only (see
-`_maybe_log_llm_extraction_shadow` in supervisor.py, gated by
-`settings.llm_extraction_shadow_mode`): the result is logged for comparison,
-never applied to conversation state. See docs/robustness/plan.md §3-4.
+During Fase 0 this was wired in SHADOW mode only (logged for comparison, never
+applied); that probe (`supervisor._maybe_log_llm_extraction_shadow` and its
+flag `llm_extraction_shadow_mode`) was removed in s4-1: nothing called it since
+28-jul. Today `fill_gaps()` is called by the conversational core
+(`conversational_core._understand`). See docs/robustness/plan.md §3-4.
 """
 
 from __future__ import annotations

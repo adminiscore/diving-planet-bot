@@ -74,7 +74,6 @@
       "que_hace": "Abre la traza del turno y manda el mensaje al grafo de agentes. Al final recoge las tareas en paralelo.",
       "donde": "src/agents/supervisor.py:route_message",
       "interruptores": [
-        "agent_arch",
         "aviso_si_openai_falla"
       ]
     },
@@ -168,9 +167,9 @@
       "carril": "flujo",
       "tipo": "respaldo",
       "titulo": "Cascada (respaldo)",
-      "que_hace": "El camino antiguo, en orden fijo. Si ninguna regla de una ruta resuelve el mensaje, la ruta se lo pasa aquí.",
+      "que_hace": "Lo que queda del camino antiguo, en orden fijo. Si ninguna regla de una ruta resuelve el mensaje, la ruta se lo pasa aquí.",
       "donde": "src/agents/supervisor.py:_shared_turn_handler",
-      "nota": "Cuántos mensajes caen aquí está SIN MEDIR: la cascada no deja tiempos propios en los registros. En la animación se usa una estimación pequeña y por eso no lleva porcentaje. Candidata a desaparecer en la 'Limpieza 2'.",
+      "nota": "Cuántos mensajes caen aquí está SIN MEDIR: la cascada no deja tiempos propios en los registros. En la animación se usa una estimación pequeña y por eso no lleva porcentaje. s4-1 (19-oct) le quitó lo que ya no corría nunca (el camino sin grafo y las reglas que las rutas resuelven antes); se queda como respaldo de las rutas.",
       "capa_de": "booking"
     },
     {
@@ -927,16 +926,9 @@
       "__end__": "b_salida"
     }
   },
-  "sin_efecto": {
-    "llm_extraction_shadow_mode": "Su función (_maybe_log_llm_extraction_shadow) no la llama nadie."
-  },
+  "sin_efecto": {},
   "pesos_fuente": "Los % del enrutador y de las fases de la reserva salen de la foto de la ronda; los del revisor y el reintento, de los logs de PRE de la misma ronda. La cascada y los textos fijos no dejan rastro medible: se animan con una estimación y no llevan porcentaje.",
   "interruptores": {
-    "agent_arch": {
-      "area": "Arquitectura",
-      "titulo": "Grafo de agentes",
-      "texto": "Cada mensaje pasa por el enrutador y una de las 5 rutas. Apagado, vuelve el camino antiguo (la cascada)."
-    },
     "chatwoot_typing_indicator": {
       "area": "Chat",
       "titulo": "“Escribiendo…” en el chat",
@@ -1106,11 +1098,6 @@
       "area": "Respuestas fijas",
       "titulo": "La alergia a un alimento la contesta el RAG",
       "texto": "Sin el texto fijo de la política de comida (salvo si el mensaje también habla de alcohol): la FAQ de vegetarianos y alergias lo cubre. Sigue sin pasar al aviso médico."
-    },
-    "llm_extraction_shadow_mode": {
-      "area": "Solo pruebas",
-      "titulo": "Extracción en sombra",
-      "texto": "Apunta en el registro lo que haría el LLM, sin cambiar nada."
     },
     "llm_activity_veto_shadow_mode": {
       "area": "Solo pruebas",

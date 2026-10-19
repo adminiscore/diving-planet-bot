@@ -1,9 +1,8 @@
-"""Fase 2.2 — nodo-agente `escalation` real + equivalencia con la cascada.
+"""Fase 2.2 — nodo-agente `escalation` real.
 
-Cubre: (a) el nodo en aislamiento por gate (PII, link roto, sensible, DIVE TO
-HEAL precio, delegación post-núcleo), (b) equivalencia flag on (grafo con el
-nodo real) == flag off (cascada) para mensajes de cada gate SAFETY — el corte
-strangler no cambia la respuesta.
+Cubre el nodo en aislamiento por gate (PII, link roto, sensible, DIVE TO HEAL
+precio, delegación post-núcleo). La equivalencia flag on (grafo) == flag off
+(cascada) se fue con el flag `agent_arch` (s4-1).
 """
 
 from unittest.mock import AsyncMock
@@ -11,8 +10,6 @@ from unittest.mock import AsyncMock
 import pytest
 
 from src.agents.escalation_agent import escalation_node
-from src.agents.supervisor import route_message
-from src.config import settings
 from src.flows.state import ConversationState, Step
 
 
@@ -118,10 +115,8 @@ async def test_node_wants_human_delegates_to_cascade(monkeypatch):
 # `_shared_turn_handler` (Fase 5.2, prep del corte — ver docs/multi-agent-
 # refactor-plan.md §5). A diferencia del test de arriba (que solo verifica que
 # el nodo DELEGA), estos verifican que la delegación produce el resultado
-# correcto por sí sola — cobertura que hoy solo existe indirectamente vía los
-# tests de `_shared_turn_handler` en test_routing_signals_integration.py y los
-# `*_equivalent_graph_vs_cascade` (que dejarán de existir cuando se quite el
-# flag `agent_arch`).
+# correcto por sí sola (los `*_equivalent_graph_vs_cascade` se fueron con el
+# flag `agent_arch` en s4-1).
 
 @pytest.mark.asyncio
 async def test_node_wants_human_signal_escalates_directly():
@@ -166,28 +161,3 @@ async def test_node_bare_affirmation_accepts_pending_advisor_offer():
     assert result["reply"]
     assert conv.step == Step.ESCALATE
     assert conv.pending_escalation_reason == "aceptó la oferta del bot de hablar con un asesor"
-
-
-# ── equivalencia flag on/off (el corte strangler no cambia la respuesta) ──
-
-@pytest.mark.asyncio
-@pytest.mark.parametrize("message", [
-    "mi correo es juan.perez@gmail.com",           # PII (pre-núcleo)
-    "el link de pago no me funciona",              # link roto keyword (pre-núcleo)
-    "estoy embarazada, puedo bucear?",             # sensible keyword (pre-núcleo)
-    "voy en silla de ruedas, cuanto cuesta bucear?",  # DIVE TO HEAL precio (pre-núcleo)
-    "quiero hablar con una persona",               # wants_human (post-núcleo → delega)
-])
-async def test_escalation_equivalent_graph_vs_cascade(monkeypatch, message):
-    # Routing LLM offline → determinista (los detectores regex manejan cada gate);
-    # la ruta SAFETY no toca el núcleo salvo en el caso wants_human (que delega).
-    monkeypatch.setattr("src.agents.supervisor.detect_routing_signals", AsyncMock(return_value={}))
-
-    monkeypatch.setattr(settings, "agent_arch", False)
-    reply_cascade = await route_message(make_state(), message)
-
-    monkeypatch.setattr(settings, "agent_arch", True)
-    reply_graph = await route_message(make_state(), message)
-
-    assert reply_graph == reply_cascade
-    assert reply_graph  # no se dropea el turno

@@ -25,7 +25,7 @@ from collections import Counter
 
 os.environ.update({
     "ENV_FILE": ".env.dev", "APP_ENV": "development",
-    "JEV_ROUTER_ENABLED": "true", "AGENT_ARCH": "true", "RAG_MIN_SCORE": "0.40",
+    "JEV_ROUTER_ENABLED": "true", "RAG_MIN_SCORE": "0.40",
     # Los interruptores de rag-5 ya no existen (s4-25): contesta y sigue, el adelanto, la busqueda por origen y las
     # notas en paralelo son lo de siempre, como en PRE. (Con las notas en SERIE se calculaban al principio del turno,
     # ANTES de lanzar el adelantado, y la espera que se quiere medir no existia: primera pasada del 30-sep, 99 %

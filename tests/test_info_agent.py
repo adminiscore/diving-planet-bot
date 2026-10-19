@@ -1,8 +1,9 @@
-"""Fase 2.4 — nodo-agente `info` real + rama edad→INFO del router + equivalencia.
+"""Fase 2.4 — nodo-agente `info` real + rama edad→INFO del router.
 
 Cubre: (a) el router enruta las preguntas de edad a INFO (cierre patrón A),
 (b) el nodo en aislamiento (edad determinista / DIVE TO HEAL no-precio → RAG /
-delegación), (c) equivalencia flag on == flag off para mensajes INFO.
+delegación). La equivalencia flag on == flag off se fue con el flag `agent_arch`
+(s4-1).
 """
 
 from unittest.mock import AsyncMock
@@ -10,8 +11,6 @@ from unittest.mock import AsyncMock
 import pytest
 
 from src.agents.info_agent import info_node
-from src.agents.supervisor import route_message
-from src.config import settings
 from src.flows.state import ConversationState, Step
 from src.orchestration.router import classify_route
 from src.orchestration.state import ROUTE_BOOKING, ROUTE_INFO
@@ -99,38 +98,3 @@ async def test_node_fallback_delegates_without_dropping_turn(monkeypatch):
     conv = make_state()
     result = await info_node({"conv_state": conv, "message": "hola que tal", "signals": {}})
     assert result["reply"] == "respuesta de la cascada"
-
-
-# ── equivalencia flag on/off ──
-
-@pytest.mark.asyncio
-async def test_info_age_equivalent_graph_vs_cascade(monkeypatch):
-    monkeypatch.setattr("src.agents.supervisor.detect_routing_signals", AsyncMock(return_value={}))
-    message = "mi hijo de 9 años puede bucear?"
-
-    monkeypatch.setattr(settings, "agent_arch", False)
-    reply_cascade = await route_message(make_state(), message)
-
-    monkeypatch.setattr(settings, "agent_arch", True)
-    reply_graph = await route_message(make_state(), message)
-
-    assert reply_graph == reply_cascade
-    assert reply_graph
-
-
-@pytest.mark.asyncio
-async def test_info_dive_to_heal_equivalent_graph_vs_cascade(monkeypatch):
-    # RAG es no-determinista → se mockea al MISMO binding (supervisor.rag_answer)
-    # que usan la cascada y el nodo, para que ambos devuelvan lo mismo y la
-    # igualdad pruebe el enrutado, no la (no-)determinación del RAG.
-    monkeypatch.setattr("src.agents.supervisor.detect_routing_signals", AsyncMock(return_value={}))
-    monkeypatch.setattr("src.agents.supervisor.rag_answer", AsyncMock(return_value="RAG-FIXED"))
-    message = "voy en silla de ruedas, en que consiste el buceo adaptado?"
-
-    monkeypatch.setattr(settings, "agent_arch", False)
-    reply_cascade = await route_message(make_state(), message)
-
-    monkeypatch.setattr(settings, "agent_arch", True)
-    reply_graph = await route_message(make_state(), message)
-
-    assert reply_graph == reply_cascade == "RAG-FIXED"

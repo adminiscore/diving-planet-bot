@@ -1,10 +1,8 @@
-"""Fase 1.3-1.4 (docs/multi-agent-refactor-plan.md) — grafo LangGraph tras el flag.
+"""Fase 1.3-1.4 (docs/multi-agent-refactor-plan.md) — el turno pasa por el grafo LangGraph.
 
-Prueba de equivalencia del strangler: con `agent_arch` ON el turno pasa por el
-grafo (router + nodos-wrapper que delegan en la cascada); OFF, la cascada
-directa. En Fase 1 ambos caminos deben producir la MISMA respuesta y el MISMO
-efecto sobre el estado. También fija que el grafo reutiliza las señales del
-router (una sola llamada LLM por turno, no dos).
+Fija que el grafo muta el estado del caller en el sitio y que reutiliza las señales del router (una sola llamada LLM
+por turno, no dos). s4-1 (19-oct) quitó el flag `agent_arch` y con él la cascada directa: se fueron también los
+tests de equivalencia grafo/cascada y el que fijaba el flag encendido por defecto.
 """
 
 from unittest.mock import AsyncMock
@@ -12,7 +10,6 @@ from unittest.mock import AsyncMock
 import pytest
 
 from src.agents.supervisor import route_message
-from src.config import Settings, settings
 from src.flows.state import ConversationState, Step
 
 
@@ -22,61 +19,26 @@ def make_state() -> ConversationState:
 
 @pytest.fixture
 def _signals_offline(monkeypatch):
-    """Mockea detect_routing_signals (el binding del supervisor, que usan TANTO
-    la cascada COMO el nodo router del grafo) a {} — determinista, sin red, para
-    comparar los dos caminos limpiamente."""
+    """Mockea detect_routing_signals (el binding del supervisor, que usa el nodo router del grafo) a {} —
+    determinista, sin red."""
     sup_mock = AsyncMock(return_value={})
     monkeypatch.setattr("src.agents.supervisor.detect_routing_signals", sup_mock)
     return sup_mock
 
 
-def test_agent_arch_defaults_to_on():
-    # Paso 10 (28-sep): el valor por defecto del código es el de PRE (el grafo sirve desde el Stage B).
-    assert Settings.model_fields["agent_arch"].default is True
-
-
 @pytest.mark.asyncio
-async def test_graph_and_cascade_produce_same_reply(monkeypatch, _signals_offline):
-    monkeypatch.setattr(settings, "agent_arch", False)
-    reply_off = await route_message(make_state(), "hola")
-
-    monkeypatch.setattr(settings, "agent_arch", True)
-    reply_on = await route_message(make_state(), "hola")
-
-    assert reply_on == reply_off
-
-
-@pytest.mark.asyncio
-async def test_graph_and_cascade_same_reply_for_digit_click(monkeypatch, _signals_offline):
-    # Clic de botón numérico: signals={} en ambos caminos, sin LLM.
-    monkeypatch.setattr(settings, "agent_arch", False)
-    s_off = make_state()
-    s_off.step = Step.MAIN_MENU
-    reply_off = await route_message(s_off, "2")
-
-    monkeypatch.setattr(settings, "agent_arch", True)
-    s_on = make_state()
-    s_on.step = Step.MAIN_MENU
-    reply_on = await route_message(s_on, "2")
-
-    assert reply_on == reply_off
-
-
-@pytest.mark.asyncio
-async def test_graph_mutates_conv_state_in_place(monkeypatch, _signals_offline):
-    monkeypatch.setattr(settings, "agent_arch", True)
+async def test_graph_mutates_conv_state_in_place(_signals_offline):
     state = make_state()
     assert state.step == Step.WELCOME
     await route_message(state, "hola")
-    # El nodo delega en la cascada, que muta el objeto in-place igual que sin grafo.
+    # El nodo muta el objeto in-place.
     assert state.step != Step.WELCOME
     assert len(state.history) > 0
 
 
 @pytest.mark.asyncio
-async def test_graph_reuses_router_signals_no_double_llm_call(monkeypatch, _signals_offline):
+async def test_graph_reuses_router_signals_no_double_llm_call(_signals_offline):
     sup_mock = _signals_offline
-    monkeypatch.setattr(settings, "agent_arch", True)
     await route_message(make_state(), "quiero información de los tours")
 
     # El nodo router calcula las señales UNA sola vez; el nodo de ruta las pasa
@@ -85,12 +47,11 @@ async def test_graph_reuses_router_signals_no_double_llm_call(monkeypatch, _sign
 
 
 @pytest.mark.asyncio
-async def test_graph_result_carries_same_conv_state_object(monkeypatch, _signals_offline):
+async def test_graph_result_carries_same_conv_state_object(_signals_offline):
     """El grafo transporta el objeto vivo, no una copia (verificado además a
     nivel de LangGraph en el diseño)."""
     from src.orchestration.graph import run_turn_via_graph
 
-    monkeypatch.setattr(settings, "agent_arch", True)
     state = make_state()
     reply = await run_turn_via_graph(state, "hola")
     assert isinstance(reply, str) and reply

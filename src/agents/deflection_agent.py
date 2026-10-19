@@ -25,7 +25,8 @@ equivalencia se preserva porque, cuando el router manda a `ROUTE_DEFLECT`, ya
 ha descartado antes PII/sensible/link/cancelación/reprogramación (devolvería
 SAFETY/CHANGE si no) — así que los gates previos de la cascada son no-ops para
 un mensaje de deflexión, y reproducir solo los dos gates de deflexión da la
-MISMA respuesta (verificado por los tests de equivalencia flag on/off).
+MISMA respuesta (lo verificaban los tests de equivalencia grafo/cascada, que se
+fueron con el flag `agent_arch` en s4-1).
 
 Los detectores y los copys viven todavía en `supervisor.py` (se importan aquí);
 migrarán a un módulo propio en Fase 3 (junto con el resto de detectores del

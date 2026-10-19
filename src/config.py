@@ -692,13 +692,6 @@ class Settings(BaseSettings):
     langfuse_secret_key: str = ""
     langfuse_host: str = "https://cloud.langfuse.com"
 
-    # --- Refactor multiagente sobre LangGraph (Fase 0.5, docs/multi-agent-
-    # refactor-plan.md) --- strangler-fig kill switch: off en todos lados hasta
-    # que el grafo real (Fase 1+) esté probado en PRE. Con el flag apagado el
-    # módulo `src/orchestration` ni se importa — cero riesgo/overhead para el
-    # camino actual (cascada del supervisor).
-    agent_arch: bool = True
-
     # --- Supabase ---
     supabase_url: str = ""
     supabase_anon_key: str = ""
@@ -751,19 +744,11 @@ class Settings(BaseSettings):
     # turns (not the full LLM context) — kept separate and smaller on purpose.
     history_retrieval_enrichment_window: int = 10
 
-    # --- Robustness Fase 0 (docs/robustness/plan.md) ---
-    # When True, every message also runs through the LLM gap-filler extractor
-    # (src/agents/llm_extractor.py) in SHADOW mode: the result is logged for
-    # comparison against the regex-based IntentDetector but never changes
-    # behavior. Off by default everywhere — turned on only in the environment(s)
-    # used to gather Fase 0 agreement data. Not a per-field cutover switch (that
-    # comes later, per-domain, once eval-set thresholds are met — see the plan).
-    llm_extraction_shadow_mode: bool = False
-    # --- Robustness Fases 1, 2, 3 y 8 (docs/robustness/plan.md §4): el cutover por dominio del extractor LLM
-    # (certificación, grupo/cantidad/edades, ubicación y perfil/logística) rellena los huecos que deja el regex, sin
-    # pisar nunca lo que el regex resolvió. Cada dominio tenía su flag `llm_extraction_cutover_*`, los cuatro en True;
-    # s4-25 los quitó. OJO: su función (`supervisor._maybe_apply_llm_extraction_cutover`) no la llama nadie desde el
-    # 28-jul (308488d, se retiró el orquestador antiguo): no tenían efecto en el camino real.
+    # --- Robustness Fases 0, 1, 2, 3 y 8 (docs/robustness/plan.md §4): la sonda en sombra de la Fase 0
+    # (`llm_extraction_shadow_mode`) y el cutover por dominio del extractor LLM (certificación, grupo/cantidad/edades,
+    # ubicación y perfil/logística, flags `llm_extraction_cutover_*`) ya no existen: s4-25 quitó los flags del cutover
+    # y s4-1 sus funciones y la sonda, que no llamaba nadie desde el 28-jul (308488d, se retiró el orquestador
+    # antiguo). El relleno de huecos vivo es el del núcleo (`conversational_core._understand`).
     # --- Robustness Fase 9 (docs/multi-agent-refactor-plan.md, hallazgo en vivo
     # conversacion real "purple-sun-590", 2026-09-03) ---
     # A diferencia de los 4 dominios de arriba (que solo rellenan huecos), este

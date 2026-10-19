@@ -2,7 +2,7 @@
 hallazgo en vivo conversacion real "purple-sun-590", 2026-09-03, y conversacion
 real 913, 2026-09-10): `supervisor._maybe_veto_resolved_field_via_llm("activity", ...)`.
 
-Unlike `_maybe_apply_llm_extraction_cutover` (fills gaps only), this CAN
+Unlike the gap-filler (`fill_gaps`, fills gaps only), this CAN
 correct an `activity` the regex already resolved -- but only when `activity`
 was resolved THIS turn (`"activity" in intent.detected_fields`) AND the
 message genuinely looks ambiguous (`activity`'s `should_verify`,
@@ -73,7 +73,7 @@ async def test_both_flags_off_does_not_call_llm():
 @pytest.mark.asyncio
 async def test_no_activity_resolved_skips_veto():
     """Sin `activity` resuelto no hay nada que vetar -- eso lo cubre el
-    cutover de huecos (_maybe_apply_llm_extraction_cutover), no este veto."""
+    relleno de huecos (`fill_gaps`), no este veto."""
     intent = DetectedIntent(activity=None)
     state = ConversationState(conversation_id="veto-no-activity-test")
 

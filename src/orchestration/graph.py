@@ -57,15 +57,13 @@ _REAL_NODES = {
 async def _router_node(state: BotState) -> dict:
     """Calcula las señales de routing (1 vez/turno, con el mismo skip de clics
     numéricos que la cascada) y clasifica la ruta. Es el único sitio donde se
-    llama a `detect_routing_signals` cuando el grafo está activo — el nodo de
-    ruta reutiliza el resultado vía `state["signals"]` (evita la doble llamada
-    LLM).
+    llama a `detect_routing_signals` — el nodo de ruta reutiliza el resultado
+    vía `state["signals"]` (evita la doble llamada LLM).
 
     Se importa `detect_routing_signals` DESDE `supervisor` (no desde
-    `escalation`) a propósito: es el mismo binding que usa la cascada y que los
-    tests parchean (`src.agents.supervisor.detect_routing_signals`), así un
-    solo mock cubre los dos caminos (grafo y cascada) — la prueba de
-    equivalencia (suite verde on/off) depende de ello.
+    `escalation`) a propósito: es el binding que los tests parchean
+    (`src.agents.supervisor.detect_routing_signals`); hasta s4-1 un solo mock
+    cubría así los dos caminos (grafo y cascada).
 
     **Side-effects pre-router** (§4.bis: el restart de escenario nuevo se
     ejecuta "antes del router"): la cascada, en la cabecera de
@@ -154,7 +152,7 @@ _COMPILED_GRAPH = None
 
 def get_compiled_graph():
     """Grafo compilado (lazy singleton — se compila una vez al primer uso, no
-    a import, para no pagarlo cuando `agent_arch` está apagado)."""
+    a import)."""
     global _COMPILED_GRAPH
     if _COMPILED_GRAPH is None:
         _COMPILED_GRAPH = _build_graph()
