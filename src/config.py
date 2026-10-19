@@ -149,8 +149,8 @@ class Settings(BaseSettings):
     idioma_por_jev: bool = True  # el cambio de idioma a mitad de conversación
     # ex-9b (19-oct): el aviso "el pago no confirma la reserva al momento" sale también cuando la pregunta va de CÓMO
     # reservar (`tambien` en avisos.json). El RAG decía "al pagar quedas confirmado" (ronda ex9b-2). APAGADO.
-    aviso_pago_al_reservar: bool = True  # RONDA ex9b-3 (19-oct): encendido para medir; revert = False
-    precio_por_jev: bool = True  # RONDA ex9b-3; "origen antes del precio": ¿pide el precio de NUESTRAS actividades? (Jev; regex si calla)
+    aviso_pago_al_reservar: bool = True  # PROMOCIONADO 19-oct (ronda ex9b-3, HISTORY 0.31.64); revert = False
+    precio_por_jev: bool = True  # PROMOCIONADO (ex9b-3); "origen antes del precio": ¿pide el precio de NUESTRAS actividades? (Jev; regex si calla)
     deliberacion_por_jev: bool = True  # "no sé si buceo o snorkel": `comparing_options` de la IA, sin la frase de duda
     # ex-9b paso 3 (19-oct): el regex deja de ser la "pista" de los campos del extractor (actividad, origen,
     # certificación, grupo y reparto, nacionalidad, última inmersión); se quedan la isla y el hotel del catálogo. Si el
@@ -159,7 +159,7 @@ class Settings(BaseSettings):
     # palabras clave no corre y las puertas de Jev sobre el regex solo miran las edades. La actividad principal de un
     # grupo repartido ya sale del reparto sin flag (misma rama). nucleo/extraction._understand y nucleo/extractor.
     # APAGADO hasta medirlo.
-    extractor_sin_pista: bool = True  # RONDA ex9b-3 (19-oct): encendido para medir; revert = False
+    extractor_sin_pista: bool = True  # PROMOCIONADO 19-oct (ronda ex9b-3, HISTORY 0.31.64); revert = False
     # ex-9b paso 4 (19-oct): la respuesta corta a la pregunta pendiente del origen, del hotel y de cuántos son la lee la
     # IA, también con 12 caracteres o menos: el origen, la respuesta de Jev a esa pregunta (`pending_answer`, que ya dice
     # que delegar = Cartagena) y si no, el extractor y la red anti-bucle; el hotel y el total, el extractor (`hotel`,
@@ -167,11 +167,11 @@ class Settings(BaseSettings):
     # Los botones y una cifra sola se leen sin IA (formato). El regex de siempre (`_departure_place`, "da igual",
     # `_HOTEL_UNKNOWN_RE`, `_quantity_answer`, `_COURSE_SOLO_RE`) solo si la IA calla (Jev no contestó y el extractor
     # falló). nucleo/routing._apply_short_answer y nucleo/extraction. APAGADO hasta medirlo.
-    respuesta_corta_por_ia: bool = True  # RONDA ex9b-3 (19-oct): encendido para medir; revert = False
+    respuesta_corta_por_ia: bool = True  # PROMOCIONADO 19-oct (ronda ex9b-3, HISTORY 0.31.64); revert = False
     # ex-9b paso 4: "me llamo X" (`_NAME_TRIGGER_SIN_SOY_RE`) iba antes que el extractor y ganaba; con el flag, si la regex
     # lo ve, manda el `nombre` del extractor (con `nombre_por_extractor`) y la regex solo si el extractor falla.
     # nucleo/setup._nombre_del_mensaje. APAGADO hasta medirlo.
-    nombre_solo_por_extractor: bool = True  # RONDA ex9b-3 (19-oct): encendido para medir; revert = False
+    nombre_solo_por_extractor: bool = True  # PROMOCIONADO 19-oct (ronda ex9b-3, HISTORY 0.31.64); revert = False
     # ex-9b paso 4: los días cerrados (25 de diciembre y 1 de enero) los contesta el RAG, que lleva siempre las políticas
     # (`rag_politicas_en_contexto`), en vez del texto fijo que dispara `_CLOSED_DATE_RE` y se come el resto del mensaje.
     # Replay del golden: 0 cambios (ningún diálogo visible los nombra); pero sin el texto fijo, "quiero bucear el 25 de
@@ -565,6 +565,11 @@ class Settings(BaseSettings):
     # revisar): si una llamada a OpenRouter falla, se repite con este modelo de OpenAI (llm_client._por_proveedor).
     # Solo actúa cuando OpenRouter falla. Vacío = sube el error como antes.
     respaldo_si_openrouter_falla: str = "gpt-5.4-mini"
+    # ex-9b (19-oct, ronda ex9b-3): una llamada a OpenRouter (la reescritura de DeepSeek) se quedó colgada 30 s, el
+    # límite general, y el turno tardó 34 s. Si OpenRouter no ha contestado en estos segundos, se lanza la misma
+    # petición por OpenAI (`respaldo_si_openrouter_falla`) y gana la primera que termine bien, para todas las piezas.
+    # 0 = apagado (el respaldo solo cuando OpenRouter falla, como hasta hoy).
+    openrouter_respaldo_segundos: float = 0.0
     # s4-33 (8-oct, Alvaro): instrucciones del juez de grounding v3 para GPT-6 Luna (prompts/info.py
     # GROUNDING_VERIFY_V3_LUNA_*): el v3 entero + 3 aclaraciones (lo que dice el cliente de si mismo no se comprueba;
     # valoraciones y ofertas de ayuda no son datos; las deducciones directas del contexto cuentan). Va con

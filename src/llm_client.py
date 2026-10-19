@@ -173,14 +173,53 @@ async def _por_proveedor(original, *args, **kwargs):
     modelo = str(kwargs.get("model") or "")
     if not es_de_openrouter(modelo):
         return await original(*args, **adaptar_parametros(kwargs))
+    respaldo = settings.respaldo_si_openrouter_falla
+    if respaldo and not es_de_openrouter(respaldo) and settings.openrouter_respaldo_segundos > 0:
+        return await _openrouter_o_respaldo_por_tiempo(original, respaldo, modelo, args, kwargs)
     try:
         return await _openrouter().chat.completions.create(*args, **parametros_openrouter(kwargs))
     except Exception as exc:  # noqa: BLE001 — el respaldo decide; sin respaldo sube el error
-        respaldo = settings.respaldo_si_openrouter_falla
         if not respaldo or es_de_openrouter(respaldo):
             raise
         logger.warning(f"[LLM][OPENROUTER] {modelo} falló ({str(exc)[:160]}): contesta {respaldo} por OpenAI")
         return await original(*args, **adaptar_parametros({**kwargs, "model": respaldo}))
+
+
+async def _openrouter_o_respaldo_por_tiempo(original, respaldo: str, modelo: str, args, kwargs):
+    """ex-9b (flag `openrouter_respaldo_segundos`): la llamada a OpenRouter con respaldo POR TIEMPO, como
+    `crear_con_respaldo`. Si en esos segundos no ha terminado, sale la misma petición por OpenAI y gana la primera que
+    termine bien (la otra se cancela); si OpenRouter falla antes, contesta el respaldo, como siempre. La del respaldo
+    sale en [TURN_METRICS] como `<pieza>_respaldo`."""
+    import asyncio
+
+    from src.observability import _LLM_PIEZA, pieza_llm
+
+    segundos = settings.openrouter_respaldo_segundos
+    pieza = _LLM_PIEZA.get() or "llm"
+
+    async def por_openai():
+        with pieza_llm(f"{pieza}_respaldo"):
+            return await original(*args, **adaptar_parametros({**kwargs, "model": respaldo}))
+
+    t_openrouter = asyncio.ensure_future(_openrouter().chat.completions.create(*args, **parametros_openrouter(kwargs)))
+    await asyncio.wait({t_openrouter}, timeout=segundos)
+    if t_openrouter.done():
+        if t_openrouter.exception() is None:
+            return t_openrouter.result()
+        logger.warning(f"[LLM][OPENROUTER] {modelo} falló ({str(t_openrouter.exception())[:160]}): contesta {respaldo}")
+        return await por_openai()
+    t_openai = asyncio.ensure_future(por_openai())
+    pendientes = {t_openrouter, t_openai}
+    while pendientes:
+        hechas, pendientes = await asyncio.wait(pendientes, return_when=asyncio.FIRST_COMPLETED)
+        buena = next((t for t in hechas if t.exception() is None), None)
+        if buena is not None:
+            for t in pendientes:
+                t.cancel()
+            gana = "OpenRouter" if buena is t_openrouter else respaldo
+            logger.info(f"[LLM][OPENROUTER] {pieza}: {modelo} tardaba más de {segundos:g} s: gana {gana}")
+            return buena.result()
+    return t_openai.result()  # fallaron los dos: sube la excepción del respaldo
 
 
 def _is_empty_for(spec: dict, value) -> bool:

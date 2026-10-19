@@ -1,6 +1,29 @@
 History
 =======
 
+0.31.64 - (2026-10-19)
+----------------------
+* **Ronda ex9b-3 PROMOCIONADA: pasos 3 y 4 de ex-9b, "pide precio" por Jev y el aviso del pago** (Gadea con Claude y
+  tres agentes).
+  - **Paso 3** `EXTRACTOR_SIN_PISTA`: el regex deja de alimentar actividad/origen/certificación/grupo/nacionalidad/última
+    inmersión; si el extractor falla se pregunta y, al 2.º fallo seguido, se dice y se pasa a un asesor (antes repetía
+    "¿qué actividad?" hasta 10 veces). La regla del grupo repartido (sin flag) ya iba en ex9b-2. Un agente adaptó los
+    78 tests que probaban el regex sin saberlo (`extractor_dice` en conftest).
+  - **Paso 4** `RESPUESTA_CORTA_POR_IA` (la respuesta corta al origen, hotel o cuántos la lee la IA, también con ≤ 12
+    caracteres; banco 25/31 → 30/31, sobre todo el hotel: "no tengo idea, el Hilton creo" ya no lo pierde) y
+    `NOMBRE_SOLO_POR_EXTRACTOR`; el plan de N inmersiones con `dive_counts_in` (sin flag). `DIAS_CERRADOS_POR_RAG`
+    APAGADO: "quiero bucear el 25 de diciembre, somos 2" no llegaría al RAG y nadie avisaría del cierre. Las notas del
+    RAG desde el estado pasan al paso 6 (faltan campos por persona).
+  - **Paso 5** `PRECIO_POR_JEV` (13/16 → 16/16) y **`AVISO_PAGO_AL_RESERVAR`** (el RAG decía "al pagar quedas
+    confirmado" al explicar cómo reservar; la base y la decisión de Gadea dicen que el equipo concilia y confirma).
+  - **97,4 % 28/32 frente a ex9b-2 97,0 % 26/32**: 0 regresiones reales; mejora real certificado-fechas-fotos (ya no
+    repregunta, 3/3). Latencia p50 3,5 s / p95 8,4 s (antes 3,2 / 6,1): mismas llamadas por turno (4,39), más lentas
+    todas las piezas, también las que no se tocaron (proveedores), y un turno de 34 s: la reescritura de DeepSeek se
+    colgó 30 s (el límite general) antes del respaldo. Arreglo para la ronda siguiente: `openrouter_respaldo_segundos`
+    (si OpenRouter no contesta en N s, sale por OpenAI y gana la primera; APAGADO).
+  - Pendiente antes de G9: el paso 6 (duración, edades, plan elegido, el reparto cuando se suma alguien y las notas
+    del RAG por persona; lo prepara un agente con las decisiones de Gadea del 19-oct).
+
 0.31.63 - (2026-10-19)
 ----------------------
 * **Ronda ex9b-2 PROMOCIONADA: preguntas nuevas de Jev, deliberación por la IA y el enrutador de respaldo con "none"**
