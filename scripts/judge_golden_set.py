@@ -192,7 +192,10 @@ def load_reference(referencia: str = REFERENCIA_POR_DEFECTO) -> str:
                  "- No adivinar (decision de Gadea, 18-oct): 'quiero bucear certificado' o 'fun dives' NO confirman que "
                  "el cliente este certificado; decir desde que pais escribe o viaja NO da su nacionalidad; un plural NO "
                  "dice cuantos son; preguntar el precio de algo NO es elegir esa actividad. Preguntar UNA vez uno de "
-                 "esos datos para confirmarlo es CORRECTO y no es una repregunta.")
+                 "esos datos para confirmarlo es CORRECTO y no es una repregunta.\n"
+                 "- Certificacion (decision de Gadea, 19-oct): si el cliente dice que ha buceado hace poco ('buceé hace "
+                 "poco'), es buzo certificado aunque antes diga 'no' a otra pregunta: ofrecerle los planes de buzo "
+                 "certificado es CORRECTO.")
     fichas = [d["content"] for d in build_kb_v2() if d["metadata"]["source"] == "services" and d["metadata"]["lang"] == "es"]
     parts.append("### Fichas de los servicios (base de conocimiento del bot)\n" + "\n\n---\n\n".join(fichas))
     faqs = json.loads((CURADA / "faqs.json").read_text(encoding="utf-8"))["faqs"]

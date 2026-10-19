@@ -1,6 +1,25 @@
 History
 =======
 
+0.31.61 - (2026-10-19)
+----------------------
+* **`CERTIFICADO_SOLO_SI_LO_DICE` PROMOCIONADO con «buceé hace poco» = certificado; s4-2 INTEGRADO y equivalente: la
+  limpieza del código, terminada** (Gadea con Claude, con las tareas de Álvaro).
+  - **Decisión de Gadea (19-oct):** si el cliente dice que ha buceado hace poco, es certificado aunque empiece por «no»
+    (que contestaba a otra cosa). En `IS_CERTIFIED_DICHO_*`; el juez del golden lo sabe (aclaraciones).
+  - **Ronda mod-H2** (limpieza-3 + el flag): 97,0 % 26/32, igual que limpieza-3; reserva-solo-link ya ofrece la salida de
+    2 inmersiones (178 USD) y no el minicurso a 183 USD. Sus 2 "regresiones": pedir-fotos (oscila) y reserva-solo-link
+    sin-invenciones (el juez aún no sabía la decisión de Gadea).
+  - **s4-2**: un movimiento de código puro (preparado por un agente en `feature/limpieza-s4-2`): `conversational_core.py`
+    5.997 → 2.184 líneas (el resto a `src/agents/nucleo/`: setup, availability, routing, extraction, extractor,
+    slotfill_close) y `supervisor.py` 3.286 → 743 (a `src/agents/rutas/`: router, safety, deflection, changes, info,
+    booking, contexto_rag); los dos re-exportan lo movido. Cada sentencia original una vez en los ficheros nuevos, 141
+    prompts idénticos, 3220 tests iguales (solo cambió la ruta de los parches). **Ronda de equivalencia `limpieza-4`**:
+    97,4 % 27/32 frente a mod-H2 97,0 % 26/32; mismas llamadas por turno (4,3), p95 5,6 s; una regresión (la repregunta
+    de moneda-precios-principiante-y-snorkel, que oscila).
+  - Con s4-25, s4-1 y s4-2, la limpieza del plan está hecha. ex-9 parte 2 (las expresiones regulares que entienden al
+    cliente, 64,8 % del total) en estudio antes de decidir (Gadea).
+
 0.31.60 - (2026-10-19)
 ----------------------
 * **s4-1 INTEGRADO y equivalente: fuera `agent_arch` y la cascada muerta** (Gadea con Claude, con las tareas de Álvaro;
