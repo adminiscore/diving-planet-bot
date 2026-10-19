@@ -325,9 +325,10 @@ class Settings(BaseSettings):
     # mod-2 (18-oct, decisión de Gadea): elegir el buceo certificado ("fun dives") no dice que el cliente esté
     # certificado; tiene que confirmarlo. Con el flag, el extractor no lo deduce (la regla del catálogo lo hacía para
     # todos los modelos). APAGADO.
-    certificado_solo_si_lo_dice: bool = False  # mod-G/mod-H (19-oct): APAGADO; con la regla de is_certified afinada sigue el
+    certificado_solo_si_lo_dice: bool = True  # RONDA mod-H2 (19-oct, + «buceé hace poco» = certificado); revert = False
+    # (antes, mod-G/mod-H: APAGADO; con la regla de is_certified afinada sigue el
     # minicurso a 183 USD en reserva-solo-link: el extractor toma el «no» de «no, buceé hace poco» (a «¿eres buzo
-    # certificado?») como no certificado. Falta la regla de contradicción también en el extractor.
+    # certificado?») como no certificado; arreglado con «buceé hace poco» en IS_CERTIFIED_DICHO_*.)
     # mod-2 (18-oct, decisión de Gadea, revoca `extractor_precio_elige`): preguntar el precio de un producto es una duda:
     # no elige la actividad, no dice que quiera bucear ni que sea certificado. Cambia a la vez las cuatro frases del
     # extractor que hablan del precio (ver extractor_turno._PRECIO_NO_ELIGE). APAGADO hasta medirlo.
