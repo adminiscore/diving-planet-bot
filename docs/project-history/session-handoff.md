@@ -59,7 +59,17 @@ integrar la rama del otro y suite en verde, porque en PRE gana el último; (3) *
 despliegue reinicia el contenedor y mata la medida del otro (avisar en el registro de Plan Coral con la hora de fin).
 Las doce normas, con su porqué, están en el documento.
 
-### ▶️ RETOMAR AQUÍ — 19-oct, 03:15 (Gadea con Claude, noche en autonomía): G2 promocionada, limpieza paso 1 confirmada
+### ▶️ RETOMAR AQUÍ — 19-oct, 05:15 (Gadea con Claude, noche en autonomía): limpieza s4-25 TERMINADA (pasos 1 y 2)
+
+**PRE sirve 970641f (pre_gadea)**: el estado promocionado de la noche + la limpieza s4-25 en sus dos pasos (21 flags sin
+su camino apagado, src −412 líneas netas), cada paso con su ronda de equivalencia comprobada con el código de antes y
+el de después por `--codigo-local` (ruido; HISTORY 0.31.57-0.31.59; datos en `docs/robustness/limpieza/equivalencia-*`).
+El paso 2 (flujo, zona de Álvaro) lo preparó un agente (`feature/limpieza-paso2-flujo`) y se le avisó por Coral.
+CAL-G hecha (p95 5,5 s). **s4-1** (quitar `agent_arch` y la cascada muerta) lo está preparando otro agente en
+`feature/limpieza-s4-1` SIN integrar: decide Álvaro o Gadea (es el núcleo del supervisor). Siguen pendientes: ex-9
+parte 2 y s4-2 (Álvaro), las dos reglas del extractor apagadas (ver abajo) y G9 una sola vez → Andrés.
+
+### (anterior) RETOMAR AQUÍ — 19-oct, 03:15 (Gadea con Claude, noche en autonomía): G2 promocionada, limpieza paso 1 confirmada
 
 **PRE sirve fc53411 (pre_gadea), el estado promocionado**: el bot sin gpt-4 (mod-F), mod-G2 (TARJETA_SIN_SEGURIDAD,
 RECOMENDAR_A_NO_CERTIFICADOS, resolutor Haiku con RESOLUTOR_SIN_CONTRADICCIONES), el respaldo si OpenRouter falla y la
