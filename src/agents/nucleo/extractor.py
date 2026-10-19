@@ -222,6 +222,8 @@ async def _aplicar_extractor(intent, state: ConversationState, message: str, pis
     datos = await datos_del_extractor(state, message)
     # CAL-C5: de este mensaje, ¿leyó el extractor? (la red de menciones por palabras solo actúa si no; ver abajo)
     state._extractor_leyo = message if datos is not None else None
+    # ex-9b paso 4 (`respuesta_corta_por_ia`): lo mismo, en el intent del turno ("voy solo" lo decide el extractor si leyó).
+    intent._leido_por_extractor = datos is not None
     if settings.extractor_sin_pista:
         state.extractor_fallos_seguidos = 0 if datos is not None else (state.extractor_fallos_seguidos or 0) + 1
     await _otro_idioma_en_ingles(state, datos, message)
@@ -258,6 +260,10 @@ async def _aplicar_extractor(intent, state: ConversationState, message: str, pis
     _poner_refresher(state, datos)
     # ex-7: el grupo antes que la actividad: la regla de ex-8 del grupo repartido mira el reparto del turno.
     _poner_grupo(intent, state, message, datos, pista)
+    if settings.respuesta_corta_por_ia:
+        # ex-9b paso 4: "voy solo" / "just me" es el grupo de 1 que lee el extractor con su cita ("voy solo" = 1); el
+        # regex del detector (`solo_confirmed`: "para mí", "soy buzo certificado"…) solo cuenta si el extractor falla.
+        intent.solo_confirmed = intent.group_size == 1 and "group_size" in intent.detected_fields
     if datos.get("quiere_bucear") is True:
         state.quiere_bucear = True
     _poner_actividad(intent, state, datos, pista)
@@ -589,6 +595,22 @@ async def datos_del_extractor(state: ConversationState, message: str) -> dict | 
         logger.warning(f"[EXTRACT][EX5] el extractor falló, se sigue con lo de hoy: {exc!r}")
         return None
     return datos  # None = la llamada falló (degradado)
+
+
+async def lectura_del_extractor(state: ConversationState, message: str) -> dict | None:
+    """ex-9b paso 4: lo que el extractor lee de ESTE mensaje, antes de `_understand` y sin gastar la lectura: la tarea
+    adelantada sigue colgada del estado y `datos_del_extractor` la vuelve a dar sin otra llamada (una tarea acabada
+    devuelve su resultado cada vez que se espera). Si no se lanzó con el turno, se lanza ahora. None = falló."""
+    if getattr(state, "_extraccion_adelantada", None) is None:
+        lanzar_extraccion_adelantada(state, message)
+    tarea = getattr(state, "_extraccion_adelantada", None)
+    if tarea is None:
+        return None
+    try:
+        return await tarea
+    except (asyncio.CancelledError, Exception) as exc:  # noqa: BLE001 — sin lectura, decide lo de siempre
+        logger.warning(f"[EXTRACT][EX9B-4] el extractor falló: {exc!r}")
+        return None
 
 
 # Campo del extractor -> atributo del estado donde se guarda lo dicho en un turno de pase a una persona.

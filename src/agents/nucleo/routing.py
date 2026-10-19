@@ -148,6 +148,109 @@ _LOCATION_DEFER_RE = re.compile(
 )
 
 
+# ex-9b paso 4 (flag `respuesta_corta_por_ia`): las respuestas cortas que lee la IA en vez del regex.
+_RESPUESTA_LEIDA_POR_LA_IA = frozenset({SLOT_LOCATION, SLOT_HOTEL, SLOT_QTY})
+
+
+def _es_formato(state: ConversationState, slot: str, message: str) -> bool:
+    """¿La respuesta es FORMATO y no hay que entenderla? Un botón (su título tecleado o su valor), "1"/"2" a la pregunta
+    del origen o una cifra sola a "¿cuántos sois?" ("4", "dos"). Eso se sigue leyendo sin IA."""
+    msg = message.strip().lower()
+    if _button_value(state, message) is not None:
+        return True
+    if msg in {str(o.get("value", "")).lower() for o in state.quick_replies or []}:
+        return True
+    if slot == SLOT_LOCATION:
+        return msg in ("1", "2")
+    if slot == SLOT_QTY:
+        return len(_words(message)) == 1 and cart_render.parse_quantity(message) is not None
+    return False
+
+
+async def _lectura_de_la_ia(state: ConversationState, message: str, routing_signals: dict, slot: str) -> dict | None:
+    """ex-9b paso 4 (flag `respuesta_corta_por_ia`): lo que la IA lee de la respuesta corta a la pregunta pendiente:
+    {"jev": la respuesta de Jev a ESA pregunta (`pending_answer`, aunque dude), "extractor": lo que leyó el extractor}.
+    None = la conducta de hoy (el regex): flag apagado, otra pregunta, formato, o la IA calla (Jev no contestó a la
+    pregunta y el extractor falló), la misma regla que `supervisor.regex_decide`. Con la respuesta de Jev al origen no
+    hace falta esperar al extractor aquí: lo aplica `_understand` como siempre."""
+    if not settings.respuesta_corta_por_ia or slot not in _RESPUESTA_LEIDA_POR_LA_IA:
+        return None
+    if slot == SLOT_HOTEL and not settings.hotel_por_extractor:
+        return None  # sin el campo `hotel`, el extractor no lee hoteles
+    if _es_formato(state, slot, message):
+        return None
+    pa = routing_signals.get("pending_answer")
+    jev = pa if isinstance(pa, dict) and pa.get("slot") == slot else None
+    datos = None
+    if jev is None:
+        from src.agents.nucleo.extractor import lectura_del_extractor  # lazy
+
+        datos = await lectura_del_extractor(state, message)
+        if datos is None:
+            logger.info(f"[CORE][EX9B-4] la IA calla en la respuesta a {slot!r}: decide el regex de siempre")
+            return None
+    return {"jev": jev, "extractor": datos}
+
+
+def _lugar_del_catalogo(texto: str) -> tuple[str | None, str | None]:
+    """(hotel, isla) de la lista cerrada del catálogo que nombra el texto (la del detector, clase d: se queda)."""
+    intent = DetectedIntent()
+    _detector._detect_location((texto or "").lower(), intent)
+    return intent.hotel, intent.island
+
+
+def _origen_por_la_ia(state: ConversationState, message: str, ia: dict) -> bool:
+    """El origen en la respuesta corta, según Jev (`pending_answer`, seguro). Si Jev duda, dice que no contesta o no
+    contestó, no se resuelve aquí: lo leen el extractor en `_understand` y la red anti-bucle del mismo turno (Jev si está
+    seguro; si no, el resolutor LLM), con sus guardas, como cualquier respuesta que el regex no entendía. La delegación
+    ("da igual", "tú decides" = Cartagena, la salida recomendada) Jev la contesta dudando (0,27-0,62 en el banco del
+    paso 4) y la acaba resolviendo el resolutor (5/5)."""
+    from src.agents.jev_router import PENDING_ANSWER_MIN  # lazy
+
+    jev = ia.get("jev") or {}
+    valor = jev.get("value")
+    if valor in ("cartagena", "island") and jev.get("confidence", 0.0) >= PENDING_ANSWER_MIN:
+        state.location = state.detected_location = valor
+        logger.info(f"[CORE][EX9B-4] origen por Jev: {valor!r} ({jev['confidence']:.2f})")
+        return True
+    return False
+
+
+def _hotel_por_la_ia(state: ConversationState, message: str, ia: dict) -> bool:
+    """El hotel en la respuesta corta ("¿en qué hotel o isla te hospedas?"), según el extractor: el nombre tal como lo
+    escribe, con su cita; si es del catálogo de las islas (la lista cerrada que guarda `_conservar_hotel`), su id y su
+    isla. Si el extractor no trae hotel, el del catálogo que nombre el mensaje ("en el Ubuntu"; "en isla grande" da la
+    isla). Sin hotel, "por confirmar" como hoy (lo coordina el asesor y no se pregunta en bucle). Nunca se guarda el
+    mensaje entero como hotel."""
+    hotel = ((ia.get("extractor") or {}).get("hotel") or "").strip()
+    del_catalogo, isla = _lugar_del_catalogo(hotel or message)
+    nombre = del_catalogo or hotel
+    if isla and not state.detected_island:
+        state.island = state.detected_island = isla
+    if not nombre:
+        marker = "por confirmar" if state.language == "es" else "to be confirmed"
+        state.hotel = state.detected_hotel = marker
+        if not state.island:
+            state.island = marker
+        logger.info(f"[CORE][EX9B-4] la respuesta no trae hotel (extractor: {hotel!r}, isla {isla!r}): por confirmar")
+        return True
+    state.hotel = state.detected_hotel = nombre
+    if not state.island:
+        state.island = nombre
+    logger.info(f"[CORE][EX9B-4] hotel por el extractor: {nombre!r} (isla {isla!r})")
+    return True
+
+
+def _cantidad_por_la_ia(state: ConversationState, message: str, ia: dict) -> bool:
+    """El total del grupo en la respuesta corta, según el extractor (`group_size`: "solo yo" = 1, "somos 4" = 4). Si no lo
+    lee, no se resuelve aquí: la red anti-bucle pregunta al resolutor LLM con su guarda de magnitudes."""
+    n = (ia.get("extractor") or {}).get("group_size")
+    if isinstance(n, int) and not isinstance(n, bool) and n > 0:
+        logger.info(f"[CORE][EX9B-4] total del grupo por el extractor: {n}")
+        return _apply_group_total(state, n)
+    return False
+
+
 def _word_ages(message: str) -> list[int]:
     """Edades escritas en palabra, en orden de aparición ("cinco y siete" ->
     [5, 7]). Vacío si no hay ninguna. Reusa el mapa canónico `AGE_WORDS` de
@@ -158,12 +261,16 @@ def _word_ages(message: str) -> list[int]:
 
 # ─── COMPRENDER ───
 
-def _apply_short_answer(state: ConversationState, message: str) -> bool:
+def _apply_short_answer(state: ConversationState, message: str, ia: dict | None = None) -> bool:
     """Contextual slot carryover: interpreta el mensaje como respuesta al slot
-    pendiente. Devuelve True si lo resolvió."""
+    pendiente. Devuelve True si lo resolvió. `ia` (ex-9b paso 4, `_lectura_de_la_ia`): con ella, el origen, el hotel y
+    el total los lee la IA; sin ella (flag apagado, formato o la IA calla), el regex de siempre."""
     slot = state.core_pending_slot
     if not slot:
         return False
+    if ia is not None and slot in _RESPUESTA_LEIDA_POR_LA_IA:
+        lector = {SLOT_LOCATION: _origen_por_la_ia, SLOT_HOTEL: _hotel_por_la_ia, SLOT_QTY: _cantidad_por_la_ia}[slot]
+        return lector(state, message, ia)
     # Escribir el titulo de un boton de la pregunta es pulsarlo (hallazgo G, 2026-09-15):
     # "seguimos siendo 2" tecleado no es un numero suelto ni un total que lea el detector.
     button = _button_value(state, message)
@@ -715,8 +822,13 @@ async def _routing_phase(
     has_qmark = "?" in message
 
     resolved_short = False
+    # ex-9b paso 4 (`respuesta_corta_por_ia`): la respuesta corta que resolvió la IA no se salta `_understand` aunque
+    # tenga 12 caracteres o menos (el extractor ya la leyó entera: "el hilton" al origen trae también el hotel).
+    respuesta_por_la_ia = False
     if prev_pending and not has_qmark:
-        resolved_short = _apply_short_answer(state, message)
+        ia = await _lectura_de_la_ia(state, message, routing_signals, prev_pending)
+        resolved_short = _apply_short_answer(state, message, ia=ia)
+        respuesta_por_la_ia = resolved_short and ia is not None
     if prev_pending == SLOT_CONFIRM_CORRECTION and not resolved_short:
         # u3-5 paso 1b: la confirmación se pregunta UNA vez. Un "sí" al principio vale aunque el
         # mensaje siga con una pregunta ("sí, ¿y cuánto es?"); cualquier otra cosa = no confirmado:
@@ -826,6 +938,7 @@ async def _routing_phase(
     # short`, que la extracción usa para detectar qué cambió este turno).
     return {
         "resolved_short": resolved_short,
+        "respuesta_por_la_ia": respuesta_por_la_ia,
         "prev_pending": prev_pending,
         "prev_cart_types": prev_cart_types,
         "prev_main_activity": prev_main_activity,
