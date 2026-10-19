@@ -146,6 +146,12 @@ services:
       REGEX_SOLO_SI_IA_CALLA: "true"
       # ex-9b paso 5: "¿trae una pregunta?" y "¿corrige?" en el núcleo los decide Jev cuando contesta. EN PRUEBA (ex9b-1).
       PREGUNTA_Y_CORRECCION_POR_JEV: "true"
+      # ex-9b paso 5: preguntas nuevas de Jev (caso nuevo antes de borrar la memoria 4/10 → 10/10, "¿eres un bot?" 7/13 →
+      # 13/13, cambio de idioma 8/13 → 13/13) y la deliberación por la IA (14/16 → 15/16). EN PRUEBA en la ronda ex9b-2.
+      REINICIO_POR_JEV: "true"
+      IDENTIDAD_IA_POR_JEV: "true"
+      IDIOMA_POR_JEV: "true"
+      DELIBERACION_POR_JEV: "true"
       # CERTIFICADO_SOLO_SI_LO_DICE con «buceé hace poco» = certificado (decisión de Gadea). PROMOCIONADO (HISTORY
       # 0.31.61: mod-H2 97,0 % igual que limpieza-3; reserva-solo-link ya no ofrece el minicurso). Revert = quitar estas líneas.
       CERTIFICADO_SOLO_SI_LO_DICE: "true"

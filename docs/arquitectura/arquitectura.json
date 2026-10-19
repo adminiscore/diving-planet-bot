@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-19T11:13:36+00:00",
-  "commit": "0418ac6",
+  "generado": "2026-10-19T11:27:13+00:00",
+  "commit": "01f08ab",
   "rama": "feature/pre_gadea"
  },
  "vistas": {
@@ -187,22 +187,22 @@
     {
      "nombre": "reinicio_por_jev",
      "titulo": "Solo empieza de cero si Jev ve un caso nuevo",
-     "codigo": false,
-     "pre": false,
+     "codigo": true,
+     "pre": true,
      "sin_efecto": false
     },
     {
      "nombre": "identidad_ia_por_jev",
      "titulo": "Jev decide si preguntan si Coral es un bot",
-     "codigo": false,
-     "pre": false,
+     "codigo": true,
+     "pre": true,
      "sin_efecto": false
     },
     {
      "nombre": "idioma_por_jev",
      "titulo": "Jev decide si el cliente pide cambiar de idioma",
-     "codigo": false,
-     "pre": false,
+     "codigo": true,
+     "pre": true,
      "sin_efecto": false
     }
    ],
@@ -213,9 +213,9 @@
    ],
    "marca": "openrouter",
    "tiempos": {
-    "n": 93,
-    "p50": 0.431,
-    "p95": 1.232
+    "n": 94,
+    "p50": 0.43,
+    "p95": 1.195
    }
   },
   {
@@ -240,7 +240,7 @@
    "tiempos": {
     "n": 8,
     "p50": 0.002,
-    "p95": 0.011
+    "p95": 0.003
    }
   },
   {
@@ -255,9 +255,9 @@
    "modelos": [],
    "interruptores": [],
    "tiempos": {
-    "n": 2,
-    "p50": 0.003,
-    "p95": 0.004
+    "n": 1,
+    "p50": 0.007,
+    "p95": 0.007
    }
   },
   {
@@ -281,8 +281,8 @@
    "modelos": [],
    "tiempos": {
     "n": 1,
-    "p50": 0.005,
-    "p95": 0.005
+    "p50": 0.004,
+    "p95": 0.004
    }
   },
   {
@@ -299,9 +299,9 @@
    "modelos": [],
    "interruptores": [],
    "tiempos": {
-    "n": 2,
-    "p50": 3.92,
-    "p95": 4.412
+    "n": 4,
+    "p50": 3.512,
+    "p95": 4.425
    }
   },
   {
@@ -318,8 +318,8 @@
    "interruptores": [],
    "tiempos": {
     "n": 80,
-    "p50": 2.794,
-    "p95": 5.273
+    "p50": 3.045,
+    "p95": 6.043
    }
   },
   {
@@ -521,8 +521,8 @@
    "marca": "openai",
    "tiempos": {
     "n": 80,
-    "p50": 0.031,
-    "p95": 1.296
+    "p50": 0.027,
+    "p95": 0.926
    }
   },
   {
@@ -539,7 +539,7 @@
    "tiempos": {
     "n": 80,
     "p50": 0.005,
-    "p95": 0.228
+    "p95": 0.225
    }
   },
   {
@@ -561,9 +561,9 @@
    "interruptores": [],
    "marca": "openrouter",
    "tiempos": {
-    "n": 74,
+    "n": 72,
     "p50": 0.006,
-    "p95": 0.015
+    "p95": 0.018
    }
   },
   {
@@ -665,9 +665,9 @@
    ],
    "marca": "openrouter",
    "tiempos": {
-    "n": 74,
-    "p50": 0.59,
-    "p95": 1.76
+    "n": 72,
+    "p50": 0.51,
+    "p95": 1.538
    }
   },
   {
@@ -844,8 +844,8 @@
     {
      "nombre": "deliberacion_por_jev",
      "titulo": "Jev decide si el cliente duda entre opciones",
-     "codigo": false,
-     "pre": false,
+     "codigo": true,
+     "pre": true,
      "sin_efecto": false
     },
     {
@@ -858,9 +858,9 @@
    ],
    "marca": "openrouter",
    "tiempos": {
-    "n": 74,
-    "p50": 1.255,
-    "p95": 4.384
+    "n": 72,
+    "p50": 1.341,
+    "p95": 5.405
    }
   },
   {
@@ -956,7 +956,7 @@
    "conteo": {
     "n": 45,
     "que": "preguntas",
-    "fuente": "2026-10-19-limpieza-4.json"
+    "fuente": "2026-10-19-ex9b-1.json"
    }
   },
   {
@@ -2211,9 +2211,9 @@
    "area": "Reserva",
    "titulo": "Jev decide si el cliente duda entre opciones",
    "texto": "Si el cliente nombra dos actividades, Jev decide si está dudando entre ellas (y entonces Coral se las explica) o si las está reservando para distintas personas del grupo. Antes lo decidían frases sueltas y unas reglas de excepción: «somos 3 y no tenemos claro si hacer snorkel o el minicurso» se tomaba como una reserva por llevar una cifra.",
-   "codigo": false,
-   "pre": false,
-   "fijado_en_pre": false,
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
    "usado_por": [
     "b_slotfill_close"
    ],
@@ -2396,9 +2396,9 @@
    "area": "Respuestas fijas",
    "titulo": "Jev decide si preguntan si Coral es un bot",
    "texto": "La respuesta fija «soy Coral, la asistente virtual» sale cuando Jev ve que el cliente pregunta si habla con un bot o con una persona. Antes bastaba una palabra como «modelo»: «¿qué modelo de regulador usan?» recibía esa respuesta.",
-   "codigo": false,
-   "pre": false,
-   "fijado_en_pre": false,
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
    "usado_por": [
     "router"
    ],
@@ -2435,9 +2435,9 @@
    "area": "Chat",
    "titulo": "Jev decide si el cliente pide cambiar de idioma",
    "texto": "La conversación cambia de idioma cuando Jev ve que el cliente lo pide («can we continue in english?», «no entiendo inglés»). Antes «¿el curso es en inglés?» pasaba la conversación al inglés.",
-   "codigo": false,
-   "pre": false,
-   "fijado_en_pre": false,
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
    "usado_por": [
     "router"
    ],
@@ -3192,9 +3192,9 @@
    "area": "Enrutador",
    "titulo": "Solo empieza de cero si Jev ve un caso nuevo",
    "texto": "Si el cliente saluda y se presenta a mitad de conversación, antes se borraba toda la memoria («Hola, soy Ana, ya hablamos ayer, al final somos 3» perdía la reserva). Ahora la borra solo si Jev, que ve lo hablado antes, dice que es una persona o un caso nuevo; si sigue con lo de antes, se queda todo.",
-   "codigo": false,
-   "pre": false,
-   "fijado_en_pre": false,
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
    "usado_por": [
     "router"
    ],
@@ -3325,7 +3325,7 @@
     "b_acuse"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 47
+   "llamadas_ultima_ronda": 45
   },
   {
    "ajuste": "avisos_al_final_model",
@@ -3335,7 +3335,7 @@
     "r_revisor"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 98
+   "llamadas_ultima_ronda": 95
   },
   {
    "ajuste": "extraction_model",
@@ -3343,7 +3343,7 @@
    "pre": "gpt-5.4-mini",
    "usado_por": [],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": null
+   "llamadas_ultima_ronda": 2
   },
   {
    "ajuste": "extractor_turno_model",
@@ -3353,7 +3353,7 @@
     "b_extraction"
    ],
    "proveedor": "OpenRouter",
-   "llamadas_ultima_ronda": 96
+   "llamadas_ultima_ronda": 95
   },
   {
    "ajuste": "grounding_v3_model",
@@ -3383,7 +3383,7 @@
    ],
    "proveedor": "OpenRouter",
    "llamadas_ultima_ronda": null,
-   "nota": "Decidió solo 83 de 93 mensajes; en los otros 10 decidió el LLM de respaldo (sus llamadas cuentan en gpt-4o-mini)."
+   "nota": "Decidió solo 84 de 94 mensajes; en los otros 10 decidió el LLM de respaldo (sus llamadas cuentan en gpt-4o-mini)."
   },
   {
    "ajuste": "notas_model",
@@ -3416,7 +3416,7 @@
     "r_reescribir"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": null
+   "llamadas_ultima_ronda": 2
   },
   {
    "ajuste": "openai_transcription_model",
@@ -3444,7 +3444,7 @@
     "r_escribir"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 98
+   "llamadas_ultima_ronda": 95
   },
   {
    "ajuste": "rag_plan_model",
@@ -3452,7 +3452,7 @@
    "pre": "gpt-6-luna",
    "usado_por": [],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 98
+   "llamadas_ultima_ronda": 95
   },
   {
    "ajuste": "red_extractor_model",
@@ -3462,7 +3462,7 @@
     "b_extraction"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 98
+   "llamadas_ultima_ronda": 95
   },
   {
    "ajuste": "reescritura_model",
@@ -3480,7 +3480,7 @@
     "b_slotfill_close"
    ],
    "proveedor": "OpenRouter",
-   "llamadas_ultima_ronda": 96
+   "llamadas_ultima_ronda": 95
   },
   {
    "ajuste": "resumen_model",
@@ -3503,46 +3503,46 @@
   }
  ],
  "ronda": {
-  "etiqueta": "limpieza-4 (s4-2 + H2 promocionada; PRE e048ad7)",
-  "run_at": "2026-10-19T08:49:12Z",
-  "fichero": "2026-10-19-limpieza-4.json",
-  "commit": "e048ad7",
+  "etiqueta": "ex9b-1 (pasos 1, 2, 5 + tope 400)",
+  "run_at": "2026-10-19T11:26:18Z",
+  "fichero": "2026-10-19-ex9b-1.json",
+  "commit": "01f08ab",
   "por_tipo": {
    "reserva": {
-    "turns": 48,
-    "latency_p50": 1.675,
-    "latency_p95": 3.041,
-    "latency_avg": 1.767,
-    "llm_calls_avg": 2.75,
+    "turns": 49,
+    "latency_p50": 1.524,
+    "latency_p95": 2.657,
+    "latency_avg": 1.619,
+    "llm_calls_avg": 2.53,
     "llm_calls_p95": 4.0,
-    "llm_calls_max": 5,
-    "embeddings_avg": 1.62,
-    "llm_share": 1.237,
+    "llm_calls_max": 6,
+    "embeddings_avg": 1.45,
+    "llm_share": 1.161,
     "tokens_avg": 0,
     "cost_avg_usd": 0
    },
    "rag": {
     "turns": 45,
-    "latency_p50": 3.933,
-    "latency_p95": 6.82,
-    "latency_avg": 4.305,
-    "llm_calls_avg": 5.96,
+    "latency_p50": 4.446,
+    "latency_p95": 7.732,
+    "latency_avg": 5.025,
+    "llm_calls_avg": 6.04,
     "llm_calls_p95": 8.8,
-    "llm_calls_max": 9,
-    "embeddings_avg": 2.24,
-    "llm_share": 1.422,
+    "llm_calls_max": 10,
+    "embeddings_avg": 2.33,
+    "llm_share": 1.236,
     "tokens_avg": 0,
     "cost_avg_usd": 0
    }
   },
   "enrutador": {
    "by_backend": {
-    "jev": 83,
+    "jev": 84,
     "llm_uncertain": 9,
     "llm": 1
    },
-   "ms_p50": 403.5,
-   "ms_p95": 540.9
+   "ms_p50": 404.0,
+   "ms_p95": 482.8
   },
   "cliente": {
    "turns": 93,
@@ -3550,14 +3550,15 @@
    "no_reply": 0,
    "multi_bubble": 1,
    "latency_p50": 3.0,
-   "latency_p95": 6.0,
-   "latency_max": 8
+   "latency_p95": 7.0,
+   "latency_max": 14
   },
   "llamadas_por_modelo": {
    "deepseek/deepseek-v4.1-flash": 159,
-   "gpt-6-luna": 98,
-   "anthropic/claude-haiku-5.5": 96,
-   "gpt-5.4-nano": 47
+   "anthropic/claude-haiku-5.5": 95,
+   "gpt-6-luna": 95,
+   "gpt-5.4-nano": 45,
+   "gpt-5.4-mini": 2
   },
   "calidad": null
  },

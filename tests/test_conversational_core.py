@@ -1915,7 +1915,10 @@ def test_deliberation_backstop_patterns():
     # duda de SLOT (ubicación) — no hay 2 ofertas de producto, no se toca
     ("no sé si cartagena o las islas", {}, False),
 ])
-def test_is_deliberation_between_options_matrix(message, signals, expected):
+def test_is_deliberation_between_options_matrix(message, signals, expected, monkeypatch):
+    # ex-9b paso 5: la matriz prueba la frase de duda y los vetos; con `deliberacion_por_jev` y la IA contestando
+    # manda `comparing_options` (test_preguntas_nuevas_jev.py).
+    monkeypatch.setattr(core.settings, "deliberacion_por_jev", False)
     assert core._is_deliberation_between_options(message, signals) is expected
 
 

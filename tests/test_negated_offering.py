@@ -11,6 +11,15 @@ import pytest
 
 from src.agents import conversational_core as core
 
+
+@pytest.fixture(autouse=True)
+def _camino_de_los_vetos(monkeypatch):
+    """ex-9b paso 5: con `deliberacion_por_jev`, si la IA contesta manda `comparing_options` (hoy ni Jev ni DeepSeek
+    cometen este error: 12/12 el 19-oct). Estos tests prueban los vetos, que siguen valiendo cuando la IA calla."""
+    from src.config import settings
+
+    monkeypatch.setattr(settings, "deliberacion_por_jev", False)
+
 COMPARING = {"comparing_options": {"comparing": True}}
 
 

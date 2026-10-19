@@ -143,11 +143,11 @@ class Settings(BaseSettings):
     # (`asks_question`, `corrects`); el regex de siempre solo si Jev calla. El "?" sigue contando. EN PRUEBA (ex9b-1).
     pregunta_y_correccion_por_jev: bool = True
     # ex-9b paso 5 (19-oct): preguntas nuevas de Jev en lugar de regex (`jev_router`: NUEVO_CASO, PREGUNTA_SI_ES_IA,
-    # CAMBIA_IDIOMA); el regex solo si Jev calla. APAGADOS hasta medirlos.
-    reinicio_por_jev: bool = False  # el reinicio de escenario (borra la memoria) solo si Jev dice que es un caso nuevo
-    identidad_ia_por_jev: bool = False  # "¿eres un bot?"
-    idioma_por_jev: bool = False  # el cambio de idioma a mitad de conversación
-    deliberacion_por_jev: bool = False  # "no sé si buceo o snorkel": `comparing_options` de la IA, sin la frase de duda
+    # CAMBIA_IDIOMA); el regex solo si Jev calla. EN PRUEBA en la ronda ex9b-2; revert = False.
+    reinicio_por_jev: bool = True  # el reinicio de escenario (borra la memoria) solo si Jev dice que es un caso nuevo
+    identidad_ia_por_jev: bool = True  # "¿eres un bot?"
+    idioma_por_jev: bool = True  # el cambio de idioma a mitad de conversación
+    deliberacion_por_jev: bool = True  # "no sé si buceo o snorkel": `comparing_options` de la IA, sin la frase de duda
     # ex-9b paso 3 (19-oct): el regex deja de ser la "pista" de los campos del extractor (actividad, origen,
     # certificación, grupo y reparto, nacionalidad, última inmersión); se quedan la isla y el hotel del catálogo. Si el
     # extractor falla (Haiku y su respaldo), esos datos quedan sin saber y la reserva los PREGUNTA (decisión de Gadea);
