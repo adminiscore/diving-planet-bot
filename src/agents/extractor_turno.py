@@ -307,6 +307,10 @@ _REPARTO_EN_PARES = _dato(
     "Cuántas personas hacen cada actividad (una entrada por actividad), solo si el grupo se reparte entre VARIAS.")
 
 
+# Cuánto más que a la llamada principal se espera a la del paso 6 (ver `extraer_turno`).
+PASO6_ESPERA_MAX = 1.5
+
+
 def _reparto_de_pares(valor):
     """La lista de pares del reparto -> {actividad: personas} (sumando si una actividad sale dos veces)."""
     if not isinstance(valor, list):
@@ -668,15 +672,20 @@ async def extraer_turno(mensaje: str, *, history: list[dict] | None = None, sabi
         if aparte:
             esquema_paso6 = {"type": "object", "properties": {c: e for c, (e, _es, _en) in paso6.items()},
                              "required": list(paso6), "additionalProperties": False}
-            resp, resp6 = await asyncio.gather(_pedir(sistema, esquema, "extractor"),
-                                               _pedir(sistema_paso6, esquema_paso6, "extractor_paso6"),
-                                               return_exceptions=True)
-            if isinstance(resp, BaseException):
-                raise resp
-            if isinstance(resp6, BaseException):
-                logger.warning(f"[LLM_EXTRACTOR] la llamada del paso 6 falló ({resp6}): sin sus campos en este turno")
-            else:
+            t6 = asyncio.ensure_future(_pedir(sistema_paso6, esquema_paso6, "extractor_paso6"))
+            try:
+                resp = await _pedir(sistema, esquema, "extractor")
+            except BaseException:
+                t6.cancel()
+                raise
+            # Ronda ex9b-6: el respaldo de esta llamada tardó 6-8 s en 3 turnos y el turno lo esperaba. Como mucho se la
+            # espera `PASO6_ESPERA_MAX` s más que a la principal; si no llega, el turno sigue sin sus campos (el bot los
+            # pregunta si hacen falta, como cuando el extractor falla).
+            try:
+                resp6 = await asyncio.wait_for(t6, timeout=PASO6_ESPERA_MAX)
                 datos_paso6 = json.loads(resp6.choices[0].message.content or "{}")
+            except Exception as exc6:  # noqa: BLE001 — sin los campos del paso 6 en este turno
+                logger.warning(f"[LLM_EXTRACTOR] la llamada del paso 6 no llegó o falló ({exc6!r}): sin sus campos")
         else:
             resp = await _pedir(sistema, esquema, "extractor")
         datos = {**json.loads(resp.choices[0].message.content or "{}"), **datos_paso6}

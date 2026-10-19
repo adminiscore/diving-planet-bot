@@ -165,7 +165,14 @@ services:
       # "compiled grammar is too large", y contestaba siempre el respaldo). Se queda el respaldo POR TIEMPO de
       # OpenRouter (5 s): si no contesta en 5 s, la misma petición sale por OpenAI.
       OPENROUTER_RESPALDO_SEGUNDOS: "5.0"
-      # El paso 6 de ex-9b NO se promociona (rondas ex9b-5 y ex9b-6 por debajo de ex9b-3; HISTORY 0.31.66): apagado.
+      # RONDA ex9b-8 (decisión de Gadea: G9 con el paso 6): el paso 6 (duración, edades, notas) en una segunda llamada al
+      # extractor (la base sin él, ex9b-7, dio 96,1 %: las rondas con él estaban dentro del ruido) y quien se suma al grupo
+      # por el punto único del acompañante, decidido por Jev (banco de punta a punta 10/14 → 12/14, nadie contado dos veces).
+      DURACION_POR_EXTRACTOR: "true"
+      EDADES_POR_EXTRACTOR: "true"
+      NOTAS_RAG_DESDE_ESTADO: "true"
+      PASO6_EN_LLAMADA_APARTE: "true"
+      REPARTO_AL_SUMARSE_ALGUIEN: "true"
       # RONDA ex9b-7 (19-oct, confirmación antes de G9): las cifras de los enlaces ya no se tapan al mandar el texto a
       # OpenRouter (el enlace de Maps del punto de encuentro llegaba roto con el respaldo del RAG).
       PII_RESPETA_URLS: "true"

@@ -525,3 +525,50 @@ async def test_aparte_sin_campos_del_paso6_una_sola_llamada(monkeypatch):
     llamadas: list = []
     await ex.extraer_turno(MENSAJE7, history=None, sabido={}, client=_cliente_dos(PRINCIPAL7, None, llamadas))
     assert len(llamadas) == 1
+
+
+@pytest.mark.asyncio
+async def test_aparte_la_llamada_lenta_del_paso6_no_bloquea_el_turno(aparte, monkeypatch):
+    """Ronda ex9b-6: el respaldo de la llamada del paso 6 tardó 6-8 s y el turno lo esperaba."""
+    import asyncio
+    import time
+
+    monkeypatch.setattr(ex, "PASO6_ESPERA_MAX", 0.1)
+
+    class _C:
+        async def create(self, **kw):
+            if "dias_de_buceo" in kw["response_format"]["json_schema"]["schema"]["properties"]:
+                await asyncio.sleep(3)
+            msg = type("M", (), {"content": json.dumps(PRINCIPAL7)})()
+            return type("R", (), {"choices": [type("C", (), {"message": msg})()], "usage": None})()
+
+    cliente = type("O", (), {"chat": type("Ch", (), {"completions": _C()})()})()
+    t0 = time.perf_counter()
+    out = await ex.extraer_turno(MENSAJE7, history=None, sabido={}, client=cliente)
+    assert time.perf_counter() - t0 < 1.5
+    assert out["group_size"] == 2 and "dias_de_buceo" not in out
+
+
+# --- 8. quien se suma al grupo: por el punto único del acompañante y con Jev (ex-9b, punto 2 de Gadea) -------------
+
+def test_adds_person_viaja_con_las_senales_del_turno():
+    from src.agents import jev_router as j
+
+    assert j.ADDS_PERSON in j._TURN_SIGNALS
+
+
+@pytest.mark.parametrize("encendido, jev, pregunta", [
+    (False, 0.22, False),  # hoy: "viene" casa la lista de palabras y se suma sin preguntar (cuenta dos veces)
+    (True, 0.22, True),    # con el flag decide Jev: duda -> se pregunta el total
+    (True, 0.9, False),    # Jev seguro de que es nueva -> se suma
+    (True, None, False),   # Jev calla -> la lista de siempre
+])
+def test_quien_se_suma_lo_decide_jev(monkeypatch, encendido, jev, pregunta):
+    monkeypatch.setattr(settings, "reparto_al_sumarse_alguien", encendido)
+    st = _estado()
+    st.detected_activity, st.detected_group_size = "certified_diving", 2
+    st._jev_adds_person = jev
+    core_extraction._add_or_ask_companion(st, "mi amigo, el que ya te dije que viene, quiere snorkel", "snorkel", 1)
+    assert bool(st.pending_companion_in_group) is pregunta
+    if not pregunta:
+        assert st.detected_group_size == 3

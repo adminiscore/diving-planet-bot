@@ -191,11 +191,11 @@ class Settings(BaseSettings):
     reparto_en_pares: bool = False
     # ex-9b (19-oct, decisión de Gadea): los campos del paso 6 en una SEGUNDA llamada al extractor, a la vez que la de
     # siempre (el esquema de todo junto no cabía en Haiku). APAGADO hasta medirlo.
-    paso6_en_llamada_aparte: bool = False  # con el paso 6 apagado no hace nada; se queda para retomarlo
-    duracion_por_extractor: bool = False  # NO PROMOCIONADO (rondas ex9b-5 96,6 % y ex9b-6 95,2 % frente a ex9b-3 97,4 %; ver HISTORY 0.31.66)
+    paso6_en_llamada_aparte: bool = True  # RONDA ex9b-8; la espera de esa llamada, como mucho 1,5 s más; revert = False
+    duracion_por_extractor: bool = True  # RONDA ex9b-8 (ex9b-7, la base sin el paso 6, dio 96,1 %: las rondas varían ±3 diálogos); revert = False
     # - Las edades (`edades`), con su cita; el regex solo valida la cifra. `fill_gaps` ya no las rellena si el extractor
     #   leyó el mensaje. nucleo/extractor._poner_edades y la respuesta corta a "¿qué edades tienen?".
-    edades_por_extractor: bool = False  # NO PROMOCIONADO (rondas ex9b-5 96,6 % y ex9b-6 95,2 % frente a ex9b-3 97,4 %; ver HISTORY 0.31.66)
+    edades_por_extractor: bool = True  # RONDA ex9b-8 (ex9b-7, la base sin el paso 6, dio 96,1 %: las rondas varían ±3 diálogos); revert = False
     # - El plan elegido: si el mensaje ACEPTA el paquete que el bot acaba de proponer (`acepta_propuesta`, solo cuando el
     #   bot propuso uno), se da por elegido y sigue la reserva; preguntar el precio no es aceptar. Antes,
     #   `_CONFIRMS_DESCRIBED_PACKAGE_RE` ("quiero este paquete"). nucleo/routing._paquete_confirmado.
@@ -205,12 +205,12 @@ class Settings(BaseSettings):
     #   ve el reparto sabido aunque no esté guardado ({buceo: 2} = la actividad para todos) y devuelve el nuevo; y el atajo
     #   de "reparto completo" deja pasar la red de acompañantes si Jev está seguro de que se suma alguien
     #   (`companion_joins`). nucleo/extractor._sabido_para_extractor y nucleo/extraction.
-    reparto_al_sumarse_alguien: bool = False
+    reparto_al_sumarse_alguien: bool = True  # RONDA ex9b-8: por el punto único del acompañante y con Jev; revert = False
     # - Las notas del RAG sobre OTRA persona del grupo ("el minicurso no certifica", "certificado inactivo = refresher")
     #   salen del estado (`otro_sin_certificar`, `otro_certificado_inactivo` del extractor, con cita) en vez de un regex
     #   sobre todo lo que escribió el cliente; si el extractor no leyó algún mensaje, el regex de siempre.
     #   rutas/contexto_rag.
-    notas_rag_desde_estado: bool = False  # NO PROMOCIONADO (rondas ex9b-5 96,6 % y ex9b-6 95,2 % frente a ex9b-3 97,4 %; ver HISTORY 0.31.66)
+    notas_rag_desde_estado: bool = True  # RONDA ex9b-8 (ex9b-7, la base sin el paso 6, dio 96,1 %: las rondas varían ±3 diálogos); revert = False
     resolutor_sin_contradicciones: bool = True  # PROMOCIONADO 19-oct (mod-G2, HISTORY 0.31.57); revert = False
     # EX-EST-2 (14-oct): el acuse reconoce SOLO lo que dice el mensaje (el resumen de la reserva no se repite; ante
     # 'gracias' o una fecha suelta, nada). Banco scripts/banco_acuse.py: inventaba en 33/40 casos reales
@@ -604,7 +604,7 @@ class Settings(BaseSettings):
     # 0 = apagado (el respaldo solo cuando OpenRouter falla, como hasta hoy).
     # ex-9b (19-oct): al tapar los datos personales, las cifras DENTRO de un enlace (coordenadas de Google Maps) no se
     # tapan, salvo en los enlaces de WhatsApp (llevan un teléfono). APAGADO hasta medirlo.
-    pii_respeta_urls: bool = True  # RONDA ex9b-7 (19-oct, confirmación antes de G9); revert = False
+    pii_respeta_urls: bool = True  # RONDA ex9b-7/8 (19-oct); revert = False
     openrouter_respaldo_segundos: float = 5.0  # PROMOCIONADO 19-oct (ex9b-4: saltó 1 vez, ganó el respaldo); revert = 0.0
     # s4-33 (8-oct, Alvaro): instrucciones del juez de grounding v3 para GPT-6 Luna (prompts/info.py
     # GROUNDING_VERIFY_V3_LUNA_*): el v3 entero + 3 aclaraciones (lo que dice el cliente de si mismo no se comprueba;

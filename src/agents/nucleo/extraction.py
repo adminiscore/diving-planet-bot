@@ -895,6 +895,9 @@ def _number_of_something_else(state: ConversationState, message: str, value) -> 
     return value in {intent.cert_dives, intent.cert_days, *(intent.ages or [])}
 
 
+_JEV_SE_SUMA_SEGURO = 0.7  # ex-9b: por encima, Jev está seguro de que el mensaje suma a una persona NUEVA
+
+
 def _add_or_ask_companion(state: ConversationState, message: str, activity: str, qty: int) -> None:
     """Punto unico para la actividad de otra persona (tarea 7a, 2026-09-15).
 
@@ -908,9 +911,17 @@ def _add_or_ask_companion(state: ConversationState, message: str, activity: str,
     otra persona es nueva (`qty <= total - 1`)."""
     total = state.detected_group_size
     counted = sum((state.detected_group_allocation or {}).values()) or (total or 0)
+    se_suma = bool(_ADDITION_CUE_RE.search(message))
+    jev = getattr(state, "_jev_adds_person", None)
+    if settings.reparto_al_sumarse_alguien and jev is not None:
+        # ex-9b (19-oct): "¿se suma alguien?" lo decide Jev cuando contesta (`adds_person`); la lista de palabras solo si
+        # calla. Con la lista, "mi amigo, el que ya te dije que viene, quiere snorkel" casaba "viene" y se contaba dos
+        # veces (Jev 0,30: duda -> se pregunta el total). Banco s4-26: las personas nuevas dan >= 0,45 y casi todas
+        # las ya contadas < 0,2; por encima de 0,7 se añade sin preguntar.
+        se_suma = jev >= _JEV_SE_SUMA_SEGURO
     if (
         total and qty <= total - 1 and counted + qty > total
-        and not _ADDITION_CUE_RE.search(message)
+        and not se_suma
     ):
         state.pending_companion_in_group = {"activity": activity, "qty": qty}
         if _jev_dice_ya_contada(state):

@@ -432,6 +432,23 @@ def _poner_grupo(intent, state: ConversationState, message: str, datos: dict, pi
         # la red de acompañantes con la regla de s4-26 (moverlo en vez de añadirlo).
         logger.info(f"[EXTRACT][EX9B-6] el extractor amplía el reparto {reparto!r}, pero Jev dice que ya estaba contado")
         reparto, total = None, None
+    antes_del_turno = _reparto_guardado(state)
+    if reparto and settings.reparto_al_sumarse_alguien and _amplia(reparto, antes_del_turno) and not corrige:
+        # ex-9b (19-oct, punto 2 de Gadea): el extractor suma gente de UNA actividad al grupo ya sabido. Sumarla sin
+        # más contaba dos veces a alguien ya contado cuando Jev dudaba ("mi amigo, el que ya te dije que viene, quiere
+        # snorkel": adds_person 0,30). Va por el punto único de siempre (`_add_or_ask_companion`): si el mensaje dice
+        # que se suma alguien, se añade; si Jev está seguro de que ya estaba contado, se mueve; si no, se pregunta el
+        # total (una vez). Un reparto que suma varias actividades a la vez sigue como antes.
+        nuevos = {a: n - antes_del_turno.get(a, 0) for a, n in reparto.items() if n - antes_del_turno.get(a, 0) > 0}
+        if len(nuevos) == 1:
+            from src.agents.nucleo.extraction import _add_or_ask_companion  # lazy
+
+            (actividad, cuantos), = nuevos.items()
+            logger.info(f"[EXTRACT][EX9B-6] el extractor suma {cuantos} de {actividad!r} al grupo sabido "
+                        f"{antes_del_turno!r}: decide el punto único del acompañante")
+            intent._reparto_del_extractor = set(reparto)
+            _add_or_ask_companion(state, message, actividad, cuantos)
+            return
     if reparto:
         suma = sum(v for v in reparto.values() if isinstance(v, int) and v > 0)
         antes = _reparto_guardado(state)

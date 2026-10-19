@@ -1,6 +1,26 @@
 History
 =======
 
+0.31.67 - (2026-10-19)
+----------------------
+* **El paso 6 vuelve (decisión de Gadea: G9 con todo listo) y quien se suma al grupo, arreglado; ronda ex9b-8**
+  (Gadea con Claude).
+  - **ex9b-7** (la base SIN el paso 6: ex9b-3 + respaldo por tiempo + enlaces enteros): 96,1 % 25/32, con 5 regresiones
+    "reales" frente a ex9b-3, entre ellas el "enlace roto" de certificado-fechas-fotos que se había achacado al paso 6.
+    Las rondas con el mismo código varían ±3 diálogos: ex9b-5 (96,6 %) y ex9b-6 (95,2 %) estaban dentro del ruido.
+    Esa queja de enlace roto ("miré en el link que no incluye las fotos") sale del enrutador según el contexto de esa
+    conversación (aislado, Jev no la marca 5/5).
+  - **Paso 6** otra vez encendido (duración, edades, notas por persona; el plan elegido sigue fuera), con la llamada
+    aparte y su espera acotada: como mucho 1,5 s más que la principal (en ex9b-6 su respaldo tardó 6-8 s en 3 turnos);
+    si no llega, el turno sigue sin sus campos.
+  - **Quien se suma a un grupo ya sabido** (`REPARTO_AL_SUMARSE_ALGUIEN`): la ampliación del extractor pasa por el punto
+    único del acompañante (`_add_or_ask_companion`): se añade, se mueve o se pregunta el total; "¿se suma alguien?" lo
+    decide Jev (`adds_person`) cuando contesta, la lista de palabras solo si calla. Arreglo de paso: `adds_person` no
+    viajaba con las señales del turno cuando Jev dudaba en el router (sí `companion_joins`). Banco de punta a punta
+    (estado real, extractor y Jev reales, 7 casos × 2): 10/14 → 12/14 y nadie contado dos veces ("mi hermano también
+    viene, él quiere hacer snorkel" ya no se pierde).
+  - En marcha (agente): la limpieza de los flags de ex-9b promocionados (sin cambiar la conducta).
+
 0.31.66 - (2026-10-19)
 ----------------------
 * **El paso 6 de ex-9b NO se promociona; arreglo de los enlaces al tapar datos personales; ronda ex9b-7 de
