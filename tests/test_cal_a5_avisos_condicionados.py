@@ -341,6 +341,10 @@ def test_el_fichero_de_avisos_es_valido():
             assert fuente.split(":", 1)[1] in servicios, f"{aviso['id']}: ficha {fuente} no existe"
         else:
             assert fuente in politicas, f"{aviso['id']}: política {fuente} no existe"
+        tambien = aviso.get("tambien") or {}
+        assert set(tambien) <= {"tema", "fuentes"}, f"{aviso['id']}: 'tambien' solo admite tema y fuentes"
+        assert set(tambien.get("tema") or []) <= set(av._temas()), f"{aviso['id']}: tema de 'tambien' sin definir"
+        assert set(tambien.get("fuentes") or []) <= politicas, f"{aviso['id']}: fuente de 'tambien' no existe"
         for campo, valor in (aviso.get("cuando") or {}).items():
             assert campo in campos_validos, f"{aviso['id']}: condición {campo} desconocida"
             if campo in ("actividad", "actividad_tambien"):

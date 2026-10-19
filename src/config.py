@@ -147,6 +147,9 @@ class Settings(BaseSettings):
     reinicio_por_jev: bool = True  # el reinicio de escenario (borra la memoria) solo si Jev dice que es un caso nuevo
     identidad_ia_por_jev: bool = True  # "¿eres un bot?"
     idioma_por_jev: bool = True  # el cambio de idioma a mitad de conversación
+    # ex-9b (19-oct): el aviso "el pago no confirma la reserva al momento" sale también cuando la pregunta va de CÓMO
+    # reservar (`tambien` en avisos.json). El RAG decía "al pagar quedas confirmado" (ronda ex9b-2). APAGADO.
+    aviso_pago_al_reservar: bool = False
     precio_por_jev: bool = False  # "origen antes del precio": ¿pide el precio de NUESTRAS actividades? (Jev; regex si calla)
     deliberacion_por_jev: bool = True  # "no sé si buceo o snorkel": `comparing_options` de la IA, sin la frase de duda
     # ex-9b paso 3 (19-oct): el regex deja de ser la "pista" de los campos del extractor (actividad, origen,

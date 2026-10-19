@@ -29,6 +29,8 @@ import logging
 from functools import lru_cache
 from pathlib import Path
 
+from src.config import settings
+
 logger = logging.getLogger("uvicorn.error")
 
 AVISOS_PATH = Path(__file__).resolve().parents[2] / "data" / "knowledge_base" / "avisos.json"
@@ -173,8 +175,19 @@ def _depende_del_cliente(aviso: dict) -> bool:
     return bool((aviso.get("cuando") or {}).keys() - {"tema"})
 
 
+def _cuando(aviso: dict) -> dict:
+    """Las condiciones del aviso. ex-9b (19-oct, flag `aviso_pago_al_reservar`): `tambien` añade temas a los de `cuando`
+    (y fuentes, ver `_fuentes`): "el pago no confirma la reserva al momento" tenía que salir también cuando la pregunta
+    va de CÓMO reservar, donde el RAG decía "al pagar quedas confirmado" (ronda ex9b-2, certificado-fechas-fotos)."""
+    cuando = dict(aviso.get("cuando") or {})
+    extra = (aviso.get("tambien") or {}).get("tema") if settings.aviso_pago_al_reservar else None
+    if extra and "tema" in cuando:
+        cuando["tema"] = list(cuando["tema"]) + [t for t in extra if t not in cuando["tema"]]
+    return cuando
+
+
 def _cumple(aviso: dict, hechos: dict, temas: set[str], fuentes: set[str]) -> bool:
-    cuando = aviso.get("cuando") or {}
+    cuando = _cuando(aviso)
     actividades = hechos.get("actividades") or set()
     for campo, esperado in cuando.items():
         if campo in ("actividad", "actividad_tambien"):
@@ -201,12 +214,18 @@ def _cumple(aviso: dict, hechos: dict, temas: set[str], fuentes: set[str]) -> bo
         # a 36/48, porque la fuente del aviso no siempre entra entre las 4 primeras aunque la pregunta vaya de eso
         # (`minicourse_scope` salía en la posición 6 en cal-48, y en cal-32 el aviso de la moneda ni se recupera: lo
         # trae el tema desde `foreign_card_payment`). La exigencia se queda solo aquí.
-        return _fuente(aviso) in fuentes
+        return bool(_fuentes(aviso) & fuentes)
     return True
 
 
 def _fuente(aviso: dict) -> str:
     return str(aviso.get("fuente", "")).split(":")[-1]
+
+
+def _fuentes(aviso: dict) -> set[str]:
+    """Su fuente y, con `aviso_pago_al_reservar`, las de `tambien` (ver `_cuando`)."""
+    extra = (aviso.get("tambien") or {}).get("fuentes") if settings.aviso_pago_al_reservar else None
+    return {_fuente(aviso)} | {str(f).split(":")[-1] for f in (extra or [])}
 
 
 def seleccionar(hechos: dict, temas: set[str], fuentes: set[str] | None = None) -> list[dict]:
@@ -218,7 +237,7 @@ def seleccionar(hechos: dict, temas: set[str], fuentes: set[str] | None = None) 
                 if not (a.get("una_vez") and a["id"] in dados) and _cumple(a, hechos, temas, fuentes)]
     # Si aplican más de `MAX_AVISOS`, primero los que la BÚSQUEDA señala como más relacionados con la pregunta (su
     # fuente está entre los primeros documentos): así los dos huecos no se los queda el orden del fichero.
-    elegidos.sort(key=lambda a: _fuente(a) not in fuentes)
+    elegidos.sort(key=lambda a: not (_fuentes(a) & fuentes))
     if elegidos:
         logger.info(f"[AVISOS] {len(elegidos)} aplican: {[a['id'] for a in elegidos[:MAX_AVISOS]]}")
     return elegidos[:MAX_AVISOS]
