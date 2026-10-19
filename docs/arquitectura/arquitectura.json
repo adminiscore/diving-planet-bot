@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-19T15:04:37+00:00",
-  "commit": "9cd567b",
+  "generado": "2026-10-19T15:49:44+00:00",
+  "commit": "1c76ac6",
   "rama": "feature/pre_gadea"
  },
  "vistas": {
@@ -580,6 +580,13 @@
      "codigo": true,
      "pre": true,
      "sin_efecto": false
+    },
+    {
+     "nombre": "plan_elegido_por_extractor",
+     "titulo": "Aceptar el paquete que propone Coral lo elige",
+     "codigo": false,
+     "pre": false,
+     "sin_efecto": false
     }
    ],
    "marca": "openrouter",
@@ -683,6 +690,27 @@
      "titulo": "Los datos del cliente los lee solo la IA",
      "codigo": true,
      "pre": true,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "duracion_por_extractor",
+     "titulo": "Los días de buceo y de estancia los lee la IA",
+     "codigo": false,
+     "pre": false,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "edades_por_extractor",
+     "titulo": "Las edades las lee la IA",
+     "codigo": false,
+     "pre": false,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "reparto_al_sumarse_alguien",
+     "titulo": "Alguien que se suma a un grupo ya sabido no se pierde",
+     "codigo": false,
+     "pre": false,
      "sin_efecto": false
     }
    ],
@@ -977,6 +1005,13 @@
     {
      "nombre": "contexto_tras_el_pase",
      "titulo": "Tras pasar el caso a una persona, el bot no improvisa sobre él",
+     "codigo": false,
+     "pre": false,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "notas_rag_desde_estado",
+     "titulo": "Las reglas del RAG sobre los acompañantes salen de lo que dijo el cliente",
      "codigo": false,
      "pre": false,
      "sin_efecto": false
@@ -2274,6 +2309,32 @@
    "sin_efecto": null
   },
   {
+   "nombre": "duracion_por_extractor",
+   "area": "Reserva",
+   "titulo": "Los días de buceo y de estancia los lee la IA",
+   "texto": "Cuántos días quiere bucear el cliente y cuántos días estará los lee el extractor (la IA que comprueba lo que el cliente dijo de verdad), por separado. Si dice cuántos días quiere bucear, manda eso («estaré del 5 al 9, pero solo quiero bucear un día» = un día); si solo dice cuánto estará, se recomienda con la estancia (decisión de Gadea). Antes lo leía una lista de palabras que se equivocaba: «estoy embarazada de 4 meses» o «llevo 3 días esperando respuesta» eran «varios días», y «bucear el 18 y el 19» no se leía. Un paquete de varios días del catálogo («el paquete de 5 inmersiones») sigue contando como varios días. Si la IA no contesta, lo de siempre.",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
+   "usado_por": [
+    "b_extraction"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "edades_por_extractor",
+   "area": "Reserva",
+   "titulo": "Las edades las lee la IA",
+   "texto": "Las edades de las personas que van las lee el extractor, con la frase del cliente que las dice; la lista de palabras solo comprueba que la cifra está en esa frase. Antes «el pequeño tiene 6 y el grande 10» no se leía y «soy residente hace 3 años» podía pasar por una edad; y otro LLM las completaba leyendo toda la conversación (podía suponerlas). Si la IA no contesta, lo de siempre.",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
+   "usado_por": [
+    "b_extraction"
+   ],
+   "sin_efecto": null
+  },
+  {
    "nombre": "escalado_solo_emergencias",
    "area": "Enrutador",
    "titulo": "Solo las emergencias pasan a un asesor por palabra clave",
@@ -2881,6 +2942,19 @@
    "sin_efecto": null
   },
   {
+   "nombre": "notas_rag_desde_estado",
+   "area": "Preguntas",
+   "titulo": "Las reglas del RAG sobre los acompañantes salen de lo que dijo el cliente",
+   "texto": "Las dos reglas que se le dan al RAG cuando otra persona del grupo no está certificada («el minicurso no certifica») o lo está pero lleva tiempo sin bucear («sigue siendo buzo certificado; puede necesitar el refresher») salen de lo que la IA leyó del cliente, con su frase. Antes las ponía una lista de palabras que buscaba en todo lo que escribió el cliente («no ha buceado» de cualquier cosa contaba). Si la IA no leyó algún mensaje, la lista de siempre.",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
+   "usado_por": [
+    "r_entrada"
+   ],
+   "sin_efecto": null
+  },
+  {
    "nombre": "openrouter_permitir_entrenamiento",
    "area": "Solo pruebas",
    "titulo": "Permitir proveedores que entrenan",
@@ -2927,6 +3001,19 @@
    "fijado_en_pre": true,
    "usado_por": [
     "router"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "plan_elegido_por_extractor",
+   "area": "Reserva",
+   "titulo": "Aceptar el paquete que propone Coral lo elige",
+   "texto": "Si Coral acaba de proponer un paquete y el cliente lo acepta con sus palabras («perfecto, ese me sirve», «vamos con ese»), queda elegido y sigue la reserva (decisión de Gadea). Antes solo valía la frase «quiero este paquete». Preguntar por el paquete (su precio, qué incluye) no es elegirlo. Si la IA no contesta, la frase de siempre.",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
+   "usado_por": [
+    "b_routing"
    ],
    "sin_efecto": null
   },
@@ -3277,6 +3364,19 @@
    "fijado_en_pre": true,
    "usado_por": [
     "router"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "reparto_al_sumarse_alguien",
+   "area": "Reserva",
+   "titulo": "Alguien que se suma a un grupo ya sabido no se pierde",
+   "texto": "Si ya se sabe el grupo (por ejemplo, 2 buzos certificados) y el cliente dice que viene alguien más («mi hermano también viene, él quiere hacer snorkel»), la IA ve a los que ya iban y devuelve el grupo nuevo (3: 2 buceo y 1 snorkel). Antes la persona se podía perder: la IA no sabía a quién sumarla y un atajo daba el grupo por completo. Ahora ese atajo deja pasar el turno cuando Jev está seguro de que entra alguien. Si se suma alguien que hace lo mismo que el grupo, Coral confirma el total una vez.",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
+   "usado_por": [
+    "b_extraction"
    ],
    "sin_efecto": null
   },
