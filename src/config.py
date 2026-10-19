@@ -149,8 +149,8 @@ class Settings(BaseSettings):
     idioma_por_jev: bool = True  # el cambio de idioma a mitad de conversación
     # ex-9b (19-oct): el aviso "el pago no confirma la reserva al momento" sale también cuando la pregunta va de CÓMO
     # reservar (`tambien` en avisos.json). El RAG decía "al pagar quedas confirmado" (ronda ex9b-2). APAGADO.
-    aviso_pago_al_reservar: bool = False
-    precio_por_jev: bool = False  # "origen antes del precio": ¿pide el precio de NUESTRAS actividades? (Jev; regex si calla)
+    aviso_pago_al_reservar: bool = True  # RONDA ex9b-3 (19-oct): encendido para medir; revert = False
+    precio_por_jev: bool = True  # RONDA ex9b-3; "origen antes del precio": ¿pide el precio de NUESTRAS actividades? (Jev; regex si calla)
     deliberacion_por_jev: bool = True  # "no sé si buceo o snorkel": `comparing_options` de la IA, sin la frase de duda
     # ex-9b paso 3 (19-oct): el regex deja de ser la "pista" de los campos del extractor (actividad, origen,
     # certificación, grupo y reparto, nacionalidad, última inmersión); se quedan la isla y el hotel del catálogo. Si el
@@ -159,7 +159,7 @@ class Settings(BaseSettings):
     # palabras clave no corre y las puertas de Jev sobre el regex solo miran las edades. La actividad principal de un
     # grupo repartido ya sale del reparto sin flag (misma rama). nucleo/extraction._understand y nucleo/extractor.
     # APAGADO hasta medirlo.
-    extractor_sin_pista: bool = False
+    extractor_sin_pista: bool = True  # RONDA ex9b-3 (19-oct): encendido para medir; revert = False
     # ex-9b paso 4 (19-oct): la respuesta corta a la pregunta pendiente del origen, del hotel y de cuántos son la lee la
     # IA, también con 12 caracteres o menos: el origen, la respuesta de Jev a esa pregunta (`pending_answer`, que ya dice
     # que delegar = Cartagena) y si no, el extractor y la red anti-bucle; el hotel y el total, el extractor (`hotel`,
@@ -167,11 +167,11 @@ class Settings(BaseSettings):
     # Los botones y una cifra sola se leen sin IA (formato). El regex de siempre (`_departure_place`, "da igual",
     # `_HOTEL_UNKNOWN_RE`, `_quantity_answer`, `_COURSE_SOLO_RE`) solo si la IA calla (Jev no contestó y el extractor
     # falló). nucleo/routing._apply_short_answer y nucleo/extraction. APAGADO hasta medirlo.
-    respuesta_corta_por_ia: bool = False
+    respuesta_corta_por_ia: bool = True  # RONDA ex9b-3 (19-oct): encendido para medir; revert = False
     # ex-9b paso 4: "me llamo X" (`_NAME_TRIGGER_SIN_SOY_RE`) iba antes que el extractor y ganaba; con el flag, si la regex
     # lo ve, manda el `nombre` del extractor (con `nombre_por_extractor`) y la regex solo si el extractor falla.
     # nucleo/setup._nombre_del_mensaje. APAGADO hasta medirlo.
-    nombre_solo_por_extractor: bool = False
+    nombre_solo_por_extractor: bool = True  # RONDA ex9b-3 (19-oct): encendido para medir; revert = False
     # ex-9b paso 4: los días cerrados (25 de diciembre y 1 de enero) los contesta el RAG, que lleva siempre las políticas
     # (`rag_politicas_en_contexto`), en vez del texto fijo que dispara `_CLOSED_DATE_RE` y se come el resto del mensaje.
     # Replay del golden: 0 cambios (ningún diálogo visible los nombra); pero sin el texto fijo, "quiero bucear el 25 de

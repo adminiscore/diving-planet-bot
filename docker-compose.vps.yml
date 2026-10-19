@@ -152,6 +152,15 @@ services:
       IDENTIDAD_IA_POR_JEV: "true"
       IDIOMA_POR_JEV: "true"
       DELIBERACION_POR_JEV: "true"
+      # RONDA ex9b-3 (19-oct), EN PRUEBA: paso 3 (el regex deja de ser pista del extractor; si el extractor falla se
+      # pregunta y al 2.º fallo seguido pasa a un asesor), paso 4 (respuestas cortas e "me llamo X" por la IA; banco 25/31
+      # → 30/31), "pide precio" por Jev (13/16 → 16/16) y el aviso de que el pago no confirma al momento también al
+      # explicar cómo reservar. Revert = quitar estas líneas y "False" en config.py.
+      EXTRACTOR_SIN_PISTA: "true"
+      RESPUESTA_CORTA_POR_IA: "true"
+      NOMBRE_SOLO_POR_EXTRACTOR: "true"
+      PRECIO_POR_JEV: "true"
+      AVISO_PAGO_AL_RESERVAR: "true"
       # CERTIFICADO_SOLO_SI_LO_DICE con «buceé hace poco» = certificado (decisión de Gadea). PROMOCIONADO (HISTORY
       # 0.31.61: mod-H2 97,0 % igual que limpieza-3; reserva-solo-link ya no ofrece el minicurso). Revert = quitar estas líneas.
       CERTIFICADO_SOLO_SI_LO_DICE: "true"

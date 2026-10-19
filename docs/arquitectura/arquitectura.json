@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-19T13:36:42+00:00",
-  "commit": "b4ffd51",
+  "generado": "2026-10-19T13:37:22+00:00",
+  "commit": "9ae3e19",
   "rama": "feature/pre_gadea"
  },
  "vistas": {
@@ -520,8 +520,8 @@
     {
      "nombre": "nombre_solo_por_extractor",
      "titulo": "«Me llamo…» tampoco gana a la IA",
-     "codigo": false,
-     "pre": false,
+     "codigo": true,
+     "pre": true,
      "sin_efecto": false
     }
    ],
@@ -577,8 +577,8 @@
     {
      "nombre": "respuesta_corta_por_ia",
      "titulo": "La respuesta corta a la pregunta del bot la lee la IA",
-     "codigo": false,
-     "pre": false,
+     "codigo": true,
+     "pre": true,
      "sin_efecto": false
     }
    ],
@@ -681,8 +681,8 @@
     {
      "nombre": "extractor_sin_pista",
      "titulo": "Los datos del cliente los lee solo la IA",
-     "codigo": false,
-     "pre": false,
+     "codigo": true,
+     "pre": true,
      "sin_efecto": false
     }
    ],
@@ -874,8 +874,8 @@
     {
      "nombre": "precio_por_jev",
      "titulo": "Jev decide si piden el precio de una actividad",
-     "codigo": false,
-     "pre": false,
+     "codigo": true,
+     "pre": true,
      "sin_efecto": false
     },
     {
@@ -2061,9 +2061,9 @@
    "area": "Preguntas",
    "titulo": "Al explicar cómo reservar, avisa de que el pago no confirma al momento",
    "texto": "Cuando el cliente pregunta cómo reservar, Coral puede añadir el aviso de que el pago se registra al momento y el equipo lo revisa poco después para confirmar la reserva. Antes ese aviso solo salía si se hablaba de pagos, y al explicar cómo reservar Coral decía «al pagar quedas confirmado», que no es así (decisión de Gadea).",
-   "codigo": false,
-   "pre": false,
-   "fijado_en_pre": false,
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
    "usado_por": [],
    "sin_efecto": null
   },
@@ -2354,9 +2354,9 @@
    "area": "Reserva",
    "titulo": "Los datos del cliente los lee solo la IA",
    "texto": "La actividad, desde dónde sale, si está certificado, cuántos son y cómo se reparten, la nacionalidad y la última inmersión los lee solo el extractor (la IA que comprueba lo que el cliente dijo de verdad). Hoy, si esa IA falla, Coral los adivina con listas de palabras (que se equivocan: «hola quiero bucear con mi amigo» pasa por elegir el buceo para certificados); con este interruptor los pregunta (decisión de Gadea); si la IA vuelve a fallar en el turno siguiente, Coral dice que tiene un problema técnico y pasa a un asesor, en vez de repetir la pregunta. A quien empieza se le sigue recomendando el minicurso, pero porque la IA lee que quiere bucear y no está certificado, no por las palabras. El hotel y la isla del catálogo se siguen reconociendo como hoy.",
-   "codigo": false,
-   "pre": false,
-   "fijado_en_pre": false,
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
    "usado_por": [
     "b_extraction"
    ],
@@ -2859,9 +2859,9 @@
    "area": "Reserva",
    "titulo": "«Me llamo…» tampoco gana a la IA",
    "texto": "El nombre de quien escribe lo decide siempre el extractor, también cuando el mensaje dice «me llamo» o «mi nombre es»: antes esa frase iba por delante y ganaba, y «me llamo mucho la atención el precio» saludaba «¡Hola, Mucho!». Si la IA no contesta, la frase de siempre.",
-   "codigo": false,
-   "pre": false,
-   "fijado_en_pre": false,
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
    "usado_por": [
     "b_setup"
    ],
@@ -2959,9 +2959,9 @@
    "area": "Preguntas",
    "titulo": "Jev decide si piden el precio de una actividad",
    "texto": "Antes de dar un precio sin saber desde dónde sale el cliente, Coral le pregunta el origen. Para saber si el cliente pide el precio de una actividad (y no el de un hotel o un taxi), ahora manda Jev; antes bastaba con que el mensaje dijera «hotel» en cualquier parte («¿cuánto me sale el plan de 2 inmersiones? me quedo en el hotel Caribe») para cotizar sin preguntar el origen.",
-   "codigo": false,
-   "pre": false,
-   "fijado_en_pre": false,
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
    "usado_por": [
     "b_slotfill_close"
    ],
@@ -3324,9 +3324,9 @@
    "area": "Reserva",
    "titulo": "La respuesta corta a la pregunta del bot la lee la IA",
    "texto": "Cuando el bot acaba de preguntar desde dónde sale el cliente, en qué hotel se aloja o cuántos son, la respuesta corta la lee la IA (la respuesta de Jev a esa pregunta y el extractor), también si tiene pocas letras; las listas de palabras solo cuentan si la IA no contesta. Antes «no tengo idea, el Hilton creo» guardaba el hotel «por confirmar» y perdía el Hilton, y una frase cualquiera («ok perfecto») se guardaba como nombre del hotel. «Da igual» o «tú decides» siguen siendo salir desde Cartagena, y un hotel que no se sabe sigue «por confirmar». Los botones y una cifra sola («4») se leen como siempre. «Voy solo» = un grupo de 1, según la IA.",
-   "codigo": false,
-   "pre": false,
-   "fijado_en_pre": false,
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
    "usado_por": [
     "b_routing"
    ],

@@ -140,10 +140,13 @@ def test_safety_question_knows_group_size_because_qty_comes_first():
 
 
 @pytest.mark.asyncio
-async def test_solo_signal_infers_one_person_for_diving_too(extractor_dice):
+async def test_solo_signal_infers_one_person_for_diving_too(extractor_dice, monkeypatch):
     """Decisión owner (2026-07-22): la señal explícita "voy solo" deduce 1
     persona en CUALQUIER actividad, no solo en cursos PADI (antes solo padi_*).
     Sin señal explícita se sigue preguntando (ver el test de abajo)."""
+    # ex-9b paso 4: prueba el camino del regex de la respuesta corta; con `respuesta_corta_por_ia` la lee la IA
+    # (test_ex9b_paso4.py).
+    monkeypatch.setattr(core.settings, "respuesta_corta_por_ia", False)
     # Sin group_size en lo que lee el extractor: lo que se prueba es la regla de "voy solo" de `_understand`.
     extractor_dice({"soy buzo certificado y quiero bucear, voy solo, desde cartagena": {**BUZO, **CARTAGENA}})
     state = make_state("es")
@@ -153,7 +156,10 @@ async def test_solo_signal_infers_one_person_for_diving_too(extractor_dice):
 
 
 @pytest.mark.asyncio
-async def test_solo_signal_infers_one_person_for_snorkel(extractor_dice):
+async def test_solo_signal_infers_one_person_for_snorkel(extractor_dice, monkeypatch):
+    # ex-9b paso 4: prueba el camino del regex de la respuesta corta; con `respuesta_corta_por_ia` la lee la IA
+    # (test_ex9b_paso4.py).
+    monkeypatch.setattr(core.settings, "respuesta_corta_por_ia", False)
     extractor_dice({"quiero hacer snorkel, voy sola, desde cartagena": {"activity": "snorkel", **CARTAGENA}})
     state = make_state("es")
     await route_message(state, "quiero hacer snorkel, voy sola, desde cartagena")
@@ -226,7 +232,8 @@ SOFIA = "hola soy Sofia, ya soy certificada, quiero unas inmersiones desde carta
 
 @pytest.mark.asyncio
 async def test_sofia_full_flow_spanish(extractor_dice):
-    extractor_dice({SOFIA: {**BUZO, **CARTAGENA, "nombre": "Sofia"}})
+    # ex-9b paso 4: "solo yo" a "¿cuántos sois?" lo lee el extractor (group_size 1) con `respuesta_corta_por_ia`.
+    extractor_dice({SOFIA: {**BUZO, **CARTAGENA, "nombre": "Sofia"}, "solo yo": {"group_size": 1}})
     state = make_state("es")
     resp = await route_message(state, SOFIA)
     # ex-9b paso 3: "ya soy certificada" no dice cuántos van (el regex deducía 1 de la primera persona; el extractor no,
@@ -357,8 +364,11 @@ async def test_short_answer_resolves_pending_location(extractor_dice):
 
 
 @pytest.mark.asyncio
-async def test_short_answer_island_then_hotel(extractor_dice):
+async def test_short_answer_island_then_hotel(extractor_dice, monkeypatch):
     # Las respuestas cortas las resuelve el núcleo, no el extractor: lo que se prueba.
+    # ex-9b paso 4: prueba el camino del regex de la respuesta corta; con `respuesta_corta_por_ia` la lee la IA
+    # (test_ex9b_paso4.py).
+    monkeypatch.setattr(core.settings, "respuesta_corta_por_ia", False)
     extractor_dice({"quiero bucear, somos 2 certificados": {**BUZO, "group_size": 2}})
     state = make_state("es")
     await route_message(state, "quiero bucear, somos 2 certificados")
@@ -391,7 +401,8 @@ async def test_multi_slot_message_absorbed_in_one_turn(extractor_dice):
 @pytest.mark.asyncio
 async def test_question_mid_flow_answers_and_reasks_pending_slot(monkeypatch, extractor_dice):
     monkeypatch.setattr(settings, "aplazar_pregunta_sin_respuesta", False)  # camino de antes de EX-FLUJO-1
-    extractor_dice({"quiero bucear, soy certificado, desde cartagena": {**BUZO, **CARTAGENA}})
+    extractor_dice({"quiero bucear, soy certificado, desde cartagena": {**BUZO, **CARTAGENA},
+                    "solo yo": {"group_size": 1}})  # ex-9b paso 4: la respuesta corta la lee el extractor
     state = make_state("es")
     await route_message(state, "quiero bucear, soy certificado, desde cartagena")
     # ex-9b paso 3: "soy certificado" no dice cuántos van (el regex deducía 1 de la primera persona): se pregunta.

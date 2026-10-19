@@ -97,7 +97,8 @@ async def _cerrada(extractor_dice):
     # respuesta corta a la cantidad, que resuelve el núcleo.
     extractor_dice({"quiero hacer el curso open water, estoy en cartagena":
                     {"activity": "padi_open_water", "location": "cartagena"},
-                    "no soy colombiano": {"is_colombian": False}})
+                    "no soy colombiano": {"is_colombian": False},
+                    "para mi": {"group_size": 1}})  # ex-9b paso 4: con `respuesta_corta_por_ia` la lee el extractor
     st = _state()
     for m in ("quiero hacer el curso open water, estoy en cartagena", "para mi", "no soy colombiano"):
         await route_message(st, m)
