@@ -59,7 +59,28 @@ integrar la rama del otro y suite en verde, porque en PRE gana el último; (3) *
 despliegue reinicia el contenedor y mata la medida del otro (avisar en el registro de Plan Coral con la hora de fin).
 Las doce normas, con su porqué, están en el documento.
 
-### ▶️ RETOMAR AQUÍ — 19-oct, 14:40 (Gadea con Claude; Álvaro parado): ex-9b en marcha, ronda ex9b-2 midiendo
+### ▶️ RETOMAR AQUÍ — 20-oct, 00:20 (Gadea con Claude, en autonomía): ex-9b TERMINADO; G9 lanzado (autorizado por Gadea)
+
+**ex-9b (las expresiones regulares que "entendían" al cliente) TERMINADO y en PRE (835d318, pre_gadea).** HISTORY
+0.31.62-0.31.68. Rondas core del día: ex9b-1 96,1 % → ex9b-2 97,0 % → ex9b-3 97,4 % → (ex9b-4/5/6, el paso 6 mal
+metido o dentro del ruido) → ex9b-7 96,1 % (la base sin el paso 6: las rondas varían ±3 diálogos) → **ex9b-8 98,7 %
+29/32**, la mejor de la serie, 0 regresiones. Decisiones de Gadea del 19-oct: los 6 pasos antes de G9; si el extractor
+falla, se PREGUNTA (al 2.º fallo seguido, pase a un asesor); duración = mandan los días de BUCEO; plan elegido = aceptar
+lo que Coral propuso (apagado: tomaba la descripción del Open Water por un paquete); los campos del paso 6 en una
+SEGUNDA llamada al extractor (todo junto no cabía en Haiku). Limpieza de los flags promocionados integrada (−447 líneas).
+- **G9** lanzado por la noche (Gadea: "cuando solo quede G9 lánzalo; cuando termine, analiza, sube todo y apaga el
+  PC"): `run_synthetic_pre --sample golden --golden docs/robustness/golden-set/examen-sintetico-g9.json` y
+  `judge_golden_set --golden …`. El análisis va en HISTORY 0.31.69 y aquí abajo. NADIE abre el examen para ajustar el
+  bot (sus fallos se arreglan por causa con frases propias, nunca con las suyas).
+- **Para Álvaro a la vuelta:** el núcleo cambió mucho (ver HISTORY 0.31.62-0.31.68): `supervisor.regex_decide` (el
+  regex solo si la IA calla), preguntas nuevas de Jev (caso nuevo, ¿eres un bot?, idioma, pide precio), sin pista del
+  regex en el extractor, respuestas cortas por la IA, el paso 6 en `extractor_turno` (llamada aparte), quien se suma al
+  grupo por `_add_or_ask_companion`. Las tareas suyas que llevé están en el Plan Coral.
+- **Lecciones** (memoria): lanzar rondas con `set -o pipefail` y `check_deploy --sha <commit subido>`; como mucho 3
+  procesos pesados a la vez en el portátil; un esquema estricto grande no cabe en Haiku ("compiled grammar is too
+  large", falla SIEMPRE y contesta el respaldo); las rondas core varían ±3 diálogos con el mismo código.
+
+### (anterior) RETOMAR AQUÍ — 19-oct, 14:40 (Gadea con Claude; Álvaro parado): ex-9b en marcha, ronda ex9b-2 midiendo
 
 **Decisión de Gadea (19-oct): ex-9 parte 2 (ex-9b) ENTERA antes de G9** — "quiero hacer g9 con todo lo que es código y
 fallos solucionables terminados". Plan de 6 pasos en `docs/robustness/regex/estudio-ex9-regex.md`; bancos y scripts en
