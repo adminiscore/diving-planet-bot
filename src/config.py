@@ -248,25 +248,6 @@ class Settings(BaseSettings):
     # todas. Subirlo por entorno si algun dia hay una llamada legitimamente larga.
     llm_timeout_seconds: float = 30.0
 
-    # l1-4 (Fase L1): las notas del asesor se calculan EN PARALELO, no antes.
-    #
-    # `_maybe_capture_notes` cuesta ~0,75 s de media (nodo `setup` en Langfuse:
-    # p50 0,748 / p95 1,266 sobre 90 turnos, foto 2026-09-23-core-l11-B1) de un
-    # turno de ~4,2 s, y en ese paso no hay ninguna otra llamada al LLM: es la
-    # ganancia entera de l1-4.
-    #
-    # Por que en paralelo y no despues de responder (propuesta de Gadea, mejor
-    # que la primera version): las notas ALIMENTAN `_build_extra_context`, el
-    # contexto que recibe el RAG. Si se retrasan, la respuesta de ESE turno se
-    # queda sin la nota de ESE mensaje -> cambia la conducta. Lanzandolas al
-    # principio y esperandolas justo antes de quien las usa, la respuesta sigue
-    # viendo la nota y el tiempo queda escondido detras del router (1,4 s) y la
-    # extraccion (1,0 s), que corren mientras tanto.
-    #
-    # El resumen (`maybe_update_summary`) se queda como esta: solo recalcula cada
-    # N mensajes, asi que casi nunca cuesta nada.
-    notes_in_parallel: bool = True
-
     # U3 (u3-1, paso 1): las 9 señales del router con Jev (TypeSafe, vía el Decisions API
     # de OpenRouter) en vez de con el LLM. Evaluado en l2-4 (2026-09-24): mejor que el
     # router LLM en la batería (32/37 frente a 30/37, seguridad 11/11 frente a 8/11) y
@@ -281,30 +262,6 @@ class Settings(BaseSettings):
     # p95 medido ~0,37 s; en l2-4 1 de ~600 llamadas tardó >30 s (API en alpha).
     jev_timeout_seconds: float = 2.0
 
-    # u3-1 paso 3 (24-sep): el acuse cálido (`compose_acknowledgement`) se lanza en
-    # paralelo al empezar el turno y se espera en el cierre, en vez de ir DESPUÉS de la
-    # extracción (en el 48 % de los turnos iban en serie: 0,85 s + 1,0 s). Si la pregunta
-    # pendiente es de sí/no (seguridad, certificación, nacionalidad, refresher), sigue en
-    # serie: su resumen necesita el valor recién extraído. ENCENDIDO por defecto (= PRE, paso 10).
-    ack_in_parallel: bool = True
-
-    # u3-4 (24-sep): "contesta y sigue". Un mensaje que trae una pregunta (regex, "?" o
-    # Jev >= 0,7 en la MISMA llamada del router) ya no se trata como pregunta O como dato:
-    # el RAG la contesta en paralelo, la extracción sigue su camino normal y la respuesta
-    # lleva las dos cosas (primero la respuesta, luego lo que toque de la reserva). Ver
-    # docs/robustness/u3-4-diseno.md. ENCENDIDO por defecto (= PRE, paso 10).
-    answer_and_continue: bool = True
-
-    # u3-5 (27-sep): correcciones de datos ya guardados ("¿lo cambio?"). Paso 1, deterministas:
-    # (a) no se propone un cambio que se lee igual para el cliente; (b) la confirmación se pregunta
-    # UNA vez: si el cliente no contesta sí/no, se queda lo guardado y esa propuesta no se repite.
-    # Ronda A del paso 3: de 12 "¿lo cambio?", 6 eran repeticiones y 2 "X -> X". ENCENDIDO por defecto (= PRE, paso 10).
-    corrections_v2: bool = True
-    # u3-5 (27-sep, decision de Gadea): el minicurso DEDUCIDO ("primera vez") se recomienda y lo confirma
-    # el cliente. Separado de `corrections_v2` tras la ronda B del 27-sep (su unica regresion propia:
-    # "MINI CURSOS" en plural no contaba como nombrarlo, y con acompanante la recomendacion no se llegaba
-    # a mostrar). ENCENDIDO por defecto (= PRE, paso 10).
-    recommend_inferred_minicourse: bool = True
     # CAL-C1 (16-oct): quien ya dijo que quiere bucear no recibe el menú de actividades; sin certificación se le
     # recomienda el minicurso y, sin saberla, se le pregunta (regla de Gadea). APAGADO hasta medirlo.
     actividad_por_lo_sabido: bool = True  # PROMOCIONADO 17-oct (CAL-C, ronda core calc-A/B; decisión de Álvaro)
@@ -727,11 +684,6 @@ class Settings(BaseSettings):
     # docs/robustness/rag-3/README.md.
     rag_contesta_lo_que_sabe: bool = False
 
-    # Paso 6 (27-sep): respuestas fijas y salida deterministas de S4. s4-14: si piden un telefono se
-    # da el WhatsApp oficial (decision de Gadea; antes "no manejo un numero"); s4-15: "¿eres un bot?"
-    # -> dice que es la asistente virtual; s4-16: la queja se pasa a staff con una disculpa. ENCENDIDO por defecto (= PRE, paso 10).
-    s4_fixes: bool = True
-
     # --- Observabilidad: Langfuse (sustituye a LangSmith, cuota Developer
     # agotada; ver docs/robustness/progress-log.md "Tarea 8"). Sin claves, el
     # tracing queda apagado y `langfuse` ni se importa (3.14-safe). Claves por
@@ -807,44 +759,11 @@ class Settings(BaseSettings):
     # used to gather Fase 0 agreement data. Not a per-field cutover switch (that
     # comes later, per-domain, once eval-set thresholds are met — see the plan).
     llm_extraction_shadow_mode: bool = False
-    # --- Robustness Fase 1 (docs/robustness/plan.md §4, dominio certificación) ---
-    # When True, the LLM extractor's result for `is_certified`/`activity` is
-    # actually APPLIED (not just logged) when the regex left them unresolved —
-    # the first real per-domain cutover. Eval-set agreement measured at 100%
-    # (docs/robustness/progress-log.md, 2026-07-21) before enabling this. Off
-    # by default everywhere; the regex stays the primary/fast path regardless —
-    # this only fills gaps, never overrides a regex-resolved value.
-    llm_extraction_cutover_certification: bool = True
-    # --- Robustness Fase 2 (docs/robustness/plan.md §4, dominio grupo/cantidad/edades) ---
-    # When True, the LLM extractor's result for `group_size`/`group_allocation`/
-    # `ages` is actually APPLIED (not just logged) when the regex left them
-    # unresolved — the second per-domain cutover. Independent from the Fase 1
-    # certification flag: each domain has its own kill switch (plan.md principle
-    # #7). Off by default everywhere; the regex stays the primary/fast path —
-    # this only fills gaps, never overrides a regex-resolved value.
-    llm_extraction_cutover_group: bool = True
-    # --- Robustness Fase 3 (docs/robustness/plan.md §4, dominio ubicación) ---
-    # When True, the LLM extractor's result for `location`/`island`/`hotel` is
-    # actually APPLIED (not just logged) when the regex left them unresolved —
-    # the third per-domain cutover. `location` (cartagena|island) drives the
-    # logistics/pricing routing and is the high-value field here (the LLM infers
-    # it from neighborhoods/landmarks the regex can't enumerate, e.g.
-    # "bocagrande"→cartagena); `island`/`hotel` are display/context only and
-    # degrade gracefully. Independent kill switch (plan.md #7). Off by default
-    # everywhere; the regex stays the primary/fast path — gaps only, never
-    # overrides a regex-resolved value.
-    llm_extraction_cutover_location: bool = True
-    # --- Robustness Fase 8 (docs/robustness/review-2026-07-21.md H5, dominio
-    # perfil/logística) ---
-    # When True, the LLM extractor's result for `is_colombian`/`duration`/
-    # `last_dive_over_2_years` is APPLIED when the regex left them unresolved.
-    # `is_colombian` drives currency + the Colombian discount; `duration`
-    # (single/multi day) and `last_dive_over_2_years` (refresher signal) tune the
-    # package recommendation. The LLM infers these from phrasings the regex can't
-    # enumerate ("soy paisa"→colombiano, "toda la semana"→multi_day, "hace como 4
-    # años que no buceo"→>2y). Independent kill switch (plan.md #7). Off by
-    # default everywhere; regex stays primary — gaps only, never overrides.
-    llm_extraction_cutover_logistics: bool = True
+    # --- Robustness Fases 1, 2, 3 y 8 (docs/robustness/plan.md §4): el cutover por dominio del extractor LLM
+    # (certificación, grupo/cantidad/edades, ubicación y perfil/logística) rellena los huecos que deja el regex, sin
+    # pisar nunca lo que el regex resolvió. Cada dominio tenía su flag `llm_extraction_cutover_*`, los cuatro en True;
+    # s4-25 los quitó. OJO: su función (`supervisor._maybe_apply_llm_extraction_cutover`) no la llama nadie desde el
+    # 28-jul (308488d, se retiró el orquestador antiguo): no tenían efecto en el camino real.
     # --- Robustness Fase 9 (docs/multi-agent-refactor-plan.md, hallazgo en vivo
     # conversacion real "purple-sun-590", 2026-09-03) ---
     # A diferencia de los 4 dominios de arriba (que solo rellenan huecos), este

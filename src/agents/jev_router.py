@@ -279,7 +279,7 @@ _ASKS_RECALL_Q = {
     ),
 }
 
-# s4-20 (paso 6, flag `s4_fixes`, 27-sep): lo que solo puede resolver una PERSONA del equipo porque el
+# s4-20 (paso 6, 27-sep): lo que solo puede resolver una PERSONA del equipo porque el
 # bot no ve reservas, pagos ni correos, o porque es trato de empresa: una reserva o un pago YA hechos
 # ("ya hice una reserva, ¿la recibieron?", "¿está todo ok con mis reservas?"), una agencia o empresa que
 # coordina tarifas, o que el staff apruebe o revise algo (logs de PADI, un correo enviado). Hoy seguia
@@ -299,7 +299,7 @@ _NEEDS_STAFF_Q = {
     ),
 }
 
-# s4-6 (paso 6, flag `s4_fixes`): cambio de FECHA con la reserva aun en construccion. Decision del owner:
+# s4-6 (paso 6, 27-sep): cambio de FECHA con la reserva aun en construccion. Decision del owner:
 # sin reserva pagada, un cambio de fecha pasa a un asesor. La senal del router (`booking_change_topic`)
 # no vale aqui: confunde "hazlo para 3 dias" o "en realidad somos 4" con reprogramar, y por eso se
 # ignora mientras se arma el carrito. Esta pregunta es SOLO el dia. Calibrada con
@@ -537,17 +537,14 @@ def _questions_for_turn(pending_slot: str | None = None) -> dict:
     pending_q = pending_answer_question(pending_slot)
     if pending_q:
         q[PENDING_ANSWER] = pending_q
-    if settings.answer_and_continue:
-        q.update({ASKS_QUESTION: _ASKS_QUESTION_Q_V2 if settings.jev_pide_algo else _ASKS_QUESTION_Q,
-                  **_AFFIRMS_QUESTIONS})
-    if settings.corrections_v2:
-        q[CORRECTS] = _CORRECTS_Q
+    q.update({ASKS_QUESTION: _ASKS_QUESTION_Q_V2 if settings.jev_pide_algo else _ASKS_QUESTION_Q,
+              **_AFFIRMS_QUESTIONS})
+    q[CORRECTS] = _CORRECTS_Q
     q[ASKS_RECALL] = _ASKS_RECALL_Q
-    if settings.s4_fixes:
-        q[NEEDS_STAFF] = ({**_NEEDS_STAFF_Q,
-                           "instructions": f"{_NEEDS_STAFF_Q['instructions']} {_FUERA_DEL_SISTEMA}"}
-                          if settings.pase_si_pide_fuera_del_sistema else _NEEDS_STAFF_Q)
-        q[CHANGES_DATE] = _CHANGES_DATE_Q
+    q[NEEDS_STAFF] = ({**_NEEDS_STAFF_Q,
+                       "instructions": f"{_NEEDS_STAFF_Q['instructions']} {_FUERA_DEL_SISTEMA}"}
+                      if settings.pase_si_pide_fuera_del_sistema else _NEEDS_STAFF_Q)
+    q[CHANGES_DATE] = _CHANGES_DATE_Q
     q[COMPANION_JOINS] = _COMPANION_JOINS_Q
     if settings.jev_persona_ya_contada:
         q[ADDS_PERSON] = _ADDS_PERSON_Q
@@ -700,8 +697,8 @@ _TURN_SIGNALS = (
 async def detect_routing_signals_jev_full(
     message: str, *, lang: str = "es", pending_slot: str | None = None, history: list[dict] | None = None,
 ) -> tuple[dict | str | None, dict]:
-    """Como `detect_routing_signals_jev`, y además las señales de u3-4/u3-5 (solo con
-    `answer_and_continue`): `asks_question` y los `affirms_*`. Van en el segundo valor
+    """Como `detect_routing_signals_jev`, y además las señales de u3-4/u3-5:
+    `asks_question` y los `affirms_*`. Van en el segundo valor
     porque valen también cuando Jev DUDA en las señales del router: son otras preguntas
     y el router LLM no las contesta.
 

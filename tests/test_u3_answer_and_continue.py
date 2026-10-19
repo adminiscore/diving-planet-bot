@@ -1,7 +1,7 @@
-"""u3-4: "contesta y sigue" (flag `answer_and_continue`).
+"""u3-4: "contesta y sigue" (el flag `answer_and_continue` se quitó en s4-25: es lo de siempre).
 
 Lo que se fija aquí:
-1. el flag nace apagado y, apagado, Jev no recibe la pregunta nueva;
+1. Jev recibe la pregunta nueva;
 2. con "?" y un dato en el mismo mensaje: se contesta Y el dato se guarda (antes se
    perdía y se volvía a pedir);
    Los datos de un turno con pregunta los lee el LLM, no el regex (escalón 0: el regex
@@ -25,7 +25,7 @@ import pytest
 from src.agents import conversational_core as core
 from src.agents import escalation, jev_router, supervisor
 from src.agents.supervisor import route_message
-from src.config import Settings, settings
+from src.config import settings
 from src.flows.state import ConversationState
 
 
@@ -48,8 +48,6 @@ def _offline(monkeypatch):
     monkeypatch.setattr(core, "resolve_slot_answer", AsyncMock(return_value={}))
     monkeypatch.setattr(core, "extract_notes", AsyncMock(return_value=[]))
     monkeypatch.setattr(core, "compose_acknowledgement", AsyncMock(return_value=""))
-    monkeypatch.setattr(settings, "notes_in_parallel", False)
-    monkeypatch.setattr(settings, "ack_in_parallel", False)
     # Estos tests prueban el camino de u3-4 en el que la ubicación del REGEX se verifica con el LLM. Con ex-5
     # (`extraccion_llm_ubicacion`) la ubicación la decide el extractor (tests/test_ex5_ubicacion_extractor.py).
     # Igual con ex-8 (`extraccion_llm_actividad`): actividad y nacionalidad (tests/test_ex8_actividad_nacionalidad.py).
@@ -80,27 +78,8 @@ def rag(monkeypatch):
     return calls
 
 
-def test_el_flag_nace_encendido():
-    assert Settings().answer_and_continue is True  # promocionado: el valor por defecto es el de PRE
-
-
-def test_flag_apagado_jev_no_recibe_la_pregunta(monkeypatch):
-    monkeypatch.setattr(settings, "answer_and_continue", False)
-    assert jev_router.ASKS_QUESTION not in jev_router._questions_for_turn()
-    monkeypatch.setattr(settings, "answer_and_continue", True)
+def test_jev_recibe_la_pregunta():
     assert jev_router.ASKS_QUESTION in jev_router._questions_for_turn()
-
-
-async def test_flag_apagado_la_pregunta_con_dato_pierde_el_dato(monkeypatch, signals, rag):
-    """La conducta de hoy, para que el contraste del test siguiente quede escrito."""
-    monkeypatch.setattr(settings, "answer_and_continue", False)
-    st = _state()
-    await route_message(st, "queremos bucear, somos certificados, desde cartagena")
-    assert st.core_pending_slot == core.SLOT_QTY
-    resp = await route_message(st, "somos 3, ¿qué incluye el precio?")
-    assert "RESPUESTA_RAG" in resp
-    assert st.detected_group_size is None
-    assert st.core_pending_slot == core.SLOT_QTY
 
 
 def _llm_reads(monkeypatch, message, patch):
@@ -116,7 +95,6 @@ def _llm_reads(monkeypatch, message, patch):
 
 
 async def test_con_flag_y_jev_contesta_sin_interrogacion(monkeypatch, signals, rag):
-    monkeypatch.setattr(settings, "answer_and_continue", True)
     st = _state()
     await route_message(st, "queremos bucear, somos certificados")
     assert st.core_pending_slot == core.SLOT_LOCATION
@@ -136,7 +114,6 @@ async def test_en_una_pregunta_el_regex_no_escribe_datos(monkeypatch, signals, r
     fallaba. Lo que el test quiere fijar es la conducta CUANDO el LLM se abstiene, no si la
     API responde — ver `test_si_el_llm_no_contesta_no_se_tira_nada` para el otro caso.
     """
-    monkeypatch.setattr(settings, "answer_and_continue", True)
     _calls, box = verificador
     box["afirma"] = {}  # el LLM se abstiene: nadie afirma la ubicación
     st = _state()
@@ -150,7 +127,6 @@ async def test_en_una_pregunta_el_regex_no_escribe_datos(monkeypatch, signals, r
 async def test_sin_pregunta_no_se_lanza_nada(monkeypatch, signals, rag):
     # rag-5: sin la respuesta adelantada (se llamaría y se cancelaría); aquí se mira el enrutado.
     monkeypatch.setattr(core, "lanzar_rag_adelantado", lambda *a, **k: None)
-    monkeypatch.setattr(settings, "answer_and_continue", True)
     st = _state()
     await route_message(st, "queremos bucear, somos certificados")
     resp = await route_message(st, "desde cartagena")
@@ -158,7 +134,6 @@ async def test_sin_pregunta_no_se_lanza_nada(monkeypatch, signals, rag):
 
 
 async def test_recordar_sigue_con_su_respuesta_fija(monkeypatch, signals, rag):
-    monkeypatch.setattr(settings, "answer_and_continue", True)
     monkeypatch.setattr(core, "detect_special_signals", AsyncMock(return_value={"recall_field": "group_size"}))
     st = _state()
     await route_message(st, "quiero bucear, soy certificado, desde cartagena, somos 2")
@@ -169,7 +144,6 @@ async def test_recordar_sigue_con_su_respuesta_fija(monkeypatch, signals, rag):
 
 
 async def test_el_rag_ve_la_foto_del_historial(monkeypatch, rag):
-    monkeypatch.setattr(settings, "answer_and_continue", True)
     st = _state()
     st.history.append({"role": "user", "content": "¿qué incluye?"})
     core._maybe_launch_answer(st, "¿qué incluye?", {})
@@ -179,7 +153,6 @@ async def test_el_rag_ve_la_foto_del_historial(monkeypatch, rag):
 
 
 async def test_una_respuesta_sin_usar_se_cancela(monkeypatch):
-    monkeypatch.setattr(settings, "answer_and_continue", True)
     started = asyncio.Event()
 
     async def _slow(message, **_k):
@@ -221,7 +194,6 @@ def _mock_http(monkeypatch, answers):
 
 
 async def test_jev_marca_la_pregunta_en_las_senales(monkeypatch):
-    monkeypatch.setattr(settings, "answer_and_continue", True)
     monkeypatch.setattr(settings, "jev_router_enabled", True)
     sent = _mock_http(monkeypatch, {jev_router.ASKS_QUESTION: {"type": "noul", "noul": 0.92}})
     got = await escalation.detect_routing_signals("perfecto, como pago")
@@ -230,7 +202,6 @@ async def test_jev_marca_la_pregunta_en_las_senales(monkeypatch):
 
 
 async def test_por_debajo_de_07_no_es_pregunta(monkeypatch):
-    monkeypatch.setattr(settings, "answer_and_continue", True)
     monkeypatch.setattr(settings, "jev_router_enabled", True)
     _mock_http(monkeypatch, {jev_router.ASKS_QUESTION: {"type": "noul", "noul": 0.65}})
     # 27-sep: el "no" viaja como False (lo usa la respuesta corta tras el pase a una persona); para
@@ -239,7 +210,6 @@ async def test_por_debajo_de_07_no_es_pregunta(monkeypatch):
 
 
 async def test_si_jev_duda_en_el_router_la_pregunta_viaja_igual(monkeypatch):
-    monkeypatch.setattr(settings, "answer_and_continue", True)
     monkeypatch.setattr(settings, "jev_router_enabled", True)
     _mock_http(monkeypatch, {
         jev_router.ASKS_QUESTION: {"type": "noul", "noul": 0.9},
@@ -263,7 +233,6 @@ async def test_si_jev_duda_en_el_router_los_afirma_viajan_igual(monkeypatch):
     """26-sep: antes solo se rescataba `asks_question`; los `affirms_*` se perdían en los
     turnos en que Jev duda en el router ("Yo soy open y me gustaría salir un día…" perdió la
     actividad así en el replay, con Jev afirmándola a 0,93)."""
-    monkeypatch.setattr(settings, "answer_and_continue", True)
     monkeypatch.setattr(settings, "jev_router_enabled", True)
     _mock_http(monkeypatch, {
         jev_router.ASKS_QUESTION: {"type": "noul", "noul": 0.9},
@@ -315,7 +284,6 @@ def rag_sin_respuesta(monkeypatch):
 async def test_si_el_rag_no_sabe_no_se_pega_la_pregunta_de_la_reserva(
     monkeypatch, signals, rag_sin_respuesta
 ):
-    monkeypatch.setattr(settings, "answer_and_continue", True)
     st = _state()
     await route_message(st, "queremos bucear, somos certificados")
     assert st.core_pending_slot == core.SLOT_LOCATION
@@ -338,7 +306,6 @@ async def test_si_el_rag_si_sabe_la_pregunta_de_la_reserva_sigue_yendo_detras(
     """Control del test anterior: el arreglo 1 NO puede cargarse el "y sigue" de
     u3-4, que es justo lo que aporta. Sin él, el test de arriba pasaría aunque la
     pregunta de la reserva no se encadenara nunca."""
-    monkeypatch.setattr(settings, "answer_and_continue", True)
     st = _state()
     await route_message(st, "queremos bucear, somos certificados")
 
@@ -415,7 +382,6 @@ def no_rellena(monkeypatch):
 async def test_en_un_turno_con_pregunta_no_se_rellenan_huecos(
     monkeypatch, signals, rag, verificador, no_rellena
 ):
-    monkeypatch.setattr(settings, "answer_and_continue", True)
     st = _state()
     await route_message(st, "queremos bucear, somos certificados")
     no_rellena.clear()
@@ -437,7 +403,6 @@ async def test_lo_que_no_se_puede_verificar_no_se_guarda(monkeypatch, signals, r
     verificables = set(supervisor._VETO_FIELD_SPECS)
     assert "hotel" not in verificables and "island" not in verificables
 
-    monkeypatch.setattr(settings, "answer_and_continue", True)
     st = _state()
     await route_message(st, "queremos bucear, somos certificados")
 
@@ -452,12 +417,7 @@ async def test_lo_que_no_se_puede_verificar_no_se_guarda(monkeypatch, signals, r
 # llamada del router. Medida y por qué: `docs/robustness/u3-4-diseno.md`.
 
 
-def test_flag_apagado_jev_no_recibe_las_preguntas_de_afirmacion(monkeypatch):
-    monkeypatch.setattr(settings, "answer_and_continue", False)
-    preguntas = jev_router._questions_for_turn()
-    assert jev_router.AFFIRMS_LOCATION not in preguntas
-    assert jev_router.AFFIRMS_ACTIVITY not in preguntas
-    monkeypatch.setattr(settings, "answer_and_continue", True)
+def test_jev_recibe_las_preguntas_de_afirmacion():
     preguntas = jev_router._questions_for_turn()
     assert jev_router.AFFIRMS_LOCATION in preguntas
     assert jev_router.AFFIRMS_ACTIVITY in preguntas
@@ -487,10 +447,7 @@ def test_la_duda_en_la_afirmacion_no_manda_el_turno_al_router_llm():
     assert jev_router.uncertain_answers(medio) == []
 
 
-def test_con_el_flag_jev_recibe_tambien_la_pregunta_de_hipotesis(monkeypatch):
-    monkeypatch.setattr(settings, "answer_and_continue", False)
-    assert jev_router.ACTIVITY_HYPOTHESIS not in jev_router._questions_for_turn()
-    monkeypatch.setattr(settings, "answer_and_continue", True)
+def test_jev_recibe_tambien_la_pregunta_de_hipotesis():
     assert jev_router.ACTIVITY_HYPOTHESIS in jev_router._questions_for_turn()
 
 
@@ -527,11 +484,8 @@ def test_la_actividad_la_deciden_las_dos_preguntas():
 # ---------------------------------------------------------------------------
 
 
-def test_con_el_flag_jev_recibe_las_preguntas_de_u35(monkeypatch):
+def test_jev_recibe_las_preguntas_de_u35():
     nuevas = (jev_router.AFFIRMS_CERTIFICATION, jev_router.AFFIRMS_GROUP, jev_router.AFFIRMS_NATIONALITY)
-    monkeypatch.setattr(settings, "answer_and_continue", False)
-    assert not any(q in jev_router._questions_for_turn() for q in nuevas)
-    monkeypatch.setattr(settings, "answer_and_continue", True)
     assert all(q in jev_router._questions_for_turn() for q in nuevas)
     assert jev_router.uncertain_answers({q: {"type": "noul", "noul": 0.5} for q in nuevas}) == []
 
@@ -558,7 +512,6 @@ def _con_pregunta(st, afirma):
 async def test_el_lo_cambio_fantasma_se_descarta_si_jev_dice_que_no_lo_afirma(monkeypatch):
     """Ronda B2: "listo, como pago" -> la revisión de datos guardados dice "no certificado" ->
     "¿lo cambio?". Con Jev diciendo que el mensaje no habla de certificación, no se pregunta."""
-    monkeypatch.setattr(settings, "answer_and_continue", True)
     st = _con_pregunta(_state(), {"is_certified": False})
     st.is_certified = True
     intent = core._detector.detect("listo, como pago", st)
@@ -567,22 +520,10 @@ async def test_el_lo_cambio_fantasma_se_descarta_si_jev_dice_que_no_lo_afirma(mo
     assert st.is_certified is True
 
 
-async def test_con_el_flag_apagado_la_contradiccion_se_confirma_como_siempre(monkeypatch):
-    """Control: sin el flag no cambia nada aunque quedara una señal guardada."""
-    monkeypatch.setattr(settings, "answer_and_continue", False)
-    st = _state()
-    st.is_certified = True
-    st._answer_affirms = {"is_certified": False}
-    intent = core._detector.detect("ah no, no soy certificado", st)
-    core._route_contradictions(st, "ah no, no soy certificado", intent, {"is_certified": False})
-    assert st.pending_correction == {"is_certified": False}
-
-
 async def test_el_lo_cambio_fantasma_tambien_se_descarta_en_un_turno_de_cortesia(monkeypatch):
     """Replay del 26-sep: "Just completed the waivers. Thank you!" -> la revisión de datos
     guardados re-deducía "en las islas" del historial -> "¿lo cambio? salida desde Cartagena ->
     en las islas". No hay pregunta en el mensaje, pero Jev dice que no afirma ningún lugar."""
-    monkeypatch.setattr(settings, "answer_and_continue", True)
     st = _state()
     st.location = "cartagena"
     st._answer_affirms = {"location": False}
@@ -594,7 +535,6 @@ async def test_el_lo_cambio_fantasma_tambien_se_descarta_en_un_turno_de_cortesia
 
 async def test_la_senal_de_jev_se_renueva_en_cada_turno(monkeypatch, signals, rag):
     """Nunca se usa la señal de un turno anterior: sin señal en este turno, no hay nada."""
-    monkeypatch.setattr(settings, "answer_and_continue", True)
     st = _state()
     signals["value"] = {"affirms_location": False}
     await route_message(st, "queremos bucear, somos certificados")
@@ -605,7 +545,6 @@ async def test_la_senal_de_jev_se_renueva_en_cada_turno(monkeypatch, signals, ra
 
 
 async def test_si_jev_dice_que_si_lo_afirma_la_contradiccion_se_confirma(monkeypatch):
-    monkeypatch.setattr(settings, "answer_and_continue", True)
     st = _con_pregunta(_state(), {"is_certified": True})
     st.is_certified = True
     intent = core._detector.detect("no soy certificado, ¿qué me recomiendas?", st)
@@ -649,7 +588,6 @@ def relleno(monkeypatch):
 
 
 async def test_con_el_no_de_jev_no_se_rellena(monkeypatch, signals, rag, verificador, relleno):
-    monkeypatch.setattr(settings, "answer_and_continue", True)
     calls, box = relleno
     st = _state()
     await route_message(st, "hola")
@@ -665,7 +603,6 @@ async def test_con_el_no_de_jev_no_se_rellena(monkeypatch, signals, rag, verific
 # "¿me recuerdas…?" contestó 15 preguntas que no lo eran ("could you just confirm at what time and
 # where…?") y canceló su respuesta.
 async def test_si_jev_dice_que_no_pide_recordar_se_contesta_la_pregunta(monkeypatch, signals, rag):
-    monkeypatch.setattr(settings, "answer_and_continue", True)
     monkeypatch.setattr(core, "detect_special_signals", AsyncMock(return_value={"recall_field": "booking_recap"}))
     st = _state()
     await route_message(st, "quiero bucear, soy certificado, desde cartagena, somos 2")
@@ -675,7 +612,6 @@ async def test_si_jev_dice_que_no_pide_recordar_se_contesta_la_pregunta(monkeypa
 
 
 async def test_si_jev_dice_que_pide_recordar_sigue_la_respuesta_fija(monkeypatch, signals, rag):
-    monkeypatch.setattr(settings, "answer_and_continue", True)
     monkeypatch.setattr(core, "detect_special_signals", AsyncMock(return_value={"recall_field": "group_size"}))
     st = _state()
     await route_message(st, "quiero bucear, soy certificado, desde cartagena, somos 2")
@@ -708,7 +644,6 @@ def test_el_filtro_de_senales_solo_con_jev_seguro(monkeypatch):
 
 
 async def test_con_el_filtro_no_se_llama_al_llm_de_senales(monkeypatch, signals, rag):
-    monkeypatch.setattr(settings, "answer_and_continue", True)
     spy = AsyncMock(return_value={})
     monkeypatch.setattr(core, "detect_special_signals", spy)
     st = _state()

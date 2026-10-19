@@ -134,7 +134,7 @@ async def escalation_node(state: BotState) -> dict:
             logger.info(f"[NODE:escalation] sensible (señal LLM) reason={reason}")
             return {"reply": response}
 
-    # 5b · s4-20: post-venta / empresa (Jev `needs_staff`, flag `s4_fixes`) -> una persona.
+    # 5b · s4-20: post-venta / empresa (Jev `needs_staff`) -> una persona.
     staff = _needs_staff_handoff(conv, message, signals)
     if staff:
         return {"reply": staff}

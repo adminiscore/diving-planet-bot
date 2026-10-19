@@ -93,7 +93,6 @@
       ],
       "interruptores": [
         "jev_router_enabled",
-        "s4_fixes",
         "jev_con_contexto",
         "pase_si_pide_fuera_del_sistema",
         "datos_ajenos_se_niegan"
@@ -321,9 +320,7 @@
       "nodo_grafo": "availability",
       "que_hace": "Fechas cerradas y preguntas de disponibilidad (estas las contesta el RAG).",
       "donde": "src/agents/conversational_core.py:_availability_phase",
-      "interruptores": [
-        "s4_fixes"
-      ]
+      "interruptores": []
     },
     {
       "id": "b_routing",
@@ -337,10 +334,7 @@
       "modelos": [
         "senales_model"
       ],
-      "interruptores": [
-        "answer_and_continue",
-        "corrections_v2"
-      ]
+      "interruptores": []
     },
     {
       "id": "b_extraction",
@@ -384,7 +378,6 @@
         "resolutor_model"
       ],
       "interruptores": [
-        "recommend_inferred_minicourse",
         "actividad_por_lo_sabido",
         "una_sola_pregunta",
         "tras_pase_recuerda_el_pase",
@@ -421,7 +414,6 @@
         "notas_model"
       ],
       "interruptores": [
-        "notes_in_parallel",
         "notas_puerta_jev",
         "memoria_sin_ordenes_del_cliente"
       ]
@@ -437,9 +429,7 @@
       "modelos": [
         "acuse_model"
       ],
-      "interruptores": [
-        "ack_in_parallel"
-      ]
+      "interruptores": []
     },
     {
       "id": "b_pregunta",
@@ -450,9 +440,7 @@
       "zoom": "info",
       "que_hace": "Si el cliente pregunta algo en mitad de la reserva, el RAG lo contesta a la vez y la respuesta va delante ('contesta y sigue').",
       "donde": "src/agents/conversational_core.py:_maybe_launch_answer",
-      "interruptores": [
-        "answer_and_continue"
-      ]
+      "interruptores": []
     },
     {
       "id": "b_salida",
@@ -940,10 +928,6 @@
     }
   },
   "sin_efecto": {
-    "llm_extraction_cutover_certification": "Solo lo lee supervisor._maybe_apply_llm_extraction_cutover, que nadie llama.",
-    "llm_extraction_cutover_group": "Solo lo lee supervisor._maybe_apply_llm_extraction_cutover, que nadie llama.",
-    "llm_extraction_cutover_location": "Solo lo lee supervisor._maybe_apply_llm_extraction_cutover, que nadie llama.",
-    "llm_extraction_cutover_logistics": "Solo lo lee supervisor._maybe_apply_llm_extraction_cutover, que nadie llama.",
     "llm_extraction_shadow_mode": "Su función (_maybe_log_llm_extraction_shadow) no la llama nadie."
   },
   "pesos_fuente": "Los % del enrutador y de las fases de la reserva salen de la foto de la ronda; los del revisor y el reintento, de los logs de PRE de la misma ronda. La cascada y los textos fijos no dejan rastro medible: se animan con una estimación y no llevan porcentaje.",
@@ -962,26 +946,6 @@
       "area": "Enrutador",
       "titulo": "Jev decide la ruta",
       "texto": "Un clasificador rápido (~0,3 s) decide qué tipo de mensaje es; si duda o falla, decide un LLM (~1,3 s)."
-    },
-    "notes_in_parallel": {
-      "area": "Reserva",
-      "titulo": "Notas en paralelo",
-      "texto": "Las notas para el asesor se preparan a la vez que el resto del turno, no antes (ahorra ~0,75 s)."
-    },
-    "ack_in_parallel": {
-      "area": "Reserva",
-      "titulo": "Acuse en paralelo",
-      "texto": "La frase cálida del principio se prepara mientras se entiende el mensaje."
-    },
-    "answer_and_continue": {
-      "area": "Reserva",
-      "titulo": "Contesta y sigue",
-      "texto": "Si el cliente pregunta algo en mitad de la reserva, se contesta y la reserva sigue en el mismo mensaje."
-    },
-    "corrections_v2": {
-      "area": "Reserva",
-      "titulo": "Correcciones sin repetir",
-      "texto": "Cuando un dato cambia, pregunta «¿lo cambio?» una sola vez, y nunca por un cambio que se lee igual."
     },
     "respaldo_mismo_modelo": {
       "area": "Preguntas",
@@ -1078,11 +1042,6 @@
       "titulo": "Sin menú si ya quiere bucear",
       "texto": "Si el cliente ya dijo que quiere bucear, no se le enseña el menú de actividades: si no está certificado se le recomienda el minicurso y, si no se sabe, se le pregunta si es buzo certificado."
     },
-    "recommend_inferred_minicourse": {
-      "area": "Reserva",
-      "titulo": "Recomendar el minicurso",
-      "texto": "Si el cliente dice que es su primera vez, le recomienda el minicurso y lo confirma con él."
-    },
     "rag_concise": {
       "area": "Preguntas",
       "titulo": "Respuestas cortas",
@@ -1148,35 +1107,10 @@
       "titulo": "La alergia a un alimento la contesta el RAG",
       "texto": "Sin el texto fijo de la política de comida (salvo si el mensaje también habla de alcohol): la FAQ de vegetarianos y alergias lo cubre. Sigue sin pasar al aviso médico."
     },
-    "s4_fixes": {
-      "area": "Respuestas fijas",
-      "titulo": "Respuestas fijas revisadas",
-      "texto": "Teléfono oficial, «¿eres un bot?», quejas a una persona y otros textos fijos corregidos."
-    },
     "llm_extraction_shadow_mode": {
       "area": "Solo pruebas",
       "titulo": "Extracción en sombra",
       "texto": "Apunta en el registro lo que haría el LLM, sin cambiar nada."
-    },
-    "llm_extraction_cutover_certification": {
-      "area": "Reserva",
-      "titulo": "El LLM completa la certificación",
-      "texto": "Si las reglas no saben si el cliente es buzo certificado, lo deduce el LLM."
-    },
-    "llm_extraction_cutover_group": {
-      "area": "Reserva",
-      "titulo": "El LLM completa el grupo",
-      "texto": "Si las reglas no saben cuántos son o sus edades, lo deduce el LLM."
-    },
-    "llm_extraction_cutover_location": {
-      "area": "Reserva",
-      "titulo": "El LLM completa el origen",
-      "texto": "Si las reglas no saben si sale de Cartagena o de las islas, lo deduce el LLM."
-    },
-    "llm_extraction_cutover_logistics": {
-      "area": "Reserva",
-      "titulo": "El LLM completa el perfil",
-      "texto": "Si las reglas no saben la nacionalidad, los días o si necesita refresh, lo deduce el LLM."
     },
     "llm_activity_veto_shadow_mode": {
       "area": "Solo pruebas",

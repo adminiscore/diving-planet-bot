@@ -158,15 +158,6 @@ def build_system_prompt(lang: str, query: str | None = None) -> str:
             f"Style and tone:\n{_build_tone_section('en')}\n\n"
             f"{RAG_BODY_EN}"
         )
-    if settings.s4_fixes:
-        from src.prompts.info import (  # lazy
-            RAG_PAYMENT_OLD_EN,
-            RAG_PAYMENT_OLD_ES,
-            RAG_PAYMENT_V2_EN,
-            RAG_PAYMENT_V2_ES,
-        )
-
-        prompt = prompt.replace(RAG_PAYMENT_OLD_ES, RAG_PAYMENT_V2_ES).replace(RAG_PAYMENT_OLD_EN, RAG_PAYMENT_V2_EN)
     if settings.rag_contesta_lo_que_sabe:
         # rag-4: contestar la parte que SÍ está en el contexto antes de decir que falta el resto.
         from src.prompts.info import (  # lazy
@@ -1012,19 +1003,18 @@ async def rag_answer(
     from src.flows.catalog import catalog_facts, para_el_juez  # lazy
 
     facts = catalog_facts(lang)
-    if settings.s4_fixes:
-        # s4-22 (paso 6): cotizaba el precio de Cartagena (o solo el de las islas) sin saber de
-        # donde sale el cliente y sin decirlo. La moneda ya tenia su regla en el catalogo.
-        facts += (
-            "\nOrigen: si el contexto no dice desde dónde sale el cliente, da el precio desde Cartagena "
-            "y el de 'ya en las islas', cada uno rotulado, o pregúntale desde dónde saldría."
-            if lang == "es" else
-            "\nOrigin: if the context doesn't say where the customer departs from, give the price from "
-            "Cartagena and the 'already on the islands' one, each labelled, or ask where they'd leave from."
-        )
-        from src.flows.catalog import catalog_booking_links  # lazy
+    # s4-22 (paso 6): cotizaba el precio de Cartagena (o solo el de las islas) sin saber de
+    # donde sale el cliente y sin decirlo. La moneda ya tenia su regla en el catalogo.
+    facts += (
+        "\nOrigen: si el contexto no dice desde dónde sale el cliente, da el precio desde Cartagena "
+        "y el de 'ya en las islas', cada uno rotulado, o pregúntale desde dónde saldría."
+        if lang == "es" else
+        "\nOrigin: if the context doesn't say where the customer departs from, give the price from "
+        "Cartagena and the 'already on the islands' one, each labelled, or ask where they'd leave from."
+    )
+    from src.flows.catalog import catalog_booking_links  # lazy
 
-        facts += "\n" + catalog_booking_links(lang)
+    facts += "\n" + catalog_booking_links(lang)
     if settings.rag_politicas_en_contexto:
         # EX-RAG-1: las políticas, siempre (como el catálogo); en el prefijo fijo, cacheable, y el juez también
         # las ve (una política citada en la respuesta queda respaldada).
@@ -1193,11 +1183,11 @@ async def rag_answer(
             cabeza.append(JUEZ_PRESENTACION_ES if lang == "es" else JUEZ_PRESENTACION_EN)
         if cabeza:
             grounding_context = "\n\n".join([*cabeza, grounding_context])
-        # Paso 6 (s4_fixes): corregir un precio que cita el cliente ("¿son los mismos 2.215.000?" -> "el
+        # Paso 6 (27-sep): corregir un precio que cita el cliente ("¿son los mismos 2.215.000?" -> "el
         # precio es 2.450.000, no 2.215.000") nombra su cifra; el guard la tomaba por inventada y la
         # respuesta acababa en "no lo tengo". Sus propias cifras cuentan; el juez sigue rechazando que
         # se CONFIRME un precio que el contexto no respalda.
-        amounts_context = f"{grounding_context}\n{redact_pii(query)}" if settings.s4_fixes else grounding_context
+        amounts_context = f"{grounding_context}\n{redact_pii(query)}"
         client = trace_openai(AsyncOpenAI(api_key=settings.openai_api_key))
         fallback = FALLBACK_ES if lang == "es" else FALLBACK_EN
 

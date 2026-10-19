@@ -20,7 +20,6 @@ MENU = "¿Con cuál te animas — *buceo*, *minicurso*, *snorkel* o un *curso PA
 @pytest.fixture
 def flag(monkeypatch):
     monkeypatch.setattr(settings, "actividad_por_lo_sabido", True)
-    monkeypatch.setattr(settings, "recommend_inferred_minicourse", True)
     monkeypatch.setattr(settings, "recomendar_a_certificados", True)
 
 

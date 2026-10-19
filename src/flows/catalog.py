@@ -722,7 +722,7 @@ def para_el_juez(hechos: str, lang: str) -> str:
 
 
 def catalog_booking_links(lang: str) -> str:
-    """Paso 6 (flag `s4_fixes`): el link de reserva de cada servicio para el contexto del RAG. Con la
+    """Paso 6 (27-sep): el link de reserva de cada servicio para el contexto del RAG. Con la
     regla nueva de "¿cómo pago?" (el link de reserva) el LLM escribía un link que no estaba en el
     contexto, el guard de URLs lo rechazaba y la respuesta acababa en "no lo tengo a la mano" (ronda B
     del paso 6, "no sé cómo se haga la reserva"). Los de servicios que cierra un asesor no van."""

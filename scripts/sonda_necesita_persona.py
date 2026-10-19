@@ -1,4 +1,4 @@
-"""Banco de calibración de la pregunta de Jev `needs_staff` (paso 6, s4-20, flag `s4_fixes`, 27-sep).
+"""Banco de calibración de la pregunta de Jev `needs_staff` (paso 6, s4-20, 27-sep).
 
 Post-venta y trato de empresa: lo que solo resuelve una persona del equipo (el bot no ve reservas,
 pagos ni correos). Positivos escritos para el banco (variantes de post-venta, agencia, revisión de

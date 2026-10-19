@@ -11,7 +11,6 @@ sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 import scripts.replay_golden_local as replay  # noqa: E402 — fija el entorno de PRE e importa todo
 from src.agents import conversational_core as core  # noqa: E402
 from src.agents import escalation, supervisor  # noqa: E402
-from src.config import settings  # noqa: E402
 from src.flows.state import ConversationState  # noqa: E402
 from src.prompts import booking  # noqa: E402
 
@@ -60,7 +59,6 @@ async def pasada(dialogos, activo):
 
 
 async def main():
-    settings.answer_and_continue = True
     supervisor.rag_answer = replay._rag
     core.compose_acknowledgement = lambda *a, **k: asyncio.sleep(0, result="")
     core.extract_notes = lambda *a, **k: asyncio.sleep(0, result=[])

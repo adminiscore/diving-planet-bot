@@ -45,7 +45,6 @@ def test_con_el_flag_la_peticion_de_contacto_pasa_a_un_asesor(monkeypatch):
 
 
 def test_con_el_flag_el_texto_de_antes_no_da_el_numero(monkeypatch):
-    monkeypatch.setattr(settings, "s4_fixes", True)
     monkeypatch.setattr(sv, "_official_whatsapp", lambda: "+57 320 231515")
     monkeypatch.setattr(settings, "contacto_pasa_a_persona", True)
     assert "+57" not in sv._contact_number_deflection("es")
@@ -53,7 +52,6 @@ def test_con_el_flag_el_texto_de_antes_no_da_el_numero(monkeypatch):
 
 def test_sin_el_flag_el_comportamiento_es_el_de_hoy(monkeypatch):
     """Hasta medirlo, PRE sigue dando el WhatsApp (decisión del 17-sep)."""
-    monkeypatch.setattr(settings, "s4_fixes", True)
     monkeypatch.setattr(sv, "_official_whatsapp", lambda: "+57 320 231515")
     monkeypatch.setattr(settings, "contacto_pasa_a_persona", False)
     assert "+57 320 231515" in sv._contact_number_deflection("es")
@@ -65,7 +63,6 @@ def test_sin_el_flag_el_comportamiento_es_el_de_hoy(monkeypatch):
 def test_con_el_flag_lo_que_el_sistema_no_da_pasa_a_una_persona(monkeypatch):
     """cal-29: "Pero un link especial" (una agencia que quiere un enlace para sus clientes) no era, para la señal,
     algo que solo pueda hacer una persona, así que el bot lo explicaba sin ofrecer el pase."""
-    monkeypatch.setattr(settings, "s4_fixes", True)
     monkeypatch.setattr(settings, "pase_si_pide_fuera_del_sistema", False)
     assert "special" not in jr._questions_for_turn()["needs_staff"]["instructions"]
     monkeypatch.setattr(settings, "pase_si_pide_fuera_del_sistema", True)

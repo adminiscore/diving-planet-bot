@@ -1,4 +1,4 @@
-"""Paso 6 (flag `s4_fixes`, 27-sep): salida y flujo deterministas de S4.
+"""Paso 6 (27-sep; el flag `s4_fixes` se quitó en s4-25): salida y flujo deterministas de S4.
 
 - s4-14: si piden un teléfono, el WhatsApp oficial (de la base de conocimiento), decisión de Gadea.
 - s4-15: "¿eres un bot?" -> dice que es la asistente virtual.
@@ -16,7 +16,7 @@ import pytest
 
 from src.agents import escalation, jev_router, supervisor
 from src.agents import rag_agent
-from src.config import Settings, settings
+from src.config import settings
 from src.domain import activities as dom
 from src.flows.state import ConversationState
 from src.orchestration import router
@@ -42,18 +42,9 @@ def _state(**kw) -> ConversationState:
     return s
 
 
-def test_el_flag_nace_encendido():
-    assert Settings().s4_fixes is True  # promocionado: el valor por defecto es el de PRE
-
-
-@pytest.fixture
-def on(monkeypatch):
-    monkeypatch.setattr(settings, "s4_fixes", True)
-
-
 # ─── Respuestas fijas ────────────────────────────────────────────────────────
 
-def test_si_piden_telefono_NO_se_da_el_numero(on, monkeypatch):
+def test_si_piden_telefono_NO_se_da_el_numero(monkeypatch):
     """DECISIÓN DE GADEA del 16-oct, que sustituye a la del 17-sep (dar el WhatsApp oficial): esto es un chatbot y no
     da números; quien pide un contacto directo pasa con un asesor (`contacto_pasa_a_persona`, flag de CAL-E1)."""
     monkeypatch.setattr(settings, "contacto_pasa_a_persona", True)
@@ -61,7 +52,7 @@ def test_si_piden_telefono_NO_se_da_el_numero(on, monkeypatch):
     assert "+57" not in supervisor._contact_number_deflection("en")
 
 
-def test_con_el_flag_apagado_se_da_el_whatsapp_como_antes(on, monkeypatch):
+def test_con_el_flag_apagado_se_da_el_whatsapp_como_antes(monkeypatch):
     """El camino de antes sigue entero: es el revert si la ronda del golden no sostiene el cambio."""
     monkeypatch.setattr(settings, "contacto_pasa_a_persona", False)
     number = supervisor._official_whatsapp()
@@ -70,17 +61,12 @@ def test_con_el_flag_apagado_se_da_el_whatsapp_como_antes(on, monkeypatch):
     assert number in supervisor._contact_number_deflection("en")
 
 
-def test_sin_el_flag_no_se_da_el_numero(monkeypatch):
-    monkeypatch.setattr(settings, "s4_fixes", False)
-    assert "no manejo un número" in supervisor._contact_number_deflection("es")
-
-
-def test_eres_un_bot_dice_que_es_la_asistente_virtual(on):
+def test_eres_un_bot_dice_que_es_la_asistente_virtual():
     assert "asistente virtual" in supervisor._ai_identity_deflection("es")
     assert "virtual assistant" in supervisor._ai_identity_deflection("en")
 
 
-def test_la_queja_pasa_a_staff_con_una_disculpa(on):
+def test_la_queja_pasa_a_staff_con_una_disculpa():
     _, text = escalation.sensitive_response_for("complaints_or_emergencies", "es")
     assert "Siento mucho" in text and "staff" in text
     _, text = escalation.detect_sensitive_escalation("this is a scam, I want my money back", "en")
@@ -126,33 +112,27 @@ async def test_un_acuse_sin_prosa_se_descarta(monkeypatch):
 
 # ─── s4-7 ────────────────────────────────────────────────────────────────────
 
-def test_las_vinetas_de_pago_de_antes_siguen_en_el_prompt():
-    """Si alguien las reescribe, la sustitución del flag dejaría de aplicarse sin avisar."""
-    assert info.RAG_PAYMENT_OLD_ES in info.RAG_BODY_ES
-    assert info.RAG_PAYMENT_OLD_EN in info.RAG_BODY_EN
-
-
-def test_con_el_flag_el_prompt_manda_al_link_de_reserva(on):
-    for lang, new, old in (("es", info.RAG_PAYMENT_V2_ES, info.RAG_PAYMENT_OLD_ES),
-                           ("en", info.RAG_PAYMENT_V2_EN, info.RAG_PAYMENT_OLD_EN)):
+def test_el_prompt_manda_al_link_de_reserva():
+    """Las viñetas de pago de s4-7 están escritas en el cuerpo del prompt (antes las sustituía el flag)."""
+    for lang, nueva, vieja in (
+        ("es", "NUNCA digas que un asesor enviará el enlace de pago", "di que el asesor le enviará el enlace"),
+        ("en", "NEVER say that an advisor will send the payment link", "the advisor will send the correct link"),
+    ):
         prompt = rag_agent.build_system_prompt(lang)
-        assert new in prompt and old not in prompt
+        assert nueva in prompt and vieja not in prompt
+        assert nueva in (info.RAG_BODY_ES if lang == "es" else info.RAG_BODY_EN)
 
 
 # ─── s4-20 y s4-6: preguntas de Jev ──────────────────────────────────────────
 
-def test_las_preguntas_nuevas_solo_van_con_el_flag(monkeypatch):
-    monkeypatch.setattr(settings, "s4_fixes", False)
-    q = jev_router._questions_for_turn()
-    assert jev_router.NEEDS_STAFF not in q and jev_router.CHANGES_DATE not in q
-    monkeypatch.setattr(settings, "s4_fixes", True)
+def test_las_preguntas_nuevas_van_siempre():
     q = jev_router._questions_for_turn()
     assert jev_router.NEEDS_STAFF in q and jev_router.CHANGES_DATE in q
     out = jev_router.answers_to_signals({"needs_staff": {"noul": 0.9}, "changes_date": {"noul": 0.2}})
     assert out["needs_staff"] is True and out["changes_date"] is False
 
 
-def test_post_venta_pasa_a_una_persona(on):
+def test_post_venta_pasa_a_una_persona():
     st = _state()
     reply = supervisor._needs_staff_handoff(st, "ya hice la reserva, ¿la recibieron?", {"needs_staff": True})
     assert reply and "asesor" in reply
@@ -160,11 +140,11 @@ def test_post_venta_pasa_a_una_persona(on):
     assert supervisor._needs_staff_handoff(_state(), "hola", {"needs_staff": False}) is None
 
 
-def test_post_venta_va_al_nodo_de_escalado(on):
+def test_post_venta_va_al_nodo_de_escalado():
     assert router.classify_route(_state(), "¿está todo ok con mis reservas?", {"needs_staff": True}) == router.ROUTE_SAFETY
 
 
-def test_cambio_de_fecha_con_el_carrito_abierto_va_a_cambios(on, monkeypatch):
+def test_cambio_de_fecha_con_el_carrito_abierto_va_a_cambios(monkeypatch):
     st = _state(detected_activity="snorkel", detected_group_size=3, location="cartagena")
     monkeypatch.setattr(supervisor, "_in_active_cart_building", lambda s: True)
     signals = {"booking_change_topic": "reschedule", "changes_date": True}
@@ -173,7 +153,7 @@ def test_cambio_de_fecha_con_el_carrito_abierto_va_a_cambios(on, monkeypatch):
     assert router.classify_route(st, "hazlo para 3 días", {"booking_change_topic": "reschedule"}) != router.ROUTE_CHANGE
 
 
-async def test_con_el_flag_el_rag_tiene_los_links_de_reserva(on, monkeypatch):
+async def test_el_rag_tiene_los_links_de_reserva(monkeypatch):
     """Ronda B del paso 6: "no sé cómo se haga la reserva" acababa en "no lo tengo" porque el LLM
     escribía un link que no estaba en el contexto y el guard de URLs lo rechazaba."""
     from src.flows.catalog import SERVICES
@@ -212,7 +192,7 @@ async def test_con_el_flag_el_rag_tiene_los_links_de_reserva(on, monkeypatch):
     assert url in answer
 
 
-async def test_tras_el_pase_a_una_persona_un_gracias_no_vuelve_a_vender(on, monkeypatch):
+async def test_tras_el_pase_a_una_persona_un_gracias_no_vuelve_a_vender(monkeypatch):
     from src.agents import conversational_core as core
     from src.flows.state import Step
 
@@ -229,7 +209,7 @@ async def test_tras_el_pase_a_una_persona_un_gracias_no_vuelve_a_vender(on, monk
     assert await core._availability_phase(_state(step=Step.ESCALATE), "gracias", {}, "") is None
 
 
-def test_ida_y_vuelta_solo_si_se_sabe_que_el_plan_es_de_un_dia(on):
+def test_ida_y_vuelta_solo_si_se_sabe_que_el_plan_es_de_un_dia():
     from src.agents import conversational_core as core
 
     generic = _state(detected_activity="padi_course")
@@ -250,7 +230,7 @@ def test_el_catalogo_dice_si_el_almuerzo_va_incluido():
     assert "almuerzo NO incluido" in island and "almuerzo incluido" in cartagena
 
 
-async def test_corregir_el_precio_que_cita_el_cliente_no_acaba_en_no_lo_tengo(on, monkeypatch):
+async def test_corregir_el_precio_que_cita_el_cliente_no_acaba_en_no_lo_tengo(monkeypatch):
     """Ronda B del paso 6: "¿con tarjeta son los mismos 2.215.000?" -> la corrección nombra su cifra."""
     async def _docs(*a, **k):
         return [{"content": "Curso Basico PADI: 2.450.000 COP online.", "score": 0.99, "metadata": {"source": "faqs"}}]
@@ -285,7 +265,7 @@ async def test_corregir_el_precio_que_cita_el_cliente_no_acaba_en_no_lo_tengo(on
     assert "2.450.000" in answer
 
 
-def test_el_curso_referido_duerme_en_las_islas(on):
+def test_el_curso_referido_duerme_en_las_islas():
     """Decisión de Gadea (14-oct): el Curso Referido, como el Open Water, duerme en las islas el día 1 (antes la base
     decía que se podía volver a Cartagena y la política de los cursos de 2 días decía lo contrario: el RAG se
     contradecía). services.json lo marca con "overnight": "required"."""

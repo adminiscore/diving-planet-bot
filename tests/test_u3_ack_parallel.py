@@ -1,8 +1,8 @@
-"""u3-1 paso 3: el acuse cálido en paralelo (flag `ack_in_parallel`).
+"""u3-1 paso 3: el acuse cálido en paralelo (el flag `ack_in_parallel` se quitó en s4-25: es lo de siempre).
 
 Lo que se fija aquí:
-1. con el flag apagado no se lanza nada (conducta de siempre);
-2. con el flag, `_setup_phase` lanza el acuse sin esperarlo y el cierre usa ESE acuse;
+1. (era: con el flag apagado no se lanzaba nada; ese camino ya no existe);
+2. `_setup_phase` lanza el acuse sin esperarlo y el cierre usa ESE acuse;
 3. si la pregunta pendiente es de sí/no (seguridad, certificación, nacionalidad,
    refresher) NO se lanza: su resumen necesita el valor recién extraído;
 4. si la pregunta pendiente cambia entre el principio y el cierre, se descarta;
@@ -15,7 +15,6 @@ import asyncio
 import pytest
 
 import src.agents.conversational_core as core
-from src.config import settings
 from src.flows.state import ConversationState, Step
 
 
@@ -38,21 +37,11 @@ def acks(monkeypatch):
         return "¡Genial!"
 
     monkeypatch.setattr(core, "compose_acknowledgement", _ack)
-    monkeypatch.setattr(settings, "notes_in_parallel", False)
     monkeypatch.setattr(core, "_maybe_capture_notes", lambda *a, **k: asyncio.sleep(0))
     return calls
 
 
-async def test_flag_apagado_no_lanza_nada(monkeypatch, acks):
-    monkeypatch.setattr(settings, "ack_in_parallel", False)
-    st = _state(pending=core.SLOT_LOCATION)
-    await core._setup_phase(st, "desde cartagena", {})
-    assert getattr(st, "_pending_ack", None) is None
-    assert acks == []
-
-
-async def test_con_flag_se_lanza_y_el_cierre_lo_usa(monkeypatch, acks):
-    monkeypatch.setattr(settings, "ack_in_parallel", True)
+async def test_se_lanza_y_el_cierre_lo_usa(monkeypatch, acks):
     st = _state(pending=core.SLOT_LOCATION)
     await core._setup_phase(st, "desde cartagena", {})
     assert st._pending_ack is not None and len(acks) == 0  # lanzado, sin esperar
@@ -62,7 +51,6 @@ async def test_con_flag_se_lanza_y_el_cierre_lo_usa(monkeypatch, acks):
 
 @pytest.mark.parametrize("slot", sorted(core._JUST_ANSWERED_PHRASE))
 async def test_preguntas_de_si_no_siguen_en_serie(monkeypatch, acks, slot):
-    monkeypatch.setattr(settings, "ack_in_parallel", True)
     st = _state(pending=slot)
     await core._setup_phase(st, "sí", {})
     assert getattr(st, "_pending_ack", None) is None
@@ -70,7 +58,6 @@ async def test_preguntas_de_si_no_siguen_en_serie(monkeypatch, acks, slot):
 
 
 async def test_si_la_pregunta_pendiente_cambia_se_descarta(monkeypatch, acks):
-    monkeypatch.setattr(settings, "ack_in_parallel", True)
     st = _state(pending=core.SLOT_LOCATION)
     await core._setup_phase(st, "desde cartagena", {})
     task = st._pending_ack["task"]
@@ -80,7 +67,6 @@ async def test_si_la_pregunta_pendiente_cambia_se_descarta(monkeypatch, acks):
 
 
 async def test_un_acuse_sin_usar_se_cancela_al_cerrar(monkeypatch, acks):
-    monkeypatch.setattr(settings, "ack_in_parallel", True)
     st = _state(pending=core.SLOT_LOCATION)
     await core._setup_phase(st, "desde cartagena", {})
     task = st._pending_ack["task"]
@@ -91,7 +77,6 @@ async def test_un_acuse_sin_usar_se_cancela_al_cerrar(monkeypatch, acks):
 
 
 async def test_la_foto_se_toma_al_lanzar(monkeypatch, acks):
-    monkeypatch.setattr(settings, "ack_in_parallel", True)
     st = _state(pending=core.SLOT_LOCATION)
     st.detected_activity = "snorkel"
     await core._setup_phase(st, "desde cartagena", {})
@@ -101,7 +86,6 @@ async def test_la_foto_se_toma_al_lanzar(monkeypatch, acks):
 
 
 async def test_primer_turno_no_lanza(monkeypatch, acks):
-    monkeypatch.setattr(settings, "ack_in_parallel", True)
     st = _state(pending=None)
     st.step = Step.WELCOME
     await core._setup_phase(st, "hola, quiero bucear", {})

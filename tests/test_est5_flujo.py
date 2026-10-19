@@ -63,7 +63,6 @@ def test_jev_cuenta_las_peticiones_en_imperativo_solo_con_el_flag(monkeypatch, f
     """`jev_pide_algo`: "dame la cuenta y transfiero" o "send me the payment link" también son algo que contestar."""
     from src.agents import jev_router
 
-    monkeypatch.setattr(settings, "answer_and_continue", True)
     monkeypatch.setattr(settings, "jev_pide_algo", flag)
     pregunta = jev_router._questions_for_turn()[jev_router.ASKS_QUESTION]
     esperada = jev_router._ASKS_QUESTION_Q_V2 if flag else jev_router._ASKS_QUESTION_Q
