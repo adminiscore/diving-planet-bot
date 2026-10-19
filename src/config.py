@@ -325,7 +325,7 @@ class Settings(BaseSettings):
     # mod-2 (18-oct, decisión de Gadea): elegir el buceo certificado ("fun dives") no dice que el cliente esté
     # certificado; tiene que confirmarlo. Con el flag, el extractor no lo deduce (la regla del catálogo lo hacía para
     # todos los modelos). APAGADO.
-    certificado_solo_si_lo_dice: bool = True  # RONDA mod-H2 (19-oct, + «buceé hace poco» = certificado); revert = False
+    certificado_solo_si_lo_dice: bool = True  # PROMOCIONADO 19-oct (mod-H2, HISTORY 0.31.61); revert = False
     # (antes, mod-G/mod-H: APAGADO; con la regla de is_certified afinada sigue el
     # minicurso a 183 USD en reserva-solo-link: el extractor toma el «no» de «no, buceé hace poco» (a «¿eres buzo
     # certificado?») como no certificado; arreglado con «buceé hace poco» en IS_CERTIFIED_DICHO_*.)
