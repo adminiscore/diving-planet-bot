@@ -1,0 +1,38 @@
+{
+ "_nota": "ex-9b paso 6: etiquetas de los campos nuevos del extractor para el oráculo del replay (`paso6_replay.py`), solo en los turnos del golden VISIBLE donde el regex de hoy lee algo o el mensaje habla de días, edades o de la certificación de otra persona (146 candidatos de 368 turnos; los demás = el campo no se dice). Lo que el cliente AFIRMA según la regla de cada campo: dias_de_buceo / dias_de_estancia (en días), edades (en años), acepta_propuesta, otro_sin_certificar, otro_certificado_inactivo. Etiquetadas por Claude (19-oct); las de `dudosos` las tiene que resolver Gadea.",
+ "etiquetas": {
+  "ex0-semana-santa-solo-avanzado-islas-t1": {"dias_de_buceo": 2},
+  "ex0-paquete-5-buceos-islas-residente-sin-recogida-t1": {"dias_de_estancia": 4},
+  "ex0-certificado-fechas-fotos-y-reserva-t1": {"dias_de_estancia": 3, "dias_de_buceo": 1},
+  "ex0-logistica-isla-fragata-regreso-otro-dia-t1": {"dias_de_buceo": 2},
+  "ex0-cambio-fecha-por-enfermedad-t3": {"dias_de_buceo": 2},
+  "ex0-regreso-otro-dia-paquete-5-t1": {"dias_de_buceo": 2},
+  "ex0-referral-mas-refresher-hotel-y-domingo-pascua-t3": {"dias_de_buceo": 2},
+  "ex0-paquete-5-buceos-precio-overnight-isla-grande-baru-t1": {"dias_de_buceo": 2, "dias_de_estancia": 3},
+  "ex0-certificado-precio-dia-paquete-5-y-hoteles-base-t1": {"dias_de_buceo": 2},
+  "ex0-minicurso-precio-colombianos-origen-pendiente-t1": {"dias_de_buceo": 1},
+  "ex0-precio-paquetes-5-o-3-buceos-y-opcion-2-diurnos-t3": {"dias_de_buceo": 1},
+  "ex0-familia-ninos-resumen-t3": {"edades": [6, 9]},
+  "ex0-nino-7-familia-t1": {"edades": [7]},
+  "ex0-ninos-6-y-10-t3": {"edades": [10]},
+  "ex0-ninos-6-y-10-t4": {"edades": [6]},
+  "ex0-familia-mixta-precio-descuento-refresher-t1": {"edades": [10, 14, 17, 19, 42, 43]},
+  "ex0-acompanante-goteo-t3": {"otro_sin_certificar": true},
+  "ex0-grupo-con-refresher-t2": {"otro_certificado_inactivo": true},
+  "ex0-confirma-reserva-existente-escalar-t3": {"otro_sin_certificar": true},
+  "ex0-post-venta-confirmar-formularios-elearning-t2": {"otro_sin_certificar": true},
+  "ex0-curso-open-water-principiantes-idioma-frances-anticipacion-t1": {"otro_sin_certificar": true}
+ },
+ "dudosos": {
+  "ex0-paquete-en-carrito-t3": "pregunta por algo 'para más días' (sin cifra): sin días; el regex decía varios días",
+  "ex0-paquete-5-buceos-islas-residente-sin-recogida-t1": "'el plan de 5 buceos para el finde del 27 al 30': ¿estancia de 4 días o días de buceo?",
+  "ex0-regreso-otro-dia-paquete-5-t1": "'paquete de 5 buceos… noche en cocoliso, buceo nuevamente': ¿2 días de buceo dichos o solo el paquete?",
+  "ex0-precio-paquetes-5-o-3-buceos-y-opcion-2-diurnos-t3": "'¿tenéis una opción… para bucear un día en vez de dos?': pregunta, pero dice que quiere un día",
+  "ex0-paquete-5-buceos-precio-overnight-isla-grande-baru-t1": "pregunta por 'a 2 day dive package' y dice que llega el 13 y se va el 15",
+  "ex0-equipaje-mochilas-y-almacenamiento-t1": "'we just booked a 5 dive package for April 13th': sin días dichos",
+  "ex0-precios-y-disponibilidad-con-negociacion-t2": "pregunta el precio de 'dos buceos o del pack de 5 buceos en 2 días': preguntar no elige, sin días (el regex: varios días)",
+  "ex0-referral-mas-refresher-hotel-y-domingo-pascua-t1": "pregunta el precio del curso referido de 2 días más un minicurso el día antes: sin días",
+  "ex0-grupo-con-refresher-t2": "'uno de los certificados no bucea hace 5 años': puede ser quien escribe",
+  "ex0-curso-open-water-principiantes-idioma-frances-anticipacion-t1": "'somos dos y es la primera vez': quien escribe y la otra persona"
+ }
+}

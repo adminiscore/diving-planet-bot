@@ -1,0 +1,1274 @@
+{
+ "turnos": 368,
+ "dialogos": 95,
+ "comparaciones": {
+  "flags apagados: código de 9ae3e19 frente al nuevo (oráculo)": {
+   "turnos_estado": 0,
+   "turnos_reply": 0,
+   "turnos_rag": 0,
+   "dialogos_estado": [],
+   "dialogos_reply": [],
+   "dialogos_rag": [],
+   "campos": {},
+   "cambios": []
+  },
+  "flags apagados: código de 9ae3e19 frente al nuevo (extractor caído)": {
+   "turnos_estado": 0,
+   "turnos_reply": 0,
+   "turnos_rag": 0,
+   "dialogos_estado": [],
+   "dialogos_reply": [],
+   "dialogos_rag": [],
+   "campos": {},
+   "cambios": []
+  },
+  "duracion_por_extractor (oráculo)": {
+   "turnos_estado": 68,
+   "turnos_reply": 2,
+   "turnos_rag": 19,
+   "dialogos_estado": [
+    "cambio-fecha-por-enfermedad",
+    "certificado-fechas-fotos-y-reserva",
+    "certificado-precio-dia-paquete-5-y-hoteles-base",
+    "colombianos-precio-minicurso-dos-inmersiones",
+    "curso-open-water-principiantes-idioma-frances-anticipacion",
+    "curso-open-water-transporte-y-regreso-otro-dia",
+    "embarazo",
+    "logistica-isla-fragata-regreso-otro-dia",
+    "minicurso-precio-colombianos-origen-pendiente",
+    "open-water-hoteles-noche-fotos-horario",
+    "paquete-5-buceos-islas-residente-sin-recogida",
+    "paquete-5-buceos-precio-overnight-isla-grande-baru",
+    "paquete-en-carrito",
+    "precio-paquetes-5-o-3-buceos-y-opcion-2-diurnos",
+    "programa-fotos-y-alojamiento",
+    "queja",
+    "referral-mas-refresher-hotel-y-domingo-pascua",
+    "regreso-otro-dia-paquete-5",
+    "semana-santa-solo-avanzado-islas"
+   ],
+   "dialogos_reply": [
+    "semana-santa-solo-avanzado-islas"
+   ],
+   "dialogos_rag": [
+    "certificado-precio-dia-paquete-5-y-hoteles-base",
+    "colombianos-precio-minicurso-dos-inmersiones",
+    "curso-open-water-transporte-y-regreso-otro-dia",
+    "embarazo",
+    "logistica-isla-fragata-regreso-otro-dia",
+    "open-water-hoteles-noche-fotos-horario",
+    "paquete-5-buceos-islas-residente-sin-recogida",
+    "precio-paquetes-5-o-3-buceos-y-opcion-2-diurnos",
+    "programa-fotos-y-alojamiento",
+    "referral-mas-refresher-hotel-y-domingo-pascua",
+    "semana-santa-solo-avanzado-islas"
+   ],
+   "campos": {
+    "detected_duration": 47,
+    "duracion_de_buceo": 41
+   },
+   "cambios": [
+    {
+     "id": "paquete-en-carrito",
+     "turno": 3,
+     "msg": "y tienen algo para mas dias, como un paquete?",
+     "estado": {
+      "detected_duration": [
+       "multi_day",
+       null
+      ]
+     }
+    },
+    {
+     "id": "embarazo",
+     "turno": 1,
+     "msg": "hola, estoy embarazada de 4 meses, puedo bucear?",
+     "estado": {
+      "detected_duration": [
+       "multi_day",
+       null
+      ]
+     },
+     "rag": [
+      "-La conversación se esta llevando a cabo en español. Aun no sabemos la nacionalidad del cliente: si das un precio, en USD (si dice que es colombiano/a o residente en Colombia, en COP; no hay descuento especial por ser colombiano). El cliente indico que estara varios dias. Paso actual del flujo guiado: free_text.",
+      "+La conversación se esta llevando a cabo en español. Aun no sabemos la nacionalidad del cliente: si das un precio, en USD (si dice que es colombiano/a o residente en Colombia, en COP; no hay descuento especial por ser colombiano). Paso actual del flujo guiado: free_text."
+     ]
+    },
+    {
+     "id": "queja",
+     "turno": 1,
+     "msg": "llevo 3 dias esperando respuesta de mi reserva, esto es pesimo servicio",
+     "estado": {
+      "detected_duration": [
+       "multi_day",
+       null
+      ]
+     }
+    },
+    {
+     "id": "semana-santa-solo-avanzado-islas",
+     "turno": 1,
+     "msg": "Estoy interesada en bucear en semana santa 18 y 19",
+     "estado": {
+      "detected_duration": [
+       null,
+       "multi_day"
+      ],
+      "duracion_de_buceo": [
+       false,
+       true
+      ]
+     }
+    },
+    {
+     "id": "semana-santa-solo-avanzado-islas",
+     "turno": 2,
+     "msg": "Un solo buzo avanzado",
+     "estado": {
+      "detected_duration": [
+       null,
+       "multi_day"
+      ],
+      "duracion_de_buceo": [
+       false,
+       true
+      ]
+     },
+     "reply_a": "¿Desde dónde saldrías? Podemos recogerte saliendo *desde Cartagena* (ida y vuelta el mismo día) o, si ya estás *en las islas*, coordinamos la recogida en tu hotel.",
+     "reply_b": "¿Desde dónde saldrías? Podemos recogerte saliendo *desde Cartagena* o, si ya estás *en las islas*, coordinamos la recogida en tu hotel."
+    },
+    {
+     "id": "semana-santa-solo-avanzado-islas",
+     "turno": 3,
+     "msg": "1. Cuakes son sus costos con equipo?\n2. ⁠tienen disponibilidad?\n3. ⁠tienen algun hospedaje o zona para hospedarme que recomienden centrico a",
+     "estado": {
+      "detected_duration": [
+       null,
+       "multi_day"
+      ],
+      "duracion_de_buceo": [
+       false,
+       true
+      ]
+     },
+     "reply_a": "«RAG»\n\n¿Desde dónde saldrías? Podemos recogerte saliendo *desde Cartagena* (ida y vuelta el mismo día) o, si ya estás *en las islas*, coordinamos la recogida en tu hotel.",
+     "reply_b": "«RAG»\n\n¿Desde dónde saldrías? Podemos recogerte saliendo *desde Cartagena* o, si ya estás *en las islas*, coordinamos la recogida en tu hotel.",
+     "rag": [
+      "-La conversación se esta llevando a cabo en español. El cliente marco que es buzo certificado (solo buzos certificados en el grupo). Aun no sabemos la nacionalidad del cliente: si das un precio, en USD (si dice que es colombiano/a o residente en Colombia, en COP; no hay descuento especial por ser colombiano). El cliente ya indico que son 1 persona(s) en total. Paso actual del flujo guiado: free_text.",
+      "+La conversación se esta llevando a cabo en español. El cliente marco que es buzo certificado (solo buzos certificados en el grupo). Aun no sabemos la nacionalidad del cliente: si das un precio, en USD (si dice que es colombiano/a o residente en Colombia, en COP; no hay descuento especial por ser colombiano). El cliente ya indico que son 1 persona(s) en total. El cliente indico que estara varios dias. Paso actual del flujo guiado: free_text."
+     ]
+    },
+    {
+     "id": "semana-santa-solo-avanzado-islas",
+     "turno": 4,
+     "msg": "Quiero quedarme en las islas",
+     "estado": {
+      "detected_duration": [
+       null,
+       "multi_day"
+      ],
+      "duracion_de_buceo": [
+       false,
+       true
+      ]
+     }
+    },
+    {
+     "id": "semana-santa-solo-avanzado-islas",
+     "turno": 5,
+     "msg": "Veo q los 5 buceos serian por 293 pagando en el website",
+     "estado": {
+      "detected_duration": [
+       null,
+       "multi_day"
+      ],
+      "duracion_de_buceo": [
+       false,
+       true
+      ]
+     }
+    },
+    {
+     "id": "semana-santa-solo-avanzado-islas",
+     "turno": 6,
+     "msg": "Ustedes cotizan los hoteles san pedro y cocoliso",
+     "estado": {
+      "detected_duration": [
+       null,
+       "multi_day"
+      ],
+      "duracion_de_buceo": [
+       false,
+       true
+      ]
+     }
+    },
+    {
+     "id": "semana-santa-solo-avanzado-islas",
+     "turno": 7,
+     "msg": "Me interesa llegaria el 17 de abril y me iria el 20 de abril",
+     "estado": {
+      "detected_duration": [
+       null,
+       "multi_day"
+      ],
+      "duracion_de_buceo": [
+       false,
+       true
+      ]
+     }
+    },
+    {
+     "id": "semana-santa-solo-avanzado-islas",
+     "turno": 8,
+     "msg": "Hay disponibilidad?",
+     "estado": {
+      "detected_duration": [
+       null,
+       "multi_day"
+      ],
+      "duracion_de_buceo": [
+       false,
+       true
+      ]
+     },
+     "rag": [
+      "-La conversación se esta llevando a cabo en español. El cliente indica que ya esta en las Islas del Rosario. Si pregunta por punto de encuentro, recogida u horarios, responde SOLO con la informacion de recogida en hotel/isla; no menciones la salida desde el Muelle de la Bodeguita en Cartagena salvo que el cliente pregunte explicitamente por ese caso. Se hospeda (o se hospedara) en la isla: isla_grande. Hotel/alojamiento reportado: Veo q los 5 buceos serian por 293 pagando en el website. El cliente marco que es buzo certificado (solo buzos certificados en el grupo). Aun no sabemos la nacionalidad del cliente: si das un precio, en USD (si dice que es colombiano/a o residente en Colombia, en COP; no hay descuento especial por ser colombiano). El cliente ya indico que son 1 persona(s) en total. Paso actual del flujo guiado: free_text.",
+      "+La conversación se esta llevando a cabo en español. El cliente indica que ya esta en las Islas del Rosario. Si pregunta por punto de encuentro, recogida u horarios, responde SOLO con la informacion de recogida en hotel/isla; no menciones la salida desde el Muelle de la Bodeguita en Cartagena salvo que el cliente pregunte explicitamente por ese caso. Se hospeda (o se hospedara) en la isla: isla_grande. Hotel/alojamiento reportado: Veo q los 5 buceos serian por 293 pagando en el website. El cliente marco que es buzo certificado (solo buzos certificados en el grupo). Aun no sabemos la nacionalidad del cliente: si das un precio, en USD (si dice que es colombiano/a o residente en Colombia, en COP; no hay descuento especial por ser colombiano). El cliente ya indico que son 1 persona(s) en total. El cliente indico que estara varios dias. Paso actual del flujo guiado: free_text."
+     ]
+    },
+    {
+     "id": "semana-santa-solo-avanzado-islas",
+     "turno": 9,
+     "msg": "Uno de los buceos puede ser en wreck?",
+     "estado": {
+      "detected_duration": [
+       null,
+       "multi_day"
+      ],
+      "duracion_de_buceo": [
+       false,
+       true
+      ]
+     },
+     "rag": [
+      "-La conversación se esta llevando a cabo en español. El cliente indica que ya esta en las Islas del Rosario. Si pregunta por punto de encuentro, recogida u horarios, responde SOLO con la informacion de recogida en hotel/isla; no menciones la salida desde el Muelle de la Bodeguita en Cartagena salvo que el cliente pregunte explicitamente por ese caso. Se hospeda (o se hospedara) en la isla: isla_grande. Hotel/alojamiento reportado: Veo q los 5 buceos serian por 293 pagando en el website. El cliente marco que es buzo certificado (solo buzos certificados en el grupo). Aun no sabemos la nacionalidad del cliente: si das un precio, en USD (si dice que es colombiano/a o residente en Colombia, en COP; no hay descuento especial por ser colombiano). El cliente ya indico que son 1 persona(s) en total. Paso actual del flujo guiado: free_text.",
+      "+La conversación se esta llevando a cabo en español. El cliente indica que ya esta en las Islas del Rosario. Si pregunta por punto de encuentro, recogida u horarios, responde SOLO con la informacion de recogida en hotel/isla; no menciones la salida desde el Muelle de la Bodeguita en Cartagena salvo que el cliente pregunte explicitamente por ese caso. Se hospeda (o se hospedara) en la isla: isla_grande. Hotel/alojamiento reportado: Veo q los 5 buceos serian por 293 pagando en el website. El cliente marco que es buzo certificado (solo buzos certificados en el grupo). Aun no sabemos la nacionalidad del cliente: si das un precio, en USD (si dice que es colombiano/a o residente en Colombia, en COP; no hay descuento especial por ser colombiano). El cliente ya indico que son 1 persona(s) en total. El cliente indico que estara varios dias. Paso actual del flujo guiado: free_text."
+     ]
+    },
+    {
+     "id": "paquete-5-buceos-islas-residente-sin-recogida",
+     "turno": 1,
+     "msg": "Tienes disponibilidad para el plan de 5 buceos para el finde del 27 de junio al 30 de junio",
+     "estado": {
+      "detected_duration": [
+       null,
+       "multi_day"
+      ]
+     }
+    },
+    {
+     "id": "paquete-5-buceos-islas-residente-sin-recogida",
+     "turno": 2,
+     "msg": "Para dos personas",
+     "estado": {
+      "detected_duration": [
+       null,
+       "multi_day"
+      ]
+     }
+    },
+    {
+     "id": "paquete-5-buceos-islas-residente-sin-recogida",
+     "turno": 3,
+     "msg": "Hola para residentes en colombia (3 años) no aplica el desc colombia o?",
+     "estado": {
+      "detected_duration": [
+       null,
+       "multi_day"
+      ]
+     },
+     "rag": [
+      "-La conversación se esta llevando a cabo en español. Aun no sabemos la nacionalidad del cliente: si das un precio, en USD (si dice que es colombiano/a o residente en Colombia, en COP; no hay descuento especial por ser colombiano). El cliente ya indico que son 2 persona(s) en total. Paso actual del flujo guiado: free_text.",
+      "+La conversación se esta llevando a cabo en español. Aun no sabemos la nacionalidad del cliente: si das un precio, en USD (si dice que es colombiano/a o residente en Colombia, en COP; no hay descuento especial por ser colombiano). El cliente ya indico que son 2 persona(s) en total. El cliente indico que estara varios dias. Paso actual del flujo guiado: free_text."
+     ]
+    },
+    {
+     "id": "paquete-5-buceos-islas-residente-sin-recogida",
+     "turno": 4,
+     "msg": "Va quiero comprar sin ir de cartagena",
+     "estado": {
+      "detected_duration": [
+       null,
+       "multi_day"
+      ]
+     }
+    },
+    {
+     "id": "paquete-5-buceos-islas-residente-sin-recogida",
+     "turno": 5,
+     "msg": "COcoliso",
+     "estado": {
+      "detected_duration": [
+       null,
+       "multi_day"
+      ]
+     }
+    },
+    {
+     "id": "paquete-5-buceos-islas-residente-sin-recogida",
+     "turno": 6,
+     "msg": "cual es el costo del paquete",
+     "estado": {},
+     "rag": [
+      "-La conversación se esta llevando a cabo en español. El cliente indica que ya esta en las Islas del Rosario. Si pregunta por punto de encuentro, recogida u horarios, responde SOLO con la informacion de recogida en hotel/isla; no menciones la salida desde el Muelle de la Bodeguita en Cartagena salvo que el cliente pregunte explicitamente por ese caso. Se hospeda (o se hospedara) en la isla: isla_grande. Hotel/alojamiento reportado: cocoliso. El cliente indico que es colombiano/a (mostrar precios en COP, no hay descuento especial por ser colombiano). El cliente ya indico que son 2 persona(s) en total. Paso actual del flujo guiado: free_text.",
+      "+La conversación se esta llevando a cabo en español. El cliente indica que ya esta en las Islas del Rosario. Si pregunta por punto de encuentro, recogida u horarios, responde SOLO con la informacion de recogida en hotel/isla; no menciones la salida desde el Muelle de la Bodeguita en Cartagena salvo que el cliente pregunte explicitamente por ese caso. Se hospeda (o se hospedara) en la isla: isla_grande. Hotel/alojamiento reportado: cocoliso. El cliente indico que es colombiano/a (mostrar precios en COP, no hay descuento especial por ser colombiano). El cliente ya indico que son 2 persona(s) en total. El cliente indico que estara varios dias. Paso actual del flujo guiado: free_text."
+     ]
+    },
+    {
+     "id": "certificado-fechas-fotos-y-reserva",
+     "turno": 1,
+     "msg": "Hola, buenos días. Deca del centro de buceo. Me recomendaron a ustedes para bucear en Cartagena. Yo voy a estar entre el 5 y el 7 por allá. ",
+     "estado": {
+      "duracion_de_buceo": [
+       false,
+       true
+      ]
+     }
+    },
+    {
+     "id": "certificado-fechas-fotos-y-reserva",
+     "turno": 2,
+     "msg": "Mil gracias por la info. Oye, quiero hacerte una pregunta. Estuve consultando con otra agencia, um principalmente para mirar como los lugare",
+     "estado": {
+      "duracion_de_buceo": [
+       false,
+       true
+      ]
+     }
+    },
+    {
+     "id": "certificado-fechas-fotos-y-reserva",
+     "turno": 3,
+     "msg": "Y, aprovecho para preguntarte, entonces, si tienes en esas fechas, el 5 y 6 de febrero, y miré en el link que no incluye las fotos, ¿eso tie",
+     "estado": {
+      "duracion_de_buceo": [
+       false,
+       true
+      ]
+     }
+    },
+    {
+     "id": "certificado-fechas-fotos-y-reserva",
+     "turno": 4,
+     "msg": "Vale, perfecto. Muchas gracias por la explicación. um Listo, entonces tienes la fecha del 5 o 6 de febrero y no sé cómo se haga la reserva p",
+     "estado": {
+      "duracion_de_buceo": [
+       false,
+       true
+      ]
+     }
+    },
+    {
+     "id": "programa-fotos-y-alojamiento",
+     "turno": 4,
+     "msg": "Oye, par de preguntas. Si quisiera también me puedo hospedar con ustedes? Estoy pensando en ir en unos meses de nuevo",
+     "estado": {
+      "detected_duration": [
+       "multi_day",
+       null
+      ]
+     }
+    },
+    {
+     "id": "programa-fotos-y-alojamiento",
+     "turno": 5,
+     "msg": "Depronto te pasaron las fotos??",
+     "estado": {
+      "detected_duration": [
+       "multi_day",
+       null
+      ]
+     },
+     "rag": [
+      "-La conversación se esta llevando a cabo en español. Aun no sabemos la nacionalidad del cliente: si das un precio, en USD (si dice que es colombiano/a o residente en Colombia, en COP; no hay descuento especial por ser colombiano). El cliente indico que estara varios dias. Paso actual del flujo guiado: free_text.",
+      "+La conversación se esta llevando a cabo en español. Aun no sabemos la nacionalidad del cliente: si das un precio, en USD (si dice que es colombiano/a o residente en Colombia, en COP; no hay descuento especial por ser colombiano). Paso actual del flujo guiado: free_text."
+     ]
+    },
+    {
+     "id": "programa-fotos-y-alojamiento",
+     "turno": 6,
+     "msg": "Mire que los muchachos tomaron una en la lancha, pero, uno de los clientes (creo que se llama [NOMBRE]) tomó un video",
+     "estado": {
+      "detected_duration": [
+       "multi_day",
+       null
+      ]
+     }
+    },
+    {
+     "id": "logistica-isla-fragata-regreso-otro-dia",
+     "turno": 1,
+     "msg": "Hello! I have a question about the diving excursion. My husband and I are booked for April 13-14 and are staying in the Rosario islands that",
+     "estado": {
+      "detected_duration": [
+       null,
+       "multi_day"
+      ],
+      "duracion_de_buceo": [
+       false,
+       true
+      ]
+     }
+    },
+    {
+     "id": "logistica-isla-fragata-regreso-otro-dia",
+     "turno": 2,
+     "msg": "Amazing thank you! We’re thinking about extending our stay on the Rosario islands. Would it be possible to get dropped back off there after ",
+     "estado": {
+      "detected_duration": [
+       null,
+       "multi_day"
+      ],
+      "duracion_de_buceo": [
+       false,
+       true
+      ]
+     },
+     "rag": [
+      "-The conversation is currently happening in English. Aun no sabemos la nacionalidad del cliente: si das un precio, en USD (si dice que es colombiano/a o residente en Colombia, en COP; no hay descuento especial por ser colombiano). Current guided-flow step: free_text.",
+      "+The conversation is currently happening in English. Aun no sabemos la nacionalidad del cliente: si das un precio, en USD (si dice que es colombiano/a o residente en Colombia, en COP; no hay descuento especial por ser colombiano). The customer indicated they will be there for multiple days. Current guided-flow step: free_text."
+     ]
+    },
+    {
+     "id": "cambio-fecha-por-enfermedad",
+     "turno": 3,
+     "msg": "Hello. Unfortunately my husband is dealing with food poisoning and experienced the worst of it last night. He is still not feeling great. Is",
+     "estado": {
+      "detected_duration": [
+       null,
+       "multi_day"
+      ],
+      "duracion_de_buceo": [
+       false,
+       true
+      ]
+     }
+    },
+    {
+     "id": "cambio-fecha-por-enfermedad",
+     "turno": 4,
+     "msg": "I think Tuesday would be best. We already have a room booked on the island for Monday night and Tuesday night",
+     "estado": {
+      "detected_duration": [
+       null,
+       "multi_day"
+      ],
+      "duracion_de_buceo": [
+       false,
+       true
+      ]
+     }
+    },
+    {
+     "id": "cambio-fecha-por-enfermedad",
+     "turno": 5,
+     "msg": "We do not have a transfer to the island. We will most likely stay in Cartagena tomorrow night, then come diving on Tuesday, and stay overnig",
+     "estado": {
+      "detected_duration": [
+       null,
+       "multi_day"
+      ],
+      "duracion_de_buceo": [
+       false,
+       true
+      ]
+     }
+    },
+    {
+     "id": "cambio-fecha-por-enfermedad",
+     "turno": 6,
+     "msg": "I apologize for the change and confusion!",
+     "estado": {
+      "detected_duration": [
+       null,
+       "multi_day"
+      ],
+      "duracion_de_buceo": [
+       false,
+       true
+      ]
+     }
+    },
+    {
+     "id": "regreso-otro-dia-paquete-5",
+     "turno": 1,
+     "msg": "Seguramente tomaremos el paquete de 5 buceos para 2 personas con el traslado saliendo desde cartagena, niche en cocoliso, buceo nuevamente  ",
+     "estado": {
+      "duracion_de_buceo": [
+       false,
+       true
+      ]
+     }
+    },
+    {
+     "id": "regreso-otro-dia-paquete-5",
+     "turno": 2,
+     "msg": "Porque el paquete es saliendo un dia y regresando al siguiente a Cartagena. Nosotros quedaríamos 1 noche mas .",
+     "estado": {
+      "duracion_de_buceo": [
+       false,
+       true
+      ]
+     }
+    },
+    {
+     "id": "referral-mas-refresher-hotel-y-domingo-pascua",
+     "turno": 1,
+     "msg": "Hi. We want to complete our PADI open water: we have referrals and e-learning certificates. We would also like a refresher first. How does t",
+     "estado": {
+      "detected_duration": [
+       "multi_day",
+       null
+      ]
+     }
+    },
+    {
+     "id": "referral-mas-refresher-hotel-y-domingo-pascua",
+     "turno": 2,
+     "msg": "Ok. Thanks. We will work out the best days. Do you recommend any hotels on the island convenient for the diving?",
+     "estado": {
+      "detected_duration": [
+       "multi_day",
+       null
+      ]
+     },
+     "rag": [
+      "-The conversation is currently happening in English. Aun no sabemos la nacionalidad del cliente: si das un precio, en USD (si dice que es colombiano/a o residente en Colombia, en COP; no hay descuento especial por ser colombiano). The customer already said there are 2 people in total. The customer indicated they will be there for multiple days. Current guided-flow step: free_text.",
+      "+The conversation is currently happening in English. Aun no sabemos la nacionalidad del cliente: si das un precio, en USD (si dice que es colombiano/a o residente en Colombia, en COP; no hay descuento especial por ser colombiano). The customer already said there are 2 people in total. Current guided-flow step: free_text."
+     ]
+    },
+    {
+     "id": "referral-mas-refresher-hotel-y-domingo-pascua",
+     "turno": 3,
+     "msg": "Great. We will book diving with you on the website and will book our hotel on the island . Hope you are operating on Easter Sunday? We want ",
+     "estado": {
+      "duracion_de_buceo": [
+       false,
+       true
+      ]
+     },
+     "rag": [
+      "-The conversation is currently happening in English. Aun no sabemos la nacionalidad del cliente: si das un precio, en USD (si dice que es colombiano/a o residente en Colombia, en COP; no hay descuento especial por ser colombiano). The customer already said there are 2 people in total. The customer indicated they will be there for multiple days. Current guided-flow step: free_text.",
+      "+The conversation is currently happening in English. Aun no sabemos la nacionalidad del cliente: si das un precio, en USD (si dice que es colombiano/a o residente en Colombia, en COP; no hay descuento especial por ser colombiano). The customer already said there are 2 people in total. Current guided-flow step: free_text."
+     ]
+    },
+    {
+     "id": "paquete-5-buceos-precio-overnight-isla-grande-baru",
+     "turno": 1,
+     "msg": "Hello My name is [NOMBRE], i'd like to inquiry about the modalities for a 2 day dive package at the rosario islands. i'll be heading in on a",
+     "estado": {
+      "duracion_de_buceo": [
+       false,
+       true
+      ]
+     }
+    },
+    {
+     "id": "paquete-5-buceos-precio-overnight-isla-grande-baru",
+     "turno": 2,
+     "msg": "certified diver",
+     "estado": {
+      "duracion_de_buceo": [
+       false,
+       true
+      ]
+     }
+    },
+    {
+     "id": "paquete-5-buceos-precio-overnight-isla-grande-baru",
+     "turno": 3,
+     "msg": "beginner",
+     "estado": {
+      "duracion_de_buceo": [
+       false,
+       true
+      ]
+     }
+    },
+    {
+     "id": "paquete-5-buceos-precio-overnight-isla-grande-baru",
+     "turno": 4,
+     "msg": "Looking for recommendations for hotels for a solo backpacker is Isla Grande part of rosario island?",
+     "estado": {
+      "duracion_de_buceo": [
+       false,
+       true
+      ]
+     }
+    },
+    {
+     "id": "paquete-5-buceos-precio-overnight-isla-grande-baru",
+     "turno": 5,
+     "msg": "or Playa Tranquila on Isla Barú",
+     "estado": {
+      "duracion_de_buceo": [
+       false,
+       true
+      ]
+     }
+    },
+    {
+     "id": "paquete-5-buceos-precio-overnight-isla-grande-baru",
+     "turno": 6,
+     "msg": "Price?  Can you help me with this information?",
+     "estado": {
+      "duracion_de_buceo": [
+       false,
+       true
+      ]
+     }
+    },
+    {
+     "id": "open-water-hoteles-noche-fotos-horario",
+     "turno": 4,
+     "msg": "and the total is 2 days course",
+     "estado": {
+      "detected_duration": [
+       "multi_day",
+       null
+      ]
+     }
+    },
+    {
+     "id": "open-water-hoteles-noche-fotos-horario",
+     "turno": 5,
+     "msg": "2 full days course, right?",
+     "estado": {
+      "detected_duration": [
+       "multi_day",
+       null
+      ]
+     },
+     "rag": [
+      "-The conversation is currently happening in English. Aun no sabemos la nacionalidad del cliente: si das un precio, en USD (si dice que es colombiano/a o residente en Colombia, en COP; no hay descuento especial por ser colombiano). The customer indicated they will be there for multiple days. Current guided-flow step: free_text.",
+      "+The conversation is currently happening in English. Aun no sabemos la nacionalidad del cliente: si das un precio, en USD (si dice que es colombiano/a o residente en Colombia, en COP; no hay descuento especial por ser colombiano). Current guided-flow step: free_text."
+     ]
+    },
+    {
+     "id": "open-water-hoteles-noche-fotos-horario",
+     "turno": 6,
+     "msg": "also- I saw pictures and videos are not included...?",
+     "estado": {
+      "detected_duration": [
+       "multi_day",
+       null
+      ]
+     },
+     "rag": [
+      "-The conversation is currently happening in English. Aun no sabemos la nacionalidad del cliente: si das un precio, en USD (si dice que es colombiano/a o residente en Colombia, en COP; no hay descuento especial por ser colombiano). The customer indicated they will be there for multiple days. Current guided-flow step: free_text.",
+      "+The conversation is currently happening in English. Aun no sabemos la nacionalidad del cliente: si das un precio, en USD (si dice que es colombiano/a o residente en Colombia, en COP; no hay descuento especial por ser colombiano). Current guided-flow step: free_text."
+     ]
+    },
+    {
+     "id": "open-water-hoteles-noche-fotos-horario",
+     "turno": 7,
+     "msg": "but will have a photographer taking pictures during the divings?",
+     "estado": {
+      "detected_duration": [
+       "multi_day",
+       null
+      ]
+     },
+     "rag": [
+      "-The conversation is currently happening in English. Aun no sabemos la nacionalidad del cliente: si das un precio, en USD (si dice que es colombiano/a o residente en Colombia, en COP; no hay descuento especial por ser colombiano). The customer indicated they will be there for multiple days. Current guided-flow step: free_text.",
+      "+The conversation is currently happening in English. Aun no sabemos la nacionalidad del cliente: si das un precio, en USD (si dice que es colombiano/a o residente en Colombia, en COP; no hay descuento especial por ser colombiano). Current guided-flow step: free_text."
+     ]
+    },
+    {
+     "id": "open-water-hoteles-noche-fotos-horario",
+     "turno": 8,
+     "msg": "Sorry again, do you have a more detailed schedule ?\nFor instance, what time does the course finish on the first day?\nBecause I wanted to kno",
+     "estado": {
+      "detected_duration": [
+       "multi_day",
+       null
+      ]
+     },
+     "rag": [
+      "-The conversation is currently happening in English. Aun no sabemos la nacionalidad del cliente: si das un precio, en USD (si dice que es colombiano/a o residente en Colombia, en COP; no hay descuento especial por ser colombiano). The customer indicated they will be there for multiple days. Current guided-flow step: free_text.",
+      "+The conversation is currently happening in English. Aun no sabemos la nacionalidad del cliente: si das un precio, en USD (si dice que es colombiano/a o residente en Colombia, en COP; no hay descuento especial por ser colombiano). Current guided-flow step: free_text."
+     ]
+    },
+    {
+     "id": "open-water-hoteles-noche-fotos-horario",
+     "turno": 9,
+     "msg": "thanks",
+     "estado": {
+      "detected_duration": [
+       "multi_day",
+       null
+      ]
+     }
+    },
+    {
+     "id": "curso-open-water-transporte-y-regreso-otro-dia",
+     "turno": 2,
+     "msg": "What if I decide to stay one day longer in rosario, can you provide de transfer back to cartagena?",
+     "estado": {
+      "detected_duration": [
+       "single_day",
+       null
+      ]
+     }
+    },
+    {
+     "id": "curso-open-water-transporte-y-regreso-otro-dia",
+     "turno": 3,
+     "msg": "Thanks.\nAnother question is, where is the meeting point in cartagena?",
+     "estado": {
+      "detected_duration": [
+       "single_day",
+       null
+      ]
+     },
+     "rag": [
+      "-The conversation is currently happening in English. Aun no sabemos la nacionalidad del cliente: si das un precio, en USD (si dice que es colombiano/a o residente en Colombia, en COP; no hay descuento especial por ser colombiano). The customer indicated they will be there for a single day. Current guided-flow step: free_text.",
+      "+The conversation is currently happening in English. Aun no sabemos la nacionalidad del cliente: si das un precio, en USD (si dice que es colombiano/a o residente en Colombia, en COP; no hay descuento especial por ser colombiano). Current guided-flow step: free_text."
+     ]
+    },
+    {
+     "id": "certificado-precio-dia-paquete-5-y-hoteles-base",
+     "turno": 1,
+     "msg": "Hi, I plan on being in Cartagena and do scuba diving on April 21 and 22. I have open water, advanced open water and deep diver certs. Please",
+     "estado": {
+      "detected_duration": [
+       null,
+       "multi_day"
+      ],
+      "duracion_de_buceo": [
+       false,
+       true
+      ]
+     },
+     "rag": [
+      "-The conversation is currently happening in English. The customer is departing from Cartagena for their experience. If they ask about the meeting point, pickup, or schedule, answer ONLY with the Cartagena departure info (Muelle de la Bodeguita); do not mention the hotel/island pickup option unless they explicitly ask about it. El cliente marco que es buzo certificado (solo buzos certificados en el grupo). Aun no sabemos la nacionalidad del cliente: si das un precio, en USD (si dice que es colombiano/a o residente en Colombia, en COP; no hay descuento especial por ser colombiano). Current guided-flow step: free_text.",
+      "+The conversation is currently happening in English. The customer is departing from Cartagena for their experience. If they ask about the meeting point, pickup, or schedule, answer ONLY with the Cartagena departure info (Muelle de la Bodeguita); do not mention the hotel/island pickup option unless they explicitly ask about it. El cliente marco que es buzo certificado (solo buzos certificados en el grupo). Aun no sabemos la nacionalidad del cliente: si das un precio, en USD (si dice que es colombiano/a o residente en Colombia, en COP; no hay descuento especial por ser colombiano). The customer indicated they will be there for multiple days. Current guided-flow step: free_text."
+     ]
+    },
+    {
+     "id": "certificado-precio-dia-paquete-5-y-hoteles-base",
+     "turno": 2,
+     "msg": "PADI open water, advanced open water and deep diver certs",
+     "estado": {
+      "detected_duration": [
+       null,
+       "multi_day"
+      ],
+      "duracion_de_buceo": [
+       false,
+       true
+      ]
+     }
+    },
+    {
+     "id": "certificado-precio-dia-paquete-5-y-hoteles-base",
+     "turno": 3,
+     "msg": "So if I book for 2 days are we going to the same spots or do different one within San Brenardo National park?",
+     "estado": {
+      "duracion_de_buceo": [
+       false,
+       true
+      ]
+     },
+     "rag": [
+      "-The conversation is currently happening in English. The customer is departing from Cartagena for their experience. If they ask about the meeting point, pickup, or schedule, answer ONLY with the Cartagena departure info (Muelle de la Bodeguita); do not mention the hotel/island pickup option unless they explicitly ask about it. El cliente marco que es buzo certificado (solo buzos certificados en el grupo). Aun no sabemos la nacionalidad del cliente: si das un precio, en USD (si dice que es colombiano/a o residente en Colombia, en COP; no hay descuento especial por ser colombiano). Current guided-flow step: free_text.",
+      "+The conversation is currently happening in English. The customer is departing from Cartagena for their experience. If they ask about the meeting point, pickup, or schedule, answer ONLY with the Cartagena departure info (Muelle de la Bodeguita); do not mention the hotel/island pickup option unless they explicitly ask about it. El cliente marco que es buzo certificado (solo buzos certificados en el grupo). Aun no sabemos la nacionalidad del cliente: si das un precio, en USD (si dice que es colombiano/a o residente en Colombia, en COP; no hay descuento especial por ser colombiano). The customer indicated they will be there for multiple days. Current guided-flow step: free_text."
+     ]
+    },
+    {
+     "id": "certificado-precio-dia-paquete-5-y-hoteles-base",
+     "turno": 4,
+     "msg": "And how much is per a day",
+     "estado": {
+      "duracion_de_buceo": [
+       false,
+       true
+      ]
+     }
+    },
+    {
+     "id": "certificado-precio-dia-paquete-5-y-hoteles-base",
+     "turno": 5,
+     "msg": "I see this package of 5 dives",
+     "estado": {
+      "duracion_de_buceo": [
+       false,
+       true
+      ]
+     }
+    },
+    {
+     "id": "certificado-precio-dia-paquete-5-y-hoteles-base",
+     "turno": 6,
+     "msg": "What island on rosario islands should I look for the hotel?",
+     "estado": {
+      "duracion_de_buceo": [
+       false,
+       true
+      ]
+     }
+    },
+    {
+     "id": "colombianos-precio-minicurso-dos-inmersiones",
+     "turno": 4,
+     "msg": "Yo vi un video en YT de alguien que hizo el paquete con ustedes e hicieron dos inmersiones en dos distintos puntos",
+     "estado": {
+      "detected_duration": [
+       "multi_day",
+       null
+      ]
+     }
+    },
+    {
+     "id": "colombianos-precio-minicurso-dos-inmersiones",
+     "turno": 5,
+     "msg": "Eso es una tarifa diferente?",
+     "estado": {
+      "detected_duration": [
+       "multi_day",
+       null
+      ]
+     },
+     "rag": [
+      "-La conversación se esta llevando a cabo en español. El cliente indico que es colombiano/a (mostrar precios en COP, no hay descuento especial por ser colombiano). El cliente ya indico que son 2 persona(s) en total. El cliente indico que estara varios dias. Paso actual del flujo guiado: free_text.",
+      "+La conversación se esta llevando a cabo en español. El cliente indico que es colombiano/a (mostrar precios en COP, no hay descuento especial por ser colombiano). El cliente ya indico que son 2 persona(s) en total. Paso actual del flujo guiado: free_text."
+     ]
+    },
+    {
+     "id": "minicurso-precio-colombianos-origen-pendiente",
+     "turno": 1,
+     "msg": "Me gustaría agendar un día de buceo con ustedes",
+     "estado": {
+      "duracion_de_buceo": [
+       false,
+       true
+      ]
+     }
+    },
+    {
+     "id": "minicurso-precio-colombianos-origen-pendiente",
+     "turno": 2,
+     "msg": "Buceo para principiantes",
+     "estado": {
+      "duracion_de_buceo": [
+       false,
+       true
+      ]
+     }
+    },
+    {
+     "id": "minicurso-precio-colombianos-origen-pendiente",
+     "turno": 3,
+     "msg": "2 personas",
+     "estado": {
+      "duracion_de_buceo": [
+       false,
+       true
+      ]
+     }
+    },
+    {
+     "id": "minicurso-precio-colombianos-origen-pendiente",
+     "turno": 4,
+     "msg": "Ese es el precio para ciudadanos colombianos? somos de Bogotá",
+     "estado": {
+      "duracion_de_buceo": [
+       false,
+       true
+      ]
+     }
+    },
+    {
+     "id": "precio-paquetes-5-o-3-buceos-y-opcion-2-diurnos",
+     "turno": 1,
+     "msg": "Hey I am going to be in Colombia in a few days and moving around the country. I was hoping to include the island visit and dives as part of ",
+     "estado": {
+      "detected_duration": [
+       "multi_day",
+       null
+      ]
+     }
+    },
+    {
+     "id": "precio-paquetes-5-o-3-buceos-y-opcion-2-diurnos",
+     "turno": 3,
+     "msg": "do you have an option for 2 dives and 1 night dive so I do one day of diving instead of two?",
+     "estado": {
+      "detected_duration": [
+       "multi_day",
+       "single_day"
+      ],
+      "duracion_de_buceo": [
+       false,
+       true
+      ]
+     }
+    },
+    {
+     "id": "precio-paquetes-5-o-3-buceos-y-opcion-2-diurnos",
+     "turno": 4,
+     "msg": "or 2 day dives?",
+     "estado": {
+      "detected_duration": [
+       "multi_day",
+       "single_day"
+      ],
+      "duracion_de_buceo": [
+       false,
+       true
+      ]
+     },
+     "rag": [
+      "-The conversation is currently happening in English. Aun no sabemos la nacionalidad del cliente: si das un precio, en USD (si dice que es colombiano/a o residente en Colombia, en COP; no hay descuento especial por ser colombiano). The customer indicated they will be there for multiple days. Current guided-flow step: free_text.",
+      "+The conversation is currently happening in English. Aun no sabemos la nacionalidad del cliente: si das un precio, en USD (si dice que es colombiano/a o residente en Colombia, en COP; no hay descuento especial por ser colombiano). The customer indicated they will be there for a single day. Current guided-flow step: free_text."
+     ]
+    },
+    {
+     "id": "precio-paquetes-5-o-3-buceos-y-opcion-2-diurnos",
+     "turno": 5,
+     "msg": "amazing I may opt for that... i'll give you more confirmed details in the next week. thanks so much",
+     "estado": {
+      "detected_duration": [
+       "multi_day",
+       "single_day"
+      ],
+      "duracion_de_buceo": [
+       false,
+       true
+      ]
+     }
+    },
+    {
+     "id": "curso-open-water-principiantes-idioma-frances-anticipacion",
+     "turno": 2,
+     "msg": "Es decir en dos dias tendriamos el certificado haciendo nuestro curso en linea . La persona que me acompana no habla ni ingles ni espanol pe",
+     "estado": {
+      "detected_duration": [
+       "multi_day",
+       null
+      ]
+     }
+    },
+    {
+     "id": "curso-open-water-principiantes-idioma-frances-anticipacion",
+     "turno": 3,
+     "msg": "Frances",
+     "estado": {
+      "detected_duration": [
+       "multi_day",
+       null
+      ]
+     }
+    },
+    {
+     "id": "curso-open-water-principiantes-idioma-frances-anticipacion",
+     "turno": 4,
+     "msg": "Exactamente entre el 20 y 22 de julio",
+     "estado": {
+      "detected_duration": [
+       "multi_day",
+       null
+      ]
+     }
+    }
+   ]
+  },
+  "edades_por_extractor (oráculo)": {
+   "turnos_estado": 4,
+   "turnos_reply": 0,
+   "turnos_rag": 1,
+   "dialogos_estado": [
+    "ninos-6-y-10"
+   ],
+   "dialogos_reply": [],
+   "dialogos_rag": [
+    "ninos-6-y-10"
+   ],
+   "campos": {
+    "detected_ages": 4
+   },
+   "cambios": [
+    {
+     "id": "ninos-6-y-10",
+     "turno": 3,
+     "msg": "el mayor tiene 10",
+     "estado": {
+      "detected_ages": [
+       [],
+       [
+        10
+       ]
+      ]
+     }
+    },
+    {
+     "id": "ninos-6-y-10",
+     "turno": 4,
+     "msg": "y el menor tiene 6",
+     "estado": {
+      "detected_ages": [
+       [],
+       [
+        6,
+        10
+       ]
+      ]
+     }
+    },
+    {
+     "id": "ninos-6-y-10",
+     "turno": 5,
+     "msg": "pueden hacer snorkel los dos o el pequeno esta muy chico?",
+     "estado": {
+      "detected_ages": [
+       [],
+       [
+        6,
+        10
+       ]
+      ]
+     },
+     "rag": [
+      "-La conversación se esta llevando a cabo en español. Aun no sabemos la nacionalidad del cliente: si das un precio, en USD (si dice que es colombiano/a o residente en Colombia, en COP; no hay descuento especial por ser colombiano). El cliente ya indico que son 2 persona(s) en total. Paso actual del flujo guiado: free_text.",
+      "+La conversación se esta llevando a cabo en español. Aun no sabemos la nacionalidad del cliente: si das un precio, en USD (si dice que es colombiano/a o residente en Colombia, en COP; no hay descuento especial por ser colombiano). El cliente ya indico que son 2 persona(s) en total. Edades de menores mencionadas y qué puede hacer cada uno (datos exactos, úsalos): ¡Con 6 años puede hacer *snorkel* y disfrutar del arrecife desde la superficie! 🌊 El buceo (Bubble Makers) es a partir de los 8 años y el minicurso desde los 10. ¡Con 10 años puede hacer *snorkel*, el *minicurso de buceo* y el curso *Open Water*! 🎉 ¡Y a esa edad ya puede hacer también los cursos *Advanced* y *Rescue* (desde los 12 años)! El *Divemaster* es a partir de los 18. Para las salidas como *buzo certificado* solo necesita tener la certificación Open Water. (Los menores deben ir acompañados de un adulto responsable.) Paso actual del flujo guiado: free_text."
+     ]
+    },
+    {
+     "id": "ninos-6-y-10",
+     "turno": 6,
+     "msg": "entonces que actividad me recomiendas para cada uno",
+     "estado": {
+      "detected_ages": [
+       [],
+       [
+        6,
+        10
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  "plan_elegido_por_extractor (oráculo)": {
+   "turnos_estado": 0,
+   "turnos_reply": 0,
+   "turnos_rag": 0,
+   "dialogos_estado": [],
+   "dialogos_reply": [],
+   "dialogos_rag": [],
+   "campos": {},
+   "cambios": []
+  },
+  "reparto_al_sumarse_alguien (oráculo)": {
+   "turnos_estado": 0,
+   "turnos_reply": 0,
+   "turnos_rag": 0,
+   "dialogos_estado": [],
+   "dialogos_reply": [],
+   "dialogos_rag": [],
+   "campos": {},
+   "cambios": []
+  },
+  "notas_rag_desde_estado (oráculo)": {
+   "turnos_estado": 14,
+   "turnos_reply": 0,
+   "turnos_rag": 1,
+   "dialogos_estado": [
+    "acompanante-goteo",
+    "confirma-reserva-existente-escalar",
+    "curso-open-water-principiantes-idioma-frances-anticipacion",
+    "grupo-con-refresher",
+    "post-venta-confirmar-formularios-elearning"
+   ],
+   "dialogos_reply": [],
+   "dialogos_rag": [
+    "curso-open-water-principiantes-idioma-frances-anticipacion"
+   ],
+   "campos": {
+    "acompanante_sin_certificar": 12,
+    "acompanante_certificado_inactivo": 2
+   },
+   "cambios": [
+    {
+     "id": "acompanante-goteo",
+     "turno": 3,
+     "msg": "el no es certificado",
+     "estado": {
+      "acompanante_sin_certificar": [
+       false,
+       true
+      ]
+     }
+    },
+    {
+     "id": "acompanante-goteo",
+     "turno": 4,
+     "msg": "el quiere hacer snorkel",
+     "estado": {
+      "acompanante_sin_certificar": [
+       false,
+       true
+      ]
+     }
+    },
+    {
+     "id": "acompanante-goteo",
+     "turno": 5,
+     "msg": "somos los dos solamente",
+     "estado": {
+      "acompanante_sin_certificar": [
+       false,
+       true
+      ]
+     }
+    },
+    {
+     "id": "acompanante-goteo",
+     "turno": 6,
+     "msg": "desde cartagena",
+     "estado": {
+      "acompanante_sin_certificar": [
+       false,
+       true
+      ]
+     }
+    },
+    {
+     "id": "acompanante-goteo",
+     "turno": 7,
+     "msg": "no hace poco bucee",
+     "estado": {
+      "acompanante_sin_certificar": [
+       false,
+       true
+      ]
+     }
+    },
+    {
+     "id": "acompanante-goteo",
+     "turno": 8,
+     "msg": "no somos colombianos",
+     "estado": {
+      "acompanante_sin_certificar": [
+       false,
+       true
+      ]
+     }
+    },
+    {
+     "id": "grupo-con-refresher",
+     "turno": 2,
+     "msg": "uno de los certificados no bucea hace 5 anos",
+     "estado": {
+      "acompanante_certificado_inactivo": [
+       false,
+       true
+      ]
+     }
+    },
+    {
+     "id": "grupo-con-refresher",
+     "turno": 3,
+     "msg": "cartagena, todos extranjeros",
+     "estado": {
+      "acompanante_certificado_inactivo": [
+       false,
+       true
+      ]
+     }
+    },
+    {
+     "id": "confirma-reserva-existente-escalar",
+     "turno": 3,
+     "msg": "Hello, I just want to tell you, I just make a reservation for me and [NOMBRE] for diving with you on Monday 11th of May. Him is gonna be lik",
+     "estado": {
+      "acompanante_sin_certificar": [
+       false,
+       true
+      ]
+     }
+    },
+    {
+     "id": "post-venta-confirmar-formularios-elearning",
+     "turno": 2,
+     "msg": "Hi, good morning. I hope you are good. We're gonna dive with you next Monday. My name is [NOMBRE] and my boyfriend's name is [NOMBRE]. I am ",
+     "estado": {
+      "acompanante_sin_certificar": [
+       false,
+       true
+      ]
+     }
+    },
+    {
+     "id": "curso-open-water-principiantes-idioma-frances-anticipacion",
+     "turno": 1,
+     "msg": "Hola!\nMe gustaria tener mas informacion acerca de los cursos de buceo en Cartagena (especificamente en Islas del Rosario)\nSomos dos personas",
+     "estado": {
+      "acompanante_sin_certificar": [
+       false,
+       true
+      ]
+     }
+    },
+    {
+     "id": "curso-open-water-principiantes-idioma-frances-anticipacion",
+     "turno": 2,
+     "msg": "Es decir en dos dias tendriamos el certificado haciendo nuestro curso en linea . La persona que me acompana no habla ni ingles ni espanol pe",
+     "estado": {
+      "acompanante_sin_certificar": [
+       false,
+       true
+      ]
+     },
+     "rag": [
+      "-La conversación se esta llevando a cabo en español. El cliente indica que saldra desde Cartagena para su experiencia. Si pregunta por punto de encuentro, recogida u horarios, responde SOLO con la informacion de salida desde Cartagena (Muelle de la Bodeguita); no menciones la opcion de recogida en hotel/islas salvo que el cliente pregunte explicitamente por ese caso. El cliente marco que no es buzo certificado o que viene como principiante/snorkel. Aun no sabemos la nacionalidad del cliente: si das un precio, en USD (si dice que es colombiano/a o residente en Colombia, en COP; no hay descuento especial por ser colombiano). El cliente ya indico que son 2 persona(s) en total. Paso actual del flujo guiado: free_text.",
+      "+La conversación se esta llevando a cabo en español. IMPORTANTE — regla de negocio real (no la inventes ni la relajes): un minicurso de buceo es UNA experiencia de iniciación de 1 día, NO una certificación. Los paquetes de 5, 7 y 9 inmersiones (y cualquier 'buceo certificado') son EXCLUSIVOS para buzos certificados (mínimo Open Water). Si el grupo tiene a alguien que hizo (o hará) el minicurso pero NO está certificado, esa persona NO puede sumarse a inmersiones de buceo certificado ese mismo viaje ni al día siguiente — necesitaría completar un curso de certificación real (Open Water) primero. Nunca confirmes ni des a entender que podrán 'bucear juntos' en el tramo certificado del plan; si preguntan por eso, acláralo con esta regla. Además, el minicurso es una reserva SEPARADA del paquete de buceo certificado (cada uno con su propio link) — no digas que uno 'incluye' al otro; si das los links de ambos, preséntalos como dos reservas distintas, no una anidada dentro de la otra. El cliente indica que saldra desde Cartagena para su experiencia. Si pregunta por punto de encuentro, recogida u horarios, responde SOLO con la informacion de salida desde Cartagena (Muelle de la Bodeguita); no menciones la opcion de recogida en hotel/islas salvo que el cliente pregunte explicitamente por ese caso. El cliente marco que no es buzo certificado o que viene como principiante/snorkel. Aun no sabemos la nacionalidad del cliente: si das un precio, en USD (si dice que es colombiano/a o residente en Colombia, en COP; no hay descuento especial por ser colombiano). El cliente ya indico que son 2 persona(s) en total. Paso actual del flujo guiado: free_text."
+     ]
+    },
+    {
+     "id": "curso-open-water-principiantes-idioma-frances-anticipacion",
+     "turno": 3,
+     "msg": "Frances",
+     "estado": {
+      "acompanante_sin_certificar": [
+       false,
+       true
+      ]
+     }
+    },
+    {
+     "id": "curso-open-water-principiantes-idioma-frances-anticipacion",
+     "turno": 4,
+     "msg": "Exactamente entre el 20 y 22 de julio",
+     "estado": {
+      "acompanante_sin_certificar": [
+       false,
+       true
+      ]
+     }
+    }
+   ]
+  },
+  "los cinco flags con el extractor caído": {
+   "turnos_estado": 0,
+   "turnos_reply": 0,
+   "turnos_rag": 0,
+   "dialogos_estado": [],
+   "dialogos_reply": [],
+   "dialogos_rag": [],
+   "campos": {},
+   "cambios": []
+  }
+ }
+}
