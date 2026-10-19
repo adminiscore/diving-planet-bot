@@ -38,6 +38,7 @@ sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 from scripts.replay_golden_local import _noop, _rag, dialogues  # noqa: E402
 from src.agents import conversational_core as core  # noqa: E402
 from src.agents import escalation, supervisor  # noqa: E402
+from src.agents.nucleo import slotfill_close as core_close  # noqa: E402
 from src.config import settings  # noqa: E402
 from src.flows.state import ConversationState  # noqa: E402
 
@@ -126,7 +127,7 @@ def _clase(frase: str) -> str:
 
 async def main() -> None:
     supervisor.rag_answer = _rag
-    core.compose_acknowledgement = lambda *a, **k: asyncio.sleep(0, result="")
+    core_close.compose_acknowledgement = lambda *a, **k: asyncio.sleep(0, result="")
     # Notas FIJAS (vacías): descarta su CONTENIDO como causa. `NOTAS_TARDAN` les da la latencia de una llamada
     # real (van en paralelo, como en PRE): si con notas vacías pero lentas se rehace más, la causa no
     # es lo que dicen las notas sino la ESPERA, que deja a la extracción cambiar el estado entre las dos huellas.

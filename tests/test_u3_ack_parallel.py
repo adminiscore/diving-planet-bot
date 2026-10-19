@@ -15,6 +15,8 @@ import asyncio
 import pytest
 
 import src.agents.conversational_core as core
+from src.agents.nucleo import setup as core_setup
+from src.agents.nucleo import slotfill_close as core_close
 from src.flows.state import ConversationState, Step
 
 
@@ -36,8 +38,8 @@ def acks(monkeypatch):
         await asyncio.sleep(0.01)
         return "¡Genial!"
 
-    monkeypatch.setattr(core, "compose_acknowledgement", _ack)
-    monkeypatch.setattr(core, "_maybe_capture_notes", lambda *a, **k: asyncio.sleep(0))
+    monkeypatch.setattr(core_close, "compose_acknowledgement", _ack)
+    monkeypatch.setattr(core_setup, "_maybe_capture_notes", lambda *a, **k: asyncio.sleep(0))
     return calls
 
 

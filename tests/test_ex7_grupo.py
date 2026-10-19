@@ -11,6 +11,7 @@ from unittest.mock import AsyncMock
 import pytest
 
 from src.agents import conversational_core as core
+from src.agents.nucleo import extractor as core_extractor
 from src.flows.state import ConversationState
 
 
@@ -18,7 +19,7 @@ from src.flows.state import ConversationState
 def ex7(monkeypatch):
 
     def con(datos):
-        monkeypatch.setattr(core, "datos_del_extractor", AsyncMock(return_value=datos))
+        monkeypatch.setattr(core_extractor, "datos_del_extractor", AsyncMock(return_value=datos))
 
     return con
 

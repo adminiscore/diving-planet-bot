@@ -13,6 +13,9 @@ from unittest.mock import AsyncMock
 import pytest
 
 from src.agents.booking_agent import booking_node
+from src.agents.nucleo import extraction as core_extraction
+from src.agents.nucleo import routing as core_routing
+from src.agents.nucleo import slotfill_close as core_close
 from src.flows.state import ConversationState, Step
 
 
@@ -32,11 +35,13 @@ def _core_llm_offline(monkeypatch):
     se mockea aparte donde hace falta)."""
     import src.agents.conversational_core as core
 
-    monkeypatch.setattr(core, "fill_gaps", AsyncMock(return_value={}))
-    monkeypatch.setattr(core, "detect_special_signals", AsyncMock(return_value={}))
-    monkeypatch.setattr(core, "resolve_slot_answer", AsyncMock(return_value={}))
+    monkeypatch.setattr(core_extraction, "fill_gaps", AsyncMock(return_value={}))
+    _senales = AsyncMock(return_value={})
+    monkeypatch.setattr(core_routing, "detect_special_signals", _senales)
+    monkeypatch.setattr(core_extraction, "detect_special_signals", _senales)
+    monkeypatch.setattr(core_extraction, "resolve_slot_answer", AsyncMock(return_value={}))
     monkeypatch.setattr(core, "extract_notes", AsyncMock(return_value=[]))
-    monkeypatch.setattr(core, "compose_acknowledgement", AsyncMock(return_value=""))
+    monkeypatch.setattr(core_close, "compose_acknowledgement", AsyncMock(return_value=""))
 
 
 # ── subgrafo (Fase 3.3, andamiaje) ──

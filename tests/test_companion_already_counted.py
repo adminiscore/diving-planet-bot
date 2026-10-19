@@ -12,6 +12,9 @@ from unittest.mock import AsyncMock, patch
 import pytest
 
 from src.agents import conversational_core as core
+from src.agents.nucleo import extraction as core_extraction
+from src.agents.nucleo import routing as core_routing
+from src.agents.nucleo import slotfill_close as core_close
 from src.agents.supervisor import route_message
 from src.flows.state import ConversationState
 
@@ -35,12 +38,13 @@ def _two_divers_waiting_nationality():
 
 
 async def _send(state, message, signals):
+    _senales = AsyncMock(return_value=signals)
     with patch("src.agents.supervisor.detect_routing_signals", new=AsyncMock(return_value={})), \
-         patch.object(core, "fill_gaps", new=AsyncMock(return_value={})), \
+         patch.object(core_extraction, "fill_gaps", new=AsyncMock(return_value={})), \
          patch.object(core, "extract_and_verify", create=True, new=AsyncMock(return_value=({}, {}))), \
-         patch.object(core, "detect_special_signals", new=AsyncMock(return_value=signals)), \
-         patch.object(core, "compose_acknowledgement", new=AsyncMock(return_value="")), \
-         patch.object(core, "resolve_slot_answer", new=AsyncMock(return_value={})), \
+         patch.object(core_routing, "detect_special_signals", new=_senales), patch.object(core_extraction, "detect_special_signals", new=_senales), \
+         patch.object(core_close, "compose_acknowledgement", new=AsyncMock(return_value="")), \
+         patch.object(core_extraction, "resolve_slot_answer", new=AsyncMock(return_value={})), \
          patch("src.agents.supervisor._maybe_veto_resolved_fields_via_llm", new=AsyncMock(return_value=None)):
         return await route_message(state, message)
 

@@ -302,7 +302,7 @@
       "titulo": "Preparar",
       "nodo_grafo": "setup",
       "que_hace": "Detecta el idioma en el primer mensaje, apunta el nombre y lanza en paralelo las notas y el acuse.",
-      "donde": "src/agents/conversational_core.py:_setup_phase",
+      "donde": "src/agents/nucleo/setup.py:_setup_phase",
       "modelos": [
         "openai_model"
       ],
@@ -318,7 +318,7 @@
       "titulo": "Disponibilidad",
       "nodo_grafo": "availability",
       "que_hace": "Fechas cerradas y preguntas de disponibilidad (estas las contesta el RAG).",
-      "donde": "src/agents/conversational_core.py:_availability_phase",
+      "donde": "src/agents/nucleo/availability.py:_availability_phase",
       "interruptores": []
     },
     {
@@ -329,7 +329,7 @@
       "titulo": "Señales",
       "nodo_grafo": "routing",
       "que_hace": "Lee las señales de Jev: respuestas cortas a lo que se preguntó, correcciones, '¿me recuerdas…?'. Si hay una pregunta, lanza la respuesta en paralelo.",
-      "donde": "src/agents/conversational_core.py:_routing_phase",
+      "donde": "src/agents/nucleo/routing.py:_routing_phase",
       "modelos": [
         "senales_model"
       ],
@@ -343,7 +343,7 @@
       "titulo": "Entender los datos",
       "nodo_grafo": "extraction",
       "que_hace": "Saca del mensaje actividad, personas, fechas, certificación, origen y nacionalidad: primero con reglas y luego con un LLM que rellena y comprueba.",
-      "donde": "src/agents/conversational_core.py:_extraction_phase",
+      "donde": "src/agents/nucleo/extraction.py:_extraction_phase",
       "modelos": [
         "extractor_turno_model",
         "red_extractor_model"
@@ -372,7 +372,7 @@
       "titulo": "Preguntar o cerrar",
       "nodo_grafo": "slotfill_close",
       "que_hace": "Si falta un dato, lo pregunta. Si está todo, arma el resumen con el precio y el link de reserva. Pone delante la respuesta a la pregunta del cliente, si la hubo.",
-      "donde": "src/agents/conversational_core.py:_slotfill_close_phase",
+      "donde": "src/agents/nucleo/slotfill_close.py:_slotfill_close_phase",
       "modelos": [
         "resolutor_model"
       ],

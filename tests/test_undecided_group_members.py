@@ -11,6 +11,7 @@ from unittest.mock import AsyncMock, patch
 import pytest
 
 from src.agents import conversational_core as core
+from src.agents.nucleo import extraction as core_extraction
 from src.flows.state import ConversationState
 
 
@@ -30,7 +31,7 @@ def _state():
 async def test_undecided_member_is_not_assumed_and_rest_follow_main_activity():
     state = _state()
     llm = {"group_allocation": {"undecided": 1}}
-    with patch.object(core, "fill_gaps", new=AsyncMock(return_value=llm)), \
+    with patch.object(core_extraction, "fill_gaps", new=AsyncMock(return_value=llm)), \
          patch.object(core, "extract_and_verify", create=True, new=AsyncMock(return_value=(llm, {}))):
         await core._understand(state, "somos 3, uno no está certificado")
     assert state.detected_group_allocation == {"certified_diving": 2}
@@ -65,7 +66,7 @@ async def test_invented_undecided_quantity_is_ignored():
     """La cifra de `undecided` del LLM tiene que estar en el texto: "uno" no avala un 2."""
     state = _state()
     llm = {"group_allocation": {"undecided": 2}}
-    with patch.object(core, "fill_gaps", new=AsyncMock(return_value=llm)), \
+    with patch.object(core_extraction, "fill_gaps", new=AsyncMock(return_value=llm)), \
          patch.object(core, "extract_and_verify", create=True, new=AsyncMock(return_value=(llm, {}))):
         await core._understand(state, "uno de nosotros no está certificado")
     assert state.pending_undecided_qty is None

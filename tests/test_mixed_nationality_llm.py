@@ -14,6 +14,7 @@ import pytest
 
 from src.agents import conversational_core as core
 from src.agents.intent_detector import mentions_writer_and_others
+from src.agents.nucleo import extraction as core_extraction
 from src.flows.state import ConversationState
 from src.prompts.booking import EXTRACTION_TOOL, extraction_tool
 
@@ -73,7 +74,7 @@ async def _understand(message, returned):
 
     state = ConversationState(conversation_id="mixed")
     state.language = "es"
-    with patch.object(core, "fill_gaps", fake_fill), patch.object(core, "extract_and_verify", fake_extract, create=True):
+    with patch.object(core_extraction, "fill_gaps", fake_fill), patch.object(core, "extract_and_verify", fake_extract, create=True):
         await core._understand(state, message)
     return state, calls
 

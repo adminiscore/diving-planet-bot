@@ -25,6 +25,7 @@ from dataclasses import asdict
 import pytest
 
 import src.agents.conversational_core as core
+from src.agents.nucleo import setup as core_setup
 from src.flows.state import ConversationState
 
 
@@ -43,7 +44,7 @@ async def test_setup_no_espera_pero_deja_la_tarea(monkeypatch):
         await asyncio.sleep(0.05)
         terminado.append(message)
 
-    monkeypatch.setattr(core, "_maybe_capture_notes", _notas_lentas)
+    monkeypatch.setattr(core_setup, "_maybe_capture_notes", _notas_lentas)
 
     st = _state()
     st.history.append({"role": "user", "content": "hola"})
@@ -63,7 +64,7 @@ async def test_la_nota_acaba_en_el_estado_antes_de_que_nadie_la_use(monkeypatch)
         await asyncio.sleep(0.01)
         state.remembered_facts = {**(state.remembered_facts or {}), "notes": ["lesion en la rodilla"]}
 
-    monkeypatch.setattr(core, "_maybe_capture_notes", _notas)
+    monkeypatch.setattr(core_setup, "_maybe_capture_notes", _notas)
 
     st = _state()
     st.history.append({"role": "user", "content": "hola"})
@@ -88,7 +89,7 @@ async def test_la_tarea_nunca_se_serializa_a_redis(monkeypatch):
     async def _notas(state, message, **_):
         pass
 
-    monkeypatch.setattr(core, "_maybe_capture_notes", _notas)
+    monkeypatch.setattr(core_setup, "_maybe_capture_notes", _notas)
 
     st = _state()
     st.history.append({"role": "user", "content": "hola"})
@@ -103,7 +104,7 @@ async def test_si_la_captura_falla_el_turno_no_se_cae(monkeypatch):
     async def _explota(state, message, **_):
         raise RuntimeError("el LLM de notas ha fallado")
 
-    monkeypatch.setattr(core, "_maybe_capture_notes", _explota)
+    monkeypatch.setattr(core_setup, "_maybe_capture_notes", _explota)
 
     st = _state()
     st.history.append({"role": "user", "content": "hola"})

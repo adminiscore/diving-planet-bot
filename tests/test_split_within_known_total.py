@@ -13,6 +13,7 @@ from unittest.mock import AsyncMock, patch
 import pytest
 
 from src.agents import conversational_core as core
+from src.agents.nucleo import extraction as core_extraction
 from src.flows.state import ConversationState
 
 
@@ -24,7 +25,7 @@ def _grupo_camino_antiguo(monkeypatch):
 
 async def _understand(state, message, patch_value):
     with patch.object(core, "extract_and_verify", create=True, new=AsyncMock(return_value=(patch_value, {}))), \
-         patch.object(core, "fill_gaps", new=AsyncMock(return_value=patch_value)), \
+         patch.object(core_extraction, "fill_gaps", new=AsyncMock(return_value=patch_value)), \
          patch.object(core, "verify_fields", create=True, new=AsyncMock(return_value={})), \
          patch("src.agents.supervisor._maybe_veto_resolved_fields_via_llm", new=AsyncMock(return_value=None)):
         await core._understand(state, message)

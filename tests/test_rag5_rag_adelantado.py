@@ -6,6 +6,7 @@ from unittest.mock import patch
 import pytest
 
 from src.agents import conversational_core as core
+from src.agents.nucleo import setup as core_setup
 from src.flows.state import ConversationState, Step
 
 
@@ -119,7 +120,7 @@ async def test_primer_mensaje_se_adelanta_con_el_idioma_y_el_paso_que_dejara_set
     async def _sin_notas(*a, **k):
         return None
 
-    monkeypatch.setattr(core, "_maybe_capture_notes", _sin_notas)
+    monkeypatch.setattr(core_setup, "_maybe_capture_notes", _sin_notas)
     rag = _RagFalso()
     state = _primer_turno()
     with patch("src.agents.supervisor.rag_answer", new=rag), \

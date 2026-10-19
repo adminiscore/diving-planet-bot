@@ -8,6 +8,7 @@ respuesta lo que ES la cantidad o lo que el detector ya lee como total del grupo
 import pytest
 
 from src.agents import conversational_core as core
+from src.agents.nucleo import extraction as core_extraction
 from src.flows.state import ConversationState
 
 NOT_A_COUNT = [
@@ -84,7 +85,7 @@ async def test_llm_fill_does_not_take_a_dive_count_as_the_group_total():
     state.is_certified = state.detected_is_certified = True
     fill = {"group_size": 2}
     with patch.object(core, "extract_and_verify", create=True, new=AsyncMock(return_value=(fill, {}))), \
-         patch.object(core, "fill_gaps", new=AsyncMock(return_value=fill)), \
+         patch.object(core_extraction, "fill_gaps", new=AsyncMock(return_value=fill)), \
          patch.object(core, "verify_fields", create=True, new=AsyncMock(return_value={})), \
          patch("src.agents.supervisor._maybe_veto_resolved_fields_via_llm", new=AsyncMock(return_value=None)):
         await core._understand(state, "2 inmersiones")
@@ -105,7 +106,7 @@ async def test_boolean_riding_on_an_invalid_answer_to_the_pending_question_is_dr
     state.is_certified = state.detected_is_certified = True
     fill = {"group_size": 2, "is_colombian": False}
     with patch.object(core, "extract_and_verify", create=True, new=AsyncMock(return_value=(dict(fill), {}))), \
-         patch.object(core, "fill_gaps", new=AsyncMock(return_value=dict(fill))), \
+         patch.object(core_extraction, "fill_gaps", new=AsyncMock(return_value=dict(fill))), \
          patch.object(core, "verify_fields", create=True, new=AsyncMock(return_value={})), \
          patch("src.agents.supervisor._maybe_veto_resolved_fields_via_llm", new=AsyncMock(return_value=None)):
         await core._understand(state, "2 inmersiones")

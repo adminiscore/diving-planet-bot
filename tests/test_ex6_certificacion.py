@@ -9,6 +9,7 @@ from unittest.mock import AsyncMock
 import pytest
 
 from src.agents import conversational_core as core
+from src.agents.nucleo import extractor as core_extractor
 from src.flows.state import ConversationState
 
 
@@ -22,7 +23,7 @@ def _grupo_camino_antiguo(monkeypatch):
 def ex6(monkeypatch):
 
     def con(datos):
-        monkeypatch.setattr(core, "datos_del_extractor", AsyncMock(return_value=datos))
+        monkeypatch.setattr(core_extractor, "datos_del_extractor", AsyncMock(return_value=datos))
 
     return con
 
@@ -81,7 +82,7 @@ async def test_los_campos_del_extractor_no_van_al_veto(monkeypatch):
     sus campos (la llamada iba en serie y su resultado se tiraba)."""
     from src.agents import supervisor
 
-    monkeypatch.setattr(core, "datos_del_extractor", AsyncMock(return_value={}))
+    monkeypatch.setattr(core_extractor, "datos_del_extractor", AsyncMock(return_value={}))
     verificar = AsyncMock(return_value={})
     monkeypatch.setattr(supervisor, "verify_fields", verificar)
     monkeypatch.setattr(core, "verify_fields", verificar, raising=False)

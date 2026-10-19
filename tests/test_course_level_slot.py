@@ -13,6 +13,8 @@ import pytest
 from src.agents import conversational_core as core
 from src.agents import supervisor
 from src.agents.intent_detector import DetectedIntent
+from src.agents.nucleo import extraction as core_extraction
+from src.agents.nucleo import routing as core_routing
 from src.agents.supervisor import route_message
 from src.domain import activities as dom
 from src.flows.state import ConversationState
@@ -107,9 +109,9 @@ async def test_conversation_asks_the_course_and_continues_after_the_choice():
         "extract_and_verify": AsyncMock(return_value=({}, {})),
         "detect_special_signals": AsyncMock(return_value={}),
     }
-    with patch.object(core, "fill_gaps", new=no_llm["fill_gaps"]), \
+    with patch.object(core_extraction, "fill_gaps", new=no_llm["fill_gaps"]), \
          patch.object(core, "extract_and_verify", create=True, new=no_llm["extract_and_verify"]), \
-         patch.object(core, "detect_special_signals", new=no_llm["detect_special_signals"]):
+         patch.object(core_routing, "detect_special_signals", new=no_llm["detect_special_signals"]), patch.object(core_extraction, "detect_special_signals", new=no_llm["detect_special_signals"]):
         first = await route_message(state, "quiero hacer un curso PADI")
         assert state.detected_activity == "padi_course"
         assert state.core_pending_slot == core.SLOT_COURSE_LEVEL

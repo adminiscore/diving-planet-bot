@@ -10,6 +10,7 @@ mensaje, no es el mensaje entero y el detector no lee en ella la respuesta pendi
 import pytest
 
 from src.agents import conversational_core as core
+from src.agents.nucleo import extraction as core_extraction
 from src.flows.state import ConversationState
 from src.prompts.booking import EVIDENCE_FIELDS, extraction_tool
 
@@ -65,7 +66,7 @@ async def _understand(state, message, returned):
         return dict(returned)
 
     from unittest.mock import patch
-    with patch.object(core, "extract_and_verify", fake, create=True), patch.object(core, "fill_gaps", fake_fill):
+    with patch.object(core, "extract_and_verify", fake, create=True), patch.object(core_extraction, "fill_gaps", fake_fill):
         await core._understand(state, message)
     return calls
 
