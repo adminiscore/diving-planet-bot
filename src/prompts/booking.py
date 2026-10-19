@@ -84,7 +84,7 @@ _FIELD_MEANING_EN = {
     # Solo viaja en `extraction_tool(["mixed_nationality"])` (hallazgo A, 2026-09-15). Texto
     # medido con el LLM real: una version que insistia en "no supongas" marcaba a los
     # residentes como grupo mixto; los mensajes de un solo lado los corta la puerta del
-    # nucleo (`mentions_writer_and_others`), no el prompt.
+    # nucleo (`mentions_writer_and_others`, sin llamador; borrada en ex-9b), no el prompt.
     "mixed_nationality": (
         "whether the party mixes nationalities for payment: true if it includes BOTH people "
         "who are Colombian or live in Colombia AND people who are neither (for example the writer "

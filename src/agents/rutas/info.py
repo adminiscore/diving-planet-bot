@@ -155,6 +155,9 @@ def private_group_event_reply(state: ConversationState) -> str:
 # del paquete): no cambia, solo la moneda. Respuesta determinista, sin
 # necesidad de recalcular ningun numero -- evita el riesgo de alucinacion
 # por completo en vez de confiar en que el juez de grounding la atrape.
+# ex-3/ex-9b: esa respuesta fija se apagó con `atajo_nacionalidad_por_rag` (la contesta el RAG con la regla de
+# moneda del catálogo) y se borró; el patrón sigue porque `orchestration/router.classify_route` manda la pregunta
+# a la ruta INFO.
 _SAME_PRICE_DIFFERENT_NATIONALITY_RE = re.compile(
     r"(?:lo\s+mismo|el\s+mismo\s+precio|mismo\s+precio).{0,40}"
     r"(?:colombian[oa]|extranjer[oa]|residente)|"
@@ -162,30 +165,6 @@ _SAME_PRICE_DIFFERENT_NATIONALITY_RE = re.compile(
     r"same\s+(?:price|thing).{0,40}(?:colombian|foreign)",
     re.IGNORECASE,
 )
-
-
-def fixed_same_price_answer(msg_lower: str, lang: str) -> str | None:
-    """La respuesta fija de "¿cambia el precio por nacionalidad?", o None si no aplica o (ex-3,
-    `atajo_nacionalidad_por_rag`) la contesta el RAG con la regla de moneda del catálogo."""
-    if settings.atajo_nacionalidad_por_rag or not _SAME_PRICE_DIFFERENT_NATIONALITY_RE.search(msg_lower):
-        return None
-    return _same_price_different_nationality_answer(lang)
-
-
-def _same_price_different_nationality_answer(lang: str) -> str:
-    if lang == "es":
-        return (
-            "¡No cambia nada en el precio! 🌊 El valor es el mismo para todos — solo cambia la "
-            "moneda en la que se paga: colombianos/residentes pagan en pesos (COP) y "
-            "extranjeros en dólares (USD), al mismo precio equivalente, sin cobro extra ni "
-            "descuento por nacionalidad. ¿Te ayudo a armar la reserva? 😊"
-        )
-    return (
-        "The price doesn't change at all! 🌊 It's the same for everyone — only the currency "
-        "changes: Colombians/residents pay in pesos (COP) and foreign visitors in dollars "
-        "(USD), at the same equivalent price, no extra charge and no discount for "
-        "nationality. Want me to help you put the booking together? 😊"
-    )
 
 
 # Cues that turn an age mention into an eligibility QUESTION we should answer

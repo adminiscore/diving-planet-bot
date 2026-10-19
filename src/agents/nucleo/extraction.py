@@ -62,7 +62,6 @@ from src.agents.intent_detector import (
     _SINGULAR_PERSON,
     certification_claim,
     course_level_is_ambiguous,
-    mentions_other_person_subject,
 )
 from src.agents.llm_extractor import (
     detect_special_signals,
@@ -71,10 +70,7 @@ from src.agents.llm_extractor import (
     resolve_slot_answer,
 )
 from src.agents.nucleo.extractor import (
-    _CORRECTABLE_FIELDS,
     _aplicar_extractor,
-    _has_correction_cue,
-    _route_contradictions,
     campos_del_extractor,
 )
 from src.config import settings
@@ -82,7 +78,6 @@ from src.domain import activities as dom
 from src.flows import cart_render
 from src.flows.state import ConversationState
 from src.utils.number_words import number_alt, number_words
-from src.utils.text import strip_accents
 
 logger = logging.getLogger("uvicorn.error")
 
@@ -326,22 +321,6 @@ def _message_numbers(message: str) -> Counter:
 _NAMED_PERSON_RE = re.compile(_SINGULAR_PERSON, re.IGNORECASE)
 
 
-def _named_people(message: str) -> Counter:
-    """Cada persona del grupo nombrada una a una respalda una cifra 1 del reparto (2026-09-15).
-
-    "mi amigo tiene licencia, yo no": el LLM devuelve bien {certified_diving: 1,
-    undecided: 1} y total 2, pero sin ninguna cifra escrita la comprobación de
-    `_message_numbers` tiraba el reparto entero y, con él, el total. El propio prompt ya
-    cuenta así ("mi pareja y yo" = 2).
-
-    Quien escribe cuenta siempre que nombra a otra persona, lo diga con "yo" o solo con
-    el verbo ("soy certificado y mi hijo no"). Sin nadie más nombrado no cuenta: un "yo
-    quiero bucear" respaldaría un reparto de una sola entrada y fijaría el total en 1 sin
-    que nadie lo dijera."""
-    others = len(_NAMED_PERSON_RE.findall(message))
-    return Counter({1: others + 1}) if others else Counter()
-
-
 def _singular_companion(message: str) -> bool:
     """¿El mensaje habla de UN solo acompañante? Exactamente una persona nombrada o, si no
     nombra a nadie, "someone"/"uno que" (2026-09-15). Antes bastaba con que apareciera una:
@@ -456,9 +435,6 @@ _BOOL_SLOT_FIELD = {
     SLOT_NATIONALITY: "is_colombian",
 }
 
-# Booleanos cuyo valor del LLM pasa por `_boolean_patch_is_anchored`.
-_BOOL_PATCH_FIELDS = frozenset(_BOOL_SLOT_FIELD.values())
-
 
 # Campo de estado que resuelve cada slot que la red anti-bucle de Fase C sabe
 # interpretar (`_LLM_RESOLVABLE_SLOTS`) — usado por
@@ -515,144 +491,10 @@ _SLOT_PREV_KEY = {
 }
 
 
-def _pending_answer_field(pending_slot: str | None) -> str:
-    """Campo del intent que contesta la pregunta pendiente ("location", "group_size"...), o
-    "" si no hay. Una sola lectura para la guarda (b), la de campos sabidos y la cita."""
-    return _SLOT_STATE_FIELD.get(pending_slot, "").removeprefix("detected_") if pending_slot else ""
-
-
-def _asks_for_evidence(pending_slot: str | None) -> bool:
-    """¿Puede la guarda (b) descartar un booleano en este turno? Solo si la pregunta
-    pendiente la contesta un campo extraible que no es un booleano (ubicacion, total)."""
-    return pending_slot not in _BOOL_SLOT_FIELD and _pending_answer_field(pending_slot) in _DRIVING_FIELDS
-
-
-def _normalized_words(text: str) -> str:
-    return " ".join(re.findall(r"\w+", strip_accents((text or "").lower())))
-
-
-# Muelles y barrios de Cartagena que nombran los clientes y el detector no conoce (solo para saber si el cliente nombró
-# un lugar; el lugar lo sigue decidiendo el detector). Salieron al repasar los rellenos de `location` de los logs de PRE
-# del 2 al 9-oct: "El todo mar donde se van a encontrar", "El de boca grande?" (punto-encuentro-corrige-todo-mar).
-_LUGAR_DE_CARTAGENA_RE = re.compile(
-    r"\bboca\s?grande\b|\bgetseman[ií]\b|\bcastillo\s?grande\b|\blaguito\b|\bcentro\s+hist[oó]rico\b|"
-    r"\bbodeguita\b|\btodo\s?mar\b",
-    re.IGNORECASE,
-)
-
-
-def _quote_backs_boolean(field: str, pending_slot: str | None, message: str, evidence: dict) -> bool:
-    """Respuesta doble (hallazgo B, 2026-09-15): "desde cartagena, somos paisas" con la
-    ubicacion pendiente. El extractor cita, en la misma peticion, las palabras del mensaje
-    que dicen cada booleano; la cita lo respalda si
-      - esta literalmente en el mensaje (cita del historial, no),
-      - no es el mensaje entero: la respuesta pendiente tiene que estar en otra parte, y
-      - el detector no lee en ella la respuesta pendiente ("Desde Cartagena" no dice la
-        nacionalidad aunque el LLM la infiera de ahi).
-    Sonda con el LLM real (21 escenarios x 3): respuestas dobles legitimas 24/33 -> 33/33,
-    alucinaciones evitadas 30/30 igual, cortesias incluidas ("desde cartagena, gracias")."""
-    answered_field = _pending_answer_field(pending_slot)
-    if not _asks_for_evidence(pending_slot) or not isinstance(evidence, dict) or not isinstance(evidence.get(field), str):
-        return False
-    quote, text = _normalized_words(evidence.get(field)), _normalized_words(message)
-    if not quote or quote not in text or len(quote) >= len(text):
-        return False
-    return getattr(_detector.detect(evidence[field], ConversationState(conversation_id="evidence")), answered_field, None) is None
-
-
-def _boolean_patch_is_anchored(
-    field: str, pending_slot: str | None, intent, patch: dict, *, gated_by_jev: bool = False,
-) -> bool:
-    """GUARDA (b): ¿es de fiar el booleano que el LLM rellenó en este turno?
-
-    Complementa a `_BOOL_SLOT_FIELD` (guarda (a), que ni siquiera le pide al LLM
-    el booleano del slot pendiente) con el caso simétrico: el LLM rellenando un
-    booleano DISTINTO del que el bot preguntó. Caso real: el bot pregunta la
-    ubicación, el cliente contesta "Desde Cartagena" y el LLM añade
-    `is_colombian=True` (3/3 con LLM real, 2026-09-14).
-
-    Antes esto era una lista de vocabulario por campo ("¿el mensaje menciona el
-    tema?"). Medido 2026-09-14 con turnos reales: en aperturas descartaba el
-    valor correcto en todo lo que la lista no conocía ("soy paisa", "ya soy
-    sertificado", "tengo el AOWD", "nunca lo he hecho"), 0/24 frente a 18/24, con
-    la misma protección (18/18). Lo que separa "Desde Cartagena" de "soy paisa"
-    no es el vocabulario sino la estructura del turno: el primero es la
-    RESPUESTA a otra pregunta pendiente; un booleano que viaja pegado a esa
-    respuesta no se acepta. Mismo principio que `_turn_answered_a_different_slot`
-    en la red anti-bucle.
-
-    Coste conocido: una respuesta doble legítima ("desde cartagena, somos
-    paisas") pierde el booleano y el bot lo pregunta después. Una pregunta de
-    más, nunca una reserva equivocada.
-    """
-    if field not in _BOOL_PATCH_FIELDS or pending_slot is None:
-        return True
-    if _BOOL_SLOT_FIELD.get(pending_slot) == field:
-        # guarda (a): ese slot solo lo resuelven los resolutores anclados. Salvo el relleno CON
-        # PUERTA del turno con pregunta (u3-4, 26-sep): sin historial y con el "sí" de Jev para
-        # ESTE campo en ESTE mensaje, así que no puede "contestar" mirando el historial.
-        return gated_by_jev
-    answered_field = _pending_answer_field(pending_slot)
-    if not answered_field:
-        return True
-    answered = getattr(intent, answered_field, None) is not None or patch.get(answered_field) is not None
-    return not answered
-
-
-def _recheck_proposals(state: ConversationState, intent, answered_pending: bool, disagreements: dict, recheck) -> dict:
-    """GUARDA (b) aplicada a la verificacion de campos ya sabidos (tarea 7b, 2026-09-15).
-
-    Mismo principio que `_boolean_patch_is_anchored`: lo que viaja pegado a la respuesta
-    de OTRA pregunta pendiente no se acepta. Medido en conversacion con el LLM real: en
-    "desde cartagena" (ubicacion pendiente) o "no, buceamos hace 6 meses" (seguridad
-    pendiente) la verificacion re-derivaba del historial el total y el reparto y pedia
-    confirmar cambios que nadie habia dicho. "ah no, somos gringos" con la ubicacion
-    pendiente no contesta esa pregunta y se sigue leyendo; tras el cierre no hay nada
-    pendiente."""
-    proposals = {f: v for f, v in disagreements.items() if f in recheck}
-    pending = state.core_pending_slot
-    answered_field = _pending_answer_field(pending)
-    answered = answered_pending or bool(answered_field and getattr(intent, answered_field, None) is not None)
-    if proposals and answered:
-        logger.info(f"[CORE] verificacion de campos sabidos descartada (el turno contesto {pending!r}): {proposals}")
-        return {}
-    return proposals
-
-
 def _state_known_fields(state: ConversationState) -> set[str]:
     """Campos extraíbles que la CONVERSACIÓN ya conoce (estado), con la misma
     convención que missing_fields: False es un valor resuelto, None/[] no."""
     return {f for f, v in _known_field_values(state).items() if v not in (None, [], {})}
-
-
-def _regex_contradictions(state: ConversationState, message: str, intent) -> dict:
-    """Lo que el regex lee y contradice lo guardado sale del intent: el regex propone,
-    no decide. Tambien deduce (minicurso -> no certificado) y lee frases de otra
-    persona ("mi novia no es buzo", "mi parce no esta certificado") (tarea 7b).
-
-    Solo se acepta sin mas lo que quien escribe dice de si mismo CON cue explicito
-    ("espera, en realidad no somos colombianos"). El resto de lo que dice de si mismo
-    se devuelve para que la verificacion LLM de campos sabidos lo arbitre (una
-    peticion, solo cuando hay contradiccion): el LLM entiende la jerga y se abstiene
-    si habla de otra persona (medido 24/24)."""
-
-    known = _known_field_values(state)
-    contradicting = {
-        f: getattr(intent, f) for f in _CORRECTABLE_FIELDS
-        if f not in campos_del_extractor()  # ex-5: lo decide el extractor al final
-        and f in intent.detected_fields and known.get(f) not in (None, [], {})
-        and getattr(intent, f) not in (None, [], {}) and getattr(intent, f) != known[f]
-    }
-    for field in contradicting:
-        setattr(intent, field, None)
-        intent.detected_fields.remove(field)
-    stated = {} if mentions_other_person_subject(message) else {
-        f: v for f, v in contradicting.items() if f != "is_certified" or certification_claim(message) == v
-    }
-    if stated and _has_correction_cue(state, message):
-        _route_contradictions(state, message, intent, stated)
-        return {}
-    return stated
 
 
 def _recommend_inferred_minicourse(intent, state: ConversationState, message: str) -> None:

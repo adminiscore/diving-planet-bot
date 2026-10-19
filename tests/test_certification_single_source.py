@@ -5,12 +5,12 @@ negativa y RAG) y el RAG tenia su propia lista de "ya certificado":
 - "quiere sacarse la certificacion" o "me quiero certificar" salian certificados;
 - el RAG leia "no soy certificado" como certificado y descartaba "tengo el open water
   y quiero hacer buceo" por el "quiero hacer".
-Ahora `certification_status` decide para el detector y para el RAG.
+Ahora `certification_status` decide para el detector (el resumen fijo del RAG que también la usaba se borró en
+ex-9b).
 """
 
 import pytest
 
-from src.agents import rag_agent
 from src.agents.intent_detector import IntentDetector, certification_status
 from src.flows.state import ConversationState
 
@@ -39,15 +39,3 @@ def test_wish_to_certify_leaves_the_activity_open():
     intent = IntentDetector().detect("quisiera obtener la certificación", ConversationState(conversation_id="c"))
     assert intent.is_certified is False
     assert intent.activity is None
-
-
-@pytest.mark.parametrize("message, expected", [
-    ("no soy certificado, es mi primera vez", False),
-    ("no tengo licencia de buceo", False),
-    ("tengo el open water y quiero hacer buceo", True),
-    ("i'm certified but haven't dived in like 4 years", True),
-])
-def test_rag_uses_the_detector_source(message, expected):
-    assert rag_agent._mentions_already_certified(message.lower()) is expected
-    assert not hasattr(rag_agent, "_ALREADY_CERTIFIED_RE")
-    assert not hasattr(rag_agent, "_WANTS_CERT_EXCLUDE_RE")

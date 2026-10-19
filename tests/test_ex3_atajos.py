@@ -1,7 +1,9 @@
 """ex-3 (fase EX): respuestas de texto fijo ACTIVAS que pasan al RAG, una por flag (`atajo_resumen_por_rag`,
 `atajo_nacionalidad_por_rag`, `atajo_alergia_por_rag`). Inventario y motivos: docs/robustness/atajos/inventario-ex3.md.
 
-Sin red: apagado, cada atajo contesta como hoy; encendido, no contesta y la pregunta sigue al RAG.
+Sin red: apagado, cada atajo contesta como hoy; encendido, no contesta y la pregunta sigue al RAG. ex-9b: el resumen
+fijo de "¿qué ofrecen?" y la respuesta fija de "¿cambia el precio si es colombiano?" (sus flags están encendidos en
+PRE) se borraron; queda fijado que la pregunta abierta llega al RAG.
 """
 import pytest
 
@@ -14,10 +16,7 @@ class _AlRag(Exception):
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("encendido", [False, True])
-async def test_resumen_de_opciones(monkeypatch, encendido):
-    monkeypatch.setattr(settings, "atajo_resumen_por_rag", encendido)
-
+async def test_resumen_de_opciones_lo_contesta_el_rag(monkeypatch):
     async def busqueda(*args, **kwargs):
         raise _AlRag
 
@@ -26,18 +25,8 @@ async def test_resumen_de_opciones(monkeypatch, encendido):
 
     monkeypatch.setattr(rag_agent, "search_knowledge_base", busqueda)
     monkeypatch.setattr(rag_agent, "condense_query", reescribir)
-    if encendido:
-        with pytest.raises(_AlRag):
-            await rag_agent.rag_answer("¿qué ofrecen para bucear?", lang="es")
-    else:
-        assert "Minicurso" in await rag_agent.rag_answer("¿qué ofrecen para bucear?", lang="es")
-
-
-@pytest.mark.parametrize("encendido", [False, True])
-def test_mismo_precio_por_nacionalidad(monkeypatch, encendido):
-    monkeypatch.setattr(settings, "atajo_nacionalidad_por_rag", encendido)
-    texto = supervisor.fixed_same_price_answer("lo mismo pero para mi amigo que es colombiano, cambia algo?", "es")
-    assert (texto is None) if encendido else ("No cambia nada" in texto)
+    with pytest.raises(_AlRag):
+        await rag_agent.rag_answer("¿qué ofrecen para bucear?", lang="es")
 
 
 @pytest.mark.parametrize("encendido", [False, True])

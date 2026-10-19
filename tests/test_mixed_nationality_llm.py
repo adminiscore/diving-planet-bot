@@ -13,7 +13,6 @@ from unittest.mock import patch
 import pytest
 
 from src.agents import conversational_core as core
-from src.agents.intent_detector import mentions_writer_and_others
 from src.agents.nucleo import extraction as core_extraction
 from src.flows.state import ConversationState
 from src.prompts.booking import EXTRACTION_TOOL, extraction_tool
@@ -23,35 +22,6 @@ from src.prompts.booking import EXTRACTION_TOOL, extraction_tool
 def _camino_viejo_de_actividad(monkeypatch):
     """Estos tests prueban el camino viejo (regex + veto/relleno). Con ex-8 (`extraccion_llm_actividad`) la actividad y
     la nacionalidad las decide el extractor "LLM primero": tests/test_ex8_actividad_nacionalidad.py."""
-
-
-@pytest.mark.parametrize("message", [
-    "yo soy colombiano y mi novia extranjera",
-    "mi esposa es colombiana y yo no",
-    "dos somos colombianos pero uno es extranjero",
-    "somos colombianos pero mi amigo es aleman",
-    "i'm colombian but my girlfriend is from spain",
-    "yo vivo en bogota y mi amigo es gringo",
-    "uno de nosotros es colombiano y los otros dos no",
-    "one of us is colombian and the others are not",
-    "somos alemanes pero mi esposa vive en medellin",
-])
-def test_both_sides_of_the_party_ask_the_llm(message):
-    assert mentions_writer_and_others(message)
-
-
-@pytest.mark.parametrize("message", [
-    "ninguno colombiano",
-    "mi novio es aleman y quiere hacer snorkel",
-    "mi esposa es colombiana",
-    "nadie es colombiano, somos de chile",
-    "my girlfriend is from spain and she wants to dive",
-    "we're all from germany",
-    "somos colombianos, queremos bucear",
-    "no soy colombiano pero vivo en colombia",
-])
-def test_one_side_only_never_asks(message):
-    assert not mentions_writer_and_others(message)
 
 
 def test_the_usual_tool_is_untouched():

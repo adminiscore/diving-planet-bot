@@ -129,14 +129,6 @@ def _detect_kids_mention(message: str) -> bool:
         "grandchild", "grandchildren", "grandson", "granddaughter",
         "baby", "babies",
     }
-    if tokens & kids_keywords:
-        return True
-
-    kids_patterns = (
-        r"\bmi\s+(hij[oa]|sobrin[oa]|nin[oa]|niet[oa]|bebe)\b",
-        r"\bmis\s+(hij[oa]s|sobrin[oa]s|nin[oa]s|niet[oa]s)\b",
-        r"\bmi\s+familia\s+con\s+(hij[oa]s|nin[oa]s|menores)\b",
-        r"\bmy\s+(grandchild|grandson|granddaughter|baby|kid|child)\b",
-        r"\b(?:\d+|" + number_alt(2, 10, "es") + r")\s+(hij[oa]s|nin[oa]s|sobrin[oa]s|menores)\b",
-    )
-    return any(re.search(pattern, normalized) for pattern in kids_patterns)
+    # ex-9b: aquí había 5 patrones ("mi hijo", "mis sobrinos", "3 menores"...) que nunca decidían nada: cada uno exige
+    # una palabra que ya está en `kids_keywords`, y esa comprobación va antes.
+    return bool(tokens & kids_keywords)
