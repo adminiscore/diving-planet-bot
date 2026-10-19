@@ -59,7 +59,25 @@ integrar la rama del otro y suite en verde, porque en PRE gana el último; (3) *
 despliegue reinicia el contenedor y mata la medida del otro (avisar en el registro de Plan Coral con la hora de fin).
 Las doce normas, con su porqué, están en el documento.
 
-### ▶️ RETOMAR AQUÍ — 19-oct, 05:15 (Gadea con Claude, noche en autonomía): limpieza s4-25 TERMINADA (pasos 1 y 2)
+### ▶️ RETOMAR AQUÍ — 19-oct, 14:40 (Gadea con Claude; Álvaro parado): ex-9b en marcha, ronda ex9b-2 midiendo
+
+**Decisión de Gadea (19-oct): ex-9 parte 2 (ex-9b) ENTERA antes de G9** — "quiero hacer g9 con todo lo que es código y
+fallos solucionables terminados". Plan de 6 pasos en `docs/robustness/regex/estudio-ex9-regex.md`; bancos y scripts en
+`docs/robustness/regex/estudio-ex9/`. **G9 no se lanza: se avisa a Gadea cuando solo quede G9.** Seguimos Gadea y Claude
+con todo hasta que vuelva Álvaro (luego se reasignan las pendientes).
+
+**PRE sirve c6c2d12 (pre_gadea)**, ronda **ex9b-2** en curso (preguntas nuevas de Jev REINICIO/IDENTIDAD_IA/IDIOMA,
+DELIBERACION_POR_JEV, la regla del grupo repartido del paso 3 y el enrutador de respaldo con "none"). HISTORY 0.31.62.
+- Hechos: pasos 0, 1 (agente), 2 y la parte 1 del 5 (promocionados con ex9b-1). Paso 3 integrado con
+  `EXTRACTOR_SIN_PISTA` APAGADO; un agente adapta en `feature/ex9b-paso-3-tests` los 76 tests que dependían del regex
+  (necesario para promocionarlo). Paso 4 lo prepara otro agente en `feature/ex9b-paso-4` (respuestas cortas por la IA,
+  nombre, notas del RAG desde el estado, `_N_INMERSIONES_RE` → `dive_counts_in`, días cerrados).
+- Pendientes: del paso 5, "pide precio" (tras el paso 3) y dos grupos casi sin uso ("no es DTH", grupo privado); paso 6
+  (duración, edades y plan elegido en el extractor: dudas de negocio para Gadea).
+- **Cómo lanzar una ronda** (lección del 19-oct): `set -o pipefail && check_deploy --sha <commit SUBIDO> | tail && ronda`;
+  el jsonl se abre en modo append (si una tanda sale mal, apartarla antes de repetir el mismo `--name`).
+
+### (anterior) RETOMAR AQUÍ — 19-oct, 05:15 (Gadea con Claude, noche en autonomía): limpieza s4-25 TERMINADA (pasos 1 y 2)
 
 **PRE sirve 970641f (pre_gadea)**: el estado promocionado de la noche + la limpieza s4-25 en sus dos pasos (21 flags sin
 su camino apagado, src −412 líneas netas), cada paso con su ronda de equivalencia comprobada con el código de antes y

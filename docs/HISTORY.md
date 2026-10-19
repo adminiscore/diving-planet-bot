@@ -1,6 +1,38 @@
 History
 =======
 
+0.31.62 - (2026-10-19)
+----------------------
+* **ex-9 parte 2 (ex-9b), pasos 0, 1, 2 y 5: que entienda la IA y no las listas de palabras; ronda ex9b-1** (Gadea con
+  Claude y dos agentes; decisión de Gadea del 19-oct: los 6 pasos de `docs/robustness/regex/estudio-ex9-regex.md` antes
+  de G9).
+  - **Pasos 0 y 1** (agente): inventario bien contado (776 patrones, "entender" 73,2 %); borrados 76 regex muertos y 715
+    líneas de src (revisor con cita, resumen fijo de "¿qué ofrecen?", "mismo precio", TOPIC_PATTERNS, kids_patterns…):
+    700 patrones, "entender" 71,9 %. Replay de 95 diálogos: 0 diferencias.
+  - **Paso 2** `ALCOHOL_DETRAS_DE_LO_MEDICO` (encendido): si Jev dice médico, manda la seguridad aunque se nombre el
+    alcohol. Banco 6/10 → 10/10.
+  - **Paso 5** (encendidos y **promocionados** con la ronda): `REGEX_SOLO_SI_IA_CALLA`, con una sola regla
+    (`supervisor.regex_decide`) en el router, los nodos, `setup` y la cascada: link roto, sensible, cancelar/cambiar,
+    contacto, "hablar con", DTH. Solo con el router no bastaba: "quiero hablar con mi esposa antes de reservar"
+    llegaba a la reserva y `setup` la volvía a pasar a una persona. Banco de ruta 14/17 → 17/17.
+    `PREGUNTA_Y_CORRECCION_POR_JEV`: pregunta 6/14 → 14/14, corrección 4/10 → 10/10. El enrutador de respaldo ya no
+    toma "mándame el link por WhatsApp" por pedir un contacto (7/7).
+  - **Arreglos:** toda respuesta estructurada con al menos 400 tokens de salida (el router de respaldo se cortaba a
+    140); el CI listaba un test borrado y no desplegaba (la 1ª tanda de la ronda corrió sobre el código viejo y se
+    tiró: ver la memoria de cómo lanzar rondas).
+  - **Ronda core ex9b-1**: 96,1 % 24/32 frente a limpieza-4 97,4 % 27/32. Mejora real: moneda-precios. Regresiones:
+    clima-y-cancelacion (ruido del juez: 2/3 con y sin los flags, y lo "inventado" es verdad) y descuento-online (0/3
+    con y sin los flags). Su causa: Jev duda y decide DeepSeek, que rellena todos los campos y, sin opción "none",
+    elegía real_time_issues y cancellation (8 de 12); en limpieza-4 pasaba porque el JSON se cortaba. Arreglado (608c3bd):
+    "none" en los dos enums y "un precio o descuento distinto de lo esperado no es un fallo" (decisión de Gadea del
+    18-oct). Banco con Jev 15/16, batería de 9 señales 34/37, preguntas de Jev idénticas. p50 2,8 s (3,1) / p95 6,6 s
+    (5,6, Luna lento en el RAG).
+  - **En la ronda ex9b-2**: preguntas nuevas de Jev `REINICIO_POR_JEV` (el reinicio borraba la memoria con "Hola, soy
+    Ana, ya hablamos ayer…"; 4/10 → 10/10), `IDENTIDAD_IA_POR_JEV` (7/13 → 13/13), `IDIOMA_POR_JEV` (8/13 → 13/13),
+    `DELIBERACION_POR_JEV` (14/16 → 15/16); la regla del grupo repartido del paso 3 (sin flag). Paso 3
+    `EXTRACTOR_SIN_PISTA` integrado APAGADO (con el extractor funcionando, 0 cambios; caído, 0 datos inventados y pase a
+    un asesor al 2.º fallo seguido); su promoción espera a los 76 tests que dependían del regex sin saberlo (un agente).
+
 0.31.61 - (2026-10-19)
 ----------------------
 * **`CERTIFICADO_SOLO_SI_LO_DICE` PROMOCIONADO con «buceé hace poco» = certificado; s4-2 INTEGRADO y equivalente: la
