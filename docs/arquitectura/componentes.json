@@ -312,7 +312,8 @@
         "openai_model"
       ],
       "interruptores": [
-        "idioma_del_extractor"
+        "idioma_del_extractor",
+        "nombre_solo_por_extractor"
       ]
     },
     {
@@ -324,7 +325,9 @@
       "nodo_grafo": "availability",
       "que_hace": "Fechas cerradas y preguntas de disponibilidad (estas las contesta el RAG).",
       "donde": "src/agents/nucleo/availability.py:_availability_phase",
-      "interruptores": []
+      "interruptores": [
+        "dias_cerrados_por_rag"
+      ]
     },
     {
       "id": "b_routing",
@@ -338,7 +341,9 @@
       "modelos": [
         "senales_model"
       ],
-      "interruptores": []
+      "interruptores": [
+        "respuesta_corta_por_ia"
+      ]
     },
     {
       "id": "b_extraction",
@@ -1362,6 +1367,21 @@
       "area": "Reserva",
       "titulo": "Los datos del cliente los lee solo la IA",
       "texto": "La actividad, desde dónde sale, si está certificado, cuántos son y cómo se reparten, la nacionalidad y la última inmersión los lee solo el extractor (la IA que comprueba lo que el cliente dijo de verdad). Hoy, si esa IA falla, Coral los adivina con listas de palabras (que se equivocan: «hola quiero bucear con mi amigo» pasa por elegir el buceo para certificados); con este interruptor los pregunta (decisión de Gadea); si la IA vuelve a fallar en el turno siguiente, Coral dice que tiene un problema técnico y pasa a un asesor, en vez de repetir la pregunta. A quien empieza se le sigue recomendando el minicurso, pero porque la IA lee que quiere bucear y no está certificado, no por las palabras. El hotel y la isla del catálogo se siguen reconociendo como hoy."
+    },
+    "respuesta_corta_por_ia": {
+      "area": "Reserva",
+      "titulo": "La respuesta corta a la pregunta del bot la lee la IA",
+      "texto": "Cuando el bot acaba de preguntar desde dónde sale el cliente, en qué hotel se aloja o cuántos son, la respuesta corta la lee la IA (la respuesta de Jev a esa pregunta y el extractor), también si tiene pocas letras; las listas de palabras solo cuentan si la IA no contesta. Antes «no tengo idea, el Hilton creo» guardaba el hotel «por confirmar» y perdía el Hilton, y una frase cualquiera («ok perfecto») se guardaba como nombre del hotel. «Da igual» o «tú decides» siguen siendo salir desde Cartagena, y un hotel que no se sabe sigue «por confirmar». Los botones y una cifra sola («4») se leen como siempre. «Voy solo» = un grupo de 1, según la IA."
+    },
+    "nombre_solo_por_extractor": {
+      "area": "Reserva",
+      "titulo": "«Me llamo…» tampoco gana a la IA",
+      "texto": "El nombre de quien escribe lo decide siempre el extractor, también cuando el mensaje dice «me llamo» o «mi nombre es»: antes esa frase iba por delante y ganaba, y «me llamo mucho la atención el precio» saludaba «¡Hola, Mucho!». Si la IA no contesta, la frase de siempre."
+    },
+    "dias_cerrados_por_rag": {
+      "area": "Respuestas fijas",
+      "titulo": "Los días cerrados los contesta el RAG",
+      "texto": "Si el cliente nombra el 25 de diciembre, el 1 de enero, Navidad o Año Nuevo, contesta el RAG (que siempre tiene la política de días cerrados) en vez de un texto fijo que se comía el resto del mensaje («vamos a estar en Cartagena para año nuevo, somos 4 y queremos bucear» → solo «cerramos el 25 y el 1»). Ojo: si el mensaje no pregunta nada («quiero bucear el 25 de diciembre»), no llega al RAG y nadie avisa del cierre."
     },
     "resolutor_sin_contradicciones": {
       "area": "Reserva",

@@ -1584,13 +1584,9 @@ def _entradas_rag(state: ConversationState, history: list, message: str = "") ->
 # con el historial real, 3/3 con uno limpio, 3/3 con el plan puesto en el estado; docs/robustness/s4-27/). Si el
 # cliente NOMBRA cuántas inmersiones y su origen consta, el contexto dice qué plan del catálogo es: solo añade un dato,
 # no decide nada. El número de inmersiones de cada plan sale de su id (`2_dives_1_day...`), no de una lista a mano.
-_NUMEROS = {"una": 1, "uno": 1, "one": 1, "dos": 2, "two": 2, "tres": 3, "three": 3, "cuatro": 4, "four": 4,
-            "cinco": 5, "five": 5, "siete": 7, "seven": 7, "nueve": 9, "nine": 9}
-_N_INMERSIONES_RE = re.compile(
-    r"\b(\d|una|uno|one|dos|two|tres|three|cuatro|four|cinco|five|siete|seven|nueve|nine)\s+"
-    r"(?:inmersi[oó]n(?:es)?|immersions?|buceos?|dives?)\b",
-    re.IGNORECASE,
-)
+# ex-9b paso 4 (sin flag: replay del golden igual): "N inmersiones" lo lee `intent_detector.dive_counts_in`, la única
+# lectura de esa cifra (antes un regex propio, `_N_INMERSIONES_RE`), con los tamaños de los planes de su origen.
+_PLAN_ID_RE = re.compile(r"(\d+)_dives?_")
 
 
 def _plan_nombrado(state: ConversationState, message: str) -> str | None:
@@ -1598,17 +1594,21 @@ def _plan_nombrado(state: ConversationState, message: str) -> str | None:
     None si el flag está apagado, el origen no consta, no nombra un número de inmersiones o ningún plan lo tiene."""
     if not settings.rag_plan_nombrado or state.location not in ("cartagena", "island") or not message:
         return None
-    m = _N_INMERSIONES_RE.search(message)
-    if not m:
-        return None
-    raw = m.group(1).lower()
-    n = int(raw) if raw.isdigit() else _NUMEROS[raw]
+    from src.agents.intent_detector import dive_counts_in  # lazy
     from src.flows.catalog import SERVICES, service_fact_parts  # lazy
 
     en_islas = state.location == "island"
-    planes = [sid for sid in SERVICES
-              if re.match(rf"{n}_dives?_", sid) and sid.endswith("_already_on_island") == en_islas]
-    if not planes or state.selected_service in planes:
+    por_tamano: dict[int, list[str]] = {}
+    for sid in SERVICES:
+        m = _PLAN_ID_RE.match(sid)
+        if m and sid.endswith("_already_on_island") == en_islas:
+            por_tamano.setdefault(int(m.group(1)), []).append(sid)
+    nombrados = dive_counts_in(message, tamanos=por_tamano)
+    if not nombrados:
+        return None
+    n = nombrados[0]
+    planes = por_tamano[n]
+    if state.selected_service in planes:
         return None
     es = state.language == "es"
     nombre = "name_es" if es else "name_en"

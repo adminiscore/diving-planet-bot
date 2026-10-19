@@ -145,7 +145,12 @@ async def _availability_phase(
     # 25 dic y 1 ene). `_CLOSED_DATE_RE` sola basta para contestar aquí. Esta
     # fase se ejecuta ANTES que la copia del supervisor; el mismo guard se
     # aplicó ahí también.
-    if supervisor._CLOSED_DATE_RE.search(msg_lower):
+    # ex-9b paso 4 (flag `dias_cerrados_por_rag`): sin este texto fijo los días cerrados los contesta el RAG, que lleva
+    # siempre las políticas (`rag_politicas_en_contexto`, `closed_days` incluida). El texto fijo, disparado por un
+    # regex ("navidad", "año nuevo"), se come el resto del mensaje ("vamos a estar en cartagena para año nuevo, somos 4
+    # y queremos bucear" → solo "cerramos el 25 y el 1"); pero sin él, "quiero bucear el 25 de diciembre, somos 2" no
+    # llega al RAG (Jev: no pregunta nada) y nadie avisa de que ese día está cerrado (banco del paso 4).
+    if not settings.dias_cerrados_por_rag and supervisor._CLOSED_DATE_RE.search(msg_lower):
         from src.knowledge.loader import load_policies
         policy_text = (load_policies().get("policies", {}).get("closed_days") or {}).get(
             state.language, ""

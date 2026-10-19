@@ -101,6 +101,27 @@ def _capture_client_name(state: ConversationState, message: str) -> None:
     logger.info(f"[CORE] captured client name -> {state.client_name}")
 
 
+async def _nombre_del_mensaje(state: ConversationState, message: str) -> None:
+    """El nombre con que se presenta el cliente. ex-9b paso 4 (flag `nombre_solo_por_extractor`, con
+    `nombre_por_extractor`): la regex de "me llamo X" iba antes que el extractor y ganaba; ahora, si la ve, manda el
+    `nombre` del extractor (aquí mismo, para que el saludo del primer turno lo lleve; la lectura no se gasta) y la regex
+    solo si el extractor falla. Sin la regex, el nombre lo pone el extractor más adelante en el turno, como hoy."""
+    if state.client_name:
+        return
+    if (settings.nombre_solo_por_extractor and settings.nombre_por_extractor
+            and _NAME_TRIGGER_SIN_SOY_RE.search(message)):
+        from src.agents.nucleo.extractor import _nombre_del_extractor, lectura_del_extractor  # lazy
+
+        datos = await lectura_del_extractor(state, message)
+        if datos is not None:
+            _nombre_del_extractor(state, datos, message)
+            if not state.client_name:
+                logger.info("[CORE][EX9B-4] la regex veía un nombre y el extractor no: sin nombre")
+            return
+        logger.info("[CORE][EX9B-4] el extractor falló: el nombre lo lee la regex de siempre")
+    _capture_client_name(state, message)
+
+
 async def _idioma_del_extractor(state: ConversationState, message: str) -> str | None:
     """CAL-E4 (flag `idioma_del_extractor`): el idioma del PRIMER turno según el extractor, que ya va lanzado con el
     enrutador. "es" o "en" tal cual; cualquier otro idioma, inglés (regla G-10 de Gadea). None si el flag está apagado,
@@ -195,7 +216,7 @@ async def _setup_phase(
         # todo. `elif` porque en el primer turno la detección de arriba ya
         # decide bien.
         state.language = state.detected_language = pedido
-    _capture_client_name(state, message)
+    await _nombre_del_mensaje(state, message)
     greeting = _greeting(state) if first_turn else ""
 
     state.history.append({"role": "user", "content": message})

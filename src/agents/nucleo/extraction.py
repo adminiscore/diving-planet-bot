@@ -731,8 +731,11 @@ async def _understand(state: ConversationState, message: str, *, answered_pendin
     # señal singular EXPLÍCITA ("voy solo"/"just me") y ninguna señal de
     # compañía — una auto-presentación en singular sin más ("tengo el open
     # water") NO basta, porque un jefe de grupo escribe igual: ahí se pregunta.
+    # ex-9b paso 4 (`respuesta_corta_por_ia`): si el extractor leyó el mensaje, "voy solo" es su `group_size` 1 (ya
+    # aplicado arriba); estos regex solo si el extractor falla.
     if (
-        not state.detected_group_size
+        not (settings.respuesta_corta_por_ia and getattr(intent, "_leido_por_extractor", False))
+        and not state.detected_group_size
         and not state.detected_group_allocation
         and state.detected_activity
         and _COURSE_SOLO_RE.search(message)
@@ -1129,7 +1132,8 @@ async def _extraction_phase_body(
 
     # COMPRENDER: extracción del resto del mensaje.
     companion_merged_fastpath = False
-    if not (resolved_short and len(message.strip()) <= 12):
+    # ex-9b paso 4: una respuesta corta resuelta por la IA no se salta la lectura del resto (ver `_routing_phase`).
+    if not (resolved_short and len(message.strip()) <= 12) or carry.get("respuesta_por_la_ia"):
         _, companion_merged_fastpath = await _understand(state, message, answered_pending=resolved_short)
     if state.mixed_nationality_notice:
         # Una sola fuente de copy y efecto para el grupo mixto (hallazgo A, 2026-09-15).

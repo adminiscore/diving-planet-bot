@@ -192,13 +192,16 @@ def _dive_number(token: str) -> int | None:
     return int(token) if token.isdigit() else _DIVE_WORD_TO_NUM.get(token)
 
 
-def dive_counts_in(message: str) -> list[int]:
+def dive_counts_in(message: str, tamanos=None) -> list[int]:
     """Tamanos de paquete reales que nombra el texto, en orden y sin repetir. Unica
     lectura de "N inmersiones" para el detector, el nucleo (paquete que describio el
     bot) y el RAG (precio). Los tamanos salen del catalogo (`dom.dive_packages`). Un
-    "paquete de N" sin unidad solo cuenta si N no puede ser un numero de dias."""
+    "paquete de N" sin unidad solo cuenta si N no puede ser un numero de dias.
+    `tamanos` (ex-9b paso 4): los que valen, si no son los paquetes (el plan nombrado del
+    RAG usa los planes del origen del cliente, con la inmersion suelta de las islas)."""
     packages = dom.dive_packages()
     day_counts = {days for days, _ in packages.values()}
+    validos = set(packages) if tamanos is None else set(tamanos)
     counts = [
         _dive_number(token)
         for match in _CERT_DIVE_COUNT_RE.finditer(message or "")
@@ -209,7 +212,7 @@ def dive_counts_in(message: str) -> list[int]:
         for n in (_dive_number(token) for token in match.groups() if token)
         if n not in day_counts
     ]
-    return list(dict.fromkeys(n for n in counts if n in packages))
+    return list(dict.fromkeys(n for n in counts if n in validos))
 
 
 def detect_cert_day_count(message: str) -> int | None:
