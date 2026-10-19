@@ -78,7 +78,7 @@ fijo del alcohol sin pasar a una persona.
 
 | Fuente | Qué da | Script (`estudio-ex9/scripts/`) |
 |---|---|---|
-| Inventario + lectura del código, siguiendo los llamadores hasta `route_message` con la config de PRE (valores por defecto de `config.py` + `JEV_ROUTER_ENABLED=true`) | clase y propuesta de los 232 grupos | `mapa.py` → `grupos.csv` |
+| Inventario + lectura del código, siguiendo los llamadores hasta `route_message` con la config de PRE (valores por defecto de `config.py` + `JEV_ROUTER_ENABLED=true`) | clase y propuesta de los 191 grupos estudiados (de 232) | `mapa.py` → `grupos.csv` |
 | Los 342 mensajes de cliente distintos del golden VISIBLE (sin el oculto), sin red | qué patrones casan y qué decide `detect()` | `parte1_detector.py`, `parte6_saltos.py` |
 | Banco ex0 (342 turnos etiquetados): regex de hoy, sin red, frente al extractor Haiku ya medido (`estabilidad-mod2-cert-claude-haiku-5-5.json`, diseño, flags de PRE) | solape regex / IA por campo | `parte2_banco.py` |
 | Trazas de estabilidad de CAL (`docs/robustness/cal/estabilidad/`, 24 diálogos visibles, 327 turnos) | regex frente a extractor en PRE, con la etiqueta del turno | `parte3_trazas_pre.py` |
@@ -288,7 +288,9 @@ hacer cuando el extractor falla). Los pasos 4 a 6 se pueden repartir por persona
 
 `docs/robustness/regex/estudio-ex9/`:
 
-- `grupos.csv`: los 232 grupos del inventario con su familia (del script y corregida), grupo funcional, clase y propuesta.
+- `grupos.csv`: los 191 grupos estudiados (todos los de "entender" y "sin clasificar", los atajos y las guardas que se
+  revisaron; los demás son guardas, formato y privacidad, que no se tocan) con su familia (del script y corregida), grupo
+  funcional, clase y propuesta.
 - `datos/resumen.json` (números por familia, clase, propuesta y grupo funcional), `datos/detector-golden-visible.json`,
   `datos/saltos-golden-visible.json`, `datos/banco-ex0-regex-vs-haiku.json`, `datos/pre-trazas-cal.json`,
   `datos/pre-logs-rondas-visibles.json`, `datos/replay-diferencias.json`, `datos/cobertura-funciones-replay.json`.
