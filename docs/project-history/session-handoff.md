@@ -68,6 +68,9 @@ El paso 2 (flujo, zona de Álvaro) lo preparó un agente (`feature/limpieza-paso
 CAL-G hecha (p95 5,5 s). **s4-1** (quitar `agent_arch` y la cascada muerta) lo está preparando otro agente en
 `feature/limpieza-s4-1` SIN integrar: decide Álvaro o Gadea (es el núcleo del supervisor). Siguen pendientes: ex-9
 parte 2 y s4-2 (Álvaro), las dos reglas del extractor apagadas (ver abajo) y G9 una sola vez → Andrés.
+**s4-1 ya preparado** en `feature/limpieza-s4-1` (391f5d3, sin integrar; src −344 netas, suite 3220; avisado en
+Coral #564). **Ojo:** los últimos commits de la noche (HISTORY 0.31.58-0.31.59, relevo) son solo docs y están en
+`feature/gadea-g3` y en local; `pre_gadea`/PRE siguen en 970641f (el código es el mismo): suben con el próximo push.
 
 ### (anterior) RETOMAR AQUÍ — 19-oct, 03:15 (Gadea con Claude, noche en autonomía): G2 promocionada, limpieza paso 1 confirmada
 
