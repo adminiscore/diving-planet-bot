@@ -1,6 +1,20 @@
 History
 =======
 
+0.31.58 - (2026-10-19)
+----------------------
+* **Limpieza s4-25 paso 1 CONFIRMADA equivalente; `CERTIFICADO_SOLO_SI_LO_DICE` afinado pero sigue APAGADO** (Gadea con
+  Claude, noche).
+  - **Ronda de equivalencia `limpieza-1`** (s4-25 paso 1 + mod-G2): 97,4 % 27/32 frente a mod-G2 96,9 % 27/32; latencia
+    y llamadas iguales (4,35 frente a 4,32 por turno). Sus 3 "regresiones", repetidas 3 veces con el código de ANTES
+    (e8687a9) y el de DESPUÉS (2cb8263) por `--codigo-local`: clima-y-cancelacion (pasa a persona y escalar por clima)
+    0/3 en los dos; el resto, 1/3 a un lado o al otro. **Ruido: la limpieza no cambia el comportamiento.**
+  - **`CERTIFICADO_SOLO_SI_LO_DICE` afinado** (`IS_CERTIFIED_DICHO_*`): sin la regla del código, is_certified nombra las
+    formas de decirlo que esa regla tapaba (curso de certificación terminado, inmersiones registradas, necesitar un
+    refresher). Ronda **mod-H** (limpieza-1 + el flag): 96,1 % 24/32 frente a 97,4 % → NO: sigue el minicurso a 183 USD en
+    reserva-solo-link porque el EXTRACTOR toma el «no» de «no, buceé hace poco» (a «¿eres buzo certificado?») como no
+    certificado. Siguiente arreglo: la regla de contradicción del resolutor también en el extractor. APAGADO.
+
 0.31.57 - (2026-10-19)
 ----------------------
 * **Noche del 18 al 19-oct (Gadea con Claude, en autonomía): mod-G2 PROMOCIONADA; las reglas de no adivinar del
