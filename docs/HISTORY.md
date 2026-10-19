@@ -1,6 +1,21 @@
 History
 =======
 
+0.31.60 - (2026-10-19)
+----------------------
+* **s4-1 INTEGRADO y equivalente: fuera `agent_arch` y la cascada muerta** (Gadea con Claude, con las tareas de Álvaro;
+  decisión de Gadea: "seguimos nosotros con todo hasta que vuelva Álvaro"; un agente lo preparó en
+  `feature/limpieza-s4-1`, 391f5d3).
+  - `route_message` manda siempre el turno al grafo; fuera la cola de `_shared_turn_handler` que desde el grafo no se
+    alcanza, `_maybe_apply_llm_extraction_cutover` y `_maybe_log_llm_extraction_shadow` (con `llm_extraction_shadow_mode`).
+    src +74 −418; 38 tests del camino viejo borrados; suite 3220. Se quedan, por vivos, los gates de antes del núcleo (el
+    nodo info delega en el handler por «mismo precio» desde `atajo_nacionalidad_por_rag`).
+  - **Ronda de equivalencia `limpieza-3`**: 97,0 % 26/32 frente a limpieza-2 96,1 % 24/32; 3 mejoras reales y una sola
+    regresión, la política de fotos de certificado-fechas-fotos-y-reserva (el criterio que más oscila: entra y sale en
+    las rondas C, E, F, H, G2 y limpieza-1). Sin errores en PRE.
+  - **r6-1 cerrada** (Gadea): todo lo de la tarea ya está en PRE (timeouts, aviso si OpenAI falla, respaldos del RAG,
+    del extractor y de OpenRouter).
+
 0.31.59 - (2026-10-19)
 ----------------------
 * **Limpieza s4-25 paso 2 (flujo) INTEGRADA y equivalente** (Gadea con Claude, noche, con las tareas de Álvaro; un
