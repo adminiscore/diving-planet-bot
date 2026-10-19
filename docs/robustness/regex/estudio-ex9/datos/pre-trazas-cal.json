@@ -1,0 +1,257 @@
+{
+ "turnos": 327,
+ "turnos_distintos": 109,
+ "por_campo": {
+  "activity": {
+   "el regex leía y el extractor dice que NO lo afirma": 29,
+   "descartado: regex acierta": 13,
+   "coinciden": 32,
+   "solo el extractor (el regex no leía nada)": 24,
+   "solo extractor: no etiquetado": 24,
+   "descartado: extractor acierta (no lo dice)": 15,
+   "descartado: ninguno": 1,
+   "distinto valor": 23,
+   "distinto: extractor acierta": 14,
+   "distinto: ninguno": 3
+  },
+  "is_certified": {
+   "coinciden": 30,
+   "solo el extractor (el regex no leía nada)": 17,
+   "solo extractor: acierta": 9,
+   "solo extractor: no etiquetado": 8,
+   "distinto valor": 5,
+   "distinto: ninguno": 5,
+   "el regex leía y el extractor dice que NO lo afirma": 10,
+   "descartado: extractor acierta (no lo dice)": 7
+  },
+  "location": {
+   "coinciden": 21,
+   "el regex leía y el extractor dice que NO lo afirma": 17,
+   "descartado: extractor acierta (no lo dice)": 15,
+   "solo el extractor (el regex no leía nada)": 3,
+   "solo extractor: no etiquetado": 3,
+   "distinto valor": 3,
+   "distinto: extractor acierta": 3
+  },
+  "group_size": {
+   "coinciden": 21,
+   "solo el extractor (el regex no leía nada)": 12,
+   "solo extractor: no etiquetado": 6,
+   "distinto valor": 3,
+   "distinto: extractor acierta": 3,
+   "el regex leía y el extractor dice que NO lo afirma": 3,
+   "descartado: extractor acierta (no lo dice)": 3,
+   "solo extractor: acierta": 3
+  },
+  "last_dive_over_2_years": {
+   "coinciden": 3,
+   "solo el extractor (el regex no leía nada)": 3,
+   "solo extractor: acierta": 3
+  }
+ },
+ "distintos": {
+  "activity": {
+   "el regex leía y el extractor dice que NO lo afirma": 11,
+   "descartado: regex acierta": 5,
+   "coinciden": 11,
+   "solo el extractor (el regex no leía nada)": 16,
+   "descartado: extractor acierta (no lo dice)": 5,
+   "descartado: ninguno": 1,
+   "distinto valor": 8,
+   "distinto: extractor acierta": 5,
+   "distinto: ninguno": 1
+  },
+  "is_certified": {
+   "coinciden": 10,
+   "solo el extractor (el regex no leía nada)": 7,
+   "distinto valor": 2,
+   "distinto: ninguno": 2,
+   "el regex leía y el extractor dice que NO lo afirma": 4,
+   "descartado: extractor acierta (no lo dice)": 3
+  },
+  "location": {
+   "coinciden": 7,
+   "el regex leía y el extractor dice que NO lo afirma": 6,
+   "descartado: extractor acierta (no lo dice)": 5,
+   "solo el extractor (el regex no leía nada)": 2,
+   "distinto valor": 1,
+   "distinto: extractor acierta": 1
+  },
+  "group_size": {
+   "coinciden": 7,
+   "solo el extractor (el regex no leía nada)": 5,
+   "distinto valor": 1,
+   "distinto: extractor acierta": 1,
+   "el regex leía y el extractor dice que NO lo afirma": 1,
+   "descartado: extractor acierta (no lo dice)": 1
+  },
+  "last_dive_over_2_years": {
+   "coinciden": 1,
+   "solo el extractor (el regex no leía nada)": 1
+  }
+ },
+ "otras": {
+  "[CORE][U3-6]": 230,
+  "[INTENT] Detected duration": 24,
+  "[CORE][CAL-C5] el extractor leyó": 33,
+  "Jev descarta lo del regex (U3-4) en location": 18,
+  "Jev descarta lo del regex (U3-4) en is_certified": 4,
+  "[CORE][SIGNALS]": 11,
+  "[INTENT] Detected cert day count": 6,
+  "Jev descarta lo del regex (U3-4) en is_colombian": 9,
+  "[CORE][S4-26] la regex ve a otra persona y Jev no": 6,
+  "[INTENT] Detected cert dive count": 9,
+  "Jev descarta lo del regex (U3-3) en activity": 3,
+  "[INTENT] Detected hotel": 1,
+  "Jev descarta lo del regex (U3-4) en activity": 4,
+  "Jev descarta lo del regex (U3-4) en group_size": 3
+ },
+ "ejemplos": {
+  "activity descartado (regex acierta)": [
+   "'Buzos certificados': regex='certified_diving'",
+   "'Buzos certificados': regex='certified_diving'",
+   "'Buzos certificados': regex='certified_diving'",
+   "\"Hello My name is [NOMBRE], i'd like to inquiry about the modalities for a 2 day dive packa\": regex='certified_diving'",
+   "\"Hello My name is [NOMBRE], i'd like to inquiry about the modalities for a 2 day dive packa\": regex='certified_diving'",
+   "\"Hello My name is [NOMBRE], i'd like to inquiry about the modalities for a 2 day dive packa\": regex='certified_diving'",
+   "'somos buzos certificados': regex='certified_diving'",
+   "'somos buzos certificados': regex='certified_diving'",
+   "'somos buzos certificados': regex='certified_diving'",
+   "'soy certificado pero no buceo hace 5 anos': regex='certified_diving'"
+  ],
+  "[CORE][U3-6]": [
+   "'Me gustaria saber las salidas para 17 enero': [CORE][U3-6] señales sin LLM (Jev: acompañante 0.04, no pide recordar)",
+   "'Como estan las salidas?': [CORE][U3-6] recordar sin LLM (Jev: no pide recordar)",
+   "'Como estan las salidas?': [CORE][U3-6] señales sin LLM (Jev: acompañante 0.05, no pide recordar)",
+   "'Si, pero puede pasar de ir al mismo punto o me llevan a otros puntos?': [CORE][U3-6] recordar sin LLM (Jev: no pide recordar)",
+   "'Si, pero puede pasar de ir al mismo punto o me llevan a otros puntos?': [CORE][U3-6] señales sin LLM (Jev: acompañante 0.05, no pide recordar)",
+   "'Yo tengo extrangeria': [CORE][U3-6] señales sin LLM (Jev: acompañante 0.05, no pide recordar)"
+  ],
+  "[INTENT] Detected duration": [
+   "'Hola, buenos días. Deca del centro de buceo. Me recomendaron a ustedes para bucear en Cart': [INTENT] Detected duration: single_day",
+   "'Hola, buenos días. Deca del centro de buceo. Me recomendaron a ustedes para bucear en Cart': [INTENT] Detected duration: single_day",
+   "'Hola, buenos días. Deca del centro de buceo. Me recomendaron a ustedes para bucear en Cart': [INTENT] Detected duration: single_day",
+   "'Es decir en dos dias tendriamos el certificado haciendo nuestro curso en linea . La person': [INTENT] Detected duration: multi_day",
+   "'Es decir en dos dias tendriamos el certificado haciendo nuestro curso en linea . La person': [INTENT] Detected duration: multi_day",
+   "'Es decir en dos dias tendriamos el certificado haciendo nuestro curso en linea . La person': [INTENT] Detected duration: multi_day"
+  ],
+  "[CORE][CAL-C5] el extractor leyó": [
+   "'Hola, buenos días. Deca del centro de buceo. Me recomendaron a ustedes para bucear en Cart': [CORE][CAL-C5] el extractor leyó el mensaje: la red de menciones no añade ['certified_diving']",
+   "'Hola, buenos días. Deca del centro de buceo. Me recomendaron a ustedes para bucear en Cart': [CORE][CAL-C5] el extractor leyó el mensaje: la red de menciones no añade ['certified_diving']",
+   "'Hola, buenos días. Deca del centro de buceo. Me recomendaron a ustedes para bucear en Cart': [CORE][CAL-C5] el extractor leyó el mensaje: la red de menciones no añade ['certified_diving']",
+   "'Busco el seguinte:\\nVamos en família a Cartagena. 1 buzo avanzado y 2 para bautismo': [CORE][CAL-C5] el extractor leyó el mensaje: la red de menciones no añade ['minicourse']",
+   "'Busco el seguinte:\\nVamos en família a Cartagena. 1 buzo avanzado y 2 para bautismo': [CORE][CAL-C5] el extractor leyó el mensaje: la red de menciones no añade ['minicourse']",
+   "'Busco el seguinte:\\nVamos en família a Cartagena. 1 buzo avanzado y 2 para bautismo': [CORE][CAL-C5] el extractor leyó el mensaje: la red de menciones no añade ['minicourse']"
+  ],
+  "location descartado (extractor acierta (no lo dice))": [
+   "'Me pasas el contacto del hotel cocoliso?': regex='island'",
+   "'O el San Pedro': regex='island'",
+   "'Me pasas el contacto del hotel cocoliso?': regex='island'",
+   "'O el San Pedro': regex='island'",
+   "'Me pasas el contacto del hotel cocoliso?': regex='island'",
+   "'O el San Pedro': regex='island'",
+   "'do you have any hotel in Rosario you recommend?': regex='island'",
+   "'do you have any hotel in Rosario you recommend?': regex='island'",
+   "'do you have any hotel in Rosario you recommend?': regex='island'",
+   "'Gracias por la información.\\nMe podrías decir cual es el hotel en islas de Rosario? Para ev': regex='island'"
+  ],
+  "activity descartado (extractor acierta (no lo dice))": [
+   "'Hola!\\nMe gustaria tener mas informacion acerca de los cursos de buceo en Cartagena (especi': regex='certified_diving'",
+   "'Hola!\\nMe gustaria tener mas informacion acerca de los cursos de buceo en Cartagena (especi': regex='certified_diving'",
+   "'Hola!\\nMe gustaria tener mas informacion acerca de los cursos de buceo en Cartagena (especi': regex='certified_diving'",
+   "'Me gustaría agendar un día de buceo con ustedes': regex='certified_diving'",
+   "'Me gustaría agendar un día de buceo con ustedes': regex='certified_diving'",
+   "'Me gustaría agendar un día de buceo con ustedes': regex='certified_diving'",
+   "'Ese? Desde ahi sale la lancha de buceo ?': regex='certified_diving'",
+   "'Ese? Desde ahi sale la lancha de buceo ?': regex='certified_diving'",
+   "'Ese? Desde ahi sale la lancha de buceo ?': regex='certified_diving'",
+   "'Hola! Como estan? Me llamo [NOMBRE] soy buza advanced': regex='certified_diving'"
+  ],
+  "activity descartado (ninguno)": [
+   "'Es decir en dos dias tendriamos el certificado haciendo nuestro curso en linea . La person': regex='certified_diving'"
+  ],
+  "is_certified distinto (ninguno)": [
+   "'Es decir en dos dias tendriamos el certificado haciendo nuestro curso en linea . La person': extractor=False regex=True",
+   "'Es decir en dos dias tendriamos el certificado haciendo nuestro curso en linea . La person': extractor=False regex=True",
+   "'Busco el seguinte:\\nVamos en família a Cartagena. 1 buzo avanzado y 2 para bautismo': extractor=True regex=False",
+   "'Busco el seguinte:\\nVamos en família a Cartagena. 1 buzo avanzado y 2 para bautismo': extractor=True regex=False",
+   "'Busco el seguinte:\\nVamos en família a Cartagena. 1 buzo avanzado y 2 para bautismo': extractor=True regex=False"
+  ],
+  "[CORE][SIGNALS]": [
+   "'Es decir en dos dias tendriamos el certificado haciendo nuestro curso en linea . La person': [CORE][SIGNALS] detected={'companion_activity': 'minicourse', 'mentions_other_person': True, 'companion_is_singular': True, 'companion_qty': 1} msg='E",
+   "'Frances': [CORE][SIGNALS] detected={'companion_activity': 'minicourse', 'mentions_other_person': True, 'companion_is_singular': True, 'companion_qty': 1} msg='F",
+   "'Frances': [CORE][SIGNALS] detected={'companion_activity': 'minicourse', 'mentions_other_person': True, 'companion_is_singular': True, 'companion_qty': 1} msg='F",
+   "'Frances': [CORE][SIGNALS] detected={'companion_activity': 'minicourse', 'mentions_other_person': True, 'companion_is_singular': True, 'companion_qty': 1} msg='F",
+   "'Ese es el precio para ciudadanos colombianos? somos de Bogotá': [CORE][SIGNALS] detected={'companion_activity': 'minicourse', 'mentions_other_person': True, 'companion_is_singular': False, 'companion_qty': 2} msg='",
+   "'no soy colombiano': [CORE][SIGNALS] detected={'recall_field': 'is_colombian'} msg='no soy colombiano'"
+  ],
+  "activity distinto (extractor acierta)": [
+   "'Es decir en dos dias tendriamos el certificado haciendo nuestro curso en linea . La person': extractor='padi_open_water' regex='certified_diving'",
+   "'Es decir en dos dias tendriamos el certificado haciendo nuestro curso en linea . La person': extractor='padi_open_water' regex='certified_diving'",
+   "'Hi, I’m trying to checkout to take PADI Open Water Diver certification course but the disc': extractor='padi_open_water' regex='certified_diving'",
+   "'Hi, I’m trying to checkout to take PADI Open Water Diver certification course but the disc': extractor='padi_open_water' regex='certified_diving'",
+   "'Hi, I’m trying to checkout to take PADI Open Water Diver certification course but the disc': extractor='padi_open_water' regex='certified_diving'",
+   "'Buceo para principiantes': extractor='minicourse' regex='certified_diving'",
+   "'Buceo para principiantes': extractor='minicourse' regex='certified_diving'",
+   "'Buceo para principiantes': extractor='minicourse' regex='certified_diving'",
+   "\"Hi, I'm interested in taking PADI Open Water Diver certification course.\": extractor='padi_open_water' regex='certified_diving'",
+   "\"Hi, I'm interested in taking PADI Open Water Diver certification course.\": extractor='padi_open_water' regex='certified_diving'"
+  ],
+  "is_certified descartado (extractor acierta (no lo dice))": [
+   "'Es decir en dos dias tendriamos el certificado haciendo nuestro curso en linea . La person': regex=True",
+   "'Hi, I’m trying to checkout to take PADI Open Water Diver certification course but the disc': regex=True",
+   "'Hi, I’m trying to checkout to take PADI Open Water Diver certification course but the disc': regex=True",
+   "'Hi, I’m trying to checkout to take PADI Open Water Diver certification course but the disc': regex=True",
+   "\"Hi, I'm interested in taking PADI Open Water Diver certification course.\": regex=True",
+   "\"Hi, I'm interested in taking PADI Open Water Diver certification course.\": regex=True",
+   "\"Hi, I'm interested in taking PADI Open Water Diver certification course.\": regex=True"
+  ],
+  "group_size distinto (extractor acierta)": [
+   "'Busco el seguinte:\\nVamos en família a Cartagena. 1 buzo avanzado y 2 para bautismo': extractor=3 regex=1",
+   "'Busco el seguinte:\\nVamos en família a Cartagena. 1 buzo avanzado y 2 para bautismo': extractor=3 regex=1",
+   "'Busco el seguinte:\\nVamos en família a Cartagena. 1 buzo avanzado y 2 para bautismo': extractor=3 regex=1"
+  ],
+  "activity distinto (ninguno)": [
+   "'Busco el seguinte:\\nVamos en família a Cartagena. 1 buzo avanzado y 2 para bautismo': extractor='padi_advanced' regex='minicourse'",
+   "'Busco el seguinte:\\nVamos en família a Cartagena. 1 buzo avanzado y 2 para bautismo': extractor='padi_advanced' regex='minicourse'",
+   "'Busco el seguinte:\\nVamos en família a Cartagena. 1 buzo avanzado y 2 para bautismo': extractor='padi_advanced' regex='minicourse'"
+  ],
+  "[INTENT] Detected cert day count": [
+   "'Me gustaría agendar un día de buceo con ustedes': [INTENT] Detected cert day count: 1",
+   "'Me gustaría agendar un día de buceo con ustedes': [INTENT] Detected cert day count: 1",
+   "'Me gustaría agendar un día de buceo con ustedes': [INTENT] Detected cert day count: 1",
+   "\"Hello My name is [NOMBRE], i'd like to inquiry about the modalities for a 2 day dive packa\": [INTENT] Detected cert day count: 2",
+   "\"Hello My name is [NOMBRE], i'd like to inquiry about the modalities for a 2 day dive packa\": [INTENT] Detected cert day count: 2",
+   "\"Hello My name is [NOMBRE], i'd like to inquiry about the modalities for a 2 day dive packa\": [INTENT] Detected cert day count: 2"
+  ],
+  "[CORE][S4-26] la regex ve a otra persona y Jev no": [
+   "'Amigo el precio que está allí es en dólares o pesos colombianos': [CORE][S4-26] la regex ve a otra persona y Jev no (0.05): manda Jev",
+   "'Amigo el precio que está allí es en dólares o pesos colombianos': [CORE][S4-26] la regex ve a otra persona y Jev no (0.05): manda Jev",
+   "'Amigo el precio que está allí es en dólares o pesos colombianos': [CORE][S4-26] la regex ve a otra persona y Jev no (0.04): manda Jev",
+   "'Amigo el precio que está allí es en dólares o pesos colombianos': [CORE][S4-26] la regex ve a otra persona y Jev no (0.04): manda Jev",
+   "'Amigo el precio que está allí es en dólares o pesos colombianos': [CORE][S4-26] la regex ve a otra persona y Jev no (0.05): manda Jev",
+   "'Amigo el precio que está allí es en dólares o pesos colombianos': [CORE][S4-26] la regex ve a otra persona y Jev no (0.05): manda Jev"
+  ],
+  "[INTENT] Detected cert dive count": [
+   "'Buenos días. Quiero hacer el paquete de 5 buceos. Cuál es el costo para colombianos por fa': [INTENT] Detected cert dive count: 5",
+   "'Buenos días. Quiero hacer el paquete de 5 buceos. Cuál es el costo para colombianos por fa': [INTENT] Detected cert dive count: 5",
+   "'Buenos días. Quiero hacer el paquete de 5 buceos. Cuál es el costo para colombianos por fa': [INTENT] Detected cert dive count: 5",
+   "'Me puedes decir el precio de las 2 inmersiones? Desde ese hotel?': [INTENT] Detected cert dive count: 2",
+   "'Me puedes decir el precio de las 2 inmersiones? Desde ese hotel?': [INTENT] Detected cert dive count: 2",
+   "'Me puedes decir el precio de las 2 inmersiones? Desde ese hotel?': [INTENT] Detected cert dive count: 2"
+  ],
+  "[INTENT] Detected hotel": [
+   "'or Playa Tranquila on Isla Barú': [INTENT] Detected hotel: Playa Tranquila on Isla Barú"
+  ],
+  "location distinto (extractor acierta)": [
+   "'Hola!! Te contacto desde Argentina.  Estaremos visitando Cartagena y queria coordinar inme': extractor='cartagena' regex='island'",
+   "'Hola!! Te contacto desde Argentina.  Estaremos visitando Cartagena y queria coordinar inme': extractor='cartagena' regex='island'",
+   "'Hola!! Te contacto desde Argentina.  Estaremos visitando Cartagena y queria coordinar inme': extractor='cartagena' regex='island'"
+  ],
+  "group_size descartado (extractor acierta (no lo dice))": [
+   "'Hola! Como estan? Me llamo [NOMBRE] soy buza advanced': regex=1",
+   "'Hola! Como estan? Me llamo [NOMBRE] soy buza advanced': regex=1",
+   "'Hola! Como estan? Me llamo [NOMBRE] soy buza advanced': regex=1"
+  ]
+ }
+}

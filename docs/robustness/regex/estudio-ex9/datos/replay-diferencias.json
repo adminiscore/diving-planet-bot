@@ -1,0 +1,2197 @@
+{
+ "nota": "Replays offline (scripts/parte5_replay.py): 95 dialogos visibles, 368 turnos, sin red; RAG, acuse y notas con respuesta fija; Jev sin clave. oraculo = el extractor devuelve las etiquetas del banco ex0.",
+ "determinismo_base_vs_base": "mismo resultado en dos pasadas: 0 turnos distintos",
+ "base_vs_sin_dominios": {
+  "turnos_estado": 29,
+  "turnos_reply": 25,
+  "dialogos_estado": [
+   "acompanante-goteo",
+   "familia-mixta-precio-descuento-refresher",
+   "grupo-3-actividades",
+   "grupo-con-refresher",
+   "grupo-mixto-precio-cop-total",
+   "grupo-recompuesto",
+   "manual-duracion-curso"
+  ],
+  "dialogos_reply": [
+   "acompanante-goteo",
+   "familia-mixta-precio-descuento-refresher",
+   "grupo-3-actividades",
+   "grupo-con-refresher",
+   "grupo-mixto-precio-cop-total",
+   "grupo-recompuesto",
+   "manual-duracion-curso"
+  ],
+  "campos": {
+   "core_pending_slot": 25,
+   "detected_activity": 24,
+   "carrito": 3,
+   "solo_traveler_confirmed": 5,
+   "pending_escalation_reason": 1
+  },
+  "primer_cambio": {
+   "grupo-3-actividades": {
+    "turno": 1,
+    "msg": "somos 6: 2 bucean certificados, 2 hacen minicurso y 2 snorkel",
+    "cambios": {
+     "core_pending_slot": [
+      "location",
+      "activity"
+     ],
+     "detected_activity": [
+      "minicourse",
+      null
+     ]
+    },
+    "reply_a": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n",
+    "reply_b": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n"
+   },
+   "grupo-recompuesto": {
+    "turno": 1,
+    "msg": "3 certificados y 2 minicurso",
+    "cambios": {
+     "core_pending_slot": [
+      "location",
+      "activity"
+     ],
+     "detected_activity": [
+      "minicourse",
+      null
+     ]
+    },
+    "reply_a": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n",
+    "reply_b": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n"
+   },
+   "acompanante-goteo": {
+    "turno": 4,
+    "msg": "el quiere hacer snorkel",
+    "cambios": {
+     "core_pending_slot": [
+      "location",
+      "activity"
+     ],
+     "detected_activity": [
+      "snorkel",
+      null
+     ]
+    },
+    "reply_a": "¿Desde dónde saldrías? Podemos recogerte saliendo *desde Cartagena* (ida y vuelta el mismo día) o, si ya estás *en las islas*, coordinamos la recogida en tu hotel.",
+    "reply_b": "¿Te animas con la *salida de 2 inmersiones*, un *paquete de varios días* o un *curso avanzado*? 🌊"
+   },
+   "grupo-con-refresher": {
+    "turno": 1,
+    "msg": "somos 3: 2 certificados y 1 minicurso",
+    "cambios": {
+     "core_pending_slot": [
+      "location",
+      "activity"
+     ],
+     "detected_activity": [
+      "minicourse",
+      null
+     ]
+    },
+    "reply_a": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n",
+    "reply_b": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n"
+   },
+   "manual-duracion-curso": {
+    "turno": 2,
+    "msg": "Para mi",
+    "cambios": {
+     "solo_traveler_confirmed": [
+      false,
+      true
+     ]
+    },
+    "reply_a": "Última cosa para darte el precio y el link correctos: ¿eres colombiano o residente en Colombia?",
+    "reply_b": "Última cosa para darte el precio y el link correctos: ¿eres colombiano o residente en Colombia?"
+   },
+   "grupo-mixto-precio-cop-total": {
+    "turno": 1,
+    "msg": "Busco el seguinte:\nVamos en família a Cartagena. 1 buzo avanzado y 2 para bautismo",
+    "cambios": {
+     "core_pending_slot": [
+      "safety",
+      "activity"
+     ],
+     "detected_activity": [
+      "minicourse",
+      null
+     ]
+    },
+    "reply_a": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n",
+    "reply_b": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n"
+   },
+   "familia-mixta-precio-descuento-refresher": {
+    "turno": 3,
+    "msg": "So should I book 2  separately? One for diving and one for snorkeling",
+    "cambios": {
+     "core_pending_slot": [
+      "location",
+      "activity"
+     ],
+     "detected_activity": [
+      "certified_diving",
+      null
+     ]
+    },
+    "reply_a": "«RAG»\n\nWhere would you be departing from? We can pick you up *from Cartagena* (round trip, same day) or, if you're already *on the islands*, we arrange pickup at your hotel.",
+    "reply_b": "«RAG»\n\nWhich one are you leaning toward — *diving*, a *mini-course*, *snorkeling* or a *PADI course*? 🌊"
+   }
+  }
+ },
+ "sin_dominios_vs_sin_todo": {
+  "turnos_estado": 131,
+  "turnos_reply": 12,
+  "dialogos_estado": [
+   "acompanante-goteo",
+   "aprobacion-logs-padi",
+   "certificado-fechas-fotos-y-reserva",
+   "certificado-precio-dia-paquete-5-y-hoteles-base",
+   "colombianos-precio-minicurso-dos-inmersiones",
+   "confirma-reserva-existente-escalar",
+   "curso-open-water-principiantes-idioma-frances-anticipacion",
+   "curso-open-water-transporte-y-regreso-otro-dia",
+   "embarazo",
+   "equipaje-mochilas-y-almacenamiento",
+   "familia-mixta-precio-descuento-refresher",
+   "familia-ninos-resumen",
+   "isla-hotel-refresher",
+   "manual-duracion-curso",
+   "minicurso-precio-colombianos-origen-pendiente",
+   "nino-7-familia",
+   "open-water-hoteles-noche-fotos-horario",
+   "paquete-5-buceos-cop-refresh-y-hoteles",
+   "paquete-5-buceos-islas-residente-sin-recogida",
+   "paquete-5-buceos-precio-overnight-isla-grande-baru",
+   "paquete-5-inmersiones",
+   "paquete-en-carrito",
+   "precio-desde-islas-vs-cartagena",
+   "precio-paquetes-5-o-3-buceos-y-opcion-2-diurnos",
+   "precios-y-disponibilidad-con-negociacion",
+   "premisa-falsa-lunes",
+   "programa-fotos-y-alojamiento",
+   "queja",
+   "referral-mas-refresher-hotel-y-domingo-pascua",
+   "regreso-otro-dia-paquete-5",
+   "reserva-completa-saludo-a-pago",
+   "reserva-ingles",
+   "reserva-paquete-5-buceos-solicita",
+   "reserva-solo-link",
+   "semana-santa-solo-avanzado-islas"
+  ],
+  "dialogos_reply": [
+   "familia-ninos-resumen",
+   "manual-duracion-curso",
+   "nino-7-familia",
+   "paquete-5-buceos-cop-refresh-y-hoteles",
+   "paquete-5-buceos-precio-overnight-isla-grande-baru",
+   "precios-y-disponibilidad-con-negociacion",
+   "semana-santa-solo-avanzado-islas"
+  ],
+  "campos": {
+   "solo_traveler_confirmed": 44,
+   "detected_ages": 12,
+   "core_pending_slot": 5,
+   "carrito": 2,
+   "detected_cert_dives": 44,
+   "detected_duration": 67,
+   "detected_cert_days": 10
+  },
+  "primer_cambio": {
+   "reserva-completa-saludo-a-pago": {
+    "turno": 2,
+    "msg": "quiero bucear, ya soy certificado",
+    "cambios": {
+     "solo_traveler_confirmed": [
+      true,
+      false
+     ]
+    },
+    "reply_a": "¿Desde dónde saldrías? Podemos recogerte saliendo *desde Cartagena* (ida y vuelta el mismo día) o, si ya estás *en las islas*, coordinamos la recogida en tu hotel.",
+    "reply_b": "¿Desde dónde saldrías? Podemos recogerte saliendo *desde Cartagena* (ida y vuelta el mismo día) o, si ya estás *en las islas*, coordinamos la recogida en tu hotel."
+   },
+   "reserva-solo-link": {
+    "turno": 2,
+    "msg": "solo yo",
+    "cambios": {
+     "solo_traveler_confirmed": [
+      true,
+      false
+     ]
+    },
+    "reply_a": "¡Genial! Para recomendarte el plan perfecto: ¿Eres buzo certificado? (Y si no, ¡tranquilo! El minicurso es ideal para empezar. 🤿)",
+    "reply_b": "¡Genial! Para recomendarte el plan perfecto: ¿Eres buzo certificado? (Y si no, ¡tranquilo! El minicurso es ideal para empezar. 🤿)"
+   },
+   "reserva-ingles": {
+    "turno": 2,
+    "msg": "i'm certified, just me",
+    "cambios": {
+     "solo_traveler_confirmed": [
+      true,
+      false
+     ]
+    },
+    "reply_a": "Where would you be departing from? We can pick you up *from Cartagena* (round trip, same day) or, if you're already *on the islands*, we arrange pickup at your hotel.",
+    "reply_b": "Where would you be departing from? We can pick you up *from Cartagena* (round trip, same day) or, if you're already *on the islands*, we arrange pickup at your hotel."
+   },
+   "acompanante-goteo": {
+    "turno": 2,
+    "msg": "yo soy certificado",
+    "cambios": {
+     "solo_traveler_confirmed": [
+      true,
+      false
+     ]
+    },
+    "reply_a": "¿Te animas con la *salida de 2 inmersiones*, un *paquete de varios días* o un *curso avanzado*? 🌊",
+    "reply_b": "¿Te animas con la *salida de 2 inmersiones*, un *paquete de varios días* o un *curso avanzado*? 🌊"
+   },
+   "familia-ninos-resumen": {
+    "turno": 3,
+    "msg": "los ninos tienen 6 y 9 anos",
+    "cambios": {
+     "core_pending_slot": [
+      "nationality",
+      "ages"
+     ],
+     "detected_ages": [
+      [
+       6,
+       9
+      ],
+      []
+     ]
+    },
+    "reply_a": "Última cosa para darte el precio y el link correctos: ¿sois colombianos o residentes en Colombia?",
+    "reply_b": "Me comentaste que van menores — ¿qué edades tienen? Así les preparo la actividad adecuada (snorkel, Bubble Makers o minicurso según la edad)."
+   },
+   "isla-hotel-refresher": {
+    "turno": 3,
+    "msg": "soy certificado, voy solo",
+    "cambios": {
+     "solo_traveler_confirmed": [
+      true,
+      false
+     ]
+    },
+    "reply_a": "Te recomiendo el plan de *2 inmersiones en 1 día* en las Islas del Rosario. (Si prefieres un *paquete multi-día* de 3 o más inmersiones, dímelo.)\n\n¿Han pasado *más de 2 años* desde tu última inmersión?",
+    "reply_b": "Te recomiendo el plan de *2 inmersiones en 1 día* en las Islas del Rosario. (Si prefieres un *paquete multi-día* de 3 o más inmersiones, dímelo.)\n\n¿Han pasado *más de 2 años* desde tu última inmersión?"
+   },
+   "nino-7-familia": {
+    "turno": 1,
+    "msg": "mi hijo de 7 anos puede bucear?",
+    "cambios": {
+     "core_pending_slot": [
+      null,
+      "activity"
+     ],
+     "detected_ages": [
+      [
+       7
+      ],
+      []
+     ]
+    },
+    "reply_a": "¡Con 7 años puede hacer *snorkel* y disfrutar del arrecife desde la superficie! 🌊 El buceo (Bubble Makers) es a partir de los 8 años y el minicurso desde los 10.\n\n¿Quieres que te ayude a armar el plan para tu grupo? Escr",
+    "reply_b": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n"
+   },
+   "premisa-falsa-lunes": {
+    "turno": 4,
+    "msg": "buceo certificado, solo yo",
+    "cambios": {
+     "solo_traveler_confirmed": [
+      true,
+      false
+     ]
+    },
+    "reply_a": "¡Genial! Para recomendarte el plan perfecto: ¿Eres buzo certificado? (Y si no, ¡tranquilo! El minicurso es ideal para empezar. 🤿)",
+    "reply_b": "¡Genial! Para recomendarte el plan perfecto: ¿Eres buzo certificado? (Y si no, ¡tranquilo! El minicurso es ideal para empezar. 🤿)"
+   },
+   "paquete-5-inmersiones": {
+    "turno": 1,
+    "msg": "hola, cuanto cuesta el paquete de 5 inmersiones?",
+    "cambios": {
+     "detected_cert_dives": [
+      5,
+      null
+     ],
+     "detected_duration": [
+      "multi_day",
+      null
+     ]
+    },
+    "reply_a": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n",
+    "reply_b": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n"
+   },
+   "paquete-en-carrito": {
+    "turno": 3,
+    "msg": "y tienen algo para mas dias, como un paquete?",
+    "cambios": {
+     "detected_duration": [
+      "multi_day",
+      null
+     ]
+    },
+    "reply_a": "«RAG»\n\n¡Genial! Para recomendarte el plan perfecto: ¿Sois buzos certificados? (Y si no, ¡tranquilo! El minicurso es ideal para empezar. 🤿)",
+    "reply_b": "«RAG»\n\n¡Genial! Para recomendarte el plan perfecto: ¿Sois buzos certificados? (Y si no, ¡tranquilo! El minicurso es ideal para empezar. 🤿)"
+   },
+   "embarazo": {
+    "turno": 1,
+    "msg": "hola, estoy embarazada de 4 meses, puedo bucear?",
+    "cambios": {
+     "detected_duration": [
+      "multi_day",
+      null
+     ]
+    },
+    "reply_a": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n",
+    "reply_b": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n"
+   },
+   "queja": {
+    "turno": 1,
+    "msg": "llevo 3 dias esperando respuesta de mi reserva, esto es pesimo servicio",
+    "cambios": {
+     "detected_duration": [
+      "multi_day",
+      null
+     ]
+    },
+    "reply_a": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n",
+    "reply_b": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n"
+   },
+   "manual-duracion-curso": {
+    "turno": 2,
+    "msg": "Para mi",
+    "cambios": {
+     "solo_traveler_confirmed": [
+      true,
+      false
+     ]
+    },
+    "reply_a": "Última cosa para darte el precio y el link correctos: ¿eres colombiano o residente en Colombia?",
+    "reply_b": "Última cosa para darte el precio y el link correctos: ¿eres colombiano o residente en Colombia?"
+   },
+   "paquete-5-buceos-cop-refresh-y-hoteles": {
+    "turno": 1,
+    "msg": "Buenos días. Quiero hacer el paquete de 5 buceos. Cuál es el costo para colombianos por favor?",
+    "cambios": {
+     "detected_cert_dives": [
+      5,
+      null
+     ],
+     "detected_duration": [
+      "multi_day",
+      null
+     ]
+    },
+    "reply_a": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n",
+    "reply_b": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n"
+   },
+   "reserva-paquete-5-buceos-solicita": {
+    "turno": 1,
+    "msg": "Buenos días. Me gustaría hacer una reserva para el paquete de 5 buceos por favor?",
+    "cambios": {
+     "detected_cert_dives": [
+      5,
+      null
+     ],
+     "detected_duration": [
+      "multi_day",
+      null
+     ]
+    },
+    "reply_a": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n",
+    "reply_b": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n"
+   },
+   "semana-santa-solo-avanzado-islas": {
+    "turno": 5,
+    "msg": "Veo q los 5 buceos serian por 293 pagando en el website",
+    "cambios": {
+     "detected_cert_dives": [
+      5,
+      null
+     ]
+    },
+    "reply_a": "¿Han pasado *más de 2 años* desde tu última inmersión?",
+    "reply_b": "Te recomiendo el plan de *2 inmersiones en 1 día* en las Islas del Rosario. (Si prefieres un *paquete multi-día* de 3 o más inmersiones, dímelo.)\n\n¿Han pasado *más de 2 años* desde tu última inmersión?"
+   },
+   "paquete-5-buceos-islas-residente-sin-recogida": {
+    "turno": 1,
+    "msg": "Tienes disponibilidad para el plan de 5 buceos para el finde del 27 de junio al 30 de junio",
+    "cambios": {
+     "detected_cert_dives": [
+      5,
+      null
+     ]
+    },
+    "reply_a": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n",
+    "reply_b": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n"
+   },
+   "certificado-fechas-fotos-y-reserva": {
+    "turno": 1,
+    "msg": "Hola, buenos días. Deca del centro de buceo. Me recomendaron a ustedes para bucear en Cartagena. Yo voy a estar entre el",
+    "cambios": {
+     "detected_duration": [
+      "single_day",
+      null
+     ]
+    },
+    "reply_a": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n",
+    "reply_b": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n"
+   },
+   "programa-fotos-y-alojamiento": {
+    "turno": 4,
+    "msg": "Oye, par de preguntas. Si quisiera también me puedo hospedar con ustedes? Estoy pensando en ir en unos meses de nuevo",
+    "cambios": {
+     "detected_duration": [
+      "multi_day",
+      null
+     ]
+    },
+    "reply_a": "«RAG»\n\n¿Con cuál te animas — *buceo*, *minicurso*, *snorkel* o un *curso PADI*? 🌊",
+    "reply_b": "«RAG»\n\n¿Con cuál te animas — *buceo*, *minicurso*, *snorkel* o un *curso PADI*? 🌊"
+   },
+   "equipaje-mochilas-y-almacenamiento": {
+    "turno": 1,
+    "msg": "Hello! We just booked a 5 dive package with you for April 13th under [NOMBRE].\nOn the morning of the 13th we will be che",
+    "cambios": {
+     "detected_cert_dives": [
+      5,
+      null
+     ],
+     "detected_duration": [
+      "multi_day",
+      null
+     ]
+    },
+    "reply_a": "Hi! 🪸 I'm *Coral* from *Diving Planet* — we dive year-round in the Rosario Islands, departing from Cartagena or right from the islands. So happy to have you here! I'd love to help you put your plan together. 🌊\n\n«RAG»\n\nTe",
+    "reply_b": "Hi! 🪸 I'm *Coral* from *Diving Planet* — we dive year-round in the Rosario Islands, departing from Cartagena or right from the islands. So happy to have you here! I'd love to help you put your plan together. 🌊\n\n«RAG»\n\nTe"
+   },
+   "precio-desde-islas-vs-cartagena": {
+    "turno": 5,
+    "msg": "Me puedes decir el precio de las 2 inmersiones? Desde ese hotel?",
+    "cambios": {
+     "detected_cert_dives": [
+      2,
+      null
+     ]
+    },
+    "reply_a": "«RAG»\n\nSolo para confirmar, ¿lo cambio?\n• salida desde Cartagena → *en las islas*",
+    "reply_b": "«RAG»\n\nSolo para confirmar, ¿lo cambio?\n• salida desde Cartagena → *en las islas*"
+   },
+   "regreso-otro-dia-paquete-5": {
+    "turno": 1,
+    "msg": "Seguramente tomaremos el paquete de 5 buceos para 2 personas con el traslado saliendo desde cartagena, niche en cocoliso",
+    "cambios": {
+     "detected_cert_dives": [
+      5,
+      null
+     ],
+     "detected_duration": [
+      "multi_day",
+      null
+     ]
+    },
+    "reply_a": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n",
+    "reply_b": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n"
+   },
+   "referral-mas-refresher-hotel-y-domingo-pascua": {
+    "turno": 1,
+    "msg": "Hi. We want to complete our PADI open water: we have referrals and e-learning certificates. We would also like a refresh",
+    "cambios": {
+     "detected_duration": [
+      "multi_day",
+      null
+     ]
+    },
+    "reply_a": "Hi! 🪸 I'm *Coral* from *Diving Planet* — we dive year-round in the Rosario Islands, departing from Cartagena or right from the islands. So happy to have you here! I'd love to help you put your plan together. 🌊\n\n«RAG»\n\nWh",
+    "reply_b": "Hi! 🪸 I'm *Coral* from *Diving Planet* — we dive year-round in the Rosario Islands, departing from Cartagena or right from the islands. So happy to have you here! I'd love to help you put your plan together. 🌊\n\n«RAG»\n\nWh"
+   },
+   "paquete-5-buceos-precio-overnight-isla-grande-baru": {
+    "turno": 1,
+    "msg": "Hello My name is [NOMBRE], i'd like to inquiry about the modalities for a 2 day dive package at the rosario islands. i'l",
+    "cambios": {
+     "detected_cert_days": [
+      2,
+      null
+     ],
+     "detected_duration": [
+      "multi_day",
+      null
+     ]
+    },
+    "reply_a": "Hi! 🪸 I'm *Coral* from *Diving Planet* — we dive year-round in the Rosario Islands, departing from Cartagena or right from the islands. So happy to have you here! I'd love to help you put your plan together. 🌊\n\n«RAG»\n\nGr",
+    "reply_b": "Hi! 🪸 I'm *Coral* from *Diving Planet* — we dive year-round in the Rosario Islands, departing from Cartagena or right from the islands. So happy to have you here! I'd love to help you put your plan together. 🌊\n\n«RAG»\n\nGr"
+   },
+   "aprobacion-logs-padi": {
+    "turno": 2,
+    "msg": "el sábado pasado nosotros hicimos 2 buceos con uds y los registramos en PADI, no se si nos puedas ayudar con [NOMBRE] qu",
+    "cambios": {
+     "detected_cert_dives": [
+      2,
+      null
+     ]
+    },
+    "reply_a": "¿Con cuál te animas — *buceo*, *minicurso*, *snorkel* o un *curso PADI*? 🌊",
+    "reply_b": "¿Con cuál te animas — *buceo*, *minicurso*, *snorkel* o un *curso PADI*? 🌊"
+   },
+   "open-water-hoteles-noche-fotos-horario": {
+    "turno": 4,
+    "msg": "and the total is 2 days course",
+    "cambios": {
+     "detected_duration": [
+      "multi_day",
+      null
+     ]
+    },
+    "reply_a": "And how many people should I plan for? That way I can give you the exact price. 😊",
+    "reply_b": "And how many people should I plan for? That way I can give you the exact price. 😊"
+   },
+   "curso-open-water-transporte-y-regreso-otro-dia": {
+    "turno": 2,
+    "msg": "What if I decide to stay one day longer in rosario, can you provide de transfer back to cartagena?",
+    "cambios": {
+     "detected_duration": [
+      "single_day",
+      null
+     ]
+    },
+    "reply_a": "«RAG»\n\nWhich one are you leaning toward — *diving*, a *mini-course*, *snorkeling* or a *PADI course*? 🌊",
+    "reply_b": "«RAG»\n\nWhich one are you leaning toward — *diving*, a *mini-course*, *snorkeling* or a *PADI course*? 🌊"
+   },
+   "certificado-precio-dia-paquete-5-y-hoteles-base": {
+    "turno": 3,
+    "msg": "So if I book for 2 days are we going to the same spots or do different one within San Brenardo National park?",
+    "cambios": {
+     "detected_duration": [
+      "multi_day",
+      null
+     ]
+    },
+    "reply_a": "«RAG»\n\nI recommend the *2 dives in 1 day* plan in the Rosario Islands. (If you'd rather a *multi-day package* of 3+ dives, just tell me.)\n\nHas it been *more than 2 years* since your last dive?",
+    "reply_b": "«RAG»\n\nI recommend the *2 dives in 1 day* plan in the Rosario Islands. (If you'd rather a *multi-day package* of 3+ dives, just tell me.)\n\nHas it been *more than 2 years* since your last dive?"
+   },
+   "colombianos-precio-minicurso-dos-inmersiones": {
+    "turno": 4,
+    "msg": "Yo vi un video en YT de alguien que hizo el paquete con ustedes e hicieron dos inmersiones en dos distintos puntos",
+    "cambios": {
+     "detected_cert_dives": [
+      2,
+      null
+     ],
+     "detected_duration": [
+      "multi_day",
+      null
+     ]
+    },
+    "reply_a": "¿Con cuál te animas — *buceo*, *minicurso*, *snorkel* o un *curso PADI*? 🌊",
+    "reply_b": "¿Con cuál te animas — *buceo*, *minicurso*, *snorkel* o un *curso PADI*? 🌊"
+   },
+   "minicurso-precio-colombianos-origen-pendiente": {
+    "turno": 1,
+    "msg": "Me gustaría agendar un día de buceo con ustedes",
+    "cambios": {
+     "detected_cert_days": [
+      1,
+      null
+     ],
+     "detected_duration": [
+      "single_day",
+      null
+     ]
+    },
+    "reply_a": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n",
+    "reply_b": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n"
+   },
+   "precio-paquetes-5-o-3-buceos-y-opcion-2-diurnos": {
+    "turno": 1,
+    "msg": "Hey I am going to be in Colombia in a few days and moving around the country. I was hoping to include the island visit a",
+    "cambios": {
+     "detected_duration": [
+      "multi_day",
+      null
+     ]
+    },
+    "reply_a": "Hi! 🪸 I'm *Coral* from *Diving Planet* — we dive year-round in the Rosario Islands, departing from Cartagena or right from the islands. So happy to have you here! I'd love to help you put your plan together. 🌊\n\nTell me, ",
+    "reply_b": "Hi! 🪸 I'm *Coral* from *Diving Planet* — we dive year-round in the Rosario Islands, departing from Cartagena or right from the islands. So happy to have you here! I'd love to help you put your plan together. 🌊\n\nTell me, "
+   },
+   "confirma-reserva-existente-escalar": {
+    "turno": 3,
+    "msg": "Hello, I just want to tell you, I just make a reservation for me and [NOMBRE] for diving with you on Monday 11th of May.",
+    "cambios": {
+     "solo_traveler_confirmed": [
+      true,
+      false
+     ]
+    },
+    "reply_a": "Which one are you leaning toward — *diving*, a *mini-course*, *snorkeling* or a *PADI course*? 🌊",
+    "reply_b": "Which one are you leaning toward — *diving*, a *mini-course*, *snorkeling* or a *PADI course*? 🌊"
+   },
+   "familia-mixta-precio-descuento-refresher": {
+    "turno": 1,
+    "msg": "Hi There,\nI am looking to book 2 dives and snorkeling sessions for the following people.\n2 diving sessions - All PADI ce",
+    "cambios": {
+     "detected_ages": [
+      [
+       10,
+       14,
+       17,
+       19,
+       42,
+       43
+      ],
+      []
+     ],
+     "detected_cert_dives": [
+      2,
+      null
+     ]
+    },
+    "reply_a": "Hi! 🪸 I'm *Coral* from *Diving Planet* — we dive year-round in the Rosario Islands, departing from Cartagena or right from the islands. So happy to have you here! I'd love to help you put your plan together. 🌊\n\nTell me, ",
+    "reply_b": "Hi! 🪸 I'm *Coral* from *Diving Planet* — we dive year-round in the Rosario Islands, departing from Cartagena or right from the islands. So happy to have you here! I'd love to help you put your plan together. 🌊\n\nTell me, "
+   },
+   "precios-y-disponibilidad-con-negociacion": {
+    "turno": 1,
+    "msg": "Hola! Como estan? Me llamo [NOMBRE] soy buza advanced",
+    "cambios": {
+     "solo_traveler_confirmed": [
+      true,
+      false
+     ]
+    },
+    "reply_a": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n",
+    "reply_b": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n"
+   },
+   "curso-open-water-principiantes-idioma-frances-anticipacion": {
+    "turno": 2,
+    "msg": "Es decir en dos dias tendriamos el certificado haciendo nuestro curso en linea . La persona que me acompana no habla ni ",
+    "cambios": {
+     "detected_duration": [
+      "multi_day",
+      null
+     ]
+    },
+    "reply_a": "«RAG»\n\nÚltima cosa para darte el precio y el link correctos: ¿sois colombianos o residentes en Colombia?",
+    "reply_b": "«RAG»\n\nÚltima cosa para darte el precio y el link correctos: ¿sois colombianos o residentes en Colombia?"
+   }
+  }
+ },
+ "oraculo_vs_extractor_caido": {
+  "turnos_estado": 222,
+  "turnos_reply": 179,
+  "dialogos_estado": [
+   "acompanante-goteo",
+   "actividad-cambia-varias",
+   "aprobacion-logs-padi",
+   "cambio-fecha-por-enfermedad",
+   "cambio-idioma",
+   "certificado-fechas-fotos-y-reserva",
+   "certificado-precio-dia-paquete-5-y-hoteles-base",
+   "colombianos-precio-minicurso-dos-inmersiones",
+   "confirma-reserva-existente-escalar",
+   "contacto-hoteles-cocoliso-san-pedro",
+   "curso-alojamiento-y-recogida-islas",
+   "curso-open-water-disponibilidad-pasos-y-precio-citado",
+   "curso-open-water-precio-cop-hoteles-y-transporte",
+   "curso-open-water-principiantes-idioma-frances-anticipacion",
+   "curso-referido-pide-datos-centro",
+   "descuento-online-sin-codigo",
+   "desde-islas-buzo-certificado",
+   "familia-mixta-precio-descuento-refresher",
+   "grupo-3-actividades",
+   "grupo-con-refresher",
+   "grupo-mixto-precio-cop-total",
+   "grupo-recompuesto",
+   "humano-con-carrito",
+   "isla-hotel-refresher",
+   "link-roto-carrito",
+   "manual-duracion-curso",
+   "minicurso-islas-y-acompanante-lancha",
+   "minicurso-precio-colombianos-origen-pendiente",
+   "moneda-precios-principiante-y-snorkel",
+   "nacionalidad-ambigua",
+   "nacionalidad-mixta-carrito",
+   "ninos-6-y-10",
+   "open-water-hoteles-noche-fotos-horario",
+   "open-water-precio-para-colombianos-corrige-mito",
+   "paquete-5-buceos-cop-refresh-y-hoteles",
+   "paquete-5-buceos-islas-residente-sin-recogida",
+   "paquete-5-buceos-precio-overnight-isla-grande-baru",
+   "paquete-en-carrito",
+   "pedir-fotos-postventa",
+   "precio-desde-islas-vs-cartagena",
+   "precio-fundive-datos-faltan",
+   "precios-y-disponibilidad-con-negociacion",
+   "premisa-falsa-lunes",
+   "principiante-hora-lugar-y-precio",
+   "referral-mas-refresher-hotel-y-domingo-pascua",
+   "refresher-rechaza-acepta",
+   "regateo-grupo-6",
+   "regreso-otro-dia-paquete-5",
+   "reserva-completa-saludo-a-pago",
+   "reserva-ingles",
+   "reserva-paquete-5-buceos-solicita",
+   "reserva-solo-link",
+   "semana-santa-solo-avanzado-islas",
+   "snorkel-precio-residente-y-pago-link",
+   "vuelo-tras-bucear"
+  ],
+  "dialogos_reply": [
+   "acompanante-goteo",
+   "actividad-cambia-varias",
+   "aprobacion-logs-padi",
+   "cambio-fecha-por-enfermedad",
+   "cambio-idioma",
+   "certificado-fechas-fotos-y-reserva",
+   "certificado-precio-dia-paquete-5-y-hoteles-base",
+   "colombianos-precio-minicurso-dos-inmersiones",
+   "confirma-reserva-existente-escalar",
+   "curso-alojamiento-y-recogida-islas",
+   "curso-open-water-disponibilidad-pasos-y-precio-citado",
+   "curso-open-water-precio-cop-hoteles-y-transporte",
+   "curso-open-water-principiantes-idioma-frances-anticipacion",
+   "curso-referido-pide-datos-centro",
+   "descuento-online-sin-codigo",
+   "desde-islas-buzo-certificado",
+   "familia-mixta-precio-descuento-refresher",
+   "grupo-con-refresher",
+   "grupo-mixto-precio-cop-total",
+   "humano-con-carrito",
+   "isla-hotel-refresher",
+   "manual-duracion-curso",
+   "minicurso-precio-colombianos-origen-pendiente",
+   "moneda-precios-principiante-y-snorkel",
+   "nacionalidad-mixta-carrito",
+   "ninos-6-y-10",
+   "open-water-hoteles-noche-fotos-horario",
+   "open-water-precio-para-colombianos-corrige-mito",
+   "paquete-5-buceos-cop-refresh-y-hoteles",
+   "paquete-5-buceos-islas-residente-sin-recogida",
+   "paquete-5-buceos-precio-overnight-isla-grande-baru",
+   "paquete-en-carrito",
+   "pedir-fotos-postventa",
+   "precio-desde-islas-vs-cartagena",
+   "precio-fundive-datos-faltan",
+   "precios-y-disponibilidad-con-negociacion",
+   "premisa-falsa-lunes",
+   "principiante-hora-lugar-y-precio",
+   "referral-mas-refresher-hotel-y-domingo-pascua",
+   "regateo-grupo-6",
+   "regreso-otro-dia-paquete-5",
+   "reserva-ingles",
+   "reserva-paquete-5-buceos-solicita",
+   "reserva-solo-link",
+   "semana-santa-solo-avanzado-islas",
+   "snorkel-precio-residente-y-pago-link",
+   "vuelo-tras-bucear"
+  ],
+  "campos": {
+   "detected_group_size": 73,
+   "is_certified": 106,
+   "core_pending_slot": 165,
+   "carrito": 9,
+   "detected_activity": 122,
+   "last_dive_over_2_years": 7,
+   "detected_group_allocation": 17,
+   "solo_traveler_confirmed": 12,
+   "is_colombian": 34,
+   "detected_location": 40,
+   "location": 40,
+   "pending_escalation_reason": 1,
+   "island": 13,
+   "needs_cert_or_course": 7,
+   "hotel": 2
+  },
+  "primer_cambio": {
+   "reserva-completa-saludo-a-pago": {
+    "turno": 2,
+    "msg": "quiero bucear, ya soy certificado",
+    "cambios": {
+     "detected_group_size": [
+      null,
+      1
+     ]
+    },
+    "reply_a": "¿Desde dónde saldrías? Podemos recogerte saliendo *desde Cartagena* (ida y vuelta el mismo día) o, si ya estás *en las islas*, coordinamos la recogida en tu hotel.",
+    "reply_b": "¿Desde dónde saldrías? Podemos recogerte saliendo *desde Cartagena* (ida y vuelta el mismo día) o, si ya estás *en las islas*, coordinamos la recogida en tu hotel."
+   },
+   "reserva-solo-link": {
+    "turno": 1,
+    "msg": "quiero bucear certificado",
+    "cambios": {
+     "core_pending_slot": [
+      "certification",
+      "location"
+     ],
+     "is_certified": [
+      null,
+      true
+     ]
+    },
+    "reply_a": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n",
+    "reply_b": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n"
+   },
+   "reserva-ingles": {
+    "turno": 1,
+    "msg": "hi, i want to book a dive",
+    "cambios": {
+     "core_pending_slot": [
+      "activity",
+      "certification"
+     ],
+     "detected_activity": [
+      null,
+      "certified_diving"
+     ]
+    },
+    "reply_a": "Hi! 🪸 I'm *Coral* from *Diving Planet* — we dive year-round in the Rosario Islands, departing from Cartagena or right from the islands. So happy to have you here! I'd love to help you put your plan together. 🌊\n\nTell me, ",
+    "reply_b": "Hi! 🪸 I'm *Coral* from *Diving Planet* — we dive year-round in the Rosario Islands, departing from Cartagena or right from the islands. So happy to have you here! I'd love to help you put your plan together. 🌊\n\nGreat! So"
+   },
+   "cambio-idioma": {
+    "turno": 1,
+    "msg": "hola quiero bucear certificado",
+    "cambios": {
+     "core_pending_slot": [
+      "certification",
+      "location"
+     ],
+     "is_certified": [
+      null,
+      true
+     ]
+    },
+    "reply_a": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n",
+    "reply_b": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n"
+   },
+   "grupo-3-actividades": {
+    "turno": 1,
+    "msg": "somos 6: 2 bucean certificados, 2 hacen minicurso y 2 snorkel",
+    "cambios": {
+     "is_certified": [
+      null,
+      false
+     ]
+    },
+    "reply_a": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n",
+    "reply_b": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n"
+   },
+   "grupo-recompuesto": {
+    "turno": 1,
+    "msg": "3 certificados y 2 minicurso",
+    "cambios": {
+     "is_certified": [
+      null,
+      false
+     ]
+    },
+    "reply_a": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n",
+    "reply_b": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n"
+   },
+   "acompanante-goteo": {
+    "turno": 1,
+    "msg": "hola quiero bucear con mi amigo",
+    "cambios": {
+     "core_pending_slot": [
+      "activity",
+      "certification"
+     ],
+     "detected_activity": [
+      null,
+      "certified_diving"
+     ],
+     "detected_group_size": [
+      2,
+      null
+     ]
+    },
+    "reply_a": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n",
+    "reply_b": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n"
+   },
+   "isla-hotel-refresher": {
+    "turno": 1,
+    "msg": "hola quiero bucear, ya estoy en las islas",
+    "cambios": {
+     "core_pending_slot": [
+      "activity",
+      "certification"
+     ],
+     "detected_activity": [
+      null,
+      "certified_diving"
+     ]
+    },
+    "reply_a": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n",
+    "reply_b": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n"
+   },
+   "actividad-cambia-varias": {
+    "turno": 1,
+    "msg": "hola quiero bucear certificado",
+    "cambios": {
+     "core_pending_slot": [
+      "certification",
+      "location"
+     ],
+     "is_certified": [
+      null,
+      true
+     ]
+    },
+    "reply_a": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n",
+    "reply_b": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n"
+   },
+   "refresher-rechaza-acepta": {
+    "turno": 5,
+    "msg": "desde cartagena, voy solo",
+    "cambios": {
+     "solo_traveler_confirmed": [
+      false,
+      true
+     ]
+    },
+    "reply_a": "El *refresher* es una sesión corta de repaso en el agua antes de la inmersión. Tiene un costo de *183 USD* por persona que lo necesite. ¿Os interesa?",
+    "reply_b": "El *refresher* es una sesión corta de repaso en el agua antes de la inmersión. Tiene un costo de *183 USD* por persona que lo necesite. ¿Os interesa?"
+   },
+   "grupo-con-refresher": {
+    "turno": 1,
+    "msg": "somos 3: 2 certificados y 1 minicurso",
+    "cambios": {
+     "is_certified": [
+      null,
+      false
+     ]
+    },
+    "reply_a": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n",
+    "reply_b": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n"
+   },
+   "ninos-6-y-10": {
+    "turno": 1,
+    "msg": "hola quiero llevar a mis hijos a bucear",
+    "cambios": {
+     "core_pending_slot": [
+      "activity",
+      "certification"
+     ],
+     "detected_activity": [
+      null,
+      "certified_diving"
+     ]
+    },
+    "reply_a": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n",
+    "reply_b": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n"
+   },
+   "nacionalidad-ambigua": {
+    "turno": 1,
+    "msg": "naci en colombia pero vivo en miami hace 10 años, cuento como colombiano?",
+    "cambios": {
+     "is_colombian": [
+      true,
+      null
+     ]
+    },
+    "reply_a": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n",
+    "reply_b": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n"
+   },
+   "nacionalidad-mixta-carrito": {
+    "turno": 1,
+    "msg": "queremos bucear certificado, somos 3",
+    "cambios": {
+     "core_pending_slot": [
+      "certification",
+      "location"
+     ],
+     "is_certified": [
+      null,
+      true
+     ]
+    },
+    "reply_a": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n",
+    "reply_b": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n"
+   },
+   "vuelo-tras-bucear": {
+    "turno": 1,
+    "msg": "hola, tengo un vuelo esa misma noche despues de bucear",
+    "cambios": {
+     "core_pending_slot": [
+      "activity",
+      "certification"
+     ],
+     "detected_activity": [
+      null,
+      "certified_diving"
+     ]
+    },
+    "reply_a": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n",
+    "reply_b": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n"
+   },
+   "premisa-falsa-lunes": {
+    "turno": 4,
+    "msg": "buceo certificado, solo yo",
+    "cambios": {
+     "core_pending_slot": [
+      "certification",
+      "location"
+     ],
+     "is_certified": [
+      null,
+      true
+     ]
+    },
+    "reply_a": "¡Genial! Para recomendarte el plan perfecto: ¿Eres buzo certificado? (Y si no, ¡tranquilo! El minicurso es ideal para empezar. 🤿)",
+    "reply_b": "¿Desde dónde saldrías? Podemos recogerte saliendo *desde Cartagena* (ida y vuelta el mismo día) o, si ya estás *en las islas*, coordinamos la recogida en tu hotel."
+   },
+   "paquete-en-carrito": {
+    "turno": 1,
+    "msg": "quiero bucear certificado",
+    "cambios": {
+     "core_pending_slot": [
+      "certification",
+      "location"
+     ],
+     "is_certified": [
+      null,
+      true
+     ]
+    },
+    "reply_a": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n",
+    "reply_b": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n"
+   },
+   "regateo-grupo-6": {
+    "turno": 1,
+    "msg": "hola cuanto cuesta el buceo certificado",
+    "cambios": {
+     "core_pending_slot": [
+      "activity",
+      "location"
+     ],
+     "detected_activity": [
+      null,
+      "certified_diving"
+     ],
+     "is_certified": [
+      null,
+      true
+     ]
+    },
+    "reply_a": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n",
+    "reply_b": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n"
+   },
+   "humano-con-carrito": {
+    "turno": 1,
+    "msg": "quiero bucear certificado, somos 2",
+    "cambios": {
+     "core_pending_slot": [
+      "certification",
+      "location"
+     ],
+     "is_certified": [
+      null,
+      true
+     ]
+    },
+    "reply_a": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n",
+    "reply_b": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n"
+   },
+   "link-roto-carrito": {
+    "turno": 1,
+    "msg": "quiero minicurso, somos 3",
+    "cambios": {
+     "is_certified": [
+      null,
+      false
+     ]
+    },
+    "reply_a": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n",
+    "reply_b": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n"
+   },
+   "manual-duracion-curso": {
+    "turno": 1,
+    "msg": "Hola quiero sacarme la certificación y estoy en cartagena",
+    "cambios": {
+     "core_pending_slot": [
+      "qty",
+      "activity"
+     ],
+     "detected_activity": [
+      "padi_open_water",
+      null
+     ],
+     "is_certified": [
+      null,
+      false
+     ]
+    },
+    "reply_a": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n",
+    "reply_b": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n"
+   },
+   "open-water-precio-para-colombianos-corrige-mito": {
+    "turno": 1,
+    "msg": "Buenos días. Estoy interesada en el curso básico de buceo. Cuál es el costo para colombianos?",
+    "cambios": {
+     "core_pending_slot": [
+      "location",
+      "activity"
+     ],
+     "detected_activity": [
+      "padi_open_water",
+      null
+     ],
+     "is_colombian": [
+      true,
+      null
+     ]
+    },
+    "reply_a": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n",
+    "reply_b": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n"
+   },
+   "curso-open-water-precio-cop-hoteles-y-transporte": {
+    "turno": 2,
+    "msg": "Estoy interesada en el curso básico de buceo. Me podrían dar el costo para colombianos por favor",
+    "cambios": {
+     "core_pending_slot": [
+      "location",
+      "certification"
+     ],
+     "detected_activity": [
+      "padi_open_water",
+      "certified_diving"
+     ]
+    },
+    "reply_a": "¿Desde dónde saldrías? Este plan dura 2 días y hay que *dormir en las islas* (el alojamiento no está incluido): puedes salir *desde Cartagena* el primer día o, si ya estás *en las islas*, coordinamos la recogida en tu ho",
+    "reply_b": "¡Genial! Para recomendarte el plan perfecto: ¿Eres buzo certificado? (Y si no, ¡tranquilo! El minicurso es ideal para empezar. 🤿)"
+   },
+   "curso-open-water-disponibilidad-pasos-y-precio-citado": {
+    "turno": 2,
+    "msg": "Gracias. Entonces por favor los pasos para hacer la reserva/ curso básico",
+    "cambios": {
+     "core_pending_slot": [
+      "location",
+      "activity"
+     ],
+     "detected_activity": [
+      "padi_open_water",
+      null
+     ]
+    },
+    "reply_a": "¿Desde dónde saldrías? Este plan dura 2 días y hay que *dormir en las islas* (el alojamiento no está incluido): puedes salir *desde Cartagena* el primer día o, si ya estás *en las islas*, coordinamos la recogida en tu ho",
+    "reply_b": "¿Con cuál te animas — *buceo*, *minicurso*, *snorkel* o un *curso PADI*? 🌊"
+   },
+   "paquete-5-buceos-cop-refresh-y-hoteles": {
+    "turno": 1,
+    "msg": "Buenos días. Quiero hacer el paquete de 5 buceos. Cuál es el costo para colombianos por favor?",
+    "cambios": {
+     "core_pending_slot": [
+      "certification",
+      "activity"
+     ],
+     "detected_activity": [
+      "certified_diving",
+      null
+     ],
+     "is_colombian": [
+      true,
+      null
+     ]
+    },
+    "reply_a": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n",
+    "reply_b": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n"
+   },
+   "reserva-paquete-5-buceos-solicita": {
+    "turno": 1,
+    "msg": "Buenos días. Me gustaría hacer una reserva para el paquete de 5 buceos por favor?",
+    "cambios": {
+     "core_pending_slot": [
+      "certification",
+      "activity"
+     ],
+     "detected_activity": [
+      "certified_diving",
+      null
+     ]
+    },
+    "reply_a": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n",
+    "reply_b": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n"
+   },
+   "semana-santa-solo-avanzado-islas": {
+    "turno": 1,
+    "msg": "Estoy interesada en bucear en semana santa 18 y 19",
+    "cambios": {
+     "core_pending_slot": [
+      "activity",
+      "certification"
+     ],
+     "detected_activity": [
+      null,
+      "certified_diving"
+     ]
+    },
+    "reply_a": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n",
+    "reply_b": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n"
+   },
+   "paquete-5-buceos-islas-residente-sin-recogida": {
+    "turno": 2,
+    "msg": "Para dos personas",
+    "cambios": {
+     "detected_group_size": [
+      2,
+      null
+     ]
+    },
+    "reply_a": "¡Genial! Para recomendarte el plan perfecto: ¿Sois buzos certificados? (Y si no, ¡tranquilo! El minicurso es ideal para empezar. 🤿)",
+    "reply_b": "¡Genial! Para recomendarte el plan perfecto: ¿Eres buzo certificado? (Y si no, ¡tranquilo! El minicurso es ideal para empezar. 🤿)"
+   },
+   "snorkel-precio-residente-y-pago-link": {
+    "turno": 1,
+    "msg": "cupo para snorkeling para dos personas el sábado?",
+    "cambios": {
+     "core_pending_slot": [
+      "location",
+      "activity"
+     ],
+     "detected_activity": [
+      "snorkel",
+      null
+     ],
+     "detected_group_size": [
+      2,
+      null
+     ]
+    },
+    "reply_a": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n",
+    "reply_b": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n"
+   },
+   "grupo-mixto-precio-cop-total": {
+    "turno": 1,
+    "msg": "Busco el seguinte:\nVamos en família a Cartagena. 1 buzo avanzado y 2 para bautismo",
+    "cambios": {
+     "core_pending_slot": [
+      "safety",
+      "nationality"
+     ],
+     "detected_group_allocation": [
+      {
+       "certified_diving": 1,
+       "minicourse": 2
+      },
+      null
+     ],
+     "detected_group_size": [
+      3,
+      1
+     ],
+     "is_certified": [
+      null,
+      false
+     ]
+    },
+    "reply_a": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n",
+    "reply_b": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n"
+   },
+   "certificado-fechas-fotos-y-reserva": {
+    "turno": 1,
+    "msg": "Hola, buenos días. Deca del centro de buceo. Me recomendaron a ustedes para bucear en Cartagena. Yo voy a estar entre el",
+    "cambios": {
+     "core_pending_slot": [
+      "qty",
+      "certification"
+     ],
+     "is_certified": [
+      true,
+      null
+     ]
+    },
+    "reply_a": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n",
+    "reply_b": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n"
+   },
+   "cambio-fecha-por-enfermedad": {
+    "turno": 4,
+    "msg": "I think Tuesday would be best. We already have a room booked on the island for Monday night and Tuesday night",
+    "cambios": {
+     "detected_location": [
+      null,
+      "island"
+     ],
+     "location": [
+      null,
+      "island"
+     ]
+    },
+    "reply_a": "Which one are you leaning toward — *diving*, a *mini-course*, *snorkeling* or a *PADI course*? 🌊",
+    "reply_b": "Which one are you leaning toward — *diving*, a *mini-course*, *snorkeling* or a *PADI course*? 🌊"
+   },
+   "precio-desde-islas-vs-cartagena": {
+    "turno": 1,
+    "msg": "Hola!! Te contacto desde Argentina.  Estaremos visitando Cartagena y queria coordinar inmersiones en Isla del Rosario.  ",
+    "cambios": {
+     "core_pending_slot": [
+      "safety",
+      "cert_or_course"
+     ],
+     "detected_activity": [
+      "certified_diving",
+      "padi_advanced"
+     ],
+     "detected_location": [
+      "cartagena",
+      "island"
+     ],
+     "is_certified": [
+      true,
+      null
+     ],
+     "island": [
+      null,
+      "isla_rosario"
+     ],
+     "location": [
+      "cartagena",
+      "island"
+     ],
+     "needs_cert_or_course": [
+      false,
+      true
+     ]
+    },
+    "reply_a": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n",
+    "reply_b": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n"
+   },
+   "regreso-otro-dia-paquete-5": {
+    "turno": 1,
+    "msg": "Seguramente tomaremos el paquete de 5 buceos para 2 personas con el traslado saliendo desde cartagena, niche en cocoliso",
+    "cambios": {
+     "core_pending_slot": [
+      "certification",
+      "activity"
+     ],
+     "detected_activity": [
+      "certified_diving",
+      null
+     ],
+     "detected_group_size": [
+      2,
+      null
+     ],
+     "detected_location": [
+      "cartagena",
+      null
+     ],
+     "location": [
+      "cartagena",
+      null
+     ]
+    },
+    "reply_a": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n",
+    "reply_b": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n"
+   },
+   "contacto-hoteles-cocoliso-san-pedro": {
+    "turno": 4,
+    "msg": "O el San Pedro",
+    "cambios": {
+     "detected_location": [
+      null,
+      "island"
+     ],
+     "hotel": [
+      null,
+      "san_pedro_majagua"
+     ],
+     "island": [
+      null,
+      "isla_grande"
+     ],
+     "location": [
+      null,
+      "island"
+     ]
+    },
+    "reply_a": "¿Con cuál te animas — *buceo*, *minicurso*, *snorkel* o un *curso PADI*? 🌊",
+    "reply_b": "¿Con cuál te animas — *buceo*, *minicurso*, *snorkel* o un *curso PADI*? 🌊"
+   },
+   "pedir-fotos-postventa": {
+    "turno": 3,
+    "msg": "Fueron muy buenos buceos,  excelente organización de todo el grupo. Muchas gracias",
+    "cambios": {
+     "core_pending_slot": [
+      "activity",
+      "certification"
+     ],
+     "detected_activity": [
+      null,
+      "certified_diving"
+     ]
+    },
+    "reply_a": "¿Con cuál te animas — *buceo*, *minicurso*, *snorkel* o un *curso PADI*? 🌊",
+    "reply_b": "¡Genial! Para recomendarte el plan perfecto: ¿Eres buzo certificado? (Y si no, ¡tranquilo! El minicurso es ideal para empezar. 🤿)"
+   },
+   "referral-mas-refresher-hotel-y-domingo-pascua": {
+    "turno": 1,
+    "msg": "Hi. We want to complete our PADI open water: we have referrals and e-learning certificates. We would also like a refresh",
+    "cambios": {
+     "core_pending_slot": [
+      "location",
+      "activity"
+     ],
+     "detected_activity": [
+      "padi_open_water_referral",
+      null
+     ],
+     "detected_group_size": [
+      2,
+      null
+     ]
+    },
+    "reply_a": "Hi! 🪸 I'm *Coral* from *Diving Planet* — we dive year-round in the Rosario Islands, departing from Cartagena or right from the islands. So happy to have you here! I'd love to help you put your plan together. 🌊\n\n«RAG»\n\nWh",
+    "reply_b": "Hi! 🪸 I'm *Coral* from *Diving Planet* — we dive year-round in the Rosario Islands, departing from Cartagena or right from the islands. So happy to have you here! I'd love to help you put your plan together. 🌊\n\n«RAG»\n\nTe"
+   },
+   "paquete-5-buceos-precio-overnight-isla-grande-baru": {
+    "turno": 1,
+    "msg": "Hello My name is [NOMBRE], i'd like to inquiry about the modalities for a 2 day dive package at the rosario islands. i'l",
+    "cambios": {
+     "core_pending_slot": [
+      "certification",
+      "activity"
+     ],
+     "detected_activity": [
+      "certified_diving",
+      null
+     ],
+     "detected_location": [
+      "cartagena",
+      null
+     ],
+     "location": [
+      "cartagena",
+      null
+     ]
+    },
+    "reply_a": "Hi! 🪸 I'm *Coral* from *Diving Planet* — we dive year-round in the Rosario Islands, departing from Cartagena or right from the islands. So happy to have you here! I'd love to help you put your plan together. 🌊\n\n«RAG»\n\nGr",
+    "reply_b": "Hi! 🪸 I'm *Coral* from *Diving Planet* — we dive year-round in the Rosario Islands, departing from Cartagena or right from the islands. So happy to have you here! I'd love to help you put your plan together. 🌊\n\n«RAG»\n\nTe"
+   },
+   "aprobacion-logs-padi": {
+    "turno": 2,
+    "msg": "el sábado pasado nosotros hicimos 2 buceos con uds y los registramos en PADI, no se si nos puedas ayudar con [NOMBRE] qu",
+    "cambios": {
+     "core_pending_slot": [
+      "activity",
+      "cert_or_course"
+     ],
+     "detected_activity": [
+      null,
+      "certified_diving"
+     ]
+    },
+    "reply_a": "¿Con cuál te animas — *buceo*, *minicurso*, *snorkel* o un *curso PADI*? 🌊",
+    "reply_b": "Para recomendarte bien: ¿ya tienen esa certificación o quieren sacarla con el curso? 🤿"
+   },
+   "open-water-hoteles-noche-fotos-horario": {
+    "turno": 1,
+    "msg": "Hi, I'm interested in taking PADI Open Water Diver certification course.",
+    "cambios": {
+     "detected_activity": [
+      "padi_open_water",
+      "certified_diving"
+     ],
+     "is_certified": [
+      null,
+      true
+     ]
+    },
+    "reply_a": "Hi! 🪸 I'm *Coral* from *Diving Planet* — we dive year-round in the Rosario Islands, departing from Cartagena or right from the islands. So happy to have you here! I'd love to help you put your plan together. 🌊\n\nWhere wou",
+    "reply_b": "Hi! 🪸 I'm *Coral* from *Diving Planet* — we dive year-round in the Rosario Islands, departing from Cartagena or right from the islands. So happy to have you here! I'd love to help you put your plan together. 🌊\n\nWhere wou"
+   },
+   "descuento-online-sin-codigo": {
+    "turno": 1,
+    "msg": "Hi, I’m trying to checkout to take PADI Open Water Diver certification course but the discount of 10% is not showing up.",
+    "cambios": {
+     "core_pending_slot": [
+      "location",
+      "activity"
+     ],
+     "detected_activity": [
+      "padi_open_water",
+      null
+     ]
+    },
+    "reply_a": "Hi! 🪸 I'm *Coral* from *Diving Planet* — we dive year-round in the Rosario Islands, departing from Cartagena or right from the islands. So happy to have you here! I'd love to help you put your plan together. 🌊\n\n«RAG»\n\nWh",
+    "reply_b": "Hi! 🪸 I'm *Coral* from *Diving Planet* — we dive year-round in the Rosario Islands, departing from Cartagena or right from the islands. So happy to have you here! I'd love to help you put your plan together. 🌊\n\n«RAG»\n\nTe"
+   },
+   "certificado-precio-dia-paquete-5-y-hoteles-base": {
+    "turno": 1,
+    "msg": "Hi, I plan on being in Cartagena and do scuba diving on April 21 and 22. I have open water, advanced open water and deep",
+    "cambios": {
+     "core_pending_slot": [
+      "qty",
+      "activity"
+     ],
+     "detected_activity": [
+      "certified_diving",
+      null
+     ],
+     "detected_location": [
+      "cartagena",
+      null
+     ],
+     "is_certified": [
+      true,
+      null
+     ],
+     "location": [
+      "cartagena",
+      null
+     ]
+    },
+    "reply_a": "Hi! 🪸 I'm *Coral* from *Diving Planet* — we dive year-round in the Rosario Islands, departing from Cartagena or right from the islands. So happy to have you here! I'd love to help you put your plan together. 🌊\n\n«RAG»\n\nAn",
+    "reply_b": "Hi! 🪸 I'm *Coral* from *Diving Planet* — we dive year-round in the Rosario Islands, departing from Cartagena or right from the islands. So happy to have you here! I'd love to help you put your plan together. 🌊\n\n«RAG»\n\nTe"
+   },
+   "colombianos-precio-minicurso-dos-inmersiones": {
+    "turno": 2,
+    "msg": "Cuál es la tarifa especial para Colombianos? Mi pareja y yo somos de Bogotá",
+    "cambios": {
+     "detected_group_size": [
+      2,
+      null
+     ],
+     "is_colombian": [
+      true,
+      null
+     ]
+    },
+    "reply_a": "«RAG»\n\n¿Con cuál te animas — *buceo*, *minicurso*, *snorkel* o un *curso PADI*? 🌊",
+    "reply_b": "«RAG»\n\n¿Con cuál te animas — *buceo*, *minicurso*, *snorkel* o un *curso PADI*? 🌊"
+   },
+   "minicurso-precio-colombianos-origen-pendiente": {
+    "turno": 1,
+    "msg": "Me gustaría agendar un día de buceo con ustedes",
+    "cambios": {
+     "core_pending_slot": [
+      "activity",
+      "certification"
+     ],
+     "detected_activity": [
+      null,
+      "certified_diving"
+     ]
+    },
+    "reply_a": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n",
+    "reply_b": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n"
+   },
+   "curso-referido-pide-datos-centro": {
+    "turno": 3,
+    "msg": "Yes … I’ll let to you the form transfer to Dive Planet … but I need of infos of dive center",
+    "cambios": {
+     "core_pending_slot": [
+      "activity",
+      "cert_or_course"
+     ],
+     "detected_activity": [
+      null,
+      "certified_diving"
+     ]
+    },
+    "reply_a": "Which one are you leaning toward — *diving*, a *mini-course*, *snorkeling* or a *PADI course*? 🌊",
+    "reply_b": "So I can recommend the right plan: do you already hold that certification, or do you want to get it with the course? 🤿"
+   },
+   "moneda-precios-principiante-y-snorkel": {
+    "turno": 4,
+    "msg": "Sería buzo principiante y snorkeling",
+    "cambios": {
+     "core_pending_slot": [
+      "activity",
+      "location"
+     ],
+     "detected_activity": [
+      null,
+      "snorkel"
+     ],
+     "is_certified": [
+      null,
+      false
+     ]
+    },
+    "reply_a": "¿Con cuál te animas — *buceo*, *minicurso*, *snorkel* o un *curso PADI*? 🌊",
+    "reply_b": "¿Desde dónde saldrías? Podemos recogerte saliendo *desde Cartagena* (ida y vuelta el mismo día) o, si ya estás *en las islas*, coordinamos la recogida en tu hotel."
+   },
+   "principiante-hora-lugar-y-precio": {
+    "turno": 1,
+    "msg": "Hello, is it possible to book for a diving cruise tomorrow, for 1 person?",
+    "cambios": {
+     "detected_group_size": [
+      1,
+      null
+     ]
+    },
+    "reply_a": "Hi! 🪸 I'm *Coral* from *Diving Planet* — we dive year-round in the Rosario Islands, departing from Cartagena or right from the islands. So happy to have you here! I'd love to help you put your plan together. 🌊\n\n«RAG»\n\nTe",
+    "reply_b": "Hi! 🪸 I'm *Coral* from *Diving Planet* — we dive year-round in the Rosario Islands, departing from Cartagena or right from the islands. So happy to have you here! I'd love to help you put your plan together. 🌊\n\n«RAG»\n\nTe"
+   },
+   "confirma-reserva-existente-escalar": {
+    "turno": 3,
+    "msg": "Hello, I just want to tell you, I just make a reservation for me and [NOMBRE] for diving with you on Monday 11th of May.",
+    "cambios": {
+     "core_pending_slot": [
+      "activity",
+      "location"
+     ],
+     "detected_activity": [
+      null,
+      "certified_diving"
+     ],
+     "detected_group_size": [
+      null,
+      1
+     ],
+     "is_certified": [
+      null,
+      false
+     ]
+    },
+    "reply_a": "Which one are you leaning toward — *diving*, a *mini-course*, *snorkeling* or a *PADI course*? 🌊",
+    "reply_b": "Where would you be departing from? We can pick you up *from Cartagena* (round trip, same day) or, if you're already *on the islands*, we arrange pickup at your hotel."
+   },
+   "familia-mixta-precio-descuento-refresher": {
+    "turno": 1,
+    "msg": "Hi There,\nI am looking to book 2 dives and snorkeling sessions for the following people.\n2 diving sessions - All PADI ce",
+    "cambios": {
+     "core_pending_slot": [
+      "activity",
+      "companion_qty"
+     ],
+     "detected_activity": [
+      null,
+      "padi_open_water"
+     ],
+     "detected_group_allocation": [
+      {
+       "certified_diving": 3,
+       "snorkel": 3
+      },
+      null
+     ],
+     "detected_group_size": [
+      6,
+      null
+     ],
+     "is_certified": [
+      null,
+      true
+     ]
+    },
+    "reply_a": "Hi! 🪸 I'm *Coral* from *Diving Planet* — we dive year-round in the Rosario Islands, departing from Cartagena or right from the islands. So happy to have you here! I'd love to help you put your plan together. 🌊\n\nTell me, ",
+    "reply_b": "Hi! 🪸 I'm *Coral* from *Diving Planet* — we dive year-round in the Rosario Islands, departing from Cartagena or right from the islands. So happy to have you here! I'd love to help you put your plan together. 🌊\n\nHow many "
+   },
+   "precios-y-disponibilidad-con-negociacion": {
+    "turno": 1,
+    "msg": "Hola! Como estan? Me llamo [NOMBRE] soy buza advanced",
+    "cambios": {
+     "is_certified": [
+      true,
+      null
+     ]
+    },
+    "reply_a": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n",
+    "reply_b": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n"
+   },
+   "curso-open-water-principiantes-idioma-frances-anticipacion": {
+    "turno": 1,
+    "msg": "Hola!\nMe gustaria tener mas informacion acerca de los cursos de buceo en Cartagena (especificamente en Islas del Rosario",
+    "cambios": {
+     "detected_group_size": [
+      2,
+      null
+     ],
+     "detected_location": [
+      "cartagena",
+      null
+     ],
+     "is_certified": [
+      false,
+      null
+     ],
+     "location": [
+      "cartagena",
+      null
+     ]
+    },
+    "reply_a": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n",
+    "reply_b": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n"
+   },
+   "minicurso-islas-y-acompanante-lancha": {
+    "turno": 1,
+    "msg": "Buena Tardes quería preguntarte estaremos en islas del rosario en junio y quería regalarle a mi esposo una experiencia d",
+    "cambios": {
+     "detected_activity": [
+      "minicourse",
+      "snorkel"
+     ]
+    },
+    "reply_a": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n",
+    "reply_b": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n"
+   },
+   "precio-fundive-datos-faltan": {
+    "turno": 1,
+    "msg": "Hola buenos días, mi nombre es [NOMBRE]. Quería averiguar por el costo de un fundive para este fin de semana",
+    "cambios": {
+     "core_pending_slot": [
+      "certification",
+      "activity"
+     ],
+     "detected_activity": [
+      "certified_diving",
+      null
+     ]
+    },
+    "reply_a": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n",
+    "reply_b": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n"
+   },
+   "curso-alojamiento-y-recogida-islas": {
+    "turno": 1,
+    "msg": "Quiero hacer la certificación de buceo en agosto que tengo vacaciones.",
+    "cambios": {
+     "detected_activity": [
+      "padi_open_water",
+      "certified_diving"
+     ],
+     "is_certified": [
+      null,
+      false
+     ]
+    },
+    "reply_a": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n",
+    "reply_b": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n"
+   },
+   "desde-islas-buzo-certificado": {
+    "turno": 1,
+    "msg": "Thank you for contacting us, how may we help? Hii!! I am staying at Isla Grande and I would love to dive here. The hoste",
+    "cambios": {
+     "core_pending_slot": [
+      "certification",
+      "activity"
+     ],
+     "detected_activity": [
+      "certified_diving",
+      null
+     ],
+     "detected_location": [
+      "island",
+      null
+     ],
+     "island": [
+      "isla_grande",
+      null
+     ],
+     "location": [
+      "island",
+      null
+     ]
+    },
+    "reply_a": "Hi! 🪸 I'm *Coral* from *Diving Planet* — we dive year-round in the Rosario Islands, departing from Cartagena or right from the islands. So happy to have you here! I'd love to help you put your plan together. 🌊\n\n«RAG»\n\nGr",
+    "reply_b": "Hi! 🪸 I'm *Coral* from *Diving Planet* — we dive year-round in the Rosario Islands, departing from Cartagena or right from the islands. So happy to have you here! I'd love to help you put your plan together. 🌊\n\n«RAG»\n\nTe"
+   }
+  }
+ },
+ "saltos_en_el_turno": {
+  "oraculo": {
+   "N-FMT": {
+    "casa_min": 366,
+    "evaluado_min": 366
+   },
+   "ID-IDIOMA(palabras)": {
+    "casa_min": 348,
+    "evaluado_min": 349
+   },
+   "N-SALUDO": {
+    "casa_min": 221,
+    "evaluado_min": 368
+   },
+   "S-NINOS": {
+    "casa_min": 209,
+    "evaluado_min": 354
+   },
+   "N-TOK": {
+    "casa_min": 165,
+    "evaluado_min": 171
+   },
+   "ID-BUCEO2": {
+    "casa_min": 82,
+    "evaluado_min": 349
+   },
+   "ID-ACT": {
+    "casa_min": 82,
+    "evaluado_min": 354
+   },
+   "S-REINICIO": {
+    "casa_min": 60,
+    "evaluado_min": 368
+   },
+   "ID-GRUPO-N": {
+    "casa_min": 51,
+    "evaluado_min": 349
+   },
+   "ID-GRUPO-R": {
+    "casa_min": 39,
+    "evaluado_min": 349
+   },
+   "ID-ORIGEN": {
+    "casa_min": 34,
+    "evaluado_min": 353
+   },
+   "ID-CERT": {
+    "casa_min": 32,
+    "evaluado_min": 344
+   },
+   "S-PREG": {
+    "casa_min": 30,
+    "evaluado_min": 347
+   },
+   "ID-PERS": {
+    "casa_min": 25,
+    "evaluado_min": 267
+   },
+   "S-EDADMIN": {
+    "casa_min": 25,
+    "evaluado_min": 363
+   },
+   "N-ACOMP": {
+    "casa_min": 19,
+    "evaluado_min": 274
+   },
+   "N-CORTA": {
+    "casa_min": 19,
+    "evaluado_min": 19
+   },
+   "ID-DUR": {
+    "casa_min": 18,
+    "evaluado_min": 349
+   },
+   "ID-NUM": {
+    "casa_min": 16,
+    "evaluado_min": 349
+   },
+   "ID-NAC": {
+    "casa_min": 15,
+    "evaluado_min": 349
+   },
+   "ID-TOK": {
+    "casa_min": 15,
+    "evaluado_min": 15
+   },
+   "ID-HOTEL": {
+    "casa_min": 11,
+    "evaluado_min": 353
+   },
+   "ID-EDAD": {
+    "casa_min": 8,
+    "evaluado_min": 349
+   },
+   "S-CORR": {
+    "casa_min": 7,
+    "evaluado_min": 346
+   },
+   "N-CIFRA": {
+    "casa_min": 6,
+    "evaluado_min": 7
+   },
+   "S-NOTAS": {
+    "casa_min": 6,
+    "evaluado_min": 366
+   },
+   "N-PLAN": {
+    "casa_min": 4,
+    "evaluado_min": 89
+   },
+   "S-DISPO": {
+    "casa_min": 4,
+    "evaluado_min": 355
+   },
+   "?_HOLDS_CERT_WRITER_RE": {
+    "casa_min": 3,
+    "evaluado_min": 304
+   },
+   "N-IDIOMA": {
+    "casa_min": 3,
+    "evaluado_min": 267
+   },
+   "N-MINI": {
+    "casa_min": 2,
+    "evaluado_min": 12
+   },
+   "?_OTHER_PERSON_SUBJECT_RE": {
+    "casa_min": 1,
+    "evaluado_min": 39
+   },
+   "S-IA": {
+    "casa_min": 1,
+    "evaluado_min": 364
+   },
+   "S-LINK": {
+    "casa_min": 1,
+    "evaluado_min": 1
+   },
+   "S-DTH": {
+    "casa_min": 1,
+    "evaluado_min": 366
+   },
+   "S-IDIOMA(no inventariado)": {
+    "casa_min": 1,
+    "evaluado_min": 3
+   },
+   "S-ESCALADO-PALABRA(no inventariado)": {
+    "casa_min": 1,
+    "evaluado_min": 359
+   },
+   "ESCALADO-EMERGENCIA(no inventariado)": {
+    "casa_min": 0,
+    "evaluado_min": 367
+   },
+   "?_COURSE_NAME_PATTERNS": {
+    "casa_min": 0,
+    "evaluado_min": 354
+   },
+   "?_OTHER_PERSON_EXPERIENCER_RE": {
+    "casa_min": 0,
+    "evaluado_min": 38
+   },
+   "?_SPECIALTY_NAME_PATTERNS": {
+    "casa_min": 0,
+    "evaluado_min": 354
+   },
+   "N-SOLO": {
+    "casa_min": 0,
+    "evaluado_min": 93
+   },
+   "N-PAQUETE": {
+    "casa_min": 0,
+    "evaluado_min": 355
+   },
+   "N-DELIB": {
+    "casa_min": 0,
+    "evaluado_min": 7
+   },
+   "N-NOMBRE": {
+    "casa_min": 0,
+    "evaluado_min": 358
+   },
+   "S-ALCOHOL": {
+    "casa_min": 0,
+    "evaluado_min": 368
+   },
+   "S-ESCAL": {
+    "casa_min": 0,
+    "evaluado_min": 1
+   },
+   "S-CERRADO": {
+    "casa_min": 0,
+    "evaluado_min": 355
+   },
+   "S-PRIVADO": {
+    "casa_min": 0,
+    "evaluado_min": 368
+   },
+   "S-MISMOPRECIO": {
+    "casa_min": 0,
+    "evaluado_min": 368
+   }
+  },
+  "extractor_caido": {
+   "N-FMT": {
+    "casa_min": 366,
+    "evaluado_min": 366
+   },
+   "ID-IDIOMA(palabras)": {
+    "casa_min": 347,
+    "evaluado_min": 348
+   },
+   "N-SALUDO": {
+    "casa_min": 221,
+    "evaluado_min": 368
+   },
+   "S-NINOS": {
+    "casa_min": 209,
+    "evaluado_min": 354
+   },
+   "N-TOK": {
+    "casa_min": 167,
+    "evaluado_min": 172
+   },
+   "ID-BUCEO2": {
+    "casa_min": 82,
+    "evaluado_min": 348
+   },
+   "ID-ACT": {
+    "casa_min": 82,
+    "evaluado_min": 354
+   },
+   "S-REINICIO": {
+    "casa_min": 60,
+    "evaluado_min": 368
+   },
+   "ID-GRUPO-N": {
+    "casa_min": 51,
+    "evaluado_min": 348
+   },
+   "ID-ORIGEN": {
+    "casa_min": 34,
+    "evaluado_min": 353
+   },
+   "ID-CERT": {
+    "casa_min": 32,
+    "evaluado_min": 343
+   },
+   "S-PREG": {
+    "casa_min": 30,
+    "evaluado_min": 346
+   },
+   "ID-PERS": {
+    "casa_min": 25,
+    "evaluado_min": 273
+   },
+   "S-EDADMIN": {
+    "casa_min": 25,
+    "evaluado_min": 363
+   },
+   "ID-GRUPO-R": {
+    "casa_min": 23,
+    "evaluado_min": 348
+   },
+   "N-ACOMP": {
+    "casa_min": 22,
+    "evaluado_min": 288
+   },
+   "N-CORTA": {
+    "casa_min": 21,
+    "evaluado_min": 21
+   },
+   "ID-DUR": {
+    "casa_min": 18,
+    "evaluado_min": 348
+   },
+   "ID-NUM": {
+    "casa_min": 16,
+    "evaluado_min": 348
+   },
+   "ID-NAC": {
+    "casa_min": 15,
+    "evaluado_min": 348
+   },
+   "ID-TOK": {
+    "casa_min": 15,
+    "evaluado_min": 15
+   },
+   "ID-HOTEL": {
+    "casa_min": 11,
+    "evaluado_min": 353
+   },
+   "ID-EDAD": {
+    "casa_min": 8,
+    "evaluado_min": 348
+   },
+   "S-NOTAS": {
+    "casa_min": 6,
+    "evaluado_min": 366
+   },
+   "N-MINI": {
+    "casa_min": 5,
+    "evaluado_min": 9
+   },
+   "N-CIFRA": {
+    "casa_min": 5,
+    "evaluado_min": 6
+   },
+   "S-DISPO": {
+    "casa_min": 4,
+    "evaluado_min": 355
+   },
+   "N-PLAN": {
+    "casa_min": 3,
+    "evaluado_min": 76
+   },
+   "?_HOLDS_CERT_WRITER_RE": {
+    "casa_min": 3,
+    "evaluado_min": 303
+   },
+   "N-IDIOMA": {
+    "casa_min": 3,
+    "evaluado_min": 267
+   },
+   "N-SOLO": {
+    "casa_min": 2,
+    "evaluado_min": 136
+   },
+   "S-CORR": {
+    "casa_min": 2,
+    "evaluado_min": 7
+   },
+   "?_OTHER_PERSON_SUBJECT_RE": {
+    "casa_min": 1,
+    "evaluado_min": 39
+   },
+   "S-IA": {
+    "casa_min": 1,
+    "evaluado_min": 364
+   },
+   "S-LINK": {
+    "casa_min": 1,
+    "evaluado_min": 1
+   },
+   "S-DTH": {
+    "casa_min": 1,
+    "evaluado_min": 366
+   },
+   "S-IDIOMA(no inventariado)": {
+    "casa_min": 1,
+    "evaluado_min": 3
+   },
+   "ESCALADO-EMERGENCIA(no inventariado)": {
+    "casa_min": 0,
+    "evaluado_min": 367
+   },
+   "?_COURSE_NAME_PATTERNS": {
+    "casa_min": 0,
+    "evaluado_min": 354
+   },
+   "?_OTHER_PERSON_EXPERIENCER_RE": {
+    "casa_min": 0,
+    "evaluado_min": 38
+   },
+   "?_SPECIALTY_NAME_PATTERNS": {
+    "casa_min": 0,
+    "evaluado_min": 354
+   },
+   "N-PAQUETE": {
+    "casa_min": 0,
+    "evaluado_min": 354
+   },
+   "N-DELIB": {
+    "casa_min": 0,
+    "evaluado_min": 6
+   },
+   "N-NOMBRE": {
+    "casa_min": 0,
+    "evaluado_min": 358
+   },
+   "S-ALCOHOL": {
+    "casa_min": 0,
+    "evaluado_min": 368
+   },
+   "S-ESCAL": {
+    "casa_min": 0,
+    "evaluado_min": 1
+   },
+   "S-CERRADO": {
+    "casa_min": 0,
+    "evaluado_min": 354
+   },
+   "S-PRIVADO": {
+    "casa_min": 0,
+    "evaluado_min": 368
+   },
+   "S-MISMOPRECIO": {
+    "casa_min": 0,
+    "evaluado_min": 368
+   },
+   "S-ESCALADO-PALABRA(no inventariado)": {
+    "casa_min": 0,
+    "evaluado_min": 358
+   }
+  }
+ }
+}

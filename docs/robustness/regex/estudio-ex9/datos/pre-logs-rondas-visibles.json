@@ -1,0 +1,214 @@
+{
+ "rondas": [
+  "2026-10-14-est2-B",
+  "2026-10-14-est3-B",
+  "2026-10-14-est4-B",
+  "2026-10-14-est5-B",
+  "2026-10-14-flujo1-A",
+  "2026-10-14-flujo1-A2",
+  "2026-10-14-flujo1-B",
+  "2026-10-14-flujo1-B2",
+  "2026-10-14-flujo1-B3",
+  "2026-10-14-g10-A",
+  "2026-10-14-g10-B",
+  "2026-10-15-est6-B",
+  "2026-10-15-ex9-A",
+  "2026-10-15-ex9-B",
+  "2026-10-16-calb-A2",
+  "2026-10-16-calb-B2"
+ ],
+ "por_campo": {
+  "group_size": {
+   "regex leía, extractor: no lo afirma": 30,
+   "solo extractor": 155,
+   "coinciden": 146,
+   "distinto": 29
+  },
+  "activity": {
+   "coinciden": 315,
+   "solo extractor": 232,
+   "regex leía, extractor: no lo afirma": 318,
+   "distinto": 153
+  },
+  "is_certified": {
+   "coinciden": 187,
+   "solo extractor": 152,
+   "distinto": 44,
+   "regex leía, extractor: no lo afirma": 77
+  },
+  "location": {
+   "coinciden": 213,
+   "regex leía, extractor: no lo afirma": 118,
+   "distinto": 26,
+   "solo extractor": 5
+  },
+  "last_dive_over_2_years": {
+   "coinciden": 32,
+   "solo extractor": 33
+  }
+ },
+ "otras": {
+  "turnos_jev": 2723,
+  "turnos": 2725,
+  "u3_3_jev_descarta_regex": 29,
+  "intent_edades": 25,
+  "signals_llm_red_precision": 66,
+  "u3_4_jev_descarta_regex": 298,
+  "intent_duracion": 142,
+  "intent_n_inmersiones": 107,
+  "router_llm_por_duda": 203,
+  "escalado_palabra": 206,
+  "s4_26_regex_otra_persona_manda_jev": 106,
+  "intent_isla": 45,
+  "intent_n_dias": 29,
+  "intent_solo": 59,
+  "cutover_fill_gaps_aplicado": 14,
+  "intent_hotel": 14,
+  "jev_fallo": 3
+ },
+ "ejemplos": {
+  "u3_3_jev_descarta_regex": [
+   "[EXTRACT][U3-3] campo=group_size regex=1 descartado por Jev (no lo afirma, 0.03)",
+   "[EXTRACT][U3-3] campo=location regex='cartagena' descartado por Jev (no lo afirma, 0.15)",
+   "[EXTRACT][U3-3] campo=group_size regex=1 descartado por Jev (no lo afirma, 0.03)",
+   "[EXTRACT][U3-3] campo=location regex='cartagena' descartado por Jev (no lo afirma, 0.17)",
+   "[EXTRACT][U3-3] campo=activity regex='certified_diving' descartado por Jev (no lo afirma, 0.19)"
+  ],
+  "activity distinto": [
+   "extractor='certified_diving' regex='minicourse'",
+   "extractor='padi_advanced' regex='minicourse'",
+   "extractor='certified_diving' regex='padi_advanced'",
+   "extractor='minicourse' regex='certified_diving'",
+   "extractor='padi_open_water' regex='certified_diving'",
+   "extractor='minicourse' regex='certified_diving'",
+   "extractor='minicourse' regex='snorkel'",
+   "extractor='minicourse' regex='certified_diving'"
+  ],
+  "is_certified distinto": [
+   "extractor=True regex=False",
+   "extractor=True regex=False",
+   "extractor=True regex=False",
+   "extractor=True regex=False",
+   "extractor=True regex=False",
+   "extractor=True regex=False",
+   "extractor=True regex=False",
+   "extractor=True regex=False"
+  ],
+  "intent_edades": [
+   "[INTENT] Detected ages: [6, 9]",
+   "[INTENT] Detected ages: [10, 14, 17, 19, 42, 43]",
+   "[INTENT] Detected ages: [6, 9]",
+   "[INTENT] Detected ages: [10, 14, 17, 19, 42, 43]",
+   "[INTENT] Detected ages: [6, 9]"
+  ],
+  "signals_llm_red_precision": [
+   "[CORE][SIGNALS] detected={'companion_activity': 'snorkel', 'mentions_other_person': True, 'companion_is_singular': False, 'companion_qty': 4} msg='los ninos tienen 6 y 9 anos'",
+   "[CORE][SIGNALS] detected={'companion_activity': 'snorkel', 'mentions_other_person': True, 'companion_is_singular': True, 'companion_qty': 1} msg='para las dos?'",
+   "[CORE][SIGNALS] detected={'companion_activity': 'certified_diving', 'mentions_other_person': True, 'companion_is_singular': True, 'companion_qty': 1} msg='So [NOMBRE] can go directly to Diving Planet to start the Open Wa",
+   "[CORE][SIGNALS] detected={'companion_activity': 'minicourse', 'mentions_other_person': True, 'companion_is_singular': True, 'companion_qty': 1} msg='Es decir en dos dias tendriamos el certificado haciendo nuestro curso e",
+   "[CORE][SIGNALS] detected={'companion_activity': 'snorkel', 'mentions_other_person': True, 'companion_is_singular': True, 'companion_qty': 1} msg='pero i ria en el la lancha solo el no hay como pagar para acompañarlo aun "
+  ],
+  "u3_4_jev_descarta_regex": [
+   "[EXTRACT][U3-4] campo=is_colombian regex=True descartado por Jev (no lo afirma)",
+   "[EXTRACT][U3-4] campo=is_colombian regex=True descartado por Jev (no lo afirma)",
+   "[EXTRACT][U3-4] campo=location regex='island' descartado por Jev (no lo afirma)",
+   "[EXTRACT][U3-4] campo=location regex='island' descartado por Jev (no lo afirma)",
+   "[EXTRACT][U3-4] campo=activity regex='certified_diving' descartado por Jev (no lo afirma)"
+  ],
+  "intent_duracion": [
+   "[INTENT] Detected duration: multi_day",
+   "[INTENT] Detected duration: multi_day",
+   "[INTENT] Detected duration: multi_day",
+   "[INTENT] Detected duration: multi_day",
+   "[INTENT] Detected duration: multi_day"
+  ],
+  "intent_n_inmersiones": [
+   "[INTENT] Detected cert dive count: 5",
+   "[INTENT] Detected cert dive count: 5",
+   "[INTENT] Detected cert dive count: 5",
+   "[INTENT] Detected cert dive count: 2",
+   "[INTENT] Detected cert dive count: 5"
+  ],
+  "router_llm_por_duda": [
+   "[ROUTER][JEV] 420 ms duda=['availability_question@0.53'] -> router LLM (se conservan ['affirms_activity', 'affirms_certification', 'affirms_group', 'affirms_location', 'affirms_nationality', 'affirms_p', 'asks_question',",
+   "[ROUTER][JEV] 395 ms duda=['availability_question@0.49'] -> router LLM (se conservan ['affirms_activity', 'affirms_certification', 'affirms_group', 'affirms_location', 'affirms_nationality', 'affirms_p', 'asks_question',",
+   "[ROUTER][JEV] 426 ms duda=['availability_question@0.45'] -> router LLM (se conservan ['affirms_activity', 'affirms_certification', 'affirms_group', 'affirms_location', 'affirms_nationality', 'affirms_p', 'asks_question',",
+   "[ROUTER][JEV] 399 ms duda=['availability_question@0.39'] -> router LLM (se conservan ['affirms_activity', 'affirms_certification', 'affirms_group', 'affirms_location', 'affirms_nationality', 'affirms_p', 'asks_question',",
+   "[ROUTER][JEV] 393 ms duda=['booking_change_topic=none@0.47'] -> router LLM (se conservan ['affirms_activity', 'affirms_certification', 'affirms_group', 'affirms_location', 'affirms_nationality', 'affirms_p', 'asks_questi"
+  ],
+  "escalado_palabra": [
+   "[ESCALATION][ROUTING_SIGNALS] detected={'wants_human': False, 'wants_menu_or_restart': False, 'sensitive_topic': False, 'adaptive_diving_topic': False, 'availability_question': True, 'broken_link_complaint': False, 'asks",
+   "[ESCALATION][ROUTING_SIGNALS] detected={'wants_human': False, 'wants_menu_or_restart': False, 'sensitive_topic': False, 'adaptive_diving_topic': False, 'availability_question': True, 'broken_link_complaint': False, 'asks",
+   "[ESCALATION][ROUTING_SIGNALS] detected={'availability_question': True, 'wants_human': False, 'wants_menu_or_restart': False, 'sensitive_topic': False, 'adaptive_diving_topic': False, 'booking_change_topic': False, 'asks_",
+   "[ESCALATION][ROUTING_SIGNALS] detected={'wants_human': False, 'wants_menu_or_restart': False, 'sensitive_topic': False, 'adaptive_diving_topic': False, 'availability_question': True, 'broken_link_complaint': False, 'asks",
+   "[ESCALATION][ROUTING_SIGNALS] detected={'wants_human': False, 'wants_menu_or_restart': False, 'sensitive_topic': False, 'adaptive_diving_topic': False, 'booking_change_topic': False, 'asks_for_contact_number': False, 'br"
+  ],
+  "s4_26_regex_otra_persona_manda_jev": [
+   "[CORE][S4-26] la regex ve a otra persona y Jev no (0.07): manda Jev",
+   "[CORE][S4-26] la regex ve a otra persona y Jev no (0.07): manda Jev",
+   "[CORE][S4-26] la regex ve a otra persona y Jev no (0.03): manda Jev",
+   "[CORE][S4-26] la regex ve a otra persona y Jev no (0.03): manda Jev",
+   "[CORE][S4-26] la regex ve a otra persona y Jev no (0.07): manda Jev"
+  ],
+  "intent_isla": [
+   "[INTENT] Detected island: isla_grande",
+   "[INTENT] Detected island: isla_rosario",
+   "[INTENT] Detected island: isla_grande",
+   "[INTENT] Detected island: isla_grande",
+   "[INTENT] Detected island: isla_rosario"
+  ],
+  "location distinto": [
+   "extractor='island' regex='cartagena'",
+   "extractor='cartagena' regex='island'",
+   "extractor='island' regex='cartagena'",
+   "extractor='cartagena' regex='island'",
+   "extractor='island' regex='cartagena'",
+   "extractor='cartagena' regex='island'",
+   "extractor='island' regex='cartagena'",
+   "extractor='cartagena' regex='island'"
+  ],
+  "group_size distinto": [
+   "extractor=3 regex=1",
+   "extractor=6 regex=3",
+   "extractor=3 regex=1",
+   "extractor=6 regex=3",
+   "extractor=3 regex=1",
+   "extractor=6 regex=3",
+   "extractor=3 regex=1",
+   "extractor=6 regex=3"
+  ],
+  "intent_n_dias": [
+   "[INTENT] Detected cert day count: 2",
+   "[INTENT] Detected cert day count: 1",
+   "[INTENT] Detected cert day count: 2",
+   "[INTENT] Detected cert day count: 1",
+   "[INTENT] Detected cert day count: 2"
+  ],
+  "intent_solo": [
+   "[CORE] tras el pase a una persona: sin pregunta de la reserva",
+   "[CORE] tras el pase a una persona: sin pregunta de la reserva",
+   "[CORE] tras el pase a una persona: sin pregunta de la reserva",
+   "[CORE] tras el pase a una persona: sin pregunta de la reserva",
+   "[CORE] tras el pase a una persona: sin pregunta de la reserva"
+  ],
+  "cutover_fill_gaps_aplicado": [
+   "[EXTRACT][CUTOVER] applied={'ages': [42, 19, 17, 43, 14, 10]} msg='May 3rd'",
+   "[EXTRACT][CUTOVER] applied={'ages': [42, 19, 17, 43, 14, 10]} msg='May 3rd'",
+   "[EXTRACT][CUTOVER] applied={'ages': [42, 19, 17, 43, 14, 10]} msg='May 3rd'",
+   "[EXTRACT][CUTOVER] applied={'ages': [42, 19, 17, 43, 14, 10]} msg='May 3rd'",
+   "[EXTRACT][CUTOVER] applied={'ages': [42, 19, 17, 43, 14, 10]} msg='May 3rd'"
+  ],
+  "intent_hotel": [
+   "[INTENT] Detected hotel: san_pedro_majagua",
+   "[INTENT] Detected hotel: san_pedro_majagua",
+   "[INTENT] Detected hotel: san_pedro_majagua",
+   "[INTENT] Detected hotel: san_pedro_majagua",
+   "[INTENT] Detected hotel: san_pedro_majagua"
+  ],
+  "jev_fallo": [
+   "[ROUTER][JEV] fallo en 2072 ms, se usa el router LLM: ReadTimeout:",
+   "[ROUTER][JEV] fallo en 3115 ms, se usa el router LLM: ConnectTimeout:",
+   "[ROUTER][JEV] fallo en 3115 ms, se usa el router LLM: ConnectTimeout:"
+  ]
+ }
+}

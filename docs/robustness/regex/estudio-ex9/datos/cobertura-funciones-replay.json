@@ -1,0 +1,92 @@
+{
+ "src/agents/intent_detector.py": {
+  "detect": "SI",
+  "_detect_language": "SI",
+  "_detect_activity": "SI",
+  "_detect_certification": "SI",
+  "_detect_group_info": "SI",
+  "_detect_ages": "SI",
+  "_detect_last_dive": "SI",
+  "_detect_duration": "SI",
+  "_detect_location": "SI",
+  "_detect_nationality": "SI",
+  "certification_claim": "SI",
+  "certification_status": "SI",
+  "holds_padi_cert": "SI",
+  "nationality_is_ambiguous": "SI",
+  "certification_is_ambiguous": "no",
+  "course_level_is_ambiguous": "SI",
+  "mentions_other_person_subject": "no",
+  "mentions_writer_and_others": "no",
+  "elided_certification": "SI",
+  "other_person_certification": "SI",
+  "place_by_role": "SI",
+  "matched_activity_categories": "SI",
+  "courses_mentioned": "SI",
+  "dive_counts_in": "SI",
+  "detect_cert_day_count": "SI",
+  "_split_out_uncertifiable_kids": "SI"
+ },
+ "src/agents/nucleo/extraction.py": {
+  "_understand": "SI",
+  "_question_turn_fields": "SI",
+  "_drop_regex_fields_jev_denies": "SI",
+  "_regex_contradictions": "no",
+  "_quote_backs_boolean": "no",
+  "_boolean_patch_is_anchored": "no",
+  "_recheck_proposals": "no",
+  "_named_people": "no",
+  "_recommend_inferred_minicourse": "SI",
+  "_flag_cert_or_course": "SI",
+  "_asks_for_a_course": "no",
+  "_add_or_ask_companion": "no",
+  "_menciones_para_la_red": "SI",
+  "_number_of_something_else": "no",
+  "_mentions_person": "SI",
+  "_menciona_a_alguien": "SI",
+  "_singular_companion": "no"
+ },
+ "src/agents/nucleo/extractor.py": {
+  "_aplicar_extractor": "SI",
+  "_poner_actividad": "SI",
+  "_poner_grupo": "SI",
+  "_poner_certificacion": "SI",
+  "_poner_ubicacion": "SI",
+  "_conservar_hotel": "SI",
+  "_hotel_del_catalogo": "no",
+  "_lugar_por_jev": "no",
+  "_route_contradictions": "SI"
+ },
+ "src/agents/rutas/booking.py": {
+  "_apply_detected_intent": "SI",
+  "_maybe_veto_resolved_fields_via_llm": "no",
+  "_activity_should_verify": "no",
+  "_nationality_should_verify": "no",
+  "_certification_should_verify": "no",
+  "enforce_group_allocation_consistency": "SI",
+  "_looks_like_info_question": "SI"
+ },
+ "src/agents/nucleo/routing.py": {
+  "_apply_short_answer": "SI",
+  "_quantity_answer": "SI",
+  "_departure_place": "SI",
+  "_is_deliberation_between_options": "SI",
+  "_maybe_apply_confirmed_package": "SI",
+  "_word_ages": "no"
+ },
+ "src/agents/nucleo/setup.py": {
+  "_capture_client_name": "SI",
+  "_setup_phase": "SI"
+ },
+ "src/agents/rutas/info.py": {
+  "_maybe_answer_age_eligibility": "SI",
+  "_looks_like_age_eligibility_question": "SI",
+  "_alcohol_and_food_policy_answer": "SI",
+  "_private_group_event_answer": "no"
+ },
+ "src/agents/rutas/router.py": {
+  "_is_new_scenario_restart": "SI",
+  "_reset_to_fresh_scenario": "no",
+  "_detect_kids_mention": "SI"
+ }
+}
