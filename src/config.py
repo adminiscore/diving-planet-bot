@@ -191,15 +191,16 @@ class Settings(BaseSettings):
     reparto_en_pares: bool = False
     # ex-9b (19-oct, decisión de Gadea): los campos del paso 6 en una SEGUNDA llamada al extractor, a la vez que la de
     # siempre (el esquema de todo junto no cabía en Haiku). APAGADO hasta medirlo.
-    paso6_en_llamada_aparte: bool = True  # RONDA ex9b-5 (19-oct): encendido para medir; revert = False
-    duracion_por_extractor: bool = True  # RONDA ex9b-5 (19-oct): encendido, en la llamada aparte; revert = False
+    paso6_en_llamada_aparte: bool = True  # RONDA ex9b-6 (19-oct); revert = False
+    duracion_por_extractor: bool = True  # RONDA ex9b-6 (19-oct, ex9b-5: sus regresiones no se repiten en la atribución 3+3); revert = False
     # - Las edades (`edades`), con su cita; el regex solo valida la cifra. `fill_gaps` ya no las rellena si el extractor
     #   leyó el mensaje. nucleo/extractor._poner_edades y la respuesta corta a "¿qué edades tienen?".
-    edades_por_extractor: bool = True  # RONDA ex9b-5 (19-oct): encendido, en la llamada aparte; revert = False
+    edades_por_extractor: bool = True  # RONDA ex9b-6 (19-oct, ex9b-5: sus regresiones no se repiten en la atribución 3+3); revert = False
     # - El plan elegido: si el mensaje ACEPTA el paquete que el bot acaba de proponer (`acepta_propuesta`, solo cuando el
     #   bot propuso uno), se da por elegido y sigue la reserva; preguntar el precio no es aceptar. Antes,
     #   `_CONFIRMS_DESCRIBED_PACKAGE_RE` ("quiero este paquete"). nucleo/routing._paquete_confirmado.
-    plan_elegido_por_extractor: bool = True  # RONDA ex9b-5 (19-oct): encendido, en la llamada aparte; revert = False
+    plan_elegido_por_extractor: bool = False  # NO (ex9b-5, manual-duracion-curso): la descripción del curso Open Water
+    # ("4 inmersiones") se tomaba por la propuesta de un paquete y "para mí" lo elegía: Curso Referido. 0 usos en PRE.
     # - Alguien que se SUMA a un grupo ya sabido ("mi hermano también viene, hace snorkel" sobre 2 buzos): el extractor
     #   ve el reparto sabido aunque no esté guardado ({buceo: 2} = la actividad para todos) y devuelve el nuevo; y el atajo
     #   de "reparto completo" deja pasar la red de acompañantes si Jev está seguro de que se suma alguien
@@ -209,7 +210,7 @@ class Settings(BaseSettings):
     #   salen del estado (`otro_sin_certificar`, `otro_certificado_inactivo` del extractor, con cita) en vez de un regex
     #   sobre todo lo que escribió el cliente; si el extractor no leyó algún mensaje, el regex de siempre.
     #   rutas/contexto_rag.
-    notas_rag_desde_estado: bool = True  # RONDA ex9b-5 (19-oct): encendido, en la llamada aparte; revert = False
+    notas_rag_desde_estado: bool = True  # RONDA ex9b-6 (19-oct, ex9b-5: sus regresiones no se repiten en la atribución 3+3); revert = False
     resolutor_sin_contradicciones: bool = True  # PROMOCIONADO 19-oct (mod-G2, HISTORY 0.31.57); revert = False
     # EX-EST-2 (14-oct): el acuse reconoce SOLO lo que dice el mensaje (el resumen de la reserva no se repite; ante
     # 'gracias' o una fecha suelta, nada). Banco scripts/banco_acuse.py: inventaba en 33/40 casos reales
@@ -601,6 +602,9 @@ class Settings(BaseSettings):
     # límite general, y el turno tardó 34 s. Si OpenRouter no ha contestado en estos segundos, se lanza la misma
     # petición por OpenAI (`respaldo_si_openrouter_falla`) y gana la primera que termine bien, para todas las piezas.
     # 0 = apagado (el respaldo solo cuando OpenRouter falla, como hasta hoy).
+    # ex-9b (19-oct): al tapar los datos personales, las cifras DENTRO de un enlace (coordenadas de Google Maps) no se
+    # tapan, salvo en los enlaces de WhatsApp (llevan un teléfono). APAGADO hasta medirlo.
+    pii_respeta_urls: bool = True  # RONDA ex9b-6 (19-oct): encendido para medir; revert = False
     openrouter_respaldo_segundos: float = 5.0  # PROMOCIONADO 19-oct (ex9b-4: saltó 1 vez, ganó el respaldo); revert = 0.0
     # s4-33 (8-oct, Alvaro): instrucciones del juez de grounding v3 para GPT-6 Luna (prompts/info.py
     # GROUNDING_VERIFY_V3_LUNA_*): el v3 entero + 3 aclaraciones (lo que dice el cliente de si mismo no se comprueba;

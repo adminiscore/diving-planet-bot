@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-19T17:19:54+00:00",
-  "commit": "0f5f73c",
+  "generado": "2026-10-19T18:35:44+00:00",
+  "commit": "41a1e68",
   "rama": "feature/pre_gadea"
  },
  "vistas": {
@@ -214,8 +214,8 @@
    "marca": "openrouter",
    "tiempos": {
     "n": 93,
-    "p50": 0.451,
-    "p95": 1.654
+    "p50": 0.464,
+    "p95": 1.588
    }
   },
   {
@@ -238,9 +238,9 @@
    ],
    "modelos": [],
    "tiempos": {
-    "n": 8,
-    "p50": 0.001,
-    "p95": 0.004
+    "n": 7,
+    "p50": 0.002,
+    "p95": 0.006
    }
   },
   {
@@ -256,8 +256,8 @@
    "interruptores": [],
    "tiempos": {
     "n": 1,
-    "p50": 0.004,
-    "p95": 0.004
+    "p50": 0.006,
+    "p95": 0.006
    }
   },
   {
@@ -281,8 +281,8 @@
    "modelos": [],
    "tiempos": {
     "n": 1,
-    "p50": 0.002,
-    "p95": 0.002
+    "p50": 0.004,
+    "p95": 0.004
    }
   },
   {
@@ -299,9 +299,9 @@
    "modelos": [],
    "interruptores": [],
    "tiempos": {
-    "n": 2,
-    "p50": 4.297,
-    "p95": 4.65
+    "n": 4,
+    "p50": 4.564,
+    "p95": 6.466
    }
   },
   {
@@ -317,9 +317,9 @@
    "modelos": [],
    "interruptores": [],
    "tiempos": {
-    "n": 81,
-    "p50": 3.437,
-    "p95": 6.596
+    "n": 80,
+    "p50": 3.527,
+    "p95": 7.233
    }
   },
   {
@@ -527,9 +527,9 @@
    ],
    "marca": "openai",
    "tiempos": {
-    "n": 81,
-    "p50": 0.033,
-    "p95": 2.45
+    "n": 80,
+    "p50": 0.028,
+    "p95": 1.575
    }
   },
   {
@@ -552,9 +552,9 @@
    ],
    "modelos": [],
    "tiempos": {
-    "n": 81,
+    "n": 80,
     "p50": 0.005,
-    "p95": 3.275
+    "p95": 0.239
    }
   },
   {
@@ -584,16 +584,16 @@
     {
      "nombre": "plan_elegido_por_extractor",
      "titulo": "Aceptar el paquete que propone Coral lo elige",
-     "codigo": true,
-     "pre": true,
+     "codigo": false,
+     "pre": false,
      "sin_efecto": false
     }
    ],
    "marca": "openrouter",
    "tiempos": {
     "n": 74,
-    "p50": 0.006,
-    "p95": 0.019
+    "p50": 0.007,
+    "p95": 0.526
    }
   },
   {
@@ -717,8 +717,8 @@
    "marca": "openrouter",
    "tiempos": {
     "n": 74,
-    "p50": 1.672,
-    "p95": 2.739
+    "p50": 0.978,
+    "p95": 1.937
    }
   },
   {
@@ -916,9 +916,9 @@
    ],
    "marca": "openrouter",
    "tiempos": {
-    "n": 73,
-    "p50": 1.286,
-    "p95": 5.537
+    "n": 74,
+    "p50": 1.824,
+    "p95": 5.576
    }
   },
   {
@@ -1019,9 +1019,9 @@
    ],
    "modelos": [],
    "conteo": {
-    "n": 46,
+    "n": 47,
     "que": "preguntas",
-    "fuente": "2026-10-19-ex9b-4.json"
+    "fuente": "2026-10-19-ex9b-5.json"
    }
   },
   {
@@ -3016,13 +3016,24 @@
    "sin_efecto": null
   },
   {
+   "nombre": "pii_respeta_urls",
+   "area": "Chat",
+   "titulo": "Al tapar datos personales, los enlaces quedan enteros",
+   "texto": "Antes de enviar un texto a algunos modelos, Coral tapa teléfonos y documentos. Las cifras de un enlace (las coordenadas del mapa del punto de encuentro) se tapaban como si fueran un teléfono y el enlace llegaba roto al cliente. Ahora los enlaces quedan enteros, salvo los de WhatsApp, que llevan un teléfono.",
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
+   "usado_por": [],
+   "sin_efecto": null
+  },
+  {
    "nombre": "plan_elegido_por_extractor",
    "area": "Reserva",
    "titulo": "Aceptar el paquete que propone Coral lo elige",
    "texto": "Si Coral acaba de proponer un paquete y el cliente lo acepta con sus palabras («perfecto, ese me sirve», «vamos con ese»), queda elegido y sigue la reserva (decisión de Gadea). Antes solo valía la frase «quiero este paquete». Preguntar por el paquete (su precio, qué incluye) no es elegirlo. Si la IA no contesta, la frase de siempre.",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
    "usado_por": [
     "b_routing"
    ],
@@ -3540,7 +3551,7 @@
     "b_acuse"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 47
+   "llamadas_ultima_ronda": 46
   },
   {
    "ajuste": "avisos_al_final_model",
@@ -3550,7 +3561,7 @@
     "r_revisor"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 107
+   "llamadas_ultima_ronda": 106
   },
   {
    "ajuste": "extraction_model",
@@ -3558,7 +3569,7 @@
    "pre": "gpt-5.4-mini",
    "usado_por": [],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 93
+   "llamadas_ultima_ronda": 1
   },
   {
    "ajuste": "extractor_turno_model",
@@ -3568,7 +3579,7 @@
     "b_extraction"
    ],
    "proveedor": "OpenRouter",
-   "llamadas_ultima_ronda": 96
+   "llamadas_ultima_ronda": 189
   },
   {
    "ajuste": "grounding_v3_model",
@@ -3631,7 +3642,7 @@
     "r_reescribir"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 93
+   "llamadas_ultima_ronda": 1
   },
   {
    "ajuste": "openai_transcription_model",
@@ -3659,7 +3670,7 @@
     "r_escribir"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 107
+   "llamadas_ultima_ronda": 106
   },
   {
    "ajuste": "rag_plan_model",
@@ -3667,7 +3678,7 @@
    "pre": "gpt-6-luna",
    "usado_por": [],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 107
+   "llamadas_ultima_ronda": 106
   },
   {
    "ajuste": "red_extractor_model",
@@ -3677,7 +3688,7 @@
     "b_extraction"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 107
+   "llamadas_ultima_ronda": 106
   },
   {
    "ajuste": "reescritura_model",
@@ -3695,7 +3706,7 @@
     "b_slotfill_close"
    ],
    "proveedor": "OpenRouter",
-   "llamadas_ultima_ronda": 96
+   "llamadas_ultima_ronda": 189
   },
   {
    "ajuste": "resumen_model",
@@ -3718,34 +3729,34 @@
   }
  ],
  "ronda": {
-  "etiqueta": "ex9b-4 (paso 6, respaldo por tiempo de OpenRouter)",
-  "run_at": "2026-10-19T16:38:20Z",
-  "fichero": "2026-10-19-ex9b-4.json",
-  "commit": "0f5f73c",
+  "etiqueta": "ex9b-5 (paso 6 en una segunda llamada)",
+  "run_at": "2026-10-19T17:48:07Z",
+  "fichero": "2026-10-19-ex9b-5.json",
+  "commit": "41a1e68",
   "por_tipo": {
    "reserva": {
-    "turns": 47,
-    "latency_p50": 2.7,
-    "latency_p95": 4.862,
-    "latency_avg": 2.984,
-    "llm_calls_avg": 3.98,
-    "llm_calls_p95": 7.4,
-    "llm_calls_max": 10,
-    "embeddings_avg": 1.49,
-    "llm_share": 1.493,
+    "turns": 46,
+    "latency_p50": 1.869,
+    "latency_p95": 3.468,
+    "latency_avg": 2.109,
+    "llm_calls_avg": 3.83,
+    "llm_calls_p95": 6.0,
+    "llm_calls_max": 6,
+    "embeddings_avg": 1.48,
+    "llm_share": 1.827,
     "tokens_avg": 0,
     "cost_avg_usd": 0
    },
    "rag": {
-    "turns": 46,
-    "latency_p50": 5.391,
-    "latency_p95": 10.451,
-    "latency_avg": 5.726,
-    "llm_calls_avg": 7.13,
+    "turns": 47,
+    "latency_p50": 5.484,
+    "latency_p95": 7.942,
+    "latency_avg": 5.712,
+    "llm_calls_avg": 7.19,
     "llm_calls_p95": 10.0,
-    "llm_calls_max": 12,
-    "embeddings_avg": 2.2,
-    "llm_share": 1.596,
+    "llm_calls_max": 11,
+    "embeddings_avg": 2.3,
+    "llm_share": 1.563,
     "tokens_avg": 0,
     "cost_avg_usd": 0
    }
@@ -3756,8 +3767,8 @@
     "llm_uncertain": 11,
     "llm": 1
    },
-   "ms_p50": 419.0,
-   "ms_p95": 577.45
+   "ms_p50": 426.0,
+   "ms_p95": 503.15
   },
   "cliente": {
    "turns": 93,
@@ -3766,14 +3777,14 @@
    "multi_bubble": 1,
    "latency_p50": 4.0,
    "latency_p95": 8.0,
-   "latency_max": 13
+   "latency_max": 10
   },
   "llamadas_por_modelo": {
+   "anthropic/claude-haiku-5.5": 189,
    "deepseek/deepseek-v4.1-flash": 172,
-   "gpt-6-luna": 107,
-   "anthropic/claude-haiku-5.5": 96,
-   "gpt-5.4-mini": 93,
-   "gpt-5.4-nano": 47
+   "gpt-6-luna": 106,
+   "gpt-5.4-nano": 46,
+   "gpt-5.4-mini": 1
   },
   "calidad": null
  },

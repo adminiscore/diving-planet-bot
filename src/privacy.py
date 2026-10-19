@@ -64,6 +64,22 @@ def detect_pii(text: str) -> list[str]:
     return hits
 
 
+# ex-9b (19-oct, flag `pii_respeta_urls`, ronda ex9b-5): las cifras de un enlace (las coordenadas de Google Maps del
+# punto de encuentro, "…@10.4236,-75.5512…") se tapaban como teléfono antes de mandar el texto a OpenRouter, y el
+# respaldo del RAG (DeepSeek) contestaba con el enlace roto ("[REDACTED_PHONE]" dentro). Con el flag no se tapan
+# cifras DENTRO de un enlace, salvo en los que llevan un teléfono (WhatsApp, wa.me), que se siguen tapando.
+_URL_CON_TELEFONO_RE = re.compile(r"wa\.me|whatsapp", re.IGNORECASE)
+
+
+def _fuera_de_enlaces(text: str, matches: list[re.Match]) -> list[re.Match]:
+    from src.config import settings  # lazy: privacy no depende de la configuración al importarse
+
+    if not settings.pii_respeta_urls:
+        return matches
+    tramos = [(u.start(), u.end()) for u in URL_RE.finditer(text) if not _URL_CON_TELEFONO_RE.search(u.group(0))]
+    return [m for m in matches if not any(a <= m.start() and m.end() <= b for a, b in tramos)]
+
+
 def _replace_matches(text: str, matches: list[re.Match], label: str) -> str:
     for m in reversed(matches):
         text = text[: m.start()] + label + text[m.end():]
@@ -76,12 +92,14 @@ def redact_pii(text: str) -> str:
 
     redacted = text
     redacted = EMAIL_RE.sub("[REDACTED_EMAIL]", redacted)
-    redacted = _replace_matches(redacted, _phone_matches(redacted), "[REDACTED_PHONE]")
-    redacted = _replace_matches(redacted, _grouped_id_matches(redacted), "[REDACTED_NUMBER]")
+    redacted = _replace_matches(redacted, _fuera_de_enlaces(redacted, _phone_matches(redacted)), "[REDACTED_PHONE]")
+    redacted = _replace_matches(redacted, _fuera_de_enlaces(redacted, _grouped_id_matches(redacted)), "[REDACTED_NUMBER]")
 
     if SENSITIVE_KEYWORDS_RE.search(redacted):
-        redacted = CARD_NUMBER_RE.sub("[REDACTED_CARD]", redacted)
-        redacted = LONG_DIGITS_RE.sub("[REDACTED_NUMBER]", redacted)
+        redacted = _replace_matches(redacted, _fuera_de_enlaces(redacted, list(CARD_NUMBER_RE.finditer(redacted))),
+                                    "[REDACTED_CARD]")
+        redacted = _replace_matches(redacted, _fuera_de_enlaces(redacted, list(LONG_DIGITS_RE.finditer(redacted))),
+                                    "[REDACTED_NUMBER]")
 
     # Keep URLs: they can be useful (booking links). No redaction here.
     _ = URL_RE
