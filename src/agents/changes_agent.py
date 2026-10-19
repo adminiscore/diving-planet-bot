@@ -25,7 +25,7 @@ MISMA función que la cascada — una sola fuente de verdad, sin strings duplica
 está DESPUÉS de `maybe_handle_turn`, así que el núcleo intercepta las preguntas de
 disponibilidad "frescas" primero. Esto es la **divergencia documentada patrón B**
 del audit del shadow (§1.5): router→changes, cascada→booking (3/14). Reproducir el
-gate aquí sin correr el núcleo cambiaría el comportamiento respecto al flag off.
+gate aquí sin correr el núcleo cambiaría el comportamiento respecto a la cascada.
 Por eso NO se reproduce: se **delega en la cascada** (que corre el núcleo y luego,
 si procede, el handler de disponibilidad) → equivalencia garantizada. Si en el
 cutover (Fase 5.2) se decide que la disponibilidad debe ganar al núcleo, se

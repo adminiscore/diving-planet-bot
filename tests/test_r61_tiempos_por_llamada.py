@@ -137,13 +137,13 @@ async def test_con_openai_caido_el_bot_lo_dice_y_pasa_a_un_asesor(monkeypatch):
     from src.config import settings
     from src.flows.state import ConversationState, Step
 
-    async def turno_degradado(state, message, routing_signals=None):
+    async def turno_degradado(conv_state, message):
         obs.record_llm_call("chat", 0.1, "gpt-4.1-mini", status=429)
         obs.record_llm_call("chat", 0.1, "gpt-6-luna", status=429)
         return "Ese detalle en concreto no lo tengo a la mano."
 
-    monkeypatch.setattr(settings, "agent_arch", False)
-    monkeypatch.setattr(supervisor, "_shared_turn_handler", turno_degradado)
+    # s4-1: sin la cascada, el turno degradado es el del grafo (route_message lo importa al llamarlo).
+    monkeypatch.setattr("src.orchestration.graph.run_turn_via_graph", turno_degradado)
     for flag in (False, True):
         monkeypatch.setattr(settings, "aviso_si_openai_falla", flag)
         st = ConversationState(conversation_id="r61b", language="es")

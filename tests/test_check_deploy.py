@@ -25,7 +25,7 @@ def test_el_compose_da_interruptores_y_modelos_sin_contrasenas_ni_urls():
     for modelo in ("openai_model", "rag_answer_model", "extraction_model", "jev_model"):
         assert modelo in esperado
     assert isinstance(esperado["rag_min_score"], float)
-    assert isinstance(esperado["agent_arch"], bool)
+    assert isinstance(esperado["jev_router_enabled"], bool)
     assert all(isinstance(v, (bool, int, float, str)) for v in esperado.values())
 
 

@@ -17,7 +17,7 @@ from zoneinfo import ZoneInfo
 
 from src.agents import conversation_summarizer
 from src.agents.escalation import (
-    detect_routing_signals,
+    detect_routing_signals,  # noqa: F401 — el nodo router del grafo lo importa de aquí (y los tests lo parchean aquí)
     detect_sensitive_escalation,
     sensitive_response_for,
 )
@@ -28,7 +28,7 @@ from src.agents.intent_detector import (
     nationality_is_ambiguous,
 )
 from src.agents.lead_summary import build_lead_summary
-from src.agents.llm_extractor import fill_gaps, missing_fields, verify_fields
+from src.agents.llm_extractor import verify_fields
 from src.agents.rag_agent import (  # noqa: F401 — el núcleo llama a `supervisor.rag_answer`
     is_fallback_answer,
     rag_answer,
@@ -36,10 +36,12 @@ from src.agents.rag_agent import (  # noqa: F401 — el núcleo llama a `supervi
 from src.config import settings
 from src.domain import activities as dom
 from src.flows import cart_render, eligibility
-from src.flows.messages import set_quick_replies
 from src.flows.state import ConversationState, Step
 from src.knowledge.loader import load_policies
-from src.privacy import detect_pii, privacy_block_message
+from src.privacy import (  # noqa: F401 — los usan el router y el nodo `escalation`
+    detect_pii,
+    privacy_block_message,
+)
 from src.utils.number_words import number_alt
 from src.utils.text import strip_accents as _strip_accents
 
@@ -1137,24 +1139,6 @@ def _normalize_for_menu_match(text: str) -> str:
         cleaned,
     )
     return " ".join(cleaned.split())
-
-
-def _detect_language_intent(message: str) -> str | None:
-    """Detect an explicit language switch request.
-
-    Matches words like "english/ingles", "spanish/espanol/castellano". Accent-insensitive.
-    Returns "es", "en", or None when the message contains no language keyword.
-    """
-    normalized = _strip_accents(message.strip().lower())
-    # Word-boundary match so "english" inside another word would not trigger;
-    # at the same time tolerate adjacent punctuation.
-    if re.search(r"\b(english|ingles)\b", normalized):
-        return "en"
-    if re.search(r"\b(spanish|espanol|castellano)\b", normalized):
-        return "es"
-    return None
-
-
 
 
 def _detect_kids_mention(message: str) -> bool:
@@ -2273,20 +2257,10 @@ def _finalize_tree_response(state: ConversationState, message: str, response: st
 _MAX_REMEMBERED_NOTES = 8
 
 
-# Per-domain cutover field sets (docs/robustness/plan.md §4): Fase 1 = certification, Fase 2 = group/quantity/ages,
-# Fase 3 = location, Fase 8 = profile/logistics. Each domain had its own kill-switch flag
-# (`llm_extraction_cutover_*`, plan.md principle #7), all on since 28-sep; s4-25 removed them, so the four apply.
-# OJO: nothing calls `_maybe_apply_llm_extraction_cutover` since the legacy orchestrator was retired (308488d,
-# 28-jul); only its tests exercise it.
-_CERTIFICATION_CUTOVER_FIELDS = {"is_certified", "activity"}
-_GROUP_CUTOVER_FIELDS = {"group_size", "group_allocation", "ages"}
-_LOCATION_CUTOVER_FIELDS = {"location", "island", "hotel"}
-_LOGISTICS_CUTOVER_FIELDS = {"is_colombian", "duration", "last_dive_over_2_years"}
-_CUTOVER_FIELDS = (
-    _CERTIFICATION_CUTOVER_FIELDS | _GROUP_CUTOVER_FIELDS | _LOCATION_CUTOVER_FIELDS | _LOGISTICS_CUTOVER_FIELDS
-)
-
-
+# s4-1 (19-oct): fuera el cutover por dominio del extractor (`_maybe_apply_llm_extraction_cutover` y sus
+# `_*_CUTOVER_FIELDS`) y la sonda en sombra de la Fase 0 (`_maybe_log_llm_extraction_shadow`, con su flag
+# `llm_extraction_shadow_mode`): no los llamaba nadie desde que se retiró el orquestador antiguo (308488d, 28-jul).
+# El relleno de huecos vivo es el de `conversational_core._understand` (`fill_gaps`).
 def _log_safe_message(message: str, limit: int = 500) -> str:
     """Message text for [EXTRACT] log lines. Real bug found live (2026-07-21):
     truncating to 60 chars (as this used to) silently cut off the end of real
@@ -2300,56 +2274,6 @@ def _log_safe_message(message: str, limit: int = 500) -> str:
     if len(message) <= limit:
         return message
     return message[:limit] + "…[truncated]"
-
-
-async def _maybe_apply_llm_extraction_cutover(
-    message: str, regex_intent: DetectedIntent, state: ConversationState
-) -> None:
-    """Per-domain real cutover (docs/robustness/plan.md §4), for the four domains
-    of `_CUTOVER_FIELDS` (their `llm_extraction_cutover_*` flags were removed in
-    s4-25). When the regex left one of those fields unresolved, asks the LLM
-    gap-filler ONCE and — unlike the Fase 0 shadow probe — actually MUTATES
-    `regex_intent` in place, but ONLY for those fields (any other field the LLM
-    returns is discarded). A single LLM call covers every domain at once (plan.md
-    §3.3, cost/latency control). Must run BEFORE `_apply_detected_intent(intent,
-    state)` so the filled values propagate to conversation state normally.
-
-    The regex is still the primary/fast path: this only fills a genuine gap,
-    never overrides a value the regex already resolved. Any error degrades
-    silently to "regex-only", exactly like today — this can never make a reply
-    worse than before the cutover existed.
-    """
-    try:
-        relevant_gaps = [f for f in missing_fields(regex_intent) if f in _CUTOVER_FIELDS]
-        if not relevant_gaps:
-            return
-        patch = await fill_gaps(message, regex_intent, history=state.history, lang=state.language)
-        # Auditoría Fase B (2026-07-23): este cutover de extracción es el
-        # equivalente de la Capa 5 del núcleo conversacional — y le faltaba el
-        # mismo saneamiento que Gadea añadió allí (commit d3ecdba): con el
-        # historial real de la conversación por delante, `fill_gaps` puede
-        # alucinar un group_allocation/group_size completo para un mensaje de
-        # "se añade un acompañante" sin ningún número real (p. ej. "también
-        # vienen mis amigos a hacer snorkel" → {snorkel: 3} inventado).
-        # Mismos regexes que `conversational_core._understand()` (import
-        # perezoso: evita el ciclo módulo-a-módulo, mismo patrón ya usado en
-        # este fichero para `conversational_core.maybe_handle_turn`).
-        from src.agents.conversational_core import _ADDED_PERSON_RE, _EXPLICIT_NUMBER_RE
-        if _ADDED_PERSON_RE.search(message) and not _EXPLICIT_NUMBER_RE.search(message):
-            patch.pop("group_allocation", None)
-            patch.pop("group_size", None)
-        # Apply ONLY fields that were an actual gap in an enabled domain — never a
-        # field the regex already resolved (fill_gaps guards this too, but the
-        # cutover enforces the "never overwrite regex" property itself as well).
-        applied = {k: v for k, v in patch.items() if k in relevant_gaps}
-        for field, value in applied.items():
-            setattr(regex_intent, field, value)
-            if field not in regex_intent.detected_fields:
-                regex_intent.detected_fields.append(field)
-        if applied:
-            logger.info(f"[EXTRACT][CUTOVER] applied={applied} msg={_log_safe_message(message)!r}")
-    except Exception as exc:  # noqa: BLE001
-        logger.warning(f"[EXTRACT][CUTOVER] failed, degrading to regex-only (ignored): {exc}")
 
 
 # Mapeo activity(enum del LLM) -> service_id del catalogo: el servicio base de
@@ -2796,34 +2720,6 @@ async def _maybe_veto_resolved_field_via_llm(
     await _maybe_veto_resolved_fields_via_llm(message, regex_intent, state, only_fields=[field])
 
 
-async def _maybe_log_llm_extraction_shadow(
-    message: str, regex_intent: DetectedIntent, state: ConversationState
-) -> None:
-    """Fase 0 shadow-mode measurement (docs/robustness/plan.md §4). Gated by
-    `settings.llm_extraction_shadow_mode` (off by default everywhere) — when
-    on, runs the LLM gap-filler in parallel and logs what it WOULD have added,
-    purely for measuring agreement. Never mutates state, never affects the
-    reply. Any exception here is swallowed — this is a measurement probe, not
-    part of the response path, and must never be able to break a real turn.
-    """
-    if not settings.llm_extraction_shadow_mode:
-        return
-    try:
-        gaps_before = missing_fields(regex_intent)
-        if not gaps_before:
-            return
-        patch = await fill_gaps(message, regex_intent, history=state.history, lang=state.language)
-        # No live ground truth to compare against here — this just records
-        # what the LLM would have added on top of the regex result, for a
-        # human to review later (or feed into docs/robustness/eval-set.json
-        # as a new case if it looks like a real gap the regex should cover).
-        logger.info(
-            f"[EXTRACT][SHADOW] msg={_log_safe_message(message)!r} gaps_before={gaps_before} llm_patch={patch}"
-        )
-    except Exception as exc:  # noqa: BLE001
-        logger.warning(f"[EXTRACT][SHADOW] probe failed (ignored): {exc}")
-
-
 # Cue de CORRECCIÓN explícita de un dato ya fijado ("en realidad revisamos y
 # somos 4", "perdón, en realidad somos 3", "me equivoqué, somos 2",
 # "actually we're 4"/"sorry, we're actually 3") — a diferencia de
@@ -2976,28 +2872,6 @@ def _apply_detected_intent(intent, state: ConversationState, message: str | None
         logger.info(f"[INTENT] Detected hotel: {intent.hotel}")
 
 
-def _continue_booking_quick_replies(state: ConversationState) -> list[dict]:
-    """Buttons appended after answering an info question mid-flow (availability,
-    food/included questions, etc.) without losing the pending cart action.
-
-    Reuses the CURRENT step's primary quick reply value (by convention the
-    first option in every mixed_* menu is the main forward action — "Añadir
-    al carrito", "Confirmar carrito", etc.) so clicking "Continuar con la
-    reserva" resumes exactly where the client was, instead of asking them to
-    retype it as free text or letting the orchestrator misfire a tree action.
-    """
-    lang = state.language
-    continue_title = "✅ Continuar con la reserva" if lang == "es" else "✅ Continue with booking"
-    home_title = "🏠 Inicio" if lang == "es" else "🏠 Home"
-    buttons: list[dict] = []
-    if state.quick_replies:
-        primary_value = state.quick_replies[0].get("value")
-        if primary_value and primary_value != "back":
-            buttons.append({"title": continue_title, "value": primary_value})
-    buttons.append({"title": home_title, "value": "menu"})
-    return buttons
-
-
 _INTENT_TRIGGER_STEPS = {
     Step.WELCOME,
     Step.LANGUAGE,
@@ -3020,15 +2894,12 @@ async def route_message(state: ConversationState, message: str) -> str:
     so the summary check runs regardless of which internal branch below
     handled the message, without threading it through every early return.
 
-    Strangler-fig (Fase 1.4, docs/multi-agent-refactor-plan.md): con
-    `settings.agent_arch` ON el turno pasa por el grafo LangGraph
-    (`orchestration.graph` — router → 5 nodos-agente reales + subgrafo booking),
-    y ESOS MISMOS nodos delegan en `_shared_turn_handler` para el núcleo +
-    tail post-núcleo + fallback de resiliencia (ver su docstring — Fase 5.2
-    paso 2, ya no es "cascada legacy", es el handler compartido). Con el
-    flag OFF, `_shared_turn_handler` es el único camino, llamado aquí
-    directamente. El flag es la red de rollback hasta que el grafo tenga
-    confianza en producción.
+    El turno pasa siempre por el grafo LangGraph (`orchestration.graph` — router
+    → 5 nodos-agente reales + subgrafo booking), y esos nodos delegan en
+    `_shared_turn_handler` para el núcleo + tail post-núcleo + fallback de
+    resiliencia (ver su docstring). s4-1 (19-oct) quitó el flag `agent_arch`
+    (Fase 1.4, docs/multi-agent-refactor-plan.md), que llevaba semanas en True,
+    y con él el camino apagado: la cascada llamada aquí directamente.
 
     Observabilidad (m0-1): todo el turno va dentro de `turn_trace` — una traza
     raíz `turno` por mensaje, en contexto limpio y con el resumen del turno.
@@ -3039,11 +2910,8 @@ async def route_message(state: ConversationState, message: str) -> str:
     escalation_before = state.pending_escalation_reason
     async with turn_trace(settings, state.conversation_id, message) as turn:
         note_turn(language=state.language, greeting=_is_greeting_only(message))
-        if settings.agent_arch:
-            from src.orchestration.graph import run_turn_via_graph
-            response = await run_turn_via_graph(state, message)
-        else:
-            response = await _shared_turn_handler(state, message)
+        from src.orchestration.graph import run_turn_via_graph
+        response = await run_turn_via_graph(state, message)
         # l1-4: red de seguridad. Si el turno no pasó por RAG, la captura de notas
         # que `_setup_phase` lanzó en paralelo puede seguir viva; hay que esperarla
         # ANTES de que el canal guarde el estado o se perdería la nota. Es no-op
@@ -3117,14 +2985,14 @@ def _respuesta_fallo_tecnico(state: ConversationState, codigo: int) -> str:
 
 
 async def _shared_turn_handler(
-    state: ConversationState, message: str, routing_signals: dict | None = None
+    state: ConversationState, message: str, routing_signals: dict
 ) -> str:
     """
     Handler de turno COMPARTIDO — renombrado (Fase 5.2 paso 2,
     docs/multi-agent-refactor-plan.md §5) desde `_route_message_inner` porque
     ese nombre sugería "cascada legacy a punto de borrarse" y ya no es
-    correcto: con `settings.agent_arch` ON, esta función NO es un camino
-    muerto en paralelo al grafo — es la pieza que los 5 nodos-agente reales
+    correcto: esta función NO es un camino muerto en paralelo al grafo — es
+    la pieza que los 5 nodos-agente reales
     (`deflection`/`escalation`/`changes`/`info`/`booking`) siguen usando por
     dos motivos, documentados en el 🔎 PREP de reachability del plan:
 
@@ -3137,8 +3005,22 @@ async def _shared_turn_handler(
        delega aquí en vez de dropear el turno — esta función SIEMPRE
        responde algo.
 
-    Con el flag OFF (rollback), es además el único camino: la cascada
-    completa que `route_message` llama directamente.
+    s4-1 (19-oct) quitó el flag `agent_arch`: ya no hay cascada que
+    `route_message` llame directamente, solo la llaman los nodos. Con eso se
+    borró lo que desde el grafo no se alcanza nunca: el reinicio de escenario
+    nuevo y la mención de niños (los hace el nodo router antes de clasificar),
+    el cálculo de las señales (las trae siempre el router), los gates de PII,
+    alcohol/alergia, evento de empresa y "mismo precio" (el router los manda a
+    su nodo, que los resuelve antes de delegar) y, detrás del núcleo, el link
+    roto y el tema sensible repetidos, la disponibilidad y el cambio de idioma:
+    el núcleo solo declina por escalado-keyword/`wants_human` (`_setup_phase`),
+    y el gate de escalado de abajo mira exactamente lo mismo.
+
+    Los gates pre-núcleo que quedan SÍ se alcanzan desde el grafo: el nodo
+    `info` delega cuando el router lo mandó allí por "mismo precio" (con
+    `atajo_nacionalidad_por_rag` el nodo ya no da esa respuesta fija) sin
+    mirar lo que va detrás, o por una pregunta de edad que no lo era; y la
+    negativa de datos ajenos de `_needs_staff_handoff` no la mira el router.
 
     Borrarla del todo requeriría antes migrar el grupo (B) de gates
     post-núcleo a nodos propios (5.2 paso 3, aún no hecho) — hasta entonces
@@ -3151,110 +3033,21 @@ async def _shared_turn_handler(
     4. Si está en paso SUMMARY/ESCALATE/FREE_TEXT -> agente RAG
     5. Si manda texto libre en un paso de menú -> agente RAG
 
-    `routing_signals`: si viene dado (grafo LangGraph — el router ya calculó
-    `detect_routing_signals` una vez por turno), se reutiliza en vez de
-    recomputar la llamada LLM. None (flag OFF, único caller) = se calcula
-    internamente igual que siempre (comportamiento idéntico).
+    `routing_signals`: las que calculó el nodo router del grafo
+    (`detect_routing_signals`, una vez por turno); se reutilizan, sin
+    recomputar la llamada LLM.
     """
     msg_lower = message.strip().lower()
-
-    # New-scenario restart: greeting + fresh self-introduction while old memory
-    # is around → wipe it and reprocess this message as a fresh first turn, so
-    # the previous booking's summary/facts/notes/slots don't bleed in. Narrow by
-    # design (see _is_new_scenario_restart); a bare "hola" never triggers it.
-    if _is_new_scenario_restart(message, state):
-        logger.info("[SUPERVISOR] New-scenario restart -> wiping conversation memory")
-        _reset_to_fresh_scenario(state)
-        return await _shared_turn_handler(state, message)
-
-    # Sticky detection: once the speaker mentions kids/children/family-with-kids,
-    # we remember it for the rest of the conversation so the cart-mixto question
-    # about age ranges fires even if the cart ends up cert-only.
-    if not getattr(state, "kids_mention_detected", False) and _detect_kids_mention(message):
-        state.kids_mention_detected = True
-
-    pii_hits = detect_pii(message)
-    if pii_hits:
-        state.step = Step.ESCALATE
-        state.pending_escalation_reason = "datos sensibles detectados"
-        logger.warning(f"[SUPERVISOR][PRIVACY] PII detected hits={pii_hits} step={state.step.value}")
-        return privacy_block_message(state.language)
-
-    # Hallazgo (batería sintética contra PRE, 2026-08-26, lote 4, portado de
-    # pre_gadea v0.21.11): "¿puedo tomarme una cerveza antes de bucear?" y
-    # "soy alérgico a los mariscos, es un problema?" escalaban como
-    # `medical_questions` — el LLM de sensitive_topic los interpreta como un
-    # tema médico/de sustancias, pero son preguntas de POLÍTICA plana con
-    # respuesta ya conocida en el catálogo (`no_alcohol_policy`,
-    # `food_policy`: veganos/vegetarianos/celíacos reciben arroz con
-    # vegetales, cualquier alergia alimentaria se avisa antes del tour).
-    # Escalar es peor que responder: le hace perder tiempo al cliente por
-    # algo que el bot ya sabe con certeza. Se comprueba ANTES de cualquier
-    # gate de seguridad (misma prioridad que el link roto) para no dejar
-    # que ninguno de los dos se adelante. Acotado a mención EXPLÍCITA de un
-    # alérgeno alimentario conocido del catálogo (marisco/gluten/nueces/
-    # maní/lactosa) — una alergia sin ese contexto ("tengo alergias
-    # severas, es peligroso bucear?") sigue yendo al escalado médico
-    # normal, sin tocar.
-    combined_policy_text = _alcohol_and_food_policy_answer(msg_lower, state.language)
-    if combined_policy_text is not None:
-        logger.info(
-            "[SUPERVISOR] Alcohol/food-allergy question -> real policy text, not medical escalation "
-            f"(alcohol={bool(_ALCOHOL_BEFORE_DIVING_RE.search(msg_lower))} "
-            f"food={bool(_ALLERGY_WORD_RE.search(msg_lower) and _FOOD_ALLERGEN_RE.search(msg_lower))})"
-        )
-        return combined_policy_text
-
-    # Hallazgo en vivo (lote 11, 2026-09-02): evento corporativo/grupo
-    # privado — respuesta determinista redactada, sin pasar por RAG (que
-    # alucinaba) ni filtrar el numero de WhatsApp de la politica cruda. Ver
-    # _private_group_event_answer.
-    if _PRIVATE_GROUP_EVENT_RE.search(msg_lower):
-        logger.info("[SUPERVISOR] Private/corporate group event -> real deterministic answer")
-        return private_group_event_reply(state)
-
-    # Hallazgo en vivo (lote 12, 2026-09-02): "¿cambia el precio si es
-    # colombiano?" — respuesta determinista fija (politica de negocio, no
-    # depende del paquete), sin pasar por RAG (que alucinaba un precio
-    # equivocado al intentar re-generar el numero). Ver
-    # _same_price_different_nationality_answer.
-    same_price = fixed_same_price_answer(msg_lower, state.language)
-    if same_price is not None:
-        logger.info("[SUPERVISOR] Same price, different nationality question -> real deterministic answer")
-        return same_price
 
     # SAFETY FIRST: broken-link complaints and sensitive topics (medical,
     # weather, complaints) must escalate BEFORE the intent detector runs.
     # Otherwise a message like "Estoy embarazada, puedo bucear?" gets hijacked
     # by the booking intent ("bucear") and routed into the cart flow instead of
-    # being handed to human staff. Broken-link runs before sensitive on purpose
-    # (see the note at the original sensitive block below).
+    # being handed to human staff. Broken-link runs before sensitive on purpose:
+    # phrases like "reserva no funciona" otherwise match the generic
+    # real_time_issues rule.
     if _detect_broken_link_complaint(message, state.history):
         return _broken_link_escalation_response(state, message)
-
-    # Red de precisión (auditoría 2026-07-22/23): ESCALATION_KEYWORDS/
-    # MENU_KEYWORDS/BACK_KEYWORDS/SENSITIVE_RULES/_ADAPTIVE_DIVING_PATTERN son
-    # listas cerradas de palabras exactas — probado en vivo que NO reconocen
-    # variantes regionales reales ("estoy embarazadita", "soy epiléptica",
-    # "tengo una condición cardiaca" en femenino, "ataque de pánico", "perdí
-    # una pierna", "uso prótesis"). Calculado ANTES del chequeo de keywords
-    # (no después, como en la versión anterior) porque hace falta para
-    # resolver una colisión real entre categorías: "accidente" es palabra
-    # clave de SENSITIVE_RULES (queja/emergencia) pero también aparece en
-    # backstories de discapacidad ("perdí una pierna en un accidente") que
-    # deben ir a DIVE TO HEAL, no a un escalado médico genérico de urgencia.
-    # Gasto cero para clics de botón puramente numéricos (nunca pueden
-    # expresar un tema sensible/escalado/menú en ningún idioma). A diferencia
-    # del extractor de reserva, el sesgo aquí es escalar/enrutar de más que
-    # de menos — el propio prompt se lo pide al LLM.
-    if routing_signals is None:
-        # ex-5: sin grafo (cascada), el extractor "LLM primero" arranca aquí, a la vez que el enrutador.
-        from src.agents.conversational_core import lanzar_extraccion_adelantada
-
-        lanzar_extraccion_adelantada(state, message)
-        routing_signals = {} if msg_lower.isdigit() else await detect_routing_signals(
-            message, lang=state.language, pending_slot=state.core_pending_slot, history=state.history,
-        )
 
     # Respaldo LLM del gate de LINK ROTO (Bloque 2.3): el detector por keyword
     # de arriba exige frase-de-queja + token de link (o URL en el turno previo)
@@ -3483,134 +3276,11 @@ async def _shared_turn_handler(
         logger.info("[SUPERVISOR] Escalation triggered by keyword or LLM signal")
         return MESSAGES["escalate"][state.language]
 
-    # Customer reports a broken link/form/URL → escalate with high priority.
-    # Must run BEFORE sensitive_escalation because phrases like "reserva no funciona"
-    # otherwise match the generic real_time_issues rule.
-    if _detect_broken_link_complaint(message, state.history):
-        reason = "🚨 LINK ROTO reportado por el cliente — revisar URLs"
-        state.step = Step.ESCALATE
-        state.quick_replies = []
-        state.pending_escalation_reason = reason
-        state.pending_note = build_lead_summary(state, escalation_reason=reason)
-        logger.warning(f"[SUPERVISOR] Broken-link complaint detected msg={message[:80]!r}")
-        if state.language == "es":
-            return (
-                "Lamento que el enlace no te haya funcionado. Aviso al equipo para revisarlo y te paso "
-                "con un asesor para confirmar el siguiente paso o enviarte el link correcto.\n\n"
-                "Enseguida se pone en contacto contigo. ¡Gracias!"
-            )
-        return (
-            "Sorry the link didn't work. I'll let the team know to check it and connect you with a "
-            "advisor who can confirm the next step or share the correct link.\n\n"
-            "They will get in touch with you shortly. Thanks!"
-        )
-
-    sensitive_escalation = detect_sensitive_escalation(message, state.language)
-    if sensitive_escalation:
-        reason, response = sensitive_escalation
-        state.step = Step.ESCALATE
-        state.quick_replies = []
-        state.pending_escalation_reason = reason
-        state.pending_note = build_lead_summary(state, escalation_reason=reason)
-        logger.info(f"[SUPERVISOR] Sensitive escalation triggered reason={reason}")
-        return response
-
-    # Generic "what days / is there availability" question — never invent a
-    # date; reassure the client and point them to the booking link's calendar
-    # (the real calendar with exact dates + headcount lives there). Runs after
-    # the urgent real_time_issues escalation above, so specific phrases like
-    # "disponible mañana" / "hay cupo" still escalate instead of getting this
-    # canned answer. Keeps state.step untouched so "Continuar con la reserva"
-    # resumes exactly where the client was.
-    #
-    # Bloque 2.5 (2026-07-23): ampliado el disparador. El `_AVAILABILITY_PATTERN`
-    # solo cazaba "qué días hay disponibles" y no las preguntas de fecha ESPECÍFICA
-    # ("¿tienen disponibilidad el sábado?", "¿queda espacio el domingo?", "any spots
-    # left saturday?") — medido en vivo que esas caían a RAG y ALUCINABAN una
-    # confirmación de cupo ("¡Claro que sí! Tenemos disponibilidad para el sábado").
-    # Añadidos `_asks_about_availability` (lista ampliada) y el respaldo LLM
-    # `availability_question`, ambos al MISMO handler (conserva el resume mid-cart).
-    # `_AVAILABILITY_PATTERN` (el original) va SIEMPRE — no confunde una pregunta
-    # de plan multi-día con disponibilidad y los tests de resume mid-cart
-    # dependen de él. Las adiciones de Bloque 2.5 (`_asks_about_availability` +
-    # señal LLM `availability_question`) NO se aplican mientras se construye la
-    # reserva: ahí "no teneis algo para mas dias?" es una pregunta de PLAN que el
-    # interceptor multi-día debe manejar, y la señal LLM la marcaba como
-    # disponibilidad, pisándolo (regresión: test_multiday_switch_by_text_at_
-    # last_dive_step). Fuera del carrito (free-text) sí, para cerrar la
-    # alucinación de cupo de fecha específica.
-    if (
-        _AVAILABILITY_PATTERN.search(msg_lower)
-        or (
-            (_asks_about_availability(msg_lower) or routing_signals.get("availability_question"))
-            and not _in_active_cart_building(state)
-        )
-        or _CLOSED_DATE_RE.search(msg_lower)
-    ) and state.step not in (Step.WELCOME, Step.LANGUAGE):
-        # Hallazgo (batería sintética contra PRE, 2026-08-26, conv 395,
-        # portado de pre_gadea v0.21.10): "¿abren el 25 de diciembre?"
-        # caía en esta misma respuesta genérica ("las salidas son diarias,
-        # siempre hay disponibilidad") — FALSA para esos dos días
-        # concretos: `policies.json["closed_days"]` dice explícitamente
-        # "Solo cerramos el 25 de diciembre y el 1 de enero". Se comprueba
-        # ANTES del canned genérico para no darle al cliente información
-        # incorrecta sobre un día que sí está cerrado.
-        if _CLOSED_DATE_RE.search(msg_lower):
-            policy_text = (load_policies().get("policies", {}).get("closed_days") or {}).get(
-                state.language, ""
-            )
-            logger.info("[SUPERVISOR] Closed-date question detected -> real closed_days policy, not canned availability")
-            return policy_text
-        answer = (
-            "¡Buena noticia! 📅 Las salidas son diarias y siempre hay disponibilidad. "
-            "Vas a poder elegir el día exacto y el número de personas directamente en el "
-            "calendario del link de reserva. 😊"
-            if state.language == "es"
-            else
-            "Good news! 📅 Departures run daily and there's always availability. "
-            "You'll be able to pick the exact date and number of people right in the "
-            "booking link's calendar. 😊"
-        )
-        state.quick_replies = _continue_booking_quick_replies(state)
-        logger.info(f"[SUPERVISOR] Availability/dates question -> canned answer, step kept={state.step.value}")
-        return answer
-
-    # (Fase 4 P2·paso2, 2026-07-28) Retirados los handlers menú-reset / back /
-    # greeting-restart: con el núcleo on (paso 1) "menú"/"volver"/"back"/"hola"
-    # son mensaje normal que el núcleo maneja, así que estos bloques eran código
-    # muerto — y con ellos se van los DOS únicos callers vivos de
-    # `decision_tree.process_message`, lo que habilita borrar el árbol (paso 3).
-    # El escalado, la disponibilidad, el idioma y el gating de seguridad siguen.
-
-    # Explicit language-switch request ("in english", "spanish please",
-    # "me lo puedes decir en español?", etc.) at any step.
-    language_intent = _detect_language_intent(message)
-    if language_intent is not None:
-        # Idioma/saludo → entrada de reserva (taxonomía §4.bis: greeting → booking).
-        from src.flows.messages import MESSAGES
-        if state.step in (Step.WELCOME, Step.LANGUAGE):
-            # Treat as language selection; advance to MAIN_MENU.
-            state.language = language_intent
-            state.step = Step.MAIN_MENU
-            set_quick_replies(state, "main_menu")
-            logger.info(f"[SUPERVISOR] Language intent at start -> lang={language_intent}")
-            return MESSAGES["main_menu"][language_intent]
-        if state.language != language_intent:
-            # Mid-conversation switch: acknowledge in new language and re-show main menu.
-            state.language = language_intent
-            state.step = Step.MAIN_MENU
-            set_quick_replies(state, "main_menu")
-            ack = (
-                "¡Listo! Sigamos en español. "
-                if language_intent == "es"
-                else "Got it! Continuing in English. "
-            )
-            logger.info(f"[SUPERVISOR] Language switch mid-conversation -> lang={language_intent}")
-            return ack + MESSAGES["main_menu"][language_intent]
-
-    # Núcleo = único camino (Fase 4): todo mensaje se resuelve arriba — el
-    # núcleo (return en el hook), o los handlers de escalado/menú/back. Este
-    # fallback defensivo no debería alcanzarse.
+    # Núcleo = único camino (Fase 4): todo mensaje se resuelve arriba. El núcleo
+    # solo declina por escalado-keyword/`wants_human` (`_setup_phase`), la misma
+    # condición del gate de escalado de arriba, así que esto no se alcanza: s4-1
+    # borró lo que había entre ese gate y este fallback defensivo (link roto y
+    # tema sensible repetidos, disponibilidad y cambio de idioma).
     logger.warning(f"[SUPERVISOR] fallthrough inesperado step={state.step.value}")
     from src.flows.messages import MESSAGES
     return MESSAGES["main_menu"][state.language]

@@ -20,7 +20,7 @@ from pathlib import Path
 
 os.environ.update({
     "ENV_FILE": ".env.dev", "APP_ENV": "development",
-    "JEV_ROUTER_ENABLED": "true", "AGENT_ARCH": "true", "RAG_MIN_SCORE": "0.40",
+    "JEV_ROUTER_ENABLED": "true", "RAG_MIN_SCORE": "0.40",
     # s4-25: contesta y sigue (u3-4), las correcciones (u3-5), lo del paso 6 y las notas y el acuse en paralelo ya no
     # tienen flag; las notas y el acuse, que aqui iban en serie, son respuestas fijas.
     "LANGFUSE_PUBLIC_KEY": "", "LANGFUSE_SECRET_KEY": "",

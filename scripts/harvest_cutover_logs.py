@@ -37,7 +37,8 @@ import sys
 from collections import Counter
 from datetime import date
 
-# Los dominios y sus campos, espejo de _*_CUTOVER_FIELDS en supervisor.py.
+# Los dominios y sus campos, espejo de los _*_CUTOVER_FIELDS que tenía supervisor.py (borrados en s4-1 con el cutover
+# antiguo, que no llamaba nadie desde el 28-jul).
 DOMAIN_FIELDS = {
     "certification": {"is_certified", "activity"},
     "logistics": {"is_colombian", "duration", "last_dive_over_2_years"},

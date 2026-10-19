@@ -1,10 +1,9 @@
-"""Fase 2.3 — nodo-agente `changes` real + equivalencia con la cascada.
+"""Fase 2.3 — nodo-agente `changes` real.
 
-Cubre: (a) el nodo en aislamiento por gate (cancelación, reprogramación,
-delegación de disponibilidad), (b) equivalencia flag on (grafo con el nodo real)
-== flag off (cascada) para mensajes de cada gate CHANGE — el corte strangler no
-cambia la respuesta (incl. la divergencia documentada patrón B de disponibilidad,
-que se preserva delegando).
+Cubre el nodo en aislamiento por gate (cancelación, reprogramación, delegación de
+disponibilidad: la divergencia documentada patrón B se preserva delegando). La
+equivalencia flag on (grafo) == flag off (cascada) se fue con el flag `agent_arch`
+(s4-1).
 """
 
 from unittest.mock import AsyncMock
@@ -12,8 +11,6 @@ from unittest.mock import AsyncMock
 import pytest
 
 from src.agents.changes_agent import changes_node
-from src.agents.supervisor import route_message
-from src.config import settings
 from src.flows.state import ConversationState, Step
 
 
@@ -84,10 +81,7 @@ async def test_node_availability_delegates_to_cascade(monkeypatch):
 # resto de hallazgos de la batería sintética) — la delegación del nodo llega
 # ahí a través del núcleo, no de la copia duplicada en la cola de
 # `_shared_turn_handler` (que en la práctica queda como red de resiliencia,
-# no como el camino real). Cobertura que hoy solo existe indirectamente vía
-# los tests de `_shared_turn_handler`/núcleo en otros archivos y los
-# `*_equivalent_graph_vs_cascade` (que dejarán de existir cuando se quite el
-# flag `agent_arch`).
+# no como el camino real; s4-1 borró esa copia, que no se alcanzaba).
 
 @pytest.mark.asyncio
 async def test_node_closed_date_question_gives_real_policy_directly():
@@ -101,25 +95,3 @@ async def test_node_closed_date_question_gives_real_policy_directly():
     )
     assert "siempre hay disponibilidad" not in result["reply"].lower()
     assert "25 de diciembre" in result["reply"] or "cerramos" in result["reply"].lower()
-
-
-# ── equivalencia flag on/off (el corte strangler no cambia la respuesta) ──
-
-@pytest.mark.asyncio
-@pytest.mark.parametrize("message", [
-    "quiero cancelar mi reserva",                  # cancelación (pre-núcleo)
-    "quiero cambiar la fecha de mi reserva",       # reprogramación (pre-núcleo)
-    "que dias hay disponibles?",                   # disponibilidad (post-núcleo → delega)
-])
-async def test_changes_equivalent_graph_vs_cascade(monkeypatch, message):
-    # Routing LLM offline → determinista (los detectores regex manejan cada gate).
-    monkeypatch.setattr("src.agents.supervisor.detect_routing_signals", AsyncMock(return_value={}))
-
-    monkeypatch.setattr(settings, "agent_arch", False)
-    reply_cascade = await route_message(make_state(), message)
-
-    monkeypatch.setattr(settings, "agent_arch", True)
-    reply_graph = await route_message(make_state(), message)
-
-    assert reply_graph == reply_cascade
-    assert reply_graph  # no se dropea el turno

@@ -5286,12 +5286,13 @@ async def maybe_handle_turn(
     Devuelve None solo para las clases de mensaje que deben seguir cayendo a
     los handlers deterministas legacy (escalado por keyword, menú/volver).
 
-    `routing_signals` (auditoría 2026-07-22): ya calculado UNA vez por
-    `supervisor._shared_turn_handler` (nunca se recalcula aquí).
+    `routing_signals` (auditoría 2026-07-22): ya calculado UNA vez por el nodo
+    router del grafo, que lo pasa por `supervisor._shared_turn_handler` (nunca
+    se recalcula aquí).
 
     (Fase 3.3b/c/d/e) Orquesta las fases extraídas: `_setup_phase` →
     `_availability_phase` → `_routing_phase` → `_extraction_phase` →
-    `_slotfill_close_phase`. El subgrafo del booking (flag on) llama a las MISMAS
+    `_slotfill_close_phase`. El subgrafo del booking llama a las MISMAS
     funciones como nodos, así que cascada y grafo comparten la fuente de verdad —
     equivalencia por construcción."""
     routing_signals = routing_signals or {}

@@ -1,8 +1,8 @@
 {
  "meta": {
-  "generado": "2026-10-19T01:29:24+00:00",
-  "commit": "a637665",
-  "rama": "feature/pre_gadea"
+  "generado": "2026-10-19T03:22:22+00:00",
+  "commit": "970641f",
+  "rama": "limpieza-s4-1"
  },
  "vistas": {
   "general": {
@@ -110,13 +110,6 @@
    "que_hace": "Abre la traza del turno y manda el mensaje al grafo de agentes. Al final recoge las tareas en paralelo.",
    "donde": "src/agents/supervisor.py:route_message",
    "interruptores": [
-    {
-     "nombre": "agent_arch",
-     "titulo": "Grafo de agentes",
-     "codigo": true,
-     "pre": true,
-     "sin_efecto": false
-    },
     {
      "nombre": "aviso_si_openai_falla",
      "titulo": "Si OpenAI cae, decir la verdad y pasar a un asesor",
@@ -300,9 +293,9 @@
    "carril": "flujo",
    "tipo": "respaldo",
    "titulo": "Cascada (respaldo)",
-   "que_hace": "El camino antiguo, en orden fijo. Si ninguna regla de una ruta resuelve el mensaje, la ruta se lo pasa aquí.",
+   "que_hace": "Lo que queda del camino antiguo, en orden fijo. Si ninguna regla de una ruta resuelve el mensaje, la ruta se lo pasa aquí.",
    "donde": "src/agents/supervisor.py:_shared_turn_handler",
-   "nota": "Cuántos mensajes caen aquí está SIN MEDIR: la cascada no deja tiempos propios en los registros. En la animación se usa una estimación pequeña y por eso no lleva porcentaje. Candidata a desaparecer en la 'Limpieza 2'.",
+   "nota": "Cuántos mensajes caen aquí está SIN MEDIR: la cascada no deja tiempos propios en los registros. En la animación se usa una estimación pequeña y por eso no lleva porcentaje. s4-1 (19-oct) le quitó lo que ya no corría nunca (el camino sin grafo y las reglas que las rutas resuelven antes); se queda como respaldo de las rutas.",
    "capa_de": "booking",
    "modelos": [],
    "interruptores": []
@@ -1902,19 +1895,6 @@
    "sin_efecto": null
   },
   {
-   "nombre": "agent_arch",
-   "area": "Arquitectura",
-   "titulo": "Grafo de agentes",
-   "texto": "Cada mensaje pasa por el enrutador y una de las 5 rutas. Apagado, vuelve el camino antiguo (la cascada).",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [
-    "route_message"
-   ],
-   "sin_efecto": null
-  },
-  {
    "nombre": "aplazar_pregunta_sin_respuesta",
    "area": "Reserva",
    "titulo": "No repite la pregunta que el cliente no contestó",
@@ -2523,17 +2503,6 @@
    "fijado_en_pre": false,
    "usado_por": [],
    "sin_efecto": null
-  },
-  {
-   "nombre": "llm_extraction_shadow_mode",
-   "area": "Solo pruebas",
-   "titulo": "Extracción en sombra",
-   "texto": "Apunta en el registro lo que haría el LLM, sin cambiar nada.",
-   "codigo": false,
-   "pre": false,
-   "fijado_en_pre": false,
-   "usado_por": [],
-   "sin_efecto": "Su función (_maybe_log_llm_extraction_shadow) no la llama nadie."
   },
   {
    "nombre": "llm_group_allocation_veto_cutover",

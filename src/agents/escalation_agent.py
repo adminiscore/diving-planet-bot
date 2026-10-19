@@ -30,7 +30,7 @@ la oferta de asesor): en la cascada están DESPUÉS de `maybe_handle_turn`, así
 la cascada corre el núcleo PRIMERO y solo cae a estos gates si el núcleo devuelve
 None. Reproducirlos aquí sin correr el núcleo cambiaría el orden → posible
 divergencia. Por eso NO se reproducen: se **delega en la cascada**, que corre el
-núcleo y luego el gate, exactamente como con el flag off. Es un no-op de
+núcleo y luego el gate, en el mismo orden que la cascada antigua. Es un no-op de
 comportamiento pero mantiene la equivalencia garantizada (patrón del nodo
 `deflection`: se maneja lo aislado, se delega la cola).
 
