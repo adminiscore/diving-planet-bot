@@ -213,7 +213,11 @@ ROUTING_TOOL = {
                         "WhatsApp or on the website?'), or for the contact of "
                         "ANOTHER business such as a hotel ('¿me pasas el "
                         "contacto del hotel?') — those are information "
-                        "questions. When unsure, leave it false."
+                        "questions. Asking us to SEND them something (the "
+                        "link, the price, information) by WhatsApp or email "
+                        "('¿me mandas el link por whatsapp?') is not asking "
+                        "for a contact channel either. When unsure, leave it "
+                        "false."
                     ),
                 },
                 "comparing_options": {
