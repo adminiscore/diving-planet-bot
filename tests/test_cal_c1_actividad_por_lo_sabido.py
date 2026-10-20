@@ -55,7 +55,7 @@ def test_quiere_bucear_sin_saber_la_certificacion_la_pregunta(flag):
     assert "¿Eres buzo certificado?" in texto and MENU not in texto
     assert st.core_pending_slot == SLOT_CERTIFICATION
     st = _estado(quiere_bucear=True, detected_group_size=2)
-    assert "¿Sois buzos certificados?" in ask_slot(st, SLOT_ACTIVITY)
+    assert "¿Son buzos certificados?" in ask_slot(st, SLOT_ACTIVITY)  # textos_de_cartagena (20-oct): ustedes
 
 
 def test_certificado_recibe_el_menu_de_certificados(flag):

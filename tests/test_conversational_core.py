@@ -201,7 +201,7 @@ def test_nationality_question_singular_for_one_person():
 
     grupo = make_state("es")
     grupo.detected_group_size = 3
-    assert "sois colombianos" in core.ask_slot(grupo, core.SLOT_NATIONALITY)
+    assert "son colombianos" in core.ask_slot(grupo, core.SLOT_NATIONALITY)  # textos_de_cartagena (20-oct): ustedes
 
 
 def test_slot_order_beginner_skips_safety():
