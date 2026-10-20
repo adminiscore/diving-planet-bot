@@ -156,10 +156,10 @@ services:
       # gen-1 + gen-3 (20-oct, fase GEN; docs/robustness/gen/gen1-diagnostico.md): contestar lo contestable antes del
       # pase por tema médico o clima; el clima dice antes la política (decisión de Gadea); una dieta o alergia no es
       # tema médico (se lee al arrancar); y con eso la alergia alimentaria ya puede ir al RAG (ATAJO_ALERGIA_POR_RAG,
-      # más arriba). APAGADOS hasta su ronda.
-      CONTESTA_ANTES_DE_PASAR: "false"
-      CLIMA_CON_POLITICA: "false"
-      DIETA_NO_ES_MEDICA: "false"
+      # más arriba). ENCENDIDOS para la ronda core gen3-B (frente a gen3-A, del mismo día).
+      CONTESTA_ANTES_DE_PASAR: "true"
+      CLIMA_CON_POLITICA: "true"
+      DIETA_NO_ES_MEDICA: "true"
       # CERTIFICADO_SOLO_SI_LO_DICE con «buceé hace poco» = certificado (decisión de Gadea). PROMOCIONADO (HISTORY
       # 0.31.61: mod-H2 97,0 % igual que limpieza-3; reserva-solo-link ya no ofrece el minicurso). Revert = quitar estas líneas.
       CERTIFICADO_SOLO_SI_LO_DICE: "true"
@@ -241,7 +241,7 @@ services:
       # 0.31.18); alergia no paso su escalon 0 (acababa en el aviso medico): APAGADO.
       ATAJO_RESUMEN_POR_RAG: "true"
       ATAJO_NACIONALIDAD_POR_RAG: "true"
-      ATAJO_ALERGIA_POR_RAG: "false"
+      ATAJO_ALERGIA_POR_RAG: "true"
       # g-7 paso 4 (24-sep): los chats antiguos (conversations.json) y el few-shot
       # se borraron del codigo y del indice, asi que RAG_EXCLUDE_SOURCES y
       # RAG_FEWSHOT_ENABLED ya no hacen falta. l1-1 (juez de grounding unico) es
