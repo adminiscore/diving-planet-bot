@@ -163,9 +163,9 @@ services:
       DIETA_NO_ES_MEDICA: "true"
       # gen-2 (20-oct; docs/robustness/gen/gen2-diagnostico.md): la pregunta sola de la búsqueda deja el sitio si la
       # pregunta trata de él (Barú), y el RAG abre con la respuesta (sin «¡Claro que sí!» delante de un no). La base
-      # (policies.json) va aparte: el CI la regenera en cada despliegue. APAGADOS hasta su ronda.
-      PREGUNTA_SOLA_CON_SU_SITIO: "false"
-      ABRE_CON_LA_RESPUESTA: "false"
+      # (policies.json) va aparte: el CI la regenera en cada despliegue. ENCENDIDOS para la ronda core gen2-B.
+      PREGUNTA_SOLA_CON_SU_SITIO: "true"
+      ABRE_CON_LA_RESPUESTA: "true"
       # CERTIFICADO_SOLO_SI_LO_DICE con «buceé hace poco» = certificado (decisión de Gadea). PROMOCIONADO (HISTORY
       # 0.31.61: mod-H2 97,0 % igual que limpieza-3; reserva-solo-link ya no ofrece el minicurso). Revert = quitar estas líneas.
       CERTIFICADO_SOLO_SI_LO_DICE: "true"
