@@ -1,6 +1,25 @@
 History
 =======
 
+0.31.72 - (2026-10-20)
+----------------------
+* **Textos fijos del flujo en el español de Cartagena, PROMOCIONADO** (decisión de Gadea; `src/flows/textos.py`, flag
+  `TEXTOS_DE_CARTAGENA`).
+  - No era un regex: son plantillas escritas a mano que el flujo envía tal cual, sin pasar por el tono del prompt del
+    RAG. El inventario de todas las cadenas de `src/` dio 8 textos al cliente:
+    - Con «vosotros» («¿Sois…?», «¿Os interesa?», «vuestro caso», «os ayudo»), que pasan a «ustedes», en singular o
+      plural según el grupo.
+    - «¡tranquilo!» con género supuesto, que pasa a «¡tranqui!».
+    - La pregunta del origen, que decía «podemos recogerte saliendo desde Cartagena» (no hay recogida en Cartagena):
+      ahora es «puedes salir desde Cartagena (desde el Muelle de la Bodeguita)».
+  - `tests/test_textos_de_cartagena.py` falla si un texto del bot usa «vosotros» o dice que se recoge en Cartagena.
+    Es un control al programar, no un regex en el bot.
+  - Ronda core **textos-B 97,4 % 26/32** frente a **gen2-B 97,4 % 27/32**, la base del mismo día con el mismo código.
+    Los 3 criterios que empeoran no pasan por estos textos:
+    - El acuse de la IA dice «none of you» a quien va solo; lo copia de un ejemplo de su prompt. Va a gen-8.
+    - Una pregunta del RAG.
+    - El menú que se añade tras una respuesta.
+
 0.31.71 - (2026-10-20)
 ----------------------
 * **gen-2 PROMOCIONADA: no inventar ni dar por hecho** (Gadea con Claude; `docs/robustness/gen/gen2-diagnostico.md`).

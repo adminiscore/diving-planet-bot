@@ -581,7 +581,7 @@ class Settings(BaseSettings):
     abre_con_la_respuesta: bool = True  # PROMOCIONADO 20-oct (gen2-B 97,4 % 27/32 frente a gen2-A 93,9 % 22/32, 0 regresiones; HISTORY 0.31.71); revert = False
     # - Textos fijos del flujo en el español de Cartagena (decisión de Gadea, 20-oct): vosotros -> ustedes, sin género
     #   supuesto y sin "podemos recogerte saliendo desde Cartagena" (no hay recogida en Cartagena). flows/textos.py.
-    textos_de_cartagena: bool = True  # ENCENDIDO para la ronda core textos-B (frente a gen2-B)
+    textos_de_cartagena: bool = True  # PROMOCIONADO 20-oct (textos-B 97,4 % 26/32 frente a gen2-B 97,4 % 27/32: los 3 que empeoran no pasan por estos textos; HISTORY 0.31.72); revert = False
     # s4-33 (8-oct, Alvaro): instrucciones del juez de grounding v3 para GPT-6 Luna (prompts/info.py
     # GROUNDING_VERIFY_V3_LUNA_*): el v3 entero + 3 aclaraciones (lo que dice el cliente de si mismo no se comprueba;
     # valoraciones y ofertas de ayuda no son datos; las deducciones directas del contexto cuentan). Va con
