@@ -1,6 +1,21 @@
 History
 =======
 
+0.31.73 - (2026-10-20)
+----------------------
+* **gen-7 (refresher) PROMOCIONADO** (`docs/robustness/gen/gen7-diagnostico.md`).
+  - En la reserva, «sí, uno de nosotros no bucea desde hace 4 años» REPETÍA la pregunta de seguridad y el refresher no
+    llegaba. El dato era de OTRA persona y `_restore_main_diver_fields` lo devolvía a `None`.
+  - `SEGURIDAD_DE_GRUPO`: `conversational_core.refresh_en_el_grupo` cuenta a todo el grupo.
+  - `REFRESHER_COMPLETO`: el texto del refresher dice que se reserva como Minicurso y que lleva el formulario médico de
+    curso.
+  - Banco propio: 0/2 → 2/2.
+  - Ronda core **gen7-B 96,1 % 25/32** frente a **textos-B 97,4 % 26/32**: 3 criterios mejoran y 6 empeoran.
+    - Ninguno de los 6 pasa por el cambio: fotos, buceo adaptado, moneda-precios y ROVERD ya habían variado hoy.
+    - El invento del referral sale igual con los flags apagados y encendidos (atribución 3+3); es del RAG.
+  - Para revisar: la base nombra el sistema interno «ROVERD» (`booking_system_info`, descuentos) y el bot lo dijo una
+    vez.
+
 0.31.72 - (2026-10-20)
 ----------------------
 * **Textos fijos del flujo en el español de Cartagena, PROMOCIONADO** (decisión de Gadea; `src/flows/textos.py`, flag

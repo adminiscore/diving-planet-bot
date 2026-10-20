@@ -59,7 +59,38 @@ integrar la rama del otro y suite en verde, porque en PRE gana el último; (3) *
 despliegue reinicia el contenedor y mata la medida del otro (avisar en el registro de Plan Coral con la hora de fin).
 Las doce normas, con su porqué, están en el documento.
 
-### ▶️ RETOMAR AQUÍ — 20-oct, 00:20 (Gadea con Claude, en autonomía): ex-9b TERMINADO; G9 lanzado (autorizado por Gadea)
+### ▶️ RETOMAR AQUÍ — 20-oct, 16:40 (Gadea con Claude): fase GEN (subir el examen oculto) — gen-1, gen-2, gen-3 (a), textos de Cartagena y gen-7 PROMOCIONADOS
+
+- **Plan:** fase **GEN** en Plan Coral (tareas gen-1 a gen-11). Sale de G9: 84,1 % de criterios y 20/72 diálogos sin
+  fallos (26 diálogos con un solo fallo). Reglas: nada de parches ni regex, se arregla por causa con bancos de frases
+  propias y nadie abre el examen.
+- **Hecho hoy (HISTORY 0.31.70-0.31.73), cada cambio con su ronda core frente a una base del mismo día:**
+  - **gen-1** (diagnóstico): el RAG a solas cubre el 96 %; el dato se perdía en el pase a un asesor.
+  - **gen-3 (a)**: contesta lo contestable antes de pasar; el clima explica su política; una dieta no es tema médico; la
+    alergia la contesta el RAG. gen3-B 98,7 % 30/32.
+  - **gen-2**: la base dice lo que es «no» (Barú, sin recogida en Cartagena, una noche, pago presencial); la pregunta
+    sola conserva el sitio; el bot abre con la respuesta. gen2-B 97,4 % 27/32 frente a 93,9 % 22/32.
+  - **Textos de Cartagena**: vosotros → ustedes, sin género supuesto y sin «podemos recogerte saliendo desde
+    Cartagena». Hay un test que impide volver a escribir vosotros en un texto del bot.
+  - **gen-7 (refresher)**: la pregunta de seguridad cuenta a todo el grupo y el texto del refresher dice cómo se
+    reserva. Banco 0/2 → 2/2.
+- **Herramientas nuevas:**
+  - `reproducir_juez_pre --banco <json>`: diálogos propios dentro de PRE, con lo que contestó el RAG en cada turno.
+  - `rag_piezas --preguntas <json>`: otros sets de preguntas.
+  - Bancos en `docs/robustness/gen/` y `docs/robustness/rag-piezas/preguntas-gen*.json`.
+- **Siguiente (lo decide Gadea):**
+  - gen-3 (b): pasar directamente cuando toca (servicio privado, cambio urgente), en vez de ofrecerlo.
+  - gen-8, con estos hallazgos: el acuse de la IA dice «none of you» a quien va solo (lo copia de un ejemplo de
+    `src/prompts/booking.py:1394`), y tras una respuesta se añade el menú de actividades aunque ya la eligió.
+  - gen-4 y gen-6 (Álvaro), gen-5 (Gonzalo).
+  - **gen-11** (Álvaro y Gonzalo, con el negocio): qué llevar y si hay un mínimo de personas. No preguntárselo a Gadea.
+  - gen-9 y gen-10, a decidir por Gadea: el criterio del WhatsApp y un G10 nuevo para la medida final.
+  - Para revisar: la base nombra el sistema interno «ROVERD» y el bot lo dijo una vez.
+- **Rondas:** varían ±3 diálogos con el mismo código. Comparar siempre con una base del mismo día y juzgar las dos con
+  la misma referencia (la caché del juez depende de la base). Al subir `policies.json`, el CI regenera `kb_v2` en PRE.
+- **PRE:** `feature/pre_gadea`, último commit de hoy; libre.
+
+### (anterior) RETOMAR AQUÍ — 20-oct, 00:20 (Gadea con Claude, en autonomía): ex-9b TERMINADO; G9 lanzado (autorizado por Gadea)
 
 **ex-9b (las expresiones regulares que "entendían" al cliente) TERMINADO y en PRE (835d318, pre_gadea).** HISTORY
 0.31.62-0.31.68. Rondas core del día: ex9b-1 96,1 % → ex9b-2 97,0 % → ex9b-3 97,4 % → (ex9b-4/5/6, el paso 6 mal
