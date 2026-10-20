@@ -1,6 +1,27 @@
 History
 =======
 
+0.31.71 - (2026-10-20)
+----------------------
+* **gen-2 PROMOCIONADA: no inventar ni dar por hecho** (Gadea con Claude; `docs/robustness/gen/gen2-diagnostico.md`).
+  - **Ronda core gen2-B 97,4 % 27/32** frente a **gen2-A 93,9 % 22/32**, del mismo día y juzgadas con la misma
+    referencia:
+    - 10 criterios mejoran: sin invenciones de recogida, de origen o de reserva, y menos repreguntas.
+    - 2 empeoran, pero con la misma respuesta palabra por palabra en A y en B: es el juez.
+  - La base (`policies.json`; el CI regenera `kb_v2` al desplegar) dice lo que es «no», con datos que ya estaban:
+    - La recogida es solo en las Islas del Rosario: Barú no, y quien se aloja allí sale desde Cartagena.
+    - Desde Cartagena no hay recogida en el hotel.
+    - Los cursos de 2 días piden al menos una noche.
+    - El pago: 50 % online y 50 % en persona solo para colombianos y residentes. Además, formas de preguntar por el
+      efectivo o el muelle.
+  - `PREGUNTA_SOLA_CON_SU_SITIO`: la pregunta sola de la búsqueda quitaba «dónde se aloja» aunque la pregunta fuera de
+    ese sitio, y el bot decía que recogía en Barú.
+  - `ABRE_CON_LA_RESPUESTA`: sin «¡Claro que sí!» delante de un «no» o un «depende».
+  - Escalón 0 (`--codigo-local`, esquema `kb_v2_prueba`): `rag_piezas` gen-2 con cobertura de 50 a 83 % y
+    prohibidas de 6 a 1; banco de diálogos 22/24.
+  - Visto al aclarar la base: varios textos fijos del flujo dicen «podemos recogerte saliendo desde Cartagena»
+    (no hay recogida en Cartagena) y usan «vosotros» («¿sois…?», «os ayudo»). Va en un cambio aparte.
+
 0.31.70 - (2026-10-20)
 ----------------------
 * **Fase GEN (subir el examen oculto): gen-1 diagnosticada y gen-3 PROMOCIONADA. Contestar lo contestable antes de

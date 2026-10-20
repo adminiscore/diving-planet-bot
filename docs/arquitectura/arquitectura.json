@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-20T10:46:49+00:00",
-  "commit": "319a9e8",
+  "generado": "2026-10-20T11:48:11+00:00",
+  "commit": "815d9cf",
   "rama": "feature/pre_gadea"
  },
  "vistas": {
@@ -1027,8 +1027,8 @@
     {
      "nombre": "pregunta_sola_con_su_sitio",
      "titulo": "La búsqueda no pierde el sitio por el que se pregunta",
-     "codigo": false,
-     "pre": false,
+     "codigo": true,
+     "pre": true,
      "sin_efecto": false
     }
    ],
@@ -1161,8 +1161,8 @@
     {
      "nombre": "abre_con_la_respuesta",
      "titulo": "Empieza por la respuesta, sin «¡Claro que sí!» delante de un no",
-     "codigo": false,
-     "pre": false,
+     "codigo": true,
+     "pre": true,
      "sin_efecto": false
     },
     {
@@ -1919,8 +1919,8 @@
    "area": "Preguntas",
    "titulo": "Empieza por la respuesta, sin «¡Claro que sí!» delante de un no",
    "texto": "Si la respuesta es «no» o «depende», Coral la dice primero («La recogida no es en el hotel: …») en vez de abrir con «¡Claro que sí!». Las expresiones de ánimo van delante solo cuando la respuesta es un sí.",
-   "codigo": false,
-   "pre": false,
+   "codigo": true,
+   "pre": true,
    "fijado_en_pre": true,
    "usado_por": [
     "r_escribir"
@@ -2982,8 +2982,8 @@
    "area": "Preguntas",
    "titulo": "La búsqueda no pierde el sitio por el que se pregunta",
    "texto": "Para buscar, Coral se queda con la pregunta del mensaje y quita los datos del cliente. Si la pregunta trata de un sitio (\"estoy en Barú, ¿me recogen en el hotel?\"), ahora el sitio se queda: sin él, la búsqueda traía la recogida en los hoteles de las islas y Coral decía que recogía en Barú.",
-   "codigo": false,
-   "pre": false,
+   "codigo": true,
+   "pre": true,
    "fijado_en_pre": true,
    "usado_por": [
     "r_reescribir"

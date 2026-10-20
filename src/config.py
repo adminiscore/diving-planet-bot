@@ -575,10 +575,10 @@ class Settings(BaseSettings):
     # gen-2 (20-oct; docs/robustness/gen/gen2-diagnostico.md): "inventa o da por hecho".
     # - La pregunta sola de la búsqueda doble quitaba "dónde se aloja" aunque la pregunta fuera de ese sitio ("estoy en
     #   Barú, ¿me recogen en el hotel?" -> "¿me recogen en el hotel?"). query_rewriter._instruccion_pregunta_sola.
-    pregunta_sola_con_su_sitio: bool = False
+    pregunta_sola_con_su_sitio: bool = True  # PROMOCIONADO 20-oct (gen2-B 97,4 % 27/32 frente a gen2-A 93,9 % 22/32, 0 regresiones; HISTORY 0.31.71); revert = False
     # - El RAG empieza por la respuesta: sin "¡Claro que sí!" delante de un "no" o un "depende" (solo con
     #   `rag_no_adivina`, que está promocionado). prompts/info.RAG_ABRE_CON_LA_RESPUESTA_*.
-    abre_con_la_respuesta: bool = False
+    abre_con_la_respuesta: bool = True  # PROMOCIONADO 20-oct (gen2-B 97,4 % 27/32 frente a gen2-A 93,9 % 22/32, 0 regresiones; HISTORY 0.31.71); revert = False
     # s4-33 (8-oct, Alvaro): instrucciones del juez de grounding v3 para GPT-6 Luna (prompts/info.py
     # GROUNDING_VERIFY_V3_LUNA_*): el v3 entero + 3 aclaraciones (lo que dice el cliente de si mismo no se comprueba;
     # valoraciones y ofertas de ayuda no son datos; las deducciones directas del contexto cuentan). Va con
