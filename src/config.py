@@ -582,6 +582,13 @@ class Settings(BaseSettings):
     # - Textos fijos del flujo en el español de Cartagena (decisión de Gadea, 20-oct): vosotros -> ustedes, sin género
     #   supuesto y sin "podemos recogerte saliendo desde Cartagena" (no hay recogida en Cartagena). flows/textos.py.
     textos_de_cartagena: bool = True  # PROMOCIONADO 20-oct (textos-B 97,4 % 26/32 frente a gen2-B 97,4 % 27/32: los 3 que empeoran no pasan por estos textos; HISTORY 0.31.72); revert = False
+    # gen-7 (20-oct, refresher): "sí, uno de nosotros no bucea desde hace 4 años" a "¿… de alguno del grupo?" repetía la
+    # pregunta y el refresher no llegaba (el dato era de OTRA persona). La pregunta de seguridad cuenta a todo el grupo
+    # (conversational_core.refresh_en_el_grupo).
+    seguridad_de_grupo: bool = False
+    # - El texto fijo del refresher dice lo que dice la base: se reserva como Minicurso y lleva el formulario médico de
+    #   curso (G9: "no dijo que se reserva como minicurso", "no mencionó el formulario médico").
+    refresher_completo: bool = False
     # s4-33 (8-oct, Alvaro): instrucciones del juez de grounding v3 para GPT-6 Luna (prompts/info.py
     # GROUNDING_VERIFY_V3_LUNA_*): el v3 entero + 3 aclaraciones (lo que dice el cliente de si mismo no se comprueba;
     # valoraciones y ofertas de ayuda no son datos; las deducciones directas del contexto cuentan). Va con

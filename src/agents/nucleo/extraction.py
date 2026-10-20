@@ -47,6 +47,7 @@ from src.agents.conversational_core import (
     _take_undecided_members,
     ask_slot,
     next_missing_slot,
+    refresh_en_el_grupo,
 )
 from src.agents.intent_detector import (
     _PERSON_NOUN_MENTION_EN,
@@ -920,7 +921,7 @@ def _jev_rules_out_special_signals(state: ConversationState) -> bool:
     # Con el refresher en juego (mas de 2 anos sin bucear) la respuesta a esa pregunta puede llegar en
     # cualquier turno ("espera, en realidad si lo quiero" con otra pregunta ya pendiente, escalon 0):
     # esa la lee el LLM.
-    if state.last_dive_over_2_years or (state.core_pending_slot or next_missing_slot(state)) == SLOT_REFRESHER:
+    if refresh_en_el_grupo(state) or (state.core_pending_slot or next_missing_slot(state)) == SLOT_REFRESHER:
         return False
     logger.info(f"[CORE][U3-6] señales sin LLM (Jev: acompañante {p:.2f}, no pide recordar)")
     return True

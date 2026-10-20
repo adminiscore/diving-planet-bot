@@ -183,6 +183,18 @@ _SLOTS_APLAZABLES = frozenset({
 })
 
 
+def refresh_en_el_grupo(state: ConversationState) -> bool | None:
+    """¿Alguien del grupo lleva más de 2 años sin bucear? None si aún no se sabe.
+
+    gen-7 (20-oct, flag `seguridad_de_grupo`): la pregunta de seguridad es de GRUPO ("¿… de alguno del grupo?") y el
+    refresher se cobra "por persona que lo necesite", pero solo contaba quien escribe (`last_dive_over_2_years`).
+    "Sí, uno de nosotros no bucea desde hace 4 años" lo guardaba el extractor como de OTRA persona
+    (`acompanante_certificado_inactivo`) y la pregunta se repetía sin llegar nunca al refresher."""
+    if state.last_dive_over_2_years or (settings.seguridad_de_grupo and state.acompanante_certificado_inactivo):
+        return True
+    return state.last_dive_over_2_years
+
+
 def next_missing_slot(state: ConversationState, saltar: frozenset[str] | set[str] = frozenset()) -> str | None:
     """El ÚNICO slot obligatorio que falta, o None si la reserva está lista
     para el resumen + links. Lógica pura: no muta el estado. `saltar`: slots
@@ -228,9 +240,10 @@ def next_missing_slot(state: ConversationState, saltar: frozenset[str] | set[str
     if not state.detected_group_size and not state.detected_group_allocation and SLOT_QTY not in saltar:
         return SLOT_QTY
     if _cart_will_include_cert(state):
-        if state.last_dive_over_2_years is None and SLOT_SAFETY not in saltar:
+        refresh = refresh_en_el_grupo(state)
+        if refresh is None and SLOT_SAFETY not in saltar:
             return SLOT_SAFETY
-        if state.last_dive_over_2_years and state.refresher_interested is None and SLOT_REFRESHER not in saltar:
+        if refresh and state.refresher_interested is None and SLOT_REFRESHER not in saltar:
             return SLOT_REFRESHER
     if state.kids_mention_detected and not state.detected_ages and SLOT_AGES not in saltar:
         return SLOT_AGES
@@ -568,6 +581,20 @@ def ask_slot(state: ConversationState, slot: str, *, reasking: bool = False) -> 
         )
         # Se cobra (owner 2026-09-14): precio por persona desde el catalogo.
         price = cart_render.refresher_price_text(state, una_moneda=settings.rag_sin_precio_con_tarjeta)  # G3-07a
+        if settings.refresher_completo:
+            # gen-7 (20-oct): lo que dice la base del refresher (ficha `refresher:minicourse` y `medical_restrictions`):
+            # se reserva como el Minicurso de Buceo y usa el formulario médico de curso, aunque sea buzo certificado.
+            plural = (state.detected_group_size or 1) > 1
+            return (
+                "El *refresher* es un repaso con instructor antes de volver a bucear: se reserva como *Minicurso de "
+                f"Buceo* y cuesta *{price}* por persona que lo necesite. Lleva el formulario médico de curso (aunque "
+                "estén certificados, el enlace llega con la reserva). "
+                + ("¿Les interesa?" if plural else "¿Te interesa?")
+                if lang == "es" else
+                "The *refresher* is an instructor-led review before diving again: it is booked as the *Dive Mini "
+                f"Course* and costs *{price}* per person who needs it. It uses the course medical form (even for "
+                "certified divers; the link comes with the booking). Are you interested?"
+            )
         return (
             "El *refresher* es una sesión corta de repaso en el agua antes de la "
             f"inmersión. Tiene un costo de *{price}* por persona que lo necesite. "

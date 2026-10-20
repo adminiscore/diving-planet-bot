@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-20T13:00:33+00:00",
-  "commit": "2b52402",
+  "generado": "2026-10-20T13:12:46+00:00",
+  "commit": "af165db",
   "rama": "feature/pre_gadea"
  },
  "vistas": {
@@ -683,6 +683,20 @@
      "titulo": "Las preguntas fijas, en el español de Cartagena",
      "codigo": true,
      "pre": true,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "seguridad_de_grupo",
+     "titulo": "La pregunta de los 2 años sin bucear cuenta a todo el grupo",
+     "codigo": false,
+     "pre": false,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "refresher_completo",
+     "titulo": "El refresher dice cómo se reserva y qué formulario lleva",
+     "codigo": false,
+     "pre": false,
      "sin_efecto": false
     }
    ],
@@ -3235,6 +3249,19 @@
    "sin_efecto": null
   },
   {
+   "nombre": "refresher_completo",
+   "area": "Reserva",
+   "titulo": "El refresher dice cómo se reserva y qué formulario lleva",
+   "texto": "Al ofrecer el refresher, Coral dice también que se reserva como Minicurso de Buceo y que lleva el formulario médico de curso aunque sean buzos certificados (el enlace llega con la reserva).",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": true,
+   "usado_por": [
+    "b_extraction"
+   ],
+   "sin_efecto": null
+  },
+  {
    "nombre": "refresher_por_extractor",
    "area": "Reserva",
    "titulo": "Si quiere el repaso, se apunta aunque no se le haya preguntado",
@@ -3307,6 +3334,19 @@
    "fijado_en_pre": false,
    "usado_por": [
     "r_escribir"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "seguridad_de_grupo",
+   "area": "Reserva",
+   "titulo": "La pregunta de los 2 años sin bucear cuenta a todo el grupo",
+   "texto": "Coral pregunta si alguno del grupo lleva más de 2 años sin bucear. Si contestaban «sí, uno de nosotros, hace 4 años», ese dato se guardaba como de otra persona y la pregunta se repetía sin llegar nunca al refresher. Ahora cuenta para el grupo y Coral ofrece el refresher.",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": true,
+   "usado_por": [
+    "b_extraction"
    ],
    "sin_efecto": null
   },
