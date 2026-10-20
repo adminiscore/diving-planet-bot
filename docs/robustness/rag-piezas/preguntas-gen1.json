@@ -1,0 +1,264 @@
+{
+ "about": "gen-1 (Plan Coral, fase GEN, 20-oct): preguntas VISIBLES con frases propias para las CAUSAS de 'el RAG contesta incompleto' que dejó G9 (qué incluye un plan, horarios de regreso y recogida, días y cupo, edades, profundidad, seguro, descuentos, moneda, referido, comida, pagos, alojamiento, buceo adaptado, precio por origen). Ninguna sale del examen: los temas salen del análisis por causas (g9-analisis-2026-10-20.md) y la verdad de data/knowledge_base. Mismo formato que preguntas.json; se corre con rag_piezas --preguntas.",
+ "version": 1,
+ "creado": "2026-10-20",
+ "casos": [
+  {
+   "id": "gen1-incluye-2buceos-es",
+   "origen": "gen-1: frase propia",
+   "lang": "es",
+   "pregunta": "Buenas, ya tengo mi certificación. Si cojo la salida de dos inmersiones desde Cartagena, ¿qué me cubre el precio exactamente?",
+   "estado": {"is_certified": true, "location": "cartagena"},
+   "necesita": [
+    {"id": "lancha", "hecho": "Incluye la lancha Cartagena-Islas-Cartagena.", "anclas": ["cartagena-islas-cartagena"]},
+    {"id": "almuerzo", "hecho": "Incluye el almuerzo.", "anclas": ["almuerzo"]},
+    {"id": "seguro", "hecho": "Incluye el seguro de buceo obligatorio.", "anclas": ["seguro de buceo obligatorio", "seguro obligatorio de buceo"]},
+    {"id": "equipo", "hecho": "Incluye el equipo de buceo.", "anclas": ["equipo de buceo"]},
+    {"id": "parque", "hecho": "Incluye la tarifa de ingreso al Parque Nacional Natural.", "anclas": ["parque nacional"]},
+    {"id": "dos-inmersiones-guiadas", "hecho": "Incluye 2 inmersiones guiadas con un profesional PADI.", "anclas": ["2 inmersiones guiadas", "2 inmersiones"]}
+   ],
+   "no_debe": ["El precio incluye el transporte terrestre hasta el muelle."]
+  },
+  {
+   "id": "gen1-incluye-minicurso-en",
+   "origen": "gen-1: frase propia",
+   "lang": "en",
+   "pregunta": "First time diving for me. The mini course leaving from Cartagena, what's covered in the price?",
+   "estado": {"is_certified": false, "location": "cartagena"},
+   "necesita": [
+    {"id": "boat", "hecho": "Boat transport Cartagena-Islands-Cartagena is included.", "anclas": ["cartagena-islands-cartagena", "cartagena-islas-cartagena"]},
+    {"id": "lunch", "hecho": "Lunch is included.", "anclas": ["lunch", "almuerzo"]},
+    {"id": "insurance", "hecho": "Mandatory dive insurance is included.", "anclas": ["dive insurance", "seguro"]},
+    {"id": "equipment", "hecho": "Diving equipment is included.", "anclas": ["diving equipment", "equipo de buceo"]},
+    {"id": "park", "hecho": "The National Park entrance fee is included.", "anclas": ["national park", "parque nacional"]},
+    {"id": "pool-1-dive", "hecho": "It includes pool training plus 1 ocean dive with a PADI instructor.", "anclas": ["1 ocean dive", "1 inmersion en mar"]}
+   ],
+   "no_debe": ["The mini course gives a PADI certification."]
+  },
+  {
+   "id": "gen1-incluye-ow-es",
+   "origen": "gen-1: frase propia",
+   "lang": "es",
+   "pregunta": "Del curso Open Water saliendo desde Cartagena, ¿qué está incluido y qué no?",
+   "estado": {"location": "cartagena", "selected_service": "open_water"},
+   "necesita": [
+    {"id": "inmersiones", "hecho": "Incluye el entrenamiento en piscina y 4 inmersiones de certificación con instructor PADI.", "anclas": ["4 inmersiones de certificacion"]},
+    {"id": "certificacion", "hecho": "Incluye la tarjeta de certificación PADI.", "anclas": ["tarjeta de certificacion padi", "certificacion padi"]},
+    {"id": "lancha", "hecho": "Incluye la lancha Cartagena-Islas-Cartagena.", "anclas": ["cartagena-islas-cartagena"]},
+    {"id": "equipo-seguro", "hecho": "Incluye el equipo de buceo y el seguro de buceo obligatorio.", "anclas": ["seguro de buceo obligatorio + equipo de buceo"]},
+    {"id": "almuerzo-dia1", "hecho": "Incluye el almuerzo solo el primer día.", "anclas": ["almuerzo el primer dia", "almuerzo solo el dia 1"]},
+    {"id": "sin-alojamiento", "hecho": "No incluye el alojamiento en las islas (hay que dormir al menos una noche).", "anclas": ["alojamiento no incluido", "hotel/alojamiento en islas del rosario"]}
+   ],
+   "no_debe": ["El curso incluye el hotel en las islas."]
+  },
+  {
+   "id": "gen1-incluye-minicurso-islas-es",
+   "origen": "gen-1: frase propia",
+   "lang": "es",
+   "pregunta": "Estoy en un hotel en Isla Grande que tiene muelle. El minicurso desde aquí, ¿qué trae incluido?",
+   "estado": {"location": "island", "island": "Isla Grande"},
+   "necesita": [
+    {"id": "recogida", "hecho": "Incluye la recogida en el hotel si tiene acceso marítimo, sin cargo adicional.", "anclas": ["recogida en hotel", "sin cargo adicional"]},
+    {"id": "seguro-equipo", "hecho": "Incluye el seguro de buceo y el equipo de buceo.", "anclas": ["seguro de buceo + equipo de buceo"]},
+    {"id": "profesional", "hecho": "Va acompañado por un profesional PADI.", "anclas": ["profesional padi"]},
+    {"id": "sin-almuerzo", "hecho": "Desde las islas el almuerzo NO está incluido.", "anclas": ["almuerzo no incluido"]}
+   ],
+   "no_debe": ["El minicurso desde las islas incluye el almuerzo.", "Incluye la lancha desde Cartagena."]
+  },
+  {
+   "id": "gen1-regreso-es",
+   "origen": "gen-1: frase propia",
+   "lang": "es",
+   "pregunta": "¿Y a qué hora estaríamos otra vez en Cartagena después de bucear?",
+   "estado": {"is_certified": true, "location": "cartagena"},
+   "necesita": [
+    {"id": "sale-3pm", "hecho": "La lancha regresa a Cartagena a las 3:00 p.m.", "anclas": ["3:00 p.m."]},
+    {"id": "llega-415", "hecho": "La llegada estimada a Cartagena es hacia las 4:15 p.m.", "anclas": ["4:15"]}
+   ],
+   "no_debe": ["Regresan a Cartagena antes del mediodía."]
+  },
+  {
+   "id": "gen1-recogida-islas-en",
+   "origen": "gen-1: frase propia",
+   "lang": "en",
+   "pregunta": "We're staying at a place on Isla Grande with its own dock. What time do you come get us for snorkeling, and is the pick-up extra?",
+   "estado": {"location": "island", "island": "Isla Grande", "selected_service": "snorkeling"},
+   "necesita": [
+    {"id": "franja", "hecho": "Pick-up at the hotel is between 9:30 and 9:45 a.m.", "anclas": ["9:30 + 9:45"]},
+    {"id": "sin-cargo", "hecho": "If the hotel has boat access, pick-up and return are included at no extra charge.", "anclas": ["sin cargo adicional", "no additional charge", "no extra charge", "hotel pick-up"]}
+   ],
+   "no_debe": ["The pick-up has an extra cost."]
+  },
+  {
+   "id": "gen1-dias-navidad-es",
+   "origen": "gen-1: frase propia",
+   "lang": "es",
+   "pregunta": "Vamos a estar en Cartagena entre Navidad y Año Nuevo, ¿salen a bucear esos días?",
+   "estado": {},
+   "necesita": [
+    {"id": "cerrado-25-1", "hecho": "Solo cierran el 25 de diciembre y el 1 de enero; el resto de días operan, festivos incluidos.", "anclas": ["25 de diciembre + 1 de enero", "december 25 + january 1"]}
+   ],
+   "no_debe": ["Cierran toda la semana de Navidad."]
+  },
+  {
+   "id": "gen1-cupo-es",
+   "origen": "gen-1: frase propia",
+   "lang": "es",
+   "pregunta": "¿Les queda cupo para el miércoles? Seríamos tres buzos",
+   "estado": {"detected_group_size": 3, "is_certified": true, "location": "cartagena"},
+   "necesita": [
+    {"id": "siempre-hay", "hecho": "Siempre hay disponibilidad.", "anclas": ["siempre hay disponibilidad"]},
+    {"id": "fecha-en-enlace", "hecho": "La fecha y las personas se eligen en el enlace de reserva.", "anclas": ["se eligen en el enlace de reserva", "enlace de reserva"]},
+    {"id": "corte-430", "hecho": "Para reservar para el día siguiente hay que hacerlo antes de las 4:30 p.m.", "anclas": ["4:30"], "opcional": true}
+   ],
+   "no_debe": ["Hay que consultar la disponibilidad con un asesor."]
+  },
+  {
+   "id": "gen1-edad-snorkel-en",
+   "origen": "gen-1: frase propia",
+   "lang": "en",
+   "pregunta": "Our girl is 7. Is there anything she can do in the water with us?",
+   "estado": {},
+   "necesita": [
+    {"id": "snorkel-6", "hecho": "Snorkeling is from 6 years old, so a 7-year-old can snorkel.", "anclas": ["6 anos", "6 years", "age 6", "minimum age 6", "edad minima 6"]},
+    {"id": "buceo-10", "hecho": "The dive mini course and PADI courses are from 10 years old.", "anclas": ["10 anos", "10 years", "minimum age 10", "edad minima 10"], "opcional": true}
+   ],
+   "no_debe": ["A 7-year-old can do the dive mini course."]
+  },
+  {
+   "id": "gen1-profundidad-advanced-en",
+   "origen": "gen-1: frase propia",
+   "lang": "en",
+   "pregunta": "I hold an Advanced card. How deep can I go on your fun dives?",
+   "estado": {"is_certified": true},
+   "necesita": [
+    {"id": "advanced-30", "hecho": "With Advanced certification the limit is 30 meters.", "anclas": ["30 metros", "30 meters", "30 m"]},
+    {"id": "ow-18", "hecho": "Open Water divers go down to 18 meters.", "anclas": ["18 metros", "18 meters", "18 m"], "opcional": true}
+   ],
+   "no_debe": []
+  },
+  {
+   "id": "gen1-seguro-es",
+   "origen": "gen-1: frase propia",
+   "lang": "es",
+   "pregunta": "Una duda, ¿el seguro va incluido en el precio o tengo que contratar uno por mi cuenta?",
+   "estado": {"is_certified": true, "location": "cartagena"},
+   "necesita": [
+    {"id": "incluido", "hecho": "Todos los planes incluyen el seguro de buceo (o de la actividad); no hay que contratar uno aparte.", "anclas": ["incluyen seguro", "seguro de buceo obligatorio", "seguro obligatorio de buceo"]}
+   ],
+   "no_debe": ["Hay que contratar un seguro aparte."]
+  },
+  {
+   "id": "gen1-descuentos-es",
+   "origen": "gen-1: frase propia",
+   "lang": "es",
+   "pregunta": "¿Qué descuentos manejan?",
+   "estado": {},
+   "necesita": [
+    {"id": "online-10", "hecho": "10 % de descuento reservando online en la web; se aplica automáticamente, sin código.", "anclas": ["10% de descuento reservando online", "10 % de descuento", "10% de descuento"]},
+    {"id": "grupo-20", "hecho": "Grupos de 5 o más: otro 10 % que se suma al online (20 % en total), pidiéndolo al equipo antes de pagar.", "anclas": ["20%", "20 %"]}
+   ],
+   "no_debe": ["Hay un código de descuento.", "Hay un descuento especial para colombianos."]
+  },
+  {
+   "id": "gen1-precio-extranjero-en",
+   "origen": "gen-1: frase propia",
+   "lang": "en",
+   "pregunta": "Do foreigners pay more than Colombians for the tours?",
+   "estado": {},
+   "necesita": [
+    {"id": "mismo-precio", "hecho": "The price is the same for everyone; only the currency changes (COP for Colombians and residents, USD for the rest).", "anclas": ["solo cambia la moneda", "only the currency", "precio es el mismo", "same price"]},
+    {"id": "sin-descuento-nacionalidad", "hecho": "There is no special discount for being Colombian or for being a foreigner.", "anclas": ["no hay descuento por ser colombiano", "no existe descuento especial", "no special discount"]}
+   ],
+   "no_debe": ["Foreigners pay a higher price.", "Colombians get a special discount."]
+  },
+  {
+   "id": "gen1-referido-es",
+   "origen": "gen-1: frase propia",
+   "lang": "es",
+   "pregunta": "Hice la parte teórica y las prácticas de piscina del Open Water en Bogotá. ¿Puedo terminar el curso con ustedes?",
+   "estado": {},
+   "necesita": [
+    {"id": "curso-referido", "hecho": "Sí, con el Curso Referido (Open Water).", "anclas": ["curso referido"]},
+    {"id": "teoria-piscina", "hecho": "Hay que llegar con la teoría y las prácticas en piscina ya completadas en el centro de origen.", "anclas": ["teoria y las practicas en piscina"]},
+    {"id": "carta", "hecho": "Hay que traer la carta de referido firmada por un instructor PADI.", "anclas": ["carta de referido"]}
+   ],
+   "no_debe": ["Tiene que repetir la teoría y la piscina."]
+  },
+  {
+   "id": "gen1-celiaco-es",
+   "origen": "gen-1: frase propia",
+   "lang": "es",
+   "pregunta": "Soy celíaco, ¿hay algo que pueda comer en el almuerzo del tour?",
+   "estado": {"location": "cartagena"},
+   "necesita": [
+    {"id": "arroz-vegetales", "hecho": "Los celíacos reciben arroz con vegetales.", "anclas": ["arroz con vegetales"]},
+    {"id": "propia-comida", "hecho": "Puede llevar su propia comida si lo necesita.", "anclas": ["propia comida"]},
+    {"id": "avisar", "hecho": "Debe informar antes del tour de su alergia o dieta.", "anclas": ["informarnos antes", "informarlo antes"]}
+   ],
+   "no_debe": []
+  },
+  {
+   "id": "gen1-nada-mas-en",
+   "origen": "gen-1: frase propia",
+   "lang": "en",
+   "pregunta": "After paying online, will I have to pay anything else on the day of the dive?",
+   "estado": {"is_certified": true, "location": "cartagena"},
+   "necesita": [
+    {"id": "nada-obligatorio", "hecho": "No: the online price covers the plan; nothing else is mandatory on the day.", "anclas": ["included", "incluye"]},
+    {"id": "opcionales", "hecho": "Only optional extras are paid apart: underwater photos or videos, voluntary tips, additional food.", "anclas": ["voluntary tips", "propinas voluntarias"]}
+   ],
+   "no_debe": ["There is a mandatory fee to pay on the day."]
+  },
+  {
+   "id": "gen1-pago-dia-es",
+   "origen": "gen-1: frase propia",
+   "lang": "es",
+   "pregunta": "¿Puedo pagar en efectivo allá el día de la actividad?",
+   "estado": {},
+   "necesita": [
+    {"id": "anticipo-50", "hecho": "Solo colombianos y residentes en Colombia pueden pagar un anticipo del 50 % online y el otro 50 % presencial (tarjeta o efectivo).", "anclas": ["50%", "50 %"]},
+    {"id": "extranjeros-100", "hecho": "El resto de clientes extranjeros paga el 100 % con tarjeta en la página web al reservar.", "anclas": ["100%", "100 %"]}
+   ],
+   "no_debe": ["Cualquiera puede pagar todo en el muelle."]
+  },
+  {
+   "id": "gen1-alojamiento-ow-en",
+   "origen": "gen-1: frase propia",
+   "lang": "en",
+   "pregunta": "Does the Open Water price include the hotel night on the island?",
+   "estado": {"selected_service": "open_water"},
+   "necesita": [
+    {"id": "sin-hotel", "hecho": "Lodging is not included.", "anclas": ["lodging not included", "alojamiento no incluido", "accommodation is not included"]},
+    {"id": "una-noche", "hecho": "You must stay at least one night on the islands; it is not a same-day round trip.", "anclas": ["overnight", "1 noche", "una noche", "one night"]},
+    {"id": "reservar-hotel", "hecho": "The hotel is booked directly with the hotel.", "anclas": ["directamente con el hotel", "directly with the hotel"], "opcional": true}
+   ],
+   "no_debe": ["The course includes the hotel night."]
+  },
+  {
+   "id": "gen1-precio-dos-origenes-es",
+   "origen": "gen-1: frase propia",
+   "lang": "es",
+   "pregunta": "¿Cuánto vale el minicurso? Aún no sé si saldré de Cartagena o si ya estaré alojada en las islas",
+   "estado": {"is_colombian": true},
+   "necesita": [
+    {"id": "desde-cartagena", "hecho": "Desde Cartagena: 655.000 COP online.", "anclas": ["655000"]},
+    {"id": "desde-islas", "hecho": "Ya en las islas: 475.000 COP online.", "anclas": ["475000"]}
+   ],
+   "no_debe": []
+  },
+  {
+   "id": "gen1-silla-ruedas-es",
+   "origen": "gen-1: frase propia",
+   "lang": "es",
+   "pregunta": "Mi hermano va en silla de ruedas, ¿él puede bucear con ustedes?",
+   "estado": {},
+   "necesita": [
+    {"id": "si-adaptado", "hecho": "Sí: con buceo adaptado (DIVE TO HEAL) se acepta movilidad reducida y los instructores están formados en buceo adaptado.", "anclas": ["buceo adaptado", "dive to heal"]},
+    {"id": "limitacion-medica", "hecho": "La limitación es que haya condiciones médicas adicionales que contraindiquen el buceo.", "anclas": ["contraindiquen", "contraindica"]},
+    {"id": "avisar", "hecho": "Se recomienda avisar con anticipación.", "anclas": ["anticipacion"], "opcional": true}
+   ],
+   "no_debe": ["Las personas en silla de ruedas no pueden bucear."]
+  }
+ ]
+}

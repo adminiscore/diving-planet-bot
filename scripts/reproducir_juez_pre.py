@@ -12,6 +12,11 @@ el juez. Repite el diálogo N veces. **Nunca usa el examen oculto.**
     python -m scripts.reproducir_juez_pre <dialogo> --codigo-local --flag x          # con el código local, sin desplegar
     python -m scripts.reproducir_juez_pre <dialogo> --hasta 2 --reps 8               # solo los 2 primeros turnos
     python -m scripts.reproducir_juez_pre <dialogo> --codigo-local --env RAG_ANSWER_MODEL=gpt-6-luna   # otro modelo
+    python -m scripts.reproducir_juez_pre --banco docs/robustness/gen/dialogos-gen1.json --reps 1   # banco propio entero
+
+gen-1 (20-oct): `--banco` corre diálogos PROPIOS (un JSON {"dialogos": [{"id", "turnos"}]}) en una sola sesión, y cada
+turno guarda también lo que contestó el RAG (`rag`: consulta y respuesta de cada `supervisor.rag_answer`). Así se ve si
+un dato que falta en la respuesta al cliente lo dio el RAG y se perdió después, o si el RAG ni se llamó.
 
 Coste: el de N conversaciones del bot (céntimos por conversación). La cuenta de OpenAI es la misma que la de PRE.
 """
@@ -28,7 +33,7 @@ import asyncio, json, time
 from src.agents import rag_agent, supervisor
 from src.config import settings
 from src.flows.state import ConversationState
-TURNOS, REPS = json.loads(TURNOS_JSON), N_REPS
+DIALOGOS, REPS = json.loads(DIALOGOS_JSON), N_REPS
 for _f in FLAGS:  # "no:X" APAGA X solo en este proceso (17-oct: medir con PRE en la rama de otro)
     setattr(settings, _f.removeprefix("no:"), not _f.startswith("no:"))
 juicios = []
@@ -38,6 +43,14 @@ async def _spy(answer, context, lang="es"):
     juicios.append({"ok": ok, "why": why[:800], "answer": answer, "context": context})
     return ok, why
 rag_agent.is_grounded = _spy
+# gen-1 (20-oct): lo que contestó el RAG en el turno, para compararlo con lo que llegó al cliente.
+rags = []
+_orig_rag = supervisor.rag_answer
+async def _spy_rag(query, *a, **kw):
+    answer = await _orig_rag(query, *a, **kw)
+    rags.append({"query": query, "answer": answer})
+    return answer
+supervisor.rag_answer = _spy_rag
 # 9-oct (s4-28): el estado de la reserva y las líneas del flujo de cada turno, para ver QUÉ camino puso un dato
 # (p. ej. el extractor rellenando `location` con la pregunta del origen pendiente).
 import logging
@@ -54,10 +67,11 @@ _CAMPOS = ("location", "detected_location", "core_pending_slot", "pregunta_preci
            "quiere_bucear", "suggested_activity")
 
 async def main():
-    for rep in range(REPS):
-        st = ConversationState(conversation_id=f"repro-juez-{rep}")
-        for i, msg in enumerate(TURNOS, 1):
+    for dialogo, turnos, rep in [(d, ts, r) for d, ts in DIALOGOS for r in range(REPS)]:
+        st = ConversationState(conversation_id=f"repro-juez-{dialogo}-{rep}")
+        for i, msg in enumerate(turnos, 1):
             juicios.clear()
+            rags.clear()
             _TRAZA.clear()
             t0 = time.perf_counter()
             try:
@@ -65,7 +79,8 @@ async def main():
             except Exception as exc:  # noqa: BLE001
                 reply = f"ERROR {type(exc).__name__}: {exc}"
             estado = {c: getattr(st, c, None) for c in _CAMPOS if getattr(st, c, None) not in (None, "", [], {})}
-            print(json.dumps({"rep": rep, "turn": i, "msg": msg, "reply": reply, "juicios": list(juicios),
+            print(json.dumps({"dialogo": dialogo, "rep": rep, "turn": i, "msg": msg, "reply": reply,
+                              "rag": list(rags), "juicios": list(juicios),
                               "segundos": round(time.perf_counter() - t0, 2), "estado": estado,
                               "traza": list(_TRAZA)},
                              ensure_ascii=False, default=str), flush=True)
@@ -93,7 +108,8 @@ def turnos(dialogo: str) -> list[str]:
 def main() -> None:
     sys.stdout.reconfigure(encoding="utf-8")
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
-    ap.add_argument("dialogo", help="id del diálogo del golden (no del examen oculto)")
+    ap.add_argument("dialogo", nargs="?", help="id del diálogo del golden (no del examen oculto) o del --banco")
+    ap.add_argument("--banco", help="JSON propio {'dialogos': [{'id', 'turnos'}]}; sin `dialogo`, corre todos")
     ap.add_argument("--reps", type=int, default=3)
     ap.add_argument("--out", help="JSONL de salida (una línea por turno y repetición)")
     ap.add_argument("--dry", action="store_true")
@@ -105,29 +121,42 @@ def main() -> None:
                     help="corre con el código LOCAL (sin desplegar) copiado dentro de dp-pre-bot; PRE no cambia")
     args = ap.parse_args()
 
-    ts = turnos(args.dialogo)[: args.hasta or None]
-    print(f"{args.dialogo}: {len(ts)} turnos × {args.reps} repeticiones")
-    for i, t in enumerate(ts, 1):
-        print(f"  {i}. {t}")
+    if args.banco:
+        banco = json.loads(Path(args.banco).read_text(encoding="utf-8"))["dialogos"]
+        dialogos = [(d["id"], d["turnos"]) for d in banco if args.dialogo in (None, d["id"])]
+        if not dialogos:
+            raise SystemExit(f"no existe el diálogo {args.dialogo} en {args.banco}")
+    elif args.dialogo:
+        dialogos = [(args.dialogo, turnos(args.dialogo))]
+    else:
+        raise SystemExit("falta el diálogo o --banco")
+    dialogos = [(d, ts[: args.hasta or None]) for d, ts in dialogos]
+    total = sum(len(ts) for _, ts in dialogos) * args.reps
+    for d, ts in dialogos:
+        print(f"{d}: {len(ts)} turnos × {args.reps} repeticiones")
+        for i, t in enumerate(ts, 1):
+            print(f"  {i}. {t}")
     if args.dry:
         return
 
     from scripts.pre_access import docker_python, pre_ssh, subir_codigo_local
 
-    script = f"TURNOS_JSON = {json.dumps(ts, ensure_ascii=False)!r}\nN_REPS = {args.reps}\nFLAGS = {args.flag!r}\n{_REMOTO}"
+    script = (f"DIALOGOS_JSON = {json.dumps(dialogos, ensure_ascii=False)!r}\nN_REPS = {args.reps}\n"
+              f"FLAGS = {args.flag!r}\n{_REMOTO}")
     codigo = subir_codigo_local() if args.codigo_local else None
     entorno = dict(e.split("=", 1) for e in args.env)
-    r = pre_ssh(docker_python(entorno, codigo_local=codigo), input_text=script, timeout=max(600, 240 * args.reps))
+    r = pre_ssh(docker_python(entorno, codigo_local=codigo), input_text=script, timeout=max(600, 60 * total))
     filas = [json.loads(ln) for ln in (r.stdout or "").splitlines() if ln.startswith("{")]
-    out = Path(args.out) if args.out else ROOT / f"repro-{args.dialogo}.jsonl"
+    nombre = args.dialogo or Path(args.banco).stem
+    out = Path(args.out) if args.out else ROOT / f"repro-{nombre}.jsonl"
     out.write_text("".join(json.dumps(f, ensure_ascii=False) + "\n" for f in filas), encoding="utf-8")
     print(f"resultados: {len(filas)} turnos → {out}")
     for f in filas:
         rech = [j for j in f["juicios"] if not j["ok"]]
         marca = f"RECHAZOS {len(rech)}" if rech else "ok"
-        print(f"  rep {f['rep']} turno {f['turn']}: juicios {len(f['juicios'])} · {marca}"
-              + (f" · {rech[0]['why'][:140]}" if rech else ""))
-    if len(filas) < len(ts) * args.reps:
+        print(f"  {f['dialogo']} rep {f['rep']} turno {f['turn']}: rag {len(f['rag'])} · juicios {len(f['juicios'])}"
+              f" · {marca}" + (f" · {rech[0]['why'][:140]}" if rech else ""))
+    if len(filas) < total:
         print("⚠️ faltan turnos; stderr de PRE:\n" + (r.stderr or "")[-2000:])
 
 

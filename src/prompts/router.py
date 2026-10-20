@@ -325,6 +325,24 @@ ROUTING_TOOL = {
     },
 }
 
+# gen-3 (20-oct, flag `dieta_no_es_medica`): "una de nosotras es celíaca, ¿qué puede comer?" salía como
+# 'medical_questions' y pasaba a un asesor, aunque la base lo contesta (arroz con vegetales, puede traer su comida, avisar
+# antes). La misma clase de exclusión que la discapacidad o los métodos de pago de arriba. El enrutador de respaldo y Jev
+# (`jev_router.routing_questions`) leen esta descripción al importar: los dos llaman a `con_dieta_no_es_medica` con el
+# flag (este módulo no lee la configuración).
+_DIETA_NO_ES_MEDICA = (
+    " Do NOT use 'medical_questions' for a DIET or FOOD question (celiac/gluten-free, vegetarian, vegan, lactose "
+    "intolerance, a food allergy and what they can eat at lunch): that is the lunch/food policy, normal catalog "
+    "information, and must be left 'none' here."
+)
+
+
+def con_dieta_no_es_medica(tool: dict) -> None:
+    """Añade la exclusión de la dieta a la definición de `sensitive_topic` (una sola vez)."""
+    prop = tool["function"]["parameters"]["properties"]["sensitive_topic"]
+    if _DIETA_NO_ES_MEDICA not in prop["description"]:
+        prop["description"] += _DIETA_NO_ES_MEDICA
+
 
 def routing_system_prompt(lang: str) -> str:
     if lang == "es":

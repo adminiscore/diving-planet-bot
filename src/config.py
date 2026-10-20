@@ -559,6 +559,19 @@ class Settings(BaseSettings):
     # tapan, salvo en los enlaces de WhatsApp (llevan un teléfono). APAGADO hasta medirlo.
     pii_respeta_urls: bool = True  # PROMOCIONADO 20-oct (ex9b-7/8); revert = False
     openrouter_respaldo_segundos: float = 5.0  # PROMOCIONADO 19-oct (ex9b-4: saltó 1 vez, ganó el respaldo); revert = 0.0
+    # gen-1 + gen-3 (20-oct, fase GEN; docs/robustness/gen/gen1-diagnostico.md). El RAG a solas cubre el 96 % de los
+    # datos; en una conversación el dato se perdía en el PASE por tema sensible: la respuesta fija se comía el resto del
+    # mensaje ("¿cómo estará el mar el jueves? ¿el precio incluye el equipo?" -> solo "te conecto con el equipo").
+    # - Contestar lo contestable y luego pasar (médico y clima): el RAG contesta las OTRAS preguntas del mensaje, sin
+    #   tocar el tema sensible, y después va la línea del pase. escalation_agent._lo_contestable.
+    contesta_antes_de_pasar: bool = False
+    # - El clima (decisión de Gadea, 20-oct): antes del pase, que operamos todos los días salvo el 25-dic y el 1-ene,
+    #   que la seguridad va primero y que, si el mar no está apto, se reprograma (FAQ 3 y 10 de la base).
+    clima_con_politica: bool = False
+    # - Una dieta o una alergia alimentaria (celíacos, vegetarianos) NO es un tema médico: es la política de comida y
+    #   la base la contesta. Va en la definición de `sensitive_topic` (prompts/router.py), que leen el enrutador de
+    #   respaldo y Jev. Se lee AL IMPORTAR (como el resto del tool del enrutador): para medirlo, `--env`, no `--flag`.
+    dieta_no_es_medica: bool = False
     # s4-33 (8-oct, Alvaro): instrucciones del juez de grounding v3 para GPT-6 Luna (prompts/info.py
     # GROUNDING_VERIFY_V3_LUNA_*): el v3 entero + 3 aclaraciones (lo que dice el cliente de si mismo no se comprueba;
     # valoraciones y ofertas de ayuda no son datos; las deducciones directas del contexto cuentan). Va con

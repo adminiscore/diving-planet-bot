@@ -29,7 +29,10 @@ from openai import AsyncOpenAI
 from src.config import settings
 from src.llm_client import tool_arguments, trace_openai
 from src.observability import con_pieza_llm
-from src.prompts.router import ROUTING_TOOL, routing_system_prompt
+from src.prompts.router import ROUTING_TOOL, con_dieta_no_es_medica, routing_system_prompt
+
+if settings.dieta_no_es_medica:  # gen-3 (20-oct): el enrutador de respaldo, con la misma definición que Jev
+    con_dieta_no_es_medica(ROUTING_TOOL)
 
 logger = structlog.get_logger()
 _llm_logger = logging.getLogger("uvicorn.error")
@@ -133,10 +136,25 @@ _PASE_MEDICO = {
 }
 
 
+# gen-3 (20-oct, flag `clima_con_politica`, decisión de Gadea): el aviso del clima decía solo "las condiciones pueden
+# cambiar, te conecto con el equipo". Antes del pase, lo que la base ya dice (FAQ 3 y 10): cuándo operamos y qué pasa si
+# el mar no está apto. La previsión de un día concreto sigue siendo del equipo.
+_CLIMA_CON_POLITICA = {
+    "es": ("Operamos todos los días del año salvo el 25 de diciembre y el 1 de enero, y la seguridad va primero: si el "
+           "mar no está apto, la salida se reprograma. La previsión de un día concreto te la confirma el equipo: te "
+           "paso ahora con alguien que te escribe por aquí enseguida."),
+    "en": ("We operate every day of the year except December 25 and January 1, and safety comes first: if the sea is "
+           "not suitable, the trip is rescheduled. The forecast for a specific day is confirmed by our team: I'm "
+           "passing you now to someone who will write to you here shortly."),
+}
+
+
 def _rule_message(rule: dict, lang: str) -> str:
     key = "es" if lang == "es" else "en"
     if f"{key}_v2" in rule:
         return rule[f"{key}_v2"]
+    if settings.clima_con_politica and rule is SENSITIVE_RULES.get("weather_conditions"):
+        return _CLIMA_CON_POLITICA[key]
     if settings.aviso_medico_dice_pase and rule is SENSITIVE_RULES.get("medical_questions"):
         return rule[key] + _PASE_MEDICO[key]
     return rule[key]

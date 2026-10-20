@@ -1,0 +1,79 @@
+{
+ "about": "gen-1 (Plan Coral, fase GEN, 20-oct): diálogos PROPIOS para ver DÓNDE se pierde un dato cuando el RAG, preguntado a solas, lo dice (rag_piezas gen1-base: 96 % de cobertura). Cada uno prueba una SITUACIÓN de las causas de G9 (pregunta en mitad de una reserva, varias preguntas en un mensaje, pregunta junto a un tema que pasa a un asesor, pregunta tras la tarjeta del precio…), con frases nuestras; ninguno sale del examen. 'espera' es lo que debería decir la última respuesta (verdad de data/knowledge_base). Se corre con reproducir_juez_pre --banco.",
+ "version": 1,
+ "creado": "2026-10-20",
+ "dialogos": [
+  {
+   "id": "g1-reserva-luego-incluye",
+   "patron": "pregunta de información en mitad de una reserva",
+   "turnos": ["hola, somos 2 buzos certificados y queremos bucear el sábado", "salimos desde Cartagena", "¿y qué incluye exactamente ese plan?"],
+   "espera": "lancha Cartagena-Islas-Cartagena, almuerzo, seguro, equipo, entrada al Parque Nacional, 2 inmersiones guiadas"
+  },
+  {
+   "id": "g1-varias-preguntas",
+   "patron": "varias preguntas en un mismo mensaje",
+   "turnos": ["Hola, tengo Open Water. ¿Cuánto cuesta bucear un día saliendo de Cartagena, hasta qué profundidad bajan y el seguro va incluido?"],
+   "espera": "precio de la salida de 2 inmersiones (USD si no se sabe la nacionalidad), Open Water hasta 18 m, seguro incluido"
+  },
+  {
+   "id": "g1-clima-y-pregunta",
+   "patron": "pregunta contestable junto a una que pasa a un asesor (clima)",
+   "turnos": ["Hola! Queremos bucear el jueves desde Cartagena, somos 2 certificados. ¿Cómo va a estar el mar ese día? ¿Y el precio incluye el equipo?"],
+   "espera": "sí, el equipo está incluido (y lo demás que incluye); el clima del día lo confirma el equipo o se opera salvo mal tiempo"
+  },
+  {
+   "id": "g1-medico-y-edades",
+   "patron": "pregunta contestable junto a un tema médico",
+   "turnos": ["Tengo asma leve y controlada. ¿Puedo hacer el minicurso? ¿Y desde qué edad pueden bucear mis hijos? Tienen 9 y 12"],
+   "espera": "el asma lo valora el equipo / formulario médico; minicurso desde 10 años: el de 12 sí, el de 9 snorkel (desde 6) o Bubble Makers (8-10)"
+  },
+  {
+   "id": "g1-tarjeta-luego-llevar",
+   "patron": "pregunta de logística tras la tarjeta del precio",
+   "turnos": ["Quiero hacer el minicurso desde Cartagena, nunca he buceado", "perfecto, ¿y qué tengo que llevar ese día?"],
+   "espera": "equipo incluido; recomendaciones de la base (protector solar reef-safe, hidratación, gafas de sol…); una mochila o bolso por persona en la lancha"
+  },
+  {
+   "id": "g1-reserva-luego-regreso",
+   "patron": "pregunta de horario en mitad de una reserva",
+   "turnos": ["Somos 3, todos certificados, queremos la salida de 2 inmersiones desde Cartagena", "¿a qué hora estaríamos de vuelta?"],
+   "espera": "regreso a las 3:00 p.m., llegada a Cartagena hacia las 4:15 p.m."
+  },
+  {
+   "id": "g1-islas-recogida-precio",
+   "patron": "ya en las islas: recogida y precio en el mismo mensaje",
+   "turnos": ["Estamos en el hotel Cocoliso y queremos hacer snorkel mañana, somos 2", "¿a qué hora nos recogen y cuánto cuesta?"],
+   "espera": "recogida en el hotel entre 9:30 y 9:45, sin cargo; 45 USD online por persona (o COP si son colombianos)"
+  },
+  {
+   "id": "g1-en-incluye-y-diciembre",
+   "patron": "inglés, dos preguntas de información",
+   "turnos": ["Hi! Two of us, both Advanced. What does the 2-dive day from Cartagena include, and do you go out every day in late December?"],
+   "espera": "boat, lunch, insurance, equipment, park fee, 2 guided dives; every day except December 25 and January 1"
+  },
+  {
+   "id": "g1-reserva-luego-cupo",
+   "patron": "disponibilidad de una fecha en mitad de una reserva",
+   "turnos": ["Queremos el minicurso para el 28 de diciembre, somos 4 y nadie ha buceado", "salimos de Cartagena", "¿seguro que hay cupo ese día?"],
+   "espera": "siempre hay disponibilidad; la fecha y las personas se eligen en el enlace de reserva"
+  },
+  {
+   "id": "g1-colombiano-ow-hotel",
+   "patron": "precio + qué incluye + qué no incluye en un mensaje",
+   "turnos": ["Hola, soy colombiano. ¿Cuánto vale el curso Open Water y qué incluye? ¿El hotel va aparte?"],
+   "espera": "precio en COP (Cartagena 2.450.000 online si sale de allí, o preguntar el origen); qué incluye; el alojamiento no está incluido y hay que dormir al menos una noche"
+  },
+  {
+   "id": "g1-refresh-3-anos",
+   "patron": "refresher",
+   "turnos": ["Hace 3 años que no buceo, tengo el Open Water. ¿Qué tengo que hacer para bucear con ustedes?"],
+   "espera": "más de 2 años: refresh, que se reserva como Minicurso; la excepción de 500+ inmersiones o Dive Master la revisa un asesor; el formulario médico de curso"
+  },
+  {
+   "id": "g1-reserva-luego-celiaca",
+   "patron": "pregunta de comida en mitad de una reserva",
+   "turnos": ["Somos 2 para el minicurso el domingo, salimos de Cartagena", "una de nosotras es celíaca, ¿qué puede comer?"],
+   "espera": "arroz con vegetales; puede llevar su propia comida; avisar antes del tour"
+  }
+ ]
+}

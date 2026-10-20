@@ -112,7 +112,10 @@
       "que_hace": "Datos personales, links rotos, temas delicados o cuando hace falta una persona: pasa el caso a un asesor.",
       "donde": "src/agents/escalation_agent.py:escalation_node",
       "interruptores": [
-        "escalado_solo_emergencias"
+        "escalado_solo_emergencias",
+        "contesta_antes_de_pasar",
+        "clima_con_politica",
+        "dieta_no_es_medica"
       ]
     },
     {
@@ -1300,6 +1303,21 @@
       "area": "Reserva",
       "titulo": "A quien no es certificado le recomienda sus opciones",
       "texto": "Si sabemos que el cliente no es buzo certificado y no ha elegido actividad, Coral le propone el minicurso para bucear, el snorkel para quedarse en la superficie o el curso Open Water para certificarse, en vez de repetir el menú entero (que ofrece buceo, solo para certificados)."
+    },
+    "contesta_antes_de_pasar": {
+      "area": "Enrutador",
+      "titulo": "Contesta lo que puede antes de pasar a un asesor",
+      "texto": "Si un mensaje trae un tema médico o el clima de un día (que lleva un asesor) y además otras preguntas, Coral contesta primero esas otras preguntas, sin tocar el tema médico ni el clima, y después pasa la conversación al equipo. Antes el aviso fijo se comía el resto del mensaje."
+    },
+    "clima_con_politica": {
+      "area": "Enrutador",
+      "titulo": "Con el clima, explica cuándo operamos antes de pasar",
+      "texto": "Antes de pasar al equipo una pregunta por el clima de un día concreto, Coral dice que operamos todos los días salvo el 25 de diciembre y el 1 de enero, que la seguridad va primero y que, si el mar no está apto, la salida se reprograma (decisión de Gadea, 20-oct)."
+    },
+    "dieta_no_es_medica": {
+      "area": "Enrutador",
+      "titulo": "Una dieta o una alergia a un alimento no es un tema médico",
+      "texto": "Celíacos, vegetarianos o una alergia a un alimento: Coral lo contesta con la política de comida (arroz con vegetales, puede llevar su comida, avisar antes) en vez de pasarlo a un asesor como si fuera una consulta médica."
     },
     "pii_respeta_urls": {
       "area": "Chat",

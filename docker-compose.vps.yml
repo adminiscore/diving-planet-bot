@@ -153,6 +153,13 @@ services:
       # PROMOCIONADO (ex9b-7/8): las cifras de los enlaces ya no se tapan al mandar el texto a
       # OpenRouter (el enlace de Maps del punto de encuentro llegaba roto con el respaldo del RAG).
       PII_RESPETA_URLS: "true"
+      # gen-1 + gen-3 (20-oct, fase GEN; docs/robustness/gen/gen1-diagnostico.md): contestar lo contestable antes del
+      # pase por tema médico o clima; el clima dice antes la política (decisión de Gadea); una dieta o alergia no es
+      # tema médico (se lee al arrancar); y con eso la alergia alimentaria ya puede ir al RAG (ATAJO_ALERGIA_POR_RAG,
+      # más arriba). APAGADOS hasta su ronda.
+      CONTESTA_ANTES_DE_PASAR: "false"
+      CLIMA_CON_POLITICA: "false"
+      DIETA_NO_ES_MEDICA: "false"
       # CERTIFICADO_SOLO_SI_LO_DICE con «buceé hace poco» = certificado (decisión de Gadea). PROMOCIONADO (HISTORY
       # 0.31.61: mod-H2 97,0 % igual que limpieza-3; reserva-solo-link ya no ofrece el minicurso). Revert = quitar estas líneas.
       CERTIFICADO_SOLO_SI_LO_DICE: "true"

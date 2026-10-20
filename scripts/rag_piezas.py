@@ -411,11 +411,16 @@ def main() -> None:
     ap.add_argument("--repuntuar", metavar="FICHERO", help="recalcula las causas de una medición guardada con las anclas "
                     "actuales de preguntas.json (sin volver a PRE; la verificación de la respuesta no cambia)")
     ap.add_argument("--dry", action="store_true", help="solo lista los casos")
+    ap.add_argument("--preguntas", metavar="FICHERO",
+                    help="otro set de preguntas visibles con el mismo formato (p. ej. preguntas-gen1.json de gen-1)")
     ap.add_argument("--codigo-local", action="store_true",
                     help="corre el código LOCAL (copiado a una carpeta temporal del contenedor) en vez del desplegado")
     ap.add_argument("--env", action="append", default=[], metavar="CLAVE=VALOR",
                     help="variable de entorno solo para este proceso (p. ej. RAG_KB_ESQUEMA=kb_v2_prueba); se puede repetir")
     args = ap.parse_args()
+    if args.preguntas:
+        global PREGUNTAS
+        PREGUNTAS = Path(args.preguntas)
 
     if args.comparar:
         comparar(Path(args.comparar[0]), Path(args.comparar[1]))

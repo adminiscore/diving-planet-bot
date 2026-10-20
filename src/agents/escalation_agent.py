@@ -64,6 +64,55 @@ from src.orchestration.state import BotState
 
 logger = logging.getLogger("uvicorn.error")
 
+# gen-1 + gen-3 (20-oct, flag `contesta_antes_de_pasar`): el pase por tema sensible era una respuesta fija que se comía
+# el resto del mensaje ("tengo asma… ¿y desde qué edad pueden bucear mis hijos?" -> solo el aviso médico). Con el flag,
+# el RAG contesta las OTRAS preguntas, sin tocar el tema sensible, y después va la línea del pase. Solo médico y clima:
+# una queja, una emergencia o un pago que falla se pasan sin más.
+_TEMA_QUE_PASA = {
+    "medical_questions": {"es": "su salud o una condición médica", "en": "their health or a medical condition"},
+    "weather_conditions": {"es": "el tiempo o el estado del mar de un día concreto",
+                           "en": "the weather or sea conditions on a specific day"},
+}
+_NADA = "NADA"
+_SOLO_LO_DEMAS = {
+    "es": ("El cliente pregunta también por {tema}: de eso se encarga una persona del equipo, así que NO lo contestes, "
+           "no lo comentes y no des ningún consejo sobre ello. Busca en su mensaje las OTRAS preguntas (cualquier "
+           "cosa que pregunte aparte de eso) y contéstalas todas, solo esas, con el contexto. No cierres con una "
+           "pregunta ni ofrezcas nada: después de tu respuesta el cliente pasa con el equipo. Solo si el mensaje no "
+           "pregunta nada aparte de {tema}, responde exactamente: " + _NADA),
+    "en": ("The customer also asks about {tema}: a person from the team handles that, so do NOT answer it, do not "
+           "comment on it and give no advice about it. Look in their message for the OTHER questions (anything they "
+           "ask apart from that) and answer all of them, only those, from the context. Do not close with a question "
+           "or offer anything: after your answer the customer is passed to the team. Only if the message asks "
+           "nothing apart from {tema}, reply exactly: " + _NADA),
+}
+
+
+async def _lo_contestable(conv, message: str, reason: str, lang: str) -> str | None:
+    """Lo que el RAG contesta del mensaje APARTE del tema sensible, o None (flag apagado, otro tema, nada más que
+    contestar, "no lo tengo" o un fallo: entonces el pase va solo, como siempre)."""
+    from src.config import settings  # lazy
+    if not settings.contesta_antes_de_pasar or reason not in _TEMA_QUE_PASA:
+        return None
+    from src.agents import rag_agent, supervisor  # lazy
+    from src.agents.conversational_core import _entradas_rag  # lazy
+
+    key = "es" if lang == "es" else "en"
+    entradas = _entradas_rag(conv, conv.history, message)
+    instruccion = _SOLO_LO_DEMAS[key].format(tema=_TEMA_QUE_PASA[reason][key])
+    entradas["extra_context"] = f"{entradas['extra_context']}\n\n{instruccion}" if entradas.get("extra_context") \
+        else instruccion
+    try:
+        answer = (await supervisor.rag_answer(message, **entradas) or "").strip()
+    except Exception as exc:  # noqa: BLE001 — sin respuesta parcial, el pase va solo
+        logger.warning(f"[NODE:escalation] contestar antes de pasar falló: {type(exc).__name__}: {exc}")
+        return None
+    nada = answer.strip(" .!¡*\"'").upper().startswith(_NADA) and len(answer) < 30
+    if not answer or nada or rag_agent.is_fallback_answer(answer):
+        return None
+    logger.info(f"[NODE:escalation] contesta antes de pasar ({reason}): {len(answer)} caracteres")
+    return answer
+
 
 async def escalation_node(state: BotState) -> dict:
     from src.agents.supervisor import (
@@ -116,24 +165,28 @@ async def escalation_node(state: BotState) -> dict:
     )
     if sensitive_early:
         reason, response = sensitive_early
+        # Antes de marcar el pase: con el paso en ESCALATE el RAG creía que ya estaba hecho ("el asesor ya tiene tu
+        # caso") justo encima de "te paso ahora".
+        antes = await _lo_contestable(conv, message, reason, sensitive_lang)
         conv.step = Step.ESCALATE
         conv.quick_replies = []
         conv.pending_escalation_reason = reason
         conv.pending_note = build_lead_summary(conv, escalation_reason=reason)
         logger.info(f"[NODE:escalation] sensible (keyword) reason={reason}")
-        return {"reply": response}
+        return {"reply": f"{antes}\n\n{response}" if antes else response}
 
     # 5 · Tema sensible por señal LLM.
     if signals.get("sensitive_topic"):
         found = sensitive_response_for(signals["sensitive_topic"], sensitive_lang)
         if found:
             reason, response = found
+            antes = await _lo_contestable(conv, message, reason, sensitive_lang)  # antes del pase (ver arriba)
             conv.step = Step.ESCALATE
             conv.quick_replies = []
             conv.pending_escalation_reason = reason
             conv.pending_note = build_lead_summary(conv, escalation_reason=reason)
             logger.info(f"[NODE:escalation] sensible (señal LLM) reason={reason}")
-            return {"reply": response}
+            return {"reply": f"{antes}\n\n{response}" if antes else response}
 
     # 5b · s4-20: post-venta / empresa (Jev `needs_staff`) -> una persona.
     staff = _needs_staff_handoff(conv, message, signals)

@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-19T22:14:31+00:00",
-  "commit": "a0b5d88",
+  "generado": "2026-10-20T09:24:27+00:00",
+  "commit": "a394b23",
   "rama": "feature/pre_gadea"
  },
  "vistas": {
@@ -178,9 +178,9 @@
    ],
    "marca": "openrouter",
    "tiempos": {
-    "n": 93,
-    "p50": 0.454,
-    "p95": 1.785
+    "n": 236,
+    "p50": 0.456,
+    "p95": 1.226
    }
   },
   {
@@ -199,13 +199,34 @@
      "codigo": true,
      "pre": true,
      "sin_efecto": false
+    },
+    {
+     "nombre": "contesta_antes_de_pasar",
+     "titulo": "Contesta lo que puede antes de pasar a un asesor",
+     "codigo": false,
+     "pre": false,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "clima_con_politica",
+     "titulo": "Con el clima, explica cuándo operamos antes de pasar",
+     "codigo": false,
+     "pre": false,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "dieta_no_es_medica",
+     "titulo": "Una dieta o una alergia a un alimento no es un tema médico",
+     "codigo": false,
+     "pre": false,
+     "sin_efecto": false
     }
    ],
    "modelos": [],
    "tiempos": {
-    "n": 7,
+    "n": 28,
     "p50": 0.002,
-    "p95": 0.007
+    "p95": 0.008
    }
   },
   {
@@ -220,9 +241,9 @@
    "modelos": [],
    "interruptores": [],
    "tiempos": {
-    "n": 1,
-    "p50": 0.004,
-    "p95": 0.004
+    "n": 11,
+    "p50": 0.003,
+    "p95": 0.011
    }
   },
   {
@@ -246,8 +267,8 @@
    "modelos": [],
    "tiempos": {
     "n": 1,
-    "p50": 0.003,
-    "p95": 0.003
+    "p50": 0.004,
+    "p95": 0.004
    }
   },
   {
@@ -264,9 +285,9 @@
    "modelos": [],
    "interruptores": [],
    "tiempos": {
-    "n": 4,
-    "p50": 4.114,
-    "p95": 5.374
+    "n": 17,
+    "p50": 3.971,
+    "p95": 10.402
    }
   },
   {
@@ -282,9 +303,9 @@
    "modelos": [],
    "interruptores": [],
    "tiempos": {
-    "n": 80,
-    "p50": 3.06,
-    "p95": 6.739
+    "n": 179,
+    "p50": 3.643,
+    "p95": 7.032
    }
   },
   {
@@ -485,9 +506,9 @@
    ],
    "marca": "openai",
    "tiempos": {
-    "n": 80,
-    "p50": 0.032,
-    "p95": 1.947
+    "n": 179,
+    "p50": 0.037,
+    "p95": 2.002
    }
   },
   {
@@ -510,9 +531,9 @@
    ],
    "modelos": [],
    "tiempos": {
-    "n": 80,
-    "p50": 0.005,
-    "p95": 0.146
+    "n": 179,
+    "p50": 0.006,
+    "p95": 3.748
    }
   },
   {
@@ -542,9 +563,9 @@
    ],
    "marca": "openrouter",
    "tiempos": {
-    "n": 74,
-    "p50": 0.006,
-    "p95": 0.171
+    "n": 144,
+    "p50": 0.007,
+    "p95": 0.051
    }
   },
   {
@@ -660,9 +681,9 @@
    ],
    "marca": "openrouter",
    "tiempos": {
-    "n": 74,
-    "p50": 0.964,
-    "p95": 2.242
+    "n": 144,
+    "p50": 0.956,
+    "p95": 2.443
    }
   },
   {
@@ -832,9 +853,9 @@
    ],
    "marca": "openrouter",
    "tiempos": {
-    "n": 74,
-    "p50": 1.173,
-    "p95": 5.34
+    "n": 141,
+    "p50": 2.294,
+    "p95": 5.414
    }
   },
   {
@@ -935,9 +956,9 @@
    ],
    "modelos": [],
    "conteo": {
-    "n": 46,
+    "n": 158,
     "que": "preguntas",
-    "fuente": "2026-10-19-ex9b-8.json"
+    "fuente": "2026-10-19-g9.json"
    }
   },
   {
@@ -2123,6 +2144,19 @@
    "sin_efecto": null
   },
   {
+   "nombre": "clima_con_politica",
+   "area": "Enrutador",
+   "titulo": "Con el clima, explica cuándo operamos antes de pasar",
+   "texto": "Antes de pasar al equipo una pregunta por el clima de un día concreto, Coral dice que operamos todos los días salvo el 25 de diciembre y el 1 de enero, que la seguridad va primero y que, si el mar no está apto, la salida se reprograma (decisión de Gadea, 20-oct).",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": true,
+   "usado_por": [
+    "safety"
+   ],
+   "sin_efecto": null
+  },
+  {
    "nombre": "consulta_con_lo_sabido",
    "area": "Preguntas",
    "titulo": "La búsqueda sabe de qué va la pregunta",
@@ -2145,6 +2179,19 @@
    "fijado_en_pre": true,
    "usado_por": [
     "deflection"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "contesta_antes_de_pasar",
+   "area": "Enrutador",
+   "titulo": "Contesta lo que puede antes de pasar a un asesor",
+   "texto": "Si un mensaje trae un tema médico o el clima de un día (que lleva un asesor) y además otras preguntas, Coral contesta primero esas otras preguntas, sin tocar el tema médico ni el clima, y después pasa la conversación al equipo. Antes el aviso fijo se comía el resto del mensaje.",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": true,
+   "usado_por": [
+    "safety"
    ],
    "sin_efecto": null
   },
@@ -2184,6 +2231,19 @@
    "fijado_en_pre": false,
    "usado_por": [
     "b_availability"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "dieta_no_es_medica",
+   "area": "Enrutador",
+   "titulo": "Una dieta o una alergia a un alimento no es un tema médico",
+   "texto": "Celíacos, vegetarianos o una alergia a un alimento: Coral lo contesta con la política de comida (arroz con vegetales, puede llevar su comida, avisar antes) en vez de pasarlo a un asesor como si fuera una consulta médica.",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": true,
+   "usado_por": [
+    "safety"
    ],
    "sin_efecto": null
   },
@@ -3289,7 +3349,7 @@
     "b_acuse"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 46
+   "llamadas_ultima_ronda": 82
   },
   {
    "ajuste": "avisos_al_final_model",
@@ -3299,7 +3359,7 @@
     "r_revisor"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 106
+   "llamadas_ultima_ronda": 360
   },
   {
    "ajuste": "extraction_model",
@@ -3307,7 +3367,7 @@
    "pre": "gpt-5.4-mini",
    "usado_por": [],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 1
+   "llamadas_ultima_ronda": 18
   },
   {
    "ajuste": "extractor_turno_model",
@@ -3317,7 +3377,7 @@
     "b_extraction"
    ],
    "proveedor": "OpenRouter",
-   "llamadas_ultima_ronda": 187
+   "llamadas_ultima_ronda": 465
   },
   {
    "ajuste": "grounding_v3_model",
@@ -3327,7 +3387,7 @@
     "r_revisor"
    ],
    "proveedor": "OpenRouter",
-   "llamadas_ultima_ronda": 168
+   "llamadas_ultima_ronda": 528
   },
   {
    "ajuste": "idioma_model",
@@ -3335,7 +3395,7 @@
    "pre": "deepseek/deepseek-v4.1-flash",
    "usado_por": [],
    "proveedor": "OpenRouter",
-   "llamadas_ultima_ronda": 168
+   "llamadas_ultima_ronda": 528
   },
   {
    "ajuste": "jev_model",
@@ -3347,7 +3407,7 @@
    ],
    "proveedor": "OpenRouter",
    "llamadas_ultima_ronda": null,
-   "nota": "Decidió solo 82 de 93 mensajes; en los otros 11 decidió el LLM de respaldo (sus llamadas cuentan en gpt-4o-mini)."
+   "nota": "Decidió solo 204 de 236 mensajes; en los otros 32 decidió el LLM de respaldo (sus llamadas cuentan en gpt-4o-mini)."
   },
   {
    "ajuste": "notas_model",
@@ -3357,7 +3417,7 @@
     "b_notas"
    ],
    "proveedor": "OpenRouter",
-   "llamadas_ultima_ronda": 168
+   "llamadas_ultima_ronda": 528
   },
   {
    "ajuste": "openai_embedding_model",
@@ -3380,7 +3440,7 @@
     "r_reescribir"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 1
+   "llamadas_ultima_ronda": 18
   },
   {
    "ajuste": "openai_transcription_model",
@@ -3398,7 +3458,7 @@
    "pre": "deepseek/deepseek-v4.1-flash",
    "usado_por": [],
    "proveedor": "OpenRouter",
-   "llamadas_ultima_ronda": 168
+   "llamadas_ultima_ronda": 528
   },
   {
    "ajuste": "rag_answer_model",
@@ -3408,7 +3468,7 @@
     "r_escribir"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 106
+   "llamadas_ultima_ronda": 360
   },
   {
    "ajuste": "rag_plan_model",
@@ -3416,7 +3476,7 @@
    "pre": "gpt-6-luna",
    "usado_por": [],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 106
+   "llamadas_ultima_ronda": 360
   },
   {
    "ajuste": "red_extractor_model",
@@ -3426,7 +3486,7 @@
     "b_extraction"
    ],
    "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 106
+   "llamadas_ultima_ronda": 360
   },
   {
    "ajuste": "reescritura_model",
@@ -3434,7 +3494,7 @@
    "pre": "deepseek/deepseek-v4.1-flash",
    "usado_por": [],
    "proveedor": "OpenRouter",
-   "llamadas_ultima_ronda": 168
+   "llamadas_ultima_ronda": 528
   },
   {
    "ajuste": "resolutor_model",
@@ -3444,7 +3504,7 @@
     "b_slotfill_close"
    ],
    "proveedor": "OpenRouter",
-   "llamadas_ultima_ronda": 187
+   "llamadas_ultima_ronda": 465
   },
   {
    "ajuste": "resumen_model",
@@ -3452,7 +3512,7 @@
    "pre": "deepseek/deepseek-v4.1-flash",
    "usado_por": [],
    "proveedor": "OpenRouter",
-   "llamadas_ultima_ronda": 168
+   "llamadas_ultima_ronda": 528
   },
   {
    "ajuste": "senales_model",
@@ -3463,66 +3523,65 @@
     "b_routing"
    ],
    "proveedor": "OpenRouter",
-   "llamadas_ultima_ronda": 168
+   "llamadas_ultima_ronda": 528
   }
  ],
  "ronda": {
-  "etiqueta": "ex9b-8 (paso 6 + quien se suma, final antes de G9)",
-  "run_at": "2026-10-19T21:41:36Z",
-  "fichero": "2026-10-19-ex9b-8.json",
-  "commit": "bb8f93c",
+  "etiqueta": "G9 (estado final de ex-9b)",
+  "run_at": "2026-10-19T23:03:08Z",
+  "fichero": "2026-10-19-g9.json",
+  "commit": "144f138",
   "por_tipo": {
    "reserva": {
-    "turns": 47,
-    "latency_p50": 1.922,
-    "latency_p95": 3.546,
-    "latency_avg": 2.16,
-    "llm_calls_avg": 3.85,
-    "llm_calls_p95": 5.7,
-    "llm_calls_max": 7,
-    "embeddings_avg": 1.51,
-    "llm_share": 1.835,
+    "turns": 78,
+    "latency_p50": 1.739,
+    "latency_p95": 3.202,
+    "latency_avg": 1.949,
+    "llm_calls_avg": 3.51,
+    "llm_calls_p95": 5.0,
+    "llm_calls_max": 6,
+    "embeddings_avg": 1.4,
+    "llm_share": 1.597,
     "tokens_avg": 0,
     "cost_avg_usd": 0
    },
    "rag": {
-    "turns": 46,
-    "latency_p50": 4.814,
-    "latency_p95": 7.836,
-    "latency_avg": 5.117,
-    "llm_calls_avg": 7.11,
-    "llm_calls_p95": 10.0,
-    "llm_calls_max": 10,
-    "embeddings_avg": 2.33,
-    "llm_share": 1.608,
+    "turns": 158,
+    "latency_p50": 4.619,
+    "latency_p95": 7.782,
+    "latency_avg": 5.005,
+    "llm_calls_avg": 7.46,
+    "llm_calls_p95": 11.0,
+    "llm_calls_max": 16,
+    "embeddings_avg": 2.11,
+    "llm_share": 1.628,
     "tokens_avg": 0,
     "cost_avg_usd": 0
    }
   },
   "enrutador": {
    "by_backend": {
-    "jev": 82,
-    "llm_uncertain": 10,
-    "llm": 1
+    "jev": 204,
+    "llm_uncertain": 32
    },
-   "ms_p50": 424.5,
-   "ms_p95": 525.7
+   "ms_p50": 422.5,
+   "ms_p95": 509.75
   },
   "cliente": {
-   "turns": 93,
-   "conversations": 32,
+   "turns": 236,
+   "conversations": 72,
    "no_reply": 0,
-   "multi_bubble": 1,
+   "multi_bubble": 0,
    "latency_p50": 4.0,
-   "latency_p95": 7.4,
-   "latency_max": 9
+   "latency_p95": 8.0,
+   "latency_max": 17
   },
   "llamadas_por_modelo": {
-   "anthropic/claude-haiku-5.5": 187,
-   "deepseek/deepseek-v4.1-flash": 168,
-   "gpt-6-luna": 106,
-   "gpt-5.4-nano": 46,
-   "gpt-5.4-mini": 1
+   "deepseek/deepseek-v4.1-flash": 528,
+   "anthropic/claude-haiku-5.5": 465,
+   "gpt-6-luna": 360,
+   "gpt-5.4-nano": 82,
+   "gpt-5.4-mini": 18
   },
   "calidad": null
  },

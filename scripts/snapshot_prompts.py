@@ -82,6 +82,10 @@ def _collect() -> dict[str, str]:
     for lang in LANGS:
         add(f"router/routing_signals.system.{lang}", router.routing_system_prompt(lang))
     add_json("router/routing_signals.tool", router.ROUTING_TOOL)
+    # gen-3 (20-oct, flag `dieta_no_es_medica`): la misma definición con la exclusión de la dieta (sobre una copia).
+    tool_dieta = json.loads(json.dumps(router.ROUTING_TOOL))
+    router.con_dieta_no_es_medica(tool_dieta)
+    add_json("router/routing_signals.tool.dieta_no_es_medica", tool_dieta)
 
     # ── booking · extracción (fill_gaps) ─────────────────────────────────────
     # El texto interpola los campos pedidos: se cubren el caso de 1 campo, el de
