@@ -528,6 +528,19 @@ RAG_NO_ADIVINA_EN = (
     "dates). Answer what they ask with the general information and, if the answer depends on a detail about them they "
     "have not said, ask for it; never ask for what they already said."
 )
+# gen-2 (20-oct, flag `abre_con_la_respuesta`): el tono pide muletillas ("¡Claro que sí!") y el modelo abría con ellas
+# antes de un "no" o un "depende": "¡Claro que sí! … la recogida no es en el hotel", "¡Claro! … no puedo confirmarte
+# el efectivo" (banco gen-2, 5 de 24; en G9, inventos cuando además faltaba el dato).
+RAG_ABRE_CON_LA_RESPUESTA_ES = (
+    "Empieza por la respuesta. Si es «no», «depende» o «solo en algunos casos», NO abras con una afirmación («¡Claro!», "
+    "«¡Claro que sí!», «¡Sí!», «¡Listo!»): di primero lo que aplica (por ejemplo, «La recogida no es en el hotel: …»). "
+    "Las expresiones de ánimo van delante solo cuando la respuesta es un sí."
+)
+RAG_ABRE_CON_LA_RESPUESTA_EN = (
+    "Start with the answer. If it is 'no', 'it depends' or 'only in some cases', do NOT open with an affirmation "
+    "('Sure!', 'Of course!', 'Yes!', 'Absolutely!'): state first what applies (e.g. 'Pick-up is not at the hotel: …'). "
+    "Upbeat openers go first only when the answer is a yes."
+)
 # EX-EST-2 (15-oct, flag `rag_sin_hora`): el RAG no sabe la hora ni la fecha de hoy. Rondas est4-B/est5-B: "ya pasó esa
 # hora" o "como todavía estás a tiempo" sobre el cierre de las 4:30, sin que el cliente dijera la hora.
 RAG_SIN_HORA_ES = (

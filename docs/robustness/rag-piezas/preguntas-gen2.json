@@ -1,0 +1,79 @@
+{
+ "about": "gen-2 (Plan Coral, fase GEN, 20-oct): preguntas VISIBLES con frases propias para las causas de 'inventa o da por hecho' (docs/robustness/gen/gen2-diagnostico.md): lo que es 'no' o 'depende' y la base dice a medias, y el pago presencial que no llega al modelo. Ninguna sale del examen; la verdad sale de data/knowledge_base y de las decisiones de Gadea (Barú, 18-oct). Se corre con rag_piezas --preguntas.",
+ "version": 1,
+ "creado": "2026-10-20",
+ "casos": [
+  {
+   "id": "gen2-efectivo-muelle-es",
+   "origen": "gen-2: frase propia",
+   "lang": "es",
+   "pregunta": "¿Puedo pagar en efectivo en el muelle el día de la salida?",
+   "estado": {},
+   "necesita": [
+    {"id": "anticipo-50", "hecho": "Los colombianos y residentes en Colombia pueden pagar un anticipo del 50 % online y el otro 50 % presencial, con tarjeta o efectivo.", "anclas": ["50% de forma presencial", "50% presencial", "otro 50%"]},
+    {"id": "extranjeros-100", "hecho": "El resto de clientes extranjeros paga el 100 % con tarjeta en la página web al reservar.", "anclas": ["100% con tarjeta", "100% al reservar"]}
+   ],
+   "no_debe": ["Cualquiera puede pagar todo en efectivo en el muelle.", "No se puede pagar nada de forma presencial."]
+  },
+  {
+   "id": "gen2-cash-dock-en",
+   "origen": "gen-2: frase propia",
+   "lang": "en",
+   "pregunta": "Can we just pay cash at the dock on the day?",
+   "estado": {},
+   "necesita": [
+    {"id": "anticipo-50", "hecho": "Colombians and residents in Colombia can pay a 50% deposit online and the other 50% in person (card or cash).", "anclas": ["50% in person", "other 50%", "50% de forma presencial"]},
+    {"id": "extranjeros-100", "hecho": "International customers pay 100% by card on the website when booking.", "anclas": ["100% by card", "100% with a foreign card", "100% con tarjeta"]}
+   ],
+   "no_debe": ["Anyone can pay everything in cash at the dock."]
+  },
+  {
+   "id": "gen2-baru-recogida-es",
+   "origen": "gen-2: frase propia",
+   "lang": "es",
+   "pregunta": "Estoy alojado en Barú, ¿me pueden recoger en el hotel para bucear?",
+   "estado": {},
+   "necesita": [
+    {"id": "no-baru", "hecho": "Diving Planet no opera en Barú: Barú es otro destino (una península unida a tierra), no las Islas del Rosario.", "anclas": ["no en baru", "no operamos", "opera exclusivamente en las islas del rosario"]},
+    {"id": "sin-recogida", "hecho": "No hay recogida en Barú: la recogida en hotel es solo en las Islas del Rosario.", "anclas": ["hoteles con acceso maritimo", "si ya estas en las islas del rosario"]}
+   ],
+   "no_debe": ["Se puede coordinar una recogida en un hotel de Barú.", "Un asesor puede confirmar si recogen en Barú."]
+  },
+  {
+   "id": "gen2-recogida-getsemani-es",
+   "origen": "gen-2: frase propia",
+   "lang": "es",
+   "pregunta": "Estoy en un hotel en Getsemaní, ¿me recogen allí para ir a bucear?",
+   "estado": {},
+   "necesita": [
+    {"id": "muelle", "hecho": "Saliendo desde Cartagena, el punto de encuentro es el Muelle de la Bodeguita a las 8:00 a.m.", "anclas": ["muelle de la bodeguita"]},
+    {"id": "sin-transporte", "hecho": "El transporte terrestre hasta el muelle no está incluido: no hay recogida en hoteles de Cartagena.", "anclas": ["transporte terrestre al muelle"]}
+   ],
+   "no_debe": ["Recogen al cliente en su hotel de Cartagena.", "Un asesor puede confirmar si recogen en su hotel de Cartagena."]
+  },
+  {
+   "id": "gen2-noches-ow-es",
+   "origen": "gen-2: frase propia",
+   "lang": "es",
+   "pregunta": "Si hago el Open Water, ¿cuántas noches tengo que dormir en la isla?",
+   "estado": {},
+   "necesita": [
+    {"id": "una-noche", "hecho": "Hay que alojarse al menos 1 noche en las Islas del Rosario (no es ida y vuelta el mismo día).", "anclas": ["al menos 1 noche", "una noche"]},
+    {"id": "sin-alojamiento", "hecho": "El alojamiento no está incluido.", "anclas": ["alojamiento no incluido", "hotel no incluido"]}
+   ],
+   "no_debe": ["Hay que dormir dos noches en las islas.", "La información no dice cuántas noches."]
+  },
+  {
+   "id": "gen2-volver-otro-dia-es",
+   "origen": "gen-2: frase propia",
+   "lang": "es",
+   "pregunta": "Si hago la salida de buceo desde Cartagena, ¿puedo quedarme en las islas y volver otro día en su lancha?",
+   "estado": {"location": "cartagena", "is_certified": true},
+   "necesita": [
+    {"id": "no-incluido", "hecho": "El regreso a Cartagena en una fecha distinta a la del plan no está incluido.", "anclas": ["fecha distinta"]},
+    {"id": "asesor", "hecho": "Si quiere volver con la lancha otro día, lo coordina un asesor del equipo.", "anclas": ["lo coordina un asesor", "asesor del equipo"]}
+   ],
+   "no_debe": ["El regreso otro día está incluido en el precio."]
+  }
+ ]
+}

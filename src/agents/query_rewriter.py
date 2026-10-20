@@ -102,6 +102,20 @@ _PREGUNTA_SOLA_EN = ("Copy only the QUESTION (or questions) in the customer's me
                      "Leave out the facts they give (dates, where they depart from, how many they are, where they stay), "
                      "add nothing from the conversation and do NOT answer it. If the message asks nothing, return all "
                      "of it translated. Return only that.")
+# gen-2 (20-oct, flag `pregunta_sola_con_su_sitio`): "Estoy alojado en Barú, ¿me pueden recoger en el hotel?" -> "¿Me
+# pueden recoger en el hotel?": sin el sitio, la búsqueda traía la recogida en los hoteles de las islas y el bot
+# contestaba que podía recoger en Barú (rag_piezas gen2-base). Un dato sin el que la pregunta cambia de sentido se queda.
+_CON_SU_SITIO_ES = (" Pero deja el sitio o el dato si la pregunta trata de él (si pregunta si le recogen en su hotel, si "
+                    "se puede salir o bucear desde un lugar, deja ese lugar).")
+_CON_SU_SITIO_EN = (" But keep the place or detail if the question is about it (if they ask whether they are picked up at "
+                    "their hotel, or whether they can depart or dive from a place, keep that place).")
+
+
+def _instruccion_pregunta_sola(lang: str) -> str:
+    base = _PREGUNTA_SOLA_ES if lang == "es" else _PREGUNTA_SOLA_EN
+    if not settings.pregunta_sola_con_su_sitio:
+        return base
+    return base + (_CON_SU_SITIO_ES if lang == "es" else _CON_SU_SITIO_EN)
 
 
 @con_pieza_llm("pregunta_sola")
@@ -125,7 +139,7 @@ async def pregunta_sola(query: str, lang: str) -> str | None:
         response = await client.chat.completions.create(
             model=settings.pregunta_sola_model,
             messages=[
-                {"role": "system", "content": _PREGUNTA_SOLA_ES if lang == "es" else _PREGUNTA_SOLA_EN},
+                {"role": "system", "content": _instruccion_pregunta_sola(lang)},
                 {"role": "user", "content": redact_pii(query)},
             ],
             temperature=0,

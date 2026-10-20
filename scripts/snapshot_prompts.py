@@ -218,6 +218,8 @@ def _collect() -> dict[str, str]:
     add("info/rag_no_supone.en", info.RAG_NO_SUPONE_EN)
     add("info/rag_no_adivina.es", info.RAG_NO_ADIVINA_ES)
     add("info/rag_no_adivina.en", info.RAG_NO_ADIVINA_EN)
+    add("info/rag_abre_con_la_respuesta.es", info.RAG_ABRE_CON_LA_RESPUESTA_ES)  # gen-2 (20-oct)
+    add("info/rag_abre_con_la_respuesta.en", info.RAG_ABRE_CON_LA_RESPUESTA_EN)
     add("info/rag_sin_hora.es", info.RAG_SIN_HORA_ES)
     add("info/rag_sin_hora.en", info.RAG_SIN_HORA_EN)
     add("info/rag_disponibilidad_vieja.es", info.RAG_DISPONIBILIDAD_VIEJA_ES)
