@@ -156,7 +156,8 @@ services:
       # gen-1 + gen-3 (20-oct, fase GEN; docs/robustness/gen/gen1-diagnostico.md): contestar lo contestable antes del
       # pase por tema médico o clima; el clima dice antes la política (decisión de Gadea); una dieta o alergia no es
       # tema médico (se lee al arrancar); y con eso la alergia alimentaria ya puede ir al RAG (ATAJO_ALERGIA_POR_RAG,
-      # más arriba). ENCENDIDOS para la ronda core gen3-B (frente a gen3-A, del mismo día).
+      # más arriba). PROMOCIONADOS 20-oct: gen3-B 98,7 % 30/32 frente a gen3-A 97,4 % 26/32 (mismo día), 0 regresiones
+      # (la repregunta de moneda-precios-principiante-y-snorkel sale igual sin los flags, atribución 3+3). Revert = "false".
       CONTESTA_ANTES_DE_PASAR: "true"
       CLIMA_CON_POLITICA: "true"
       DIETA_NO_ES_MEDICA: "true"

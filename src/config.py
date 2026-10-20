@@ -236,7 +236,7 @@ class Settings(BaseSettings):
     # - alergia a un alimento (sin alcohol en el mensaje): la FAQ curada "Soy vegetariano o tengo una alergia" lo
     #   cubre. NO PASA el escalón 0 (13-oct): con el flag la alergia acaba en el aviso médico ("Para preguntas médicas…");
     #   se queda la respuesta fija. APAGADO.
-    atajo_alergia_por_rag: bool = False
+    atajo_alergia_por_rag: bool = True  # PROMOCIONADO 20-oct con dieta_no_es_medica (gen3-B; HISTORY 0.31.70); revert = False
     # Model for the RAG answer-generation call only (rag_agent.py
     # `_answer_with_llm`). Kept SEPARATE from `openai_model` (used broadly
     # across the bot) so we can trial a stronger model for JUST this call --
@@ -564,14 +564,14 @@ class Settings(BaseSettings):
     # mensaje ("¿cómo estará el mar el jueves? ¿el precio incluye el equipo?" -> solo "te conecto con el equipo").
     # - Contestar lo contestable y luego pasar (médico y clima): el RAG contesta las OTRAS preguntas del mensaje, sin
     #   tocar el tema sensible, y después va la línea del pase. escalation_agent._lo_contestable.
-    contesta_antes_de_pasar: bool = False
+    contesta_antes_de_pasar: bool = True  # PROMOCIONADO 20-oct (gen3-B 98,7 % 30/32 frente a gen3-A 97,4 % 26/32, 0 regresiones; HISTORY 0.31.70); revert = False
     # - El clima (decisión de Gadea, 20-oct): antes del pase, que operamos todos los días salvo el 25-dic y el 1-ene,
     #   que la seguridad va primero y que, si el mar no está apto, se reprograma (FAQ 3 y 10 de la base).
-    clima_con_politica: bool = False
+    clima_con_politica: bool = True  # PROMOCIONADO 20-oct (gen3-B 98,7 % 30/32 frente a gen3-A 97,4 % 26/32, 0 regresiones; HISTORY 0.31.70); revert = False
     # - Una dieta o una alergia alimentaria (celíacos, vegetarianos) NO es un tema médico: es la política de comida y
     #   la base la contesta. Va en la definición de `sensitive_topic` (prompts/router.py), que leen el enrutador de
     #   respaldo y Jev. Se lee AL IMPORTAR (como el resto del tool del enrutador): para medirlo, `--env`, no `--flag`.
-    dieta_no_es_medica: bool = False
+    dieta_no_es_medica: bool = True  # PROMOCIONADO 20-oct (gen3-B 98,7 % 30/32 frente a gen3-A 97,4 % 26/32, 0 regresiones; HISTORY 0.31.70); revert = False
     # s4-33 (8-oct, Alvaro): instrucciones del juez de grounding v3 para GPT-6 Luna (prompts/info.py
     # GROUNDING_VERIFY_V3_LUNA_*): el v3 entero + 3 aclaraciones (lo que dice el cliente de si mismo no se comprueba;
     # valoraciones y ofertas de ayuda no son datos; las deducciones directas del contexto cuentan). Va con

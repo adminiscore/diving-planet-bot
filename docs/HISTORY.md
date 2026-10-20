@@ -1,6 +1,38 @@
 History
 =======
 
+0.31.70 - (2026-10-20)
+----------------------
+* **Fase GEN (subir el examen oculto): gen-1 diagnosticada y gen-3 PROMOCIONADA. Contestar lo contestable antes de
+  pasar a un asesor** (Gadea con Claude; plan en Plan Coral, fase GEN).
+  - **gen-1, diagnóstico** (`docs/robustness/gen/gen1-diagnostico.md`), solo con material propio:
+    - El RAG a solas cubre el **96 %** de los datos (`rag_piezas --preguntas preguntas-gen1.json`: 20 preguntas, 104
+      datos, 0 prohibidas).
+    - En una conversación, el dato se perdía en el **pase por tema sensible**: la respuesta fija del médico o del clima
+      se comía el resto del mensaje, y una celíaca se trataba como tema médico.
+    - Es la misma causa que gen-3.
+    - Faltan en la base, y lo decide el negocio: qué llevar y si hay un mínimo de personas.
+  - **Promocionado** (ronda core **gen3-B 98,7 % 30/32** frente a **gen3-A 97,4 % 26/32**, del mismo día):
+    - Resultado: 5 criterios mejoran y 1 empeora, pero esa repregunta sale igual sin los flags (atribución 3+3, es de
+      gen-8). Latencia de la ronda igual (p50 4 s, p95 7 s); los turnos con pase pasan de ~1,5 s a 3-8 s.
+    - Banco propio del pase: 20/20.
+    - `CONTESTA_ANTES_DE_PASAR`: con un tema médico o el clima, el RAG contesta las OTRAS preguntas, sin tocar el tema
+      sensible, y después va el pase. Se llama antes de marcar el pase, porque si no el RAG creía que el asesor ya
+      tenía el caso.
+    - `CLIMA_CON_POLITICA` (decisión de Gadea): antes del pase, que operamos todos los días salvo el 25-dic y el
+      1-ene, que la seguridad va primero y que, si el mar no está apto, se reprograma.
+    - `DIETA_NO_ES_MEDICA`: una dieta o una alergia a un alimento no es tema médico. Va en la definición de
+      `sensitive_topic` que leen Jev y el enrutador de respaldo.
+    - `ATAJO_ALERGIA_POR_RAG`: se apagó el 13-oct porque la alergia acababa en el aviso médico; con lo anterior ya no,
+      y el texto crudo de la política deja de salir.
+  - Herramientas:
+    - `reproducir_juez_pre --banco` corre diálogos propios y guarda lo que contestó el RAG en cada turno.
+    - `rag_piezas --preguntas` admite otro set.
+  - **gen-2, diagnóstico** (`docs/robustness/gen/gen2-diagnostico.md`, banco propio de 12 diálogos):
+    - Abre con «¡Claro que sí!» antes de un «no» o un «depende».
+    - La base dice a medias lo que es «no»: Barú y la recogida en hoteles de Cartagena.
+    - El dato del pago presencial no le llega al modelo.
+
 0.31.69 - (2026-10-20)
 ----------------------
 * **G9 (el examen oculto sintético, 72 conversaciones) sobre el estado final de ex-9b: 84,1 % de criterios, 20/72

@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-20T09:24:27+00:00",
-  "commit": "a394b23",
+  "generado": "2026-10-20T10:33:58+00:00",
+  "commit": "9e2ff07",
   "rama": "feature/pre_gadea"
  },
  "vistas": {
@@ -203,22 +203,22 @@
     {
      "nombre": "contesta_antes_de_pasar",
      "titulo": "Contesta lo que puede antes de pasar a un asesor",
-     "codigo": false,
-     "pre": false,
+     "codigo": true,
+     "pre": true,
      "sin_efecto": false
     },
     {
      "nombre": "clima_con_politica",
      "titulo": "Con el clima, explica cuándo operamos antes de pasar",
-     "codigo": false,
-     "pre": false,
+     "codigo": true,
+     "pre": true,
      "sin_efecto": false
     },
     {
      "nombre": "dieta_no_es_medica",
      "titulo": "Una dieta o una alergia a un alimento no es un tema médico",
-     "codigo": false,
-     "pre": false,
+     "codigo": true,
+     "pre": true,
      "sin_efecto": false
     }
    ],
@@ -987,8 +987,8 @@
     {
      "nombre": "atajo_alergia_por_rag",
      "titulo": "La alergia a un alimento la contesta el RAG",
-     "codigo": false,
-     "pre": false,
+     "codigo": true,
+     "pre": true,
      "sin_efecto": false
     }
    ],
@@ -1970,8 +1970,8 @@
    "area": "Respuestas fijas",
    "titulo": "La alergia a un alimento la contesta el RAG",
    "texto": "Sin el texto fijo de la política de comida (salvo si el mensaje también habla de alcohol): la FAQ de vegetarianos y alergias lo cubre. Sigue sin pasar al aviso médico.",
-   "codigo": false,
-   "pre": false,
+   "codigo": true,
+   "pre": true,
    "fijado_en_pre": true,
    "usado_por": [
     "r_reglas"
@@ -2148,8 +2148,8 @@
    "area": "Enrutador",
    "titulo": "Con el clima, explica cuándo operamos antes de pasar",
    "texto": "Antes de pasar al equipo una pregunta por el clima de un día concreto, Coral dice que operamos todos los días salvo el 25 de diciembre y el 1 de enero, que la seguridad va primero y que, si el mar no está apto, la salida se reprograma (decisión de Gadea, 20-oct).",
-   "codigo": false,
-   "pre": false,
+   "codigo": true,
+   "pre": true,
    "fijado_en_pre": true,
    "usado_por": [
     "safety"
@@ -2187,8 +2187,8 @@
    "area": "Enrutador",
    "titulo": "Contesta lo que puede antes de pasar a un asesor",
    "texto": "Si un mensaje trae un tema médico o el clima de un día (que lleva un asesor) y además otras preguntas, Coral contesta primero esas otras preguntas, sin tocar el tema médico ni el clima, y después pasa la conversación al equipo. Antes el aviso fijo se comía el resto del mensaje.",
-   "codigo": false,
-   "pre": false,
+   "codigo": true,
+   "pre": true,
    "fijado_en_pre": true,
    "usado_por": [
     "safety"
@@ -2239,8 +2239,8 @@
    "area": "Enrutador",
    "titulo": "Una dieta o una alergia a un alimento no es un tema médico",
    "texto": "Celíacos, vegetarianos o una alergia a un alimento: Coral lo contesta con la política de comida (arroz con vegetales, puede llevar su comida, avisar antes) en vez de pasarlo a un asesor como si fuera una consulta médica.",
-   "codigo": false,
-   "pre": false,
+   "codigo": true,
+   "pre": true,
    "fijado_en_pre": true,
    "usado_por": [
     "safety"

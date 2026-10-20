@@ -136,9 +136,18 @@ class TestAlcoholAndFoodPolicy:
         assert answer is not None
         assert "alcohol" in answer.lower()
 
-    def test_allergy_with_known_allergen(self):
+    def test_allergy_with_known_allergen(self, monkeypatch):
+        from src.config import settings
+
+        monkeypatch.setattr(settings, "atajo_alergia_por_rag", False)  # el texto fijo; desde el 20-oct, el RAG
         answer = _alcohol_and_food_policy_answer("soy alergico a los mariscos", "es")
         assert answer is not None
+
+    def test_allergy_with_known_allergen_va_al_rag(self, monkeypatch):
+        from src.config import settings
+
+        monkeypatch.setattr(settings, "atajo_alergia_por_rag", True)
+        assert _alcohol_and_food_policy_answer("soy alergico a los mariscos", "es") is None
 
     def test_allergy_without_food_allergen_returns_none(self):
         """Alergia sin alérgeno alimentario explícito no es esta política --

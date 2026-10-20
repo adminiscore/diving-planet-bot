@@ -1,0 +1,19 @@
+{
+ "about": "gen-2 (Plan Coral, fase GEN, 20-oct): diálogos PROPIOS que tientan al bot a inventar o dar por hecho, uno por cada clase de invento que dejó G9 (de los motivos del juez, sin abrir el examen): el género del cliente, un «¡Claro que sí!» a algo que es «no» o «depende», Barú, el origen o el servicio sin decirlos, las noches del curso y lo que se dice tras un pase. Frases nuestras; 'espera' sale de data/knowledge_base y de las decisiones de Gadea. Se corre con reproducir_juez_pre --banco.",
+ "version": 1,
+ "creado": "2026-10-20",
+ "dialogos": [
+  {"id": "g2-genero-colombianos", "patron": "género", "turnos": ["Buenas, somos colombianos, ¿cuánto vale el snorkel saliendo de Cartagena?"], "espera": "precio en COP por persona; nada en femenino ni en singular sobre el cliente («colombiana», «interesada»)"},
+  {"id": "g2-genero-primer-mensaje", "patron": "género", "turnos": ["Hola, me interesa bucear por primera vez, ¿qué me recomiendas?"], "espera": "recomendar minicurso (y snorkel/Open Water según contexto) sin adjetivos con género sobre el cliente («bienvenida», «interesado»)"},
+  {"id": "g2-claro-pagar-muelle", "patron": "«¡Claro!» a algo que depende", "turnos": ["¿Puedo pagar en efectivo en el muelle el día de la salida?"], "espera": "no abre con «¡Claro!»: solo colombianos y residentes pueden dejar el 50 % presencial; el resto paga el 100 % online"},
+  {"id": "g2-claro-recogida-cartagena", "patron": "«¡Claro!» a algo que es no", "turnos": ["Estoy en un hotel en Getsemaní, ¿me recogen allí para ir a bucear?"], "espera": "no hay recogida en hoteles de Cartagena: punto de encuentro en el Muelle de la Bodeguita a las 8:00; el transporte terrestre no está incluido"},
+  {"id": "g2-claro-ow-un-dia", "patron": "«¡Claro!» a algo que es no", "turnos": ["¿Se puede hacer el Open Water en un solo día? Solo tengo el sábado"], "espera": "no: son 2 días y hay que dormir en las islas; con un día, el minicurso"},
+  {"id": "g2-claro-volver-otro-dia", "patron": "«¡Claro!» a algo que es no", "turnos": ["Si hago la salida de buceo desde Cartagena, ¿puedo quedarme en las islas y volver otro día en su lancha?"], "espera": "el regreso en una fecha distinta no está incluido; se coordina con un asesor (política return_different_day)"},
+  {"id": "g2-baru-recogida", "patron": "Barú", "turnos": ["Estoy alojado en Barú, ¿me pueden recoger en el hotel para bucear?"], "espera": "no operamos en Barú y Barú no es Islas del Rosario; opciones: salir desde Cartagena (Muelle de la Bodeguita)"},
+  {"id": "g2-recogida-sin-origen", "patron": "origen sin decirlo", "turnos": ["¿A qué hora es la recogida?"], "espera": "depende de si sale desde Cartagena (8:00 en el muelle) o está en las islas (9:30-9:45 en el hotel); preguntar o dar los dos, sin asumir"},
+  {"id": "g2-noches-ow", "patron": "noches del curso", "turnos": ["Si hago el Open Water, ¿cuántas noches tengo que dormir en la isla?"], "espera": "al menos 1 noche (el día 1 no se vuelve a Cartagena); el alojamiento no está incluido"},
+  {"id": "g2-tras-pase-precio", "patron": "lo que se dice tras un pase", "turnos": ["tengo asma, ¿puedo bucear?", "ok, y mientras tanto ¿cuánto cuesta el minicurso desde Cartagena?"], "espera": "turno 2: el precio del minicurso desde Cartagena (USD si no se sabe la nacionalidad), sin inventar que el asesor ya resolvió algo"},
+  {"id": "g2-equipo-sin-servicio", "patron": "servicio sin decirlo", "turnos": ["Ya hice la reserva. ¿Tengo que llevar mi propio equipo?"], "espera": "todos los planes incluyen el equipo, sin nombrar un servicio que no dijo"},
+  {"id": "g2-reservar-hoy-para-manana", "patron": "hora y cierre del sistema", "turnos": ["¿Todavía puedo reservar para mañana?"], "espera": "se puede reservar para el día siguiente antes de las 4:30 p.m.; si no sabe la hora actual, decirlo sin afirmar que ya pasó o no"}
+ ]
+}

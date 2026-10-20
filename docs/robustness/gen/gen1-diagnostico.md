@@ -59,3 +59,32 @@ Es la misma causa que gen-3 («pase a un asesor mal llevado»): gen-1 y gen-3 se
 
 Visto de paso: la pregunta de la nacionalidad usa «¿sois colombianos?» (España). En Cartagena se dice «¿son
 colombianos?».
+
+## 4. Resultado: PROMOCIONADO (20-oct, HISTORY 0.31.70)
+
+Se hicieron los puntos 1 y 2 de la propuesta, más el clima con su política (decisión de Gadea). Flags:
+`contesta_antes_de_pasar`, `clima_con_politica` y `dieta_no_es_medica`. Con el último, también se encendió
+`atajo_alergia_por_rag`: la alergia la contesta el RAG y ya no sale el texto crudo de la política.
+
+**Banco del pase** (`dialogos-gen3.json`, 10 diálogos ×2): **20/20 bien**.
+- Contesta lo demás y luego pasa: asma + edades, embarazo + horario, medicación + seguro, clima + equipo (en inglés y
+  en español).
+- Solo pasa: los controles de solo médico y solo clima.
+- La base contesta, sin pase: celíaca, vegetariana y alergia a los mariscos.
+
+**Banco de gen-1:** sin regresiones.
+
+**Ronda core:**
+
+| Ronda | Criterios | Diálogos sin fallos |
+|---|---|---|
+| gen3-A (base del mismo día) | 97,4 % | 26/32 |
+| gen3-B (con los flags) | **98,7 %** | **30/32** |
+
+- 5 criterios mejoran y 1 empeora. El que empeora (repregunta de la actividad en `moneda-precios-principiante-y-snorkel`)
+  sale igual con los flags apagados y encendidos (atribución 3+3); es de gen-8.
+- La latencia de la ronda no cambia (p50 4 s, p95 7 s). Los turnos con pase pasan de ~1,5 s a 3-8 s porque ahora
+  contestan algo.
+
+Queda de gen-3 el otro lado: cuando hay que pasar directamente (servicio privado, cambio de fecha urgente), el bot
+OFRECE pasar en vez de hacerlo.

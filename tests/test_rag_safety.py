@@ -67,7 +67,8 @@ def test_detect_weather_escalation_english():
     assert result is not None
     reason, response = result
     assert reason == "weather_conditions"
-    assert "updated information" in response
+    # gen-3 (20-oct, `clima_con_politica`): antes del pase, cuándo operamos; la previsión la confirma el equipo.
+    assert "December 25" in response and "forecast" in response
 
 
 def test_routing_tool_excludes_weather_policy_questions_from_escalation():
