@@ -20,6 +20,7 @@ objeto que tiene el caller — verificado empíricamente antes de escribir esto.
 
 from __future__ import annotations
 
+import asyncio
 import logging
 
 from langgraph.graph import END, START, StateGraph
@@ -30,6 +31,7 @@ from src.agents.deflection_agent import deflection_node
 from src.agents.escalation_agent import escalation_node
 from src.agents.info_agent import info_node
 from src.agents.jev_router import NUEVO_CASO, PIDE_PRECIO
+from src.flows.state import Step
 from src.orchestration.router import classify_route
 from src.orchestration.state import (
     ALL_ROUTES,
@@ -114,6 +116,21 @@ async def _router_node(state: BotState) -> dict:
     lanzar_rag_adelantado(conv, message)
     lanzar_extraccion_adelantada(conv, message)  # ex-5: el extractor "LLM primero", también a la vez
 
+    # gen-5 (flag `idioma_unico_de_apertura`): el idioma de la apertura se decide aquí, una vez y a la vez que las
+    # señales, para que todas las rutas contesten en el mismo (antes lo sensible, el contacto, la edad o el buceo
+    # adaptado decidían cada uno a su manera y sin G-10).
+    from src.config import settings
+
+    abre = (settings.idioma_unico_de_apertura and not conv.detected_language and not msg_lower.isdigit()
+            and conv.step in (Step.WELCOME, Step.LANGUAGE))
+    if abre:
+        from src.agents.nucleo.setup import idioma_de_apertura
+
+        if signals is None:
+            signals, _ = await asyncio.gather(_senales(), idioma_de_apertura(conv, message))
+        else:
+            await idioma_de_apertura(conv, message)
+        logger.info(f"[GRAPH][IDIOMA] apertura en {conv.language!r}")
     if signals is None:
         signals = await _senales()
     # ex-9b paso 5 (PIDE_PRECIO): lo que Jev dice de ESTE turno (None si calla), para la puerta del origen antes

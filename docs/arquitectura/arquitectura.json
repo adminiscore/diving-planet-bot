@@ -1,8 +1,8 @@
 {
  "meta": {
-  "generado": "2026-10-20T14:14:20+00:00",
-  "commit": "483f85b",
-  "rama": "feature/pre_gadea"
+  "generado": "2026-10-20T17:21:11+00:00",
+  "commit": "f6bb4a6",
+  "rama": "feature/gen5-gonzalo"
  },
  "vistas": {
   "general": {
@@ -168,6 +168,13 @@
      "titulo": "Los datos de otros clientes se niegan, sin pasar a un asesor",
      "codigo": true,
      "pre": true,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "idioma_unico_de_apertura",
+     "titulo": "El idioma del primer mensaje se decide una vez para todo",
+     "codigo": false,
+     "pre": false,
      "sin_efecto": false
     }
    ],
@@ -501,6 +508,13 @@
      "titulo": "El idioma del primer mensaje lo dice quien lee el mensaje",
      "codigo": true,
      "pre": true,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "idioma_unico_de_apertura",
+     "titulo": "El idioma del primer mensaje se decide una vez para todo",
+     "codigo": false,
+     "pre": false,
      "sin_efecto": false
     }
    ],
@@ -2503,6 +2517,20 @@
    "fijado_en_pre": true,
    "usado_por": [
     "b_extraction"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "idioma_unico_de_apertura",
+   "area": "Chat",
+   "titulo": "El idioma del primer mensaje se decide una vez para todo",
+   "texto": "Solo la reserva decidía bien el idioma del primer mensaje. Si el cliente empezaba pidiendo un teléfono, preguntando si Coral es un bot, por la edad de un niño o por un tema médico, otra regla más simple contestaba a veces en español a quien escribía en inglés o en portugués. Ahora el enrutador decide el idioma una sola vez, a la vez que clasifica el mensaje, y todas las respuestas lo usan.",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
+   "usado_por": [
+    "router",
+    "b_setup"
    ],
    "sin_efecto": null
   },

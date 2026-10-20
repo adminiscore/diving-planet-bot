@@ -145,6 +145,46 @@ async def _idioma_del_extractor(state: ConversationState, message: str) -> str |
     return elegido
 
 
+async def idioma_de_apertura(state: ConversationState, message: str) -> None:
+    """El idioma del PRIMER mensaje: lo fija en `state.language` y `state.detected_language` y aplica G-10 (otro
+    idioma → inglés). La reserva lo llama desde `_setup_phase`; con `idioma_unico_de_apertura` (gen-5), el router del
+    grafo, una vez por conversación y antes de cualquier ruta, para que lo sensible, el contacto, la edad o el buceo
+    adaptado contesten en el mismo idioma que la reserva."""
+    from src.agents import supervisor  # lazy
+    from src.agents.language_detector import detect_language_llm
+    from src.flows.catalog import _detect_language_from_text
+    # Cadena: heurística de stopwords → fallback LLM (solo si la heurística no
+    # detecta nada; evita preguntar "Español/English" ante un mensaje que
+    # revela el idioma con palabras fuera de la lista curada) → heurística de
+    # hints. El `or` corta: el LLM solo se llama si la primera devuelve None.
+    # CAL-E4 (16-oct, flag `idioma_del_extractor`): la heurística de palabras vacías decide PRIMERO y corta la
+    # cadena, así que un mensaje en portugués con muchas palabras iguales al español ("Busco el seguinte: Vamos en
+    # família a Cartagena") se contestaba en español (cal-12). El idioma lo dice el EXTRACTOR, que ya va lanzado en
+    # paralelo con el enrutador (campo `idioma`, G-10): no cuesta una llamada más y no es una lista de palabras.
+    state.language = (
+        await _idioma_del_extractor(state, message)
+        or _detect_language_from_text(message)
+        or await detect_language_llm(message)
+        or supervisor._infer_language(message, state.language)
+    )
+    # Auditoría 2026-08-26 (batería sintética contra PRE, Grupo 4,
+    # portado de pre_gadea v0.21.4): esta detección de apertura
+    # (heurística → LLM → hints, la más fiable) solo fijaba
+    # `state.language`, nunca `state.detected_language` —
+    # `_apply_detected_intent` (que corre en CADA turno vía
+    # `_understand()`) sobreescribe `state.language` con su propia
+    # clasificación más simple, por-mensaje, mientras
+    # `state.detected_language` siga vacío. Resultado: en el PRIMER
+    # turno, el saludo se renderizaba ya en el idioma correcto pero
+    # segundos después, dentro del mismo turno, la pregunta de slot
+    # salía en otro idioma — la clasificación por-mensaje del
+    # intent_detector decidía distinto para un mensaje con palabras
+    # mezcladas. Fijar `detected_language` aquí también evita ese
+    # pisado sobre la detección ya resuelta y más fiable.
+    state.detected_language = state.language
+    await _otro_idioma_en_ingles(state, message=message)
+
+
 async def _setup_phase(
     state: ConversationState, message: str, routing_signals: dict,
 ) -> tuple[str, bool] | None:
@@ -173,38 +213,10 @@ async def _setup_phase(
     # toca presentarse (Coral + Diving Planet, tono cercano — regla de persona).
     first_turn = state.step in (Step.WELCOME, Step.LANGUAGE)
     if first_turn:
-        from src.agents.language_detector import detect_language_llm
-        from src.flows.catalog import _detect_language_from_text
-        # Cadena: heurística de stopwords → fallback LLM (solo si la heurística no
-        # detecta nada; evita preguntar "Español/English" ante un mensaje que
-        # revela el idioma con palabras fuera de la lista curada) → heurística de
-        # hints. El `or` corta: el LLM solo se llama si la primera devuelve None.
-        # CAL-E4 (16-oct, flag `idioma_del_extractor`): la heurística de palabras vacías decide PRIMERO y corta la
-        # cadena, así que un mensaje en portugués con muchas palabras iguales al español ("Busco el seguinte: Vamos en
-        # família a Cartagena") se contestaba en español (cal-12). El idioma lo dice el EXTRACTOR, que ya va lanzado en
-        # paralelo con el enrutador (campo `idioma`, G-10): no cuesta una llamada más y no es una lista de palabras.
-        state.language = (
-            await _idioma_del_extractor(state, message)
-            or _detect_language_from_text(message)
-            or await detect_language_llm(message)
-            or supervisor._infer_language(message, state.language)
-        )
-        # Auditoría 2026-08-26 (batería sintética contra PRE, Grupo 4,
-        # portado de pre_gadea v0.21.4): esta detección de apertura
-        # (heurística → LLM → hints, la más fiable) solo fijaba
-        # `state.language`, nunca `state.detected_language` —
-        # `_apply_detected_intent` (que corre en CADA turno vía
-        # `_understand()`) sobreescribe `state.language` con su propia
-        # clasificación más simple, por-mensaje, mientras
-        # `state.detected_language` siga vacío. Resultado: en el PRIMER
-        # turno, el saludo se renderizaba ya en el idioma correcto pero
-        # segundos después, dentro del mismo turno, la pregunta de slot
-        # salía en otro idioma — la clasificación por-mensaje del
-        # intent_detector decidía distinto para un mensaje con palabras
-        # mezcladas. Fijar `detected_language` aquí también evita ese
-        # pisado sobre la detección ya resuelta y más fiable.
-        state.detected_language = state.language
-        await _otro_idioma_en_ingles(state, message=message)
+        # gen-5: con `idioma_unico_de_apertura` el router ya lo decidió en este mismo turno (mismo mensaje y misma
+        # cadena); no se vuelve a decidir.
+        if not (settings.idioma_unico_de_apertura and state.detected_language):
+            await idioma_de_apertura(state, message)
         state.step = Step.FREE_TEXT
         state.quick_replies = []
     elif pedido := _idioma_pedido(state, message, routing_signals):

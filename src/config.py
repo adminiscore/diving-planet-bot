@@ -589,6 +589,13 @@ class Settings(BaseSettings):
     # - El texto fijo del refresher dice lo que dice la base: se reserva como Minicurso y lleva el formulario médico de
     #   curso (G9: "no dijo que se reserva como minicurso", "no mencionó el formulario médico").
     refresher_completo: bool = True  # PROMOCIONADO 20-oct (banco gen-7 0/2 -> 2/2; core gen7-B 96,1 % 25/32 frente a textos-B 97,4 % 26/32, ninguna regresión del cambio: atribución 3+3; HISTORY 0.31.73); revert = False
+    # gen-5 (20-oct, Gonzalo con Claude; idioma del primer turno): el idioma de la apertura se decidía en cuatro sitios.
+    # La reserva (`_setup_phase`) usaba el extractor, las palabras vacías, el LLM y G-10 (otro idioma → inglés); lo
+    # sensible, `_reply_language` (solo palabras); el contacto y "¿eres un bot?", `_infer_language` (solo pistas); la
+    # edad y el buceo adaptado, el "es" por defecto. Ninguno de los tres últimos aplicaba G-10. Con el flag se decide
+    # UNA vez en el router, a la vez que las señales, con la cadena de la reserva (`nucleo.setup.idioma_de_apertura`),
+    # y todos los caminos la heredan. APAGADO hasta medirlo (banco docs/robustness/gen/dialogos-gen5.json).
+    idioma_unico_de_apertura: bool = False
     # s4-33 (8-oct, Alvaro): instrucciones del juez de grounding v3 para GPT-6 Luna (prompts/info.py
     # GROUNDING_VERIFY_V3_LUNA_*): el v3 entero + 3 aclaraciones (lo que dice el cliente de si mismo no se comprueba;
     # valoraciones y ofertas de ayuda no son datos; las deducciones directas del contexto cuentan). Va con
