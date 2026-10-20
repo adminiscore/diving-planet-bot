@@ -585,10 +585,10 @@ class Settings(BaseSettings):
     # gen-7 (20-oct, refresher): "sí, uno de nosotros no bucea desde hace 4 años" a "¿… de alguno del grupo?" repetía la
     # pregunta y el refresher no llegaba (el dato era de OTRA persona). La pregunta de seguridad cuenta a todo el grupo
     # (conversational_core.refresh_en_el_grupo).
-    seguridad_de_grupo: bool = False
+    seguridad_de_grupo: bool = True  # ENCENDIDO para la ronda core gen7-B (frente a textos-B)
     # - El texto fijo del refresher dice lo que dice la base: se reserva como Minicurso y lleva el formulario médico de
     #   curso (G9: "no dijo que se reserva como minicurso", "no mencionó el formulario médico").
-    refresher_completo: bool = False
+    refresher_completo: bool = True  # ENCENDIDO para la ronda core gen7-B (frente a textos-B)
     # s4-33 (8-oct, Alvaro): instrucciones del juez de grounding v3 para GPT-6 Luna (prompts/info.py
     # GROUNDING_VERIFY_V3_LUNA_*): el v3 entero + 3 aclaraciones (lo que dice el cliente de si mismo no se comprueba;
     # valoraciones y ofertas de ayuda no son datos; las deducciones directas del contexto cuentan). Va con
