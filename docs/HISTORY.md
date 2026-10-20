@@ -1,6 +1,21 @@
 History
 =======
 
+0.31.69 - (2026-10-20)
+----------------------
+* **G9 (el examen oculto sintético, 72 conversaciones) sobre el estado final de ex-9b: 84,1 % de criterios, 20/72
+  diálogos sin fallos** (lanzado por Claude con permiso de Gadea; análisis en
+  `docs/robustness/golden-set/g9-analisis-2026-10-20.md`).
+  - Frente al core visible (ex9b-8 98,7 % 29/32): el oculto mide generalización. 98 fallos de 618: globales
+    sin-invenciones 15, sin-repreguntas 5, idioma 4; criterios propios 74. Por categoría: info 6/20, curso 4/14,
+    logística 2/11, posventa 2/10, pago 2/7.
+  - Causas (aprox.): el RAG contesta incompleto (~30), inventa o da por hecho (15), el origen (~8), el pase a un asesor
+    mal llevado (~8), el refresher incompleto (~6), la moneda (~5), el idioma del primer turno (4), el plan de
+    acompañante (~3). El hueco es sobre todo del RAG (completar y no inventar).
+  - Un criterio del examen choca con una decisión posterior al congelado (dar el WhatsApp oficial; desde el 16-oct no
+    se dan teléfonos): revisar con Gadea qué criterios actualizar.
+  - Latencia: p50 4,6 s / p95 7,8 s. Coste del juez 1,80 $.
+
 0.31.68 - (2026-10-20)
 ----------------------
 * **ex-9b TERMINADO: ronda ex9b-8 PROMOCIONADA (98,7 % 29/32, la mejor de la serie) y la limpieza de sus flags;

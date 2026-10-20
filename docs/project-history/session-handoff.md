@@ -72,6 +72,10 @@ SEGUNDA llamada al extractor (todo junto no cabía en Haiku). Limpieza de los fl
   PC"): `run_synthetic_pre --sample golden --golden docs/robustness/golden-set/examen-sintetico-g9.json` y
   `judge_golden_set --golden …`. El análisis va en HISTORY 0.31.69 y aquí abajo. NADIE abre el examen para ajustar el
   bot (sus fallos se arreglan por causa con frases propias, nunca con las suyas).
+- **Resultado de G9 (20-oct, 02:30): 84,1 % de criterios, 20/72 diálogos sin fallos** (core visible 98,7 %). Análisis
+  por causas en `docs/robustness/golden-set/g9-analisis-2026-10-20.md`; el hueco es sobre todo del RAG (contesta
+  incompleto ~30, inventa 15). **Siguiente (con Gadea):** decidir qué criterios del examen chocan con decisiones
+  posteriores (p. ej. el WhatsApp) y atacar por causa la 1 y la 2 con bancos de frases propias.
 - **Para Álvaro a la vuelta:** el núcleo cambió mucho (ver HISTORY 0.31.62-0.31.68): `supervisor.regex_decide` (el
   regex solo si la IA calla), preguntas nuevas de Jev (caso nuevo, ¿eres un bot?, idioma, pide precio), sin pista del
   regex en el extractor, respuestas cortas por la IA, el paso 6 en `extractor_turno` (llamada aparte), quien se suma al
