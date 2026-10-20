@@ -12,6 +12,7 @@ from src.agents.lead_summary import build_lead_summary
 from src.agents.supervisor import _infer_language
 from src.config import settings
 from src.flows.state import ConversationState, Step
+from src.flows.textos import de_cartagena
 
 logger = logging.getLogger("uvicorn.error")
 
@@ -168,7 +169,8 @@ def _needs_staff_handoff(state: ConversationState, message: str, routing_signals
             return (
                 "No puedo compartir datos de otros clientes (nombres, teléfonos, correos ni reservas): es "
                 "información privada y la cuidamos igual que la tuya. 🔒 Si quieres organizar un grupo, cuéntame "
-                "cuántas personas sois y qué os gustaría hacer, y os ayudo a armar el plan. 🌊"
+                + de_cartagena("cuántas personas son y qué les gustaría hacer, y les ayudo a armar el plan. 🌊",
+                               "cuántas personas sois y qué os gustaría hacer, y os ayudo a armar el plan. 🌊")
             )
         return (
             "I can't share other customers' details (names, phone numbers, emails or bookings): that information is "

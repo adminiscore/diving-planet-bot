@@ -40,6 +40,7 @@ from src.config import settings
 from src.domain import activities as dom
 from src.flows import cart_render, eligibility
 from src.flows.state import ConversationState, Step
+from src.flows.textos import de_cartagena
 from src.utils.fuzzy import is_affirmative, is_agree
 from src.utils.number_words import number_alt
 from src.utils.text import strip_accents
@@ -498,9 +499,11 @@ def ask_slot(state: ConversationState, slot: str, *, reasking: bool = False) -> 
     if slot == SLOT_CERTIFICATION:
         plural = (state.detected_group_size or 1) > 1
         if lang == "es":
-            q = "¿Sois buzos certificados?" if plural else "¿Eres buzo certificado?"
+            q = (de_cartagena("¿Son buzos certificados?", "¿Sois buzos certificados?") if plural
+                 else "¿Eres buzo certificado?")
             return (f"¡Genial! Para recomendarte el plan perfecto: {q} "
-                    "(Y si no, ¡tranquilo! El minicurso es ideal para empezar. 🤿)")
+                    + de_cartagena("(Y si no, ¡tranqui! El minicurso es ideal para empezar. 🤿)",
+                                   "(Y si no, ¡tranquilo! El minicurso es ideal para empezar. 🤿)"))
         q = "Are you certified divers?" if plural else "Are you a certified diver?"
         return (f"Great! So I can recommend the perfect plan: {q} "
                 "(And if not, no worries — the mini-course is the ideal way to start. 🤿)")
@@ -514,13 +517,7 @@ def ask_slot(state: ConversationState, slot: str, *, reasking: bool = False) -> 
         )
         if _plan_en_duda(state):
             # CAL-F (flag `origen_neutro_con_dos_planes`): duda entre dos planes; ninguno se afirma (ver `_plan_en_duda`).
-            return (
-                "¿Desde dónde saldrías? Podemos recogerte saliendo *desde Cartagena* o, si ya estás "
-                "*en las islas*, coordinamos la recogida en tu hotel."
-                if lang == "es" else
-                "Where would you be departing from? We can pick you up *from Cartagena* or, if you're "
-                "already *on the islands*, we arrange pickup at your hotel."
-            )
+            return _pregunta_origen(lang)
         if _plan_needs_overnight(state):
             # Politica `courses_overnight_requirement` / paquetes de varios dias: hay que dormir en
             # las islas; ofrecer "ida y vuelta el mismo dia" contradecia la referencia (ronda A).
@@ -540,22 +537,8 @@ def ask_slot(state: ConversationState, slot: str, *, reasking: bool = False) -> 
         if not _plan_is_single_day(state):
             # Paso 6 (ronda B): con la actividad sin concretar ("curso básico" -> curso PADI generico)
             # se ofrecia "ida y vuelta el mismo dia" a un Open Water. Solo se afirma si se sabe.
-            return (
-                "¿Desde dónde saldrías? Podemos recogerte saliendo *desde Cartagena* o, si ya estás "
-                "*en las islas*, coordinamos la recogida en tu hotel."
-                if lang == "es" else
-                "Where would you be departing from? We can pick you up *from Cartagena* or, if you're "
-                "already *on the islands*, we arrange pickup at your hotel."
-            )
-        return (
-            "¿Desde dónde saldrías? Podemos recogerte saliendo *desde Cartagena* "
-            "(ida y vuelta el mismo día) o, si ya estás *en las islas*, coordinamos "
-            "la recogida en tu hotel."
-            if lang == "es" else
-            "Where would you be departing from? We can pick you up *from Cartagena* "
-            "(round trip, same day) or, if you're already *on the islands*, we arrange "
-            "pickup at your hotel."
-        )
+            return _pregunta_origen(lang)
+        return _pregunta_origen(lang, mismo_dia=True)
     if slot == SLOT_HOTEL:
         return (
             "¿En qué hotel o isla te hospedas? Así coordinamos la recogida."
@@ -588,7 +571,8 @@ def ask_slot(state: ConversationState, slot: str, *, reasking: bool = False) -> 
         return (
             "El *refresher* es una sesión corta de repaso en el agua antes de la "
             f"inmersión. Tiene un costo de *{price}* por persona que lo necesite. "
-            "¿Os interesa?"
+            + de_cartagena("¿Les interesa?" if (state.detected_group_size or 1) > 1 else "¿Te interesa?",
+                           "¿Os interesa?")
             if lang == "es" else
             "The *refresher* is a short in-water review session before the dive. "
             f"It costs *{price}* per person who needs it. Are you interested?"
@@ -713,7 +697,8 @@ def ask_slot(state: ConversationState, slot: str, *, reasking: bool = False) -> 
         plural = (state.detected_group_size or 1) > 1
         if lang == "es":
             pregunta = (
-                "¿sois colombianos o residentes en Colombia?" if plural
+                de_cartagena("¿son colombianos o residentes en Colombia?", "¿sois colombianos o residentes en Colombia?")
+                if plural
                 else "¿eres colombiano o residente en Colombia?"
             )
             if not _es_la_ultima_pregunta(state):
@@ -743,6 +728,26 @@ def _dias_del_plan(state: ConversationState) -> int | None:
     act = dom.by_id(state.detected_activity) if state.detected_activity else None
     dias = {_dias(sid) for sid in (act.all_services() if act else ())}
     return dias.pop() if len(dias) == 1 and None not in dias else None
+
+
+def _pregunta_origen(lang: str, mismo_dia: bool = False) -> str:
+    """La pregunta del origen. Con `textos_de_cartagena` (gen, 20-oct) dice que desde Cartagena se sale del Muelle de la
+    Bodeguita: "podemos recogerte saliendo desde Cartagena" sugería una recogida que no existe (ver flows/textos.py)."""
+    if lang == "es":
+        dia = ", ida y vuelta el mismo día" if mismo_dia else ""
+        return de_cartagena(
+            f"¿Desde dónde saldrías? Puedes salir *desde Cartagena* (desde el Muelle de la Bodeguita{dia}) o, si ya "
+            "estás *en las islas*, coordinamos la recogida en tu hotel.",
+            "¿Desde dónde saldrías? Podemos recogerte saliendo *desde Cartagena* "
+            + ("(ida y vuelta el mismo día) " if mismo_dia else "")
+            + "o, si ya estás *en las islas*, coordinamos la recogida en tu hotel.")
+    dia = ", round trip, same day" if mismo_dia else ""
+    return de_cartagena(
+        f"Where would you be departing from? You can leave *from Cartagena* (from Muelle de la Bodeguita{dia}) or, "
+        "if you're already *on the islands*, we arrange pickup at your hotel.",
+        "Where would you be departing from? We can pick you up *from Cartagena* "
+        + ("(round trip, same day) " if mismo_dia else "")
+        + "or, if you're already *on the islands*, we arrange pickup at your hotel.")
 
 
 def _plan_en_duda(state: ConversationState) -> bool:
@@ -1276,7 +1281,8 @@ def _recall_answer(state: ConversationState, field: str) -> str | None:
             return None
         if n == 1:
             return "Me dijiste que vas *solo/a*." if es else "You told me it's just *you*."
-        return f"Me dijiste que sois *{n}* personas." if es else f"You told me you're a group of *{n}*."
+        return (de_cartagena(f"Me dijiste que son *{n}* personas.", f"Me dijiste que sois *{n}* personas.") if es
+                else f"You told me you're a group of *{n}*.")
     if field == "activity":
         act = _effective_activity(state)
         if not act:

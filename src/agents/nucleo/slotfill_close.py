@@ -39,6 +39,7 @@ from src.config import settings
 from src.domain import activities as dom
 from src.flows import cart_render
 from src.flows.state import ConversationState, Step
+from src.flows.textos import de_cartagena
 from src.utils import money
 
 logger = logging.getLogger("uvicorn.error")
@@ -61,7 +62,9 @@ def _nota_seguridad(state: ConversationState) -> str:
     precio = cart_render.refresher_price_text(state, una_moneda=True)  # una sola moneda por mensaje (Gadea)
     if state.language == "es":
         return ("\n\n⚠️ Si alguno lleva *más de 2 años* sin bucear, se añade el *refresher* (repaso en el agua antes de "
-                f"la inmersión): *{precio}* por persona. ¿Es vuestro caso?")
+                f"la inmersión): *{precio}* por persona. "
+                + de_cartagena("¿Es el caso de alguno de ustedes?" if (state.detected_group_size or 1) > 1
+                               else "¿Es tu caso?", "¿Es vuestro caso?"))
     return ("\n\n⚠️ If anyone hasn't dived for *more than 2 years*, a *refresher* is added (a review in the water before "
             f"the dive): *{precio}* per person. Is that your case?")
 
@@ -188,7 +191,8 @@ def _finalize(state: ConversationState) -> str:
         if lang == "es":
             return (
                 f"{refresher_note}{summary}\n\n"
-                "Como sois colombianos/residentes, el pago es en pesos (COP): puedes "
+                + de_cartagena("Como son colombianos/residentes", "Como sois colombianos/residentes")
+                + ", el pago es en pesos (COP): puedes "
                 "pagar *100% online* o *50% online + 50% en persona*. Te paso con un "
                 "asesor para confirmar disponibilidad y coordinar el pago — enseguida "
                 "se pone en contacto contigo. 🌊"
