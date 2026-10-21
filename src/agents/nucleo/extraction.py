@@ -793,6 +793,11 @@ def _flag_cert_or_course(intent, state: ConversationState, message: str) -> None
         return
     if not course_level_is_ambiguous(message):
         return
+    if settings.referido_no_pregunta_nivel and intent.activity == "padi_open_water_referral":
+        # gen-16 (21-oct): el extractor ya leyó que quiere TERMINAR aquí un Open Water empezado (el Referido): nombrar
+        # «Open Water» no es ambiguo y «¿ya tienen el Curso referido o quieren sacarla?» era una repregunta
+        # (banco dialogos-gen16-repreguntas, 2/2).
+        return
     registered = dom.by_id(intent.activity) if intent.activity else None
     if registered is not None and registered.course_level is not None:
         state.cert_or_course_level = intent.activity
