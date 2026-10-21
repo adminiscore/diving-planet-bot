@@ -37,6 +37,8 @@ PROPUESTA = ("Te propongo el *paquete de 5 inmersiones en 2 días*: sales desde 
 def _apagados(monkeypatch):
     for f in FLAGS6:
         monkeypatch.setattr(settings, f, False)
+    # gen-8: `actividad_de_la_pregunta` también es un campo del paso 6 (tests/test_gen8_actividad_preguntada.py).
+    monkeypatch.setattr(settings, "actividad_de_la_pregunta", False)
     # Los campos en la MISMA llamada (lo que prueban estos tests); la llamada aparte la encienden los suyos (sección 7).
     monkeypatch.setattr(settings, "paso6_en_llamada_aparte", False)
 
