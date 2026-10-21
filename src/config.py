@@ -360,6 +360,17 @@ class Settings(BaseSettings):
     # operamos). Quien se aloja allí no queda como "ya en las islas" (Jev, el extractor de respaldo, el resolutor de la
     # pregunta del origen); el lugar se le pregunta a la base, que da el aviso. APAGADO.
     baru_no_es_rosario: bool = True  # PROMOCIONADO 18-oct (mod-B, HISTORY 0.31.53); revert = False
+    # gen-6 (21-oct, Gonzalo con Claude): con G3-06, "estamos hospedados en Barú" se quedaba sin origen (Jev "none", el
+    # extractor lo descartaba y con `lugar_con_dos_lectores` un "none" de Jev tumba al extractor) y el bot volvía a
+    # preguntar "¿desde dónde saldrías?" (banco docs/robustness/gen/dialogos-gen6.json 2/2). La política (policies.json):
+    # quien se aloja en Barú o Playa Blanca sale desde Cartagena. Con el flag, los tres lectores del lugar (Jev
+    # customer_place, extractor_turno y el resolutor de la pregunta del origen) lo leen como 'cartagena'. Va con
+    # `baru_no_es_rosario`. APAGADO.
+    baru_sale_de_cartagena: bool = False
+    # - gen-6 (21-oct): la puerta del origen quita las frases con importe; si el RAG escribía "…cuesta:", una línea en
+    #   blanco y la lista de precios, el título quedaba colgado ("La salida de 2 inmersiones cuesta:" y luego la pregunta
+    #   del origen). conversational_core._sin_importes. APAGADO.
+    origen_sin_titulo_suelto: bool = False
     # mod-2 (18-oct, decisión de Gadea): elegir el buceo certificado ("fun dives") no dice que el cliente esté
     # certificado; tiene que confirmarlo. Con el flag, el extractor no lo deduce (la regla del catálogo lo hacía para
     # todos los modelos). APAGADO.

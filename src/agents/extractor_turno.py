@@ -567,6 +567,8 @@ def _lugares() -> set[str]:
     from src.agents.rag_agent import AMBIGUOUS_LOCATION_NAMES  # lazy
 
     palabras = {"cartagena", "isla", "islas", "island", "islands", "rosario", "hotel", "hostel", "hostal"}
+    if settings.baru_sale_de_cartagena:
+        palabras.update({"baru", "blanca"})  # gen-6: "estamos en Barú" dice desde dónde sale (Cartagena)
     for nombre in AMBIGUOUS_LOCATION_NAMES:
         palabras.update(w for w in _norm(nombre) if len(w) > 3)
     return palabras
@@ -647,6 +649,10 @@ async def extraer_turno(mensaje: str, *, history: list[dict] | None = None, sabi
     if settings.vivir_no_es_residir:
         # gen-4: vivir en Colombia no es ser residente (ver `_VIVIR_NO_ES_RESIDIR`).
         for antes, despues in _VIVIR_NO_ES_RESIDIR:
+            sistema = sistema.replace(antes, despues)
+    if settings.baru_sale_de_cartagena:
+        # gen-6: alojarse en Barú o Playa Blanca es salir desde Cartagena (ver `_BARU_SALE_DE_CARTAGENA`).
+        for antes, despues in _BARU_SALE_DE_CARTAGENA:
             sistema = sistema.replace(antes, despues)
     if con_hotel:
         sistema += REGLA_HOTEL_ES if lang == "es" else REGLA_HOTEL_EN
@@ -764,6 +770,10 @@ async def extraer_turno(mensaje: str, *, history: list[dict] | None = None, sabi
         if campo == "location" and valor == "island" and settings.baru_no_es_rosario and _solo_baru(cita):
             # G3-06 (decisión de Gadea): Barú y Playa Blanca no son las islas ("estamos en el hotel las islas, en
             # baru" salía island). El lugar queda sin saber y lo contesta la base (aviso solo-operamos-en-rosario).
+            if settings.baru_sale_de_cartagena:
+                # gen-6: quien se aloja en Barú sale desde Cartagena (policies.json); sin saberlo, se repreguntaba.
+                salida[campo] = "cartagena"
+                continue
             descartes[campo] = f"Barú no es Islas del Rosario: {cita!r}"
             continue
         if campo == "hotel" and not (isinstance(valor, str) and cita_verificable(valor, mensaje)):
@@ -878,6 +888,18 @@ RESIDENTE_EN = ("- is_colombian: if they say they are Colombian, from a Colombia
 # in Bogotá", "estoy viviendo en Colombia por trabajo", "sí, vivo aquí" a "¿eres colombiano o residente?" → true, COP).
 # La regla del negocio (policies.json, colombian_pricing): COP para los colombianos, vivan donde vivan, y los
 # residentes, que es tener cédula de extranjería. Nacer allí no da la nacionalidad sola (Gadea, 21-oct): null.
+# gen-6 (21-oct, flag `baru_sale_de_cartagena`): "estamos hospedados en Barú" no daba origen (G3-06: Barú no es las
+# islas, y tampoco era nada) y el bot volvía a preguntar desde dónde sale (banco gen-6 2/2). La política
+# (policies.json): quien se aloja en Barú o Playa Blanca sale desde Cartagena (Muelle de la Bodeguita).
+_BARU_SALE_DE_CARTAGENA = (
+    ("La cita de location tiene que nombrar el lugar (Cartagena, las islas, un hotel).",
+     "Alojado en Barú o en Playa Blanca (no son las islas: allí no recogemos, y desde allí se sale desde Cartagena) → "
+     "cartagena. La cita de location tiene que nombrar el lugar (Cartagena, las islas, Barú, un hotel)."),
+    ("The location quote must name the place (Cartagena, the islands, a hotel).",
+     "Staying in Barú or Playa Blanca (they are not the islands: we do not pick up there, and from there they set out "
+     "from Cartagena) → cartagena. The location quote must name the place (Cartagena, the islands, Barú, a hotel)."),
+)
+
 _VIVIR_NO_ES_RESIDIR = (
     # Solo se AÑADE una frase: reescribir la definición de residente (21-oct, primeras versiones) hacía que un extranjero
     # con cédula de extranjería pasara a false (banco 0/15); la regla de siempre los lee bien (40/40).

@@ -2078,6 +2078,14 @@ def _sin_importes(answer: str) -> str:
         frases = [f for f in _FRASE_RE.split(linea) if f.strip() and not _DEPENDE_DEL_ORIGEN_RE.search(f)]
         if frases:
             lineas.append(" ".join(frases))
+        elif settings.origen_sin_titulo_suelto:
+            # gen-6 (21-oct): "La salida de 2 inmersiones cuesta:", una línea en blanco y la lista de precios dejaba el
+            # título colgado ("…cuesta:" y luego la pregunta del origen): el título se busca saltando las líneas en blanco.
+            ultima = len(lineas) - 1
+            while ultima >= 0 and not lineas[ultima].strip():
+                ultima -= 1
+            if ultima >= 0 and lineas[ultima].rstrip().endswith(":"):
+                del lineas[ultima:]
         elif lineas and lineas[-1].rstrip().endswith(":"):
             lineas.pop()  # el título de una lista que se ha quitado entera ("los precios son:")
     # La pregunta final (casi siempre "¿quieres el link / que te ayude a reservar?") la sustituye la del origen.
