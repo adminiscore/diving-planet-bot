@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-21T17:49:06+00:00",
-  "commit": "5541769",
+  "generado": "2026-10-21T18:19:11+00:00",
+  "commit": "b6de4a0",
   "rama": "feature/gen8-alvaro"
  },
  "vistas": {
@@ -704,6 +704,13 @@
     {
      "nombre": "reserva_de_hotel_no_es_nuestra",
      "titulo": "Reservar el hotel no es reservar con nosotros",
+     "codigo": false,
+     "pre": false,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "referido_no_pregunta_nivel",
+     "titulo": "Quien termina aquí el Open Water no es preguntado de más",
      "codigo": false,
      "pre": false,
      "sin_efecto": false
@@ -3165,6 +3172,19 @@
    "fijado_en_pre": true,
    "usado_por": [
     "b_slotfill_close"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "referido_no_pregunta_nivel",
+   "area": "Reserva",
+   "titulo": "Quien termina aquí el Open Water no es preguntado de más",
+   "texto": "A quien quiere terminar aquí un Open Water empezado en otro centro (el curso referido), Coral ya no le pregunta si tiene el curso o si quiere sacarlo: sigue con la reserva.",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
+   "usado_por": [
+    "b_extraction"
    ],
    "sin_efecto": null
   },
