@@ -196,12 +196,12 @@ def test_nationality_question_singular_for_one_person():
     solo = make_state("es")
     solo.detected_group_size = 1
     q = core.ask_slot(solo, core.SLOT_NATIONALITY)
-    assert "eres colombiano" in q
-    assert "sois" not in q
+    assert "¿eres " in q  # "¿eres colombiano…?" o, con `vivir_no_es_residir`, "¿eres de nacionalidad colombiana…?"
+    assert "sois" not in q and "¿son " not in q
 
     grupo = make_state("es")
     grupo.detected_group_size = 3
-    assert "son colombianos" in core.ask_slot(grupo, core.SLOT_NATIONALITY)  # textos_de_cartagena (20-oct): ustedes
+    assert "¿son " in core.ask_slot(grupo, core.SLOT_NATIONALITY)  # textos_de_cartagena (20-oct): ustedes
 
 
 def test_slot_order_beginner_skips_safety():
