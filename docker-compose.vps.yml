@@ -180,6 +180,9 @@ services:
       # en el router, con la cadena de la reserva y G-10, y todas las rutas lo heredan. PROMOCIONADO 21-oct (gen5-B
       # frente a gen5-A, del mismo día; los que empeoran no pasan por el idioma).
       IDIOMA_UNICO_DE_APERTURA: "true"
+      # gen-12 (21-oct): el RAG no da por hecho si el cliente es hombre o mujer. PROMOCIONADO (ronda sin desplegar
+      # gen12-B frente a gen12-A; banco gen-2 sin palabras de género). La base ya no nombra «ROVERD» (va con el despliegue).
+      SIN_GENERO_SUPUESTO: "true"
       # CERTIFICADO_SOLO_SI_LO_DICE con «buceé hace poco» = certificado (decisión de Gadea). PROMOCIONADO (HISTORY
       # 0.31.61: mod-H2 97,0 % igual que limpieza-3; reserva-solo-link ya no ofrece el minicurso). Revert = quitar estas líneas.
       CERTIFICADO_SOLO_SI_LO_DICE: "true"

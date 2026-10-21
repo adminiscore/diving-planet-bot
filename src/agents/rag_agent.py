@@ -196,6 +196,11 @@ def build_system_prompt(lang: str, query: str | None = None) -> str:
             )
 
             prompt = f"{prompt}\n\n{RAG_ABRE_CON_LA_RESPUESTA_ES if lang == 'es' else RAG_ABRE_CON_LA_RESPUESTA_EN}"
+        if settings.sin_genero_supuesto:
+            # gen-12 (21-oct): sin dar por hecho si el cliente es hombre o mujer (ver RAG_SIN_GENERO_*).
+            from src.prompts.info import RAG_SIN_GENERO_EN, RAG_SIN_GENERO_ES  # lazy
+
+            prompt = f"{prompt}\n\n{RAG_SIN_GENERO_ES if lang == 'es' else RAG_SIN_GENERO_EN}"
     elif settings.rag_no_supone_reserva:
         # EX-RAG-2: no atribuir al cliente un servicio o una reserva que no dijo.
         from src.prompts.info import RAG_NO_SUPONE_EN, RAG_NO_SUPONE_ES  # lazy

@@ -40,3 +40,19 @@ def test_la_base_dice_lo_que_es_no():
     assert "al menos una noche" in pol["courses_overnight_requirement"]["es"]
     formas = json.loads((BASE / "curada/preguntas.json").read_text(encoding="utf-8"))["reglas"]
     assert any("efectivo" in f for f in formas["politica:foreign_card_payment"]["es"])
+
+
+@pytest.mark.parametrize("flag", [True, False])
+def test_sin_genero_supuesto(monkeypatch, flag):
+    """gen-12 (21-oct): el RAG no da por hecho si el cliente es hombre o mujer."""
+    from src.prompts.info import RAG_SIN_GENERO_ES
+
+    monkeypatch.setattr(settings, "rag_no_adivina", True)
+    monkeypatch.setattr(settings, "sin_genero_supuesto", flag)
+    assert (RAG_SIN_GENERO_ES in build_system_prompt("es")) is flag
+
+
+def test_la_base_no_nombra_el_sistema_interno():
+    """gen-12 (21-oct): «ROVERD» es el nombre interno del sistema de reservas (criterio sin-fugas)."""
+    for f in ("policies.json", "discounts.json", "curada/faqs.json", "curada/preguntas.json"):
+        assert "roverd" not in (BASE / f).read_text(encoding="utf-8-sig").lower(), f

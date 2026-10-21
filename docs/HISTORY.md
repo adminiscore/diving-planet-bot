@@ -1,6 +1,18 @@
 History
 =======
 
+0.31.75 - (2026-10-21)
+----------------------
+* **gen-12 PROMOCIONADO: el RAG sin nombres internos ni género supuesto.** Es la primera promoción medida con la ronda
+  sin desplegar, con A y B a la vez.
+  - La base (FAQ del pago, el descuento online y la política del sistema de reservas) ya no nombra el sistema interno
+    «ROVERD» (criterio sin-fugas). El CI regenera `kb_v2` al desplegar.
+  - `SIN_GENERO_SUPUESTO`: el RAG no da por hecho si el cliente es hombre o mujer («tranquilo», «bienvenido»,
+    «colombiana»). En el banco de gen-2, las palabras con género pasan de 2/52 a 0/39.
+  - `ronda_local_pre` **gen12-B 96,5 % 26/32** frente a **gen12-A 96,1 % 24/32**: 4 criterios mejoran y 4 empeoran.
+    Los que empeoran tienen la misma respuesta de fondo en A y B (el texto fijo de DIVE TO HEAL, una repregunta que ya
+    variaba y una pregunta de más en las fotos). Ninguno toca el género ni el nombre interno.
+
 0.31.74 - (2026-10-21)
 ----------------------
 * **gen-5 PROMOCIONADO** (Gonzalo con Claude, `7221aa0`; integrado y medido por Gadea con Claude;

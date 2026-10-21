@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-21T09:44:55+00:00",
-  "commit": "2640850",
+  "generado": "2026-10-21T10:23:00+00:00",
+  "commit": "70cc236",
   "rama": "feature/pre_gadea"
  },
  "vistas": {
@@ -1196,6 +1196,13 @@
     {
      "nombre": "abre_con_la_respuesta",
      "titulo": "Empieza por la respuesta, sin «¡Claro que sí!» delante de un no",
+     "codigo": true,
+     "pre": true,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "sin_genero_supuesto",
+     "titulo": "No da por hecho si el cliente es hombre o mujer",
      "codigo": true,
      "pre": true,
      "sin_efecto": false
@@ -3388,6 +3395,19 @@
    "fijado_en_pre": true,
    "usado_por": [
     "b_extraction"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "sin_genero_supuesto",
+   "area": "Preguntas",
+   "titulo": "No da por hecho si el cliente es hombre o mujer",
+   "texto": "Si el cliente no lo ha dicho, Coral no le aplica palabras con género («tranquilo», «bienvenido», «colombiana»): usa formas que valgan para cualquiera («tranqui», «te damos la bienvenida»).",
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
+   "usado_por": [
+    "r_escribir"
    ],
    "sin_efecto": null
   },

@@ -541,6 +541,18 @@ RAG_ABRE_CON_LA_RESPUESTA_EN = (
     "('Sure!', 'Of course!', 'Yes!', 'Absolutely!'): state first what applies (e.g. 'Pick-up is not at the hotel: …'). "
     "Upbeat openers go first only when the answer is a yes."
 )
+# gen-12 (21-oct, flag `sin_genero_supuesto`): el RAG daba por hecho si el cliente es hombre o mujer ("¡Puedes venir
+# tranquilo!" a quien no lo dijo; en G9, "colombiana" a quien dijo "somos colombianos"). La regla de no adivinar no lo
+# nombraba.
+RAG_SIN_GENERO_ES = (
+    "No des por hecho si el cliente es hombre o mujer. Si no lo sabes, no le apliques palabras con género "
+    "(«tranquilo», «bienvenido», «listo», «interesado», «colombiano»): usa formas que valgan para cualquiera "
+    "(«tranqui», «te damos la bienvenida», «si eres colombiano o colombiana»)."
+)
+RAG_SIN_GENERO_EN = (
+    "Do not assume whether the customer is a man or a woman. If you do not know, do not use gendered words for them "
+    "(\"sir\", \"madam\", \"guys\"); use wording that fits anyone."
+)
 # EX-EST-2 (15-oct, flag `rag_sin_hora`): el RAG no sabe la hora ni la fecha de hoy. Rondas est4-B/est5-B: "ya pasó esa
 # hora" o "como todavía estás a tiempo" sobre el cierre de las 4:30, sin que el cliente dijera la hora.
 RAG_SIN_HORA_ES = (
