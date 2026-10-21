@@ -375,6 +375,7 @@
         "hotel_por_extractor",
         "lugar_con_dos_lectores",
         "sin_cedula_extranjero",
+        "vivir_no_es_residir",
         "est4_flujo",
         "jev_pide_algo",
         "duracion_por_extractor",
@@ -418,7 +419,9 @@
         "recomendar_a_certificados",
         "recomendar_a_no_certificados",
         "resolutor_sin_contradicciones",
-        "acuse_solo_el_mensaje"
+        "acuse_solo_el_mensaje",
+        "acuse_en_su_numero",
+        "actividad_de_la_pregunta"
       ]
     },
     {
@@ -1143,6 +1146,11 @@
       "titulo": "Sin cédula, paga en dólares",
       "texto": "Decisión de Álvaro: si el cliente dice que no tiene cédula colombiana (ni de extranjería) o que es extranjero, no es colombiano y paga en dólares."
     },
+    "vivir_no_es_residir": {
+      "area": "Reserva",
+      "titulo": "Vivir en Colombia no es ser residente",
+      "texto": "Paga en pesos quien dice que es colombiano (viva donde viva) o que tiene cédula de extranjería. Quien solo dice que vive, trabaja o nació en Colombia no cuenta como colombiano: el bot pregunta '¿eres de nacionalidad colombiana o tienes cédula de extranjería?'."
+    },
     "lugar_con_dos_lectores": {
       "area": "Reserva",
       "titulo": "El origen, con dos lectores de acuerdo",
@@ -1172,6 +1180,16 @@
       "area": "Preguntas",
       "titulo": "Datos que el RAG decía mal",
       "texto": "Siempre hay disponibilidad (decisión del negocio): Coral ya no dice 'no puedo confirmar cupos'. Si lo que pide el cliente encaja con varios planes (un paquete de 2 días: 4 o 5 inmersiones), los nombra todos. Y la pregunta del origen solo dice 'ida y vuelta el mismo día' si se sabe que el plan es de un día."
+    },
+    "actividad_de_la_pregunta": {
+      "area": "Reserva",
+      "titulo": "Ofrece la actividad por la que pregunta el cliente",
+      "texto": "Quien pregunta por una actividad sin elegirla aún ('en el minicurso, ¿el equipo está incluido?') recibe, tras la respuesta, la oferta de esa actividad ('Si quieres, te ayudo a reservar: Minicurso') en vez del menú de las 4 actividades. La elige el cliente."
+    },
+    "acuse_en_su_numero": {
+      "area": "Reserva",
+      "titulo": "El acuse habla en singular a quien va solo",
+      "texto": "La frase de acuse ('Entendido, …') repite el dato con las palabras y el número del cliente: a quien dice 'I'm not Colombian' le contesta 'you're not Colombian', no 'none of you are Colombian'."
     },
     "acuse_solo_el_mensaje": {
       "area": "Reserva",

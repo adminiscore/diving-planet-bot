@@ -189,6 +189,11 @@ services:
       # que empeoran no pasan por el pase). Revert = quitar estas dos líneas.
       CAMBIO_DE_RESERVA_PASA: "true"
       PRIVADO_PASA_DIRECTO: "true"
+      # gen-8 (Álvaro, 21-oct): el acuse habla con el número del cliente (el ejemplo en plural se copiaba a quien va
+      # solo) y a quien pregunta por UNA actividad sin elegirla se le ofrece esa, no el menú de 4. PROMOCIONADO 21-oct
+      # (gen8-B frente a gen8-A, del mismo día; el que empeora es del RAG). Revert = quitar estas dos líneas.
+      ACUSE_EN_SU_NUMERO: "true"
+      ACTIVIDAD_DE_LA_PREGUNTA: "true"
       # CERTIFICADO_SOLO_SI_LO_DICE con «buceé hace poco» = certificado (decisión de Gadea). PROMOCIONADO (HISTORY
       # 0.31.61: mod-H2 97,0 % igual que limpieza-3; reserva-solo-link ya no ofrece el minicurso). Revert = quitar estas líneas.
       CERTIFICADO_SOLO_SI_LO_DICE: "true"

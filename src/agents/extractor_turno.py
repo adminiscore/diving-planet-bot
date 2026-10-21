@@ -249,6 +249,25 @@ REGLA_OTRAS_PERSONAS_EN = (
     "is_certified and last_dive_over_2_years."
 )
 
+# 6. gen-8 (`actividad_de_la_pregunta`): la actividad de la que el cliente PREGUNTA sin elegirla. La regla de activity
+#    (decisión de Gadea: no se adivina) deja sin actividad a quien pregunta "en el minicurso, ¿el equipo está
+#    incluido?" o "si hiciera el Open Water…", y el bot le pegaba detrás de la respuesta el menú de 4 actividades. No
+#    cambia activity: es otro hecho, con su cita, para que el bot ofrezca esa actividad y la elija el cliente.
+CAMPO_ACTIVIDAD_PREGUNTADA = _dato({"type": "string", "enum": list(ACTIVIDADES)},
+                                   "La actividad concreta de la que pregunta o habla el mensaje, aunque no la elija.")
+REGLA_ACTIVIDAD_PREGUNTADA_ES = (
+    "\n- actividad_preguntada: la actividad concreta de la lista de la que pregunta o habla este mensaje aunque no la "
+    "elija: una duda sobre ella (\"en el minicurso, ¿el equipo está incluido?\"), una hipótesis (\"si hiciera el "
+    "Advanced…\") o su precio. null si no nombra ninguna concreta, si pregunta qué opciones hay o si compara varias. "
+    "Si además la elige, va también en activity."
+)
+REGLA_ACTIVIDAD_PREGUNTADA_EN = (
+    "\n- actividad_preguntada: the concrete activity from the list that this message asks or talks about even if it "
+    "does not choose it: a doubt about it (\"is gear included in the mini course?\"), a hypothesis (\"if I did the "
+    "Advanced…\") or its price. null if it names no concrete one, asks what options there are or compares several. If "
+    "it also chooses it, it goes in activity too."
+)
+
 
 def campos_paso6(history: list[dict] | None) -> dict:
     """Los campos nuevos del paso 6 que van en ESTA llamada, según sus flags: {campo: (esquema, regla_es, regla_en)}.
@@ -264,6 +283,9 @@ def campos_paso6(history: list[dict] | None) -> dict:
     if settings.notas_rag_desde_estado:
         campos["otro_sin_certificar"] = (CAMPO_OTRO_SIN_CERTIFICAR, REGLA_OTRAS_PERSONAS_ES, REGLA_OTRAS_PERSONAS_EN)
         campos["otro_certificado_inactivo"] = (CAMPO_OTRO_CERTIFICADO_INACTIVO, "", "")
+    if settings.actividad_de_la_pregunta:
+        campos["actividad_preguntada"] = (CAMPO_ACTIVIDAD_PREGUNTADA, REGLA_ACTIVIDAD_PREGUNTADA_ES,
+                                          REGLA_ACTIVIDAD_PREGUNTADA_EN)
     return campos
 
 
@@ -622,6 +644,10 @@ async def extraer_turno(mensaje: str, *, history: list[dict] | None = None, sabi
     if settings.sin_cedula_extranjero:
         # CAL-C (17-oct, decisión de Álvaro): sin cédula colombiana → no es colombiano (paga en USD). Ver SIN_CEDULA_*.
         sistema = sistema.replace(SIN_CEDULA_HOY_ES, SIN_CEDULA_ES).replace(SIN_CEDULA_HOY_EN, SIN_CEDULA_EN)
+    if settings.vivir_no_es_residir:
+        # gen-4: vivir en Colombia no es ser residente (ver `_VIVIR_NO_ES_RESIDIR`).
+        for antes, despues in _VIVIR_NO_ES_RESIDIR:
+            sistema = sistema.replace(antes, despues)
     if con_hotel:
         sistema += REGLA_HOTEL_ES if lang == "es" else REGLA_HOTEL_EN
     # Solo cuando el refresher importa (ya se sabe que lleva más de 2 años sin bucear): con el campo en todas las
@@ -847,6 +873,23 @@ RESIDENTE_ES = ("- is_colombian: si dice que es colombiano, de una ciudad de Col
 RESIDENTE_HOY_EN = "- is_colombian: if they say they are Colombian, from a Colombian city or a resident of Colombia ("
 RESIDENTE_EN = ("- is_colombian: if they say they are Colombian, from a Colombian city or a resident of Colombia (having a "
                 "cédula de extranjería means being a resident; ")
+
+# gen-4 (21-oct, flag `vivir_no_es_residir`): "de una ciudad de Colombia" y "residente" se leían como VIVIR allí ("I live
+# in Bogotá", "estoy viviendo en Colombia por trabajo", "sí, vivo aquí" a "¿eres colombiano o residente?" → true, COP).
+# La regla del negocio (policies.json, colombian_pricing): COP para los colombianos, vivan donde vivan, y los
+# residentes, que es tener cédula de extranjería. Nacer allí no da la nacionalidad sola (Gadea, 21-oct): null.
+_VIVIR_NO_ES_RESIDIR = (
+    # Solo se AÑADE una frase: reescribir la definición de residente (21-oct, primeras versiones) hacía que un extranjero
+    # con cédula de extranjería pasara a false (banco 0/15); la regla de siempre los lee bien (40/40).
+    ("Nunca lo deduzcas del idioma en que escribe ni de su nombre.",
+     "Nunca lo deduzcas del idioma en que escribe ni de su nombre. true si dice que es colombiano, viva donde viva "
+     "(también fuera del país), o que tiene cédula de extranjería, aunque sea de otra nacionalidad. Solo vivir, "
+     "trabajar, estar o haber nacido en Colombia, o ser expat, sin decir más, es null."),
+    ("Never infer it from the language they write in or from their name.",
+     "Never infer it from the language they write in or from their name. True if they say they are Colombian, wherever "
+     "they live (also abroad), or that they have a cédula de extranjería, even if they are a foreign national. Only "
+     "living, working, staying or having been born in Colombia, or being an expat, with nothing more, is null."),
+)
 
 # El mismo flag: aceptar la opción que propone el bot es elegirla (est3-B, pareja-certificados: "nos gusta, somos 2…"
 # tras "te propongo la salida de 2 inmersiones" citaba el texto del bot y se descartaba; el bot repetía el menú).

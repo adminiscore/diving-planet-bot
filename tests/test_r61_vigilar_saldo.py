@@ -40,6 +40,21 @@ def test_clasificar(exc, alarma):
     assert v.clasificar(exc)[1] is alarma
 
 
+def test_la_llamada_no_usa_max_tokens():
+    """mej-5: gpt-5.4-nano rechaza `max_tokens` (400): la comprobación fallaba siempre y la alarma no distinguía la falta
+    de saldo. Va `max_completion_tokens`."""
+    llamadas = []
+
+    class _C:
+        def create(self, **kw):
+            llamadas.append(kw)
+            return object()
+
+    cliente = type("O", (), {"chat": type("Ch", (), {"completions": _C()})()})()
+    assert v.comprobar(cliente, pausa=0) == (True, "OpenAI contesta")
+    assert "max_tokens" not in llamadas[0] and llamadas[0]["max_completion_tokens"] >= 16
+
+
 def test_sin_saldo_no_se_reintenta():
     ok, motivo = v.comprobar(_cliente(_FalloError(429, "insufficient_quota")), pausa=0)
     assert not ok and "sin saldo" in motivo

@@ -48,6 +48,20 @@ def _sin_baru(texto: str) -> str:
     return _lugar_sin_baru(texto) if settings.baru_no_es_rosario else texto
 
 
+def _acuse_en_su_numero(texto: str) -> str:
+    """gen-8 (flag `acuse_en_su_numero`): el ejemplo del acuse, sin una frase en plural para copiar (ver booking)."""
+    if not settings.acuse_en_su_numero:
+        return texto
+    from src.prompts.booking import (  # lazy
+        ACUSE_EJEMPLO_EN,
+        ACUSE_EJEMPLO_ES,
+        ACUSE_EN_SU_NUMERO_EN,
+        ACUSE_EN_SU_NUMERO_ES,
+    )
+
+    return texto.replace(ACUSE_EJEMPLO_ES, ACUSE_EN_SU_NUMERO_ES).replace(ACUSE_EJEMPLO_EN, ACUSE_EN_SU_NUMERO_EN)
+
+
 def _tool(tool: dict) -> dict:
     return _tool_sin_baru(tool) if settings.baru_no_es_rosario else tool
 
@@ -617,7 +631,8 @@ async def compose_acknowledgement(
         response = await client.chat.completions.create(
             model=settings.acuse_model,
             messages=[
-                {"role": "system", "content": acknowledgement_system_prompt(lang, client_name) + _regla_solo_mensaje(lang)},
+                {"role": "system", "content": _acuse_en_su_numero(acknowledgement_system_prompt(lang, client_name))
+                 + _regla_solo_mensaje(lang)},
                 {"role": "user", "content": user_content},
             ],
             temperature=0.4,

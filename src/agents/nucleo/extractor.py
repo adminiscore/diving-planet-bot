@@ -200,6 +200,7 @@ async def _aplicar_extractor(intent, state: ConversationState, message: str, pis
     _poner_duracion(intent, state, datos, message)
     _poner_edades(intent, datos)
     _poner_otras_personas(state, datos)
+    _poner_actividad_preguntada(state, datos)
 
 
 def duracion_del_extractor(datos: dict | None, state: ConversationState) -> tuple[str | None, bool]:
@@ -283,6 +284,17 @@ def _poner_otras_personas(state: ConversationState, datos: dict) -> None:
     if (datos or {}).get("otro_certificado_inactivo") is True and not state.acompanante_certificado_inactivo:
         state.acompanante_certificado_inactivo = True
         logger.info("[EXTRACT][EX9B-6] otra persona del grupo está certificada pero inactiva")
+
+
+def _poner_actividad_preguntada(state: ConversationState, datos: dict) -> None:
+    """gen-8 (`actividad_de_la_pregunta`): la actividad concreta de la que el cliente pregunta sin elegirla. Se queda
+    la última: "¿y cuánto dura?" no nombra ninguna y sigue hablando de la misma."""
+    if not settings.actividad_de_la_pregunta:
+        return
+    actividad = (datos or {}).get("actividad_preguntada")
+    if actividad and actividad != state.actividad_preguntada:
+        state.actividad_preguntada = actividad
+        logger.info(f"[EXTRACT][GEN8] pregunta por {actividad!r} sin elegirla")
 
 
 def _reparto_guardado(state: ConversationState) -> dict:
@@ -697,6 +709,7 @@ async def _guardar_lo_dicho(state: ConversationState, motivo: str) -> None:
         _el_extractor_no_leyo(state)
         return
     _poner_otras_personas(state, datos)
+    _poner_actividad_preguntada(state, datos)
     sabido = _known_field_values(state)
     guardados = {}
     for campo, atributo in _CAMPOS_DEL_PASE.items():
