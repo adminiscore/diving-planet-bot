@@ -1,6 +1,28 @@
 History
 =======
 
+0.31.80 - (2026-10-21)
+----------------------
+* **MEJ-2, primera parte: la base revisada para el negocio y un control de la tarifa** (Gadea con Claude).
+  - **Documento para Andrés**, «Revisión de la base de Coral (2026)», compartido por Gadea, con:
+    - los precios que creemos mal y la tarifa 2026 completa;
+    - los servicios con tarifa y sin ficha (Scuba Diver, completar e-learning, nocturnos, Rescue desde las islas…);
+    - las contradicciones que necesitan respuesta;
+    - las 20 decisiones de negocio ya aplicadas, para confirmar;
+    - los huecos (qué llevar, mínimo de personas, descuento del segundo día) y el proceso para mantener la base.
+  - **Precios raros** (todos del CSV de tarifas de mayo, así que también en las dos copias de la base):
+    - los USD de los dos paquetes de 4 inmersiones desde las islas parecen cruzados;
+    - desde las islas, los paquetes de 5, 7 y 9 salen un 11-14 % más caros en USD y el Rescue un 10 % más barato.
+  - **`tests/test_tarifa_cuadra.py`** (nuevo): cada USD tiene que cuadrar con su COP (±6 % del cambio de la
+    tarifa), y el precio online tiene que ser el 10 % menos que la tarifa plena. Los 7 que no cuadran quedan en
+    `PENDIENTES_DE_ANDRES` (xfail); al corregir uno, el test pide sacarlo de la lista.
+  - **Auditoría de la base del 21-oct**: 19 contradicciones (el 14-oct eran 24); tres van al documento.
+    - Lo ya decidido se corrige en la base: el Advanced es desde los 12 años (no 10), el grupo mixto paga en USD
+      (FAQ 116), el refresher es el minicurso pero para certificados, y el enlace del formulario va también en
+      inglés.
+    - `auditoria_base` fallaba siempre en la pasada de idiomas desde mod-8: Luna no admite `temperature=0`. Ahora
+      la pasada de temas se guarda antes, para que un fallo no la pierda.
+
 0.31.79 - (2026-10-21)
 ----------------------
 * **gen-8 PROMOCIONADO: el acuse en el número del cliente y la actividad de la pregunta** (Álvaro con Claude,
