@@ -20,6 +20,7 @@ import argparse
 import json
 import sys
 from collections import Counter
+from pathlib import Path
 
 from scripts import judge_golden_set as juez
 
@@ -93,6 +94,7 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("b")
     p.add_argument("--rejuzgar", type=int, default=0, help="juicios nuevos por criterio que cambia (0 = sin API)")
     p.add_argument("--tambien-mejoras", action="store_true", help="re-juzgar también las mejoras, no solo regresiones")
+    p.add_argument("--golden", help="otro fichero de diálogos (los exámenes de control G9/G10), como en judge_golden_set")
     args = p.parse_args(argv)
     res_a, res_b = (json.load(open(R.format(n), encoding="utf-8")) for n in (args.a, args.b))
     # 6-oct: el juez tiene dos referencias del negocio (judge_golden_set.REFERENCIAS); los resultados de antes no la
@@ -113,7 +115,7 @@ def main(argv: list[str] | None = None) -> int:
         from openai import OpenAI  # lazy: sin --rejuzgar no hace falta clave
 
         client = OpenAI(api_key=juez._env("OPENAI_API_KEY"))
-        golden = json.loads(juez.GOLDEN_FILE.read_text(encoding="utf-8"))
+        golden = json.loads((Path(args.golden) if args.golden else juez.GOLDEN_FILE).read_text(encoding="utf-8"))
 
     def clasificar(k, a, b, c_mal, records_otra, rejuzgar: bool) -> tuple[str, str]:
         nota = " [misma cita en la otra ronda]" if _misma_cita_en_la_otra(c_mal, records_otra) else ""
