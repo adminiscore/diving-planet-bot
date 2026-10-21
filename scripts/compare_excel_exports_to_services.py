@@ -70,7 +70,10 @@ def main() -> int:
     services_path = Path(args.services)
     export_path = Path(args.tarifa_export)
 
-    services = json.loads(services_path.read_text(encoding="utf-8")).get("services", {})
+    # ord-3: los precios ya no están en services.json; cada servicio apunta a su fila de pricing.json.
+    from src.flows.catalog import RAW_SERVICES
+
+    services = RAW_SERVICES
     roverd = _load_roverd_table(export_path)
 
     mapping: dict[str, tuple[str, str]] = {

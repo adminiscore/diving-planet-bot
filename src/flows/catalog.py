@@ -203,9 +203,37 @@ def _extra_notes_multiline(service: dict, lang: str) -> str:
 
 
 
+# ord-3 (21-oct, decisión de Gadea, Coral #1150): la tarifa vive en UN sitio, `pricing.json` (la que vigila
+# test_tarifa_cuadra y la que usa el juez). Cada servicio de `services.json` dice qué fila es la suya (`tarifa`, p. ej.
+# "from_cartagena.paquetes.paquete_5_buceos") y aquí se le ponen sus cuatro precios al cargar. Antes había dos copias
+# que había que tener iguales a mano (test_pricing_consistency las comparaba).
+_KB_DIR = Path(__file__).resolve().parents[2] / "data" / "knowledge_base"
+TARIFA = json.loads((_KB_DIR / "pricing.json").read_text(encoding="utf-8-sig"))
+_PRECIOS_DE_LA_TARIFA = {"price_usd": "usd_online", "price_usd_normal": "usd_normal",
+                         "price_cop": "cop_online", "price_cop_normal": "cop_normal"}
+
+
+def fila_de_la_tarifa(ruta: str) -> dict:
+    """La fila de `pricing.json` por su ruta ("origen.categoría.clave"). KeyError si no existe."""
+    fila = TARIFA
+    for clave in ruta.split("."):
+        fila = fila[clave]
+    return fila
+
+
+def _servicios_con_precios() -> dict:
+    """Las entradas de services.json con los precios de su fila de la tarifa (sin `tarifa`, sin precio)."""
+    crudos = json.loads((_KB_DIR / "services.json").read_text(encoding="utf-8-sig")).get("services", {})
+    servicios = {}
+    for service_id, service in crudos.items():
+        fila = fila_de_la_tarifa(service["tarifa"]) if service.get("tarifa") else {}
+        servicios[service_id] = {**service, **{campo: fila.get(columna)
+                                               for campo, columna in _PRECIOS_DE_LA_TARIFA.items()}}
+    return servicios
+
+
 def _load_services() -> dict:
-    path = Path(__file__).resolve().parents[2] / "data" / "knowledge_base" / "services.json"
-    raw_services = json.loads(path.read_text(encoding="utf-8-sig")).get("services", {})
+    raw_services = _servicios_con_precios()
     services = {}
     for service_id, service in raw_services.items():
         # Edad minima: la del servicio si la declara, si no la de su actividad en
@@ -279,9 +307,9 @@ def _load_raw_services() -> dict:
     Hacen falta para `service_fact_sheet` (rag-3): la ficha de la base v2 se construye desde el
     JSON crudo (`included_es`, `duration_note_es`…), no desde las claves renombradas de `SERVICES`
     (`includes_es`, ya unido y saneado). Construir la ficha desde dos entradas distintas es
-    exactamente lo que rag-2 vino a evitar: dos textos del mismo servicio que pueden diferir."""
-    path = Path(__file__).resolve().parents[2] / "data" / "knowledge_base" / "services.json"
-    return json.loads(path.read_text(encoding="utf-8-sig")).get("services", {})
+    exactamente lo que rag-2 vino a evitar: dos textos del mismo servicio que pueden diferir. ord-3: con los precios
+    de la tarifa ya puestos, como en `_load_services`."""
+    return _servicios_con_precios()
 
 
 RAW_SERVICES = _load_raw_services()
@@ -416,22 +444,11 @@ SPECIALTY_SERVICE_IDS = {
 
 
 def _load_companion_price() -> dict:
-    path = Path(__file__).resolve().parents[2] / "data" / "knowledge_base" / "pricing.json"
-    try:
-        data = json.loads(path.read_text(encoding="utf-8-sig"))
-    except (FileNotFoundError, json.JSONDecodeError):
-        return {"usd_online": 80.44, "usd_normal": 89.38, "cop_online": 288000, "cop_normal": 320000}
-    for origin in ("from_cartagena", "from_islands"):
-        section = data.get(origin, {}).get("servicios_buceo_snorkel", {})
-        comp = section.get("acompanante") if isinstance(section, dict) else None
-        if comp:
-            return {
-                "usd_online": float(comp.get("usd_online", 80.44)),
-                "usd_normal": float(comp.get("usd_normal", 89.38)),
-                "cop_online": int(comp.get("cop_online", 288000)),
-                "cop_normal": int(comp.get("cop_normal", 320000)),
-            }
-    return {"usd_online": 80.44, "usd_normal": 89.38, "cop_online": 288000, "cop_normal": 320000}
+    """El precio del acompañante, de su fila de la tarifa. ord-3: sin cifras de respaldo escritas aquí; si la fila
+    falta, falla al cargar (y los tests), en vez de cotizar en silencio un precio viejo."""
+    comp = fila_de_la_tarifa("from_cartagena.servicios_buceo_snorkel.acompanante")
+    return {"usd_online": float(comp["usd_online"]), "usd_normal": float(comp["usd_normal"]),
+            "cop_online": int(comp["cop_online"]), "cop_normal": int(comp["cop_normal"])}
 
 
 COMPANION_PRICE = _load_companion_price()

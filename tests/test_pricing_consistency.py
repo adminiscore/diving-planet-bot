@@ -1,144 +1,71 @@
-"""
-Cross-check that prices in services.json match pricing.json for every overlapping service.
+"""ord-3 (21-oct, decisión de Gadea, Coral #1150): la tarifa vive en UN sitio, `pricing.json`.
 
-Catches silent price drift when one file is updated without updating the other.
-Run with: pytest tests/test_pricing_consistency.py -v
+Antes había dos copias de cada precio (services.json y pricing.json) y este test comprobaba que fueran iguales. Ahora
+cada servicio de services.json dice qué fila de la tarifa es la suya (`tarifa`) y `catalog` le pone los precios al
+cargar. Aquí se comprueba que el enlace no se rompe y que no vuelve a haber copias:
+
+- ningún servicio lleva precios propios;
+- cada `tarifa` existe y tiene sus cuatro precios;
+- toda fila de la tarifa con precio la usa un servicio, es el acompañante o dice por qué no se ofrece;
+- las notas de precio no repiten cifras (se quedarían viejas al cambiar la tarifa).
 """
 import json
+import re
 from pathlib import Path
 
 import pytest
 
-PRICING_PATH = Path("data/knowledge_base/pricing.json")
-SERVICES_PATH = Path("data/knowledge_base/services.json")
+from src.flows import catalog
 
-# Maps (services.json service_id) → (pricing.json dotted path)
-# Format: "origin.category.key"
-SERVICE_PRICING_MAP = {
-    # --- From Cartagena: dive services ---
-    "2_dives_1_day":  "from_cartagena.servicios_buceo_snorkel.buzo_certificado_doble",
-    "minicourse":     "from_cartagena.servicios_buceo_snorkel.minicurso_refresh",
-    "snorkeling":     "from_cartagena.servicios_buceo_snorkel.snorkel_doble",
-    # --- From Cartagena: packages ---
-    "3_dives_1_day":  "from_cartagena.paquetes.paquete_3_buceos",
-    "4_dives_2_days": "from_cartagena.paquetes.paquete_4_buceos_diurnos",
-    "5_dives_2_days": "from_cartagena.paquetes.paquete_5_buceos",
-    "7_dives_3_days": "from_cartagena.paquetes.paquete_7_buceos",
-    "9_dives_4_days": "from_cartagena.paquetes.paquete_9_buceos",
-    # --- From Cartagena: PADI courses ---
-    "open_water":     "from_cartagena.cursos_buceo.curso_open_water",
-    "advanced":       "from_cartagena.cursos_buceo.curso_avanzado",
-    "rescue":         "from_cartagena.cursos_buceo.curso_rescate_efr",
-    "referral":       "from_cartagena.cursos_buceo.curso_referido",
-    # --- From Cartagena: specialties (price by dive count) ---
-    "naturalist_specialty":         "from_cartagena.cursos_especialidades.especialidad_2_buceos",
-    "fish_identification_specialty": "from_cartagena.cursos_especialidades.especialidad_2_buceos",
-    "buoyancy_specialty":           "from_cartagena.cursos_especialidades.especialidad_2_buceos",
-    "nitrox_specialty":             "from_cartagena.cursos_especialidades.especialidad_2_buceos",
-    "mindful_diving":               "from_cartagena.cursos_especialidades.especialidad_4_buceos",
-    # --- Already on island: dive services ---
-    "1_dive_1_day_already_on_island":   "from_islands.servicios_buceo_snorkel.buzo_certificado_sencillo",
-    "2_dives_1_day_already_on_island":  "from_islands.servicios_buceo_snorkel.buzo_certificado_doble",
-    "minicourse_already_on_island":     "from_islands.servicios_buceo_snorkel.minicurso_refresh",
-    "snorkeling_already_on_island":     "from_islands.servicios_buceo_snorkel.snorkel_doble",
-    # --- Already on island: packages ---
-    "3_dives_1_day_already_on_island":       "from_islands.paquetes.paquete_3_buceos",
-    "4_dives_2_days_already_on_island":      "from_islands.paquetes.paquete_4_buceos_diurnos",
-    "4_dives_2_days_mixed_already_on_island": "from_islands.paquetes.paquete_4_buceos_mixto",
-    "5_dives_2_days_already_on_island":      "from_islands.paquetes.paquete_5_buceos",
-    "7_dives_3_days_already_on_island":      "from_islands.paquetes.paquete_7_buceos",
-    "9_dives_4_days_already_on_island":      "from_islands.paquetes.paquete_9_buceos",
-    # --- Already on island: PADI courses ---
-    "open_water_already_on_island": "from_islands.cursos_buceo.curso_open_water",
-    "advanced_already_on_island":   "from_islands.cursos_buceo.curso_avanzado",
-    "referral_already_on_island":   "from_islands.cursos_buceo.curso_referido",
-    # --- Already on island: specialties ---
-    "fish_identification_specialty_already_on_island": "from_islands.cursos_especialidades.especialidad_2_buceos",
-    "nitrox_specialty_already_on_island":              "from_islands.cursos_especialidades.especialidad_2_buceos",
-    "naturalist_specialty_already_on_island":          "from_islands.cursos_especialidades.especialidad_2_buceos",
-    "buoyancy_specialty_already_on_island":            "from_islands.cursos_especialidades.especialidad_2_buceos",
-}
-
-# services.json field → pricing.json field
-PRICE_FIELD_MAP = {
-    "price_usd":        "usd_online",
-    "price_usd_normal": "usd_normal",
-    "price_cop":        "cop_online",
-    "price_cop_normal": "cop_normal",
-}
+SERVICES = json.loads(Path("data/knowledge_base/services.json").read_text(encoding="utf-8-sig"))["services"]
+CAMPOS = ("price_usd", "price_usd_normal", "price_cop", "price_cop_normal")
+COLUMNAS = ("usd_online", "usd_normal", "cop_online", "cop_normal")
+SIN_PRECIO = {"divemaster", "private"}  # se cotizan con un asesor
 
 
-def _load():
-    with PRICING_PATH.open(encoding="utf-8-sig") as f:
-        pricing = json.load(f)
-    with SERVICES_PATH.open(encoding="utf-8-sig") as f:
-        services = json.load(f)["services"]
-    return pricing, services
-
-
-def _resolve(pricing: dict, dotted_path: str) -> dict:
-    node = pricing
-    for key in dotted_path.split("."):
-        node = node[key]
-    return node
-
-
-@pytest.fixture(scope="module")
-def data():
-    return _load()
-
-
-def _cases():
-    try:
-        pricing, services = _load()
-    except Exception:
-        return []
-
-    cases = []
-    for svc_id, pricing_path in SERVICE_PRICING_MAP.items():
-        if svc_id not in services:
-            continue
-        try:
-            p = _resolve(pricing, pricing_path)
-        except KeyError:
-            continue
-        s = services[svc_id]
-        for svc_field, pricing_field in PRICE_FIELD_MAP.items():
-            sv = s.get(svc_field)
-            pv = p.get(pricing_field)
-            if sv is None or pv is None:
+def _filas_con_precio():
+    for origen in ("from_cartagena", "from_islands"):
+        for categoria, filas in catalog.TARIFA[origen].items():
+            if not isinstance(filas, dict):
                 continue
-            cases.append((svc_id, svc_field, float(sv), float(pv), pricing_path))
-    return cases
+            for clave, fila in filas.items():
+                if isinstance(fila, dict) and "usd_online" in fila:
+                    yield f"{origen}.{categoria}.{clave}", fila
 
 
-@pytest.mark.parametrize(
-    "svc_id,field,svc_price,pricing_price,pricing_path",
-    _cases(),
-    ids=[f"{c[0]}.{c[1]}" for c in _cases()],
-)
-def test_price_matches(svc_id, field, svc_price, pricing_price, pricing_path):
-    """Price in services.json must equal the corresponding field in pricing.json."""
-    assert abs(svc_price - pricing_price) < 0.01, (
-        f"{svc_id}.{field}: services.json={svc_price} "
-        f"vs pricing.json ({pricing_path}.{PRICE_FIELD_MAP[field]})={pricing_price}"
-    )
+def test_ningun_servicio_lleva_precios_propios():
+    con_precio = sorted(sid for sid, s in SERVICES.items() if any(c in s for c in CAMPOS))
+    assert not con_precio, f"precios copiados en services.json (van en pricing.json): {con_precio}"
 
 
-def test_all_mapped_services_exist_in_services_json():
-    """Every service_id in SERVICE_PRICING_MAP must exist in services.json."""
-    pricing, services = _load()
-    missing = [sid for sid in SERVICE_PRICING_MAP if sid not in services]
-    assert not missing, f"service IDs in map but missing from services.json: {missing}"
+@pytest.mark.parametrize("service_id", sorted(SERVICES))
+def test_cada_servicio_apunta_a_una_fila_con_sus_cuatro_precios(service_id):
+    ruta = SERVICES[service_id].get("tarifa")
+    if service_id in SIN_PRECIO:
+        assert ruta is None
+        return
+    assert ruta, f"{service_id} no dice qué fila de la tarifa es la suya"
+    fila = catalog.fila_de_la_tarifa(ruta)
+    assert all(fila.get(c) is not None for c in COLUMNAS), f"{service_id} -> {ruta}: faltan precios"
+    assert "no_se_ofrece" not in fila, f"{service_id} -> {ruta}: esa fila dice que no se ofrece"
+    assert [catalog.SERVICES[service_id][c] for c in CAMPOS] == [fila[c] for c in COLUMNAS]
 
 
-def test_all_pricing_paths_exist_in_pricing_json():
-    """Every dotted path in SERVICE_PRICING_MAP must resolve in pricing.json."""
-    pricing, _ = _load()
-    bad_paths = []
-    for svc_id, path in SERVICE_PRICING_MAP.items():
-        try:
-            _resolve(pricing, path)
-        except KeyError as e:
-            bad_paths.append(f"{svc_id} → {path} (key {e} not found)")
-    assert not bad_paths, "Broken pricing paths:\n" + "\n".join(bad_paths)
+def test_toda_fila_con_precio_se_usa_o_dice_por_que_no():
+    usadas = {s["tarifa"] for s in SERVICES.values() if s.get("tarifa")}
+    acompanante = "from_cartagena.servicios_buceo_snorkel.acompanante"
+    sueltas = [ruta for ruta, fila in _filas_con_precio()
+               if ruta not in usadas and ruta != acompanante and not fila.get("no_se_ofrece")]
+    assert not sueltas, f"filas con precio sin servicio ni motivo («no_se_ofrece»): {sueltas}"
+
+
+def test_el_acompanante_sale_de_su_fila():
+    fila = catalog.fila_de_la_tarifa("from_cartagena.servicios_buceo_snorkel.acompanante")
+    assert catalog.COMPANION_PRICE == {c: fila[c] for c in COLUMNAS}
+
+
+def test_las_notas_de_precio_no_repiten_cifras():
+    cifra = re.compile(r"\$\s?\d|\d[\d.,]*\s*(?:USD|COP)\b")
+    con_cifras = [f"{sid}.{k}" for sid, s in SERVICES.items() for k, v in s.items()
+                  if k.startswith("price_note") and cifra.search(v or "")]
+    assert not con_cifras, f"cifras en notas de precio (salen de la tarifa): {con_cifras}"

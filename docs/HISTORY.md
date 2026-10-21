@@ -1,6 +1,35 @@
 History
 =======
 
+0.31.88 - (2026-10-21)
+----------------------
+* **ord-3: la tarifa vive en un solo sitio, `pricing.json`** (Álvaro con Claude, `feature/ord3-alvaro`; decisión de
+  Gadea, Coral #1150).
+  - Antes, cada precio estaba dos veces: en `services.json`, que es de donde cotiza el bot, y en `pricing.json`, que
+    es la tarifa que usa el juez. Había que tenerlas iguales a mano.
+  - Ahora `services.json` ya no lleva precios. Cada servicio dice cuál es su fila de la tarifa (`tarifa`) y
+    `catalog` le pone los precios al cargar. El acompañante sale de su fila, sin cifras de respaldo escritas en el
+    código.
+  - La tarifa gana el Bubble Makers, con precio PROVISIONAL a confirmar con Andrés.
+  - Las 14 filas con precio que no son ningún servicio llevan su motivo en `no_se_ofrece` (decisión de mej-2): Scuba
+    Diver, especialidad de 3 inmersiones, nocturnos y buceo adicional sueltos, e-learning (→ Referido), Rescue desde
+    las islas. Dos filas no tienen ficha en el catálogo: el snorkel de 1 salida en las islas y la especialidad de 4
+    inmersiones en las islas.
+  - Las notas de precio ya no repiten cifras. Dos, redondeadas, decían 204 y 140 USD.
+  - `faqs.json`, que solo usa la base vieja:
+    - la 108 llamaba «precio normal» al precio online del paquete de 4 inmersiones diurnas;
+    - la 122 daba 187 USD como precio del Bubble Makers, cuando ese es el normal.
+  - **Equivalencia sin gastar.** Con el código de antes y el de después salen idénticos, letra por letra:
+    - los 38 servicios;
+    - sus partes y fichas en ES y EN;
+    - el catálogo del RAG;
+    - el acompañante.
+  - Tests:
+    - `test_pricing_consistency`: el enlace a la tarifa, sin copias, y ninguna fila suelta sin motivo.
+    - `test_ord3_faq_cifras`: toda cifra de las FAQ curadas está en la tarifa. Fuera de ella solo queda el
+      suplemento de Nitrox por tanque.
+  - De paso, `compare_excel_exports_to_services` vuelve a funcionar: se rompía con el BOM.
+
 0.31.87 - (2026-10-21)
 ----------------------
 * **mej-1d: fuera 13 interruptores ya promocionados** (Álvaro con Claude, `feature/mej1d-alvaro`). Las reglas son
