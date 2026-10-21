@@ -77,11 +77,11 @@ def ficha_servicio(service_id: str, svc: dict, lang: str) -> dict:
 
 _REFRESHER = {
     "es": ("Ficha del servicio: Refresher (repaso para buzos certificados con más de 2 años sin bucear) — {origen}",
-           "El refresher es la MISMA actividad que el Minicurso de Buceo: misma información, itinerario, requisitos y "
-           "precio. Se reserva como '{nombre}'. Lo que sigue es la ficha de ese minicurso."),
+           "El refresher es la MISMA actividad que el Minicurso de Buceo: mismo itinerario, horario y precio; la "
+           "diferencia es que es para buzos ya certificados. Se reserva como '{nombre}'. Lo que sigue es la ficha de ese minicurso."),
     "en": ("Service sheet: Refresher (review for certified divers who haven't dived in more than 2 years) — {origen}",
-           "The refresher is the SAME activity as the Dive Mini Course: same information, itinerary, requirements and "
-           "price. It is booked as '{nombre}'. Below is that mini course's sheet."),
+           "The refresher is the SAME activity as the Dive Mini Course: same itinerary, schedule and price; the "
+           "difference is that it is for already-certified divers. It is booked as '{nombre}'. Below is that mini course's sheet."),
 }
 _REFRESHER_PARA = {"es": "Repaso para buzos certificados que llevan más de 2 años sin bucear.",
                    "en": "Review for certified divers who haven't dived in more than 2 years."}
