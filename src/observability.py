@@ -173,14 +173,16 @@ def con_pieza_llm(nombre: str):
 
 
 def record_llm_call(kind: str, seconds: float, model: str | None = None, *, pieza: str | None = None,
-                    inicio: float | None = None, status: int | None = None) -> None:
+                    inicio: float | None = None, status: int | None = None, uso: dict | None = None) -> None:
     """Apunta una llamada al LLM (`chat` o `embedding`) en el turno en curso: tipo, duración, modelo y, si se saben,
-    la pieza que la hizo y cuándo empezó (segundos desde el inicio del turno)."""
+    la pieza que la hizo, cuándo empezó (segundos desde el inicio del turno) y los tokens que gastó (`uso`)."""
     current = _TURN_FACTS.get()
     if current is not None:
         llamada = {"kind": kind, "s": round(seconds, 4), "model": model, "pieza": pieza or _LLM_PIEZA.get()}
         if status is not None and status >= 400:
             llamada["error"] = status  # r6-1(b): 401 clave, 429 sin saldo o saturado, 5xx caído
+        if uso:
+            llamada["uso"] = uso
         t0_turno = _TURN_T0.get()
         if inicio is not None and t0_turno is not None:
             llamada["t"] = round(inicio - t0_turno, 3)
@@ -205,10 +207,27 @@ async def _on_response(response) -> None:
             model = json.loads(request.content or b"{}").get("model")
         except Exception:  # noqa: BLE001
             pass
-        record_llm_call(kind, time.perf_counter() - t0, model, pieza=request.extensions.get("coral_pieza"),
-                        inicio=t0, status=response.status_code)
+        segundos = time.perf_counter() - t0
+        record_llm_call(kind, segundos, model, pieza=request.extensions.get("coral_pieza"),
+                        inicio=t0, status=response.status_code, uso=await _uso_de(response))
     except Exception:  # noqa: BLE001 — medir nunca rompe una llamada
         pass
+
+
+async def _uso_de(response) -> dict | None:
+    """MEJ-5 (21-oct): los tokens de la llamada (entrada, de ellos en caché, salida) y, si es OpenRouter, su coste,
+    para saber qué pieza y qué modelo gastan. El bot no usa streaming: leer aquí el cuerpo no cambia la llamada (httpx
+    lo guarda y el cliente de OpenAI lo vuelve a usar)."""
+    try:
+        if response.status_code >= 400:
+            return None
+        await response.aread()
+        u = (json.loads(response.content or b"{}") or {}).get("usage") or {}
+        uso = {"in": u.get("prompt_tokens"), "out": u.get("completion_tokens"),
+               "ca": (u.get("prompt_tokens_details") or {}).get("cached_tokens"), "usd": u.get("cost")}
+        return {k: v for k, v in uso.items() if v} or None
+    except Exception:  # noqa: BLE001 — medir nunca rompe una llamada
+        return None
 
 
 def metered_http_client():
@@ -295,7 +314,7 @@ def turn_metrics_line(conversation_id: str, facts: dict, started_at: str, second
         "nodes": facts.get("_nodes") or {},
         # r6-1: cada llamada (pieza, modelo, inicio en el turno, duración), para ver qué va en serie y qué en paralelo.
         "llamadas": [{"p": c.get("pieza") or c["kind"], "m": c.get("model"), "t": c.get("t"), "s": c["s"],
-                      **({"e": c["error"]} if c.get("error") else {})}
+                      **({"e": c["error"]} if c.get("error") else {}), **({"u": c["uso"]} if c.get("uso") else {})}
                      for c in calls],
         "llm_errores": sum(1 for c in calls if c.get("error")),
     }
