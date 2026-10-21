@@ -19,6 +19,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
+from src.config import settings
 from src.domain import activities as dom
 
 # --- Age thresholds ---------------------------------------------------------
@@ -178,15 +179,39 @@ def format_group_plan(plans: list[PersonPlan], lang: str = "es") -> str:
     labels = {option: _plan_label(option, lang) for option in (*_OPTION_TO_ACTIVITY, COMPANION)}
     lines: list[str] = []
     for p in plans:
-        opts = " / ".join(labels[o] for o in p.options)
+        if settings.tarjeta_edades_en_cifra and p.age is not None:
+            opts = " / ".join(_con_edad_minima(o, labels[o], lang) for o in p.options)
+        else:
+            opts = " / ".join(labels[o] for o in p.options)
         qty_prefix = f"{p.qty}× " if p.qty > 1 else ""
+        who = _who(p, lang) if settings.tarjeta_edades_en_cifra else p.who
         if lang == "es":
             verb = "→ " if p.auto else "→ puede elegir: "
-            lines.append(f"• {qty_prefix}*{p.who}* {verb}{opts}")
+            lines.append(f"• {qty_prefix}*{who}* {verb}{opts}")
         else:
             verb = "→ " if p.auto else "→ can choose: "
-            lines.append(f"• {qty_prefix}*{p.who}* {verb}{opts}")
+            lines.append(f"• {qty_prefix}*{who}* {verb}{opts}")
     return "\n".join(lines)
+
+
+# ord-7b (21-oct, flag `tarjeta_edades_en_cifra`): con niños, la edad mínima de cada opción en cifra (decisión de
+# Gadea con ord-0); la del registro de actividades. Las que ya dicen su franja (Bubble Makers, 8-10) se quedan igual.
+def _con_edad_minima(option: str, label: str, lang: str) -> str:
+    activity = dom.by_id(option_activity_id(option))
+    if activity is None or activity.min_age is None or activity.max_age is not None:
+        return label
+    return f"{label} (desde {activity.min_age} años)" if lang == "es" else f"{label} (from age {activity.min_age})"
+
+
+_WHO_EN = {"buzo certificado": "certified diver", "sin certificar": "not certified"}
+
+
+def _who(p: PersonPlan, lang: str) -> str:
+    if lang == "es":
+        return p.who
+    if p.age is not None:
+        return f"{p.age} years old"
+    return _WHO_EN.get(p.who, p.who)
 
 
 def age_eligibility_note(age: int, lang: str = "es") -> str:

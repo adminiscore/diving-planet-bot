@@ -171,10 +171,31 @@ async def route_message(state: ConversationState, message: str) -> str:
     from src.observability import note_turn, turn_trace
 
     escalation_before = state.pending_escalation_reason
+    paso_antes = state.step
+    state._contestado_antes_del_pase = False  # gen-13: se renueva cada turno
+    state._senales_router = None
     async with turn_trace(settings, state.conversation_id, message) as turn:
         note_turn(language=state.language, greeting=_is_greeting_only(message))
         from src.orchestration.graph import run_turn_via_graph
         response = await run_turn_via_graph(state, message)
+        if state.pending_escalation_reason not in (None, escalation_before) and isinstance(response, str):
+            # gen-13: el turno acaba de pasar a un asesor; las OTRAS preguntas del mensaje se contestan delante.
+            from src.agents.conversational_core import _greeting
+            from src.agents.escalation_agent import lo_contestable_en_cualquier_pase
+
+            # Con el paso ya en ESCALATE el RAG recibe «la conversación ya está con una persona» y dice «el asesor ya
+            # tiene tu caso» encima de «te paso ahora» (lo mismo que gen-1): contesta con el paso de antes del turno.
+            paso_del_pase, state.step = state.step, paso_antes
+            try:
+                antes = await lo_contestable_en_cualquier_pase(state, message)
+            finally:
+                state.step = paso_del_pase
+            if antes:
+                saludo = _greeting(state)
+                if saludo and response.startswith(saludo):
+                    response = f"{saludo}{antes}\n\n{response[len(saludo):]}"
+                else:
+                    response = f"{antes}\n\n{response}"
         # l1-4: red de seguridad. Si el turno no pasó por RAG, la captura de notas
         # que `_setup_phase` lanzó en paralelo puede seguir viva; hay que esperarla
         # ANTES de que el canal guarde el estado o se perdería la nota. Es no-op

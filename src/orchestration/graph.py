@@ -136,6 +136,7 @@ async def _router_node(state: BotState) -> dict:
     # ex-9b paso 5 (PIDE_PRECIO): lo que Jev dice de ESTE turno (None si calla), para la puerta del origen antes
     # del precio, que corre en la reserva y en info. Se pone en cada turno: nunca queda el de un turno anterior.
     conv._jev_pide_precio = signals.get(PIDE_PRECIO)
+    conv._senales_router = signals  # gen-13: el cierre del turno sabe si el mensaje traía una pregunta
     route = classify_route(conv, message, signals)
     logger.info(f"[GRAPH] conv={conv.conversation_id} route={route}")
     from src.observability import note_turn

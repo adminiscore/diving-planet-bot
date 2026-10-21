@@ -2,7 +2,7 @@
 
 Cuesta 474 USD frente a 693 del Open Water completo: leerlo como Open Water
 cotizaba 219 USD de mas. Decision del owner: solo cuenta si el cliente lo dice, y
-entonces se cierra con el asesor (sin link de reserva). Nada de listas: las
+entonces se cierra con el asesor (sin link de reserva); desde el 21-oct (Gadea) se reserva con su enlace. Nada de listas: las
 "hermanas" salen del registro y el cierre con asesor del campo `contact_only` de
 services.json.
 """
@@ -27,9 +27,11 @@ def test_referral_gloss_does_not_name_open_water():
     assert gloss and all("padi_open_water" not in text for text in gloss.values())
 
 
-def test_referral_closes_with_an_advisor_from_catalog_data():
-    assert cart_render._is_contact_only_service("referral") is True
-    assert cart_render._is_contact_only_service("referral_already_on_island") is True
+def test_referral_books_online_like_the_other_courses():
+    """gen-19 (21-oct, decisión de Gadea): el Referido se reserva con su enlace online, como los demás cursos (antes
+    lo cerraba un asesor y el RAG daba la página de información como si fuera para reservar)."""
+    assert cart_render._is_contact_only_service("referral") is False
+    assert cart_render._is_contact_only_service("referral_already_on_island") is False
     assert cart_render._is_contact_only_service("divemaster") is True
     assert cart_render._is_contact_only_service("open_water") is False
 

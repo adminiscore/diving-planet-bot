@@ -193,11 +193,11 @@ class Settings(BaseSettings):
     # regla de vivir_no_es_residir ponía «estar» entre lo que no dice la nacionalidad) y el bot cotizaba en USD. Con el
     # flag, decir de qué ciudad o región de Colombia es (o su gentilicio) es ser colombiano; alojarse o viajar no dice
     # nada. Solo actúa con vivir_no_es_residir encendido. APAGADO.
-    gentilicio_es_colombiano: bool = False
+    gentilicio_es_colombiano: bool = True  # PROMOCIONADO 21-oct (core gen14-A 96,5 % 26/32 frente a gen14-B 97,8 % 27/32; rejuzgado x3: 3 mejoras reales, 0 regresiones de la nacionalidad; HISTORY 0.31.85); revert = False
     # gen-14 (21-oct): en un turno con pregunta, el RAG contesta (o se adelanta) antes de que la extracción apunte la
     # nacionalidad que dice ESE mensaje, y a «Somos de Cali… ¿cuánto vale?» le daba USD. Con el flag, el RAG recibe la
     # nacionalidad que ya leyó la extracción del turno (conversational_core._con_la_nacionalidad_del_mensaje). APAGADO.
-    rag_espera_la_nacionalidad: bool = False
+    rag_espera_la_nacionalidad: bool = True  # PROMOCIONADO 21-oct (con gentilicio_es_colombiano, misma ronda gen14-A/B); revert = False
     # gen-15 (21-oct): los hoteles de las islas que da la base (policies.json other_island_hotels: Mulata, Rosario de
     # Mar, Eco Hotel Las Palmeras…) no estaban en la lista del bot ni en la pregunta del lugar de Jev, y el bot volvía a
     # preguntar desde dónde sale. Con el flag, el extractor y Jev los conocen (extractor_turno.HOTELES_DE_LA_BASE).
@@ -601,6 +601,11 @@ class Settings(BaseSettings):
     # mensaje ("¿cómo estará el mar el jueves? ¿el precio incluye el equipo?" -> solo "te conecto con el equipo").
     # - Contestar lo contestable y luego pasar (médico y clima): el RAG contesta las OTRAS preguntas del mensaje, sin
     #   tocar el tema sensible, y después va la línea del pase. escalation_agent._lo_contestable.
+    # - gen-13 (21-oct): lo mismo para CUALQUIER pase a un asesor (contacto, pago, grupo privado, cambios de reserva,
+    #   necesidades especiales, post-venta, «pásame con alguien»), en un solo sitio: el cierre del turno
+    #   (supervisor.route_message -> escalation_agent.lo_contestable_en_cualquier_pase). Causa 2 de G10/G9 (~27 fallos).
+    #   Las emergencias, las quejas, los datos personales y el fallo técnico se pasan solos.
+    contesta_antes_de_cualquier_pase: bool = True  # PROMOCIONADO 21-oct (banco 4/16 -> 16/16; core gen13-A 97,4 % 27/32 frente a gen13-B 97,4 % 26/32, 0 regresiones del flag; HISTORY 0.31.84); revert = False
     contesta_antes_de_pasar: bool = True  # PROMOCIONADO 20-oct (gen3-B 98,7 % 30/32 frente a gen3-A 97,4 % 26/32, 0 regresiones; HISTORY 0.31.70); revert = False
     # - El clima (decisión de Gadea, 20-oct): antes del pase, que operamos todos los días salvo el 25-dic y el 1-ene,
     #   que la seguridad va primero y que, si el mar no está apto, se reprograma (FAQ 3 y 10 de la base).
@@ -678,6 +683,23 @@ class Settings(BaseSettings):
     # conserva-A/B (9 dialogos, misma franja): 92,6 -> 97,0 %, 5 -> 8/9 sin fallos, 6 mejoras, ninguna regresion del flag.
     # PROMOCIONADO 8-oct (HISTORY 0.31.1). Revert = False aqui y en el compose.
     origen_conserva_respuesta: bool = True
+    # ord-7 (21-oct, decisión de Gadea con ord-0): cuando la puerta del origen salta, quitaba también lo que incluye,
+    # el almuerzo y el enlace, y el cliente se quedaba sin nada de lo que preguntó (ord-0: 3 de las 4 omisiones de
+    # redacción). Ahora, si se sabe de qué actividad pregunta y tiene un plan por origen, el código pone las DOS
+    # variantes del catálogo (desde Cartagena y ya en las islas: precio online por persona en su moneda, el transporte
+    # y si lleva almuerzo) y pregunta el origen para seguir. Sin actividad concreta (los paquetes de buceo), como hoy.
+    origen_dos_variantes: bool = False
+    # ord-7b (21-oct, decisión de Gadea con ord-0: con niños, la edad mínima EN CIFRA): la tarjeta «qué puede hacer cada
+    # quien» pone la edad mínima de cada opción («minicurso de buceo (desde 10 años)») y dice quién es cada línea en el
+    # idioma del cliente (en inglés salía «8 años», g10-049).
+    tarjeta_edades_en_cifra: bool = False
+    # gen-19 (21-oct): con el origen y el plan sabidos, si la respuesta da el precio de ese plan sin su enlace de
+    # reserva, el código añade el enlace del catálogo (`conversational_core._con_enlace_si_toca`). No a colombianos
+    # ni a grupos mixtos ni en los planes que cierra un asesor.
+    enlace_cuando_toca: bool = False
+    # ord-7 (21-oct): la pregunta de Jev «¿pide el precio?» nombra las actividades del centro; con «the dive center's
+    # activities» a secas, «¿Cuánto cuesta el snorkel?» salía 0,55 (umbral 0,7) y la puerta del origen no saltaba.
+    jev_precio_nombra_actividades: bool = False
     # CAL (17-oct): el catálogo del RAG pinta hasta qué profundidad certifica cada curso (`max_depth_m`: Open Water
     # 18 m, Advanced 30 m, lo que dice el registro de actividades) y una línea general de profundidad por certificación
     # (cal-18: "¿cuántos metros bajan?" no tenía el dato en nada que viera el RAG). APAGADO hasta medirlo.

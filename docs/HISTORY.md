@@ -1,6 +1,98 @@
 History
 =======
 
+0.31.85 - (2026-10-21)
+----------------------
+* **gen-14 PROMOCIONADO** (Álvaro con Claude; integrado por Gadea con Claude): `gentilicio_es_colombiano` y
+  `rag_espera_la_nacionalidad`.
+  - Ser DE una ciudad o región de Colombia («somos de Cali», «soy paisa») es ser colombiano aunque diga dónde se
+    aloja; alojarse o viajar no dice la nacionalidad.
+  - El RAG recibe la nacionalidad que dice el mismo mensaje.
+  - Ronda core: gen14-A 96,5 % 26/32 frente a gen14-B 97,8 % 27/32. Rejuzgado ×3: 3 mejoras reales y ninguna
+    regresión de la nacionalidad.
+  - En inglés, la pregunta explica la cédula: «Colombia's ID card for foreigners», sin «residents» (decisión de
+    Gadea).
+* **Integrados con los flags APAGADOS** (Álvaro):
+  - gen-15: los hoteles de las islas de la base, y reservar el hotel no es reservar con nosotros.
+  - gen-16: a quien quiere terminar aquí un Open Water no se le pregunta si ya tiene el curso.
+* **ord-6b** (Álvaro): Bubble Makers con ficha y precios PROVISIONALES, a confirmar con Andrés. La cierra un asesor.
+
+0.31.84 - (2026-10-21)
+----------------------
+* **ord-0: por qué omite el RAG, medido.** Se repitieron 18 omisiones de G10/G9 ×3 en PRE
+  (`docs/robustness/ord/estudio.md`).
+  - Búsqueda: 0. El dato llega al contexto en los 18.
+  - Redacción: 4. Azar: 3. **Examen exigente: 8.** Decisión de negocio: 1. Ya arreglado: 2.
+  - Patrón nuevo, **la puerta del origen**: sin saber el origen, el bot preguntaba y se callaba el precio, qué
+    incluye, el almuerzo y el enlace.
+* **ord-6, decisiones de Gadea.**
+  - Sin origen, Coral da las dos variantes (lo hace ord-7).
+  - Lo único que se añade sin que lo pregunten es la edad mínima en cifra cuando hay niños.
+  - No se añaden: el 25-dic, el formulario médico, «el descuento de grupo no aplica a cursos», el cierre de las 4:30 ni
+    la excepción de 500 inmersiones.
+  - Bubble Makers con precios provisionales (ord-6b, Álvaro, a confirmar con Andrés).
+  - El Referido se reserva con su enlace, como los demás cursos.
+* **gen-13 PROMOCIONADO: lo contestable va antes de CUALQUIER pase a un asesor** (`contesta_antes_de_cualquier_pase`).
+  - Antes, un pase por contacto, servicio privado, cambio de reserva o «pásame con alguien» se comía el resto del
+    mensaje (causa 2 de G10/G9, ~27 fallos).
+  - Ahora el RAG contesta lo demás antes del pase. Se hace en un solo sitio: el cierre del turno en
+    `supervisor.route_message`.
+  - Van solos los datos sensibles, las quejas o emergencias y los fallos técnicos.
+  - Banco propio: **4/16 → 16/16**.
+  - Ronda core: gen13-A 97,4 % 27/32 frente a gen13-B 97,4 % 26/32. Con votos hay 2 mejoras reales y ninguna
+    regresión del flag: las 2 de B están en diálogos sin pase, donde no actúa.
+  - En los turnos con pase, la mediana sube de 1,9 s a 3,6 s.
+* **Arreglos en la base.**
+  - La política y el aviso de fotos decían «en el minicurso no se hacen», al revés de lo decidido.
+  - La política de edades pide la edad mínima en cifra.
+  - El Referido deja de ser `contact_only`.
+  - 12 FAQ antiguas llamaban «Detalles y reserva» a la página de información; ahora dicen «Más información».
+* **En medida, con los flags APAGADOS** (ord-7 y gen-19, `cfb63de`):
+  - `origen_dos_variantes`. Banco 2/14 → 12/14; con enlaces sin origen, 2/8 → 8/8.
+  - `tarjeta_edades_en_cifra`.
+  - `jev_precio_nombra_actividades`: «¿Cuánto cuesta el snorkel?» pasa de 0,55 a 0,94.
+  - `enlace_cuando_toca`. En el banco no cambia nada (10/14 = 10/14): cuando lo piden, el enlace ya salía.
+
+0.31.83 - (2026-10-21)
+----------------------
+* **G10 y G9 de control: no subimos.** Medidos sobre `cd1d149`, con todo lo promocionado hasta gen-4, gen-6 y gen-8.
+  Se usó `ronda_local_pre --golden` y G10 se pasó una sola vez.
+  - **G10: 85,6 %, 23/72**; sin sus 2 criterios desfasados (gen-17), 85,9 %.
+  - **G9: 86,8 %, 20/72**; sin desfasados, 87,5 % y 23/72. Por la mañana estaba en 84,1 % y 20/72.
+  - Los criterios suben unos 2,5 puntos y los diálogos sin fallos no se mueven. **56 diálogos caen por un solo fallo.**
+  - Las causas son las mismas en los dos exámenes: el RAG omite datos (~75, de ellos ~12 por no compartir el enlace),
+    los pases que dejan sin contestar (~27), la moneda (~17), el origen (~13), las repreguntas (~12) y las
+    invenciones (~9). Análisis y diagnóstico en `docs/robustness/gen/g10-g9-analisis-2026-10-21.md`.
+  - Nuevo orden de Gadea en Plan Coral: P1 gen-13, gen-19, ord-0 y ord-6 (Gadea con Claude), y gen-14 y gen-15
+    (Álvaro); P2 ord-4, ord-5, ord-1 y mej-9. **G11** (gen-18) solo cuando P1 y P2 estén promocionados y G10, ya de
+    control, llegue a ≥ 92 % y ≥ 40/72.
+* **MEJ-8 PROMOCIONADO** (Álvaro con Claude, solo la base; integrado por Gadea con Claude).
+  - 18 h para volar también tras el refresher (son certificados); las 12 h, solo para el minicurso.
+  - Las horas se cuentan desde la última inmersión; la del minicurso termina hacia las 12:00.
+  - El Advanced «requiere 1 noche en las islas (el alojamiento no está incluido)».
+  - El criterio `sin-fugas` del golden visible no cuenta una cifra pública de la empresa.
+  - Ronda: mej8-A 97,8 % 27/32 frente a mej8-B 96,6 % 26/32. Rejuzgado ×3: tres son ruido del juez y la cuarta, del
+    origen. Queda un fallo de aritmética de horas del modelo (12:00 + 12 h frente a un vuelo a las 2:00), anotado en
+    el diagnóstico.
+* **mej-5 (Álvaro): el coste a la vista.**
+  - La alerta de saldo vigila también OpenRouter, sin gastar.
+  - Jev sale en las métricas, con sus tokens (unos 0,00026 $ por llamada).
+  - `turn_metrics --metricas` da el coste de una ronda por proveedor, pieza y conversación, con los precios de
+    `scripts/precios_llm.py`.
+  - Una ronda core cuesta unos 0,33 $; lo más caro son el revisor y el extractor.
+
+0.31.82 - (2026-10-21)
+----------------------
+* **mej-2 cerrada con las respuestas de Gadea a la revisión de la base** (`b6251b2`, `cd1d149`; documento «Revisión de la
+  base de Coral (2026)»).
+  - Los 7 precios que no cuadraban son correctos y quedan confirmados en `test_tarifa_cuadra`.
+  - Políticas nuevas: qué llevar (bañador, toalla, crema de sol, gafas de sol y ropa cómoda), sin mínimo de personas
+    y taquillas en la base de la isla. Con esto se cierra gen-11.
+  - Fuera el descuento del segundo día, que ya no existe.
+  - Fotos voluntarias también en el minicurso.
+  - Recogida desde las islas: 9:30 en general, 8:00 las especialidades y 7:30 el día 2 de los cursos.
+  - El proceso para cambios: Andrés avisa a Gadea, y la auditoría y el test de la tarifa vigilan.
+
 0.31.81 - (2026-10-21)
 ----------------------
 * **gen-6 PROMOCIONADO: Barú sale desde Cartagena** (Gonzalo con Claude, `befd8a7`…`f4c680a`; integrado por Gadea con

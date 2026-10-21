@@ -1,0 +1,15 @@
+{
+  "about": "ord-7 (21-oct, ampliación): sin origen, un enlace de reserva o una pregunta de precio corta («¿Cuánto cuesta el snorkel?», que Jev no veía como precio) deben dar las dos variantes, y con origen solo la suya. Frases nuestras. 'todas' = fragmentos que deben aparecer en el último turno; 'ninguno' = fragmentos que no deben aparecer.",
+  "version": 1,
+  "creado": "2026-10-21",
+  "dialogos": [
+    {"id": "o7e-enlace-openwater", "turnos": ["Hola! Mándame el enlace para reservar el curso Open Water, porfa"],
+     "todas": ["basic-course/4", "basic-course-already-on-the-island"], "ninguno": []},
+    {"id": "o7e-link-snorkel-en", "turnos": ["Could you send me the booking link for the snorkeling tour?"],
+     "todas": ["superficio/3", "snorkeling-already-on-the-island"], "ninguno": []},
+    {"id": "o7e-snorkel-corto", "turnos": ["¿Cuánto cuesta el snorkel?"],
+     "todas": ["126", "45"], "ninguno": []},
+    {"id": "ctl-enlace-con-origen", "turnos": ["Estoy en Cartagena y saldría desde allí, pásame el enlace del minicurso"],
+     "todas": ["minicurso-de-buceo/2"], "ninguno": ["dive-mini-course-already-on-island"]}
+  ]
+}

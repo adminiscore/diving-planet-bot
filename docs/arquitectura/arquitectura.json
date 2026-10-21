@@ -1,8 +1,8 @@
 {
  "meta": {
-  "generado": "2026-10-21T18:19:11+00:00",
-  "commit": "b6de4a0",
-  "rama": "feature/gen8-alvaro"
+  "generado": "2026-10-21T18:21:14+00:00",
+  "commit": "a4d6638",
+  "rama": "feature/pre_gadea"
  },
  "vistas": {
   "general": {
@@ -157,6 +157,13 @@
      "sin_efecto": false
     },
     {
+     "nombre": "jev_precio_nombra_actividades",
+     "titulo": "Jev reconoce una pregunta de precio de cualquier actividad",
+     "codigo": false,
+     "pre": false,
+     "sin_efecto": false
+    },
+    {
      "nombre": "pase_si_pide_fuera_del_sistema",
      "titulo": "Lo que la web no puede dar lo arregla una persona",
      "codigo": true,
@@ -210,6 +217,13 @@
     {
      "nombre": "contesta_antes_de_pasar",
      "titulo": "Contesta lo que puede antes de pasar a un asesor",
+     "codigo": true,
+     "pre": true,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "contesta_antes_de_cualquier_pase",
+     "titulo": "Contesta lo que puede antes de CUALQUIER pase a un asesor",
      "codigo": true,
      "pre": true,
      "sin_efecto": false
@@ -302,6 +316,13 @@
      "titulo": "El servicio privado pasa a un asesor en cuanto lo piden",
      "codigo": true,
      "pre": true,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "tarjeta_edades_en_cifra",
+     "titulo": "Con niños, la edad mínima en cifra",
+     "codigo": false,
+     "pre": false,
      "sin_efecto": false
     }
    ],
@@ -683,15 +704,15 @@
     {
      "nombre": "gentilicio_es_colombiano",
      "titulo": "Ser de una ciudad de Colombia es ser colombiano",
-     "codigo": false,
-     "pre": false,
+     "codigo": true,
+     "pre": true,
      "sin_efecto": false
     },
     {
      "nombre": "rag_espera_la_nacionalidad",
      "titulo": "El precio en la moneda que acaba de decir el cliente",
-     "codigo": false,
-     "pre": false,
+     "codigo": true,
+     "pre": true,
      "sin_efecto": false
     },
     {
@@ -1249,6 +1270,20 @@
      "titulo": "Al preguntar el origen, conserva el resto",
      "codigo": true,
      "pre": true,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "origen_dos_variantes",
+     "titulo": "Sin saber el origen, da las dos variantes",
+     "codigo": false,
+     "pre": false,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "enlace_cuando_toca",
+     "titulo": "Con el precio de un plan, su enlace de reserva",
+     "codigo": false,
+     "pre": false,
      "sin_efecto": false
     },
     {
@@ -2327,6 +2362,19 @@
    "sin_efecto": null
   },
   {
+   "nombre": "contesta_antes_de_cualquier_pase",
+   "area": "Enrutador",
+   "titulo": "Contesta lo que puede antes de CUALQUIER pase a un asesor",
+   "texto": "Si un turno acaba pasando la conversación al equipo por cualquier motivo (pide una persona, un contacto, un servicio privado, un cambio de reserva…) y el mensaje trae además otras preguntas, Coral contesta primero esas preguntas y después hace el pase. No lo hace con los datos sensibles, las quejas o emergencias ni los fallos técnicos, que van solos (gen-13, 21-oct).",
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
+   "usado_por": [
+    "safety"
+   ],
+   "sin_efecto": null
+  },
+  {
    "nombre": "contesta_antes_de_pasar",
    "area": "Enrutador",
    "titulo": "Contesta lo que puede antes de pasar a un asesor",
@@ -2414,6 +2462,19 @@
    "fijado_en_pre": true,
    "usado_por": [
     "b_extraction"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "enlace_cuando_toca",
+   "area": "Preguntas",
+   "titulo": "Con el precio de un plan, su enlace de reserva",
+   "texto": "Si ya sabemos desde dónde sale el cliente y de qué plan habla, y la respuesta le da el precio de ese plan sin el enlace para reservarlo, Coral añade el enlace de reserva del catálogo. No lo hace con colombianos ni grupos mixtos (los cierra un asesor) ni en los planes que cierra un asesor (gen-19, 21-oct).",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
+   "usado_por": [
+    "r_escribir"
    ],
    "sin_efecto": null
   },
@@ -2522,9 +2583,9 @@
    "area": "Reserva",
    "titulo": "Ser de una ciudad de Colombia es ser colombiano",
    "texto": "Quien dice de qué ciudad o región de Colombia es ('somos de Cali', 'soy de Pereira') cuenta como colombiano y paga en pesos, aunque diga además dónde se aloja. Vivir en Colombia, alojarse o estar de viaje no dice la nacionalidad.",
-   "codigo": false,
-   "pre": false,
-   "fijado_en_pre": false,
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
    "usado_por": [
     "b_extraction"
    ],
@@ -2665,6 +2726,19 @@
    "fijado_en_pre": true,
    "usado_por": [
     "b_extraction"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "jev_precio_nombra_actividades",
+   "area": "Enrutador",
+   "titulo": "Jev reconoce una pregunta de precio de cualquier actividad",
+   "texto": "La pregunta de Jev «¿pide el precio?» nombra las actividades del centro (salidas y paquetes, minicurso o refresher, snorkel, cursos y especialidades). Sin eso, «¿Cuánto cuesta el snorkel?» no contaba como pregunta de precio, no se preguntaba el origen y se cotizaba Cartagena sin saberlo (ord-7, 21-oct).",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
+   "usado_por": [
+    "router"
    ],
    "sin_efecto": null
   },
@@ -2846,6 +2920,19 @@
    "sin_efecto": null
   },
   {
+   "nombre": "origen_dos_variantes",
+   "area": "Preguntas",
+   "titulo": "Sin saber el origen, da las dos variantes",
+   "texto": "Si el cliente pregunta el precio o qué incluye una actividad y no sabemos si sale de Cartagena o ya está en las islas, Coral da las dos variantes del catálogo (precio online por persona en su moneda, el transporte y si lleva almuerzo) y pregunta el origen para pasarle el plan y el enlace exactos. Antes se callaba todo lo que dependía del origen (ord-7, decisión de Gadea, 21-oct).",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
+   "usado_por": [
+    "r_escribir"
+   ],
+   "sin_efecto": null
+  },
+  {
    "nombre": "origen_neutro_con_dos_planes",
    "area": "Reserva",
    "titulo": "Si duda entre dos planes, la pregunta del origen es neutra",
@@ -2987,9 +3074,9 @@
    "area": "Preguntas",
    "titulo": "El precio en la moneda que acaba de decir el cliente",
    "texto": "Si el cliente dice de dónde es en el mismo mensaje en que pregunta un precio ('Somos de Cali, ¿cuánto vale?'), la respuesta ya sale en pesos. Antes la respuesta se escribía antes de apuntar la nacionalidad y salía en dólares.",
-   "codigo": false,
-   "pre": false,
-   "fijado_en_pre": false,
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
    "usado_por": [
     "b_extraction"
    ],
@@ -3326,6 +3413,19 @@
    "fijado_en_pre": true,
    "usado_por": [
     "r_escribir"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "tarjeta_edades_en_cifra",
+   "area": "Preguntas",
+   "titulo": "Con niños, la edad mínima en cifra",
+   "texto": "La tarjeta de qué puede hacer cada persona según su edad dice la edad mínima de cada opción (por ejemplo, «minicurso de buceo (desde 10 años)») y, en inglés, quién es cada línea en inglés (antes salía «8 años») (ord-7b, decisión de Gadea, 21-oct).",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
+   "usado_por": [
+    "info"
    ],
    "sin_efecto": null
   },
