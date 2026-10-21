@@ -25,10 +25,9 @@ def _state(**kw) -> ConversationState:
     return s
 
 
-# --- jev_acompanante_manda: "¿cuántos días son?" no es "son" (hijo) -----------------------------------------------
+# --- s4-26, Jev manda en el acompañante: "¿cuántos días son?" no es "son" (hijo) -----------------------------------------------
 
 def test_con_jev_seguro_de_que_no_la_regex_no_inventa_acompanante(monkeypatch):
-    monkeypatch.setattr(settings, "jev_acompanante_manda", True)
     st = _state()
     st._jev_companion = 0.04
     assert core._mentions_person("Si cuantos días son?")  # la regex sola sí lo ve
@@ -36,27 +35,18 @@ def test_con_jev_seguro_de_que_no_la_regex_no_inventa_acompanante(monkeypatch):
 
 
 def test_sin_veredicto_de_jev_manda_la_regex(monkeypatch):
-    monkeypatch.setattr(settings, "jev_acompanante_manda", True)
     st = _state()
     st._jev_companion = None
     assert core._menciona_a_alguien(st, "voy con mi amigo")
 
 
 def test_jev_dudoso_no_tapa_un_acompanante_real(monkeypatch):
-    monkeypatch.setattr(settings, "jev_acompanante_manda", True)
     st = _state()
     st._jev_companion = 0.85
     assert core._menciona_a_alguien(st, "el quiere hacer snorkel con mi hijo")
 
 
-def test_con_el_flag_apagado_la_regex_de_siempre(monkeypatch):
-    monkeypatch.setattr(settings, "jev_acompanante_manda", False)
-    st = _state()
-    st._jev_companion = 0.04
-    assert core._menciona_a_alguien(st, "Si cuantos días son?")
-
-
-# --- cierre_sin_repetir: tras el cierre, "¿cuánto dura?" se contesta sola --------------------------------------
+# --- s4-26, el cierre no se repite: tras el cierre, "¿cuánto dura?" se contesta sola --------------------------------------
 
 @pytest.fixture
 def _offline(monkeypatch):
@@ -81,13 +71,11 @@ async def _cerrada(extractor_dice):
     return st
 
 
-@pytest.mark.parametrize("flag, repite", [(True, False), (False, True)])
-async def test_el_cierre_igual_no_se_repite_tras_una_respuesta(monkeypatch, _offline, extractor_dice, flag, repite):
-    monkeypatch.setattr(settings, "cierre_sin_repetir", flag)
+async def test_el_cierre_igual_no_se_repite_tras_una_respuesta(_offline, extractor_dice):
     st = await _cerrada(extractor_dice)
     r = await route_message(st, "¿Cuánto tiempo dura?")
     assert r.startswith("rag_answer_stub")  # la respuesta del RAG (stub del conftest) va siempre
-    assert ("book.divingplanet.org" in r) is repite
+    assert "book.divingplanet.org" not in r
 
 
 # --- jev_persona_ya_contada: "él quiere hacer snorkel" no es una persona nueva ----------------------------------
@@ -128,36 +116,29 @@ def test_jev_pide_la_pregunta_solo_con_el_flag(monkeypatch):
     assert jev_router.ADDS_PERSON not in jev_router._questions_for_turn()
 
 
-# --- rag_condiciones_abiertas / rag_plan_elegido --------------------------------------------------------------
+# --- s4-26: condiciones abiertas y «el plan», no «el carrito» --------------------------------------------------------------
 
 def test_la_regla_de_condiciones_va_en_el_prompt_del_rag(monkeypatch):
     from src.agents import rag_agent
 
-    monkeypatch.setattr(settings, "rag_condiciones_abiertas", True)
     assert "Condiciones del cliente" in rag_agent.build_system_prompt("es")
     assert "Customer conditions" in rag_agent.build_system_prompt("en")
-    monkeypatch.setattr(settings, "rag_condiciones_abiertas", False)
-    assert "Condiciones del cliente" not in rag_agent.build_system_prompt("es")
 
 
-@pytest.mark.parametrize("flag, palabra", [(True, "plan que está armando"), (False, "carrito")])
-def test_el_contexto_del_rag_no_dice_carrito(monkeypatch, flag, palabra):
+def test_el_contexto_del_rag_no_dice_carrito():
     from src.agents import supervisor
 
-    monkeypatch.setattr(settings, "rag_plan_elegido", flag)
     st = _state(mixed_cart=[{"type": "course", "qty": 1, "label": "Curso Basico PADI (Open Water)"}])
     ctx = supervisor._build_extra_context(st) or ""
-    assert palabra in ctx
+    assert "plan que está armando" in ctx and "carrito" not in ctx
 
 
-# --- hotel_ubicacion_declarada (s4-27): la ubicacion deducida del hotel pasa por la puerta de Jev --------------
+# --- s4-27: la ubicacion deducida del hotel pasa por la puerta de Jev --------------
 
-@pytest.mark.parametrize("flag", [True, False])
-def test_la_ubicacion_del_hotel_se_declara(monkeypatch, flag):
-    monkeypatch.setattr(settings, "hotel_ubicacion_declarada", flag)
+def test_la_ubicacion_del_hotel_se_declara():
     intent = core._detector.detect("¿Me pasas el contacto del hotel cocoliso?", _state())
     assert intent.location == "island" and intent.hotel == "cocoliso"
-    assert ("location" in intent.detected_fields) is flag
+    assert "location" in intent.detected_fields
 
 
 # --- jev_lugar_cliente (s4-28): la pregunta de Jev (la leen CAL-C3c y CAL-C4; `_lugar_por_jev` se quitó con la

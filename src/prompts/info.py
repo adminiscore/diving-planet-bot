@@ -54,7 +54,7 @@ QUERY_REWRITE_EN = (
 # ── Respuesta RAG · la persona (Coral) ──────────────────────────────────────
 
 # La presentación de Diving Planet en UN sitio (1-oct): la dice el bot (RAG_INTRO) y la ve el juez de grounding
-# (JUEZ_PRESENTACION, flag `juez_presentacion`). Sin ella el juez marcaba como inventados "30 años" y "PADI 5
+# (JUEZ_PRESENTACION). Sin ella el juez marcaba como inventados "30 años" y "PADI 5
 # estrellas", que el bot tiene ORDENADO decir (ronda 2026-10-01-juez-B, docs/robustness/juez/README.md).
 PRESENTACION_ES = (
     "el primer centro de buceo PADI 5 Estrellas de Colombia con 30 años de experiencia en las Islas del Rosario, "
@@ -258,7 +258,7 @@ GROUNDED for everything else, which is acceptable even if it is not in the conte
 Reply with ONE word: GROUNDED or HALLUCINATED."""
 
 
-# s4-26 (7-oct, flag `rag_condiciones_abiertas`): una CONDICION dicha en un turno ("si tu hotel tiene acceso por lancha,
+# s4-26 (7-oct, promocionado): una CONDICION dicha en un turno ("si tu hotel tiene acceso por lancha,
 # te recogemos") pasaba a HECHO en el siguiente ("como te alojas en un hotel con acceso por lancha, como el Fragata, la
 # recogida esta incluida"), sin que nadie lo dijera (logistica-isla-fragata-regreso-otro-dia, 2/2 en PRE; el Fragata
 # no esta en la lista de hoteles).
@@ -273,41 +273,6 @@ RAG_CONDICIONES_EN = (
     "boat access, their diving level, their age…), say it as a condition (\"if your hotel has boat access, …\"). Do "
     "not treat it as met even if you already mentioned it as a condition: it is only a fact if the customer or the "
     "context says so (for example, if their hotel is on the list of hotels with pick-up)."
-)
-
-
-# Latencia del RAG (28-sep, flag `rag_concise`): escribir la respuesta es lo más lento del turno y crece con la
-# longitud (medido en PRE: 220 caracteres 1,1 s, 720 caracteres 2,8 s). La mediana era ~680 caracteres y no por
-# la intro cálida (el owner la pidió el 8-jul y se queda), sino por contar más de lo preguntado: a "¿cuánto
-# dura?" contestaba con el itinerario entero. Decisión del owner (28-sep): solo lo preguntado y ofrecer ampliar.
-# `build_system_prompt` cambia la frase de la intro por la corta y añade la regla al final del cuerpo.
-RAG_INTRO_LONG_ES = "Una o dos frases de intro, sin alargarte ni sonar a folleto, y luego respondes la pregunta."
-RAG_INTRO_SHORT_ES = "Una sola frase corta de intro, y luego respondes la pregunta."
-RAG_INTRO_LONG_EN = "One or two intro sentences, without going long or sounding like a brochure, then answer the question."
-RAG_INTRO_SHORT_EN = "One short intro sentence, then answer the question."
-RAG_CONCISE_ES = (
-    "Longitud — importante:\n"
-    "- Contesta SOLO lo que el cliente pregunta. No añadas por tu cuenta temas que no pidió (itinerarios, requisitos, "
-    "qué llevar, otros planes).\n"
-    "- Si hay más información que le puede servir, no la cuentes: ofrécela en una pregunta al final (\"¿quieres que "
-    "te cuente cómo es cada día?\").\n"
-    "- Los datos que SÍ des, completos y tal como los dice el contexto: no los resumas con tus palabras, no juntes "
-    "planes distintos en una frase y no rellenes huecos (formas de pago, \"es seguro\", \"y otras opciones\") que el "
-    "contexto no nombra.\n"
-    "- Si el cliente hace varias preguntas o pide detalle expreso, contéstalas todas. Las reglas de arriba (links, "
-    "precios del contexto, no inventar) siguen valiendo igual."
-)
-RAG_CONCISE_EN = (
-    "Length — important:\n"
-    "- Answer ONLY what the customer asks. Do not add topics they did not ask for (itineraries, requirements, what "
-    "to bring, other plans).\n"
-    "- If there is more information that could help, do not tell it: offer it in a closing question (\"would you like "
-    "me to walk you through each day?\").\n"
-    "- The facts you DO give, complete and the way the context states them: do not paraphrase them, do not merge "
-    "different plans into one sentence and do not fill gaps (payment methods, \"it's secure\", \"and other "
-    "options\") that the context does not name.\n"
-    "- If the customer asks several questions or explicitly asks for detail, answer all of them. The rules above "
-    "(links, prices from the context, never invent) still apply."
 )
 
 
@@ -399,50 +364,6 @@ _PASO_2_ES = "\n\nPaso 2."
 _PASO_2_EN = "\n\nStep 2."
 GROUNDING_VERIFY_V3_LUNA_ES = GROUNDING_VERIFY_V3_ES.replace(_PASO_2_ES, _JUEZ_LUNA_ES + _PASO_2_ES, 1)
 GROUNDING_VERIFY_V3_LUNA_EN = GROUNDING_VERIFY_V3_EN.replace(_PASO_2_EN, _JUEZ_LUNA_EN + _PASO_2_EN, 1)
-
-
-# Juez v4 (flag `juez_por_tipo`, 1-oct; docs/robustness/juez/README.md). El v3 pedía dos tareas en una: filtrar qué
-# frases son datos del negocio y verificar esos datos. En cuanto la respuesta traía algún dato, el modelo se saltaba
-# el filtro: copiaba la respuesta frase por frase, literal (hasta la pregunta final al cliente), y ponía SÍ/NO a cada
-# una; a "no lo tengo a la mano, un asesor te lo confirma" le tocaba SÍ o NO al azar (misma respuesta, temperatura 0:
-# NO 1 de 3). Aquí la clasificación es un paso explícito de cada línea, y el veredicto lo saca el código: solo cuenta
-# un NO en una línea de tipo "dato".
-GROUNDING_VERIFY_V4_ES = """Eres el verificador de las respuestas de Coral, la asistente de Diving Planet (centro de buceo en las Islas del Rosario, Cartagena). Decide si la RESPUESTA se apoya en el CONTEXTO.
-
-Recorre la RESPUESTA frase por frase. Por cada frase escribe una línea con este formato exacto:
-- <la frase> | <tipo>
-
-<tipo> es UNO de estos:
-- dato: afirma algo sobre la oferta o el funcionamiento de Diving Planet: cifras de la empresa (años, clientes), precios, descuentos, horarios, lugares y puntos de encuentro, qué incluye o no un plan (recogida, almuerzo, transporte), duración, dormir en las islas, requisitos previos (teoría, formularios, certificados), políticas (cambios, cancelaciones, reembolsos, qué pasa con la reserva), disponibilidad, sitios de buceo y lo que se ve en ellos, servicios que se ofrecen o no, cómo funcionan la web, los links y los pagos.
-- no_lo_tengo: dice que un detalle no se tiene a mano o no se puede confirmar aquí. Nombrar el tema sin afirmar nada sobre él ("sobre el descuento por transferencia, no lo tengo a la mano") es no_lo_tengo, no dato.
-- asesor: ofrece ayuda o pasar con un asesor del equipo, o dice que un asesor lo confirmará.
-- otro: saludo, presentarse como Coral de Diving Planet, entusiasmo, cortesía, preguntas al cliente, repetir lo que dijo el cliente, y explicaciones generales del buceo que no describen la oferta de Diving Planet.
-Si una frase afirma un dato y además hace otra cosa (por ejemplo, un dato y una oferta de asesor), su tipo es dato.
-
-Debajo de cada frase de tipo dato, escribe cada afirmación sobre Diving Planet que contiene, una por línea, con este formato exacto:
-  * <afirmación> | SÍ o NO
-Si la frase dice varias cosas, cada una es una afirmación aparte con su veredicto (por ejemplo, "el equipo te envía un link para pagar por transferencia, pero ese método no incluye descuento" son dos afirmaciones). "SÍ" si el contexto lo dice o se deduce directamente de él; "NO" si no lo dice o lo contradice. Una cifra escrita con otros separadores es la misma (1.429.000 = 1,429,000 = 1429000), y una afirmación cuenta como respaldada aunque sus partes estén en frases distintas del contexto.
-
-En la última línea escribe SOLO una palabra: HALLUCINATED si alguna afirmación tiene "NO"; GROUNDED si no."""
-
-
-GROUNDING_VERIFY_V4_EN = """You check the replies of Coral, the assistant of Diving Planet (a dive center in the Rosario Islands, Cartagena). Decide whether the RESPONSE is supported by the CONTEXT.
-
-Go through the RESPONSE sentence by sentence. For each sentence write one line with this exact format:
-- <the sentence> | <type>
-
-<type> is ONE of these:
-- fact: states something about Diving Planet's offer or how it works: figures about the company (years, customers), prices, discounts, schedules, places and meeting points, what a plan includes or not (pickup, lunch, transport), duration, overnight stays on the islands, prior requirements (theory, forms, certifications), policies (changes, cancellations, refunds, what happens to the booking), availability, dive sites and what can be seen there, services offered or not, how the website, links and payments work.
-- not_at_hand: says a detail is not at hand or cannot be confirmed here. Naming the topic without stating anything about it ("about the transfer discount, I don't have that detail at hand") is not_at_hand, not fact.
-- advisor: offers help or to hand over to an advisor from the team, or says an advisor will confirm it.
-- other: greeting, introducing herself as Coral from Diving Planet, enthusiasm, politeness, questions to the customer, repeating what the customer said, and general explanations about diving that do not describe Diving Planet's offer.
-If a sentence states a fact and also does something else (for example, a fact and an advisor offer), its type is fact.
-
-Under each sentence of type fact, write every claim about Diving Planet it contains, one per line, with this exact format:
-  * <claim> | YES or NO
-If the sentence says several things, each one is a separate claim with its own verdict (for example, "the team sends you a link to pay by transfer, but that method has no discount" is two claims). "YES" if the context states it or it follows directly from it; "NO" if the context does not state it or contradicts it. A figure written with other separators is the same (1.429.000 = 1,429,000 = 1429000), and a claim counts as supported even if its parts are in different sentences of the context.
-
-On the last line write ONLY one word: HALLUCINATED if any claim has "NO"; GROUNDED otherwise."""
 
 
 # EX-RAG-2 (flag `rag_no_supone_reserva`, 14-oct). Ronda atencion-B2 (cambio-fecha-por-enfermedad t1): "we will be

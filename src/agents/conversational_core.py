@@ -2081,7 +2081,6 @@ def _answer_already_asks(answer: str) -> bool:
 # definido.
 from src.agents.nucleo.availability import (  # noqa: E402, F401
     _availability_phase,
-    _courtesy_after_handoff,
     _modo_posventa,
     _reserva_nueva_en_curso,
     _tras_el_pase,

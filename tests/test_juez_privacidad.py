@@ -1,4 +1,4 @@
-"""2-oct, flag `juez_privacidad_por_linea`: el juez tapa los datos personales línea a línea.
+"""2-oct (promocionado; ya sin flag): el juez tapa los datos personales línea a línea.
 
 `redact_pii` tapa TODOS los números largos de un texto si en cualquier parte aparece "pasaporte", "cuenta",
 "Bancolombia"... Sobre el contexto entero del juez, una FAQ de pagos ("con tarjeta extranjera se usa el pasaporte")
@@ -29,9 +29,8 @@ def test_por_lineas_quedan_los_precios_y_se_tapa_la_cedula():
     assert "1.023.456.789" not in limpio and "[REDACTED_NUMBER]" in limpio
 
 
-@pytest.mark.parametrize("flag,ve_el_precio", [(True, True), (False, False)])
 @pytest.mark.asyncio
-async def test_el_juez_ve_los_precios_con_el_flag(monkeypatch, flag, ve_el_precio):
+async def test_el_juez_ve_los_precios(monkeypatch):
     visto = []
 
     class _Completions:
@@ -45,8 +44,7 @@ async def test_el_juez_ve_los_precios_con_el_flag(monkeypatch, flag, ve_el_preci
             self.chat = type("Chat", (), {"completions": _Completions()})()
 
     monkeypatch.setattr(grounding_check, "AsyncOpenAI", _OpenAI)
-    monkeypatch.setattr(grounding_check.settings, "juez_privacidad_por_linea", flag)
     await grounding_check.is_grounded("El paquete de 5 cuesta 1.429.000 COP online.", CONTEXTO, lang="es")
     contexto_enviado = visto[0].split("RESPUESTA:")[0]
-    assert ("1.429.000" in contexto_enviado) is ve_el_precio
+    assert "1.429.000" in contexto_enviado
     assert "1.023.456.789" not in contexto_enviado

@@ -6,14 +6,12 @@ from openai import AsyncOpenAI
 from src.config import settings
 from src.llm_client import trace_openai
 from src.observability import con_pieza_llm
-from src.privacy import redact_pii, redact_pii_por_lineas
+from src.privacy import redact_pii_por_lineas
 from src.prompts.info import (
     GROUNDING_VERIFY_V3_EN,
     GROUNDING_VERIFY_V3_ES,
     GROUNDING_VERIFY_V3_LUNA_EN,
     GROUNDING_VERIFY_V3_LUNA_ES,
-    GROUNDING_VERIFY_V4_EN,
-    GROUNDING_VERIFY_V4_ES,
 )
 
 logger = logging.getLogger("uvicorn.error")
@@ -293,20 +291,17 @@ async def is_grounded(answer: str, context: str, lang: str = "es") -> tuple[bool
     if not answer.strip() or not context.strip():
         return False, "empty_answer_or_context"
 
-    por_tipo = settings.juez_por_tipo
-    if por_tipo:
-        system = GROUNDING_VERIFY_V4_ES if lang == "es" else GROUNDING_VERIFY_V4_EN
-    elif settings.juez_v3_luna:
+    if settings.juez_v3_luna:
         # s4-33 (8-oct): el v3 con tres aclaraciones para GPT-6 Luna como juez (prompts/info.py).
         system = GROUNDING_VERIFY_V3_LUNA_ES if lang == "es" else GROUNDING_VERIFY_V3_LUNA_EN
     else:
         system = GROUNDING_VERIFY_V3_ES if lang == "es" else GROUNDING_VERIFY_V3_EN
-    # 2-oct (flag `juez_privacidad_por_linea`): `redact_pii` tapa TODOS los numeros largos de un texto si en
+    # 2-oct (promocionado): `redact_pii` tapa TODOS los numeros largos de un texto si en
     # cualquier parte sale "pasaporte", "cuenta", "Bancolombia"... Pensado para un mensaje del cliente; sobre el
     # contexto entero del juez, una FAQ de pagos borraba todos los precios del catalogo >= 1.000.000 COP y el juez
     # rechazaba el precio correcto (reproducido en PRE: `paquete-5-buceos-cop-refresh-y-hoteles`, 50 precios
     # tapados). Por lineas, una cedula del cliente se sigue tapando (palabra y numero van juntos).
-    tapar = redact_pii_por_lineas if settings.juez_privacidad_por_linea else redact_pii
+    tapar = redact_pii_por_lineas
     if lang == "es":
         user_content = (
             f"CONTEXTO:\n{tapar(context)}\n\n"
@@ -319,8 +314,7 @@ async def is_grounded(answer: str, context: str, lang: str = "es") -> tuple[bool
         )
 
     model = settings.grounding_v3_model
-    # v4 copia cada frase de la respuesta (con tipo y veredicto): necesita más sitio que la lista de datos.
-    tope = 700 if por_tipo else 300
+    tope = 300
     if model.startswith("gpt-6") and settings.juez_luna_razonamiento != "none":
         # s4-33 (9-oct): Luna razonando como juez; el razonamiento cuenta en el tope de salida.
         extra = {"reasoning_effort": settings.juez_luna_razonamiento, "max_completion_tokens": tope + 4000}
@@ -340,22 +334,18 @@ async def is_grounded(answer: str, context: str, lang: str = "es") -> tuple[bool
             **extra,
         )
         content = (response.choices[0].message.content or "").strip()
-        if por_tipo:
-            grounded, unsupported = veredicto_por_tipo(content)
-            reason = "GROUNDED" if grounded else "HALLUCINATED " + " | ".join(unsupported)[:200]
-        else:
-            grounded = verdict_from_fact_list(content)
-            unsupported = [ln.strip() for ln in content.splitlines()
-                           if ln.strip().startswith("-") and _FACT_NO.search(ln.strip().rstrip(" ."))]
-            if not grounded and unsupported:
-                # J2 (1-oct): Jev revisa las frases marcadas NO; si ninguna afirma nada del negocio (solo "no lo
-                # tengo", asesor o cortesía), la respuesta pasa. Ver `src/agents/juez_segunda_opinion.py`.
-                from src.agents.juez_segunda_opinion import ninguna_afirma
+        grounded = verdict_from_fact_list(content)
+        unsupported = [ln.strip() for ln in content.splitlines()
+                       if ln.strip().startswith("-") and _FACT_NO.search(ln.strip().rstrip(" ."))]
+        if not grounded and unsupported:
+            # J2 (1-oct): Jev revisa las frases marcadas NO; si ninguna afirma nada del negocio (solo "no lo
+            # tengo", asesor o cortesía), la respuesta pasa. Ver `src/agents/juez_segunda_opinion.py`.
+            from src.agents.juez_segunda_opinion import ninguna_afirma
 
-                frases = [re.sub(r"[\s:.]*\bNO\b\.?\s*$", "", u.lstrip("- ").strip()) for u in unsupported]
-                if await ninguna_afirma(frases):
-                    grounded = True
-            reason = "GROUNDED" if grounded else "HALLUCINATED " + " | ".join(unsupported)[:200]
+            frases = [re.sub(r"[\s:.]*\bNO\b\.?\s*$", "", u.lstrip("- ").strip()) for u in unsupported]
+            if await ninguna_afirma(frases):
+                grounded = True
+        reason = "GROUNDED" if grounded else "HALLUCINATED " + " | ".join(unsupported)[:200]
         logger.info(f"[RAG][GROUNDING] grounded={grounded} verdict={reason}")
         return grounded, reason
     except Exception as exc:
@@ -364,34 +354,6 @@ async def is_grounded(answer: str, context: str, lang: str = "es") -> tuple[bool
 
 
 _FACT_NO = re.compile(r"(?:\bNO\b|\bNO\.)\s*$", re.IGNORECASE)
-
-
-_TIPOS_DATO = {"dato", "fact"}
-
-
-def veredicto_por_tipo(text: str) -> tuple[bool, list[str]]:
-    """Juez v4 (flag `juez_por_tipo`, 1-oct), dos niveles: "- <frase> | <tipo>" por frase y, debajo de las de tipo
-    dato, "* <afirmación> | SÍ/NO" por afirmación. Solo cuenta un NO de una afirmación que cuelga de una frase de
-    tipo dato: lo que el v3 dejaba al filtro implícito del modelo (que se saltaba) lo decide el código, y partir en
-    afirmaciones evita que una parte cierta tape una inventada (primera versión, una línea por frase: se colaban
-    "…pero ese método no incluye descuento"). Devuelve (respaldada, ["- <afirmación> NO", ...]), el formato de motivo
-    del v3 para la segunda redacción con motivo. Sin ninguna línea con formato, decide su última palabra."""
-    no_respaldadas, lineas_con_formato, tipo_actual = [], 0, ""
-    for ln in text.splitlines():
-        linea = ln.strip()
-        partes = [p.strip() for p in linea.lstrip("-*").split("|")]
-        if len(partes) < 2:
-            continue
-        lineas_con_formato += 1
-        if linea.startswith("*"):
-            if tipo_actual in _TIPOS_DATO and _FACT_NO.search(partes[-1].rstrip(" .")):
-                no_respaldadas.append(f"- {' | '.join(partes[:-1])} NO")
-        else:
-            tipo_actual = partes[-1].lower().rstrip(" .")
-    if not lineas_con_formato:
-        ultima = (text.strip().splitlines() or [""])[-1].strip().upper()
-        return not ultima.startswith("HALLUCINATED"), []
-    return not no_respaldadas, no_respaldadas
 
 
 def verdict_from_fact_list(text: str) -> bool:

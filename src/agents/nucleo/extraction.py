@@ -232,17 +232,16 @@ def _mentions_person(message: str) -> bool:
 
 
 def _menciona_a_alguien(state: ConversationState, message: str) -> bool:
-    """s4-26 (flag `jev_acompanante_manda`): ¿el mensaje menciona a otra persona? Si Jev esta seguro de que
+    """s4-26 (7-oct): ¿el mensaje menciona a otra persona? Si Jev esta seguro de que
     no (companion_joins < COMPANION_NONE_MAX, la puerta de u3-6), manda Jev; si no lo sabemos, la regex de
     siempre. Todas las decisiones del acompañante del turno pasan por aqui."""
-    if settings.jev_acompanante_manda:
-        from src.agents.jev_router import COMPANION_NONE_MAX  # lazy
+    from src.agents.jev_router import COMPANION_NONE_MAX  # lazy
 
-        p = getattr(state, "_jev_companion", None)
-        if p is not None and p < COMPANION_NONE_MAX:
-            if _mentions_person(message):
-                logger.info(f"[CORE][S4-26] la regex ve a otra persona y Jev no ({p:.2f}): manda Jev")
-            return False
+    p = getattr(state, "_jev_companion", None)
+    if p is not None and p < COMPANION_NONE_MAX:
+        if _mentions_person(message):
+            logger.info(f"[CORE][S4-26] la regex ve a otra persona y Jev no ({p:.2f}): manda Jev")
+        return False
     return _mentions_person(message)
 
 

@@ -9,7 +9,6 @@ from __future__ import annotations
 import logging
 
 from src.agents.conversational_core import (
-    _AFFIRMS_SIGNAL_FIELDS,
     _is_rag_fallback,
     _turn_has_question,
     rag_con_adelantado,
@@ -19,29 +18,6 @@ from src.config import settings
 from src.flows.state import ConversationState, Step
 
 logger = logging.getLogger("uvicorn.error")
-
-
-def _courtesy_after_handoff(state: ConversationState, routing_signals: dict, greeting: str) -> str | None:
-    """s4-20 (paso 6, 27-sep): tras pasar la conversacion a una persona, un mensaje que ni
-    pregunta ni da ningun dato ("gracias", "ok, quedo atento") recibe una respuesta corta en vez de
-    volver a vender ("¿Con cuál te animas — buceo, minicurso…?", ronda B del paso 6 tras el pase de
-    los logs de PADI). Lo decide Jev con lo que ya contesta en la misma llamada (`asks_question` y los
-    `affirms_*`, todos en falso); si Jev no contesto, la conducta de hoy."""
-    if state.step != Step.ESCALATE:
-        return None
-    keys = ("asks_question", "needs_staff", *(sig for _, sig in _AFFIRMS_SIGNAL_FIELDS))
-    if "asks_question" not in routing_signals or any(routing_signals.get(k) for k in keys):
-        return None
-    response = greeting + (
-        "¡Con gusto! 🙌 Ya le pasé tu caso a un asesor del equipo y te escribe por aquí enseguida. Si "
-        "mientras tanto necesitas algo más, cuéntame."
-        if state.language == "es" else
-        "You're welcome! 🙌 I've already passed your case to an advisor from the team and they'll write to "
-        "you here shortly. If you need anything else in the meantime, just tell me."
-    )
-    state.quick_replies = []
-    state.history.append({"role": "assistant", "content": response})
-    return response
 
 
 def _reserva_nueva_en_curso(state: ConversationState) -> bool:
@@ -82,9 +58,9 @@ def _modo_posventa(state: ConversationState, routing_signals: dict) -> bool:
 async def _tras_el_pase(
     state: ConversationState, message: str, routing_signals: dict, greeting: str, *, posventa: bool = False,
 ) -> str:
-    """13-oct (flag `tras_pase_sin_vender`): con la conversación ya pasada a una persona, el bot no vuelve a vender.
+    """13-oct: con la conversación ya pasada a una persona, el bot no vuelve a vender.
 
-    Antes solo una cortesía pura recibía la respuesta corta (`_courtesy_after_handoff`); en cuanto el cliente daba un
+    Antes solo una cortesía pura recibía la respuesta corta (la de s4-20, ya borrada); en cuanto el cliente daba un
     dato volvía la reserva: tras pasar al asesor "my husband has food poisoning… move our dive to Tuesday?", el bot
     preguntaba "Which one are you leaning toward — diving, a mini-course…?" a cada dato siguiente
     (cambio-fecha-por-enfermedad, rondas ex8-B2 y ex7-B). Ahora contesta lo que se pregunte (el RAG) y, si no hay
@@ -129,13 +105,10 @@ async def _availability_phase(
     reubicarla en el cutover (Fase 5.2)."""
     from src.agents import supervisor  # lazy
 
-    if settings.tras_pase_sin_vender and state.step == Step.ESCALATE:
+    if state.step == Step.ESCALATE:
         return await _tras_el_pase(state, message, routing_signals, greeting)
     if _modo_posventa(state, routing_signals):
         return await _tras_el_pase(state, message, routing_signals, greeting, posventa=True)
-    courtesy = _courtesy_after_handoff(state, routing_signals, greeting)
-    if courtesy is not None:
-        return courtesy
 
     msg_lower = message.strip().lower()
     # Hallazgo (batería sintética contra PRE, 2026-08-26, conv 395, portado

@@ -1,6 +1,31 @@
 History
 =======
 
+0.31.78 - (2026-10-21)
+----------------------
+* **MEJ-1, tanda 1b: fuera 14 flags promocionados o descartados hace más de una semana**, solo en ficheros que no
+  llevan las ramas abiertas (los de Álvaro y Gonzalo esperan a la 1d). PRE no cambia.
+  - **Promocionados, se queda su camino y se va el viejo:**
+    - El juez ve la presentación oficial (`JUEZ_PRESENTACION`, 1-oct).
+    - El juez tapa los datos personales línea a línea (`JUEZ_PRIVACIDAD_POR_LINEA`, 2-oct).
+    - Del 7-oct, s4-26: una condición del cliente no pasa a hecho (`RAG_CONDICIONES_ABIERTAS`), el contexto dice «el
+      plan» y no «el carrito» (`RAG_PLAN_ELEGIDO`), el cierre igual no se repite (`CIERRE_SIN_REPETIR`) y Jev manda en
+      el acompañante (`JEV_ACOMPANANTE_MANDA`).
+    - La ubicación del hotel se declara (`HOTEL_UBICACION_DECLARADA`, 8-oct).
+    - Cada edad cuenta como una persona (`GRUPO_POR_EDADES`, 9-oct).
+    - El resumen de opciones lo contesta el RAG (`ATAJO_RESUMEN_POR_RAG`, 13-oct; ya no tenía código).
+  - **Encendidos en PRE desde el 13-oct y sin promoción formal**, porque su mini-ronda atencion-B se cortó por falta de
+    crédito: el aviso médico dice que pasa a una persona (`AVISO_MEDICO_DICE_PASE`) y, tras el pase, no se vuelve a
+    vender (`TRAS_PASE_SIN_VENDER`). Han ido en todas las rondas desde entonces, G9 incluido. Con el segundo, la
+    cortesía de s4-20 (`_courtesy_after_handoff`) ya no se alcanzaba y se borra.
+  - **Descartados, fuera enteros:**
+    - `RAG_CONCISE` (28-sep): el texto, la intro corta y su test.
+    - `RAG_FICHA_DEL_SERVICIO` (rag-3, 29-sep): la rama, `scripts/rag3_contexto_local.py` y su test.
+    - `JUEZ_POR_TIPO` (juez v4, 1-oct): `veredicto_por_tipo`, el prompt v4 y `scripts/sonda_juez_tipo.py`.
+  - Los tests de la rama vieja se quitan y los parametrizados se quedan con el caso encendido. Suite de los ficheros
+    tocados, el mapa y los flags en verde. `escalado_solo_emergencias` se queda por ahora: 9 ficheros de tests
+    dependen de la lista vieja.
+
 0.31.77 - (2026-10-21)
 ----------------------
 * **gen-3b PROMOCIONADO: pasar directamente cuando toca** (Gonzalo con Claude, `a8a9883`; integrado por Gadea con
