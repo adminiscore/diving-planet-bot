@@ -64,7 +64,7 @@ def test_sensitive_response_for_matches_keyword_path_text():
     de palabras clave — mismo caso, misma respuesta, venga de donde venga."""
     from src.agents.escalation import _rule_message
 
-    # El texto del camino de palabras clave sale de `_rule_message` (con `aviso_medico_dice_pase` lleva el pase).
+    # El texto del camino de palabras clave sale de `_rule_message` (lleva el pase, 13-oct).
     keyword_reason, keyword_text = ("medical_questions", _rule_message(SENSITIVE_RULES["medical_questions"], "es"))
     llm_reason, llm_text = sensitive_response_for("medical_questions", "es")
     assert llm_reason == keyword_reason

@@ -1,8 +1,8 @@
 {
  "meta": {
-  "generado": "2026-10-21T12:04:53+00:00",
-  "commit": "7a1efd9",
-  "rama": "feature/gen8-alvaro"
+  "generado": "2026-10-21T12:19:10+00:00",
+  "commit": "d7cfdc1",
+  "rama": "mej1b-gadea"
  },
  "estructura": {
   "componentes": [
@@ -55,7 +55,6 @@
      "hotel_por_extractor",
      "lugar_con_dos_lectores",
      "sin_cedula_extranjero",
-     "vivir_no_es_residir",
      "est4_flujo",
      "jev_pide_algo",
      "duracion_por_extractor",
@@ -155,9 +154,7 @@
      "recomendar_a_certificados",
      "recomendar_a_no_certificados",
      "resolutor_sin_contradicciones",
-     "acuse_solo_el_mensaje",
-     "acuse_en_su_numero",
-     "actividad_de_la_pregunta"
+     "acuse_solo_el_mensaje"
     ]
    },
    {
@@ -194,7 +191,9 @@
     "tipo": "agente",
     "nodo_grafo": "changes",
     "modelos": [],
-    "interruptores": []
+    "interruptores": [
+     "cambio_de_reserva_pasa"
+    ]
    },
    {
     "id": "chatwoot",
@@ -279,7 +278,9 @@
     "tipo": "agente",
     "nodo_grafo": "info",
     "modelos": [],
-    "interruptores": []
+    "interruptores": [
+     "privado_pasa_directo"
+    ]
    },
    {
     "id": "kb",
@@ -402,7 +403,6 @@
      "rag_answer_model"
     ],
     "interruptores": [
-     "rag_concise",
      "rag_origen_pregunta",
      "origen_conserva_respuesta",
      "rag_no_supone_reserva",
@@ -459,7 +459,6 @@
     "nodo_grafo": null,
     "modelos": [],
     "interruptores": [
-     "atajo_resumen_por_rag",
      "atajo_nacionalidad_por_rag",
      "atajo_alergia_por_rag"
     ]
@@ -484,9 +483,6 @@
      "avisos_al_final_model"
     ],
     "interruptores": [
-     "juez_por_tipo",
-     "juez_presentacion",
-     "juez_privacidad_por_linea",
      "juez_v3_luna",
      "juez_revisa_con_cita",
      "rag_revisor_completitud",
@@ -889,10 +885,6 @@
     "codigo": true,
     "pre": true
    },
-   "actividad_de_la_pregunta": {
-    "codigo": false,
-    "pre": false
-   },
    "actividad_del_reparto": {
     "codigo": true,
     "pre": true
@@ -904,10 +896,6 @@
    "actividad_principal_en_el_reparto": {
     "codigo": true,
     "pre": true
-   },
-   "acuse_en_su_numero": {
-    "codigo": false,
-    "pre": false
    },
    "acuse_solo_el_mensaje": {
     "codigo": true,
@@ -922,14 +910,6 @@
     "pre": true
    },
    "atajo_nacionalidad_por_rag": {
-    "codigo": true,
-    "pre": true
-   },
-   "atajo_resumen_por_rag": {
-    "codigo": true,
-    "pre": true
-   },
-   "aviso_medico_dice_pase": {
     "codigo": true,
     "pre": true
    },
@@ -953,6 +933,10 @@
     "codigo": true,
     "pre": true
    },
+   "cambio_de_reserva_pasa": {
+    "codigo": true,
+    "pre": true
+   },
    "catalogo_preparacion": {
     "codigo": false,
     "pre": false
@@ -966,10 +950,6 @@
     "pre": true
    },
    "chatwoot_typing_indicator": {
-    "codigo": true,
-    "pre": true
-   },
-   "cierre_sin_repetir": {
     "codigo": true,
     "pre": true
    },
@@ -1045,10 +1025,6 @@
     "codigo": true,
     "pre": true
    },
-   "grupo_por_edades": {
-    "codigo": true,
-    "pre": true
-   },
    "grupo_privado_pase": {
     "codigo": true,
     "pre": true
@@ -1061,10 +1037,6 @@
     "codigo": true,
     "pre": true
    },
-   "hotel_ubicacion_declarada": {
-    "codigo": true,
-    "pre": true
-   },
    "idioma_del_extractor": {
     "codigo": true,
     "pre": true
@@ -1074,10 +1046,6 @@
     "pre": true
    },
    "idioma_unico_de_apertura": {
-    "codigo": true,
-    "pre": true
-   },
-   "jev_acompanante_manda": {
     "codigo": true,
     "pre": true
    },
@@ -1101,18 +1069,6 @@
     "codigo": false,
     "pre": true
    },
-   "juez_por_tipo": {
-    "codigo": false,
-    "pre": false
-   },
-   "juez_presentacion": {
-    "codigo": true,
-    "pre": true
-   },
-   "juez_privacidad_por_linea": {
-    "codigo": true,
-    "pre": true
-   },
    "juez_revisa_con_cita": {
     "codigo": false,
     "pre": false
@@ -1120,54 +1076,6 @@
    "juez_v3_luna": {
     "codigo": true,
     "pre": true
-   },
-   "llm_activity_veto_cutover": {
-    "codigo": true,
-    "pre": true
-   },
-   "llm_activity_veto_shadow_mode": {
-    "codigo": false,
-    "pre": false
-   },
-   "llm_certification_veto_cutover": {
-    "codigo": false,
-    "pre": false
-   },
-   "llm_certification_veto_shadow_mode": {
-    "codigo": false,
-    "pre": false
-   },
-   "llm_group_allocation_veto_cutover": {
-    "codigo": true,
-    "pre": true
-   },
-   "llm_group_allocation_veto_shadow_mode": {
-    "codigo": false,
-    "pre": false
-   },
-   "llm_group_size_veto_cutover": {
-    "codigo": true,
-    "pre": true
-   },
-   "llm_group_size_veto_shadow_mode": {
-    "codigo": false,
-    "pre": false
-   },
-   "llm_location_veto_cutover": {
-    "codigo": false,
-    "pre": false
-   },
-   "llm_location_veto_shadow_mode": {
-    "codigo": false,
-    "pre": false
-   },
-   "llm_nationality_veto_cutover": {
-    "codigo": false,
-    "pre": false
-   },
-   "llm_nationality_veto_shadow_mode": {
-    "codigo": false,
-    "pre": false
    },
    "lo_dicho_en_respuesta_fija": {
     "codigo": true,
@@ -1245,21 +1153,9 @@
     "codigo": true,
     "pre": true
    },
-   "rag_concise": {
-    "codigo": false,
-    "pre": false
-   },
-   "rag_condiciones_abiertas": {
+   "privado_pasa_directo": {
     "codigo": true,
     "pre": true
-   },
-   "rag_contesta_lo_que_sabe": {
-    "codigo": false,
-    "pre": false
-   },
-   "rag_ficha_del_servicio": {
-    "codigo": false,
-    "pre": false
    },
    "rag_no_adivina": {
     "codigo": true,
@@ -1274,10 +1170,6 @@
     "pre": true
    },
    "rag_origen_pregunta": {
-    "codigo": true,
-    "pre": true
-   },
-   "rag_plan_elegido": {
     "codigo": true,
     "pre": true
    },
@@ -1377,17 +1269,9 @@
     "codigo": true,
     "pre": true
    },
-   "tras_pase_sin_vender": {
-    "codigo": true,
-    "pre": true
-   },
    "una_sola_pregunta": {
     "codigo": true,
     "pre": true
-   },
-   "vivir_no_es_residir": {
-    "codigo": false,
-    "pre": false
    }
   },
   "modelos": {
@@ -1475,7 +1359,20 @@
   "flechas_nuevas": [],
   "flechas_quitadas": [],
   "interruptores": [
-   "vivir_no_es_residir"
+   "atajo_resumen_por_rag",
+   "aviso_medico_dice_pase",
+   "cierre_sin_repetir",
+   "grupo_por_edades",
+   "hotel_ubicacion_declarada",
+   "jev_acompanante_manda",
+   "juez_por_tipo",
+   "juez_presentacion",
+   "juez_privacidad_por_linea",
+   "rag_concise",
+   "rag_condiciones_abiertas",
+   "rag_ficha_del_servicio",
+   "rag_plan_elegido",
+   "tras_pase_sin_vender"
   ],
   "modelos": []
  }

@@ -30,7 +30,6 @@ def _camino_antiguo_ex2_ex3(monkeypatch):
     from src.config import settings as _flags
 
     monkeypatch.setattr(_flags, "escalado_solo_emergencias", False)
-    monkeypatch.setattr(_flags, "atajo_resumen_por_rag", False)
     monkeypatch.setattr(_flags, "atajo_nacionalidad_por_rag", False)
 
 
@@ -190,23 +189,6 @@ async def test_el_rag_tiene_los_links_de_reserva(monkeypatch):
     monkeypatch.setattr(rag_agent, "is_grounded", _judge)
     answer = await rag_agent.rag_answer("¿cómo hago la reserva?", lang="es", extra_context="Cliente certificado.")
     assert url in answer
-
-
-async def test_tras_el_pase_a_una_persona_un_gracias_no_vuelve_a_vender(monkeypatch):
-    from src.agents import conversational_core as core
-    from src.flows.state import Step
-
-    # La cortesía de s4-20 (con `tras_pase_sin_vender` cualquier turno tras el pase se atiende sin vender:
-    # tests/test_tras_el_pase.py).
-    monkeypatch.setattr(core.settings, "tras_pase_sin_vender", False)
-
-    st = _state(step=Step.ESCALATE)
-    quiet = {"asks_question": False, "needs_staff": False, "affirms_location": False, "affirms_activity": False}
-    reply = await core._availability_phase(st, "gracias", quiet, "")
-    assert reply and "asesor" in reply and "animas" not in reply
-    # si pregunta algo, o Jev no contestó, sigue el turno normal
-    assert await core._availability_phase(_state(step=Step.ESCALATE), "¿y a qué hora?", {**quiet, "asks_question": True}, "") is None
-    assert await core._availability_phase(_state(step=Step.ESCALATE), "gracias", {}, "") is None
 
 
 def test_ida_y_vuelta_solo_si_se_sabe_que_el_plan_es_de_un_dia():

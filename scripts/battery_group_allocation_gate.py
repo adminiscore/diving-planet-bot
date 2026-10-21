@@ -8,13 +8,9 @@ un total de un turno anterior. Y PRE no tiene trafico real (solo los 3
 desarrolladores), asi que tampoco se puede esperar a que lo conteste la
 produccion: hay que provocarlo.
 
-Mide las CUATRO combinaciones de los dos vetos que tocan al grupo:
-
-  veto de total   -> `llm_group_size_veto_cutover`: corrige un total que el regex
-                     resolvio con confianza y mal ("en total 7: 4 certificados..."
-                     da 4 -- la cifra de un tramo tomada por el total).
-  veto de reparto -> `llm_group_allocation_veto_cutover`: corrige un reparto que
-                     el regex resolvio pero que NO suma el total.
+Media las CUATRO combinaciones de los dos vetos que tocaban al grupo (total y
+reparto). Los vetos salieron del camino real en ex-9 y se borraron en MEJ-1
+(21-oct): ahora mide una sola variante, el camino real del turno.
 
 (La version del 2026-09-12 media la "puerta" de `_relevant_gaps` en lugar del
 veto de total; la puerta se retiro ese mismo dia con estos datos, ver
@@ -51,7 +47,6 @@ import sys
 from collections import Counter
 
 from src.agents import conversational_core as cc
-from src.agents import supervisor as sup
 from src.flows.state import ConversationState
 
 CERT, MINI, SNK, OW = "certified_diving", "minicourse", "snorkel", "padi_open_water"
@@ -573,13 +568,7 @@ SCENARIOS = [
 
 # ── Los dos vetos, conmutables ──────────────────────────────────────────────
 
-VARIANTES = [
-    # (nombre, veto de total, veto de reparto)
-    ("sin_vetos", False, False),
-    ("solo_reparto", False, True),
-    ("solo_total", True, False),
-    ("ambos", True, True),
-]
+VARIANTES = ["actual"]  # una sola desde MEJ-1: los vetos ya no existen
 
 
 def _build_state(spec):
@@ -591,9 +580,7 @@ def _build_state(spec):
     return s
 
 
-async def _run(spec, veto_total, veto_reparto):
-    object.__setattr__(sup.settings, "llm_group_size_veto_cutover", veto_total)
-    object.__setattr__(sup.settings, "llm_group_allocation_veto_cutover", veto_reparto)
+async def _run(spec):
     state = _build_state(spec)
     try:
         await cc._understand(state, spec["message"])
@@ -645,13 +632,13 @@ _FAMILIAS = ("beneficio", "total", "riesgo", "frontera")
 
 async def main():
     reps = int(sys.argv[1]) if len(sys.argv) > 1 else 2
-    nombres = [v[0] for v in VARIANTES]
+    nombres = VARIANTES
     tabla = {}
     for spec in SCENARIOS:
-        for nombre, veto_total, veto_reparto in VARIANTES:
+        for nombre in VARIANTES:
             veredictos, vistos = [], []
             for _ in range(reps):
-                got = await _run(spec, veto_total, veto_reparto)
+                got = await _run(spec)
                 veredictos.append(_clasificar(spec, got))
                 vistos.append(got.get("err") or "gs={} {}".format(
                     got.get("gs"), json.dumps(got.get("alloc"), ensure_ascii=False, sort_keys=True)))

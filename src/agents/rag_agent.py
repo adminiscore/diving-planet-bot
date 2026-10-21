@@ -156,18 +156,6 @@ def build_system_prompt(lang: str, query: str | None = None) -> str:
             f"Style and tone:\n{_build_tone_section('en')}\n\n"
             f"{RAG_BODY_EN}"
         )
-    if settings.rag_contesta_lo_que_sabe:
-        # rag-4: contestar la parte que SÍ está en el contexto antes de decir que falta el resto.
-        from src.prompts.info import (  # lazy
-            RAG_NO_TENGO_OLD_EN,
-            RAG_NO_TENGO_OLD_ES,
-            RAG_NO_TENGO_V2_EN,
-            RAG_NO_TENGO_V2_ES,
-        )
-
-        prompt = prompt.replace(RAG_NO_TENGO_OLD_ES, RAG_NO_TENGO_V2_ES).replace(
-            RAG_NO_TENGO_OLD_EN, RAG_NO_TENGO_V2_EN
-        )
     if settings.est2_datos:
         # EX-EST-2: siempre hay disponibilidad (decisión del negocio) y, si encajan varios planes, se nombran todos.
         from src.prompts.info import (  # lazy
@@ -216,24 +204,10 @@ def build_system_prompt(lang: str, query: str | None = None) -> str:
         from src.prompts.info import RAG_SIN_HORA_EN, RAG_SIN_HORA_ES  # lazy
 
         prompt = f"{prompt}\n\n{RAG_SIN_HORA_ES if lang == 'es' else RAG_SIN_HORA_EN}"
-    if settings.rag_condiciones_abiertas:
-        from src.prompts.info import RAG_CONDICIONES_EN, RAG_CONDICIONES_ES  # lazy
+    # s4-26 (7-oct): una condición del cliente no pasa a hecho sin que nadie lo diga (ver RAG_CONDICIONES_*).
+    from src.prompts.info import RAG_CONDICIONES_EN, RAG_CONDICIONES_ES  # lazy
 
-        prompt = f"{prompt}\n\n{RAG_CONDICIONES_ES if lang == 'es' else RAG_CONDICIONES_EN}"
-    if settings.rag_concise:
-        from src.prompts.info import (  # lazy
-            RAG_CONCISE_EN,
-            RAG_CONCISE_ES,
-            RAG_INTRO_LONG_EN,
-            RAG_INTRO_LONG_ES,
-            RAG_INTRO_SHORT_EN,
-            RAG_INTRO_SHORT_ES,
-        )
-
-        if lang == "es":
-            prompt = f"{prompt.replace(RAG_INTRO_LONG_ES, RAG_INTRO_SHORT_ES)}\n\n{RAG_CONCISE_ES}"
-        else:
-            prompt = f"{prompt.replace(RAG_INTRO_LONG_EN, RAG_INTRO_SHORT_EN)}\n\n{RAG_CONCISE_EN}"
+    prompt = f"{prompt}\n\n{RAG_CONDICIONES_ES if lang == 'es' else RAG_CONDICIONES_EN}"
     return prompt
 
 
@@ -919,14 +893,12 @@ async def rag_answer(
 
         grounding_context = _build_grounding_context(context, extra_context=extra_context, history=history)
         cabeza = [catalog_prefix_juez or catalog_prefix] if catalog_prefix else []
-        if settings.juez_presentacion:
-            # Lo que el bot tiene ordenado decir de la empresa, el juez tiene que poder comprobarlo. Va tras el
-            # catálogo: los dos son fijos por idioma, así que el prefijo sigue siendo cacheable.
-            from src.prompts.info import JUEZ_PRESENTACION_EN, JUEZ_PRESENTACION_ES  # lazy
+        # Lo que el bot tiene ordenado decir de la empresa, el juez tiene que poder comprobarlo (1-oct). Va tras el
+        # catálogo: los dos son fijos por idioma, así que el prefijo sigue siendo cacheable.
+        from src.prompts.info import JUEZ_PRESENTACION_EN, JUEZ_PRESENTACION_ES  # lazy
 
-            cabeza.append(JUEZ_PRESENTACION_ES if lang == "es" else JUEZ_PRESENTACION_EN)
-        if cabeza:
-            grounding_context = "\n\n".join([*cabeza, grounding_context])
+        cabeza.append(JUEZ_PRESENTACION_ES if lang == "es" else JUEZ_PRESENTACION_EN)
+        grounding_context = "\n\n".join([*cabeza, grounding_context])
         # Paso 6 (27-sep): corregir un precio que cita el cliente ("¿son los mismos 2.215.000?" -> "el
         # precio es 2.450.000, no 2.215.000") nombra su cifra; el guard la tomaba por inventada y la
         # respuesta acababa en "no lo tengo". Sus propias cifras cuentan; el juez sigue rechazando que

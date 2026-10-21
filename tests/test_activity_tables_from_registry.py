@@ -24,6 +24,7 @@ def test_dead_tables_are_gone():
     assert not hasattr(core, "_PRODUCT_ACTIVITIES")
     assert not hasattr(supervisor, "_REMEMBER_ACTIVITY_MAP")
     assert not hasattr(catalog, "SERVICE_TO_CART_TYPE")
+    assert not hasattr(supervisor, "_ACTIVITY_TO_SERVICE_ID")  # se fue con los vetos (MEJ-1)
 
 
 def test_cart_types_of_day_activities_come_from_the_registry():
@@ -31,17 +32,6 @@ def test_cart_types_of_day_activities_come_from_the_registry():
     assert core._ACTIVITY_TO_CART_TYPE == {
         "certified_diving": "cert", "minicourse": "beginner", "snorkel": "snorkel",
     }
-
-
-def test_activity_to_service_id_comes_from_the_registry():
-    legacy = {
-        "certified_diving": "2_dives_1_day", "minicourse": "minicourse", "snorkel": "snorkeling",
-        "padi_open_water": "open_water", "padi_advanced": "advanced", "padi_rescue": "rescue",
-        "padi_divemaster": "divemaster",
-    }
-    for activity_id, service_id in legacy.items():
-        assert supervisor._ACTIVITY_TO_SERVICE_ID[activity_id] == service_id
-    assert "padi_course" not in supervisor._ACTIVITY_TO_SERVICE_ID  # sin nivel, sin servicio
 
 
 def test_island_map_covers_every_island_variant_including_3_and_4_dives():

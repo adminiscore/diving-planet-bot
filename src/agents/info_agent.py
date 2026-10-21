@@ -38,6 +38,7 @@ from __future__ import annotations
 
 import logging
 
+from src.config import settings
 from src.flows.state import Step
 from src.orchestration.state import BotState
 
@@ -46,9 +47,9 @@ logger = logging.getLogger("uvicorn.error")
 
 async def info_node(state: BotState) -> dict:
     from src.agents.conversational_core import rag_con_adelantado
+    from src.agents.rutas.info import pide_servicio_privado
     from src.agents.supervisor import (
         _ADAPTIVE_DIVING_PATTERN,
-        _PRIVATE_GROUP_EVENT_RE,
         _alcohol_and_food_policy_answer,
         _maybe_answer_age_eligibility,
         _shared_turn_handler,
@@ -78,10 +79,15 @@ async def info_node(state: BotState) -> dict:
     #     2026-09-02): política plana conocida que RAG alucinaba en vez de
     #     retomar; respuesta determinista, redactada para no filtrar el
     #     número de WhatsApp de la política cruda.
-    if _PRIVATE_GROUP_EVENT_RE.search(msg_lower):
+    #     gen-3b (flag `privado_pasa_directo`): también cuando lo dice Jev, y el mensaje va al historial ANTES del
+    #     resumen del pase para que el asesor lea cuántos son o la fecha si ya los dio.
+    if pide_servicio_privado(msg_lower, signals):
+        if settings.privado_pasa_directo:
+            conv.history.append({"role": "user", "content": message})
         answer = private_group_event_reply(conv)  # 13-oct: con `grupo_privado_pase` marca también el pase
         logger.info("[NODE:info] Private/corporate group event -> real deterministic answer")
-        conv.history.append({"role": "user", "content": message})
+        if not settings.privado_pasa_directo:
+            conv.history.append({"role": "user", "content": message})
         conv.history.append({"role": "assistant", "content": answer})
         return {"reply": answer}
 

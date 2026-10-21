@@ -177,12 +177,12 @@ class Settings(BaseSettings):
     acuse_solo_el_mensaje: bool = True
     # gen-8 (21-oct): el ejemplo del acuse para reconocer un dato iba en plural ("none of you are Colombian") y lo
     # copiaba a quien va solo; con el flag, la regla de usar las palabras y el número del cliente. APAGADO.
-    acuse_en_su_numero: bool = False
+    acuse_en_su_numero: bool = True  # PROMOCIONADO 21-oct (ronda sin desplegar gen8-B 97,9 % 27/32 frente a gen8-A 97,0 % 26/32; el que empeora es del RAG; HISTORY 0.31.79); revert = False
     # gen-8 (21-oct): la actividad de la que el cliente PREGUNTA sin elegirla ("en el minicurso, ¿el equipo está
     # incluido?", "si hiciera el Advanced…"), leída por el extractor con su cita. Mientras no elige, la pregunta de la
     # actividad le ofrece esa en vez del menú de 4 (textos-B: "Which one are you leaning toward — diving, a
     # mini-course…?" a quien llevaba 3 turnos preguntando por el Open Water). APAGADO.
-    actividad_de_la_pregunta: bool = False
+    actividad_de_la_pregunta: bool = True  # PROMOCIONADO 21-oct (con `acuse_en_su_numero`, misma ronda gen8-A/B; banco gen-8: menú de 4 a quien ya hablaba de una actividad 2/24 -> 0/24; HISTORY 0.31.79); revert = False
     # gen-4 (21-oct): VIVIR en Colombia no es ser residente (G9, causa 6). El extractor leía "I live in Bogotá" o "sí,
     # vivo aquí" como colombiano (COP) en el banco docs/robustness/gen/banco_gen4_moneda.py (5/30 bien). Con el flag:
     # cuenta quien dice que es colombiano, viva donde viva, o que tiene cédula de extranjería (policies.json,
@@ -215,15 +215,6 @@ class Settings(BaseSettings):
     # Caso: regateo-grupo-6 repreguntaba "¿buceo, minicurso, snorkel o curso?". ENCENDIDO para su mini-ronda B (atencion-B,
     # 13-oct); si no pasa, False aqui y quitar la linea del compose.
     extractor_precio_elige: bool = True
-    # 13-oct (Gonzalo): con la conversacion ya pasada a una persona (Step.ESCALATE), el bot no vuelve a hacer preguntas
-    # de la reserva: contesta lo que se pregunte y si no, una nota corta. Caso: cambio-fecha-por-enfermedad (tras el
-    # pase por la intoxicacion, "Which one are you leaning toward — diving, a mini-course…?" en 3 turnos).
-    # ENCENDIDO para su mini-ronda B (atencion-B, 13-oct); si no pasa, False aqui y quitar la linea del compose.
-    tras_pase_sin_vender: bool = True
-    # 13-oct (Gonzalo): el aviso medico pasa la conversacion a una persona pero no lo decia; con el flag anade "Te paso
-    # ahora con alguien del equipo, que te escribe por aqui enseguida" (escalation._PASE_MEDICO). ENCENDIDO para su mini-ronda B (atencion-B,
-    # 13-oct); si no pasa, False aqui y quitar la linea del compose.
-    aviso_medico_dice_pase: bool = True
     # 13-oct (Gonzalo): posventa. Jev (`ya_reservado`, misma llamada) dice si el cliente YA tiene una reserva o ya hizo la
     # actividad; mientras valga, el bot contesta lo que pregunte pero no hace preguntas de la reserva ni ofrece el menu
     # de actividades. Casos: cambio-fecha-por-enfermedad ("Just completed the waivers" -> "Which one are you leaning
@@ -247,10 +238,8 @@ class Settings(BaseSettings):
     escalado_solo_emergencias: bool = True
     # ex-3 (fase EX): respuestas de texto fijo ACTIVAS que pasan al RAG, una por flag (inventario y motivos:
     # docs/robustness/atajos/inventario-ex3.md). APAGADOS hasta medirlos.
-    # - resumen de "¿qué ofrecen para bucear?" (rag_agent._canonical_diving_overview_answer): en las 38 rondas guardadas
-    #   de PRE solo saltó con un buzo certificado que daba fechas ("soy open… no sé qué tienen"), al que le contestaba
-    #   "¿Nunca has buceado? → minicurso". El catálogo entero ya va en el contexto del RAG.
-    atajo_resumen_por_rag: bool = True  # PROMOCIONADO 13-oct (Alvaro, HISTORY 0.31.18)
+    # (El del resumen de "¿qué ofrecen para bucear?", `atajo_resumen_por_rag`, promocionado el 13-oct, ya no tiene flag:
+    # MEJ-1.)
     # - "¿cambia el precio si es colombiano?": la regla de moneda va en el catálogo y en 2 FAQs curadas.
     atajo_nacionalidad_por_rag: bool = True  # PROMOCIONADO 13-oct (Alvaro, HISTORY 0.31.18): sonda igual o mejor
     # - alergia a un alimento (sin alcohol en el mensaje): la FAQ curada "Soy vegetariano o tengo una alergia" lo
@@ -400,11 +389,6 @@ class Settings(BaseSettings):
     # Modelo del juez de grounding v3 (el de siempre desde s4-25: sin flag). 28-sep (HISTORY 0.29.66): v3 con
     # gpt-4.1-mini 48/70 y gpt-4o-mini 37/70 frente a 70/70, y NO más rápidos: se quedó gpt-4.1.
     grounding_v3_model: str = "deepseek/deepseek-v4.1-flash"  # PROMOCIONADO 18-oct (mod-C, HISTORY 0.31.53); revert = "gpt-4.1"
-    # 1-oct (docs/robustness/juez/README.md): juez v4. Una linea por frase con su tipo (dato / no_lo_tengo / asesor /
-    # otro) y el veredicto lo saca el codigo (solo cuenta un NO en un dato). El v3 se saltaba su propio filtro en
-    # cuanto la respuesta traia un dato y ponia SI/NO al azar a "no lo tengo a la mano, un asesor te lo confirma".
-    # APAGADO: se mide primero con el banco (scripts/sonda_juez_tipo.py).
-    juez_por_tipo: bool = False
     # J1 (1-oct): con un modelo de razonamiento como juez (GROUNDING_V3_MODEL=gpt-5-mini), su esfuerzo de razonamiento.
     grounding_reasoning_effort: str = "low"
     # 8-oct (cambio de modelos, fase 0): esfuerzo de razonamiento para los modelos gpt-6 cuando la llamada no lo pide.
@@ -619,6 +603,16 @@ class Settings(BaseSettings):
     # gen-12 (21-oct): el RAG no da por hecho si el cliente es hombre o mujer (prompts/info.RAG_SIN_GENERO_*). Va con
     # `rag_no_adivina` (promocionado). La base, además, ya no nombra el sistema interno de reservas (criterio sin-fugas).
     sin_genero_supuesto: bool = True  # PROMOCIONADO 21-oct (ronda sin desplegar gen12-B 96,5 % 26/32 frente a gen12-A 96,1 % 24/32; banco gen-2: género 2/52 -> 0/39; HISTORY 0.31.75); revert = False
+    # gen-3b (21-oct, Gonzalo con Claude; "pasa directamente cuando toca"): cambiar la fecha, cancelar o cambiar el
+    # número de personas de una reserva YA HECHA daba la política y OFRECÍA el pase («¿te conecto con un asesor o
+    # prefieres volver al menú principal?», un menú que ya no existe) sin marcarlo. Con el flag se da la política y se
+    # pasa a un asesor (motivo + resumen), como `needs_staff`: el bot no ve las reservas. rutas/changes.py. APAGADO.
+    cambio_de_reserva_pasa: bool = True  # PROMOCIONADO 21-oct (ronda sin desplegar gen3b-B 97,8 % 28/32 frente a gen3b-A 98,3 % 28/32; los 2 que empeoran no pasan por el pase; banco gen-3b 8/26 -> 26/26; HISTORY 0.31.77); revert = False
+    # - El servicio privado (salida, lancha o instructor solo para su grupo, grupo cerrado, evento de empresa) pasa
+    #   DIRECTAMENTE en cuanto lo pide (decisión de Gadea, 21-oct). Solo pasaba si el mensaje decía "servicio privado",
+    #   "grupo cerrado" o "evento corporativo"; lo demás iba al RAG, que solo puede OFRECER el pase. Lo dice Jev
+    #   (`pide_servicio_privado`) y responde el grupo privado (rutas/info.py). APAGADO.
+    privado_pasa_directo: bool = True  # PROMOCIONADO 21-oct (con `cambio_de_reserva_pasa`, misma ronda gen3b-A/B; HISTORY 0.31.77); revert = False
     # s4-33 (8-oct, Alvaro): instrucciones del juez de grounding v3 para GPT-6 Luna (prompts/info.py
     # GROUNDING_VERIFY_V3_LUNA_*): el v3 entero + 3 aclaraciones (lo que dice el cliente de si mismo no se comprueba;
     # valoraciones y ofertas de ayuda no son datos; las deducciones directas del contexto cuentan). Va con
@@ -628,25 +622,6 @@ class Settings(BaseSettings):
     # gpt-6; "low"/"medium" = razona antes de la lista y el tope de salida sube 4000 tokens, como el juez gpt-5/o).
     # Se mide con scripts/banco_juez_reales.py --ajuste juez_luna_razonamiento=low.
     juez_luna_razonamiento: str = "none"
-    # 1-oct (Alvaro, paso 1 del "Siguiente" de Gonzalo): el juez ve la presentacion de Diving Planet (PADI 5
-    # Estrellas, 30 años), la misma frase que el bot tiene ordenado decir (prompts/info.py PRESENTACION_*). Sin ella
-    # el juez tiraba esas frases por inventadas (ronda 2026-10-01-juez-B). APAGADO hasta medirlo
-    # (scripts/sonda_juez_presentacion.py y ronda core). Banco 1-oct: ciertos que pasan 3 -> 12 de 12, inventos
-    # cazados 17 -> 18 de 18 (docs/robustness/juez/presentacion-2026-10-01.json). PROMOCIONADO 1-oct (ronda core
-    # 2026-10-01-presentacion-B, HISTORY 0.29.91): rechazos del juez 3 -> 0, turnos con pregunta 4,29 -> 3,91 s;
-    # calidad dentro del ruido. (Que la cancelacion pasara a una persona en esa ronda NO fue por este flag: ese turno
-    # no paso por el RAG; HISTORY 0.29.93.) Revert = False aqui y en el compose.
-    juez_presentacion: bool = True
-    # 2-oct (Alvaro, paso 2 del "Siguiente" de Gonzalo): el juez tapa los datos personales LINEA A LINEA. `redact_pii`
-    # sobre el contexto entero tapaba todos los precios >= 1.000.000 COP del catalogo si una FAQ decia "pasaporte"
-    # o "Bancolombia", y el juez rechazaba el precio correcto (paquete de 5 en conversacion; reproducido en PRE con
-    # scripts/reproducir_juez_pre.py: 50 precios tapados). Por lineas: 0 precios tapados y la cedula de un cliente
-    # se sigue tapando. Escalon 0 (el dialogo x5 en PRE): rechazos 10 -> 0, precio dado 0/5 -> 5/5, "no lo tengo"
-    # 4 -> 0. PROMOCIONADO 2-oct (HISTORY 0.29.92): ronda core 2026-10-01-privacidad-B frente a presentacion-B,
-    # el paquete de 5 da el precio en pesos, calidad 93,4 -> 94,3 % (ruido), turnos con pregunta p50 3,91 -> 3,36 s.
-    # Limite conocido: si la palabra "cedula" y su numero van en lineas distintas, el numero no se tapa (solo afecta
-    # a lo que ve el juez). Revert = False aqui y en el compose.
-    juez_privacidad_por_linea: bool = True
     # Punto 3 (el ORIGEN del cliente en los precios; 15 de 63 fallos visibles de la ronda 2026-10-02-completa: el modelo
     # cotizaba un origen por su cuenta). 6-oct: dos versiones con un AVISO en el contexto del RAG, medidas y quitadas
     # (V1 "no lo sabemos, preguntalo": ronda 2026-10-06-origen-B 93,9 -> 93,4 %, repreguntaba lo ya dado a entender; V2
@@ -688,39 +663,11 @@ class Settings(BaseSettings):
     # (cal-14: explicaba qué poner en el concepto de una transferencia, contra la política). Lo general se contesta
     # igual; lo del caso concreto lo confirma el asesor. APAGADO hasta medirlo.
     contexto_tras_el_pase: bool = False
-    # Punto 4 (s4-26, 7-oct): si Jev esta SEGURO de que el mensaje no mete a otra persona (companion_joins <
-    # COMPANION_NONE_MAX, la misma puerta de u3-6), la regex de "menciona a alguien" (`_mentions_person`) no puede
-    # contradecirlo. "Si cuantos dias son?" casaba "son" (hijo, en ingles) y el flujo preguntaba la actividad de un
-    # acompañante inexistente ("¡Qué bien que venga alguien más!", manual-duracion-curso) con Jev en 0,04. Sin Jev
-    # (flag o Jev apagados, o fallo) = la regex de hoy.
-    # PROMOCIONADO 7-oct (ronda core s426-B frente a origen-c2-B: 93,0 -> 95,6 %, 8 mejoras / 1 regresion ajena, del enrutador; HISTORY 0.30.1). Revert = False aqui y en el compose.
-    jev_acompanante_manda: bool = True
-    # Punto 4 (s4-26, 7-oct): con la reserva ya cerrada (tarjeta con precio y link enviada) y sin cambios en este turno,
-    # una pregunta ("¿cuánto dura?") se contesta SOLA; antes se le pegaba detras la tarjeta entera otra vez
-    # (manual-duracion-curso: no-lista-precios / sin-repreguntas). PROMOCIONADO 7-oct (s426-B; HISTORY 0.30.1).
-    cierre_sin_repetir: bool = True
-    # Punto 4 (s4-26, 7-oct): una CONDICION del cliente ("si tu hotel tiene acceso por lancha") no pasa a HECHO en el
-    # turno siguiente sin que nadie lo diga (logistica-isla-fragata-regreso-otro-dia: "como te alojas en un hotel con
-    # acceso por lancha, como el Fragata, la recogida esta incluida"). prompts/info.py RAG_CONDICIONES_*. Escalon 0 en
-    # PRE (7-oct, codigo local, 3 reps): la condicion se mantiene 3/3 (antes se daba por cumplida 2/2). PROMOCIONADO 7-oct
-    # (s426-B) pero PARCIAL: en la mini-ronda s426-extra-B volvio a darla por cumplida (en total 3/4). Es una regla de
-    # prompt: ayuda, no garantiza.
-    rag_condiciones_abiertas: bool = True
-    # Punto 4 (s4-26, 7-oct): el contexto del RAG llama "el plan que esta armando" a lo que el cliente ya eligio, no
-    # "su carrito": el cliente no ve ningun carrito y el modelo repetia la palabra ("el curso que tienes en tu carrito",
-    # manual-duracion-curso, 3 de 6 en el escalon 0; el juez lo da por invento). PROMOCIONADO 7-oct (s426-B: ya no sale).
-    rag_plan_elegido: bool = True
     # Punto 4 (s4-26, 7-oct): una pregunta mas de Jev en la misma llamada (`adds_person`): ¿el mensaje SUMA a una persona
     # nueva o habla de alguien ya contado? Si Jev esta seguro de que no es nueva (< 0,2), "él quiere hacer snorkel" se
     # mueve dentro del grupo sin preguntar "¿seguís siendo 2?" (acompanante-goteo). Si duda, se pregunta como hoy.
     # Banco ciego: 0/10 nuevas por debajo, 9/10 ya contadas. PROMOCIONADO 7-oct (mini-ronda s426-extra-B: goteo pasa).
     jev_persona_ya_contada: bool = True
-    # s4-27 (8-oct): la ubicacion que el detector deduce de un HOTEL ("cocoliso" -> en las islas) se declara en
-    # `detected_fields` como cualquier otro dato, asi que pasa por la puerta de Jev (u3-3/u3-4). Antes no se declaraba
-    # y se colaba siempre: "¿me pasas el contacto del hotel Cocoliso?" (Jev: no afirma ubicacion) dejaba al cliente "ya
-    # en las islas" (contacto-hoteles-cocoliso-san-pedro). PROMOCIONADO 8-oct: mini-ronda de los 10 dialogos visibles con
-    # hotel, A/B en la misma franja: 79,7 -> 85,3 %, 2 -> 4/10 sin fallos (HISTORY 0.30.3). Revert = False aqui y en el compose.
-    hotel_ubicacion_declarada: bool = True
     # s4-28 (8-oct): una pregunta mas de Jev en la misma llamada (`customer_place`: Cartagena / ya en las islas / no lo
     # dice). Nacio para decidir QUE lugar proponia la regex (`place_by_role` lo decidia por la preposicion: "visitando
     # Cartagena... coordinar inmersiones EN Isla del Rosario" salia islas); banco ciego: Jev 12/12, regex 4/12.
@@ -738,30 +685,9 @@ class Settings(BaseSettings):
     # duda, ningun mensaje nombra inmersiones), latencia igual. PROMOCIONADO: ENCENDIDO. Revert = False aqui y quitar
     # la linea del compose.
     rag_plan_nombrado: bool = True
-    # 9-oct (Gonzalo, fallos del flujo de reserva): cada EDAD que da el mensaje cuenta como una persona para respaldar
-    # el reparto del grupo, como una persona nombrada; y el detector lee tambien "age 17" en singular (no "minimum
-    # age"). Caso: familia-mixta-precio-descuento-refresher ("2 adults (ages 42, 19) / 1 youth (age 17) / Snorkeling /
-    # 1 Adult (Age 43) / 2 kids (Ages 14, 10)"): el reparto {buceo 3, snorkel 3} se tiraba por no tener un "3" escrito
-    # y el bot preguntaba "¿cuantos serian para buceo certificado?". Escalon 0 en PRE: 3/3 guardan 6 personas (3 y 3);
-    # en el golden visible el detector solo cambia en ese mensaje. Mini-ronda s428-A/B: mejora la buscada
-    # (familia-mixta da el precio), ninguna regresion suya. PROMOCIONADO: ENCENDIDO.
-    grupo_por_edades: bool = True
-    # Latencia del RAG (28-sep): la respuesta contesta SOLO lo preguntado, en 2-4 frases, y ofrece ampliar (la
-    # intro cálida se queda, en una frase). Escribir la respuesta crece con la longitud (220 caracteres 1,1 s,
-    # 720 caracteres 2,8 s); la mediana era ~680. Decisión del owner. APAGADO hasta su A/B (prompts/info.py).
-    # Escalón 0 (HISTORY 0.29.67): con tope de longitud comprime e inventa huecos; la variante suave del código no.
-    rag_concise: bool = False
     # Esquema de la base curada que lee la busqueda (rag-2, `scripts/kb_v2.py`). Solo para medir una base nueva sin
     # tocar la que usa PRE (p. ej. RAG_KB_ESQUEMA=kb_v2_prueba con `rag_piezas --codigo-local`); en PRE es siempre "kb_v2".
     rag_kb_esquema: str = "kb_v2"
-    # rag-3 (29-sep): si ya se sabe QUE servicio mira el cliente, su ficha entera (la misma que la de la base v2,
-    # `catalog.service_fact_sheet`) va SIEMPRE al contexto, en vez de depender de que la busqueda la encuentre.
-    # Motivo medido (`rag_piezas`, 2026-09-28-rag2-B2): con `selected_service` puesto, la ficha NO entraba en el
-    # top-8 ante preguntas genericas -- "what time does the course finish on the first day?" con el Open Water
-    # elegido, y la direccion del centro con el Curso Referido. El dato existe (el itinerario lleva la hora de
-    # encuentro); el problema es de busqueda. Sustituye a la inyeccion parcial de incluye/no incluye, que se
-    # quedaba corta. APAGADO hasta su A/B (rag_piezas + ronda core).
-    rag_ficha_del_servicio: bool = False
     # rag-5 (1-oct): puerta de Jev para el extractor de notas. Gonzalo midio el 30-sep que de 26 notas nuevas solo 7
     # eran buenas y 15 eran la pregunta del cliente apuntada como hecho, o inventada; y que son las que hacen rehacer
     # la respuesta adelantada. Con el flag, Jev contesta en la llamada del enrutador "¿cuenta algo del cliente que
@@ -770,18 +696,6 @@ class Settings(BaseSettings):
     # Ronda rag5-C: extractor llamado en 9 de 77 turnos, 6 notas en 93 turnos, calidad igual. PROMOCIONADO 1-oct
     # (HISTORY 0.29.88). Revert = "false" aqui y en docker-compose.vps.yml.
     notas_puerta_jev: bool = True
-    # rag-4 (29-sep): la regla del "no lo tengo" del prompt del RAG es TODO-O-NADA -- dice "si la respuesta no esta
-    # en el contexto, dilo" y no dice nada de contestar la parte que SI esta, asi que ante una pregunta con varias
-    # partes el modelo tira la respuesta entera aunque tenga la mitad. Medido (`rag_piezas`, 2026-09-28-rag2-B2): de
-    # los fallos que quedan tras rag-2, 9 son de redaccion y TODOS con el dato ya en el contexto; en
-    # `salida-confirmada` el bot suelta la plantilla LITERAL de esa regla teniendo delante "se opera todos los dias
-    # salvo 25-dic y 1-ene" y "solo se suspende por mal tiempo".
-    # DESCARTADO 29-sep con medida (HISTORY 0.29.77): sobre los 47 casos la cobertura BAJA de 89 % a 83 %, los
-    # rechazos del juez suben de 2 a 8 y aparecen 1 contradiccion, 1 dato prohibido y 3 "no lo tengo". Decirle
-    # "contesta lo que sabes" le hace AFIRMAR mas, el guard rechaza y tras regenerar dice "no lo tengo" MAS que
-    # antes: lo contrario de lo que buscaba. Se deja aqui apagado para que no se reintente sin leer
-    # docs/robustness/rag-3/README.md.
-    rag_contesta_lo_que_sabe: bool = False
 
     # --- Observabilidad: Langfuse (sustituye a LangSmith, cuota Developer
     # agotada; ver docs/robustness/progress-log.md "Tarea 8"). Sin claves, el
@@ -848,90 +762,9 @@ class Settings(BaseSettings):
     # ubicación y perfil/logística, flags `llm_extraction_cutover_*`) ya no existen: s4-25 quitó los flags del cutover
     # y s4-1 sus funciones y la sonda, que no llamaba nadie desde el 28-jul (308488d, se retiró el orquestador
     # antiguo). El relleno de huecos vivo es el del núcleo (`conversational_core._understand`).
-    # --- Robustness Fase 9 (docs/multi-agent-refactor-plan.md, hallazgo en vivo
-    # conversacion real "purple-sun-590", 2026-09-03) ---
-    # A diferencia de los 4 dominios de arriba (que solo rellenan huecos), este
-    # veto puede CORREGIR un `activity` que el regex SI resolvio -- solo cuando
-    # `intent_detector.matched_activity_categories(message)` marca el mensaje
-    # como ambiguo (2+ categorias disparadas a la vez). Ej.: "quiero el open
-    # water, nunca he buceado" dispara minicourse Y padi_course; el regex gana
-    # por ORDEN de comprobacion (if/elif), no por lo que el cliente pidio de
-    # verdad -- y el cutover de certificacion de arriba no lo salva porque
-    # 'nunca rellena un campo ya resuelto' es su regla explicita. Dos fases,
-    # mismo patron shadow->cutover que los 4 dominios de arriba:
-    llm_activity_veto_shadow_mode: bool = False  # mide sin aplicar (loguea discrepancias)
-    # CUTOVER por defecto desde 2026-09-14 (antes solo en `.env.pre` del VPS).
-    # Criterio para todo el mecanismo: un flag de CUTOVER que ya se midio y
-    # decide respuestas vive en el CODIGO, no en un .env que no esta en el repo
-    # -- si no, cualquier entorno nuevo (PRO, dev) arranca con el fallo que ya se
-    # cerro. Los de SHADOW (solo loguean) siguen en el entorno. Medido: eval-set
-    # `activity` 98% con el trigger de ambiguedad (progress-log 2026-09-12).
-    llm_activity_veto_cutover: bool = True       # aplica de verdad (corrige activity/service_id)
-    # --- Generalizacion del veto por-campo (docs/multi-agent-refactor-plan.md,
-    # hallazgo en vivo conversacion real 913, 2026-09-10) ---
-    # Mismo mecanismo que `llm_activity_veto_*` (ver `supervisor._VETO_FIELD_
-    # SPECS`/`_maybe_veto_resolved_field_via_llm`), extendido a is_certified/
-    # is_colombian/location por pedido explicito del usuario ("por bandera").
-    # A diferencia de `activity` (evidencia real: conv. 913), estos 3 son
-    # paridad PREVENTIVA -- sin bug en vivo que los motive todavia. Los 6
-    # flags off por defecto en todas partes; sin ellos, cada campo es un
-    # no-op inmediato dentro del bucle de `_understand()`, cero coste.
-    llm_certification_veto_shadow_mode: bool = False
-    llm_certification_veto_cutover: bool = False
-    llm_nationality_veto_shadow_mode: bool = False
-    llm_nationality_veto_cutover: bool = False
-    llm_location_veto_shadow_mode: bool = False
-    llm_location_veto_cutover: bool = False
-    # --- Extension a group_size (docs/multi-agent-refactor-plan.md, hallazgo
-    # en vivo bateria sintetica, 2026-09-10) ---
-    # A diferencia de los 3 de arriba (huecos genericos, sin bug en vivo que
-    # los motive), este SI tiene un caso real detectado: "mi pareja y
-    # nuestros dos hijos" resuelve group_size=2 (el patron `pareja`->2 gana
-    # y nunca suma a los hijos) -- el regex CONTESTA CON CONFIANZA y se
-    # equivoca, exactamente el patron de fallo que este mecanismo existe
-    # para cazar (fill_gaps no ayuda aqui: su regla es nunca tocar un campo
-    # ya resuelto). Un intento de arreglarlo por regex (excluir "mi/tu/su
-    # pareja") rompio un caso real validado por el owner
-    # (test_owner_conversations_fase1.py::test_scenario3a_couple_group_size_two,
-    # donde "con mi pareja" SI debe valer 2) -- revertido. Se deja en manos
-    # de este mecanismo en su lugar.
-    llm_group_size_veto_shadow_mode: bool = False
-    # CUTOVER por defecto desde 2026-09-14 (mismo criterio que
-    # `llm_activity_veto_cutover`). Medido en PRE con
-    # scripts/battery_group_allocation_gate.py: sin este veto, TOTAL_MAL en 5 de
-    # 33 escenarios ("en total 7: 4 certificados..." -> 4, "mi pareja y nuestros
-    # dos hijos" -> 2); con el, 0 -- y los controles donde el regex acierta (incl.
-    # el caso del owner "con mi pareja" = 2) intactos.
-    llm_group_size_veto_cutover: bool = True
-
-    # --- Veto de `group_allocation` (reparto INCOMPLETO pero visible) ---
-    # Justificacion real (NO el 91% del eval-set: el unico caso que falla
-    # alli es una alucinacion de `fill_gaps` leyendo el historial, y el veto
-    # ni se disparia sobre el -- solo actua sobre campos que el REGEX
-    # resolvio ESTE turno). El caso que SI motiva esto es otro:
-    #   "somos 5: 3 certificados, 1 minicurso y 1 snorkel"
-    #   -> group_size=5 (correcto) pero allocation={minicourse:1, snorkel:1}
-    # porque "N certificados" sin verbo no matchea `activity_kw`. El total
-    # esta bien y el reparto no suma el total: el regex vuelve a CONTESTAR
-    # CON CONFIANZA y equivocarse, que es justo lo que este mecanismo caza.
-    # Quedo asi tras arreglar que un reparto incompleto redujera ademas el
-    # `group_size` declarado (ver progress-log 2026-09-10).
-    #
-    # Trigger PROPIO (`_group_allocation_should_verify`), no el generico:
-    # solo cuando el reparto NO suma el `group_size` conocido. La leccion de
-    # `activity` (trigger generico -> 89%->73%, revertido) vale igual aqui,
-    # y ademas hace el coste practicamente cero: en los repartos que ya
-    # cuadran no se gasta ni una peticion.
-    # Off por defecto en todas partes.
-    llm_group_allocation_veto_shadow_mode: bool = False
-    # CUTOVER por defecto (2026-09-12), a diferencia del resto de campos del
-    # mecanismo. No es una excepcion caprichosa: es el unico que se activa con
-    # datos medidos de antemano en vez de "a ver que tal". Con el trigger propio
-    # (solo dispara si el reparto no suma el total) y la invariante de
-    # `enforce_group_allocation_consistency`, la bateria de conversacion da
-    # 6/10 repartos correctos frente a 3/10, con 0 repartos parciales y 0
-    # alucinaciones en los 10 escenarios de riesgo.
-    llm_group_allocation_veto_cutover: bool = True
+    # --- Robustness Fase 9 (vetos por campo, sep-2026): un LLM verificaba un campo que el regex ya había resuelto y lo
+    # corregía. ex-9 (15-oct) lo sacó del camino real (el extractor con cita manda) y MEJ-1 (21-oct) borró la maquinaria
+    # muerta (`rutas.booking`) y sus 12 flags `llm_*_veto_shadow_mode` / `llm_*_veto_cutover`.
 
     @property
     def is_dev(self) -> bool:

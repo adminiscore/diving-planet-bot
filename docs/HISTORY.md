@@ -1,6 +1,91 @@
 History
 =======
 
+0.31.79 - (2026-10-21)
+----------------------
+* **gen-8 PROMOCIONADO: el acuse en el número del cliente y la actividad de la pregunta** (Álvaro con Claude,
+  `cf35b8c`, `c7472d5` y los tests de `f7c8e0f`; integrado por Gadea con Claude). Decisión de Gadea del 21-oct.
+  - `ACUSE_EN_SU_NUMERO`: el ejemplo del acuse iba en plural («none of you are Colombian») y se copiaba a quien va
+    solo. Ahora la regla es usar las palabras y el número del cliente.
+  - `ACTIVIDAD_DE_LA_PREGUNTA`: el extractor lee, con su cita, la actividad por la que el cliente pregunta sin elegirla
+    («en el minicurso, ¿el equipo está incluido?»). Mientras no elige, la pregunta de la actividad le ofrece esa y no
+    el menú de 4. Banco propio: el menú de 4 a quien ya hablaba de una actividad pasa de 2/24 a 0/24.
+  - Ronda core sin desplegar, mismo código y misma hora: **gen8-B 97,9 % 27/32** frente a **gen8-A 97,0 % 26/32**.
+    Mejoran 4 y empeora 1 (certificado-fechas-fotos-y-reserva, sin-invenciones: la hora de regreso que da el RAG en
+    el turno 1, sin el flag de por medio). Ratificado por Gonzalo y por Gadea con Claude.
+* **gen-4 entra APAGADO** (`VIVIR_NO_ES_RESIDIR`, `2aebd76`): vivir, trabajar o haber nacido en Colombia no hace
+  colombiano. Cuenta quien dice que lo es o que tiene cédula de extranjería, y la pregunta nombra la cédula
+  (decisiones de Gadea del 21-oct). Le falta su ronda core A/B.
+* **mej-5**: la alerta de saldo de OpenAI fallaba siempre, porque `gpt-5.4-nano` rechaza `max_tokens`; ahora va
+  `max_completion_tokens=16` (`513d743`, de Gonzalo).
+
+0.31.78 - (2026-10-21)
+----------------------
+* **MEJ-1, tanda 1b: fuera 14 flags promocionados o descartados hace más de una semana**, solo en ficheros que no
+  llevan las ramas abiertas (los de Álvaro y Gonzalo esperan a la 1d). PRE no cambia.
+  - **Promocionados, se queda su camino y se va el viejo:**
+    - El juez ve la presentación oficial (`JUEZ_PRESENTACION`, 1-oct).
+    - El juez tapa los datos personales línea a línea (`JUEZ_PRIVACIDAD_POR_LINEA`, 2-oct).
+    - Del 7-oct, s4-26: una condición del cliente no pasa a hecho (`RAG_CONDICIONES_ABIERTAS`), el contexto dice «el
+      plan» y no «el carrito» (`RAG_PLAN_ELEGIDO`), el cierre igual no se repite (`CIERRE_SIN_REPETIR`) y Jev manda en
+      el acompañante (`JEV_ACOMPANANTE_MANDA`).
+    - La ubicación del hotel se declara (`HOTEL_UBICACION_DECLARADA`, 8-oct).
+    - Cada edad cuenta como una persona (`GRUPO_POR_EDADES`, 9-oct).
+    - El resumen de opciones lo contesta el RAG (`ATAJO_RESUMEN_POR_RAG`, 13-oct; ya no tenía código).
+  - **Encendidos en PRE desde el 13-oct y sin promoción formal**, porque su mini-ronda atencion-B se cortó por falta de
+    crédito: el aviso médico dice que pasa a una persona (`AVISO_MEDICO_DICE_PASE`) y, tras el pase, no se vuelve a
+    vender (`TRAS_PASE_SIN_VENDER`). Han ido en todas las rondas desde entonces, G9 incluido. Con el segundo, la
+    cortesía de s4-20 (`_courtesy_after_handoff`) ya no se alcanzaba y se borra.
+  - **Descartados, fuera enteros:**
+    - `RAG_CONCISE` (28-sep): el texto, la intro corta y su test.
+    - `RAG_FICHA_DEL_SERVICIO` (rag-3, 29-sep): la rama, `scripts/rag3_contexto_local.py` y su test.
+    - `JUEZ_POR_TIPO` (juez v4, 1-oct): `veredicto_por_tipo`, el prompt v4 y `scripts/sonda_juez_tipo.py`.
+  - Los tests de la rama vieja se quitan y los parametrizados se quedan con el caso encendido. Suite de los ficheros
+    tocados, el mapa y los flags en verde. `escalado_solo_emergencias` se queda por ahora: 9 ficheros de tests
+    dependen de la lista vieja.
+
+0.31.77 - (2026-10-21)
+----------------------
+* **gen-3b PROMOCIONADO: pasar directamente cuando toca** (Gonzalo con Claude, `a8a9883`; integrado por Gadea con
+  Claude; `docs/robustness/gen/gen3b-diagnostico.md`). Decisión de Gadea del 21-oct.
+  - `CAMBIO_DE_RESERVA_PASA`: cambiar la fecha, cancelar o cambiar el número de personas de una reserva YA hecha da la
+    política y pasa directo a un asesor, con el motivo y el resumen (`rutas/changes.py`). Antes ofrecía «¿te conecto
+    con un asesor o prefieres volver al menú principal?», con un menú que ya no existe, sin marcar el pase.
+  - `PRIVADO_PASA_DIRECTO`: el servicio privado (lancha, salida o instructor solo para su grupo, evento de empresa)
+    pasa directo en cuanto lo pide. Lo reconoce Jev (`pide_servicio_privado`) y no solo las tres frases literales de
+    antes; si dio cuántos son o la fecha, va en el resumen.
+  - Banco propio: 8/26 → 26/26, con la frontera intacta.
+  - Ronda core sin desplegar, mismo código y misma hora (juzgada por Álvaro): **gen3b-B 97,8 % 28/32** frente a
+    **gen3b-A 98,3 % 28/32**. Mejoran 2 y empeoran 2 (moneda-precios-principiante-y-snorkel y
+    paquete-5-buceos-cop-refresh-y-hoteles). Comprobado en los jsonl por Gonzalo y por Gadea con Claude: en esos
+    diálogos ningún turno pasa por el cambio de reserva ni por el privado; solo cambia la redacción del RAG.
+  - Viene con el arreglo de Coral de `52dedeb`: con varias medidas `--codigo-local` a la vez, «PRE: libre» solo sale
+    al terminar la última.
+
+0.31.76 - (2026-10-21)
+----------------------
+* **MEJ-1, tanda 1a: fuera la maquinaria muerta de los vetos por campo** (Fase 9, sep-2026). ex-9 (15-oct) la sacó
+  del camino real y desde entonces no corría.
+  - Borrados en `rutas/booking.py`: specs, triggers, `apply_veto_disagreements`, `valid_veto_corrections`, el veto de
+    actividad y el de reparto. También sus reexports en `supervisor.py`, `certification_is_ambiguous` en
+    `intent_detector.py` y los **12 flags `llm_*_veto_shadow_mode` / `llm_*_veto_cutover`** (con sus fichas del mapa).
+  - Se quedan, porque se usan: `enforce_group_allocation_consistency` (el reparto tiene que cuadrar con el total
+    guardado), `nationality_is_ambiguous` y `matched_activity_categories`. `verify_fields` y su prompt
+    (`llm_extractor`, `prompts/booking`) esperan a la tanda 1d, cuando se integre la rama de Álvaro.
+  - Comportamiento igual. Se comprobó en el código subido (130cefb): nadie del camino real llamaba a
+    `_maybe_veto_resolved_fields_via_llm` (solo el reexport y los tests) y ningún flag de veto estaba en el compose.
+    Por eso no hay ronda de equivalencia: se ahorra crédito.
+  - Tests: 6 ficheros solo del veto, borrados. `test_group_allocation_veto.py` pasa a
+    `test_reparto_cuadra_con_el_total.py` (se queda el invariante). Suite completa: 3216 en verde.
+    `battery_group_allocation_gate` mide ahora una sola variante.
+  - Unas 1.350 líneas menos.
+* **MEJ-1, tanda 1c (decisión de Gadea: los apagados antiguos se borran): fuera `RAG_CONTESTA_LO_QUE_SABE`** (rag-4,
+  29-sep, DESCARTADO el mismo día: la cobertura bajó de 89 % a 83 % y los rechazos del juez subieron de 2 a 8).
+  - Se borran la rama de `rag_agent`, los 4 textos `RAG_NO_TENGO_*` de `prompts/info.py`, el flag, su ficha del mapa,
+    su foto en `snapshot_prompts` y su test. La lección sigue en `docs/robustness/rag-3/README.md` y en 0.29.77.
+  - `AVISOS_CONDICIONADOS` (CAL-A5, 16-17 oct) se queda: es de esta semana y su código lo comparten
+    `consulta_con_lo_sabido` (promocionado) y el revisor de avisos de CAL-A6.
+
 0.31.75 - (2026-10-21)
 ----------------------
 * **gen-12 PROMOCIONADO: el RAG sin nombres internos ni género supuesto.** Es la primera promoción medida con la ronda

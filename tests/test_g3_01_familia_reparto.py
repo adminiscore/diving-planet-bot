@@ -16,7 +16,7 @@ from src.agents import conversational_core as core
 from src.agents import supervisor
 from src.config import settings
 from src.flows.state import ConversationState
-from tests.test_group_allocation_veto import _intent_alloc
+from tests.test_reparto_cuadra_con_el_total import _intent_alloc
 
 
 def _familia(actividad="certified_diving"):

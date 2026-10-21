@@ -206,7 +206,7 @@ def _build_extra_context(state: ConversationState) -> str | None:
             )
 
     # CAL (17-oct, flag `contexto_tras_el_pase`): la conversación YA está con una persona del equipo. Tras un pase,
-    # un "gracias" recibe una respuesta corta (`_courtesy_after_handoff`), pero una PREGUNTA seguía el flujo normal y
+    # un "gracias" recibía una respuesta corta (la cortesía de s4-20), pero una PREGUNTA seguía el flujo normal y
     # el RAG contestaba sin saber que el caso lo tiene un asesor: en cal-14 el cliente, tras pasar su pago a una
     # persona, pregunta qué poner en el "concepto" de una transferencia, y el bot se lo explica, aunque la política dice
     # que no se paga por transferencia y aunque el pase se hizo justo porque el bot no ve pagos. Mismo patrón que la
@@ -514,30 +514,7 @@ def _build_extra_context(state: ConversationState) -> str | None:
             from src.flows.catalog import SERVICES
 
             active_service = SERVICES.get(active_service_id)
-            if active_service and settings.rag_ficha_del_servicio:
-                # rag-3: la ficha ENTERA, la misma que la base v2 (`catalog.service_fact_sheet`), no solo
-                # incluye/no incluye. El caso que lo abrió: "what time does the course finish on the first
-                # day?" con el Open Water elegido — la hora está en el itinerario de la ficha, y la búsqueda
-                # no metía la ficha en el top-8 (`rag_piezas`, 2026-09-28-rag2-B2).
-                from src.flows.catalog import service_fact_sheet
-
-                name = active_service.get(f"name_{state.language}", active_service_id)
-                es = state.language == "es"
-                parts.append(
-                    f"Actividad que el cliente esta viendo/considerando ahora: {name}. Su ficha completa:"
-                     if es else
-                     f"Activity the customer is currently viewing/considering: {name}. Its full sheet:"
-                )
-                parts.append(service_fact_sheet(active_service_id, state.language))
-                parts.append(
-                    "Usa esta ficha como fuente de verdad para lo que incluye o no, equipo, seguro, "
-                     "horarios, itinerario y requisitos de ESTA actividad; no necesitas buscar en otra parte."
-                     if es else
-                     "Use this sheet as the source of truth for what is or isn't included, equipment, "
-                     "insurance, schedule, itinerary and requirements of THIS activity; no need to search "
-                     "elsewhere."
-                )
-            elif active_service:
+            if active_service:
                 name = active_service.get(f"name_{state.language}", active_service_id)
                 includes = active_service.get(f"includes_{state.language}")
                 not_included = active_service.get(f"not_included_{state.language}") or []
@@ -683,10 +660,10 @@ def _build_extra_context(state: ConversationState) -> str | None:
             f"{it.get('qty', 0)} x {it.get('label') or it.get('type', '')}" for it in cart
         )
         if state.language == "es":
-            # s4-26 (flag `rag_plan_elegido`): el cliente no ve ningun "carrito" (ve la tarjeta con el link) y el modelo
+            # s4-26 (7-oct): el cliente no ve ningun "carrito" (ve la tarjeta con el link) y el modelo
             # repetia la palabra ("el curso que tienes en tu carrito", manual-duracion-curso: el juez lo da por invento).
-            donde = "en el plan que está armando" if settings.rag_plan_elegido else "en su carrito"
-            el_plan = "el plan" if settings.rag_plan_elegido else "el carrito"
+            donde = "en el plan que está armando"
+            el_plan = "el plan"
             parts.append(
                 f"El cliente YA tiene estas actividades {donde}: {items}. "
                 "No vuelvas a preguntar por estas actividades; tenlas en cuenta como contexto. "
@@ -696,9 +673,9 @@ def _build_extra_context(state: ConversationState) -> str | None:
                 "habla de 'equipo de snorkel', no de 'equipo de buceo'."
             )
         else:
-            where = "in the plan they are putting together" if settings.rag_plan_elegido else "in their cart"
-            the_item = "the plan item" if settings.rag_plan_elegido else "the cart item"
-            the_plan = "the plan" if settings.rag_plan_elegido else "the cart"
+            where = "in the plan they are putting together"
+            the_item = "the plan item"
+            the_plan = "the plan"
             parts.append(
                 f"The customer ALREADY has these activities {where}: {items}. "
                 "Do not ask again about these activities; treat them as known context. "

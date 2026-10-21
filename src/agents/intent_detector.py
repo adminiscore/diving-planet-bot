@@ -440,9 +440,9 @@ def matched_activity_categories(message: str) -> set[str]:
     padi_course, specialty}) cuyos patrones matchean este mensaje — 0, 1 o
     varias. Funcion pura, sin llamadas ni estado; reusa EXACTAMENTE los
     mismos patrones que `_detect_activity` (nunca los duplica). 2+
-    categorias a la vez es la senal barata de "mensaje ambiguo" que dispara
-    la verificacion LLM en `supervisor._maybe_veto_activity_via_llm` — sin
-    esto, un mensaje como "quiero el open water, nunca he buceado" (dispara
+    categorias a la vez es la senal barata de "mensaje ambiguo" (la usaba el
+    veto LLM de actividad, borrado en MEJ-1; hoy la usan `_detect_activity`, el
+    nucleo y `conversational_core`) — sin esto, un mensaje como "quiero el open water, nunca he buceado" (dispara
     minicourse Y padi_course) se resuelve solo por el ORDEN de la cadena
     if/elif, no por lo que el cliente realmente pidio (hallazgo en vivo,
     conversacion real "purple-sun-590", 2026-09-03)."""
@@ -561,16 +561,6 @@ def _product_family_nouns() -> frozenset[str]:
     (hueco 1, 2026-09-16: "quiero la especialidad de nitrox" preguntaba si ya la tenia)."""
     specialties = [a for a in dom.registry().activities if a.family == "specialty" and not a.generic]
     return _course_family_nouns() | _label_nouns(specialties)
-
-
-def certification_is_ambiguous(message: str) -> bool:
-    """Polaridad de certificacion contradictoria ("no es que no estemos
-    certificados, si lo estamos", "somos 3, 2 con open water y 1 no").
-
-    Medido 2026-09-14: en estos mensajes el regex ACIERTA (a diferencia de la
-    nacionalidad), asi que el detector NO se abstiene. Sirve solo de trigger del
-    veto de `is_certified`, para que el LLM no opine en los casos claros."""
-    return polarity_is_ambiguous(message, _NOT_CERTIFIED_ANY_RE, _CERTIFIED_ANY_RE)
 
 
 # Vocabulario de "¿el mensaje afirma/niega certificacion?" -- elevado de
@@ -709,8 +699,6 @@ _NOT_CERTIFIED_PATTERNS = [
 ]
 
 
-_NOT_CERTIFIED_ANY_RE = re.compile("|".join(f"(?:{strip_accents(p)})" for p in _NOT_CERTIFIED_PATTERNS))
-_CERTIFIED_ANY_RE = re.compile("|".join(f"(?:{strip_accents(p)})" for p in _CERTIFIED_PATTERNS))
 
 
 # Negacion que alcanza a lo que viene justo despues (hasta dos palabras por medio):
@@ -1877,16 +1865,14 @@ class IntentDetector:
         for m in re.finditer(r'\b(?:uno|una|otr[oa]|el\s+otro|la\s+otra)\s+de\s+(\d{1,2})\b', message):
             _add(m.group(1))
         # 4) "aged 8 and 10", "ages 8 and 10", "edad 8 y 10".
-        #    9-oct (flag `grupo_por_edades`): también en singular, "1 youth (age 17)" (familia-mixta: se perdían 2 de
+        #    9-oct: también en singular, "1 youth (age 17)" (familia-mixta: se perdían 2 de
         #    6 edades); no "minimum age 10" / "edad mínima", que es una regla, no una persona.
-        from src.config import settings  # lazy: el detector no depende de la config
-
-        _edad_re = r'aged|ages?' if settings.grupo_por_edades else r'aged|ages'
+        _edad_re = r'aged|ages?'
         for m in re.finditer(
             rf'\b(?:{_edad_re}|edad(?:es)?(?:\s+de)?)\s+((?:\d{{1,2}}\s*(?:,|y|e|and|&)\s*)*\d{{1,2}})',
             message,
         ):
-            if settings.grupo_por_edades and re.search(r'm[ií]nim|\bmin\b', message[max(0, m.start() - 12):m.start()]):
+            if re.search(r'm[ií]nim|\bmin\b', message[max(0, m.start() - 12):m.start()]):
                 continue
             _add(m.group(1))
         # 5) English kid-noun + "are/is N and M": "our kids are 7 and 11".
@@ -2302,14 +2288,11 @@ class IntentDetector:
                     intent.detected_fields.append("island")
                 if not intent.location:
                     intent.location = "island"
-                    # s4-27 (flag `hotel_ubicacion_declarada`): la ubicacion que se deduce del hotel se DECLARA, como
+                    # s4-27 (8-oct): la ubicacion que se deduce del hotel se DECLARA, como
                     # todas, para que pase por la puerta de Jev (u3-3/u3-4). Sin declararla se colaba siempre:
                     # "¿me pasas el contacto del hotel Cocoliso?" (Jev: no afirma ubicacion) dejaba al cliente "ya en
                     # las islas" (contacto-hoteles-cocoliso-san-pedro).
-                    from src.config import settings  # lazy: el detector no depende de la config
-
-                    if settings.hotel_ubicacion_declarada:
-                        intent.detected_fields.append("location")
+                    intent.detected_fields.append("location")
                 intent.detected_fields.append("hotel")
                 break
 

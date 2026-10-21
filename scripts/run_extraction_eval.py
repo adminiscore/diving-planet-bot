@@ -40,9 +40,7 @@ from src.agents.llm_extractor import (
     EXTRACTABLE_FIELDS,
     compare_with_ground_truth,
     fill_gaps,
-    verify_fields,
 )
-from src.agents.supervisor import _VETO_FIELD_SPECS, valid_veto_corrections
 from src.flows.state import ConversationState
 
 EVAL_SET_PATH = Path(__file__).resolve().parent.parent / "docs" / "robustness" / "eval-set.json"
@@ -102,17 +100,6 @@ def _install_watcher() -> _DegradationWatcher:
     lg.setLevel(logging.WARNING)
     return w
 
-# Reusa DIRECTAMENTE `supervisor._VETO_FIELD_SPECS` (mismo trigger `should_
-# verify` por campo, p. ej. la ambiguedad real que `activity` exige) en vez
-# de reimplementar la condicion de disparo aqui -- hallazgo en vivo,
-# 2026-09-10: una primera version de este script SI la reimplemento
-# ("resuelto este turno" a secas, sin el `should_verify` de `activity`), y
-# ese drift exacto (logica duplicada, no sincronizada) hizo que este script
-# midiera un trigger que ya no era el que corria en produccion, ocultando
-# que el fix real (revertir el trigger de activity a ambiguedad) SI
-# funcionaba. No repetir ese error aqui otra vez.
-
-
 def _regex_resolved(intent) -> dict:
     return {
         f: getattr(intent, f)
@@ -123,11 +110,11 @@ def _regex_resolved(intent) -> dict:
 
 # ── Modo --core (2026-09-15) ─────────────────────────────────────────────────
 #
-# El modo por defecto mide regex + `fill_gaps` + veto, sin las guardas del nucleo,
+# El modo por defecto mide regex + `fill_gaps`, sin las guardas del nucleo,
 # y los casos con historial salian mal por un artefacto: el LLM veia la pregunta
 # del bot pero no el estado que esa conversacion tendria (slot pendiente, reparto ya
 # sabido). Con --core cada caso pasa por `conversational_core._understand`, el turno
-# real de produccion con su config (vetos y guardas incluidos), sobre un estado
+# real de produccion con su config (guardas incluidas), sobre un estado
 # sembrado con `history` y el `state` opcional del caso. Se puntua lo que el TURNO
 # cambio en el estado: un campo que ya estaba y no se toca cuenta como abstencion.
 
@@ -176,27 +163,8 @@ async def _script_turn(case: dict, detector: IntentDetector) -> tuple[dict, dict
     )
     combined = {**resolved, **patch}
 
-    # Veto de campos ya resueltos (docs/multi-agent-refactor-plan.md,
-    # generalizacion "A bien montado" 2026-09-10, agrupado en UNA
-    # peticion el mismo dia): se verifica cada campo resuelto por el
-    # regex ESTE turno que ademas pase el `should_verify` de su spec
-    # (para `activity`, ambiguedad real -- ver supervisor.py). Se aplica
-    # siempre aqui (no gateado por settings) para medir el efecto REAL
-    # del mecanismo sobre el eval-set completo, independientemente de
-    # que flags esten on/off en el entorno donde se corre este script.
-    veto_fields = [
-        f for f, spec in _VETO_FIELD_SPECS.items()
-        if f in resolved and f in regex_intent.detected_fields
-        and (spec.should_verify is None
-             or spec.should_verify(case["message"], regex_intent, state))
-    ]
-    if veto_fields:
-        disagreements = await verify_fields(
-            veto_fields, case["message"], {f: resolved[f] for f in veto_fields},
-            history=case.get("history"), lang=case.get("lang", "es"),
-        )
-        # El mismo filtro que aplica el producto (supervisor.apply_veto_disagreements).
-        combined.update(valid_veto_corrections(disagreements, resolved, case["message"]))
+    # El veto de campos ya resueltos (sep-2026) salio del camino real en ex-9 y se borro en MEJ-1 (21-oct): este modo
+    # mide regex + `fill_gaps`, como el producto.
     return combined, {"regex_had": resolved, "llm_patch": patch}
 
 
@@ -209,7 +177,7 @@ async def run(core: bool = False) -> None:
     total_agree = total_disagree = total_missed = 0
     watcher = _install_watcher()
     contaminados: list[str] = []
-    print(f"Modo: {'nucleo (_understand, config de produccion)' if core else 'script (regex + fill_gaps + veto)'}")
+    print(f"Modo: {'nucleo (_understand, config de produccion)' if core else 'script (regex + fill_gaps)'}")
 
     for case in cases:
         antes_degradado = watcher.degraded

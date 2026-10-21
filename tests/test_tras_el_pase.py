@@ -1,7 +1,7 @@
 """Tras pasar la conversación a una persona (13-oct, `cambio-fecha-por-enfermedad`, rondas ex8-B2 y ex7-B):
 
-1. `aviso_medico_dice_pase`: el aviso médico pasa a una persona (Step.ESCALATE) pero no lo decía.
-2. `tras_pase_sin_vender`: con la conversación ya pasada, el bot no vuelve a hacer la pregunta de la reserva ("Which one
+1. El aviso médico pasa a una persona (Step.ESCALATE) pero no lo decía.
+2. Con la conversación ya pasada, el bot no vuelve a hacer la pregunta de la reserva ("Which one
    are you leaning toward — diving, a mini-course…?") cuando el cliente da un dato; contesta lo que se pregunte o deja
    una nota corta.
 """
@@ -19,12 +19,10 @@ from src.config import settings
 from src.flows.state import ConversationState, Step
 
 
-@pytest.mark.parametrize("flag,dice", [(True, True), (False, False)])
-def test_el_aviso_medico_dice_que_pasa_a_una_persona(monkeypatch, flag, dice):
-    monkeypatch.setattr(settings, "aviso_medico_dice_pase", flag)
+def test_el_aviso_medico_dice_que_pasa_a_una_persona():
     _, es = escalation.sensitive_response_for("medical_questions", "es")
     _, en = escalation.sensitive_response_for("medical_questions", "en")
-    assert ("Te paso ahora" in es) is dice and ("I'm passing you now" in en) is dice
+    assert "Te paso ahora" in es and "I'm passing you now" in en
     # los demás avisos no cambian
     _, tiempo = escalation.sensitive_response_for("weather_conditions", "es")
     assert "Te paso ahora" not in tiempo
@@ -53,17 +51,12 @@ def _pasada(lang="en") -> ConversationState:
     return st
 
 
-@pytest.mark.parametrize("flag", [True, False])
-async def test_tras_el_pase_no_vuelve_a_vender(monkeypatch, offline, flag):
-    monkeypatch.setattr(settings, "tras_pase_sin_vender", flag)
+async def test_tras_el_pase_no_vuelve_a_vender(offline):
     st = _pasada()
     resp = await route_message(st, "We already have a room booked on the island for Monday and Tuesday night")
     vende = any(p in resp.lower() for p in ("leaning toward", "mini-course", "how many", "where would you"))
-    if flag:
-        assert not vende, resp
-        assert "advisor" in resp.lower() or "RESPUESTA_RAG" in resp
-    else:
-        assert vende, resp  # la conducta de antes: vuelve la pregunta de la reserva
+    assert not vende, resp
+    assert "advisor" in resp.lower() or "RESPUESTA_RAG" in resp
 
 
 # --- 3. posventa: el cliente ya tiene una reserva o ya hizo la actividad ------------------------------------------

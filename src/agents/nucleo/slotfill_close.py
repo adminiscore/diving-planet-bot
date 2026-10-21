@@ -454,7 +454,7 @@ async def _slotfill_close_phase(
         state.history.append({"role": "assistant", "content": response})
         return response
     if (answer and finalized and settings.rag_sin_precio_con_tarjeta and _IMPORTE_RE.search(answer)
-            and not (settings.cierre_sin_repetir and cierre_previo and state.mixed_last_summary == cierre_previo)):
+            and not (cierre_previo and state.mixed_last_summary == cierre_previo)):
         # G3-07a (18-oct, decisión de Gadea: una sola moneda por mensaje): el turno lleva la tarjeta del plan con su
         # precio, y la respuesta (adelantada, escrita antes de saber de dónde es el cliente) traía otro importe: "126
         # USD" en el texto y "2 × 448.000 COP" en la tarjeta (conv 5573). Se rehace sin precio; solo en este caso.
@@ -473,7 +473,7 @@ async def _slotfill_close_phase(
         if _answer_replaces_the_booking_question(state, answer, finalized=finalized):
             state.quick_replies = []
             response = answer
-        elif settings.cierre_sin_repetir and finalized and cierre_previo and state.mixed_last_summary == cierre_previo:
+        elif finalized and cierre_previo and state.mixed_last_summary == cierre_previo:
             # s4-26: la reserva ya estaba cerrada y no ha cambiado; la tarjeta (precio, link) ya la tiene el cliente.
             # Repetirla detrás de cada respuesta ("¿cuánto dura?") era el fallo de manual-duracion-curso.
             logger.info("[CORE][S4-26] cierre igual al ya enviado: va solo la respuesta")

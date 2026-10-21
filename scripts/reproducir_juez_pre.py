@@ -8,7 +8,7 @@ el juez. Repite el diálogo N veces. **Nunca usa el examen oculto.**
 
     python -m scripts.reproducir_juez_pre paquete-5-buceos-cop-refresh-y-hoteles --reps 5 --out <fichero.jsonl>
     python -m scripts.reproducir_juez_pre <dialogo> --dry          # solo enseña los turnos
-    python -m scripts.reproducir_juez_pre <dialogo> --flag juez_privacidad_por_linea   # flag SOLO en ese proceso
+    python -m scripts.reproducir_juez_pre <dialogo> --flag <flag>   # flag SOLO en ese proceso
     python -m scripts.reproducir_juez_pre <dialogo> --codigo-local --flag x          # con el código local, sin desplegar
     python -m scripts.reproducir_juez_pre <dialogo> --hasta 2 --reps 8               # solo los 2 primeros turnos
     python -m scripts.reproducir_juez_pre <dialogo> --codigo-local --env RAG_ANSWER_MODEL=gpt-6-luna   # otro modelo
@@ -64,7 +64,10 @@ logging.getLogger().addHandler(_Traza())
 logging.getLogger().setLevel(logging.INFO)
 _CAMPOS = ("location", "detected_location", "core_pending_slot", "pregunta_precio_pendiente", "detected_activity",
            "selected_service", "detected_group_size", "detected_group_allocation", "is_certified", "is_colombian",
-           "quiere_bucear", "suggested_activity")
+           "quiere_bucear", "suggested_activity",
+           # gen-3b (21-oct): si el turno pasó el caso a una persona (y por qué), para medir "pasa directo" frente a
+           # "ofrece el pase".
+           "pending_escalation_reason")
 
 async def main():
     for dialogo, turnos, rep in [(d, ts, r) for d, ts in DIALOGOS for r in range(REPS)]:

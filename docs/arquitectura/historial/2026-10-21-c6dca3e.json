@@ -1,8 +1,8 @@
 {
  "meta": {
-  "generado": "2026-10-21T10:40:22+00:00",
-  "commit": "1f66c3e",
-  "rama": "feature/gen8-alvaro"
+  "generado": "2026-10-21T11:55:41+00:00",
+  "commit": "c6dca3e",
+  "rama": "feature/pre_gadea"
  },
  "estructura": {
   "componentes": [
@@ -154,8 +154,7 @@
      "recomendar_a_certificados",
      "recomendar_a_no_certificados",
      "resolutor_sin_contradicciones",
-     "acuse_solo_el_mensaje",
-     "acuse_en_su_numero"
+     "acuse_solo_el_mensaje"
     ]
    },
    {
@@ -192,7 +191,9 @@
     "tipo": "agente",
     "nodo_grafo": "changes",
     "modelos": [],
-    "interruptores": []
+    "interruptores": [
+     "cambio_de_reserva_pasa"
+    ]
    },
    {
     "id": "chatwoot",
@@ -277,7 +278,9 @@
     "tipo": "agente",
     "nodo_grafo": "info",
     "modelos": [],
-    "interruptores": []
+    "interruptores": [
+     "privado_pasa_directo"
+    ]
    },
    {
     "id": "kb",
@@ -899,10 +902,6 @@
     "codigo": true,
     "pre": true
    },
-   "acuse_en_su_numero": {
-    "codigo": false,
-    "pre": false
-   },
    "acuse_solo_el_mensaje": {
     "codigo": true,
     "pre": true
@@ -944,6 +943,10 @@
     "pre": true
    },
    "busqueda_con_la_pregunta_sola": {
+    "codigo": true,
+    "pre": true
+   },
+   "cambio_de_reserva_pasa": {
     "codigo": true,
     "pre": true
    },
@@ -1115,54 +1118,6 @@
     "codigo": true,
     "pre": true
    },
-   "llm_activity_veto_cutover": {
-    "codigo": true,
-    "pre": true
-   },
-   "llm_activity_veto_shadow_mode": {
-    "codigo": false,
-    "pre": false
-   },
-   "llm_certification_veto_cutover": {
-    "codigo": false,
-    "pre": false
-   },
-   "llm_certification_veto_shadow_mode": {
-    "codigo": false,
-    "pre": false
-   },
-   "llm_group_allocation_veto_cutover": {
-    "codigo": true,
-    "pre": true
-   },
-   "llm_group_allocation_veto_shadow_mode": {
-    "codigo": false,
-    "pre": false
-   },
-   "llm_group_size_veto_cutover": {
-    "codigo": true,
-    "pre": true
-   },
-   "llm_group_size_veto_shadow_mode": {
-    "codigo": false,
-    "pre": false
-   },
-   "llm_location_veto_cutover": {
-    "codigo": false,
-    "pre": false
-   },
-   "llm_location_veto_shadow_mode": {
-    "codigo": false,
-    "pre": false
-   },
-   "llm_nationality_veto_cutover": {
-    "codigo": false,
-    "pre": false
-   },
-   "llm_nationality_veto_shadow_mode": {
-    "codigo": false,
-    "pre": false
-   },
    "lo_dicho_en_respuesta_fija": {
     "codigo": true,
     "pre": true
@@ -1239,6 +1194,10 @@
     "codigo": true,
     "pre": true
    },
+   "privado_pasa_directo": {
+    "codigo": true,
+    "pre": true
+   },
    "rag_concise": {
     "codigo": false,
     "pre": false
@@ -1246,10 +1205,6 @@
    "rag_condiciones_abiertas": {
     "codigo": true,
     "pre": true
-   },
-   "rag_contesta_lo_que_sabe": {
-    "codigo": false,
-    "pre": false
    },
    "rag_ficha_del_servicio": {
     "codigo": false,
@@ -1465,7 +1420,8 @@
   "flechas_nuevas": [],
   "flechas_quitadas": [],
   "interruptores": [
-   "acuse_en_su_numero"
+   "cambio_de_reserva_pasa",
+   "privado_pasa_directo"
   ],
   "modelos": []
  }

@@ -22,7 +22,6 @@ def _camino_antiguo_ex2_ex3(monkeypatch):
     from src.config import settings as _flags
 
     monkeypatch.setattr(_flags, "escalado_solo_emergencias", False)
-    monkeypatch.setattr(_flags, "atajo_resumen_por_rag", False)
     monkeypatch.setattr(_flags, "atajo_nacionalidad_por_rag", False)
     # 13-oct: el grupo privado ahora marca el pase (tests/test_nombre_y_grupo_privado.py); aquí, la conducta de antes.
     monkeypatch.setattr(_flags, "grupo_privado_pase", False)
@@ -264,13 +263,13 @@ async def test_adaptive_diving_context_persists_for_generic_followup_not_just_pr
 @pytest.mark.asyncio
 async def test_cancellation_signal_routes_to_policy_when_keyword_list_misses():
     """"ya no voy a poder ir al buceo" no matchea CANCEL_BOOKING_PHRASES (frase
-    indirecta) — la señal LLM debe dar la info de política + botones asesor/menú."""
+    indirecta) — la señal LLM debe dar la info de política y pasar a un asesor."""
     state = make_state()
     with patch("src.agents.supervisor.detect_routing_signals",
                new=AsyncMock(return_value={"booking_change_topic": "cancellation"})):
         resp = await route_message(state, "ya no voy a poder ir al buceo")
     assert resp
-    assert state.quick_replies  # botones asesor/menú presentes
+    assert state.step == Step.ESCALATE  # gen-3b: política y pase directo, sin botones
 
 
 @pytest.mark.asyncio
@@ -282,7 +281,7 @@ async def test_reschedule_signal_routes_to_policy_when_keyword_list_misses():
                new=AsyncMock(return_value={"booking_change_topic": "reschedule"})):
         resp = await route_message(state, "se puede correr la fecha?")
     assert resp
-    assert state.quick_replies
+    assert state.step == Step.ESCALATE
 
 
 @pytest.mark.asyncio
@@ -304,14 +303,14 @@ async def test_modify_headcount_signal_routes_to_policy_when_keyword_list_misses
     reserva hecha, quiero agregar una persona más" caía al menú genérico de
     bienvenida — asimetría con cancelación/reprogramación, que sí se
     reconocían. La señal LLM `booking_change_topic == "modify_headcount"`
-    debe dar la info de política + botones asesor/menú, igual que las otras
+    debe dar la info de política y pasar a un asesor, igual que las otras
     dos categorías."""
     state = make_state()
     with patch("src.agents.supervisor.detect_routing_signals",
                new=AsyncMock(return_value={"booking_change_topic": "modify_headcount"})):
         resp = await route_message(state, "quiero cambiar el numero de personas de mi reserva ya hecha")
     assert resp
-    assert state.quick_replies
+    assert state.step == Step.ESCALATE
 
 
 @pytest.mark.asyncio
@@ -322,7 +321,7 @@ async def test_modify_headcount_keyword_list_catches_explicit_phrase():
     with patch("src.agents.supervisor.detect_routing_signals", new=AsyncMock(return_value={})):
         resp = await route_message(state, "ya tengo una reserva hecha, quiero agregar una persona mas")
     assert resp
-    assert state.quick_replies
+    assert state.step == Step.ESCALATE
 
 
 @pytest.mark.asyncio

@@ -96,7 +96,7 @@ async def correccion_antes(rep):
 async def f01(rep):
     """7c: cambio legitimo del reparto ya guardado (escenario f01 de la bateria de grupo)."""
     spec = next(s for s in bg.SCENARIOS if s["id"].startswith("f01"))
-    got = await bg._run(spec, True, True)
+    got = await bg._run(spec)
     return [f"  {spec['message']!r} estado_inicial={spec['state']} -> {got}"]
 
 

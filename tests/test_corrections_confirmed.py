@@ -60,8 +60,7 @@ async def _send(state, message, verify=None):
          patch.object(core, "verify_fields", create=True, new=AsyncMock(return_value=verify or {})), \
          patch.object(core_routing, "detect_special_signals", new=_senales), patch.object(core_extraction, "detect_special_signals", new=_senales), \
          patch.object(core_close, "compose_acknowledgement", new=AsyncMock(return_value="")), \
-         patch.object(core_extraction, "resolve_slot_answer", new=AsyncMock(return_value={})), \
-         patch("src.agents.rutas.booking._maybe_veto_resolved_fields_via_llm", new=AsyncMock(return_value=None)):
+         patch.object(core_extraction, "resolve_slot_answer", new=AsyncMock(return_value={})):
         return await route_message(state, message)
 
 
@@ -122,8 +121,7 @@ async def test_split_with_an_ambiguous_course_level_waits_for_the_answer(extract
     state.detected_group_size = 5
     split = {"group_allocation": {"padi_open_water": 2, "snorkel": 3}}
     with patch.object(core, "extract_and_verify", create=True, new=AsyncMock(return_value=(split, {}))), \
-         patch.object(core_extraction, "fill_gaps", new=AsyncMock(return_value=split)), \
-         patch("src.agents.rutas.booking._maybe_veto_resolved_fields_via_llm", new=AsyncMock(return_value=None)):
+         patch.object(core_extraction, "fill_gaps", new=AsyncMock(return_value=split)):
         await core._understand(state, "2 open water y 3 snorkel")
     assert state.needs_cert_or_course is True
     assert state.detected_group_allocation is None

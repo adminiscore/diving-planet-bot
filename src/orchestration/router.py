@@ -101,7 +101,10 @@ def classify_route(conv_state: ConversationState, message: str, signals: dict) -
     # (policies.json["private_services"]) que RAG alucinaba (juez de
     # grounding la rechazaba las 2 veces) en vez de retomarla -- misma
     # prioridad que alcohol/alergia.
-    if sup._PRIVATE_GROUP_EVENT_RE.search(msg_lower):
+    # gen-3b (flag `privado_pasa_directo`): también cuando lo dice Jev ("¿la lancha solo para nosotros?").
+    from src.agents.rutas.info import pide_servicio_privado
+
+    if pide_servicio_privado(msg_lower, signals):
         return ROUTE_INFO
 
     # Hallazgo en vivo (lote 12, bateria "natural/deictica", 2026-09-02):

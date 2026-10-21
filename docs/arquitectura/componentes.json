@@ -127,7 +127,10 @@
       "titulo": "Cambios",
       "nodo_grafo": "changes",
       "que_hace": "Cancelar, cambiar de fecha o de número de personas: explica la política y ofrece botones.",
-      "donde": "src/agents/changes_agent.py:changes_node"
+      "donde": "src/agents/changes_agent.py:changes_node",
+      "interruptores": [
+        "cambio_de_reserva_pasa"
+      ]
     },
     {
       "id": "deflection",
@@ -152,6 +155,9 @@
       "zoom": "info",
       "que_hace": "Políticas con texto fijo (alcohol, alergias, edad…) y, para el resto, busca la respuesta en la base de conocimiento (RAG).",
       "donde": "src/agents/info_agent.py:info_node",
+      "interruptores": [
+        "privado_pasa_directo"
+      ],
       "nota": "Por esta ruta solo llegan las preguntas que no son de reserva. La mayoría de las preguntas se contestan desde la Reserva («contesta y sigue»), así que el RAG trabaja muchas más veces de las que pasa un mensaje por aquí."
     },
     {
@@ -488,7 +494,6 @@
       "que_hace": "Bloquea datos personales y contesta con texto fijo lo que ya tiene respuesta cerrada (políticas, vista general del buceo).",
       "donde": "src/agents/info_agent.py:info_node",
       "interruptores": [
-        "atajo_resumen_por_rag",
         "atajo_nacionalidad_por_rag",
         "atajo_alergia_por_rag"
       ]
@@ -564,7 +569,6 @@
         "rag_answer_model"
       ],
       "interruptores": [
-        "rag_concise",
         "rag_origen_pregunta",
         "origen_conserva_respuesta",
         "rag_no_supone_reserva",
@@ -607,9 +611,6 @@
         "avisos_al_final_model"
       ],
       "interruptores": [
-        "juez_por_tipo",
-        "juez_presentacion",
-        "juez_privacidad_por_linea",
         "juez_v3_luna",
         "juez_revisa_con_cita",
         "rag_revisor_completitud",
@@ -1051,11 +1052,6 @@
       "titulo": "Sin menú si ya quiere bucear",
       "texto": "Si el cliente ya dijo que quiere bucear, no se le enseña el menú de actividades: si no está certificado se le recomienda el minicurso y, si no se sabe, se le pregunta si es buzo certificado."
     },
-    "rag_concise": {
-      "area": "Preguntas",
-      "titulo": "Respuestas cortas",
-      "texto": "Contestar solo lo preguntado en 2-4 frases. Probado el 28-sep: ahorra poco o inventa huecos."
-    },
     "avisos_condicionados": {
       "area": "Preguntas",
       "titulo": "Avisos que el cliente necesita y no pregunta",
@@ -1081,30 +1077,10 @@
       "titulo": "La respuesta se redacta sin azar (temperatura 0)",
       "texto": "La misma pregunta con el mismo contexto da siempre la misma respuesta. En el examen ex-10, 18 de los 56 fallos del RAG eran azar: unas veces lo decía y otras no."
     },
-    "rag_ficha_del_servicio": {
-      "area": "Preguntas",
-      "titulo": "Ficha del plan siempre a mano",
-      "texto": "Si se sabe qué plan mira el cliente, su ficha entera va a la respuesta. Medido el 29-sep: no mejora."
-    },
     "notas_puerta_jev": {
       "area": "Reserva",
       "titulo": "Solo apuntar notas si hay algo que apuntar",
       "texto": "El enrutador rápido dice si el mensaje cuenta algo del cliente (salud, ocasión, límites...). Si está seguro de que no, no se apunta nada: evita notas inventadas a partir de preguntas."
-    },
-    "juez_por_tipo": {
-      "area": "Preguntas",
-      "titulo": "Revisor que clasifica cada frase",
-      "texto": "El revisor marca el tipo de cada frase y solo cuentan los datos. Medido el 1-oct: deja pasar más inventos; apagado."
-    },
-    "rag_contesta_lo_que_sabe": {
-      "area": "Preguntas",
-      "titulo": "Contestar la parte que sabe",
-      "texto": "Decir lo que sí se sabe antes de decir que falta el resto. Medido el 29-sep: empeora."
-    },
-    "atajo_resumen_por_rag": {
-      "area": "Respuestas fijas",
-      "titulo": "«¿Qué ofrecen para bucear?» lo contesta el RAG",
-      "texto": "Sin el resumen fijo de opciones: en las pruebas solo saltaba con un buzo certificado que daba fechas, al que le preguntaba si nunca había buceado. El RAG tiene el catálogo entero."
     },
     "atajo_nacionalidad_por_rag": {
       "area": "Respuestas fijas",
@@ -1116,90 +1092,10 @@
       "titulo": "La alergia a un alimento la contesta el RAG",
       "texto": "Sin el texto fijo de la política de comida (salvo si el mensaje también habla de alcohol): la FAQ de vegetarianos y alergias lo cubre. Sigue sin pasar al aviso médico."
     },
-    "llm_activity_veto_shadow_mode": {
-      "area": "Solo pruebas",
-      "titulo": "Corrección de actividad en sombra",
-      "texto": "Apunta lo que corregiría el LLM, sin cambiar nada."
-    },
-    "llm_activity_veto_cutover": {
-      "area": "Reserva",
-      "titulo": "El LLM corrige la actividad",
-      "texto": "Si el mensaje es ambiguo, el LLM puede corregir la actividad que dedujeron las reglas."
-    },
-    "llm_certification_veto_shadow_mode": {
-      "area": "Solo pruebas",
-      "titulo": "Corrección de certificación en sombra",
-      "texto": "Apunta lo que corregiría el LLM, sin cambiar nada."
-    },
-    "llm_certification_veto_cutover": {
-      "area": "Reserva",
-      "titulo": "El LLM corrige la certificación",
-      "texto": "El LLM puede corregir si el cliente es buzo certificado cuando las reglas se equivocan."
-    },
-    "llm_nationality_veto_shadow_mode": {
-      "area": "Solo pruebas",
-      "titulo": "Corrección de nacionalidad en sombra",
-      "texto": "Apunta lo que corregiría el LLM, sin cambiar nada."
-    },
-    "llm_nationality_veto_cutover": {
-      "area": "Reserva",
-      "titulo": "El LLM corrige la nacionalidad",
-      "texto": "El LLM puede corregir si el cliente es colombiano cuando las reglas se equivocan."
-    },
-    "llm_location_veto_shadow_mode": {
-      "area": "Solo pruebas",
-      "titulo": "Corrección de origen en sombra",
-      "texto": "Apunta lo que corregiría el LLM, sin cambiar nada."
-    },
-    "llm_location_veto_cutover": {
-      "area": "Reserva",
-      "titulo": "El LLM corrige el origen",
-      "texto": "El LLM puede corregir si sale de Cartagena o de las islas cuando las reglas se equivocan."
-    },
-    "llm_group_size_veto_shadow_mode": {
-      "area": "Solo pruebas",
-      "titulo": "Corrección de grupo en sombra",
-      "texto": "Apunta lo que corregiría el LLM, sin cambiar nada."
-    },
-    "llm_group_size_veto_cutover": {
-      "area": "Reserva",
-      "titulo": "El LLM corrige cuántos son",
-      "texto": "«Mi pareja y nuestros dos hijos» son 4, no 2: el LLM corrige el número cuando las reglas fallan."
-    },
-    "llm_group_allocation_veto_shadow_mode": {
-      "area": "Solo pruebas",
-      "titulo": "Corrección de reparto en sombra",
-      "texto": "Apunta lo que corregiría el LLM, sin cambiar nada."
-    },
-    "llm_group_allocation_veto_cutover": {
-      "area": "Reserva",
-      "titulo": "El LLM corrige quién hace qué",
-      "texto": "Si el reparto de actividades no suma el total del grupo, el LLM lo completa."
-    },
-    "juez_presentacion": {
-      "area": "Preguntas",
-      "titulo": "El revisor conoce la presentación",
-      "texto": "El revisor ve la presentación oficial (PADI 5 Estrellas, 30 años) para no tomarla por inventada cuando el bot la dice."
-    },
-    "juez_privacidad_por_linea": {
-      "area": "Preguntas",
-      "titulo": "El revisor ve los precios completos",
-      "texto": "Los datos personales se tapan frase a frase: una mención de 'pasaporte' en una pregunta frecuente ya no borra los precios del catálogo que el revisor necesita comprobar."
-    },
     "rag_origen_pregunta": {
       "area": "Preguntas",
       "titulo": "Pregunta el origen antes de dar precio",
       "texto": "Si piden un precio y aún no sabemos si el cliente sale desde Cartagena o ya está en las islas, Coral pregunta primero el origen con un texto fijo (y sus botones); cuando lo dice, contesta el precio que había pedido."
-    },
-    "jev_acompanante_manda": {
-      "area": "Reserva",
-      "titulo": "Jev decide si viene alguien más",
-      "texto": "Si Jev está seguro de que el mensaje no mete a otra persona, una palabra suelta ya no inventa un acompañante: 'cuántos días son' no es 'son' (hijo, en inglés)."
-    },
-    "hotel_ubicacion_declarada": {
-      "area": "Reserva",
-      "titulo": "Nombrar un hotel no es estar allí",
-      "texto": "Si el cliente solo pregunta por un hotel de las islas ('¿me pasas el contacto del Cocoliso?'), Coral ya no da por hecho que está alojado allí; si dice que se aloja, sí."
     },
     "formato_whatsapp": {
       "area": "Chat",
@@ -1220,26 +1116,6 @@
       "area": "Reserva",
       "titulo": "Sabe si 'él' ya estaba contado",
       "texto": "Jev distingue a alguien que ya está en el grupo ('él quiere hacer snorkel') de una persona nueva ('también viene mi hermana'); en el primer caso Coral reparte el grupo sin preguntar '¿seguís siendo 2?'."
-    },
-    "rag_condiciones_abiertas": {
-      "area": "Preguntas",
-      "titulo": "No da por cumplida una condición",
-      "texto": "Si algo depende de un dato del cliente que no consta (que su hotel tenga acceso por lancha), Coral lo dice como condición también en los turnos siguientes, en vez de darlo por hecho."
-    },
-    "rag_plan_elegido": {
-      "area": "Preguntas",
-      "titulo": "Habla del plan, no del carrito",
-      "texto": "Lo que el cliente ya eligió se le describe a Coral como 'el plan que está armando': el cliente no ve ningún carrito y Coral ya no le dice 'el curso que tienes en tu carrito'."
-    },
-    "cierre_sin_repetir": {
-      "area": "Reserva",
-      "titulo": "No repite la tarjeta de la reserva",
-      "texto": "Con la reserva ya cerrada y sin cambios, una pregunta como '¿cuánto dura?' se contesta sola, sin volver a pegar el precio y el link."
-    },
-    "grupo_por_edades": {
-      "area": "Reserva",
-      "titulo": "Cada edad es una persona",
-      "texto": "Si el cliente lista a su grupo con edades ('2 adults (ages 42, 19), 1 youth (age 17)…'), Coral cuenta a cada uno y guarda el reparto, en vez de preguntar '¿cuántos serían?'."
     },
     "rag_plan_nombrado": {
       "area": "Preguntas",
@@ -1456,20 +1332,20 @@
       "titulo": "Grupo privado: pase real",
       "texto": "Un grupo privado o un evento de empresa recibe su respuesta y, además, la conversación pasa de verdad a un asesor con el resumen."
     },
+    "privado_pasa_directo": {
+      "area": "Respuestas fijas",
+      "titulo": "El servicio privado pasa a un asesor en cuanto lo piden",
+      "texto": "Antes solo pasaba si el cliente decía literalmente «servicio privado», «grupo cerrado» o «evento corporativo». Con «¿podemos tener la lancha solo para nosotros?», Coral contestaba y solo OFRECÍA el pase. Ahora la IA que clasifica el mensaje reconoce cualquier petición de algo solo para su grupo, y la conversación pasa directamente a un asesor para la cotización. El resumen lleva lo que dijo (cuántos son, la fecha)."
+    },
+    "cambio_de_reserva_pasa": {
+      "area": "Respuestas fijas",
+      "titulo": "Cambiar o cancelar una reserva hecha pasa a un asesor",
+      "texto": "Cambiar la fecha, cancelar o cambiar el número de personas de una reserva ya hecha solo lo puede hacer el equipo. Antes Coral explicaba la política y preguntaba «¿te conecto con un asesor o prefieres volver al menú principal?», con un menú que ya no existe, y nadie se enteraba si el cliente no contestaba. Ahora explica la política y pasa directamente a un asesor con el resumen."
+    },
     "extractor_precio_elige": {
       "area": "Reserva",
       "titulo": "Preguntar el precio es elegir",
       "texto": "'¿Cuánto cuesta el buceo certificado?' cuenta como elegir esa actividad; el bot ya no vuelve a preguntar '¿buceo, minicurso, snorkel o curso?'."
-    },
-    "tras_pase_sin_vender": {
-      "area": "Reserva",
-      "titulo": "Tras el pase, no vende",
-      "texto": "Con la conversación ya pasada a una persona, Coral contesta lo que le pregunten pero no vuelve a las preguntas de la reserva."
-    },
-    "aviso_medico_dice_pase": {
-      "area": "Respuestas fijas",
-      "titulo": "El aviso médico dice el pase",
-      "texto": "El aviso médico dice que pasa la conversación a alguien del equipo, que es lo que hace."
     },
     "posventa_sin_vender": {
       "area": "Reserva",

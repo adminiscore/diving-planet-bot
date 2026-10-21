@@ -127,7 +127,7 @@ def _active_rules() -> dict:
             "real_time_issues": SENSITIVE_RULES["real_time_issues"]}
 
 
-# 13-oct (flag `aviso_medico_dice_pase`): el aviso médico PASA la conversación a una persona (Step.ESCALATE en los dos
+# 13-oct (promocionado): el aviso médico PASA la conversación a una persona (Step.ESCALATE en los dos
 # caminos, palabra clave y Jev) pero solo decía "es importante que hables con nuestro staff": el cliente no sabía que
 # alguien iba a escribirle (cambio-fecha-por-enfermedad: `pasa-a-persona-por-enfermedad` no_cumple en ex8-B2 y ex7-B).
 _PASE_MEDICO = {
@@ -155,7 +155,7 @@ def _rule_message(rule: dict, lang: str) -> str:
         return rule[f"{key}_v2"]
     if settings.clima_con_politica and rule is SENSITIVE_RULES.get("weather_conditions"):
         return _CLIMA_CON_POLITICA[key]
-    if settings.aviso_medico_dice_pase and rule is SENSITIVE_RULES.get("medical_questions"):
+    if rule is SENSITIVE_RULES.get("medical_questions"):
         return rule[key] + _PASE_MEDICO[key]
     return rule[key]
 

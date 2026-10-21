@@ -420,14 +420,8 @@ async def test_en_un_turno_con_pregunta_no_se_rellenan_huecos(
 
 
 async def test_lo_que_no_se_puede_verificar_no_se_guarda(monkeypatch, signals, rag, verificador, extractor_dice):
-    """`hotel`/`island`/`ages`/`last_dive_over_2_years` no tienen verificador en
-    `_VETO_FIELD_SPECS`. La regla del arreglo es "solo lo que el cliente afirma Y el LLM
-    confirma": si no se puede confirmar, no se guarda."""
-    from src.agents import supervisor
-
-    verificables = set(supervisor._VETO_FIELD_SPECS)
-    assert "hotel" not in verificables and "island" not in verificables
-
+    """La regla del arreglo es "solo lo que el cliente afirma Y el LLM confirma": si no se puede confirmar, no se
+    guarda (un hotel nombrado dentro de una pregunta no es dónde se aloja)."""
     extractor_dice(LEE_EL_EXTRACTOR)  # ex-9b paso 3: sin él, al 2.º turno se pasa a un asesor
     st = _state()
     await route_message(st, "queremos bucear, somos certificados")
