@@ -37,7 +37,8 @@ def test_coste_por_proveedor_pieza_y_conversacion():
     assert c["openrouter_usd"] == pytest.approx(0.00226, abs=1e-4)
     assert set(c["por_pieza"]) == {"rag_escritor", "revisor", "jev", "embedding"}
     assert c["por_conversacion"]["n"] == 1
-    assert c["usd_por_100_turnos"] == pytest.approx(c["usd"] * 50, abs=1e-4)
+    # 2 turnos: por 100 turnos es el total × 50 (el total va redondeado a 4 decimales, de ahí la tolerancia).
+    assert c["usd_por_100_turnos"] == pytest.approx(c["usd"] * 50, abs=5e-3)
 
 
 def test_un_modelo_sin_precio_se_cuenta_aparte():
