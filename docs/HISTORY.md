@@ -18,6 +18,12 @@ History
     `test_reparto_cuadra_con_el_total.py` (se queda el invariante). Suite completa: 3216 en verde.
     `battery_group_allocation_gate` mide ahora una sola variante.
   - Unas 1.350 líneas menos.
+* **MEJ-1, tanda 1c (decisión de Gadea: los apagados antiguos se borran): fuera `RAG_CONTESTA_LO_QUE_SABE`** (rag-4,
+  29-sep, DESCARTADO el mismo día: la cobertura bajó de 89 % a 83 % y los rechazos del juez subieron de 2 a 8).
+  - Se borran la rama de `rag_agent`, los 4 textos `RAG_NO_TENGO_*` de `prompts/info.py`, el flag, su ficha del mapa,
+    su foto en `snapshot_prompts` y su test. La lección sigue en `docs/robustness/rag-3/README.md` y en 0.29.77.
+  - `AVISOS_CONDICIONADOS` (CAL-A5, 16-17 oct) se queda: es de esta semana y su código lo comparten
+    `consulta_con_lo_sabido` (promocionado) y el revisor de avisos de CAL-A6.
 
 0.31.75 - (2026-10-21)
 ----------------------

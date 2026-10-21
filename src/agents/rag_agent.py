@@ -156,18 +156,6 @@ def build_system_prompt(lang: str, query: str | None = None) -> str:
             f"Style and tone:\n{_build_tone_section('en')}\n\n"
             f"{RAG_BODY_EN}"
         )
-    if settings.rag_contesta_lo_que_sabe:
-        # rag-4: contestar la parte que SÍ está en el contexto antes de decir que falta el resto.
-        from src.prompts.info import (  # lazy
-            RAG_NO_TENGO_OLD_EN,
-            RAG_NO_TENGO_OLD_ES,
-            RAG_NO_TENGO_V2_EN,
-            RAG_NO_TENGO_V2_ES,
-        )
-
-        prompt = prompt.replace(RAG_NO_TENGO_OLD_ES, RAG_NO_TENGO_V2_ES).replace(
-            RAG_NO_TENGO_OLD_EN, RAG_NO_TENGO_V2_EN
-        )
     if settings.est2_datos:
         # EX-EST-2: siempre hay disponibilidad (decisión del negocio) y, si encajan varios planes, se nombran todos.
         from src.prompts.info import (  # lazy
