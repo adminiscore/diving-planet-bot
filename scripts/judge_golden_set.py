@@ -42,7 +42,7 @@ import re
 import sys
 import time
 import unicodedata
-from collections import defaultdict
+from collections import Counter, defaultdict
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -462,7 +462,10 @@ def _judge_logic_hash() -> str:
 
 
 def cache_key(model: str, effort: str | None, reference: str, user_message: str) -> str:
-    raw = "\x1f".join([model, effort or "", _judge_logic_hash(), hashlib.sha256(reference.encode()).hexdigest(), user_message])
+    # mej-3: con votos, el veredicto es otro (la mayoría), así que va en otra clave; con 1 voto la clave es la de siempre
+    # y la cache ya guardada sigue valiendo.
+    juez = (effort or "") + (f"|votos{VOTOS}" if VOTOS > 1 else "")
+    raw = "\x1f".join([model, juez, _judge_logic_hash(), hashlib.sha256(reference.encode()).hexdigest(), user_message])
     return hashlib.sha256(raw.encode()).hexdigest()
 
 
@@ -662,15 +665,42 @@ def llm_judge_criterion(
     return {**verdict, "usage": {"input": usage.prompt_tokens, "cached": cached, "output": usage.completion_tokens}}
 
 
+# mej-3 (21-oct, Gadea: "un juez más estable"): la misma respuesta se aprobaba en una ronda y se suspendía en otra. Con
+# `--votos 3`, un criterio cuyo PRIMER veredicto es un suspenso (`no_cumple` o `revisar`, lo que mueve la nota) se
+# pregunta dos veces más y manda la mayoría; sin mayoría, `revisar`. Los `cumple` no se repiten: el coste sube solo en
+# los criterios dudosos. Con 1 voto (por defecto) el juez es el de siempre.
+VOTOS = 1
+_DUDOSOS = ("no_cumple", "revisar")
+
+
+def mayoria(votos: list[dict]) -> dict:
+    """El veredicto de la mayoría (el primer voto con ese veredicto, con su evidencia y su motivo) y todos los votos.
+    Sin mayoría, `revisar`."""
+    cuenta = Counter(v["verdict"] for v in votos)
+    veredicto, n = cuenta.most_common(1)[0]
+    usage = {k: sum(v.get("usage", {}).get(k, 0) for v in votos) for k in ("input", "cached", "output")}
+    lista = [v["verdict"] for v in votos]
+    if n * 2 <= len(votos):
+        return {"verdict": "revisar", "reason": f"[sin mayoría entre {len(votos)} votos: {', '.join(lista)}] "
+                                                f"{votos[0].get('reason', '')}", "votos": lista, "usage": usage}
+    elegido = next(v for v in votos if v["verdict"] == veredicto)
+    return {**elegido, "votos": lista, "usage": usage}
+
+
 def evaluate_criterion(client, model, effort, reference, dialogue, records, criterion, others=None, counted=None) -> dict:
     if criterion.get("auto"):
         result = {**AUTO_CHECKS[criterion["auto"]](records), "by": "auto"}
     else:
-        judged = (
-            llm_judge_criterion(client, model, effort, reference, dialogue, records, criterion, others, counted)
-            if is_general(criterion) else
-            llm_judge_criterion(client, model, effort, reference, dialogue, records, criterion, others)
-        )
+        def votar() -> dict:
+            return (
+                llm_judge_criterion(client, model, effort, reference, dialogue, records, criterion, others, counted)
+                if is_general(criterion) else
+                llm_judge_criterion(client, model, effort, reference, dialogue, records, criterion, others)
+            )
+
+        judged = votar()
+        if VOTOS > 1 and judged["verdict"] in _DUDOSOS:
+            judged = mayoria([judged, *(votar() for _ in range(VOTOS - 1))])
         result = {**judged, "by": model}
     return {"id": criterion["id"], **result}
 
@@ -741,7 +771,12 @@ def main(argv: list[str] | None = None) -> int:
                              "defecto, el fichero de resultados lleva __ref-<referencia>")
     parser.add_argument("--golden", help="otro fichero de dialogos con el mismo formato (G9: el examen oculto "
                                          "sintetico, que se juzga UNA sola vez)")
+    parser.add_argument("--votos", type=int, default=1,
+                        help="mej-3: si el primer veredicto es un suspenso, se pregunta hasta N veces y manda la "
+                             "mayoria (3 = dos votos mas solo en los dudosos); el resultado lleva __votosN")
     args = parser.parse_args(argv)
+    global VOTOS
+    VOTOS = max(1, args.votos)
     if args.golden:
         global GOLDEN_FILE
         GOLDEN_FILE = Path(args.golden)
@@ -793,6 +828,7 @@ def main(argv: list[str] | None = None) -> int:
         "golden_version": golden["version"],
         "model": args.model,
         "effort": args.effort,
+        "votos": VOTOS,
         "referencia": args.referencia,
         "missing_dialogues": missing,
         "usage": usage,
@@ -804,6 +840,7 @@ def main(argv: list[str] | None = None) -> int:
     }
     RESULTS_DIR.mkdir(parents=True, exist_ok=True)
     sufijo = "" if args.referencia == REFERENCIA_POR_DEFECTO else f"__ref-{args.referencia}"
+    sufijo += f"__votos{VOTOS}" if VOTOS > 1 else ""
     out = RESULTS_DIR / f"{Path(args.run).stem}__{args.model}-{args.effort}{sufijo}.json"
     out.write_text(json.dumps(report, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
 
