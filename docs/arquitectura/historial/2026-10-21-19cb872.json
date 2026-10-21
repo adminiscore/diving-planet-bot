@@ -1,8 +1,8 @@
 {
  "meta": {
-  "generado": "2026-10-21T12:48:03+00:00",
-  "commit": "1e6a5e5",
-  "rama": "feature/gen8-alvaro"
+  "generado": "2026-10-21T14:51:55+00:00",
+  "commit": "19cb872",
+  "rama": "feature/pre_gadea"
  },
  "estructura": {
   "componentes": [
@@ -149,6 +149,7 @@
      "actividad_del_reparto",
      "origen_neutro_con_dos_planes",
      "baru_no_es_rosario",
+     "baru_sale_de_cartagena",
      "certificado_solo_si_lo_dice",
      "precio_no_elige",
      "tarjeta_sin_seguridad",
@@ -409,6 +410,7 @@
     "interruptores": [
      "rag_origen_pregunta",
      "origen_conserva_respuesta",
+     "origen_sin_titulo_suelto",
      "rag_no_supone_reserva",
      "rag_no_adivina",
      "abre_con_la_respuesta",
@@ -941,6 +943,10 @@
     "codigo": true,
     "pre": true
    },
+   "baru_sale_de_cartagena": {
+    "codigo": true,
+    "pre": true
+   },
    "busqueda_con_la_pregunta_sola": {
     "codigo": true,
     "pre": true
@@ -1137,9 +1143,13 @@
     "codigo": true,
     "pre": true
    },
+   "origen_sin_titulo_suelto": {
+    "codigo": true,
+    "pre": true
+   },
    "pago_colombiano_con_asesor": {
-    "codigo": false,
-    "pre": false
+    "codigo": true,
+    "pre": true
    },
    "pase_si_pide_fuera_del_sistema": {
     "codigo": true,
@@ -1290,8 +1300,8 @@
     "pre": true
    },
    "vivir_no_es_residir": {
-    "codigo": false,
-    "pre": false
+    "codigo": true,
+    "pre": true
    }
   },
   "modelos": {
@@ -1379,7 +1389,10 @@
   "flechas_nuevas": [],
   "flechas_quitadas": [],
   "interruptores": [
-   "pago_colombiano_con_asesor"
+   "baru_sale_de_cartagena",
+   "origen_sin_titulo_suelto",
+   "pago_colombiano_con_asesor",
+   "vivir_no_es_residir"
   ],
   "modelos": []
  }

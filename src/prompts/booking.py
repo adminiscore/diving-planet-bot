@@ -247,17 +247,33 @@ _SIN_BARU = (
 )
 
 
-def lugar_sin_baru(texto: str) -> str:
+# gen-6 (21-oct, flag `baru_sale_de_cartagena`): con G3-06 Barú dejó de ser "las islas", pero tampoco era nada: el lugar
+# quedaba sin saber y el bot volvía a preguntar "¿desde dónde saldrías?" a quien acababa de decir "estamos en Barú"
+# (banco gen-6 2/2). La política (policies.json, transporte): quien se aloja en Barú sale desde Cartagena (Muelle de la
+# Bodeguita). Se añade a cada texto de Barú, para todos los lectores del lugar.
+_BARU_A_CARTAGENA = (
+    (_BARU_EN, _BARU_EN + " Someone staying there sets out from Cartagena (Muelle de la Bodeguita): that is 'cartagena'."),
+    (_BARU_ES, _BARU_ES + " Quien se aloja allí sale desde Cartagena (Muelle de la Bodeguita): eso es 'cartagena'."),
+    ("(Barú y Playa Blanca no)", "(Barú y Playa Blanca no: quien se aloja allí sale desde Cartagena)"),
+    ("(not Barú or Playa Blanca)", "(not Barú or Playa Blanca: someone staying there sets out from Cartagena)"),
+)
+
+
+def lugar_sin_baru(texto: str, sale_de_cartagena: bool = False) -> str:
     """Los textos de lugar sin Barú ni Playa Blanca entre "las islas". Lo aplica quien lee el flag `baru_no_es_rosario`
-    (este módulo no importa `src`)."""
+    (este módulo no importa `src`); con `sale_de_cartagena` (flag `baru_sale_de_cartagena`, gen-6), además, quien se
+    aloja allí es 'cartagena'."""
     if not isinstance(texto, str):
         return texto
     for antes, despues in _SIN_BARU:
         texto = texto.replace(antes, despues)
+    if sale_de_cartagena:
+        for antes, despues in _BARU_A_CARTAGENA:
+            texto = texto.replace(antes, despues)
     return texto
 
 
-def tool_sin_baru(tool: dict) -> dict:
+def tool_sin_baru(tool: dict, sale_de_cartagena: bool = False) -> dict:
     """Copia del tool de extracción con las descripciones de lugar sin Barú (ver `lugar_sin_baru`)."""
     from copy import deepcopy
 
@@ -265,7 +281,7 @@ def tool_sin_baru(tool: dict) -> dict:
     props = tool["function"]["parameters"]["properties"]
     for campo in ("location", "island"):
         if campo in props:
-            props[campo]["description"] = lugar_sin_baru(props[campo]["description"])
+            props[campo]["description"] = lugar_sin_baru(props[campo]["description"], sale_de_cartagena)
     return tool
 
 

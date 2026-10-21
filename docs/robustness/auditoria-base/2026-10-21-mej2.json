@@ -1,0 +1,225 @@
+{
+  "nombre": "mej2",
+  "modelo": "gpt-5",
+  "modelo_idiomas": "gpt-6-luna",
+  "temas": "todos",
+  "uso_tokens": {
+    "temas": {
+      "entrada": 328631,
+      "salida": 118747
+    },
+    "idiomas": {}
+  },
+  "contradicciones": [
+    {
+      "que": "¿Se puede reservar solo 1 inmersión saliendo desde Cartagena?",
+      "doc_a": "faq:131",
+      "cita_a": "Desde Cartagena el mínimo es de 2 inmersiones",
+      "doc_b": "ficha:minicourse",
+      "cita_b": "Entrenamiento en piscina + 1 inmersion en mar con instructor PADI",
+      "explicacion": "El FAQ afirma que desde Cartagena no se ofrece solo 1 inmersión y que eso solo es posible ya en las islas; sin embargo, el Minicurso saliendo desde Cartagena incluye únicamente 1 inmersión.",
+      "gravedad": "alta",
+      "tema": "booking",
+      "citas_comprobadas": true
+    },
+    {
+      "que": "Edad mínima para cursos PADI (Advanced)",
+      "doc_a": "politica:age_minimum",
+      "cita_a": "minicurso de buceo y cursos PADI desde los 10 anos.",
+      "doc_b": "ficha:advanced",
+      "cita_b": "requiere certificación; edad mínima 12.",
+      "explicacion": "D69 afirma que los cursos PADI empiezan desde 10 años, pero el Curso Avanzado PADI requiere mínimo 12. No pueden ser ciertos a la vez para Advanced.",
+      "gravedad": "alta",
+      "tema": "certification",
+      "citas_comprobadas": true
+    },
+    {
+      "que": "Edad mínima para cursos PADI (Advanced, ya en las islas)",
+      "doc_a": "politica:age_minimum",
+      "cita_a": "minicurso de buceo y cursos PADI desde los 10 anos.",
+      "doc_b": "ficha:advanced_already_on_island",
+      "cita_b": "requiere certificación; edad mínima 12.",
+      "explicacion": "La política general indica cursos PADI desde 10 años, pero el Advanced (variante ya en islas) exige 12. Contradicción directa en la edad mínima.",
+      "gravedad": "alta",
+      "tema": "certification",
+      "citas_comprobadas": true
+    },
+    {
+      "que": "Alcance del 5% por equipo propio en cursos",
+      "doc_a": "descuento:own_equipment_discount",
+      "cita_a": "solo en buceo recreativo y cursos PADI",
+      "doc_b": "catalogo",
+      "cita_b": "solo en buceo recreativo y cursos (no en snorkel ni minicurso)",
+      "explicacion": "D11 restringe el 5% por equipo propio a cursos PADI; el CAT lo aplica a todos los cursos (incluye cursos no PADI como Mindful Diving). No pueden ser ambos ciertos a la vez.",
+      "gravedad": "alta",
+      "tema": "discount",
+      "citas_comprobadas": true
+    },
+    {
+      "que": "Tiempo mínimo para volar después de UNA inmersión",
+      "doc_a": "ficha:refresher:minicourse",
+      "cita_a": "Despues de bucear, esperar minimo 12 horas antes de tomar un vuelo",
+      "doc_b": "ficha:1_dive_1_day_already_on_island",
+      "cita_b": "Esperar minimo 18 horas para tomar un vuelo despues de bucear",
+      "explicacion": "Para actividades de una sola inmersión, en un caso exigen 12 h y en otro 18 h. No pueden ser ambas la regla operativa a la vez; debe unificarse el no‑fly time.",
+      "gravedad": "alta",
+      "tema": "refresher",
+      "citas_comprobadas": true
+    },
+    {
+      "que": "Hora de recogida en hoteles de las islas (especialidad Identificación de Peces, ya en islas)",
+      "doc_a": "ficha:fish_identification_specialty_already_on_island",
+      "cita_a": "Recogida en tu hotel a las 8:00 (si tiene acceso por lancha)",
+      "doc_b": "faq:101",
+      "cita_b": "Desde las islas: recogida en el hotel hacia las 9:30",
+      "explicacion": "Para esta especialidad indican recogida a las 8:00, pero la política general fija la recogida desde las islas hacia las 9:30. No pueden ser ambas horas a la vez para el mismo servicio.",
+      "gravedad": "alta",
+      "tema": "schedule",
+      "citas_comprobadas": true
+    },
+    {
+      "que": "Hora de recogida en hoteles de las islas (especialidad Nitrox, ya en islas)",
+      "doc_a": "ficha:nitrox_specialty_already_on_island",
+      "cita_a": "Recogida en tu hotel a las 8:00 (si tiene acceso por lancha)",
+      "doc_b": "faq:101",
+      "cita_b": "Desde las islas: recogida en el hotel hacia las 9:30",
+      "explicacion": "La especialidad Nitrox (ya en islas) fija 8:00, mientras la política indica 9:30 para recogidas en islas. Horarios incompatibles.",
+      "gravedad": "alta",
+      "tema": "schedule",
+      "citas_comprobadas": true
+    },
+    {
+      "que": "Hora de recogida en hoteles de las islas (especialidad Naturalista, ya en islas)",
+      "doc_a": "ficha:naturalist_specialty_already_on_island",
+      "cita_a": "Recogida en tu hotel a las 8:00 (si tiene acceso por lancha)",
+      "doc_b": "faq:101",
+      "cita_b": "Desde las islas: recogida en el hotel hacia las 9:30",
+      "explicacion": "La especialidad Naturalista (ya en islas) anuncia 8:00, pero la guía general marca 9:30 para recogidas en islas. Conflicto horario.",
+      "gravedad": "alta",
+      "tema": "schedule",
+      "citas_comprobadas": true
+    },
+    {
+      "que": "Hora de recogida en hoteles de las islas (especialidad Flotabilidad, ya en islas)",
+      "doc_a": "ficha:buoyancy_specialty_already_on_island",
+      "cita_a": "Recogida en tu hotel a las 8:00 (si tiene acceso por lancha)",
+      "doc_b": "faq:101",
+      "cita_b": "Desde las islas: recogida en el hotel hacia las 9:30",
+      "explicacion": "La especialidad Flotabilidad (ya en islas) indica 8:00, mientras la política general indica 9:30. Inconsistencia de horario.",
+      "gravedad": "alta",
+      "tema": "schedule",
+      "citas_comprobadas": true
+    },
+    {
+      "que": "Disponibilidad general vs. sujeta a disponibilidad para cambios de fecha",
+      "doc_a": "politica:availability_always",
+      "cita_a": "Siempre hay disponibilidad (confirmado por el negocio).",
+      "doc_b": "politica:reschedule",
+      "cita_b": "Los cambios de fecha estan sujetos a disponibilidad",
+      "explicacion": "Si siempre hay disponibilidad, los cambios de fecha no deberían depender de disponibilidad. Ambas no pueden ser ciertas a la vez.",
+      "gravedad": "media",
+      "tema": "availability",
+      "citas_comprobadas": true
+    },
+    {
+      "que": "Disponibilidad general vs. sujeta a disponibilidad para cambiar número de personas",
+      "doc_a": "politica:availability_always",
+      "cita_a": "Siempre hay disponibilidad (confirmado por el negocio).",
+      "doc_b": "politica:modify_booking",
+      "cita_b": "Los cambios en el numero de personas de una reserva ya hecha estan sujetos a disponibilidad",
+      "explicacion": "Afirmar disponibilidad siempre entra en conflicto con exigir disponibilidad para modificar el número de personas; implica que a veces no hay cupo.",
+      "gravedad": "media",
+      "tema": "availability",
+      "citas_comprobadas": true
+    },
+    {
+      "que": "Hora de recogida desde las islas (especialidades vs. horario general)",
+      "doc_a": "faq:101",
+      "cita_a": "Desde las islas: recogida en el hotel hacia las 9:30",
+      "doc_b": "ficha:fish_identification_specialty_already_on_island",
+      "cita_b": "Recogida en tu hotel a las 8:00",
+      "explicacion": "El horario general indica recogida desde las islas hacia las 9:30, pero en las especialidades ya en las islas se fija a las 8:00. Son horas distintas para la misma modalidad de salida desde las islas, lo que puede generar información operativa contradictoria.",
+      "gravedad": "media",
+      "tema": "booking",
+      "citas_comprobadas": true
+    },
+    {
+      "que": "Edad mínima para cursos PADI (Advanced)",
+      "doc_a": "faq:7",
+      "cita_a": "para el minicurso de buceo y los cursos PADI es desde los 10 años.",
+      "doc_b": "ficha:advanced",
+      "cita_b": "requiere certificación; edad mínima 12.",
+      "explicacion": "La FAQ afirma que todos los cursos PADI empiezan desde los 10 años, pero el Curso Avanzado de su propia oferta exige mínimo 12 años. No pueden ser ciertas a la vez para Advanced.",
+      "gravedad": "media",
+      "tema": "depth",
+      "citas_comprobadas": true
+    },
+    {
+      "que": "Edad mínima para cursos PADI (Advanced ya en islas)",
+      "doc_a": "faq:7",
+      "cita_a": "para el minicurso de buceo y los cursos PADI es desde los 10 años.",
+      "doc_b": "ficha:advanced_already_on_island",
+      "cita_b": "requiere certificación; edad mínima 12.",
+      "explicacion": "La FAQ generaliza 10 años para cursos PADI, pero el Advanced 'ya en las islas' exige 12. Es un requisito contradictorio.",
+      "gravedad": "media",
+      "tema": "depth",
+      "citas_comprobadas": true
+    },
+    {
+      "que": "Requisito de certificación (Minicurso vs Refresher ya en las islas)",
+      "doc_a": "ficha:minicourse_already_on_island",
+      "cita_a": "almuerzo NO incluido; sin certificación previa.",
+      "doc_b": "ficha:refresher:minicourse_already_on_island",
+      "cita_b": "almuerzo NO incluido; para buzos ya certificados.",
+      "explicacion": "D4 afirma que el Refresher tiene los mismos requisitos que el Minicurso (ya en las islas), pero simultáneamente exige certificación, mientras el Minicurso declara que no se requiere. Son requisitos mutuamente excluyentes si la actividad y sus requisitos fueran idénticos.",
+      "gravedad": "media",
+      "tema": "forms_waiver",
+      "citas_comprobadas": true
+    },
+    {
+      "que": "Moneda de pago para colombianos en grupos mixtos",
+      "doc_a": "faq:116",
+      "cita_a": "Los colombianos (vivan donde vivan) y los residentes en Colombia pagan en pesos colombianos (COP).",
+      "doc_b": "catalogo",
+      "cita_b": "en un grupo mixto de colombianos o residentes y extranjeros, toda la reserva en USD",
+      "explicacion": "D8 afirma que los colombianos pagan en COP, pero el CAT indica que si el grupo es mixto toda la reserva se paga en USD. No pueden cumplirse ambas reglas a la vez para un colombiano en grupo mixto.",
+      "gravedad": "media",
+      "tema": "payment",
+      "citas_comprobadas": true
+    },
+    {
+      "que": "Fotos/videos en el Refresher (reservado como Minicurso)",
+      "doc_a": "faq:98",
+      "cita_a": "No se realizan fotos ni videos en el minicurso",
+      "doc_b": "politica:photos_videos_policy",
+      "cita_b": "en las salidas de buzos certificados rige lo anterior: no incluidas, el instructor puede hacerlas voluntariamente",
+      "explicacion": "El Refresher se reserva y se define como la misma actividad que el Minicurso (D37), por lo que según D41 no se realizan fotos. Pero D54 indica que en actividades de buzos certificados (como el Refresher) el instructor puede tomar fotos voluntariamente. Para el Refresher ambas reglas no pueden aplicarse a la vez.",
+      "gravedad": "media",
+      "tema": "pricing",
+      "citas_comprobadas": true
+    },
+    {
+      "que": "Requisitos del refresher vs. minicurso (certificación previa)",
+      "doc_a": "ficha:refresher:minicourse",
+      "cita_a": "MISMA actividad que el Minicurso de Buceo: misma información, itinerario, requisitos y precio.",
+      "doc_b": "catalogo",
+      "cita_b": "sin certificación previa; equipo incluido.",
+      "explicacion": "D10 afirma que refresher y minicurso tienen los mismos requisitos, pero el catálogo indica que el minicurso no requiere certificación previa, mientras que el refresher es para buzos certificados. No pueden tener requisitos idénticos si difieren en certificación previa.",
+      "gravedad": "media",
+      "tema": "refresher",
+      "citas_comprobadas": true
+    },
+    {
+      "que": "Requisito de certificación en la 'misma actividad' (Minicurso vs Refresher)",
+      "doc_a": "ficha:refresher:minicourse",
+      "cita_a": "almuerzo incluido; para buzos ya certificados.",
+      "doc_b": "ficha:minicourse",
+      "cita_b": "almuerzo incluido; sin certificación previa.",
+      "explicacion": "D35 afirma que el refresher es la misma actividad que el Minicurso con los mismos requisitos, pero uno exige estar certificado y el otro explícitamente no. No pueden ser verdaderos a la vez si es la misma actividad con los mismos requisitos.",
+      "gravedad": "media",
+      "tema": "schedule",
+      "citas_comprobadas": true
+    }
+  ],
+  "diferencias_idioma": []
+}

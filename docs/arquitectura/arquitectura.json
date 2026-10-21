@@ -1,8 +1,8 @@
 {
  "meta": {
-  "generado": "2026-10-21T12:48:03+00:00",
-  "commit": "1e6a5e5",
-  "rama": "feature/gen8-alvaro"
+  "generado": "2026-10-21T14:51:55+00:00",
+  "commit": "19cb872",
+  "rama": "feature/pre_gadea"
  },
  "vistas": {
   "general": {
@@ -676,15 +676,15 @@
     {
      "nombre": "vivir_no_es_residir",
      "titulo": "Vivir en Colombia no es ser residente",
-     "codigo": false,
-     "pre": false,
+     "codigo": true,
+     "pre": true,
      "sin_efecto": false
     },
     {
      "nombre": "pago_colombiano_con_asesor",
      "titulo": "El pago de un colombiano lo coordina un asesor",
-     "codigo": false,
-     "pre": false,
+     "codigo": true,
+     "pre": true,
      "sin_efecto": false
     },
     {
@@ -855,6 +855,13 @@
     {
      "nombre": "baru_no_es_rosario",
      "titulo": "Barú no es las Islas del Rosario",
+     "codigo": true,
+     "pre": true,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "baru_sale_de_cartagena",
+     "titulo": "Desde Barú se sale desde Cartagena",
      "codigo": true,
      "pre": true,
      "sin_efecto": false
@@ -1205,6 +1212,13 @@
     {
      "nombre": "origen_conserva_respuesta",
      "titulo": "Al preguntar el origen, conserva el resto",
+     "codigo": true,
+     "pre": true,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "origen_sin_titulo_suelto",
+     "titulo": "Al quitar los precios, no deja el título colgado",
      "codigo": true,
      "pre": true,
      "sin_efecto": false
@@ -2148,6 +2162,19 @@
    "sin_efecto": null
   },
   {
+   "nombre": "baru_sale_de_cartagena",
+   "area": "Reserva",
+   "titulo": "Desde Barú se sale desde Cartagena",
+   "texto": "Quien dice que se aloja en Barú o en Playa Blanca queda como 'sale desde Cartagena' (Muelle de la Bodeguita), que es lo que dice la política. Antes se quedaba sin origen y Coral le volvía a preguntar '¿desde dónde saldrías?' justo después de que lo dijera.",
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
+   "usado_por": [
+    "b_slotfill_close"
+   ],
+   "sin_efecto": null
+  },
+  {
    "nombre": "busqueda_con_la_pregunta_sola",
    "area": "Preguntas",
    "titulo": "Se busca también la pregunta sola, sin los datos que da el cliente",
@@ -2771,13 +2798,26 @@
    "sin_efecto": null
   },
   {
+   "nombre": "origen_sin_titulo_suelto",
+   "area": "Preguntas",
+   "titulo": "Al quitar los precios, no deja el título colgado",
+   "texto": "Cuando Coral pregunta el origen antes de dar precios, quita de la respuesta las frases con importes. Si los precios iban en una lista separada por una línea en blanco, quedaba suelto el título ('La salida de 2 inmersiones cuesta:'). Ahora se quita también.",
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
+   "usado_por": [
+    "r_escribir"
+   ],
+   "sin_efecto": null
+  },
+  {
    "nombre": "pago_colombiano_con_asesor",
    "area": "Reserva",
    "titulo": "El pago de un colombiano lo coordina un asesor",
    "texto": "Al cerrar la reserva de un colombiano, Coral le pasa con un asesor para coordinar el pago en pesos, sin decir que hay que 'confirmar disponibilidad' (siempre hay) y en su número ('puedes pagar' a quien va solo). Antes de cerrar, la respuesta a sus preguntas no le da el link de reserva.",
-   "codigo": false,
-   "pre": false,
-   "fijado_en_pre": false,
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
    "usado_por": [
     "b_extraction"
    ],
@@ -3259,9 +3299,9 @@
    "area": "Reserva",
    "titulo": "Vivir en Colombia no es ser residente",
    "texto": "Paga en pesos quien dice que es colombiano (viva donde viva) o que tiene cédula de extranjería. Quien solo dice que vive, trabaja o nació en Colombia no cuenta como colombiano: el bot pregunta '¿eres de nacionalidad colombiana o tienes cédula de extranjería?'.",
-   "codigo": false,
-   "pre": false,
-   "fijado_en_pre": false,
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
    "usado_por": [
     "b_extraction"
    ],

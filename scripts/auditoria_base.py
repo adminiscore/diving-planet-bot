@@ -77,7 +77,12 @@ def documentos() -> tuple[list[dict], dict]:
 
 
 async def _json(client, model: str, sistema: str, usuario: str) -> dict:
-    extra = {"reasoning_effort": "medium"} if model.startswith(("gpt-5", "o")) else {"temperature": 0}
+    if model.startswith(("gpt-5", "o")):
+        extra = {"reasoning_effort": "medium"}
+    elif model.startswith("gpt-6"):
+        extra = {}  # Luna solo admite la temperatura por defecto (mod-8 la puso de modelo de idiomas)
+    else:
+        extra = {"temperature": 0}
     r = await client.chat.completions.create(
         model=model, response_format={"type": "json_object"}, **extra,
         messages=[{"role": "system", "content": sistema}, {"role": "user", "content": usuario}])
@@ -165,17 +170,29 @@ async def main_async(a) -> int:
     print(f"{len(docs) - 1} documentos en español + catálogo; modelo {a.modelo}", flush=True)
     temas = [t for t in a.temas.split(",") if t] if a.temas else None
     contradicciones, uso_t = await pasada_temas(client, a.modelo, docs, temas, sem)
-    diferencias, uso_i = ([], {}) if a.sin_idiomas else await pasada_idiomas(client, a.modelo_idiomas, docs, en, sem)
     orden = {"alta": 0, "media": 1, "baja": 2}
     contradicciones.sort(key=lambda c: (not c["citas_comprobadas"], orden.get(c.get("gravedad"), 3), c["tema"]))
-
     DIR.mkdir(parents=True, exist_ok=True)
     salida = DIR / f"{date.today().isoformat()}-{a.name}.json"
-    salida.write_text(json.dumps({
-        "nombre": a.name, "modelo": a.modelo, "modelo_idiomas": a.modelo_idiomas, "temas": temas or "todos",
-        "uso_tokens": {"temas": uso_t, "idiomas": uso_i},
-        "contradicciones": contradicciones, "diferencias_idioma": diferencias,
-    }, ensure_ascii=False, indent=2), encoding="utf-8")
+
+    def guardar(diferencias: list, uso_i: dict, error_idiomas: str = "") -> None:
+        salida.write_text(json.dumps({
+            "nombre": a.name, "modelo": a.modelo, "modelo_idiomas": a.modelo_idiomas, "temas": temas or "todos",
+            "uso_tokens": {"temas": uso_t, "idiomas": uso_i},
+            "contradicciones": contradicciones, "diferencias_idioma": diferencias,
+            **({"error_idiomas": error_idiomas} if error_idiomas else {}),
+        }, ensure_ascii=False, indent=2), encoding="utf-8")
+
+    # La pasada de temas es la cara: se guarda ANTES de la de idiomas, que no puede llevársela por delante si falla.
+    guardar([], {})
+    diferencias, uso_i, error_idiomas = [], {}, ""
+    if not a.sin_idiomas:
+        try:
+            diferencias, uso_i = await pasada_idiomas(client, a.modelo_idiomas, docs, en, sem)
+        except Exception as exc:  # noqa: BLE001
+            error_idiomas = f"{type(exc).__name__}: {exc}"[:300]
+            print(f"\n(!) la pasada de idiomas falló y se guarda solo la de temas: {error_idiomas}", flush=True)
+    guardar(diferencias, uso_i, error_idiomas)
 
     buenas = [c for c in contradicciones if c["citas_comprobadas"]]
     print(f"\nCONTRADICCIONES: {len(buenas)} con citas comprobadas "
@@ -196,7 +213,7 @@ def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     p.add_argument("--name", required=True)
     p.add_argument("--temas", default="", help="temas de los metadatos separados por comas (por defecto, todos)")
-    p.add_argument("--modelo", default="gpt-5")
+    p.add_argument("--modelo", default="gpt-5-mini")  # 21-oct (Gadea): nada más caro que gpt-5-mini sin su permiso
     p.add_argument("--modelo-idiomas", default="gpt-6-luna")  # mod-8 (18-oct): antes gpt-4.1
     p.add_argument("--sin-idiomas", action="store_true")
     p.add_argument("--paralelo", type=int, default=5)

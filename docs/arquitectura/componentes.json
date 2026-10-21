@@ -413,6 +413,7 @@
         "actividad_del_reparto",
         "origen_neutro_con_dos_planes",
         "baru_no_es_rosario",
+        "baru_sale_de_cartagena",
         "certificado_solo_si_lo_dice",
         "precio_no_elige",
         "tarjeta_sin_seguridad",
@@ -571,6 +572,7 @@
       "interruptores": [
         "rag_origen_pregunta",
         "origen_conserva_respuesta",
+        "origen_sin_titulo_suelto",
         "rag_no_supone_reserva",
         "rag_no_adivina",
         "abre_con_la_respuesta",
@@ -991,6 +993,16 @@
       "area": "Reserva",
       "titulo": "Barú no es las Islas del Rosario",
       "texto": "Quien se aloja en Barú o en Playa Blanca ya no queda como 'ya en las islas': allí no operamos (es una península unida a tierra). El bot le dice dónde buceamos en vez de prometerle la recogida en su hotel con precios de las islas."
+    },
+    "baru_sale_de_cartagena": {
+      "area": "Reserva",
+      "titulo": "Desde Barú se sale desde Cartagena",
+      "texto": "Quien dice que se aloja en Barú o en Playa Blanca queda como 'sale desde Cartagena' (Muelle de la Bodeguita), que es lo que dice la política. Antes se quedaba sin origen y Coral le volvía a preguntar '¿desde dónde saldrías?' justo después de que lo dijera."
+    },
+    "origen_sin_titulo_suelto": {
+      "area": "Preguntas",
+      "titulo": "Al quitar los precios, no deja el título colgado",
+      "texto": "Cuando Coral pregunta el origen antes de dar precios, quita de la respuesta las frases con importes. Si los precios iban en una lista separada por una línea en blanco, quedaba suelto el título ('La salida de 2 inmersiones cuesta:'). Ahora se quita también."
     },
     "origen_neutro_con_dos_planes": {
       "area": "Reserva",

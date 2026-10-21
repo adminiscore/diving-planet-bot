@@ -32,6 +32,7 @@ import sys
 from datetime import UTC, datetime
 from pathlib import Path
 
+from scripts import run_synthetic_pre
 from scripts.run_synthetic_pre import load_batches, select_cases
 
 RUNS_DIR = Path("docs/robustness/synthetic-runs")
@@ -46,6 +47,18 @@ from src.state_store import deserialize_state, serialize_state
 CASOS, PARALELO, BASE_ID = json.loads(CASOS_JSON), N_PARALELO, CONV_BASE
 for _f in FLAGS:  # "no:X" APAGA X solo en este proceso
     setattr(settings, _f.removeprefix("no:"), not _f.startswith("no:"))
+if METRICAS:  # MEJ-5: la línea [TURN_METRICS] de cada turno (llamadas, modelos, tokens) sale por stdout con «M »
+    import logging
+
+    class _Metricas(logging.Handler):
+        def emit(self, rec):
+            m = rec.getMessage()
+            if m.startswith("[TURN_METRICS] "):
+                print("M " + m.split(" ", 1)[1], flush=True)
+
+    _lg = logging.getLogger("uvicorn.error")
+    _lg.addHandler(_Metricas())
+    _lg.setLevel(logging.INFO)
 
 def _entrega(st, respuesta):
     """Lo que hace `finalize_chatwoot_delivery` con el estado y el texto (sin mandar nada)."""
@@ -100,9 +113,15 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--env", action="append", default=[], metavar="CLAVE=VALOR",
                     help="variable de entorno SOLO en este proceso (para lo que se lee al importar); repetible")
     ap.add_argument("--paralelo", type=int, default=4, help="diálogos a la vez dentro del contenedor (por defecto 4)")
+    ap.add_argument("--golden", help="con --sample golden: otro fichero de diálogos con el mismo formato (los exámenes "
+                                     "ocultos G9/G10: se pasan UNA sola vez y nadie los abre)")
+    ap.add_argument("--metricas", action="store_true",
+                    help="guarda también las métricas de cada turno (llamadas, modelos y tokens) en <jsonl>.metricas")
     ap.add_argument("--dry", action="store_true")
     args = ap.parse_args(argv)
 
+    if args.golden:
+        run_synthetic_pre.GOLDEN_FILE = Path(args.golden)
     casos = select_cases(load_batches(), args.sample, None)
     if args.ids:
         quiero = set(args.ids.split(","))
@@ -120,13 +139,17 @@ def main(argv: list[str] | None = None) -> int:
 
     conv_base = int(datetime.now(UTC).timestamp()) * 1000  # ids únicos: el juez se queda con el conv más alto por etiqueta
     script = (f"CASOS_JSON = {json.dumps(casos, ensure_ascii=False)!r}\nN_PARALELO = {args.paralelo}\n"
-              f"CONV_BASE = {conv_base}\nFLAGS = {args.flag!r}\n{_REMOTO}")
+              f"CONV_BASE = {conv_base}\nFLAGS = {args.flag!r}\nMETRICAS = {args.metricas!r}\n{_REMOTO}")
     entorno = dict(e.split("=", 1) for e in args.env)
     codigo = subir_codigo_local() if args.codigo_local else None
     r = pre_ssh(docker_python(entorno, codigo), input_text=script,
                 timeout=max(900, 25 * turnos // max(1, args.paralelo) + 600))
     filas = [ln for ln in (r.stdout or "").splitlines() if ln.startswith("{")]
     out.write_text("".join(ln + "\n" for ln in filas), encoding="utf-8")
+    if args.metricas:
+        metricas = [ln[2:] for ln in (r.stdout or "").splitlines() if ln.startswith("M {")]
+        out.with_suffix(".metricas").write_text("".join(ln + "\n" for ln in metricas), encoding="utf-8")
+        print(f"métricas de {len(metricas)} turnos → {out.with_suffix('.metricas')}", flush=True)
     sin = sum(1 for ln in filas if json.loads(ln)["reply"] is None)
     print(f"FIN {out}: {len(filas)}/{turnos} turnos, {sin} sin respuesta", flush=True)
     if len(filas) < turnos:

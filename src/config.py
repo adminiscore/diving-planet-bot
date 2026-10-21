@@ -188,13 +188,13 @@ class Settings(BaseSettings):
     # cuenta quien dice que es colombiano, viva donde viva, o que tiene cédula de extranjería (policies.json,
     # colombian_pricing; sin cédula = USD, decisión de Álvaro del 17-oct); vivir, trabajar o haber nacido allí no dice
     # ni lo uno ni lo otro (nacer allí no da la nacionalidad: Gadea, 21-oct). Y la pregunta nombra la cédula. APAGADO.
-    vivir_no_es_residir: bool = False
+    vivir_no_es_residir: bool = True  # PROMOCIONADO 21-oct (ronda sin desplegar gen4-B2 frente a gen4-A2; las regresiones no pasan por la nacionalidad; banco del extractor 65/90 -> 86/90; HISTORY 0.31.81); revert = False
     # gen-4 (21-oct, decisión de Gadea, Coral #862): el cierre para colombianos (pasa a un asesor que coordina el pago en
     # COP) decía "para confirmar disponibilidad" (siempre hay) y "Como son colombianos/residentes" también a quien va
     # solo. Con el flag, sin disponibilidad y en el número del cliente, sin género (nucleo/slotfill_close._finalize).
     # Y el RAG, que a un colombiano ya conocido le daba el link de reserva antes del cierre, sabe que su pago lo
     # coordina un asesor (rutas/contexto_rag). APAGADO.
-    pago_colombiano_con_asesor: bool = False
+    pago_colombiano_con_asesor: bool = True  # PROMOCIONADO 21-oct (con `vivir_no_es_residir`, misma ronda gen4-A2/B2; decisión de Gadea, Coral #862; HISTORY 0.31.81); revert = False
     # EX-EST-2 (14-oct): arreglos de datos de la tanda est3 (la pregunta del origen solo dice 'ida y vuelta el mismo dia'
     # si se SABE que el plan es de un dia; ...). PROMOCIONADO 14-oct tras est3-B (HISTORY 0.31.25).
     # Revert = False aqui y en el compose.
@@ -366,6 +366,17 @@ class Settings(BaseSettings):
     # operamos). Quien se aloja allí no queda como "ya en las islas" (Jev, el extractor de respaldo, el resolutor de la
     # pregunta del origen); el lugar se le pregunta a la base, que da el aviso. APAGADO.
     baru_no_es_rosario: bool = True  # PROMOCIONADO 18-oct (mod-B, HISTORY 0.31.53); revert = False
+    # gen-6 (21-oct, Gonzalo con Claude): con G3-06, "estamos hospedados en Barú" se quedaba sin origen (Jev "none", el
+    # extractor lo descartaba y con `lugar_con_dos_lectores` un "none" de Jev tumba al extractor) y el bot volvía a
+    # preguntar "¿desde dónde saldrías?" (banco docs/robustness/gen/dialogos-gen6.json 2/2). La política (policies.json):
+    # quien se aloja en Barú o Playa Blanca sale desde Cartagena. Con el flag, los tres lectores del lugar (Jev
+    # customer_place, extractor_turno y el resolutor de la pregunta del origen) lo leen como 'cartagena'. Va con
+    # `baru_no_es_rosario`. APAGADO.
+    baru_sale_de_cartagena: bool = True  # PROMOCIONADO 21-oct (ronda sin desplegar gen6-B3 97,4 % 26/32 frente a gen6-A3 97,0 % 26/32; banco Barú 0/8 -> 8/8; HISTORY 0.31.81); revert = False
+    # - gen-6 (21-oct): la puerta del origen quita las frases con importe; si el RAG escribía "…cuesta:", una línea en
+    #   blanco y la lista de precios, el título quedaba colgado ("La salida de 2 inmersiones cuesta:" y luego la pregunta
+    #   del origen). conversational_core._sin_importes. APAGADO.
+    origen_sin_titulo_suelto: bool = True  # PROMOCIONADO 21-oct (con `baru_sale_de_cartagena`, misma ronda gen6-A3/B3; HISTORY 0.31.81); revert = False
     # mod-2 (18-oct, decisión de Gadea): elegir el buceo certificado ("fun dives") no dice que el cliente esté
     # certificado; tiene que confirmarlo. Con el flag, el extractor no lo deduce (la regla del catálogo lo hacía para
     # todos los modelos). APAGADO.
