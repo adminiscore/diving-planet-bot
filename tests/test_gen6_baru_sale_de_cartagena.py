@@ -58,6 +58,27 @@ def test_la_puerta_del_origen_no_deja_el_titulo_colgado(monkeypatch):
     assert "cuesta:" not in resto and "USD" not in resto and "Cuéntame qué día" in resto
 
 
+def test_en_baru_es_respuesta_cartagena_al_origen(con_flag):
+    from src.agents import conversational_core as core
+
+    assert core._departure_place("en baru") == "cartagena"
+    assert core._departure_place("ya estamos en la isla") == "island"
+
+
+async def test_el_extractor_pone_cartagena_por_baru(con_flag):
+    import json
+
+    class _C:
+        async def create(self, **kw):
+            datos = {"location": {"valor": "island", "cita": "estamos en el hotel las islas, en baru"}}
+            msg = type("M", (), {"content": json.dumps(datos)})()
+            return type("R", (), {"choices": [type("C", (), {"message": msg})()], "usage": None})()
+
+    cliente = type("O", (), {"chat": type("Ch", (), {"completions": _C()})()})()
+    out = await ex.extraer_turno("estamos en el hotel las islas, en baru. nos pueden recoger ahi?", client=cliente)
+    assert out.get("location") == "cartagena"
+
+
 def test_apagado_todo_igual(monkeypatch):
     monkeypatch.setattr(settings, "baru_no_es_rosario", True)
     monkeypatch.setattr(settings, "baru_sale_de_cartagena", False)

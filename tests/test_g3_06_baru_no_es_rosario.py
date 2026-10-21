@@ -36,6 +36,7 @@ ISLA = {"location": {"valor": "island", "cita": "estamos en el hotel las islas, 
 @pytest.mark.parametrize("flag, queda", [(False, "island"), (True, None)])
 async def test_el_extractor_no_pone_las_islas_por_baru(monkeypatch, flag, queda):
     monkeypatch.setattr(settings, "baru_no_es_rosario", flag)
+    monkeypatch.setattr(settings, "baru_sale_de_cartagena", False)  # con gen-6, 'cartagena' (test_gen6_*)
     out = await ex.extraer_turno(MSG, client=_cliente(ISLA))
     assert out.get("location") == queda
 
@@ -53,6 +54,7 @@ def test_solo_baru(cita, solo):
 @pytest.mark.parametrize("flag, lugar", [(False, "island"), (True, None)])
 def test_baru_no_es_respuesta_isla_al_origen(monkeypatch, flag, lugar):
     monkeypatch.setattr(settings, "baru_no_es_rosario", flag)
+    monkeypatch.setattr(settings, "baru_sale_de_cartagena", False)  # con gen-6, 'cartagena' (test_gen6_*)
     assert core._departure_place("en baru") == lugar
 
 
