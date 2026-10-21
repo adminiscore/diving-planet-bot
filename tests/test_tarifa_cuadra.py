@@ -6,10 +6,10 @@ mismo CSV de tarifas: si el CSV trae un error, está en los dos. Aquí, cada pre
 - el precio en USD equivale al de COP con el mismo cambio que los demás (±6 % de la mediana);
 - el precio online es la tarifa plena con el 10 % de descuento (±1,5 puntos), en COP y en USD.
 
-Así salieron, el 21-oct, los USD cruzados de los dos paquetes de 4 inmersiones desde las islas, los paquetes de 5, 7
-y 9 desde las islas más caros en USD y el Rescue desde las islas más barato. Están en `PENDIENTES_DE_ANDRES` hasta que
-el negocio diga el precio bueno (documento «Revisión de la base de Coral (2026)»). Cuando se corrija uno, el test pide
-sacarlo de la lista: la lista no puede quedarse vieja.
+Así salieron, el 21-oct, siete precios que no cuadraban (los paquetes de 4, 5, 7 y 9 inmersiones desde las islas, el
+Rescue desde las islas y el snorkel nocturno). Gadea los confirmó el mismo día (documento «Revisión de la base de Coral
+(2026)»): son los buenos. Quedan en `EXCEPCIONES_CONFIRMADAS` con el precio confirmado; si la tarifa cambia uno, el test
+pide volver a confirmarlo.
 """
 
 import json
@@ -23,15 +23,15 @@ TARIFA = json.loads(Path("data/knowledge_base/pricing.json").read_text(encoding=
 TOLERANCIA_CAMBIO = 0.06
 TOLERANCIA_DESCUENTO = 0.015
 
-# (origen, servicio) -> por qué no cuadra. Se quitan cuando el negocio confirme o corrija el precio.
-PENDIENTES_DE_ANDRES = {
-    ("from_islands", "paquete_4_buceos_diurnos"): "USD cruzado con el paquete mixto (204,3 por ≈ 234)",
-    ("from_islands", "paquete_4_buceos_mixto"): "USD cruzado con el de 4 diurnas (235,8 por ≈ 203)",
-    ("from_islands", "paquete_5_buceos"): "USD un 12 % más caro que su COP",
-    ("from_islands", "paquete_7_buceos"): "USD un 11 % más caro que su COP",
-    ("from_islands", "paquete_9_buceos"): "USD un 14 % más caro que su COP",
-    ("from_islands", "curso_rescate_efr"): "USD un 10 % más barato que su COP",
-    ("from_islands", "snorkel_nocturno"): "USD redondo (52,2), un 8 % por encima de su COP",
+# (origen, servicio) -> (COP online, USD online) que el negocio confirmó aunque no cuadren con el resto (Gadea, 21-oct).
+EXCEPCIONES_CONFIRMADAS = {
+    ("from_islands", "paquete_4_buceos_diurnos"): (830000, 204.3),
+    ("from_islands", "paquete_4_buceos_mixto"): (720000, 235.8),
+    ("from_islands", "paquete_5_buceos"): (1000000, 318.6),
+    ("from_islands", "paquete_7_buceos"): (1375000, 432),
+    ("from_islands", "paquete_9_buceos"): (1695000, 544.5),
+    ("from_islands", "curso_rescate_efr"): (2550000, 648),
+    ("from_islands", "snorkel_nocturno"): (170000, 52.2),  # dólar redondo, dado por bueno
 }
 
 
@@ -68,12 +68,14 @@ def test_la_tarifa_tiene_servicios_de_los_dos_origenes():
 
 @pytest.mark.parametrize("clave", sorted(SERVICIOS), ids=lambda c: f"{c[0]}.{c[1]}")
 def test_cada_precio_cuadra_con_la_tarifa(clave):
-    fallos = _fallos(SERVICIOS[clave])
-    if clave in PENDIENTES_DE_ANDRES:
-        assert fallos, f"{clave} ya cuadra: sácalo de PENDIENTES_DE_ANDRES"
-        pytest.xfail(f"pendiente de Andrés: {PENDIENTES_DE_ANDRES[clave]}")
+    s = SERVICIOS[clave]
+    if clave in EXCEPCIONES_CONFIRMADAS:
+        assert (s["cop_online"], float(s["usd_online"])) == EXCEPCIONES_CONFIRMADAS[clave], (
+            f"{clave} cambió de precio: vuelve a confirmarlo con el negocio y actualiza EXCEPCIONES_CONFIRMADAS")
+        return
+    fallos = _fallos(s)
     assert not fallos, f"{clave}: {'; '.join(fallos)}"
 
 
-def test_los_pendientes_existen_en_la_tarifa():
-    assert set(PENDIENTES_DE_ANDRES) <= set(SERVICIOS)
+def test_las_excepciones_existen_en_la_tarifa():
+    assert set(EXCEPCIONES_CONFIRMADAS) <= set(SERVICIOS)

@@ -638,7 +638,7 @@ def catalog_facts(lang: str) -> str:
                "buceo recreativo, minicurso y snorkel (no en cursos PADI; no es automático: se pide al equipo ANTES "
                "de pagar y, si se paga sin pedirlo, no se devuelve); "
                "5% si el cliente trae su equipo COMPLETO, solo en buceo recreativo y cursos (no en snorkel ni "
-               "minicurso); 10% el segundo día de buceo (buceo recreativo y cursos).",
+               "minicurso).",
                "Moneda: los colombianos (vivan donde vivan) y los residentes en Colombia pagan en COP; el resto, en "
                "USD (en un grupo mixto de colombianos o residentes y extranjeros, toda la reserva en USD); es el "
                "mismo precio en las dos monedas: el precio en COP de cada plan es el que pagan los "
@@ -663,7 +663,7 @@ def catalog_facts(lang: str) -> str:
                "Discounts: 10% online (already in the 'online' price); an extra 10% for groups of 5 or more in "
                "recreational diving, mini course and snorkeling (not PADI courses; not automatic: it is requested "
                "from the team BEFORE paying and, if paid without requesting it, it is not refunded); 5% if the customer brings their COMPLETE gear, only for recreational diving and courses (not "
-               "snorkeling or the mini course); 10% on the second day of diving (recreational diving and courses).",
+               "snorkeling or the mini course).",
                "Currency: Colombians (wherever they live) and residents of Colombia pay in COP; everyone else in USD "
                "(in a mixed group of Colombians or residents and foreigners, the whole booking in USD); it is the same price in both currencies: each plan's COP price is what Colombians pay. There is NO "
                "discount or reduced rate for Colombians: if the customer thinks there is one, say so clearly (only "
