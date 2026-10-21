@@ -573,6 +573,11 @@ def _build_extra_context(state: ConversationState) -> str | None:
     # Colombiano o no
     if getattr(state, "is_colombian", None) is True:
         parts.append("El cliente indico que es colombiano/a (mostrar precios en COP, no hay descuento especial por ser colombiano).")
+        if settings.pago_colombiano_con_asesor:
+            # gen-4 (decisión de Gadea, Coral #862): al cerrar, un asesor coordina su pago en COP; el link de reserva
+            # que el RAG le daba antes (banco dialogos-gen4-moneda, g4-colombiana) le hacía pagar por otro camino.
+            parts.append("Al ser colombiano/a o residente, su pago (100 % online o 50 % online + 50 % en persona, en "
+                         "COP) lo coordina un asesor al cerrar la reserva: no le compartas el link de reserva.")
     elif getattr(state, "is_colombian", None) is False:
         parts.append("El cliente indico que no es colombiano/a (mostrar precios en USD).")
     elif settings.moneda_sin_nacionalidad_usd:

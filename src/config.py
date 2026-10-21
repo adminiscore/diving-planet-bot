@@ -189,6 +189,12 @@ class Settings(BaseSettings):
     # colombian_pricing; sin cédula = USD, decisión de Álvaro del 17-oct); vivir, trabajar o haber nacido allí no dice
     # ni lo uno ni lo otro (nacer allí no da la nacionalidad: Gadea, 21-oct). Y la pregunta nombra la cédula. APAGADO.
     vivir_no_es_residir: bool = False
+    # gen-4 (21-oct, decisión de Gadea, Coral #862): el cierre para colombianos (pasa a un asesor que coordina el pago en
+    # COP) decía "para confirmar disponibilidad" (siempre hay) y "Como son colombianos/residentes" también a quien va
+    # solo. Con el flag, sin disponibilidad y en el número del cliente, sin género (nucleo/slotfill_close._finalize).
+    # Y el RAG, que a un colombiano ya conocido le daba el link de reserva antes del cierre, sabe que su pago lo
+    # coordina un asesor (rutas/contexto_rag). APAGADO.
+    pago_colombiano_con_asesor: bool = False
     # EX-EST-2 (14-oct): arreglos de datos de la tanda est3 (la pregunta del origen solo dice 'ida y vuelta el mismo dia'
     # si se SABE que el plan es de un dia; ...). PROMOCIONADO 14-oct tras est3-B (HISTORY 0.31.25).
     # Revert = False aqui y en el compose.
