@@ -21,9 +21,7 @@ from src.prompts.booking import (
     EXTRACTION_TOOL,
     SIGNALS_TOOL,
     _field_enum,
-    combined_extraction_system_prompt,
     extraction_system_prompt,
-    fields_verification_system_prompt,
 )
 
 LANGS = ["es", "en"]
@@ -53,11 +51,7 @@ def test_activity_glosses_are_not_copied_by_hand_anymore():
 
 @pytest.mark.parametrize("lang", LANGS)
 def test_extraction_prompts_carry_the_registry_gloss_not_the_full_context(lang):
-    prompts = [
-        extraction_system_prompt(lang, ["activity"]),
-        fields_verification_system_prompt(["activity"], lang),
-        combined_extraction_system_prompt(["group_size"], ["activity"], lang),
-    ]
+    prompts = [extraction_system_prompt(lang, ["activity"])]  # mej-1d: el veto y el combinado se quitaron
     glossed = [a for a in dom.registry().activities if a.gloss and a.id in _field_enum("activity")]
     assert glossed, "ninguna actividad del enum tiene gloss: test en vacio"
     for prompt in prompts:

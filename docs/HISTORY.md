@@ -1,6 +1,24 @@
 History
 =======
 
+0.31.89 - (2026-10-21)
+----------------------
+* **mej-1d, parte 2: fuera los restos del veto de 1a** (Álvaro con Claude, `feature/mej1d2-alvaro`). El veto por
+  campo salió del camino real con ex-9 (15-oct) y su maquinaria se borró en la tanda 1a. Quedaban sus piezas sin
+  nadie que las llamara.
+  - Fuera de `llm_extractor`: `verify_fields`, `extract_and_verify`, `verify_field`, `disagreements_with` y
+    `_clean_verified_value`.
+  - Fuera de `prompts/booking`: el prompt de verificación y el combinado, las guías por campo (`_FIELD_RULES_*`, las
+    pistas del detector y la tabla de significados en español) y `_meaning_rule`.
+  - Unas 620 líneas menos en el código y 67 tests menos, los del veto.
+  - **Equivalencia sin gastar.** Con el código de antes y el de después salen idénticos, letra por letra:
+    - 16 393 variantes del prompt de extracción de `fill_gaps` (todas las combinaciones de campos, ES y EN);
+    - el tool de extracción, con y sin extras y sin Barú;
+    - las señales y el resolutor de casillas;
+    - las preguntas de Jev, la llamada del extractor del turno, el catálogo y el prompt del RAG.
+  - Suite: 3169 en verde. Quedan en algunos tests parches de `extract_and_verify` con `create=True`: no hacen nada
+    y no rompen nada.
+
 0.31.88 - (2026-10-21)
 ----------------------
 * **ord-3: la tarifa vive en un solo sitio, `pricing.json`** (Álvaro con Claude, `feature/ord3-alvaro`; decisión de

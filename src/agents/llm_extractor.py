@@ -26,15 +26,13 @@ from src.config import settings
 from src.llm_client import tool_arguments, trace_openai
 from src.observability import con_pieza_llm
 from src.prompts.booking import (
-    EXTRACTION_TOOL,
+    EXTRACTION_TOOL,  # noqa: F401 — se reexporta (tests/test_prompts_surface.py)
     SIGNALS_TOOL,
     SLOT_RESOLVER_CONTRADICCION,
     SLOT_RESOLVER_SPEC,
     acknowledgement_system_prompt,
-    combined_extraction_system_prompt,
     extraction_system_prompt,
     extraction_tool,
-    fields_verification_system_prompt,
     signals_system_prompt,
     slot_resolver_prompt,
     slot_resolver_tool,
@@ -116,9 +114,8 @@ def missing_fields(regex_intent: DetectedIntent) -> list[str]:
 
 
 def _build_messages(system: str, message: str, history: list[dict] | None) -> list[dict]:
-    """system + ventana de historial + el mensaje del turno. Identico en las
-    tres funciones (fill_gaps, verify_fields, extract_and_verify): tenerlo en
-    un sitio evita que una de ellas se quede con una ventana distinta."""
+    """system + ventana de historial + el mensaje del turno (fill_gaps; antes tambien el veto, que quito
+    mej-1d)."""
     messages: list[dict] = [{"role": "system", "content": system}]
     for turn in (history or [])[-settings.history_retrieval_enrichment_window:]:
         role = turn.get("role")
@@ -219,228 +216,6 @@ async def fill_gaps(
     if patch:
         logger.info(f"[LLM_EXTRACTOR] filled gaps={list(patch.keys())} msg={message[:60]!r}")
     return patch
-
-
-def _clean_verified_value(field: str, llm_value):
-    """Normaliza y valida el valor que devolvio el LLM para `field`.
-    Devuelve None si no hay valor utilizable."""
-    # `group_allocation` vuelve con las claves fijas del schema estricto y las
-    # actividades no usadas a null -- mismo tratamiento que en `fill_gaps`.
-    if isinstance(llm_value, dict):
-        llm_value = {k: v for k, v in llm_value.items() if v}
-    if llm_value in (None, "", [], {}):
-        return None
-    # Robustez (hallazgo en vivo, eval-set 2026-09-10): un tool_choice forzado
-    # no obliga al modelo a respetar el `enum` declarado en EXTRACTION_TOOL --
-    # se observo un caso real donde `activity` volvio 'certificarse' (ni
-    # siquiera un valor del enum) en vez de un valor real como
-    # 'padi_open_water'. Si el campo declara enum, se descarta cualquier
-    # valor fuera de el (degrada a "nada que vetar", nunca a un valor
-    # inventado) en vez de dejarlo pasar sin validar.
-    field_schema = EXTRACTION_TOOL["function"]["parameters"]["properties"].get(field, {})
-    enum = field_schema.get("enum")
-    if enum is not None and llm_value not in enum:
-        logger.warning(
-            f"[LLM_EXTRACTOR][{field.upper()}_VETO] valor fuera de enum descartado: {llm_value!r}"
-        )
-        return None
-    return llm_value
-
-
-def disagreements_with(values: dict, fields, reference: dict) -> dict:
-    """Campos de `fields` cuyo valor del LLM (limpio) existe y difiere de `reference`.
-    Una sola comparacion para la verificacion y para los campos sabidos que viajan como
-    relleno (hallazgo J). `is_certified=False` / `is_colombian=False` son respuestas
-    reales: se comparan con `!=`, nunca por truthiness."""
-    out = {}
-    for field in fields:
-        value = _clean_verified_value(field, (values or {}).get(field))
-        if value is not None and value != reference.get(field):
-            out[field] = value
-    return out
-
-
-@con_pieza_llm("red_verify_fields")
-async def verify_fields(
-    fields: list[str],
-    message: str,
-    regex_values: dict,
-    *,
-    history: list[dict] | None = None,
-    lang: str = "es",
-    client: AsyncOpenAI | None = None,
-    as_answers: bool = False,
-) -> dict | None:
-    """Verifica en UNA SOLA peticion varios campos que el regex ya resolvio
-    (ver `supervisor._maybe_veto_resolved_fields_via_llm`). Devuelve un dict
-    {campo: valor_del_llm} SOLO con los campos en los que el LLM DISCREPA del
-    regex; {} si coincide en todos o si la llamada falla.
-
-    Nacio como `verify_activity` (especifica de `activity`, hallazgo en vivo
-    "purple-sun-590" 2026-09-03), se generalizo a `verify_field` por-campo
-    (conversacion real 913, 2026-09-10) y finalmente se agrupo en una sola
-    peticion el mismo dia, al medir que el recurso escaso de la cuenta son
-    las PETICIONES/dia (limite RPD agotado con los tokens intactos), no los
-    tokens: N campos en N peticiones gastaba justo el recurso limitado.
-
-    A diferencia de `fill_gaps` (que solo rellena huecos y nunca toca un
-    campo ya resuelto), esta funcion pregunta al LLM de forma independiente
-    y solo reporta lo que discrepa. Cualquier fallo degrada a {} (el llamador
-    se queda con el regex, mismo patron defensivo que `fill_gaps`: esto nunca
-    puede dejar la respuesta peor que antes de que el veto existiera).
-
-    `as_answers` (u3-4 arreglo 2, 2026-09-25) cambia lo que se devuelve: en vez del
-    diff, **la respuesta del LLM tal cual**, restringida a los campos preguntados. Hace
-    falta porque el diff no distingue "el LLM CONFIRMA el valor" de "el LLM no opina":
-    los dos casos son "no discrepa" y devuelven `{}`. Para decidir si el cliente AFIRMA
-    algo en un mensaje con pregunta hay que poder ver la diferencia — un campo que el LLM
-    no devuelve es un campo que nadie afirmó.
-
-    Con `as_answers`, un fallo (API caída, respuesta malformada, sin tool-call) devuelve
-    **`None`**, no `{}`: `{}` significaría "el LLM no afirmó nada" y el llamante tiraría
-    datos buenos por un corte de red. Es el mismo contrato defensivo de siempre — nunca
-    dejar el turno peor que con solo el regex — pero aquí no se puede expresar con un
-    dict vacío.
-    """
-    if not fields or not message or not message.strip():
-        return {} if not as_answers else None
-    log_tag = "_".join(f.upper() for f in fields) if len(fields) == 1 else "FIELDS"
-    messages: list[dict] = [
-        {"role": "system", "content": _sin_baru(fields_verification_system_prompt(fields, lang))}
-    ]
-    for turn in (history or [])[-settings.history_retrieval_enrichment_window:]:
-        role = turn.get("role")
-        content = turn.get("content")
-        if role in ("user", "assistant") and content:
-            messages.append({"role": role, "content": content})
-    messages.append({"role": "user", "content": message})
-
-    try:
-        client = client or trace_openai(AsyncOpenAI(api_key=settings.openai_api_key))
-        response = await client.chat.completions.create(
-            model=settings.red_extractor_model,
-            messages=messages,
-            tools=[_tool(EXTRACTION_TOOL)],
-            tool_choice={"type": "function", "function": {"name": "extract_fields"}},
-            temperature=0.0,
-            # Escala con el numero de campos pedidos (antes 100 fijo para 1).
-            max_tokens=60 + 60 * len(fields),
-        )
-        choice = response.choices[0].message
-        tool_calls = getattr(choice, "tool_calls", None)
-        if not tool_calls:
-            return {} if not as_answers else None
-        args = tool_arguments(tool_calls[0], EXTRACTION_TOOL)
-    except (json.JSONDecodeError, TypeError, AttributeError, IndexError) as exc:
-        logger.warning(f"[LLM_EXTRACTOR][DEGRADED][{log_tag}_VETO] malformed response: {exc}")
-        return {} if not as_answers else None
-    except Exception as exc:  # noqa: BLE001
-        logger.warning(f"[LLM_EXTRACTOR][DEGRADED][{log_tag}_VETO] error: {exc}")
-        return {} if not as_answers else None
-
-    if as_answers:
-        return {f: args[f] for f in fields if f in args}
-    return disagreements_with(args, fields, regex_values)
-
-
-@con_pieza_llm("red_extract_and_verify")
-async def extract_and_verify(
-    gaps: list[str],
-    verify: list[str],
-    message: str,
-    regex_values: dict,
-    *,
-    history: list[dict] | None = None,
-    lang: str = "es",
-    client: AsyncOpenAI | None = None,
-    extra_fields=(),
-) -> tuple[dict, dict]:
-    """Rellena huecos Y verifica campos resueltos en UNA SOLA peticion.
-
-    Devuelve `(patch, disagreements)`: el patch de los huecos (mismo contrato
-    que `fill_gaps`) y las discrepancias de los campos verificados (mismo
-    contrato que `verify_fields`). Cualquier fallo degrada a `({}, {})` --
-    el llamador se queda con el regex, igual que las dos funciones que
-    sustituye.
-
-    Por que existe (medido 2026-09-12): `fill_gaps` y `verify_fields` usaban
-    el mismo modelo y la MISMA tool en 2 peticiones distintas del mismo turno,
-    y en el eval-set el 61% de los turnos disparan ambas. El recurso escaso de
-    la cuenta son las peticiones/dia (RPD), no los tokens -- el mismo
-    razonamiento que llevo a agrupar los N vetos en 1 peticion, un paso mas.
-
-    Seguro porque el conjunto de huecos NO depende del resultado del veto: el
-    veto solo cambia el VALOR de campos que el regex ya habia resuelto, y
-    `missing_fields` mira exactamente los que siguen en None/[]. Por eso se
-    pueden pedir los dos conjuntos a la vez en vez de encadenarlos.
-    """
-    if not message or not message.strip() or (not gaps and not verify):
-        return {}, {}
-    # Extras de relleno con su variante del tool (ver `fill_gaps`).
-    gaps = list(gaps) + [f for f in extra_fields if f not in gaps]
-    tool = _tool(extraction_tool(extra_fields))
-    # Un solo camino de peticion para los tres casos; lo unico que cambia es
-    # que prompt se monta. Asi no hay dos implementaciones del mismo reparto
-    # de resultados que puedan desincronizarse.
-    if gaps and verify:
-        system = combined_extraction_system_prompt(gaps, verify, lang)
-    elif gaps:
-        system = extraction_system_prompt(lang, gaps)
-    else:
-        system = fields_verification_system_prompt(verify, lang)
-    messages = _build_messages(_sin_baru(system), message, history)
-    try:
-        client = client or trace_openai(AsyncOpenAI(api_key=settings.openai_api_key))
-        response = await client.chat.completions.create(
-            model=settings.red_extractor_model,
-            messages=messages,
-            tools=[tool],
-            tool_choice={"type": "function", "function": {"name": "extract_fields"}},
-            temperature=0.0,
-            # El de huecos usaba 200 fijo; el del veto escalaba con los campos.
-            # Aqui conviven los dos conjuntos.
-            max_tokens=200 + 60 * len(verify),
-        )
-        choice = response.choices[0].message
-        tool_calls = getattr(choice, "tool_calls", None)
-        if not tool_calls:
-            return {}, {}
-        args = _strip_schema_nulls(tool_arguments(tool_calls[0], tool))
-    except (json.JSONDecodeError, TypeError, AttributeError, IndexError) as exc:
-        logger.warning(f"[LLM_EXTRACTOR][DEGRADED][COMBINED] malformed response: {exc}")
-        return {}, {}
-    except Exception as exc:  # noqa: BLE001
-        logger.warning(f"[LLM_EXTRACTOR][DEGRADED][COMBINED] error: {exc}")
-        return {}, {}
-
-    # El modelo no sabe a que lista pertenece cada campo -- lo reparte el
-    # CODIGO, con el mismo criterio que aplicaba cada funcion por separado.
-    patch = {
-        k: v for k, v in (args or {}).items()
-        if k in gaps and v not in (None, "", [], {})
-    }
-    disagreements = disagreements_with(args, verify, regex_values)
-    if patch:
-        logger.info(f"[LLM_EXTRACTOR][COMBINED] filled gaps={list(patch.keys())} msg={message[:60]!r}")
-    return patch, disagreements
-
-
-async def verify_field(
-    field: str,
-    message: str,
-    regex_value,
-    *,
-    history: list[dict] | None = None,
-    lang: str = "es",
-    client: AsyncOpenAI | None = None,
-):
-    """Atajo de un solo campo sobre `verify_fields`. Devuelve el valor del
-    LLM si discrepa, o None."""
-    result = await verify_fields(
-        [field], message, {field: regex_value},
-        history=history, lang=lang, client=client,
-    )
-    return result.get(field)
 
 
 def compare_with_ground_truth(patch: dict, expected: dict) -> dict:
