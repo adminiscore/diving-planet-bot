@@ -373,6 +373,15 @@ _YA_RESERVADO_Q = {
         "another day')."
     ),
 }
+# gen-15 (21-oct, flag `reserva_de_hotel_no_es_nuestra`): «We booked 3 nights at Mulata. How much is snorkeling?» salía
+# ya_reservado=True (banco dialogos-gen15-hoteles 4/4): el turno iba a posventa (sin preguntas de la reserva) y la puerta
+# del origen preguntaba desde dónde sale. Reservar el hotel no es reservar con el centro.
+_YA_RESERVADO_Q_SIN_HOTEL = {
+    **_YA_RESERVADO_Q,
+    "instructions": _YA_RESERVADO_Q["instructions"] + (
+        " Booking a HOTEL, accommodation, flights or a transfer is NOT a booking with this dive center ('we booked 3 "
+        "nights at the hotel'): only a booking of its dives, courses or tours counts."),
+}
 
 # ex-9b paso 5 (19-oct): tres preguntas que sustituyen a regex que "entendían" al cliente (estudio
 # docs/robustness/regex/estudio-ex9-regex.md, clase C). El regex sigue solo si Jev calla. Bancos en
@@ -661,7 +670,7 @@ def _questions_for_turn(pending_slot: str | None = None) -> dict:
     if settings.jev_persona_ya_contada:
         q[ADDS_PERSON] = _ADDS_PERSON_Q
     if settings.posventa_sin_vender:
-        q[YA_RESERVADO] = _YA_RESERVADO_Q
+        q[YA_RESERVADO] = _YA_RESERVADO_Q_SIN_HOTEL if settings.reserva_de_hotel_no_es_nuestra else _YA_RESERVADO_Q
     if settings.datos_ajenos_se_niegan:
         q[PIDE_DATOS_AJENOS] = _PIDE_DATOS_AJENOS_Q
     if settings.privado_pasa_directo:

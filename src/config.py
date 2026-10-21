@@ -203,6 +203,10 @@ class Settings(BaseSettings):
     # preguntar desde dónde sale. Con el flag, el extractor y Jev los conocen (extractor_turno.HOTELES_DE_LA_BASE).
     # APAGADO.
     hoteles_de_la_base: bool = False
+    # gen-15 (21-oct): «We booked 3 nights at Mulata» salía en Jev como «ya tiene una reserva con nosotros» y el turno
+    # iba a posventa (sin preguntas de la reserva). Con el flag, la pregunta YA_RESERVADO dice que reservar el hotel,
+    # el alojamiento o el vuelo no es una reserva con el centro (jev_router._YA_RESERVADO_Q_SIN_HOTEL). APAGADO.
+    reserva_de_hotel_no_es_nuestra: bool = False
     # gen-4 (21-oct, decisión de Gadea, Coral #862): el cierre para colombianos (pasa a un asesor que coordina el pago en
     # COP) decía "para confirmar disponibilidad" (siempre hay) y "Como son colombianos/residentes" también a quien va
     # solo. Con el flag, sin disponibilidad y en el número del cliente, sin género (nucleo/slotfill_close._finalize).

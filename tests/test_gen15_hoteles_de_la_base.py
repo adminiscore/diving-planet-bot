@@ -39,3 +39,25 @@ def test_jev_los_nombra_en_la_opcion_islas(monkeypatch, flag):
     pregunta = jev_router._questions_for_turn(None)[jev_router.CUSTOMER_PLACE]
     assert ("Eco Hotel Las Palmeras" in pregunta["criteria"]["islands"]) is flag
     assert "Eco Hotel Las Palmeras" not in pregunta["criteria"]["cartagena"]
+
+
+@pytest.mark.parametrize("flag, lugar, pregunta", [
+    (True, {"choice": "islands", "confidence": 0.97}, False),
+    (True, {"choice": "cartagena", "confidence": 0.9}, False),
+    (True, {"choice": "islands", "confidence": 0.3}, True),   # Jev no está seguro: la puerta de siempre
+    (True, {"choice": "none", "confidence": 0.9}, True),
+    (False, {"choice": "islands", "confidence": 0.97}, True),  # sin el flag, la puerta de siempre
+])
+def test_la_puerta_del_origen_no_pregunta_si_jev_esta_seguro(monkeypatch, flag, lugar, pregunta):
+    """«We booked 3 nights at Mulata. How much is snorkeling?»: la puerta del origen preguntaba con Jev seguro."""
+    from src.agents import conversational_core as core
+    from src.flows.state import ConversationState
+
+    monkeypatch.setattr(settings, "hoteles_de_la_base", flag)
+    monkeypatch.setattr(settings, "rag_origen_pregunta", True)
+    st = ConversationState(conversation_id="gen15", language="en")
+    st._jev_lugar = lugar
+    st._jev_pide_precio = True
+    texto = core._origen_antes_del_precio(st, "We booked 3 nights at Mulata. How much is snorkeling?",
+                                          "Snorkeling costs 45 USD online.")
+    assert (texto is not None) is pregunta

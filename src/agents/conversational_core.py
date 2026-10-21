@@ -1021,6 +1021,15 @@ async def _otro_idioma_en_ingles(state: ConversationState, datos: dict | None = 
         state.language = state.detected_language = "en"
 
 
+def _jev_dice_el_lugar(state: ConversationState) -> bool:
+    """gen-15: ¿Jev está seguro (≥ `CUSTOMER_PLACE_MIN`) de que el mensaje dice dónde está el cliente (Cartagena o las
+    islas)? Lo contrario de `_jev_dice_que_no_lo_dice`."""
+    from src.agents.jev_router import CUSTOMER_PLACE_MIN  # lazy
+
+    lugar = getattr(state, "_jev_lugar", None) or {}
+    return lugar.get("choice") in ("islands", "cartagena") and (lugar.get("confidence") or 0.0) >= CUSTOMER_PLACE_MIN
+
+
 def _jev_dice_que_no_lo_dice(state: ConversationState) -> bool:
     """CAL-C3c: ¿Jev está seguro (≥ `CUSTOMER_PLACE_MIN`) de que el mensaje no dice dónde está el cliente?"""
     from src.agents.jev_router import CUSTOMER_PLACE_MIN  # lazy
@@ -2044,6 +2053,11 @@ def _origen_antes_del_precio(state: ConversationState, message: str, answer: str
     Cotiza = lleva un importe, y el cliente pide un precio o repregunta tras la pregunta del origen sin contestarla
     ("¿y en pesos?"). Un importe en la respuesta a otra cosa ("¿qué incluye?") se deja como hoy."""
     if not settings.rag_origen_pregunta or state.location or state.detected_location:
+        return None
+    if settings.hoteles_de_la_base and _jev_dice_el_lugar(state):
+        # gen-15: la puerta mira el origen antes de que la extracción del turno lo guarde, y sus pistas son palabras
+        # («Cartagena», «islas», «Barú»): «We booked 3 nights at Mulata. How much is snorkeling?» se repreguntaba 2/2
+        # con Jev seguro (islands 0,97). Si Jev está seguro de dónde está el cliente, el mensaje ya lo dice.
         return None
     texto = message or ""
     if not answer or not _IMPORTE_RE.search(answer):
