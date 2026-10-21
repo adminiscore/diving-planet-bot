@@ -1,6 +1,24 @@
 History
 =======
 
+0.31.74 - (2026-10-21)
+----------------------
+* **gen-5 PROMOCIONADO** (Gonzalo con Claude, `7221aa0`; integrado y medido por Gadea con Claude;
+  `docs/robustness/gen/gen5-diagnostico.md`).
+  - El idioma del primer mensaje se decide UNA vez en el router, con la cadena de la reserva y G-10, y todas las rutas
+    lo heredan (`IDIOMA_UNICO_DE_APERTURA`).
+  - Banco propio: 22/32 → 48/48.
+  - Ronda core **gen5-B 96,6 % 27/32** frente a **gen5-A 97,0 % 26/32**, del mismo día. Mejora 1 criterio y empeoran
+    2, ninguno del idioma: una repregunta de moneda-precios, que ya variaba, y un detalle del formulario en el RAG.
+* **GEN-0, prioridad 1 de Gadea: rondas core SIN DESPLEGAR** (`scripts/ronda_local_pre.py`, `2640850`).
+  - Corre la muestra dentro de `dp-pre-bot` con el código local (`--codigo-local`) y los flags de cada uno. Es fiel al
+    webhook: el estado se serializa entre turnos, la entrega limpia la nota y el pase, y se aplican las burbujas y el
+    formato de WhatsApp.
+  - Escribe el mismo jsonl que la ronda por Chatwoot. Así varias personas, y A y B, pueden medir a la vez.
+  - **Validada** con el código de gen5-B: sin desplegar 98,3 % 28/32 frente a 96,6 % 27/32 por Chatwoot, con 3 fallos
+    en común y los demás en diálogos que ya varían de una ronda real a otra.
+  - 93 turnos en 2 min (por Chatwoot, 16), con la misma latencia por turno (p50 4,1 / p95 7,7 s frente a 4 / 8).
+
 0.31.73 - (2026-10-20)
 ----------------------
 * **gen-7 (refresher) PROMOCIONADO** (`docs/robustness/gen/gen7-diagnostico.md`).
