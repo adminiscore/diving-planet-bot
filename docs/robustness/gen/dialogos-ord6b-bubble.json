@@ -1,0 +1,16 @@
+{
+ "about": "ord-6b (21-oct, decisión de Gadea, Coral #1065): Bubble Makers con precios provisionales (desde Cartagena 168 USD / 600.000 COP online, 187 / 667.000 normal; ya en las islas 123 / 435.000 online, 137 / 484.000 normal), ficha contact_only (la cierra un asesor). Diálogos PROPIOS. 'espera' es lo que debe hacer el bot; nunca inventar lancha, almuerzo ni horario del Bubble Makers desde Cartagena (no están en la base).",
+ "version": 1,
+ "creado": "2026-10-21",
+ "dialogos": [
+  {"id": "b6-precio-cartagena", "patron": "precio desde Cartagena",
+   "turnos": ["Hola, ¿cuánto cuesta el Bubble Makers para mi hija de 9 años? Salimos desde Cartagena."],
+   "espera": "168 USD online (187 normal) por persona, desde Cartagena; que lo cierra un asesor; sin inventar lancha ni almuerzo"},
+  {"id": "b6-ninos-islas", "patron": "niños de 8 y 9 ya en las islas",
+   "turnos": ["Hi! My kids are 8 and 9 and we're staying on Isla Grande. Can they try diving? How much would it be?"],
+   "espera": "Bubble Makers ya en las islas, 123 USD online (137 normal) por niño; no el minicurso (es desde 10)"},
+  {"id": "b6-familia-reserva", "patron": "familia en el flujo de la reserva",
+   "turnos": ["Buenas, somos 2 adultos buzos certificados y nuestro hijo de 9 años, salimos desde Cartagena", "queremos bucear nosotros y que el niño haga lo que pueda"],
+   "espera": "salida de 2 inmersiones para los adultos y Bubble Makers para el niño (o el asesor), sin ofrecerle el minicurso al niño de 9"}
+ ]
+}

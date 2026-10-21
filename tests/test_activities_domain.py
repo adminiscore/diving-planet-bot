@@ -62,7 +62,9 @@ def test_business_context_can_be_restricted():
 def test_bookable_activities_exclude_add_ons_and_activities_without_service():
     bookable = dom.bookable_activity_ids()
     assert "refresher" not in bookable          # se vende como el minicurso
-    assert "bubble_makers" not in bookable      # sin servicio en el catalogo (D2)
+    # ord-6b (21-oct, decisión de Gadea): Bubble Makers ya tiene servicio (precio provisional, contact_only: lo cierra
+    # un asesor); antes no lo tenía (D2) y no se podía reservar.
+    assert "bubble_makers" in bookable
     assert {"padi_course", "padi_specialty"} <= set(bookable)   # genericas: F4 pregunta el nivel
     assert {"specialty_nitrox", "padi_open_water_referral", "certified_diving"} <= set(bookable)
 
