@@ -1,8 +1,8 @@
 {
  "meta": {
-  "generado": "2026-10-21T10:23:00+00:00",
-  "commit": "70cc236",
-  "rama": "feature/pre_gadea"
+  "generado": "2026-10-21T10:40:22+00:00",
+  "commit": "1f66c3e",
+  "rama": "feature/gen8-alvaro"
  },
  "vistas": {
   "general": {
@@ -883,6 +883,13 @@
      "titulo": "El acuse no se inventa nada",
      "codigo": true,
      "pre": true,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "acuse_en_su_numero",
+     "titulo": "El acuse habla en singular a quien va solo",
+     "codigo": false,
+     "pre": false,
      "sin_efecto": false
     }
    ],
@@ -2003,6 +2010,19 @@
    "codigo": true,
    "pre": true,
    "fijado_en_pre": true,
+   "usado_por": [
+    "b_slotfill_close"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "acuse_en_su_numero",
+   "area": "Reserva",
+   "titulo": "El acuse habla en singular a quien va solo",
+   "texto": "La frase de acuse ('Entendido, …') repite el dato con las palabras y el número del cliente: a quien dice 'I'm not Colombian' le contesta 'you're not Colombian', no 'none of you are Colombian'.",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
    "usado_por": [
     "b_slotfill_close"
    ],

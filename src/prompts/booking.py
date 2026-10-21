@@ -1350,6 +1350,21 @@ ACUSE_SOLO_MENSAJE_EN = (
 )
 
 
+# gen-8 (21-oct, flag `acuse_en_su_numero`): el ejemplo "got it, none of you are Colombian" estaba en plural y el
+# acuse lo copiaba también a quien va solo ("I'm not Colombian" -> "none of you are Colombian", 4 de 5 en el banco
+# docs/robustness/gen/banco_gen8_acuse.py). En su lugar, la regla: el dato con las palabras y el NÚMERO del cliente.
+ACUSE_EJEMPLO_ES = "Mejor: 'entendido, ninguno es colombiano' o similar, neutro y literal."
+ACUSE_EN_SU_NUMERO_ES = ("Mejor: el dato tal cual, neutro y literal, con el NÚMERO del propio cliente y sin dar por "
+                         "hecho si es hombre o mujer: si habla de sí mismo ('no soy colombiano'), en singular "
+                         "('entendido, no eres de Colombia'); solo si habla del grupo ('ninguno es colombiano'), en "
+                         "plural ('entendido, nadie del grupo es de Colombia').")
+ACUSE_EJEMPLO_EN = ("Better: 'got it, none of you are "
+                    "Colombian' or similar — neutral and literal.")
+ACUSE_EN_SU_NUMERO_EN = ("Better: the fact as-is, neutral and literal, in the customer's own words and NUMBER: if they "
+                         "speak about themselves ('I'm not Colombian'), singular ('got it, you're not Colombian'); only "
+                         "if they speak about the group ('none of us are Colombian'), plural.")
+
+
 def acknowledgement_system_prompt(lang: str, client_name: str | None) -> str:
     name_es = f" El cliente se llama {client_name}; salúdalo/nómbralo con naturalidad de vez en cuando (no en cada mensaje)." if client_name else ""
     name_en = f" The customer's name is {client_name}; address them by name naturally now and then (not every message)." if client_name else ""

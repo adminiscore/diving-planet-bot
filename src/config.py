@@ -175,6 +175,9 @@ class Settings(BaseSettings):
     # 16/29 sin fallos (antes 12), ninguna regresion del acuse. PROMOCIONADO 14-oct (HISTORY 0.31.25).
     # Revert = False aqui y en el compose.
     acuse_solo_el_mensaje: bool = True
+    # gen-8 (21-oct): el ejemplo del acuse para reconocer un dato iba en plural ("none of you are Colombian") y lo
+    # copiaba a quien va solo; con el flag, la regla de usar las palabras y el número del cliente. APAGADO.
+    acuse_en_su_numero: bool = False
     # EX-EST-2 (14-oct): arreglos de datos de la tanda est3 (la pregunta del origen solo dice 'ida y vuelta el mismo dia'
     # si se SABE que el plan es de un dia; ...). PROMOCIONADO 14-oct tras est3-B (HISTORY 0.31.25).
     # Revert = False aqui y en el compose.
