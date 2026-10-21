@@ -1,6 +1,42 @@
 History
 =======
 
+0.31.84 - (2026-10-21)
+----------------------
+* **ord-0: por qué omite el RAG, medido.** Se repitieron 18 omisiones de G10/G9 ×3 en PRE
+  (`docs/robustness/ord/estudio.md`).
+  - Búsqueda: 0. El dato llega al contexto en los 18.
+  - Redacción: 4. Azar: 3. **Examen exigente: 8.** Decisión de negocio: 1. Ya arreglado: 2.
+  - Patrón nuevo, **la puerta del origen**: sin saber el origen, el bot preguntaba y se callaba el precio, qué
+    incluye, el almuerzo y el enlace.
+* **ord-6, decisiones de Gadea.**
+  - Sin origen, Coral da las dos variantes (lo hace ord-7).
+  - Lo único que se añade sin que lo pregunten es la edad mínima en cifra cuando hay niños.
+  - No se añaden: el 25-dic, el formulario médico, «el descuento de grupo no aplica a cursos», el cierre de las 4:30 ni
+    la excepción de 500 inmersiones.
+  - Bubble Makers con precios provisionales (ord-6b, Álvaro, a confirmar con Andrés).
+  - El Referido se reserva con su enlace, como los demás cursos.
+* **gen-13 PROMOCIONADO: lo contestable va antes de CUALQUIER pase a un asesor** (`contesta_antes_de_cualquier_pase`).
+  - Antes, un pase por contacto, servicio privado, cambio de reserva o «pásame con alguien» se comía el resto del
+    mensaje (causa 2 de G10/G9, ~27 fallos).
+  - Ahora el RAG contesta lo demás antes del pase. Se hace en un solo sitio: el cierre del turno en
+    `supervisor.route_message`.
+  - Van solos los datos sensibles, las quejas o emergencias y los fallos técnicos.
+  - Banco propio: **4/16 → 16/16**.
+  - Ronda core: gen13-A 97,4 % 27/32 frente a gen13-B 97,4 % 26/32. Con votos hay 2 mejoras reales y ninguna
+    regresión del flag: las 2 de B están en diálogos sin pase, donde no actúa.
+  - En los turnos con pase, la mediana sube de 1,9 s a 3,6 s.
+* **Arreglos en la base.**
+  - La política y el aviso de fotos decían «en el minicurso no se hacen», al revés de lo decidido.
+  - La política de edades pide la edad mínima en cifra.
+  - El Referido deja de ser `contact_only`.
+  - 12 FAQ antiguas llamaban «Detalles y reserva» a la página de información; ahora dicen «Más información».
+* **En medida, con los flags APAGADOS** (ord-7 y gen-19, `cfb63de`):
+  - `origen_dos_variantes`. Banco 2/14 → 12/14; con enlaces sin origen, 2/8 → 8/8.
+  - `tarjeta_edades_en_cifra`.
+  - `jev_precio_nombra_actividades`: «¿Cuánto cuesta el snorkel?» pasa de 0,55 a 0,94.
+  - `enlace_cuando_toca`. En el banco no cambia nada (10/14 = 10/14): cuando lo piden, el enlace ya salía.
+
 0.31.83 - (2026-10-21)
 ----------------------
 * **G10 y G9 de control: no subimos.** Medidos sobre `cd1d149`, con todo lo promocionado hasta gen-4, gen-6 y gen-8.

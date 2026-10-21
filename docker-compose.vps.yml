@@ -159,6 +159,8 @@ services:
       # más arriba). PROMOCIONADOS 20-oct: gen3-B 98,7 % 30/32 frente a gen3-A 97,4 % 26/32 (mismo día), 0 regresiones
       # (la repregunta de moneda-precios-principiante-y-snorkel sale igual sin los flags, atribución 3+3). Revert = "false".
       CONTESTA_ANTES_DE_PASAR: "true"
+      # gen-13 (21-oct, PROMOCIONADO): lo contestable va también antes de CUALQUIER pase a un asesor. Revert = "false".
+      CONTESTA_ANTES_DE_CUALQUIER_PASE: "true"
       CLIMA_CON_POLITICA: "true"
       DIETA_NO_ES_MEDICA: "true"
       # gen-2 (20-oct; docs/robustness/gen/gen2-diagnostico.md): la pregunta sola de la búsqueda deja el sitio si la
