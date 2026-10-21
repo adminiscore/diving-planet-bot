@@ -26,13 +26,13 @@ def make_state(**over) -> ConversationState:
 # ── nodo en aislamiento (State in → update out) ──
 
 @pytest.mark.asyncio
-async def test_node_cancellation_shows_policy_and_buttons():
+async def test_node_cancellation_shows_policy_and_hands_off():
     conv = make_state()
     result = await changes_node(
         {"conv_state": conv, "message": "quiero cancelar mi reserva", "signals": {}}
     )
     assert result["reply"]
-    assert conv.quick_replies  # botones asesor/menú
+    assert conv.step == Step.ESCALATE and not conv.quick_replies  # gen-3b: pasa directo, sin botones
     assert conv.history[-1]["role"] == "assistant"
 
 
@@ -46,17 +46,17 @@ async def test_node_cancellation_via_signal_outside_cart():
          "signals": {"booking_change_topic": "cancellation"}}
     )
     assert result["reply"]
-    assert conv.quick_replies
+    assert conv.step == Step.ESCALATE and not conv.quick_replies
 
 
 @pytest.mark.asyncio
-async def test_node_reschedule_shows_policy_and_buttons():
+async def test_node_reschedule_shows_policy_and_hands_off():
     conv = make_state()
     result = await changes_node(
         {"conv_state": conv, "message": "quiero cambiar la fecha de mi reserva", "signals": {}}
     )
     assert result["reply"]
-    assert conv.quick_replies
+    assert conv.step == Step.ESCALATE and not conv.quick_replies
 
 
 @pytest.mark.asyncio

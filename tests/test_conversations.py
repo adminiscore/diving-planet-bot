@@ -1121,20 +1121,19 @@ async def test_intent_does_not_trigger_on_very_short_input():
 # ===========================================================================
 # BLOQUE — CANCELACIÓN Y REPROGRAMACIÓN DE RESERVAS EXISTENTES
 # Los clientes que piden cancelar o cambiar la fecha de una reserva existente
-# deben recibir el texto de política + dos botones (asesor / menú principal),
-# nunca entrar al flujo de reserva ni recibir una respuesta genérica de RAG.
+# reciben el texto de política y pasan DIRECTAMENTE a un asesor (gen-3b, 21-oct,
+# decisión de Gadea; antes, dos botones asesor / menú principal), nunca entran
+# al flujo de reserva ni reciben una respuesta genérica de RAG.
 # ===========================================================================
 
 @pytest.mark.asyncio
-async def test_cancel_booking_explicit_es_shows_policy_and_buttons():
-    """'quiero cancelar mi reserva' → policy text + advisor/home buttons."""
+async def test_cancel_booking_explicit_es_shows_policy_and_hands_off():
+    """'quiero cancelar mi reserva' → policy text + direct handoff."""
     state = make_state()
     resp = await route_message(state, "quiero cancelar mi reserva")
-    assert state.step != Step.ESCALATE, "Debe mostrar botones, no escalar automáticamente"
     assert "terminos" in resp.lower() or "condiciones" in resp.lower() or "cancelaci" in resp.lower()
-    button_values = [b["value"] for b in state.quick_replies]
-    assert "asesor" in button_values
-    assert "inicio" in button_values
+    assert state.step == Step.ESCALATE
+    assert not state.quick_replies  # el «menú principal» ya no existe
 
 
 @pytest.mark.asyncio
@@ -1142,8 +1141,7 @@ async def test_cancel_booking_phrase_without_possessive_es():
     """'cancelar la reserva' (sin 'mi') también activa la detección."""
     state = make_state()
     await route_message(state, "cancelar la reserva")
-    button_values = [b["value"] for b in state.quick_replies]
-    assert "asesor" in button_values
+    assert state.step == Step.ESCALATE
 
 
 @pytest.mark.asyncio
@@ -1151,8 +1149,7 @@ async def test_cancel_booking_quisiera_variant_es():
     """'quisiera cancelar mi reserva' también activa la detección."""
     state = make_state()
     await route_message(state, "quisiera cancelar mi reserva")
-    button_values = [b["value"] for b in state.quick_replies]
-    assert "asesor" in button_values
+    assert state.step == Step.ESCALATE
 
 
 @pytest.mark.asyncio
@@ -1160,8 +1157,7 @@ async def test_cancel_booking_anular_variant_es():
     """'anular mi reserva' debe activar el detector."""
     state = make_state()
     await route_message(state, "anular mi reserva")
-    button_values = [b["value"] for b in state.quick_replies]
-    assert "asesor" in button_values
+    assert state.step == Step.ESCALATE
 
 
 @pytest.mark.asyncio
@@ -1169,19 +1165,17 @@ async def test_cancel_booking_accent_insensitive_es():
     """Con tildes ('cancelar mi reservación') también debe detectarse."""
     state = make_state()
     await route_message(state, "necesito cancelar mi reservación")
-    button_values = [b["value"] for b in state.quick_replies]
-    assert "asesor" in button_values
+    assert state.step == Step.ESCALATE
 
 
 @pytest.mark.asyncio
-async def test_cancel_booking_explicit_en_shows_policy_and_buttons():
-    """'cancel my booking' → policy text + advisor/home buttons (EN)."""
+async def test_cancel_booking_explicit_en_shows_policy_and_hands_off():
+    """'cancel my booking' → policy text + direct handoff (EN)."""
     state = make_state(lang="en")
     resp = await route_message(state, "cancel my booking")
     assert "terms" in resp.lower() or "condition" in resp.lower() or "cancel" in resp.lower()
-    button_values = [b["value"] for b in state.quick_replies]
-    assert "asesor" in button_values
-    assert "inicio" in button_values
+    assert state.step == Step.ESCALATE
+    assert not state.quick_replies  # el «menú principal» ya no existe
 
 
 @pytest.mark.asyncio
@@ -1189,8 +1183,7 @@ async def test_cancel_booking_how_do_i_cancel_en():
     """'how do i cancel my booking' also triggers detection (EN)."""
     state = make_state(lang="en")
     await route_message(state, "how do i cancel my booking")
-    button_values = [b["value"] for b in state.quick_replies]
-    assert "asesor" in button_values
+    assert state.step == Step.ESCALATE
 
 
 @pytest.mark.asyncio
@@ -1203,14 +1196,13 @@ async def test_cancel_advisor_button_escalates():
 
 
 @pytest.mark.asyncio
-async def test_reschedule_explicit_es_shows_policy_and_buttons():
-    """'cambiar la fecha' → reschedule policy text + advisor/home buttons."""
+async def test_reschedule_explicit_es_shows_policy_and_hands_off():
+    """'cambiar la fecha' → reschedule policy text + direct handoff."""
     state = make_state()
     resp = await route_message(state, "cambiar la fecha de mi reserva")
     assert "fecha" in resp.lower() or "disponibilidad" in resp.lower() or "condiciones" in resp.lower()
-    button_values = [b["value"] for b in state.quick_replies]
-    assert "asesor" in button_values
-    assert "inicio" in button_values
+    assert state.step == Step.ESCALATE
+    assert not state.quick_replies  # el «menú principal» ya no existe
 
 
 @pytest.mark.asyncio
@@ -1218,8 +1210,7 @@ async def test_reschedule_quisiera_variant_es():
     """'quisiera cambiar la fecha' también activa la detección."""
     state = make_state()
     await route_message(state, "quisiera cambiar la fecha")
-    button_values = [b["value"] for b in state.quick_replies]
-    assert "asesor" in button_values
+    assert state.step == Step.ESCALATE
 
 
 @pytest.mark.asyncio
@@ -1227,18 +1218,16 @@ async def test_reschedule_reprogramar_variant_es():
     """'reprogramar mi reserva' activa la detección."""
     state = make_state()
     await route_message(state, "reprogramar mi reserva")
-    button_values = [b["value"] for b in state.quick_replies]
-    assert "asesor" in button_values
+    assert state.step == Step.ESCALATE
 
 
 @pytest.mark.asyncio
-async def test_reschedule_explicit_en_shows_policy_and_buttons():
-    """'reschedule my booking' → reschedule policy text + advisor/home buttons (EN)."""
+async def test_reschedule_explicit_en_shows_policy_and_hands_off():
+    """'reschedule my booking' → reschedule policy text + direct handoff (EN)."""
     state = make_state(lang="en")
     await route_message(state, "reschedule my booking")
-    button_values = [b["value"] for b in state.quick_replies]
-    assert "asesor" in button_values
-    assert "inicio" in button_values
+    assert state.step == Step.ESCALATE
+    assert not state.quick_replies  # el «menú principal» ya no existe
 
 
 @pytest.mark.asyncio
@@ -1246,8 +1235,7 @@ async def test_reschedule_i_would_like_to_reschedule_en():
     """'i'd like to reschedule' triggers detection (EN)."""
     state = make_state(lang="en")
     await route_message(state, "i'd like to reschedule my booking")
-    button_values = [b["value"] for b in state.quick_replies]
-    assert "asesor" in button_values
+    assert state.step == Step.ESCALATE
 
 
 
