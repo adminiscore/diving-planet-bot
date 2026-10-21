@@ -200,6 +200,13 @@ services:
       # pasan por el origen). Revert = quitar estas dos líneas.
       BARU_SALE_DE_CARTAGENA: "true"
       ORIGEN_SIN_TITULO_SUELTO: "true"
+      # gen-4 (Álvaro, 21-oct): vivir, trabajar o haber nacido en Colombia no hace colombiano; cuenta quien dice que lo
+      # es («soy de Medellín» también) o que tiene cédula de extranjería, y la pregunta nombra la cédula. El colombiano
+      # pasa a un asesor para el pago en COP, sin «confirmar disponibilidad» y en su número (decisiones de Gadea del
+      # 21-oct). PROMOCIONADO 21-oct (gen4-B2 frente a gen4-A2; las regresiones no pasan por la nacionalidad). Revert =
+      # quitar estas dos líneas.
+      VIVIR_NO_ES_RESIDIR: "true"
+      PAGO_COLOMBIANO_CON_ASESOR: "true"
       # CERTIFICADO_SOLO_SI_LO_DICE con «buceé hace poco» = certificado (decisión de Gadea). PROMOCIONADO (HISTORY
       # 0.31.61: mod-H2 97,0 % igual que limpieza-3; reserva-solo-link ya no ofrece el minicurso). Revert = quitar estas líneas.
       CERTIFICADO_SOLO_SI_LO_DICE: "true"
