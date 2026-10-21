@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-21T17:22:08+00:00",
-  "commit": "9d2c938",
+  "generado": "2026-10-21T17:29:20+00:00",
+  "commit": "163fbca",
   "rama": "feature/gen8-alvaro"
  },
  "vistas": {
@@ -683,6 +683,13 @@
     {
      "nombre": "gentilicio_es_colombiano",
      "titulo": "Ser de una ciudad de Colombia es ser colombiano",
+     "codigo": false,
+     "pre": false,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "rag_espera_la_nacionalidad",
+     "titulo": "El precio en la moneda que acaba de decir el cliente",
      "codigo": false,
      "pre": false,
      "sin_efecto": false
@@ -2938,6 +2945,19 @@
    "fijado_en_pre": true,
    "usado_por": [
     "info"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "rag_espera_la_nacionalidad",
+   "area": "Preguntas",
+   "titulo": "El precio en la moneda que acaba de decir el cliente",
+   "texto": "Si el cliente dice de dónde es en el mismo mensaje en que pregunta un precio ('Somos de Cali, ¿cuánto vale?'), la respuesta ya sale en pesos. Antes la respuesta se escribía antes de apuntar la nacionalidad y salía en dólares.",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
+   "usado_por": [
+    "b_extraction"
    ],
    "sin_efecto": null
   },
