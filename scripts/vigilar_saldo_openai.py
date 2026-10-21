@@ -50,7 +50,9 @@ def comprobar(cliente=None, pausa: float = 5.0) -> tuple[bool, str]:
     motivo = ""
     for intento in range(REINTENTOS):
         try:
-            cliente.chat.completions.create(model=MODELO, max_tokens=1,
+            # mej-5 (21-oct, Gonzalo): los gpt-5 rechazan `max_tokens` (400 "Unsupported parameter") y la alarma saltaba
+            # siempre, con o sin saldo; hoy, sin crédito a las 12:45, no se distinguía. 16, porque razona.
+            cliente.chat.completions.create(model=MODELO, max_completion_tokens=16,
                                             messages=[{"role": "user", "content": "ok"}])
             return True, "OpenAI contesta"
         except Exception as exc:  # noqa: BLE001
