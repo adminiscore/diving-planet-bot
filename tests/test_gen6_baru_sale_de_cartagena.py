@@ -82,4 +82,5 @@ async def test_el_extractor_pone_cartagena_por_baru(con_flag):
 def test_apagado_todo_igual(monkeypatch):
     monkeypatch.setattr(settings, "baru_no_es_rosario", True)
     monkeypatch.setattr(settings, "baru_sale_de_cartagena", False)
+    monkeypatch.setattr(settings, "hoteles_de_la_base", False)  # gen-15 añade los hoteles a la misma pregunta
     assert jr._questions_for_turn()[jr.CUSTOMER_PLACE] is jr._CUSTOMER_PLACE_Q_SIN_BARU
