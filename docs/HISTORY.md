@@ -1,6 +1,29 @@
 History
 =======
 
+0.31.87 - (2026-10-21)
+----------------------
+* **mej-1d: fuera 13 interruptores ya promocionados** (Álvaro con Claude, `feature/mej1d-alvaro`). Las reglas son
+  las de la 1b (0.31.78): se queda el camino promocionado y se quita el viejo. PRE no cambia: todos estaban
+  encendidos.
+  - Promocionados del 1 al 13 de octubre (más de una semana):
+    - De Jev: `notas_puerta_jev`, `jev_persona_ya_contada`, `jev_lugar_cliente` y `posventa_sin_vender`.
+    - Del extractor: `nombre_por_extractor` (fuera también la regex vieja de «soy X») y `extractor_precio_elige`
+      (con `precio_no_elige` apagado vale su regla V2, como hoy).
+    - De la puerta del origen: `rag_origen_pregunta` y `origen_conserva_respuesta`. El camino que usa ord-7 queda
+      siempre encendido.
+    - Resto: `rag_plan_nombrado`, `grupo_privado_pase`, `atajo_nacionalidad_por_rag` y
+      `escalado_solo_emergencias`.
+  - `moneda_sin_nacionalidad_usd` (16-oct; decisión de Gadea, Coral #976): la regla de USD sin nacionalidad va
+    escrita en el catálogo, sin sustituirla al vuelo.
+  - **Equivalencia sin gastar.** Con el código de antes (a29ce06) y el de después se compararon las preguntas de
+    Jev (6 casillas pendientes), la llamada entera del extractor en ES y EN, el catálogo, el prompt del RAG y el
+    resumen de la moneda. Todo sale idéntico, letra por letra. Por eso no hay ronda.
+  - Tests: los de la rama vieja, fuera. Los parametrizados se quedan con el caso encendido. Lo médico, el tiempo
+    y las quejas, que antes pasaban por palabra clave, ahora se prueban con la señal de Jev. Suite completa en
+    verde. Mapa regenerado.
+  - Quedan para una segunda parte los restos del veto de 1a (`verify_fields`, `extract_and_verify` y su prompt).
+
 0.31.85 - (2026-10-21)
 ----------------------
 * **gen-14 PROMOCIONADO** (Álvaro con Claude; integrado por Gadea con Claude): `gentilicio_es_colombiano` y

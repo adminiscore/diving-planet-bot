@@ -34,10 +34,15 @@ def _idioma(texto: str) -> str:
 
 
 def _por_lista(texto: str, lang: str, variante: str) -> str | None:
-    """La categoría que caza la lista de palabras clave (hoy, o con `escalado_solo_emergencias`), o None."""
-    settings.escalado_solo_emergencias = variante == "ex2"
-    found = escalation.detect_sensitive_escalation(texto, lang)
-    settings.escalado_solo_emergencias = False
+    """La categoría que caza la lista de palabras clave (la entera de antes, o la de ex-2), o None. mej-1d: ex-2 ya
+    no lleva interruptor; la lista entera se reproduce sustituyendo un momento `_active_rules`."""
+    activas = escalation._active_rules
+    if variante == "hoy":
+        escalation._active_rules = lambda: escalation.SENSITIVE_RULES
+    try:
+        found = escalation.detect_sensitive_escalation(texto, lang)
+    finally:
+        escalation._active_rules = activas
     return found[0] if found else None
 
 

@@ -221,14 +221,6 @@ class Settings(BaseSettings):
     # si se SABE que el plan es de un dia; ...). PROMOCIONADO 14-oct tras est3-B (HISTORY 0.31.25).
     # Revert = False aqui y en el compose.
     est2_datos: bool = True
-    # CAL-B (15-oct, Gonzalo; decision de Gadea del 15-oct): sin saber la nacionalidad, el precio va en USD. La regla del
-    # catalogo decia "si no sabes la nacionalidad, da las dos monedas" (catalog.MONEDA_SIN_NACIONALIDAD) y el resumen del
-    # estado no decia nada: con el flag, la regla del catalogo es la de Gadea y el resumen da la moneda ya resuelta.
-    # Banco de fallos (8 casos x 3): fallan 12/24 -> 7/24 (6 de los 7 son del choque con la regla del origen).
-    # Mini-ronda calb-A2/B2 (16-oct, 24 dialogos, con credito): 92,7 -> 95,4 %, 12 -> 17/24 sin fallos, 9 mejoras / 5
-    # regresiones (2 por criterios desfasados o el choque con el origen, 3 ajenas). PROMOCIONADO 16-oct (decision de Alvaro;
-    # HISTORY 0.31.35). Revert = False aqui.
-    moneda_sin_nacionalidad_usd: bool = True
     # ex-3 (fase EX): respuestas de texto fijo ACTIVAS que pasan al RAG, una por flag (inventario y motivos:
     # docs/robustness/atajos/inventario-ex3.md). APAGADOS hasta medirlos.
     # (El del resumen de "¿qué ofrecen para bucear?", `atajo_resumen_por_rag`, promocionado el 13-oct, ya no tiene flag:
