@@ -1,8 +1,8 @@
 {
  "meta": {
-  "generado": "2026-10-21T12:39:23+00:00",
-  "commit": "0f26fe8",
-  "rama": "feature/pre_gadea"
+  "generado": "2026-10-21T12:48:03+00:00",
+  "commit": "1e6a5e5",
+  "rama": "feature/gen8-alvaro"
  },
  "vistas": {
   "general": {
@@ -676,6 +676,13 @@
     {
      "nombre": "vivir_no_es_residir",
      "titulo": "Vivir en Colombia no es ser residente",
+     "codigo": false,
+     "pre": false,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "pago_colombiano_con_asesor",
+     "titulo": "El pago de un colombiano lo coordina un asesor",
      "codigo": false,
      "pre": false,
      "sin_efecto": false
@@ -2760,6 +2767,19 @@
    "fijado_en_pre": true,
    "usado_por": [
     "b_slotfill_close"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "pago_colombiano_con_asesor",
+   "area": "Reserva",
+   "titulo": "El pago de un colombiano lo coordina un asesor",
+   "texto": "Al cerrar la reserva de un colombiano, Coral le pasa con un asesor para coordinar el pago en pesos, sin decir que hay que 'confirmar disponibilidad' (siempre hay) y en su número ('puedes pagar' a quien va solo). Antes de cerrar, la respuesta a sus preguntas no le da el link de reserva.",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
+   "usado_por": [
+    "b_extraction"
    ],
    "sin_efecto": null
   },
