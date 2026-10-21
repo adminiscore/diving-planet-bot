@@ -770,6 +770,24 @@ def _http() -> httpx.AsyncClient:
     return _client
 
 
+def _medir_jev(resp: httpx.Response | None, t0: float) -> None:
+    """mej-5 (21-oct): Jev va por su propio cliente HTTP, fuera del cliente medido de OpenAI, y no salía en las
+    métricas del turno (ni su coste ni sus fallos: el 21-oct, con la clave de OpenRouter en su límite, Jev daba 403 en
+    todos los turnos y no se veía en [TURN_METRICS]). Su respuesta trae `usage` (tokens y coste en dólares)."""
+    from src.observability import record_llm_call  # lazy
+
+    try:
+        uso = None
+        if resp is not None and resp.status_code < 400:
+            u = (resp.json() or {}).get("usage") or {}
+            uso = {k: v for k, v in {"in": u.get("input_tokens"), "out": u.get("output_tokens"),
+                                     "usd": u.get("cost")}.items() if v} or None
+        record_llm_call("chat", time.perf_counter() - t0, settings.jev_model, pieza="jev", inicio=t0,
+                        status=resp.status_code if resp is not None else 599, uso=uso)
+    except Exception:  # noqa: BLE001 — medir nunca rompe una llamada
+        pass
+
+
 UNCERTAIN = "uncertain"  # Jev respondió pero duda: el turno lo decide el router LLM
 
 # CAL-E5 (16-oct, flag `jev_con_contexto`): Jev contestaba las señales viendo SOLO el mensaje del turno, así que un
@@ -833,6 +851,7 @@ async def detect_routing_signals_jev_full(
     if not key or not message or not message.strip():
         return None, {}
     t0 = time.perf_counter()
+    resp = None
     try:
         resp = await _http().post(
             JEV_URL,
@@ -844,6 +863,7 @@ async def detect_routing_signals_jev_full(
             },
             timeout=settings.jev_timeout_seconds,
         )
+        _medir_jev(resp, t0)
         resp.raise_for_status()
         answers = resp.json()["answers"]
         signals = answers_to_signals(answers)
@@ -858,6 +878,8 @@ async def detect_routing_signals_jev_full(
             extras[PENDING_ANSWER] = pending_answer_value(pending_slot, answers[PENDING_ANSWER])
     except Exception as exc:  # noqa: BLE001 — cualquier fallo cae al router LLM
         ms = (time.perf_counter() - t0) * 1000
+        if resp is None:
+            _medir_jev(None, t0)  # timeout o sin conexión: también cuenta como llamada fallida
         logger.warning(f"[ROUTER][JEV] fallo en {ms:.0f} ms, se usa el router LLM: {type(exc).__name__}: {exc}")
         return None, {}
     ms = (time.perf_counter() - t0) * 1000
