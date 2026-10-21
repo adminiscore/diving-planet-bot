@@ -32,6 +32,7 @@ import sys
 from datetime import UTC, datetime
 from pathlib import Path
 
+from scripts import run_synthetic_pre
 from scripts.run_synthetic_pre import load_batches, select_cases
 
 RUNS_DIR = Path("docs/robustness/synthetic-runs")
@@ -100,9 +101,13 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--env", action="append", default=[], metavar="CLAVE=VALOR",
                     help="variable de entorno SOLO en este proceso (para lo que se lee al importar); repetible")
     ap.add_argument("--paralelo", type=int, default=4, help="diálogos a la vez dentro del contenedor (por defecto 4)")
+    ap.add_argument("--golden", help="con --sample golden: otro fichero de diálogos con el mismo formato (los exámenes "
+                                     "ocultos G9/G10: se pasan UNA sola vez y nadie los abre)")
     ap.add_argument("--dry", action="store_true")
     args = ap.parse_args(argv)
 
+    if args.golden:
+        run_synthetic_pre.GOLDEN_FILE = Path(args.golden)
     casos = select_cases(load_batches(), args.sample, None)
     if args.ids:
         quiero = set(args.ids.split(","))
