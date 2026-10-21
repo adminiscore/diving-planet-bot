@@ -4,7 +4,8 @@ name: Vigilar saldo de OpenAI (PRE)
 # mínima (1 token) que la cuenta de OpenAI de PRE puede contestar, DENTRO del contenedor del bot y con su clave
 # (`scripts/vigilar_saldo_openai.py`). Si no puede (sin saldo, clave inválida, caído), el job falla -> GitHub manda
 # un correo; y si el chat del equipo tiene la identidad `vigilante` (CORAL_TOKENS en /opt/coral-hub/.env), escribe un
-# aviso en Coral. No toca el bot ni los datos. Ojo: GitHub solo ejecuta los `schedule` del fichero que está en la
+# aviso en Coral. mej-5 (21-oct): también avisa si a OpenRouter (cuenta o límite de la clave) le quedan menos de 5 $.
+# No toca el bot ni los datos. Ojo: GitHub solo ejecuta los `schedule` del fichero que está en la
 # rama por defecto (main); hasta que llegue ahí, se puede lanzar a mano (workflow_dispatch).
 
 on:
@@ -26,7 +27,7 @@ jobs:
 
       # Mismo patrón que el deploy: el script remoto va por STDIN (heredoc), inmune a comillas. Sin `set -x`: no se
       # imprime el token de Coral.
-      - name: Comprobar que OpenAI contesta con la clave de PRE
+      - name: Comprobar que OpenAI contesta y que a OpenRouter le queda saldo, con las claves de PRE
         run: |
           ssh -i ~/.ssh/pre_vps root@${{ secrets.PRE_VPS_HOST }} bash -s <<'REMOTE'
           set -uo pipefail

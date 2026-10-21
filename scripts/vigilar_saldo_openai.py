@@ -11,6 +11,9 @@ suelto no es falta de saldo: se reintenta. Nunca imprime la clave ni el token.
 
 Por qué (17-oct): esta semana PRE se quedó mudo dos veces porque se acabó el crédito, y nadie se enteró hasta que
 alguien probó el bot. Coste: ~1 token por hora.
+
+mej-5 (21-oct): también vigila OpenRouter (saldo de la cuenta y límite de la clave, sin gastar nada; ver
+`comprobar_openrouter`). Sale con 2 si cualquiera de los dos da alarma.
 """
 from __future__ import annotations
 
@@ -64,14 +67,60 @@ def comprobar(cliente=None, pausa: float = 5.0) -> tuple[bool, str]:
     return False, motivo
 
 
+# mej-5 (21-oct): el 21-oct OpenAI se vació tres veces en una tarde y la causa fue OPENROUTER: su clave llegó a su
+# límite (403 "Key limit exceeded"), todo lo de OpenRouter (Jev, el extractor, el revisor) fallaba y el bot lo repetía
+# en OpenAI (~17 llamadas por turno). OpenRouter dice cuánto queda SIN gastar nada: el saldo de la cuenta
+# (GET /credits) y el límite de la clave (GET /key). Se avisa antes de llegar a cero.
+UMBRAL_OPENROUTER_USD = 5.0
+
+
+def _leer_openrouter(ruta: str, clave: str, base: str, abrir) -> dict:
+    peticion = urllib.request.Request(f"{base.rstrip('/')}{ruta}", headers={"Authorization": f"Bearer {clave}"})
+    with abrir(peticion, timeout=15) as r:
+        return json.loads(r.read() or b"{}").get("data") or {}
+
+
+def comprobar_openrouter(abrir=None, clave: str | None = None, base: str | None = None,
+                         umbral: float = UMBRAL_OPENROUTER_USD) -> tuple[bool, str]:
+    """(ok, motivo) de la cuenta y la clave de OpenRouter, sin gastar: alarma si a la cuenta o al límite de la clave
+    les quedan menos de `umbral` dólares, o si OpenRouter rechaza la clave. Sin clave configurada, no se vigila."""
+    if clave is None or base is None:
+        from src.config import settings
+
+        clave = settings.openrouter_api_key if clave is None else clave
+        base = settings.openrouter_base_url if base is None else base
+    if not clave:
+        return True, "sin clave de OpenRouter: no se vigila"
+    abrir = abrir or urllib.request.urlopen
+    try:
+        cuenta = _leer_openrouter("/credits", clave, base, abrir)
+        llave = _leer_openrouter("/key", clave, base, abrir)
+    except Exception as exc:  # noqa: BLE001
+        codigo = getattr(exc, "code", None)
+        if codigo in (401, 402, 403):
+            return False, f"OpenRouter rechaza la clave o no tiene saldo ({codigo})"
+        return False, f"OpenRouter no responde ({codigo or type(exc).__name__})"
+    quedan = []
+    if isinstance(cuenta.get("total_credits"), (int, float)) and isinstance(cuenta.get("total_usage"), (int, float)):
+        resto = cuenta["total_credits"] - cuenta["total_usage"]
+        quedan.append(("a la cuenta", resto))
+    if isinstance(llave.get("limit_remaining"), (int, float)):
+        quedan.append(("al límite de la clave", llave["limit_remaining"]))
+    poco = [(donde, resto) for donde, resto in quedan if resto < umbral]
+    if poco:
+        return False, "; ".join(f"OpenRouter: le quedan {resto:.2f} $ {donde}" for donde, resto in poco)
+    detalle = ", ".join(f"{resto:.2f} $ {donde}" for donde, resto in quedan) or "sin datos de saldo"
+    return True, f"OpenRouter contesta ({detalle})"
+
+
 def avisar_en_coral(motivo: str) -> str:
     url = os.environ.get("CORAL_URL", "").rstrip("/")
     token = os.environ.get("CORAL_TOKEN_VIGILANTE", "")
     if not url or not token:
         return "sin identidad 'vigilante' en Coral: solo el correo de GitHub"
-    texto = (f"⚠️ ALERTA: la cuenta de OpenAI de PRE no puede contestar: {motivo}. El bot dice a los clientes que hay "
-             "un problema técnico y los pasa a un asesor (si AVISO_SI_OPENAI_FALLA está encendido). Revisad el saldo "
-             "y la clave de OpenAI.")
+    texto = (f"⚠️ ALERTA de saldo de PRE: {motivo}. Si OpenAI no contesta, el bot dice a los clientes que hay un "
+             "problema técnico y los pasa a un asesor (si AVISO_SI_OPENAI_FALLA está encendido); si se acaba "
+             "OpenRouter, el bot lo repite todo en OpenAI y lo vacía. Revisad el saldo y las claves.")
     peticion = urllib.request.Request(
         f"{url}/api/mensajes", method="POST",
         data=json.dumps({"texto": texto, "tipo": "aviso", "para": "todos"}).encode("utf-8"),
@@ -87,13 +136,15 @@ def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--coral", action="store_true", help="si falla, avisar también en Coral (identidad 'vigilante')")
     args = ap.parse_args(argv)
-    ok, motivo = comprobar()
-    if ok:
-        print(f"[SALDO][OPENAI] ok: {motivo}")
+    alarmas = []
+    for pieza, (ok, motivo) in (("OPENAI", comprobar()), ("OPENROUTER", comprobar_openrouter())):
+        print(f"[SALDO][{pieza}] {'ok' if ok else 'ALERTA'}: {motivo}")
+        if not ok:
+            alarmas.append(motivo)
+    if not alarmas:
         return 0
-    print(f"[SALDO][OPENAI] ALERTA: {motivo}")
     if args.coral:
-        print(f"[SALDO][OPENAI] {avisar_en_coral(motivo)}")
+        print(f"[SALDO] {avisar_en_coral('; '.join(alarmas))}")
     return 2
 
 
