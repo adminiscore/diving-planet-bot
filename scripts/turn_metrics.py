@@ -111,6 +111,53 @@ def build(turns: list[dict], label: str, start: str, end: str) -> dict:
         "models": dict(models.most_common()),
         "rag_adelantado": rag_adelantado(turns),
         "por_pieza": por_pieza(turns),
+        "coste": coste(turns),
+    }
+
+
+def coste(turns: list[dict]) -> dict:
+    """mej-5 (21-oct): dólares y tokens de la ronda, por proveedor, pieza, modelo y conversación. OpenRouter trae su
+    coste en cada llamada ("usd"); OpenAI se calcula con `scripts/precios_llm`. Las llamadas sin tokens (métricas de
+    antes del 21-oct, o un fallo) no suman; las de un modelo sin precio se cuentan aparte en `sin_precio`."""
+    from scripts.precios_llm import FECHA, coste_openai
+
+    total = {"openai": 0.0, "openrouter": 0.0}
+    piezas: dict[str, dict] = defaultdict(lambda: {"usd": 0.0, "in": 0, "out": 0, "n": 0})
+    modelos: dict[str, float] = defaultdict(float)
+    por_conv: dict[str, float] = defaultdict(float)
+    sin_precio: Counter = Counter()
+    for t in turns:
+        for c in t.get("llamadas") or []:
+            u = c.get("u") or {}
+            if not u:
+                continue
+            if "usd" in u:
+                usd, proveedor = float(u["usd"]), "openrouter"
+            else:
+                usd, proveedor = coste_openai(c.get("m"), u.get("in", 0), u.get("ca", 0), u.get("out", 0)), "openai"
+                if usd is None:
+                    sin_precio[c.get("m") or "?"] += 1
+                    continue
+            total[proveedor] += usd
+            pieza = piezas[c.get("p") or "?"]
+            pieza["usd"] += usd
+            pieza["in"] += u.get("in", 0) or 0
+            pieza["out"] += u.get("out", 0) or 0
+            pieza["n"] += 1
+            modelos[c.get("m") or "?"] += usd
+            por_conv[str(t.get("session"))] += usd
+    n = len(turns) or 1
+    convs = sorted(por_conv.values())
+    return {
+        "precios": FECHA,
+        "usd": round(total["openai"] + total["openrouter"], 4),
+        "openai_usd": round(total["openai"], 4),
+        "openrouter_usd": round(total["openrouter"], 4),
+        "usd_por_100_turnos": round((total["openai"] + total["openrouter"]) * 100 / n, 4),
+        "por_conversacion": {"n": len(convs), "p50": _pct(convs, 50), "max": round(max(convs), 4) if convs else None},
+        "por_pieza": {p: {**v, "usd": round(v["usd"], 4)} for p, v in sorted(piezas.items(), key=lambda kv: -kv[1]["usd"])},
+        "por_modelo": {m: round(v, 4) for m, v in sorted(modelos.items(), key=lambda kv: -kv[1])},
+        "sin_precio": dict(sin_precio),
     }
 
 
@@ -152,7 +199,19 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--to", dest="end")
     parser.add_argument("--from-run", help="JSONL de scripts.run_synthetic_pre: fija la ventana y añade el tiempo del cliente")
     parser.add_argument("--out")
+    parser.add_argument("--metricas", help="fichero .metricas de ronda_local_pre --metricas (sin ir al log de PRE)")
     args = parser.parse_args(argv)
+
+    if args.metricas:
+        # mej-5: las métricas que guarda la ronda sin desplegar (una línea JSON por turno, sin la etiqueta).
+        with open(args.metricas, encoding="utf-8") as fh:
+            turns = parse_lines(f"{TAG} {line}" for line in fh if line.strip())
+        snapshot = build(turns, args.label, turns[0]["start"] if turns else "", turns[-1]["start"] if turns else "")
+        text = json.dumps(snapshot, ensure_ascii=False, indent=2)
+        if args.out:
+            Path(args.out).write_text(text + "\n", encoding="utf-8")
+        print(text)
+        return 0
 
     run_records = None
     if args.from_run:

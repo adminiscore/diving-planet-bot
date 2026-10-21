@@ -76,7 +76,69 @@ def test_sin_identidad_vigilante_no_escribe_en_coral(monkeypatch):
     assert "solo el correo" in v.avisar_en_coral("sin saldo")
 
 
+class _Respuesta:
+    def __init__(self, datos):
+        self._cuerpo = __import__("json").dumps({"data": datos}).encode()
+
+    def read(self):
+        return self._cuerpo
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *a):
+        return False
+
+
+def _abrir(credits=None, key=None, error=None):
+    def abrir(peticion, timeout=15):
+        if error is not None:
+            raise error
+        return _Respuesta(credits if peticion.full_url.endswith("/credits") else key)
+    return abrir
+
+
+def _or(abrir):
+    return v.comprobar_openrouter(abrir=abrir, clave="sk-or-falsa", base="https://openrouter.ai/api/v1", umbral=5)
+
+
+def test_openrouter_con_saldo_es_ok():
+    ok, motivo = _or(_abrir({"total_credits": 35, "total_usage": 10}, {"limit": None, "limit_remaining": None}))
+    assert ok and "25.00 $ a la cuenta" in motivo
+
+
+def test_openrouter_con_poco_saldo_en_la_cuenta_es_alarma():
+    """El 21-oct a la cuenta le quedaban 3,06 $ de 35: se avisa antes de llegar a cero."""
+    ok, motivo = _or(_abrir({"total_credits": 35, "total_usage": 31.94}, {"limit": None, "limit_remaining": None}))
+    assert not ok and "3.06 $ a la cuenta" in motivo
+
+
+def test_openrouter_con_la_clave_cerca_de_su_limite_es_alarma():
+    """El 21-oct la clave llegó a su límite de 30 $ (403 'Key limit exceeded') con saldo en la cuenta."""
+    ok, motivo = _or(_abrir({"total_credits": 100, "total_usage": 30}, {"limit": 30, "limit_remaining": 0.5}))
+    assert not ok and "límite de la clave" in motivo
+
+
+@pytest.mark.parametrize("codigo", [401, 402, 403])
+def test_openrouter_que_rechaza_la_clave_es_alarma(codigo):
+    error = type("HTTPError", (Exception,), {})()
+    error.code = codigo
+    ok, motivo = _or(_abrir(error=error))
+    assert not ok and str(codigo) in motivo
+
+
+def test_sin_clave_de_openrouter_no_se_vigila():
+    assert v.comprobar_openrouter(abrir=_abrir(error=AssertionError("no debe llamar")), clave="", base="x")[0]
+
+
+def test_main_sale_con_2_si_solo_falla_openrouter(monkeypatch):
+    monkeypatch.setattr(v, "comprobar", lambda: (True, "OpenAI contesta"))
+    monkeypatch.setattr(v, "comprobar_openrouter", lambda: (False, "OpenRouter: le quedan 1.00 $ a la cuenta"))
+    assert v.main([]) == 2
+
+
 def test_main_sale_con_2_y_no_imprime_el_token(monkeypatch, capsys):
+    monkeypatch.setattr(v, "comprobar_openrouter", lambda: (True, "sin clave de OpenRouter: no se vigila"))
     monkeypatch.setattr(v, "comprobar", lambda: (False, "sin saldo (429 insufficient_quota)"))
     monkeypatch.setattr(v, "avisar_en_coral", lambda motivo: "aviso en Coral (200)")
     monkeypatch.setenv("CORAL_TOKEN_VIGILANTE", "tok-secreto-123")

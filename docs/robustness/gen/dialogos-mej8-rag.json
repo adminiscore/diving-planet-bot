@@ -1,0 +1,31 @@
+{
+ "about": "MEJ-8 (21-oct, decisiones de Gadea en Coral #976): (2) tras un REFRESHER se esperan 18 h para volar, como el buceo (son buzos certificados); las 12 h son solo para el minicurso de quien no está certificado. (3) El Advanced REQUIERE 1 noche en las islas; el alojamiento no está incluido (no 'incluye 1 noche'). Diálogos PROPIOS (ninguno sale del examen). 'espera' es lo que debe decir la última respuesta. Se corre con reproducir_juez_pre --banco: sin --codigo-local es la base desplegada; con --codigo-local, la base nueva (policies.json va entera en el contexto del RAG).",
+ "version": 1,
+ "creado": "2026-10-21",
+ "dialogos": [
+  {
+   "id": "m8-refresher-vuelo-mismo-dia",
+   "patron": "refresher y vuelo a las pocas horas",
+   "turnos": ["Hi! I'm a certified diver but haven't dived in 3 years, so I'll do the refresher on Saturday morning. My flight home is Saturday at 11 pm, is that ok?"],
+   "espera": "no: tras el refresher hay que esperar al menos 18 h (no 12)"
+  },
+  {
+   "id": "m8-minicurso-vuelo-14h",
+   "patron": "minicurso (no certificado) y vuelo 14 h después",
+   "turnos": ["Hola, nunca he buceado y quiero hacer el minicurso el viernes por la mañana. Vuelo el sábado a las 2 de la madrugada, ¿hay problema?"],
+   "espera": "sí puede: tras el minicurso el mínimo son 12 h"
+  },
+  {
+   "id": "m8-referral-y-refresher-vuelo",
+   "patron": "curso referido más refresher, pregunta por volar",
+   "turnos": ["Hola, vamos a terminar el Open Water con un referido y hacer antes un refresher. ¿Cuánto tenemos que esperar para volar después?"],
+   "espera": "18 h tras el curso y también tras el refresher"
+  },
+  {
+   "id": "m8-advanced-alojamiento",
+   "patron": "¿el Advanced incluye el alojamiento?",
+   "turnos": ["Hi, does the Advanced course include the night of accommodation on the islands?"],
+   "espera": "no: requiere al menos 1 noche en las islas, el alojamiento no está incluido"
+  }
+ ]
+}
