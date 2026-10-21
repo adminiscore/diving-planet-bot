@@ -23,16 +23,6 @@ def _grupo_camino_antiguo(monkeypatch):
     decide el extractor (tests/test_ex7_grupo.py)."""
 
 
-@pytest.fixture(autouse=True)
-def _camino_antiguo_ex2_ex3(monkeypatch):
-    """Estos tests fijan el camino de antes de ex-2/ex-3 (lista entera de palabras clave y respuestas fijas); lo nuevo
-    lo cubren tests/test_ex2_escalado.py y tests/test_ex3_atajos.py."""
-    from src.config import settings as _flags
-
-    monkeypatch.setattr(_flags, "escalado_solo_emergencias", False)
-    monkeypatch.setattr(_flags, "atajo_nacionalidad_por_rag", False)
-
-
 # ex-9b paso 3: lo que el extractor del turno lee de los mensajes de estos tests (fixture `extractor_dice` de
 # conftest). Sin él, en los tests (sin red) el extractor falla y el turno va por la rama "el extractor falló".
 # Con las reglas de `extraer_turno`: quien es buzo y quiere bucear hace buceo certificado.
@@ -671,14 +661,6 @@ async def test_menu_keyword_handled_as_normal_message_by_core():
     assert resp
 
 
-@pytest.mark.asyncio
-async def test_sensitive_medical_still_escalates_before_core():
-    state = make_state("es")
-    state.step = Step.MAIN_MENU
-    await route_message(state, "estoy embarazada, ¿puedo bucear?")
-    assert state.step == Step.ESCALATE
-
-
 # ---------------------------------------------------------------------------
 # Fix A del handoff (2026-07-22 tarde): el gap-fill del núcleo debe loguear en
 # el MISMO formato que el cutover ([EXTRACT][CUTOVER] applied={...} msg='...'),
@@ -1020,7 +1002,7 @@ async def test_recall_refresher_field_not_yet_known_falls_back():
 # ── Nombre del cliente desde el mensaje + acuse cálido (2026-07-22) ───────────
 
 @pytest.mark.parametrize("msg,expected", [
-    ("hola soy rocio, quiero hacer buceo, tengo el AOWD", "Rocio"),
+    ("hola soy rocio, quiero hacer buceo, tengo el AOWD", None),  # "soy X" lo decide el extractor (13-oct)
     ("me llamo Ana y quiero snorkel", "Ana"),
     ("mi nombre es Carlos", "Carlos"),
     ("my name is John", "John"),
@@ -1034,19 +1016,16 @@ async def test_recall_refresher_field_not_yet_known_falls_back():
     ("soy del equipo de pruebas del sistema", None),
 ])
 def test_capture_client_name(monkeypatch, msg, expected):
-    # El camino de la regex con "soy X" (con `nombre_por_extractor` ese caso lo decide el extractor:
-    # tests/test_nombre_y_grupo_privado.py).
-    monkeypatch.setattr(core.settings, "nombre_por_extractor", False)
+    # La regex solo con las formas sin ambigüedad; "soy X" lo decide el extractor (tests/test_nombre_y_grupo_privado.py).
     st = ConversationState(conversation_id="name")
     core._capture_client_name(st, msg)
     assert st.client_name == expected
 
 
 def test_capture_client_name_first_wins(monkeypatch):
-    monkeypatch.setattr(core.settings, "nombre_por_extractor", False)
     st = ConversationState(conversation_id="name2")
-    core._capture_client_name(st, "soy Rocio")
-    core._capture_client_name(st, "en realidad soy Ana")
+    core._capture_client_name(st, "me llamo Rocio")
+    core._capture_client_name(st, "en realidad me llamo Ana")
     assert st.client_name == "Rocio"
 
 

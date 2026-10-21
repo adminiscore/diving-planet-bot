@@ -12,25 +12,12 @@
 
 from __future__ import annotations
 
-import pytest
-
-from src.agents import escalation, jev_router, supervisor
-from src.agents import rag_agent
+from src.agents import escalation, jev_router, rag_agent, supervisor
 from src.config import settings
 from src.domain import activities as dom
 from src.flows.state import ConversationState
 from src.orchestration import router
 from src.prompts import info
-
-
-@pytest.fixture(autouse=True)
-def _camino_antiguo_ex2_ex3(monkeypatch):
-    """Estos tests fijan el camino de antes de ex-2/ex-3 (lista entera de palabras clave y respuestas fijas); lo nuevo
-    lo cubren tests/test_ex2_escalado.py y tests/test_ex3_atajos.py."""
-    from src.config import settings as _flags
-
-    monkeypatch.setattr(_flags, "escalado_solo_emergencias", False)
-    monkeypatch.setattr(_flags, "atajo_nacionalidad_por_rag", False)
 
 
 def _state(**kw) -> ConversationState:
@@ -68,7 +55,7 @@ def test_eres_un_bot_dice_que_es_la_asistente_virtual():
 def test_la_queja_pasa_a_staff_con_una_disculpa():
     _, text = escalation.sensitive_response_for("complaints_or_emergencies", "es")
     assert "Siento mucho" in text and "staff" in text
-    _, text = escalation.detect_sensitive_escalation("this is a scam, I want my money back", "en")
+    _, text = escalation.sensitive_response_for("complaints_or_emergencies", "en")
     assert "sorry" in text.lower()
 
 

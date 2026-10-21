@@ -890,8 +890,6 @@ def _jev_dice_ya_contada(state: ConversationState) -> bool:
     (adds_person < ADDS_PERSON_NOT_MAX), sino que habla de alguien que ya estaba en el grupo? Ausente = no lo
     sabemos -> se pregunta el total, como hoy. Banco ciego (frases propias, no del golden): 0/10 personas nuevas
     por debajo del umbral (la mas baja 0,45), 9/10 ya contadas por debajo."""
-    if not settings.jev_persona_ya_contada:
-        return False
     from src.agents.jev_router import ADDS_PERSON_NOT_MAX  # lazy
 
     p = getattr(state, "_jev_adds_person", None)

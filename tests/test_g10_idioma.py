@@ -99,7 +99,6 @@ def test_una_o_dos_palabras_no_cambian_el_idioma(monkeypatch):
 
 
 def test_una_respuesta_corta_no_es_un_nombre(monkeypatch):
-    monkeypatch.setattr(settings, "nombre_por_extractor", True)
     st = ConversationState(conversation_id="g10", language="es")
     st.core_pending_slot = "nationality"
     core._nombre_del_extractor(st, {"nombre": "Frances"}, "Frances")

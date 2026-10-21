@@ -35,7 +35,6 @@ def test_el_extractor_los_conoce_con_el_flag(monkeypatch, flag):
 @pytest.mark.parametrize("flag", [False, True])
 def test_jev_los_nombra_en_la_opcion_islas(monkeypatch, flag):
     monkeypatch.setattr(settings, "hoteles_de_la_base", flag)
-    monkeypatch.setattr(settings, "jev_lugar_cliente", True)
     pregunta = jev_router._questions_for_turn(None)[jev_router.CUSTOMER_PLACE]
     assert ("Eco Hotel Las Palmeras" in pregunta["criteria"]["islands"]) is flag
     assert "Eco Hotel Las Palmeras" not in pregunta["criteria"]["cartagena"]
@@ -54,7 +53,6 @@ def test_la_puerta_del_origen_no_pregunta_si_jev_esta_seguro(monkeypatch, flag, 
     from src.flows.state import ConversationState
 
     monkeypatch.setattr(settings, "hoteles_de_la_base", flag)
-    monkeypatch.setattr(settings, "rag_origen_pregunta", True)
     st = ConversationState(conversation_id="gen15", language="en")
     st._jev_lugar = lugar
     st._jev_pide_precio = True

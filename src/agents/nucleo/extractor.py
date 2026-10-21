@@ -29,10 +29,10 @@ logger = logging.getLogger("uvicorn.error")
 
 
 def _nombre_del_extractor(state: ConversationState, datos: dict | None, message: str = "") -> None:
-    """El nombre que el extractor leyó con cita (solo con el flag y si aún no lo sabemos). Una respuesta de una o dos
+    """El nombre que el extractor leyó con cita (si aún no lo sabemos). Una respuesta de una o dos
     palabras a una pregunta del bot no es presentarse (ronda flujo1-B2: "Frances", a "¿sois colombianos?", saludaba
     "Thank you…, Frances!")."""
-    if not settings.nombre_por_extractor or state.client_name or not datos:
+    if state.client_name or not datos:
         return
     if state.core_pending_slot and len((message or "").split()) <= 2:
         return
@@ -315,7 +315,7 @@ def _amplia(nuevo: dict, antes: dict) -> bool:
 def _jev_dice_que_nadie_se_suma(state: ConversationState) -> bool:
     """ex-9b paso 6 (`reparto_al_sumarse_alguien`, con `jev_persona_ya_contada`): ¿Jev está SEGURO de que el mensaje no
     suma a una persona nueva (adds_person < ADDS_PERSON_NOT_MAX, la puerta de s4-26)? Ausente = no lo sabemos."""
-    if not (settings.reparto_al_sumarse_alguien and settings.jev_persona_ya_contada):
+    if not settings.reparto_al_sumarse_alguien:
         return False
     from src.agents.jev_router import ADDS_PERSON_NOT_MAX  # lazy
 

@@ -136,16 +136,15 @@ def _private_group_event_answer(lang: str) -> str:
 def private_group_event_reply(state: ConversationState) -> str:
     """La respuesta del grupo privado / evento de empresa, la misma desde el supervisor y desde el nodo `info`.
 
-    13-oct (flag `grupo_privado_pase`; hallazgo de ex-3, HISTORY 0.31.17): la respuesta dice "Te paso con un asesor"
-    pero no marcaba el pase; solo llegaba a una persona si el cliente contestaba "sí/ok" justo después. Con el flag se
+    13-oct (`grupo_privado_pase`, promocionado; hallazgo de ex-3, HISTORY 0.31.17): la respuesta dice "Te paso con un
+    asesor" pero no marcaba el pase; solo llegaba a una persona si el cliente contestaba "sí/ok" justo después. Se
     marca como cualquier otro pase (motivo + resumen para el asesor); `channels/chatwoot` lo ejecuta al enviar."""
-    if settings.grupo_privado_pase:
-        reason = "grupo privado o evento de empresa: cotización a medida"
-        state.step = Step.ESCALATE
-        state.quick_replies = []
-        state.pending_escalation_reason = reason
-        state.pending_note = build_lead_summary(state, escalation_reason=reason)
-        logger.info("[SUPERVISOR] grupo privado / empresa -> pase a un asesor")
+    reason = "grupo privado o evento de empresa: cotización a medida"
+    state.step = Step.ESCALATE
+    state.quick_replies = []
+    state.pending_escalation_reason = reason
+    state.pending_note = build_lead_summary(state, escalation_reason=reason)
+    logger.info("[SUPERVISOR] grupo privado / empresa -> pase a un asesor")
     return _private_group_event_answer(state.language)
 
 

@@ -19,16 +19,6 @@ from src.orchestration.state import (
 )
 
 
-@pytest.fixture(autouse=True)
-def _camino_antiguo_ex2_ex3(monkeypatch):
-    """Estos tests fijan el camino de antes de ex-2/ex-3 (lista entera de palabras clave y respuestas fijas); lo nuevo
-    lo cubren tests/test_ex2_escalado.py y tests/test_ex3_atajos.py."""
-    from src.config import settings as _flags
-
-    monkeypatch.setattr(_flags, "escalado_solo_emergencias", False)
-    monkeypatch.setattr(_flags, "atajo_nacionalidad_por_rag", False)
-
-
 def make_state(**over) -> ConversationState:
     s = ConversationState(conversation_id="router-test")
     s.step = Step.MAIN_MENU  # fuera de WELCOME/LANGUAGE (donde availability se ignora)
@@ -45,10 +35,6 @@ def test_pii_routes_to_safety():
 
 def test_broken_link_keyword_routes_to_safety():
     assert classify_route(make_state(), "el link de pago no funciona", {}) == ROUTE_SAFETY
-
-
-def test_sensitive_medical_routes_to_safety():
-    assert classify_route(make_state(), "estoy embarazada, puedo bucear?", {}) == ROUTE_SAFETY
 
 
 def test_sensitive_topic_signal_routes_to_safety():
@@ -154,8 +140,8 @@ def test_generic_info_question_defaults_to_booking_core():
 # ── Prioridad: SAFETY gana sobre BOOKING cuando ambos aplican ──
 
 def test_safety_takes_priority_over_booking_intent():
-    # "bucear" es intención de reserva, pero el tema médico manda (safety-first).
-    st = classify_route(make_state(), "estoy embarazada y quiero bucear", {})
+    # "bucear" es intención de reserva, pero el tema médico manda (safety-first). Desde ex-2 lo médico lo marca Jev.
+    st = classify_route(make_state(), "estoy embarazada y quiero bucear", {"sensitive_topic": "medical_questions"})
     assert st == ROUTE_SAFETY
 
 

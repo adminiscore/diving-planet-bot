@@ -15,7 +15,6 @@ from src.agents.nucleo import extraction as core_extraction
 from src.agents.nucleo import routing as core_routing
 from src.agents.nucleo import slotfill_close as core_close
 from src.agents.supervisor import route_message
-from src.config import settings
 from src.flows.state import ConversationState, Step
 
 
@@ -61,25 +60,20 @@ async def test_tras_el_pase_no_vuelve_a_vender(offline):
 
 # --- 3. posventa: el cliente ya tiene una reserva o ya hizo la actividad ------------------------------------------
 
-@pytest.mark.parametrize("flag,ahora,antes,afirma,queda", [
-    (True, True, False, None, True),     # Jev dice que ya tiene reserva
-    (True, None, True, None, True),      # se recuerda en los turnos siguientes
-    (True, False, True, True, False),    # elige una actividad nueva: vuelve la reserva
-    (True, None, False, None, False),
-    (False, True, False, None, False),   # flag apagado
+@pytest.mark.parametrize("ahora,antes,afirma,queda", [
+    (True, False, None, True),     # Jev dice que ya tiene reserva
+    (None, True, None, True),      # se recuerda en los turnos siguientes
+    (False, True, True, False),    # elige una actividad nueva: vuelve la reserva
+    (None, False, None, False),
 ])
-def test_modo_posventa(monkeypatch, flag, ahora, antes, afirma, queda):
-    monkeypatch.setattr(settings, "posventa_sin_vender", flag)
+def test_modo_posventa(ahora, antes, afirma, queda):
     st = ConversationState(conversation_id="posventa")
     st.ya_reservado = antes
     senales = {k: v for k, v in (("ya_reservado", ahora), ("affirms_activity", afirma)) if v is not None}
     assert core._modo_posventa(st, senales) is queda
 
 
-@pytest.mark.parametrize("flag", [True, False])
-async def test_posventa_no_vende(monkeypatch, offline, flag):
-    monkeypatch.setattr(settings, "posventa_sin_vender", flag)
-
+async def test_posventa_no_vende(monkeypatch, offline):
     async def _senales(message, **_k):
         return {"ya_reservado": True}
 
@@ -89,13 +83,12 @@ async def test_posventa_no_vende(monkeypatch, offline, flag):
     st.detected_language = "en"
     resp = await route_message(st, "Just completed the waivers. Thank you!")
     vende = any(p in resp.lower() for p in ("leaning toward", "mini-course", "what would you like to experience"))
-    assert vende is (not flag), resp
+    assert not vende, resp
 
 
 def test_posventa_no_corta_una_reserva_nueva_en_curso(monkeypatch):
     """Ronda atencion-B2: a mitad de reservar snorkel, "ok ya he buceado con ustedes" (Jev: ya_reservado) no pasa a
     posventa; sin actividad elegida (cambio de fecha, fotos) sí; y tras mandar el enlace, también."""
-    monkeypatch.setattr(settings, "posventa_sin_vender", True)
     st = ConversationState(conversation_id="posventa")
     st.detected_activity = "snorkel"
     assert core._modo_posventa(st, {"ya_reservado": True}) is False

@@ -1,19 +1,11 @@
+from unittest.mock import AsyncMock, patch
+
 import pytest
 
 from src.agents import grounding_check, rag_agent
-from src.agents.escalation import detect_sensitive_escalation
+from src.agents.escalation import detect_sensitive_escalation, sensitive_response_for
 from src.agents.supervisor import route_message
 from src.flows.state import ConversationState, Step
-
-
-@pytest.fixture(autouse=True)
-def _camino_antiguo_ex2_ex3(monkeypatch):
-    """Estos tests fijan el camino de antes de ex-2/ex-3 (lista entera de palabras clave y respuestas fijas); lo nuevo
-    lo cubren tests/test_ex2_escalado.py y tests/test_ex3_atajos.py."""
-    from src.config import settings as _flags
-
-    monkeypatch.setattr(_flags, "escalado_solo_emergencias", False)
-    monkeypatch.setattr(_flags, "atajo_nacionalidad_por_rag", False)
 
 
 class DummyMessage:
@@ -52,7 +44,8 @@ async def grounded_ok(*args, **kwargs):
 
 
 def test_detect_medical_escalation_spanish():
-    result = detect_sensitive_escalation("Tengo asma, puedo bucear?", "es")
+    # Desde ex-2 lo médico lo marca Jev (`sensitive_topic`); el texto del pase es el mismo.
+    result = sensitive_response_for("medical_questions", "es")
 
     assert result is not None
     reason, response = result
@@ -61,7 +54,7 @@ def test_detect_medical_escalation_spanish():
 
 
 def test_detect_weather_escalation_english():
-    result = detect_sensitive_escalation("How is the weather tomorrow?", "en")
+    result = sensitive_response_for("weather_conditions", "en")
 
     assert result is not None
     reason, response = result
@@ -88,19 +81,6 @@ def test_routing_tool_excludes_weather_policy_questions_from_escalation():
     schema_text = str(ROUTING_TOOL)
     assert "qué pasa si llueve" in schema_text
     assert "not a request for today's/tomorrow's real forecast" in schema_text
-
-
-@pytest.mark.parametrize("msg", [
-    "esto es una estafa, quiero mi dinero",
-    "me estafaron con la reserva",
-    "this is a scam, i want my money back",
-    "pésimo servicio, nadie contesta",
-    "los voy a demandar",
-])
-def test_complaints_and_fraud_escalate(msg):
-    result = detect_sensitive_escalation(msg, "es")
-    assert result is not None
-    assert result[0] == "complaints_or_emergencies"
 
 
 @pytest.mark.parametrize("msg", [
@@ -196,7 +176,10 @@ async def test_supervisor_escalates_sensitive_message_before_rag(monkeypatch):
     state.step = Step.MAIN_MENU
     state.language = "es"
 
-    response = await route_message(state, "Estoy embarazada, puedo bucear?")
+    # Desde ex-2 lo médico lo marca Jev (`sensitive_topic`, en la misma llamada del enrutador).
+    jev = AsyncMock(return_value={"sensitive_topic": "medical_questions"})
+    with patch("src.agents.supervisor.detect_routing_signals", new=jev):
+        response = await route_message(state, "Estoy embarazada, puedo bucear?")
 
     assert state.step == Step.ESCALATE
     assert "staff calificado" in response
@@ -1183,30 +1166,12 @@ def test_heart_idioms_do_not_trigger_medical_escalation(msg):
 
 
 @pytest.mark.parametrize("msg", [
-    "tengo un problema en el corazón",
-    "sufro del corazón, ¿puedo bucear?",
-])
-def test_real_heart_condition_still_escalates(msg):
-    result = detect_sensitive_escalation(msg, "es")
-    assert result is not None and result[0] == "medical_questions"
-
-
-@pytest.mark.parametrize("msg", [
     "¿los instructores tienen buena presión para manejar grupos grandes?",
     "hay que saber manejar la presión en este trabajo",
 ])
 def test_pressure_idioms_do_not_trigger_medical_escalation(msg):
     result = detect_sensitive_escalation(msg, "es")
     assert result is None or result[0] != "medical_questions"
-
-
-@pytest.mark.parametrize("msg", [
-    "mi presión arterial es un poco alta, nada grave",
-    "tengo la presión alta",
-])
-def test_real_blood_pressure_still_escalates(msg):
-    result = detect_sensitive_escalation(msg, "es")
-    assert result is not None and result[0] == "medical_questions"
 
 
 # --- Zero-KB-support must never be answered from world knowledge -------------

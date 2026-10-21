@@ -682,21 +682,17 @@ def _questions_for_turn(pending_slot: str | None = None) -> dict:
                       if settings.pase_si_pide_fuera_del_sistema else _NEEDS_STAFF_Q)
     q[CHANGES_DATE] = _CHANGES_DATE_Q
     q[COMPANION_JOINS] = _COMPANION_JOINS_Q
-    if settings.jev_persona_ya_contada:
-        q[ADDS_PERSON] = _ADDS_PERSON_Q
-    if settings.posventa_sin_vender:
-        q[YA_RESERVADO] = _YA_RESERVADO_Q_SIN_HOTEL if settings.reserva_de_hotel_no_es_nuestra else _YA_RESERVADO_Q
+    q[ADDS_PERSON] = _ADDS_PERSON_Q
+    q[YA_RESERVADO] = _YA_RESERVADO_Q_SIN_HOTEL if settings.reserva_de_hotel_no_es_nuestra else _YA_RESERVADO_Q
     if settings.datos_ajenos_se_niegan:
         q[PIDE_DATOS_AJENOS] = _PIDE_DATOS_AJENOS_Q
     if settings.privado_pasa_directo:
         q[PIDE_SERVICIO_PRIVADO] = _PIDE_SERVICIO_PRIVADO_Q
-    if settings.jev_lugar_cliente:
-        q[CUSTOMER_PLACE] = _con_hoteles_de_la_base(
-            (_CUSTOMER_PLACE_Q_BARU_CARTAGENA if settings.baru_sale_de_cartagena else _CUSTOMER_PLACE_Q_SIN_BARU)
-            if settings.baru_no_es_rosario else _CUSTOMER_PLACE_Q
-        )
-    if settings.notas_puerta_jev:
-        q[SHARES_OPEN_FACT] = _SHARES_OPEN_FACT_Q
+    q[CUSTOMER_PLACE] = _con_hoteles_de_la_base(
+        (_CUSTOMER_PLACE_Q_BARU_CARTAGENA if settings.baru_sale_de_cartagena else _CUSTOMER_PLACE_Q_SIN_BARU)
+        if settings.baru_no_es_rosario else _CUSTOMER_PLACE_Q
+    )
+    q[SHARES_OPEN_FACT] = _SHARES_OPEN_FACT_Q
     q[NUEVO_CASO] = _NUEVO_CASO_Q
     q[PREGUNTA_SI_ES_IA] = _PREGUNTA_SI_ES_IA_Q
     q[CAMBIA_IDIOMA] = _CAMBIA_IDIOMA_Q

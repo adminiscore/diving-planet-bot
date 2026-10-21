@@ -36,8 +36,6 @@ def _modo_posventa(state: ConversationState, routing_signals: dict) -> bool:
     """13-oct (flag `posventa_sin_vender`): ¿el cliente ya tiene una reserva o ya hizo la actividad? Lo dice Jev
     (`ya_reservado`, en la misma llamada del enrutador) y se recuerda; se olvida si en un turno sin ese dato el cliente
     AFIRMA una actividad (quiere reservar algo nuevo)."""
-    if not settings.posventa_sin_vender:
-        return False
     ahora = routing_signals.get("ya_reservado")
     if ahora is True and not state.ya_reservado and _reserva_nueva_en_curso(state):
         # Ronda atencion-B2 (snorkel-precio-residente-y-pago-link): a mitad de reservar snorkel para dos, "ok ya he

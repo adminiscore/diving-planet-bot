@@ -19,7 +19,6 @@ import pytest
 import src.agents.conversational_core as core
 from src.agents import jev_router
 from src.agents.nucleo import setup as core_setup
-from src.config import settings
 from src.flows.state import ConversationState
 
 
@@ -45,7 +44,6 @@ def extractor(monkeypatch):
     async def _notas(state, message, **_):
         llamadas.append(message)
 
-    monkeypatch.setattr(settings, "notas_puerta_jev", True)
     monkeypatch.setattr(core_setup, "_maybe_capture_notes", _notas)
     return llamadas
 
@@ -69,18 +67,8 @@ async def test_sin_respuesta_de_jev_lo_de_siempre(extractor):
     assert extractor == ["how much would that be"]
 
 
-@pytest.mark.asyncio
-async def test_con_el_flag_apagado_lo_de_siempre(extractor, monkeypatch):
-    monkeypatch.setattr(settings, "notas_puerta_jev", False)
-    await _setup("how much would that be", {jev_router.SHARES_OPEN_FACT: 0.03})
-    assert extractor == ["how much would that be"]
-
-
-def test_la_pregunta_solo_va_con_el_flag(monkeypatch):
-    monkeypatch.setattr(settings, "notas_puerta_jev", True)
+def test_la_pregunta_va_siempre():
     assert jev_router.SHARES_OPEN_FACT in jev_router._questions_for_turn()
-    monkeypatch.setattr(settings, "notas_puerta_jev", False)
-    assert jev_router.SHARES_OPEN_FACT not in jev_router._questions_for_turn()
 
 
 def test_viaja_como_probabilidad_y_su_duda_no_manda_el_turno_al_llm():

@@ -438,7 +438,7 @@ async def _slotfill_close_phase(
     # acuse (un "¡genial!" delante de una respuesta sobra). Se omite la pregunta de la
     # reserva solo en el caso que ya cubría `_answer_question`: la respuesta ya invita a
     # elegir actividad y lo siguiente sería el menú entero (fallo en vivo 2026-07-24).
-    if settings.rag_origen_pregunta and state.pregunta_precio_pendiente and (state.location or state.detected_location):
+    if state.pregunta_precio_pendiente and (state.location or state.detected_location):
         # 7-oct (opción C del punto 3): el cliente ya dijo desde dónde sale; se contesta la pregunta del precio que
         # quedó pendiente (si este mensaje no trae otra pregunta, que manda). Se consume pase lo que pase.
         pendiente, state.pregunta_precio_pendiente = state.pregunta_precio_pendiente, None

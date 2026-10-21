@@ -66,7 +66,6 @@ def test_una_isla_sigue_siendo_isla(monkeypatch):
 @pytest.mark.parametrize("flag", [False, True])
 def test_jev_y_los_prompts_sin_baru(monkeypatch, flag):
     monkeypatch.setattr(settings, "baru_no_es_rosario", flag)
-    monkeypatch.setattr(settings, "jev_lugar_cliente", True)
     islas = jev_router._questions_for_turn()[jev_router.CUSTOMER_PLACE]["criteria"]["islands"]
     assert ("Baru..." in islas) is not flag
     texto = booking.lugar_sin_baru(booking.slot_resolver_prompt("location", "en"))
