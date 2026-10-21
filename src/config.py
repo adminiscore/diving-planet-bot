@@ -695,6 +695,11 @@ class Settings(BaseSettings):
     tarjeta_edades_en_cifra: bool = True  # PROMOCIONADO 21-oct (con ord-7); revert = False
     # ord-7 (21-oct): la pregunta de Jev «¿pide el precio?» nombra las actividades del centro; con «the dive center's
     # activities» a secas, «¿Cuánto cuesta el snorkel?» salía 0,55 (umbral 0,7) y la puerta del origen no saltaba.
+    # ord-9 (21-oct, decisión de Gadea tras G10 de control: el 67 % de los fallos son omisiones del RAG con el dato
+    # delante, y las listas las reescribía de memoria): si Jev dice que el cliente pregunta qué incluye un plan y el
+    # plan es concreto, el RAG no enumera y el código añade la lista exacta de la ficha
+    # (`conversational_core._con_lista_del_dato`). APAGADO hasta medirlo.
+    listas_del_dato: bool = False
     jev_precio_nombra_actividades: bool = True  # PROMOCIONADO 21-oct (con ord-7); revert = False
     # CAL (17-oct): el catálogo del RAG pinta hasta qué profundidad certifica cada curso (`max_depth_m`: Open Water
     # 18 m, Advanced 30 m, lo que dice el registro de actividades) y una línea general de profundidad por certificación

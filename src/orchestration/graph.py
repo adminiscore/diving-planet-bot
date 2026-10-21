@@ -30,7 +30,7 @@ from src.agents.changes_agent import changes_node
 from src.agents.deflection_agent import deflection_node
 from src.agents.escalation_agent import escalation_node
 from src.agents.info_agent import info_node
-from src.agents.jev_router import NUEVO_CASO, PIDE_PRECIO
+from src.agents.jev_router import NUEVO_CASO, PIDE_PRECIO, PIDE_QUE_INCLUYE
 from src.flows.state import Step
 from src.orchestration.router import classify_route
 from src.orchestration.state import (
@@ -136,6 +136,7 @@ async def _router_node(state: BotState) -> dict:
     # ex-9b paso 5 (PIDE_PRECIO): lo que Jev dice de ESTE turno (None si calla), para la puerta del origen antes
     # del precio, que corre en la reserva y en info. Se pone en cada turno: nunca queda el de un turno anterior.
     conv._jev_pide_precio = signals.get(PIDE_PRECIO)
+    conv._jev_pide_incluye = signals.get(PIDE_QUE_INCLUYE)  # ord-9: la lista de qué incluye sale de la ficha
     conv._senales_router = signals  # gen-13: el cierre del turno sabe si el mensaje traía una pregunta
     route = classify_route(conv, message, signals)
     logger.info(f"[GRAPH] conv={conv.conversation_id} route={route}")

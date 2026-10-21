@@ -1,6 +1,23 @@
 History
 =======
 
+0.31.87 - (2026-10-22)
+----------------------
+* **G10 de control con todo junto (gen-20): plano.** 85,4 % 20/72 (sin desfasados 86,4 % 22/72) frente a 85,6 % 23/72
+  de la tarde.
+  - 33 criterios mejoran (justo los de los arreglos de hoy) y 33 empeoran (variación del RAG).
+  - Latencia igual (p50 4,8 s, p95 8,8 s).
+  - De los 82 fallos, el RAG omite un dato que tiene en el 67 %, inventa en el 18 % y repregunta en el 5 %.
+* **Arreglos de lo que causamos:**
+  - El aviso de disponibilidad ya no dice «no hay garantía absoluta» (el juez lo leía como que contradice «siempre
+    hay disponibilidad»).
+  - El Referido pide el formulario médico de curso; el RAG le daba la exoneración de buzo certificado.
+  - 4 criterios desfasados nuevos en G10: fotos ×2, las dos variantes sin origen y el enlace a colombianos.
+  - `ab_judge_compare --golden` para rejuzgar G9/G10.
+* **ord-9 «las listas, del dato»** (flag `listas_del_dato`, APAGADO, decisión de Gadea).
+  - Si el cliente pregunta qué incluye un plan concreto, la lista sale de la ficha.
+  - Banco 10/14 → 14/14, pero Luna repite la lista: pendiente insistir al RAG (ver el relevo).
+
 0.31.86 - (2026-10-21)
 ----------------------
 * **ord-7 PROMOCIONADO** (Gadea con Claude): `origen_dos_variantes`, `tarjeta_edades_en_cifra` y

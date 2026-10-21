@@ -59,7 +59,40 @@ integrar la rama del otro y suite en verde, porque en PRE gana el último; (3) *
 despliegue reinicia el contenedor y mata la medida del otro (avisar en el registro de Plan Coral con la hora de fin).
 Las doce normas, con su porqué, están en el documento.
 
-### ▶️ RETOMAR AQUÍ — 20-oct, 16:40 (Gadea con Claude): fase GEN (subir el examen oculto) — gen-1, gen-2, gen-3 (a), textos de Cartagena y gen-7 PROMOCIONADOS
+### ▶️ RETOMAR AQUÍ — 22-oct, 00:40 (Gadea con Claude): G10 de control con todo junto, PLANO; el RAG omite datos que tiene (67 % de los fallos) → ord-9 «listas del dato» a medias
+
+- **PRE sirve `c59f092`** (pre_gadea), sano. Encendido: gen-13, gen-14, gen-15, gen-16, ord-7, ord-4 y ord-6c (sin el
+  formulario médico). Lo último subido esta noche (ver el push de las 00:40) lleva además los arreglos de lo que
+  causamos y ord-9 APAGADO.
+- **G10 de control con todo junto** (gen-20, `2026-10-21-g10-control-2`): **85,4 % 20/72** (sin desfasados 86,4 %
+  22/72) frente a 85,6 % 23/72 de la tarde. Plano: 33 mejoras (las de los arreglos) y 33 regresiones (variación del
+  RAG). Latencia igual (p50 4,8 s, p95 8,8 s). El rejuzgado con votos de los 66 cambios se cortó al apagar: repetirlo
+  con `ab_judge_compare 2026-10-21-g10 2026-10-21-g10-control-2 --rejuzgar 2 --tambien-mejoras --golden
+  docs/robustness/golden-set/examen-sintetico-g10.json` (unos 1-2 $).
+- **Diagnóstico (Gadea lo ha visto):** de los 82 fallos sin desfasados, el RAG OMITE un dato que tiene en el 67 % (26
+  listas: qué incluye, requisitos y documentos; 29 otros datos), inventa en el 18 % y repregunta en el 5 %. Cada
+  diálogo tiene ~8 criterios: con 86 % por criterio salen ~22/72; para 40/72 hace falta ~93 % (los fallos a la
+  mitad), y eso solo lo da un cambio de sistema, no más parches.
+- **Decisión de Gadea:** atacar primero **A. Las listas, del dato (ord-9, flag `listas_del_dato`, APAGADO)**. Hecho: Jev
+  pregunta `pide_que_incluye`; si el plan es uno solo, el RAG recibe `sin_lista` y el código añade la lista exacta de la
+  ficha; si la respuesta se escribió sin la indicación (la adelantada sale antes que Jev y la extracción), se rehace
+  una vez. Banco `docs/robustness/ord/dialogos-ord9.json`: 10/14 → **14/14** (información completa), PERO Luna sigue
+  enumerando y la lista sale DOS veces.
+- **SIGUIENTE (decidido por Gadea a las 00:35, sin empezar):**
+  1. **Insistir al RAG**: repetir «no enumeres lo que incluye: lo añade el sistema» al final del mensaje del RAG, tras
+     «Pregunta del cliente» (`rag_agent.py`, ~línea 877, solo con `sin_lista`). Medir el banco ord-9: que no salga la
+     lista dos veces.
+  2. **DIVE TO HEAL incluido**: quitar `_sanitize_includes` de `src/flows/catalog.py` (líneas 93-98 y 235-236): el
+     «aporte eco-social a DIVE TO HEAL» va en lo que incluye cada plan que lo lleva en services.json. Regenerar la foto
+     `tests/data/fichas_servicio_antes.json` (cambian muchas fichas: a propósito).
+  3. Ronda core ord9-A/B y propuesta a Gadea. Después, según la dinámica: integrar las ramas de Álvaro
+     (`feature/mej1d2-alvaro` 361f50a trae mej-1d, ord-3 y la limpieza del veto: equivalencia letra por letra y suite en
+     verde), ord-8 (simplificar la puerta del origen) y el resto del plan del RAG (B: probar gpt-5-mini como escritor,
+     con permiso; C: ord-1 + mej-9) si Gadea los pide.
+- **Reglas nuevas de Gadea (en memoria):** quien quede libre coge la siguiente tarea del orden; si alguien no está
+  conectado, sus tareas se liberan y se reparten en orden; el plan se adapta a lo que digan los resultados.
+
+### (anterior) RETOMAR AQUÍ — 20-oct, 16:40 (Gadea con Claude): fase GEN (subir el examen oculto) — gen-1, gen-2, gen-3 (a), textos de Cartagena y gen-7 PROMOCIONADOS
 
 - **Plan:** fase **GEN** en Plan Coral (tareas gen-1 a gen-11). Sale de G9: 84,1 % de criterios y 20/72 diálogos sin
   fallos (26 diálogos con un solo fallo). Reglas: nada de parches ni regex, se arregla por causa con bancos de frases

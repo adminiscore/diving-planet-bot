@@ -513,6 +513,18 @@ RAG_SIN_PRECIO_ES = (
     "pregunta (qué incluye, horarios, punto de encuentro, requisitos…) y, si lo único que pregunta es el precio, di en "
     "una frase que se lo dejas a continuación."
 )
+# ord-9 (21-oct, flag `listas_del_dato`): el cliente pregunta qué incluye un plan concreto y el código añade la lista
+# exacta de la ficha (`conversational_core._con_lista_del_dato`): el texto no la reescribe de memoria (la recortaba).
+RAG_SIN_LISTA_ES = (
+    "En ESTA respuesta no enumeres lo que incluye el plan: justo después el sistema añade la lista exacta de lo que "
+    "incluye. Si el cliente pregunta por algo concreto (el equipo, el almuerzo, el transporte…), contesta sí o no en "
+    "una frase; y contesta el resto de lo que pregunta."
+)
+RAG_SIN_LISTA_EN = (
+    "In THIS answer do not list what the plan includes: right after it the system adds the exact list of what's "
+    "included. If the customer asks about something specific (gear, lunch, transport…), answer yes or no in one "
+    "sentence; and answer the rest of what they ask."
+)
 RAG_SIN_PRECIO_EN = (
     "In THIS answer do not give prices, amounts, currencies or booking links: right after it the system shows the "
     "customer the card of their plan with the price per person in their currency and the link. Answer the rest of what "

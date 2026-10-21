@@ -446,6 +446,20 @@ _PIDE_PRECIO_Q_ACTIVIDADES = {
         "about duration, number of dives or how to book."
     ),
 }
+# ord-9 (21-oct, flag `listas_del_dato`, decisión de Gadea tras G10 de control): el 67 % de los fallos de G10 eran
+# omisiones del RAG con el dato delante, y de ellas las listas (qué incluye un plan) las reescribía de memoria y las
+# recortaba. Si el cliente pregunta qué incluye, la lista sale de la ficha (conversational_core._con_lista_del_dato).
+PIDE_QUE_INCLUYE = "pide_que_incluye"
+PIDE_QUE_INCLUYE_MIN = 0.7
+_PIDE_QUE_INCLUYE_Q = {
+    "type": "noul",
+    "instructions": (
+        "The customer asks what one of the dive center's plans, courses or activities includes (what comes with it), "
+        "or whether something specific is included in it (gear, lunch, boat transport, insurance, park fee, "
+        "certification card, number of dives). It is FALSE when they only ask the price, the schedule, the duration, "
+        "what to bring, the requirements, or about something the dive center does not sell (a hotel, a room, a taxi)."
+    ),
+}
 CAMBIA_IDIOMA = "cambia_idioma"
 CAMBIA_IDIOMA_MIN = 0.6
 _CAMBIA_IDIOMA_Q = {
@@ -634,7 +648,7 @@ _U34_QUESTIONS = (
     ASKS_QUESTION, AFFIRMS_LOCATION, AFFIRMS_ACTIVITY, ACTIVITY_HYPOTHESIS,
     AFFIRMS_CERTIFICATION, AFFIRMS_GROUP, AFFIRMS_NATIONALITY, CORRECTS, ASKS_RECALL, NEEDS_STAFF,
     CHANGES_DATE, COMPANION_JOINS, PENDING_ANSWER, SHARES_OPEN_FACT, ADDS_PERSON, CUSTOMER_PLACE, YA_RESERVADO,
-    PIDE_DATOS_AJENOS, NUEVO_CASO, PREGUNTA_SI_ES_IA, CAMBIA_IDIOMA, PIDE_PRECIO, PIDE_SERVICIO_PRIVADO,
+    PIDE_DATOS_AJENOS, NUEVO_CASO, PREGUNTA_SI_ES_IA, CAMBIA_IDIOMA, PIDE_PRECIO, PIDE_SERVICIO_PRIVADO, PIDE_QUE_INCLUYE,
 )
 
 
@@ -701,6 +715,8 @@ def _questions_for_turn(pending_slot: str | None = None) -> dict:
     q[PREGUNTA_SI_ES_IA] = _PREGUNTA_SI_ES_IA_Q
     q[CAMBIA_IDIOMA] = _CAMBIA_IDIOMA_Q
     q[PIDE_PRECIO] = _PIDE_PRECIO_Q_ACTIVIDADES if settings.jev_precio_nombra_actividades else _PIDE_PRECIO_Q
+    if settings.listas_del_dato:
+        q[PIDE_QUE_INCLUYE] = _PIDE_QUE_INCLUYE_Q
     return q
 
 
@@ -776,6 +792,8 @@ def answers_to_signals(answers: dict, threshold: float = THRESHOLD) -> dict:
         out[PREGUNTA_SI_ES_IA] = (answers.get(PREGUNTA_SI_ES_IA) or {}).get("noul", 0.0) >= PREGUNTA_SI_ES_IA_MIN
     if PIDE_PRECIO in answers:
         out[PIDE_PRECIO] = (answers.get(PIDE_PRECIO) or {}).get("noul", 0.0) >= PIDE_PRECIO_MIN
+    if PIDE_QUE_INCLUYE in answers:
+        out[PIDE_QUE_INCLUYE] = (answers.get(PIDE_QUE_INCLUYE) or {}).get("noul", 0.0) >= PIDE_QUE_INCLUYE_MIN
     if CAMBIA_IDIOMA in answers:
         a = answers.get(CAMBIA_IDIOMA) or {}
         out[CAMBIA_IDIOMA] = a.get("choice") if float(a.get("confidence", 0.0)) >= CAMBIA_IDIOMA_MIN else "none"
@@ -867,7 +885,7 @@ async def detect_routing_signals_jev(message: str, *, lang: str = "es") -> dict 
 _TURN_SIGNALS = (
     AFFIRMS_LOCATION, AFFIRMS_ACTIVITY, AFFIRMS_CERTIFICATION, AFFIRMS_GROUP, AFFIRMS_NATIONALITY, CORRECTS,
     ASKS_RECALL, NEEDS_STAFF, CHANGES_DATE, COMPANION_JOINS, SHARES_OPEN_FACT, YA_RESERVADO, PIDE_DATOS_AJENOS,
-    NUEVO_CASO, PREGUNTA_SI_ES_IA, CAMBIA_IDIOMA, PIDE_PRECIO, PIDE_SERVICIO_PRIVADO,
+    NUEVO_CASO, PREGUNTA_SI_ES_IA, CAMBIA_IDIOMA, PIDE_PRECIO, PIDE_SERVICIO_PRIVADO, PIDE_QUE_INCLUYE,
     # ex-9b (19-oct): ADDS_PERSON también viaja cuando Jev duda en el router (como COMPANION_JOINS): sin él, en esos
     # turnos "¿se suma alguien nuevo?" lo decidía la lista de palabras.
     ADDS_PERSON,
