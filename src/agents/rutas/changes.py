@@ -4,12 +4,17 @@ personas de una reserva hecha, y las preguntas de disponibilidad que el router m
 s4-2 (19-oct): movido tal cual desde `supervisor.py`, que lo re-exporta. Ver `src/agents/rutas/__init__.py`.
 """
 
+import logging
 import re
 
+from src.agents.lead_summary import build_lead_summary
 from src.agents.supervisor import _booking_change_buttons, _infer_language
-from src.flows.state import ConversationState
+from src.config import settings
+from src.flows.state import ConversationState, Step
 from src.knowledge.loader import load_policies
 from src.utils.text import strip_accents as _strip_accents
+
+logger = logging.getLogger("uvicorn.error")
 
 # Generic "what days / when is there availability" questions. The real
 # calendar (exact date + headcount) only exists on the booking link, so we
@@ -215,6 +220,12 @@ def _booking_change_response(state: ConversationState, message: str, kind: str) 
     effective_lang = state.language if state.detected_language else _infer_language(message, state.language)
     policy_kind = {"modify_headcount": "modify_booking"}.get(kind, kind)
     policy_text = (load_policies().get("policies", {}).get(policy_kind) or {}).get(effective_lang, "")
+    if settings.cambio_de_reserva_pasa:
+        # El mensaje va al historial ANTES del resumen del pase, para que el asesor lo lea.
+        state.history.append({"role": "user", "content": message})
+        response = _pase_por_cambio_de_reserva(state, policy_text, kind, effective_lang)
+        state.history.append({"role": "assistant", "content": response})
+        return response
     if kind == "cancellation":
         if effective_lang == "es":
             response = (
@@ -252,3 +263,32 @@ def _booking_change_response(state: ConversationState, message: str, kind: str) 
     state.history.append({"role": "user", "content": message})
     state.history.append({"role": "assistant", "content": response})
     return response
+
+
+# gen-3b (21-oct, flag `cambio_de_reserva_pasa`): cambiar la fecha, cancelar o cambiar el número de personas de una
+# reserva ya hecha solo lo puede hacer una persona del equipo (el bot no ve las reservas). La respuesta OFRECÍA el pase
+# («¿quieres que te conecte con un asesor o prefieres volver al menú principal?», un menú que ya no existe) y no lo
+# marcaba: si el cliente no contestaba «sí», nadie se enteraba. Con el flag se da la política y se PASA, como
+# `needs_staff`.
+_PASE_POR_CAMBIO = {
+    "cancellation": ("cancelación de reserva: la gestiona una persona", "la cancelación", "the cancellation"),
+    "reschedule": ("cambio de fecha de una reserva: lo gestiona una persona", "el cambio de fecha", "the date change"),
+    "modify_headcount": ("cambio en el número de personas de una reserva: lo gestiona una persona",
+                         "el cambio en el número de personas", "the change in the number of people"),
+}
+
+
+def _pase_por_cambio_de_reserva(state: ConversationState, policy_text: str, kind: str, lang: str) -> str:
+    reason, que_es, que_en = _PASE_POR_CAMBIO[kind]
+    state.step = Step.ESCALATE
+    state.quick_replies = []
+    state.pending_escalation_reason = reason
+    state.pending_note = build_lead_summary(state, escalation_reason=reason)
+    logger.info(f"[SUPERVISOR] {kind} de una reserva hecha -> pase a un asesor")
+    if lang == "es":
+        pase = (f"Te paso ahora con un asesor de Diving Planet para gestionar {que_es}; enseguida se pone en contacto "
+                "contigo por aquí. 🙌")
+    else:
+        pase = (f"I'm passing you now to a Diving Planet advisor to handle {que_en}; they'll get in touch with you "
+                "here shortly. 🙌")
+    return f"{policy_text}\n\n{pase}" if policy_text else pase

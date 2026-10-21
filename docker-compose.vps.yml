@@ -183,6 +183,12 @@ services:
       # gen-12 (21-oct): el RAG no da por hecho si el cliente es hombre o mujer. PROMOCIONADO (ronda sin desplegar
       # gen12-B frente a gen12-A; banco gen-2 sin palabras de género). La base ya no nombra «ROVERD» (va con el despliegue).
       SIN_GENERO_SUPUESTO: "true"
+      # gen-3b (Gonzalo, 21-oct; docs/robustness/gen/gen3b-diagnostico.md): con una reserva YA hecha, cambiar la fecha,
+      # cancelar o cambiar el número de personas da la política y pasa directo a un asesor; el servicio privado pasa
+      # directo en cuanto lo pide (decisión de Gadea). PROMOCIONADO 21-oct (gen3b-B frente a gen3b-A, del mismo día; los
+      # que empeoran no pasan por el pase). Revert = quitar estas dos líneas.
+      CAMBIO_DE_RESERVA_PASA: "true"
+      PRIVADO_PASA_DIRECTO: "true"
       # CERTIFICADO_SOLO_SI_LO_DICE con «buceé hace poco» = certificado (decisión de Gadea). PROMOCIONADO (HISTORY
       # 0.31.61: mod-H2 97,0 % igual que limpieza-3; reserva-solo-link ya no ofrece el minicurso). Revert = quitar estas líneas.
       CERTIFICADO_SOLO_SI_LO_DICE: "true"

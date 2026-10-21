@@ -1,6 +1,24 @@
 History
 =======
 
+0.31.77 - (2026-10-21)
+----------------------
+* **gen-3b PROMOCIONADO: pasar directamente cuando toca** (Gonzalo con Claude, `a8a9883`; integrado por Gadea con
+  Claude; `docs/robustness/gen/gen3b-diagnostico.md`). Decisión de Gadea del 21-oct.
+  - `CAMBIO_DE_RESERVA_PASA`: cambiar la fecha, cancelar o cambiar el número de personas de una reserva YA hecha da la
+    política y pasa directo a un asesor, con el motivo y el resumen (`rutas/changes.py`). Antes ofrecía «¿te conecto
+    con un asesor o prefieres volver al menú principal?», con un menú que ya no existe, sin marcar el pase.
+  - `PRIVADO_PASA_DIRECTO`: el servicio privado (lancha, salida o instructor solo para su grupo, evento de empresa)
+    pasa directo en cuanto lo pide. Lo reconoce Jev (`pide_servicio_privado`) y no solo las tres frases literales de
+    antes; si dio cuántos son o la fecha, va en el resumen.
+  - Banco propio: 8/26 → 26/26, con la frontera intacta.
+  - Ronda core sin desplegar, mismo código y misma hora (juzgada por Álvaro): **gen3b-B 97,8 % 28/32** frente a
+    **gen3b-A 98,3 % 28/32**. Mejoran 2 y empeoran 2 (moneda-precios-principiante-y-snorkel y
+    paquete-5-buceos-cop-refresh-y-hoteles). Comprobado en los jsonl por Gonzalo y por Gadea con Claude: en esos
+    diálogos ningún turno pasa por el cambio de reserva ni por el privado; solo cambia la redacción del RAG.
+  - Viene con el arreglo de Coral de `52dedeb`: con varias medidas `--codigo-local` a la vez, «PRE: libre» solo sale
+    al terminar la última.
+
 0.31.76 - (2026-10-21)
 ----------------------
 * **MEJ-1, tanda 1a: fuera la maquinaria muerta de los vetos por campo** (Fase 9, sep-2026). ex-9 (15-oct) la sacó
