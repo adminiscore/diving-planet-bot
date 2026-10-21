@@ -6,6 +6,7 @@ Clave `~/.ssh/dp_pre_vps` y `root@89.167.4.161` por defecto; se cambian con `PRE
 
 import os
 import subprocess
+import tempfile
 from pathlib import Path
 
 # 17-oct: una medida del banco ENTERO (71 casos = 71 conexiones seguidas) empezó a fallar a partir del caso 10 y los
@@ -102,6 +103,44 @@ def subir_codigo_local(destino: str | None = None) -> str:
 _medida_anunciada = False
 
 
+# Coral #787 (21-oct, propuesta de Gadea): con dos medidas a la vez, el "PRE: libre" lo publicaba la PRIMERA en terminar
+# y PRE parecía libre con la otra aún corriendo (#781/#782 -> #784: casi se corta la base con un push). Cada medida deja
+# una marca con su pid en esta carpeta; al terminar borra la suya y solo suelta PRE si no queda ninguna viva.
+_MARCAS_DE_MEDIDA = Path(tempfile.gettempdir()) / "coral-medidas"
+
+
+def _proceso_vivo(pid: int) -> bool:
+    if pid == os.getpid():
+        return True
+    if os.name == "nt":
+        r = subprocess.run(["tasklist", "/FI", f"PID eq {pid}", "/NH"], capture_output=True, text=True)
+        return str(pid) in r.stdout
+    try:
+        os.kill(pid, 0)
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        return True
+    return True
+
+
+def _otras_medidas_vivas() -> list[int]:
+    """Los pids de las OTRAS medidas de este ordenador que siguen corriendo (las marcas de procesos muertos se borran)."""
+    vivas = []
+    for marca in _MARCAS_DE_MEDIDA.glob("*"):
+        try:
+            pid = int(marca.name)
+        except ValueError:
+            continue
+        if pid == os.getpid():
+            continue
+        if _proceso_vivo(pid):
+            vivas.append(pid)
+        else:
+            marca.unlink(missing_ok=True)
+    return vivas
+
+
 def _anunciar_medida() -> None:
     """Coral (tools/coral): avisa al equipo de que este proceso está midiendo en PRE y lo suelta al terminar, para que
     nadie suba a una rama pre_* mientras tanto (norma 3: el deploy reinicia el contenedor y mata la medida). Solo si
@@ -123,8 +162,17 @@ def _anunciar_medida() -> None:
         cliente.llamar("PUT", "/api/estado", {"pre": "midiendo", "minutos": 180, "nota": que}, timeout=5)
     except Exception:
         return
+    marca = _MARCAS_DE_MEDIDA / str(os.getpid())
+    try:
+        _MARCAS_DE_MEDIDA.mkdir(exist_ok=True)
+        marca.touch()
+    except OSError:
+        pass
 
     def soltar() -> None:
+        marca.unlink(missing_ok=True)
+        if _otras_medidas_vivas():
+            return  # otra medida de este ordenador sigue: PRE sigue ocupado, la última en terminar lo suelta
         try:
             cliente.llamar("PUT", "/api/estado", {"pre": "libre"}, timeout=5)
         except Exception:
