@@ -202,15 +202,15 @@ class Settings(BaseSettings):
     # Mar, Eco Hotel Las Palmeras…) no estaban en la lista del bot ni en la pregunta del lugar de Jev, y el bot volvía a
     # preguntar desde dónde sale. Con el flag, el extractor y Jev los conocen (extractor_turno.HOTELES_DE_LA_BASE).
     # APAGADO.
-    hoteles_de_la_base: bool = False
+    hoteles_de_la_base: bool = True  # PROMOCIONADO 21-oct (gen-15: banco Jev 15/33 -> 30/33, repregunta del lugar 5/10 -> 0/10; las regresiones de la core, repetidas x2, no pasan por el lugar; HISTORY 0.31.86); revert = False
     # gen-15 (21-oct): «We booked 3 nights at Mulata» salía en Jev como «ya tiene una reserva con nosotros» y el turno
     # iba a posventa (sin preguntas de la reserva). Con el flag, la pregunta YA_RESERVADO dice que reservar el hotel,
     # el alojamiento o el vuelo no es una reserva con el centro (jev_router._YA_RESERVADO_Q_SIN_HOTEL). APAGADO.
-    reserva_de_hotel_no_es_nuestra: bool = False
+    reserva_de_hotel_no_es_nuestra: bool = True  # PROMOCIONADO 21-oct (con hoteles_de_la_base, gen-15); revert = False
     # gen-16 (21-oct): a quien quiere TERMINAR aquí un Open Water empezado (el extractor lee el Referido) se le
     # preguntaba «¿ya tienen el Curso referido o quieren sacarla?» porque nombraba «Open Water». Con el flag, no se
     # pregunta (nucleo/extraction._flag_cert_or_course). APAGADO.
-    referido_no_pregunta_nivel: bool = False
+    referido_no_pregunta_nivel: bool = True  # PROMOCIONADO 21-oct (gen-16: banco 2/2 -> 0/2; core sin regresiones del Referido; HISTORY 0.31.86); revert = False
     # gen-4 (21-oct, decisión de Gadea, Coral #862): el cierre para colombianos (pasa a un asesor que coordina el pago en
     # COP) decía "para confirmar disponibilidad" (siempre hay) y "Como son colombianos/residentes" también a quien va
     # solo. Con el flag, sin disponibilidad y en el número del cliente, sin género (nucleo/slotfill_close._finalize).
@@ -445,7 +445,7 @@ class Settings(BaseSettings):
     respaldo_mismo_modelo: bool = False
     # CAL-A1 (16-oct): la respuesta del RAG se redacta a temperatura 0 (hoy 0,3). 18 de los 56 fallos del RAG en ex-10
     # eran azar (docs/robustness/investigacion/diagnostico-73-fallos.md). APAGADO hasta medirlo (banco de fallos, 3 reps).
-    rag_temperatura_cero: bool = False
+    rag_temperatura_cero: bool = True  # PROMOCIONADO 21-oct (ord-4: core ord4-A 96,5 % 25/32 frente a ord4-B 97,4 % 26/32, 3 mejoras reales y 0 regresiones; banco de omisiones 15 -> 17/54; HISTORY 0.31.86); revert = False
     # CAL-A2 (16-oct): antes de redactar, un PLAN (src/agents/rag_plan.py) saca la lista de lo que el cliente pregunta y la
     # redacción la contesta punto por punto. APAGADO hasta medirlo.
     rag_plan_primero: bool = False
@@ -688,18 +688,14 @@ class Settings(BaseSettings):
     # redacción). Ahora, si se sabe de qué actividad pregunta y tiene un plan por origen, el código pone las DOS
     # variantes del catálogo (desde Cartagena y ya en las islas: precio online por persona en su moneda, el transporte
     # y si lleva almuerzo) y pregunta el origen para seguir. Sin actividad concreta (los paquetes de buceo), como hoy.
-    origen_dos_variantes: bool = False
+    origen_dos_variantes: bool = True  # PROMOCIONADO 21-oct (ord-7: bancos 2/14 -> 12/14 y 2/8 -> 8/8; core ord7-B2 96,6 % 25/32 frente a ord4-A 96,5 % 25/32, ninguna regresion de ord-7; HISTORY 0.31.86); revert = False
     # ord-7b (21-oct, decisión de Gadea con ord-0: con niños, la edad mínima EN CIFRA): la tarjeta «qué puede hacer cada
     # quien» pone la edad mínima de cada opción («minicurso de buceo (desde 10 años)») y dice quién es cada línea en el
     # idioma del cliente (en inglés salía «8 años», g10-049).
-    tarjeta_edades_en_cifra: bool = False
-    # gen-19 (21-oct): con el origen y el plan sabidos, si la respuesta da el precio de ese plan sin su enlace de
-    # reserva, el código añade el enlace del catálogo (`conversational_core._con_enlace_si_toca`). No a colombianos
-    # ni a grupos mixtos ni en los planes que cierra un asesor.
-    enlace_cuando_toca: bool = False
+    tarjeta_edades_en_cifra: bool = True  # PROMOCIONADO 21-oct (con ord-7); revert = False
     # ord-7 (21-oct): la pregunta de Jev «¿pide el precio?» nombra las actividades del centro; con «the dive center's
     # activities» a secas, «¿Cuánto cuesta el snorkel?» salía 0,55 (umbral 0,7) y la puerta del origen no saltaba.
-    jev_precio_nombra_actividades: bool = False
+    jev_precio_nombra_actividades: bool = True  # PROMOCIONADO 21-oct (con ord-7); revert = False
     # CAL (17-oct): el catálogo del RAG pinta hasta qué profundidad certifica cada curso (`max_depth_m`: Open Water
     # 18 m, Advanced 30 m, lo que dice el registro de actividades) y una línea general de profundidad por certificación
     # (cal-18: "¿cuántos metros bajan?" no tenía el dato en nada que viera el RAG). APAGADO hasta medirlo.

@@ -42,3 +42,12 @@ def test_referral_is_cartable_but_never_offered():
     state = ConversationState(conversation_id="lvl")
     state.detected_activity = "padi_course"
     assert "padi_open_water_referral" not in core._course_level_options(state)
+
+
+def test_referral_booking_links_reach_the_rag():
+    """gen-19 (21-oct): sin `contact_only`, los enlaces del Referido entran en los enlaces de reserva que ve el RAG
+    (antes daba la página de información como si fuera para reservar)."""
+    from src.flows.catalog import catalog_booking_links
+
+    assert "book/referral/6" in catalog_booking_links("es")
+    assert "referral-already-on-the-island" in catalog_booking_links("es")

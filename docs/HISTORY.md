@@ -1,6 +1,34 @@
 History
 =======
 
+0.31.86 - (2026-10-21)
+----------------------
+* **ord-7 PROMOCIONADO** (Gadea con Claude): `origen_dos_variantes`, `tarjeta_edades_en_cifra` y
+  `jev_precio_nombra_actividades`.
+  - Sin saber el origen, la puerta del precio ya no deja al cliente sin nada. Da las dos variantes del catálogo
+    (precio en su moneda, transporte y almuerzo) y, si el RAG dio un enlace, los dos enlaces; después pregunta el
+    origen.
+  - Solo lo hace si el importe o el enlace que dio el RAG es de esa actividad (en el banco salían los precios del
+    Open Water a quien preguntaba por el repaso).
+  - La tarjeta de edades dice la edad mínima en cifra y, en inglés, «8 years old».
+  - Jev: «¿Cuánto cuesta el snorkel?» pasa de 0,55 a 0,94.
+  - Bancos: 2/14 → 12/14; enlaces sin origen 2/8 → 8/8.
+  - Ronda core: ord7-B2 96,6 % 25/32 frente a ord4-A 96,5 % 25/32, sin regresiones de ord-7.
+* **ord-4 PROMOCIONADO**: el escritor del RAG a temperatura 0.
+  - Banco de omisiones: el dato sale 15 → 17 de 54 veces; diálogos constantes 14 → 16 de 18.
+  - Ronda core: ord4-A 96,5 % 25/32 frente a ord4-B 97,4 % 26/32, con 3 mejoras reales y 0 regresiones.
+* **gen-15 y gen-16 PROMOCIONADOS** (Álvaro con Claude).
+  - gen-15, `hoteles_de_la_base` y `reserva_de_hotel_no_es_nuestra`: los 3 diálogos que regresaban, repetidos ×2
+    por lado, no pasan por el lugar.
+  - gen-16, `referido_no_pregunta_nivel`.
+* **gen-19 cerrado.** El flag `enlace_cuando_toca` se quitó con su código: en el banco no cambiaba nada.
+* **ord-5 descartado**: ya medido en CAL-A3 (16-oct) sin ganancia.
+* **ord-6c**, decisiones de Gadea revaloradas.
+  - Coral añade los días cerrados al preguntar si hay sitio, el formulario médico al preguntar requisitos y que el
+    descuento de grupo no aplica a cursos PADI (avisos al final).
+  - La excepción de 500 inmersiones y las 4:30 para fechas lejanas pasan a desfasados de G10/G9: G10 85,6 → 86,0 %,
+    G9 86,8 → 87,8 % y 20 → 23/72.
+
 0.31.85 - (2026-10-21)
 ----------------------
 * **gen-14 PROMOCIONADO** (Álvaro con Claude; integrado por Gadea con Claude): `gentilicio_es_colombiano` y

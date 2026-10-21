@@ -213,6 +213,18 @@ services:
       # la nacionalidad que dice ese mismo mensaje (gen14-A/B). Revert = quitar estas dos líneas.
       GENTILICIO_ES_COLOMBIANO: "true"
       RAG_ESPERA_LA_NACIONALIDAD: "true"
+      # gen-15 (Álvaro, 21-oct, PROMOCIONADO): los hoteles de las islas de la base y reservar el hotel no es reservar
+      # con nosotros. gen-16 (Álvaro): a quien quiere terminar aquí un Open Water no se le pregunta si ya lo tiene.
+      # Revert = quitar estas tres líneas.
+      HOTELES_DE_LA_BASE: "true"
+      RESERVA_DE_HOTEL_NO_ES_NUESTRA: "true"
+      REFERIDO_NO_PREGUNTA_NIVEL: "true"
+      # ord-7 (21-oct, PROMOCIONADO): sin origen, las dos variantes; la edad mínima en cifra; Jev ve el precio del
+      # snorkel. ord-4: el escritor del RAG a temperatura 0. Revert = quitar estas cuatro líneas.
+      ORIGEN_DOS_VARIANTES: "true"
+      TARJETA_EDADES_EN_CIFRA: "true"
+      JEV_PRECIO_NOMBRA_ACTIVIDADES: "true"
+      RAG_TEMPERATURA_CERO: "true"
       # CERTIFICADO_SOLO_SI_LO_DICE con «buceé hace poco» = certificado (decisión de Gadea). PROMOCIONADO (HISTORY
       # 0.31.61: mod-H2 97,0 % igual que limpieza-3; reserva-solo-link ya no ofrece el minicurso). Revert = quitar estas líneas.
       CERTIFICADO_SOLO_SI_LO_DICE: "true"

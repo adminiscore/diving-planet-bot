@@ -2221,36 +2221,10 @@ def _enlaza_alguno(answer: str, servicios: list[tuple[str, dict]], state: Conver
 
 
 def _puerta_del_origen(state: ConversationState, message: str, answer: str) -> str:
-    """La respuesta del RAG tras la puerta del origen (opción C) y, si no salta, con el enlace cuando toca (gen-19)."""
-    return _origen_antes_del_precio(state, message, answer) or _con_enlace_si_toca(state, answer)
-
-
-# gen-19 (21-oct, flag `enlace_cuando_toca`): con el origen y el plan sabidos, si la respuesta da el precio de ese plan
-# y no trae su enlace de reserva, el cliente tenía que pedirlo otra vez (o el RAG lo ofrecía como pregunta, «¿quieres
-# que te comparta el enlace?»). Lo pone el código, del catálogo. No a colombianos ni a grupos mixtos (los cierra un
-# asesor, decisión de Gadea) ni en los planes que cierra un asesor (`contact_only`).
-_ENLACE = {"es": "Puedes reservarlo aquí, eligiendo la fecha y el número de personas: {url}",
-           "en": "You can book it here, choosing the date and number of people: {url}"}
-
-
-def _con_enlace_si_toca(state: ConversationState, answer: str) -> str:
-    from src.flows.catalog import SERVICES  # lazy
-
-    if (not settings.enlace_cuando_toca or not answer or "book.divingplanet.org" in answer
-            or state.is_colombian or getattr(state, "mixed_nationality_notice", False)):
-        return answer
-    origen = state.location or state.detected_location
-    actividad = state.actividad_preguntada or state.detected_activity or state.suggested_activity
-    ids = dom.service_ids(actividad, origen) if actividad and origen in ("cartagena", "island") else ()
-    servicio = SERVICES.get(ids[0]) if len(ids) == 1 else None
-    if not servicio or servicio.get("contact_only") or not _cotiza_alguno(answer, [servicio]):
-        return answer
-    url = cart_render._resolve_service_booking_url(servicio, state)
-    if not url or "book.divingplanet.org" not in url:
-        return answer
-    from src.agents.rag_plan import insertar_frase  # lazy
-
-    return insertar_frase(answer, _ENLACE["es" if state.language == "es" else "en"].format(url=url))
+    """La respuesta del RAG tras la puerta del origen (opción C): la pregunta del origen (con las dos variantes, ord-7)
+    si cotiza o enlaza sin saber el origen; si no, la respuesta tal cual. gen-19 (21-oct) añadía aquí el enlace cuando
+    tocaba; se quitó por decisión de Gadea: en su banco no cambiaba nada (el enlace ya salía cuando lo piden)."""
+    return _origen_antes_del_precio(state, message, answer) or answer
 
 
 def _cotiza_alguno(answer: str, servicios: list[dict]) -> bool:
