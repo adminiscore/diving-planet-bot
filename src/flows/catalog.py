@@ -264,6 +264,8 @@ def _load_services() -> dict:
             "booking_url_island": "",
             "category": service.get("category"),
             "contact_only": service.get("contact_only", False),
+            # ord-6b: sin itinerario en la base, el catálogo no rellena lancha, ida y vuelta ni almuerzo.
+            "detalles_por_asesor": service.get("detalles_por_asesor", False),
         }
     return services
 
@@ -457,6 +459,15 @@ def service_fact_parts(service_id: str, lang: str) -> list[str]:
     if svc.get("includes_night_dive"):
         parts.append("incluye un buceo nocturno" if es else "includes a night dive")
     island = service_id.endswith("_already_on_island")
+    if svc.get("detalles_por_asesor"):
+        # ord-6b (21-oct): un servicio con precio provisional y sin itinerario en la base (Bubble Makers desde
+        # Cartagena). Lo de abajo rellenaría «ida y vuelta el mismo día» y «almuerzo NO incluido» sin saberlo.
+        parts.append("traslado, horario y almuerzo: los confirma un asesor" if es
+                     else "transfer, schedule and lunch: confirmed by an advisor")
+        parts.append("sin certificación previa" if es else "no prior certification")
+        if svc.get("min_age") and svc["min_age"] != 10:
+            parts.append(f"edad mínima {svc['min_age']}" if es else f"minimum age {svc['min_age']}")
+        return parts
     if service_id in OVERNIGHT_SERVICES and not island:
         parts.append("hay que dormir en las islas (alojamiento no incluido), no es ida y vuelta el mismo día"
                      if es else "you must stay overnight on the islands (lodging not included), not a same-day round trip")

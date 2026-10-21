@@ -753,8 +753,12 @@ def ask_slot(state: ConversationState, slot: str, *, reasking: bool = False) -> 
                  else "¿eres de nacionalidad colombiana o tienes cédula de extranjería?")
                 if lang == "es" else
                 # Sin "resident" (Gonzalo, #852): "resident" se contestaba "I live here", el fallo de gen-4.
-                ("are you Colombian nationals, or do you have a cédula de extranjería?" if plural
-                 else "are you a Colombian national, or do you have a cédula de extranjería?")
+                # Sin explicar, «cédula de extranjería» quedaba en español en una respuesta en inglés (ronda gen14-B,
+                # reserva-ingles idioma); decisión de Gadea (#1078): una explicación corta y sin «residents».
+                ("are you Colombian nationals, or do you have a Colombian *cédula de extranjería* (Colombia's ID card "
+                 "for foreigners)?" if plural else
+                 "are you a Colombian national, or do you have a Colombian *cédula de extranjería* (Colombia's ID card "
+                 "for foreigners)?")
             )
             if lang == "es":
                 cabeza = ("Para darte el precio y el link correctos:" if not _es_la_ultima_pregunta(state)
@@ -1019,6 +1023,15 @@ async def _otro_idioma_en_ingles(state: ConversationState, datos: dict | None = 
     if idioma and idioma not in ("es", "en") and state.language != "en":
         logger.info(f"[CORE][IDIOMA] el cliente escribe en {idioma!r}: se contesta en inglés")
         state.language = state.detected_language = "en"
+
+
+def _jev_dice_el_lugar(state: ConversationState) -> bool:
+    """gen-15: ¿Jev está seguro (≥ `CUSTOMER_PLACE_MIN`) de que el mensaje dice dónde está el cliente (Cartagena o las
+    islas)? Lo contrario de `_jev_dice_que_no_lo_dice`."""
+    from src.agents.jev_router import CUSTOMER_PLACE_MIN  # lazy
+
+    lugar = getattr(state, "_jev_lugar", None) or {}
+    return lugar.get("choice") in ("islands", "cartagena") and (lugar.get("confidence") or 0.0) >= CUSTOMER_PLACE_MIN
 
 
 def _jev_dice_que_no_lo_dice(state: ConversationState) -> bool:
@@ -1594,6 +1607,30 @@ async def _answer_question(
     return answer
 
 
+async def _con_la_nacionalidad_del_mensaje(state: ConversationState, message: str) -> ConversationState:
+    """gen-14 (21-oct, flag `rag_espera_la_nacionalidad`): el RAG de un turno con pregunta se escribe (o se adelanta)
+    ANTES de que la extracción apunte lo que dice ESE mensaje, así que «Somos de Cali… ¿cuánto vale la salida?» se
+    cotizaba en USD con la regla de «sin nacionalidad, USD» (banco dialogos-gen14-moneda: is_colombian True y la
+    respuesta en USD 2/2; en la traza, «respuesta adelantada aprovechada» antes de «Detected nationality»). Con el
+    flag, el RAG recibe una COPIA del estado con la nacionalidad que la extracción del turno ya leyó (no se gasta ni
+    se lanza otra: es la tarea adelantada); el estado de verdad lo sigue escribiendo la extracción. Si la nacionalidad
+    cambia, la huella de rag-5 cambia y la respuesta adelantada se rehace."""
+    if not settings.rag_espera_la_nacionalidad or state.is_colombian is not None:
+        return state
+    from src.agents.nucleo.extractor import lectura_del_extractor  # lazy
+
+    datos = await lectura_del_extractor(state, message)
+    valor = (datos or {}).get("is_colombian")
+    if valor is None or (datos or {}).get("mixed_nationality"):
+        return state
+    import copy
+
+    copia = copy.copy(state)
+    copia.is_colombian = valor
+    logger.info(f"[CORE][GEN14] el RAG ya sabe la nacionalidad de este mensaje: is_colombian={valor}")
+    return copia
+
+
 async def _rag_answer(
     state: ConversationState, message: str, *, rag_query: str | None = None, history: list | None = None,
     sin_precio: bool = False,
@@ -1603,7 +1640,8 @@ async def _rag_answer(
     # l1-4: las notas de ESTE mensaje pueden estar calculándose en paralelo. Aquí
     # es donde se usan (van dentro del contexto del RAG), así que aquí se espera.
     await await_pending_notes(state)
-    entradas = _entradas_rag(state, state.history if history is None else history, message)
+    entradas = _entradas_rag(await _con_la_nacionalidad_del_mensaje(state, message),
+                             state.history if history is None else history, message)
     if sin_precio:  # G3-07a: solo se pasa cuando hace falta (la llamada de siempre no cambia)
         entradas["sin_precio"] = True
     answer = await supervisor.rag_answer(rag_query or message, **entradas)
@@ -1760,7 +1798,7 @@ async def _adoptar_o_rehacer(state: ConversationState, message: str, history: li
     from src.observability import note_turn
 
     await await_pending_notes(state)
-    entradas = _entradas_rag(state, history, message)
+    entradas = _entradas_rag(await _con_la_nacionalidad_del_mensaje(state, message), history, message)
     huella = _huella_rag(message, entradas)
     if huella == adelantado["huella"]:
         note_turn(rag_used=True, rag_adelantado="aprovechado")
@@ -2019,6 +2057,11 @@ def _origen_antes_del_precio(state: ConversationState, message: str, answer: str
     Cotiza = lleva un importe, y el cliente pide un precio o repregunta tras la pregunta del origen sin contestarla
     ("¿y en pesos?"). Un importe en la respuesta a otra cosa ("¿qué incluye?") se deja como hoy."""
     if not settings.rag_origen_pregunta or state.location or state.detected_location:
+        return None
+    if settings.hoteles_de_la_base and _jev_dice_el_lugar(state):
+        # gen-15: la puerta mira el origen antes de que la extracción del turno lo guarde, y sus pistas son palabras
+        # («Cartagena», «islas», «Barú»): «We booked 3 nights at Mulata. How much is snorkeling?» se repreguntaba 2/2
+        # con Jev seguro (islands 0,97). Si Jev está seguro de dónde está el cliente, el mensaje ya lo dice.
         return None
     texto = message or ""
     # ord-7: un enlace de reserva también depende del origen («mándame el enlace del Open Water» daba el de Cartagena).

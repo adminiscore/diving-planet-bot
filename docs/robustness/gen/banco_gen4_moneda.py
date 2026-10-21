@@ -23,7 +23,7 @@ P_EN = "One last thing so I can give you the right price and link: are you Colom
 P_ES_CEDULA = ("Última cosa para darte el precio y el link correctos: ¿eres de nacionalidad colombiana o tienes cédula "
                "de extranjería?")
 P_EN_CEDULA = ("One last thing so I can give you the right price and link: are you a Colombian national, or do you have "
-               "a cédula de extranjería?")
+               "a Colombian *cédula de extranjería* (Colombia's ID card for foreigners)?")
 CASOS = [
     # Colombianos, vivan donde vivan: COP.
     ("soy colombiana pero vivo en Madrid hace años", None, "es", True),
@@ -43,6 +43,17 @@ CASOS = [
     ("sí, vivo aquí", P_ES, "es", None),
     # Nacer en Colombia no da la nacionalidad sola (Gadea, 21-oct: no se deduce; se pregunta).
     ("nací en Bogotá, aunque ahora vivo en Chile", None, "es", None),
+    # gen-14: la ciudad o el gentilicio de Colombia, aunque diga dónde se aloja o adónde viaja (frases propias, distintas
+    # de los ejemplos de la regla).
+    ("Hola! Somos de Cali y ya estamos alojados en Isla Grande, ¿cuánto vale la salida de 2 inmersiones?", None, "es", True),
+    ("Buenas, soy paisa y tengo Advanced, ¿qué precio tiene el paquete de 5 inmersiones?", None, "es", True),
+    ("mi familia y yo somos de Pereira, estamos de vacaciones en Cartagena", None, "es", True),
+    ("I'm from Bucaramanga originally, now on holiday in Cartagena", None, "en", True),
+    ("sí, soy santandereano", P_ES, "es", True),
+    # Controles: alojarse o viajar no dice nada; una ciudad de OTRO país no es Colombia.
+    ("estamos de vacaciones en Bogotá esta semana", None, "es", None),
+    ("we're staying in Medellín for a month", None, "en", None),
+    ("somos de Lima y estamos alojados en Cartagena", None, "es", "no_true"),
     # Extranjeros (sin cédula o turistas): USD.
     ("soy gringo, vivo en Medellín pero no tengo cédula", None, "es", False),
     ("I'm American, living in Bogotá on a tourist visa", P_EN, "en", False),
@@ -66,9 +77,9 @@ async def main(pasadas: int, flags: list[str], pregunta_vieja: bool = False) -> 
         salidas = await asyncio.gather(*[extraer_turno(mensaje, history=historia, sabido={}, lang=lang)
                                          for _ in range(pasadas)])
         leidos = [(s or {}).get("is_colombian") for s in salidas]
-        ok = sum(1 for v in leidos if v is esperado)
+        ok = sum(1 for v in leidos if (v is not True) if esperado == "no_true") if esperado == "no_true" else             sum(1 for v in leidos if v is esperado)
         bien, total = bien + ok, total + pasadas
-        tipo = {True: "COP", False: "USD", None: "no lo dice"}[esperado]
+        tipo = {True: "COP", False: "USD", None: "no lo dice", "no_true": "USD"}[esperado]
         por_tipo.setdefault(tipo, [0, 0])
         por_tipo[tipo][0] += ok
         por_tipo[tipo][1] += pasadas

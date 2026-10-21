@@ -464,12 +464,28 @@ def _solo_baru(cita: str) -> bool:
     return "rosario" not in texto and not any(isla and isla in texto for isla in islas)
 
 
-def _pistas_islas() -> str:
+# gen-15 (21-oct, flag `hoteles_de_la_base`): los hoteles de las islas que da la base del negocio
+# (data/knowledge_base/policies.json, other_island_hotels: la base en Majagua y Cocoliso, y otros con acceso marítimo).
+# La lista de hoteles del bot (rag_agent.AMBIGUOUS_LOCATION_NAMES) no tenía Mulata, Rosario de Mar ni Eco Hotel Las
+# Palmeras, y «we booked 2 nights at Mulata» o «vamos a estar en Las Palmeras» no salían como «ya en las islas» (banco
+# docs/robustness/gen/banco_gen15_hoteles.py). tests/test_gen15_hoteles_de_la_base.py vigila que sigan en la base.
+HOTELES_DE_LA_BASE = ("San Pedro de Majagua", "Cocoliso", "Ubuntu", "Secreto", "Mulata", "Rosario de Mar",
+                      "Eco Hotel Las Palmeras")
+
+
+def _nombres_de_lugar() -> list[str]:
     from src.agents.rag_agent import (
         AMBIGUOUS_LOCATION_NAMES,  # lazy: lista cerrada de hoteles e islas del Rosario
     )
 
-    return ", ".join(AMBIGUOUS_LOCATION_NAMES)
+    nombres = list(AMBIGUOUS_LOCATION_NAMES)
+    if settings.hoteles_de_la_base:
+        nombres += [h for h in HOTELES_DE_LA_BASE if not any(h.lower() in n.lower() for n in nombres)]
+    return nombres
+
+
+def _pistas_islas() -> str:
+    return ", ".join(_nombres_de_lugar())
 
 
 SISTEMA_ES = """Eres el lector de mensajes de Coral, la asistente de reservas de Diving Planet (buceo y snorkel en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas). Lees UN mensaje del cliente y devuelves SOLO los datos de la reserva que el cliente AFIRMA en ese mensaje, cada uno con la cita exacta de sus palabras.
@@ -564,12 +580,10 @@ def _en_trozos_seguidos(c: list[str], m: list[str]) -> bool:
 
 def _lugares() -> set[str]:
     """Palabras de lugar (lista cerrada): Cartagena, islas/hotel y los nombres de hoteles e islas del Rosario."""
-    from src.agents.rag_agent import AMBIGUOUS_LOCATION_NAMES  # lazy
-
     palabras = {"cartagena", "isla", "islas", "island", "islands", "rosario", "hotel", "hostel", "hostal"}
     if settings.baru_sale_de_cartagena:
         palabras.update({"baru", "blanca"})  # gen-6: "estamos en Barú" dice desde dónde sale (Cartagena)
-    for nombre in AMBIGUOUS_LOCATION_NAMES:
+    for nombre in _nombres_de_lugar():
         palabras.update(w for w in _norm(nombre) if len(w) > 3)
     return palabras
 
@@ -650,6 +664,10 @@ async def extraer_turno(mensaje: str, *, history: list[dict] | None = None, sabi
         # gen-4: vivir en Colombia no es ser residente (ver `_VIVIR_NO_ES_RESIDIR`).
         for antes, despues in _VIVIR_NO_ES_RESIDIR:
             sistema = sistema.replace(antes, despues)
+        if settings.gentilicio_es_colombiano:
+            # gen-14: la ciudad o el gentilicio sí dicen la nacionalidad; alojarse o viajar no (ver la constante).
+            for antes, despues in _GENTILICIO_ES_COLOMBIANO:
+                sistema = sistema.replace(antes, despues)
     if settings.baru_sale_de_cartagena:
         # gen-6: alojarse en Barú o Playa Blanca es salir desde Cartagena (ver `_BARU_SALE_DE_CARTAGENA`).
         for antes, despues in _BARU_SALE_DE_CARTAGENA:
@@ -911,6 +929,24 @@ _VIVIR_NO_ES_RESIDIR = (
      "Never infer it from the language they write in or from their name. True if they say they are Colombian, wherever "
      "they live (also abroad), or that they have a cédula de extranjería, even if they are a foreign national. Only "
      "living, working, staying or having been born in Colombia, or being an expat, with nothing more, is null."),
+)
+
+# gen-14 (21-oct, flag `gentilicio_es_colombiano`): con «estar» en la lista de lo que no dice la nacionalidad, «Somos de
+# Cali y ya estamos alojados en Isla Grande» bajaba a null (de 2/3 a 1/3 colombiano) y «soy paisa» nunca contaba (0/3):
+# el bot cotizaba en USD a colombianos (causa (a) de moneda en G10/G9, Coral #999). Decir de qué ciudad o región de
+# Colombia es (o su gentilicio) dice que es colombiano; alojarse o viajar no dice nada. Se aplica tras
+# `_VIVIR_NO_ES_RESIDIR`.
+_GENTILICIO_ES_COLOMBIANO = (
+    ("Solo vivir, trabajar, estar o haber nacido en Colombia, o ser expat, sin decir más, es null.",
+     "Solo vivir, trabajar o haber nacido en Colombia, o ser expat, sin decir más, es null («vivo en Medellín», «I live "
+     "in Bogotá»). Ser DE una ciudad o región de Colombia, dicho como su origen o con su gentilicio («somos de "
+     "Barranquilla», «soy costeña», «rolo»), sí es ser colombiano: true, aunque además cuente dónde se aloja. Alojarse o "
+     "estar de viaje en un sitio no dice nada de la nacionalidad."),
+    ("Only living, working, staying or having been born in Colombia, or being an expat, with nothing more, is null.",
+     "Only living, working or having been born in Colombia, or being an expat, with nothing more, is null (\"I live in "
+     "Bogotá\", \"vivo en Medellín\"). Being FROM a Colombian city or region, said as their origin or with its demonym "
+     "(\"we're from Barranquilla\", \"I'm costeña\", \"rolo\"), does make them Colombian: true, even if they also say "
+     "where they are staying. Staying or travelling somewhere says nothing about nationality."),
 )
 
 # El mismo flag: aceptar la opción que propone el bot es elegirla (est3-B, pareja-certificados: "nos gusta, somos 2…"

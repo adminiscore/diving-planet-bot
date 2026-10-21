@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-21T18:13:56+00:00",
-  "commit": "cfb63de",
+  "generado": "2026-10-21T18:15:03+00:00",
+  "commit": "0d3c4be",
   "rama": "feature/pre_gadea"
  },
  "vistas": {
@@ -699,6 +699,34 @@
      "titulo": "Vivir en Colombia no es ser residente",
      "codigo": true,
      "pre": true,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "gentilicio_es_colombiano",
+     "titulo": "Ser de una ciudad de Colombia es ser colombiano",
+     "codigo": false,
+     "pre": false,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "rag_espera_la_nacionalidad",
+     "titulo": "El precio en la moneda que acaba de decir el cliente",
+     "codigo": false,
+     "pre": false,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "hoteles_de_la_base",
+     "titulo": "Conoce todos los hoteles de las islas",
+     "codigo": false,
+     "pre": false,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "reserva_de_hotel_no_es_nuestra",
+     "titulo": "Reservar el hotel no es reservar con nosotros",
+     "codigo": false,
+     "pre": false,
      "sin_efecto": false
     },
     {
@@ -2544,6 +2572,19 @@
    "sin_efecto": null
   },
   {
+   "nombre": "gentilicio_es_colombiano",
+   "area": "Reserva",
+   "titulo": "Ser de una ciudad de Colombia es ser colombiano",
+   "texto": "Quien dice de qué ciudad o región de Colombia es ('somos de Cali', 'soy de Pereira') cuenta como colombiano y paga en pesos, aunque diga además dónde se aloja. Vivir en Colombia, alojarse o estar de viaje no dice la nacionalidad.",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
+   "usado_por": [
+    "b_extraction"
+   ],
+   "sin_efecto": null
+  },
+  {
    "nombre": "grupo_privado_pase",
    "area": "Respuestas fijas",
    "titulo": "Grupo privado: pase real",
@@ -2575,6 +2616,19 @@
    "codigo": true,
    "pre": true,
    "fijado_en_pre": true,
+   "usado_por": [
+    "b_extraction"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "hoteles_de_la_base",
+   "area": "Reserva",
+   "titulo": "Conoce todos los hoteles de las islas",
+   "texto": "Coral reconoce como alojados en las islas a quien nombra cualquiera de los hoteles que da la base del negocio (Majagua, Cocoliso, Ubuntu, Secreto, Mulata, Rosario de Mar, Eco Hotel Las Palmeras) y no le vuelve a preguntar desde dónde sale.",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
    "usado_por": [
     "b_extraction"
    ],
@@ -3009,6 +3063,19 @@
    "sin_efecto": null
   },
   {
+   "nombre": "rag_espera_la_nacionalidad",
+   "area": "Preguntas",
+   "titulo": "El precio en la moneda que acaba de decir el cliente",
+   "texto": "Si el cliente dice de dónde es en el mismo mensaje en que pregunta un precio ('Somos de Cali, ¿cuánto vale?'), la respuesta ya sale en pesos. Antes la respuesta se escribía antes de apuntar la nacionalidad y salía en dólares.",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
+   "usado_por": [
+    "b_extraction"
+   ],
+   "sin_efecto": null
+  },
+  {
    "nombre": "rag_no_adivina",
    "area": "Preguntas",
    "titulo": "No adivina ningún dato del cliente",
@@ -3248,6 +3315,19 @@
    "fijado_en_pre": true,
    "usado_por": [
     "b_slotfill_close"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "reserva_de_hotel_no_es_nuestra",
+   "area": "Enrutador",
+   "titulo": "Reservar el hotel no es reservar con nosotros",
+   "texto": "Quien dice que ya reservó el hotel o el vuelo ('we booked 3 nights at Mulata') sigue siendo un cliente nuevo: Coral le cotiza y le hace las preguntas de la reserva, en vez de tratarle como alguien que ya reservó con Diving Planet.",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
+   "usado_por": [
+    "b_extraction"
    ],
    "sin_efecto": null
   },

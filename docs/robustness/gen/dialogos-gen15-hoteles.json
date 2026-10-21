@@ -1,0 +1,22 @@
+{
+ "about": "gen-15 (21-oct, causas de origen de G10/G9 que pasó Gadea por tipos en Coral #999, sin frases del examen): (a) hotel de las islas no reconocido → el bot repregunta desde dónde sale; (b) hotel reconocido, pero no aplica el plan o el precio 'ya en las islas'. Hoteles de policies.json other_island_hotels. Diálogos PROPIOS. 'espera' es lo que debe hacer el bot.",
+ "version": 1,
+ "creado": "2026-10-21",
+ "dialogos": [
+  {"id": "g15-mulata-snorkel", "patron": "(a) hotel que la lista del bot no tenía",
+   "turnos": ["Hi! We booked 3 nights at Mulata. How much is snorkeling for the two of us?"],
+   "espera": "no repregunta el origen; precio del snorkel ya en las islas (45 USD online), sin almuerzo"},
+  {"id": "g15-las-palmeras-minicurso", "patron": "(a) hotel que la lista del bot no tenía",
+   "turnos": ["Hola, vamos a estar en Las Palmeras unos días. ¿Cuánto vale el minicurso? Nunca he buceado."],
+   "espera": "no repregunta el origen; minicurso ya en las islas (134 USD online)"},
+  {"id": "g15-majagua-reserva", "patron": "(a) hotel de la lista dicho corto",
+   "turnos": ["Buenas, nos alojamos en el Majagua y queremos bucear, somos certificados", "somos 2"],
+   "espera": "no repregunta el origen; plan de 2 inmersiones ya en las islas"},
+  {"id": "g15-ubuntu-precio", "patron": "(b) hotel reconocido, plan de las islas",
+   "turnos": ["Hello, we're staying at Ubuntu. What's the price of the 2-dive trip?"],
+   "espera": "plan ya en las islas (124 USD online, sin almuerzo), no el de Cartagena"},
+  {"id": "g15-rosario-de-mar-acompanante", "patron": "(a) hotel que la lista del bot no tenía, acompañante",
+   "turnos": ["Estaremos en Rosario de Mar. Mi pareja bucea y yo no, ¿puedo ir en la lancha?"],
+   "espera": "sí, plan de acompañante ya en las islas (80 USD online, sin almuerzo); no repregunta el origen"}
+ ]
+}

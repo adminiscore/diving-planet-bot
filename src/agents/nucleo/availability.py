@@ -108,6 +108,10 @@ async def _availability_phase(
     if state.step == Step.ESCALATE:
         return await _tras_el_pase(state, message, routing_signals, greeting)
     if _modo_posventa(state, routing_signals):
+        if settings.hoteles_de_la_base:
+            # gen-15: la puerta del origen del RAG mira dónde dice Jev que está el cliente (`_jev_lugar`), que se apunta
+            # en el enrutado; en posventa no se llega ahí y se preguntaba el origen con Jev seguro (islands 0,97).
+            state._jev_lugar = routing_signals.get("customer_place")
         return await _tras_el_pase(state, message, routing_signals, greeting, posventa=True)
 
     msg_lower = message.strip().lower()

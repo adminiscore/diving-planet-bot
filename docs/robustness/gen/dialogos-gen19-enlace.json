@@ -1,0 +1,22 @@
+{
+ "about": "gen-19 (21-oct): ¿el bot comparte el enlace de reserva cuando el cliente lo pide o cuando toca? Causa de G10/G9: 'el RAG omite datos', dentro de lo cual 'no comparte el enlace de reserva' ~12 (Gadea, Coral #998). Diálogos PROPIOS (ninguno sale del examen). 'espera' es lo que debe hacer la última respuesta; 'enlace' = un link de book.divingplanet.org del plan y origen que tocan.",
+ "version": 1,
+ "creado": "2026-10-21",
+ "dialogos": [
+  {"id": "g19-pide-link-snorkel-cartagena", "patron": "pide el enlace, origen sabido",
+   "turnos": ["Hola, saldríamos desde Cartagena. ¿Me pasas el link para reservar el snorkel?"],
+   "espera": "enlace del snorkel desde Cartagena"},
+  {"id": "g19-where-book-minicourse", "patron": "pregunta dónde reservar, origen sabido",
+   "turnos": ["We're in Cartagena next week. Where can I book the mini course?"],
+   "espera": "enlace del minicurso desde Cartagena"},
+  {"id": "g19-como-reservo-tras-precio", "patron": "pide reservar tras el precio",
+   "turnos": ["Hi, we're staying at Ubuntu. How much is the 2-dive trip?", "great, how do I book it?"],
+   "espera": "enlace del plan de 2 inmersiones ya en las islas"},
+  {"id": "g19-link-open-water-sin-origen", "patron": "pide el enlace sin decir el origen",
+   "turnos": ["Hola, mándame por favor el link para reservar el curso Open Water"],
+   "espera": "según la decisión de Gadea: los dos enlaces o preguntar el origen"},
+  {"id": "g19-quiero-reservar-certificado", "patron": "dice que quiere reservar, origen sabido",
+   "turnos": ["Buenas, soy buzo certificado y salgo desde Cartagena el sábado. Quiero reservar la salida de 2 inmersiones."],
+   "espera": "enlace de la salida de 2 inmersiones desde Cartagena (o el flujo de la reserva con su enlace al cerrar)"}
+ ]
+}

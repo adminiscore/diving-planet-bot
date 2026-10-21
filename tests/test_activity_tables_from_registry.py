@@ -31,6 +31,8 @@ def test_cart_types_of_day_activities_come_from_the_registry():
     """Mismo resultado que la tabla a mano, ahora derivado."""
     assert core._ACTIVITY_TO_CART_TYPE == {
         "certified_diving": "cert", "minicourse": "beginner", "snorkel": "snorkel",
+        # ord-6b (21-oct): Bubble Makers ya tiene servicio de un día; su cart_type (beginner) ya estaba en el registro.
+        "bubble_makers": "beginner",
     }
 
 
