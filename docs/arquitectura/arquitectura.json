@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-21T10:40:22+00:00",
-  "commit": "1f66c3e",
+  "generado": "2026-10-21T11:03:56+00:00",
+  "commit": "cf35b8c",
   "rama": "feature/gen8-alvaro"
  },
  "vistas": {
@@ -888,6 +888,13 @@
     {
      "nombre": "acuse_en_su_numero",
      "titulo": "El acuse habla en singular a quien va solo",
+     "codigo": false,
+     "pre": false,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "actividad_de_la_pregunta",
+     "titulo": "Ofrece la actividad por la que pregunta el cliente",
      "codigo": false,
      "pre": false,
      "sin_efecto": false
@@ -1973,6 +1980,19 @@
    "fijado_en_pre": true,
    "usado_por": [
     "r_escribir"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "actividad_de_la_pregunta",
+   "area": "Reserva",
+   "titulo": "Ofrece la actividad por la que pregunta el cliente",
+   "texto": "Quien pregunta por una actividad sin elegirla aún ('en el minicurso, ¿el equipo está incluido?') recibe, tras la respuesta, la oferta de esa actividad ('Si quieres, te ayudo a reservar: Minicurso') en vez del menú de las 4 actividades. La elige el cliente.",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
+   "usado_por": [
+    "b_slotfill_close"
    ],
    "sin_efecto": null
   },

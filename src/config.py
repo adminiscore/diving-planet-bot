@@ -178,6 +178,11 @@ class Settings(BaseSettings):
     # gen-8 (21-oct): el ejemplo del acuse para reconocer un dato iba en plural ("none of you are Colombian") y lo
     # copiaba a quien va solo; con el flag, la regla de usar las palabras y el número del cliente. APAGADO.
     acuse_en_su_numero: bool = False
+    # gen-8 (21-oct): la actividad de la que el cliente PREGUNTA sin elegirla ("en el minicurso, ¿el equipo está
+    # incluido?", "si hiciera el Advanced…"), leída por el extractor con su cita. Mientras no elige, la pregunta de la
+    # actividad le ofrece esa en vez del menú de 4 (textos-B: "Which one are you leaning toward — diving, a
+    # mini-course…?" a quien llevaba 3 turnos preguntando por el Open Water). APAGADO.
+    actividad_de_la_pregunta: bool = False
     # EX-EST-2 (14-oct): arreglos de datos de la tanda est3 (la pregunta del origen solo dice 'ida y vuelta el mismo dia'
     # si se SABE que el plan es de un dia; ...). PROMOCIONADO 14-oct tras est3-B (HISTORY 0.31.25).
     # Revert = False aqui y en el compose.

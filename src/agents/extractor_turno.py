@@ -249,6 +249,25 @@ REGLA_OTRAS_PERSONAS_EN = (
     "is_certified and last_dive_over_2_years."
 )
 
+# 6. gen-8 (`actividad_de_la_pregunta`): la actividad de la que el cliente PREGUNTA sin elegirla. La regla de activity
+#    (decisión de Gadea: no se adivina) deja sin actividad a quien pregunta "en el minicurso, ¿el equipo está
+#    incluido?" o "si hiciera el Open Water…", y el bot le pegaba detrás de la respuesta el menú de 4 actividades. No
+#    cambia activity: es otro hecho, con su cita, para que el bot ofrezca esa actividad y la elija el cliente.
+CAMPO_ACTIVIDAD_PREGUNTADA = _dato({"type": "string", "enum": list(ACTIVIDADES)},
+                                   "La actividad concreta de la que pregunta o habla el mensaje, aunque no la elija.")
+REGLA_ACTIVIDAD_PREGUNTADA_ES = (
+    "\n- actividad_preguntada: la actividad concreta de la lista de la que pregunta o habla este mensaje aunque no la "
+    "elija: una duda sobre ella (\"en el minicurso, ¿el equipo está incluido?\"), una hipótesis (\"si hiciera el "
+    "Advanced…\") o su precio. null si no nombra ninguna concreta, si pregunta qué opciones hay o si compara varias. "
+    "Si además la elige, va también en activity."
+)
+REGLA_ACTIVIDAD_PREGUNTADA_EN = (
+    "\n- actividad_preguntada: the concrete activity from the list that this message asks or talks about even if it "
+    "does not choose it: a doubt about it (\"is gear included in the mini course?\"), a hypothesis (\"if I did the "
+    "Advanced…\") or its price. null if it names no concrete one, asks what options there are or compares several. If "
+    "it also chooses it, it goes in activity too."
+)
+
 
 def campos_paso6(history: list[dict] | None) -> dict:
     """Los campos nuevos del paso 6 que van en ESTA llamada, según sus flags: {campo: (esquema, regla_es, regla_en)}.
@@ -264,6 +283,9 @@ def campos_paso6(history: list[dict] | None) -> dict:
     if settings.notas_rag_desde_estado:
         campos["otro_sin_certificar"] = (CAMPO_OTRO_SIN_CERTIFICAR, REGLA_OTRAS_PERSONAS_ES, REGLA_OTRAS_PERSONAS_EN)
         campos["otro_certificado_inactivo"] = (CAMPO_OTRO_CERTIFICADO_INACTIVO, "", "")
+    if settings.actividad_de_la_pregunta:
+        campos["actividad_preguntada"] = (CAMPO_ACTIVIDAD_PREGUNTADA, REGLA_ACTIVIDAD_PREGUNTADA_ES,
+                                          REGLA_ACTIVIDAD_PREGUNTADA_EN)
     return campos
 
 

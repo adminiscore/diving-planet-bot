@@ -1,0 +1,37 @@
+{
+ "about": "gen-8 (21-oct): ¿el bot pega el menú de actividades tras una respuesta aunque el cliente ya habla de UNA actividad? Hallazgo de textos-B (curso-open-water-transporte, core visible): el cliente pregunta por el Open Water «in case I decided to do» y, tras contestarle dónde es el punto de encuentro, el bot añade «Which one are you leaning toward — diving, a mini-course, snorkeling or a PADI course?». Diálogos PROPIOS (ninguno sale del examen): el cliente nombra una actividad en una pregunta de información, sin decir aún que la reserva, y luego hace preguntas de logística. 'espera' es lo que NO debería pasar. El último es el control: quien no nombra ninguna actividad sí puede recibir el menú. Se corre con reproducir_juez_pre --banco.",
+ "version": 1,
+ "creado": "2026-10-21",
+ "dialogos": [
+  {
+   "id": "g8m-ow-hipotetico-en",
+   "patron": "curso nombrado en hipótesis y luego logística",
+   "turnos": ["Hello! If I went for the Open Water certification, does the price include the boat to the islands?", "And how many nights would I need to stay there?", "ok. what time should I be at the dock?"],
+   "espera": "sin el menú de 4 actividades tras la respuesta; como mucho, ofrecer el Open Water"
+  },
+  {
+   "id": "g8m-minicurso-pregunta-es",
+   "patron": "minicurso nombrado en una pregunta y luego logística",
+   "turnos": ["Hola, una consulta: en el minicurso, ¿el equipo está incluido?", "¿Y cuánto dura más o menos?", "Perfecto, ¿dónde nos vemos en Cartagena?"],
+   "espera": "sin el menú de 4 actividades; como mucho, ofrecer el minicurso"
+  },
+  {
+   "id": "g8m-snorkel-ninos-en",
+   "patron": "snorkel nombrado en una pregunta y luego otra pregunta",
+   "turnos": ["Hi, is the snorkeling tour ok for kids around 8 years old?", "Do they get life jackets?", "Thanks! Is lunch included?"],
+   "espera": "sin el menú de 4 actividades; como mucho, ofrecer el snorkel"
+  },
+  {
+   "id": "g8m-advanced-es",
+   "patron": "curso avanzado nombrado en hipótesis",
+   "turnos": ["Buenas, si hiciera el Advanced con ustedes, ¿cuántas inmersiones son?", "¿Hace falta llevar mi propio equipo?", "¿A qué hora sale la lancha?"],
+   "espera": "sin el menú de 4 actividades; como mucho, ofrecer el Advanced"
+  },
+  {
+   "id": "g8m-control-sin-actividad-en",
+   "patron": "control: no nombra ninguna actividad",
+   "turnos": ["Hi! Where exactly do your boats leave from in Cartagena?", "And is there parking nearby?"],
+   "espera": "aquí el menú (o preguntar qué le gustaría hacer) es correcto"
+  }
+ ]
+}

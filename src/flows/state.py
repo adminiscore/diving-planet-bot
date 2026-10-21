@@ -170,6 +170,9 @@ class ConversationState:
     # ex-9b paso 6 (`notas_rag_desde_estado`): algún mensaje de esta conversación no lo leyó el extractor (falló): esas
     # notas vuelven al regex de siempre sobre lo que escribió el cliente (solo si la IA calla).
     extractor_ha_fallado: bool = False
+    # gen-8 (flag `actividad_de_la_pregunta`): la última actividad concreta de la que el cliente preguntó sin elegirla
+    # (extractor, con cita). Mientras no elige, la pregunta de la actividad le ofrece esa en vez del menú.
+    actividad_preguntada: str | None = None
 
     # Actividad del acompañante detectada por la red de precisión LLM
     # (detect_special_signals) cuando la cantidad quedó pendiente de preguntar

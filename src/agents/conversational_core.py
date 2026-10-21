@@ -308,6 +308,27 @@ def _minicurso_ya_recomendado(state: ConversationState) -> bool:
                for m in marcas)
 
 
+# gen-8 (`actividad_de_la_pregunta`): productos genéricos ("un curso PADI", "una especialidad"): no hay uno que ofrecer.
+_SIN_OFERTA_CONCRETA = ("padi_course", "padi_specialty")
+
+
+def _ofrecer_la_actividad_preguntada(state: ConversationState) -> str | None:
+    """gen-8: quien pregunta por UNA actividad sin elegirla recibe la oferta de esa, no el menú de 4 (textos-B). La
+    elige el cliente: "sí" confirma la recomendación (`suggested_activity`, nucleo/routing)."""
+    actividad = state.actividad_preguntada
+    if not (settings.actividad_de_la_pregunta and actividad) or actividad in _SIN_OFERTA_CONCRETA:
+        return None
+    if state.suggested_activity and state.suggested_activity != actividad:
+        return None
+    lang = state.language
+    state.suggested_activity = actividad
+    nombre = dom.label(actividad, lang)
+    state.quick_replies = [{"title": "✅ Sí, quiero reservar" if lang == "es" else "✅ Yes, let's book it",
+                            "value": "sí" if lang == "es" else "yes"}]
+    return (f"Si quieres, te ayudo a reservar: *{nombre}*. ¿Te animas? 🌊" if lang == "es" else
+            f"If you'd like, I can help you book it: *{nombre}*. Shall we? 🌊")
+
+
 def ask_slot(state: ConversationState, slot: str, *, reasking: bool = False) -> str:
     """Pregunta natural por el slot que falta. Un solo mensaje, UNA pregunta,
     quick-replies solo donde el plan lo permite (ubicación / sí-no).
@@ -320,6 +341,8 @@ def ask_slot(state: ConversationState, slot: str, *, reasking: bool = False) -> 
     state.core_pending_slot = slot
     state.quick_replies = []
 
+    if slot == SLOT_ACTIVITY and (oferta := _ofrecer_la_actividad_preguntada(state)):
+        return oferta
     if (slot == SLOT_ACTIVITY and settings.actividad_por_lo_sabido and state.quiere_bucear
             and not state.suggested_activity and not state.detected_group_allocation):
         # CAL-C1 (16-oct; regla de Gadea 14/27-sep: recomendar según lo que se sabe). Quien ya dijo que quiere bucear
