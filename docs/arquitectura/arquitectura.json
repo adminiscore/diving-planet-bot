@@ -1,8 +1,8 @@
 {
  "meta": {
-  "generado": "2026-10-21T14:51:55+00:00",
-  "commit": "19cb872",
-  "rama": "feature/pre_gadea"
+  "generado": "2026-10-21T17:22:08+00:00",
+  "commit": "9d2c938",
+  "rama": "feature/gen8-alvaro"
  },
  "vistas": {
   "general": {
@@ -678,6 +678,13 @@
      "titulo": "Vivir en Colombia no es ser residente",
      "codigo": true,
      "pre": true,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "gentilicio_es_colombiano",
+     "titulo": "Ser de una ciudad de Colombia es ser colombiano",
+     "codigo": false,
+     "pre": false,
      "sin_efecto": false
     },
     {
@@ -2480,6 +2487,19 @@
    "pre": true,
    "fijado_en_pre": false,
    "usado_por": [],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "gentilicio_es_colombiano",
+   "area": "Reserva",
+   "titulo": "Ser de una ciudad de Colombia es ser colombiano",
+   "texto": "Quien dice de qué ciudad o región de Colombia es ('somos de Cali', 'soy de Pereira') cuenta como colombiano y paga en pesos, aunque diga además dónde se aloja. Vivir en Colombia, alojarse o estar de viaje no dice la nacionalidad.",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
+   "usado_por": [
+    "b_extraction"
+   ],
    "sin_efecto": null
   },
   {

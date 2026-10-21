@@ -36,3 +36,12 @@ def test_la_pregunta_nombra_la_cedula_con_el_flag(monkeypatch, lang, plural):
     monkeypatch.setattr(settings, "vivir_no_es_residir", False)
     sin = ask_slot(st, SLOT_NATIONALITY)
     assert "cédula" not in sin
+
+
+@pytest.mark.parametrize("prompt", [ex.SISTEMA_ES, ex.SISTEMA_EN], ids=["es", "en"])
+def test_gen14_la_frase_que_cambia_sigue_en_el_prompt(prompt):
+    """gen-14 (`gentilicio_es_colombiano`): se aplica sobre el texto que deja `vivir_no_es_residir`."""
+    texto = prompt
+    for a, b in ex._VIVIR_NO_ES_RESIDIR:
+        texto = texto.replace(a, b)
+    assert sum(1 for a, _b in ex._GENTILICIO_ES_COLOMBIANO if a in texto) == 1

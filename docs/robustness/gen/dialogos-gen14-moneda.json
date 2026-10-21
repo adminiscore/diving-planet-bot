@@ -1,0 +1,28 @@
+{
+ "about": "gen-14 (21-oct, causas de moneda de G10/G9 que pasó Gadea por tipos en Coral #999, sin frases del examen): (a) a un colombiano o residente con cédula le da USD o ningún COP, también ya en las islas y en paquetes; (b) grupo mixto sin explicar que todo va en USD; (c) 'vive en Colombia' con otra nacionalidad → COP; (d) no aclara que es el mismo precio y solo cambia la moneda. Diálogos PROPIOS. 'espera' es la moneda de la respuesta con precio. Se corre con reproducir_juez_pre --banco (la traza enseña is_colombian).",
+ "version": 1,
+ "creado": "2026-10-21",
+ "dialogos": [
+  {"id": "g14-colombiano-islas-2-buceos", "patron": "(a) colombiano, ya en las islas, plan de 2 inmersiones",
+   "turnos": ["Hola! Somos de Cali y ya estamos alojados en Isla Grande. ¿Cuánto vale la salida de 2 inmersiones? Ya somos buzos."],
+   "espera": "COP"},
+  {"id": "g14-paisa-paquete-5", "patron": "(a) colombiano (forma regional), paquete",
+   "turnos": ["Buenas, soy paisa y tengo Advanced. ¿Qué precio tiene el paquete de 5 inmersiones saliendo desde Cartagena?"],
+   "espera": "COP"},
+  {"id": "g14-residente-cedula-snorkel-islas", "patron": "(a) residente con cédula de extranjería, ya en las islas",
+   "turnos": ["Hi, I'm a resident in Colombia with a cédula de extranjería. We're staying at Hotel San Pedro de Majagua. How much is snorkeling for 2?"],
+   "espera": "COP"},
+  {"id": "g14-colombiana-pesos-luego", "patron": "(a) pregunta el precio y después dice que es colombiana",
+   "turnos": ["Hola, ¿cuánto cuesta el minicurso desde Cartagena?", "Ah, y soy colombiana, ¿me lo puedes dar en pesos?"],
+   "espera": "COP en la segunda respuesta"},
+  {"id": "g14-grupo-mixto", "patron": "(b) grupo mixto",
+   "turnos": ["Hola, somos 3: mi esposo es colombiano y mis dos amigas son alemanas. ¿Cuánto cuesta el snorkel desde Cartagena?"],
+   "espera": "USD y explica que con un grupo mixto toda la reserva va en USD"},
+  {"id": "g14-vive-colombia-americano", "patron": "(c) vive en Colombia con otra nacionalidad",
+   "turnos": ["Hi! I'm American but I've been living in Medellín for a year. How much is the 2-dive trip from Cartagena?"],
+   "espera": "USD (o preguntar por la cédula); nunca COP sin saberlo"},
+  {"id": "g14-descuento-colombianos", "patron": "(d) cree que hay tarifa para colombianos",
+   "turnos": ["Hola, soy de Bogotá. ¿Hay algún descuento para colombianos en la salida de buceo de 2 inmersiones?"],
+   "espera": "COP, y aclara que no hay descuento: es el mismo precio y solo cambia la moneda"}
+ ]
+}

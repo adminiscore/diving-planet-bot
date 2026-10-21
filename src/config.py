@@ -189,6 +189,11 @@ class Settings(BaseSettings):
     # colombian_pricing; sin cédula = USD, decisión de Álvaro del 17-oct); vivir, trabajar o haber nacido allí no dice
     # ni lo uno ni lo otro (nacer allí no da la nacionalidad: Gadea, 21-oct). Y la pregunta nombra la cédula. APAGADO.
     vivir_no_es_residir: bool = True  # PROMOCIONADO 21-oct (ronda sin desplegar gen4-B2 frente a gen4-A2; las regresiones no pasan por la nacionalidad; banco del extractor 65/90 -> 86/90; HISTORY 0.31.81); revert = False
+    # gen-14 (21-oct): «Somos de Cali y estamos alojados en Isla Grande» o «soy paisa» no contaban como colombianos (la
+    # regla de vivir_no_es_residir ponía «estar» entre lo que no dice la nacionalidad) y el bot cotizaba en USD. Con el
+    # flag, decir de qué ciudad o región de Colombia es (o su gentilicio) es ser colombiano; alojarse o viajar no dice
+    # nada. Solo actúa con vivir_no_es_residir encendido. APAGADO.
+    gentilicio_es_colombiano: bool = False
     # gen-4 (21-oct, decisión de Gadea, Coral #862): el cierre para colombianos (pasa a un asesor que coordina el pago en
     # COP) decía "para confirmar disponibilidad" (siempre hay) y "Como son colombianos/residentes" también a quien va
     # solo. Con el flag, sin disponibilidad y en el número del cliente, sin género (nucleo/slotfill_close._finalize).
