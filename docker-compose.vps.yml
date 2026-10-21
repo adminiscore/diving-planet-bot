@@ -194,6 +194,12 @@ services:
       # (gen8-B frente a gen8-A, del mismo día; el que empeora es del RAG). Revert = quitar estas dos líneas.
       ACUSE_EN_SU_NUMERO: "true"
       ACTIVIDAD_DE_LA_PREGUNTA: "true"
+      # gen-6 (Gonzalo, 21-oct; docs/robustness/gen/gen6-diagnostico.md): quien se aloja en Barú o Playa Blanca sale
+      # desde Cartagena (Barú no es Islas del Rosario, decisión de Gadea del 18-oct) y la puerta del origen no deja el
+      # título de la lista colgado. PROMOCIONADO 21-oct (gen6-B3 frente a gen6-A3, del mismo día; los que empeoran no
+      # pasan por el origen). Revert = quitar estas dos líneas.
+      BARU_SALE_DE_CARTAGENA: "true"
+      ORIGEN_SIN_TITULO_SUELTO: "true"
       # CERTIFICADO_SOLO_SI_LO_DICE con «buceé hace poco» = certificado (decisión de Gadea). PROMOCIONADO (HISTORY
       # 0.31.61: mod-H2 97,0 % igual que limpieza-3; reserva-solo-link ya no ofrece el minicurso). Revert = quitar estas líneas.
       CERTIFICADO_SOLO_SI_LO_DICE: "true"

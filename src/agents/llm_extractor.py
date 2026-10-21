@@ -45,7 +45,7 @@ from src.prompts.booking import tool_sin_baru as _tool_sin_baru
 
 def _sin_baru(texto: str) -> str:
     """G3-06 (flag `baru_no_es_rosario`): los textos de lugar de estos prompts, sin Barú entre "las islas"."""
-    return _lugar_sin_baru(texto) if settings.baru_no_es_rosario else texto
+    return _lugar_sin_baru(texto, settings.baru_sale_de_cartagena) if settings.baru_no_es_rosario else texto
 
 
 def _acuse_en_su_numero(texto: str) -> str:
@@ -63,7 +63,7 @@ def _acuse_en_su_numero(texto: str) -> str:
 
 
 def _tool(tool: dict) -> dict:
-    return _tool_sin_baru(tool) if settings.baru_no_es_rosario else tool
+    return _tool_sin_baru(tool, settings.baru_sale_de_cartagena) if settings.baru_no_es_rosario else tool
 
 logger = logging.getLogger("uvicorn.error")
 
