@@ -24,8 +24,11 @@ History
 * **gen-19 cerrado.** El flag `enlace_cuando_toca` se quitó con su código: en el banco no cambiaba nada.
 * **ord-5 descartado**: ya medido en CAL-A3 (16-oct) sin ganancia.
 * **ord-6c**, decisiones de Gadea revaloradas.
-  - Coral añade los días cerrados al preguntar si hay sitio, el formulario médico al preguntar requisitos y que el
-    descuento de grupo no aplica a cursos PADI (avisos al final).
+  - Coral añade los días cerrados al preguntar si hay sitio y que el descuento de grupo no aplica a cursos PADI
+    (avisos al final).
+  - El formulario médico al final se probó y se quitó: en la ronda core (ord6c-B frente a ord4-A, 96,6 % 24/32
+    frente a 96,5 % 25/32) le dijo a un buzo certificado que lo necesitaba, lo que es falso. Cuando preguntan por
+    requisitos, el bot ya lo decía solo.
   - La excepción de 500 inmersiones y las 4:30 para fechas lejanas pasan a desfasados de G10/G9: G10 85,6 → 86,0 %,
     G9 86,8 → 87,8 % y 20 → 23/72.
 
