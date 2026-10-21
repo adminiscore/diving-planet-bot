@@ -1,6 +1,46 @@
 History
 =======
 
+0.31.83 - (2026-10-21)
+----------------------
+* **G10 y G9 de control: no subimos.** Medidos sobre `cd1d149`, con todo lo promocionado hasta gen-4, gen-6 y gen-8.
+  Se usó `ronda_local_pre --golden` y G10 se pasó una sola vez.
+  - **G10: 85,6 %, 23/72**; sin sus 2 criterios desfasados (gen-17), 85,9 %.
+  - **G9: 86,8 %, 20/72**; sin desfasados, 87,5 % y 23/72. Por la mañana estaba en 84,1 % y 20/72.
+  - Los criterios suben unos 2,5 puntos y los diálogos sin fallos no se mueven. **56 diálogos caen por un solo fallo.**
+  - Las causas son las mismas en los dos exámenes: el RAG omite datos (~75, de ellos ~12 por no compartir el enlace),
+    los pases que dejan sin contestar (~27), la moneda (~17), el origen (~13), las repreguntas (~12) y las
+    invenciones (~9). Análisis y diagnóstico en `docs/robustness/gen/g10-g9-analisis-2026-10-21.md`.
+  - Nuevo orden de Gadea en Plan Coral: P1 gen-13, gen-19, ord-0 y ord-6 (Gadea con Claude), y gen-14 y gen-15
+    (Álvaro); P2 ord-4, ord-5, ord-1 y mej-9. **G11** (gen-18) solo cuando P1 y P2 estén promocionados y G10, ya de
+    control, llegue a ≥ 92 % y ≥ 40/72.
+* **MEJ-8 PROMOCIONADO** (Álvaro con Claude, solo la base; integrado por Gadea con Claude).
+  - 18 h para volar también tras el refresher (son certificados); las 12 h, solo para el minicurso.
+  - Las horas se cuentan desde la última inmersión; la del minicurso termina hacia las 12:00.
+  - El Advanced «requiere 1 noche en las islas (el alojamiento no está incluido)».
+  - El criterio `sin-fugas` del golden visible no cuenta una cifra pública de la empresa.
+  - Ronda: mej8-A 97,8 % 27/32 frente a mej8-B 96,6 % 26/32. Rejuzgado ×3: tres son ruido del juez y la cuarta, del
+    origen. Queda un fallo de aritmética de horas del modelo (12:00 + 12 h frente a un vuelo a las 2:00), anotado en
+    el diagnóstico.
+* **mej-5 (Álvaro): el coste a la vista.**
+  - La alerta de saldo vigila también OpenRouter, sin gastar.
+  - Jev sale en las métricas, con sus tokens (unos 0,00026 $ por llamada).
+  - `turn_metrics --metricas` da el coste de una ronda por proveedor, pieza y conversación, con los precios de
+    `scripts/precios_llm.py`.
+  - Una ronda core cuesta unos 0,33 $; lo más caro son el revisor y el extractor.
+
+0.31.82 - (2026-10-21)
+----------------------
+* **mej-2 cerrada con las respuestas de Gadea a la revisión de la base** (`b6251b2`, `cd1d149`; documento «Revisión de la
+  base de Coral (2026)»).
+  - Los 7 precios que no cuadraban son correctos y quedan confirmados en `test_tarifa_cuadra`.
+  - Políticas nuevas: qué llevar (bañador, toalla, crema de sol, gafas de sol y ropa cómoda), sin mínimo de personas
+    y taquillas en la base de la isla. Con esto se cierra gen-11.
+  - Fuera el descuento del segundo día, que ya no existe.
+  - Fotos voluntarias también en el minicurso.
+  - Recogida desde las islas: 9:30 en general, 8:00 las especialidades y 7:30 el día 2 de los cursos.
+  - El proceso para cambios: Andrés avisa a Gadea, y la auditoría y el test de la tarifa vigilan.
+
 0.31.81 - (2026-10-21)
 ----------------------
 * **gen-6 PROMOCIONADO: Barú sale desde Cartagena** (Gonzalo con Claude, `befd8a7`…`f4c680a`; integrado por Gadea con
