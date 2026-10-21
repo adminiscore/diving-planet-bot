@@ -23,7 +23,7 @@ P_EN = "One last thing so I can give you the right price and link: are you Colom
 P_ES_CEDULA = ("Última cosa para darte el precio y el link correctos: ¿eres de nacionalidad colombiana o tienes cédula "
                "de extranjería?")
 P_EN_CEDULA = ("One last thing so I can give you the right price and link: are you a Colombian national, or do you have "
-               "a cédula de extranjería?")
+               "a Colombian *cédula de extranjería* (Colombia's ID card for foreigners)?")
 CASOS = [
     # Colombianos, vivan donde vivan: COP.
     ("soy colombiana pero vivo en Madrid hace años", None, "es", True),

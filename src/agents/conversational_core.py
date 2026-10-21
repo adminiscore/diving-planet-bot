@@ -753,8 +753,12 @@ def ask_slot(state: ConversationState, slot: str, *, reasking: bool = False) -> 
                  else "¿eres de nacionalidad colombiana o tienes cédula de extranjería?")
                 if lang == "es" else
                 # Sin "resident" (Gonzalo, #852): "resident" se contestaba "I live here", el fallo de gen-4.
-                ("are you Colombian nationals, or do you have a cédula de extranjería?" if plural
-                 else "are you a Colombian national, or do you have a cédula de extranjería?")
+                # Sin explicar, «cédula de extranjería» quedaba en español en una respuesta en inglés (ronda gen14-B,
+                # reserva-ingles idioma); decisión de Gadea (#1078): una explicación corta y sin «residents».
+                ("are you Colombian nationals, or do you have a Colombian *cédula de extranjería* (Colombia's ID card "
+                 "for foreigners)?" if plural else
+                 "are you a Colombian national, or do you have a Colombian *cédula de extranjería* (Colombia's ID card "
+                 "for foreigners)?")
             )
             if lang == "es":
                 cabeza = ("Para darte el precio y el link correctos:" if not _es_la_ultima_pregunta(state)
