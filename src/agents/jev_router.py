@@ -527,6 +527,21 @@ _CUSTOMER_PLACE_Q_BARU_CARTAGENA = {
     },
 }
 
+def _con_hoteles_de_la_base(pregunta: dict) -> dict:
+    """gen-15 (21-oct, flag `hoteles_de_la_base`): la pregunta del lugar no nombraba ningún hotel de las islas, y Jev
+    no sabía qué es «Mulata» o «Las Palmeras» (banco docs/robustness/gen/banco_gen15_hoteles.py: «Eco Hotel Las
+    Palmeras» → cartagena 0,69-0,76; Mulata, Ubuntu o Majagua → none). Con el flag, la opción «islands» nombra los
+    hoteles de la base (`extractor_turno.HOTELES_DE_LA_BASE`, de policies.json other_island_hotels)."""
+    if not settings.hoteles_de_la_base:
+        return pregunta
+    from src.agents.extractor_turno import HOTELES_DE_LA_BASE  # lazy
+
+    hoteles = ", ".join(HOTELES_DE_LA_BASE)
+    criterios = dict(pregunta["criteria"])
+    criterios["islands"] = (f"{criterios['islands']} Staying at one of these island hotels also counts: {hoteles}.")
+    return {**pregunta, "criteria": criterios}
+
+
 # rag-5 (1-oct): ¿el mensaje cuenta algo del cliente que haya que APUNTAR como nota? Puerta del extractor de
 # notas (`conversational_core._maybe_capture_notes`): Gonzalo midió el 30-sep que de 26 notas nuevas solo 7
 # eran buenas y 15 eran la pregunta del cliente apuntada como hecho, o inventada ("how much would that be" ->
@@ -652,7 +667,7 @@ def _questions_for_turn(pending_slot: str | None = None) -> dict:
     if settings.privado_pasa_directo:
         q[PIDE_SERVICIO_PRIVADO] = _PIDE_SERVICIO_PRIVADO_Q
     if settings.jev_lugar_cliente:
-        q[CUSTOMER_PLACE] = (
+        q[CUSTOMER_PLACE] = _con_hoteles_de_la_base(
             (_CUSTOMER_PLACE_Q_BARU_CARTAGENA if settings.baru_sale_de_cartagena else _CUSTOMER_PLACE_Q_SIN_BARU)
             if settings.baru_no_es_rosario else _CUSTOMER_PLACE_Q
         )

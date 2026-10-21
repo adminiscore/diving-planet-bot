@@ -464,12 +464,28 @@ def _solo_baru(cita: str) -> bool:
     return "rosario" not in texto and not any(isla and isla in texto for isla in islas)
 
 
-def _pistas_islas() -> str:
+# gen-15 (21-oct, flag `hoteles_de_la_base`): los hoteles de las islas que da la base del negocio
+# (data/knowledge_base/policies.json, other_island_hotels: la base en Majagua y Cocoliso, y otros con acceso marítimo).
+# La lista de hoteles del bot (rag_agent.AMBIGUOUS_LOCATION_NAMES) no tenía Mulata, Rosario de Mar ni Eco Hotel Las
+# Palmeras, y «we booked 2 nights at Mulata» o «vamos a estar en Las Palmeras» no salían como «ya en las islas» (banco
+# docs/robustness/gen/banco_gen15_hoteles.py). tests/test_gen15_hoteles_de_la_base.py vigila que sigan en la base.
+HOTELES_DE_LA_BASE = ("San Pedro de Majagua", "Cocoliso", "Ubuntu", "Secreto", "Mulata", "Rosario de Mar",
+                      "Eco Hotel Las Palmeras")
+
+
+def _nombres_de_lugar() -> list[str]:
     from src.agents.rag_agent import (
         AMBIGUOUS_LOCATION_NAMES,  # lazy: lista cerrada de hoteles e islas del Rosario
     )
 
-    return ", ".join(AMBIGUOUS_LOCATION_NAMES)
+    nombres = list(AMBIGUOUS_LOCATION_NAMES)
+    if settings.hoteles_de_la_base:
+        nombres += [h for h in HOTELES_DE_LA_BASE if not any(h.lower() in n.lower() for n in nombres)]
+    return nombres
+
+
+def _pistas_islas() -> str:
+    return ", ".join(_nombres_de_lugar())
 
 
 SISTEMA_ES = """Eres el lector de mensajes de Coral, la asistente de reservas de Diving Planet (buceo y snorkel en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas). Lees UN mensaje del cliente y devuelves SOLO los datos de la reserva que el cliente AFIRMA en ese mensaje, cada uno con la cita exacta de sus palabras.
@@ -564,12 +580,10 @@ def _en_trozos_seguidos(c: list[str], m: list[str]) -> bool:
 
 def _lugares() -> set[str]:
     """Palabras de lugar (lista cerrada): Cartagena, islas/hotel y los nombres de hoteles e islas del Rosario."""
-    from src.agents.rag_agent import AMBIGUOUS_LOCATION_NAMES  # lazy
-
     palabras = {"cartagena", "isla", "islas", "island", "islands", "rosario", "hotel", "hostel", "hostal"}
     if settings.baru_sale_de_cartagena:
         palabras.update({"baru", "blanca"})  # gen-6: "estamos en Barú" dice desde dónde sale (Cartagena)
-    for nombre in AMBIGUOUS_LOCATION_NAMES:
+    for nombre in _nombres_de_lugar():
         palabras.update(w for w in _norm(nombre) if len(w) > 3)
     return palabras
 

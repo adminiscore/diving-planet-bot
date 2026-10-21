@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-21T17:29:20+00:00",
-  "commit": "163fbca",
+  "generado": "2026-10-21T17:40:22+00:00",
+  "commit": "b527f09",
   "rama": "feature/gen8-alvaro"
  },
  "vistas": {
@@ -690,6 +690,13 @@
     {
      "nombre": "rag_espera_la_nacionalidad",
      "titulo": "El precio en la moneda que acaba de decir el cliente",
+     "codigo": false,
+     "pre": false,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "hoteles_de_la_base",
+     "titulo": "Conoce todos los hoteles de las islas",
      "codigo": false,
      "pre": false,
      "sin_efecto": false
@@ -2541,6 +2548,19 @@
    "codigo": true,
    "pre": true,
    "fijado_en_pre": true,
+   "usado_por": [
+    "b_extraction"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "hoteles_de_la_base",
+   "area": "Reserva",
+   "titulo": "Conoce todos los hoteles de las islas",
+   "texto": "Coral reconoce como alojados en las islas a quien nombra cualquiera de los hoteles que da la base del negocio (Majagua, Cocoliso, Ubuntu, Secreto, Mulata, Rosario de Mar, Eco Hotel Las Palmeras) y no le vuelve a preguntar desde dónde sale.",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
    "usado_por": [
     "b_extraction"
    ],
