@@ -44,7 +44,20 @@ pregunta del origen).
 
 Ficheros: `2026-10-21-gen6-base.jsonl` y `2026-10-21-gen6-con.jsonl`.
 
-**Ojo, medida que hay que repetir.** Las dos tandas del banco (14:53-15:00) y las rondas core `gen6-A/B` y `gen6-A2/B2`
+**Medida válida (repetida a las 16:17, con OpenRouter y OpenAI bien: 0 trazas de Jev con fallo o 403):**
+
+| Variante | Barú con origen Cartagena | Pregunta el origen tras decir Barú | Frases cortadas |
+|---|---|---|---|
+| Base (`2026-10-21-gen6-base2.jsonl`) | 0/8 | 1 (Playa Blanca: el RAG dice «sal desde Cartagena» y se añade «¿Desde dónde saldrías?») | 0 |
+| Con los dos flags (`2026-10-21-gen6-con2.jsonl`) | **8/8** | **0** | 0 |
+
+Ronda core sin desplegar (`gen6-A3` frente a `gen6-B3`, mismo código y misma hora, juez por defecto): A 97,0 % 26/32,
+B 97,4 % 26/32. Mejoran 4 criterios y empeoran 3 (politica-fotos en certificado-fechas-fotos-y-reserva, clima-escalar
+y sin-repreguntas en manual-acompanante-mayor). En ninguno de esos 3 diálogos nombra el cliente Barú o Playa Blanca, ni
+salta la pregunta del origen antes del precio: no pasan por gen-6. Además, clima-escalar es uno de los criterios que el
+juez cambia solo, sin que cambie la respuesta (mej-3).
+
+**Ojo, medidas anteriores que no valen.** Las dos tandas del banco (14:53-15:00) y las rondas core `gen6-A/B` y `gen6-A2/B2`
 se hicieron con la clave de OpenRouter en su límite total: las trazas tienen «[ROUTER][JEV] fallo … 403 Forbidden».
 Jev (una de las tres piezas del cambio) no corría, y el extractor era el de respaldo. Se repiten el banco y la A/B cuando
 OpenRouter y OpenAI tengan saldo.
