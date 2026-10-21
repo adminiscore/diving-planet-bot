@@ -127,7 +127,10 @@
       "titulo": "Cambios",
       "nodo_grafo": "changes",
       "que_hace": "Cancelar, cambiar de fecha o de número de personas: explica la política y ofrece botones.",
-      "donde": "src/agents/changes_agent.py:changes_node"
+      "donde": "src/agents/changes_agent.py:changes_node",
+      "interruptores": [
+        "cambio_de_reserva_pasa"
+      ]
     },
     {
       "id": "deflection",
@@ -152,6 +155,9 @@
       "zoom": "info",
       "que_hace": "Políticas con texto fijo (alcohol, alergias, edad…) y, para el resto, busca la respuesta en la base de conocimiento (RAG).",
       "donde": "src/agents/info_agent.py:info_node",
+      "interruptores": [
+        "privado_pasa_directo"
+      ],
       "nota": "Por esta ruta solo llegan las preguntas que no son de reserva. La mayoría de las preguntas se contestan desde la Reserva («contesta y sigue»), así que el RAG trabaja muchas más veces de las que pasa un mensaje por aquí."
     },
     {
@@ -1431,6 +1437,16 @@
       "area": "Respuestas fijas",
       "titulo": "Grupo privado: pase real",
       "texto": "Un grupo privado o un evento de empresa recibe su respuesta y, además, la conversación pasa de verdad a un asesor con el resumen."
+    },
+    "privado_pasa_directo": {
+      "area": "Respuestas fijas",
+      "titulo": "El servicio privado pasa a un asesor en cuanto lo piden",
+      "texto": "Antes solo pasaba si el cliente decía literalmente «servicio privado», «grupo cerrado» o «evento corporativo». Con «¿podemos tener la lancha solo para nosotros?», Coral contestaba y solo OFRECÍA el pase. Ahora la IA que clasifica el mensaje reconoce cualquier petición de algo solo para su grupo, y la conversación pasa directamente a un asesor para la cotización. El resumen lleva lo que dijo (cuántos son, la fecha)."
+    },
+    "cambio_de_reserva_pasa": {
+      "area": "Respuestas fijas",
+      "titulo": "Cambiar o cancelar una reserva hecha pasa a un asesor",
+      "texto": "Cambiar la fecha, cancelar o cambiar el número de personas de una reserva ya hecha solo lo puede hacer el equipo. Antes Coral explicaba la política y preguntaba «¿te conecto con un asesor o prefieres volver al menú principal?», con un menú que ya no existe, y nadie se enteraba si el cliente no contestaba. Ahora explica la política y pasa directamente a un asesor con el resumen."
     },
     "extractor_precio_elige": {
       "area": "Reserva",

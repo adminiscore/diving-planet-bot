@@ -340,6 +340,24 @@ _PIDE_DATOS_AJENOS_Q = {
     ),
 }
 
+# gen-3b (21-oct, decisión de Gadea, flag `privado_pasa_directo`): el servicio privado (una salida, una lancha o un
+# instructor solo para su grupo, un grupo cerrado, un evento de empresa) no tiene precio fijo y lo cotiza un asesor:
+# se pasa DIRECTAMENTE en cuanto lo pide. Hasta hoy solo pasaba si el mensaje decía "servicio privado", "grupo
+# cerrado" o "evento corporativo" (`_PRIVATE_GROUP_EVENT_RE`); "¿podemos tener la lancha solo para nosotros?" iba al
+# RAG, que solo puede OFRECER el pase (G3-03). Banco docs/robustness/gen/dialogos-gen3b.json.
+PIDE_SERVICIO_PRIVADO = "pide_servicio_privado"
+PIDE_SERVICIO_PRIVADO_MIN = 0.7
+_PIDE_SERVICIO_PRIVADO_Q = {
+    "type": "noul",
+    "instructions": (
+        "The customer asks for, or asks about, a PRIVATE or exclusive service just for their own group: a private "
+        "departure, boat, tour or instructor not shared with other customers, a closed group, or an event for a "
+        "company, team or celebration organized for them. It is FALSE when they want to join the regular shared "
+        "trips or courses (even as a big group or a family), when they ask for a discount for a group, and when "
+        "'private' refers to privacy or personal data."
+    ),
+}
+
 YA_RESERVADO = "ya_reservado"
 YA_RESERVADO_MIN = 0.7
 _YA_RESERVADO_Q = {
@@ -563,7 +581,7 @@ _U34_QUESTIONS = (
     ASKS_QUESTION, AFFIRMS_LOCATION, AFFIRMS_ACTIVITY, ACTIVITY_HYPOTHESIS,
     AFFIRMS_CERTIFICATION, AFFIRMS_GROUP, AFFIRMS_NATIONALITY, CORRECTS, ASKS_RECALL, NEEDS_STAFF,
     CHANGES_DATE, COMPANION_JOINS, PENDING_ANSWER, SHARES_OPEN_FACT, ADDS_PERSON, CUSTOMER_PLACE, YA_RESERVADO,
-    PIDE_DATOS_AJENOS, NUEVO_CASO, PREGUNTA_SI_ES_IA, CAMBIA_IDIOMA, PIDE_PRECIO,
+    PIDE_DATOS_AJENOS, NUEVO_CASO, PREGUNTA_SI_ES_IA, CAMBIA_IDIOMA, PIDE_PRECIO, PIDE_SERVICIO_PRIVADO,
 )
 
 
@@ -617,6 +635,8 @@ def _questions_for_turn(pending_slot: str | None = None) -> dict:
         q[YA_RESERVADO] = _YA_RESERVADO_Q
     if settings.datos_ajenos_se_niegan:
         q[PIDE_DATOS_AJENOS] = _PIDE_DATOS_AJENOS_Q
+    if settings.privado_pasa_directo:
+        q[PIDE_SERVICIO_PRIVADO] = _PIDE_SERVICIO_PRIVADO_Q
     if settings.jev_lugar_cliente:
         q[CUSTOMER_PLACE] = _CUSTOMER_PLACE_Q_SIN_BARU if settings.baru_no_es_rosario else _CUSTOMER_PLACE_Q
     if settings.notas_puerta_jev:
@@ -690,6 +710,9 @@ def answers_to_signals(answers: dict, threshold: float = THRESHOLD) -> dict:
         out[YA_RESERVADO] = (answers.get(YA_RESERVADO) or {}).get("noul", 0.0) >= YA_RESERVADO_MIN
     if PIDE_DATOS_AJENOS in answers:
         out[PIDE_DATOS_AJENOS] = (answers.get(PIDE_DATOS_AJENOS) or {}).get("noul", 0.0) >= PIDE_DATOS_AJENOS_MIN
+    if PIDE_SERVICIO_PRIVADO in answers:
+        out[PIDE_SERVICIO_PRIVADO] = ((answers.get(PIDE_SERVICIO_PRIVADO) or {}).get("noul", 0.0)
+                                      >= PIDE_SERVICIO_PRIVADO_MIN)
     # ex-9b paso 5: también en FALSE ("Jev dice que no" manda; ausente = Jev calla y decide el regex).
     if NUEVO_CASO in answers:
         out[NUEVO_CASO] = (answers.get(NUEVO_CASO) or {}).get("noul", 0.0) >= NUEVO_CASO_MIN
@@ -770,7 +793,7 @@ async def detect_routing_signals_jev(message: str, *, lang: str = "es") -> dict 
 _TURN_SIGNALS = (
     AFFIRMS_LOCATION, AFFIRMS_ACTIVITY, AFFIRMS_CERTIFICATION, AFFIRMS_GROUP, AFFIRMS_NATIONALITY, CORRECTS,
     ASKS_RECALL, NEEDS_STAFF, CHANGES_DATE, COMPANION_JOINS, SHARES_OPEN_FACT, YA_RESERVADO, PIDE_DATOS_AJENOS,
-    NUEVO_CASO, PREGUNTA_SI_ES_IA, CAMBIA_IDIOMA, PIDE_PRECIO,
+    NUEVO_CASO, PREGUNTA_SI_ES_IA, CAMBIA_IDIOMA, PIDE_PRECIO, PIDE_SERVICIO_PRIVADO,
     # ex-9b (19-oct): ADDS_PERSON también viaja cuando Jev duda en el router (como COMPANION_JOINS): sin él, en esos
     # turnos "¿se suma alguien nuevo?" lo decidía la lista de palabras.
     ADDS_PERSON,

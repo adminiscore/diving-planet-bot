@@ -1,8 +1,8 @@
 {
  "meta": {
-  "generado": "2026-10-21T10:23:00+00:00",
-  "commit": "70cc236",
-  "rama": "feature/pre_gadea"
+  "generado": "2026-10-21T10:50:21+00:00",
+  "commit": "1f66c3e",
+  "rama": "feature/gen3b-gonzalo"
  },
  "vistas": {
   "general": {
@@ -245,8 +245,16 @@
    "nodo_grafo": "changes",
    "que_hace": "Cancelar, cambiar de fecha o de número de personas: explica la política y ofrece botones.",
    "donde": "src/agents/changes_agent.py:changes_node",
+   "interruptores": [
+    {
+     "nombre": "cambio_de_reserva_pasa",
+     "titulo": "Cambiar o cancelar una reserva hecha pasa a un asesor",
+     "codigo": false,
+     "pre": false,
+     "sin_efecto": false
+    }
+   ],
    "modelos": [],
-   "interruptores": [],
    "tiempos": {
     "n": 11,
     "p50": 0.003,
@@ -288,9 +296,17 @@
    "zoom": "info",
    "que_hace": "Políticas con texto fijo (alcohol, alergias, edad…) y, para el resto, busca la respuesta en la base de conocimiento (RAG).",
    "donde": "src/agents/info_agent.py:info_node",
+   "interruptores": [
+    {
+     "nombre": "privado_pasa_directo",
+     "titulo": "El servicio privado pasa a un asesor en cuanto lo piden",
+     "codigo": false,
+     "pre": false,
+     "sin_efecto": false
+    }
+   ],
    "nota": "Por esta ruta solo llegan las preguntas que no son de reserva. La mayoría de las preguntas se contestan desde la Reserva («contesta y sigue»), así que el RAG trabaja muchas más veces de las que pasa un mensaje por aquí.",
    "modelos": [],
-   "interruptores": [],
    "tiempos": {
     "n": 17,
     "p50": 3.971,
@@ -2150,6 +2166,19 @@
    "sin_efecto": null
   },
   {
+   "nombre": "cambio_de_reserva_pasa",
+   "area": "Respuestas fijas",
+   "titulo": "Cambiar o cancelar una reserva hecha pasa a un asesor",
+   "texto": "Cambiar la fecha, cancelar o cambiar el número de personas de una reserva ya hecha solo lo puede hacer el equipo. Antes Coral explicaba la política y preguntaba «¿te conecto con un asesor o prefieres volver al menú principal?», con un menú que ya no existe, y nadie se enteraba si el cliente no contestaba. Ahora explica la política y pasa directamente a un asesor con el resumen.",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
+   "usado_por": [
+    "changes"
+   ],
+   "sin_efecto": null
+  },
+  {
    "nombre": "catalogo_preparacion",
    "area": "Preguntas",
    "titulo": "El catálogo enseña la preparación de cada plan (apagado: medido y empeora)",
@@ -3043,6 +3072,19 @@
    "fijado_en_pre": true,
    "usado_por": [
     "r_reescribir"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "privado_pasa_directo",
+   "area": "Respuestas fijas",
+   "titulo": "El servicio privado pasa a un asesor en cuanto lo piden",
+   "texto": "Antes solo pasaba si el cliente decía literalmente «servicio privado», «grupo cerrado» o «evento corporativo». Con «¿podemos tener la lancha solo para nosotros?», Coral contestaba y solo OFRECÍA el pase. Ahora la IA que clasifica el mensaje reconoce cualquier petición de algo solo para su grupo, y la conversación pasa directamente a un asesor para la cotización. El resumen lleva lo que dijo (cuántos son, la fecha).",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
+   "usado_por": [
+    "info"
    ],
    "sin_efecto": null
   },
