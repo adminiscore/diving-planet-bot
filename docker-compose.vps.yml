@@ -176,6 +176,10 @@ services:
       # formulario médico de curso. PROMOCIONADOS 20-oct (gen7-B; los que empeoran no pasan por el cambio, atribución 3+3).
       SEGURIDAD_DE_GRUPO: "true"
       REFRESHER_COMPLETO: "true"
+      # gen-5 (Gonzalo, 20-oct; docs/robustness/gen/gen5-diagnostico.md): el idioma del primer mensaje se decide una vez
+      # en el router, con la cadena de la reserva y G-10, y todas las rutas lo heredan. ENCENDIDO para la ronda core
+      # gen5-B (frente a gen5-A, del mismo día).
+      IDIOMA_UNICO_DE_APERTURA: "true"
       # CERTIFICADO_SOLO_SI_LO_DICE con «buceé hace poco» = certificado (decisión de Gadea). PROMOCIONADO (HISTORY
       # 0.31.61: mod-H2 97,0 % igual que limpieza-3; reserva-solo-link ya no ofrece el minicurso). Revert = quitar estas líneas.
       CERTIFICADO_SOLO_SI_LO_DICE: "true"

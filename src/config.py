@@ -595,7 +595,7 @@ class Settings(BaseSettings):
     # edad y el buceo adaptado, el "es" por defecto. Ninguno de los tres últimos aplicaba G-10. Con el flag se decide
     # UNA vez en el router, a la vez que las señales, con la cadena de la reserva (`nucleo.setup.idioma_de_apertura`),
     # y todos los caminos la heredan. APAGADO hasta medirlo (banco docs/robustness/gen/dialogos-gen5.json).
-    idioma_unico_de_apertura: bool = False
+    idioma_unico_de_apertura: bool = True  # ENCENDIDO para la ronda core gen5-B (frente a gen5-A)
     # s4-33 (8-oct, Alvaro): instrucciones del juez de grounding v3 para GPT-6 Luna (prompts/info.py
     # GROUNDING_VERIFY_V3_LUNA_*): el v3 entero + 3 aclaraciones (lo que dice el cliente de si mismo no se comprueba;
     # valoraciones y ofertas de ayuda no son datos; las deducciones directas del contexto cuentan). Va con
