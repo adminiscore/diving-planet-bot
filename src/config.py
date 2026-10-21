@@ -193,11 +193,11 @@ class Settings(BaseSettings):
     # regla de vivir_no_es_residir ponía «estar» entre lo que no dice la nacionalidad) y el bot cotizaba en USD. Con el
     # flag, decir de qué ciudad o región de Colombia es (o su gentilicio) es ser colombiano; alojarse o viajar no dice
     # nada. Solo actúa con vivir_no_es_residir encendido. APAGADO.
-    gentilicio_es_colombiano: bool = False
+    gentilicio_es_colombiano: bool = True  # PROMOCIONADO 21-oct (core gen14-A 96,5 % 26/32 frente a gen14-B 97,8 % 27/32; rejuzgado x3: 3 mejoras reales, 0 regresiones de la nacionalidad; HISTORY 0.31.85); revert = False
     # gen-14 (21-oct): en un turno con pregunta, el RAG contesta (o se adelanta) antes de que la extracción apunte la
     # nacionalidad que dice ESE mensaje, y a «Somos de Cali… ¿cuánto vale?» le daba USD. Con el flag, el RAG recibe la
     # nacionalidad que ya leyó la extracción del turno (conversational_core._con_la_nacionalidad_del_mensaje). APAGADO.
-    rag_espera_la_nacionalidad: bool = False
+    rag_espera_la_nacionalidad: bool = True  # PROMOCIONADO 21-oct (con gentilicio_es_colombiano, misma ronda gen14-A/B); revert = False
     # gen-15 (21-oct): los hoteles de las islas que da la base (policies.json other_island_hotels: Mulata, Rosario de
     # Mar, Eco Hotel Las Palmeras…) no estaban en la lista del bot ni en la pregunta del lugar de Jev, y el bot volvía a
     # preguntar desde dónde sale. Con el flag, el extractor y Jev los conocen (extractor_turno.HOTELES_DE_LA_BASE).

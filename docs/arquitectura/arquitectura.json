@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-21T18:15:03+00:00",
-  "commit": "0d3c4be",
+  "generado": "2026-10-21T18:21:14+00:00",
+  "commit": "a4d6638",
   "rama": "feature/pre_gadea"
  },
  "vistas": {
@@ -704,15 +704,15 @@
     {
      "nombre": "gentilicio_es_colombiano",
      "titulo": "Ser de una ciudad de Colombia es ser colombiano",
-     "codigo": false,
-     "pre": false,
+     "codigo": true,
+     "pre": true,
      "sin_efecto": false
     },
     {
      "nombre": "rag_espera_la_nacionalidad",
      "titulo": "El precio en la moneda que acaba de decir el cliente",
-     "codigo": false,
-     "pre": false,
+     "codigo": true,
+     "pre": true,
      "sin_efecto": false
     },
     {
@@ -725,6 +725,13 @@
     {
      "nombre": "reserva_de_hotel_no_es_nuestra",
      "titulo": "Reservar el hotel no es reservar con nosotros",
+     "codigo": false,
+     "pre": false,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "referido_no_pregunta_nivel",
+     "titulo": "Quien termina aquí el Open Water no es preguntado de más",
      "codigo": false,
      "pre": false,
      "sin_efecto": false
@@ -2576,9 +2583,9 @@
    "area": "Reserva",
    "titulo": "Ser de una ciudad de Colombia es ser colombiano",
    "texto": "Quien dice de qué ciudad o región de Colombia es ('somos de Cali', 'soy de Pereira') cuenta como colombiano y paga en pesos, aunque diga además dónde se aloja. Vivir en Colombia, alojarse o estar de viaje no dice la nacionalidad.",
-   "codigo": false,
-   "pre": false,
-   "fijado_en_pre": false,
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
    "usado_por": [
     "b_extraction"
    ],
@@ -3067,9 +3074,9 @@
    "area": "Preguntas",
    "titulo": "El precio en la moneda que acaba de decir el cliente",
    "texto": "Si el cliente dice de dónde es en el mismo mensaje en que pregunta un precio ('Somos de Cali, ¿cuánto vale?'), la respuesta ya sale en pesos. Antes la respuesta se escribía antes de apuntar la nacionalidad y salía en dólares.",
-   "codigo": false,
-   "pre": false,
-   "fijado_en_pre": false,
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
    "usado_por": [
     "b_extraction"
    ],
@@ -3252,6 +3259,19 @@
    "fijado_en_pre": true,
    "usado_por": [
     "b_slotfill_close"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "referido_no_pregunta_nivel",
+   "area": "Reserva",
+   "titulo": "Quien termina aquí el Open Water no es preguntado de más",
+   "texto": "A quien quiere terminar aquí un Open Water empezado en otro centro (el curso referido), Coral ya no le pregunta si tiene el curso o si quiere sacarlo: sigue con la reserva.",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
+   "usado_por": [
+    "b_extraction"
    ],
    "sin_efecto": null
   },

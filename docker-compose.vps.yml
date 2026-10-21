@@ -209,6 +209,10 @@ services:
       # quitar estas dos líneas.
       VIVIR_NO_ES_RESIDIR: "true"
       PAGO_COLOMBIANO_CON_ASESOR: "true"
+      # gen-14 (Álvaro, 21-oct, PROMOCIONADO): ser DE una ciudad o región de Colombia es ser colombiano, y el RAG recibe
+      # la nacionalidad que dice ese mismo mensaje (gen14-A/B). Revert = quitar estas dos líneas.
+      GENTILICIO_ES_COLOMBIANO: "true"
+      RAG_ESPERA_LA_NACIONALIDAD: "true"
       # CERTIFICADO_SOLO_SI_LO_DICE con «buceé hace poco» = certificado (decisión de Gadea). PROMOCIONADO (HISTORY
       # 0.31.61: mod-H2 97,0 % igual que limpieza-3; reserva-solo-link ya no ofrece el minicurso). Revert = quitar estas líneas.
       CERTIFICADO_SOLO_SI_LO_DICE: "true"

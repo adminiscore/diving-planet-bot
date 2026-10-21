@@ -1,6 +1,22 @@
 History
 =======
 
+0.31.85 - (2026-10-21)
+----------------------
+* **gen-14 PROMOCIONADO** (Álvaro con Claude; integrado por Gadea con Claude): `gentilicio_es_colombiano` y
+  `rag_espera_la_nacionalidad`.
+  - Ser DE una ciudad o región de Colombia («somos de Cali», «soy paisa») es ser colombiano aunque diga dónde se
+    aloja; alojarse o viajar no dice la nacionalidad.
+  - El RAG recibe la nacionalidad que dice el mismo mensaje.
+  - Ronda core: gen14-A 96,5 % 26/32 frente a gen14-B 97,8 % 27/32. Rejuzgado ×3: 3 mejoras reales y ninguna
+    regresión de la nacionalidad.
+  - En inglés, la pregunta explica la cédula: «Colombia's ID card for foreigners», sin «residents» (decisión de
+    Gadea).
+* **Integrados con los flags APAGADOS** (Álvaro):
+  - gen-15: los hoteles de las islas de la base, y reservar el hotel no es reservar con nosotros.
+  - gen-16: a quien quiere terminar aquí un Open Water no se le pregunta si ya tiene el curso.
+* **ord-6b** (Álvaro): Bubble Makers con ficha y precios PROVISIONALES, a confirmar con Andrés. La cierra un asesor.
+
 0.31.84 - (2026-10-21)
 ----------------------
 * **ord-0: por qué omite el RAG, medido.** Se repitieron 18 omisiones de G10/G9 ×3 en PRE
