@@ -29,7 +29,6 @@ DETALLE: list[str] = []
 
 async def juzgar(item: dict, modelo: str, etiqueta: str = "aprobada") -> tuple[bool, float]:
     settings.grounding_v3_model = modelo
-    settings.juez_por_tipo = False
     t = time.perf_counter()
     ok, motivo = await grounding_check.is_grounded(item["respuesta"], item["contexto"], item["lang"])
     if ok == (etiqueta == "invento"):  # se equivoca: deja pasar un invento, o tumba una verdad o una aprobada

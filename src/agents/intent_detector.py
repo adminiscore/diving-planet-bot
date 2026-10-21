@@ -1865,16 +1865,14 @@ class IntentDetector:
         for m in re.finditer(r'\b(?:uno|una|otr[oa]|el\s+otro|la\s+otra)\s+de\s+(\d{1,2})\b', message):
             _add(m.group(1))
         # 4) "aged 8 and 10", "ages 8 and 10", "edad 8 y 10".
-        #    9-oct (flag `grupo_por_edades`): también en singular, "1 youth (age 17)" (familia-mixta: se perdían 2 de
+        #    9-oct: también en singular, "1 youth (age 17)" (familia-mixta: se perdían 2 de
         #    6 edades); no "minimum age 10" / "edad mínima", que es una regla, no una persona.
-        from src.config import settings  # lazy: el detector no depende de la config
-
-        _edad_re = r'aged|ages?' if settings.grupo_por_edades else r'aged|ages'
+        _edad_re = r'aged|ages?'
         for m in re.finditer(
             rf'\b(?:{_edad_re}|edad(?:es)?(?:\s+de)?)\s+((?:\d{{1,2}}\s*(?:,|y|e|and|&)\s*)*\d{{1,2}})',
             message,
         ):
-            if settings.grupo_por_edades and re.search(r'm[ií]nim|\bmin\b', message[max(0, m.start() - 12):m.start()]):
+            if re.search(r'm[ií]nim|\bmin\b', message[max(0, m.start() - 12):m.start()]):
                 continue
             _add(m.group(1))
         # 5) English kid-noun + "are/is N and M": "our kids are 7 and 11".
@@ -2290,14 +2288,11 @@ class IntentDetector:
                     intent.detected_fields.append("island")
                 if not intent.location:
                     intent.location = "island"
-                    # s4-27 (flag `hotel_ubicacion_declarada`): la ubicacion que se deduce del hotel se DECLARA, como
+                    # s4-27 (8-oct): la ubicacion que se deduce del hotel se DECLARA, como
                     # todas, para que pase por la puerta de Jev (u3-3/u3-4). Sin declararla se colaba siempre:
                     # "¿me pasas el contacto del hotel Cocoliso?" (Jev: no afirma ubicacion) dejaba al cliente "ya en
                     # las islas" (contacto-hoteles-cocoliso-san-pedro).
-                    from src.config import settings  # lazy: el detector no depende de la config
-
-                    if settings.hotel_ubicacion_declarada:
-                        intent.detected_fields.append("location")
+                    intent.detected_fields.append("location")
                 intent.detected_fields.append("hotel")
                 break
 

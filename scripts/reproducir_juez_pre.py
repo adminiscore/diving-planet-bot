@@ -8,7 +8,7 @@ el juez. Repite el diálogo N veces. **Nunca usa el examen oculto.**
 
     python -m scripts.reproducir_juez_pre paquete-5-buceos-cop-refresh-y-hoteles --reps 5 --out <fichero.jsonl>
     python -m scripts.reproducir_juez_pre <dialogo> --dry          # solo enseña los turnos
-    python -m scripts.reproducir_juez_pre <dialogo> --flag juez_privacidad_por_linea   # flag SOLO en ese proceso
+    python -m scripts.reproducir_juez_pre <dialogo> --flag <flag>   # flag SOLO en ese proceso
     python -m scripts.reproducir_juez_pre <dialogo> --codigo-local --flag x          # con el código local, sin desplegar
     python -m scripts.reproducir_juez_pre <dialogo> --hasta 2 --reps 8               # solo los 2 primeros turnos
     python -m scripts.reproducir_juez_pre <dialogo> --codigo-local --env RAG_ANSWER_MODEL=gpt-6-luna   # otro modelo

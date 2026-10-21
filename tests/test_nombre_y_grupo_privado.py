@@ -74,8 +74,7 @@ EMPRESA = "hola, somos una empresa y queremos llevar 20 empleados a bucear como 
 @pytest.fixture(autouse=True)
 def _camino_antiguo_ex2_ex3(monkeypatch):
     """Como en tests/test_routing_signals_integration.py: la respuesta fija del grupo privado es la de hoy."""
-    for f in ("escalado_solo_emergencias", "atajo_resumen_por_rag", "atajo_nacionalidad_por_rag",
-              "atajo_alergia_por_rag"):
+    for f in ("escalado_solo_emergencias", "atajo_nacionalidad_por_rag", "atajo_alergia_por_rag"):
         if hasattr(settings, f):
             monkeypatch.setattr(settings, f, False)
 

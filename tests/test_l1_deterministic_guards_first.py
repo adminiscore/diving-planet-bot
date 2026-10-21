@@ -25,7 +25,6 @@ def _camino_antiguo_ex2_ex3(monkeypatch):
     from src.config import settings as _flags
 
     monkeypatch.setattr(_flags, "escalado_solo_emergencias", False)
-    monkeypatch.setattr(_flags, "atajo_resumen_por_rag", False)
     monkeypatch.setattr(_flags, "atajo_nacionalidad_por_rag", False)
 
 

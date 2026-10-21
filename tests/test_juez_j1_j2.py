@@ -25,7 +25,6 @@ def juez(monkeypatch):
         monkeypatch.setattr(grounding_check, "AsyncOpenAI", lambda **k: cliente)
         monkeypatch.setattr(grounding_check, "trace_openai", lambda c: c)
         return crear
-    monkeypatch.setattr(settings, "juez_por_tipo", False)
     return poner
 
 

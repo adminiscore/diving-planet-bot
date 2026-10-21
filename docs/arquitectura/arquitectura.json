@@ -1,8 +1,8 @@
 {
  "meta": {
-  "generado": "2026-10-21T11:55:41+00:00",
-  "commit": "c6dca3e",
-  "rama": "feature/pre_gadea"
+  "generado": "2026-10-21T12:19:10+00:00",
+  "commit": "d7cfdc1",
+  "rama": "mej1b-gadea"
  },
  "vistas": {
   "general": {
@@ -1022,13 +1022,6 @@
    "donde": "src/agents/info_agent.py:info_node",
    "interruptores": [
     {
-     "nombre": "atajo_resumen_por_rag",
-     "titulo": "«¿Qué ofrecen para bucear?» lo contesta el RAG",
-     "codigo": true,
-     "pre": true,
-     "sin_efecto": false
-    },
-    {
      "nombre": "atajo_nacionalidad_por_rag",
      "titulo": "«¿Cambia el precio si es colombiano?» lo contesta el RAG",
      "codigo": true,
@@ -1175,13 +1168,6 @@
    ],
    "interruptores": [
     {
-     "nombre": "rag_concise",
-     "titulo": "Respuestas cortas",
-     "codigo": false,
-     "pre": false,
-     "sin_efecto": false
-    },
-    {
      "nombre": "rag_origen_pregunta",
      "titulo": "Pregunta el origen antes de dar precio",
      "codigo": true,
@@ -1311,27 +1297,6 @@
     }
    ],
    "interruptores": [
-    {
-     "nombre": "juez_por_tipo",
-     "titulo": "Revisor que clasifica cada frase",
-     "codigo": false,
-     "pre": false,
-     "sin_efecto": false
-    },
-    {
-     "nombre": "juez_presentacion",
-     "titulo": "El revisor conoce la presentación",
-     "codigo": true,
-     "pre": true,
-     "sin_efecto": false
-    },
-    {
-     "nombre": "juez_privacidad_por_linea",
-     "titulo": "El revisor ve los precios completos",
-     "codigo": true,
-     "pre": true,
-     "sin_efecto": false
-    },
     {
      "nombre": "juez_v3_luna",
      "titulo": "Instrucciones del revisor para Luna",
@@ -2077,30 +2042,6 @@
    "sin_efecto": null
   },
   {
-   "nombre": "atajo_resumen_por_rag",
-   "area": "Respuestas fijas",
-   "titulo": "«¿Qué ofrecen para bucear?» lo contesta el RAG",
-   "texto": "Sin el resumen fijo de opciones: en las pruebas solo saltaba con un buzo certificado que daba fechas, al que le preguntaba si nunca había buceado. El RAG tiene el catálogo entero.",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [
-    "r_reglas"
-   ],
-   "sin_efecto": null
-  },
-  {
-   "nombre": "aviso_medico_dice_pase",
-   "area": "Respuestas fijas",
-   "titulo": "El aviso médico dice el pase",
-   "texto": "El aviso médico dice que pasa la conversación a alguien del equipo, que es lo que hace.",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [],
-   "sin_efecto": null
-  },
-  {
    "nombre": "aviso_si_openai_falla",
    "area": "Arquitectura",
    "titulo": "Si OpenAI cae, decir la verdad y pasar a un asesor",
@@ -2228,17 +2169,6 @@
    "usado_por": [
     "preparacion"
    ],
-   "sin_efecto": null
-  },
-  {
-   "nombre": "cierre_sin_repetir",
-   "area": "Reserva",
-   "titulo": "No repite la tarjeta de la reserva",
-   "texto": "Con la reserva ya cerrada y sin cambios, una pregunta como '¿cuánto dura?' se contesta sola, sin volver a pegar el precio y el link.",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [],
    "sin_efecto": null
   },
   {
@@ -2472,17 +2402,6 @@
    "sin_efecto": null
   },
   {
-   "nombre": "grupo_por_edades",
-   "area": "Reserva",
-   "titulo": "Cada edad es una persona",
-   "texto": "Si el cliente lista a su grupo con edades ('2 adults (ages 42, 19), 1 youth (age 17)…'), Coral cuenta a cada uno y guarda el reparto, en vez de preguntar '¿cuántos serían?'.",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [],
-   "sin_efecto": null
-  },
-  {
    "nombre": "grupo_privado_pase",
    "area": "Respuestas fijas",
    "titulo": "Grupo privado: pase real",
@@ -2517,17 +2436,6 @@
    "usado_por": [
     "b_extraction"
    ],
-   "sin_efecto": null
-  },
-  {
-   "nombre": "hotel_ubicacion_declarada",
-   "area": "Reserva",
-   "titulo": "Nombrar un hotel no es estar allí",
-   "texto": "Si el cliente solo pregunta por un hotel de las islas ('¿me pasas el contacto del Cocoliso?'), Coral ya no da por hecho que está alojado allí; si dice que se aloja, sí.",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [],
    "sin_efecto": null
   },
   {
@@ -2568,17 +2476,6 @@
     "router",
     "b_setup"
    ],
-   "sin_efecto": null
-  },
-  {
-   "nombre": "jev_acompanante_manda",
-   "area": "Reserva",
-   "titulo": "Jev decide si viene alguien más",
-   "texto": "Si Jev está seguro de que el mensaje no mete a otra persona, una palabra suelta ya no inventa un acompañante: 'cuántos días son' no es 'son' (hijo, en inglés).",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [],
    "sin_efecto": null
   },
   {
@@ -2640,45 +2537,6 @@
    "usado_por": [
     "router",
     "openrouter"
-   ],
-   "sin_efecto": null
-  },
-  {
-   "nombre": "juez_por_tipo",
-   "area": "Preguntas",
-   "titulo": "Revisor que clasifica cada frase",
-   "texto": "El revisor marca el tipo de cada frase y solo cuentan los datos. Medido el 1-oct: deja pasar más inventos; apagado.",
-   "codigo": false,
-   "pre": false,
-   "fijado_en_pre": false,
-   "usado_por": [
-    "r_revisor"
-   ],
-   "sin_efecto": null
-  },
-  {
-   "nombre": "juez_presentacion",
-   "area": "Preguntas",
-   "titulo": "El revisor conoce la presentación",
-   "texto": "El revisor ve la presentación oficial (PADI 5 Estrellas, 30 años) para no tomarla por inventada cuando el bot la dice.",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [
-    "r_revisor"
-   ],
-   "sin_efecto": null
-  },
-  {
-   "nombre": "juez_privacidad_por_linea",
-   "area": "Preguntas",
-   "titulo": "El revisor ve los precios completos",
-   "texto": "Los datos personales se tapan frase a frase: una mención de 'pasaporte' en una pregunta frecuente ya no borra los precios del catálogo que el revisor necesita comprobar.",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [
-    "r_revisor"
    ],
    "sin_efecto": null
   },
@@ -2957,41 +2815,6 @@
    "sin_efecto": null
   },
   {
-   "nombre": "rag_concise",
-   "area": "Preguntas",
-   "titulo": "Respuestas cortas",
-   "texto": "Contestar solo lo preguntado en 2-4 frases. Probado el 28-sep: ahorra poco o inventa huecos.",
-   "codigo": false,
-   "pre": false,
-   "fijado_en_pre": false,
-   "usado_por": [
-    "r_escribir"
-   ],
-   "sin_efecto": null
-  },
-  {
-   "nombre": "rag_condiciones_abiertas",
-   "area": "Preguntas",
-   "titulo": "No da por cumplida una condición",
-   "texto": "Si algo depende de un dato del cliente que no consta (que su hotel tenga acceso por lancha), Coral lo dice como condición también en los turnos siguientes, en vez de darlo por hecho.",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [],
-   "sin_efecto": null
-  },
-  {
-   "nombre": "rag_ficha_del_servicio",
-   "area": "Preguntas",
-   "titulo": "Ficha del plan siempre a mano",
-   "texto": "Si se sabe qué plan mira el cliente, su ficha entera va a la respuesta. Medido el 29-sep: no mejora.",
-   "codigo": false,
-   "pre": false,
-   "fijado_en_pre": false,
-   "usado_por": [],
-   "sin_efecto": null
-  },
-  {
    "nombre": "rag_no_adivina",
    "area": "Preguntas",
    "titulo": "No adivina ningún dato del cliente",
@@ -3041,17 +2864,6 @@
    "usado_por": [
     "r_escribir"
    ],
-   "sin_efecto": null
-  },
-  {
-   "nombre": "rag_plan_elegido",
-   "area": "Preguntas",
-   "titulo": "Habla del plan, no del carrito",
-   "texto": "Lo que el cliente ya eligió se le describe a Coral como 'el plan que está armando': el cliente no ve ningún carrito y Coral ya no le dice 'el curso que tienes en tu carrito'.",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [],
    "sin_efecto": null
   },
   {
@@ -3360,17 +3172,6 @@
    "usado_por": [
     "b_slotfill_close"
    ],
-   "sin_efecto": null
-  },
-  {
-   "nombre": "tras_pase_sin_vender",
-   "area": "Reserva",
-   "titulo": "Tras el pase, no vende",
-   "texto": "Con la conversación ya pasada a una persona, Coral contesta lo que le pregunten pero no vuelve a las preguntas de la reserva.",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [],
    "sin_efecto": null
   },
   {

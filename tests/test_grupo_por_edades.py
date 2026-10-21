@@ -1,4 +1,4 @@
-"""Flag `grupo_por_edades` (9-oct, fallos del flujo de reserva): cada EDAD que da el mensaje cuenta como una persona
+"""`grupo_por_edades` (9-oct, promocionado; ya sin flag; fallos del flujo de reserva): cada EDAD que da el mensaje cuenta como una persona
 para respaldar el reparto del grupo, y el detector lee también "age 17" en singular (no "minimum age").
 
 Caso: `familia-mixta-precio-descuento-refresher`, primer mensaje: "2 adults (ages 42, 19) / 1 youth (age 17) /
@@ -15,7 +15,6 @@ from src.agents import supervisor
 from src.agents.nucleo import extraction as core_extraction
 from src.agents.nucleo import routing as core_routing
 from src.agents.nucleo import slotfill_close as core_close
-from src.config import settings
 from src.flows.state import ConversationState
 
 
@@ -34,15 +33,13 @@ def _edades(mensaje: str) -> list[int]:
     return sorted(core._detector.detect(mensaje, ConversationState(conversation_id="e")).ages or [])
 
 
-@pytest.mark.parametrize("flag,mensaje,edades", [
-    (True, FAMILIA, [10, 14, 17, 19, 42, 43]),
-    (False, FAMILIA, [10, 14, 19, 42]),                      # sin el flag, "age 17" y "Age 43" se perdían
-    (True, "my son (age 9) will snorkel", [9]),
-    (True, "what's the minimum age 10 for snorkel?", []),   # una regla, no una persona
-    (True, "kids aged 8 and 10", [8, 10]),                   # lo de siempre sigue igual
+@pytest.mark.parametrize("mensaje,edades", [
+    (FAMILIA, [10, 14, 17, 19, 42, 43]),                # antes del 9-oct, "age 17" y "Age 43" se perdían
+    ("my son (age 9) will snorkel", [9]),
+    ("what's the minimum age 10 for snorkel?", []),    # una regla, no una persona
+    ("kids aged 8 and 10", [8, 10]),                    # lo de siempre sigue igual
 ])
-def test_edades_en_singular(monkeypatch, flag, mensaje, edades):
-    monkeypatch.setattr(settings, "grupo_por_edades", flag)
+def test_edades_en_singular(mensaje, edades):
     assert _edades(mensaje) == edades
 
 
