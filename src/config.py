@@ -661,6 +661,23 @@ class Settings(BaseSettings):
     # conserva-A/B (9 dialogos, misma franja): 92,6 -> 97,0 %, 5 -> 8/9 sin fallos, 6 mejoras, ninguna regresion del flag.
     # PROMOCIONADO 8-oct (HISTORY 0.31.1). Revert = False aqui y en el compose.
     origen_conserva_respuesta: bool = True
+    # ord-7 (21-oct, decisión de Gadea con ord-0): cuando la puerta del origen salta, quitaba también lo que incluye,
+    # el almuerzo y el enlace, y el cliente se quedaba sin nada de lo que preguntó (ord-0: 3 de las 4 omisiones de
+    # redacción). Ahora, si se sabe de qué actividad pregunta y tiene un plan por origen, el código pone las DOS
+    # variantes del catálogo (desde Cartagena y ya en las islas: precio online por persona en su moneda, el transporte
+    # y si lleva almuerzo) y pregunta el origen para seguir. Sin actividad concreta (los paquetes de buceo), como hoy.
+    origen_dos_variantes: bool = False
+    # ord-7b (21-oct, decisión de Gadea con ord-0: con niños, la edad mínima EN CIFRA): la tarjeta «qué puede hacer cada
+    # quien» pone la edad mínima de cada opción («minicurso de buceo (desde 10 años)») y dice quién es cada línea en el
+    # idioma del cliente (en inglés salía «8 años», g10-049).
+    tarjeta_edades_en_cifra: bool = False
+    # gen-19 (21-oct): con el origen y el plan sabidos, si la respuesta da el precio de ese plan sin su enlace de
+    # reserva, el código añade el enlace del catálogo (`conversational_core._con_enlace_si_toca`). No a colombianos
+    # ni a grupos mixtos ni en los planes que cierra un asesor.
+    enlace_cuando_toca: bool = False
+    # ord-7 (21-oct): la pregunta de Jev «¿pide el precio?» nombra las actividades del centro; con «the dive center's
+    # activities» a secas, «¿Cuánto cuesta el snorkel?» salía 0,55 (umbral 0,7) y la puerta del origen no saltaba.
+    jev_precio_nombra_actividades: bool = False
     # CAL (17-oct): el catálogo del RAG pinta hasta qué profundidad certifica cada curso (`max_depth_m`: Open Water
     # 18 m, Advanced 30 m, lo que dice el registro de actividades) y una línea general de profundidad por certificación
     # (cal-18: "¿cuántos metros bajan?" no tenía el dato en nada que viera el RAG). APAGADO hasta medirlo.

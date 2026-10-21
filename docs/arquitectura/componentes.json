@@ -93,6 +93,7 @@
       "interruptores": [
         "jev_router_enabled",
         "jev_con_contexto",
+        "jev_precio_nombra_actividades",
         "pase_si_pide_fuera_del_sistema",
         "datos_ajenos_se_niegan",
         "idioma_unico_de_apertura"
@@ -157,7 +158,8 @@
       "que_hace": "Políticas con texto fijo (alcohol, alergias, edad…) y, para el resto, busca la respuesta en la base de conocimiento (RAG).",
       "donde": "src/agents/info_agent.py:info_node",
       "interruptores": [
-        "privado_pasa_directo"
+        "privado_pasa_directo",
+        "tarjeta_edades_en_cifra"
       ],
       "nota": "Por esta ruta solo llegan las preguntas que no son de reserva. La mayoría de las preguntas se contestan desde la Reserva («contesta y sigue»), así que el RAG trabaja muchas más veces de las que pasa un mensaje por aquí."
     },
@@ -573,6 +575,8 @@
       "interruptores": [
         "rag_origen_pregunta",
         "origen_conserva_respuesta",
+        "origen_dos_variantes",
+        "enlace_cuando_toca",
         "origen_sin_titulo_suelto",
         "rag_no_supone_reserva",
         "rag_no_adivina",
@@ -1120,6 +1124,11 @@
       "titulo": "Permitir proveedores que entrenan",
       "texto": "Solo para probar modelos por OpenRouter con datos anonimizados: deja usar proveedores que entrenan con los mensajes (como la API oficial de DeepSeek). Apagado siempre con clientes reales."
     },
+    "jev_precio_nombra_actividades": {
+      "area": "Enrutador",
+      "titulo": "Jev reconoce una pregunta de precio de cualquier actividad",
+      "texto": "La pregunta de Jev «¿pide el precio?» nombra las actividades del centro (salidas y paquetes, minicurso o refresher, snorkel, cursos y especialidades). Sin eso, «¿Cuánto cuesta el snorkel?» no contaba como pregunta de precio, no se preguntaba el origen y se cotizaba Cartagena sin saberlo (ord-7, 21-oct)."
+    },
     "jev_lugar_cliente": {
       "area": "Reserva",
       "titulo": "Jev decide dónde está el cliente",
@@ -1334,6 +1343,21 @@
       "area": "Preguntas",
       "titulo": "Al preguntar el origen, conserva el resto",
       "texto": "Cuando Coral tiene que preguntar desde dónde sale el cliente antes de dar un precio, ya no tira la respuesta entera: quita solo las frases con importes y conserva lo demás (por ejemplo, que no hay precio especial para colombianos)."
+    },
+    "origen_dos_variantes": {
+      "area": "Preguntas",
+      "titulo": "Sin saber el origen, da las dos variantes",
+      "texto": "Si el cliente pregunta el precio o qué incluye una actividad y no sabemos si sale de Cartagena o ya está en las islas, Coral da las dos variantes del catálogo (precio online por persona en su moneda, el transporte y si lleva almuerzo) y pregunta el origen para pasarle el plan y el enlace exactos. Antes se callaba todo lo que dependía del origen (ord-7, decisión de Gadea, 21-oct)."
+    },
+    "enlace_cuando_toca": {
+      "area": "Preguntas",
+      "titulo": "Con el precio de un plan, su enlace de reserva",
+      "texto": "Si ya sabemos desde dónde sale el cliente y de qué plan habla, y la respuesta le da el precio de ese plan sin el enlace para reservarlo, Coral añade el enlace de reserva del catálogo. No lo hace con colombianos ni grupos mixtos (los cierra un asesor) ni en los planes que cierra un asesor (gen-19, 21-oct)."
+    },
+    "tarjeta_edades_en_cifra": {
+      "area": "Preguntas",
+      "titulo": "Con niños, la edad mínima en cifra",
+      "texto": "La tarjeta de qué puede hacer cada persona según su edad dice la edad mínima de cada opción (por ejemplo, «minicurso de buceo (desde 10 años)») y, en inglés, quién es cada línea en inglés (antes salía «8 años») (ord-7b, decisión de Gadea, 21-oct)."
     },
     "juez_v3_luna": {
       "area": "Preguntas",

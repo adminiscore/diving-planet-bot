@@ -1,0 +1,21 @@
+{
+  "about": "gen-19 (Plan Coral, fase GEN, 21-oct, Gadea con Claude): diálogos PROPIOS del enlace de reserva cuando el cliente lo pide o toca (origen y plan sabidos y precio dado). Frases nuestras, ninguna de G9/G10. 'enlace' = el fragmento de book.divingplanet.org que debe aparecer en el último turno; vacío = no debe aparecer ninguno. Los 'ctl-' son la frontera (colombiano: lo cierra un asesor; sin origen: aún no). Se corre con reproducir_juez_pre --banco --codigo-local con y sin --flag enlace_cuando_toca.",
+  "version": 1,
+  "creado": "2026-10-21",
+  "dialogos": [
+    {"id": "g19-islas-snorkel", "turnos": ["Hola, estamos en un hotel de Isla Grande con acceso al mar. ¿Cuánto cuesta el snorkel?"],
+     "enlace": "snorkeling-already-on-the-island"},
+    {"id": "g19-cartagena-minicurso", "turnos": ["Salgo desde Cartagena y nunca he buceado, ¿cuánto vale el minicurso?"],
+     "enlace": "minicurso-de-buceo"},
+    {"id": "g19-referido", "turnos": ["Ya hice la teoría y la piscina del Open Water en mi país y quiero terminar las inmersiones con ustedes saliendo desde Cartagena. ¿Cómo lo reservo?"],
+     "enlace": "book/referral"},
+    {"id": "g19-advanced-en", "turnos": ["We're based in Cartagena for the week. Could you send me the link to sign up for the Advanced course?"],
+     "enlace": "advanced-course"},
+    {"id": "g19-nitrox-islas", "turnos": ["I'm already on the islands at my hotel. How much is the Nitrox specialty and how do I book it?"],
+     "enlace": "nitrox-specialty-already"},
+    {"id": "ctl-colombiano", "turnos": ["Soy colombiano y salgo de Cartagena, ¿cuánto cuesta el snorkel?"],
+     "enlace": ""},
+    {"id": "ctl-sin-origen", "turnos": ["¿Cuánto cuesta el snorkel?"],
+     "enlace": ""}
+  ]
+}
