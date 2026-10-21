@@ -213,7 +213,7 @@ def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     p.add_argument("--name", required=True)
     p.add_argument("--temas", default="", help="temas de los metadatos separados por comas (por defecto, todos)")
-    p.add_argument("--modelo", default="gpt-5")
+    p.add_argument("--modelo", default="gpt-5-mini")  # 21-oct (Gadea): nada más caro que gpt-5-mini sin su permiso
     p.add_argument("--modelo-idiomas", default="gpt-6-luna")  # mod-8 (18-oct): antes gpt-4.1
     p.add_argument("--sin-idiomas", action="store_true")
     p.add_argument("--paralelo", type=int, default=5)
