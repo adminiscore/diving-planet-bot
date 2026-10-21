@@ -1,6 +1,39 @@
 History
 =======
 
+0.31.81 - (2026-10-21)
+----------------------
+* **gen-6 PROMOCIONADO: Barú sale desde Cartagena** (Gonzalo con Claude, `befd8a7`…`f4c680a`; integrado por Gadea con
+  Claude; `docs/robustness/gen/gen6-diagnostico.md`).
+  - `BARU_SALE_DE_CARTAGENA`: alojarse en Barú o Playa Blanca es salir desde Cartagena para Jev, el extractor y el
+    resolutor, porque Barú no es Islas del Rosario (decisión de Gadea del 18-oct). Antes el origen se quedaba sin
+    guardar y el bot lo volvía a preguntar.
+  - `ORIGEN_SIN_TITULO_SUELTO`: la puerta del origen no deja colgado el título de la lista.
+  - Banco con OpenRouter bien: Barú con origen 0/8 → 8/8, repreguntas 1 → 0.
+  - Ronda core sin desplegar: **gen6-B3 97,4 % 26/32** frente a **gen6-A3 97,0 % 26/32**. Los 3 que empeoran no pasan
+    por el origen (uno tiene el mismo texto en A y B).
+* **gen-4 PROMOCIONADO: la moneda** (Álvaro con Claude, `2aebd76`, `00dbd51`; integrado por Gadea con Claude).
+  - `VIVIR_NO_ES_RESIDIR`: vivir, trabajar o haber nacido en Colombia no hace colombiano. Cuenta quien dice serlo
+    («soy de Medellín» también) o tener cédula de extranjería, y la pregunta nombra la cédula.
+  - `PAGO_COLOMBIANO_CON_ASESOR`: el colombiano pasa a un asesor para el pago en COP, sin «confirmar
+    disponibilidad» y hablándole en su número; el RAG no le da el link de reserva.
+  - Las decisiones son de Gadea, del 21-oct.
+  - Bancos: extractor 65/90 → 86/90; en PRE, «vive en Colombia» → USD y colombiano en el exterior → COP 2/2.
+  - Ronda core sin desplegar: **gen4-A2 98,3 % 29/32** y **gen4-B2 97,0 % 25/32**. La mejora en moneda es del flag.
+    Las 4 regresiones son del juez o del texto del RAG (fuga de «360 personas», «una noche» sin alojamiento, 18 h para
+    volar, clima con el mismo texto); ninguna pasa por la nacionalidad. Álvaro rejuzgó ×3 y Gadea con Claude lo
+    comprobó en los jsonl.
+* **Las rondas medidas con OpenRouter en su límite no valen.** La clave llegó a 30 $ entre las 14:26 y las 14:53; Gadea
+  la deja sin límite. Con OpenRouter caído, todo pasaba al respaldo de OpenAI (`gpt-5.4-mini`) y el gasto de OpenAI se
+  multiplicaba unas 140 veces. gen-4 y gen-6 se repitieron después.
+* **mej-5: los tokens de cada llamada en las métricas del turno** (`src/observability.py`; `ronda_local_pre --metricas`).
+  - Ronda core `uso-openai` con OpenRouter bien: **OpenAI 0,05 $ por 100 turnos** (Luna 86 %, nano 14 %) y
+    OpenRouter 0,31 $; el respaldo `gpt-5.4-mini` no salta.
+  - El juez cuesta 0,57 $ por ronda core.
+  - Con OpenRouter caído y respaldo Luna (`respaldo-luna`): 0,14 $ por 100 turnos, frente a 6-7 $ con `gpt-5.4-mini`.
+  - `ronda_local_pre --golden` permite pasar G10 y G9 sin desplegar. `auditoria_base` usa `gpt-5-mini` (Gadea: nada
+    más caro sin su permiso).
+
 0.31.80 - (2026-10-21)
 ----------------------
 * **MEJ-2, primera parte: la base revisada para el negocio y un control de la tarifa** (Gadea con Claude).
