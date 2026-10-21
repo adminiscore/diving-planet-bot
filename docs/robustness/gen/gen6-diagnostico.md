@@ -42,5 +42,9 @@ pregunta del origen).
 | Base | 0/8 | 2 | bien |
 | `--flag baru_sale_de_cartagena` | **8/8** | **0** | igual |
 
-Ficheros: `2026-10-21-gen6-base.jsonl` y `2026-10-21-gen6-con.jsonl`. La ronda core A/B sin desplegar (`gen6-A`,
-`gen6-B`) va en el commit siguiente, con su juicio.
+Ficheros: `2026-10-21-gen6-base.jsonl` y `2026-10-21-gen6-con.jsonl`.
+
+**Ojo, medida que hay que repetir.** Las dos tandas del banco (14:53-15:00) y las rondas core `gen6-A/B` y `gen6-A2/B2`
+se hicieron con la clave de OpenRouter en su límite total: las trazas tienen «[ROUTER][JEV] fallo … 403 Forbidden».
+Jev (una de las tres piezas del cambio) no corría, y el extractor era el de respaldo. Se repiten el banco y la A/B cuando
+OpenRouter y OpenAI tengan saldo.
