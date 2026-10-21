@@ -1,35 +1,13 @@
-"""Tests del veto LLM de `group_allocation` (docs/robustness/progress-log.md,
-2026-09-12; justificacion en el comentario de `config.py`).
+"""Un reparto por actividad tiene que cuadrar con el total que queda guardado (2026-09-12/14).
 
-Motivo real: tras arreglar que un reparto incompleto redujera ademas el
-`group_size` declarado (2026-09-10), quedan repartos **incompletos pero
-visibles** -- el total esta bien y el reparto no suma el total:
+`supervisor.enforce_group_allocation_consistency` descarta un reparto que no suma el total (o sube el total si el reparto
+suma más), contra el total que QUEDA GUARDADO (`_group_size_that_will_persist`), no contra el del turno. Motivo real:
+repartos **incompletos pero visibles** ("somos 5: 3 certificados, 1 minicurso y 1 snorkel" -> {minicourse: 1,
+snorkel: 1}) y totales de turno mal leídos ("4 certificados" con 7 ya sabidos).
 
-    "somos 5: 3 certificados, 1 minicurso y 1 snorkel"
-    -> group_size=5 (correcto), allocation={minicourse:1, snorkel:1}
-
-porque "N certificados" sin verbo no matchea `activity_kw`. El regex vuelve a
-CONTESTAR CON CONFIANZA y equivocarse, que es exactamente lo que este
-mecanismo caza (y lo que `fill_gaps` no puede: su regla es no tocar un campo
-ya resuelto).
-
-NO confundir la justificacion con el 91% de `group_allocation` en el
-eval-set: el unico caso que falla alli
-(`hist-followup-must-not-rederive-resolved-group-allocation`) es una
-alucinacion de `fill_gaps` leyendo el historial, y el veto ni se dispararia
-sobre el -- solo actua sobre campos que el REGEX resolvio ESTE turno.
-
-Dos particularidades frente al resto de campos del mecanismo:
-
-1. Tiene `should_verify` PROPIO (`_group_allocation_should_verify`): solo
-   dispara si el reparto no suma el `group_size` conocido. Es la leccion de
-   `activity` (trigger generico -> 89%->73%, revertido) aplicada de entrada.
-2. Es el unico campo que es un **dict** y no un escalar. `verify_fields` y
-   `_clean_verified_value` ya lo contemplaban, pero no habia test que lo
-   fijara: el resto del mecanismo se diseno pensando en escalares.
-
-Ambos flags en `False` por defecto en todas partes: shadow-mode primero,
-nunca cutover sin datos.
+Aquí vivía también el veto LLM de `group_allocation`: salió del camino real en ex-9 y su maquinaria se borró en MEJ-1
+(21-oct). Quedan la regla del reparto, el comportamiento del regex y `verify_fields` / `_clean_verified_value` de
+`llm_extractor` (sus pruebas con dicts), que se irán con su limpieza.
 """
 
 import json
@@ -42,8 +20,6 @@ from src.agents import supervisor
 from src.agents.intent_detector import IntentDetector
 from src.agents.llm_extractor import _clean_verified_value, verify_fields
 from src.agents.nucleo import extraction as core_extraction
-from src.agents.rutas import booking as sup_booking
-from src.config import settings
 from src.flows.state import ConversationState
 
 _INCOMPLETE_MSG = "somos 5: 3 certificados, 1 minicurso y 1 snorkel"
@@ -72,14 +48,6 @@ def _client_returning(payload):
 
 # -- Los flags nacen apagados ------------------------------------------------
 
-def test_cutover_is_on_by_default_and_shadow_is_not():
-    """Unico campo del mecanismo que nace en cutover. Se activo con datos
-    medidos ANTES (bateria de conversacion: 6/10 repartos correctos frente a
-    3/10, 0 parciales, 0 alucinaciones), no a ver que tal."""
-    assert settings.llm_group_allocation_veto_shadow_mode is False
-    assert settings.llm_group_allocation_veto_cutover is True
-
-
 # -- El caso real que motiva el mecanismo ------------------------------------
 
 def test_regex_produces_an_incomplete_but_visible_allocation():
@@ -91,42 +59,6 @@ def test_regex_produces_an_incomplete_but_visible_allocation():
 
 
 # -- El trigger propio -------------------------------------------------------
-
-def test_should_verify_fires_when_allocation_does_not_add_up():
-    intent, _ = _detect(_INCOMPLETE_MSG)
-    assert supervisor._group_allocation_should_verify(_INCOMPLETE_MSG, intent) is True
-
-
-def test_should_verify_stays_quiet_when_allocation_adds_up():
-    """Coste cero en los repartos que ya cuadran -- y, sobre todo, no se mete
-    al LLM a opinar sobre algo que el regex resolvio bien."""
-    intent, _ = _detect(_COMPLETE_MSG)
-    assert sum(intent.group_allocation.values()) == intent.group_size
-    assert supervisor._group_allocation_should_verify(_COMPLETE_MSG, intent) is False
-
-
-def test_should_verify_abstains_without_a_group_size_to_compare_against():
-    intent, _ = _detect(_INCOMPLETE_MSG)
-    intent.group_size = None
-    assert supervisor._group_allocation_should_verify(_INCOMPLETE_MSG, intent) is False
-
-
-def test_should_verify_abstains_without_allocation():
-    intent, _ = _detect(_INCOMPLETE_MSG)
-    intent.group_allocation = None
-    assert supervisor._group_allocation_should_verify(_INCOMPLETE_MSG, intent) is False
-
-
-def test_eligible_only_when_a_flag_is_on():
-    intent, _ = _detect(_INCOMPLETE_MSG)
-    with patch.object(supervisor.settings, "llm_group_allocation_veto_cutover", False):
-        assert "group_allocation" not in supervisor._eligible_veto_fields(
-            _INCOMPLETE_MSG, intent)
-        with patch.object(supervisor.settings,
-                          "llm_group_allocation_veto_shadow_mode", True):
-            assert "group_allocation" in supervisor._eligible_veto_fields(
-                _INCOMPLETE_MSG, intent)
-
 
 # -- Es un DICT, no un escalar -----------------------------------------------
 
@@ -166,40 +98,6 @@ async def test_verify_fields_reports_nothing_when_the_dict_matches():
 
 # -- Shadow no aplica, cutover si --------------------------------------------
 
-@pytest.mark.asyncio
-async def test_shadow_mode_measures_without_applying():
-    """`cutover` va a True por defecto desde 2026-09-12, asi que aqui hay que
-    apagarlo explicitamente para probar el shadow."""
-    intent, state = _detect(_INCOMPLETE_MSG)
-    with patch.object(supervisor.settings, "llm_group_allocation_veto_shadow_mode", True), \
-         patch.object(supervisor.settings, "llm_group_allocation_veto_cutover", False), \
-         patch.object(sup_booking, "verify_fields",
-                      new=AsyncMock(return_value={"group_allocation": _FULL_ALLOCATION})):
-        await supervisor._maybe_veto_resolved_fields_via_llm(_INCOMPLETE_MSG, intent, state)
-    assert intent.group_allocation == _REGEX_PARTIAL
-
-
-@pytest.mark.asyncio
-async def test_cutover_applies_the_complete_allocation():
-    intent, state = _detect(_INCOMPLETE_MSG)
-    with patch.object(supervisor.settings, "llm_group_allocation_veto_cutover", True), \
-         patch.object(sup_booking, "verify_fields",
-                      new=AsyncMock(return_value={"group_allocation": _FULL_ALLOCATION})):
-        await supervisor._maybe_veto_resolved_fields_via_llm(_INCOMPLETE_MSG, intent, state)
-    assert intent.group_allocation == _FULL_ALLOCATION
-    assert sum(intent.group_allocation.values()) == intent.group_size
-
-
-@pytest.mark.asyncio
-async def test_llm_failure_degrades_to_the_regex_value():
-    intent, state = _detect(_INCOMPLETE_MSG)
-    with patch.object(supervisor.settings, "llm_group_allocation_veto_cutover", True), \
-         patch.object(sup_booking, "verify_fields",
-                      new=AsyncMock(side_effect=RuntimeError("boom"))):
-        await supervisor._maybe_veto_resolved_fields_via_llm(_INCOMPLETE_MSG, intent, state)
-    assert intent.group_allocation == _REGEX_PARTIAL
-
-
 # -- El prompt agrupado tiene que saber renderizar el campo -------------------
 
 @pytest.mark.parametrize("lang", ["es", "en"])
@@ -227,50 +125,6 @@ def _intent_con_reparto(alloc, gs=None):
     intent.group_allocation = alloc
     intent.group_size = gs
     return intent
-
-
-def test_trigger_uses_the_total_known_by_the_conversation():
-    state = ConversationState(conversation_id="ga-multi-turno")
-    state.detected_group_size = 6
-    intent = _intent_con_reparto({"snorkel": 2})  # reparto a medias, sin total en el turno
-    assert supervisor._group_allocation_should_verify("4 con titulo y 2 snorkel",
-                                                      intent, state) is True
-
-
-def test_trigger_still_abstains_with_no_total_anywhere():
-    state = ConversationState(conversation_id="ga-sin-total")
-    intent = _intent_con_reparto({"snorkel": 2})
-    assert supervisor._group_allocation_should_verify("...", intent, state) is False
-    assert supervisor._group_allocation_should_verify("...", intent, None) is False
-
-
-def test_trigger_takes_this_turns_total_when_it_is_an_explicit_correction():
-    """El total del turno solo manda sobre el de la conversacion cuando es una
-    CORRECCION explicita -- la misma regla con la que se guarda el estado
-    (`_group_size_that_will_persist`). Antes mandaba siempre, y eso dejaba el
-    veto mudo cuando el total del turno venia mal leido (ver el bloque de
-    abajo)."""
-    state = ConversationState(conversation_id="ga-turno-manda")
-    state.detected_group_size = 99
-    intent = _intent_con_reparto({"certified_diving": 2, "snorkel": 1}, gs=3)
-    # El cue lo marca un unico punto, el enrutado de correcciones del nucleo
-    # (`conversational_core._regex_contradictions`, tarea 7b), en `intent.overwrite`.
-    intent.overwrite = ["group_size"]
-    assert supervisor._group_allocation_should_verify(
-        "en realidad somos 3", intent, state) is False
-
-
-def test_trigger_stays_quiet_when_the_conversations_total_already_matches():
-    state = ConversationState(conversation_id="ga-cuadra")
-    state.detected_group_size = 3
-    intent = _intent_con_reparto({"certified_diving": 2, "snorkel": 1})
-    assert supervisor._group_allocation_should_verify("...", intent, state) is False
-
-
-def test_should_verify_is_still_callable_with_two_arguments():
-    """`state` es opcional a proposito: hay llamadas de 2 argumentos vivas."""
-    intent = _intent_con_reparto({"snorkel": 2}, gs=5)
-    assert supervisor._group_allocation_should_verify("...", intent) is True
 
 
 # -- La invariante: el reparto debe sumar el total, VENGA DE DONDE VENGA ------
@@ -429,13 +283,6 @@ def test_a_split_that_exceeds_the_known_total_raises_the_persisted_total():
     assert state.detected_group_allocation == alloc
 
 
-def test_trigger_fires_when_the_split_only_matches_a_misread_turn_total():
-    """Mismo caso visto desde el veto: antes comparaba 4 con 4 y no disparaba."""
-    intent = _intent_con_reparto({"certified_diving": 4}, gs=4)
-    assert supervisor._group_allocation_should_verify(
-        "4 certificados", intent, _state_con_total(7)) is True
-
-
 def test_split_whose_turn_total_the_regex_derived_from_the_split_itself():
     """El caso `b10` de scripts/battery_group_allocation_gate.py, fallando en PRE
     con los DOS vetos encendidos (2026-09-14): con 7 sabidos, "4 con brevet, 2
@@ -451,7 +298,6 @@ def test_split_whose_turn_total_the_regex_derived_from_the_split_itself():
     assert intent.group_allocation == {"minicourse": 2, "snorkel": 1}
     assert intent.group_size == 3  # el total que el regex dedujo del reparto
 
-    assert supervisor._group_allocation_should_verify(msg, intent, state) is True
     supervisor.enforce_group_allocation_consistency(intent, state, msg)
     assert intent.group_allocation is None
 
@@ -465,8 +311,7 @@ async def test_a_misread_turn_total_cannot_carry_a_partial_split_into_the_state(
     state.detected_group_size = 7
     partial = {"group_allocation": {"certified_diving": 4}}
     with patch.object(cc, "extract_and_verify", create=True, new=AsyncMock(return_value=(partial, {}))), \
-         patch.object(core_extraction, "fill_gaps", new=AsyncMock(return_value=dict(partial))), \
-         patch.object(sup_booking, "verify_fields", new=AsyncMock(return_value={})):
+         patch.object(core_extraction, "fill_gaps", new=AsyncMock(return_value=dict(partial))):
         await cc._understand(state, "4 certificados")
     assert state.detected_group_size == 7
     assert state.detected_group_allocation is None

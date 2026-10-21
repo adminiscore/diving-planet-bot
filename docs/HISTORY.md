@@ -1,6 +1,24 @@
 History
 =======
 
+0.31.76 - (2026-10-21)
+----------------------
+* **MEJ-1, tanda 1a: fuera la maquinaria muerta de los vetos por campo** (Fase 9, sep-2026). ex-9 (15-oct) la sacó
+  del camino real y desde entonces no corría.
+  - Borrados en `rutas/booking.py`: specs, triggers, `apply_veto_disagreements`, `valid_veto_corrections`, el veto de
+    actividad y el de reparto. También sus reexports en `supervisor.py`, `certification_is_ambiguous` en
+    `intent_detector.py` y los **12 flags `llm_*_veto_shadow_mode` / `llm_*_veto_cutover`** (con sus fichas del mapa).
+  - Se quedan, porque se usan: `enforce_group_allocation_consistency` (el reparto tiene que cuadrar con el total
+    guardado), `nationality_is_ambiguous` y `matched_activity_categories`. `verify_fields` y su prompt
+    (`llm_extractor`, `prompts/booking`) esperan a la tanda 1d, cuando se integre la rama de Álvaro.
+  - Comportamiento igual. Se comprobó en el código subido (130cefb): nadie del camino real llamaba a
+    `_maybe_veto_resolved_fields_via_llm` (solo el reexport y los tests) y ningún flag de veto estaba en el compose.
+    Por eso no hay ronda de equivalencia: se ahorra crédito.
+  - Tests: 6 ficheros solo del veto, borrados. `test_group_allocation_veto.py` pasa a
+    `test_reparto_cuadra_con_el_total.py` (se queda el invariante). Suite completa: 3216 en verde.
+    `battery_group_allocation_gate` mide ahora una sola variante.
+  - Unas 1.350 líneas menos.
+
 0.31.75 - (2026-10-21)
 ----------------------
 * **gen-12 PROMOCIONADO: el RAG sin nombres internos ni género supuesto.** Es la primera promoción medida con la ronda

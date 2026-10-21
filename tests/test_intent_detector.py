@@ -647,9 +647,8 @@ class TestMatchedActivityCategories:
     """Hallazgo en vivo (conversacion real 'purple-sun-590', 2026-09-03): el
     regex de _detect_activity resuelve por la primera categoria que matchea
     (orden de codigo), no por lo que el cliente pidio. matched_activity_
-    categories() es la senal barata (0/1/2+ categorias) que activa la
-    verificacion LLM (supervisor._maybe_veto_activity_via_llm) solo cuando
-    hace falta."""
+    categories() es la senal barata (0/1/2+ categorias) de mensaje ambiguo
+    (la usaba el veto LLM de actividad, borrado en MEJ-1)."""
 
     def test_real_bug_message_matches_multiple_categories(self):
         # El mensaje real que causo el bug: pide open water pero "nunca he

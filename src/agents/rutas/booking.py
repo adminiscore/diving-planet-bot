@@ -9,13 +9,8 @@ s4-2 (19-oct): movido tal cual desde `supervisor.py`, que lo re-exporta. Ver `sr
 import logging
 import re
 
-from src.agents.intent_detector import (
-    DetectedIntent,
-    matched_activity_categories,
-    nationality_is_ambiguous,
-)
+from src.agents.intent_detector import DetectedIntent
 from src.agents.lead_summary import build_lead_summary
-from src.agents.llm_extractor import verify_fields
 from src.agents.supervisor import _booking_change_buttons
 from src.config import settings
 from src.domain import activities as dom
@@ -230,81 +225,6 @@ def _log_safe_message(message: str, limit: int = 500) -> str:
     return message[:limit] + "…[truncated]"
 
 
-# Mapeo activity(enum del LLM) -> service_id del catalogo: el servicio base de
-# cada actividad en el registro (F3a de docs/robustness/activity-domain-plan.md;
-# antes una tabla a mano con los mismos valores). padi_course/padi_specialty se
-# quedan sin service_id (igual que el regex): sin nivel concreto nombrado no hay
-# un unico item de catalogo que elegir.
-_ACTIVITY_TO_SERVICE_ID = {
-    activity_id: service_id
-    for activity_id in dom.activity_ids()
-    if (service_id := dom.base_service_id(activity_id)) and not dom.by_id(activity_id).sold_as
-}
-
-
-def _apply_activity_veto(regex_intent: DetectedIntent, llm_activity: str) -> None:
-    """Side-effect especifico de `activity`: ademas del valor, fija el
-    `service_id` correspondiente (mismo mapeo que _detect_activity aplica
-    inline). Es la unica pieza de logica que no generaliza al resto de los
-    campos verificados -- de ahi que viva como `apply` custom en
-    `_VETO_FIELD_SPECS` en vez de en el orquestador generico."""
-    regex_intent.service_id = _ACTIVITY_TO_SERVICE_ID.get(llm_activity)
-
-
-def _activity_should_verify(
-    message: str, regex_intent: DetectedIntent, state: ConversationState | None = None
-) -> bool:
-    """Trigger de `activity`: SOLO cuando el mensaje dispara 2+ categorias a
-    la vez (mismo criterio que el `_maybe_veto_activity_via_llm` original de
-    Fase 9). Medido en vivo con el eval-set (2026-09-10, ver docs/robustness/
-    progress-log.md Fase 11): ampliar esto a "resuelto este turno" (sin exigir
-    ambiguedad) llama al LLM en TODO turno donde se resuelve `activity` --
-    incluidos los casos claros, sin ambiguedad real -- y el sesgo propio del
-    LLM hacia 'minicourse' en mensajes escuetos ("Hola quiero bucear")
-    sobreescribia el default correcto del regex, hundiendo el agreement de
-    89%->73%. La ambiguedad real (2+ categorias) sigue siendo la señal
-    correcta de "aqui SI hay riesgo real de colision" -- el gap de la
-    conversacion 913 se cerro por otra via (ver `_PADI_COURSE_PATTERNS` en
-    intent_detector.py, patron nuevo para "primer nivel"/"primer curso"),
-    no ampliando este trigger.
-
-    Segunda condicion: la actividad del regex tiene "hermanas" en el registro
-    (misma familia y nivel: Open Water y su curso referido, 474 USD frente a 693).
-    El regex se queda con la suya si el LLM falla o no discrepa. Un primer intento
-    (2026-09-14) con una glosa que nombraba `padi_open_water` bajo el eval-set 214
-    -> 213; esta version usa una glosa que solo describe al referido."""
-    if len(matched_activity_categories(message)) >= 2:
-        return True
-    return bool(dom.sibling_ids(getattr(regex_intent, "activity", None)))
-
-
-def _nationality_should_verify(
-    message: str, regex_intent: DetectedIntent, state: ConversationState | None = None
-) -> bool:
-    """Trigger de `is_colombian`: SOLO cuando el mensaje trae polaridad de
-    nacionalidad contradictoria (`intent_detector.nationality_is_ambiguous`).
-
-    Mismo razonamiento que `_activity_should_verify`: con el trigger generico el
-    LLM opinaba tambien en los casos claros y su sesgo pisaba al regex -- aqui,
-    en las negaciones compactas ("ninguno colombiano" -> True, eval-set; ver
-    test_field_veto_generic_trigger_risk.py). Es la condicion que el propio test
-    de riesgo exigia antes de plantearse encender el flag; encenderlo sigue
-    siendo una decision aparte, con medida."""
-    return nationality_is_ambiguous(message)
-
-
-def _certification_should_verify(
-    message: str, regex_intent: DetectedIntent, state: ConversationState | None = None
-) -> bool:
-    """Trigger de `is_certified`: SOLO con polaridad de certificacion
-    contradictoria (`intent_detector.certification_is_ambiguous`), misma regla
-    comun que la nacionalidad. Sustituye al trigger generico que el test de
-    riesgo marcaba como peligroso. Encender el flag sigue siendo una decision
-    aparte, con medida."""
-    from src.agents.intent_detector import certification_is_ambiguous
-    return certification_is_ambiguous(message)
-
-
 def _group_size_that_will_persist(
     intent: DetectedIntent, state: ConversationState | None, message: str | None
 ) -> int | None:
@@ -315,8 +235,7 @@ def _group_size_that_will_persist(
     turno lo acepta como correccion (`intent.overwrite`: cue explicito o confirmada
     por el cliente, ver `conversational_core._route_contradictions`).
 
-    Existe porque la invariante del reparto y el trigger de su veto razonaban
-    con el total del TURNO, que es justo el que el regex lee mal: con 7 ya
+    Existe porque la invariante del reparto razonaba con el total del TURNO, que es justo el que el regex lee mal: con 7 ya
     sabidos, "4 certificados" da group_size=4 en el turno (cifra de un tramo
     tomada por el total), un reparto {certified_diving: 4} "cuadraba" con ese 4
     y se guardaba junto a un estado que seguia en 7. Medido con LLM real en PRE
@@ -333,151 +252,6 @@ def _group_size_that_will_persist(
     if turn != known and "group_size" in getattr(intent, "overwrite", ()):
         return turn
     return known
-
-
-def _group_allocation_should_verify(
-    message: str, regex_intent: DetectedIntent, state: ConversationState | None = None
-) -> bool:
-    """Trigger propio de `group_allocation`: solo si el reparto NO suma el
-    `group_size` conocido.
-
-    El fallo que motiva el veto es un reparto INCOMPLETO pero VISIBLE --
-    "somos 5: 3 certificados, 1 minicurso y 1 snorkel" da group_size=5 y
-    allocation={minicourse:1, snorkel:1}, porque "N certificados" sin verbo
-    no matchea `activity_kw`. Esa incoherencia (2 != 5) es comprobable con
-    aritmetica, sin preguntarle a nadie, asi que se usa como disparador en
-    vez del generico "resuelto este turno".
-
-    No es un detalle de eficiencia sino de precision: el trigger generico ya
-    se midio en `activity` (89%->73%, revertido) porque llamar al LLM tambien
-    en los casos CLAROS mete su sesgo por encima de un regex que acertaba.
-    Aqui, ademas, un reparto que ya cuadra no tiene nada que corregir.
-
-    Sin `group_size` conocido -- ni en el turno ni en la conversacion -- no hay
-    con que comparar: se abstiene (False).
-    """
-    allocation = getattr(regex_intent, "group_allocation", None)
-    if not allocation:
-        return False
-    # El total puede venir de ESTE turno o de uno anterior. Mirar solo el turno
-    # dejaba el veto mudo justo en el caso multi-turno ("somos 6" y, dos turnos
-    # despues, "4 con titulo y 2 snorkel") -- medido en
-    # scripts/battery_group_allocation_gate.py, 2026-09-12. Y cuando hay los dos,
-    # cuenta el que se va a GUARDAR (ver `_group_size_that_will_persist`).
-    group_size = _group_size_that_will_persist(regex_intent, state, message)
-    if group_size is None:
-        return False
-    try:
-        total = sum(allocation.values())
-    except (AttributeError, TypeError):
-        return False
-    return total != group_size
-
-
-class _VetoSpec:
-    __slots__ = ("shadow_flag", "cutover_flag", "apply", "should_verify")
-
-    def __init__(self, shadow_flag: str, cutover_flag: str, apply=None, should_verify=None):
-        self.shadow_flag = shadow_flag
-        self.cutover_flag = cutover_flag
-        self.apply = apply
-        # Por defecto: "el campo se resolvio ESTE turno" (field in
-        # regex_intent.detected_fields). `activity` sobreescribe esto con un
-        # trigger mas estricto (ambiguedad real) -- ver `_activity_should_
-        # verify` y su comentario para el porque.
-        self.should_verify = should_verify
-
-
-# Mecanismo por-campo (docs/multi-agent-refactor-plan.md, hallazgo en vivo
-# conversacion real "purple-sun-590" 2026-09-03 + conversacion real 913
-# 2026-09-10): un LLM verifica INDEPENDIENTEMENTE un campo que el regex ya
-# resolvio y lo corrige si discrepa. Nacio como `_maybe_veto_activity_via_llm`
-# (solo `activity`, disparado unicamente cuando el mensaje se autodiagnostica
-# ambiguo via `matched_activity_categories`) y se generalizo para no repetir,
-# al nivel del propio fix, el mismo anti-patron de "logica duplicada que se
-# desincroniza" que motivo la auditoria regex de hoy -- el usuario pidio
-# explicitamente extender el mismo patron a `is_certified`/`is_colombian`/
-# `location`.
-#
-# El trigger POR DEFECTO ("resuelto este turno") se intento ampliar tambien
-# para `activity` (cerrar el gap de la conv. 913 sin depender de que el regex
-# se autodiagnostique ambiguo), pero el eval-set demostro en vivo que eso
-# regresiona la precision (89%->73%: el LLM llamado en CADA resolucion,
-# incluidas las claras, introduce su propio sesgo por encima del default
-# correcto del regex). `activity` mantiene su trigger original de ambiguedad
-# (`_activity_should_verify`); el gap real de la conv. 913 se cerro con una
-# entrada nueva en `_PADI_COURSE_PATTERNS` (intent_detector.py), no ampliando
-# este trigger. Los otros 3 campos si usan el trigger generico "resuelto este
-# turno" -- pero permanecen con AMBOS flags en False (paridad preventiva,
-# sin evidencia de bug real ni de que su propio trigger generico sea seguro
-# a esa escala todavia; el eval-set de hoy ya deja datos parciales, ver
-# progress-log.md).
-_VETO_FIELD_SPECS = {
-    "activity": _VetoSpec(
-        shadow_flag="llm_activity_veto_shadow_mode",
-        cutover_flag="llm_activity_veto_cutover",
-        apply=_apply_activity_veto,
-        should_verify=_activity_should_verify,
-    ),
-    "is_certified": _VetoSpec(
-        shadow_flag="llm_certification_veto_shadow_mode",
-        cutover_flag="llm_certification_veto_cutover",
-        should_verify=_certification_should_verify,
-    ),
-    "is_colombian": _VetoSpec(
-        shadow_flag="llm_nationality_veto_shadow_mode",
-        cutover_flag="llm_nationality_veto_cutover",
-        should_verify=_nationality_should_verify,
-    ),
-    "location": _VetoSpec(
-        shadow_flag="llm_location_veto_shadow_mode",
-        cutover_flag="llm_location_veto_cutover",
-    ),
-    # Hallazgo en vivo (bateria sintetica, 2026-09-10): "mi pareja y nuestros
-    # dos hijos" resuelve group_size=2 (subcuenta) via el patron `pareja`->2
-    # -- el regex CONTESTA CON CONFIANZA y se equivoca, a diferencia de un
-    # hueco (None) que ya cubriria fill_gaps. Un intento de arreglarlo por
-    # regex rompio un caso real validado por el owner (ver comentario en
-    # config.py); se deja en manos de este mecanismo en su lugar.
-    "group_size": _VetoSpec(
-        shadow_flag="llm_group_size_veto_shadow_mode",
-        cutover_flag="llm_group_size_veto_cutover",
-    ),
-    # Reparto incompleto pero visible (ver config.py para la justificacion,
-    # que NO es el 91% del eval-set). Unico campo del mecanismo que es un
-    # DICT y no un escalar: `_clean_verified_value` ya limpia los nulls que
-    # mete el schema estricto y la comparacion `!=` de `verify_fields`
-    # funciona igual sobre dicts -- hay tests explicitos de eso porque el
-    # resto del mecanismo se diseño pensando en escalares.
-    "group_allocation": _VetoSpec(
-        shadow_flag="llm_group_allocation_veto_shadow_mode",
-        cutover_flag="llm_group_allocation_veto_cutover",
-        should_verify=_group_allocation_should_verify,
-    ),
-}
-
-
-def _eligible_veto_fields(
-    message: str, regex_intent: DetectedIntent, state: ConversationState | None = None
-) -> list[str]:
-    """Campos de `_VETO_FIELD_SPECS` que toca verificar en este turno: con
-    alguna de sus 2 banderas encendida, con valor resuelto, marcados como
-    resueltos ESTE turno, y que pasen su `should_verify` propio si lo tienen."""
-    eligible = []
-    for field, spec in _VETO_FIELD_SPECS.items():
-        if not (getattr(settings, spec.shadow_flag) or getattr(settings, spec.cutover_flag)):
-            continue
-        value = getattr(regex_intent, field, None)
-        if value in (None, [], ""):
-            continue  # nada resuelto que vetar (eso ya lo cubre el cutover de huecos)
-        if field not in regex_intent.detected_fields:
-            continue  # no se resolvio ESTE turno -- nada nuevo que verificar
-        if spec.should_verify is not None and not spec.should_verify(
-            message, regex_intent, state
-        ):
-            continue  # trigger especifico del campo (p. ej. ambiguedad de activity)
-        eligible.append(field)
-    return eligible
 
 
 def enforce_group_allocation_consistency(
@@ -510,9 +284,8 @@ def enforce_group_allocation_consistency(
     Un reparto ausente hace que el bot pregunte; un reparto incompleto se
     aplica tal cual y se lleva por delante el precio. Abstenerse es mejor.
 
-    El total se busca primero en el turno y luego en la conversacion, igual que
-    `_group_allocation_should_verify`. Sin total conocido no hay invariante que
-    comprobar y no se toca nada.
+    El total se busca primero en el turno y luego en la conversacion. Sin total
+    conocido no hay invariante que comprobar y no se toca nada.
     """
     allocation = getattr(regex_intent, "group_allocation", None)
     if not allocation:
@@ -573,105 +346,6 @@ def enforce_group_allocation_consistency(
     regex_intent.group_allocation = None
     if "group_allocation" in regex_intent.detected_fields:
         regex_intent.detected_fields.remove("group_allocation")
-
-
-async def _maybe_veto_resolved_fields_via_llm(
-    message: str, regex_intent: DetectedIntent, state: ConversationState,
-    only_fields: list[str] | None = None,
-) -> None:
-    """Verifica en UNA SOLA peticion todos los campos que el regex resolvio
-    este turno y que tengan el veto encendido. Ver el comentario de
-    `_VETO_FIELD_SPECS` arriba para el diseño completo.
-
-    Una peticion para N campos, no N peticiones (medido en vivo 2026-09-10):
-    el recurso escaso de la cuenta son las peticiones/dia (limite RPD
-    agotado con los tokens intactos), asi que agrupar es lo correcto contra
-    el limite real -- y de paso deja una sola ida y vuelta de latencia.
-
-    IMPORTANTE: la LLAMADA se hace si algun campo tiene cualquiera de sus 2
-    banderas, pero la APLICACION es POR CAMPO segun SU PROPIA bandera de
-    cutover -- un campo en shadow-mode nunca se aplica aunque otro campo del
-    mismo lote si este en cutover. Cualquier fallo degrada a "regex-only" en
-    silencio.
-    """
-    fields = _eligible_veto_fields(message, regex_intent, state)
-    if only_fields is not None:
-        fields = [f for f in fields if f in only_fields]
-    if not fields:
-        return  # cero coste: ni una peticion
-    try:
-        regex_values = {f: getattr(regex_intent, f, None) for f in fields}
-        disagreements = await verify_fields(
-            fields, message, regex_values, history=state.history, lang=state.language,
-        )
-        apply_veto_disagreements(disagreements, regex_intent, message, regex_values)
-    except Exception as exc:  # noqa: BLE001
-        logger.warning(f"[EXTRACT][VETO] failed, degrading to regex-only (ignored): {exc}")
-
-
-def _veto_would_generalize(regex_activity, llm_activity) -> bool:
-    """True si el LLM solo propone la actividad GENERICA de la misma familia que la
-    concreta que ya dio el regex. Derivado del registro (`generic`, `family`)."""
-    concrete = dom.by_id(regex_activity) if isinstance(regex_activity, str) else None
-    proposed = dom.by_id(llm_activity) if isinstance(llm_activity, str) else None
-    return (
-        concrete is not None and proposed is not None
-        and not concrete.generic and proposed.generic
-        and concrete.family == proposed.family
-    )
-
-
-def valid_veto_corrections(disagreements: dict, regex_values: dict, message: str = "") -> dict:
-    """Discrepancias del LLM que cuentan como correccion. Unico filtro: lo usan
-    `apply_veto_disagreements` y el eval-set, para que midan lo mismo."""
-    valid = {}
-    for field, llm_value in disagreements.items():
-        if field == "activity" and _veto_would_generalize(regex_values.get(field), llm_value):
-            # La lista del LLM no tiene todas las actividades concretas: si solo puede
-            # decir la generica de la MISMA familia ("padi_specialty" frente a
-            # "specialty_mindful_diving"), eso no es una correccion, es perder lo que
-            # el cliente nombro (2026-09-15).
-            logger.info(
-                f"[EXTRACT][ACTIVITY_VETO] ignorado (generaliza) regex={regex_values.get(field)!r} "
-                f"llm={llm_value!r} msg={_log_safe_message(message)!r}"
-            )
-            continue
-        valid[field] = llm_value
-    return valid
-
-
-def apply_veto_disagreements(
-    disagreements: dict, regex_intent: DetectedIntent, message: str,
-    regex_values: dict | None = None,
-) -> None:
-    """Aplica (o solo loguea) las discrepancias que devolvio el LLM.
-
-    Separado de la LLAMADA a proposito: desde que `extract_and_verify` puede
-    traer las discrepancias en la misma peticion que los huecos (ver
-    `conversational_core._understand`), hay DOS sitios que obtienen
-    discrepancias y uno solo que decide que hacer con ellas. La semantica
-    delicada -- aplicar POR CAMPO segun SU flag de cutover, y el side-effect
-    de `spec.apply` -- vive aqui una sola vez.
-    """
-    regex_values = regex_values or {}
-    for field, llm_value in valid_veto_corrections(disagreements, regex_values, message).items():
-        spec = _VETO_FIELD_SPECS[field]
-        cutover = getattr(settings, spec.cutover_flag)
-        logger.info(
-            f"[EXTRACT][{field.upper()}_VETO] regex={regex_values.get(field)!r} "
-            f"llm={llm_value!r} applied={cutover} msg={_log_safe_message(message)!r}"
-        )
-        if cutover:
-            setattr(regex_intent, field, llm_value)
-            if spec.apply:
-                spec.apply(regex_intent, llm_value)
-
-
-async def _maybe_veto_resolved_field_via_llm(
-    field: str, message: str, regex_intent: DetectedIntent, state: ConversationState
-) -> None:
-    """Atajo de un solo campo sobre `_maybe_veto_resolved_fields_via_llm`."""
-    await _maybe_veto_resolved_fields_via_llm(message, regex_intent, state, only_fields=[field])
 
 
 # Cue de CORRECCIÓN explícita de un dato ya fijado ("en realidad revisamos y

@@ -938,11 +938,9 @@ def _apply_question_turn_answers(intent, fields: list[str], answers: dict, messa
       "¿me recomiendas un hotel en Rosario?" (el regex leía isla) e "in case I
       decided to do the Open Water course?" (el relleno lo daba por dato).
 
-    Se aplica sin mirar el flag `llm_*_veto_cutover` de cada campo, y es a
-    propósito: esos flags gobiernan el veto del turno NORMAL, donde la pregunta es
-    "¿el regex leyó mal?" y cada campo se midió por separado (`location`,
-    `is_certified` e `is_colombian` están en `False`). Aquí la pregunta es otra —
-    "¿el cliente afirma esto o es hipótesis?" — y solo corre en turnos con pregunta.
+    Nació aparte de los `llm_*_veto_cutover` (el veto del turno NORMAL, "¿el regex
+    leyó mal?", borrado con sus flags en MEJ-1): aquí la pregunta es otra — "¿el
+    cliente afirma esto o es hipótesis?" — y solo corre en turnos con pregunta.
     """
     for f in fields:
         llm_value = answers.get(f)

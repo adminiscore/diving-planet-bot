@@ -8,8 +8,8 @@ grafo (`orchestration/state.py`: ALL_ROUTES) tiene su módulo con lo que solo us
 - `deflection.py`   → petición de número o contacto directo, "¿eres un bot?".
 - `changes.py`      → cancelar, reprogramar o cambiar el número de personas; preguntas de disponibilidad.
 - `info.py`         → alcohol y alergias, grupo privado, "¿cambia el precio por nacionalidad?", edad.
-- `booking.py`      → lo que el núcleo de la reserva toma del supervisor: aplicar la intención detectada, el veto de
-                      campos, la coherencia del reparto, grupo mixto, nota pendiente, fecha cerrada.
+- `booking.py`      → lo que el núcleo de la reserva toma del supervisor: aplicar la intención detectada, la
+                      coherencia del reparto, grupo mixto, nota pendiente, fecha cerrada.
 - `contexto_rag.py` → `_build_extra_context`, el contexto del estado que se le pasa al RAG (info y núcleo).
 
 En `supervisor.py` quedan la entrada (`route_message`), la cascada compartida (`_shared_turn_handler`), el aviso de
@@ -18,8 +18,8 @@ fallo técnico y lo común a varias rutas (`_infer_language`, `_matches_escalati
 (import perezoso desde `supervisor`), el núcleo (`supervisor.<nombre>`), los scripts y los tests lo siguen
 encontrando allí.
 
-Ojo con los parches de los tests: un nombre se busca en el módulo donde está DEFINIDA la función que lo usa. Para
-cambiar `verify_fields` dentro del veto hay que parchear `rutas.booking.verify_fields`, no `supervisor.verify_fields`.
+Ojo con los parches de los tests: un nombre se busca en el módulo donde está DEFINIDA la función que lo usa: se
+parchea `rutas.<módulo>.<nombre>`, no `supervisor.<nombre>`.
 
 Este `__init__` carga antes `supervisor`: los módulos de aquí importan de él lo común y él los importa al final para
 re-exportarlos. Así da igual qué se importe primero.

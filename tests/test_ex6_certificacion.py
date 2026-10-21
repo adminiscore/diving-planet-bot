@@ -10,7 +10,6 @@ import pytest
 
 from src.agents import conversational_core as core
 from src.agents.nucleo import extractor as core_extractor
-from src.agents.rutas import booking as sup_booking
 from src.flows.state import ConversationState
 
 
@@ -77,16 +76,3 @@ async def test_nivel_nombrado_con_cita_no_se_pregunta(ex6):
     assert st.is_certified is True
 
 
-@pytest.mark.asyncio
-async def test_los_campos_del_extractor_no_van_al_veto(monkeypatch):
-    """ex-9 (ronda atencion-B2): con los dominios del extractor encendidos, el veto del camino viejo no se pide para
-    sus campos (la llamada iba en serie y su resultado se tiraba)."""
-    from src.agents import supervisor
-
-    monkeypatch.setattr(core_extractor, "datos_del_extractor", AsyncMock(return_value={}))
-    verificar = AsyncMock(return_value={})
-    monkeypatch.setattr(sup_booking, "verify_fields", verificar)
-    monkeypatch.setattr(core, "verify_fields", verificar, raising=False)
-    await _entender("Hi, I am looking to book 2 dives and snorkeling for 6 people, all PADI certified")
-    for llamada in verificar.await_args_list:
-        assert not set(llamada.args[0]) & set(core.campos_del_extractor()), llamada.args[0]

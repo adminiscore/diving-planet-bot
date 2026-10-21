@@ -4,6 +4,7 @@ Cada caso pasa por `conversational_core._understand` sobre un estado sembrado y 
 puntua lo que el turno cambio. Sin LLM: se mockean las peticiones.
 """
 
+import contextlib
 import copy
 from unittest.mock import patch
 
@@ -21,13 +22,10 @@ def _mock_llm(merged=None, fill=None):
     async def fake_fill(*args, **kwargs):
         return copy.deepcopy(fill or {})
 
-    async def fake_veto(*args, **kwargs):
-        return None
-
     return (
         patch.object(cc, "extract_and_verify", create=True, new=fake_merged),
         patch.object(core_extraction, "fill_gaps", new=fake_fill),
-        patch("src.agents.rutas.booking._maybe_veto_resolved_fields_via_llm", new=fake_veto),
+        contextlib.nullcontext(),  # el veto de campos se borró en MEJ-1 (21-oct)
     )
 
 

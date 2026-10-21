@@ -4,7 +4,8 @@ docs/robustness/NEXT-SESSION-PROMPT.md, 2026-09-14).
 Con el trigger generico ("resuelto este turno") el LLM se consultaba en TODO
 turno donde el regex resolvia la nacionalidad, incluidas las negaciones
 compactas que el regex acierta y el LLM confunde ("ninguno colombiano" -> True,
-visto en el eval-set; ver test_field_veto_generic_trigger_risk.py). Es el mismo
+visto en el eval-set). El veto se borró en MEJ-1 (21-oct); la señal de
+ambigüedad sigue porque la usa `_detect_nationality`. Es el mismo
 fallo que se midio con `activity` (89%->73%) y la misma salida: verificar solo
 cuando el propio mensaje se delata como ambiguo.
 
@@ -59,24 +60,6 @@ def test_message_without_nationality_is_not_ambiguous():
 def _intent(message):
     state = ConversationState(conversation_id="nat-trigger")
     return IntentDetector().detect(message, state), state
-
-
-def test_nationality_spec_has_its_own_trigger():
-    assert supervisor._VETO_FIELD_SPECS["is_colombian"].should_verify is not None
-
-
-def test_trigger_skips_the_compact_negation_the_llm_gets_wrong():
-    intent, state = _intent("ninguno colombiano")
-    assert intent.is_colombian is False
-    spec = supervisor._VETO_FIELD_SPECS["is_colombian"]
-    assert spec.should_verify("ninguno colombiano", intent, state) is False
-
-
-def test_trigger_fires_on_real_ambiguity():
-    msg = "dos somos colombianos pero uno es extranjero"
-    intent, state = _intent(msg)
-    spec = supervisor._VETO_FIELD_SPECS["is_colombian"]
-    assert spec.should_verify(msg, intent, state) is True
 
 
 @pytest.mark.parametrize("message", [

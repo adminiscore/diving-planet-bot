@@ -440,9 +440,9 @@ def matched_activity_categories(message: str) -> set[str]:
     padi_course, specialty}) cuyos patrones matchean este mensaje — 0, 1 o
     varias. Funcion pura, sin llamadas ni estado; reusa EXACTAMENTE los
     mismos patrones que `_detect_activity` (nunca los duplica). 2+
-    categorias a la vez es la senal barata de "mensaje ambiguo" que dispara
-    la verificacion LLM en `supervisor._maybe_veto_activity_via_llm` — sin
-    esto, un mensaje como "quiero el open water, nunca he buceado" (dispara
+    categorias a la vez es la senal barata de "mensaje ambiguo" (la usaba el
+    veto LLM de actividad, borrado en MEJ-1; hoy la usan `_detect_activity`, el
+    nucleo y `conversational_core`) — sin esto, un mensaje como "quiero el open water, nunca he buceado" (dispara
     minicourse Y padi_course) se resuelve solo por el ORDEN de la cadena
     if/elif, no por lo que el cliente realmente pidio (hallazgo en vivo,
     conversacion real "purple-sun-590", 2026-09-03)."""
@@ -561,16 +561,6 @@ def _product_family_nouns() -> frozenset[str]:
     (hueco 1, 2026-09-16: "quiero la especialidad de nitrox" preguntaba si ya la tenia)."""
     specialties = [a for a in dom.registry().activities if a.family == "specialty" and not a.generic]
     return _course_family_nouns() | _label_nouns(specialties)
-
-
-def certification_is_ambiguous(message: str) -> bool:
-    """Polaridad de certificacion contradictoria ("no es que no estemos
-    certificados, si lo estamos", "somos 3, 2 con open water y 1 no").
-
-    Medido 2026-09-14: en estos mensajes el regex ACIERTA (a diferencia de la
-    nacionalidad), asi que el detector NO se abstiene. Sirve solo de trigger del
-    veto de `is_certified`, para que el LLM no opine en los casos claros."""
-    return polarity_is_ambiguous(message, _NOT_CERTIFIED_ANY_RE, _CERTIFIED_ANY_RE)
 
 
 # Vocabulario de "¿el mensaje afirma/niega certificacion?" -- elevado de
@@ -709,8 +699,6 @@ _NOT_CERTIFIED_PATTERNS = [
 ]
 
 
-_NOT_CERTIFIED_ANY_RE = re.compile("|".join(f"(?:{strip_accents(p)})" for p in _NOT_CERTIFIED_PATTERNS))
-_CERTIFIED_ANY_RE = re.compile("|".join(f"(?:{strip_accents(p)})" for p in _CERTIFIED_PATTERNS))
 
 
 # Negacion que alcanza a lo que viene justo despues (hasta dos palabras por medio):

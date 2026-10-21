@@ -828,90 +828,9 @@ class Settings(BaseSettings):
     # ubicación y perfil/logística, flags `llm_extraction_cutover_*`) ya no existen: s4-25 quitó los flags del cutover
     # y s4-1 sus funciones y la sonda, que no llamaba nadie desde el 28-jul (308488d, se retiró el orquestador
     # antiguo). El relleno de huecos vivo es el del núcleo (`conversational_core._understand`).
-    # --- Robustness Fase 9 (docs/multi-agent-refactor-plan.md, hallazgo en vivo
-    # conversacion real "purple-sun-590", 2026-09-03) ---
-    # A diferencia de los 4 dominios de arriba (que solo rellenan huecos), este
-    # veto puede CORREGIR un `activity` que el regex SI resolvio -- solo cuando
-    # `intent_detector.matched_activity_categories(message)` marca el mensaje
-    # como ambiguo (2+ categorias disparadas a la vez). Ej.: "quiero el open
-    # water, nunca he buceado" dispara minicourse Y padi_course; el regex gana
-    # por ORDEN de comprobacion (if/elif), no por lo que el cliente pidio de
-    # verdad -- y el cutover de certificacion de arriba no lo salva porque
-    # 'nunca rellena un campo ya resuelto' es su regla explicita. Dos fases,
-    # mismo patron shadow->cutover que los 4 dominios de arriba:
-    llm_activity_veto_shadow_mode: bool = False  # mide sin aplicar (loguea discrepancias)
-    # CUTOVER por defecto desde 2026-09-14 (antes solo en `.env.pre` del VPS).
-    # Criterio para todo el mecanismo: un flag de CUTOVER que ya se midio y
-    # decide respuestas vive en el CODIGO, no en un .env que no esta en el repo
-    # -- si no, cualquier entorno nuevo (PRO, dev) arranca con el fallo que ya se
-    # cerro. Los de SHADOW (solo loguean) siguen en el entorno. Medido: eval-set
-    # `activity` 98% con el trigger de ambiguedad (progress-log 2026-09-12).
-    llm_activity_veto_cutover: bool = True       # aplica de verdad (corrige activity/service_id)
-    # --- Generalizacion del veto por-campo (docs/multi-agent-refactor-plan.md,
-    # hallazgo en vivo conversacion real 913, 2026-09-10) ---
-    # Mismo mecanismo que `llm_activity_veto_*` (ver `supervisor._VETO_FIELD_
-    # SPECS`/`_maybe_veto_resolved_field_via_llm`), extendido a is_certified/
-    # is_colombian/location por pedido explicito del usuario ("por bandera").
-    # A diferencia de `activity` (evidencia real: conv. 913), estos 3 son
-    # paridad PREVENTIVA -- sin bug en vivo que los motive todavia. Los 6
-    # flags off por defecto en todas partes; sin ellos, cada campo es un
-    # no-op inmediato dentro del bucle de `_understand()`, cero coste.
-    llm_certification_veto_shadow_mode: bool = False
-    llm_certification_veto_cutover: bool = False
-    llm_nationality_veto_shadow_mode: bool = False
-    llm_nationality_veto_cutover: bool = False
-    llm_location_veto_shadow_mode: bool = False
-    llm_location_veto_cutover: bool = False
-    # --- Extension a group_size (docs/multi-agent-refactor-plan.md, hallazgo
-    # en vivo bateria sintetica, 2026-09-10) ---
-    # A diferencia de los 3 de arriba (huecos genericos, sin bug en vivo que
-    # los motive), este SI tiene un caso real detectado: "mi pareja y
-    # nuestros dos hijos" resuelve group_size=2 (el patron `pareja`->2 gana
-    # y nunca suma a los hijos) -- el regex CONTESTA CON CONFIANZA y se
-    # equivoca, exactamente el patron de fallo que este mecanismo existe
-    # para cazar (fill_gaps no ayuda aqui: su regla es nunca tocar un campo
-    # ya resuelto). Un intento de arreglarlo por regex (excluir "mi/tu/su
-    # pareja") rompio un caso real validado por el owner
-    # (test_owner_conversations_fase1.py::test_scenario3a_couple_group_size_two,
-    # donde "con mi pareja" SI debe valer 2) -- revertido. Se deja en manos
-    # de este mecanismo en su lugar.
-    llm_group_size_veto_shadow_mode: bool = False
-    # CUTOVER por defecto desde 2026-09-14 (mismo criterio que
-    # `llm_activity_veto_cutover`). Medido en PRE con
-    # scripts/battery_group_allocation_gate.py: sin este veto, TOTAL_MAL en 5 de
-    # 33 escenarios ("en total 7: 4 certificados..." -> 4, "mi pareja y nuestros
-    # dos hijos" -> 2); con el, 0 -- y los controles donde el regex acierta (incl.
-    # el caso del owner "con mi pareja" = 2) intactos.
-    llm_group_size_veto_cutover: bool = True
-
-    # --- Veto de `group_allocation` (reparto INCOMPLETO pero visible) ---
-    # Justificacion real (NO el 91% del eval-set: el unico caso que falla
-    # alli es una alucinacion de `fill_gaps` leyendo el historial, y el veto
-    # ni se disparia sobre el -- solo actua sobre campos que el REGEX
-    # resolvio ESTE turno). El caso que SI motiva esto es otro:
-    #   "somos 5: 3 certificados, 1 minicurso y 1 snorkel"
-    #   -> group_size=5 (correcto) pero allocation={minicourse:1, snorkel:1}
-    # porque "N certificados" sin verbo no matchea `activity_kw`. El total
-    # esta bien y el reparto no suma el total: el regex vuelve a CONTESTAR
-    # CON CONFIANZA y equivocarse, que es justo lo que este mecanismo caza.
-    # Quedo asi tras arreglar que un reparto incompleto redujera ademas el
-    # `group_size` declarado (ver progress-log 2026-09-10).
-    #
-    # Trigger PROPIO (`_group_allocation_should_verify`), no el generico:
-    # solo cuando el reparto NO suma el `group_size` conocido. La leccion de
-    # `activity` (trigger generico -> 89%->73%, revertido) vale igual aqui,
-    # y ademas hace el coste practicamente cero: en los repartos que ya
-    # cuadran no se gasta ni una peticion.
-    # Off por defecto en todas partes.
-    llm_group_allocation_veto_shadow_mode: bool = False
-    # CUTOVER por defecto (2026-09-12), a diferencia del resto de campos del
-    # mecanismo. No es una excepcion caprichosa: es el unico que se activa con
-    # datos medidos de antemano en vez de "a ver que tal". Con el trigger propio
-    # (solo dispara si el reparto no suma el total) y la invariante de
-    # `enforce_group_allocation_consistency`, la bateria de conversacion da
-    # 6/10 repartos correctos frente a 3/10, con 0 repartos parciales y 0
-    # alucinaciones en los 10 escenarios de riesgo.
-    llm_group_allocation_veto_cutover: bool = True
+    # --- Robustness Fase 9 (vetos por campo, sep-2026): un LLM verificaba un campo que el regex ya había resuelto y lo
+    # corregía. ex-9 (15-oct) lo sacó del camino real (el extractor con cita manda) y MEJ-1 (21-oct) borró la maquinaria
+    # muerta (`rutas.booking`) y sus 12 flags `llm_*_veto_shadow_mode` / `llm_*_veto_cutover`.
 
     @property
     def is_dev(self) -> bool:
