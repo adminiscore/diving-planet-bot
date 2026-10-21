@@ -1,0 +1,18 @@
+{
+ "about": "gen-9 (21-oct, decisión de Gadea): criterios de G9 que se marcan aparte. El examen (examen-sintetico-g9.json) NO se toca ni se abre: la lista sale de los resultados del juez (2026-10-19-g9). 'desfasados' chocan con decisiones del negocio y NO puntúan (scripts/puntuar_sin_desfasados.py). 'sin_respaldo_en_la_base' piden un dato que la base no tiene o la contradicen: se listan, pero siguen puntuando salvo que se pida (--con-sin-respaldo); dependen de gen-11 (Álvaro y Gonzalo, con el negocio).",
+ "creado": "2026-10-21",
+ "desfasados": [
+  {"dialogo": "g9-041", "criterio": "no-telefono-salvo-peticion", "decision": "16-oct (Gadea): el chatbot no da teléfonos ni WhatsApp; quien pide un contacto pasa con un asesor", "motivo": "el criterio exige dar el WhatsApp oficial"},
+  {"dialogo": "g9-046", "criterio": "precio-snorkel-already-island", "decision": "15/18-oct (Gadea): una sola moneda por mensaje; sin nacionalidad conocida, USD", "motivo": "el criterio exige también el precio en COP"},
+  {"dialogo": "g9-049", "criterio": "precio-snorkel-already-on-island", "decision": "15/18-oct (Gadea): una sola moneda por mensaje; sin nacionalidad conocida, USD", "motivo": "el criterio exige el precio en las dos monedas («45 USD / 150.000 COP»)"}
+ ],
+ "sin_respaldo_en_la_base": [
+  {"dialogo": "g9-040", "criterio": "que-llevar", "motivo": "lista de qué llevar (traje de baño, toalla…) que la base no tiene (gen-11)"},
+  {"dialogo": "g9-029", "criterio": "que-llevar-minicurso-islas", "motivo": "lista de qué llevar que la base no tiene (gen-11)"},
+  {"dialogo": "g9-032", "criterio": "que-llevar-lockers", "motivo": "lista de qué llevar que la base no tiene (gen-11)"},
+  {"dialogo": "g9-016", "criterio": "que-llevar-minicurso", "motivo": "lista de qué llevar que la base no tiene (gen-11)"},
+  {"dialogo": "g9-050", "criterio": "horario-e-roupa", "motivo": "recomendación de ropa que la base no tiene (gen-11)"},
+  {"dialogo": "g9-059", "criterio": "grupos-snorkel", "motivo": "que se aceptan personas solas y no hay mínimo: la base no lo dice (gen-11)"},
+  {"dialogo": "g9-002", "criterio": "sin-descuento-especial-mas-dias", "motivo": "dice que el 10 % online es el único descuento, pero la base tiene el 10 % del segundo día de buceo"}
+ ]
+}

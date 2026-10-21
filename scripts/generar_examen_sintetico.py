@@ -61,12 +61,12 @@ EXTRAS = [None] * 7 + [
 ]
 
 
-def perfiles(n: int, semilla: int) -> list[dict]:
+def perfiles(n: int, semilla: int, prefijo: str = "g9") -> list[dict]:
     rnd = random.Random(semilla)
     salida = []
     for i in range(n):
         salida.append({
-            "id": f"g9-{i + 1:03d}",
+            "id": f"{prefijo}-{i + 1:03d}",
             "idioma": IDIOMAS[i % len(IDIOMAS)],
             "actividad": ACTIVIDADES[i % len(ACTIVIDADES)],
             # Pesos parecidos a lo que llega de verdad (la mayoría sale de Cartagena o no lo dice, pre-venta), para que
@@ -94,9 +94,27 @@ Reglas de los CRITERIOS (2 a 4 por caso):
 - Si el bot podría razonablemente preguntar un dato que falta antes de contestar, el criterio lo admite ("da el precio en COP… o pregunta desde dónde sale").
 - Si el caso no llega a un punto (la conversación acaba antes), el criterio dice "si la conversación llega a…, …; si no, no aplica".
 - No pongas criterios de estilo ni de idioma, ni de no inventar, ni de no repreguntar: esos los aplica el examen a todos los casos.
-- Política del negocio que debes respetar en los criterios: el chatbot no da teléfonos ni WhatsApp (pasa a un asesor); los colombianos y residentes pagan en COP y el resto en USD, mismo precio; el 10 % online es automático, sin código; reservas y pagos por el enlace online; lo ya reservado o pagado (cambios, cancelaciones, comprobar pagos) lo gestiona una persona del equipo.
+- Política del negocio que debes respetar en los criterios: el chatbot no da teléfonos ni WhatsApp (pasa a un asesor); los colombianos y residentes pagan en COP y el resto en USD, mismo precio; el 10 % online es automático, sin código; reservas y pagos por el enlace online; lo ya reservado o pagado (cambios, cancelaciones, comprobar pagos) lo gestiona una persona del equipo.{politica_nueva}
 
 Devuelve SOLO JSON: {"casos": [{"id": "<el id del perfil>", "category": "<una palabra: info, reserva, curso, grupo, post-venta, pago, escalado, logistica, seguridad, ...>", "turns": ["mensaje 1", "..."], "criteria": [{"id": "<kebab-case>", "check": "<criterio>"}], "cobertura": {"idioma": "<es|en|pt>", "actividad": "<...>", "etapa": "<...>"}}]}"""
+
+# G10 (21-oct, decisión de Gadea): las decisiones del negocio posteriores al congelado de G9 (17-oct), para que el examen
+# nuevo no nazca con criterios que las contradicen (gen-9: en G9, "dar el WhatsApp" o "el precio en las dos monedas").
+# Solo con `--prefijo` distinto de g9 (G9 queda como se generó).
+POLITICA_DESDE_G10 = (
+    " Además (decisiones del negocio de octubre): en un mismo mensaje el precio va en UNA sola moneda, y si no se sabe "
+    "la nacionalidad, en USD; Barú no es Islas del Rosario y allí no se opera (quien se aloja en Barú sale desde "
+    "Cartagena); desde Cartagena no hay recogida en el hotel (el punto de encuentro es el Muelle de la Bodeguita); el "
+    "clima de un día concreto lo confirma una persona del equipo (el bot puede explicar que se opera todos los días salvo "
+    "el 25 de diciembre y el 1 de enero y que, si el mar no está apto, se reprograma); una pregunta médica la valora una "
+    "persona del equipo (el bot no da consejo médico, pero contesta lo demás que pregunte el cliente); una dieta o una "
+    "alergia a un alimento no es un tema médico (política de comida); el refresher se reserva como el Minicurso de "
+    "Buceo, y a los buzos muy experimentados (500+ inmersiones, Dive Master) los revisa un asesor; un refresh o un PADI "
+    "ReActivate hecho en otro centro cuenta; la reserva no queda confirmada al pagar (el equipo concilia el pago); el "
+    "bot da el precio por persona, no el total del grupo; la propina es voluntaria y sin cifra; si el cliente escribe en "
+    "un idioma que no es español ni inglés, el bot contesta en inglés. No pongas criterios que exijan un dato que no "
+    "esté en la REFERENCIA (por ejemplo, una lista de qué llevar o un mínimo de personas que la referencia no da)."
+)
 
 VALIDA = """Revisas criterios de un examen de un chatbot de buceo. Para cada criterio, di si lo que exige está RESPALDADO por la REFERENCIA del negocio (no contradice ningún dato y los datos que exige están en ella) y si es comprobable con los mensajes del cliente del caso. Devuelve SOLO JSON: {"criterios": [{"caso": "<id del caso>", "id": "<id del criterio>", "respaldado": true|false, "motivo": "<una frase si es false>"}]}"""
 
@@ -119,7 +137,8 @@ async def _llamar(cliente, modelo: str, sistema: str, usuario: str, temperatura:
     return json.loads(resp.choices[0].message.content or "{}")
 
 
-async def generar(n: int, semilla: int, modelo: str, por_llamada: int) -> list[dict]:
+async def generar(n: int, semilla: int, modelo: str, por_llamada: int, prefijo: str = "g9",
+                  quitar_no_respaldados: bool = False) -> list[dict]:
     from openai import AsyncOpenAI
 
     from scripts.judge_golden_set import load_reference
@@ -128,7 +147,8 @@ async def generar(n: int, semilla: int, modelo: str, por_llamada: int) -> list[d
     cliente = AsyncOpenAI(api_key=settings.openai_api_key)
     referencia = load_reference("curada")
     ejemplos = _ejemplos_de_estilo()
-    perf = perfiles(n, semilla)
+    perf = perfiles(n, semilla, prefijo)
+    sistema = SISTEMA.replace("{politica_nueva}", "" if prefijo == "g9" else POLITICA_DESDE_G10)
     lotes = [perf[i:i + por_llamada] for i in range(0, len(perf), por_llamada)]
     sem = asyncio.Semaphore(4)
 
@@ -138,7 +158,7 @@ async def generar(n: int, semilla: int, modelo: str, por_llamada: int) -> list[d
             usuario = (f"REFERENCIA DEL NEGOCIO:\n{referencia}\n\nEJEMPLOS DE CASOS REALES (estilo y forma de los "
                        f"criterios):\n{ejemplos}\n\nPERFILES (un caso por perfil, con su id):\n"
                        f"{json.dumps(lote, ensure_ascii=False)}")
-            datos = await _llamar(cliente, modelo, SISTEMA, usuario, 0.8)
+            datos = await _llamar(cliente, modelo, sistema, usuario, 0.8)
             return datos.get("casos") or []
 
     casos = [c for lote in await asyncio.gather(*(un_lote(lt) for lt in lotes)) for c in lote]
@@ -155,11 +175,16 @@ async def generar(n: int, semilla: int, modelo: str, por_llamada: int) -> list[d
                     caso = next((c for c in lote if c.get("id") == x.get("caso")), None)
                     if caso is not None:
                         caso.setdefault("revisar", {})[x.get("id")] = x.get("motivo", "")
+                        if quitar_no_respaldados:
+                            # G10: sin revisión humana (nadie abre el examen): el criterio dudoso se quita.
+                            caso["criteria"] = [k for k in caso.get("criteria") or [] if k.get("id") != x.get("id")]
 
     await asyncio.gather(*(validar(casos[i:i + por_llamada]) for i in range(0, len(casos), por_llamada)))
     por_id = {p["id"]: p for p in perf}
     for c in casos:
-        c["source"] = {"tipo": "sintetico-g9", "perfil": por_id.get(c.get("id"))}
+        c["source"] = {"tipo": f"sintetico-{prefijo}", "perfil": por_id.get(c.get("id"))}
+    if quitar_no_respaldados:
+        casos = [c for c in casos if c.get("criteria")]
     return casos
 
 
@@ -172,26 +197,35 @@ def main() -> None:
     ap.add_argument("--por-llamada", type=int, default=4)
     ap.add_argument("--out", required=True)
     ap.add_argument("--solo-perfiles", action="store_true", help="solo imprime los perfiles (sin API)")
+    ap.add_argument("--prefijo", default="g9", help="prefijo de los ids (g10: el examen nuevo, con la política nueva)")
+    ap.add_argument("--quitar-no-respaldados", action="store_true",
+                    help="quita los criterios que la segunda pasada no ve respaldados (sin revisión humana)")
     args = ap.parse_args()
     if args.solo_perfiles:
-        for p in perfiles(args.n, args.semilla):
+        for p in perfiles(args.n, args.semilla, args.prefijo):
             print(json.dumps(p, ensure_ascii=False))
         return
-    casos = asyncio.run(generar(args.n, args.semilla, args.modelo, args.por_llamada))
+    casos = asyncio.run(generar(args.n, args.semilla, args.modelo, args.por_llamada, args.prefijo,
+                                args.quitar_no_respaldados))
     golden = json.loads(GOLDEN.read_text(encoding="utf-8"))
     cuerpo = json.dumps(casos, ensure_ascii=False, sort_keys=True)
     salida = {
         "version": 1,
-        "status": "CONGELADO: no se usa para ajustar el bot; se pasa UNA vez al final (G9)",
+        "status": f"CONGELADO: no se usa para ajustar el bot; se pasa UNA vez al final ({args.prefijo.upper()})",
         "about": __doc__.split("\n\n")[0],
         "generado": {"at": datetime.now(UTC).isoformat(timespec="seconds"), "modelo": args.modelo,
-                     "semilla": args.semilla, "n": args.n, "sha256": hashlib.sha256(cuerpo.encode("utf-8")).hexdigest()},
+                     "semilla": args.semilla, "n": args.n, "prefijo": args.prefijo,
+                     "quitar_no_respaldados": args.quitar_no_respaldados,
+                     "sha256": hashlib.sha256(cuerpo.encode("utf-8")).hexdigest()},
         "global_criteria": golden["global_criteria"],
         "dialogues": casos,
     }
     Path(args.out).write_text(json.dumps(salida, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
     revisar = [c["id"] for c in casos if c.get("revisar")]
-    print(f"{len(casos)} casos → {args.out} · criterios a revisar en {len(revisar)} casos: {revisar}")
+    criterios = sum(len(c.get("criteria") or []) for c in casos)
+    # Solo cuentas: el contenido del examen no se imprime (nadie lo mira).
+    print(f"{len(casos)} casos, {criterios} criterios → {args.out} · casos con criterios dudosos: {len(revisar)}"
+          + (" (quitados)" if args.quitar_no_respaldados else f": {revisar}"))
 
 
 if __name__ == "__main__":
