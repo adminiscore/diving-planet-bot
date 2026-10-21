@@ -43,8 +43,10 @@ def test_la_lista_lleva_cada_aviso_con_su_condicion_en_palabras():
     # Cada aviso en su línea, menos la información general (`"al_final": false`): el cierre de las 4:30, el formulario
     # médico... En la ronda core simulada eran 19 de los 33 avisos añadidos, casi todos relleno.
     assert len(lista.splitlines()) == len([a for a in av.avisos() if a.get("al_final", True)])
-    for informativo in ("cierre-430-siguiente-dia", "operamos-todos-los-dias", "formulario-medico-tras-reservar",
-                        "reserva-confirmada-al-pagar", "descuento-online-automatico"):
+    # ord-6c (21-oct, Gadea): «operamos todos los días salvo el 25-dic y el 1-ene» SÍ se añade (si preguntan si hay sitio).
+    # El formulario médico se probó al final y se quitó: a un buzo certificado le dijo que lo necesitaba (falso).
+    for informativo in ("cierre-430-siguiente-dia", "formulario-medico-tras-reservar", "reserva-confirmada-al-pagar",
+                        "descuento-online-automatico"):
         assert informativo not in lista
 
 

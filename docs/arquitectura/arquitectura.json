@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-21T19:13:01+00:00",
-  "commit": "1888af80",
+  "generado": "2026-10-21T19:21:55+00:00",
+  "commit": "922185c1",
   "rama": "feature/mej1d-alvaro"
  },
  "vistas": {
@@ -159,8 +159,8 @@
     {
      "nombre": "jev_precio_nombra_actividades",
      "titulo": "Jev reconoce una pregunta de precio de cualquier actividad",
-     "codigo": false,
-     "pre": false,
+     "codigo": true,
+     "pre": true,
      "sin_efecto": false
     },
     {
@@ -314,8 +314,8 @@
     {
      "nombre": "tarjeta_edades_en_cifra",
      "titulo": "Con niños, la edad mínima en cifra",
-     "codigo": false,
-     "pre": false,
+     "codigo": true,
+     "pre": true,
      "sin_efecto": false
     }
    ],
@@ -711,22 +711,22 @@
     {
      "nombre": "hoteles_de_la_base",
      "titulo": "Conoce todos los hoteles de las islas",
-     "codigo": false,
-     "pre": false,
+     "codigo": true,
+     "pre": true,
      "sin_efecto": false
     },
     {
      "nombre": "reserva_de_hotel_no_es_nuestra",
      "titulo": "Reservar el hotel no es reservar con nosotros",
-     "codigo": false,
-     "pre": false,
+     "codigo": true,
+     "pre": true,
      "sin_efecto": false
     },
     {
      "nombre": "referido_no_pregunta_nivel",
      "titulo": "Quien termina aquí el Open Water no es preguntado de más",
-     "codigo": false,
-     "pre": false,
+     "codigo": true,
+     "pre": true,
      "sin_efecto": false
     },
     {
@@ -1240,15 +1240,8 @@
     {
      "nombre": "origen_dos_variantes",
      "titulo": "Sin saber el origen, da las dos variantes",
-     "codigo": false,
-     "pre": false,
-     "sin_efecto": false
-    },
-    {
-     "nombre": "enlace_cuando_toca",
-     "titulo": "Con el precio de un plan, su enlace de reserva",
-     "codigo": false,
-     "pre": false,
+     "codigo": true,
+     "pre": true,
      "sin_efecto": false
     },
     {
@@ -1296,8 +1289,8 @@
     {
      "nombre": "rag_temperatura_cero",
      "titulo": "La respuesta se redacta sin azar (temperatura 0)",
-     "codigo": false,
-     "pre": false,
+     "codigo": true,
+     "pre": true,
      "sin_efecto": false
     },
     {
@@ -2418,19 +2411,6 @@
    "sin_efecto": null
   },
   {
-   "nombre": "enlace_cuando_toca",
-   "area": "Preguntas",
-   "titulo": "Con el precio de un plan, su enlace de reserva",
-   "texto": "Si ya sabemos desde dónde sale el cliente y de qué plan habla, y la respuesta le da el precio de ese plan sin el enlace para reservarlo, Coral añade el enlace de reserva del catálogo. No lo hace con colombianos ni grupos mixtos (los cierra un asesor) ni en los planes que cierra un asesor (gen-19, 21-oct).",
-   "codigo": false,
-   "pre": false,
-   "fijado_en_pre": false,
-   "usado_por": [
-    "r_escribir"
-   ],
-   "sin_efecto": null
-  },
-  {
    "nombre": "est2_datos",
    "area": "Preguntas",
    "titulo": "Datos que el RAG decía mal",
@@ -2550,9 +2530,9 @@
    "area": "Reserva",
    "titulo": "Conoce todos los hoteles de las islas",
    "texto": "Coral reconoce como alojados en las islas a quien nombra cualquiera de los hoteles que da la base del negocio (Majagua, Cocoliso, Ubuntu, Secreto, Mulata, Rosario de Mar, Eco Hotel Las Palmeras) y no le vuelve a preguntar desde dónde sale.",
-   "codigo": false,
-   "pre": false,
-   "fijado_en_pre": false,
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
    "usado_por": [
     "b_extraction"
    ],
@@ -2629,9 +2609,9 @@
    "area": "Enrutador",
    "titulo": "Jev reconoce una pregunta de precio de cualquier actividad",
    "texto": "La pregunta de Jev «¿pide el precio?» nombra las actividades del centro (salidas y paquetes, minicurso o refresher, snorkel, cursos y especialidades). Sin eso, «¿Cuánto cuesta el snorkel?» no contaba como pregunta de precio, no se preguntaba el origen y se cotizaba Cartagena sin saberlo (ord-7, 21-oct).",
-   "codigo": false,
-   "pre": false,
-   "fijado_en_pre": false,
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
    "usado_por": [
     "router"
    ],
@@ -2771,9 +2751,9 @@
    "area": "Preguntas",
    "titulo": "Sin saber el origen, da las dos variantes",
    "texto": "Si el cliente pregunta el precio o qué incluye una actividad y no sabemos si sale de Cartagena o ya está en las islas, Coral da las dos variantes del catálogo (precio online por persona en su moneda, el transporte y si lleva almuerzo) y pregunta el origen para pasarle el plan y el enlace exactos. Antes se callaba todo lo que dependía del origen (ord-7, decisión de Gadea, 21-oct).",
-   "codigo": false,
-   "pre": false,
-   "fijado_en_pre": false,
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
    "usado_por": [
     "r_escribir"
    ],
@@ -3040,9 +3020,9 @@
    "area": "Preguntas",
    "titulo": "La respuesta se redacta sin azar (temperatura 0)",
    "texto": "La misma pregunta con el mismo contexto da siempre la misma respuesta. En el examen ex-10, 18 de los 56 fallos del RAG eran azar: unas veces lo decía y otras no.",
-   "codigo": false,
-   "pre": false,
-   "fijado_en_pre": false,
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
    "usado_por": [
     "r_escribir"
    ],
@@ -3079,9 +3059,9 @@
    "area": "Reserva",
    "titulo": "Quien termina aquí el Open Water no es preguntado de más",
    "texto": "A quien quiere terminar aquí un Open Water empezado en otro centro (el curso referido), Coral ya no le pregunta si tiene el curso o si quiere sacarlo: sigue con la reserva.",
-   "codigo": false,
-   "pre": false,
-   "fijado_en_pre": false,
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
    "usado_por": [
     "b_extraction"
    ],
@@ -3155,9 +3135,9 @@
    "area": "Enrutador",
    "titulo": "Reservar el hotel no es reservar con nosotros",
    "texto": "Quien dice que ya reservó el hotel o el vuelo ('we booked 3 nights at Mulata') sigue siendo un cliente nuevo: Coral le cotiza y le hace las preguntas de la reserva, en vez de tratarle como alguien que ya reservó con Diving Planet.",
-   "codigo": false,
-   "pre": false,
-   "fijado_en_pre": false,
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
    "usado_por": [
     "b_extraction"
    ],
@@ -3233,9 +3213,9 @@
    "area": "Preguntas",
    "titulo": "Con niños, la edad mínima en cifra",
    "texto": "La tarjeta de qué puede hacer cada persona según su edad dice la edad mínima de cada opción (por ejemplo, «minicurso de buceo (desde 10 años)») y, en inglés, quién es cada línea en inglés (antes salía «8 años») (ord-7b, decisión de Gadea, 21-oct).",
-   "codigo": false,
-   "pre": false,
-   "fijado_en_pre": false,
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
    "usado_por": [
     "info"
    ],

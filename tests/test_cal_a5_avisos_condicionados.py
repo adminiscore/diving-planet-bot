@@ -329,6 +329,7 @@ def test_el_fichero_de_avisos_es_valido():
     datos = json.loads(av.AVISOS_PATH.read_text(encoding="utf-8-sig"))
     politicas = set(_de_la_base("policies.json", "policies"))
     servicios = set(_de_la_base("services.json", "services"))
+    descuentos = set(_de_la_base("discounts.json", "discounts"))  # ord-6c: el descuento de grupo vive ahí
     ids = [a["id"] for a in datos["avisos"]]
     assert len(ids) == len(set(ids)), "ids repetidos"
     campos_validos = {"actividad", "actividad_tambien", "origen", "nacionalidad", "tema",
@@ -339,6 +340,8 @@ def test_el_fichero_de_avisos_es_valido():
         fuente = aviso["fuente"]
         if fuente.startswith("ficha:"):
             assert fuente.split(":", 1)[1] in servicios, f"{aviso['id']}: ficha {fuente} no existe"
+        elif fuente.startswith("descuento:"):
+            assert fuente.split(":", 1)[1] in descuentos, f"{aviso['id']}: descuento {fuente} no existe"
         else:
             assert fuente in politicas, f"{aviso['id']}: política {fuente} no existe"
         tambien = aviso.get("tambien") or {}
@@ -364,6 +367,7 @@ def test_los_temas_son_de_la_base_de_conocimiento():
 
     conocidos = {n for n, _ in TOPIC_PATTERNS}
     conocidos |= set(_de_la_base("policies.json", "policies"))
+    conocidos |= set(_de_la_base("discounts.json", "discounts"))  # ord-6c: «descuento:group_discount» de la base curada
     conocidos |= {"included", "requirements", "pricing", "itinerary", "summary"}  # subtipos de las fichas
     for tema, claves in av._temas().items():
         desconocidas = set(claves) - conocidos
