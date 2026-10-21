@@ -115,6 +115,7 @@
       "interruptores": [
         "escalado_solo_emergencias",
         "contesta_antes_de_pasar",
+        "contesta_antes_de_cualquier_pase",
         "clima_con_politica",
         "dieta_no_es_medica"
       ]
@@ -1228,6 +1229,11 @@
       "area": "Enrutador",
       "titulo": "Contesta lo que puede antes de pasar a un asesor",
       "texto": "Si un mensaje trae un tema médico o el clima de un día (que lleva un asesor) y además otras preguntas, Coral contesta primero esas otras preguntas, sin tocar el tema médico ni el clima, y después pasa la conversación al equipo. Antes el aviso fijo se comía el resto del mensaje."
+    },
+    "contesta_antes_de_cualquier_pase": {
+      "area": "Enrutador",
+      "titulo": "Contesta lo que puede antes de CUALQUIER pase a un asesor",
+      "texto": "Si un turno acaba pasando la conversación al equipo por cualquier motivo (pide una persona, un contacto, un servicio privado, un cambio de reserva…) y el mensaje trae además otras preguntas, Coral contesta primero esas preguntas y después hace el pase. No lo hace con los datos sensibles, las quejas o emergencias ni los fallos técnicos, que van solos (gen-13, 21-oct)."
     },
     "clima_con_politica": {
       "area": "Enrutador",

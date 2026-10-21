@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-21T17:16:54+00:00",
-  "commit": "1548cfe",
+  "generado": "2026-10-21T17:35:28+00:00",
+  "commit": "379b7bb",
   "rama": "feature/pre_gadea"
  },
  "vistas": {
@@ -212,6 +212,13 @@
      "titulo": "Contesta lo que puede antes de pasar a un asesor",
      "codigo": true,
      "pre": true,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "contesta_antes_de_cualquier_pase",
+     "titulo": "Contesta lo que puede antes de CUALQUIER pase a un asesor",
+     "codigo": false,
+     "pre": false,
      "sin_efecto": false
     },
     {
@@ -2288,6 +2295,19 @@
    "fijado_en_pre": true,
    "usado_por": [
     "deflection"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "contesta_antes_de_cualquier_pase",
+   "area": "Enrutador",
+   "titulo": "Contesta lo que puede antes de CUALQUIER pase a un asesor",
+   "texto": "Si un turno acaba pasando la conversación al equipo por cualquier motivo (pide una persona, un contacto, un servicio privado, un cambio de reserva…) y el mensaje trae además otras preguntas, Coral contesta primero esas preguntas y después hace el pase. No lo hace con los datos sensibles, las quejas o emergencias ni los fallos técnicos, que van solos (gen-13, 21-oct).",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
+   "usado_por": [
+    "safety"
    ],
    "sin_efecto": null
   },

@@ -94,12 +94,45 @@ async def _lo_contestable(conv, message: str, reason: str, lang: str) -> str | N
     from src.config import settings  # lazy
     if not settings.contesta_antes_de_pasar or reason not in _TEMA_QUE_PASA:
         return None
+    conv._contestado_antes_del_pase = True  # gen-13: el cierre del turno no lo repite
+    key = "es" if lang == "es" else "en"
+    return await _contestar_lo_demas(conv, message, _TEMA_QUE_PASA[reason][key], key, reason)
+
+
+# gen-13 (21-oct, flag `contesta_antes_de_cualquier_pase`): en G9 y G10, ~27 fallos en unos 15 diálogos eran pases a un
+# asesor (contacto, pago, grupo privado, cambios de reserva, necesidades especiales, post-venta, «pásame con alguien»)
+# que se comían el resto del mensaje: el cliente preguntaba también el precio, qué incluye o el enlace y se quedaba sin
+# respuesta. Lo mismo que gen-1 para lo médico y el clima, pero para CUALQUIER pase y en un solo sitio: el cierre del
+# turno (`supervisor.route_message`). No se contesta nada más en los pases que van solos a propósito.
+_PASE_QUE_VA_SOLO = ("datos sensibles", "complaints_or_emergencies", "FALLO TÉCNICO")
+_TEMA_DEL_PASE = {"es": "lo que va a gestionar una persona del equipo (motivo del pase: {motivo})",
+                  "en": "what a person from the team will handle (handoff reason: {motivo})"}
+
+
+async def lo_contestable_en_cualquier_pase(conv, message: str) -> str | None:
+    """Cierre de un turno que acaba de pasar a un asesor: lo que el RAG contesta de las OTRAS preguntas del mensaje,
+    sin tocar el motivo del pase, o None (flag apagado, ya contestado por gen-1, pase que va solo, mensaje sin
+    pregunta, nada más que contestar, «no lo tengo» o un fallo)."""
+    from src.config import settings  # lazy
+    reason = conv.pending_escalation_reason or ""
+    if (not settings.contesta_antes_de_cualquier_pase or getattr(conv, "_contestado_antes_del_pase", False)
+            or any(m in reason for m in _PASE_QUE_VA_SOLO)):
+        return None
+    from src.agents.conversational_core import _turn_has_question  # lazy
+
+    if not _turn_has_question(message, getattr(conv, "_senales_router", None) or {}):
+        return None
+    key = "es" if conv.language == "es" else "en"
+    tema = _TEMA_QUE_PASA[reason][key] if reason in _TEMA_QUE_PASA else _TEMA_DEL_PASE[key].format(motivo=reason)
+    return await _contestar_lo_demas(conv, message, tema, key, reason)
+
+
+async def _contestar_lo_demas(conv, message: str, tema: str, key: str, reason: str) -> str | None:
     from src.agents import rag_agent, supervisor  # lazy
     from src.agents.conversational_core import _entradas_rag  # lazy
 
-    key = "es" if lang == "es" else "en"
     entradas = _entradas_rag(conv, conv.history, message)
-    instruccion = _SOLO_LO_DEMAS[key].format(tema=_TEMA_QUE_PASA[reason][key])
+    instruccion = _SOLO_LO_DEMAS[key].format(tema=tema)
     entradas["extra_context"] = f"{entradas['extra_context']}\n\n{instruccion}" if entradas.get("extra_context") \
         else instruccion
     try:
