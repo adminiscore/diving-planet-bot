@@ -1,0 +1,37 @@
+{
+ "about": "gen-4 (21-oct): ¿el bot da el precio en pesos (COP) a quien es colombiano o tiene cédula de extranjería, y en dólares (USD) a quien solo vive en Colombia sin decir más? Regla: policies.json (colombian_pricing; sin cédula = USD, decisión de Álvaro del 17-oct; sin saber la nacionalidad, USD, decisión del 15-oct). Diálogos PROPIOS (ninguno sale del examen). 'espera' es la moneda de la última respuesta con precio. Se corre con reproducir_juez_pre --banco.",
+ "version": 1,
+ "creado": "2026-10-21",
+ "dialogos": [
+  {
+   "id": "g4-colombiana-pregunta-precio",
+   "patron": "colombiana que lo dice al empezar y pregunta un precio",
+   "turnos": ["Hola! soy colombiana, de Medellín. ¿Cuánto cuesta el minicurso saliendo desde Cartagena?"],
+   "espera": "COP"
+  },
+  {
+   "id": "g4-colombiano-en-el-exterior",
+   "patron": "colombiano que vive fuera, en inglés",
+   "turnos": ["Hi! I'm Colombian but I live in Miami. How much is the 2-dive trip from Cartagena?"],
+   "espera": "COP"
+  },
+  {
+   "id": "g4-cedula-extranjeria",
+   "patron": "extranjero con cédula de extranjería",
+   "turnos": ["Hola, soy venezolano y tengo cédula de extranjería. Somos 2 buzos certificados, ¿cuánto sale bucear un día desde Cartagena?"],
+   "espera": "COP"
+  },
+  {
+   "id": "g4-vive-en-colombia",
+   "patron": "vive en Colombia sin decir nacionalidad ni cédula",
+   "turnos": ["Hi, I live in Bogotá and I'm coming to Cartagena next month. How much is the snorkeling tour?"],
+   "espera": "USD o preguntar la nacionalidad/cédula; nunca COP sin saberlo"
+  },
+  {
+   "id": "g4-nacionalidad-al-final",
+   "patron": "dice que es colombiano al contestar la pregunta del bot",
+   "turnos": ["Hola, quiero hacer el minicurso el sábado", "desde Cartagena", "voy solo", "sí, soy colombiano"],
+   "espera": "COP"
+  }
+ ]
+}

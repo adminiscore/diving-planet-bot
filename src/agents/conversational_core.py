@@ -745,6 +745,24 @@ def ask_slot(state: ConversationState, slot: str, *, reasking: bool = False) -> 
         # Singular/plural como en certificación y seguridad — en vivo salía
         # siempre en plural ("¿sois colombianos?") a quien viajaba solo.
         plural = (state.detected_group_size or 1) > 1
+        if settings.vivir_no_es_residir:
+            # gen-4: "residente" se contestaba "sí, vivo aquí"; lo que cuenta es la nacionalidad o la cédula de
+            # extranjería (policies.json, colombian_pricing). Sin género supuesto (SIN_GENERO_SUPUESTO).
+            pregunta = (
+                ("¿son de nacionalidad colombiana o tienen cédula de extranjería?" if plural
+                 else "¿eres de nacionalidad colombiana o tienes cédula de extranjería?")
+                if lang == "es" else
+                # Sin "resident" (Gonzalo, #852): "resident" se contestaba "I live here", el fallo de gen-4.
+                ("are you Colombian nationals, or do you have a cédula de extranjería?" if plural
+                 else "are you a Colombian national, or do you have a cédula de extranjería?")
+            )
+            if lang == "es":
+                cabeza = ("Para darte el precio y el link correctos:" if not _es_la_ultima_pregunta(state)
+                          else "Última cosa para darte el precio y el link correctos:")
+            else:
+                cabeza = ("So I can give you the right price and link:" if not _es_la_ultima_pregunta(state)
+                          else "One last thing so I can give you the right price and link:")
+            return f"{cabeza} {pregunta}"
         if lang == "es":
             pregunta = (
                 de_cartagena("¿son colombianos o residentes en Colombia?", "¿sois colombianos o residentes en Colombia?")

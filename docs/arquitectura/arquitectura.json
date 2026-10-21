@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-21T11:03:56+00:00",
-  "commit": "cf35b8c",
+  "generado": "2026-10-21T12:17:37+00:00",
+  "commit": "7a1efd9",
   "rama": "feature/gen8-alvaro"
  },
  "vistas": {
@@ -655,6 +655,13 @@
      "titulo": "Sin cédula, paga en dólares",
      "codigo": true,
      "pre": true,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "vivir_no_es_residir",
+     "titulo": "Vivir en Colombia no es ser residente",
+     "codigo": false,
+     "pre": false,
      "sin_efecto": false
     },
     {
@@ -3524,6 +3531,19 @@
    "fijado_en_pre": true,
    "usado_por": [
     "b_slotfill_close"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "vivir_no_es_residir",
+   "area": "Reserva",
+   "titulo": "Vivir en Colombia no es ser residente",
+   "texto": "Paga en pesos quien dice que es colombiano (viva donde viva) o que tiene cédula de extranjería. Quien solo dice que vive, trabaja o nació en Colombia no cuenta como colombiano: el bot pregunta '¿eres de nacionalidad colombiana o tienes cédula de extranjería?'.",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
+   "usado_por": [
+    "b_extraction"
    ],
    "sin_efecto": null
   }

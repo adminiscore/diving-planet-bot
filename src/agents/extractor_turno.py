@@ -644,6 +644,10 @@ async def extraer_turno(mensaje: str, *, history: list[dict] | None = None, sabi
     if settings.sin_cedula_extranjero:
         # CAL-C (17-oct, decisión de Álvaro): sin cédula colombiana → no es colombiano (paga en USD). Ver SIN_CEDULA_*.
         sistema = sistema.replace(SIN_CEDULA_HOY_ES, SIN_CEDULA_ES).replace(SIN_CEDULA_HOY_EN, SIN_CEDULA_EN)
+    if settings.vivir_no_es_residir:
+        # gen-4: vivir en Colombia no es ser residente (ver `_VIVIR_NO_ES_RESIDIR`).
+        for antes, despues in _VIVIR_NO_ES_RESIDIR:
+            sistema = sistema.replace(antes, despues)
     if con_hotel:
         sistema += REGLA_HOTEL_ES if lang == "es" else REGLA_HOTEL_EN
     # Solo cuando el refresher importa (ya se sabe que lleva más de 2 años sin bucear): con el campo en todas las
@@ -869,6 +873,23 @@ RESIDENTE_ES = ("- is_colombian: si dice que es colombiano, de una ciudad de Col
 RESIDENTE_HOY_EN = "- is_colombian: if they say they are Colombian, from a Colombian city or a resident of Colombia ("
 RESIDENTE_EN = ("- is_colombian: if they say they are Colombian, from a Colombian city or a resident of Colombia (having a "
                 "cédula de extranjería means being a resident; ")
+
+# gen-4 (21-oct, flag `vivir_no_es_residir`): "de una ciudad de Colombia" y "residente" se leían como VIVIR allí ("I live
+# in Bogotá", "estoy viviendo en Colombia por trabajo", "sí, vivo aquí" a "¿eres colombiano o residente?" → true, COP).
+# La regla del negocio (policies.json, colombian_pricing): COP para los colombianos, vivan donde vivan, y los
+# residentes, que es tener cédula de extranjería. Nacer allí no da la nacionalidad sola (Gadea, 21-oct): null.
+_VIVIR_NO_ES_RESIDIR = (
+    # Solo se AÑADE una frase: reescribir la definición de residente (21-oct, primeras versiones) hacía que un extranjero
+    # con cédula de extranjería pasara a false (banco 0/15); la regla de siempre los lee bien (40/40).
+    ("Nunca lo deduzcas del idioma en que escribe ni de su nombre.",
+     "Nunca lo deduzcas del idioma en que escribe ni de su nombre. true si dice que es colombiano, viva donde viva "
+     "(también fuera del país), o que tiene cédula de extranjería, aunque sea de otra nacionalidad. Solo vivir, "
+     "trabajar, estar o haber nacido en Colombia, o ser expat, sin decir más, es null."),
+    ("Never infer it from the language they write in or from their name.",
+     "Never infer it from the language they write in or from their name. True if they say they are Colombian, wherever "
+     "they live (also abroad), or that they have a cédula de extranjería, even if they are a foreign national. Only "
+     "living, working, staying or having been born in Colombia, or being an expat, with nothing more, is null."),
+)
 
 # El mismo flag: aceptar la opción que propone el bot es elegirla (est3-B, pareja-certificados: "nos gusta, somos 2…"
 # tras "te propongo la salida de 2 inmersiones" citaba el texto del bot y se descartaba; el bot repetía el menú).

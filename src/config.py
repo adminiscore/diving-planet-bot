@@ -183,6 +183,12 @@ class Settings(BaseSettings):
     # actividad le ofrece esa en vez del menú de 4 (textos-B: "Which one are you leaning toward — diving, a
     # mini-course…?" a quien llevaba 3 turnos preguntando por el Open Water). APAGADO.
     actividad_de_la_pregunta: bool = False
+    # gen-4 (21-oct): VIVIR en Colombia no es ser residente (G9, causa 6). El extractor leía "I live in Bogotá" o "sí,
+    # vivo aquí" como colombiano (COP) en el banco docs/robustness/gen/banco_gen4_moneda.py (5/30 bien). Con el flag:
+    # cuenta quien dice que es colombiano, viva donde viva, o que tiene cédula de extranjería (policies.json,
+    # colombian_pricing; sin cédula = USD, decisión de Álvaro del 17-oct); vivir, trabajar o haber nacido allí no dice
+    # ni lo uno ni lo otro (nacer allí no da la nacionalidad: Gadea, 21-oct). Y la pregunta nombra la cédula. APAGADO.
+    vivir_no_es_residir: bool = False
     # EX-EST-2 (14-oct): arreglos de datos de la tanda est3 (la pregunta del origen solo dice 'ida y vuelta el mismo dia'
     # si se SABE que el plan es de un dia; ...). PROMOCIONADO 14-oct tras est3-B (HISTORY 0.31.25).
     # Revert = False aqui y en el compose.
