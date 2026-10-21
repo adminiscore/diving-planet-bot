@@ -1,8 +1,8 @@
 {
  "meta": {
-  "generado": "2026-10-21T12:19:10+00:00",
-  "commit": "d7cfdc1",
-  "rama": "mej1b-gadea"
+  "generado": "2026-10-21T12:39:23+00:00",
+  "commit": "0f26fe8",
+  "rama": "feature/pre_gadea"
  },
  "vistas": {
   "general": {
@@ -674,6 +674,13 @@
      "sin_efecto": false
     },
     {
+     "nombre": "vivir_no_es_residir",
+     "titulo": "Vivir en Colombia no es ser residente",
+     "codigo": false,
+     "pre": false,
+     "sin_efecto": false
+    },
+    {
      "nombre": "est4_flujo",
      "titulo": "Arreglos del flujo de la tanda est5",
      "codigo": true,
@@ -897,6 +904,20 @@
     {
      "nombre": "acuse_solo_el_mensaje",
      "titulo": "El acuse no se inventa nada",
+     "codigo": true,
+     "pre": true,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "acuse_en_su_numero",
+     "titulo": "El acuse habla en singular a quien va solo",
+     "codigo": true,
+     "pre": true,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "actividad_de_la_pregunta",
+     "titulo": "Ofrece la actividad por la que pregunta el cliente",
      "codigo": true,
      "pre": true,
      "sin_efecto": false
@@ -1951,6 +1972,19 @@
    "sin_efecto": null
   },
   {
+   "nombre": "actividad_de_la_pregunta",
+   "area": "Reserva",
+   "titulo": "Ofrece la actividad por la que pregunta el cliente",
+   "texto": "Quien pregunta por una actividad sin elegirla aún ('en el minicurso, ¿el equipo está incluido?') recibe, tras la respuesta, la oferta de esa actividad ('Si quieres, te ayudo a reservar: Minicurso') en vez del menú de las 4 actividades. La elige el cliente.",
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
+   "usado_por": [
+    "b_slotfill_close"
+   ],
+   "sin_efecto": null
+  },
+  {
    "nombre": "actividad_del_reparto",
    "area": "Reserva",
    "titulo": "La actividad principal sale del reparto del grupo",
@@ -1981,6 +2015,19 @@
    "area": "Reserva",
    "titulo": "La actividad de los hijos no sustituye a la de los padres",
    "texto": "En una familia en la que los padres ya eligieron bucear, 'el de 12 minicurso y el de 8 snorkel' añade a los hijos al plan sin cambiar la actividad principal. Antes el minicurso pasaba a ser la actividad principal y, al decir 'mi esposo bucea conmigo', el bot movía al hijo del minicurso a las inmersiones.",
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
+   "usado_por": [
+    "b_slotfill_close"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "acuse_en_su_numero",
+   "area": "Reserva",
+   "titulo": "El acuse habla en singular a quien va solo",
+   "texto": "La frase de acuse ('Entendido, …') repite el dato con las palabras y el número del cliente: a quien dice 'I'm not Colombian' le contesta 'you're not Colombian', no 'none of you are Colombian'.",
    "codigo": true,
    "pre": true,
    "fijado_en_pre": true,
@@ -3184,6 +3231,19 @@
    "fijado_en_pre": true,
    "usado_por": [
     "b_slotfill_close"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "vivir_no_es_residir",
+   "area": "Reserva",
+   "titulo": "Vivir en Colombia no es ser residente",
+   "texto": "Paga en pesos quien dice que es colombiano (viva donde viva) o que tiene cédula de extranjería. Quien solo dice que vive, trabaja o nació en Colombia no cuenta como colombiano: el bot pregunta '¿eres de nacionalidad colombiana o tienes cédula de extranjería?'.",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
+   "usado_por": [
+    "b_extraction"
    ],
    "sin_efecto": null
   }

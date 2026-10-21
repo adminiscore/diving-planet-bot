@@ -1,6 +1,24 @@
 History
 =======
 
+0.31.79 - (2026-10-21)
+----------------------
+* **gen-8 PROMOCIONADO: el acuse en el número del cliente y la actividad de la pregunta** (Álvaro con Claude,
+  `cf35b8c`, `c7472d5` y los tests de `f7c8e0f`; integrado por Gadea con Claude). Decisión de Gadea del 21-oct.
+  - `ACUSE_EN_SU_NUMERO`: el ejemplo del acuse iba en plural («none of you are Colombian») y se copiaba a quien va
+    solo. Ahora la regla es usar las palabras y el número del cliente.
+  - `ACTIVIDAD_DE_LA_PREGUNTA`: el extractor lee, con su cita, la actividad por la que el cliente pregunta sin elegirla
+    («en el minicurso, ¿el equipo está incluido?»). Mientras no elige, la pregunta de la actividad le ofrece esa y no
+    el menú de 4. Banco propio: el menú de 4 a quien ya hablaba de una actividad pasa de 2/24 a 0/24.
+  - Ronda core sin desplegar, mismo código y misma hora: **gen8-B 97,9 % 27/32** frente a **gen8-A 97,0 % 26/32**.
+    Mejoran 4 y empeora 1 (certificado-fechas-fotos-y-reserva, sin-invenciones: la hora de regreso que da el RAG en
+    el turno 1, sin el flag de por medio). Ratificado por Gonzalo y por Gadea con Claude.
+* **gen-4 entra APAGADO** (`VIVIR_NO_ES_RESIDIR`, `2aebd76`): vivir, trabajar o haber nacido en Colombia no hace
+  colombiano. Cuenta quien dice que lo es o que tiene cédula de extranjería, y la pregunta nombra la cédula
+  (decisiones de Gadea del 21-oct). Le falta su ronda core A/B.
+* **mej-5**: la alerta de saldo de OpenAI fallaba siempre, porque `gpt-5.4-nano` rechaza `max_tokens`; ahora va
+  `max_completion_tokens=16` (`513d743`, de Gonzalo).
+
 0.31.78 - (2026-10-21)
 ----------------------
 * **MEJ-1, tanda 1b: fuera 14 flags promocionados o descartados hace más de una semana**, solo en ficheros que no
