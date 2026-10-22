@@ -29,8 +29,8 @@ que solo cumpla el redactor.
 | 7 | No inventar precios, horarios ni disponibilidad; no confirmar reservas | importes y enlaces (G) | G | se queda |
 | 8 | Corte de horario con la hora actual | `rag_sin_hora`; el contexto no lleva la hora | — | se queda |
 | 9 | No inventar capacidad, duración ni cupos | `capacity_claims_grounded` (G) solo para capacidad | G | se queda |
-| 10 | 5 % por equipo propio solo con el equipo COMPLETO | catálogo: «5% si el cliente trae su equipo COMPLETO, solo en buceo recreativo y cursos» | **C** | **quitar** (duplicada) |
-| 11 | Un descuento: el porcentaje y la condición; no calcular el precio final | catálogo: «No sumes ni calcules totales»; `currency_amounts_grounded` (G) tira una cifra calculada | **C+G** | **quitar** (duplicada; el guarda sigue) |
+| 10 | 5 % por equipo propio solo con el equipo COMPLETO | catálogo: «5% si el cliente trae su equipo COMPLETO…», pero no dice nada del equipo PARCIAL (test de regresión T081) | G | **se queda** (revisado tras la suite con el flag) |
+| 11 | Un descuento: el porcentaje y la condición; no calcular el precio final | catálogo: solo «No sumes ni calcules totales»; `currency_amounts_grounded` (G) tira la cifra calculada, y sin la regla se acababa en el respaldo unas 2 de cada 3 veces (test_rag_safety, 17-jul) | G | **se queda** (revisado tras la suite con el flag) |
 | 12 | Disponibilidad: siempre; cerrado el 25-dic y el 1-ene; elige fecha en el enlace | catálogo: «Operamos todos los días del año salvo el 25 de diciembre y el 1 de enero. Tú no ves los cupos…» | **C** | **quitar**, salvo «no confirmas el estado de una reserva ya hecha», que va a la 22 |
 | 13 | Respetar lo «no disponible desde Cartagena» o «por consulta» | catálogo y fichas | C (dato) | se queda (la regla es la que hace que se respete) |
 | 14 | Sin consejo médico; excepción DIVE TO HEAL | ruta sensible (F) solo si Jev o el regex la detectan | F parcial | se queda |
@@ -79,11 +79,10 @@ Ficheros: `2026-10-22-arq2a-{A,B,HA,HB}.jsonl` en esta carpeta.
 
 ## Propuesta para medir (un flag, APAGADO)
 
-`RAG_SIN_REGLAS_DEL_CODIGO`: se quitan del prompt **solo** las reglas de clase C (10, 11, 12 salvo su última frase, 20
-y 21) y se **fusionan** los dos bloques de tono (3), sin perder ninguna instrucción. Las de clase G y F se quedan: un
+`RAG_SIN_REGLAS_DEL_CODIGO`: se quitan del prompt **solo** las reglas de clase C (12 salvo su última frase, 20 y 21) y se **fusionan** los dos bloques de tono (3), sin perder ninguna instrucción. Las de clase G y F se quedan: un
 guarda no hace cumplir la regla, y una que cumple solo el redactor no vale.
 
-Ahorro estimado: unas 300-350 palabras de unas 2 670 (~12 %). Lo que se busca es menos ruido en una sola llamada que
+Ahorro: ES 2 671 → 2 545 palabras (−4,7 %), EN 2 520 → 2 419 (−4,0 %). La primera versión también quitaba la 10 y la 11 (−10 %); la suite con el flag encendido sacó sus tests de regresión y se quedan. Lo que se busca es menos ruido en una sola llamada que
 elige entre ~13 600 tokens y ~50 reglas, no tanto el coste.
 
 **Medida:** banco fijo `docs/robustness/arq/banco-rag.json` ×3 con el flag y sin él, en las dos variantes de

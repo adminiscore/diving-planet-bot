@@ -5,6 +5,7 @@ import pytest
 from src.agents import grounding_check, rag_agent
 from src.agents.escalation import detect_sensitive_escalation, sensitive_response_for
 from src.agents.supervisor import route_message
+from src.config import settings
 from src.flows.state import ConversationState, Step
 
 
@@ -799,15 +800,16 @@ def test_system_prompt_has_no_duplicated_currency_section_es():
     """Regression: 'Gestion de precios, monedas y pagos:' header must appear exactly once."""
     prompt = rag_agent.build_system_prompt("es")
     assert prompt.count("Gestión de precios, monedas y pagos:") == 1
-    # The body of that section should also appear exactly once.
-    assert prompt.count("Evita mezclar muchas monedas") == 1
+    # The body of that section should also appear exactly once (arq-2a: con `rag_sin_reglas_del_codigo`, ninguna: la
+    # regla de la moneda vive en el catálogo, test_arq2a_reglas_del_codigo).
+    assert prompt.count("Evita mezclar muchas monedas") == (0 if settings.rag_sin_reglas_del_codigo else 1)
 
 
 def test_system_prompt_has_no_duplicated_currency_section_en():
     """Regression: 'Pricing, currencies, and payments:' header must appear exactly once."""
     prompt = rag_agent.build_system_prompt("en")
     assert prompt.count("Pricing, currencies, and payments:") == 1
-    assert prompt.count("Avoid mixing several currencies") == 1
+    assert prompt.count("Avoid mixing several currencies") == (0 if settings.rag_sin_reglas_del_codigo else 1)
 
 
 def test_system_prompt_has_booking_cutoff_time_guard_es():
