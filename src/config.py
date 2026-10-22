@@ -672,6 +672,7 @@ class Settings(BaseSettings):
     recotizar_al_cambiar_moneda: bool = False  # «soy colombiano» DESPUÉS de recibir el precio en USD: se vuelve a dar en COP (g10-003/016/047)
     rag_comprueba_los_hechos: bool = False  # arq-3 también para el RAG con hechos (mensajes mezclados): si deja fuera un hecho, se rehace una vez
     redactor_sin_preguntas_de_cierre: bool = False  # el redactor no cierra preguntando datos (fecha, personas, origen…): los pregunta el sistema
+    descuentos_en_la_tabla: bool = False  # los descuentos son una intención de la tabla (Jev): el redactor los da con sus condiciones (g10-027/035/067)
     fecha_con_dia_de_la_semana: bool = False  # la fecha del contexto del RAG lleva el día de la semana y el de mañana («jueves 23» era viernes)
     sin_certificacion_no_hace_falta: bool = True  # PROMOCIONADO 22-oct (FLU-1: al decir «no estoy certificado» para una actividad que no lo pide, el bot dice que no hace falta; HISTORY 0.31.94); revert = False
     # arq-2a (22-oct, Gonzalo con Claude): fuera del prompt del RAG las reglas que el código ya pone en el contexto que

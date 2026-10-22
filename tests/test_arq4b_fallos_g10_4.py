@@ -68,3 +68,27 @@ def test_la_fecha_lleva_el_dia_de_la_semana(monkeypatch):
     linea = contexto_rag._build_extra_context(st).splitlines()[0]
     assert "mañana es" in linea and any(d in linea for d in ("lunes", "martes", "miércoles", "jueves", "viernes",
                                                              "sábado", "domingo"))
+
+
+@pytest.mark.parametrize("flag", [False, True])
+def test_los_descuentos_son_una_intencion_de_la_tabla(monkeypatch, flag):
+    from src.agents import jev_router as j
+
+    monkeypatch.setattr(settings, "hechos_por_codigo", True)
+    monkeypatch.setattr(settings, "descuentos_en_la_tabla", flag)
+    q = j._questions_for_turn()
+    assert (j.PIDE_DESCUENTO in q) is flag
+    assert ("discounts" in q[j.PIDE_OTRA_COSA]["instructions"]) is flag
+    señales = j.answers_to_signals({j.PIDE_DESCUENTO: {"noul": 0.9}}) if flag else {}
+    assert señales.get(j.PIDE_DESCUENTO, False) is flag
+
+
+def test_los_hechos_del_descuento_con_y_sin_actividad():
+    from src.flows import hechos as hechos_mod
+
+    st = ConversationState(conversation_id="arq4b", language="es")
+    con = hechos_mod.hechos(st, ["descuento"], ["snorkel"])[0]["descuento"]
+    sin = hechos_mod.hechos_sin_actividad(st, ["descuento"])[0]["descuento"]
+    assert con == sin and len(con) == 4 and any("grupos de 5" in d for d in con)
+    respuesta = "Reservando online tienes un 10 % de descuento automático."
+    assert hechos_mod.faltan(respuesta, [{"descuento": con}], ["descuento"])  # le faltan el de grupo, el del equipo…

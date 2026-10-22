@@ -543,6 +543,26 @@ _INTENCIONES_Q = {
         ),
     },
 }
+# arq-4b (22-oct, flag `descuentos_en_la_tabla`, G10 nº 4: g10-027, g10-035, g10-067): los descuentos entran en la
+# tabla. El RAG los contaba sin sus condiciones (que el de grupo se suma al online, que no vale para cursos PADI, que
+# el del equipo es solo con el equipo completo); con los hechos de discounts.json los da enteros el redactor.
+PIDE_DESCUENTO = "pide_descuento"
+_PIDE_DESCUENTO_Q = {
+    "type": "noul",
+    "instructions": (
+        "The customer asks about discounts or special prices: a group discount or group rate, the discount for "
+        "booking online, a discount for bringing their own gear, whether Colombians or residents get a discount, "
+        "discount codes, or whether a discount applies to them, even if the same message also asks other things. It "
+        "is FALSE when they only ask the normal price."
+    ),
+}
+_PIDE_OTRA_COSA_CON_DESCUENTOS_Q = {
+    "type": "noul",
+    "instructions": _INTENCIONES_Q[PIDE_OTRA_COSA]["instructions"]
+    .replace("the age limits or the booking link of an activity", "the age limits, the discounts or the booking link "
+             "of an activity")
+    .replace("availability, age, link)", "availability, age, discounts, link)"),
+}
 CAMBIA_IDIOMA = "cambia_idioma"
 CAMBIA_IDIOMA_MIN = 0.6
 _CAMBIA_IDIOMA_Q = {
@@ -816,6 +836,9 @@ def _questions_for_turn(pending_slot: str | None = None) -> dict:
     if settings.hechos_por_codigo:
         q[PIDE_QUE_INCLUYE] = _PIDE_QUE_INCLUYE_Q
         q.update(_INTENCIONES_Q)
+        if settings.descuentos_en_la_tabla:
+            q[PIDE_DESCUENTO] = _PIDE_DESCUENTO_Q
+            q[PIDE_OTRA_COSA] = _PIDE_OTRA_COSA_CON_DESCUENTOS_Q
     return q
 
 
@@ -893,7 +916,7 @@ def answers_to_signals(answers: dict, threshold: float = THRESHOLD) -> dict:
         out[PIDE_PRECIO] = (answers.get(PIDE_PRECIO) or {}).get("noul", 0.0) >= PIDE_PRECIO_MIN
     if PIDE_QUE_INCLUYE in answers:
         out[PIDE_QUE_INCLUYE] = (answers.get(PIDE_QUE_INCLUYE) or {}).get("noul", 0.0) >= PIDE_QUE_INCLUYE_MIN
-    for intencion in _INTENCIONES_Q:
+    for intencion in (*_INTENCIONES_Q, PIDE_DESCUENTO):
         if intencion in answers and intencion != PIDE_OTRA_COSA:
             out[intencion] = (answers.get(intencion) or {}).get("noul", 0.0) >= INTENCION_MIN
     if PIDE_OTRA_COSA in answers:
@@ -991,6 +1014,7 @@ _TURN_SIGNALS = (
     AFFIRMS_LOCATION, AFFIRMS_ACTIVITY, AFFIRMS_CERTIFICATION, AFFIRMS_GROUP, AFFIRMS_NATIONALITY, CORRECTS,
     ASKS_RECALL, NEEDS_STAFF, CHANGES_DATE, COMPANION_JOINS, SHARES_OPEN_FACT, YA_RESERVADO, PIDE_DATOS_AJENOS,
     NUEVO_CASO, PREGUNTA_SI_ES_IA, CAMBIA_IDIOMA, PIDE_PRECIO, PIDE_SERVICIO_PRIVADO, PIDE_QUE_INCLUYE, *_INTENCIONES_Q,
+    PIDE_DESCUENTO,
     # ex-9b (19-oct): ADDS_PERSON también viaja cuando Jev duda en el router (como COMPANION_JOINS): sin él, en esos
     # turnos "¿se suma alguien nuevo?" lo decidía la lista de palabras.
     ADDS_PERSON,

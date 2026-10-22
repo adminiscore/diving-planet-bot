@@ -1,0 +1,81 @@
+{
+ "about": "arq-4b descuentos (22-oct, flag DESCUENTOS_EN_LA_TABLA): preguntar por descuentos lo contesta el redactor con las condiciones de discounts.json. Frases nuestras (no salen de G9/G10). Controles: el precio a secas y una pregunta ajena no traen la lista de descuentos.",
+ "dialogos": [
+  {
+   "id": "d1-grupo-snorkel",
+   "tipo": "descuento",
+   "turnos": [
+    "Hola, somos 6 amigos y queremos hacer snorkel desde Cartagena. ¿Hay descuento para grupos?"
+   ],
+   "todas": [
+    "se suma|20 %|20%",
+    "antes de pagar"
+   ]
+  },
+  {
+   "id": "d2-equipo-propio",
+   "tipo": "descuento",
+   "turnos": [
+    "Hi, if I bring my own complete diving gear, do I get a discount on the 2-dive trip?"
+   ],
+   "todas": [
+    "5%|5 %",
+    "complete"
+   ]
+  },
+  {
+   "id": "d3-colombiano",
+   "tipo": "descuento",
+   "turnos": [
+    "Hola, ¿por ser colombiano tengo algún descuento en el buceo?"
+   ],
+   "todas": [
+    "mismo",
+    "moneda"
+   ]
+  },
+  {
+   "id": "d4-online",
+   "tipo": "descuento",
+   "turnos": [
+    "¿Hay algún descuento si reservo el minicurso por la página?"
+   ],
+   "todas": [
+    "10",
+    "autom"
+   ]
+  },
+  {
+   "id": "d5-grupo-curso",
+   "tipo": "descuento",
+   "turnos": [
+    "Somos 5 y queremos hacer el curso Open Water. ¿Hay descuento de grupo?"
+   ],
+   "todas": [
+    "no aplica|no se aplica"
+   ]
+  },
+  {
+   "id": "c1-precio-a-secas",
+   "tipo": "control",
+   "turnos": [
+    "¿Cuánto cuesta el minicurso saliendo desde Cartagena?"
+   ],
+   "ninguno": [
+    "descuento para grupos",
+    "descuento de grupo",
+    "equipo completo"
+   ]
+  },
+  {
+   "id": "c2-peces",
+   "tipo": "control",
+   "turnos": [
+    "¿Qué peces se pueden ver en las Islas del Rosario?"
+   ],
+   "ninguno": [
+    "descuento"
+   ]
+  }
+ ]
+}

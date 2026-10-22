@@ -32,7 +32,7 @@ from src.flows.catalog import (
 from src.flows.state import ConversationState
 from src.utils import money
 
-INTENCIONES = ("precio", "incluye", "requisitos", "horario", "disponibilidad", "edad", "enlace")
+INTENCIONES = ("precio", "incluye", "requisitos", "horario", "disponibilidad", "edad", "enlace", "descuento")
 ORIGENES = ("cartagena", "island")
 # Las intenciones cuyos hechos cambian según desde dónde sale el cliente: sin origen van las dos variantes.
 _DEPENDEN_DEL_ORIGEN = {"precio", "incluye", "horario", "enlace"}
@@ -193,6 +193,8 @@ def hechos(state: ConversationState, intenciones: list[str], actividades: list[s
                                                     _politica("booking_system_info", lang)) if p]
         if "edad" in pedidas:
             bloque["edad"] = {"minima": registro.min_age, "maxima": registro.max_age}
+        if "descuento" in pedidas:
+            bloque["descuento"] = _descuentos(lang)
         # arq-1m (G10 nº 2): «¿hay disponibilidad mañana?» o «¿cómo reservamos?» se contestaban con «en la web», sin el
         # enlace (Jev marcaba la disponibilidad, no el enlace): con la disponibilidad va también el enlace de reserva.
         if "enlace" in pedidas or (settings.enlace_con_disponibilidad and "disponibilidad" in pedidas):
@@ -262,7 +264,17 @@ def _previo_y_edad(registro, lang: str) -> list[str]:
 # redactor porque no se sabía la actividad (`hechos=sin_actividad`); 11 preguntaban solo la hora o la recogida, qué llevar
 # o si hay sitio, casi siempre quien ya reservó y no la nombra. Esos hechos son los mismos para todas las actividades (las
 # políticas), así que el código los da sin adivinar la actividad. Precio, qué incluye, edad y enlace sí la necesitan.
-INTENCIONES_SIN_ACTIVIDAD = frozenset({"horario", "disponibilidad", "requisitos"})
+INTENCIONES_SIN_ACTIVIDAD = frozenset({"horario", "disponibilidad", "requisitos", "descuento"})
+
+
+def _descuentos(lang: str) -> list[str]:
+    """arq-4b (flag `descuentos_en_la_tabla`): los descuentos con sus condiciones, tal cual de discounts.json (online,
+    grupo, equipo propio y que no hay descuento por ser colombiano). Son los mismos para todas las actividades: cada uno
+    dice a qué aplica."""
+    datos = json.loads(_DISCOUNTS.read_text(encoding="utf-8-sig")).get("discounts", {})
+    claves = ("online_direct_booking", "group_discount", "own_equipment_discount", "colombian_cop_pricing")
+    return [d.get(f"description_{lang}") or d.get("description_es") for d in (datos.get(c) or {} for c in claves)
+            if d.get(f"description_{lang}") or d.get("description_es")]
 
 
 def hechos_sin_actividad(state: ConversationState, intenciones: list[str]) -> list[dict]:
@@ -290,6 +302,8 @@ def hechos_sin_actividad(state: ConversationState, intenciones: list[str]) -> li
             # arq-1s: «soy buzo certificado, ¿qué requisitos hay?» sin actividad dicha: el carné también.
             bloque["requisitos"].insert(0, _politica("certification_required", lang))
             bloque["requisitos"] = [p for p in bloque["requisitos"] if p]
+    if "descuento" in pedidas:
+        bloque["descuento"] = _descuentos(lang)
     return [bloque]
 
 
@@ -379,7 +393,7 @@ def faltan(answer: str, bloques: list[dict], intenciones: list[str]) -> list[str
         if "enlace" in intenciones or "disponibilidad" in intenciones:
             perdidos += [u for u in (b.get("enlace") or {}).values()
                          if isinstance(u, str) and _url_sin_parametros(u) not in answer]
-        for intencion in ("incluye", "requisitos"):
+        for intencion in ("incluye", "requisitos", "descuento"):
             if intencion not in intenciones:
                 continue
             listas = b.get(intencion) or {}

@@ -32,6 +32,7 @@ from src.agents.escalation_agent import escalation_node
 from src.agents.info_agent import info_node
 from src.agents.jev_router import (
     NUEVO_CASO,
+    PIDE_DESCUENTO,
     PIDE_DISPONIBILIDAD,
     PIDE_EDAD,
     PIDE_ENLACE,
@@ -59,6 +60,7 @@ logger = logging.getLogger("uvicorn.error")
 _INTENCION_DE_SENAL = {
     "precio": PIDE_PRECIO, "incluye": PIDE_QUE_INCLUYE, "requisitos": PIDE_REQUISITOS, "horario": PIDE_HORARIO,
     "disponibilidad": PIDE_DISPONIBILIDAD, "edad": PIDE_EDAD, "enlace": PIDE_ENLACE,
+    "descuento": PIDE_DESCUENTO,  # arq-4b: solo llega con el flag `descuentos_en_la_tabla`
 }
 
 

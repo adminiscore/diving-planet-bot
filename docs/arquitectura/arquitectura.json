@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-22T18:42:09+00:00",
-  "commit": "a5e62070",
+  "generado": "2026-10-22T18:59:33+00:00",
+  "commit": "44524159",
   "rama": "feature/pre_gadea"
  },
  "vistas": {
@@ -1362,6 +1362,13 @@
      "codigo": false,
      "pre": false,
      "sin_efecto": false
+    },
+    {
+     "nombre": "descuentos_en_la_tabla",
+     "titulo": "Los descuentos, con sus condiciones",
+     "codigo": false,
+     "pre": false,
+     "sin_efecto": false
     }
    ],
    "marca": "openai"
@@ -2589,6 +2596,19 @@
    "fijado_en_pre": true,
    "usado_por": [
     "router"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "descuentos_en_la_tabla",
+   "area": "Preguntas",
+   "titulo": "Los descuentos, con sus condiciones",
+   "texto": "Preguntar por descuentos (de grupo, por reservar online, por traer el equipo, por ser colombiano) es una pregunta de la tabla: Coral da cada descuento con sus condiciones tal cual de la base, sin dejarse ninguna (arq-4b, 22-oct).",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
+   "usado_por": [
+    "r_hechos"
    ],
    "sin_efecto": null
   },
