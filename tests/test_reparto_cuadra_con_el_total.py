@@ -5,20 +5,17 @@ suma más), contra el total que QUEDA GUARDADO (`_group_size_that_will_persist`)
 repartos **incompletos pero visibles** ("somos 5: 3 certificados, 1 minicurso y 1 snorkel" -> {minicourse: 1,
 snorkel: 1}) y totales de turno mal leídos ("4 certificados" con 7 ya sabidos).
 
-Aquí vivía también el veto LLM de `group_allocation`: salió del camino real en ex-9 y su maquinaria se borró en MEJ-1
-(21-oct). Quedan la regla del reparto, el comportamiento del regex y `verify_fields` / `_clean_verified_value` de
-`llm_extractor` (sus pruebas con dicts), que se irán con su limpieza.
+Aquí vivía también el veto LLM de `group_allocation`: salió del camino real en ex-9, su maquinaria se borró en MEJ-1
+y sus restos de `llm_extractor` (`verify_fields`, `_clean_verified_value`) en mej-1d (21-oct). Quedan la regla del
+reparto y el comportamiento del regex.
 """
 
-import json
-from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
 
 import pytest
 
 from src.agents import supervisor
 from src.agents.intent_detector import IntentDetector
-from src.agents.llm_extractor import _clean_verified_value, verify_fields
 from src.agents.nucleo import extraction as core_extraction
 from src.flows.state import ConversationState
 
@@ -31,19 +28,6 @@ _FULL_ALLOCATION = {"certified_diving": 3, "minicourse": 1, "snorkel": 1}
 def _detect(msg):
     state = ConversationState(conversation_id="ga-veto-test")
     return IntentDetector().detect(msg, state), state
-
-
-def _client_returning(payload):
-    """Cliente OpenAI de mentira que devuelve `payload` como tool_call."""
-    async def _create(**kwargs):
-        call = SimpleNamespace(function=SimpleNamespace(
-            name="extract_fields", arguments=json.dumps(payload)))
-        return SimpleNamespace(choices=[SimpleNamespace(
-            message=SimpleNamespace(tool_calls=[call]))])
-
-    client = AsyncMock()
-    client.chat.completions.create = _create
-    return client
 
 
 # -- Los flags nacen apagados ------------------------------------------------
@@ -59,58 +43,6 @@ def test_regex_produces_an_incomplete_but_visible_allocation():
 
 
 # -- El trigger propio -------------------------------------------------------
-
-# -- Es un DICT, no un escalar -----------------------------------------------
-
-def test_clean_verified_value_keeps_a_dict_and_strips_schema_nulls():
-    """El schema estricto devuelve todas las claves, con null en las no usadas
-    (igual que en `fill_gaps`)."""
-    raw = {"certified_diving": 3, "minicourse": 1, "snorkel": 1,
-           "padi_open_water": None, "padi_advanced": 0}
-    assert _clean_verified_value("group_allocation", raw) == _FULL_ALLOCATION
-
-
-def test_clean_verified_value_discards_an_all_null_dict():
-    assert _clean_verified_value("group_allocation", {"snorkel": None}) is None
-
-
-@pytest.mark.asyncio
-async def test_verify_fields_reports_a_dict_disagreement():
-    """La comparacion `!=` de `verify_fields` tiene que funcionar sobre dicts,
-    no solo sobre escalares."""
-    out = await verify_fields(
-        ["group_allocation"], _INCOMPLETE_MSG,
-        {"group_allocation": _REGEX_PARTIAL}, lang="es",
-        client=_client_returning({"group_allocation": _FULL_ALLOCATION}),
-    )
-    assert out == {"group_allocation": _FULL_ALLOCATION}
-
-
-@pytest.mark.asyncio
-async def test_verify_fields_reports_nothing_when_the_dict_matches():
-    out = await verify_fields(
-        ["group_allocation"], _COMPLETE_MSG,
-        {"group_allocation": dict(_FULL_ALLOCATION)}, lang="es",
-        client=_client_returning({"group_allocation": dict(_FULL_ALLOCATION)}),
-    )
-    assert out == {}
-
-
-# -- Shadow no aplica, cutover si --------------------------------------------
-
-# -- El prompt agrupado tiene que saber renderizar el campo -------------------
-
-@pytest.mark.parametrize("lang", ["es", "en"])
-def test_verification_prompt_renders_group_allocation(lang):
-    """`fields_verification_system_prompt` hace `rules[f]`: sin entrada propia
-    en `_FIELD_VERIFICATION_RULES_*` reventaria con KeyError en cuanto el
-    campo entrase en un lote."""
-    from src.prompts.booking import fields_verification_system_prompt
-
-    prompt = fields_verification_system_prompt(["group_size", "group_allocation"], lang)
-    assert "group_allocation" in prompt
-    assert "certified_diving" in prompt
-
 
 # -- El total puede venir de la CONVERSACION, no solo del turno ---------------
 #

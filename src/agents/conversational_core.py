@@ -1151,12 +1151,10 @@ def _notes_snapshot(state: ConversationState) -> dict:
 def _jev_sin_nada_que_apuntar(routing_signals: dict) -> bool:
     """rag-5 (flag `notas_puerta_jev`): ¿Jev está SEGURO de que el mensaje no cuenta nada del cliente que haya que
     apuntar? Entonces no se llama al extractor de notas, que en esos mensajes apuntaba la pregunta como si fuera un
-    hecho ("how much would that be" -> "not Colombian"). Sin la respuesta de Jev (apagado o falló), lo de siempre."""
+    hecho ("how much would that be" -> "not Colombian"). Sin la respuesta de Jev (falló), lo de siempre."""
     from src.agents.jev_router import NOTES_SKIP_MAX, SHARES_OPEN_FACT
     from src.observability import note_turn
 
-    if not settings.notas_puerta_jev:
-        return False
     p = routing_signals.get(SHARES_OPEN_FACT)
     if p is None:
         return False
@@ -1707,8 +1705,8 @@ _PLAN_ID_RE = re.compile(r"(\d+)_dives?_")
 
 def _plan_nombrado(state: ConversationState, message: str) -> str | None:
     """El plan del catálogo que nombra el cliente ("las 2 inmersiones") para su origen, como una línea del contexto;
-    None si el flag está apagado, el origen no consta, no nombra un número de inmersiones o ningún plan lo tiene."""
-    if not settings.rag_plan_nombrado or state.location not in ("cartagena", "island") or not message:
+    None si el origen no consta, no nombra un número de inmersiones o ningún plan lo tiene."""
+    if state.location not in ("cartagena", "island") or not message:
         return None
     from src.agents.intent_detector import dive_counts_in  # lazy
     from src.flows.catalog import SERVICES, service_fact_parts  # lazy
@@ -2015,8 +2013,7 @@ _PREGUNTA_ORIGEN_RE = re.compile(
 
 def _answer_asks_the_origin(state: ConversationState, answer: str) -> bool:
     """¿La reserva iba a preguntar el origen y la respuesta del RAG ya lo pregunta? Entonces va sola."""
-    return (settings.rag_origen_pregunta and state.core_pending_slot == SLOT_LOCATION
-            and bool(_PREGUNTA_ORIGEN_RE.search(answer)))
+    return state.core_pending_slot == SLOT_LOCATION and bool(_PREGUNTA_ORIGEN_RE.search(answer))
 
 
 # 7-oct (Álvaro, opción C del punto 3; flag `rag_origen_pregunta`): si el cliente pide un PRECIO y no sabemos desde
@@ -2063,7 +2060,7 @@ def _origen_antes_del_precio(state: ConversationState, message: str, answer: str
 
     Cotiza = lleva un importe, y el cliente pide un precio o repregunta tras la pregunta del origen sin contestarla
     ("¿y en pesos?"). Un importe en la respuesta a otra cosa ("¿qué incluye?") se deja como hoy."""
-    if not settings.rag_origen_pregunta or state.location or state.detected_location:
+    if state.location or state.detected_location:
         return None
     if settings.hoteles_de_la_base and _jev_dice_el_lugar(state):
         # gen-15: la puerta mira el origen antes de que la extracción del turno lo guarde, y sus pistas son palabras
@@ -2103,11 +2100,8 @@ def _origen_antes_del_precio(state: ConversationState, message: str, answer: str
         tras = (ORIGEN_TRAS_LOS_ENLACES_ES, ORIGEN_TRAS_LOS_ENLACES_EN) if da_enlace else (
             ORIGEN_TRAS_LAS_VARIANTES_ES, ORIGEN_TRAS_LAS_VARIANTES_EN)
         pregunta = f"{variantes}\n\n{tras[0] if state.language == 'es' else tras[1]}"
-    if settings.origen_conserva_respuesta:
-        resto = _sin_importes(answer)
-        if resto:
-            return f"{resto}\n\n{pregunta}"
-    return pregunta
+    resto = _sin_importes(answer)
+    return f"{resto}\n\n{pregunta}" if resto else pregunta
 
 
 # s4-31 (8-oct, flag `origen_conserva_respuesta`): en la ronda del golden visible con Luna (`2026-10-08-luna-visible`),
@@ -2426,7 +2420,6 @@ from src.agents.nucleo.routing import (  # noqa: E402, F401
     sembrar_senales_del_turno,
 )
 from src.agents.nucleo.setup import (  # noqa: E402, F401
-    _NAME_TRIGGER_RE,
     _NAME_TRIGGER_SIN_SOY_RE,
     _SWITCH_TO_EN_RE,
     _SWITCH_TO_ES_RE,

@@ -39,7 +39,6 @@ from scripts.replay_golden_local import _noop, _rag, dialogues  # noqa: E402
 from src.agents import conversational_core as core  # noqa: E402
 from src.agents import escalation, supervisor  # noqa: E402
 from src.agents.nucleo import slotfill_close as core_close  # noqa: E402
-from src.config import settings  # noqa: E402
 from src.flows.state import ConversationState  # noqa: E402
 
 _FRASES = re.compile(r"(?<=[.!?])\s+")
@@ -135,7 +134,7 @@ async def main() -> None:
     if os.environ.get("NOTAS_REALES") == "1":
         # Tercera pasada: las notas DE VERDAD (una llamada a gpt-4o-mini por mensaje con 3+ palabras). Si ahora
         # se rehace mucho más que con notas vacías, la causa es lo que DICEN las notas.
-        print(f"notas: REALES · puerta de Jev (`NOTAS_PUERTA_JEV`): {settings.notas_puerta_jev}")
+        print("notas: REALES · puerta de Jev (`notas_puerta_jev`, sin interruptor desde mej-1d): siempre")
         # 1-oct: se apunta CADA nota capturada (no solo las de los rehechos), para comprobar que la puerta no se come
         # las buenas. Con la puerta, los mensajes que Jev descarta ni siquiera llegan al extractor.
         _extraer = core.extract_notes

@@ -15,18 +15,6 @@ from src.agents.supervisor import route_message
 from src.flows.state import ConversationState, Step
 
 
-@pytest.fixture(autouse=True)
-def _camino_antiguo_ex2_ex3(monkeypatch):
-    """Estos tests fijan el camino de antes de ex-2/ex-3 (lista entera de palabras clave y respuestas fijas); lo nuevo
-    lo cubren tests/test_ex2_escalado.py y tests/test_ex3_atajos.py."""
-    from src.config import settings as _flags
-
-    monkeypatch.setattr(_flags, "escalado_solo_emergencias", False)
-    monkeypatch.setattr(_flags, "atajo_nacionalidad_por_rag", False)
-    # 13-oct: el grupo privado ahora marca el pase (tests/test_nombre_y_grupo_privado.py); aquí, la conducta de antes.
-    monkeypatch.setattr(_flags, "grupo_privado_pase", False)
-
-
 def make_state(lang: str = "es", step: Step = Step.FREE_TEXT) -> ConversationState:
     s = ConversationState(conversation_id="routing-test")
     s.language = lang
@@ -125,7 +113,8 @@ async def test_corporate_event_gets_real_answer_not_hallucinated_rag():
     politica real (policies.json["private_services"]) existe pero no se
     puede dar en crudo (lleva el numero de WhatsApp, y el bot nunca debe
     darlo -- owner, 2026-07-20). Debe responder con la version redactada,
-    sin escalar como tema medico/sensible ni caer al fallback generico."""
+    sin escalar como tema medico/sensible ni caer al fallback generico. Desde el 13-oct (`grupo_privado_pase`,
+    promocionado) marca el pase a un asesor como cualquier otro."""
     state = make_state()
     with patch("src.agents.supervisor.detect_routing_signals", new=AsyncMock(return_value={})):
         resp = await route_message(
@@ -133,7 +122,7 @@ async def test_corporate_event_gets_real_answer_not_hallucinated_rag():
             "hola, somos una empresa y queremos llevar 20 empleados a bucear "
             "como evento corporativo, es posible?",
         )
-    assert state.step != Step.ESCALATE
+    assert state.pending_escalation_reason == "grupo privado o evento de empresa: cotización a medida"
     assert "asesor" in resp.lower() or "advisor" in resp.lower()
     assert "320 231515" not in resp
     assert "no lo tengo a la mano" not in resp.lower()

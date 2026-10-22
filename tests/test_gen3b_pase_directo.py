@@ -68,7 +68,6 @@ async def test_el_nodo_info_pasa_y_el_resumen_lleva_el_mensaje(monkeypatch):
     from src.agents.info_agent import info_node
 
     monkeypatch.setattr(settings, "privado_pasa_directo", True)
-    monkeypatch.setattr(settings, "grupo_privado_pase", True)
     st = _state()
     mensaje = "¿Podemos tener la lancha solo para nosotros seis el sábado?"
     out = await info_node({"conv_state": st, "message": mensaje, "signals": {jr.PIDE_SERVICIO_PRIVADO: True}})

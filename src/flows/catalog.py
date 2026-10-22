@@ -203,9 +203,37 @@ def _extra_notes_multiline(service: dict, lang: str) -> str:
 
 
 
+# ord-3 (21-oct, decisión de Gadea, Coral #1150): la tarifa vive en UN sitio, `pricing.json` (la que vigila
+# test_tarifa_cuadra y la que usa el juez). Cada servicio de `services.json` dice qué fila es la suya (`tarifa`, p. ej.
+# "from_cartagena.paquetes.paquete_5_buceos") y aquí se le ponen sus cuatro precios al cargar. Antes había dos copias
+# que había que tener iguales a mano (test_pricing_consistency las comparaba).
+_KB_DIR = Path(__file__).resolve().parents[2] / "data" / "knowledge_base"
+TARIFA = json.loads((_KB_DIR / "pricing.json").read_text(encoding="utf-8-sig"))
+_PRECIOS_DE_LA_TARIFA = {"price_usd": "usd_online", "price_usd_normal": "usd_normal",
+                         "price_cop": "cop_online", "price_cop_normal": "cop_normal"}
+
+
+def fila_de_la_tarifa(ruta: str) -> dict:
+    """La fila de `pricing.json` por su ruta ("origen.categoría.clave"). KeyError si no existe."""
+    fila = TARIFA
+    for clave in ruta.split("."):
+        fila = fila[clave]
+    return fila
+
+
+def _servicios_con_precios() -> dict:
+    """Las entradas de services.json con los precios de su fila de la tarifa (sin `tarifa`, sin precio)."""
+    crudos = json.loads((_KB_DIR / "services.json").read_text(encoding="utf-8-sig")).get("services", {})
+    servicios = {}
+    for service_id, service in crudos.items():
+        fila = fila_de_la_tarifa(service["tarifa"]) if service.get("tarifa") else {}
+        servicios[service_id] = {**service, **{campo: fila.get(columna)
+                                               for campo, columna in _PRECIOS_DE_LA_TARIFA.items()}}
+    return servicios
+
+
 def _load_services() -> dict:
-    path = Path(__file__).resolve().parents[2] / "data" / "knowledge_base" / "services.json"
-    raw_services = json.loads(path.read_text(encoding="utf-8-sig")).get("services", {})
+    raw_services = _servicios_con_precios()
     services = {}
     for service_id, service in raw_services.items():
         # Edad minima: la del servicio si la declara, si no la de su actividad en
@@ -279,9 +307,9 @@ def _load_raw_services() -> dict:
     Hacen falta para `service_fact_sheet` (rag-3): la ficha de la base v2 se construye desde el
     JSON crudo (`included_es`, `duration_note_es`…), no desde las claves renombradas de `SERVICES`
     (`includes_es`, ya unido y saneado). Construir la ficha desde dos entradas distintas es
-    exactamente lo que rag-2 vino a evitar: dos textos del mismo servicio que pueden diferir."""
-    path = Path(__file__).resolve().parents[2] / "data" / "knowledge_base" / "services.json"
-    return json.loads(path.read_text(encoding="utf-8-sig")).get("services", {})
+    exactamente lo que rag-2 vino a evitar: dos textos del mismo servicio que pueden diferir. ord-3: con los precios
+    de la tarifa ya puestos, como en `_load_services`."""
+    return _servicios_con_precios()
 
 
 RAW_SERVICES = _load_raw_services()
@@ -416,22 +444,11 @@ SPECIALTY_SERVICE_IDS = {
 
 
 def _load_companion_price() -> dict:
-    path = Path(__file__).resolve().parents[2] / "data" / "knowledge_base" / "pricing.json"
-    try:
-        data = json.loads(path.read_text(encoding="utf-8-sig"))
-    except (FileNotFoundError, json.JSONDecodeError):
-        return {"usd_online": 80.44, "usd_normal": 89.38, "cop_online": 288000, "cop_normal": 320000}
-    for origin in ("from_cartagena", "from_islands"):
-        section = data.get(origin, {}).get("servicios_buceo_snorkel", {})
-        comp = section.get("acompanante") if isinstance(section, dict) else None
-        if comp:
-            return {
-                "usd_online": float(comp.get("usd_online", 80.44)),
-                "usd_normal": float(comp.get("usd_normal", 89.38)),
-                "cop_online": int(comp.get("cop_online", 288000)),
-                "cop_normal": int(comp.get("cop_normal", 320000)),
-            }
-    return {"usd_online": 80.44, "usd_normal": 89.38, "cop_online": 288000, "cop_normal": 320000}
+    """El precio del acompañante, de su fila de la tarifa. ord-3: sin cifras de respaldo escritas aquí; si la fila
+    falta, falla al cargar (y los tests), en vez de cotizar en silencio un precio viejo."""
+    comp = fila_de_la_tarifa("from_cartagena.servicios_buceo_snorkel.acompanante")
+    return {"usd_online": float(comp["usd_online"]), "usd_normal": float(comp["usd_normal"]),
+            "cop_online": int(comp["cop_online"]), "cop_normal": int(comp["cop_normal"])}
 
 
 COMPANION_PRICE = _load_companion_price()
@@ -587,7 +604,7 @@ def catalog_facts(lang: str) -> str:
 
     # 17-oct: la clave lleva TODOS los flags que cambian el texto. Antes solo llevaba la moneda, así que cambiar
     # otro flag en el mismo proceso (los tests, o una medida que enciende un flag) devolvía el catálogo de antes.
-    clave = (f"{lang}|{settings.moneda_sin_nacionalidad_usd}|{settings.catalogo_profundidad}|"
+    clave = (f"{lang}|{settings.catalogo_profundidad}|"
              f"{settings.catalogo_preparacion}")
     if clave in _FACTS_CACHE:
         return _FACTS_CACHE[clave]
@@ -654,8 +671,9 @@ def catalog_facts(lang: str) -> str:
                "USD (en un grupo mixto de colombianos o residentes y extranjeros, toda la reserva en USD); es el "
                "mismo precio en las dos monedas: el precio en COP de cada plan es el que pagan los "
                "colombianos. NO existe descuento ni tarifa rebajada para colombianos: si el cliente cree que la hay, "
-               "díselo claramente (solo cambia la moneda). Si no sabes la nacionalidad del cliente, da las dos "
-               "monedas. No sumes ni calcules totales. Si el cliente "
+               "díselo claramente (solo cambia la moneda). Si no sabes la nacionalidad del cliente, da el precio en "
+               "USD (si te dice que es colombiano o residente en Colombia, en COP). No sumes ni calcules totales. "
+               "Si el cliente "
                "cita un precio que no coincide con el catálogo, dale el del catálogo sin repetir su cifra."]
     else:
         head = ("OFFICIAL CATALOG (source of truth; prices per person, 'online' = with the 10% discount "
@@ -678,8 +696,8 @@ def catalog_facts(lang: str) -> str:
                "Currency: Colombians (wherever they live) and residents of Colombia pay in COP; everyone else in USD "
                "(in a mixed group of Colombians or residents and foreigners, the whole booking in USD); it is the same price in both currencies: each plan's COP price is what Colombians pay. There is NO "
                "discount or reduced rate for Colombians: if the customer thinks there is one, say so clearly (only "
-               "the currency changes). If you don't know the customer's nationality, give both currencies. Do not "
-               "add up or compute totals. If the "
+               "the currency changes). If you don't know the customer's nationality, give the price in USD (if they "
+               "tell you they are Colombian or a resident of Colombia, in COP). Do not add up or compute totals. If the "
                "customer quotes a price that doesn't match the catalog, give the catalog price without repeating theirs."]
     text = chr(10).join(out)
     if settings.catalogo_profundidad:
@@ -688,24 +706,19 @@ def catalog_facts(lang: str) -> str:
         profundidad = _profundidad_por_certificacion(lang)
         if profundidad:
             text += chr(10) + profundidad
-    if settings.moneda_sin_nacionalidad_usd:
-        # CAL-B (15-oct, decisión de Gadea): sin saber la nacionalidad, el precio va en USD, no en las dos monedas.
-        text = text.replace(MONEDA_SIN_NACIONALIDAD["es"][0], MONEDA_SIN_NACIONALIDAD["es"][1]).replace(
-            MONEDA_SIN_NACIONALIDAD["en"][0], MONEDA_SIN_NACIONALIDAD["en"][1])
     _FACTS_CACHE[clave] = text
     return text
 
 
-# CAL-B (15-oct, flag `moneda_sin_nacionalidad_usd`; decisión de Gadea del 15-oct): "si el cliente pide precio y no
-# sabemos su nacionalidad → precio en USD (no las dos monedas)". La regla del catálogo decía lo contrario ("da las dos
-# monedas"): de ahí parte de los 16 fallos de moneda de ex-10 (docs/robustness/cal/README.md).
+# CAL-B (15-oct, `moneda_sin_nacionalidad_usd`, promocionado el 16-oct; decisión de Gadea del 15-oct): "si el cliente
+# pide precio y no sabemos su nacionalidad → precio en USD (no las dos monedas)". La regla del catálogo decía lo
+# contrario ("da las dos monedas"): de ahí parte de los 16 fallos de moneda de ex-10 (docs/robustness/cal/README.md).
+# mej-1d (decisión de Gadea, Coral #976): la regla va escrita en el catálogo, sin sustituirla al vuelo ni interruptor.
 MONEDA_SIN_NACIONALIDAD = {
-    "es": ("Si no sabes la nacionalidad del cliente, da las dos monedas.",
-           "Si no sabes la nacionalidad del cliente, da el precio en USD (si te dice que es colombiano o residente en "
-           "Colombia, en COP)."),
-    "en": ("If you don't know the customer's nationality, give both currencies.",
-           "If you don't know the customer's nationality, give the price in USD (if they tell you they are Colombian "
-           "or a resident of Colombia, in COP)."),
+    "es": "Si no sabes la nacionalidad del cliente, da el precio en USD (si te dice que es colombiano o residente en "
+          "Colombia, en COP).",
+    "en": "If you don't know the customer's nationality, give the price in USD (if they tell you they are Colombian "
+          "or a resident of Colombia, in COP).",
 }
 
 

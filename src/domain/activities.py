@@ -169,8 +169,8 @@ def sibling_ids(activity_id: str | None) -> list[str]:
 
 def _is_chargeable(a: Activity) -> bool:
     """El carrito sabe cobrarla: servicios en el catalogo, o el acompanante sin
-    actividad (su precio vive en pricing.json). Genericas y actividades sin precio
-    (Bubble Makers, D2) no."""
+    actividad. Todos los precios viven en pricing.json (ord-3). Genericas y actividades
+    sin servicio en el catalogo no."""
     return bool(a.cart_type) and not a.generic and (bool(a.all_services()) or a.family == "companion")
 
 

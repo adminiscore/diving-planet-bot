@@ -114,7 +114,6 @@
       "que_hace": "Datos personales, links rotos, temas delicados o cuando hace falta una persona: pasa el caso a un asesor.",
       "donde": "src/agents/escalation_agent.py:escalation_node",
       "interruptores": [
-        "escalado_solo_emergencias",
         "contesta_antes_de_pasar",
         "contesta_antes_de_cualquier_pase",
         "clima_con_politica",
@@ -446,7 +445,6 @@
         "notas_model"
       ],
       "interruptores": [
-        "notas_puerta_jev",
         "memoria_sin_ordenes_del_cliente"
       ]
     },
@@ -503,7 +501,6 @@
       "que_hace": "Bloquea datos personales y contesta con texto fijo lo que ya tiene respuesta cerrada (políticas, vista general del buceo).",
       "donde": "src/agents/info_agent.py:info_node",
       "interruptores": [
-        "atajo_nacionalidad_por_rag",
         "atajo_alergia_por_rag"
       ]
     },
@@ -578,8 +575,6 @@
         "rag_answer_model"
       ],
       "interruptores": [
-        "rag_origen_pregunta",
-        "origen_conserva_respuesta",
         "origen_dos_variantes",
         "listas_del_dato",
         "origen_sin_titulo_suelto",
@@ -1099,25 +1094,10 @@
       "titulo": "La respuesta se redacta sin azar (temperatura 0)",
       "texto": "La misma pregunta con el mismo contexto da siempre la misma respuesta. En el examen ex-10, 18 de los 56 fallos del RAG eran azar: unas veces lo decía y otras no."
     },
-    "notas_puerta_jev": {
-      "area": "Reserva",
-      "titulo": "Solo apuntar notas si hay algo que apuntar",
-      "texto": "El enrutador rápido dice si el mensaje cuenta algo del cliente (salud, ocasión, límites...). Si está seguro de que no, no se apunta nada: evita notas inventadas a partir de preguntas."
-    },
-    "atajo_nacionalidad_por_rag": {
-      "area": "Respuestas fijas",
-      "titulo": "«¿Cambia el precio si es colombiano?» lo contesta el RAG",
-      "texto": "Sin el texto fijo: la regla de la moneda (mismo precio, COP para colombianos y residentes, USD para el resto) ya va en el catálogo y en las FAQs."
-    },
     "atajo_alergia_por_rag": {
       "area": "Respuestas fijas",
       "titulo": "La alergia a un alimento la contesta el RAG",
       "texto": "Sin el texto fijo de la política de comida (salvo si el mensaje también habla de alcohol): la FAQ de vegetarianos y alergias lo cubre. Sigue sin pasar al aviso médico."
-    },
-    "rag_origen_pregunta": {
-      "area": "Preguntas",
-      "titulo": "Pregunta el origen antes de dar precio",
-      "texto": "Si piden un precio y aún no sabemos si el cliente sale desde Cartagena o ya está en las islas, Coral pregunta primero el origen con un texto fijo (y sus botones); cuando lo dice, contesta el precio que había pedido."
     },
     "formato_whatsapp": {
       "area": "Chat",
@@ -1133,26 +1113,6 @@
       "area": "Enrutador",
       "titulo": "Jev reconoce una pregunta de precio de cualquier actividad",
       "texto": "La pregunta de Jev «¿pide el precio?» nombra las actividades del centro (salidas y paquetes, minicurso o refresher, snorkel, cursos y especialidades). Sin eso, «¿Cuánto cuesta el snorkel?» no contaba como pregunta de precio, no se preguntaba el origen y se cotizaba Cartagena sin saberlo (ord-7, 21-oct)."
-    },
-    "jev_lugar_cliente": {
-      "area": "Reserva",
-      "titulo": "Jev decide dónde está el cliente",
-      "texto": "Bucear en las islas no es estar en las islas: Jev dice si el mensaje cuenta de verdad desde dónde sale el cliente. Si está seguro de que no lo dice ('quiero bucear en las islas del Rosario'), el origen no se guarda y Coral lo pregunta; y si nombra un sitio que no es Cartagena ni las islas, Coral se lo pregunta a la base."
-    },
-    "jev_persona_ya_contada": {
-      "area": "Reserva",
-      "titulo": "Sabe si 'él' ya estaba contado",
-      "texto": "Jev distingue a alguien que ya está en el grupo ('él quiere hacer snorkel') de una persona nueva ('también viene mi hermana'); en el primer caso Coral reparte el grupo sin preguntar '¿seguís siendo 2?'."
-    },
-    "rag_plan_nombrado": {
-      "area": "Preguntas",
-      "titulo": "Sabe qué plan nombra el cliente",
-      "texto": "Si el cliente dice cuántas inmersiones quiere ('el precio de las 2 inmersiones') y sabemos desde dónde sale, Coral recibe el plan exacto del catálogo, en vez de confundirlo con un paquete que también trae 2 inmersiones."
-    },
-    "escalado_solo_emergencias": {
-      "area": "Enrutador",
-      "titulo": "Solo las emergencias pasan a un asesor por palabra clave",
-      "texto": "La lista de palabras que pasa el caso a un asesor antes de que opine la IA se queda con las emergencias y los problemas en tiempo real (pago que falla, cupo para mañana). Las preguntas médicas, el tiempo y las quejas los decide Jev leyendo la frase entera: así 'ya llenamos el formulario médico' o 'mi amigo es abogado' dejan de pasar a un asesor."
     },
     "extractor_aclaraciones": {
       "area": "Reserva",
@@ -1369,11 +1329,6 @@
       "titulo": "Otro idioma: contesta en inglés",
       "texto": "Coral atiende en español e inglés. Si el cliente escribe en otro idioma (portugués, francés…), contesta en inglés. Unas palabras sueltas de otro idioma dentro de un mensaje en español no cambian el idioma. Lo dice el extractor de la fase EX, en la misma llamada."
     },
-    "origen_conserva_respuesta": {
-      "area": "Preguntas",
-      "titulo": "Al preguntar el origen, conserva el resto",
-      "texto": "Cuando Coral tiene que preguntar desde dónde sale el cliente antes de dar un precio, ya no tira la respuesta entera: quita solo las frases con importes y conserva lo demás (por ejemplo, que no hay precio especial para colombianos)."
-    },
     "origen_dos_variantes": {
       "area": "Preguntas",
       "titulo": "Sin saber el origen, da las dos variantes",
@@ -1394,16 +1349,6 @@
       "titulo": "Instrucciones del revisor para Luna",
       "texto": "Con GPT-6 Luna como revisor: lo que el cliente dice de sí mismo no se comprueba, las valoraciones y ofertas de ayuda no son datos, y una deducción directa de la información cuenta como respaldada."
     },
-    "nombre_por_extractor": {
-      "area": "Reserva",
-      "titulo": "El nombre lo lee la IA",
-      "texto": "El nombre del cliente sale del extractor con su cita: 'soy gringo' o 'soy paisa' ya no se toman como nombre ('¡Hola, Gringo!')."
-    },
-    "grupo_privado_pase": {
-      "area": "Respuestas fijas",
-      "titulo": "Grupo privado: pase real",
-      "texto": "Un grupo privado o un evento de empresa recibe su respuesta y, además, la conversación pasa de verdad a un asesor con el resumen."
-    },
     "privado_pasa_directo": {
       "area": "Respuestas fijas",
       "titulo": "El servicio privado pasa a un asesor en cuanto lo piden",
@@ -1413,21 +1358,6 @@
       "area": "Respuestas fijas",
       "titulo": "Cambiar o cancelar una reserva hecha pasa a un asesor",
       "texto": "Cambiar la fecha, cancelar o cambiar el número de personas de una reserva ya hecha solo lo puede hacer el equipo. Antes Coral explicaba la política y preguntaba «¿te conecto con un asesor o prefieres volver al menú principal?», con un menú que ya no existe, y nadie se enteraba si el cliente no contestaba. Ahora explica la política y pasa directamente a un asesor con el resumen."
-    },
-    "extractor_precio_elige": {
-      "area": "Reserva",
-      "titulo": "Preguntar el precio es elegir",
-      "texto": "'¿Cuánto cuesta el buceo certificado?' cuenta como elegir esa actividad; el bot ya no vuelve a preguntar '¿buceo, minicurso, snorkel o curso?'."
-    },
-    "posventa_sin_vender": {
-      "area": "Reserva",
-      "titulo": "Posventa: no vende",
-      "texto": "Si el cliente ya tiene una reserva o ya buceó con nosotros (lo dice la IA), Coral le atiende sin ofrecerle actividades ni hacer preguntas de la reserva."
-    },
-    "moneda_sin_nacionalidad_usd": {
-      "area": "Preguntas",
-      "titulo": "Sin nacionalidad, en dólares",
-      "texto": "Si el cliente pide un precio y no sabemos si es colombiano, Coral lo da en USD (decisión de Gadea); en COP si dice que es colombiano o residente, y en USD para un grupo mixto."
     },
     "jev_con_contexto": {
       "area": "Enrutador",

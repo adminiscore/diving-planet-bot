@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-21T22:06:54+00:00",
-  "commit": "a4cb9f5",
+  "generado": "2026-10-22T08:15:22+00:00",
+  "commit": "4ed293c",
   "rama": "feature/pre_gadea"
  },
  "vistas": {
@@ -207,13 +207,6 @@
    "que_hace": "Datos personales, links rotos, temas delicados o cuando hace falta una persona: pasa el caso a un asesor.",
    "donde": "src/agents/escalation_agent.py:escalation_node",
    "interruptores": [
-    {
-     "nombre": "escalado_solo_emergencias",
-     "titulo": "Solo las emergencias pasan a un asesor por palabra clave",
-     "codigo": true,
-     "pre": true,
-     "sin_efecto": false
-    },
     {
      "nombre": "contesta_antes_de_pasar",
      "titulo": "Contesta lo que puede antes de pasar a un asesor",
@@ -1017,13 +1010,6 @@
    ],
    "interruptores": [
     {
-     "nombre": "notas_puerta_jev",
-     "titulo": "Solo apuntar notas si hay algo que apuntar",
-     "codigo": true,
-     "pre": true,
-     "sin_efecto": false
-    },
-    {
      "nombre": "memoria_sin_ordenes_del_cliente",
      "titulo": "La memoria no se cree las órdenes del cliente",
      "codigo": true,
@@ -1112,13 +1098,6 @@
    "que_hace": "Bloquea datos personales y contesta con texto fijo lo que ya tiene respuesta cerrada (políticas, vista general del buceo).",
    "donde": "src/agents/info_agent.py:info_node",
    "interruptores": [
-    {
-     "nombre": "atajo_nacionalidad_por_rag",
-     "titulo": "«¿Cambia el precio si es colombiano?» lo contesta el RAG",
-     "codigo": true,
-     "pre": true,
-     "sin_efecto": false
-    },
     {
      "nombre": "atajo_alergia_por_rag",
      "titulo": "La alergia a un alimento la contesta el RAG",
@@ -1258,20 +1237,6 @@
     }
    ],
    "interruptores": [
-    {
-     "nombre": "rag_origen_pregunta",
-     "titulo": "Pregunta el origen antes de dar precio",
-     "codigo": true,
-     "pre": true,
-     "sin_efecto": false
-    },
-    {
-     "nombre": "origen_conserva_respuesta",
-     "titulo": "Al preguntar el origen, conserva el resto",
-     "codigo": true,
-     "pre": true,
-     "sin_efecto": false
-    },
     {
      "nombre": "origen_dos_variantes",
      "titulo": "Sin saber el origen, da las dos variantes",
@@ -2167,19 +2132,6 @@
    "sin_efecto": null
   },
   {
-   "nombre": "atajo_nacionalidad_por_rag",
-   "area": "Respuestas fijas",
-   "titulo": "«¿Cambia el precio si es colombiano?» lo contesta el RAG",
-   "texto": "Sin el texto fijo: la regla de la moneda (mismo precio, COP para colombianos y residentes, USD para el resto) ya va en el catálogo y en las FAQs.",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [
-    "r_reglas"
-   ],
-   "sin_efecto": null
-  },
-  {
    "nombre": "aviso_si_openai_falla",
    "area": "Arquitectura",
    "titulo": "Si OpenAI cae, decir la verdad y pasar a un asesor",
@@ -2466,19 +2418,6 @@
    "sin_efecto": null
   },
   {
-   "nombre": "escalado_solo_emergencias",
-   "area": "Enrutador",
-   "titulo": "Solo las emergencias pasan a un asesor por palabra clave",
-   "texto": "La lista de palabras que pasa el caso a un asesor antes de que opine la IA se queda con las emergencias y los problemas en tiempo real (pago que falla, cupo para mañana). Las preguntas médicas, el tiempo y las quejas los decide Jev leyendo la frase entera: así 'ya llenamos el formulario médico' o 'mi amigo es abogado' dejan de pasar a un asesor.",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [
-    "safety"
-   ],
-   "sin_efecto": null
-  },
-  {
    "nombre": "est2_datos",
    "area": "Preguntas",
    "titulo": "Datos que el RAG decía mal",
@@ -2531,17 +2470,6 @@
    "sin_efecto": null
   },
   {
-   "nombre": "extractor_precio_elige",
-   "area": "Reserva",
-   "titulo": "Preguntar el precio es elegir",
-   "texto": "'¿Cuánto cuesta el buceo certificado?' cuenta como elegir esa actividad; el bot ya no vuelve a preguntar '¿buceo, minicurso, snorkel o curso?'.",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [],
-   "sin_efecto": null
-  },
-  {
    "nombre": "extractor_todo_lo_dicho",
    "area": "Reserva",
    "titulo": "El extractor entiende mejor grupo, aceptación y residencia",
@@ -2576,17 +2504,6 @@
    "usado_por": [
     "b_extraction"
    ],
-   "sin_efecto": null
-  },
-  {
-   "nombre": "grupo_privado_pase",
-   "area": "Respuestas fijas",
-   "titulo": "Grupo privado: pase real",
-   "texto": "Un grupo privado o un evento de empresa recibe su respuesta y, además, la conversación pasa de verdad a un asesor con el resumen.",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [],
    "sin_efecto": null
   },
   {
@@ -2679,28 +2596,6 @@
    "usado_por": [
     "router"
    ],
-   "sin_efecto": null
-  },
-  {
-   "nombre": "jev_lugar_cliente",
-   "area": "Reserva",
-   "titulo": "Jev decide dónde está el cliente",
-   "texto": "Bucear en las islas no es estar en las islas: Jev dice si el mensaje cuenta de verdad desde dónde sale el cliente. Si está seguro de que no lo dice ('quiero bucear en las islas del Rosario'), el origen no se guarda y Coral lo pregunta; y si nombra un sitio que no es Cartagena ni las islas, Coral se lo pregunta a la base.",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [],
-   "sin_efecto": null
-  },
-  {
-   "nombre": "jev_persona_ya_contada",
-   "area": "Reserva",
-   "titulo": "Sabe si 'él' ya estaba contado",
-   "texto": "Jev distingue a alguien que ya está en el grupo ('él quiere hacer snorkel') de una persona nueva ('también viene mi hermana'); en el primer caso Coral reparte el grupo sin preguntar '¿seguís siendo 2?'.",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [],
    "sin_efecto": null
   },
   {
@@ -2835,17 +2730,6 @@
    "sin_efecto": null
   },
   {
-   "nombre": "moneda_sin_nacionalidad_usd",
-   "area": "Preguntas",
-   "titulo": "Sin nacionalidad, en dólares",
-   "texto": "Si el cliente pide un precio y no sabemos si es colombiano, Coral lo da en USD (decisión de Gadea); en COP si dice que es colombiano o residente, y en USD para un grupo mixto.",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": false,
-   "usado_por": [],
-   "sin_efecto": null
-  },
-  {
    "nombre": "ninos_primero_al_snorkel",
    "area": "Reserva",
    "titulo": "El niño que hace snorkel no cambia el minicurso de su hermano",
@@ -2855,30 +2739,6 @@
    "fijado_en_pre": true,
    "usado_por": [
     "b_slotfill_close"
-   ],
-   "sin_efecto": null
-  },
-  {
-   "nombre": "nombre_por_extractor",
-   "area": "Reserva",
-   "titulo": "El nombre lo lee la IA",
-   "texto": "El nombre del cliente sale del extractor con su cita: 'soy gringo' o 'soy paisa' ya no se toman como nombre ('¡Hola, Gringo!').",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [],
-   "sin_efecto": null
-  },
-  {
-   "nombre": "notas_puerta_jev",
-   "area": "Reserva",
-   "titulo": "Solo apuntar notas si hay algo que apuntar",
-   "texto": "El enrutador rápido dice si el mensaje cuenta algo del cliente (salud, ocasión, límites...). Si está seguro de que no, no se apunta nada: evita notas inventadas a partir de preguntas.",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [
-    "b_notas"
    ],
    "sin_efecto": null
   },
@@ -2904,19 +2764,6 @@
    "pre": false,
    "fijado_en_pre": false,
    "usado_por": [],
-   "sin_efecto": null
-  },
-  {
-   "nombre": "origen_conserva_respuesta",
-   "area": "Preguntas",
-   "titulo": "Al preguntar el origen, conserva el resto",
-   "texto": "Cuando Coral tiene que preguntar desde dónde sale el cliente antes de dar un precio, ya no tira la respuesta entera: quita solo las frases con importes y conserva lo demás (por ejemplo, que no hay precio especial para colombianos).",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [
-    "r_escribir"
-   ],
    "sin_efecto": null
   },
   {
@@ -3020,17 +2867,6 @@
    "sin_efecto": null
   },
   {
-   "nombre": "posventa_sin_vender",
-   "area": "Reserva",
-   "titulo": "Posventa: no vende",
-   "texto": "Si el cliente ya tiene una reserva o ya buceó con nosotros (lo dice la IA), Coral le atiende sin ofrecerle actividades ni hacer preguntas de la reserva.",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [],
-   "sin_efecto": null
-  },
-  {
    "nombre": "precio_no_elige",
    "area": "Reserva",
    "titulo": "Preguntar un precio no es elegir",
@@ -3119,30 +2955,6 @@
    "usado_por": [
     "r_escribir"
    ],
-   "sin_efecto": null
-  },
-  {
-   "nombre": "rag_origen_pregunta",
-   "area": "Preguntas",
-   "titulo": "Pregunta el origen antes de dar precio",
-   "texto": "Si piden un precio y aún no sabemos si el cliente sale desde Cartagena o ya está en las islas, Coral pregunta primero el origen con un texto fijo (y sus botones); cuando lo dice, contesta el precio que había pedido.",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [
-    "r_escribir"
-   ],
-   "sin_efecto": null
-  },
-  {
-   "nombre": "rag_plan_nombrado",
-   "area": "Preguntas",
-   "titulo": "Sabe qué plan nombra el cliente",
-   "texto": "Si el cliente dice cuántas inmersiones quiere ('el precio de las 2 inmersiones') y sabemos desde dónde sale, Coral recibe el plan exacto del catálogo, en vez de confundirlo con un paquete que también trae 2 inmersiones.",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [],
    "sin_efecto": null
   },
   {

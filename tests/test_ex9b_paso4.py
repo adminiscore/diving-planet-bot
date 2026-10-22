@@ -4,7 +4,7 @@
    `pending_answer` para el origen; el extractor para el hotel y el total), también con 12 caracteres o menos; los
    botones y una cifra sola son formato y se leen sin IA; el regex de siempre solo si la IA calla. "Voy solo" es el
    `group_size` 1 del extractor.
-2. Si la regex ve "me llamo X", manda el `nombre` del extractor (con `nombre_por_extractor`).
+2. Si la regex ve "me llamo X", manda el `nombre` del extractor.
 3. Clase A: el plan de N inmersiones del RAG lee la cifra con `dive_counts_in` (sin flag: replay igual) y los días
    cerrados los contesta el RAG con `dias_cerrados_por_rag` (con flag: sin el texto fijo, "quiero bucear el 25 de
    diciembre" no llega al RAG).
@@ -251,13 +251,8 @@ async def test_voy_solo_con_el_extractor_caido_el_regex(extractor):
 # --- 5. el nombre ---------------------------------------------------------------------------------------------------------
 
 
-@pytest.fixture
-def nombre_on(monkeypatch):
-    monkeypatch.setattr(settings, "nombre_por_extractor", True)
-
-
 @pytest.mark.asyncio
-async def test_nombre_manda_el_extractor(nombre_on, extractor):
+async def test_nombre_manda_el_extractor(extractor):
     extractor({"nombre": "Ana"})
     st = _estado()
     await core_setup._nombre_del_mensaje(st, "hola, mi nombre es ana maría")
@@ -269,7 +264,7 @@ async def test_nombre_manda_el_extractor(nombre_on, extractor):
 
 
 @pytest.mark.asyncio
-async def test_nombre_extractor_caido_la_regex(nombre_on, extractor):
+async def test_nombre_extractor_caido_la_regex(extractor):
     extractor(None)
     st = _estado()
     await core_setup._nombre_del_mensaje(st, "me llamo Pepe y quiero bucear")
@@ -277,7 +272,7 @@ async def test_nombre_extractor_caido_la_regex(nombre_on, extractor):
 
 
 @pytest.mark.asyncio
-async def test_nombre_sin_la_regex_no_se_espera_al_extractor(nombre_on, extractor):
+async def test_nombre_sin_la_regex_no_se_espera_al_extractor(extractor):
     leer = extractor({"nombre": "Rocío"})
     st = _estado()
     await core_setup._nombre_del_mensaje(st, "hola soy Rocío")
@@ -289,7 +284,6 @@ async def test_nombre_sin_la_regex_no_se_espera_al_extractor(nombre_on, extracto
 
 
 def test_plan_nombrado_lee_la_cifra_con_dive_counts_in(monkeypatch):
-    monkeypatch.setattr(settings, "rag_plan_nombrado", True)
     assert not hasattr(core, "_N_INMERSIONES_RE")
     isla = _estado(location="island")
     assert "1 inmersion(es)" in core._plan_nombrado(isla, "¿cuánto vale 1 inmersión desde el hotel?")  # la suelta

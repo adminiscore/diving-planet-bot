@@ -36,7 +36,7 @@ cada una y **una sola llamada redacta todo**. No hay N respuestas que juntar.
 |---|---|---|
 | **arq-0a** | Integrar las ramas de Álvaro: mej-1d (13 interruptores menos), ord-3 (la tarifa en pricing.json) y la limpieza del veto (~620 líneas). Son la base limpia. | 1-2 h |
 | **arq-0b** | **Banco fijo del RAG** (~40 preguntas con frases nuestras, de los tipos de fallo de G9/G10: listas, otros datos, invenciones, varias preguntas por mensaje) ×3. Pasa a ser el **indicador del RAG**; G10 solo al final de cada fase. Medir la línea base. | 3-4 h |
-| **arq-0c** | **Diagnóstico de modelo:** Luna frente a gpt-5-mini como escritor en el banco (omisiones, coste por conversación y latencia). Es un diagnóstico, no la solución. | 1-2 h |
+| **arq-0c** | **¿Con los hechos por código basta Luna?** Se hace DESPUÉS de arq-1d (decisión de Gadea, 22-oct): Luna frente a gpt-5-mini, los dos con los hechos por código, en el banco fijo ×3, con omisiones, invenciones, latencia y coste por 100 turnos. Luna es ~7-9 veces más barato que gpt-5.4-mini: si rinden igual, se queda Luna; un modelo caro, como mucho, solo para los turnos difíciles. | 1-2 h |
 | **arq-0d** | ¿Qué parte de los fallos de G10/G9 cae en mensajes con varias preguntas? Para saber cuánto puede dar la fragmentación. | 1 h |
 | **arq-1a** | **Diseño:** el esquema de intenciones y, para cada una, los hechos que da el código (documento y tests del contrato). | 2 h |
 | **arq-1b** | **Interpretación:** el extractor devuelve la lista de intenciones del turno (con su actividad y plan), con banco propio. | 3-4 h |

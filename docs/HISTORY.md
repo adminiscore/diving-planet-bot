@@ -1,7 +1,7 @@
 History
 =======
 
-0.31.87 - (2026-10-22)
+0.31.90 - (2026-10-22)
 ----------------------
 * **G10 de control con todo junto (gen-20): plano.** 85,4 % 20/72 (sin desfasados 86,4 % 22/72) frente a 85,6 % 23/72
   de la tarde.
@@ -17,6 +17,76 @@ History
 * **ord-9 «las listas, del dato»** (flag `listas_del_dato`, APAGADO, decisión de Gadea).
   - Si el cliente pregunta qué incluye un plan concreto, la lista sale de la ficha.
   - Banco 10/14 → 14/14, pero Luna repite la lista: pendiente insistir al RAG (ver el relevo).
+
+0.31.89 - (2026-10-21)
+----------------------
+* **mej-1d, parte 2: fuera los restos del veto de 1a** (Álvaro con Claude, `feature/mej1d2-alvaro`). El veto por
+  campo salió del camino real con ex-9 (15-oct) y su maquinaria se borró en la tanda 1a. Quedaban sus piezas sin
+  nadie que las llamara.
+  - Fuera de `llm_extractor`: `verify_fields`, `extract_and_verify`, `verify_field`, `disagreements_with` y
+    `_clean_verified_value`.
+  - Fuera de `prompts/booking`: el prompt de verificación y el combinado, las guías por campo (`_FIELD_RULES_*`, las
+    pistas del detector y la tabla de significados en español) y `_meaning_rule`.
+  - Unas 620 líneas menos en el código y 67 tests menos, los del veto.
+  - **Equivalencia sin gastar.** Con el código de antes y el de después salen idénticos, letra por letra:
+    - 16 393 variantes del prompt de extracción de `fill_gaps` (todas las combinaciones de campos, ES y EN);
+    - el tool de extracción, con y sin extras y sin Barú;
+    - las señales y el resolutor de casillas;
+    - las preguntas de Jev, la llamada del extractor del turno, el catálogo y el prompt del RAG.
+  - Suite: 3169 en verde. Quedan en algunos tests parches de `extract_and_verify` con `create=True`: no hacen nada
+    y no rompen nada.
+
+0.31.88 - (2026-10-21)
+----------------------
+* **ord-3: la tarifa vive en un solo sitio, `pricing.json`** (Álvaro con Claude, `feature/ord3-alvaro`; decisión de
+  Gadea, Coral #1150).
+  - Antes, cada precio estaba dos veces: en `services.json`, que es de donde cotiza el bot, y en `pricing.json`, que
+    es la tarifa que usa el juez. Había que tenerlas iguales a mano.
+  - Ahora `services.json` ya no lleva precios. Cada servicio dice cuál es su fila de la tarifa (`tarifa`) y
+    `catalog` le pone los precios al cargar. El acompañante sale de su fila, sin cifras de respaldo escritas en el
+    código.
+  - La tarifa gana el Bubble Makers, con precio PROVISIONAL a confirmar con Andrés.
+  - Las 14 filas con precio que no son ningún servicio llevan su motivo en `no_se_ofrece` (decisión de mej-2): Scuba
+    Diver, especialidad de 3 inmersiones, nocturnos y buceo adicional sueltos, e-learning (→ Referido), Rescue desde
+    las islas. Dos filas no tienen ficha en el catálogo: el snorkel de 1 salida en las islas y la especialidad de 4
+    inmersiones en las islas.
+  - Las notas de precio ya no repiten cifras. Dos, redondeadas, decían 204 y 140 USD.
+  - `faqs.json`, que solo usa la base vieja:
+    - la 108 llamaba «precio normal» al precio online del paquete de 4 inmersiones diurnas;
+    - la 122 daba 187 USD como precio del Bubble Makers, cuando ese es el normal.
+  - **Equivalencia sin gastar.** Con el código de antes y el de después salen idénticos, letra por letra:
+    - los 38 servicios;
+    - sus partes y fichas en ES y EN;
+    - el catálogo del RAG;
+    - el acompañante.
+  - Tests:
+    - `test_pricing_consistency`: el enlace a la tarifa, sin copias, y ninguna fila suelta sin motivo.
+    - `test_ord3_faq_cifras`: toda cifra de las FAQ curadas está en la tarifa. Fuera de ella solo queda el
+      suplemento de Nitrox por tanque.
+  - De paso, `compare_excel_exports_to_services` vuelve a funcionar: se rompía con el BOM.
+
+0.31.87 - (2026-10-21)
+----------------------
+* **mej-1d: fuera 13 interruptores ya promocionados** (Álvaro con Claude, `feature/mej1d-alvaro`). Las reglas son
+  las de la 1b (0.31.78): se queda el camino promocionado y se quita el viejo. PRE no cambia: todos estaban
+  encendidos.
+  - Promocionados del 1 al 13 de octubre (más de una semana):
+    - De Jev: `notas_puerta_jev`, `jev_persona_ya_contada`, `jev_lugar_cliente` y `posventa_sin_vender`.
+    - Del extractor: `nombre_por_extractor` (fuera también la regex vieja de «soy X») y `extractor_precio_elige`
+      (con `precio_no_elige` apagado vale su regla V2, como hoy).
+    - De la puerta del origen: `rag_origen_pregunta` y `origen_conserva_respuesta`. El camino que usa ord-7 queda
+      siempre encendido.
+    - Resto: `rag_plan_nombrado`, `grupo_privado_pase`, `atajo_nacionalidad_por_rag` y
+      `escalado_solo_emergencias`.
+  - `moneda_sin_nacionalidad_usd` (16-oct; decisión de Gadea, Coral #976): la regla de USD sin nacionalidad va
+    escrita en el catálogo, sin sustituirla al vuelo.
+  - **Equivalencia sin gastar.** Con el código de antes (a29ce06) y el de después se compararon las preguntas de
+    Jev (6 casillas pendientes), la llamada entera del extractor en ES y EN, el catálogo, el prompt del RAG y el
+    resumen de la moneda. Todo sale idéntico, letra por letra. Por eso no hay ronda.
+  - Tests: los de la rama vieja, fuera. Los parametrizados se quedan con el caso encendido. Lo médico, el tiempo
+    y las quejas, que antes pasaban por palabra clave, ahora se prueban con la señal de Jev. Suite completa en
+    verde. Mapa regenerado.
+  - Quedan para una segunda parte los restos del veto de 1a (`verify_fields`, `extract_and_verify` y su prompt).
 
 0.31.86 - (2026-10-21)
 ----------------------

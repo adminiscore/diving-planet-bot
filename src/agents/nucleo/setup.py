@@ -66,20 +66,10 @@ def _idioma_pedido(state: ConversationState, message: str, routing_signals: dict
 
 # ─── Persona: saludo del primer turno (Coral, cálida, sin "asistente"/"bot") ───
 
-# Captura del nombre del cliente DEL PROPIO MENSAJE ("hola soy Rocío", "me llamo
-# Ana"). Camino rápido determinista; el LLM de comprensión (Parte 1 del plan)
-# puede rellenarlo también. Conservador a propósito: tras "soy" siguen muchos
-# atributos que NO son nombres ("soy certificado", "soy colombiano", "soy buzo"),
-# así que se filtran con una stoplist. El nombre de WhatsApp (sender['name']) queda
-# diferido hasta que el canal exista. Se captura en minúscula (móvil) y se
-# Title-Casea. Primera captura gana (el nombre no cambia a mitad de conversación).
-_NAME_TRIGGER_RE = re.compile(
-    r"\b(?:me\s+llamo|mi\s+nombre\s+es|my\s+name\s+is|soy)\s+([a-záéíóúñ]{2,20})\b",
-    re.IGNORECASE,
-)
-
-
-# 13-oct (flag `nombre_por_extractor`): con el flag, la regex solo captura las formas SIN ambigüedad ("me llamo",
+# Captura del nombre del cliente DEL PROPIO MENSAJE ("me llamo Ana"). Camino rápido determinista; el extractor lo
+# rellena también. El nombre de WhatsApp (sender['name']) queda diferido hasta que el canal exista. Se captura en
+# minúscula (móvil) y se Title-Casea. Primera captura gana (el nombre no cambia a mitad de conversación).
+# 13-oct (`nombre_por_extractor`, promocionado): la regex solo captura las formas SIN ambigüedad ("me llamo",
 # "mi nombre es", "my name is"); "soy X" lo decide el extractor con su cita (`_nombre_del_extractor`): "yo soy gringo"
 # saludaba "¡Hola, Gringo!" y el nombre se arrastraba a los acuses y al resumen para el asesor.
 _NAME_TRIGGER_SIN_SOY_RE = re.compile(
@@ -91,7 +81,7 @@ _NAME_TRIGGER_SIN_SOY_RE = re.compile(
 def _capture_client_name(state: ConversationState, message: str) -> None:
     if state.client_name:
         return
-    m = (_NAME_TRIGGER_SIN_SOY_RE if settings.nombre_por_extractor else _NAME_TRIGGER_RE).search(message)
+    m = _NAME_TRIGGER_SIN_SOY_RE.search(message)
     if not m:
         return
     word = m.group(1)
@@ -108,7 +98,7 @@ async def _nombre_del_mensaje(state: ConversationState, message: str) -> None:
     nombre lo pone el extractor más adelante en el turno, como hoy."""
     if state.client_name:
         return
-    if settings.nombre_por_extractor and _NAME_TRIGGER_SIN_SOY_RE.search(message):
+    if _NAME_TRIGGER_SIN_SOY_RE.search(message):
         from src.agents.nucleo.extractor import _nombre_del_extractor, lectura_del_extractor  # lazy
 
         datos = await lectura_del_extractor(state, message)

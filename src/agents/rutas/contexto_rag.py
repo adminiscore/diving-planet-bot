@@ -557,7 +557,7 @@ def _build_extra_context(state: ConversationState) -> str | None:
                          "COP) lo coordina un asesor al cerrar la reserva: no le compartas el link de reserva.")
     elif getattr(state, "is_colombian", None) is False:
         parts.append("El cliente indico que no es colombiano/a (mostrar precios en USD).")
-    elif settings.moneda_sin_nacionalidad_usd:
+    else:
         # CAL-B (15-oct, decisión de Gadea): la moneda la decide el código con el estado, no el modelo. Sin
         # nacionalidad, USD; antes no se decía nada y el modelo daba las dos monedas o cotizaba en COP.
         parts.append("Aun no sabemos la nacionalidad del cliente: si das un precio, en USD (si dice que es colombiano/a "

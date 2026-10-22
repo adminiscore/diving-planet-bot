@@ -15,7 +15,6 @@ from src.agents import jev_router as j
 from src.agents import supervisor
 from src.agents.nucleo.setup import _idioma_pedido
 from src.agents.rutas.deflection import pregunta_si_es_ia
-from src.config import settings
 from src.flows.state import ConversationState
 from src.orchestration import graph
 
@@ -162,7 +161,6 @@ COTIZA = "El plan de 2 inmersiones cuesta 150 USD por persona."
 def _sin_origen(monkeypatch, jev):
     from src.agents import conversational_core as core
 
-    monkeypatch.setattr(settings, "rag_origen_pregunta", True)
     st = _estado()
     st._jev_pide_precio = jev
     return core, st

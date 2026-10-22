@@ -195,11 +195,10 @@ def load_knowledge_base() -> list[dict]:
     """Convert JSON knowledge base files into documents for embedding."""
     documents = []
 
-    # --- Services ---
-    with open(DATA_DIR / "services.json", "r", encoding="utf-8-sig") as f:
-        data = json.load(f)
+    # --- Services --- (ord-3: los precios salen de la tarifa, `catalog.RAW_SERVICES`, no de services.json)
+    from src.flows.catalog import RAW_SERVICES
 
-    for key, svc in data.get("services", {}).items():
+    for key, svc in RAW_SERVICES.items():
         documents.extend(_service_subchunks(key, svc, "es"))
         documents.extend(_service_subchunks(key, svc, "en"))
 

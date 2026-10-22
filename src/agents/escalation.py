@@ -103,7 +103,7 @@ SENSITIVE_RULES = {
 }
 
 
-# ex-2 (fase EX, flag `escalado_solo_emergencias`): la lista que pasa a un asesor ANTES de que opine la IA se queda
+# ex-2 (fase EX, `escalado_solo_emergencias`, promocionado): la lista que pasa a un asesor ANTES de que opine la IA se queda
 # con las EMERGENCIAS (red rápida: perder una es grave; una falsa alarma cuesta poco) y las INCIDENCIAS en tiempo real
 # ("hay cupo mañana", "no puedo pagar": frases concretas, 0 falsas alarmas en el banco, y Jev solo marca los fallos, no
 # "¿hay cupo mañana?"). Lo médico, el tiempo y las quejas los decide Jev con `sensitive_topic` (la misma llamada del
@@ -119,9 +119,7 @@ EMERGENCY_KEYWORDS = {
 
 
 def _active_rules() -> dict:
-    """Las reglas de palabras clave que pasan a un asesor: todas, o (ex-2) las emergencias y las incidencias."""
-    if not settings.escalado_solo_emergencias:
-        return SENSITIVE_RULES
+    """Las reglas de palabras clave que pasan a un asesor (ex-2): las emergencias y las incidencias."""
     emergencias = SENSITIVE_RULES["complaints_or_emergencies"]
     return {"complaints_or_emergencies": {**emergencias, "keywords": EMERGENCY_KEYWORDS},
             "real_time_issues": SENSITIVE_RULES["real_time_issues"]}

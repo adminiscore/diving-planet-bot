@@ -129,7 +129,6 @@ def test_origen_con_dos_lectores(monkeypatch, jev, flag, guardado):
 
 def test_c3c_islas_como_sitio_de_buceo_no_desactiva_la_puerta_del_origen(monkeypatch):
     # cal-71/73: la palabra "islas" del mensaje desactivaba la pregunta del origen antes de cotizar
-    monkeypatch.setattr(settings, "rag_origen_pregunta", True)
     msg = "Estoy interesada en bucear el lunes festivo en islas del rosario. Que precio tiene?"
     respuesta = "El precio es 124 USD por persona."
     st = ConversationState(conversation_id="c3c", language="es")
@@ -144,7 +143,6 @@ def test_c3c_islas_como_sitio_de_buceo_no_desactiva_la_puerta_del_origen(monkeyp
 
 
 def test_c3c_un_origen_dicho_antes_sigue_contando(monkeypatch):
-    monkeypatch.setattr(settings, "rag_origen_pregunta", True)
     monkeypatch.setattr(settings, "lugar_con_dos_lectores", True)
     st = ConversationState(conversation_id="c3c", language="es")
     st.history = [{"role": "user", "content": "estamos en Cartagena"}, {"role": "user", "content": "y el precio?"}]

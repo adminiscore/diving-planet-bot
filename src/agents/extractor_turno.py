@@ -95,8 +95,7 @@ ESQUEMA = {
 
 # 13-oct (Gonzalo, flag `nombre_por_extractor`): el NOMBRE con que se presenta quien escribe, con su cita. Lo leía una
 # regex ("soy X" con una lista de palabras excluidas) y "yo soy gringo" saludaba "¡Hola, Gringo!" (hallazgo de ex-3,
-# HISTORY 0.31.18): añadir "gringo" a la lista sería un parche (mañana "soy paisa", "soy argentino"). Con el flag
-# apagado la llamada es exactamente la de antes (ni el campo ni su regla).
+# HISTORY 0.31.18): añadir "gringo" a la lista sería un parche (mañana "soy paisa", "soy argentino").
 ESQUEMA_CON_NOMBRE = {
     **ESQUEMA,
     "properties": {**ESQUEMA["properties"],
@@ -345,10 +344,10 @@ def _reparto_de_pares(valor):
     return reparto
 
 
-def _esquema(con_nombre: bool, con_hotel: bool, con_refresher: bool = False, precio_no_elige: bool = False,
+def _esquema(con_hotel: bool, con_refresher: bool = False, precio_no_elige: bool = False,
              paso6: dict | None = None) -> dict:
     """El esquema de la llamada con los campos opcionales encendidos (sin ellos, el de siempre)."""
-    base = ESQUEMA_CON_NOMBRE if con_nombre else ESQUEMA
+    base = ESQUEMA_CON_NOMBRE
     if precio_no_elige:  # mod-2: ver `_PRECIO_NO_ELIGE`
         import copy
 
@@ -637,7 +636,7 @@ async def extraer_turno(mensaje: str, *, history: list[dict] | None = None, sabi
         sistema = sistema.replace(GENERAL_PRECIO_ES, GENERAL_PRECIO_ES_V3).replace(GENERAL_PRECIO_EN, GENERAL_PRECIO_EN_V3)
         for antes, despues in _PRECIO_NO_ELIGE:
             sistema = sistema.replace(antes, despues)
-    elif settings.extractor_precio_elige:
+    else:
         sistema = sistema.replace(GENERAL_PRECIO_ES, GENERAL_PRECIO_ES_V2).replace(GENERAL_PRECIO_EN, GENERAL_PRECIO_EN_V2)
     if settings.certificado_solo_si_lo_dice:
         # 19-oct: sin la regla del código, que is_certified vea todas las formas de decirlo (ver IS_CERTIFIED_DICHO_*).
@@ -653,9 +652,7 @@ async def extraer_turno(mensaje: str, *, history: list[dict] | None = None, sabi
             ACTIVIDAD_EJEMPLOS_HOY_EN, ACTIVIDAD_EJEMPLOS_EN)
         sistema = sistema.replace(RESIDENTE_HOY_ES, RESIDENTE_ES).replace(RESIDENTE_HOY_EN, RESIDENTE_EN)
         sistema = sistema.replace(ELIGE_HOY_ES, ELIGE_ES).replace(ELIGE_HOY_EN, ELIGE_EN)
-    con_nombre = settings.nombre_por_extractor
-    if con_nombre:
-        sistema += REGLA_NOMBRE_ES if lang == "es" else REGLA_NOMBRE_EN
+    sistema += REGLA_NOMBRE_ES if lang == "es" else REGLA_NOMBRE_EN
     con_hotel = settings.hotel_por_extractor
     if settings.sin_cedula_extranjero:
         # CAL-C (17-oct, decisión de Álvaro): sin cédula colombiana → no es colombiano (paga en USD). Ver SIN_CEDULA_*.
@@ -718,7 +715,7 @@ async def extraer_turno(mensaje: str, *, history: list[dict] | None = None, sabi
     datos_paso6: dict = {}
     try:
         client = client or trace_openai(AsyncOpenAI(api_key=settings.openai_api_key))
-        esquema = _esquema(con_nombre, con_hotel, con_refresher, settings.precio_no_elige, None if aparte else paso6)
+        esquema = _esquema(con_hotel, con_refresher, settings.precio_no_elige, None if aparte else paso6)
         if aparte:
             esquema_paso6 = {"type": "object", "properties": {c: e for c, (e, _es, _en) in paso6.items()},
                              "required": list(paso6), "additionalProperties": False}
@@ -749,7 +746,7 @@ async def extraer_turno(mensaje: str, *, history: list[dict] | None = None, sabi
         return None
     extraer_turno.ultimo_segundos = time.perf_counter() - t0
     salida, descartes = {}, {}
-    for campo in (*CAMPOS, *EXTRAS, *(("nombre",) if con_nombre else ()), *(("hotel",) if con_hotel else ()),
+    for campo in (*CAMPOS, *EXTRAS, "nombre", *(("hotel",) if con_hotel else ()),
                   *(("refresher_interested",) if con_refresher else ()), *paso6):
         d = datos.get(campo)
         if not isinstance(d, dict) or d.get("valor") in (None, "", [], {}):

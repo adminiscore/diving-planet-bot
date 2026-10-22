@@ -221,49 +221,10 @@ class Settings(BaseSettings):
     # si se SABE que el plan es de un dia; ...). PROMOCIONADO 14-oct tras est3-B (HISTORY 0.31.25).
     # Revert = False aqui y en el compose.
     est2_datos: bool = True
-    # 13-oct (Gonzalo): el NOMBRE del cliente lo lee el extractor con su cita (campo `nombre`, solo con este flag; con
-    # el flag apagado la llamada al extractor es la de antes). La regex se queda con las formas sin ambiguedad ("me
-    # llamo", "mi nombre es", "my name is"). Caso: "yo soy gringo" -> "¡Hola, Gringo!" (HISTORY 0.31.18).
-    # ENCENDIDO para su mini-ronda B (atencion-B, 13-oct); si no pasa, False aqui y quitar la linea del compose.
-    nombre_por_extractor: bool = True
-    # 13-oct (Gonzalo): el grupo privado / evento de empresa contesta "Te paso con un asesor…" y ahora MARCA el pase
-    # (motivo + resumen para el asesor, como el link roto o needs_staff). Antes no se marcaba: solo llegaba a una persona
-    # si el cliente respondia "si/ok" justo despues (HISTORY 0.31.17). ENCENDIDO para su mini-ronda B (atencion-B,
-    # 13-oct); si no pasa, False aqui y quitar la linea del compose.
-    grupo_privado_pase: bool = True
-    # 13-oct (Gonzalo): en las instrucciones del extractor, la regla general daba "¿cuanto cuesta el buceo certificado?"
-    # como algo que NO es un dato y la de `activity` dice que preguntar el precio de un producto SI lo elige (Gadea
-    # 14/27-sep). Con el flag el ejemplo vale solo para la certificacion (extractor_turno.GENERAL_PRECIO_*_V2).
-    # Caso: regateo-grupo-6 repreguntaba "¿buceo, minicurso, snorkel o curso?". ENCENDIDO para su mini-ronda B (atencion-B,
-    # 13-oct); si no pasa, False aqui y quitar la linea del compose.
-    extractor_precio_elige: bool = True
-    # 13-oct (Gonzalo): posventa. Jev (`ya_reservado`, misma llamada) dice si el cliente YA tiene una reserva o ya hizo la
-    # actividad; mientras valga, el bot contesta lo que pregunte pero no hace preguntas de la reserva ni ofrece el menu
-    # de actividades. Casos: cambio-fecha-por-enfermedad ("Just completed the waivers" -> "Which one are you leaning
-    # toward…?"), pedir-fotos-postventa ("Fueron muy buenos buceos" -> "¿Con cual te animas?"). ENCENDIDO para su mini-ronda B (atencion-B,
-    # 13-oct); si no pasa, False aqui y quitar la linea del compose.
-    posventa_sin_vender: bool = True
-    # CAL-B (15-oct, Gonzalo; decision de Gadea del 15-oct): sin saber la nacionalidad, el precio va en USD. La regla del
-    # catalogo decia "si no sabes la nacionalidad, da las dos monedas" (catalog.MONEDA_SIN_NACIONALIDAD) y el resumen del
-    # estado no decia nada: con el flag, la regla del catalogo es la de Gadea y el resumen da la moneda ya resuelta.
-    # Banco de fallos (8 casos x 3): fallan 12/24 -> 7/24 (6 de los 7 son del choque con la regla del origen).
-    # Mini-ronda calb-A2/B2 (16-oct, 24 dialogos, con credito): 92,7 -> 95,4 %, 12 -> 17/24 sin fallos, 9 mejoras / 5
-    # regresiones (2 por criterios desfasados o el choque con el origen, 3 ajenas). PROMOCIONADO 16-oct (decision de Alvaro;
-    # HISTORY 0.31.35). Revert = False aqui.
-    moneda_sin_nacionalidad_usd: bool = True
-    # ex-2 (fase EX): las palabras clave que pasan a un asesor ANTES de que opine la IA se quedan con las EMERGENCIAS
-    # (escalation.EMERGENCY_KEYWORDS) y las incidencias en tiempo real; lo medico, el tiempo y las quejas los decide
-    # Jev (`sensitive_topic`). Con la lista entera, "completed the medical form" o "mi amigo es abogado" pasaban a un
-    # asesor. Escalon 0 (docs/robustness/escalado/, scripts/banco_escalado.py): falsas alarmas 32-33 -> 11-12,
-    # perdidas 4-5 -> 5-7 (solo del tiempo). PROMOCIONADO 13-oct (decision de Alvaro; HISTORY 0.31.18: ronda ex23
-    # 95,3 -> 95,3 %, "medical form" ya no recibe el aviso medico). Revert = False aqui y en el compose.
-    escalado_solo_emergencias: bool = True
     # ex-3 (fase EX): respuestas de texto fijo ACTIVAS que pasan al RAG, una por flag (inventario y motivos:
     # docs/robustness/atajos/inventario-ex3.md). APAGADOS hasta medirlos.
     # (El del resumen de "¿qué ofrecen para bucear?", `atajo_resumen_por_rag`, promocionado el 13-oct, ya no tiene flag:
-    # MEJ-1.)
-    # - "¿cambia el precio si es colombiano?": la regla de moneda va en el catálogo y en 2 FAQs curadas.
-    atajo_nacionalidad_por_rag: bool = True  # PROMOCIONADO 13-oct (Alvaro, HISTORY 0.31.18): sonda igual o mejor
+    # MEJ-1; tampoco el de "¿cambia el precio si es colombiano?", `atajo_nacionalidad_por_rag`: mej-1d.)
     # - alergia a un alimento (sin alcohol en el mensaje): la FAQ curada "Soy vegetariano o tengo una alergia" lo
     #   cubre. NO PASA el escalón 0 (13-oct): con el flag la alergia acaba en el aviso médico ("Para preguntas médicas…");
     #   se queda la respuesta fija. APAGADO.
@@ -660,29 +621,6 @@ class Settings(BaseSettings):
     # gpt-6; "low"/"medium" = razona antes de la lista y el tope de salida sube 4000 tokens, como el juez gpt-5/o).
     # Se mide con scripts/banco_juez_reales.py --ajuste juez_luna_razonamiento=low.
     juez_luna_razonamiento: str = "none"
-    # Punto 3 (el ORIGEN del cliente en los precios; 15 de 63 fallos visibles de la ronda 2026-10-02-completa: el modelo
-    # cotizaba un origen por su cuenta). 6-oct: dos versiones con un AVISO en el contexto del RAG, medidas y quitadas
-    # (V1 "no lo sabemos, preguntalo": ronda 2026-10-06-origen-B 93,9 -> 93,4 %, repreguntaba lo ya dado a entender; V2
-    # "la conversacion manda": volvia a cotizar Cartagena). 7-oct, opcion C (decision de Alvaro): lo hace el CODIGO
-    # (`conversational_core._origen_antes_del_precio`): si el cliente pide un precio, el origen no consta y el cliente
-    # no ha nombrado Cartagena ni las islas, el bot pregunta el origen con un texto fijo (con sus botones), guarda la
-    # pregunta y la contesta en cuanto el cliente lo dice. Y si una respuesta ya pregunta el origen, la reserva no
-    # repite su pregunta. Escalon 0 en PRE (7-oct, Gonzalo, docs/robustness/origen-c/): PASA -- mejor que hoy en los 8
-    # dialogos, peor en ninguno, sin las repreguntas de V1; hueco: "¿y en pesos?" (precio sin palabras de precio).
-    # Ronda core origen-c-B (7-oct): 93,9 -> 92,9 %; la puerta miraba la PREGUNTA ("¿dice precio?") y fallaba por los
-    # dos lados (pregunta de MONEDA sin contestar; "¿y en pesos?" cotizaba). Arreglo: mira si la RESPUESTA del RAG
-    # lleva un importe. Ronda core origen-c2-B (7-oct): 93,9 -> 93,0 % (ruido), ninguna regresion real; la puerta salta
-    # donde debe (5 veces, incluido "¿y en pesos?") y ya no en la pregunta de la moneda. PROMOCIONADO: ENCENDIDO.
-    # Revert = False aqui y "false" en el compose.
-    rag_origen_pregunta: bool = True
-    # s4-31 (8-oct, Alvaro): cuando la puerta del origen salta, en vez de SUSTITUIR la respuesta del RAG por la pregunta
-    # fija, se quitan solo las frases con un importe y su pregunta final, y se anade la del origen. En la ronda del
-    # golden visible con Luna (2026-10-08-luna-visible) 6 de 33 fallos del RAG eran de perder lo que no era el precio
-    # ("no hay precio especial para colombianos", "con 1,5 anos no hace falta refresher"). Tambien quita los links de
-    # reserva y lo que incluye (dependen del origen). Escalon 0 en PRE: las 6 conservan lo que no es precio. Mini-ronda
-    # conserva-A/B (9 dialogos, misma franja): 92,6 -> 97,0 %, 5 -> 8/9 sin fallos, 6 mejoras, ninguna regresion del flag.
-    # PROMOCIONADO 8-oct (HISTORY 0.31.1). Revert = False aqui y en el compose.
-    origen_conserva_respuesta: bool = True
     # ord-7 (21-oct, decisión de Gadea con ord-0): cuando la puerta del origen salta, quitaba también lo que incluye,
     # el almuerzo y el enlace, y el cliente se quedaba sin nada de lo que preguntó (ord-0: 3 de las 4 omisiones de
     # redacción). Ahora, si se sabe de qué actividad pregunta y tiene un plan por origen, el código pone las DOS
@@ -719,39 +657,9 @@ class Settings(BaseSettings):
     # (cal-14: explicaba qué poner en el concepto de una transferencia, contra la política). Lo general se contesta
     # igual; lo del caso concreto lo confirma el asesor. APAGADO hasta medirlo.
     contexto_tras_el_pase: bool = False
-    # Punto 4 (s4-26, 7-oct): una pregunta mas de Jev en la misma llamada (`adds_person`): ¿el mensaje SUMA a una persona
-    # nueva o habla de alguien ya contado? Si Jev esta seguro de que no es nueva (< 0,2), "él quiere hacer snorkel" se
-    # mueve dentro del grupo sin preguntar "¿seguís siendo 2?" (acompanante-goteo). Si duda, se pregunta como hoy.
-    # Banco ciego: 0/10 nuevas por debajo, 9/10 ya contadas. PROMOCIONADO 7-oct (mini-ronda s426-extra-B: goteo pasa).
-    jev_persona_ya_contada: bool = True
-    # s4-28 (8-oct): una pregunta mas de Jev en la misma llamada (`customer_place`: Cartagena / ya en las islas / no lo
-    # dice). Nacio para decidir QUE lugar proponia la regex (`place_by_role` lo decidia por la preposicion: "visitando
-    # Cartagena... coordinar inmersiones EN Isla del Rosario" salia islas); banco ciego: Jev 12/12, regex 4/12.
-    # PROMOCIONADO 8-oct (HISTORY 0.30.4). Desde ex-9b paso 3 el origen lo lee solo el extractor (sin pista del regex) y
-    # esa regla (`_lugar_por_jev`) se quito en la limpieza ex9b; la pregunta se queda porque la leen CAL-C3c
-    # (`lugar_con_dos_lectores`: Jev seguro de que el mensaje no dice el origen) y CAL-C4 (`lugar_desconocido_al_rag`).
-    # Revert = False aqui y en el compose.
-    jev_lugar_cliente: bool = True
-    # s4-27 (7-oct, Gonzalo): si el cliente NOMBRA cuantas inmersiones ("el precio de las 2 inmersiones") y su origen
-    # consta, el contexto del RAG dice que plan del catalogo es (`conversational_core._plan_nombrado`). Caso:
-    # precio-desde-islas-vs-cartagena, el RAG negaba las 2 inmersiones desde las islas (124 USD) y ofrecia el paquete
-    # de 3; rag_piezas con el historial real 0-1/3, con el plan en el contexto 3/3 (docs/robustness/s4-27/).
-    # Escalon 0 en PRE (codigo local, 3 reps): t5 da los 124 USD 3/3 (hoy 0/3). Ronda core s427-B (7-oct) frente a
-    # s426-B re-juzgada: 95,2 -> 96,0 %, 24 -> 26/32 sin fallos, 1 regresion ajena (descuento-online: el enrutador
-    # duda, ningun mensaje nombra inmersiones), latencia igual. PROMOCIONADO: ENCENDIDO. Revert = False aqui y quitar
-    # la linea del compose.
-    rag_plan_nombrado: bool = True
     # Esquema de la base curada que lee la busqueda (rag-2, `scripts/kb_v2.py`). Solo para medir una base nueva sin
     # tocar la que usa PRE (p. ej. RAG_KB_ESQUEMA=kb_v2_prueba con `rag_piezas --codigo-local`); en PRE es siempre "kb_v2".
     rag_kb_esquema: str = "kb_v2"
-    # rag-5 (1-oct): puerta de Jev para el extractor de notas. Gonzalo midio el 30-sep que de 26 notas nuevas solo 7
-    # eran buenas y 15 eran la pregunta del cliente apuntada como hecho, o inventada; y que son las que hacen rehacer
-    # la respuesta adelantada. Con el flag, Jev contesta en la llamada del enrutador "¿cuenta algo del cliente que
-    # haya que apuntar?" y, si esta SEGURO de que no (p < 0,2), no se llama al extractor. Calibrado con
-    # `scripts/sonda_notas.py`: 0/24 positivos perdidos (7 de ellos casos reales ciegos), 43/44 negativos parados.
-    # Ronda rag5-C: extractor llamado en 9 de 77 turnos, 6 notas en 93 turnos, calidad igual. PROMOCIONADO 1-oct
-    # (HISTORY 0.29.88). Revert = "false" aqui y en docker-compose.vps.yml.
-    notas_puerta_jev: bool = True
 
     # --- Observabilidad: Langfuse (sustituye a LangSmith, cuota Developer
     # agotada; ver docs/robustness/progress-log.md "Tarea 8"). Sin claves, el

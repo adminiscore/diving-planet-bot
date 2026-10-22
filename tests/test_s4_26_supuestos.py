@@ -13,7 +13,6 @@ from src.agents.nucleo import extraction as core_extraction
 from src.agents.nucleo import routing as core_routing
 from src.agents.nucleo import slotfill_close as core_close
 from src.agents.supervisor import route_message
-from src.config import settings
 from src.flows.state import ConversationState
 
 
@@ -87,7 +86,6 @@ def _grupo_de_dos():
 
 @pytest.mark.parametrize("p, pregunta", [(0.05, False), (0.45, True), (None, True)])
 def test_persona_ya_contada_se_mueve_sin_preguntar(monkeypatch, p, pregunta):
-    monkeypatch.setattr(settings, "jev_persona_ya_contada", True)
     st = _grupo_de_dos()
     st._jev_adds_person = p
     core._add_or_ask_companion(st, "él quiere hacer snorkel", "snorkel", 1)
@@ -97,23 +95,12 @@ def test_persona_ya_contada_se_mueve_sin_preguntar(monkeypatch, p, pregunta):
         assert st.detected_group_size == 2
 
 
-def test_persona_ya_contada_con_el_flag_apagado_se_pregunta(monkeypatch):
-    monkeypatch.setattr(settings, "jev_persona_ya_contada", False)
-    st = _grupo_de_dos()
-    st._jev_adds_person = 0.05
-    core._add_or_ask_companion(st, "él quiere hacer snorkel", "snorkel", 1)
-    assert st.pending_companion_in_group == {"activity": "snorkel", "qty": 1}
-
-
-def test_jev_pide_la_pregunta_solo_con_el_flag(monkeypatch):
+def test_jev_pide_la_pregunta():
     from src.agents import jev_router
 
-    monkeypatch.setattr(settings, "jev_persona_ya_contada", True)
     assert jev_router.ADDS_PERSON in jev_router._questions_for_turn()
     assert jev_router.answers_to_signals({jev_router.ADDS_PERSON: {"type": "noul", "noul": 0.05}})[
         jev_router.ADDS_PERSON] == 0.05
-    monkeypatch.setattr(settings, "jev_persona_ya_contada", False)
-    assert jev_router.ADDS_PERSON not in jev_router._questions_for_turn()
 
 
 # --- s4-26: condiciones abiertas y «el plan», no «el carrito» --------------------------------------------------------------
@@ -144,13 +131,10 @@ def test_la_ubicacion_del_hotel_se_declara():
 # --- jev_lugar_cliente (s4-28): la pregunta de Jev (la leen CAL-C3c y CAL-C4; `_lugar_por_jev` se quitó con la
 # pista del regex en la limpieza ex9b) ---------------------------------------------------------------------------
 
-def test_jev_pide_el_lugar_solo_con_el_flag(monkeypatch):
+def test_jev_pide_el_lugar():
     from src.agents import jev_router
 
-    monkeypatch.setattr(settings, "jev_lugar_cliente", True)
     assert jev_router.CUSTOMER_PLACE in jev_router._questions_for_turn()
     out = jev_router.answers_to_signals({jev_router.CUSTOMER_PLACE: {"type": "choice", "choice": "none", "confidence": 0.9}})
     assert out[jev_router.CUSTOMER_PLACE] == {"choice": "none", "confidence": 0.9}
     assert jev_router.uncertain_answers({jev_router.CUSTOMER_PLACE: {"type": "choice", "choice": "none", "confidence": 0.3}}) == []
-    monkeypatch.setattr(settings, "jev_lugar_cliente", False)
-    assert jev_router.CUSTOMER_PLACE not in jev_router._questions_for_turn()

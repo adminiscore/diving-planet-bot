@@ -84,7 +84,7 @@ async def info_node(state: BotState) -> dict:
     if pide_servicio_privado(msg_lower, signals):
         if settings.privado_pasa_directo:
             conv.history.append({"role": "user", "content": message})
-        answer = private_group_event_reply(conv)  # 13-oct: con `grupo_privado_pase` marca también el pase
+        answer = private_group_event_reply(conv)  # 13-oct: marca también el pase
         logger.info("[NODE:info] Private/corporate group event -> real deterministic answer")
         if not settings.privado_pasa_directo:
             conv.history.append({"role": "user", "content": message})

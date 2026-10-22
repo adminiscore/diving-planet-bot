@@ -107,36 +107,7 @@ def _collect() -> dict[str, str]:
     add_json("booking/extraction.tool+evidence", booking.extraction_tool(["evidence"]))
     add_json("booking/evidence.fields", list(booking.EVIDENCE_FIELDS))
 
-    # ── booking · veto de valores ya resueltos (verify_fields) ──────────────
-    # Un bloque por campo (el prompt de 1 campo) + la combinacion de TODOS
-    # (el caso agrupado real, 1 peticion para N campos).
-    _veto_fields = (
-        "activity", "is_certified", "is_colombian", "location", "group_size",
-        "group_allocation",
-    )
-    for field in _veto_fields:
-        for lang in LANGS:
-            add(
-                f"booking/field_verification.{field}.system.{lang}",
-                booking.field_verification_system_prompt(field, lang),
-            )
-    for lang in LANGS:
-        add(
-            f"booking/field_verification.ALL.system.{lang}",
-            booking.fields_verification_system_prompt(list(_veto_fields), lang),
-        )
-
-    # ── booking · prompt COMBINADO (huecos + veto en 1 peticion) ────────────
-    # Es el prompt que corre de verdad en el 61% de los turnos (ver
-    # `llm_extractor.extract_and_verify`): tiene que quedar en el snapshot
-    # igual que los dos que fusiona.
-    for lang in LANGS:
-        add(
-            f"booking/combined_extraction.system.{lang}",
-            booking.combined_extraction_system_prompt(
-                ["location", "duration"], ["activity", "group_size"], lang
-            ),
-        )
+    # (mej-1d: el veto y el prompt combinado se quitaron; no corrian desde ex-9.)
 
     # ── booking · señales especiales (detect_special_signals) ─────────────────
     for lang in LANGS:
@@ -192,6 +163,8 @@ def _collect() -> dict[str, str]:
     add("info/rag.pase_ofrecido.en", info.RAG_PASE_OFRECIDO_EN)
     add("info/rag.sin_precio.es", info.RAG_SIN_PRECIO_ES)
     add("info/rag.sin_precio.en", info.RAG_SIN_PRECIO_EN)
+    add("info/rag.sin_lista.es", info.RAG_SIN_LISTA_ES)
+    add("info/rag.sin_lista.en", info.RAG_SIN_LISTA_EN)
     add("memory/seguridad.notas.es", memory.MEMORIA_SEGURA_NOTAS_ES)
     add("memory/seguridad.notas.en", memory.MEMORIA_SEGURA_NOTAS_EN)
     add("memory/seguridad.resumen.es", memory.MEMORIA_SEGURA_RESUMEN_ES)
