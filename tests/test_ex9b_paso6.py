@@ -39,6 +39,8 @@ def _apagados(monkeypatch):
         monkeypatch.setattr(settings, f, False)
     # gen-8: `actividad_de_la_pregunta` también es un campo del paso 6 (tests/test_gen8_actividad_preguntada.py).
     monkeypatch.setattr(settings, "actividad_de_la_pregunta", False)
+    # arq-1t: `paquete_varios_dias` también es un campo del paso 6 (tests/test_arq1t_paquete.py).
+    monkeypatch.setattr(settings, "paquete_varios_dias", False)
     # Los campos en la MISMA llamada (lo que prueban estos tests); la llamada aparte la encienden los suyos (sección 7).
     monkeypatch.setattr(settings, "paso6_en_llamada_aparte", False)
 

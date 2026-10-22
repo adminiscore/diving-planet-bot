@@ -241,6 +241,10 @@ def _poner_duracion(intent, state: ConversationState, datos: dict, message: str 
     if duracion is None and not state.detected_duration and _paquete_de_varios_dias_nombrado(message):
         duracion = "multi_day"
         logger.info("[EXTRACT][EX9B-6] sin días dichos, pero nombra un paquete de varios días del catálogo")
+    if duracion is None and settings.paquete_varios_dias and (datos or {}).get("paquete_varios_dias") is True:
+        # arq-1t: «el paquete de varios días», sin cifra (el extractor lo dice con su cita).
+        duracion, de_buceo = "multi_day", True
+        logger.info("[EXTRACT][ARQ1T] pide un paquete de varios días sin decir cuántos")
     if duracion is None:
         if regex:
             logger.info(f"[EXTRACT][EX9B-6] el regex leía duration={regex!r}; el cliente no lo dice")

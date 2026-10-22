@@ -137,11 +137,21 @@ def hechos(state: ConversationState, intenciones: list[str], actividades: list[s
     moneda = _moneda(state)
     pedidas = [i for i in intenciones if i in INTENCIONES]
     elegido = state.selected_service or getattr(state, "detected_service_id", None)
+    # arq-1t: pide varios días sin plan elegido → los hechos de los paquetes de varios días, no los de la salida de uno.
+    # El plan base que se apunta solo al saber la actividad (`detected_service_id`, rutas/booking) no es una elección.
+    varios_dias = (settings.paquete_varios_dias and not state.selected_service
+                   and state.detected_duration == "multi_day")
     bloques = []
     for actividad in actividades:
         registro = dom.by_id(actividad)
         if registro is None:
             continue
+        detectado = getattr(state, "detected_service_id", None)
+        sin_plan = varios_dias and detectado in (None, dom.base_service_id(actividad))
+        paquetes = {o: _paquetes_de_varios_dias(actividad, o) for o in origenes} if sin_plan else {}
+        paquetes = {o: s for o, s in paquetes.items() if s}
+        if paquetes:
+            elegido = paquetes.get("cartagena", next(iter(paquetes.values())))[0]  # el primero, como base del precio
         bloque: dict = {"actividad": actividad, "nombre": dom.label(actividad, lang), "origen": origen}
         if registro.cart_type == "companion":
             bloques.append(_acompanante(bloque, pedidas, origen, origenes, moneda, lang))
@@ -158,7 +168,16 @@ def hechos(state: ConversationState, intenciones: list[str], actividades: list[s
             if otros:  # el buceo y los paquetes: el plan base y la lista de los demás con su precio
                 bloque["otros_planes"] = [{"plan": _nombre(s, lang), "precio": _precio(s, moneda)}
                                           for s in otros if _precio(s, moneda)]
-        if "incluye" in pedidas:
+        if "incluye" in pedidas and paquetes:
+            # arq-1t: lo común a todos los paquetes de varios días del origen (solo cambia el número de inmersiones) y
+            # la lista de paquetes; lo que NO incluyen, igual (el alojamiento y los almuerzos de los otros días).
+            bloque["incluye"] = {o: _comunes([_lista(s, "included", lang) for s in sids]) for o, sids in paquetes.items()}
+            no_incluye = {o: _comunes([_lista(s, "not_included", lang) for s in sids]) for o, sids in paquetes.items()}
+            if "island" in paquetes:
+                no_incluye["island"] = [*no_incluye.get("island", []), _politica("island_pickup", lang)]
+            bloque["no_incluye"] = {o: [x for x in v if x] for o, v in no_incluye.items() if any(v)}
+            bloque["paquetes"] = {o: [_nombre(s, lang) for s in sids] for o, sids in paquetes.items()}
+        elif "incluye" in pedidas:
             bloque["incluye"] = _por_origen(actividad, origenes, lambda sid: _lista(sid, "included", lang), elegido)
             # Lo que NO incluye: de la ficha y, en los planes de las islas (sus fichas no lo traen), de la política de la
             # recogida («no incluyen transporte desde Cartagena ni almuerzo»). Sin esto, «¿hay almuerzo?» desde las
@@ -262,6 +281,19 @@ def _previo_y_edad(registro, lang: str) -> list[str]:
         hechos_.append(f"Edad mínima: desde los {registro.min_age} años." if lang == "es"
                        else f"Minimum age: {registro.min_age} and over.")
     return hechos_
+
+
+def _paquetes_de_varios_dias(actividad: str, origen: str) -> list[str]:
+    """arq-1t: los planes de la actividad en ese origen que duran varios días (los paquetes), en el orden del registro."""
+    return [s for s in dom.service_ids(actividad, origen) if ((SERVICES.get(s) or {}).get("duration_days") or 0) > 1]
+
+
+def _comunes(listas: list[list[str]]) -> list[str]:
+    """Los elementos que están en TODAS las listas, en el orden de la primera."""
+    if not listas:
+        return []
+    resto = [set(lista) for lista in listas[1:]]
+    return [x for x in listas[0] if all(x in r for r in resto)]
 
 
 # arq-1u (22-oct, flag `enlace_con_como_pagar`; G10 nº 4: g10-051, g10-072, g10-006, g10-045): con el enlace de reserva,

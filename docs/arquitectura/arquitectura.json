@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-22T18:38:32+00:00",
-  "commit": "84271e44",
+  "generado": "2026-10-22T19:00:24+00:00",
+  "commit": "cb6ad35b",
   "rama": "feature/alvaro-22oct"
  },
  "vistas": {
@@ -1345,6 +1345,13 @@
     {
      "nombre": "enlace_con_como_pagar",
      "titulo": "Con el enlace, cómo se reserva y se paga",
+     "codigo": false,
+     "pre": false,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "paquete_varios_dias",
+     "titulo": "«El paquete de varios días» sin decir cuántos",
      "codigo": false,
      "pre": false,
      "sin_efecto": false
@@ -3112,6 +3119,19 @@
    "fijado_en_pre": true,
    "usado_por": [
     "b_extraction"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "paquete_varios_dias",
+   "area": "Preguntas",
+   "titulo": "«El paquete de varios días» sin decir cuántos",
+   "texto": "Si el cliente pregunta por un paquete de varios días sin decir cuántos, Coral lo entiende así y, al preguntar qué incluye, da lo que tienen todos los paquetes (almuerzo solo el primer día, alojamiento no incluido) y la lista de paquetes, en vez de lo de la salida de un día (arq-1t, 22-oct).",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
+   "usado_por": [
+    "r_hechos"
    ],
    "sin_efecto": null
   },

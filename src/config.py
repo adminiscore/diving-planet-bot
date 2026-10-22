@@ -666,6 +666,10 @@ class Settings(BaseSettings):
     # con tarjeta en la web), que la reserva queda confirmada cuando el equipo concilia el pago (política
     # payment_confirmation) y, si pide certificación, el carné. APAGADO hasta medirlo.
     enlace_con_como_pagar: bool = False
+    # ARQ-1t (22-oct): «el paquete de varios días» sin cifra: el extractor lo dice (paso 6, `paquete_varios_dias`), la
+    # duración queda en varios días y, sin plan elegido, los hechos son los de los paquetes (precio desde el primero con
+    # la lista de todos; qué incluye: lo común a todos), no los de la salida de un día. APAGADO hasta medirlo.
+    paquete_varios_dias: bool = False
     varias_actividades: bool = False  # ARQ-1j (22-oct): el extractor da TODAS las actividades del mensaje (y el acompañante) y los hechos salen de cada una
     adaptado_contesta_lo_demas: bool = True  # PROMOCIONADO 22-oct (arq-1l: banco DIVE TO HEAL 3/12 -> 11/12; HISTORY 0.31.93); revert = False
     enlace_con_disponibilidad: bool = True  # PROMOCIONADO 22-oct (arq-1m: banco de enlace 3/12 -> 12/12; HISTORY 0.31.93); revert = False
