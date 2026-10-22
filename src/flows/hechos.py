@@ -32,7 +32,8 @@ from src.flows.catalog import (
 from src.flows.state import ConversationState
 from src.utils import money
 
-INTENCIONES = ("precio", "incluye", "requisitos", "horario", "disponibilidad", "edad", "enlace", "descuento")
+INTENCIONES = ("precio", "incluye", "requisitos", "horario", "disponibilidad", "edad", "enlace", "descuento",
+               "tiempo")
 ORIGENES = ("cartagena", "island")
 # Las intenciones cuyos hechos cambian según desde dónde sale el cliente: sin origen van las dos variantes.
 _DEPENDEN_DEL_ORIGEN = {"precio", "incluye", "horario", "enlace"}
@@ -214,6 +215,8 @@ def hechos(state: ConversationState, intenciones: list[str], actividades: list[s
             bloque["edad"] = {"minima": registro.min_age, "maxima": registro.max_age}
         if "descuento" in pedidas:
             bloque["descuento"] = _descuentos(lang)
+        if "tiempo" in pedidas:
+            bloque.update(_tiempo(lang))
         # arq-1m (G10 nº 2): «¿hay disponibilidad mañana?» o «¿cómo reservamos?» se contestaban con «en la web», sin el
         # enlace (Jev marcaba la disponibilidad, no el enlace): con la disponibilidad va también el enlace de reserva.
         if "enlace" in pedidas or (settings.enlace_con_disponibilidad and "disponibilidad" in pedidas):
@@ -285,6 +288,17 @@ def _previo_y_edad(registro, lang: str) -> list[str]:
     return hechos_
 
 
+def _tiempo(lang: str) -> dict:
+    """arq-1v: si da tiempo antes de irse. La decisión de Gadea (desde las islas va muy justo y lo confirma un asesor;
+    desde Cartagena no alcanza; el cierre de las 4:30) va en `tiempo`; la espera antes de volar, aparte (`si_vuela`), para
+    que solo se diga si el cliente vuela."""
+    if not settings.tiempo_limitado:
+        return {}
+    tiempo = [p for p in (_politica("time_limited_departure", lang), _politica("activity_schedule", lang)) if p]
+    vuela = _politica("flight_after_diving", lang)
+    return {"tiempo": tiempo, **({"si_vuela": vuela} if vuela else {})}
+
+
 def _paquetes_de_varios_dias(actividad: str, origen: str) -> list[str]:
     """arq-1t: los planes de la actividad en ese origen que duran varios días (los paquetes), en el orden del registro."""
     return [s for s in dom.service_ids(actividad, origen) if ((SERVICES.get(s) or {}).get("duration_days") or 0) > 1]
@@ -316,7 +330,7 @@ def _pago_extranjero(lang: str) -> str | None:
 # redactor porque no se sabía la actividad (`hechos=sin_actividad`); 11 preguntaban solo la hora o la recogida, qué llevar
 # o si hay sitio, casi siempre quien ya reservó y no la nombra. Esos hechos son los mismos para todas las actividades (las
 # políticas), así que el código los da sin adivinar la actividad. Precio, qué incluye, edad y enlace sí la necesitan.
-INTENCIONES_SIN_ACTIVIDAD = frozenset({"horario", "disponibilidad", "requisitos", "descuento"})
+INTENCIONES_SIN_ACTIVIDAD = frozenset({"horario", "disponibilidad", "requisitos", "descuento", "tiempo"})
 
 
 def _descuentos(lang: str) -> list[str]:
@@ -347,6 +361,8 @@ def hechos_sin_actividad(state: ConversationState, intenciones: list[str]) -> li
     if "disponibilidad" in pedidas:
         bloque["disponibilidad"] = [p for p in (_politica("availability_always", lang),
                                                 _politica("booking_system_info", lang)) if p]
+    if "tiempo" in pedidas:
+        bloque.update(_tiempo(lang))
     if "requisitos" in pedidas:
         bloque["requisitos"] = [p for p in (_politica("insurance_form_requirement", lang),
                                             _politica("what_to_bring", lang)) if p]
@@ -456,6 +472,9 @@ def faltan(answer: str, bloques: list[dict], intenciones: list[str]) -> list[str
         for elemento in dict.fromkeys(e for lista in (b.get("recogida") or {}).values() for e in lista):
             if not _elemento_dado(elemento, raices, answer):
                 perdidos.append(elemento)
+        if "tiempo" in intenciones and b.get("tiempo"):  # arq-1v: la decisión de Gadea tiene que ir
+            if not _elemento_dado(b["tiempo"][0], raices, answer):
+                perdidos.append(b["tiempo"][0])
         if "enlace" in intenciones or "disponibilidad" in intenciones:
             for elemento in b.get("como_reservar") or []:  # arq-1u
                 if not _elemento_dado(elemento, raices, answer):

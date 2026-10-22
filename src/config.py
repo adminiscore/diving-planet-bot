@@ -670,6 +670,10 @@ class Settings(BaseSettings):
     # duración queda en varios días y, sin plan elegido, los hechos son los de los paquetes (precio desde el primero con
     # la lista de todos; qué incluye: lo común a todos), no los de la salida de un día. APAGADO hasta medirlo.
     paquete_varios_dias: bool = False
+    # ARQ-1v (22-oct): «me voy mañana al mediodía, ¿me da tiempo?» entra en la tabla (Jev pide_si_alcanza): los hechos
+    # dan la decisión de Gadea (desde las islas va muy justo y lo confirma un asesor; desde Cartagena no alcanza; cierre
+    # de las 4:30 del día anterior) y la espera antes de volar, solo si vuela. APAGADO hasta medirlo.
+    tiempo_limitado: bool = False
     varias_actividades: bool = False  # ARQ-1j (22-oct): el extractor da TODAS las actividades del mensaje (y el acompañante) y los hechos salen de cada una
     adaptado_contesta_lo_demas: bool = True  # PROMOCIONADO 22-oct (arq-1l: banco DIVE TO HEAL 3/12 -> 11/12; HISTORY 0.31.93); revert = False
     enlace_con_disponibilidad: bool = True  # PROMOCIONADO 22-oct (arq-1m: banco de enlace 3/12 -> 12/12; HISTORY 0.31.93); revert = False

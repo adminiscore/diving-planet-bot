@@ -485,6 +485,22 @@ PIDE_DISPONIBILIDAD = "pide_disponibilidad"
 PIDE_EDAD = "pide_edad"
 PIDE_ENLACE = "pide_enlace"
 PIDE_OTRA_COSA = "pide_otra_cosa"
+# arq-1v (22-oct, flag `tiempo_limitado`): «me voy mañana al mediodía, ¿me da tiempo?». No era de la tabla: lo contestaba
+# el RAG razonando solo y distinto cada vez (G10 nº 4: g10-016, 021, 036, 050, 065).
+PIDE_SI_ALCANZA = "pide_si_alcanza"
+_PIDE_SI_ALCANZA_Q = {
+    "type": "noul",
+    "instructions": (
+        "The customer has a time limit and asks whether an activity fits before they leave, or what they can do in "
+        "the little time they have (they leave tomorrow at noon, they fly out in the morning, they only have one "
+        "morning), even if the same message also asks other things. It is FALSE when they only ask the schedule "
+        "without saying they are short of time."
+    ),
+}
+_OTRA_COSA_SIN_EL_TIEMPO = (
+    " Whether they have enough time for an activity before they leave also counts as one of those (it is not "
+    "something else)."
+)
 INTENCION_MIN = 0.7
 _INTENCIONES_Q = {
     PIDE_REQUISITOS: {
@@ -752,7 +768,7 @@ _U34_QUESTIONS = (
     AFFIRMS_CERTIFICATION, AFFIRMS_GROUP, AFFIRMS_NATIONALITY, CORRECTS, ASKS_RECALL, NEEDS_STAFF,
     CHANGES_DATE, COMPANION_JOINS, PENDING_ANSWER, SHARES_OPEN_FACT, ADDS_PERSON, CUSTOMER_PLACE, YA_RESERVADO,
     PIDE_DATOS_AJENOS, NUEVO_CASO, PREGUNTA_SI_ES_IA, CAMBIA_IDIOMA, PIDE_PRECIO, PIDE_SERVICIO_PRIVADO, PIDE_QUE_INCLUYE,
-    *_INTENCIONES_Q, PIDE_DESCUENTO,  # arq-4b: su duda no es del router (no manda el turno al LLM)
+    *_INTENCIONES_Q, PIDE_DESCUENTO, PIDE_SI_ALCANZA,  # arq-4b/arq-1v: su duda no manda el turno al router LLM
 )
 
 
@@ -839,6 +855,11 @@ def _questions_for_turn(pending_slot: str | None = None) -> dict:
         if settings.descuentos_en_la_tabla:
             q[PIDE_DESCUENTO] = _PIDE_DESCUENTO_Q
             q[PIDE_OTRA_COSA] = _PIDE_OTRA_COSA_CON_DESCUENTOS_Q
+    if settings.tiempo_limitado and PIDE_OTRA_COSA in q:
+        # arq-1v: preguntar si da tiempo es de la tabla; «otra cosa» deja de contarlo.
+        q[PIDE_SI_ALCANZA] = _PIDE_SI_ALCANZA_Q
+        q[PIDE_OTRA_COSA] = {**q[PIDE_OTRA_COSA],
+                             "instructions": q[PIDE_OTRA_COSA]["instructions"] + _OTRA_COSA_SIN_EL_TIEMPO}
     return q
 
 
@@ -919,6 +940,8 @@ def answers_to_signals(answers: dict, threshold: float = THRESHOLD) -> dict:
     for intencion in (*_INTENCIONES_Q, PIDE_DESCUENTO):
         if intencion in answers and intencion != PIDE_OTRA_COSA:
             out[intencion] = (answers.get(intencion) or {}).get("noul", 0.0) >= INTENCION_MIN
+    if PIDE_SI_ALCANZA in answers:
+        out[PIDE_SI_ALCANZA] = (answers.get(PIDE_SI_ALCANZA) or {}).get("noul", 0.0) >= INTENCION_MIN
     if PIDE_OTRA_COSA in answers:
         # ARQ-1d: al revés que las intenciones, cuenta como «sí» todo lo que no sea un «no» seguro.
         out[PIDE_OTRA_COSA] = (answers.get(PIDE_OTRA_COSA) or {}).get("noul", 1.0) > 1 - INTENCION_MIN
@@ -1018,6 +1041,7 @@ _TURN_SIGNALS = (
     # ex-9b (19-oct): ADDS_PERSON también viaja cuando Jev duda en el router (como COMPANION_JOINS): sin él, en esos
     # turnos "¿se suma alguien nuevo?" lo decidía la lista de palabras.
     ADDS_PERSON,
+    PIDE_SI_ALCANZA,  # arq-1v: también cuando Jev duda en el router (si no, se perdía: banco arq-1v, v1)
 )  # ASKS_QUESTION y PENDING_ANSWER se anaden a mano en `detect_routing_signals_jev_full`
 
 

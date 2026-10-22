@@ -41,6 +41,7 @@ from src.agents.jev_router import (
     PIDE_PRECIO,
     PIDE_QUE_INCLUYE,
     PIDE_REQUISITOS,
+    PIDE_SI_ALCANZA,
 )
 from src.flows.state import Step
 from src.orchestration.router import classify_route
@@ -61,6 +62,7 @@ _INTENCION_DE_SENAL = {
     "precio": PIDE_PRECIO, "incluye": PIDE_QUE_INCLUYE, "requisitos": PIDE_REQUISITOS, "horario": PIDE_HORARIO,
     "disponibilidad": PIDE_DISPONIBILIDAD, "edad": PIDE_EDAD, "enlace": PIDE_ENLACE,
     "descuento": PIDE_DESCUENTO,  # arq-4b: solo llega con el flag `descuentos_en_la_tabla`
+    "tiempo": PIDE_SI_ALCANZA,  # arq-1v (`tiempo_limitado`): Jev solo la pregunta con el flag
 }
 
 
