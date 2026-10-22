@@ -681,6 +681,10 @@ async def extraer_turno(mensaje: str, *, history: list[dict] | None = None, sabi
     if settings.sin_cedula_extranjero:
         # CAL-C (17-oct, decisión de Álvaro): sin cédula colombiana → no es colombiano (paga en USD). Ver SIN_CEDULA_*.
         sistema = sistema.replace(SIN_CEDULA_HOY_ES, SIN_CEDULA_ES).replace(SIN_CEDULA_HOY_EN, SIN_CEDULA_EN)
+        if settings.cedula_de_extranjeria_manda:
+            # arq-1r: el extranjero CON cédula de extranjería es residente (ver `_CEDULA_DE_EXTRANJERIA_MANDA`).
+            for antes, despues in _CEDULA_DE_EXTRANJERIA_MANDA:
+                sistema = sistema.replace(antes, despues)
     if settings.vivir_no_es_residir:
         # gen-4: vivir en Colombia no es ser residente (ver `_VIVIR_NO_ES_RESIDIR`).
         for antes, despues in _VIVIR_NO_ES_RESIDIR:
@@ -1014,3 +1018,13 @@ SIN_CEDULA_ES = ("mixed_nationality true e is_colombian null. Si dice que no tie
 SIN_CEDULA_HOY_EN = "mixed_nationality true and is_colombian null."
 SIN_CEDULA_EN = ("mixed_nationality true and is_colombian null. If they say they have no Colombian ID (cédula, nor a "
                  "cédula de extranjería) or that they are a foreigner or tourist: false.")
+
+# arq-1r (22-oct, flag `cedula_de_extranjeria_manda`): «extranjero o turista: false» chocaba con la cédula de extranjería,
+# que es justo la de los extranjeros residentes (paga en COP, decisión de Álvaro del 17-oct). Con historial
+# («living in Bogotá»), «I have a cédula de extranjería» salía false 2 de 9 lecturas (G10 nº 4, g10-047). Una frase.
+_CEDULA_DE_EXTRANJERIA_MANDA = (
+    ("o que es extranjero o turista: false.",
+     "o que es extranjero o turista: false, salvo que diga que tiene cédula de extranjería (entonces true)."),
+    ("or that they are a foreigner or tourist: false.",
+     "or that they are a foreigner or tourist: false, unless they say they have a cédula de extranjería (then true)."),
+)

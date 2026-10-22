@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-22T17:13:19+00:00",
-  "commit": "33f73c5f",
+  "generado": "2026-10-22T18:08:11+00:00",
+  "commit": "3708736b",
   "rama": "feature/alvaro-22oct"
  },
  "vistas": {
@@ -713,6 +713,13 @@
      "titulo": "Sin cédula, paga en dólares",
      "codigo": true,
      "pre": true,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "cedula_de_extranjeria_manda",
+     "titulo": "La cédula de extranjería manda sobre «extranjero»",
+     "codigo": false,
+     "pre": false,
      "sin_efecto": false
     },
     {
@@ -2404,6 +2411,19 @@
    "fijado_en_pre": true,
    "usado_por": [
     "r_catalogo"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "cedula_de_extranjeria_manda",
+   "area": "Reserva",
+   "titulo": "La cédula de extranjería manda sobre «extranjero»",
+   "texto": "Un extranjero que dice que tiene cédula de extranjería es residente y paga en pesos; antes la regla «extranjero o turista: paga en dólares» le ganaba la mitad de las veces (arq-1r, 22-oct).",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
+   "usado_por": [
+    "b_extraction"
    ],
    "sin_efecto": null
   },

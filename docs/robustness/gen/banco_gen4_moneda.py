@@ -35,6 +35,9 @@ CASOS = [
     ("I'm Venezuelan and I have a cédula de extranjería", None, "en", True),
     ("soy español, pero tengo cédula de extranjería desde hace años", None, "es", True),
     ("I'm French and I hold a Colombian resident ID", P_EN, "en", True),
+    # arq-1r (22-oct): extranjero CON cédula de extranjería (chocaba con «extranjero o turista: false»).
+    ("sí, soy alemana pero tengo cédula de extranjería", P_ES, "es", True),
+    ("I hold a cédula de extranjería.", P_EN, "en", True),
     # Viven en Colombia sin decir nacionalidad ni cédula: no lo dice (None).
     ("vivo en Medellín hace dos años", None, "es", None),
     ("I live in Bogotá", P_EN, "en", None),
