@@ -643,6 +643,11 @@ class Settings(BaseSettings):
     # con las reglas aplicadas (src/flows/hechos.py) y el redactor solo los pone en palabras, sin el catálogo entero.
     # APAGADO hasta medirlo con el banco fijo del RAG ×3 y su ronda core.
     hechos_por_codigo: bool = False
+    # arq-2a (22-oct, Gonzalo con Claude): fuera del prompt del RAG las reglas que el código ya pone en el contexto que
+    # el RAG lee siempre (catálogo y políticas, en los dos caminos de `hechos_por_codigo`): moneda, 5 % por equipo
+    # completo, no calcular totales, días de cierre y mal tiempo, y una viñeta repetida del tono. Las que solo vigila un
+    # guarda se quedan. prompts/info.RAG_SIN_REGLAS_DEL_CODIGO_*; docs/robustness/arq/arq2a-inventario.md. APAGADO.
+    rag_sin_reglas_del_codigo: bool = False
     jev_precio_nombra_actividades: bool = True  # PROMOCIONADO 21-oct (con ord-7); revert = False
     # CAL (17-oct): el catálogo del RAG pinta hasta qué profundidad certifica cada curso (`max_depth_m`: Open Water
     # 18 m, Advanced 30 m, lo que dice el registro de actividades) y una línea general de profundidad por certificación

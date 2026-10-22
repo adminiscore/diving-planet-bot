@@ -473,6 +473,58 @@ RAG_DISPONIBILIDAD_NUEVA_EN = (
     "don't say you can't confirm slots or that the team must check them. What you don't confirm is the status of a "
     "specific booking already made (the team sees that)."
 )
+# arq-2a (22-oct, Gonzalo con Claude; flag `rag_sin_reglas_del_codigo`): fuera del prompt del RAG las reglas que el
+# código ya pone en el contexto que el RAG lee SIEMPRE (`catalog.catalog_facts` y `policies_facts`, en los dos caminos
+# de `hechos_por_codigo`): la moneda (está en el catálogo y en la línea del estado), el 5 % por equipo COMPLETO, no
+# calcular totales con el descuento, y los días de cierre y la suspensión por mal tiempo. Se queda lo que el contexto no
+# dice. Y fuera la viñeta del tono que repite la de brand_tone ("como un asesor real de Diving Planet en WhatsApp").
+# Las reglas que solo vigila un guarda (importes, enlaces, teléfono, datos personales) se QUEDAN: el guarda tira la
+# respuesta, no hace cumplir la regla. Inventario: docs/robustness/arq/arq2a-inventario.md.
+RAG_DISPONIBILIDAD_CORTA_ES = (
+    "- Disponibilidad: no digas que no puedes confirmar cupos ni que el equipo debe verificarlos (el catálogo dice "
+    "cuándo operamos y cómo elige fecha y personas). Lo que no confirmas es el estado de una reserva concreta ya hecha "
+    "(eso lo ve el equipo)."
+)
+RAG_DISPONIBILIDAD_CORTA_EN = (
+    "- Availability: don't say you can't confirm slots or that the team must check them (the catalog says when we "
+    "operate and how they pick date and people). What you don't confirm is the status of a specific booking already "
+    "made (the team sees that)."
+)
+RAG_SIN_REGLAS_DEL_CODIGO_ES = (
+    ("- Habla como un cartagenero amigable, cálido y profesional, igual que un asesor real de Diving Planet en "
+     "WhatsApp.\n", ""),
+    ("- El descuento por equipo propio (5%) SOLO aplica si el cliente trae el equipo COMPLETO (regulador, BCD/chaleco, "
+     "traje, máscara, aletas). Si menciona solo una PARTE del equipo (ej: \"traigo mi máscara y aletas\"), responde "
+     "que ese descuento no aplica por equipo parcial — NO confirmes el descuento en ese caso.\n", ""),
+    ("- Cuando cites un descuento (grupo, equipo propio, online, etc.), da SOLO el porcentaje y la condición tal cual "
+     "están en el contexto (ej: \"10% para grupos de 5 o más\"). NUNCA calcules ni afirmes el precio final ya con el "
+     "descuento aplicado (ej. nunca digas \"así que pagarían $142\" o \"el valor por persona sería...\") — esa cifra no "
+     "está en el contexto, es un cálculo tuyo, y aunque la aritmética sea correcta no puedes verificarla como un precio "
+     "real. Di el porcentaje y deriva el total exacto al momento de reservar o al asesor.\n", ""),
+    (RAG_DISPONIBILIDAD_NUEVA_ES, RAG_DISPONIBILIDAD_CORTA_ES),
+    ("- Usa el contexto de extra_context para adaptar la moneda: si se indica que el cliente NO es colombiano/a, muestra "
+     "los precios en USD; si se indica que SÍ es colombiano/a, muestra los precios en COP. No existe descuento especial "
+     "por ser colombiano; los colombianos simplemente pagan en pesos y los extranjeros en dólares al mismo precio "
+     "equivalente.\n", ""),
+    ("- Evita mezclar muchas monedas en la misma línea si puede confundir; aclara siempre qué es COP y qué es USD.\n",
+     ""),
+)
+RAG_SIN_REGLAS_DEL_CODIGO_EN = (
+    ("- The own-equipment discount (5%) ONLY applies if the customer brings their COMPLETE gear (regulator, BCD, "
+     "wetsuit, mask, fins). If they mention only PART of the equipment (e.g. \"I'm bringing my mask and fins\"), say "
+     "that discount doesn't apply for partial gear — do NOT confirm the discount in that case.\n", ""),
+    ("- When citing a discount (group, own equipment, online, etc.), give ONLY the percentage and condition exactly as "
+     "stated in the context (e.g. \"10% for groups of 5 or more\"). NEVER calculate or state the final discounted price "
+     "(e.g. never say \"so you'd pay $142\" or \"the price per person would be...\") — that figure isn't in the "
+     "context, it's your own calculation, and even if the math is correct you can't verify it as a real price. State "
+     "the percentage and route the exact total to checkout or the advisor.\n", ""),
+    (RAG_DISPONIBILIDAD_NUEVA_EN, RAG_DISPONIBILIDAD_CORTA_EN),
+    ("- Use the extra_context to adapt currency: if the customer is NOT Colombian, show prices in USD; if they ARE "
+     "Colombian, show prices in COP. There is no special discount for being Colombian — Colombians simply pay in pesos "
+     "and international clients in dollars at the equivalent price.\n", ""),
+    ("- Avoid mixing several currencies in the same line if it could be confusing; always make it clear which amounts "
+     "are in COP and which are in USD.\n", ""),
+)
 RAG_VARIOS_PLANES_ES = (
     "Si lo que pide el cliente encaja con VARIOS planes del catálogo (por ejemplo, \"un paquete de 2 días\": el de 4 "
     "inmersiones y el de 5 con nocturna), nombra las opciones con su precio en vez de elegir tú una."

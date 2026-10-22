@@ -1,8 +1,8 @@
 {
  "meta": {
-  "generado": "2026-10-22T08:53:57+00:00",
-  "commit": "0b69dac",
-  "rama": "feature/pre_gadea"
+  "generado": "2026-10-22T10:18:28+00:00",
+  "commit": "6ad2777c",
+  "rama": "feature/arq2a-gonzalo"
  },
  "vistas": {
   "general": {
@@ -1296,6 +1296,13 @@
      "titulo": "No adivina ningún dato del cliente",
      "codigo": true,
      "pre": true,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "rag_sin_reglas_del_codigo",
+     "titulo": "El RAG sin las reglas que ya dice el catálogo",
+     "codigo": false,
+     "pre": false,
      "sin_efecto": false
     },
     {
@@ -3085,6 +3092,19 @@
    "codigo": true,
    "pre": true,
    "fijado_en_pre": true,
+   "usado_por": [
+    "r_escribir"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "rag_sin_reglas_del_codigo",
+   "area": "Preguntas",
+   "titulo": "El RAG sin las reglas que ya dice el catálogo",
+   "texto": "Las instrucciones de Coral repetían reglas que el catálogo y las políticas ya le dan siempre: en qué moneda cotizar, el 5 % por traer el equipo completo, no calcular totales con el descuento y los días en que no operamos. Se quitan del prompt (un 10 % más corto) y se quedan donde está el dato. Las que solo vigila un control automático (teléfonos, enlaces, cifras) siguen en el prompt (arq-2a, 22-oct).",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
    "usado_por": [
     "r_escribir"
    ],

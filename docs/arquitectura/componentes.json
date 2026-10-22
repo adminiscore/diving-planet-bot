@@ -595,6 +595,7 @@
         "origen_sin_titulo_suelto",
         "rag_no_supone_reserva",
         "rag_no_adivina",
+        "rag_sin_reglas_del_codigo",
         "abre_con_la_respuesta",
         "sin_genero_supuesto",
         "rag_sin_hora",
@@ -1495,6 +1496,11 @@
       "area": "Preguntas",
       "titulo": "Hechos por código (ARQ)",
       "texto": "El modelo interpreta, el código decide y el modelo redacta: si el cliente solo pregunta precio, qué incluye, requisitos, horario, disponibilidad, edad o el enlace de una actividad, los datos los saca el código (moneda, las dos salidas si no se sabe el origen, edades en cifra, el asesor para colombianos) y Coral solo los escribe. Así no se deja partes de las listas ni mezcla datos (arq-1d, 22-oct)."
+    },
+    "rag_sin_reglas_del_codigo": {
+      "area": "Preguntas",
+      "titulo": "El RAG sin las reglas que ya dice el catálogo",
+      "texto": "Las instrucciones de Coral repetían reglas que el catálogo y las políticas ya le dan siempre: en qué moneda cotizar, el 5 % por traer el equipo completo, no calcular totales con el descuento y los días en que no operamos. Se quitan del prompt (un 10 % más corto) y se quedan donde está el dato. Las que solo vigila un control automático (teléfonos, enlaces, cifras) siguen en el prompt (arq-2a, 22-oct)."
     }
   },
   "areas": [

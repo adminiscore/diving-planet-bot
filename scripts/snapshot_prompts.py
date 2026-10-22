@@ -201,6 +201,11 @@ def _collect() -> dict[str, str]:
     add("info/rag_disponibilidad_nueva.en", info.RAG_DISPONIBILIDAD_NUEVA_EN)
     add("info/rag_varios_planes.es", info.RAG_VARIOS_PLANES_ES)
     add("info/rag_varios_planes.en", info.RAG_VARIOS_PLANES_EN)
+    # arq-2a (flag `rag_sin_reglas_del_codigo`): la disponibilidad corta y lo que se quita del prompt del RAG.
+    add("info/rag_disponibilidad_corta.es", info.RAG_DISPONIBILIDAD_CORTA_ES)
+    add("info/rag_disponibilidad_corta.en", info.RAG_DISPONIBILIDAD_CORTA_EN)
+    add_json("info/rag_sin_reglas_del_codigo.es", info.RAG_SIN_REGLAS_DEL_CODIGO_ES)
+    add_json("info/rag_sin_reglas_del_codigo.en", info.RAG_SIN_REGLAS_DEL_CODIGO_EN)
     add("info/rag_regen_feedback.es", info.RAG_REGEN_FEEDBACK_ES)
     add("info/rag_regen_feedback.en", info.RAG_REGEN_FEEDBACK_EN)
     add_json("info/rag_regen_guard.es", info.RAG_REGEN_GUARD_ES)
