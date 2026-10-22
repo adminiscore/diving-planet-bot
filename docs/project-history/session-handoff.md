@@ -59,7 +59,18 @@ integrar la rama del otro y suite en verde, porque en PRE gana el último; (3) *
 despliegue reinicia el contenedor y mata la medida del otro (avisar en el registro de Plan Coral con la hora de fin).
 Las doce normas, con su porqué, están en el documento.
 
-### ▶️ RETOMAR AQUÍ — 22-oct, 00:40 (Gadea con Claude): G10 de control con todo junto, PLANO; el RAG omite datos que tiene (67 % de los fallos) → ord-9 «listas del dato» a medias
+### ▶️ RETOMAR AQUÍ — 22-oct, 10:30 (Gadea con Claude): FASE NUEVA ARQ, «el modelo interpreta, el código decide, el modelo redacta»
+
+- **Plan:** `docs/robustness/arq/plan-hechos-por-codigo.md` y fase **ARQ** en Plan Coral (arq-0a a arq-4, en orden).
+  Decisión de Gadea (22-oct, 01:00): se deja de arreglar el RAG por capas y se cambia la arquitectura de la respuesta,
+  por intenciones y midiendo cada paso con un **banco fijo del RAG ×3** (arq-0b). GEN queda cerrada; ord-1, mej-9,
+  ord-8 y ord-9 quedan absorbidas en ARQ.
+- **A Andrés no se va hasta cerrar los gaps de G9/G10:** G10 de control ≥ 92 % y ≥ 40/72 (G9 en línea).
+- **Orden de hoy:** arq-0a (integrar `feature/mej1d2-alvaro`: mej-1d + ord-3 + limpieza del veto) → arq-0b (banco
+  fijo) → arq-0c (Luna frente a gpt-5-mini) → arq-0d → arq-1a… Álvaro y Gonzalo no están por la mañana: Claude avanza
+  en orden y les pasa tareas cuando se conecten (arq-1b y arq-2c son buenas para Álvaro).
+
+### (anterior) RETOMAR AQUÍ — 22-oct, 00:40 (Gadea con Claude): G10 de control con todo junto, PLANO; el RAG omite datos que tiene (67 % de los fallos) → ord-9 «listas del dato» a medias
 
 - **PRE sirve `c59f092`** (pre_gadea), sano. Encendido: gen-13, gen-14, gen-15, gen-16, ord-7, ord-4 y ord-6c (sin el
   formulario médico). Lo último subido esta noche (ver el push de las 00:40) lleva además los arreglos de lo que

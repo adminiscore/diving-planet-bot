@@ -525,6 +525,16 @@ medias (u3-1 ✅, u3-4 ✅ promocionada, u3-5 🟡); PRE con u3-4 encendido. Sui
 > entender / extractor) → los 17 fallos del flujo de reserva → ronda COMPLETA con el examen oculto (una vez) → R6/Q5.
 > Detalle: `session-handoff.md`, "RETOMAR AQUÍ" del 9-oct.
 
+> **Estado al 22-oct (Gadea), fase ARQ — la vigente; corrige el orden de los bloques de abajo:**
+> - **Situación:** tras las fases CAL, EX, MOD, GEN y ORD, el bot está en ~86 % de criterios en los exámenes de
+>   control G9/G10 y en ~20-23/72 diálogos sin fallos. G10 de control con todo lo de GEN promocionado salió **plano**
+>   (85,4 % 20/72).
+> - **Diagnóstico:** el RAG **omite datos que tiene** (67 % de los fallos). Una sola llamada elige entre ~13.600 tokens
+>   y ~50 reglas, y las reglas que ya cumple el código también le llegan en texto.
+> - **Decisión:** nueva fase **ARQ**, «el modelo interpreta, el código decide, el modelo redacta», por intenciones y con
+>   un banco fijo del RAG ×3 como indicador. Plan y tareas: `docs/robustness/arq/plan-hechos-por-codigo.md`.
+> - **Meta:** G10 de control ≥ 92 % y ≥ 40/72 antes de ir a Andrés; después, G11 (gen-18).
+
 > **Estado al 1-oct (Gadea), fase RAG:** rag-1, rag-2, rag-3 y **rag-5 ✅ promocionadas**; rag-4 ❌ descartada.
 > rag-5 (HISTORY 0.29.88): el RAG arranca a la vez que el enrutador y la puerta de Jev para las notas evita que se
 > rehaga; turnos con pregunta p50 5,37 → 3,44 s, calidad igual (23/32). **Orden decidido por Gadea el 1-oct:
