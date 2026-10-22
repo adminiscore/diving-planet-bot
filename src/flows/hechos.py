@@ -164,10 +164,33 @@ def hechos(state: ConversationState, intenciones: list[str], actividades: list[s
                 bloque["enlace"] = _por_origen(
                     actividad, origenes,
                     lambda sid: cart_render._resolve_service_booking_url(SERVICES.get(sid) or {}, state))
+        if {"incluye", "horario"} & set(pedidas):
+            # Cómo se llega según el origen (G10 de control, 22-oct: «no aclara que en Cartagena no se recoge en el
+            # hotel», «no dice que el regreso está incluido sin cargo», «falta "a 5 minutos del centro"»).
+            recogida = {o: [_politica("meeting_point", lang)] if o == "cartagena"
+                        else [_politica("island_pickup_free", lang)]
+                        for o in origenes if _plan_base(actividad, o)}
+            bloque["recogida"] = {o: [x for x in v if x] for o, v in recogida.items() if any(v)}
+        if {"precio", "incluye", "horario", "requisitos"} & set(pedidas):
+            alojamiento = _alojamiento(actividad, registro, lang)
+            if alojamiento:  # G10: «no aclara que el alojamiento no está incluido» en los planes de varios días
+                bloque["alojamiento"] = alojamiento
         if not origen and _DEPENDEN_DEL_ORIGEN & set(pedidas):
             bloque["pregunta_pendiente"] = "origen"
         bloques.append(bloque)
     return bloques
+
+
+def _alojamiento(actividad: str, registro, lang: str) -> str | None:
+    """En los planes de varios días, que hay que dormir en las islas y el alojamiento no está incluido: la política de
+    los cursos de 2 días o, en los paquetes, lo que dice su ficha que no incluye."""
+    sid = _plan_base(actividad, "cartagena") or _plan_base(actividad, "island")
+    if not sid or ((SERVICES.get(sid) or {}).get("duration_days") or 1) < 2:
+        return None
+    if registro.cart_type == "course":
+        return _politica("courses_overnight_requirement", lang)
+    return next((x for x in _lista(sid, "not_included", lang) if "aloj" in _plano(x) or "accommodation" in _plano(x)),
+                None)
 
 
 # ── ARQ-3: ¿la respuesta lleva los hechos? ───────────────────────────────────
@@ -235,6 +258,11 @@ def faltan(answer: str, bloques: list[dict], intenciones: list[str]) -> list[str
                                           for e in lista):
                 if not _elemento_dado(elemento, raices, answer):
                     perdidos.append(elemento)
+        for elemento in dict.fromkeys(e for lista in (b.get("recogida") or {}).values() for e in lista):
+            if not _elemento_dado(elemento, raices, answer):
+                perdidos.append(elemento)
+        if b.get("alojamiento") and not _elemento_dado(b["alojamiento"], raices, answer):
+            perdidos.append(b["alojamiento"])
         if "horario" in intenciones:
             horas = {h for lista in (b.get("horario") or {}).values() for e in lista
                      for h in re.findall(r"\b(\d{1,2}):\d{2}", e)}

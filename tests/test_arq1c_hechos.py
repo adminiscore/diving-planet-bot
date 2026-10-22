@@ -109,7 +109,7 @@ def test_arq3_faltan_los_hechos_que_la_respuesta_no_lleva():
     st = _conv(location="cartagena")
     bloques = h.hechos(st, ["precio", "requisitos", "edad"], ["padi_open_water_referral"])
     completa = ("Cuesta 474 USD online o 526 USD sin reserva online. Desde los 10 años. Requisitos: "
-                + " ".join(bloques[0]["requisitos"]))
+                + " ".join(bloques[0]["requisitos"]) + " " + bloques[0]["alojamiento"])
     assert h.faltan(completa, bloques, ["precio", "requisitos", "edad"]) == []
     corta = "Cuesta 474 USD online. Lleva bañador y toalla."
     perdidos = h.faltan(corta, bloques, ["precio", "requisitos", "edad"])
@@ -121,4 +121,17 @@ def test_arq3_una_parafrasis_corta_cuenta():
     st = _conv(location="island")
     bloques = h.hechos(st, ["incluye"], ["snorkel"])
     lista = bloques[0]["incluye"]["island"]
-    assert h.faltan("Incluye: " + "; ".join(x.lower() for x in lista), bloques, ["incluye"]) == []
+    recogida = bloques[0]["recogida"]["island"][0]
+    assert h.faltan("Incluye: " + "; ".join(x.lower() for x in lista) + ". " + recogida, bloques, ["incluye"]) == []
+
+
+def test_la_recogida_y_el_alojamiento_van_en_los_hechos():
+    """G10 de control (22-oct): faltaban «en Cartagena no se recoge en el hotel», «el regreso va incluido sin cargo» y
+    «el alojamiento no está incluido» en los planes de varios días."""
+    [b] = h.hechos(_conv(), ["incluye"], ["minicourse"])
+    assert "no hay recogida en el hotel" in b["recogida"]["cartagena"][0]
+    assert "sin cargo" in b["recogida"]["island"][0] and "alojamiento" not in b
+    [b] = h.hechos(_conv(location="cartagena"), ["precio"], ["padi_advanced"])
+    assert "no esta incluido" in b["alojamiento"] and "recogida" not in b
+    assert any("Muelle" in p for p in h.faltan("Cuesta 0 USD.", h.hechos(_conv(location="cartagena"), ["horario"],
+                                                                          ["minicourse"]), ["horario"]))
