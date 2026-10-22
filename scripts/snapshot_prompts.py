@@ -163,8 +163,6 @@ def _collect() -> dict[str, str]:
     add("info/rag.pase_ofrecido.en", info.RAG_PASE_OFRECIDO_EN)
     add("info/rag.sin_precio.es", info.RAG_SIN_PRECIO_ES)
     add("info/rag.sin_precio.en", info.RAG_SIN_PRECIO_EN)
-    add("info/rag.sin_lista.es", info.RAG_SIN_LISTA_ES)
-    add("info/rag.sin_lista.en", info.RAG_SIN_LISTA_EN)
     add("info/redactor_hechos.es", info.REDACTOR_HECHOS_ES)
     add("info/redactor_hechos.en", info.REDACTOR_HECHOS_EN)
     add("info/rag.con_hechos.es", info.RAG_CON_HECHOS_ES)

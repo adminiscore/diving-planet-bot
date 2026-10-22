@@ -8,7 +8,6 @@ from src.orchestration import graph
 
 def test_las_preguntas_solo_con_el_flag(monkeypatch):
     monkeypatch.setattr(settings, "hechos_por_codigo", False)
-    monkeypatch.setattr(settings, "listas_del_dato", False)
     q = j._questions_for_turn()
     assert j.PIDE_REQUISITOS not in q and j.PIDE_QUE_INCLUYE not in q
     monkeypatch.setattr(settings, "hechos_por_codigo", True)
