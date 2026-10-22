@@ -638,6 +638,11 @@ class Settings(BaseSettings):
     # plan es concreto, el RAG no enumera y el código añade la lista exacta de la ficha
     # (`conversational_core._con_lista_del_dato`). APAGADO hasta medirlo.
     listas_del_dato: bool = False
+    # ARQ (22-oct, fase ARQ, decisión de Gadea: docs/robustness/arq/plan-hechos-por-codigo.md): Jev da las intenciones
+    # del mensaje (precio, qué incluye, requisitos, horario, disponibilidad, edad, enlace), el código saca los hechos
+    # con las reglas aplicadas (src/flows/hechos.py) y el redactor solo los pone en palabras, sin el catálogo entero.
+    # APAGADO hasta medirlo con el banco fijo del RAG ×3 y su ronda core.
+    hechos_por_codigo: bool = False
     jev_precio_nombra_actividades: bool = True  # PROMOCIONADO 21-oct (con ord-7); revert = False
     # CAL (17-oct): el catálogo del RAG pinta hasta qué profundidad certifica cada curso (`max_depth_m`: Open Water
     # 18 m, Advanced 30 m, lo que dice el registro de actividades) y una línea general de profundidad por certificación

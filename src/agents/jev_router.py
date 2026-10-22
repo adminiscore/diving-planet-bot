@@ -460,6 +460,58 @@ _PIDE_QUE_INCLUYE_Q = {
         "what to bring, the requirements, or about something the dive center does not sell (a hotel, a room, a taxi)."
     ),
 }
+# ARQ-1b (22-oct, flag `hechos_por_codigo`, fase ARQ: el modelo interpreta, el código decide, el modelo redacta): qué
+# INTENCIONES trae el mensaje, una pregunta sí/no por intención en la misma llamada (opciones fijas: regla del 24-sep).
+# Con ellas el código saca los hechos (src/flows/hechos.py) y el redactor solo los pone en palabras. Precio y qué
+# incluye ya existían (PIDE_PRECIO, PIDE_QUE_INCLUYE).
+PIDE_REQUISITOS = "pide_requisitos"
+PIDE_HORARIO = "pide_horario"
+PIDE_DISPONIBILIDAD = "pide_disponibilidad"
+PIDE_EDAD = "pide_edad"
+PIDE_ENLACE = "pide_enlace"
+INTENCION_MIN = 0.7
+_INTENCIONES_Q = {
+    PIDE_REQUISITOS: {
+        "type": "noul",
+        "instructions": (
+            "The customer asks what is needed or required for one of the dive center's activities or courses: "
+            "requirements, documents (certification card, referral form), forms (medical form, waiver, insurance "
+            "form), what to bring, or what to do beforehand. It is FALSE when they only ask the price, what is "
+            "included, the schedule or the availability."
+        ),
+    },
+    PIDE_HORARIO: {
+        "type": "noul",
+        "instructions": (
+            "The customer asks about the times or logistics of an activity: the meeting time or place, the hotel "
+            "pickup time, the return time, how long it lasts, how many days it takes, or whether they must stay "
+            "overnight on the islands. It is FALSE when they only ask the price, whether a date is available, or "
+            "what is included."
+        ),
+    },
+    PIDE_DISPONIBILIDAD: {
+        "type": "noul",
+        "instructions": (
+            "The customer asks whether there is space or availability, whether the dive center operates on a date or "
+            "day, or how or until when they can book. It is FALSE when they ask the schedule, the price or what is "
+            "included."
+        ),
+    },
+    PIDE_EDAD: {
+        "type": "noul",
+        "instructions": (
+            "The customer asks whether someone of a certain age can do an activity, asks the minimum or maximum age, "
+            "or gives children's ages asking what they can do. It is FALSE otherwise."
+        ),
+    },
+    PIDE_ENLACE: {
+        "type": "noul",
+        "instructions": (
+            "The customer asks for the link or web page to book or to pay, or how to book online. It is FALSE when "
+            "they ask other things."
+        ),
+    },
+}
 CAMBIA_IDIOMA = "cambia_idioma"
 CAMBIA_IDIOMA_MIN = 0.6
 _CAMBIA_IDIOMA_Q = {
@@ -649,6 +701,7 @@ _U34_QUESTIONS = (
     AFFIRMS_CERTIFICATION, AFFIRMS_GROUP, AFFIRMS_NATIONALITY, CORRECTS, ASKS_RECALL, NEEDS_STAFF,
     CHANGES_DATE, COMPANION_JOINS, PENDING_ANSWER, SHARES_OPEN_FACT, ADDS_PERSON, CUSTOMER_PLACE, YA_RESERVADO,
     PIDE_DATOS_AJENOS, NUEVO_CASO, PREGUNTA_SI_ES_IA, CAMBIA_IDIOMA, PIDE_PRECIO, PIDE_SERVICIO_PRIVADO, PIDE_QUE_INCLUYE,
+    *_INTENCIONES_Q,
 )
 
 
@@ -711,8 +764,10 @@ def _questions_for_turn(pending_slot: str | None = None) -> dict:
     q[PREGUNTA_SI_ES_IA] = _PREGUNTA_SI_ES_IA_Q
     q[CAMBIA_IDIOMA] = _CAMBIA_IDIOMA_Q
     q[PIDE_PRECIO] = _PIDE_PRECIO_Q_ACTIVIDADES if settings.jev_precio_nombra_actividades else _PIDE_PRECIO_Q
-    if settings.listas_del_dato:
+    if settings.listas_del_dato or settings.hechos_por_codigo:
         q[PIDE_QUE_INCLUYE] = _PIDE_QUE_INCLUYE_Q
+    if settings.hechos_por_codigo:
+        q.update(_INTENCIONES_Q)
     return q
 
 
@@ -790,6 +845,9 @@ def answers_to_signals(answers: dict, threshold: float = THRESHOLD) -> dict:
         out[PIDE_PRECIO] = (answers.get(PIDE_PRECIO) or {}).get("noul", 0.0) >= PIDE_PRECIO_MIN
     if PIDE_QUE_INCLUYE in answers:
         out[PIDE_QUE_INCLUYE] = (answers.get(PIDE_QUE_INCLUYE) or {}).get("noul", 0.0) >= PIDE_QUE_INCLUYE_MIN
+    for intencion in _INTENCIONES_Q:
+        if intencion in answers:
+            out[intencion] = (answers.get(intencion) or {}).get("noul", 0.0) >= INTENCION_MIN
     if CAMBIA_IDIOMA in answers:
         a = answers.get(CAMBIA_IDIOMA) or {}
         out[CAMBIA_IDIOMA] = a.get("choice") if float(a.get("confidence", 0.0)) >= CAMBIA_IDIOMA_MIN else "none"
@@ -881,7 +939,7 @@ async def detect_routing_signals_jev(message: str, *, lang: str = "es") -> dict 
 _TURN_SIGNALS = (
     AFFIRMS_LOCATION, AFFIRMS_ACTIVITY, AFFIRMS_CERTIFICATION, AFFIRMS_GROUP, AFFIRMS_NATIONALITY, CORRECTS,
     ASKS_RECALL, NEEDS_STAFF, CHANGES_DATE, COMPANION_JOINS, SHARES_OPEN_FACT, YA_RESERVADO, PIDE_DATOS_AJENOS,
-    NUEVO_CASO, PREGUNTA_SI_ES_IA, CAMBIA_IDIOMA, PIDE_PRECIO, PIDE_SERVICIO_PRIVADO, PIDE_QUE_INCLUYE,
+    NUEVO_CASO, PREGUNTA_SI_ES_IA, CAMBIA_IDIOMA, PIDE_PRECIO, PIDE_SERVICIO_PRIVADO, PIDE_QUE_INCLUYE, *_INTENCIONES_Q,
     # ex-9b (19-oct): ADDS_PERSON también viaja cuando Jev duda en el router (como COMPANION_JOINS): sin él, en esos
     # turnos "¿se suma alguien nuevo?" lo decidía la lista de palabras.
     ADDS_PERSON,

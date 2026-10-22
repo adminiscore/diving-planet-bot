@@ -30,7 +30,16 @@ from src.agents.changes_agent import changes_node
 from src.agents.deflection_agent import deflection_node
 from src.agents.escalation_agent import escalation_node
 from src.agents.info_agent import info_node
-from src.agents.jev_router import NUEVO_CASO, PIDE_PRECIO, PIDE_QUE_INCLUYE
+from src.agents.jev_router import (
+    NUEVO_CASO,
+    PIDE_DISPONIBILIDAD,
+    PIDE_EDAD,
+    PIDE_ENLACE,
+    PIDE_HORARIO,
+    PIDE_PRECIO,
+    PIDE_QUE_INCLUYE,
+    PIDE_REQUISITOS,
+)
 from src.flows.state import Step
 from src.orchestration.router import classify_route
 from src.orchestration.state import (
@@ -44,6 +53,13 @@ from src.orchestration.state import (
 )
 
 logger = logging.getLogger("uvicorn.error")
+
+# ARQ-1b: la señal de Jev de cada intención (src/flows/hechos.INTENCIONES).
+_INTENCION_DE_SENAL = {
+    "precio": PIDE_PRECIO, "incluye": PIDE_QUE_INCLUYE, "requisitos": PIDE_REQUISITOS, "horario": PIDE_HORARIO,
+    "disponibilidad": PIDE_DISPONIBILIDAD, "edad": PIDE_EDAD, "enlace": PIDE_ENLACE,
+}
+
 
 # Nodos-agente REALES (Fase 2). Con 2.5 los 5 nodos son reales — ya no queda
 # ningún wrapper delegando en la cascada por defecto (`_make_legacy_delegate_node`
@@ -137,6 +153,8 @@ async def _router_node(state: BotState) -> dict:
     # del precio, que corre en la reserva y en info. Se pone en cada turno: nunca queda el de un turno anterior.
     conv._jev_pide_precio = signals.get(PIDE_PRECIO)
     conv._jev_pide_incluye = signals.get(PIDE_QUE_INCLUYE)  # ord-9: la lista de qué incluye sale de la ficha
+    # ARQ-1b: las intenciones del mensaje según Jev (vacío si calla), para los hechos por código (src/flows/hechos.py).
+    conv._intenciones = [nombre for nombre, señal in _INTENCION_DE_SENAL.items() if signals.get(señal)]
     conv._senales_router = signals  # gen-13: el cierre del turno sabe si el mensaje traía una pregunta
     route = classify_route(conv, message, signals)
     logger.info(f"[GRAPH] conv={conv.conversation_id} route={route}")
