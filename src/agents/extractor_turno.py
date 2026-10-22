@@ -268,6 +268,27 @@ REGLA_ACTIVIDAD_PREGUNTADA_EN = (
 )
 
 
+# arq-1j (22-oct, flag `varias_actividades`): TODAS las actividades por las que pregunta el mensaje. Con una sola
+# (`actividad_preguntada`), «¿cuánto pagamos un buzo y un acompañante?» o «¿qué incluyen el snorkel y el minicurso?»
+# quedaban sin actividad (la regla pide null si compara varias) y contestaba el RAG sin los hechos del código: ~8-10
+# fallos del G10 nº 2. El acompañante entra porque tiene precio y lo que incluye, aunque no sea una actividad elegible.
+CAMPO_ACTIVIDADES_PREGUNTADAS = _dato({"type": "array", "items": {"type": "string",
+                                                                  "enum": [*ACTIVIDADES, "companion"]}},
+                                      "Todas las actividades concretas por las que pregunta el mensaje.")
+REGLA_ACTIVIDADES_PREGUNTADAS_ES = (
+    "\n- actividades_preguntadas: TODAS las actividades concretas de la lista por las que pregunta este mensaje (su "
+    "precio, qué incluyen, sus requisitos…), aunque no elija ninguna; companion es el acompañante que va en la lancha "
+    "sin bucear. «¿Cuánto cuestan el snorkel y el minicurso?» → [snorkel, minicourse]. null si no nombra ninguna "
+    "concreta."
+)
+REGLA_ACTIVIDADES_PREGUNTADAS_EN = (
+    "\n- actividades_preguntadas: ALL the concrete activities from the list that this message asks about (their price, "
+    "what they include, their requirements…), even if it chooses none; companion is the companion who rides the boat "
+    "without diving. \"How much are snorkeling and the mini course?\" → [snorkel, minicourse]. null if it names no "
+    "concrete one."
+)
+
+
 def campos_paso6(history: list[dict] | None) -> dict:
     """Los campos nuevos del paso 6 que van en ESTA llamada, según sus flags: {campo: (esquema, regla_es, regla_en)}.
     Vacío con los flags apagados (la llamada de siempre). `acepta_propuesta` solo si el bot acaba de proponer un plan."""
@@ -285,6 +306,9 @@ def campos_paso6(history: list[dict] | None) -> dict:
     if settings.actividad_de_la_pregunta:
         campos["actividad_preguntada"] = (CAMPO_ACTIVIDAD_PREGUNTADA, REGLA_ACTIVIDAD_PREGUNTADA_ES,
                                           REGLA_ACTIVIDAD_PREGUNTADA_EN)
+    if settings.varias_actividades:
+        campos["actividades_preguntadas"] = (CAMPO_ACTIVIDADES_PREGUNTADAS, REGLA_ACTIVIDADES_PREGUNTADAS_ES,
+                                             REGLA_ACTIVIDADES_PREGUNTADAS_EN)
     return campos
 
 

@@ -20,7 +20,13 @@ from pathlib import Path
 
 from src.domain import activities as dom
 from src.flows import cart_render
-from src.flows.catalog import ISLAND_SERVICE_MAP, RAW_SERVICES, SERVICES
+from src.flows.catalog import (
+    COMPANION_INCLUDES,
+    COMPANION_PRICE,
+    ISLAND_SERVICE_MAP,
+    RAW_SERVICES,
+    SERVICES,
+)
 from src.flows.state import ConversationState
 from src.utils import money
 
@@ -114,6 +120,9 @@ def hechos(state: ConversationState, intenciones: list[str], actividades: list[s
         if registro is None:
             continue
         bloque: dict = {"actividad": actividad, "nombre": dom.label(actividad, lang), "origen": origen}
+        if registro.cart_type == "companion":
+            bloques.append(_acompanante(bloque, pedidas, origen, origenes, moneda, lang))
+            continue
         if "precio" in pedidas:
             bloque["moneda"] = moneda
             # La regla de la moneda (el precio es el mismo, solo cambia la moneda): «según la página tienen un precio
@@ -179,6 +188,23 @@ def hechos(state: ConversationState, intenciones: list[str], actividades: list[s
             bloque["pregunta_pendiente"] = "origen"
         bloques.append(bloque)
     return bloques
+
+
+def _acompanante(bloque: dict, pedidas: list[str], origen: str | None, origenes: tuple[str, ...], moneda: str,
+                 lang: str) -> dict:
+    """arq-1j: el acompañante (va en la lancha sin bucear) no tiene ficha: su precio es una fila de la tarifa, el mismo en
+    los dos orígenes, y lo que incluye cambia con el origen (en las islas, sin lancha desde Cartagena ni almuerzo)."""
+    if "precio" in pedidas:
+        c = COMPANION_PRICE
+        online, normal = ((money.cop(c["cop_online"]), money.cop(c["cop_normal"])) if moneda == "COP"
+                          else (money.usd(c["usd_online"]), money.usd(c["usd_normal"])))
+        bloque["moneda"] = moneda
+        bloque["precio"] = {o: {"plan": bloque["nombre"], "online": online, "normal": normal} for o in origenes}
+    if "incluye" in pedidas:
+        bloque["incluye"] = {o: list(COMPANION_INCLUDES[lang][o]) for o in origenes}
+    if not origen and {"precio", "incluye"} & set(pedidas):
+        bloque["pregunta_pendiente"] = "origen"
+    return bloque
 
 
 def _alojamiento(actividad: str, registro, lang: str) -> str | None:

@@ -48,6 +48,17 @@ def _actividad(state: ConversationState, datos: dict) -> str | None:
     return None
 
 
+def _actividades(state: ConversationState, datos: dict) -> list[str]:
+    """arq-1j (flag `varias_actividades`): todas las del mensaje si nombra dos o más («¿cuánto pagamos un buzo y un
+    acompañante?»); si no, la de siempre."""
+    if settings.varias_actividades:
+        varias = [a for a in dict.fromkeys(datos.get("actividades_preguntadas") or []) if dom.by_id(a) is not None]
+        if len(varias) >= 2:
+            return varias
+    una = _actividad(state, datos)
+    return [una] if una else []
+
+
 def _origen(state: ConversationState, datos: dict) -> str | None:
     for lugar in (state.location, state.detected_location, datos.get("location")):
         if lugar in hechos_mod.ORIGENES:
@@ -151,11 +162,11 @@ async def hechos_del_turno(state: ConversationState, message: str, history: list
     from src.agents.nucleo.extractor import lectura_del_extractor  # lazy
 
     datos = await lectura_del_extractor(state, message) or {}
-    actividad = _actividad(state, datos)
-    if actividad is None:
+    actividades = _actividades(state, datos)
+    if not actividades:
         return None
-    bloques = hechos_mod.hechos(_foto(state, datos, _origen(state, datos)), intenciones, [actividad])
-    cubiertas = [i for i in intenciones if bloques and _cubierta(bloques[0], i)]
+    bloques = hechos_mod.hechos(_foto(state, datos, _origen(state, datos)), intenciones, actividades)
+    cubiertas = [i for i in intenciones if any(_cubierta(b, i) for b in bloques)]
     return (bloques, cubiertas) if cubiertas else None
 
 

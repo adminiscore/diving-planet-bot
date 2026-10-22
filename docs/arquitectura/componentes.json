@@ -595,7 +595,8 @@
       ],
       "interruptores": [
         "hechos_por_codigo",
-        "hechos_al_rag"
+        "hechos_al_rag",
+        "varias_actividades"
       ]
     },
     {
@@ -1537,6 +1538,11 @@
       "area": "Enrutador",
       "titulo": "La palabra de control «NADA» no le llega al cliente",
       "texto": "Antes de pasar a un asesor, Coral contesta las otras preguntas del mensaje; si no hay ninguna, el modelo responde la palabra «NADA» y no se dice nada más. Si detrás iba pegado el aviso de disponibilidad, «NADA» se colaba al principio de la respuesta. Ahora se mira la primera línea entera, sea cual sea la longitud (22-oct)."
+    },
+    "varias_actividades": {
+      "area": "Preguntas",
+      "titulo": "Varias actividades en un mensaje",
+      "texto": "Si el cliente pregunta por varias actividades a la vez («¿cuánto pagamos un buzo y un acompañante?», «¿qué incluyen el snorkel y el minicurso?»), el extractor las da todas y Coral contesta cada una con sus datos; antes contestaba el RAG de memoria (arq-1j, 22-oct)."
     }
   },
   "areas": [

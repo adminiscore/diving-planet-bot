@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-22T13:02:05+00:00",
-  "commit": "b1cf763",
+  "generado": "2026-10-22T14:40:35+00:00",
+  "commit": "cacb477",
   "rama": "feature/pre_gadea"
  },
  "vistas": {
@@ -1270,6 +1270,13 @@
      "titulo": "Hechos del código también en los mensajes mezclados",
      "codigo": true,
      "pre": true,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "varias_actividades",
+     "titulo": "Varias actividades en un mensaje",
+     "codigo": false,
+     "pre": false,
      "sin_efecto": false
     }
    ],
@@ -3438,6 +3445,19 @@
    "fijado_en_pre": true,
    "usado_por": [
     "b_slotfill_close"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "varias_actividades",
+   "area": "Preguntas",
+   "titulo": "Varias actividades en un mensaje",
+   "texto": "Si el cliente pregunta por varias actividades a la vez («¿cuánto pagamos un buzo y un acompañante?», «¿qué incluyen el snorkel y el minicurso?»), el extractor las da todas y Coral contesta cada una con sus datos; antes contestaba el RAG de memoria (arq-1j, 22-oct).",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
+   "usado_por": [
+    "r_hechos"
    ],
    "sin_efecto": null
   },
