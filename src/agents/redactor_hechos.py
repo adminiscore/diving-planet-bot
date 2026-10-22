@@ -191,7 +191,6 @@ async def hechos_del_turno(state: ConversationState, message: str, history: list
         if settings.hechos_sin_actividad and set(intenciones) <= hechos_mod.INTENCIONES_SIN_ACTIVIDAD:
             # arq-1p: la hora, la recogida, qué llevar o si hay sitio son iguales para todas las actividades.
             bloques = hechos_mod.hechos_sin_actividad(_foto(state, datos, _origen(state, datos)), intenciones)
-            note_turn(hechos_sin_actividad=True)
             cubiertas = [i for i in intenciones if any(_cubierta(b, i) for b in bloques)]
             return (bloques, cubiertas) if cubiertas else None
         note_turn(hechos_por_codigo="sin_actividad" if datos else "sin_lectura")
@@ -278,5 +277,8 @@ async def responder(state: ConversationState, message: str, history: list[dict])
                 else (core.ORIGEN_TRAS_LAS_VARIANTES_ES, core.ORIGEN_TRAS_LAS_VARIANTES_EN))
         answer = f"{answer}\n\n{tras[0] if lang == 'es' else tras[1]}"
     logger.info(f"[HECHOS] contesta el redactor: {actividad} {intenciones} origen={origen}")
-    note_turn(rag_used=True, hechos_por_codigo="redactor", intenciones=",".join(intenciones))
+    # arq-1p: «redactor_general» cuando contestó con el bloque sin actividad (se ve en [TURN_METRICS] `hechos`).
+    general = all(b.get("actividad") is None for b in bloques)
+    note_turn(rag_used=True, hechos_por_codigo="redactor_general" if general else "redactor",
+              intenciones=",".join(intenciones))
     return answer

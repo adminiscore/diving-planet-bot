@@ -73,10 +73,15 @@ def test_lo_que_necesita_la_actividad_no_tiene_bloque_general():
 
 
 def test_con_el_flag_lo_escribe_el_redactor(redactor, monkeypatch):
+    from src import observability
+
+    notas: dict = {}
+    monkeypatch.setattr(observability, "note_turn", lambda **kw: notas.update(kw))
     monkeypatch.setattr(settings, "hechos_sin_actividad", True)
     st = _conv(["horario"])
     answer = asyncio.run(redactor_hechos.responder(st, MENSAJE, st.history))
     assert answer == redactor.estado["texto"]
+    assert notas["hechos_por_codigo"] == "redactor_general"  # se ve en [TURN_METRICS] `hechos`
     [messages] = redactor.hechas
     assert "9:30" in messages[-1]["content"] and "Bodeguita" in messages[-1]["content"]
 
