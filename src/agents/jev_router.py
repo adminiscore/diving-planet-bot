@@ -456,8 +456,9 @@ _PIDE_QUE_INCLUYE_Q = {
     "instructions": (
         "The customer asks what one of the dive center's plans, courses or activities includes (what comes with it), "
         "or whether something specific is included in it (gear, lunch, boat transport, insurance, park fee, "
-        "certification card, number of dives). It is FALSE when they only ask the price, the schedule, the duration, "
-        "what to bring, the requirements, or about something the dive center does not sell (a hotel, a room, a taxi)."
+        "certification card, number of dives), even if the same message also asks other things. It is FALSE when "
+        "they only ask the price, the schedule, the duration, what to bring, the requirements, or about something the "
+        "dive center does not sell (a hotel, a room, a taxi)."
     ),
 }
 # ARQ-1b (22-oct, flag `hechos_por_codigo`, fase ARQ: el modelo interpreta, el código decide, el modelo redacta): qué
@@ -477,8 +478,8 @@ _INTENCIONES_Q = {
         "instructions": (
             "The customer asks what is needed or required for one of the dive center's activities or courses: "
             "requirements, documents (certification card, referral form), forms (medical form, waiver, insurance "
-            "form), what to bring, or what to do beforehand. It is FALSE when they only ask the price, what is "
-            "included, the schedule or the availability."
+            "form), what to bring, or what to do beforehand, even if the same message also asks other things. It "
+            "is FALSE when they only ask the price, what is included, the schedule or the availability."
         ),
     },
     PIDE_HORARIO: {
@@ -486,8 +487,8 @@ _INTENCIONES_Q = {
         "instructions": (
             "The customer asks about the times or logistics of an activity: the meeting time or place, the hotel "
             "pickup time, the return time, how long it lasts, how many days it takes, or whether they must stay "
-            "overnight on the islands. It is FALSE when they only ask the price, whether a date is available, or "
-            "what is included."
+            "overnight on the islands, even if the same message also asks other things. It is FALSE when they only "
+            "ask the price, whether a date is available, or what is included."
         ),
     },
     PIDE_DISPONIBILIDAD: {
@@ -502,7 +503,8 @@ _INTENCIONES_Q = {
         "type": "noul",
         "instructions": (
             "The customer asks whether someone of a certain age can do an activity, asks the minimum or maximum age, "
-            "or gives children's ages asking what they can do. It is FALSE otherwise."
+            "or gives children's ages asking what they can do, even if the same message also asks other things. It "
+            "is FALSE otherwise."
         ),
     },
     PIDE_ENLACE: {

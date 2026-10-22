@@ -130,3 +130,10 @@ def test_la_tarjeta_de_edades_no_se_come_las_otras_preguntas(monkeypatch, intenc
     respuesta = _maybe_answer_age_eligibility("Mi hijo tiene 12 años, ¿cuánto cuesta el minicurso y desde qué edad "
                                               "se puede?", st)
     assert (respuesta is not None) is tarjeta
+
+
+def test_si_los_hechos_no_contestan_lo_que_pregunta_contesta_el_rag(llamadas):
+    """Jev no marcó una intención (v3: «what time do we meet» a 0,72): el redactor dice FALTA y contesta el RAG."""
+    llamadas.estado["texto"] = "FALTA"
+    st = _conv(location="cartagena")
+    assert asyncio.run(redactor_hechos.responder(st, MENSAJE, st.history)) is None

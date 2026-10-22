@@ -34,6 +34,8 @@ logger = logging.getLogger("uvicorn.error")
 # hechos).
 _HISTORIAL = 6
 _LUGAR_DE_JEV = {"cartagena": "cartagena", "islands": "island"}
+# La palabra con la que el redactor dice que los hechos no contestan lo que pregunta (ver REDACTOR_HECHOS_*).
+_FALTA = "FALTA"
 
 
 def _actividad(state: ConversationState, datos: dict) -> str | None:
@@ -147,6 +149,12 @@ async def responder(state: ConversationState, message: str, history: list[dict])
         logger.warning(f"[HECHOS] el redactor falló: {exc!r}")
         return None
     answer = (respuesta.choices[0].message.content or "").strip()
+    if answer.strip(" .*_").upper() == _FALTA:
+        # Pregunta algo que los hechos no traen (Jev no marcó esa intención: «what time do we meet» a 0,72 en un mensaje
+        # de tres preguntas, banco arq-1d v3). Mejor el RAG, con toda la base, que un «no tengo ese dato».
+        logger.info(f"[HECHOS] el redactor dice que falta algo ({intenciones}); contesta el RAG")
+        note_turn(hechos_por_codigo="falta")
+        return None
     if not (is_coherent_text(answer) and currency_amounts_grounded(answer, f"{texto_hechos}\n{message}")
             and urls_grounded(answer, texto_hechos) and not contains_phone_number(answer)):
         logger.info("[HECHOS] la redacción no pasa las guardas deterministas; contesta el RAG")
