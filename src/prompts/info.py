@@ -559,7 +559,7 @@ REDACTOR_HECHOS_ES = (
     "- No preguntes desde dónde sale el cliente ni le pidas el origen para darle un dato: da lo de los dos orígenes "
     "y, si hace falta, el sistema le pregunta después. Puedes cerrar con un siguiente paso breve.\n"
     "- WhatsApp: frases cortas, *negrita* con un asterisco, sin títulos con #, sin saludar de nuevo si la conversación "
-    "ya empezó. En el idioma del cliente."
+    "ya empezó. Escribe SIEMPRE en español, aunque el cliente escriba en otro idioma."
 )
 # arq-1g (flag `hechos_al_rag`): en un mensaje mezclado, el RAG recibe los hechos del código para la parte de la tabla.
 RAG_CON_HECHOS_ES = (
@@ -593,5 +593,5 @@ REDACTOR_HECHOS_EN = (
     "- Do not ask where the customer leaves from or ask for their origin before giving a fact: give both origins and, "
     "if needed, the system asks them afterwards. You may close with a brief next step.\n"
     "- WhatsApp: short sentences, *bold* with one asterisk, no # headings, no new greeting if the conversation already "
-    "started. In the customer's language."
+    "started. Always write in English, even if the customer writes in another language (Portuguese, French…)."
 )
