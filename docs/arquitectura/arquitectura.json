@@ -1,8 +1,8 @@
 {
  "meta": {
-  "generado": "2026-10-22T08:53:57+00:00",
-  "commit": "0b69dac",
-  "rama": "feature/pre_gadea"
+  "generado": "2026-10-22T11:12:36+00:00",
+  "commit": "6ad2777c",
+  "rama": "feature/nada-gonzalo"
  },
  "vistas": {
   "general": {
@@ -219,6 +219,13 @@
      "titulo": "Contesta lo que puede antes de CUALQUIER pase a un asesor",
      "codigo": true,
      "pre": true,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "nada_en_primera_linea",
+     "titulo": "La palabra de control «NADA» no le llega al cliente",
+     "codigo": false,
+     "pre": false,
      "sin_efecto": false
     },
     {
@@ -2781,6 +2788,19 @@
    "fijado_en_pre": true,
    "usado_por": [
     "b_notas"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "nada_en_primera_linea",
+   "area": "Enrutador",
+   "titulo": "La palabra de control «NADA» no le llega al cliente",
+   "texto": "Antes de pasar a un asesor, Coral contesta las otras preguntas del mensaje; si no hay ninguna, el modelo responde la palabra «NADA» y no se dice nada más. Si detrás iba pegado el aviso de disponibilidad, «NADA» se colaba al principio de la respuesta. Ahora se mira la primera línea entera, sea cual sea la longitud (22-oct).",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
+   "usado_por": [
+    "safety"
    ],
    "sin_efecto": null
   },

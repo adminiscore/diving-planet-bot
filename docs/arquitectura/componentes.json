@@ -116,6 +116,7 @@
       "interruptores": [
         "contesta_antes_de_pasar",
         "contesta_antes_de_cualquier_pase",
+        "nada_en_primera_linea",
         "clima_con_politica",
         "dieta_no_es_medica"
       ]
@@ -1260,6 +1261,11 @@
       "area": "Enrutador",
       "titulo": "Contesta lo que puede antes de CUALQUIER pase a un asesor",
       "texto": "Si un turno acaba pasando la conversación al equipo por cualquier motivo (pide una persona, un contacto, un servicio privado, un cambio de reserva…) y el mensaje trae además otras preguntas, Coral contesta primero esas preguntas y después hace el pase. No lo hace con los datos sensibles, las quejas o emergencias ni los fallos técnicos, que van solos (gen-13, 21-oct)."
+    },
+    "nada_en_primera_linea": {
+      "area": "Enrutador",
+      "titulo": "La palabra de control «NADA» no le llega al cliente",
+      "texto": "Antes de pasar a un asesor, Coral contesta las otras preguntas del mensaje; si no hay ninguna, el modelo responde la palabra «NADA» y no se dice nada más. Si detrás iba pegado el aviso de disponibilidad, «NADA» se colaba al principio de la respuesta. Ahora se mira la primera línea entera, sea cual sea la longitud (22-oct)."
     },
     "clima_con_politica": {
       "area": "Enrutador",

@@ -127,6 +127,22 @@ async def lo_contestable_en_cualquier_pase(conv, message: str) -> str | None:
     return await _contestar_lo_demas(conv, message, tema, key, reason)
 
 
+def _es_nada(answer: str) -> bool:
+    """¿El RAG contestó la palabra de control (`_NADA`: no había nada más que contestar)?
+
+    22-oct (flag `nada_en_primera_linea`, Gonzalo con Claude): se miraba `startswith("NADA") and len(answer) < 30`, pero
+    `rag_answer` pega detrás el aviso al final (`avisos_al_final`: «Operamos todos los días…»), así que la respuesta
+    pasaba de 30 caracteres y «NADA» le llegaba al cliente (8 turnos en las rondas del 21-22, también en G10). Con el
+    flag, cuenta la PRIMERA LÍNEA entera, sin límite de longitud; una respuesta real que empieza por «Nada, no hace
+    falta…» no es la palabra sola. Lo mismo que FALTA en el redactor de hechos (a3e233f)."""
+    from src.config import settings  # lazy
+
+    if not settings.nada_en_primera_linea:
+        return answer.strip(" .!¡*\"'").upper().startswith(_NADA) and len(answer) < 30
+    lineas = answer.strip().splitlines()
+    return bool(lineas) and lineas[0].strip(" .!¡*\"'").upper() == _NADA
+
+
 async def _contestar_lo_demas(conv, message: str, tema: str, key: str, reason: str) -> str | None:
     from src.agents import rag_agent, supervisor  # lazy
     from src.agents.conversational_core import _entradas_rag  # lazy
@@ -140,8 +156,7 @@ async def _contestar_lo_demas(conv, message: str, tema: str, key: str, reason: s
     except Exception as exc:  # noqa: BLE001 — sin respuesta parcial, el pase va solo
         logger.warning(f"[NODE:escalation] contestar antes de pasar falló: {type(exc).__name__}: {exc}")
         return None
-    nada = answer.strip(" .!¡*\"'").upper().startswith(_NADA) and len(answer) < 30
-    if not answer or nada or rag_agent.is_fallback_answer(answer):
+    if not answer or _es_nada(answer) or rag_agent.is_fallback_answer(answer):
         return None
     logger.info(f"[NODE:escalation] contesta antes de pasar ({reason}): {len(answer)} caracteres")
     return answer
