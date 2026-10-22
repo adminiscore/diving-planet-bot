@@ -687,8 +687,12 @@ async def rag_answer(
     avisos_hechos: dict | None = None,
     sin_precio: bool = False,
     sin_lista: bool = False,
+    hechos: str | None = None,
 ) -> str:
-    """`sin_precio` (G3-07a, 18-oct; lo pide el flujo con el flag `rag_sin_precio_con_tarjeta`): el turno lleva la
+    """`hechos` (arq-1g, flag `hechos_al_rag`): en un mensaje mezclado, los hechos del código (JSON de
+    `src/flows/hechos.py`) para la parte que pregunta de la tabla (precio, qué incluye, requisitos…): se usan tal cual.
+
+    `sin_precio` (G3-07a, 18-oct; lo pide el flujo con el flag `rag_sin_precio_con_tarjeta`): el turno lleva la
     tarjeta del plan con el precio y el enlace, así que el texto no los da (ver RAG_SIN_PRECIO_*).
 
     `avisos_hechos` (CAL-A, flag `avisos_condicionados`): lo que ya sabemos del cliente en campos estructurados
@@ -875,6 +879,11 @@ async def rag_answer(
         if extra_context and context != extra_context:
             # Si ya tenemos contexto KB y ademas extra_context, lo anexamos explicito
             user_content += f"\n\nContexto adicional de la situacion: {extra_context}"
+        if hechos:
+            # arq-1g: la parte de la tabla sale del dato, no de memoria; detrás del contexto, antes de la pregunta.
+            from src.prompts.info import RAG_CON_HECHOS_EN, RAG_CON_HECHOS_ES  # lazy
+
+            user_content += f"\n\n{RAG_CON_HECHOS_ES if lang == 'es' else RAG_CON_HECHOS_EN}\n{hechos}"
         user_content += f"\n\nPregunta del cliente: {redact_pii(query)}"
         # CAL-A2 (`rag_plan_primero`): la lista de lo que el cliente pregunta, para contestarla punto por punto.
         puntos: list[str] = []
@@ -899,6 +908,8 @@ async def rag_answer(
         messages.append({"role": "user", "content": user_content})
 
         grounding_context = _build_grounding_context(context, extra_context=extra_context, history=history)
+        if hechos:
+            grounding_context = f"{grounding_context}\n\n{hechos}"  # arq-1g: el revisor y las guardas también los ven
         cabeza = [catalog_prefix_juez or catalog_prefix] if catalog_prefix else []
         # Lo que el bot tiene ordenado decir de la empresa, el juez tiene que poder comprobarlo (1-oct). Va tras el
         # catálogo: los dos son fijos por idioma, así que el prefijo sigue siendo cacheable.

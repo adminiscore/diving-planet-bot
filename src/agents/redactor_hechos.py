@@ -136,12 +136,12 @@ def _pide_los_que_faltan(perdidos: list[str], lang: str) -> str:
             "of them (and without removing anything it already said).")
 
 
-async def responder(state: ConversationState, message: str, history: list[dict]) -> str | None:
-    """La respuesta escrita con los hechos del código, o None si este mensaje no es para el redactor (y contesta el
-    RAG): Jev no da intenciones o no está seguro de que no traiga otra cosa, no se sabe la actividad, los hechos no
-    cubren alguna intención, o la redacción no pasa las guardas deterministas (importes, enlaces, teléfonos)."""
+async def hechos_del_turno(state: ConversationState, message: str, history: list[dict]) -> tuple[list[dict], list[str]] | None:
+    """Los hechos de las intenciones de este mensaje que el código sabe dar (bloques, intenciones cubiertas), o None si
+    no hay: Jev no da intenciones, la pregunta no es la del mensaje de ahora o no se sabe la actividad. No mira si el
+    mensaje trae algo más: eso lo decide quien llama (el redactor, o el RAG en los mensajes mezclados, arq-1g)."""
     intenciones = list(getattr(state, "_intenciones", None) or [])
-    if not intenciones or getattr(state, "_otra_cosa", None) is not False:
+    if not intenciones:
         return None
     ultimo = next((h.get("content") for h in reversed(history or []) if h.get("role") == "user"), None)
     if ultimo != message:
@@ -149,22 +149,43 @@ async def responder(state: ConversationState, message: str, history: list[dict])
         # de Jev son las del mensaje de ahora, no las suyas.
         return None
     from src.agents.nucleo.extractor import lectura_del_extractor  # lazy
-    from src.observability import note_turn  # lazy
 
     datos = await lectura_del_extractor(state, message) or {}
     actividad = _actividad(state, datos)
     if actividad is None:
         return None
-    origen = _origen(state, datos)
-    bloques = hechos_mod.hechos(_foto(state, datos, origen), intenciones, [actividad])
-    if not bloques or not all(_cubierta(bloques[0], i) for i in intenciones):
+    bloques = hechos_mod.hechos(_foto(state, datos, _origen(state, datos)), intenciones, [actividad])
+    cubiertas = [i for i in intenciones if bloques and _cubierta(bloques[0], i)]
+    return (bloques, cubiertas) if cubiertas else None
+
+
+def texto_de_los_hechos(bloques: list[dict]) -> str:
+    """Los hechos en JSON para el modelo. `pregunta_pendiente` es del código (la pregunta la pone él): con ella delante,
+    Luna preguntaba el origen en vez de dar los dos enlaces (banco arq-1d, k2 2 de 3)."""
+    return json.dumps([{k: v for k, v in b.items() if k != "pregunta_pendiente"} for b in bloques],
+                      ensure_ascii=False, indent=1)
+
+
+async def responder(state: ConversationState, message: str, history: list[dict]) -> str | None:
+    """La respuesta escrita con los hechos del código, o None si este mensaje no es para el redactor (y contesta el
+    RAG): Jev no da intenciones o no está seguro de que no traiga otra cosa, no se sabe la actividad, los hechos no
+    cubren alguna intención, o la redacción no pasa las guardas deterministas (importes, enlaces, teléfonos)."""
+    if getattr(state, "_otra_cosa", None) is not False:
+        return None
+    turno = await hechos_del_turno(state, message, history)
+    if turno is None:
+        return None
+    from src.observability import note_turn  # lazy
+
+    bloques, cubiertas = turno
+    intenciones = list(getattr(state, "_intenciones", None) or [])
+    actividad = bloques[0]["actividad"]
+    origen = bloques[0].get("origen")
+    if cubiertas != intenciones:
         logger.info(f"[HECHOS] {actividad}: los hechos no cubren {intenciones}; contesta el RAG")
         return None
     lang = "es" if state.language == "es" else "en"
-    # `pregunta_pendiente` es del código (la pregunta la pone él, abajo): con ella delante, Luna preguntaba el origen
-    # en vez de dar los dos enlaces (banco arq-1d, k2 2 de 3).
-    texto_hechos = json.dumps([{k: v for k, v in b.items() if k != "pregunta_pendiente"} for b in bloques],
-                              ensure_ascii=False, indent=1)
+    texto_hechos = texto_de_los_hechos(bloques)
     client = trace_openai(AsyncOpenAI(api_key=settings.openai_api_key))
     mensajes = _mensajes(lang, history, message, texto_hechos)
     answer = await _redactar(client, mensajes)
@@ -177,6 +198,7 @@ async def responder(state: ConversationState, message: str, history: list[dict])
         # have the price for the refresher. FALTA»), y las dos veces le habría llegado al cliente.
         logger.info(f"[HECHOS] el redactor dice que falta algo ({intenciones}); contesta el RAG")
         note_turn(hechos_por_codigo="falta")
+        state._redactor_dijo_falta = True  # arq-1g: el mensaje era mezclado; el RAG recibe los hechos
         return None
     if not _pasa_las_guardas(answer, texto_hechos, message):
         logger.info("[HECHOS] la redacción no pasa las guardas deterministas; contesta el RAG")

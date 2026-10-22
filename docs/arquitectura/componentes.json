@@ -577,7 +577,8 @@
         "rag_answer_model"
       ],
       "interruptores": [
-        "hechos_por_codigo"
+        "hechos_por_codigo",
+        "hechos_al_rag"
       ]
     },
     {
@@ -1507,6 +1508,11 @@
       "area": "Arquitectura",
       "titulo": "Caché del extractor (Haiku)",
       "texto": "El extractor usa un modelo de Anthropic por OpenRouter, que solo reutiliza el principio repetido del prompt si se le pide. Con el interruptor se le pide y Haiku va siempre al mismo proveedor (los demás de respaldo): las dos llamadas del extractor, casi la mitad del coste de un turno, pasan a pagar ~10 % de su prompt (arq-2b, 22-oct)."
+    },
+    "hechos_al_rag": {
+      "area": "Preguntas",
+      "titulo": "Hechos del código también en los mensajes mezclados",
+      "texto": "Si el cliente pregunta algo de la tabla (precio, qué incluye, requisitos…) y además otra cosa («¿cuánto cuesta y qué peces se ven?»), contesta el RAG, pero la parte de la tabla la escribe con los datos que saca el código y no de memoria (arq-1g, 22-oct)."
     }
   },
   "areas": [

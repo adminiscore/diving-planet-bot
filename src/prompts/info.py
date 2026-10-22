@@ -561,6 +561,17 @@ REDACTOR_HECHOS_ES = (
     "- WhatsApp: frases cortas, *negrita* con un asterisco, sin títulos con #, sin saludar de nuevo si la conversación "
     "ya empezó. En el idioma del cliente."
 )
+# arq-1g (flag `hechos_al_rag`): en un mensaje mezclado, el RAG recibe los hechos del código para la parte de la tabla.
+RAG_CON_HECHOS_ES = (
+    "Hechos del sistema para parte de lo que pregunta el cliente, ya calculados con las reglas de Diving Planet (moneda, "
+    "origen, edades). Para esa parte úsalos tal cual y COMPLETOS (las listas enteras, cada importe, la edad), sin "
+    "cambiarlos por lo que diga el catálogo; el resto de la pregunta contéstalo como siempre:"
+)
+RAG_CON_HECHOS_EN = (
+    "System facts for part of what the customer asks, already worked out with Diving Planet's rules (currency, origin, "
+    "ages). For that part use them as given and IN FULL (whole lists, every amount, the age), without swapping them for "
+    "what the catalog says; answer the rest of the question as usual:"
+)
 REDACTOR_HECHOS_EN = (
     "You answer the customer's question ONLY with the FACTS the system gives you (JSON), already worked out with "
     "Diving Planet's rules. Do not choose among them or change them: put them into words.\n"

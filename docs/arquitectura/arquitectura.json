@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-22T11:09:36+00:00",
-  "commit": "ea6852e",
+  "generado": "2026-10-22T11:27:09+00:00",
+  "commit": "9cedd79",
   "rama": "feature/pre_gadea"
  },
  "vistas": {
@@ -1254,6 +1254,13 @@
     {
      "nombre": "hechos_por_codigo",
      "titulo": "Hechos por código (ARQ)",
+     "codigo": false,
+     "pre": false,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "hechos_al_rag",
+     "titulo": "Hechos del código también en los mensajes mezclados",
      "codigo": false,
      "pre": false,
      "sin_efecto": false
@@ -2585,6 +2592,19 @@
    "fijado_en_pre": true,
    "usado_por": [
     "b_extraction"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "hechos_al_rag",
+   "area": "Preguntas",
+   "titulo": "Hechos del código también en los mensajes mezclados",
+   "texto": "Si el cliente pregunta algo de la tabla (precio, qué incluye, requisitos…) y además otra cosa («¿cuánto cuesta y qué peces se ven?»), contesta el RAG, pero la parte de la tabla la escribe con los datos que saca el código y no de memoria (arq-1g, 22-oct).",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
+   "usado_por": [
+    "r_hechos"
    ],
    "sin_efecto": null
   },

@@ -1639,6 +1639,24 @@ async def _con_hechos(state: ConversationState, message: str, history: list) -> 
     return await redactor_hechos.responder(state, message, history)
 
 
+async def _hechos_para_el_rag(state: ConversationState, message: str, history: list) -> str | None:
+    """ARQ-1g (flag `hechos_al_rag`): en un mensaje MEZCLADO (intenciones de la tabla y algo más: «¿cuánto cuesta y qué
+    peces se ven?»), el RAG contesta, pero la parte cubierta la escribe con los hechos del código y no de memoria. None
+    si no hay nada cubierto o si el mensaje es todo de la tabla (entonces contesta el redactor). También cuando Jev lo
+    daba por todo de la tabla pero el redactor dijo FALTA: el mensaje traía algo más."""
+    mezclado = getattr(state, "_otra_cosa", None) is not False or getattr(state, "_redactor_dijo_falta", False)
+    if not (settings.hechos_por_codigo and settings.hechos_al_rag and mezclado):
+        return None
+    from src.agents import redactor_hechos  # lazy
+
+    turno = await redactor_hechos.hechos_del_turno(state, message, history)
+    if turno is None:
+        return None
+    bloques, cubiertas = turno
+    logger.info(f"[HECHOS] mensaje mezclado: el RAG recibe los hechos de {cubiertas} ({bloques[0]['actividad']})")
+    return redactor_hechos.texto_de_los_hechos(bloques)
+
+
 async def _rag_answer(
     state: ConversationState, message: str, *, rag_query: str | None = None, history: list | None = None,
     sin_precio: bool = False,
@@ -1653,6 +1671,8 @@ async def _rag_answer(
         return con_hechos
     entradas = _entradas_rag(await _con_la_nacionalidad_del_mensaje(state, message),
                              state.history if history is None else history, message)
+    if hechos := await _hechos_para_el_rag(state, message, state.history if history is None else history):
+        entradas["hechos"] = hechos  # arq-1g
     if sin_precio:  # G3-07a: solo se pasa cuando hace falta (la llamada de siempre no cambia)
         entradas["sin_precio"] = True
     answer = await supervisor.rag_answer(rag_query or message, **entradas)
@@ -1752,7 +1772,7 @@ def _plan_nombrado(state: ConversationState, message: str) -> str | None:
 # corrección, un cambio de idioma...), se tira y se lanza la de siempre: nunca contesta con otro contexto y nunca
 # tarda más que hoy. Si el turno no llega a pedir respuesta, se cancela al cerrarlo (ese es el coste extra).
 _HORA_DEL_RESUMEN = re.compile(r"^(Fecha y hora actual|Current date and time): [^(]*\([^)]*\)\.\s*")
-_PARTES_HUELLA = ("mensaje", "idioma", "historial", "resumen", "origen", "lista")  # en el orden de `_huella_rag`
+_PARTES_HUELLA = ("mensaje", "idioma", "historial", "resumen", "origen", "lista", "hechos")  # en el orden de `_huella_rag`
 
 
 def _huella_rag(message: str, entradas: dict) -> tuple:
@@ -1761,7 +1781,7 @@ def _huella_rag(message: str, entradas: dict) -> tuple:
     resumen = _HORA_DEL_RESUMEN.sub("", entradas.get("extra_context") or "")  # la hora cambia de un minuto a otro
     # ord-9: una respuesta adelantada escrita sin «no enumeres lo que incluye» no vale si el turno lo pide.
     return (message, entradas.get("lang"), json.dumps(entradas.get("history") or [], ensure_ascii=False),
-            resumen, entradas.get("origin"), bool(entradas.get("sin_lista")))
+            resumen, entradas.get("origin"), bool(entradas.get("sin_lista")), entradas.get("hechos"))
 
 
 def lanzar_rag_adelantado(state: ConversationState, message: str) -> None:
@@ -1819,6 +1839,8 @@ async def _adoptar_o_rehacer(state: ConversationState, message: str, history: li
         note_turn(rag_adelantado="descartado")
         return con_hechos
     entradas = _entradas_rag(await _con_la_nacionalidad_del_mensaje(state, message), history, message)
+    if hechos := await _hechos_para_el_rag(state, message, history):
+        entradas["hechos"] = hechos  # arq-1g: la adelantada salió sin ellos, así que su huella no coincide y se rehace
     huella = _huella_rag(message, entradas)
     if huella == adelantado["huella"]:
         note_turn(rag_used=True, rag_adelantado="aprovechado")

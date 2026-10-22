@@ -372,3 +372,21 @@ def test_los_temas_son_de_la_base_de_conocimiento():
     for tema, claves in av._temas().items():
         desconocidas = set(claves) - conocidos
         assert not desconocidas, f"tema {tema}: {desconocidas} no son topics ni claves de la base"
+
+
+@pytest.mark.asyncio
+async def test_arq1g_los_hechos_van_en_el_mensaje_y_los_ve_el_revisor(rag, monkeypatch):
+    """ARQ-1g: en un mensaje mezclado el RAG recibe los hechos del código para la parte de la tabla."""
+    rag_agent, llamadas = rag
+    vistos: list[str] = []
+
+    async def fake_verify(answer, context, lang="es"):
+        vistos.append(context)
+        return True, ""
+
+    monkeypatch.setattr(rag_agent, "_verify_grounding", fake_verify)
+    hechos = '[{"actividad": "minicourse", "precio": {"cartagena": {"online": "183 USD"}}}]'
+    await rag_agent.rag_answer("¿cuánto cuesta el minicurso y qué peces se ven?", lang="es", hechos=hechos)
+    primera = _mensaje_del_usuario(llamadas[0])
+    assert "Hechos del sistema" in primera and "183 USD" in primera
+    assert primera.index("183 USD") < primera.index("Pregunta del cliente")
