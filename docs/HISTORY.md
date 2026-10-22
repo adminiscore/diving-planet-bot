@@ -1,6 +1,25 @@
 History
 =======
 
+0.31.94 - (2026-10-22)
+----------------------
+* **G10 nº 3 (909a065) no vale como nota:** el redactor de hechos contestó 37 turnos frente a 72 en el nº 2 con el
+  mismo código; repitiendo 5 diálogos con el código desplegado vuelve al redactor en 10 de 10 turnos. Algo del entorno
+  esa tarde, sin motivo registrado. Decisión de Gadea: sin votos y con el juez parado.
+* **[TURN_METRICS] lleva `hechos`:** quién contestó lo de la tabla (`redactor`, `al_rag`, `falta`, `guardas`) o por qué
+  no el redactor (`otra_cosa`, `jev_calla`, `sin_intenciones`, `pregunta_guardada`, `sin_actividad`, `sin_lectura`,
+  `sin_cubrir`, `no_cubre`, `fallo`).
+* **PROMOCIÓN de flu-1** (decisión de Gadea), repreguntas del flujo de la reserva del G10 nº 2:
+  - `grupo_de_una_persona`: «es para una persona» cuenta como el tamaño del grupo en la pregunta de Jev. Banco
+    `docs/robustness/arq/banco-flu1.json` ×3: 19/24 → 20/24, controles iguales.
+  - `curso_preguntado_no_es_nivel`: «is there space for the Open Water tomorrow?» ya no recibe «¿ya tienen el Open
+    Water o quieren sacarlo?»; lo decide la actividad de la que pregunta (extractor), no la regex.
+  - `sin_certificacion_no_hace_falta`: al no certificado que quiere snorkel, minicurso u Open Water se le dice que no
+    necesita certificación (dato del registro).
+  - Banco `docs/robustness/arq/banco-flu1b.json` ×3 de los dos últimos: 9/24 → 24/24, controles 6/6 en los dos.
+  - Fuera de flu-1: el hotel dicho tras pasar a un asesor (diseño del 13-oct: tras el pase solo se contestan preguntas).
+* **G10 nº 4** con todo lo anterior (código local, los tres flags encendidos): en marcha.
+
 0.31.93 - (2026-10-22)
 ----------------------
 * **G10 nº 2 sobre PRE promocionado (eb1679a):** 87,7 % 25/72 → **90,7 % 34/72** sin desfasados (58 → 56 fallos con los

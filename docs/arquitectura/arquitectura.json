@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-22T16:35:28+00:00",
-  "commit": "fd53591",
+  "generado": "2026-10-22T16:42:05+00:00",
+  "commit": "c09ef5b",
   "rama": "feature/pre_gadea"
  },
  "vistas": {
@@ -187,8 +187,8 @@
     {
      "nombre": "grupo_de_una_persona",
      "titulo": "«Es para una persona» cuenta como el grupo",
-     "codigo": false,
-     "pre": false,
+     "codigo": true,
+     "pre": true,
      "sin_efecto": false
     }
    ],
@@ -830,8 +830,8 @@
     {
      "nombre": "curso_preguntado_no_es_nivel",
      "titulo": "Preguntar por un curso no es decir el nivel",
-     "codigo": false,
-     "pre": false,
+     "codigo": true,
+     "pre": true,
      "sin_efecto": false
     }
    ],
@@ -1030,8 +1030,8 @@
     {
      "nombre": "sin_certificacion_no_hace_falta",
      "titulo": "«No estoy certificado»: no hace falta",
-     "codigo": false,
-     "pre": false,
+     "codigo": true,
+     "pre": true,
      "sin_efecto": false
     }
    ],
@@ -2502,9 +2502,9 @@
    "area": "Reserva",
    "titulo": "Preguntar por un curso no es decir el nivel",
    "texto": "Si el cliente pregunta por un curso con nivel («¿hay Open Water mañana?»), Coral entiende que quiere el curso y no le pregunta si ya tiene esa certificación; con el nivel a secas («somos 4 open water») sigue preguntando (flu-1, 22-oct).",
-   "codigo": false,
-   "pre": false,
-   "fijado_en_pre": false,
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
    "usado_por": [
     "b_extraction"
    ],
@@ -2695,9 +2695,9 @@
    "area": "Reserva",
    "titulo": "«Es para una persona» cuenta como el grupo",
    "texto": "Si el cliente dice que la reserva es para una persona («es para una persona», «solo para mí»), Coral lo apunta y no vuelve a preguntar para cuántas personas; preguntar si UNA persona puede hacer algo sigue sin contar (flu-1, 22-oct).",
-   "codigo": false,
-   "pre": false,
-   "fijado_en_pre": false,
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
    "usado_por": [
     "router"
    ],
@@ -3469,9 +3469,9 @@
    "area": "Reserva",
    "titulo": "«No estoy certificado»: no hace falta",
    "texto": "Cuando el cliente dice que no está certificado y su actividad no lo pide (snorkel, minicurso, curso Open Water), Coral le dice que no necesita certificación (flu-1, 22-oct).",
-   "codigo": false,
-   "pre": false,
-   "fijado_en_pre": false,
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
    "usado_por": [
     "b_slotfill_close"
    ],
