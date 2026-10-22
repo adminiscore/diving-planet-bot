@@ -228,6 +228,15 @@ services:
       # CERTIFICADO_SOLO_SI_LO_DICE con «buceé hace poco» = certificado (decisión de Gadea). PROMOCIONADO (HISTORY
       # 0.31.61: mod-H2 97,0 % igual que limpieza-3; reserva-solo-link ya no ofrece el minicurso). Revert = quitar estas líneas.
       CERTIFICADO_SOLO_SI_LO_DICE: "true"
+      # ARQ (22-oct, PROMOCIONADO, decisión de Gadea tras el G10 de control): el redactor de hechos (arq-1d/1e/1h +
+      # arq-3), «soy de Medellín» (arq-1f), los hechos en los mensajes mezclados (arq-1g), menos reglas en el prompt
+      # del RAG (arq-2a), la caché del extractor (arq-2b) y el NADA que no llega al cliente. Revert = quitar estas líneas.
+      HECHOS_POR_CODIGO: "true"
+      EL_VERBO_NO_LA_CIUDAD: "true"
+      HECHOS_AL_RAG: "true"
+      RAG_SIN_REGLAS_DEL_CODIGO: "true"
+      CACHE_ANTHROPIC: "true"
+      NADA_EN_PRIMERA_LINEA: "true"
       ACUSE_MODEL: "gpt-5.4-nano"
       NOTAS_MODEL: "deepseek/deepseek-v4.1-flash"
       # ex-4 (12-oct): el extractor "LLM primero" de la fase EX (src/agents/extractor_turno.py).

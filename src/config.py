@@ -198,8 +198,8 @@ class Settings(BaseSettings):
     # nacionalidad que dice ESE mensaje, y a «Somos de Cali… ¿cuánto vale?» le daba USD. Con el flag, el RAG recibe la
     # nacionalidad que ya leyó la extracción del turno (conversational_core._con_la_nacionalidad_del_mensaje). APAGADO.
     rag_espera_la_nacionalidad: bool = True  # PROMOCIONADO 21-oct (con gentilicio_es_colombiano, misma ronda gen14-A/B); revert = False
-    el_verbo_no_la_ciudad: bool = False  # ARQ-1f (22-oct): «soy de Medellín» es colombiano y «vivo en Barranquilla» no; pares con la misma ciudad en la regla del extractor (decisión de Gadea)
-    cache_anthropic: bool = False  # ARQ-2b (22-oct): el prompt de sistema de los modelos de Anthropic por OpenRouter (Haiku en el extractor) se marca para la caché (`cache_control`); OpenAI y DeepSeek ya cachean solos
+    el_verbo_no_la_ciudad: bool = True  # PROMOCIONADO 22-oct (arq-1f: banco de moneda 87/93 -> 93/93; banco fijo p6 0/3 -> 3/3; HISTORY 0.31.92); revert = False
+    cache_anthropic: bool = True  # PROMOCIONADO 22-oct (arq-2b: core A/B2 coste -31 %, turno p50 4,25 -> 4,07 s, extractor p50 0,78 -> 0,68 s; HISTORY 0.31.92); revert = False
     cache_anthropic_proveedor: str = "amazon-bedrock"  # ARQ-2b: con la caché, el proveedor de Haiku que va primero (los demás de respaldo). Sonda 22-oct (7 llamadas cada uno): bedrock caché 7/7 y p50 1,98 s (sin caché 1,94 s); anthropic 7/7 y 2,29 s; vertex 3/7
     # gen-15 (21-oct): los hoteles de las islas que da la base (policies.json other_island_hotels: Mulata, Rosario de
     # Mar, Eco Hotel Las Palmeras…) no estaban en la lista del bot ni en la pregunta del lugar de Jev, y el bot volvía a
@@ -573,7 +573,7 @@ class Settings(BaseSettings):
     # 22-oct (Gonzalo con Claude; propuesta #1252, Gadea #1255): la palabra de control «NADA» de contestar antes del
     # pase le llegaba al cliente cuando el aviso al final iba pegado detrás (se miraba len < 30): 8 turnos en las rondas
     # del 21-22, también en G10. Con el flag cuenta la primera línea entera. escalation_agent._es_nada. APAGADO.
-    nada_en_primera_linea: bool = False
+    nada_en_primera_linea: bool = True  # PROMOCIONADO 22-oct (Gonzalo: el NADA de contestar antes del pase ya no llega al cliente; 8 turnos en las rondas del 21-22; HISTORY 0.31.92); revert = False
     contesta_antes_de_pasar: bool = True  # PROMOCIONADO 20-oct (gen3-B 98,7 % 30/32 frente a gen3-A 97,4 % 26/32, 0 regresiones; HISTORY 0.31.70); revert = False
     # - El clima (decisión de Gadea, 20-oct): antes del pase, que operamos todos los días salvo el 25-dic y el 1-ene,
     #   que la seguridad va primero y que, si el mar no está apto, se reprograma (FAQ 3 y 10 de la base).
@@ -644,13 +644,13 @@ class Settings(BaseSettings):
     # del mensaje (precio, qué incluye, requisitos, horario, disponibilidad, edad, enlace), el código saca los hechos
     # con las reglas aplicadas (src/flows/hechos.py) y el redactor solo los pone en palabras, sin el catálogo entero.
     # APAGADO hasta medirlo con el banco fijo del RAG ×3 y su ronda core.
-    hechos_por_codigo: bool = False
-    hechos_al_rag: bool = False  # ARQ-1g (22-oct, decisión de Gadea): en un mensaje mezclado (intenciones de la tabla y algo más), el RAG recibe los hechos del código para la parte cubierta (necesita hechos_por_codigo)
+    hechos_por_codigo: bool = True  # PROMOCIONADO 22-oct (arq-1d/1e/1h + arq-3: banco fijo x3 100/120 -> 115-119/120, 0 invenciones; core A/B3 97,4 % -> 97,9 % 27/32 con votos, sin regresiones del redactor; G10 de control 86,4 % 22/72 -> 87,7 % 25/72, votos 27 mejoras y 23 regresiones reales, ~9 ya arregladas; HISTORY 0.31.92); revert = False
+    hechos_al_rag: bool = True  # PROMOCIONADO 22-oct (arq-1g: banco de mezclados x3, la parte de la tabla 61/66 -> 66/66; HISTORY 0.31.92); revert = False
     # arq-2a (22-oct, Gonzalo con Claude): fuera del prompt del RAG las reglas que el código ya pone en el contexto que
     # el RAG lee siempre (catálogo y políticas, en los dos caminos de `hechos_por_codigo`): moneda, 5 % por equipo
     # completo, no calcular totales, días de cierre y mal tiempo, y una viñeta repetida del tono. Las que solo vigila un
     # guarda se quedan. prompts/info.RAG_SIN_REGLAS_DEL_CODIGO_*; docs/robustness/arq/arq2a-inventario.md. APAGADO.
-    rag_sin_reglas_del_codigo: bool = False
+    rag_sin_reglas_del_codigo: bool = True  # PROMOCIONADO 22-oct (arq-2a, Gonzalo: banco neutro 105/104 y 115/115, core con votos 97,9 % 27/32 -> 98,3 % 29/32, prompt -4,7 %; HISTORY 0.31.92); revert = False
     jev_precio_nombra_actividades: bool = True  # PROMOCIONADO 21-oct (con ord-7); revert = False
     # CAL (17-oct): el catálogo del RAG pinta hasta qué profundidad certifica cada curso (`max_depth_m`: Open Water
     # 18 m, Advanced 30 m, lo que dice el registro de actividades) y una línea general de profundidad por certificación

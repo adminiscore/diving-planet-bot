@@ -1,6 +1,33 @@
 History
 =======
 
+0.31.92 - (2026-10-22)
+----------------------
+* **PROMOCIÓN de la fase ARQ** (decisión de Gadea tras el G10 de control y sus votos). Encendidos en config y compose:
+  `hechos_por_codigo`, `el_verbo_no_la_ciudad`, `hechos_al_rag`, `rag_sin_reglas_del_codigo`, `cache_anthropic` y
+  `nada_en_primera_linea`. Revert = ponerlos a False.
+* **arq-4, G10 de control con el redactor, arq-3 y arq-1f** (código local, antes de lo de abajo): 86,4 % 22/72 → **87,7 %
+  25/72** sin desfasados (82 → 74 fallos). Votos frente a ayer: 27 mejoras y 23 regresiones reales.
+  - De las 23: 4 de idioma (clientes en portugués contestados en portugués), 3 de edad («más de 10») y 2 de recogida y
+    alojamiento, ya arregladas; el resto, repreguntas del flujo y turnos del RAG.
+  - Fallos por quién escribió el turno (`scripts/clasifica_fallos_g10.py`, `docs/robustness/arq/g10-arq1-fallos-por-quien.md`):
+    RAG 37, redactor ~25, flujo 6, pase 5.
+* **arq-1g, mensajes mezclados:** si el mensaje trae algo de la tabla y algo más (o el redactor dice FALTA), contesta el
+  RAG pero recibe los hechos del código para la parte cubierta. Banco propio de mezclados ×3: 61/66 → 66/66.
+* **arq-1h, hechos más completos:** la recogida según el origen (Cartagena: punto de encuentro a 5 min del centro, sin
+  recogida en el hotel; islas: recogida y regreso sin cargo) y el alojamiento no incluido en los planes de varios días.
+  Banco 115/120; arq-3 rehace el doble (40), la mitad por el punto de encuentro: turnos del redactor p50 +0,4 s.
+* **El redactor** escribe siempre en el idioma de la conversación y dice la edad como «desde los N años».
+* **arq-2a (Gonzalo):** fuera del prompt del RAG las reglas que el código ya pone en su contexto (−4,7 %). Core con votos
+  97,9 % 27/32 → 98,3 % 29/32.
+* **arq-2b, la caché del extractor:** Anthropic solo cachea con `cache_control` y OpenRouter saltaba entre proveedores.
+  Con la caché y Bedrock primero: coste de la ronda core −31 %, turno p50 4,25 → 4,07 s, extractor 0,78 → 0,68 s.
+* **arq-2c (Gonzalo):** fuera ord-9 (`listas_del_dato`), sustituido por el redactor.
+* **El NADA (Gonzalo):** la palabra de control de «contestar antes del pase» ya no llega al cliente (8 turnos en las
+  rondas del 21-22).
+* **arq-1i (Gonzalo), en pausa:** intenciones nuevas de clima general y pago; decisiones de Gadea: el clima general lo
+  contesta el redactor, cambios y cancelaciones fuera.
+
 0.31.91 - (2026-10-22)
 ----------------------
 * **Fase ARQ, «el modelo interpreta, el código decide, el modelo redacta»** (decisión de Gadea, 22-oct). Plan:

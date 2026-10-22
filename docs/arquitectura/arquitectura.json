@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-22T12:39:41+00:00",
-  "commit": "f541cb8",
+  "generado": "2026-10-22T13:02:05+00:00",
+  "commit": "b1cf763",
   "rama": "feature/pre_gadea"
  },
  "vistas": {
@@ -238,8 +238,8 @@
     {
      "nombre": "nada_en_primera_linea",
      "titulo": "La palabra de control «NADA» no le llega al cliente",
-     "codigo": false,
-     "pre": false,
+     "codigo": true,
+     "pre": true,
      "sin_efecto": false
     }
    ],
@@ -711,8 +711,8 @@
     {
      "nombre": "el_verbo_no_la_ciudad",
      "titulo": "«Soy de Medellín» es colombiano",
-     "codigo": false,
-     "pre": false,
+     "codigo": true,
+     "pre": true,
      "sin_efecto": false
     },
     {
@@ -809,8 +809,8 @@
     {
      "nombre": "cache_anthropic",
      "titulo": "Caché del extractor (Haiku)",
-     "codigo": false,
-     "pre": false,
+     "codigo": true,
+     "pre": true,
      "sin_efecto": false
     }
    ],
@@ -1261,15 +1261,15 @@
     {
      "nombre": "hechos_por_codigo",
      "titulo": "Hechos por código (ARQ)",
-     "codigo": false,
-     "pre": false,
+     "codigo": true,
+     "pre": true,
      "sin_efecto": false
     },
     {
      "nombre": "hechos_al_rag",
      "titulo": "Hechos del código también en los mensajes mezclados",
-     "codigo": false,
-     "pre": false,
+     "codigo": true,
+     "pre": true,
      "sin_efecto": false
     }
    ],
@@ -1385,8 +1385,8 @@
     {
      "nombre": "rag_sin_reglas_del_codigo",
      "titulo": "El RAG sin las reglas que ya dice el catálogo",
-     "codigo": false,
-     "pre": false,
+     "codigo": true,
+     "pre": true,
      "sin_efecto": false
     }
    ],
@@ -2284,9 +2284,9 @@
    "area": "Arquitectura",
    "titulo": "Caché del extractor (Haiku)",
    "texto": "El extractor usa un modelo de Anthropic por OpenRouter, que solo reutiliza el principio repetido del prompt si se le pide. Con el interruptor se le pide y Haiku va siempre al mismo proveedor (los demás de respaldo): las dos llamadas del extractor, casi la mitad del coste de un turno, pasan a pagar ~10 % de su prompt (arq-2b, 22-oct).",
-   "codigo": false,
-   "pre": false,
-   "fijado_en_pre": false,
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
    "usado_por": [
     "b_extraction"
    ],
@@ -2505,9 +2505,9 @@
    "area": "Reserva",
    "titulo": "«Soy de Medellín» es colombiano",
    "texto": "Ser de una ciudad de Colombia dice la nacionalidad y vivir allí no: «soy de Medellín» paga en pesos y «vivo en Barranquilla» no dice nada. La regla del extractor pone la misma ciudad en los dos lados, porque con ciudades distintas el modelo aprendía la ciudad en vez del verbo (arq-1f, 22-oct).",
-   "codigo": false,
-   "pre": false,
-   "fijado_en_pre": false,
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
    "usado_por": [
     "b_extraction"
    ],
@@ -2607,9 +2607,9 @@
    "area": "Preguntas",
    "titulo": "Hechos del código también en los mensajes mezclados",
    "texto": "Si el cliente pregunta algo de la tabla (precio, qué incluye, requisitos…) y además otra cosa («¿cuánto cuesta y qué peces se ven?»), contesta el RAG, pero la parte de la tabla la escribe con los datos que saca el código y no de memoria (arq-1g, 22-oct).",
-   "codigo": false,
-   "pre": false,
-   "fijado_en_pre": false,
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
    "usado_por": [
     "r_hechos"
    ],
@@ -2620,9 +2620,9 @@
    "area": "Preguntas",
    "titulo": "Hechos por código (ARQ)",
    "texto": "El modelo interpreta, el código decide y el modelo redacta: si el cliente solo pregunta precio, qué incluye, requisitos, horario, disponibilidad, edad o el enlace de una actividad, los datos los saca el código (moneda, las dos salidas si no se sabe el origen, edades en cifra, el asesor para colombianos) y Coral solo los escribe. Así no se deja partes de las listas ni mezcla datos (arq-1d, 22-oct).",
-   "codigo": false,
-   "pre": false,
-   "fijado_en_pre": false,
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
    "usado_por": [
     "r_hechos"
    ],
@@ -2843,9 +2843,9 @@
    "area": "Enrutador",
    "titulo": "La palabra de control «NADA» no le llega al cliente",
    "texto": "Antes de pasar a un asesor, Coral contesta las otras preguntas del mensaje; si no hay ninguna, el modelo responde la palabra «NADA» y no se dice nada más. Si detrás iba pegado el aviso de disponibilidad, «NADA» se colaba al principio de la respuesta. Ahora se mira la primera línea entera, sea cual sea la longitud (22-oct).",
-   "codigo": false,
-   "pre": false,
-   "fijado_en_pre": false,
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
    "usado_por": [
     "safety"
    ],
@@ -3162,9 +3162,9 @@
    "area": "Preguntas",
    "titulo": "El RAG sin las reglas que ya dice el catálogo",
    "texto": "Las instrucciones de Coral repetían reglas que el catálogo y las políticas ya le dan siempre: en qué moneda cotizar, el 5 % por traer el equipo completo, no calcular totales con el descuento y los días en que no operamos. Se quitan del prompt (un 10 % más corto) y se quedan donde está el dato. Las que solo vigila un control automático (teléfonos, enlaces, cifras) siguen en el prompt (arq-2a, 22-oct).",
-   "codigo": false,
-   "pre": false,
-   "fijado_en_pre": false,
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
    "usado_por": [
     "r_escribir"
    ],
