@@ -144,3 +144,6 @@ def test_falta_en_medio_de_la_respuesta_tampoco_llega_al_cliente(llamadas):
     llamadas.estado["texto"] = "El snorkel cuesta 45 USD.\n\nFALTA\n\n¿Para cuántas personas?"
     st = _conv(location="island")
     assert asyncio.run(redactor_hechos.responder(st, MENSAJE, st.history)) is None
+    # Core B2: al final de una frase.
+    llamadas.estado["texto"] = "El snorkel cuesta 45 USD. No tengo el precio del refresher. FALTA"
+    assert asyncio.run(redactor_hechos.responder(st, MENSAJE, st.history)) is None
