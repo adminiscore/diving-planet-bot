@@ -601,7 +601,8 @@
         "hechos_por_codigo",
         "hechos_al_rag",
         "varias_actividades",
-        "enlace_con_disponibilidad"
+        "enlace_con_disponibilidad",
+        "hechos_sin_actividad"
       ]
     },
     {
@@ -1544,6 +1545,11 @@
       "area": "Enrutador",
       "titulo": "La palabra de control «NADA» no le llega al cliente",
       "texto": "Antes de pasar a un asesor, Coral contesta las otras preguntas del mensaje; si no hay ninguna, el modelo responde la palabra «NADA» y no se dice nada más. Si detrás iba pegado el aviso de disponibilidad, «NADA» se colaba al principio de la respuesta. Ahora se mira la primera línea entera, sea cual sea la longitud (22-oct)."
+    },
+    "hechos_sin_actividad": {
+      "area": "Preguntas",
+      "titulo": "Hora, recogida, qué llevar y sitio sin saber la actividad",
+      "texto": "Si el cliente pregunta solo a qué hora es o cómo es la recogida, qué llevar o si hay sitio, y no se sabe de qué actividad habla (a menudo porque ya reservó), los datos salen de las políticas, que son iguales para todas, y Coral los escribe; antes contestaba el RAG (arq-1p, 22-oct)."
     },
     "varias_actividades": {
       "area": "Preguntas",

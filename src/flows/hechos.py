@@ -217,6 +217,37 @@ def hechos(state: ConversationState, intenciones: list[str], actividades: list[s
     return bloques
 
 
+# arq-1p (22-oct, flag `hechos_sin_actividad`): lo que NO depende de la actividad. En el G10 nº 4, 24 turnos se quedaron sin
+# redactor porque no se sabía la actividad (`hechos=sin_actividad`); 11 preguntaban solo la hora o la recogida, qué llevar
+# o si hay sitio, casi siempre quien ya reservó y no la nombra. Esos hechos son los mismos para todas las actividades (las
+# políticas), así que el código los da sin adivinar la actividad. Precio, qué incluye, edad y enlace sí la necesitan.
+INTENCIONES_SIN_ACTIVIDAD = frozenset({"horario", "disponibilidad", "requisitos"})
+
+
+def hechos_sin_actividad(state: ConversationState, intenciones: list[str]) -> list[dict]:
+    """Un bloque de hechos generales (sin actividad) para las intenciones que no dependen de ella; [] si no hay ninguna."""
+    lang = "es" if state.language == "es" else "en"
+    origen = state.location if state.location in ORIGENES else None
+    origenes = (origen,) if origen else ORIGENES
+    pedidas = [i for i in intenciones if i in INTENCIONES_SIN_ACTIVIDAD]
+    if not pedidas:
+        return []
+    bloque: dict = {"actividad": None, "nombre": "general", "origen": origen}
+    if "horario" in pedidas:
+        bloque["horario_general"] = [p for p in (_politica("operating_hours", lang),
+                                                 _politica("activity_schedule", lang)) if p]
+        recogida = {o: [_politica("meeting_point", lang) if o == "cartagena" else _politica("island_pickup_free", lang)]
+                    for o in origenes}
+        bloque["recogida"] = {o: [x for x in v if x] for o, v in recogida.items() if any(v)}
+    if "disponibilidad" in pedidas:
+        bloque["disponibilidad"] = [p for p in (_politica("availability_always", lang),
+                                                _politica("booking_system_info", lang)) if p]
+    if "requisitos" in pedidas:
+        bloque["requisitos"] = [p for p in (_politica("insurance_form_requirement", lang),
+                                            _politica("what_to_bring", lang)) if p]
+    return [bloque]
+
+
 def _acompanante(bloque: dict, pedidas: list[str], origen: str | None, origenes: tuple[str, ...], moneda: str,
                  lang: str) -> dict:
     """arq-1j: el acompañante (va en la lancha sin bucear) no tiene ficha: su precio es una fila de la tarifa, el mismo en

@@ -188,6 +188,12 @@ async def hechos_del_turno(state: ConversationState, message: str, history: list
     datos = await lectura_del_extractor(state, message) or {}
     actividades = _actividades(state, datos)
     if not actividades:
+        if settings.hechos_sin_actividad and set(intenciones) <= hechos_mod.INTENCIONES_SIN_ACTIVIDAD:
+            # arq-1p: la hora, la recogida, qué llevar o si hay sitio son iguales para todas las actividades.
+            bloques = hechos_mod.hechos_sin_actividad(_foto(state, datos, _origen(state, datos)), intenciones)
+            note_turn(hechos_sin_actividad=True)
+            cubiertas = [i for i in intenciones if any(_cubierta(b, i) for b in bloques)]
+            return (bloques, cubiertas) if cubiertas else None
         note_turn(hechos_por_codigo="sin_actividad" if datos else "sin_lectura")
         return None
     bloques = hechos_mod.hechos(_foto(state, datos, _origen(state, datos)), intenciones, actividades)

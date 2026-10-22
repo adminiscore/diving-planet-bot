@@ -1,8 +1,8 @@
 {
  "meta": {
-  "generado": "2026-10-22T16:42:05+00:00",
-  "commit": "c09ef5b",
-  "rama": "feature/pre_gadea"
+  "generado": "2026-10-22T16:56:41+00:00",
+  "commit": "229193f5",
+  "rama": "feature/alvaro-22oct"
  },
  "vistas": {
   "general": {
@@ -1312,6 +1312,13 @@
      "titulo": "El enlace con la disponibilidad",
      "codigo": true,
      "pre": true,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "hechos_sin_actividad",
+     "titulo": "Hora, recogida, qué llevar y sitio sin saber la actividad",
+     "codigo": false,
+     "pre": false,
      "sin_efecto": false
     }
    ],
@@ -2724,6 +2731,19 @@
    "codigo": true,
    "pre": true,
    "fijado_en_pre": true,
+   "usado_por": [
+    "r_hechos"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "hechos_sin_actividad",
+   "area": "Preguntas",
+   "titulo": "Hora, recogida, qué llevar y sitio sin saber la actividad",
+   "texto": "Si el cliente pregunta solo a qué hora es o cómo es la recogida, qué llevar o si hay sitio, y no se sabe de qué actividad habla (a menudo porque ya reservó), los datos salen de las políticas, que son iguales para todas, y Coral los escribe; antes contestaba el RAG (arq-1p, 22-oct).",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
    "usado_por": [
     "r_hechos"
    ],
