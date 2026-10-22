@@ -18,7 +18,7 @@ from pathlib import Path
 
 from src.domain import activities as dom
 from src.flows import cart_render
-from src.flows.catalog import RAW_SERVICES, SERVICES
+from src.flows.catalog import ISLAND_SERVICE_MAP, RAW_SERVICES, SERVICES
 from src.flows.state import ConversationState
 from src.utils import money
 
@@ -54,8 +54,13 @@ def _moneda(state: ConversationState) -> str:
 
 
 def _plan_base(actividad: str, origen: str) -> str | None:
-    """El plan de la actividad en ese origen: el primero del registro (en el buceo, la salida de 2 inmersiones)."""
+    """El plan de la actividad en ese origen: el base (en el buceo, la salida de 2 inmersiones) y, en las islas, su
+    variante. En las islas el primero del registro es la salida de 1 inmersión: «¿la salida de dos inmersiones?»
+    desde Majagua recibía 97 USD de base (banco arq-1d, p4)."""
     ids = dom.service_ids(actividad, origen)
+    base = dom.base_service_id(actividad)
+    if origen == "island" and ISLAND_SERVICE_MAP.get(base) in ids:
+        return ISLAND_SERVICE_MAP[base]
     return ids[0] if ids else None
 
 
@@ -99,13 +104,22 @@ def hechos(state: ConversationState, intenciones: list[str], actividades: list[s
         if "precio" in pedidas:
             bloque["moneda"] = moneda
             bloque["precio"] = _por_origen(actividad, origenes, lambda sid: _precio(sid, moneda))
-            otros = [s for s in dom.service_ids(actividad, origen or "cartagena")[1:]]
+            base = _plan_base(actividad, origen or "cartagena")
+            otros = [s for s in dom.service_ids(actividad, origen or "cartagena") if s != base]
             if otros:  # el buceo y los paquetes: el plan base y la lista de los demás con su precio
                 bloque["otros_planes"] = [
                     {"plan": (SERVICES.get(s) or {}).get(f"name_{lang}") or s, "precio": _precio(s, moneda)}
                     for s in otros if _precio(s, moneda)]
         if "incluye" in pedidas:
             bloque["incluye"] = _por_origen(actividad, origenes, lambda sid: _lista(sid, "included", lang))
+            # Lo que NO incluye: de la ficha y, en los planes de las islas (sus fichas no lo traen), de la política de la
+            # recogida («no incluyen transporte desde Cartagena ni almuerzo»). Sin esto, «¿hay almuerzo?» desde las
+            # islas se quedaba sin contestar (banco arq-1d, v2).
+            no_incluye = _por_origen(actividad, origenes, lambda sid: _lista(sid, "not_included", lang))
+            if "island" in origenes and _plan_base(actividad, "island"):
+                no_incluye["island"] = [*no_incluye.get("island", []), _politica("island_pickup", lang)]
+            if no_incluye:
+                bloque["no_incluye"] = no_incluye
         if "requisitos" in pedidas:
             requisitos: list[str] = []
             sid = _plan_base(actividad, origen or "cartagena")

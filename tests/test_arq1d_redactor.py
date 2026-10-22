@@ -137,3 +137,10 @@ def test_si_los_hechos_no_contestan_lo_que_pregunta_contesta_el_rag(llamadas):
     llamadas.estado["texto"] = "FALTA"
     st = _conv(location="cartagena")
     assert asyncio.run(redactor_hechos.responder(st, MENSAJE, st.history)) is None
+
+
+def test_falta_en_medio_de_la_respuesta_tampoco_llega_al_cliente(llamadas):
+    """Banco D, v2: «…Incluye: … / FALTA / ¿Y para cuántas personas…?» habría llegado tal cual."""
+    llamadas.estado["texto"] = "El snorkel cuesta 45 USD.\n\nFALTA\n\n¿Para cuántas personas?"
+    st = _conv(location="island")
+    assert asyncio.run(redactor_hechos.responder(st, MENSAJE, st.history)) is None

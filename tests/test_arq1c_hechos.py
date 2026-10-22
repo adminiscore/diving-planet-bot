@@ -74,3 +74,19 @@ def test_solo_las_intenciones_pedidas_y_varias_actividades():
 def test_en_ingles():
     [b] = h.hechos(_conv("en", location="cartagena"), ["incluye"], ["minicourse"])
     assert "Lunch" in b["incluye"]["cartagena"]
+
+
+def test_lo_que_no_incluye_y_el_almuerzo_de_las_islas():
+    """Banco arq-1d, v2: «¿hay almuerzo?» desde las islas; sus fichas no dicen lo que no incluyen, la política sí."""
+    [b] = h.hechos(_conv(location="island"), ["incluye"], ["snorkel"])
+    assert any("almuerzo" in x for x in b["no_incluye"]["island"])
+    [b] = h.hechos(_conv(location="cartagena"), ["incluye"], ["minicourse"])
+    assert "Propinas voluntarias" in b["no_incluye"]["cartagena"]
+
+
+def test_el_plan_base_del_buceo_en_las_islas_es_el_de_2_inmersiones():
+    """Banco arq-1d, p4: en las islas el primero del registro es la salida de 1 inmersión (97 USD)."""
+    [b] = h.hechos(_conv(location="island"), ["precio"], ["certified_diving"])
+    assert b["precio"]["island"]["online"] == "124 USD"
+    assert any(p["precio"]["online"] == "97 USD" for p in b["otros_planes"])
+    assert all(p["precio"]["online"] != "124 USD" for p in b["otros_planes"])

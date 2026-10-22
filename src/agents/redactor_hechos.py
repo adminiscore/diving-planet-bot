@@ -149,9 +149,10 @@ async def responder(state: ConversationState, message: str, history: list[dict])
         logger.warning(f"[HECHOS] el redactor falló: {exc!r}")
         return None
     answer = (respuesta.choices[0].message.content or "").strip()
-    if answer.strip(" .*_").upper() == _FALTA:
+    if any(linea.strip(" .*_").upper() == _FALTA for linea in answer.splitlines() or [""]):
         # Pregunta algo que los hechos no traen (Jev no marcó esa intención: «what time do we meet» a 0,72 en un mensaje
-        # de tres preguntas, banco arq-1d v3). Mejor el RAG, con toda la base, que un «no tengo ese dato».
+        # de tres preguntas, banco arq-1d v3). Mejor el RAG, con toda la base, que un «no tengo ese dato». Se mira cada
+        # línea: en el banco D la escribió en medio de la respuesta (v2) y le habría llegado al cliente.
         logger.info(f"[HECHOS] el redactor dice que falta algo ({intenciones}); contesta el RAG")
         note_turn(hechos_por_codigo="falta")
         return None
