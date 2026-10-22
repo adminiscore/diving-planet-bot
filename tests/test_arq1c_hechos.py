@@ -90,3 +90,9 @@ def test_el_plan_base_del_buceo_en_las_islas_es_el_de_2_inmersiones():
     assert b["precio"]["island"]["online"] == "124 USD"
     assert any(p["precio"]["online"] == "97 USD" for p in b["otros_planes"])
     assert all(p["precio"]["online"] != "124 USD" for p in b["otros_planes"])
+
+
+def test_cada_precio_dice_de_que_plan_es():
+    """Banco arq-1d F, p4: sin el nombre del plan, el redactor no podía decir que 124 USD es la salida de 2 inmersiones."""
+    [b] = h.hechos(_conv(location="island"), ["precio"], ["certified_diving"])
+    assert "2" in b["precio"]["island"]["plan"]

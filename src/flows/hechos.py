@@ -73,6 +73,17 @@ def _precio(sid: str, moneda: str) -> dict | None:
     return {"online": online, "normal": normal} if online else None
 
 
+def _nombre(sid: str, lang: str) -> str:
+    return (SERVICES.get(sid) or {}).get(f"name_{lang}") or sid
+
+
+def _precio_del_plan(sid: str, moneda: str, lang: str) -> dict | None:
+    """El precio con el nombre de su plan: sin él, «¿la salida de dos inmersiones?» desde las islas recibía 124 USD sin
+    decir de qué plan eran y el redactor, con razón, no lo daba (banco arq-1d F, p4)."""
+    precio = _precio(sid, moneda)
+    return {"plan": _nombre(sid, lang), **precio} if precio else None
+
+
 def _lista(sid: str, campo: str, lang: str) -> list[str]:
     s = RAW_SERVICES.get(sid) or {}
     return list(s.get(f"{campo}_{lang}") or s.get(f"{campo}_es") or [])
@@ -103,13 +114,12 @@ def hechos(state: ConversationState, intenciones: list[str], actividades: list[s
         bloque: dict = {"actividad": actividad, "nombre": dom.label(actividad, lang), "origen": origen}
         if "precio" in pedidas:
             bloque["moneda"] = moneda
-            bloque["precio"] = _por_origen(actividad, origenes, lambda sid: _precio(sid, moneda))
+            bloque["precio"] = _por_origen(actividad, origenes, lambda sid: _precio_del_plan(sid, moneda, lang))
             base = _plan_base(actividad, origen or "cartagena")
             otros = [s for s in dom.service_ids(actividad, origen or "cartagena") if s != base]
             if otros:  # el buceo y los paquetes: el plan base y la lista de los demás con su precio
-                bloque["otros_planes"] = [
-                    {"plan": (SERVICES.get(s) or {}).get(f"name_{lang}") or s, "precio": _precio(s, moneda)}
-                    for s in otros if _precio(s, moneda)]
+                bloque["otros_planes"] = [{"plan": _nombre(s, lang), "precio": _precio(s, moneda)}
+                                          for s in otros if _precio(s, moneda)]
         if "incluye" in pedidas:
             bloque["incluye"] = _por_origen(actividad, origenes, lambda sid: _lista(sid, "included", lang))
             # Lo que NO incluye: de la ficha y, en los planes de las islas (sus fichas no lo traen), de la política de la
