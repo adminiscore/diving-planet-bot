@@ -59,7 +59,27 @@ integrar la rama del otro y suite en verde, porque en PRE gana el último; (3) *
 despliegue reinicia el contenedor y mata la medida del otro (avisar en el registro de Plan Coral con la hora de fin).
 Las doce normas, con su porqué, están en el documento.
 
-### ▶️ RETOMAR AQUÍ — 22-oct, 15:10 (Gadea con Claude): ARQ PROMOCIONADA en PRE (eb1679a) y G10 nº 2 en marcha
+### ▶️ RETOMAR AQUÍ — 22-oct, 18:00 (Gadea con Claude): G10 nº 2 = 90,7 % 34/72; promoción y G10 nº 3 en marcha
+
+- **PRE sirve `909a065`** (pre_gadea), sano, 122 ajustes (HISTORY 0.31.93).
+- **G10:** control de ayer 86,4 % 22/72 → nº 1 87,7 % 25/72 → **nº 2 90,7 % 34/72** (sin desfasados; 10 criterios
+  desfasados). Meta para Andrés: ≥ 92 % y ≥ 40/72.
+- **G10 nº 3** sobre `909a065`, lanzado a las 17:55 (`2026-10-22-g10-arq3`). Al acabar:
+  1. puntuación sin desfasados;
+  2. `scripts/clasifica_fallos_g10.py 2026-10-22-g10-arq3`;
+  3. votos frente a `2026-10-22-g10-arq2` (~1 h).
+- **Lo de hoy, todo con su banco propio ×3 en `docs/robustness/arq/`:** arq-1k, arq-1l, arq-1m, arq-1n y los datos
+  alineados (promocionados); arq-1j y arq-1o probados y NO promocionados.
+- **Método que funcionó:** diagnosticar cada fallo del G10 mirando el turno (quién lo escribió y qué dijo), no por el
+  texto del juez.
+- **Siguiente:**
+  1. Según el G10 nº 3.
+  2. flu-1, el flujo de la reserva: repreguntas «¿para cuántas personas?», pase al decir el hotel, «¿tienes el Open
+     Water?» a quien quiere el curso, snorkel sin certificación.
+  3. arq-1i (Gonzalo, en pausa).
+  4. arq-9 (futuro).
+
+### (anterior) RETOMAR AQUÍ — 22-oct, 15:10 (Gadea con Claude): ARQ PROMOCIONADA en PRE (eb1679a) y G10 nº 2 en marcha
 
 - **PRE sirve `eb1679a`** (pre_gadea), sano, 120 ajustes. Encendidos hoy (HISTORY 0.31.92): `hechos_por_codigo`
   (redactor + arq-3 + arq-1e + arq-1h), `el_verbo_no_la_ciudad`, `hechos_al_rag`, `rag_sin_reglas_del_codigo` (Gonzalo),
