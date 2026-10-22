@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-22T19:00:24+00:00",
-  "commit": "cb6ad35b",
+  "generado": "2026-10-22T21:18:02+00:00",
+  "commit": "352199a1",
   "rama": "feature/alvaro-22oct"
  },
  "vistas": {
@@ -1352,6 +1352,13 @@
     {
      "nombre": "paquete_varios_dias",
      "titulo": "«El paquete de varios días» sin decir cuántos",
+     "codigo": false,
+     "pre": false,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "tiempo_limitado",
+     "titulo": "«Me voy mañana al mediodía, ¿me da tiempo?»",
      "codigo": false,
      "pre": false,
      "sin_efecto": false
@@ -3633,6 +3640,19 @@
    "fijado_en_pre": true,
    "usado_por": [
     "b_extraction"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "tiempo_limitado",
+   "area": "Preguntas",
+   "titulo": "«Me voy mañana al mediodía, ¿me da tiempo?»",
+   "texto": "Si el cliente tiene poco tiempo, Coral contesta con la regla de Gadea: desde las islas va muy justo (recogida 9:30-9:45, fin hacia las 12-13) y lo confirma un asesor; desde Cartagena no alcanza (regreso hacia las 4:15); para mañana hay que reservar antes de las 4:30; y la espera antes de volar solo si vuela (arq-1v, 22-oct).",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
+   "usado_por": [
+    "r_hechos"
    ],
    "sin_efecto": null
   },

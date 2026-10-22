@@ -1,0 +1,64 @@
+{
+ "about": "arq-1v (22-oct): TIEMPO_LIMITADO. «Me voy mañana al mediodía, ¿me da tiempo?»: desde las islas va muy justo (recogida 9:30-9:45, fin 12-13) y lo confirma un asesor; desde Cartagena no alcanza (regreso 4:15); cierre de las 4:30 del día anterior (decisión de Gadea). Frases nuestras (no salen de G9/G10). Control: el horario a secas no habla de ir justo.",
+ "dialogos": [
+  {
+   "id": "v1-islas-es",
+   "tipo": "tiempo",
+   "turnos": [
+    "Estoy alojado en Isla Grande y me voy mañana a mediodía. ¿Me da tiempo a hacer el snorkel mañana por la mañana?"
+   ],
+   "todas": [
+    "justo",
+    "asesor",
+    "9:30|12"
+   ]
+  },
+  {
+   "id": "v2-cartagena-es",
+   "tipo": "tiempo",
+   "turnos": [
+    "Estoy en Cartagena y me regreso a Bogotá mañana a las 12. ¿Alcanzo a hacer el minicurso mañana?"
+   ],
+   "todas": [
+    "no alcanza|no te da tiempo|no da tiempo|no alcanzarías|no alcanzaría|no alcanzas",
+    "4:15|3:00"
+   ]
+  },
+  {
+   "id": "v3-islas-en",
+   "tipo": "tiempo",
+   "turnos": [
+    "We're staying at Cocoliso and leave tomorrow around noon. Can we squeeze in a dive in the morning?"
+   ],
+   "todas": [
+    "tight",
+    "advisor|team",
+    "9:30|12"
+   ]
+  },
+  {
+   "id": "v4-sin-origen",
+   "tipo": "tiempo",
+   "turnos": [
+    "Me voy mañana al mediodía, ¿qué puedo hacer con ustedes antes de irme?"
+   ],
+   "todas": [
+    "justo",
+    "4:15|no alcanza|no da tiempo"
+   ]
+  },
+  {
+   "id": "c1-horario",
+   "tipo": "control",
+   "turnos": [
+    "¿A qué hora termina el minicurso saliendo desde Cartagena?"
+   ],
+   "todas": [
+    "4:15|3:00"
+   ],
+   "ninguno": [
+    "muy justo"
+   ]
+  }
+ ]
+}
