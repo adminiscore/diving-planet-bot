@@ -1676,7 +1676,6 @@ async def _rag_answer(
     if sin_precio:  # G3-07a: solo se pasa cuando hace falta (la llamada de siempre no cambia)
         entradas["sin_precio"] = True
     answer = await supervisor.rag_answer(rag_query or message, **entradas)
-    answer = await _sin_lista_si_hace_falta(state, rag_query or message, answer, entradas)  # ord-9
     # 7-oct (opción C): si cotiza sin origen, se pregunta el origen; quien la recibe deja el estado preparado
     # (`_fijar_origen_antes_del_precio`).
     return _puerta_del_origen(state, message, answer)
@@ -1709,9 +1708,6 @@ def _entradas_rag(state: ConversationState, history: list, message: str = "") ->
     # rag-3: con el origen del cliente, la búsqueda baja las fichas del otro origen.
     if state.location:
         entradas["origin"] = state.location
-    # ord-9 (`listas_del_dato`): pregunta qué incluye un plan concreto; el texto no lo enumera, lo añade el código.
-    if _pide_la_lista(state):
-        entradas["sin_lista"] = True
     # CAL-A5 (`avisos_condicionados`): los hechos del estado con los que el código elige los avisos que la respuesta
     # tiene que dar. "dados" es la lista DEL ESTADO (el mismo objeto), así que lo que se avisa se apunta solo.
     # CAL-D (`consulta_con_lo_sabido`) usa los mismos hechos para que la consulta de búsqueda nombre el asunto.
@@ -1772,16 +1768,15 @@ def _plan_nombrado(state: ConversationState, message: str) -> str | None:
 # corrección, un cambio de idioma...), se tira y se lanza la de siempre: nunca contesta con otro contexto y nunca
 # tarda más que hoy. Si el turno no llega a pedir respuesta, se cancela al cerrarlo (ese es el coste extra).
 _HORA_DEL_RESUMEN = re.compile(r"^(Fecha y hora actual|Current date and time): [^(]*\([^)]*\)\.\s*")
-_PARTES_HUELLA = ("mensaje", "idioma", "historial", "resumen", "origen", "lista", "hechos")  # en el orden de `_huella_rag`
+_PARTES_HUELLA = ("mensaje", "idioma", "historial", "resumen", "origen", "hechos")  # en el orden de `_huella_rag`
 
 
 def _huella_rag(message: str, entradas: dict) -> tuple:
     import json
 
     resumen = _HORA_DEL_RESUMEN.sub("", entradas.get("extra_context") or "")  # la hora cambia de un minuto a otro
-    # ord-9: una respuesta adelantada escrita sin «no enumeres lo que incluye» no vale si el turno lo pide.
     return (message, entradas.get("lang"), json.dumps(entradas.get("history") or [], ensure_ascii=False),
-            resumen, entradas.get("origin"), bool(entradas.get("sin_lista")), entradas.get("hechos"))
+            resumen, entradas.get("origin"), entradas.get("hechos"))
 
 
 def lanzar_rag_adelantado(state: ConversationState, message: str) -> None:
@@ -1850,7 +1845,6 @@ async def _adoptar_o_rehacer(state: ConversationState, message: str, history: li
         for aviso_id in adelantado.get("avisos_dados") or []:
             if aviso_id not in state.avisos_dados:
                 state.avisos_dados.append(aviso_id)
-        answer = await _sin_lista_si_hace_falta(state, message, answer, entradas)  # ord-9
         return _puerta_del_origen(state, message, answer)  # 7-oct: opción C, ver `_rag_answer`
     adelantado["task"].cancel()
     # Diagnóstico (30-sep): la mitad de los intentos de la ronda rag5-B se rehicieron y no se sabía por qué.
@@ -1858,7 +1852,6 @@ async def _adoptar_o_rehacer(state: ConversationState, message: str, history: li
     note_turn(rag_adelantado="rehecho", rag_rehecho_por=cambio)
     logger.info(f"[CORE][RAG5] el contexto cambió entre medias ({cambio}): se rehace la respuesta")
     answer = await supervisor.rag_answer(message, **entradas)
-    answer = await _sin_lista_si_hace_falta(state, message, answer, entradas)  # ord-9
     return _puerta_del_origen(state, message, answer)
 
 
@@ -2263,61 +2256,9 @@ def _enlaza_alguno(answer: str, servicios: list[tuple[str, dict]], state: Conver
 def _puerta_del_origen(state: ConversationState, message: str, answer: str) -> str:
     """La respuesta del RAG tras la puerta del origen (opción C): la pregunta del origen (con las dos variantes, ord-7)
     si cotiza o enlaza sin saber el origen; si no, la respuesta tal cual. gen-19 (21-oct) añadía aquí el enlace cuando
-    tocaba; se quitó por decisión de Gadea: en su banco no cambiaba nada (el enlace ya salía cuando lo piden)."""
-    return _origen_antes_del_precio(state, message, answer) or _con_lista_del_dato(state, answer)
-
-
-# ord-9 (21-oct, flag `listas_del_dato`, decisión de Gadea tras G10 de control): el 67 % de los fallos de G10 eran
-# omisiones del RAG con el dato delante; las listas de lo que incluye un plan las reescribía de memoria y las recortaba
-# («no menciona el seguro», «omite las 4 inmersiones», «el almuerzo solo el primer día»). Si Jev dice que el cliente
-# pregunta qué incluye y el plan es uno solo, el RAG no enumera (`sin_lista`) y aquí se añade la lista de la ficha.
-def _servicio_concreto(state: ConversationState) -> dict | None:
-    """El plan del que habla el cliente, si es uno solo: el elegido o detectado (en la variante de su origen) o, con el
-    origen sabido, el único plan de la actividad de la que pregunta."""
-    from src.flows.catalog import SERVICES  # lazy
-
-    for sid in (state.selected_service, state.detected_service_id):
-        if sid and sid in SERVICES:
-            return SERVICES.get(cart_render._service_for_location(sid, state)) or SERVICES[sid]
-    origen = state.location or state.detected_location
-    actividad = state.actividad_preguntada or state.detected_activity or state.suggested_activity
-    ids = dom.service_ids(actividad, origen) if actividad and origen in ("cartagena", "island") else ()
-    return SERVICES.get(ids[0]) if len(ids) == 1 else None
-
-
-def _pide_la_lista(state: ConversationState) -> bool:
-    return bool(settings.listas_del_dato and getattr(state, "_jev_pide_incluye", None)
-                and (_servicio_concreto(state) or {}).get("includes_es"))
-
-
-async def _sin_lista_si_hace_falta(state: ConversationState, query: str, answer: str, entradas: dict) -> str:
-    """ord-9: la respuesta se escribió sin «no enumeres lo que incluye» (la adelantada sale antes que Jev y que la
-    extracción, y el plan suele decirse en el mismo mensaje) pero al terminar ya toca añadir la lista: se rehace una
-    vez con `sin_lista`, como G3-07a con el precio. Si falla, vale la de antes."""
-    if not answer or entradas.get("sin_lista") or not _pide_la_lista(state):
-        return answer
-    from src.agents import supervisor  # lazy
-
-    logger.info("[CORE][LISTA] el plan se supo durante la respuesta: se rehace sin enumerar lo que incluye")
-    try:
-        return await supervisor.rag_answer(query, **{**entradas, "sin_lista": True}) or answer
-    except Exception as exc:  # noqa: BLE001 — si falla, va la de antes (con la lista repetida, pero completa)
-        logger.warning(f"[CORE][LISTA] no se pudo rehacer sin la lista: {exc!r}")
-        return answer
-
-
-def _con_lista_del_dato(state: ConversationState, answer: str) -> str:
-    if not answer or not _pide_la_lista(state):
-        return answer
-    servicio = _servicio_concreto(state)
-    es = state.language == "es"
-    lista = servicio.get("includes_es" if es else "includes_en") or servicio.get("includes_es")
-    nombre = servicio.get("name_es" if es else "name_en") or servicio.get("name_es")
-    from src.agents.rag_plan import insertar_frase  # lazy
-
-    titulo = f"*{nombre}* incluye" if es else f"*{nombre}* includes"
-    logger.info(f"[CORE][LISTA] se añade la lista de {nombre!r} (ficha)")
-    return insertar_frase(answer, f"{titulo}: {lista}.")
+    tocaba; se quitó por decisión de Gadea: en su banco no cambiaba nada (el enlace ya salía cuando lo piden). ord-9
+    (la lista de qué incluye, de la ficha) se retiró en arq-2c (22-oct): la da el redactor de hechos."""
+    return _origen_antes_del_precio(state, message, answer) or answer
 
 
 def _cotiza_alguno(answer: str, servicios: list[dict]) -> bool:

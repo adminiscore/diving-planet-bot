@@ -695,7 +695,6 @@ async def rag_answer(
     origin: str | None = None,
     avisos_hechos: dict | None = None,
     sin_precio: bool = False,
-    sin_lista: bool = False,
     hechos: str | None = None,
 ) -> str:
     """`hechos` (arq-1g, flag `hechos_al_rag`): en un mensaje mezclado, los hechos del código (JSON de
@@ -871,11 +870,6 @@ async def rag_answer(
             from src.prompts.info import RAG_SIN_PRECIO_EN, RAG_SIN_PRECIO_ES  # lazy
 
             system_prompt = f"{system_prompt}\n\n{RAG_SIN_PRECIO_ES if lang == 'es' else RAG_SIN_PRECIO_EN}"
-        if sin_lista:
-            # ord-9: el código añade la lista exacta de lo que incluye; detrás del catálogo, como G3-07a.
-            from src.prompts.info import RAG_SIN_LISTA_EN, RAG_SIN_LISTA_ES  # lazy
-
-            system_prompt = f"{system_prompt}\n\n{RAG_SIN_LISTA_ES if lang == 'es' else RAG_SIN_LISTA_EN}"
         messages = [{"role": "system", "content": system_prompt}]
 
         # Add conversation history (settings.history_window_size messages max,

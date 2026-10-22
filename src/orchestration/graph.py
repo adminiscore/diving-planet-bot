@@ -153,7 +153,6 @@ async def _router_node(state: BotState) -> dict:
     # ex-9b paso 5 (PIDE_PRECIO): lo que Jev dice de ESTE turno (None si calla), para la puerta del origen antes
     # del precio, que corre en la reserva y en info. Se pone en cada turno: nunca queda el de un turno anterior.
     conv._jev_pide_precio = signals.get(PIDE_PRECIO)
-    conv._jev_pide_incluye = signals.get(PIDE_QUE_INCLUYE)  # ord-9: la lista de qué incluye sale de la ficha
     # ARQ-1b: las intenciones del mensaje según Jev (vacío si calla), para los hechos por código (src/flows/hechos.py).
     conv._intenciones = [nombre for nombre, señal in _INTENCION_DE_SENAL.items() if signals.get(señal)]
     conv._otra_cosa = signals.get(PIDE_OTRA_COSA)  # ARQ-1d: None (Jev calla) cuenta como que sí trae algo más

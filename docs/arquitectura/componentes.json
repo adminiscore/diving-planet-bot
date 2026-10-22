@@ -23,7 +23,8 @@
       "carril": "flujo",
       "tipo": "entrada",
       "titulo": "Cliente",
-      "que_hace": "Escribe por WhatsApp o por la web. Puede mandar texto, pulsar un botón o mandar una nota de voz."
+      "que_hace": "Escribe por WhatsApp o por la web. Puede mandar texto, pulsar un botón o mandar una nota de voz.",
+      "interruptores": []
     },
     {
       "id": "chatwoot",
@@ -33,7 +34,8 @@
       "titulo": "Chatwoot",
       "que_hace": "La plataforma de chat. Recibe el mensaje del cliente, avisa al bot y muestra lo que el bot contesta.",
       "nota": "Servidor propio en el VPS (contenedor dp-chatwoot).",
-      "marca": "chatwoot"
+      "marca": "chatwoot",
+      "interruptores": []
     },
     {
       "id": "entrada",
@@ -47,7 +49,8 @@
         "Aviso: POST /webhooks/chatwoot",
         "Revisión cada 1 s: poll_active_conversations_once"
       ],
-      "marca": "chatwoot"
+      "marca": "chatwoot",
+      "interruptores": []
     },
     {
       "id": "preparacion",
@@ -172,7 +175,8 @@
       "nodo_grafo": "booking",
       "zoom": "booking",
       "que_hace": "La ruta más usada: entiende qué quiere el cliente, pregunta lo que falta y arma el resumen con el link para pagar.",
-      "donde": "src/agents/booking_agent.py:booking_node"
+      "donde": "src/agents/booking_agent.py:booking_node",
+      "interruptores": []
     },
     {
       "id": "cascada",
@@ -183,7 +187,8 @@
       "que_hace": "Lo que queda del camino antiguo, en orden fijo. Si ninguna regla de una ruta resuelve el mensaje, la ruta se lo pasa aquí.",
       "donde": "src/agents/supervisor.py:_shared_turn_handler",
       "nota": "Cuántos mensajes caen aquí está SIN MEDIR: la cascada no deja tiempos propios en los registros. En la animación se usa una estimación pequeña y por eso no lleva porcentaje. s4-1 (19-oct) le quitó lo que ya no corría nunca (el camino sin grafo y las reglas que las rutas resuelven antes); se queda como respaldo de las rutas.",
-      "capa_de": "booking"
+      "capa_de": "booking",
+      "interruptores": []
     },
     {
       "id": "cierre",
@@ -195,7 +200,8 @@
       "donde": "src/agents/conversation_summarizer.py:maybe_update_summary",
       "modelos": [
         "openai_model"
-      ]
+      ],
+      "interruptores": []
     },
     {
       "id": "envio",
@@ -205,7 +211,8 @@
       "titulo": "Enviar",
       "que_hace": "Deja una nota privada para el equipo si hace falta, pasa a un humano si toca, envía la respuesta (con botones) y apaga el 'escribiendo…'.",
       "donde": "src/channels/chatwoot.py:finalize_chatwoot_delivery",
-      "marca": "chatwoot"
+      "marca": "chatwoot",
+      "interruptores": []
     },
     {
       "id": "estado",
@@ -216,7 +223,8 @@
       "que_hace": "Lo que el bot sabe de cada cliente: actividad, personas, fechas, origen, historial y notas. Se lee al empezar cada turno y se guarda al terminar; también evita procesar dos veces el mismo mensaje.",
       "donde": "src/state_store.py:save_state",
       "nota": "Redis (contenedor dp-pre-redis).",
-      "marca": "redis"
+      "marca": "redis",
+      "interruptores": []
     },
     {
       "id": "openai",
@@ -227,7 +235,8 @@
       "que_hace": "Los modelos que escriben, extraen datos, revisan y pasan la voz a texto. Todas las llamadas pasan por un punto con límite de 30 s.",
       "donde": "src/llm_client.py:trace_openai",
       "nota": "Misma cuenta para PRE y para las pruebas: si se queda sin crédito, el bot no contesta.",
-      "marca": "openai"
+      "marca": "openai",
+      "interruptores": []
     },
     {
       "id": "openrouter",
@@ -267,7 +276,8 @@
       "tipo": "datos",
       "titulo": "Catálogo",
       "que_hace": "Planes, precios (USD y COP), duración, qué incluye cada uno y sus links de reserva. Es la fuente de verdad: la reserva cotiza con él y el RAG y el revisor lo ven siempre.",
-      "donde": "src/flows/catalog.py:catalog_facts"
+      "donde": "src/flows/catalog.py:catalog_facts",
+      "interruptores": []
     },
     {
       "id": "metricas",
@@ -277,7 +287,8 @@
       "titulo": "Métricas",
       "que_hace": "Cada turno deja una línea [TURN_METRICS] con su tiempo, sus llamadas a la IA y el tiempo de cada pieza; de ahí salen los números de este mapa.",
       "donde": "src/observability.py:turn_metrics_line",
-      "nota": "Langfuse sigue conectado (plan gratuito agotado hasta el 16-oct)."
+      "nota": "Langfuse sigue conectado (plan gratuito agotado hasta el 16-oct).",
+      "interruptores": []
     },
     {
       "id": "ci",
@@ -287,7 +298,8 @@
       "titulo": "GitHub CI",
       "que_hace": "Cada push a una rama pre_* pasa las pruebas y, si salen bien, despliega en PRE.",
       "donde": ".github/workflows/ci.yml",
-      "marca": "githubactions"
+      "marca": "githubactions",
+      "interruptores": []
     },
     {
       "id": "pre",
@@ -297,7 +309,8 @@
       "titulo": "Servidor PRE",
       "que_hace": "El VPS donde corren el bot, Chatwoot, Postgres y Redis. python -m scripts.check_deploy comprueba que sirve lo último.",
       "donde": "docker-compose.vps.yml",
-      "marca": "docker"
+      "marca": "docker",
+      "interruptores": []
     },
     {
       "id": "b_entrada",
@@ -305,7 +318,8 @@
       "carril": "flujo",
       "tipo": "entrada",
       "titulo": "Viene del enrutador",
-      "que_hace": "El enrutador decidió que es un mensaje de reserva."
+      "que_hace": "El enrutador decidió que es un mensaje de reserva.",
+      "interruptores": []
     },
     {
       "id": "b_setup",
@@ -481,7 +495,8 @@
       "carril": "flujo",
       "tipo": "salida",
       "titulo": "Vuelve a cerrar el turno",
-      "que_hace": "La respuesta sale hacia 'Cerrar el turno' y 'Enviar'."
+      "que_hace": "La respuesta sale hacia 'Cerrar el turno' y 'Enviar'.",
+      "interruptores": []
     },
     {
       "id": "r_entrada",
@@ -549,7 +564,8 @@
       "tipo": "cerebro",
       "titulo": "¿Es fiable lo encontrado?",
       "que_hace": "Si lo encontrado no se parece lo bastante a la pregunta, contesta solo con el catálogo y lo que sabe del cliente.",
-      "donde": "src/agents/rag_agent.py:_is_confident"
+      "donde": "src/agents/rag_agent.py:_is_confident",
+      "interruptores": []
     },
     {
       "id": "r_catalogo",
@@ -595,7 +611,6 @@
       ],
       "interruptores": [
         "origen_dos_variantes",
-        "listas_del_dato",
         "origen_sin_titulo_suelto",
         "rag_no_supone_reserva",
         "rag_no_adivina",
@@ -666,7 +681,8 @@
       "tipo": "salida",
       "titulo": "\"No lo tengo a la mano\"",
       "que_hace": "Si el reintento también falla, un mensaje honesto que ofrece un asesor.",
-      "donde": "src/agents/rag_agent.py:FALLBACK_ES"
+      "donde": "src/agents/rag_agent.py:FALLBACK_ES",
+      "interruptores": []
     },
     {
       "id": "r_salida",
@@ -674,7 +690,8 @@
       "carril": "flujo",
       "tipo": "salida",
       "titulo": "Respuesta aprobada",
-      "que_hace": "La respuesta que pasó el revisor vuelve a la ruta que preguntó."
+      "que_hace": "La respuesta que pasó el revisor vuelve a la ruta que preguntó.",
+      "interruptores": []
     }
   ],
   "aristas": [
@@ -1365,11 +1382,6 @@
       "area": "Preguntas",
       "titulo": "Sin saber el origen, da las dos variantes",
       "texto": "Si el cliente pregunta el precio o qué incluye una actividad y no sabemos si sale de Cartagena o ya está en las islas, Coral da las dos variantes del catálogo (precio online por persona en su moneda, el transporte y si lleva almuerzo) y pregunta el origen para pasarle el plan y el enlace exactos. Antes se callaba todo lo que dependía del origen (ord-7, decisión de Gadea, 21-oct)."
-    },
-    "listas_del_dato": {
-      "area": "Preguntas",
-      "titulo": "Lo que incluye un plan, de la ficha",
-      "texto": "Si el cliente pregunta qué incluye un plan concreto (o si incluye algo: el equipo, el almuerzo...), Coral no lo escribe de memoria: añade la lista exacta de la ficha del plan. Antes el texto recortaba la lista y se dejaba el seguro, las inmersiones o que el almuerzo es solo el primer día (ord-9, 21-oct)."
     },
     "tarjeta_edades_en_cifra": {
       "area": "Preguntas",

@@ -446,9 +446,10 @@ _PIDE_PRECIO_Q_ACTIVIDADES = {
         "about duration, number of dives or how to book."
     ),
 }
-# ord-9 (21-oct, flag `listas_del_dato`, decisión de Gadea tras G10 de control): el 67 % de los fallos de G10 eran
-# omisiones del RAG con el dato delante, y de ellas las listas (qué incluye un plan) las reescribía de memoria y las
-# recortaba. Si el cliente pregunta qué incluye, la lista sale de la ficha (conversational_core._con_lista_del_dato).
+# ord-9 (21-oct, decisión de Gadea tras G10 de control): el 67 % de los fallos de G10 eran omisiones del RAG con el
+# dato delante, y de ellas las listas (qué incluye un plan) las reescribía de memoria y las recortaba. La pregunta se
+# queda para el redactor de hechos (`hechos_por_codigo`), que da la lista de la ficha; el arreglo de ord-9 por el RAG
+# (`listas_del_dato`) se retiró en arq-2c (22-oct) al quedar sustituido por el redactor.
 PIDE_QUE_INCLUYE = "pide_que_incluye"
 PIDE_QUE_INCLUYE_MIN = 0.7
 _PIDE_QUE_INCLUYE_Q = {
@@ -781,9 +782,8 @@ def _questions_for_turn(pending_slot: str | None = None) -> dict:
     q[PREGUNTA_SI_ES_IA] = _PREGUNTA_SI_ES_IA_Q
     q[CAMBIA_IDIOMA] = _CAMBIA_IDIOMA_Q
     q[PIDE_PRECIO] = _PIDE_PRECIO_Q_ACTIVIDADES if settings.jev_precio_nombra_actividades else _PIDE_PRECIO_Q
-    if settings.listas_del_dato or settings.hechos_por_codigo:
-        q[PIDE_QUE_INCLUYE] = _PIDE_QUE_INCLUYE_Q
     if settings.hechos_por_codigo:
+        q[PIDE_QUE_INCLUYE] = _PIDE_QUE_INCLUYE_Q
         q.update(_INTENCIONES_Q)
     return q
 
