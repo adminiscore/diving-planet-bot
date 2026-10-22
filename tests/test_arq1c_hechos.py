@@ -96,3 +96,9 @@ def test_cada_precio_dice_de_que_plan_es():
     """Banco arq-1d F, p4: sin el nombre del plan, el redactor no podía decir que 124 USD es la salida de 2 inmersiones."""
     [b] = h.hechos(_conv(location="island"), ["precio"], ["certified_diving"])
     assert "2" in b["precio"]["island"]["plan"]
+
+
+def test_el_precio_lleva_la_regla_de_la_moneda():
+    """Core arq1d-B2: «tienen un precio especial para colombianos» recibía COP sin decir que no lo hay."""
+    [b] = h.hechos(_conv(location="cartagena", is_colombian=True), ["precio"], ["padi_open_water"])
+    assert "no hay descuento por ser colombiano" in b["regla_moneda"]

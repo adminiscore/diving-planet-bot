@@ -114,6 +114,10 @@ def hechos(state: ConversationState, intenciones: list[str], actividades: list[s
         bloque: dict = {"actividad": actividad, "nombre": dom.label(actividad, lang), "origen": origen}
         if "precio" in pedidas:
             bloque["moneda"] = moneda
+            # La regla de la moneda (el precio es el mismo, solo cambia la moneda): «según la página tienen un precio
+            # especial para colombianos» recibía los precios en COP sin que nadie dijera que no lo hay (core arq1d-B2).
+            mixto = getattr(state, "mixed_nationality_notice", False)
+            bloque["regla_moneda"] = _politica("mixed_nationality_group" if mixto else "colombian_pricing", lang)
             bloque["precio"] = _por_origen(actividad, origenes, lambda sid: _precio_del_plan(sid, moneda, lang))
             base = _plan_base(actividad, origen or "cartagena")
             otros = [s for s in dom.service_ids(actividad, origen or "cartagena") if s != base]
