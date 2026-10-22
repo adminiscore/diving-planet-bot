@@ -205,6 +205,12 @@ def hechos(state: ConversationState, intenciones: list[str], actividades: list[s
                     lambda sid: cart_render._resolve_service_booking_url(SERVICES.get(sid) or {}, state), elegido)
                 if bloque["enlace"]:
                     bloque["descuento_online"] = _descuento_online(lang)
+                    if settings.enlace_con_como_pagar:
+                        como = [_politica("how_to_book", lang), _pago_extranjero(lang),
+                                _politica("payment_confirmation", lang)]
+                        if registro.requires_certification:
+                            como.append(_politica("certification_required", lang))
+                        bloque["como_reservar"] = [c for c in como if c]
         if {"incluye", "horario"} & set(pedidas):
             # Cómo se llega según el origen (G10 de control, 22-oct: «no aclara que en Cartagena no se recoge en el
             # hotel», «no dice que el regreso está incluido sin cargo», «falta "a 5 minutos del centro"»).
@@ -256,6 +262,20 @@ def _previo_y_edad(registro, lang: str) -> list[str]:
         hechos_.append(f"Edad mínima: desde los {registro.min_age} años." if lang == "es"
                        else f"Minimum age: {registro.min_age} and over.")
     return hechos_
+
+
+# arq-1u (22-oct, flag `enlace_con_como_pagar`; G10 nº 4: g10-051, g10-072, g10-006, g10-045): con el enlace de reserva,
+# cómo se reserva y se paga por él (el extranjero, 100 % con tarjeta en la web) y que la reserva queda confirmada cuando
+# el equipo concilia el pago; si la actividad pide certificación, el carné (g10-027). Al colombiano no se le da el
+# enlace (lo coordina un asesor), así que la parte de su pago no va aquí.
+_CORTE_PAGO = {"es": "El anticipo del 50 %", "en": "The 50% deposit option"}
+
+
+def _pago_extranjero(lang: str) -> str | None:
+    """La parte de `foreign_card_payment` que vale para quien paga por el enlace (sin la del pago de los colombianos)."""
+    texto = _politica("foreign_card_payment", lang) or ""
+    corte = texto.find(_CORTE_PAGO[lang])
+    return (texto[:corte] if corte >= 0 else texto).strip() or None
 
 
 # arq-1p (22-oct, flag `hechos_sin_actividad`): lo que NO depende de la actividad. En el G10 nº 4, 24 turnos se quedaron sin
@@ -390,6 +410,10 @@ def faltan(answer: str, bloques: list[dict], intenciones: list[str]) -> list[str
         for elemento in dict.fromkeys(e for lista in (b.get("recogida") or {}).values() for e in lista):
             if not _elemento_dado(elemento, raices, answer):
                 perdidos.append(elemento)
+        if "enlace" in intenciones or "disponibilidad" in intenciones:
+            for elemento in b.get("como_reservar") or []:  # arq-1u
+                if not _elemento_dado(elemento, raices, answer):
+                    perdidos.append(elemento)
         if b.get("alojamiento") and not _elemento_dado(b["alojamiento"], raices, answer):
             perdidos.append(b["alojamiento"])
         if "horario" in intenciones:

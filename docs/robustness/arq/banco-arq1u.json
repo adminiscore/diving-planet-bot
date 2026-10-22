@@ -1,0 +1,65 @@
+{
+ "about": "arq-1u (22-oct): ENLACE_CON_COMO_PAGAR. Con el enlace de reserva, cómo se reserva y se paga por él (el extranjero, 100 % con tarjeta en la web), que la reserva queda confirmada cuando el equipo concilia el pago y, si pide certificación, el carné. Frases nuestras (no salen de G9/G10). Control: al colombiano no se le da el enlace (lo coordina un asesor).",
+ "dialogos": [
+  {
+   "id": "u1-snorkel-enlace-es",
+   "tipo": "enlace",
+   "turnos": [
+    "Hola, soy chilena y quiero reservar el snorkel saliendo desde Cartagena. ¿Me pasas el enlace para reservar y pagar?"
+   ],
+   "todas": [
+    "book.divingplanet.org",
+    "tarjeta",
+    "concilia|confirma"
+   ]
+  },
+  {
+   "id": "u2-minicurso-enlace-en",
+   "tipo": "enlace",
+   "turnos": [
+    "Hi, I'm from Canada. How do I book and pay for the mini course from Cartagena?"
+   ],
+   "todas": [
+    "book.divingplanet.org",
+    "card",
+    "reconcil|confirm"
+   ]
+  },
+  {
+   "id": "u3-buceo-enlace-es",
+   "tipo": "enlace",
+   "turnos": [
+    "Somos buzos certificados de España. ¿Cómo reservamos la salida de 2 inmersiones desde Cartagena?"
+   ],
+   "todas": [
+    "book.divingplanet.org",
+    "carn|tarjeta de buzo|certific",
+    "concilia|confirma"
+   ]
+  },
+  {
+   "id": "u4-pago-en",
+   "tipo": "enlace",
+   "turnos": [
+    "We're from the US and want the snorkel tour from Cartagena. Can I get the booking link? When is my booking confirmed?"
+   ],
+   "todas": [
+    "book.divingplanet.org",
+    "reconcil|confirm"
+   ]
+  },
+  {
+   "id": "c1-colombiano",
+   "tipo": "control",
+   "turnos": [
+    "Hola, soy colombiano y quiero reservar el snorkel desde Cartagena. ¿Me pasas el enlace?"
+   ],
+   "todas": [
+    "asesor"
+   ],
+   "ninguno": [
+    "book.divingplanet.org"
+   ]
+  }
+ ]
+}

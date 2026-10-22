@@ -662,6 +662,10 @@ class Settings(BaseSettings):
     # de buzo certificado: G10 lo vio contradictorio), y el requisito previo (Open Water para el Advanced) y la edad
     # mínima en cifra. APAGADO hasta medirlo.
     requisitos_coherentes: bool = False
+    # ARQ-1u (22-oct): con el enlace de reserva, los hechos dicen cómo se reserva y se paga por él (el extranjero, 100 %
+    # con tarjeta en la web), que la reserva queda confirmada cuando el equipo concilia el pago (política
+    # payment_confirmation) y, si pide certificación, el carné. APAGADO hasta medirlo.
+    enlace_con_como_pagar: bool = False
     varias_actividades: bool = False  # ARQ-1j (22-oct): el extractor da TODAS las actividades del mensaje (y el acompañante) y los hechos salen de cada una
     adaptado_contesta_lo_demas: bool = True  # PROMOCIONADO 22-oct (arq-1l: banco DIVE TO HEAL 3/12 -> 11/12; HISTORY 0.31.93); revert = False
     enlace_con_disponibilidad: bool = True  # PROMOCIONADO 22-oct (arq-1m: banco de enlace 3/12 -> 12/12; HISTORY 0.31.93); revert = False
