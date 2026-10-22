@@ -199,6 +199,7 @@ class Settings(BaseSettings):
     # nacionalidad que ya leyó la extracción del turno (conversational_core._con_la_nacionalidad_del_mensaje). APAGADO.
     rag_espera_la_nacionalidad: bool = True  # PROMOCIONADO 21-oct (con gentilicio_es_colombiano, misma ronda gen14-A/B); revert = False
     el_verbo_no_la_ciudad: bool = False  # ARQ-1f (22-oct): «soy de Medellín» es colombiano y «vivo en Barranquilla» no; pares con la misma ciudad en la regla del extractor (decisión de Gadea)
+    cache_anthropic: bool = False  # ARQ-2b (22-oct): el prompt de sistema de los modelos de Anthropic por OpenRouter (Haiku en el extractor) se marca para la caché (`cache_control`); OpenAI y DeepSeek ya cachean solos
     # gen-15 (21-oct): los hoteles de las islas que da la base (policies.json other_island_hotels: Mulata, Rosario de
     # Mar, Eco Hotel Las Palmeras…) no estaban en la lista del bot ni en la pregunta del lugar de Jev, y el bot volvía a
     # preguntar desde dónde sale. Con el flag, el extractor y Jev los conocen (extractor_turno.HOTELES_DE_LA_BASE).

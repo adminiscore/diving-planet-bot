@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-22T10:45:15+00:00",
-  "commit": "bc6c28a",
+  "generado": "2026-10-22T11:09:36+00:00",
+  "commit": "ea6852e",
   "rama": "feature/pre_gadea"
  },
  "vistas": {
@@ -797,6 +797,13 @@
      "titulo": "El refresher dice cómo se reserva y qué formulario lleva",
      "codigo": true,
      "pre": true,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "cache_anthropic",
+     "titulo": "Caché del extractor (Haiku)",
+     "codigo": false,
+     "pre": false,
      "sin_efecto": false
     }
    ],
@@ -2255,6 +2262,19 @@
    "fijado_en_pre": true,
    "usado_por": [
     "r_reescribir"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "cache_anthropic",
+   "area": "Arquitectura",
+   "titulo": "Caché del extractor (Haiku)",
+   "texto": "El extractor usa un modelo de Anthropic por OpenRouter, que solo reutiliza el principio repetido del prompt si se le pide. Con el interruptor se le pide y Haiku va siempre al mismo proveedor (los demás de respaldo): las dos llamadas del extractor, casi la mitad del coste de un turno, pasan a pagar ~10 % de su prompt (arq-2b, 22-oct).",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
+   "usado_por": [
+    "b_extraction"
    ],
    "sin_efecto": null
   },

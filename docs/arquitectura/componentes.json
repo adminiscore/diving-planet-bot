@@ -392,7 +392,8 @@
         "reparto_al_sumarse_alguien",
         "textos_de_cartagena",
         "seguridad_de_grupo",
-        "refresher_completo"
+        "refresher_completo",
+        "cache_anthropic"
       ]
     },
     {
@@ -1501,6 +1502,11 @@
       "area": "Reserva",
       "titulo": "«Soy de Medellín» es colombiano",
       "texto": "Ser de una ciudad de Colombia dice la nacionalidad y vivir allí no: «soy de Medellín» paga en pesos y «vivo en Barranquilla» no dice nada. La regla del extractor pone la misma ciudad en los dos lados, porque con ciudades distintas el modelo aprendía la ciudad en vez del verbo (arq-1f, 22-oct)."
+    },
+    "cache_anthropic": {
+      "area": "Arquitectura",
+      "titulo": "Caché del extractor (Haiku)",
+      "texto": "El extractor usa un modelo de Anthropic por OpenRouter, que solo reutiliza el principio repetido del prompt si se le pide. Con el interruptor se le pide y Haiku va siempre al mismo proveedor (los demás de respaldo): las dos llamadas del extractor, casi la mitad del coste de un turno, pasan a pagar ~10 % de su prompt (arq-2b, 22-oct)."
     }
   },
   "areas": [

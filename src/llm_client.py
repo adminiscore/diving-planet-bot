@@ -105,9 +105,25 @@ def parametros_openrouter(kwargs: dict) -> dict:
         kw["messages"] = [{**m, "content": redact_pii_por_lineas(m["content"])}
                           if m.get("role") != "system" and isinstance(m.get("content"), str) else m
                           for m in kw["messages"]]
+    if settings.cache_anthropic and str(kw.get("model") or "").startswith("anthropic/") and isinstance(
+            kw.get("messages"), list):
+        # ARQ-2b (22-oct): OpenAI y DeepSeek cachean solos el principio repetido del prompt; Anthropic solo si se le pide
+        # con `cache_control`. El extractor (Haiku, dos llamadas por turno, ~7.000-7.800 tokens de prompt de sistema casi
+        # igual en cada turno) salía sin caché: 0 de 197 llamadas en la ronda core arq1d-B3, el 45-49 % del coste del
+        # turno. Se marca el prompt de sistema; el mensaje del turno va detrás, sin marcar.
+        kw["messages"] = [{**m, "content": [{"type": "text", "text": m["content"],
+                                             "cache_control": {"type": "ephemeral"}}]}
+                          if m.get("role") == "system" and isinstance(m.get("content"), str) else m
+                          for m in kw["messages"]]
     proveedores = [p.strip() for p in settings.openrouter_proveedores.split(",") if p.strip()]
     extra = dict(kw.pop("extra_body", None) or {})
     datos = "allow" if settings.openrouter_permitir_entrenamiento else "deny"
+    if settings.cache_anthropic and str(kw.get("model") or "").startswith("anthropic/") and proveedores:
+        # ARQ-2b: cada proveedor tiene su caché; con «el más rápido en cada llamada» Haiku saltaba entre Vertex,
+        # Anthropic y Bedrock y la caché acertaba 3 de 5 (sonda del 22-oct). Orden fijo, con los demás de respaldo.
+        orden = sorted(proveedores, key=lambda p: p != "anthropic")
+        extra.setdefault("provider", {"only": proveedores, "order": orden, "allow_fallbacks": True,
+                                      "data_collection": datos})
     extra.setdefault("provider", {"only": proveedores, "sort": "latency", "allow_fallbacks": True, "data_collection": datos}
                      if proveedores else {"sort": "latency", "data_collection": datos})
     extra.setdefault("reasoning", {"enabled": False})
