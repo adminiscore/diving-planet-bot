@@ -27,3 +27,11 @@ def test_cada_intencion_de_los_hechos_tiene_su_senal():
 
 def test_las_intenciones_viajan_aunque_jev_dude_en_el_router():
     assert set(j._INTENCIONES_Q) <= set(j._TURN_SIGNALS) and set(j._INTENCIONES_Q) <= set(j._U34_QUESTIONS)
+
+
+def test_flu1_la_pregunta_del_grupo_cuenta_una_persona(monkeypatch):
+    """flu-1: «Es para una persona» daba 0,40 con la pregunta de antes (se repreguntaba «¿para cuántas personas?»)."""
+    monkeypatch.setattr(settings, "grupo_de_una_persona", False)
+    assert "it's for one person" not in j._questions_for_turn()[j.AFFIRMS_GROUP]["instructions"]
+    monkeypatch.setattr(settings, "grupo_de_una_persona", True)
+    assert "it's for one person" in j._questions_for_turn()[j.AFFIRMS_GROUP]["instructions"]

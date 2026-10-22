@@ -240,6 +240,19 @@ _AFFIRMS_QUESTIONS = {
         ),
     },
 }
+# flu-1 (22-oct, flag `grupo_de_una_persona`): «¿Qué incluye exactamente? Es para una persona.» no contaba como grupo
+# (la excepción «cuando preguntan por una sola persona sin decir quién viene» se pensó para «¿una persona de 14 años
+# puede bucear?») y el bot repreguntaba «¿para cuántas personas?» (G10 nº 2, g10-033; banco flu-1).
+_AFFIRMS_GROUP_Q_UNA = {
+    "type": "noul",
+    "instructions": (
+        'The customer tells us HOW MANY people will take part, or who is coming: a number of people, '
+        "'just me', 'it's for one person', 'my wife and I', a family, a list of names. A plan counts ('we'll "
+        "probably book it for three'). It is FALSE when the numbers in the message count dives, days, nights or "
+        "packages rather than people, when 'solo' means 'only' ('solo la mañana'), or when they ask whether ONE "
+        "person could do something ('can a 14-year-old dive?') without saying who is coming."
+    ),
+}
 # u3-5 paso 2 (27-sep): ¿el mensaje CAMBIA o CORRIGE un dato que el cliente ya habia dado? Es la
 # señal de corrección de la regla del owner (tarea 7b: con señal explícita se acepta; sin ella, se
 # confirma), que hasta ahora solo leia un regex de palabras ("perdon", "en realidad", "actually"...):
@@ -760,6 +773,8 @@ def _questions_for_turn(pending_slot: str | None = None) -> dict:
         q[PENDING_ANSWER] = pending_q
     q.update({ASKS_QUESTION: _ASKS_QUESTION_Q_V2 if settings.jev_pide_algo else _ASKS_QUESTION_Q,
               **_AFFIRMS_QUESTIONS})
+    if settings.grupo_de_una_persona:
+        q[AFFIRMS_GROUP] = _AFFIRMS_GROUP_Q_UNA
     q[CORRECTS] = _CORRECTS_Q
     q[ASKS_RECALL] = _ASKS_RECALL_Q
     q[NEEDS_STAFF] = ({**_NEEDS_STAFF_Q,

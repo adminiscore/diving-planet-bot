@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-22T15:55:59+00:00",
-  "commit": "909a065",
+  "generado": "2026-10-22T16:02:52+00:00",
+  "commit": "83b0657",
   "rama": "feature/pre_gadea"
  },
  "vistas": {
@@ -182,6 +182,13 @@
      "titulo": "El idioma del primer mensaje se decide una vez para todo",
      "codigo": true,
      "pre": true,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "grupo_de_una_persona",
+     "titulo": "«Es para una persona» cuenta como el grupo",
+     "codigo": false,
+     "pre": false,
      "sin_efecto": false
     }
    ],
@@ -2653,6 +2660,19 @@
    "fijado_en_pre": true,
    "usado_por": [
     "b_extraction"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "grupo_de_una_persona",
+   "area": "Reserva",
+   "titulo": "«Es para una persona» cuenta como el grupo",
+   "texto": "Si el cliente dice que la reserva es para una persona («es para una persona», «solo para mí»), Coral lo apunta y no vuelve a preguntar para cuántas personas; preguntar si UNA persona puede hacer algo sigue sin contar (flu-1, 22-oct).",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
+   "usado_por": [
+    "router"
    ],
    "sin_efecto": null
   },
