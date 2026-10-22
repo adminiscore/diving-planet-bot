@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-22T15:08:07+00:00",
-  "commit": "21d5220",
+  "generado": "2026-10-22T15:09:45+00:00",
+  "commit": "f2c1eec",
   "rama": "feature/pre_gadea"
  },
  "vistas": {
@@ -1285,6 +1285,13 @@
      "codigo": false,
      "pre": false,
      "sin_efecto": false
+    },
+    {
+     "nombre": "enlace_con_disponibilidad",
+     "titulo": "El enlace con la disponibilidad",
+     "codigo": false,
+     "pre": false,
+     "sin_efecto": false
     }
    ],
    "marca": "openai"
@@ -2537,6 +2544,19 @@
    "fijado_en_pre": true,
    "usado_por": [
     "b_extraction"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "enlace_con_disponibilidad",
+   "area": "Preguntas",
+   "titulo": "El enlace con la disponibilidad",
+   "texto": "Si el cliente pregunta si hay cupo o cómo reservar, Coral le da también el enlace de reserva de su plan (a los colombianos no: el pago lo coordina un asesor) (arq-1m, 22-oct).",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
+   "usado_por": [
+    "r_hechos"
    ],
    "sin_efecto": null
   },

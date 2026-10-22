@@ -18,6 +18,7 @@ import unicodedata
 from functools import lru_cache
 from pathlib import Path
 
+from src.config import settings
 from src.domain import activities as dom
 from src.flows import cart_render
 from src.flows.catalog import (
@@ -174,7 +175,9 @@ def hechos(state: ConversationState, intenciones: list[str], actividades: list[s
                                                     _politica("booking_system_info", lang)) if p]
         if "edad" in pedidas:
             bloque["edad"] = {"minima": registro.min_age, "maxima": registro.max_age}
-        if "enlace" in pedidas:
+        # arq-1m (G10 nº 2): «¿hay disponibilidad mañana?» o «¿cómo reservamos?» se contestaban con «en la web», sin el
+        # enlace (Jev marcaba la disponibilidad, no el enlace): con la disponibilidad va también el enlace de reserva.
+        if "enlace" in pedidas or (settings.enlace_con_disponibilidad and "disponibilidad" in pedidas):
             if state.is_colombian and not getattr(state, "mixed_nationality_notice", False):
                 # Decisión de Gadea (21-oct): el cierre de un colombiano lo coordina un asesor (pago en COP), sin enlace.
                 bloque["enlace"] = {"asesor": True}
@@ -282,7 +285,7 @@ def faltan(answer: str, bloques: list[dict], intenciones: list[str]) -> list[str
                              if precio.get(k) and re.sub(r"\D", "", precio[k]) not in cifras]
         if "edad" in intenciones:
             perdidos += [f"edad {v}" for v in (b.get("edad") or {}).values() if v and str(v) not in cifras]
-        if "enlace" in intenciones:
+        if "enlace" in intenciones or "disponibilidad" in intenciones:
             perdidos += [u for u in (b.get("enlace") or {}).values()
                          if isinstance(u, str) and _url_sin_parametros(u) not in answer]
         for intencion in ("incluye", "requisitos"):
