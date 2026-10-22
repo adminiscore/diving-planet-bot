@@ -1,0 +1,59 @@
+{
+ "about": "arq-1r (22-oct): residente con cédula de extranjería → paga en COP (decisión de Álvaro del 17-oct; vivir en Colombia sin cédula no basta). Frases nuestras (no salen de G9/G10). Controles: vive en Colombia sin cédula o con visa de turista → USD.",
+ "dialogos": [
+  {
+   "id": "r1-cedula-tras-precio-es",
+   "tipo": "cedula",
+   "turnos": [
+    "Hola, soy buzo certificado y vivo en Bogotá, hace 3 años que no buceo. ¿Cuánto cuesta salir a bucear el sábado desde Cartagena?",
+    "¿Hay descuento para los que vivimos aquí?",
+    "Tengo cédula de extranjería."
+   ],
+   "todas": [
+    "COP|pesos"
+   ]
+  },
+  {
+   "id": "r2-cedula-tras-precio-en",
+   "tipo": "cedula",
+   "turnos": [
+    "Hi, I'm a certified diver based in Medellín and I haven't dived for about three years. What's the price for two dives from Cartagena?",
+    "Do residents get a better price?",
+    "I hold a cédula de extranjería."
+   ],
+   "todas": [
+    "COP|pesos"
+   ]
+  },
+  {
+   "id": "r3-cedula-de-entrada",
+   "tipo": "cedula",
+   "turnos": [
+    "Buenas, soy francés pero tengo cédula de extranjería. ¿Cuánto vale el snorkel saliendo desde Cartagena?"
+   ],
+   "todas": [
+    "COP|pesos"
+   ]
+  },
+  {
+   "id": "c1-visa-turista",
+   "tipo": "control",
+   "turnos": [
+    "I live in Cartagena for a few months on a tourist visa. How much is the snorkel tour from Cartagena?"
+   ],
+   "todas": [
+    "USD"
+   ]
+  },
+  {
+   "id": "c2-solo-vive",
+   "tipo": "control",
+   "turnos": [
+    "Vivo en Cartagena hace un año. ¿Cuánto vale el minicurso saliendo desde Cartagena?"
+   ],
+   "todas": [
+    "USD"
+   ]
+  }
+ ]
+}

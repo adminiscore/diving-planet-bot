@@ -646,6 +646,22 @@ class Settings(BaseSettings):
     # APAGADO hasta medirlo con el banco fijo del RAG ×3 y su ronda core.
     hechos_por_codigo: bool = True  # PROMOCIONADO 22-oct (arq-1d/1e/1h + arq-3: banco fijo x3 100/120 -> 115-119/120, 0 invenciones; core A/B3 97,4 % -> 97,9 % 27/32 con votos, sin regresiones del redactor; G10 de control 86,4 % 22/72 -> 87,7 % 25/72, votos 27 mejoras y 23 regresiones reales, ~9 ya arregladas; HISTORY 0.31.92); revert = False
     hechos_al_rag: bool = True  # PROMOCIONADO 22-oct (arq-1g: banco de mezclados x3, la parte de la tabla 61/66 -> 66/66; HISTORY 0.31.92); revert = False
+    # ARQ-1p (22-oct): sin saber la actividad, la hora o la recogida, qué llevar y si hay sitio salen de las políticas
+    # (son iguales para todas) y las escribe el redactor; antes contestaba el RAG (G10 nº 4: 24 turnos sin actividad, 11
+    # de este tipo). Precio, qué incluye, edad y enlace siguen necesitando la actividad. APAGADO hasta medirlo.
+    hechos_sin_actividad: bool = False
+    # ARQ-1q (22-oct): decir que YA reservó no basta para pasar a una persona (needs_staff de Jev): con la reserva hecha,
+    # preguntar el horario, la recogida o qué llevar lo contesta Coral; ver o tocar esa reserva o pago sigue yendo a un
+    # asesor. APAGADO hasta medirlo.
+    ya_reservo_no_es_pase: bool = False
+    # ARQ-1r (22-oct): «extranjero o turista: false» (CAL-C) chocaba con la cédula de extranjería, que tienen los
+    # extranjeros residentes (pagan en COP): el extractor leía false 2 de 9 veces. Una frase: salvo que tenga cédula de
+    # extranjería. APAGADO hasta medirlo.
+    cedula_de_extranjeria_manda: bool = False
+    # ARQ-1s (22-oct): requisitos coherentes en los hechos: en un curso, solo el formulario médico de curso (no además el
+    # de buzo certificado: G10 lo vio contradictorio), y el requisito previo (Open Water para el Advanced) y la edad
+    # mínima en cifra. APAGADO hasta medirlo.
+    requisitos_coherentes: bool = False
     varias_actividades: bool = False  # ARQ-1j (22-oct): el extractor da TODAS las actividades del mensaje (y el acompañante) y los hechos salen de cada una
     adaptado_contesta_lo_demas: bool = True  # PROMOCIONADO 22-oct (arq-1l: banco DIVE TO HEAL 3/12 -> 11/12; HISTORY 0.31.93); revert = False
     enlace_con_disponibilidad: bool = True  # PROMOCIONADO 22-oct (arq-1m: banco de enlace 3/12 -> 12/12; HISTORY 0.31.93); revert = False

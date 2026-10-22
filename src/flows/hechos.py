@@ -174,7 +174,12 @@ def hechos(state: ConversationState, intenciones: list[str], actividades: list[s
             if sid:
                 requisitos += _lista(sid, "requirements", lang)
             if registro.cart_type in _CON_FORMULARIO_MEDICO:
-                requisitos.append(_politica("medical_restrictions", lang))
+                if not settings.requisitos_coherentes:
+                    requisitos.append(_politica("medical_restrictions", lang))
+                elif not _ya_dice_el_enlace(requisitos, _formulario_de_curso(lang)):
+                    requisitos.append(_formulario_de_curso(lang))
+            if settings.requisitos_coherentes:
+                requisitos += _previo_y_edad(registro, lang)
             if registro.requires_certification:
                 requisitos.append(_politica("certification_required", lang))
             requisitos += [_politica("insurance_form_requirement", lang), _politica("what_to_bring", lang)]
@@ -215,6 +220,77 @@ def hechos(state: ConversationState, intenciones: list[str], actividades: list[s
             bloque["pregunta_pendiente"] = "origen"
         bloques.append(bloque)
     return bloques
+
+
+# arq-1s (22-oct, flag `requisitos_coherentes`; G10 nº 4): (1) en un curso, un solo formulario: la política médica dice a
+# la vez «para cursos, el médico de curso» y «si eres buzo certificado, el de buzo certificado», y el alumno del Advanced
+# (certificado Y en un curso) recibía los dos (g10-058, «contradictorio»); decisión de Gadea: en un curso, el de curso.
+# (2) el requisito previo del curso (el nivel anterior del registro: el Open Water para el Advanced) y la edad mínima en
+# cifra (g10-032).
+_CORTE_FORMULARIO = {"es": "Si eres buzo certificado", "en": "If you are a certified diver"}
+
+
+def _formulario_de_curso(lang: str) -> str | None:
+    """La parte de la política médica que vale para un curso (sin la del formulario de buzo certificado)."""
+    texto = _politica("medical_restrictions", lang) or ""
+    corte = texto.find(_CORTE_FORMULARIO[lang])
+    return (texto[:corte] if corte >= 0 else texto).strip() or None
+
+
+def _ya_dice_el_enlace(requisitos: list[str], hecho: str | None) -> bool:
+    """¿Algún requisito de la ficha ya lleva el enlace de este hecho? (el minicurso trae el formulario en su ficha)."""
+    enlaces = _URL.findall(hecho or "")
+    return bool(enlaces) and any(e.rstrip(".,") in r for e in enlaces for r in requisitos)
+
+
+def _previo_y_edad(registro, lang: str) -> list[str]:
+    hechos_: list[str] = []
+    if registro.family == "course" and registro.course_level and registro.course_level > 1:
+        previo = next((a for a in dom.registry().activities if a.family == "course" and a.certifies
+                       and a.course_level == registro.course_level - 1 and not a.generic), None)
+        if previo is not None:
+            nombre = re.sub(r"\s+", " ", re.sub(r"(?i)\b(curso|course)\b", "", dom.label(previo.id, lang))).strip()
+            hechos_.append(f"Requisito previo: tener la certificación {nombre}." if lang == "es"
+                           else f"Prerequisite: holding the {nombre} certification.")
+    if registro.min_age:
+        hechos_.append(f"Edad mínima: desde los {registro.min_age} años." if lang == "es"
+                       else f"Minimum age: {registro.min_age} and over.")
+    return hechos_
+
+
+# arq-1p (22-oct, flag `hechos_sin_actividad`): lo que NO depende de la actividad. En el G10 nº 4, 24 turnos se quedaron sin
+# redactor porque no se sabía la actividad (`hechos=sin_actividad`); 11 preguntaban solo la hora o la recogida, qué llevar
+# o si hay sitio, casi siempre quien ya reservó y no la nombra. Esos hechos son los mismos para todas las actividades (las
+# políticas), así que el código los da sin adivinar la actividad. Precio, qué incluye, edad y enlace sí la necesitan.
+INTENCIONES_SIN_ACTIVIDAD = frozenset({"horario", "disponibilidad", "requisitos"})
+
+
+def hechos_sin_actividad(state: ConversationState, intenciones: list[str]) -> list[dict]:
+    """Un bloque de hechos generales (sin actividad) para las intenciones que no dependen de ella; [] si no hay ninguna."""
+    lang = "es" if state.language == "es" else "en"
+    origen = state.location if state.location in ORIGENES else None
+    origenes = (origen,) if origen else ORIGENES
+    pedidas = [i for i in intenciones if i in INTENCIONES_SIN_ACTIVIDAD]
+    if not pedidas:
+        return []
+    bloque: dict = {"actividad": None, "nombre": "general", "origen": origen}
+    if "horario" in pedidas:
+        bloque["horario_general"] = [p for p in (_politica("operating_hours", lang),
+                                                 _politica("activity_schedule", lang)) if p]
+        recogida = {o: [_politica("meeting_point", lang) if o == "cartagena" else _politica("island_pickup_free", lang)]
+                    for o in origenes}
+        bloque["recogida"] = {o: [x for x in v if x] for o, v in recogida.items() if any(v)}
+    if "disponibilidad" in pedidas:
+        bloque["disponibilidad"] = [p for p in (_politica("availability_always", lang),
+                                                _politica("booking_system_info", lang)) if p]
+    if "requisitos" in pedidas:
+        bloque["requisitos"] = [p for p in (_politica("insurance_form_requirement", lang),
+                                            _politica("what_to_bring", lang)) if p]
+        if settings.requisitos_coherentes and getattr(state, "is_certified", None) is True:
+            # arq-1s: «soy buzo certificado, ¿qué requisitos hay?» sin actividad dicha: el carné también.
+            bloque["requisitos"].insert(0, _politica("certification_required", lang))
+            bloque["requisitos"] = [p for p in bloque["requisitos"] if p]
+    return [bloque]
 
 
 def _acompanante(bloque: dict, pedidas: list[str], origen: str | None, origenes: tuple[str, ...], moneda: str,

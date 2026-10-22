@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-22T18:35:56+00:00",
-  "commit": "229193f5",
+  "generado": "2026-10-22T18:42:09+00:00",
+  "commit": "a5e62070",
   "rama": "feature/pre_gadea"
  },
  "vistas": {
@@ -189,6 +189,13 @@
      "titulo": "«Es para una persona» cuenta como el grupo",
      "codigo": true,
      "pre": true,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "ya_reservo_no_es_pase",
+     "titulo": "Decir «ya reservé» no es pedir a una persona",
+     "codigo": false,
+     "pre": false,
      "sin_efecto": false
     }
    ],
@@ -833,6 +840,13 @@
      "codigo": true,
      "pre": true,
      "sin_efecto": false
+    },
+    {
+     "nombre": "cedula_de_extranjeria_manda",
+     "titulo": "La cédula de extranjería manda sobre «extranjero»",
+     "codigo": false,
+     "pre": false,
+     "sin_efecto": false
     }
    ],
    "marca": "openrouter",
@@ -1331,6 +1345,20 @@
     {
      "nombre": "redactor_sin_preguntas_de_cierre",
      "titulo": "El redactor no pregunta datos al cerrar",
+     "codigo": false,
+     "pre": false,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "hechos_sin_actividad",
+     "titulo": "Hora, recogida, qué llevar y sitio sin saber la actividad",
+     "codigo": false,
+     "pre": false,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "requisitos_coherentes",
+     "titulo": "Requisitos sin contradicciones",
      "codigo": false,
      "pre": false,
      "sin_efecto": false
@@ -2422,6 +2450,19 @@
    "sin_efecto": null
   },
   {
+   "nombre": "cedula_de_extranjeria_manda",
+   "area": "Reserva",
+   "titulo": "La cédula de extranjería manda sobre «extranjero»",
+   "texto": "Un extranjero que dice que tiene cédula de extranjería es residente y paga en pesos; antes la regla «extranjero o turista: paga en dólares» le ganaba la mitad de las veces (arq-1r, 22-oct).",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
+   "usado_por": [
+    "b_extraction"
+   ],
+   "sin_efecto": null
+  },
+  {
    "nombre": "certificado_solo_si_lo_dice",
    "area": "Reserva",
    "titulo": "Certificado solo si lo dice",
@@ -2765,6 +2806,19 @@
    "codigo": true,
    "pre": true,
    "fijado_en_pre": true,
+   "usado_por": [
+    "r_hechos"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "hechos_sin_actividad",
+   "area": "Preguntas",
+   "titulo": "Hora, recogida, qué llevar y sitio sin saber la actividad",
+   "texto": "Si el cliente pregunta solo a qué hora es o cómo es la recogida, qué llevar o si hay sitio, y no se sabe de qué actividad habla (a menudo porque ya reservó), los datos salen de las políticas, que son iguales para todas, y Coral los escribe; antes contestaba el RAG (arq-1p, 22-oct).",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
    "usado_por": [
     "r_hechos"
    ],
@@ -3480,6 +3534,19 @@
    "sin_efecto": null
   },
   {
+   "nombre": "requisitos_coherentes",
+   "area": "Preguntas",
+   "titulo": "Requisitos sin contradicciones",
+   "texto": "En los requisitos de un curso va un solo formulario médico (el de curso, no además el de buzo certificado), el curso que hace falta antes (el Open Water para el Advanced) y la edad mínima en cifra; y a quien dice que es buzo certificado se le recuerda el carné (arq-1s, 22-oct).",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
+   "usado_por": [
+    "r_hechos"
+   ],
+   "sin_efecto": null
+  },
+  {
    "nombre": "reserva_de_hotel_no_es_nuestra",
    "area": "Enrutador",
    "titulo": "Reservar el hotel no es reservar con nosotros",
@@ -3671,6 +3738,19 @@
    "fijado_en_pre": true,
    "usado_por": [
     "b_extraction"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "ya_reservo_no_es_pase",
+   "area": "Enrutador",
+   "titulo": "Decir «ya reservé» no es pedir a una persona",
+   "texto": "Si el cliente ya tiene reserva y solo pregunta el horario, la recogida, qué llevar o algo general de la actividad, Coral le contesta; solo pasa a un asesor si hay que ver o tocar esa reserva o ese pago (si llegó, cambiar la fecha, cancelar, devolución, un correo que no llegó) (arq-1q, 22-oct).",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
+   "usado_por": [
+    "router"
    ],
    "sin_efecto": null
   }

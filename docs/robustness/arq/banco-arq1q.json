@@ -1,0 +1,160 @@
+{
+ "about": "arq-1q (22-oct): YA_RESERVO_NO_ES_PASE. Decir que ya reservó no basta para pasar a una persona: con la reserva hecha, preguntar el horario, la recogida o qué llevar lo contesta Coral. Ver o tocar ESA reserva o pago sigue yendo a un asesor (controles, decisión de Gadea #1385). Frases nuestras (no salen de G9/G10). t6-t8 (añadidos tras la primera medida): «hice la reserva por la web/online» es la forma que daba el pase (banco arq-1p, p3).",
+ "dialogos": [
+  {
+   "id": "t1-hora-cartagena",
+   "tipo": "tabla",
+   "turnos": [
+    "Hola, ya hice la reserva por la web. ¿A qué hora es la salida desde Cartagena?"
+   ],
+   "todas": [
+    "8:00|8 a|8am|8 am"
+   ],
+   "ninguno": [
+    "te paso con un asesor",
+    "tiene que revisarlo una persona"
+   ]
+  },
+  {
+   "id": "t2-que-llevar",
+   "tipo": "tabla",
+   "turnos": [
+    "Ya pagamos el snorkel del sábado. ¿Qué tenemos que llevar?"
+   ],
+   "todas": [
+    "toalla"
+   ],
+   "ninguno": [
+    "te paso con un asesor",
+    "tiene que revisarlo una persona"
+   ]
+  },
+  {
+   "id": "t3-pickup-en",
+   "tipo": "tabla",
+   "turnos": [
+    "Hi, we booked the mini course for tomorrow and we're staying at Cocoliso. What time is the pickup?"
+   ],
+   "todas": [
+    "9:30"
+   ],
+   "ninguno": [
+    "passing you to",
+    "needs to be checked by a person"
+   ]
+  },
+  {
+   "id": "t4-hora-sin-origen",
+   "tipo": "tabla",
+   "turnos": [
+    "Tengo una reserva hecha para el domingo. ¿Cuál es el horario de ese día?"
+   ],
+   "todas": [
+    "8:00|8 a|8am|8 am|9:30"
+   ],
+   "ninguno": [
+    "te paso con un asesor",
+    "tiene que revisarlo una persona"
+   ]
+  },
+  {
+   "id": "t5-bring-en",
+   "tipo": "tabla",
+   "turnos": [
+    "I've already paid for Friday's dive. What should I bring?"
+   ],
+   "todas": [
+    "towel"
+   ],
+   "ninguno": [
+    "passing you to",
+    "needs to be checked by a person"
+   ]
+  },
+  {
+   "id": "c1-cambiar-fecha",
+   "tipo": "control",
+   "turnos": [
+    "Quiero cambiar la fecha de mi reserva del sábado para el domingo."
+   ],
+   "todas": [
+    "asesor|una persona del equipo|alguien del equipo"
+   ]
+  },
+  {
+   "id": "c2-no-llega-correo",
+   "tipo": "control",
+   "turnos": [
+    "Hice el pago ayer y no me ha llegado el correo de confirmación."
+   ],
+   "todas": [
+    "asesor|una persona del equipo|alguien del equipo"
+   ]
+  },
+  {
+   "id": "c3-devolucion",
+   "tipo": "control",
+   "turnos": [
+    "Ya pagué la reserva pero al final no puedo ir, ¿me devuelven el dinero?"
+   ],
+   "todas": [
+    "asesor|una persona del equipo|alguien del equipo"
+   ]
+  },
+  {
+   "id": "c4-pago-en",
+   "tipo": "control",
+   "turnos": [
+    "Could you check that my payment went through? I booked for Monday."
+   ],
+   "todas": [
+    "advisor|person from our team|someone from the team|our team|colleague"
+   ]
+  },
+  {
+   "id": "t6-web-horario",
+   "tipo": "tabla",
+   "turnos": [
+    "Hola, ya hice la reserva por la web. ¿Cuál es el horario?"
+   ],
+   "todas": [
+    "8:00|8 a|8am|8 am|9:30"
+   ],
+   "ninguno": [
+    "te paso con un asesor",
+    "tiene que revisarlo una persona",
+    "te conecto con alguien"
+   ]
+  },
+  {
+   "id": "t7-online-muelle",
+   "tipo": "tabla",
+   "turnos": [
+    "Hice la reserva online la semana pasada. ¿A qué hora tengo que estar en el muelle?"
+   ],
+   "todas": [
+    "8:00|8 a|8am|8 am"
+   ],
+   "ninguno": [
+    "te paso con un asesor",
+    "tiene que revisarlo una persona",
+    "te conecto con alguien"
+   ]
+  },
+  {
+   "id": "t8-website-start-en",
+   "tipo": "tabla",
+   "turnos": [
+    "I made the booking through your website. What time does it start?"
+   ],
+   "todas": [
+    "8:00|8 am|8am|8 a.m|9:30"
+   ],
+   "ninguno": [
+    "passing you to",
+    "needs to be checked by a person",
+    "connect you with someone"
+   ]
+  }
+ ]
+}

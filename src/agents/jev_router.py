@@ -766,6 +766,18 @@ _FUERA_DEL_SISTEMA = (
 )
 
 
+# arq-1q (22-oct, flag `ya_reservo_no_es_pase`): «ya hice la reserva por la web, ¿cuál es el horario?» daba needs_staff
+# 2 de 3 veces (banco arq-1p, p3) y el bot pasaba a un asesor una pregunta que los hechos contestan (G10 nº 4: el mismo
+# pase en dos diálogos). Decir que ya reservó no basta: hace falta una persona solo para ver o tocar ESA reserva o pago.
+_YA_RESERVO_NO_BASTA = (
+    "Saying they ALREADY booked is not enough by itself: if, with a booking made, they only ask about the schedule or "
+    "meeting time, pickup, what to bring, what is included or other general information about the activity, it is "
+    "FALSE. It stays TRUE when they need someone to look at or act on THEIR booking or payment: confirm it was "
+    "received, its status, change its date, cancel it or get their money back, or a confirmation email that did not "
+    "arrive."
+)
+
+
 def _questions_for_turn(pending_slot: str | None = None) -> dict:
     q = dict(_QUESTIONS)
     pending_q = pending_answer_question(pending_slot)
@@ -777,9 +789,13 @@ def _questions_for_turn(pending_slot: str | None = None) -> dict:
         q[AFFIRMS_GROUP] = _AFFIRMS_GROUP_Q_UNA
     q[CORRECTS] = _CORRECTS_Q
     q[ASKS_RECALL] = _ASKS_RECALL_Q
-    q[NEEDS_STAFF] = ({**_NEEDS_STAFF_Q,
-                       "instructions": f"{_NEEDS_STAFF_Q['instructions']} {_FUERA_DEL_SISTEMA}"}
-                      if settings.pase_si_pide_fuera_del_sistema else _NEEDS_STAFF_Q)
+    instrucciones = _NEEDS_STAFF_Q["instructions"]
+    if settings.pase_si_pide_fuera_del_sistema:
+        instrucciones = f"{instrucciones} {_FUERA_DEL_SISTEMA}"
+    if settings.ya_reservo_no_es_pase:
+        instrucciones = f"{instrucciones} {_YA_RESERVO_NO_BASTA}"
+    q[NEEDS_STAFF] = (_NEEDS_STAFF_Q if instrucciones == _NEEDS_STAFF_Q["instructions"]
+                      else {**_NEEDS_STAFF_Q, "instructions": instrucciones})
     q[CHANGES_DATE] = _CHANGES_DATE_Q
     q[COMPANION_JOINS] = _COMPANION_JOINS_Q
     q[ADDS_PERSON] = _ADDS_PERSON_Q

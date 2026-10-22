@@ -47,7 +47,8 @@ def test_la_lista_completa_de_la_ficha():
                                                     ("snorkel", False), ("certified_diving", False)])
 def test_el_formulario_medico_solo_en_cursos_minicurso_y_refresher(actividad, formulario):
     [b] = h.hechos(_conv(location="cartagena"), ["requisitos"], [actividad])
-    assert any("formulario medico" in r.lower() for r in b["requisitos"]) is formulario
+    # con o sin tilde: con `requisitos_coherentes` el del minicurso es solo el de su ficha («formulario médico»)
+    assert any("formulario medico" in r.lower().replace("é", "e") for r in b["requisitos"]) is formulario
 
 
 def test_edad_en_cifra():

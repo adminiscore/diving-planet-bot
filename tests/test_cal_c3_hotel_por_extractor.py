@@ -156,6 +156,8 @@ def test_c3c_un_origen_dicho_antes_sigue_contando(monkeypatch):
 @pytest.mark.parametrize("lang", ["es", "en"])
 async def test_sin_cedula_cambia_la_regla_solo_con_el_flag(monkeypatch, lang):
     sistemas = []
+    # arq-1r añade una frase a esta regla; aquí se mira la regla sola.
+    monkeypatch.setattr(settings, "cedula_de_extranjeria_manda", False)
     for valor in (False, True):
         monkeypatch.setattr(settings, "sin_cedula_extranjero", valor)
         llamadas = []
