@@ -649,6 +649,7 @@ class Settings(BaseSettings):
     varias_actividades: bool = False  # ARQ-1j (22-oct): el extractor da TODAS las actividades del mensaje (y el acompañante) y los hechos salen de cada una
     adaptado_contesta_lo_demas: bool = True  # PROMOCIONADO 22-oct (arq-1l: banco DIVE TO HEAL 3/12 -> 11/12; HISTORY 0.31.93); revert = False
     enlace_con_disponibilidad: bool = True  # PROMOCIONADO 22-oct (arq-1m: banco de enlace 3/12 -> 12/12; HISTORY 0.31.93); revert = False
+    rag_enlace_al_recomendar: bool = False  # ARQ-1o (22-oct, decisión de Gadea): el RAG da el enlace del plan que recomienda si sabe el origen (a colombianos no)
     # arq-2a (22-oct, Gonzalo con Claude): fuera del prompt del RAG las reglas que el código ya pone en el contexto que
     # el RAG lee siempre (catálogo y políticas, en los dos caminos de `hechos_por_codigo`): moneda, 5 % por equipo
     # completo, no calcular totales, días de cierre y mal tiempo, y una viñeta repetida del tono. Las que solo vigila un

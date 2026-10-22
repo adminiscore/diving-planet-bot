@@ -167,6 +167,8 @@ def _collect() -> dict[str, str]:
     add("info/redactor_hechos.en", info.REDACTOR_HECHOS_EN)
     add("info/rag.con_hechos.es", info.RAG_CON_HECHOS_ES)
     add("info/rag.con_hechos.en", info.RAG_CON_HECHOS_EN)
+    add("info/rag.enlace_al_recomendar.es", info.RAG_ENLACE_AL_RECOMENDAR_ES)
+    add("info/rag.enlace_al_recomendar.en", info.RAG_ENLACE_AL_RECOMENDAR_EN)
     add("memory/seguridad.notas.es", memory.MEMORIA_SEGURA_NOTAS_ES)
     add("memory/seguridad.notas.en", memory.MEMORIA_SEGURA_NOTAS_EN)
     add("memory/seguridad.resumen.es", memory.MEMORIA_SEGURA_RESUMEN_ES)

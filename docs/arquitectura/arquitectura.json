@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-22T15:40:31+00:00",
-  "commit": "a5937ad",
+  "generado": "2026-10-22T15:55:59+00:00",
+  "commit": "909a065",
   "rama": "feature/pre_gadea"
  },
  "vistas": {
@@ -1408,6 +1408,13 @@
      "titulo": "El RAG sin las reglas que ya dice el catálogo",
      "codigo": true,
      "pre": true,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "rag_enlace_al_recomendar",
+     "titulo": "El enlace al recomendar",
+     "codigo": false,
+     "pre": false,
      "sin_efecto": false
     }
    ],
@@ -3071,6 +3078,19 @@
    "fijado_en_pre": true,
    "usado_por": [
     "info"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "rag_enlace_al_recomendar",
+   "area": "Preguntas",
+   "titulo": "El enlace al recomendar",
+   "texto": "Cuando Coral recomienda un plan concreto y sabe desde dónde sale el cliente, da su enlace de reserva en vez de preguntar si lo quiere (a los colombianos no: el pago lo coordina un asesor) (arq-1o, 22-oct).",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
+   "usado_por": [
+    "r_escribir"
    ],
    "sin_efecto": null
   },

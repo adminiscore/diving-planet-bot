@@ -217,6 +217,14 @@ def build_system_prompt(lang: str, query: str | None = None) -> str:
 
         for antes, despues in (RAG_SIN_REGLAS_DEL_CODIGO_ES if lang == "es" else RAG_SIN_REGLAS_DEL_CODIGO_EN):
             prompt = prompt.replace(antes, despues)
+    if settings.rag_enlace_al_recomendar:
+        # arq-1o: al recomendar un plan con el origen sabido, su enlace va en la respuesta (ver RAG_ENLACE_AL_RECOMENDAR_*).
+        from src.prompts.info import (  # lazy
+            RAG_ENLACE_AL_RECOMENDAR_EN,
+            RAG_ENLACE_AL_RECOMENDAR_ES,
+        )
+
+        prompt = f"{prompt}\n\n{RAG_ENLACE_AL_RECOMENDAR_ES if lang == 'es' else RAG_ENLACE_AL_RECOMENDAR_EN}"
     return prompt
 
 
