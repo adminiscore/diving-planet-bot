@@ -90,7 +90,7 @@ def test_tarjeta_de_edades(monkeypatch, flag, esperado_es, esperado_en):
 def test_tarjeta_bubble_makers_ya_dice_su_franja(monkeypatch):
     monkeypatch.setattr(settings, "tarjeta_edades_en_cifra", True)
     texto = eligibility.format_group_plan(eligibility.plan_group(certified=0, noncert_ages=[8]), "es")
-    assert "Bubble Makers (buceo para niños 8-10) /" in texto and "snorkel (desde 6 años)" in texto
+    assert "Bubble Makers (buceo para niños 8-10, en piscina o aguas de máx. 2 m) /" in texto and "snorkel (desde 6 años)" in texto
 
 
 def test_si_el_rag_cotizo_otra_actividad_no_hay_variantes(variantes):

@@ -23,6 +23,7 @@ from src.domain import activities as dom
 from src.flows import cart_render
 from src.flows.catalog import (
     COMPANION_INCLUDES,
+    COMPANION_NO_INCLUYE,
     COMPANION_PRICE,
     ISLAND_SERVICE_MAP,
     RAW_SERVICES,
@@ -46,6 +47,18 @@ _POLICIES = Path(__file__).resolve().parents[2] / "data" / "knowledge_base" / "p
 def _politicas() -> dict:
     datos = json.loads(_POLICIES.read_text(encoding="utf-8-sig"))
     return datos.get("policies", datos)
+
+
+_DISCOUNTS = Path(__file__).resolve().parents[2] / "data" / "knowledge_base" / "discounts.json"
+
+
+@lru_cache(maxsize=1)
+def _descuento_online(lang: str) -> str | None:
+    """El descuento online (10 %, se aplica solo al reservar por la web), de discounts.json: va con el enlace (G10 nº 2:
+    daba el enlace sin decir que reservando ahí se aplica el precio online)."""
+    datos = json.loads(_DISCOUNTS.read_text(encoding="utf-8-sig")).get("discounts", {})
+    online = datos.get("online_direct_booking") or {}
+    return online.get(f"description_{lang}") or online.get("description_es")
 
 
 def _politica(clave: str, lang: str) -> str | None:
@@ -185,6 +198,8 @@ def hechos(state: ConversationState, intenciones: list[str], actividades: list[s
                 bloque["enlace"] = _por_origen(
                     actividad, origenes,
                     lambda sid: cart_render._resolve_service_booking_url(SERVICES.get(sid) or {}, state), elegido)
+                if bloque["enlace"]:
+                    bloque["descuento_online"] = _descuento_online(lang)
         if {"incluye", "horario"} & set(pedidas):
             # Cómo se llega según el origen (G10 de control, 22-oct: «no aclara que en Cartagena no se recoge en el
             # hotel», «no dice que el regreso está incluido sin cargo», «falta "a 5 minutos del centro"»).
@@ -214,6 +229,7 @@ def _acompanante(bloque: dict, pedidas: list[str], origen: str | None, origenes:
         bloque["precio"] = {o: {"plan": bloque["nombre"], "online": online, "normal": normal} for o in origenes}
     if "incluye" in pedidas:
         bloque["incluye"] = {o: list(COMPANION_INCLUDES[lang][o]) for o in origenes}
+        bloque["no_incluye"] = {o: [COMPANION_NO_INCLUYE[lang]] for o in origenes}
     if not origen and {"precio", "incluye"} & set(pedidas):
         bloque["pregunta_pendiente"] = "origen"
     return bloque

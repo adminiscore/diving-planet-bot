@@ -444,7 +444,10 @@ def _load_companion_price() -> dict:
 
 
 COMPANION_PRICE = _load_companion_price()
-# Lo que incluye el plan de acompañante según el origen (una sola fuente: el catálogo del RAG y los hechos de arq-1j).
+# Lo que incluye el plan de acompañante según el origen (una sola fuente: el catálogo del RAG y los hechos de arq-1j). No
+# incluye equipo: no se mete al agua (G10 nº 2: «todos los planes incluyen equipo», también el acompañante).
+COMPANION_NO_INCLUYE = {"es": "equipo de buceo o de snorkel (no se mete al agua)",
+                        "en": "diving or snorkeling gear (they don't go in the water)"}
 COMPANION_INCLUDES = {
     "es": {"cartagena": ["Lancha", "Almuerzo", "Seguro", "Entrada al Parque Nacional Natural"],
            "island": ["Seguro", "Entrada al Parque Nacional Natural"]},
@@ -659,12 +662,14 @@ def catalog_facts(lang: str) -> str:
                 "descuento por reservar en la web):")
         out = [head, "Saliendo desde Cartagena:", *groups[False],
                f"- Acompañante (no bucea, va en la lancha con el grupo): {companion} online, {companion_normal} normal; "
-               f"incluye {_lista_en_frase(COMPANION_INCLUDES['es']['cartagena'], 'es')}.",
+               f"incluye {_lista_en_frase(COMPANION_INCLUDES['es']['cartagena'], 'es')}; no incluye "
+               f"{COMPANION_NO_INCLUYE['es']}.",
                islas_es,
                *groups[True],
                f"- Acompañante - ya en las islas (no bucea, va en la lancha con el grupo): {companion} online, "
                f"{companion_normal} normal (el mismo precio); incluye "
-               f"{_lista_en_frase(COMPANION_INCLUDES['es']['island'], 'es')}; almuerzo NO incluido.",
+               f"{_lista_en_frase(COMPANION_INCLUDES['es']['island'], 'es')}; almuerzo NO incluido; no incluye "
+               f"{COMPANION_NO_INCLUYE['es']}.",
                "Edad mínima 10 años salvo que se indique otra.",
                "Operamos todos los días del año salvo el 25 de diciembre y el 1 de enero. Tú no ves los cupos: "
                "el cliente elige la fecha y el número de personas en el calendario del link de reserva.",
@@ -686,12 +691,14 @@ def catalog_facts(lang: str) -> str:
                 "for booking on the website):")
         out = [head, "Departing from Cartagena:", *groups[False],
                f"- Companion (doesn't dive, rides the boat with the group): {companion} online, {companion_normal} "
-               f"regular; includes {_lista_en_frase(COMPANION_INCLUDES['en']['cartagena'], 'en')}.",
+               f"regular; includes {_lista_en_frase(COMPANION_INCLUDES['en']['cartagena'], 'en')}; does not include "
+               f"{COMPANION_NO_INCLUYE['en']}.",
                islas_en,
                *groups[True],
                f"- Companion - already on the islands (doesn't dive, rides the boat with the group): {companion} online, "
                f"{companion_normal} regular (the same price); includes "
-               f"{_lista_en_frase(COMPANION_INCLUDES['en']['island'], 'en')}; lunch NOT included.",
+               f"{_lista_en_frase(COMPANION_INCLUDES['en']['island'], 'en')}; lunch NOT included; does not include "
+               f"{COMPANION_NO_INCLUYE['en']}.",
                "Minimum age 10 unless stated otherwise.",
                "We operate every day of the year except December 25 and January 1. You can't see open slots: "
                "the customer picks the date and number of people in the booking link's calendar.",
