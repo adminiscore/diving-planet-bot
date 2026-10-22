@@ -59,7 +59,27 @@ integrar la rama del otro y suite en verde, porque en PRE gana el último; (3) *
 despliegue reinicia el contenedor y mata la medida del otro (avisar en el registro de Plan Coral con la hora de fin).
 Las doce normas, con su porqué, están en el documento.
 
-### ▶️ RETOMAR AQUÍ — 22-oct, 18:00 (Gadea con Claude): G10 nº 2 = 90,7 % 34/72; promoción y G10 nº 3 en marcha
+### ▶️ RETOMAR AQUÍ — 23-oct, 01:15 (Gadea con Claude): arreglos del G10 nº 4 hechos y SIN PROMOCIONAR; G10 nº 5 = 91,2 % 40/72
+
+- **PRE sirve `229193f`** (flu-1 promocionado, 125 ajustes). **Nada más subido:** por decisión de Gadea (23-oct, 00:20)
+  todo lo de la noche está integrado SOLO en local en `feature/pre_gadea` (último `8137f28` + relevo). Lo primero
+  mañana: decidir la promoción y hacer push.
+- **G10:** nº 2 91,4 % 35/72 · nº 3 no vale (el redactor contestó la mitad por algo del entorno) · nº 4 90,1 % 34/72 ·
+  **nº 5 91,2 % 40/72** (53 fallos: RAG 25, redactor 16, RAG con hechos 10; 29 arreglados y 23 nuevos frente al nº 4) (con la lista de 17 desfasados; meta para Andrés ≥ 92 % y ≥ 40/72).
+- **Pendientes de promocionar (todos APAGADOS, cada uno con su banco ×3):** los 11 del G10 nº 5
+  (`hechos_sin_actividad`, `ya_reservo_no_es_pase`, `cedula_de_extranjeria_manda`, `requisitos_coherentes`,
+  `enlace_con_como_pagar`, `paquete_varios_dias`, `recotizar_al_cambiar_moneda`, `rag_comprueba_los_hechos`,
+  `redactor_sin_preguntas_de_cierre`, `fecha_con_dia_de_la_semana`, `descuentos_en_la_tabla`) y `tiempo_limitado`
+  (arq-1v, no estaba en el nº 5). Suite en verde con todos apagados (3329) y con los 12 encendidos.
+- **Coste a vigilar:** `rag_comprueba_los_hechos` sube la p90 de 9,2 a 11,8 s (30 turnos con tres redacciones del RAG).
+  Si se promociona, recortarlo (reintentar solo el escrito, sin revisor, o solo cuando falta precio o enlace).
+- **[TURN_METRICS] `hechos`** dice quién contestó cada turno (redactor, redactor_general, al_rag) o por qué no el
+  redactor; `scripts/clasifica_fallos_g10.py` ya lo usa.
+- **Datos a confirmar con Andrés:** el Rescue desde 10 años en el registro (PADI suele pedir 12).
+- **Siguiente:** (1) decidir la promoción con la nota del nº 5; (2) clasificar sus fallos por quién y repartir;
+  (3) arq-1i (Gonzalo, en pausa); (4) mej-7 (respaldo cuando OpenRouter falla).
+
+### (anterior) RETOMAR AQUÍ — 22-oct, 18:00 (Gadea con Claude): G10 nº 2 = 90,7 % 34/72; promoción y G10 nº 3 en marcha
 
 - **PRE sirve `909a065`** (pre_gadea), sano, 122 ajustes (HISTORY 0.31.93).
 - **G10:** control de ayer 86,4 % 22/72 → nº 1 87,7 % 25/72 → **nº 2 90,7 % 34/72** (sin desfasados; 10 criterios

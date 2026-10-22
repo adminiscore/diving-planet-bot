@@ -1,6 +1,29 @@
 History
 =======
 
+0.31.95 - (2026-10-23)
+----------------------
+* **G10 nº 4** (PRE 909a065 + fd53591 + flu-1, código local): 89,0 % 31/72 sin desfasados; con los desfasados nuevos
+  de Gadea (g10-004, g10-027, g10-069, g10-020 —portugués se queda en inglés—, g10-015 ×2, g10-009) **90,1 % 34/72**
+  (el nº 2 con la misma lista: 91,4 % 35/72). 66 fallos analizados turno a turno y repartidos por causa.
+* **Arreglos de los fallos del nº 4, todos con flag APAGADO y banco propio ×3 (frases nuestras):**
+  - Gadea con Claude (arq-4b): `recotizar_al_cambiar_moneda` (COP al decir «soy colombiano» después: 0/9 → 9/9),
+    `rag_comprueba_los_hechos` (arq-3 también en el RAG con hechos), `redactor_sin_preguntas_de_cierre`,
+    `fecha_con_dia_de_la_semana` y `descuentos_en_la_tabla` (los descuentos con sus condiciones: 15/21 → 19/21).
+  - Álvaro con Claude: `hechos_sin_actividad` (arq-1p, 20/30 → 28/30), `ya_reservo_no_es_pase` (arq-1q, 21/24 →
+    24/24), `cedula_de_extranjeria_manda` (arq-1r), `requisitos_coherentes` (arq-1s, 2/12 → 12/12),
+    `enlace_con_como_pagar` (arq-1u, 3/12 → 6/12), `paquete_varios_dias` (arq-1t) y `tiempo_limitado` (arq-1v, «me
+    voy mañana a mediodía»: 6/12 → 12/12, decisión de Gadea: desde las islas «va muy justo», también en el hotel de
+    la base).
+  - Datos nuevos fuera de flag (Álvaro): políticas `payment_confirmation` y `time_limited_departure` con sus
+    preguntas en kb_v2.
+* **G10 nº 5** (todo lo anterior salvo arq-1v, los 11 flags encendidos, código local): datos del código en 111
+  turnos frente a 86; p50 5,34 s, p90 11,81 s (el reintento del RAG con hechos: 30 turnos con 3 redacciones);
+  **91,2 % 40/72 sin desfasados** (nº 4: 90,1 % 34/72): la meta de diálogos (≥ 40/72) se cumple; la de
+  criterios (≥ 92 %) queda a 0,8 puntos. 53 fallos (RAG 25, redactor 16, RAG con hechos 10): 29 arreglados y 23 nuevos
+  frente al nº 4.
+* **Nada promocionado ni subido** (decisión de Gadea, 23-oct 00:20): todo integrado en local en `feature/pre_gadea`.
+
 0.31.94 - (2026-10-22)
 ----------------------
 * **G10 nº 3 (909a065) no vale como nota:** el redactor de hechos contestó 37 turnos frente a 72 en el nº 2 con el
