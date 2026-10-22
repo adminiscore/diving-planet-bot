@@ -19,7 +19,15 @@ def _jsonl(fichero: str) -> list[dict]:
         return [json.loads(linea) for linea in f]
 
 
+_POR_HECHOS = {"redactor": "redactor", "redactor_general": "redactor", "al_rag": "RAG con hechos",
+               "falta": "redactor dijo FALTA -> RAG", "guardas": "redactor sin guardas -> RAG"}
+
+
 def _quien(metrica: dict) -> str:
+    # Desde fd53591 (22-oct) [TURN_METRICS] dice quién contestó (`hechos`): manda sobre las piezas, que cuentan también
+    # el RAG adelantado aunque se descarte.
+    if metrica.get("hechos") in _POR_HECHOS:
+        return _POR_HECHOS[metrica["hechos"]]
     piezas = [c["p"] for c in metrica.get("llamadas", [])]
     if "redactor_hechos" in piezas:
         return "redactor" if "rag_escritor" not in piezas else "redactor->RAG"

@@ -451,7 +451,8 @@
         "acuse_solo_el_mensaje",
         "acuse_en_su_numero",
         "actividad_de_la_pregunta",
-        "sin_certificacion_no_hace_falta"
+        "sin_certificacion_no_hace_falta",
+        "recotizar_al_cambiar_moneda"
       ]
     },
     {
@@ -601,7 +602,9 @@
         "hechos_por_codigo",
         "hechos_al_rag",
         "varias_actividades",
-        "enlace_con_disponibilidad"
+        "enlace_con_disponibilidad",
+        "rag_comprueba_los_hechos",
+        "redactor_sin_preguntas_de_cierre"
       ]
     },
     {
@@ -630,7 +633,8 @@
         "rag_ofrece_el_pase",
         "rag_sin_precio_con_tarjeta",
         "rag_sin_reglas_del_codigo",
-        "rag_enlace_al_recomendar"
+        "rag_enlace_al_recomendar",
+        "fecha_con_dia_de_la_semana"
       ],
       "tiempo_medido": {
         "p50": 1.9,
@@ -1579,6 +1583,26 @@
       "area": "Reserva",
       "titulo": "«No estoy certificado»: no hace falta",
       "texto": "Cuando el cliente dice que no está certificado y su actividad no lo pide (snorkel, minicurso, curso Open Water), Coral le dice que no necesita certificación (flu-1, 22-oct)."
+    },
+    "recotizar_al_cambiar_moneda": {
+      "area": "Reserva",
+      "titulo": "«Soy colombiano» después del precio: en pesos",
+      "texto": "Si el cliente dice que es colombiano (o residente) después de recibir un precio en dólares, Coral se lo vuelve a dar en pesos (arq-4b, 22-oct)."
+    },
+    "rag_comprueba_los_hechos": {
+      "area": "Preguntas",
+      "titulo": "El RAG comprueba que lleva los hechos",
+      "texto": "En los mensajes mezclados, si la respuesta del RAG deja fuera algún hecho del código (un punto de lo que incluye, un precio, un enlace), se rehace una vez diciéndole cuáles (arq-4b, 22-oct)."
+    },
+    "redactor_sin_preguntas_de_cierre": {
+      "area": "Preguntas",
+      "titulo": "El redactor no pregunta datos al cerrar",
+      "texto": "El redactor de hechos no termina preguntando la fecha, cuántos son o desde dónde salen: esas preguntas las hace la reserva, y si el cliente ya lo dijo era repetirse (arq-4b, 22-oct)."
+    },
+    "fecha_con_dia_de_la_semana": {
+      "area": "Preguntas",
+      "titulo": "La fecha con el día de la semana",
+      "texto": "La fecha que recibe el RAG lleva el día de la semana de hoy y de mañana, para que no los calcule mal (arq-4b, 22-oct)."
     }
   },
   "areas": [

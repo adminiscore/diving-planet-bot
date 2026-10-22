@@ -133,6 +133,10 @@ def _mensajes(lang: str, history: list[dict], message: str, texto_hechos: str) -
         system = (f"{RAG_INTRO_EN}\n\n{RAG_SECURITY_EN}\nStyle and tone:\n{_build_tone_section('en')}\n\n"
                   f"{REDACTOR_HECHOS_EN}")
         user = f"Facts:\n{texto_hechos}\n\nCustomer's question: {redact_pii(message)}"
+    if settings.redactor_sin_preguntas_de_cierre:
+        from src.prompts.info import REDACTOR_SIN_PREGUNTAS_EN, REDACTOR_SIN_PREGUNTAS_ES  # lazy
+
+        system += REDACTOR_SIN_PREGUNTAS_ES if lang == "es" else REDACTOR_SIN_PREGUNTAS_EN
     previos = list(history or [])
     if previos and previos[-1].get("role") == "user" and previos[-1].get("content") == message:
         previos = previos[:-1]  # el mensaje va abajo, con los hechos

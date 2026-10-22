@@ -306,6 +306,38 @@ def _no_hace_falta_certificacion(state: ConversationState, carry: dict) -> str:
             else f"You don't need any certification for *{nombre}*. 🙌\n\n")
 
 
+def _precio_en_su_moneda(state: ConversationState, carry: dict) -> str:
+    """arq-4b (flag `recotizar_al_cambiar_moneda`, G10 nº 4: g10-003, g10-016, g10-047): «soy colombiano» DESPUÉS de
+    recibir el precio en USD recibía «¡Perfecto, eres colombiano!» y la siguiente pregunta, y el precio en pesos no
+    llegaba nunca. Si en ESTE turno se sabe que paga en COP y ya se le dio un precio en USD, se le vuelve a dar en COP
+    (los mismos hechos del código que usa el redactor)."""
+    if not settings.recotizar_al_cambiar_moneda or state.is_colombian is not True or carry.get("prev_is_colombian"):
+        return ""
+    if getattr(state, "mixed_nationality_notice", False):
+        return ""
+    if not any(m.get("role") == "assistant" and " USD" in (m.get("content") or "") for m in state.history or []):
+        return ""
+    actividad = next((a for a in (_effective_activity(state), state.actividad_preguntada, state.suggested_activity)
+                      if a and dom.by_id(a) is not None and not dom.by_id(a).generic), None)
+    if actividad is None:
+        return ""
+    from src.flows import hechos as hechos_mod  # lazy
+
+    bloque = next(iter(hechos_mod.hechos(state, ["precio"], [actividad])), {})
+    precios = bloque.get("precio") or {}
+    if not precios:
+        return ""
+    es = state.language == "es"
+    # El nombre del plan de las islas ya lo dice («… (ya en las islas)»); el de Cartagena no.
+    desde_cartagena = " (desde Cartagena)" if es else " (from Cartagena)"
+    lineas = [f"• *{p['plan']}*" + (desde_cartagena if o == "cartagena" and len(precios) > 1 else "") + ": "
+              + (f"{p['online']} reservando online · {p['normal']} sin reserva online" if es
+                 else f"{p['online']} booking online · {p['normal']} without online booking")
+              for o, p in precios.items()]
+    cabeza = "En pesos colombianos, el precio por persona es:" if es else "In Colombian pesos, the price per person is:"
+    return cabeza + "\n" + "\n".join(lineas) + "\n\n"
+
+
 def cancel_pending_ack(state: ConversationState) -> None:
     """Red de seguridad al cerrar el turno: un acuse lanzado que nadie usó se cancela."""
     pending = getattr(state, "_pending_ack", None)
@@ -515,7 +547,7 @@ async def _slotfill_close_phase(
             )
         if ack:
             ack = ack.rstrip() + "\n\n"
-        ack += _no_hace_falta_certificacion(state, carry)
+        ack += _no_hace_falta_certificacion(state, carry) + _precio_en_su_moneda(state, carry)
     response = greeting + ack + response
     state.history.append({"role": "assistant", "content": response})
     return response

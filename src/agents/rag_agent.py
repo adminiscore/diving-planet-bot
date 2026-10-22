@@ -704,6 +704,7 @@ async def rag_answer(
     avisos_hechos: dict | None = None,
     sin_precio: bool = False,
     hechos: str | None = None,
+    hechos_bloques: tuple[list[dict], list[str]] | None = None,
 ) -> str:
     """`hechos` (arq-1g, flag `hechos_al_rag`): en un mensaje mezclado, los hechos del código (JSON de
     `src/flows/hechos.py`) para la parte que pregunta de la tabla (precio, qué incluye, requisitos…): se usan tal cual.
@@ -1026,7 +1027,7 @@ async def rag_answer(
                     grounded, reason = await _verify_grounding(answer, grounding_context, lang=lang)
                 if grounded and attempt == 0 and (
                         (settings.rag_revisor_completitud and puntos) or settings.rag_revisor_avisos
-                        or avisos_elegidos):
+                        or avisos_elegidos or hechos_bloques):
                     # CAL-A3/A4: el revisor de siempre solo castiga inventar; aquí también dejarse algo (A3: un punto
                     # del plan; A4: un aviso que el cliente necesita). Si falta, se reintenta UNA vez con lo que
                     # falta; si el reintento sale peor, vale esta.
@@ -1043,13 +1044,24 @@ async def rag_answer(
 
                         avisos += await rag_plan.puntos_sin_cubrir(
                             avisos_mod.textos(avisos_elegidos), answer, lang)
-                    if faltan or avisos:
+                    perdidos = []
+                    if hechos_bloques:
+                        # arq-4b (flag `rag_comprueba_los_hechos`, G10 nº 4): con los hechos delante, el RAG dejaba
+                        # fuera puntos de la lista («qué incluye» del minicurso sin la piscina ni la inmersión). La
+                        # misma comprobación por código que el redactor (arq-3), sin otro modelo.
+                        from src.agents.redactor_hechos import _pide_los_que_faltan  # lazy
+                        from src.flows import hechos as hechos_mod  # lazy
+
+                        perdidos = hechos_mod.faltan(answer, *hechos_bloques)
+                    if faltan or avisos or perdidos:
                         partes = ([rag_plan.feedback_de_faltan(faltan, lang)] if faltan else []) + (
-                            [rag_plan.feedback_de_avisos(avisos, lang)] if avisos else [])
+                            [rag_plan.feedback_de_avisos(avisos, lang)] if avisos else []) + (
+                            [_pide_los_que_faltan(perdidos, lang)] if perdidos else [])
                         respuesta_buena = answer
                         messages = [*messages, {"role": "assistant", "content": answer},
                                     {"role": "user", "content": "\n\n".join(partes)}]
-                        logger.info(f"[RAG][COMPLETITUD] reintento: faltan {len(faltan)} puntos, {len(avisos)} avisos")
+                        logger.info(f"[RAG][COMPLETITUD] reintento: faltan {len(faltan)} puntos, {len(avisos)} avisos, "
+                                    f"{len(perdidos)} hechos")
                         continue
                 if grounded:
                     _apuntar_avisos()

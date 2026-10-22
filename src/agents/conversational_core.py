@@ -1657,6 +1657,7 @@ async def _hechos_para_el_rag(state: ConversationState, message: str, history: l
     from src.observability import note_turn  # lazy
 
     note_turn(hechos_por_codigo="al_rag")
+    state._hechos_del_rag = (bloques, cubiertas)  # arq-4b: el RAG comprueba que su respuesta los lleve
     return redactor_hechos.texto_de_los_hechos(bloques)
 
 
@@ -1676,6 +1677,8 @@ async def _rag_answer(
                              state.history if history is None else history, message)
     if hechos := await _hechos_para_el_rag(state, message, state.history if history is None else history):
         entradas["hechos"] = hechos  # arq-1g
+        if settings.rag_comprueba_los_hechos:
+            entradas["hechos_bloques"] = state._hechos_del_rag
     if sin_precio:  # G3-07a: solo se pasa cuando hace falta (la llamada de siempre no cambia)
         entradas["sin_precio"] = True
     answer = await supervisor.rag_answer(rag_query or message, **entradas)
@@ -1839,6 +1842,8 @@ async def _adoptar_o_rehacer(state: ConversationState, message: str, history: li
     entradas = _entradas_rag(await _con_la_nacionalidad_del_mensaje(state, message), history, message)
     if hechos := await _hechos_para_el_rag(state, message, history):
         entradas["hechos"] = hechos  # arq-1g: la adelantada salió sin ellos, así que su huella no coincide y se rehace
+        if settings.rag_comprueba_los_hechos:
+            entradas["hechos_bloques"] = state._hechos_del_rag
     huella = _huella_rag(message, entradas)
     if huella == adelantado["huella"]:
         note_turn(rag_used=True, rag_adelantado="aprovechado")

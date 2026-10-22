@@ -1,0 +1,137 @@
+{
+ "about": "arq-4b (22-oct): arreglos de los fallos del G10 nº 4 con frases nuestras (no salen de G9/G10). RECOTIZAR_AL_CAMBIAR_MONEDA (precio en COP al decir «soy colombiano» después), RAG_COMPRUEBA_LOS_HECHOS (listas completas en mezclados), REDACTOR_SIN_PREGUNTAS_DE_CIERRE y FECHA_CON_DIA_DE_LA_SEMANA. Controles: el extranjero no recibe COP.",
+ "dialogos": [
+  {
+   "id": "c1-minicurso-colombiana",
+   "tipo": "cop",
+   "turnos": [
+    "Hola, ¿cuánto cuesta el minicurso?",
+    "Soy colombiana."
+   ],
+   "todas": [
+    "cop"
+   ]
+  },
+  {
+   "id": "c2-snorkel-medellin",
+   "tipo": "cop",
+   "turnos": [
+    "Hola, ¿qué precio tiene el snorkel saliendo desde Cartagena?",
+    "Ah, soy de Medellín."
+   ],
+   "todas": [
+    "cop"
+   ]
+  },
+  {
+   "id": "c3-en-colombian",
+   "tipo": "cop",
+   "turnos": [
+    "How much is the snorkeling tour from Cartagena?",
+    "Oh, I'm Colombian by the way."
+   ],
+   "todas": [
+    "cop"
+   ]
+  },
+  {
+   "id": "c4-control-frances",
+   "tipo": "control",
+   "turnos": [
+    "Hola, ¿cuánto cuesta el minicurso?",
+    "Soy de Francia."
+   ],
+   "ninguno": [
+    "cop"
+   ]
+  },
+  {
+   "id": "m1-incluye-y-peces",
+   "tipo": "mezclado",
+   "turnos": [
+    "Hola, ¿qué incluye el minicurso y qué peces se pueden ver?"
+   ],
+   "todas": [
+    "piscina",
+    "seguro",
+    "equipo",
+    "instructor"
+   ]
+  },
+  {
+   "id": "m2-snorkel-incluye-ninos",
+   "tipo": "mezclado",
+   "turnos": [
+    "What does the snorkeling tour include, and is it fine for kids who don't swim very well?"
+   ],
+   "todas": [
+    "insurance",
+    "equipment|gear",
+    "guide"
+   ]
+  },
+  {
+   "id": "m3-ow-incluye-visibilidad",
+   "tipo": "mezclado",
+   "turnos": [
+    "¿Qué incluye el curso Open Water y cómo está la visibilidad en esta época?"
+   ],
+   "todas": [
+    "seguro",
+    "certificaci",
+    "equipo"
+   ]
+  },
+  {
+   "id": "r1-fecha-dada",
+   "tipo": "cierre",
+   "turnos": [
+    "Hi! We're 2 adults and want to snorkel on August 14, leaving from Cartagena. Is there availability?"
+   ],
+   "ninguno": [
+    "august 14 work",
+    "which date",
+    "what date"
+   ]
+  },
+  {
+   "id": "r2-teoria-dada",
+   "tipo": "cierre",
+   "turnos": [
+    "Hola, ya reservé el curso referido y ya hice la teoría y la piscina en mi país. ¿Qué tengo que llevar?"
+   ],
+   "ninguno": [
+    "ya hiciste la teor",
+    "ya hicieron la teor",
+    "ya completaste la teor",
+    "hiciste la piscina"
+   ]
+  },
+  {
+   "id": "r3-cupo-fecha",
+   "tipo": "cierre",
+   "turnos": [
+    "¿Hay cupo para el minicurso el 3 de mayo? Salgo desde Cartagena."
+   ],
+   "ninguno": [
+    "3 de mayo te sirve",
+    "qué fecha",
+    "que fecha",
+    "para cuándo",
+    "para cuando"
+   ]
+  },
+  {
+   "id": "w1-manana",
+   "tipo": "fecha",
+   "turnos": [
+    "Hola, ¿puedo reservar snorkel para mañana saliendo desde Cartagena?"
+   ],
+   "ninguno": [
+    "mañana jueves",
+    "mañana, jueves",
+    "jueves 23"
+   ]
+  }
+ ]
+}

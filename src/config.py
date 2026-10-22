@@ -652,6 +652,11 @@ class Settings(BaseSettings):
     rag_enlace_al_recomendar: bool = False  # ARQ-1o (22-oct, decisión de Gadea): el RAG da el enlace del plan que recomienda si sabe el origen (a colombianos no)
     grupo_de_una_persona: bool = True  # PROMOCIONADO 22-oct (FLU-1: «es para una persona» cuenta como el tamaño del grupo en la pregunta de Jev; banco flu-1 19/24 -> 20/24, controles iguales; HISTORY 0.31.94); revert = False
     curso_preguntado_no_es_nivel: bool = True  # PROMOCIONADO 22-oct (FLU-1: si el extractor lee que el mensaje PREGUNTA por un curso con nivel, no se pregunta «¿ya tienen el Open Water o quieren sacarlo?»; banco flu-1b 9/24 -> 24/24 con el de abajo; HISTORY 0.31.94); revert = False
+    # arq-4b (22-oct, fallos del G10 nº 4), APAGADOS hasta medirlos con su banco:
+    recotizar_al_cambiar_moneda: bool = False  # «soy colombiano» DESPUÉS de recibir el precio en USD: se vuelve a dar en COP (g10-003/016/047)
+    rag_comprueba_los_hechos: bool = False  # arq-3 también para el RAG con hechos (mensajes mezclados): si deja fuera un hecho, se rehace una vez
+    redactor_sin_preguntas_de_cierre: bool = False  # el redactor no cierra preguntando datos (fecha, personas, origen…): los pregunta el sistema
+    fecha_con_dia_de_la_semana: bool = False  # la fecha del contexto del RAG lleva el día de la semana y el de mañana («jueves 23» era viernes)
     sin_certificacion_no_hace_falta: bool = True  # PROMOCIONADO 22-oct (FLU-1: al decir «no estoy certificado» para una actividad que no lo pide, el bot dice que no hace falta; HISTORY 0.31.94); revert = False
     # arq-2a (22-oct, Gonzalo con Claude): fuera del prompt del RAG las reglas que el código ya pone en el contexto que
     # el RAG lee siempre (catálogo y políticas, en los dos caminos de `hechos_por_codigo`): moneda, 5 % por equipo

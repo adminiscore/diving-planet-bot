@@ -605,6 +605,21 @@ RAG_ENLACE_AL_RECOMENDAR_EN = (
     "the catalog of links in the same answer instead of asking whether they want it. Do not give the link to a Colombian "
     "customer: the payment is arranged by an advisor in this chat."
 )
+# arq-4b (22-oct, flag `redactor_sin_preguntas_de_cierre`, G10 nº 4): el redactor cerraba con «¿te sirve el 23 de
+# julio?», «¿ya hicieron la teoría y la piscina?» o «¿para qué fecha?» tras haberlo dicho el cliente (g10-049, g10-051,
+# g10-057), y el sistema añadía después su propia pregunta. Las preguntas de datos las hace el sistema.
+REDACTOR_SIN_PREGUNTAS_ES = (
+    "\n- No termines preguntando un dato del cliente (la fecha, cuántos son, desde dónde sale, si ya hizo algo…): si "
+    "falta alguno, el sistema lo pregunta después, y si ya lo dijo, preguntarlo de nuevo es repetirse. Como mucho, "
+    "cierra con una invitación breve que no pida datos."
+)
+REDACTOR_SIN_PREGUNTAS_EN = (
+    "\n- Do not end by asking for a customer detail (the date, how many they are, where they leave from, whether they "
+    "already did something…): if one is missing the system asks for it afterwards, and if they already said it, asking "
+    "again repeats it. At most, close with a brief invitation that does not ask for details."
+)
+
+
 # arq-1g (flag `hechos_al_rag`): en un mensaje mezclado, el RAG recibe los hechos del código para la parte de la tabla.
 RAG_CON_HECHOS_ES = (
     "Hechos del sistema para parte de lo que pregunta el cliente, ya calculados con las reglas de Diving Planet (moneda, "
