@@ -1654,6 +1654,9 @@ async def _hechos_para_el_rag(state: ConversationState, message: str, history: l
         return None
     bloques, cubiertas = turno
     logger.info(f"[HECHOS] mensaje mezclado: el RAG recibe los hechos de {cubiertas} ({bloques[0]['actividad']})")
+    from src.observability import note_turn  # lazy
+
+    note_turn(hechos_por_codigo="al_rag")
     return redactor_hechos.texto_de_los_hechos(bloques)
 
 

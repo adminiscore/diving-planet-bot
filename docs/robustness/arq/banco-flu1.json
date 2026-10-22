@@ -1,0 +1,122 @@
+{
+ "about": "flu-1 (22-oct): «es para una persona» / «voy solo» cuenta como el tamaño del grupo y el bot no repregunta «¿para cuántas personas?» (flag GRUPO_DE_UNA_PERSONA). Controles: preguntar si UNA persona puede hacer algo, o hablar en plural, NO fija el grupo. Frases nuestras (no salen de G9/G10).",
+ "dialogos": [
+  {
+   "id": "u1-incluye-una-persona",
+   "tipo": "una",
+   "turnos": [
+    "Hola, quiero hacer snorkel saliendo desde Cartagena.",
+    "¿Qué incluye exactamente? Es para una persona extranjera."
+   ],
+   "todas": [
+    "equipo|almuerzo|lancha"
+   ],
+   "ninguno": [
+    "cuantas personas",
+    "cuantos son",
+    "cuantos serian"
+   ]
+  },
+  {
+   "id": "u2-just-me-precio",
+   "tipo": "una",
+   "turnos": [
+    "Hi! I want to go snorkeling from Cartagena.",
+    "It's just me, I'm from Canada. How much is it?"
+   ],
+   "todas": [
+    "usd"
+   ],
+   "ninguno": [
+    "how many people",
+    "how many of you",
+    "how many are"
+   ]
+  },
+  {
+   "id": "u3-voy-sola-minicurso",
+   "tipo": "una",
+   "turnos": [
+    "Hola, me interesa el minicurso de buceo.",
+    "Voy sola, salgo desde Cartagena y soy de México. ¿Cuánto cuesta?"
+   ],
+   "todas": [
+    "usd"
+   ],
+   "ninguno": [
+    "cuantas personas",
+    "cuantos son",
+    "cuantos serian"
+   ]
+  },
+  {
+   "id": "u4-solo-yo-certificado",
+   "tipo": "una",
+   "turnos": [
+    "Hola, quiero bucear, tengo el Open Water y buceé el año pasado.",
+    "Solo yo, desde Cartagena. Soy alemán. ¿Qué precio tiene?"
+   ],
+   "todas": [
+    "usd"
+   ],
+   "ninguno": [
+    "cuantas personas",
+    "cuantos son",
+    "cuantos serian"
+   ]
+  },
+  {
+   "id": "u5-alone-islas",
+   "tipo": "una",
+   "turnos": [
+    "Hi, I'm already on the islands and I'd like to try diving for the first time.",
+    "I'm traveling alone, I'm from Spain. What does it include?"
+   ],
+   "todas": [
+    "equipment|gear|instructor"
+   ],
+   "ninguno": [
+    "how many people",
+    "how many of you",
+    "how many are"
+   ]
+  },
+  {
+   "id": "c1-edad-de-una-persona",
+   "tipo": "control",
+   "turnos": [
+    "Hola, ¿una persona de 14 años puede hacer snorkel con ustedes?",
+    "Genial. Salimos desde Cartagena y no somos colombianos."
+   ],
+   "todas": [
+    "cuantas personas|cuantos son|cuantos serian|cuantos van"
+   ]
+  },
+  {
+   "id": "c2-minimum-group",
+   "tipo": "control",
+   "turnos": [
+    "Can one person book the minicourse or is there a minimum group size?",
+    "Ok, we'll depart from Cartagena, we're from France."
+   ],
+   "todas": [
+    "how many"
+   ]
+  },
+  {
+   "id": "c3-para-mi-y-mi-novia",
+   "tipo": "control",
+   "turnos": [
+    "Quiero reservar snorkel desde Cartagena para mí y mi novia.",
+    "No somos colombianos, ¿cuánto cuesta?"
+   ],
+   "todas": [
+    "usd"
+   ],
+   "ninguno": [
+    "cuantas personas",
+    "una persona"
+   ]
+  }
+ ]
+}

@@ -111,3 +111,14 @@ def test_la_foto_cuenta_el_rag_adelantado_y_que_lo_hizo_rehacer():
     assert foto["latencia_turnos_rag"]["aprovechado"]["n"] == 1
     assert foto["latencia_turnos_rag"]["rehecho"]["n"] == 2
     assert foto["rehecho_por"] == {"resumen": 2, "historial": 1}
+
+
+async def test_la_linea_dice_quien_contesto_lo_de_la_tabla(caplog):
+    """arq-4 (22-oct): el G10 nº 3 tuvo el redactor en 37 turnos frente a 72 en el nº 2, con el mismo código, y la línea
+    no decía por qué; ahora lleva `hechos` (redactor, o el motivo por el que contestó el RAG)."""
+    with caplog.at_level("INFO", logger="uvicorn.error"):
+        async with obs.turn_trace(_S(), "1", "hola") as turn:
+            obs.note_turn(hechos_por_codigo="otra_cosa")
+            turn.update(reply="x")
+    linea = next(m for m in caplog.messages if m.startswith(obs.TURN_METRICS_TAG))
+    assert json.loads(linea[len(obs.TURN_METRICS_TAG):])["hechos"] == "otra_cosa"
