@@ -117,7 +117,8 @@
         "contesta_antes_de_pasar",
         "contesta_antes_de_cualquier_pase",
         "clima_con_politica",
-        "dieta_no_es_medica"
+        "dieta_no_es_medica",
+        "nada_en_primera_linea"
       ]
     },
     {
@@ -1519,6 +1520,11 @@
       "area": "Preguntas",
       "titulo": "El RAG sin las reglas que ya dice el catálogo",
       "texto": "Las instrucciones de Coral repetían reglas que el catálogo y las políticas ya le dan siempre: en qué moneda cotizar, el 5 % por traer el equipo completo, no calcular totales con el descuento y los días en que no operamos. Se quitan del prompt (un 10 % más corto) y se quedan donde está el dato. Las que solo vigila un control automático (teléfonos, enlaces, cifras) siguen en el prompt (arq-2a, 22-oct)."
+    },
+    "nada_en_primera_linea": {
+      "area": "Enrutador",
+      "titulo": "La palabra de control «NADA» no le llega al cliente",
+      "texto": "Antes de pasar a un asesor, Coral contesta las otras preguntas del mensaje; si no hay ninguna, el modelo responde la palabra «NADA» y no se dice nada más. Si detrás iba pegado el aviso de disponibilidad, «NADA» se colaba al principio de la respuesta. Ahora se mira la primera línea entera, sea cual sea la longitud (22-oct)."
     }
   },
   "areas": [
