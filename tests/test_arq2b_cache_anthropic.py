@@ -19,7 +19,8 @@ def test_con_el_flag_el_sistema_de_anthropic_va_marcado_y_con_orden_fijo(monkeyp
     assert bloque["cache_control"] == {"type": "ephemeral"} and bloque["text"] == "reglas del extractor"
     assert kw["messages"][1]["content"] == "hola"
     proveedor = kw["extra_body"]["provider"]
-    assert proveedor["order"][0] == "anthropic" and "sort" not in proveedor and proveedor["allow_fallbacks"]
+    assert proveedor["order"][0] == settings.cache_anthropic_proveedor and "sort" not in proveedor
+    assert proveedor["allow_fallbacks"] and set(proveedor["order"]) == {"google-vertex", "anthropic", "amazon-bedrock"}
     assert proveedor["data_collection"] == "deny"
 
 

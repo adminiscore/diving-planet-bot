@@ -120,8 +120,9 @@ def parametros_openrouter(kwargs: dict) -> dict:
     datos = "allow" if settings.openrouter_permitir_entrenamiento else "deny"
     if settings.cache_anthropic and str(kw.get("model") or "").startswith("anthropic/") and proveedores:
         # ARQ-2b: cada proveedor tiene su caché; con «el más rápido en cada llamada» Haiku saltaba entre Vertex,
-        # Anthropic y Bedrock y la caché acertaba 3 de 5 (sonda del 22-oct). Orden fijo, con los demás de respaldo.
-        orden = sorted(proveedores, key=lambda p: p != "anthropic")
+        # Anthropic y Bedrock y la caché acertaba 3 de 5 (sonda del 22-oct). Orden fijo (`cache_anthropic_proveedor`
+        # primero), con los demás de respaldo.
+        orden = sorted(proveedores, key=lambda p: p != settings.cache_anthropic_proveedor)
         extra.setdefault("provider", {"only": proveedores, "order": orden, "allow_fallbacks": True,
                                       "data_collection": datos})
     extra.setdefault("provider", {"only": proveedores, "sort": "latency", "allow_fallbacks": True, "data_collection": datos}

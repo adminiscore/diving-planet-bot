@@ -200,6 +200,7 @@ class Settings(BaseSettings):
     rag_espera_la_nacionalidad: bool = True  # PROMOCIONADO 21-oct (con gentilicio_es_colombiano, misma ronda gen14-A/B); revert = False
     el_verbo_no_la_ciudad: bool = False  # ARQ-1f (22-oct): «soy de Medellín» es colombiano y «vivo en Barranquilla» no; pares con la misma ciudad en la regla del extractor (decisión de Gadea)
     cache_anthropic: bool = False  # ARQ-2b (22-oct): el prompt de sistema de los modelos de Anthropic por OpenRouter (Haiku en el extractor) se marca para la caché (`cache_control`); OpenAI y DeepSeek ya cachean solos
+    cache_anthropic_proveedor: str = "amazon-bedrock"  # ARQ-2b: con la caché, el proveedor de Haiku que va primero (los demás de respaldo). Sonda 22-oct (7 llamadas cada uno): bedrock caché 7/7 y p50 1,98 s (sin caché 1,94 s); anthropic 7/7 y 2,29 s; vertex 3/7
     # gen-15 (21-oct): los hoteles de las islas que da la base (policies.json other_island_hotels: Mulata, Rosario de
     # Mar, Eco Hotel Las Palmeras…) no estaban en la lista del bot ni en la pregunta del lugar de Jev, y el bot volvía a
     # preguntar desde dónde sale. Con el flag, el extractor y Jev los conocen (extractor_turno.HOTELES_DE_LA_BASE).
