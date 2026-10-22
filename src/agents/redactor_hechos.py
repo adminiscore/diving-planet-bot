@@ -49,6 +49,12 @@ def _actividad(state: ConversationState, datos: dict) -> str | None:
     reparto = state.detected_group_allocation or {}
     en_juego = {a for a in (state.actividad_preguntada, state.detected_activity, elegida.id if elegida else None,
                             *(a for a, n in reparto.items() if n)) if a and dom.by_id(a) is not None}
+    repaso = any(x is True for x in (datos.get("refresher_interested"), datos.get("last_dive_over_2_years"),
+                                     state.refresher_interested, state.last_dive_over_2_years))
+    if repaso and en_juego <= {"certified_diving", "minicourse", "refresher"}:
+        # arq-1n (G10 nº 2): el certificado con más de 2 años sin bucear hace primero el refresher (se reserva como el
+        # minicurso); sin esto, «¿qué incluye?» desde Ubuntu salía con el almuerzo del buceo desde Cartagena.
+        return "refresher"
     if len(en_juego) == 1:
         return en_juego.pop()
     if not en_juego and state.suggested_activity and dom.by_id(state.suggested_activity) is not None:
@@ -64,6 +70,12 @@ def _actividades(state: ConversationState, datos: dict) -> list[str]:
         if len(varias) >= 2:
             return varias
     una = _actividad(state, datos)
+    registro = dom.by_id(una) if una else None
+    if registro is not None and registro.generic:
+        # arq-1n (G10 nº 2): «¿cuánto cuestan las especialidades?» no tenía hechos (lo genérico no tiene planes) y el
+        # RAG las nombraba sin precio. Se abre en las actividades concretas de su familia, con plan.
+        return [a.id for a in dom.registry().activities if a.family == registro.family and not a.generic
+                and (dom.service_ids(a.id, "cartagena") or dom.service_ids(a.id, "island"))]
     return [una] if una else []
 
 

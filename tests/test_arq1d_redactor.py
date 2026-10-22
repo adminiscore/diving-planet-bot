@@ -194,3 +194,15 @@ def test_arq1k_los_hechos_salen_del_plan_elegido():
     st.location = "island"
     [b] = hechos.hechos(st, ["precio"], ["certified_diving"])
     assert "ya en las islas" in b["precio"]["island"]["plan"]
+
+
+def test_arq1n_lo_generico_se_abre_en_sus_actividades():
+    st = _conv()
+    assert redactor_hechos._actividades(st, {"actividad_preguntada": "padi_specialty"})[:2] == [
+        "specialty_nitrox", "specialty_buoyancy"]
+
+
+def test_arq1n_el_certificado_sin_bucear_hace_el_refresher():
+    st = _conv(detected_activity="certified_diving", last_dive_over_2_years=True)
+    assert redactor_hechos._actividad(st, {}) == "refresher"
+    assert redactor_hechos._actividad(st, {"actividad_preguntada": "certified_diving"}) == "certified_diving"
