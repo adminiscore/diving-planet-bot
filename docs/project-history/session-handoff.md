@@ -59,7 +59,24 @@ integrar la rama del otro y suite en verde, porque en PRE gana el último; (3) *
 despliegue reinicia el contenedor y mata la medida del otro (avisar en el registro de Plan Coral con la hora de fin).
 Las doce normas, con su porqué, están en el documento.
 
-### ▶️ RETOMAR AQUÍ — 22-oct, 12:30 (Gadea con Claude): ARQ-1 hecha, el redactor de hechos da 116/120 en el banco (base 100/120)
+### ▶️ RETOMAR AQUÍ — 22-oct, 15:10 (Gadea con Claude): ARQ PROMOCIONADA en PRE (eb1679a) y G10 nº 2 en marcha
+
+- **PRE sirve `eb1679a`** (pre_gadea), sano, 120 ajustes. Encendidos hoy (HISTORY 0.31.92): `hechos_por_codigo`
+  (redactor + arq-3 + arq-1e + arq-1h), `el_verbo_no_la_ciudad`, `hechos_al_rag`, `rag_sin_reglas_del_codigo` (Gonzalo),
+  `cache_anthropic` y `nada_en_primera_linea` (Gonzalo).
+- **G10 nº 1** (código local, sin lo de la tarde): 86,4 % 22/72 → **87,7 % 25/72**. Fallos por quién escribió el turno en
+  `docs/robustness/arq/g10-arq1-fallos-por-quien.md` (RAG 37, redactor ~25, flujo 6, pase 5) con
+  `scripts/clasifica_fallos_g10.py`.
+- **G10 nº 2** sobre PRE promocionado: lanzado a las 15:08 (`2026-10-22-g10-arq2`); al acabar, votos frente a
+  `2026-10-22-g10-arq1` (`ab_judge_compare … --rejuzgar 2 --tambien-mejoras --golden …`, ~1 h con muchas diferencias) y
+  la clasificación por quién.
+- **Siguiente, según el G10 nº 2:** arq-1i (Gonzalo, EN PAUSA sin crédito, todo en su local: clima general al redactor
+  y pago); afinar arq-1h para que el punto de encuentro salga a la primera (hoy arq-3 rehace el 40 % de los turnos del
+  redactor); repreguntas del flujo; arq-9 (futuro: prompts en un solo idioma).
+- **Lección del día:** las palabras de control de un modelo (FALTA, NADA) se buscan en todo el texto, no por longitud
+  ni solo en una línea: las dos se colaron al cliente.
+
+### (anterior) RETOMAR AQUÍ — 22-oct, 12:30 (Gadea con Claude): ARQ-1 hecha, el redactor de hechos da 116/120 en el banco (base 100/120)
 
 - **Hecho (HISTORY 0.31.91, flag `hechos_por_codigo` APAGADO hasta que Gadea lo promocione):**
   - Jev da las intenciones del mensaje (arq-1b).
