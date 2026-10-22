@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-22T11:27:09+00:00",
-  "commit": "9cedd79",
+  "generado": "2026-10-22T12:17:51+00:00",
+  "commit": "0579427",
   "rama": "feature/pre_gadea"
  },
  "vistas": {
@@ -1380,6 +1380,13 @@
      "titulo": "Una sola moneda por mensaje: si va la tarjeta del plan, el texto no da precio",
      "codigo": true,
      "pre": true,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "rag_sin_reglas_del_codigo",
+     "titulo": "El RAG sin las reglas que ya dice el catálogo",
+     "codigo": false,
+     "pre": false,
      "sin_efecto": false
     }
    ],
@@ -3145,6 +3152,19 @@
    "codigo": true,
    "pre": true,
    "fijado_en_pre": true,
+   "usado_por": [
+    "r_escribir"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "rag_sin_reglas_del_codigo",
+   "area": "Preguntas",
+   "titulo": "El RAG sin las reglas que ya dice el catálogo",
+   "texto": "Las instrucciones de Coral repetían reglas que el catálogo y las políticas ya le dan siempre: en qué moneda cotizar, el 5 % por traer el equipo completo, no calcular totales con el descuento y los días en que no operamos. Se quitan del prompt (un 10 % más corto) y se quedan donde está el dato. Las que solo vigila un control automático (teléfonos, enlaces, cifras) siguen en el prompt (arq-2a, 22-oct).",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
    "usado_por": [
     "r_escribir"
    ],

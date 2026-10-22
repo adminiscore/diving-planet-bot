@@ -208,6 +208,15 @@ def build_system_prompt(lang: str, query: str | None = None) -> str:
     from src.prompts.info import RAG_CONDICIONES_EN, RAG_CONDICIONES_ES  # lazy
 
     prompt = f"{prompt}\n\n{RAG_CONDICIONES_ES if lang == 'es' else RAG_CONDICIONES_EN}"
+    if settings.rag_sin_reglas_del_codigo:
+        # arq-2a: fuera las reglas que el código ya pone en el contexto del RAG (ver RAG_SIN_REGLAS_DEL_CODIGO_*).
+        from src.prompts.info import (  # lazy
+            RAG_SIN_REGLAS_DEL_CODIGO_EN,
+            RAG_SIN_REGLAS_DEL_CODIGO_ES,
+        )
+
+        for antes, despues in (RAG_SIN_REGLAS_DEL_CODIGO_ES if lang == "es" else RAG_SIN_REGLAS_DEL_CODIGO_EN):
+            prompt = prompt.replace(antes, despues)
     return prompt
 
 
