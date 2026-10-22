@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-22T16:56:41+00:00",
-  "commit": "229193f5",
+  "generado": "2026-10-22T17:13:19+00:00",
+  "commit": "33f73c5f",
   "rama": "feature/alvaro-22oct"
  },
  "vistas": {
@@ -168,6 +168,13 @@
      "titulo": "Lo que la web no puede dar lo arregla una persona",
      "codigo": true,
      "pre": true,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "ya_reservo_no_es_pase",
+     "titulo": "Decir «ya reservé» no es pedir a una persona",
+     "codigo": false,
+     "pre": false,
      "sin_efecto": false
     },
     {
@@ -3611,6 +3618,19 @@
    "fijado_en_pre": true,
    "usado_por": [
     "b_extraction"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "ya_reservo_no_es_pase",
+   "area": "Enrutador",
+   "titulo": "Decir «ya reservé» no es pedir a una persona",
+   "texto": "Si el cliente ya tiene reserva y solo pregunta el horario, la recogida, qué llevar o algo general de la actividad, Coral le contesta; solo pasa a un asesor si hay que ver o tocar esa reserva o ese pago (si llegó, cambiar la fecha, cancelar, devolución, un correo que no llegó) (arq-1q, 22-oct).",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
+   "usado_por": [
+    "router"
    ],
    "sin_efecto": null
   }

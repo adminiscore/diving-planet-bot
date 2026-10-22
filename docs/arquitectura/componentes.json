@@ -98,6 +98,7 @@
         "jev_con_contexto",
         "jev_precio_nombra_actividades",
         "pase_si_pide_fuera_del_sistema",
+        "ya_reservo_no_es_pase",
         "datos_ajenos_se_niegan",
         "idioma_unico_de_apertura",
         "grupo_de_una_persona"
@@ -1545,6 +1546,11 @@
       "area": "Enrutador",
       "titulo": "La palabra de control «NADA» no le llega al cliente",
       "texto": "Antes de pasar a un asesor, Coral contesta las otras preguntas del mensaje; si no hay ninguna, el modelo responde la palabra «NADA» y no se dice nada más. Si detrás iba pegado el aviso de disponibilidad, «NADA» se colaba al principio de la respuesta. Ahora se mira la primera línea entera, sea cual sea la longitud (22-oct)."
+    },
+    "ya_reservo_no_es_pase": {
+      "area": "Enrutador",
+      "titulo": "Decir «ya reservé» no es pedir a una persona",
+      "texto": "Si el cliente ya tiene reserva y solo pregunta el horario, la recogida, qué llevar o algo general de la actividad, Coral le contesta; solo pasa a un asesor si hay que ver o tocar esa reserva o ese pago (si llegó, cambiar la fecha, cancelar, devolución, un correo que no llegó) (arq-1q, 22-oct)."
     },
     "hechos_sin_actividad": {
       "area": "Preguntas",
