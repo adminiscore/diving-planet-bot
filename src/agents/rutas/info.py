@@ -227,6 +227,12 @@ def _maybe_answer_age_eligibility(message: str, state: ConversationState) -> str
     """
     if not _AGE_ELIGIBILITY_CUE.search(message):
         return None
+    if settings.hechos_por_codigo and set(getattr(state, "_intenciones", None) or ()) - {"edad"}:
+        # ARQ-1e: «Salgo de Cartagena con mi hijo de 12. ¿Cuánto cuesta el minicurso, qué incluye y desde qué edad?»
+        # salía con esta tarjeta y sin el precio ni lo que incluye (banco arq-1d, v1 y v5: 0 de 4 datos 3 de 3). Si Jev
+        # ve más intenciones que la edad, el turno sigue y lo contesta el redactor de hechos, con la edad como un hecho.
+        logger.info("[INFO][ARQ1E] la pregunta trae más que la edad: no contesta la tarjeta de edades")
+        return None
     # NOTE (robustness review H4, deferred): LLM cutover not wired here because this
     # is a pre-dispatch short-circuit; wiring it would double the LLM call on
     # fall-through (the turn is extracted again later by the core).

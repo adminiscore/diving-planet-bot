@@ -564,6 +564,21 @@
       ]
     },
     {
+      "id": "r_hechos",
+      "vista": "info",
+      "carril": "flujo",
+      "tipo": "llm",
+      "titulo": "Redactor de hechos",
+      "que_hace": "Si el mensaje solo pide precio, qué incluye, requisitos, horario, disponibilidad, edad o enlace de una actividad, el código saca los datos con las reglas ya aplicadas y el modelo solo los pone en palabras, sin buscar ni recibir el catálogo. Si no, contesta el RAG de siempre.",
+      "donde": "src/agents/redactor_hechos.py:responder",
+      "modelos": [
+        "rag_answer_model"
+      ],
+      "interruptores": [
+        "hechos_por_codigo"
+      ]
+    },
+    {
       "id": "r_escribir",
       "vista": "info",
       "carril": "flujo",
@@ -943,6 +958,18 @@
       "de": "booking",
       "a": "kb",
       "etiqueta": "busca (preguntas en la reserva)",
+      "estilo": "datos"
+    },
+    {
+      "de": "r_entrada",
+      "a": "r_hechos",
+      "etiqueta": "solo intenciones de la tabla",
+      "estilo": "datos"
+    },
+    {
+      "de": "r_hechos",
+      "a": "r_salida",
+      "etiqueta": "respuesta",
       "estilo": "datos"
     }
   ],
@@ -1463,6 +1490,11 @@
       "area": "Preguntas",
       "titulo": "Las reglas del RAG sobre los acompañantes salen de lo que dijo el cliente",
       "texto": "Las dos reglas que se le dan al RAG cuando otra persona del grupo no está certificada («el minicurso no certifica») o lo está pero lleva tiempo sin bucear («sigue siendo buzo certificado; puede necesitar el refresher») salen de lo que la IA leyó del cliente, con su frase. Antes las ponía una lista de palabras que buscaba en todo lo que escribió el cliente («no ha buceado» de cualquier cosa contaba). Si la IA no leyó algún mensaje, la lista de siempre."
+    },
+    "hechos_por_codigo": {
+      "area": "Preguntas",
+      "titulo": "Hechos por código (ARQ)",
+      "texto": "El modelo interpreta, el código decide y el modelo redacta: si el cliente solo pregunta precio, qué incluye, requisitos, horario, disponibilidad, edad o el enlace de una actividad, los datos los saca el código (moneda, las dos salidas si no se sabe el origen, edades en cifra, el asesor para colombianos) y Coral solo los escribe. Así no se deja partes de las listas ni mezcla datos (arq-1d, 22-oct)."
     }
   },
   "areas": [

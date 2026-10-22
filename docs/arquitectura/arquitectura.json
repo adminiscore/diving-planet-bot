@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-22T08:15:22+00:00",
-  "commit": "4ed293c",
+  "generado": "2026-10-22T08:53:57+00:00",
+  "commit": "0b69dac",
   "rama": "feature/pre_gadea"
  },
  "vistas": {
@@ -1222,6 +1222,32 @@
    "modelos": []
   },
   {
+   "id": "r_hechos",
+   "vista": "info",
+   "carril": "flujo",
+   "tipo": "llm",
+   "titulo": "Redactor de hechos",
+   "que_hace": "Si el mensaje solo pide precio, qué incluye, requisitos, horario, disponibilidad, edad o enlace de una actividad, el código saca los datos con las reglas ya aplicadas y el modelo solo los pone en palabras, sin buscar ni recibir el catálogo. Si no, contesta el RAG de siempre.",
+   "donde": "src/agents/redactor_hechos.py:responder",
+   "modelos": [
+    {
+     "ajuste": "rag_answer_model",
+     "codigo": "gpt-6-luna",
+     "pre": "gpt-6-luna"
+    }
+   ],
+   "interruptores": [
+    {
+     "nombre": "hechos_por_codigo",
+     "titulo": "Hechos por código (ARQ)",
+     "codigo": false,
+     "pre": false,
+     "sin_efecto": false
+    }
+   ],
+   "marca": "openai"
+  },
+  {
    "id": "r_escribir",
    "vista": "info",
    "carril": "flujo",
@@ -2011,6 +2037,22 @@
    "estilo": "datos",
    "origen": "curada",
    "vista": "general"
+  },
+  {
+   "de": "r_entrada",
+   "a": "r_hechos",
+   "etiqueta": "solo intenciones de la tabla",
+   "estilo": "datos",
+   "origen": "curada",
+   "vista": "info"
+  },
+  {
+   "de": "r_hechos",
+   "a": "r_salida",
+   "etiqueta": "respuesta",
+   "estilo": "datos",
+   "origen": "curada",
+   "vista": "info"
   }
  ],
  "interruptores": [
@@ -2503,6 +2545,19 @@
    "fijado_en_pre": true,
    "usado_por": [
     "b_extraction"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "hechos_por_codigo",
+   "area": "Preguntas",
+   "titulo": "Hechos por código (ARQ)",
+   "texto": "El modelo interpreta, el código decide y el modelo redacta: si el cliente solo pregunta precio, qué incluye, requisitos, horario, disponibilidad, edad o el enlace de una actividad, los datos los saca el código (moneda, las dos salidas si no se sabe el origen, edades en cifra, el asesor para colombianos) y Coral solo los escribe. Así no se deja partes de las listas ni mezcla datos (arq-1d, 22-oct).",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
+   "usado_por": [
+    "r_hechos"
    ],
    "sin_efecto": null
   },
@@ -3445,6 +3500,7 @@
    "codigo": "gpt-6-luna",
    "pre": "gpt-6-luna",
    "usado_por": [
+    "r_hechos",
     "r_escribir"
    ],
    "proveedor": "OpenAI",

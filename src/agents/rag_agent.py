@@ -622,13 +622,14 @@ async def _verify_grounding(answer: str, context: str, lang: str) -> tuple[bool,
     return await is_grounded(answer, context, lang=lang)
 
 
-async def generar_con_respaldo(client, messages: list[dict]):
+async def generar_con_respaldo(client, messages: list[dict], pieza: str = "rag_escritor"):
     """La llamada que escribe la respuesta del RAG, con RESPALDO (8-oct, cambio de modelos).
 
     GPT-6 Luna escribe mejores respuestas, pero tiene una cola de latencia (~8 % de llamadas a 6-13 s en la ronda
     modelos-B). Si el modelo principal no ha terminado en `rag_respaldo_segundos`, se lanza la MISMA petición al
     modelo de respaldo (`rag_respaldo_modelo`, gpt-4.1-mini) en paralelo y se usa la primera que termine; la otra
-    se cancela. Si el principal falla, contesta el respaldo. Sin respaldo configurado, la llamada de siempre."""
+    se cancela. Si el principal falla, contesta el respaldo. Sin respaldo configurado, la llamada de siempre.
+    `pieza`: cómo sale la llamada del principal en [TURN_METRICS] (ARQ-1d: el redactor de hechos usa esta misma)."""
     from src.observability import note_turn, pieza_llm  # lazy
 
     principal = settings.rag_answer_model or settings.openai_model
@@ -644,7 +645,7 @@ async def generar_con_respaldo(client, messages: list[dict]):
         # sí y otras no; diagnóstico de Gadea): con temperatura 0 la redacción es estable.
         temperatura = 0.0 if settings.rag_temperatura_cero else 0.3
         # r6-1: el escritor y el respaldo salen por separado en [TURN_METRICS] (CAL-G).
-        with pieza_llm("rag_respaldo" if es_respaldo or model != principal else "rag_escritor"):
+        with pieza_llm("rag_respaldo" if es_respaldo or model != principal else pieza):
             return await client.chat.completions.create(model=model, messages=messages, temperature=temperatura,
                                                         max_tokens=500)
 

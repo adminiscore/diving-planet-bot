@@ -469,6 +469,7 @@ PIDE_HORARIO = "pide_horario"
 PIDE_DISPONIBILIDAD = "pide_disponibilidad"
 PIDE_EDAD = "pide_edad"
 PIDE_ENLACE = "pide_enlace"
+PIDE_OTRA_COSA = "pide_otra_cosa"
 INTENCION_MIN = 0.7
 _INTENCIONES_Q = {
     PIDE_REQUISITOS: {
@@ -509,6 +510,19 @@ _INTENCIONES_Q = {
         "instructions": (
             "The customer asks for the link or web page to book or to pay, or how to book online. It is FALSE when "
             "they ask other things."
+        ),
+    },
+    # ARQ-1d: el redactor de hechos solo contesta si el mensaje no trae NADA más que estas intenciones; si Jev no
+    # está seguro de que no (≥ INTENCION_MIN en el «no»), contesta el RAG de siempre.
+    PIDE_OTRA_COSA: {
+        "type": "noul",
+        "instructions": (
+            "The customer asks something that is NOT the price, what is included, the requirements or documents, the "
+            "times or logistics, the availability, the age limits or the booking link of an activity: for example "
+            "what marine life they will see, whether it is safe, the weather, the difference between two activities, "
+            "which one to choose, what options there are, payment methods, cancellations, or any other question. It "
+            "is FALSE when every question in the message is one of those (price, included, requirements, schedule, "
+            "availability, age, link), or when the message asks nothing."
         ),
     },
 }
@@ -846,8 +860,11 @@ def answers_to_signals(answers: dict, threshold: float = THRESHOLD) -> dict:
     if PIDE_QUE_INCLUYE in answers:
         out[PIDE_QUE_INCLUYE] = (answers.get(PIDE_QUE_INCLUYE) or {}).get("noul", 0.0) >= PIDE_QUE_INCLUYE_MIN
     for intencion in _INTENCIONES_Q:
-        if intencion in answers:
+        if intencion in answers and intencion != PIDE_OTRA_COSA:
             out[intencion] = (answers.get(intencion) or {}).get("noul", 0.0) >= INTENCION_MIN
+    if PIDE_OTRA_COSA in answers:
+        # ARQ-1d: al revés que las intenciones, cuenta como «sí» todo lo que no sea un «no» seguro.
+        out[PIDE_OTRA_COSA] = (answers.get(PIDE_OTRA_COSA) or {}).get("noul", 1.0) > 1 - INTENCION_MIN
     if CAMBIA_IDIOMA in answers:
         a = answers.get(CAMBIA_IDIOMA) or {}
         out[CAMBIA_IDIOMA] = a.get("choice") if float(a.get("confidence", 0.0)) >= CAMBIA_IDIOMA_MIN else "none"

@@ -36,6 +36,7 @@ from src.agents.jev_router import (
     PIDE_EDAD,
     PIDE_ENLACE,
     PIDE_HORARIO,
+    PIDE_OTRA_COSA,
     PIDE_PRECIO,
     PIDE_QUE_INCLUYE,
     PIDE_REQUISITOS,
@@ -155,6 +156,7 @@ async def _router_node(state: BotState) -> dict:
     conv._jev_pide_incluye = signals.get(PIDE_QUE_INCLUYE)  # ord-9: la lista de qué incluye sale de la ficha
     # ARQ-1b: las intenciones del mensaje según Jev (vacío si calla), para los hechos por código (src/flows/hechos.py).
     conv._intenciones = [nombre for nombre, señal in _INTENCION_DE_SENAL.items() if signals.get(señal)]
+    conv._otra_cosa = signals.get(PIDE_OTRA_COSA)  # ARQ-1d: None (Jev calla) cuenta como que sí trae algo más
     conv._senales_router = signals  # gen-13: el cierre del turno sabe si el mensaje traía una pregunta
     route = classify_route(conv, message, signals)
     logger.info(f"[GRAPH] conv={conv.conversation_id} route={route}")

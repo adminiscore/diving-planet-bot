@@ -1629,6 +1629,16 @@ async def _con_la_nacionalidad_del_mensaje(state: ConversationState, message: st
     return copia
 
 
+async def _con_hechos(state: ConversationState, message: str, history: list) -> str | None:
+    """ARQ-1d (flag `hechos_por_codigo`): si el mensaje solo pide intenciones que el código sabe contestar, la
+    respuesta del redactor de hechos (src/agents/redactor_hechos.py); si no, None y contesta el RAG de siempre."""
+    if not settings.hechos_por_codigo:
+        return None
+    from src.agents import redactor_hechos  # lazy
+
+    return await redactor_hechos.responder(state, message, history)
+
+
 async def _rag_answer(
     state: ConversationState, message: str, *, rag_query: str | None = None, history: list | None = None,
     sin_precio: bool = False,
@@ -1638,6 +1648,9 @@ async def _rag_answer(
     # l1-4: las notas de ESTE mensaje pueden estar calculándose en paralelo. Aquí
     # es donde se usan (van dentro del contexto del RAG), así que aquí se espera.
     await await_pending_notes(state)
+    if not sin_precio and (con_hechos := await _con_hechos(state, message,
+                                                            state.history if history is None else history)):
+        return con_hechos
     entradas = _entradas_rag(await _con_la_nacionalidad_del_mensaje(state, message),
                              state.history if history is None else history, message)
     if sin_precio:  # G3-07a: solo se pasa cuando hace falta (la llamada de siempre no cambia)
@@ -1801,6 +1814,10 @@ async def _adoptar_o_rehacer(state: ConversationState, message: str, history: li
     from src.observability import note_turn
 
     await await_pending_notes(state)
+    if con_hechos := await _con_hechos(state, message, history):
+        adelantado["task"].cancel()
+        note_turn(rag_adelantado="descartado")
+        return con_hechos
     entradas = _entradas_rag(await _con_la_nacionalidad_del_mensaje(state, message), history, message)
     huella = _huella_rag(message, entradas)
     if huella == adelantado["huella"]:
