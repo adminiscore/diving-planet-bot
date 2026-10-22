@@ -241,10 +241,9 @@ def _alojamiento(actividad: str, registro, lang: str, elegido: str | None = None
     sid = _plan_base(actividad, "cartagena", elegido) or _plan_base(actividad, "island", elegido)
     if not sid or ((SERVICES.get(sid) or {}).get("duration_days") or 1) < 2:
         return None
-    if registro.cart_type == "course":
-        return _politica("courses_overnight_requirement", lang)
-    return next((x for x in _lista(sid, "not_included", lang) if "aloj" in _plano(x) or "accommodation" in _plano(x)),
-                None)
+    # Cursos de 2 días y paquetes de varios días: la misma política (decisión de Gadea, 22-oct: el alojamiento de los
+    # paquetes también se reserva directamente con el hotel; G10 nº 2, g10-067).
+    return _politica("courses_overnight_requirement", lang)
 
 
 # ── ARQ-3: ¿la respuesta lleva los hechos? ───────────────────────────────────

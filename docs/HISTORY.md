@@ -1,6 +1,35 @@
 History
 =======
 
+0.31.93 - (2026-10-22)
+----------------------
+* **G10 nº 2 sobre PRE promocionado (eb1679a):** 87,7 % 25/72 → **90,7 % 34/72** sin desfasados (58 → 56 fallos con los
+  dos desfasados nuevos). Votos frente al nº 1: 29 mejoras y 16 regresiones reales. Diagnóstico turno a turno
+  (`docs/robustness/arq/g10-arq2-fallos-por-quien.txt`): las causas reales no eran las del texto del juez.
+* **PROMOCIÓN para el G10 nº 3** (decisión de Gadea): `adaptado_contesta_lo_demas` y `enlace_con_disponibilidad`
+  encendidos; arq-1k y arq-1n van dentro del redactor.
+  - **arq-1k:** el redactor usa el plan elegido (no el base) y no adivina la actividad si hay varias en juego. Banco
+    propio 10/15 → 13/15.
+  - **arq-1l:** con DIVE TO HEAL activo, lo que el mensaje pregunta aparte (acompañante, moneda del grupo, snorkel del
+    resto) lo contesta el RAG antes del texto fijo del asesor. Banco propio 3/12 → 11/12.
+  - **arq-1m:** con la disponibilidad o «¿cómo reservamos?» va el enlace (a colombianos no). Banco propio 3/12 → 12/12.
+  - **arq-1n:** el refresher con hechos, lo genérico (especialidades) abierto en sus actividades, la recogida en las
+    islas «entre 9:30 y 9:45» en toda la base.
+* **Datos alineados** (decisiones de Gadea):
+  - El pago de los colombianos: 100 % online o 50 % + 50 % en persona, coordinado por un asesor por el chat (política,
+    FAQ y FAQ curadas).
+  - Minicurso «desde los 10 años» (la ficha de las islas decía «más de 10»).
+  - Bubble Makers: en piscina o aguas de máx. 2 m.
+  - Comida de los paquetes: almuerzo solo el primer día desde Cartagena; en las islas no se incluye.
+  - El acompañante no incluye equipo.
+  - El alojamiento de los paquetes de varios días también se reserva directamente con el hotel.
+  - El enlace va con el descuento online.
+* **Criterios desfasados nuevos:** g10-035 (enlace de la web a un colombiano), g10-055 (fotos del minicurso) y
+  g10-016 («sí da tiempo» saliendo a mediodía: el bot hace bien en ser prudente).
+* **arq-1j (varias actividades), NO promocionado:** banco 18/18 sin el flag frente a 15/18 con él; el RAG con el
+  catálogo ya lo hace bien.
+* **Banco fijo ×3 con todo:** 117/120, 0 invenciones, 40/40 estables.
+
 0.31.92 - (2026-10-22)
 ----------------------
 * **PROMOCIÓN de la fase ARQ** (decisión de Gadea tras el G10 de control y sus votos). Encendidos en config y compose:

@@ -647,8 +647,8 @@ class Settings(BaseSettings):
     hechos_por_codigo: bool = True  # PROMOCIONADO 22-oct (arq-1d/1e/1h + arq-3: banco fijo x3 100/120 -> 115-119/120, 0 invenciones; core A/B3 97,4 % -> 97,9 % 27/32 con votos, sin regresiones del redactor; G10 de control 86,4 % 22/72 -> 87,7 % 25/72, votos 27 mejoras y 23 regresiones reales, ~9 ya arregladas; HISTORY 0.31.92); revert = False
     hechos_al_rag: bool = True  # PROMOCIONADO 22-oct (arq-1g: banco de mezclados x3, la parte de la tabla 61/66 -> 66/66; HISTORY 0.31.92); revert = False
     varias_actividades: bool = False  # ARQ-1j (22-oct): el extractor da TODAS las actividades del mensaje (y el acompañante) y los hechos salen de cada una
-    adaptado_contesta_lo_demas: bool = False  # ARQ-1l (22-oct): con DIVE TO HEAL activo, lo que el mensaje pregunta aparte del buceo adaptado (acompañante, moneda, cancelación) lo contesta el RAG antes del texto fijo del asesor
-    enlace_con_disponibilidad: bool = False  # ARQ-1m (22-oct): con la intención de disponibilidad («¿hay cupo mañana?», «¿cómo reservamos?») los hechos llevan el enlace de reserva (a colombianos no: lo coordina un asesor)
+    adaptado_contesta_lo_demas: bool = True  # PROMOCIONADO 22-oct (arq-1l: banco DIVE TO HEAL 3/12 -> 11/12; HISTORY 0.31.93); revert = False
+    enlace_con_disponibilidad: bool = True  # PROMOCIONADO 22-oct (arq-1m: banco de enlace 3/12 -> 12/12; HISTORY 0.31.93); revert = False
     # arq-2a (22-oct, Gonzalo con Claude): fuera del prompt del RAG las reglas que el código ya pone en el contexto que
     # el RAG lee siempre (catálogo y políticas, en los dos caminos de `hechos_por_codigo`): moneda, 5 % por equipo
     # completo, no calcular totales, días de cierre y mal tiempo, y una viñeta repetida del tono. Las que solo vigila un
