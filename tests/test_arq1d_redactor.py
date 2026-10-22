@@ -29,7 +29,8 @@ def _conv(lang="es", **campos) -> ConversationState:
 def llamadas(monkeypatch):
     """El extractor lee el minicurso de este mensaje y Luna contesta con `texto`; se guardan los mensajes que recibe."""
     hechas: list = []
-    estado = {"texto": "El *Minicurso* cuesta 183 USD desde Cartagena y 134 USD si ya estás en las islas."}
+    estado = {"texto": "El *Minicurso* cuesta 183 USD online o 204 USD sin reserva desde Cartagena, y 134 USD o 149 USD "
+                      "si ya estás en las islas."}
 
     async def lectura(state, message):
         return {"actividad_preguntada": "minicourse"}
@@ -56,7 +57,7 @@ def test_contesta_con_los_hechos_y_el_codigo_pregunta_el_origen(llamadas):
 
 
 def test_con_origen_no_se_pregunta(llamadas):
-    llamadas.estado["texto"] = "El *Minicurso* desde Cartagena cuesta 183 USD por persona."
+    llamadas.estado["texto"] = "El *Minicurso* desde Cartagena cuesta 183 USD online o 204 USD sin reserva online."
     st = _conv(location="cartagena")
     assert asyncio.run(redactor_hechos.responder(st, MENSAJE, st.history)) == llamadas.estado["texto"]
 
@@ -147,3 +148,29 @@ def test_falta_en_medio_de_la_respuesta_tampoco_llega_al_cliente(llamadas):
     # Core B2: al final de una frase.
     llamadas.estado["texto"] = "El snorkel cuesta 45 USD. No tengo el precio del refresher. FALTA"
     assert asyncio.run(redactor_hechos.responder(st, MENSAJE, st.history)) is None
+
+
+def test_arq3_si_falta_un_hecho_se_rehace_una_vez_diciendo_cual(llamadas, monkeypatch):
+    textos = ["El minicurso desde Cartagena cuesta 183 USD.",
+              "El minicurso desde Cartagena cuesta 183 USD online o 204 USD sin reserva online."]
+
+    async def generar(client, messages, pieza="rag_escritor"):
+        llamadas.hechas.append((messages, pieza))
+        return SimpleNamespace(choices=[SimpleNamespace(message=SimpleNamespace(content=textos.pop(0)))])
+
+    monkeypatch.setattr(rag_agent, "generar_con_respaldo", generar)
+    st = _conv(location="cartagena")
+    assert asyncio.run(redactor_hechos.responder(st, MENSAJE, st.history)).endswith("204 USD sin reserva online.")
+    [_, (segunda, _)] = llamadas.hechas
+    assert "204 USD" in segunda[-1]["content"] and segunda[-2]["role"] == "assistant"
+
+
+def test_arq3_si_al_rehacer_no_mejora_se_queda_la_primera(llamadas, monkeypatch):
+    async def generar(client, messages, pieza="rag_escritor"):
+        llamadas.hechas.append((messages, pieza))
+        return SimpleNamespace(choices=[SimpleNamespace(message=SimpleNamespace(content="Cuesta 183 USD."))])
+
+    monkeypatch.setattr(rag_agent, "generar_con_respaldo", generar)
+    st = _conv(location="cartagena")
+    assert asyncio.run(redactor_hechos.responder(st, MENSAJE, st.history)) == "Cuesta 183 USD."
+    assert len(llamadas.hechas) == 2  # una vez, no en bucle

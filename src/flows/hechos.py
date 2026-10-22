@@ -13,6 +13,8 @@ y el registro de actividades).
 from __future__ import annotations
 
 import json
+import re
+import unicodedata
 from functools import lru_cache
 from pathlib import Path
 
@@ -166,3 +168,76 @@ def hechos(state: ConversationState, intenciones: list[str], actividades: list[s
             bloque["pregunta_pendiente"] = "origen"
         bloques.append(bloque)
     return bloques
+
+
+# ── ARQ-3: ¿la respuesta lleva los hechos? ───────────────────────────────────
+# El redactor recibe los hechos y a veces se deja alguno («cumple la edad mínima» sin decir 10, banco arq-1d F v1). El
+# código lo comprueba con lo que es exacto (importes, edades, enlaces) y, en las listas, con las palabras clave de la
+# primera frase de cada elemento (el redactor las copia casi tal cual; una paráfrasis corta conserva la mayoría).
+# Solo lee los hechos y la respuesta, nunca el mensaje del cliente.
+_PALABRA = re.compile(r"[a-z0-9]+")
+_URL = re.compile(r"https?://\S+")
+_CIFRA = re.compile(r"\d[\d.,]*")
+_VACIAS = {"para", "como", "desde", "hasta", "este", "esta", "estos", "estas", "debes", "puedes", "tiene", "tienes",
+           "with", "from", "that", "this", "your", "they", "must", "have", "will", "into", "each", "also"}
+_MINIMO_DE_PALABRAS = 0.5
+
+
+def _plano(texto: str) -> str:
+    t = unicodedata.normalize("NFKD", (texto or "").lower())
+    return "".join(c for c in t if not unicodedata.combining(c))
+
+
+def _raices(texto: str) -> set[str]:
+    """Las palabras con contenido, recortadas a 5 letras (plural, género y conjugación cercanos cuentan igual)."""
+    return {p[:5] for p in _PALABRA.findall(_plano(_URL.sub(" ", texto))) if len(p) >= 4 and p not in _VACIAS}
+
+
+def _cifras(texto: str) -> set[str]:
+    return {re.sub(r"\D", "", c) for c in _CIFRA.findall(texto or "")}
+
+
+def _primera_frase(elemento: str) -> str:
+    return re.split(r"(?<=[.!?])\s", elemento.strip(), maxsplit=1)[0]
+
+
+def _url_sin_parametros(url: str) -> str:
+    return url.split("?")[0].split("#")[0].rstrip(".,)")
+
+
+def _elemento_dado(elemento: str, raices: set[str], answer: str) -> bool:
+    frase = _primera_frase(elemento)
+    if any(_url_sin_parametros(u) not in answer for u in _URL.findall(frase)):
+        return False
+    propias = _raices(frase)
+    return not propias or len(propias & raices) / len(propias) >= _MINIMO_DE_PALABRAS
+
+
+def faltan(answer: str, bloques: list[dict], intenciones: list[str]) -> list[str]:
+    """Los hechos pedidos que la respuesta no lleva (vacío si los lleva todos)."""
+    raices, cifras = _raices(answer), _cifras(answer)
+    perdidos: list[str] = []
+    for b in bloques:
+        if "precio" in intenciones:
+            for precio in (b.get("precio") or {}).values():
+                perdidos += [precio[k] for k in ("online", "normal")
+                             if precio.get(k) and re.sub(r"\D", "", precio[k]) not in cifras]
+        if "edad" in intenciones:
+            perdidos += [f"edad {v}" for v in (b.get("edad") or {}).values() if v and str(v) not in cifras]
+        if "enlace" in intenciones:
+            perdidos += [u for u in (b.get("enlace") or {}).values()
+                         if isinstance(u, str) and _url_sin_parametros(u) not in answer]
+        for intencion in ("incluye", "requisitos"):
+            if intencion not in intenciones:
+                continue
+            listas = b.get(intencion) or {}
+            for elemento in dict.fromkeys(e for lista in (listas.values() if isinstance(listas, dict) else [listas])
+                                          for e in lista):
+                if not _elemento_dado(elemento, raices, answer):
+                    perdidos.append(elemento)
+        if "horario" in intenciones:
+            horas = {h for lista in (b.get("horario") or {}).values() for e in lista
+                     for h in re.findall(r"\b(\d{1,2}):\d{2}", e)}
+            if horas and not horas & cifras and not any(f"{h}:" in answer for h in horas):
+                perdidos.append("la hora (" + ", ".join(sorted(horas, key=int)) + ")")
+    return perdidos

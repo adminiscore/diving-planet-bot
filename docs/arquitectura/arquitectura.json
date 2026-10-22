@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-22T08:53:57+00:00",
-  "commit": "0b69dac",
+  "generado": "2026-10-22T10:45:15+00:00",
+  "commit": "bc6c28a",
   "rama": "feature/pre_gadea"
  },
  "vistas": {
@@ -699,6 +699,13 @@
      "titulo": "Ser de una ciudad de Colombia es ser colombiano",
      "codigo": true,
      "pre": true,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "el_verbo_no_la_ciudad",
+     "titulo": "«Soy de Medellín» es colombiano",
+     "codigo": false,
+     "pre": false,
      "sin_efecto": false
     },
     {
@@ -2454,6 +2461,19 @@
    "codigo": true,
    "pre": true,
    "fijado_en_pre": true,
+   "usado_por": [
+    "b_extraction"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "el_verbo_no_la_ciudad",
+   "area": "Reserva",
+   "titulo": "«Soy de Medellín» es colombiano",
+   "texto": "Ser de una ciudad de Colombia dice la nacionalidad y vivir allí no: «soy de Medellín» paga en pesos y «vivo en Barranquilla» no dice nada. La regla del extractor pone la misma ciudad en los dos lados, porque con ciudades distintas el modelo aprendía la ciudad en vez del verbo (arq-1f, 22-oct).",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
    "usado_por": [
     "b_extraction"
    ],

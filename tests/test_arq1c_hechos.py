@@ -102,3 +102,23 @@ def test_el_precio_lleva_la_regla_de_la_moneda():
     """Core arq1d-B2: «tienen un precio especial para colombianos» recibía COP sin decir que no lo hay."""
     [b] = h.hechos(_conv(location="cartagena", is_colombian=True), ["precio"], ["padi_open_water"])
     assert "no hay descuento por ser colombiano" in b["regla_moneda"]
+
+
+def test_arq3_faltan_los_hechos_que_la_respuesta_no_lleva():
+    """ARQ-3: el código ve lo que el redactor se deja (banco G, v6: el referido sin la carta de referido firmada)."""
+    st = _conv(location="cartagena")
+    bloques = h.hechos(st, ["precio", "requisitos", "edad"], ["padi_open_water_referral"])
+    completa = ("Cuesta 474 USD online o 526 USD sin reserva online. Desde los 10 años. Requisitos: "
+                + " ".join(bloques[0]["requisitos"]))
+    assert h.faltan(completa, bloques, ["precio", "requisitos", "edad"]) == []
+    corta = "Cuesta 474 USD online. Lleva bañador y toalla."
+    perdidos = h.faltan(corta, bloques, ["precio", "requisitos", "edad"])
+    assert "526 USD" in perdidos and "edad 10" in perdidos
+    assert any("referido" in p for p in perdidos)
+
+
+def test_arq3_una_parafrasis_corta_cuenta():
+    st = _conv(location="island")
+    bloques = h.hechos(st, ["incluye"], ["snorkel"])
+    lista = bloques[0]["incluye"]["island"]
+    assert h.faltan("Incluye: " + "; ".join(x.lower() for x in lista), bloques, ["incluye"]) == []

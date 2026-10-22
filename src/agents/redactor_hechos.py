@@ -110,6 +110,32 @@ def _mensajes(lang: str, history: list[dict], message: str, texto_hechos: str) -
             {"role": "user", "content": user}]
 
 
+async def _redactar(client, mensajes: list[dict]) -> str | None:
+    from src.agents.rag_agent import generar_con_respaldo  # lazy
+
+    try:
+        respuesta = await generar_con_respaldo(client, mensajes, pieza="redactor_hechos")
+    except Exception as exc:  # noqa: BLE001 — sin redacción, contesta el RAG
+        logger.warning(f"[HECHOS] el redactor falló: {exc!r}")
+        return None
+    return (respuesta.choices[0].message.content or "").strip()
+
+
+def _pasa_las_guardas(answer: str, texto_hechos: str, message: str) -> bool:
+    """Las guardas deterministas de siempre: ni importes, ni enlaces, ni teléfonos que no estén en los hechos."""
+    return (is_coherent_text(answer) and currency_amounts_grounded(answer, f"{texto_hechos}\n{message}")
+            and urls_grounded(answer, texto_hechos) and not contains_phone_number(answer))
+
+
+def _pide_los_que_faltan(perdidos: list[str], lang: str) -> str:
+    lista = "\n".join(f"- {p}" for p in perdidos)
+    if lang == "es":
+        return (f"A tu respuesta le faltan estos hechos:\n{lista}\nEscríbela de nuevo entera, con el mismo estilo, "
+                "incluyéndolos todos (y sin quitar nada de lo que ya decía).")
+    return (f"Your answer is missing these facts:\n{lista}\nWrite it again in full, in the same style, including all "
+            "of them (and without removing anything it already said).")
+
+
 async def responder(state: ConversationState, message: str, history: list[dict]) -> str | None:
     """La respuesta escrita con los hechos del código, o None si este mensaje no es para el redactor (y contesta el
     RAG): Jev no da intenciones o no está seguro de que no traiga otra cosa, no se sabe la actividad, los hechos no
@@ -139,16 +165,11 @@ async def responder(state: ConversationState, message: str, history: list[dict])
     # en vez de dar los dos enlaces (banco arq-1d, k2 2 de 3).
     texto_hechos = json.dumps([{k: v for k, v in b.items() if k != "pregunta_pendiente"} for b in bloques],
                               ensure_ascii=False, indent=1)
-    from src.agents.rag_agent import generar_con_respaldo  # lazy
-
     client = trace_openai(AsyncOpenAI(api_key=settings.openai_api_key))
-    try:
-        respuesta = await generar_con_respaldo(client, _mensajes(lang, history, message, texto_hechos),
-                                               pieza="redactor_hechos")
-    except Exception as exc:  # noqa: BLE001 — sin redacción, contesta el RAG
-        logger.warning(f"[HECHOS] el redactor falló: {exc!r}")
+    mensajes = _mensajes(lang, history, message, texto_hechos)
+    answer = await _redactar(client, mensajes)
+    if answer is None:
         return None
-    answer = (respuesta.choices[0].message.content or "").strip()
     if _FALTA in answer:
         # Pregunta algo que los hechos no traen (Jev no marcó esa intención: «what time do we meet» a 0,72 en un mensaje
         # de tres preguntas, banco arq-1d v3). Mejor el RAG, con toda la base, que un «no tengo ese dato». Se mira en
@@ -157,11 +178,25 @@ async def responder(state: ConversationState, message: str, history: list[dict])
         logger.info(f"[HECHOS] el redactor dice que falta algo ({intenciones}); contesta el RAG")
         note_turn(hechos_por_codigo="falta")
         return None
-    if not (is_coherent_text(answer) and currency_amounts_grounded(answer, f"{texto_hechos}\n{message}")
-            and urls_grounded(answer, texto_hechos) and not contains_phone_number(answer)):
+    if not _pasa_las_guardas(answer, texto_hechos, message):
         logger.info("[HECHOS] la redacción no pasa las guardas deterministas; contesta el RAG")
         note_turn(hechos_por_codigo="guardas")
         return None
+    perdidos = hechos_mod.faltan(answer, bloques, intenciones)
+    if perdidos:
+        # ARQ-3: el código comprueba que la respuesta lleva los hechos (en el banco G, el referido sin la carta de
+        # referido firmada, el Advanced sin las 18 h antes de volar). Se rehace UNA vez diciendo cuáles; vale la que deje
+        # menos fuera y pase lo mismo que la primera.
+        otra = await _redactar(client, [*mensajes, {"role": "assistant", "content": answer},
+                                        {"role": "user", "content": _pide_los_que_faltan(perdidos, lang)}])
+        quedan = hechos_mod.faltan(otra, bloques, intenciones) if otra else perdidos
+        mejor = (otra is not None and _FALTA not in otra and _pasa_las_guardas(otra, texto_hechos, message)
+                 and len(quedan) < len(perdidos))
+        logger.info(f"[HECHOS][ARQ3] faltaban {len(perdidos)}, tras rehacer {len(quedan)}"
+                    f"{'' if mejor else ' (se queda la primera)'}: {[p[:60] for p in perdidos]}")
+        note_turn(hechos_faltaban=len(perdidos), hechos_quedan=len(quedan) if mejor else len(perdidos))
+        if mejor:
+            answer = otra
     if any(b.get("pregunta_pendiente") == "origen" for b in bloques):
         # La pregunta del origen la pone el código, con el texto que reconoce el flujo (`_es_pregunta_de_origen`): así
         # queda pendiente el origen y, cuando lo diga, se le contesta el plan exacto, como en ord-7.

@@ -665,6 +665,10 @@ async def extraer_turno(mensaje: str, *, history: list[dict] | None = None, sabi
             # gen-14: la ciudad o el gentilicio sí dicen la nacionalidad; alojarse o viajar no (ver la constante).
             for antes, despues in _GENTILICIO_ES_COLOMBIANO:
                 sistema = sistema.replace(antes, despues)
+            if settings.el_verbo_no_la_ciudad:
+                # arq-1f: pares con la misma ciudad, para que decida el verbo (ver `_EL_VERBO_NO_LA_CIUDAD`).
+                for antes, despues in _EL_VERBO_NO_LA_CIUDAD:
+                    sistema = sistema.replace(antes, despues)
     if settings.baru_sale_de_cartagena:
         # gen-6: alojarse en Barú o Playa Blanca es salir desde Cartagena (ver `_BARU_SALE_DE_CARTAGENA`).
         for antes, despues in _BARU_SALE_DE_CARTAGENA:
@@ -944,6 +948,26 @@ _GENTILICIO_ES_COLOMBIANO = (
      "Bogotá\", \"vivo en Medellín\"). Being FROM a Colombian city or region, said as their origin or with its demonym "
      "(\"we're from Barranquilla\", \"I'm costeña\", \"rolo\"), does make them Colombian: true, even if they also say "
      "where they are staying. Staying or travelling somewhere says nothing about nationality."),
+)
+
+# arq-1f (22-oct, flag `el_verbo_no_la_ciudad`, decisión de Gadea: «soy de Medellín» es colombiano). Los ejemplos de
+# gen-14 ponían Medellín en el lado null («vivo en Medellín») y Barranquilla en el true («somos de Barranquilla»), y el
+# modelo aprendió la ciudad en vez del verbo: «Soy de Medellín, ¿cuánto cuesta el Open Water?» salía null 2 de 2 y «vivo
+# en Barranquilla» true 3 de 3 (banco gen-4, 22-oct). Pares con la MISMA ciudad en los dos lados. Sustituye la frase de
+# `_GENTILICIO_ES_COLOMBIANO` (se aplica detrás).
+_EL_VERBO_NO_LA_CIUDAD = (
+    (_GENTILICIO_ES_COLOMBIANO[0][1],
+     "Solo vivir, trabajar o haber nacido en Colombia, o ser expat, sin decir más, es null. Ser DE una ciudad o región de "
+     "Colombia, dicho como su origen o con su gentilicio, sí es ser colombiano: true, aunque además cuente dónde se aloja "
+     "o dónde vive. Lo que decide es el verbo, no la ciudad: «vivo en Medellín» es null y «soy de Medellín» es true; «I "
+     "live in Bogotá» es null y «I'm from Bogotá» es true; «soy paisa», «soy costeña» o «rolo» son true. Alojarse o "
+     "estar de viaje en un sitio no dice nada de la nacionalidad."),
+    (_GENTILICIO_ES_COLOMBIANO[1][1],
+     "Only living, working or having been born in Colombia, or being an expat, with nothing more, is null. Being FROM a "
+     "Colombian city or region, said as their origin or with its demonym, does make them Colombian: true, even if they "
+     "also say where they are staying or living. The verb decides, not the city: \"I live in Bogotá\" is null and \"I'm "
+     "from Bogotá\" is true; \"vivo en Medellín\" is null and \"soy de Medellín\" is true; \"paisa\", \"costeña\" or "
+     "\"rolo\" are true. Staying or travelling somewhere says nothing about nationality."),
 )
 
 # El mismo flag: aceptar la opción que propone el bot es elegirla (est3-B, pareja-certificados: "nos gusta, somos 2…"

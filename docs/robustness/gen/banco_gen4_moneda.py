@@ -50,6 +50,13 @@ CASOS = [
     ("mi familia y yo somos de Pereira, estamos de vacaciones en Cartagena", None, "es", True),
     ("I'm from Bucaramanga originally, now on holiday in Cartagena", None, "en", True),
     ("sí, soy santandereano", P_ES, "es", True),
+    # arq-1f (22-oct, decisión de Gadea): «soy de <ciudad>» en singular y sin hablar del alojamiento (banco arq-1d p6:
+    # «Soy de Medellín…» salía null). Frases propias, con otras ciudades.
+    ("Soy de Barranquilla, ¿cuánto cuesta el snorkel?", None, "es", True),
+    ("soy de Manizales y quiero hacer el minicurso", None, "es", True),
+    ("I'm from Cali, how much is the mini course?", None, "en", True),
+    ("Soy de Bogotá pero vivo en Madrid, ¿qué vale el Open Water?", None, "es", True),
+    ("vivo en Barranquilla, ¿cuánto cuesta el snorkel?", None, "es", None),
     # Controles: alojarse o viajar no dice nada; una ciudad de OTRO país no es Colombia.
     ("estamos de vacaciones en Bogotá esta semana", None, "es", None),
     ("we're staying in Medellín for a month", None, "en", None),
