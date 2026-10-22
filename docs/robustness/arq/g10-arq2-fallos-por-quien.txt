@@ -1,0 +1,73 @@
+58 fallos: {'RAG': 30, 'redactor->RAG': 13, 'sin RAG (booking)': 5, 'redactor': 4, 'sin RAG (safety)': 4, 'sin RAG (info)': 1, 'sin cita del bot': 1}
+
+== redactor->RAG (13)
+  - g10-010 edad-minima-snorkel: El cliente preguntó por snorkel y dio las edades (7 y 11). El bot no aclaró la edad mínima para snorkel (6 años) ni dijo que ambos niños pueden partic
+  - g10-010 edad-minima-minicurso-buceo: El cliente indicó que tiene niños de 7 y 11 años; el bot no aclaró la edad mínima del Minicurso de Buceo (10 años) ni dijo que el niño de 11 puede par
+  - g10-010 incluye-snorkel: El criterio pide enumerar qué incluye el Tour de Snorkeling según el origen (o preguntar el origen antes de detallar). El bot solo describió lo inclui
+  - g10-050 precio-minicurso-o-pregunta: El bot no proporcionó el precio del Minicurso en USD ni preguntó si están “ya en las islas” o salen desde Cartagena antes de cotizar; en vez de eso se
+  - g10-051 global:sin-invenciones: La afirmación de que un asesor coordina la reserva y el pago en COP "por este chat" no aparece en la referencia; la referencia indica que la reserva s
+  - g10-042 global:sin-invenciones: La referencia indica que el minicurso es 'desde los 10 años' (>=10); el bot dijo 'más de 10 años' (>) que contradice la edad mínima oficial.
+  - g10-016 que-incluye-minicurso-islas: El bot menciona recogida, seguro, equipo e instructor y que el almuerzo no está incluido, pero no enumera la clase teórica, la práctica en piscina ni 
+  - g10-016 horario-minicurso-islas: El criterio pide que el bot aclare que sí alcanza el tiempo; el bot dijo lo contrario (que quedaría muy justo y que no puede asegurar, además de recor
+  - g10-025 hora-recogida-especialidad-islas: El bot sí indicó la recogida a las 8:00 en las islas, pero no dijo que el punto y la hora exactos se coordinan con un asesor del equipo si el hotel es
+  - g10-055 global:sin-invenciones: La referencia exige indicar la edad mínima en cifra ('desde los 10 años'); decir 'más de 10 años' es incorrecto/ambiguo y contradice la política de ed
+  - g10-003 recomienda-minicurso-principiante: El bot sí recomendó y explicó el Minicurso pero no cumplió la parte decisiva del criterio: no envió el enlace de reserva (aunque en su mensaje prometi
+  - g10-019 global:sin-invenciones: El bot afirma que no hay enlace de reserva para este curso, pero la REFERENCIA contiene enlaces oficiales de reserva para el Curso Avanzado PADI.
+  - g10-033 global:sin-repreguntas: El bot volvió a preguntar "¿Y para cuántas personas...?" después de que el cliente ya indicó claramente que es para una persona.
+
+== RAG (30)
+  - g10-050 limitacion-tiempo: El bot advirtió que probablemente no alcance a hacerse la actividad, pero no dio los horarios concretos exigidos por el criterio (termina hacia 12:00-
+  - g10-045 no-confirma-al-pagar: El bot no aclaró que el pago se registra de inmediato pero que la reserva solo queda confirmada cuando el equipo concilia manualmente; esa información
+  - g10-027 global:sin-invenciones: El bot afirma que un asesor ya tiene los 'detalles' del cliente sin que el cliente haya proporcionado información de contacto o haya indicado que ya h
+  - g10-035 global:sin-invenciones: El bot afirma que 'el pago en COP lo coordina un asesor', lo cual no figura en la referencia; la referencia indica que los colombianos pagan en COP y 
+  - g10-035 precio-moneda-cop-ambos-planes: El criterio pide dar el precio en COP por persona para buzo certificado (630.000 COP online) y acompañante (288.000 COP online) saliendo desde Cartage
+  - g10-035 ofrece-enlace-online: El cliente pidió el enlace de reserva y el bot no lo compartió; en su lugar ofreció pasar con un asesor. Aunque el bot mencionó antes que la reserva s
+  - g10-023 no-operan-en-baru: El bot aclaró que no opera en Barú y que opera en las Islas del Rosario, pero no explicó explícitamente que los clientes alojados en Barú deben salir 
+  - g10-066 horario-estandar-recogida-islas: El bot indicó la recogida 'hacia las 9:30 a.m.' pero no dijo explícitamente el rango 'entre 9:30 y 9:45 a.m.' exigido por el criterio; sí explicó el f
+  - g10-040 hora-inicio-mergulho-certificado-islas: El cliente preguntó la hora de inicio y el bot dio solo la salida desde Cartagena (8:00 a.m.) pero no indicó la recogida para quienes ya están en las 
+  - g10-029 incluye-mini-curso-cartagena: No enumera todos los elementos requeridos por el criterio: aunque sí menciona transporte ida y vuelta y que el almuerzo está incluido, no indica explí
+  - g10-061 precio-todos-los-planes-o-pregunta-actividad: El bot no dio los precios en USD por persona para las opciones de buceo 'ya en las islas' (p. ej. 1 inmersión, 2 inmersiones y paquetes 3/4/5/7/9 inme
+  - g10-061 inclusiones-todos-los-planes-islas: Falla al enumerar las inclusiones obligatorias del buceo 'ya en las islas' (p. ej. recogida en el hotel, seguro y acompañamiento profesional PADI); so
+  - g10-021 logistica-tiempo-limitado-no-es-ida-y-vuelta-buceo-mismo-dia: El cliente preguntó por disponibilidad para mañana pero el bot no informó la regla obligatoria del sistema de reservas (cierre a las 4:30 p.m. del día
+  - g10-055 no-incluye-fotos-minicurso: El criterio exige afirmar que en el minicurso no se incluyen ni se realizan fotos/videos; el bot sólo dijo que no están incluidos pero indicó que el i
+  - g10-031 precio-referral-already-on-island: El cliente indicó que ya está en un hotel de las islas (Eco Hotel Las Palmeras), por lo que el bot debía cotizar el precio en COP del Curso Referido (
+  - g10-008 explica-refresh-y-pregunta-experiencia: El bot explicó correctamente que normalmente se requiere refresher y la excepción para buzos muy experimentados o si ya hicieron ReActivate, pero no p
+  - g10-008 da-precio-cop-y-explica-descuento-grupo: El bot no dio los precios por persona en COP para las salidas de buceo (2 inmersiones) ni para el refresher/minicurso saliendo desde Cartagena; solo i
+  - g10-006 no-confirma-al-pagar: El bot afirma que la reserva se confirma al pagar en el link, pero la referencia exige aclarar que el pago se registra pero el equipo debe conciliar y
+  - g10-009 no-da-lista-llevar: El bot proporcionó una lista explícita de 'qué llevar' (swimsuit, towel, sunscreen, sunglasses, comfortable clothes), lo cual está prohibido por el cr
+  - g10-068 anticipo-colombianos-explica: El bot menciona solo la opción del anticipo del 50% y el 50% presencial; no explica que los colombianos también pueden pagar el 100% online, que es pa
+  - g10-067 descuento-equipo-propio-explica-politica: El bot menciona el 5% y que debe ser equipo completo, pero no explica que el descuento aplica solo a buceo recreativo y cursos PADI (no al minicurso n
+  - g10-067 alojamiento-no-incluido-explica: El bot dice que el alojamiento "is not included" y que hay que quedarse en las islas, pero no aclara que el alojamiento debe reservarse directamente c
+  - g10-034 comida-no-incluida-islas-explica: El cliente indicó que está en Ubuntu (ya en las islas) pero el bot afirmó que el tour incluye almuerzo; según la referencia, el Minicurso/Refresher 'y
+  - g10-013 recomienda-minicurso-si-es-principiante: El bot explicó correctamente que el Minicurso es la opción recomendada y describió el plan, pero no cumplió el requisito de incluir el link de reserva
+  - g10-024 confirma-buceo-adaptado: El cliente preguntó explícitamente por discapacidad motora y auditiva y por si ofrecen buceo adaptado; el bot sólo dijo que DIVE TO HEAL coordina la l
+  - g10-024 precio-buceo-already-on-island-usd: El criterio exige dar el precio por persona en USD para el buceo 'ya en las islas' o preguntar qué tipo de buceo buscan; el bot no dio el precio por p
+  - g10-024 proceso-reserva-grupo: El bot coordinó la logística con un asesor (correcto) pero no explicó que la reserva habitual se hace por el enlace online; por tanto no cumplió el re
+  - g10-012 precio-y-opciones-especialidad-cartagena: El bot nombró las especialidades disponibles pero no dio los precios por persona en COP del catálogo para ninguna de ellas, como exige el criterio (de
+  - g10-054 global:sin-invenciones: El bot afirma "Si buscas un paquete de 3 días" y luego ofrece como opción un "paquete de 4 inmersiones diurnas en 2 días", lo que es una clasificación
+  - g10-054 comida-paquetes-varios-dias: El bot NO aclaró la excepción requerida por el criterio: no dijo explícitamente que el almuerzo solo está incluido el primer día solo para salidas des
+
+== sin RAG (info) (1)
+  - g10-049 pueden-combinar-buceo-snorkel-misma-lancha: El bot no confirmó explícitamente que pueden ir juntos en la misma lancha combinando buceo y snorkel, ni explicó que el snorkel se realiza en zona dis
+
+== redactor (4)
+  - g10-041 incluye-paquete: La respuesta del bot enumera transporte, equipo y seguro, pero no aclara el número de inmersiones para los paquetes de varios días ni especifica que e
+  - g10-015 grupo-tarifa-paquete-islas: El cliente indicó 'hotel Ubuntu' (está en las islas) pero el bot no ofreció las tarifas específicas para quien ya está en las islas para los paquetes 
+  - g10-043 reserva-link-online: El criterio pide explicar que la reserva se hace por el enlace online y compartir el link oficial para el Curso Open Water saliendo desde Cartagena; e
+  - g10-069 confirma-disponibilidad-cursos-islas: El bot confirmó disponibilidad y las fechas cerradas, pero no limitó la instrucción a la ficha concreta ni compartió el enlace del 'Curso Open Water -
+
+== sin cita del bot (1)
+  - g10-023 global:sin-invenciones: El bot afirma que "todos incluyen" equipo completo, pero el servicio Acompañante (lista de precios y fichas) no incluye equipo de buceo; por tanto la 
+
+== sin RAG (booking) (5)
+  - g10-015 salida-antes-de-fin-plan: El cliente informó que se van mañana al mediodía y el bot no advirtió que los paquetes de varios días requieren disponibilidad de días completos y que
+  - g10-015 hotel-no-incluido-grupo: El cliente indicó su hotel (Ubuntu) y el bot no aclaró en ningún momento que el alojamiento no está incluido en el precio del paquete y que debe reser
+  - g10-069 explica-curso-open-water-islas: El cliente ya dijo que está en un hotel de las islas (Ecohotel Las Palmeras) pero el bot no explicó los detalles requeridos del 'Curso Open Water - ya
+  - g10-069 comparte-link-curso-open-water-islas: El bot no compartió el enlace de reserva solicitado para el Curso Open Water - ya en las islas (https://book.divingplanet.org/book/basic-course-alread
+  - g10-059 sin-certificacion-snorkel: El bot reconoce que el cliente no está certificado pero no aclara explícitamente que para hacer snorkeling NO se requiere certificación; debía afirmar
+
+== sin RAG (safety) (4)
+  - g10-037 cambio-cancelacion-escalado: El bot ofreció pasar con un asesor pero no explicó explícitamente que los cambios o cancelaciones de reservas ya hechas los gestiona una persona del e
+  - g10-037 acompanante-precio-cartagena-cop: El bot no ofreció el plan de acompañante ni dio el precio en COP saliendo desde Cartagena, ni preguntó desde dónde sale el cliente antes de cotizar, p
+  - g10-063 descuento-grupo-mixto: El cliente indicó explícitamente que el grupo es mixto (colombianos + extranjero) y pidió el precio, pero el bot no aclaró la regla de la referencia: 
+  - g10-063 precio-snorkel-cartagena-grupo: La conversación llegó a la opción de snorkel, pero el bot no indicó el precio por persona en USD del Tour de Snorkeling saliendo desde Cartagena ni ac
