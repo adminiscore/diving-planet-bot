@@ -39,12 +39,20 @@ _FALTA = "FALTA"
 
 
 def _actividad(state: ConversationState, datos: dict) -> str | None:
-    """La actividad de la que pregunta ESTE mensaje (extractor) o, si no nombra ninguna, la de la conversación."""
-    elegida = dom.activity_for_service(state.selected_service) if state.selected_service else None
-    for actividad in (datos.get("actividad_preguntada"), datos.get("activity"), state.actividad_preguntada,
-                      state.detected_activity, state.suggested_activity, elegida.id if elegida else None):
+    """La actividad de la que pregunta ESTE mensaje (extractor) o, si no nombra ninguna, la de la conversación SI es
+    una sola. arq-1k (G10 nº 2): hablaban de snorkel para los niños y de buceo para el padre, «¿qué incluye?» y el
+    redactor contestaba lo del buceo; con varias en juego no se adivina: contesta el RAG, que ve la conversación."""
+    for actividad in (datos.get("actividad_preguntada"), datos.get("activity")):
         if actividad and dom.by_id(actividad) is not None:
             return actividad
+    elegida = dom.activity_for_service(state.selected_service) if state.selected_service else None
+    reparto = state.detected_group_allocation or {}
+    en_juego = {a for a in (state.actividad_preguntada, state.detected_activity, elegida.id if elegida else None,
+                            *(a for a, n in reparto.items() if n)) if a and dom.by_id(a) is not None}
+    if len(en_juego) == 1:
+        return en_juego.pop()
+    if not en_juego and state.suggested_activity and dom.by_id(state.suggested_activity) is not None:
+        return state.suggested_activity  # la que acaba de proponer el bot («¿y qué incluye?»)
     return None
 
 

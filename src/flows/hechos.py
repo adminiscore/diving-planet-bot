@@ -61,15 +61,23 @@ def _moneda(state: ConversationState) -> str:
     return "COP" if state.is_colombian else "USD"
 
 
-def _plan_base(actividad: str, origen: str) -> str | None:
-    """El plan de la actividad en ese origen: el base (en el buceo, la salida de 2 inmersiones) y, en las islas, su
-    variante. En las islas el primero del registro es la salida de 1 inmersión: «¿la salida de dos inmersiones?»
-    desde Majagua recibía 97 USD de base (banco arq-1d, p4)."""
+def _plan_base(actividad: str, origen: str, elegido: str | None = None) -> str | None:
+    """El plan de la actividad en ese origen: el que el cliente eligió o se detectó en la conversación (arq-1k: «¿qué
+    incluye?» del paquete de 5 inmersiones recibía lo de la salida de 2, G10 nº 2) y, si no, el base (en el buceo, la
+    salida de 2 inmersiones) y, en las islas, su variante. En las islas el primero del registro es la salida de 1
+    inmersión: «¿la salida de dos inmersiones?» desde Majagua recibía 97 USD de base (banco arq-1d, p4)."""
     ids = dom.service_ids(actividad, origen)
+    if elegido:
+        propio = ISLAND_SERVICE_MAP.get(elegido, elegido) if origen == "island" else _DE_LAS_ISLAS.get(elegido, elegido)
+        if propio in ids:
+            return propio
     base = dom.base_service_id(actividad)
     if origen == "island" and ISLAND_SERVICE_MAP.get(base) in ids:
         return ISLAND_SERVICE_MAP[base]
     return ids[0] if ids else None
+
+
+_DE_LAS_ISLAS = {isla: cartagena for cartagena, isla in ISLAND_SERVICE_MAP.items()}
 
 
 def _precio(sid: str, moneda: str) -> dict | None:
@@ -97,10 +105,10 @@ def _lista(sid: str, campo: str, lang: str) -> list[str]:
     return list(s.get(f"{campo}_{lang}") or s.get(f"{campo}_es") or [])
 
 
-def _por_origen(actividad: str, origenes: tuple[str, ...], fn) -> dict:
+def _por_origen(actividad: str, origenes: tuple[str, ...], fn, elegido: str | None = None) -> dict:
     out = {}
     for origen in origenes:
-        sid = _plan_base(actividad, origen)
+        sid = _plan_base(actividad, origen, elegido)
         valor = fn(sid) if sid else None
         if valor:
             out[origen] = valor
@@ -114,6 +122,7 @@ def hechos(state: ConversationState, intenciones: list[str], actividades: list[s
     origenes = (origen,) if origen else ORIGENES
     moneda = _moneda(state)
     pedidas = [i for i in intenciones if i in INTENCIONES]
+    elegido = state.selected_service or getattr(state, "detected_service_id", None)
     bloques = []
     for actividad in actividades:
         registro = dom.by_id(actividad)
@@ -129,25 +138,25 @@ def hechos(state: ConversationState, intenciones: list[str], actividades: list[s
             # especial para colombianos» recibía los precios en COP sin que nadie dijera que no lo hay (core arq1d-B2).
             mixto = getattr(state, "mixed_nationality_notice", False)
             bloque["regla_moneda"] = _politica("mixed_nationality_group" if mixto else "colombian_pricing", lang)
-            bloque["precio"] = _por_origen(actividad, origenes, lambda sid: _precio_del_plan(sid, moneda, lang))
-            base = _plan_base(actividad, origen or "cartagena")
+            bloque["precio"] = _por_origen(actividad, origenes, lambda sid: _precio_del_plan(sid, moneda, lang), elegido)
+            base = _plan_base(actividad, origen or "cartagena", elegido)
             otros = [s for s in dom.service_ids(actividad, origen or "cartagena") if s != base]
             if otros:  # el buceo y los paquetes: el plan base y la lista de los demás con su precio
                 bloque["otros_planes"] = [{"plan": _nombre(s, lang), "precio": _precio(s, moneda)}
                                           for s in otros if _precio(s, moneda)]
         if "incluye" in pedidas:
-            bloque["incluye"] = _por_origen(actividad, origenes, lambda sid: _lista(sid, "included", lang))
+            bloque["incluye"] = _por_origen(actividad, origenes, lambda sid: _lista(sid, "included", lang), elegido)
             # Lo que NO incluye: de la ficha y, en los planes de las islas (sus fichas no lo traen), de la política de la
             # recogida («no incluyen transporte desde Cartagena ni almuerzo»). Sin esto, «¿hay almuerzo?» desde las
             # islas se quedaba sin contestar (banco arq-1d, v2).
-            no_incluye = _por_origen(actividad, origenes, lambda sid: _lista(sid, "not_included", lang))
-            if "island" in origenes and _plan_base(actividad, "island"):
+            no_incluye = _por_origen(actividad, origenes, lambda sid: _lista(sid, "not_included", lang), elegido)
+            if "island" in origenes and _plan_base(actividad, "island", elegido):
                 no_incluye["island"] = [*no_incluye.get("island", []), _politica("island_pickup", lang)]
             if no_incluye:
                 bloque["no_incluye"] = no_incluye
         if "requisitos" in pedidas:
             requisitos: list[str] = []
-            sid = _plan_base(actividad, origen or "cartagena")
+            sid = _plan_base(actividad, origen or "cartagena", elegido)
             if sid:
                 requisitos += _lista(sid, "requirements", lang)
             if registro.cart_type in _CON_FORMULARIO_MEDICO:
@@ -157,7 +166,7 @@ def hechos(state: ConversationState, intenciones: list[str], actividades: list[s
             requisitos += [_politica("insurance_form_requirement", lang), _politica("what_to_bring", lang)]
             bloque["requisitos"] = [r for r in dict.fromkeys(requisitos) if r]
         if "horario" in pedidas:
-            bloque["horario"] = _por_origen(actividad, origenes, lambda sid: _lista(sid, "itinerary", lang))
+            bloque["horario"] = _por_origen(actividad, origenes, lambda sid: _lista(sid, "itinerary", lang), elegido)
             bloque["horario_general"] = [p for p in (_politica("operating_hours", lang),
                                                      _politica("activity_schedule", lang)) if p]
         if "disponibilidad" in pedidas:
@@ -172,16 +181,16 @@ def hechos(state: ConversationState, intenciones: list[str], actividades: list[s
             else:
                 bloque["enlace"] = _por_origen(
                     actividad, origenes,
-                    lambda sid: cart_render._resolve_service_booking_url(SERVICES.get(sid) or {}, state))
+                    lambda sid: cart_render._resolve_service_booking_url(SERVICES.get(sid) or {}, state), elegido)
         if {"incluye", "horario"} & set(pedidas):
             # Cómo se llega según el origen (G10 de control, 22-oct: «no aclara que en Cartagena no se recoge en el
             # hotel», «no dice que el regreso está incluido sin cargo», «falta "a 5 minutos del centro"»).
             recogida = {o: [_politica("meeting_point", lang)] if o == "cartagena"
                         else [_politica("island_pickup_free", lang)]
-                        for o in origenes if _plan_base(actividad, o)}
+                        for o in origenes if _plan_base(actividad, o, elegido)}
             bloque["recogida"] = {o: [x for x in v if x] for o, v in recogida.items() if any(v)}
         if {"precio", "incluye", "horario", "requisitos"} & set(pedidas):
-            alojamiento = _alojamiento(actividad, registro, lang)
+            alojamiento = _alojamiento(actividad, registro, lang, elegido)
             if alojamiento:  # G10: «no aclara que el alojamiento no está incluido» en los planes de varios días
                 bloque["alojamiento"] = alojamiento
         if not origen and _DEPENDEN_DEL_ORIGEN & set(pedidas):
@@ -207,10 +216,10 @@ def _acompanante(bloque: dict, pedidas: list[str], origen: str | None, origenes:
     return bloque
 
 
-def _alojamiento(actividad: str, registro, lang: str) -> str | None:
+def _alojamiento(actividad: str, registro, lang: str, elegido: str | None = None) -> str | None:
     """En los planes de varios días, que hay que dormir en las islas y el alojamiento no está incluido: la política de
     los cursos de 2 días o, en los paquetes, lo que dice su ficha que no incluye."""
-    sid = _plan_base(actividad, "cartagena") or _plan_base(actividad, "island")
+    sid = _plan_base(actividad, "cartagena", elegido) or _plan_base(actividad, "island", elegido)
     if not sid or ((SERVICES.get(sid) or {}).get("duration_days") or 1) < 2:
         return None
     if registro.cart_type == "course":

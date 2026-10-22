@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-22T14:40:35+00:00",
-  "commit": "cacb477",
+  "generado": "2026-10-22T15:08:07+00:00",
+  "commit": "21d5220",
   "rama": "feature/pre_gadea"
  },
  "vistas": {
@@ -240,6 +240,13 @@
      "titulo": "La palabra de control «NADA» no le llega al cliente",
      "codigo": true,
      "pre": true,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "adaptado_contesta_lo_demas",
+     "titulo": "DIVE TO HEAL no se come lo demás",
+     "codigo": false,
+     "pre": false,
      "sin_efecto": false
     }
    ],
@@ -2179,6 +2186,19 @@
    "fijado_en_pre": true,
    "usado_por": [
     "b_slotfill_close"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "adaptado_contesta_lo_demas",
+   "area": "Preguntas",
+   "titulo": "DIVE TO HEAL no se come lo demás",
+   "texto": "Con el buceo adaptado en marcha, si el cliente pregunta además por el acompañante, la moneda del grupo o una cancelación, eso se contesta antes del texto fijo del asesor (el precio del buceo adaptado sigue siendo a medida) (arq-1l, 22-oct).",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
+   "usado_por": [
+    "safety"
    ],
    "sin_efecto": null
   },

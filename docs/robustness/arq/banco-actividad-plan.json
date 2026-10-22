@@ -1,0 +1,13 @@
+{"about": "arq-1k (22-oct): el redactor usa el plan elegido (no el base) y no adivina la actividad si hay varias en juego. Frases nuestras (no salen de G9/G10). Formato de banco-rag.json.",
+ "dialogos": [
+  {"id": "ap1-paquete5-incluye", "tipo": "plan", "turnos": ["Queremos el paquete de 5 inmersiones en 2 días, saliendo desde Cartagena.", "¿Qué incluye?"],
+   "todas": ["5 inmersiones|cinco inmersiones", "primer dia|primer día"]},
+  {"id": "ap2-en-paquete4-incluye", "tipo": "plan", "turnos": ["We'd like the 4-dive package over 2 days, leaving from Cartagena.", "What's included?"],
+   "todas": ["4 dives|four dives|4 guided|4 daytime", "first day|day 1"]},
+  {"id": "ap3-islas-paquete3-precio", "tipo": "plan", "turnos": ["Estamos alojados en Isla Grande y queremos el paquete de 3 inmersiones con la nocturna.", "¿Cuánto cuesta?"],
+   "todas": ["188"]},
+  {"id": "ap4-padre-buzo-hijos-snorkel", "tipo": "actividad", "turnos": ["Yo soy buzo certificado y mis dos hijos de 9 y 12 años quieren hacer snorkel. Salimos desde Cartagena.", "¿Qué incluye lo de los niños?"],
+   "todas": ["snorkel"], "ninguno": ["2 inmersiones guiadas|2 guided dives"]},
+  {"id": "ap5-snorkel-control", "tipo": "actividad", "turnos": ["Hola, queremos hacer snorkel saliendo desde Cartagena.", "¿Y qué incluye?"],
+   "todas": ["snorkel", "almuerzo"]}
+ ]}

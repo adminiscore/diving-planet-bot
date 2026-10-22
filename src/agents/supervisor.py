@@ -506,7 +506,9 @@ async def _shared_turn_handler(
         # bare-affirmation-accepts-advisor branch (which gates on MAIN_MENU).
         if state.step in (Step.WELCOME, Step.LANGUAGE):
             state.step = Step.MAIN_MENU
-        answer = _adaptive_diving_advisor_answer(state.language)
+        from src.agents.escalation_agent import respuesta_dive_to_heal  # lazy
+
+        answer = await respuesta_dive_to_heal(state, message)
         state.history.append({"role": "user", "content": message})
         state.history.append({"role": "assistant", "content": answer})
         return answer

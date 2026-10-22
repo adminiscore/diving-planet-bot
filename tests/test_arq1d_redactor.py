@@ -174,3 +174,23 @@ def test_arq3_si_al_rehacer_no_mejora_se_queda_la_primera(llamadas, monkeypatch)
     st = _conv(location="cartagena")
     assert asyncio.run(redactor_hechos.responder(st, MENSAJE, st.history)) == "Cuesta 183 USD."
     assert len(llamadas.hechas) == 2  # una vez, no en bucle
+
+
+def test_arq1k_con_varias_actividades_en_juego_no_se_adivina():
+    """G10 nº 2: buceo para el padre y snorkel para los niños; «¿qué incluye?» no nombra ninguna."""
+    st = _conv(detected_activity="certified_diving", detected_group_allocation={"certified_diving": 1, "snorkel": 2})
+    assert redactor_hechos._actividad(st, {}) is None
+    st = _conv(detected_activity="snorkel")
+    assert redactor_hechos._actividad(st, {}) == "snorkel"
+    assert redactor_hechos._actividad(st, {"actividad_preguntada": "minicourse"}) == "minicourse"
+
+
+def test_arq1k_los_hechos_salen_del_plan_elegido():
+    from src.flows import hechos
+
+    st = _conv(location="cartagena", selected_service="5_dives_2_days")
+    [b] = hechos.hechos(st, ["precio", "incluye"], ["certified_diving"])
+    assert b["precio"]["cartagena"]["online"] == "392 USD" and b.get("alojamiento")
+    st.location = "island"
+    [b] = hechos.hechos(st, ["precio"], ["certified_diving"])
+    assert "ya en las islas" in b["precio"]["island"]["plan"]

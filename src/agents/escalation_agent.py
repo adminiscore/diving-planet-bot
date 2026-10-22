@@ -162,11 +162,32 @@ async def _contestar_lo_demas(conv, message: str, tema: str, key: str, reason: s
     return answer
 
 
+# arq-1l (22-oct, flag `adaptado_contesta_lo_demas`): con el contexto de DIVE TO HEAL activo, CUALQUIER mensaje con
+# «precio» o «reserva» recibía el texto fijo del buceo adaptado (precio a medida con un asesor, decisión del dueño del
+# 17-jul), aunque preguntara por el acompañante, la moneda de un grupo mixto o una cancelación (G10 nº 2: 4 fallos). Lo
+# del buceo adaptado sigue igual; lo demás lo contesta antes el RAG, con el mismo mecanismo que el pase (gen-13).
+_TEMA_ADAPTADO = {"es": "el precio y la organización del buceo adaptado (DIVE TO HEAL)",
+                  "en": "the price and arrangements of adaptive diving (DIVE TO HEAL)"}
+
+
+async def respuesta_dive_to_heal(conv, message: str) -> str:
+    """La respuesta a un precio o una reserva dentro de DIVE TO HEAL: el texto fijo del asesor y, con el flag, delante
+    lo que el mensaje pregunta aparte del buceo adaptado."""
+    from src.agents.rutas.safety import _adaptive_diving_advisor_answer  # lazy
+    from src.config import settings  # lazy
+
+    fija = _adaptive_diving_advisor_answer(conv.language)
+    if not settings.adaptado_contesta_lo_demas:
+        return fija
+    lang = "es" if conv.language == "es" else "en"
+    resto = await _contestar_lo_demas(conv, message, _TEMA_ADAPTADO[lang], lang, "dive_to_heal")
+    return f"{resto}\n\n{fija}" if resto else fija
+
+
 async def escalation_node(state: BotState) -> dict:
     from src.agents.supervisor import (
         _ADAPTIVE_DIVING_PATTERN,
         _PRICE_OR_BOOKING_Q,
-        _adaptive_diving_advisor_answer,
         _broken_link_escalation_response,
         _detect_broken_link_complaint,
         _has_link_tech_context,
@@ -252,7 +273,7 @@ async def escalation_node(state: BotState) -> dict:
     if conv.adaptive_diving_context and _PRICE_OR_BOOKING_Q.search(message):
         if conv.step in (Step.WELCOME, Step.LANGUAGE):
             conv.step = Step.MAIN_MENU
-        answer = _adaptive_diving_advisor_answer(conv.language)
+        answer = await respuesta_dive_to_heal(conv, message)
         conv.history.append({"role": "user", "content": message})
         conv.history.append({"role": "assistant", "content": answer})
         logger.info("[NODE:escalation] DIVE TO HEAL precio/reserva -> asesor")
