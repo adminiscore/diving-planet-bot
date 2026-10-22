@@ -137,11 +137,21 @@ def hechos(state: ConversationState, intenciones: list[str], actividades: list[s
     moneda = _moneda(state)
     pedidas = [i for i in intenciones if i in INTENCIONES]
     elegido = state.selected_service or getattr(state, "detected_service_id", None)
+    # arq-1t: pide varios días sin plan elegido → los hechos de los paquetes de varios días, no los de la salida de uno.
+    # El plan base que se apunta solo al saber la actividad (`detected_service_id`, rutas/booking) no es una elección.
+    varios_dias = (settings.paquete_varios_dias and not state.selected_service
+                   and state.detected_duration == "multi_day")
     bloques = []
     for actividad in actividades:
         registro = dom.by_id(actividad)
         if registro is None:
             continue
+        detectado = getattr(state, "detected_service_id", None)
+        sin_plan = varios_dias and detectado in (None, dom.base_service_id(actividad))
+        paquetes = {o: _paquetes_de_varios_dias(actividad, o) for o in origenes} if sin_plan else {}
+        paquetes = {o: s for o, s in paquetes.items() if s}
+        if paquetes:
+            elegido = paquetes.get("cartagena", next(iter(paquetes.values())))[0]  # el primero, como base del precio
         bloque: dict = {"actividad": actividad, "nombre": dom.label(actividad, lang), "origen": origen}
         if registro.cart_type == "companion":
             bloques.append(_acompanante(bloque, pedidas, origen, origenes, moneda, lang))
@@ -158,7 +168,16 @@ def hechos(state: ConversationState, intenciones: list[str], actividades: list[s
             if otros:  # el buceo y los paquetes: el plan base y la lista de los demás con su precio
                 bloque["otros_planes"] = [{"plan": _nombre(s, lang), "precio": _precio(s, moneda)}
                                           for s in otros if _precio(s, moneda)]
-        if "incluye" in pedidas:
+        if "incluye" in pedidas and paquetes:
+            # arq-1t: lo común a todos los paquetes de varios días del origen (solo cambia el número de inmersiones) y
+            # la lista de paquetes; lo que NO incluyen, igual (el alojamiento y los almuerzos de los otros días).
+            bloque["incluye"] = {o: _comunes([_lista(s, "included", lang) for s in sids]) for o, sids in paquetes.items()}
+            no_incluye = {o: _comunes([_lista(s, "not_included", lang) for s in sids]) for o, sids in paquetes.items()}
+            if "island" in paquetes:
+                no_incluye["island"] = [*no_incluye.get("island", []), _politica("island_pickup", lang)]
+            bloque["no_incluye"] = {o: [x for x in v if x] for o, v in no_incluye.items() if any(v)}
+            bloque["paquetes"] = {o: [_nombre(s, lang) for s in sids] for o, sids in paquetes.items()}
+        elif "incluye" in pedidas:
             bloque["incluye"] = _por_origen(actividad, origenes, lambda sid: _lista(sid, "included", lang), elegido)
             # Lo que NO incluye: de la ficha y, en los planes de las islas (sus fichas no lo traen), de la política de la
             # recogida («no incluyen transporte desde Cartagena ni almuerzo»). Sin esto, «¿hay almuerzo?» desde las
@@ -207,6 +226,12 @@ def hechos(state: ConversationState, intenciones: list[str], actividades: list[s
                     lambda sid: cart_render._resolve_service_booking_url(SERVICES.get(sid) or {}, state), elegido)
                 if bloque["enlace"]:
                     bloque["descuento_online"] = _descuento_online(lang)
+                    if settings.enlace_con_como_pagar:
+                        como = [_politica("how_to_book", lang), _pago_extranjero(lang),
+                                _politica("payment_confirmation", lang)]
+                        if registro.requires_certification:
+                            como.append(_politica("certification_required", lang))
+                        bloque["como_reservar"] = [c for c in como if c]
         if {"incluye", "horario"} & set(pedidas):
             # Cómo se llega según el origen (G10 de control, 22-oct: «no aclara que en Cartagena no se recoge en el
             # hotel», «no dice que el regreso está incluido sin cargo», «falta "a 5 minutos del centro"»).
@@ -258,6 +283,33 @@ def _previo_y_edad(registro, lang: str) -> list[str]:
         hechos_.append(f"Edad mínima: desde los {registro.min_age} años." if lang == "es"
                        else f"Minimum age: {registro.min_age} and over.")
     return hechos_
+
+
+def _paquetes_de_varios_dias(actividad: str, origen: str) -> list[str]:
+    """arq-1t: los planes de la actividad en ese origen que duran varios días (los paquetes), en el orden del registro."""
+    return [s for s in dom.service_ids(actividad, origen) if ((SERVICES.get(s) or {}).get("duration_days") or 0) > 1]
+
+
+def _comunes(listas: list[list[str]]) -> list[str]:
+    """Los elementos que están en TODAS las listas, en el orden de la primera."""
+    if not listas:
+        return []
+    resto = [set(lista) for lista in listas[1:]]
+    return [x for x in listas[0] if all(x in r for r in resto)]
+
+
+# arq-1u (22-oct, flag `enlace_con_como_pagar`; G10 nº 4: g10-051, g10-072, g10-006, g10-045): con el enlace de reserva,
+# cómo se reserva y se paga por él (el extranjero, 100 % con tarjeta en la web) y que la reserva queda confirmada cuando
+# el equipo concilia el pago; si la actividad pide certificación, el carné (g10-027). Al colombiano no se le da el
+# enlace (lo coordina un asesor), así que la parte de su pago no va aquí.
+_CORTE_PAGO = {"es": "El anticipo del 50 %", "en": "The 50% deposit option"}
+
+
+def _pago_extranjero(lang: str) -> str | None:
+    """La parte de `foreign_card_payment` que vale para quien paga por el enlace (sin la del pago de los colombianos)."""
+    texto = _politica("foreign_card_payment", lang) or ""
+    corte = texto.find(_CORTE_PAGO[lang])
+    return (texto[:corte] if corte >= 0 else texto).strip() or None
 
 
 # arq-1p (22-oct, flag `hechos_sin_actividad`): lo que NO depende de la actividad. En el G10 nº 4, 24 turnos se quedaron sin
@@ -404,6 +456,10 @@ def faltan(answer: str, bloques: list[dict], intenciones: list[str]) -> list[str
         for elemento in dict.fromkeys(e for lista in (b.get("recogida") or {}).values() for e in lista):
             if not _elemento_dado(elemento, raices, answer):
                 perdidos.append(elemento)
+        if "enlace" in intenciones or "disponibilidad" in intenciones:
+            for elemento in b.get("como_reservar") or []:  # arq-1u
+                if not _elemento_dado(elemento, raices, answer):
+                    perdidos.append(elemento)
         if b.get("alojamiento") and not _elemento_dado(b["alojamiento"], raices, answer):
             perdidos.append(b["alojamiento"])
         if "horario" in intenciones:

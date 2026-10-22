@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-22T18:59:33+00:00",
-  "commit": "44524159",
+  "generado": "2026-10-22T19:24:10+00:00",
+  "commit": "e2e4aeaa",
   "rama": "feature/pre_gadea"
  },
  "vistas": {
@@ -1369,6 +1369,20 @@
      "codigo": false,
      "pre": false,
      "sin_efecto": false
+    },
+    {
+     "nombre": "enlace_con_como_pagar",
+     "titulo": "Con el enlace, cómo se reserva y se paga",
+     "codigo": false,
+     "pre": false,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "paquete_varios_dias",
+     "titulo": "«El paquete de varios días» sin decir cuántos",
+     "codigo": false,
+     "pre": false,
+     "sin_efecto": false
     }
    ],
    "marca": "openai"
@@ -2678,6 +2692,19 @@
    "sin_efecto": null
   },
   {
+   "nombre": "enlace_con_como_pagar",
+   "area": "Preguntas",
+   "titulo": "Con el enlace, cómo se reserva y se paga",
+   "texto": "Cuando Coral da el enlace de reserva a quien no es colombiano, explica también cómo se reserva y se paga (100 % con tarjeta en la web), que la reserva queda confirmada cuando el equipo concilia el pago y, si la actividad pide certificación, el carné (arq-1u, 22-oct).",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
+   "usado_por": [
+    "r_hechos"
+   ],
+   "sin_efecto": null
+  },
+  {
    "nombre": "enlace_con_disponibilidad",
    "area": "Preguntas",
    "titulo": "El enlace con la disponibilidad",
@@ -3153,6 +3180,19 @@
    "fijado_en_pre": true,
    "usado_por": [
     "b_extraction"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "paquete_varios_dias",
+   "area": "Preguntas",
+   "titulo": "«El paquete de varios días» sin decir cuántos",
+   "texto": "Si el cliente pregunta por un paquete de varios días sin decir cuántos, Coral lo entiende así y, al preguntar qué incluye, da lo que tienen todos los paquetes (almuerzo solo el primer día, alojamiento no incluido) y la lista de paquetes, en vez de lo de la salida de un día (arq-1t, 22-oct).",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
+   "usado_por": [
+    "r_hechos"
    ],
    "sin_efecto": null
   },

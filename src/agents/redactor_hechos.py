@@ -100,6 +100,8 @@ def _foto(state: ConversationState, datos: dict, origen: str | None) -> Conversa
         foto.is_colombian = datos["is_colombian"]
     if datos.get("mixed_nationality") is True:
         foto.mixed_nationality_notice = True
+    if settings.paquete_varios_dias and datos.get("paquete_varios_dias") is True:
+        foto.detected_duration = "multi_day"  # arq-1t: «el paquete de varios días» en ESTE mensaje
     return foto
 
 

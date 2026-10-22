@@ -289,6 +289,22 @@ REGLA_ACTIVIDADES_PREGUNTADAS_EN = (
 )
 
 
+# arq-1t (22-oct, flag `paquete_varios_dias`): «¿cuánto vale el paquete de varios días?» no dejaba nada en el estado
+# (dias_de_buceo solo con cifra) y el «¿qué incluye?» siguiente recibía lo de la salida de un día (G10 nº 4, g10-041).
+CAMPO_PAQUETE_VARIOS_DIAS = _dato({"type": "boolean"},
+                                  "Pide un paquete o plan de VARIOS días de buceo sin decir cuántos días ni inmersiones.")
+REGLA_PAQUETE_VARIOS_DIAS_ES = (
+    "\n- paquete_varios_dias: true si pide o pregunta por un paquete o plan de VARIOS días de buceo sin decir cuántos "
+    "días ni cuántas inmersiones («el paquete de varios días», «un plan de varios días buceando»). null si dice el número "
+    "de días o de inmersiones, o si habla de un solo día."
+)
+REGLA_PAQUETE_VARIOS_DIAS_EN = (
+    "\n- paquete_varios_dias: true if they ask for or about a package or plan of SEVERAL days of diving without saying "
+    "how many days or dives (\"the multi-day package\", \"a plan diving over several days\"). null if they give the "
+    "number of days or dives, or talk about a single day."
+)
+
+
 def campos_paso6(history: list[dict] | None) -> dict:
     """Los campos nuevos del paso 6 que van en ESTA llamada, según sus flags: {campo: (esquema, regla_es, regla_en)}.
     Vacío con los flags apagados (la llamada de siempre). `acepta_propuesta` solo si el bot acaba de proponer un plan."""
@@ -309,6 +325,9 @@ def campos_paso6(history: list[dict] | None) -> dict:
     if settings.varias_actividades:
         campos["actividades_preguntadas"] = (CAMPO_ACTIVIDADES_PREGUNTADAS, REGLA_ACTIVIDADES_PREGUNTADAS_ES,
                                              REGLA_ACTIVIDADES_PREGUNTADAS_EN)
+    if settings.paquete_varios_dias:
+        campos["paquete_varios_dias"] = (CAMPO_PAQUETE_VARIOS_DIAS, REGLA_PAQUETE_VARIOS_DIAS_ES,
+                                         REGLA_PAQUETE_VARIOS_DIAS_EN)
     return campos
 
 
