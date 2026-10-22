@@ -410,7 +410,8 @@
         "textos_de_cartagena",
         "seguridad_de_grupo",
         "refresher_completo",
-        "cache_anthropic"
+        "cache_anthropic",
+        "curso_preguntado_no_es_nivel"
       ]
     },
     {
@@ -449,7 +450,8 @@
         "resolutor_sin_contradicciones",
         "acuse_solo_el_mensaje",
         "acuse_en_su_numero",
-        "actividad_de_la_pregunta"
+        "actividad_de_la_pregunta",
+        "sin_certificacion_no_hace_falta"
       ]
     },
     {
@@ -1567,6 +1569,16 @@
       "area": "Reserva",
       "titulo": "«Es para una persona» cuenta como el grupo",
       "texto": "Si el cliente dice que la reserva es para una persona («es para una persona», «solo para mí»), Coral lo apunta y no vuelve a preguntar para cuántas personas; preguntar si UNA persona puede hacer algo sigue sin contar (flu-1, 22-oct)."
+    },
+    "curso_preguntado_no_es_nivel": {
+      "area": "Reserva",
+      "titulo": "Preguntar por un curso no es decir el nivel",
+      "texto": "Si el cliente pregunta por un curso con nivel («¿hay Open Water mañana?»), Coral entiende que quiere el curso y no le pregunta si ya tiene esa certificación; con el nivel a secas («somos 4 open water») sigue preguntando (flu-1, 22-oct)."
+    },
+    "sin_certificacion_no_hace_falta": {
+      "area": "Reserva",
+      "titulo": "«No estoy certificado»: no hace falta",
+      "texto": "Cuando el cliente dice que no está certificado y su actividad no lo pide (snorkel, minicurso, curso Open Water), Coral le dice que no necesita certificación (flu-1, 22-oct)."
     }
   },
   "areas": [

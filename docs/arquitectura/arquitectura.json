@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-22T16:02:52+00:00",
-  "commit": "83b0657",
+  "generado": "2026-10-22T16:35:28+00:00",
+  "commit": "fd53591",
   "rama": "feature/pre_gadea"
  },
  "vistas": {
@@ -826,6 +826,13 @@
      "codigo": true,
      "pre": true,
      "sin_efecto": false
+    },
+    {
+     "nombre": "curso_preguntado_no_es_nivel",
+     "titulo": "Preguntar por un curso no es decir el nivel",
+     "codigo": false,
+     "pre": false,
+     "sin_efecto": false
     }
    ],
    "marca": "openrouter",
@@ -1018,6 +1025,13 @@
      "titulo": "Ofrece la actividad por la que pregunta el cliente",
      "codigo": true,
      "pre": true,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "sin_certificacion_no_hace_falta",
+     "titulo": "«No estoy certificado»: no hace falta",
+     "codigo": false,
+     "pre": false,
      "sin_efecto": false
     }
    ],
@@ -2484,6 +2498,19 @@
    "sin_efecto": null
   },
   {
+   "nombre": "curso_preguntado_no_es_nivel",
+   "area": "Reserva",
+   "titulo": "Preguntar por un curso no es decir el nivel",
+   "texto": "Si el cliente pregunta por un curso con nivel («¿hay Open Water mañana?»), Coral entiende que quiere el curso y no le pregunta si ya tiene esa certificación; con el nivel a secas («somos 4 open water») sigue preguntando (flu-1, 22-oct).",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
+   "usado_por": [
+    "b_extraction"
+   ],
+   "sin_efecto": null
+  },
+  {
    "nombre": "datos_ajenos_se_niegan",
    "area": "Enrutador",
    "titulo": "Los datos de otros clientes se niegan, sin pasar a un asesor",
@@ -3434,6 +3461,19 @@
    "fijado_en_pre": true,
    "usado_por": [
     "b_extraction"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "sin_certificacion_no_hace_falta",
+   "area": "Reserva",
+   "titulo": "«No estoy certificado»: no hace falta",
+   "texto": "Cuando el cliente dice que no está certificado y su actividad no lo pide (snorkel, minicurso, curso Open Water), Coral le dice que no necesita certificación (flu-1, 22-oct).",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
+   "usado_por": [
+    "b_slotfill_close"
    ],
    "sin_efecto": null
   },

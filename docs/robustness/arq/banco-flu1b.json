@@ -1,0 +1,105 @@
+{
+ "about": "flu-1b (22-oct): CURSO_PREGUNTADO_NO_ES_NIVEL (preguntar por un curso no es un nivel dudoso) y SIN_CERTIFICACION_NO_HACE_FALTA (al no certificado que quiere snorkel, minicurso u Open Water se le dice que no hace falta). Frases nuestras (no salen de G9/G10). Controles: el buceo certificado no dice «no hace falta»; «somos 4 open water» sigue preguntando.",
+ "dialogos": [
+  {
+   "id": "s1-snorkel-es",
+   "tipo": "sin_cert",
+   "turnos": [
+    "Hola, ¿qué planes tienen?",
+    "No tengo certificación, solo quiero hacer snorkel."
+   ],
+   "todas": [
+    "no necesitas certific|no hace falta|no se necesita|no requiere|sin necesidad de certific"
+   ]
+  },
+  {
+   "id": "s2-snorkel-en",
+   "tipo": "sin_cert",
+   "turnos": [
+    "Hi there, what can we do with you?",
+    "We're not certified divers, we'd just like to snorkel."
+   ],
+   "todas": [
+    "don't need|do not need|no certification|not required|doesn't require|no need"
+   ]
+  },
+  {
+   "id": "s3-minicurso",
+   "tipo": "sin_cert",
+   "turnos": [
+    "Hola, me interesa el minicurso.",
+    "Nunca he buceado y no tengo ningún curso."
+   ],
+   "todas": [
+    "no necesitas certific|no hace falta|no se necesita|no requiere|sin necesidad de|no necesitas experiencia"
+   ]
+  },
+  {
+   "id": "s4-control-buceo",
+   "tipo": "control",
+   "turnos": [
+    "Hola, queremos bucear.",
+    "No estamos certificados."
+   ],
+   "todas": [
+    "minicurso"
+   ],
+   "ninguno": [
+    "buceo certificado* no necesitas",
+    "buceo certificado no necesitas"
+   ]
+  },
+  {
+   "id": "o1-ow-cupo-en",
+   "tipo": "curso",
+   "turnos": [
+    "Hi, is there space for the Open Water tomorrow?",
+    "I'm staying at San Pedro de Majagua."
+   ],
+   "ninguno": [
+    "already hold",
+    "already have the",
+    "or do you want to get it"
+   ]
+  },
+  {
+   "id": "o2-ow-precio-es",
+   "tipo": "curso",
+   "turnos": [
+    "Hola, ¿cuánto cuesta el Open Water?",
+    "Salgo desde Cartagena."
+   ],
+   "ninguno": [
+    "ya tienen el",
+    "ya tienes el",
+    "o quieren sacarla",
+    "o quieres sacarla"
+   ]
+  },
+  {
+   "id": "o3-advanced-cupo",
+   "tipo": "curso",
+   "turnos": [
+    "¿Tienen cupo para el Advanced este sábado?",
+    "Estoy en Cartagena, soy de Chile."
+   ],
+   "ninguno": [
+    "ya tienen el",
+    "ya tienes el",
+    "o quieren sacarla",
+    "o quieres sacarla"
+   ]
+  },
+  {
+   "id": "o4-control-somos-ow",
+   "tipo": "control",
+   "turnos": [
+    "Hola, somos 4 open water",
+    "Salimos desde Cartagena"
+   ],
+   "todas": [
+    "ya tienen|o quieren sacarla|ya lo tienen|ya la tienen"
+   ]
+  }
+ ]
+}

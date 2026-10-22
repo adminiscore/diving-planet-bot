@@ -798,6 +798,12 @@ def _flag_cert_or_course(intent, state: ConversationState, message: str) -> None
         # «Open Water» no es ambiguo y «¿ya tienen el Curso referido o quieren sacarla?» era una repregunta
         # (banco dialogos-gen16-repreguntas, 2/2).
         return
+    preguntada = getattr(intent, "_actividad_preguntada", None)
+    if settings.curso_preguntado_no_es_nivel and preguntada and getattr(dom.by_id(preguntada), "course_level", None):
+        # flu-1 (G10 nº 2): «do you have open water available tomorrow?» pregunta por el CURSO (el extractor lo lee como
+        # la actividad de la que pregunta); quien ya tiene el nivel no pregunta por su disponibilidad ni su precio. Con
+        # el nivel a secas («somos 4 open water») el extractor no lee ninguna actividad preguntada y se sigue preguntando.
+        return
     registered = dom.by_id(intent.activity) if intent.activity else None
     if registered is not None and registered.course_level is not None:
         state.cert_or_course_level = intent.activity

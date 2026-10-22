@@ -201,6 +201,7 @@ async def _aplicar_extractor(intent, state: ConversationState, message: str, pis
     _poner_edades(intent, datos)
     _poner_otras_personas(state, datos)
     _poner_actividad_preguntada(state, datos)
+    intent._actividad_preguntada = datos.get("actividad_preguntada")  # la de ESTE mensaje (flu-1, `_flag_cert_or_course`)
 
 
 def duracion_del_extractor(datos: dict | None, state: ConversationState) -> tuple[str | None, bool]:

@@ -290,6 +290,22 @@ async def _take_parallel_ack(state: ConversationState, prev_pending) -> str | No
         return ""
 
 
+def _no_hace_falta_certificacion(state: ConversationState, carry: dict) -> str:
+    """flu-1 (flag `sin_certificacion_no_hace_falta`, G10 nº 2): «No, I'm not certified. I'm just interested in
+    snorkeling» recibía «Got it—you're not certified…» y la pregunta del origen, sin decirle que para el snorkel no hace
+    falta. Si en ESTE turno dice que no está certificado y su actividad no lo pide (dato del registro), se dice."""
+    if not settings.sin_certificacion_no_hace_falta or carry.get("prev_main_is_certified") is False:
+        return ""
+    if _known_field_values(state).get("is_certified") is not False:
+        return ""
+    registro = dom.by_id(state.detected_activity) if state.detected_activity else None
+    if registro is None or registro.generic or registro.requires_certification or registro.cart_type == "companion":
+        return ""
+    nombre = dom.label(registro.id, state.language)
+    return (f"Para el *{nombre}* no necesitas certificación. 🙌\n\n" if state.language == "es"
+            else f"You don't need any certification for *{nombre}*. 🙌\n\n")
+
+
 def cancel_pending_ack(state: ConversationState) -> None:
     """Red de seguridad al cerrar el turno: un acuse lanzado que nadie usó se cancela."""
     pending = getattr(state, "_pending_ack", None)
@@ -499,6 +515,7 @@ async def _slotfill_close_phase(
             )
         if ack:
             ack = ack.rstrip() + "\n\n"
+        ack += _no_hace_falta_certificacion(state, carry)
     response = greeting + ack + response
     state.history.append({"role": "assistant", "content": response})
     return response

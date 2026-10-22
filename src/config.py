@@ -651,6 +651,8 @@ class Settings(BaseSettings):
     enlace_con_disponibilidad: bool = True  # PROMOCIONADO 22-oct (arq-1m: banco de enlace 3/12 -> 12/12; HISTORY 0.31.93); revert = False
     rag_enlace_al_recomendar: bool = False  # ARQ-1o (22-oct, decisión de Gadea): el RAG da el enlace del plan que recomienda si sabe el origen (a colombianos no)
     grupo_de_una_persona: bool = False  # FLU-1 (22-oct): «es para una persona» cuenta como el tamaño del grupo en la pregunta de Jev (antes se repreguntaba)
+    curso_preguntado_no_es_nivel: bool = False  # FLU-1 (22-oct): si el extractor lee que el mensaje PREGUNTA por un curso con nivel («do you have open water available tomorrow?»), no se pregunta «¿ya tienen el Open Water o quieren sacarlo?»
+    sin_certificacion_no_hace_falta: bool = False  # FLU-1 (22-oct): al decir «no estoy certificado» para una actividad que no lo pide (snorkel, minicurso, Open Water), el bot dice que no hace falta
     # arq-2a (22-oct, Gonzalo con Claude): fuera del prompt del RAG las reglas que el código ya pone en el contexto que
     # el RAG lee siempre (catálogo y políticas, en los dos caminos de `hechos_por_codigo`): moneda, 5 % por equipo
     # completo, no calcular totales, días de cierre y mal tiempo, y una viñeta repetida del tono. Las que solo vigila un
