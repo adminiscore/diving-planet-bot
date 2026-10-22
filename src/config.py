@@ -658,6 +658,10 @@ class Settings(BaseSettings):
     # extranjeros residentes (pagan en COP): el extractor leía false 2 de 9 veces. Una frase: salvo que tenga cédula de
     # extranjería. APAGADO hasta medirlo.
     cedula_de_extranjeria_manda: bool = False
+    # ARQ-1s (22-oct): requisitos coherentes en los hechos: en un curso, solo el formulario médico de curso (no además el
+    # de buzo certificado: G10 lo vio contradictorio), y el requisito previo (Open Water para el Advanced) y la edad
+    # mínima en cifra. APAGADO hasta medirlo.
+    requisitos_coherentes: bool = False
     varias_actividades: bool = False  # ARQ-1j (22-oct): el extractor da TODAS las actividades del mensaje (y el acompañante) y los hechos salen de cada una
     adaptado_contesta_lo_demas: bool = True  # PROMOCIONADO 22-oct (arq-1l: banco DIVE TO HEAL 3/12 -> 11/12; HISTORY 0.31.93); revert = False
     enlace_con_disponibilidad: bool = True  # PROMOCIONADO 22-oct (arq-1m: banco de enlace 3/12 -> 12/12; HISTORY 0.31.93); revert = False

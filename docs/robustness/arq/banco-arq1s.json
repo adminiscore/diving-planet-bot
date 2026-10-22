@@ -1,0 +1,74 @@
+{
+ "about": "arq-1s (22-oct): REQUISITOS_COHERENTES. En un curso, un solo formulario (el médico de curso, no además el de buzo certificado; decisión de Gadea), el requisito previo (Open Water para el Advanced, Advanced para el Rescue) y la edad mínima en cifra. Frases nuestras (no salen de G9/G10). Control: el buceo certificado sigue con el carné y sin el formulario de curso.",
+ "dialogos": [
+  {
+   "id": "s1-advanced-formulario",
+   "tipo": "curso",
+   "turnos": [
+    "Hola, quiero hacer el Advanced saliendo desde Cartagena. ¿Qué requisitos tiene y qué formulario tengo que llenar?"
+   ],
+   "todas": [
+    "exoneracion-curso",
+    "open water",
+    "12"
+   ],
+   "ninguno": [
+    "exoneracion-buzo"
+   ]
+  },
+  {
+   "id": "s2-advanced-en",
+   "tipo": "curso",
+   "turnos": [
+    "What are the requirements for the Advanced Open Water course from Cartagena?"
+   ],
+   "todas": [
+    "open water",
+    "12"
+   ],
+   "ninguno": [
+    "exoneracion-buzo"
+   ]
+  },
+  {
+   "id": "s3-rescue",
+   "tipo": "curso",
+   "turnos": [
+    "¿Qué necesito para hacer el curso Rescue desde Cartagena?"
+   ],
+   "todas": [
+    "advanced"
+   ],
+   "ninguno": [
+    "exoneracion-buzo"
+   ]
+  },
+  {
+   "id": "s4-open-water",
+   "tipo": "curso",
+   "turnos": [
+    "Hi, what do I need for the Open Water course from Cartagena? Any forms?"
+   ],
+   "todas": [
+    "exoneracion-curso|medical form",
+    "10"
+   ],
+   "ninguno": [
+    "exoneracion-buzo"
+   ]
+  },
+  {
+   "id": "c1-certificado",
+   "tipo": "control",
+   "turnos": [
+    "Soy buzo certificado. ¿Qué requisitos hay para salir a bucear desde Cartagena?"
+   ],
+   "todas": [
+    "carn|tarjeta"
+   ],
+   "ninguno": [
+    "exoneracion-curso"
+   ]
+  }
+ ]
+}

@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-22T18:08:11+00:00",
-  "commit": "3708736b",
+  "generado": "2026-10-22T18:28:46+00:00",
+  "commit": "bbc81084",
   "rama": "feature/alvaro-22oct"
  },
  "vistas": {
@@ -1331,6 +1331,13 @@
     {
      "nombre": "hechos_sin_actividad",
      "titulo": "Hora, recogida, qué llevar y sitio sin saber la actividad",
+     "codigo": false,
+     "pre": false,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "requisitos_coherentes",
+     "titulo": "Requisitos sin contradicciones",
      "codigo": false,
      "pre": false,
      "sin_efecto": false
@@ -3443,6 +3450,19 @@
    "fijado_en_pre": true,
    "usado_por": [
     "b_slotfill_close"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "requisitos_coherentes",
+   "area": "Preguntas",
+   "titulo": "Requisitos sin contradicciones",
+   "texto": "En los requisitos de un curso va un solo formulario médico (el de curso, no además el de buzo certificado), el curso que hace falta antes (el Open Water para el Advanced) y la edad mínima en cifra; y a quien dice que es buzo certificado se le recuerda el carné (arq-1s, 22-oct).",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
+   "usado_por": [
+    "r_hechos"
    ],
    "sin_efecto": null
   },
