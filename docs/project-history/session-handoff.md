@@ -59,7 +59,33 @@ integrar la rama del otro y suite en verde, porque en PRE gana el último; (3) *
 despliegue reinicia el contenedor y mata la medida del otro (avisar en el registro de Plan Coral con la hora de fin).
 Las doce normas, con su porqué, están en el documento.
 
-### ▶️ RETOMAR AQUÍ — 22-oct, 10:30 (Gadea con Claude): FASE NUEVA ARQ, «el modelo interpreta, el código decide, el modelo redacta»
+### ▶️ RETOMAR AQUÍ — 22-oct, 12:30 (Gadea con Claude): ARQ-1 hecha, el redactor de hechos da 116/120 en el banco (base 100/120)
+
+- **Hecho (HISTORY 0.31.91, flag `hechos_por_codigo` APAGADO hasta que Gadea lo promocione):**
+  - Jev da las intenciones del mensaje (arq-1b).
+  - El código saca los hechos (arq-1c, `src/flows/hechos.py`).
+  - Luna los redacta sin catálogo ni reglas (arq-1d, `src/agents/redactor_hechos.py`).
+  - La tarjeta de edades ya no se come las preguntas (arq-1e).
+- **Medidas:**
+  - Banco fijo ×3: base 100/120 → **116/120**, 0 invenciones.
+  - Ronda core: p50 3,98 → 3,27 s, −14 % de coste.
+  - El A/B con votos de la ronda core está en el resultado de Coral y en Plan Coral.
+- **Siguiente, en orden:**
+  1. Si Gadea promociona: push y **arq-4, G10 de control** con el flag encendido.
+  2. arq-2a: quitar del prompt del RAG las reglas que ya cumple el código.
+  3. arq-2b: recortar el contexto del RAG.
+  4. arq-2c: retirar ord-7 (puerta del origen), ord-9 y los avisos que cubren los hechos.
+  5. arq-3: validación por código.
+- **arq-0c descartada (Gadea):** se queda Luna, sin compararlo con otros modelos.
+- **Pendiente fuera del redactor:**
+  - «Soy de Medellín» no se lee como colombiano (extracción).
+  - Las recomendaciones («¿qué actividades pueden hacer?») las sigue contestando el RAG.
+- **Cómo medir:**
+  - `reproducir_juez_pre --banco docs/robustness/arq/banco-rag.json --reps 3 --codigo-local --flag hechos_por_codigo`
+    y luego `puntuar_banco_rag --detalle`.
+  - La traza guarda `[HECHOS]`: dice si contestó el redactor, si dijo FALTA o si no pasó las guardas.
+
+### (anterior) RETOMAR AQUÍ — 22-oct, 10:30 (Gadea con Claude): FASE NUEVA ARQ, «el modelo interpreta, el código decide, el modelo redacta»
 
 - **Plan:** `docs/robustness/arq/plan-hechos-por-codigo.md` y fase **ARQ** en Plan Coral (arq-0a a arq-4, en orden).
   Decisión de Gadea (22-oct, 01:00): se deja de arreglar el RAG por capas y se cambia la arquitectura de la respuesta,

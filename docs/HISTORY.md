@@ -1,6 +1,40 @@
 History
 =======
 
+0.31.91 - (2026-10-22)
+----------------------
+* **Fase ARQ, «el modelo interpreta, el código decide, el modelo redacta»** (decisión de Gadea, 22-oct). Plan:
+  `docs/robustness/arq/plan-hechos-por-codigo.md`; diseño: `docs/robustness/arq/diseno-intenciones-y-hechos.md`.
+* **arq-0b, el banco fijo del RAG** (`docs/robustness/arq/banco-rag.json`, 40 diálogos con frases nuestras ×3, y
+  `scripts/puntuar_banco_rag.py`). Es el indicador de la fase; G10 solo al final.
+  - Línea base sobre el código de PRE: 100/120 (83,3 %) y 4 invenciones.
+* **arq-0d:** el 88 % de los fallos de G10 (96 % en G9) está en diálogos con algún mensaje de 2 o más preguntas, pero
+  66 de 72 diálogos los tienen. El redactor contesta todas las intenciones de un mensaje en una sola llamada.
+* **arq-1b, las intenciones las da Jev**, en la llamada de siempre: precio, qué incluye, requisitos, horario,
+  disponibilidad, edad y enlace, más «¿trae algo más?» (`pide_otra_cosa`). Todas cuentan aunque el mensaje pregunte
+  otras cosas. Sonda con 25 frases nuestras: todas con las intenciones justas.
+* **arq-1c, los hechos los saca el código** (`src/flows/hechos.py`): moneda, las dos salidas si no se sabe el origen, la
+  edad en cifra, el asesor para colombianos, cada precio con el nombre de su plan (el base del buceo es el de 2
+  inmersiones también en las islas) y lo que NO incluye (en las islas, de la política de la recogida: sin transporte
+  desde Cartagena ni almuerzo). DIVE TO HEAL va en lo que incluye (sin `_sanitize_includes`, decisión de Gadea).
+* **arq-1d, el redactor de hechos** (`src/agents/redactor_hechos.py`, flag `hechos_por_codigo`, APAGADO).
+  - Si el mensaje solo pide intenciones de la tabla y se sabe la actividad, Luna redacta SOLO con los hechos y el estilo
+    de Coral, sin catálogo, políticas ni las reglas del RAG.
+  - Si los hechos no contestan algo, el redactor dice FALTA y contesta el RAG; lo mismo si se cuela un importe, enlace
+    o teléfono que no está en los hechos.
+  - La pregunta del origen la pone el código (el flujo la reconoce, como en ord-7).
+* **arq-1e:** la tarjeta de edades ya no se come el precio ni lo que incluye: si Jev ve más intenciones que la edad,
+  contesta el redactor.
+* **Política del carné:** también se pide en el refresher y en los cursos para buzos certificados (Advanced, Rescue,
+  Divemaster y especialidades); antes decía solo «salidas de buceo recreativo» y el redactor la descartaba.
+* **Medidas con el flag encendido:**
+  - Banco fijo ×3: 100/120 → **116/120 (96,7 %)**, invenciones 4 → **0**; «varias» 60/60 fragmentos, listas 21/21. Las
+    pasadas intermedias (C-F) dieron 110-115.
+  - Ronda core (A apagado, B2 encendido): turno p50 3,98 → 3,27 s, p95 7,79 → 7,66 s, coste −14 %.
+  - Quedan fuera del redactor: «Soy de Medellín» no se lee como colombiano (extracción) y las recomendaciones
+    («¿qué actividades pueden hacer?») las sigue contestando el RAG.
+* **arq-0c descartada** (Gadea): nos quedamos con Luna, sin compararlo con gpt-5-mini ni gpt-5.4-mini.
+
 0.31.90 - (2026-10-22)
 ----------------------
 * **G10 de control con todo junto (gen-20): plano.** 85,4 % 20/72 (sin desfasados 86,4 % 22/72) frente a 85,6 % 23/72

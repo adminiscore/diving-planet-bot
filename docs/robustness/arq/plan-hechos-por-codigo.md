@@ -36,12 +36,13 @@ cada una y **una sola llamada redacta todo**. No hay N respuestas que juntar.
 |---|---|---|
 | **arq-0a** | Integrar las ramas de Álvaro: mej-1d (13 interruptores menos), ord-3 (la tarifa en pricing.json) y la limpieza del veto (~620 líneas). Son la base limpia. | 1-2 h |
 | **arq-0b** | **Banco fijo del RAG** (~40 preguntas con frases nuestras, de los tipos de fallo de G9/G10: listas, otros datos, invenciones, varias preguntas por mensaje) ×3. Pasa a ser el **indicador del RAG**; G10 solo al final de cada fase. Medir la línea base. | 3-4 h |
-| **arq-0c** | **¿Con los hechos por código basta Luna?** Se hace DESPUÉS de arq-1d (decisión de Gadea, 22-oct): Luna frente a gpt-5-mini, los dos con los hechos por código, en el banco fijo ×3, con omisiones, invenciones, latencia y coste por 100 turnos. Luna es ~7-9 veces más barato que gpt-5.4-mini: si rinden igual, se queda Luna; un modelo caro, como mucho, solo para los turnos difíciles. | 1-2 h |
+| ~~arq-0c~~ | **DESCARTADA (Gadea, 22-oct 12:05):** se queda Luna, sin compararlo con gpt-5-mini ni gpt-5.4-mini. Con los hechos por código da 110-116/120 en el banco fijo ×3 (base 100/120). | — |
 | **arq-0d** | ¿Qué parte de los fallos de G10/G9 cae en mensajes con varias preguntas? Para saber cuánto puede dar la fragmentación. | 1 h |
 | **arq-1a** | **Diseño:** el esquema de intenciones y, para cada una, los hechos que da el código (documento y tests del contrato). | 2 h |
 | **arq-1b** | **Interpretación:** el extractor devuelve la lista de intenciones del turno (con su actividad y plan), con banco propio. | 3-4 h |
 | **arq-1c** | **Constructor de hechos** por código, con las reglas ya aplicadas: precio y variantes (moneda, origen), qué incluye, requisitos y documentos, disponibilidad y horarios, edades, recogida y punto de encuentro. | 4-6 h |
 | **arq-1d** | **Redactor de hechos:** con intenciones cubiertas, el escritor recibe solo los hechos y el estilo (sin el catálogo ni las políticas enteras); lo demás va al RAG de hoy. Detrás de un flag, medido en el banco por intención y con su ronda core. | 4-6 h |
+| **arq-1e** | **La tarjeta de edades no se come las preguntas** (sale de arq-1d: «mi hijo de 12, ¿cuánto cuesta el minicurso, qué incluye y desde qué edad?» solo recibía la tarjeta). Si Jev ve más intenciones que la edad, contesta el redactor. HECHA 22-oct. | 1 h |
 | **arq-2a** | Quitar del prompt del RAG las reglas que ya cumple el código (absorbe ord-1). | 2-3 h |
 | **arq-2b** | Recortar el contexto por intención y usar el estado en vez del historial entero (absorbe mej-9). | 2-3 h |
 | **arq-2c** | Retirar las capas que corrigen el texto después: la puerta del origen con sus variantes (ord-7), la lista añadida (ord-9) y los avisos que cubran los hechos (absorbe ord-8). Menos flags. | 3-4 h |
