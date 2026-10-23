@@ -59,7 +59,24 @@ integrar la rama del otro y suite en verde, porque en PRE gana el último; (3) *
 despliegue reinicia el contenedor y mata la medida del otro (avisar en el registro de Plan Coral con la hora de fin).
 Las doce normas, con su porqué, están en el documento.
 
-### ▶️ RETOMAR AQUÍ — 23-oct, 01:15 (Gadea con Claude): arreglos del G10 nº 4 hechos y SIN PROMOCIONAR; G10 nº 5 = 91,2 % 40/72
+### ▶️ RETOMAR AQUÍ — 24-oct, 00:15 (Gadea con Claude): G10 nº 6 y arq-8 PROMOCIONADOS; real-1 = 94,9 % 82/116
+
+- **PRE sirve `39cd9ec`** (feature/pre_gadea), healthy, 152 ajustes. HISTORY 0.31.98 (G10 nº 6: 8 flags, mej-7 a 300 s,
+  arq-7e y el juez `--paralelo`) y 0.31.99 (arq-8: 7 flags; fuera `discount_policies` de pricing.json).
+- **G10 nº 6:** 94,3 % 46/72 sin los 25 desfasados (nº 5: 92,4 % 42/72); p50 4,97 s, p90 10,28 s.
+- **real-1** (golden completo, 116 diálogos, contra 39cd9ec): **94,9 % 82/116**, frente al 17-oct (calf-completa) 95,8 %
+  86/116. 13 arreglados y 17 rotos. Latencia del cliente: p50 3,0 → 3,5 s, **p90 5,0 → 10,3 s**.
+  - Causas nuevas claras: «¿cómo pago?» sin el enlace (3 diálogos, viene de la intención de pago de
+    `intenciones_clima_pago`), y la repregunta «¿Eres buzo certificado?» (27 respuestas frente a 18).
+  - Tareas real-1a, real-1b y real-1c en Plan Coral; el resto de fallos son sueltos.
+- **No promocionado:** arq-8c (`principiante_sin_buceo_certificado`, no se reproduce). arq-7c (Gonzalo) descartado.
+- **Álvaro:** sim-5 en `feature/sim5-alvaro` (sin subir a pre_gadea): ~94 de 106 flags promocionados ya sin su camino
+  viejo, suite en verde tras cada tanda. Se integra el 24-oct.
+- **Gonzalo:** sesión cerrada. g-3b espera su `SYNTH_CHATWOOT_TOKEN`.
+- **Siguiente (decisión de Gadea, 24-oct):** revisar mejoras y empeoramientos de real-1 frente al 17-oct y elegir el
+  rumbo. Candidatos: real-1a y real-1b (por causa, banco ×3), la latencia (real-1c), integrar sim-5 y g-3b.
+
+### (anterior) RETOMAR AQUÍ — 23-oct, 01:15 (Gadea con Claude): arreglos del G10 nº 4 hechos y SIN PROMOCIONAR; G10 nº 5 = 91,2 % 40/72
 
 - **PRE sirve `229193f`** (flu-1 promocionado, 125 ajustes). **Nada más subido:** por decisión de Gadea (23-oct, 00:20)
   todo lo de la noche está integrado SOLO en local en `feature/pre_gadea` (último `8137f28` + relevo). Lo primero
