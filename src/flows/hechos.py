@@ -28,6 +28,7 @@ from src.flows.catalog import (
     ISLAND_SERVICE_MAP,
     RAW_SERVICES,
     SERVICES,
+    descuentos_de_la_base,
 )
 from src.flows.state import ConversationState
 from src.utils import money
@@ -190,7 +191,7 @@ def hechos(state: ConversationState, intenciones: list[str], actividades: list[s
             bloque["incluye"] = {o: _comunes([_lista(s, "included", lang) for s in sids]) for o, sids in paquetes.items()}
             no_incluye = {o: _comunes([_lista(s, "not_included", lang) for s in sids]) for o, sids in paquetes.items()}
             if "island" in paquetes:
-                no_incluye["island"] = [*no_incluye.get("island", []), _politica("island_pickup", lang)]
+                no_incluye["island"] = [*no_incluye.get("island", []), _no_incluyen_las_islas(lang)]
             bloque["no_incluye"] = {o: [x for x in v if x] for o, v in no_incluye.items() if any(v)}
             bloque["paquetes"] = {o: [_nombre(s, lang) for s in sids] for o, sids in paquetes.items()}
         elif "incluye" in pedidas:
@@ -200,9 +201,15 @@ def hechos(state: ConversationState, intenciones: list[str], actividades: list[s
             # islas se quedaba sin contestar (banco arq-1d, v2).
             no_incluye = _por_origen(actividad, origenes, lambda sid: _lista(sid, "not_included", lang), elegido)
             if "island" in origenes and _plan_base(actividad, "island", elegido):
-                no_incluye["island"] = [*no_incluye.get("island", []), _politica("island_pickup", lang)]
+                no_incluye["island"] = [*no_incluye.get("island", []), _no_incluyen_las_islas(lang)]
             if no_incluye:
                 bloque["no_incluye"] = no_incluye
+            if settings.incluye_lo_que_se_hace and "horario" not in pedidas:
+                # arq-8d: lo que se hace (la clase, la piscina, la inmersión) es lo que el cliente espera oír con «¿qué
+                # incluye?», y en la ficha está en el itinerario; con el horario ya va (sin repetirlo).
+                que_se_hace = _por_origen(actividad, origenes, lambda sid: _lista(sid, "itinerary", lang), elegido)
+                if que_se_hace:
+                    bloque["en_que_consiste"] = que_se_hace
         if "requisitos" in pedidas:
             requisitos: list[str] = []
             sid = _plan_base(actividad, origen or "cartagena", elegido)
@@ -255,7 +262,8 @@ def hechos(state: ConversationState, intenciones: list[str], actividades: list[s
             # Cómo se llega según el origen (G10 de control, 22-oct: «no aclara que en Cartagena no se recoge en el
             # hotel», «no dice que el regreso está incluido sin cargo», «falta "a 5 minutos del centro"»).
             recogida = {o: [_politica("meeting_point", lang)] if o == "cartagena"
-                        else [_politica("island_pickup_free", lang)]
+                        else [_politica("island_pickup_free", lang), *_coordinacion_en_las_islas(lang),
+                              *_sin_almuerzo_en_las_islas(lang, pedidas)]
                         for o in origenes if _plan_base(actividad, o, elegido)}
             bloque["recogida"] = {o: [x for x in v if x] for o, v in recogida.items() if any(v)}
         if {"precio", "incluye", "horario", "requisitos"} & set(pedidas):
@@ -353,16 +361,19 @@ def _descuentos(state: ConversationState, lang: str) -> list[str]:
     """arq-4b (flag `descuentos_en_la_tabla`): los descuentos con sus condiciones, tal cual de discounts.json (online,
     grupo, equipo propio y que no hay descuento por ser colombiano). Son los mismos para todas las actividades: cada uno
     dice a qué aplica."""
-    datos = json.loads(_DISCOUNTS.read_text(encoding="utf-8-sig")).get("discounts", {})
-    claves = ("online_direct_booking", "group_discount", "own_equipment_discount", "colombian_cop_pricing")
-    # arq-8a (G10 nº 6, g10-043): «mi pareja es colombiana y yo extranjera, ¿hay descuento?» llevaba «los colombianos
-    # pagan en COP» y no la regla del grupo mixto (esa solo iba con el precio): «tu pareja paga en pesos y tú en dólares».
-    # En un grupo mixto, la regla de la moneda es la suya, como en `regla_moneda`.
-    mixto = settings.grupo_mixto_en_descuentos and getattr(state, "mixed_nationality_notice", False)
-    lista = [_politica("mixed_nationality_group", lang) if mixto and c == "colombian_cop_pricing"
-             else (datos.get(c) or {}).get(f"description_{lang}") or (datos.get(c) or {}).get("description_es")
-             for c in claves]
-    return [x for x in lista if x]
+    if settings.descuentos_un_sitio:  # arq-8h: de la función del catálogo, con la nota del acompañante
+        textos = descuentos_de_la_base(lang)
+    else:
+        datos = json.loads(_DISCOUNTS.read_text(encoding="utf-8-sig")).get("discounts", {})
+        claves = ("online_direct_booking", "group_discount", "own_equipment_discount", "colombian_cop_pricing")
+        textos = {c: (datos.get(c) or {}).get(f"description_{lang}") or (datos.get(c) or {}).get("description_es")
+                  for c in claves}
+    if settings.grupo_mixto_en_descuentos and getattr(state, "mixed_nationality_notice", False):
+        # arq-8a (G10 nº 6, g10-043): «mi pareja es colombiana y yo extranjera, ¿hay descuento?» llevaba «los
+        # colombianos pagan en COP» y no la regla del grupo mixto (esa solo iba con el precio): «tu pareja paga en pesos y
+        # tú en dólares». En un grupo mixto, la regla de la moneda es la suya, como en `regla_moneda`.
+        textos = {**textos, "colombian_cop_pricing": _politica("mixed_nationality_group", lang)}
+    return [x for x in textos.values() if x]
 
 
 def hechos_sin_actividad(state: ConversationState, intenciones: list[str]) -> list[dict]:
@@ -414,6 +425,42 @@ def _sale_de_baru(lang: str) -> str | None:
         return None
     frase = texto[corte:].strip()
     return frase[0].upper() + frase[1:]
+
+
+# arq-8d/8e (23-oct; G10 nº 6): `island_pickup` junta tres cosas: cómo se coordina la recogida, lo que esos planes no
+# incluyen y que Barú no es de las islas. Se corta por sus frases (el texto de la base, sin cambiarlo; la política entera
+# la siguen usando el índice del RAG, los avisos y las preguntas de la base).
+_CORTE_NO_INCLUYEN = {"es": "Estos planes manejan", "en": "These plans have"}
+_CORTE_SOLO_ISLAS = {"es": "La recogida es solo", "en": "Pick-up is only"}
+
+
+def _partes_de_la_recogida(lang: str) -> tuple[str, str] | None:
+    """(cómo se coordina la recogida, lo que no incluyen los planes de las islas), o None si la política cambió."""
+    texto = _politica("island_pickup", lang) or ""
+    a, b = texto.find(_CORTE_NO_INCLUYEN[lang]), texto.find(_CORTE_SOLO_ISLAS[lang])
+    if a <= 0 or b <= a:
+        return None
+    return texto[:a].strip(), texto[a:b].strip()
+
+
+def _no_incluyen_las_islas(lang: str) -> str | None:
+    """arq-8d: con el flag, solo la frase de lo que no incluyen; sin él (o si la política cambió), la política entera."""
+    partes = _partes_de_la_recogida(lang) if settings.incluye_lo_que_se_hace else None
+    return partes[1] if partes else _politica("island_pickup", lang)
+
+
+def _sin_almuerzo_en_las_islas(lang: str, pedidas: list[str]) -> list[str]:
+    """arq-8d: con «incluye», la frase de que los planes de las islas no incluyen transporte desde Cartagena ni almuerzo
+    va también con la recogida, que la pone el código entera (banco arq-8, B: con `no_incluye` solo, el redactor no la
+    decía en 9 de 9, porque `no_incluye` solo se cuenta si el cliente pregunta por algo concreto)."""
+    partes = _partes_de_la_recogida(lang) if settings.incluye_lo_que_se_hace and "incluye" in pedidas else None
+    return [partes[1]] if partes else []
+
+
+def _coordinacion_en_las_islas(lang: str) -> list[str]:
+    """arq-8e: las frases de cómo se coordina la recogida en las islas (con el flag)."""
+    partes = _partes_de_la_recogida(lang) if settings.recogida_se_coordina else None
+    return [partes[0]] if partes else []
 
 
 def _bucea(actividad: str | None) -> bool:
@@ -575,8 +622,8 @@ def faltan(answer: str, bloques: list[dict], intenciones: list[str]) -> list[str
         if "enlace" in intenciones or "disponibilidad" in intenciones:
             perdidos += [u for u in (b.get("enlace") or {}).values()
                          if isinstance(u, str) and _url_sin_parametros(u) not in answer]
-        for intencion in ("incluye", "requisitos", "descuento"):
-            if intencion not in intenciones:
+        for intencion in ("incluye", "requisitos", "descuento", "en_que_consiste"):
+            if (intencion if intencion != "en_que_consiste" else "incluye") not in intenciones:
                 continue
             listas = b.get(intencion) or {}
             for elemento in dict.fromkeys(e for lista in (listas.values() if isinstance(listas, dict) else [listas])

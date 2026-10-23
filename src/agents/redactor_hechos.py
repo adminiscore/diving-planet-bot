@@ -161,6 +161,13 @@ def _mensajes(lang: str, history: list[dict], message: str, texto_hechos: str) -
             )
 
             system += REDACTOR_FRASES_POR_CODIGO_ES if lang == "es" else REDACTOR_FRASES_POR_CODIGO_EN
+        if settings.incluye_lo_que_se_hace:  # arq-8d
+            from src.prompts.info import (  # lazy
+                REDACTOR_EN_QUE_CONSISTE_EN,
+                REDACTOR_EN_QUE_CONSISTE_ES,
+            )
+
+            system += REDACTOR_EN_QUE_CONSISTE_ES if lang == "es" else REDACTOR_EN_QUE_CONSISTE_EN
     if settings.dos_monedas_sin_nacionalidad:
         from src.prompts.info import REDACTOR_DOS_MONEDAS_EN, REDACTOR_DOS_MONEDAS_ES  # lazy
 
@@ -206,6 +213,11 @@ _ROTULO_DEL_ORIGEN = {"es": {"cartagena": "Desde Cartagena", "island": "Si ya es
                       "en": {"cartagena": "From Cartagena", "island": "If you're already on the Rosario Islands"}}
 
 
+def _listas_del_codigo() -> tuple[str, ...]:
+    """arq-8d: con `incluye_lo_que_se_hace`, también lo que se hace en la actividad (va con «incluye»)."""
+    return (*_LISTAS_DEL_CODIGO, "en_que_consiste") if settings.incluye_lo_que_se_hace else _LISTAS_DEL_CODIGO
+
+
 def _en_vinetas(valor, lang: str) -> str:
     """Una lista del dato en viñetas «•»; si viene por origen y hay dos, cada una con su rótulo en negrita."""
     if isinstance(valor, dict):
@@ -218,23 +230,69 @@ def _en_vinetas(valor, lang: str) -> str:
 def _poner_listas(answer: str, bloques: list[dict], intenciones: list[str], lang: str) -> str:
     """Cambia cada marca «[[campo]]» por la lista entera del dato. Si el modelo no dejó la marca y tampoco escribió la
     lista (arq-3 ve que faltan sus puntos), la lista va al final; si la escribió él, se queda la suya."""
-    for campo in _LISTAS_DEL_CODIGO:
-        if campo not in intenciones:
+    for campo in _listas_del_codigo():
+        if (campo if campo != "en_que_consiste" else "incluye") not in intenciones:
             continue
         piezas = [(b, _en_vinetas(b.get(campo), lang)) for b in bloques]
         piezas = [(b, t) for b, t in piezas if t]
         if not piezas:
             continue
-        texto = "\n\n".join((f"*{b.get('nombre')}*\n" if len(piezas) > 1 and b.get("nombre") else "") + t
-                            for b, t in piezas)
+        if settings.listas_una_vez:
+            texto = _una_vez(piezas)
+        else:
+            texto = "\n\n".join((f"*{b.get('nombre')}*\n" if len(piezas) > 1 and b.get("nombre") else "") + t
+                                for b, t in piezas)
         marca = f"[[{campo}]]"
         if marca in answer:
             answer = answer.replace(marca, texto, 1).replace(marca, "")
-        elif hechos_mod.faltan(answer, [{campo: b.get(campo)} for b, _ in piezas], [campo]):
+        elif hechos_mod.faltan(answer, [{campo: b.get(campo)} for b, _ in piezas],
+                               ["incluye" if campo == "en_que_consiste" else campo]):
             answer = f"{answer.rstrip()}\n\n{texto}"
     if settings.frases_por_codigo:
         answer = _poner_frases(answer, bloques, lang)
+    if settings.listas_una_vez:
+        answer = _sin_rotulos_sueltos(answer, lang)
     return _sin_marcas(answer)
+
+
+def _una_vez(piezas: list[tuple[dict, str]]) -> str:
+    """arq-8f: la lista que sale igual en varias actividades va una vez, con el nombre de todas ellas; si es igual en
+    todas, sin nombre (G10 nº 6: los descuentos ×5 en las cinco especialidades)."""
+    grupos: dict[str, list[str]] = {}
+    for b, t in piezas:
+        grupos.setdefault(t, []).append(b.get("nombre") or "")
+    if len(grupos) == 1:
+        return next(iter(grupos))
+    return "\n\n".join((f"*{', '.join(n for n in nombres if n)}*\n" if any(nombres) else "") + t
+                       for t, nombres in grupos.items())
+
+
+def _rotulo_solo(linea: str, lang: str) -> bool:
+    """¿La línea es solo un rótulo de origen («*Desde Cartagena*», «*From Cartagena:*»), sin nada detrás?"""
+    limpia = linea.strip().strip("*").strip().rstrip(":").strip("*").strip()
+    return limpia.lower() in {r.lower() for r in _ROTULO_DEL_ORIGEN[lang].values()}
+
+
+def _sin_rotulos_sueltos(answer: str, lang: str) -> str:
+    """arq-8f (#1631; arq-7e, 2 de 98 respuestas): el modelo escribe su rótulo de origen justo antes de la marca y el
+    código pone el suyo (rótulo doble), o queda un rótulo sin nada debajo. Fuera el rótulo solo en su línea si lo que
+    sigue es otro rótulo, una línea en blanco o el final."""
+    lineas = answer.split("\n")
+    fuera = set()
+    for i, linea in enumerate(lineas):
+        if not _rotulo_solo(linea, lang):
+            continue
+        siguiente = lineas[i + 1] if i + 1 < len(lineas) else ""
+        if not siguiente.strip() or _empieza_por_rotulo(siguiente, lang):
+            fuera.add(i)
+    if not fuera:
+        return answer
+    return re.sub(r"\n{3,}", "\n\n", "\n".join(x for i, x in enumerate(lineas) if i not in fuera)).strip()
+
+
+def _empieza_por_rotulo(linea: str, lang: str) -> bool:
+    cabeza = linea.strip().lstrip("*").lower()
+    return any(cabeza.startswith(r.lower()) for r in _ROTULO_DEL_ORIGEN[lang].values())
 
 
 # G10 nº 6: con el enlace, los hechos traen `descuento_online` y no la lista `descuento` (no se preguntó por descuentos);
@@ -263,6 +321,8 @@ def _poner_frases(answer: str, bloques: list[dict], lang: str) -> str:
             texto = "\n\n".join(dict.fromkeys(valores))
         else:
             partes = [(o, frases) for v in valores for o, frases in v.items() if frases]
+            if settings.listas_una_vez:  # arq-8f: el punto de encuentro una vez, no una por actividad
+                partes = list(dict.fromkeys((o, tuple(f)) for o, f in partes))
             texto = "\n\n".join((f"*{_ROTULO_DEL_ORIGEN[lang].get(o, o)}:* " if len(partes) > 1 else "")
                                 + " ".join(frases) for o, frases in partes)
         marca = f"[[{campo}]]"

@@ -29,6 +29,16 @@ def test_en_un_grupo_mixto_el_descuento_lleva_la_regla_del_grupo(monkeypatch, la
     assert len(b["descuento"]) == 4  # online, grupo y equipo propio siguen
 
 
+def test_con_los_descuentos_en_un_sitio_tambien(monkeypatch):
+    """arq-8h (Álvaro): con `descuentos_un_sitio` la lista sale del catálogo; la regla del grupo mixto se aplica igual."""
+    monkeypatch.setattr(settings, "grupo_mixto_en_descuentos", True)
+    monkeypatch.setattr(settings, "descuentos_un_sitio", True)
+    [b] = h.hechos(_conv(mixed_nationality_notice=True), ["descuento"], ["snorkel"])
+    texto = " ".join(b["descuento"])
+    assert "toda la reserva del grupo se paga en dólares" in texto and "pagan en pesos" not in texto
+    assert len(b["descuento"]) == 4
+
+
 def test_sin_actividad_tambien(monkeypatch):
     monkeypatch.setattr(settings, "grupo_mixto_en_descuentos", True)
     [b] = h.hechos_sin_actividad(_conv(mixed_nationality_notice=True), ["descuento"])

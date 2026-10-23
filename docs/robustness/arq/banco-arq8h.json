@@ -1,0 +1,59 @@
+{
+ "about": "arq-8h (23-oct, decisión de Álvaro por Gadea, #1634): descuentos en un solo sitio (discounts.json) y la nota del acompañante (lo confirma el equipo al pedir el descuento). Frases nuestras (no salen de G9/G10). Con --codigo-local se mide lo que leen el catálogo y los hechos; el índice del RAG solo cambia al reindexar (lo prueban los tests). Control: el descuento online, que no cambia.",
+ "dialogos": [
+  {
+   "id": "g1-grupo-con-acompanantes-es",
+   "tipo": "grupo",
+   "turnos": [
+    "Somos seis: cuatro vamos a bucear y dos solo vienen en la lancha a acompañar. ¿Hay algún descuento de grupo?"
+   ],
+   "todas": [
+    "5 personas|5 o mas|cinco",
+    "antes de pagar",
+    "acompa"
+   ]
+  },
+  {
+   "id": "g2-grupo-con-acompanante-en",
+   "tipo": "grupo",
+   "turnos": [
+    "There are seven of us for snorkeling and my mom will just ride along on the boat. Do you give a group discount?"
+   ],
+   "todas": [
+    "5 or more|five or more",
+    "before paying",
+    "companion|rides the boat|ride along"
+   ]
+  },
+  {
+   "id": "g3-equipo-minicurso-es",
+   "tipo": "equipo",
+   "turnos": [
+    "Tengo mi propio equipo completo de buceo. ¿Me hacen descuento en el minicurso si lo llevo?"
+   ],
+   "todas": [
+    "no aplica|no se aplica|no tiene descuento|no hay descuento"
+   ]
+  },
+  {
+   "id": "g4-equipo-snorkel-en",
+   "tipo": "equipo",
+   "turnos": [
+    "If I bring my own full gear, is there a discount for the snorkeling tour?"
+   ],
+   "todas": [
+    "does not apply|doesn't apply|not apply|no discount"
+   ]
+  },
+  {
+   "id": "c1-online",
+   "tipo": "control",
+   "turnos": [
+    "¿Tienen descuento si reservo por la página web?"
+   ],
+   "todas": [
+    "10"
+   ]
+  }
+ ]
+}
