@@ -390,9 +390,6 @@
         "Fase EX: extractor_turno.extraer_turno (LLM primero, cita comprobada)"
       ],
       "interruptores": [
-        "idioma_otro_en_ingles",
-        "extractor_aclaraciones",
-        "extractor_todo_lo_dicho",
         "extractor_cita_del_cliente",
         "hotel_por_extractor",
         "lugar_con_dos_lectores",
@@ -405,8 +402,6 @@
         "reserva_de_hotel_no_es_nuestra",
         "referido_no_pregunta_nivel",
         "pago_colombiano_con_asesor",
-        "est4_flujo",
-        "jev_pide_algo",
         "duracion_por_extractor",
         "edades_por_extractor",
         "reparto_al_sumarse_alguien",
@@ -448,11 +443,8 @@
         "certificado_solo_si_lo_dice",
         "precio_no_elige",
         "tarjeta_sin_seguridad",
-        "aplazar_pregunta_sin_respuesta",
-        "recomendar_a_certificados",
         "recomendar_a_no_certificados",
         "resolutor_sin_contradicciones",
-        "acuse_solo_el_mensaje",
         "acuse_en_su_numero",
         "actividad_de_la_pregunta",
         "sin_certificacion_no_hace_falta",
@@ -527,9 +519,7 @@
       "titulo": "Textos fijos y atajos",
       "que_hace": "Bloquea datos personales y contesta con texto fijo lo que ya tiene respuesta cerrada (políticas, vista general del buceo).",
       "donde": "src/agents/info_agent.py:info_node",
-      "interruptores": [
-        "atajo_alergia_por_rag"
-      ]
+      "interruptores": []
     },
     {
       "id": "r_reescribir",
@@ -585,8 +575,6 @@
       "que_hace": "El catálogo entero va siempre en las instrucciones del bot y en las del revisor.",
       "donde": "src/flows/catalog.py:catalog_facts",
       "interruptores": [
-        "rag_politicas_en_contexto",
-        "est2_datos",
         "catalogo_profundidad",
         "catalogo_preparacion"
       ]
@@ -638,7 +626,6 @@
       "interruptores": [
         "origen_dos_variantes",
         "origen_sin_titulo_suelto",
-        "rag_no_supone_reserva",
         "rag_no_adivina",
         "abre_con_la_respuesta",
         "sin_genero_supuesto",
@@ -1171,11 +1158,6 @@
       "titulo": "La respuesta se redacta sin azar (temperatura 0)",
       "texto": "La misma pregunta con el mismo contexto da siempre la misma respuesta. En el examen ex-10, 18 de los 56 fallos del RAG eran azar: unas veces lo decía y otras no."
     },
-    "atajo_alergia_por_rag": {
-      "area": "Respuestas fijas",
-      "titulo": "La alergia a un alimento la contesta el RAG",
-      "texto": "Sin el texto fijo de la política de comida (salvo si el mensaje también habla de alcohol): la FAQ de vegetarianos y alergias lo cubre. Sigue sin pasar al aviso médico."
-    },
     "formato_whatsapp": {
       "area": "Chat",
       "titulo": "Formato de WhatsApp",
@@ -1190,21 +1172,6 @@
       "area": "Enrutador",
       "titulo": "Jev reconoce una pregunta de precio de cualquier actividad",
       "texto": "La pregunta de Jev «¿pide el precio?» nombra las actividades del centro (salidas y paquetes, minicurso o refresher, snorkel, cursos y especialidades). Sin eso, «¿Cuánto cuesta el snorkel?» no contaba como pregunta de precio, no se preguntaba el origen y se cotizaba Cartagena sin saberlo (ord-7, 21-oct)."
-    },
-    "extractor_aclaraciones": {
-      "area": "Reserva",
-      "titulo": "El extractor entiende las negaciones",
-      "texto": "El extractor de la fase EX lee primero las negaciones del lugar: 'sin ir de Cartagena' quiere decir que NO sale de Cartagena (antes lo leía como Cartagena)."
-    },
-    "jev_pide_algo": {
-      "area": "Reserva",
-      "titulo": "Una petición también se contesta",
-      "texto": "El enrutador (Jev) cuenta como algo que contestar una petición escrita como orden, sin interrogación: 'dame la cuenta y transfiero', 'send me the payment link', 'full name of the dive center'. Antes recibían la pregunta de la reserva o la respuesta fija de posventa."
-    },
-    "est4_flujo": {
-      "area": "Reserva",
-      "titulo": "Arreglos del flujo de la tanda est5",
-      "texto": "Lo que el cliente dice en el mensaje que se pasa a una persona ya no se pierde: si dijo que se aloja en un hotel de las islas, el bot no le vuelve a preguntar desde dónde sale."
     },
     "sin_cedula_extranjero": {
       "area": "Reserva",
@@ -1261,20 +1228,10 @@
       "titulo": "Aceptar la propuesta del bot cuenta",
       "texto": "Cuando el cliente acepta el plan que le propone el bot ('nos gusta'), el extractor lo apunta aunque cite el texto de la propuesta del bot (antes el control antiinventos lo tiraba)."
     },
-    "extractor_todo_lo_dicho": {
-      "area": "Reserva",
-      "titulo": "El extractor entiende mejor grupo, aceptación y residencia",
-      "texto": "Arreglos del extractor de la fase EX: 'Un solo buzo avanzado' con la actividad ya elegida da el número de personas (antes el bot preguntaba '¿cuántas personas?' varias veces), 'con mi amigo' cuenta 2, aceptar la opción que propone el bot es elegirla y la cédula de extranjería es ser residente (paga en COP)."
-    },
     "juez_revisa_con_cita": {
       "area": "Preguntas",
       "titulo": "El revisor pide la cita antes de rechazar",
       "texto": "Cuando el revisor de las respuestas del RAG rechaza una frase, se le pide la cita literal de la base que la respalda; si la trae (y sus cifras y enlaces están en la base), la respuesta pasa. Antes rechazaba respuestas correctas y la que se regeneraba salía peor."
-    },
-    "est2_datos": {
-      "area": "Preguntas",
-      "titulo": "Datos que el RAG decía mal",
-      "texto": "Siempre hay disponibilidad (decisión del negocio): Coral ya no dice 'no puedo confirmar cupos'. Si lo que pide el cliente encaja con varios planes (un paquete de 2 días: 4 o 5 inmersiones), los nombra todos. Y la pregunta del origen solo dice 'ida y vuelta el mismo día' si se sabe que el plan es de un día."
     },
     "actividad_de_la_pregunta": {
       "area": "Reserva",
@@ -1285,16 +1242,6 @@
       "area": "Reserva",
       "titulo": "El acuse habla en singular a quien va solo",
       "texto": "La frase de acuse ('Entendido, …') repite el dato con las palabras y el número del cliente: a quien dice 'I'm not Colombian' le contesta 'you're not Colombian', no 'none of you are Colombian'."
-    },
-    "acuse_solo_el_mensaje": {
-      "area": "Reserva",
-      "titulo": "El acuse no se inventa nada",
-      "texto": "La frase corta con la que Coral reconoce lo que dijo el cliente ('Entendido, …') solo repite lo que dice el mensaje: ya no convierte una fecha en 'tu reserva' ni un 'gracias' en 'tu actividad de Advanced'."
-    },
-    "recomendar_a_certificados": {
-      "area": "Reserva",
-      "titulo": "A un buzo certificado le recomienda sus opciones",
-      "texto": "Si el cliente ya dijo que es buzo certificado y no ha elegido actividad, Coral le propone la salida de 2 inmersiones, los paquetes de varios días o un curso avanzado, en vez del menú entero con minicurso y snorkel (regla de Gadea: recomendar según el contexto)."
     },
     "recomendar_a_no_certificados": {
       "area": "Reserva",
@@ -1376,35 +1323,15 @@
       "titulo": "Una respuesta que se contradice no fija el dato",
       "texto": "Si a la pregunta del bot el cliente contesta algo que se contradice (\"sí… bueno, en realidad no\" a ¿eres buzo certificado?), Coral no da el dato por sabido: vuelve a preguntar en vez de adivinar."
     },
-    "aplazar_pregunta_sin_respuesta": {
-      "area": "Reserva",
-      "titulo": "No repite la pregunta que el cliente no contestó",
-      "texto": "Si el cliente no contesta una pregunta de la reserva (origen, cuántos, última inmersión, nacionalidad…), Coral no la repite en el turno siguiente: sigue con lo que falta y la vuelve a hacer justo antes del resumen (decisión de Gadea, 14-oct)."
-    },
     "rag_sin_hora": {
       "area": "Preguntas",
       "titulo": "El RAG no supone la hora",
       "texto": "Regla del RAG: no sabe la fecha ni la hora de hoy, así que no dice 'ya pasó esa hora' ni 'todavía estás a tiempo' con el cierre de las 4:30; da la regla completa."
     },
-    "rag_no_supone_reserva": {
-      "area": "Preguntas",
-      "titulo": "No da por hecho lo que el cliente no dijo",
-      "texto": "Si el cliente habla de su reserva sin decir qué servicio tiene, Coral no lo adivina ('tu paquete de 3 inmersiones'): contesta con la información general y, si hace falta, le pregunta."
-    },
     "rag_no_adivina": {
       "area": "Preguntas",
       "titulo": "No adivina ningún dato del cliente",
       "texto": "La regla anterior ampliada a todo lo que el cliente no ha dicho: desde dónde sale, su nacionalidad (el país desde el que escribe no la dice), si está certificado, cuántos son y las fechas. Coral contesta con la información general y, si la respuesta depende de ese dato, lo pregunta."
-    },
-    "rag_politicas_en_contexto": {
-      "area": "Preguntas",
-      "titulo": "Las políticas siempre a mano",
-      "texto": "Las políticas del negocio (equipaje, recogida, idiomas de instrucción, cambios…) van siempre enteras en el contexto del RAG, como el catálogo. Antes dependían de que la búsqueda las encontrara y en un mensaje largo podían quedarse fuera."
-    },
-    "idioma_otro_en_ingles": {
-      "area": "Reserva",
-      "titulo": "Otro idioma: contesta en inglés",
-      "texto": "Coral atiende en español e inglés. Si el cliente escribe en otro idioma (portugués, francés…), contesta en inglés. Unas palabras sueltas de otro idioma dentro de un mensaje en español no cambian el idioma. Lo dice el extractor de la fase EX, en la misma llamada."
     },
     "origen_dos_variantes": {
       "area": "Preguntas",

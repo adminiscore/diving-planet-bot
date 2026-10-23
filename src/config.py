@@ -52,60 +52,14 @@ class Settings(BaseSettings):
     # 2 colas de 4-5 s en 47 turnos de reserva (p50 1,14 s, p90 1,67 s); gpt-5.4-mini es de OpenAI (otro proveedor).
     extractor_respaldo_modelo: str = "gpt-5.4-mini"  # ENCENDIDO 18-oct con mod-F (HISTORY 0.31.56); revert = ""
     extractor_respaldo_segundos: float = 2.0
-    # G-10 (decision de Gadea, 14-oct): el bot atiende en espanol e ingles; si el cliente escribe en OTRO idioma
-    # (portugues, frances...) contesta en INGLES. El idioma principal del mensaje lo dice el extractor de la fase EX
-    # (misma llamada, sin coste); unas palabras sueltas de otro idioma no cuentan. conversational_core.
-    # _otro_idioma_en_ingles. PROMOCIONADO 14-oct (HISTORY 0.31.22: g10-A/B 89,8 -> 91,2 %). Revert = False aqui y en el compose.
-    idioma_otro_en_ingles: bool = True
-    # EX-RAG-1 (aprobado por Gadea el 14-oct para medir): las politicas del negocio enteras van SIEMPRE en el contexto
-    # del RAG, como el catalogo (prefijo fijo, cacheable; ~2.000 tokens). El RAG no recuperaba la de equipaje en un
-    # mensaje largo. rag_agent (bloque del catalogo). PROMOCIONADO 14-oct (HISTORY 0.31.22: g10-A/B 89,8 -> 91,2 %). Revert = False aqui y en el compose.
-    rag_politicas_en_contexto: bool = True
-    # EX-RAG-2 (14-oct): regla del RAG: no atribuir al cliente un servicio o una reserva que no dijo ('For the 3-dive
-    # package...' a quien solo dijo que dormia en la isla). rag_agent.build_system_prompt. PROMOCIONADO 14-oct (HISTORY 0.31.22: g10-A/B 89,8 -> 91,2 %).
-    # Revert = False aqui y en el compose.
-    rag_no_supone_reserva: bool = True
     # 18-oct (decision de Gadea: no adivinar nada que el cliente no haya dicho): la regla de EX-RAG-2 ampliada a origen,
     # nacionalidad, certificacion, cuantos son y fechas; la sustituye. Fallos estables de CAL-F (zona RAG).
     # rag_agent.build_system_prompt, prompts/info.RAG_NO_ADIVINA_*. APAGADO.
     rag_no_adivina: bool = True  # PROMOCIONADO 18-oct (mod-E, HISTORY 0.31.55); revert = False
-    # EX-FLUJO-1 (decision de Gadea, 14-oct, opcion 2): si el cliente no contesta una pregunta de la reserva, no se
-    # repite en el turno siguiente: se aplaza y vuelve justo antes del resumen. Solo las preguntas de datos que no
-    # condicionan a otras (origen, hotel, cuantos, ultima inmersion, refresher, edades, nacionalidad).
-    # conversational_core._siguiente_pregunta. PROMOCIONADO 14-oct (HISTORY 0.31.23; se aplaza a la TERCERA vez). Revert = False aqui y en el compose.
-    aplazar_pregunta_sin_respuesta: bool = True
-    # EX-EXTRACTOR-1 (14-oct): la regla de la ubicacion del extractor con la NEGACION primero ('sin ir de Cartagena' =
-    # no sale de Cartagena: 0 -> 10/10, sin mover otros campos). La primera version (un bloque de aclaraciones al final,
-    # ronda flujo1-B) movia otros campos y se cambio. extractor_turno.UBICACION_NEGACION_*. PROMOCIONADO 14-oct (HISTORY 0.31.23).
-    # Revert = False aqui y en el compose.
-    extractor_aclaraciones: bool = True
-    # EX-EST-2 (14-oct): arreglos del prompt del extractor por causa (est3-B), version v3 tras la ronda est4-B: (1) la
-    # cita siempre del cliente, nunca del bot ni de 'Lo que ya sabemos'; aceptar la opcion que propone el bot es elegirla;
-    # (2) 'un solo buzo', 'dos adultos' en los ejemplos del grupo ('Un solo buzo avanzado' con la actividad sabida 0 ->
-    # 10/10); (3) el ejemplo 'quiero bucear con mi amigo' (no elige actividad) ya no le quita el grupo (8 -> 10/10);
-    # (4) la cedula de extranjeria es ser residente (0 -> 8/8 COP). La v1 ('extrae todo aunque ya se sepa') rompia las
-    # respuestas cortas ('Frances' a la nacionalidad 4/8 -> 0/8, regresion de est4-B) y repetia lo sabido.
-    # Banco ex0 3 pasadas (v3): aciertos 91,8 % (igual), casos con invento 5 -> 3, peor caso 89,3 -> 91,0 %.
-    # extractor_turno.TODO_LO_DICHO_*, GRUPO_*, ACTIVIDAD_EJEMPLOS_*, RESIDENTE_*, ELIGE_*. Ronda est5-B: arregla la repregunta
-    # de 'Frances'; ninguna regresion suya. PROMOCIONADO 15-oct (HISTORY 0.31.29).
-    # Revert = False aqui y en el compose.
-    extractor_todo_lo_dicho: bool = True
     # CAL-C2 (16-oct): aceptar lo que propone el bot ("nos gusta") se citaba con el texto del BOT y la comprobación
     # de la cita lo descartaba; ahora, para la actividad, vale una cita que esté en la última pregunta del bot.
     # APAGADO hasta medirlo.
     extractor_cita_del_cliente: bool = True  # PROMOCIONADO 17-oct (CAL-C, ronda core calc-A/B; decisión de Álvaro)
-    # EX-EST-2 (14-oct, tanda est5): arreglos del flujo por causa. (1) Lo que el cliente dice en el turno que acaba en
-    # el pase a una persona se guarda (antes la extraccion se cancelaba: 'staying at the Ubuntu Hotel' y luego 'Where will
-    # you be joining us from?'). conversational_core.guardar_lo_dicho_en_el_pase. Ronda est5-B: sin regresiones suyas.
-    # PROMOCIONADO 15-oct (HISTORY 0.31.29).
-    # Revert = False aqui y en el compose.
-    est4_flujo: bool = True
-    # EX-EST-2 (15-oct): la señal de Jev "¿hay algo que CONTESTAR?" (`asks_question`) cuenta también las peticiones en
-    # imperativo ('dame la cuenta y transfiero', 'send me the payment link', 'Full name of dive center…'): antes no
-    # llegaban al RAG. Banco de 257 mensajes: ve 140 -> 146/157, falsas alarmas 3 -> 5/100. jev_router._ASKS_QUESTION_Q_V2.
-    # Ronda est6-B: 'dame la cuenta y transfiero' ya se contesta (forma de pago). PROMOCIONADO 15-oct (HISTORY 0.31.31).
-    # Revert = False aqui y en el compose.
-    jev_pide_algo: bool = True
     # EX-EST-2 (15-oct): regla del RAG: no sabe la fecha ni la hora de hoy ('ya pasó esa hora', 'como todavía estás a
     # tiempo' sobre el cierre de las 4:30, rondas est4-B/est5-B). prompts/info.RAG_SIN_HORA_*. DESCARTADO 15-oct (APAGADO):
     # en est6-B el RAG, sin fecha, calculo igual que 'desde el 3 de abril de 2025 ya pasaron mas de dos años' (falso).
@@ -119,11 +73,6 @@ class Settings(BaseSettings):
     # (sin ella 0/30), porque una cita real que respalda solo PARTE de la frase la daba por buena ("en un grupo mixto
     # los colombianos pagan en pesos" con la cita "pagan en pesos los colombianos"). Sin la cita: 0/30 rechazos injustos.
     juez_revisa_con_cita: bool = False
-    # EX-EST-2 (14-oct): a quien ya dijo que es buzo certificado y no ha elegido actividad se le recomiendan SUS opciones
-    # (salida de 2 inmersiones, paquetes, curso avanzado) en vez del menu entero con minicurso y snorkel (regla de
-    # Gadea: recomendar segun el contexto). conversational_core.ask_slot. PROMOCIONADO 14-oct (HISTORY 0.31.24).
-    # Revert = False aqui y en el compose.
-    recomendar_a_certificados: bool = True
     # 18-oct (ronda mod-F): el simétrico para quien NO es certificado y no ha elegido: minicurso, snorkel o Open Water en
     # vez del menú entero (que ofrece "buceo", solo para certificados). conversational_core.ask_slot. APAGADO.
     recomendar_a_no_certificados: bool = True  # PROMOCIONADO 19-oct (mod-G2, HISTORY 0.31.57); revert = False
@@ -169,12 +118,6 @@ class Settings(BaseSettings):
     #   rutas/contexto_rag.
     notas_rag_desde_estado: bool = True  # PROMOCIONADO 20-oct (ronda ex9b-8: 98,7 % 29/32, 0 regresiones; HISTORY 0.31.68); revert = False
     resolutor_sin_contradicciones: bool = True  # PROMOCIONADO 19-oct (mod-G2, HISTORY 0.31.57); revert = False
-    # EX-EST-2 (14-oct): el acuse reconoce SOLO lo que dice el mensaje (el resumen de la reserva no se repite; ante
-    # 'gracias' o una fecha suelta, nada). Banco scripts/banco_acuse.py: inventaba en 33/40 casos reales
-    # ('tienes una reserva para el sabado'). prompts/booking.ACUSE_SOLO_MENSAJE_*. Ronda est3-B: 91,3 % (est2-B 88,8 %),
-    # 16/29 sin fallos (antes 12), ninguna regresion del acuse. PROMOCIONADO 14-oct (HISTORY 0.31.25).
-    # Revert = False aqui y en el compose.
-    acuse_solo_el_mensaje: bool = True
     # gen-8 (21-oct): el ejemplo del acuse para reconocer un dato iba en plural ("none of you are Colombian") y lo
     # copiaba a quien va solo; con el flag, la regla de usar las palabras y el número del cliente. APAGADO.
     acuse_en_su_numero: bool = True  # PROMOCIONADO 21-oct (ronda sin desplegar gen8-B 97,9 % 27/32 frente a gen8-A 97,0 % 26/32; el que empeora es del RAG; HISTORY 0.31.79); revert = False
@@ -220,18 +163,6 @@ class Settings(BaseSettings):
     # Y el RAG, que a un colombiano ya conocido le daba el link de reserva antes del cierre, sabe que su pago lo
     # coordina un asesor (rutas/contexto_rag). APAGADO.
     pago_colombiano_con_asesor: bool = True  # PROMOCIONADO 21-oct (con `vivir_no_es_residir`, misma ronda gen4-A2/B2; decisión de Gadea, Coral #862; HISTORY 0.31.81); revert = False
-    # EX-EST-2 (14-oct): arreglos de datos de la tanda est3 (la pregunta del origen solo dice 'ida y vuelta el mismo dia'
-    # si se SABE que el plan es de un dia; ...). PROMOCIONADO 14-oct tras est3-B (HISTORY 0.31.25).
-    # Revert = False aqui y en el compose.
-    est2_datos: bool = True
-    # ex-3 (fase EX): respuestas de texto fijo ACTIVAS que pasan al RAG, una por flag (inventario y motivos:
-    # docs/robustness/atajos/inventario-ex3.md). APAGADOS hasta medirlos.
-    # (El del resumen de "¿qué ofrecen para bucear?", `atajo_resumen_por_rag`, promocionado el 13-oct, ya no tiene flag:
-    # MEJ-1; tampoco el de "¿cambia el precio si es colombiano?", `atajo_nacionalidad_por_rag`: mej-1d.)
-    # - alergia a un alimento (sin alcohol en el mensaje): la FAQ curada "Soy vegetariano o tengo una alergia" lo
-    #   cubre. NO PASA el escalón 0 (13-oct): con el flag la alergia acaba en el aviso médico ("Para preguntas médicas…");
-    #   se queda la respuesta fija. APAGADO.
-    atajo_alergia_por_rag: bool = True  # PROMOCIONADO 20-oct con dieta_no_es_medica (gen3-B; HISTORY 0.31.70); revert = False
     # Model for the RAG answer-generation call only (rag_agent.py
     # `_answer_with_llm`). Kept SEPARATE from `openai_model` (used broadly
     # across the bot) so we can trial a stronger model for JUST this call --

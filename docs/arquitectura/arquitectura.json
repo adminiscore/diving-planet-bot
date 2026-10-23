@@ -1,8 +1,8 @@
 {
  "meta": {
-  "generado": "2026-10-23T11:46:51+00:00",
-  "commit": "d82e3918",
-  "rama": "feature/pre_gadea"
+  "generado": "2026-10-23T14:28:03+00:00",
+  "commit": "c24f158b",
+  "rama": "feature/sim5-alvaro"
  },
  "vistas": {
   "general": {
@@ -681,27 +681,6 @@
    ],
    "interruptores": [
     {
-     "nombre": "idioma_otro_en_ingles",
-     "titulo": "Otro idioma: contesta en inglés",
-     "codigo": true,
-     "pre": true,
-     "sin_efecto": false
-    },
-    {
-     "nombre": "extractor_aclaraciones",
-     "titulo": "El extractor entiende las negaciones",
-     "codigo": true,
-     "pre": true,
-     "sin_efecto": false
-    },
-    {
-     "nombre": "extractor_todo_lo_dicho",
-     "titulo": "El extractor entiende mejor grupo, aceptación y residencia",
-     "codigo": true,
-     "pre": true,
-     "sin_efecto": false
-    },
-    {
      "nombre": "extractor_cita_del_cliente",
      "titulo": "Aceptar la propuesta del bot cuenta",
      "codigo": true,
@@ -781,20 +760,6 @@
     {
      "nombre": "pago_colombiano_con_asesor",
      "titulo": "El pago de un colombiano lo coordina un asesor",
-     "codigo": true,
-     "pre": true,
-     "sin_efecto": false
-    },
-    {
-     "nombre": "est4_flujo",
-     "titulo": "Arreglos del flujo de la tanda est5",
-     "codigo": true,
-     "pre": true,
-     "sin_efecto": false
-    },
-    {
-     "nombre": "jev_pide_algo",
-     "titulo": "Una petición también se contesta",
      "codigo": true,
      "pre": true,
      "sin_efecto": false
@@ -1007,20 +972,6 @@
      "sin_efecto": false
     },
     {
-     "nombre": "aplazar_pregunta_sin_respuesta",
-     "titulo": "No repite la pregunta que el cliente no contestó",
-     "codigo": true,
-     "pre": true,
-     "sin_efecto": false
-    },
-    {
-     "nombre": "recomendar_a_certificados",
-     "titulo": "A un buzo certificado le recomienda sus opciones",
-     "codigo": true,
-     "pre": true,
-     "sin_efecto": false
-    },
-    {
      "nombre": "recomendar_a_no_certificados",
      "titulo": "A quien no es certificado le recomienda sus opciones",
      "codigo": true,
@@ -1030,13 +981,6 @@
     {
      "nombre": "resolutor_sin_contradicciones",
      "titulo": "Una respuesta que se contradice no fija el dato",
-     "codigo": true,
-     "pre": true,
-     "sin_efecto": false
-    },
-    {
-     "nombre": "acuse_solo_el_mensaje",
-     "titulo": "El acuse no se inventa nada",
      "codigo": true,
      "pre": true,
      "sin_efecto": false
@@ -1181,15 +1125,7 @@
    "titulo": "Textos fijos y atajos",
    "que_hace": "Bloquea datos personales y contesta con texto fijo lo que ya tiene respuesta cerrada (políticas, vista general del buceo).",
    "donde": "src/agents/info_agent.py:info_node",
-   "interruptores": [
-    {
-     "nombre": "atajo_alergia_por_rag",
-     "titulo": "La alergia a un alimento la contesta el RAG",
-     "codigo": true,
-     "pre": true,
-     "sin_efecto": false
-    }
-   ],
+   "interruptores": [],
    "modelos": []
   },
   {
@@ -1274,20 +1210,6 @@
    "que_hace": "El catálogo entero va siempre en las instrucciones del bot y en las del revisor.",
    "donde": "src/flows/catalog.py:catalog_facts",
    "interruptores": [
-    {
-     "nombre": "rag_politicas_en_contexto",
-     "titulo": "Las políticas siempre a mano",
-     "codigo": true,
-     "pre": true,
-     "sin_efecto": false
-    },
-    {
-     "nombre": "est2_datos",
-     "titulo": "Datos que el RAG decía mal",
-     "codigo": true,
-     "pre": true,
-     "sin_efecto": false
-    },
     {
      "nombre": "catalogo_profundidad",
      "titulo": "El catálogo dice hasta qué profundidad baja cada buzo",
@@ -1483,13 +1405,6 @@
     {
      "nombre": "origen_sin_titulo_suelto",
      "titulo": "Al quitar los precios, no deja el título colgado",
-     "codigo": true,
-     "pre": true,
-     "sin_efecto": false
-    },
-    {
-     "nombre": "rag_no_supone_reserva",
-     "titulo": "No da por hecho lo que el cliente no dijo",
      "codigo": true,
      "pre": true,
      "sin_efecto": false
@@ -2359,19 +2274,6 @@
    "sin_efecto": null
   },
   {
-   "nombre": "acuse_solo_el_mensaje",
-   "area": "Reserva",
-   "titulo": "El acuse no se inventa nada",
-   "texto": "La frase corta con la que Coral reconoce lo que dijo el cliente ('Entendido, …') solo repite lo que dice el mensaje: ya no convierte una fecha en 'tu reserva' ni un 'gracias' en 'tu actividad de Advanced'.",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [
-    "b_slotfill_close"
-   ],
-   "sin_efecto": null
-  },
-  {
    "nombre": "adaptado_contesta_lo_demas",
    "area": "Preguntas",
    "titulo": "DIVE TO HEAL no se come lo demás",
@@ -2381,32 +2283,6 @@
    "fijado_en_pre": true,
    "usado_por": [
     "safety"
-   ],
-   "sin_efecto": null
-  },
-  {
-   "nombre": "aplazar_pregunta_sin_respuesta",
-   "area": "Reserva",
-   "titulo": "No repite la pregunta que el cliente no contestó",
-   "texto": "Si el cliente no contesta una pregunta de la reserva (origen, cuántos, última inmersión, nacionalidad…), Coral no la repite en el turno siguiente: sigue con lo que falta y la vuelve a hacer justo antes del resumen (decisión de Gadea, 14-oct).",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [
-    "b_slotfill_close"
-   ],
-   "sin_efecto": null
-  },
-  {
-   "nombre": "atajo_alergia_por_rag",
-   "area": "Respuestas fijas",
-   "titulo": "La alergia a un alimento la contesta el RAG",
-   "texto": "Sin el texto fijo de la política de comida (salvo si el mensaje también habla de alcohol): la FAQ de vegetarianos y alergias lo cubre. Sigue sin pasar al aviso médico.",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [
-    "r_reglas"
    ],
    "sin_efecto": null
   },
@@ -2801,62 +2677,10 @@
    "sin_efecto": null
   },
   {
-   "nombre": "est2_datos",
-   "area": "Preguntas",
-   "titulo": "Datos que el RAG decía mal",
-   "texto": "Siempre hay disponibilidad (decisión del negocio): Coral ya no dice 'no puedo confirmar cupos'. Si lo que pide el cliente encaja con varios planes (un paquete de 2 días: 4 o 5 inmersiones), los nombra todos. Y la pregunta del origen solo dice 'ida y vuelta el mismo día' si se sabe que el plan es de un día.",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [
-    "r_catalogo"
-   ],
-   "sin_efecto": null
-  },
-  {
-   "nombre": "est4_flujo",
-   "area": "Reserva",
-   "titulo": "Arreglos del flujo de la tanda est5",
-   "texto": "Lo que el cliente dice en el mensaje que se pasa a una persona ya no se pierde: si dijo que se aloja en un hotel de las islas, el bot no le vuelve a preguntar desde dónde sale.",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [
-    "b_extraction"
-   ],
-   "sin_efecto": null
-  },
-  {
-   "nombre": "extractor_aclaraciones",
-   "area": "Reserva",
-   "titulo": "El extractor entiende las negaciones",
-   "texto": "El extractor de la fase EX lee primero las negaciones del lugar: 'sin ir de Cartagena' quiere decir que NO sale de Cartagena (antes lo leía como Cartagena).",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [
-    "b_extraction"
-   ],
-   "sin_efecto": null
-  },
-  {
    "nombre": "extractor_cita_del_cliente",
    "area": "Reserva",
    "titulo": "Aceptar la propuesta del bot cuenta",
    "texto": "Cuando el cliente acepta el plan que le propone el bot ('nos gusta'), el extractor lo apunta aunque cite el texto de la propuesta del bot (antes el control antiinventos lo tiraba).",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [
-    "b_extraction"
-   ],
-   "sin_efecto": null
-  },
-  {
-   "nombre": "extractor_todo_lo_dicho",
-   "area": "Reserva",
-   "titulo": "El extractor entiende mejor grupo, aceptación y residencia",
-   "texto": "Arreglos del extractor de la fase EX: 'Un solo buzo avanzado' con la actividad ya elegida da el número de personas (antes el bot preguntaba '¿cuántas personas?' varias veces), 'con mi amigo' cuenta 2, aceptar la opción que propone el bot es elegirla y la cédula de extranjería es ser residente (paga en COP).",
    "codigo": true,
    "pre": true,
    "fijado_en_pre": true,
@@ -3046,19 +2870,6 @@
    "sin_efecto": null
   },
   {
-   "nombre": "idioma_otro_en_ingles",
-   "area": "Reserva",
-   "titulo": "Otro idioma: contesta en inglés",
-   "texto": "Coral atiende en español e inglés. Si el cliente escribe en otro idioma (portugués, francés…), contesta en inglés. Unas palabras sueltas de otro idioma dentro de un mensaje en español no cambian el idioma. Lo dice el extractor de la fase EX, en la misma llamada.",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [
-    "b_extraction"
-   ],
-   "sin_efecto": null
-  },
-  {
    "nombre": "idioma_unico_de_apertura",
    "area": "Chat",
    "titulo": "El idioma del primer mensaje se decide una vez para todo",
@@ -3096,19 +2907,6 @@
    "fijado_en_pre": true,
    "usado_por": [
     "router"
-   ],
-   "sin_efecto": null
-  },
-  {
-   "nombre": "jev_pide_algo",
-   "area": "Reserva",
-   "titulo": "Una petición también se contesta",
-   "texto": "El enrutador (Jev) cuenta como algo que contestar una petición escrita como orden, sin interrogación: 'dame la cuenta y transfiero', 'send me the payment link', 'full name of the dive center'. Antes recibían la pregunta de la reserva o la respuesta fija de posventa.",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [
-    "b_extraction"
    ],
    "sin_efecto": null
   },
@@ -3511,19 +3309,6 @@
    "sin_efecto": null
   },
   {
-   "nombre": "rag_no_supone_reserva",
-   "area": "Preguntas",
-   "titulo": "No da por hecho lo que el cliente no dijo",
-   "texto": "Si el cliente habla de su reserva sin decir qué servicio tiene, Coral no lo adivina ('tu paquete de 3 inmersiones'): contesta con la información general y, si hace falta, le pregunta.",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [
-    "r_escribir"
-   ],
-   "sin_efecto": null
-  },
-  {
    "nombre": "rag_ofrece_el_pase",
    "area": "Preguntas",
    "titulo": "El bot ofrece pasar con una persona, no dice que ya lo ha hecho",
@@ -3546,19 +3331,6 @@
    "fijado_en_pre": false,
    "usado_por": [
     "r_escribir"
-   ],
-   "sin_efecto": null
-  },
-  {
-   "nombre": "rag_politicas_en_contexto",
-   "area": "Preguntas",
-   "titulo": "Las políticas siempre a mano",
-   "texto": "Las políticas del negocio (equipaje, recogida, idiomas de instrucción, cambios…) van siempre enteras en el contexto del RAG, como el catálogo. Antes dependían de que la búsqueda las encontrara y en un mensaje largo podían quedarse fuera.",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [
-    "r_catalogo"
    ],
    "sin_efecto": null
   },
@@ -3637,19 +3409,6 @@
    "fijado_en_pre": true,
    "usado_por": [
     "r_escribir"
-   ],
-   "sin_efecto": null
-  },
-  {
-   "nombre": "recomendar_a_certificados",
-   "area": "Reserva",
-   "titulo": "A un buzo certificado le recomienda sus opciones",
-   "texto": "Si el cliente ya dijo que es buzo certificado y no ha elegido actividad, Coral le propone la salida de 2 inmersiones, los paquetes de varios días o un curso avanzado, en vez del menú entero con minicurso y snorkel (regla de Gadea: recomendar según el contexto).",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [
-    "b_slotfill_close"
    ],
    "sin_efecto": null
   },
