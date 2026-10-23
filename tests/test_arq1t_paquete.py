@@ -39,10 +39,10 @@ def test_incluye_lo_comun_a_los_paquetes(monkeypatch):
     monkeypatch.setattr(settings, "paquete_varios_dias", True)
     b = _bloque(["incluye"], detected_duration="multi_day")
     cartagena = b["incluye"]["cartagena"]
-    assert "Almuerzo el primer dia" in cartagena
+    assert "Almuerzo el primer día" in cartagena
     assert not any("inmersiones guiadas" in x for x in cartagena)  # el número cambia de un paquete a otro
     assert any("alojamiento" in x.lower() for x in b["no_incluye"]["cartagena"])
-    assert len(b["paquetes"]["cartagena"]) >= 3 and all("dias" in p for p in b["paquetes"]["cartagena"])
+    assert len(b["paquetes"]["cartagena"]) >= 3 and all("días" in p for p in b["paquetes"]["cartagena"])
 
 
 def test_el_plan_base_apuntado_por_defecto_no_es_una_eleccion(monkeypatch):
@@ -55,7 +55,7 @@ def test_el_plan_base_apuntado_por_defecto_no_es_una_eleccion(monkeypatch):
 def test_el_precio_parte_del_primer_paquete(monkeypatch):
     monkeypatch.setattr(settings, "paquete_varios_dias", True)
     b = _bloque(["precio"], detected_duration="multi_day", location="cartagena")
-    assert "dias" in b["precio"]["cartagena"]["plan"] and b["otros_planes"]
+    assert "días" in b["precio"]["cartagena"]["plan"] and b["otros_planes"]
 
 
 @pytest.mark.parametrize("campos", [{"detected_duration": "single_day"}, {"detected_duration": "multi_day",

@@ -49,7 +49,7 @@ def test_el_aporte_a_dive_to_heal_va_en_lo_que_incluye():
 def test_la_lista_completa_de_la_ficha():
     [b] = h.hechos(_conv(location="cartagena"), ["incluye"], ["padi_open_water"])
     lista = " | ".join(b["incluye"]["cartagena"])
-    assert "4 inmersiones" in lista and "primer dia" in lista and "Tarjeta de certificacion" in lista
+    assert "4 inmersiones" in lista and "primer día" in lista and "Tarjeta de certificación" in lista
 
 
 @pytest.mark.parametrize("actividad, formulario", [("minicourse", True), ("refresher", True), ("padi_open_water", True),
@@ -142,7 +142,7 @@ def test_la_recogida_y_el_alojamiento_van_en_los_hechos():
     assert "no hay recogida en el hotel" in b["recogida"]["cartagena"][0]
     assert "sin cargo" in b["recogida"]["island"][0] and "alojamiento" not in b
     [b] = h.hechos(_conv(location="cartagena"), ["precio"], ["padi_advanced"])
-    assert "no esta incluido" in b["alojamiento"] and "recogida" not in b
+    assert "no está incluido" in b["alojamiento"] and "recogida" not in b
     assert any("Muelle" in p for p in h.faltan("Cuesta 0 USD.", h.hechos(_conv(location="cartagena"), ["horario"],
                                                                           ["minicourse"]), ["horario"]))
 

@@ -65,7 +65,7 @@ def test_con_la_profundidad_cada_certificacion_dice_hasta_donde_certifica(flags)
     """cal-18: Open Water hasta 18 m y Advanced hasta 30 m, en la línea de cada curso."""
     flags(profundidad=True)
     es = catalog.catalog_facts("es")
-    assert "certifica para bucear hasta 18 m" in _linea(es, "Curso Basico PADI (Open Water)")
+    assert "certifica para bucear hasta 18 m" in _linea(es, "Curso Básico PADI (Open Water)")
     assert "certifica para bucear hasta 30 m" in _linea(es, "Curso Avanzado PADI")
     assert "preparación:" not in es, "la profundidad no arrastra la preparación"
     en = catalog.catalog_facts("en")

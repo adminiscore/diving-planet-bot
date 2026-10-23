@@ -48,6 +48,14 @@ def test_arq7d_la_recogida_y_el_alojamiento_por_codigo(monkeypatch):
     assert "*Desde Cartagena:*" in answer and "el alojamiento no está incluido" in answer
 
 
-def test_arq7d_sin_el_flag_no_toca_las_frases(monkeypatch):
+def test_arq7d_sin_el_flag_no_pone_las_frases_ni_deja_la_marca(monkeypatch):
     monkeypatch.setattr(settings, "frases_por_codigo", False)
-    assert rh._poner_listas("Así llegas: [[recogida]]", _C, ["horario"], "es") == "Así llegas: [[recogida]]"
+    assert rh._poner_listas("Así llegas: [[recogida]]", _C, ["horario"], "es") == "Así llegas:"
+
+
+def test_g10_6_la_marca_que_el_codigo_no_rellena_no_llega_al_cliente(monkeypatch):
+    """G10 nº 6 (g10-051, g10-069): «[[descuento]]» sin la lista `descuento` en los hechos (solo el enlace)."""
+    monkeypatch.setattr(settings, "frases_por_codigo", True)
+    answer = rh._poner_listas("Reserva aquí:\nhttps://book.divingplanet.org/x\n\n[[descuento]]\n\nPagas con tarjeta.",
+                              _B, ["enlace"], "es")
+    assert answer == "Reserva aquí:\nhttps://book.divingplanet.org/x\n\nPagas con tarjeta."
