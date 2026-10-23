@@ -618,6 +618,19 @@ REDACTOR_SIN_PREGUNTAS_EN = (
     "already did something…): if one is missing the system asks for it afterwards, and if they already said it, asking "
     "again repeats it. At most, close with a brief invitation that does not ask for details."
 )
+# arq-7a (23-oct, flag `listas_por_codigo`, latencia): las listas largas las pone el código donde el modelo deja la marca.
+REDACTOR_LISTAS_POR_CODIGO_ES = (
+    "\n- Las listas `incluye`, `requisitos` y `descuento` NO las escribas tú: donde vaya cada una pon, en una línea "
+    "sola, su marca [[incluye]], [[requisitos]] o [[descuento]], y el sistema pondrá la lista entera con sus orígenes. "
+    "Antes puedes escribir una frase que la presente o que conteste lo que pregunta (por ejemplo «Sí, el almuerzo está "
+    "incluido»), sin repetir los elementos de la lista."
+)
+REDACTOR_LISTAS_POR_CODIGO_EN = (
+    "\n- Do NOT write the `incluye`, `requisitos` and `descuento` lists yourself: where each one goes put, on a line of "
+    "its own, its marker [[incluye]], [[requisitos]] or [[descuento]], and the system will insert the full list with its "
+    "origins. Before it you may write a sentence that introduces it or answers what they ask (for example «Yes, lunch "
+    "is included»), without repeating the list items."
+)
 # arq-5c (23-oct, flag `dos_monedas_sin_nacionalidad`, decisión de Gadea): sin saber la nacionalidad, los hechos traen
 # el precio en USD (`precio`) y en COP (`precio_cop`).
 REDACTOR_DOS_MONEDAS_ES = (

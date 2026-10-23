@@ -615,7 +615,8 @@
         "paquete_varios_dias",
         "tiempo_limitado",
         "dos_monedas_sin_nacionalidad",
-        "mezclados_por_partes"
+        "mezclados_por_partes",
+        "listas_por_codigo"
       ]
     },
     {
@@ -1669,6 +1670,11 @@
       "area": "Preguntas",
       "titulo": "Mensajes mezclados, por partes",
       "texto": "Cuando el cliente pregunta a la vez algo de la tabla (precio, qué incluye, horarios…) y otra cosa, la parte de la tabla la escribe el redactor con los datos del código y el RAG, a la vez, solo lo demás: las listas salen completas y no hace falta rehacer la respuesta (arq-5b, 23-oct)."
+    },
+    "listas_por_codigo": {
+      "area": "Preguntas",
+      "titulo": "Las listas las pone el código",
+      "texto": "Lo que incluye un plan, los requisitos y los descuentos los copia el código del dato, en viñetas y con sus orígenes, donde el redactor deja una marca; el modelo solo escribe las frases. Las listas salen siempre enteras y no hace falta rehacer la respuesta (arq-7a, latencia, 23-oct)."
     }
   },
   "areas": [

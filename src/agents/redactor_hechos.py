@@ -135,6 +135,13 @@ def _mensajes(lang: str, history: list[dict], message: str, texto_hechos: str) -
         system = (f"{RAG_INTRO_EN}\n\n{RAG_SECURITY_EN}\nStyle and tone:\n{_build_tone_section('en')}\n\n"
                   f"{REDACTOR_HECHOS_EN}")
         user = f"Facts:\n{texto_hechos}\n\nCustomer's question: {redact_pii(message)}"
+    if settings.listas_por_codigo:
+        from src.prompts.info import (  # lazy
+            REDACTOR_LISTAS_POR_CODIGO_EN,
+            REDACTOR_LISTAS_POR_CODIGO_ES,
+        )
+
+        system += REDACTOR_LISTAS_POR_CODIGO_ES if lang == "es" else REDACTOR_LISTAS_POR_CODIGO_EN
     if settings.dos_monedas_sin_nacionalidad:
         from src.prompts.info import REDACTOR_DOS_MONEDAS_EN, REDACTOR_DOS_MONEDAS_ES  # lazy
 
@@ -163,6 +170,42 @@ async def _redactar(client, mensajes: list[dict]) -> str | None:
 
 
 _EN_SU_IDIOMA = {"es": "Escríbela de nuevo entera en español.", "en": "Write it again in full in English."}
+
+# arq-7a (23-oct, flag `listas_por_codigo`, latencia): en el G10 nº 5 el redactor escribía dos veces en 53 de 79 turnos:
+# el primer borrador resumía las listas largas y arq-3 pedía rehacerlo (+2,5 s). Esas listas las pone ahora el código,
+# copiadas del dato, donde el modelo deja su marca («[[incluye]]»); el modelo escribe solo las frases.
+_LISTAS_DEL_CODIGO = ("incluye", "requisitos", "descuento")
+_ROTULO_DEL_ORIGEN = {"es": {"cartagena": "Desde Cartagena", "island": "Si ya estás en las Islas del Rosario"},
+                      "en": {"cartagena": "From Cartagena", "island": "If you're already on the Rosario Islands"}}
+
+
+def _en_vinetas(valor, lang: str) -> str:
+    """Una lista del dato en viñetas «•»; si viene por origen y hay dos, cada una con su rótulo en negrita."""
+    if isinstance(valor, dict):
+        partes = [(o, items) for o, items in valor.items() if items]
+        return "\n\n".join((f"*{_ROTULO_DEL_ORIGEN[lang].get(o, o)}:*\n" if len(partes) > 1 else "")
+                           + "\n".join(f"• {x}" for x in items) for o, items in partes)
+    return "\n".join(f"• {x}" for x in valor or [])
+
+
+def _poner_listas(answer: str, bloques: list[dict], intenciones: list[str], lang: str) -> str:
+    """Cambia cada marca «[[campo]]» por la lista entera del dato. Si el modelo no dejó la marca y tampoco escribió la
+    lista (arq-3 ve que faltan sus puntos), la lista va al final; si la escribió él, se queda la suya."""
+    for campo in _LISTAS_DEL_CODIGO:
+        if campo not in intenciones:
+            continue
+        piezas = [(b, _en_vinetas(b.get(campo), lang)) for b in bloques]
+        piezas = [(b, t) for b, t in piezas if t]
+        if not piezas:
+            continue
+        texto = "\n\n".join((f"*{b.get('nombre')}*\n" if len(piezas) > 1 and b.get("nombre") else "") + t
+                            for b, t in piezas)
+        marca = f"[[{campo}]]"
+        if marca in answer:
+            answer = answer.replace(marca, texto, 1).replace(marca, "")
+        elif hechos_mod.faltan(answer, [{campo: b.get(campo)} for b, _ in piezas], [campo]):
+            answer = f"{answer.rstrip()}\n\n{texto}"
+    return answer
 # arq-5b: en un mensaje mezclado el redactor contesta solo la parte de los hechos; lo demás va justo después (el RAG).
 _SOLO_LA_TABLA = {
     "es": ("\n- El mensaje pregunta además otras cosas que contesta otra parte del sistema justo después de ti: contesta "
@@ -315,6 +358,8 @@ async def _escribir(state: ConversationState, message: str, history: list[dict],
         if not parte:
             state._redactor_dijo_falta = True  # arq-1g: el mensaje era mezclado; el RAG recibe los hechos
         return None
+    if settings.listas_por_codigo:
+        answer = _poner_listas(answer, bloques, intenciones, lang)
     if not _pasa_las_guardas(answer, texto_hechos, message):
         logger.info("[HECHOS] la redacción no pasa las guardas deterministas; contesta el RAG")
         note_turn(hechos_por_codigo="guardas")
@@ -326,6 +371,8 @@ async def _escribir(state: ConversationState, message: str, history: list[dict],
         # menos fuera y pase lo mismo que la primera.
         otra = await _redactar(client, [*mensajes, {"role": "assistant", "content": answer},
                                         {"role": "user", "content": _pide_los_que_faltan(perdidos, lang)}])
+        if otra and settings.listas_por_codigo:
+            otra = _poner_listas(otra, bloques, intenciones, lang)
         quedan = hechos_mod.faltan(otra, bloques, intenciones) if otra else perdidos
         mejor = (otra is not None and _FALTA not in otra and _pasa_las_guardas(otra, texto_hechos, message)
                  and len(quedan) < len(perdidos))
