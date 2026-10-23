@@ -28,6 +28,7 @@ from src.flows.catalog import (
     ISLAND_SERVICE_MAP,
     RAW_SERVICES,
     SERVICES,
+    descuentos_de_la_base,
 )
 from src.flows.state import ConversationState
 from src.utils import money
@@ -360,6 +361,8 @@ def _descuentos(lang: str) -> list[str]:
     """arq-4b (flag `descuentos_en_la_tabla`): los descuentos con sus condiciones, tal cual de discounts.json (online,
     grupo, equipo propio y que no hay descuento por ser colombiano). Son los mismos para todas las actividades: cada uno
     dice a qué aplica."""
+    if settings.descuentos_un_sitio:  # arq-8h: de la función del catálogo, con la nota del acompañante
+        return list(descuentos_de_la_base(lang).values())
     datos = json.loads(_DISCOUNTS.read_text(encoding="utf-8-sig")).get("discounts", {})
     claves = ("online_direct_booking", "group_discount", "own_equipment_discount", "colombian_cop_pricing")
     return [d.get(f"description_{lang}") or d.get("description_es") for d in (datos.get(c) or {} for c in claves)

@@ -709,6 +709,12 @@ class Settings(BaseSettings):
     # repite igual en varias actividades (el punto de encuentro, los descuentos) sale una vez, y el rótulo del origen que
     # el modelo escribe justo antes de la marca no se duplica ni queda suelto al final. APAGADO.
     listas_una_vez: bool = False
+    # ARQ-8h (23-oct, decisión de Álvaro por Gadea, #1634): los descuentos, en UN sitio (discounts.json). Estaban en cinco:
+    # discounts.json, pricing.json `discount_policies` (lo que indexa el RAG: sin tildes, el 5 % de equipo sin «solo
+    # buceo recreativo y cursos» y con ROVERD), un texto fijo en el catálogo, avisos.json y ejemplos del prompt. Con el
+    # flag, el catálogo, los hechos y el índice (load_embeddings, al desplegar) los leen de discounts.json, con la nota
+    # del acompañante (lo confirma el equipo al pedir el descuento: la base no dice si entra). APAGADO.
+    descuentos_un_sitio: bool = False
     varias_actividades: bool = False  # ARQ-1j (22-oct): el extractor da TODAS las actividades del mensaje (y el acompañante) y los hechos salen de cada una
     adaptado_contesta_lo_demas: bool = True  # PROMOCIONADO 22-oct (arq-1l: banco DIVE TO HEAL 3/12 -> 11/12; HISTORY 0.31.93); revert = False
     enlace_con_disponibilidad: bool = True  # PROMOCIONADO 22-oct (arq-1m: banco de enlace 3/12 -> 12/12; HISTORY 0.31.93); revert = False

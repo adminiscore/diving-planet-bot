@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-23T16:17:21+00:00",
-  "commit": "28455297",
+  "generado": "2026-10-23T16:50:17+00:00",
+  "commit": "6dfb7041",
   "rama": "feature/arq8-alvaro"
  },
  "vistas": {
@@ -1481,6 +1481,13 @@
      "codigo": false,
      "pre": false,
      "sin_efecto": false
+    },
+    {
+     "nombre": "descuentos_un_sitio",
+     "titulo": "Los descuentos, en un solo sitio",
+     "codigo": false,
+     "pre": false,
+     "sin_efecto": false
     }
    ],
    "marca": "openai"
@@ -2719,6 +2726,19 @@
    "codigo": true,
    "pre": true,
    "fijado_en_pre": true,
+   "usado_por": [
+    "r_hechos"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "descuentos_un_sitio",
+   "area": "Preguntas",
+   "titulo": "Los descuentos, en un solo sitio",
+   "texto": "Los descuentos (online, grupo, equipo propio, colombianos) se leen solo de discounts.json: el catálogo, los hechos y el índice del RAG. Antes había cinco copias y la del índice era vieja. El de grupo lleva la nota del acompañante: si entra, lo confirma el equipo al pedir el descuento (arq-8h, decisión de Álvaro, 23-oct).",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
    "usado_por": [
     "r_hechos"
    ],
