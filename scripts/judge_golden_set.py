@@ -19,10 +19,15 @@ aprovechar la cache de prompts de OpenAI. Desde el 6-oct, por defecto la `curada
 que usa el bot (catalogo, links de reserva, fichas de servicio y FAQs curadas); `--referencia
 antigua` da la de antes (resultados sin campo `referencia`). A y B, siempre con la misma.
 
-Uso (en serie):
+Uso:
 
     ENV_FILE=.env.dev python -m scripts.judge_golden_set \\
         --run docs/robustness/synthetic-runs/2026-09-17-golden.jsonl [--snapshot foto.json] [--review-sample 5]
+
+Juzga `--paralelo` dialogos a la vez (por defecto 4; 23-oct: en serie iba a ~7 criterios por
+minuto y la ronda completa tardaba ~1 h 40 min). Dentro de cada dialogo el orden es el de
+siempre (concretos y despues generales), las preguntas al juez son las mismas y la cache
+tambien; solo cambia cuantos dialogos van a la vez. `--paralelo 1` es el juez en serie de antes.
 
 Juez oficial: gpt-5-mini con reasoning_effort medium (calibracion del 2026-09-17: 91,5 % de
 acuerdo con las etiquetas humanas, 5 fallos falsos y 1 escapado en 71 veredictos, ~0,67 $/ronda;
@@ -40,9 +45,11 @@ import json
 import random
 import re
 import sys
+import threading
 import time
 import unicodedata
 from collections import defaultdict
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -448,6 +455,9 @@ def judge_user_message(
 # con el tiempo en los diálogos de texto fijo (saludos, plantillas de reserva, escalados).
 CACHE_FILE = RESULTS_DIR / "judge-cache.jsonl"
 _CACHEABLE = ("cumple", "no_cumple", "no_aplica", "revisar")
+# Con `--paralelo` escriben en el fichero varios hilos; en Windows el modo "a" no es atomico
+# entre manejadores distintos y dos lineas podrian pisarse.
+_CACHE_LOCK = threading.Lock()
 
 
 def _judge_logic_hash() -> str:
@@ -637,7 +647,7 @@ def save_to_cache(key: str, result: dict, path: Path = CACHE_FILE) -> None:
         return
     keep = {k: v for k, v in result.items() if k != "usage"}
     path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("a", encoding="utf-8") as fh:
+    with _CACHE_LOCK, path.open("a", encoding="utf-8") as fh:
         fh.write(json.dumps({"key": key, "result": keep}, ensure_ascii=False) + "\n")
 
 
@@ -741,6 +751,7 @@ def main(argv: list[str] | None = None) -> int:
                              "defecto, el fichero de resultados lleva __ref-<referencia>")
     parser.add_argument("--golden", help="otro fichero de dialogos con el mismo formato (G9: el examen oculto "
                                          "sintetico, que se juzga UNA sola vez)")
+    parser.add_argument("--paralelo", type=int, default=4, help="dialogos juzgados a la vez (1 = en serie)")
     args = parser.parse_args(argv)
     if args.golden:
         global GOLDEN_FILE
@@ -765,19 +776,38 @@ def main(argv: list[str] | None = None) -> int:
         client = OpenAI(api_key=api_key)
     cache = None if args.no_cache else load_cache()
     stats = {"hits": 0, "misses": 0}
-    results, missing = [], []
-    for n, dialogue in enumerate(golden["dialogues"], 1):
-        records = runs.get(dialogue["id"])
-        if not records:
-            missing.append(dialogue["id"])
-            continue
+    missing = [d["id"] for d in golden["dialogues"] if not runs.get(d["id"])]
+    todo = [d for d in golden["dialogues"] if runs.get(d["id"])]
+    position = {d["id"]: n for n, d in enumerate(golden["dialogues"], 1)}
+
+    def judge_dialogue(dialogue: dict) -> tuple[dict, dict]:
+        # Cada dialogo con su propio contador (se suman al final): lo unico que comparten los
+        # hilos es la cache, un dict por claves, y su fichero, con candado en save_to_cache.
+        own = {"hits": 0, "misses": 0}
+        records = runs[dialogue["id"]]
         all_criteria = criteria_for(dialogue, golden["global_criteria"])
-        criteria = judge_criteria(client, args.model, args.effort, reference, dialogue, records, all_criteria, cache, stats)
-        results.append({"id": dialogue["id"], "category": dialogue["category"], "conv": records[0]["conv"], "criteria": criteria})
-        flagged = [f"{c['id']}={c['verdict']}" for c in criteria if c["verdict"] not in ("cumple", "no_aplica")]
+        criteria = judge_criteria(client, args.model, args.effort, reference, dialogue, records, all_criteria, cache, own)
         if not args.dry_cache:
-            print(f"[{n}/{len(golden['dialogues'])}] {dialogue['id']}: {'OK' if not flagged else ', '.join(flagged)}", flush=True)
             time.sleep(0.2)
+        return {"id": dialogue["id"], "category": dialogue["category"], "conv": records[0]["conv"], "criteria": criteria}, own
+
+    done: dict[str, dict] = {}
+    with ThreadPoolExecutor(max_workers=max(1, args.paralelo)) as pool:
+        futures = {pool.submit(judge_dialogue, d): d for d in todo}
+        try:
+            for future in as_completed(futures):
+                result, own = future.result()
+                done[result["id"]] = result
+                for k in stats:
+                    stats[k] += own[k]
+                flagged = [f"{c['id']}={c['verdict']}" for c in result["criteria"] if c["verdict"] not in ("cumple", "no_aplica")]
+                if not args.dry_cache:
+                    print(f"[{position[result['id']]}/{len(golden['dialogues'])}] {result['id']}: "
+                          f"{'OK' if not flagged else ', '.join(flagged)}", flush=True)
+        except BaseException:
+            pool.shutdown(wait=False, cancel_futures=True)  # p. ej. sin credito: no seguir pagando
+            raise
+    results = [done[d["id"]] for d in todo]  # en el orden del golden, como en serie
 
     total = stats["hits"] + stats["misses"]
     if args.dry_cache:
