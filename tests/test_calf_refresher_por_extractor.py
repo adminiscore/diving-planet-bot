@@ -1,4 +1,4 @@
-"""CAL-F (18-oct), flag `refresher_por_extractor`: el extractor lee si el cliente quiere o no el REFRESHER.
+"""CAL-F (18-oct; promocionado, sus flags se borraron en sim-5): el extractor lee si el cliente quiere o no el REFRESHER.
 
 refresher-rechaza-acepta (3/3 en PRE): "mejor no quiero el refresher" y luego "espera, en realidad sí lo quiero, mejor
 prevenir" antes de que el bot preguntara el refresher: la decisión se perdía, el bot volvía a preguntar "¿Os
@@ -14,7 +14,6 @@ import pytest
 
 from src.agents import conversational_core as core
 from src.agents import extractor_turno as ex
-from src.config import settings
 from src.flows.state import ConversationState
 
 
@@ -33,18 +32,7 @@ SI = {"refresher_interested": {"valor": True, "cita": "en realidad si lo quiero"
 
 
 @pytest.mark.asyncio
-async def test_sin_flag_ni_campo_ni_regla(monkeypatch):
-    monkeypatch.setattr(settings, "refresher_por_extractor", False)
-    llamadas = []
-    out = await ex.extraer_turno(MSG, sabido={"is_certified": True, "last_dive_over_2_years": True}, client=_cliente(SI, llamadas))
-    assert "refresher_interested" not in out
-    assert "refresher_interested" not in llamadas[0]["response_format"]["json_schema"]["schema"]["properties"]
-    assert ex.REGLA_REFRESHER_ES not in llamadas[0]["messages"][0]["content"]
-
-
-@pytest.mark.asyncio
-async def test_con_flag_la_decision_y_quiere_bucear(monkeypatch):
-    monkeypatch.setattr(settings, "refresher_por_extractor", True)
+async def test_la_decision_y_quiere_bucear():
     llamadas = []
     out = await ex.extraer_turno(MSG, sabido={"is_certified": True, "last_dive_over_2_years": True}, client=_cliente(SI, llamadas))
     assert out["refresher_interested"] is True
@@ -56,7 +44,6 @@ async def test_con_flag_la_decision_y_quiere_bucear(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_una_cita_que_no_esta_en_el_mensaje_se_descarta(monkeypatch):
-    monkeypatch.setattr(settings, "refresher_por_extractor", True)
     out = await ex.extraer_turno(MSG, sabido={"last_dive_over_2_years": True}, client=_cliente(
         {"refresher_interested": {"valor": True, "cita": "quiero el refresher"}}, []))
     assert "refresher_interested" not in out
@@ -64,20 +51,17 @@ async def test_una_cita_que_no_esta_en_el_mensaje_se_descarta(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_si_no_lleva_mas_de_2_anos_ni_campo_ni_regla(monkeypatch):
-    monkeypatch.setattr(settings, "refresher_por_extractor", True)
     llamadas = []
     out = await ex.extraer_turno(MSG, sabido={"is_certified": True}, client=_cliente(SI, llamadas))
     assert "refresher_interested" not in out
     assert ex.REGLA_REFRESHER_ES not in llamadas[0]["messages"][0]["content"]
 
 
-@pytest.mark.parametrize("flag, antes, dice, queda", [
-    (True, False, True, True),    # "mejor no" y luego "en realidad sí": vale lo último
-    (True, None, False, False),
-    (False, None, True, None),    # sin el flag, como hoy
+@pytest.mark.parametrize("antes, dice, queda", [
+    (False, True, True),    # "mejor no" y luego "en realidad sí": vale lo último
+    (None, False, False),
 ])
-def test_el_nucleo_guarda_lo_ultimo(monkeypatch, flag, antes, dice, queda):
-    monkeypatch.setattr(settings, "refresher_por_extractor", flag)
+def test_el_nucleo_guarda_lo_ultimo(antes, dice, queda):
     st = ConversationState(conversation_id="calf-refresher")
     st.refresher_interested = antes
     core._poner_refresher(st, {"refresher_interested": dice})
@@ -92,17 +76,14 @@ AVANZADO = {"activity": {"valor": "padi_advanced", "cita": "1 buzo avanzado"},
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("flag, actividad", [(False, "padi_advanced"), (True, "certified_diving")])
-async def test_la_actividad_sale_del_reparto(monkeypatch, flag, actividad):
-    monkeypatch.setattr(settings, "actividad_del_reparto", flag)
+async def test_la_actividad_sale_del_reparto():
     out = await ex.extraer_turno("Vamos en familia a Cartagena. 1 buzo avanzado y 2 para bautismo",
                                  client=_cliente(AVANZADO, []))
-    assert out["activity"] == actividad
+    assert out["activity"] == "certified_diving"
 
 
 @pytest.mark.asyncio
 async def test_si_la_actividad_esta_en_el_reparto_no_se_toca(monkeypatch):
-    monkeypatch.setattr(settings, "actividad_del_reparto", True)
     datos = {"activity": {"valor": "minicourse", "cita": "el de 12 minicurso"},
              "group_allocation": {"valor": {"minicourse": 1, "snorkel": 1}, "cita": "el de 12 minicurso y el de 8 snorkel"}}
     out = await ex.extraer_turno("el de 12 minicurso y el de 8 snorkel", client=_cliente(datos, []))
@@ -111,21 +92,18 @@ async def test_si_la_actividad_esta_en_el_reparto_no_se_toca(monkeypatch):
 
 # CAL-F precios-y-disponibilidad (flag `origen_neutro_con_dos_planes`): duda entre un plan de 1 día y uno de varios ---
 
-@pytest.mark.parametrize("flag, dormir", [(False, True), (True, False)])
-def test_con_dos_planes_la_pregunta_del_origen_es_neutra(monkeypatch, flag, dormir):
-    monkeypatch.setattr(settings, "origen_neutro_con_dos_planes", flag)
+def test_con_dos_planes_la_pregunta_del_origen_es_neutra():
     st = ConversationState(conversation_id="calf-origen")
     st.language = "es"
     st.detected_activity, st.detected_service_id, st.detected_duration = "certified_diving", "2_dives_1_day", "multi_day"
     texto = core.ask_slot(st, core.SLOT_LOCATION)
-    assert ("dormir en las islas" in texto) is dormir
-    assert "dura 1 día" not in texto or not flag
+    assert "dormir en las islas" not in texto
+    assert "dura 1 día" not in texto
 
 
 def test_con_el_paquete_elegido_sigue_diciendo_que_hay_que_dormir(monkeypatch):
     from src.flows.catalog import OVERNIGHT_SERVICES
 
-    monkeypatch.setattr(settings, "origen_neutro_con_dos_planes", True)
     st = ConversationState(conversation_id="calf-origen")
     st.language = "es"
     st.detected_activity, st.detected_duration = "certified_diving", "multi_day"

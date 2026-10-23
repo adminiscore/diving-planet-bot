@@ -760,8 +760,8 @@ def pending_answer_question(slot: str | None) -> dict | None:
     spec = SLOT_RESOLVER_SPEC.get(slot or "")
     if not spec or spec["type"] == "integer":
         return None
-    if settings.baru_no_es_rosario:  # G3-06; gen-6: con `baru_sale_de_cartagena`, Barú es 'cartagena'
-        spec = {**spec, "value_meaning": lugar_sin_baru(spec["value_meaning"], settings.baru_sale_de_cartagena)}
+    # G3-06; gen-6: con `baru_sale_de_cartagena`, Barú es 'cartagena'
+    spec = {**spec, "value_meaning": lugar_sin_baru(spec["value_meaning"], settings.baru_sale_de_cartagena)}
     asked = f"The assistant just asked the customer: \"{spec['question_en']}\""
     if spec["type"] == "boolean":
         criteria = {
@@ -858,9 +858,7 @@ def _questions_for_turn(pending_slot: str | None = None) -> dict:
     if settings.privado_pasa_directo:
         q[PIDE_SERVICIO_PRIVADO] = _PIDE_SERVICIO_PRIVADO_Q
     q[CUSTOMER_PLACE] = _con_hoteles_de_la_base(
-        (_CUSTOMER_PLACE_Q_BARU_CARTAGENA if settings.baru_sale_de_cartagena else _CUSTOMER_PLACE_Q_SIN_BARU)
-        if settings.baru_no_es_rosario else _CUSTOMER_PLACE_Q
-    )
+        _CUSTOMER_PLACE_Q_BARU_CARTAGENA if settings.baru_sale_de_cartagena else _CUSTOMER_PLACE_Q_SIN_BARU)
     q[SHARES_OPEN_FACT] = _SHARES_OPEN_FACT_Q
     q[NUEVO_CASO] = _NUEVO_CASO_Q
     q[PREGUNTA_SI_ES_IA] = _PREGUNTA_SI_ES_IA_Q

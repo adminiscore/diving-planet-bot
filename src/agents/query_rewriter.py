@@ -28,7 +28,7 @@ _NOMBRA_EL_ASUNTO_EN = (
 
 
 def _otro_idioma(query: str, lang: str) -> bool:
-    """G3-05 (flag `busqueda_con_la_pregunta_sola`): el mensaje no parece escrito en el idioma de la respuesta.
+    """G3-05: el mensaje no parece escrito en el idioma de la respuesta.
     Entonces se REESCRIBE siempre (la consulta, en el idioma de la respuesta) y la pregunta sola se traduce: un cliente
     en portugués o francés se contesta en inglés, y su mensaje, buscado tal cual contra la base en español e inglés,
     traía fichas al azar ("Precisa saber nadar?" no encontraba la FAQ de saber nadar, conv 5571). La heurística de
@@ -36,7 +36,7 @@ def _otro_idioma(query: str, lang: str) -> bool:
     mensaje en español no la dispara."""
     from src.flows.catalog import _detect_language_from_text  # lazy
 
-    return settings.busqueda_con_la_pregunta_sola and _detect_language_from_text(query or "") not in (None, lang)
+    return _detect_language_from_text(query or "") not in (None, lang)
 
 
 def _should_condense(query: str, history: list[dict] | None, lang: str = "es") -> bool:
@@ -130,7 +130,7 @@ async def pregunta_sola(query: str, lang: str) -> str | None:
     falta saber nadar?"), y la consulta reescrita, que nombra el asunto (CAL-D), tampoco la trae. En portugués o
     francés, además, buscar el mensaje tal cual no encuentra nada (conv 5571). En el banco G3, el bot contestaba "no
     tengo ese dato" 3 de 3 en los tres idiomas."""
-    if not settings.busqueda_con_la_pregunta_sola or not query:
+    if not query:
         return None
     if not _otro_idioma(query, lang) and len(query.split()) < 8:
         return None

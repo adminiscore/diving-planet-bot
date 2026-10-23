@@ -28,7 +28,6 @@ def test_la_pregunta_sola_deja_el_sitio_con_el_flag(monkeypatch, flag):
 
 @pytest.mark.parametrize("flag", [True, False])
 def test_abre_con_la_respuesta(monkeypatch, flag):
-    monkeypatch.setattr(settings, "rag_no_adivina", True)
     monkeypatch.setattr(settings, "abre_con_la_respuesta", flag)
     assert (RAG_ABRE_CON_LA_RESPUESTA_ES in build_system_prompt("es")) is flag
 
@@ -47,7 +46,6 @@ def test_sin_genero_supuesto(monkeypatch, flag):
     """gen-12 (21-oct): el RAG no da por hecho si el cliente es hombre o mujer."""
     from src.prompts.info import RAG_SIN_GENERO_ES
 
-    monkeypatch.setattr(settings, "rag_no_adivina", True)
     monkeypatch.setattr(settings, "sin_genero_supuesto", flag)
     assert (RAG_SIN_GENERO_ES in build_system_prompt("es")) is flag
 

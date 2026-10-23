@@ -250,10 +250,8 @@ def _ninos_del_minicurso(state: ConversationState) -> tuple[int, int]:
     convertía el minicurso del de 12 en "Minicurso [Bubble Makers] (8-10 años)". Si el carrito ya tiene plazas de
     snorkel, los niños más pequeños van primero ahí (un menor de 8 solo puede hacer snorkel) y el resto es el del
     minicurso. Solo cambia la etiqueta: el precio de Bubble Makers es el del minicurso."""
-    from src.config import settings  # lazy
-
     edades = sorted(a for a in (state.detected_ages or []) if isinstance(a, int) and a < 18)
-    if not (settings.ninos_primero_al_snorkel and edades):
+    if not edades:
         return state.kids_under_8_count or 0, state.kids_eight_to_ten_count or 0
     plazas_snorkel = sum(i.get("qty", 0) for i in state.mixed_cart or [] if i.get("type") == "snorkel")
     resto = edades[plazas_snorkel:]

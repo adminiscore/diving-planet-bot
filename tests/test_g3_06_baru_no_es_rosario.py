@@ -1,4 +1,4 @@
-"""G3-06 (18-oct, decisión de Gadea), flag `baru_no_es_rosario`: Barú y Playa Blanca NO son Islas del Rosario.
+"""G3-06 (18-oct, decisión de Gadea; promocionado, su flag `baru_no_es_rosario` se borró en sim-5): Barú y Playa Blanca NO son Islas del Rosario.
 
 Conv 5572 (charla G3): "estamos en el hotel las islas, en baru" quedaba como location=island, y el bot decía a la vez
 "en Barú no operamos" y "la recogida está incluida", con precios de las islas. Se fija, con el flag:
@@ -33,12 +33,10 @@ ISLA = {"location": {"valor": "island", "cita": "estamos en el hotel las islas, 
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("flag, queda", [(False, "island"), (True, None)])
-async def test_el_extractor_no_pone_las_islas_por_baru(monkeypatch, flag, queda):
-    monkeypatch.setattr(settings, "baru_no_es_rosario", flag)
+async def test_el_extractor_no_pone_las_islas_por_baru(monkeypatch):
     monkeypatch.setattr(settings, "baru_sale_de_cartagena", False)  # con gen-6, 'cartagena' (test_gen6_*)
     out = await ex.extraer_turno(MSG, client=_cliente(ISLA))
-    assert out.get("location") == queda
+    assert out.get("location") is None
 
 
 @pytest.mark.parametrize("cita, solo", [
@@ -51,22 +49,17 @@ def test_solo_baru(cita, solo):
     assert ex._solo_baru(cita) is solo
 
 
-@pytest.mark.parametrize("flag, lugar", [(False, "island"), (True, None)])
-def test_baru_no_es_respuesta_isla_al_origen(monkeypatch, flag, lugar):
-    monkeypatch.setattr(settings, "baru_no_es_rosario", flag)
+def test_baru_no_es_respuesta_isla_al_origen(monkeypatch):
     monkeypatch.setattr(settings, "baru_sale_de_cartagena", False)  # con gen-6, 'cartagena' (test_gen6_*)
-    assert core._departure_place("en baru") == lugar
+    assert core._departure_place("en baru") is None
 
 
 def test_una_isla_sigue_siendo_isla(monkeypatch):
-    monkeypatch.setattr(settings, "baru_no_es_rosario", True)
     assert core._departure_place("ya estamos en la isla") == "island"
 
 
-@pytest.mark.parametrize("flag", [False, True])
-def test_jev_y_los_prompts_sin_baru(monkeypatch, flag):
-    monkeypatch.setattr(settings, "baru_no_es_rosario", flag)
+def test_jev_y_los_prompts_sin_baru():
     islas = jev_router._questions_for_turn()[jev_router.CUSTOMER_PLACE]["criteria"]["islands"]
-    assert ("Baru..." in islas) is not flag
+    assert "Baru..." not in islas
     texto = booking.lugar_sin_baru(booking.slot_resolver_prompt("location", "en"))
     assert "(Barú, Isla Grande" not in texto and "NOT the islands" in texto

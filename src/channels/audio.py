@@ -103,8 +103,7 @@ async def transcribe_audio_bytes(
     }
     if lang_hint:
         kwargs["language"] = lang_hint  # ISO-639-1; optional, model auto-detects otherwise
-    if settings.transcripcion_con_vocabulario:
-        kwargs["prompt"] = VOCABULARIO_TRANSCRIPCION
+    kwargs["prompt"] = VOCABULARIO_TRANSCRIPCION
     try:
         client = trace_openai(AsyncOpenAI(api_key=settings.openai_api_key))
         result = await client.audio.transcriptions.create(**kwargs, timeout=_TRANSCRIBE_TIMEOUT)

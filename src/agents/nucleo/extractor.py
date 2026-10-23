@@ -498,10 +498,10 @@ def _hotel_del_catalogo(nombre: str) -> tuple[str, str | None] | None:
 
 
 def _poner_refresher(state: ConversationState, datos: dict) -> None:
-    """CAL-F (`refresher_por_extractor`, 18-oct): si el cliente dice que quiere (o no) el refresher, se guarda aunque
+    """CAL-F (18-oct): si el cliente dice que quiere (o no) el refresher, se guarda aunque
     el bot aún no se lo haya preguntado. Vale lo último que decide: "mejor no" y luego "en realidad sí lo quiero"."""
     valor = (datos or {}).get("refresher_interested")
-    if not settings.refresher_por_extractor or not isinstance(valor, bool) or state.refresher_interested is valor:
+    if not isinstance(valor, bool) or state.refresher_interested is valor:
         return
     state.refresher_interested = valor
     logger.info(f"[EXTRACT][CAL-F] refresher_interested={valor} (lo dice el cliente)")
@@ -687,13 +687,11 @@ async def guardar_lo_dicho_en_el_pase(state: ConversationState) -> None:
 
 
 async def guardar_lo_dicho_sin_nucleo(state: ConversationState) -> None:
-    """G3-01 (flag `lo_dicho_en_respuesta_fija`, 17-oct): lo mismo que en el turno del pase, en cualquier turno que
+    """G3-01 (17-oct): lo mismo que en el turno del pase, en cualquier turno que
     contestó SIN el núcleo (una respuesta fija). Charla G3 de Gadea, conv 5567: "la salida de 2 inmersiones para
     nosotros dos. y los niños qué pueden hacer?" lo contestaba la respuesta fija de edades (bien), pero la actividad
     elegida se perdía y el bot acababa ofreciendo el menú al marido certificado. Que la extracción adelantada siga sin
     usar al final del turno es la señal de que el núcleo no corrió."""
-    if not settings.lo_dicho_en_respuesta_fija:
-        return
     await _guardar_lo_dicho(state, "SIN_NUCLEO")
 
 

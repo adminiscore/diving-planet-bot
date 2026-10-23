@@ -596,7 +596,7 @@ def ask_slot(state: ConversationState, slot: str, *, reasking: bool = False) -> 
             [{"title": "✅ Yes", "value": "yes"}, {"title": "❌ No", "value": "no"}]
         )
         # Se cobra (owner 2026-09-14): precio por persona desde el catalogo.
-        price = cart_render.refresher_price_text(state, una_moneda=settings.rag_sin_precio_con_tarjeta)  # G3-07a
+        price = cart_render.refresher_price_text(state, una_moneda=True)  # G3-07a
         if settings.refresher_completo:
             # gen-7 (20-oct): lo que dice la base del refresher (ficha `refresher:minicourse` y `medical_restrictions`):
             # se reserva como el Minicurso de Buceo y usa el formulario médico de curso, aunque sea buzo certificado.
@@ -824,7 +824,7 @@ def _plan_en_duda(state: ConversationState) -> bool:
 
     servicio = state.detected_service_id
     return bool(
-        settings.origen_neutro_con_dos_planes and state.detected_activity == "certified_diving"
+        state.detected_activity == "certified_diving"
         and state.detected_duration == "multi_day" and servicio
         and servicio not in (MULTI_DAY_SERVICES | OVERNIGHT_SERVICES)
     )

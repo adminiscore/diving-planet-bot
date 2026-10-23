@@ -12,7 +12,6 @@ import re
 from src.agents.intent_detector import DetectedIntent
 from src.agents.lead_summary import build_lead_summary
 from src.agents.supervisor import _booking_change_buttons
-from src.config import settings
 from src.domain import activities as dom
 from src.flows import cart_render
 from src.flows.state import ConversationState, Step
@@ -325,7 +324,7 @@ def enforce_group_allocation_consistency(
     # suma < total: al reparto le FALTA gente. Nunca se guarda asi -- el bot
     # pregunta, que sale gratis, en vez de tarificar de menos en silencio.
     principal = state.detected_activity if state is not None else None
-    if (settings.reparto_parcial_con_lo_sabido and principal and not state.detected_group_allocation
+    if (principal and not state.detected_group_allocation
             and principal in dom.cart_activity_ids()):
         # G3-01 (17-oct): sin reparto guardado, todo el grupo hace la actividad principal (así se tarifica). "el de 12
         # minicurso y el de 8 snorkel" en una familia de 4 cuyos padres ya eligieron la salida de 2 inmersiones dice
@@ -367,13 +366,11 @@ _CORRECTION_CUE_RE = re.compile(
 
 
 def _principal_sigue_en_el_reparto(intent, state: ConversationState) -> bool:
-    """G3-01 (flag `actividad_principal_en_el_reparto`, 17-oct): "el de 12 minicurso y el de 8 snorkel" en una familia
+    """G3-01 (17-oct): "el de 12 minicurso y el de 8 snorkel" en una familia
     cuyos padres ya eligieron la salida de 2 inmersiones da el reparto {certified_diving: 2, minicourse: 1, snorkel: 1}
     y la actividad "minicourse". La regla de "la última actividad gana" ponía el minicurso como principal; luego "mi
     esposo bucea conmigo" movía a uno del minicurso a las inmersiones ({certified_diving: 3, snorkel: 1}). Si la
     actividad principal sigue en el reparto con gente, la nueva es la de otra parte del grupo: no la sustituye."""
-    if not settings.actividad_principal_en_el_reparto:
-        return False
     principal, reparto = state.detected_activity, getattr(intent, "group_allocation", None)
     return bool(
         principal and intent.activity and intent.activity != principal and isinstance(reparto, dict)

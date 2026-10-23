@@ -719,7 +719,7 @@ async def extraer_turno(mensaje: str, *, history: list[dict] | None = None, sabi
     sistema += REGLA_HOTEL_ES if lang == "es" else REGLA_HOTEL_EN
     # Solo cuando el refresher importa (ya se sabe que lleva más de 2 años sin bucear): con el campo en todas las
     # llamadas, el banco ex0 bajaba de 99,5 a 96,5 % estable y volvía "paquete de 5 inmersiones" → certificado.
-    con_refresher = settings.refresher_por_extractor and (sabido or {}).get("last_dive_over_2_years") is True
+    con_refresher = (sabido or {}).get("last_dive_over_2_years") is True
     if con_refresher:
         sistema += REGLA_REFRESHER_ES if lang == "es" else REGLA_REFRESHER_EN
     # ex-9b paso 6: los campos nuevos con su regla (ninguno con los flags apagados).
@@ -828,7 +828,7 @@ async def extraer_turno(mensaje: str, *, history: list[dict] | None = None, sabi
         if campo == "location" and not nombra_un_lugar(cita):
             descartes[campo] = f"la cita no nombra un lugar: {cita!r}"
             continue
-        if campo == "location" and valor == "island" and settings.baru_no_es_rosario and _solo_baru(cita):
+        if campo == "location" and valor == "island" and _solo_baru(cita):
             # G3-06 (decisión de Gadea): Barú y Playa Blanca no son las islas ("estamos en el hotel las islas, en
             # baru" salía island). El lugar queda sin saber y lo contesta la base (aviso solo-operamos-en-rosario).
             if settings.baru_sale_de_cartagena:
@@ -853,7 +853,7 @@ async def extraer_turno(mensaje: str, *, history: list[dict] | None = None, sabi
     if quiere and certificado is True and not salida.get("activity") and not sabido.get("activity"):
         salida["activity"] = "certified_diving"
     reparto, actividad = salida.get("group_allocation"), salida.get("activity")
-    if settings.actividad_del_reparto and isinstance(reparto, dict) and actividad and actividad not in reparto:
+    if isinstance(reparto, dict) and actividad and actividad not in reparto:
         # CAL-F (18-oct, grupo-mixto-precio-cop-total 2/3): "1 buzo avanzado y 2 para bautismo" daba el reparto
         # {certified_diving: 1, minicourse: 2} (bien) y la actividad padi_advanced: el bot cotizaba el Curso Avanzado.
         # Si la actividad no es de nadie del reparto, se contradicen; manda el reparto.

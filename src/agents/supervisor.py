@@ -234,13 +234,12 @@ async def route_message(state: ConversationState, message: str) -> str:
             cart_items=sum(int(item.get("qty") or 0) for item in state.mixed_cart) if state.mixed_cart else 0,
             fallback=is_fallback_answer(response),
         )
-        if settings.aviso_si_openai_falla:
-            from src.observability import fallo_de_openai_en_el_turno
+        from src.observability import fallo_de_openai_en_el_turno
 
-            codigo = fallo_de_openai_en_el_turno()
-            if codigo is not None:
-                response = _respuesta_fallo_tecnico(state, codigo)
-                turn.update(reply=response, escalated=True, fallo_openai=codigo)
+        codigo = fallo_de_openai_en_el_turno()
+        if codigo is not None:
+            response = _respuesta_fallo_tecnico(state, codigo)
+            turn.update(reply=response, escalated=True, fallo_openai=codigo)
         if ((state.extractor_fallos_seguidos or 0) >= EXTRACTOR_FALLOS_PARA_PASE
                 and "FALLO TÉCNICO" not in (state.pending_escalation_reason or "")):
             response = _respuesta_fallo_tecnico(

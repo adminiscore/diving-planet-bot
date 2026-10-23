@@ -8,8 +8,6 @@ from src.llm_client import trace_openai
 from src.observability import con_pieza_llm
 from src.privacy import redact_pii_por_lineas
 from src.prompts.info import (
-    GROUNDING_VERIFY_V3_EN,
-    GROUNDING_VERIFY_V3_ES,
     GROUNDING_VERIFY_V3_LUNA_EN,
     GROUNDING_VERIFY_V3_LUNA_ES,
 )
@@ -291,11 +289,8 @@ async def is_grounded(answer: str, context: str, lang: str = "es") -> tuple[bool
     if not answer.strip() or not context.strip():
         return False, "empty_answer_or_context"
 
-    if settings.juez_v3_luna:
-        # s4-33 (8-oct): el v3 con tres aclaraciones para GPT-6 Luna como juez (prompts/info.py).
-        system = GROUNDING_VERIFY_V3_LUNA_ES if lang == "es" else GROUNDING_VERIFY_V3_LUNA_EN
-    else:
-        system = GROUNDING_VERIFY_V3_ES if lang == "es" else GROUNDING_VERIFY_V3_EN
+    # s4-33 (8-oct): el v3 con tres aclaraciones para GPT-6 Luna como juez (prompts/info.py).
+    system = GROUNDING_VERIFY_V3_LUNA_ES if lang == "es" else GROUNDING_VERIFY_V3_LUNA_EN
     # 2-oct (promocionado): `redact_pii` tapa TODOS los numeros largos de un texto si en
     # cualquier parte sale "pasaporte", "cuenta", "Bancolombia"... Pensado para un mensaje del cliente; sobre el
     # contexto entero del juez, una FAQ de pagos borraba todos los precios del catalogo >= 1.000.000 COP y el juez

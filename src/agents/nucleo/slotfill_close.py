@@ -148,7 +148,7 @@ def _refresher_note(state: ConversationState) -> str:
     No se inventa cuantos lo necesitan: la pregunta de seguridad es de grupo."""
     if not state.refresher_interested:
         return ""
-    price = cart_render.refresher_price_text(state, una_moneda=settings.rag_sin_precio_con_tarjeta)  # G3-07a
+    price = cart_render.refresher_price_text(state, una_moneda=True)  # G3-07a
     url = None if state.is_colombian else cart_render.refresher_booking_url(state)
     if state.language == "es":
         how = f" Resérvalo aquí: {url}" if url else " El asesor te lo confirma junto con el pago."
@@ -502,7 +502,7 @@ async def _slotfill_close_phase(
         response = greeting + answer
         state.history.append({"role": "assistant", "content": response})
         return response
-    if (answer and finalized and settings.rag_sin_precio_con_tarjeta and _IMPORTE_RE.search(answer)
+    if (answer and finalized and _IMPORTE_RE.search(answer)
             and not (cierre_previo and state.mixed_last_summary == cierre_previo)):
         # G3-07a (18-oct, decisión de Gadea: una sola moneda por mensaje): el turno lleva la tarjeta del plan con su
         # precio, y la respuesta (adelantada, escrita antes de saber de dónde es el cliente) traía otro importe: "126

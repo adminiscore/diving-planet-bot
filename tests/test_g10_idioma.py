@@ -5,7 +5,6 @@ import asyncio
 import pytest
 
 from src.agents import conversational_core as core
-from src.config import settings
 from src.flows.state import ConversationState
 
 
@@ -52,17 +51,6 @@ def test_politicas_enteras_para_el_rag():
 
 
 @pytest.mark.parametrize("lang", ["es", "en"])
-def test_regla_de_no_suponer_en_el_prompt_del_rag(monkeypatch, lang):
-    """EX-RAG-2: con el flag, el prompt del RAG lleva la regla de no atribuir al cliente un servicio que no dijo."""
-    from src.agents.rag_agent import build_system_prompt
-    from src.prompts.info import RAG_NO_SUPONE_EN, RAG_NO_SUPONE_ES
-
-    regla = RAG_NO_SUPONE_ES if lang == "es" else RAG_NO_SUPONE_EN
-    monkeypatch.setattr(settings, "rag_no_adivina", False)  # la regla ampliada la sustituye (ver el test de abajo)
-    assert regla in build_system_prompt(lang)
-
-
-@pytest.mark.parametrize("lang", ["es", "en"])
 def test_la_regla_de_no_adivinar_sustituye_a_la_de_no_suponer(monkeypatch, lang):
     """18-oct (decisión de Gadea: no adivinar nada que el cliente no haya dicho): con `rag_no_adivina` el prompt lleva
     la regla ampliada (origen, nacionalidad, certificación, cuántos, fechas…) y no la vieja, que solo cubría el
@@ -70,7 +58,6 @@ def test_la_regla_de_no_adivinar_sustituye_a_la_de_no_suponer(monkeypatch, lang)
     from src.agents.rag_agent import build_system_prompt
     from src.prompts.info import RAG_NO_ADIVINA_EN, RAG_NO_ADIVINA_ES, RAG_NO_SUPONE_EN, RAG_NO_SUPONE_ES
 
-    monkeypatch.setattr(settings, "rag_no_adivina", True)
     prompt = build_system_prompt(lang)
     assert (RAG_NO_ADIVINA_ES if lang == "es" else RAG_NO_ADIVINA_EN) in prompt
     assert (RAG_NO_SUPONE_ES if lang == "es" else RAG_NO_SUPONE_EN) not in prompt

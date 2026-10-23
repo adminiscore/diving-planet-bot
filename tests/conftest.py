@@ -80,13 +80,14 @@ def _no_llm_language_fallback(monkeypatch):
 
 
 @pytest.fixture(autouse=True)
-def _sin_aviso_de_openai_caido(monkeypatch):
-    """r6-1(b): `aviso_si_openai_falla` está PROMOCIONADO, pero aquí la clave de OpenAI es falsa y todas las llamadas
-    fallan (401): el aviso saltaría en cada turno y taparía lo que mide cada test. Se apaga por defecto; los tests del
-    aviso (test_r61_tiempos_por_llamada.py) lo encienden ellos."""
-    from src.config import settings
-
-    monkeypatch.setattr(settings, "aviso_si_openai_falla", False)
+def _sin_aviso_de_openai_caido(monkeypatch, request):
+    """r6-1(b): el aviso de OpenAI caído va siempre (su flag `aviso_si_openai_falla` se borró en sim-5), pero aquí la
+    clave de OpenAI es falsa y todas las llamadas fallan (401): el aviso saltaría en cada turno y taparía lo que mide
+    cada test. Aquí ningún turno cuenta como OpenAI caído, salvo en los tests del aviso
+    (test_r61_tiempos_por_llamada.py)."""
+    if "test_r61_tiempos_por_llamada" in request.node.nodeid:
+        return
+    monkeypatch.setattr("src.observability.fallo_de_openai_en_el_turno", lambda: None)
 
 
 @pytest.fixture

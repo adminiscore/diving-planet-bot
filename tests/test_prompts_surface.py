@@ -103,8 +103,8 @@ def test_domain_modules_are_a_leaf_no_src_imports():
         # info
         (query_rewriter, "QUERY_REWRITE_ES", info),
         (query_rewriter, "QUERY_REWRITE_EN", info),
-        (grounding_check, "GROUNDING_VERIFY_V3_ES", info),
-        (grounding_check, "GROUNDING_VERIFY_V3_EN", info),
+        (grounding_check, "GROUNDING_VERIFY_V3_LUNA_ES", info),
+        (grounding_check, "GROUNDING_VERIFY_V3_LUNA_EN", info),
         (rag_agent, "RAG_INTRO_ES", info),
         (rag_agent, "RAG_SECURITY_ES", info),
         (rag_agent, "RAG_BODY_ES", info),

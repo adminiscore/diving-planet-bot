@@ -4,7 +4,7 @@ specific requirement handy" aunque la FAQ de saber nadar existe. En el banco G3 
 
 Medido en la búsqueda de PRE: la pregunta sola trae la FAQ la primera; con el origen y la fecha delante, la FAQ no
 entra entre las 8 primeras (la tapan las fichas que salen desde Cartagena), y la consulta reescrita, que nombra el
-asunto (CAL-D), tampoco la trae. Con el flag `busqueda_con_la_pregunta_sola`, la búsqueda doble usa la PREGUNTA SOLA
+asunto (CAL-D), tampoco la trae. Con `busqueda_con_la_pregunta_sola` (promocionado; su flag se borró en sim-5), la búsqueda doble usa la PREGUNTA SOLA
 (sin los datos que da el cliente, en el idioma de la respuesta) en vez del mensaje entero. Un mensaje corto en el
 idioma de la respuesta ya es la pregunta: ni llamada de más ni otra búsqueda.
 """
@@ -14,7 +14,6 @@ import pytest
 
 from src.agents import query_rewriter as qr
 from src.agents import rag_agent
-from src.config import settings
 
 
 def _fake_openai(respuesta, llamadas):
@@ -35,7 +34,6 @@ def _fake_openai(respuesta, llamadas):
 async def test_la_pregunta_sola_de_un_mensaje_largo_o_en_otro_idioma(monkeypatch):
     llamadas: list[dict] = []
     monkeypatch.setattr(qr, "AsyncOpenAI", _fake_openai("Do you need to know how to swim?", llamadas))
-    monkeypatch.setattr(settings, "busqueda_con_la_pregunta_sola", True)
     assert await qr.pregunta_sola("saímos de Cartagena, dia 30. Precisa saber nadar?", "en") \
         == "Do you need to know how to swim?"
     assert "only the QUESTION" in llamadas[0]["messages"][0]["content"]
@@ -48,18 +46,8 @@ async def test_la_pregunta_sola_de_un_mensaje_largo_o_en_otro_idioma(monkeypatch
 async def test_un_mensaje_corto_en_el_idioma_de_la_respuesta_ya_es_la_pregunta(monkeypatch):
     llamadas: list[dict] = []
     monkeypatch.setattr(qr, "AsyncOpenAI", _fake_openai("x", llamadas))
-    monkeypatch.setattr(settings, "busqueda_con_la_pregunta_sola", True)
     assert await qr.pregunta_sola("do we need to swim?", "en") is None
     assert await qr.pregunta_sola("¿hace falta saber nadar?", "es") is None
-    assert llamadas == []
-
-
-@pytest.mark.asyncio
-async def test_sin_el_flag_no_hay_llamada(monkeypatch):
-    llamadas: list[dict] = []
-    monkeypatch.setattr(qr, "AsyncOpenAI", _fake_openai("Do you need to know how to swim?", llamadas))
-    monkeypatch.setattr(settings, "busqueda_con_la_pregunta_sola", False)
-    assert await qr.pregunta_sola("saímos de Cartagena, dia 30. Precisa saber nadar?", "en") is None
     assert llamadas == []
 
 

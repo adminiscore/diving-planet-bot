@@ -169,35 +169,28 @@ def build_system_prompt(lang: str, query: str | None = None) -> str:
     prompt = prompt.replace(RAG_DISPONIBILIDAD_VIEJA_ES, RAG_DISPONIBILIDAD_NUEVA_ES).replace(
         RAG_DISPONIBILIDAD_VIEJA_EN, RAG_DISPONIBILIDAD_NUEVA_EN)
     prompt = f"{prompt}\n\n{RAG_VARIOS_PLANES_ES if lang == 'es' else RAG_VARIOS_PLANES_EN}"
-    if settings.rag_no_adivina:
-        # 18-oct: no adivinar ningún dato del cliente (origen, nacionalidad, certificación, cuántos, fechas); sustituye
-        # a la regla de EX-RAG-2, que solo cubría el servicio (ver RAG_NO_ADIVINA_*).
-        from src.prompts.info import RAG_NO_ADIVINA_EN, RAG_NO_ADIVINA_ES  # lazy
+    # 18-oct: no adivinar ningún dato del cliente (origen, nacionalidad, certificación, cuántos, fechas); sustituye a
+    # la regla de EX-RAG-2, que solo cubría el servicio (ver RAG_NO_ADIVINA_*).
+    from src.prompts.info import RAG_NO_ADIVINA_EN, RAG_NO_ADIVINA_ES  # lazy
 
-        prompt = f"{prompt}\n\n{RAG_NO_ADIVINA_ES if lang == 'es' else RAG_NO_ADIVINA_EN}"
-        if settings.abre_con_la_respuesta:
-            # gen-2 (20-oct): sin "¡Claro que sí!" delante de un "no" o un "depende" (ver RAG_ABRE_CON_LA_RESPUESTA_*).
-            from src.prompts.info import (  # lazy
-                RAG_ABRE_CON_LA_RESPUESTA_EN,
-                RAG_ABRE_CON_LA_RESPUESTA_ES,
-            )
+    prompt = f"{prompt}\n\n{RAG_NO_ADIVINA_ES if lang == 'es' else RAG_NO_ADIVINA_EN}"
+    if settings.abre_con_la_respuesta:
+        # gen-2 (20-oct): sin "¡Claro que sí!" delante de un "no" o un "depende" (ver RAG_ABRE_CON_LA_RESPUESTA_*).
+        from src.prompts.info import (  # lazy
+            RAG_ABRE_CON_LA_RESPUESTA_EN,
+            RAG_ABRE_CON_LA_RESPUESTA_ES,
+        )
 
-            prompt = f"{prompt}\n\n{RAG_ABRE_CON_LA_RESPUESTA_ES if lang == 'es' else RAG_ABRE_CON_LA_RESPUESTA_EN}"
-        if settings.sin_genero_supuesto:
-            # gen-12 (21-oct): sin dar por hecho si el cliente es hombre o mujer (ver RAG_SIN_GENERO_*).
-            from src.prompts.info import RAG_SIN_GENERO_EN, RAG_SIN_GENERO_ES  # lazy
+        prompt = f"{prompt}\n\n{RAG_ABRE_CON_LA_RESPUESTA_ES if lang == 'es' else RAG_ABRE_CON_LA_RESPUESTA_EN}"
+    if settings.sin_genero_supuesto:
+        # gen-12 (21-oct): sin dar por hecho si el cliente es hombre o mujer (ver RAG_SIN_GENERO_*).
+        from src.prompts.info import RAG_SIN_GENERO_EN, RAG_SIN_GENERO_ES  # lazy
 
-            prompt = f"{prompt}\n\n{RAG_SIN_GENERO_ES if lang == 'es' else RAG_SIN_GENERO_EN}"
-    else:
-        # EX-RAG-2: no atribuir al cliente un servicio o una reserva que no dijo.
-        from src.prompts.info import RAG_NO_SUPONE_EN, RAG_NO_SUPONE_ES  # lazy
+        prompt = f"{prompt}\n\n{RAG_SIN_GENERO_ES if lang == 'es' else RAG_SIN_GENERO_EN}"
+    # G3-03: el RAG no puede pasar el caso a una persona; lo OFRECE como pregunta (ver RAG_PASE_OFRECIDO_*).
+    from src.prompts.info import RAG_PASE_OFRECIDO_EN, RAG_PASE_OFRECIDO_ES  # lazy
 
-        prompt = f"{prompt}\n\n{RAG_NO_SUPONE_ES if lang == 'es' else RAG_NO_SUPONE_EN}"
-    if settings.rag_ofrece_el_pase:
-        # G3-03: el RAG no puede pasar el caso a una persona; lo OFRECE como pregunta (ver RAG_PASE_OFRECIDO_*).
-        from src.prompts.info import RAG_PASE_OFRECIDO_EN, RAG_PASE_OFRECIDO_ES  # lazy
-
-        prompt = f"{prompt}\n\n{RAG_PASE_OFRECIDO_ES if lang == 'es' else RAG_PASE_OFRECIDO_EN}"
+    prompt = f"{prompt}\n\n{RAG_PASE_OFRECIDO_ES if lang == 'es' else RAG_PASE_OFRECIDO_EN}"
     if settings.rag_sin_hora:
         # EX-EST-2: el RAG no sabe la hora ni la fecha de hoy (ver RAG_SIN_HORA_*).
         from src.prompts.info import RAG_SIN_HORA_EN, RAG_SIN_HORA_ES  # lazy

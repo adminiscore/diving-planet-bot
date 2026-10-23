@@ -8,7 +8,7 @@ ajustar y se informa aparte: rechazarlo es lo correcto para un juez de grounding
 Ajustar SOLO mirando el diseño; el ciego se mide al final sin tocar nada. Como el ciego tiene un solo invento, comprobar
 también el banco del 1-oct (`scripts.sonda_juez_modelo --grupo ciego`), que tiene 18.
 
-    python -m scripts.banco_juez_reales --modelo gpt-6-luna --flag juez_v3_luna --grupo diseño --detalle
+    python -m scripts.banco_juez_reales --modelo gpt-6-luna --grupo diseño --detalle
     python -m scripts.banco_juez_reales --modelo gpt-4.1                                  # el de PRE, de referencia
 
 Los inventos y las verdades se juzgan `--reps` veces (el juez no es determinista); las aprobadas, una.
