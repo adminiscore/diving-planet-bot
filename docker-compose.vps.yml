@@ -132,20 +132,8 @@ services:
       # "compiled grammar is too large", y contestaba siempre el respaldo). Se queda el respaldo POR TIEMPO de
       # OpenRouter (5 s): si no contesta en 5 s, la misma petición sale por OpenAI.
       OPENROUTER_RESPALDO_SEGUNDOS: "5.0"
-      # PROMOCIONADO 20-oct con la ronda ex9b-8 (98,7 % 29/32; decisión de Gadea: G9 con el paso 6): el paso 6 (duración, edades, notas) en una segunda llamada al
-      # extractor (la base sin él, ex9b-7, dio 96,1 %: las rondas con él estaban dentro del ruido) y quien se suma al grupo
-      # por el punto único del acompañante, decidido por Jev (banco de punta a punta 10/14 → 12/14, nadie contado dos veces).
-      DURACION_POR_EXTRACTOR: "true"
-      EDADES_POR_EXTRACTOR: "true"
-      NOTAS_RAG_DESDE_ESTADO: "true"
-      PASO6_EN_LLAMADA_APARTE: "true"
-      REPARTO_AL_SUMARSE_ALGUIEN: "true"
       # gen-13 (21-oct, PROMOCIONADO): lo contestable va también antes de CUALQUIER pase a un asesor. Revert = "false".
       CONTESTA_ANTES_DE_CUALQUIER_PASE: "true"
-      # Textos fijos del flujo en el español de Cartagena (decisión de Gadea, 20-oct; src/flows/textos.py): vosotros ->
-      # ustedes, sin género supuesto y la pregunta del origen sin "podemos recogerte saliendo desde Cartagena".
-      # PROMOCIONADO 20-oct (textos-B frente a gen2-B: mismos 97,4 %; los que empeoran no pasan por estos textos).
-      TEXTOS_DE_CARTAGENA: "true"
       # gen-5 (Gonzalo, 20-oct; docs/robustness/gen/gen5-diagnostico.md): el idioma del primer mensaje se decide una vez
       # en el router, con la cadena de la reserva y G-10, y todas las rutas lo heredan. PROMOCIONADO 21-oct (gen5-B
       # frente a gen5-A, del mismo día; los que empeoran no pasan por el idioma).

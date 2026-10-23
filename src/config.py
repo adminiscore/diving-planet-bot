@@ -65,8 +65,6 @@ class Settings(BaseSettings):
     # (sin ella 0/30), porque una cita real que respalda solo PARTE de la frase la daba por buena ("en un grupo mixto
     # los colombianos pagan en pesos" con la cita "pagan en pesos los colombianos"). Sin la cita: 0/30 rechazos injustos.
     juez_revisa_con_cita: bool = False
-    # 18-oct (ronda mod-D, reserva-solo-link): el resolutor no fija un valor con una respuesta que se contradice ("no,
-    # buceé hace poco" a "¿Eres buzo certificado?"). prompts/booking.SLOT_RESOLVER_CONTRADICCION. APAGADO.
     # ex-9b paso 4: los días cerrados (25 de diciembre y 1 de enero) los contesta el RAG, que lleva siempre las políticas
     # (`rag_politicas_en_contexto`), en vez del texto fijo que dispara `_CLOSED_DATE_RE` y se come el resto del mensaje.
     # Replay del golden: 0 cambios (ningún diálogo visible los nombra); pero sin el texto fijo, "quiero bucear el 25 de
@@ -74,38 +72,18 @@ class Settings(BaseSettings):
     # APAGADO hasta medirlo.
     dias_cerrados_por_rag: bool = False
     # ex-9b paso 6 (19-oct): los últimos datos de "entender al cliente" que decidía solo el regex, al extractor del turno
-    # (campo nuevo con su cita; APAGADO = ni el campo ni su regla, la llamada de siempre). Si el extractor falla, lo de hoy.
-    # - La duración: los días que quiere BUCEAR y los de su estancia, por separado (`dias_de_buceo`, `dias_de_estancia`).
-    #   Manda lo que dice de bucear ("estaré del 5 al 9 pero solo quiero bucear un día" = un día) y, si solo dice cuánto
-    #   estará, la estancia (decisión de Gadea, 19-oct). El contrato no cambia: `detected_duration` = single_day /
-    #   multi_day. Fuera los falsos positivos del regex ("embarazada de 4 meses", "3 días esperando").
-    #   nucleo/extractor._poner_duracion y la respuesta corta a "¿un día o varios?" (nucleo/routing).
+    # (campo nuevo con su cita, en una segunda llamada a la vez que la de siempre). La duración, las edades, quien se suma
+    # al grupo y las notas sobre otras personas se promocionaron el 20-oct y sus flags se borraron en sim-5. Si el
+    # extractor falla, lo de antes.
     # ex-9b (19-oct): el reparto del extractor como lista de pares {actividad, personas}: con el objeto de 10 enteros
     # opcionales y los campos del paso 6, Anthropic rechazaba la llamada ("compiled grammar is too large") y
     # contestaba siempre el respaldo (ronda ex9b-4). APAGADO hasta medirlo.
     reparto_en_pares: bool = False
-    # ex-9b (19-oct, decisión de Gadea): los campos del paso 6 en una SEGUNDA llamada al extractor, a la vez que la de
-    # siempre (el esquema de todo junto no cabía en Haiku). APAGADO hasta medirlo.
-    paso6_en_llamada_aparte: bool = True  # PROMOCIONADO 20-oct (ex9b-8); su espera, como mucho 1,5 s más; revert = False
-    duracion_por_extractor: bool = True  # PROMOCIONADO 20-oct (ronda ex9b-8: 98,7 % 29/32, 0 regresiones; HISTORY 0.31.68); revert = False
-    # - Las edades (`edades`), con su cita; el regex solo valida la cifra. `fill_gaps` ya no las rellena si el extractor
-    #   leyó el mensaje. nucleo/extractor._poner_edades y la respuesta corta a "¿qué edades tienen?".
-    edades_por_extractor: bool = True  # PROMOCIONADO 20-oct (ronda ex9b-8: 98,7 % 29/32, 0 regresiones; HISTORY 0.31.68); revert = False
     # - El plan elegido: si el mensaje ACEPTA el paquete que el bot acaba de proponer (`acepta_propuesta`, solo cuando el
     #   bot propuso uno), se da por elegido y sigue la reserva; preguntar el precio no es aceptar. Antes,
     #   `_CONFIRMS_DESCRIBED_PACKAGE_RE` ("quiero este paquete"). nucleo/routing._paquete_confirmado.
     plan_elegido_por_extractor: bool = False  # NO (ex9b-5, manual-duracion-curso): la descripción del curso Open Water
     # ("4 inmersiones") se tomaba por la propuesta de un paquete y "para mí" lo elegía: Curso Referido. 0 usos en PRE.
-    # - Alguien que se SUMA a un grupo ya sabido ("mi hermano también viene, hace snorkel" sobre 2 buzos): el extractor
-    #   ve el reparto sabido aunque no esté guardado ({buceo: 2} = la actividad para todos) y devuelve el nuevo; y el atajo
-    #   de "reparto completo" deja pasar la red de acompañantes si Jev está seguro de que se suma alguien
-    #   (`companion_joins`). nucleo/extractor._sabido_para_extractor y nucleo/extraction.
-    reparto_al_sumarse_alguien: bool = True  # PROMOCIONADO 20-oct (ex9b-8): por el punto único del acompañante y con Jev; revert = False
-    # - Las notas del RAG sobre OTRA persona del grupo ("el minicurso no certifica", "certificado inactivo = refresher")
-    #   salen del estado (`otro_sin_certificar`, `otro_certificado_inactivo` del extractor, con cita) en vez de un regex
-    #   sobre todo lo que escribió el cliente; si el extractor no leyó algún mensaje, el regex de siempre.
-    #   rutas/contexto_rag.
-    notas_rag_desde_estado: bool = True  # PROMOCIONADO 20-oct (ronda ex9b-8: 98,7 % 29/32, 0 regresiones; HISTORY 0.31.68); revert = False
     # gen-8 (21-oct): el ejemplo del acuse para reconocer un dato iba en plural ("none of you are Colombian") y lo
     # copiaba a quien va solo; con el flag, la regla de usar las palabras y el número del cliente. APAGADO.
     acuse_en_su_numero: bool = True  # PROMOCIONADO 21-oct (ronda sin desplegar gen8-B 97,9 % 27/32 frente a gen8-A 97,0 % 26/32; el que empeora es del RAG; HISTORY 0.31.79); revert = False
@@ -336,9 +314,6 @@ class Settings(BaseSettings):
     # pase le llegaba al cliente cuando el aviso al final iba pegado detrás (se miraba len < 30): 8 turnos en las rondas
     # del 21-22, también en G10. Con el flag cuenta la primera línea entera. escalation_agent._es_nada. APAGADO.
     nada_en_primera_linea: bool = True  # PROMOCIONADO 22-oct (Gonzalo: el NADA de contestar antes del pase ya no llega al cliente; 8 turnos en las rondas del 21-22; HISTORY 0.31.92); revert = False
-    # - Textos fijos del flujo en el español de Cartagena (decisión de Gadea, 20-oct): vosotros -> ustedes, sin género
-    #   supuesto y sin "podemos recogerte saliendo desde Cartagena" (no hay recogida en Cartagena). flows/textos.py.
-    textos_de_cartagena: bool = True  # PROMOCIONADO 20-oct (textos-B 97,4 % 26/32 frente a gen2-B 97,4 % 27/32: los 3 que empeoran no pasan por estos textos; HISTORY 0.31.72); revert = False
     # gen-5 (20-oct, Gonzalo con Claude; idioma del primer turno): el idioma de la apertura se decidía en cuatro sitios.
     # La reserva (`_setup_phase`) usaba el extractor, las palabras vacías, el LLM y G-10 (otro idioma → inglés); lo
     # sensible, `_reply_language` (solo palabras); el contacto y "¿eres un bot?", `_infer_language` (solo pistas); la
