@@ -9,7 +9,6 @@ import pytest
 
 from src.agents import extractor_turno as ex
 from src.agents.conversational_core import SLOT_NATIONALITY, ask_slot
-from src.config import settings
 from src.flows.state import ConversationState
 
 
@@ -28,14 +27,10 @@ def test_cada_frase_que_se_cambia_esta_en_el_prompt(prompt):
 def test_la_pregunta_nombra_la_cedula_con_el_flag(monkeypatch, lang, plural):
     st = ConversationState(conversation_id="gen4", language=lang)
     st.detected_group_size = 3 if plural else 1
-    monkeypatch.setattr(settings, "vivir_no_es_residir", True)
     con = ask_slot(st, SLOT_NATIONALITY)
     assert "cédula de extranjería" in con
     assert "resident" not in con  # ni "residente" ni "resident": se contestaba "vivo aquí" (Gonzalo, #852)
     assert "colombiano" not in con  # sin género supuesto
-    monkeypatch.setattr(settings, "vivir_no_es_residir", False)
-    sin = ask_slot(st, SLOT_NATIONALITY)
-    assert "cédula" not in sin
 
 
 @pytest.mark.parametrize("prompt", [ex.SISTEMA_ES, ex.SISTEMA_EN], ids=["es", "en"])
@@ -50,6 +45,5 @@ def test_gen14_la_frase_que_cambia_sigue_en_el_prompt(prompt):
 def test_en_ingles_la_cedula_se_explica_sin_residents(monkeypatch):
     """Decisión de Gadea (#1078): en inglés, «cédula de extranjería» con una explicación corta y sin «residents»."""
     st = ConversationState(conversation_id="gen4-en", language="en")
-    monkeypatch.setattr(settings, "vivir_no_es_residir", True)
     pregunta = ask_slot(st, SLOT_NATIONALITY)
     assert "Colombia's ID card for foreigners" in pregunta and "resident" not in pregunta

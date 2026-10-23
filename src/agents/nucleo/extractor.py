@@ -286,10 +286,8 @@ def _poner_otras_personas(state: ConversationState, datos: dict) -> None:
 
 
 def _poner_actividad_preguntada(state: ConversationState, datos: dict) -> None:
-    """gen-8 (`actividad_de_la_pregunta`): la actividad concreta de la que el cliente pregunta sin elegirla. Se queda
-    la última: "¿y cuánto dura?" no nombra ninguna y sigue hablando de la misma."""
-    if not settings.actividad_de_la_pregunta:
-        return
+    """gen-8: la actividad concreta de la que el cliente pregunta sin elegirla. Se queda la última: "¿y cuánto dura?"
+    no nombra ninguna y sigue hablando de la misma."""
     actividad = (datos or {}).get("actividad_preguntada")
     if actividad and actividad != state.actividad_preguntada:
         state.actividad_preguntada = actividad

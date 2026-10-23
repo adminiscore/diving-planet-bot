@@ -12,7 +12,6 @@ import pytest
 
 from src.agents import extractor_turno as ex
 from src.agents import jev_router
-from src.config import settings
 
 POLITICA = json.loads((Path(__file__).resolve().parents[1] / "data" / "knowledge_base" / "policies.json")
                       .read_text(encoding="utf-8-sig"))["policies"]["other_island_hotels"]
@@ -25,34 +24,28 @@ def test_cada_hotel_sigue_en_la_base(hotel):
     assert clave in POLITICA["es"] and clave in POLITICA["en"]
 
 
-@pytest.mark.parametrize("flag", [False, True])
-def test_el_extractor_los_conoce_con_el_flag(monkeypatch, flag):
-    monkeypatch.setattr(settings, "hoteles_de_la_base", flag)
-    assert ("Mulata" in ex._pistas_islas()) is flag
-    assert ex.nombra_un_lugar("vamos a estar en Las Palmeras") is flag
+def test_el_extractor_los_conoce():
+    assert "Mulata" in ex._pistas_islas()
+    assert ex.nombra_un_lugar("vamos a estar en Las Palmeras")
 
 
-@pytest.mark.parametrize("flag", [False, True])
-def test_jev_los_nombra_en_la_opcion_islas(monkeypatch, flag):
-    monkeypatch.setattr(settings, "hoteles_de_la_base", flag)
+def test_jev_los_nombra_en_la_opcion_islas():
     pregunta = jev_router._questions_for_turn(None)[jev_router.CUSTOMER_PLACE]
-    assert ("Eco Hotel Las Palmeras" in pregunta["criteria"]["islands"]) is flag
+    assert "Eco Hotel Las Palmeras" in pregunta["criteria"]["islands"]
     assert "Eco Hotel Las Palmeras" not in pregunta["criteria"]["cartagena"]
 
 
-@pytest.mark.parametrize("flag, lugar, pregunta", [
-    (True, {"choice": "islands", "confidence": 0.97}, False),
-    (True, {"choice": "cartagena", "confidence": 0.9}, False),
-    (True, {"choice": "islands", "confidence": 0.3}, True),   # Jev no está seguro: la puerta de siempre
-    (True, {"choice": "none", "confidence": 0.9}, True),
-    (False, {"choice": "islands", "confidence": 0.97}, True),  # sin el flag, la puerta de siempre
+@pytest.mark.parametrize("lugar, pregunta", [
+    ({"choice": "islands", "confidence": 0.97}, False),
+    ({"choice": "cartagena", "confidence": 0.9}, False),
+    ({"choice": "islands", "confidence": 0.3}, True),   # Jev no está seguro: la puerta de siempre
+    ({"choice": "none", "confidence": 0.9}, True),
 ])
-def test_la_puerta_del_origen_no_pregunta_si_jev_esta_seguro(monkeypatch, flag, lugar, pregunta):
+def test_la_puerta_del_origen_no_pregunta_si_jev_esta_seguro(lugar, pregunta):
     """«We booked 3 nights at Mulata. How much is snorkeling?»: la puerta del origen preguntaba con Jev seguro."""
     from src.agents import conversational_core as core
     from src.flows.state import ConversationState
 
-    monkeypatch.setattr(settings, "hoteles_de_la_base", flag)
     st = ConversationState(conversation_id="gen15", language="en")
     st._jev_lugar = lugar
     st._jev_pide_precio = True

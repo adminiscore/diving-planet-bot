@@ -38,8 +38,6 @@ PROPUESTA = ("Te propongo el *paquete de 5 inmersiones en 2 días*: sales desde 
 def _apagados(monkeypatch):
     for f in FLAGS6:
         monkeypatch.setattr(settings, f, False)
-    # gen-8: `actividad_de_la_pregunta` también es un campo del paso 6 (tests/test_gen8_actividad_preguntada.py).
-    monkeypatch.setattr(settings, "actividad_de_la_pregunta", False)
     # arq-1t: `paquete_varios_dias` también es un campo del paso 6 (tests/test_arq1t_paquete.py).
     monkeypatch.setattr(settings, "paquete_varios_dias", False)
 

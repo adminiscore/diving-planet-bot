@@ -145,7 +145,7 @@ def _departure_place(message: str) -> str | None:
     isla = _GENERIC_ISLAND_RE.search(text)
     if isla and strip_accents(isla.group(0).lower()) == "baru":
         # G3-06: Barú no es una isla del Rosario (ver `lugar_sin_baru`); gen-6: quien se aloja allí sale desde Cartagena.
-        return "cartagena" if settings.baru_sale_de_cartagena else None
+        return "cartagena"
     return "island" if isla else None
 
 

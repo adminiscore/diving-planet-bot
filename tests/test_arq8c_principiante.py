@@ -15,11 +15,6 @@ def _conv(**campos) -> ConversationState:
     return st
 
 
-@pytest.fixture(autouse=True)
-def _con_la_oferta(monkeypatch):
-    monkeypatch.setattr(settings, "actividad_de_la_pregunta", True)
-
-
 def test_al_que_no_esta_certificado_no_se_le_ofrece_el_buceo(monkeypatch):
     monkeypatch.setattr(settings, "principiante_sin_buceo_certificado", True)
     st = _conv(actividad_preguntada="certified_diving", is_certified=False)

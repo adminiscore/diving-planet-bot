@@ -43,13 +43,11 @@ from src.prompts.booking import tool_sin_baru as _tool_sin_baru
 
 def _sin_baru(texto: str) -> str:
     """G3-06: los textos de lugar de estos prompts, sin Barú entre "las islas"."""
-    return _lugar_sin_baru(texto, settings.baru_sale_de_cartagena)
+    return _lugar_sin_baru(texto, True)
 
 
 def _acuse_en_su_numero(texto: str) -> str:
-    """gen-8 (flag `acuse_en_su_numero`): el ejemplo del acuse, sin una frase en plural para copiar (ver booking)."""
-    if not settings.acuse_en_su_numero:
-        return texto
+    """gen-8: el ejemplo del acuse, sin una frase en plural para copiar (ver booking)."""
     from src.prompts.booking import (  # lazy
         ACUSE_EJEMPLO_EN,
         ACUSE_EJEMPLO_ES,
@@ -61,7 +59,7 @@ def _acuse_en_su_numero(texto: str) -> str:
 
 
 def _tool(tool: dict) -> dict:
-    return _tool_sin_baru(tool, settings.baru_sale_de_cartagena)
+    return _tool_sin_baru(tool, True)
 
 logger = logging.getLogger("uvicorn.error")
 

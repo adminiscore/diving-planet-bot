@@ -187,40 +187,24 @@ def _finalize(state: ConversationState) -> str:
         summary = _colombian_summary_lines(state)
         state.mixed_last_summary = summary
         state.pending_note = build_lead_summary(state, escalation_reason=reason)
-        if settings.pago_colombiano_con_asesor:
-            # gen-4 (21-oct, decisión de Gadea, #862): el colombiano sigue pasando a un asesor, pero sin "confirmar
-            # disponibilidad" (siempre hay: decisión del negocio) y en el número del cliente ("Como son…" se decía
-            # también a quien va solo), sin género supuesto.
-            grupo = (state.detected_group_size or 1) > 1
-            if lang == "es":
-                return (
-                    f"{refresher_note}{summary}\n\n"
-                    "El pago es en pesos colombianos (COP): "
-                    + ("pueden" if grupo else "puedes")
-                    + " pagar *100% online* o *50% online + 50% en persona*. "
-                    + ("Les paso con un asesor para coordinar el pago; enseguida se pone en contacto con ustedes. 🌊"
-                       if grupo else
-                       "Te paso con un asesor para coordinar el pago; enseguida se pone en contacto contigo. 🌊")
-                )
-            return (
-                f"{refresher_note}{summary}\n\n"
-                "You pay in Colombian pesos (COP): *100% online* or *50% online + 50% in person*. I'll connect you "
-                "with an advisor to arrange the payment — they'll be in touch shortly. 🌊"
-            )
+        # gen-4 (21-oct, decisión de Gadea, #862): el colombiano pasa a un asesor, sin "confirmar disponibilidad" (siempre
+        # hay: decisión del negocio) y en el número del cliente ("Como son…" se decía también a quien va solo), sin
+        # género supuesto.
+        grupo = (state.detected_group_size or 1) > 1
         if lang == "es":
             return (
                 f"{refresher_note}{summary}\n\n"
-                + "Como son colombianos/residentes"
-                + ", el pago es en pesos (COP): puedes "
-                "pagar *100% online* o *50% online + 50% en persona*. Te paso con un "
-                "asesor para confirmar disponibilidad y coordinar el pago — enseguida "
-                "se pone en contacto contigo. 🌊"
+                "El pago es en pesos colombianos (COP): "
+                + ("pueden" if grupo else "puedes")
+                + " pagar *100% online* o *50% online + 50% en persona*. "
+                + ("Les paso con un asesor para coordinar el pago; enseguida se pone en contacto con ustedes. 🌊"
+                   if grupo else
+                   "Te paso con un asesor para coordinar el pago; enseguida se pone en contacto contigo. 🌊")
             )
         return (
             f"{refresher_note}{summary}\n\n"
-            "As Colombian residents you pay in COP: *100% online* or *50% online + "
-            "50% in person*. I'll connect you with an advisor to confirm availability "
-            "and arrange payment — they'll be in touch shortly. 🌊"
+            "You pay in Colombian pesos (COP): *100% online* or *50% online + 50% in person*. I'll connect you "
+            "with an advisor to arrange the payment — they'll be in touch shortly. 🌊"
         )
 
     response = cart_render.goto_final_summary(state)

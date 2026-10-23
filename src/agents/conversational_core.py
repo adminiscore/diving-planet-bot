@@ -315,7 +315,7 @@ def _ofrecer_la_actividad_preguntada(state: ConversationState) -> str | None:
     """gen-8: quien pregunta por UNA actividad sin elegirla recibe la oferta de esa, no el menú de 4 (textos-B). La
     elige el cliente: "sí" confirma la recomendación (`suggested_activity`, nucleo/routing)."""
     actividad = state.actividad_preguntada
-    if not (settings.actividad_de_la_pregunta and actividad) or actividad in _SIN_OFERTA_CONCRETA:
+    if not actividad or actividad in _SIN_OFERTA_CONCRETA:
         return None
     if state.suggested_activity and state.suggested_activity != actividad:
         return None
@@ -733,44 +733,27 @@ def ask_slot(state: ConversationState, slot: str, *, reasking: bool = False) -> 
         # Singular/plural como en certificación y seguridad — en vivo salía
         # siempre en plural ("¿sois colombianos?") a quien viajaba solo.
         plural = (state.detected_group_size or 1) > 1
-        if settings.vivir_no_es_residir:
-            # gen-4: "residente" se contestaba "sí, vivo aquí"; lo que cuenta es la nacionalidad o la cédula de
-            # extranjería (policies.json, colombian_pricing). Sin género supuesto (SIN_GENERO_SUPUESTO).
-            pregunta = (
-                ("¿son de nacionalidad colombiana o tienen cédula de extranjería?" if plural
-                 else "¿eres de nacionalidad colombiana o tienes cédula de extranjería?")
-                if lang == "es" else
-                # Sin "resident" (Gonzalo, #852): "resident" se contestaba "I live here", el fallo de gen-4.
-                # Sin explicar, «cédula de extranjería» quedaba en español en una respuesta en inglés (ronda gen14-B,
-                # reserva-ingles idioma); decisión de Gadea (#1078): una explicación corta y sin «residents».
-                ("are you Colombian nationals, or do you have a Colombian *cédula de extranjería* (Colombia's ID card "
-                 "for foreigners)?" if plural else
-                 "are you a Colombian national, or do you have a Colombian *cédula de extranjería* (Colombia's ID card "
-                 "for foreigners)?")
-            )
-            if lang == "es":
-                cabeza = ("Para darte el precio y el link correctos:" if not _es_la_ultima_pregunta(state)
-                          else "Última cosa para darte el precio y el link correctos:")
-            else:
-                cabeza = ("So I can give you the right price and link:" if not _es_la_ultima_pregunta(state)
-                          else "One last thing so I can give you the right price and link:")
-            return f"{cabeza} {pregunta}"
-        if lang == "es":
-            pregunta = (
-                "¿son colombianos o residentes en Colombia?"
-                if plural
-                else "¿eres colombiano o residente en Colombia?"
-            )
-            if not _es_la_ultima_pregunta(state):
-                return f"Para darte el precio y el link correctos: {pregunta}"
-            return f"Última cosa para darte el precio y el link correctos: {pregunta}"
-        pregunta_en = (
-            "are you Colombian or residents of Colombia?" if plural
-            else "are you Colombian or a resident of Colombia?"
+        # gen-4: "residente" se contestaba "sí, vivo aquí"; lo que cuenta es la nacionalidad o la cédula de extranjería
+        # (policies.json, colombian_pricing). Sin género supuesto (SIN_GENERO_SUPUESTO).
+        pregunta = (
+            ("¿son de nacionalidad colombiana o tienen cédula de extranjería?" if plural
+             else "¿eres de nacionalidad colombiana o tienes cédula de extranjería?")
+            if lang == "es" else
+            # Sin "resident" (Gonzalo, #852): "resident" se contestaba "I live here", el fallo de gen-4.
+            # Sin explicar, «cédula de extranjería» quedaba en español en una respuesta en inglés (ronda gen14-B,
+            # reserva-ingles idioma); decisión de Gadea (#1078): una explicación corta y sin «residents».
+            ("are you Colombian nationals, or do you have a Colombian *cédula de extranjería* (Colombia's ID card "
+             "for foreigners)?" if plural else
+             "are you a Colombian national, or do you have a Colombian *cédula de extranjería* (Colombia's ID card "
+             "for foreigners)?")
         )
-        if not _es_la_ultima_pregunta(state):
-            return f"So I can give you the right price and link: {pregunta_en}"
-        return f"One last thing so I can give you the right price and link: {pregunta_en}"
+        if lang == "es":
+            cabeza = ("Para darte el precio y el link correctos:" if not _es_la_ultima_pregunta(state)
+                      else "Última cosa para darte el precio y el link correctos:")
+        else:
+            cabeza = ("So I can give you the right price and link:" if not _es_la_ultima_pregunta(state)
+                      else "One last thing so I can give you the right price and link:")
+        return f"{cabeza} {pregunta}"
     raise ValueError(f"unknown slot {slot!r}")
 
 
@@ -1589,7 +1572,7 @@ async def _con_la_nacionalidad_del_mensaje(state: ConversationState, message: st
     flag, el RAG recibe una COPIA del estado con la nacionalidad que la extracción del turno ya leyó (no se gasta ni
     se lanza otra: es la tarea adelantada); el estado de verdad lo sigue escribiendo la extracción. Si la nacionalidad
     cambia, la huella de rag-5 cambia y la respuesta adelantada se rehace."""
-    if not settings.rag_espera_la_nacionalidad or state.is_colombian is not None:
+    if state.is_colombian is not None:
         return state
     from src.agents.nucleo.extractor import lectura_del_extractor  # lazy
 
@@ -2138,7 +2121,7 @@ def _origen_antes_del_precio(state: ConversationState, message: str, answer: str
     ("¿y en pesos?"). Un importe en la respuesta a otra cosa ("¿qué incluye?") se deja como hoy."""
     if state.location or state.detected_location:
         return None
-    if settings.hoteles_de_la_base and _jev_dice_el_lugar(state):
+    if _jev_dice_el_lugar(state):
         # gen-15: la puerta mira el origen antes de que la extracción del turno lo guarde, y sus pistas son palabras
         # («Cartagena», «islas», «Barú»): «We booked 3 nights at Mulata. How much is snorkeling?» se repreguntaba 2/2
         # con Jev seguro (islands 0,97). Si Jev está seguro de dónde está el cliente, el mensaje ya lo dice.

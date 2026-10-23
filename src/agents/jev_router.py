@@ -707,8 +707,6 @@ def _con_hoteles_de_la_base(pregunta: dict) -> dict:
     no sabía qué es «Mulata» o «Las Palmeras» (banco docs/robustness/gen/banco_gen15_hoteles.py: «Eco Hotel Las
     Palmeras» → cartagena 0,69-0,76; Mulata, Ubuntu o Majagua → none). Con el flag, la opción «islands» nombra los
     hoteles de la base (`extractor_turno.HOTELES_DE_LA_BASE`, de policies.json other_island_hotels)."""
-    if not settings.hoteles_de_la_base:
-        return pregunta
     from src.agents.extractor_turno import HOTELES_DE_LA_BASE  # lazy
 
     hoteles = ", ".join(HOTELES_DE_LA_BASE)
@@ -759,8 +757,8 @@ def pending_answer_question(slot: str | None) -> dict | None:
     spec = SLOT_RESOLVER_SPEC.get(slot or "")
     if not spec or spec["type"] == "integer":
         return None
-    # G3-06; gen-6: con `baru_sale_de_cartagena`, Barú es 'cartagena'
-    spec = {**spec, "value_meaning": lugar_sin_baru(spec["value_meaning"], settings.baru_sale_de_cartagena)}
+    # G3-06; gen-6: Barú es 'cartagena'
+    spec = {**spec, "value_meaning": lugar_sin_baru(spec["value_meaning"], True)}
     asked = f"The assistant just asked the customer: \"{spec['question_en']}\""
     if spec["type"] == "boolean":
         criteria = {
@@ -852,12 +850,11 @@ def _questions_for_turn(pending_slot: str | None = None) -> dict:
     q[CHANGES_DATE] = _CHANGES_DATE_Q
     q[COMPANION_JOINS] = _COMPANION_JOINS_Q
     q[ADDS_PERSON] = _ADDS_PERSON_Q
-    q[YA_RESERVADO] = _YA_RESERVADO_Q_SIN_HOTEL if settings.reserva_de_hotel_no_es_nuestra else _YA_RESERVADO_Q
+    q[YA_RESERVADO] = _YA_RESERVADO_Q_SIN_HOTEL
     q[PIDE_DATOS_AJENOS] = _PIDE_DATOS_AJENOS_Q
     if settings.privado_pasa_directo:
         q[PIDE_SERVICIO_PRIVADO] = _PIDE_SERVICIO_PRIVADO_Q
-    q[CUSTOMER_PLACE] = _con_hoteles_de_la_base(
-        _CUSTOMER_PLACE_Q_BARU_CARTAGENA if settings.baru_sale_de_cartagena else _CUSTOMER_PLACE_Q_SIN_BARU)
+    q[CUSTOMER_PLACE] = _con_hoteles_de_la_base(_CUSTOMER_PLACE_Q_BARU_CARTAGENA)
     q[SHARES_OPEN_FACT] = _SHARES_OPEN_FACT_Q
     q[NUEVO_CASO] = _NUEVO_CASO_Q
     q[PREGUNTA_SI_ES_IA] = _PREGUNTA_SI_ES_IA_Q

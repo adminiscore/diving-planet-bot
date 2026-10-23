@@ -318,9 +318,8 @@ def campos_paso6(history: list[dict] | None) -> dict:
         campos["acepta_propuesta"] = (CAMPO_ACEPTA, REGLA_ACEPTA_ES, REGLA_ACEPTA_EN)
     campos["otro_sin_certificar"] = (CAMPO_OTRO_SIN_CERTIFICAR, REGLA_OTRAS_PERSONAS_ES, REGLA_OTRAS_PERSONAS_EN)
     campos["otro_certificado_inactivo"] = (CAMPO_OTRO_CERTIFICADO_INACTIVO, "", "")
-    if settings.actividad_de_la_pregunta:
-        campos["actividad_preguntada"] = (CAMPO_ACTIVIDAD_PREGUNTADA, REGLA_ACTIVIDAD_PREGUNTADA_ES,
-                                          REGLA_ACTIVIDAD_PREGUNTADA_EN)
+    campos["actividad_preguntada"] = (CAMPO_ACTIVIDAD_PREGUNTADA, REGLA_ACTIVIDAD_PREGUNTADA_ES,
+                                      REGLA_ACTIVIDAD_PREGUNTADA_EN)
     if settings.varias_actividades:
         campos["actividades_preguntadas"] = (CAMPO_ACTIVIDADES_PREGUNTADAS, REGLA_ACTIVIDADES_PREGUNTADAS_ES,
                                              REGLA_ACTIVIDADES_PREGUNTADAS_EN)
@@ -520,8 +519,7 @@ def _nombres_de_lugar() -> list[str]:
     )
 
     nombres = list(AMBIGUOUS_LOCATION_NAMES)
-    if settings.hoteles_de_la_base:
-        nombres += [h for h in HOTELES_DE_LA_BASE if not any(h.lower() in n.lower() for n in nombres)]
+    nombres += [h for h in HOTELES_DE_LA_BASE if not any(h.lower() in n.lower() for n in nombres)]  # gen-15
     return nombres
 
 
@@ -621,9 +619,8 @@ def _en_trozos_seguidos(c: list[str], m: list[str]) -> bool:
 
 def _lugares() -> set[str]:
     """Palabras de lugar (lista cerrada): Cartagena, islas/hotel y los nombres de hoteles e islas del Rosario."""
-    palabras = {"cartagena", "isla", "islas", "island", "islands", "rosario", "hotel", "hostel", "hostal"}
-    if settings.baru_sale_de_cartagena:
-        palabras.update({"baru", "blanca"})  # gen-6: "estamos en Barú" dice desde dónde sale (Cartagena)
+    # gen-6: "estamos en Barú" dice desde dónde sale (Cartagena)
+    palabras = {"cartagena", "isla", "islas", "island", "islands", "rosario", "hotel", "hostel", "hostal", "baru", "blanca"}
     for nombre in _nombres_de_lugar():
         palabras.update(w for w in _norm(nombre) if len(w) > 3)
     return palabras
@@ -698,22 +695,19 @@ async def extraer_turno(mensaje: str, *, history: list[dict] | None = None, sabi
         # arq-1r: el extranjero CON cédula de extranjería es residente (ver `_CEDULA_DE_EXTRANJERIA_MANDA`).
         for antes, despues in _CEDULA_DE_EXTRANJERIA_MANDA:
             sistema = sistema.replace(antes, despues)
-    if settings.vivir_no_es_residir:
-        # gen-4: vivir en Colombia no es ser residente (ver `_VIVIR_NO_ES_RESIDIR`).
-        for antes, despues in _VIVIR_NO_ES_RESIDIR:
+    # gen-4: vivir en Colombia no es ser residente (ver `_VIVIR_NO_ES_RESIDIR`).
+    for antes, despues in _VIVIR_NO_ES_RESIDIR:
+        sistema = sistema.replace(antes, despues)
+    # gen-14: la ciudad o el gentilicio sí dicen la nacionalidad; alojarse o viajar no (ver la constante).
+    for antes, despues in _GENTILICIO_ES_COLOMBIANO:
+        sistema = sistema.replace(antes, despues)
+    if settings.el_verbo_no_la_ciudad:
+        # arq-1f: pares con la misma ciudad, para que decida el verbo (ver `_EL_VERBO_NO_LA_CIUDAD`).
+        for antes, despues in _EL_VERBO_NO_LA_CIUDAD:
             sistema = sistema.replace(antes, despues)
-        if settings.gentilicio_es_colombiano:
-            # gen-14: la ciudad o el gentilicio sí dicen la nacionalidad; alojarse o viajar no (ver la constante).
-            for antes, despues in _GENTILICIO_ES_COLOMBIANO:
-                sistema = sistema.replace(antes, despues)
-            if settings.el_verbo_no_la_ciudad:
-                # arq-1f: pares con la misma ciudad, para que decida el verbo (ver `_EL_VERBO_NO_LA_CIUDAD`).
-                for antes, despues in _EL_VERBO_NO_LA_CIUDAD:
-                    sistema = sistema.replace(antes, despues)
-    if settings.baru_sale_de_cartagena:
-        # gen-6: alojarse en Barú o Playa Blanca es salir desde Cartagena (ver `_BARU_SALE_DE_CARTAGENA`).
-        for antes, despues in _BARU_SALE_DE_CARTAGENA:
-            sistema = sistema.replace(antes, despues)
+    # gen-6: alojarse en Barú o Playa Blanca es salir desde Cartagena (ver `_BARU_SALE_DE_CARTAGENA`).
+    for antes, despues in _BARU_SALE_DE_CARTAGENA:
+        sistema = sistema.replace(antes, despues)
     sistema += REGLA_HOTEL_ES if lang == "es" else REGLA_HOTEL_EN
     # Solo cuando el refresher importa (ya se sabe que lleva más de 2 años sin bucear): con el campo en todas las
     # llamadas, el banco ex0 bajaba de 99,5 a 96,5 % estable y volvía "paquete de 5 inmersiones" → certificado.
@@ -829,11 +823,8 @@ async def extraer_turno(mensaje: str, *, history: list[dict] | None = None, sabi
         if campo == "location" and valor == "island" and _solo_baru(cita):
             # G3-06 (decisión de Gadea): Barú y Playa Blanca no son las islas ("estamos en el hotel las islas, en
             # baru" salía island). El lugar queda sin saber y lo contesta la base (aviso solo-operamos-en-rosario).
-            if settings.baru_sale_de_cartagena:
-                # gen-6: quien se aloja en Barú sale desde Cartagena (policies.json); sin saberlo, se repreguntaba.
-                salida[campo] = "cartagena"
-                continue
-            descartes[campo] = f"Barú no es Islas del Rosario: {cita!r}"
+            # gen-6: quien se aloja en Barú sale desde Cartagena (policies.json); sin saberlo, se repreguntaba.
+            salida[campo] = "cartagena"
             continue
         if campo == "hotel" and not (isinstance(valor, str) and cita_verificable(valor, mensaje)):
             descartes[campo] = f"el nombre del hotel no está en el mensaje: {valor!r}"

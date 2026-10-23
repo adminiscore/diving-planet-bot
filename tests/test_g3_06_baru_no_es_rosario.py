@@ -15,7 +15,6 @@ import pytest
 from src.agents import conversational_core as core
 from src.agents import extractor_turno as ex
 from src.agents import jev_router
-from src.config import settings
 from src.prompts import booking
 
 
@@ -32,13 +31,6 @@ MSG = "estamos en el hotel las islas, en baru. nos pueden recoger ahi?"
 ISLA = {"location": {"valor": "island", "cita": "estamos en el hotel las islas, en baru"}}
 
 
-@pytest.mark.asyncio
-async def test_el_extractor_no_pone_las_islas_por_baru(monkeypatch):
-    monkeypatch.setattr(settings, "baru_sale_de_cartagena", False)  # con gen-6, 'cartagena' (test_gen6_*)
-    out = await ex.extraer_turno(MSG, client=_cliente(ISLA))
-    assert out.get("location") is None
-
-
 @pytest.mark.parametrize("cita, solo", [
     ("estamos en el hotel las islas, en baru", True),
     ("nos quedamos en Playa Blanca", True),
@@ -47,11 +39,6 @@ async def test_el_extractor_no_pone_las_islas_por_baru(monkeypatch):
 ])
 def test_solo_baru(cita, solo):
     assert ex._solo_baru(cita) is solo
-
-
-def test_baru_no_es_respuesta_isla_al_origen(monkeypatch):
-    monkeypatch.setattr(settings, "baru_sale_de_cartagena", False)  # con gen-6, 'cartagena' (test_gen6_*)
-    assert core._departure_place("en baru") is None
 
 
 def test_una_isla_sigue_siendo_isla(monkeypatch):

@@ -8,7 +8,6 @@ import pytest
 
 from src.agents.nucleo import slotfill_close
 from src.agents.rutas.contexto_rag import _build_extra_context
-from src.config import settings
 from src.flows.state import ConversationState
 
 
@@ -26,23 +25,15 @@ def _colombiano(lang: str, personas: int) -> ConversationState:
     ("es", 1, "puedes pagar"), ("es", 3, "pueden pagar"), ("en", 1, "You pay"), ("en", 3, "You pay"),
 ])
 def test_el_cierre_sin_disponibilidad_y_en_su_numero(monkeypatch, lang, personas, numero):
-    monkeypatch.setattr(settings, "pago_colombiano_con_asesor", True)
     texto = slotfill_close._finalize(_colombiano(lang, personas))
     assert "disponibilidad" not in texto and "availability" not in texto
     assert numero in texto
     assert "Como son" not in texto and "colombianos/residentes" not in texto
 
 
-def test_sin_el_flag_el_cierre_de_siempre(monkeypatch):
-    monkeypatch.setattr(settings, "pago_colombiano_con_asesor", False)
-    assert "confirmar disponibilidad" in slotfill_close._finalize(_colombiano("es", 1))
-
-
-@pytest.mark.parametrize("flag", [False, True])
-def test_el_rag_sabe_que_el_pago_lo_coordina_un_asesor(monkeypatch, flag):
-    monkeypatch.setattr(settings, "pago_colombiano_con_asesor", flag)
+def test_el_rag_sabe_que_el_pago_lo_coordina_un_asesor():
     contexto = _build_extra_context(_colombiano("es", 1)) or ""
-    assert ("no le compartas el link de reserva" in contexto) is flag
+    assert "no le compartas el link de reserva" in contexto
     extranjero = _colombiano("es", 1)
     extranjero.is_colombian = False
     assert "no le compartas el link" not in (_build_extra_context(extranjero) or "")
