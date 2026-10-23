@@ -1,0 +1,27 @@
+{
+ "about": "arq-5f (23-oct, Gonzalo con Claude, reparto de Gadea #1525): HECHOS_QUE_FALTABAN. La excepción del refresher (500+ inmersiones o Divemaster: lo revisa un asesor), que el horario no se adelanta (lo ve un asesor), buceo y snorkel en la misma lancha y que alojados en Barú o Playa Blanca salen desde Cartagena. Los controles no tienen que traer nada de eso. Frases nuestras (no salen de G9/G10).",
+ "dialogos": [
+  {"id": "f1-refresh-500", "tipo": "refresh", "turnos": ["Tengo más de 500 inmersiones pero llevo 3 años sin bucear. ¿Qué necesito para la salida de 2 inmersiones?"],
+   "todas": ["500|dive master|divemaster", "asesor|equipo"]},
+  {"id": "f2-refresh-dm-en", "tipo": "refresh", "turnos": ["I'm a Divemaster but I haven't dived in 4 years. What are the requirements for the fun dives?"],
+   "todas": ["dive master|divemaster|500", "team|advisor"]},
+  {"id": "f3-adelantar-cartagena", "tipo": "horario", "turnos": ["¿Podemos salir más temprano desde Cartagena para el snorkel? ¿A qué hora es la salida?"],
+   "todas": ["no se pueden adelantar|son fijos|es fijo|no se puede adelantar", "asesor"]},
+  {"id": "f4-pickup-antes-en", "tipo": "horario", "turnos": ["We're staying on the islands. Can the hotel pickup for the mini course be earlier than 9:30? What time is it?"],
+   "todas": ["fixed|cannot be moved|can't be moved|cannot be changed", "advisor|team"]},
+  {"id": "f5-lancha-mixta", "tipo": "lancha", "turnos": ["Somos 4 saliendo desde Cartagena: dos hacen la salida de 2 inmersiones y dos el snorkel. ¿A qué hora salimos?"],
+   "todas": ["misma lancha|juntos", "zona distinta|otra zona|distinta"]},
+  {"id": "f6-lancha-mixta-en", "tipo": "lancha", "turnos": ["From Cartagena, my wife will snorkel and I'll do the 2 dives. What time do we leave?"],
+   "todas": ["same boat|together"]},
+  {"id": "f7-baru", "tipo": "baru", "turnos": ["Nos alojamos en Barú. ¿A qué hora es la salida del snorkel?"],
+   "todas": ["cartagena", "bodeguita"], "ninguno": ["te recogemos en tu hotel|recogida en tu hotel"]},
+  {"id": "f8-playa-blanca-en", "tipo": "baru", "turnos": ["We're staying in Playa Blanca. What time is the snorkel trip?"],
+   "todas": ["cartagena"], "ninguno": ["pick you up at your hotel"]},
+  {"id": "c1-hora-cartagena", "tipo": "control", "turnos": ["¿A qué hora sale el buceo desde Cartagena?"],
+   "todas": ["8:00|8 a|8am"], "ninguno": ["barú|baru", "misma lancha"]},
+  {"id": "c2-requisitos-minicurso", "tipo": "control", "turnos": ["¿Qué necesito para hacer el minicurso?"],
+   "ninguno": ["500", "divemaster|dive master"]},
+  {"id": "c3-majagua", "tipo": "control", "turnos": ["Estamos en el hotel Majagua, ¿a qué hora nos recogen para el snorkel?"],
+   "todas": ["9:30"], "ninguno": ["barú|baru"]}
+ ]
+}

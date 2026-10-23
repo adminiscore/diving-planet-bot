@@ -265,7 +265,7 @@ def hechos(state: ConversationState, intenciones: list[str], actividades: list[s
         if not origen and _DEPENDEN_DEL_ORIGEN & set(pedidas):
             bloque["pregunta_pendiente"] = "origen"
         bloques.append(bloque)
-    return bloques
+    return _lo_que_faltaba(state, bloques, pedidas, lang)
 
 
 # arq-1s (22-oct, flag `requisitos_coherentes`; G10 nº 4): (1) en un curso, un solo formulario: la política médica dice a
@@ -389,7 +389,53 @@ def hechos_sin_actividad(state: ConversationState, intenciones: list[str]) -> li
     if "descuento" in pedidas:
         bloque["descuento"] = _descuentos(lang)
     bloque.update(_clima_y_pago(state, pedidas, lang))
-    return [bloque]
+    return _lo_que_faltaba(state, [bloque], pedidas, lang)
+
+
+# arq-5f (23-oct, flag `hechos_que_faltaban`, reparto de Gadea #1525; G10 nº 5): hechos de la base que la tabla no daba.
+# La excepción del refresher (g10-008, g10-047), que el horario no se adelanta (g10-066), buceo y snorkel en la misma
+# lancha (g10-049) y que alojados en Barú salen desde Cartagena. Se añaden a los bloques ya hechos.
+_CON_REFRESH = {"certified_diving", "refresher"}
+_BUCEO = {"certified_diving", "minicourse", "bubble_makers", "refresher"}
+_CORTE_BARU = {"es": "quien se aloja en Barú", "en": "guests staying in Barú"}
+
+
+def _sale_de_baru(lang: str) -> str | None:
+    """La parte de `island_pickup` de quien se aloja en Barú (sale desde Cartagena)."""
+    texto = _politica("island_pickup", lang) or ""
+    corte = texto.find(_CORTE_BARU[lang])
+    if corte < 0:
+        return None
+    frase = texto[corte:].strip()
+    return frase[0].upper() + frase[1:]
+
+
+def _bucea(actividad: str | None) -> bool:
+    registro = dom.by_id(actividad) if actividad else None
+    return actividad in _BUCEO or (registro is not None and registro.cart_type == "course")
+
+
+def _lo_que_faltaba(state: ConversationState, bloques: list[dict], pedidas: list[str], lang: str) -> list[dict]:
+    if not settings.hechos_que_faltaban:
+        return bloques
+    actividades = {b.get("actividad") for b in bloques} | {
+        a for a, n in (getattr(state, "detected_group_allocation", None) or {}).items() if n}
+    # La lancha va con el horario o lo que incluye (cómo es la salida), no con una pregunta de edad o de precio.
+    con_snorkel_y_buceo = ({"horario", "incluye"} & set(pedidas) and "snorkel" in actividades
+                           and any(_bucea(a) for a in actividades))
+    for b in bloques:
+        if "horario_general" in b:
+            b["horario_general"] = [*b["horario_general"], *filter(None, [_politica("schedule_not_adjustable", lang)])]
+        actividad = b.get("actividad")
+        certificado_sin_actividad = actividad is None and getattr(state, "is_certified", None) is True
+        if "requisitos" in pedidas and "requisitos" in b and (actividad in _CON_REFRESH or certificado_sin_actividad):
+            b["requisitos"] = list(dict.fromkeys([*b["requisitos"], *filter(None, [_politica("refresh_requirement",
+                                                                                              lang)])]))
+        if getattr(state, "_aloja_en_baru", False) and (b.get("recogida") or {}).get("cartagena") is not None:
+            b["recogida"]["cartagena"] = [*b["recogida"]["cartagena"], *filter(None, [_sale_de_baru(lang)])]
+        if con_snorkel_y_buceo and (actividad is None or actividad == "snorkel" or _bucea(actividad)):
+            b["misma_lancha"] = _politica("mixed_group_boat", lang)
+    return bloques
 
 
 # arq-1i (23-oct, flag `intenciones_clima_pago`, decisión de Gadea #1312): el clima en general y cómo se paga, los mismos
