@@ -579,6 +579,35 @@ _PIDE_OTRA_COSA_CON_DESCUENTOS_Q = {
              "of an activity")
     .replace("availability, age, link)", "availability, age, discounts, link)"),
 }
+# arq-1i (23-oct, flag `intenciones_clima_pago`, decisión de Gadea #1312; G10 nº 5: g10-034, g10-067/045/006): el clima
+# en GENERAL y cómo se paga entran en la tabla. El clima de un día concreto o de una reserva hecha NO: sigue la ruta
+# sensible con pase (por eso la pregunta lo excluye).
+PIDE_CLIMA = "pide_clima"
+PIDE_PAGO = "pide_pago"
+_PIDE_CLIMA_Q = {
+    "type": "noul",
+    "instructions": (
+        "The customer asks in GENERAL what happens with bad weather: whether trips are cancelled or rescheduled for "
+        "bad weather, whether they get a refund if the weather prevents the trip, or whether the weather is usually "
+        "a problem, even if the same message also asks other things. It is FALSE when they ask the forecast or the sea "
+        "conditions for a specific day or date (today, tomorrow, next Saturday, a date), or about a trip they have "
+        "already booked."
+    ),
+}
+_PIDE_PAGO_Q = {
+    "type": "noul",
+    "instructions": (
+        "The customer asks how to pay or about payment in general: payment methods, paying by card, by bank transfer, "
+        "in cash or at the dock, paying a deposit or part now and the rest later, or whether the booking is confirmed "
+        "once they pay, even if the same message also asks other things. It is FALSE when they report a payment that "
+        "failed or ask about a payment they already made, or only ask for the booking link."
+    ),
+}
+_OTRA_COSA_SIN_CLIMA_NI_PAGO = (
+    " What happens in general with bad weather (cancellation, rescheduling or refund, not the forecast for a specific "
+    "day) and how to pay (payment methods, deposit, transfer, when the booking is confirmed) also count as one of "
+    "those (they are not something else)."
+)
 CAMBIA_IDIOMA = "cambia_idioma"
 CAMBIA_IDIOMA_MIN = 0.6
 _CAMBIA_IDIOMA_Q = {
@@ -769,6 +798,7 @@ _U34_QUESTIONS = (
     CHANGES_DATE, COMPANION_JOINS, PENDING_ANSWER, SHARES_OPEN_FACT, ADDS_PERSON, CUSTOMER_PLACE, YA_RESERVADO,
     PIDE_DATOS_AJENOS, NUEVO_CASO, PREGUNTA_SI_ES_IA, CAMBIA_IDIOMA, PIDE_PRECIO, PIDE_SERVICIO_PRIVADO, PIDE_QUE_INCLUYE,
     *_INTENCIONES_Q, PIDE_DESCUENTO, PIDE_SI_ALCANZA,  # arq-4b/arq-1v: su duda no manda el turno al router LLM
+    PIDE_CLIMA, PIDE_PAGO,  # arq-1i
 )
 
 
@@ -860,6 +890,13 @@ def _questions_for_turn(pending_slot: str | None = None) -> dict:
         q[PIDE_SI_ALCANZA] = _PIDE_SI_ALCANZA_Q
         q[PIDE_OTRA_COSA] = {**q[PIDE_OTRA_COSA],
                              "instructions": q[PIDE_OTRA_COSA]["instructions"] + _OTRA_COSA_SIN_EL_TIEMPO}
+    if settings.intenciones_clima_pago and PIDE_OTRA_COSA in q:
+        # arq-1i: el clima en general y el pago son de la tabla; «otra cosa» deja de contarlos (sus ejemplos los nombraban).
+        q[PIDE_CLIMA] = _PIDE_CLIMA_Q
+        q[PIDE_PAGO] = _PIDE_PAGO_Q
+        otra = (q[PIDE_OTRA_COSA]["instructions"].replace("the weather, ", "the forecast for a specific day, ")
+                .replace("payment methods, ", ""))
+        q[PIDE_OTRA_COSA] = {**q[PIDE_OTRA_COSA], "instructions": otra + _OTRA_COSA_SIN_CLIMA_NI_PAGO}
     return q
 
 
@@ -937,7 +974,7 @@ def answers_to_signals(answers: dict, threshold: float = THRESHOLD) -> dict:
         out[PIDE_PRECIO] = (answers.get(PIDE_PRECIO) or {}).get("noul", 0.0) >= PIDE_PRECIO_MIN
     if PIDE_QUE_INCLUYE in answers:
         out[PIDE_QUE_INCLUYE] = (answers.get(PIDE_QUE_INCLUYE) or {}).get("noul", 0.0) >= PIDE_QUE_INCLUYE_MIN
-    for intencion in (*_INTENCIONES_Q, PIDE_DESCUENTO):
+    for intencion in (*_INTENCIONES_Q, PIDE_DESCUENTO, PIDE_CLIMA, PIDE_PAGO):
         if intencion in answers and intencion != PIDE_OTRA_COSA:
             out[intencion] = (answers.get(intencion) or {}).get("noul", 0.0) >= INTENCION_MIN
     if PIDE_SI_ALCANZA in answers:
@@ -1042,6 +1079,7 @@ _TURN_SIGNALS = (
     # turnos "¿se suma alguien nuevo?" lo decidía la lista de palabras.
     ADDS_PERSON,
     PIDE_SI_ALCANZA,  # arq-1v: también cuando Jev duda en el router (si no, se perdía: banco arq-1v, v1)
+    PIDE_CLIMA, PIDE_PAGO,  # arq-1i: el router los mira (el clima en general no va a la ruta sensible)
 )  # ASKS_QUESTION y PENDING_ANSWER se anaden a mano en `detect_routing_signals_jev_full`
 
 

@@ -171,6 +171,8 @@ def _collect() -> dict[str, str]:
     add("info/redactor_dos_monedas.en", info.REDACTOR_DOS_MONEDAS_EN)
     add("info/redactor_listas_por_codigo.es", info.REDACTOR_LISTAS_POR_CODIGO_ES)
     add("info/redactor_listas_por_codigo.en", info.REDACTOR_LISTAS_POR_CODIGO_EN)
+    add("info/redactor_clima_pago.es", info.REDACTOR_CLIMA_PAGO_ES)  # arq-1i
+    add("info/redactor_clima_pago.en", info.REDACTOR_CLIMA_PAGO_EN)
     add("info/rag.con_hechos.es", info.RAG_CON_HECHOS_ES)
     add("info/rag.con_hechos.en", info.RAG_CON_HECHOS_EN)
     add("info/rag.enlace_al_recomendar.es", info.RAG_ENLACE_AL_RECOMENDAR_ES)

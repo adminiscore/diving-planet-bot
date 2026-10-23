@@ -64,6 +64,7 @@ def classify_route(conv_state: ConversationState, message: str, signals: dict) -
     `detect_routing_signals` de este turno (dict vacío para clics de botón
     numéricos, igual que en la cascada)."""
     from src.agents import supervisor as sup
+    from src.agents.escalation import clima_general_al_redactor
 
     msg_lower = message.strip().lower()
     history = conv_state.history
@@ -122,9 +123,12 @@ def classify_route(conv_state: ConversationState, message: str, signals: dict) -
     # El tema sensible se suprime si el turno es DIVE TO HEAL (mismo criterio que
     # la cascada: sensitive_escalation_early es None si adaptive_diving_topic).
     adaptive_signal = bool(signals.get("adaptive_diving_topic"))
-    if not adaptive_signal and regex_vale and sup.detect_sensitive_escalation(message, lang):
+    # arq-1i: el clima en general lo contesta el redactor de hechos (`clima_general_al_redactor`).
+    sensible = sup.detect_sensitive_escalation(message, lang) if not adaptive_signal and regex_vale else None
+    if sensible and not clima_general_al_redactor(sensible[0], signals):
         return ROUTE_SAFETY
-    if signals.get("sensitive_topic") and sup.sensitive_response_for(signals["sensitive_topic"], lang):
+    sensible = sup.sensitive_response_for(signals["sensitive_topic"], lang) if signals.get("sensitive_topic") else None
+    if sensible and not clima_general_al_redactor(sensible[0], signals):
         return ROUTE_SAFETY
     # s4-20 (paso 6): post-venta / empresa -> el nodo de escalado hace el pase (`_needs_staff_handoff`).
     if signals.get("needs_staff") is True:

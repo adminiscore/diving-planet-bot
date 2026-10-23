@@ -14,6 +14,14 @@ from src.flows.state import ConversationState
 
 MENSAJE = "¿Cuánto cuesta el minicurso?"
 
+@pytest.fixture(autouse=True)
+def _flags_de_siempre(monkeypatch):
+    """Estos tests miran lo de siempre; las dos monedas (arq-5c) y las listas y frases por código (arq-7a/7d) tienen los
+    suyos. Sin esto, con esos flags encendidos (el G10 nº 6) fallaban por diseño."""
+    for flag in ("dos_monedas_sin_nacionalidad", "listas_por_codigo", "frases_por_codigo"):
+        monkeypatch.setattr(settings, flag, False, raising=False)
+
+
 
 def _conv(lang="es", **campos) -> ConversationState:
     st = ConversationState(conversation_id="arq1d", language=lang)

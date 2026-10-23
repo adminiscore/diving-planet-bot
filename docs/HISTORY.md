@@ -1,6 +1,25 @@
 History
 =======
 
+0.31.97 - (2026-10-23)
+----------------------
+* **Arreglos de los fallos del G10 nº 5, con flag APAGADO hasta el G10 nº 6** (banco propio ×3, frases nuestras):
+  - `hechos_en_el_pase` (arq-5a): el RAG de «contestar antes del pase» recibe los hechos (12/18 → 17/18).
+  - `dos_monedas_sin_nacionalidad` (arq-5c, decisión de Gadea): sin saber la nacionalidad, USD y COP (10/15 → 15/15).
+  - `intenciones_clima_pago` (arq-1i, Gonzalo): el clima en general y cómo se paga en la tabla (38/42 → 42/42). Dato
+    nuevo fuera de flag: la política `weather_cancellation`.
+  - `mezclados_por_partes` (arq-5b): **descartado**. 21/21 sin él frente a 20/21 con él, y 4-6 s más lento.
+* **Sin flag (arq-5d):** el «null» de un modelo ya no llega al cliente, y el redactor rehace una vez la respuesta si
+  sale en otro idioma.
+* **Latencia (arq-7, decisión de Gadea), flags APAGADOS hasta el G10 nº 6:**
+  - `listas_por_codigo` (arq-7a): las listas largas las pone el código. Segundas redacciones 51/98 → 28/96 y mediana
+    del redactor 5,0 → 3,4 s, con la misma calidad.
+  - `rag_hechos_sin_reintento` (arq-7b): en los mezclados el código añade lo que falta. p50 9,7 → 6,5 s y p90
+    12,8 → 8,1 s, con la misma calidad.
+  - Plan en `docs/robustness/arq/plan-latencia-arq7.md`.
+* **Criterios desfasados (arq-5g):** Gadea marcó 8 más (lista de 25). El G10 nº 5 queda en **92,4 % 42/72**: la meta
+  de Andrés se cumple.
+
 0.31.96 - (2026-10-23)
 ----------------------
 * **PROMOCIÓN** (decisión de Gadea, 23-oct): los 11 flags del G10 nº 5 (90,1 % 34/72 → **91,2 % 40/72** sin

@@ -641,6 +641,20 @@ REDACTOR_DOS_MONEDAS_EN = (
     "\n- If both `precio` and `precio_cop` are given, give both: the price in US dollars and the same price in Colombian "
     "pesos, with the currency rule (Colombians and residents pay in COP; everyone else in USD)."
 )
+# arq-1i (23-oct, flag `intenciones_clima_pago`, decisión de Gadea #1312): el clima en general y cómo se paga.
+REDACTOR_CLIMA_PAGO_ES = (
+    "\n- `clima`: qué pasa con el mal tiempo (es poco probable; si Capitanía cierra se reprograma y, si no se puede, "
+    "reembolso del 100 %). No des pronósticos ni digas qué tiempo hará: el de un día concreto lo confirma el equipo, y "
+    "ofrece pasarle con un asesor.\n- `pago`: cómo paga ESTE cliente, tal cual. Si no se sabe su nacionalidad, da "
+    "las dos formas (extranjeros y colombianos o residentes), cada una con su parte."
+)
+REDACTOR_CLIMA_PAGO_EN = (
+    "\n- `clima`: what happens with bad weather (it is unlikely; if the Port Authority closes departures the trip is "
+    "rescheduled and, if that is not possible, there is a 100% refund). Do not give forecasts or say what the weather "
+    "will be: for a specific day the team confirms it, and offer to pass them to an advisor.\n- `pago`: how THIS "
+    "customer pays, as given. If their nationality is unknown, give both ways (international guests and Colombians or "
+    "residents), each with its part."
+)
 
 
 # arq-1g (flag `hechos_al_rag`): en un mensaje mezclado, el RAG recibe los hechos del código para la parte de la tabla.

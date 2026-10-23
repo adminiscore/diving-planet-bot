@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-23T10:19:33+00:00",
-  "commit": "cd71a466",
+  "generado": "2026-10-23T10:39:35+00:00",
+  "commit": "2ee1c5ca",
   "rama": "feature/pre_gadea"
  },
  "vistas": {
@@ -266,6 +266,13 @@
     {
      "nombre": "hechos_en_el_pase",
      "titulo": "Antes del pase, con los hechos del código",
+     "codigo": false,
+     "pre": false,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "intenciones_clima_pago",
+     "titulo": "El clima en general y cómo se paga",
      "codigo": false,
      "pre": false,
      "sin_efecto": false
@@ -1422,6 +1429,13 @@
     {
      "nombre": "rag_hechos_sin_reintento",
      "titulo": "Lo que falta lo añade el código",
+     "codigo": false,
+     "pre": false,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "intenciones_clima_pago",
+     "titulo": "El clima en general y cómo se paga",
      "codigo": false,
      "pre": false,
      "sin_efecto": false
@@ -3015,6 +3029,20 @@
    "usado_por": [
     "router",
     "b_setup"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "intenciones_clima_pago",
+   "area": "Preguntas",
+   "titulo": "El clima en general y cómo se paga",
+   "texto": "«¿Y si hace mal tiempo?» ya no pasa a un asesor: Coral explica la política (las cancelaciones son poco probables; si Capitanía cierra se reprograma y, si no se puede, reembolso del 100 %), no da pronósticos y ofrece un asesor; con un día concreto o una reserva hecha sigue el pase. «¿Cómo pago?» lo contesta según la nacionalidad: el extranjero, 100 % con tarjeta en la web; el colombiano o residente, 100 % o 50 % y 50 %, con un asesor (arq-1i, 23-oct).",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
+   "usado_por": [
+    "safety",
+    "r_hechos"
    ],
    "sin_efecto": null
   },

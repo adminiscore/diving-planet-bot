@@ -1,6 +1,7 @@
 """ARQ-1c (22-oct): los hechos de cada intención los saca el código, con las reglas del negocio ya aplicadas."""
 import pytest
 
+from src.config import settings
 from src.flows import hechos as h
 from src.flows.state import ConversationState
 
@@ -22,6 +23,14 @@ def test_sin_origen_las_dos_variantes_y_la_pregunta_del_origen():
 def test_con_origen_solo_su_variante_y_sin_pregunta():
     [b] = h.hechos(_conv(location="island"), ["precio", "incluye"], ["snorkel"])
     assert set(b["precio"]) == {"island"} and "pregunta_pendiente" not in b
+
+
+@pytest.fixture(autouse=True)
+def _flags_de_siempre(monkeypatch):
+    """Estos tests miran lo de siempre; las dos monedas (arq-5c) y las listas y frases por código (arq-7a/7d) tienen los
+    suyos. Sin esto, con esos flags encendidos (el G10 nº 6) fallaban por diseño."""
+    for flag in ("dos_monedas_sin_nacionalidad", "listas_por_codigo", "frases_por_codigo"):
+        monkeypatch.setattr(settings, flag, False, raising=False)
 
 
 @pytest.mark.parametrize("campos, moneda", [({"is_colombian": True}, "COP"), ({"is_colombian": False}, "USD"),
