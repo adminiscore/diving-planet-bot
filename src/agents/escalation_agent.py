@@ -91,8 +91,7 @@ _SOLO_LO_DEMAS = {
 async def _lo_contestable(conv, message: str, reason: str, lang: str) -> str | None:
     """Lo que el RAG contesta del mensaje APARTE del tema sensible, o None (flag apagado, otro tema, nada más que
     contestar, "no lo tengo" o un fallo: entonces el pase va solo, como siempre)."""
-    from src.config import settings  # lazy
-    if not settings.contesta_antes_de_pasar or reason not in _TEMA_QUE_PASA:
+    if reason not in _TEMA_QUE_PASA:
         return None
     conv._contestado_antes_del_pase = True  # gen-13: el cierre del turno no lo repite
     key = "es" if lang == "es" else "en"

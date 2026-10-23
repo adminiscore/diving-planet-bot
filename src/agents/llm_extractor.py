@@ -343,8 +343,7 @@ async def resolve_slot_answer(
         response = await client.chat.completions.create(
             model=settings.resolutor_model,
             messages=[
-                {"role": "system", "content": _sin_baru(slot_resolver_prompt(slot, lang))
-                 + (SLOT_RESOLVER_CONTRADICCION if settings.resolutor_sin_contradicciones else "")},
+                {"role": "system", "content": _sin_baru(slot_resolver_prompt(slot, lang)) + SLOT_RESOLVER_CONTRADICCION},
                 {"role": "user", "content": message},
             ],
             tools=[slot_resolver_tool(slot)],

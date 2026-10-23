@@ -46,13 +46,13 @@ logger = logging.getLogger("uvicorn.error")
 
 
 def _tarjeta_sin_seguridad(state: ConversationState, nxt: str | None, prev_pending: str | None) -> bool:
-    """CAL-F (flag `tarjeta_sin_seguridad`, decisión de Gadea, 18-oct): ¿sale ya la tarjeta con el precio aunque falte la
+    """CAL-F (decisión de Gadea, 18-oct): ¿sale ya la tarjeta con el precio aunque falte la
     respuesta de seguridad? Sí cuando es lo ÚNICO que falta y el cliente no la contestó en este mensaje (se la hicimos
     en el anterior). pareja-certificados-cop-descuento-almuerzo (3/3): la pareja preguntaba por un "bono" y por el
     almuerzo, el bot repetía "¿más de 2 años?" y la tarjeta con el precio no salía nunca. El aplazamiento de EX-FLUJO-1
     no servía: siendo la última pregunta, el resumen la volvía a hacer en el mismo turno."""
     return bool(
-        settings.tarjeta_sin_seguridad and nxt == SLOT_SAFETY and prev_pending == SLOT_SAFETY
+        nxt == SLOT_SAFETY and prev_pending == SLOT_SAFETY
         and next_missing_slot(state, saltar=frozenset({SLOT_SAFETY})) is None
     )
 

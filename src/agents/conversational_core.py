@@ -186,11 +186,11 @@ _SLOTS_APLAZABLES = frozenset({
 def refresh_en_el_grupo(state: ConversationState) -> bool | None:
     """¿Alguien del grupo lleva más de 2 años sin bucear? None si aún no se sabe.
 
-    gen-7 (20-oct, flag `seguridad_de_grupo`): la pregunta de seguridad es de GRUPO ("¿… de alguno del grupo?") y el
+    gen-7 (20-oct): la pregunta de seguridad es de GRUPO ("¿… de alguno del grupo?") y el
     refresher se cobra "por persona que lo necesite", pero solo contaba quien escribe (`last_dive_over_2_years`).
     "Sí, uno de nosotros no bucea desde hace 4 años" lo guardaba el extractor como de OTRA persona
     (`acompanante_certificado_inactivo`) y la pregunta se repetía sin llegar nunca al refresher."""
-    if state.last_dive_over_2_years or (settings.seguridad_de_grupo and state.acompanante_certificado_inactivo):
+    if state.last_dive_over_2_years or state.acompanante_certificado_inactivo:
         return True
     return state.last_dive_over_2_years
 
@@ -439,7 +439,7 @@ def ask_slot(state: ConversationState, slot: str, *, reasking: bool = False) -> 
             "days there are *multi-dive packages*, and to level up, the *Advanced course* or a specialty. Which one "
             "interests you? 🤿"
         )
-    if (slot == SLOT_ACTIVITY and settings.recomendar_a_no_certificados and state.is_certified is False
+    if (slot == SLOT_ACTIVITY and state.is_certified is False
             and not state.suggested_activity):
         # 18-oct (ronda mod-F): el simétrico de `recomendar_a_certificados`. A quien sabemos que NO es certificado y no
         # ha elegido ("Sería buzo principiante y snorkeling": el extractor no elige actividad en un mensaje ambiguo) se
@@ -597,28 +597,18 @@ def ask_slot(state: ConversationState, slot: str, *, reasking: bool = False) -> 
         )
         # Se cobra (owner 2026-09-14): precio por persona desde el catalogo.
         price = cart_render.refresher_price_text(state, una_moneda=True)  # G3-07a
-        if settings.refresher_completo:
-            # gen-7 (20-oct): lo que dice la base del refresher (ficha `refresher:minicourse` y `medical_restrictions`):
-            # se reserva como el Minicurso de Buceo y usa el formulario médico de curso, aunque sea buzo certificado.
-            plural = (state.detected_group_size or 1) > 1
-            return (
-                "El *refresher* es un repaso con instructor antes de volver a bucear: se reserva como *Minicurso de "
-                f"Buceo* y cuesta *{price}* por persona que lo necesite. Lleva el formulario médico de curso (aunque "
-                "estén certificados, el enlace llega con la reserva). "
-                + ("¿Les interesa?" if plural else "¿Te interesa?")
-                if lang == "es" else
-                "The *refresher* is an instructor-led review before diving again: it is booked as the *Dive Mini "
-                f"Course* and costs *{price}* per person who needs it. It uses the course medical form (even for "
-                "certified divers; the link comes with the booking). Are you interested?"
-            )
+        # gen-7 (20-oct): lo que dice la base del refresher (ficha `refresher:minicourse` y `medical_restrictions`): se
+        # reserva como el Minicurso de Buceo y usa el formulario médico de curso, aunque sea buzo certificado.
+        plural = (state.detected_group_size or 1) > 1
         return (
-            "El *refresher* es una sesión corta de repaso en el agua antes de la "
-            f"inmersión. Tiene un costo de *{price}* por persona que lo necesite. "
-            + de_cartagena("¿Les interesa?" if (state.detected_group_size or 1) > 1 else "¿Te interesa?",
-                           "¿Os interesa?")
+            "El *refresher* es un repaso con instructor antes de volver a bucear: se reserva como *Minicurso de "
+            f"Buceo* y cuesta *{price}* por persona que lo necesite. Lleva el formulario médico de curso (aunque "
+            "estén certificados, el enlace llega con la reserva). "
+            + ("¿Les interesa?" if plural else "¿Te interesa?")
             if lang == "es" else
-            "The *refresher* is a short in-water review session before the dive. "
-            f"It costs *{price}* per person who needs it. Are you interested?"
+            "The *refresher* is an instructor-led review before diving again: it is booked as the *Dive Mini "
+            f"Course* and costs *{price}* per person who needs it. It uses the course medical form (even for "
+            "certified divers; the link comes with the booking). Are you interested?"
         )
     if slot == SLOT_CONFIRM_CORRECTION and state.pending_correction:
         known = _known_field_values(state)

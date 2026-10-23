@@ -113,8 +113,6 @@ _CON_SU_SITIO_EN = (" But keep the place or detail if the question is about it (
 
 def _instruccion_pregunta_sola(lang: str) -> str:
     base = _PREGUNTA_SOLA_ES if lang == "es" else _PREGUNTA_SOLA_EN
-    if not settings.pregunta_sola_con_su_sitio:
-        return base
     return base + (_CON_SU_SITIO_ES if lang == "es" else _CON_SU_SITIO_EN)
 
 

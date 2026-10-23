@@ -31,8 +31,7 @@ from src.llm_client import tool_arguments, trace_openai
 from src.observability import con_pieza_llm
 from src.prompts.router import ROUTING_TOOL, con_dieta_no_es_medica, routing_system_prompt
 
-if settings.dieta_no_es_medica:  # gen-3 (20-oct): el enrutador de respaldo, con la misma definición que Jev
-    con_dieta_no_es_medica(ROUTING_TOOL)
+con_dieta_no_es_medica(ROUTING_TOOL)  # gen-3 (20-oct): el enrutador de respaldo, con la misma definición que Jev
 
 logger = structlog.get_logger()
 _llm_logger = logging.getLogger("uvicorn.error")
@@ -151,7 +150,7 @@ def _rule_message(rule: dict, lang: str) -> str:
     key = "es" if lang == "es" else "en"
     if f"{key}_v2" in rule:
         return rule[f"{key}_v2"]
-    if settings.clima_con_politica and rule is SENSITIVE_RULES.get("weather_conditions"):
+    if rule is SENSITIVE_RULES.get("weather_conditions"):
         return _CLIMA_CON_POLITICA[key]
     if rule is SENSITIVE_RULES.get("medical_questions"):
         return rule[key] + _PASE_MEDICO[key]

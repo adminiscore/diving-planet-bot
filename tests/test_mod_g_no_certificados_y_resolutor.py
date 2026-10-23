@@ -10,7 +10,6 @@
 import pytest
 
 from src.agents.conversational_core import SLOT_ACTIVITY, ask_slot
-from src.config import settings
 from src.flows.state import ConversationState
 from src.prompts.booking import SLOT_RESOLVER_CONTRADICCION
 
@@ -25,31 +24,24 @@ def _estado(**campos) -> ConversationState:
 
 
 def test_a_quien_no_es_certificado_se_le_recomiendan_sus_opciones(monkeypatch):
-    monkeypatch.setattr(settings, "recomendar_a_no_certificados", True)
     texto = ask_slot(_estado(is_certified=False), SLOT_ACTIVITY, reasking=True)
     assert MENU not in texto and "*minicurso*" in texto and "*snorkel*" in texto and "Open Water" in texto
 
 
 def test_los_botones_son_los_de_un_no_certificado(monkeypatch):
-    monkeypatch.setattr(settings, "recomendar_a_no_certificados", True)
     st = _estado(is_certified=False)
     ask_slot(st, SLOT_ACTIVITY)
     assert [q["value"] for q in st.quick_replies] == ["minicurso", "snorkel", "curso open water"]
 
 
-def test_con_el_flag_apagado_o_sin_saber_la_certificacion_sale_el_menu(monkeypatch):
-    monkeypatch.setattr(settings, "recomendar_a_no_certificados", False)
-    assert MENU in ask_slot(_estado(is_certified=False), SLOT_ACTIVITY, reasking=True)
-    monkeypatch.setattr(settings, "recomendar_a_no_certificados", True)
+def test_sin_saber_la_certificacion_sale_el_menu():
     assert MENU in ask_slot(_estado(is_certified=None), SLOT_ACTIVITY, reasking=True)
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("encendido", [True, False])
-async def test_el_resolutor_lleva_la_regla_de_contradiccion_solo_con_el_flag(monkeypatch, encendido):
+async def test_el_resolutor_lleva_la_regla_de_contradiccion():
     from src.agents.llm_extractor import resolve_slot_answer
 
-    monkeypatch.setattr(settings, "resolutor_sin_contradicciones", encendido)
     visto = {}
 
     class _Cliente:
@@ -61,4 +53,4 @@ async def test_el_resolutor_lleva_la_regla_de_contradiccion_solo_con_el_flag(mon
                     raise RuntimeError("sin red en el test")
 
     await resolve_slot_answer("certification", "no, buceé hace poco", lang="es", client=_Cliente())
-    assert (SLOT_RESOLVER_CONTRADICCION in visto["messages"][0]["content"]) is encendido
+    assert SLOT_RESOLVER_CONTRADICCION in visto["messages"][0]["content"]

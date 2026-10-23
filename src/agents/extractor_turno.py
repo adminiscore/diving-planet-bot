@@ -681,9 +681,8 @@ async def extraer_turno(mensaje: str, *, history: list[dict] | None = None, sabi
             sistema = sistema.replace(antes, despues)
     else:
         sistema = sistema.replace(GENERAL_PRECIO_ES, GENERAL_PRECIO_ES_V2).replace(GENERAL_PRECIO_EN, GENERAL_PRECIO_EN_V2)
-    if settings.certificado_solo_si_lo_dice:
-        # 19-oct: sin la regla del código, que is_certified vea todas las formas de decirlo (ver IS_CERTIFIED_DICHO_*).
-        sistema = sistema.replace(IS_CERTIFIED_HOY_ES, IS_CERTIFIED_DICHO_ES).replace(IS_CERTIFIED_HOY_EN, IS_CERTIFIED_DICHO_EN)
+    # 19-oct: sin la regla del código, que is_certified vea todas las formas de decirlo (ver IS_CERTIFIED_DICHO_*).
+    sistema = sistema.replace(IS_CERTIFIED_HOY_ES, IS_CERTIFIED_DICHO_ES).replace(IS_CERTIFIED_HOY_EN, IS_CERTIFIED_DICHO_EN)
     # EX-EXTRACTOR-1: la regla de la ubicación con la negación primero (ver UBICACION_NEGACION_*).
     sistema = sistema.replace(UBICACION_HOY_ES, UBICACION_NEGACION_ES).replace(UBICACION_HOY_EN, UBICACION_NEGACION_EN)
     # EX-EST-2: extraer también lo ya sabido (ver TODO_LO_DICHO_*).
@@ -861,12 +860,8 @@ async def extraer_turno(mensaje: str, *, history: list[dict] | None = None, sabi
         if nueva:
             logger.info(f"[EXTRACT][CAL-F] activity={actividad!r} no está en el reparto {reparto}: {nueva!r}")
             salida["activity"] = nueva
-    # Regla del catálogo: el buceo certificado (nombrado: fun dives, paquetes de buceos) exige certificación.
-    # mod-2 (18-oct, decisión de Gadea, flag `certificado_solo_si_lo_dice`): que el cliente elija el buceo certificado NO
-    # dice que lo esté ("fun dives"): tiene que confirmarlo; con el flag, la regla no lo deduce.
-    if (not settings.certificado_solo_si_lo_dice and salida.get("activity") == "certified_diving"
-            and "is_certified" not in salida and certificado is not True):
-        salida["is_certified"] = True
+    # mod-2 (18-oct, decisión de Gadea): que el cliente elija el buceo certificado NO dice que lo esté ("fun dives"):
+    # tiene que confirmarlo; ya no se deduce del catálogo.
     idioma = datos.get("idioma")
     if isinstance(idioma, str) and idioma.strip():
         salida["idioma"] = idioma.strip().lower()[:2]

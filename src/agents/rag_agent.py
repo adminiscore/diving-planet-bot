@@ -174,14 +174,13 @@ def build_system_prompt(lang: str, query: str | None = None) -> str:
     from src.prompts.info import RAG_NO_ADIVINA_EN, RAG_NO_ADIVINA_ES  # lazy
 
     prompt = f"{prompt}\n\n{RAG_NO_ADIVINA_ES if lang == 'es' else RAG_NO_ADIVINA_EN}"
-    if settings.abre_con_la_respuesta:
-        # gen-2 (20-oct): sin "¡Claro que sí!" delante de un "no" o un "depende" (ver RAG_ABRE_CON_LA_RESPUESTA_*).
-        from src.prompts.info import (  # lazy
-            RAG_ABRE_CON_LA_RESPUESTA_EN,
-            RAG_ABRE_CON_LA_RESPUESTA_ES,
-        )
+    # gen-2 (20-oct): sin "¡Claro que sí!" delante de un "no" o un "depende" (ver RAG_ABRE_CON_LA_RESPUESTA_*).
+    from src.prompts.info import (  # lazy
+        RAG_ABRE_CON_LA_RESPUESTA_EN,
+        RAG_ABRE_CON_LA_RESPUESTA_ES,
+    )
 
-        prompt = f"{prompt}\n\n{RAG_ABRE_CON_LA_RESPUESTA_ES if lang == 'es' else RAG_ABRE_CON_LA_RESPUESTA_EN}"
+    prompt = f"{prompt}\n\n{RAG_ABRE_CON_LA_RESPUESTA_ES if lang == 'es' else RAG_ABRE_CON_LA_RESPUESTA_EN}"
     if settings.sin_genero_supuesto:
         # gen-12 (21-oct): sin dar por hecho si el cliente es hombre o mujer (ver RAG_SIN_GENERO_*).
         from src.prompts.info import RAG_SIN_GENERO_EN, RAG_SIN_GENERO_ES  # lazy

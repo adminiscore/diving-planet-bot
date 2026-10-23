@@ -19,17 +19,13 @@ from src.prompts.info import RAG_ABRE_CON_LA_RESPUESTA_ES
 BASE = Path("data/knowledge_base")
 
 
-@pytest.mark.parametrize("flag", [True, False])
-def test_la_pregunta_sola_deja_el_sitio_con_el_flag(monkeypatch, flag):
-    monkeypatch.setattr(settings, "pregunta_sola_con_su_sitio", flag)
-    assert ("deja ese lugar" in qr._instruccion_pregunta_sola("es")) is flag
-    assert ("keep that place" in qr._instruccion_pregunta_sola("en")) is flag
+def test_la_pregunta_sola_deja_el_sitio():
+    assert "deja ese lugar" in qr._instruccion_pregunta_sola("es")
+    assert "keep that place" in qr._instruccion_pregunta_sola("en")
 
 
-@pytest.mark.parametrize("flag", [True, False])
-def test_abre_con_la_respuesta(monkeypatch, flag):
-    monkeypatch.setattr(settings, "abre_con_la_respuesta", flag)
-    assert (RAG_ABRE_CON_LA_RESPUESTA_ES in build_system_prompt("es")) is flag
+def test_abre_con_la_respuesta():
+    assert RAG_ABRE_CON_LA_RESPUESTA_ES in build_system_prompt("es")
 
 
 def test_la_base_dice_lo_que_es_no():
