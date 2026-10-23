@@ -135,6 +135,10 @@ def _mensajes(lang: str, history: list[dict], message: str, texto_hechos: str) -
         system = (f"{RAG_INTRO_EN}\n\n{RAG_SECURITY_EN}\nStyle and tone:\n{_build_tone_section('en')}\n\n"
                   f"{REDACTOR_HECHOS_EN}")
         user = f"Facts:\n{texto_hechos}\n\nCustomer's question: {redact_pii(message)}"
+    if settings.dos_monedas_sin_nacionalidad:
+        from src.prompts.info import REDACTOR_DOS_MONEDAS_EN, REDACTOR_DOS_MONEDAS_ES  # lazy
+
+        system += REDACTOR_DOS_MONEDAS_ES if lang == "es" else REDACTOR_DOS_MONEDAS_EN
     if settings.redactor_sin_preguntas_de_cierre:
         from src.prompts.info import REDACTOR_SIN_PREGUNTAS_EN, REDACTOR_SIN_PREGUNTAS_ES  # lazy
 

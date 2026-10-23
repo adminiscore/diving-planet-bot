@@ -618,6 +618,16 @@ REDACTOR_SIN_PREGUNTAS_EN = (
     "already did something…): if one is missing the system asks for it afterwards, and if they already said it, asking "
     "again repeats it. At most, close with a brief invitation that does not ask for details."
 )
+# arq-5c (23-oct, flag `dos_monedas_sin_nacionalidad`, decisión de Gadea): sin saber la nacionalidad, los hechos traen
+# el precio en USD (`precio`) y en COP (`precio_cop`).
+REDACTOR_DOS_MONEDAS_ES = (
+    "\n- Si vienen `precio` y `precio_cop`, da los dos: el precio en dólares y el mismo en pesos colombianos, con la "
+    "regla de la moneda (pagan en COP los colombianos y residentes; el resto, en USD)."
+)
+REDACTOR_DOS_MONEDAS_EN = (
+    "\n- If both `precio` and `precio_cop` are given, give both: the price in US dollars and the same price in Colombian "
+    "pesos, with the currency rule (Colombians and residents pay in COP; everyone else in USD)."
+)
 
 
 # arq-1g (flag `hechos_al_rag`): en un mensaje mezclado, el RAG recibe los hechos del código para la parte de la tabla.

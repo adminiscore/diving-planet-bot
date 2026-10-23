@@ -69,6 +69,12 @@ def _politica(clave: str, lang: str) -> str | None:
     return valor
 
 
+def _dos_monedas(state: ConversationState) -> bool:
+    """arq-5c (flag `dos_monedas_sin_nacionalidad`): no se sabe si paga en COP (ni es un grupo mixto, que paga en USD)."""
+    return (settings.dos_monedas_sin_nacionalidad and state.is_colombian is None
+            and not getattr(state, "mixed_nationality_notice", False))
+
+
 def _moneda(state: ConversationState) -> str:
     """COP a colombianos y residentes; USD al resto, si no se sabe o en un grupo mixto (decisiones de Gadea)."""
     if getattr(state, "mixed_nationality_notice", False):
@@ -155,7 +161,7 @@ def hechos(state: ConversationState, intenciones: list[str], actividades: list[s
             elegido = paquetes.get("cartagena", next(iter(paquetes.values())))[0]  # el primero, como base del precio
         bloque: dict = {"actividad": actividad, "nombre": dom.label(actividad, lang), "origen": origen}
         if registro.cart_type == "companion":
-            bloques.append(_acompanante(bloque, pedidas, origen, origenes, moneda, lang))
+            bloques.append(_acompanante(bloque, pedidas, origen, origenes, moneda, lang, _dos_monedas(state)))
             continue
         if "precio" in pedidas:
             bloque["moneda"] = moneda
@@ -169,6 +175,15 @@ def hechos(state: ConversationState, intenciones: list[str], actividades: list[s
             if otros:  # el buceo y los paquetes: el plan base y la lista de los demás con su precio
                 bloque["otros_planes"] = [{"plan": _nombre(s, lang), "precio": _precio(s, moneda)}
                                           for s in otros if _precio(s, moneda)]
+            if _dos_monedas(state):
+                # arq-5c (decisión de Gadea, 23-oct; G10 nº 5, ~6 fallos): sin saber si es colombiano, el precio en las
+                # dos monedas, con la regla de siempre (el mismo precio, solo cambia la moneda).
+                bloque["moneda"] = "USD / COP"
+                bloque["precio_cop"] = _por_origen(actividad, origenes,
+                                                   lambda sid: _precio_del_plan(sid, "COP", lang), elegido)
+                for plan, sid in zip(bloque.get("otros_planes") or [], [s for s in otros if _precio(s, moneda)],
+                                     strict=False):
+                    plan["precio_cop"] = _precio(sid, "COP")
         if "incluye" in pedidas and paquetes:
             # arq-1t: lo común a todos los paquetes de varios días del origen (solo cambia el número de inmersiones) y
             # la lista de paquetes; lo que NO incluyen, igual (el alojamiento y los almuerzos de los otros días).
@@ -376,7 +391,7 @@ def hechos_sin_actividad(state: ConversationState, intenciones: list[str]) -> li
 
 
 def _acompanante(bloque: dict, pedidas: list[str], origen: str | None, origenes: tuple[str, ...], moneda: str,
-                 lang: str) -> dict:
+                 lang: str, dos_monedas: bool = False) -> dict:
     """arq-1j: el acompañante (va en la lancha sin bucear) no tiene ficha: su precio es una fila de la tarifa, el mismo en
     los dos orígenes, y lo que incluye cambia con el origen (en las islas, sin lancha desde Cartagena ni almuerzo)."""
     if "precio" in pedidas:
@@ -385,6 +400,10 @@ def _acompanante(bloque: dict, pedidas: list[str], origen: str | None, origenes:
                           else (money.usd(c["usd_online"]), money.usd(c["usd_normal"])))
         bloque["moneda"] = moneda
         bloque["precio"] = {o: {"plan": bloque["nombre"], "online": online, "normal": normal} for o in origenes}
+        if dos_monedas:  # arq-5c: sin saber la nacionalidad, también en COP
+            bloque["moneda"] = "USD / COP"
+            bloque["precio_cop"] = {o: {"plan": bloque["nombre"], "online": money.cop(c["cop_online"]),
+                                        "normal": money.cop(c["cop_normal"])} for o in origenes}
     if "incluye" in pedidas:
         bloque["incluye"] = {o: list(COMPANION_INCLUDES[lang][o]) for o in origenes}
         bloque["no_incluye"] = {o: [COMPANION_NO_INCLUYE[lang]] for o in origenes}
@@ -453,7 +472,7 @@ def faltan(answer: str, bloques: list[dict], intenciones: list[str]) -> list[str
     perdidos: list[str] = []
     for b in bloques:
         if "precio" in intenciones:
-            for precio in (b.get("precio") or {}).values():
+            for precio in (*(b.get("precio") or {}).values(), *(b.get("precio_cop") or {}).values()):
                 perdidos += [precio[k] for k in ("online", "normal")
                              if precio.get(k) and re.sub(r"\D", "", precio[k]) not in cifras]
         if "edad" in intenciones:

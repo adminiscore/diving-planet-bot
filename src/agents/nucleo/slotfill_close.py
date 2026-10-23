@@ -315,8 +315,9 @@ def _precio_en_su_moneda(state: ConversationState, carry: dict) -> str:
         return ""
     if getattr(state, "mixed_nationality_notice", False):
         return ""
-    if not any(m.get("role") == "assistant" and " USD" in (m.get("content") or "") for m in state.history or []):
-        return ""
+    dichos = [m.get("content") or "" for m in state.history or [] if m.get("role") == "assistant"]
+    if not any(" USD" in d for d in dichos) or any(" COP" in d for d in dichos):
+        return ""  # sin precio en USD que corregir, o ya se le dio en COP (arq-5c: las dos monedas)
     actividad = next((a for a in (_effective_activity(state), state.actividad_preguntada, state.suggested_activity)
                       if a and dom.by_id(a) is not None and not dom.by_id(a).generic), None)
     if actividad is None:

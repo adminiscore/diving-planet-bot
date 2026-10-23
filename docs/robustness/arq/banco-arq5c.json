@@ -1,0 +1,61 @@
+{
+ "about": "arq-5c (23-oct, flag DOS_MONEDAS_SIN_NACIONALIDAD, decisión de Gadea): sin saber la nacionalidad, el precio en USD y en COP. Frases nuestras (no salen de G9/G10). Controles: un extranjero sin COP; un colombiano con COP.",
+ "dialogos": [
+  {
+   "id": "m1-minicurso-para-colombianos",
+   "tipo": "dos",
+   "turnos": [
+    "Hola, ¿cuánto cuesta el minicurso para colombianos?"
+   ],
+   "todas": [
+    "cop",
+    "usd"
+   ]
+  },
+  {
+   "id": "m2-snorkel-en",
+   "tipo": "dos",
+   "turnos": [
+    "Hi! How much is the snorkel tour?"
+   ],
+   "todas": [
+    "cop",
+    "usd"
+   ]
+  },
+  {
+   "id": "m3-nitrox-cartagena",
+   "tipo": "dos",
+   "turnos": [
+    "¿Qué precio tiene la especialidad de Nitrox saliendo desde Cartagena?"
+   ],
+   "todas": [
+    "cop",
+    "usd"
+   ]
+  },
+  {
+   "id": "c1-frances",
+   "tipo": "control",
+   "turnos": [
+    "Hola, soy de Francia. ¿Cuánto cuesta el minicurso desde Cartagena?"
+   ],
+   "todas": [
+    "usd"
+   ],
+   "ninguno": [
+    "cop"
+   ]
+  },
+  {
+   "id": "c2-bogota",
+   "tipo": "control",
+   "turnos": [
+    "Hola, soy de Bogotá. ¿Cuánto cuesta el snorkel desde Cartagena?"
+   ],
+   "todas": [
+    "cop"
+   ]
+  }
+ ]
+}
