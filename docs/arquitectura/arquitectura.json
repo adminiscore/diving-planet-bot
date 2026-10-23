@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-23T18:35:16+00:00",
-  "commit": "baf9290f",
+  "generado": "2026-10-23T18:56:36+00:00",
+  "commit": "332eb4a8",
   "rama": "feature/pre_gadea"
  },
  "vistas": {
@@ -1499,6 +1499,13 @@
     {
      "nombre": "descuentos_un_sitio",
      "titulo": "Los descuentos, en un solo sitio",
+     "codigo": false,
+     "pre": false,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "hotel_de_las_islas_da_origen",
+     "titulo": "El hotel de las islas ya dice desde dónde sale",
      "codigo": false,
      "pre": false,
      "sin_efecto": false
@@ -3063,6 +3070,19 @@
    "codigo": true,
    "pre": true,
    "fijado_en_pre": true,
+   "usado_por": [
+    "r_hechos"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "hotel_de_las_islas_da_origen",
+   "area": "Preguntas",
+   "titulo": "El hotel de las islas ya dice desde dónde sale",
+   "texto": "Si el cliente nombra en el mensaje un hotel de las islas que está en el catálogo (Ubuntu, Secreto, Pao Pao…), Coral ya sabe al contestar que sale desde las islas y no le pregunta desde dónde sale, aunque Jev no esté seguro del lugar (arq-8b, 23-oct).",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
    "usado_por": [
     "r_hechos"
    ],

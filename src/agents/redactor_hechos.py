@@ -89,7 +89,37 @@ def _origen(state: ConversationState, datos: dict) -> str | None:
     lugar = getattr(state, "_jev_lugar", None) or {}  # gen-15: «nos alojamos en Mulata» lo dice Jev, no una palabra
     if (lugar.get("confidence") or 0.0) >= CUSTOMER_PLACE_MIN:
         return _LUGAR_DE_JEV.get(lugar.get("choice"))
+    if settings.hotel_de_las_islas_da_origen and datos.get("hotel"):
+        # arq-8b: «We'll be staying at the Ubuntu hotel… how much…?» con Jev a 0,52 en el lugar: el extractor lee el hotel
+        # y CAL-C3e lo sabe de las islas, pero el origen lo pone al guardar, después de contestar; el redactor daba las
+        # dos variantes y preguntaba desde dónde sale (banco arq-8b variantes, v5 3/3).
+        if _hotel_de_las_islas(str(datos["hotel"])):
+            return "island"
     return None
+
+
+_GENERICAS_DE_HOTEL = {"hotel", "eco", "the", "el"}
+
+
+def _sin_genericas(nombre: str) -> str:
+    plano = hechos_mod._plano(nombre)
+    return " ".join(p for p in re.findall(r"[a-z0-9]+", plano) if p not in _GENERICAS_DE_HOTEL)
+
+
+def _hotel_de_las_islas(nombre: str) -> bool:
+    """arq-8b: ¿el hotel que nombra el cliente es de las islas? En cualquiera de las dos listas que ya usa el bot: el
+    catálogo del detector (CAL-C3e: Ubuntu, Secreto, Pao Pao…) y los de la base (gen-15, policies.json: Mulata, Rosario
+    de Mar, Eco Hotel Las Palmeras…, que el detector no tiene). Sin tildes, mayúsculas ni «hotel»/«eco»."""
+    from src.agents.extractor_turno import HOTELES_DE_LA_BASE  # lazy
+    from src.agents.nucleo.extractor import _hotel_del_catalogo  # lazy
+
+    if _hotel_del_catalogo(nombre):
+        return True
+    dicho = _sin_genericas(nombre)
+    if len(dicho) < 4:
+        return False
+    # Solo «el nombre de la base está en lo que dijo» (no al revés: «Hotel San Pedro», en Cartagena, no es Majagua).
+    return any((base := _sin_genericas(h)) and base in dicho for h in HOTELES_DE_LA_BASE)
 
 
 def _foto(state: ConversationState, datos: dict, origen: str | None, message: str = "",

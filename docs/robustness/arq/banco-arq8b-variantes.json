@@ -1,0 +1,21 @@
+{
+ "about": "arq-8b (23-oct, Gonzalo con Claude, encargo de Gadea #1655): variantes del tipo de g10-051 (sin copiar sus frases): el cliente da un hotel de las islas en futuro («me voy a hospedar», «me voy a alojar», «vamos a estar») y en el mismo mensaje 4-5 preguntas con fecha y nacionalidad, con curso o especialidad; o lo dice en un turno y pregunta en el siguiente. No tiene que preguntar desde dónde sale. Control: alojado en Cartagena. Frases nuestras.",
+ "dialogos": [
+  {"id": "v1-palmeras-minicurso", "tipo": "hotel_islas", "turnos": ["Me voy a hospedar en el Eco Hotel Las Palmeras. ¿Hay cupo para el minicurso el 15 de noviembre? Somos colombianos, ¿cuánto cuesta? ¿Nos recogen en el hotel? ¿Cómo reservo?"],
+   "todas": ["COP|pesos"], "ninguno": ["desde dónde saldr|desde dónde sal|desde donde saldr|desde donde sal|saldrías|saldrias"]},
+  {"id": "v2-mulata-open-water", "tipo": "hotel_islas", "turnos": ["Me voy a alojar en el hotel Mulata del 10 al 14 de diciembre y quiero sacar el Open Water. Soy colombiana. ¿Cuánto cuesta, hay transporte desde el hotel y cómo lo reservo?"],
+   "todas": ["COP|pesos"], "ninguno": ["desde dónde saldr|desde dónde sal|desde donde saldr|desde donde sal|saldrías|saldrias"]},
+  {"id": "v3-rosario-de-mar-nitrox", "tipo": "hotel_islas", "turnos": ["Vamos a estar en el hotel Rosario de Mar la semana que viene y queremos hacer la especialidad de nitrox el martes. Somos colombianos. ¿Cuánto vale, nos recogen y cómo se reserva?"],
+   "todas": ["COP|pesos"], "ninguno": ["desde dónde saldr|desde dónde sal|desde donde saldr|desde donde sal|saldrías|saldrias"]},
+  {"id": "v4-secreto-dos-inmersiones", "tipo": "hotel_islas", "turnos": ["Llegaremos al hotel Secreto el viernes 21. ¿Hay disponibilidad para la salida de 2 inmersiones el sábado 22? Somos de Bogotá. ¿Precio? ¿Pasan por el hotel? ¿Cómo pago?"],
+   "todas": ["COP|pesos"], "ninguno": ["desde dónde saldr|desde dónde sal|desde donde saldr|desde donde sal|saldrías|saldrias"]},
+  {"id": "v5-ubuntu-en", "tipo": "hotel_islas", "turnos": ["We'll be staying at the Ubuntu hotel from November 3. Is there space for the fun dives on November 4? We're Colombian. How much is it, do you pick us up at the hotel, and how do we book?"],
+   "todas": ["COP|pesos"], "ninguno": ["where will you be departing|where are you departing|where would you be departing|would you leave"]},
+  {"id": "v6-palmeras-dos-turnos", "tipo": "hotel_islas", "turnos": ["Hola! Me voy a hospedar en el Eco Hotel Las Palmeras", "¿Hay cupo el 15 de noviembre para el snorkel? Soy colombiano, ¿cuánto cuesta y cómo reservo? ¿Me recogen?"],
+   "todas": ["COP|pesos"], "ninguno": ["desde dónde saldr|desde dónde sal|desde donde saldr|desde donde sal|saldrías|saldrias"]},
+  {"id": "v7-advanced-pao-pao", "tipo": "hotel_islas", "turnos": ["Hola, quiero hacer el curso Advanced", "Me voy a quedar en el hotel Pao Pao del 2 al 5 de diciembre y soy colombiano. ¿Precio, hay disponibilidad el 3 y cómo es el transporte?"],
+   "todas": ["COP|pesos"], "ninguno": ["desde dónde saldr|desde dónde sal|desde donde saldr|desde donde sal|saldrías|saldrias"]},
+  {"id": "c1-cartagena-centro", "tipo": "control", "turnos": ["Me voy a hospedar en el centro de Cartagena. Soy colombiano. ¿Cuánto cuesta el snorkel y cómo reservo?"],
+   "todas": ["COP|pesos", "bodeguita|cartagena"], "ninguno": ["desde dónde saldr|desde dónde sal|desde donde saldr|desde donde sal|saldrías|saldrias"]}
+ ]
+}
