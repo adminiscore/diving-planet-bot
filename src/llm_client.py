@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import json
 import logging
+import time
 from typing import TypeVar
 
 from openai import AsyncOpenAI as _RealAsyncOpenAI
@@ -134,6 +135,35 @@ def parametros_openrouter(kwargs: dict) -> dict:
 
 _cliente_openrouter: _RealAsyncOpenAI | None = None
 
+# mej-7 (flag `openrouter_corte_segundos`): hasta cuándo no se llama a OpenRouter tras un 401/402/403 (la clave o el
+# crédito, no un fallo pasajero de un proveedor: esos los cubre el respaldo de siempre).
+_CODIGOS_DE_LA_CLAVE = {401, 402, 403}
+_openrouter_cortado_hasta = 0.0
+
+
+def openrouter_cortado() -> bool:
+    """¿Está OpenRouter cortado por un fallo de la clave o del crédito? (mej-7; siempre False con el flag apagado)."""
+    return settings.openrouter_corte_segundos > 0 and time.monotonic() < _openrouter_cortado_hasta
+
+
+def cortar_openrouter_si_es_la_clave(status: int | None, quien: str) -> None:
+    """mej-7: con un 401/402/403 de OpenRouter, lo corta `openrouter_corte_segundos` (avisa una vez por corte)."""
+    global _openrouter_cortado_hasta
+    if settings.openrouter_corte_segundos <= 0 or status not in _CODIGOS_DE_LA_CLAVE:
+        return
+    if not openrouter_cortado():
+        logger.error(f"[LLM][OPENROUTER] {quien}: {status} (la clave o el crédito): se deja de llamar a OpenRouter "
+                     f"{settings.openrouter_corte_segundos:g} s; las piezas van por su respaldo de OpenAI y Jev se salta")
+    _openrouter_cortado_hasta = time.monotonic() + settings.openrouter_corte_segundos
+
+
+def _status(exc: BaseException) -> int | None:
+    """El código HTTP de un error de la API (openai.APIStatusError o httpx.HTTPStatusError), si lo trae."""
+    status = getattr(exc, "status_code", None)
+    if status is None:
+        status = getattr(getattr(exc, "response", None), "status_code", None)
+    return status if isinstance(status, int) else None
+
 
 def _openrouter() -> _RealAsyncOpenAI:
     global _cliente_openrouter
@@ -191,11 +221,17 @@ async def _por_proveedor(original, *args, **kwargs):
     if not es_de_openrouter(modelo):
         return await original(*args, **adaptar_parametros(kwargs))
     respaldo = settings.respaldo_si_openrouter_falla
+    if respaldo and not es_de_openrouter(respaldo) and openrouter_cortado():
+        from src.observability import note_turn  # lazy
+
+        note_turn(openrouter="cortado")
+        return await original(*args, **adaptar_parametros({**kwargs, "model": respaldo}))
     if respaldo and not es_de_openrouter(respaldo) and settings.openrouter_respaldo_segundos > 0:
         return await _openrouter_o_respaldo_por_tiempo(original, respaldo, modelo, args, kwargs)
     try:
         return await _openrouter().chat.completions.create(*args, **parametros_openrouter(kwargs))
     except Exception as exc:  # noqa: BLE001 — el respaldo decide; sin respaldo sube el error
+        cortar_openrouter_si_es_la_clave(_status(exc), modelo)
         if not respaldo or es_de_openrouter(respaldo):
             raise
         logger.warning(f"[LLM][OPENROUTER] {modelo} falló ({str(exc)[:160]}): contesta {respaldo} por OpenAI")
@@ -223,6 +259,7 @@ async def _openrouter_o_respaldo_por_tiempo(original, respaldo: str, modelo: str
     if t_openrouter.done():
         if t_openrouter.exception() is None:
             return t_openrouter.result()
+        cortar_openrouter_si_es_la_clave(_status(t_openrouter.exception()), modelo)
         logger.warning(f"[LLM][OPENROUTER] {modelo} falló ({str(t_openrouter.exception())[:160]}): contesta {respaldo}")
         return await por_openai()
     t_openai = asyncio.ensure_future(por_openai())
