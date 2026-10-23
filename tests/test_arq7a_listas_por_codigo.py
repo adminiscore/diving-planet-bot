@@ -34,3 +34,20 @@ def test_una_lista_que_no_se_pidio_no_se_pone():
 def test_el_prompt_pide_la_marca_solo_con_el_flag(monkeypatch, flag):
     monkeypatch.setattr(settings, "listas_por_codigo", flag)
     assert ("[[incluye]]" in rh._mensajes("es", [], "¿qué incluye?", "[]")[0]["content"]) is flag
+
+
+_C = [{"nombre": "Snorkel", "recogida": {"cartagena": ["Muelle de la Bodeguita, a 5 minutos del centro, a las 8:00."],
+                                         "island": ["Recogida en el hotel entre las 9:30 y las 9:45, sin cargo."]},
+       "alojamiento": "Hay que dormir una noche en las islas; el alojamiento no está incluido."}]
+
+
+def test_arq7d_la_recogida_y_el_alojamiento_por_codigo(monkeypatch):
+    monkeypatch.setattr(settings, "frases_por_codigo", True)
+    answer = rh._poner_listas("Así llegas:\n[[recogida]]\n\n[[alojamiento]]", _C, ["horario"], "es")
+    assert "[[" not in answer and "Bodeguita" in answer and "9:30 y las 9:45" in answer
+    assert "*Desde Cartagena:*" in answer and "el alojamiento no está incluido" in answer
+
+
+def test_arq7d_sin_el_flag_no_toca_las_frases(monkeypatch):
+    monkeypatch.setattr(settings, "frases_por_codigo", False)
+    assert rh._poner_listas("Así llegas: [[recogida]]", _C, ["horario"], "es") == "Así llegas: [[recogida]]"

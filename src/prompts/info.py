@@ -631,6 +631,15 @@ REDACTOR_LISTAS_POR_CODIGO_EN = (
     "origins. Before it you may write a sentence that introduces it or answers what they ask (for example «Yes, lunch "
     "is included»), without repeating the list items."
 )
+# arq-7d (23-oct, flag `frases_por_codigo`, latencia): la recogida y el alojamiento también los pone el código.
+REDACTOR_FRASES_POR_CODIGO_ES = (
+    "\n- `recogida` y `alojamiento` tampoco los escribas: pon su marca [[recogida]] o [[alojamiento]] en una línea sola "
+    "y el sistema pondrá la frase tal cual."
+)
+REDACTOR_FRASES_POR_CODIGO_EN = (
+    "\n- Do not write `recogida` and `alojamiento` either: put their marker [[recogida]] or [[alojamiento]] on a line of "
+    "its own and the system will insert the sentence as given."
+)
 # arq-5c (23-oct, flag `dos_monedas_sin_nacionalidad`, decisión de Gadea): sin saber la nacionalidad, los hechos traen
 # el precio en USD (`precio`) y en COP (`precio_cop`).
 REDACTOR_DOS_MONEDAS_ES = (

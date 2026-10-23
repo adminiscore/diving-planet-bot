@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-23T10:39:35+00:00",
-  "commit": "2ee1c5ca",
+  "generado": "2026-10-23T10:54:53+00:00",
+  "commit": "edd85f3d",
   "rama": "feature/pre_gadea"
  },
  "vistas": {
@@ -1439,6 +1439,13 @@
      "codigo": false,
      "pre": false,
      "sin_efecto": false
+    },
+    {
+     "nombre": "frases_por_codigo",
+     "titulo": "La recogida y el alojamiento, por código",
+     "codigo": false,
+     "pre": false,
+     "sin_efecto": false
     }
    ],
    "marca": "openai"
@@ -2873,6 +2880,19 @@
    "pre": true,
    "fijado_en_pre": false,
    "usado_por": [],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "frases_por_codigo",
+   "area": "Preguntas",
+   "titulo": "La recogida y el alojamiento, por código",
+   "texto": "Con las listas por código, también las frases de la recogida y del alojamiento las copia el código del dato donde el redactor deja su marca: así no hace falta rehacer la respuesta porque el modelo las haya parafraseado (arq-7d, latencia, 23-oct).",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
+   "usado_por": [
+    "r_hechos"
+   ],
    "sin_efecto": null
   },
   {

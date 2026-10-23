@@ -142,6 +142,13 @@ def _mensajes(lang: str, history: list[dict], message: str, texto_hechos: str) -
         )
 
         system += REDACTOR_LISTAS_POR_CODIGO_ES if lang == "es" else REDACTOR_LISTAS_POR_CODIGO_EN
+        if settings.frases_por_codigo:
+            from src.prompts.info import (  # lazy
+                REDACTOR_FRASES_POR_CODIGO_EN,
+                REDACTOR_FRASES_POR_CODIGO_ES,
+            )
+
+            system += REDACTOR_FRASES_POR_CODIGO_ES if lang == "es" else REDACTOR_FRASES_POR_CODIGO_EN
     if settings.dos_monedas_sin_nacionalidad:
         from src.prompts.info import REDACTOR_DOS_MONEDAS_EN, REDACTOR_DOS_MONEDAS_ES  # lazy
 
@@ -208,6 +215,33 @@ def _poner_listas(answer: str, bloques: list[dict], intenciones: list[str], lang
         if marca in answer:
             answer = answer.replace(marca, texto, 1).replace(marca, "")
         elif hechos_mod.faltan(answer, [{campo: b.get(campo)} for b, _ in piezas], [campo]):
+            answer = f"{answer.rstrip()}\n\n{texto}"
+    if settings.frases_por_codigo:
+        answer = _poner_frases(answer, bloques, lang)
+    return answer
+
+
+# arq-7d (23-oct, flag `frases_por_codigo`, latencia): tras arq-7a, en el banco fijo quedaban 28 de 96 turnos con
+# segunda redacción, casi todos por las frases de la recogida y del alojamiento (políticas que el modelo parafraseaba
+# y arq-3 no reconocía). También las pone el código, tal cual, donde el modelo deja «[[recogida]]» o «[[alojamiento]]».
+_FRASES_DEL_CODIGO = ("recogida", "alojamiento")
+
+
+def _poner_frases(answer: str, bloques: list[dict], lang: str) -> str:
+    for campo in _FRASES_DEL_CODIGO:
+        valores = [b.get(campo) for b in bloques if b.get(campo)]
+        if not valores:
+            continue
+        if campo == "alojamiento":
+            texto = "\n\n".join(dict.fromkeys(valores))
+        else:
+            partes = [(o, frases) for v in valores for o, frases in v.items() if frases]
+            texto = "\n\n".join((f"*{_ROTULO_DEL_ORIGEN[lang].get(o, o)}:* " if len(partes) > 1 else "")
+                                + " ".join(frases) for o, frases in partes)
+        marca = f"[[{campo}]]"
+        if marca in answer:
+            answer = answer.replace(marca, texto, 1).replace(marca, "")
+        elif hechos_mod.faltan(answer, [{campo: v} for v in valores], []):
             answer = f"{answer.rstrip()}\n\n{texto}"
     return answer
 # arq-5b: en un mensaje mezclado el redactor contesta solo la parte de los hechos; lo demás va justo después (el RAG).
