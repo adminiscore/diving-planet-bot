@@ -378,14 +378,7 @@
         "Fase EX: extractor_turno.extraer_turno (LLM primero, cita comprobada)"
       ],
       "interruptores": [
-        "vivir_no_es_residir",
-        "gentilicio_es_colombiano",
         "el_verbo_no_la_ciudad",
-        "rag_espera_la_nacionalidad",
-        "hoteles_de_la_base",
-        "reserva_de_hotel_no_es_nuestra",
-        "referido_no_pregunta_nivel",
-        "pago_colombiano_con_asesor",
         "cache_anthropic",
         "curso_preguntado_no_es_nivel",
         "cedula_de_extranjeria_manda"
@@ -404,10 +397,7 @@
         "resolutor_model"
       ],
       "interruptores": [
-        "baru_sale_de_cartagena",
         "precio_no_elige",
-        "acuse_en_su_numero",
-        "actividad_de_la_pregunta",
         "sin_certificacion_no_hace_falta",
         "recotizar_al_cambiar_moneda"
       ]
@@ -997,11 +987,6 @@
       "titulo": "Preguntar un precio no es elegir",
       "texto": "Si el cliente solo pregunta cuánto cuesta algo ('¿cuánto vale el paquete de 5 inmersiones?'), el bot no da por hecho que lo ha elegido ni que es buzo certificado: es una duda. Decir lo que quiere hacer sí lo elige."
     },
-    "baru_sale_de_cartagena": {
-      "area": "Reserva",
-      "titulo": "Desde Barú se sale desde Cartagena",
-      "texto": "Quien dice que se aloja en Barú o en Playa Blanca queda como 'sale desde Cartagena' (Muelle de la Bodeguita), que es lo que dice la política. Antes se quedaba sin origen y Coral le volvía a preguntar '¿desde dónde saldrías?' justo después de que lo dijera."
-    },
     "origen_sin_titulo_suelto": {
       "area": "Preguntas",
       "titulo": "Al quitar los precios, no deja el título colgado",
@@ -1047,55 +1032,10 @@
       "titulo": "Jev reconoce una pregunta de precio de cualquier actividad",
       "texto": "La pregunta de Jev «¿pide el precio?» nombra las actividades del centro (salidas y paquetes, minicurso o refresher, snorkel, cursos y especialidades). Sin eso, «¿Cuánto cuesta el snorkel?» no contaba como pregunta de precio, no se preguntaba el origen y se cotizaba Cartagena sin saberlo (ord-7, 21-oct)."
     },
-    "pago_colombiano_con_asesor": {
-      "area": "Reserva",
-      "titulo": "El pago de un colombiano lo coordina un asesor",
-      "texto": "Al cerrar la reserva de un colombiano, Coral le pasa con un asesor para coordinar el pago en pesos, sin decir que hay que 'confirmar disponibilidad' (siempre hay) y en su número ('puedes pagar' a quien va solo). Antes de cerrar, la respuesta a sus preguntas no le da el link de reserva."
-    },
-    "referido_no_pregunta_nivel": {
-      "area": "Reserva",
-      "titulo": "Quien termina aquí el Open Water no es preguntado de más",
-      "texto": "A quien quiere terminar aquí un Open Water empezado en otro centro (el curso referido), Coral ya no le pregunta si tiene el curso o si quiere sacarlo: sigue con la reserva."
-    },
-    "reserva_de_hotel_no_es_nuestra": {
-      "area": "Enrutador",
-      "titulo": "Reservar el hotel no es reservar con nosotros",
-      "texto": "Quien dice que ya reservó el hotel o el vuelo ('we booked 3 nights at Mulata') sigue siendo un cliente nuevo: Coral le cotiza y le hace las preguntas de la reserva, en vez de tratarle como alguien que ya reservó con Diving Planet."
-    },
-    "hoteles_de_la_base": {
-      "area": "Reserva",
-      "titulo": "Conoce todos los hoteles de las islas",
-      "texto": "Coral reconoce como alojados en las islas a quien nombra cualquiera de los hoteles que da la base del negocio (Majagua, Cocoliso, Ubuntu, Secreto, Mulata, Rosario de Mar, Eco Hotel Las Palmeras) y no le vuelve a preguntar desde dónde sale."
-    },
-    "rag_espera_la_nacionalidad": {
-      "area": "Preguntas",
-      "titulo": "El precio en la moneda que acaba de decir el cliente",
-      "texto": "Si el cliente dice de dónde es en el mismo mensaje en que pregunta un precio ('Somos de Cali, ¿cuánto vale?'), la respuesta ya sale en pesos. Antes la respuesta se escribía antes de apuntar la nacionalidad y salía en dólares."
-    },
-    "gentilicio_es_colombiano": {
-      "area": "Reserva",
-      "titulo": "Ser de una ciudad de Colombia es ser colombiano",
-      "texto": "Quien dice de qué ciudad o región de Colombia es ('somos de Cali', 'soy de Pereira') cuenta como colombiano y paga en pesos, aunque diga además dónde se aloja. Vivir en Colombia, alojarse o estar de viaje no dice la nacionalidad."
-    },
-    "vivir_no_es_residir": {
-      "area": "Reserva",
-      "titulo": "Vivir en Colombia no es ser residente",
-      "texto": "Paga en pesos quien dice que es colombiano (viva donde viva) o que tiene cédula de extranjería. Quien solo dice que vive, trabaja o nació en Colombia no cuenta como colombiano: el bot pregunta '¿eres de nacionalidad colombiana o tienes cédula de extranjería?'."
-    },
     "juez_revisa_con_cita": {
       "area": "Preguntas",
       "titulo": "El revisor pide la cita antes de rechazar",
       "texto": "Cuando el revisor de las respuestas del RAG rechaza una frase, se le pide la cita literal de la base que la respalda; si la trae (y sus cifras y enlaces están en la base), la respuesta pasa. Antes rechazaba respuestas correctas y la que se regeneraba salía peor."
-    },
-    "actividad_de_la_pregunta": {
-      "area": "Reserva",
-      "titulo": "Ofrece la actividad por la que pregunta el cliente",
-      "texto": "Quien pregunta por una actividad sin elegirla aún ('en el minicurso, ¿el equipo está incluido?') recibe, tras la respuesta, la oferta de esa actividad ('Si quieres, te ayudo a reservar: Minicurso') en vez del menú de las 4 actividades. La elige el cliente."
-    },
-    "acuse_en_su_numero": {
-      "area": "Reserva",
-      "titulo": "El acuse habla en singular a quien va solo",
-      "texto": "La frase de acuse ('Entendido, …') repite el dato con las palabras y el número del cliente: a quien dice 'I'm not Colombian' le contesta 'you're not Colombian', no 'none of you are Colombian'."
     },
     "contesta_antes_de_cualquier_pase": {
       "area": "Enrutador",

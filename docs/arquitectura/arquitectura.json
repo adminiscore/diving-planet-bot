@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-23T20:53:03+00:00",
-  "commit": "3300f7d8",
+  "generado": "2026-10-23T21:20:51+00:00",
+  "commit": "0b44aaa4",
   "rama": "feature/sim5-alvaro"
  },
  "vistas": {
@@ -609,57 +609,8 @@
    ],
    "interruptores": [
     {
-     "nombre": "vivir_no_es_residir",
-     "titulo": "Vivir en Colombia no es ser residente",
-     "codigo": true,
-     "pre": true,
-     "sin_efecto": false
-    },
-    {
-     "nombre": "gentilicio_es_colombiano",
-     "titulo": "Ser de una ciudad de Colombia es ser colombiano",
-     "codigo": true,
-     "pre": true,
-     "sin_efecto": false
-    },
-    {
      "nombre": "el_verbo_no_la_ciudad",
      "titulo": "«Soy de Medellín» es colombiano",
-     "codigo": true,
-     "pre": true,
-     "sin_efecto": false
-    },
-    {
-     "nombre": "rag_espera_la_nacionalidad",
-     "titulo": "El precio en la moneda que acaba de decir el cliente",
-     "codigo": true,
-     "pre": true,
-     "sin_efecto": false
-    },
-    {
-     "nombre": "hoteles_de_la_base",
-     "titulo": "Conoce todos los hoteles de las islas",
-     "codigo": true,
-     "pre": true,
-     "sin_efecto": false
-    },
-    {
-     "nombre": "reserva_de_hotel_no_es_nuestra",
-     "titulo": "Reservar el hotel no es reservar con nosotros",
-     "codigo": true,
-     "pre": true,
-     "sin_efecto": false
-    },
-    {
-     "nombre": "referido_no_pregunta_nivel",
-     "titulo": "Quien termina aquí el Open Water no es preguntado de más",
-     "codigo": true,
-     "pre": true,
-     "sin_efecto": false
-    },
-    {
-     "nombre": "pago_colombiano_con_asesor",
-     "titulo": "El pago de un colombiano lo coordina un asesor",
      "codigo": true,
      "pre": true,
      "sin_efecto": false
@@ -711,31 +662,10 @@
    ],
    "interruptores": [
     {
-     "nombre": "baru_sale_de_cartagena",
-     "titulo": "Desde Barú se sale desde Cartagena",
-     "codigo": true,
-     "pre": true,
-     "sin_efecto": false
-    },
-    {
      "nombre": "precio_no_elige",
      "titulo": "Preguntar un precio no es elegir",
      "codigo": false,
      "pre": false,
-     "sin_efecto": false
-    },
-    {
-     "nombre": "acuse_en_su_numero",
-     "titulo": "El acuse habla en singular a quien va solo",
-     "codigo": true,
-     "pre": true,
-     "sin_efecto": false
-    },
-    {
-     "nombre": "actividad_de_la_pregunta",
-     "titulo": "Ofrece la actividad por la que pregunta el cliente",
-     "codigo": true,
-     "pre": true,
      "sin_efecto": false
     },
     {
@@ -1898,32 +1828,6 @@
  ],
  "interruptores": [
   {
-   "nombre": "actividad_de_la_pregunta",
-   "area": "Reserva",
-   "titulo": "Ofrece la actividad por la que pregunta el cliente",
-   "texto": "Quien pregunta por una actividad sin elegirla aún ('en el minicurso, ¿el equipo está incluido?') recibe, tras la respuesta, la oferta de esa actividad ('Si quieres, te ayudo a reservar: Minicurso') en vez del menú de las 4 actividades. La elige el cliente.",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [
-    "b_slotfill_close"
-   ],
-   "sin_efecto": null
-  },
-  {
-   "nombre": "acuse_en_su_numero",
-   "area": "Reserva",
-   "titulo": "El acuse habla en singular a quien va solo",
-   "texto": "La frase de acuse ('Entendido, …') repite el dato con las palabras y el número del cliente: a quien dice 'I'm not Colombian' le contesta 'you're not Colombian', no 'none of you are Colombian'.",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [
-    "b_slotfill_close"
-   ],
-   "sin_efecto": null
-  },
-  {
    "nombre": "adaptado_contesta_lo_demas",
    "area": "Preguntas",
    "titulo": "DIVE TO HEAL no se come lo demás",
@@ -1946,19 +1850,6 @@
    "fijado_en_pre": false,
    "usado_por": [
     "r_escribir"
-   ],
-   "sin_efecto": null
-  },
-  {
-   "nombre": "baru_sale_de_cartagena",
-   "area": "Reserva",
-   "titulo": "Desde Barú se sale desde Cartagena",
-   "texto": "Quien dice que se aloja en Barú o en Playa Blanca queda como 'sale desde Cartagena' (Muelle de la Bodeguita), que es lo que dice la política. Antes se quedaba sin origen y Coral le volvía a preguntar '¿desde dónde saldrías?' justo después de que lo dijera.",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [
-    "b_slotfill_close"
    ],
    "sin_efecto": null
   },
@@ -2195,19 +2086,6 @@
    "sin_efecto": null
   },
   {
-   "nombre": "gentilicio_es_colombiano",
-   "area": "Reserva",
-   "titulo": "Ser de una ciudad de Colombia es ser colombiano",
-   "texto": "Quien dice de qué ciudad o región de Colombia es ('somos de Cali', 'soy de Pereira') cuenta como colombiano y paga en pesos, aunque diga además dónde se aloja. Vivir en Colombia, alojarse o estar de viaje no dice la nacionalidad.",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [
-    "b_extraction"
-   ],
-   "sin_efecto": null
-  },
-  {
    "nombre": "grupo_de_una_persona",
    "area": "Reserva",
    "titulo": "«Es para una persona» cuenta como el grupo",
@@ -2295,19 +2173,6 @@
    "fijado_en_pre": true,
    "usado_por": [
     "r_hechos"
-   ],
-   "sin_efecto": null
-  },
-  {
-   "nombre": "hoteles_de_la_base",
-   "area": "Reserva",
-   "titulo": "Conoce todos los hoteles de las islas",
-   "texto": "Coral reconoce como alojados en las islas a quien nombra cualquiera de los hoteles que da la base del negocio (Majagua, Cocoliso, Ubuntu, Secreto, Mulata, Rosario de Mar, Eco Hotel Las Palmeras) y no le vuelve a preguntar desde dónde sale.",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [
-    "b_extraction"
    ],
    "sin_efecto": null
   },
@@ -2482,19 +2347,6 @@
    "sin_efecto": null
   },
   {
-   "nombre": "pago_colombiano_con_asesor",
-   "area": "Reserva",
-   "titulo": "El pago de un colombiano lo coordina un asesor",
-   "texto": "Al cerrar la reserva de un colombiano, Coral le pasa con un asesor para coordinar el pago en pesos, sin decir que hay que 'confirmar disponibilidad' (siempre hay) y en su número ('puedes pagar' a quien va solo). Antes de cerrar, la respuesta a sus preguntas no le da el link de reserva.",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [
-    "b_extraction"
-   ],
-   "sin_efecto": null
-  },
-  {
    "nombre": "paquete_varios_dias",
    "area": "Preguntas",
    "titulo": "«El paquete de varios días» sin decir cuántos",
@@ -2595,19 +2447,6 @@
    "fijado_en_pre": false,
    "usado_por": [
     "r_escribir"
-   ],
-   "sin_efecto": null
-  },
-  {
-   "nombre": "rag_espera_la_nacionalidad",
-   "area": "Preguntas",
-   "titulo": "El precio en la moneda que acaba de decir el cliente",
-   "texto": "Si el cliente dice de dónde es en el mismo mensaje en que pregunta un precio ('Somos de Cali, ¿cuánto vale?'), la respuesta ya sale en pesos. Antes la respuesta se escribía antes de apuntar la nacionalidad y salía en dólares.",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [
-    "b_extraction"
    ],
    "sin_efecto": null
   },
@@ -2742,19 +2581,6 @@
    "sin_efecto": null
   },
   {
-   "nombre": "referido_no_pregunta_nivel",
-   "area": "Reserva",
-   "titulo": "Quien termina aquí el Open Water no es preguntado de más",
-   "texto": "A quien quiere terminar aquí un Open Water empezado en otro centro (el curso referido), Coral ya no le pregunta si tiene el curso o si quiere sacarlo: sigue con la reserva.",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [
-    "b_extraction"
-   ],
-   "sin_efecto": null
-  },
-  {
    "nombre": "reparto_en_pares",
    "area": "Reserva",
    "titulo": "El reparto del grupo, en un formato más corto para la IA",
@@ -2775,19 +2601,6 @@
    "fijado_en_pre": true,
    "usado_por": [
     "r_hechos"
-   ],
-   "sin_efecto": null
-  },
-  {
-   "nombre": "reserva_de_hotel_no_es_nuestra",
-   "area": "Enrutador",
-   "titulo": "Reservar el hotel no es reservar con nosotros",
-   "texto": "Quien dice que ya reservó el hotel o el vuelo ('we booked 3 nights at Mulata') sigue siendo un cliente nuevo: Coral le cotiza y le hace las preguntas de la reserva, en vez de tratarle como alguien que ya reservó con Diving Planet.",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [
-    "b_extraction"
    ],
    "sin_efecto": null
   },
@@ -2866,19 +2679,6 @@
    "fijado_en_pre": false,
    "usado_por": [
     "r_hechos"
-   ],
-   "sin_efecto": null
-  },
-  {
-   "nombre": "vivir_no_es_residir",
-   "area": "Reserva",
-   "titulo": "Vivir en Colombia no es ser residente",
-   "texto": "Paga en pesos quien dice que es colombiano (viva donde viva) o que tiene cédula de extranjería. Quien solo dice que vive, trabaja o nació en Colombia no cuenta como colombiano: el bot pregunta '¿eres de nacionalidad colombiana o tienes cédula de extranjería?'.",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [
-    "b_extraction"
    ],
    "sin_efecto": null
   },

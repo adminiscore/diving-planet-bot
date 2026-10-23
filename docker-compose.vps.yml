@@ -147,34 +147,7 @@ services:
       # que empeoran no pasan por el pase). Revert = quitar estas dos líneas.
       CAMBIO_DE_RESERVA_PASA: "true"
       PRIVADO_PASA_DIRECTO: "true"
-      # gen-8 (Álvaro, 21-oct): el acuse habla con el número del cliente (el ejemplo en plural se copiaba a quien va
-      # solo) y a quien pregunta por UNA actividad sin elegirla se le ofrece esa, no el menú de 4. PROMOCIONADO 21-oct
-      # (gen8-B frente a gen8-A, del mismo día; el que empeora es del RAG). Revert = quitar estas dos líneas.
-      ACUSE_EN_SU_NUMERO: "true"
-      ACTIVIDAD_DE_LA_PREGUNTA: "true"
-      # gen-6 (Gonzalo, 21-oct; docs/robustness/gen/gen6-diagnostico.md): quien se aloja en Barú o Playa Blanca sale
-      # desde Cartagena (Barú no es Islas del Rosario, decisión de Gadea del 18-oct) y la puerta del origen no deja el
-      # título de la lista colgado. PROMOCIONADO 21-oct (gen6-B3 frente a gen6-A3, del mismo día; los que empeoran no
-      # pasan por el origen). Revert = quitar estas dos líneas.
-      BARU_SALE_DE_CARTAGENA: "true"
       ORIGEN_SIN_TITULO_SUELTO: "true"
-      # gen-4 (Álvaro, 21-oct): vivir, trabajar o haber nacido en Colombia no hace colombiano; cuenta quien dice que lo
-      # es («soy de Medellín» también) o que tiene cédula de extranjería, y la pregunta nombra la cédula. El colombiano
-      # pasa a un asesor para el pago en COP, sin «confirmar disponibilidad» y en su número (decisiones de Gadea del
-      # 21-oct). PROMOCIONADO 21-oct (gen4-B2 frente a gen4-A2; las regresiones no pasan por la nacionalidad). Revert =
-      # quitar estas dos líneas.
-      VIVIR_NO_ES_RESIDIR: "true"
-      PAGO_COLOMBIANO_CON_ASESOR: "true"
-      # gen-14 (Álvaro, 21-oct, PROMOCIONADO): ser DE una ciudad o región de Colombia es ser colombiano, y el RAG recibe
-      # la nacionalidad que dice ese mismo mensaje (gen14-A/B). Revert = quitar estas dos líneas.
-      GENTILICIO_ES_COLOMBIANO: "true"
-      RAG_ESPERA_LA_NACIONALIDAD: "true"
-      # gen-15 (Álvaro, 21-oct, PROMOCIONADO): los hoteles de las islas de la base y reservar el hotel no es reservar
-      # con nosotros. gen-16 (Álvaro): a quien quiere terminar aquí un Open Water no se le pregunta si ya lo tiene.
-      # Revert = quitar estas tres líneas.
-      HOTELES_DE_LA_BASE: "true"
-      RESERVA_DE_HOTEL_NO_ES_NUESTRA: "true"
-      REFERIDO_NO_PREGUNTA_NIVEL: "true"
       # ord-7 (21-oct, PROMOCIONADO): sin origen, las dos variantes; la edad mínima en cifra; Jev ve el precio del
       # snorkel. ord-4: el escritor del RAG a temperatura 0. Revert = quitar estas cuatro líneas.
       ORIGEN_DOS_VARIANTES: "true"

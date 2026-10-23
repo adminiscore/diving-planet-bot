@@ -84,51 +84,9 @@ class Settings(BaseSettings):
     #   `_CONFIRMS_DESCRIBED_PACKAGE_RE` ("quiero este paquete"). nucleo/routing._paquete_confirmado.
     plan_elegido_por_extractor: bool = False  # NO (ex9b-5, manual-duracion-curso): la descripción del curso Open Water
     # ("4 inmersiones") se tomaba por la propuesta de un paquete y "para mí" lo elegía: Curso Referido. 0 usos en PRE.
-    # gen-8 (21-oct): el ejemplo del acuse para reconocer un dato iba en plural ("none of you are Colombian") y lo
-    # copiaba a quien va solo; con el flag, la regla de usar las palabras y el número del cliente. APAGADO.
-    acuse_en_su_numero: bool = True  # PROMOCIONADO 21-oct (ronda sin desplegar gen8-B 97,9 % 27/32 frente a gen8-A 97,0 % 26/32; el que empeora es del RAG; HISTORY 0.31.79); revert = False
-    # gen-8 (21-oct): la actividad de la que el cliente PREGUNTA sin elegirla ("en el minicurso, ¿el equipo está
-    # incluido?", "si hiciera el Advanced…"), leída por el extractor con su cita. Mientras no elige, la pregunta de la
-    # actividad le ofrece esa en vez del menú de 4 (textos-B: "Which one are you leaning toward — diving, a
-    # mini-course…?" a quien llevaba 3 turnos preguntando por el Open Water). APAGADO.
-    actividad_de_la_pregunta: bool = True  # PROMOCIONADO 21-oct (con `acuse_en_su_numero`, misma ronda gen8-A/B; banco gen-8: menú de 4 a quien ya hablaba de una actividad 2/24 -> 0/24; HISTORY 0.31.79); revert = False
-    # gen-4 (21-oct): VIVIR en Colombia no es ser residente (G9, causa 6). El extractor leía "I live in Bogotá" o "sí,
-    # vivo aquí" como colombiano (COP) en el banco docs/robustness/gen/banco_gen4_moneda.py (5/30 bien). Con el flag:
-    # cuenta quien dice que es colombiano, viva donde viva, o que tiene cédula de extranjería (policies.json,
-    # colombian_pricing; sin cédula = USD, decisión de Álvaro del 17-oct); vivir, trabajar o haber nacido allí no dice
-    # ni lo uno ni lo otro (nacer allí no da la nacionalidad: Gadea, 21-oct). Y la pregunta nombra la cédula. APAGADO.
-    vivir_no_es_residir: bool = True  # PROMOCIONADO 21-oct (ronda sin desplegar gen4-B2 frente a gen4-A2; las regresiones no pasan por la nacionalidad; banco del extractor 65/90 -> 86/90; HISTORY 0.31.81); revert = False
-    # gen-14 (21-oct): «Somos de Cali y estamos alojados en Isla Grande» o «soy paisa» no contaban como colombianos (la
-    # regla de vivir_no_es_residir ponía «estar» entre lo que no dice la nacionalidad) y el bot cotizaba en USD. Con el
-    # flag, decir de qué ciudad o región de Colombia es (o su gentilicio) es ser colombiano; alojarse o viajar no dice
-    # nada. Solo actúa con vivir_no_es_residir encendido. APAGADO.
-    gentilicio_es_colombiano: bool = True  # PROMOCIONADO 21-oct (core gen14-A 96,5 % 26/32 frente a gen14-B 97,8 % 27/32; rejuzgado x3: 3 mejoras reales, 0 regresiones de la nacionalidad; HISTORY 0.31.85); revert = False
-    # gen-14 (21-oct): en un turno con pregunta, el RAG contesta (o se adelanta) antes de que la extracción apunte la
-    # nacionalidad que dice ESE mensaje, y a «Somos de Cali… ¿cuánto vale?» le daba USD. Con el flag, el RAG recibe la
-    # nacionalidad que ya leyó la extracción del turno (conversational_core._con_la_nacionalidad_del_mensaje). APAGADO.
-    rag_espera_la_nacionalidad: bool = True  # PROMOCIONADO 21-oct (con gentilicio_es_colombiano, misma ronda gen14-A/B); revert = False
     el_verbo_no_la_ciudad: bool = True  # PROMOCIONADO 22-oct (arq-1f: banco de moneda 87/93 -> 93/93; banco fijo p6 0/3 -> 3/3; HISTORY 0.31.92); revert = False
     cache_anthropic: bool = True  # PROMOCIONADO 22-oct (arq-2b: core A/B2 coste -31 %, turno p50 4,25 -> 4,07 s, extractor p50 0,78 -> 0,68 s; HISTORY 0.31.92); revert = False
     cache_anthropic_proveedor: str = "amazon-bedrock"  # ARQ-2b: con la caché, el proveedor de Haiku que va primero (los demás de respaldo). Sonda 22-oct (7 llamadas cada uno): bedrock caché 7/7 y p50 1,98 s (sin caché 1,94 s); anthropic 7/7 y 2,29 s; vertex 3/7
-    # gen-15 (21-oct): los hoteles de las islas que da la base (policies.json other_island_hotels: Mulata, Rosario de
-    # Mar, Eco Hotel Las Palmeras…) no estaban en la lista del bot ni en la pregunta del lugar de Jev, y el bot volvía a
-    # preguntar desde dónde sale. Con el flag, el extractor y Jev los conocen (extractor_turno.HOTELES_DE_LA_BASE).
-    # APAGADO.
-    hoteles_de_la_base: bool = True  # PROMOCIONADO 21-oct (gen-15: banco Jev 15/33 -> 30/33, repregunta del lugar 5/10 -> 0/10; las regresiones de la core, repetidas x2, no pasan por el lugar; HISTORY 0.31.86); revert = False
-    # gen-15 (21-oct): «We booked 3 nights at Mulata» salía en Jev como «ya tiene una reserva con nosotros» y el turno
-    # iba a posventa (sin preguntas de la reserva). Con el flag, la pregunta YA_RESERVADO dice que reservar el hotel,
-    # el alojamiento o el vuelo no es una reserva con el centro (jev_router._YA_RESERVADO_Q_SIN_HOTEL). APAGADO.
-    reserva_de_hotel_no_es_nuestra: bool = True  # PROMOCIONADO 21-oct (con hoteles_de_la_base, gen-15); revert = False
-    # gen-16 (21-oct): a quien quiere TERMINAR aquí un Open Water empezado (el extractor lee el Referido) se le
-    # preguntaba «¿ya tienen el Curso referido o quieren sacarla?» porque nombraba «Open Water». Con el flag, no se
-    # pregunta (nucleo/extraction._flag_cert_or_course). APAGADO.
-    referido_no_pregunta_nivel: bool = True  # PROMOCIONADO 21-oct (gen-16: banco 2/2 -> 0/2; core sin regresiones del Referido; HISTORY 0.31.86); revert = False
-    # gen-4 (21-oct, decisión de Gadea, Coral #862): el cierre para colombianos (pasa a un asesor que coordina el pago en
-    # COP) decía "para confirmar disponibilidad" (siempre hay) y "Como son colombianos/residentes" también a quien va
-    # solo. Con el flag, sin disponibilidad y en el número del cliente, sin género (nucleo/slotfill_close._finalize).
-    # Y el RAG, que a un colombiano ya conocido le daba el link de reserva antes del cierre, sabe que su pago lo
-    # coordina un asesor (rutas/contexto_rag). APAGADO.
-    pago_colombiano_con_asesor: bool = True  # PROMOCIONADO 21-oct (con `vivir_no_es_residir`, misma ronda gen4-A2/B2; decisión de Gadea, Coral #862; HISTORY 0.31.81); revert = False
     # Model for the RAG answer-generation call only (rag_agent.py
     # `_answer_with_llm`). Kept SEPARATE from `openai_model` (used broadly
     # across the bot) so we can trial a stronger model for JUST this call --
@@ -189,13 +147,6 @@ class Settings(BaseSettings):
     # p95 medido ~0,37 s; en l2-4 1 de ~600 llamadas tardó >30 s (API en alpha).
     jev_timeout_seconds: float = 2.0
 
-    # gen-6 (21-oct, Gonzalo con Claude): con G3-06, "estamos hospedados en Barú" se quedaba sin origen (Jev "none", el
-    # extractor lo descartaba y con `lugar_con_dos_lectores` un "none" de Jev tumba al extractor) y el bot volvía a
-    # preguntar "¿desde dónde saldrías?" (banco docs/robustness/gen/dialogos-gen6.json 2/2). La política (policies.json):
-    # quien se aloja en Barú o Playa Blanca sale desde Cartagena. Con el flag, los tres lectores del lugar (Jev
-    # customer_place, extractor_turno y el resolutor de la pregunta del origen) lo leen como 'cartagena'. Va con
-    # `baru_no_es_rosario`. APAGADO.
-    baru_sale_de_cartagena: bool = True  # PROMOCIONADO 21-oct (ronda sin desplegar gen6-B3 97,4 % 26/32 frente a gen6-A3 97,0 % 26/32; banco Barú 0/8 -> 8/8; HISTORY 0.31.81); revert = False
     # - gen-6 (21-oct): la puerta del origen quita las frases con importe; si el RAG escribía "…cuesta:", una línea en
     #   blanco y la lista de precios, el título quedaba colgado ("La salida de 2 inmersiones cuesta:" y luego la pregunta
     #   del origen). conversational_core._sin_importes. APAGADO.
