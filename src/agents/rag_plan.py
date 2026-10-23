@@ -214,6 +214,23 @@ If one is missing, write the sentence that will be added to the answer: ONE sent
 
 Return only JSON: {"aviso": "<notice id>" or null, "cita_del_cliente": "the customer's exact words that meet the condition" or null, "cita_del_ultimo_mensaje": "the exact words of their LAST MESSAGE the notice is about" or null, "frase": "<the sentence>" or null}"""
 
+# arq-7c (flag `aviso_final_estricto`, decisión de Gadea #1510): con DeepSeek Flash el revisor metía avisos de relleno
+# («el minicurso no certifica» en una pregunta de fotos, o repitiendo lo que la respuesta ya decía: banco arq-7c, 9 de 39
+# turnos). Antes de elegir tiene que escribir de qué va el último mensaje y la frase de la respuesta que ya da el aviso;
+# si la escribe, el código descarta el aviso.
+_AVISO_FINAL_ESTRICTO_ES = """
+
+ANTES de elegir, comprueba las dos cosas por escrito en el JSON:
+- "tema_del_ultimo_mensaje": de qué actividad y de qué tema habla su ÚLTIMO MENSAJE (por ejemplo "minicurso, fotos"). Un aviso de otra actividad o de otro tema NO falta: «el minicurso no certifica» solo si habla de certificarse o parece creer que el minicurso certifica, nunca en una pregunta de fotos, de seguridad o de qué se ve.
+- "ya_lo_dice": la frase de la RESPUESTA que ya da ese aviso, aunque sea con otras palabras ("does not provide certification" ya dice que no certifica), o null si ninguna lo da. Si la escribes, el aviso NO falta: pon "aviso": null.
+Devuelve el JSON con esos dos campos primero: {"tema_del_ultimo_mensaje": ..., "ya_lo_dice": ..., "aviso": ..., "cita_del_cliente": ..., "cita_del_ultimo_mensaje": ..., "frase": ...}"""
+_AVISO_FINAL_ESTRICTO_EN = """
+
+BEFORE choosing, check both things in writing in the JSON:
+- "tema_del_ultimo_mensaje": which activity and which topic their LAST MESSAGE is about (for example "mini course, photos"). A notice about another activity or another topic is NOT missing: «el minicurso no certifica» only if they talk about getting certified or seem to think the mini course certifies, never in a question about photos, safety or what they will see.
+- "ya_lo_dice": the sentence of the ANSWER that already gives that notice, even in other words ("does not provide certification" already says it does not certify), or null if none does. If you write one, the notice is NOT missing: set "aviso": null.
+Return the JSON with those two fields first: {"tema_del_ultimo_mensaje": ..., "ya_lo_dice": ..., "aviso": ..., "cita_del_cliente": ..., "cita_del_ultimo_mensaje": ..., "frase": ...}"""
+
 _IDIOMAS = {"es": ("español", "Spanish"), "en": ("inglés", "English"), "pt": ("portugués", "Portuguese"),
             "fr": ("francés", "French"), "de": ("alemán", "German"), "it": ("italiano", "Italian")}
 
@@ -232,12 +249,21 @@ def _lo_dijo_el_cliente(cita: str, history: list[dict] | None, query: str) -> bo
     return cita_n in dicho or cita_n in _normalizado(query)
 
 
+def _instruccion_del_aviso_final(es: bool) -> str:
+    base = _AVISO_FINAL_ES if es else _AVISO_FINAL_EN
+    if settings.aviso_final_estricto:
+        base += _AVISO_FINAL_ESTRICTO_ES if es else _AVISO_FINAL_ESTRICTO_EN
+    return base
+
+
 @con_pieza_llm("aviso_final")
 async def aviso_al_final(history: list[dict] | None, query: str, answer: str, lang: str,
-                         dados: list[str] | None = None) -> tuple[str, str] | None:
+                         dados: list[str] | None = None,
+                         turno: tuple[dict | None, set[str]] | None = None) -> tuple[str, str] | None:
     """CAL-A6: (id del aviso, frase que añadir) si a la respuesta le falta uno de la lista cerrada; None si no falta
     ninguno, si el modelo nombra uno que no está en la lista o ya dado, si no cita palabras reales del cliente, o si
-    la llamada falla (nunca rompe el turno)."""
+    la llamada falla (nunca rompe el turno). `turno` (arq-7c): lo que se sabe del cliente y los temas de los
+    documentos, para descartar con `aviso_final_filtrado` el aviso que no casa (`avisos.casa_con_el_turno`)."""
     from src.flows import avisos as avisos_mod  # lazy
     from src.privacy import redact_pii  # lazy
 
@@ -255,9 +281,9 @@ async def aviso_al_final(history: list[dict] | None, query: str, answer: str, la
     t0 = time.perf_counter()
     try:
         resp = await _cliente().chat.completions.create(
-            model=modelo, temperature=0, max_tokens=250,
+            model=modelo, temperature=0, max_tokens=350 if settings.aviso_final_estricto else 250,
             response_format={"type": "json_object"},
-            messages=[{"role": "system", "content": _AVISO_FINAL_ES if es else _AVISO_FINAL_EN},
+            messages=[{"role": "system", "content": _instruccion_del_aviso_final(es)},
                       {"role": "user", "content": contenido}])
         datos = json.loads(resp.choices[0].message.content or "{}")
     except Exception as exc:  # noqa: BLE001 — nunca romper el turno
@@ -268,6 +294,10 @@ async def aviso_al_final(history: list[dict] | None, query: str, answer: str, la
         logger.info(f"[RAG][AVISO_FINAL] {int((time.perf_counter() - t0) * 1000)} ms model={modelo}")
     aviso_id = str(datos.get("aviso") or "").strip()
     frase = str(datos.get("frase") or "").strip()
+    if settings.aviso_final_estricto and aviso_id and str(datos.get("ya_lo_dice") or "").strip():
+        logger.info(f"[RAG][AVISO_FINAL] descartado {aviso_id}: la respuesta ya lo dice "
+                    f"({str(datos['ya_lo_dice'])[:80]!r})")
+        return None
     cita = str(datos.get("cita_del_cliente") or "").strip()
     cita_ultimo = str(datos.get("cita_del_ultimo_mensaje") or "").strip()
     aviso = avisos_mod.por_id(aviso_id) if aviso_id else None
@@ -276,6 +306,9 @@ async def aviso_al_final(history: list[dict] | None, query: str, answer: str, la
             logger.info(f"[RAG][AVISO_FINAL] descartado: {aviso_id!r} no está en la lista o viene sin frase")
         return None
     if aviso.get("una_vez") and aviso_id in set(dados or []):
+        return None
+    if settings.aviso_final_filtrado and turno is not None and not avisos_mod.casa_con_el_turno(aviso, *turno):
+        logger.info(f"[RAG][AVISO_FINAL] descartado {aviso_id}: no casa con el tema o la actividad del turno")
         return None
     if not _lo_dijo_el_cliente(cita, history, query):
         logger.info(f"[RAG][AVISO_FINAL] descartado {aviso_id}: la cita no es del cliente ({cita[:80]!r})")

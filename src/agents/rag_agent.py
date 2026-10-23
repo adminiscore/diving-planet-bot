@@ -694,6 +694,16 @@ async def generar_con_respaldo(client, messages: list[dict], pieza: str = "rag_e
     return t_respaldo.result()  # fallaron los dos: la excepción del respaldo sube y el llamador da el fallback
 
 
+def _turno_del_aviso(avisos_hechos: dict | None, docs: list[dict] | None) -> dict:
+    """arq-7c (`aviso_final_filtrado`): lo que se sabe del cliente y los temas de los documentos recuperados, para el
+    aviso final; nada con el flag apagado (la llamada queda como antes)."""
+    if not settings.aviso_final_filtrado:
+        return {}
+    from src.flows import avisos as avisos_mod  # lazy
+
+    return {"turno": (avisos_hechos, avisos_mod.temas_de_los_docs(docs))}
+
+
 async def rag_answer(
     query: str,
     lang: str = "es",
@@ -1022,7 +1032,8 @@ async def rag_answer(
                     (grounded, reason), aviso_final = await asyncio.gather(
                         _verify_grounding(answer, grounding_context, lang=lang),
                         rag_plan.aviso_al_final(history, redact_pii(query), answer, lang,
-                                                dados=(avisos_hechos or {}).get("dados")))
+                                                dados=(avisos_hechos or {}).get("dados"),
+                                                **_turno_del_aviso(avisos_hechos, docs)))
                 else:
                     grounded, reason = await _verify_grounding(answer, grounding_context, lang=lang)
                 if grounded and attempt == 0 and (

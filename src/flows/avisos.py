@@ -216,6 +216,21 @@ def _cumple(aviso: dict, hechos: dict, temas: set[str], fuentes: set[str]) -> bo
     return True
 
 
+def casa_con_el_turno(aviso: dict, hechos: dict | None, temas: set[str]) -> bool:
+    """arq-7c (flag `aviso_final_filtrado`): si el aviso que propone el revisor del final casa con el turno. Solo mira
+    el tema (el de los documentos recuperados) y la actividad, y la actividad solo si consta alguna (el revisor lee la
+    conversación porque a veces el estado no la sabe: cal-49 habla del referido sin elegirlo). Las demás condiciones
+    (origen, nacionalidad, estancia) se quedan para el revisor, que las lee en lo que dijo el cliente."""
+    cuando = _cuando(aviso)
+    actividades = (hechos or {}).get("actividades") or set()
+    if cuando.get("tema") and not set(cuando["tema"]) & temas:
+        return False
+    for campo in ("actividad", "actividad_tambien"):
+        if cuando.get(campo) and actividades and not set(cuando[campo]) & actividades:
+            return False
+    return True
+
+
 def _fuente(aviso: dict) -> str:
     return str(aviso.get("fuente", "")).split(":")[-1]
 
