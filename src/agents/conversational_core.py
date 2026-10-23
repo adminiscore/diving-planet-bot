@@ -2342,8 +2342,22 @@ def _fijar_origen_antes_del_precio(state: ConversationState, pregunta: str) -> N
     """La pregunta del origen ocupa el turno: queda pendiente el origen (con los botones de siempre) y se guarda la
     pregunta del precio para contestarla cuando el cliente lo diga."""
     ask_slot(state, SLOT_LOCATION)  # solo por lo que deja en el estado: el slot pendiente y sus botones
+    anterior = state.pregunta_precio_pendiente
+    if settings.precio_pendiente_con_el_origen and anterior and not _pide_precio(state, pregunta):
+        # arq-8f (banco arq-8c de Gadea, #1667): con una pregunta de precio guardada, «soy de Medellín» (no dice el origen)
+        # vuelve a pedirlo y pisaba la pregunta con ese mensaje; luego se contestaba «soy de Medellín». Se queda la de
+        # antes, salvo que este mensaje pregunte otro precio.
+        pregunta = anterior
     state.pregunta_precio_pendiente = pregunta
     logger.info("[CORE][ORIGEN] precio sin origen -> se pregunta el origen antes de cotizar")
+
+
+def _pide_precio(state: ConversationState, mensaje: str) -> bool:
+    """¿Este mensaje pide un precio? Lo dice Jev (ex-9b paso 5); si calla, las palabras de siempre."""
+    jev = getattr(state, "_jev_pide_precio", None)
+    if jev is not None:
+        return jev is True
+    return bool(_PIDE_PRECIO_RE.search(mensaje or "")) and not _PRECIO_AJENO_RE.search(mensaje or "")
 
 
 def _answer_already_asks(answer: str) -> bool:
