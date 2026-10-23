@@ -649,27 +649,27 @@ class Settings(BaseSettings):
     # ARQ-1p (22-oct): sin saber la actividad, la hora o la recogida, qué llevar y si hay sitio salen de las políticas
     # (son iguales para todas) y las escribe el redactor; antes contestaba el RAG (G10 nº 4: 24 turnos sin actividad, 11
     # de este tipo). Precio, qué incluye, edad y enlace siguen necesitando la actividad. APAGADO hasta medirlo.
-    hechos_sin_actividad: bool = False
+    hechos_sin_actividad: bool = True  # PROMOCIONADO 23-oct (G10 nº 5 con los 11: 90,1 % 34/72 -> 91,2 % 40/72; HISTORY 0.31.96); revert = False
     # ARQ-1q (22-oct): decir que YA reservó no basta para pasar a una persona (needs_staff de Jev): con la reserva hecha,
     # preguntar el horario, la recogida o qué llevar lo contesta Coral; ver o tocar esa reserva o pago sigue yendo a un
     # asesor. APAGADO hasta medirlo.
-    ya_reservo_no_es_pase: bool = False
+    ya_reservo_no_es_pase: bool = True  # PROMOCIONADO 23-oct (G10 nº 5 con los 11: 90,1 % 34/72 -> 91,2 % 40/72; HISTORY 0.31.96); revert = False
     # ARQ-1r (22-oct): «extranjero o turista: false» (CAL-C) chocaba con la cédula de extranjería, que tienen los
     # extranjeros residentes (pagan en COP): el extractor leía false 2 de 9 veces. Una frase: salvo que tenga cédula de
     # extranjería. APAGADO hasta medirlo.
-    cedula_de_extranjeria_manda: bool = False
+    cedula_de_extranjeria_manda: bool = True  # PROMOCIONADO 23-oct (G10 nº 5 con los 11: 90,1 % 34/72 -> 91,2 % 40/72; HISTORY 0.31.96); revert = False
     # ARQ-1s (22-oct): requisitos coherentes en los hechos: en un curso, solo el formulario médico de curso (no además el
     # de buzo certificado: G10 lo vio contradictorio), y el requisito previo (Open Water para el Advanced) y la edad
     # mínima en cifra. APAGADO hasta medirlo.
-    requisitos_coherentes: bool = False
+    requisitos_coherentes: bool = True  # PROMOCIONADO 23-oct (G10 nº 5 con los 11: 90,1 % 34/72 -> 91,2 % 40/72; HISTORY 0.31.96); revert = False
     # ARQ-1u (22-oct): con el enlace de reserva, los hechos dicen cómo se reserva y se paga por él (el extranjero, 100 %
     # con tarjeta en la web), que la reserva queda confirmada cuando el equipo concilia el pago (política
     # payment_confirmation) y, si pide certificación, el carné. APAGADO hasta medirlo.
-    enlace_con_como_pagar: bool = False
+    enlace_con_como_pagar: bool = True  # PROMOCIONADO 23-oct (G10 nº 5 con los 11: 90,1 % 34/72 -> 91,2 % 40/72; HISTORY 0.31.96); revert = False
     # ARQ-1t (22-oct): «el paquete de varios días» sin cifra: el extractor lo dice (paso 6, `paquete_varios_dias`), la
     # duración queda en varios días y, sin plan elegido, los hechos son los de los paquetes (precio desde el primero con
     # la lista de todos; qué incluye: lo común a todos), no los de la salida de un día. APAGADO hasta medirlo.
-    paquete_varios_dias: bool = False
+    paquete_varios_dias: bool = True  # PROMOCIONADO 23-oct (G10 nº 5 con los 11: 90,1 % 34/72 -> 91,2 % 40/72; HISTORY 0.31.96); revert = False
     # ARQ-1v (22-oct): «me voy mañana al mediodía, ¿me da tiempo?» entra en la tabla (Jev pide_si_alcanza): los hechos
     # dan la decisión de Gadea (desde las islas va muy justo y lo confirma un asesor; desde Cartagena no alcanza; cierre
     # de las 4:30 del día anterior) y la espera antes de volar, solo si vuela. APAGADO hasta medirlo.
@@ -681,11 +681,11 @@ class Settings(BaseSettings):
     grupo_de_una_persona: bool = True  # PROMOCIONADO 22-oct (FLU-1: «es para una persona» cuenta como el tamaño del grupo en la pregunta de Jev; banco flu-1 19/24 -> 20/24, controles iguales; HISTORY 0.31.94); revert = False
     curso_preguntado_no_es_nivel: bool = True  # PROMOCIONADO 22-oct (FLU-1: si el extractor lee que el mensaje PREGUNTA por un curso con nivel, no se pregunta «¿ya tienen el Open Water o quieren sacarlo?»; banco flu-1b 9/24 -> 24/24 con el de abajo; HISTORY 0.31.94); revert = False
     # arq-4b (22-oct, fallos del G10 nº 4), APAGADOS hasta medirlos con su banco:
-    recotizar_al_cambiar_moneda: bool = False  # «soy colombiano» DESPUÉS de recibir el precio en USD: se vuelve a dar en COP (g10-003/016/047)
-    rag_comprueba_los_hechos: bool = False  # arq-3 también para el RAG con hechos (mensajes mezclados): si deja fuera un hecho, se rehace una vez
-    redactor_sin_preguntas_de_cierre: bool = False  # el redactor no cierra preguntando datos (fecha, personas, origen…): los pregunta el sistema
-    descuentos_en_la_tabla: bool = False  # los descuentos son una intención de la tabla (Jev): el redactor los da con sus condiciones (g10-027/035/067)
-    fecha_con_dia_de_la_semana: bool = False  # la fecha del contexto del RAG lleva el día de la semana y el de mañana («jueves 23» era viernes)
+    recotizar_al_cambiar_moneda: bool = True  # PROMOCIONADO 23-oct (G10 nº 5 con los 11: 90,1 % 34/72 -> 91,2 % 40/72; HISTORY 0.31.96); revert = False · «soy colombiano» DESPUÉS de recibir el precio en USD: se vuelve a dar en COP (g10-003/016/047)
+    rag_comprueba_los_hechos: bool = True  # PROMOCIONADO 23-oct (G10 nº 5 con los 11: 90,1 % 34/72 -> 91,2 % 40/72; HISTORY 0.31.96); revert = False · arq-3 también para el RAG con hechos (mensajes mezclados): si deja fuera un hecho, se rehace una vez
+    redactor_sin_preguntas_de_cierre: bool = True  # PROMOCIONADO 23-oct (G10 nº 5 con los 11: 90,1 % 34/72 -> 91,2 % 40/72; HISTORY 0.31.96); revert = False · el redactor no cierra preguntando datos (fecha, personas, origen…): los pregunta el sistema
+    descuentos_en_la_tabla: bool = True  # PROMOCIONADO 23-oct (G10 nº 5 con los 11: 90,1 % 34/72 -> 91,2 % 40/72; HISTORY 0.31.96); revert = False · los descuentos son una intención de la tabla (Jev): el redactor los da con sus condiciones (g10-027/035/067)
+    fecha_con_dia_de_la_semana: bool = True  # PROMOCIONADO 23-oct (G10 nº 5 con los 11: 90,1 % 34/72 -> 91,2 % 40/72; HISTORY 0.31.96); revert = False · la fecha del contexto del RAG lleva el día de la semana y el de mañana («jueves 23» era viernes)
     sin_certificacion_no_hace_falta: bool = True  # PROMOCIONADO 22-oct (FLU-1: al decir «no estoy certificado» para una actividad que no lo pide, el bot dice que no hace falta; HISTORY 0.31.94); revert = False
     # arq-2a (22-oct, Gonzalo con Claude): fuera del prompt del RAG las reglas que el código ya pone en el contexto que
     # el RAG lee siempre (catálogo y políticas, en los dos caminos de `hechos_por_codigo`): moneda, 5 % por equipo

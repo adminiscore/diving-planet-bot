@@ -1,6 +1,19 @@
 History
 =======
 
+0.31.96 - (2026-10-23)
+----------------------
+* **PROMOCIÓN** (decisión de Gadea, 23-oct): los 11 flags del G10 nº 5 (90,1 % 34/72 → **91,2 % 40/72** sin
+  desfasados; la meta de diálogos para Andrés se cumple): `hechos_sin_actividad`, `ya_reservo_no_es_pase`,
+  `cedula_de_extranjeria_manda`, `requisitos_coherentes`, `enlace_con_como_pagar`, `paquete_varios_dias`,
+  `recotizar_al_cambiar_moneda`, `rag_comprueba_los_hechos`, `redactor_sin_preguntas_de_cierre`,
+  `descuentos_en_la_tabla` y `fecha_con_dia_de_la_semana`. Fijados en `docker-compose.vps.yml`.
+* **Se queda APAGADO** `tiempo_limitado` (arq-1v): no estaba en el G10 nº 5; se mide en el siguiente.
+* **Con el push entran también los datos nuevos** de arq-1u y arq-1v (políticas `payment_confirmation` y
+  `time_limited_departure`, con sus preguntas en kb_v2), que no dependen de ningún flag.
+* **Siguiente:** analizar los 53 fallos de los 32 diálogos que fallan en el nº 5 y recortar la latencia del reintento
+  del RAG con hechos (p90 9,2 → 11,8 s).
+
 0.31.95 - (2026-10-23)
 ----------------------
 * **G10 nº 4** (PRE 909a065 + fd53591 + flu-1, código local): 89,0 % 31/72 sin desfasados; con los desfasados nuevos
