@@ -813,6 +813,10 @@ class Settings(BaseSettings):
     # tarda ~4 s (medido en PRE: escribir la respuesta ~1,9 s + juez ~1,2 s + búsqueda ~0,4 s); sin
     # aviso, el cliente no sabe si le han leído. No cambia lo que dice el bot. Revert = "false".
     chatwoot_typing_indicator: bool = True
+    # mej-8 (24-oct, Álvaro con Claude): quien prueba el bot escribe «#mal» (y qué esperaba) cuando una respuesta está
+    # mal; el bot no lo contesta: etiqueta `mal` en Chatwoot y acuse (src/channels/marca_mal.py). Los casos salen con
+    # scripts/exportar_mal.py al formato de scripts/banco_fallos.py. APAGADO.
+    marcar_mal: bool = False
     chatwoot_website_token: str = "T49iSq16SvRnqUqbayMQWmni"  # inbox website channel token (widget SDK)
 
     @property

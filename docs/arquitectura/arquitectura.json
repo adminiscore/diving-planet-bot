@@ -1,8 +1,8 @@
 {
  "meta": {
-  "generado": "2026-10-23T20:21:24+00:00",
-  "commit": "5055b79e",
-  "rama": "feature/pre_gadea"
+  "generado": "2026-10-23T22:30:53+00:00",
+  "commit": "39cd9ecc",
+  "rama": "feature/mej8-alvaro"
  },
  "vistas": {
   "general": {
@@ -96,6 +96,13 @@
      "titulo": "Las notas de voz se transcriben con el vocabulario del negocio",
      "codigo": true,
      "pre": true,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "marcar_mal",
+     "titulo": "«#mal» para marcar un fallo al probar",
+     "codigo": false,
+     "pre": false,
      "sin_efecto": false
     }
    ],
@@ -3335,6 +3342,19 @@
    "fijado_en_pre": true,
    "usado_por": [
     "b_slotfill_close"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "marcar_mal",
+   "area": "Chat",
+   "titulo": "«#mal» para marcar un fallo al probar",
+   "texto": "Quien prueba el bot escribe «#mal» (y qué esperaba) cuando una respuesta está mal: Coral no lo contesta, pone la etiqueta «mal» a la conversación en Chatwoot y da las gracias. Luego esas conversaciones se sacan como casos de prueba (mej-8, 24-oct).",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
+   "usado_por": [
+    "preparacion"
    ],
    "sin_efecto": null
   },

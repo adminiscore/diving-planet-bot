@@ -17,6 +17,7 @@ from fastapi import APIRouter, HTTPException, Request
 from src import state_store
 from src.agents.escalation import escalate_to_human
 from src.agents.supervisor import route_message
+from src.channels import marca_mal
 from src.channels.audio import AUDIO_FALLBACK, first_audio_attachment, transcribe_audio_url
 from src.config import settings
 from src.flows.state import MESSAGE_SPLIT, ConversationState
@@ -156,6 +157,11 @@ async def handle_message(payload: dict):
             logger.info(f"[WEBHOOK] Skipping already processed interactive message={message_id}")
             return
 
+    if settings.marcar_mal and message_type in ("incoming", 0) and marca_mal.es_marca(message):
+        state = await state_store.load_state(conversation_id)
+        await _anotar_fallo_marcado(conversation_id, state.language if state else settings.default_language)
+        return
+
     logger.info(f"[BOT] Incoming from {sender.get('name', 'unknown')}: {message[:100]}")
 
     async with _lock_for(conversation_id):
@@ -260,6 +266,10 @@ async def poll_active_conversations_once():
                         logger.info(f"[BOT] Skipping button echo from poll: {content_lower[:60]}")
                         continue
 
+                    if settings.marcar_mal and marca_mal.es_marca(content):
+                        await _anotar_fallo_marcado(conversation_id, state.language)
+                        continue
+
                     # Voice note delivered via the poller (not the webhook):
                     # transcribe it. On failure the fallback was already sent.
                     content = await _resolve_voice_note(conversation_id, state, chatwoot_message, content)
@@ -274,6 +284,31 @@ async def poll_active_conversations_once():
 
                 if routed:
                     await state_store.save_state(conversation_id, state)
+
+
+async def _anotar_fallo_marcado(conversation_id: str, lang: str | None) -> None:
+    """mej-8 (flag `marcar_mal`): el «#mal» de quien prueba el bot no se contesta ni entra en el historial: la
+    conversación se lleva la etiqueta `mal` en Chatwoot (para `scripts/exportar_mal.py`) y se acusa recibo. Si
+    Chatwoot falla al etiquetar, se registra y el acuse sale igual (nunca lanza)."""
+    url = (
+        f"{settings.chatwoot_api_url.rstrip('/')}/api/v1/accounts/{settings.chatwoot_account_id}"
+        f"/conversations/{conversation_id}/labels"
+    )
+    headers = {"api_access_token": settings.chatwoot_api_token, "Content-Type": "application/json"}
+    try:
+        async with httpx.AsyncClient() as client:
+            resp = await client.get(url, headers=headers, timeout=10.0)
+            resp.raise_for_status()
+            etiquetas = list(resp.json().get("payload") or [])
+            if marca_mal.ETIQUETA not in etiquetas:
+                # El POST de Chatwoot SUSTITUYE las etiquetas: van las que había más la nueva.
+                resp = await client.post(url, json={"labels": [*etiquetas, marca_mal.ETIQUETA]}, headers=headers,
+                                         timeout=10.0)
+                resp.raise_for_status()
+    except Exception as exc:  # noqa: BLE001 — una etiqueta nunca rompe el turno
+        logger.warning(f"[BOT] etiqueta {marca_mal.ETIQUETA!r} falló conv={conversation_id}: {exc}")
+    await send_chatwoot_message(conversation_id, marca_mal.ACUSE.get(lang or "", marca_mal.ACUSE["es"]))
+    logger.info(f"[BOT] conv={conversation_id} fallo marcado con {marca_mal.MARCA}")
 
 
 async def finalize_chatwoot_delivery(conversation_id: str, state: ConversationState, response: str | None):
