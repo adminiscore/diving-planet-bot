@@ -113,10 +113,7 @@
       "que_hace": "Datos personales, links rotos, temas delicados o cuando hace falta una persona: pasa el caso a un asesor.",
       "donde": "src/agents/escalation_agent.py:escalation_node",
       "interruptores": [
-        "contesta_antes_de_pasar",
         "contesta_antes_de_cualquier_pase",
-        "clima_con_politica",
-        "dieta_no_es_medica",
         "nada_en_primera_linea",
         "adaptado_contesta_lo_demas",
         "hechos_en_el_pase",
@@ -393,8 +390,6 @@
         "edades_por_extractor",
         "reparto_al_sumarse_alguien",
         "textos_de_cartagena",
-        "seguridad_de_grupo",
-        "refresher_completo",
         "cache_anthropic",
         "curso_preguntado_no_es_nivel",
         "cedula_de_extranjeria_manda"
@@ -414,11 +409,7 @@
       ],
       "interruptores": [
         "baru_sale_de_cartagena",
-        "certificado_solo_si_lo_dice",
         "precio_no_elige",
-        "tarjeta_sin_seguridad",
-        "recomendar_a_no_certificados",
-        "resolutor_sin_contradicciones",
         "acuse_en_su_numero",
         "actividad_de_la_pregunta",
         "sin_certificacion_no_hace_falta",
@@ -504,9 +495,7 @@
       "modelos": [
         "openai_model"
       ],
-      "interruptores": [
-        "pregunta_sola_con_su_sitio"
-      ]
+      "interruptores": []
     },
     {
       "id": "r_buscar",
@@ -595,7 +584,6 @@
       "interruptores": [
         "origen_dos_variantes",
         "origen_sin_titulo_suelto",
-        "abre_con_la_respuesta",
         "sin_genero_supuesto",
         "rag_sin_hora",
         "rag_temperatura_cero",
@@ -1002,20 +990,10 @@
       "titulo": "El respaldo del RAG, otra petición a Luna",
       "texto": "Si Luna tarda más de 3 segundos en escribir la respuesta, se lanza otra petición igual a Luna en vez de a gpt-4.1-mini, y gana la primera que termine. Es para dejar de depender de gpt-4.1."
     },
-    "tarjeta_sin_seguridad": {
-      "area": "Reserva",
-      "titulo": "El precio sale aunque falte la pregunta de seguridad",
-      "texto": "Si solo falta saber si alguien lleva más de 2 años sin bucear y el cliente no lo contesta, el bot da igualmente el precio, con una línea: 'si alguno lleva más de 2 años sin bucear, se añade el refresher (precio)'. Antes repetía la pregunta y el precio no salía nunca."
-    },
     "precio_no_elige": {
       "area": "Reserva",
       "titulo": "Preguntar un precio no es elegir",
       "texto": "Si el cliente solo pregunta cuánto cuesta algo ('¿cuánto vale el paquete de 5 inmersiones?'), el bot no da por hecho que lo ha elegido ni que es buzo certificado: es una duda. Decir lo que quiere hacer sí lo elige."
-    },
-    "certificado_solo_si_lo_dice": {
-      "area": "Reserva",
-      "titulo": "Certificado solo si lo dice",
-      "texto": "Que el cliente quiera el buceo para certificados ('fun dives') no significa que esté certificado: el bot se lo pregunta. Antes una regla lo daba por hecho."
     },
     "baru_sale_de_cartagena": {
       "area": "Reserva",
@@ -1117,65 +1095,20 @@
       "titulo": "El acuse habla en singular a quien va solo",
       "texto": "La frase de acuse ('Entendido, …') repite el dato con las palabras y el número del cliente: a quien dice 'I'm not Colombian' le contesta 'you're not Colombian', no 'none of you are Colombian'."
     },
-    "recomendar_a_no_certificados": {
-      "area": "Reserva",
-      "titulo": "A quien no es certificado le recomienda sus opciones",
-      "texto": "Si sabemos que el cliente no es buzo certificado y no ha elegido actividad, Coral le propone el minicurso para bucear, el snorkel para quedarse en la superficie o el curso Open Water para certificarse, en vez de repetir el menú entero (que ofrece buceo, solo para certificados)."
-    },
-    "contesta_antes_de_pasar": {
-      "area": "Enrutador",
-      "titulo": "Contesta lo que puede antes de pasar a un asesor",
-      "texto": "Si un mensaje trae un tema médico o el clima de un día (que lleva un asesor) y además otras preguntas, Coral contesta primero esas otras preguntas, sin tocar el tema médico ni el clima, y después pasa la conversación al equipo. Antes el aviso fijo se comía el resto del mensaje."
-    },
     "contesta_antes_de_cualquier_pase": {
       "area": "Enrutador",
       "titulo": "Contesta lo que puede antes de CUALQUIER pase a un asesor",
       "texto": "Si un turno acaba pasando la conversación al equipo por cualquier motivo (pide una persona, un contacto, un servicio privado, un cambio de reserva…) y el mensaje trae además otras preguntas, Coral contesta primero esas preguntas y después hace el pase. No lo hace con los datos sensibles, las quejas o emergencias ni los fallos técnicos, que van solos (gen-13, 21-oct)."
-    },
-    "clima_con_politica": {
-      "area": "Enrutador",
-      "titulo": "Con el clima, explica cuándo operamos antes de pasar",
-      "texto": "Antes de pasar al equipo una pregunta por el clima de un día concreto, Coral dice que operamos todos los días salvo el 25 de diciembre y el 1 de enero, que la seguridad va primero y que, si el mar no está apto, la salida se reprograma (decisión de Gadea, 20-oct)."
-    },
-    "dieta_no_es_medica": {
-      "area": "Enrutador",
-      "titulo": "Una dieta o una alergia a un alimento no es un tema médico",
-      "texto": "Celíacos, vegetarianos o una alergia a un alimento: Coral lo contesta con la política de comida (arroz con vegetales, puede llevar su comida, avisar antes) en vez de pasarlo a un asesor como si fuera una consulta médica."
-    },
-    "pregunta_sola_con_su_sitio": {
-      "area": "Preguntas",
-      "titulo": "La búsqueda no pierde el sitio por el que se pregunta",
-      "texto": "Para buscar, Coral se queda con la pregunta del mensaje y quita los datos del cliente. Si la pregunta trata de un sitio (\"estoy en Barú, ¿me recogen en el hotel?\"), ahora el sitio se queda: sin él, la búsqueda traía la recogida en los hoteles de las islas y Coral decía que recogía en Barú."
-    },
-    "abre_con_la_respuesta": {
-      "area": "Preguntas",
-      "titulo": "Empieza por la respuesta, sin «¡Claro que sí!» delante de un no",
-      "texto": "Si la respuesta es «no» o «depende», Coral la dice primero («La recogida no es en el hotel: …») en vez de abrir con «¡Claro que sí!». Las expresiones de ánimo van delante solo cuando la respuesta es un sí."
     },
     "textos_de_cartagena": {
       "area": "Reserva",
       "titulo": "Las preguntas fijas, en el español de Cartagena",
       "texto": "Las preguntas que Coral hace con un texto fijo (desde dónde sales, si eres certificado, de qué país, el refresher…) estaban escritas con «vosotros» («¿Sois…?», «os ayudo») y con «¡tranquilo!». Ahora van con «ustedes» y sin suponer si el cliente es hombre o mujer. Y la pregunta del origen ya no dice «podemos recogerte saliendo desde Cartagena»: desde Cartagena se sale del Muelle de la Bodeguita, sin recogida en el hotel."
     },
-    "seguridad_de_grupo": {
-      "area": "Reserva",
-      "titulo": "La pregunta de los 2 años sin bucear cuenta a todo el grupo",
-      "texto": "Coral pregunta si alguno del grupo lleva más de 2 años sin bucear. Si contestaban «sí, uno de nosotros, hace 4 años», ese dato se guardaba como de otra persona y la pregunta se repetía sin llegar nunca al refresher. Ahora cuenta para el grupo y Coral ofrece el refresher."
-    },
-    "refresher_completo": {
-      "area": "Reserva",
-      "titulo": "El refresher dice cómo se reserva y qué formulario lleva",
-      "texto": "Al ofrecer el refresher, Coral dice también que se reserva como Minicurso de Buceo y que lleva el formulario médico de curso aunque sean buzos certificados (el enlace llega con la reserva)."
-    },
     "sin_genero_supuesto": {
       "area": "Preguntas",
       "titulo": "No da por hecho si el cliente es hombre o mujer",
       "texto": "Si el cliente no lo ha dicho, Coral no le aplica palabras con género («tranquilo», «bienvenido», «colombiana»): usa formas que valgan para cualquiera («tranqui», «te damos la bienvenida»)."
-    },
-    "pii_respeta_urls": {
-      "area": "Chat",
-      "titulo": "Al tapar datos personales, los enlaces quedan enteros",
-      "texto": "Antes de enviar un texto a algunos modelos, Coral tapa teléfonos y documentos. Las cifras de un enlace (las coordenadas del mapa del punto de encuentro) se tapaban como si fueran un teléfono y el enlace llegaba roto al cliente. Ahora los enlaces quedan enteros, salvo los de WhatsApp, que llevan un teléfono."
     },
     "paso6_en_llamada_aparte": {
       "area": "Reserva",
@@ -1191,11 +1124,6 @@
       "area": "Respuestas fijas",
       "titulo": "Los días cerrados los contesta el RAG",
       "texto": "Si el cliente nombra el 25 de diciembre, el 1 de enero, Navidad o Año Nuevo, contesta el RAG (que siempre tiene la política de días cerrados) en vez de un texto fijo que se comía el resto del mensaje («vamos a estar en Cartagena para año nuevo, somos 4 y queremos bucear» → solo «cerramos el 25 y el 1»). Ojo: si el mensaje no pregunta nada («quiero bucear el 25 de diciembre»), no llega al RAG y nadie avisa del cierre."
-    },
-    "resolutor_sin_contradicciones": {
-      "area": "Reserva",
-      "titulo": "Una respuesta que se contradice no fija el dato",
-      "texto": "Si a la pregunta del bot el cliente contesta algo que se contradice (\"sí… bueno, en realidad no\" a ¿eres buzo certificado?), Coral no da el dato por sabido: vuelve a preguntar en vez de adivinar."
     },
     "rag_sin_hora": {
       "area": "Preguntas",

@@ -65,9 +65,6 @@ class Settings(BaseSettings):
     # (sin ella 0/30), porque una cita real que respalda solo PARTE de la frase la daba por buena ("en un grupo mixto
     # los colombianos pagan en pesos" con la cita "pagan en pesos los colombianos"). Sin la cita: 0/30 rechazos injustos.
     juez_revisa_con_cita: bool = False
-    # 18-oct (ronda mod-F): el simétrico para quien NO es certificado y no ha elegido: minicurso, snorkel o Open Water en
-    # vez del menú entero (que ofrece "buceo", solo para certificados). conversational_core.ask_slot. APAGADO.
-    recomendar_a_no_certificados: bool = True  # PROMOCIONADO 19-oct (mod-G2, HISTORY 0.31.57); revert = False
     # 18-oct (ronda mod-D, reserva-solo-link): el resolutor no fija un valor con una respuesta que se contradice ("no,
     # buceé hace poco" a "¿Eres buzo certificado?"). prompts/booking.SLOT_RESOLVER_CONTRADICCION. APAGADO.
     # ex-9b paso 4: los días cerrados (25 de diciembre y 1 de enero) los contesta el RAG, que lleva siempre las políticas
@@ -109,7 +106,6 @@ class Settings(BaseSettings):
     #   sobre todo lo que escribió el cliente; si el extractor no leyó algún mensaje, el regex de siempre.
     #   rutas/contexto_rag.
     notas_rag_desde_estado: bool = True  # PROMOCIONADO 20-oct (ronda ex9b-8: 98,7 % 29/32, 0 regresiones; HISTORY 0.31.68); revert = False
-    resolutor_sin_contradicciones: bool = True  # PROMOCIONADO 19-oct (mod-G2, HISTORY 0.31.57); revert = False
     # gen-8 (21-oct): el ejemplo del acuse para reconocer un dato iba en plural ("none of you are Colombian") y lo
     # copiaba a quien va solo; con el flag, la regla de usar las palabras y el número del cliente. APAGADO.
     acuse_en_su_numero: bool = True  # PROMOCIONADO 21-oct (ronda sin desplegar gen8-B 97,9 % 27/32 frente a gen8-A 97,0 % 26/32; el que empeora es del RAG; HISTORY 0.31.79); revert = False
@@ -226,10 +222,6 @@ class Settings(BaseSettings):
     #   blanco y la lista de precios, el título quedaba colgado ("La salida de 2 inmersiones cuesta:" y luego la pregunta
     #   del origen). conversational_core._sin_importes. APAGADO.
     origen_sin_titulo_suelto: bool = True  # PROMOCIONADO 21-oct (con `baru_sale_de_cartagena`, misma ronda gen6-A3/B3; HISTORY 0.31.81); revert = False
-    # mod-2 (18-oct, decisión de Gadea): elegir el buceo certificado ("fun dives") no dice que el cliente esté
-    # certificado; tiene que confirmarlo. Con el flag, el extractor no lo deduce (la regla del catálogo lo hacía para
-    # todos los modelos). APAGADO.
-    certificado_solo_si_lo_dice: bool = True  # PROMOCIONADO 19-oct (mod-H2, HISTORY 0.31.61); revert = False
     # (antes, mod-G/mod-H: APAGADO; con la regla de is_certified afinada sigue el
     # minicurso a 183 USD en reserva-solo-link: el extractor toma el «no» de «no, buceé hace poco» (a «¿eres buzo
     # certificado?») como no certificado; arreglado con «buceé hace poco» en IS_CERTIFIED_DICHO_*.)
@@ -237,9 +229,6 @@ class Settings(BaseSettings):
     # no elige la actividad, no dice que quiera bucear ni que sea certificado. Cambia a la vez las cuatro frases del
     # extractor que hablan del precio (ver extractor_turno._PRECIO_NO_ELIGE). APAGADO hasta medirlo.
     precio_no_elige: bool = False  # mod-G (18-oct): repreguntas en 5 diálogos del core (quita deducciones válidas); a afinar
-    # CAL-F (18-oct, decisión de Gadea): la tarjeta con el precio sale aunque el cliente no conteste la pregunta de
-    # seguridad (solo si es lo único que falta), con la pregunta una vez dentro y el precio del refresher. APAGADO.
-    tarjeta_sin_seguridad: bool = True  # PROMOCIONADO 19-oct (mod-G2, HISTORY 0.31.57); revert = False
 
     # Modelo del juez de grounding v3 (el de siempre desde s4-25: sin flag). 28-sep (HISTORY 0.29.66): v3 con
     # gpt-4.1-mini 48/70 y gpt-4o-mini 37/70 frente a 70/70, y NO más rápidos: se quedó gpt-4.1.
@@ -322,13 +311,6 @@ class Settings(BaseSettings):
     # revisar): si una llamada a OpenRouter falla, se repite con este modelo de OpenAI (llm_client._por_proveedor).
     # Solo actúa cuando OpenRouter falla. Vacío = sube el error como antes.
     respaldo_si_openrouter_falla: str = "gpt-5.4-mini"
-    # ex-9b (19-oct, ronda ex9b-3): una llamada a OpenRouter (la reescritura de DeepSeek) se quedó colgada 30 s, el
-    # límite general, y el turno tardó 34 s. Si OpenRouter no ha contestado en estos segundos, se lanza la misma
-    # petición por OpenAI (`respaldo_si_openrouter_falla`) y gana la primera que termine bien, para todas las piezas.
-    # 0 = apagado (el respaldo solo cuando OpenRouter falla, como hasta hoy).
-    # ex-9b (19-oct): al tapar los datos personales, las cifras DENTRO de un enlace (coordenadas de Google Maps) no se
-    # tapan, salvo en los enlaces de WhatsApp (llevan un teléfono). APAGADO hasta medirlo.
-    pii_respeta_urls: bool = True  # PROMOCIONADO 20-oct (ex9b-7/8); revert = False
     openrouter_respaldo_segundos: float = 5.0  # PROMOCIONADO 19-oct (ex9b-4: saltó 1 vez, ganó el respaldo); revert = 0.0
     # gen-1 + gen-3 (20-oct, fase GEN; docs/robustness/gen/gen1-diagnostico.md). El RAG a solas cubre el 96 % de los
     # datos; en una conversación el dato se perdía en el PASE por tema sensible: la respuesta fija se comía el resto del
@@ -344,31 +326,9 @@ class Settings(BaseSettings):
     # pase le llegaba al cliente cuando el aviso al final iba pegado detrás (se miraba len < 30): 8 turnos en las rondas
     # del 21-22, también en G10. Con el flag cuenta la primera línea entera. escalation_agent._es_nada. APAGADO.
     nada_en_primera_linea: bool = True  # PROMOCIONADO 22-oct (Gonzalo: el NADA de contestar antes del pase ya no llega al cliente; 8 turnos en las rondas del 21-22; HISTORY 0.31.92); revert = False
-    contesta_antes_de_pasar: bool = True  # PROMOCIONADO 20-oct (gen3-B 98,7 % 30/32 frente a gen3-A 97,4 % 26/32, 0 regresiones; HISTORY 0.31.70); revert = False
-    # - El clima (decisión de Gadea, 20-oct): antes del pase, que operamos todos los días salvo el 25-dic y el 1-ene,
-    #   que la seguridad va primero y que, si el mar no está apto, se reprograma (FAQ 3 y 10 de la base).
-    clima_con_politica: bool = True  # PROMOCIONADO 20-oct (gen3-B 98,7 % 30/32 frente a gen3-A 97,4 % 26/32, 0 regresiones; HISTORY 0.31.70); revert = False
-    # - Una dieta o una alergia alimentaria (celíacos, vegetarianos) NO es un tema médico: es la política de comida y
-    #   la base la contesta. Va en la definición de `sensitive_topic` (prompts/router.py), que leen el enrutador de
-    #   respaldo y Jev. Se lee AL IMPORTAR (como el resto del tool del enrutador): para medirlo, `--env`, no `--flag`.
-    dieta_no_es_medica: bool = True  # PROMOCIONADO 20-oct (gen3-B 98,7 % 30/32 frente a gen3-A 97,4 % 26/32, 0 regresiones; HISTORY 0.31.70); revert = False
-    # gen-2 (20-oct; docs/robustness/gen/gen2-diagnostico.md): "inventa o da por hecho".
-    # - La pregunta sola de la búsqueda doble quitaba "dónde se aloja" aunque la pregunta fuera de ese sitio ("estoy en
-    #   Barú, ¿me recogen en el hotel?" -> "¿me recogen en el hotel?"). query_rewriter._instruccion_pregunta_sola.
-    pregunta_sola_con_su_sitio: bool = True  # PROMOCIONADO 20-oct (gen2-B 97,4 % 27/32 frente a gen2-A 93,9 % 22/32, 0 regresiones; HISTORY 0.31.71); revert = False
-    # - El RAG empieza por la respuesta: sin "¡Claro que sí!" delante de un "no" o un "depende" (solo con
-    #   `rag_no_adivina`, que está promocionado). prompts/info.RAG_ABRE_CON_LA_RESPUESTA_*.
-    abre_con_la_respuesta: bool = True  # PROMOCIONADO 20-oct (gen2-B 97,4 % 27/32 frente a gen2-A 93,9 % 22/32, 0 regresiones; HISTORY 0.31.71); revert = False
     # - Textos fijos del flujo en el español de Cartagena (decisión de Gadea, 20-oct): vosotros -> ustedes, sin género
     #   supuesto y sin "podemos recogerte saliendo desde Cartagena" (no hay recogida en Cartagena). flows/textos.py.
     textos_de_cartagena: bool = True  # PROMOCIONADO 20-oct (textos-B 97,4 % 26/32 frente a gen2-B 97,4 % 27/32: los 3 que empeoran no pasan por estos textos; HISTORY 0.31.72); revert = False
-    # gen-7 (20-oct, refresher): "sí, uno de nosotros no bucea desde hace 4 años" a "¿… de alguno del grupo?" repetía la
-    # pregunta y el refresher no llegaba (el dato era de OTRA persona). La pregunta de seguridad cuenta a todo el grupo
-    # (conversational_core.refresh_en_el_grupo).
-    seguridad_de_grupo: bool = True  # PROMOCIONADO 20-oct (banco gen-7 0/2 -> 2/2; core gen7-B 96,1 % 25/32 frente a textos-B 97,4 % 26/32, ninguna regresión del cambio: atribución 3+3; HISTORY 0.31.73); revert = False
-    # - El texto fijo del refresher dice lo que dice la base: se reserva como Minicurso y lleva el formulario médico de
-    #   curso (G9: "no dijo que se reserva como minicurso", "no mencionó el formulario médico").
-    refresher_completo: bool = True  # PROMOCIONADO 20-oct (banco gen-7 0/2 -> 2/2; core gen7-B 96,1 % 25/32 frente a textos-B 97,4 % 26/32, ninguna regresión del cambio: atribución 3+3; HISTORY 0.31.73); revert = False
     # gen-5 (20-oct, Gonzalo con Claude; idioma del primer turno): el idioma de la apertura se decidía en cuatro sitios.
     # La reserva (`_setup_phase`) usaba el extractor, las palabras vacías, el LLM y G-10 (otro idioma → inglés); lo
     # sensible, `_reply_language` (solo palabras); el contacto y "¿eres un bot?", `_infer_language` (solo pistas); la

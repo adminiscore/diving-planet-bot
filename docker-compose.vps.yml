@@ -128,9 +128,6 @@ services:
       # que no la sigue), la tarjeta con precio aunque falte la pregunta de seguridad y recomendar a no certificados.
       # Revert = "gpt-5.4-nano" y quitar las tres de abajo.
       RESOLUTOR_MODEL: "anthropic/claude-haiku-5.5"
-      TARJETA_SIN_SEGURIDAD: "true"
-      RECOMENDAR_A_NO_CERTIFICADOS: "true"
-      RESOLUTOR_SIN_CONTRADICCIONES: "true"
       # Ronda ex9b-4 (19-oct): el paso 6 NO se promociona (con sus campos, Anthropic rechazaba el esquema del extractor,
       # "compiled grammar is too large", y contestaba siempre el respaldo). Se queda el respaldo POR TIEMPO de
       # OpenRouter (5 s): si no contesta en 5 s, la misma petición sale por OpenAI.
@@ -143,34 +140,12 @@ services:
       NOTAS_RAG_DESDE_ESTADO: "true"
       PASO6_EN_LLAMADA_APARTE: "true"
       REPARTO_AL_SUMARSE_ALGUIEN: "true"
-      # PROMOCIONADO (ex9b-7/8): las cifras de los enlaces ya no se tapan al mandar el texto a
-      # OpenRouter (el enlace de Maps del punto de encuentro llegaba roto con el respaldo del RAG).
-      PII_RESPETA_URLS: "true"
-      # gen-1 + gen-3 (20-oct, fase GEN; docs/robustness/gen/gen1-diagnostico.md): contestar lo contestable antes del
-      # pase por tema médico o clima; el clima dice antes la política (decisión de Gadea); una dieta o alergia no es
-      # tema médico (se lee al arrancar); y con eso la alergia alimentaria ya puede ir al RAG (ex-3; sin
-      # interruptor desde sim-5). PROMOCIONADOS 20-oct: gen3-B 98,7 % 30/32 frente a gen3-A 97,4 % 26/32 (mismo día), 0 regresiones
-      # (la repregunta de moneda-precios-principiante-y-snorkel sale igual sin los flags, atribución 3+3). Revert = "false".
-      CONTESTA_ANTES_DE_PASAR: "true"
       # gen-13 (21-oct, PROMOCIONADO): lo contestable va también antes de CUALQUIER pase a un asesor. Revert = "false".
       CONTESTA_ANTES_DE_CUALQUIER_PASE: "true"
-      CLIMA_CON_POLITICA: "true"
-      DIETA_NO_ES_MEDICA: "true"
-      # gen-2 (20-oct; docs/robustness/gen/gen2-diagnostico.md): la pregunta sola de la búsqueda deja el sitio si la
-      # pregunta trata de él (Barú), y el RAG abre con la respuesta (sin «¡Claro que sí!» delante de un no). La base
-      # (policies.json) va aparte: el CI la regenera en cada despliegue. PROMOCIONADOS 20-oct: gen2-B 97,4 % 27/32
-      # frente a gen2-A 93,9 % 22/32 (mismo día); las 2 que empeoran tienen la misma respuesta en A y B (juez). Revert = "false".
-      PREGUNTA_SOLA_CON_SU_SITIO: "true"
-      ABRE_CON_LA_RESPUESTA: "true"
       # Textos fijos del flujo en el español de Cartagena (decisión de Gadea, 20-oct; src/flows/textos.py): vosotros ->
       # ustedes, sin género supuesto y la pregunta del origen sin "podemos recogerte saliendo desde Cartagena".
       # PROMOCIONADO 20-oct (textos-B frente a gen2-B: mismos 97,4 %; los que empeoran no pasan por estos textos).
       TEXTOS_DE_CARTAGENA: "true"
-      # gen-7 (20-oct, refresher): la pregunta de seguridad cuenta a todo el grupo («sí, uno de nosotros no bucea desde
-      # hace 4 años» repetía la pregunta) y el texto del refresher dice que se reserva como Minicurso y lleva el
-      # formulario médico de curso. PROMOCIONADOS 20-oct (gen7-B; los que empeoran no pasan por el cambio, atribución 3+3).
-      SEGURIDAD_DE_GRUPO: "true"
-      REFRESHER_COMPLETO: "true"
       # gen-5 (Gonzalo, 20-oct; docs/robustness/gen/gen5-diagnostico.md): el idioma del primer mensaje se decide una vez
       # en el router, con la cadena de la reserva y G-10, y todas las rutas lo heredan. PROMOCIONADO 21-oct (gen5-B
       # frente a gen5-A, del mismo día; los que empeoran no pasan por el idioma).
@@ -218,9 +193,6 @@ services:
       TARJETA_EDADES_EN_CIFRA: "true"
       JEV_PRECIO_NOMBRA_ACTIVIDADES: "true"
       RAG_TEMPERATURA_CERO: "true"
-      # CERTIFICADO_SOLO_SI_LO_DICE con «buceé hace poco» = certificado (decisión de Gadea). PROMOCIONADO (HISTORY
-      # 0.31.61: mod-H2 97,0 % igual que limpieza-3; reserva-solo-link ya no ofrece el minicurso). Revert = quitar estas líneas.
-      CERTIFICADO_SOLO_SI_LO_DICE: "true"
       # ARQ (22-oct, PROMOCIONADO, decisión de Gadea tras el G10 de control): el redactor de hechos (arq-1d/1e/1h +
       # arq-3), «soy de Medellín» (arq-1f), los hechos en los mensajes mezclados (arq-1g), menos reglas en el prompt
       # del RAG (arq-2a), la caché del extractor (arq-2b) y el NADA que no llega al cliente. Revert = quitar estas líneas.

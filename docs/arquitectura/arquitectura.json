@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-23T15:09:33+00:00",
-  "commit": "65420442",
+  "generado": "2026-10-23T15:29:00+00:00",
+  "commit": "18bff680",
   "rama": "feature/sim5-alvaro"
  },
  "vistas": {
@@ -186,29 +186,8 @@
    "donde": "src/agents/escalation_agent.py:escalation_node",
    "interruptores": [
     {
-     "nombre": "contesta_antes_de_pasar",
-     "titulo": "Contesta lo que puede antes de pasar a un asesor",
-     "codigo": true,
-     "pre": true,
-     "sin_efecto": false
-    },
-    {
      "nombre": "contesta_antes_de_cualquier_pase",
      "titulo": "Contesta lo que puede antes de CUALQUIER pase a un asesor",
-     "codigo": true,
-     "pre": true,
-     "sin_efecto": false
-    },
-    {
-     "nombre": "clima_con_politica",
-     "titulo": "Con el clima, explica cuándo operamos antes de pasar",
-     "codigo": true,
-     "pre": true,
-     "sin_efecto": false
-    },
-    {
-     "nombre": "dieta_no_es_medica",
-     "titulo": "Una dieta o una alergia a un alimento no es un tema médico",
      "codigo": true,
      "pre": true,
      "sin_efecto": false
@@ -714,20 +693,6 @@
      "sin_efecto": false
     },
     {
-     "nombre": "seguridad_de_grupo",
-     "titulo": "La pregunta de los 2 años sin bucear cuenta a todo el grupo",
-     "codigo": true,
-     "pre": true,
-     "sin_efecto": false
-    },
-    {
-     "nombre": "refresher_completo",
-     "titulo": "El refresher dice cómo se reserva y qué formulario lleva",
-     "codigo": true,
-     "pre": true,
-     "sin_efecto": false
-    },
-    {
      "nombre": "cache_anthropic",
      "titulo": "Caché del extractor (Haiku)",
      "codigo": true,
@@ -781,38 +746,10 @@
      "sin_efecto": false
     },
     {
-     "nombre": "certificado_solo_si_lo_dice",
-     "titulo": "Certificado solo si lo dice",
-     "codigo": true,
-     "pre": true,
-     "sin_efecto": false
-    },
-    {
      "nombre": "precio_no_elige",
      "titulo": "Preguntar un precio no es elegir",
      "codigo": false,
      "pre": false,
-     "sin_efecto": false
-    },
-    {
-     "nombre": "tarjeta_sin_seguridad",
-     "titulo": "El precio sale aunque falte la pregunta de seguridad",
-     "codigo": true,
-     "pre": true,
-     "sin_efecto": false
-    },
-    {
-     "nombre": "recomendar_a_no_certificados",
-     "titulo": "A quien no es certificado le recomienda sus opciones",
-     "codigo": true,
-     "pre": true,
-     "sin_efecto": false
-    },
-    {
-     "nombre": "resolutor_sin_contradicciones",
-     "titulo": "Una respuesta que se contradice no fija el dato",
-     "codigo": true,
-     "pre": true,
      "sin_efecto": false
     },
     {
@@ -965,15 +902,7 @@
      "pre": "gpt-5.4-mini"
     }
    ],
-   "interruptores": [
-    {
-     "nombre": "pregunta_sola_con_su_sitio",
-     "titulo": "La búsqueda no pierde el sitio por el que se pregunta",
-     "codigo": true,
-     "pre": true,
-     "sin_efecto": false
-    }
-   ],
+   "interruptores": [],
    "marca": "openai"
   },
   {
@@ -1206,13 +1135,6 @@
     {
      "nombre": "origen_sin_titulo_suelto",
      "titulo": "Al quitar los precios, no deja el título colgado",
-     "codigo": true,
-     "pre": true,
-     "sin_efecto": false
-    },
-    {
-     "nombre": "abre_con_la_respuesta",
-     "titulo": "Empieza por la respuesta, sin «¡Claro que sí!» delante de un no",
      "codigo": true,
      "pre": true,
      "sin_efecto": false
@@ -1962,19 +1884,6 @@
  ],
  "interruptores": [
   {
-   "nombre": "abre_con_la_respuesta",
-   "area": "Preguntas",
-   "titulo": "Empieza por la respuesta, sin «¡Claro que sí!» delante de un no",
-   "texto": "Si la respuesta es «no» o «depende», Coral la dice primero («La recogida no es en el hotel: …») en vez de abrir con «¡Claro que sí!». Las expresiones de ánimo van delante solo cuando la respuesta es un sí.",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [
-    "r_escribir"
-   ],
-   "sin_efecto": null
-  },
-  {
    "nombre": "actividad_de_la_pregunta",
    "area": "Reserva",
    "titulo": "Ofrece la actividad por la que pregunta el cliente",
@@ -2092,19 +2001,6 @@
    "sin_efecto": null
   },
   {
-   "nombre": "certificado_solo_si_lo_dice",
-   "area": "Reserva",
-   "titulo": "Certificado solo si lo dice",
-   "texto": "Que el cliente quiera el buceo para certificados ('fun dives') no significa que esté certificado: el bot se lo pregunta. Antes una regla lo daba por hecho.",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [
-    "b_slotfill_close"
-   ],
-   "sin_efecto": null
-  },
-  {
    "nombre": "chatwoot_typing_indicator",
    "area": "Chat",
    "titulo": "“Escribiendo…” en el chat",
@@ -2118,36 +2014,10 @@
    "sin_efecto": null
   },
   {
-   "nombre": "clima_con_politica",
-   "area": "Enrutador",
-   "titulo": "Con el clima, explica cuándo operamos antes de pasar",
-   "texto": "Antes de pasar al equipo una pregunta por el clima de un día concreto, Coral dice que operamos todos los días salvo el 25 de diciembre y el 1 de enero, que la seguridad va primero y que, si el mar no está apto, la salida se reprograma (decisión de Gadea, 20-oct).",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [
-    "safety"
-   ],
-   "sin_efecto": null
-  },
-  {
    "nombre": "contesta_antes_de_cualquier_pase",
    "area": "Enrutador",
    "titulo": "Contesta lo que puede antes de CUALQUIER pase a un asesor",
    "texto": "Si un turno acaba pasando la conversación al equipo por cualquier motivo (pide una persona, un contacto, un servicio privado, un cambio de reserva…) y el mensaje trae además otras preguntas, Coral contesta primero esas preguntas y después hace el pase. No lo hace con los datos sensibles, las quejas o emergencias ni los fallos técnicos, que van solos (gen-13, 21-oct).",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [
-    "safety"
-   ],
-   "sin_efecto": null
-  },
-  {
-   "nombre": "contesta_antes_de_pasar",
-   "area": "Enrutador",
-   "titulo": "Contesta lo que puede antes de pasar a un asesor",
-   "texto": "Si un mensaje trae un tema médico o el clima de un día (que lleva un asesor) y además otras preguntas, Coral contesta primero esas otras preguntas, sin tocar el tema médico ni el clima, y después pasa la conversación al equipo. Antes el aviso fijo se comía el resto del mensaje.",
    "codigo": true,
    "pre": true,
    "fijado_en_pre": true,
@@ -2205,19 +2075,6 @@
    "fijado_en_pre": false,
    "usado_por": [
     "b_availability"
-   ],
-   "sin_efecto": null
-  },
-  {
-   "nombre": "dieta_no_es_medica",
-   "area": "Enrutador",
-   "titulo": "Una dieta o una alergia a un alimento no es un tema médico",
-   "texto": "Celíacos, vegetarianos o una alergia a un alimento: Coral lo contesta con la política de comida (arroz con vegetales, puede llevar su comida, avisar antes) en vez de pasarlo a un asesor como si fuera una consulta médica.",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [
-    "safety"
    ],
    "sin_efecto": null
   },
@@ -2635,17 +2492,6 @@
    "sin_efecto": null
   },
   {
-   "nombre": "pii_respeta_urls",
-   "area": "Chat",
-   "titulo": "Al tapar datos personales, los enlaces quedan enteros",
-   "texto": "Antes de enviar un texto a algunos modelos, Coral tapa teléfonos y documentos. Las cifras de un enlace (las coordenadas del mapa del punto de encuentro) se tapaban como si fueran un teléfono y el enlace llegaba roto al cliente. Ahora los enlaces quedan enteros, salvo los de WhatsApp, que llevan un teléfono.",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [],
-   "sin_efecto": null
-  },
-  {
    "nombre": "plan_elegido_por_extractor",
    "area": "Reserva",
    "titulo": "Aceptar el paquete que propone Coral lo elige",
@@ -2668,19 +2514,6 @@
    "fijado_en_pre": false,
    "usado_por": [
     "b_slotfill_close"
-   ],
-   "sin_efecto": null
-  },
-  {
-   "nombre": "pregunta_sola_con_su_sitio",
-   "area": "Preguntas",
-   "titulo": "La búsqueda no pierde el sitio por el que se pregunta",
-   "texto": "Para buscar, Coral se queda con la pregunta del mensaje y quita los datos del cliente. Si la pregunta trata de un sitio (\"estoy en Barú, ¿me recogen en el hotel?\"), ahora el sitio se queda: sin él, la búsqueda traía la recogida en los hoteles de las islas y Coral decía que recogía en Barú.",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [
-    "r_reescribir"
    ],
    "sin_efecto": null
   },
@@ -2828,19 +2661,6 @@
    "sin_efecto": null
   },
   {
-   "nombre": "recomendar_a_no_certificados",
-   "area": "Reserva",
-   "titulo": "A quien no es certificado le recomienda sus opciones",
-   "texto": "Si sabemos que el cliente no es buzo certificado y no ha elegido actividad, Coral le propone el minicurso para bucear, el snorkel para quedarse en la superficie o el curso Open Water para certificarse, en vez de repetir el menú entero (que ofrece buceo, solo para certificados).",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [
-    "b_slotfill_close"
-   ],
-   "sin_efecto": null
-  },
-  {
    "nombre": "recotizar_al_cambiar_moneda",
    "area": "Reserva",
    "titulo": "«Soy colombiano» después del precio: en pesos",
@@ -2871,19 +2691,6 @@
    "area": "Reserva",
    "titulo": "Quien termina aquí el Open Water no es preguntado de más",
    "texto": "A quien quiere terminar aquí un Open Water empezado en otro centro (el curso referido), Coral ya no le pregunta si tiene el curso o si quiere sacarlo: sigue con la reserva.",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [
-    "b_extraction"
-   ],
-   "sin_efecto": null
-  },
-  {
-   "nombre": "refresher_completo",
-   "area": "Reserva",
-   "titulo": "El refresher dice cómo se reserva y qué formulario lleva",
-   "texto": "Al ofrecer el refresher, Coral dice también que se reserva como Minicurso de Buceo y que lleva el formulario médico de curso aunque sean buzos certificados (el enlace llega con la reserva).",
    "codigo": true,
    "pre": true,
    "fijado_en_pre": true,
@@ -2943,19 +2750,6 @@
    "sin_efecto": null
   },
   {
-   "nombre": "resolutor_sin_contradicciones",
-   "area": "Reserva",
-   "titulo": "Una respuesta que se contradice no fija el dato",
-   "texto": "Si a la pregunta del bot el cliente contesta algo que se contradice (\"sí… bueno, en realidad no\" a ¿eres buzo certificado?), Coral no da el dato por sabido: vuelve a preguntar en vez de adivinar.",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [
-    "b_slotfill_close"
-   ],
-   "sin_efecto": null
-  },
-  {
    "nombre": "respaldo_mismo_modelo",
    "area": "Preguntas",
    "titulo": "El respaldo del RAG, otra petición a Luna",
@@ -2965,19 +2759,6 @@
    "fijado_en_pre": false,
    "usado_por": [
     "r_escribir"
-   ],
-   "sin_efecto": null
-  },
-  {
-   "nombre": "seguridad_de_grupo",
-   "area": "Reserva",
-   "titulo": "La pregunta de los 2 años sin bucear cuenta a todo el grupo",
-   "texto": "Coral pregunta si alguno del grupo lleva más de 2 años sin bucear. Si contestaban «sí, uno de nosotros, hace 4 años», ese dato se guardaba como de otra persona y la pregunta se repetía sin llegar nunca al refresher. Ahora cuenta para el grupo y Coral ofrece el refresher.",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [
-    "b_extraction"
    ],
    "sin_efecto": null
   },
@@ -3017,19 +2798,6 @@
    "fijado_en_pre": true,
    "usado_por": [
     "info"
-   ],
-   "sin_efecto": null
-  },
-  {
-   "nombre": "tarjeta_sin_seguridad",
-   "area": "Reserva",
-   "titulo": "El precio sale aunque falte la pregunta de seguridad",
-   "texto": "Si solo falta saber si alguien lleva más de 2 años sin bucear y el cliente no lo contesta, el bot da igualmente el precio, con una línea: 'si alguno lleva más de 2 años sin bucear, se añade el refresher (precio)'. Antes repetía la pregunta y el precio no salía nunca.",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [
-    "b_slotfill_close"
    ],
    "sin_efecto": null
   },
