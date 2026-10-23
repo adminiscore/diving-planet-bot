@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-23T09:52:45+00:00",
-  "commit": "cd900eea",
+  "generado": "2026-10-23T09:56:37+00:00",
+  "commit": "95ced4a0",
   "rama": "feature/pre_gadea"
  },
  "vistas": {
@@ -1401,6 +1401,13 @@
     {
      "nombre": "dos_monedas_sin_nacionalidad",
      "titulo": "Sin saber la nacionalidad, las dos monedas",
+     "codigo": false,
+     "pre": false,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "mezclados_por_partes",
+     "titulo": "Mensajes mezclados, por partes",
      "codigo": false,
      "pre": false,
      "sin_efecto": false
@@ -3125,6 +3132,19 @@
    "fijado_en_pre": true,
    "usado_por": [
     "b_notas"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "mezclados_por_partes",
+   "area": "Preguntas",
+   "titulo": "Mensajes mezclados, por partes",
+   "texto": "Cuando el cliente pregunta a la vez algo de la tabla (precio, qué incluye, horarios…) y otra cosa, la parte de la tabla la escribe el redactor con los datos del código y el RAG, a la vez, solo lo demás: las listas salen completas y no hace falta rehacer la respuesta (arq-5b, 23-oct).",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
+   "usado_por": [
+    "r_hechos"
    ],
    "sin_efecto": null
   },

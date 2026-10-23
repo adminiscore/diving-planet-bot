@@ -686,6 +686,9 @@ class Settings(BaseSettings):
     # arq-5c (23-oct, decisión de Gadea; G10 nº 5, ~6 fallos): sin saber si el cliente es colombiano, el precio de los
     # hechos va en USD y en COP. APAGADO hasta medirlo.
     dos_monedas_sin_nacionalidad: bool = False
+    # arq-5b (23-oct, G10 nº 5): en los mensajes mezclados el redactor escribe la parte de la tabla con los hechos y el
+    # RAG, a la vez, solo lo demás (las listas salen completas y sobra el reintento del RAG). APAGADO hasta medirlo.
+    mezclados_por_partes: bool = False
     # arq-4b (22-oct, fallos del G10 nº 4), APAGADOS hasta medirlos con su banco:
     recotizar_al_cambiar_moneda: bool = True  # PROMOCIONADO 23-oct (G10 nº 5 con los 11: 90,1 % 34/72 -> 91,2 % 40/72; HISTORY 0.31.96); revert = False · «soy colombiano» DESPUÉS de recibir el precio en USD: se vuelve a dar en COP (g10-003/016/047)
     rag_comprueba_los_hechos: bool = True  # PROMOCIONADO 23-oct (G10 nº 5 con los 11: 90,1 % 34/72 -> 91,2 % 40/72; HISTORY 0.31.96); revert = False · arq-3 también para el RAG con hechos (mensajes mezclados): si deja fuera un hecho, se rehace una vez

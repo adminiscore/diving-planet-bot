@@ -1664,6 +1664,57 @@ async def _hechos_para_el_rag(state: ConversationState, message: str, history: l
     return redactor_hechos.texto_de_los_hechos(bloques)
 
 
+# arq-5b (23-oct, flag `mezclados_por_partes`, G10 nº 5): en un mensaje MEZCLADO (preguntas de la tabla y algo más) el
+# RAG recibía los hechos y aun así dejaba puntos de las listas; el reintento de `rag_comprueba_los_hechos` no siempre lo
+# arreglaba y subía la p90 de 9,2 a 11,8 s. Ahora la parte de la tabla la escribe el redactor con los hechos y el RAG,
+# A LA VEZ, solo lo demás (el mismo mecanismo que «contestar antes del pase», gen-13).
+_TEMA_DE_LA_TABLA = {
+    "precio": ("el precio", "the price"), "incluye": ("lo que incluye", "what is included"),
+    "requisitos": ("los requisitos y qué llevar", "the requirements and what to bring"),
+    "horario": ("los horarios y la recogida", "the times and the pickup"),
+    "disponibilidad": ("la disponibilidad y cómo reservar", "the availability and how to book"),
+    "edad": ("las edades", "the ages"), "enlace": ("el enlace de reserva", "the booking link"),
+    "descuento": ("los descuentos", "the discounts"), "tiempo": ("si le da tiempo", "whether there is enough time"),
+}
+_RESTO_DEL_MEZCLADO = {
+    "es": ("Lo que el cliente pregunta sobre {tema} se lo contesta otra parte del sistema justo antes que tú, con los "
+           "datos oficiales: NO lo contestes, no lo repitas y no lo menciones. Contesta las OTRAS preguntas de su "
+           "mensaje, solo esas, con el contexto, sin saludar. Solo si el mensaje no pregunta nada aparte de eso, "
+           "responde exactamente: NADA"),
+    "en": ("What the customer asks about {tema} is answered by another part of the system right before you, with the "
+           "official data: do NOT answer it, repeat it or mention it. Answer the OTHER questions in their message, "
+           "only those, from the context, without greeting. Only if the message asks nothing apart from that, reply "
+           "exactly: NADA"),
+}
+
+
+async def _mezclado_por_partes(state: ConversationState, message: str, history: list, entradas: dict) -> str | None:
+    """arq-5b: la parte de la tabla (redactor, con los hechos) + lo demás (RAG), en paralelo. None con el flag apagado,
+    sin hechos o si la parte del redactor no sale: entonces contesta el RAG con los hechos, como antes."""
+    turno = getattr(state, "_hechos_del_rag", None)
+    if not settings.mezclados_por_partes or not turno:
+        return None
+    from src.agents import escalation_agent, rag_agent, redactor_hechos, supervisor  # lazy
+
+    bloques, cubiertas = turno
+    lang = 0 if state.language == "es" else 1
+    tema = ", ".join(_TEMA_DE_LA_TABLA[i][lang] for i in cubiertas if i in _TEMA_DE_LA_TABLA)
+    resto = {k: v for k, v in entradas.items() if k not in ("hechos", "hechos_bloques")}
+    instruccion = _RESTO_DEL_MEZCLADO["es" if lang == 0 else "en"].format(tema=tema)
+    resto["extra_context"] = f"{resto['extra_context']}\n\n{instruccion}" if resto.get("extra_context") else instruccion
+    parte, demas = await asyncio.gather(redactor_hechos.redactar_parte(state, message, history, bloques, cubiertas),
+                                        supervisor.rag_answer(message, **resto), return_exceptions=True)
+    if isinstance(parte, BaseException) or not parte:
+        logger.info("[HECHOS][ARQ5B] la parte del redactor no salió: contesta el RAG con los hechos")
+        return None
+    if (isinstance(demas, BaseException) or not demas or escalation_agent._es_nada(demas)
+            or rag_agent.is_fallback_answer(demas)):
+        logger.info("[HECHOS][ARQ5B] solo la parte de la tabla (el RAG no tenía nada más que contestar)")
+        return parte
+    logger.info(f"[HECHOS][ARQ5B] mezclado por partes: {cubiertas} (redactor) + lo demás (RAG)")
+    return f"{parte}\n\n{demas.strip()}"
+
+
 async def _rag_answer(
     state: ConversationState, message: str, *, rag_query: str | None = None, history: list | None = None,
     sin_precio: bool = False,
@@ -1682,6 +1733,9 @@ async def _rag_answer(
         entradas["hechos"] = hechos  # arq-1g
         if settings.rag_comprueba_los_hechos:
             entradas["hechos_bloques"] = state._hechos_del_rag
+        if not sin_precio and (por_partes := await _mezclado_por_partes(
+                state, message, state.history if history is None else history, entradas)):
+            return _puerta_del_origen(state, message, por_partes)
     if sin_precio:  # G3-07a: solo se pasa cuando hace falta (la llamada de siempre no cambia)
         entradas["sin_precio"] = True
     answer = await supervisor.rag_answer(rag_query or message, **entradas)
@@ -1847,6 +1901,10 @@ async def _adoptar_o_rehacer(state: ConversationState, message: str, history: li
         entradas["hechos"] = hechos  # arq-1g: la adelantada salió sin ellos, así que su huella no coincide y se rehace
         if settings.rag_comprueba_los_hechos:
             entradas["hechos_bloques"] = state._hechos_del_rag
+        if por_partes := await _mezclado_por_partes(state, message, history, entradas):
+            adelantado["task"].cancel()
+            note_turn(rag_adelantado="descartado")
+            return _puerta_del_origen(state, message, por_partes)
     huella = _huella_rag(message, entradas)
     if huella == adelantado["huella"]:
         note_turn(rag_used=True, rag_adelantado="aprovechado")
