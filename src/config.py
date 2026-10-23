@@ -692,6 +692,10 @@ class Settings(BaseSettings):
     # refresher; que el horario no se adelanta (lo ve un asesor); buceo y snorkel en la misma lancha si el turno trae los
     # dos; y que alojados en Barú o Playa Blanca salen desde Cartagena. APAGADO hasta medirlo.
     hechos_que_faltaban: bool = True  # PROMOCIONADO 23-oct (G10 nº 6 con los 8: 92,4 % 42/72 -> 94,3 % 46/72; HISTORY 0.31.98); revert = False
+    # ARQ-8b (23-oct, Gonzalo con Claude, encargo de Gadea #1655; g10-051): si el extractor lee en ESTE mensaje un hotel
+    # del catálogo de las islas (CAL-C3e), el redactor de hechos ya lo da por origen «island» al contestar; antes solo
+    # lo sabía al guardar el estado, después, y con Jev dudando en el lugar preguntaba desde dónde sale. APAGADO.
+    hotel_de_las_islas_da_origen: bool = False
     varias_actividades: bool = False  # ARQ-1j (22-oct): el extractor da TODAS las actividades del mensaje (y el acompañante) y los hechos salen de cada una
     adaptado_contesta_lo_demas: bool = True  # PROMOCIONADO 22-oct (arq-1l: banco DIVE TO HEAL 3/12 -> 11/12; HISTORY 0.31.93); revert = False
     enlace_con_disponibilidad: bool = True  # PROMOCIONADO 22-oct (arq-1m: banco de enlace 3/12 -> 12/12; HISTORY 0.31.93); revert = False

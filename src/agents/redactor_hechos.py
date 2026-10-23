@@ -89,6 +89,14 @@ def _origen(state: ConversationState, datos: dict) -> str | None:
     lugar = getattr(state, "_jev_lugar", None) or {}  # gen-15: «nos alojamos en Mulata» lo dice Jev, no una palabra
     if (lugar.get("confidence") or 0.0) >= CUSTOMER_PLACE_MIN:
         return _LUGAR_DE_JEV.get(lugar.get("choice"))
+    if settings.hotel_de_las_islas_da_origen and datos.get("hotel"):
+        # arq-8b: «We'll be staying at the Ubuntu hotel… how much…?» con Jev a 0,52 en el lugar: el extractor lee el hotel
+        # y CAL-C3e lo sabe de las islas, pero el origen lo pone al guardar, después de contestar; el redactor daba las
+        # dos variantes y preguntaba desde dónde sale (banco arq-8b variantes, v5 3/3).
+        from src.agents.nucleo.extractor import _hotel_del_catalogo  # lazy
+
+        if _hotel_del_catalogo(str(datos["hotel"])):
+            return "island"
     return None
 
 
