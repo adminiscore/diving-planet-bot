@@ -1,8 +1,8 @@
 {
  "meta": {
-  "generado": "2026-10-23T15:15:57+00:00",
-  "commit": "bd70d900",
-  "rama": "feature/pre_gadea"
+  "generado": "2026-10-23T16:17:21+00:00",
+  "commit": "28455297",
+  "rama": "feature/arq8-alvaro"
  },
  "vistas": {
   "general": {
@@ -1452,6 +1452,34 @@
      "titulo": "Hechos que faltaban en la tabla",
      "codigo": true,
      "pre": true,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "incluye_lo_que_se_hace",
+     "titulo": "«¿Qué incluye?» dice también lo que se hace",
+     "codigo": false,
+     "pre": false,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "recogida_se_coordina",
+     "titulo": "La recogida en las islas dice cómo se coordina",
+     "codigo": false,
+     "pre": false,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "precio_pendiente_con_el_origen",
+     "titulo": "El precio que esperaba el origen no se pierde",
+     "codigo": false,
+     "pre": false,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "listas_una_vez",
+     "titulo": "Lo que se repite sale una vez",
+     "codigo": false,
+     "pre": false,
      "sin_efecto": false
     }
    ],
@@ -3073,6 +3101,19 @@
    "sin_efecto": null
   },
   {
+   "nombre": "incluye_lo_que_se_hace",
+   "area": "Preguntas",
+   "titulo": "«¿Qué incluye?» dice también lo que se hace",
+   "texto": "Con «¿qué incluye?» el bot da, además de la lista de lo incluido, lo que se hace en la actividad (la clase, la piscina, la inmersión: el itinerario de la ficha) y, en los planes de las islas, que no incluyen transporte desde Cartagena ni almuerzo (arq-8d, G10 nº 6, 23-oct).",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
+   "usado_por": [
+    "r_hechos"
+   ],
+   "sin_efecto": null
+  },
+  {
    "nombre": "intenciones_clima_pago",
    "area": "Preguntas",
    "titulo": "El clima en general y cómo se paga",
@@ -3173,6 +3214,19 @@
    "codigo": true,
    "pre": true,
    "fijado_en_pre": true,
+   "usado_por": [
+    "r_hechos"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "listas_una_vez",
+   "area": "Preguntas",
+   "titulo": "Lo que se repite sale una vez",
+   "texto": "Cuando el bot habla de varias actividades a la vez, lo que es igual en todas (el punto de encuentro, los descuentos) sale una sola vez, y los rótulos del origen no salen dobles ni sueltos (arq-8f, G10 nº 6, 23-oct).",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
    "usado_por": [
     "r_hechos"
    ],
@@ -3420,6 +3474,19 @@
    "sin_efecto": null
   },
   {
+   "nombre": "precio_pendiente_con_el_origen",
+   "area": "Preguntas",
+   "titulo": "El precio que esperaba el origen no se pierde",
+   "texto": "Si el cliente preguntó un precio sin decir desde dónde sale y luego lo dice junto con otra pregunta («salgo de Cartagena, ¿incluye el almuerzo?»), el bot contesta las dos: el precio ya no se pierde (arq-8f, G10 nº 6, 23-oct).",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
+   "usado_por": [
+    "r_hechos"
+   ],
+   "sin_efecto": null
+  },
+  {
    "nombre": "pregunta_sola_con_su_sitio",
    "area": "Preguntas",
    "titulo": "La búsqueda no pierde el sitio por el que se pregunta",
@@ -3637,6 +3704,19 @@
    "fijado_en_pre": true,
    "usado_por": [
     "r_escribir"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "recogida_se_coordina",
+   "area": "Preguntas",
+   "titulo": "La recogida en las islas dice cómo se coordina",
+   "texto": "Con la recogida desde un hotel de las islas va también cómo se coordina: en algunos casos la lancha llega al hotel y en otros se indica el muelle o punto más cercano (arq-8e, G10 nº 6, 23-oct).",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
+   "usado_por": [
+    "r_hechos"
    ],
    "sin_efecto": null
   },

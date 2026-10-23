@@ -1,0 +1,111 @@
+{
+ "about": "arq-8d/8e/8f (23-oct, reparto de Gadea #1617; causas del G10 nº 6). Frases nuestras (no salen de G9/G10). 8d: «¿qué incluye?» dice lo que se hace (clase, piscina, inmersión) y, en las islas, que no incluye almuerzo. 8e: la recogida en las islas dice cómo se coordina (el muelle o punto más cercano). 8f: el precio que esperaba el origen se da cuando el cliente dice el origen aunque pregunte otra cosa. Controles: desde Cartagena, el precio a secas y una pregunta sin precio pendiente.",
+ "dialogos": [
+  {
+   "id": "d1-minicurso-islas-es",
+   "tipo": "incluye",
+   "turnos": [
+    "Hola, estamos alojados en un hotel de Isla Grande. ¿Qué incluye el minicurso de buceo?"
+   ],
+   "todas": [
+    "piscina",
+    "inmersion",
+    "almuerzo"
+   ]
+  },
+  {
+   "id": "d2-openwater-islas-en",
+   "tipo": "incluye",
+   "turnos": [
+    "We're staying on one of the Rosario islands. What does the Open Water course include?"
+   ],
+   "todas": [
+    "pool",
+    "elearning",
+    "lunch"
+   ]
+  },
+  {
+   "id": "d3-snorkel-islas-es",
+   "tipo": "incluye",
+   "turnos": [
+    "Ya estoy en las Islas del Rosario. Para el snorkel, ¿qué está incluido y qué se hace?"
+   ],
+   "todas": [
+    "9:30|9:45",
+    "almuerzo"
+   ]
+  },
+  {
+   "id": "e1-especialidad-islas-es",
+   "tipo": "recogida",
+   "turnos": [
+    "Me estoy quedando en un hotel en la isla y quiero hacer la especialidad de flotabilidad. ¿A qué hora y dónde me recogen?"
+   ],
+   "todas": [
+    "8:00",
+    "muelle|punto"
+   ]
+  },
+  {
+   "id": "e2-snorkel-islas-en",
+   "tipo": "recogida",
+   "turnos": [
+    "We are at a hotel on the islands already. Where and when do you pick us up for snorkeling?"
+   ],
+   "todas": [
+    "9:30|9:45",
+    "dock|meeting point"
+   ]
+  },
+  {
+   "id": "f1-especialidades-precio-es",
+   "tipo": "precio_pendiente",
+   "turnos": [
+    "Buenas, ¿cuánto cuestan las especialidades PADI?",
+    "Somos colombianos y saldríamos desde Cartagena. ¿Tienen almuerzo incluido?"
+   ],
+   "todas": [
+    "1.485.000|1485000",
+    "almuerzo"
+   ]
+  },
+  {
+   "id": "f2-snorkel-precio-en",
+   "tipo": "precio_pendiente",
+   "turnos": [
+    "Hi, how much is the snorkeling tour?",
+    "We're already staying on the islands. Is the equipment included?"
+   ],
+   "todas": [
+    "45 usd|$45|45 dollars",
+    "equipment|gear"
+   ]
+  },
+  {
+   "id": "c1-cartagena-incluye",
+   "tipo": "control",
+   "turnos": [
+    "Salimos desde Cartagena. ¿Qué incluye el plan de snorkel?"
+   ],
+   "todas": [
+    "almuerzo",
+    "bodeguita"
+   ],
+   "ninguno": [
+    "punto mas cercano"
+   ]
+  },
+  {
+   "id": "c2-sin-precio-pendiente",
+   "tipo": "control",
+   "turnos": [
+    "Hola, quiero hacer snorkel",
+    "Salgo desde Cartagena. ¿Incluye el almuerzo?"
+   ],
+   "todas": [
+    "almuerzo"
+   ]
+  }
+ ]
+}

@@ -621,7 +621,11 @@
         "rag_hechos_sin_reintento",
         "intenciones_clima_pago",
         "frases_por_codigo",
-        "hechos_que_faltaban"
+        "hechos_que_faltaban",
+        "incluye_lo_que_se_hace",
+        "recogida_se_coordina",
+        "precio_pendiente_con_el_origen",
+        "listas_una_vez"
       ]
     },
     {
@@ -1675,6 +1679,26 @@
       "area": "Preguntas",
       "titulo": "Mensajes mezclados, por partes",
       "texto": "Cuando el cliente pregunta a la vez algo de la tabla (precio, qué incluye, horarios…) y otra cosa, la parte de la tabla la escribe el redactor con los datos del código y el RAG, a la vez, solo lo demás: las listas salen completas y no hace falta rehacer la respuesta (arq-5b, 23-oct)."
+    },
+    "incluye_lo_que_se_hace": {
+      "area": "Preguntas",
+      "titulo": "«¿Qué incluye?» dice también lo que se hace",
+      "texto": "Con «¿qué incluye?» el bot da, además de la lista de lo incluido, lo que se hace en la actividad (la clase, la piscina, la inmersión: el itinerario de la ficha) y, en los planes de las islas, que no incluyen transporte desde Cartagena ni almuerzo (arq-8d, G10 nº 6, 23-oct)."
+    },
+    "recogida_se_coordina": {
+      "area": "Preguntas",
+      "titulo": "La recogida en las islas dice cómo se coordina",
+      "texto": "Con la recogida desde un hotel de las islas va también cómo se coordina: en algunos casos la lancha llega al hotel y en otros se indica el muelle o punto más cercano (arq-8e, G10 nº 6, 23-oct)."
+    },
+    "precio_pendiente_con_el_origen": {
+      "area": "Preguntas",
+      "titulo": "El precio que esperaba el origen no se pierde",
+      "texto": "Si el cliente preguntó un precio sin decir desde dónde sale y luego lo dice junto con otra pregunta («salgo de Cartagena, ¿incluye el almuerzo?»), el bot contesta las dos: el precio ya no se pierde (arq-8f, G10 nº 6, 23-oct)."
+    },
+    "listas_una_vez": {
+      "area": "Preguntas",
+      "titulo": "Lo que se repite sale una vez",
+      "texto": "Cuando el bot habla de varias actividades a la vez, lo que es igual en todas (el punto de encuentro, los descuentos) sale una sola vez, y los rótulos del origen no salen dobles ni sueltos (arq-8f, G10 nº 6, 23-oct)."
     },
     "listas_por_codigo": {
       "area": "Preguntas",

@@ -692,6 +692,23 @@ class Settings(BaseSettings):
     # refresher; que el horario no se adelanta (lo ve un asesor); buceo y snorkel en la misma lancha si el turno trae los
     # dos; y que alojados en Barú o Playa Blanca salen desde Cartagena. APAGADO hasta medirlo.
     hechos_que_faltaban: bool = True  # PROMOCIONADO 23-oct (G10 nº 6 con los 8: 92,4 % 42/72 -> 94,3 % 46/72; HISTORY 0.31.98); revert = False
+    # ARQ-8d (23-oct, reparto de Gadea #1617; G10 nº 6, «qué incluye» del minicurso y del Open Water ya en las islas):
+    # con «incluye» va también lo que se HACE (el itinerario de la ficha: la clase, la piscina, la inmersión), si no se
+    # pidió el horario; y lo que no incluyen los planes de las islas es la frase de `island_pickup` que lo dice («no
+    # incluyen transporte desde Cartagena ni almuerzo»), no el párrafo entero, que el redactor saltaba. APAGADO.
+    incluye_lo_que_se_hace: bool = False
+    # ARQ-8e (23-oct, #1617; G10 nº 6, recogida en las islas): la recogida de las islas lleva también cómo se coordina
+    # (las frases de `island_pickup`: «en algunos casos la lancha llega directo al hotel; en otros te indicamos el muelle o
+    # punto más cercano»). APAGADO.
+    recogida_se_coordina: bool = False
+    # ARQ-8f (23-oct, #1617; G10 nº 6, precio de las especialidades): una pregunta de precio que esperaba el origen se
+    # contesta en cuanto se sabe, aunque el mensaje que lo da pregunte otra cosa («soy de Cartagena, ¿incluye el
+    # almuerzo?»): el precio entra en las intenciones del turno. APAGADO.
+    precio_pendiente_con_el_origen: bool = False
+    # ARQ-8f (23-oct, #1617 y #1631; G10 nº 6): lo que el código pinta (listas y frases) va una sola vez: lo que se
+    # repite igual en varias actividades (el punto de encuentro, los descuentos) sale una vez, y el rótulo del origen que
+    # el modelo escribe justo antes de la marca no se duplica ni queda suelto al final. APAGADO.
+    listas_una_vez: bool = False
     varias_actividades: bool = False  # ARQ-1j (22-oct): el extractor da TODAS las actividades del mensaje (y el acompañante) y los hechos salen de cada una
     adaptado_contesta_lo_demas: bool = True  # PROMOCIONADO 22-oct (arq-1l: banco DIVE TO HEAL 3/12 -> 11/12; HISTORY 0.31.93); revert = False
     enlace_con_disponibilidad: bool = True  # PROMOCIONADO 22-oct (arq-1m: banco de enlace 3/12 -> 12/12; HISTORY 0.31.93); revert = False
