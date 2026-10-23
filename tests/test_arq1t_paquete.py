@@ -27,7 +27,6 @@ def test_el_campo_va_solo_con_el_flag(monkeypatch):
 
 @pytest.mark.parametrize("flag, dice, duracion", [(True, True, "multi_day"), (False, True, None), (True, None, None)])
 def test_la_duracion_queda_en_varios_dias(monkeypatch, flag, dice, duracion):
-    monkeypatch.setattr(settings, "duracion_por_extractor", True)
     monkeypatch.setattr(settings, "paquete_varios_dias", flag)
     intent = DetectedIntent()
     st = ConversationState(conversation_id="arq1t")

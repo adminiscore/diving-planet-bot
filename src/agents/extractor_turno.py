@@ -306,19 +306,18 @@ REGLA_PAQUETE_VARIOS_DIAS_EN = (
 
 
 def campos_paso6(history: list[dict] | None) -> dict:
-    """Los campos nuevos del paso 6 que van en ESTA llamada, según sus flags: {campo: (esquema, regla_es, regla_en)}.
-    Vacío con los flags apagados (la llamada de siempre). `acepta_propuesta` solo si el bot acaba de proponer un plan."""
-    campos: dict = {}
-    if settings.duracion_por_extractor:
-        campos["dias_de_buceo"] = (CAMPO_DIAS_DE_BUCEO, REGLA_DURACION_ES, REGLA_DURACION_EN)
-        campos["dias_de_estancia"] = (CAMPO_DIAS_DE_ESTANCIA, "", "")
-    if settings.edades_por_extractor:
-        campos["edades"] = (CAMPO_EDADES, REGLA_EDADES_ES, REGLA_EDADES_EN)
+    """Los campos nuevos del paso 6 que van en ESTA llamada: {campo: (esquema, regla_es, regla_en)}. La duración, las
+    edades y las otras personas del grupo siempre (promocionados; sus flags se borraron en sim-5); el resto, según sus
+    flags. `acepta_propuesta` solo si el bot acaba de proponer un plan."""
+    campos: dict = {
+        "dias_de_buceo": (CAMPO_DIAS_DE_BUCEO, REGLA_DURACION_ES, REGLA_DURACION_EN),
+        "dias_de_estancia": (CAMPO_DIAS_DE_ESTANCIA, "", ""),
+        "edades": (CAMPO_EDADES, REGLA_EDADES_ES, REGLA_EDADES_EN),
+    }
     if settings.plan_elegido_por_extractor and plan_que_propone_el_bot(history) is not None:
         campos["acepta_propuesta"] = (CAMPO_ACEPTA, REGLA_ACEPTA_ES, REGLA_ACEPTA_EN)
-    if settings.notas_rag_desde_estado:
-        campos["otro_sin_certificar"] = (CAMPO_OTRO_SIN_CERTIFICAR, REGLA_OTRAS_PERSONAS_ES, REGLA_OTRAS_PERSONAS_EN)
-        campos["otro_certificado_inactivo"] = (CAMPO_OTRO_CERTIFICADO_INACTIVO, "", "")
+    campos["otro_sin_certificar"] = (CAMPO_OTRO_SIN_CERTIFICAR, REGLA_OTRAS_PERSONAS_ES, REGLA_OTRAS_PERSONAS_EN)
+    campos["otro_certificado_inactivo"] = (CAMPO_OTRO_CERTIFICADO_INACTIVO, "", "")
     if settings.actividad_de_la_pregunta:
         campos["actividad_preguntada"] = (CAMPO_ACTIVIDAD_PREGUNTADA, REGLA_ACTIVIDAD_PREGUNTADA_ES,
                                           REGLA_ACTIVIDAD_PREGUNTADA_EN)
@@ -723,17 +722,17 @@ async def extraer_turno(mensaje: str, *, history: list[dict] | None = None, sabi
         sistema += REGLA_REFRESHER_ES if lang == "es" else REGLA_REFRESHER_EN
     # ex-9b paso 6: los campos nuevos con su regla (ninguno con los flags apagados).
     paso6 = campos_paso6(history)
-    # ex-9b (19-oct, decisión de Gadea, flag `paso6_en_llamada_aparte`): con dos o más campos del paso 6 el esquema
-    # estricto no cabía en Haiku ("compiled grammar is too large": ronda ex9b-4, 92 de 92 llamadas al respaldo).
-    # Con el flag, la llamada de siempre sale con su esquema de siempre y los campos del paso 6 van en OTRA llamada,
-    # a la vez (mismo texto + sus reglas: el principio del prompt sale de la caché). Se juntan al leer.
-    aparte = bool(paso6) and settings.paso6_en_llamada_aparte
+    # ex-9b (19-oct, decisión de Gadea): con dos o más campos del paso 6 el esquema estricto no cabía en Haiku ("compiled
+    # grammar is too large": ronda ex9b-4, 92 de 92 llamadas al respaldo). La llamada de siempre sale con su esquema de
+    # siempre y los campos del paso 6 van en OTRA llamada, a la vez (mismo texto + sus reglas: el principio del prompt
+    # sale de la caché). Se juntan al leer.
+    aparte = bool(paso6)
     sistema_paso6 = sistema
     for _esq, regla_es, regla_en in paso6.values():
         sistema_paso6 += regla_es if lang == "es" else regla_en
     if not aparte:
         sistema = sistema_paso6
-    if settings.reparto_al_sumarse_alguien and ((sabido or {}).get("group_size") or (sabido or {}).get("group_allocation")):
+    if (sabido or {}).get("group_size") or (sabido or {}).get("group_allocation"):
         sistema += REGLA_SUMARSE_ES if lang == "es" else REGLA_SUMARSE_EN
     modelo = modelo or settings.extractor_turno_model
     t0 = time.perf_counter()

@@ -317,7 +317,7 @@ def _build_extra_context(state: ConversationState) -> str | None:
     companion_search_text = " ".join(companion_notes) + " " + user_messages_text
     nota_sin_certificar = bool(_UNCERTIFIED_COMPANION_NOTE_RE.search(companion_search_text))
     nota_certificado_inactivo = _mentions_inactive_but_certified_companion(companion_search_text)
-    if settings.notas_rag_desde_estado and not state.extractor_ha_fallado:
+    if not state.extractor_ha_fallado:
         # ex-9b paso 6: las dos reglas salen del ESTADO, que llena el extractor con cita: OTRA persona del grupo no está
         # certificada (`acompanante_sin_certificar`) o lo está pero lleva tiempo sin bucear
         # (`acompanante_certificado_inactivo`). El regex leía todo lo que escribió el cliente y las notas del LLM de

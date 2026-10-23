@@ -40,7 +40,6 @@ from src.config import settings
 from src.domain import activities as dom
 from src.flows import cart_render, eligibility
 from src.flows.state import ConversationState, Step
-from src.flows.textos import de_cartagena
 from src.utils.fuzzy import is_affirmative, is_agree
 from src.utils.number_words import number_alt
 from src.utils.text import strip_accents
@@ -535,11 +534,10 @@ def ask_slot(state: ConversationState, slot: str, *, reasking: bool = False) -> 
     if slot == SLOT_CERTIFICATION:
         plural = (state.detected_group_size or 1) > 1
         if lang == "es":
-            q = (de_cartagena("¿Son buzos certificados?", "¿Sois buzos certificados?") if plural
+            q = ("¿Son buzos certificados?" if plural
                  else "¿Eres buzo certificado?")
             return (f"¡Genial! Para recomendarte el plan perfecto: {q} "
-                    + de_cartagena("(Y si no, ¡tranqui! El minicurso es ideal para empezar. 🤿)",
-                                   "(Y si no, ¡tranquilo! El minicurso es ideal para empezar. 🤿)"))
+                    + "(Y si no, ¡tranqui! El minicurso es ideal para empezar. 🤿)")
         q = "Are you certified divers?" if plural else "Are you a certified diver?"
         return (f"Great! So I can recommend the perfect plan: {q} "
                 "(And if not, no worries — the mini-course is the ideal way to start. 🤿)")
@@ -759,7 +757,7 @@ def ask_slot(state: ConversationState, slot: str, *, reasking: bool = False) -> 
             return f"{cabeza} {pregunta}"
         if lang == "es":
             pregunta = (
-                de_cartagena("¿son colombianos o residentes en Colombia?", "¿sois colombianos o residentes en Colombia?")
+                "¿son colombianos o residentes en Colombia?"
                 if plural
                 else "¿eres colombiano o residente en Colombia?"
             )
@@ -793,23 +791,15 @@ def _dias_del_plan(state: ConversationState) -> int | None:
 
 
 def _pregunta_origen(lang: str, mismo_dia: bool = False) -> str:
-    """La pregunta del origen. Con `textos_de_cartagena` (gen, 20-oct) dice que desde Cartagena se sale del Muelle de la
-    Bodeguita: "podemos recogerte saliendo desde Cartagena" sugería una recogida que no existe (ver flows/textos.py)."""
+    """La pregunta del origen (gen, 20-oct, textos en el español de Cartagena): desde Cartagena se sale del Muelle de la
+    Bodeguita ("podemos recogerte saliendo desde Cartagena" sugería una recogida que no existe)."""
     if lang == "es":
         dia = ", ida y vuelta el mismo día" if mismo_dia else ""
-        return de_cartagena(
-            f"¿Desde dónde saldrías? Puedes salir *desde Cartagena* (desde el Muelle de la Bodeguita{dia}) o, si ya "
-            "estás *en las islas*, coordinamos la recogida en tu hotel.",
-            "¿Desde dónde saldrías? Podemos recogerte saliendo *desde Cartagena* "
-            + ("(ida y vuelta el mismo día) " if mismo_dia else "")
-            + "o, si ya estás *en las islas*, coordinamos la recogida en tu hotel.")
+        return (f"¿Desde dónde saldrías? Puedes salir *desde Cartagena* (desde el Muelle de la Bodeguita{dia}) o, si ya "
+            "estás *en las islas*, coordinamos la recogida en tu hotel.")
     dia = ", round trip, same day" if mismo_dia else ""
-    return de_cartagena(
-        f"Where would you be departing from? You can leave *from Cartagena* (from Muelle de la Bodeguita{dia}) or, "
-        "if you're already *on the islands*, we arrange pickup at your hotel.",
-        "Where would you be departing from? We can pick you up *from Cartagena* "
-        + ("(round trip, same day) " if mismo_dia else "")
-        + "or, if you're already *on the islands*, we arrange pickup at your hotel.")
+    return (f"Where would you be departing from? You can leave *from Cartagena* (from Muelle de la Bodeguita{dia}) or, "
+        "if you're already *on the islands*, we arrange pickup at your hotel.")
 
 
 def _plan_en_duda(state: ConversationState) -> bool:
@@ -1346,7 +1336,7 @@ def _recall_answer(state: ConversationState, field: str) -> str | None:
             return None
         if n == 1:
             return "Me dijiste que vas *solo/a*." if es else "You told me it's just *you*."
-        return (de_cartagena(f"Me dijiste que son *{n}* personas.", f"Me dijiste que sois *{n}* personas.") if es
+        return (f"Me dijiste que son *{n}* personas." if es
                 else f"You told me you're a group of *{n}*.")
     if field == "activity":
         act = _effective_activity(state)

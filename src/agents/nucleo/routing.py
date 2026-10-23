@@ -198,12 +198,11 @@ def _es_formato(state: ConversationState, slot: str, message: str) -> bool:
 
 
 def _respuesta_del_paso6(state: ConversationState, slot: str) -> bool:
-    """ex-9b paso 6: ¿la respuesta corta a esta pregunta la lee el extractor? Las edades con `edades_por_extractor`; el
-    "¿un día o varios?" del acompañante (primer paso, aún sin duración) con `duracion_por_extractor`."""
+    """ex-9b paso 6: ¿la respuesta corta a esta pregunta la lee el extractor? Las edades; y el "¿un día o varios?" del
+    acompañante (primer paso, aún sin duración)."""
     if slot == SLOT_AGES:
-        return settings.edades_por_extractor
-    return (slot == SLOT_COMPANION_ACTIVITY and settings.duracion_por_extractor
-            and state.detected_duration is None)
+        return True
+    return slot == SLOT_COMPANION_ACTIVITY and state.detected_duration is None
 
 
 async def _lectura_de_la_ia(state: ConversationState, message: str, routing_signals: dict, slot: str) -> dict | None:

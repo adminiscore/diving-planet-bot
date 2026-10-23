@@ -13,7 +13,6 @@ from src.agents import conversational_core as core
 from src.agents.nucleo import extraction as core_extraction
 from src.agents.nucleo import routing as core_routing
 from src.agents.supervisor import route_message
-from src.config import settings
 from src.flows.state import ConversationState, Step
 
 
@@ -2762,17 +2761,18 @@ def test_extra_context_warns_against_uncertified_companion_diving_certified(monk
     FUENTE recuperada, solo la lógica de negocio real). Tener el hecho en
     las notas no bastaba -- hace falta la regla explícita."""
     # ex-9b paso 6: prueba la regla escrita a partir de notas/historial (el camino del regex); con
-    # `notas_rag_desde_estado` la dispara el estado que pone el extractor (test_ex9b_paso6.py).
-    monkeypatch.setattr(settings, "notas_rag_desde_estado", False)
+    # el extractor leyéndolo todo la dispara el estado que pone el extractor (test_ex9b_paso6.py).
     from src.agents.supervisor import _build_extra_context
 
     state = make_state("es")
+    state.extractor_ha_fallado = True  # el camino del regex: el extractor no leyó algún mensaje
     state.remembered_facts = {"notes": ["novia no es buzo certificado"]}
     ctx = _build_extra_context(state)
     assert ctx is not None
     assert "minicurso" in ctx.lower() and "NO puede sumarse" in ctx
 
     state_en = make_state("en")
+    state_en.extractor_ha_fallado = True
     state_en.remembered_facts = {"notes": ["girlfriend is not certified"]}
     ctx_en = _build_extra_context(state_en)
     assert ctx_en is not None
@@ -2794,11 +2794,11 @@ def test_extra_context_never_dived_note_also_triggers_uncertified_rule(monkeypat
     grupo ("tú y tu primo se unen a ella en las inmersiones"). "Nunca ha
     buceado" debe disparar la misma regla."""
     # ex-9b paso 6: prueba la regla escrita a partir de notas/historial (el camino del regex); con
-    # `notas_rag_desde_estado` la dispara el estado que pone el extractor (test_ex9b_paso6.py).
-    monkeypatch.setattr(settings, "notas_rag_desde_estado", False)
+    # el extractor leyéndolo todo la dispara el estado que pone el extractor (test_ex9b_paso6.py).
     from src.agents.supervisor import _build_extra_context
 
     state = make_state("es")
+    state.extractor_ha_fallado = True  # el camino del regex: el extractor no leyó algún mensaje
     state.remembered_facts = {"notes": ["primo nunca ha buceado"]}
     ctx = _build_extra_context(state)
     assert ctx is not None
@@ -2816,11 +2816,11 @@ def test_extra_context_warns_that_inactive_certified_companion_needs_refresher_n
     certificado e inactivo necesita el refresher, no el minicurso -- son
     productos con elegibilidad distinta."""
     # ex-9b paso 6: prueba la regla escrita a partir de notas/historial (el camino del regex); con
-    # `notas_rag_desde_estado` la dispara el estado que pone el extractor (test_ex9b_paso6.py).
-    monkeypatch.setattr(settings, "notas_rag_desde_estado", False)
+    # el extractor leyéndolo todo la dispara el estado que pone el extractor (test_ex9b_paso6.py).
     from src.agents.supervisor import _build_extra_context
 
     state = make_state("es")
+    state.extractor_ha_fallado = True  # el camino del regex: el extractor no leyó algún mensaje
     state.remembered_facts = {"notes": ["amigo certificado hace 8 años no ha buceado"]}
     ctx = _build_extra_context(state)
     assert ctx is not None
@@ -2828,6 +2828,7 @@ def test_extra_context_warns_that_inactive_certified_companion_needs_refresher_n
     assert "refresher" in ctx.lower()
 
     state_en = make_state("en")
+    state_en.extractor_ha_fallado = True
     state_en.remembered_facts = {"notes": ["friend got certified 8 years ago, hasn't dived since"]}
     ctx_en = _build_extra_context(state_en)
     assert ctx_en is not None
@@ -2853,11 +2854,11 @@ def test_extra_context_inactive_certified_rule_survives_incomplete_note_paraphra
     se corrigió que "se certificó" (verbo) no matcheaba el regex de
     certificación (solo cubría "certificado/a", forma adjetivo)."""
     # ex-9b paso 6: prueba la regla escrita a partir de notas/historial (el camino del regex); con
-    # `notas_rag_desde_estado` la dispara el estado que pone el extractor (test_ex9b_paso6.py).
-    monkeypatch.setattr(settings, "notas_rag_desde_estado", False)
+    # el extractor leyéndolo todo la dispara el estado que pone el extractor (test_ex9b_paso6.py).
     from src.agents.supervisor import _build_extra_context
 
     state = make_state("es")
+    state.extractor_ha_fallado = True  # el camino del regex: el extractor no leyó algún mensaje
     # La nota SOLA (como la parafraseó capture_notes esta vez) no basta.
     state.remembered_facts = {"notes": ["amigo no ha buceado en 8 años"]}
     state.history = [
@@ -2883,11 +2884,11 @@ def test_extra_context_inactive_certified_rule_matches_infinitive_bucear_form(mo
     crudo del cliente con la forma infinitiva -- el caso real que fallaba en
     vivo."""
     # ex-9b paso 6: prueba la regla escrita a partir de notas/historial (el camino del regex); con
-    # `notas_rag_desde_estado` la dispara el estado que pone el extractor (test_ex9b_paso6.py).
-    monkeypatch.setattr(settings, "notas_rag_desde_estado", False)
+    # el extractor leyéndolo todo la dispara el estado que pone el extractor (test_ex9b_paso6.py).
     from src.agents.supervisor import _build_extra_context
 
     state = make_state("es")
+    state.extractor_ha_fallado = True  # el camino del regex: el extractor no leyó algún mensaje
     state.remembered_facts = {"notes": []}
     state.history = [
         {"role": "user", "content": (

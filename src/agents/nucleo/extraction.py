@@ -553,10 +553,8 @@ def _relevant_gaps(state: ConversationState, intent, message: str, *, keep_pendi
 
 
 async def _edades_las_lee_el_extractor(state: ConversationState, message: str) -> bool:
-    """ex-9b paso 6 (`edades_por_extractor`): ¿leyó el extractor este mensaje (con su campo `edades`)? Espera la lectura
-    adelantada sin gastarla (`lectura_del_extractor`): ninguna llamada más."""
-    if not settings.edades_por_extractor:
-        return False
+    """ex-9b paso 6: ¿leyó el extractor este mensaje (con su campo `edades`)? Espera la lectura adelantada sin gastarla
+    (`lectura_del_extractor`): ninguna llamada más."""
     from src.agents.nucleo.extractor import lectura_del_extractor  # lazy
 
     return await lectura_del_extractor(state, message) is not None
@@ -848,7 +846,7 @@ def _add_or_ask_companion(state: ConversationState, message: str, activity: str,
     counted = sum((state.detected_group_allocation or {}).values()) or (total or 0)
     se_suma = bool(_ADDITION_CUE_RE.search(message))
     jev = getattr(state, "_jev_adds_person", None)
-    if settings.reparto_al_sumarse_alguien and jev is not None:
+    if jev is not None:
         # ex-9b (19-oct): "¿se suma alguien?" lo decide Jev cuando contesta (`adds_person`); la lista de palabras solo si
         # calla. Con la lista, "mi amigo, el que ya te dije que viene, quiere snorkel" casaba "viene" y se contaba dos
         # veces (Jev 0,30: duda -> se pregunta el total). Banco s4-26: las personas nuevas dan >= 0,45 y casi todas
@@ -870,18 +868,18 @@ def _add_or_ask_companion(state: ConversationState, message: str, activity: str,
     _merge_companion_activity(state, activity, qty)
 
 
-# ex-9b paso 6 (`reparto_al_sumarse_alguien`): por encima, Jev está SEGURO de que el mensaje mete a otra persona en la
+# ex-9b paso 6: por encima, Jev está SEGURO de que el mensaje mete a otra persona en la
 # reserva (`companion_joins`). En los fallos de "se suma alguien a un grupo ya repartido" Jev daba 0,94-0,97.
 _JEV_SE_SUMA_MIN = 0.8
 
 
 def _jev_seguro_de_que_se_suma(state: ConversationState, companion_ambiguous: bool) -> bool:
-    """ex-9b paso 6 (`reparto_al_sumarse_alguien`): el atajo de "el reparto ya cubre a todo el grupo" se saltaba la red de
+    """ex-9b paso 6: el atajo de "el reparto ya cubre a todo el grupo" se saltaba la red de
     acompañantes aunque el mensaje sumara a alguien ("mi hermano también viene, él quiere hacer snorkel" sobre {buceo: 2}
     para 2): la persona se perdía. Se deja pasar el turno solo si el mensaje nombra a otra persona y Jev está seguro de
     que entra en la reserva; el atajo sigue para todo lo demás (se puso porque el router LLM de antes inventaba
     acompañantes). Si el extractor ya amplió el reparto en este turno, `companion_ambiguous` es False y no hace falta."""
-    if not settings.reparto_al_sumarse_alguien or not companion_ambiguous:
+    if not companion_ambiguous:
         return False
     p = getattr(state, "_jev_companion", None)
     if p is None or p < _JEV_SE_SUMA_MIN:
