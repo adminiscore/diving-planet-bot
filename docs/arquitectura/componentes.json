@@ -567,7 +567,14 @@
         "rag_hechos_sin_reintento",
         "intenciones_clima_pago",
         "frases_por_codigo",
-        "hechos_que_faltaban"
+        "hechos_que_faltaban",
+        "grupo_mixto_en_descuentos",
+        "principiante_sin_buceo_certificado",
+        "incluye_lo_que_se_hace",
+        "recogida_se_coordina",
+        "precio_pendiente_con_el_origen",
+        "listas_una_vez",
+        "descuentos_un_sitio"
       ]
     },
     {
@@ -1330,6 +1337,31 @@
       "titulo": "Mensajes mezclados, por partes",
       "texto": "Cuando el cliente pregunta a la vez algo de la tabla (precio, qué incluye, horarios…) y otra cosa, la parte de la tabla la escribe el redactor con los datos del código y el RAG, a la vez, solo lo demás: las listas salen completas y no hace falta rehacer la respuesta (arq-5b, 23-oct)."
     },
+    "incluye_lo_que_se_hace": {
+      "area": "Preguntas",
+      "titulo": "«¿Qué incluye?» dice también lo que se hace",
+      "texto": "Con «¿qué incluye?» el bot da, además de la lista de lo incluido, lo que se hace en la actividad (la clase, la piscina, la inmersión: el itinerario de la ficha) y, en los planes de las islas, que no incluyen transporte desde Cartagena ni almuerzo (arq-8d, G10 nº 6, 23-oct)."
+    },
+    "recogida_se_coordina": {
+      "area": "Preguntas",
+      "titulo": "La recogida en las islas dice cómo se coordina",
+      "texto": "Con la recogida desde un hotel de las islas va también cómo se coordina: en algunos casos la lancha llega al hotel y en otros se indica el muelle o punto más cercano (arq-8e, G10 nº 6, 23-oct)."
+    },
+    "precio_pendiente_con_el_origen": {
+      "area": "Preguntas",
+      "titulo": "El precio que esperaba el origen no se pierde",
+      "texto": "Si el cliente preguntó un precio sin decir desde dónde sale y luego lo dice junto con otra pregunta («salgo de Cartagena, ¿incluye el almuerzo?»), el bot contesta las dos: el precio ya no se pierde (arq-8f, G10 nº 6, 23-oct)."
+    },
+    "descuentos_un_sitio": {
+      "area": "Preguntas",
+      "titulo": "Los descuentos, en un solo sitio",
+      "texto": "Los descuentos (online, grupo, equipo propio, colombianos) se leen solo de discounts.json: el catálogo, los hechos y el índice del RAG. Antes había cinco copias y la del índice era vieja. El de grupo lleva la nota del acompañante: si entra, lo confirma el equipo al pedir el descuento (arq-8h, decisión de Álvaro, 23-oct)."
+    },
+    "listas_una_vez": {
+      "area": "Preguntas",
+      "titulo": "Lo que se repite sale una vez",
+      "texto": "Cuando el bot habla de varias actividades a la vez, lo que es igual en todas (el punto de encuentro, los descuentos) sale una sola vez, y los rótulos del origen no salen dobles ni sueltos (arq-8f, G10 nº 6, 23-oct)."
+    },
     "listas_por_codigo": {
       "area": "Preguntas",
       "titulo": "Las listas las pone el código",
@@ -1354,6 +1386,16 @@
       "area": "Preguntas",
       "titulo": "Hechos que faltaban en la tabla",
       "texto": "Coral da también la excepción del refresher (500+ inmersiones o Divemaster: lo revisa un asesor), que el horario no se puede adelantar (lo ve un asesor), que buceo y snorkel pueden ir en la misma lancha con el snorkel en otra zona, y que quien se aloja en Barú o Playa Blanca sale desde Cartagena (arq-5f, 23-oct)."
+    },
+    "grupo_mixto_en_descuentos": {
+      "area": "Preguntas",
+      "titulo": "Grupo mixto: todo en dólares también al hablar de descuentos",
+      "texto": "Si en el grupo hay colombianos y extranjeros y preguntan por descuentos o por un precio especial, Coral da la regla del grupo mixto (toda la reserva en USD) en vez de «los colombianos pagan en COP», que le hacía decir «cada uno paga en su moneda» (arq-8a, 23-oct)."
+    },
+    "principiante_sin_buceo_certificado": {
+      "area": "Preguntas",
+      "titulo": "A quien no está certificado no se le ofrece el buceo certificado",
+      "texto": "Si el cliente dijo que nunca ha buceado o que no está certificado, Coral no le ofrece reservar una actividad que exige la certificación aunque haya preguntado por «bucear»: sigue la recomendación de siempre (minicurso o curso) y elige él (arq-8c, 23-oct)."
     }
   },
   "areas": [

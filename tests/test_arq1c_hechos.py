@@ -127,7 +127,10 @@ def test_arq3_faltan_los_hechos_que_la_respuesta_no_lleva():
     assert any("referido" in p for p in perdidos)
 
 
-def test_arq3_una_parafrasis_corta_cuenta():
+def test_arq3_una_parafrasis_corta_cuenta(monkeypatch):
+    # Solo la lista y la recogida de siempre (con arq-8d/8e van además lo que se hace y cómo se coordina).
+    monkeypatch.setattr(h.settings, "incluye_lo_que_se_hace", False)
+    monkeypatch.setattr(h.settings, "recogida_se_coordina", False)
     st = _conv(location="island")
     bloques = h.hechos(st, ["incluye"], ["snorkel"])
     lista = bloques[0]["incluye"]["island"]

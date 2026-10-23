@@ -421,6 +421,29 @@ class Settings(BaseSettings):
     # refresher; que el horario no se adelanta (lo ve un asesor); buceo y snorkel en la misma lancha si el turno trae los
     # dos; y que alojados en Barú o Playa Blanca salen desde Cartagena. APAGADO hasta medirlo.
     hechos_que_faltaban: bool = True  # PROMOCIONADO 23-oct (G10 nº 6 con los 8: 92,4 % 42/72 -> 94,3 % 46/72; HISTORY 0.31.98); revert = False
+    # ARQ-8d (23-oct, reparto de Gadea #1617; G10 nº 6, «qué incluye» del minicurso y del Open Water ya en las islas):
+    # con «incluye» va también lo que se HACE (el itinerario de la ficha: la clase, la piscina, la inmersión), si no se
+    # pidió el horario; y lo que no incluyen los planes de las islas es la frase de `island_pickup` que lo dice («no
+    # incluyen transporte desde Cartagena ni almuerzo»), no el párrafo entero, que el redactor saltaba. APAGADO.
+    incluye_lo_que_se_hace: bool = False
+    # ARQ-8e (23-oct, #1617; G10 nº 6, recogida en las islas): la recogida de las islas lleva también cómo se coordina
+    # (las frases de `island_pickup`: «en algunos casos la lancha llega directo al hotel; en otros te indicamos el muelle o
+    # punto más cercano»). APAGADO.
+    recogida_se_coordina: bool = False
+    # ARQ-8f (23-oct, #1617; G10 nº 6, precio de las especialidades): una pregunta de precio que esperaba el origen se
+    # contesta en cuanto se sabe, aunque el mensaje que lo da pregunte otra cosa («soy de Cartagena, ¿incluye el
+    # almuerzo?»): el precio entra en las intenciones del turno. APAGADO.
+    precio_pendiente_con_el_origen: bool = False
+    # ARQ-8f (23-oct, #1617 y #1631; G10 nº 6): lo que el código pinta (listas y frases) va una sola vez: lo que se
+    # repite igual en varias actividades (el punto de encuentro, los descuentos) sale una vez, y el rótulo del origen que
+    # el modelo escribe justo antes de la marca no se duplica ni queda suelto al final. APAGADO.
+    listas_una_vez: bool = False
+    # ARQ-8h (23-oct, decisión de Álvaro por Gadea, #1634): los descuentos, en UN sitio (discounts.json). Estaban en cinco:
+    # discounts.json, pricing.json `discount_policies` (lo que indexa el RAG: sin tildes, el 5 % de equipo sin «solo
+    # buceo recreativo y cursos» y con ROVERD), un texto fijo en el catálogo, avisos.json y ejemplos del prompt. Con el
+    # flag, el catálogo, los hechos y el índice (load_embeddings, al desplegar) los leen de discounts.json, con la nota
+    # del acompañante (lo confirma el equipo al pedir el descuento: la base no dice si entra). APAGADO.
+    descuentos_un_sitio: bool = False
     varias_actividades: bool = False  # ARQ-1j (22-oct): el extractor da TODAS las actividades del mensaje (y el acompañante) y los hechos salen de cada una
     adaptado_contesta_lo_demas: bool = True  # PROMOCIONADO 22-oct (arq-1l: banco DIVE TO HEAL 3/12 -> 11/12; HISTORY 0.31.93); revert = False
     enlace_con_disponibilidad: bool = True  # PROMOCIONADO 22-oct (arq-1m: banco de enlace 3/12 -> 12/12; HISTORY 0.31.93); revert = False
@@ -444,6 +467,12 @@ class Settings(BaseSettings):
     rag_hechos_sin_reintento: bool = True  # PROMOCIONADO 23-oct (G10 nº 6 con los 8: 92,4 % 42/72 -> 94,3 % 46/72; HISTORY 0.31.98); revert = False
     # arq-7d: con `listas_por_codigo`, también la recogida y el alojamiento los pone el código donde el modelo deja la
     # marca (las segundas redacciones que quedaban eran casi todas por esas dos frases). APAGADO.
+    # arq-8a (23-oct, G10 nº 6, g10-043): en un grupo mixto, la lista de descuentos lleva la regla del grupo mixto (todo en
+    # USD) en vez de «los colombianos pagan en COP». APAGADO hasta medirlo.
+    grupo_mixto_en_descuentos: bool = False
+    # arq-8c (23-oct, G10 nº 6, g10-003): a quien dijo que no está certificado no se le ofrece una actividad que exige la
+    # certificación («Si quieres, te ayudo a reservar: *Buceo certificado*»). APAGADO hasta medirlo.
+    principiante_sin_buceo_certificado: bool = False
     frases_por_codigo: bool = True  # PROMOCIONADO 23-oct (G10 nº 6 con los 8: 92,4 % 42/72 -> 94,3 % 46/72; HISTORY 0.31.98); revert = False
     # arq-4b (22-oct, fallos del G10 nº 4), APAGADOS hasta medirlos con su banco:
     recotizar_al_cambiar_moneda: bool = True  # PROMOCIONADO 23-oct (G10 nº 5 con los 11: 90,1 % 34/72 -> 91,2 % 40/72; HISTORY 0.31.96); revert = False · «soy colombiano» DESPUÉS de recibir el precio en USD: se vuelve a dar en COP (g10-003/016/047)

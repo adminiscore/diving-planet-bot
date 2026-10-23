@@ -631,6 +631,15 @@ REDACTOR_LISTAS_POR_CODIGO_EN = (
     "origins. Before it you may write a sentence that introduces it or answers what they ask (for example «Yes, lunch "
     "is included»), without repeating the list items."
 )
+# arq-8d (23-oct, flag `incluye_lo_que_se_hace`): lo que se hace en la actividad, también como lista del código.
+REDACTOR_EN_QUE_CONSISTE_ES = (
+    "\n- `en_que_consiste` es lo que se hace en la actividad: tampoco lo escribas; pon su marca [[en_que_consiste]] en "
+    "una línea sola, junto a la de [[incluye]]."
+)
+REDACTOR_EN_QUE_CONSISTE_EN = (
+    "\n- `en_que_consiste` is what you do in the activity: do not write it either; put its marker [[en_que_consiste]] on "
+    "a line of its own, next to [[incluye]]."
+)
 # arq-7d (23-oct, flag `frases_por_codigo`, latencia): la recogida y el alojamiento también los pone el código.
 REDACTOR_FRASES_POR_CODIGO_ES = (
     "\n- `recogida` y `alojamiento` tampoco los escribas: pon su marca [[recogida]] o [[alojamiento]] en una línea sola "

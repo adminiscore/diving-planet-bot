@@ -45,7 +45,7 @@ from src.agents.jev_router import (
     PIDE_REQUISITOS,
     PIDE_SI_ALCANZA,
 )
-from src.flows.state import Step
+from src.flows.state import ConversationState, Step
 from src.orchestration.router import classify_route
 from src.orchestration.state import (
     ALL_ROUTES,
@@ -161,7 +161,7 @@ async def _router_node(state: BotState) -> dict:
     # del precio, que corre en la reserva y en info. Se pone en cada turno: nunca queda el de un turno anterior.
     conv._jev_pide_precio = signals.get(PIDE_PRECIO)
     # ARQ-1b: las intenciones del mensaje según Jev (vacío si calla), para los hechos por código (src/flows/hechos.py).
-    conv._intenciones = [nombre for nombre, señal in _INTENCION_DE_SENAL.items() if signals.get(señal)]
+    conv._intenciones = intenciones_del_turno(conv, signals)
     conv._otra_cosa = signals.get(PIDE_OTRA_COSA)  # ARQ-1d: None (Jev calla) cuenta como que sí trae algo más
     conv._redactor_dijo_falta = False  # ARQ-1g: lo pone el redactor si los hechos no contestan algo del mensaje
     conv._senales_router = signals  # gen-13: el cierre del turno sabe si el mensaje traía una pregunta
@@ -220,6 +220,19 @@ def get_compiled_graph():
     if _COMPILED_GRAPH is None:
         _COMPILED_GRAPH = _build_graph()
     return _COMPILED_GRAPH
+
+
+def intenciones_del_turno(conv: ConversationState, signals: dict) -> list[str]:
+    """ARQ-1b: las intenciones del mensaje según Jev (vacío si calla), para los hechos por código."""
+    from src.config import settings
+
+    intenciones = [nombre for nombre, señal in _INTENCION_DE_SENAL.items() if signals.get(señal)]
+    if (settings.precio_pendiente_con_el_origen and intenciones and conv.pregunta_precio_pendiente
+            and "precio" not in intenciones):
+        # arq-8f (G10 nº 6): el precio que esperaba el origen se perdía si el mensaje que da el origen pregunta otra cosa
+        # («soy de Cartagena, ¿incluye el almuerzo?»): solo se contestaba la pregunta nueva. Va con ella.
+        intenciones.append("precio")
+    return intenciones
 
 
 async def run_turn_via_graph(conv_state, message: str) -> str:

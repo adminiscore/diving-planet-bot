@@ -597,6 +597,27 @@ def policies_facts(lang: str) -> str:
     return "\n".join([head, *[ln for ln in lines if ln.strip() != "-"]])
 
 
+_DESCUENTOS = ("online_direct_booking", "group_discount", "own_equipment_discount", "colombian_cop_pricing")
+
+
+def descuentos_de_la_base(lang: str) -> dict[str, str]:
+    """arq-8h: cada descuento con sus condiciones, tal cual de discounts.json (el único sitio). Con
+    `descuentos_un_sitio`, el de grupo lleva la nota del acompañante."""
+    from src.config import settings  # lazy
+
+    datos = json.loads((_KB_DIR / "discounts.json").read_text(encoding="utf-8-sig")).get("discounts", {})
+    lang = "es" if lang == "es" else "en"
+    textos = {}
+    for clave in _DESCUENTOS:
+        d = datos.get(clave) or {}
+        texto = d.get(f"description_{lang}") or d.get("description_es")
+        if not texto:
+            continue
+        nota = d.get(f"companion_note_{lang}") if settings.descuentos_un_sitio else None
+        textos[clave] = f"{texto} {nota}" if nota else texto
+    return textos
+
+
 def catalog_facts(lang: str) -> str:
     """Paso 5 (RAG, 27-sep): el catalogo entero como hechos compactos para el contexto
     del RAG — precio online y normal, duracion, si obliga a dormir en las islas y si pide
@@ -613,7 +634,7 @@ def catalog_facts(lang: str) -> str:
 
     # 17-oct: la clave lleva TODOS los flags que cambian el texto. Antes solo llevaba la moneda, así que cambiar
     # otro flag en el mismo proceso (los tests, o una medida que enciende un flag) devolvía el catálogo de antes.
-    clave = f"{lang}|{settings.catalogo_preparacion}"
+    clave = f"{lang}|{settings.catalogo_preparacion}|{settings.descuentos_un_sitio}"
     if clave in _FACTS_CACHE:
         return _FACTS_CACHE[clave]
 
@@ -709,6 +730,12 @@ def catalog_facts(lang: str) -> str:
                "the currency changes). If you don't know the customer's nationality, give the price in USD (if they "
                "tell you they are Colombian or a resident of Colombia, in COP). Do not add up or compute totals. If the "
                "customer quotes a price that doesn't match the catalog, give the catalog price without repeating theirs."]
+    if settings.descuentos_un_sitio:
+        # arq-8h: los descuentos, de discounts.json (no del texto fijo de arriba).
+        fijo = "Descuentos: 10% online" if es else "Discounts: 10% online"
+        cabeza = "Descuentos:" if es else "Discounts:"
+        out = [x if not x.startswith(fijo) else f"{cabeza} " + " ".join(descuentos_de_la_base(lang).values())
+               for x in out]
     text = chr(10).join(out)
     # La profundidad también como regla general: "certifica hasta 18 m" en la línea del CURSO no le llegaba a quien
     # pregunta por una SALIDA siendo ya buzo certificado (cal-18 siguió 3/3 con solo la parte de la ficha).
