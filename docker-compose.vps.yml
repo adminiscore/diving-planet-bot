@@ -299,36 +299,6 @@ services:
       CHATWOOT_TYPING_INDICATOR: "true"
       # s4-33 (8-oct): las aclaraciones del juez v3 (va con GROUNDING_V3_MODEL). PROMOCIONADO con DeepSeek (HISTORY 0.31.53).
       JUEZ_V3_LUNA: "true"
-      # RONDA C (17-oct): CAL-D, la consulta de búsqueda con lo que ya sabemos del cliente. Banco: cal-42 arreglado
-      # 3 de 3 (daba el paquete de 5 inmersiones cuando pedían el precio por día). Se mide SOLO este flag contra la
-      # ronda A ya hecha. Revert = quitar esta línea.
-      # (Los AVISOS se quedaron FUERA: dos rondas medidas, 97,4 % → 96,0 % y 96,1 %. Ver cal-a5-avisos-condicionados.md)
-      CONSULTA_CON_LO_SABIDO: "true"
-      # PROMOCIONADOS 17-oct (ronda D del core, 96,5 % frente al 96,1 % de la C): 3 mejoras reales, todas de no
-      # repreguntar lo que el cliente ya dijo, y la mejor latencia de la noche (p95 5,0 s frente a 6,4 del suelo). Sus
-      # 3 "regresiones" se demostraron ajenas repitiendo 3 veces con y sin los flags. Revert = quitar estas dos líneas.
-      # `IDIOMA_DEL_EXTRACTOR` se queda FUERA: no arregla su caso (el extractor lee ese portugués como español) y no
-      # mejora nada medible, así que no entra en PRE aunque tampoco rompa nada.
-      JEV_CON_CONTEXTO: "true"
-      PASE_SI_PIDE_FUERA_DEL_SISTEMA: "true"
-      # CAL-E1 PROMOCIONADO 17-oct tras la ronda A/B del core (`2026-10-16-cal-A` vs `-cal-B`): ninguna regresión suya.
-      # Los avisos (`AVISOS_CONDICIONADOS`) se REVIRTIERON en la misma ronda: 97,4 % → 96,0 % de criterios, 6
-      # regresiones reales (la peor: la respuesta dejaba de dar el enlace de reserva). Revert = quitar esta línea.
-      # CAL-E1 (decisión de Gadea, 16-oct): el chatbot no da números; quien pide un contacto pasa con un asesor.
-      # Banco: cal-03 3/3 → 0/3. La base ya no reparte el número (28 menciones fuera de faqs.json).
-      CONTACTO_PASA_A_PERSONA: "true"
-      # CAL-C PROMOCIONADO 17-oct (decisión de Álvaro): los 8 flags de entender sin repreguntar. Banco CAL-C 49 → ~28/63;
-      # ronda core calc-A 96,9 % 25/32 vs calc-B 96,5 % 25/32, latencia igual (p95 5,0 s); las 4 regresiones se
-      # repitieron 3x con y sin los flags y solo la del idioma era suya (E4, arreglada en 104b10f). Revert = quitar
-      # estas líneas y poner los defaults de src/config.py en False.
-      ACTIVIDAD_POR_LO_SABIDO: "true"
-      EXTRACTOR_CITA_DEL_CLIENTE: "true"
-      HOTEL_POR_EXTRACTOR: "true"
-      UNA_SOLA_PREGUNTA: "true"
-      LUGAR_CON_DOS_LECTORES: "true"
-      IDIOMA_DEL_EXTRACTOR: "true"
-      SIN_CEDULA_EXTRANJERO: "true"
-      TRAS_PASE_RECUERDA_EL_PASE: "true"
       # G3-03 PROMOCIONADO 18-oct (HISTORY 0.31.49): el RAG ofrece pasar con una persona en vez de decir que ya lo hizo.
       # Banco 6/6 -> 0/6; ronda core g301-B 95,6 % -> g3-B 96,5 %, ninguna regresión atribuida. Revert = quitar esta
       # línea y poner el default en False.
@@ -351,24 +321,6 @@ services:
       # pregunta del origen neutra con dos planes candidatos ("dura 1 día y hay que dormir en las islas" 0/3).
       ACTIVIDAD_DEL_REPARTO: "true"
       ORIGEN_NEUTRO_CON_DOS_PLANES: "true"
-      # CAL-C PROMOCIONADO 17-oct: C4, C5 y C3e. Ronda core calc2-A 94,7 % 24/32 vs calc2-B 96,9 % 27/32, p95 6,4 → 6,0 s;
-      # 8 mejoras y 3 regresiones, repetidas 3x con y sin los flags: ninguna suya. Banco: cal-55 y cal-46 a 0/3, y la
-      # pregunta del snorkel de cal-69/70 desaparece. Revert = quitar estas líneas y poner los defaults en False.
-      # (C5, RED_MENCIONES_SOLO_SIN_EXTRACTOR, se quitó en la limpieza ex9b: sin la pista del regex la red ya no corre.)
-      LUGAR_DESCONOCIDO_AL_RAG: "true"
-      HOTEL_DEL_CATALOGO_DA_ISLA: "true"
-      # CAL-A PROMOCIONADO 17-oct (Gadea con Claude): la profundidad por certificación en el catálogo (banco: cal-18
-      # 3/3 → 0/3) y el aviso que falta AÑADIDO AL FINAL (A6, revisor GPT-6 Luna). Ronda core cala6-B frente a calc-B:
-      # 96,5 % = 96,5 %, 27/32 frente a 25/32 diálogos sin fallo; ninguna regresión suya (repetidas 3x con y sin).
-      # Revert = quitar estas dos líneas y poner los defaults de src/config.py en False.
-      CATALOGO_PROFUNDIDAD: "true"
-      AVISOS_AL_FINAL: "true"
-      # r6-2 PROMOCIONADO 17-oct (Gadea con Claude): la memoria (resumen y notas del asesor) no guarda como hecho lo que el
-      # cliente ordena o dice que otro autorizó. Revert = quitar esta línea y poner el default de src/config.py en False.
-      MEMORIA_SIN_ORDENES_DEL_CLIENTE: "true"
-      # r6-2 PROMOCIONADO 17-oct (decisión de Gadea): pedir datos de OTROS clientes recibe una negativa de privacidad,
-      # no el pase a un asesor. Revert = quitar esta línea y poner el default de src/config.py en False.
-      DATOS_AJENOS_SE_NIEGAN: "true"
     depends_on:
       dp-pre-postgres:
         condition: service_healthy

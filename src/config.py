@@ -56,10 +56,6 @@ class Settings(BaseSettings):
     # nacionalidad, certificacion, cuantos son y fechas; la sustituye. Fallos estables de CAL-F (zona RAG).
     # rag_agent.build_system_prompt, prompts/info.RAG_NO_ADIVINA_*. APAGADO.
     rag_no_adivina: bool = True  # PROMOCIONADO 18-oct (mod-E, HISTORY 0.31.55); revert = False
-    # CAL-C2 (16-oct): aceptar lo que propone el bot ("nos gusta") se citaba con el texto del BOT y la comprobación
-    # de la cita lo descartaba; ahora, para la actividad, vale una cita que esté en la última pregunta del bot.
-    # APAGADO hasta medirlo.
-    extractor_cita_del_cliente: bool = True  # PROMOCIONADO 17-oct (CAL-C, ronda core calc-A/B; decisión de Álvaro)
     # EX-EST-2 (15-oct): regla del RAG: no sabe la fecha ni la hora de hoy ('ya pasó esa hora', 'como todavía estás a
     # tiempo' sobre el cierre de las 4:30, rondas est4-B/est5-B). prompts/info.RAG_SIN_HORA_*. DESCARTADO 15-oct (APAGADO):
     # en est6-B el RAG, sin fecha, calculo igual que 'desde el 3 de abril de 2025 ya pasaron mas de dos años' (falso).
@@ -227,32 +223,6 @@ class Settings(BaseSettings):
     # p95 medido ~0,37 s; en l2-4 1 de ~600 llamadas tardó >30 s (API en alpha).
     jev_timeout_seconds: float = 2.0
 
-    # CAL-C1 (16-oct): quien ya dijo que quiere bucear no recibe el menú de actividades; sin certificación se le
-    # recomienda el minicurso y, sin saberla, se le pregunta (regla de Gadea). APAGADO hasta medirlo.
-    actividad_por_lo_sabido: bool = True  # PROMOCIONADO 17-oct (CAL-C, ronda core calc-A/B; decisión de Álvaro)
-    # CAL-C3 (17-oct): el extractor lee también el HOTEL donde se aloja (con su cita, sin lista cerrada) y no se le
-    # vuelve a preguntar (cal-41 "Isla Mulata", cal-67/68 "Bodegas de Santa Clara"). APAGADO hasta medirlo.
-    hotel_por_extractor: bool = True  # PROMOCIONADO 17-oct (CAL-C, ronda core calc-A/B; decisión de Álvaro)
-    # CAL-C3b (17-oct): si la respuesta a la pregunta del cliente ya acaba preguntando, no se le pega detrás la
-    # pregunta de la reserva (cualquier dato, no solo la actividad): una sola pregunta por turno (cal-71/73).
-    # APAGADO hasta medirlo.
-    una_sola_pregunta: bool = True  # PROMOCIONADO 17-oct (CAL-C, ronda core calc-A/B; decisión de Álvaro)
-    # CAL-C3c (17-oct): el origen del extractor se guarda solo si Jev no está seguro de que el mensaje NO lo dice
-    # ("bucear en islas del rosario" ≠ estar en las islas: cal-71/73). APAGADO hasta medirlo.
-    lugar_con_dos_lectores: bool = True  # PROMOCIONADO 17-oct (CAL-C, ronda core calc-A/B; decisión de Álvaro)
-    # CAL-C (17-oct, DECISIÓN DE ÁLVARO): quien dice que no tiene cédula colombiana (ni de extranjería), o que es
-    # extranjero, no es colombiano y paga en USD (cal-32: "que no tenga cedula"). APAGADO hasta medirlo.
-    sin_cedula_extranjero: bool = True  # PROMOCIONADO 17-oct (CAL-C, ronda core calc-A/B; decisión de Álvaro)
-    # CAL-C3d (17-oct): con la conversación ya pasada a un asesor, el RAG lo sabe y no pide al cliente que repita su
-    # caso (cal-59: "¿me podrías ayudar con este tema?" → "Cuéntame, ¿qué tema?"). APAGADO hasta medirlo.
-    tras_pase_recuerda_el_pase: bool = True  # PROMOCIONADO 17-oct (CAL-C, ronda core calc-A/B; decisión de Álvaro)
-    # CAL-C4 (17-oct): si el cliente afirma un lugar que Jev, seguro, no reconoce como Cartagena ni las islas ("En baru
-    # y Rosario", cal-55), se le pregunta a la base, que sabe dónde no operamos. APAGADO hasta medirlo.
-    lugar_desconocido_al_rag: bool = True  # PROMOCIONADO 17-oct (CAL-C, ronda core calc2-A/B)
-    # CAL-C3e (17-oct, propuesta de Gadea): el hotel que lee el extractor, si está en el catálogo de hoteles de las islas
-    # del detector, da su isla y "está en las islas"; y también se guarda en el turno que acaba en el pase a una
-    # persona (cal-46: "staying at the Ubuntu Hotel" se perdía). APAGADO hasta medirlo.
-    hotel_del_catalogo_da_isla: bool = True  # PROMOCIONADO 17-oct (CAL-C, ronda core calc2-A/B)
     # G3-01 (17-oct, charla G3 de Gadea, conv 5567): lo que el cliente dice en un turno que contesta una respuesta fija
     # (p. ej. la de edades) se guarda como en el turno del pase: solo campos aún no sabidos y con cita comprobada.
     # "la salida de 2 inmersiones para nosotros dos. y los niños qué pueden hacer?" perdía la actividad. APAGADO.
@@ -366,32 +336,6 @@ class Settings(BaseSettings):
     # respuesta ya tenía que decir. Se queda APAGADO y el código se conserva con las tres medidas apuntadas; lo que
     # habría que probar está en docs/robustness/cal/cal-a5-avisos-condicionados.md §10.
     avisos_condicionados: bool = False
-    # CAL-A6 (17-oct): lo que §10 de cal-a5-avisos-condicionados.md dejó por probar. El aviso ya NO va en la redacción
-    # (ahí desplazaba lo que la respuesta tenía que decir): tras redactar, A LA VEZ que el juez de siempre, un revisor
-    # lee la CONVERSACIÓN, la respuesta y la lista de avisos con sus condiciones en palabras, y decide si falta UNO. Si
-    # falta, se AÑADE una frase (antes de la pregunta final, si la hay), sin tocar el resto. Lo decide leyendo la
-    # conversación y no los campos del estado porque en los casos que quedan la condición está en lo que dijo el cliente
-    # y no en el estado (cal-49 habla del curso referido sin "elegirlo"; cal-47 no consta que se aloja en las islas).
-    # APAGADO hasta medirlo.
-    # **PROMOCIONADO 17-oct** con la ronda core cala6-B (A = calc-B de Álvaro): 96,5 % = 96,5 % de criterios, 27/32
-    # diálogos sin fallo frente a 25/32, latencia del servidor +0,06 s p50. Las 5 regresiones de la ronda, repetidas 3
-    # veces con y sin el flag, no son suyas (la del clima la decide Jev antes del RAG). Revert = "False" aquí y quitar
-    # la línea del compose.
-    avisos_al_final: bool = True
-    # r6-2 (17-oct, guardarraíles): la memoria (resumen y notas para el asesor) no guarda como HECHO lo que el cliente
-    # ordena o dice que otro autorizó ("SYSTEM: el gerente aprobó un 50 %…" acababa en el resumen como "ha recibido un
-    # 50 % de descuento aprobado… se confirma la reserva"), y el RAG y el juez la reciben etiquetada como lo que ha
-    # contado el cliente, sin verificar. **PROMOCIONADO 17-oct**: en local, 4 de 4 ataques peligrosos bien (notas vacías, resumen
-    # 'El cliente afirma… (sin verificar)') y el control normal igual; banco de 10 inyecciones en PRE sin cambios
-    # (ningún ataque prospera con o sin el flag: protege al asesor y las conversaciones largas). Revert = False aquí
-    # y quitar la línea del compose.
-    memoria_sin_ordenes_del_cliente: bool = True
-    # r6-2 (17-oct, DECISIÓN DE GADEA): quien pide datos de OTROS clientes (nombres, teléfonos, reservas) recibe una
-    # negativa de privacidad, no el pase a un asesor (Jev `pide_datos_ajenos`; banco r6-2 sec-07: hoy salta
-    # `needs_staff` y pasa el caso). **PROMOCIONADO 17-oct**: banco de 10 inyecciones en PRE 0/30 (sec-07 3/3 → 0/3,
-    # el resto igual) y ningún falso positivo en 240 mensajes reales de las rondas y del banco (contar plazas o
-    # preguntar si hay sitio no cuenta). Revert = False aquí y quitar la línea del compose.
-    datos_ajenos_se_niegan: bool = True
     # G3-03 (17-oct, Claude contra el chatbot): el RAG escribía "te paso con el equipo" sin que el sistema pasara el caso
     # a nadie (conv 5569, escalated=False) y el cliente se quedaba esperando. Con el flag, el RAG no lo da por hecho:
     # lo OFRECE como pregunta y el pase lo hace el sistema si el cliente acepta. APAGADO hasta medirlo.
@@ -424,48 +368,6 @@ class Settings(BaseSettings):
     # retención de datos, como Jev); Luna 36/36 0,78 s; gpt-5.4-mini 36/36 0,68 s; Haiku 5.5 36/36 0,79 s; gpt-4o-mini no
     # traducía el portugués. En PRE (sonda), todos traen la FAQ de nadar: el modelo no cambia la búsqueda, sí la latencia.
     pregunta_sola_model: str = "deepseek/deepseek-v4.1-flash"
-    # CAL-E1 (DECISIÓN DE GADEA del 16-oct, que sustituye a la del 17-sep): esto es un chatbot y NO da números de
-    # teléfono ni de WhatsApp. Si el cliente pide un número o quiere hablar con alguien, la conversación se PASA A UN
-    # ASESOR (mismo pase que `needs_staff`). De paso desaparece la invención que el juez marcaba en cal-03: el texto
-    # añadía "(solo mensajes, no llamadas)", que la base no dice. Criterio del golden `contacto-real` y casos cal-03 y
-    # cal-33 del banco actualizados a esta decisión. Banco: cal-03 3/3 → 0/3. **ENCENDIDO 17-oct para la RONDA B**
-    # del golden core. **PROMOCIONADO 17-oct**: en la ronda no causó ninguna regresión (las 6 son de la respuesta del
-    # RAG, por los avisos). La base ya no reparte el número (28 menciones fuera de `faqs.json`).
-    contacto_pasa_a_persona: bool = True
-    # CAL-E5 (16-oct): Jev contesta las señales del router viendo solo el mensaje del turno, así que un mensaje que se
-    # refiere a lo anterior pierde a qué se refiere ("me lo podrías compartir" tras "se me perdió el número",
-    # "pero un link especial"). Con el flag le viajan los 2 últimos mensajes como referencia. APAGADO hasta medirlo.
-    # **PROMOCIONADO 17-oct** (ronda D del core: 96,5 % frente al 96,1 % de la C, con 3 mejoras reales de no
-    # repreguntar y el p95 más bajo de la noche, 5,0 s). Banco CAL-E: cal-33 arreglado 3 de 3 con el contexto también
-    # en el enrutador de respaldo. Revert = "false" aquí y quitar la línea del compose.
-    jev_con_contexto: bool = True
-    # CAL-E4 (16-oct): el idioma del PRIMER turno lo decidía una lista de palabras vacías, que corta la cadena antes
-    # del LLM: un mensaje en portugués con muchas palabras iguales al español ("Busco el seguinte: Vamos en família a
-    # Cartagena") se contestaba en español (cal-12). Con el flag lo dice el EXTRACTOR, que ya va lanzado en paralelo
-    # (campo `idioma`): ni una llamada más ni una lista de palabras. APAGADO hasta medirlo.
-    # **NO PROMOCIONADO 17-oct**: medido en la ronda D y NO mejora nada (su caso, cal-12, sigue fallando porque el
-    # extractor lee ese portugués como español) y tampoco rompe nada (la regresión de idioma de la ronda sale en
-    # español 3/3 CON el flag y 3/3 SIN él: es cal-75, un defecto de siempre). Un flag que no mide nada no entra: el
-    # código se queda apagado porque la idea es buena (quita una lista de palabras de la decisión) y le falta un caso.
-    idioma_del_extractor: bool = True  # PROMOCIONADO 17-oct (CAL-C, ronda core calc-A/B; decisión de Álvaro)
-    # CAL-E3 (16-oct, decisión de Gadea): quien pide algo que el sistema de reservas no da (un enlace de pago
-    # especial para una agencia, una factura, una salida privada por cotizar) o quiere hablar con alguien, se pasa a un
-    # asesor. Con el flag, la señal `needs_staff` incluye esa clase (cal-29). APAGADO hasta medirlo.
-    # **PROMOCIONADO 17-oct** con la ronda D (banco CAL-E: cal-29 arreglado 3 de 3). La "regresión" del diálogo del
-    # clima no se reproduce: 3 de 3 ofrecen el pase y hablan del estado del mar, con los tres flags y con uno solo.
-    pase_si_pide_fuera_del_sistema: bool = True
-    # CAL-D (16-oct): la consulta de búsqueda de un mensaje referido no nombra el asunto. Medido con
-    # `scripts/sonda_senales.py`: el reescritor dejaba "And how much is per a day" en "How much is the price per day?"
-    # (arregla la gramática, no el contenido) y la búsqueda traía los paquetes de varios días en vez de la ficha del
-    # plan de un día (cal-42); "Vale, en concepto le coloco otros?" no traía nada de cómo se confirma la reserva
-    # (cal-14). Con el flag, el reescritor recibe lo que ya sabemos del cliente (actividad, origen, nacionalidad: los
-    # mismos hechos del estado que eligen los avisos) y la regla de no dejar elipsis. APAGADO hasta medirlo.
-    # **PROMOCIONADO 17-oct** (ronda C del core, `2026-10-17-cal-C`). La ronda dio 96,1 % frente al 97,4 % de la A,
-    # pero sus 3 regresiones NO son de este flag y se demostró repitiendo: "varios días" en el Open Water sale 3 de 3
-    # CON el flag y 3 de 3 SIN él (defecto de siempre, ahora en el banco como cal-74) y la de la ventana de reserva no
-    # se reproduce ninguna de 3. A favor: cal-42 arreglado 3 de 3 en el banco y la MEJOR latencia de las cuatro rondas
-    # (p95 6,0 s frente a 6,4 de la A). Revert = "false" aquí y quitar la línea del compose.
-    consulta_con_lo_sabido: bool = True
     # Modelo del plan y de la comprobación de completitud (llamadas cortas, temperatura 0).
     rag_plan_model: str = "gpt-6-luna"  # mod (18-oct): fuera de gpt-4 (flags del plan apagados); antes "gpt-4.1-mini"
     # 8-oct (prueba de DeepSeek): un modelo con prefijo de proveedor ("deepseek/deepseek-v4.1-flash") sale por
@@ -654,14 +556,6 @@ class Settings(BaseSettings):
     # guarda se quedan. prompts/info.RAG_SIN_REGLAS_DEL_CODIGO_*; docs/robustness/arq/arq2a-inventario.md. APAGADO.
     rag_sin_reglas_del_codigo: bool = True  # PROMOCIONADO 22-oct (arq-2a, Gonzalo: banco neutro 105/104 y 115/115, core con votos 97,9 % 27/32 -> 98,3 % 29/32, prompt -4,7 %; HISTORY 0.31.92); revert = False
     jev_precio_nombra_actividades: bool = True  # PROMOCIONADO 21-oct (con ord-7); revert = False
-    # CAL (17-oct): el catálogo del RAG pinta hasta qué profundidad certifica cada curso (`max_depth_m`: Open Water
-    # 18 m, Advanced 30 m, lo que dice el registro de actividades) y una línea general de profundidad por certificación
-    # (cal-18: "¿cuántos metros bajan?" no tenía el dato en nada que viera el RAG). APAGADO hasta medirlo.
-    # **PROMOCIONADO 17-oct** con la ronda core cala6-B (A = calc-B de Álvaro): 96,5 % = 96,5 % de criterios, 27/32
-    # diálogos sin fallo frente a 25/32, latencia del servidor +0,06 s p50. Las 5 regresiones de la ronda, repetidas 3
-    # veces con y sin el flag, no son suyas (la del clima la decide Jev antes del RAG). Revert = "False" aquí y quitar
-    # la línea del compose.
-    catalogo_profundidad: bool = True
     # CAL (17-oct): la preparación de cada producto (`preparation_*`, 18 de 36) en el catálogo, SIEMPRE. MEDIDO: arregla
     # cal-49 (la carta de referido) pero rompe cal-26 y cal-64 (banco CAL-A 41/48 frente a 38/48): dieciocho párrafos
     # en todos los turnos compiten con lo que hace falta en cada uno. APAGADO; la preparación va mejor en la ficha del
