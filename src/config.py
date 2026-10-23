@@ -147,10 +147,6 @@ class Settings(BaseSettings):
     # p95 medido ~0,37 s; en l2-4 1 de ~600 llamadas tardó >30 s (API en alpha).
     jev_timeout_seconds: float = 2.0
 
-    # - gen-6 (21-oct): la puerta del origen quita las frases con importe; si el RAG escribía "…cuesta:", una línea en
-    #   blanco y la lista de precios, el título quedaba colgado ("La salida de 2 inmersiones cuesta:" y luego la pregunta
-    #   del origen). conversational_core._sin_importes. APAGADO.
-    origen_sin_titulo_suelto: bool = True  # PROMOCIONADO 21-oct (con `baru_sale_de_cartagena`, misma ronda gen6-A3/B3; HISTORY 0.31.81); revert = False
     # (antes, mod-G/mod-H: APAGADO; con la regla de is_certified afinada sigue el
     # minicurso a 183 USD en reserva-solo-link: el extractor toma el «no» de «no, buceé hace poco» (a «¿eres buzo
     # certificado?») como no certificado; arreglado con «buceé hace poco» en IS_CERTIFIED_DICHO_*.)
@@ -183,9 +179,6 @@ class Settings(BaseSettings):
     # r6-1(d) (17-oct, salir de gpt-4.1; acordado con Gadea): el respaldo del RAG es otra petición al MISMO modelo
     # (Luna) a los `rag_respaldo_segundos`, en vez de gpt-4.1-mini. APAGADO hasta medir latencia (p95/máx) y calidad.
     respaldo_mismo_modelo: bool = False
-    # CAL-A1 (16-oct): la respuesta del RAG se redacta a temperatura 0 (hoy 0,3). 18 de los 56 fallos del RAG en ex-10
-    # eran azar (docs/robustness/investigacion/diagnostico-73-fallos.md). APAGADO hasta medirlo (banco de fallos, 3 reps).
-    rag_temperatura_cero: bool = True  # PROMOCIONADO 21-oct (ord-4: core ord4-A 96,5 % 25/32 frente a ord4-B 97,4 % 26/32, 3 mejoras reales y 0 regresiones; banco de omisiones 15 -> 17/54; HISTORY 0.31.86); revert = False
     # CAL-A2 (16-oct): antes de redactar, un PLAN (src/agents/rag_plan.py) saca la lista de lo que el cliente pregunta y la
     # redacción la contesta punto por punto. APAGADO hasta medirlo.
     rag_plan_primero: bool = False
@@ -251,54 +244,14 @@ class Settings(BaseSettings):
     # petición por OpenAI (`respaldo_si_openrouter_falla`) y gana la primera que termine bien, para todas las piezas.
     # 0 = apagado (el respaldo solo cuando OpenRouter falla, como hasta hoy).
     openrouter_respaldo_segundos: float = 5.0  # PROMOCIONADO 19-oct (ex9b-4: saltó 1 vez, ganó el respaldo); revert = 0.0
-    # gen-1 + gen-3 (20-oct, fase GEN; docs/robustness/gen/gen1-diagnostico.md). El RAG a solas cubre el 96 % de los
-    # datos; en una conversación el dato se perdía en el PASE por tema sensible: la respuesta fija se comía el resto del
-    # mensaje ("¿cómo estará el mar el jueves? ¿el precio incluye el equipo?" -> solo "te conecto con el equipo").
-    # - Contestar lo contestable y luego pasar (médico y clima): el RAG contesta las OTRAS preguntas del mensaje, sin
-    #   tocar el tema sensible, y después va la línea del pase. escalation_agent._lo_contestable.
-    # - gen-13 (21-oct): lo mismo para CUALQUIER pase a un asesor (contacto, pago, grupo privado, cambios de reserva,
-    #   necesidades especiales, post-venta, «pásame con alguien»), en un solo sitio: el cierre del turno
-    #   (supervisor.route_message -> escalation_agent.lo_contestable_en_cualquier_pase). Causa 2 de G10/G9 (~27 fallos).
-    #   Las emergencias, las quejas, los datos personales y el fallo técnico se pasan solos.
-    contesta_antes_de_cualquier_pase: bool = True  # PROMOCIONADO 21-oct (banco 4/16 -> 16/16; core gen13-A 97,4 % 27/32 frente a gen13-B 97,4 % 26/32, 0 regresiones del flag; HISTORY 0.31.84); revert = False
     # 22-oct (Gonzalo con Claude; propuesta #1252, Gadea #1255): la palabra de control «NADA» de contestar antes del
     # pase le llegaba al cliente cuando el aviso al final iba pegado detrás (se miraba len < 30): 8 turnos en las rondas
     # del 21-22, también en G10. Con el flag cuenta la primera línea entera. escalation_agent._es_nada. APAGADO.
     nada_en_primera_linea: bool = True  # PROMOCIONADO 22-oct (Gonzalo: el NADA de contestar antes del pase ya no llega al cliente; 8 turnos en las rondas del 21-22; HISTORY 0.31.92); revert = False
-    # gen-5 (20-oct, Gonzalo con Claude; idioma del primer turno): el idioma de la apertura se decidía en cuatro sitios.
-    # La reserva (`_setup_phase`) usaba el extractor, las palabras vacías, el LLM y G-10 (otro idioma → inglés); lo
-    # sensible, `_reply_language` (solo palabras); el contacto y "¿eres un bot?", `_infer_language` (solo pistas); la
-    # edad y el buceo adaptado, el "es" por defecto. Ninguno de los tres últimos aplicaba G-10. Con el flag se decide
-    # UNA vez en el router, a la vez que las señales, con la cadena de la reserva (`nucleo.setup.idioma_de_apertura`),
-    # y todos los caminos la heredan. APAGADO hasta medirlo (banco docs/robustness/gen/dialogos-gen5.json).
-    idioma_unico_de_apertura: bool = True  # PROMOCIONADO 21-oct (gen5-B 96,6 % 27/32 frente a gen5-A 97,0 % 26/32; los que empeoran no pasan por el idioma; HISTORY 0.31.74); revert = False
-    # gen-12 (21-oct): el RAG no da por hecho si el cliente es hombre o mujer (prompts/info.RAG_SIN_GENERO_*). Va con
-    # `rag_no_adivina` (promocionado). La base, además, ya no nombra el sistema interno de reservas (criterio sin-fugas).
-    sin_genero_supuesto: bool = True  # PROMOCIONADO 21-oct (ronda sin desplegar gen12-B 96,5 % 26/32 frente a gen12-A 96,1 % 24/32; banco gen-2: género 2/52 -> 0/39; HISTORY 0.31.75); revert = False
-    # gen-3b (21-oct, Gonzalo con Claude; "pasa directamente cuando toca"): cambiar la fecha, cancelar o cambiar el
-    # número de personas de una reserva YA HECHA daba la política y OFRECÍA el pase («¿te conecto con un asesor o
-    # prefieres volver al menú principal?», un menú que ya no existe) sin marcarlo. Con el flag se da la política y se
-    # pasa a un asesor (motivo + resumen), como `needs_staff`: el bot no ve las reservas. rutas/changes.py. APAGADO.
-    cambio_de_reserva_pasa: bool = True  # PROMOCIONADO 21-oct (ronda sin desplegar gen3b-B 97,8 % 28/32 frente a gen3b-A 98,3 % 28/32; los 2 que empeoran no pasan por el pase; banco gen-3b 8/26 -> 26/26; HISTORY 0.31.77); revert = False
-    # - El servicio privado (salida, lancha o instructor solo para su grupo, grupo cerrado, evento de empresa) pasa
-    #   DIRECTAMENTE en cuanto lo pide (decisión de Gadea, 21-oct). Solo pasaba si el mensaje decía "servicio privado",
-    #   "grupo cerrado" o "evento corporativo"; lo demás iba al RAG, que solo puede OFRECER el pase. Lo dice Jev
-    #   (`pide_servicio_privado`) y responde el grupo privado (rutas/info.py). APAGADO.
-    privado_pasa_directo: bool = True  # PROMOCIONADO 21-oct (con `cambio_de_reserva_pasa`, misma ronda gen3b-A/B; HISTORY 0.31.77); revert = False
     # s4-33 (9-oct): razonamiento de GPT-6 Luna cuando hace de juez de grounding ("none" = como el resto de llamadas a
     # gpt-6; "low"/"medium" = razona antes de la lista y el tope de salida sube 4000 tokens, como el juez gpt-5/o).
     # Se mide con scripts/banco_juez_reales.py --ajuste juez_luna_razonamiento=low.
     juez_luna_razonamiento: str = "none"
-    # ord-7 (21-oct, decisión de Gadea con ord-0): cuando la puerta del origen salta, quitaba también lo que incluye,
-    # el almuerzo y el enlace, y el cliente se quedaba sin nada de lo que preguntó (ord-0: 3 de las 4 omisiones de
-    # redacción). Ahora, si se sabe de qué actividad pregunta y tiene un plan por origen, el código pone las DOS
-    # variantes del catálogo (desde Cartagena y ya en las islas: precio online por persona en su moneda, el transporte
-    # y si lleva almuerzo) y pregunta el origen para seguir. Sin actividad concreta (los paquetes de buceo), como hoy.
-    origen_dos_variantes: bool = True  # PROMOCIONADO 21-oct (ord-7: bancos 2/14 -> 12/14 y 2/8 -> 8/8; core ord7-B2 96,6 % 25/32 frente a ord4-A 96,5 % 25/32, ninguna regresion de ord-7; HISTORY 0.31.86); revert = False
-    # ord-7b (21-oct, decisión de Gadea con ord-0: con niños, la edad mínima EN CIFRA): la tarjeta «qué puede hacer cada
-    # quien» pone la edad mínima de cada opción («minicurso de buceo (desde 10 años)») y dice quién es cada línea en el
-    # idioma del cliente (en inglés salía «8 años», g10-049).
-    tarjeta_edades_en_cifra: bool = True  # PROMOCIONADO 21-oct (con ord-7); revert = False
     # ord-7 (21-oct): la pregunta de Jev «¿pide el precio?» nombra las actividades del centro; con «the dive center's
     # activities» a secas, «¿Cuánto cuesta el snorkel?» salía 0,55 (umbral 0,7) y la puerta del origen no saltaba.
     # ARQ (22-oct, fase ARQ, decisión de Gadea: docs/robustness/arq/plan-hechos-por-codigo.md): Jev da las intenciones
@@ -412,7 +365,6 @@ class Settings(BaseSettings):
     # completo, no calcular totales, días de cierre y mal tiempo, y una viñeta repetida del tono. Las que solo vigila un
     # guarda se quedan. prompts/info.RAG_SIN_REGLAS_DEL_CODIGO_*; docs/robustness/arq/arq2a-inventario.md. APAGADO.
     rag_sin_reglas_del_codigo: bool = True  # PROMOCIONADO 22-oct (arq-2a, Gonzalo: banco neutro 105/104 y 115/115, core con votos 97,9 % 27/32 -> 98,3 % 29/32, prompt -4,7 %; HISTORY 0.31.92); revert = False
-    jev_precio_nombra_actividades: bool = True  # PROMOCIONADO 21-oct (con ord-7); revert = False
     # CAL (17-oct): la preparación de cada producto (`preparation_*`, 18 de 36) en el catálogo, SIEMPRE. MEDIDO: arregla
     # cal-49 (la carta de referido) pero rompe cal-26 y cal-64 (banco CAL-A 41/48 frente a 38/48): dieciocho párrafos
     # en todos los turnos compiten con lo que hace falta en cada uno. APAGADO; la preparación va mejor en la ficha del

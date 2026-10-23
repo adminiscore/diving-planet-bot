@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-23T21:20:51+00:00",
-  "commit": "0b44aaa4",
+  "generado": "2026-10-23T21:45:04+00:00",
+  "commit": "41e2645c",
   "rama": "feature/sim5-alvaro"
  },
  "vistas": {
@@ -135,20 +135,6 @@
      "sin_efecto": false
     },
     {
-     "nombre": "jev_precio_nombra_actividades",
-     "titulo": "Jev reconoce una pregunta de precio de cualquier actividad",
-     "codigo": true,
-     "pre": true,
-     "sin_efecto": false
-    },
-    {
-     "nombre": "idioma_unico_de_apertura",
-     "titulo": "El idioma del primer mensaje se decide una vez para todo",
-     "codigo": true,
-     "pre": true,
-     "sin_efecto": false
-    },
-    {
      "nombre": "grupo_de_una_persona",
      "titulo": "«Es para una persona» cuenta como el grupo",
      "codigo": true,
@@ -185,13 +171,6 @@
    "que_hace": "Datos personales, links rotos, temas delicados o cuando hace falta una persona: pasa el caso a un asesor.",
    "donde": "src/agents/escalation_agent.py:escalation_node",
    "interruptores": [
-    {
-     "nombre": "contesta_antes_de_cualquier_pase",
-     "titulo": "Contesta lo que puede antes de CUALQUIER pase a un asesor",
-     "codigo": true,
-     "pre": true,
-     "sin_efecto": false
-    },
     {
      "nombre": "nada_en_primera_linea",
      "titulo": "La palabra de control «NADA» no le llega al cliente",
@@ -237,15 +216,7 @@
    "nodo_grafo": "changes",
    "que_hace": "Cancelar, cambiar de fecha o de número de personas: explica la política y ofrece botones.",
    "donde": "src/agents/changes_agent.py:changes_node",
-   "interruptores": [
-    {
-     "nombre": "cambio_de_reserva_pasa",
-     "titulo": "Cambiar o cancelar una reserva hecha pasa a un asesor",
-     "codigo": true,
-     "pre": true,
-     "sin_efecto": false
-    }
-   ],
+   "interruptores": [],
    "modelos": [],
    "tiempos": {
     "n": 11,
@@ -280,22 +251,7 @@
    "zoom": "info",
    "que_hace": "Políticas con texto fijo (alcohol, alergias, edad…) y, para el resto, busca la respuesta en la base de conocimiento (RAG).",
    "donde": "src/agents/info_agent.py:info_node",
-   "interruptores": [
-    {
-     "nombre": "privado_pasa_directo",
-     "titulo": "El servicio privado pasa a un asesor en cuanto lo piden",
-     "codigo": true,
-     "pre": true,
-     "sin_efecto": false
-    },
-    {
-     "nombre": "tarjeta_edades_en_cifra",
-     "titulo": "Con niños, la edad mínima en cifra",
-     "codigo": true,
-     "pre": true,
-     "sin_efecto": false
-    }
-   ],
+   "interruptores": [],
    "nota": "Por esta ruta solo llegan las preguntas que no son de reserva. La mayoría de las preguntas se contestan desde la Reserva («contesta y sigue»), así que el RAG trabaja muchas más veces de las que pasa un mensaje por aquí.",
    "modelos": [],
    "tiempos": {
@@ -509,15 +465,7 @@
      "pre": "gpt-5.4-mini"
     }
    ],
-   "interruptores": [
-    {
-     "nombre": "idioma_unico_de_apertura",
-     "titulo": "El idioma del primer mensaje se decide una vez para todo",
-     "codigo": true,
-     "pre": true,
-     "sin_efecto": false
-    }
-   ],
+   "interruptores": [],
    "marca": "openai",
    "tiempos": {
     "n": 179,
@@ -1070,38 +1018,10 @@
    ],
    "interruptores": [
     {
-     "nombre": "origen_dos_variantes",
-     "titulo": "Sin saber el origen, da las dos variantes",
-     "codigo": true,
-     "pre": true,
-     "sin_efecto": false
-    },
-    {
-     "nombre": "origen_sin_titulo_suelto",
-     "titulo": "Al quitar los precios, no deja el título colgado",
-     "codigo": true,
-     "pre": true,
-     "sin_efecto": false
-    },
-    {
-     "nombre": "sin_genero_supuesto",
-     "titulo": "No da por hecho si el cliente es hombre o mujer",
-     "codigo": true,
-     "pre": true,
-     "sin_efecto": false
-    },
-    {
      "nombre": "rag_sin_hora",
      "titulo": "El RAG no supone la hora",
      "codigo": false,
      "pre": false,
-     "sin_efecto": false
-    },
-    {
-     "nombre": "rag_temperatura_cero",
-     "titulo": "La respuesta se redacta sin azar (temperatura 0)",
-     "codigo": true,
-     "pre": true,
      "sin_efecto": false
     },
     {
@@ -1867,19 +1787,6 @@
    "sin_efecto": null
   },
   {
-   "nombre": "cambio_de_reserva_pasa",
-   "area": "Respuestas fijas",
-   "titulo": "Cambiar o cancelar una reserva hecha pasa a un asesor",
-   "texto": "Cambiar la fecha, cancelar o cambiar el número de personas de una reserva ya hecha solo lo puede hacer el equipo. Antes Coral explicaba la política y preguntaba «¿te conecto con un asesor o prefieres volver al menú principal?», con un menú que ya no existe, y nadie se enteraba si el cliente no contestaba. Ahora explica la política y pasa directamente a un asesor con el resumen.",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [
-    "changes"
-   ],
-   "sin_efecto": null
-  },
-  {
    "nombre": "catalogo_preparacion",
    "area": "Preguntas",
    "titulo": "El catálogo enseña la preparación de cada plan (apagado: medido y empeora)",
@@ -1915,19 +1822,6 @@
    "fijado_en_pre": true,
    "usado_por": [
     "preparacion"
-   ],
-   "sin_efecto": null
-  },
-  {
-   "nombre": "contesta_antes_de_cualquier_pase",
-   "area": "Enrutador",
-   "titulo": "Contesta lo que puede antes de CUALQUIER pase a un asesor",
-   "texto": "Si un turno acaba pasando la conversación al equipo por cualquier motivo (pide una persona, un contacto, un servicio privado, un cambio de reserva…) y el mensaje trae además otras preguntas, Coral contesta primero esas preguntas y después hace el pase. No lo hace con los datos sensibles, las quejas o emergencias ni los fallos técnicos, que van solos (gen-13, 21-oct).",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [
-    "safety"
    ],
    "sin_efecto": null
   },
@@ -2177,20 +2071,6 @@
    "sin_efecto": null
   },
   {
-   "nombre": "idioma_unico_de_apertura",
-   "area": "Chat",
-   "titulo": "El idioma del primer mensaje se decide una vez para todo",
-   "texto": "Solo la reserva decidía bien el idioma del primer mensaje. Si el cliente empezaba pidiendo un teléfono, preguntando si Coral es un bot, por la edad de un niño o por un tema médico, otra regla más simple contestaba a veces en español a quien escribía en inglés o en portugués. Ahora el enrutador decide el idioma una sola vez, a la vez que clasifica el mensaje, y todas las respuestas lo usan.",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [
-    "router",
-    "b_setup"
-   ],
-   "sin_efecto": null
-  },
-  {
    "nombre": "incluye_lo_que_se_hace",
    "area": "Preguntas",
    "titulo": "«¿Qué incluye?» dice también lo que se hace",
@@ -2214,19 +2094,6 @@
    "usado_por": [
     "safety",
     "r_hechos"
-   ],
-   "sin_efecto": null
-  },
-  {
-   "nombre": "jev_precio_nombra_actividades",
-   "area": "Enrutador",
-   "titulo": "Jev reconoce una pregunta de precio de cualquier actividad",
-   "texto": "La pregunta de Jev «¿pide el precio?» nombra las actividades del centro (salidas y paquetes, minicurso o refresher, snorkel, cursos y especialidades). Sin eso, «¿Cuánto cuesta el snorkel?» no contaba como pregunta de precio, no se preguntaba el origen y se cotizaba Cartagena sin saberlo (ord-7, 21-oct).",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [
-    "router"
    ],
    "sin_efecto": null
   },
@@ -2321,32 +2188,6 @@
    "sin_efecto": null
   },
   {
-   "nombre": "origen_dos_variantes",
-   "area": "Preguntas",
-   "titulo": "Sin saber el origen, da las dos variantes",
-   "texto": "Si el cliente pregunta el precio o qué incluye una actividad y no sabemos si sale de Cartagena o ya está en las islas, Coral da las dos variantes del catálogo (precio online por persona en su moneda, el transporte y si lleva almuerzo) y pregunta el origen para pasarle el plan y el enlace exactos. Antes se callaba todo lo que dependía del origen (ord-7, decisión de Gadea, 21-oct).",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [
-    "r_escribir"
-   ],
-   "sin_efecto": null
-  },
-  {
-   "nombre": "origen_sin_titulo_suelto",
-   "area": "Preguntas",
-   "titulo": "Al quitar los precios, no deja el título colgado",
-   "texto": "Cuando Coral pregunta el origen antes de dar precios, quita de la respuesta las frases con importes. Si los precios iban en una lista separada por una línea en blanco, quedaba suelto el título ('La salida de 2 inmersiones cuesta:'). Ahora se quita también.",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [
-    "r_escribir"
-   ],
-   "sin_efecto": null
-  },
-  {
    "nombre": "paquete_varios_dias",
    "area": "Preguntas",
    "titulo": "«El paquete de varios días» sin decir cuántos",
@@ -2408,19 +2249,6 @@
    "fijado_en_pre": false,
    "usado_por": [
     "r_hechos"
-   ],
-   "sin_efecto": null
-  },
-  {
-   "nombre": "privado_pasa_directo",
-   "area": "Respuestas fijas",
-   "titulo": "El servicio privado pasa a un asesor en cuanto lo piden",
-   "texto": "Antes solo pasaba si el cliente decía literalmente «servicio privado», «grupo cerrado» o «evento corporativo». Con «¿podemos tener la lancha solo para nosotros?», Coral contestaba y solo OFRECÍA el pase. Ahora la IA que clasifica el mensaje reconoce cualquier petición de algo solo para su grupo, y la conversación pasa directamente a un asesor para la cotización. El resumen lleva lo que dijo (cuántos son, la fecha).",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [
-    "info"
    ],
    "sin_efecto": null
   },
@@ -2529,19 +2357,6 @@
    "sin_efecto": null
   },
   {
-   "nombre": "rag_temperatura_cero",
-   "area": "Preguntas",
-   "titulo": "La respuesta se redacta sin azar (temperatura 0)",
-   "texto": "La misma pregunta con el mismo contexto da siempre la misma respuesta. En el examen ex-10, 18 de los 56 fallos del RAG eran azar: unas veces lo decía y otras no.",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [
-    "r_escribir"
-   ],
-   "sin_efecto": null
-  },
-  {
    "nombre": "recogida_se_coordina",
    "area": "Preguntas",
    "titulo": "La recogida en las islas dice cómo se coordina",
@@ -2627,32 +2442,6 @@
    "fijado_en_pre": true,
    "usado_por": [
     "b_slotfill_close"
-   ],
-   "sin_efecto": null
-  },
-  {
-   "nombre": "sin_genero_supuesto",
-   "area": "Preguntas",
-   "titulo": "No da por hecho si el cliente es hombre o mujer",
-   "texto": "Si el cliente no lo ha dicho, Coral no le aplica palabras con género («tranquilo», «bienvenido», «colombiana»): usa formas que valgan para cualquiera («tranqui», «te damos la bienvenida»).",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [
-    "r_escribir"
-   ],
-   "sin_efecto": null
-  },
-  {
-   "nombre": "tarjeta_edades_en_cifra",
-   "area": "Preguntas",
-   "titulo": "Con niños, la edad mínima en cifra",
-   "texto": "La tarjeta de qué puede hacer cada persona según su edad dice la edad mínima de cada opción (por ejemplo, «minicurso de buceo (desde 10 años)») y, en inglés, quién es cada línea en inglés (antes salía «8 años») (ord-7b, decisión de Gadea, 21-oct).",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [
-    "info"
    ],
    "sin_efecto": null
   },

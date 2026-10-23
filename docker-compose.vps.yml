@@ -132,28 +132,6 @@ services:
       # "compiled grammar is too large", y contestaba siempre el respaldo). Se queda el respaldo POR TIEMPO de
       # OpenRouter (5 s): si no contesta en 5 s, la misma petición sale por OpenAI.
       OPENROUTER_RESPALDO_SEGUNDOS: "5.0"
-      # gen-13 (21-oct, PROMOCIONADO): lo contestable va también antes de CUALQUIER pase a un asesor. Revert = "false".
-      CONTESTA_ANTES_DE_CUALQUIER_PASE: "true"
-      # gen-5 (Gonzalo, 20-oct; docs/robustness/gen/gen5-diagnostico.md): el idioma del primer mensaje se decide una vez
-      # en el router, con la cadena de la reserva y G-10, y todas las rutas lo heredan. PROMOCIONADO 21-oct (gen5-B
-      # frente a gen5-A, del mismo día; los que empeoran no pasan por el idioma).
-      IDIOMA_UNICO_DE_APERTURA: "true"
-      # gen-12 (21-oct): el RAG no da por hecho si el cliente es hombre o mujer. PROMOCIONADO (ronda sin desplegar
-      # gen12-B frente a gen12-A; banco gen-2 sin palabras de género). La base ya no nombra «ROVERD» (va con el despliegue).
-      SIN_GENERO_SUPUESTO: "true"
-      # gen-3b (Gonzalo, 21-oct; docs/robustness/gen/gen3b-diagnostico.md): con una reserva YA hecha, cambiar la fecha,
-      # cancelar o cambiar el número de personas da la política y pasa directo a un asesor; el servicio privado pasa
-      # directo en cuanto lo pide (decisión de Gadea). PROMOCIONADO 21-oct (gen3b-B frente a gen3b-A, del mismo día; los
-      # que empeoran no pasan por el pase). Revert = quitar estas dos líneas.
-      CAMBIO_DE_RESERVA_PASA: "true"
-      PRIVADO_PASA_DIRECTO: "true"
-      ORIGEN_SIN_TITULO_SUELTO: "true"
-      # ord-7 (21-oct, PROMOCIONADO): sin origen, las dos variantes; la edad mínima en cifra; Jev ve el precio del
-      # snorkel. ord-4: el escritor del RAG a temperatura 0. Revert = quitar estas cuatro líneas.
-      ORIGEN_DOS_VARIANTES: "true"
-      TARJETA_EDADES_EN_CIFRA: "true"
-      JEV_PRECIO_NOMBRA_ACTIVIDADES: "true"
-      RAG_TEMPERATURA_CERO: "true"
       # ARQ (22-oct, PROMOCIONADO, decisión de Gadea tras el G10 de control): el redactor de hechos (arq-1d/1e/1h +
       # arq-3), «soy de Medellín» (arq-1f), los hechos en los mensajes mezclados (arq-1g), menos reglas en el prompt
       # del RAG (arq-2a), la caché del extractor (arq-2b) y el NADA que no llega al cliente. Revert = quitar estas líneas.

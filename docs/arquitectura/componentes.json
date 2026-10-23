@@ -92,8 +92,6 @@
       ],
       "interruptores": [
         "jev_router_enabled",
-        "jev_precio_nombra_actividades",
-        "idioma_unico_de_apertura",
         "grupo_de_una_persona",
         "ya_reservo_no_es_pase"
       ],
@@ -113,7 +111,6 @@
       "que_hace": "Datos personales, links rotos, temas delicados o cuando hace falta una persona: pasa el caso a un asesor.",
       "donde": "src/agents/escalation_agent.py:escalation_node",
       "interruptores": [
-        "contesta_antes_de_cualquier_pase",
         "nada_en_primera_linea",
         "adaptado_contesta_lo_demas",
         "hechos_en_el_pase",
@@ -129,9 +126,7 @@
       "nodo_grafo": "changes",
       "que_hace": "Cancelar, cambiar de fecha o de número de personas: explica la política y ofrece botones.",
       "donde": "src/agents/changes_agent.py:changes_node",
-      "interruptores": [
-        "cambio_de_reserva_pasa"
-      ]
+      "interruptores": []
     },
     {
       "id": "deflection",
@@ -154,10 +149,7 @@
       "zoom": "info",
       "que_hace": "Políticas con texto fijo (alcohol, alergias, edad…) y, para el resto, busca la respuesta en la base de conocimiento (RAG).",
       "donde": "src/agents/info_agent.py:info_node",
-      "interruptores": [
-        "privado_pasa_directo",
-        "tarjeta_edades_en_cifra"
-      ],
+      "interruptores": [],
       "nota": "Por esta ruta solo llegan las preguntas que no son de reserva. La mayoría de las preguntas se contestan desde la Reserva («contesta y sigue»), así que el RAG trabaja muchas más veces de las que pasa un mensaje por aquí."
     },
     {
@@ -327,9 +319,7 @@
       "modelos": [
         "openai_model"
       ],
-      "interruptores": [
-        "idioma_unico_de_apertura"
-      ]
+      "interruptores": []
     },
     {
       "id": "b_availability",
@@ -574,11 +564,7 @@
         "rag_answer_model"
       ],
       "interruptores": [
-        "origen_dos_variantes",
-        "origen_sin_titulo_suelto",
-        "sin_genero_supuesto",
         "rag_sin_hora",
-        "rag_temperatura_cero",
         "respaldo_mismo_modelo",
         "rag_plan_primero",
         "avisos_condicionados",
@@ -987,11 +973,6 @@
       "titulo": "Preguntar un precio no es elegir",
       "texto": "Si el cliente solo pregunta cuánto cuesta algo ('¿cuánto vale el paquete de 5 inmersiones?'), el bot no da por hecho que lo ha elegido ni que es buzo certificado: es una duda. Decir lo que quiere hacer sí lo elige."
     },
-    "origen_sin_titulo_suelto": {
-      "area": "Preguntas",
-      "titulo": "Al quitar los precios, no deja el título colgado",
-      "texto": "Cuando Coral pregunta el origen antes de dar precios, quita de la respuesta las frases con importes. Si los precios iban en una lista separada por una línea en blanco, quedaba suelto el título ('La salida de 2 inmersiones cuesta:'). Ahora se quita también."
-    },
     "avisos_condicionados": {
       "area": "Preguntas",
       "titulo": "Avisos que el cliente necesita y no pregunta",
@@ -1012,11 +993,6 @@
       "titulo": "El revisor también mira que no falte nada",
       "texto": "Además de comprobar que la respuesta no inventa, se comprueba que contesta cada punto que preguntó el cliente. Si falta alguno se reescribe una vez; si la reescritura sale peor, se queda la primera."
     },
-    "rag_temperatura_cero": {
-      "area": "Preguntas",
-      "titulo": "La respuesta se redacta sin azar (temperatura 0)",
-      "texto": "La misma pregunta con el mismo contexto da siempre la misma respuesta. En el examen ex-10, 18 de los 56 fallos del RAG eran azar: unas veces lo decía y otras no."
-    },
     "formato_whatsapp": {
       "area": "Chat",
       "titulo": "Formato de WhatsApp",
@@ -1027,25 +1003,10 @@
       "titulo": "Permitir proveedores que entrenan",
       "texto": "Solo para probar modelos por OpenRouter con datos anonimizados: deja usar proveedores que entrenan con los mensajes (como la API oficial de DeepSeek). Apagado siempre con clientes reales."
     },
-    "jev_precio_nombra_actividades": {
-      "area": "Enrutador",
-      "titulo": "Jev reconoce una pregunta de precio de cualquier actividad",
-      "texto": "La pregunta de Jev «¿pide el precio?» nombra las actividades del centro (salidas y paquetes, minicurso o refresher, snorkel, cursos y especialidades). Sin eso, «¿Cuánto cuesta el snorkel?» no contaba como pregunta de precio, no se preguntaba el origen y se cotizaba Cartagena sin saberlo (ord-7, 21-oct)."
-    },
     "juez_revisa_con_cita": {
       "area": "Preguntas",
       "titulo": "El revisor pide la cita antes de rechazar",
       "texto": "Cuando el revisor de las respuestas del RAG rechaza una frase, se le pide la cita literal de la base que la respalda; si la trae (y sus cifras y enlaces están en la base), la respuesta pasa. Antes rechazaba respuestas correctas y la que se regeneraba salía peor."
-    },
-    "contesta_antes_de_cualquier_pase": {
-      "area": "Enrutador",
-      "titulo": "Contesta lo que puede antes de CUALQUIER pase a un asesor",
-      "texto": "Si un turno acaba pasando la conversación al equipo por cualquier motivo (pide una persona, un contacto, un servicio privado, un cambio de reserva…) y el mensaje trae además otras preguntas, Coral contesta primero esas preguntas y después hace el pase. No lo hace con los datos sensibles, las quejas o emergencias ni los fallos técnicos, que van solos (gen-13, 21-oct)."
-    },
-    "sin_genero_supuesto": {
-      "area": "Preguntas",
-      "titulo": "No da por hecho si el cliente es hombre o mujer",
-      "texto": "Si el cliente no lo ha dicho, Coral no le aplica palabras con género («tranquilo», «bienvenido», «colombiana»): usa formas que valgan para cualquiera («tranqui», «te damos la bienvenida»)."
     },
     "reparto_en_pares": {
       "area": "Reserva",
@@ -1061,31 +1022,6 @@
       "area": "Preguntas",
       "titulo": "El RAG no supone la hora",
       "texto": "Regla del RAG: no sabe la fecha ni la hora de hoy, así que no dice 'ya pasó esa hora' ni 'todavía estás a tiempo' con el cierre de las 4:30; da la regla completa."
-    },
-    "origen_dos_variantes": {
-      "area": "Preguntas",
-      "titulo": "Sin saber el origen, da las dos variantes",
-      "texto": "Si el cliente pregunta el precio o qué incluye una actividad y no sabemos si sale de Cartagena o ya está en las islas, Coral da las dos variantes del catálogo (precio online por persona en su moneda, el transporte y si lleva almuerzo) y pregunta el origen para pasarle el plan y el enlace exactos. Antes se callaba todo lo que dependía del origen (ord-7, decisión de Gadea, 21-oct)."
-    },
-    "tarjeta_edades_en_cifra": {
-      "area": "Preguntas",
-      "titulo": "Con niños, la edad mínima en cifra",
-      "texto": "La tarjeta de qué puede hacer cada persona según su edad dice la edad mínima de cada opción (por ejemplo, «minicurso de buceo (desde 10 años)») y, en inglés, quién es cada línea en inglés (antes salía «8 años») (ord-7b, decisión de Gadea, 21-oct)."
-    },
-    "privado_pasa_directo": {
-      "area": "Respuestas fijas",
-      "titulo": "El servicio privado pasa a un asesor en cuanto lo piden",
-      "texto": "Antes solo pasaba si el cliente decía literalmente «servicio privado», «grupo cerrado» o «evento corporativo». Con «¿podemos tener la lancha solo para nosotros?», Coral contestaba y solo OFRECÍA el pase. Ahora la IA que clasifica el mensaje reconoce cualquier petición de algo solo para su grupo, y la conversación pasa directamente a un asesor para la cotización. El resumen lleva lo que dijo (cuántos son, la fecha)."
-    },
-    "cambio_de_reserva_pasa": {
-      "area": "Respuestas fijas",
-      "titulo": "Cambiar o cancelar una reserva hecha pasa a un asesor",
-      "texto": "Cambiar la fecha, cancelar o cambiar el número de personas de una reserva ya hecha solo lo puede hacer el equipo. Antes Coral explicaba la política y preguntaba «¿te conecto con un asesor o prefieres volver al menú principal?», con un menú que ya no existe, y nadie se enteraba si el cliente no contestaba. Ahora explica la política y pasa directamente a un asesor con el resumen."
-    },
-    "idioma_unico_de_apertura": {
-      "area": "Chat",
-      "titulo": "El idioma del primer mensaje se decide una vez para todo",
-      "texto": "Solo la reserva decidía bien el idioma del primer mensaje. Si el cliente empezaba pidiendo un teléfono, preguntando si Coral es un bot, por la edad de un niño o por un tema médico, otra regla más simple contestaba a veces en español a quien escribía en inglés o en portugués. Ahora el enrutador decide el idioma una sola vez, a la vez que clasifica el mensaje, y todas las respuestas lo usan."
     },
     "contexto_tras_el_pase": {
       "area": "Preguntas",
