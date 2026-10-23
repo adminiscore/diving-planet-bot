@@ -328,6 +328,8 @@ def turn_metrics_line(conversation_id: str, facts: dict, started_at: str, second
         # arq-4 (22-oct): quién contestó lo de la tabla ("redactor"; "falta"/"guardas" si se rindió) o por qué no le
         # tocó al redactor ("otra_cosa", "jev_calla", "sin_actividad", "sin_lectura", "no_cubre"...).
         payload["hechos"] = facts["hechos_por_codigo"]
+    if facts.get("openrouter"):
+        payload["openrouter"] = facts["openrouter"]  # mej-7: "cortado" si OpenRouter estaba cortado (clave o crédito)
     if facts.get("rag_respaldo"):
         # 8-oct: respuesta del RAG con respaldo. "principal" (contestó antes de la espera), "gana_principal" /
         # "gana_respaldo" (saltó el respaldo y ganó ese), "error_principal" (falló el principal y contestó el respaldo).

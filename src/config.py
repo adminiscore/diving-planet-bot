@@ -559,6 +559,12 @@ class Settings(BaseSettings):
     # ex-9b (19-oct): al tapar los datos personales, las cifras DENTRO de un enlace (coordenadas de Google Maps) no se
     # tapan, salvo en los enlaces de WhatsApp (llevan un teléfono). APAGADO hasta medirlo.
     pii_respeta_urls: bool = True  # PROMOCIONADO 20-oct (ex9b-7/8); revert = False
+    # mej-7 (23-oct, Gonzalo con Claude, encargo de Gadea #1566): si OpenRouter contesta 401, 402 o 403 (la clave o el
+    # crédito: el 21-oct, ronda respaldo-luna, 401 en las 93 vueltas y en cada pieza), se deja de llamar a OpenRouter
+    # estos segundos: cada pieza va directa a su respaldo de OpenAI y Jev se salta (decide el router LLM), en vez de
+    # perder ~0,25 s por llamada y repetir el fallo en cada pieza de cada turno. Se avisa una vez por corte en el log
+    # (ERROR) y en [TURN_METRICS] (`openrouter=cortado`). 0 = apagado (hoy: se intenta siempre y se repite en OpenAI).
+    openrouter_corte_segundos: float = 0.0
     openrouter_respaldo_segundos: float = 5.0  # PROMOCIONADO 19-oct (ex9b-4: saltó 1 vez, ganó el respaldo); revert = 0.0
     # gen-1 + gen-3 (20-oct, fase GEN; docs/robustness/gen/gen1-diagnostico.md). El RAG a solas cubre el 96 % de los
     # datos; en una conversación el dato se perdía en el PASE por tema sensible: la respuesta fija se comía el resto del
