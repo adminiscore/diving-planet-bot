@@ -1,8 +1,8 @@
 {
  "meta": {
-  "generado": "2026-10-23T16:50:17+00:00",
-  "commit": "6dfb7041",
-  "rama": "feature/arq8-alvaro"
+  "generado": "2026-10-23T18:35:16+00:00",
+  "commit": "baf9290f",
+  "rama": "feature/pre_gadea"
  },
  "vistas": {
   "general": {
@@ -1452,6 +1452,20 @@
      "titulo": "Hechos que faltaban en la tabla",
      "codigo": true,
      "pre": true,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "grupo_mixto_en_descuentos",
+     "titulo": "Grupo mixto: todo en dólares también al hablar de descuentos",
+     "codigo": false,
+     "pre": false,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "principiante_sin_buceo_certificado",
+     "titulo": "A quien no está certificado no se le ofrece el buceo certificado",
+     "codigo": false,
+     "pre": false,
      "sin_efecto": false
     },
     {
@@ -2977,6 +2991,19 @@
    "sin_efecto": null
   },
   {
+   "nombre": "grupo_mixto_en_descuentos",
+   "area": "Preguntas",
+   "titulo": "Grupo mixto: todo en dólares también al hablar de descuentos",
+   "texto": "Si en el grupo hay colombianos y extranjeros y preguntan por descuentos o por un precio especial, Coral da la regla del grupo mixto (toda la reserva en USD) en vez de «los colombianos pagan en COP», que le hacía decir «cada uno paga en su moneda» (arq-8a, 23-oct).",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
+   "usado_por": [
+    "r_hechos"
+   ],
+   "sin_efecto": null
+  },
+  {
    "nombre": "hechos_al_rag",
    "area": "Preguntas",
    "titulo": "Hechos del código también en los mensajes mezclados",
@@ -3516,6 +3543,19 @@
    "fijado_en_pre": true,
    "usado_por": [
     "r_reescribir"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "principiante_sin_buceo_certificado",
+   "area": "Preguntas",
+   "titulo": "A quien no está certificado no se le ofrece el buceo certificado",
+   "texto": "Si el cliente dijo que nunca ha buceado o que no está certificado, Coral no le ofrece reservar una actividad que exige la certificación aunque haya preguntado por «bucear»: sigue la recomendación de siempre (minicurso o curso) y elige él (arq-8c, 23-oct).",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
+   "usado_por": [
+    "r_hechos"
    ],
    "sin_efecto": null
   },

@@ -11,6 +11,7 @@ import pytest
 
 from src.config import settings
 from src.flows import catalog, hechos
+from src.flows.state import ConversationState
 
 DISCOUNTS = json.loads((Path(__file__).resolve().parents[1] / "data/knowledge_base/discounts.json")
                        .read_text(encoding="utf-8-sig"))["discounts"]
@@ -43,7 +44,7 @@ def test_el_catalogo_lee_la_base(un_sitio, lang):
 
 
 def test_los_hechos_llevan_la_nota(un_sitio):
-    assert any(DISCOUNTS["group_discount"]["companion_note_es"] in x for x in hechos._descuentos("es"))
+    assert any(DISCOUNTS["group_discount"]["companion_note_es"] in x for x in hechos._descuentos(ConversationState(conversation_id="arq8h", language="es"), "es"))
 
 
 def test_el_indice_lee_la_base(un_sitio):

@@ -738,6 +738,12 @@ class Settings(BaseSettings):
     rag_hechos_sin_reintento: bool = True  # PROMOCIONADO 23-oct (G10 nº 6 con los 8: 92,4 % 42/72 -> 94,3 % 46/72; HISTORY 0.31.98); revert = False
     # arq-7d: con `listas_por_codigo`, también la recogida y el alojamiento los pone el código donde el modelo deja la
     # marca (las segundas redacciones que quedaban eran casi todas por esas dos frases). APAGADO.
+    # arq-8a (23-oct, G10 nº 6, g10-043): en un grupo mixto, la lista de descuentos lleva la regla del grupo mixto (todo en
+    # USD) en vez de «los colombianos pagan en COP». APAGADO hasta medirlo.
+    grupo_mixto_en_descuentos: bool = False
+    # arq-8c (23-oct, G10 nº 6, g10-003): a quien dijo que no está certificado no se le ofrece una actividad que exige la
+    # certificación («Si quieres, te ayudo a reservar: *Buceo certificado*»). APAGADO hasta medirlo.
+    principiante_sin_buceo_certificado: bool = False
     frases_por_codigo: bool = True  # PROMOCIONADO 23-oct (G10 nº 6 con los 8: 92,4 % 42/72 -> 94,3 % 46/72; HISTORY 0.31.98); revert = False
     # arq-4b (22-oct, fallos del G10 nº 4), APAGADOS hasta medirlos con su banco:
     recotizar_al_cambiar_moneda: bool = True  # PROMOCIONADO 23-oct (G10 nº 5 con los 11: 90,1 % 34/72 -> 91,2 % 40/72; HISTORY 0.31.96); revert = False · «soy colombiano» DESPUÉS de recibir el precio en USD: se vuelve a dar en COP (g10-003/016/047)
