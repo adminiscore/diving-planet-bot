@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-23T09:32:20+00:00",
-  "commit": "e04bc093",
+  "generado": "2026-10-23T09:48:57+00:00",
+  "commit": "88c53475",
   "rama": "feature/pre_gadea"
  },
  "vistas": {
@@ -261,6 +261,13 @@
      "titulo": "DIVE TO HEAL no se come lo demás",
      "codigo": true,
      "pre": true,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "hechos_en_el_pase",
+     "titulo": "Antes del pase, con los hechos del código",
+     "codigo": false,
+     "pre": false,
      "sin_efecto": false
     }
    ],
@@ -2849,6 +2856,19 @@
    "fijado_en_pre": true,
    "usado_por": [
     "r_hechos"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "hechos_en_el_pase",
+   "area": "Enrutador",
+   "titulo": "Antes del pase, con los hechos del código",
+   "texto": "Cuando Coral pasa la conversación a un asesor (un pago que falla, un cambio de reserva, alguien que pide hablar con una persona, el buceo adaptado) y contesta antes lo demás que pregunta el cliente, lo de precios, qué incluye, horarios o descuentos sale de los datos del código, no de memoria (arq-5a, 23-oct).",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
+   "usado_por": [
+    "safety"
    ],
    "sin_efecto": null
   },

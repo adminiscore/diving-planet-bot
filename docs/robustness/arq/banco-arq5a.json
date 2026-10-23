@@ -1,0 +1,74 @@
+{
+ "about": "arq-5a (23-oct, flag HECHOS_EN_EL_PASE): turnos que pasan a un asesor (pago que falla, cambio de reserva, pide una persona, buceo adaptado) y preguntan además cosas de la tabla; el RAG de «contestar antes del pase» las da con los hechos del código. Frases nuestras (no salen de G9/G10). Control: un pase sin nada más no añade datos.",
+ "dialogos": [
+  {
+   "id": "e1-pago-incluye",
+   "tipo": "pase",
+   "turnos": [
+    "Hola, estoy intentando pagar el minicurso por la web y no me deja terminar. ¿Qué incluye exactamente?"
+   ],
+   "todas": [
+    "piscina",
+    "seguro",
+    "instructor"
+   ]
+  },
+  {
+   "id": "e2-persona-snorkel-islas",
+   "tipo": "pase",
+   "turnos": [
+    "Hola, estamos en el hotel San Pedro de Majagua, somos 4 y no sabemos si bucear o hacer snorkel. ¿Qué incluye el snorkel y cuánto cuesta? Prefiero hablar con una persona."
+   ],
+   "todas": [
+    "45|150.000",
+    "seguro",
+    "recog"
+   ]
+  },
+  {
+   "id": "e3-cambio-fecha-recogida",
+   "tipo": "pase",
+   "turnos": [
+    "Hi, I already booked the 2-dive trip from the islands but I need to change the date. Also, what time is the hotel pickup and what should I bring?"
+   ],
+   "todas": [
+    "9:30",
+    "towel"
+   ]
+  },
+  {
+   "id": "e4-adaptado-acompanante",
+   "tipo": "pase",
+   "turnos": [
+    "Hola, mi madre usa silla de ruedas y queremos buceo adaptado desde Cartagena. Yo iría de acompañante sin bucear, ¿qué incluye el plan de acompañante?"
+   ],
+   "todas": [
+    "lancha",
+    "seguro"
+   ]
+  },
+  {
+   "id": "e5-pago-descuento-equipo",
+   "tipo": "pase",
+   "turnos": [
+    "Hello, the payment page fails when I try to pay for the 4-dive package. Do you give a discount if I bring all my own gear?"
+   ],
+   "todas": [
+    "5%|5 %",
+    "complete"
+   ]
+  },
+  {
+   "id": "c1-cancelar-solo",
+   "tipo": "control",
+   "turnos": [
+    "Quiero cancelar mi reserva del sábado, ¿me devuelven el dinero?"
+   ],
+   "ninguno": [
+    "piscina",
+    "almuerzo",
+    "incluye"
+   ]
+  }
+ ]
+}
