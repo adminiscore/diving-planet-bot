@@ -256,6 +256,16 @@ services:
       REDACTOR_SIN_PREGUNTAS_DE_CIERRE: "true"
       DESCUENTOS_EN_LA_TABLA: "true"
       FECHA_CON_DIA_DE_LA_SEMANA: "true"
+      # arq-5, arq-1i, arq-7 y arq-1v (23-oct, PROMOCIONADO con el G10 nº 6: 94,3 % 46/72) y mej-7 (corte de OpenRouter).
+      TIEMPO_LIMITADO: "true"
+      INTENCIONES_CLIMA_PAGO: "true"
+      HECHOS_QUE_FALTABAN: "true"
+      HECHOS_EN_EL_PASE: "true"
+      DOS_MONEDAS_SIN_NACIONALIDAD: "true"
+      LISTAS_POR_CODIGO: "true"
+      RAG_HECHOS_SIN_REINTENTO: "true"
+      FRASES_POR_CODIGO: "true"
+      OPENROUTER_CORTE_SEGUNDOS: "300"
       ACUSE_MODEL: "gpt-5.4-nano"
       NOTAS_MODEL: "deepseek/deepseek-v4.1-flash"
       # ex-4 (12-oct): el extractor "LLM primero" de la fase EX (src/agents/extractor_turno.py).
