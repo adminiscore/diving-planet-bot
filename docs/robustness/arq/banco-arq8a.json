@@ -1,0 +1,103 @@
+{
+ "about": "arq-8a (23-oct, decisión de Gadea: antes de real-1). Grupo mixto (colombianos o residentes con extranjeros): toda la reserva se paga en USD (política mixed_nationality_group), también cuando preguntan por descuentos o por un precio especial y no por el precio. Causa vista en el G10 nº 6 y en su mini-ronda: con la intención «descuento» los hechos llevaban la regla de los colombianos en COP y no la del grupo mixto, y el redactor decía «cada uno paga en su moneda». Frases nuestras (no salen de G9/G10). Controles: un grupo solo de colombianos y uno solo de extranjeros.",
+ "dialogos": [
+  {
+   "id": "m1-descuento-medellin-alemania",
+   "tipo": "mixto",
+   "turnos": [
+    "Somos dos amigos, uno de Medellín y otro de Alemania. ¿Tienen algún descuento para colombianos en el snorkel?"
+   ],
+   "todas": [
+    "usd|dolares|dólares",
+    "todo el grupo|toda la reserva|todos pagan|todos en"
+   ],
+   "ninguno": [
+    "cada uno paga en su moneda|cada uno en su moneda|paga en pesos colombianos y|pagas en pesos y"
+   ]
+  },
+  {
+   "id": "m2-pagamos-distinto",
+   "tipo": "mixto",
+   "turnos": [
+    "Voy con mi esposo, que es francés; yo soy de Cartagena. ¿Pagamos distinto por el minicurso?"
+   ],
+   "todas": [
+    "usd|dolares|dólares",
+    "todo el grupo|toda la reserva|todos pagan|todos en|ambos pagan|los dos pagan"
+   ],
+   "ninguno": [
+    "cada uno paga en su moneda|cada uno en su moneda|paga en pesos colombianos y|pagas en pesos y"
+   ]
+  },
+  {
+   "id": "m3-precio-cali-espana",
+   "tipo": "mixto",
+   "turnos": [
+    "Somos tres: dos de Cali y una amiga de España. ¿Cuánto nos sale el minicurso desde Cartagena?"
+   ],
+   "todas": [
+    "usd|dolares|dólares",
+    "todo el grupo|toda la reserva|todos pagan|todos en"
+   ],
+   "ninguno": [
+    "cada uno paga en su moneda|cada uno en su moneda|paga en pesos colombianos y|pagas en pesos y"
+   ]
+  },
+  {
+   "id": "m4-precio-especial-para-ella",
+   "tipo": "mixto",
+   "turnos": [
+    "Hola, ¿qué descuentos tienen?",
+    "Vamos mi novia, que es de Bogotá, y yo, que soy de México. ¿Hay precio especial para ella?"
+   ],
+   "todas": [
+    "usd|dolares|dólares",
+    "todo el grupo|toda la reserva|todos pagan|todos en|ambos pagan|los dos pagan"
+   ],
+   "ninguno": [
+    "cada uno paga en su moneda|cada uno en su moneda|paga en pesos colombianos y|pagas en pesos y"
+   ]
+  },
+  {
+   "id": "m5-en-local-discount",
+   "tipo": "mixto",
+   "turnos": [
+    "My girlfriend is Colombian and I'm from Canada. Do we get a local discount for the fun dives?"
+   ],
+   "todas": [
+    "usd|dollars",
+    "whole group|whole booking|entire group|entire booking|both pay|all pay"
+   ],
+   "ninguno": [
+    "each pays in their own currency|she pays in pesos|she can pay in pesos|pays in cop and"
+   ]
+  },
+  {
+   "id": "c1-solo-colombianos",
+   "tipo": "control",
+   "turnos": [
+    "Somos dos de Barranquilla. ¿Hay descuento por ser colombianos en el snorkel?"
+   ],
+   "todas": [
+    "cop|pesos",
+    "mismo|no hay"
+   ],
+   "ninguno": [
+    "todo el grupo paga en|toda la reserva se paga en"
+   ]
+  },
+  {
+   "id": "c2-solo-extranjeros",
+   "tipo": "control",
+   "turnos": [
+    "Somos dos alemanes. ¿Tienen descuento para extranjeros en el minicurso?"
+   ],
+   "todas": [
+    "usd|dolares|dólares|10"
+   ],
+   "ninguno": [
+    "todo el grupo paga en|toda la reserva se paga en"
+   ]
+  }
+ ]
+}

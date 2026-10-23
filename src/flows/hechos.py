@@ -229,7 +229,7 @@ def hechos(state: ConversationState, intenciones: list[str], actividades: list[s
         if "edad" in pedidas:
             bloque["edad"] = {"minima": registro.min_age, "maxima": registro.max_age}
         if "descuento" in pedidas:
-            bloque["descuento"] = _descuentos(lang)
+            bloque["descuento"] = _descuentos(state, lang)
         if "tiempo" in pedidas:
             bloque.update(_tiempo(lang))
         bloque.update(_clima_y_pago(state, pedidas, lang))
@@ -349,14 +349,20 @@ def _pago_extranjero(lang: str) -> str | None:
 INTENCIONES_SIN_ACTIVIDAD = frozenset({"horario", "disponibilidad", "requisitos", "descuento", "tiempo", "clima", "pago"})
 
 
-def _descuentos(lang: str) -> list[str]:
+def _descuentos(state: ConversationState, lang: str) -> list[str]:
     """arq-4b (flag `descuentos_en_la_tabla`): los descuentos con sus condiciones, tal cual de discounts.json (online,
     grupo, equipo propio y que no hay descuento por ser colombiano). Son los mismos para todas las actividades: cada uno
     dice a qué aplica."""
     datos = json.loads(_DISCOUNTS.read_text(encoding="utf-8-sig")).get("discounts", {})
     claves = ("online_direct_booking", "group_discount", "own_equipment_discount", "colombian_cop_pricing")
-    return [d.get(f"description_{lang}") or d.get("description_es") for d in (datos.get(c) or {} for c in claves)
-            if d.get(f"description_{lang}") or d.get("description_es")]
+    # arq-8a (G10 nº 6, g10-043): «mi pareja es colombiana y yo extranjera, ¿hay descuento?» llevaba «los colombianos
+    # pagan en COP» y no la regla del grupo mixto (esa solo iba con el precio): «tu pareja paga en pesos y tú en dólares».
+    # En un grupo mixto, la regla de la moneda es la suya, como en `regla_moneda`.
+    mixto = settings.grupo_mixto_en_descuentos and getattr(state, "mixed_nationality_notice", False)
+    lista = [_politica("mixed_nationality_group", lang) if mixto and c == "colombian_cop_pricing"
+             else (datos.get(c) or {}).get(f"description_{lang}") or (datos.get(c) or {}).get("description_es")
+             for c in claves]
+    return [x for x in lista if x]
 
 
 def hechos_sin_actividad(state: ConversationState, intenciones: list[str]) -> list[dict]:
@@ -387,7 +393,7 @@ def hechos_sin_actividad(state: ConversationState, intenciones: list[str]) -> li
             bloque["requisitos"].insert(0, _politica("certification_required", lang))
             bloque["requisitos"] = [p for p in bloque["requisitos"] if p]
     if "descuento" in pedidas:
-        bloque["descuento"] = _descuentos(lang)
+        bloque["descuento"] = _descuentos(state, lang)
     bloque.update(_clima_y_pago(state, pedidas, lang))
     return _lo_que_faltaba(state, [bloque], pedidas, lang)
 

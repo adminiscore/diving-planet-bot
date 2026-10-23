@@ -1,0 +1,69 @@
+{
+ "about": "arq-8b (23-oct, decisión de Gadea: antes de real-1). Quien dice que se aloja en un hotel de las islas ya ha dado el origen («ya en las islas»): no se le pregunta «¿desde dónde saldrías?», tampoco en un mensaje largo con varias preguntas. Causa vista en el G10 nº 6 y en su mini-ronda (g10-051, las dos veces). Frases nuestras (no salen de G9/G10). Control: un hotel de Cartagena (sí se cotiza desde Cartagena, sin precio de las islas) y un mensaje sin hotel (sí se pregunta el origen).",
+ "dialogos": [
+  {
+   "id": "o1-mulata-varias-preguntas",
+   "tipo": "hotel-islas",
+   "turnos": [
+    "Buenas, vamos a estar tres noches en el hotel Mulata. ¿Cuánto cuesta el minicurso para dos? ¿Incluye el traslado desde el hotel? ¿Qué hay que llevar?"
+   ],
+   "todas": [
+    "134|475.000"
+   ],
+   "ninguno": [
+    "desde donde saldrias|desde donde sales|saldrias desde cartagena|sales desde cartagena o"
+   ]
+  },
+  {
+   "id": "o2-palmeras-snorkel",
+   "tipo": "hotel-islas",
+   "turnos": [
+    "Hola! Me quedo en el Eco Hotel Las Palmeras la próxima semana. Quisiera hacer snorkel, ¿qué precio tiene, me recogen en el hotel y cómo reservo?"
+   ],
+   "ninguno": [
+    "desde donde saldrias|desde donde sales|saldrias desde cartagena|sales desde cartagena o"
+   ]
+  },
+  {
+   "id": "o3-majagua-buceo",
+   "tipo": "hotel-islas",
+   "turnos": [
+    "Soy buzo Advanced y me hospedo en San Pedro de Majagua. ¿Tienen salidas el viernes? ¿Cuánto vale bucear dos inmersiones? ¿Necesito llevar el carné?"
+   ],
+   "ninguno": [
+    "desde donde saldrias|desde donde sales|saldrias desde cartagena|sales desde cartagena o"
+   ]
+  },
+  {
+   "id": "o4-en-staying-at-cocoliso",
+   "tipo": "hotel-islas",
+   "turnos": [
+    "Hi, we're staying at Cocoliso for 2 nights. How much is the discover scuba course, is the boat from the hotel included and how do we book it?"
+   ],
+   "ninguno": [
+    "where would you be departing|where will you depart|depart from cartagena or|leave from cartagena or"
+   ]
+  },
+  {
+   "id": "c1-hotel-cartagena",
+   "tipo": "control",
+   "turnos": [
+    "Hola, estoy en un hotel del centro histórico de Cartagena. ¿Cuánto cuesta el minicurso y qué incluye?"
+   ],
+   "todas": [
+    "183|655.000"
+   ]
+  },
+  {
+   "id": "c2-sin-hotel",
+   "tipo": "control",
+   "turnos": [
+    "Hola, ¿cuánto cuesta el minicurso y qué incluye?"
+   ],
+   "todas": [
+    "cartagena",
+    "islas"
+   ]
+  }
+ ]
+}
