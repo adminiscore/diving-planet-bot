@@ -164,3 +164,20 @@ def test_el_precio_pendiente_entra_en_las_intenciones(monkeypatch, flag, pendien
     conv = _estado("cartagena")
     conv.pregunta_precio_pendiente = pendiente
     assert graph.intenciones_del_turno(conv, {n: True for n in intenciones}) == esperado
+
+
+@pytest.mark.parametrize("flag, jev, mensaje, queda", [
+    (True, False, "soy de Medellín", "¿cuánto cuesta bucear?"),                 # no pregunta precio: se queda la de antes
+    (False, False, "soy de Medellín", "soy de Medellín"),                       # apagado, como antes
+    (True, True, "¿y el snorkel cuánto vale?", "¿y el snorkel cuánto vale?"),  # otro precio: manda el nuevo
+    (True, None, "somos de Bogotá", "¿cuánto cuesta bucear?"),                 # Jev calla: las palabras de siempre
+])
+def test_la_pregunta_de_precio_guardada_no_se_pisa(monkeypatch, flag, jev, mensaje, queda):
+    from src.agents import conversational_core as core
+
+    monkeypatch.setattr(settings, "precio_pendiente_con_el_origen", flag)
+    st = _estado()
+    st.pregunta_precio_pendiente = "¿cuánto cuesta bucear?"
+    st._jev_pide_precio = jev
+    core._fijar_origen_antes_del_precio(st, mensaje)
+    assert st.pregunta_precio_pendiente == queda
