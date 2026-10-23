@@ -4,7 +4,6 @@ import pytest
 
 from src.agents import extractor_turno as ex
 from src.agents import jev_router as jr
-from src.config import settings
 from src.prompts.booking import SLOT_RESOLVER_SPEC, lugar_sin_baru
 
 
@@ -42,9 +41,6 @@ def test_la_puerta_del_origen_no_deja_el_titulo_colgado(monkeypatch):
     blanco."""
     from src.agents.conversational_core import _sin_importes
 
-    monkeypatch.setattr(settings, "origen_sin_titulo_suelto", False)
-    assert "cuesta:" in _sin_importes(_RAG_CON_LISTA + "\n\nCuéntame qué día te viene mejor para organizarlo todo.")
-    monkeypatch.setattr(settings, "origen_sin_titulo_suelto", True)
     resto = _sin_importes(_RAG_CON_LISTA + "\n\nCuéntame qué día te viene mejor para organizarlo todo.")
     assert "cuesta:" not in resto and "USD" not in resto and "Cuéntame qué día" in resto
 

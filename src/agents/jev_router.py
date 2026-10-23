@@ -423,18 +423,8 @@ _PREGUNTA_SI_ES_IA_Q = {
 #   inmersiones? me quedo en el hotel Caribe" se cotizaba sin saber el origen. Regex 13/16, Jev 16/16.
 PIDE_PRECIO = "pide_precio"
 PIDE_PRECIO_MIN = 0.7
-_PIDE_PRECIO_Q = {
-    "type": "noul",
-    "instructions": (
-        "The customer asks how much one of the dive center's activities, courses or packages costs (price, rate, "
-        "cost, a quote), including asking that price again in another currency or for a different number of people. "
-        "It is FALSE when they ask the price of something the dive center does not sell (a hotel, a room or night, a "
-        "taxi or transport), when they only ask which currencies or payment methods are accepted, and when they ask "
-        "about duration, number of dives or how to book."
-    ),
-}
-# ord-7 (21-oct, flag `jev_precio_nombra_actividades`): con «one of the dive center's activities» a secas, Jev no veía
-# «el snorkel» en español como una de ellas: «¿Cuánto cuesta el snorkel?» 0,55 y «precio del snorkel» 0,61 (umbral
+# ord-7 (21-oct; promocionado, su flag `jev_precio_nombra_actividades` se borró en sim-5): con «one of the dive
+# center's activities» a secas, Jev no veía «el snorkel» en español como una de ellas: «¿Cuánto cuesta el snorkel?» 0,55 y «precio del snorkel» 0,61 (umbral
 # 0,7), la puerta del origen no saltaba y se cotizaba Cartagena sin saber el origen (banco gen-19, 4/4). Nombrando las
 # actividades: 0,94 y 0,94; hotel, taxi, monedas, duración, cómo reservar y qué incluye siguen en 0,04-0,11.
 _PIDE_PRECIO_Q_ACTIVIDADES = {
@@ -852,14 +842,13 @@ def _questions_for_turn(pending_slot: str | None = None) -> dict:
     q[ADDS_PERSON] = _ADDS_PERSON_Q
     q[YA_RESERVADO] = _YA_RESERVADO_Q_SIN_HOTEL
     q[PIDE_DATOS_AJENOS] = _PIDE_DATOS_AJENOS_Q
-    if settings.privado_pasa_directo:
-        q[PIDE_SERVICIO_PRIVADO] = _PIDE_SERVICIO_PRIVADO_Q
+    q[PIDE_SERVICIO_PRIVADO] = _PIDE_SERVICIO_PRIVADO_Q
     q[CUSTOMER_PLACE] = _con_hoteles_de_la_base(_CUSTOMER_PLACE_Q_BARU_CARTAGENA)
     q[SHARES_OPEN_FACT] = _SHARES_OPEN_FACT_Q
     q[NUEVO_CASO] = _NUEVO_CASO_Q
     q[PREGUNTA_SI_ES_IA] = _PREGUNTA_SI_ES_IA_Q
     q[CAMBIA_IDIOMA] = _CAMBIA_IDIOMA_Q
-    q[PIDE_PRECIO] = _PIDE_PRECIO_Q_ACTIVIDADES if settings.jev_precio_nombra_actividades else _PIDE_PRECIO_Q
+    q[PIDE_PRECIO] = _PIDE_PRECIO_Q_ACTIVIDADES
     if settings.hechos_por_codigo:
         q[PIDE_QUE_INCLUYE] = _PIDE_QUE_INCLUYE_Q
         q.update(_INTENCIONES_Q)

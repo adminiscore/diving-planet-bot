@@ -2128,7 +2128,7 @@ def _origen_antes_del_precio(state: ConversationState, message: str, answer: str
         return None
     texto = message or ""
     # ord-7: un enlace de reserva también depende del origen («mándame el enlace del Open Water» daba el de Cartagena).
-    da_enlace = settings.origen_dos_variantes and bool(answer) and "book.divingplanet.org" in answer
+    da_enlace = bool(answer) and "book.divingplanet.org" in answer
     if not answer or not (_IMPORTE_RE.search(answer) or da_enlace):
         return None
     jev = getattr(state, "_jev_pide_precio", None)
@@ -2154,7 +2154,7 @@ def _origen_antes_del_precio(state: ConversationState, message: str, answer: str
     if any(_PISTA_ORIGEN_RE.search(t) for t in [*del_cliente, *este]):
         return None
     pregunta = ORIGEN_ANTES_DEL_PRECIO_ES if state.language == "es" else ORIGEN_ANTES_DEL_PRECIO_EN
-    variantes = _dos_variantes(state, answer, con_enlace=da_enlace) if settings.origen_dos_variantes else None
+    variantes = _dos_variantes(state, answer, con_enlace=da_enlace)
     if variantes:
         tras = (ORIGEN_TRAS_LOS_ENLACES_ES, ORIGEN_TRAS_LOS_ENLACES_EN) if da_enlace else (
             ORIGEN_TRAS_LAS_VARIANTES_ES, ORIGEN_TRAS_LAS_VARIANTES_EN)
@@ -2188,16 +2188,15 @@ def _sin_importes(answer: str) -> str:
         frases = [f for f in _FRASE_RE.split(linea) if f.strip() and not _DEPENDE_DEL_ORIGEN_RE.search(f)]
         if frases:
             lineas.append(" ".join(frases))
-        elif settings.origen_sin_titulo_suelto:
-            # gen-6 (21-oct): "La salida de 2 inmersiones cuesta:", una línea en blanco y la lista de precios dejaba el
-            # título colgado ("…cuesta:" y luego la pregunta del origen): el título se busca saltando las líneas en blanco.
+        else:
+            # El título de una lista que se ha quitado entera ("los precios son:"). gen-6 (21-oct): "La salida de 2
+            # inmersiones cuesta:", una línea en blanco y la lista de precios dejaba el título colgado ("…cuesta:" y
+            # luego la pregunta del origen): el título se busca saltando las líneas en blanco.
             ultima = len(lineas) - 1
             while ultima >= 0 and not lineas[ultima].strip():
                 ultima -= 1
             if ultima >= 0 and lineas[ultima].rstrip().endswith(":"):
                 del lineas[ultima:]
-        elif lineas and lineas[-1].rstrip().endswith(":"):
-            lineas.pop()  # el título de una lista que se ha quitado entera ("los precios son:")
     # La pregunta final (casi siempre "¿quieres el link / que te ayude a reservar?") la sustituye la del origen.
     while lineas and not lineas[-1].strip():
         lineas.pop()

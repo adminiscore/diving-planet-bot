@@ -109,11 +109,11 @@ _PRIVATE_GROUP_EVENT_RE = re.compile(
 
 def pide_servicio_privado(msg_lower: str, signals: dict) -> bool:
     """¿El cliente pide un servicio privado (salida, lancha o instructor solo para su grupo, grupo cerrado, evento de
-    empresa)? La lista de siempre o, con `privado_pasa_directo` (gen-3b, decisión de Gadea: pasa directo en cuanto lo
-    pide), Jev (`pide_servicio_privado`). Lo usan el router y el nodo `info`, con el mismo criterio."""
+    empresa)? La lista de siempre o (gen-3b, decisión de Gadea: pasa directo en cuanto lo pide) Jev
+    (`pide_servicio_privado`). Lo usan el router y el nodo `info`, con el mismo criterio."""
     if _PRIVATE_GROUP_EVENT_RE.search(msg_lower):
         return True
-    return settings.privado_pasa_directo and (signals or {}).get("pide_servicio_privado") is True
+    return (signals or {}).get("pide_servicio_privado") is True
 
 
 def _private_group_event_answer(lang: str) -> str:

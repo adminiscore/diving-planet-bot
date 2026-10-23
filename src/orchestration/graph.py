@@ -143,10 +143,8 @@ async def _router_node(state: BotState) -> dict:
     # gen-5 (flag `idioma_unico_de_apertura`): el idioma de la apertura se decide aquí, una vez y a la vez que las
     # señales, para que todas las rutas contesten en el mismo (antes lo sensible, el contacto, la edad o el buceo
     # adaptado decidían cada uno a su manera y sin G-10).
-    from src.config import settings
 
-    abre = (settings.idioma_unico_de_apertura and not conv.detected_language and not msg_lower.isdigit()
-            and conv.step in (Step.WELCOME, Step.LANGUAGE))
+    abre = not conv.detected_language and not msg_lower.isdigit() and conv.step in (Step.WELCOME, Step.LANGUAGE)
     if abre:
         from src.agents.nucleo.setup import idioma_de_apertura
 

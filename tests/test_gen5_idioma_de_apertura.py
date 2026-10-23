@@ -6,7 +6,6 @@ import pytest
 
 from src.agents import supervisor
 from src.agents.nucleo import setup
-from src.config import settings
 from src.flows.state import ConversationState, Step
 from src.orchestration import graph
 
@@ -50,7 +49,6 @@ async def test_idioma_de_apertura_aplica_g10(monkeypatch):
 ])
 async def test_con_el_flag_el_router_fija_el_idioma_para_todas_las_rutas(
         monkeypatch, router_sin_llamadas, mensaje, idioma, esperado):
-    monkeypatch.setattr(settings, "idioma_unico_de_apertura", True)
     router_sin_llamadas["valor"] = idioma
     conv = ConversationState(conversation_id="gen5")
     await graph._router_node({"conv_state": conv, "message": mensaje})
@@ -59,15 +57,7 @@ async def test_con_el_flag_el_router_fija_el_idioma_para_todas_las_rutas(
     assert supervisor._reply_language(conv, mensaje) == esperado
 
 
-async def test_apagado_el_router_no_toca_el_idioma(monkeypatch, router_sin_llamadas):
-    monkeypatch.setattr(settings, "idioma_unico_de_apertura", False)
-    conv = ConversationState(conversation_id="gen5")
-    await graph._router_node({"conv_state": conv, "message": "Estou grávida de três meses, posso mergulhar?"})
-    assert conv.detected_language is None
-
-
 async def test_fuera_de_la_apertura_el_router_no_vuelve_a_decidir(monkeypatch, router_sin_llamadas):
-    monkeypatch.setattr(settings, "idioma_unico_de_apertura", True)
     conv = ConversationState(conversation_id="gen5", language="es")
     conv.detected_language = "es"
     conv.step = Step.FREE_TEXT
@@ -76,7 +66,6 @@ async def test_fuera_de_la_apertura_el_router_no_vuelve_a_decidir(monkeypatch, r
 
 
 async def test_la_reserva_no_vuelve_a_decidir_lo_que_decidio_el_router(monkeypatch):
-    monkeypatch.setattr(settings, "idioma_unico_de_apertura", True)
     llamadas = []
 
     async def _contar(state, message):
@@ -92,7 +81,7 @@ async def test_la_reserva_no_vuelve_a_decidir_lo_que_decidio_el_router(monkeypat
     await setup._setup_phase(conv, "Olá, somos quatro e queremos fazer snorkel", {})
     assert llamadas == [] and conv.language == "en" and conv.step == Step.FREE_TEXT
 
-    monkeypatch.setattr(settings, "idioma_unico_de_apertura", False)
+    # Sin idioma decidido (el router no lo decidió), la reserva lo decide.
     conv = ConversationState(conversation_id="gen5")
     await setup._setup_phase(conv, "Olá, somos quatro e queremos fazer snorkel", {})
     assert llamadas == ["Olá, somos quatro e queremos fazer snorkel"]

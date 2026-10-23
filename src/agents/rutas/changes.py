@@ -8,8 +8,7 @@ import logging
 import re
 
 from src.agents.lead_summary import build_lead_summary
-from src.agents.supervisor import _booking_change_buttons, _infer_language
-from src.config import settings
+from src.agents.supervisor import _infer_language
 from src.flows.state import ConversationState, Step
 from src.knowledge.loader import load_policies
 from src.utils.text import strip_accents as _strip_accents
@@ -220,55 +219,17 @@ def _booking_change_response(state: ConversationState, message: str, kind: str) 
     effective_lang = state.language if state.detected_language else _infer_language(message, state.language)
     policy_kind = {"modify_headcount": "modify_booking"}.get(kind, kind)
     policy_text = (load_policies().get("policies", {}).get(policy_kind) or {}).get(effective_lang, "")
-    if settings.cambio_de_reserva_pasa:
-        # El mensaje va al historial ANTES del resumen del pase, para que el asesor lo lea.
-        state.history.append({"role": "user", "content": message})
-        response = _pase_por_cambio_de_reserva(state, policy_text, kind, effective_lang)
-        state.history.append({"role": "assistant", "content": response})
-        return response
-    if kind == "cancellation":
-        if effective_lang == "es":
-            response = (
-                f"{policy_text}\n\n¿Quieres que te conecte con un asesor para gestionar la "
-                "cancelación, o prefieres volver al menú principal?"
-            )
-        else:
-            response = (
-                f"{policy_text}\n\nWould you like me to connect you with an advisor to handle the "
-                "cancellation, or would you rather go back to the main menu?"
-            )
-    elif kind == "reschedule":
-        if effective_lang == "es":
-            response = (
-                f"{policy_text}\n\n¿Quieres que te conecte con un asesor para gestionar el cambio "
-                "de fecha, o prefieres volver al menú principal?"
-            )
-        else:
-            response = (
-                f"{policy_text}\n\nWould you like me to connect you with an advisor to handle the "
-                "date change, or would you rather go back to the main menu?"
-            )
-    else:  # modify_headcount
-        if effective_lang == "es":
-            response = (
-                f"{policy_text}\n\n¿Quieres que te conecte con un asesor para gestionar el cambio "
-                "en el número de personas, o prefieres volver al menú principal?"
-            )
-        else:
-            response = (
-                f"{policy_text}\n\nWould you like me to connect you with an advisor to handle the "
-                "headcount change, or would you rather go back to the main menu?"
-            )
-    state.quick_replies = _booking_change_buttons(effective_lang)
+    # El mensaje va al historial ANTES del resumen del pase, para que el asesor lo lea.
     state.history.append({"role": "user", "content": message})
+    response = _pase_por_cambio_de_reserva(state, policy_text, kind, effective_lang)
     state.history.append({"role": "assistant", "content": response})
     return response
 
 
-# gen-3b (21-oct, flag `cambio_de_reserva_pasa`): cambiar la fecha, cancelar o cambiar el número de personas de una
-# reserva ya hecha solo lo puede hacer una persona del equipo (el bot no ve las reservas). La respuesta OFRECÍA el pase
+# gen-3b (21-oct; promocionado, su flag `cambio_de_reserva_pasa` se borró en sim-5): cambiar la fecha, cancelar o
+# cambiar el número de personas de una reserva ya hecha solo lo puede hacer una persona del equipo (el bot no ve las reservas). La respuesta OFRECÍA el pase
 # («¿quieres que te conecte con un asesor o prefieres volver al menú principal?», un menú que ya no existe) y no lo
-# marcaba: si el cliente no contestaba «sí», nadie se enteraba. Con el flag se da la política y se PASA, como
+# marcaba: si el cliente no contestaba «sí», nadie se enteraba. Ahora se da la política y se PASA, como
 # `needs_staff`.
 _PASE_POR_CAMBIO = {
     "cancellation": ("cancelación de reserva: la gestiona una persona", "la cancelación", "the cancellation"),

@@ -112,10 +112,8 @@ async def lo_contestable_en_cualquier_pase(conv, message: str) -> str | None:
     """Cierre de un turno que acaba de pasar a un asesor: lo que el RAG contesta de las OTRAS preguntas del mensaje,
     sin tocar el motivo del pase, o None (flag apagado, ya contestado por gen-1, pase que va solo, mensaje sin
     pregunta, nada más que contestar, «no lo tengo» o un fallo)."""
-    from src.config import settings  # lazy
     reason = conv.pending_escalation_reason or ""
-    if (not settings.contesta_antes_de_cualquier_pase or getattr(conv, "_contestado_antes_del_pase", False)
-            or any(m in reason for m in _PASE_QUE_VA_SOLO)):
+    if getattr(conv, "_contestado_antes_del_pase", False) or any(m in reason for m in _PASE_QUE_VA_SOLO):
         return None
     from src.agents.conversational_core import _turn_has_question  # lazy
 

@@ -19,7 +19,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from src.config import settings
 from src.domain import activities as dom
 
 # --- Age thresholds ---------------------------------------------------------
@@ -179,12 +178,12 @@ def format_group_plan(plans: list[PersonPlan], lang: str = "es") -> str:
     labels = {option: _plan_label(option, lang) for option in (*_OPTION_TO_ACTIVITY, COMPANION)}
     lines: list[str] = []
     for p in plans:
-        if settings.tarjeta_edades_en_cifra and p.age is not None:
+        if p.age is not None:
             opts = " / ".join(_con_edad_minima(o, labels[o], lang) for o in p.options)
         else:
             opts = " / ".join(labels[o] for o in p.options)
         qty_prefix = f"{p.qty}× " if p.qty > 1 else ""
-        who = _who(p, lang) if settings.tarjeta_edades_en_cifra else p.who
+        who = _who(p, lang)
         if lang == "es":
             verb = "→ " if p.auto else "→ puede elegir: "
             lines.append(f"• {qty_prefix}*{who}* {verb}{opts}")

@@ -181,11 +181,10 @@ def build_system_prompt(lang: str, query: str | None = None) -> str:
     )
 
     prompt = f"{prompt}\n\n{RAG_ABRE_CON_LA_RESPUESTA_ES if lang == 'es' else RAG_ABRE_CON_LA_RESPUESTA_EN}"
-    if settings.sin_genero_supuesto:
-        # gen-12 (21-oct): sin dar por hecho si el cliente es hombre o mujer (ver RAG_SIN_GENERO_*).
-        from src.prompts.info import RAG_SIN_GENERO_EN, RAG_SIN_GENERO_ES  # lazy
+    # gen-12 (21-oct): sin dar por hecho si el cliente es hombre o mujer (ver RAG_SIN_GENERO_*).
+    from src.prompts.info import RAG_SIN_GENERO_EN, RAG_SIN_GENERO_ES  # lazy
 
-        prompt = f"{prompt}\n\n{RAG_SIN_GENERO_ES if lang == 'es' else RAG_SIN_GENERO_EN}"
+    prompt = f"{prompt}\n\n{RAG_SIN_GENERO_ES if lang == 'es' else RAG_SIN_GENERO_EN}"
     # G3-03: el RAG no puede pasar el caso a una persona; lo OFRECE como pregunta (ver RAG_PASE_OFRECIDO_*).
     from src.prompts.info import RAG_PASE_OFRECIDO_EN, RAG_PASE_OFRECIDO_ES  # lazy
 
@@ -677,7 +676,7 @@ async def generar_con_respaldo(client, messages: list[dict], pieza: str = "rag_e
     async def llamar(model: str, es_respaldo: bool = False):
         # CAL-A1 (`rag_temperatura_cero`): 18 de los 56 fallos del RAG en ex-10 eran azar (mismo contexto, unas veces
         # sí y otras no; diagnóstico de Gadea): con temperatura 0 la redacción es estable.
-        temperatura = 0.0 if settings.rag_temperatura_cero else 0.3
+        temperatura = 0.0
         # r6-1: el escritor y el respaldo salen por separado en [TURN_METRICS] (CAL-G).
         with pieza_llm("rag_respaldo" if es_respaldo or model != principal else pieza):
             return await client.chat.completions.create(model=model, messages=messages, temperature=temperatura,

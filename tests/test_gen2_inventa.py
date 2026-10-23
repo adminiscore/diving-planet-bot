@@ -9,11 +9,9 @@
 import json
 from pathlib import Path
 
-import pytest
 
 from src.agents import query_rewriter as qr
 from src.agents.rag_agent import build_system_prompt
-from src.config import settings
 from src.prompts.info import RAG_ABRE_CON_LA_RESPUESTA_ES
 
 BASE = Path("data/knowledge_base")
@@ -37,13 +35,11 @@ def test_la_base_dice_lo_que_es_no():
     assert any("efectivo" in f for f in formas["politica:foreign_card_payment"]["es"])
 
 
-@pytest.mark.parametrize("flag", [True, False])
-def test_sin_genero_supuesto(monkeypatch, flag):
+def test_sin_genero_supuesto():
     """gen-12 (21-oct): el RAG no da por hecho si el cliente es hombre o mujer."""
     from src.prompts.info import RAG_SIN_GENERO_ES
 
-    monkeypatch.setattr(settings, "sin_genero_supuesto", flag)
-    assert (RAG_SIN_GENERO_ES in build_system_prompt("es")) is flag
+    assert RAG_SIN_GENERO_ES in build_system_prompt("es")
 
 
 def test_la_base_no_nombra_el_sistema_interno():
