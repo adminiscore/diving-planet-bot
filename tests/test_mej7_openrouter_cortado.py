@@ -89,3 +89,12 @@ async def test_con_openrouter_cortado_jev_no_se_llama(con_corte, monkeypatch):
 
     monkeypatch.setattr(jev_router, "_http", lambda: _NoLlamar())
     assert await jev_router.detect_routing_signals_jev_full("¿cuánto cuesta el snorkel?") == (None, {})
+
+
+def test_el_corte_sale_en_turn_metrics():
+    import json
+
+    from src.observability import turn_metrics_line
+
+    linea = turn_metrics_line("c1", {"openrouter": "cortado"}, "2026-10-23T12:00:00Z", 1.0)
+    assert json.loads(linea[linea.index("{"):])["openrouter"] == "cortado"

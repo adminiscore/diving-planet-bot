@@ -63,3 +63,18 @@ OpenRouter durante `openrouter_corte_segundos` (propuesta: 300 s):
 
 No cambia ningún modelo ni el respaldo (gpt-5.4-mini). El riesgo 2 (sin Jev no hay redactor) sigue igual: es un cambio
 mayor y no hace falta para que el turno no se rompa.
+
+## Prueba con una clave falsa (23-oct, sin gasto de OpenRouter)
+
+Banco de arq-1i (14 diálogos, 1 vuelta), `--codigo-local --env OPENROUTER_API_KEY=clave-falsa`; A sin corte, B con
+`OPENROUTER_CORTE_SEGUNDOS=300` (`2026-10-23-mej7-A.jsonl` y `-B.jsonl`):
+
+- **Jev:** A falla con 401 en cada turno (96-242 ms); B falla una vez y los otros 13 turnos se lo saltan («OpenRouter
+  cortado»). El corte hace lo que tiene que hacer.
+- **Latencia:** p50 8,5 s (A) frente a 9,8 s (B), p90 12,7 frente a 12,0. Con 14 turnos es ruido: el ahorro esperado
+  (~0,25 s por etapa) es menor que la variación. Lo que pesa es que todo va por el respaldo de OpenAI.
+- **Cliente:** 0 respuestas de error en los dos. Calidad 9/14 (A) y 8/14 (B, 2 invenciones), frente a 38/42 del mismo
+  banco con la clave buena. Es el riesgo 2: sin Jev no hay redactor y todo va al RAG con las piezas de respaldo.
+
+Conclusión: el corte no ahorra tiempo medible, pero quita el fallo repetido en cada pieza y lo avisa una vez.
+Lo que de verdad cuesta calidad con la clave caída es perder Jev.
