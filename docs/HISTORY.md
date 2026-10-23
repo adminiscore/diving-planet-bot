@@ -1,6 +1,25 @@
 History
 =======
 
+0.31.98 - (2026-10-23)
+----------------------
+* **PROMOCIÓN** (decisión de Gadea, 23-oct): los 8 flags del G10 nº 6 (92,4 % 42/72 → **94,3 % 46/72** sin
+  desfasados; p50 5,34 → 4,97 s, p90 11,81 → 10,28 s): `tiempo_limitado`, `intenciones_clima_pago`,
+  `hechos_que_faltaban`, `hechos_en_el_pase`, `dos_monedas_sin_nacionalidad`, `listas_por_codigo`,
+  `rag_hechos_sin_reintento` y `frases_por_codigo`. Y **mej-7** (Gonzalo): si la clave o el crédito de OpenRouter
+  fallan, se deja de llamar a OpenRouter durante `OPENROUTER_CORTE_SEGUNDOS` = 300 s (`openrouter=cortado` en
+  [TURN_METRICS]). Todo fijado en `docker-compose.vps.yml`.
+* **arq-7e: lo que el código pega tal cual sale listo para el cliente.** En el G10 nº 6, `[[descuento]]` llegaba al
+  cliente en 2 respuestas, y las listas y frases pegadas salían de la base sin tildes y en tercera persona («Si el
+  cliente ya esta en las Islas…» en 23 respuestas, «10 anos»). Ahora la marca que el código no rellena se quita, y los
+  textos en español de `services`, `policies` y `discounts` llevan tildes. Las frases que se pegan van en segunda
+  persona, en español y en inglés. Solo cambia la forma: ni precios ni condiciones. Mini-ronda de los 30 diálogos
+  afectados: 0 textos sin pulir en 98 turnos, y 93,1 % 18/30 (frente a 94,3 % 20/30; los fallos nuevos son
+  variación).
+* **El juez juzga 4 diálogos a la vez** (`--paralelo`, por defecto 4; arq-6b). Antes iba a ~7 criterios por minuto.
+  Ahora un G10 sin caché tarda ~20 min (antes ~1 h 13 min). La huella de la caché es la misma, y el G10 nº 6
+  rejuzgado da los 657 veredictos idénticos.
+
 0.31.97 - (2026-10-23)
 ----------------------
 * **Arreglos de los fallos del G10 nº 5, con flag APAGADO hasta el G10 nº 6** (banco propio ×3, frases nuestras):

@@ -1082,6 +1082,12 @@ async def detect_routing_signals_jev_full(
     key = settings.openrouter_api_key
     if not key or not message or not message.strip():
         return None, {}
+    from src.llm_client import cortar_openrouter_si_es_la_clave, openrouter_cortado  # lazy
+
+    if openrouter_cortado():
+        # mej-7: la clave o el crédito de OpenRouter fallaron hace poco; Jev va por OpenRouter y fallaría igual.
+        logger.warning("[ROUTER][JEV] OpenRouter cortado (clave o crédito): se usa el router LLM")
+        return None, {}
     t0 = time.perf_counter()
     resp = None
     try:
@@ -1109,6 +1115,7 @@ async def detect_routing_signals_jev_full(
         if pending_slot and PENDING_ANSWER in answers:
             extras[PENDING_ANSWER] = pending_answer_value(pending_slot, answers[PENDING_ANSWER])
     except Exception as exc:  # noqa: BLE001 — cualquier fallo cae al router LLM
+        cortar_openrouter_si_es_la_clave(getattr(getattr(exc, "response", None), "status_code", None), "jev")
         ms = (time.perf_counter() - t0) * 1000
         if resp is None:
             _medir_jev(None, t0)  # timeout o sin conexión: también cuenta como llamada fallida

@@ -23,7 +23,7 @@ def _estado(location, lang="es", selected=None) -> ConversationState:
     ("island", "es", "Me puedes decir el precio de las 2 inmersiones? Desde ese hotel?", ["124 USD"]),
     ("cartagena", "es", "¿Y en el caso de tomar solo 2 inmersiones desde Cartagena?", ["178 USD"]),
     ("cartagena", "en", "Do you have just two dives, so I only do one day?", ["Fun Dives - 2 dives (1 day)"]),
-    ("cartagena", "es", "quiero el paquete de 5 buceos", ["Paquete de 5 inmersiones (2 dias)", "392 USD"]),
+    ("cartagena", "es", "quiero el paquete de 5 buceos", ["Paquete de 5 inmersiones (2 días)", "392 USD"]),
     ("island", "es", "¿y el de 4 buceos?", ["4 diurnas", "3 diurnas + 1 nocturna"]),  # las dos variantes
 ])
 def test_sale_el_plan_del_numero_y_el_origen(monkeypatch, location, lang, mensaje, esperado):

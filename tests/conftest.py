@@ -90,6 +90,18 @@ def _sin_aviso_de_openai_caido(monkeypatch, request):
     monkeypatch.setattr("src.observability.fallo_de_openai_en_el_turno", lambda: None)
 
 
+@pytest.fixture(autouse=True)
+def _sin_corte_de_openrouter(monkeypatch):
+    """mej-7: `openrouter_corte_segundos` está PROMOCIONADO (300 s), pero aquí la clave de OpenRouter es falsa: el primer
+    401 cortaría OpenRouter para todos los tests siguientes (el corte es del proceso) y Jev dejaría de llamarse. Se apaga
+    por defecto y se empieza sin corte; los tests del corte (test_mej7_openrouter_cortado.py) lo encienden ellos."""
+    from src import llm_client
+    from src.config import settings
+
+    monkeypatch.setattr(settings, "openrouter_corte_segundos", 0.0)
+    monkeypatch.setattr(llm_client, "_openrouter_cortado_hasta", 0.0)
+
+
 @pytest.fixture
 def extractor_dice(monkeypatch):
     """ex-9b paso 3: simula el extractor del turno con lo que el cliente AFIRMA en cada mensaje, como el oráculo del

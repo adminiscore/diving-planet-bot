@@ -12,6 +12,7 @@ from __future__ import annotations
 import copy
 import json
 import logging
+import re
 
 from openai import AsyncOpenAI
 
@@ -233,7 +234,18 @@ def _poner_listas(answer: str, bloques: list[dict], intenciones: list[str], lang
             answer = f"{answer.rstrip()}\n\n{texto}"
     if settings.frases_por_codigo:
         answer = _poner_frases(answer, bloques, lang)
-    return answer
+    return _sin_marcas(answer)
+
+
+# G10 nº 6: con el enlace, los hechos traen `descuento_online` y no la lista `descuento` (no se preguntó por descuentos);
+# el modelo dejó igual «[[descuento]]» y la marca le llegó al cliente en 2 respuestas. Lo que el código no rellena, se quita.
+_MARCA = re.compile(r"[ \t]*\[\[[a-z_]+\]\][ \t]*")
+
+
+def _sin_marcas(answer: str) -> str:
+    if "[[" not in answer:
+        return answer
+    return re.sub(r"\n{3,}", "\n\n", _MARCA.sub("", answer)).strip()
 
 
 # arq-7d (23-oct, flag `frases_por_codigo`, latencia): tras arq-7a, en el banco fijo quedaban 28 de 96 turnos con

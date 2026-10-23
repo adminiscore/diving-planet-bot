@@ -311,6 +311,16 @@ class Settings(BaseSettings):
     # revisar): si una llamada a OpenRouter falla, se repite con este modelo de OpenAI (llm_client._por_proveedor).
     # Solo actúa cuando OpenRouter falla. Vacío = sube el error como antes.
     respaldo_si_openrouter_falla: str = "gpt-5.4-mini"
+    # mej-7 (23-oct, Gonzalo con Claude, encargo de Gadea #1566): si OpenRouter contesta 401, 402 o 403 (la clave o el
+    # crédito: el 21-oct, ronda respaldo-luna, 401 en las 93 vueltas y en cada pieza), se deja de llamar a OpenRouter
+    # estos segundos: cada pieza va directa a su respaldo de OpenAI y Jev se salta (decide el router LLM), en vez de
+    # perder ~0,25 s por llamada y repetir el fallo en cada pieza de cada turno. Se avisa una vez por corte en el log
+    # (ERROR) y en [TURN_METRICS] (`openrouter=cortado`). 0 = apagado (hoy: se intenta siempre y se repite en OpenAI).
+    openrouter_corte_segundos: float = 300.0  # PROMOCIONADO 23-oct (mej-7, decisión de Gadea: 300 s; HISTORY 0.31.98); revert = 0.0
+    # ex-9b (19-oct, ronda ex9b-3): una llamada a OpenRouter (la reescritura de DeepSeek) se quedó colgada 30 s, el
+    # límite general, y el turno tardó 34 s. Si OpenRouter no ha contestado en estos segundos, se lanza la misma
+    # petición por OpenAI (`respaldo_si_openrouter_falla`) y gana la primera que termine bien, para todas las piezas.
+    # 0 = apagado (el respaldo solo cuando OpenRouter falla, como hasta hoy).
     openrouter_respaldo_segundos: float = 5.0  # PROMOCIONADO 19-oct (ex9b-4: saltó 1 vez, ganó el respaldo); revert = 0.0
     # gen-1 + gen-3 (20-oct, fase GEN; docs/robustness/gen/gen1-diagnostico.md). El RAG a solas cubre el 96 % de los
     # datos; en una conversación el dato se perdía en el PASE por tema sensible: la respuesta fija se comía el resto del
@@ -398,19 +408,19 @@ class Settings(BaseSettings):
     # ARQ-1v (22-oct): «me voy mañana al mediodía, ¿me da tiempo?» entra en la tabla (Jev pide_si_alcanza): los hechos
     # dan la decisión de Gadea (desde las islas va muy justo y lo confirma un asesor; desde Cartagena no alcanza; cierre
     # de las 4:30 del día anterior) y la espera antes de volar, solo si vuela. APAGADO hasta medirlo.
-    tiempo_limitado: bool = False
+    tiempo_limitado: bool = True  # PROMOCIONADO 23-oct (G10 nº 6 con los 8: 92,4 % 42/72 -> 94,3 % 46/72; HISTORY 0.31.98); revert = False
     # ARQ-1i (23-oct, Gonzalo con Claude, decisión de Gadea #1312 y #1477; G10 nº 5: g10-034 el clima, g10-067/045/006 el
     # pago): dos intenciones más de la tabla, que no dependen de la actividad. El clima en GENERAL (política
     # weather_cancellation: si Capitanía cierra se reprograma o se reembolsa el 100 %; sin pronósticos, ofrece un asesor)
     # ya no va a la ruta sensible; con un día concreto o una reserva hecha, sigue el pase. Y cómo se paga (según la
     # nacionalidad: el extranjero 100 % con tarjeta en la web; el colombiano, 100 % o 50 % y 50 %, con un asesor), la
     # confirmación y la transferencia solo si falla el online. APAGADO hasta medirlo.
-    intenciones_clima_pago: bool = False
+    intenciones_clima_pago: bool = True  # PROMOCIONADO 23-oct (G10 nº 6 con los 8: 92,4 % 42/72 -> 94,3 % 46/72; HISTORY 0.31.98); revert = False
     # ARQ-5f (23-oct, Gonzalo con Claude, reparto de Gadea #1525; G10 nº 5): hechos que faltaban en la tabla. La excepción
     # del refresher (500+ inmersiones o Divemaster: lo revisa un asesor) en los requisitos del buceo certificado y del
     # refresher; que el horario no se adelanta (lo ve un asesor); buceo y snorkel en la misma lancha si el turno trae los
     # dos; y que alojados en Barú o Playa Blanca salen desde Cartagena. APAGADO hasta medirlo.
-    hechos_que_faltaban: bool = False
+    hechos_que_faltaban: bool = True  # PROMOCIONADO 23-oct (G10 nº 6 con los 8: 92,4 % 42/72 -> 94,3 % 46/72; HISTORY 0.31.98); revert = False
     varias_actividades: bool = False  # ARQ-1j (22-oct): el extractor da TODAS las actividades del mensaje (y el acompañante) y los hechos salen de cada una
     adaptado_contesta_lo_demas: bool = True  # PROMOCIONADO 22-oct (arq-1l: banco DIVE TO HEAL 3/12 -> 11/12; HISTORY 0.31.93); revert = False
     enlace_con_disponibilidad: bool = True  # PROMOCIONADO 22-oct (arq-1m: banco de enlace 3/12 -> 12/12; HISTORY 0.31.93); revert = False
@@ -419,22 +429,22 @@ class Settings(BaseSettings):
     curso_preguntado_no_es_nivel: bool = True  # PROMOCIONADO 22-oct (FLU-1: si el extractor lee que el mensaje PREGUNTA por un curso con nivel, no se pregunta «¿ya tienen el Open Water o quieren sacarlo?»; banco flu-1b 9/24 -> 24/24 con el de abajo; HISTORY 0.31.94); revert = False
     # arq-5a (23-oct, G10 nº 5: ~15 fallos con hechos=None): el RAG de «contestar antes del pase» (asesor, pago, DIVE TO
     # HEAL) recibe los hechos del código como en la ruta normal. APAGADO hasta medirlo.
-    hechos_en_el_pase: bool = False
+    hechos_en_el_pase: bool = True  # PROMOCIONADO 23-oct (G10 nº 6 con los 8: 92,4 % 42/72 -> 94,3 % 46/72; HISTORY 0.31.98); revert = False
     # arq-5c (23-oct, decisión de Gadea; G10 nº 5, ~6 fallos): sin saber si el cliente es colombiano, el precio de los
     # hechos va en USD y en COP. APAGADO hasta medirlo.
-    dos_monedas_sin_nacionalidad: bool = False
+    dos_monedas_sin_nacionalidad: bool = True  # PROMOCIONADO 23-oct (G10 nº 6 con los 8: 92,4 % 42/72 -> 94,3 % 46/72; HISTORY 0.31.98); revert = False
     # arq-5b (23-oct, G10 nº 5): en los mensajes mezclados el redactor escribe la parte de la tabla con los hechos y el
     # RAG, a la vez, solo lo demás (las listas salen completas y sobra el reintento del RAG). APAGADO hasta medirlo.
     mezclados_por_partes: bool = False
     # arq-7 (23-oct, latencia, decisión de Gadea; antes del G10 nº 6). arq-7a: las listas largas del redactor (incluye,
     # requisitos, descuento) las pone el código donde el modelo deja una marca: sin segunda redacción. APAGADO.
-    listas_por_codigo: bool = False
+    listas_por_codigo: bool = True  # PROMOCIONADO 23-oct (G10 nº 6 con los 8: 92,4 % 42/72 -> 94,3 % 46/72; HISTORY 0.31.98); revert = False
     # arq-7b: en los mezclados, si al RAG le faltan puntos de las listas de los hechos, los añade el código en vez de
     # rehacer la respuesta (el reintento de completitud: ~5 s). APAGADO.
-    rag_hechos_sin_reintento: bool = False
+    rag_hechos_sin_reintento: bool = True  # PROMOCIONADO 23-oct (G10 nº 6 con los 8: 92,4 % 42/72 -> 94,3 % 46/72; HISTORY 0.31.98); revert = False
     # arq-7d: con `listas_por_codigo`, también la recogida y el alojamiento los pone el código donde el modelo deja la
     # marca (las segundas redacciones que quedaban eran casi todas por esas dos frases). APAGADO.
-    frases_por_codigo: bool = False
+    frases_por_codigo: bool = True  # PROMOCIONADO 23-oct (G10 nº 6 con los 8: 92,4 % 42/72 -> 94,3 % 46/72; HISTORY 0.31.98); revert = False
     # arq-4b (22-oct, fallos del G10 nº 4), APAGADOS hasta medirlos con su banco:
     recotizar_al_cambiar_moneda: bool = True  # PROMOCIONADO 23-oct (G10 nº 5 con los 11: 90,1 % 34/72 -> 91,2 % 40/72; HISTORY 0.31.96); revert = False · «soy colombiano» DESPUÉS de recibir el precio en USD: se vuelve a dar en COP (g10-003/016/047)
     rag_comprueba_los_hechos: bool = True  # PROMOCIONADO 23-oct (G10 nº 5 con los 11: 90,1 % 34/72 -> 91,2 % 40/72; HISTORY 0.31.96); revert = False · arq-3 también para el RAG con hechos (mensajes mezclados): si deja fuera un hecho, se rehace una vez
