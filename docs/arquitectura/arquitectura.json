@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-23T10:17:18+00:00",
-  "commit": "4e508458",
+  "generado": "2026-10-23T10:19:33+00:00",
+  "commit": "cd71a466",
   "rama": "feature/pre_gadea"
  },
  "vistas": {
@@ -1415,6 +1415,13 @@
     {
      "nombre": "listas_por_codigo",
      "titulo": "Las listas las pone el código",
+     "codigo": false,
+     "pre": false,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "rag_hechos_sin_reintento",
+     "titulo": "Lo que falta lo añade el código",
      "codigo": false,
      "pre": false,
      "sin_efecto": false
@@ -3406,6 +3413,19 @@
    "fijado_en_pre": true,
    "usado_por": [
     "b_extraction"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "rag_hechos_sin_reintento",
+   "area": "Preguntas",
+   "titulo": "Lo que falta lo añade el código",
+   "texto": "En los mensajes mezclados, si la respuesta del RAG se deja puntos de lo que incluye, de los requisitos o de los descuentos, el código los añade al final con su rótulo en vez de rehacer la respuesta entera; un precio o un enlace que falte sí se rehace (arq-7b, latencia, 23-oct).",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
+   "usado_por": [
+    "r_hechos"
    ],
    "sin_efecto": null
   },

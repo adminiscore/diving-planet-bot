@@ -639,6 +639,32 @@ async def _verify_grounding(answer: str, context: str, lang: str) -> tuple[bool,
     return await is_grounded(answer, context, lang=lang)
 
 
+# arq-7b (23-oct, flag `rag_hechos_sin_reintento`, latencia): los puntos de las listas de los hechos que el RAG dejó
+# fuera, con su rótulo; lo demás (recogida, alojamiento) va tal cual.
+_ROTULOS_DE_LO_QUE_FALTA = {"incluye": ("También incluye:", "It also includes:"),
+                            "requisitos": ("También necesitas:", "You'll also need:"),
+                            "descuento": ("Sobre los descuentos:", "About discounts:")}
+
+
+def _completar_con_hechos(answer: str, bloques: list[dict], intenciones: list[str], lang: str) -> str | None:
+    """arq-7b: la respuesta con los puntos de los hechos que le faltan añadidos por el código, o None si lo que falta
+    no se puede añadir así (un precio, un enlace, una edad, una hora): entonces se rehace, como antes."""
+    from src.flows import hechos as hechos_mod  # lazy
+
+    i = 0 if lang == "es" else 1
+    extra: list[str] = []
+    for campo, rotulos in _ROTULOS_DE_LO_QUE_FALTA.items():
+        if campo not in intenciones:
+            continue
+        faltan = dict.fromkeys(x for b in bloques for x in hechos_mod.faltan(answer, [{campo: b.get(campo)}], [campo]))
+        if faltan:
+            extra.append(rotulos[i] + "\n" + "\n".join(f"• {x}" for x in faltan))
+    for campo in ("recogida", "alojamiento"):
+        extra += list(dict.fromkeys(x for b in bloques for x in hechos_mod.faltan(answer, [{campo: b.get(campo)}], [])))
+    completada = f"{answer.rstrip()}\n\n" + "\n\n".join(extra) if extra else answer
+    return None if hechos_mod.faltan(completada, bloques, intenciones) else completada
+
+
 async def generar_con_respaldo(client, messages: list[dict], pieza: str = "rag_escritor"):
     """La llamada que escribe la respuesta del RAG, con RESPALDO (8-oct, cambio de modelos).
 
@@ -1053,6 +1079,13 @@ async def rag_answer(
                         from src.flows import hechos as hechos_mod  # lazy
 
                         perdidos = hechos_mod.faltan(answer, *hechos_bloques)
+                        if perdidos and not faltan and not avisos and settings.rag_hechos_sin_reintento:
+                            # arq-7b (latencia): si solo faltan puntos de las listas, los añade el código en vez de
+                            # rehacer la respuesta (el reintento repetía escritor, revisor y aviso final: ~5 s).
+                            completada = _completar_con_hechos(answer, *hechos_bloques, lang)
+                            if completada is not None:
+                                logger.info(f"[RAG][ARQ7B] faltaban {len(perdidos)} hechos: los añade el código")
+                                answer, perdidos = completada, []
                     if faltan or avisos or perdidos:
                         partes = ([rag_plan.feedback_de_faltan(faltan, lang)] if faltan else []) + (
                             [rag_plan.feedback_de_avisos(avisos, lang)] if avisos else []) + (

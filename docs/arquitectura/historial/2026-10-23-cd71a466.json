@@ -1,0 +1,1556 @@
+{
+ "meta": {
+  "generado": "2026-10-23T10:19:33+00:00",
+  "commit": "cd71a466",
+  "rama": "feature/pre_gadea"
+ },
+ "estructura": {
+  "componentes": [
+   {
+    "id": "b_acuse",
+    "vista": "booking",
+    "titulo": "Acuse (en paralelo)",
+    "tipo": "paralelo",
+    "nodo_grafo": null,
+    "modelos": [
+     "acuse_model"
+    ],
+    "interruptores": []
+   },
+   {
+    "id": "b_availability",
+    "vista": "booking",
+    "titulo": "Disponibilidad",
+    "tipo": "agente",
+    "nodo_grafo": "availability",
+    "modelos": [],
+    "interruptores": [
+     "dias_cerrados_por_rag"
+    ]
+   },
+   {
+    "id": "b_entrada",
+    "vista": "booking",
+    "titulo": "Viene del enrutador",
+    "tipo": "entrada",
+    "nodo_grafo": null,
+    "modelos": [],
+    "interruptores": []
+   },
+   {
+    "id": "b_extraction",
+    "vista": "booking",
+    "titulo": "Entender los datos",
+    "tipo": "agente",
+    "nodo_grafo": "extraction",
+    "modelos": [
+     "extractor_turno_model",
+     "red_extractor_model"
+    ],
+    "interruptores": [
+     "idioma_otro_en_ingles",
+     "extractor_aclaraciones",
+     "extractor_todo_lo_dicho",
+     "extractor_cita_del_cliente",
+     "hotel_por_extractor",
+     "lugar_con_dos_lectores",
+     "sin_cedula_extranjero",
+     "vivir_no_es_residir",
+     "gentilicio_es_colombiano",
+     "el_verbo_no_la_ciudad",
+     "rag_espera_la_nacionalidad",
+     "hoteles_de_la_base",
+     "reserva_de_hotel_no_es_nuestra",
+     "referido_no_pregunta_nivel",
+     "pago_colombiano_con_asesor",
+     "est4_flujo",
+     "jev_pide_algo",
+     "duracion_por_extractor",
+     "edades_por_extractor",
+     "reparto_al_sumarse_alguien",
+     "textos_de_cartagena",
+     "seguridad_de_grupo",
+     "refresher_completo",
+     "cache_anthropic",
+     "curso_preguntado_no_es_nivel",
+     "cedula_de_extranjeria_manda"
+    ]
+   },
+   {
+    "id": "b_notas",
+    "vista": "booking",
+    "titulo": "Notas (en paralelo)",
+    "tipo": "paralelo",
+    "nodo_grafo": null,
+    "modelos": [
+     "notas_model"
+    ],
+    "interruptores": [
+     "memoria_sin_ordenes_del_cliente"
+    ]
+   },
+   {
+    "id": "b_pregunta",
+    "vista": "booking",
+    "titulo": "Respuesta a la pregunta (en paralelo)",
+    "tipo": "paralelo",
+    "nodo_grafo": null,
+    "modelos": [],
+    "interruptores": []
+   },
+   {
+    "id": "b_routing",
+    "vista": "booking",
+    "titulo": "Señales",
+    "tipo": "agente",
+    "nodo_grafo": "routing",
+    "modelos": [
+     "senales_model"
+    ],
+    "interruptores": [
+     "plan_elegido_por_extractor"
+    ]
+   },
+   {
+    "id": "b_salida",
+    "vista": "booking",
+    "titulo": "Vuelve a cerrar el turno",
+    "tipo": "salida",
+    "nodo_grafo": null,
+    "modelos": [],
+    "interruptores": []
+   },
+   {
+    "id": "b_setup",
+    "vista": "booking",
+    "titulo": "Preparar",
+    "tipo": "agente",
+    "nodo_grafo": "setup",
+    "modelos": [
+     "openai_model"
+    ],
+    "interruptores": [
+     "idioma_del_extractor",
+     "idioma_unico_de_apertura"
+    ]
+   },
+   {
+    "id": "b_slotfill_close",
+    "vista": "booking",
+    "titulo": "Preguntar o cerrar",
+    "tipo": "agente",
+    "nodo_grafo": "slotfill_close",
+    "modelos": [
+     "resolutor_model"
+    ],
+    "interruptores": [
+     "actividad_por_lo_sabido",
+     "una_sola_pregunta",
+     "tras_pase_recuerda_el_pase",
+     "lugar_desconocido_al_rag",
+     "hotel_del_catalogo_da_isla",
+     "lo_dicho_en_respuesta_fija",
+     "actividad_principal_en_el_reparto",
+     "reparto_parcial_con_lo_sabido",
+     "ninos_primero_al_snorkel",
+     "refresher_por_extractor",
+     "actividad_del_reparto",
+     "origen_neutro_con_dos_planes",
+     "baru_no_es_rosario",
+     "baru_sale_de_cartagena",
+     "certificado_solo_si_lo_dice",
+     "precio_no_elige",
+     "tarjeta_sin_seguridad",
+     "aplazar_pregunta_sin_respuesta",
+     "recomendar_a_certificados",
+     "recomendar_a_no_certificados",
+     "resolutor_sin_contradicciones",
+     "acuse_solo_el_mensaje",
+     "acuse_en_su_numero",
+     "actividad_de_la_pregunta",
+     "sin_certificacion_no_hace_falta",
+     "recotizar_al_cambiar_moneda"
+    ]
+   },
+   {
+    "id": "booking",
+    "vista": "general",
+    "titulo": "Reserva",
+    "tipo": "agente",
+    "nodo_grafo": "booking",
+    "modelos": [],
+    "interruptores": []
+   },
+   {
+    "id": "cascada",
+    "vista": "general",
+    "titulo": "Cascada (respaldo)",
+    "tipo": "respaldo",
+    "nodo_grafo": null,
+    "modelos": [],
+    "interruptores": []
+   },
+   {
+    "id": "catalogo",
+    "vista": "general",
+    "titulo": "Catálogo",
+    "tipo": "datos",
+    "nodo_grafo": null,
+    "modelos": [],
+    "interruptores": []
+   },
+   {
+    "id": "changes",
+    "vista": "general",
+    "titulo": "Cambios",
+    "tipo": "agente",
+    "nodo_grafo": "changes",
+    "modelos": [],
+    "interruptores": [
+     "cambio_de_reserva_pasa"
+    ]
+   },
+   {
+    "id": "chatwoot",
+    "vista": "general",
+    "titulo": "Chatwoot",
+    "tipo": "externo",
+    "nodo_grafo": null,
+    "modelos": [],
+    "interruptores": []
+   },
+   {
+    "id": "ci",
+    "vista": "general",
+    "titulo": "GitHub CI",
+    "tipo": "infra",
+    "nodo_grafo": null,
+    "modelos": [],
+    "interruptores": []
+   },
+   {
+    "id": "cierre",
+    "vista": "general",
+    "titulo": "Cerrar el turno",
+    "tipo": "salida",
+    "nodo_grafo": null,
+    "modelos": [
+     "openai_model"
+    ],
+    "interruptores": []
+   },
+   {
+    "id": "cliente",
+    "vista": "general",
+    "titulo": "Cliente",
+    "tipo": "entrada",
+    "nodo_grafo": null,
+    "modelos": [],
+    "interruptores": []
+   },
+   {
+    "id": "deflection",
+    "vista": "general",
+    "titulo": "Desvío",
+    "tipo": "agente",
+    "nodo_grafo": "deflection",
+    "modelos": [],
+    "interruptores": [
+     "contacto_pasa_a_persona"
+    ]
+   },
+   {
+    "id": "entrada",
+    "vista": "general",
+    "titulo": "Entrada",
+    "tipo": "entrada",
+    "nodo_grafo": null,
+    "modelos": [],
+    "interruptores": []
+   },
+   {
+    "id": "envio",
+    "vista": "general",
+    "titulo": "Enviar",
+    "tipo": "salida",
+    "nodo_grafo": null,
+    "modelos": [],
+    "interruptores": []
+   },
+   {
+    "id": "estado",
+    "vista": "general",
+    "titulo": "Memoria de la conversación",
+    "tipo": "datos",
+    "nodo_grafo": null,
+    "modelos": [],
+    "interruptores": []
+   },
+   {
+    "id": "info",
+    "vista": "general",
+    "titulo": "Información",
+    "tipo": "agente",
+    "nodo_grafo": "info",
+    "modelos": [],
+    "interruptores": [
+     "privado_pasa_directo",
+     "tarjeta_edades_en_cifra"
+    ]
+   },
+   {
+    "id": "kb",
+    "vista": "general",
+    "titulo": "Base de conocimiento",
+    "tipo": "datos",
+    "nodo_grafo": null,
+    "modelos": [
+     "openai_embedding_model"
+    ],
+    "interruptores": []
+   },
+   {
+    "id": "metricas",
+    "vista": "general",
+    "titulo": "Métricas",
+    "tipo": "externo",
+    "nodo_grafo": null,
+    "modelos": [],
+    "interruptores": []
+   },
+   {
+    "id": "openai",
+    "vista": "general",
+    "titulo": "OpenAI",
+    "tipo": "externo",
+    "nodo_grafo": null,
+    "modelos": [],
+    "interruptores": []
+   },
+   {
+    "id": "openrouter",
+    "vista": "general",
+    "titulo": "OpenRouter (Jev)",
+    "tipo": "externo",
+    "nodo_grafo": null,
+    "modelos": [
+     "jev_model"
+    ],
+    "interruptores": [
+     "jev_router_enabled"
+    ]
+   },
+   {
+    "id": "pre",
+    "vista": "general",
+    "titulo": "Servidor PRE",
+    "tipo": "infra",
+    "nodo_grafo": null,
+    "modelos": [],
+    "interruptores": []
+   },
+   {
+    "id": "preparacion",
+    "vista": "general",
+    "titulo": "Preparar el turno",
+    "tipo": "entrada",
+    "nodo_grafo": null,
+    "modelos": [
+     "openai_transcription_model"
+    ],
+    "interruptores": [
+     "chatwoot_typing_indicator",
+     "transcripcion_con_vocabulario"
+    ]
+   },
+   {
+    "id": "r_buscar",
+    "vista": "info",
+    "titulo": "Buscar",
+    "tipo": "datos",
+    "nodo_grafo": null,
+    "modelos": [
+     "openai_embedding_model"
+    ],
+    "interruptores": []
+   },
+   {
+    "id": "r_catalogo",
+    "vista": "info",
+    "titulo": "Catálogo",
+    "tipo": "datos",
+    "nodo_grafo": null,
+    "modelos": [],
+    "interruptores": [
+     "rag_politicas_en_contexto",
+     "est2_datos",
+     "catalogo_profundidad",
+     "catalogo_preparacion"
+    ]
+   },
+   {
+    "id": "r_confianza",
+    "vista": "info",
+    "titulo": "¿Es fiable lo encontrado?",
+    "tipo": "cerebro",
+    "nodo_grafo": null,
+    "modelos": [],
+    "interruptores": []
+   },
+   {
+    "id": "r_entrada",
+    "vista": "info",
+    "titulo": "Llega una pregunta",
+    "tipo": "entrada",
+    "nodo_grafo": null,
+    "modelos": [],
+    "interruptores": [
+     "contexto_tras_el_pase",
+     "notas_rag_desde_estado"
+    ]
+   },
+   {
+    "id": "r_escribir",
+    "vista": "info",
+    "titulo": "Escribir la respuesta",
+    "tipo": "llm",
+    "nodo_grafo": null,
+    "modelos": [
+     "rag_answer_model"
+    ],
+    "interruptores": [
+     "origen_dos_variantes",
+     "origen_sin_titulo_suelto",
+     "rag_no_supone_reserva",
+     "rag_no_adivina",
+     "abre_con_la_respuesta",
+     "sin_genero_supuesto",
+     "rag_sin_hora",
+     "rag_temperatura_cero",
+     "respaldo_mismo_modelo",
+     "rag_plan_primero",
+     "avisos_condicionados",
+     "rag_ofrece_el_pase",
+     "rag_sin_precio_con_tarjeta",
+     "rag_sin_reglas_del_codigo",
+     "rag_enlace_al_recomendar",
+     "fecha_con_dia_de_la_semana"
+    ]
+   },
+   {
+    "id": "r_guardas",
+    "vista": "info",
+    "titulo": "Comprobaciones fijas",
+    "tipo": "cerebro",
+    "nodo_grafo": null,
+    "modelos": [],
+    "interruptores": []
+   },
+   {
+    "id": "r_hechos",
+    "vista": "info",
+    "titulo": "Redactor de hechos",
+    "tipo": "llm",
+    "nodo_grafo": null,
+    "modelos": [
+     "rag_answer_model"
+    ],
+    "interruptores": [
+     "hechos_por_codigo",
+     "hechos_al_rag",
+     "varias_actividades",
+     "enlace_con_disponibilidad",
+     "rag_comprueba_los_hechos",
+     "redactor_sin_preguntas_de_cierre",
+     "hechos_sin_actividad",
+     "requisitos_coherentes",
+     "descuentos_en_la_tabla",
+     "enlace_con_como_pagar",
+     "paquete_varios_dias",
+     "tiempo_limitado",
+     "dos_monedas_sin_nacionalidad",
+     "mezclados_por_partes",
+     "listas_por_codigo",
+     "rag_hechos_sin_reintento"
+    ]
+   },
+   {
+    "id": "r_nolotengo",
+    "vista": "info",
+    "titulo": "\"No lo tengo a la mano\"",
+    "tipo": "salida",
+    "nodo_grafo": null,
+    "modelos": [],
+    "interruptores": []
+   },
+   {
+    "id": "r_reescribir",
+    "vista": "info",
+    "titulo": "Reescribir la pregunta",
+    "tipo": "llm",
+    "nodo_grafo": null,
+    "modelos": [
+     "openai_model"
+    ],
+    "interruptores": [
+     "consulta_con_lo_sabido",
+     "busqueda_con_la_pregunta_sola",
+     "pregunta_sola_con_su_sitio"
+    ]
+   },
+   {
+    "id": "r_reglas",
+    "vista": "info",
+    "titulo": "Textos fijos y atajos",
+    "tipo": "agente",
+    "nodo_grafo": null,
+    "modelos": [],
+    "interruptores": [
+     "atajo_alergia_por_rag"
+    ]
+   },
+   {
+    "id": "r_reintento",
+    "vista": "info",
+    "titulo": "Reintento con motivo",
+    "tipo": "cerebro",
+    "nodo_grafo": null,
+    "modelos": [],
+    "interruptores": []
+   },
+   {
+    "id": "r_revisor",
+    "vista": "info",
+    "titulo": "Revisor",
+    "tipo": "llm",
+    "nodo_grafo": null,
+    "modelos": [
+     "grounding_v3_model",
+     "avisos_al_final_model"
+    ],
+    "interruptores": [
+     "juez_v3_luna",
+     "juez_revisa_con_cita",
+     "rag_revisor_completitud",
+     "rag_revisor_avisos",
+     "avisos_al_final"
+    ]
+   },
+   {
+    "id": "r_salida",
+    "vista": "info",
+    "titulo": "Respuesta aprobada",
+    "tipo": "salida",
+    "nodo_grafo": null,
+    "modelos": [],
+    "interruptores": []
+   },
+   {
+    "id": "route_message",
+    "vista": "general",
+    "titulo": "Director del turno",
+    "tipo": "cerebro",
+    "nodo_grafo": null,
+    "modelos": [],
+    "interruptores": [
+     "aviso_si_openai_falla"
+    ]
+   },
+   {
+    "id": "router",
+    "vista": "general",
+    "titulo": "Enrutador",
+    "tipo": "cerebro",
+    "nodo_grafo": "router",
+    "modelos": [
+     "jev_model",
+     "senales_model"
+    ],
+    "interruptores": [
+     "jev_router_enabled",
+     "jev_con_contexto",
+     "jev_precio_nombra_actividades",
+     "pase_si_pide_fuera_del_sistema",
+     "datos_ajenos_se_niegan",
+     "idioma_unico_de_apertura",
+     "grupo_de_una_persona",
+     "ya_reservo_no_es_pase"
+    ]
+   },
+   {
+    "id": "safety",
+    "vista": "general",
+    "titulo": "Seguridad",
+    "tipo": "agente",
+    "nodo_grafo": "safety",
+    "modelos": [],
+    "interruptores": [
+     "contesta_antes_de_pasar",
+     "contesta_antes_de_cualquier_pase",
+     "clima_con_politica",
+     "dieta_no_es_medica",
+     "nada_en_primera_linea",
+     "adaptado_contesta_lo_demas",
+     "hechos_en_el_pase"
+    ]
+   }
+  ],
+  "aristas": [
+   [
+    "b_acuse",
+    "b_slotfill_close",
+    "paralelo"
+   ],
+   [
+    "b_availability",
+    "b_routing",
+    "condicional"
+   ],
+   [
+    "b_availability",
+    "b_salida",
+    "condicional"
+   ],
+   [
+    "b_entrada",
+    "b_setup",
+    "normal"
+   ],
+   [
+    "b_extraction",
+    "b_salida",
+    "condicional"
+   ],
+   [
+    "b_extraction",
+    "b_slotfill_close",
+    "condicional"
+   ],
+   [
+    "b_pregunta",
+    "b_slotfill_close",
+    "paralelo"
+   ],
+   [
+    "b_routing",
+    "b_extraction",
+    "condicional"
+   ],
+   [
+    "b_routing",
+    "b_pregunta",
+    "paralelo"
+   ],
+   [
+    "b_routing",
+    "b_salida",
+    "condicional"
+   ],
+   [
+    "b_setup",
+    "b_acuse",
+    "paralelo"
+   ],
+   [
+    "b_setup",
+    "b_availability",
+    "condicional"
+   ],
+   [
+    "b_setup",
+    "b_notas",
+    "paralelo"
+   ],
+   [
+    "b_setup",
+    "b_salida",
+    "condicional"
+   ],
+   [
+    "b_slotfill_close",
+    "b_salida",
+    "normal"
+   ],
+   [
+    "booking",
+    "cascada",
+    "respaldo"
+   ],
+   [
+    "booking",
+    "catalogo",
+    "datos"
+   ],
+   [
+    "booking",
+    "cierre",
+    "normal"
+   ],
+   [
+    "booking",
+    "kb",
+    "datos"
+   ],
+   [
+    "booking",
+    "openai",
+    "datos"
+   ],
+   [
+    "cascada",
+    "cierre",
+    "normal"
+   ],
+   [
+    "changes",
+    "cascada",
+    "respaldo"
+   ],
+   [
+    "changes",
+    "cierre",
+    "normal"
+   ],
+   [
+    "chatwoot",
+    "entrada",
+    "normal"
+   ],
+   [
+    "ci",
+    "pre",
+    "infra"
+   ],
+   [
+    "cierre",
+    "envio",
+    "normal"
+   ],
+   [
+    "cierre",
+    "metricas",
+    "datos"
+   ],
+   [
+    "cierre",
+    "openai",
+    "datos"
+   ],
+   [
+    "cliente",
+    "chatwoot",
+    "normal"
+   ],
+   [
+    "deflection",
+    "cascada",
+    "respaldo"
+   ],
+   [
+    "deflection",
+    "cierre",
+    "normal"
+   ],
+   [
+    "entrada",
+    "preparacion",
+    "normal"
+   ],
+   [
+    "envio",
+    "chatwoot",
+    "vuelta"
+   ],
+   [
+    "envio",
+    "estado",
+    "datos"
+   ],
+   [
+    "info",
+    "cascada",
+    "respaldo"
+   ],
+   [
+    "info",
+    "catalogo",
+    "datos"
+   ],
+   [
+    "info",
+    "cierre",
+    "normal"
+   ],
+   [
+    "info",
+    "kb",
+    "datos"
+   ],
+   [
+    "info",
+    "openai",
+    "datos"
+   ],
+   [
+    "preparacion",
+    "estado",
+    "datos"
+   ],
+   [
+    "preparacion",
+    "openai",
+    "datos"
+   ],
+   [
+    "preparacion",
+    "route_message",
+    "normal"
+   ],
+   [
+    "r_buscar",
+    "r_confianza",
+    "normal"
+   ],
+   [
+    "r_catalogo",
+    "r_escribir",
+    "datos"
+   ],
+   [
+    "r_catalogo",
+    "r_revisor",
+    "datos"
+   ],
+   [
+    "r_confianza",
+    "r_escribir",
+    "normal"
+   ],
+   [
+    "r_entrada",
+    "r_hechos",
+    "datos"
+   ],
+   [
+    "r_entrada",
+    "r_reglas",
+    "normal"
+   ],
+   [
+    "r_escribir",
+    "r_guardas",
+    "normal"
+   ],
+   [
+    "r_guardas",
+    "r_reintento",
+    "bucle"
+   ],
+   [
+    "r_guardas",
+    "r_revisor",
+    "normal"
+   ],
+   [
+    "r_hechos",
+    "r_salida",
+    "datos"
+   ],
+   [
+    "r_reescribir",
+    "r_buscar",
+    "normal"
+   ],
+   [
+    "r_reglas",
+    "r_reescribir",
+    "normal"
+   ],
+   [
+    "r_reglas",
+    "r_salida",
+    "atajo"
+   ],
+   [
+    "r_reintento",
+    "r_escribir",
+    "bucle"
+   ],
+   [
+    "r_reintento",
+    "r_nolotengo",
+    "bucle"
+   ],
+   [
+    "r_revisor",
+    "r_reintento",
+    "bucle"
+   ],
+   [
+    "r_revisor",
+    "r_salida",
+    "normal"
+   ],
+   [
+    "route_message",
+    "router",
+    "normal"
+   ],
+   [
+    "router",
+    "booking",
+    "condicional"
+   ],
+   [
+    "router",
+    "changes",
+    "condicional"
+   ],
+   [
+    "router",
+    "deflection",
+    "condicional"
+   ],
+   [
+    "router",
+    "info",
+    "condicional"
+   ],
+   [
+    "router",
+    "openai",
+    "datos"
+   ],
+   [
+    "router",
+    "openrouter",
+    "datos"
+   ],
+   [
+    "router",
+    "safety",
+    "condicional"
+   ],
+   [
+    "safety",
+    "cascada",
+    "respaldo"
+   ],
+   [
+    "safety",
+    "cierre",
+    "normal"
+   ]
+  ],
+  "interruptores": {
+   "abre_con_la_respuesta": {
+    "codigo": true,
+    "pre": true
+   },
+   "actividad_de_la_pregunta": {
+    "codigo": true,
+    "pre": true
+   },
+   "actividad_del_reparto": {
+    "codigo": true,
+    "pre": true
+   },
+   "actividad_por_lo_sabido": {
+    "codigo": true,
+    "pre": true
+   },
+   "actividad_principal_en_el_reparto": {
+    "codigo": true,
+    "pre": true
+   },
+   "acuse_en_su_numero": {
+    "codigo": true,
+    "pre": true
+   },
+   "acuse_solo_el_mensaje": {
+    "codigo": true,
+    "pre": true
+   },
+   "adaptado_contesta_lo_demas": {
+    "codigo": true,
+    "pre": true
+   },
+   "aplazar_pregunta_sin_respuesta": {
+    "codigo": true,
+    "pre": true
+   },
+   "atajo_alergia_por_rag": {
+    "codigo": true,
+    "pre": true
+   },
+   "aviso_si_openai_falla": {
+    "codigo": true,
+    "pre": true
+   },
+   "avisos_al_final": {
+    "codigo": true,
+    "pre": true
+   },
+   "avisos_condicionados": {
+    "codigo": false,
+    "pre": false
+   },
+   "baru_no_es_rosario": {
+    "codigo": true,
+    "pre": true
+   },
+   "baru_sale_de_cartagena": {
+    "codigo": true,
+    "pre": true
+   },
+   "busqueda_con_la_pregunta_sola": {
+    "codigo": true,
+    "pre": true
+   },
+   "cache_anthropic": {
+    "codigo": true,
+    "pre": true
+   },
+   "cambio_de_reserva_pasa": {
+    "codigo": true,
+    "pre": true
+   },
+   "catalogo_preparacion": {
+    "codigo": false,
+    "pre": false
+   },
+   "catalogo_profundidad": {
+    "codigo": true,
+    "pre": true
+   },
+   "cedula_de_extranjeria_manda": {
+    "codigo": true,
+    "pre": true
+   },
+   "certificado_solo_si_lo_dice": {
+    "codigo": true,
+    "pre": true
+   },
+   "chatwoot_typing_indicator": {
+    "codigo": true,
+    "pre": true
+   },
+   "clima_con_politica": {
+    "codigo": true,
+    "pre": true
+   },
+   "consulta_con_lo_sabido": {
+    "codigo": true,
+    "pre": true
+   },
+   "contacto_pasa_a_persona": {
+    "codigo": true,
+    "pre": true
+   },
+   "contesta_antes_de_cualquier_pase": {
+    "codigo": true,
+    "pre": true
+   },
+   "contesta_antes_de_pasar": {
+    "codigo": true,
+    "pre": true
+   },
+   "contexto_tras_el_pase": {
+    "codigo": false,
+    "pre": false
+   },
+   "curso_preguntado_no_es_nivel": {
+    "codigo": true,
+    "pre": true
+   },
+   "datos_ajenos_se_niegan": {
+    "codigo": true,
+    "pre": true
+   },
+   "descuentos_en_la_tabla": {
+    "codigo": true,
+    "pre": true
+   },
+   "dias_cerrados_por_rag": {
+    "codigo": false,
+    "pre": false
+   },
+   "dieta_no_es_medica": {
+    "codigo": true,
+    "pre": true
+   },
+   "dos_monedas_sin_nacionalidad": {
+    "codigo": false,
+    "pre": false
+   },
+   "duracion_por_extractor": {
+    "codigo": true,
+    "pre": true
+   },
+   "edades_por_extractor": {
+    "codigo": true,
+    "pre": true
+   },
+   "el_verbo_no_la_ciudad": {
+    "codigo": true,
+    "pre": true
+   },
+   "enlace_con_como_pagar": {
+    "codigo": true,
+    "pre": true
+   },
+   "enlace_con_disponibilidad": {
+    "codigo": true,
+    "pre": true
+   },
+   "est2_datos": {
+    "codigo": true,
+    "pre": true
+   },
+   "est4_flujo": {
+    "codigo": true,
+    "pre": true
+   },
+   "extractor_aclaraciones": {
+    "codigo": true,
+    "pre": true
+   },
+   "extractor_cita_del_cliente": {
+    "codigo": true,
+    "pre": true
+   },
+   "extractor_todo_lo_dicho": {
+    "codigo": true,
+    "pre": true
+   },
+   "fecha_con_dia_de_la_semana": {
+    "codigo": true,
+    "pre": true
+   },
+   "formato_whatsapp": {
+    "codigo": true,
+    "pre": true
+   },
+   "gentilicio_es_colombiano": {
+    "codigo": true,
+    "pre": true
+   },
+   "grupo_de_una_persona": {
+    "codigo": true,
+    "pre": true
+   },
+   "hechos_al_rag": {
+    "codigo": true,
+    "pre": true
+   },
+   "hechos_en_el_pase": {
+    "codigo": false,
+    "pre": false
+   },
+   "hechos_por_codigo": {
+    "codigo": true,
+    "pre": true
+   },
+   "hechos_sin_actividad": {
+    "codigo": true,
+    "pre": true
+   },
+   "hotel_del_catalogo_da_isla": {
+    "codigo": true,
+    "pre": true
+   },
+   "hotel_por_extractor": {
+    "codigo": true,
+    "pre": true
+   },
+   "hoteles_de_la_base": {
+    "codigo": true,
+    "pre": true
+   },
+   "idioma_del_extractor": {
+    "codigo": true,
+    "pre": true
+   },
+   "idioma_otro_en_ingles": {
+    "codigo": true,
+    "pre": true
+   },
+   "idioma_unico_de_apertura": {
+    "codigo": true,
+    "pre": true
+   },
+   "jev_con_contexto": {
+    "codigo": true,
+    "pre": true
+   },
+   "jev_pide_algo": {
+    "codigo": true,
+    "pre": true
+   },
+   "jev_precio_nombra_actividades": {
+    "codigo": true,
+    "pre": true
+   },
+   "jev_router_enabled": {
+    "codigo": false,
+    "pre": true
+   },
+   "juez_revisa_con_cita": {
+    "codigo": false,
+    "pre": false
+   },
+   "juez_v3_luna": {
+    "codigo": true,
+    "pre": true
+   },
+   "listas_por_codigo": {
+    "codigo": false,
+    "pre": false
+   },
+   "lo_dicho_en_respuesta_fija": {
+    "codigo": true,
+    "pre": true
+   },
+   "lugar_con_dos_lectores": {
+    "codigo": true,
+    "pre": true
+   },
+   "lugar_desconocido_al_rag": {
+    "codigo": true,
+    "pre": true
+   },
+   "memoria_sin_ordenes_del_cliente": {
+    "codigo": true,
+    "pre": true
+   },
+   "mezclados_por_partes": {
+    "codigo": false,
+    "pre": false
+   },
+   "nada_en_primera_linea": {
+    "codigo": true,
+    "pre": true
+   },
+   "ninos_primero_al_snorkel": {
+    "codigo": true,
+    "pre": true
+   },
+   "notas_rag_desde_estado": {
+    "codigo": true,
+    "pre": true
+   },
+   "openrouter_permitir_entrenamiento": {
+    "codigo": false,
+    "pre": false
+   },
+   "origen_dos_variantes": {
+    "codigo": true,
+    "pre": true
+   },
+   "origen_neutro_con_dos_planes": {
+    "codigo": true,
+    "pre": true
+   },
+   "origen_sin_titulo_suelto": {
+    "codigo": true,
+    "pre": true
+   },
+   "pago_colombiano_con_asesor": {
+    "codigo": true,
+    "pre": true
+   },
+   "paquete_varios_dias": {
+    "codigo": true,
+    "pre": true
+   },
+   "pase_si_pide_fuera_del_sistema": {
+    "codigo": true,
+    "pre": true
+   },
+   "paso6_en_llamada_aparte": {
+    "codigo": true,
+    "pre": true
+   },
+   "pii_respeta_urls": {
+    "codigo": true,
+    "pre": true
+   },
+   "plan_elegido_por_extractor": {
+    "codigo": false,
+    "pre": false
+   },
+   "precio_no_elige": {
+    "codigo": false,
+    "pre": false
+   },
+   "pregunta_sola_con_su_sitio": {
+    "codigo": true,
+    "pre": true
+   },
+   "privado_pasa_directo": {
+    "codigo": true,
+    "pre": true
+   },
+   "rag_comprueba_los_hechos": {
+    "codigo": true,
+    "pre": true
+   },
+   "rag_enlace_al_recomendar": {
+    "codigo": false,
+    "pre": false
+   },
+   "rag_espera_la_nacionalidad": {
+    "codigo": true,
+    "pre": true
+   },
+   "rag_hechos_sin_reintento": {
+    "codigo": false,
+    "pre": false
+   },
+   "rag_no_adivina": {
+    "codigo": true,
+    "pre": true
+   },
+   "rag_no_supone_reserva": {
+    "codigo": true,
+    "pre": true
+   },
+   "rag_ofrece_el_pase": {
+    "codigo": true,
+    "pre": true
+   },
+   "rag_plan_primero": {
+    "codigo": false,
+    "pre": false
+   },
+   "rag_politicas_en_contexto": {
+    "codigo": true,
+    "pre": true
+   },
+   "rag_revisor_avisos": {
+    "codigo": false,
+    "pre": false
+   },
+   "rag_revisor_completitud": {
+    "codigo": false,
+    "pre": false
+   },
+   "rag_sin_hora": {
+    "codigo": false,
+    "pre": false
+   },
+   "rag_sin_precio_con_tarjeta": {
+    "codigo": true,
+    "pre": true
+   },
+   "rag_sin_reglas_del_codigo": {
+    "codigo": true,
+    "pre": true
+   },
+   "rag_temperatura_cero": {
+    "codigo": true,
+    "pre": true
+   },
+   "recomendar_a_certificados": {
+    "codigo": true,
+    "pre": true
+   },
+   "recomendar_a_no_certificados": {
+    "codigo": true,
+    "pre": true
+   },
+   "recotizar_al_cambiar_moneda": {
+    "codigo": true,
+    "pre": true
+   },
+   "redactor_sin_preguntas_de_cierre": {
+    "codigo": true,
+    "pre": true
+   },
+   "referido_no_pregunta_nivel": {
+    "codigo": true,
+    "pre": true
+   },
+   "refresher_completo": {
+    "codigo": true,
+    "pre": true
+   },
+   "refresher_por_extractor": {
+    "codigo": true,
+    "pre": true
+   },
+   "reparto_al_sumarse_alguien": {
+    "codigo": true,
+    "pre": true
+   },
+   "reparto_en_pares": {
+    "codigo": false,
+    "pre": false
+   },
+   "reparto_parcial_con_lo_sabido": {
+    "codigo": true,
+    "pre": true
+   },
+   "requisitos_coherentes": {
+    "codigo": true,
+    "pre": true
+   },
+   "reserva_de_hotel_no_es_nuestra": {
+    "codigo": true,
+    "pre": true
+   },
+   "resolutor_sin_contradicciones": {
+    "codigo": true,
+    "pre": true
+   },
+   "respaldo_mismo_modelo": {
+    "codigo": false,
+    "pre": false
+   },
+   "seguridad_de_grupo": {
+    "codigo": true,
+    "pre": true
+   },
+   "sin_cedula_extranjero": {
+    "codigo": true,
+    "pre": true
+   },
+   "sin_certificacion_no_hace_falta": {
+    "codigo": true,
+    "pre": true
+   },
+   "sin_genero_supuesto": {
+    "codigo": true,
+    "pre": true
+   },
+   "tarjeta_edades_en_cifra": {
+    "codigo": true,
+    "pre": true
+   },
+   "tarjeta_sin_seguridad": {
+    "codigo": true,
+    "pre": true
+   },
+   "textos_de_cartagena": {
+    "codigo": true,
+    "pre": true
+   },
+   "tiempo_limitado": {
+    "codigo": false,
+    "pre": false
+   },
+   "transcripcion_con_vocabulario": {
+    "codigo": true,
+    "pre": true
+   },
+   "tras_pase_recuerda_el_pase": {
+    "codigo": true,
+    "pre": true
+   },
+   "una_sola_pregunta": {
+    "codigo": true,
+    "pre": true
+   },
+   "varias_actividades": {
+    "codigo": false,
+    "pre": false
+   },
+   "vivir_no_es_residir": {
+    "codigo": true,
+    "pre": true
+   },
+   "ya_reservo_no_es_pase": {
+    "codigo": true,
+    "pre": true
+   }
+  },
+  "modelos": {
+   "acuse_model": {
+    "codigo": "gpt-5.4-nano",
+    "pre": "gpt-5.4-nano"
+   },
+   "avisos_al_final_model": {
+    "codigo": "gpt-6-luna",
+    "pre": "gpt-6-luna"
+   },
+   "extraction_model": {
+    "codigo": "gpt-5.4-mini",
+    "pre": "gpt-5.4-mini"
+   },
+   "extractor_turno_model": {
+    "codigo": "anthropic/claude-haiku-5.5",
+    "pre": "anthropic/claude-haiku-5.5"
+   },
+   "grounding_v3_model": {
+    "codigo": "deepseek/deepseek-v4.1-flash",
+    "pre": "deepseek/deepseek-v4.1-flash"
+   },
+   "idioma_model": {
+    "codigo": "deepseek/deepseek-v4.1-flash",
+    "pre": "deepseek/deepseek-v4.1-flash"
+   },
+   "jev_model": {
+    "codigo": "typesafe/jev-1.13",
+    "pre": "typesafe/jev-1.13"
+   },
+   "notas_model": {
+    "codigo": "deepseek/deepseek-v4.1-flash",
+    "pre": "deepseek/deepseek-v4.1-flash"
+   },
+   "openai_embedding_model": {
+    "codigo": "text-embedding-3-small",
+    "pre": "text-embedding-3-small"
+   },
+   "openai_model": {
+    "codigo": "gpt-5.4-mini",
+    "pre": "gpt-5.4-mini"
+   },
+   "openai_transcription_model": {
+    "codigo": "gpt-transcribe",
+    "pre": "gpt-transcribe"
+   },
+   "pregunta_sola_model": {
+    "codigo": "deepseek/deepseek-v4.1-flash",
+    "pre": "deepseek/deepseek-v4.1-flash"
+   },
+   "rag_answer_model": {
+    "codigo": "gpt-6-luna",
+    "pre": "gpt-6-luna"
+   },
+   "rag_plan_model": {
+    "codigo": "gpt-6-luna",
+    "pre": "gpt-6-luna"
+   },
+   "red_extractor_model": {
+    "codigo": "gpt-6-luna",
+    "pre": "gpt-6-luna"
+   },
+   "reescritura_model": {
+    "codigo": "deepseek/deepseek-v4.1-flash",
+    "pre": "deepseek/deepseek-v4.1-flash"
+   },
+   "resolutor_model": {
+    "codigo": "anthropic/claude-haiku-5.5",
+    "pre": "anthropic/claude-haiku-5.5"
+   },
+   "resumen_model": {
+    "codigo": "deepseek/deepseek-v4.1-flash",
+    "pre": "deepseek/deepseek-v4.1-flash"
+   },
+   "senales_model": {
+    "codigo": "deepseek/deepseek-v4.1-flash",
+    "pre": "deepseek/deepseek-v4.1-flash"
+   }
+  }
+ },
+ "cambios": {
+  "piezas_nuevas": [],
+  "piezas_quitadas": [],
+  "flechas_nuevas": [],
+  "flechas_quitadas": [],
+  "interruptores": [
+   "rag_hechos_sin_reintento"
+  ],
+  "modelos": []
+ }
+}

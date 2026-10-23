@@ -616,7 +616,8 @@
         "tiempo_limitado",
         "dos_monedas_sin_nacionalidad",
         "mezclados_por_partes",
-        "listas_por_codigo"
+        "listas_por_codigo",
+        "rag_hechos_sin_reintento"
       ]
     },
     {
@@ -1675,6 +1676,11 @@
       "area": "Preguntas",
       "titulo": "Las listas las pone el código",
       "texto": "Lo que incluye un plan, los requisitos y los descuentos los copia el código del dato, en viñetas y con sus orígenes, donde el redactor deja una marca; el modelo solo escribe las frases. Las listas salen siempre enteras y no hace falta rehacer la respuesta (arq-7a, latencia, 23-oct)."
+    },
+    "rag_hechos_sin_reintento": {
+      "area": "Preguntas",
+      "titulo": "Lo que falta lo añade el código",
+      "texto": "En los mensajes mezclados, si la respuesta del RAG se deja puntos de lo que incluye, de los requisitos o de los descuentos, el código los añade al final con su rótulo en vez de rehacer la respuesta entera; un precio o un enlace que falte sí se rehace (arq-7b, latencia, 23-oct)."
     }
   },
   "areas": [
