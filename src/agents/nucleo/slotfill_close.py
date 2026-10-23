@@ -70,12 +70,12 @@ def _nota_seguridad(state: ConversationState) -> str:
 
 
 def _siguiente_pregunta(state: ConversationState, prev_pending: str | None) -> str | None:
-    """EX-FLUJO-1 (flag `aplazar_pregunta_sin_respuesta`, decisión de Gadea, 14-oct): si el cliente no contestó la
+    """EX-FLUJO-1 (decisión de Gadea, 14-oct): si el cliente no contestó la
     pregunta del turno anterior (sigue faltando ese dato), no se repite: se aplaza y se pregunta otra cosa; las
     aplazadas vuelven justo antes del resumen, cuando no falta nada más. Ronda atencion-B2: "¿Ha pasado más de 2 años
     desde la última inmersión?" salía tres turnos seguidos mientras el cliente daba fechas y su regreso."""
     nxt = next_missing_slot(state)
-    if not settings.aplazar_pregunta_sin_respuesta or nxt is None:
+    if nxt is None:
         return nxt
     # Ronda flujo1-B2: aplazar a la PRIMERA pregunta sin contestar reordenaba casi todas las conversaciones ("Última
     # cosa… ¿sois colombianos?" demasiado pronto; el acuse tomaba la respuesta a una aplazada por la de la pendiente).

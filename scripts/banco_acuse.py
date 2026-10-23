@@ -6,7 +6,8 @@ cliente no dijo ("tienes una reserva para el sábado", "has reservado dos minicu
 Aquí, los mensajes reales (con un resumen como el que recibía) y controles que hoy salen bien; N pasadas por caso, y un
 juez (JUEZ_MODELO, Luna desde el 18-oct) que dice si la frase afirma algo que el cliente no dijo.
 
-    ENV_FILE=.env.dev python -m scripts.banco_acuse [--pasadas 5] [--flag acuse_solo_el_mensaje]
+    ENV_FILE=.env.dev python -m scripts.banco_acuse [--pasadas 5] [--flag <otro flag>]
+(`acuse_solo_el_mensaje` se promocionó y su interruptor se borró en sim-5: la regla va siempre.)
 """
 import argparse
 import asyncio

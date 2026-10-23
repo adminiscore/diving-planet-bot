@@ -72,10 +72,9 @@ def _alcohol_and_food_policy_answer(msg_lower: str, lang: str) -> str | None:
         text = (policies.get("no_alcohol_policy") or {}).get(lang, "")
         if text:
             parts.append(text)
-    # ex-3 (`atajo_alergia_por_rag`): la alergia sola la contesta el RAG (FAQ curada); con alcohol en el mismo
-    # mensaje va junta, como hoy (la política de alcohol no está en la base del RAG).
-    alergia_por_rag = settings.atajo_alergia_por_rag and not parts
-    if not alergia_por_rag and _ALLERGY_WORD_RE.search(msg_lower) and _FOOD_ALLERGEN_RE.search(msg_lower):
+    # ex-3: la alergia sola la contesta el RAG (FAQ curada); con alcohol en el mismo mensaje va junta (la política de
+    # alcohol no está en la base del RAG).
+    if parts and _ALLERGY_WORD_RE.search(msg_lower) and _FOOD_ALLERGEN_RE.search(msg_lower):
         text = (policies.get("food_policy") or {}).get(lang, "")
         if text:
             parts.append(text)

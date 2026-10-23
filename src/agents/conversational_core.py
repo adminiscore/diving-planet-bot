@@ -254,7 +254,7 @@ def next_missing_slot(state: ConversationState, saltar: frozenset[str] | set[str
 
 def _es_la_ultima_pregunta(state: ConversationState) -> bool:
     """La nacionalidad es la última pregunta salvo que haya otra aplazada aún sin contestar (EX-FLUJO-1)."""
-    if not settings.aplazar_pregunta_sin_respuesta or not state.preguntas_aplazadas:
+    if not state.preguntas_aplazadas:
         return True
     return next_missing_slot(state, saltar=frozenset({SLOT_NATIONALITY})) in (None, SLOT_NATIONALITY)
 
@@ -418,7 +418,7 @@ def ask_slot(state: ConversationState, slot: str, *, reasking: bool = False) -> 
             "with an instructor, no experience needed. If you want to get certified, there's the *PADI Open "
             "Water course*. Shall we go for the mini-course? 🤿"
         )
-    if slot == SLOT_ACTIVITY and settings.recomendar_a_certificados and state.is_certified is True:
+    if slot == SLOT_ACTIVITY and state.is_certified is True:
         # 14-oct (ronda flujo1-B3): a quien ya dijo que es buzo certificado se le ofrecía el menú entero (minicurso,
         # snorkel…) y el juez lo marcaba como repregunta. Regla de Gadea (14/27-sep): recomendar según el contexto, y
         # que elija el cliente: para un certificado, la salida de 2 inmersiones, los paquetes o un curso avanzado.
@@ -863,11 +863,9 @@ def _plan_is_single_day(state: ConversationState) -> bool:
     if state.detected_service_id:
         return state.detected_service_id not in not_single
     if state.detected_activity == "certified_diving":
-        if settings.est2_datos:
-            # EX-EST-2 (14-oct): "el plan de 5 buceos para el finde" sin duración detectada recibía "ida y vuelta el mismo
-            # día". Solo se afirma un día si se SABE.
-            return state.detected_duration == "single_day"
-        return state.detected_duration != "multi_day"
+        # EX-EST-2 (14-oct): "el plan de 5 buceos para el finde" sin duración detectada recibía "ida y vuelta el mismo
+        # día". Solo se afirma un día si se SABE.
+        return state.detected_duration == "single_day"
     act = dom.by_id(state.detected_activity) if state.detected_activity else None
     services = act.all_services() if act else ()
     return bool(services) and not any(sid in not_single for sid in services)
@@ -1005,8 +1003,6 @@ async def _otro_idioma_en_ingles(state: ConversationState, datos: dict | None = 
     contesta en inglés. El idioma principal lo dice el extractor de la fase EX (misma llamada; unas palabras sueltas no
     cuentan). En el primer turno se mira la extracción ya lanzada con el enrutador, antes del saludo (sin consumirla:
     `_understand` la vuelve a esperar y ya está hecha)."""
-    if not settings.idioma_otro_en_ingles:
-        return
     if len((message or "").split()) < 3:
         # Ronda flujo1-B2: "Frances" (contesta la nacionalidad) pasó la conversación a inglés. Una o dos palabras no
         # dicen en qué idioma escribe el cliente.

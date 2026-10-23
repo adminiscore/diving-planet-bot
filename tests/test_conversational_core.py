@@ -390,7 +390,6 @@ async def test_multi_slot_message_absorbed_in_one_turn(extractor_dice):
 
 @pytest.mark.asyncio
 async def test_question_mid_flow_answers_and_reasks_pending_slot(monkeypatch, extractor_dice):
-    monkeypatch.setattr(settings, "aplazar_pregunta_sin_respuesta", False)  # camino de antes de EX-FLUJO-1
     extractor_dice({"quiero bucear, soy certificado, desde cartagena": {**BUZO, **CARTAGENA},
                     "solo yo": {"group_size": 1}})  # ex-9b paso 4: la respuesta corta la lee el extractor
     state = make_state("es")
@@ -465,7 +464,6 @@ async def test_reask_does_not_repeat_plan_recommendation(monkeypatch, extractor_
     aporta otro dato ("desde cartagena" respondiendo a la pregunta de
     seguridad), la re-pregunta NO debe repetir la recomendación del plan —
     en vivo se veía 3 veces el mismo bloque entero."""
-    monkeypatch.setattr(settings, "aplazar_pregunta_sin_respuesta", False)  # camino de antes de EX-FLUJO-1
     extractor_dice({ROCIO: BUZO, "desde cartagena": CARTAGENA, "soy solo yo": {"group_size": 1},
                     "somos 3 en realidad": {"group_size": 3}})
     state = make_state("es")
@@ -897,7 +895,6 @@ async def test_qty_un_par_resolved_by_slot_resolver(monkeypatch):
 async def test_slot_resolver_abstains_no_infinite_state_change(monkeypatch):
     """Si el resolutor se abstiene ({}), el slot NO cambia y se re-pregunta —
     igual que antes, nunca peor (no se inventa un valor)."""
-    monkeypatch.setattr(settings, "aplazar_pregunta_sin_respuesta", False)  # camino de antes de EX-FLUJO-1
     resolver = AsyncMock(return_value={})
     monkeypatch.setattr(core_extraction, "resolve_slot_answer", resolver)
     state = make_state("es")
@@ -1526,7 +1523,6 @@ async def test_companion_activity_ambiguity_defers_instead_of_burying_pending_sl
     colombianos") que en realidad respondía a otra cosa. Ahora se difiere: se
     sigue preguntando lo que tocaba (seguridad), y el acompañante se retoma
     justo antes de cerrar, sin perderse ni bloquear nada por el medio."""
-    monkeypatch.setattr(settings, "aplazar_pregunta_sin_respuesta", False)  # camino de antes de EX-FLUJO-1
     extractor_dice({"no somos colombianos": {"is_colombian": False}})
     state = make_state("es")
     state.detected_activity = "certified_diving"
@@ -2257,7 +2253,6 @@ async def test_location_resolver_island_value(monkeypatch):
 async def test_location_resolver_abstains_reasks(monkeypatch):
     """Si el resolutor se abstiene, la ubicación NO se inventa y se re-pregunta
     (nunca peor que hoy)."""
-    monkeypatch.setattr(settings, "aplazar_pregunta_sin_respuesta", False)  # camino de antes de EX-FLUJO-1
     monkeypatch.setattr(core_extraction, "resolve_slot_answer", AsyncMock(return_value={}))
     state = _at_location_stage()
     with patch("src.agents.supervisor.detect_routing_signals",
@@ -3018,7 +3013,6 @@ async def test_explicit_language_switch_mid_conversation_is_honored(monkeypatch,
     """El mismo hallazgo, de punta a punta: pedir explícitamente cambiar de
     idioma a mitad de conversación debe surtir efecto YA MISMO, en la
     respuesta de ese mismo turno."""
-    monkeypatch.setattr(settings, "aplazar_pregunta_sin_respuesta", False)  # camino de antes de EX-FLUJO-1
     # ex-9b paso 3: "quiero bucear certificado" elige el buceo certificado pero no dice que lo esté (mod-2,
     # `certificado_solo_si_lo_dice`; el regex lo deducía y la siguiente pregunta era el origen): se pregunta la
     # certificación, ya en inglés.

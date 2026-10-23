@@ -2,8 +2,8 @@
 flag apagado y encendido, con el estado REAL turno a turno (se usó en u3-4, 24-sep).
 
 Uso (dos pasadas, luego `scripts/replay_diff.py`):
-    python -m scripts.replay_golden_local --flag aplazar_pregunta_sin_respuesta --side off
-    python -m scripts.replay_golden_local --flag aplazar_pregunta_sin_respuesta --side on
+    python -m scripts.replay_golden_local --flag <flag> --side off
+    python -m scripts.replay_golden_local --flag <flag> --side on
 Salida: docs/robustness/<dir>/replay-<side>.jsonl (por defecto --dir u3-4).
 Coste: céntimos (solo extracción + Jev; RAG/acuse/notas son respuestas fijas).
 

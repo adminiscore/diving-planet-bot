@@ -156,20 +156,19 @@ def build_system_prompt(lang: str, query: str | None = None) -> str:
             f"Style and tone:\n{_build_tone_section('en')}\n\n"
             f"{RAG_BODY_EN}"
         )
-    if settings.est2_datos:
-        # EX-EST-2: siempre hay disponibilidad (decisión del negocio) y, si encajan varios planes, se nombran todos.
-        from src.prompts.info import (  # lazy
-            RAG_DISPONIBILIDAD_NUEVA_EN,
-            RAG_DISPONIBILIDAD_NUEVA_ES,
-            RAG_DISPONIBILIDAD_VIEJA_EN,
-            RAG_DISPONIBILIDAD_VIEJA_ES,
-            RAG_VARIOS_PLANES_EN,
-            RAG_VARIOS_PLANES_ES,
-        )
+    # EX-EST-2: siempre hay disponibilidad (decisión del negocio) y, si encajan varios planes, se nombran todos.
+    from src.prompts.info import (  # lazy
+        RAG_DISPONIBILIDAD_NUEVA_EN,
+        RAG_DISPONIBILIDAD_NUEVA_ES,
+        RAG_DISPONIBILIDAD_VIEJA_EN,
+        RAG_DISPONIBILIDAD_VIEJA_ES,
+        RAG_VARIOS_PLANES_EN,
+        RAG_VARIOS_PLANES_ES,
+    )
 
-        prompt = prompt.replace(RAG_DISPONIBILIDAD_VIEJA_ES, RAG_DISPONIBILIDAD_NUEVA_ES).replace(
-            RAG_DISPONIBILIDAD_VIEJA_EN, RAG_DISPONIBILIDAD_NUEVA_EN)
-        prompt = f"{prompt}\n\n{RAG_VARIOS_PLANES_ES if lang == 'es' else RAG_VARIOS_PLANES_EN}"
+    prompt = prompt.replace(RAG_DISPONIBILIDAD_VIEJA_ES, RAG_DISPONIBILIDAD_NUEVA_ES).replace(
+        RAG_DISPONIBILIDAD_VIEJA_EN, RAG_DISPONIBILIDAD_NUEVA_EN)
+    prompt = f"{prompt}\n\n{RAG_VARIOS_PLANES_ES if lang == 'es' else RAG_VARIOS_PLANES_EN}"
     if settings.rag_no_adivina:
         # 18-oct: no adivinar ningún dato del cliente (origen, nacionalidad, certificación, cuántos, fechas); sustituye
         # a la regla de EX-RAG-2, que solo cubría el servicio (ver RAG_NO_ADIVINA_*).
@@ -189,7 +188,7 @@ def build_system_prompt(lang: str, query: str | None = None) -> str:
             from src.prompts.info import RAG_SIN_GENERO_EN, RAG_SIN_GENERO_ES  # lazy
 
             prompt = f"{prompt}\n\n{RAG_SIN_GENERO_ES if lang == 'es' else RAG_SIN_GENERO_EN}"
-    elif settings.rag_no_supone_reserva:
+    else:
         # EX-RAG-2: no atribuir al cliente un servicio o una reserva que no dijo.
         from src.prompts.info import RAG_NO_SUPONE_EN, RAG_NO_SUPONE_ES  # lazy
 
@@ -788,12 +787,11 @@ async def rag_answer(
     from src.flows.catalog import catalog_booking_links  # lazy
 
     facts += "\n" + catalog_booking_links(lang)
-    if settings.rag_politicas_en_contexto:
-        # EX-RAG-1: las políticas, siempre (como el catálogo); en el prefijo fijo, cacheable, y el juez también
-        # las ve (una política citada en la respuesta queda respaldada).
-        from src.flows.catalog import policies_facts  # lazy
+    # EX-RAG-1: las políticas, siempre (como el catálogo); en el prefijo fijo, cacheable, y el juez también las ve (una
+    # política citada en la respuesta queda respaldada).
+    from src.flows.catalog import policies_facts  # lazy
 
-        facts += "\n\n" + policies_facts(lang)
+    facts += "\n\n" + policies_facts(lang)
     # Paso 9 (l2-2): al prompt del sistema y a la cabeza del contexto del juez (prefijos fijos
     # que OpenAI cachea); en el mensaje del usuario, detras del historial, nunca se cacheaba.
     catalog_prefix = facts

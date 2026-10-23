@@ -1,12 +1,11 @@
-"""EX-EST-2 (14-oct, flag `extractor_todo_lo_dicho`): los cuatro arreglos del prompt del extractor son reemplazos de
-frases del prompt de hoy. Si alguien cambia una de esas frases, el reemplazo dejaría de aplicarse sin avisar: este test
-lo vigila, y que con el flag el prompt lleve las frases nuevas (y sin él, las de hoy)."""
+"""EX-EST-2 (14-oct; promocionado, su flag `extractor_todo_lo_dicho` se borró en sim-5): los arreglos del prompt del
+extractor son reemplazos de frases del prompt de base. Si alguien cambia una de esas frases, el reemplazo dejaría de
+aplicarse sin avisar: este test lo vigila, y que el prompt lleve las frases nuevas."""
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
 from src.agents import extractor_turno as et
-from src.config import settings
 
 PARES = [
     (et.TODO_LO_DICHO_HOY_ES, et.TODO_LO_DICHO_ES, et.TODO_LO_DICHO_HOY_EN, et.TODO_LO_DICHO_EN),
@@ -23,8 +22,7 @@ def test_cada_frase_de_hoy_esta_una_vez_en_el_prompt(hoy_es, nuevo_es, hoy_en, n
     assert et.SISTEMA_EN.count(hoy_en) == 1
 
 
-async def _sistema(monkeypatch, flag: bool, lang: str) -> str:
-    monkeypatch.setattr(settings, "extractor_todo_lo_dicho", flag)
+async def _sistema(lang: str) -> str:
     client = MagicMock()
     resp = MagicMock()
     resp.choices = [MagicMock(message=MagicMock(content="{}"))]
@@ -34,17 +32,10 @@ async def _sistema(monkeypatch, flag: bool, lang: str) -> str:
 
 
 @pytest.mark.parametrize("lang", ["es", "en"])
-async def test_con_el_flag_el_prompt_lleva_las_frases_nuevas(monkeypatch, lang):
-    sistema = await _sistema(monkeypatch, True, lang)
+async def test_el_prompt_lleva_las_frases_nuevas(lang):
+    sistema = await _sistema(lang)
     for hoy_es, nuevo_es, hoy_en, nuevo_en in PARES:
         hoy, nuevo = (hoy_es, nuevo_es) if lang == "es" else (hoy_en, nuevo_en)
         assert nuevo in sistema
         if hoy not in nuevo:  # la de la nacionalidad empieza igual que la de hoy: solo se le añade
             assert hoy not in sistema
-
-
-@pytest.mark.parametrize("lang", ["es", "en"])
-async def test_sin_el_flag_el_prompt_es_el_de_hoy(monkeypatch, lang):
-    sistema = await _sistema(monkeypatch, False, lang)
-    for hoy_es, _, hoy_en, _ in PARES:
-        assert (hoy_es if lang == "es" else hoy_en) in sistema

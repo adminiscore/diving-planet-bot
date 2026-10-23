@@ -21,7 +21,6 @@ def _extraccion(idioma: str):
 @pytest.fixture
 def router_sin_llamadas(monkeypatch):
     """El router sin red: señales vacías, sin RAG adelantado y una extracción adelantada que dice el idioma pedido."""
-    monkeypatch.setattr(settings, "idioma_otro_en_ingles", True)
     monkeypatch.setattr(settings, "idioma_del_extractor", True)
 
     async def _senales(*_a, **_k):
@@ -39,7 +38,6 @@ def router_sin_llamadas(monkeypatch):
 
 
 async def test_idioma_de_apertura_aplica_g10(monkeypatch):
-    monkeypatch.setattr(settings, "idioma_otro_en_ingles", True)
     monkeypatch.setattr(settings, "idioma_del_extractor", True)
     st = ConversationState(conversation_id="gen5")
     st._extraccion_adelantada = _extraccion("pt")

@@ -2,7 +2,6 @@
 APAGADO desde el 14-oct) se borró en ex-9b con sus tests."""
 import asyncio
 
-from src.config import settings
 
 
 def test_aclaraciones_del_extractor_con_el_flag(monkeypatch):
@@ -18,9 +17,5 @@ def test_aclaraciones_del_extractor_con_el_flag(monkeypatch):
                     capturado["sistema"] = kw["messages"][0]["content"]
                     raise RuntimeError("solo miramos el prompt")
 
-    monkeypatch.setattr(settings, "extractor_aclaraciones", True)
     asyncio.run(ex.extraer_turno("Va quiero comprar sin ir de cartagena", client=_Cliente()))
     assert ex.UBICACION_NEGACION_ES in capturado["sistema"]
-    monkeypatch.setattr(settings, "extractor_aclaraciones", False)
-    asyncio.run(ex.extraer_turno("Va quiero comprar sin ir de cartagena", client=_Cliente()))
-    assert ex.UBICACION_NEGACION_ES not in capturado["sistema"]

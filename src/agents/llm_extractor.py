@@ -380,9 +380,7 @@ async def resolve_slot_answer(
 
 
 def _regla_solo_mensaje(lang: str) -> str:
-    """EX-EST-2 (flag `acuse_solo_el_mensaje`): el acuse reconoce solo lo que dice el mensaje (ver ACUSE_SOLO_MENSAJE_*)."""
-    if not settings.acuse_solo_el_mensaje:
-        return ""
+    """EX-EST-2 (14-oct): el acuse reconoce solo lo que dice el mensaje (ver ACUSE_SOLO_MENSAJE_*)."""
     from src.prompts.booking import ACUSE_SOLO_MENSAJE_EN, ACUSE_SOLO_MENSAJE_ES  # lazy
 
     return ACUSE_SOLO_MENSAJE_ES if lang == "es" else ACUSE_SOLO_MENSAJE_EN

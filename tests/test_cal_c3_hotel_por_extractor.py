@@ -254,8 +254,6 @@ def test_c3e_turno_normal_da_isla_y_origen(monkeypatch):
 async def test_c3e_el_hotel_se_guarda_en_el_turno_del_pase(monkeypatch):
     import asyncio
 
-    monkeypatch.setattr(settings, "est4_flujo", True)
-
     async def datos():
         return {"hotel": "Ubuntu Hotel"}
 

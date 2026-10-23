@@ -116,7 +116,7 @@ async def _idioma_del_extractor(state: ConversationState, message: str) -> str |
     enrutador. "es" o "en" tal cual; cualquier otro idioma, inglés (regla G-10 de Gadea). None si el flag está apagado,
     el mensaje es muy corto (una o dos palabras no dicen el idioma) o la extracción no está: entonces, la cadena de
     siempre."""
-    if not (settings.idioma_del_extractor and settings.idioma_otro_en_ingles):
+    if not settings.idioma_del_extractor:
         return None
     if len((message or "").split()) < 3:
         return None

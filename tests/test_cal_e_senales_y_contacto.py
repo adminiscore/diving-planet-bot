@@ -89,7 +89,6 @@ async def test_el_idioma_del_primer_turno_lo_dice_el_extractor(monkeypatch):
     from src.flows.state import ConversationState
 
     monkeypatch.setattr(settings, "idioma_del_extractor", True)
-    monkeypatch.setattr(settings, "idioma_otro_en_ingles", True)
     st = ConversationState(conversation_id="t")
 
     async def extraccion():
@@ -108,7 +107,6 @@ async def test_el_extractor_no_cambia_el_espanol_ni_el_ingles(monkeypatch):
     from src.flows.state import ConversationState
 
     monkeypatch.setattr(settings, "idioma_del_extractor", True)
-    monkeypatch.setattr(settings, "idioma_otro_en_ingles", True)
     for idioma, esperado in (("es", "es"), ("en", "en"), ("fr", "en")):
         st = ConversationState(conversation_id="t")
 
@@ -126,7 +124,6 @@ async def test_sin_el_flag_o_sin_extraccion_decide_la_cadena_de_siempre(monkeypa
     from src.agents import conversational_core as core
     from src.flows.state import ConversationState
 
-    monkeypatch.setattr(settings, "idioma_otro_en_ingles", True)
     st = ConversationState(conversation_id="t")
 
     async def extraccion():

@@ -51,22 +51,8 @@ async def test_alcohol_before_diving_question_answers_policy_not_medical_escalat
     assert "alcohol" in resp.lower()
 
 
-@pytest.mark.asyncio
-async def test_food_allergy_question_answers_policy_not_medical_escalation(monkeypatch):
-    """Mismo hallazgo, alérgeno alimentario: "soy alérgico a los mariscos,
-    es un problema?" escalaba como `medical_questions` pese a que
-    `food_policy` ya cubre alergias alimentarias del tour (avisar antes,
-    arroz con vegetales de reemplazo). Camino del texto fijo: desde el 20-oct
-    (`atajo_alergia_por_rag` promocionado con `dieta_no_es_medica`) lo contesta
-    el RAG; lo nuevo, tests/test_contesta_antes_de_pasar.py."""
-    from src.config import settings
-
-    monkeypatch.setattr(settings, "atajo_alergia_por_rag", False)
-    state = make_state()
-    with patch("src.agents.supervisor.detect_routing_signals", new=AsyncMock(return_value={})):
-        resp = await route_message(state, "soy alergico a los mariscos, es un problema?")
-    assert state.step != Step.ESCALATE
-    assert "alergia" in resp.lower() or "tour" in resp.lower() or "almuerzo" in resp.lower()
+# La alergia alimentaria (sin alcohol) la contesta el RAG desde el 20-oct (`atajo_alergia_por_rag`, promocionado y
+# borrado en sim-5): tests/test_contesta_antes_de_pasar.py.
 
 
 @pytest.mark.asyncio

@@ -677,14 +677,12 @@ _CAMPOS_DEL_PASE = {"location": "detected_location", "group_size": "detected_gro
 
 
 async def guardar_lo_dicho_en_el_pase(state: ConversationState) -> None:
-    """EX-EST-2 (flag `est4_flujo`, 14-oct): en un turno que acaba en el pase a una persona el núcleo no corre y la
+    """EX-EST-2 (14-oct): en un turno que acaba en el pase a una persona el núcleo no corre y la
     extracción adelantada se cancelaba sin usar, así que lo que el cliente decía en ESE mensaje se perdía. Ronda
     est3-B (`recogida-ubuntu-comida-y-certificacion`): "I just booked… We are staying at the Ubuntu Hotel" pasaba al
     asesor (bien) y en el turno siguiente el bot preguntaba "Where will you be joining us from?". Aquí se espera la
     extracción (ya lanzada con el turno) y se guardan sus datos con cita comprobada, solo en los campos que la
     conversación aún no sabe (nunca se pisa nada)."""
-    if not settings.est4_flujo:
-        return
     await _guardar_lo_dicho(state, "PASE")
 
 

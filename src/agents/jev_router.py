@@ -99,17 +99,7 @@ _QUESTIONS = routing_questions()
 # preguntas; regex O Jev >= 0,7 ve 134 con 0 falsas alarmas.
 ASKS_QUESTION = "asks_question"
 ASKS_QUESTION_MIN = 0.7
-_ASKS_QUESTION_Q = {
-    "type": "noul",
-    "instructions": (
-        "The customer's message contains a QUESTION or a REQUEST FOR INFORMATION that the booking assistant must "
-        "ANSWER (for example about prices, what is included, schedules, hotels, discounts, policies, logistics, "
-        "how something works). It is FALSE if the message only gives booking details (dates, number of people, "
-        "where they are, an activity choice), only answers the assistant's previous question, or is small talk "
-        "or thanks."
-    ),
-}
-# EX-EST-2 (15-oct, flag `jev_pide_algo`): una PETICIÓN en imperativo también hay que contestarla. Rondas est3-B/est5-B:
+# EX-EST-2 (15-oct): una PETICIÓN en imperativo también hay que contestarla. Rondas est3-B/est5-B:
 # "dame la cuenta y transfiero" (0,53), "send me the payment link" (0,43) y "Full name of dive center, location, dates
 # etc" (0,45) no llegaban a 0,7: no iban al RAG y recibían la pregunta de la reserva o la respuesta fija de posventa
 # ("si necesitas algo de tu reserva…"). Banco de 257 mensajes del golden (`docs/robustness/u3-4/preguntas-etiquetadas
@@ -849,7 +839,7 @@ def _questions_for_turn(pending_slot: str | None = None) -> dict:
     pending_q = pending_answer_question(pending_slot)
     if pending_q:
         q[PENDING_ANSWER] = pending_q
-    q.update({ASKS_QUESTION: _ASKS_QUESTION_Q_V2 if settings.jev_pide_algo else _ASKS_QUESTION_Q,
+    q.update({ASKS_QUESTION: _ASKS_QUESTION_Q_V2,
               **_AFFIRMS_QUESTIONS})
     if settings.grupo_de_una_persona:
         q[AFFIRMS_GROUP] = _AFFIRMS_GROUP_Q_UNA

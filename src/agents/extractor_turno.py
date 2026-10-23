@@ -684,17 +684,15 @@ async def extraer_turno(mensaje: str, *, history: list[dict] | None = None, sabi
     if settings.certificado_solo_si_lo_dice:
         # 19-oct: sin la regla del código, que is_certified vea todas las formas de decirlo (ver IS_CERTIFIED_DICHO_*).
         sistema = sistema.replace(IS_CERTIFIED_HOY_ES, IS_CERTIFIED_DICHO_ES).replace(IS_CERTIFIED_HOY_EN, IS_CERTIFIED_DICHO_EN)
-    if settings.extractor_aclaraciones:
-        # EX-EXTRACTOR-1: la regla de la ubicación con la negación primero (ver UBICACION_NEGACION_*).
-        sistema = sistema.replace(UBICACION_HOY_ES, UBICACION_NEGACION_ES).replace(UBICACION_HOY_EN, UBICACION_NEGACION_EN)
-    if settings.extractor_todo_lo_dicho:
-        # EX-EST-2: extraer también lo ya sabido (ver TODO_LO_DICHO_*).
-        sistema = sistema.replace(TODO_LO_DICHO_HOY_ES, TODO_LO_DICHO_ES).replace(TODO_LO_DICHO_HOY_EN, TODO_LO_DICHO_EN)
-        sistema = sistema.replace(GRUPO_HOY_ES, GRUPO_NUMERO_ES).replace(GRUPO_HOY_EN, GRUPO_NUMERO_EN)
-        sistema = sistema.replace(ACTIVIDAD_EJEMPLOS_HOY_ES, ACTIVIDAD_EJEMPLOS_ES).replace(
-            ACTIVIDAD_EJEMPLOS_HOY_EN, ACTIVIDAD_EJEMPLOS_EN)
-        sistema = sistema.replace(RESIDENTE_HOY_ES, RESIDENTE_ES).replace(RESIDENTE_HOY_EN, RESIDENTE_EN)
-        sistema = sistema.replace(ELIGE_HOY_ES, ELIGE_ES).replace(ELIGE_HOY_EN, ELIGE_EN)
+    # EX-EXTRACTOR-1: la regla de la ubicación con la negación primero (ver UBICACION_NEGACION_*).
+    sistema = sistema.replace(UBICACION_HOY_ES, UBICACION_NEGACION_ES).replace(UBICACION_HOY_EN, UBICACION_NEGACION_EN)
+    # EX-EST-2: extraer también lo ya sabido (ver TODO_LO_DICHO_*).
+    sistema = sistema.replace(TODO_LO_DICHO_HOY_ES, TODO_LO_DICHO_ES).replace(TODO_LO_DICHO_HOY_EN, TODO_LO_DICHO_EN)
+    sistema = sistema.replace(GRUPO_HOY_ES, GRUPO_NUMERO_ES).replace(GRUPO_HOY_EN, GRUPO_NUMERO_EN)
+    sistema = sistema.replace(ACTIVIDAD_EJEMPLOS_HOY_ES, ACTIVIDAD_EJEMPLOS_ES).replace(
+        ACTIVIDAD_EJEMPLOS_HOY_EN, ACTIVIDAD_EJEMPLOS_EN)
+    sistema = sistema.replace(RESIDENTE_HOY_ES, RESIDENTE_ES).replace(RESIDENTE_HOY_EN, RESIDENTE_EN)
+    sistema = sistema.replace(ELIGE_HOY_ES, ELIGE_ES).replace(ELIGE_HOY_EN, ELIGE_EN)
     sistema += REGLA_NOMBRE_ES if lang == "es" else REGLA_NOMBRE_EN
     con_hotel = settings.hotel_por_extractor
     if settings.sin_cedula_extranjero:
