@@ -64,8 +64,7 @@
         "openai_transcription_model"
       ],
       "interruptores": [
-        "chatwoot_typing_indicator",
-        "transcripcion_con_vocabulario"
+        "chatwoot_typing_indicator"
       ]
     },
     {
@@ -76,9 +75,7 @@
       "titulo": "Director del turno",
       "que_hace": "Abre la traza del turno y manda el mensaje al grafo de agentes. Al final recoge las tareas en paralelo.",
       "donde": "src/agents/supervisor.py:route_message",
-      "interruptores": [
-        "aviso_si_openai_falla"
-      ]
+      "interruptores": []
     },
     {
       "id": "router",
@@ -416,14 +413,6 @@
         "resolutor_model"
       ],
       "interruptores": [
-        "lo_dicho_en_respuesta_fija",
-        "actividad_principal_en_el_reparto",
-        "reparto_parcial_con_lo_sabido",
-        "ninos_primero_al_snorkel",
-        "refresher_por_extractor",
-        "actividad_del_reparto",
-        "origen_neutro_con_dos_planes",
-        "baru_no_es_rosario",
         "baru_sale_de_cartagena",
         "certificado_solo_si_lo_dice",
         "precio_no_elige",
@@ -516,7 +505,6 @@
         "openai_model"
       ],
       "interruptores": [
-        "busqueda_con_la_pregunta_sola",
         "pregunta_sola_con_su_sitio"
       ]
     },
@@ -607,7 +595,6 @@
       "interruptores": [
         "origen_dos_variantes",
         "origen_sin_titulo_suelto",
-        "rag_no_adivina",
         "abre_con_la_respuesta",
         "sin_genero_supuesto",
         "rag_sin_hora",
@@ -615,8 +602,6 @@
         "respaldo_mismo_modelo",
         "rag_plan_primero",
         "avisos_condicionados",
-        "rag_ofrece_el_pase",
-        "rag_sin_precio_con_tarjeta",
         "rag_sin_reglas_del_codigo",
         "rag_enlace_al_recomendar",
         "fecha_con_dia_de_la_semana"
@@ -649,7 +634,6 @@
         "avisos_al_final_model"
       ],
       "interruptores": [
-        "juez_v3_luna",
         "juez_revisa_con_cita",
         "rag_revisor_completitud",
         "rag_revisor_avisos"
@@ -1018,11 +1002,6 @@
       "titulo": "El respaldo del RAG, otra petición a Luna",
       "texto": "Si Luna tarda más de 3 segundos en escribir la respuesta, se lanza otra petición igual a Luna en vez de a gpt-4.1-mini, y gana la primera que termine. Es para dejar de depender de gpt-4.1."
     },
-    "aviso_si_openai_falla": {
-      "area": "Arquitectura",
-      "titulo": "Si OpenAI cae, decir la verdad y pasar a un asesor",
-      "texto": "Si en un mensaje ninguna llamada a OpenAI funciona (sin saldo, clave mala o caído), el bot dice que tiene un problema técnico y pasa la conversación a un asesor; el motivo del pase avisa al equipo de que revise el saldo. Antes contestaba 'no lo tengo a la mano' a todo."
-    },
     "tarjeta_sin_seguridad": {
       "area": "Reserva",
       "titulo": "El precio sale aunque falte la pregunta de seguridad",
@@ -1038,11 +1017,6 @@
       "titulo": "Certificado solo si lo dice",
       "texto": "Que el cliente quiera el buceo para certificados ('fun dives') no significa que esté certificado: el bot se lo pregunta. Antes una regla lo daba por hecho."
     },
-    "baru_no_es_rosario": {
-      "area": "Reserva",
-      "titulo": "Barú no es las Islas del Rosario",
-      "texto": "Quien se aloja en Barú o en Playa Blanca ya no queda como 'ya en las islas': allí no operamos (es una península unida a tierra). El bot le dice dónde buceamos en vez de prometerle la recogida en su hotel con precios de las islas."
-    },
     "baru_sale_de_cartagena": {
       "area": "Reserva",
       "titulo": "Desde Barú se sale desde Cartagena",
@@ -1052,41 +1026,6 @@
       "area": "Preguntas",
       "titulo": "Al quitar los precios, no deja el título colgado",
       "texto": "Cuando Coral pregunta el origen antes de dar precios, quita de la respuesta las frases con importes. Si los precios iban en una lista separada por una línea en blanco, quedaba suelto el título ('La salida de 2 inmersiones cuesta:'). Ahora se quita también."
-    },
-    "origen_neutro_con_dos_planes": {
-      "area": "Reserva",
-      "titulo": "Si duda entre dos planes, la pregunta del origen es neutra",
-      "texto": "Si el cliente compara un plan de un día con uno de varios días ('dos buceos o el pack de 5 en 2 días'), el bot pregunta desde dónde sale sin afirmar cuánto dura ni que haya que dormir en las islas. Antes decía 'Este plan dura 1 día y hay que dormir en las islas'."
-    },
-    "actividad_del_reparto": {
-      "area": "Reserva",
-      "titulo": "La actividad principal sale del reparto del grupo",
-      "texto": "Si el cliente reparte el grupo ('1 buzo avanzado y 2 para bautismo') y la actividad principal no es de nadie de ese reparto, manda el reparto: 'buzo avanzado' es un buzo que ya tiene el nivel, no el Curso Avanzado. Antes el bot le cotizaba el curso."
-    },
-    "refresher_por_extractor": {
-      "area": "Reserva",
-      "titulo": "Si quiere el repaso, se apunta aunque no se le haya preguntado",
-      "texto": "El extractor lee si el cliente quiere o no el refresher (el repaso antes de bucear), aunque el bot todavía no se lo haya preguntado, y vale lo último que decide. Antes, 'mejor no… en realidad sí lo quiero' se perdía y el bot volvía a preguntar '¿Os interesa?' sin cerrar nunca el plan."
-    },
-    "ninos_primero_al_snorkel": {
-      "area": "Reserva",
-      "titulo": "El niño que hace snorkel no cambia el minicurso de su hermano",
-      "texto": "En el precio, si hay plazas de snorkel, los niños más pequeños se cuentan primero ahí. Así, con un hijo de 12 en el minicurso y uno de 8 en snorkel, el minicurso ya no sale como 'Bubble Makers (8-10 años)'. Solo cambia la etiqueta: el precio es el mismo."
-    },
-    "reparto_parcial_con_lo_sabido": {
-      "area": "Reserva",
-      "titulo": "Los que no se nombran siguen con lo que tenían",
-      "texto": "Si el cliente dice qué hace solo una parte del grupo ('el de 12 minicurso y el de 8 snorkel'), los demás siguen con la actividad que ya habían elegido (la salida de 2 inmersiones de los padres). Antes el bot descartaba ese reparto y cotizaba el minicurso a casi todos."
-    },
-    "actividad_principal_en_el_reparto": {
-      "area": "Reserva",
-      "titulo": "La actividad de los hijos no sustituye a la de los padres",
-      "texto": "En una familia en la que los padres ya eligieron bucear, 'el de 12 minicurso y el de 8 snorkel' añade a los hijos al plan sin cambiar la actividad principal. Antes el minicurso pasaba a ser la actividad principal y, al decir 'mi esposo bucea conmigo', el bot movía al hijo del minicurso a las inmersiones."
-    },
-    "lo_dicho_en_respuesta_fija": {
-      "area": "Reserva",
-      "titulo": "Lo que dice el cliente no se pierde con una respuesta fija",
-      "texto": "Si el bot contesta con una respuesta fija (por ejemplo, qué puede hacer cada niño según su edad), lo que el cliente dijo en ese mensaje también se guarda: 'la salida de 2 inmersiones para nosotros dos. ¿y los niños?' ya no pierde la actividad elegida. Solo rellena datos que aún no se sabían."
     },
     "avisos_condicionados": {
       "area": "Preguntas",
@@ -1263,11 +1202,6 @@
       "titulo": "El RAG no supone la hora",
       "texto": "Regla del RAG: no sabe la fecha ni la hora de hoy, así que no dice 'ya pasó esa hora' ni 'todavía estás a tiempo' con el cierre de las 4:30; da la regla completa."
     },
-    "rag_no_adivina": {
-      "area": "Preguntas",
-      "titulo": "No adivina ningún dato del cliente",
-      "texto": "La regla anterior ampliada a todo lo que el cliente no ha dicho: desde dónde sale, su nacionalidad (el país desde el que escribe no la dice), si está certificado, cuántos son y las fechas. Coral contesta con la información general y, si la respuesta depende de ese dato, lo pregunta."
-    },
     "origen_dos_variantes": {
       "area": "Preguntas",
       "titulo": "Sin saber el origen, da las dos variantes",
@@ -1277,11 +1211,6 @@
       "area": "Preguntas",
       "titulo": "Con niños, la edad mínima en cifra",
       "texto": "La tarjeta de qué puede hacer cada persona según su edad dice la edad mínima de cada opción (por ejemplo, «minicurso de buceo (desde 10 años)») y, en inglés, quién es cada línea en inglés (antes salía «8 años») (ord-7b, decisión de Gadea, 21-oct)."
-    },
-    "juez_v3_luna": {
-      "area": "Preguntas",
-      "titulo": "Instrucciones del revisor para Luna",
-      "texto": "Con GPT-6 Luna como revisor: lo que el cliente dice de sí mismo no se comprueba, las valoraciones y ofertas de ayuda no son datos, y una deducción directa de la información cuenta como respaldada."
     },
     "privado_pasa_directo": {
       "area": "Respuestas fijas",
@@ -1307,26 +1236,6 @@
       "area": "Preguntas",
       "titulo": "El catálogo enseña la preparación de cada plan (apagado: medido y empeora)",
       "texto": "Lo que hay que traer o hacer antes de cada plan (la carta de referido, la teoría). Medido: arregla un caso y rompe dos, porque dieciocho párrafos en todos los turnos distraen. Mejor solo cuando se habla de ese plan."
-    },
-    "rag_ofrece_el_pase": {
-      "area": "Preguntas",
-      "titulo": "El bot ofrece pasar con una persona, no dice que ya lo ha hecho",
-      "texto": "La respuesta decía 'te paso con el equipo' aunque nadie recibía el caso, y el cliente se quedaba esperando. Ahora pregunta '¿quieres que te pase con un asesor?' y el pase lo hace el sistema si el cliente dice que sí."
-    },
-    "busqueda_con_la_pregunta_sola": {
-      "area": "Preguntas",
-      "titulo": "Se busca también la pregunta sola, sin los datos que da el cliente",
-      "texto": "Si el cliente da datos y pregunta en el mismo mensaje (\"salimos de Cartagena el día 30. ¿Hace falta saber nadar?\"), el origen y la fecha tapaban la pregunta y la búsqueda no traía la pregunta frecuente: el bot decía que no tenía el dato. Ahora también se busca la pregunta sola, traducida si el cliente escribe en portugués o francés."
-    },
-    "rag_sin_precio_con_tarjeta": {
-      "area": "Preguntas",
-      "titulo": "Una sola moneda por mensaje: si va la tarjeta del plan, el texto no da precio",
-      "texto": "Cuando la respuesta lleva la tarjeta del plan (precio por persona en la moneda del cliente y enlace), el texto no repite el precio. Antes podía salir '126 USD' en el texto y '448.000 COP' en la tarjeta del mismo mensaje, porque el texto se escribía antes de saber que el cliente era colombiano."
-    },
-    "transcripcion_con_vocabulario": {
-      "area": "Chat",
-      "titulo": "Las notas de voz se transcriben con el vocabulario del negocio",
-      "texto": "Al pasar a texto una nota de voz se le da al modelo la lista de nombres del negocio (Muelle de la Bodeguita, Isla Grande, Majagua, Getsemaní…). Sin ella escribía 'muelle la Destesa'."
     },
     "duracion_por_extractor": {
       "area": "Reserva",

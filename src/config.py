@@ -52,10 +52,6 @@ class Settings(BaseSettings):
     # 2 colas de 4-5 s en 47 turnos de reserva (p50 1,14 s, p90 1,67 s); gpt-5.4-mini es de OpenAI (otro proveedor).
     extractor_respaldo_modelo: str = "gpt-5.4-mini"  # ENCENDIDO 18-oct con mod-F (HISTORY 0.31.56); revert = ""
     extractor_respaldo_segundos: float = 2.0
-    # 18-oct (decision de Gadea: no adivinar nada que el cliente no haya dicho): la regla de EX-RAG-2 ampliada a origen,
-    # nacionalidad, certificacion, cuantos son y fechas; la sustituye. Fallos estables de CAL-F (zona RAG).
-    # rag_agent.build_system_prompt, prompts/info.RAG_NO_ADIVINA_*. APAGADO.
-    rag_no_adivina: bool = True  # PROMOCIONADO 18-oct (mod-E, HISTORY 0.31.55); revert = False
     # EX-EST-2 (15-oct): regla del RAG: no sabe la fecha ni la hora de hoy ('ya pasó esa hora', 'como todavía estás a
     # tiempo' sobre el cierre de las 4:30, rondas est4-B/est5-B). prompts/info.RAG_SIN_HORA_*. DESCARTADO 15-oct (APAGADO):
     # en est6-B el RAG, sin fecha, calculo igual que 'desde el 3 de abril de 2025 ya pasaron mas de dos años' (falso).
@@ -183,10 +179,6 @@ class Settings(BaseSettings):
     # whisper-1; switch to "whisper-1" if an older SDK is in play.
     # MOD-6 (18-oct, decisión de Gadea: "decide tú"): gpt-transcribe con vocabulario. PROMOCIONADO (HISTORY 0.31.53).
     openai_transcription_model: str = "gpt-transcribe"
-    # MOD-6 (18-oct): la pista de vocabulario del negocio en la transcripción (src/channels/audio.py). Con
-    # gpt-transcribe (fuera de la familia gpt-4o): 3,2 % de palabras mal frente al 3,7 % de hoy. APAGADO hasta decidir el
-    # modelo de transcripción (docs/robustness/mod/README.md, mod-6). PROMOCIONADO 18-oct (HISTORY 0.31.53); revert = False.
-    transcripcion_con_vocabulario: bool = True
     rag_top_k: int = 8
     rag_min_score: float = 0.40
     # Minimum raw ts_rank_cd score for a BM25-only hit to count as "confident".
@@ -223,36 +215,6 @@ class Settings(BaseSettings):
     # p95 medido ~0,37 s; en l2-4 1 de ~600 llamadas tardó >30 s (API en alpha).
     jev_timeout_seconds: float = 2.0
 
-    # G3-01 (17-oct, charla G3 de Gadea, conv 5567): lo que el cliente dice en un turno que contesta una respuesta fija
-    # (p. ej. la de edades) se guarda como en el turno del pase: solo campos aún no sabidos y con cita comprobada.
-    # "la salida de 2 inmersiones para nosotros dos. y los niños qué pueden hacer?" perdía la actividad. APAGADO.
-    lo_dicho_en_respuesta_fija: bool = True  # PROMOCIONADO 18-oct (G3-01, ronda core g301-A/B)
-    # G3-01 (17-oct): si la actividad principal ya elegida sigue en el reparto del grupo con gente, la actividad nueva
-    # del turno es la de otra parte del grupo y no la sustituye ("el de 12 minicurso" no convierte a los padres
-    # certificados en alumnos del minicurso). APAGADO hasta medirlo.
-    actividad_principal_en_el_reparto: bool = True  # PROMOCIONADO 18-oct (G3-01, ronda core g301-A/B)
-    # G3-01 (17-oct): un reparto que no suma el total, sin reparto guardado y con la actividad principal ya elegida, se
-    # completa con ella (sin reparto, todo el grupo hace la principal): "el de 12 minicurso y el de 8 snorkel" en una
-    # familia de 4 con la salida de 2 inmersiones elegida = {certified_diving: 2, minicourse: 1, snorkel: 1}. Antes se
-    # descartaba y se cotizaba 3 × minicurso. APAGADO hasta medirlo.
-    reparto_parcial_con_lo_sabido: bool = True  # PROMOCIONADO 18-oct (G3-01, ronda core g301-A/B)
-    # G3-01b (17-oct): en la tarjeta del precio, si hay plazas de snorkel, los niños más pequeños van primero ahí; el
-    # niño de 8 que hace snorkel ya no convierte el minicurso del de 12 en "Bubble Makers (8-10)". APAGADO.
-    ninos_primero_al_snorkel: bool = True  # PROMOCIONADO 18-oct (G3-01, ronda core g301-A/B)
-    # CAL-F (18-oct, refresher-rechaza-acepta 3/3 en PRE): el extractor lee si el cliente quiere o no el refresher, con su
-    # cita, aunque el bot no se lo haya preguntado ("en realidad sí lo quiero, mejor prevenir" se perdía). APAGADO.
-    refresher_por_extractor: bool = True  # PROMOCIONADO 18-oct (CAL-F, decisión de Álvaro)
-    # CAL-F (18-oct, grupo-mixto-precio-cop-total): si la actividad que lee el extractor no es de nadie del reparto que
-    # lee a la vez, manda el reparto ("1 buzo avanzado y 2 para bautismo" no es el Curso Avanzado). APAGADO.
-    actividad_del_reparto: bool = True  # PROMOCIONADO 18-oct (CAL-F, decisión de Álvaro)
-    # CAL-F (18-oct, precios-y-disponibilidad-con-negociacion): si el servicio guardado es de un día y la duración dice
-    # varios ("dos buceos o el pack de 5 en 2 días"), el plan no está elegido: la pregunta del origen es la neutra, sin
-    # "dura 1 día y hay que dormir en las islas". APAGADO.
-    origen_neutro_con_dos_planes: bool = True  # PROMOCIONADO 18-oct (CAL-F, decisión de Álvaro)
-    # G3-06 (18-oct, decisión de Gadea): Barú y Playa Blanca NO son Islas del Rosario (península unida a tierra, donde no
-    # operamos). Quien se aloja allí no queda como "ya en las islas" (Jev, el extractor de respaldo, el resolutor de la
-    # pregunta del origen); el lugar se le pregunta a la base, que da el aviso. APAGADO.
-    baru_no_es_rosario: bool = True  # PROMOCIONADO 18-oct (mod-B, HISTORY 0.31.53); revert = False
     # gen-6 (21-oct, Gonzalo con Claude): con G3-06, "estamos hospedados en Barú" se quedaba sin origen (Jev "none", el
     # extractor lo descartaba y con `lugar_con_dos_lectores` un "none" de Jev tumba al extractor) y el bot volvía a
     # preguntar "¿desde dónde saldrías?" (banco docs/robustness/gen/dialogos-gen6.json 2/2). La política (policies.json):
@@ -278,11 +240,6 @@ class Settings(BaseSettings):
     # CAL-F (18-oct, decisión de Gadea): la tarjeta con el precio sale aunque el cliente no conteste la pregunta de
     # seguridad (solo si es lo único que falta), con la pregunta una vez dentro y el precio del refresher. APAGADO.
     tarjeta_sin_seguridad: bool = True  # PROMOCIONADO 19-oct (mod-G2, HISTORY 0.31.57); revert = False
-    # r6-1(b) (17-oct): si en un turno NINGUNA llamada a OpenAI funciona (sin saldo, clave inválida, caído), el bot dice
-    # que hay un problema técnico y pasa a un asesor (motivo = alerta en Chatwoot), en vez de "no lo tengo a la mano".
-    # PROMOCIONADO 18-oct (decisión de Álvaro, tras la 2.ª caída por saldo en un día): comprobado en PRE con una clave
-    # inválida (mensaje honesto + pase) y sin falsos disparos con la clave buena (4/4).
-    aviso_si_openai_falla: bool = True
 
     # Modelo del juez de grounding v3 (el de siempre desde s4-25: sin flag). 28-sep (HISTORY 0.29.66): v3 con
     # gpt-4.1-mini 48/70 y gpt-4o-mini 37/70 frente a 70/70, y NO más rápidos: se quedó gpt-4.1.
@@ -336,26 +293,6 @@ class Settings(BaseSettings):
     # respuesta ya tenía que decir. Se queda APAGADO y el código se conserva con las tres medidas apuntadas; lo que
     # habría que probar está en docs/robustness/cal/cal-a5-avisos-condicionados.md §10.
     avisos_condicionados: bool = False
-    # G3-03 (17-oct, Claude contra el chatbot): el RAG escribía "te paso con el equipo" sin que el sistema pasara el caso
-    # a nadie (conv 5569, escalated=False) y el cliente se quedaba esperando. Con el flag, el RAG no lo da por hecho:
-    # lo OFRECE como pregunta y el pase lo hace el sistema si el cliente acepta. APAGADO hasta medirlo.
-    # PROMOCIONADO 18-oct (HISTORY 0.31.49): banco 6/6 -> 0/6; ronda core g301-B 95,6 % -> g3-B 96,5 %, ninguna
-    # regresión atribuida (3 reps con y sin). Revert = False aquí y en el compose.
-    rag_ofrece_el_pase: bool = True
-    # G3-05 (17-oct, Claude contra el chatbot): "salimos de Cartagena el día 30. ¿Hace falta saber nadar?" recibía "no
-    # tengo ese dato" (3 de 3, en español, inglés y portugués) aunque la FAQ existe: buscando el mensaje entero, el
-    # origen y la fecha tapan la pregunta con las fichas que salen desde Cartagena; en portugués, además, se buscaba
-    # tal cual contra la base en español e inglés. Con el flag, la búsqueda doble usa la PREGUNTA SOLA (sin los datos
-    # que da el cliente y en el idioma de la respuesta), una llamada corta a la vez que la búsqueda principal, solo
-    # para mensajes largos o en otro idioma. APAGADO hasta medirlo.
-    # 18-oct: banco G3 9/9 -> 1/9, rag_piezas sin pérdidas, core sin regresiones atribuidas, pero +0,7 s de mediana en
-    # los turnos del RAG con gpt-4o-mini (que además no traducía el portugués). APAGADO hasta que Gadea elija el
-    # modelo (`pregunta_sola_model`): gpt-4.1-nano 0,5-0,6 s (familia 4.1, que Álvaro quiere dejar) o Luna 0,98 s.
-    busqueda_con_la_pregunta_sola: bool = True  # PROMOCIONADO 18-oct (mod-B, HISTORY 0.31.53); revert = False
-    # G3-07a (18-oct, decisión de Gadea: en un mismo mensaje, una sola moneda): cuando el turno lleva la tarjeta del plan
-    # (precio en su moneda y enlace), el flujo pide al RAG la respuesta SIN precio (`rag_answer(sin_precio=True)`). El
-    # RAG lo hace Gadea; el punto de decisión del flujo, Álvaro. APAGADO hasta medirlo con g3-07a y g3-02.
-    rag_sin_precio_con_tarjeta: bool = True  # PROMOCIONADO 18-oct (mod-B, HISTORY 0.31.53); revert = False
     # Modelo del revisor de `avisos_al_final` (vacío = `rag_plan_model`). Va a la vez que el juez de grounding.
     # Medido en local (17-oct, 5 casos del banco + los 93 turnos de la ronda core cal-D): gpt-4.1-mini acierta 4 de 5
     # pero añade aviso en 64 de 93 turnos (relleno); gpt-4.1 y GPT-6 Luna (sin razonamiento) aciertan 4 de 5 y añaden
@@ -452,11 +389,6 @@ class Settings(BaseSettings):
     #   "grupo cerrado" o "evento corporativo"; lo demás iba al RAG, que solo puede OFRECER el pase. Lo dice Jev
     #   (`pide_servicio_privado`) y responde el grupo privado (rutas/info.py). APAGADO.
     privado_pasa_directo: bool = True  # PROMOCIONADO 21-oct (con `cambio_de_reserva_pasa`, misma ronda gen3b-A/B; HISTORY 0.31.77); revert = False
-    # s4-33 (8-oct, Alvaro): instrucciones del juez de grounding v3 para GPT-6 Luna (prompts/info.py
-    # GROUNDING_VERIFY_V3_LUNA_*): el v3 entero + 3 aclaraciones (lo que dice el cliente de si mismo no se comprueba;
-    # valoraciones y ofertas de ayuda no son datos; las deducciones directas del contexto cuentan). Va con
-    # GROUNDING_V3_MODEL=gpt-6-luna. APAGADO hasta medirlo (banco sonda_juez_modelo, escalon 0, A/B core).
-    juez_v3_luna: bool = True  # PROMOCIONADO 18-oct (mod-C, HISTORY 0.31.53: va con el revisor en DeepSeek); revert = False
     # s4-33 (9-oct): razonamiento de GPT-6 Luna cuando hace de juez de grounding ("none" = como el resto de llamadas a
     # gpt-6; "low"/"medium" = razona antes de la lista y el tope de salida sube 4000 tokens, como el juez gpt-5/o).
     # Se mide con scripts/banco_juez_reales.py --ajuste juez_luna_razonamiento=low.

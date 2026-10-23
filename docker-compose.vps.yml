@@ -114,18 +114,11 @@ services:
       # ronda core mod-E 96,9 % frente a mod-C 96,5 %, ninguna regresión atribuida). Revert = "gpt-4.1-mini" y quitar
       # RAG_NO_ADIVINA.
       RAG_RESPALDO_MODELO: "deepseek/deepseek-v4.1-flash"
-      RAG_NO_ADIVINA: "true"
       RAG_RESPALDO_SEGUNDOS: "3.0"
       # Juez de grounding v3 (28-sep; sin flag desde s4-25): gpt-4.1 (con gpt-4.1-mini el v3 era inestable).
       # MOD-1 (18-oct): el revisor en DeepSeek v4.1 Flash con la aclaración de s4-33 (JUEZ_V3_LUNA). PROMOCIONADO
       # (HISTORY 0.31.53: ronda core mod-C 97,8 %, ninguna regresión atribuida al modelo). Revert = "gpt-4.1" y JUEZ_V3_LUNA "false".
       GROUNDING_V3_MODEL: "deepseek/deepseek-v4.1-flash"
-      # G3 (18-oct, Gadea y Álvaro): Barú no es Rosario, la búsqueda con la pregunta sola y una sola moneda.
-      # PROMOCIONADO (HISTORY 0.31.53: ronda core mod-B; la regresión que parecía suya era ruido, 0/3 con los tres).
-      # Revert = quitar estas tres líneas y poner los defaults en False.
-      BARU_NO_ES_ROSARIO: "true"
-      BUSQUEDA_CON_LA_PREGUNTA_SOLA: "true"
-      RAG_SIN_PRECIO_CON_TARJETA: "true"
       EXTRACTION_MODEL: "gpt-5.4-mini"
       # mod-3 (18-oct): cada pieza de EXTRACTION_MODEL con su modelo (mismo valor hasta promocionar otro).
       SENALES_MODEL: "deepseek/deepseek-v4.1-flash"
@@ -277,7 +270,6 @@ services:
       # MOD-6 (18-oct): gpt-transcribe con el vocabulario del negocio. PROMOCIONADO (HISTORY 0.31.53). Revert = "gpt-4o-mini-transcribe"
       # y quitar TRANSCRIPCION_CON_VOCABULARIO.
       OPENAI_TRANSCRIPTION_MODEL: "gpt-transcribe"
-      TRANSCRIPCION_CON_VOCABULARIO: "true"
       JEV_MODEL: "typesafe/jev-1.13"
       # EX-EST-2: el RAG no supone la fecha ni la hora de hoy. DESCARTADO 15-oct (ver config.py).
       RAG_SIN_HORA: "false"
@@ -297,30 +289,6 @@ services:
       # l2-3 (28-sep): "escribiendo…" en el chat mientras el bot prepara la respuesta. Solo
       # cambia lo que ve el cliente mientras espera, no lo que dice el bot. Revert = "false".
       CHATWOOT_TYPING_INDICATOR: "true"
-      # s4-33 (8-oct): las aclaraciones del juez v3 (va con GROUNDING_V3_MODEL). PROMOCIONADO con DeepSeek (HISTORY 0.31.53).
-      JUEZ_V3_LUNA: "true"
-      # G3-03 PROMOCIONADO 18-oct (HISTORY 0.31.49): el RAG ofrece pasar con una persona en vez de decir que ya lo hizo.
-      # Banco 6/6 -> 0/6; ronda core g301-B 95,6 % -> g3-B 96,5 %, ninguna regresión atribuida. Revert = quitar esta
-      # línea y poner el default en False.
-      RAG_OFRECE_EL_PASE: "true"
-      # G3-01 PROMOCIONADO 18-oct (decisión de Álvaro): la familia con 2 certificados e hijos (minicurso y snorkel)
-      # llega al precio (0/2 -> 3/3 en PRE). Ronda core g301-A 95,6 % 218/228 vs g301-B 95,6 % 218/228, p95 cliente
-      # 5,4 -> 6,0 s; las 3 mejoras y 3 regresiones, repetidas 3x con y sin: ningún flag dispara en ellas (ruido).
-      LO_DICHO_EN_RESPUESTA_FIJA: "true"
-      REPARTO_PARCIAL_CON_LO_SABIDO: "true"
-      ACTIVIDAD_PRINCIPAL_EN_EL_REPARTO: "true"
-      NINOS_PRIMERO_AL_SNORKEL: "true"
-      # CAL-F PROMOCIONADO 18-oct (decisión de Álvaro): refresher-rechaza-acepta 3/3 cierran con la salida y el refresher;
-      # banco ex0 sin cambios atribuibles (el campo solo entra si ya lleva más de 2 años sin bucear).
-      REFRESHER_POR_EXTRACTOR: "true"
-      # r6-1(b) PROMOCIONADO 18-oct (decisión de Álvaro): si en un turno ninguna llamada a OpenAI funciona, el bot dice que
-      # tiene un problema técnico y pasa a un asesor (en PRE con clave inválida: bien; con la buena: 0 falsos, 4/4).
-      AVISO_SI_OPENAI_FALLA: "true"
-      # CAL-F PROMOCIONADOS 18-oct (decisión de Álvaro): la actividad sale del reparto ("1 buzo avanzado y 2 para
-      # bautismo" no es el Curso Avanzado; estado bien 3/3, y en la medida de Gadea 0/6 respuestas citan el curso) y la
-      # pregunta del origen neutra con dos planes candidatos ("dura 1 día y hay que dormir en las islas" 0/3).
-      ACTIVIDAD_DEL_REPARTO: "true"
-      ORIGEN_NEUTRO_CON_DOS_PLANES: "true"
     depends_on:
       dp-pre-postgres:
         condition: service_healthy
