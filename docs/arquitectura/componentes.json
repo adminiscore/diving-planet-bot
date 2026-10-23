@@ -92,7 +92,6 @@
       ],
       "interruptores": [
         "jev_router_enabled",
-        "grupo_de_una_persona",
         "ya_reservo_no_es_pase"
       ],
       "detalle": [
@@ -111,8 +110,6 @@
       "que_hace": "Datos personales, links rotos, temas delicados o cuando hace falta una persona: pasa el caso a un asesor.",
       "donde": "src/agents/escalation_agent.py:escalation_node",
       "interruptores": [
-        "nada_en_primera_linea",
-        "adaptado_contesta_lo_demas",
         "hechos_en_el_pase",
         "intenciones_clima_pago"
       ]
@@ -368,9 +365,6 @@
         "Fase EX: extractor_turno.extraer_turno (LLM primero, cita comprobada)"
       ],
       "interruptores": [
-        "el_verbo_no_la_ciudad",
-        "cache_anthropic",
-        "curso_preguntado_no_es_nivel",
         "cedula_de_extranjeria_manda"
       ]
     },
@@ -388,7 +382,6 @@
       ],
       "interruptores": [
         "precio_no_elige",
-        "sin_certificacion_no_hace_falta",
         "recotizar_al_cambiar_moneda"
       ]
     },
@@ -524,10 +517,7 @@
         "rag_answer_model"
       ],
       "interruptores": [
-        "hechos_por_codigo",
-        "hechos_al_rag",
         "varias_actividades",
-        "enlace_con_disponibilidad",
         "rag_comprueba_los_hechos",
         "redactor_sin_preguntas_de_cierre",
         "hechos_sin_actividad",
@@ -568,7 +558,6 @@
         "respaldo_mismo_modelo",
         "rag_plan_primero",
         "avisos_condicionados",
-        "rag_sin_reglas_del_codigo",
         "rag_enlace_al_recomendar",
         "fecha_con_dia_de_la_semana"
       ],
@@ -1038,70 +1027,15 @@
       "titulo": "Aceptar el paquete que propone Coral lo elige",
       "texto": "Si Coral acaba de proponer un paquete y el cliente lo acepta con sus palabras («perfecto, ese me sirve», «vamos con ese»), queda elegido y sigue la reserva (decisión de Gadea). Antes solo valía la frase «quiero este paquete». Preguntar por el paquete (su precio, qué incluye) no es elegirlo. Si la IA no contesta, la frase de siempre."
     },
-    "hechos_por_codigo": {
-      "area": "Preguntas",
-      "titulo": "Hechos por código (ARQ)",
-      "texto": "El modelo interpreta, el código decide y el modelo redacta: si el cliente solo pregunta precio, qué incluye, requisitos, horario, disponibilidad, edad o el enlace de una actividad, los datos los saca el código (moneda, las dos salidas si no se sabe el origen, edades en cifra, el asesor para colombianos) y Coral solo los escribe. Así no se deja partes de las listas ni mezcla datos (arq-1d, 22-oct)."
-    },
-    "el_verbo_no_la_ciudad": {
-      "area": "Reserva",
-      "titulo": "«Soy de Medellín» es colombiano",
-      "texto": "Ser de una ciudad de Colombia dice la nacionalidad y vivir allí no: «soy de Medellín» paga en pesos y «vivo en Barranquilla» no dice nada. La regla del extractor pone la misma ciudad en los dos lados, porque con ciudades distintas el modelo aprendía la ciudad en vez del verbo (arq-1f, 22-oct)."
-    },
-    "cache_anthropic": {
-      "area": "Arquitectura",
-      "titulo": "Caché del extractor (Haiku)",
-      "texto": "El extractor usa un modelo de Anthropic por OpenRouter, que solo reutiliza el principio repetido del prompt si se le pide. Con el interruptor se le pide y Haiku va siempre al mismo proveedor (los demás de respaldo): las dos llamadas del extractor, casi la mitad del coste de un turno, pasan a pagar ~10 % de su prompt (arq-2b, 22-oct)."
-    },
-    "hechos_al_rag": {
-      "area": "Preguntas",
-      "titulo": "Hechos del código también en los mensajes mezclados",
-      "texto": "Si el cliente pregunta algo de la tabla (precio, qué incluye, requisitos…) y además otra cosa («¿cuánto cuesta y qué peces se ven?»), contesta el RAG, pero la parte de la tabla la escribe con los datos que saca el código y no de memoria (arq-1g, 22-oct)."
-    },
-    "rag_sin_reglas_del_codigo": {
-      "area": "Preguntas",
-      "titulo": "El RAG sin las reglas que ya dice el catálogo",
-      "texto": "Las instrucciones de Coral repetían reglas que el catálogo y las políticas ya le dan siempre: en qué moneda cotizar, el 5 % por traer el equipo completo, no calcular totales con el descuento y los días en que no operamos. Se quitan del prompt (un 10 % más corto) y se quedan donde está el dato. Las que solo vigila un control automático (teléfonos, enlaces, cifras) siguen en el prompt (arq-2a, 22-oct)."
-    },
-    "nada_en_primera_linea": {
-      "area": "Enrutador",
-      "titulo": "La palabra de control «NADA» no le llega al cliente",
-      "texto": "Antes de pasar a un asesor, Coral contesta las otras preguntas del mensaje; si no hay ninguna, el modelo responde la palabra «NADA» y no se dice nada más. Si detrás iba pegado el aviso de disponibilidad, «NADA» se colaba al principio de la respuesta. Ahora se mira la primera línea entera, sea cual sea la longitud (22-oct)."
-    },
     "varias_actividades": {
       "area": "Preguntas",
       "titulo": "Varias actividades en un mensaje",
       "texto": "Si el cliente pregunta por varias actividades a la vez («¿cuánto pagamos un buzo y un acompañante?», «¿qué incluyen el snorkel y el minicurso?»), el extractor las da todas y Coral contesta cada una con sus datos; antes contestaba el RAG de memoria (arq-1j, 22-oct)."
     },
-    "adaptado_contesta_lo_demas": {
-      "area": "Preguntas",
-      "titulo": "DIVE TO HEAL no se come lo demás",
-      "texto": "Con el buceo adaptado en marcha, si el cliente pregunta además por el acompañante, la moneda del grupo o una cancelación, eso se contesta antes del texto fijo del asesor (el precio del buceo adaptado sigue siendo a medida) (arq-1l, 22-oct)."
-    },
-    "enlace_con_disponibilidad": {
-      "area": "Preguntas",
-      "titulo": "El enlace con la disponibilidad",
-      "texto": "Si el cliente pregunta si hay cupo o cómo reservar, Coral le da también el enlace de reserva de su plan (a los colombianos no: el pago lo coordina un asesor) (arq-1m, 22-oct)."
-    },
     "rag_enlace_al_recomendar": {
       "area": "Preguntas",
       "titulo": "El enlace al recomendar",
       "texto": "Cuando Coral recomienda un plan concreto y sabe desde dónde sale el cliente, da su enlace de reserva en vez de preguntar si lo quiere (a los colombianos no: el pago lo coordina un asesor) (arq-1o, 22-oct)."
-    },
-    "grupo_de_una_persona": {
-      "area": "Reserva",
-      "titulo": "«Es para una persona» cuenta como el grupo",
-      "texto": "Si el cliente dice que la reserva es para una persona («es para una persona», «solo para mí»), Coral lo apunta y no vuelve a preguntar para cuántas personas; preguntar si UNA persona puede hacer algo sigue sin contar (flu-1, 22-oct)."
-    },
-    "curso_preguntado_no_es_nivel": {
-      "area": "Reserva",
-      "titulo": "Preguntar por un curso no es decir el nivel",
-      "texto": "Si el cliente pregunta por un curso con nivel («¿hay Open Water mañana?»), Coral entiende que quiere el curso y no le pregunta si ya tiene esa certificación; con el nivel a secas («somos 4 open water») sigue preguntando (flu-1, 22-oct)."
-    },
-    "sin_certificacion_no_hace_falta": {
-      "area": "Reserva",
-      "titulo": "«No estoy certificado»: no hace falta",
-      "texto": "Cuando el cliente dice que no está certificado y su actividad no lo pide (snorkel, minicurso, curso Open Water), Coral le dice que no necesita certificación (flu-1, 22-oct)."
     },
     "recotizar_al_cambiar_moneda": {
       "area": "Reserva",

@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-23T21:45:04+00:00",
-  "commit": "41e2645c",
+  "generado": "2026-10-23T22:11:18+00:00",
+  "commit": "5dd4e6ee",
   "rama": "feature/sim5-alvaro"
  },
  "vistas": {
@@ -135,13 +135,6 @@
      "sin_efecto": false
     },
     {
-     "nombre": "grupo_de_una_persona",
-     "titulo": "«Es para una persona» cuenta como el grupo",
-     "codigo": true,
-     "pre": true,
-     "sin_efecto": false
-    },
-    {
      "nombre": "ya_reservo_no_es_pase",
      "titulo": "Decir «ya reservé» no es pedir a una persona",
      "codigo": true,
@@ -171,20 +164,6 @@
    "que_hace": "Datos personales, links rotos, temas delicados o cuando hace falta una persona: pasa el caso a un asesor.",
    "donde": "src/agents/escalation_agent.py:escalation_node",
    "interruptores": [
-    {
-     "nombre": "nada_en_primera_linea",
-     "titulo": "La palabra de control «NADA» no le llega al cliente",
-     "codigo": true,
-     "pre": true,
-     "sin_efecto": false
-    },
-    {
-     "nombre": "adaptado_contesta_lo_demas",
-     "titulo": "DIVE TO HEAL no se come lo demás",
-     "codigo": true,
-     "pre": true,
-     "sin_efecto": false
-    },
     {
      "nombre": "hechos_en_el_pase",
      "titulo": "Antes del pase, con los hechos del código",
@@ -557,27 +536,6 @@
    ],
    "interruptores": [
     {
-     "nombre": "el_verbo_no_la_ciudad",
-     "titulo": "«Soy de Medellín» es colombiano",
-     "codigo": true,
-     "pre": true,
-     "sin_efecto": false
-    },
-    {
-     "nombre": "cache_anthropic",
-     "titulo": "Caché del extractor (Haiku)",
-     "codigo": true,
-     "pre": true,
-     "sin_efecto": false
-    },
-    {
-     "nombre": "curso_preguntado_no_es_nivel",
-     "titulo": "Preguntar por un curso no es decir el nivel",
-     "codigo": true,
-     "pre": true,
-     "sin_efecto": false
-    },
-    {
      "nombre": "cedula_de_extranjeria_manda",
      "titulo": "La cédula de extranjería manda sobre «extranjero»",
      "codigo": true,
@@ -614,13 +572,6 @@
      "titulo": "Preguntar un precio no es elegir",
      "codigo": false,
      "pre": false,
-     "sin_efecto": false
-    },
-    {
-     "nombre": "sin_certificacion_no_hace_falta",
-     "titulo": "«No estoy certificado»: no hace falta",
-     "codigo": true,
-     "pre": true,
      "sin_efecto": false
     },
     {
@@ -817,31 +768,10 @@
    ],
    "interruptores": [
     {
-     "nombre": "hechos_por_codigo",
-     "titulo": "Hechos por código (ARQ)",
-     "codigo": true,
-     "pre": true,
-     "sin_efecto": false
-    },
-    {
-     "nombre": "hechos_al_rag",
-     "titulo": "Hechos del código también en los mensajes mezclados",
-     "codigo": true,
-     "pre": true,
-     "sin_efecto": false
-    },
-    {
      "nombre": "varias_actividades",
      "titulo": "Varias actividades en un mensaje",
      "codigo": false,
      "pre": false,
-     "sin_efecto": false
-    },
-    {
-     "nombre": "enlace_con_disponibilidad",
-     "titulo": "El enlace con la disponibilidad",
-     "codigo": true,
-     "pre": true,
      "sin_efecto": false
     },
     {
@@ -1043,13 +973,6 @@
      "titulo": "Avisos que el cliente necesita y no pregunta",
      "codigo": false,
      "pre": false,
-     "sin_efecto": false
-    },
-    {
-     "nombre": "rag_sin_reglas_del_codigo",
-     "titulo": "El RAG sin las reglas que ya dice el catálogo",
-     "codigo": true,
-     "pre": true,
      "sin_efecto": false
     },
     {
@@ -1748,19 +1671,6 @@
  ],
  "interruptores": [
   {
-   "nombre": "adaptado_contesta_lo_demas",
-   "area": "Preguntas",
-   "titulo": "DIVE TO HEAL no se come lo demás",
-   "texto": "Con el buceo adaptado en marcha, si el cliente pregunta además por el acompañante, la moneda del grupo o una cancelación, eso se contesta antes del texto fijo del asesor (el precio del buceo adaptado sigue siendo a medida) (arq-1l, 22-oct).",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [
-    "safety"
-   ],
-   "sin_efecto": null
-  },
-  {
    "nombre": "avisos_condicionados",
    "area": "Preguntas",
    "titulo": "Avisos que el cliente necesita y no pregunta",
@@ -1770,19 +1680,6 @@
    "fijado_en_pre": false,
    "usado_por": [
     "r_escribir"
-   ],
-   "sin_efecto": null
-  },
-  {
-   "nombre": "cache_anthropic",
-   "area": "Arquitectura",
-   "titulo": "Caché del extractor (Haiku)",
-   "texto": "El extractor usa un modelo de Anthropic por OpenRouter, que solo reutiliza el principio repetido del prompt si se le pide. Con el interruptor se le pide y Haiku va siempre al mismo proveedor (los demás de respaldo): las dos llamadas del extractor, casi la mitad del coste de un turno, pasan a pagar ~10 % de su prompt (arq-2b, 22-oct).",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [
-    "b_extraction"
    ],
    "sin_efecto": null
   },
@@ -1839,19 +1736,6 @@
    "sin_efecto": null
   },
   {
-   "nombre": "curso_preguntado_no_es_nivel",
-   "area": "Reserva",
-   "titulo": "Preguntar por un curso no es decir el nivel",
-   "texto": "Si el cliente pregunta por un curso con nivel («¿hay Open Water mañana?»), Coral entiende que quiere el curso y no le pregunta si ya tiene esa certificación; con el nivel a secas («somos 4 open water») sigue preguntando (flu-1, 22-oct).",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [
-    "b_extraction"
-   ],
-   "sin_efecto": null
-  },
-  {
    "nombre": "descuentos_en_la_tabla",
    "area": "Preguntas",
    "titulo": "Los descuentos, con sus condiciones",
@@ -1904,36 +1788,10 @@
    "sin_efecto": null
   },
   {
-   "nombre": "el_verbo_no_la_ciudad",
-   "area": "Reserva",
-   "titulo": "«Soy de Medellín» es colombiano",
-   "texto": "Ser de una ciudad de Colombia dice la nacionalidad y vivir allí no: «soy de Medellín» paga en pesos y «vivo en Barranquilla» no dice nada. La regla del extractor pone la misma ciudad en los dos lados, porque con ciudades distintas el modelo aprendía la ciudad en vez del verbo (arq-1f, 22-oct).",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [
-    "b_extraction"
-   ],
-   "sin_efecto": null
-  },
-  {
    "nombre": "enlace_con_como_pagar",
    "area": "Preguntas",
    "titulo": "Con el enlace, cómo se reserva y se paga",
    "texto": "Cuando Coral da el enlace de reserva a quien no es colombiano, explica también cómo se reserva y se paga (100 % con tarjeta en la web), que la reserva queda confirmada cuando el equipo concilia el pago y, si la actividad pide certificación, el carné (arq-1u, 22-oct).",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [
-    "r_hechos"
-   ],
-   "sin_efecto": null
-  },
-  {
-   "nombre": "enlace_con_disponibilidad",
-   "area": "Preguntas",
-   "titulo": "El enlace con la disponibilidad",
-   "texto": "Si el cliente pregunta si hay cupo o cómo reservar, Coral le da también el enlace de reserva de su plan (a los colombianos no: el pago lo coordina un asesor) (arq-1m, 22-oct).",
    "codigo": true,
    "pre": true,
    "fijado_en_pre": true,
@@ -1980,19 +1838,6 @@
    "sin_efecto": null
   },
   {
-   "nombre": "grupo_de_una_persona",
-   "area": "Reserva",
-   "titulo": "«Es para una persona» cuenta como el grupo",
-   "texto": "Si el cliente dice que la reserva es para una persona («es para una persona», «solo para mí»), Coral lo apunta y no vuelve a preguntar para cuántas personas; preguntar si UNA persona puede hacer algo sigue sin contar (flu-1, 22-oct).",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [
-    "router"
-   ],
-   "sin_efecto": null
-  },
-  {
    "nombre": "grupo_mixto_en_descuentos",
    "area": "Preguntas",
    "titulo": "Grupo mixto: todo en dólares también al hablar de descuentos",
@@ -2000,19 +1845,6 @@
    "codigo": false,
    "pre": false,
    "fijado_en_pre": false,
-   "usado_por": [
-    "r_hechos"
-   ],
-   "sin_efecto": null
-  },
-  {
-   "nombre": "hechos_al_rag",
-   "area": "Preguntas",
-   "titulo": "Hechos del código también en los mensajes mezclados",
-   "texto": "Si el cliente pregunta algo de la tabla (precio, qué incluye, requisitos…) y además otra cosa («¿cuánto cuesta y qué peces se ven?»), contesta el RAG, pero la parte de la tabla la escribe con los datos que saca el código y no de memoria (arq-1g, 22-oct).",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
    "usado_por": [
     "r_hechos"
    ],
@@ -2028,19 +1860,6 @@
    "fijado_en_pre": true,
    "usado_por": [
     "safety"
-   ],
-   "sin_efecto": null
-  },
-  {
-   "nombre": "hechos_por_codigo",
-   "area": "Preguntas",
-   "titulo": "Hechos por código (ARQ)",
-   "texto": "El modelo interpreta, el código decide y el modelo redacta: si el cliente solo pregunta precio, qué incluye, requisitos, horario, disponibilidad, edad o el enlace de una actividad, los datos los saca el código (moneda, las dos salidas si no se sabe el origen, edades en cifra, el asesor para colombianos) y Coral solo los escribe. Así no se deja partes de las listas ni mezcla datos (arq-1d, 22-oct).",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [
-    "r_hechos"
    ],
    "sin_efecto": null
   },
@@ -2160,19 +1979,6 @@
    "fijado_en_pre": false,
    "usado_por": [
     "r_hechos"
-   ],
-   "sin_efecto": null
-  },
-  {
-   "nombre": "nada_en_primera_linea",
-   "area": "Enrutador",
-   "titulo": "La palabra de control «NADA» no le llega al cliente",
-   "texto": "Antes de pasar a un asesor, Coral contesta las otras preguntas del mensaje; si no hay ninguna, el modelo responde la palabra «NADA» y no se dice nada más. Si detrás iba pegado el aviso de disponibilidad, «NADA» se colaba al principio de la respuesta. Ahora se mira la primera línea entera, sea cual sea la longitud (22-oct).",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [
-    "safety"
    ],
    "sin_efecto": null
   },
@@ -2344,19 +2150,6 @@
    "sin_efecto": null
   },
   {
-   "nombre": "rag_sin_reglas_del_codigo",
-   "area": "Preguntas",
-   "titulo": "El RAG sin las reglas que ya dice el catálogo",
-   "texto": "Las instrucciones de Coral repetían reglas que el catálogo y las políticas ya le dan siempre: en qué moneda cotizar, el 5 % por traer el equipo completo, no calcular totales con el descuento y los días en que no operamos. Se quitan del prompt (un 10 % más corto) y se quedan donde está el dato. Las que solo vigila un control automático (teléfonos, enlaces, cifras) siguen en el prompt (arq-2a, 22-oct).",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [
-    "r_escribir"
-   ],
-   "sin_efecto": null
-  },
-  {
    "nombre": "recogida_se_coordina",
    "area": "Preguntas",
    "titulo": "La recogida en las islas dice cómo se coordina",
@@ -2429,19 +2222,6 @@
    "fijado_en_pre": false,
    "usado_por": [
     "r_escribir"
-   ],
-   "sin_efecto": null
-  },
-  {
-   "nombre": "sin_certificacion_no_hace_falta",
-   "area": "Reserva",
-   "titulo": "«No estoy certificado»: no hace falta",
-   "texto": "Cuando el cliente dice que no está certificado y su actividad no lo pide (snorkel, minicurso, curso Open Water), Coral le dice que no necesita certificación (flu-1, 22-oct).",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [
-    "b_slotfill_close"
    ],
    "sin_efecto": null
   },

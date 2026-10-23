@@ -132,22 +132,6 @@ services:
       # "compiled grammar is too large", y contestaba siempre el respaldo). Se queda el respaldo POR TIEMPO de
       # OpenRouter (5 s): si no contesta en 5 s, la misma petición sale por OpenAI.
       OPENROUTER_RESPALDO_SEGUNDOS: "5.0"
-      # ARQ (22-oct, PROMOCIONADO, decisión de Gadea tras el G10 de control): el redactor de hechos (arq-1d/1e/1h +
-      # arq-3), «soy de Medellín» (arq-1f), los hechos en los mensajes mezclados (arq-1g), menos reglas en el prompt
-      # del RAG (arq-2a), la caché del extractor (arq-2b) y el NADA que no llega al cliente. Revert = quitar estas líneas.
-      HECHOS_POR_CODIGO: "true"
-      EL_VERBO_NO_LA_CIUDAD: "true"
-      HECHOS_AL_RAG: "true"
-      RAG_SIN_REGLAS_DEL_CODIGO: "true"
-      CACHE_ANTHROPIC: "true"
-      NADA_EN_PRIMERA_LINEA: "true"
-      # arq-1l y arq-1m (22-oct, PROMOCIONADO tras el G10 nº 2): DIVE TO HEAL contesta lo demás; el enlace con la disponibilidad.
-      ADAPTADO_CONTESTA_LO_DEMAS: "true"
-      ENLACE_CON_DISPONIBILIDAD: "true"
-      # flu-1 (22-oct, PROMOCIONADO con el G10 nº 4): repreguntas del flujo de la reserva.
-      GRUPO_DE_UNA_PERSONA: "true"
-      CURSO_PREGUNTADO_NO_ES_NIVEL: "true"
-      SIN_CERTIFICACION_NO_HACE_FALTA: "true"
       # arq-4b / arq-1p..1u (23-oct, PROMOCIONADO con el G10 nº 5: 91,2 % 40/72): los arreglos de los fallos del G10 nº 4.
       HECHOS_SIN_ACTIVIDAD: "true"
       YA_RESERVO_NO_ES_PASE: "true"
