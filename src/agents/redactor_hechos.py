@@ -158,6 +158,21 @@ async def _redactar(client, mensajes: list[dict]) -> str | None:
     return (respuesta.choices[0].message.content or "").strip()
 
 
+_EN_SU_IDIOMA = {"es": "Escríbela de nuevo entera en español.", "en": "Write it again in full in English."}
+
+
+def _en_otro_idioma(answer: str, lang: str) -> bool:
+    """arq-5d: ¿la redacción salió en otro idioma que el de la conversación? Las mismas palabras vacías con las que el
+    flujo detecta el idioma del cliente, con margen claro (el doble y al menos 4): los nombres propios en español de
+    una respuesta en inglés («Muelle de la Bodeguita», «Islas del Rosario») no bastan para tomarla por otro idioma."""
+    from src.flows.catalog import _ENGLISH_STOPWORDS, _SPANISH_STOPWORDS  # lazy
+
+    palabras = [p.strip(".,!?¡¿:;()[]{}\"'*•") for p in answer.lower().split()]
+    es, en = sum(p in _SPANISH_STOPWORDS for p in palabras), sum(p in _ENGLISH_STOPWORDS for p in palabras)
+    propio, ajeno = (es, en) if lang == "es" else (en, es)
+    return ajeno >= 4 and ajeno >= 2 * propio
+
+
 def _pasa_las_guardas(answer: str, texto_hechos: str, message: str) -> bool:
     """Las guardas deterministas de siempre: ni importes, ni enlaces, ni teléfonos que no estén en los hechos."""
     return (is_coherent_text(answer) and currency_amounts_grounded(answer, f"{texto_hechos}\n{message}")
@@ -246,6 +261,14 @@ async def responder(state: ConversationState, message: str, history: list[dict])
     client = trace_openai(AsyncOpenAI(api_key=settings.openai_api_key))
     mensajes = _mensajes(lang, history, message, texto_hechos)
     answer = await _redactar(client, mensajes)
+    if answer is not None and _en_otro_idioma(answer, lang):
+        # arq-5d (G10 nº 5, g10-020): a quien escribía en portugués el redactor le contestó en portugués, aunque la
+        # conversación es en inglés (decisión de Gadea). Se rehace una vez diciéndolo; si sigue igual, contesta el RAG.
+        logger.info(f"[HECHOS] la redacción no está en {lang}: se rehace")
+        answer = await _redactar(client, [*mensajes, {"role": "assistant", "content": answer},
+                                          {"role": "user", "content": _EN_SU_IDIOMA[lang]}])
+        if answer is not None and _en_otro_idioma(answer, lang):
+            answer = None
     if answer is None:
         note_turn(hechos_por_codigo="fallo")
         return None

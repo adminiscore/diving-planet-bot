@@ -261,7 +261,7 @@ async def aviso_al_final(history: list[dict] | None, query: str, answer: str, la
         logger.warning(f"[RAG][AVISO_FINAL] falló, no se añade nada: {exc}")
         return None
     aviso_id = str(datos.get("aviso") or "").strip()
-    frase = str(datos.get("frase") or "").strip()
+    frase = _sin_nulo(str(datos.get("frase") or ""))
     cita = str(datos.get("cita_del_cliente") or "").strip()
     cita_ultimo = str(datos.get("cita_del_ultimo_mensaje") or "").strip()
     aviso = avisos_mod.por_id(aviso_id) if aviso_id else None
@@ -281,10 +281,21 @@ async def aviso_al_final(history: list[dict] | None, query: str, answer: str, la
     return aviso_id, frase
 
 
+# arq-5d (G10 nº 5, g10-065): el modelo del aviso devolvió la frase «null» y llegó al cliente como un párrafo suelto.
+_NULOS = {"null", "none", "n/a", "nada", "-"}
+
+
+def _sin_nulo(frase: str) -> str:
+    """La frase, o vacía si es la representación de «nada» de un modelo («null», «None», unas comillas vacías…)."""
+    frase = frase.strip()
+    limpia = frase.strip(" .\"'`").lower()
+    return "" if not limpia or limpia in _NULOS else frase
+
+
 def insertar_frase(answer: str, frase: str) -> str:
     """La frase del aviso en su propio párrafo, sin tocar nada más: antes del último párrafo si este pregunta algo al
     cliente (la pregunta sigue siendo lo último que lee), y si no, al final."""
-    frase = frase.strip()
+    frase = _sin_nulo(frase)
     texto = answer.rstrip()
     if not frase:
         return answer
