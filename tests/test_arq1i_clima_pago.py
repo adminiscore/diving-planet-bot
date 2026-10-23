@@ -16,7 +16,6 @@ CLIMA = "¿Qué pasa si hace mal tiempo y hay tormenta? ¿Se cancela?"
 
 @pytest.fixture
 def encendido(monkeypatch):
-    monkeypatch.setattr(settings, "hechos_por_codigo", True)
     monkeypatch.setattr(settings, "intenciones_clima_pago", True)
 
 
@@ -25,7 +24,6 @@ def _st(**kw):
 
 
 def test_apagado_jev_no_pregunta(monkeypatch):
-    monkeypatch.setattr(settings, "hechos_por_codigo", True)
     monkeypatch.setattr(settings, "intenciones_clima_pago", False)
     q = j._questions_for_turn()
     assert j.PIDE_CLIMA not in q and j.PIDE_PAGO not in q

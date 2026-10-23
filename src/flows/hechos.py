@@ -242,7 +242,7 @@ def hechos(state: ConversationState, intenciones: list[str], actividades: list[s
         bloque.update(_clima_y_pago(state, pedidas, lang))
         # arq-1m (G10 nº 2): «¿hay disponibilidad mañana?» o «¿cómo reservamos?» se contestaban con «en la web», sin el
         # enlace (Jev marcaba la disponibilidad, no el enlace): con la disponibilidad va también el enlace de reserva.
-        if "enlace" in pedidas or (settings.enlace_con_disponibilidad and "disponibilidad" in pedidas):
+        if "enlace" in pedidas or "disponibilidad" in pedidas:
             if state.is_colombian and not getattr(state, "mixed_nationality_notice", False):
                 # Decisión de Gadea (21-oct): el cierre de un colombiano lo coordina un asesor (pago en COP), sin enlace.
                 bloque["enlace"] = {"asesor": True}

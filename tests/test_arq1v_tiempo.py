@@ -13,7 +13,6 @@ def _st():
 
 
 def test_apagado_jev_pregunta_lo_de_antes(monkeypatch):
-    monkeypatch.setattr(settings, "hechos_por_codigo", True)
     monkeypatch.setattr(settings, "tiempo_limitado", False)
     monkeypatch.setattr(settings, "descuentos_en_la_tabla", False)  # arq-4b también cambia «otra cosa»
     monkeypatch.setattr(settings, "intenciones_clima_pago", False)  # arq-1i también
@@ -22,7 +21,6 @@ def test_apagado_jev_pregunta_lo_de_antes(monkeypatch):
 
 
 def test_encendido_jev_pregunta_y_otra_cosa_no_lo_cuenta(monkeypatch):
-    monkeypatch.setattr(settings, "hechos_por_codigo", True)
     monkeypatch.setattr(settings, "tiempo_limitado", True)
     monkeypatch.setattr(settings, "intenciones_clima_pago", False)  # arq-1i añade su frase detrás
     q = j._questions_for_turn()

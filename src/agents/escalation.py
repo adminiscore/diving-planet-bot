@@ -203,7 +203,7 @@ def clima_general_al_redactor(reason: str | None, signals: dict | None) -> bool:
     tiempo se cancela?») no va a la ruta sensible: la contesta el redactor de hechos con la política (se reprograma o se
     reembolsa el 100 % si Capitanía cierra) y ofrece un asesor. Con un día concreto o una reserva hecha Jev no la marca
     (`pide_clima`) y sigue el pase. Lo miran el router y la cascada, con el mismo criterio."""
-    return (reason == "weather_conditions" and settings.intenciones_clima_pago and settings.hechos_por_codigo
+    return (reason == "weather_conditions" and settings.intenciones_clima_pago
             and (signals or {}).get("pide_clima") is True)
 
 

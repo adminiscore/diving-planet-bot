@@ -274,10 +274,10 @@ async def _take_parallel_ack(state: ConversationState, prev_pending) -> str | No
 
 
 def _no_hace_falta_certificacion(state: ConversationState, carry: dict) -> str:
-    """flu-1 (flag `sin_certificacion_no_hace_falta`, G10 nº 2): «No, I'm not certified. I'm just interested in
+    """flu-1 (G10 nº 2): «No, I'm not certified. I'm just interested in
     snorkeling» recibía «Got it—you're not certified…» y la pregunta del origen, sin decirle que para el snorkel no hace
     falta. Si en ESTE turno dice que no está certificado y su actividad no lo pide (dato del registro), se dice."""
-    if not settings.sin_certificacion_no_hace_falta or carry.get("prev_main_is_certified") is False:
+    if carry.get("prev_main_is_certified") is False:
         return ""
     if _known_field_values(state).get("is_certified") is not False:
         return ""

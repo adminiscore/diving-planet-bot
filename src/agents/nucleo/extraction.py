@@ -71,7 +71,6 @@ from src.agents.nucleo.extractor import (
     _aplicar_extractor,
     campos_del_extractor,
 )
-from src.config import settings
 from src.domain import activities as dom
 from src.flows import cart_render
 from src.flows.state import ConversationState
@@ -797,7 +796,7 @@ def _flag_cert_or_course(intent, state: ConversationState, message: str) -> None
         # (banco dialogos-gen16-repreguntas, 2/2).
         return
     preguntada = getattr(intent, "_actividad_preguntada", None)
-    if settings.curso_preguntado_no_es_nivel and preguntada and getattr(dom.by_id(preguntada), "course_level", None):
+    if preguntada and getattr(dom.by_id(preguntada), "course_level", None):
         # flu-1 (G10 nº 2): «do you have open water available tomorrow?» pregunta por el CURSO (el extractor lo lee como
         # la actividad de la que pregunta); quien ya tiene el nivel no pregunta por su disponibilidad ni su precio. Con
         # el nivel a secas («somos 4 open water») el extractor no lee ninguna actividad preguntada y se sigue preguntando.

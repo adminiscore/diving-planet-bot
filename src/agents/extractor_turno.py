@@ -701,10 +701,9 @@ async def extraer_turno(mensaje: str, *, history: list[dict] | None = None, sabi
     # gen-14: la ciudad o el gentilicio sí dicen la nacionalidad; alojarse o viajar no (ver la constante).
     for antes, despues in _GENTILICIO_ES_COLOMBIANO:
         sistema = sistema.replace(antes, despues)
-    if settings.el_verbo_no_la_ciudad:
-        # arq-1f: pares con la misma ciudad, para que decida el verbo (ver `_EL_VERBO_NO_LA_CIUDAD`).
-        for antes, despues in _EL_VERBO_NO_LA_CIUDAD:
-            sistema = sistema.replace(antes, despues)
+    # arq-1f: pares con la misma ciudad, para que decida el verbo (ver `_EL_VERBO_NO_LA_CIUDAD`).
+    for antes, despues in _EL_VERBO_NO_LA_CIUDAD:
+        sistema = sistema.replace(antes, despues)
     # gen-6: alojarse en Barú o Playa Blanca es salir desde Cartagena (ver `_BARU_SALE_DE_CARTAGENA`).
     for antes, despues in _BARU_SALE_DE_CARTAGENA:
         sistema = sistema.replace(antes, despues)

@@ -74,7 +74,6 @@ def test_la_fecha_lleva_el_dia_de_la_semana(monkeypatch):
 def test_los_descuentos_son_una_intencion_de_la_tabla(monkeypatch, flag):
     from src.agents import jev_router as j
 
-    monkeypatch.setattr(settings, "hechos_por_codigo", True)
     monkeypatch.setattr(settings, "descuentos_en_la_tabla", flag)
     q = j._questions_for_turn()
     assert (j.PIDE_DESCUENTO in q) is flag

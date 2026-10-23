@@ -3,7 +3,6 @@ aunque `rag_answer` haya pegado el aviso al final detrás. Caso real: ronda core
 import pytest
 
 from src.agents.escalation_agent import _es_nada
-from src.config import settings
 
 # El texto real que le llegó al cliente (sin el saludo), con el aviso al final pegado detrás.
 CASO_REAL = ("NADA\n\nOperamos todos los días salvo el 25 de diciembre y el 1 de enero; la seguridad va primero y, si el "
@@ -12,7 +11,6 @@ CASO_REAL = ("NADA\n\nOperamos todos los días salvo el 25 de diciembre y el 1 d
 
 @pytest.mark.parametrize("respuesta", [CASO_REAL, "NADA", "NADA.", "**NADA**", "nada", "  NADA  \n\nOtra línea"])
 def test_con_el_flag_la_palabra_de_control_se_detecta_aunque_lleve_el_aviso(monkeypatch, respuesta):
-    monkeypatch.setattr(settings, "nada_en_primera_linea", True)
     assert _es_nada(respuesta)
 
 
@@ -22,11 +20,4 @@ def test_con_el_flag_la_palabra_de_control_se_detecta_aunque_lleve_el_aviso(monk
     "El minicurso cuesta 183 USD online.\nNADA",
 ])
 def test_una_respuesta_de_verdad_no_es_la_palabra_de_control(monkeypatch, respuesta):
-    monkeypatch.setattr(settings, "nada_en_primera_linea", True)
     assert not _es_nada(respuesta)
-
-
-def test_apagado_es_lo_de_antes_y_el_caso_real_se_colaba(monkeypatch):
-    monkeypatch.setattr(settings, "nada_en_primera_linea", False)
-    assert _es_nada("NADA")
-    assert not _es_nada(CASO_REAL)  # el fallo: más de 30 caracteres

@@ -9,7 +9,6 @@ import re
 
 from src.agents.intent_detector import IntentDetector
 from src.agents.lead_summary import build_lead_summary
-from src.config import settings
 from src.flows import eligibility
 from src.flows.state import ConversationState, Step
 from src.knowledge.loader import load_policies
@@ -226,7 +225,7 @@ def _maybe_answer_age_eligibility(message: str, state: ConversationState) -> str
     """
     if not _AGE_ELIGIBILITY_CUE.search(message):
         return None
-    if settings.hechos_por_codigo and set(getattr(state, "_intenciones", None) or ()) - {"edad"}:
+    if set(getattr(state, "_intenciones", None) or ()) - {"edad"}:
         # ARQ-1e: «Salgo de Cartagena con mi hijo de 12. ¿Cuánto cuesta el minicurso, qué incluye y desde qué edad?»
         # salía con esta tarjeta y sin el precio ni lo que incluye (banco arq-1d, v1 y v5: 0 de 4 datos 3 de 3). Si Jev
         # ve más intenciones que la edad, el turno sigue y lo contesta el redactor de hechos, con la edad como un hecho.

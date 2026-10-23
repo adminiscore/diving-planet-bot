@@ -828,8 +828,7 @@ def _questions_for_turn(pending_slot: str | None = None) -> dict:
         q[PENDING_ANSWER] = pending_q
     q.update({ASKS_QUESTION: _ASKS_QUESTION_Q_V2,
               **_AFFIRMS_QUESTIONS})
-    if settings.grupo_de_una_persona:
-        q[AFFIRMS_GROUP] = _AFFIRMS_GROUP_Q_UNA
+    q[AFFIRMS_GROUP] = _AFFIRMS_GROUP_Q_UNA
     q[CORRECTS] = _CORRECTS_Q
     q[ASKS_RECALL] = _ASKS_RECALL_Q
     instrucciones = _NEEDS_STAFF_Q["instructions"]
@@ -849,12 +848,11 @@ def _questions_for_turn(pending_slot: str | None = None) -> dict:
     q[PREGUNTA_SI_ES_IA] = _PREGUNTA_SI_ES_IA_Q
     q[CAMBIA_IDIOMA] = _CAMBIA_IDIOMA_Q
     q[PIDE_PRECIO] = _PIDE_PRECIO_Q_ACTIVIDADES
-    if settings.hechos_por_codigo:
-        q[PIDE_QUE_INCLUYE] = _PIDE_QUE_INCLUYE_Q
-        q.update(_INTENCIONES_Q)
-        if settings.descuentos_en_la_tabla:
-            q[PIDE_DESCUENTO] = _PIDE_DESCUENTO_Q
-            q[PIDE_OTRA_COSA] = _PIDE_OTRA_COSA_CON_DESCUENTOS_Q
+    q[PIDE_QUE_INCLUYE] = _PIDE_QUE_INCLUYE_Q
+    q.update(_INTENCIONES_Q)
+    if settings.descuentos_en_la_tabla:
+        q[PIDE_DESCUENTO] = _PIDE_DESCUENTO_Q
+        q[PIDE_OTRA_COSA] = _PIDE_OTRA_COSA_CON_DESCUENTOS_Q
     if settings.tiempo_limitado and PIDE_OTRA_COSA in q:
         # arq-1v: preguntar si da tiempo es de la tabla; «otra cosa» deja de contarlo.
         q[PIDE_SI_ALCANZA] = _PIDE_SI_ALCANZA_Q

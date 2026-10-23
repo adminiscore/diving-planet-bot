@@ -132,10 +132,6 @@ def _es_nada(answer: str) -> bool:
     pasaba de 30 caracteres y «NADA» le llegaba al cliente (8 turnos en las rondas del 21-22, también en G10). Con el
     flag, cuenta la PRIMERA LÍNEA entera, sin límite de longitud; una respuesta real que empieza por «Nada, no hace
     falta…» no es la palabra sola. Lo mismo que FALTA en el redactor de hechos (a3e233f)."""
-    from src.config import settings  # lazy
-
-    if not settings.nada_en_primera_linea:
-        return answer.strip(" .!¡*\"'").upper().startswith(_NADA) and len(answer) < 30
     lineas = answer.strip().splitlines()
     return bool(lineas) and lineas[0].strip(" .!¡*\"'").upper() == _NADA
 
@@ -183,11 +179,8 @@ async def respuesta_dive_to_heal(conv, message: str) -> str:
     """La respuesta a un precio o una reserva dentro de DIVE TO HEAL: el texto fijo del asesor y, con el flag, delante
     lo que el mensaje pregunta aparte del buceo adaptado."""
     from src.agents.rutas.safety import _adaptive_diving_advisor_answer  # lazy
-    from src.config import settings  # lazy
 
     fija = _adaptive_diving_advisor_answer(conv.language)
-    if not settings.adaptado_contesta_lo_demas:
-        return fija
     lang = "es" if conv.language == "es" else "en"
     resto = await _contestar_lo_demas(conv, message, _TEMA_ADAPTADO[lang], lang, "dive_to_heal")
     return f"{resto}\n\n{fija}" if resto else fija

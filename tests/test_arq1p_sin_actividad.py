@@ -45,7 +45,6 @@ def redactor(monkeypatch):
     monkeypatch.setattr(extractor, "lectura_del_extractor", lectura)
     monkeypatch.setattr(rag_agent, "generar_con_respaldo", generar)
     monkeypatch.setattr(redactor_hechos, "trace_openai", lambda c: c)
-    monkeypatch.setattr(settings, "hechos_por_codigo", True)
     return SimpleNamespace(hechas=hechas, estado=estado)
 
 

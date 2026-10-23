@@ -110,13 +110,6 @@ def test_la_nacionalidad_del_mensaje_pone_la_moneda(llamadas, monkeypatch):
     assert "COP" in llamadas.hechas[0][0][-1]["content"] and st.is_colombian is None  # el estado no se toca
 
 
-def test_con_el_flag_apagado_ni_se_mira(llamadas, monkeypatch):
-    monkeypatch.setattr(settings, "hechos_por_codigo", False)
-    st = _conv()
-    assert asyncio.run(core._con_hechos(st, MENSAJE, st.history)) is None
-    assert llamadas.hechas == []
-
-
 def test_otra_cosa_cuenta_como_si_salvo_un_no_seguro():
     assert j.answers_to_signals({j.PIDE_OTRA_COSA: {"noul": 0.2}})[j.PIDE_OTRA_COSA] is False
     assert j.answers_to_signals({j.PIDE_OTRA_COSA: {"noul": 0.5}})[j.PIDE_OTRA_COSA] is True
@@ -134,7 +127,6 @@ def test_la_tarjeta_de_edades_no_se_come_las_otras_preguntas(monkeypatch, intenc
     """ARQ-1e: con más intenciones que la edad, el turno lo contesta el redactor de hechos."""
     from src.agents.rutas.info import _maybe_answer_age_eligibility
 
-    monkeypatch.setattr(settings, "hechos_por_codigo", True)
     st = _conv(_intenciones=intenciones)
     respuesta = _maybe_answer_age_eligibility("Mi hijo tiene 12 años, ¿cuánto cuesta el minicurso y desde qué edad "
                                               "se puede?", st)

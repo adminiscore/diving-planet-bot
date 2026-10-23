@@ -1589,10 +1589,8 @@ async def _con_la_nacionalidad_del_mensaje(state: ConversationState, message: st
 
 
 async def _con_hechos(state: ConversationState, message: str, history: list) -> str | None:
-    """ARQ-1d (flag `hechos_por_codigo`): si el mensaje solo pide intenciones que el código sabe contestar, la
-    respuesta del redactor de hechos (src/agents/redactor_hechos.py); si no, None y contesta el RAG de siempre."""
-    if not settings.hechos_por_codigo:
-        return None
+    """ARQ-1d: si el mensaje solo pide intenciones que el código sabe contestar, la respuesta del redactor de hechos
+    (src/agents/redactor_hechos.py); si no, None y contesta el RAG de siempre."""
     from src.agents import redactor_hechos  # lazy
 
     return await redactor_hechos.responder(state, message, history)
@@ -1600,14 +1598,14 @@ async def _con_hechos(state: ConversationState, message: str, history: list) -> 
 
 async def _hechos_para_el_rag(state: ConversationState, message: str, history: list, *, siempre: bool = False
                               ) -> str | None:
-    """ARQ-1g (flag `hechos_al_rag`): en un mensaje MEZCLADO (intenciones de la tabla y algo más: «¿cuánto cuesta y qué
+    """ARQ-1g: en un mensaje MEZCLADO (intenciones de la tabla y algo más: «¿cuánto cuesta y qué
     peces se ven?»), el RAG contesta, pero la parte cubierta la escribe con los hechos del código y no de memoria. None
     si no hay nada cubierto o si el mensaje es todo de la tabla (entonces contesta el redactor). También cuando Jev lo
     daba por todo de la tabla pero el redactor dijo FALTA: el mensaje traía algo más."""
     mezclado = getattr(state, "_otra_cosa", None) is not False or getattr(state, "_redactor_dijo_falta", False)
     # arq-5a: `siempre` (la respuesta antes del pase a un asesor) no mira si el mensaje es mezclado: ahí el redactor no
     # contesta nunca, así que lo de la tabla tiene que llegar al RAG.
-    if not (settings.hechos_por_codigo and settings.hechos_al_rag and (mezclado or siempre)):
+    if not (mezclado or siempre):
         return None
     from src.agents import redactor_hechos  # lazy
 
