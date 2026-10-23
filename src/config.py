@@ -681,6 +681,11 @@ class Settings(BaseSettings):
     # nacionalidad: el extranjero 100 % con tarjeta en la web; el colombiano, 100 % o 50 % y 50 %, con un asesor), la
     # confirmación y la transferencia solo si falla el online. APAGADO hasta medirlo.
     intenciones_clima_pago: bool = False
+    # ARQ-5f (23-oct, Gonzalo con Claude, reparto de Gadea #1525; G10 nº 5): hechos que faltaban en la tabla. La excepción
+    # del refresher (500+ inmersiones o Divemaster: lo revisa un asesor) en los requisitos del buceo certificado y del
+    # refresher; que el horario no se adelanta (lo ve un asesor); buceo y snorkel en la misma lancha si el turno trae los
+    # dos; y que alojados en Barú o Playa Blanca salen desde Cartagena. APAGADO hasta medirlo.
+    hechos_que_faltaban: bool = False
     varias_actividades: bool = False  # ARQ-1j (22-oct): el extractor da TODAS las actividades del mensaje (y el acompañante) y los hechos salen de cada una
     adaptado_contesta_lo_demas: bool = True  # PROMOCIONADO 22-oct (arq-1l: banco DIVE TO HEAL 3/12 -> 11/12; HISTORY 0.31.93); revert = False
     enlace_con_disponibilidad: bool = True  # PROMOCIONADO 22-oct (arq-1m: banco de enlace 3/12 -> 12/12; HISTORY 0.31.93); revert = False

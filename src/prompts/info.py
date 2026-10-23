@@ -650,6 +650,17 @@ REDACTOR_DOS_MONEDAS_EN = (
     "\n- If both `precio` and `precio_cop` are given, give both: the price in US dollars and the same price in Colombian "
     "pesos, with the currency rule (Colombians and residents pay in COP; everyone else in USD)."
 )
+# arq-5f (23-oct, flag `hechos_que_faltaban`): los hechos nuevos se decían a medias (banco arq-5f: «el horario es fijo»
+# sin el asesor, «la misma lancha» sin la zona distinta del snorkel).
+REDACTOR_QUE_FALTABAN_ES = (
+    "\n- Si el cliente pide cambiar o adelantar el horario, di que es fijo y que un ajuste lo revisa un asesor del "
+    "equipo.\n- `misma_lancha`: dilo entero (si van juntos o se dividen, y que el snorkel es en otra zona)."
+)
+REDACTOR_QUE_FALTABAN_EN = (
+    "\n- If the customer asks to change or move the time earlier, say it is fixed and that a team advisor reviews any "
+    "adjustment.\n- `misma_lancha`: say it in full (whether they go together or split up, and that snorkeling is in "
+    "a different area)."
+)
 # arq-1i (23-oct, flag `intenciones_clima_pago`, decisión de Gadea #1312): el clima en general y cómo se paga.
 REDACTOR_CLIMA_PAGO_ES = (
     "\n- `clima`: qué pasa con el mal tiempo (es poco probable; si Capitanía cierra se reprograma y, si no se puede, "
