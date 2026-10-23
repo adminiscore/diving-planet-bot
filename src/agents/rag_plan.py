@@ -29,6 +29,7 @@ from __future__ import annotations
 
 import json
 import logging
+import time
 
 from openai import AsyncOpenAI
 
@@ -250,9 +251,11 @@ async def aviso_al_final(history: list[dict] | None, query: str, answer: str, la
                  f"RESPUESTA:\n{answer}\n\nIDIOMA DE LA FRASE: {idioma}" if es else
                  f"NOTICES:\n{lista}\n\nCONVERSATION:\n{conversacion}\n\nCUSTOMER'S LAST MESSAGE:\n{query}\n\n"
                  f"ANSWER:\n{answer}\n\nLANGUAGE OF THE SENTENCE: {idioma}")
+    modelo = settings.avisos_al_final_model or settings.rag_plan_model
+    t0 = time.perf_counter()
     try:
         resp = await _cliente().chat.completions.create(
-            model=settings.avisos_al_final_model or settings.rag_plan_model, temperature=0, max_tokens=250,
+            model=modelo, temperature=0, max_tokens=250,
             response_format={"type": "json_object"},
             messages=[{"role": "system", "content": _AVISO_FINAL_ES if es else _AVISO_FINAL_EN},
                       {"role": "user", "content": contenido}])
@@ -260,6 +263,9 @@ async def aviso_al_final(history: list[dict] | None, query: str, answer: str, la
     except Exception as exc:  # noqa: BLE001 — nunca romper el turno
         logger.warning(f"[RAG][AVISO_FINAL] falló, no se añade nada: {exc}")
         return None
+    finally:
+        # arq-7c (23-oct): cuánto espera el turno al aviso (va a la vez que el juez de grounding) y con qué modelo.
+        logger.info(f"[RAG][AVISO_FINAL] {int((time.perf_counter() - t0) * 1000)} ms model={modelo}")
     aviso_id = str(datos.get("aviso") or "").strip()
     frase = str(datos.get("frase") or "").strip()
     cita = str(datos.get("cita_del_cliente") or "").strip()
