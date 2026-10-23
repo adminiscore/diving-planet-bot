@@ -22,3 +22,16 @@ def test_el_hotel_de_las_islas_da_el_origen(monkeypatch):
 def test_apagado_como_antes(monkeypatch):
     monkeypatch.setattr(settings, "hotel_de_las_islas_da_origen", False)
     assert redactor_hechos._origen(_st(), {"hotel": "Ubuntu hotel"}) is None
+
+
+def test_los_hoteles_de_la_base_que_el_detector_no_tiene(monkeypatch):
+    """g10-051 es Las Palmeras: el detector (CAL-C3e) no lo tiene, la lista de la base (gen-15) sí."""
+    monkeypatch.setattr(settings, "hotel_de_las_islas_da_origen", True)
+    for hotel in ("Eco Hotel Las Palmeras", "Las Palmeras", "hotel Mulata", "Rosario de Mar", "Hotel Majagua"):
+        assert redactor_hechos._origen(_st(), {"hotel": hotel}) == "island", hotel
+
+
+def test_un_hotel_de_cartagena_no_da_el_origen(monkeypatch):
+    monkeypatch.setattr(settings, "hotel_de_las_islas_da_origen", True)
+    for hotel in ("Hotel Charleston Santa Teresa", "Hotel Caribe", "Hotel Las Américas", "hotel"):
+        assert redactor_hechos._origen(_st(), {"hotel": hotel}) is None, hotel
