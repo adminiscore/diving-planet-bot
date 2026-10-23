@@ -696,29 +696,29 @@ class Settings(BaseSettings):
     # con «incluye» va también lo que se HACE (el itinerario de la ficha: la clase, la piscina, la inmersión), si no se
     # pidió el horario; y lo que no incluyen los planes de las islas es la frase de `island_pickup` que lo dice («no
     # incluyen transporte desde Cartagena ni almuerzo»), no el párrafo entero, que el redactor saltaba. APAGADO.
-    incluye_lo_que_se_hace: bool = False
+    incluye_lo_que_se_hace: bool = True  # PROMOCIONADO 23-oct (arq-8, decisión de Gadea: bancos propios ×3 con controles iguales y 0 invenciones; HISTORY 0.31.99); revert = False
     # ARQ-8e (23-oct, #1617; G10 nº 6, recogida en las islas): la recogida de las islas lleva también cómo se coordina
     # (las frases de `island_pickup`: «en algunos casos la lancha llega directo al hotel; en otros te indicamos el muelle o
     # punto más cercano»). APAGADO.
-    recogida_se_coordina: bool = False
+    recogida_se_coordina: bool = True  # PROMOCIONADO 23-oct (arq-8, decisión de Gadea: bancos propios ×3 con controles iguales y 0 invenciones; HISTORY 0.31.99); revert = False
     # ARQ-8f (23-oct, #1617; G10 nº 6, precio de las especialidades): una pregunta de precio que esperaba el origen se
     # contesta en cuanto se sabe, aunque el mensaje que lo da pregunte otra cosa («soy de Cartagena, ¿incluye el
     # almuerzo?»): el precio entra en las intenciones del turno. APAGADO.
-    precio_pendiente_con_el_origen: bool = False
+    precio_pendiente_con_el_origen: bool = True  # PROMOCIONADO 23-oct (arq-8, decisión de Gadea: bancos propios ×3 con controles iguales y 0 invenciones; HISTORY 0.31.99); revert = False
     # ARQ-8f (23-oct, #1617 y #1631; G10 nº 6): lo que el código pinta (listas y frases) va una sola vez: lo que se
     # repite igual en varias actividades (el punto de encuentro, los descuentos) sale una vez, y el rótulo del origen que
     # el modelo escribe justo antes de la marca no se duplica ni queda suelto al final. APAGADO.
-    listas_una_vez: bool = False
+    listas_una_vez: bool = True  # PROMOCIONADO 23-oct (arq-8, decisión de Gadea: bancos propios ×3 con controles iguales y 0 invenciones; HISTORY 0.31.99); revert = False
     # ARQ-8h (23-oct, decisión de Álvaro por Gadea, #1634): los descuentos, en UN sitio (discounts.json). Estaban en cinco:
     # discounts.json, pricing.json `discount_policies` (lo que indexa el RAG: sin tildes, el 5 % de equipo sin «solo
     # buceo recreativo y cursos» y con ROVERD), un texto fijo en el catálogo, avisos.json y ejemplos del prompt. Con el
     # flag, el catálogo, los hechos y el índice (load_embeddings, al desplegar) los leen de discounts.json, con la nota
     # del acompañante (lo confirma el equipo al pedir el descuento: la base no dice si entra). APAGADO.
-    descuentos_un_sitio: bool = False
+    descuentos_un_sitio: bool = True  # PROMOCIONADO 23-oct (arq-8h; HISTORY 0.31.99); revert = False Y devolver discount_policies a pricing.json (se quitó al promocionar)
     # ARQ-8b (23-oct, Gonzalo con Claude, encargo de Gadea #1655; g10-051): si el extractor lee en ESTE mensaje un hotel
     # del catálogo de las islas (CAL-C3e), el redactor de hechos ya lo da por origen «island» al contestar; antes solo
     # lo sabía al guardar el estado, después, y con Jev dudando en el lugar preguntaba desde dónde sale. APAGADO.
-    hotel_de_las_islas_da_origen: bool = False
+    hotel_de_las_islas_da_origen: bool = True  # PROMOCIONADO 23-oct (arq-8, decisión de Gadea: bancos propios ×3 con controles iguales y 0 invenciones; HISTORY 0.31.99); revert = False
     varias_actividades: bool = False  # ARQ-1j (22-oct): el extractor da TODAS las actividades del mensaje (y el acompañante) y los hechos salen de cada una
     adaptado_contesta_lo_demas: bool = True  # PROMOCIONADO 22-oct (arq-1l: banco DIVE TO HEAL 3/12 -> 11/12; HISTORY 0.31.93); revert = False
     enlace_con_disponibilidad: bool = True  # PROMOCIONADO 22-oct (arq-1m: banco de enlace 3/12 -> 12/12; HISTORY 0.31.93); revert = False
@@ -744,7 +744,7 @@ class Settings(BaseSettings):
     # marca (las segundas redacciones que quedaban eran casi todas por esas dos frases). APAGADO.
     # arq-8a (23-oct, G10 nº 6, g10-043): en un grupo mixto, la lista de descuentos lleva la regla del grupo mixto (todo en
     # USD) en vez de «los colombianos pagan en COP». APAGADO hasta medirlo.
-    grupo_mixto_en_descuentos: bool = False
+    grupo_mixto_en_descuentos: bool = True  # PROMOCIONADO 23-oct (arq-8, decisión de Gadea: bancos propios ×3 con controles iguales y 0 invenciones; HISTORY 0.31.99); revert = False
     # arq-8c (23-oct, G10 nº 6, g10-003): a quien dijo que no está certificado no se le ofrece una actividad que exige la
     # certificación («Si quieres, te ayudo a reservar: *Buceo certificado*»). APAGADO hasta medirlo.
     principiante_sin_buceo_certificado: bool = False

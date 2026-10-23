@@ -1,6 +1,24 @@
 History
 =======
 
+0.31.99 - (2026-10-23)
+----------------------
+* **PROMOCIÓN arq-8** (decisión de Gadea, 23-oct). Son las causas de los fallos que se repetían en el G10 nº 6 y en su
+  mini-ronda, arregladas por causa y medidas con banco propio ×3 de frases nuestras. En todos los bancos, los controles
+  salen igual y no hay invenciones:
+  - `grupo_mixto_en_descuentos` (arq-8a): en un grupo mixto, los descuentos llevan la regla del grupo (toda la reserva
+    en USD) en vez de «los colombianos pagan en COP». 20/21 → 21/21.
+  - `hotel_de_las_islas_da_origen` (arq-8b, Gonzalo): el hotel de las islas que lee el extractor da el origen al
+    redactor, con el catálogo del detector y los hoteles de la base. 21/24 → 24/24.
+  - `incluye_lo_que_se_hace`, `recogida_se_coordina`, `precio_pendiente_con_el_origen` y `listas_una_vez`
+    (arq-8d/8e/8f, Álvaro): qué incluye con lo que se hace y lo que no incluyen las islas, cómo se coordina la recogida
+    en las islas, el precio que esperaba el origen (sin que la pregunta guardada se pise) y lo que se repite, una vez.
+    6/27 → 27/27. La latencia p90 del banco sube de 5,5 a 7,8 s, porque ahora sí se da el precio pendiente.
+  - `descuentos_un_sitio` (arq-8h, Álvaro): los descuentos salen de un solo sitio, `discounts.json`, también para el
+    catálogo y el índice del RAG, con la nota del acompañante (lo confirma el equipo). 9/15 → 15/15. Fuera
+    `discount_policies` de `pricing.json`: era la copia vieja, sin tildes y con ROVERD.
+* **No se promociona** `principiante_sin_buceo_certificado` (arq-8c): no se reproduce con frases nuestras (0/12).
+
 0.31.98 - (2026-10-23)
 ----------------------
 * **PROMOCIÓN** (decisión de Gadea, 23-oct): los 8 flags del G10 nº 6 (92,4 % 42/72 → **94,3 % 46/72** sin
