@@ -1,0 +1,33 @@
+{
+ "about": "arq-1i (23-oct, Gonzalo con Claude): INTENCIONES_CLIMA_PAGO. El clima en GENERAL lo contesta Coral con la política (weather_cancellation: poco probable, se reprograma si Capitanía cierra y si no reembolso del 100 %), sin pronósticos y sin pasar a un asesor; con un día concreto o una reserva hecha sigue el pase (controles, decisión de Gadea #1312). Cómo se paga, según la nacionalidad (foreign_card_payment, payment_confirmation, payment_fallback). Frases nuestras (no salen de G9/G10); pa1-pa5 vienen del banco de pago y descuentos del 22-oct (línea base sin hechos 30/33).",
+ "dialogos": [
+  {"id": "cl1-mal-tiempo", "tipo": "clima", "turnos": ["¿Qué pasa si el día de la salida hace mal tiempo? ¿Se cancela el buceo?"],
+   "todas": ["reprogram|reagend", "100"], "ninguno": ["te paso ahora|te paso con"]},
+  {"id": "cl2-refund-en", "tipo": "clima", "turnos": ["If the weather is bad and we can't go out, do we get our money back?"],
+   "todas": ["reschedul", "100"], "ninguno": ["passing you now|i'm passing you"]},
+  {"id": "cl3-tormenta", "tipo": "clima", "turnos": ["¿Suelen cancelar el snorkel por el clima? Me preocupa que haya tormentas en esta época."],
+   "todas": ["poco probable|aguas protegidas", "reprogram|reagend"], "ninguno": ["te paso ahora|te paso con"]},
+  {"id": "cl4-capitania", "tipo": "clima", "turnos": ["Si hay viento fuerte y Capitanía cierra el puerto, ¿pierdo lo que pagué?"],
+   "todas": ["reprogram|reagend", "100"], "ninguno": ["te paso ahora|te paso con"]},
+  {"id": "cl5-storm-en", "tipo": "clima", "turnos": ["We're coming in rainy season. What happens with the dives if there's a storm?"],
+   "todas": ["reschedul|100"], "ninguno": ["passing you now|i'm passing you"]},
+  {"id": "cc1-clima-manana", "tipo": "control", "turnos": ["¿Cómo va a estar el clima mañana para bucear?"],
+   "todas": ["equipo|asesor"], "ninguno": ["estará soleado|hará buen tiempo|va a llover"]},
+  {"id": "cc2-reserva-tormenta", "tipo": "control", "turnos": ["Tengo reserva para el sábado y anuncian tormenta, ¿se va a cancelar mi salida?"],
+   "todas": ["equipo|asesor"]},
+  {"id": "pa1-como-pago-extranjero", "tipo": "pago", "turnos": ["Soy de Alemania, ¿cómo pago el minicurso?"],
+   "todas": ["tarjeta", "pasaporte", "100"], "ninguno": ["50 %|50%|anticipo"]},
+  {"id": "pa2-anticipo-colombiano", "tipo": "pago", "turnos": ["Soy colombiano, ¿puedo pagar una parte ahora y el resto el día del buceo?"],
+   "todas": ["50", "presencial|en persona|el día", "asesor"]},
+  {"id": "pa3-transferencia", "tipo": "pago", "turnos": ["¿Puedo pagar el snorkel por transferencia bancaria?"],
+   "todas": ["online|en la web|página web", "falla|falló|no funciona"]},
+  {"id": "pa4-pago-en-muelle", "tipo": "pago", "turnos": ["We're from Canada. Can we just pay at the dock on the day of the 2 dives trip?"],
+   "todas": ["card|online|website"], "ninguno": ["50%|50 %|deposit"]},
+  {"id": "pa5-confirmacion-pago", "tipo": "pago", "turnos": ["Si pago el Open Water en la web, ¿queda confirmada la reserva al instante?"],
+   "todas": ["concilia|confirm"]},
+  {"id": "pa6-como-pago-en", "tipo": "pago", "turnos": ["How can we pay for the fun dives?"],
+   "todas": ["card"]},
+  {"id": "pc1-pago-con-error", "tipo": "control", "turnos": ["Estoy intentando pagar con mi tarjeta en la web y me sale un error."],
+   "todas": ["asesor|equipo|transferencia"]}
+ ]
+}

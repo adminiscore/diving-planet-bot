@@ -16,6 +16,7 @@ def test_apagado_jev_pregunta_lo_de_antes(monkeypatch):
     monkeypatch.setattr(settings, "hechos_por_codigo", True)
     monkeypatch.setattr(settings, "tiempo_limitado", False)
     monkeypatch.setattr(settings, "descuentos_en_la_tabla", False)  # arq-4b también cambia «otra cosa»
+    monkeypatch.setattr(settings, "intenciones_clima_pago", False)  # arq-1i también
     q = j._questions_for_turn()
     assert j.PIDE_SI_ALCANZA not in q and q[j.PIDE_OTRA_COSA] is j._INTENCIONES_Q[j.PIDE_OTRA_COSA]
 
@@ -23,6 +24,7 @@ def test_apagado_jev_pregunta_lo_de_antes(monkeypatch):
 def test_encendido_jev_pregunta_y_otra_cosa_no_lo_cuenta(monkeypatch):
     monkeypatch.setattr(settings, "hechos_por_codigo", True)
     monkeypatch.setattr(settings, "tiempo_limitado", True)
+    monkeypatch.setattr(settings, "intenciones_clima_pago", False)  # arq-1i añade su frase detrás
     q = j._questions_for_turn()
     assert q[j.PIDE_SI_ALCANZA] is j._PIDE_SI_ALCANZA_Q
     assert q[j.PIDE_OTRA_COSA]["instructions"].endswith(j._OTRA_COSA_SIN_EL_TIEMPO)

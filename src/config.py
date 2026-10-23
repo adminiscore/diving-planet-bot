@@ -674,6 +674,13 @@ class Settings(BaseSettings):
     # dan la decisión de Gadea (desde las islas va muy justo y lo confirma un asesor; desde Cartagena no alcanza; cierre
     # de las 4:30 del día anterior) y la espera antes de volar, solo si vuela. APAGADO hasta medirlo.
     tiempo_limitado: bool = False
+    # ARQ-1i (23-oct, Gonzalo con Claude, decisión de Gadea #1312 y #1477; G10 nº 5: g10-034 el clima, g10-067/045/006 el
+    # pago): dos intenciones más de la tabla, que no dependen de la actividad. El clima en GENERAL (política
+    # weather_cancellation: si Capitanía cierra se reprograma o se reembolsa el 100 %; sin pronósticos, ofrece un asesor)
+    # ya no va a la ruta sensible; con un día concreto o una reserva hecha, sigue el pase. Y cómo se paga (según la
+    # nacionalidad: el extranjero 100 % con tarjeta en la web; el colombiano, 100 % o 50 % y 50 %, con un asesor), la
+    # confirmación y la transferencia solo si falla el online. APAGADO hasta medirlo.
+    intenciones_clima_pago: bool = False
     varias_actividades: bool = False  # ARQ-1j (22-oct): el extractor da TODAS las actividades del mensaje (y el acompañante) y los hechos salen de cada una
     adaptado_contesta_lo_demas: bool = True  # PROMOCIONADO 22-oct (arq-1l: banco DIVE TO HEAL 3/12 -> 11/12; HISTORY 0.31.93); revert = False
     enlace_con_disponibilidad: bool = True  # PROMOCIONADO 22-oct (arq-1m: banco de enlace 3/12 -> 12/12; HISTORY 0.31.93); revert = False

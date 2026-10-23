@@ -15,6 +15,7 @@ import re
 
 from src.agents import conversation_summarizer
 from src.agents.escalation import (
+    clima_general_al_redactor,
     detect_routing_signals,  # noqa: F401 — el nodo router del grafo lo importa de aquí (y los tests lo parchean aquí)
     detect_sensitive_escalation,
     sensitive_response_for,
@@ -365,6 +366,8 @@ async def _shared_turn_handler(
         None if routing_signals.get("adaptive_diving_topic") or not regex_decide(routing_signals)
         else detect_sensitive_escalation(message, sensitive_lang)
     )
+    if sensitive_escalation_early and clima_general_al_redactor(sensitive_escalation_early[0], routing_signals):
+        sensitive_escalation_early = None  # arq-1i: el clima en general lo contesta el redactor de hechos
     if sensitive_escalation_early:
         reason, response = sensitive_escalation_early
         state.step = Step.ESCALATE
@@ -376,7 +379,7 @@ async def _shared_turn_handler(
 
     if routing_signals.get("sensitive_topic"):
         found = sensitive_response_for(routing_signals["sensitive_topic"], sensitive_lang)
-        if found:
+        if found and not clima_general_al_redactor(found[0], routing_signals):
             reason, response = found
             state.step = Step.ESCALATE
             state.quick_replies = []

@@ -32,12 +32,14 @@ from src.agents.escalation_agent import escalation_node
 from src.agents.info_agent import info_node
 from src.agents.jev_router import (
     NUEVO_CASO,
+    PIDE_CLIMA,
     PIDE_DESCUENTO,
     PIDE_DISPONIBILIDAD,
     PIDE_EDAD,
     PIDE_ENLACE,
     PIDE_HORARIO,
     PIDE_OTRA_COSA,
+    PIDE_PAGO,
     PIDE_PRECIO,
     PIDE_QUE_INCLUYE,
     PIDE_REQUISITOS,
@@ -63,6 +65,7 @@ _INTENCION_DE_SENAL = {
     "disponibilidad": PIDE_DISPONIBILIDAD, "edad": PIDE_EDAD, "enlace": PIDE_ENLACE,
     "descuento": PIDE_DESCUENTO,  # arq-4b: solo llega con el flag `descuentos_en_la_tabla`
     "tiempo": PIDE_SI_ALCANZA,  # arq-1v (`tiempo_limitado`): Jev solo la pregunta con el flag
+    "clima": PIDE_CLIMA, "pago": PIDE_PAGO,  # arq-1i (`intenciones_clima_pago`): ídem
 }
 
 

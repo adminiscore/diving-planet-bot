@@ -139,6 +139,10 @@ def _mensajes(lang: str, history: list[dict], message: str, texto_hechos: str) -
         from src.prompts.info import REDACTOR_SIN_PREGUNTAS_EN, REDACTOR_SIN_PREGUNTAS_ES  # lazy
 
         system += REDACTOR_SIN_PREGUNTAS_ES if lang == "es" else REDACTOR_SIN_PREGUNTAS_EN
+    if settings.intenciones_clima_pago:  # arq-1i
+        from src.prompts.info import REDACTOR_CLIMA_PAGO_EN, REDACTOR_CLIMA_PAGO_ES  # lazy
+
+        system += REDACTOR_CLIMA_PAGO_ES if lang == "es" else REDACTOR_CLIMA_PAGO_EN
     previos = list(history or [])
     if previos and previos[-1].get("role") == "user" and previos[-1].get("content") == message:
         previos = previos[:-1]  # el mensaje va abajo, con los hechos
