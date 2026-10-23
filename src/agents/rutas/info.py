@@ -96,7 +96,7 @@ def _alcohol_and_food_policy_answer(msg_lower: str, lang: str) -> str | None:
 # el handoff interno de Chatwoot. Mismo patron que `_alcohol_and_food_
 # policy_answer`: respuesta determinista, sin pasar por RAG/retrieval, pero
 # aqui ademas REDACTADA (no el texto crudo de policies.json) para no filtrar
-# el numero, con la misma frase que ya usa `_contact_number_deflection`.
+# el numero, con la misma idea que `_contacto_pasa_a_persona` (no se dan números).
 _PRIVATE_GROUP_EVENT_RE = re.compile(
     r"evento\s+corporativo|grupo\s+cerrado|servicio\s+privado|"
     r"team[\s-]?building|"

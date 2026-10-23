@@ -10,11 +10,10 @@ respuesta equivocada, o escalar/no escalar mal).
 from src.agents.supervisor import (
     _ADAPTIVE_DIVING_PATTERN,
     _ai_identity_deflection,
-    _AI_IDENTITY_RE,
     _alcohol_and_food_policy_answer,
     _asks_about_ai_identity,
     _asks_for_contact_number,
-    _contact_number_deflection,
+    _contacto_pasa_a_persona,
     _detect_cancellation_request,
     _detect_modify_booking_request,
     _detect_reschedule_request,
@@ -84,7 +83,10 @@ class TestContactNumberRequest:
         determinista de que el texto de deflexión no contiene el patrón de
         un número de teléfono/WhatsApp."""
         import re
-        text = _contact_number_deflection("es")
+
+        from src.flows.state import ConversationState
+
+        text = _contacto_pasa_a_persona(ConversationState(conversation_id="t"), "es")
         assert not re.search(r"\+?\d[\d\s-]{6,}\d", text)
 
 

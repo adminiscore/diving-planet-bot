@@ -28,9 +28,6 @@ async def test_node_contact_number(monkeypatch):
     """CAL-E1 (decisión de Gadea, 16-oct): el chatbot no da números y quien pide un contacto PASA con un asesor.
     PRE sirve el grafo, así que el pase tiene que estar en este nodo: el test de equivalencia grafo/cascada (retirado
     con el flag `agent_arch` en s4-1) fue justo lo que cazó que solo estaba en la cascada."""
-    from src.config import settings as _flags
-
-    monkeypatch.setattr(_flags, "contacto_pasa_a_persona", True)
     conv = make_state()
     result = await deflection_node({"conv_state": conv, "message": "dame tu whatsapp", "signals": {}})
     assert "320" not in result["reply"] and "+57" not in result["reply"], "ningún número"
@@ -38,20 +35,6 @@ async def test_node_contact_number(monkeypatch):
     assert conv.step == Step.ESCALATE
     assert conv.pending_escalation_reason
     assert conv.history[-1]["role"] == "assistant"
-
-
-@pytest.mark.asyncio
-async def test_node_contact_number_camino_antiguo(monkeypatch):
-    """Con `contacto_pasa_a_persona` apagado (el revert si la ronda no sostiene el cambio), el WhatsApp oficial de
-    s4-14 y sin pase. (Hasta s4-25 fijaba también `s4_fixes` apagado, con el texto de antes de s4-14.)"""
-    from src.config import settings as _flags
-
-    monkeypatch.setattr(_flags, "contacto_pasa_a_persona", False)
-    conv = make_state()
-    result = await deflection_node({"conv_state": conv, "message": "dame tu whatsapp", "signals": {}})
-    assert "WhatsApp oficial" in result["reply"]
-    assert conv.step == Step.FREE_TEXT
-    assert conv.quick_replies == []
 
 
 @pytest.mark.asyncio

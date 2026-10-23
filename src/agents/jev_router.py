@@ -846,18 +846,15 @@ def _questions_for_turn(pending_slot: str | None = None) -> dict:
     q[CORRECTS] = _CORRECTS_Q
     q[ASKS_RECALL] = _ASKS_RECALL_Q
     instrucciones = _NEEDS_STAFF_Q["instructions"]
-    if settings.pase_si_pide_fuera_del_sistema:
-        instrucciones = f"{instrucciones} {_FUERA_DEL_SISTEMA}"
+    instrucciones = f"{instrucciones} {_FUERA_DEL_SISTEMA}"
     if settings.ya_reservo_no_es_pase:
         instrucciones = f"{instrucciones} {_YA_RESERVO_NO_BASTA}"
-    q[NEEDS_STAFF] = (_NEEDS_STAFF_Q if instrucciones == _NEEDS_STAFF_Q["instructions"]
-                      else {**_NEEDS_STAFF_Q, "instructions": instrucciones})
+    q[NEEDS_STAFF] = {**_NEEDS_STAFF_Q, "instructions": instrucciones}
     q[CHANGES_DATE] = _CHANGES_DATE_Q
     q[COMPANION_JOINS] = _COMPANION_JOINS_Q
     q[ADDS_PERSON] = _ADDS_PERSON_Q
     q[YA_RESERVADO] = _YA_RESERVADO_Q_SIN_HOTEL if settings.reserva_de_hotel_no_es_nuestra else _YA_RESERVADO_Q
-    if settings.datos_ajenos_se_niegan:
-        q[PIDE_DATOS_AJENOS] = _PIDE_DATOS_AJENOS_Q
+    q[PIDE_DATOS_AJENOS] = _PIDE_DATOS_AJENOS_Q
     if settings.privado_pasa_directo:
         q[PIDE_SERVICIO_PRIVADO] = _PIDE_SERVICIO_PRIVADO_Q
     q[CUSTOMER_PLACE] = _con_hoteles_de_la_base(
@@ -1037,7 +1034,7 @@ _CONTEXTO_CARACTERES = 400
 def _estado_para_jev(message: str, history: list[dict] | None = None) -> str:
     """Lo que Jev lee: el contexto fijo, los últimos turnos (solo con el flag) y el mensaje de este turno."""
     sin_contexto = f"{_CONTEXT}\n\nCustomer message: {message}"
-    if not (settings.jev_con_contexto and history):
+    if not history:
         return sin_contexto
     ultimos = [h for h in history if (h or {}).get("content")][-_CONTEXTO_TURNOS:]
     if not ultimos:

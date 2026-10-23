@@ -445,16 +445,8 @@ async def _shared_turn_handler(
     if (regex_decide(routing_signals) and _asks_for_contact_number(msg_lower)) or routing_signals.get(
             "asks_for_contact_number"):
         effective_lang = state.language if state.detected_language else _infer_language(message, state.language)
-        if settings.contacto_pasa_a_persona:
-            # Decisión de Gadea (16-oct): el chatbot no da números; quien quiere un contacto directo pasa con un asesor.
-            response = _contacto_pasa_a_persona(state, effective_lang)
-            state.history.append({"role": "user", "content": message})
-            state.history.append({"role": "assistant", "content": response})
-            return response
-        response = _contact_number_deflection(effective_lang)
-        state.step = Step.FREE_TEXT
-        state.quick_replies = []
-        logger.info("[SUPERVISOR] Contact-number request -> deflection (limit + redirect, no escalation)")
+        # Decisión de Gadea (16-oct): el chatbot no da números; quien quiere un contacto directo pasa con un asesor.
+        response = _contacto_pasa_a_persona(state, effective_lang)
         state.history.append({"role": "user", "content": message})
         state.history.append({"role": "assistant", "content": response})
         return response
@@ -647,9 +639,7 @@ from src.agents.rutas.deflection import (  # noqa: E402, F401
     _ai_identity_deflection,
     _asks_about_ai_identity,
     _asks_for_contact_number,
-    _contact_number_deflection,
     _contacto_pasa_a_persona,
-    _official_whatsapp,
     pregunta_si_es_ia,
 )
 from src.agents.rutas.info import (  # noqa: E402, F401

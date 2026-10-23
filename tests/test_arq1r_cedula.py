@@ -16,7 +16,6 @@ def test_la_frase_que_se_cambia_esta_en_la_regla(antes, despues):
 
 
 def _sistema(monkeypatch, flag: bool, lang: str) -> str:
-    monkeypatch.setattr(settings, "sin_cedula_extranjero", True)
     monkeypatch.setattr(settings, "cedula_de_extranjeria_manda", flag)
     visto = {}
 

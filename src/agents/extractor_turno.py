@@ -694,14 +694,12 @@ async def extraer_turno(mensaje: str, *, history: list[dict] | None = None, sabi
     sistema = sistema.replace(RESIDENTE_HOY_ES, RESIDENTE_ES).replace(RESIDENTE_HOY_EN, RESIDENTE_EN)
     sistema = sistema.replace(ELIGE_HOY_ES, ELIGE_ES).replace(ELIGE_HOY_EN, ELIGE_EN)
     sistema += REGLA_NOMBRE_ES if lang == "es" else REGLA_NOMBRE_EN
-    con_hotel = settings.hotel_por_extractor
-    if settings.sin_cedula_extranjero:
-        # CAL-C (17-oct, decisión de Álvaro): sin cédula colombiana → no es colombiano (paga en USD). Ver SIN_CEDULA_*.
-        sistema = sistema.replace(SIN_CEDULA_HOY_ES, SIN_CEDULA_ES).replace(SIN_CEDULA_HOY_EN, SIN_CEDULA_EN)
-        if settings.cedula_de_extranjeria_manda:
-            # arq-1r: el extranjero CON cédula de extranjería es residente (ver `_CEDULA_DE_EXTRANJERIA_MANDA`).
-            for antes, despues in _CEDULA_DE_EXTRANJERIA_MANDA:
-                sistema = sistema.replace(antes, despues)
+    # CAL-C (17-oct, decisión de Álvaro): sin cédula colombiana → no es colombiano (paga en USD). Ver SIN_CEDULA_*.
+    sistema = sistema.replace(SIN_CEDULA_HOY_ES, SIN_CEDULA_ES).replace(SIN_CEDULA_HOY_EN, SIN_CEDULA_EN)
+    if settings.cedula_de_extranjeria_manda:
+        # arq-1r: el extranjero CON cédula de extranjería es residente (ver `_CEDULA_DE_EXTRANJERIA_MANDA`).
+        for antes, despues in _CEDULA_DE_EXTRANJERIA_MANDA:
+            sistema = sistema.replace(antes, despues)
     if settings.vivir_no_es_residir:
         # gen-4: vivir en Colombia no es ser residente (ver `_VIVIR_NO_ES_RESIDIR`).
         for antes, despues in _VIVIR_NO_ES_RESIDIR:
@@ -718,8 +716,7 @@ async def extraer_turno(mensaje: str, *, history: list[dict] | None = None, sabi
         # gen-6: alojarse en Barú o Playa Blanca es salir desde Cartagena (ver `_BARU_SALE_DE_CARTAGENA`).
         for antes, despues in _BARU_SALE_DE_CARTAGENA:
             sistema = sistema.replace(antes, despues)
-    if con_hotel:
-        sistema += REGLA_HOTEL_ES if lang == "es" else REGLA_HOTEL_EN
+    sistema += REGLA_HOTEL_ES if lang == "es" else REGLA_HOTEL_EN
     # Solo cuando el refresher importa (ya se sabe que lleva más de 2 años sin bucear): con el campo en todas las
     # llamadas, el banco ex0 bajaba de 99,5 a 96,5 % estable y volvía "paquete de 5 inmersiones" → certificado.
     con_refresher = settings.refresher_por_extractor and (sabido or {}).get("last_dive_over_2_years") is True
@@ -764,7 +761,7 @@ async def extraer_turno(mensaje: str, *, history: list[dict] | None = None, sabi
     datos_paso6: dict = {}
     try:
         client = client or trace_openai(AsyncOpenAI(api_key=settings.openai_api_key))
-        esquema = _esquema(con_hotel, con_refresher, settings.precio_no_elige, None if aparte else paso6)
+        esquema = _esquema(True, con_refresher, settings.precio_no_elige, None if aparte else paso6)
         if aparte:
             esquema_paso6 = {"type": "object", "properties": {c: e for c, (e, _es, _en) in paso6.items()},
                              "required": list(paso6), "additionalProperties": False}
@@ -795,7 +792,7 @@ async def extraer_turno(mensaje: str, *, history: list[dict] | None = None, sabi
         return None
     extraer_turno.ultimo_segundos = time.perf_counter() - t0
     salida, descartes = {}, {}
-    for campo in (*CAMPOS, *EXTRAS, "nombre", *(("hotel",) if con_hotel else ()),
+    for campo in (*CAMPOS, *EXTRAS, "nombre", "hotel",
                   *(("refresher_interested",) if con_refresher else ()), *paso6):
         d = datos.get(campo)
         if not isinstance(d, dict) or d.get("valor") in (None, "", [], {}):
@@ -816,7 +813,7 @@ async def extraer_turno(mensaje: str, *, history: list[dict] | None = None, sabi
                 descartes[campo] = f"ninguna edad está en la cita: {d['valor']!r} / {cita!r}"
                 continue
         if not cita_verificable(cita, mensaje):
-            if (campo == "activity" and settings.extractor_cita_del_cliente and history
+            if (campo == "activity" and history
                     and cita_verificable(cita, ultima_pregunta_del_bot(history) or "")):
                 # CAL-C2: aceptar lo que propone el bot ("nos gusta" tras "te propongo la salida de 2 inmersiones") se
                 # citaba con el texto del BOT 2 de 3 veces y se descartaba. Solo la actividad, y solo si la cita está

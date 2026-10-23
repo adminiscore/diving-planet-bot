@@ -10,7 +10,6 @@ import re
 
 from src.agents.lead_summary import build_lead_summary
 from src.agents.supervisor import _infer_language
-from src.config import settings
 from src.flows.state import ConversationState, Step
 from src.flows.textos import de_cartagena
 
@@ -162,7 +161,7 @@ def _needs_staff_handoff(state: ConversationState, message: str, routing_signals
     r6-2 (flag `datos_ajenos_se_niegan`, decisión de Gadea): si el cliente pide datos de OTROS clientes, la respuesta
     es una negativa de privacidad y NO hay pase (va aquí para que valga en el grafo y en la cascada, que llaman a esta
     misma función en el mismo punto)."""
-    if settings.datos_ajenos_se_niegan and routing_signals.get("pide_datos_ajenos") is True:
+    if routing_signals.get("pide_datos_ajenos") is True:
         logger.info("[SUPERVISOR] pide datos de otros clientes (Jev) -> negativa de privacidad, sin pase")
         state.quick_replies = []
         if _reply_language(state, message) == "es":

@@ -108,7 +108,6 @@ def test_la_dieta_no_es_medica_en_la_definicion():
 async def test_el_rag_no_cree_que_el_pase_ya_esta_hecho(monkeypatch, rag):
     """Con el paso ya en ESCALATE, `tras_pase_recuerda_el_pase` le decía al RAG que el asesor ya tenía el caso."""
     monkeypatch.setattr(settings, "contesta_antes_de_pasar", True)
-    monkeypatch.setattr(settings, "tras_pase_recuerda_el_pase", True)
     llamadas = rag(EDADES)
     await ea.escalation_node({"conv_state": _estado(), "message": ASMA_Y_EDADES, "signals": dict(MEDICO)})
     assert "YA está pasada" not in llamadas[0]

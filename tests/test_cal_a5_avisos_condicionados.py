@@ -249,8 +249,14 @@ def rag(monkeypatch):
     monkeypatch.setattr(settings, "rag_plan_primero", False)
     monkeypatch.setattr(settings, "rag_revisor_completitud", False)
     monkeypatch.setattr(settings, "rag_revisor_avisos", False)
-    # A6 (`avisos_al_final`, promocionado el 17-oct) añade su propia llamada: aquí se mide A5 solo.
-    monkeypatch.setattr(settings, "avisos_al_final", False)
+    # A6 (`avisos_al_final`, promocionado el 17-oct; sin interruptor desde sim-5) añade su propia llamada: aquí se
+    # mide A5 solo.
+    from src.agents import rag_plan
+
+    async def sin_aviso_al_final(*_a, **_k):
+        return None
+
+    monkeypatch.setattr(rag_plan, "aviso_al_final", sin_aviso_al_final)
     monkeypatch.setattr(settings, "rag_respaldo_modelo", "")
     return rag_agent, llamadas
 

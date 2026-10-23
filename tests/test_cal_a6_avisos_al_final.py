@@ -1,4 +1,4 @@
-"""CAL-A6 (17-oct, flag `avisos_al_final`): el aviso que falta, como UNA frase añadida tras la respuesta.
+"""CAL-A6 (17-oct; promocionado, su flag `avisos_al_final` se borró en sim-5): el aviso que falta, como UNA frase añadida tras la respuesta.
 
 Lo que §10 de docs/robustness/cal/cal-a5-avisos-condicionados.md dejó por probar. A5 metía el aviso en la redacción y
 desplazaba lo que la respuesta tenía que decir (el golden empeoró dos rondas); y lo elegía el código con campos del
@@ -227,7 +227,6 @@ def rag(monkeypatch):
 @pytest.mark.asyncio
 async def test_con_el_flag_la_frase_se_anade_y_el_aviso_queda_dado(rag, monkeypatch):
     rag_agent, revisiones, _ = rag
-    monkeypatch.setattr(settings, "avisos_al_final", True)
     hechos = {"actividades": set(), "dados": []}
     respuesta = await rag_agent.rag_answer("¿qué necesito para el formulario?", lang="es", avisos_hechos=hechos)
     assert respuesta == ("El curso referido son 2 días en las islas.\n\n"
@@ -237,18 +236,8 @@ async def test_con_el_flag_la_frase_se_anade_y_el_aviso_queda_dado(rag, monkeypa
 
 
 @pytest.mark.asyncio
-async def test_sin_el_flag_no_hay_revisor(rag, monkeypatch):
-    rag_agent, revisiones, _ = rag
-    monkeypatch.setattr(settings, "avisos_al_final", False)
-    respuesta = await rag_agent.rag_answer("¿qué necesito para el formulario?", lang="es")
-    assert respuesta == "El curso referido son 2 días en las islas."
-    assert revisiones == []
-
-
-@pytest.mark.asyncio
 async def test_una_frase_con_un_telefono_no_se_anade(rag, monkeypatch):
     rag_agent, _, frase = rag
-    monkeypatch.setattr(settings, "avisos_al_final", True)
     frase["texto"] = "Para la carta, llama al +57 300 123 4567."
     hechos = {"actividades": set(), "dados": []}
     respuesta = await rag_agent.rag_answer("¿qué necesito para el formulario?", lang="es", avisos_hechos=hechos)

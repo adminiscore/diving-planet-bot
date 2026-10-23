@@ -7,16 +7,12 @@ from src.config import settings
 
 def test_apagado_la_pregunta_es_la_de_antes(monkeypatch):
     monkeypatch.setattr(settings, "ya_reservo_no_es_pase", False)
-    monkeypatch.setattr(settings, "pase_si_pide_fuera_del_sistema", True)
     instrucciones = j._questions_for_turn()[j.NEEDS_STAFF]["instructions"]
     assert instrucciones == f"{j._NEEDS_STAFF_Q['instructions']} {j._FUERA_DEL_SISTEMA}"
-    monkeypatch.setattr(settings, "pase_si_pide_fuera_del_sistema", False)
-    assert j._questions_for_turn()[j.NEEDS_STAFF] is j._NEEDS_STAFF_Q
 
 
 def test_encendido_lleva_la_frase_al_final(monkeypatch):
     monkeypatch.setattr(settings, "ya_reservo_no_es_pase", True)
-    monkeypatch.setattr(settings, "pase_si_pide_fuera_del_sistema", True)
     instrucciones = j._questions_for_turn()[j.NEEDS_STAFF]["instructions"]
     assert instrucciones.endswith(j._YA_RESERVO_NO_BASTA)
     assert j._FUERA_DEL_SISTEMA in instrucciones

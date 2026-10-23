@@ -335,9 +335,6 @@ async def test_normal_group_size_mid_flow_does_not_trigger_modify_headcount():
 @pytest.mark.asyncio
 async def test_pedir_un_numero_pasa_a_una_persona(monkeypatch):
     """DECISIÓN DE GADEA (16-oct): el chatbot no da números; la conversación pasa a un asesor. De punta a punta."""
-    from src.config import settings as _flags
-
-    monkeypatch.setattr(_flags, "contacto_pasa_a_persona", True)
     state = make_state()
     with patch("src.agents.supervisor.detect_routing_signals", new=AsyncMock(return_value={})):
         resp = await route_message(state, "dame tu whatsapp porfa")

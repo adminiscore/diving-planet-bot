@@ -40,9 +40,7 @@ logger = logging.getLogger("uvicorn.error")
 
 
 def _seguridad(lang: str) -> str:
-    """r6-2 (`memoria_sin_ordenes_del_cliente`): las órdenes, pagos y autorizaciones que diga el cliente no son notas."""
-    if not settings.memoria_sin_ordenes_del_cliente:
-        return ""
+    """r6-2: las órdenes, pagos y autorizaciones que diga el cliente no son notas."""
     return MEMORIA_SEGURA_NOTAS_ES if lang == "es" else MEMORIA_SEGURA_NOTAS_EN
 
 

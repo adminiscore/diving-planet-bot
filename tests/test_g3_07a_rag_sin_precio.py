@@ -5,7 +5,6 @@ antes de que el flujo aplique la extracción del turno. Cuando el turno lleva la
 `rag_answer(sin_precio=True)` (flag `rag_sin_precio_con_tarjeta`) y el texto no da precio ni enlace."""
 import pytest
 
-from src.config import settings
 from src.prompts.info import RAG_SIN_PRECIO_EN, RAG_SIN_PRECIO_ES
 
 
@@ -42,6 +41,13 @@ async def _sistema(monkeypatch, sin_precio: bool, lang: str = "es") -> str:
 
     monkeypatch.setattr(rag_agent, "search_knowledge_base", _sin_docs)
     monkeypatch.setattr(rag_agent, "_verify_grounding", _juez)
+
+    async def _sin_aviso_al_final(*_a, **_k):  # CAL-A6, siempre encendido desde sim-5: aquí no cuenta
+        return None
+
+    from src.agents import rag_plan
+
+    monkeypatch.setattr(rag_plan, "aviso_al_final", _sin_aviso_al_final)
     await rag_agent.rag_answer("¿cuánto vale el snorkel?" if lang == "es" else "how much is snorkeling?", lang=lang,
                                extra_context="Idioma: es.", sin_precio=sin_precio)
     return client.chat.completions.calls[0]["messages"][0]["content"]
@@ -49,13 +55,11 @@ async def _sistema(monkeypatch, sin_precio: bool, lang: str = "es") -> str:
 
 @pytest.mark.asyncio
 async def test_sin_precio_pide_al_rag_que_no_de_precios(monkeypatch):
-    monkeypatch.setattr(settings, "avisos_al_final", False)
     assert RAG_SIN_PRECIO_ES in await _sistema(monkeypatch, sin_precio=True)
     assert RAG_SIN_PRECIO_EN in await _sistema(monkeypatch, sin_precio=True, lang="en")
 
 
 @pytest.mark.asyncio
 async def test_por_defecto_el_rag_sigue_igual(monkeypatch):
-    monkeypatch.setattr(settings, "avisos_al_final", False)
     sistema = await _sistema(monkeypatch, sin_precio=False)
     assert RAG_SIN_PRECIO_ES not in sistema and RAG_SIN_PRECIO_EN not in sistema

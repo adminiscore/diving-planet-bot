@@ -230,9 +230,7 @@ def _mensaje_con_contexto(message: str, history: list[dict] | None) -> str:
     """CAL-E5: lo que lee el enrutador LLM de respaldo. Con el flag, los dos últimos mensajes como referencia (para
     que un mensaje referido no pierda a qué se refiere) y después el mensaje de este turno; sin el flag, el mensaje
     tal cual, como siempre."""
-    from src.config import settings as _settings
-
-    if not (_settings.jev_con_contexto and history):
+    if not history:
         return message
     ultimos = [h for h in history if (h or {}).get("content")][-2:]
     if not ultimos:

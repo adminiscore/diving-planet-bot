@@ -1037,18 +1037,14 @@ async def rag_answer(
                 _apuntar_avisos()
                 return answer
             else:
-                aviso_final = None
-                if settings.avisos_al_final:
-                    # CAL-A6: el revisor de avisos va A LA VEZ que el juez de siempre (no suma latencia si tarda menos
-                    # que él); lo que diga solo cuenta si la respuesta pasa.
-                    from src.agents import rag_plan  # lazy
+                # CAL-A6: el revisor de avisos va A LA VEZ que el juez de siempre (no suma latencia si tarda menos
+                # que él); lo que diga solo cuenta si la respuesta pasa.
+                from src.agents import rag_plan  # lazy
 
-                    (grounded, reason), aviso_final = await asyncio.gather(
-                        _verify_grounding(answer, grounding_context, lang=lang),
-                        rag_plan.aviso_al_final(history, redact_pii(query), answer, lang,
-                                                dados=(avisos_hechos or {}).get("dados")))
-                else:
-                    grounded, reason = await _verify_grounding(answer, grounding_context, lang=lang)
+                (grounded, reason), aviso_final = await asyncio.gather(
+                    _verify_grounding(answer, grounding_context, lang=lang),
+                    rag_plan.aviso_al_final(history, redact_pii(query), answer, lang,
+                                            dados=(avisos_hechos or {}).get("dados")))
                 if grounded and attempt == 0 and (
                         (settings.rag_revisor_completitud and puntos) or settings.rag_revisor_avisos
                         or avisos_elegidos or hechos_bloques):

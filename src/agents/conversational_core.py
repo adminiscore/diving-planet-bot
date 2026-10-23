@@ -343,7 +343,7 @@ def ask_slot(state: ConversationState, slot: str, *, reasking: bool = False) -> 
 
     if slot == SLOT_ACTIVITY and (oferta := _ofrecer_la_actividad_preguntada(state)):
         return oferta
-    if (slot == SLOT_ACTIVITY and settings.actividad_por_lo_sabido and state.quiere_bucear
+    if (slot == SLOT_ACTIVITY and state.quiere_bucear
             and not state.suggested_activity and not state.detected_group_allocation):
         # CAL-C1 (16-oct; regla de Gadea 14/27-sep: recomendar según lo que se sabe). Quien ya dijo que quiere bucear
         # recibía el menú entero ("5 inmersiones", "Muchas gracias!", "no estamos certificados" → "¿Con cuál te
@@ -354,7 +354,7 @@ def ask_slot(state: ConversationState, slot: str, *, reasking: bool = False) -> 
             state.suggested_activity = "minicourse"
         elif certificado is None:
             return ask_slot(state, SLOT_CERTIFICATION, reasking=reasking)
-    if (slot == SLOT_ACTIVITY and settings.actividad_por_lo_sabido and state.suggested_activity == "minicourse"
+    if (slot == SLOT_ACTIVITY and state.suggested_activity == "minicourse"
             and reasking and not _minicurso_ya_recomendado(state)):
         # La recomendación entera la primera vez que se hace (la corta "¿minicurso u Open Water?" no recomendaba:
         # cal-60, también cuando la recomendación se había apuntado en un turno anterior sin llegar a decirse).
@@ -393,7 +393,7 @@ def ask_slot(state: ConversationState, slot: str, *, reasking: bool = False) -> 
             [{"title": "✅ Yes, the mini-course", "value": "mini course"},
              {"title": "🎓 The Open Water course", "value": "open water course"}]
         )
-        if reasking and settings.actividad_por_lo_sabido:
+        if reasking:
             # CAL-C1: la corta también recomienda (cal-60: "¿minicurso u Open Water?" no se leía como recomendación).
             return (
                 "Para empezar, lo ideal es el *minicurso*: no hace falta experiencia ni certificación. ¿Te animas? "
@@ -401,13 +401,6 @@ def ask_slot(state: ConversationState, slot: str, *, reasking: bool = False) -> 
                 if lang == "es" else
                 "To start, the *mini-course* is the ideal choice: no experience or certification needed. Shall we go "
                 "for it? (If you'd rather get certified, there's the *Open Water course*.) 🤿"
-            )
-        if reasking:
-            return (
-                "¿Te animas con el *minicurso* (ideal para la primera vez) o prefieres el *curso Open Water*? 🌊"
-                if lang == "es" else
-                "Shall we go for the *mini-course* (ideal for a first time) or would you rather do the "
-                "*Open Water course*? 🌊"
             )
         return (
             "Para una primera vez te recomiendo el *minicurso*: teoría, práctica en aguas tranquilas y una "
@@ -1760,7 +1753,7 @@ def _entradas_rag(state: ConversationState, history: list, message: str = "") ->
     plan = _plan_nombrado(state, message)
     if plan:
         extra = f"{extra}\n\n{plan}" if extra else plan
-    if settings.tras_pase_recuerda_el_pase and state.step == Step.ESCALATE:
+    if state.step == Step.ESCALATE:
         pase = _PASE_HECHO_ES if state.language == "es" else _PASE_HECHO_EN
         extra = f"{extra}\n\n{pase}" if extra else pase
     entradas = {"lang": state.language, "history": history, "extra_context": extra}
@@ -1769,13 +1762,12 @@ def _entradas_rag(state: ConversationState, history: list, message: str = "") ->
         entradas["origin"] = state.location
     # CAL-A5 (`avisos_condicionados`): los hechos del estado con los que el código elige los avisos que la respuesta
     # tiene que dar. "dados" es la lista DEL ESTADO (el mismo objeto), así que lo que se avisa se apunta solo.
-    # CAL-D (`consulta_con_lo_sabido`) usa los mismos hechos para que la consulta de búsqueda nombre el asunto.
-    if settings.avisos_condicionados or settings.consulta_con_lo_sabido:
-        from src.flows import avisos as avisos_mod  # lazy
+    # CAL-D usa los mismos hechos para que la consulta de búsqueda nombre el asunto.
+    from src.flows import avisos as avisos_mod  # lazy
 
-        hechos = avisos_mod.hechos_del_estado(state)
-        hechos["dados"] = state.avisos_dados
-        entradas["avisos_hechos"] = hechos
+    hechos = avisos_mod.hechos_del_estado(state)
+    hechos["dados"] = state.avisos_dados
+    entradas["avisos_hechos"] = hechos
     return entradas
 
 
@@ -1985,7 +1977,7 @@ def _maybe_launch_answer(state: ConversationState, message: str, routing_signals
     if _has_pending_answer(state):
         return
     if not _turn_has_question(message, routing_signals):
-        if not (settings.lugar_desconocido_al_rag and _lugar_desconocido(routing_signals)):
+        if not _lugar_desconocido(routing_signals):
             return
         # CAL-C4 (17-oct): "En baru y Rosario" contestaba "Entiendo que te encuentras en Barú y Rosario" y nadie le
         # decía que en Barú no operamos (cal-55): el turno era una respuesta a la reserva y no llegaba a la base. Un
@@ -2064,7 +2056,7 @@ def _answer_replaces_the_booking_question(
     """
     if _is_rag_fallback(answer):
         return True
-    if settings.una_sola_pregunta and not finalized and _answer_already_asks(answer):
+    if not finalized and _answer_already_asks(answer):
         # CAL-C3b (17-oct): la regla vale para cualquier dato pendiente, como en el camino antiguo
         # (`_answer_question`). "¿En qué hotel de las islas se alojan? ¿En qué hotel o isla te hospedas?"
         # (cal-71/73): dos preguntas seguidas; la de la reserva queda pendiente para el turno siguiente.
@@ -2182,7 +2174,7 @@ def _origen_antes_del_precio(state: ConversationState, message: str, answer: str
         return None
     del_cliente = [h.get("content") or "" for h in (state.history or []) if h.get("role") == "user"]
     este = [texto]
-    if settings.lugar_con_dos_lectores and _jev_dice_que_no_lo_dice(state):
+    if _jev_dice_que_no_lo_dice(state):
         # CAL-C3c: "bucear en islas del rosario" nombra las islas sin decir dónde está el cliente (cal-71/73); si Jev
         # está seguro de que ESTE mensaje no dice su origen, sus palabras no cuentan como pista y se pregunta antes de
         # cotizar. El mensaje ya está en el historial cuando contesta el RAG: se quita de ahí también.

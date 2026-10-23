@@ -227,8 +227,6 @@ async def _lectura_de_la_ia(state: ConversationState, message: str, routing_sign
         return {"jev": None, "extractor": datos}
     if slot not in _RESPUESTA_LEIDA_POR_LA_IA:
         return None
-    if slot == SLOT_HOTEL and not settings.hotel_por_extractor:
-        return None  # sin el campo `hotel`, el extractor no lee hoteles
     if _es_formato(state, slot, message):
         return None
     pa = routing_signals.get("pending_answer")
