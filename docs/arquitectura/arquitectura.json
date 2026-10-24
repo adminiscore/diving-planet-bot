@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-24T10:46:23+00:00",
-  "commit": "ccbdbe86",
+  "generado": "2026-10-24T10:59:06+00:00",
+  "commit": "0e8a4f5f",
   "rama": "feature/latb-gonzalo"
  },
  "vistas": {
@@ -565,7 +565,7 @@
    "tipo": "agente",
    "titulo": "Preparar",
    "nodo_grafo": "setup",
-   "que_hace": "Detecta el idioma en el primer mensaje, apunta el nombre y lanza en paralelo las notas y el acuse.",
+   "que_hace": "Detecta el idioma en el primer mensaje, apunta el nombre y lanza en paralelo las notas.",
    "donde": "src/agents/nucleo/setup.py:_setup_phase",
    "modelos": [
     {
@@ -1035,20 +1035,6 @@
      "sin_efecto": false
     },
     {
-     "nombre": "acuse_solo_el_mensaje",
-     "titulo": "El acuse no se inventa nada",
-     "codigo": true,
-     "pre": true,
-     "sin_efecto": false
-    },
-    {
-     "nombre": "acuse_en_su_numero",
-     "titulo": "El acuse habla en singular a quien va solo",
-     "codigo": true,
-     "pre": true,
-     "sin_efecto": false
-    },
-    {
      "nombre": "actividad_de_la_pregunta",
      "titulo": "Ofrece la actividad por la que pregunta el cliente",
      "codigo": true,
@@ -1102,24 +1088,6 @@
     }
    ],
    "marca": "openrouter"
-  },
-  {
-   "id": "b_acuse",
-   "vista": "booking",
-   "carril": "apoyo",
-   "tipo": "paralelo",
-   "titulo": "Acuse (en paralelo)",
-   "que_hace": "Una frase cálida corta ('¡Qué buen plan!') preparada mientras se entiende el mensaje.",
-   "donde": "src/agents/llm_extractor.py:compose_acknowledgement",
-   "modelos": [
-    {
-     "ajuste": "acuse_model",
-     "codigo": "gpt-5.4-nano",
-     "pre": "gpt-5.4-nano"
-    }
-   ],
-   "interruptores": [],
-   "marca": "openai"
   },
   {
    "id": "b_pregunta",
@@ -2105,14 +2073,6 @@
    "vista": "booking"
   },
   {
-   "de": "b_setup",
-   "a": "b_acuse",
-   "etiqueta": "lanza",
-   "estilo": "paralelo",
-   "origen": "curada",
-   "vista": "booking"
-  },
-  {
    "de": "b_routing",
    "a": "b_pregunta",
    "etiqueta": "hay pregunta",
@@ -2124,14 +2084,6 @@
    "de": "b_pregunta",
    "a": "b_slotfill_close",
    "etiqueta": "va delante",
-   "estilo": "paralelo",
-   "origen": "curada",
-   "vista": "booking"
-  },
-  {
-   "de": "b_acuse",
-   "a": "b_slotfill_close",
-   "etiqueta": "se usa",
    "estilo": "paralelo",
    "origen": "curada",
    "vista": "booking"
@@ -2379,32 +2331,6 @@
    "area": "Reserva",
    "titulo": "La actividad de los hijos no sustituye a la de los padres",
    "texto": "En una familia en la que los padres ya eligieron bucear, 'el de 12 minicurso y el de 8 snorkel' añade a los hijos al plan sin cambiar la actividad principal. Antes el minicurso pasaba a ser la actividad principal y, al decir 'mi esposo bucea conmigo', el bot movía al hijo del minicurso a las inmersiones.",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [
-    "b_slotfill_close"
-   ],
-   "sin_efecto": null
-  },
-  {
-   "nombre": "acuse_en_su_numero",
-   "area": "Reserva",
-   "titulo": "El acuse habla en singular a quien va solo",
-   "texto": "La frase de acuse ('Entendido, …') repite el dato con las palabras y el número del cliente: a quien dice 'I'm not Colombian' le contesta 'you're not Colombian', no 'none of you are Colombian'.",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [
-    "b_slotfill_close"
-   ],
-   "sin_efecto": null
-  },
-  {
-   "nombre": "acuse_solo_el_mensaje",
-   "area": "Reserva",
-   "titulo": "El acuse no se inventa nada",
-   "texto": "La frase corta con la que Coral reconoce lo que dijo el cliente ('Entendido, …') solo repite lo que dice el mensaje: ya no convierte una fecha en 'tu reserva' ni un 'gracias' en 'tu actividad de Advanced'.",
    "codigo": true,
    "pre": true,
    "fijado_en_pre": true,
@@ -4124,16 +4050,6 @@
   }
  ],
  "modelos": [
-  {
-   "ajuste": "acuse_model",
-   "codigo": "gpt-5.4-nano",
-   "pre": "gpt-5.4-nano",
-   "usado_por": [
-    "b_acuse"
-   ],
-   "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 82
-  },
   {
    "ajuste": "avisos_al_final_model",
    "codigo": "gpt-6-luna",

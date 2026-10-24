@@ -41,7 +41,6 @@ class Settings(BaseSettings):
     senales_model: str = "deepseek/deepseek-v4.1-flash"  # PROMOCIONADO 18-oct (mod-F, HISTORY 0.31.56); revert = "gpt-4o-mini"
     red_extractor_model: str = "gpt-6-luna"  # PROMOCIONADO 18-oct (mod-F, HISTORY 0.31.56); revert = "gpt-4o-mini"
     resolutor_model: str = "anthropic/claude-haiku-5.5"  # PROMOCIONADO 19-oct (mod-G2, HISTORY 0.31.57); revert = "gpt-5.4-nano"
-    acuse_model: str = "gpt-5.4-nano"  # PROMOCIONADO 18-oct (mod-F, HISTORY 0.31.56); revert = "gpt-4o-mini"
     notas_model: str = "deepseek/deepseek-v4.1-flash"  # PROMOCIONADO 18-oct (mod-F, HISTORY 0.31.56); revert = "gpt-4o-mini"
     # ex-4 (fase EX, 12-oct): modelo del extractor "LLM primero" (src/agents/extractor_turno.py). Medido en PRE con el
     # banco ex0: gpt-4.1-mini 88-89 % de datos y 4,5 % de casos con invento en diseño; en el CIEGO 90,6 % y 5,6 % (hoy
@@ -169,20 +168,11 @@ class Settings(BaseSettings):
     #   rutas/contexto_rag.
     notas_rag_desde_estado: bool = True  # PROMOCIONADO 20-oct (ronda ex9b-8: 98,7 % 29/32, 0 regresiones; HISTORY 0.31.68); revert = False
     resolutor_sin_contradicciones: bool = True  # PROMOCIONADO 19-oct (mod-G2, HISTORY 0.31.57); revert = False
-    # EX-EST-2 (14-oct): el acuse reconoce SOLO lo que dice el mensaje (el resumen de la reserva no se repite; ante
-    # 'gracias' o una fecha suelta, nada). Banco scripts/banco_acuse.py: inventaba en 33/40 casos reales
-    # ('tienes una reserva para el sabado'). prompts/booking.ACUSE_SOLO_MENSAJE_*. Ronda est3-B: 91,3 % (est2-B 88,8 %),
-    # 16/29 sin fallos (antes 12), ninguna regresion del acuse. PROMOCIONADO 14-oct (HISTORY 0.31.25).
-    # Revert = False aqui y en el compose.
-    acuse_solo_el_mensaje: bool = True
-    # gen-8 (21-oct): el ejemplo del acuse para reconocer un dato iba en plural ("none of you are Colombian") y lo
-    # copiaba a quien va solo; con el flag, la regla de usar las palabras y el número del cliente. APAGADO.
-    acuse_en_su_numero: bool = True  # PROMOCIONADO 21-oct (ronda sin desplegar gen8-B 97,9 % 27/32 frente a gen8-A 97,0 % 26/32; el que empeora es del RAG; HISTORY 0.31.79); revert = False
     # gen-8 (21-oct): la actividad de la que el cliente PREGUNTA sin elegirla ("en el minicurso, ¿el equipo está
     # incluido?", "si hiciera el Advanced…"), leída por el extractor con su cita. Mientras no elige, la pregunta de la
     # actividad le ofrece esa en vez del menú de 4 (textos-B: "Which one are you leaning toward — diving, a
     # mini-course…?" a quien llevaba 3 turnos preguntando por el Open Water). APAGADO.
-    actividad_de_la_pregunta: bool = True  # PROMOCIONADO 21-oct (con `acuse_en_su_numero`, misma ronda gen8-A/B; banco gen-8: menú de 4 a quien ya hablaba de una actividad 2/24 -> 0/24; HISTORY 0.31.79); revert = False
+    actividad_de_la_pregunta: bool = True  # PROMOCIONADO 21-oct (gen-8, misma ronda gen8-A/B; banco gen-8: menú de 4 a quien ya hablaba de una actividad 2/24 -> 0/24; HISTORY 0.31.79); revert = False
     # gen-4 (21-oct): VIVIR en Colombia no es ser residente (G9, causa 6). El extractor leía "I live in Bogotá" o "sí,
     # vivo aquí" como colombiano (COP) en el banco docs/robustness/gen/banco_gen4_moneda.py (5/30 bien). Con el flag:
     # cuenta quien dice que es colombiano, viva donde viva, o que tiene cédula de extranjería (policies.json,

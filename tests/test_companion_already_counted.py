@@ -48,7 +48,7 @@ async def _send(state, message, signals):
          patch.object(core_extraction, "fill_gaps", new=AsyncMock(return_value={})), \
          patch.object(core, "extract_and_verify", create=True, new=AsyncMock(return_value=({}, {}))), \
          patch.object(core_routing, "detect_special_signals", new=_senales), patch.object(core_extraction, "detect_special_signals", new=_senales), \
-         patch.object(core_close, "compose_acknowledgement", new=AsyncMock(return_value="")), \
+         patch.object(core_close, "_acuse_por_codigo", new=lambda *a, **k: ""), \
          patch.object(core_extraction, "resolve_slot_answer", new=AsyncMock(return_value={})):
         return await route_message(state, message)
 

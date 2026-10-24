@@ -59,7 +59,7 @@ async def _send(state, message, verify=None):
                       new=AsyncMock(side_effect=lambda *a, **k: (dict(verify or {}), {}))), \
          patch.object(core, "verify_fields", create=True, new=AsyncMock(return_value=verify or {})), \
          patch.object(core_routing, "detect_special_signals", new=_senales), patch.object(core_extraction, "detect_special_signals", new=_senales), \
-         patch.object(core_close, "compose_acknowledgement", new=AsyncMock(return_value="")), \
+         patch.object(core_close, "_acuse_por_codigo", new=lambda *a, **k: ""), \
          patch.object(core_extraction, "resolve_slot_answer", new=AsyncMock(return_value={})):
         return await route_message(state, message)
 

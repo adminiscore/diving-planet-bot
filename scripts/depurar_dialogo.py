@@ -27,7 +27,7 @@ CAMPOS = ("core_pending_slot", "detected_activity", "detected_group_size", "dete
 
 async def main(did: str) -> None:
     supervisor.rag_answer = _rag
-    core_close.compose_acknowledgement = lambda *a, **k: asyncio.sleep(0, result="")
+    core_close._acuse_por_codigo = lambda *a, **k: ""
     escalation.escalate_to_human = _noop
     supervisor.escalate_to_human = _noop
     turns = dict(dialogues())[did]

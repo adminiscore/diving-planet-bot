@@ -30,7 +30,6 @@ from src.prompts.booking import (
     SIGNALS_TOOL,
     SLOT_RESOLVER_CONTRADICCION,
     SLOT_RESOLVER_SPEC,
-    acknowledgement_system_prompt,
     extraction_system_prompt,
     extraction_tool,
     signals_system_prompt,
@@ -44,20 +43,6 @@ from src.prompts.booking import tool_sin_baru as _tool_sin_baru
 def _sin_baru(texto: str) -> str:
     """G3-06 (flag `baru_no_es_rosario`): los textos de lugar de estos prompts, sin Barú entre "las islas"."""
     return _lugar_sin_baru(texto, settings.baru_sale_de_cartagena) if settings.baru_no_es_rosario else texto
-
-
-def _acuse_en_su_numero(texto: str) -> str:
-    """gen-8 (flag `acuse_en_su_numero`): el ejemplo del acuse, sin una frase en plural para copiar (ver booking)."""
-    if not settings.acuse_en_su_numero:
-        return texto
-    from src.prompts.booking import (  # lazy
-        ACUSE_EJEMPLO_EN,
-        ACUSE_EJEMPLO_ES,
-        ACUSE_EN_SU_NUMERO_EN,
-        ACUSE_EN_SU_NUMERO_ES,
-    )
-
-    return texto.replace(ACUSE_EJEMPLO_ES, ACUSE_EN_SU_NUMERO_ES).replace(ACUSE_EJEMPLO_EN, ACUSE_EN_SU_NUMERO_EN)
 
 
 def _tool(tool: dict) -> dict:
@@ -369,62 +354,3 @@ async def resolve_slot_answer(
         return {}
     logger.info(f"[CORE][SLOT-RESOLVER] slot={slot} value={args['value']!r} msg={message[:60]!r}")
     return {"value": args["value"]}
-
-
-# ─────────────────────── Redactor cálido "acuse" (Parte 2 del plan) ──────────
-# Genera UNA frase que reconoce lo que el cliente acaba de decir, con la persona
-# Coral y su nombre si lo hay. NO menciona precios/links/cifras ni hace la
-# pregunta: los datos DUROS y la pregunta van en la parte determinista que el
-# núcleo concatena después. Red de seguridad idéntica al resto: nunca lanza,
-# devuelve "" ante cualquier fallo (el bot sigue respondiendo con lo determinista).
-
-
-def _regla_solo_mensaje(lang: str) -> str:
-    """EX-EST-2 (flag `acuse_solo_el_mensaje`): el acuse reconoce solo lo que dice el mensaje (ver ACUSE_SOLO_MENSAJE_*)."""
-    if not settings.acuse_solo_el_mensaje:
-        return ""
-    from src.prompts.booking import ACUSE_SOLO_MENSAJE_EN, ACUSE_SOLO_MENSAJE_ES  # lazy
-
-    return ACUSE_SOLO_MENSAJE_ES if lang == "es" else ACUSE_SOLO_MENSAJE_EN
-
-
-@con_pieza_llm("acuse")
-async def compose_acknowledgement(
-    message: str,
-    *,
-    state_summary: str = "",
-    client_name: str | None = None,
-    lang: str = "es",
-    client: AsyncOpenAI | None = None,
-) -> str:
-    """Devuelve una frase de acuse cálida (o "" si no procede/falla)."""
-    if not message or not message.strip():
-        return ""
-    user_content = message if not state_summary else f"{message}\n\n[contexto de la reserva: {state_summary}]"
-    try:
-        client = client or trace_openai(AsyncOpenAI(api_key=settings.openai_api_key))
-        response = await client.chat.completions.create(
-            model=settings.acuse_model,
-            messages=[
-                {"role": "system", "content": _acuse_en_su_numero(acknowledgement_system_prompt(lang, client_name))
-                 + _regla_solo_mensaje(lang)},
-                {"role": "user", "content": user_content},
-            ],
-            temperature=0.4,
-            max_tokens=60,
-        )
-        text = (response.choices[0].message.content or "").strip().strip('"')
-    except Exception as exc:  # noqa: BLE001
-        logger.warning(f"[LLM_EXTRACTOR][DEGRADED] ack error: {exc}")
-        return ""
-    # Backstop determinista: si el modelo se saltó las reglas (precio/link/pregunta),
-    # descartar el acuse — nunca dejar que invente datos duros.
-    if not text or "http" in text.lower() or "$" in text or "€" in text or "?" in text or "¿" in text:
-        return ""
-    # s4-21 (1): un acuse sin prosa ('{" "}', golden v7 del 22-sep) salia tal cual delante de la
-    # respuesta. Mismo guard que el RAG (`is_coherent_text`).
-    from src.agents.grounding_check import is_coherent_text  # lazy
-
-    if not is_coherent_text(text):
-        return ""
-    return text

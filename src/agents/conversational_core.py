@@ -1486,69 +1486,6 @@ def _cart_item(state: ConversationState, activity: str, qty: int) -> dict:
 
 # ─── El bucle por turno ───
 
-# Frase legible por slot booleano para `_booking_context_summary`'s
-# `just_answered` — ver hallazgo en vivo debajo.
-# 14-oct (ronda flujo1-B3): un dato que sigue VACÍO no es un "no" ("cartagena" tras "¿más de 2 años?" daba "acaba de
-# responder que NO ha pasado más de 2 años" y el acuse inventaba "tienes experiencia reciente"). Sin respuesta, None.
-_JUST_ANSWERED_PHRASE = {
-    SLOT_SAFETY: lambda s: None if s.last_dive_over_2_years is None else (
-        "acaba de responder que SÍ ha pasado más de 2 años desde la última inmersión"
-        if s.last_dive_over_2_years else
-        "acaba de responder que NO ha pasado más de 2 años desde la última inmersión"
-    ),
-    SLOT_CERTIFICATION: lambda s: None if s.is_certified is None else (
-        "acaba de confirmar que SÍ está certificado" if s.is_certified else
-        "acaba de responder que NO está certificado"
-    ),
-    SLOT_NATIONALITY: lambda s: None if s.is_colombian is None else (
-        "acaba de responder que SÍ es colombiano/residente" if s.is_colombian else
-        "acaba de responder que NO es colombiano/residente"
-    ),
-    SLOT_REFRESHER: lambda s: None if s.refresher_interested is None else (
-        "acaba de responder que SÍ quiere el refresher" if s.refresher_interested else
-        "acaba de responder que NO quiere el refresher"
-    ),
-}
-
-
-def _booking_context_summary(state: ConversationState, *, just_answered_slot: str | None = None) -> str:
-    """Resumen corto del estado de la reserva para dar contexto al redactor del
-    acuse (para que reconozca cosas concretas: "anoto a tu amigo para el
-    minicurso"). Nunca incluye precios ni links — solo estructura.
-
-    Hallazgo en vivo (conversación real 831, 2026-09-02): una respuesta corta
-    y SIN contenido propio ("no", a secas, respondiendo seguridad o
-    nacionalidad) le daba a `compose_acknowledgement` el mensaje crudo "no"
-    más este resumen -- que hasta ahora NUNCA incluía los campos booleanos
-    (seguridad/certificación/nacionalidad/refresher), solo actividad/personas/
-    ubicación. Sin nada concreto que reconocer en el mensaje, el redactor
-    recurría a repetir esos datos VIEJOS y ajenos a lo que se acababa de
-    responder ("Entendido, eres una persona y estarás en Cartagena." — dicho
-    IDÉNTICO tras "no" a seguridad y otra vez tras "no" a nacionalidad, sin
-    relación con ninguna de las dos). `just_answered_slot` (el `prev_pending`
-    del turno) antepone la respuesta REAL y fresca al resumen, para que el
-    redactor tenga algo concreto y correcto que reconocer incluso ante un "no"
-    sin contexto propio.
-    """
-    parts: list[str] = []
-    if just_answered_slot:
-        phrase_fn = _JUST_ANSWERED_PHRASE.get(just_answered_slot)
-        frase = phrase_fn(state) if phrase_fn else None
-        if frase:
-            parts.append(frase)
-    if state.detected_activity:
-        parts.append(f"actividad principal: {state.detected_activity}")
-    alloc = state.detected_group_allocation or {}
-    if alloc:
-        parts.append("reparto: " + ", ".join(f"{k} x{v}" for k, v in alloc.items()))
-    elif state.detected_group_size:
-        parts.append(f"personas: {state.detected_group_size}")
-    loc = state.location or state.detected_location
-    if loc:
-        parts.append(f"ubicación: {loc}")
-    return "; ".join(parts)
-
-
 async def maybe_handle_turn(
     state: ConversationState, message: str, *, routing_signals: dict | None = None,
 ) -> str | None:
@@ -2502,13 +2439,10 @@ from src.agents.nucleo.slotfill_close import (  # noqa: E402, F401
     _colombian_summary_lines,
     _derive_kids_counts,
     _finalize,
-    _maybe_launch_ack,
     _nota_seguridad,
     _prune_applied_corrections,
     _refresher_note,
     _siguiente_pregunta,
     _slotfill_close_phase,
-    _take_parallel_ack,
     _tarjeta_sin_seguridad,
-    cancel_pending_ack,
 )

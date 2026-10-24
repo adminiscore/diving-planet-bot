@@ -3,8 +3,7 @@
 - s4-14: si piden un teléfono, el WhatsApp oficial (de la base de conocimiento), decisión de Gadea.
 - s4-15: "¿eres un bot?" -> dice que es la asistente virtual.
 - s4-16: la queja pasa a staff con una disculpa.
-- s4-21: nunca un id interno en el resumen; el aviso sensible en el idioma del mensaje de apertura;
-  un acuse sin prosa ('{" "}') se descarta.
+- s4-21: nunca un id interno en el resumen; el aviso sensible en el idioma del mensaje de apertura.
 - s4-7: "¿cómo pago?" -> el link de reserva, no "un asesor te enviará el enlace".
 - s4-20: post-venta y empresa (Jev `needs_staff`) -> una persona, antes del núcleo.
 - s4-6: cambio de fecha con el carrito abierto (Jev `changes_date`) -> política + asesor.
@@ -74,26 +73,6 @@ def test_el_aviso_sensible_sale_en_el_idioma_del_mensaje_de_apertura():
     assert supervisor._reply_language(st, "tengo asma, ¿puedo bucear?") == "es"
     st.detected_language = "es"
     assert supervisor._reply_language(st, "I have asthma") == "es"  # ya fijado: se respeta
-
-
-async def test_un_acuse_sin_prosa_se_descarta(monkeypatch):
-    from src.agents import llm_extractor
-
-    class _Msg:
-        content = '{" "}'
-
-    class _Resp:
-        choices = [type("C", (), {"message": _Msg()})()]
-
-    class _Cli:
-        def __init__(self, *a, **k):
-            async def create(**kw):
-                return _Resp()
-            self.chat = type("Ch", (), {"completions": type("Co", (), {"create": staticmethod(create)})()})()
-
-    monkeypatch.setattr(llm_extractor, "AsyncOpenAI", _Cli)
-    monkeypatch.setattr(llm_extractor, "trace_openai", lambda c: c)
-    assert await llm_extractor.compose_acknowledgement("somos 4", lang="es") == ""
 
 
 # ─── s4-7 ────────────────────────────────────────────────────────────────────

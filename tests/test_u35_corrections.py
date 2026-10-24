@@ -22,7 +22,7 @@ def _offline(monkeypatch):
                          (core_extraction, "detect_special_signals"), (core_extraction, "resolve_slot_answer")):
         monkeypatch.setattr(modulo, name, AsyncMock(return_value={}))
     monkeypatch.setattr(core, "extract_notes", AsyncMock(return_value=[]))
-    monkeypatch.setattr(core_close, "compose_acknowledgement", AsyncMock(return_value=""))
+    monkeypatch.setattr(core_close, "_acuse_por_codigo", lambda *a, **k: "")
 
 
 def _state(**kw) -> ConversationState:

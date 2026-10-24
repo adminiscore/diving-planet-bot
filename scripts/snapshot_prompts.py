@@ -132,18 +132,6 @@ def _collect() -> dict[str, str]:
             booking.lugar_sin_baru(booking.slot_resolver_prompt("location", lang)))
     add_json("booking/extraction.tool.sin_baru", booking.tool_sin_baru(booking.EXTRACTION_TOOL))
 
-    # ── booking · acuse cálido (compose_acknowledgement) ─────────────────────
-    for lang in LANGS:
-        add(f"booking/acknowledgement.system.{lang}.noname", booking.acknowledgement_system_prompt(lang, None))
-        add(f"booking/acknowledgement.system.{lang}.named", booking.acknowledgement_system_prompt(lang, "Sofía"))
-    # gen-8 (flag `acuse_en_su_numero`): el ejemplo del acuse, cambiado por la regla del número del cliente.
-    add("booking/acuse_ejemplo.es", booking.ACUSE_EJEMPLO_ES)
-    add("booking/acuse_ejemplo.en", booking.ACUSE_EJEMPLO_EN)
-    add("booking/acuse_en_su_numero.es", booking.ACUSE_EN_SU_NUMERO_ES)
-    add("booking/acuse_en_su_numero.en", booking.ACUSE_EN_SU_NUMERO_EN)
-    add("booking/acuse_solo_mensaje.es", booking.ACUSE_SOLO_MENSAJE_ES)
-    add("booking/acuse_solo_mensaje.en", booking.ACUSE_SOLO_MENSAJE_EN)
-
     # ── booking/setup · detección de idioma ──────────────────────────────────
     add("booking/language_detect.prompt.template", booking.LANGUAGE_DETECT_PROMPT)
 

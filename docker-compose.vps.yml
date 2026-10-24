@@ -189,10 +189,8 @@ services:
       # que empeoran no pasan por el pase). Revert = quitar estas dos líneas.
       CAMBIO_DE_RESERVA_PASA: "true"
       PRIVADO_PASA_DIRECTO: "true"
-      # gen-8 (Álvaro, 21-oct): el acuse habla con el número del cliente (el ejemplo en plural se copiaba a quien va
-      # solo) y a quien pregunta por UNA actividad sin elegirla se le ofrece esa, no el menú de 4. PROMOCIONADO 21-oct
-      # (gen8-B frente a gen8-A, del mismo día; el que empeora es del RAG). Revert = quitar estas dos líneas.
-      ACUSE_EN_SU_NUMERO: "true"
+      # gen-8 (Álvaro, 21-oct): a quien pregunta por UNA actividad sin elegirla se le ofrece esa, no el menú de 4.
+      # PROMOCIONADO 21-oct (gen8-B frente a gen8-A, del mismo día). Revert = quitar la línea.
       ACTIVIDAD_DE_LA_PREGUNTA: "true"
       # gen-6 (Gonzalo, 21-oct; docs/robustness/gen/gen6-diagnostico.md): quien se aloja en Barú o Playa Blanca sale
       # desde Cartagena (Barú no es Islas del Rosario, decisión de Gadea del 18-oct) y la puerta del origen no deja el
@@ -272,7 +270,6 @@ services:
       PRECIO_PENDIENTE_CON_EL_ORIGEN: "true"
       LISTAS_UNA_VEZ: "true"
       DESCUENTOS_UN_SITIO: "true"
-      ACUSE_MODEL: "gpt-5.4-nano"
       NOTAS_MODEL: "deepseek/deepseek-v4.1-flash"
       # ex-4 (12-oct): el extractor "LLM primero" de la fase EX (src/agents/extractor_turno.py).
       # mod-2 y mod-3 (18-oct): el extractor en Haiku 5.5 (Anthropic/Google/Amazon por OpenRouter) con RESPALDO en
@@ -325,9 +322,6 @@ services:
       # EX-EST-2: a un buzo certificado sin actividad elegida se le recomiendan sus opciones. PROMOCIONADO 14-oct.
       # Revert = "false" aqui y en config.py.
       RECOMENDAR_A_CERTIFICADOS: "true"
-      # EX-EST-2: el acuse reconoce solo lo que dice el mensaje. PROMOCIONADO 14-oct (est3-B). Revert = "false"
-      # aqui y en config.py.
-      ACUSE_SOLO_EL_MENSAJE: "true"
       # EX-EST-2: arreglos de datos de la tanda est3 (ver config.py). PROMOCIONADO 14-oct (est3-B). Revert = "false" aqui y
       # en config.py.
       EST2_DATOS: "true"

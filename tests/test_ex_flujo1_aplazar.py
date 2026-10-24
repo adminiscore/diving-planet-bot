@@ -70,15 +70,6 @@ def test_apagado_repite_como_hoy(monkeypatch):
     assert st.preguntas_aplazadas == []
 
 
-def test_un_dato_sin_contestar_no_es_un_no():
-    """Ronda flujo1-B3: "cartagena" tras "¿más de 2 años?" daba al acuse "acaba de responder que NO…" y este inventaba
-    "tienes experiencia reciente"."""
-    st = _estado(detected_group_size=2)
-    assert "NO ha pasado" not in core._booking_context_summary(st, just_answered_slot=core.SLOT_SAFETY)
-    st.last_dive_over_2_years = False
-    assert "NO ha pasado" in core._booking_context_summary(st, just_answered_slot=core.SLOT_SAFETY)
-
-
 def test_a_un_certificado_se_le_recomiendan_sus_opciones(monkeypatch):
     monkeypatch.setattr(settings, "recomendar_a_certificados", True)
     st = ConversationState(conversation_id="flujo1", language="es")

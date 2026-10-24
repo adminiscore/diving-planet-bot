@@ -333,7 +333,7 @@
       "tipo": "agente",
       "titulo": "Preparar",
       "nodo_grafo": "setup",
-      "que_hace": "Detecta el idioma en el primer mensaje, apunta el nombre y lanza en paralelo las notas y el acuse.",
+      "que_hace": "Detecta el idioma en el primer mensaje, apunta el nombre y lanza en paralelo las notas.",
       "donde": "src/agents/nucleo/setup.py:_setup_phase",
       "modelos": [
         "openai_model"
@@ -452,8 +452,6 @@
         "recomendar_a_certificados",
         "recomendar_a_no_certificados",
         "resolutor_sin_contradicciones",
-        "acuse_solo_el_mensaje",
-        "acuse_en_su_numero",
         "actividad_de_la_pregunta",
         "sin_certificacion_no_hace_falta",
         "recotizar_al_cambiar_moneda"
@@ -473,19 +471,6 @@
       "interruptores": [
         "memoria_sin_ordenes_del_cliente"
       ]
-    },
-    {
-      "id": "b_acuse",
-      "vista": "booking",
-      "carril": "apoyo",
-      "tipo": "paralelo",
-      "titulo": "Acuse (en paralelo)",
-      "que_hace": "Una frase cálida corta ('¡Qué buen plan!') preparada mientras se entiende el mensaje.",
-      "donde": "src/agents/llm_extractor.py:compose_acknowledgement",
-      "modelos": [
-        "acuse_model"
-      ],
-      "interruptores": []
     },
     {
       "id": "b_pregunta",
@@ -879,12 +864,6 @@
       "estilo": "paralelo"
     },
     {
-      "de": "b_setup",
-      "a": "b_acuse",
-      "etiqueta": "lanza",
-      "estilo": "paralelo"
-    },
-    {
       "de": "b_routing",
       "a": "b_pregunta",
       "etiqueta": "hay pregunta",
@@ -894,12 +873,6 @@
       "de": "b_pregunta",
       "a": "b_slotfill_close",
       "etiqueta": "va delante",
-      "estilo": "paralelo"
-    },
-    {
-      "de": "b_acuse",
-      "a": "b_slotfill_close",
-      "etiqueta": "se usa",
       "estilo": "paralelo"
     },
     {
@@ -1286,16 +1259,6 @@
       "area": "Reserva",
       "titulo": "Ofrece la actividad por la que pregunta el cliente",
       "texto": "Quien pregunta por una actividad sin elegirla aún ('en el minicurso, ¿el equipo está incluido?') recibe, tras la respuesta, la oferta de esa actividad ('Si quieres, te ayudo a reservar: Minicurso') en vez del menú de las 4 actividades. La elige el cliente."
-    },
-    "acuse_en_su_numero": {
-      "area": "Reserva",
-      "titulo": "El acuse habla en singular a quien va solo",
-      "texto": "La frase de acuse ('Entendido, …') repite el dato con las palabras y el número del cliente: a quien dice 'I'm not Colombian' le contesta 'you're not Colombian', no 'none of you are Colombian'."
-    },
-    "acuse_solo_el_mensaje": {
-      "area": "Reserva",
-      "titulo": "El acuse no se inventa nada",
-      "texto": "La frase corta con la que Coral reconoce lo que dijo el cliente ('Entendido, …') solo repite lo que dice el mensaje: ya no convierte una fecha en 'tu reserva' ni un 'gracias' en 'tu actividad de Advanced'."
     },
     "recomendar_a_certificados": {
       "area": "Reserva",

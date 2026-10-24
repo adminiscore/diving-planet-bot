@@ -29,7 +29,6 @@ MODELOS = (
     "senales_model",  # mod-3: las piezas de extraction_model, cada una con su modelo
     "red_extractor_model",
     "resolutor_model",
-    "acuse_model",
     "notas_model",
     "extractor_turno_model",
     "rag_plan_model",

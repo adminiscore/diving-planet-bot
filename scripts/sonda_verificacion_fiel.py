@@ -61,7 +61,7 @@ async def pasada(dialogos, activo):
 
 async def main():
     supervisor.rag_answer = replay._rag
-    core_close.compose_acknowledgement = lambda *a, **k: asyncio.sleep(0, result="")
+    core_close._acuse_por_codigo = lambda *a, **k: ""
     core.extract_notes = lambda *a, **k: asyncio.sleep(0, result=[])
     escalation.escalate_to_human = replay._noop
     supervisor.escalate_to_human = replay._noop

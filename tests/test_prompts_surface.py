@@ -99,7 +99,6 @@ def test_domain_modules_are_a_leaf_no_src_imports():
         (llm_extractor, "SLOT_RESOLVER_SPEC", booking),
         (llm_extractor, "slot_resolver_prompt", booking),
         (llm_extractor, "slot_resolver_tool", booking),
-        (llm_extractor, "acknowledgement_system_prompt", booking),
         # info
         (query_rewriter, "QUERY_REWRITE_ES", info),
         (query_rewriter, "QUERY_REWRITE_EN", info),

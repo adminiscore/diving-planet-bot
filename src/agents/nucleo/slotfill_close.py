@@ -11,14 +11,12 @@ import logging
 
 from src.agents.conversational_core import (
     _IMPORTE_RE,
-    _JUST_ANSWERED_PHRASE,
     _SLOTS_APLAZABLES,
     SLOT_COMPANION_ACTIVITY,
     SLOT_COMPANION_QTY,
     SLOT_SAFETY,
     _answer_asks_the_origin,
     _answer_replaces_the_booking_question,
-    _booking_context_summary,
     _cart_item,
     _effective_activity,
     _es_pregunta_de_origen,
@@ -34,7 +32,6 @@ from src.agents.conversational_core import (
     ask_slot,
     next_missing_slot,
 )
-from src.agents.llm_extractor import compose_acknowledgement
 from src.config import settings
 from src.domain import activities as dom
 from src.flows import cart_render
@@ -248,46 +245,14 @@ def _colombian_summary_lines(state: ConversationState) -> str:
     return "\n".join(lines).strip()
 
 
-# u3-1 paso 3 (24-sep): el acuse cálido en PARALELO. Medido en la ronda A2: en el 48 % de
-# los turnos iban en serie extracción (p50 0,85 s) -> acuse (p50 1,0 s), y el acuse no
-# necesita esperar: recibe el mensaje (que ya trae lo que el cliente acaba de decir) y un
-# resumen de la reserva. EXCEPCIÓN: si la pregunta pendiente es una de sí/no de
-# `_JUST_ANSWERED_PHRASE`, el resumen necesita el valor RECIÉN extraído (antes de extraer,
-# un "sí" a "¿eres colombiano?" se leería como el valor viejo) -> ahí sigue en serie, como hoy.
-def _maybe_launch_ack(state: ConversationState, message: str) -> None:
-    pending = state.core_pending_slot
-    if pending in _JUST_ANSWERED_PHRASE:
-        return
-    # La foto se toma AQUÍ, antes de lanzar la tarea (lección de la carrera de l1-4).
-    snapshot = {
-        "summary": _booking_context_summary(state, just_answered_slot=pending),
-        "client_name": state.client_name,
-        "lang": state.language,
-    }
-    state._pending_ack = {
-        "prev_pending": pending,
-        "task": asyncio.create_task(compose_acknowledgement(
-            message, state_summary=snapshot["summary"], client_name=snapshot["client_name"], lang=snapshot["lang"],
-        )),
-    }
+# lat-B (24-oct, fase LAT, corte B; decisión de Gadea #1720): el acuse lo pone el CÓDIGO. Era una llamada (el «redactor
+# cálido» de una frase) en el 54 % de los turnos de real-1, 1,08 s de mediana y el único tiempo propio de la reserva.
+# Solo cuando el cliente acaba de contestar la pregunta pendiente; la pregunta siguiente y los datos van detrás.
+_ACUSE = {"es": "¡Perfecto! 🙌", "en": "Perfect! 🙌"}
 
 
-async def _take_parallel_ack(state: ConversationState, prev_pending) -> str | None:
-    """El acuse lanzado en `_setup_phase`, si sirve para este cierre; `None` = calcularlo
-    en serie como siempre (no había, o la pregunta pendiente cambió por el camino)."""
-    pending = getattr(state, "_pending_ack", None)
-    state._pending_ack = None
-    if not pending:
-        return None
-    task = pending["task"]
-    if pending["prev_pending"] != prev_pending:
-        task.cancel()
-        return None
-    try:
-        return await task
-    except Exception as exc:  # noqa: BLE001 — un acuse nunca tumba el turno
-        logger.warning(f"[CORE][ACK][PARALELO] falló, sin acuse: {exc}")
-        return ""
+def _acuse_por_codigo(state: ConversationState, prev_pending) -> str:
+    return _ACUSE["es" if state.language == "es" else "en"] if prev_pending else ""
 
 
 def _no_hace_falta_certificacion(state: ConversationState, carry: dict) -> str:
@@ -339,21 +304,13 @@ def _precio_en_su_moneda(state: ConversationState, carry: dict) -> str:
     return cabeza + "\n" + "\n".join(lineas) + "\n\n"
 
 
-def cancel_pending_ack(state: ConversationState) -> None:
-    """Red de seguridad al cerrar el turno: un acuse lanzado que nadie usó se cancela."""
-    pending = getattr(state, "_pending_ack", None)
-    state._pending_ack = None
-    if pending and not pending["task"].done():
-        pending["task"].cancel()
-
-
 async def _slotfill_close_phase(
     state: ConversationState, message: str, greeting: str, first_turn: bool, carry: dict,
 ) -> str:
     """Fase 3.3e — RESOLVER + RESPONDER: elige el siguiente slot que falta
     (`next_missing_slot`) y lo pregunta (`ask_slot`), o cierra la reserva
-    (`_finalize` + nota de lead), y envuelve la respuesta con el acuse cálido
-    (`compose_acknowledgement`). Extraído de `_extract_close_phase`; corre cuando
+    (`_finalize` + nota de lead), y envuelve la respuesta con el acuse
+    (`_acuse_por_codigo`). Extraído de `_extract_close_phase`; corre cuando
     la extracción no resolvió el turno. Lo llama la cascada (vía
     `maybe_handle_turn`) y el nodo `slotfill_close` del subgrafo."""
     from src.agents import supervisor  # lazy
@@ -497,7 +454,6 @@ async def _slotfill_close_phase(
     answer = await _take_parallel_answer(state)
     if answer and _es_pregunta_de_origen(answer):
         # 7-oct: la pregunta del origen ocupa el turno (con sus botones); la de la reserva queda para después.
-        cancel_pending_ack(state)
         _fijar_origen_antes_del_precio(state, message)
         response = greeting + answer
         state.history.append({"role": "assistant", "content": response})
@@ -518,7 +474,6 @@ async def _slotfill_close_phase(
         # i pay" se quedaba sin el link (ronda B de u3-5). El cierre ya contesta "¿cómo pago?".
         answer = None
     if answer:
-        cancel_pending_ack(state)
         if _answer_replaces_the_booking_question(state, answer, finalized=finalized):
             state.quick_replies = []
             response = answer
@@ -537,15 +492,7 @@ async def _slotfill_close_phase(
 
     ack = ""
     if not first_turn:
-        # u3-1 paso 3: el acuse que se lanzó en paralelo en `_setup_phase`, si sirve.
-        ack = await _take_parallel_ack(state, prev_pending)
-        if ack is None:
-            ack = await compose_acknowledgement(
-                message,
-                state_summary=_booking_context_summary(state, just_answered_slot=prev_pending),
-                client_name=state.client_name,
-                lang=state.language,
-            )
+        ack = _acuse_por_codigo(state, prev_pending)
         if ack:
             ack = ack.rstrip() + "\n\n"
         ack += _no_hace_falta_certificacion(state, carry) + _precio_en_su_moneda(state, carry)
