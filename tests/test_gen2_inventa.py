@@ -1,7 +1,5 @@
 """gen-2 (20-oct, fase GEN; docs/robustness/gen/gen2-diagnostico.md): "inventa o da por hecho".
 
-- `pregunta_sola_con_su_sitio`: la pregunta sola de la búsqueda doble deja el sitio si la pregunta trata de él
-  ("estoy en Barú, ¿me recogen en el hotel?").
 - `abre_con_la_respuesta`: el RAG no abre con "¡Claro que sí!" delante de un "no" o un "depende".
 - La base: la recogida es solo en las Islas del Rosario (Barú no), en Cartagena no se recoge en el hotel, los cursos de
   2 días piden al menos una noche, y el pago presencial tiene formas de preguntarlo."""
@@ -11,19 +9,11 @@ from pathlib import Path
 
 import pytest
 
-from src.agents import query_rewriter as qr
 from src.agents.rag_agent import build_system_prompt
 from src.config import settings
 from src.prompts.info import RAG_ABRE_CON_LA_RESPUESTA_ES
 
 BASE = Path("data/knowledge_base")
-
-
-@pytest.mark.parametrize("flag", [True, False])
-def test_la_pregunta_sola_deja_el_sitio_con_el_flag(monkeypatch, flag):
-    monkeypatch.setattr(settings, "pregunta_sola_con_su_sitio", flag)
-    assert ("deja ese lugar" in qr._instruccion_pregunta_sola("es")) is flag
-    assert ("keep that place" in qr._instruccion_pregunta_sola("en")) is flag
 
 
 @pytest.mark.parametrize("flag", [True, False])

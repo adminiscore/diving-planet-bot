@@ -124,7 +124,6 @@ services:
       # PROMOCIONADO (HISTORY 0.31.53: ronda core mod-B; la regresión que parecía suya era ruido, 0/3 con los tres).
       # Revert = quitar estas tres líneas y poner los defaults en False.
       BARU_NO_ES_ROSARIO: "true"
-      BUSQUEDA_CON_LA_PREGUNTA_SOLA: "true"
       RAG_SIN_PRECIO_CON_TARJETA: "true"
       EXTRACTION_MODEL: "gpt-5.4-mini"
       # mod-3 (18-oct): cada pieza de EXTRACTION_MODEL con su modelo (mismo valor hasta promocionar otro).
@@ -140,8 +139,8 @@ services:
       RESOLUTOR_SIN_CONTRADICCIONES: "true"
       # Ronda ex9b-4 (19-oct): el paso 6 NO se promociona (con sus campos, Anthropic rechazaba el esquema del extractor,
       # "compiled grammar is too large", y contestaba siempre el respaldo). Se queda el respaldo POR TIEMPO de
-      # OpenRouter (5 s): si no contesta en 5 s, la misma petición sale por OpenAI.
-      OPENROUTER_RESPALDO_SEGUNDOS: "5.0"
+      # OpenRouter: si no contesta en 2 s (lat-B, 24-oct; antes 5), la misma petición sale por OpenAI.
+      OPENROUTER_RESPALDO_SEGUNDOS: "2.0"
       # PROMOCIONADO 20-oct con la ronda ex9b-8 (98,7 % 29/32; decisión de Gadea: G9 con el paso 6): el paso 6 (duración, edades, notas) en una segunda llamada al
       # extractor (la base sin él, ex9b-7, dio 96,1 %: las rondas con él estaban dentro del ruido) y quien se suma al grupo
       # por el punto único del acompañante, decidido por Jev (banco de punta a punta 10/14 → 12/14, nadie contado dos veces).
@@ -167,7 +166,6 @@ services:
       # pregunta trata de él (Barú), y el RAG abre con la respuesta (sin «¡Claro que sí!» delante de un no). La base
       # (policies.json) va aparte: el CI la regenera en cada despliegue. PROMOCIONADOS 20-oct: gen2-B 97,4 % 27/32
       # frente a gen2-A 93,9 % 22/32 (mismo día); las 2 que empeoran tienen la misma respuesta en A y B (juez). Revert = "false".
-      PREGUNTA_SOLA_CON_SU_SITIO: "true"
       ABRE_CON_LA_RESPUESTA: "true"
       # Textos fijos del flujo en el español de Cartagena (decisión de Gadea, 20-oct; src/flows/textos.py): vosotros ->
       # ustedes, sin género supuesto y la pregunta del origen sin "podemos recogerte saliendo desde Cartagena".
@@ -290,7 +288,6 @@ services:
       RAG_PLAN_MODEL: "gpt-6-luna"
       # CAL-A6 (17-oct): el revisor que añade el aviso que falta (flag AVISOS_AL_FINAL, apagado). Luna: decision de Gadea.
       AVISOS_AL_FINAL_MODEL: "gpt-6-luna"
-      PREGUNTA_SOLA_MODEL: "deepseek/deepseek-v4.1-flash"
       OPENAI_EMBEDDING_MODEL: "text-embedding-3-small"
       # MOD-6 (18-oct): gpt-transcribe con el vocabulario del negocio. PROMOCIONADO (HISTORY 0.31.53). Revert = "gpt-4o-mini-transcribe"
       # y quitar TRANSCRIPCION_CON_VOCABULARIO.

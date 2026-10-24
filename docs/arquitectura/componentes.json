@@ -543,9 +543,7 @@
         "openai_model"
       ],
       "interruptores": [
-        "consulta_con_lo_sabido",
-        "busqueda_con_la_pregunta_sola",
-        "pregunta_sola_con_su_sitio"
+        "consulta_con_lo_sabido"
       ]
     },
     {
@@ -1329,11 +1327,6 @@
       "titulo": "Una dieta o una alergia a un alimento no es un tema médico",
       "texto": "Celíacos, vegetarianos o una alergia a un alimento: Coral lo contesta con la política de comida (arroz con vegetales, puede llevar su comida, avisar antes) en vez de pasarlo a un asesor como si fuera una consulta médica."
     },
-    "pregunta_sola_con_su_sitio": {
-      "area": "Preguntas",
-      "titulo": "La búsqueda no pierde el sitio por el que se pregunta",
-      "texto": "Para buscar, Coral se queda con la pregunta del mensaje y quita los datos del cliente. Si la pregunta trata de un sitio (\"estoy en Barú, ¿me recogen en el hotel?\"), ahora el sitio se queda: sin él, la búsqueda traía la recogida en los hoteles de las islas y Coral decía que recogía en Barú."
-    },
     "abre_con_la_respuesta": {
       "area": "Preguntas",
       "titulo": "Empieza por la respuesta, sin «¡Claro que sí!» delante de un no",
@@ -1503,11 +1496,6 @@
       "area": "Preguntas",
       "titulo": "El bot ofrece pasar con una persona, no dice que ya lo ha hecho",
       "texto": "La respuesta decía 'te paso con el equipo' aunque nadie recibía el caso, y el cliente se quedaba esperando. Ahora pregunta '¿quieres que te pase con un asesor?' y el pase lo hace el sistema si el cliente dice que sí."
-    },
-    "busqueda_con_la_pregunta_sola": {
-      "area": "Preguntas",
-      "titulo": "Se busca también la pregunta sola, sin los datos que da el cliente",
-      "texto": "Si el cliente da datos y pregunta en el mismo mensaje (\"salimos de Cartagena el día 30. ¿Hace falta saber nadar?\"), el origen y la fecha tapaban la pregunta y la búsqueda no traía la pregunta frecuente: el bot decía que no tenía el dato. Ahora también se busca la pregunta sola, traducida si el cliente escribe en portugués o francés."
     },
     "rag_sin_precio_con_tarjeta": {
       "area": "Preguntas",

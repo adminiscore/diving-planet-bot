@@ -467,16 +467,6 @@ class Settings(BaseSettings):
     # PROMOCIONADO 18-oct (HISTORY 0.31.49): banco 6/6 -> 0/6; ronda core g301-B 95,6 % -> g3-B 96,5 %, ninguna
     # regresión atribuida (3 reps con y sin). Revert = False aquí y en el compose.
     rag_ofrece_el_pase: bool = True
-    # G3-05 (17-oct, Claude contra el chatbot): "salimos de Cartagena el día 30. ¿Hace falta saber nadar?" recibía "no
-    # tengo ese dato" (3 de 3, en español, inglés y portugués) aunque la FAQ existe: buscando el mensaje entero, el
-    # origen y la fecha tapan la pregunta con las fichas que salen desde Cartagena; en portugués, además, se buscaba
-    # tal cual contra la base en español e inglés. Con el flag, la búsqueda doble usa la PREGUNTA SOLA (sin los datos
-    # que da el cliente y en el idioma de la respuesta), una llamada corta a la vez que la búsqueda principal, solo
-    # para mensajes largos o en otro idioma. APAGADO hasta medirlo.
-    # 18-oct: banco G3 9/9 -> 1/9, rag_piezas sin pérdidas, core sin regresiones atribuidas, pero +0,7 s de mediana en
-    # los turnos del RAG con gpt-4o-mini (que además no traducía el portugués). APAGADO hasta que Gadea elija el
-    # modelo (`pregunta_sola_model`): gpt-4.1-nano 0,5-0,6 s (familia 4.1, que Álvaro quiere dejar) o Luna 0,98 s.
-    busqueda_con_la_pregunta_sola: bool = True  # PROMOCIONADO 18-oct (mod-B, HISTORY 0.31.53); revert = False
     # G3-07a (18-oct, decisión de Gadea: en un mismo mensaje, una sola moneda): cuando el turno lleva la tarjeta del plan
     # (precio en su moneda y enlace), el flujo pide al RAG la respuesta SIN precio (`rag_answer(sin_precio=True)`). El
     # RAG lo hace Gadea; el punto de decisión del flujo, Álvaro. APAGADO hasta medirlo con g3-07a y g3-02.
@@ -487,12 +477,6 @@ class Settings(BaseSettings):
     # en 20-24 y 24-27. Latencia, a la vez que el juez: gpt-4.1 no añade nada (p50 0,0 s) y Luna p50 0,4 s / p90 0,8 s.
     # DECISIÓN DE GADEA (17-oct): Luna, el último modelo y el más barato.
     avisos_al_final_model: str = "gpt-6-luna"
-    # G3-05 (18-oct, decisión de Gadea: DeepSeek, el más barato y rápido): el modelo de la pregunta sola
-    # (`busqueda_con_la_pregunta_sola`). La familia gpt-4 se retira en enero. Medido con 12 mensajes en es/en/pt/fr x3 y la
-    # instrucción endurecida: deepseek-v4.1-flash 36/36, 0,45 s de mediana (OpenRouter, proveedores de EE. UU., sin
-    # retención de datos, como Jev); Luna 36/36 0,78 s; gpt-5.4-mini 36/36 0,68 s; Haiku 5.5 36/36 0,79 s; gpt-4o-mini no
-    # traducía el portugués. En PRE (sonda), todos traen la FAQ de nadar: el modelo no cambia la búsqueda, sí la latencia.
-    pregunta_sola_model: str = "deepseek/deepseek-v4.1-flash"
     # CAL-E1 (DECISIÓN DE GADEA del 16-oct, que sustituye a la del 17-sep): esto es un chatbot y NO da números de
     # teléfono ni de WhatsApp. Si el cliente pide un número o quiere hablar con alguien, la conversación se PASA A UN
     # ASESOR (mismo pase que `needs_staff`). De paso desaparece la invención que el juez marcaba en cal-03: el texto
@@ -565,7 +549,7 @@ class Settings(BaseSettings):
     # perder ~0,25 s por llamada y repetir el fallo en cada pieza de cada turno. Se avisa una vez por corte en el log
     # (ERROR) y en [TURN_METRICS] (`openrouter=cortado`). 0 = apagado (hoy: se intenta siempre y se repite en OpenAI).
     openrouter_corte_segundos: float = 300.0  # PROMOCIONADO 23-oct (mej-7, decisión de Gadea: 300 s; HISTORY 0.31.98); revert = 0.0
-    openrouter_respaldo_segundos: float = 5.0  # PROMOCIONADO 19-oct (ex9b-4: saltó 1 vez, ganó el respaldo); revert = 0.0
+    openrouter_respaldo_segundos: float = 2.0  # lat-B (24-oct): 5 -> 2 s; en real-1, 7 llamadas colgadas esperaban 5 s (pregunta_sola, revisor); PROMOCIONADO 19-oct (ex9b-4) a 5 s; revert = 5.0
     # gen-1 + gen-3 (20-oct, fase GEN; docs/robustness/gen/gen1-diagnostico.md). El RAG a solas cubre el 96 % de los
     # datos; en una conversación el dato se perdía en el PASE por tema sensible: la respuesta fija se comía el resto del
     # mensaje ("¿cómo estará el mar el jueves? ¿el precio incluye el equipo?" -> solo "te conecto con el equipo").
@@ -589,9 +573,6 @@ class Settings(BaseSettings):
     #   respaldo y Jev. Se lee AL IMPORTAR (como el resto del tool del enrutador): para medirlo, `--env`, no `--flag`.
     dieta_no_es_medica: bool = True  # PROMOCIONADO 20-oct (gen3-B 98,7 % 30/32 frente a gen3-A 97,4 % 26/32, 0 regresiones; HISTORY 0.31.70); revert = False
     # gen-2 (20-oct; docs/robustness/gen/gen2-diagnostico.md): "inventa o da por hecho".
-    # - La pregunta sola de la búsqueda doble quitaba "dónde se aloja" aunque la pregunta fuera de ese sitio ("estoy en
-    #   Barú, ¿me recogen en el hotel?" -> "¿me recogen en el hotel?"). query_rewriter._instruccion_pregunta_sola.
-    pregunta_sola_con_su_sitio: bool = True  # PROMOCIONADO 20-oct (gen2-B 97,4 % 27/32 frente a gen2-A 93,9 % 22/32, 0 regresiones; HISTORY 0.31.71); revert = False
     # - El RAG empieza por la respuesta: sin "¡Claro que sí!" delante de un "no" o un "depende" (solo con
     #   `rag_no_adivina`, que está promocionado). prompts/info.RAG_ABRE_CON_LA_RESPUESTA_*.
     abre_con_la_respuesta: bool = True  # PROMOCIONADO 20-oct (gen2-B 97,4 % 27/32 frente a gen2-A 93,9 % 22/32, 0 regresiones; HISTORY 0.31.71); revert = False
