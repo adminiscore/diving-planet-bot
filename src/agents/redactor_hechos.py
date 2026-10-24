@@ -390,15 +390,6 @@ def _pasa_las_guardas(answer: str, texto_hechos: str, message: str) -> bool:
             and urls_grounded(answer, texto_hechos) and not contains_phone_number(answer))
 
 
-def _pide_los_que_faltan(perdidos: list[str], lang: str) -> str:
-    lista = "\n".join(f"- {p}" for p in perdidos)
-    if lang == "es":
-        return (f"A tu respuesta le faltan estos hechos:\n{lista}\nEscríbela de nuevo entera, con el mismo estilo, "
-                "incluyéndolos todos (y sin quitar nada de lo que ya decía).")
-    return (f"Your answer is missing these facts:\n{lista}\nWrite it again in full, in the same style, including all "
-            "of them (and without removing anything it already said).")
-
-
 async def hechos_del_turno(state: ConversationState, message: str, history: list[dict]) -> tuple[list[dict], list[str]] | None:
     """Los hechos de las intenciones de este mensaje que el código sabe dar (bloques, intenciones cubiertas), o None si
     no hay: Jev no da intenciones, la pregunta no es la del mensaje de ahora o no se sabe la actividad. No mira si el
@@ -522,21 +513,11 @@ async def _escribir(state: ConversationState, message: str, history: list[dict],
         return None
     perdidos = hechos_mod.faltan(answer, bloques, intenciones)
     if perdidos:
-        # ARQ-3: el código comprueba que la respuesta lleva los hechos (en el banco G, el referido sin la carta de
-        # referido firmada, el Advanced sin las 18 h antes de volar). Se rehace UNA vez diciendo cuáles; vale la que deje
-        # menos fuera y pase lo mismo que la primera.
-        otra = await _redactar(client, [*mensajes, {"role": "assistant", "content": answer},
-                                        {"role": "user", "content": _pide_los_que_faltan(perdidos, lang)}])
-        if otra and settings.listas_por_codigo:
-            otra = _poner_listas(otra, bloques, intenciones, lang)
-        quedan = hechos_mod.faltan(otra, bloques, intenciones) if otra else perdidos
-        mejor = (otra is not None and _FALTA not in otra and _pasa_las_guardas(otra, texto_hechos, message)
-                 and len(quedan) < len(perdidos))
-        logger.info(f"[HECHOS][ARQ3] faltaban {len(perdidos)}, tras rehacer {len(quedan)}"
-                    f"{'' if mejor else ' (se queda la primera)'}: {[p[:60] for p in perdidos]}")
-        note_turn(hechos_faltaban=len(perdidos), hechos_quedan=len(quedan) if mejor else len(perdidos))
-        if mejor:
-            answer = otra
+        # lat-2 (24-oct, fase LAT): ya no se rehace la respuesta cuando le falta un hecho (ARQ-3 la rehacía en el 38 % de
+        # los turnos del redactor de real-1, ~2,5 s más). Las listas y las frases ya las pone el código; lo demás que
+        # falte se apunta en [TURN_METRICS] y es deuda de calidad de la fase.
+        logger.info(f"[HECHOS][ARQ3] faltan {len(perdidos)} (no se rehace): {[p[:60] for p in perdidos]}")
+        note_turn(hechos_faltaban=len(perdidos), hechos_quedan=len(perdidos))
     if parte:
         # arq-5b: la parte de la tabla de un mensaje mezclado; la pregunta del origen no va en medio (detrás va el RAG).
         logger.info(f"[HECHOS] parte de la tabla del redactor: {actividad} {intenciones} origen={origen}")

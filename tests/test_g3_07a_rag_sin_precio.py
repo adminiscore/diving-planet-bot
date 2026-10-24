@@ -5,7 +5,6 @@ antes de que el flujo aplique la extracción del turno. Cuando el turno lleva la
 `rag_answer(sin_precio=True)` (flag `rag_sin_precio_con_tarjeta`) y el texto no da precio ni enlace."""
 import pytest
 
-from src.config import settings
 from src.prompts.info import RAG_SIN_PRECIO_EN, RAG_SIN_PRECIO_ES
 
 
@@ -49,13 +48,11 @@ async def _sistema(monkeypatch, sin_precio: bool, lang: str = "es") -> str:
 
 @pytest.mark.asyncio
 async def test_sin_precio_pide_al_rag_que_no_de_precios(monkeypatch):
-    monkeypatch.setattr(settings, "avisos_al_final", False)
     assert RAG_SIN_PRECIO_ES in await _sistema(monkeypatch, sin_precio=True)
     assert RAG_SIN_PRECIO_EN in await _sistema(monkeypatch, sin_precio=True, lang="en")
 
 
 @pytest.mark.asyncio
 async def test_por_defecto_el_rag_sigue_igual(monkeypatch):
-    monkeypatch.setattr(settings, "avisos_al_final", False)
     sistema = await _sistema(monkeypatch, sin_precio=False)
     assert RAG_SIN_PRECIO_ES not in sistema and RAG_SIN_PRECIO_EN not in sistema

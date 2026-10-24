@@ -607,7 +607,6 @@
         "hechos_al_rag",
         "varias_actividades",
         "enlace_con_disponibilidad",
-        "rag_comprueba_los_hechos",
         "redactor_sin_preguntas_de_cierre",
         "hechos_sin_actividad",
         "requisitos_coherentes",
@@ -618,7 +617,6 @@
         "dos_monedas_sin_nacionalidad",
         "mezclados_por_partes",
         "listas_por_codigo",
-        "rag_hechos_sin_reintento",
         "intenciones_clima_pago",
         "frases_por_codigo",
         "hechos_que_faltaban",
@@ -685,15 +683,13 @@
       "que_hace": "Repasa cada dato de la respuesta y marca SÍ si la información lo dice o NO si no. Con un solo NO, la respuesta no se envía (~1,2 s).",
       "donde": "src/agents/grounding_check.py:is_grounded",
       "modelos": [
-        "grounding_v3_model",
-        "avisos_al_final_model"
+        "grounding_v3_model"
       ],
       "interruptores": [
         "juez_v3_luna",
         "juez_revisa_con_cita",
         "rag_revisor_completitud",
-        "rag_revisor_avisos",
-        "avisos_al_final"
+        "rag_revisor_avisos"
       ],
       "tiempo_medido": {
         "p50": 1.2,
@@ -1484,11 +1480,6 @@
       "titulo": "El catálogo enseña la preparación de cada plan (apagado: medido y empeora)",
       "texto": "Lo que hay que traer o hacer antes de cada plan (la carta de referido, la teoría). Medido: arregla un caso y rompe dos, porque dieciocho párrafos en todos los turnos distraen. Mejor solo cuando se habla de ese plan."
     },
-    "avisos_al_final": {
-      "area": "Preguntas",
-      "titulo": "Un aviso que falta se añade al final, sin rehacer la respuesta",
-      "texto": "Mientras el revisor de siempre comprueba la respuesta, otro lee la conversación y la lista de avisos de la empresa (el minicurso no certifica, la carta del curso referido, desde las islas no hay almuerzo). Si a la respuesta le falta uno que el cliente necesita por lo que acaba de decir, se añade una frase y lo demás no se toca. Antes el aviso se metía al redactar y desplazaba lo que la respuesta tenía que decir."
-    },
     "memoria_sin_ordenes_del_cliente": {
       "area": "Chat",
       "titulo": "La memoria no se cree las órdenes del cliente",
@@ -1614,11 +1605,6 @@
       "titulo": "«Soy colombiano» después del precio: en pesos",
       "texto": "Si el cliente dice que es colombiano (o residente) después de recibir un precio en dólares, Coral se lo vuelve a dar en pesos (arq-4b, 22-oct)."
     },
-    "rag_comprueba_los_hechos": {
-      "area": "Preguntas",
-      "titulo": "El RAG comprueba que lleva los hechos",
-      "texto": "En los mensajes mezclados, si la respuesta del RAG deja fuera algún hecho del código (un punto de lo que incluye, un precio, un enlace), se rehace una vez diciéndole cuáles (arq-4b, 22-oct)."
-    },
     "redactor_sin_preguntas_de_cierre": {
       "area": "Preguntas",
       "titulo": "El redactor no pregunta datos al cerrar",
@@ -1713,11 +1699,6 @@
       "area": "Preguntas",
       "titulo": "Las listas las pone el código",
       "texto": "Lo que incluye un plan, los requisitos y los descuentos los copia el código del dato, en viñetas y con sus orígenes, donde el redactor deja una marca; el modelo solo escribe las frases. Las listas salen siempre enteras y no hace falta rehacer la respuesta (arq-7a, latencia, 23-oct)."
-    },
-    "rag_hechos_sin_reintento": {
-      "area": "Preguntas",
-      "titulo": "Lo que falta lo añade el código",
-      "texto": "En los mensajes mezclados, si la respuesta del RAG se deja puntos de lo que incluye, de los requisitos o de los descuentos, el código los añade al final con su rótulo en vez de rehacer la respuesta entera; un precio o un enlace que falte sí se rehace (arq-7b, latencia, 23-oct)."
     },
     "intenciones_clima_pago": {
       "area": "Preguntas",

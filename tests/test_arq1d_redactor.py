@@ -158,22 +158,8 @@ def test_falta_en_medio_de_la_respuesta_tampoco_llega_al_cliente(llamadas):
     assert asyncio.run(redactor_hechos.responder(st, MENSAJE, st.history)) is None
 
 
-def test_arq3_si_falta_un_hecho_se_rehace_una_vez_diciendo_cual(llamadas, monkeypatch):
-    textos = ["El minicurso desde Cartagena cuesta 183 USD.",
-              "El minicurso desde Cartagena cuesta 183 USD online o 204 USD sin reserva online."]
-
-    async def generar(client, messages, pieza="rag_escritor"):
-        llamadas.hechas.append((messages, pieza))
-        return SimpleNamespace(choices=[SimpleNamespace(message=SimpleNamespace(content=textos.pop(0)))])
-
-    monkeypatch.setattr(rag_agent, "generar_con_respaldo", generar)
-    st = _conv(location="cartagena")
-    assert asyncio.run(redactor_hechos.responder(st, MENSAJE, st.history)).endswith("204 USD sin reserva online.")
-    [_, (segunda, _)] = llamadas.hechas
-    assert "204 USD" in segunda[-1]["content"] and segunda[-2]["role"] == "assistant"
-
-
-def test_arq3_si_al_rehacer_no_mejora_se_queda_la_primera(llamadas, monkeypatch):
+def test_lat2_si_falta_un_hecho_no_se_rehace(llamadas, monkeypatch):
+    """lat-2 (24-oct): ARQ-3 rehacía la respuesta en el 38 % de los turnos del redactor; ahora se queda la primera."""
     async def generar(client, messages, pieza="rag_escritor"):
         llamadas.hechas.append((messages, pieza))
         return SimpleNamespace(choices=[SimpleNamespace(message=SimpleNamespace(content="Cuesta 183 USD."))])
@@ -181,7 +167,7 @@ def test_arq3_si_al_rehacer_no_mejora_se_queda_la_primera(llamadas, monkeypatch)
     monkeypatch.setattr(rag_agent, "generar_con_respaldo", generar)
     st = _conv(location="cartagena")
     assert asyncio.run(redactor_hechos.responder(st, MENSAJE, st.history)) == "Cuesta 183 USD."
-    assert len(llamadas.hechas) == 2  # una vez, no en bucle
+    assert len(llamadas.hechas) == 1
 
 
 def test_arq1k_con_varias_actividades_en_juego_no_se_adivina():

@@ -1738,8 +1738,7 @@ async def _rag_answer(
                              state.history if history is None else history, message)
     if hechos := await _hechos_para_el_rag(state, message, state.history if history is None else history):
         entradas["hechos"] = hechos  # arq-1g
-        if settings.rag_comprueba_los_hechos:
-            entradas["hechos_bloques"] = state._hechos_del_rag
+        entradas["hechos_bloques"] = state._hechos_del_rag
         if not sin_precio and (por_partes := await _mezclado_por_partes(
                 state, message, state.history if history is None else history, entradas)):
             return _puerta_del_origen(state, message, por_partes)
@@ -1906,8 +1905,7 @@ async def _adoptar_o_rehacer(state: ConversationState, message: str, history: li
     entradas = _entradas_rag(await _con_la_nacionalidad_del_mensaje(state, message), history, message)
     if hechos := await _hechos_para_el_rag(state, message, history):
         entradas["hechos"] = hechos  # arq-1g: la adelantada salió sin ellos, así que su huella no coincide y se rehace
-        if settings.rag_comprueba_los_hechos:
-            entradas["hechos_bloques"] = state._hechos_del_rag
+        entradas["hechos_bloques"] = state._hechos_del_rag
         if por_partes := await _mezclado_por_partes(state, message, history, entradas):
             adelantado["task"].cancel()
             note_turn(rag_adelantado="descartado")
