@@ -254,25 +254,40 @@ async def _openrouter_o_respaldo_por_tiempo(original, respaldo: str, modelo: str
             return await original(*args, **adaptar_parametros({**kwargs, "model": respaldo}))
 
     t_openrouter = asyncio.ensure_future(_openrouter().chat.completions.create(*args, **parametros_openrouter(kwargs)))
-    await asyncio.wait({t_openrouter}, timeout=segundos)
-    if t_openrouter.done():
-        if t_openrouter.exception() is None:
-            return t_openrouter.result()
-        cortar_openrouter_si_es_la_clave(_status(t_openrouter.exception()), modelo)
-        logger.warning(f"[LLM][OPENROUTER] {modelo} falló ({str(t_openrouter.exception())[:160]}): contesta {respaldo}")
-        return await por_openai()
-    t_openai = asyncio.ensure_future(por_openai())
-    pendientes = {t_openrouter, t_openai}
-    while pendientes:
-        hechas, pendientes = await asyncio.wait(pendientes, return_when=asyncio.FIRST_COMPLETED)
-        buena = next((t for t in hechas if t.exception() is None), None)
-        if buena is not None:
-            for t in pendientes:
-                t.cancel()
-            gana = "OpenRouter" if buena is t_openrouter else respaldo
-            logger.info(f"[LLM][OPENROUTER] {pieza}: {modelo} tardaba más de {segundos:g} s: gana {gana}")
-            return buena.result()
-    return t_openai.result()  # fallaron los dos: sube la excepción del respaldo
+    t_openai = None
+    try:
+        await asyncio.wait({t_openrouter}, timeout=segundos)
+        if t_openrouter.done():
+            if t_openrouter.exception() is None:
+                return t_openrouter.result()
+            cortar_openrouter_si_es_la_clave(_status(t_openrouter.exception()), modelo)
+            logger.warning(f"[LLM][OPENROUTER] {modelo} falló ({str(t_openrouter.exception())[:160]}): contesta {respaldo}")
+            return await por_openai()
+        t_openai = asyncio.ensure_future(por_openai())
+        pendientes = {t_openrouter, t_openai}
+        while pendientes:
+            hechas, pendientes = await asyncio.wait(pendientes, return_when=asyncio.FIRST_COMPLETED)
+            buena = next((t for t in hechas if t.exception() is None), None)
+            if buena is not None:
+                for t in pendientes:
+                    t.cancel()
+                gana = "OpenRouter" if buena is t_openrouter else respaldo
+                logger.info(f"[LLM][OPENROUTER] {pieza}: {modelo} tardaba más de {segundos:g} s: gana {gana}")
+                return buena.result()
+        return t_openai.result()  # fallaron los dos: sube la excepción del respaldo
+    except asyncio.CancelledError:
+        # lat-1 (24-oct): si cancelan a quien espera (el RAG adelantado que ya no hace falta), también las
+        # llamadas en marcha: con ensure_future seguían vivas y se pagaban enteras (latb4-B: 34 escritores en
+        # turnos del redactor, de 1,2 a 3,6 s cada uno, con el adelantado ya cancelado).
+        _cancelar(t_openrouter, t_openai)
+        raise
+
+
+def _cancelar(*tareas) -> None:
+    """lat-1: cancela las llamadas en marcha que no han terminado."""
+    for t in tareas:
+        if t is not None and not t.done():
+            t.cancel()
 
 
 def _is_empty_for(spec: dict, value) -> bool:
@@ -387,21 +402,29 @@ async def crear_con_respaldo(client, *, respaldo: str, segundos: float, pieza: s
     if not respaldo or respaldo == principal or segundos <= 0:
         return await llamar(principal, pieza)
     t_principal = asyncio.ensure_future(llamar(principal, pieza))
-    await asyncio.wait({t_principal}, timeout=segundos)
-    if t_principal.done() and t_principal.exception() is None:
-        return t_principal.result()
-    if t_principal.done():
-        logger.warning(f"[LLM][RESPALDO] {pieza}: {principal} falló ({t_principal.exception()}): contesta {respaldo}")
-        return await llamar(respaldo, f"{pieza}_respaldo")
-    t_respaldo = asyncio.ensure_future(llamar(respaldo, f"{pieza}_respaldo"))
-    pendientes = {t_principal, t_respaldo}
-    while pendientes:
-        hechas, pendientes = await asyncio.wait(pendientes, return_when=asyncio.FIRST_COMPLETED)
-        buena = next((t for t in hechas if t.exception() is None), None)
-        if buena is not None:
-            for t in pendientes:
-                t.cancel()
-            gana = "principal" if buena is t_principal else "respaldo"
-            logger.info(f"[LLM][RESPALDO] {pieza}: {principal} tardaba más de {segundos:g} s: gana el {gana}")
-            return buena.result()
-    return t_respaldo.result()  # fallaron los dos: sube la excepción del respaldo
+    t_respaldo = None
+    try:
+        await asyncio.wait({t_principal}, timeout=segundos)
+        if t_principal.done() and t_principal.exception() is None:
+            return t_principal.result()
+        if t_principal.done():
+            logger.warning(f"[LLM][RESPALDO] {pieza}: {principal} falló ({t_principal.exception()}): contesta {respaldo}")
+            return await llamar(respaldo, f"{pieza}_respaldo")
+        t_respaldo = asyncio.ensure_future(llamar(respaldo, f"{pieza}_respaldo"))
+        pendientes = {t_principal, t_respaldo}
+        while pendientes:
+            hechas, pendientes = await asyncio.wait(pendientes, return_when=asyncio.FIRST_COMPLETED)
+            buena = next((t for t in hechas if t.exception() is None), None)
+            if buena is not None:
+                for t in pendientes:
+                    t.cancel()
+                gana = "principal" if buena is t_principal else "respaldo"
+                logger.info(f"[LLM][RESPALDO] {pieza}: {principal} tardaba más de {segundos:g} s: gana el {gana}")
+                return buena.result()
+        return t_respaldo.result()  # fallaron los dos: sube la excepción del respaldo
+    except asyncio.CancelledError:
+        # lat-1 (24-oct): si cancelan a quien espera (el RAG adelantado que ya no hace falta), también las
+        # llamadas en marcha: con ensure_future seguían vivas y se pagaban enteras (latb4-B: 34 escritores en
+        # turnos del redactor, de 1,2 a 3,6 s cada uno, con el adelantado ya cancelado).
+        _cancelar(t_principal, t_respaldo)
+        raise

@@ -654,6 +654,12 @@ def _completar_con_hechos(answer: str, bloques: list[dict], intenciones: list[st
     return None if hechos_mod.faltan(completada, bloques, intenciones) else completada
 
 
+def _cancelar(*tareas) -> None:
+    for t in tareas:
+        if t is not None and not t.done():
+            t.cancel()
+
+
 async def generar_con_respaldo(client, messages: list[dict], pieza: str = "rag_escritor"):
     """La llamada que escribe la respuesta del RAG, con RESPALDO (8-oct, cambio de modelos).
 
@@ -685,28 +691,36 @@ async def generar_con_respaldo(client, messages: list[dict], pieza: str = "rag_e
         return await llamar(principal)
     t0 = asyncio.get_running_loop().time()
     t_principal = asyncio.ensure_future(llamar(principal))
-    await asyncio.wait({t_principal}, timeout=espera)
-    if t_principal.done() and t_principal.exception() is None:
-        note_turn(rag_respaldo="principal", rag_respaldo_s=round(asyncio.get_running_loop().time() - t0, 2))
-        return t_principal.result()
-    if t_principal.done():  # el principal falló antes de la espera: contesta el respaldo
-        logger.warning(f"[RAG][RESPALDO] {principal} falló ({t_principal.exception()}): contesta {respaldo}")
-        note_turn(rag_respaldo="error_principal", rag_respaldo_s=round(asyncio.get_running_loop().time() - t0, 2))
-        return await llamar(respaldo, es_respaldo=True)
-    t_respaldo = asyncio.ensure_future(llamar(respaldo, es_respaldo=True))
-    pendientes = {t_principal, t_respaldo}
-    while pendientes:
-        hechas, pendientes = await asyncio.wait(pendientes, return_when=asyncio.FIRST_COMPLETED)
-        buena = next((t for t in hechas if t.exception() is None), None)
-        if buena is not None:
-            for t in pendientes:
-                t.cancel()
-            gana = "gana_principal" if buena is t_principal else "gana_respaldo"
-            segundos = round(asyncio.get_running_loop().time() - t0, 2)
-            logger.info(f"[RAG][RESPALDO] {principal} tardaba más de {espera:g} s: {gana} ({segundos} s)")
-            note_turn(rag_respaldo=gana, rag_respaldo_s=segundos)
-            return buena.result()
-    return t_respaldo.result()  # fallaron los dos: la excepción del respaldo sube y el llamador da el fallback
+    t_respaldo = None
+    try:
+        await asyncio.wait({t_principal}, timeout=espera)
+        if t_principal.done() and t_principal.exception() is None:
+            note_turn(rag_respaldo="principal", rag_respaldo_s=round(asyncio.get_running_loop().time() - t0, 2))
+            return t_principal.result()
+        if t_principal.done():  # el principal falló antes de la espera: contesta el respaldo
+            logger.warning(f"[RAG][RESPALDO] {principal} falló ({t_principal.exception()}): contesta {respaldo}")
+            note_turn(rag_respaldo="error_principal", rag_respaldo_s=round(asyncio.get_running_loop().time() - t0, 2))
+            return await llamar(respaldo, es_respaldo=True)
+        t_respaldo = asyncio.ensure_future(llamar(respaldo, es_respaldo=True))
+        pendientes = {t_principal, t_respaldo}
+        while pendientes:
+            hechas, pendientes = await asyncio.wait(pendientes, return_when=asyncio.FIRST_COMPLETED)
+            buena = next((t for t in hechas if t.exception() is None), None)
+            if buena is not None:
+                for t in pendientes:
+                    t.cancel()
+                gana = "gana_principal" if buena is t_principal else "gana_respaldo"
+                segundos = round(asyncio.get_running_loop().time() - t0, 2)
+                logger.info(f"[RAG][RESPALDO] {principal} tardaba más de {espera:g} s: {gana} ({segundos} s)")
+                note_turn(rag_respaldo=gana, rag_respaldo_s=segundos)
+                return buena.result()
+        return t_respaldo.result()  # fallaron los dos: la excepción del respaldo sube y el llamador da el fallback
+    except asyncio.CancelledError:
+        # lat-1 (24-oct): si cancelan a quien espera (el RAG adelantado que ya no hace falta), también las
+        # llamadas en marcha: con ensure_future seguían vivas y se pagaban enteras (latb4-B: 34 escritores en
+        # turnos del redactor, de 1,2 a 3,6 s cada uno, con el adelantado ya cancelado).
+        _cancelar(t_principal, t_respaldo)
+        raise
 
 
 async def rag_answer(

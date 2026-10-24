@@ -58,3 +58,65 @@ async def test_si_trae_otra_cosa_o_jev_calla_sigue_el_adelantado(adelantado, mon
     st = await _turno("¿Cuánto cuesta el snorkel y qué peces se ven?")
     assert st._rag_adelantado is not None and not adelantado[0].cancelled()
     adelantado[0].cancel()
+
+
+async def _turno_reserva(mensaje, **campos):
+    st = ConversationState(conversation_id="lat1-reserva", language="es", **campos)
+    await graph._router_node({"conv_state": st, "message": mensaje})
+    return st
+
+
+@pytest.mark.asyncio
+async def test_en_la_reserva_sin_pregunta_se_cancela(adelantado, monkeypatch):
+    """«desde Cartagena» en mitad de la reserva: la respuesta adelantada no se iba a usar."""
+    _senales(monkeypatch, {"asks_question": False})
+    monkeypatch.setattr(graph, "classify_route", lambda *a, **k: graph.ROUTE_BOOKING)
+    st = await _turno_reserva("desde Cartagena")
+    await asyncio.sleep(0)
+    assert st._rag_adelantado is None and adelantado[0].cancelled()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("senales,campos", [
+    ({"asks_question": True}, {}),  # trae pregunta: «contesta y sigue» la usa
+    ({"asks_question": False}, {"adaptive_diving_context": True}),  # DIVE TO HEAL la usa sin pregunta
+    ({"asks_question": False, "affirms_location": True,
+      "customer_place": {"choice": "none", "confidence": 0.95}}, {}),  # CAL-C4: lugar desconocido, va a la base
+])
+async def test_en_la_reserva_sigue_si_se_va_a_usar(adelantado, monkeypatch, senales, campos):
+    _senales(monkeypatch, senales)
+    monkeypatch.setattr(graph, "classify_route", lambda *a, **k: graph.ROUTE_BOOKING)
+    st = await _turno_reserva("estamos en Barú", **campos)
+    assert st._rag_adelantado is not None and not adelantado[0].cancelled()
+    adelantado[0].cancel()
+
+
+@pytest.mark.asyncio
+async def test_cancelar_la_respuesta_cancela_tambien_la_llamada_del_escritor(monkeypatch):
+    """latb4-B: con el adelantado ya cancelado, el escritor lanzado con ensure_future seguía vivo y se pagaba entero."""
+    from src.agents import rag_agent
+
+    monkeypatch.setattr(settings, "rag_respaldo_segundos", 0.05)
+    llamadas = []
+
+    class _Lento:
+        def __init__(self):
+            self.chat = self
+            self.completions = self
+
+        async def create(self, **kw):
+            evento = asyncio.Event()
+            llamadas.append(evento)
+            try:
+                await asyncio.sleep(10)
+            except asyncio.CancelledError:
+                evento.set()
+                raise
+
+    tarea = asyncio.ensure_future(rag_agent.generar_con_respaldo(_Lento(), [{"role": "user", "content": "hola"}]))
+    await asyncio.sleep(0.1)  # ya están el principal y el respaldo en marcha
+    tarea.cancel()
+    with pytest.raises(asyncio.CancelledError):
+        await tarea
+    await asyncio.sleep(0)
+    assert llamadas and all(e.is_set() for e in llamadas)

@@ -173,6 +173,14 @@ async def _router_node(state: BotState) -> dict:
     conv._senales_router = signals  # gen-13: el cierre del turno sabe si el mensaje traía una pregunta
     route = classify_route(conv, message, signals)
     logger.info(f"[GRAPH] conv={conv.conversation_id} route={route}")
+    if route == ROUTE_BOOKING and _no_usara_el_rag_adelantado(conv, message, signals):
+        # lat-1 (24-oct; Gadea #1741): en la reserva, la respuesta adelantada solo se usa si el mensaje trae una pregunta
+        # (o el lugar desconocido de CAL-C4). Sin eso se tiraba después de escribirla y revisarla («desde Cartagena»,
+        # «somos 2»: latb3-B, 142 escritores y 67 revisores en turnos «descartado»). Se cancela ya; si al final hace
+        # falta el RAG, se lanza entonces.
+        from src.agents.conversational_core import cancelar_rag_adelantado
+
+        cancelar_rag_adelantado(conv)
     from src.observability import note_turn
 
     note_turn(route=route)  # resumen del turno en Langfuse (m0-1)
@@ -226,6 +234,20 @@ def get_compiled_graph():
     if _COMPILED_GRAPH is None:
         _COMPILED_GRAPH = _build_graph()
     return _COMPILED_GRAPH
+
+
+def _no_usara_el_rag_adelantado(conv: ConversationState, message: str, signals: dict) -> bool:
+    """lat-1: ¿la reserva va a tirar la respuesta adelantada? Con el mismo criterio que la lanza
+    (`conversational_core._maybe_launch_answer`): sin pregunta en el mensaje ni lugar desconocido, y fuera de DIVE TO
+    HEAL (que la usa aunque no haya pregunta)."""
+    from src.agents.conversational_core import _lugar_desconocido, _turn_has_question
+    from src.config import settings
+
+    if getattr(conv, "_rag_adelantado", None) is None or conv.adaptive_diving_context:
+        return False
+    if settings.lugar_desconocido_al_rag and _lugar_desconocido(signals):
+        return False
+    return not _turn_has_question(message, signals)
 
 
 def intenciones_del_turno(conv: ConversationState, signals: dict) -> list[str]:
