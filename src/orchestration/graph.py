@@ -241,11 +241,10 @@ def _no_usara_el_rag_adelantado(conv: ConversationState, message: str, signals: 
     (`conversational_core._maybe_launch_answer`): sin pregunta en el mensaje ni lugar desconocido, y fuera de DIVE TO
     HEAL (que la usa aunque no haya pregunta)."""
     from src.agents.conversational_core import _lugar_desconocido, _turn_has_question
-    from src.config import settings
 
     if getattr(conv, "_rag_adelantado", None) is None or conv.adaptive_diving_context:
         return False
-    if settings.lugar_desconocido_al_rag and _lugar_desconocido(signals):
+    if _lugar_desconocido(signals):
         return False
     return not _turn_has_question(message, signals)
 
