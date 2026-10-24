@@ -1,7 +1,7 @@
 """CAL-A (16-oct): que el RAG conteste TODO lo que pregunta el cliente (diseño de Gadea, diagnóstico de los 73 fallos).
 
 Se fija:
-1. A1 `rag_temperatura_cero`: la redacción va a temperatura 0 con el flag y a 0,3 sin él;
+1. A1 `rag_temperatura_cero` (promocionado; su flag se borró en sim-5): la redacción va a temperatura 0;
 2. A2 `rag_plan_primero`: la lista de puntos del plan se añade al mensaje de la redacción; sin el flag, nada cambia;
 3. A3 `rag_revisor_completitud`: si a una respuesta aprobada le falta un punto, se reintenta una vez con lo que falta;
    si el reintento no pasa el revisor, vale la primera; si no falta nada, no hay reintento;
@@ -45,7 +45,7 @@ def rag(monkeypatch):
 
     monkeypatch.setattr(rag_agent, "search_knowledge_base", fake_search)
     monkeypatch.setattr(rag_agent.settings, "rag_min_score", 0.5)
-    for flag in ("rag_temperatura_cero", "rag_plan_primero", "rag_revisor_completitud", "rag_revisor_avisos"):
+    for flag in ("rag_plan_primero", "rag_revisor_completitud", "rag_revisor_avisos"):
         monkeypatch.setattr(rag_agent.settings, flag, False)
     llamadas = []
     veredictos = []
@@ -87,11 +87,7 @@ NO = (False, "HALLUCINATED - algo. NO")
 
 
 @pytest.mark.asyncio
-async def test_temperatura_cero_con_el_flag(rag, monkeypatch):
-    llamadas = rag([CORTA], [OK])
-    await rag_agent.rag_answer(PREGUNTA, lang="es")
-    assert llamadas[0]["temperature"] == 0.3
-    monkeypatch.setattr(rag_agent.settings, "rag_temperatura_cero", True)
+async def test_temperatura_cero(rag, monkeypatch):
     llamadas = rag([CORTA], [OK])
     await rag_agent.rag_answer(PREGUNTA, lang="es")
     assert llamadas[-1]["temperature"] == 0.0

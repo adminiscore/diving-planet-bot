@@ -25,7 +25,7 @@ settings.langfuse_public_key = settings.langfuse_secret_key = ""
 from src.agents import escalation, supervisor  # noqa: E402
 from src.flows.state import ConversationState  # noqa: E402
 
-FLAGS_EX3 = ("atajo_alergia_por_rag",)  # el del resumen se borró en MEJ-1 y el de la nacionalidad en mej-1d
+FLAGS_EX3: tuple[str, ...] = ()  # los tres, promocionados y sin interruptor: MEJ-1, mej-1d y sim-5 (el de la alergia)
 
 
 async def _noop(*args, **kwargs):

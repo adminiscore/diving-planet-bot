@@ -1,26 +1,19 @@
-"""CAL-C1 (16-oct), flag `actividad_por_lo_sabido`: quien ya dijo que quiere bucear no recibe el menú de actividades.
+"""CAL-C1 (16-oct; promocionado, su flag `actividad_por_lo_sabido` se borró en sim-5): quien ya dijo que quiere bucear no recibe el menú de actividades.
 
 Banco CAL (10 casos): "5 inmersiones", "Muchas gracias!", "no estamos certificados" → "¿Con cuál te animas — buceo,
 minicurso, snorkel o un curso PADI?". Regla de Gadea (14/27-sep): recomendar según lo que se sabe. Se fija:
 1. quiere bucear y no está certificado → se recomienda el minicurso (lo confirma el cliente);
 2. quiere bucear y no se sabe la certificación → se pregunta la certificación;
-3. certificado → el menú de certificados de siempre; sin "quiere bucear" o sin el flag → el menú de siempre.
+3. certificado → el menú de certificados de siempre; sin "quiere bucear" → el menú de siempre.
 """
 
 import pytest
 
 from src.agents import conversational_core as core
 from src.agents.conversational_core import SLOT_ACTIVITY, SLOT_CERTIFICATION, ask_slot
-from src.config import settings
 from src.flows.state import ConversationState
 
 MENU = "¿Con cuál te animas — *buceo*, *minicurso*, *snorkel* o un *curso PADI*?"
-
-
-@pytest.fixture
-def flag(monkeypatch):
-    monkeypatch.setattr(settings, "actividad_por_lo_sabido", True)
-    monkeypatch.setattr(settings, "recomendar_a_certificados", True)
 
 
 def _estado(**campos) -> ConversationState:
@@ -30,7 +23,7 @@ def _estado(**campos) -> ConversationState:
     return st
 
 
-def test_quiere_bucear_sin_certificacion_recomienda_el_minicurso(flag):
+def test_quiere_bucear_sin_certificacion_recomienda_el_minicurso():
     st = _estado(quiere_bucear=True, is_certified=False)
     texto = ask_slot(st, SLOT_ACTIVITY, reasking=True)
     assert "te recomiendo el *minicurso*" in texto and MENU not in texto
@@ -41,7 +34,7 @@ def test_quiere_bucear_sin_certificacion_recomienda_el_minicurso(flag):
     assert "te recomiendo" not in corta and "lo ideal es el *minicurso*" in corta
 
 
-def test_recomendacion_apuntada_antes_pero_no_dicha_se_dice_entera(flag):
+def test_recomendacion_apuntada_antes_pero_no_dicha_se_dice_entera():
     # cal-60: la recomendación se había apuntado en un turno anterior y el bot enseñó el menú; ahora, entera.
     st = _estado(quiere_bucear=True, is_certified=False, suggested_activity="minicourse",
                  history=[{"role": "assistant", "content": "¿Con cuál te animas — *buceo*, *minicurso*…?"}])
@@ -49,7 +42,7 @@ def test_recomendacion_apuntada_antes_pero_no_dicha_se_dice_entera(flag):
     assert st.core_pending_slot == SLOT_ACTIVITY
 
 
-def test_quiere_bucear_sin_saber_la_certificacion_la_pregunta(flag):
+def test_quiere_bucear_sin_saber_la_certificacion_la_pregunta():
     st = _estado(quiere_bucear=True)
     texto = ask_slot(st, SLOT_ACTIVITY, reasking=True)
     assert "¿Eres buzo certificado?" in texto and MENU not in texto
@@ -58,24 +51,22 @@ def test_quiere_bucear_sin_saber_la_certificacion_la_pregunta(flag):
     assert "¿Son buzos certificados?" in ask_slot(st, SLOT_ACTIVITY)  # textos_de_cartagena (20-oct): ustedes
 
 
-def test_certificado_recibe_el_menu_de_certificados(flag):
+def test_certificado_recibe_el_menu_de_certificados():
     texto = ask_slot(_estado(quiere_bucear=True, is_certified=True), SLOT_ACTIVITY, reasking=True)
     assert "*salida de 2 inmersiones*" in texto
 
 
-def test_sin_quiere_bucear_o_sin_flag_el_menu_de_siempre(flag, monkeypatch):
+def test_sin_quiere_bucear_el_menu_de_siempre():
     assert MENU in ask_slot(_estado(), SLOT_ACTIVITY, reasking=True)
-    monkeypatch.setattr(settings, "actividad_por_lo_sabido", False)
-    assert MENU in ask_slot(_estado(quiere_bucear=True), SLOT_ACTIVITY, reasking=True)
 
 
-def test_con_reparto_de_grupo_no_cambia(flag):
+def test_con_reparto_de_grupo_no_cambia():
     st = _estado(quiere_bucear=True, detected_group_allocation={"certified_diving": 1, "undecided": 1})
     assert ask_slot(st, SLOT_ACTIVITY, reasking=True) == ask_slot(
         _estado(detected_group_allocation={"certified_diving": 1, "undecided": 1}), SLOT_ACTIVITY, reasking=True)
 
 
-def test_la_certificacion_conocida_por_el_campo_detectado(flag):
+def test_la_certificacion_conocida_por_el_campo_detectado():
     st = _estado(quiere_bucear=True, detected_is_certified=False)
     assert core._known_field_values(st).get("is_certified") is False
     assert "minicurso" in ask_slot(st, SLOT_ACTIVITY, reasking=True)
@@ -102,9 +93,6 @@ async def test_c2_actividad_citada_de_la_propuesta_del_bot(monkeypatch):
     datos = {"activity": {"valor": "certified_diving", "cita": "la *salida de 2 inmersiones*"},
              "group_size": {"valor": 2, "cita": "el de la salida"}}
     cliente = _cliente_que_devuelve(datos)
-    monkeypatch.setattr(settings, "extractor_cita_del_cliente", False)
-    assert "activity" not in await ex.extraer_turno("nos gusta, somos 2", history=historia, lang="es", client=cliente)
-    monkeypatch.setattr(settings, "extractor_cita_del_cliente", True)
     out = await ex.extraer_turno("nos gusta, somos 2", history=historia, lang="es", client=cliente)
     assert out["activity"] == "certified_diving"
     assert "group_size" not in out  # los demás campos siguen exigiendo la cita en el mensaje

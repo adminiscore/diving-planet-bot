@@ -9,7 +9,7 @@ cada caso del banco se pasa N veces (en paralelo, con tope de concurrencia) y se
 - latencia p50/p95 por llamada.
 
     ENV_FILE=.env.dev python -m scripts.estabilidad_extractor --grupo diseño --pasadas 5 [--modelo gpt-4.1]
-        [--flag extractor_aclaraciones] [--coinciden 2]
+        [--flag <flag>] [--coinciden 2]
 
 `--coinciden 2`: modo "dos llamadas que tienen que coincidir": cada pasada lanza dos llamadas en paralelo y solo
 se queda con los campos en los que coinciden (un campo en que no coinciden queda sin dato). Guarda el detalle en

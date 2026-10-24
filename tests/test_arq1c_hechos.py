@@ -150,13 +150,7 @@ def test_la_recogida_y_el_alojamiento_van_en_los_hechos():
                                                                           ["minicourse"]), ["horario"]))
 
 
-def test_arq1m_con_la_disponibilidad_va_el_enlace(monkeypatch):
-    from src.config import settings
-
-    monkeypatch.setattr(settings, "enlace_con_disponibilidad", False)
-    [b] = h.hechos(_conv(location="cartagena"), ["disponibilidad"], ["minicourse"])
-    assert "enlace" not in b
-    monkeypatch.setattr(settings, "enlace_con_disponibilidad", True)
+def test_arq1m_con_la_disponibilidad_va_el_enlace():
     [b] = h.hechos(_conv(location="cartagena"), ["disponibilidad"], ["minicourse"])
     assert "book.divingplanet.org" in b["enlace"]["cartagena"]
     assert h.faltan("Siempre hay disponibilidad.", [b], ["disponibilidad"])

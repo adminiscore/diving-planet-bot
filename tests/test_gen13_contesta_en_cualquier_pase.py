@@ -6,16 +6,10 @@ Un solo sitio: el cierre del turno en `supervisor.route_message`, con `escalatio
 import pytest
 
 from src.agents import escalation_agent, supervisor
-from src.config import settings
 from src.flows.state import ConversationState, Step
 
 PASE = "Te paso con un asesor del equipo, que te escribe por aquí enseguida."
 LO_DEMAS = "El minicurso desde Cartagena cuesta 655.000 COP e incluye el equipo."
-
-
-@pytest.fixture
-def con_flag(monkeypatch):
-    monkeypatch.setattr(settings, "contesta_antes_de_cualquier_pase", True)
 
 
 def _conv(**campos) -> ConversationState:
@@ -53,14 +47,14 @@ async def _route(monkeypatch, motivo, senales, mensaje="pásame con alguien y ¿
 
 
 @pytest.mark.asyncio
-async def test_un_pase_cualquiera_contesta_antes_lo_demas(monkeypatch, con_flag, lo_demas):
+async def test_un_pase_cualquiera_contesta_antes_lo_demas(monkeypatch, lo_demas):
     st, resp = await _route(monkeypatch, "solicitó asesor", {"asks_question": True})
     assert resp.startswith(LO_DEMAS) and resp.endswith(PASE)
     assert "solicitó asesor" in lo_demas[0]["tema"]
 
 
 @pytest.mark.asyncio
-async def test_el_rag_contesta_con_el_paso_de_antes_del_pase(monkeypatch, con_flag, lo_demas):
+async def test_el_rag_contesta_con_el_paso_de_antes_del_pase(monkeypatch, lo_demas):
     """Con el paso en ESCALATE el RAG diría «el asesor ya tiene tu caso» encima de «te paso ahora»."""
     st, _ = await _route(monkeypatch, "solicitó asesor", {"asks_question": True}, step=Step.MAIN_MENU)
     assert lo_demas[0]["paso"] == Step.MAIN_MENU
@@ -70,26 +64,19 @@ async def test_el_rag_contesta_con_el_paso_de_antes_del_pase(monkeypatch, con_fl
 @pytest.mark.asyncio
 @pytest.mark.parametrize("motivo", ["datos sensibles detectados", "complaints_or_emergencies",
                                     "⚠️ FALLO TÉCNICO: OpenAI sin saldo o saturado (código 429)"])
-async def test_los_pases_que_van_solos_no_contestan_nada_mas(monkeypatch, con_flag, lo_demas, motivo):
+async def test_los_pases_que_van_solos_no_contestan_nada_mas(monkeypatch, lo_demas, motivo):
     _, resp = await _route(monkeypatch, motivo, {"asks_question": True})
     assert resp == PASE and not lo_demas
 
 
 @pytest.mark.asyncio
-async def test_sin_pregunta_en_el_mensaje_el_pase_va_solo(monkeypatch, con_flag, lo_demas):
+async def test_sin_pregunta_en_el_mensaje_el_pase_va_solo(monkeypatch, lo_demas):
     _, resp = await _route(monkeypatch, "solicitó asesor", {"asks_question": False}, mensaje="pásame con un asesor")
     assert resp == PASE and not lo_demas
 
 
 @pytest.mark.asyncio
-async def test_apagado_el_pase_va_solo(monkeypatch, lo_demas):
-    monkeypatch.setattr(settings, "contesta_antes_de_cualquier_pase", False)
-    _, resp = await _route(monkeypatch, "solicitó asesor", {"asks_question": True})
-    assert resp == PASE and not lo_demas
-
-
-@pytest.mark.asyncio
-async def test_si_gen1_ya_contesto_no_se_repite(monkeypatch, con_flag, lo_demas):
+async def test_si_gen1_ya_contesto_no_se_repite(monkeypatch, lo_demas):
     async def _grafo(state, message):
         state._senales_router = {"asks_question": True}
         state._contestado_antes_del_pase = True  # lo hizo el nodo de escalado (médico o clima)
@@ -102,7 +89,7 @@ async def test_si_gen1_ya_contesto_no_se_repite(monkeypatch, con_flag, lo_demas)
 
 
 @pytest.mark.asyncio
-async def test_un_turno_sin_pase_no_cambia(monkeypatch, con_flag, lo_demas):
+async def test_un_turno_sin_pase_no_cambia(monkeypatch, lo_demas):
     async def _grafo(state, message):
         state._senales_router = {"asks_question": True}
         return "El minicurso cuesta 655.000 COP."

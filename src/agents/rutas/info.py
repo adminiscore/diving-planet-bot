@@ -9,7 +9,6 @@ import re
 
 from src.agents.intent_detector import IntentDetector
 from src.agents.lead_summary import build_lead_summary
-from src.config import settings
 from src.flows import eligibility
 from src.flows.state import ConversationState, Step
 from src.knowledge.loader import load_policies
@@ -72,10 +71,9 @@ def _alcohol_and_food_policy_answer(msg_lower: str, lang: str) -> str | None:
         text = (policies.get("no_alcohol_policy") or {}).get(lang, "")
         if text:
             parts.append(text)
-    # ex-3 (`atajo_alergia_por_rag`): la alergia sola la contesta el RAG (FAQ curada); con alcohol en el mismo
-    # mensaje va junta, como hoy (la política de alcohol no está en la base del RAG).
-    alergia_por_rag = settings.atajo_alergia_por_rag and not parts
-    if not alergia_por_rag and _ALLERGY_WORD_RE.search(msg_lower) and _FOOD_ALLERGEN_RE.search(msg_lower):
+    # ex-3: la alergia sola la contesta el RAG (FAQ curada); con alcohol en el mismo mensaje va junta (la política de
+    # alcohol no está en la base del RAG).
+    if parts and _ALLERGY_WORD_RE.search(msg_lower) and _FOOD_ALLERGEN_RE.search(msg_lower):
         text = (policies.get("food_policy") or {}).get(lang, "")
         if text:
             parts.append(text)
@@ -97,7 +95,7 @@ def _alcohol_and_food_policy_answer(msg_lower: str, lang: str) -> str | None:
 # el handoff interno de Chatwoot. Mismo patron que `_alcohol_and_food_
 # policy_answer`: respuesta determinista, sin pasar por RAG/retrieval, pero
 # aqui ademas REDACTADA (no el texto crudo de policies.json) para no filtrar
-# el numero, con la misma frase que ya usa `_contact_number_deflection`.
+# el numero, con la misma idea que `_contacto_pasa_a_persona` (no se dan números).
 _PRIVATE_GROUP_EVENT_RE = re.compile(
     r"evento\s+corporativo|grupo\s+cerrado|servicio\s+privado|"
     r"team[\s-]?building|"
@@ -110,11 +108,11 @@ _PRIVATE_GROUP_EVENT_RE = re.compile(
 
 def pide_servicio_privado(msg_lower: str, signals: dict) -> bool:
     """¿El cliente pide un servicio privado (salida, lancha o instructor solo para su grupo, grupo cerrado, evento de
-    empresa)? La lista de siempre o, con `privado_pasa_directo` (gen-3b, decisión de Gadea: pasa directo en cuanto lo
-    pide), Jev (`pide_servicio_privado`). Lo usan el router y el nodo `info`, con el mismo criterio."""
+    empresa)? La lista de siempre o (gen-3b, decisión de Gadea: pasa directo en cuanto lo pide) Jev
+    (`pide_servicio_privado`). Lo usan el router y el nodo `info`, con el mismo criterio."""
     if _PRIVATE_GROUP_EVENT_RE.search(msg_lower):
         return True
-    return settings.privado_pasa_directo and (signals or {}).get("pide_servicio_privado") is True
+    return (signals or {}).get("pide_servicio_privado") is True
 
 
 def _private_group_event_answer(lang: str) -> str:
@@ -227,7 +225,7 @@ def _maybe_answer_age_eligibility(message: str, state: ConversationState) -> str
     """
     if not _AGE_ELIGIBILITY_CUE.search(message):
         return None
-    if settings.hechos_por_codigo and set(getattr(state, "_intenciones", None) or ()) - {"edad"}:
+    if set(getattr(state, "_intenciones", None) or ()) - {"edad"}:
         # ARQ-1e: «Salgo de Cartagena con mi hijo de 12. ¿Cuánto cuesta el minicurso, qué incluye y desde qué edad?»
         # salía con esta tarjeta y sin el precio ni lo que incluye (banco arq-1d, v1 y v5: 0 de 4 datos 3 de 3). Si Jev
         # ve más intenciones que la edad, el turno sigue y lo contesta el redactor de hechos, con la edad como un hecho.

@@ -556,7 +556,7 @@ def _parte_ficha(service_id: str, lang: str) -> list[str]:
     es = lang == "es"
     partes: list[str] = []
     metros = svc.get("max_depth_m")
-    if metros and settings.catalogo_profundidad:
+    if metros:
         partes.append(f"certifica para bucear hasta {metros} m" if es else f"certifies you to dive down to {metros} m")
     preparacion = (svc.get("preparation_es" if es else "preparation_en") or "").strip().rstrip(".")
     if preparacion and settings.catalogo_preparacion:
@@ -634,13 +634,11 @@ def catalog_facts(lang: str) -> str:
 
     # 17-oct: la clave lleva TODOS los flags que cambian el texto. Antes solo llevaba la moneda, así que cambiar
     # otro flag en el mismo proceso (los tests, o una medida que enciende un flag) devolvía el catálogo de antes.
-    clave = (f"{lang}|{settings.catalogo_profundidad}|"
-             f"{settings.catalogo_preparacion}|{settings.descuentos_un_sitio}")
+    clave = f"{lang}|{settings.catalogo_preparacion}|{settings.descuentos_un_sitio}"
     if clave in _FACTS_CACHE:
         return _FACTS_CACHE[clave]
 
     es = lang == "es"
-    catalogo_fichas = settings.catalogo_profundidad or settings.catalogo_preparacion
     groups: dict[bool, list[str]] = {False: [], True: []}
     for service_id, svc in SERVICES.items():
         if svc.get("category") == "private":
@@ -650,8 +648,7 @@ def catalog_facts(lang: str) -> str:
         parts = service_fact_parts(service_id, lang)
         # 9-oct: cada plan dice si el equipo va incluido (el Dive Master no).
         parts += _parte_equipo(service_id, lang)
-        if catalogo_fichas:
-            parts += _parte_ficha(service_id, lang)
+        parts += _parte_ficha(service_id, lang)
         groups[island].append(f"- {name}: " + "; ".join(parts) + ".")
     # El refresher se vende con el servicio que le da el registro de actividades (hoy el minicurso). Paso 8
     # (28-sep): sin el atajo fijo del refresher, el RAG decia "el refresh no esta listado con precio".
@@ -740,12 +737,11 @@ def catalog_facts(lang: str) -> str:
         out = [x if not x.startswith(fijo) else f"{cabeza} " + " ".join(descuentos_de_la_base(lang).values())
                for x in out]
     text = chr(10).join(out)
-    if settings.catalogo_profundidad:
-        # La profundidad también como regla general: "certifica hasta 18 m" en la línea del CURSO no le llegaba a quien
-        # pregunta por una SALIDA siendo ya buzo certificado (cal-18 siguió 3/3 con solo la parte de la ficha).
-        profundidad = _profundidad_por_certificacion(lang)
-        if profundidad:
-            text += chr(10) + profundidad
+    # La profundidad también como regla general: "certifica hasta 18 m" en la línea del CURSO no le llegaba a quien
+    # pregunta por una SALIDA siendo ya buzo certificado (cal-18 siguió 3/3 con solo la parte de la ficha).
+    profundidad = _profundidad_por_certificacion(lang)
+    if profundidad:
+        text += chr(10) + profundidad
     _FACTS_CACHE[clave] = text
     return text
 

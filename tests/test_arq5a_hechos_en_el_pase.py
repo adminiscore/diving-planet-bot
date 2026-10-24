@@ -39,8 +39,6 @@ async def test_el_rag_antes_del_pase_recibe_los_hechos(monkeypatch, flag):
 async def test_siempre_no_mira_si_el_mensaje_es_mezclado(monkeypatch):
     from src.agents import redactor_hechos
 
-    monkeypatch.setattr(settings, "hechos_por_codigo", True)
-    monkeypatch.setattr(settings, "hechos_al_rag", True)
     llamadas = []
 
     async def turno(state, message, history):

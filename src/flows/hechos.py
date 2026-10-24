@@ -245,8 +245,7 @@ def hechos(state: ConversationState, intenciones: list[str], actividades: list[s
         # lat-0a (real-1, 24-oct): «listo, ¿cómo pago?» con el plan ya elegido se contestaba «pagas con tarjeta en la
         # página web» sin el enlace (3 diálogos). Con el pago va también el enlace del plan; el cómo pagar ya lo lleva
         # el pago, así que no se repite en `como_reservar`.
-        if ("enlace" in pedidas or "pago" in pedidas
-                or (settings.enlace_con_disponibilidad and "disponibilidad" in pedidas)):
+        if "enlace" in pedidas or "pago" in pedidas or "disponibilidad" in pedidas:
             if state.is_colombian and not getattr(state, "mixed_nationality_notice", False):
                 # Decisión de Gadea (21-oct): el cierre de un colombiano lo coordina un asesor (pago en COP), sin enlace.
                 bloque["enlace"] = {"asesor": True}

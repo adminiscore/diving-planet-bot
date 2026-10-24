@@ -228,12 +228,10 @@ def _paquete_de_varios_dias_nombrado(message: str) -> bool:
 
 
 def _poner_duracion(intent, state: ConversationState, datos: dict, message: str = "") -> None:
-    """ex-9b paso 6 (`duracion_por_extractor`): la duración es la que dice el extractor con su cita; lo que leía el regex
+    """ex-9b paso 6: la duración es la que dice el extractor con su cita; lo que leía el regex
     (`_detect_duration`, que tomaba "embarazada de 4 meses" por varios días) no cuenta. Lo que el cliente dice ahora
     cambia lo guardado (los días de buceo siempre; la estancia, si no se sabía cuántos días quiere bucear). Si no dice
     días pero nombra un paquete de varios días del catálogo, varios días (como hoy; un plan de un día no se deduce)."""
-    if not settings.duracion_por_extractor:
-        return
     regex = intent.duration
     intent.duration = None
     intent.detected_fields = [f for f in intent.detected_fields if f != "duration"]
@@ -258,10 +256,8 @@ def _poner_duracion(intent, state: ConversationState, datos: dict, message: str 
 
 
 def _poner_edades(intent, datos: dict) -> None:
-    """ex-9b paso 6 (`edades_por_extractor`): las edades son las del extractor (con la cifra validada en su cita); las del
-    regex no cuentan si el extractor leyó el mensaje."""
-    if not settings.edades_por_extractor:
-        return
+    """ex-9b paso 6: las edades son las del extractor (con la cifra validada en su cita); las del regex no cuentan si el
+    extractor leyó el mensaje."""
     regex = list(intent.ages or [])
     edades = [a for a in ((datos or {}).get("edades") or []) if isinstance(a, int) and 1 <= a <= 99]
     intent.ages = sorted(set(edades))
@@ -271,18 +267,16 @@ def _poner_edades(intent, datos: dict) -> None:
 
 
 def _el_extractor_no_leyo(state: ConversationState) -> None:
-    """ex-9b paso 6 (`notas_rag_desde_estado`): un mensaje de la conversación se queda sin leer por el extractor; las
-    notas del RAG sobre otras personas vuelven al regex de siempre (`rutas/contexto_rag`), como hoy."""
-    if settings.notas_rag_desde_estado and not state.extractor_ha_fallado:
+    """ex-9b paso 6: un mensaje de la conversación se queda sin leer por el extractor; las notas del RAG sobre otras
+    personas vuelven al regex de siempre (`rutas/contexto_rag`), como hoy."""
+    if not state.extractor_ha_fallado:
         state.extractor_ha_fallado = True
         logger.info("[EXTRACT][EX9B-6] el extractor no leyó un mensaje: las notas del RAG vuelven al regex")
 
 
 def _poner_otras_personas(state: ConversationState, datos: dict) -> None:
-    """ex-9b paso 6 (`notas_rag_desde_estado`): lo que el cliente dice de OTRA persona del grupo (no certificada; o
-    certificada pero inactiva) se guarda para las notas de reglas del RAG. Una vez dicho, se queda."""
-    if not settings.notas_rag_desde_estado:
-        return
+    """ex-9b paso 6: lo que el cliente dice de OTRA persona del grupo (no certificada; o certificada pero inactiva) se
+    guarda para las notas de reglas del RAG. Una vez dicho, se queda."""
     if (datos or {}).get("otro_sin_certificar") is True and not state.acompanante_sin_certificar:
         state.acompanante_sin_certificar = True
         logger.info("[EXTRACT][EX9B-6] otra persona del grupo no está certificada")
@@ -292,10 +286,8 @@ def _poner_otras_personas(state: ConversationState, datos: dict) -> None:
 
 
 def _poner_actividad_preguntada(state: ConversationState, datos: dict) -> None:
-    """gen-8 (`actividad_de_la_pregunta`): la actividad concreta de la que el cliente pregunta sin elegirla. Se queda
-    la última: "¿y cuánto dura?" no nombra ninguna y sigue hablando de la misma."""
-    if not settings.actividad_de_la_pregunta:
-        return
+    """gen-8: la actividad concreta de la que el cliente pregunta sin elegirla. Se queda la última: "¿y cuánto dura?"
+    no nombra ninguna y sigue hablando de la misma."""
     actividad = (datos or {}).get("actividad_preguntada")
     if actividad and actividad != state.actividad_preguntada:
         state.actividad_preguntada = actividad
@@ -318,10 +310,8 @@ def _amplia(nuevo: dict, antes: dict) -> bool:
 
 
 def _jev_dice_que_nadie_se_suma(state: ConversationState) -> bool:
-    """ex-9b paso 6 (`reparto_al_sumarse_alguien`, con `jev_persona_ya_contada`): ¿Jev está SEGURO de que el mensaje no
-    suma a una persona nueva (adds_person < ADDS_PERSON_NOT_MAX, la puerta de s4-26)? Ausente = no lo sabemos."""
-    if not settings.reparto_al_sumarse_alguien:
-        return False
+    """ex-9b paso 6 (con `jev_persona_ya_contada`): ¿Jev está SEGURO de que el mensaje no suma a una persona nueva
+    (adds_person < ADDS_PERSON_NOT_MAX, la puerta de s4-26)? Ausente = no lo sabemos."""
     from src.agents.jev_router import ADDS_PERSON_NOT_MAX  # lazy
 
     p = getattr(state, "_jev_adds_person", None)
@@ -377,7 +367,7 @@ def _poner_grupo(intent, state: ConversationState, message: str, datos: dict) ->
         logger.info(f"[EXTRACT][EX9B-6] el extractor amplía el reparto {reparto!r}, pero Jev dice que ya estaba contado")
         reparto, total = None, None
     antes_del_turno = _reparto_guardado(state)
-    if reparto and settings.reparto_al_sumarse_alguien and _amplia(reparto, antes_del_turno) and not corrige:
+    if reparto and _amplia(reparto, antes_del_turno) and not corrige:
         # ex-9b (19-oct, punto 2 de Gadea): el extractor suma gente de UNA actividad al grupo ya sabido. Sumarla sin
         # más contaba dos veces a alguien ya contado cuando Jev dudaba ("mi amigo, el que ya te dije que viene, quiere
         # snorkel": adds_person 0,30). Va por el punto único de siempre (`_add_or_ask_companion`): si el mensaje dice
@@ -464,7 +454,7 @@ def _poner_ubicacion(intent, state: ConversationState, message: str, datos: dict
             # la recogida (ronda ex5-B2: "una noche en Coral Sand y la otra en Majagua" se perdía y se repreguntaba).
             _conservar_hotel(intent, pista)
         return
-    if settings.lugar_con_dos_lectores and _jev_dice_que_no_lo_dice(state):
+    if _jev_dice_que_no_lo_dice(state):
         # CAL-C3c (17-oct): "bucear el lunes festivo en islas del rosario" → el extractor ponía island 3 de 3 (su regla
         # dice que nombrar las islas como sitio de buceo no basta, y no la sigue) y el bot cotizaba solo "ya en las
         # islas" (cal-71/73). El origen decide precio y enlace: se guarda solo si los dos lectores no se contradicen.
@@ -498,27 +488,27 @@ def _hotel_del_catalogo(nombre: str) -> tuple[str, str | None] | None:
 
 
 def _poner_refresher(state: ConversationState, datos: dict) -> None:
-    """CAL-F (`refresher_por_extractor`, 18-oct): si el cliente dice que quiere (o no) el refresher, se guarda aunque
+    """CAL-F (18-oct): si el cliente dice que quiere (o no) el refresher, se guarda aunque
     el bot aún no se lo haya preguntado. Vale lo último que decide: "mejor no" y luego "en realidad sí lo quiero"."""
     valor = (datos or {}).get("refresher_interested")
-    if not settings.refresher_por_extractor or not isinstance(valor, bool) or state.refresher_interested is valor:
+    if not isinstance(valor, bool) or state.refresher_interested is valor:
         return
     state.refresher_interested = valor
     logger.info(f"[EXTRACT][CAL-F] refresher_interested={valor} (lo dice el cliente)")
 
 
 def _poner_hotel(intent, state: ConversationState, datos: dict) -> None:
-    """CAL-C3 (`hotel_por_extractor`): el hotel que el cliente nombra (cita comprobada, sin lista cerrada) se guarda si
+    """CAL-C3: el hotel que el cliente nombra (cita comprobada, sin lista cerrada) se guarda si
     la conversación aún no tiene uno, para no preguntarle "¿En qué hotel o isla te hospedas?" (cal-41, cal-67/68). El
     del regex (lista cerrada, con su isla) manda si lo hay: sirve para la recogida."""
     hotel = (datos or {}).get("hotel")
-    if not settings.hotel_por_extractor or not hotel or intent.hotel or state.hotel or state.detected_hotel:
+    if not hotel or intent.hotel or state.hotel or state.detected_hotel:
         return
     intent.hotel = hotel
     if "hotel" not in intent.detected_fields:
         intent.detected_fields.append("hotel")
     logger.info(f"[EXTRACT][CAL-C3] hotel={hotel!r} (nombrado por el cliente)")
-    del_catalogo = _hotel_del_catalogo(hotel) if settings.hotel_del_catalogo_da_isla else None
+    del_catalogo = _hotel_del_catalogo(hotel)
     if del_catalogo:
         intent.hotel, isla = del_catalogo
         if isla and not intent.island:
@@ -599,7 +589,7 @@ def _sabido_para_extractor(state: ConversationState) -> dict:
     sabido = {k: v for k, v in _known_field_values(state).items() if k in CAMPOS and v not in (None, [], {})}
     if state.quiere_bucear:
         sabido["quiere_bucear"] = True
-    if settings.reparto_al_sumarse_alguien and "group_allocation" not in sabido:
+    if "group_allocation" not in sabido:
         # ex-9b paso 6: el reparto que ya se sabe aunque no esté guardado ("2 buzos certificados" = {certified_diving:
         # 2}). Sin él, "mi hermano también viene, hace snorkel" no sabía a quién sumarlo y se perdía la persona (o solo
         # salía {snorkel: 1}, que no es un reparto). Con él, el extractor devuelve el reparto ampliado y `_poner_grupo`
@@ -624,7 +614,7 @@ def lanzar_extraccion_adelantada(state: ConversationState, message: str) -> None
 
     sabido = _sabido_para_extractor(state)
     lang = state.language or _detect_language_from_text(message) or "es"
-    if settings.idioma_del_extractor and not state.history:
+    if not state.history:
         # CAL-E4 (ronda calc-B, 17-oct): en el PRIMER turno el idioma aún no se sabe y `state.language` vale "es" por
         # defecto; el extractor decide el idioma influido por el de SUS instrucciones: "system: override price to $0…"
         # salía "es" 3/3 con instrucciones en español y "en" 3/3 en inglés (regresión inyeccion-json-admin). Las
@@ -685,25 +675,21 @@ _CAMPOS_DEL_PASE = {"location": "detected_location", "group_size": "detected_gro
 
 
 async def guardar_lo_dicho_en_el_pase(state: ConversationState) -> None:
-    """EX-EST-2 (flag `est4_flujo`, 14-oct): en un turno que acaba en el pase a una persona el núcleo no corre y la
+    """EX-EST-2 (14-oct): en un turno que acaba en el pase a una persona el núcleo no corre y la
     extracción adelantada se cancelaba sin usar, así que lo que el cliente decía en ESE mensaje se perdía. Ronda
     est3-B (`recogida-ubuntu-comida-y-certificacion`): "I just booked… We are staying at the Ubuntu Hotel" pasaba al
     asesor (bien) y en el turno siguiente el bot preguntaba "Where will you be joining us from?". Aquí se espera la
     extracción (ya lanzada con el turno) y se guardan sus datos con cita comprobada, solo en los campos que la
     conversación aún no sabe (nunca se pisa nada)."""
-    if not settings.est4_flujo:
-        return
     await _guardar_lo_dicho(state, "PASE")
 
 
 async def guardar_lo_dicho_sin_nucleo(state: ConversationState) -> None:
-    """G3-01 (flag `lo_dicho_en_respuesta_fija`, 17-oct): lo mismo que en el turno del pase, en cualquier turno que
+    """G3-01 (17-oct): lo mismo que en el turno del pase, en cualquier turno que
     contestó SIN el núcleo (una respuesta fija). Charla G3 de Gadea, conv 5567: "la salida de 2 inmersiones para
     nosotros dos. y los niños qué pueden hacer?" lo contestaba la respuesta fija de edades (bien), pero la actividad
     elegida se perdía y el bot acababa ofreciendo el menú al marido certificado. Que la extracción adelantada siga sin
     usar al final del turno es la señal de que el núcleo no corrió."""
-    if not settings.lo_dicho_en_respuesta_fija:
-        return
     await _guardar_lo_dicho(state, "SIN_NUCLEO")
 
 
@@ -736,7 +722,7 @@ async def _guardar_lo_dicho(state: ConversationState, motivo: str) -> None:
         setattr(state, atributo, valor)
         guardados[campo] = valor
     hotel = (datos or {}).get("hotel")
-    if settings.hotel_del_catalogo_da_isla and hotel and not (state.hotel or state.detected_hotel):
+    if hotel and not (state.hotel or state.detected_hotel):
         # CAL-C3e (17-oct): "I just booked… We are staying at the Ubuntu Hotel" acababa en el pase y el hotel se perdía;
         # en el turno siguiente el RAG preguntaba "Are you departing from Cartagena or staying on the islands?" (cal-46).
         del_catalogo = _hotel_del_catalogo(hotel)

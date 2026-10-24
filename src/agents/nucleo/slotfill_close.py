@@ -36,20 +36,19 @@ from src.config import settings
 from src.domain import activities as dom
 from src.flows import cart_render
 from src.flows.state import ConversationState, Step
-from src.flows.textos import de_cartagena
 from src.utils import money
 
 logger = logging.getLogger("uvicorn.error")
 
 
 def _tarjeta_sin_seguridad(state: ConversationState, nxt: str | None, prev_pending: str | None) -> bool:
-    """CAL-F (flag `tarjeta_sin_seguridad`, decisión de Gadea, 18-oct): ¿sale ya la tarjeta con el precio aunque falte la
+    """CAL-F (decisión de Gadea, 18-oct): ¿sale ya la tarjeta con el precio aunque falte la
     respuesta de seguridad? Sí cuando es lo ÚNICO que falta y el cliente no la contestó en este mensaje (se la hicimos
     en el anterior). pareja-certificados-cop-descuento-almuerzo (3/3): la pareja preguntaba por un "bono" y por el
     almuerzo, el bot repetía "¿más de 2 años?" y la tarjeta con el precio no salía nunca. El aplazamiento de EX-FLUJO-1
     no servía: siendo la última pregunta, el resumen la volvía a hacer en el mismo turno."""
     return bool(
-        settings.tarjeta_sin_seguridad and nxt == SLOT_SAFETY and prev_pending == SLOT_SAFETY
+        nxt == SLOT_SAFETY and prev_pending == SLOT_SAFETY
         and next_missing_slot(state, saltar=frozenset({SLOT_SAFETY})) is None
     )
 
@@ -60,19 +59,19 @@ def _nota_seguridad(state: ConversationState) -> str:
     if state.language == "es":
         return ("\n\n⚠️ Si alguno lleva *más de 2 años* sin bucear, se añade el *refresher* (repaso en el agua antes de "
                 f"la inmersión): *{precio}* por persona. "
-                + de_cartagena("¿Es el caso de alguno de ustedes?" if (state.detected_group_size or 1) > 1
-                               else "¿Es tu caso?", "¿Es vuestro caso?"))
+                + ("¿Es el caso de alguno de ustedes?" if (state.detected_group_size or 1) > 1
+                               else "¿Es tu caso?"))
     return ("\n\n⚠️ If anyone hasn't dived for *more than 2 years*, a *refresher* is added (a review in the water before "
             f"the dive): *{precio}* per person. Is that your case?")
 
 
 def _siguiente_pregunta(state: ConversationState, prev_pending: str | None) -> str | None:
-    """EX-FLUJO-1 (flag `aplazar_pregunta_sin_respuesta`, decisión de Gadea, 14-oct): si el cliente no contestó la
+    """EX-FLUJO-1 (decisión de Gadea, 14-oct): si el cliente no contestó la
     pregunta del turno anterior (sigue faltando ese dato), no se repite: se aplaza y se pregunta otra cosa; las
     aplazadas vuelven justo antes del resumen, cuando no falta nada más. Ronda atencion-B2: "¿Ha pasado más de 2 años
     desde la última inmersión?" salía tres turnos seguidos mientras el cliente daba fechas y su regreso."""
     nxt = next_missing_slot(state)
-    if not settings.aplazar_pregunta_sin_respuesta or nxt is None:
+    if nxt is None:
         return nxt
     # Ronda flujo1-B2: aplazar a la PRIMERA pregunta sin contestar reordenaba casi todas las conversaciones ("Última
     # cosa… ¿sois colombianos?" demasiado pronto; el acuse tomaba la respuesta a una aplazada por la de la pendiente).
@@ -145,7 +144,7 @@ def _refresher_note(state: ConversationState) -> str:
     No se inventa cuantos lo necesitan: la pregunta de seguridad es de grupo."""
     if not state.refresher_interested:
         return ""
-    price = cart_render.refresher_price_text(state, una_moneda=settings.rag_sin_precio_con_tarjeta)  # G3-07a
+    price = cart_render.refresher_price_text(state, una_moneda=True)  # G3-07a
     url = None if state.is_colombian else cart_render.refresher_booking_url(state)
     if state.language == "es":
         how = f" Resérvalo aquí: {url}" if url else " El asesor te lo confirma junto con el pago."
@@ -185,40 +184,24 @@ def _finalize(state: ConversationState) -> str:
         summary = _colombian_summary_lines(state)
         state.mixed_last_summary = summary
         state.pending_note = build_lead_summary(state, escalation_reason=reason)
-        if settings.pago_colombiano_con_asesor:
-            # gen-4 (21-oct, decisión de Gadea, #862): el colombiano sigue pasando a un asesor, pero sin "confirmar
-            # disponibilidad" (siempre hay: decisión del negocio) y en el número del cliente ("Como son…" se decía
-            # también a quien va solo), sin género supuesto.
-            grupo = (state.detected_group_size or 1) > 1
-            if lang == "es":
-                return (
-                    f"{refresher_note}{summary}\n\n"
-                    "El pago es en pesos colombianos (COP): "
-                    + ("pueden" if grupo else "puedes")
-                    + " pagar *100% online* o *50% online + 50% en persona*. "
-                    + ("Les paso con un asesor para coordinar el pago; enseguida se pone en contacto con ustedes. 🌊"
-                       if grupo else
-                       "Te paso con un asesor para coordinar el pago; enseguida se pone en contacto contigo. 🌊")
-                )
-            return (
-                f"{refresher_note}{summary}\n\n"
-                "You pay in Colombian pesos (COP): *100% online* or *50% online + 50% in person*. I'll connect you "
-                "with an advisor to arrange the payment — they'll be in touch shortly. 🌊"
-            )
+        # gen-4 (21-oct, decisión de Gadea, #862): el colombiano pasa a un asesor, sin "confirmar disponibilidad" (siempre
+        # hay: decisión del negocio) y en el número del cliente ("Como son…" se decía también a quien va solo), sin
+        # género supuesto.
+        grupo = (state.detected_group_size or 1) > 1
         if lang == "es":
             return (
                 f"{refresher_note}{summary}\n\n"
-                + de_cartagena("Como son colombianos/residentes", "Como sois colombianos/residentes")
-                + ", el pago es en pesos (COP): puedes "
-                "pagar *100% online* o *50% online + 50% en persona*. Te paso con un "
-                "asesor para confirmar disponibilidad y coordinar el pago — enseguida "
-                "se pone en contacto contigo. 🌊"
+                "El pago es en pesos colombianos (COP): "
+                + ("pueden" if grupo else "puedes")
+                + " pagar *100% online* o *50% online + 50% en persona*. "
+                + ("Les paso con un asesor para coordinar el pago; enseguida se pone en contacto con ustedes. 🌊"
+                   if grupo else
+                   "Te paso con un asesor para coordinar el pago; enseguida se pone en contacto contigo. 🌊")
             )
         return (
             f"{refresher_note}{summary}\n\n"
-            "As Colombian residents you pay in COP: *100% online* or *50% online + "
-            "50% in person*. I'll connect you with an advisor to confirm availability "
-            "and arrange payment — they'll be in touch shortly. 🌊"
+            "You pay in Colombian pesos (COP): *100% online* or *50% online + 50% in person*. I'll connect you "
+            "with an advisor to arrange the payment — they'll be in touch shortly. 🌊"
         )
 
     response = cart_render.goto_final_summary(state)
@@ -256,10 +239,10 @@ def _acuse_por_codigo(state: ConversationState, prev_pending) -> str:
 
 
 def _no_hace_falta_certificacion(state: ConversationState, carry: dict) -> str:
-    """flu-1 (flag `sin_certificacion_no_hace_falta`, G10 nº 2): «No, I'm not certified. I'm just interested in
+    """flu-1 (G10 nº 2): «No, I'm not certified. I'm just interested in
     snorkeling» recibía «Got it—you're not certified…» y la pregunta del origen, sin decirle que para el snorkel no hace
     falta. Si en ESTE turno dice que no está certificado y su actividad no lo pide (dato del registro), se dice."""
-    if not settings.sin_certificacion_no_hace_falta or carry.get("prev_main_is_certified") is False:
+    if carry.get("prev_main_is_certified") is False:
         return ""
     if _known_field_values(state).get("is_certified") is not False:
         return ""
@@ -458,7 +441,7 @@ async def _slotfill_close_phase(
         response = greeting + answer
         state.history.append({"role": "assistant", "content": response})
         return response
-    if (answer and finalized and settings.rag_sin_precio_con_tarjeta and _IMPORTE_RE.search(answer)
+    if (answer and finalized and _IMPORTE_RE.search(answer)
             and not (cierre_previo and state.mixed_last_summary == cierre_previo)):
         # G3-07a (18-oct, decisión de Gadea: una sola moneda por mensaje): el turno lleva la tarjeta del plan con su
         # precio, y la respuesta (adelantada, escrita antes de saber de dónde es el cliente) traía otro importe: "126

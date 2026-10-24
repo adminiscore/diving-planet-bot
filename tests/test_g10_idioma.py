@@ -1,11 +1,10 @@
 """G-10 (decisión de Gadea, 14-oct): si el cliente escribe en otro idioma (no español ni inglés), el bot contesta en
-inglés. El idioma principal del mensaje lo dice el extractor de la fase EX (flag `idioma_otro_en_ingles`)."""
+inglés. El idioma principal del mensaje lo dice el extractor de la fase EX (promocionado; su flag `idioma_otro_en_ingles`, borrado en sim-5)."""
 import asyncio
 
 import pytest
 
 from src.agents import conversational_core as core
-from src.config import settings
 from src.flows.state import ConversationState
 
 
@@ -17,22 +16,12 @@ from src.flows.state import ConversationState
     (None, "es", "es"),   # sin dato, el idioma de siempre
 ])
 def test_otro_idioma_en_ingles(monkeypatch, idioma, antes, despues):
-    monkeypatch.setattr(settings, "idioma_otro_en_ingles", True)
     st = ConversationState(conversation_id="g10", language=antes)
     asyncio.run(core._otro_idioma_en_ingles(st, {"idioma": idioma} if idioma else {}, "Olá, quero fazer mergulho"))
     assert st.language == despues
 
 
-def test_apagado_no_cambia(monkeypatch):
-    monkeypatch.setattr(settings, "idioma_otro_en_ingles", False)
-    st = ConversationState(conversation_id="g10", language="es")
-    asyncio.run(core._otro_idioma_en_ingles(st, {"idioma": "pt"}, "Olá, quero fazer mergulho"))
-    assert st.language == "es"
-
-
 def test_primer_turno_mira_la_extraccion_ya_lanzada_sin_consumirla(monkeypatch):
-    monkeypatch.setattr(settings, "idioma_otro_en_ingles", True)
-
     async def caso():
         st = ConversationState(conversation_id="g10", language="es")
 
@@ -62,20 +51,6 @@ def test_politicas_enteras_para_el_rag():
 
 
 @pytest.mark.parametrize("lang", ["es", "en"])
-def test_regla_de_no_suponer_en_el_prompt_del_rag(monkeypatch, lang):
-    """EX-RAG-2: con el flag, el prompt del RAG lleva la regla de no atribuir al cliente un servicio que no dijo."""
-    from src.agents.rag_agent import build_system_prompt
-    from src.prompts.info import RAG_NO_SUPONE_EN, RAG_NO_SUPONE_ES
-
-    regla = RAG_NO_SUPONE_ES if lang == "es" else RAG_NO_SUPONE_EN
-    monkeypatch.setattr(settings, "rag_no_adivina", False)  # la regla ampliada la sustituye (ver el test de abajo)
-    monkeypatch.setattr(settings, "rag_no_supone_reserva", False)
-    assert regla not in build_system_prompt(lang)
-    monkeypatch.setattr(settings, "rag_no_supone_reserva", True)
-    assert regla in build_system_prompt(lang)
-
-
-@pytest.mark.parametrize("lang", ["es", "en"])
 def test_la_regla_de_no_adivinar_sustituye_a_la_de_no_suponer(monkeypatch, lang):
     """18-oct (decisión de Gadea: no adivinar nada que el cliente no haya dicho): con `rag_no_adivina` el prompt lleva
     la regla ampliada (origen, nacionalidad, certificación, cuántos, fechas…) y no la vieja, que solo cubría el
@@ -83,8 +58,6 @@ def test_la_regla_de_no_adivinar_sustituye_a_la_de_no_suponer(monkeypatch, lang)
     from src.agents.rag_agent import build_system_prompt
     from src.prompts.info import RAG_NO_ADIVINA_EN, RAG_NO_ADIVINA_ES, RAG_NO_SUPONE_EN, RAG_NO_SUPONE_ES
 
-    monkeypatch.setattr(settings, "rag_no_supone_reserva", True)
-    monkeypatch.setattr(settings, "rag_no_adivina", True)
     prompt = build_system_prompt(lang)
     assert (RAG_NO_ADIVINA_ES if lang == "es" else RAG_NO_ADIVINA_EN) in prompt
     assert (RAG_NO_SUPONE_ES if lang == "es" else RAG_NO_SUPONE_EN) not in prompt
@@ -92,7 +65,6 @@ def test_la_regla_de_no_adivinar_sustituye_a_la_de_no_suponer(monkeypatch, lang)
 
 def test_una_o_dos_palabras_no_cambian_el_idioma(monkeypatch):
     """Ronda flujo1-B2: "Frances" (contesta "¿sois colombianos?") pasaba la conversación a inglés."""
-    monkeypatch.setattr(settings, "idioma_otro_en_ingles", True)
     st = ConversationState(conversation_id="g10", language="es")
     asyncio.run(core._otro_idioma_en_ingles(st, {"idioma": "fr"}, "Frances"))
     assert st.language == "es"

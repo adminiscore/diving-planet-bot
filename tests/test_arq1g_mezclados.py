@@ -7,7 +7,6 @@ import pytest
 from src.agents import conversational_core as cc
 from src.agents import redactor_hechos
 from src.agents.nucleo import extractor
-from src.config import settings
 from src.flows.state import ConversationState
 
 MENSAJE = "¿Cuánto cuesta el minicurso y qué peces se ven?"
@@ -30,8 +29,6 @@ def con_flags(monkeypatch):
         return {"actividad_preguntada": "minicourse"}
 
     monkeypatch.setattr(extractor, "lectura_del_extractor", lectura)
-    monkeypatch.setattr(settings, "hechos_por_codigo", True)
-    monkeypatch.setattr(settings, "hechos_al_rag", True)
 
 
 def test_en_un_mensaje_mezclado_el_rag_recibe_los_hechos(con_flags):
@@ -44,12 +41,6 @@ def test_en_un_mensaje_mezclado_el_rag_recibe_los_hechos(con_flags):
 def test_sin_mezcla_no(con_flags, campos):
     """Todo de la tabla lo contesta el redactor; sin intenciones, el RAG de siempre."""
     st = _conv(**campos)
-    assert asyncio.run(cc._hechos_para_el_rag(st, MENSAJE, st.history)) is None
-
-
-def test_con_el_flag_apagado_no(con_flags, monkeypatch):
-    monkeypatch.setattr(settings, "hechos_al_rag", False)
-    st = _conv()
     assert asyncio.run(cc._hechos_para_el_rag(st, MENSAJE, st.history)) is None
 
 

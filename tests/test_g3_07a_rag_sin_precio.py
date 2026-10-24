@@ -41,6 +41,7 @@ async def _sistema(monkeypatch, sin_precio: bool, lang: str = "es") -> str:
 
     monkeypatch.setattr(rag_agent, "search_knowledge_base", _sin_docs)
     monkeypatch.setattr(rag_agent, "_verify_grounding", _juez)
+
     await rag_agent.rag_answer("¿cuánto vale el snorkel?" if lang == "es" else "how much is snorkeling?", lang=lang,
                                extra_context="Idioma: es.", sin_precio=sin_precio)
     return client.chat.completions.calls[0]["messages"][0]["content"]

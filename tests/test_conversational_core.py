@@ -13,7 +13,6 @@ from src.agents import conversational_core as core
 from src.agents.nucleo import extraction as core_extraction
 from src.agents.nucleo import routing as core_routing
 from src.agents.supervisor import route_message
-from src.config import settings
 from src.flows.state import ConversationState, Step
 
 
@@ -390,7 +389,6 @@ async def test_multi_slot_message_absorbed_in_one_turn(extractor_dice):
 
 @pytest.mark.asyncio
 async def test_question_mid_flow_answers_and_reasks_pending_slot(monkeypatch, extractor_dice):
-    monkeypatch.setattr(settings, "aplazar_pregunta_sin_respuesta", False)  # camino de antes de EX-FLUJO-1
     extractor_dice({"quiero bucear, soy certificado, desde cartagena": {**BUZO, **CARTAGENA},
                     "solo yo": {"group_size": 1}})  # ex-9b paso 4: la respuesta corta la lee el extractor
     state = make_state("es")
@@ -465,7 +463,6 @@ async def test_reask_does_not_repeat_plan_recommendation(monkeypatch, extractor_
     aporta otro dato ("desde cartagena" respondiendo a la pregunta de
     seguridad), la re-pregunta NO debe repetir la recomendación del plan —
     en vivo se veía 3 veces el mismo bloque entero."""
-    monkeypatch.setattr(settings, "aplazar_pregunta_sin_respuesta", False)  # camino de antes de EX-FLUJO-1
     extractor_dice({ROCIO: BUZO, "desde cartagena": CARTAGENA, "soy solo yo": {"group_size": 1},
                     "somos 3 en realidad": {"group_size": 3}})
     state = make_state("es")
@@ -897,7 +894,6 @@ async def test_qty_un_par_resolved_by_slot_resolver(monkeypatch):
 async def test_slot_resolver_abstains_no_infinite_state_change(monkeypatch):
     """Si el resolutor se abstiene ({}), el slot NO cambia y se re-pregunta —
     igual que antes, nunca peor (no se inventa un valor)."""
-    monkeypatch.setattr(settings, "aplazar_pregunta_sin_respuesta", False)  # camino de antes de EX-FLUJO-1
     resolver = AsyncMock(return_value={})
     monkeypatch.setattr(core_extraction, "resolve_slot_answer", resolver)
     state = make_state("es")
@@ -1454,7 +1450,6 @@ async def test_companion_activity_ambiguity_defers_instead_of_burying_pending_sl
     colombianos") que en realidad respondía a otra cosa. Ahora se difiere: se
     sigue preguntando lo que tocaba (seguridad), y el acompañante se retoma
     justo antes de cerrar, sin perderse ni bloquear nada por el medio."""
-    monkeypatch.setattr(settings, "aplazar_pregunta_sin_respuesta", False)  # camino de antes de EX-FLUJO-1
     extractor_dice({"no somos colombianos": {"is_colombian": False}})
     state = make_state("es")
     state.detected_activity = "certified_diving"
@@ -2185,7 +2180,6 @@ async def test_location_resolver_island_value(monkeypatch):
 async def test_location_resolver_abstains_reasks(monkeypatch):
     """Si el resolutor se abstiene, la ubicación NO se inventa y se re-pregunta
     (nunca peor que hoy)."""
-    monkeypatch.setattr(settings, "aplazar_pregunta_sin_respuesta", False)  # camino de antes de EX-FLUJO-1
     monkeypatch.setattr(core_extraction, "resolve_slot_answer", AsyncMock(return_value={}))
     state = _at_location_stage()
     with patch("src.agents.supervisor.detect_routing_signals",
@@ -2695,17 +2689,18 @@ def test_extra_context_warns_against_uncertified_companion_diving_certified(monk
     FUENTE recuperada, solo la lógica de negocio real). Tener el hecho en
     las notas no bastaba -- hace falta la regla explícita."""
     # ex-9b paso 6: prueba la regla escrita a partir de notas/historial (el camino del regex); con
-    # `notas_rag_desde_estado` la dispara el estado que pone el extractor (test_ex9b_paso6.py).
-    monkeypatch.setattr(settings, "notas_rag_desde_estado", False)
+    # el extractor leyéndolo todo la dispara el estado que pone el extractor (test_ex9b_paso6.py).
     from src.agents.supervisor import _build_extra_context
 
     state = make_state("es")
+    state.extractor_ha_fallado = True  # el camino del regex: el extractor no leyó algún mensaje
     state.remembered_facts = {"notes": ["novia no es buzo certificado"]}
     ctx = _build_extra_context(state)
     assert ctx is not None
     assert "minicurso" in ctx.lower() and "NO puede sumarse" in ctx
 
     state_en = make_state("en")
+    state_en.extractor_ha_fallado = True
     state_en.remembered_facts = {"notes": ["girlfriend is not certified"]}
     ctx_en = _build_extra_context(state_en)
     assert ctx_en is not None
@@ -2727,11 +2722,11 @@ def test_extra_context_never_dived_note_also_triggers_uncertified_rule(monkeypat
     grupo ("tú y tu primo se unen a ella en las inmersiones"). "Nunca ha
     buceado" debe disparar la misma regla."""
     # ex-9b paso 6: prueba la regla escrita a partir de notas/historial (el camino del regex); con
-    # `notas_rag_desde_estado` la dispara el estado que pone el extractor (test_ex9b_paso6.py).
-    monkeypatch.setattr(settings, "notas_rag_desde_estado", False)
+    # el extractor leyéndolo todo la dispara el estado que pone el extractor (test_ex9b_paso6.py).
     from src.agents.supervisor import _build_extra_context
 
     state = make_state("es")
+    state.extractor_ha_fallado = True  # el camino del regex: el extractor no leyó algún mensaje
     state.remembered_facts = {"notes": ["primo nunca ha buceado"]}
     ctx = _build_extra_context(state)
     assert ctx is not None
@@ -2749,11 +2744,11 @@ def test_extra_context_warns_that_inactive_certified_companion_needs_refresher_n
     certificado e inactivo necesita el refresher, no el minicurso -- son
     productos con elegibilidad distinta."""
     # ex-9b paso 6: prueba la regla escrita a partir de notas/historial (el camino del regex); con
-    # `notas_rag_desde_estado` la dispara el estado que pone el extractor (test_ex9b_paso6.py).
-    monkeypatch.setattr(settings, "notas_rag_desde_estado", False)
+    # el extractor leyéndolo todo la dispara el estado que pone el extractor (test_ex9b_paso6.py).
     from src.agents.supervisor import _build_extra_context
 
     state = make_state("es")
+    state.extractor_ha_fallado = True  # el camino del regex: el extractor no leyó algún mensaje
     state.remembered_facts = {"notes": ["amigo certificado hace 8 años no ha buceado"]}
     ctx = _build_extra_context(state)
     assert ctx is not None
@@ -2761,6 +2756,7 @@ def test_extra_context_warns_that_inactive_certified_companion_needs_refresher_n
     assert "refresher" in ctx.lower()
 
     state_en = make_state("en")
+    state_en.extractor_ha_fallado = True
     state_en.remembered_facts = {"notes": ["friend got certified 8 years ago, hasn't dived since"]}
     ctx_en = _build_extra_context(state_en)
     assert ctx_en is not None
@@ -2786,11 +2782,11 @@ def test_extra_context_inactive_certified_rule_survives_incomplete_note_paraphra
     se corrigió que "se certificó" (verbo) no matcheaba el regex de
     certificación (solo cubría "certificado/a", forma adjetivo)."""
     # ex-9b paso 6: prueba la regla escrita a partir de notas/historial (el camino del regex); con
-    # `notas_rag_desde_estado` la dispara el estado que pone el extractor (test_ex9b_paso6.py).
-    monkeypatch.setattr(settings, "notas_rag_desde_estado", False)
+    # el extractor leyéndolo todo la dispara el estado que pone el extractor (test_ex9b_paso6.py).
     from src.agents.supervisor import _build_extra_context
 
     state = make_state("es")
+    state.extractor_ha_fallado = True  # el camino del regex: el extractor no leyó algún mensaje
     # La nota SOLA (como la parafraseó capture_notes esta vez) no basta.
     state.remembered_facts = {"notes": ["amigo no ha buceado en 8 años"]}
     state.history = [
@@ -2816,11 +2812,11 @@ def test_extra_context_inactive_certified_rule_matches_infinitive_bucear_form(mo
     crudo del cliente con la forma infinitiva -- el caso real que fallaba en
     vivo."""
     # ex-9b paso 6: prueba la regla escrita a partir de notas/historial (el camino del regex); con
-    # `notas_rag_desde_estado` la dispara el estado que pone el extractor (test_ex9b_paso6.py).
-    monkeypatch.setattr(settings, "notas_rag_desde_estado", False)
+    # el extractor leyéndolo todo la dispara el estado que pone el extractor (test_ex9b_paso6.py).
     from src.agents.supervisor import _build_extra_context
 
     state = make_state("es")
+    state.extractor_ha_fallado = True  # el camino del regex: el extractor no leyó algún mensaje
     state.remembered_facts = {"notes": []}
     state.history = [
         {"role": "user", "content": (
@@ -2946,7 +2942,6 @@ async def test_explicit_language_switch_mid_conversation_is_honored(monkeypatch,
     """El mismo hallazgo, de punta a punta: pedir explícitamente cambiar de
     idioma a mitad de conversación debe surtir efecto YA MISMO, en la
     respuesta de ese mismo turno."""
-    monkeypatch.setattr(settings, "aplazar_pregunta_sin_respuesta", False)  # camino de antes de EX-FLUJO-1
     # ex-9b paso 3: "quiero bucear certificado" elige el buceo certificado pero no dice que lo esté (mod-2,
     # `certificado_solo_si_lo_dice`; el regex lo deducía y la siguiente pregunta era el origen): se pregunta la
     # certificación, ya en inglés.

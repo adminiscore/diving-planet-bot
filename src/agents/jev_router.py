@@ -36,8 +36,7 @@ import httpx
 from src.config import settings
 from src.prompts.router import ROUTING_TOOL, con_dieta_no_es_medica
 
-if settings.dieta_no_es_medica:  # gen-3 (20-oct): antes de construir las preguntas de abajo
-    con_dieta_no_es_medica(ROUTING_TOOL)
+con_dieta_no_es_medica(ROUTING_TOOL)  # gen-3 (20-oct): antes de construir las preguntas de abajo
 
 logger = logging.getLogger("uvicorn.error")
 
@@ -99,17 +98,7 @@ _QUESTIONS = routing_questions()
 # preguntas; regex O Jev >= 0,7 ve 134 con 0 falsas alarmas.
 ASKS_QUESTION = "asks_question"
 ASKS_QUESTION_MIN = 0.7
-_ASKS_QUESTION_Q = {
-    "type": "noul",
-    "instructions": (
-        "The customer's message contains a QUESTION or a REQUEST FOR INFORMATION that the booking assistant must "
-        "ANSWER (for example about prices, what is included, schedules, hotels, discounts, policies, logistics, "
-        "how something works). It is FALSE if the message only gives booking details (dates, number of people, "
-        "where they are, an activity choice), only answers the assistant's previous question, or is small talk "
-        "or thanks."
-    ),
-}
-# EX-EST-2 (15-oct, flag `jev_pide_algo`): una PETICIÓN en imperativo también hay que contestarla. Rondas est3-B/est5-B:
+# EX-EST-2 (15-oct): una PETICIÓN en imperativo también hay que contestarla. Rondas est3-B/est5-B:
 # "dame la cuenta y transfiero" (0,53), "send me the payment link" (0,43) y "Full name of dive center, location, dates
 # etc" (0,45) no llegaban a 0,7: no iban al RAG y recibían la pregunta de la reserva o la respuesta fija de posventa
 # ("si necesitas algo de tu reserva…"). Banco de 257 mensajes del golden (`docs/robustness/u3-4/preguntas-etiquetadas
@@ -434,18 +423,8 @@ _PREGUNTA_SI_ES_IA_Q = {
 #   inmersiones? me quedo en el hotel Caribe" se cotizaba sin saber el origen. Regex 13/16, Jev 16/16.
 PIDE_PRECIO = "pide_precio"
 PIDE_PRECIO_MIN = 0.7
-_PIDE_PRECIO_Q = {
-    "type": "noul",
-    "instructions": (
-        "The customer asks how much one of the dive center's activities, courses or packages costs (price, rate, "
-        "cost, a quote), including asking that price again in another currency or for a different number of people. "
-        "It is FALSE when they ask the price of something the dive center does not sell (a hotel, a room or night, a "
-        "taxi or transport), when they only ask which currencies or payment methods are accepted, and when they ask "
-        "about duration, number of dives or how to book."
-    ),
-}
-# ord-7 (21-oct, flag `jev_precio_nombra_actividades`): con «one of the dive center's activities» a secas, Jev no veía
-# «el snorkel» en español como una de ellas: «¿Cuánto cuesta el snorkel?» 0,55 y «precio del snorkel» 0,61 (umbral
+# ord-7 (21-oct; promocionado, su flag `jev_precio_nombra_actividades` se borró en sim-5): con «one of the dive
+# center's activities» a secas, Jev no veía «el snorkel» en español como una de ellas: «¿Cuánto cuesta el snorkel?» 0,55 y «precio del snorkel» 0,61 (umbral
 # 0,7), la puerta del origen no saltaba y se cotizaba Cartagena sin saber el origen (banco gen-19, 4/4). Nombrando las
 # actividades: 0,94 y 0,94; hotel, taxi, monedas, duración, cómo reservar y qué incluye siguen en 0,04-0,11.
 _PIDE_PRECIO_Q_ACTIVIDADES = {
@@ -718,8 +697,6 @@ def _con_hoteles_de_la_base(pregunta: dict) -> dict:
     no sabía qué es «Mulata» o «Las Palmeras» (banco docs/robustness/gen/banco_gen15_hoteles.py: «Eco Hotel Las
     Palmeras» → cartagena 0,69-0,76; Mulata, Ubuntu o Majagua → none). Con el flag, la opción «islands» nombra los
     hoteles de la base (`extractor_turno.HOTELES_DE_LA_BASE`, de policies.json other_island_hotels)."""
-    if not settings.hoteles_de_la_base:
-        return pregunta
     from src.agents.extractor_turno import HOTELES_DE_LA_BASE  # lazy
 
     hoteles = ", ".join(HOTELES_DE_LA_BASE)
@@ -770,8 +747,8 @@ def pending_answer_question(slot: str | None) -> dict | None:
     spec = SLOT_RESOLVER_SPEC.get(slot or "")
     if not spec or spec["type"] == "integer":
         return None
-    if settings.baru_no_es_rosario:  # G3-06; gen-6: con `baru_sale_de_cartagena`, Barú es 'cartagena'
-        spec = {**spec, "value_meaning": lugar_sin_baru(spec["value_meaning"], settings.baru_sale_de_cartagena)}
+    # G3-06; gen-6: Barú es 'cartagena'
+    spec = {**spec, "value_meaning": lugar_sin_baru(spec["value_meaning"], True)}
     asked = f"The assistant just asked the customer: \"{spec['question_en']}\""
     if spec["type"] == "boolean":
         criteria = {
@@ -849,42 +826,33 @@ def _questions_for_turn(pending_slot: str | None = None) -> dict:
     pending_q = pending_answer_question(pending_slot)
     if pending_q:
         q[PENDING_ANSWER] = pending_q
-    q.update({ASKS_QUESTION: _ASKS_QUESTION_Q_V2 if settings.jev_pide_algo else _ASKS_QUESTION_Q,
+    q.update({ASKS_QUESTION: _ASKS_QUESTION_Q_V2,
               **_AFFIRMS_QUESTIONS})
-    if settings.grupo_de_una_persona:
-        q[AFFIRMS_GROUP] = _AFFIRMS_GROUP_Q_UNA
+    q[AFFIRMS_GROUP] = _AFFIRMS_GROUP_Q_UNA
     q[CORRECTS] = _CORRECTS_Q
     q[ASKS_RECALL] = _ASKS_RECALL_Q
     instrucciones = _NEEDS_STAFF_Q["instructions"]
-    if settings.pase_si_pide_fuera_del_sistema:
-        instrucciones = f"{instrucciones} {_FUERA_DEL_SISTEMA}"
+    instrucciones = f"{instrucciones} {_FUERA_DEL_SISTEMA}"
     if settings.ya_reservo_no_es_pase:
         instrucciones = f"{instrucciones} {_YA_RESERVO_NO_BASTA}"
-    q[NEEDS_STAFF] = (_NEEDS_STAFF_Q if instrucciones == _NEEDS_STAFF_Q["instructions"]
-                      else {**_NEEDS_STAFF_Q, "instructions": instrucciones})
+    q[NEEDS_STAFF] = {**_NEEDS_STAFF_Q, "instructions": instrucciones}
     q[CHANGES_DATE] = _CHANGES_DATE_Q
     q[COMPANION_JOINS] = _COMPANION_JOINS_Q
     q[ADDS_PERSON] = _ADDS_PERSON_Q
-    q[YA_RESERVADO] = _YA_RESERVADO_Q_SIN_HOTEL if settings.reserva_de_hotel_no_es_nuestra else _YA_RESERVADO_Q
-    if settings.datos_ajenos_se_niegan:
-        q[PIDE_DATOS_AJENOS] = _PIDE_DATOS_AJENOS_Q
-    if settings.privado_pasa_directo:
-        q[PIDE_SERVICIO_PRIVADO] = _PIDE_SERVICIO_PRIVADO_Q
-    q[CUSTOMER_PLACE] = _con_hoteles_de_la_base(
-        (_CUSTOMER_PLACE_Q_BARU_CARTAGENA if settings.baru_sale_de_cartagena else _CUSTOMER_PLACE_Q_SIN_BARU)
-        if settings.baru_no_es_rosario else _CUSTOMER_PLACE_Q
-    )
+    q[YA_RESERVADO] = _YA_RESERVADO_Q_SIN_HOTEL
+    q[PIDE_DATOS_AJENOS] = _PIDE_DATOS_AJENOS_Q
+    q[PIDE_SERVICIO_PRIVADO] = _PIDE_SERVICIO_PRIVADO_Q
+    q[CUSTOMER_PLACE] = _con_hoteles_de_la_base(_CUSTOMER_PLACE_Q_BARU_CARTAGENA)
     q[SHARES_OPEN_FACT] = _SHARES_OPEN_FACT_Q
     q[NUEVO_CASO] = _NUEVO_CASO_Q
     q[PREGUNTA_SI_ES_IA] = _PREGUNTA_SI_ES_IA_Q
     q[CAMBIA_IDIOMA] = _CAMBIA_IDIOMA_Q
-    q[PIDE_PRECIO] = _PIDE_PRECIO_Q_ACTIVIDADES if settings.jev_precio_nombra_actividades else _PIDE_PRECIO_Q
-    if settings.hechos_por_codigo:
-        q[PIDE_QUE_INCLUYE] = _PIDE_QUE_INCLUYE_Q
-        q.update(_INTENCIONES_Q)
-        if settings.descuentos_en_la_tabla:
-            q[PIDE_DESCUENTO] = _PIDE_DESCUENTO_Q
-            q[PIDE_OTRA_COSA] = _PIDE_OTRA_COSA_CON_DESCUENTOS_Q
+    q[PIDE_PRECIO] = _PIDE_PRECIO_Q_ACTIVIDADES
+    q[PIDE_QUE_INCLUYE] = _PIDE_QUE_INCLUYE_Q
+    q.update(_INTENCIONES_Q)
+    if settings.descuentos_en_la_tabla:
+        q[PIDE_DESCUENTO] = _PIDE_DESCUENTO_Q
+        q[PIDE_OTRA_COSA] = _PIDE_OTRA_COSA_CON_DESCUENTOS_Q
     if settings.tiempo_limitado and PIDE_OTRA_COSA in q:
         # arq-1v: preguntar si da tiempo es de la tabla; «otra cosa» deja de contarlo.
         q[PIDE_SI_ALCANZA] = _PIDE_SI_ALCANZA_Q
@@ -1047,7 +1015,7 @@ _CONTEXTO_CARACTERES = 400
 def _estado_para_jev(message: str, history: list[dict] | None = None) -> str:
     """Lo que Jev lee: el contexto fijo, los últimos turnos (solo con el flag) y el mensaje de este turno."""
     sin_contexto = f"{_CONTEXT}\n\nCustomer message: {message}"
-    if not (settings.jev_con_contexto and history):
+    if not history:
         return sin_contexto
     ultimos = [h for h in history if (h or {}).get("content")][-_CONTEXTO_TURNOS:]
     if not ultimos:

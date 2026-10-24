@@ -52,9 +52,9 @@ def _format_turns(turns: list[dict], lang: str) -> str:
 
 @con_pieza_llm("resumen")
 async def _generate_summary(existing_summary: str | None, new_turns_text: str, lang: str) -> str:
+    # r6-2: lo que ordena el cliente, atribuido.
     system = (SUMMARY_SYSTEM_ES if lang == "es" else SUMMARY_SYSTEM_EN) + (
-        (MEMORIA_SEGURA_RESUMEN_ES if lang == "es" else MEMORIA_SEGURA_RESUMEN_EN)
-        if settings.memoria_sin_ordenes_del_cliente else "")  # r6-2: lo que ordena el cliente, atribuido
+        MEMORIA_SEGURA_RESUMEN_ES if lang == "es" else MEMORIA_SEGURA_RESUMEN_EN)
     previous_label = "Resumen anterior" if lang == "es" else "Previous summary"
     segment_label = "Tramo nuevo de la conversación" if lang == "es" else "New conversation segment"
     user_content = (

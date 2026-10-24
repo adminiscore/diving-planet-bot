@@ -14,7 +14,6 @@ import pytest
 from src.agents import conversational_core as core
 from src.agents.extractor_turno import ESQUEMA, ESQUEMA_CON_NOMBRE
 from src.agents.supervisor import route_message
-from src.config import settings
 from src.flows.state import ConversationState, Step
 
 
@@ -66,12 +65,6 @@ def test_el_nombre_es_el_unico_campo_que_se_anade_al_extractor():
 # --- 2. el pase del grupo privado / empresa -----------------------------------------------------------------------
 
 EMPRESA = "hola, somos una empresa y queremos llevar 20 empleados a bucear como evento corporativo, es posible?"
-
-
-@pytest.fixture(autouse=True)
-def _camino_antiguo_ex2_ex3(monkeypatch):
-    """Como en tests/test_routing_signals_integration.py: la respuesta fija del grupo privado es la de hoy."""
-    monkeypatch.setattr(settings, "atajo_alergia_por_rag", False)
 
 
 async def test_grupo_privado_marca_el_pase():

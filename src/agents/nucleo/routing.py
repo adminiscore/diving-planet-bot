@@ -143,9 +143,9 @@ def _departure_place(message: str) -> str | None:
     if intent.location:
         return intent.location
     isla = _GENERIC_ISLAND_RE.search(text)
-    if isla and settings.baru_no_es_rosario and strip_accents(isla.group(0).lower()) == "baru":
+    if isla and strip_accents(isla.group(0).lower()) == "baru":
         # G3-06: Barú no es una isla del Rosario (ver `lugar_sin_baru`); gen-6: quien se aloja allí sale desde Cartagena.
-        return "cartagena" if settings.baru_sale_de_cartagena else None
+        return "cartagena"
     return "island" if isla else None
 
 
@@ -198,12 +198,11 @@ def _es_formato(state: ConversationState, slot: str, message: str) -> bool:
 
 
 def _respuesta_del_paso6(state: ConversationState, slot: str) -> bool:
-    """ex-9b paso 6: ¿la respuesta corta a esta pregunta la lee el extractor? Las edades con `edades_por_extractor`; el
-    "¿un día o varios?" del acompañante (primer paso, aún sin duración) con `duracion_por_extractor`."""
+    """ex-9b paso 6: ¿la respuesta corta a esta pregunta la lee el extractor? Las edades; y el "¿un día o varios?" del
+    acompañante (primer paso, aún sin duración)."""
     if slot == SLOT_AGES:
-        return settings.edades_por_extractor
-    return (slot == SLOT_COMPANION_ACTIVITY and settings.duracion_por_extractor
-            and state.detected_duration is None)
+        return True
+    return slot == SLOT_COMPANION_ACTIVITY and state.detected_duration is None
 
 
 async def _lectura_de_la_ia(state: ConversationState, message: str, routing_signals: dict, slot: str) -> dict | None:
@@ -227,8 +226,6 @@ async def _lectura_de_la_ia(state: ConversationState, message: str, routing_sign
         return {"jev": None, "extractor": datos}
     if slot not in _RESPUESTA_LEIDA_POR_LA_IA:
         return None
-    if slot == SLOT_HOTEL and not settings.hotel_por_extractor:
-        return None  # sin el campo `hotel`, el extractor no lee hoteles
     if _es_formato(state, slot, message):
         return None
     pa = routing_signals.get("pending_answer")

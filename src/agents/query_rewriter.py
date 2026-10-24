@@ -103,11 +103,10 @@ async def condense_query(
         return query
 
     system = QUERY_REWRITE_ES if lang == "es" else QUERY_REWRITE_EN
-    sabido = lo_sabido(hechos, lang) if settings.consulta_con_lo_sabido else ""
-    if settings.consulta_con_lo_sabido:
-        # CAL-D: la consulta tiene que NOMBRAR el asunto. Sin esto, el reescritor arregla la frase y deja la elipsis
-        # ("per day", "en concepto"), que es justo lo que la búsqueda no sabe buscar.
-        system = f"{system} {_NOMBRA_EL_ASUNTO_ES if lang == 'es' else _NOMBRA_EL_ASUNTO_EN}"
+    sabido = lo_sabido(hechos, lang)
+    # CAL-D: la consulta tiene que NOMBRAR el asunto. Sin esto, el reescritor arregla la frase y deja la elipsis
+    # ("per day", "en concepto"), que es justo lo que la búsqueda no sabe buscar.
+    system = f"{system} {_NOMBRA_EL_ASUNTO_ES if lang == 'es' else _NOMBRA_EL_ASUNTO_EN}"
     if _otro_idioma(query, lang):
         # G3-05: la consulta, en el idioma de la base y de la respuesta (si no, se busca en portugués o francés).
         system = (f"{system} La consulta, SIEMPRE en español aunque el cliente escriba en otro idioma." if lang == "es"

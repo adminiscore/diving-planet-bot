@@ -8,7 +8,7 @@ deja la elipsis.
 | "And how much is per a day" (cal-42) | "How much is the price per day?" | la política del segundo día y los paquetes de varios días; la ficha del plan de 1 día no entra en el top-8 | un día de buceo, desde Cartagena, buzo certificado |
 | "Vale, en concepto le coloco otros?" (cal-14) | "¿Le coloco otros en concepto?" | descuentos, formulario del seguro, hoteles | al pagar la reserva por el enlace |
 
-El arreglo (flag `consulta_con_lo_sabido`) le da al reescritor lo que YA SABEMOS del cliente en campos estructurados
+El arreglo (flag `consulta_con_lo_sabido`, promocionado y borrado en sim-5) le da al reescritor lo que YA SABEMOS del cliente en campos estructurados
 del estado (los mismos hechos que eligen los avisos de CAL-A5) y una regla para todas las preguntas: una consulta con
 elipsis o pronombre no es autosuficiente. No es una lista de frases ni un caso.
 """
@@ -16,7 +16,6 @@ elipsis o pronombre no es autosuficiente. No es una lista de frases ni un caso.
 import pytest
 
 from src.agents import query_rewriter as qr
-from src.config import settings
 
 _HECHOS = {"actividades": {"certified_diving"}, "origen": "cartagena", "nacionalidad": "extranjero"}
 
@@ -62,10 +61,9 @@ _HISTORIAL = [
 
 
 @pytest.mark.asyncio
-async def test_con_el_flag_el_reescritor_recibe_lo_sabido_y_la_regla(monkeypatch):
+async def test_el_reescritor_recibe_lo_sabido_y_la_regla(monkeypatch):
     llamadas: list[dict] = []
     monkeypatch.setattr(qr, "AsyncOpenAI", _fake_openai("How much is one day of diving from Cartagena?", llamadas))
-    monkeypatch.setattr(settings, "consulta_con_lo_sabido", True)
     salida = await qr.condense_query("And how much is per a day", history=_HISTORIAL, lang="en", hechos=_HECHOS)
     assert salida == "How much is one day of diving from Cartagena?"
     sistema = llamadas[0]["messages"][0]["content"]
@@ -77,23 +75,10 @@ async def test_con_el_flag_el_reescritor_recibe_lo_sabido_y_la_regla(monkeypatch
 
 
 @pytest.mark.asyncio
-async def test_sin_el_flag_la_llamada_es_la_de_siempre(monkeypatch):
-    llamadas: list[dict] = []
-    monkeypatch.setattr(qr, "AsyncOpenAI", _fake_openai("How much is the price per day?", llamadas))
-    monkeypatch.setattr(settings, "consulta_con_lo_sabido", False)
-    await qr.condense_query("And how much is per a day", history=_HISTORIAL, lang="en", hechos=_HECHOS)
-    sistema = llamadas[0]["messages"][0]["content"]
-    usuario = llamadas[0]["messages"][1]["content"]
-    assert "must NAME what the question is about" not in sistema
-    assert "already know about the customer" not in usuario
-
-
-@pytest.mark.asyncio
 async def test_un_mensaje_largo_no_se_reescribe(monkeypatch):
     """La regla de hoy: con 8 palabras o más, el mensaje se busca tal cual (no se toca)."""
     llamadas: list[dict] = []
     monkeypatch.setattr(qr, "AsyncOpenAI", _fake_openai("x", llamadas))
-    monkeypatch.setattr(settings, "consulta_con_lo_sabido", True)
     largo = "quiero saber cuanto cuesta el plan de dos inmersiones saliendo desde Cartagena"
     assert await qr.condense_query(largo, history=_HISTORIAL, lang="es", hechos=_HECHOS) == largo
     assert not llamadas
@@ -109,5 +94,4 @@ async def test_si_el_reescritor_falla_se_busca_el_mensaje_tal_cual(monkeypatch):
             self.chat = type("Chat", (), {"completions": _C()})()
 
     monkeypatch.setattr(qr, "AsyncOpenAI", _Rompe)
-    monkeypatch.setattr(settings, "consulta_con_lo_sabido", True)
     assert await qr.condense_query("y por dia?", history=_HISTORIAL, lang="es", hechos=_HECHOS) == "y por dia?"

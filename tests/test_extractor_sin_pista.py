@@ -22,7 +22,6 @@ from src.agents.nucleo import extraction as core_extraction
 from src.agents.nucleo import extractor as core_extractor
 from src.agents.nucleo import routing as core_routing
 from src.agents.nucleo import slotfill_close as core_close
-from src.config import settings
 from src.flows.state import ConversationState, Step
 
 GRUPO_6 = "somos 6: 2 bucean certificados, 2 hacen minicurso y 2 snorkel"
@@ -83,7 +82,6 @@ async def test_no_se_deduce_el_minicurso_del_regex(extractor):
 @pytest.mark.asyncio
 async def test_la_recomendacion_sale_de_lo_que_dice_el_extractor(extractor, monkeypatch):
     # El minicurso se sigue recomendando, pero por los hechos del extractor (CAL-C1: quiere bucear y no es certificado).
-    monkeypatch.setattr(settings, "actividad_por_lo_sabido", True)
     extractor({"quiere_bucear": True, "is_certified": False})
     st = await _entender("nunca he buceado, quiero probar a bucear")
     assert next_missing_slot(st) == SLOT_ACTIVITY

@@ -12,7 +12,6 @@
 from __future__ import annotations
 
 from src.agents import escalation, jev_router, rag_agent, supervisor
-from src.config import settings
 from src.domain import activities as dom
 from src.flows.state import ConversationState
 from src.orchestration import router
@@ -28,23 +27,6 @@ def _state(**kw) -> ConversationState:
 
 
 # ─── Respuestas fijas ────────────────────────────────────────────────────────
-
-def test_si_piden_telefono_NO_se_da_el_numero(monkeypatch):
-    """DECISIÓN DE GADEA del 16-oct, que sustituye a la del 17-sep (dar el WhatsApp oficial): esto es un chatbot y no
-    da números; quien pide un contacto directo pasa con un asesor (`contacto_pasa_a_persona`, flag de CAL-E1)."""
-    monkeypatch.setattr(settings, "contacto_pasa_a_persona", True)
-    assert "+57" not in supervisor._contact_number_deflection("es")
-    assert "+57" not in supervisor._contact_number_deflection("en")
-
-
-def test_con_el_flag_apagado_se_da_el_whatsapp_como_antes(monkeypatch):
-    """El camino de antes sigue entero: es el revert si la ronda del golden no sostiene el cambio."""
-    monkeypatch.setattr(settings, "contacto_pasa_a_persona", False)
-    number = supervisor._official_whatsapp()
-    assert number and number.startswith("+57")
-    assert number in supervisor._contact_number_deflection("es")
-    assert number in supervisor._contact_number_deflection("en")
-
 
 def test_eres_un_bot_dice_que_es_la_asistente_virtual():
     assert "asistente virtual" in supervisor._ai_identity_deflection("es")

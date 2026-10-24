@@ -186,14 +186,6 @@ async def test_la_ia_calla_decide_el_regex(extractor, slot, mensaje, campo, valo
 
 
 @pytest.mark.asyncio
-async def test_sin_el_campo_hotel_el_extractor_no_lee_hoteles(extractor, monkeypatch):
-    monkeypatch.setattr(settings, "hotel_por_extractor", False)
-    extractor({})
-    st = _estado(SLOT_HOTEL, location="island")
-    assert await core_routing._lectura_de_la_ia(st, "hotel las palmas", {}, SLOT_HOTEL) is None
-
-
-@pytest.mark.asyncio
 async def test_otras_preguntas_no_cambian(extractor):
     leer = extractor({})
     st = _estado(SLOT_ACTIVITY)

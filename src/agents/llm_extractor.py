@@ -41,12 +41,12 @@ from src.prompts.booking import tool_sin_baru as _tool_sin_baru
 
 
 def _sin_baru(texto: str) -> str:
-    """G3-06 (flag `baru_no_es_rosario`): los textos de lugar de estos prompts, sin Barú entre "las islas"."""
-    return _lugar_sin_baru(texto, settings.baru_sale_de_cartagena) if settings.baru_no_es_rosario else texto
+    """G3-06: los textos de lugar de estos prompts, sin Barú entre "las islas"."""
+    return _lugar_sin_baru(texto, True)
 
 
 def _tool(tool: dict) -> dict:
-    return _tool_sin_baru(tool, settings.baru_sale_de_cartagena) if settings.baru_no_es_rosario else tool
+    return _tool_sin_baru(tool, True)
 
 logger = logging.getLogger("uvicorn.error")
 
@@ -328,8 +328,7 @@ async def resolve_slot_answer(
         response = await client.chat.completions.create(
             model=settings.resolutor_model,
             messages=[
-                {"role": "system", "content": _sin_baru(slot_resolver_prompt(slot, lang))
-                 + (SLOT_RESOLVER_CONTRADICCION if settings.resolutor_sin_contradicciones else "")},
+                {"role": "system", "content": _sin_baru(slot_resolver_prompt(slot, lang)) + SLOT_RESOLVER_CONTRADICCION},
                 {"role": "user", "content": message},
             ],
             tools=[slot_resolver_tool(slot)],

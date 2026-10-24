@@ -12,7 +12,6 @@ def _kw(modelo):
 
 
 def test_con_el_flag_el_sistema_de_anthropic_va_marcado_y_con_orden_fijo(monkeypatch):
-    monkeypatch.setattr(settings, "cache_anthropic", True)
     monkeypatch.setattr(settings, "openrouter_proveedores", "google-vertex,anthropic,amazon-bedrock")
     kw = _kw("anthropic/claude-haiku-5.5")
     [bloque] = kw["messages"][0]["content"]
@@ -22,11 +21,3 @@ def test_con_el_flag_el_sistema_de_anthropic_va_marcado_y_con_orden_fijo(monkeyp
     assert proveedor["order"][0] == settings.cache_anthropic_proveedor and "sort" not in proveedor
     assert proveedor["allow_fallbacks"] and set(proveedor["order"]) == {"google-vertex", "anthropic", "amazon-bedrock"}
     assert proveedor["data_collection"] == "deny"
-
-
-def test_sin_el_flag_o_con_otro_modelo_no_cambia(monkeypatch):
-    monkeypatch.setattr(settings, "cache_anthropic", False)
-    assert _kw("anthropic/claude-haiku-5.5")["messages"][0]["content"] == "reglas del extractor"
-    monkeypatch.setattr(settings, "cache_anthropic", True)
-    kw = _kw("deepseek/deepseek-v4.1-flash")
-    assert kw["messages"][0]["content"] == "reglas del extractor" and kw["extra_body"]["provider"].get("sort") == "latency"

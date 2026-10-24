@@ -345,13 +345,9 @@ async def test_handle_message_failed_voice_note_does_not_route(monkeypatch):
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("flag", [False, True])
-async def test_la_pista_de_vocabulario_solo_con_el_flag(monkeypatch, flag):
-    """MOD-6 (18-oct): con `transcripcion_con_vocabulario` la transcripción lleva la pista del negocio (Bodeguita…)."""
+async def test_la_pista_de_vocabulario(monkeypatch):
+    """MOD-6 (18-oct): la transcripción lleva la pista del negocio (Bodeguita…)."""
     monkeypatch.setattr(audio.settings, "openai_api_key", "sk-test")
-    monkeypatch.setattr(audio.settings, "transcripcion_con_vocabulario", flag)
     captured = _patch_openai(monkeypatch, text="¿a qué hora en el Muelle de la Bodeguita?")
     await audio.transcribe_audio_bytes(b"FAKE", "nota.ogg")
-    assert ("prompt" in captured) is flag
-    if flag:
-        assert "Muelle de la Bodeguita" in captured["prompt"]
+    assert "Muelle de la Bodeguita" in captured["prompt"]

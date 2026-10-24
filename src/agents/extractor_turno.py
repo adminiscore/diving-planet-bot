@@ -306,22 +306,20 @@ REGLA_PAQUETE_VARIOS_DIAS_EN = (
 
 
 def campos_paso6(history: list[dict] | None) -> dict:
-    """Los campos nuevos del paso 6 que van en ESTA llamada, según sus flags: {campo: (esquema, regla_es, regla_en)}.
-    Vacío con los flags apagados (la llamada de siempre). `acepta_propuesta` solo si el bot acaba de proponer un plan."""
-    campos: dict = {}
-    if settings.duracion_por_extractor:
-        campos["dias_de_buceo"] = (CAMPO_DIAS_DE_BUCEO, REGLA_DURACION_ES, REGLA_DURACION_EN)
-        campos["dias_de_estancia"] = (CAMPO_DIAS_DE_ESTANCIA, "", "")
-    if settings.edades_por_extractor:
-        campos["edades"] = (CAMPO_EDADES, REGLA_EDADES_ES, REGLA_EDADES_EN)
+    """Los campos nuevos del paso 6 que van en ESTA llamada: {campo: (esquema, regla_es, regla_en)}. La duración, las
+    edades y las otras personas del grupo siempre (promocionados; sus flags se borraron en sim-5); el resto, según sus
+    flags. `acepta_propuesta` solo si el bot acaba de proponer un plan."""
+    campos: dict = {
+        "dias_de_buceo": (CAMPO_DIAS_DE_BUCEO, REGLA_DURACION_ES, REGLA_DURACION_EN),
+        "dias_de_estancia": (CAMPO_DIAS_DE_ESTANCIA, "", ""),
+        "edades": (CAMPO_EDADES, REGLA_EDADES_ES, REGLA_EDADES_EN),
+    }
     if settings.plan_elegido_por_extractor and plan_que_propone_el_bot(history) is not None:
         campos["acepta_propuesta"] = (CAMPO_ACEPTA, REGLA_ACEPTA_ES, REGLA_ACEPTA_EN)
-    if settings.notas_rag_desde_estado:
-        campos["otro_sin_certificar"] = (CAMPO_OTRO_SIN_CERTIFICAR, REGLA_OTRAS_PERSONAS_ES, REGLA_OTRAS_PERSONAS_EN)
-        campos["otro_certificado_inactivo"] = (CAMPO_OTRO_CERTIFICADO_INACTIVO, "", "")
-    if settings.actividad_de_la_pregunta:
-        campos["actividad_preguntada"] = (CAMPO_ACTIVIDAD_PREGUNTADA, REGLA_ACTIVIDAD_PREGUNTADA_ES,
-                                          REGLA_ACTIVIDAD_PREGUNTADA_EN)
+    campos["otro_sin_certificar"] = (CAMPO_OTRO_SIN_CERTIFICAR, REGLA_OTRAS_PERSONAS_ES, REGLA_OTRAS_PERSONAS_EN)
+    campos["otro_certificado_inactivo"] = (CAMPO_OTRO_CERTIFICADO_INACTIVO, "", "")
+    campos["actividad_preguntada"] = (CAMPO_ACTIVIDAD_PREGUNTADA, REGLA_ACTIVIDAD_PREGUNTADA_ES,
+                                      REGLA_ACTIVIDAD_PREGUNTADA_EN)
     if settings.varias_actividades:
         campos["actividades_preguntadas"] = (CAMPO_ACTIVIDADES_PREGUNTADAS, REGLA_ACTIVIDADES_PREGUNTADAS_ES,
                                              REGLA_ACTIVIDADES_PREGUNTADAS_EN)
@@ -521,8 +519,7 @@ def _nombres_de_lugar() -> list[str]:
     )
 
     nombres = list(AMBIGUOUS_LOCATION_NAMES)
-    if settings.hoteles_de_la_base:
-        nombres += [h for h in HOTELES_DE_LA_BASE if not any(h.lower() in n.lower() for n in nombres)]
+    nombres += [h for h in HOTELES_DE_LA_BASE if not any(h.lower() in n.lower() for n in nombres)]  # gen-15
     return nombres
 
 
@@ -622,9 +619,8 @@ def _en_trozos_seguidos(c: list[str], m: list[str]) -> bool:
 
 def _lugares() -> set[str]:
     """Palabras de lugar (lista cerrada): Cartagena, islas/hotel y los nombres de hoteles e islas del Rosario."""
-    palabras = {"cartagena", "isla", "islas", "island", "islands", "rosario", "hotel", "hostel", "hostal"}
-    if settings.baru_sale_de_cartagena:
-        palabras.update({"baru", "blanca"})  # gen-6: "estamos en Barú" dice desde dónde sale (Cartagena)
+    # gen-6: "estamos en Barú" dice desde dónde sale (Cartagena)
+    palabras = {"cartagena", "isla", "islas", "island", "islands", "rosario", "hotel", "hostel", "hostal", "baru", "blanca"}
     for nombre in _nombres_de_lugar():
         palabras.update(w for w in _norm(nombre) if len(w) > 3)
     return palabras
@@ -681,65 +677,55 @@ async def extraer_turno(mensaje: str, *, history: list[dict] | None = None, sabi
             sistema = sistema.replace(antes, despues)
     else:
         sistema = sistema.replace(GENERAL_PRECIO_ES, GENERAL_PRECIO_ES_V2).replace(GENERAL_PRECIO_EN, GENERAL_PRECIO_EN_V2)
-    if settings.certificado_solo_si_lo_dice:
-        # 19-oct: sin la regla del código, que is_certified vea todas las formas de decirlo (ver IS_CERTIFIED_DICHO_*).
-        sistema = sistema.replace(IS_CERTIFIED_HOY_ES, IS_CERTIFIED_DICHO_ES).replace(IS_CERTIFIED_HOY_EN, IS_CERTIFIED_DICHO_EN)
-    if settings.extractor_aclaraciones:
-        # EX-EXTRACTOR-1: la regla de la ubicación con la negación primero (ver UBICACION_NEGACION_*).
-        sistema = sistema.replace(UBICACION_HOY_ES, UBICACION_NEGACION_ES).replace(UBICACION_HOY_EN, UBICACION_NEGACION_EN)
-    if settings.extractor_todo_lo_dicho:
-        # EX-EST-2: extraer también lo ya sabido (ver TODO_LO_DICHO_*).
-        sistema = sistema.replace(TODO_LO_DICHO_HOY_ES, TODO_LO_DICHO_ES).replace(TODO_LO_DICHO_HOY_EN, TODO_LO_DICHO_EN)
-        sistema = sistema.replace(GRUPO_HOY_ES, GRUPO_NUMERO_ES).replace(GRUPO_HOY_EN, GRUPO_NUMERO_EN)
-        sistema = sistema.replace(ACTIVIDAD_EJEMPLOS_HOY_ES, ACTIVIDAD_EJEMPLOS_ES).replace(
-            ACTIVIDAD_EJEMPLOS_HOY_EN, ACTIVIDAD_EJEMPLOS_EN)
-        sistema = sistema.replace(RESIDENTE_HOY_ES, RESIDENTE_ES).replace(RESIDENTE_HOY_EN, RESIDENTE_EN)
-        sistema = sistema.replace(ELIGE_HOY_ES, ELIGE_ES).replace(ELIGE_HOY_EN, ELIGE_EN)
+    # 19-oct: sin la regla del código, que is_certified vea todas las formas de decirlo (ver IS_CERTIFIED_DICHO_*).
+    sistema = sistema.replace(IS_CERTIFIED_HOY_ES, IS_CERTIFIED_DICHO_ES).replace(IS_CERTIFIED_HOY_EN, IS_CERTIFIED_DICHO_EN)
+    # EX-EXTRACTOR-1: la regla de la ubicación con la negación primero (ver UBICACION_NEGACION_*).
+    sistema = sistema.replace(UBICACION_HOY_ES, UBICACION_NEGACION_ES).replace(UBICACION_HOY_EN, UBICACION_NEGACION_EN)
+    # EX-EST-2: extraer también lo ya sabido (ver TODO_LO_DICHO_*).
+    sistema = sistema.replace(TODO_LO_DICHO_HOY_ES, TODO_LO_DICHO_ES).replace(TODO_LO_DICHO_HOY_EN, TODO_LO_DICHO_EN)
+    sistema = sistema.replace(GRUPO_HOY_ES, GRUPO_NUMERO_ES).replace(GRUPO_HOY_EN, GRUPO_NUMERO_EN)
+    sistema = sistema.replace(ACTIVIDAD_EJEMPLOS_HOY_ES, ACTIVIDAD_EJEMPLOS_ES).replace(
+        ACTIVIDAD_EJEMPLOS_HOY_EN, ACTIVIDAD_EJEMPLOS_EN)
+    sistema = sistema.replace(RESIDENTE_HOY_ES, RESIDENTE_ES).replace(RESIDENTE_HOY_EN, RESIDENTE_EN)
+    sistema = sistema.replace(ELIGE_HOY_ES, ELIGE_ES).replace(ELIGE_HOY_EN, ELIGE_EN)
     sistema += REGLA_NOMBRE_ES if lang == "es" else REGLA_NOMBRE_EN
-    con_hotel = settings.hotel_por_extractor
-    if settings.sin_cedula_extranjero:
-        # CAL-C (17-oct, decisión de Álvaro): sin cédula colombiana → no es colombiano (paga en USD). Ver SIN_CEDULA_*.
-        sistema = sistema.replace(SIN_CEDULA_HOY_ES, SIN_CEDULA_ES).replace(SIN_CEDULA_HOY_EN, SIN_CEDULA_EN)
-        if settings.cedula_de_extranjeria_manda:
-            # arq-1r: el extranjero CON cédula de extranjería es residente (ver `_CEDULA_DE_EXTRANJERIA_MANDA`).
-            for antes, despues in _CEDULA_DE_EXTRANJERIA_MANDA:
-                sistema = sistema.replace(antes, despues)
-    if settings.vivir_no_es_residir:
-        # gen-4: vivir en Colombia no es ser residente (ver `_VIVIR_NO_ES_RESIDIR`).
-        for antes, despues in _VIVIR_NO_ES_RESIDIR:
+    # CAL-C (17-oct, decisión de Álvaro): sin cédula colombiana → no es colombiano (paga en USD). Ver SIN_CEDULA_*.
+    sistema = sistema.replace(SIN_CEDULA_HOY_ES, SIN_CEDULA_ES).replace(SIN_CEDULA_HOY_EN, SIN_CEDULA_EN)
+    if settings.cedula_de_extranjeria_manda:
+        # arq-1r: el extranjero CON cédula de extranjería es residente (ver `_CEDULA_DE_EXTRANJERIA_MANDA`).
+        for antes, despues in _CEDULA_DE_EXTRANJERIA_MANDA:
             sistema = sistema.replace(antes, despues)
-        if settings.gentilicio_es_colombiano:
-            # gen-14: la ciudad o el gentilicio sí dicen la nacionalidad; alojarse o viajar no (ver la constante).
-            for antes, despues in _GENTILICIO_ES_COLOMBIANO:
-                sistema = sistema.replace(antes, despues)
-            if settings.el_verbo_no_la_ciudad:
-                # arq-1f: pares con la misma ciudad, para que decida el verbo (ver `_EL_VERBO_NO_LA_CIUDAD`).
-                for antes, despues in _EL_VERBO_NO_LA_CIUDAD:
-                    sistema = sistema.replace(antes, despues)
-    if settings.baru_sale_de_cartagena:
-        # gen-6: alojarse en Barú o Playa Blanca es salir desde Cartagena (ver `_BARU_SALE_DE_CARTAGENA`).
-        for antes, despues in _BARU_SALE_DE_CARTAGENA:
-            sistema = sistema.replace(antes, despues)
-    if con_hotel:
-        sistema += REGLA_HOTEL_ES if lang == "es" else REGLA_HOTEL_EN
+    # gen-4: vivir en Colombia no es ser residente (ver `_VIVIR_NO_ES_RESIDIR`).
+    for antes, despues in _VIVIR_NO_ES_RESIDIR:
+        sistema = sistema.replace(antes, despues)
+    # gen-14: la ciudad o el gentilicio sí dicen la nacionalidad; alojarse o viajar no (ver la constante).
+    for antes, despues in _GENTILICIO_ES_COLOMBIANO:
+        sistema = sistema.replace(antes, despues)
+    # arq-1f: pares con la misma ciudad, para que decida el verbo (ver `_EL_VERBO_NO_LA_CIUDAD`).
+    for antes, despues in _EL_VERBO_NO_LA_CIUDAD:
+        sistema = sistema.replace(antes, despues)
+    # gen-6: alojarse en Barú o Playa Blanca es salir desde Cartagena (ver `_BARU_SALE_DE_CARTAGENA`).
+    for antes, despues in _BARU_SALE_DE_CARTAGENA:
+        sistema = sistema.replace(antes, despues)
+    sistema += REGLA_HOTEL_ES if lang == "es" else REGLA_HOTEL_EN
     # Solo cuando el refresher importa (ya se sabe que lleva más de 2 años sin bucear): con el campo en todas las
     # llamadas, el banco ex0 bajaba de 99,5 a 96,5 % estable y volvía "paquete de 5 inmersiones" → certificado.
-    con_refresher = settings.refresher_por_extractor and (sabido or {}).get("last_dive_over_2_years") is True
+    con_refresher = (sabido or {}).get("last_dive_over_2_years") is True
     if con_refresher:
         sistema += REGLA_REFRESHER_ES if lang == "es" else REGLA_REFRESHER_EN
     # ex-9b paso 6: los campos nuevos con su regla (ninguno con los flags apagados).
     paso6 = campos_paso6(history)
-    # ex-9b (19-oct, decisión de Gadea, flag `paso6_en_llamada_aparte`): con dos o más campos del paso 6 el esquema
-    # estricto no cabía en Haiku ("compiled grammar is too large": ronda ex9b-4, 92 de 92 llamadas al respaldo).
-    # Con el flag, la llamada de siempre sale con su esquema de siempre y los campos del paso 6 van en OTRA llamada,
-    # a la vez (mismo texto + sus reglas: el principio del prompt sale de la caché). Se juntan al leer.
-    aparte = bool(paso6) and settings.paso6_en_llamada_aparte
+    # ex-9b (19-oct, decisión de Gadea): con dos o más campos del paso 6 el esquema estricto no cabía en Haiku ("compiled
+    # grammar is too large": ronda ex9b-4, 92 de 92 llamadas al respaldo). La llamada de siempre sale con su esquema de
+    # siempre y los campos del paso 6 van en OTRA llamada, a la vez (mismo texto + sus reglas: el principio del prompt
+    # sale de la caché). Se juntan al leer.
+    aparte = bool(paso6)
     sistema_paso6 = sistema
     for _esq, regla_es, regla_en in paso6.values():
         sistema_paso6 += regla_es if lang == "es" else regla_en
     if not aparte:
         sistema = sistema_paso6
-    if settings.reparto_al_sumarse_alguien and ((sabido or {}).get("group_size") or (sabido or {}).get("group_allocation")):
+    if (sabido or {}).get("group_size") or (sabido or {}).get("group_allocation"):
         sistema += REGLA_SUMARSE_ES if lang == "es" else REGLA_SUMARSE_EN
     modelo = modelo or settings.extractor_turno_model
     t0 = time.perf_counter()
@@ -766,7 +752,7 @@ async def extraer_turno(mensaje: str, *, history: list[dict] | None = None, sabi
     datos_paso6: dict = {}
     try:
         client = client or trace_openai(AsyncOpenAI(api_key=settings.openai_api_key))
-        esquema = _esquema(con_hotel, con_refresher, settings.precio_no_elige, None if aparte else paso6)
+        esquema = _esquema(True, con_refresher, settings.precio_no_elige, None if aparte else paso6)
         if aparte:
             esquema_paso6 = {"type": "object", "properties": {c: e for c, (e, _es, _en) in paso6.items()},
                              "required": list(paso6), "additionalProperties": False}
@@ -797,7 +783,7 @@ async def extraer_turno(mensaje: str, *, history: list[dict] | None = None, sabi
         return None
     extraer_turno.ultimo_segundos = time.perf_counter() - t0
     salida, descartes = {}, {}
-    for campo in (*CAMPOS, *EXTRAS, "nombre", *(("hotel",) if con_hotel else ()),
+    for campo in (*CAMPOS, *EXTRAS, "nombre", "hotel",
                   *(("refresher_interested",) if con_refresher else ()), *paso6):
         d = datos.get(campo)
         if not isinstance(d, dict) or d.get("valor") in (None, "", [], {}):
@@ -818,7 +804,7 @@ async def extraer_turno(mensaje: str, *, history: list[dict] | None = None, sabi
                 descartes[campo] = f"ninguna edad está en la cita: {d['valor']!r} / {cita!r}"
                 continue
         if not cita_verificable(cita, mensaje):
-            if (campo == "activity" and settings.extractor_cita_del_cliente and history
+            if (campo == "activity" and history
                     and cita_verificable(cita, ultima_pregunta_del_bot(history) or "")):
                 # CAL-C2: aceptar lo que propone el bot ("nos gusta" tras "te propongo la salida de 2 inmersiones") se
                 # citaba con el texto del BOT 2 de 3 veces y se descartaba. Solo la actividad, y solo si la cita está
@@ -833,14 +819,11 @@ async def extraer_turno(mensaje: str, *, history: list[dict] | None = None, sabi
         if campo == "location" and not nombra_un_lugar(cita):
             descartes[campo] = f"la cita no nombra un lugar: {cita!r}"
             continue
-        if campo == "location" and valor == "island" and settings.baru_no_es_rosario and _solo_baru(cita):
+        if campo == "location" and valor == "island" and _solo_baru(cita):
             # G3-06 (decisión de Gadea): Barú y Playa Blanca no son las islas ("estamos en el hotel las islas, en
             # baru" salía island). El lugar queda sin saber y lo contesta la base (aviso solo-operamos-en-rosario).
-            if settings.baru_sale_de_cartagena:
-                # gen-6: quien se aloja en Barú sale desde Cartagena (policies.json); sin saberlo, se repreguntaba.
-                salida[campo] = "cartagena"
-                continue
-            descartes[campo] = f"Barú no es Islas del Rosario: {cita!r}"
+            # gen-6: quien se aloja en Barú sale desde Cartagena (policies.json); sin saberlo, se repreguntaba.
+            salida[campo] = "cartagena"
             continue
         if campo == "hotel" and not (isinstance(valor, str) and cita_verificable(valor, mensaje)):
             descartes[campo] = f"el nombre del hotel no está en el mensaje: {valor!r}"
@@ -858,7 +841,7 @@ async def extraer_turno(mensaje: str, *, history: list[dict] | None = None, sabi
     if quiere and certificado is True and not salida.get("activity") and not sabido.get("activity"):
         salida["activity"] = "certified_diving"
     reparto, actividad = salida.get("group_allocation"), salida.get("activity")
-    if settings.actividad_del_reparto and isinstance(reparto, dict) and actividad and actividad not in reparto:
+    if isinstance(reparto, dict) and actividad and actividad not in reparto:
         # CAL-F (18-oct, grupo-mixto-precio-cop-total 2/3): "1 buzo avanzado y 2 para bautismo" daba el reparto
         # {certified_diving: 1, minicourse: 2} (bien) y la actividad padi_advanced: el bot cotizaba el Curso Avanzado.
         # Si la actividad no es de nadie del reparto, se contradicen; manda el reparto.
@@ -866,12 +849,8 @@ async def extraer_turno(mensaje: str, *, history: list[dict] | None = None, sabi
         if nueva:
             logger.info(f"[EXTRACT][CAL-F] activity={actividad!r} no está en el reparto {reparto}: {nueva!r}")
             salida["activity"] = nueva
-    # Regla del catálogo: el buceo certificado (nombrado: fun dives, paquetes de buceos) exige certificación.
-    # mod-2 (18-oct, decisión de Gadea, flag `certificado_solo_si_lo_dice`): que el cliente elija el buceo certificado NO
-    # dice que lo esté ("fun dives"): tiene que confirmarlo; con el flag, la regla no lo deduce.
-    if (not settings.certificado_solo_si_lo_dice and salida.get("activity") == "certified_diving"
-            and "is_certified" not in salida and certificado is not True):
-        salida["is_certified"] = True
+    # mod-2 (18-oct, decisión de Gadea): que el cliente elija el buceo certificado NO dice que lo esté ("fun dives"):
+    # tiene que confirmarlo; ya no se deduce del catálogo.
     idioma = datos.get("idioma")
     if isinstance(idioma, str) and idioma.strip():
         salida["idioma"] = idioma.strip().lower()[:2]

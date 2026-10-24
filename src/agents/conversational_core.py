@@ -40,7 +40,6 @@ from src.config import settings
 from src.domain import activities as dom
 from src.flows import cart_render, eligibility
 from src.flows.state import ConversationState, Step
-from src.flows.textos import de_cartagena
 from src.utils.fuzzy import is_affirmative, is_agree
 from src.utils.number_words import number_alt
 from src.utils.text import strip_accents
@@ -186,11 +185,11 @@ _SLOTS_APLAZABLES = frozenset({
 def refresh_en_el_grupo(state: ConversationState) -> bool | None:
     """¿Alguien del grupo lleva más de 2 años sin bucear? None si aún no se sabe.
 
-    gen-7 (20-oct, flag `seguridad_de_grupo`): la pregunta de seguridad es de GRUPO ("¿… de alguno del grupo?") y el
+    gen-7 (20-oct): la pregunta de seguridad es de GRUPO ("¿… de alguno del grupo?") y el
     refresher se cobra "por persona que lo necesite", pero solo contaba quien escribe (`last_dive_over_2_years`).
     "Sí, uno de nosotros no bucea desde hace 4 años" lo guardaba el extractor como de OTRA persona
     (`acompanante_certificado_inactivo`) y la pregunta se repetía sin llegar nunca al refresher."""
-    if state.last_dive_over_2_years or (settings.seguridad_de_grupo and state.acompanante_certificado_inactivo):
+    if state.last_dive_over_2_years or state.acompanante_certificado_inactivo:
         return True
     return state.last_dive_over_2_years
 
@@ -254,7 +253,7 @@ def next_missing_slot(state: ConversationState, saltar: frozenset[str] | set[str
 
 def _es_la_ultima_pregunta(state: ConversationState) -> bool:
     """La nacionalidad es la última pregunta salvo que haya otra aplazada aún sin contestar (EX-FLUJO-1)."""
-    if not settings.aplazar_pregunta_sin_respuesta or not state.preguntas_aplazadas:
+    if not state.preguntas_aplazadas:
         return True
     return next_missing_slot(state, saltar=frozenset({SLOT_NATIONALITY})) in (None, SLOT_NATIONALITY)
 
@@ -316,7 +315,7 @@ def _ofrecer_la_actividad_preguntada(state: ConversationState) -> str | None:
     """gen-8: quien pregunta por UNA actividad sin elegirla recibe la oferta de esa, no el menú de 4 (textos-B). La
     elige el cliente: "sí" confirma la recomendación (`suggested_activity`, nucleo/routing)."""
     actividad = state.actividad_preguntada
-    if not (settings.actividad_de_la_pregunta and actividad) or actividad in _SIN_OFERTA_CONCRETA:
+    if not actividad or actividad in _SIN_OFERTA_CONCRETA:
         return None
     if state.suggested_activity and state.suggested_activity != actividad:
         return None
@@ -350,7 +349,7 @@ def ask_slot(state: ConversationState, slot: str, *, reasking: bool = False) -> 
 
     if slot == SLOT_ACTIVITY and (oferta := _ofrecer_la_actividad_preguntada(state)):
         return oferta
-    if (slot == SLOT_ACTIVITY and settings.actividad_por_lo_sabido and state.quiere_bucear
+    if (slot == SLOT_ACTIVITY and state.quiere_bucear
             and not state.suggested_activity and not state.detected_group_allocation):
         # CAL-C1 (16-oct; regla de Gadea 14/27-sep: recomendar según lo que se sabe). Quien ya dijo que quiere bucear
         # recibía el menú entero ("5 inmersiones", "Muchas gracias!", "no estamos certificados" → "¿Con cuál te
@@ -361,7 +360,7 @@ def ask_slot(state: ConversationState, slot: str, *, reasking: bool = False) -> 
             state.suggested_activity = "minicourse"
         elif certificado is None:
             return ask_slot(state, SLOT_CERTIFICATION, reasking=reasking)
-    if (slot == SLOT_ACTIVITY and settings.actividad_por_lo_sabido and state.suggested_activity == "minicourse"
+    if (slot == SLOT_ACTIVITY and state.suggested_activity == "minicourse"
             and reasking and not _minicurso_ya_recomendado(state)):
         # La recomendación entera la primera vez que se hace (la corta "¿minicurso u Open Water?" no recomendaba:
         # cal-60, también cuando la recomendación se había apuntado en un turno anterior sin llegar a decirse).
@@ -400,7 +399,7 @@ def ask_slot(state: ConversationState, slot: str, *, reasking: bool = False) -> 
             [{"title": "✅ Yes, the mini-course", "value": "mini course"},
              {"title": "🎓 The Open Water course", "value": "open water course"}]
         )
-        if reasking and settings.actividad_por_lo_sabido:
+        if reasking:
             # CAL-C1: la corta también recomienda (cal-60: "¿minicurso u Open Water?" no se leía como recomendación).
             return (
                 "Para empezar, lo ideal es el *minicurso*: no hace falta experiencia ni certificación. ¿Te animas? "
@@ -408,13 +407,6 @@ def ask_slot(state: ConversationState, slot: str, *, reasking: bool = False) -> 
                 if lang == "es" else
                 "To start, the *mini-course* is the ideal choice: no experience or certification needed. Shall we go "
                 "for it? (If you'd rather get certified, there's the *Open Water course*.) 🤿"
-            )
-        if reasking:
-            return (
-                "¿Te animas con el *minicurso* (ideal para la primera vez) o prefieres el *curso Open Water*? 🌊"
-                if lang == "es" else
-                "Shall we go for the *mini-course* (ideal for a first time) or would you rather do the "
-                "*Open Water course*? 🌊"
             )
         return (
             "Para una primera vez te recomiendo el *minicurso*: teoría, práctica en aguas tranquilas y una "
@@ -425,7 +417,7 @@ def ask_slot(state: ConversationState, slot: str, *, reasking: bool = False) -> 
             "with an instructor, no experience needed. If you want to get certified, there's the *PADI Open "
             "Water course*. Shall we go for the mini-course? 🤿"
         )
-    if slot == SLOT_ACTIVITY and settings.recomendar_a_certificados and state.is_certified is True:
+    if slot == SLOT_ACTIVITY and state.is_certified is True:
         # 14-oct (ronda flujo1-B3): a quien ya dijo que es buzo certificado se le ofrecía el menú entero (minicurso,
         # snorkel…) y el juez lo marcaba como repregunta. Regla de Gadea (14/27-sep): recomendar según el contexto, y
         # que elija el cliente: para un certificado, la salida de 2 inmersiones, los paquetes o un curso avanzado.
@@ -453,7 +445,7 @@ def ask_slot(state: ConversationState, slot: str, *, reasking: bool = False) -> 
             "days there are *multi-dive packages*, and to level up, the *Advanced course* or a specialty. Which one "
             "interests you? 🤿"
         )
-    if (slot == SLOT_ACTIVITY and settings.recomendar_a_no_certificados and state.is_certified is False
+    if (slot == SLOT_ACTIVITY and state.is_certified is False
             and not state.suggested_activity):
         # 18-oct (ronda mod-F): el simétrico de `recomendar_a_certificados`. A quien sabemos que NO es certificado y no
         # ha elegido ("Sería buzo principiante y snorkeling": el extractor no elige actividad en un mensaje ambiguo) se
@@ -542,11 +534,10 @@ def ask_slot(state: ConversationState, slot: str, *, reasking: bool = False) -> 
     if slot == SLOT_CERTIFICATION:
         plural = (state.detected_group_size or 1) > 1
         if lang == "es":
-            q = (de_cartagena("¿Son buzos certificados?", "¿Sois buzos certificados?") if plural
+            q = ("¿Son buzos certificados?" if plural
                  else "¿Eres buzo certificado?")
             return (f"¡Genial! Para recomendarte el plan perfecto: {q} "
-                    + de_cartagena("(Y si no, ¡tranqui! El minicurso es ideal para empezar. 🤿)",
-                                   "(Y si no, ¡tranquilo! El minicurso es ideal para empezar. 🤿)"))
+                    + "(Y si no, ¡tranqui! El minicurso es ideal para empezar. 🤿)")
         q = "Are you certified divers?" if plural else "Are you a certified diver?"
         return (f"Great! So I can recommend the perfect plan: {q} "
                 "(And if not, no worries — the mini-course is the ideal way to start. 🤿)")
@@ -610,29 +601,19 @@ def ask_slot(state: ConversationState, slot: str, *, reasking: bool = False) -> 
             [{"title": "✅ Yes", "value": "yes"}, {"title": "❌ No", "value": "no"}]
         )
         # Se cobra (owner 2026-09-14): precio por persona desde el catalogo.
-        price = cart_render.refresher_price_text(state, una_moneda=settings.rag_sin_precio_con_tarjeta)  # G3-07a
-        if settings.refresher_completo:
-            # gen-7 (20-oct): lo que dice la base del refresher (ficha `refresher:minicourse` y `medical_restrictions`):
-            # se reserva como el Minicurso de Buceo y usa el formulario médico de curso, aunque sea buzo certificado.
-            plural = (state.detected_group_size or 1) > 1
-            return (
-                "El *refresher* es un repaso con instructor antes de volver a bucear: se reserva como *Minicurso de "
-                f"Buceo* y cuesta *{price}* por persona que lo necesite. Lleva el formulario médico de curso (aunque "
-                "estén certificados, el enlace llega con la reserva). "
-                + ("¿Les interesa?" if plural else "¿Te interesa?")
-                if lang == "es" else
-                "The *refresher* is an instructor-led review before diving again: it is booked as the *Dive Mini "
-                f"Course* and costs *{price}* per person who needs it. It uses the course medical form (even for "
-                "certified divers; the link comes with the booking). Are you interested?"
-            )
+        price = cart_render.refresher_price_text(state, una_moneda=True)  # G3-07a
+        # gen-7 (20-oct): lo que dice la base del refresher (ficha `refresher:minicourse` y `medical_restrictions`): se
+        # reserva como el Minicurso de Buceo y usa el formulario médico de curso, aunque sea buzo certificado.
+        plural = (state.detected_group_size or 1) > 1
         return (
-            "El *refresher* es una sesión corta de repaso en el agua antes de la "
-            f"inmersión. Tiene un costo de *{price}* por persona que lo necesite. "
-            + de_cartagena("¿Les interesa?" if (state.detected_group_size or 1) > 1 else "¿Te interesa?",
-                           "¿Os interesa?")
+            "El *refresher* es un repaso con instructor antes de volver a bucear: se reserva como *Minicurso de "
+            f"Buceo* y cuesta *{price}* por persona que lo necesite. Lleva el formulario médico de curso (aunque "
+            "estén certificados, el enlace llega con la reserva). "
+            + ("¿Les interesa?" if plural else "¿Te interesa?")
             if lang == "es" else
-            "The *refresher* is a short in-water review session before the dive. "
-            f"It costs *{price}* per person who needs it. Are you interested?"
+            "The *refresher* is an instructor-led review before diving again: it is booked as the *Dive Mini "
+            f"Course* and costs *{price}* per person who needs it. It uses the course medical form (even for "
+            "certified divers; the link comes with the booking). Are you interested?"
         )
     if slot == SLOT_CONFIRM_CORRECTION and state.pending_correction:
         known = _known_field_values(state)
@@ -752,44 +733,27 @@ def ask_slot(state: ConversationState, slot: str, *, reasking: bool = False) -> 
         # Singular/plural como en certificación y seguridad — en vivo salía
         # siempre en plural ("¿sois colombianos?") a quien viajaba solo.
         plural = (state.detected_group_size or 1) > 1
-        if settings.vivir_no_es_residir:
-            # gen-4: "residente" se contestaba "sí, vivo aquí"; lo que cuenta es la nacionalidad o la cédula de
-            # extranjería (policies.json, colombian_pricing). Sin género supuesto (SIN_GENERO_SUPUESTO).
-            pregunta = (
-                ("¿son de nacionalidad colombiana o tienen cédula de extranjería?" if plural
-                 else "¿eres de nacionalidad colombiana o tienes cédula de extranjería?")
-                if lang == "es" else
-                # Sin "resident" (Gonzalo, #852): "resident" se contestaba "I live here", el fallo de gen-4.
-                # Sin explicar, «cédula de extranjería» quedaba en español en una respuesta en inglés (ronda gen14-B,
-                # reserva-ingles idioma); decisión de Gadea (#1078): una explicación corta y sin «residents».
-                ("are you Colombian nationals, or do you have a Colombian *cédula de extranjería* (Colombia's ID card "
-                 "for foreigners)?" if plural else
-                 "are you a Colombian national, or do you have a Colombian *cédula de extranjería* (Colombia's ID card "
-                 "for foreigners)?")
-            )
-            if lang == "es":
-                cabeza = ("Para darte el precio y el link correctos:" if not _es_la_ultima_pregunta(state)
-                          else "Última cosa para darte el precio y el link correctos:")
-            else:
-                cabeza = ("So I can give you the right price and link:" if not _es_la_ultima_pregunta(state)
-                          else "One last thing so I can give you the right price and link:")
-            return f"{cabeza} {pregunta}"
-        if lang == "es":
-            pregunta = (
-                de_cartagena("¿son colombianos o residentes en Colombia?", "¿sois colombianos o residentes en Colombia?")
-                if plural
-                else "¿eres colombiano o residente en Colombia?"
-            )
-            if not _es_la_ultima_pregunta(state):
-                return f"Para darte el precio y el link correctos: {pregunta}"
-            return f"Última cosa para darte el precio y el link correctos: {pregunta}"
-        pregunta_en = (
-            "are you Colombian or residents of Colombia?" if plural
-            else "are you Colombian or a resident of Colombia?"
+        # gen-4: "residente" se contestaba "sí, vivo aquí"; lo que cuenta es la nacionalidad o la cédula de extranjería
+        # (policies.json, colombian_pricing). Sin género supuesto (SIN_GENERO_SUPUESTO).
+        pregunta = (
+            ("¿son de nacionalidad colombiana o tienen cédula de extranjería?" if plural
+             else "¿eres de nacionalidad colombiana o tienes cédula de extranjería?")
+            if lang == "es" else
+            # Sin "resident" (Gonzalo, #852): "resident" se contestaba "I live here", el fallo de gen-4.
+            # Sin explicar, «cédula de extranjería» quedaba en español en una respuesta en inglés (ronda gen14-B,
+            # reserva-ingles idioma); decisión de Gadea (#1078): una explicación corta y sin «residents».
+            ("are you Colombian nationals, or do you have a Colombian *cédula de extranjería* (Colombia's ID card "
+             "for foreigners)?" if plural else
+             "are you a Colombian national, or do you have a Colombian *cédula de extranjería* (Colombia's ID card "
+             "for foreigners)?")
         )
-        if not _es_la_ultima_pregunta(state):
-            return f"So I can give you the right price and link: {pregunta_en}"
-        return f"One last thing so I can give you the right price and link: {pregunta_en}"
+        if lang == "es":
+            cabeza = ("Para darte el precio y el link correctos:" if not _es_la_ultima_pregunta(state)
+                      else "Última cosa para darte el precio y el link correctos:")
+        else:
+            cabeza = ("So I can give you the right price and link:" if not _es_la_ultima_pregunta(state)
+                      else "One last thing so I can give you the right price and link:")
+        return f"{cabeza} {pregunta}"
     raise ValueError(f"unknown slot {slot!r}")
 
 
@@ -810,23 +774,15 @@ def _dias_del_plan(state: ConversationState) -> int | None:
 
 
 def _pregunta_origen(lang: str, mismo_dia: bool = False) -> str:
-    """La pregunta del origen. Con `textos_de_cartagena` (gen, 20-oct) dice que desde Cartagena se sale del Muelle de la
-    Bodeguita: "podemos recogerte saliendo desde Cartagena" sugería una recogida que no existe (ver flows/textos.py)."""
+    """La pregunta del origen (gen, 20-oct, textos en el español de Cartagena): desde Cartagena se sale del Muelle de la
+    Bodeguita ("podemos recogerte saliendo desde Cartagena" sugería una recogida que no existe)."""
     if lang == "es":
         dia = ", ida y vuelta el mismo día" if mismo_dia else ""
-        return de_cartagena(
-            f"¿Desde dónde saldrías? Puedes salir *desde Cartagena* (desde el Muelle de la Bodeguita{dia}) o, si ya "
-            "estás *en las islas*, coordinamos la recogida en tu hotel.",
-            "¿Desde dónde saldrías? Podemos recogerte saliendo *desde Cartagena* "
-            + ("(ida y vuelta el mismo día) " if mismo_dia else "")
-            + "o, si ya estás *en las islas*, coordinamos la recogida en tu hotel.")
+        return (f"¿Desde dónde saldrías? Puedes salir *desde Cartagena* (desde el Muelle de la Bodeguita{dia}) o, si ya "
+            "estás *en las islas*, coordinamos la recogida en tu hotel.")
     dia = ", round trip, same day" if mismo_dia else ""
-    return de_cartagena(
-        f"Where would you be departing from? You can leave *from Cartagena* (from Muelle de la Bodeguita{dia}) or, "
-        "if you're already *on the islands*, we arrange pickup at your hotel.",
-        "Where would you be departing from? We can pick you up *from Cartagena* "
-        + ("(round trip, same day) " if mismo_dia else "")
-        + "or, if you're already *on the islands*, we arrange pickup at your hotel.")
+    return (f"Where would you be departing from? You can leave *from Cartagena* (from Muelle de la Bodeguita{dia}) or, "
+        "if you're already *on the islands*, we arrange pickup at your hotel.")
 
 
 def _plan_en_duda(state: ConversationState) -> bool:
@@ -838,7 +794,7 @@ def _plan_en_duda(state: ConversationState) -> bool:
 
     servicio = state.detected_service_id
     return bool(
-        settings.origen_neutro_con_dos_planes and state.detected_activity == "certified_diving"
+        state.detected_activity == "certified_diving"
         and state.detected_duration == "multi_day" and servicio
         and servicio not in (MULTI_DAY_SERVICES | OVERNIGHT_SERVICES)
     )
@@ -870,11 +826,9 @@ def _plan_is_single_day(state: ConversationState) -> bool:
     if state.detected_service_id:
         return state.detected_service_id not in not_single
     if state.detected_activity == "certified_diving":
-        if settings.est2_datos:
-            # EX-EST-2 (14-oct): "el plan de 5 buceos para el finde" sin duración detectada recibía "ida y vuelta el mismo
-            # día". Solo se afirma un día si se SABE.
-            return state.detected_duration == "single_day"
-        return state.detected_duration != "multi_day"
+        # EX-EST-2 (14-oct): "el plan de 5 buceos para el finde" sin duración detectada recibía "ida y vuelta el mismo
+        # día". Solo se afirma un día si se SABE.
+        return state.detected_duration == "single_day"
     act = dom.by_id(state.detected_activity) if state.detected_activity else None
     services = act.all_services() if act else ()
     return bool(services) and not any(sid in not_single for sid in services)
@@ -1012,8 +966,6 @@ async def _otro_idioma_en_ingles(state: ConversationState, datos: dict | None = 
     contesta en inglés. El idioma principal lo dice el extractor de la fase EX (misma llamada; unas palabras sueltas no
     cuentan). En el primer turno se mira la extracción ya lanzada con el enrutador, antes del saludo (sin consumirla:
     `_understand` la vuelve a esperar y ya está hecha)."""
-    if not settings.idioma_otro_en_ingles:
-        return
     if len((message or "").split()) < 3:
         # Ronda flujo1-B2: "Frances" (contesta la nacionalidad) pasó la conversación a inglés. Una o dos palabras no
         # dicen en qué idioma escribe el cliente.
@@ -1367,7 +1319,7 @@ def _recall_answer(state: ConversationState, field: str) -> str | None:
             return None
         if n == 1:
             return "Me dijiste que vas *solo/a*." if es else "You told me it's just *you*."
-        return (de_cartagena(f"Me dijiste que son *{n}* personas.", f"Me dijiste que sois *{n}* personas.") if es
+        return (f"Me dijiste que son *{n}* personas." if es
                 else f"You told me you're a group of *{n}*.")
     if field == "activity":
         act = _effective_activity(state)
@@ -1557,7 +1509,7 @@ async def _con_la_nacionalidad_del_mensaje(state: ConversationState, message: st
     flag, el RAG recibe una COPIA del estado con la nacionalidad que la extracción del turno ya leyó (no se gasta ni
     se lanza otra: es la tarea adelantada); el estado de verdad lo sigue escribiendo la extracción. Si la nacionalidad
     cambia, la huella de rag-5 cambia y la respuesta adelantada se rehace."""
-    if not settings.rag_espera_la_nacionalidad or state.is_colombian is not None:
+    if state.is_colombian is not None:
         return state
     from src.agents.nucleo.extractor import lectura_del_extractor  # lazy
 
@@ -1574,10 +1526,8 @@ async def _con_la_nacionalidad_del_mensaje(state: ConversationState, message: st
 
 
 async def _con_hechos(state: ConversationState, message: str, history: list) -> str | None:
-    """ARQ-1d (flag `hechos_por_codigo`): si el mensaje solo pide intenciones que el código sabe contestar, la
-    respuesta del redactor de hechos (src/agents/redactor_hechos.py); si no, None y contesta el RAG de siempre."""
-    if not settings.hechos_por_codigo:
-        return None
+    """ARQ-1d: si el mensaje solo pide intenciones que el código sabe contestar, la respuesta del redactor de hechos
+    (src/agents/redactor_hechos.py); si no, None y contesta el RAG de siempre."""
     from src.agents import redactor_hechos  # lazy
 
     return await redactor_hechos.responder(state, message, history)
@@ -1585,14 +1535,14 @@ async def _con_hechos(state: ConversationState, message: str, history: list) -> 
 
 async def _hechos_para_el_rag(state: ConversationState, message: str, history: list, *, siempre: bool = False
                               ) -> str | None:
-    """ARQ-1g (flag `hechos_al_rag`): en un mensaje MEZCLADO (intenciones de la tabla y algo más: «¿cuánto cuesta y qué
+    """ARQ-1g: en un mensaje MEZCLADO (intenciones de la tabla y algo más: «¿cuánto cuesta y qué
     peces se ven?»), el RAG contesta, pero la parte cubierta la escribe con los hechos del código y no de memoria. None
     si no hay nada cubierto o si el mensaje es todo de la tabla (entonces contesta el redactor). También cuando Jev lo
     daba por todo de la tabla pero el redactor dijo FALTA: el mensaje traía algo más."""
     mezclado = getattr(state, "_otra_cosa", None) is not False or getattr(state, "_redactor_dijo_falta", False)
     # arq-5a: `siempre` (la respuesta antes del pase a un asesor) no mira si el mensaje es mezclado: ahí el redactor no
     # contesta nunca, así que lo de la tabla tiene que llegar al RAG.
-    if not (settings.hechos_por_codigo and settings.hechos_al_rag and (mezclado or siempre)):
+    if not (mezclado or siempre):
         return None
     from src.agents import redactor_hechos  # lazy
 
@@ -1707,7 +1657,7 @@ def _entradas_rag(state: ConversationState, history: list, message: str = "") ->
     plan = _plan_nombrado(state, message)
     if plan:
         extra = f"{extra}\n\n{plan}" if extra else plan
-    if settings.tras_pase_recuerda_el_pase and state.step == Step.ESCALATE:
+    if state.step == Step.ESCALATE:
         pase = _PASE_HECHO_ES if state.language == "es" else _PASE_HECHO_EN
         extra = f"{extra}\n\n{pase}" if extra else pase
     entradas = {"lang": state.language, "history": history, "extra_context": extra}
@@ -1716,13 +1666,12 @@ def _entradas_rag(state: ConversationState, history: list, message: str = "") ->
         entradas["origin"] = state.location
     # CAL-A5 (`avisos_condicionados`): los hechos del estado con los que el código elige los avisos que la respuesta
     # tiene que dar. "dados" es la lista DEL ESTADO (el mismo objeto), así que lo que se avisa se apunta solo.
-    # CAL-D (`consulta_con_lo_sabido`) usa los mismos hechos para que la consulta de búsqueda nombre el asunto.
-    if settings.avisos_condicionados or settings.consulta_con_lo_sabido:
-        from src.flows import avisos as avisos_mod  # lazy
+    # CAL-D usa los mismos hechos para que la consulta de búsqueda nombre el asunto.
+    from src.flows import avisos as avisos_mod  # lazy
 
-        hechos = avisos_mod.hechos_del_estado(state)
-        hechos["dados"] = state.avisos_dados
-        entradas["avisos_hechos"] = hechos
+    hechos = avisos_mod.hechos_del_estado(state)
+    hechos["dados"] = state.avisos_dados
+    entradas["avisos_hechos"] = hechos
     return entradas
 
 
@@ -1931,7 +1880,7 @@ def _maybe_launch_answer(state: ConversationState, message: str, routing_signals
     if _has_pending_answer(state):
         return
     if not _turn_has_question(message, routing_signals):
-        if not (settings.lugar_desconocido_al_rag and _lugar_desconocido(routing_signals)):
+        if not _lugar_desconocido(routing_signals):
             return
         # CAL-C4 (17-oct): "En baru y Rosario" contestaba "Entiendo que te encuentras en Barú y Rosario" y nadie le
         # decía que en Barú no operamos (cal-55): el turno era una respuesta a la reserva y no llegaba a la base. Un
@@ -2010,7 +1959,7 @@ def _answer_replaces_the_booking_question(
     """
     if _is_rag_fallback(answer):
         return True
-    if settings.una_sola_pregunta and not finalized and _answer_already_asks(answer):
+    if not finalized and _answer_already_asks(answer):
         # CAL-C3b (17-oct): la regla vale para cualquier dato pendiente, como en el camino antiguo
         # (`_answer_question`). "¿En qué hotel de las islas se alojan? ¿En qué hotel o isla te hospedas?"
         # (cal-71/73): dos preguntas seguidas; la de la reserva queda pendiente para el turno siguiente.
@@ -2105,14 +2054,14 @@ def _origen_antes_del_precio(state: ConversationState, message: str, answer: str
     ("¿y en pesos?"). Un importe en la respuesta a otra cosa ("¿qué incluye?") se deja como hoy."""
     if state.location or state.detected_location:
         return None
-    if settings.hoteles_de_la_base and _jev_dice_el_lugar(state):
+    if _jev_dice_el_lugar(state):
         # gen-15: la puerta mira el origen antes de que la extracción del turno lo guarde, y sus pistas son palabras
         # («Cartagena», «islas», «Barú»): «We booked 3 nights at Mulata. How much is snorkeling?» se repreguntaba 2/2
         # con Jev seguro (islands 0,97). Si Jev está seguro de dónde está el cliente, el mensaje ya lo dice.
         return None
     texto = message or ""
     # ord-7: un enlace de reserva también depende del origen («mándame el enlace del Open Water» daba el de Cartagena).
-    da_enlace = settings.origen_dos_variantes and bool(answer) and "book.divingplanet.org" in answer
+    da_enlace = bool(answer) and "book.divingplanet.org" in answer
     if not answer or not (_IMPORTE_RE.search(answer) or da_enlace):
         return None
     jev = getattr(state, "_jev_pide_precio", None)
@@ -2128,7 +2077,7 @@ def _origen_antes_del_precio(state: ConversationState, message: str, answer: str
         return None
     del_cliente = [h.get("content") or "" for h in (state.history or []) if h.get("role") == "user"]
     este = [texto]
-    if settings.lugar_con_dos_lectores and _jev_dice_que_no_lo_dice(state):
+    if _jev_dice_que_no_lo_dice(state):
         # CAL-C3c: "bucear en islas del rosario" nombra las islas sin decir dónde está el cliente (cal-71/73); si Jev
         # está seguro de que ESTE mensaje no dice su origen, sus palabras no cuentan como pista y se pregunta antes de
         # cotizar. El mensaje ya está en el historial cuando contesta el RAG: se quita de ahí también.
@@ -2138,7 +2087,7 @@ def _origen_antes_del_precio(state: ConversationState, message: str, answer: str
     if any(_PISTA_ORIGEN_RE.search(t) for t in [*del_cliente, *este]):
         return None
     pregunta = ORIGEN_ANTES_DEL_PRECIO_ES if state.language == "es" else ORIGEN_ANTES_DEL_PRECIO_EN
-    variantes = _dos_variantes(state, answer, con_enlace=da_enlace) if settings.origen_dos_variantes else None
+    variantes = _dos_variantes(state, answer, con_enlace=da_enlace)
     if variantes:
         tras = (ORIGEN_TRAS_LOS_ENLACES_ES, ORIGEN_TRAS_LOS_ENLACES_EN) if da_enlace else (
             ORIGEN_TRAS_LAS_VARIANTES_ES, ORIGEN_TRAS_LAS_VARIANTES_EN)
@@ -2172,16 +2121,15 @@ def _sin_importes(answer: str) -> str:
         frases = [f for f in _FRASE_RE.split(linea) if f.strip() and not _DEPENDE_DEL_ORIGEN_RE.search(f)]
         if frases:
             lineas.append(" ".join(frases))
-        elif settings.origen_sin_titulo_suelto:
-            # gen-6 (21-oct): "La salida de 2 inmersiones cuesta:", una línea en blanco y la lista de precios dejaba el
-            # título colgado ("…cuesta:" y luego la pregunta del origen): el título se busca saltando las líneas en blanco.
+        else:
+            # El título de una lista que se ha quitado entera ("los precios son:"). gen-6 (21-oct): "La salida de 2
+            # inmersiones cuesta:", una línea en blanco y la lista de precios dejaba el título colgado ("…cuesta:" y
+            # luego la pregunta del origen): el título se busca saltando las líneas en blanco.
             ultima = len(lineas) - 1
             while ultima >= 0 and not lineas[ultima].strip():
                 ultima -= 1
             if ultima >= 0 and lineas[ultima].rstrip().endswith(":"):
                 del lineas[ultima:]
-        elif lineas and lineas[-1].rstrip().endswith(":"):
-            lineas.pop()  # el título de una lista que se ha quitado entera ("los precios son:")
     # La pregunta final (casi siempre "¿quieres el link / que te ayude a reservar?") la sustituye la del origen.
     while lineas and not lineas[-1].strip():
         lineas.pop()

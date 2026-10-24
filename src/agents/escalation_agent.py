@@ -91,8 +91,7 @@ _SOLO_LO_DEMAS = {
 async def _lo_contestable(conv, message: str, reason: str, lang: str) -> str | None:
     """Lo que el RAG contesta del mensaje APARTE del tema sensible, o None (flag apagado, otro tema, nada más que
     contestar, "no lo tengo" o un fallo: entonces el pase va solo, como siempre)."""
-    from src.config import settings  # lazy
-    if not settings.contesta_antes_de_pasar or reason not in _TEMA_QUE_PASA:
+    if reason not in _TEMA_QUE_PASA:
         return None
     conv._contestado_antes_del_pase = True  # gen-13: el cierre del turno no lo repite
     key = "es" if lang == "es" else "en"
@@ -113,10 +112,8 @@ async def lo_contestable_en_cualquier_pase(conv, message: str) -> str | None:
     """Cierre de un turno que acaba de pasar a un asesor: lo que el RAG contesta de las OTRAS preguntas del mensaje,
     sin tocar el motivo del pase, o None (flag apagado, ya contestado por gen-1, pase que va solo, mensaje sin
     pregunta, nada más que contestar, «no lo tengo» o un fallo)."""
-    from src.config import settings  # lazy
     reason = conv.pending_escalation_reason or ""
-    if (not settings.contesta_antes_de_cualquier_pase or getattr(conv, "_contestado_antes_del_pase", False)
-            or any(m in reason for m in _PASE_QUE_VA_SOLO)):
+    if getattr(conv, "_contestado_antes_del_pase", False) or any(m in reason for m in _PASE_QUE_VA_SOLO):
         return None
     from src.agents.conversational_core import _turn_has_question  # lazy
 
@@ -135,10 +132,6 @@ def _es_nada(answer: str) -> bool:
     pasaba de 30 caracteres y «NADA» le llegaba al cliente (8 turnos en las rondas del 21-22, también en G10). Con el
     flag, cuenta la PRIMERA LÍNEA entera, sin límite de longitud; una respuesta real que empieza por «Nada, no hace
     falta…» no es la palabra sola. Lo mismo que FALTA en el redactor de hechos (a3e233f)."""
-    from src.config import settings  # lazy
-
-    if not settings.nada_en_primera_linea:
-        return answer.strip(" .!¡*\"'").upper().startswith(_NADA) and len(answer) < 30
     lineas = answer.strip().splitlines()
     return bool(lineas) and lineas[0].strip(" .!¡*\"'").upper() == _NADA
 
@@ -185,11 +178,8 @@ async def respuesta_dive_to_heal(conv, message: str) -> str:
     """La respuesta a un precio o una reserva dentro de DIVE TO HEAL: el texto fijo del asesor y, con el flag, delante
     lo que el mensaje pregunta aparte del buceo adaptado."""
     from src.agents.rutas.safety import _adaptive_diving_advisor_answer  # lazy
-    from src.config import settings  # lazy
 
     fija = _adaptive_diving_advisor_answer(conv.language)
-    if not settings.adaptado_contesta_lo_demas:
-        return fija
     lang = "es" if conv.language == "es" else "en"
     resto = await _contestar_lo_demas(conv, message, _TEMA_ADAPTADO[lang], lang, "dive_to_heal")
     return f"{resto}\n\n{fija}" if resto else fija

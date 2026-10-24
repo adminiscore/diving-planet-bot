@@ -1,6 +1,6 @@
 """G3-01 (17-oct, charla G3 de Gadea en PRE, conv 5567): familia de 4, los padres buzos certificados eligen "la salida
 de 2 inmersiones para nosotros dos. y los niños qué pueden hacer?" y luego "el de 12 minicurso y el de 8 snorkel".
-El bot nunca llegaba al precio. Tres flags, APAGADOS:
+El bot nunca llegaba al precio. Tres arreglos (eran flags; promocionados y borrados en sim-5):
 
 1. `lo_dicho_en_respuesta_fija`: la respuesta fija de edades contesta sin el núcleo y la actividad elegida se perdía.
 2. `reparto_parcial_con_lo_sabido`: el reparto de solo los hijos ({minicourse: 1, snorkel: 1}) no suma 4 y se
@@ -14,7 +14,6 @@ import pytest
 
 from src.agents import conversational_core as core
 from src.agents import supervisor
-from src.config import settings
 from src.flows.state import ConversationState
 from tests.test_reparto_cuadra_con_el_total import _intent_alloc
 
@@ -37,14 +36,12 @@ def _con_extraccion(state, datos):
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("flag, esperado", [(False, None), (True, "certified_diving")])
-async def test_la_actividad_dicha_en_la_respuesta_fija_se_guarda(monkeypatch, flag, esperado):
-    monkeypatch.setattr(settings, "lo_dicho_en_respuesta_fija", flag)
+async def test_la_actividad_dicha_en_la_respuesta_fija_se_guarda():
     st = _familia(actividad=None)
     _con_extraccion(st, {"activity": "certified_diving", "group_size": 2,
                          "group_allocation": {"certified_diving": 2, "minicourse": 2}})
     await core.guardar_lo_dicho_sin_nucleo(st)
-    assert st.detected_activity == esperado
+    assert st.detected_activity == "certified_diving"
     # Nunca pisa lo sabido (el total 4) ni guarda el reparto: el extractor lo inventa 1 de cada 3 veces.
     assert st.detected_group_size == 4
     assert st.detected_group_allocation is None
@@ -52,7 +49,6 @@ async def test_la_actividad_dicha_en_la_respuesta_fija_se_guarda(monkeypatch, fl
 
 @pytest.mark.asyncio
 async def test_si_el_nucleo_uso_la_extraccion_no_hace_nada(monkeypatch):
-    monkeypatch.setattr(settings, "lo_dicho_en_respuesta_fija", True)
     st = _familia(actividad=None)
     st._extraccion_adelantada = None
     await core.guardar_lo_dicho_sin_nucleo(st)
@@ -66,22 +62,13 @@ async def test_si_el_nucleo_uso_la_extraccion_no_hace_nada(monkeypatch):
     ({"certified_diving": 1, "minicourse": 1, "snorkel": 1}, {"certified_diving": 2, "minicourse": 1, "snorkel": 1}),
 ])
 def test_los_no_nombrados_siguen_con_la_principal(monkeypatch, parcial, completo):
-    monkeypatch.setattr(settings, "reparto_parcial_con_lo_sabido", True)
     intent = _intent_alloc(dict(parcial))
     supervisor.enforce_group_allocation_consistency(intent, _familia(), "el de 12 minicurso y el de 8 snorkel")
     assert intent.group_allocation == completo
 
 
-def test_sin_flag_se_descarta_como_siempre(monkeypatch):
-    monkeypatch.setattr(settings, "reparto_parcial_con_lo_sabido", False)
-    intent = _intent_alloc({"minicourse": 1, "snorkel": 1})
-    supervisor.enforce_group_allocation_consistency(intent, _familia(), "msg")
-    assert intent.group_allocation is None
-
-
 @pytest.mark.parametrize("como", ["sin_principal", "con_reparto_guardado", "principal_generica"])
 def test_sin_lo_sabido_claro_se_descarta(monkeypatch, como):
-    monkeypatch.setattr(settings, "reparto_parcial_con_lo_sabido", True)
     st = _familia(actividad={"sin_principal": None, "principal_generica": "padi_course"}.get(como, "certified_diving"))
     if como == "con_reparto_guardado":
         st.detected_group_allocation = {"certified_diving": 2, "snorkel": 2}
@@ -92,18 +79,15 @@ def test_sin_lo_sabido_claro_se_descarta(monkeypatch, como):
 
 # 3 · la actividad principal se queda -------------------------------------------------------------------------------
 
-@pytest.mark.parametrize("flag, principal", [(False, "minicourse"), (True, "certified_diving")])
-def test_la_actividad_de_los_hijos_no_sustituye_a_la_principal(monkeypatch, flag, principal):
-    monkeypatch.setattr(settings, "actividad_principal_en_el_reparto", flag)
+def test_la_actividad_de_los_hijos_no_sustituye_a_la_principal():
     st = _familia()
     intent = _intent_alloc({"certified_diving": 2, "minicourse": 1, "snorkel": 1})
     intent.activity = "minicourse"
     supervisor._apply_detected_intent(intent, st, "el de 12 minicurso y el de 8 snorkel")
-    assert st.detected_activity == principal
+    assert st.detected_activity == "certified_diving"
 
 
 def test_un_cambio_de_idea_de_todo_el_grupo_si_sustituye(monkeypatch):
-    monkeypatch.setattr(settings, "actividad_principal_en_el_reparto", True)
     st = _familia()
     intent = _intent_alloc({"snorkel": 4})
     intent.activity = "snorkel"
@@ -113,11 +97,9 @@ def test_un_cambio_de_idea_de_todo_el_grupo_si_sustituye(monkeypatch):
 
 # 4 · G3-01b: el niño que hace snorkel no cambia la etiqueta del minicurso ----------------------------------------
 
-@pytest.mark.parametrize("flag, bubble", [(False, True), (True, False)])
-def test_el_nino_del_snorkel_no_hace_bubble_makers_el_minicurso(monkeypatch, flag, bubble):
+def test_el_nino_del_snorkel_no_hace_bubble_makers_el_minicurso():
     from src.flows import cart_render
 
-    monkeypatch.setattr(settings, "ninos_primero_al_snorkel", flag)
     st = _familia()
     st.language = "es"
     st.detected_ages = [8, 12]
@@ -126,13 +108,12 @@ def test_el_nino_del_snorkel_no_hace_bubble_makers_el_minicurso(monkeypatch, fla
                      {"type": "beginner", "qty": 1, "plan": None, "label": "x"},
                      {"type": "snorkel", "qty": 1, "plan": None, "label": "x"}]
     etiquetas = [b["label"] for b in cart_render.cart_booking_blocks(st)]
-    assert any("Bubble Makers" in e for e in etiquetas) is bubble
+    assert not any("Bubble Makers" in e for e in etiquetas)
 
 
 def test_sin_snorkel_el_de_8_sigue_en_bubble_makers(monkeypatch):
     from src.flows import cart_render
 
-    monkeypatch.setattr(settings, "ninos_primero_al_snorkel", True)
     st = _familia()
     st.language = "es"
     st.detected_ages = [8, 12]

@@ -38,7 +38,6 @@ from __future__ import annotations
 
 import logging
 
-from src.config import settings
 from src.flows.state import Step
 from src.orchestration.state import BotState
 
@@ -79,15 +78,12 @@ async def info_node(state: BotState) -> dict:
     #     2026-09-02): política plana conocida que RAG alucinaba en vez de
     #     retomar; respuesta determinista, redactada para no filtrar el
     #     número de WhatsApp de la política cruda.
-    #     gen-3b (flag `privado_pasa_directo`): también cuando lo dice Jev, y el mensaje va al historial ANTES del
-    #     resumen del pase para que el asesor lea cuántos son o la fecha si ya los dio.
+    #     gen-3b: también cuando lo dice Jev, y el mensaje va al historial ANTES del resumen del pase para que el
+    #     asesor lea cuántos son o la fecha si ya los dio.
     if pide_servicio_privado(msg_lower, signals):
-        if settings.privado_pasa_directo:
-            conv.history.append({"role": "user", "content": message})
+        conv.history.append({"role": "user", "content": message})
         answer = private_group_event_reply(conv)  # 13-oct: marca también el pase
         logger.info("[NODE:info] Private/corporate group event -> real deterministic answer")
-        if not settings.privado_pasa_directo:
-            conv.history.append({"role": "user", "content": message})
         conv.history.append({"role": "assistant", "content": answer})
         return {"reply": answer}
 

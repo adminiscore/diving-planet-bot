@@ -21,18 +21,16 @@ import pytest
 from src.agents import jev_router as jr
 from src.agents import supervisor as sv
 from src.agents.rutas import deflection as sup_deflection
-from src.config import settings
 
 # ---------------------------------------------------------------- E1: el contacto pasa a una persona
 
 
-def test_con_el_flag_la_peticion_de_contacto_pasa_a_un_asesor(monkeypatch):
+def test_la_peticion_de_contacto_pasa_a_un_asesor(monkeypatch):
     """Decisión de Gadea (16-oct): esto es un chatbot y no da números. Quien pide un número o quiere hablar con
     alguien, pasa con un asesor. De paso desaparece la invención de cal-03 ("solo mensajes, no llamadas", que la base
     no dice): ya no hay número que afirmar."""
     from src.flows.state import ConversationState, Step
 
-    monkeypatch.setattr(settings, "contacto_pasa_a_persona", True)
     monkeypatch.setattr(sup_deflection, "build_lead_summary", lambda state, escalation_reason=None: "resumen")
     st = ConversationState(conversation_id="t")
     es = sv._contacto_pasa_a_persona(st, "es")
@@ -45,28 +43,12 @@ def test_con_el_flag_la_peticion_de_contacto_pasa_a_un_asesor(monkeypatch):
     assert "advisor" in en and "+57" not in en
 
 
-def test_con_el_flag_el_texto_de_antes_no_da_el_numero(monkeypatch):
-    monkeypatch.setattr(sup_deflection, "_official_whatsapp", lambda: "+57 320 231515")
-    monkeypatch.setattr(settings, "contacto_pasa_a_persona", True)
-    assert "+57" not in sv._contact_number_deflection("es")
-
-
-def test_sin_el_flag_el_comportamiento_es_el_de_hoy(monkeypatch):
-    """Hasta medirlo, PRE sigue dando el WhatsApp (decisión del 17-sep)."""
-    monkeypatch.setattr(sup_deflection, "_official_whatsapp", lambda: "+57 320 231515")
-    monkeypatch.setattr(settings, "contacto_pasa_a_persona", False)
-    assert "+57 320 231515" in sv._contact_number_deflection("es")
-
-
 # ---------------------------------------------------------------- E3: lo que el sistema no da, lo hace una persona
 
 
-def test_con_el_flag_lo_que_el_sistema_no_da_pasa_a_una_persona(monkeypatch):
+def test_lo_que_el_sistema_no_da_pasa_a_una_persona():
     """cal-29: "Pero un link especial" (una agencia que quiere un enlace para sus clientes) no era, para la señal,
     algo que solo pueda hacer una persona, así que el bot lo explicaba sin ofrecer el pase."""
-    monkeypatch.setattr(settings, "pase_si_pide_fuera_del_sistema", False)
-    assert "special" not in jr._questions_for_turn()["needs_staff"]["instructions"]
-    monkeypatch.setattr(settings, "pase_si_pide_fuera_del_sistema", True)
     instrucciones = jr._questions_for_turn()["needs_staff"]["instructions"]
     assert "'special' payment link" in instrucciones
     assert "only a person can" in instrucciones
@@ -88,8 +70,6 @@ async def test_el_idioma_del_primer_turno_lo_dice_el_extractor(monkeypatch):
     from src.agents import conversational_core as core
     from src.flows.state import ConversationState
 
-    monkeypatch.setattr(settings, "idioma_del_extractor", True)
-    monkeypatch.setattr(settings, "idioma_otro_en_ingles", True)
     st = ConversationState(conversation_id="t")
 
     async def extraccion():
@@ -107,8 +87,6 @@ async def test_el_extractor_no_cambia_el_espanol_ni_el_ingles(monkeypatch):
     from src.agents import conversational_core as core
     from src.flows.state import ConversationState
 
-    monkeypatch.setattr(settings, "idioma_del_extractor", True)
-    monkeypatch.setattr(settings, "idioma_otro_en_ingles", True)
     for idioma, esperado in (("es", "es"), ("en", "en"), ("fr", "en")):
         st = ConversationState(conversation_id="t")
 
@@ -120,23 +98,19 @@ async def test_el_extractor_no_cambia_el_espanol_ni_el_ingles(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_sin_el_flag_o_sin_extraccion_decide_la_cadena_de_siempre(monkeypatch):
+async def test_sin_extraccion_decide_la_cadena_de_siempre(monkeypatch):
     import asyncio
 
     from src.agents import conversational_core as core
     from src.flows.state import ConversationState
 
-    monkeypatch.setattr(settings, "idioma_otro_en_ingles", True)
     st = ConversationState(conversation_id="t")
 
     async def extraccion():
         return {"idioma": "pt"}
 
     st._extraccion_adelantada = asyncio.create_task(extraccion())
-    monkeypatch.setattr(settings, "idioma_del_extractor", False)
-    assert await core._idioma_del_extractor(st, "un mensaje largo en portugues brasileiro") is None
-    # Con el flag pero sin extracción (o con un mensaje de dos palabras), tampoco decide.
-    monkeypatch.setattr(settings, "idioma_del_extractor", True)
+    # Sin extracción (o con un mensaje de dos palabras), no decide.
     vacio = ConversationState(conversation_id="t2")
     assert await core._idioma_del_extractor(vacio, "un mensaje largo de verdad") is None
     assert await core._idioma_del_extractor(st, "bom dia") is None
@@ -150,16 +124,8 @@ _HISTORIAL = [{"role": "user", "content": "Se me perdió el número de la person
               {"role": "assistant", "content": "Entiendo que se te perdió el número. ¿Desde dónde saldrías?"}]
 
 
-def test_sin_el_flag_jev_ve_solo_el_mensaje(monkeypatch):
-    monkeypatch.setattr(settings, "jev_con_contexto", False)
-    estado = jr._estado_para_jev("Me lo podrías compartir por favor", _HISTORIAL)
-    assert estado.endswith("Customer message: Me lo podrías compartir por favor")
-    assert "Se me perdió" not in estado
-
-
-def test_con_el_flag_jev_ve_a_que_se_refiere(monkeypatch):
+def test_jev_ve_a_que_se_refiere():
     """cal-33: sin el turno anterior, "me lo podrías compartir" no es una petición de contacto para nadie."""
-    monkeypatch.setattr(settings, "jev_con_contexto", True)
     estado = jr._estado_para_jev("Me lo podrías compartir por favor", _HISTORIAL)
     assert "Se me perdió el número" in estado
     assert "Customer message: Me lo podrías compartir por favor" in estado
@@ -167,7 +133,6 @@ def test_con_el_flag_jev_ve_a_que_se_refiere(monkeypatch):
 
 
 def test_el_contexto_son_los_ultimos_turnos_y_va_cortado(monkeypatch):
-    monkeypatch.setattr(settings, "jev_con_contexto", True)
     largo = [{"role": "user", "content": f"mensaje {i}"} for i in range(10)]
     largo.append({"role": "assistant", "content": "x" * 2000})
     estado = jr._estado_para_jev("y ahora?", largo)
@@ -180,9 +145,6 @@ def test_el_enrutador_de_respaldo_tambien_ve_los_ultimos_turnos(monkeypatch):
     enrutador LLM, que veía solo el mensaje. Si el contexto no llega también aquí, el arreglo no sirve."""
     from src.agents import escalation
 
-    monkeypatch.setattr(settings, "jev_con_contexto", False)
-    assert escalation._mensaje_con_contexto("Me lo podrías compartir", _HISTORIAL) == "Me lo podrías compartir"
-    monkeypatch.setattr(settings, "jev_con_contexto", True)
     con = escalation._mensaje_con_contexto("Me lo podrías compartir", _HISTORIAL)
     assert "Se me perdió el número" in con
     assert con.rstrip().endswith("Me lo podrías compartir")
@@ -191,6 +153,5 @@ def test_el_enrutador_de_respaldo_tambien_ve_los_ultimos_turnos(monkeypatch):
 
 
 def test_sin_historial_el_estado_es_el_de_siempre(monkeypatch):
-    monkeypatch.setattr(settings, "jev_con_contexto", True)
     assert jr._estado_para_jev("hola", None) == jr._estado_para_jev("hola", [])
     assert jr._estado_para_jev("hola", [{"role": "user", "content": ""}]).endswith("Customer message: hola")

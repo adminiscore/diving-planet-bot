@@ -143,10 +143,8 @@ async def _router_node(state: BotState) -> dict:
     # gen-5 (flag `idioma_unico_de_apertura`): el idioma de la apertura se decide aquí, una vez y a la vez que las
     # señales, para que todas las rutas contesten en el mismo (antes lo sensible, el contacto, la edad o el buceo
     # adaptado decidían cada uno a su manera y sin G-10).
-    from src.config import settings
 
-    abre = (settings.idioma_unico_de_apertura and not conv.detected_language and not msg_lower.isdigit()
-            and conv.step in (Step.WELCOME, Step.LANGUAGE))
+    abre = not conv.detected_language and not msg_lower.isdigit() and conv.step in (Step.WELCOME, Step.LANGUAGE)
     if abre:
         from src.agents.nucleo.setup import idioma_de_apertura
 
@@ -163,7 +161,7 @@ async def _router_node(state: BotState) -> dict:
     # ARQ-1b: las intenciones del mensaje según Jev (vacío si calla), para los hechos por código (src/flows/hechos.py).
     conv._intenciones = intenciones_del_turno(conv, signals)
     conv._otra_cosa = signals.get(PIDE_OTRA_COSA)  # ARQ-1d: None (Jev calla) cuenta como que sí trae algo más
-    if settings.hechos_por_codigo and conv._intenciones and conv._otra_cosa is False:
+    if conv._intenciones and conv._otra_cosa is False:
         # lat-1 (24-oct, fase LAT; Gadea #1731): el mensaje solo pide cosas de la tabla y lo contesta el redactor de
         # hechos, así que la respuesta adelantada del RAG se tira: se cancela ya, antes de que escriba y se revise
         # (latb2-B: en 48 turnos del redactor se gastaban escritor, revisor y embeddings para nada). Si al final contesta

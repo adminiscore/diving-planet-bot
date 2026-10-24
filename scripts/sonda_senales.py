@@ -11,7 +11,7 @@ turno, imprime lo que decidieron las piezas que mandan en el camino del mensaje:
 Sirve para saber si un arreglo no mueve el caso porque la señal no salta o porque salta y el turno va por otro camino.
 
     ENV_FILE=.env.dev python -m scripts.sonda_senales --ids cal-12,cal-29,cal-33 --codigo-local \\
-        --flag jev_con_contexto --flag idioma_del_extractor
+        --flag <flag> [--flag <otro>]
 
 Coste: una conversación por caso (céntimos). La cuenta de OpenAI/OpenRouter es la de PRE.
 """

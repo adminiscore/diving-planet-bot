@@ -12,7 +12,6 @@ import pytest
 from src.agents.intent_detector import DetectedIntent
 from src.agents.nucleo import extraction
 from src.agents.nucleo.slotfill_close import _no_hace_falta_certificacion
-from src.config import settings
 from src.flows.state import ConversationState
 
 
@@ -22,14 +21,12 @@ def _intent(preguntada):
     return intent
 
 
-@pytest.mark.parametrize("flag, preguntada, pregunta", [
-    (False, "padi_open_water", True),
-    (True, "padi_open_water", False),
-    (True, None, True),  # «somos 4 open water»: el extractor no lee ninguna actividad preguntada
-    (True, "snorkel", True),  # una actividad sin nivel no dice nada del curso
+@pytest.mark.parametrize("preguntada, pregunta", [
+    ("padi_open_water", False),
+    (None, True),  # «somos 4 open water»: el extractor no lee ninguna actividad preguntada
+    ("snorkel", True),  # una actividad sin nivel no dice nada del curso
 ])
-def test_preguntar_por_el_curso_no_es_un_nivel_dudoso(monkeypatch, flag, preguntada, pregunta):
-    monkeypatch.setattr(settings, "curso_preguntado_no_es_nivel", flag)
+def test_preguntar_por_el_curso_no_es_un_nivel_dudoso(monkeypatch, preguntada, pregunta):
     monkeypatch.setattr(extraction, "course_level_is_ambiguous", lambda message: True)
     st = ConversationState(conversation_id="flu1", language="en")
     extraction._flag_cert_or_course(_intent(preguntada), st, "hi, do you have open water available tomorrow?")
@@ -53,19 +50,12 @@ def _estado(actividad, certificado, lang="en"):
     ("companion", None, False, False),
 ])
 def test_sin_certificacion_dice_que_no_hace_falta(monkeypatch, actividad, antes, ahora, dice):
-    monkeypatch.setattr(settings, "sin_certificacion_no_hace_falta", True)
     texto = _no_hace_falta_certificacion(_estado(actividad, ahora), {"prev_main_is_certified": antes})
     assert bool(texto) is dice
     if dice:
         assert "certification" in texto
 
 
-def test_sin_el_flag_no_dice_nada(monkeypatch):
-    monkeypatch.setattr(settings, "sin_certificacion_no_hace_falta", False)
-    assert _no_hace_falta_certificacion(_estado("snorkel", False), {"prev_main_is_certified": None}) == ""
-
-
 def test_en_espanol(monkeypatch):
-    monkeypatch.setattr(settings, "sin_certificacion_no_hace_falta", True)
     texto = _no_hace_falta_certificacion(_estado("snorkel", False, "es"), {"prev_main_is_certified": None})
     assert texto.startswith("Para el *Snorkel* no necesitas certificación")

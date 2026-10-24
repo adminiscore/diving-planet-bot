@@ -6,7 +6,7 @@ las aprobadas en la medición, que deben seguir pasando. Grupos de diseño y cie
 (el juez está dentro de la latencia del RAG).
 
     python -m scripts.sonda_juez_modelo gpt-4.1 gpt-6-luna
-    python -m scripts.sonda_juez_modelo gpt-6-luna --grupo diseño --detalle --flag juez_v3_luna   # s4-33 (8-oct)
+    python -m scripts.sonda_juez_modelo gpt-6-luna --grupo diseño --detalle   # s4-33 (8-oct; el v3 Luna, sin interruptor desde sim-5)
 
 `--detalle` imprime cada juicio equivocado (qué etiqueta tenía y qué frases marcó NO el juez); `--grupo` limita a un
 grupo (ajustar SOLO con el de diseño; el ciego, para comprobar sin tocar); `--flag` enciende un interruptor de

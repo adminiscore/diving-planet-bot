@@ -17,7 +17,6 @@ from src.agents.conversational_core import (
     _notes_snapshot,
     _otro_idioma_en_ingles,
 )
-from src.config import settings
 from src.flows.state import ConversationState, Step
 
 logger = logging.getLogger("uvicorn.error")
@@ -115,8 +114,6 @@ async def _idioma_del_extractor(state: ConversationState, message: str) -> str |
     enrutador. "es" o "en" tal cual; cualquier otro idioma, inglés (regla G-10 de Gadea). None si el flag está apagado,
     el mensaje es muy corto (una o dos palabras no dicen el idioma) o la extracción no está: entonces, la cadena de
     siempre."""
-    if not (settings.idioma_del_extractor and settings.idioma_otro_en_ingles):
-        return None
     if len((message or "").split()) < 3:
         return None
     tarea = getattr(state, "_extraccion_adelantada", None)
@@ -202,9 +199,8 @@ async def _setup_phase(
     # toca presentarse (Coral + Diving Planet, tono cercano — regla de persona).
     first_turn = state.step in (Step.WELCOME, Step.LANGUAGE)
     if first_turn:
-        # gen-5: con `idioma_unico_de_apertura` el router ya lo decidió en este mismo turno (mismo mensaje y misma
-        # cadena); no se vuelve a decidir.
-        if not (settings.idioma_unico_de_apertura and state.detected_language):
+        # gen-5: el router ya lo decidió en este mismo turno (mismo mensaje y misma cadena); no se vuelve a decidir.
+        if not state.detected_language:
             await idioma_de_apertura(state, message)
         state.step = Step.FREE_TEXT
         state.quick_replies = []

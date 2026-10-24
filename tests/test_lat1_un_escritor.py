@@ -8,14 +8,12 @@ import pytest
 from src.agents import conversational_core as core
 from src.agents import jev_router as j
 from src.agents import supervisor
-from src.config import settings
 from src.flows.state import ConversationState
 from src.orchestration import graph
 
 
 @pytest.fixture
 def adelantado(monkeypatch):
-    monkeypatch.setattr(settings, "hechos_por_codigo", True)
     monkeypatch.setattr(core, "lanzar_extraccion_adelantada", lambda *a, **k: None)
     tareas = []
 

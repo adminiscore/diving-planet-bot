@@ -8,7 +8,6 @@ import logging
 import re
 
 from src.agents.lead_summary import build_lead_summary
-from src.config import settings
 from src.flows.state import ConversationState, Step
 from src.utils.text import strip_accents as _strip_accents
 
@@ -97,19 +96,8 @@ def _ai_identity_deflection(lang: str) -> str:
     )
 
 
-def _official_whatsapp() -> str | None:
-    """El WhatsApp oficial, de la base de conocimiento (`escalation_rules.json`), nunca escrito aqui."""
-    from src.knowledge.loader import load_json
-
-    try:
-        info = load_json("escalation_rules.json").get("handoff_protocol", {}).get("contact_info", {})
-    except Exception:  # noqa: BLE001 — sin el dato, la deflexion de siempre
-        return None
-    return info.get("whatsapp") or None
-
-
 def _contacto_pasa_a_persona(state: ConversationState, lang: str) -> str:
-    """CAL-E1 (decisión de Gadea del 16-oct, flag `contacto_pasa_a_persona`): el bot no da números de teléfono ni de
+    """CAL-E1 (decisión de Gadea del 16-oct): el bot no da números de teléfono ni de
     WhatsApp. Ante una petición de número o de hablar con alguien, la conversación se pasa a un asesor, igual que
     `_needs_staff_handoff`: mismo efecto en el estado (paso, nota del lead y motivo) para que el pase sea uno solo.
 
@@ -129,41 +117,4 @@ def _contacto_pasa_a_persona(state: ConversationState, lang: str) -> str:
     return (
         "I don't hand out phone numbers here 🔒, but I'm passing you to a Diving Planet advisor so they can talk to "
         "you directly. They'll get in touch shortly. Thanks! 🙌"
-    )
-
-
-def _contact_number_deflection(lang: str) -> str:
-    """Deflexión honesta para una petición de número/contacto directo: límite +
-    lo que SÍ se puede + redirección a la reserva (no escala, no inventa).
-
-    s4-14 (paso 6, decision de Gadea del 17-sep que sustituye a la del 20-jul): si lo piden, se
-    da el WhatsApp OFICIAL (solo mensajes), sacado de la base de conocimiento."""
-    # CAL-E1 (decisión de Gadea del 16-oct, que sustituye a la del 17-sep): esto es un chatbot y NO da números. Si el
-    # cliente pide un número o quiere hablar con alguien, la conversación se PASA A UN ASESOR. El texto y el efecto en
-    # el estado los pone `_contacto_pasa_a_persona` (una sola puerta); aquí solo queda el caso sin el flag.
-    number = None if settings.contacto_pasa_a_persona else _official_whatsapp()
-    if number:
-        nota = "solo mensajes de WhatsApp, no llamadas" if lang == "es" else "WhatsApp messages only, no calls"
-        if lang == "es":
-            return (
-                f"¡Claro! 😊 Nuestro WhatsApp oficial es *{number}* ({nota}). Y si quieres, aquí mismo te "
-                "ayudo con todo: te armo la reserva o te paso con un asesor del equipo. ¿Seguimos? 🌊"
-            )
-        return (
-            f"Sure! 😊 Our official WhatsApp is *{number}* ({nota}). And if you like, I can help you with "
-            "everything right here: I'll put your booking together or pass you to an advisor from the team. "
-            "Shall we continue? 🌊"
-        )
-    if lang == "es":
-        return (
-            "Por aquí no manejo un número de teléfono ni WhatsApp 🔒, pero puedo "
-            "ayudarte con todo desde este chat: te armo la reserva ahora mismo y, "
-            "si lo prefieres, un asesor del equipo te contacta directamente. "
-            "¿Seguimos con tu reserva? 🌊"
-        )
-    return (
-        "I don't hand out a phone or WhatsApp number here 🔒, but I can help you "
-        "with everything right in this chat: I'll put your booking together now, "
-        "and if you prefer, an advisor from the team can reach out to you "
-        "directly. Shall we continue with your booking? 🌊"
     )

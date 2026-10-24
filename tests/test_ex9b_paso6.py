@@ -27,8 +27,9 @@ from src.agents.rutas.contexto_rag import _build_extra_context
 from src.config import settings
 from src.flows.state import ConversationState
 
-FLAGS6 = ("duracion_por_extractor", "edades_por_extractor", "plan_elegido_por_extractor", "reparto_al_sumarse_alguien",
-          "notas_rag_desde_estado")
+# sim-5: duracion_por_extractor, edades_por_extractor, reparto_al_sumarse_alguien, notas_rag_desde_estado y
+# paso6_en_llamada_aparte se promocionaron y se borraron sus flags (siempre encendidos). Queda el del plan.
+FLAGS6 = ("plan_elegido_por_extractor",)
 PROPUESTA = ("Te propongo el *paquete de 5 inmersiones en 2 días*: sales desde Cartagena, duermes en la isla y vuelves "
              "al día siguiente. ¿Te encaja?")
 
@@ -37,17 +38,14 @@ PROPUESTA = ("Te propongo el *paquete de 5 inmersiones en 2 días*: sales desde 
 def _apagados(monkeypatch):
     for f in FLAGS6:
         monkeypatch.setattr(settings, f, False)
-    # gen-8: `actividad_de_la_pregunta` también es un campo del paso 6 (tests/test_gen8_actividad_preguntada.py).
-    monkeypatch.setattr(settings, "actividad_de_la_pregunta", False)
     # arq-1t: `paquete_varios_dias` también es un campo del paso 6 (tests/test_arq1t_paquete.py).
     monkeypatch.setattr(settings, "paquete_varios_dias", False)
-    # Los campos en la MISMA llamada (lo que prueban estos tests); la llamada aparte la encienden los suyos (sección 7).
-    monkeypatch.setattr(settings, "paso6_en_llamada_aparte", False)
 
 
 @pytest.fixture
 def encender(monkeypatch):
-    return lambda *flags: [monkeypatch.setattr(settings, f, True) for f in flags]
+    # Los flags promocionados ya no existen (siempre encendidos): encenderlos no hace nada.
+    return lambda *flags: [monkeypatch.setattr(settings, f, True) for f in flags if f in type(settings).model_fields]
 
 
 @pytest.fixture
@@ -80,41 +78,32 @@ def _cliente(datos: dict, llamadas: list):
 
 
 async def _llamada(mensaje: str, datos: dict, *, history=None, sabido=None) -> tuple[dict, dict]:
+    """La lectura y LAS DOS llamadas juntas (la de siempre y la del paso 6, siempre aparte desde sim-5): el esquema con
+    los campos de las dos y el prompt de sistema de las dos seguidos."""
     llamadas: list = []
     out = await ex.extraer_turno(mensaje, history=history, sabido=sabido or {}, client=_cliente(datos, llamadas))
-    return out, llamadas[0]
+    esquemas = [k["response_format"]["json_schema"]["schema"] for k in llamadas]
+    junta = {"response_format": {"json_schema": {"schema": {
+        "properties": {c: v for e in esquemas for c, v in e["properties"].items()},
+        "required": [c for e in esquemas for c in e.get("required", [])]}}},
+        "messages": [{"content": "\n".join(k["messages"][0]["content"] for k in llamadas)}]}
+    return out, junta
 
 
 def _campos_del_esquema(llamada: dict) -> set:
     return set(llamada["response_format"]["json_schema"]["schema"]["properties"])
 
 
-# --- 0. el extractor: con los flags apagados, la llamada de siempre --------------------------------------------------
+# --- 0. el extractor: los campos del paso 6 y sus reglas ------------------------------------------------------------
 
 
 @pytest.mark.asyncio
-async def test_apagados_ni_campos_ni_reglas():
-    out, llamada = await _llamada("estaré una semana, solo quiero bucear un día", {
-        "dias_de_buceo": {"valor": 1, "cita": "solo quiero bucear un día"}}, history=[{"role": "assistant", "content": PROPUESTA}],
-        sabido={"group_size": 2})
-    nuevos = {"dias_de_buceo", "dias_de_estancia", "edades", "acepta_propuesta", "otro_sin_certificar",
-              "otro_certificado_inactivo"}
-    assert not (_campos_del_esquema(llamada) & nuevos)
-    sistema = llamada["messages"][0]["content"]
-    for regla in (ex.REGLA_DURACION_ES, ex.REGLA_EDADES_ES, ex.REGLA_ACEPTA_ES, ex.REGLA_OTRAS_PERSONAS_ES,
-                  ex.REGLA_SUMARSE_ES):
-        assert regla not in sistema
-    assert "dias_de_buceo" not in out
-
-
-@pytest.mark.asyncio
-@pytest.mark.parametrize("flag, campos, regla", [
-    ("duracion_por_extractor", {"dias_de_buceo", "dias_de_estancia"}, ex.REGLA_DURACION_ES),
-    ("edades_por_extractor", {"edades"}, ex.REGLA_EDADES_ES),
-    ("notas_rag_desde_estado", {"otro_sin_certificar", "otro_certificado_inactivo"}, ex.REGLA_OTRAS_PERSONAS_ES),
+@pytest.mark.parametrize("campos, regla", [
+    ({"dias_de_buceo", "dias_de_estancia"}, ex.REGLA_DURACION_ES),
+    ({"edades"}, ex.REGLA_EDADES_ES),
+    ({"otro_sin_certificar", "otro_certificado_inactivo"}, ex.REGLA_OTRAS_PERSONAS_ES),
 ])
-async def test_cada_flag_su_campo_y_su_regla(encender, flag, campos, regla):
-    encender(flag)
+async def test_cada_campo_con_su_regla(campos, regla):
     _, llamada = await _llamada("hola", {})
     esquema = llamada["response_format"]["json_schema"]["schema"]
     assert campos <= set(esquema["properties"]) and campos <= set(esquema["required"])
@@ -136,7 +125,6 @@ async def test_acepta_propuesta_solo_si_el_bot_propuso_un_paquete(encender):
 
 @pytest.mark.asyncio
 async def test_la_regla_de_sumarse_solo_con_el_grupo_sabido(encender):
-    encender("reparto_al_sumarse_alguien")
     _, sin_grupo = await _llamada("mi hermano también viene", {})
     assert ex.REGLA_SUMARSE_ES not in sin_grupo["messages"][0]["content"]
     _, con_grupo = await _llamada("mi hermano también viene", {}, sabido={"group_size": 2})
@@ -145,7 +133,6 @@ async def test_la_regla_de_sumarse_solo_con_el_grupo_sabido(encender):
 
 @pytest.mark.asyncio
 async def test_las_edades_se_validan_con_su_cita(encender):
-    encender("edades_por_extractor")
     out, _ = await _llamada("mis hijos tienen 8 y nueve", {"edades": {"valor": [8, 9, 12], "cita": "mis hijos tienen 8 y nueve"}})
     assert out["edades"] == [8, 9]  # el 12 no está en la cita
     out, _ = await _llamada("tengo dos hijos", {"edades": {"valor": [7], "cita": "tengo dos hijos"}})
@@ -155,7 +142,6 @@ async def test_las_edades_se_validan_con_su_cita(encender):
 
 @pytest.mark.asyncio
 async def test_los_dias_tienen_que_ser_un_numero_y_con_cita(encender):
-    encender("duracion_por_extractor")
     out, _ = await _llamada("una semana en las islas", {"dias_de_estancia": {"valor": 7, "cita": "una semana"},
                                                        "dias_de_buceo": {"valor": 0, "cita": "una semana"}})
     assert out["dias_de_estancia"] == 7 and "dias_de_buceo" not in out
@@ -167,18 +153,10 @@ async def test_los_dias_tienen_que_ser_un_numero_y_con_cita(encender):
 
 
 @pytest.mark.asyncio
-async def test_duracion_apagado_el_regex_decide(extractor_dice):
-    extractor_dice({"hola, tengo 5 meses de embarazo, ¿puedo bucear?": {}})
-    st = await _entender("hola, tengo 5 meses de embarazo, ¿puedo bucear?")
-    assert st.detected_duration == "multi_day"  # el falso positivo de hoy
-
-
-@pytest.mark.asyncio
 @pytest.mark.parametrize("mensaje", ["hola, tengo 5 meses de embarazo, ¿puedo bucear?",
                                      "hace 2 semanas que espero respuesta",
                                      "a lo mejor vamos dentro de unos meses"])
 async def test_duracion_encendido_sin_dias_dichos_no_hay_duracion(encender, extractor_dice, mensaje):
-    encender("duracion_por_extractor")
     extractor_dice({mensaje: {}})
     st = await _entender(mensaje)
     assert st.detected_duration is None
@@ -186,7 +164,6 @@ async def test_duracion_encendido_sin_dias_dichos_no_hay_duracion(encender, extr
 
 @pytest.mark.asyncio
 async def test_duracion_mandan_los_dias_de_buceo(encender, extractor_dice):
-    encender("duracion_por_extractor")
     msg = "estaré del 5 al 9 en cartagena, pero solo quiero bucear un día"
     extractor_dice({msg: {"dias_de_buceo": 1, "dias_de_estancia": 5}})
     st = await _entender(msg)
@@ -195,7 +172,6 @@ async def test_duracion_mandan_los_dias_de_buceo(encender, extractor_dice):
 
 @pytest.mark.asyncio
 async def test_duracion_la_estancia_recomienda_y_los_dias_de_buceo_la_cambian(encender, extractor_dice):
-    encender("duracion_por_extractor")
     extractor_dice({"vamos a estar una semana": {"dias_de_estancia": 7},
                     "pero solo queremos bucear un día": {"dias_de_buceo": 1},
                     "nos quedamos 3 días en total": {"dias_de_estancia": 3}})
@@ -209,7 +185,6 @@ async def test_duracion_la_estancia_recomienda_y_los_dias_de_buceo_la_cambian(en
 
 @pytest.mark.asyncio
 async def test_duracion_un_paquete_de_varios_dias_del_catalogo(encender, extractor_dice):
-    encender("duracion_por_extractor")
     extractor_dice({"me interesa el paquete de 5 inmersiones": {},
                     "alguien que conozco hizo el paquete con ustedes": {}})
     assert (await _entender("me interesa el paquete de 5 inmersiones")).detected_duration == "multi_day"
@@ -219,14 +194,12 @@ async def test_duracion_un_paquete_de_varios_dias_del_catalogo(encender, extract
 
 @pytest.mark.asyncio
 async def test_duracion_extractor_caido_como_hoy(encender, extractor_caido):
-    encender("duracion_por_extractor")
     st = await _entender("hola, tengo 5 meses de embarazo, ¿puedo bucear?")
     assert st.detected_duration == "multi_day"
 
 
 @pytest.mark.asyncio
 async def test_duracion_respuesta_corta_a_un_dia_o_varios(encender, extractor_dice):
-    encender("duracion_por_extractor")
     extractor_dice({"llegamos el jueves y nos vamos el domingo": {"dias_de_estancia": 4}})
     st = _estado(core_pending_slot=SLOT_COMPANION_ACTIVITY)
     ia = await core_routing._lectura_de_la_ia(st, "llegamos el jueves y nos vamos el domingo", {}, SLOT_COMPANION_ACTIVITY)
@@ -242,15 +215,7 @@ async def test_duracion_respuesta_corta_a_un_dia_o_varios(encender, extractor_di
 
 
 @pytest.mark.asyncio
-async def test_edades_apagado_el_regex_decide(extractor_dice):
-    extractor_dice({"el pequeño tiene 6 y el grande 10": {}})
-    st = await _entender("el pequeño tiene 6 y el grande 10")
-    assert st.detected_ages == []  # hoy el regex no lo lee
-
-
-@pytest.mark.asyncio
 async def test_edades_encendido_las_del_extractor(encender, extractor_dice, monkeypatch):
-    encender("edades_por_extractor")
     relleno = AsyncMock(return_value={})
     monkeypatch.setattr(core_extraction, "fill_gaps", relleno)
     extractor_dice({"el pequeño tiene 6 y el grande 10": {"edades": [6, 10]},
@@ -264,7 +229,6 @@ async def test_edades_encendido_las_del_extractor(encender, extractor_dice, monk
 
 @pytest.mark.asyncio
 async def test_edades_extractor_caido_como_hoy(encender, extractor_caido, monkeypatch):
-    encender("edades_por_extractor")
     relleno = AsyncMock(return_value={})
     monkeypatch.setattr(core_extraction, "fill_gaps", relleno)
     st = await _entender("los niños tienen 6 y 9 años", _estado(kids_mention_detected=True))
@@ -273,7 +237,6 @@ async def test_edades_extractor_caido_como_hoy(encender, extractor_caido, monkey
 
 @pytest.mark.asyncio
 async def test_edades_respuesta_corta(encender, extractor_dice):
-    encender("edades_por_extractor")
     extractor_dice({"el mayor 12 y la menor 8": {"edades": [12, 8]}})
     st = _estado(core_pending_slot=SLOT_AGES)
     ia = await core_routing._lectura_de_la_ia(st, "el mayor 12 y la menor 8", {}, SLOT_AGES)
@@ -346,17 +309,12 @@ def _dos_buzos(**campos) -> ConversationState:
                    detected_group_size=2, location="cartagena", detected_location="cartagena", **campos)
 
 
-def test_reparto_lo_sabido_lleva_el_reparto_aunque_no_este_guardado(encender):
-    assert "group_allocation" not in core_extractor._sabido_para_extractor(_dos_buzos())
-    encender("reparto_al_sumarse_alguien")
+def test_reparto_lo_sabido_lleva_el_reparto_aunque_no_este_guardado():
     assert core_extractor._sabido_para_extractor(_dos_buzos())["group_allocation"] == {"certified_diving": 2}
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("flag", [False, True])
-async def test_reparto_ampliado_por_el_extractor_suma_sin_preguntar(encender, extractor_dice, flag):
-    if flag:
-        encender("reparto_al_sumarse_alguien")
+async def test_reparto_ampliado_por_el_extractor_suma_sin_preguntar(extractor_dice):
     msg = "mi hermano también viene, él quiere hacer snorkel"
     extractor_dice({msg: {"group_size": 3, "group_allocation": {"certified_diving": 2, "snorkel": 1}}})
     st = await _entender(msg, _dos_buzos())
@@ -366,7 +324,6 @@ async def test_reparto_ampliado_por_el_extractor_suma_sin_preguntar(encender, ex
 
 @pytest.mark.asyncio
 async def test_reparto_jev_seguro_de_que_ya_estaba_contado(encender, extractor_dice):
-    encender("reparto_al_sumarse_alguien")
     msg = "mi amigo, el que ya venía, quiere snorkel"
     extractor_dice({msg: {"group_size": 3, "group_allocation": {"certified_diving": 2, "snorkel": 1}}})
     st = _dos_buzos()
@@ -375,16 +332,13 @@ async def test_reparto_jev_seguro_de_que_ya_estaba_contado(encender, extractor_d
     assert st.detected_group_size == 2  # dos lectores en contra: no se suma a nadie aquí
 
 
-@pytest.mark.parametrize("flag, joins, ambiguo, pasa", [
-    (False, 0.97, True, False),   # hoy: el atajo se salta la red
-    (True, 0.97, True, True),     # Jev seguro de que entra alguien: la red corre
-    (True, 0.5, True, False),     # Jev duda: el atajo, como hoy
-    (True, None, True, False),    # Jev calla: el atajo, como hoy
-    (True, 0.97, False, False),   # el turno ya resolvió el grupo (o no nombra a nadie)
+@pytest.mark.parametrize("joins, ambiguo, pasa", [
+    (0.97, True, True),     # Jev seguro de que entra alguien: la red corre
+    (0.5, True, False),     # Jev duda: el atajo, como hoy
+    (None, True, False),    # Jev calla: el atajo, como hoy
+    (0.97, False, False),   # el turno ya resolvió el grupo (o no nombra a nadie)
 ])
-def test_reparto_el_atajo_deja_pasar_si_jev_esta_seguro(encender, flag, joins, ambiguo, pasa):
-    if flag:
-        encender("reparto_al_sumarse_alguien")
+def test_reparto_el_atajo_deja_pasar_si_jev_esta_seguro(joins, ambiguo, pasa):
     st = _dos_buzos(detected_group_allocation={"certified_diving": 2})
     st._jev_companion = joins
     assert core_extraction._jev_seguro_de_que_se_suma(st, ambiguo) is pasa
@@ -392,15 +346,14 @@ def test_reparto_el_atajo_deja_pasar_si_jev_esta_seguro(encender, flag, joins, a
 
 @pytest.mark.asyncio
 async def test_reparto_turno_entero_la_red_ya_no_se_salta(encender, extractor_dice, monkeypatch):
-    """Grupo con reparto guardado {buceo: 2} y el extractor sin leer al hermano: hoy el atajo se salta la red y la
-    persona se pierde; con el flag y Jev seguro (companion_joins 0,97), la red la suma."""
+    """Grupo con reparto guardado {buceo: 2} y el extractor sin leer al hermano: el atajo se saltaba la red y la persona
+    se perdía; con Jev seguro (companion_joins 0,97), la red la suma."""
     msg = "mi hermano también viene, él quiere hacer snorkel"
     extractor_dice({msg: {}})
     senales = AsyncMock(return_value={"mentions_other_person": True, "companion_activity": "snorkel"})
     monkeypatch.setattr(core_extraction, "detect_special_signals", senales)
 
-    async def turno(flag: bool) -> ConversationState:
-        monkeypatch.setattr(settings, "reparto_al_sumarse_alguien", flag)
+    async def turno() -> ConversationState:
         st = _dos_buzos(detected_group_allocation={"certified_diving": 2}, last_dive_over_2_years=False,
                         detected_last_dive_over_2_years=False)
         st._jev_companion = 0.97
@@ -409,8 +362,7 @@ async def test_reparto_turno_entero_la_red_ya_no_se_salta(encender, extractor_di
         await core_extraction._extraction_phase_body(st, msg, {"companion_joins": 0.97}, "", carry)
         return st
 
-    assert (await turno(False)).detected_group_size == 2
-    st = await turno(True)
+    st = await turno()
     assert st.detected_group_size == 3 and (st.detected_group_allocation or {}).get("snorkel") == 1
 
 
@@ -424,13 +376,7 @@ def _contexto(state: ConversationState) -> str:
     return _build_extra_context(state) or ""
 
 
-def test_notas_apagado_el_regex_sobre_lo_que_escribe():
-    st = _estado(history=[{"role": "user", "content": "mi amigo no es certificado"}])
-    assert NOTA_SIN_CERT in _contexto(st)
-
-
 def test_notas_encendido_salen_del_estado(encender):
-    encender("notas_rag_desde_estado")
     st = _estado(history=[{"role": "user", "content": "mi amigo no es certificado"}])
     assert NOTA_SIN_CERT not in _contexto(st)  # sin el dato del extractor, no hay nota
     st.acompanante_sin_certificar = True
@@ -441,7 +387,6 @@ def test_notas_encendido_salen_del_estado(encender):
 
 @pytest.mark.asyncio
 async def test_notas_el_extractor_las_guarda(encender, extractor_dice):
-    encender("notas_rag_desde_estado")
     extractor_dice({"yo sí, pero mi novia nunca ha buceado": {"otro_sin_certificar": True}})
     st = await _entender("yo sí, pero mi novia nunca ha buceado")
     assert st.acompanante_sin_certificar is True and st.acompanante_certificado_inactivo is False
@@ -449,7 +394,6 @@ async def test_notas_el_extractor_las_guarda(encender, extractor_dice):
 
 @pytest.mark.asyncio
 async def test_notas_extractor_caido_vuelve_el_regex(encender, extractor_caido):
-    encender("notas_rag_desde_estado")
     st = _estado(history=[{"role": "user", "content": "mi amigo no es certificado"}])
     await core._understand(st, "mi amigo no es certificado")
     assert st.extractor_ha_fallado is True
@@ -466,9 +410,9 @@ def test_reexporta_lo_de_siempre():
     assert st.detected_duration == "single_day"  # una sola escritura sin el flag
 
 
-# --- 7. los campos del paso 6 en una SEGUNDA llamada (flag `paso6_en_llamada_aparte`, decisión de Gadea 19-oct) ----
+# --- 7. los campos del paso 6 en una SEGUNDA llamada (decisión de Gadea 19-oct; promocionado, flag borrado en sim-5) --
 # Ronda ex9b-4: con dos o más campos del paso 6 el esquema estricto no cabía en Haiku ("compiled grammar is too large")
-# y contestaba siempre el respaldo. Con el flag, la llamada de siempre no cambia y los campos nuevos van aparte.
+# y contestaba siempre el respaldo. La llamada de siempre no cambia y los campos nuevos van aparte.
 
 def _cliente_dos(principal: dict, paso6: dict | None, llamadas: list, falla: str | None = None):
     class _C:
@@ -490,8 +434,6 @@ PASO6_7 = {"dias_de_buceo": {"valor": 1, "cita": "solo quiero bucear un día"}, 
 
 @pytest.fixture
 def aparte(monkeypatch, encender):
-    encender("duracion_por_extractor")
-    monkeypatch.setattr(settings, "paso6_en_llamada_aparte", True)
     monkeypatch.setattr(settings, "extractor_respaldo_modelo", "")
 
 
@@ -502,7 +444,7 @@ async def test_aparte_dos_llamadas_y_se_juntan(aparte):
     assert len(llamadas) == 2
     principal, paso6 = sorted(llamadas, key=lambda k: "dias_de_buceo" in _campos_del_esquema(k))
     assert "dias_de_buceo" not in _campos_del_esquema(principal) and "group_size" in _campos_del_esquema(principal)
-    assert _campos_del_esquema(paso6) == {"dias_de_buceo", "dias_de_estancia"}
+    assert {"dias_de_buceo", "dias_de_estancia", "edades"} <= _campos_del_esquema(paso6)
     assert ex.REGLA_DURACION_ES not in principal["messages"][0]["content"]
     assert ex.REGLA_DURACION_ES in paso6["messages"][0]["content"]
     assert out["group_size"] == 2 and out["dias_de_buceo"] == 1
@@ -520,15 +462,6 @@ async def test_aparte_si_falla_la_principal_el_extractor_falla(aparte):
     out = await ex.extraer_turno(MENSAJE7, history=None, sabido={},
                                  client=_cliente_dos(PRINCIPAL7, PASO6_7, [], falla="principal"))
     assert out is None
-
-
-@pytest.mark.asyncio
-async def test_aparte_sin_campos_del_paso6_una_sola_llamada(monkeypatch):
-    monkeypatch.setattr(settings, "paso6_en_llamada_aparte", True)
-    monkeypatch.setattr(settings, "extractor_respaldo_modelo", "")
-    llamadas: list = []
-    await ex.extraer_turno(MENSAJE7, history=None, sabido={}, client=_cliente_dos(PRINCIPAL7, None, llamadas))
-    assert len(llamadas) == 1
 
 
 @pytest.mark.asyncio
@@ -561,14 +494,12 @@ def test_adds_person_viaja_con_las_senales_del_turno():
     assert j.ADDS_PERSON in j._TURN_SIGNALS
 
 
-@pytest.mark.parametrize("encendido, jev, pregunta", [
-    (False, 0.22, False),  # hoy: "viene" casa la lista de palabras y se suma sin preguntar (cuenta dos veces)
-    (True, 0.22, True),    # con el flag decide Jev: duda -> se pregunta el total
-    (True, 0.9, False),    # Jev seguro de que es nueva -> se suma
-    (True, None, False),   # Jev calla -> la lista de siempre
+@pytest.mark.parametrize("jev, pregunta", [
+    (0.22, True),    # decide Jev: duda -> se pregunta el total
+    (0.9, False),    # Jev seguro de que es nueva -> se suma
+    (None, False),   # Jev calla -> la lista de siempre
 ])
-def test_quien_se_suma_lo_decide_jev(monkeypatch, encendido, jev, pregunta):
-    monkeypatch.setattr(settings, "reparto_al_sumarse_alguien", encendido)
+def test_quien_se_suma_lo_decide_jev(jev, pregunta):
     st = _estado()
     st.detected_activity, st.detected_group_size = "certified_diving", 2
     st._jev_adds_person = jev

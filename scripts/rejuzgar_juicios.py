@@ -5,7 +5,7 @@ Aquí se juzgan otra vez las MISMAS respuestas con los mismos contextos y el jue
 interruptores), y se listan los desacuerdos: así se compara un juez nuevo sin pagar conversaciones nuevas y sin el
 ruido de que el bot redacte distinto. Los desacuerdos hay que LEERLOS: el juez de PRE no es la verdad.
 
-    python -m scripts.rejuzgar_juicios <ficheros.jsonl...> --modelo gpt-6-luna --flag juez_v3_luna
+    python -m scripts.rejuzgar_juicios <ficheros.jsonl...> --modelo gpt-6-luna
 
 Corre en local (`.env.dev`): la cuenta de OpenAI es la misma que la de PRE.
 """

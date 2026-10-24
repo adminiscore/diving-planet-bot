@@ -5,7 +5,6 @@ alguien la reescribe, el cambio dejaría de aplicarse sin avisar); (2) el dato q
 import pytest
 
 from src.agents.rag_agent import build_system_prompt
-from src.config import settings
 from src.flows.catalog import catalog_facts, policies_facts
 from src.prompts import info
 
@@ -29,16 +28,7 @@ SE_QUEDAN = {
 
 
 @pytest.mark.parametrize("lang", ["es", "en"])
-def test_cada_regla_que_se_quita_esta_en_el_prompt(monkeypatch, lang):
-    monkeypatch.setattr(settings, "rag_sin_reglas_del_codigo", False)
-    prompt = build_system_prompt(lang)
-    for antes, _ in REGLAS[lang]:
-        assert antes in prompt, antes[:60]
-
-
-@pytest.mark.parametrize("lang", ["es", "en"])
 def test_con_el_flag_salen_y_el_dato_sigue_en_el_contexto(monkeypatch, lang):
-    monkeypatch.setattr(settings, "rag_sin_reglas_del_codigo", True)
     prompt = build_system_prompt(lang)
     for antes, despues in REGLAS[lang]:
         assert antes not in prompt or antes in despues
@@ -49,10 +39,3 @@ def test_con_el_flag_salen_y_el_dato_sigue_en_el_contexto(monkeypatch, lang):
         assert regla in prompt, regla
     corta = info.RAG_DISPONIBILIDAD_CORTA_ES if lang == "es" else info.RAG_DISPONIBILIDAD_CORTA_EN
     assert corta in prompt
-
-
-@pytest.mark.parametrize("lang", ["es", "en"])
-def test_apagado_el_prompt_no_cambia(monkeypatch, lang):
-    monkeypatch.setattr(settings, "rag_sin_reglas_del_codigo", False)
-    assert info.RAG_DISPONIBILIDAD_CORTA_ES not in build_system_prompt(lang)
-    assert info.RAG_DISPONIBILIDAD_CORTA_EN not in build_system_prompt(lang)

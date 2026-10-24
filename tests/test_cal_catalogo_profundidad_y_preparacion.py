@@ -9,8 +9,9 @@ porque el dato NO estaba en nada que viera el RAG, aunque la base lo tenía:
   estaba en la ficha (`preparation_*`), pero el catálogo no pintaba la preparación.
 
 Medido (banco CAL-A 16x3): pintar la PREPARACIÓN de los 18 productos en todos los turnos arregla cal-49 pero rompe
-cal-26 y cal-64 (41/48 frente a 38/48). Por eso son dos flags: `catalogo_profundidad` (cuatro números) y
-`catalogo_preparacion` (apagado; la preparación va mejor solo cuando se habla de ese producto).
+cal-26 y cal-64 (41/48 frente a 38/48). Por eso eran dos flags: `catalogo_profundidad` (cuatro números; promocionado,
+sin interruptor desde sim-5) y `catalogo_preparacion` (apagado; la preparación va mejor solo cuando se habla de ese
+producto).
 """
 
 import json
@@ -27,8 +28,7 @@ KB = Path(__file__).resolve().parents[1] / "data" / "knowledge_base"
 
 @pytest.fixture
 def flags(monkeypatch):
-    def poner(profundidad: bool = False, preparacion: bool = False):
-        monkeypatch.setattr(settings, "catalogo_profundidad", profundidad)
+    def poner(preparacion: bool = False):
         monkeypatch.setattr(settings, "catalogo_preparacion", preparacion)
     return poner
 
@@ -37,12 +37,9 @@ def _linea(texto: str, nombre: str) -> str:
     return next(l for l in texto.splitlines() if l.startswith(f"- {nombre}:"))
 
 
-def test_sin_los_flags_el_catalogo_es_el_de_siempre(flags):
+def test_sin_la_preparacion_el_catalogo_no_la_pinta(flags):
     flags()
-    es = catalog.catalog_facts("es")
-    assert "preparación:" not in es
-    assert "certifica para bucear hasta" not in es
-    assert "Profundidad máxima de cada buzo" not in es
+    assert "preparación:" not in catalog.catalog_facts("es")
 
 
 def test_la_preparacion_va_apagada_por_defecto():
@@ -63,7 +60,7 @@ def test_con_la_preparacion_el_curso_referido_dice_la_carta(flags):
 
 def test_con_la_profundidad_cada_certificacion_dice_hasta_donde_certifica(flags):
     """cal-18: Open Water hasta 18 m y Advanced hasta 30 m, en la línea de cada curso."""
-    flags(profundidad=True)
+    flags()
     es = catalog.catalog_facts("es")
     assert "certifica para bucear hasta 18 m" in _linea(es, "Curso Básico PADI (Open Water)")
     assert "certifica para bucear hasta 30 m" in _linea(es, "Curso Avanzado PADI")
@@ -75,7 +72,7 @@ def test_con_la_profundidad_cada_certificacion_dice_hasta_donde_certifica(flags)
 def test_la_profundidad_tambien_va_como_regla_general_para_los_ya_certificados(flags):
     """cal-18 siguió fallando con solo "certifica hasta 18 m" en la línea del CURSO: quien pregunta es un buzo ya
     certificado por una SALIDA. La regla va también como línea general, construida desde las fichas de los cursos."""
-    flags(profundidad=True)
+    flags()
     ultima = catalog.catalog_facts("es").splitlines()[-1]
     assert "Profundidad máxima de cada buzo según su certificación" in ultima
     assert "hasta 18 m" in ultima and "hasta 30 m" in ultima
@@ -97,11 +94,9 @@ def test_la_cache_distingue_los_flags(flags):
     """La caché del catálogo llevaba solo la moneda en la clave: cambiar otro flag devolvía el texto de antes."""
     flags()
     apagado = catalog.catalog_facts("es")
-    flags(profundidad=True)
-    con_profundidad = catalog.catalog_facts("es")
     flags(preparacion=True)
     con_preparacion = catalog.catalog_facts("es")
-    assert len({apagado, con_profundidad, con_preparacion}) == 3
+    assert apagado != con_preparacion
     flags()
     assert catalog.catalog_facts("es") == apagado
 

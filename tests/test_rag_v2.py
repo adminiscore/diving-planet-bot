@@ -182,12 +182,11 @@ def test_el_veredicto_v3_sale_de_las_marcas_de_cada_dato():
 
 
 async def test_el_juez_v3_usa_su_prompt_y_modelo(monkeypatch):
-    monkeypatch.setattr(settings, "juez_v3_luna", False)  # el v3 tal cual (la aclaración de s4-33 tiene su test)
     seen: list = []
     monkeypatch.setattr(grounding_check, "AsyncOpenAI", _openai("- Llevamos 30 años: NO\nHALLUCINATED", seen))
     grounded, reason = await grounding_check.is_grounded("Llevamos 30 años", "contexto", lang="es")
     assert not grounded and "30 años" in reason
-    assert seen[0]["messages"][0]["content"] == grounding_check.GROUNDING_VERIFY_V3_ES
+    assert seen[0]["messages"][0]["content"] == grounding_check.GROUNDING_VERIFY_V3_LUNA_ES
     assert seen[0]["model"] == settings.grounding_v3_model
 
 
