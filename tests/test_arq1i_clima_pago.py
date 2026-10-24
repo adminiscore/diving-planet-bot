@@ -83,6 +83,14 @@ def test_el_pago_segun_la_nacionalidad(encendido):
     assert no_se_sabe["pago"][0] == hechos._politica("foreign_card_payment", "es")
 
 
+def test_lat0a_con_el_plan_elegido_el_pago_lleva_el_enlace(encendido):
+    """real-1 (reserva-solo-link, reserva-completa-saludo-a-pago): «listo, ¿cómo pago?» sin el enlace del plan."""
+    [b] = hechos.hechos(_st(is_colombian=False, location="cartagena"), ["pago"], ["certified_diving"])
+    assert "book.divingplanet.org" in str(b["enlace"]) and b["pago"] and "como_reservar" not in b
+    [colombiano] = hechos.hechos(_st(is_colombian=True, location="cartagena"), ["pago"], ["certified_diving"])
+    assert colombiano["enlace"] == {"asesor": True}  # su cierre lo coordina un asesor (21-oct)
+
+
 def test_apagado_no_hay_hechos_de_clima_ni_pago(monkeypatch):
     monkeypatch.setattr(settings, "intenciones_clima_pago", False)
     assert hechos.hechos_sin_actividad(_st(), ["clima", "pago"]) in (

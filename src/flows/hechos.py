@@ -242,7 +242,11 @@ def hechos(state: ConversationState, intenciones: list[str], actividades: list[s
         bloque.update(_clima_y_pago(state, pedidas, lang))
         # arq-1m (G10 nº 2): «¿hay disponibilidad mañana?» o «¿cómo reservamos?» se contestaban con «en la web», sin el
         # enlace (Jev marcaba la disponibilidad, no el enlace): con la disponibilidad va también el enlace de reserva.
-        if "enlace" in pedidas or (settings.enlace_con_disponibilidad and "disponibilidad" in pedidas):
+        # lat-0a (real-1, 24-oct): «listo, ¿cómo pago?» con el plan ya elegido se contestaba «pagas con tarjeta en la
+        # página web» sin el enlace (3 diálogos). Con el pago va también el enlace del plan; el cómo pagar ya lo lleva
+        # el pago, así que no se repite en `como_reservar`.
+        if ("enlace" in pedidas or "pago" in pedidas
+                or (settings.enlace_con_disponibilidad and "disponibilidad" in pedidas)):
             if state.is_colombian and not getattr(state, "mixed_nationality_notice", False):
                 # Decisión de Gadea (21-oct): el cierre de un colombiano lo coordina un asesor (pago en COP), sin enlace.
                 bloque["enlace"] = {"asesor": True}
@@ -252,7 +256,7 @@ def hechos(state: ConversationState, intenciones: list[str], actividades: list[s
                     lambda sid: cart_render._resolve_service_booking_url(SERVICES.get(sid) or {}, state), elegido)
                 if bloque["enlace"]:
                     bloque["descuento_online"] = _descuento_online(lang)
-                    if settings.enlace_con_como_pagar:
+                    if settings.enlace_con_como_pagar and "pago" not in pedidas:
                         como = [_politica("how_to_book", lang), _pago_extranjero(lang),
                                 _politica("payment_confirmation", lang)]
                         if registro.requires_certification:
