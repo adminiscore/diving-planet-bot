@@ -204,7 +204,6 @@ async def route_message(state: ConversationState, message: str) -> str:
         from src.agents.conversational_core import (
             attach_unused_answer,
             await_pending_notes,
-            cancel_pending_ack,
             cancel_pending_answer,
             cancelar_extraccion_adelantada,
             cancelar_rag_adelantado,
@@ -214,9 +213,7 @@ async def route_message(state: ConversationState, message: str) -> str:
         if state.pending_escalation_reason == escalation_before:  # un traspaso a persona va solo
             response = await attach_unused_answer(state, response)
         await await_pending_notes(state)
-        # u3-1 paso 3 / u3-4: un acuse o una respuesta lanzados en paralelo que el turno no
-        # usó se cancelan.
-        cancel_pending_ack(state)
+        # u3-4: una respuesta lanzada en paralelo que el turno no usó se cancela.
         cancel_pending_answer(state)
         cancelar_rag_adelantado(state)  # rag-5: la respuesta adelantada que nadie usó
         if state.pending_escalation_reason not in (None, escalation_before):

@@ -10,7 +10,7 @@ Un módulo por nodo dueño (el mapa completo red LLM → nodo está en
 | Módulo | Nodo | Redes LLM cuyo prompt vive aquí |
 |---|---|---|
 | `router.py` | router | `detect_routing_signals` (9 señales, 1 llamada/turno) |
-| `booking.py` | booking (subgrafo) | `fill_gaps` · `detect_special_signals` · `resolve_slot_answer` · `compose_acknowledgement` · `detect_language_llm` |
+| `booking.py` | booking (subgrafo) | `fill_gaps` · `detect_special_signals` · `resolve_slot_answer` · `detect_language_llm` |
 | `info.py` | info | `condense_query` · respuesta RAG (persona + seguridad + reglas) · `is_grounded` |
 | `memory.py` | transversal | `extract_notes` · `maybe_update_summary` |
 

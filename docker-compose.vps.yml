@@ -124,7 +124,6 @@ services:
       # PROMOCIONADO (HISTORY 0.31.53: ronda core mod-B; la regresión que parecía suya era ruido, 0/3 con los tres).
       # Revert = quitar estas tres líneas y poner los defaults en False.
       BARU_NO_ES_ROSARIO: "true"
-      BUSQUEDA_CON_LA_PREGUNTA_SOLA: "true"
       RAG_SIN_PRECIO_CON_TARJETA: "true"
       EXTRACTION_MODEL: "gpt-5.4-mini"
       # mod-3 (18-oct): cada pieza de EXTRACTION_MODEL con su modelo (mismo valor hasta promocionar otro).
@@ -140,8 +139,8 @@ services:
       RESOLUTOR_SIN_CONTRADICCIONES: "true"
       # Ronda ex9b-4 (19-oct): el paso 6 NO se promociona (con sus campos, Anthropic rechazaba el esquema del extractor,
       # "compiled grammar is too large", y contestaba siempre el respaldo). Se queda el respaldo POR TIEMPO de
-      # OpenRouter (5 s): si no contesta en 5 s, la misma petición sale por OpenAI.
-      OPENROUTER_RESPALDO_SEGUNDOS: "5.0"
+      # OpenRouter: si no contesta en 2 s (lat-B, 24-oct; antes 5), la misma petición sale por OpenAI.
+      OPENROUTER_RESPALDO_SEGUNDOS: "2.0"
       # PROMOCIONADO 20-oct con la ronda ex9b-8 (98,7 % 29/32; decisión de Gadea: G9 con el paso 6): el paso 6 (duración, edades, notas) en una segunda llamada al
       # extractor (la base sin él, ex9b-7, dio 96,1 %: las rondas con él estaban dentro del ruido) y quien se suma al grupo
       # por el punto único del acompañante, decidido por Jev (banco de punta a punta 10/14 → 12/14, nadie contado dos veces).
@@ -167,7 +166,6 @@ services:
       # pregunta trata de él (Barú), y el RAG abre con la respuesta (sin «¡Claro que sí!» delante de un no). La base
       # (policies.json) va aparte: el CI la regenera en cada despliegue. PROMOCIONADOS 20-oct: gen2-B 97,4 % 27/32
       # frente a gen2-A 93,9 % 22/32 (mismo día); las 2 que empeoran tienen la misma respuesta en A y B (juez). Revert = "false".
-      PREGUNTA_SOLA_CON_SU_SITIO: "true"
       ABRE_CON_LA_RESPUESTA: "true"
       # Textos fijos del flujo en el español de Cartagena (decisión de Gadea, 20-oct; src/flows/textos.py): vosotros ->
       # ustedes, sin género supuesto y la pregunta del origen sin "podemos recogerte saliendo desde Cartagena".
@@ -191,10 +189,8 @@ services:
       # que empeoran no pasan por el pase). Revert = quitar estas dos líneas.
       CAMBIO_DE_RESERVA_PASA: "true"
       PRIVADO_PASA_DIRECTO: "true"
-      # gen-8 (Álvaro, 21-oct): el acuse habla con el número del cliente (el ejemplo en plural se copiaba a quien va
-      # solo) y a quien pregunta por UNA actividad sin elegirla se le ofrece esa, no el menú de 4. PROMOCIONADO 21-oct
-      # (gen8-B frente a gen8-A, del mismo día; el que empeora es del RAG). Revert = quitar estas dos líneas.
-      ACUSE_EN_SU_NUMERO: "true"
+      # gen-8 (Álvaro, 21-oct): a quien pregunta por UNA actividad sin elegirla se le ofrece esa, no el menú de 4.
+      # PROMOCIONADO 21-oct (gen8-B frente a gen8-A, del mismo día). Revert = quitar la línea.
       ACTIVIDAD_DE_LA_PREGUNTA: "true"
       # gen-6 (Gonzalo, 21-oct; docs/robustness/gen/gen6-diagnostico.md): quien se aloja en Barú o Playa Blanca sale
       # desde Cartagena (Barú no es Islas del Rosario, decisión de Gadea del 18-oct) y la puerta del origen no deja el
@@ -272,7 +268,6 @@ services:
       PRECIO_PENDIENTE_CON_EL_ORIGEN: "true"
       LISTAS_UNA_VEZ: "true"
       DESCUENTOS_UN_SITIO: "true"
-      ACUSE_MODEL: "gpt-5.4-nano"
       NOTAS_MODEL: "deepseek/deepseek-v4.1-flash"
       # ex-4 (12-oct): el extractor "LLM primero" de la fase EX (src/agents/extractor_turno.py).
       # mod-2 y mod-3 (18-oct): el extractor en Haiku 5.5 (Anthropic/Google/Amazon por OpenRouter) con RESPALDO en
@@ -286,7 +281,6 @@ services:
       OPENROUTER_PROVEEDORES: "baseten,fireworks/us,coreweave,google-vertex,anthropic,amazon-bedrock"
       # CAL-A2/A3 (16-oct): el plan del RAG y la comprobacion de completitud (src/agents/rag_plan.py; flags apagados).
       RAG_PLAN_MODEL: "gpt-6-luna"
-      PREGUNTA_SOLA_MODEL: "deepseek/deepseek-v4.1-flash"
       OPENAI_EMBEDDING_MODEL: "text-embedding-3-small"
       # MOD-6 (18-oct): gpt-transcribe con el vocabulario del negocio. PROMOCIONADO (HISTORY 0.31.53). Revert = "gpt-4o-mini-transcribe"
       # y quitar TRANSCRIPCION_CON_VOCABULARIO.
@@ -324,9 +318,6 @@ services:
       # EX-EST-2: a un buzo certificado sin actividad elegida se le recomiendan sus opciones. PROMOCIONADO 14-oct.
       # Revert = "false" aqui y en config.py.
       RECOMENDAR_A_CERTIFICADOS: "true"
-      # EX-EST-2: el acuse reconoce solo lo que dice el mensaje. PROMOCIONADO 14-oct (est3-B). Revert = "false"
-      # aqui y en config.py.
-      ACUSE_SOLO_EL_MENSAJE: "true"
       # EX-EST-2: arreglos de datos de la tanda est3 (ver config.py). PROMOCIONADO 14-oct (est3-B). Revert = "false" aqui y
       # en config.py.
       EST2_DATOS: "true"

@@ -15,10 +15,7 @@ routing → extraction → slotfill_close`, Fase 3.3):
   anti-bucle (`resolve_slot_answer`): interpreta la respuesta EN EL CONTEXTO de
   la pregunta concreta que se acaba de hacer, o se abstiene (y el bot
   re-pregunta como siempre — nunca peor que hoy).
-- `acknowledgement_system_prompt` — fase `slotfill_close`
-  (`compose_acknowledgement`): UNA frase cálida que reconoce lo que el cliente
-  dijo. Los datos duros (precio, link, resumen) los pone la capa determinista
-  que se concatena después — el prompt los tiene PROHIBIDOS.
+- (lat-B, 24-oct) el acuse cálido de una frase ya no es un modelo: lo pone el código en `slotfill_close`.
 
 Cada prompt es corto y enfocado a UN caso de uso (patrón IBM, §4 del plan);
 ninguno "lo abarca todo".
@@ -957,85 +954,3 @@ def slot_resolver_tool(slot: str) -> dict:
             },
         },
     }
-
-
-# ── Acuse cálido de una frase · `llm_extractor.compose_acknowledgement` ─────
-
-# EX-EST-2 (flag `acuse_solo_el_mensaje`, 14-oct). Banco scripts/banco_acuse.py: ante mensajes sin nada que reconocer
-# ("Muchas gracias!", "May 3rd", "Para el sábado 30/05") el acuse rellenaba con el resumen de la reserva e inventaba
-# ("tienes una reserva para el sábado", "has reservado dos minicursos"): 33/40 inventos en los casos reales.
-ACUSE_SOLO_MENSAJE_ES = (
-    " REGLA MÁS IMPORTANTE — reconoce SOLO lo que dice el MENSAJE del cliente: el contexto de la reserva es para que "
-    "no te contradigas, NO para repetirlo ni resumirlo. No afirmes nada que el mensaje no diga: ni que tiene o hizo una "
-    "reserva (no uses 'reserva' ni 'reservado' si él no lo dijo), ni qué actividad hará, ni cuántos son, ni de dónde "
-    "sale, ni su experiencia. Si el mensaje no trae un dato que reconocer (un 'gracias', un 'ok', una fecha suelta, una "
-    "pregunta), responde con una cadena vacía."
-)
-ACUSE_SOLO_MENSAJE_EN = (
-    " MOST IMPORTANT RULE — acknowledge ONLY what the customer's MESSAGE says: the booking context is there so you "
-    "don't contradict it, NOT to repeat or summarize it. Don't state anything the message doesn't say: not that they "
-    "have or made a booking (don't use 'booking' or 'reservation' unless they did), nor which activity they'll do, how "
-    "many they are, where they depart from, or their experience. If the message carries no fact to acknowledge (a "
-    "'thanks', an 'ok', a bare date, a question), reply with an empty string."
-)
-
-
-# gen-8 (21-oct, flag `acuse_en_su_numero`): el ejemplo "got it, none of you are Colombian" estaba en plural y el
-# acuse lo copiaba también a quien va solo ("I'm not Colombian" -> "none of you are Colombian", 4 de 5 en el banco
-# docs/robustness/gen/banco_gen8_acuse.py). En su lugar, la regla: el dato con las palabras y el NÚMERO del cliente.
-ACUSE_EJEMPLO_ES = "Mejor: 'entendido, ninguno es colombiano' o similar, neutro y literal."
-ACUSE_EN_SU_NUMERO_ES = ("Mejor: el dato tal cual, neutro y literal, con el NÚMERO del propio cliente y sin dar por "
-                         "hecho si es hombre o mujer: si habla de sí mismo ('no soy colombiano'), en singular "
-                         "('entendido, no eres de Colombia'); solo si habla del grupo ('ninguno es colombiano'), en "
-                         "plural ('entendido, nadie del grupo es de Colombia').")
-ACUSE_EJEMPLO_EN = ("Better: 'got it, none of you are "
-                    "Colombian' or similar — neutral and literal.")
-ACUSE_EN_SU_NUMERO_EN = ("Better: the fact as-is, neutral and literal, in the customer's own words and NUMBER: if they "
-                         "speak about themselves ('I'm not Colombian'), singular ('got it, you're not Colombian'); only "
-                         "if they speak about the group ('none of us are Colombian'), plural.")
-
-
-def acknowledgement_system_prompt(lang: str, client_name: str | None) -> str:
-    name_es = f" El cliente se llama {client_name}; salúdalo/nómbralo con naturalidad de vez en cuando (no en cada mensaje)." if client_name else ""
-    name_en = f" The customer's name is {client_name}; address them by name naturally now and then (not every message)." if client_name else ""
-    if lang == "es":
-        return (
-            "Eres *Coral*, de Diving Planet (buceo en las Islas del Rosario, Cartagena). "
-            "Tono cálido, cercano y colombiano, con medida." + name_es + " "
-            "Tu ÚNICA tarea: escribir UNA sola frase corta que RECONOZCA con calidez lo que "
-            "el cliente acaba de decir (que se sienta escuchado y que la conversación fluye). "
-            "PROHIBIDO: mencionar precios, cifras de dinero, enlaces/URLs, o hacer una pregunta "
-            "(otra parte del sistema añade el dato y la pregunta). Si no hay nada natural que "
-            "reconocer, responde con una cadena vacía. "
-            "IMPORTANTE — idioma: responde SIEMPRE en español, sea cual sea el idioma del "
-            "mensaje del cliente (auditoría 2026-08-26: un cliente que ya acordó hablar en "
-            "inglés puede escribir una frase suelta en español — 'voy solo' — sin que eso "
-            "signifique que cambió de idioma; el idioma de la CONVERSACIÓN es el que manda, no "
-            "el del último mensaje). "
-            "IMPORTANTE — no reinterpretes un HECHO como una PREFERENCIA (hallazgo en vivo, "
-            "batería contra PRE, 2026-09-01): cuando el cliente declara un dato objetivo "
-            "(nacionalidad, cantidad de personas, ubicación...), reconócelo tal cual, sin "
-            "convertirlo en una opinión o elección suya. Ejemplo real: 'ninguno colombiano' "
-            "(responde sobre nacionalidad del grupo) generó 'entiendo que prefieres no incluir "
-            "a colombianos en tu grupo' — mal, suena a una elección excluyente que el cliente "
-            "nunca expresó. Mejor: 'entendido, ninguno es colombiano' o similar, neutro y literal."
-        )
-    return (
-        "You are *Coral* from Diving Planet (diving in the Rosario Islands, Cartagena). "
-        "Warm, friendly, measured tone." + name_en + " "
-        "Your ONLY task: write ONE short sentence that warmly ACKNOWLEDGES what the customer "
-        "just said (so they feel heard and the chat flows). FORBIDDEN: mentioning prices, money "
-        "figures, links/URLs, or asking a question (another part of the system adds the data and "
-        "the question). If there's nothing natural to acknowledge, reply with an empty string. "
-        "IMPORTANT — language: ALWAYS reply in English, regardless of what language the "
-        "customer's message is in (audit 2026-08-26: a customer who already agreed to speak "
-        "English may type a stray phrase in another language — 'voy solo' — that doesn't mean "
-        "they switched languages; the CONVERSATION's language rules, not the last message's). "
-        "IMPORTANT — don't reinterpret a FACT as a PREFERENCE (live finding, PRE battery, "
-        "2026-09-01): when the customer states an objective fact (nationality, group size, "
-        "location...), acknowledge it as-is, don't turn it into an opinion or choice they made. "
-        "Real example: 'none of us are Colombian' (a nationality statement) produced 'I "
-        "understand you'd rather not include Colombians in your group' — wrong, it sounds like "
-        "an exclusionary choice the customer never expressed. Better: 'got it, none of you are "
-        "Colombian' or similar — neutral and literal."
-    )

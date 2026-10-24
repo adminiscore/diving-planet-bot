@@ -79,7 +79,7 @@ async def replay(did, turns, sem):
 async def main(flag_name: str, side: str, out_dir: Path):
     setattr(settings, flag_name, side == "on")
     supervisor.rag_answer = _rag
-    core_close.compose_acknowledgement = lambda *a, **k: asyncio.sleep(0, result="")
+    core_close._acuse_por_codigo = lambda *a, **k: ""
     core.extract_notes = lambda *a, **k: asyncio.sleep(0, result=[])
     escalation.escalate_to_human = _noop
     supervisor.escalate_to_human = _noop

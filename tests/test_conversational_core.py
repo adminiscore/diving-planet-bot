@@ -999,7 +999,7 @@ async def test_recall_refresher_field_not_yet_known_falls_back():
     assert "Respuesta RAG" in resp
 
 
-# ── Nombre del cliente desde el mensaje + acuse cálido (2026-07-22) ───────────
+# ── Nombre del cliente desde el mensaje (2026-07-22) ───────────
 
 @pytest.mark.parametrize("msg,expected", [
     ("hola soy rocio, quiero hacer buceo, tengo el AOWD", None),  # "soy X" lo decide el extractor (13-oct)
@@ -1027,78 +1027,6 @@ def test_capture_client_name_first_wins(monkeypatch):
     core._capture_client_name(st, "me llamo Rocio")
     core._capture_client_name(st, "en realidad me llamo Ana")
     assert st.client_name == "Rocio"
-
-
-def _fake_openai(text):
-    from unittest.mock import MagicMock
-    client = MagicMock()
-    msg = MagicMock(); msg.content = text
-    choice = MagicMock(); choice.message = msg
-    resp = MagicMock(); resp.choices = [choice]
-    client.chat.completions.create = AsyncMock(return_value=resp)
-    return client
-
-
-@pytest.mark.asyncio
-async def test_ack_backstop_drops_price_link_or_question():
-    from src.agents.llm_extractor import compose_acknowledgement
-    # El redactor NUNCA debe colar precio, link ni pregunta (datos duros van aparte).
-    assert await compose_acknowledgement("añade snorkel", client=_fake_openai("¡Genial! Son $140.")) == ""
-    assert await compose_acknowledgement("x", client=_fake_openai("Mira https://book.divingplanet.org")) == ""
-    assert await compose_acknowledgement("x", client=_fake_openai("¿Cuántos sois?")) == ""
-
-
-@pytest.mark.asyncio
-async def test_ack_passes_a_warm_sentence():
-    from src.agents.llm_extractor import compose_acknowledgement
-    assert await compose_acknowledgement("desde cartagena", client=_fake_openai("¡Qué alegría, Rocío!")) == "¡Qué alegría, Rocío!"
-
-
-@pytest.mark.asyncio
-async def test_ack_empty_message_no_call():
-    from src.agents.llm_extractor import compose_acknowledgement
-    assert await compose_acknowledgement("") == ""
-
-
-def test_booking_context_summary_includes_just_answered_boolean_slot():
-    """Hallazgo en vivo (conversación real 831, 2026-09-02): un "no" a secas
-    respondiendo seguridad o nacionalidad le daba a compose_acknowledgement
-    el mensaje crudo + un resumen que NUNCA incluía esos campos booleanos
-    (solo actividad/personas/ubicación) -- sin nada concreto que reconocer,
-    el redactor repetía datos viejos ajenos a la respuesta real
-    ("Entendido, eres una persona y estarás en Cartagena." tras un "no" de
-    seguridad Y otra vez, idéntico, tras un "no" de nacionalidad). El
-    resumen ahora antepone la respuesta fresca cuando se le indica qué slot
-    se acaba de responder."""
-    st = ConversationState(conversation_id="ack-ctx")
-    st.detected_group_size = 1
-    st.location = "cartagena"
-    st.last_dive_over_2_years = False
-
-    summary = core._booking_context_summary(st, just_answered_slot=core.SLOT_SAFETY)
-    assert "NO ha pasado más de 2 años" in summary
-
-    st.is_colombian = False
-    summary2 = core._booking_context_summary(st, just_answered_slot=core.SLOT_NATIONALITY)
-    assert "NO es colombiano" in summary2
-
-    # Sin slot indicado, sigue funcionando como antes (sin el prefijo nuevo).
-    summary3 = core._booking_context_summary(st)
-    assert "personas: 1" in summary3
-    assert "acaba de responder" not in summary3
-
-
-def test_ack_prompt_warns_against_reinterpreting_fact_as_preference():
-    # Hallazgo en vivo, bateria contra PRE 2026-09-01: "ninguno colombiano"
-    # (un hecho de nacionalidad) genero un acuse tipo "entiendo que prefieres
-    # no incluir a colombianos" (sonaba a una preferencia/eleccion excluyente
-    # que el cliente nunca expreso). El prompt debe instruir explicitamente
-    # a no convertir hechos objetivos en preferencias.
-    from src.prompts.booking import acknowledgement_system_prompt
-    es = acknowledgement_system_prompt("es", None)
-    en = acknowledgement_system_prompt("en", None)
-    assert "no reinterpretes un HECHO" in es
-    assert "don't reinterpret a FACT" in en
 
 
 @pytest.mark.parametrize("msg,expected", [

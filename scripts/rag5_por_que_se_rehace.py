@@ -126,7 +126,7 @@ def _clase(frase: str) -> str:
 
 async def main() -> None:
     supervisor.rag_answer = _rag
-    core_close.compose_acknowledgement = lambda *a, **k: asyncio.sleep(0, result="")
+    core_close._acuse_por_codigo = lambda *a, **k: ""
     # Notas FIJAS (vacías): descarta su CONTENIDO como causa. `NOTAS_TARDAN` les da la latencia de una llamada
     # real (van en paralelo, como en PRE): si con notas vacías pero lentas se rehace más, la causa no
     # es lo que dicen las notas sino la ESPERA, que deja a la extracción cambiar el estado entre las dos huellas.

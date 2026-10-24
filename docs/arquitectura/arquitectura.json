@@ -1,8 +1,8 @@
 {
  "meta": {
-  "generado": "2026-10-24T11:07:54+00:00",
-  "commit": "ccbdbe86",
-  "rama": "feature/pre_gadea"
+  "generado": "2026-10-24T11:36:28+00:00",
+  "commit": "8fffa7a8",
+  "rama": "feature/latb-gonzalo"
  },
  "vistas": {
   "general": {
@@ -565,7 +565,7 @@
    "tipo": "agente",
    "titulo": "Preparar",
    "nodo_grafo": "setup",
-   "que_hace": "Detecta el idioma en el primer mensaje, apunta el nombre y lanza en paralelo las notas y el acuse.",
+   "que_hace": "Detecta el idioma en el primer mensaje, apunta el nombre y lanza en paralelo las notas.",
    "donde": "src/agents/nucleo/setup.py:_setup_phase",
    "modelos": [
     {
@@ -1035,20 +1035,6 @@
      "sin_efecto": false
     },
     {
-     "nombre": "acuse_solo_el_mensaje",
-     "titulo": "El acuse no se inventa nada",
-     "codigo": true,
-     "pre": true,
-     "sin_efecto": false
-    },
-    {
-     "nombre": "acuse_en_su_numero",
-     "titulo": "El acuse habla en singular a quien va solo",
-     "codigo": true,
-     "pre": true,
-     "sin_efecto": false
-    },
-    {
      "nombre": "actividad_de_la_pregunta",
      "titulo": "Ofrece la actividad por la que pregunta el cliente",
      "codigo": true,
@@ -1102,24 +1088,6 @@
     }
    ],
    "marca": "openrouter"
-  },
-  {
-   "id": "b_acuse",
-   "vista": "booking",
-   "carril": "apoyo",
-   "tipo": "paralelo",
-   "titulo": "Acuse (en paralelo)",
-   "que_hace": "Una frase cálida corta ('¡Qué buen plan!') preparada mientras se entiende el mensaje.",
-   "donde": "src/agents/llm_extractor.py:compose_acknowledgement",
-   "modelos": [
-    {
-     "ajuste": "acuse_model",
-     "codigo": "gpt-5.4-nano",
-     "pre": "gpt-5.4-nano"
-    }
-   ],
-   "interruptores": [],
-   "marca": "openai"
   },
   {
    "id": "b_pregunta",
@@ -1211,20 +1179,6 @@
     {
      "nombre": "consulta_con_lo_sabido",
      "titulo": "La búsqueda sabe de qué va la pregunta",
-     "codigo": true,
-     "pre": true,
-     "sin_efecto": false
-    },
-    {
-     "nombre": "busqueda_con_la_pregunta_sola",
-     "titulo": "Se busca también la pregunta sola, sin los datos que da el cliente",
-     "codigo": true,
-     "pre": true,
-     "sin_efecto": false
-    },
-    {
-     "nombre": "pregunta_sola_con_su_sitio",
-     "titulo": "La búsqueda no pierde el sitio por el que se pregunta",
      "codigo": true,
      "pre": true,
      "sin_efecto": false
@@ -2093,14 +2047,6 @@
    "vista": "booking"
   },
   {
-   "de": "b_setup",
-   "a": "b_acuse",
-   "etiqueta": "lanza",
-   "estilo": "paralelo",
-   "origen": "curada",
-   "vista": "booking"
-  },
-  {
    "de": "b_routing",
    "a": "b_pregunta",
    "etiqueta": "hay pregunta",
@@ -2112,14 +2058,6 @@
    "de": "b_pregunta",
    "a": "b_slotfill_close",
    "etiqueta": "va delante",
-   "estilo": "paralelo",
-   "origen": "curada",
-   "vista": "booking"
-  },
-  {
-   "de": "b_acuse",
-   "a": "b_slotfill_close",
-   "etiqueta": "se usa",
    "estilo": "paralelo",
    "origen": "curada",
    "vista": "booking"
@@ -2376,32 +2314,6 @@
    "sin_efecto": null
   },
   {
-   "nombre": "acuse_en_su_numero",
-   "area": "Reserva",
-   "titulo": "El acuse habla en singular a quien va solo",
-   "texto": "La frase de acuse ('Entendido, …') repite el dato con las palabras y el número del cliente: a quien dice 'I'm not Colombian' le contesta 'you're not Colombian', no 'none of you are Colombian'.",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [
-    "b_slotfill_close"
-   ],
-   "sin_efecto": null
-  },
-  {
-   "nombre": "acuse_solo_el_mensaje",
-   "area": "Reserva",
-   "titulo": "El acuse no se inventa nada",
-   "texto": "La frase corta con la que Coral reconoce lo que dijo el cliente ('Entendido, …') solo repite lo que dice el mensaje: ya no convierte una fecha en 'tu reserva' ni un 'gracias' en 'tu actividad de Advanced'.",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [
-    "b_slotfill_close"
-   ],
-   "sin_efecto": null
-  },
-  {
    "nombre": "adaptado_contesta_lo_demas",
    "area": "Preguntas",
    "titulo": "DIVE TO HEAL no se come lo demás",
@@ -2489,19 +2401,6 @@
    "fijado_en_pre": true,
    "usado_por": [
     "b_slotfill_close"
-   ],
-   "sin_efecto": null
-  },
-  {
-   "nombre": "busqueda_con_la_pregunta_sola",
-   "area": "Preguntas",
-   "titulo": "Se busca también la pregunta sola, sin los datos que da el cliente",
-   "texto": "Si el cliente da datos y pregunta en el mismo mensaje (\"salimos de Cartagena el día 30. ¿Hace falta saber nadar?\"), el origen y la fecha tapaban la pregunta y la búsqueda no traía la pregunta frecuente: el bot decía que no tenía el dato. Ahora también se busca la pregunta sola, traducida si el cliente escribe en portugués o francés.",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [
-    "r_reescribir"
    ],
    "sin_efecto": null
   },
@@ -3515,19 +3414,6 @@
    "sin_efecto": null
   },
   {
-   "nombre": "pregunta_sola_con_su_sitio",
-   "area": "Preguntas",
-   "titulo": "La búsqueda no pierde el sitio por el que se pregunta",
-   "texto": "Para buscar, Coral se queda con la pregunta del mensaje y quita los datos del cliente. Si la pregunta trata de un sitio (\"estoy en Barú, ¿me recogen en el hotel?\"), ahora el sitio se queda: sin él, la búsqueda traía la recogida en los hoteles de las islas y Coral decía que recogía en Barú.",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [
-    "r_reescribir"
-   ],
-   "sin_efecto": null
-  },
-  {
    "nombre": "principiante_sin_buceo_certificado",
    "area": "Preguntas",
    "titulo": "A quien no está certificado no se le ofrece el buceo certificado",
@@ -4100,16 +3986,6 @@
  ],
  "modelos": [
   {
-   "ajuste": "acuse_model",
-   "codigo": "gpt-5.4-nano",
-   "pre": "gpt-5.4-nano",
-   "usado_por": [
-    "b_acuse"
-   ],
-   "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 82
-  },
-  {
    "ajuste": "extraction_model",
    "codigo": "gpt-5.4-mini",
    "pre": "gpt-5.4-mini",
@@ -4199,14 +4075,6 @@
    ],
    "proveedor": "OpenAI",
    "llamadas_ultima_ronda": null
-  },
-  {
-   "ajuste": "pregunta_sola_model",
-   "codigo": "deepseek/deepseek-v4.1-flash",
-   "pre": "deepseek/deepseek-v4.1-flash",
-   "usado_por": [],
-   "proveedor": "OpenRouter",
-   "llamadas_ultima_ronda": 528
   },
   {
    "ajuste": "rag_answer_model",

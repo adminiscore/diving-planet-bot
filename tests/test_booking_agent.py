@@ -41,7 +41,7 @@ def _core_llm_offline(monkeypatch):
     monkeypatch.setattr(core_extraction, "detect_special_signals", _senales)
     monkeypatch.setattr(core_extraction, "resolve_slot_answer", AsyncMock(return_value={}))
     monkeypatch.setattr(core, "extract_notes", AsyncMock(return_value=[]))
-    monkeypatch.setattr(core_close, "compose_acknowledgement", AsyncMock(return_value=""))
+    monkeypatch.setattr(core_close, "_acuse_por_codigo", lambda *a, **k: "")
 
 
 # ── subgrafo (Fase 3.3, andamiaje) ──

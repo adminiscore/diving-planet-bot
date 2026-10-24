@@ -13,7 +13,6 @@ from src.agents.conversational_core import (
     _turn_has_question,
     rag_con_adelantado,
 )
-from src.agents.nucleo.slotfill_close import cancel_pending_ack
 from src.config import settings
 from src.flows.state import ConversationState, Step
 
@@ -63,7 +62,6 @@ async def _tras_el_pase(
     preguntaba "Which one are you leaning toward — diving, a mini-course…?" a cada dato siguiente
     (cambio-fecha-por-enfermedad, rondas ex8-B2 y ex7-B). Ahora contesta lo que se pregunte (el RAG) y, si no hay
     pregunta, deja una nota corta: la persona ve toda la conversación."""
-    cancel_pending_ack(state)
     state.quick_replies = []
     answer = None
     if _turn_has_question(message, routing_signals):

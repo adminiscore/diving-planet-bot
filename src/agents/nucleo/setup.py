@@ -17,7 +17,6 @@ from src.agents.conversational_core import (
     _notes_snapshot,
     _otro_idioma_en_ingles,
 )
-from src.agents.nucleo.slotfill_close import _maybe_launch_ack
 from src.config import settings
 from src.flows.state import ConversationState, Step
 
@@ -245,6 +244,4 @@ async def _setup_phase(
         state._pending_notes_task = asyncio.create_task(
             _maybe_capture_notes(state, message, snapshot=_notes_snapshot(state))
         )
-    if not first_turn:
-        _maybe_launch_ack(state, message)
     return greeting, first_turn

@@ -28,15 +28,15 @@ _NOMBRA_EL_ASUNTO_EN = (
 
 
 def _otro_idioma(query: str, lang: str) -> bool:
-    """G3-05 (flag `busqueda_con_la_pregunta_sola`): el mensaje no parece escrito en el idioma de la respuesta.
-    Entonces se REESCRIBE siempre (la consulta, en el idioma de la respuesta) y la pregunta sola se traduce: un cliente
+    """G3-05: el mensaje no parece escrito en el idioma de la respuesta. Entonces se REESCRIBE siempre (la consulta, en
+    el idioma de la respuesta): un cliente
     en portugués o francés se contesta en inglés, y su mensaje, buscado tal cual contra la base en español e inglés,
     traía fichas al azar ("Precisa saber nadar?" no encontraba la FAQ de saber nadar, conv 5571). La heurística de
     palabras marca esos idiomas como "es", así que con la respuesta en inglés salta; con la conversación en español, un
     mensaje en español no la dispara."""
     from src.flows.catalog import _detect_language_from_text  # lazy
 
-    return settings.busqueda_con_la_pregunta_sola and _detect_language_from_text(query or "") not in (None, lang)
+    return _detect_language_from_text(query or "") not in (None, lang)
 
 
 def _should_condense(query: str, history: list[dict] | None, lang: str = "es") -> bool:
@@ -90,65 +90,6 @@ def lo_sabido(hechos: dict | None, lang: str) -> str:
     if nacionalidad:
         partes.append(("nacionalidad: " if lang == "es" else "nationality: ") + nacionalidad)
     return "; ".join(partes)
-
-
-_PREGUNTA_SOLA_ES = ("Copia solo la PREGUNTA (o preguntas) del mensaje del cliente, fielmente y SIEMPRE en "
-                     "español: si el mensaje viene en otro idioma (inglés, portugués, francés...), tradúcela. Quita los "
-                     "datos que da (fechas, desde dónde sale, cuántos son, dónde se aloja), no añadas nada de la "
-                     "conversación y NO la respondas. Si el mensaje no pregunta nada, devuélvelo entero traducido. "
-                     "Devuelve solo eso.")
-_PREGUNTA_SOLA_EN = ("Copy only the QUESTION (or questions) in the customer's message, faithfully and ALWAYS in "
-                     "English: if the message is in another language (Spanish, Portuguese, French...), translate it. "
-                     "Leave out the facts they give (dates, where they depart from, how many they are, where they stay), "
-                     "add nothing from the conversation and do NOT answer it. If the message asks nothing, return all "
-                     "of it translated. Return only that.")
-# gen-2 (20-oct, flag `pregunta_sola_con_su_sitio`): "Estoy alojado en Barú, ¿me pueden recoger en el hotel?" -> "¿Me
-# pueden recoger en el hotel?": sin el sitio, la búsqueda traía la recogida en los hoteles de las islas y el bot
-# contestaba que podía recoger en Barú (rag_piezas gen2-base). Un dato sin el que la pregunta cambia de sentido se queda.
-_CON_SU_SITIO_ES = (" Pero deja el sitio o el dato si la pregunta trata de él (si pregunta si le recogen en su hotel, si "
-                    "se puede salir o bucear desde un lugar, deja ese lugar).")
-_CON_SU_SITIO_EN = (" But keep the place or detail if the question is about it (if they ask whether they are picked up at "
-                    "their hotel, or whether they can depart or dive from a place, keep that place).")
-
-
-def _instruccion_pregunta_sola(lang: str) -> str:
-    base = _PREGUNTA_SOLA_ES if lang == "es" else _PREGUNTA_SOLA_EN
-    if not settings.pregunta_sola_con_su_sitio:
-        return base
-    return base + (_CON_SU_SITIO_ES if lang == "es" else _CON_SU_SITIO_EN)
-
-
-@con_pieza_llm("pregunta_sola")
-async def pregunta_sola(query: str, lang: str) -> str | None:
-    """G3-05 (flag `busqueda_con_la_pregunta_sola`): la PREGUNTA del mensaje, sola y en el idioma de la respuesta, para
-    la búsqueda doble (hace de "pregunta tal cual"). None, sin llamada, si el mensaje es corto y está en el idioma de la
-    respuesta: entonces el mensaje ya es la pregunta.
-
-    Medido en la búsqueda de PRE (17-oct): "Do you need to know how to swim?" trae la FAQ de nadar la primera (1,03) y
-    "We left Cartagena on the 30th. Do you need to know how to swim?" no la trae entre las 8 primeras: el origen y la
-    fecha la tapan con las fichas que salen desde Cartagena. Igual en español ("salimos de Cartagena el día 30. ¿Hace
-    falta saber nadar?"), y la consulta reescrita, que nombra el asunto (CAL-D), tampoco la trae. En portugués o
-    francés, además, buscar el mensaje tal cual no encuentra nada (conv 5571). En el banco G3, el bot contestaba "no
-    tengo ese dato" 3 de 3 en los tres idiomas."""
-    if not settings.busqueda_con_la_pregunta_sola or not query:
-        return None
-    if not _otro_idioma(query, lang) and len(query.split()) < 8:
-        return None
-    try:
-        client = trace_openai(AsyncOpenAI(api_key=settings.openai_api_key))
-        response = await client.chat.completions.create(
-            model=settings.pregunta_sola_model,
-            messages=[
-                {"role": "system", "content": _instruccion_pregunta_sola(lang)},
-                {"role": "user", "content": redact_pii(query)},
-            ],
-            temperature=0,
-            max_tokens=80,
-        )
-        return (response.choices[0].message.content or "").strip() or None
-    except Exception as exc:
-        logger.warning(f"[RAG][PREGUNTA_SOLA] failed: {exc}")
-        return None
 
 
 @con_pieza_llm("reescritura")
