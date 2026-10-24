@@ -1385,8 +1385,24 @@ def _turn_has_question(message: str, routing_signals: dict) -> bool:
     # ex-9b paso 5: si Jev ha contestado, manda Jev (y el "?"); el regex solo si Jev calla. El regex daba por pregunta
     # "hay un niño de 5 años" (lanzaba el RAG y se saltaba los resolutores).
     if "asks_question" in routing_signals:
-        return "?" in message or bool(routing_signals["asks_question"])
+        if "?" in message:
+            return True
+        return bool(routing_signals["asks_question"]) and not _solo_pide_reservar(routing_signals)
     return _looks_like_question(message)
+
+
+def _solo_pide_reservar(routing_signals: dict) -> bool:
+    """lat-7 (25-oct, fase LAT): Jev da `asks_question` también a quien PIDE algo de la reserva sin preguntar nada
+    («quiero bucear certificado», «hi, i want to book a dive», «Hola, me gustaría reservar»). Si no hay ninguna intención
+    de la tabla y Jev está seguro de que no trae otra cosa (`pide_otra_cosa` = False), es un paso de la reserva: lo
+    contesta el flujo con su siguiente pregunta (~1,3 s) y no el RAG (3-9 s, y repetía el saludo; sonda lat-7, latb5-B:
+    47 mensajes cortos así)."""
+    from src.agents.jev_router import PIDE_OTRA_COSA  # lazy
+    from src.orchestration.graph import _INTENCION_DE_SENAL  # lazy
+
+    if routing_signals.get(PIDE_OTRA_COSA) is not False:
+        return False
+    return not any(routing_signals.get(senal) for senal in _INTENCION_DE_SENAL.values())
 
 
 def _is_greeting_only(message: str) -> bool:
