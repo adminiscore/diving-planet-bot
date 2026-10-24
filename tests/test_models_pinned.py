@@ -32,7 +32,6 @@ MODELOS = (
     "notas_model",
     "extractor_turno_model",
     "rag_plan_model",
-    "avisos_al_final_model",
     "openai_embedding_model",
     "openai_transcription_model",
     "jev_model",

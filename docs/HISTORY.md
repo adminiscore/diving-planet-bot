@@ -1,6 +1,24 @@
 History
 =======
 
+0.32.0 - (2026-10-24)
+---------------------
+* **Fase LAT** (decisión de Gadea, 24-oct): bajar la latencia y la complejidad. La calidad puede bajar algo y se
+  recupera en paralelo, sin volver a añadir llamadas. Plan: `docs/robustness/lat/plan-lat.md`.
+* **Corte A: fuera tres pasos que se ejecutaban en serie después de escribir.** Se borra el código, no se apaga con un
+  flag:
+  - el **aviso final** (CAL-A6): una segunda llamada a Luna que revisaba si faltaba un aviso, unos 2,3 s en cada turno
+    del RAG; con él salen sus ajustes, sus líneas del compose y su código en `rag_plan.py` y `flows/avisos.py`;
+  - la **segunda redacción del redactor** (ARQ-3), que rehacía la respuesta en el 38 % de sus turnos;
+  - el **reintento del RAG con hechos** (`rag_comprueba_los_hechos`): lo que falta de las listas lo sigue añadiendo
+    el código (arq-7b, ahora siempre), y lo demás ya no se pide en otra redacción.
+* **Medido en real-1**, frente al bot desplegado a la misma hora:
+  - latencia: p50 3,57 → 3,21 s, **p90 8,24 → 6,56 s (−20 %)** y p95 10,87 → 7,74 s (−29 %);
+  - llamadas por turno: 7,60 → 6,78; coste de la ronda: 1,12 → 0,95 $;
+  - calidad: 94,9 % 82/116 → 94,0 % 74/116, frente a anoche;
+  - deuda de calidad: avisos (10 % de grupo, Barú, clima) y datos que el redactor ya no recupera (COP, preguntar el
+    origen antes del precio).
+
 0.31.99 - (2026-10-23)
 ----------------------
 * **PROMOCIÓN arq-8** (decisión de Gadea, 23-oct). Son las causas de los fallos que se repetían en el G10 nº 6 y en su

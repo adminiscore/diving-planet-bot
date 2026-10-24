@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-24T10:59:06+00:00",
-  "commit": "0e8a4f5f",
+  "generado": "2026-10-24T11:36:28+00:00",
+  "commit": "8fffa7a8",
   "rama": "feature/latb-gonzalo"
  },
  "vistas": {
@@ -1304,13 +1304,6 @@
      "sin_efecto": false
     },
     {
-     "nombre": "rag_comprueba_los_hechos",
-     "titulo": "El RAG comprueba que lleva los hechos",
-     "codigo": true,
-     "pre": true,
-     "sin_efecto": false
-    },
-    {
      "nombre": "redactor_sin_preguntas_de_cierre",
      "titulo": "El redactor no pregunta datos al cerrar",
      "codigo": true,
@@ -1376,13 +1369,6 @@
     {
      "nombre": "listas_por_codigo",
      "titulo": "Las listas las pone el código",
-     "codigo": true,
-     "pre": true,
-     "sin_efecto": false
-    },
-    {
-     "nombre": "rag_hechos_sin_reintento",
-     "titulo": "Lo que falta lo añade el código",
      "codigo": true,
      "pre": true,
      "sin_efecto": false
@@ -1626,11 +1612,6 @@
      "ajuste": "grounding_v3_model",
      "codigo": "deepseek/deepseek-v4.1-flash",
      "pre": "deepseek/deepseek-v4.1-flash"
-    },
-    {
-     "ajuste": "avisos_al_final_model",
-     "codigo": "gpt-6-luna",
-     "pre": "gpt-6-luna"
     }
    ],
    "interruptores": [
@@ -1660,13 +1641,6 @@
      "titulo": "El revisor busca avisos que faltan",
      "codigo": false,
      "pre": false,
-     "sin_efecto": false
-    },
-    {
-     "nombre": "avisos_al_final",
-     "titulo": "Un aviso que falta se añade al final, sin rehacer la respuesta",
-     "codigo": true,
-     "pre": true,
      "sin_efecto": false
     }
    ],
@@ -2388,19 +2362,6 @@
    "fijado_en_pre": true,
    "usado_por": [
     "route_message"
-   ],
-   "sin_efecto": null
-  },
-  {
-   "nombre": "avisos_al_final",
-   "area": "Preguntas",
-   "titulo": "Un aviso que falta se añade al final, sin rehacer la respuesta",
-   "texto": "Mientras el revisor de siempre comprueba la respuesta, otro lee la conversación y la lista de avisos de la empresa (el minicurso no certifica, la carta del curso referido, desde las islas no hay almuerzo). Si a la respuesta le falta uno que el cliente necesita por lo que acaba de decir, se añade una frase y lo demás no se toca. Antes el aviso se metía al redactar y desplazaba lo que la respuesta tenía que decir.",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [
-    "r_revisor"
    ],
    "sin_efecto": null
   },
@@ -3479,19 +3440,6 @@
    "sin_efecto": null
   },
   {
-   "nombre": "rag_comprueba_los_hechos",
-   "area": "Preguntas",
-   "titulo": "El RAG comprueba que lleva los hechos",
-   "texto": "En los mensajes mezclados, si la respuesta del RAG deja fuera algún hecho del código (un punto de lo que incluye, un precio, un enlace), se rehace una vez diciéndole cuáles (arq-4b, 22-oct).",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [
-    "r_hechos"
-   ],
-   "sin_efecto": null
-  },
-  {
    "nombre": "rag_enlace_al_recomendar",
    "area": "Preguntas",
    "titulo": "El enlace al recomendar",
@@ -3514,19 +3462,6 @@
    "fijado_en_pre": true,
    "usado_por": [
     "b_extraction"
-   ],
-   "sin_efecto": null
-  },
-  {
-   "nombre": "rag_hechos_sin_reintento",
-   "area": "Preguntas",
-   "titulo": "Lo que falta lo añade el código",
-   "texto": "En los mensajes mezclados, si la respuesta del RAG se deja puntos de lo que incluye, de los requisitos o de los descuentos, el código los añade al final con su rótulo en vez de rehacer la respuesta entera; un precio o un enlace que falte sí se rehace (arq-7b, latencia, 23-oct).",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [
-    "r_hechos"
    ],
    "sin_efecto": null
   },
@@ -4050,16 +3985,6 @@
   }
  ],
  "modelos": [
-  {
-   "ajuste": "avisos_al_final_model",
-   "codigo": "gpt-6-luna",
-   "pre": "gpt-6-luna",
-   "usado_por": [
-    "r_revisor"
-   ],
-   "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 360
-  },
   {
    "ajuste": "extraction_model",
    "codigo": "gpt-5.4-mini",

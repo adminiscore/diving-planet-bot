@@ -639,7 +639,7 @@ async def _verify_grounding(answer: str, context: str, lang: str) -> tuple[bool,
     return await is_grounded(answer, context, lang=lang)
 
 
-# arq-7b (23-oct, flag `rag_hechos_sin_reintento`, latencia): los puntos de las listas de los hechos que el RAG dejó
+# arq-7b (23-oct, latencia): los puntos de las listas de los hechos que el RAG dejó
 # fuera, con su rótulo; lo demás (recogida, alojamiento) va tal cual.
 _ROTULOS_DE_LO_QUE_FALTA = {"incluye": ("También incluye:", "It also includes:"),
                             "requisitos": ("También necesitas:", "You'll also need:"),
@@ -976,23 +976,6 @@ async def rag_answer(
                     dados.append(aviso["id"])
 
         last_reject = ""
-        def _con_aviso_al_final(answer: str, aviso: tuple[str, str]) -> str:
-            """CAL-A6: la respuesta con la frase del aviso, si la frase pasa las mismas guardas deterministas que la
-            respuesta (ni importes, ni enlaces, ni teléfonos, ni datos personales que no estén en el contexto). El
-            aviso queda apuntado como dado en la lista del estado, como los de A5."""
-            from src.agents import rag_plan  # lazy
-
-            aviso_id, frase = aviso
-            if not (is_coherent_text(frase) and currency_amounts_grounded(frase, amounts_context)
-                    and urls_grounded(frase, grounding_context) and not contains_phone_number(frase)
-                    and not requests_personal_data(frase)):
-                logger.info(f"[RAG][AVISO_FINAL] {aviso_id}: la frase no pasa las guardas, no se añade")
-                return answer
-            dados = (avisos_hechos or {}).get("dados")
-            if isinstance(dados, list) and aviso_id not in dados:
-                dados.append(aviso_id)
-            return rag_plan.insertar_frase(answer, frase)
-
         respuesta_buena = None  # CAL-A3: la respuesta aprobada a la que solo le faltaba algún punto
         for attempt in range(2):
             try:
@@ -1035,18 +1018,9 @@ async def rag_answer(
                 _apuntar_avisos()
                 return answer
             else:
-                aviso_final = None
-                if settings.avisos_al_final:
-                    # CAL-A6: el revisor de avisos va A LA VEZ que el juez de siempre (no suma latencia si tarda menos
-                    # que él); lo que diga solo cuenta si la respuesta pasa.
-                    from src.agents import rag_plan  # lazy
-
-                    (grounded, reason), aviso_final = await asyncio.gather(
-                        _verify_grounding(answer, grounding_context, lang=lang),
-                        rag_plan.aviso_al_final(history, redact_pii(query), answer, lang,
-                                                dados=(avisos_hechos or {}).get("dados")))
-                else:
-                    grounded, reason = await _verify_grounding(answer, grounding_context, lang=lang)
+                # lat (24-oct): fuera el aviso final (CAL-A6), que iba a la vez que este juez pero tardaba más (Luna,
+                # ~2,3 s en serie tras escribir: 1,4 s exclusivos por turno del RAG en real-1).
+                grounded, reason = await _verify_grounding(answer, grounding_context, lang=lang)
                 if grounded and attempt == 0 and (
                         (settings.rag_revisor_completitud and puntos) or settings.rag_revisor_avisos
                         or avisos_elegidos or hechos_bloques):
@@ -1066,36 +1040,27 @@ async def rag_answer(
 
                         avisos += await rag_plan.puntos_sin_cubrir(
                             avisos_mod.textos(avisos_elegidos), answer, lang)
-                    perdidos = []
                     if hechos_bloques:
-                        # arq-4b (flag `rag_comprueba_los_hechos`, G10 nº 4): con los hechos delante, el RAG dejaba
-                        # fuera puntos de la lista («qué incluye» del minicurso sin la piscina ni la inmersión). La
-                        # misma comprobación por código que el redactor (arq-3), sin otro modelo.
-                        from src.agents.redactor_hechos import _pide_los_que_faltan  # lazy
+                        # arq-4b/arq-7b: con los hechos delante, el RAG dejaba fuera puntos de la lista («qué incluye»
+                        # del minicurso sin la piscina ni la inmersión). Los añade el código, sin otro modelo. lat-3
+                        # (24-oct): lo que el código no puede añadir ya no se pide en otra redacción (el reintento
+                        # repetía escritor y revisor, ~5 s): es deuda de calidad de la fase.
                         from src.flows import hechos as hechos_mod  # lazy
 
                         perdidos = hechos_mod.faltan(answer, *hechos_bloques)
-                        if perdidos and not faltan and not avisos and settings.rag_hechos_sin_reintento:
-                            # arq-7b (latencia): si solo faltan puntos de las listas, los añade el código en vez de
-                            # rehacer la respuesta (el reintento repetía escritor, revisor y aviso final: ~5 s).
-                            completada = _completar_con_hechos(answer, *hechos_bloques, lang)
-                            if completada is not None:
-                                logger.info(f"[RAG][ARQ7B] faltaban {len(perdidos)} hechos: los añade el código")
-                                answer, perdidos = completada, []
-                    if faltan or avisos or perdidos:
+                        if perdidos and (completada := _completar_con_hechos(answer, *hechos_bloques, lang)):
+                            logger.info(f"[RAG][ARQ7B] faltaban {len(perdidos)} hechos: los añade el código")
+                            answer = completada
+                    if faltan or avisos:
                         partes = ([rag_plan.feedback_de_faltan(faltan, lang)] if faltan else []) + (
-                            [rag_plan.feedback_de_avisos(avisos, lang)] if avisos else []) + (
-                            [_pide_los_que_faltan(perdidos, lang)] if perdidos else [])
+                            [rag_plan.feedback_de_avisos(avisos, lang)] if avisos else [])
                         respuesta_buena = answer
                         messages = [*messages, {"role": "assistant", "content": answer},
                                     {"role": "user", "content": "\n\n".join(partes)}]
-                        logger.info(f"[RAG][COMPLETITUD] reintento: faltan {len(faltan)} puntos, {len(avisos)} avisos, "
-                                    f"{len(perdidos)} hechos")
+                        logger.info(f"[RAG][COMPLETITUD] reintento: faltan {len(faltan)} puntos, {len(avisos)} avisos")
                         continue
                 if grounded:
                     _apuntar_avisos()
-                    if aviso_final:
-                        answer = _con_aviso_al_final(answer, aviso_final)
                     logger.info(
                         f"[RAG] Query: {query[:60]}... | Docs: {len(docs) if docs else 0} | "
                         f"Tokens: {response.usage.total_tokens} | "

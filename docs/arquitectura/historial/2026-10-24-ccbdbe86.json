@@ -1,8 +1,8 @@
 {
  "meta": {
-  "generado": "2026-10-24T10:46:23+00:00",
+  "generado": "2026-10-24T11:07:54+00:00",
   "commit": "ccbdbe86",
-  "rama": "feature/latb-gonzalo"
+  "rama": "feature/pre_gadea"
  },
  "estructura": {
   "componentes": [
@@ -460,7 +460,6 @@
      "hechos_al_rag",
      "varias_actividades",
      "enlace_con_disponibilidad",
-     "rag_comprueba_los_hechos",
      "redactor_sin_preguntas_de_cierre",
      "hechos_sin_actividad",
      "requisitos_coherentes",
@@ -471,7 +470,6 @@
      "dos_monedas_sin_nacionalidad",
      "mezclados_por_partes",
      "listas_por_codigo",
-     "rag_hechos_sin_reintento",
      "intenciones_clima_pago",
      "frases_por_codigo",
      "hechos_que_faltaban",
@@ -504,7 +502,9 @@
      "openai_model"
     ],
     "interruptores": [
-     "consulta_con_lo_sabido"
+     "consulta_con_lo_sabido",
+     "busqueda_con_la_pregunta_sola",
+     "pregunta_sola_con_su_sitio"
     ]
    },
    {
@@ -534,15 +534,13 @@
     "tipo": "llm",
     "nodo_grafo": null,
     "modelos": [
-     "grounding_v3_model",
-     "avisos_al_final_model"
+     "grounding_v3_model"
     ],
     "interruptores": [
      "juez_v3_luna",
      "juez_revisa_con_cita",
      "rag_revisor_completitud",
-     "rag_revisor_avisos",
-     "avisos_al_final"
+     "rag_revisor_avisos"
     ]
    },
    {
@@ -997,10 +995,6 @@
     "codigo": true,
     "pre": true
    },
-   "avisos_al_final": {
-    "codigo": true,
-    "pre": true
-   },
    "avisos_condicionados": {
     "codigo": false,
     "pre": false
@@ -1010,6 +1004,10 @@
     "pre": true
    },
    "baru_sale_de_cartagena": {
+    "codigo": true,
+    "pre": true
+   },
+   "busqueda_con_la_pregunta_sola": {
     "codigo": true,
     "pre": true
    },
@@ -1325,6 +1323,10 @@
     "codigo": true,
     "pre": true
    },
+   "pregunta_sola_con_su_sitio": {
+    "codigo": true,
+    "pre": true
+   },
    "principiante_sin_buceo_certificado": {
     "codigo": false,
     "pre": false
@@ -1333,19 +1335,11 @@
     "codigo": true,
     "pre": true
    },
-   "rag_comprueba_los_hechos": {
-    "codigo": true,
-    "pre": true
-   },
    "rag_enlace_al_recomendar": {
     "codigo": false,
     "pre": false
    },
    "rag_espera_la_nacionalidad": {
-    "codigo": true,
-    "pre": true
-   },
-   "rag_hechos_sin_reintento": {
     "codigo": true,
     "pre": true
    },
@@ -1515,10 +1509,6 @@
     "codigo": "gpt-5.4-nano",
     "pre": "gpt-5.4-nano"
    },
-   "avisos_al_final_model": {
-    "codigo": "gpt-6-luna",
-    "pre": "gpt-6-luna"
-   },
    "extraction_model": {
     "codigo": "gpt-5.4-mini",
     "pre": "gpt-5.4-mini"
@@ -1554,6 +1544,10 @@
    "openai_transcription_model": {
     "codigo": "gpt-transcribe",
     "pre": "gpt-transcribe"
+   },
+   "pregunta_sola_model": {
+    "codigo": "deepseek/deepseek-v4.1-flash",
+    "pre": "deepseek/deepseek-v4.1-flash"
    },
    "rag_answer_model": {
     "codigo": "gpt-6-luna",
@@ -1591,11 +1585,12 @@
   "flechas_nuevas": [],
   "flechas_quitadas": [],
   "interruptores": [
-   "busqueda_con_la_pregunta_sola",
-   "pregunta_sola_con_su_sitio"
+   "avisos_al_final",
+   "rag_comprueba_los_hechos",
+   "rag_hechos_sin_reintento"
   ],
   "modelos": [
-   "pregunta_sola_model"
+   "avisos_al_final_model"
   ]
  }
 }

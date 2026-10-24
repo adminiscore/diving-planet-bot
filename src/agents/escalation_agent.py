@@ -158,8 +158,7 @@ async def _contestar_lo_demas(conv, message: str, tema: str, key: str, reason: s
             historial.append({"role": "user", "content": message})
         if hechos := await _hechos_para_el_rag(conv, message, historial, siempre=True):
             entradas["hechos"] = hechos
-            if settings.rag_comprueba_los_hechos:
-                entradas["hechos_bloques"] = conv._hechos_del_rag
+            entradas["hechos_bloques"] = conv._hechos_del_rag
     instruccion = _SOLO_LO_DEMAS[key].format(tema=tema)
     entradas["extra_context"] = f"{entradas['extra_context']}\n\n{instruccion}" if entradas.get("extra_context") \
         else instruccion

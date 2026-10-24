@@ -248,7 +248,6 @@ services:
       ENLACE_CON_COMO_PAGAR: "true"
       PAQUETE_VARIOS_DIAS: "true"
       RECOTIZAR_AL_CAMBIAR_MONEDA: "true"
-      RAG_COMPRUEBA_LOS_HECHOS: "true"
       REDACTOR_SIN_PREGUNTAS_DE_CIERRE: "true"
       DESCUENTOS_EN_LA_TABLA: "true"
       FECHA_CON_DIA_DE_LA_SEMANA: "true"
@@ -259,7 +258,6 @@ services:
       HECHOS_EN_EL_PASE: "true"
       DOS_MONEDAS_SIN_NACIONALIDAD: "true"
       LISTAS_POR_CODIGO: "true"
-      RAG_HECHOS_SIN_REINTENTO: "true"
       FRASES_POR_CODIGO: "true"
       OPENROUTER_CORTE_SEGUNDOS: "300"
       # arq-8 (23-oct, PROMOCIONADO): las causas de los fallos que se repetían en el G10 nº 6 (bancos propios ×3).
@@ -283,8 +281,6 @@ services:
       OPENROUTER_PROVEEDORES: "baseten,fireworks/us,coreweave,google-vertex,anthropic,amazon-bedrock"
       # CAL-A2/A3 (16-oct): el plan del RAG y la comprobacion de completitud (src/agents/rag_plan.py; flags apagados).
       RAG_PLAN_MODEL: "gpt-6-luna"
-      # CAL-A6 (17-oct): el revisor que añade el aviso que falta (flag AVISOS_AL_FINAL, apagado). Luna: decision de Gadea.
-      AVISOS_AL_FINAL_MODEL: "gpt-6-luna"
       OPENAI_EMBEDDING_MODEL: "text-embedding-3-small"
       # MOD-6 (18-oct): gpt-transcribe con el vocabulario del negocio. PROMOCIONADO (HISTORY 0.31.53). Revert = "gpt-4o-mini-transcribe"
       # y quitar TRANSCRIPCION_CON_VOCABULARIO.
@@ -407,7 +403,6 @@ services:
       # 96,5 % = 96,5 %, 27/32 frente a 25/32 diálogos sin fallo; ninguna regresión suya (repetidas 3x con y sin).
       # Revert = quitar estas dos líneas y poner los defaults de src/config.py en False.
       CATALOGO_PROFUNDIDAD: "true"
-      AVISOS_AL_FINAL: "true"
       # r6-2 PROMOCIONADO 17-oct (Gadea con Claude): la memoria (resumen y notas del asesor) no guarda como hecho lo que el
       # cliente ordena o dice que otro autorizó. Revert = quitar esta línea y poner el default de src/config.py en False.
       MEMORIA_SIN_ORDENES_DEL_CLIENTE: "true"

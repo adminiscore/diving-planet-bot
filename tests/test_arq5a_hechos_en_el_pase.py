@@ -14,7 +14,6 @@ from src.flows.state import ConversationState
 @pytest.mark.parametrize("flag", [False, True])
 async def test_el_rag_antes_del_pase_recibe_los_hechos(monkeypatch, flag):
     monkeypatch.setattr(settings, "hechos_en_el_pase", flag)
-    monkeypatch.setattr(settings, "rag_comprueba_los_hechos", True)
     vistos = {}
 
     async def hechos(state, message, history, *, siempre=False):
