@@ -613,6 +613,7 @@ def _sabido_para_extractor(state: ConversationState) -> dict:
 def lanzar_extraccion_adelantada(state: ConversationState, message: str) -> None:
     """ex-5 (fase EX): el extractor "LLM primero" arranca con el turno, a la vez que el enrutador (no depende de
     Jev), como el RAG adelantado. `_understand` lo espera (`datos_del_extractor`); si el turno no llega, se cancela."""
+    state._lectura_del_turno = None  # lat-6: la lectura del turno anterior ya no vale
     if not campos_del_extractor():
         return
     texto = (message or "").strip()
@@ -650,7 +651,11 @@ async def datos_del_extractor(state: ConversationState, message: str) -> dict | 
                                         lang=state.language or "es")
     except (asyncio.CancelledError, Exception) as exc:  # noqa: BLE001
         logger.warning(f"[EXTRACT][EX5] el extractor falló, se sigue con lo de hoy: {exc!r}")
-        return None
+        datos = None
+    # lat-6 (24-oct): lo que lea después este mismo turno (`lectura_del_extractor`: el redactor, el enrutado) sale de
+    # aquí. Antes la tarea se soltaba y se pedía OTRA extracción en serie (~1 s; en real-1, 13 % de los turnos y antes
+    # de que empezara el redactor).
+    state._lectura_del_turno = (message, datos)
     return datos  # None = la llamada falló (degradado)
 
 
@@ -658,6 +663,9 @@ async def lectura_del_extractor(state: ConversationState, message: str) -> dict 
     """ex-9b paso 4: lo que el extractor lee de ESTE mensaje, antes de `_understand` y sin gastar la lectura: la tarea
     adelantada sigue colgada del estado y `datos_del_extractor` la vuelve a dar sin otra llamada (una tarea acabada
     devuelve su resultado cada vez que se espera). Si no se lanzó con el turno, se lanza ahora. None = falló."""
+    leida = getattr(state, "_lectura_del_turno", None)
+    if leida is not None and leida[0] == message:
+        return leida[1]  # lat-6: ya la consumió `datos_del_extractor` en este turno
     if getattr(state, "_extraccion_adelantada", None) is None:
         lanzar_extraccion_adelantada(state, message)
     tarea = getattr(state, "_extraccion_adelantada", None)
@@ -748,6 +756,7 @@ def cancelar_extraccion_adelantada(state: ConversationState) -> None:
     """Cierre del turno: una extracción adelantada que el turno no usó se cancela."""
     tarea = getattr(state, "_extraccion_adelantada", None)
     state._extraccion_adelantada = None
+    state._lectura_del_turno = None
     if tarea is not None and not tarea.done():
         tarea.cancel()
 
