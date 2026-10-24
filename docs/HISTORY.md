@@ -18,6 +18,17 @@ History
   - calidad: 94,9 % 82/116 → 94,0 % 74/116, frente a anoche;
   - deuda de calidad: avisos (10 % de grupo, Barú, clima) y datos que el redactor ya no recupera (COP, preguntar el
     origen antes del precio).
+* **Corte B** (Gonzalo), también borrando código:
+  - fuera la **pregunta sola** de la búsqueda: se queda la reescritura, que ya traduce;
+  - el **respaldo de OpenRouter** salta a los 2 s, no a los 5 (`OPENROUTER_RESPALDO_SEGUNDOS=2.0`);
+  - el **acuse** de la reserva («Entendido, vas solo») lo pone el código, sin llamada al modelo.
+* **lat-1** (Gonzalo): si contesta la tabla, el RAG adelantado se cancela en el enrutador, antes de escribir y revisar.
+* **lat-0a**: «¿cómo pago?» con el plan elegido lleva el enlace del plan; a un colombiano, el asesor.
+* **Todo junto** (cortes A y B y lat-1), en real-1 frente al bot desplegado a la misma hora:
+  - llamadas por turno: 7,67 → **5,45**;
+  - latencia: p50 3,39 → **2,79 s**, p90 7,98 → **6,16 s** y p95 11,18 → **7,28 s**;
+  - calidad: **94,8 % 80/116**, frente al 94,9 % 82/116 de anoche, dentro del ruido.
+  - Deuda apuntada: el acuse ya no reconoce lo concreto del mensaje («anoto a tu amigo para el minicurso»).
 
 0.31.99 - (2026-10-23)
 ----------------------
