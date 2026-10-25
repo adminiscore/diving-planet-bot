@@ -139,19 +139,17 @@ def _es_nada(answer: str) -> bool:
 async def _contestar_lo_demas(conv, message: str, tema: str, key: str, reason: str) -> str | None:
     from src.agents import rag_agent, supervisor  # lazy
     from src.agents.conversational_core import _entradas_rag, _hechos_para_el_rag  # lazy
-    from src.config import settings  # lazy
 
     entradas = _entradas_rag(conv, conv.history, message)
-    if settings.hechos_en_el_pase:
-        # arq-5a (G10 nº 5, ~15 fallos con hechos=None): antes del pase el RAG contestaba de memoria lo que el mensaje
-        # preguntaba de la tabla (qué incluye, precios, recogida, descuentos). Recibe los hechos del código, como en la
-        # ruta normal. El mensaje aún no está en el historial: se añade para que los hechos sean los de este mensaje.
-        historial = list(conv.history or [])
-        if not historial or historial[-1].get("role") != "user" or historial[-1].get("content") != message:
-            historial.append({"role": "user", "content": message})
-        if hechos := await _hechos_para_el_rag(conv, message, historial, siempre=True):
-            entradas["hechos"] = hechos
-            entradas["hechos_bloques"] = conv._hechos_del_rag
+    # arq-5a (G10 nº 5, ~15 fallos con hechos=None): antes del pase el RAG contestaba de memoria lo que el mensaje
+    # preguntaba de la tabla (qué incluye, precios, recogida, descuentos). Recibe los hechos del código, como en la
+    # ruta normal. El mensaje aún no está en el historial: se añade para que los hechos sean los de este mensaje.
+    historial = list(conv.history or [])
+    if not historial or historial[-1].get("role") != "user" or historial[-1].get("content") != message:
+        historial.append({"role": "user", "content": message})
+    if hechos := await _hechos_para_el_rag(conv, message, historial, siempre=True):
+        entradas["hechos"] = hechos
+        entradas["hechos_bloques"] = conv._hechos_del_rag
     instruccion = _SOLO_LO_DEMAS[key].format(tema=tema)
     entradas["extra_context"] = f"{entradas['extra_context']}\n\n{instruccion}" if entradas.get("extra_context") \
         else instruccion

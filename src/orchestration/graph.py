@@ -63,7 +63,7 @@ logger = logging.getLogger("uvicorn.error")
 _INTENCION_DE_SENAL = {
     "precio": PIDE_PRECIO, "incluye": PIDE_QUE_INCLUYE, "requisitos": PIDE_REQUISITOS, "horario": PIDE_HORARIO,
     "disponibilidad": PIDE_DISPONIBILIDAD, "edad": PIDE_EDAD, "enlace": PIDE_ENLACE,
-    "descuento": PIDE_DESCUENTO,  # arq-4b: solo llega con el flag `descuentos_en_la_tabla`
+    "descuento": PIDE_DESCUENTO,  # arq-4b
     "tiempo": PIDE_SI_ALCANZA,  # arq-1v
     "clima": PIDE_CLIMA, "pago": PIDE_PAGO,  # arq-1i
 }
@@ -251,11 +251,8 @@ def _no_usara_el_rag_adelantado(conv: ConversationState, message: str, signals: 
 
 def intenciones_del_turno(conv: ConversationState, signals: dict) -> list[str]:
     """ARQ-1b: las intenciones del mensaje según Jev (vacío si calla), para los hechos por código."""
-    from src.config import settings
-
     intenciones = [nombre for nombre, señal in _INTENCION_DE_SENAL.items() if signals.get(señal)]
-    if (settings.precio_pendiente_con_el_origen and intenciones and conv.pregunta_precio_pendiente
-            and "precio" not in intenciones):
+    if intenciones and conv.pregunta_precio_pendiente and "precio" not in intenciones:
         # arq-8f (G10 nº 6): el precio que esperaba el origen se perdía si el mensaje que da el origen pregunta otra cosa
         # («soy de Cartagena, ¿incluye el almuerzo?»): solo se contestaba la pregunta nueva. Va con ella.
         intenciones.append("precio")

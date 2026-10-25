@@ -18,7 +18,6 @@ import unicodedata
 from functools import lru_cache
 from pathlib import Path
 
-from src.config import settings
 from src.domain import activities as dom
 from src.flows import cart_render
 from src.flows.catalog import (
@@ -71,9 +70,8 @@ def _politica(clave: str, lang: str) -> str | None:
 
 
 def _dos_monedas(state: ConversationState) -> bool:
-    """arq-5c (flag `dos_monedas_sin_nacionalidad`): no se sabe si paga en COP (ni es un grupo mixto, que paga en USD)."""
-    return (settings.dos_monedas_sin_nacionalidad and state.is_colombian is None
-            and not getattr(state, "mixed_nationality_notice", False))
+    """arq-5c: no se sabe si paga en COP (ni es un grupo mixto, que paga en USD)."""
+    return state.is_colombian is None and not getattr(state, "mixed_nationality_notice", False)
 
 
 def _moneda(state: ConversationState) -> str:
@@ -203,7 +201,7 @@ def hechos(state: ConversationState, intenciones: list[str], actividades: list[s
                 no_incluye["island"] = [*no_incluye.get("island", []), _no_incluyen_las_islas(lang)]
             if no_incluye:
                 bloque["no_incluye"] = no_incluye
-            if settings.incluye_lo_que_se_hace and "horario" not in pedidas:
+            if "horario" not in pedidas:
                 # arq-8d: lo que se hace (la clase, la piscina, la inmersión) es lo que el cliente espera oír con «¿qué
                 # incluye?», y en la ficha está en el itinerario; con el horario ya va (sin repetirlo).
                 que_se_hace = _por_origen(actividad, origenes, lambda sid: _lista(sid, "itinerary", lang), elegido)
@@ -355,17 +353,11 @@ INTENCIONES_SIN_ACTIVIDAD = frozenset({"horario", "disponibilidad", "requisitos"
 
 
 def _descuentos(state: ConversationState, lang: str) -> list[str]:
-    """arq-4b (flag `descuentos_en_la_tabla`): los descuentos con sus condiciones, tal cual de discounts.json (online,
+    """arq-4b: los descuentos con sus condiciones, tal cual de discounts.json (online,
     grupo, equipo propio y que no hay descuento por ser colombiano). Son los mismos para todas las actividades: cada uno
     dice a qué aplica."""
-    if settings.descuentos_un_sitio:  # arq-8h: de la función del catálogo, con la nota del acompañante
-        textos = descuentos_de_la_base(lang)
-    else:
-        datos = json.loads(_DISCOUNTS.read_text(encoding="utf-8-sig")).get("discounts", {})
-        claves = ("online_direct_booking", "group_discount", "own_equipment_discount", "colombian_cop_pricing")
-        textos = {c: (datos.get(c) or {}).get(f"description_{lang}") or (datos.get(c) or {}).get("description_es")
-                  for c in claves}
-    if settings.grupo_mixto_en_descuentos and getattr(state, "mixed_nationality_notice", False):
+    textos = descuentos_de_la_base(lang)  # arq-8h: de la función del catálogo, con la nota del acompañante
+    if getattr(state, "mixed_nationality_notice", False):
         # arq-8a (G10 nº 6, g10-043): «mi pareja es colombiana y yo extranjera, ¿hay descuento?» llevaba «los
         # colombianos pagan en COP» y no la regla del grupo mixto (esa solo iba con el precio): «tu pareja paga en pesos y
         # tú en dólares». En un grupo mixto, la regla de la moneda es la suya, como en `regla_moneda`.
@@ -441,8 +433,8 @@ def _partes_de_la_recogida(lang: str) -> tuple[str, str] | None:
 
 
 def _no_incluyen_las_islas(lang: str) -> str | None:
-    """arq-8d: con el flag, solo la frase de lo que no incluyen; sin él (o si la política cambió), la política entera."""
-    partes = _partes_de_la_recogida(lang) if settings.incluye_lo_que_se_hace else None
+    """arq-8d: solo la frase de lo que no incluyen; si la política cambió (sin los cortes), la política entera."""
+    partes = _partes_de_la_recogida(lang)
     return partes[1] if partes else _politica("island_pickup", lang)
 
 
@@ -450,13 +442,13 @@ def _sin_almuerzo_en_las_islas(lang: str, pedidas: list[str]) -> list[str]:
     """arq-8d: con «incluye», la frase de que los planes de las islas no incluyen transporte desde Cartagena ni almuerzo
     va también con la recogida, que la pone el código entera (banco arq-8, B: con `no_incluye` solo, el redactor no la
     decía en 9 de 9, porque `no_incluye` solo se cuenta si el cliente pregunta por algo concreto)."""
-    partes = _partes_de_la_recogida(lang) if settings.incluye_lo_que_se_hace and "incluye" in pedidas else None
+    partes = _partes_de_la_recogida(lang) if "incluye" in pedidas else None
     return [partes[1]] if partes else []
 
 
 def _coordinacion_en_las_islas(lang: str) -> list[str]:
-    """arq-8e: las frases de cómo se coordina la recogida en las islas (con el flag)."""
-    partes = _partes_de_la_recogida(lang) if settings.recogida_se_coordina else None
+    """arq-8e: las frases de cómo se coordina la recogida en las islas."""
+    partes = _partes_de_la_recogida(lang)
     return [partes[0]] if partes else []
 
 

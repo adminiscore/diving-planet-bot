@@ -538,7 +538,7 @@ _INTENCIONES_Q = {
         ),
     },
 }
-# arq-4b (22-oct, flag `descuentos_en_la_tabla`, G10 nº 4: g10-027, g10-035, g10-067): los descuentos entran en la
+# arq-4b (22-oct, G10 nº 4: g10-027, g10-035, g10-067): los descuentos entran en la
 # tabla. El RAG los contaba sin sus condiciones (que el de grupo se suma al online, que no vale para cursos PADI, que
 # el del equipo es solo con el equipo completo); con los hechos de discounts.json los da enteros el redactor.
 PIDE_DESCUENTO = "pide_descuento"
@@ -849,9 +849,8 @@ def _questions_for_turn(pending_slot: str | None = None) -> dict:
     q[PIDE_PRECIO] = _PIDE_PRECIO_Q_ACTIVIDADES
     q[PIDE_QUE_INCLUYE] = _PIDE_QUE_INCLUYE_Q
     q.update(_INTENCIONES_Q)
-    if settings.descuentos_en_la_tabla:
-        q[PIDE_DESCUENTO] = _PIDE_DESCUENTO_Q
-        q[PIDE_OTRA_COSA] = _PIDE_OTRA_COSA_CON_DESCUENTOS_Q
+    q[PIDE_DESCUENTO] = _PIDE_DESCUENTO_Q
+    q[PIDE_OTRA_COSA] = _PIDE_OTRA_COSA_CON_DESCUENTOS_Q
     if PIDE_OTRA_COSA in q:
         # arq-1v: preguntar si da tiempo es de la tabla; «otra cosa» deja de contarlo.
         q[PIDE_SI_ALCANZA] = _PIDE_SI_ALCANZA_Q

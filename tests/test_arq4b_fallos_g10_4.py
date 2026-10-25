@@ -11,7 +11,6 @@ import pytest
 from src.agents import redactor_hechos
 from src.agents.nucleo.slotfill_close import _precio_en_su_moneda
 from src.agents.rutas import contexto_rag
-from src.config import settings
 from src.flows.state import ConversationState
 
 _CON_USD = [{"role": "assistant", "content": "El minicurso cuesta 183 USD reservando online."}]
@@ -63,16 +62,13 @@ def test_la_fecha_lleva_el_dia_de_la_semana(monkeypatch):
                                                              "sábado", "domingo"))
 
 
-@pytest.mark.parametrize("flag", [False, True])
-def test_los_descuentos_son_una_intencion_de_la_tabla(monkeypatch, flag):
+def test_los_descuentos_son_una_intencion_de_la_tabla():
     from src.agents import jev_router as j
 
-    monkeypatch.setattr(settings, "descuentos_en_la_tabla", flag)
     q = j._questions_for_turn()
-    assert (j.PIDE_DESCUENTO in q) is flag
-    assert ("discounts" in q[j.PIDE_OTRA_COSA]["instructions"]) is flag
-    señales = j.answers_to_signals({j.PIDE_DESCUENTO: {"noul": 0.9}}) if flag else {}
-    assert señales.get(j.PIDE_DESCUENTO, False) is flag
+    assert j.PIDE_DESCUENTO in q
+    assert "discounts" in q[j.PIDE_OTRA_COSA]["instructions"]
+    assert j.answers_to_signals({j.PIDE_DESCUENTO: {"noul": 0.9}})[j.PIDE_DESCUENTO] is True
 
 
 def test_los_hechos_del_descuento_con_y_sin_actividad():

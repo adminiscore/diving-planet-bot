@@ -9,7 +9,6 @@ from pathlib import Path
 
 import pytest
 
-from src.config import settings
 from src.flows import catalog, hechos
 from src.flows.state import ConversationState
 
@@ -17,25 +16,13 @@ DISCOUNTS = json.loads((Path(__file__).resolve().parents[1] / "data/knowledge_ba
                        .read_text(encoding="utf-8-sig"))["discounts"]
 
 
-@pytest.fixture
-def un_sitio(monkeypatch):
-    monkeypatch.setattr(settings, "descuentos_un_sitio", True)
-
-
 @pytest.mark.parametrize("lang", ["es", "en"])
 def test_la_base_tiene_la_nota_del_acompanante(lang):
     assert DISCOUNTS["group_discount"][f"companion_note_{lang}"]
 
 
-def test_apagado_sin_nota_y_como_antes(monkeypatch):
-    monkeypatch.setattr(settings, "descuentos_un_sitio", False)
-    grupo = catalog.descuentos_de_la_base("es")["group_discount"]
-    assert grupo == DISCOUNTS["group_discount"]["description_es"]
-    assert any(x.startswith("Descuentos: 10% online") for x in catalog.catalog_facts("es").split("\n"))
-
-
 @pytest.mark.parametrize("lang", ["es", "en"])
-def test_el_catalogo_lee_la_base(un_sitio, lang):
+def test_el_catalogo_lee_la_base(lang):
     texto = catalog.catalog_facts(lang)
     for d in ("online_direct_booking", "group_discount", "own_equipment_discount"):
         assert DISCOUNTS[d][f"description_{lang}"] in texto
@@ -43,11 +30,11 @@ def test_el_catalogo_lee_la_base(un_sitio, lang):
     assert "10% online (" not in texto  # el texto fijo de antes, fuera
 
 
-def test_los_hechos_llevan_la_nota(un_sitio):
+def test_los_hechos_llevan_la_nota():
     assert any(DISCOUNTS["group_discount"]["companion_note_es"] in x for x in hechos._descuentos(ConversationState(conversation_id="arq8h", language="es"), "es"))
 
 
-def test_el_indice_lee_la_base(un_sitio):
+def test_el_indice_lee_la_base():
     from scripts.load_embeddings import load_knowledge_base
 
     docs = [d for d in load_knowledge_base() if str(d["metadata"].get("section", "")).startswith("discount_")]
@@ -57,10 +44,3 @@ def test_el_indice_lee_la_base(un_sitio):
     assert "roverd" not in textos.lower()
     assert {"discount_group_discount", "discount_own_equipment", "discount_online_booking",
             "discount_colombian_cop_pricing", "discount_policies"} == {d["metadata"]["section"] for d in docs}
-
-
-def test_la_cache_del_catalogo_distingue_el_flag(monkeypatch):
-    monkeypatch.setattr(settings, "descuentos_un_sitio", False)
-    antes = catalog.catalog_facts("es")
-    monkeypatch.setattr(settings, "descuentos_un_sitio", True)
-    assert catalog.catalog_facts("es") != antes

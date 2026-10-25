@@ -1,7 +1,6 @@
 """ARQ-1c (22-oct): los hechos de cada intención los saca el código, con las reglas del negocio ya aplicadas."""
 import pytest
 
-from src.config import settings
 from src.flows import hechos as h
 from src.flows.state import ConversationState
 
@@ -25,19 +24,12 @@ def test_con_origen_solo_su_variante_y_sin_pregunta():
     assert set(b["precio"]) == {"island"} and "pregunta_pendiente" not in b
 
 
-@pytest.fixture(autouse=True)
-def _flags_de_siempre(monkeypatch):
-    """Estos tests miran lo de siempre; las dos monedas (arq-5c) y las listas y frases por código (arq-7a/7d) tienen los
-    suyos. Sin esto, con esos flags encendidos (el G10 nº 6) fallaban por diseño."""
-    for flag in ("dos_monedas_sin_nacionalidad", "listas_por_codigo", "frases_por_codigo"):
-        monkeypatch.setattr(settings, flag, False, raising=False)
-
-
 @pytest.mark.parametrize("campos, moneda", [({"is_colombian": True}, "COP"), ({"is_colombian": False}, "USD"),
-                                            ({}, "USD"), ({"is_colombian": True, "mixed_nationality_notice": True}, "USD")])
+                                            ({}, "USD / COP"),  # arq-5c: sin saber la nacionalidad, las dos
+                                            ({"is_colombian": True, "mixed_nationality_notice": True}, "USD")])
 def test_la_moneda_la_decide_el_codigo(campos, moneda):
     [b] = h.hechos(_conv(location="cartagena", **campos), ["precio"], ["minicourse"])
-    assert b["moneda"] == moneda and moneda in b["precio"]["cartagena"]["online"]
+    assert b["moneda"] == moneda and moneda.split(" / ")[0] in b["precio"]["cartagena"]["online"]
 
 
 def test_el_aporte_a_dive_to_heal_va_en_lo_que_incluye():
@@ -116,7 +108,7 @@ def test_el_precio_lleva_la_regla_de_la_moneda():
 
 def test_arq3_faltan_los_hechos_que_la_respuesta_no_lleva():
     """ARQ-3: el código ve lo que el redactor se deja (banco G, v6: el referido sin la carta de referido firmada)."""
-    st = _conv(location="cartagena")
+    st = _conv(location="cartagena", is_colombian=False)  # una sola moneda (las dos, en test_arq5c_dos_monedas)
     bloques = h.hechos(st, ["precio", "requisitos", "edad"], ["padi_open_water_referral"])
     completa = ("Cuesta 474 USD online o 526 USD sin reserva online. Desde los 10 años. Requisitos: "
                 + " ".join(bloques[0]["requisitos"]) + " " + bloques[0]["alojamiento"])
@@ -127,14 +119,12 @@ def test_arq3_faltan_los_hechos_que_la_respuesta_no_lleva():
     assert any("referido" in p for p in perdidos)
 
 
-def test_arq3_una_parafrasis_corta_cuenta(monkeypatch):
-    # Solo la lista y la recogida de siempre (con arq-8d/8e van además lo que se hace y cómo se coordina).
-    monkeypatch.setattr(h.settings, "incluye_lo_que_se_hace", False)
-    monkeypatch.setattr(h.settings, "recogida_se_coordina", False)
+def test_arq3_una_parafrasis_corta_cuenta():
     st = _conv(location="island")
     bloques = h.hechos(st, ["incluye"], ["snorkel"])
-    lista = bloques[0]["incluye"]["island"]
-    recogida = bloques[0]["recogida"]["island"][0]
+    b = bloques[0]
+    lista = [*b["incluye"]["island"], *b["en_que_consiste"]["island"]]  # arq-8d: también lo que se hace
+    recogida = " ".join(b["recogida"]["island"])  # arq-8e: con cómo se coordina y lo que no incluyen
     assert h.faltan("Incluye: " + "; ".join(x.lower() for x in lista) + ". " + recogida, bloques, ["incluye"]) == []
 
 
