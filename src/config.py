@@ -233,58 +233,14 @@ class Settings(BaseSettings):
     # gpt-6; "low"/"medium" = razona antes de la lista y el tope de salida sube 4000 tokens, como el juez gpt-5/o).
     # Se mide con scripts/banco_juez_reales.py --ajuste juez_luna_razonamiento=low.
     juez_luna_razonamiento: str = "none"
-    # ARQ-8d (23-oct, reparto de Gadea #1617; G10 nº 6, «qué incluye» del minicurso y del Open Water ya en las islas):
-    # con «incluye» va también lo que se HACE (el itinerario de la ficha: la clase, la piscina, la inmersión), si no se
-    # pidió el horario; y lo que no incluyen los planes de las islas es la frase de `island_pickup` que lo dice («no
-    # incluyen transporte desde Cartagena ni almuerzo»), no el párrafo entero, que el redactor saltaba. APAGADO.
-    incluye_lo_que_se_hace: bool = True  # PROMOCIONADO 23-oct (arq-8, decisión de Gadea: bancos propios ×3 con controles iguales y 0 invenciones; HISTORY 0.31.99); revert = False
-    # ARQ-8e (23-oct, #1617; G10 nº 6, recogida en las islas): la recogida de las islas lleva también cómo se coordina
-    # (las frases de `island_pickup`: «en algunos casos la lancha llega directo al hotel; en otros te indicamos el muelle o
-    # punto más cercano»). APAGADO.
-    recogida_se_coordina: bool = True  # PROMOCIONADO 23-oct (arq-8, decisión de Gadea: bancos propios ×3 con controles iguales y 0 invenciones; HISTORY 0.31.99); revert = False
-    # ARQ-8f (23-oct, #1617; G10 nº 6, precio de las especialidades): una pregunta de precio que esperaba el origen se
-    # contesta en cuanto se sabe, aunque el mensaje que lo da pregunte otra cosa («soy de Cartagena, ¿incluye el
-    # almuerzo?»): el precio entra en las intenciones del turno. APAGADO.
-    precio_pendiente_con_el_origen: bool = True  # PROMOCIONADO 23-oct (arq-8, decisión de Gadea: bancos propios ×3 con controles iguales y 0 invenciones; HISTORY 0.31.99); revert = False
-    # ARQ-8f (23-oct, #1617 y #1631; G10 nº 6): lo que el código pinta (listas y frases) va una sola vez: lo que se
-    # repite igual en varias actividades (el punto de encuentro, los descuentos) sale una vez, y el rótulo del origen que
-    # el modelo escribe justo antes de la marca no se duplica ni queda suelto al final. APAGADO.
-    listas_una_vez: bool = True  # PROMOCIONADO 23-oct (arq-8, decisión de Gadea: bancos propios ×3 con controles iguales y 0 invenciones; HISTORY 0.31.99); revert = False
-    # ARQ-8h (23-oct, decisión de Álvaro por Gadea, #1634): los descuentos, en UN sitio (discounts.json). Estaban en cinco:
-    # discounts.json, pricing.json `discount_policies` (lo que indexa el RAG: sin tildes, el 5 % de equipo sin «solo
-    # buceo recreativo y cursos» y con ROVERD), un texto fijo en el catálogo, avisos.json y ejemplos del prompt. Con el
-    # flag, el catálogo, los hechos y el índice (load_embeddings, al desplegar) los leen de discounts.json, con la nota
-    # del acompañante (lo confirma el equipo al pedir el descuento: la base no dice si entra). APAGADO.
-    descuentos_un_sitio: bool = True  # PROMOCIONADO 23-oct (arq-8h; HISTORY 0.31.99); revert = False Y devolver discount_policies a pricing.json (se quitó al promocionar)
-    # ARQ-8b (23-oct, Gonzalo con Claude, encargo de Gadea #1655; g10-051): si el extractor lee en ESTE mensaje un hotel
-    # del catálogo de las islas (CAL-C3e), el redactor de hechos ya lo da por origen «island» al contestar; antes solo
-    # lo sabía al guardar el estado, después, y con Jev dudando en el lugar preguntaba desde dónde sale. APAGADO.
-    hotel_de_las_islas_da_origen: bool = True  # PROMOCIONADO 23-oct (arq-8, decisión de Gadea: bancos propios ×3 con controles iguales y 0 invenciones; HISTORY 0.31.99); revert = False
     varias_actividades: bool = False  # ARQ-1j (22-oct): el extractor da TODAS las actividades del mensaje (y el acompañante) y los hechos salen de cada una
     rag_enlace_al_recomendar: bool = False  # ARQ-1o (22-oct, decisión de Gadea): el RAG da el enlace del plan que recomienda si sabe el origen (a colombianos no)
-    # arq-5a (23-oct, G10 nº 5: ~15 fallos con hechos=None): el RAG de «contestar antes del pase» (asesor, pago, DIVE TO
-    # HEAL) recibe los hechos del código como en la ruta normal. APAGADO hasta medirlo.
-    hechos_en_el_pase: bool = True  # PROMOCIONADO 23-oct (G10 nº 6 con los 8: 92,4 % 42/72 -> 94,3 % 46/72; HISTORY 0.31.98); revert = False
-    # arq-5c (23-oct, decisión de Gadea; G10 nº 5, ~6 fallos): sin saber si el cliente es colombiano, el precio de los
-    # hechos va en USD y en COP. APAGADO hasta medirlo.
-    dos_monedas_sin_nacionalidad: bool = True  # PROMOCIONADO 23-oct (G10 nº 6 con los 8: 92,4 % 42/72 -> 94,3 % 46/72; HISTORY 0.31.98); revert = False
     # arq-5b (23-oct, G10 nº 5): en los mensajes mezclados el redactor escribe la parte de la tabla con los hechos y el
     # RAG, a la vez, solo lo demás (las listas salen completas y sobra el reintento del RAG). APAGADO hasta medirlo.
     mezclados_por_partes: bool = False
-    # arq-7 (23-oct, latencia, decisión de Gadea; antes del G10 nº 6). arq-7a: las listas largas del redactor (incluye,
-    # requisitos, descuento) las pone el código donde el modelo deja una marca: sin segunda redacción. APAGADO.
-    listas_por_codigo: bool = True  # PROMOCIONADO 23-oct (G10 nº 6 con los 8: 92,4 % 42/72 -> 94,3 % 46/72; HISTORY 0.31.98); revert = False
-    # arq-7d: con `listas_por_codigo`, también la recogida y el alojamiento los pone el código donde el modelo deja la
-    # marca (las segundas redacciones que quedaban eran casi todas por esas dos frases). APAGADO.
-    # arq-8a (23-oct, G10 nº 6, g10-043): en un grupo mixto, la lista de descuentos lleva la regla del grupo mixto (todo en
-    # USD) en vez de «los colombianos pagan en COP». APAGADO hasta medirlo.
-    grupo_mixto_en_descuentos: bool = True  # PROMOCIONADO 23-oct (arq-8, decisión de Gadea: bancos propios ×3 con controles iguales y 0 invenciones; HISTORY 0.31.99); revert = False
     # arq-8c (23-oct, G10 nº 6, g10-003): a quien dijo que no está certificado no se le ofrece una actividad que exige la
     # certificación («Si quieres, te ayudo a reservar: *Buceo certificado*»). APAGADO hasta medirlo.
     principiante_sin_buceo_certificado: bool = False
-    frases_por_codigo: bool = True  # PROMOCIONADO 23-oct (G10 nº 6 con los 8: 92,4 % 42/72 -> 94,3 % 46/72; HISTORY 0.31.98); revert = False
-    # arq-4b (22-oct, fallos del G10 nº 4), APAGADOS hasta medirlos con su banco:
-    descuentos_en_la_tabla: bool = True  # PROMOCIONADO 23-oct (G10 nº 5 con los 11: 90,1 % 34/72 -> 91,2 % 40/72; HISTORY 0.31.96); revert = False · los descuentos son una intención de la tabla (Jev): el redactor los da con sus condiciones (g10-027/035/067)
     # CAL (17-oct): la preparación de cada producto (`preparation_*`, 18 de 36) en el catálogo, SIEMPRE. MEDIDO: arregla
     # cal-49 (la carta de referido) pero rompe cal-26 y cal-64 (banco CAL-A 41/48 frente a 38/48): dieciocho párrafos
     # en todos los turnos compiten con lo que hace falta en cada uno. APAGADO; la preparación va mejor en la ficha del

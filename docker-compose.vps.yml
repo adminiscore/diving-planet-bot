@@ -132,22 +132,8 @@ services:
       # "compiled grammar is too large", y contestaba siempre el respaldo). Se queda el respaldo POR TIEMPO de
       # OpenRouter: si no contesta en 2 s (lat-B, 24-oct; antes 5), la misma petición sale por OpenAI.
       OPENROUTER_RESPALDO_SEGUNDOS: "2.0"
-      # arq-4b / arq-1p..1u (23-oct, PROMOCIONADO con el G10 nº 5: 91,2 % 40/72): los arreglos de los fallos del G10 nº 4.
-      DESCUENTOS_EN_LA_TABLA: "true"
-      # arq-5, arq-1i, arq-7 y arq-1v (23-oct, PROMOCIONADO con el G10 nº 6: 94,3 % 46/72) y mej-7 (corte de OpenRouter).
-      HECHOS_EN_EL_PASE: "true"
-      DOS_MONEDAS_SIN_NACIONALIDAD: "true"
-      LISTAS_POR_CODIGO: "true"
-      FRASES_POR_CODIGO: "true"
+      # mej-7 (23-oct, PROMOCIONADO con el G10 nº 6: 94,3 % 46/72): corte de OpenRouter si contesta 401, 402 o 403.
       OPENROUTER_CORTE_SEGUNDOS: "300"
-      # arq-8 (23-oct, PROMOCIONADO): las causas de los fallos que se repetían en el G10 nº 6 (bancos propios ×3).
-      GRUPO_MIXTO_EN_DESCUENTOS: "true"
-      HOTEL_DE_LAS_ISLAS_DA_ORIGEN: "true"
-      INCLUYE_LO_QUE_SE_HACE: "true"
-      RECOGIDA_SE_COORDINA: "true"
-      PRECIO_PENDIENTE_CON_EL_ORIGEN: "true"
-      LISTAS_UNA_VEZ: "true"
-      DESCUENTOS_UN_SITIO: "true"
       NOTAS_MODEL: "deepseek/deepseek-v4.1-flash"
       # ex-4 (12-oct): el extractor "LLM primero" de la fase EX (src/agents/extractor_turno.py).
       # mod-2 y mod-3 (18-oct): el extractor en Haiku 5.5 (Anthropic/Google/Amazon por OpenRouter) con RESPALDO en
