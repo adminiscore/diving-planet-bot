@@ -89,7 +89,7 @@ def _origen(state: ConversationState, datos: dict) -> str | None:
     lugar = getattr(state, "_jev_lugar", None) or {}  # gen-15: «nos alojamos en Mulata» lo dice Jev, no una palabra
     if (lugar.get("confidence") or 0.0) >= CUSTOMER_PLACE_MIN:
         return _LUGAR_DE_JEV.get(lugar.get("choice"))
-    if settings.hotel_de_las_islas_da_origen and datos.get("hotel"):
+    if datos.get("hotel"):
         # arq-8b: «We'll be staying at the Ubuntu hotel… how much…?» con Jev a 0,52 en el lugar: el extractor lee el hotel
         # y CAL-C3e lo sabe de las islas, pero el origen lo pone al guardar, después de contestar; el redactor daba las
         # dos variantes y preguntaba desde dónde sale (banco arq-8b variantes, v5 3/3).
@@ -132,16 +132,16 @@ def _foto(state: ConversationState, datos: dict, origen: str | None, message: st
         foto.is_colombian = datos["is_colombian"]
     if datos.get("mixed_nationality") is True:
         foto.mixed_nationality_notice = True
-    if settings.paquete_varios_dias and datos.get("paquete_varios_dias") is True:
+    if datos.get("paquete_varios_dias") is True:
         foto.detected_duration = "multi_day"  # arq-1t: «el paquete de varios días» en ESTE mensaje
-    if settings.hechos_que_faltaban and origen == "cartagena":
+    if origen == "cartagena":
         # arq-5f: el extractor deja Barú como Cartagena (gen-6) sin otra marca; los hechos dicen por qué sale de allí.
         from src.agents.extractor_turno import _solo_baru  # lazy
 
         dicho = [message, *(m.get("content") or "" for m in (history or []) if m.get("role") == "user")]
         foto._aloja_en_baru = any(_solo_baru(t) for t in dicho)
     reparto = datos.get("group_allocation")
-    if settings.hechos_que_faltaban and isinstance(reparto, dict) and not foto.detected_group_allocation:
+    if isinstance(reparto, dict) and not foto.detected_group_allocation:
         # arq-5f: «dos bucean y dos hacen snorkel» en ESTE mensaje (la extracción aún no lo ha guardado): la misma lancha.
         foto.detected_group_allocation = {k: v for k, v in reparto.items() if isinstance(v, int) and v > 0}
     return foto
@@ -177,43 +177,30 @@ def _mensajes(lang: str, history: list[dict], message: str, texto_hechos: str) -
         system = (f"{RAG_INTRO_EN}\n\n{RAG_SECURITY_EN}\nStyle and tone:\n{_build_tone_section('en')}\n\n"
                   f"{REDACTOR_HECHOS_EN}")
         user = f"Facts:\n{texto_hechos}\n\nCustomer's question: {redact_pii(message)}"
-    if settings.listas_por_codigo:
-        from src.prompts.info import (  # lazy
-            REDACTOR_LISTAS_POR_CODIGO_EN,
-            REDACTOR_LISTAS_POR_CODIGO_ES,
-        )
+    from src.prompts.info import (  # lazy
+        REDACTOR_CLIMA_PAGO_EN,
+        REDACTOR_CLIMA_PAGO_ES,
+        REDACTOR_DOS_MONEDAS_EN,
+        REDACTOR_DOS_MONEDAS_ES,
+        REDACTOR_EN_QUE_CONSISTE_EN,
+        REDACTOR_EN_QUE_CONSISTE_ES,
+        REDACTOR_FRASES_POR_CODIGO_EN,
+        REDACTOR_FRASES_POR_CODIGO_ES,
+        REDACTOR_LISTAS_POR_CODIGO_EN,
+        REDACTOR_LISTAS_POR_CODIGO_ES,
+        REDACTOR_QUE_FALTABAN_EN,
+        REDACTOR_QUE_FALTABAN_ES,
+        REDACTOR_SIN_PREGUNTAS_EN,
+        REDACTOR_SIN_PREGUNTAS_ES,
+    )
 
-        system += REDACTOR_LISTAS_POR_CODIGO_ES if lang == "es" else REDACTOR_LISTAS_POR_CODIGO_EN
-        if settings.frases_por_codigo:
-            from src.prompts.info import (  # lazy
-                REDACTOR_FRASES_POR_CODIGO_EN,
-                REDACTOR_FRASES_POR_CODIGO_ES,
-            )
-
-            system += REDACTOR_FRASES_POR_CODIGO_ES if lang == "es" else REDACTOR_FRASES_POR_CODIGO_EN
-        if settings.incluye_lo_que_se_hace:  # arq-8d
-            from src.prompts.info import (  # lazy
-                REDACTOR_EN_QUE_CONSISTE_EN,
-                REDACTOR_EN_QUE_CONSISTE_ES,
-            )
-
-            system += REDACTOR_EN_QUE_CONSISTE_ES if lang == "es" else REDACTOR_EN_QUE_CONSISTE_EN
-    if settings.dos_monedas_sin_nacionalidad:
-        from src.prompts.info import REDACTOR_DOS_MONEDAS_EN, REDACTOR_DOS_MONEDAS_ES  # lazy
-
-        system += REDACTOR_DOS_MONEDAS_ES if lang == "es" else REDACTOR_DOS_MONEDAS_EN
-    if settings.redactor_sin_preguntas_de_cierre:
-        from src.prompts.info import REDACTOR_SIN_PREGUNTAS_EN, REDACTOR_SIN_PREGUNTAS_ES  # lazy
-
-        system += REDACTOR_SIN_PREGUNTAS_ES if lang == "es" else REDACTOR_SIN_PREGUNTAS_EN
-    if settings.hechos_que_faltaban:  # arq-5f
-        from src.prompts.info import REDACTOR_QUE_FALTABAN_EN, REDACTOR_QUE_FALTABAN_ES  # lazy
-
-        system += REDACTOR_QUE_FALTABAN_ES if lang == "es" else REDACTOR_QUE_FALTABAN_EN
-    if settings.intenciones_clima_pago:  # arq-1i
-        from src.prompts.info import REDACTOR_CLIMA_PAGO_EN, REDACTOR_CLIMA_PAGO_ES  # lazy
-
-        system += REDACTOR_CLIMA_PAGO_ES if lang == "es" else REDACTOR_CLIMA_PAGO_EN
+    system += REDACTOR_LISTAS_POR_CODIGO_ES if lang == "es" else REDACTOR_LISTAS_POR_CODIGO_EN
+    system += REDACTOR_FRASES_POR_CODIGO_ES if lang == "es" else REDACTOR_FRASES_POR_CODIGO_EN
+    system += REDACTOR_EN_QUE_CONSISTE_ES if lang == "es" else REDACTOR_EN_QUE_CONSISTE_EN  # arq-8d
+    system += REDACTOR_DOS_MONEDAS_ES if lang == "es" else REDACTOR_DOS_MONEDAS_EN
+    system += REDACTOR_SIN_PREGUNTAS_ES if lang == "es" else REDACTOR_SIN_PREGUNTAS_EN
+    system += REDACTOR_QUE_FALTABAN_ES if lang == "es" else REDACTOR_QUE_FALTABAN_EN  # arq-5f
+    system += REDACTOR_CLIMA_PAGO_ES if lang == "es" else REDACTOR_CLIMA_PAGO_EN  # arq-1i
     previos = list(history or [])
     if previos and previos[-1].get("role") == "user" and previos[-1].get("content") == message:
         previos = previos[:-1]  # el mensaje va abajo, con los hechos
@@ -235,7 +222,7 @@ async def _redactar(client, mensajes: list[dict]) -> str | None:
 
 _EN_SU_IDIOMA = {"es": "Escríbela de nuevo entera en español.", "en": "Write it again in full in English."}
 
-# arq-7a (23-oct, flag `listas_por_codigo`, latencia): en el G10 nº 5 el redactor escribía dos veces en 53 de 79 turnos:
+# arq-7a (23-oct, latencia): en el G10 nº 5 el redactor escribía dos veces en 53 de 79 turnos:
 # el primer borrador resumía las listas largas y arq-3 pedía rehacerlo (+2,5 s). Esas listas las pone ahora el código,
 # copiadas del dato, donde el modelo deja su marca («[[incluye]]»); el modelo escribe solo las frases.
 _LISTAS_DEL_CODIGO = ("incluye", "requisitos", "descuento")
@@ -244,8 +231,8 @@ _ROTULO_DEL_ORIGEN = {"es": {"cartagena": "Desde Cartagena", "island": "Si ya es
 
 
 def _listas_del_codigo() -> tuple[str, ...]:
-    """arq-8d: con `incluye_lo_que_se_hace`, también lo que se hace en la actividad (va con «incluye»)."""
-    return (*_LISTAS_DEL_CODIGO, "en_que_consiste") if settings.incluye_lo_que_se_hace else _LISTAS_DEL_CODIGO
+    """arq-8d: también lo que se hace en la actividad (va con «incluye»)."""
+    return (*_LISTAS_DEL_CODIGO, "en_que_consiste")
 
 
 def _en_vinetas(valor, lang: str) -> str:
@@ -267,21 +254,15 @@ def _poner_listas(answer: str, bloques: list[dict], intenciones: list[str], lang
         piezas = [(b, t) for b, t in piezas if t]
         if not piezas:
             continue
-        if settings.listas_una_vez:
-            texto = _una_vez(piezas)
-        else:
-            texto = "\n\n".join((f"*{b.get('nombre')}*\n" if len(piezas) > 1 and b.get("nombre") else "") + t
-                                for b, t in piezas)
+        texto = _una_vez(piezas)
         marca = f"[[{campo}]]"
         if marca in answer:
             answer = answer.replace(marca, texto, 1).replace(marca, "")
         elif hechos_mod.faltan(answer, [{campo: b.get(campo)} for b, _ in piezas],
                                ["incluye" if campo == "en_que_consiste" else campo]):
             answer = f"{answer.rstrip()}\n\n{texto}"
-    if settings.frases_por_codigo:
-        answer = _poner_frases(answer, bloques, lang)
-    if settings.listas_una_vez:
-        answer = _sin_rotulos_sueltos(answer, lang)
+    answer = _poner_frases(answer, bloques, lang)
+    answer = _sin_rotulos_sueltos(answer, lang)
     return _sin_marcas(answer)
 
 
@@ -336,7 +317,7 @@ def _sin_marcas(answer: str) -> str:
     return re.sub(r"\n{3,}", "\n\n", _MARCA.sub("", answer)).strip()
 
 
-# arq-7d (23-oct, flag `frases_por_codigo`, latencia): tras arq-7a, en el banco fijo quedaban 28 de 96 turnos con
+# arq-7d (23-oct, latencia): tras arq-7a, en el banco fijo quedaban 28 de 96 turnos con
 # segunda redacción, casi todos por las frases de la recogida y del alojamiento (políticas que el modelo parafraseaba
 # y arq-3 no reconocía). También las pone el código, tal cual, donde el modelo deja «[[recogida]]» o «[[alojamiento]]».
 _FRASES_DEL_CODIGO = ("recogida", "alojamiento")
@@ -351,8 +332,7 @@ def _poner_frases(answer: str, bloques: list[dict], lang: str) -> str:
             texto = "\n\n".join(dict.fromkeys(valores))
         else:
             partes = [(o, frases) for v in valores for o, frases in v.items() if frases]
-            if settings.listas_una_vez:  # arq-8f: el punto de encuentro una vez, no una por actividad
-                partes = list(dict.fromkeys((o, tuple(f)) for o, f in partes))
+            partes = list(dict.fromkeys((o, tuple(f)) for o, f in partes))  # arq-8f: el punto de encuentro, una vez
             texto = "\n\n".join((f"*{_ROTULO_DEL_ORIGEN[lang].get(o, o)}:* " if len(partes) > 1 else "")
                                 + " ".join(frases) for o, frases in partes)
         marca = f"[[{campo}]]"
@@ -411,7 +391,7 @@ async def hechos_del_turno(state: ConversationState, message: str, history: list
     datos = await lectura_del_extractor(state, message) or {}
     actividades = _actividades(state, datos)
     if not actividades:
-        if settings.hechos_sin_actividad and set(intenciones) <= hechos_mod.INTENCIONES_SIN_ACTIVIDAD:
+        if set(intenciones) <= hechos_mod.INTENCIONES_SIN_ACTIVIDAD:
             # arq-1p: la hora, la recogida, qué llevar o si hay sitio son iguales para todas las actividades.
             foto = _foto(state, datos, _origen(state, datos), message, history)
             if foto.is_certified is None and datos.get("is_certified") is not None:
@@ -505,8 +485,7 @@ async def _escribir(state: ConversationState, message: str, history: list[dict],
         if not parte:
             state._redactor_dijo_falta = True  # arq-1g: el mensaje era mezclado; el RAG recibe los hechos
         return None
-    if settings.listas_por_codigo:
-        answer = _poner_listas(answer, bloques, intenciones, lang)
+    answer = _poner_listas(answer, bloques, intenciones, lang)
     if not _pasa_las_guardas(answer, texto_hechos, message):
         logger.info("[HECHOS] la redacción no pasa las guardas deterministas; contesta el RAG")
         note_turn(hechos_por_codigo="guardas")

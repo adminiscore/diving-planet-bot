@@ -91,8 +91,7 @@
         "senales_model"
       ],
       "interruptores": [
-        "jev_router_enabled",
-        "ya_reservo_no_es_pase"
+        "jev_router_enabled"
       ],
       "detalle": [
         "Jev: jev_router.detect_routing_signals_jev_full (OpenRouter)",
@@ -109,10 +108,7 @@
       "nodo_grafo": "safety",
       "que_hace": "Datos personales, links rotos, temas delicados o cuando hace falta una persona: pasa el caso a un asesor.",
       "donde": "src/agents/escalation_agent.py:escalation_node",
-      "interruptores": [
-        "hechos_en_el_pase",
-        "intenciones_clima_pago"
-      ]
+      "interruptores": []
     },
     {
       "id": "changes",
@@ -364,9 +360,7 @@
         "LLM: llm_extractor.extract_and_verify / fill_gaps / verify_fields",
         "Fase EX: extractor_turno.extraer_turno (LLM primero, cita comprobada)"
       ],
-      "interruptores": [
-        "cedula_de_extranjeria_manda"
-      ]
+      "interruptores": []
     },
     {
       "id": "b_slotfill_close",
@@ -381,8 +375,7 @@
         "resolutor_model"
       ],
       "interruptores": [
-        "precio_no_elige",
-        "recotizar_al_cambiar_moneda"
+        "precio_no_elige"
       ]
     },
     {
@@ -505,27 +498,8 @@
       ],
       "interruptores": [
         "varias_actividades",
-        "redactor_sin_preguntas_de_cierre",
-        "hechos_sin_actividad",
-        "requisitos_coherentes",
-        "descuentos_en_la_tabla",
-        "enlace_con_como_pagar",
-        "paquete_varios_dias",
-        "tiempo_limitado",
-        "dos_monedas_sin_nacionalidad",
         "mezclados_por_partes",
-        "listas_por_codigo",
-        "intenciones_clima_pago",
-        "frases_por_codigo",
-        "hechos_que_faltaban",
-        "grupo_mixto_en_descuentos",
-        "principiante_sin_buceo_certificado",
-        "incluye_lo_que_se_hace",
-        "recogida_se_coordina",
-        "precio_pendiente_con_el_origen",
-        "listas_una_vez",
-        "descuentos_un_sitio",
-        "hotel_de_las_islas_da_origen"
+        "principiante_sin_buceo_certificado"
       ]
     },
     {
@@ -544,8 +518,7 @@
         "respaldo_mismo_modelo",
         "rag_plan_primero",
         "avisos_condicionados",
-        "rag_enlace_al_recomendar",
-        "fecha_con_dia_de_la_semana"
+        "rag_enlace_al_recomendar"
       ],
       "tiempo_medido": {
         "p50": 1.9,
@@ -1010,130 +983,10 @@
       "titulo": "El enlace al recomendar",
       "texto": "Cuando Coral recomienda un plan concreto y sabe desde dónde sale el cliente, da su enlace de reserva en vez de preguntar si lo quiere (a los colombianos no: el pago lo coordina un asesor) (arq-1o, 22-oct)."
     },
-    "recotizar_al_cambiar_moneda": {
-      "area": "Reserva",
-      "titulo": "«Soy colombiano» después del precio: en pesos",
-      "texto": "Si el cliente dice que es colombiano (o residente) después de recibir un precio en dólares, Coral se lo vuelve a dar en pesos (arq-4b, 22-oct)."
-    },
-    "redactor_sin_preguntas_de_cierre": {
-      "area": "Preguntas",
-      "titulo": "El redactor no pregunta datos al cerrar",
-      "texto": "El redactor de hechos no termina preguntando la fecha, cuántos son o desde dónde salen: esas preguntas las hace la reserva, y si el cliente ya lo dijo era repetirse (arq-4b, 22-oct)."
-    },
-    "fecha_con_dia_de_la_semana": {
-      "area": "Preguntas",
-      "titulo": "La fecha con el día de la semana",
-      "texto": "La fecha que recibe el RAG lleva el día de la semana de hoy y de mañana, para que no los calcule mal (arq-4b, 22-oct)."
-    },
-    "requisitos_coherentes": {
-      "area": "Preguntas",
-      "titulo": "Requisitos sin contradicciones",
-      "texto": "En los requisitos de un curso va un solo formulario médico (el de curso, no además el de buzo certificado), el curso que hace falta antes (el Open Water para el Advanced) y la edad mínima en cifra; y a quien dice que es buzo certificado se le recuerda el carné (arq-1s, 22-oct)."
-    },
-    "cedula_de_extranjeria_manda": {
-      "area": "Reserva",
-      "titulo": "La cédula de extranjería manda sobre «extranjero»",
-      "texto": "Un extranjero que dice que tiene cédula de extranjería es residente y paga en pesos; antes la regla «extranjero o turista: paga en dólares» le ganaba la mitad de las veces (arq-1r, 22-oct)."
-    },
-    "ya_reservo_no_es_pase": {
-      "area": "Enrutador",
-      "titulo": "Decir «ya reservé» no es pedir a una persona",
-      "texto": "Si el cliente ya tiene reserva y solo pregunta el horario, la recogida, qué llevar o algo general de la actividad, Coral le contesta; solo pasa a un asesor si hay que ver o tocar esa reserva o ese pago (si llegó, cambiar la fecha, cancelar, devolución, un correo que no llegó) (arq-1q, 22-oct)."
-    },
-    "hechos_sin_actividad": {
-      "area": "Preguntas",
-      "titulo": "Hora, recogida, qué llevar y sitio sin saber la actividad",
-      "texto": "Si el cliente pregunta solo a qué hora es o cómo es la recogida, qué llevar o si hay sitio, y no se sabe de qué actividad habla (a menudo porque ya reservó), los datos salen de las políticas, que son iguales para todas, y Coral los escribe; antes contestaba el RAG (arq-1p, 22-oct)."
-    },
-    "descuentos_en_la_tabla": {
-      "area": "Preguntas",
-      "titulo": "Los descuentos, con sus condiciones",
-      "texto": "Preguntar por descuentos (de grupo, por reservar online, por traer el equipo, por ser colombiano) es una pregunta de la tabla: Coral da cada descuento con sus condiciones tal cual de la base, sin dejarse ninguna (arq-4b, 22-oct)."
-    },
-    "paquete_varios_dias": {
-      "area": "Preguntas",
-      "titulo": "«El paquete de varios días» sin decir cuántos",
-      "texto": "Si el cliente pregunta por un paquete de varios días sin decir cuántos, Coral lo entiende así y, al preguntar qué incluye, da lo que tienen todos los paquetes (almuerzo solo el primer día, alojamiento no incluido) y la lista de paquetes, en vez de lo de la salida de un día (arq-1t, 22-oct)."
-    },
-    "enlace_con_como_pagar": {
-      "area": "Preguntas",
-      "titulo": "Con el enlace, cómo se reserva y se paga",
-      "texto": "Cuando Coral da el enlace de reserva a quien no es colombiano, explica también cómo se reserva y se paga (100 % con tarjeta en la web), que la reserva queda confirmada cuando el equipo concilia el pago y, si la actividad pide certificación, el carné (arq-1u, 22-oct)."
-    },
-    "tiempo_limitado": {
-      "area": "Preguntas",
-      "titulo": "«Me voy mañana al mediodía, ¿me da tiempo?»",
-      "texto": "Si el cliente tiene poco tiempo, Coral contesta con la regla de Gadea: desde las islas va muy justo (recogida 9:30-9:45, fin hacia las 12-13) y lo confirma un asesor; desde Cartagena no alcanza (regreso hacia las 4:15); para mañana hay que reservar antes de las 4:30; y la espera antes de volar solo si vuela (arq-1v, 22-oct)."
-    },
-    "hechos_en_el_pase": {
-      "area": "Enrutador",
-      "titulo": "Antes del pase, con los hechos del código",
-      "texto": "Cuando Coral pasa la conversación a un asesor (un pago que falla, un cambio de reserva, alguien que pide hablar con una persona, el buceo adaptado) y contesta antes lo demás que pregunta el cliente, lo de precios, qué incluye, horarios o descuentos sale de los datos del código, no de memoria (arq-5a, 23-oct)."
-    },
-    "dos_monedas_sin_nacionalidad": {
-      "area": "Preguntas",
-      "titulo": "Sin saber la nacionalidad, las dos monedas",
-      "texto": "Si no se sabe si el cliente es colombiano (o pregunta «¿cuánto cuesta para colombianos?»), Coral da el precio en dólares y en pesos, con la regla de siempre: el precio es el mismo y solo cambia la moneda (decisión de Gadea, arq-5c, 23-oct)."
-    },
     "mezclados_por_partes": {
       "area": "Preguntas",
       "titulo": "Mensajes mezclados, por partes",
       "texto": "Cuando el cliente pregunta a la vez algo de la tabla (precio, qué incluye, horarios…) y otra cosa, la parte de la tabla la escribe el redactor con los datos del código y el RAG, a la vez, solo lo demás: las listas salen completas y no hace falta rehacer la respuesta (arq-5b, 23-oct)."
-    },
-    "incluye_lo_que_se_hace": {
-      "area": "Preguntas",
-      "titulo": "«¿Qué incluye?» dice también lo que se hace",
-      "texto": "Con «¿qué incluye?» el bot da, además de la lista de lo incluido, lo que se hace en la actividad (la clase, la piscina, la inmersión: el itinerario de la ficha) y, en los planes de las islas, que no incluyen transporte desde Cartagena ni almuerzo (arq-8d, G10 nº 6, 23-oct)."
-    },
-    "recogida_se_coordina": {
-      "area": "Preguntas",
-      "titulo": "La recogida en las islas dice cómo se coordina",
-      "texto": "Con la recogida desde un hotel de las islas va también cómo se coordina: en algunos casos la lancha llega al hotel y en otros se indica el muelle o punto más cercano (arq-8e, G10 nº 6, 23-oct)."
-    },
-    "precio_pendiente_con_el_origen": {
-      "area": "Preguntas",
-      "titulo": "El precio que esperaba el origen no se pierde",
-      "texto": "Si el cliente preguntó un precio sin decir desde dónde sale y luego lo dice junto con otra pregunta («salgo de Cartagena, ¿incluye el almuerzo?»), el bot contesta las dos: el precio ya no se pierde (arq-8f, G10 nº 6, 23-oct)."
-    },
-    "descuentos_un_sitio": {
-      "area": "Preguntas",
-      "titulo": "Los descuentos, en un solo sitio",
-      "texto": "Los descuentos (online, grupo, equipo propio, colombianos) se leen solo de discounts.json: el catálogo, los hechos y el índice del RAG. Antes había cinco copias y la del índice era vieja. El de grupo lleva la nota del acompañante: si entra, lo confirma el equipo al pedir el descuento (arq-8h, decisión de Álvaro, 23-oct)."
-    },
-    "listas_una_vez": {
-      "area": "Preguntas",
-      "titulo": "Lo que se repite sale una vez",
-      "texto": "Cuando el bot habla de varias actividades a la vez, lo que es igual en todas (el punto de encuentro, los descuentos) sale una sola vez, y los rótulos del origen no salen dobles ni sueltos (arq-8f, G10 nº 6, 23-oct)."
-    },
-    "listas_por_codigo": {
-      "area": "Preguntas",
-      "titulo": "Las listas las pone el código",
-      "texto": "Lo que incluye un plan, los requisitos y los descuentos los copia el código del dato, en viñetas y con sus orígenes, donde el redactor deja una marca; el modelo solo escribe las frases. Las listas salen siempre enteras y no hace falta rehacer la respuesta (arq-7a, latencia, 23-oct)."
-    },
-    "intenciones_clima_pago": {
-      "area": "Preguntas",
-      "titulo": "El clima en general y cómo se paga",
-      "texto": "«¿Y si hace mal tiempo?» ya no pasa a un asesor: Coral explica la política (las cancelaciones son poco probables; si Capitanía cierra se reprograma y, si no se puede, reembolso del 100 %), no da pronósticos y ofrece un asesor; con un día concreto o una reserva hecha sigue el pase. «¿Cómo pago?» lo contesta según la nacionalidad: el extranjero, 100 % con tarjeta en la web; el colombiano o residente, 100 % o 50 % y 50 %, con un asesor (arq-1i, 23-oct)."
-    },
-    "frases_por_codigo": {
-      "area": "Preguntas",
-      "titulo": "La recogida y el alojamiento, por código",
-      "texto": "Con las listas por código, también las frases de la recogida y del alojamiento las copia el código del dato donde el redactor deja su marca: así no hace falta rehacer la respuesta porque el modelo las haya parafraseado (arq-7d, latencia, 23-oct)."
-    },
-    "hotel_de_las_islas_da_origen": {
-      "area": "Preguntas",
-      "titulo": "El hotel de las islas ya dice desde dónde sale",
-      "texto": "Si el cliente nombra en el mensaje un hotel de las islas que está en el catálogo (Ubuntu, Secreto, Pao Pao…), Coral ya sabe al contestar que sale desde las islas y no le pregunta desde dónde sale, aunque Jev no esté seguro del lugar (arq-8b, 23-oct)."
-    },
-    "hechos_que_faltaban": {
-      "area": "Preguntas",
-      "titulo": "Hechos que faltaban en la tabla",
-      "texto": "Coral da también la excepción del refresher (500+ inmersiones o Divemaster: lo revisa un asesor), que el horario no se puede adelantar (lo ve un asesor), que buceo y snorkel pueden ir en la misma lancha con el snorkel en otra zona, y que quien se aloja en Barú o Playa Blanca sale desde Cartagena (arq-5f, 23-oct)."
-    },
-    "grupo_mixto_en_descuentos": {
-      "area": "Preguntas",
-      "titulo": "Grupo mixto: todo en dólares también al hablar de descuentos",
-      "texto": "Si en el grupo hay colombianos y extranjeros y preguntan por descuentos o por un precio especial, Coral da la regla del grupo mixto (toda la reserva en USD) en vez de «los colombianos pagan en COP», que le hacía decir «cada uno paga en su moneda» (arq-8a, 23-oct)."
     },
     "principiante_sin_buceo_certificado": {
       "area": "Preguntas",

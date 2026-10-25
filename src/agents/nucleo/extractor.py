@@ -21,7 +21,6 @@ from src.agents.conversational_core import (
     _same_for_customer,
 )
 from src.agents.intent_detector import DetectedIntent
-from src.config import settings
 from src.domain import activities as dom
 from src.flows.state import ConversationState
 
@@ -239,7 +238,7 @@ def _poner_duracion(intent, state: ConversationState, datos: dict, message: str 
     if duracion is None and not state.detected_duration and _paquete_de_varios_dias_nombrado(message):
         duracion = "multi_day"
         logger.info("[EXTRACT][EX9B-6] sin días dichos, pero nombra un paquete de varios días del catálogo")
-    if duracion is None and settings.paquete_varios_dias and (datos or {}).get("paquete_varios_dias") is True:
+    if duracion is None and (datos or {}).get("paquete_varios_dias") is True:
         # arq-1t: «el paquete de varios días», sin cifra (el extractor lo dice con su cita).
         duracion, de_buceo = "multi_day", True
         logger.info("[EXTRACT][ARQ1T] pide un paquete de varios días sin decir cuántos")

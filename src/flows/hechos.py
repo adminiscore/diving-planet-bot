@@ -18,7 +18,6 @@ import unicodedata
 from functools import lru_cache
 from pathlib import Path
 
-from src.config import settings
 from src.domain import activities as dom
 from src.flows import cart_render
 from src.flows.catalog import (
@@ -71,9 +70,8 @@ def _politica(clave: str, lang: str) -> str | None:
 
 
 def _dos_monedas(state: ConversationState) -> bool:
-    """arq-5c (flag `dos_monedas_sin_nacionalidad`): no se sabe si paga en COP (ni es un grupo mixto, que paga en USD)."""
-    return (settings.dos_monedas_sin_nacionalidad and state.is_colombian is None
-            and not getattr(state, "mixed_nationality_notice", False))
+    """arq-5c: no se sabe si paga en COP (ni es un grupo mixto, que paga en USD)."""
+    return state.is_colombian is None and not getattr(state, "mixed_nationality_notice", False)
 
 
 def _moneda(state: ConversationState) -> str:
@@ -147,8 +145,7 @@ def hechos(state: ConversationState, intenciones: list[str], actividades: list[s
     elegido = state.selected_service or getattr(state, "detected_service_id", None)
     # arq-1t: pide varios días sin plan elegido → los hechos de los paquetes de varios días, no los de la salida de uno.
     # El plan base que se apunta solo al saber la actividad (`detected_service_id`, rutas/booking) no es una elección.
-    varios_dias = (settings.paquete_varios_dias and not state.selected_service
-                   and state.detected_duration == "multi_day")
+    varios_dias = not state.selected_service and state.detected_duration == "multi_day"
     bloques = []
     for actividad in actividades:
         registro = dom.by_id(actividad)
@@ -204,7 +201,7 @@ def hechos(state: ConversationState, intenciones: list[str], actividades: list[s
                 no_incluye["island"] = [*no_incluye.get("island", []), _no_incluyen_las_islas(lang)]
             if no_incluye:
                 bloque["no_incluye"] = no_incluye
-            if settings.incluye_lo_que_se_hace and "horario" not in pedidas:
+            if "horario" not in pedidas:
                 # arq-8d: lo que se hace (la clase, la piscina, la inmersión) es lo que el cliente espera oír con «¿qué
                 # incluye?», y en la ficha está en el itinerario; con el horario ya va (sin repetirlo).
                 que_se_hace = _por_origen(actividad, origenes, lambda sid: _lista(sid, "itinerary", lang), elegido)
@@ -215,13 +212,10 @@ def hechos(state: ConversationState, intenciones: list[str], actividades: list[s
             sid = _plan_base(actividad, origen or "cartagena", elegido)
             if sid:
                 requisitos += _lista(sid, "requirements", lang)
-            if registro.cart_type in _CON_FORMULARIO_MEDICO:
-                if not settings.requisitos_coherentes:
-                    requisitos.append(_politica("medical_restrictions", lang))
-                elif not _ya_dice_el_enlace(requisitos, _formulario_de_curso(lang)):
-                    requisitos.append(_formulario_de_curso(lang))
-            if settings.requisitos_coherentes:
-                requisitos += _previo_y_edad(registro, lang)
+            if (registro.cart_type in _CON_FORMULARIO_MEDICO
+                    and not _ya_dice_el_enlace(requisitos, _formulario_de_curso(lang))):
+                requisitos.append(_formulario_de_curso(lang))
+            requisitos += _previo_y_edad(registro, lang)
             if registro.requires_certification:
                 requisitos.append(_politica("certification_required", lang))
             requisitos += [_politica("insurance_form_requirement", lang), _politica("what_to_bring", lang)]
@@ -255,7 +249,7 @@ def hechos(state: ConversationState, intenciones: list[str], actividades: list[s
                     lambda sid: cart_render._resolve_service_booking_url(SERVICES.get(sid) or {}, state), elegido)
                 if bloque["enlace"]:
                     bloque["descuento_online"] = _descuento_online(lang)
-                    if settings.enlace_con_como_pagar and "pago" not in pedidas:
+                    if "pago" not in pedidas:
                         como = [_politica("how_to_book", lang), _pago_extranjero(lang),
                                 _politica("payment_confirmation", lang)]
                         if registro.requires_certification:
@@ -279,7 +273,7 @@ def hechos(state: ConversationState, intenciones: list[str], actividades: list[s
     return _lo_que_faltaba(state, bloques, pedidas, lang)
 
 
-# arq-1s (22-oct, flag `requisitos_coherentes`; G10 nº 4): (1) en un curso, un solo formulario: la política médica dice a
+# arq-1s (22-oct; G10 nº 4): (1) en un curso, un solo formulario: la política médica dice a
 # la vez «para cursos, el médico de curso» y «si eres buzo certificado, el de buzo certificado», y el alumno del Advanced
 # (certificado Y en un curso) recibía los dos (g10-058, «contradictorio»); decisión de Gadea: en un curso, el de curso.
 # (2) el requisito previo del curso (el nivel anterior del registro: el Open Water para el Advanced) y la edad mínima en
@@ -319,8 +313,6 @@ def _tiempo(lang: str) -> dict:
     """arq-1v: si da tiempo antes de irse. La decisión de Gadea (desde las islas va muy justo y lo confirma un asesor;
     desde Cartagena no alcanza; el cierre de las 4:30) va en `tiempo`; la espera antes de volar, aparte (`si_vuela`), para
     que solo se diga si el cliente vuela."""
-    if not settings.tiempo_limitado:
-        return {}
     tiempo = [p for p in (_politica("time_limited_departure", lang), _politica("activity_schedule", lang)) if p]
     vuela = _politica("flight_after_diving", lang)
     return {"tiempo": tiempo, **({"si_vuela": vuela} if vuela else {})}
@@ -339,7 +331,7 @@ def _comunes(listas: list[list[str]]) -> list[str]:
     return [x for x in listas[0] if all(x in r for r in resto)]
 
 
-# arq-1u (22-oct, flag `enlace_con_como_pagar`; G10 nº 4: g10-051, g10-072, g10-006, g10-045): con el enlace de reserva,
+# arq-1u (22-oct; G10 nº 4: g10-051, g10-072, g10-006, g10-045): con el enlace de reserva,
 # cómo se reserva y se paga por él (el extranjero, 100 % con tarjeta en la web) y que la reserva queda confirmada cuando
 # el equipo concilia el pago; si la actividad pide certificación, el carné (g10-027). Al colombiano no se le da el
 # enlace (lo coordina un asesor), así que la parte de su pago no va aquí.
@@ -353,7 +345,7 @@ def _pago_extranjero(lang: str) -> str | None:
     return (texto[:corte] if corte >= 0 else texto).strip() or None
 
 
-# arq-1p (22-oct, flag `hechos_sin_actividad`): lo que NO depende de la actividad. En el G10 nº 4, 24 turnos se quedaron sin
+# arq-1p (22-oct): lo que NO depende de la actividad. En el G10 nº 4, 24 turnos se quedaron sin
 # redactor porque no se sabía la actividad (`hechos=sin_actividad`); 11 preguntaban solo la hora o la recogida, qué llevar
 # o si hay sitio, casi siempre quien ya reservó y no la nombra. Esos hechos son los mismos para todas las actividades (las
 # políticas), así que el código los da sin adivinar la actividad. Precio, qué incluye, edad y enlace sí la necesitan.
@@ -361,17 +353,11 @@ INTENCIONES_SIN_ACTIVIDAD = frozenset({"horario", "disponibilidad", "requisitos"
 
 
 def _descuentos(state: ConversationState, lang: str) -> list[str]:
-    """arq-4b (flag `descuentos_en_la_tabla`): los descuentos con sus condiciones, tal cual de discounts.json (online,
+    """arq-4b: los descuentos con sus condiciones, tal cual de discounts.json (online,
     grupo, equipo propio y que no hay descuento por ser colombiano). Son los mismos para todas las actividades: cada uno
     dice a qué aplica."""
-    if settings.descuentos_un_sitio:  # arq-8h: de la función del catálogo, con la nota del acompañante
-        textos = descuentos_de_la_base(lang)
-    else:
-        datos = json.loads(_DISCOUNTS.read_text(encoding="utf-8-sig")).get("discounts", {})
-        claves = ("online_direct_booking", "group_discount", "own_equipment_discount", "colombian_cop_pricing")
-        textos = {c: (datos.get(c) or {}).get(f"description_{lang}") or (datos.get(c) or {}).get("description_es")
-                  for c in claves}
-    if settings.grupo_mixto_en_descuentos and getattr(state, "mixed_nationality_notice", False):
+    textos = descuentos_de_la_base(lang)  # arq-8h: de la función del catálogo, con la nota del acompañante
+    if getattr(state, "mixed_nationality_notice", False):
         # arq-8a (G10 nº 6, g10-043): «mi pareja es colombiana y yo extranjera, ¿hay descuento?» llevaba «los
         # colombianos pagan en COP» y no la regla del grupo mixto (esa solo iba con el precio): «tu pareja paga en pesos y
         # tú en dólares». En un grupo mixto, la regla de la moneda es la suya, como en `regla_moneda`.
@@ -402,7 +388,7 @@ def hechos_sin_actividad(state: ConversationState, intenciones: list[str]) -> li
     if "requisitos" in pedidas:
         bloque["requisitos"] = [p for p in (_politica("insurance_form_requirement", lang),
                                             _politica("what_to_bring", lang)) if p]
-        if settings.requisitos_coherentes and getattr(state, "is_certified", None) is True:
+        if getattr(state, "is_certified", None) is True:
             # arq-1s: «soy buzo certificado, ¿qué requisitos hay?» sin actividad dicha: el carné también.
             bloque["requisitos"].insert(0, _politica("certification_required", lang))
             bloque["requisitos"] = [p for p in bloque["requisitos"] if p]
@@ -412,7 +398,7 @@ def hechos_sin_actividad(state: ConversationState, intenciones: list[str]) -> li
     return _lo_que_faltaba(state, [bloque], pedidas, lang)
 
 
-# arq-5f (23-oct, flag `hechos_que_faltaban`, reparto de Gadea #1525; G10 nº 5): hechos de la base que la tabla no daba.
+# arq-5f (23-oct, reparto de Gadea #1525; G10 nº 5): hechos de la base que la tabla no daba.
 # La excepción del refresher (g10-008, g10-047), que el horario no se adelanta (g10-066), buceo y snorkel en la misma
 # lancha (g10-049) y que alojados en Barú salen desde Cartagena. Se añaden a los bloques ya hechos.
 _CON_REFRESH = {"certified_diving", "refresher"}
@@ -447,8 +433,8 @@ def _partes_de_la_recogida(lang: str) -> tuple[str, str] | None:
 
 
 def _no_incluyen_las_islas(lang: str) -> str | None:
-    """arq-8d: con el flag, solo la frase de lo que no incluyen; sin él (o si la política cambió), la política entera."""
-    partes = _partes_de_la_recogida(lang) if settings.incluye_lo_que_se_hace else None
+    """arq-8d: solo la frase de lo que no incluyen; si la política cambió (sin los cortes), la política entera."""
+    partes = _partes_de_la_recogida(lang)
     return partes[1] if partes else _politica("island_pickup", lang)
 
 
@@ -456,13 +442,13 @@ def _sin_almuerzo_en_las_islas(lang: str, pedidas: list[str]) -> list[str]:
     """arq-8d: con «incluye», la frase de que los planes de las islas no incluyen transporte desde Cartagena ni almuerzo
     va también con la recogida, que la pone el código entera (banco arq-8, B: con `no_incluye` solo, el redactor no la
     decía en 9 de 9, porque `no_incluye` solo se cuenta si el cliente pregunta por algo concreto)."""
-    partes = _partes_de_la_recogida(lang) if settings.incluye_lo_que_se_hace and "incluye" in pedidas else None
+    partes = _partes_de_la_recogida(lang) if "incluye" in pedidas else None
     return [partes[1]] if partes else []
 
 
 def _coordinacion_en_las_islas(lang: str) -> list[str]:
-    """arq-8e: las frases de cómo se coordina la recogida en las islas (con el flag)."""
-    partes = _partes_de_la_recogida(lang) if settings.recogida_se_coordina else None
+    """arq-8e: las frases de cómo se coordina la recogida en las islas."""
+    partes = _partes_de_la_recogida(lang)
     return [partes[0]] if partes else []
 
 
@@ -472,8 +458,6 @@ def _bucea(actividad: str | None) -> bool:
 
 
 def _lo_que_faltaba(state: ConversationState, bloques: list[dict], pedidas: list[str], lang: str) -> list[dict]:
-    if not settings.hechos_que_faltaban:
-        return bloques
     actividades = {b.get("actividad") for b in bloques} | {
         a for a, n in (getattr(state, "detected_group_allocation", None) or {}).items() if n}
     # La lancha va con el horario o lo que incluye (cómo es la salida), no con una pregunta de edad o de precio.
@@ -494,7 +478,7 @@ def _lo_que_faltaba(state: ConversationState, bloques: list[dict], pedidas: list
     return bloques
 
 
-# arq-1i (23-oct, flag `intenciones_clima_pago`, decisión de Gadea #1312): el clima en general y cómo se paga, los mismos
+# arq-1i (23-oct, decisión de Gadea #1312): el clima en general y cómo se paga, los mismos
 # para todas las actividades. La previsión de un día concreto no es un hecho de la base: la da el equipo (sin
 # pronósticos), y el redactor ofrece un asesor.
 _PREVISION = {
@@ -514,8 +498,6 @@ def _pago_colombiano(lang: str) -> str | None:
 
 def _clima_y_pago(state: ConversationState, pedidas: list[str], lang: str) -> dict:
     out: dict = {}
-    if not settings.intenciones_clima_pago:
-        return out
     if "clima" in pedidas:
         out["clima"] = [p for p in (_politica("weather_cancellation", lang), _politica("closed_days", lang),
                                     _PREVISION[lang]) if p]

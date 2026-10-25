@@ -14,7 +14,6 @@ import pytest
 from src.agents import conversational_core as core
 from src.agents import extractor_turno as ex
 from src.agents.nucleo import extractor as core_extractor
-from src.config import settings
 from src.flows.state import ConversationState
 
 
@@ -126,12 +125,12 @@ def test_c3c_un_origen_dicho_antes_sigue_contando(monkeypatch):
 @pytest.mark.asyncio
 @pytest.mark.parametrize("lang", ["es", "en"])
 async def test_sin_cedula_cambia_la_regla(monkeypatch, lang):
-    # arq-1r añade una frase a esta regla; aquí se mira la regla sola.
-    monkeypatch.setattr(settings, "cedula_de_extranjeria_manda", False)
     llamadas = []
     await ex.extraer_turno("que no tenga cedula", lang=lang, client=_cliente({}, llamadas))
     sistema = llamadas[0]["messages"][0]["content"]
     nueva, hoy = (ex.SIN_CEDULA_ES, ex.SIN_CEDULA_HOY_ES) if lang == "es" else (ex.SIN_CEDULA_EN, ex.SIN_CEDULA_HOY_EN)
+    for antes, despues in ex._CEDULA_DE_EXTRANJERIA_MANDA:  # arq-1r añade una frase a esta regla
+        nueva = nueva.replace(antes, despues)
     assert nueva in sistema and (hoy in nueva or hoy not in sistema)
 
 

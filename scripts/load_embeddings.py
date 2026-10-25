@@ -329,21 +329,13 @@ def load_knowledge_base() -> list[dict]:
                     },
                 })
 
-        # Discount policies. NOTE: each entry's actual keys are "es"/"en" (a
-        # full descriptive sentence), NOT "description_es"/"description_en" —
-        # found 2026-07-17 that the wrong key names silently embedded a blank
-        # chunk (every description came back "") for years, so RAG had no real
-        # data to answer "hay descuento por grupo?" and fell back to an advisor
-        # instead of correctly saying it only applies to groups of 5+.
-        disc = pricing_data.get("discount_policies", {})
-        if settings.descuentos_un_sitio:
-            # arq-8h: los descuentos del índice, de discounts.json (el único sitio), no de la copia de pricing.json.
-            from src.flows.catalog import descuentos_de_la_base
+        # Discount policies. arq-8h: de discounts.json (el único sitio), no de la copia de pricing.json. Los trozos
+        # conservan su nombre de siempre (section discount_<clave>); el de los colombianos es nuevo.
+        from src.flows.catalog import descuentos_de_la_base
 
-            es, en = descuentos_de_la_base("es"), descuentos_de_la_base("en")
-            # Los trozos conservan su nombre de siempre (section discount_<clave>); el de los colombianos es nuevo.
-            nombres = {"online_direct_booking": "online_booking", "own_equipment_discount": "own_equipment"}
-            disc = {nombres.get(k, k): {"es": es.get(k, ""), "en": en.get(k, "")} for k in es}
+        es, en = descuentos_de_la_base("es"), descuentos_de_la_base("en")
+        nombres = {"online_direct_booking": "online_booking", "own_equipment_discount": "own_equipment"}
+        disc = {nombres.get(k, k): {"es": es.get(k, ""), "en": en.get(k, "")} for k in es}
         if disc:
             lines_es = [f"Políticas de descuento Diving Planet ({year})", ""]
             lines_en = [f"Diving Planet discount policies ({year})", ""]

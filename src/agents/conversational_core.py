@@ -2249,7 +2249,7 @@ def _fijar_origen_antes_del_precio(state: ConversationState, pregunta: str) -> N
     pregunta del precio para contestarla cuando el cliente lo diga."""
     ask_slot(state, SLOT_LOCATION)  # solo por lo que deja en el estado: el slot pendiente y sus botones
     anterior = state.pregunta_precio_pendiente
-    if settings.precio_pendiente_con_el_origen and anterior and not _pide_precio(state, pregunta):
+    if anterior and not _pide_precio(state, pregunta):
         # arq-8f (banco arq-8c de Gadea, #1667): con una pregunta de precio guardada, «soy de Medellín» (no dice el origen)
         # vuelve a pedirlo y pisaba la pregunta con ese mensaje; luego se contestaba «soy de Medellín». Se queda la de
         # antes, salvo que este mensaje pregunte otro precio.

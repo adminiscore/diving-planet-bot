@@ -3,7 +3,6 @@
 desde las islas va muy justo y lo confirma un asesor; desde Cartagena no alcanza; cierre de las 4:30) y la espera antes
 de volar aparte (`si_vuela`). Sin red."""
 from src.agents import jev_router as j
-from src.config import settings
 from src.flows import hechos
 from src.flows.state import ConversationState
 
@@ -12,25 +11,14 @@ def _st():
     return ConversationState(conversation_id="arq1v", language="es")
 
 
-def test_apagado_jev_pregunta_lo_de_antes(monkeypatch):
-    monkeypatch.setattr(settings, "tiempo_limitado", False)
-    monkeypatch.setattr(settings, "descuentos_en_la_tabla", False)  # arq-4b también cambia «otra cosa»
-    monkeypatch.setattr(settings, "intenciones_clima_pago", False)  # arq-1i también
-    q = j._questions_for_turn()
-    assert j.PIDE_SI_ALCANZA not in q and q[j.PIDE_OTRA_COSA] is j._INTENCIONES_Q[j.PIDE_OTRA_COSA]
-
-
 def test_encendido_jev_pregunta_y_otra_cosa_no_lo_cuenta(monkeypatch):
-    monkeypatch.setattr(settings, "tiempo_limitado", True)
-    monkeypatch.setattr(settings, "intenciones_clima_pago", False)  # arq-1i añade su frase detrás
     q = j._questions_for_turn()
     assert q[j.PIDE_SI_ALCANZA] is j._PIDE_SI_ALCANZA_Q
-    assert q[j.PIDE_OTRA_COSA]["instructions"].endswith(j._OTRA_COSA_SIN_EL_TIEMPO)
+    assert j._OTRA_COSA_SIN_EL_TIEMPO in q[j.PIDE_OTRA_COSA]["instructions"]  # arq-1i añade su frase detrás
     assert j.answers_to_signals({j.PIDE_SI_ALCANZA: {"type": "noul", "noul": 0.9}})[j.PIDE_SI_ALCANZA] is True
 
 
 def test_los_hechos_llevan_la_decision_y_aparte_el_vuelo(monkeypatch):
-    monkeypatch.setattr(settings, "tiempo_limitado", True)
     [b] = hechos.hechos_sin_actividad(_st(), ["tiempo"])
     assert b["tiempo"][0] == hechos._politica("time_limited_departure", "es")
     assert "4:30" in b["tiempo"][0] and "asesor" in b["tiempo"][0]
@@ -39,14 +27,7 @@ def test_los_hechos_llevan_la_decision_y_aparte_el_vuelo(monkeypatch):
     assert con_actividad["tiempo"] == b["tiempo"]
 
 
-def test_apagado_no_hay_hechos_de_tiempo(monkeypatch):
-    monkeypatch.setattr(settings, "tiempo_limitado", False)
-    assert hechos.hechos_sin_actividad(_st(), ["tiempo"]) in ([], [{"actividad": None, "nombre": "general",
-                                                                     "origen": None}])
-
-
 def test_arq3_echa_de_menos_la_decision(monkeypatch):
-    monkeypatch.setattr(settings, "tiempo_limitado", True)
     [b] = hechos.hechos_sin_actividad(_st(), ["tiempo"])
     assert hechos.faltan("La actividad termina hacia las 12:00-13:00.", [b], ["tiempo"]) == [b["tiempo"][0]]
     assert hechos.faltan(b["tiempo"][0], [b], ["tiempo"]) == []

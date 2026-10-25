@@ -3,7 +3,6 @@ precio de los hechos va en USD y en COP (G10 nº 5: «¿cuánto cuesta para colo
 
 import pytest
 
-from src.config import settings
 from src.flows import hechos as hechos_mod
 from src.flows.state import ConversationState
 
@@ -15,12 +14,11 @@ def _bloque(colombiano=None, mixto=False, actividad="snorkel"):
     return hechos_mod.hechos(st, ["precio"], [actividad])[0]
 
 
-@pytest.mark.parametrize("flag, colombiano, mixto, dos", [
-    (True, None, False, True), (False, None, False, False), (True, True, False, False), (True, False, False, False),
-    (True, None, True, False),  # el grupo mixto paga en USD
+@pytest.mark.parametrize("colombiano, mixto, dos", [
+    (None, False, True), (True, False, False), (False, False, False),
+    (None, True, False),  # el grupo mixto paga en USD
 ])
-def test_las_dos_monedas_solo_sin_saber_la_nacionalidad(monkeypatch, flag, colombiano, mixto, dos):
-    monkeypatch.setattr(settings, "dos_monedas_sin_nacionalidad", flag)
+def test_las_dos_monedas_solo_sin_saber_la_nacionalidad(colombiano, mixto, dos):
     b = _bloque(colombiano, mixto)
     assert ("precio_cop" in b) is dos
     if dos:
@@ -28,13 +26,11 @@ def test_las_dos_monedas_solo_sin_saber_la_nacionalidad(monkeypatch, flag, colom
 
 
 def test_el_acompanante_y_los_otros_planes_tambien(monkeypatch):
-    monkeypatch.setattr(settings, "dos_monedas_sin_nacionalidad", True)
     assert "COP" in next(iter(_bloque(actividad="companion")["precio_cop"].values()))["online"]
     assert all("COP" in p["precio_cop"]["online"] for p in _bloque(actividad="certified_diving")["otros_planes"])
 
 
 def test_faltan_mira_tambien_el_precio_en_cop(monkeypatch):
-    monkeypatch.setattr(settings, "dos_monedas_sin_nacionalidad", True)
     b = _bloque()
     usd = " ".join(p[k] for p in b["precio"].values() for k in ("online", "normal"))
     assert hechos_mod.faltan(usd, [b], ["precio"])  # faltan los de COP
