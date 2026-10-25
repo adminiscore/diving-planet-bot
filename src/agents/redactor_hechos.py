@@ -132,16 +132,16 @@ def _foto(state: ConversationState, datos: dict, origen: str | None, message: st
         foto.is_colombian = datos["is_colombian"]
     if datos.get("mixed_nationality") is True:
         foto.mixed_nationality_notice = True
-    if settings.paquete_varios_dias and datos.get("paquete_varios_dias") is True:
+    if datos.get("paquete_varios_dias") is True:
         foto.detected_duration = "multi_day"  # arq-1t: «el paquete de varios días» en ESTE mensaje
-    if settings.hechos_que_faltaban and origen == "cartagena":
+    if origen == "cartagena":
         # arq-5f: el extractor deja Barú como Cartagena (gen-6) sin otra marca; los hechos dicen por qué sale de allí.
         from src.agents.extractor_turno import _solo_baru  # lazy
 
         dicho = [message, *(m.get("content") or "" for m in (history or []) if m.get("role") == "user")]
         foto._aloja_en_baru = any(_solo_baru(t) for t in dicho)
     reparto = datos.get("group_allocation")
-    if settings.hechos_que_faltaban and isinstance(reparto, dict) and not foto.detected_group_allocation:
+    if isinstance(reparto, dict) and not foto.detected_group_allocation:
         # arq-5f: «dos bucean y dos hacen snorkel» en ESTE mensaje (la extracción aún no lo ha guardado): la misma lancha.
         foto.detected_group_allocation = {k: v for k, v in reparto.items() if isinstance(v, int) and v > 0}
     return foto
@@ -202,18 +202,18 @@ def _mensajes(lang: str, history: list[dict], message: str, texto_hechos: str) -
         from src.prompts.info import REDACTOR_DOS_MONEDAS_EN, REDACTOR_DOS_MONEDAS_ES  # lazy
 
         system += REDACTOR_DOS_MONEDAS_ES if lang == "es" else REDACTOR_DOS_MONEDAS_EN
-    if settings.redactor_sin_preguntas_de_cierre:
-        from src.prompts.info import REDACTOR_SIN_PREGUNTAS_EN, REDACTOR_SIN_PREGUNTAS_ES  # lazy
+    from src.prompts.info import (  # lazy
+        REDACTOR_CLIMA_PAGO_EN,
+        REDACTOR_CLIMA_PAGO_ES,
+        REDACTOR_QUE_FALTABAN_EN,
+        REDACTOR_QUE_FALTABAN_ES,
+        REDACTOR_SIN_PREGUNTAS_EN,
+        REDACTOR_SIN_PREGUNTAS_ES,
+    )
 
-        system += REDACTOR_SIN_PREGUNTAS_ES if lang == "es" else REDACTOR_SIN_PREGUNTAS_EN
-    if settings.hechos_que_faltaban:  # arq-5f
-        from src.prompts.info import REDACTOR_QUE_FALTABAN_EN, REDACTOR_QUE_FALTABAN_ES  # lazy
-
-        system += REDACTOR_QUE_FALTABAN_ES if lang == "es" else REDACTOR_QUE_FALTABAN_EN
-    if settings.intenciones_clima_pago:  # arq-1i
-        from src.prompts.info import REDACTOR_CLIMA_PAGO_EN, REDACTOR_CLIMA_PAGO_ES  # lazy
-
-        system += REDACTOR_CLIMA_PAGO_ES if lang == "es" else REDACTOR_CLIMA_PAGO_EN
+    system += REDACTOR_SIN_PREGUNTAS_ES if lang == "es" else REDACTOR_SIN_PREGUNTAS_EN
+    system += REDACTOR_QUE_FALTABAN_ES if lang == "es" else REDACTOR_QUE_FALTABAN_EN  # arq-5f
+    system += REDACTOR_CLIMA_PAGO_ES if lang == "es" else REDACTOR_CLIMA_PAGO_EN  # arq-1i
     previos = list(history or [])
     if previos and previos[-1].get("role") == "user" and previos[-1].get("content") == message:
         previos = previos[:-1]  # el mensaje va abajo, con los hechos
@@ -411,7 +411,7 @@ async def hechos_del_turno(state: ConversationState, message: str, history: list
     datos = await lectura_del_extractor(state, message) or {}
     actividades = _actividades(state, datos)
     if not actividades:
-        if settings.hechos_sin_actividad and set(intenciones) <= hechos_mod.INTENCIONES_SIN_ACTIVIDAD:
+        if set(intenciones) <= hechos_mod.INTENCIONES_SIN_ACTIVIDAD:
             # arq-1p: la hora, la recogida, qué llevar o si hay sitio son iguales para todas las actividades.
             foto = _foto(state, datos, _origen(state, datos), message, history)
             if foto.is_certified is None and datos.get("is_certified") is not None:

@@ -605,7 +605,7 @@ RAG_ENLACE_AL_RECOMENDAR_EN = (
     "the catalog of links in the same answer instead of asking whether they want it. Do not give the link to a Colombian "
     "customer: the payment is arranged by an advisor in this chat."
 )
-# arq-4b (22-oct, flag `redactor_sin_preguntas_de_cierre`, G10 nº 4): el redactor cerraba con «¿te sirve el 23 de
+# arq-4b (22-oct, G10 nº 4): el redactor cerraba con «¿te sirve el 23 de
 # julio?», «¿ya hicieron la teoría y la piscina?» o «¿para qué fecha?» tras haberlo dicho el cliente (g10-049, g10-051,
 # g10-057), y el sistema añadía después su propia pregunta. Las preguntas de datos las hace el sistema.
 REDACTOR_SIN_PREGUNTAS_ES = (
@@ -659,7 +659,7 @@ REDACTOR_DOS_MONEDAS_EN = (
     "\n- If both `precio` and `precio_cop` are given, give both: the price in US dollars and the same price in Colombian "
     "pesos, with the currency rule (Colombians and residents pay in COP; everyone else in USD)."
 )
-# arq-5f (23-oct, flag `hechos_que_faltaban`): los hechos nuevos se decían a medias (banco arq-5f: «el horario es fijo»
+# arq-5f (23-oct): los hechos nuevos se decían a medias (banco arq-5f: «el horario es fijo»
 # sin el asesor, «la misma lancha» sin la zona distinta del snorkel).
 REDACTOR_QUE_FALTABAN_ES = (
     "\n- Si el cliente pide cambiar o adelantar el horario, di que es fijo y que un ajuste lo revisa un asesor del "
@@ -670,7 +670,7 @@ REDACTOR_QUE_FALTABAN_EN = (
     "adjustment.\n- `misma_lancha`: say it in full (whether they go together or split up, and that snorkeling is in "
     "a different area)."
 )
-# arq-1i (23-oct, flag `intenciones_clima_pago`, decisión de Gadea #1312): el clima en general y cómo se paga.
+# arq-1i (23-oct, decisión de Gadea #1312): el clima en general y cómo se paga.
 REDACTOR_CLIMA_PAGO_ES = (
     "\n- `clima`: qué pasa con el mal tiempo (es poco probable; si Capitanía cierra se reprograma y, si no se puede, "
     "reembolso del 100 %). No des pronósticos ni digas qué tiempo hará: el de un día concreto lo confirma el equipo, y "

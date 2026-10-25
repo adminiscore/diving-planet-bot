@@ -289,7 +289,7 @@ REGLA_ACTIVIDADES_PREGUNTADAS_EN = (
 )
 
 
-# arq-1t (22-oct, flag `paquete_varios_dias`): «¿cuánto vale el paquete de varios días?» no dejaba nada en el estado
+# arq-1t (22-oct): «¿cuánto vale el paquete de varios días?» no dejaba nada en el estado
 # (dias_de_buceo solo con cifra) y el «¿qué incluye?» siguiente recibía lo de la salida de un día (G10 nº 4, g10-041).
 CAMPO_PAQUETE_VARIOS_DIAS = _dato({"type": "boolean"},
                                   "Pide un paquete o plan de VARIOS días de buceo sin decir cuántos días ni inmersiones.")
@@ -323,9 +323,8 @@ def campos_paso6(history: list[dict] | None) -> dict:
     if settings.varias_actividades:
         campos["actividades_preguntadas"] = (CAMPO_ACTIVIDADES_PREGUNTADAS, REGLA_ACTIVIDADES_PREGUNTADAS_ES,
                                              REGLA_ACTIVIDADES_PREGUNTADAS_EN)
-    if settings.paquete_varios_dias:
-        campos["paquete_varios_dias"] = (CAMPO_PAQUETE_VARIOS_DIAS, REGLA_PAQUETE_VARIOS_DIAS_ES,
-                                         REGLA_PAQUETE_VARIOS_DIAS_EN)
+    campos["paquete_varios_dias"] = (CAMPO_PAQUETE_VARIOS_DIAS, REGLA_PAQUETE_VARIOS_DIAS_ES,
+                                     REGLA_PAQUETE_VARIOS_DIAS_EN)
     return campos
 
 
@@ -691,10 +690,9 @@ async def extraer_turno(mensaje: str, *, history: list[dict] | None = None, sabi
     sistema += REGLA_NOMBRE_ES if lang == "es" else REGLA_NOMBRE_EN
     # CAL-C (17-oct, decisión de Álvaro): sin cédula colombiana → no es colombiano (paga en USD). Ver SIN_CEDULA_*.
     sistema = sistema.replace(SIN_CEDULA_HOY_ES, SIN_CEDULA_ES).replace(SIN_CEDULA_HOY_EN, SIN_CEDULA_EN)
-    if settings.cedula_de_extranjeria_manda:
-        # arq-1r: el extranjero CON cédula de extranjería es residente (ver `_CEDULA_DE_EXTRANJERIA_MANDA`).
-        for antes, despues in _CEDULA_DE_EXTRANJERIA_MANDA:
-            sistema = sistema.replace(antes, despues)
+    # arq-1r: el extranjero CON cédula de extranjería es residente (ver `_CEDULA_DE_EXTRANJERIA_MANDA`).
+    for antes, despues in _CEDULA_DE_EXTRANJERIA_MANDA:
+        sistema = sistema.replace(antes, despues)
     # gen-4: vivir en Colombia no es ser residente (ver `_VIVIR_NO_ES_RESIDIR`).
     for antes, despues in _VIVIR_NO_ES_RESIDIR:
         sistema = sistema.replace(antes, despues)
@@ -1017,7 +1015,7 @@ SIN_CEDULA_HOY_EN = "mixed_nationality true and is_colombian null."
 SIN_CEDULA_EN = ("mixed_nationality true and is_colombian null. If they say they have no Colombian ID (cédula, nor a "
                  "cédula de extranjería) or that they are a foreigner or tourist: false.")
 
-# arq-1r (22-oct, flag `cedula_de_extranjeria_manda`): «extranjero o turista: false» chocaba con la cédula de extranjería,
+# arq-1r (22-oct): «extranjero o turista: false» chocaba con la cédula de extranjería,
 # que es justo la de los extranjeros residentes (paga en COP, decisión de Álvaro del 17-oct). Con historial
 # («living in Bogotá»), «I have a cédula de extranjería» salía false 2 de 9 lecturas (G10 nº 4, g10-047). Una frase.
 _CEDULA_DE_EXTRANJERIA_MANDA = (

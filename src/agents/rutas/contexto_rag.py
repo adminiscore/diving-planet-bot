@@ -126,25 +126,16 @@ def _build_extra_context(state: ConversationState) -> str | None:
     # un corte de horario ("cierra a las 4:30 PM del día anterior") ya pasó o
     # no, y termina inventando urgencia/cierre que no puede verificar.
     now = datetime.now(ZoneInfo("America/Bogota"))
-    if settings.fecha_con_dia_de_la_semana:
-        # arq-4b (G10 nº 4, g10-036): «mañana, jueves 23 de octubre» un jueves 22: el modelo calculaba mal el día de la
-        # semana. Se le da el de hoy y el de mañana (las dos fechas que más se nombran).
-        manana = now + timedelta(days=1)
-        if state.language == "es":
-            dias = ("lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo")
-            parts.append(f"Fecha y hora actual: {dias[now.weekday()]} {now.strftime('%Y-%m-%d %H:%M')} (hora de "
-                         f"Cartagena/Colombia; mañana es {dias[manana.weekday()]} {manana.strftime('%Y-%m-%d')}).")
-        else:
-            parts.append(f"Current date and time: {now.strftime('%A %Y-%m-%d %H:%M')} (Cartagena/Colombia time; "
-                         f"tomorrow is {manana.strftime('%A %Y-%m-%d')}).")
-    elif state.language == "es":
-        parts.append(
-            f"Fecha y hora actual: {now.strftime('%Y-%m-%d %H:%M')} (hora de Cartagena/Colombia)."
-        )
+    # arq-4b (G10 nº 4, g10-036): «mañana, jueves 23 de octubre» un jueves 22: el modelo calculaba mal el día de la
+    # semana. Se le da el de hoy y el de mañana (las dos fechas que más se nombran).
+    manana = now + timedelta(days=1)
+    if state.language == "es":
+        dias = ("lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo")
+        parts.append(f"Fecha y hora actual: {dias[now.weekday()]} {now.strftime('%Y-%m-%d %H:%M')} (hora de "
+                     f"Cartagena/Colombia; mañana es {dias[manana.weekday()]} {manana.strftime('%Y-%m-%d')}).")
     else:
-        parts.append(
-            f"Current date and time: {now.strftime('%Y-%m-%d %H:%M')} (Cartagena/Colombia time)."
-        )
+        parts.append(f"Current date and time: {now.strftime('%A %Y-%m-%d %H:%M')} (Cartagena/Colombia time; "
+                     f"tomorrow is {manana.strftime('%A %Y-%m-%d')}).")
 
     # Idioma actual de la conversación
     if state.language == "es":

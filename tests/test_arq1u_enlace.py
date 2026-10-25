@@ -3,7 +3,6 @@ queda confirmada cuando el equipo concilia el pago (política `payment_confirmat
 reserva-confirmada-al-pagar) y, si la actividad pide certificación, el carné. Al colombiano no (lo coordina un asesor)."""
 import pytest
 
-from src.config import settings
 from src.flows import hechos
 from src.flows.state import ConversationState
 
@@ -22,14 +21,8 @@ def test_el_corte_del_pago_existe(lang):
     assert hechos._politica("payment_confirmation", lang)
 
 
-def test_apagado_como_antes(monkeypatch):
-    monkeypatch.setattr(settings, "enlace_con_como_pagar", False)
-    assert "como_reservar" not in _bloque()
-
-
 @pytest.mark.parametrize("lang", ["es", "en"])
 def test_con_el_enlace_va_como_reservar_pagar_y_la_confirmacion(monkeypatch, lang):
-    monkeypatch.setattr(settings, "enlace_con_como_pagar", True)
     b = _bloque(lang=lang)
     como = b["como_reservar"]
     assert hechos._politica("how_to_book", lang) in como
@@ -40,18 +33,15 @@ def test_con_el_enlace_va_como_reservar_pagar_y_la_confirmacion(monkeypatch, lan
 
 
 def test_sin_certificacion_no_va_el_carne(monkeypatch):
-    monkeypatch.setattr(settings, "enlace_con_como_pagar", True)
     assert hechos._politica("certification_required", "es") not in _bloque("snorkel")["como_reservar"]
 
 
 def test_al_colombiano_no(monkeypatch):
-    monkeypatch.setattr(settings, "enlace_con_como_pagar", True)
     b = _bloque(is_colombian=True)
     assert b["enlace"] == {"asesor": True} and "como_reservar" not in b
 
 
 def test_arq3_echa_de_menos_la_confirmacion(monkeypatch):
-    monkeypatch.setattr(settings, "enlace_con_como_pagar", True)
     b = _bloque("snorkel")
     sin_confirmacion = " ".join(c for c in b["como_reservar"] if "concilia" not in c) + " " + " ".join(b["enlace"].values())
     perdidos = hechos.faltan(sin_confirmacion, [b], ["enlace"])

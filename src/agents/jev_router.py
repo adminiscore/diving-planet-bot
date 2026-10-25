@@ -464,7 +464,7 @@ PIDE_DISPONIBILIDAD = "pide_disponibilidad"
 PIDE_EDAD = "pide_edad"
 PIDE_ENLACE = "pide_enlace"
 PIDE_OTRA_COSA = "pide_otra_cosa"
-# arq-1v (22-oct, flag `tiempo_limitado`): «me voy mañana al mediodía, ¿me da tiempo?». No era de la tabla: lo contestaba
+# arq-1v (22-oct): «me voy mañana al mediodía, ¿me da tiempo?». No era de la tabla: lo contestaba
 # el RAG razonando solo y distinto cada vez (G10 nº 4: g10-016, 021, 036, 050, 065).
 PIDE_SI_ALCANZA = "pide_si_alcanza"
 _PIDE_SI_ALCANZA_Q = {
@@ -558,7 +558,7 @@ _PIDE_OTRA_COSA_CON_DESCUENTOS_Q = {
              "of an activity")
     .replace("availability, age, link)", "availability, age, discounts, link)"),
 }
-# arq-1i (23-oct, flag `intenciones_clima_pago`, decisión de Gadea #1312; G10 nº 5: g10-034, g10-067/045/006): el clima
+# arq-1i (23-oct, decisión de Gadea #1312; G10 nº 5: g10-034, g10-067/045/006): el clima
 # en GENERAL y cómo se paga entran en la tabla. El clima de un día concreto o de una reserva hecha NO: sigue la ruta
 # sensible con pase (por eso la pregunta lo excluye).
 PIDE_CLIMA = "pide_clima"
@@ -809,7 +809,7 @@ _FUERA_DEL_SISTEMA = (
 )
 
 
-# arq-1q (22-oct, flag `ya_reservo_no_es_pase`): «ya hice la reserva por la web, ¿cuál es el horario?» daba needs_staff
+# arq-1q (22-oct): «ya hice la reserva por la web, ¿cuál es el horario?» daba needs_staff
 # 2 de 3 veces (banco arq-1p, p3) y el bot pasaba a un asesor una pregunta que los hechos contestan (G10 nº 4: el mismo
 # pase en dos diálogos). Decir que ya reservó no basta: hace falta una persona solo para ver o tocar ESA reserva o pago.
 _YA_RESERVO_NO_BASTA = (
@@ -833,8 +833,7 @@ def _questions_for_turn(pending_slot: str | None = None) -> dict:
     q[ASKS_RECALL] = _ASKS_RECALL_Q
     instrucciones = _NEEDS_STAFF_Q["instructions"]
     instrucciones = f"{instrucciones} {_FUERA_DEL_SISTEMA}"
-    if settings.ya_reservo_no_es_pase:
-        instrucciones = f"{instrucciones} {_YA_RESERVO_NO_BASTA}"
+    instrucciones = f"{instrucciones} {_YA_RESERVO_NO_BASTA}"
     q[NEEDS_STAFF] = {**_NEEDS_STAFF_Q, "instructions": instrucciones}
     q[CHANGES_DATE] = _CHANGES_DATE_Q
     q[COMPANION_JOINS] = _COMPANION_JOINS_Q
@@ -853,12 +852,12 @@ def _questions_for_turn(pending_slot: str | None = None) -> dict:
     if settings.descuentos_en_la_tabla:
         q[PIDE_DESCUENTO] = _PIDE_DESCUENTO_Q
         q[PIDE_OTRA_COSA] = _PIDE_OTRA_COSA_CON_DESCUENTOS_Q
-    if settings.tiempo_limitado and PIDE_OTRA_COSA in q:
+    if PIDE_OTRA_COSA in q:
         # arq-1v: preguntar si da tiempo es de la tabla; «otra cosa» deja de contarlo.
         q[PIDE_SI_ALCANZA] = _PIDE_SI_ALCANZA_Q
         q[PIDE_OTRA_COSA] = {**q[PIDE_OTRA_COSA],
                              "instructions": q[PIDE_OTRA_COSA]["instructions"] + _OTRA_COSA_SIN_EL_TIEMPO}
-    if settings.intenciones_clima_pago and PIDE_OTRA_COSA in q:
+    if PIDE_OTRA_COSA in q:
         # arq-1i: el clima en general y el pago son de la tabla; «otra cosa» deja de contarlos (sus ejemplos los nombraban).
         q[PIDE_CLIMA] = _PIDE_CLIMA_Q
         q[PIDE_PAGO] = _PIDE_PAGO_Q

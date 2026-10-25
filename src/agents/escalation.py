@@ -199,12 +199,11 @@ def detect_sensitive_escalation(message: str, lang: str = "es") -> tuple[str, st
 
 
 def clima_general_al_redactor(reason: str | None, signals: dict | None) -> bool:
-    """arq-1i (flag `intenciones_clima_pago`, decisión de Gadea #1312): una pregunta GENERAL del clima («¿y si hace mal
+    """arq-1i (decisión de Gadea #1312): una pregunta GENERAL del clima («¿y si hace mal
     tiempo se cancela?») no va a la ruta sensible: la contesta el redactor de hechos con la política (se reprograma o se
     reembolsa el 100 % si Capitanía cierra) y ofrece un asesor. Con un día concreto o una reserva hecha Jev no la marca
     (`pide_clima`) y sigue el pase. Lo miran el router y la cascada, con el mismo criterio."""
-    return (reason == "weather_conditions" and settings.intenciones_clima_pago
-            and (signals or {}).get("pide_clima") is True)
+    return reason == "weather_conditions" and (signals or {}).get("pide_clima") is True
 
 
 def sensitive_response_for(category: str, lang: str = "es") -> tuple[str, str] | None:

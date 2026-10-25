@@ -32,7 +32,6 @@ from src.agents.conversational_core import (
     ask_slot,
     next_missing_slot,
 )
-from src.config import settings
 from src.domain import activities as dom
 from src.flows import cart_render
 from src.flows.state import ConversationState, Step
@@ -255,11 +254,11 @@ def _no_hace_falta_certificacion(state: ConversationState, carry: dict) -> str:
 
 
 def _precio_en_su_moneda(state: ConversationState, carry: dict) -> str:
-    """arq-4b (flag `recotizar_al_cambiar_moneda`, G10 nº 4: g10-003, g10-016, g10-047): «soy colombiano» DESPUÉS de
+    """arq-4b (G10 nº 4: g10-003, g10-016, g10-047): «soy colombiano» DESPUÉS de
     recibir el precio en USD recibía «¡Perfecto, eres colombiano!» y la siguiente pregunta, y el precio en pesos no
     llegaba nunca. Si en ESTE turno se sabe que paga en COP y ya se le dio un precio en USD, se le vuelve a dar en COP
     (los mismos hechos del código que usa el redactor)."""
-    if not settings.recotizar_al_cambiar_moneda or state.is_colombian is not True or carry.get("prev_is_colombian"):
+    if state.is_colombian is not True or carry.get("prev_is_colombian"):
         return ""
     if getattr(state, "mixed_nationality_notice", False):
         return ""

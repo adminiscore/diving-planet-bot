@@ -2,17 +2,9 @@
 hecha, preguntar el horario, la recogida o qué llevar lo contesta Coral; ver o tocar esa reserva o pago sigue yendo a un
 asesor. Aquí, sin red: la pregunta de Jev con el flag y sin él (la conducta, en docs/robustness/arq/banco-arq1q.json)."""
 from src.agents import jev_router as j
-from src.config import settings
-
-
-def test_apagado_la_pregunta_es_la_de_antes(monkeypatch):
-    monkeypatch.setattr(settings, "ya_reservo_no_es_pase", False)
-    instrucciones = j._questions_for_turn()[j.NEEDS_STAFF]["instructions"]
-    assert instrucciones == f"{j._NEEDS_STAFF_Q['instructions']} {j._FUERA_DEL_SISTEMA}"
 
 
 def test_encendido_lleva_la_frase_al_final(monkeypatch):
-    monkeypatch.setattr(settings, "ya_reservo_no_es_pase", True)
     instrucciones = j._questions_for_turn()[j.NEEDS_STAFF]["instructions"]
     assert instrucciones.endswith(j._YA_RESERVO_NO_BASTA)
     assert j._FUERA_DEL_SISTEMA in instrucciones

@@ -7,7 +7,6 @@ import json
 import pytest
 
 from src.agents import extractor_turno as ex
-from src.config import settings
 
 
 @pytest.mark.parametrize("antes, despues", ex._CEDULA_DE_EXTRANJERIA_MANDA)
@@ -15,8 +14,7 @@ def test_la_frase_que_se_cambia_esta_en_la_regla(antes, despues):
     assert sum(antes in regla for regla in (ex.SIN_CEDULA_ES, ex.SIN_CEDULA_EN)) == 1
 
 
-def _sistema(monkeypatch, flag: bool, lang: str) -> str:
-    monkeypatch.setattr(settings, "cedula_de_extranjeria_manda", flag)
+def _sistema(lang: str) -> str:
     visto = {}
 
     class _C:
@@ -32,6 +30,5 @@ def _sistema(monkeypatch, flag: bool, lang: str) -> str:
 
 @pytest.mark.parametrize("lang, frase", [("es", "salvo que diga que tiene cédula de extranjería"),
                                          ("en", "unless they say they have a cédula de extranjería")])
-def test_solo_con_el_flag(monkeypatch, lang, frase):
-    assert frase not in _sistema(monkeypatch, False, lang)
-    assert frase in _sistema(monkeypatch, True, lang)
+def test_la_frase_entra_en_la_regla(lang, frase):
+    assert frase in _sistema(lang)

@@ -8,7 +8,6 @@ import pytest
 
 from src.agents import rag_agent, redactor_hechos
 from src.agents.nucleo import extractor
-from src.config import settings
 from src.flows import hechos
 from src.flows.state import ConversationState
 
@@ -76,7 +75,6 @@ def test_con_el_flag_lo_escribe_el_redactor(redactor, monkeypatch):
 
     notas: dict = {}
     monkeypatch.setattr(observability, "note_turn", lambda **kw: notas.update(kw))
-    monkeypatch.setattr(settings, "hechos_sin_actividad", True)
     st = _conv(["horario"])
     answer = asyncio.run(redactor_hechos.responder(st, MENSAJE, st.history))
     assert answer == redactor.estado["texto"]
@@ -85,15 +83,7 @@ def test_con_el_flag_lo_escribe_el_redactor(redactor, monkeypatch):
     assert "9:30" in messages[-1]["content"] and "Bodeguita" in messages[-1]["content"]
 
 
-def test_sin_el_flag_contesta_el_rag(redactor, monkeypatch):
-    monkeypatch.setattr(settings, "hechos_sin_actividad", False)
-    st = _conv(["horario"])
-    assert asyncio.run(redactor_hechos.responder(st, MENSAJE, st.history)) is None
-    assert redactor.hechas == []
-
-
 def test_si_pide_tambien_el_precio_contesta_el_rag(redactor, monkeypatch):
-    monkeypatch.setattr(settings, "hechos_sin_actividad", True)
     st = _conv(["horario", "precio"])
     assert asyncio.run(redactor_hechos.responder(st, MENSAJE, st.history)) is None
     assert redactor.hechas == []
