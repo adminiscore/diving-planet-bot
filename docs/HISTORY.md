@@ -30,6 +30,24 @@ History
   - calidad: **94,8 % 80/116**, frente al 94,9 % 82/116 de anoche, dentro del ruido.
   - Deuda apuntada: el acuse ya no reconoce lo concreto del mensaje («anoto a tu amigo para el minicurso»).
 
+0.32.2 - (2026-10-25)
+---------------------
+* **lat-6b: el extractor en UNA llamada, sin gramática estricta.** Hasta hoy eran dos llamadas a Haiku a la vez en
+  cada turno (la de siempre y la del paso 6: 2 de las 4,6 por turno) porque en octubre la gramática estricta no cabía.
+  Sonda del 25-oct: el límite real de Anthropic son **16 campos anulables** y son 18 (anidar no sirve: cuenta los de
+  dentro). Ahora el esquema va al final del prompt de sistema y el código valida como siempre (citas, tipos); el JSON
+  se lee tolerando cercos. Fuera la llamada aparte, `PASO6_ESPERA_MAX` y sus tests; `reparto_en_pares` ya no hace
+  falta.
+  - Banco ex0 (50 casos × 2) frente a las dos llamadas: **inventados 8 → 2**, casos inestables 3 → 1, p90 2,5 → 2,1 s,
+    p50 1,5 → 1,8 s, perdidos 2 → 6 (el bot los pregunta). La variante «estricta con 16 campos» no se pudo medir
+    bien (quedaban 17 uniones y contestó el respaldo).
+  - real-1 A (PRE 542d5ac) y B a la vez: llamadas por turno **4,66 → 3,57**, coste de la ronda 0,67 → 0,54 $, tokens
+    de entrada 35.900 → 29.900 por turno; latencia igual (p50 2,67 → 2,71 s, p90 5,92 → 5,87 s, p95 6,93 = 6,93 s);
+    el extractor p50 0,71 → 0,86 s y p90 1,21 → 1,08 s, sin respaldos. Calidad: 92,6 % 71/116 frente a 93,5 %
+    73/116 del código de PRE (14 rotos, 12 arreglados: ruido), con un mecanismo reconocible: los fallos del flujo
+    pasan de 20 a 26 y varios son repreguntas, lo que cuadra con los «perdidos» del banco. Deuda: afinar el prompt del
+    esquema para que no deje en null lo que el cliente dice (sin llamadas).
+
 0.32.1 - (2026-10-24)
 ---------------------
 * **lat-6: una sola extracción por turno.** `datos_del_extractor` consumía la tarea adelantada y la soltaba; si el
