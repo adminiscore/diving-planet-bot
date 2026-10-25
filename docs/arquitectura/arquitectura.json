@@ -1,8 +1,8 @@
 {
  "meta": {
-  "generado": "2026-10-24T13:00:38+00:00",
-  "commit": "2d4ebb1b",
-  "rama": "integra-sim5"
+  "generado": "2026-10-25T11:21:44+00:00",
+  "commit": "582577fe",
+  "rama": "feature/sim5t7-alvaro"
  },
  "vistas": {
   "general": {
@@ -133,13 +133,6 @@
      "codigo": false,
      "pre": true,
      "sin_efecto": false
-    },
-    {
-     "nombre": "ya_reservo_no_es_pase",
-     "titulo": "Decir «ya reservé» no es pedir a una persona",
-     "codigo": true,
-     "pre": true,
-     "sin_efecto": false
     }
    ],
    "detalle": [
@@ -167,13 +160,6 @@
     {
      "nombre": "hechos_en_el_pase",
      "titulo": "Antes del pase, con los hechos del código",
-     "codigo": true,
-     "pre": true,
-     "sin_efecto": false
-    },
-    {
-     "nombre": "intenciones_clima_pago",
-     "titulo": "El clima en general y cómo se paga",
      "codigo": true,
      "pre": true,
      "sin_efecto": false
@@ -534,15 +520,7 @@
     "LLM: llm_extractor.extract_and_verify / fill_gaps / verify_fields",
     "Fase EX: extractor_turno.extraer_turno (LLM primero, cita comprobada)"
    ],
-   "interruptores": [
-    {
-     "nombre": "cedula_de_extranjeria_manda",
-     "titulo": "La cédula de extranjería manda sobre «extranjero»",
-     "codigo": true,
-     "pre": true,
-     "sin_efecto": false
-    }
-   ],
+   "interruptores": [],
    "marca": "openrouter",
    "tiempos": {
     "n": 144,
@@ -572,13 +550,6 @@
      "titulo": "Preguntar un precio no es elegir",
      "codigo": false,
      "pre": false,
-     "sin_efecto": false
-    },
-    {
-     "nombre": "recotizar_al_cambiar_moneda",
-     "titulo": "«Soy colombiano» después del precio: en pesos",
-     "codigo": true,
-     "pre": true,
      "sin_efecto": false
     }
    ],
@@ -757,50 +728,8 @@
      "sin_efecto": false
     },
     {
-     "nombre": "redactor_sin_preguntas_de_cierre",
-     "titulo": "El redactor no pregunta datos al cerrar",
-     "codigo": true,
-     "pre": true,
-     "sin_efecto": false
-    },
-    {
-     "nombre": "hechos_sin_actividad",
-     "titulo": "Hora, recogida, qué llevar y sitio sin saber la actividad",
-     "codigo": true,
-     "pre": true,
-     "sin_efecto": false
-    },
-    {
-     "nombre": "requisitos_coherentes",
-     "titulo": "Requisitos sin contradicciones",
-     "codigo": true,
-     "pre": true,
-     "sin_efecto": false
-    },
-    {
      "nombre": "descuentos_en_la_tabla",
      "titulo": "Los descuentos, con sus condiciones",
-     "codigo": true,
-     "pre": true,
-     "sin_efecto": false
-    },
-    {
-     "nombre": "enlace_con_como_pagar",
-     "titulo": "Con el enlace, cómo se reserva y se paga",
-     "codigo": true,
-     "pre": true,
-     "sin_efecto": false
-    },
-    {
-     "nombre": "paquete_varios_dias",
-     "titulo": "«El paquete de varios días» sin decir cuántos",
-     "codigo": true,
-     "pre": true,
-     "sin_efecto": false
-    },
-    {
-     "nombre": "tiempo_limitado",
-     "titulo": "«Me voy mañana al mediodía, ¿me da tiempo?»",
      "codigo": true,
      "pre": true,
      "sin_efecto": false
@@ -827,22 +756,8 @@
      "sin_efecto": false
     },
     {
-     "nombre": "intenciones_clima_pago",
-     "titulo": "El clima en general y cómo se paga",
-     "codigo": true,
-     "pre": true,
-     "sin_efecto": false
-    },
-    {
      "nombre": "frases_por_codigo",
      "titulo": "La recogida y el alojamiento, por código",
-     "codigo": true,
-     "pre": true,
-     "sin_efecto": false
-    },
-    {
-     "nombre": "hechos_que_faltaban",
-     "titulo": "Hechos que faltaban en la tabla",
      "codigo": true,
      "pre": true,
      "sin_efecto": false
@@ -955,13 +870,6 @@
      "titulo": "El enlace al recomendar",
      "codigo": false,
      "pre": false,
-     "sin_efecto": false
-    },
-    {
-     "nombre": "fecha_con_dia_de_la_semana",
-     "titulo": "La fecha con el día de la semana",
-     "codigo": true,
-     "pre": true,
      "sin_efecto": false
     }
    ],
@@ -1651,19 +1559,6 @@
    "sin_efecto": null
   },
   {
-   "nombre": "cedula_de_extranjeria_manda",
-   "area": "Reserva",
-   "titulo": "La cédula de extranjería manda sobre «extranjero»",
-   "texto": "Un extranjero que dice que tiene cédula de extranjería es residente y paga en pesos; antes la regla «extranjero o turista: paga en dólares» le ganaba la mitad de las veces (arq-1r, 22-oct).",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [
-    "b_extraction"
-   ],
-   "sin_efecto": null
-  },
-  {
    "nombre": "chatwoot_typing_indicator",
    "area": "Chat",
    "titulo": "“Escribiendo…” en el chat",
@@ -1742,32 +1637,6 @@
    "sin_efecto": null
   },
   {
-   "nombre": "enlace_con_como_pagar",
-   "area": "Preguntas",
-   "titulo": "Con el enlace, cómo se reserva y se paga",
-   "texto": "Cuando Coral da el enlace de reserva a quien no es colombiano, explica también cómo se reserva y se paga (100 % con tarjeta en la web), que la reserva queda confirmada cuando el equipo concilia el pago y, si la actividad pide certificación, el carné (arq-1u, 22-oct).",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [
-    "r_hechos"
-   ],
-   "sin_efecto": null
-  },
-  {
-   "nombre": "fecha_con_dia_de_la_semana",
-   "area": "Preguntas",
-   "titulo": "La fecha con el día de la semana",
-   "texto": "La fecha que recibe el RAG lleva el día de la semana de hoy y de mañana, para que no los calcule mal (arq-4b, 22-oct).",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [
-    "r_escribir"
-   ],
-   "sin_efecto": null
-  },
-  {
    "nombre": "formato_whatsapp",
    "area": "Chat",
    "titulo": "Formato de WhatsApp",
@@ -1818,32 +1687,6 @@
    "sin_efecto": null
   },
   {
-   "nombre": "hechos_que_faltaban",
-   "area": "Preguntas",
-   "titulo": "Hechos que faltaban en la tabla",
-   "texto": "Coral da también la excepción del refresher (500+ inmersiones o Divemaster: lo revisa un asesor), que el horario no se puede adelantar (lo ve un asesor), que buceo y snorkel pueden ir en la misma lancha con el snorkel en otra zona, y que quien se aloja en Barú o Playa Blanca sale desde Cartagena (arq-5f, 23-oct).",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [
-    "r_hechos"
-   ],
-   "sin_efecto": null
-  },
-  {
-   "nombre": "hechos_sin_actividad",
-   "area": "Preguntas",
-   "titulo": "Hora, recogida, qué llevar y sitio sin saber la actividad",
-   "texto": "Si el cliente pregunta solo a qué hora es o cómo es la recogida, qué llevar o si hay sitio, y no se sabe de qué actividad habla (a menudo porque ya reservó), los datos salen de las políticas, que son iguales para todas, y Coral los escribe; antes contestaba el RAG (arq-1p, 22-oct).",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [
-    "r_hechos"
-   ],
-   "sin_efecto": null
-  },
-  {
    "nombre": "hotel_de_las_islas_da_origen",
    "area": "Preguntas",
    "titulo": "El hotel de las islas ya dice desde dónde sale",
@@ -1865,20 +1708,6 @@
    "pre": true,
    "fijado_en_pre": true,
    "usado_por": [
-    "r_hechos"
-   ],
-   "sin_efecto": null
-  },
-  {
-   "nombre": "intenciones_clima_pago",
-   "area": "Preguntas",
-   "titulo": "El clima en general y cómo se paga",
-   "texto": "«¿Y si hace mal tiempo?» ya no pasa a un asesor: Coral explica la política (las cancelaciones son poco probables; si Capitanía cierra se reprograma y, si no se puede, reembolso del 100 %), no da pronósticos y ofrece un asesor; con un día concreto o una reserva hecha sigue el pase. «¿Cómo pago?» lo contesta según la nacionalidad: el extranjero, 100 % con tarjeta en la web; el colombiano o residente, 100 % o 50 % y 50 %, con un asesor (arq-1i, 23-oct).",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [
-    "safety",
     "r_hechos"
    ],
    "sin_efecto": null
@@ -1958,19 +1787,6 @@
    "pre": false,
    "fijado_en_pre": false,
    "usado_por": [],
-   "sin_efecto": null
-  },
-  {
-   "nombre": "paquete_varios_dias",
-   "area": "Preguntas",
-   "titulo": "«El paquete de varios días» sin decir cuántos",
-   "texto": "Si el cliente pregunta por un paquete de varios días sin decir cuántos, Coral lo entiende así y, al preguntar qué incluye, da lo que tienen todos los paquetes (almuerzo solo el primer día, alojamiento no incluido) y la lista de paquetes, en vez de lo de la salida de un día (arq-1t, 22-oct).",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [
-    "r_hechos"
-   ],
    "sin_efecto": null
   },
   {
@@ -2104,32 +1920,6 @@
    "sin_efecto": null
   },
   {
-   "nombre": "recotizar_al_cambiar_moneda",
-   "area": "Reserva",
-   "titulo": "«Soy colombiano» después del precio: en pesos",
-   "texto": "Si el cliente dice que es colombiano (o residente) después de recibir un precio en dólares, Coral se lo vuelve a dar en pesos (arq-4b, 22-oct).",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [
-    "b_slotfill_close"
-   ],
-   "sin_efecto": null
-  },
-  {
-   "nombre": "redactor_sin_preguntas_de_cierre",
-   "area": "Preguntas",
-   "titulo": "El redactor no pregunta datos al cerrar",
-   "texto": "El redactor de hechos no termina preguntando la fecha, cuántos son o desde dónde salen: esas preguntas las hace la reserva, y si el cliente ya lo dijo era repetirse (arq-4b, 22-oct).",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [
-    "r_hechos"
-   ],
-   "sin_efecto": null
-  },
-  {
    "nombre": "reparto_en_pares",
    "area": "Reserva",
    "titulo": "El reparto del grupo, en un formato más corto para la IA",
@@ -2138,19 +1928,6 @@
    "pre": false,
    "fijado_en_pre": false,
    "usado_por": [],
-   "sin_efecto": null
-  },
-  {
-   "nombre": "requisitos_coherentes",
-   "area": "Preguntas",
-   "titulo": "Requisitos sin contradicciones",
-   "texto": "En los requisitos de un curso va un solo formulario médico (el de curso, no además el de buzo certificado), el curso que hace falta antes (el Open Water para el Advanced) y la edad mínima en cifra; y a quien dice que es buzo certificado se le recuerda el carné (arq-1s, 22-oct).",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [
-    "r_hechos"
-   ],
    "sin_efecto": null
   },
   {
@@ -2167,19 +1944,6 @@
    "sin_efecto": null
   },
   {
-   "nombre": "tiempo_limitado",
-   "area": "Preguntas",
-   "titulo": "«Me voy mañana al mediodía, ¿me da tiempo?»",
-   "texto": "Si el cliente tiene poco tiempo, Coral contesta con la regla de Gadea: desde las islas va muy justo (recogida 9:30-9:45, fin hacia las 12-13) y lo confirma un asesor; desde Cartagena no alcanza (regreso hacia las 4:15); para mañana hay que reservar antes de las 4:30; y la espera antes de volar solo si vuela (arq-1v, 22-oct).",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [
-    "r_hechos"
-   ],
-   "sin_efecto": null
-  },
-  {
    "nombre": "varias_actividades",
    "area": "Preguntas",
    "titulo": "Varias actividades en un mensaje",
@@ -2189,19 +1953,6 @@
    "fijado_en_pre": false,
    "usado_por": [
     "r_hechos"
-   ],
-   "sin_efecto": null
-  },
-  {
-   "nombre": "ya_reservo_no_es_pase",
-   "area": "Enrutador",
-   "titulo": "Decir «ya reservé» no es pedir a una persona",
-   "texto": "Si el cliente ya tiene reserva y solo pregunta el horario, la recogida, qué llevar o algo general de la actividad, Coral le contesta; solo pasa a un asesor si hay que ver o tocar esa reserva o ese pago (si llegó, cambiar la fecha, cancelar, devolución, un correo que no llegó) (arq-1q, 22-oct).",
-   "codigo": true,
-   "pre": true,
-   "fijado_en_pre": true,
-   "usado_por": [
-    "router"
    ],
    "sin_efecto": null
   }

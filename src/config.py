@@ -233,46 +233,6 @@ class Settings(BaseSettings):
     # gpt-6; "low"/"medium" = razona antes de la lista y el tope de salida sube 4000 tokens, como el juez gpt-5/o).
     # Se mide con scripts/banco_juez_reales.py --ajuste juez_luna_razonamiento=low.
     juez_luna_razonamiento: str = "none"
-    # ARQ-1p (22-oct): sin saber la actividad, la hora o la recogida, qué llevar y si hay sitio salen de las políticas
-    # (son iguales para todas) y las escribe el redactor; antes contestaba el RAG (G10 nº 4: 24 turnos sin actividad, 11
-    # de este tipo). Precio, qué incluye, edad y enlace siguen necesitando la actividad. APAGADO hasta medirlo.
-    hechos_sin_actividad: bool = True  # PROMOCIONADO 23-oct (G10 nº 5 con los 11: 90,1 % 34/72 -> 91,2 % 40/72; HISTORY 0.31.96); revert = False
-    # ARQ-1q (22-oct): decir que YA reservó no basta para pasar a una persona (needs_staff de Jev): con la reserva hecha,
-    # preguntar el horario, la recogida o qué llevar lo contesta Coral; ver o tocar esa reserva o pago sigue yendo a un
-    # asesor. APAGADO hasta medirlo.
-    ya_reservo_no_es_pase: bool = True  # PROMOCIONADO 23-oct (G10 nº 5 con los 11: 90,1 % 34/72 -> 91,2 % 40/72; HISTORY 0.31.96); revert = False
-    # ARQ-1r (22-oct): «extranjero o turista: false» (CAL-C) chocaba con la cédula de extranjería, que tienen los
-    # extranjeros residentes (pagan en COP): el extractor leía false 2 de 9 veces. Una frase: salvo que tenga cédula de
-    # extranjería. APAGADO hasta medirlo.
-    cedula_de_extranjeria_manda: bool = True  # PROMOCIONADO 23-oct (G10 nº 5 con los 11: 90,1 % 34/72 -> 91,2 % 40/72; HISTORY 0.31.96); revert = False
-    # ARQ-1s (22-oct): requisitos coherentes en los hechos: en un curso, solo el formulario médico de curso (no además el
-    # de buzo certificado: G10 lo vio contradictorio), y el requisito previo (Open Water para el Advanced) y la edad
-    # mínima en cifra. APAGADO hasta medirlo.
-    requisitos_coherentes: bool = True  # PROMOCIONADO 23-oct (G10 nº 5 con los 11: 90,1 % 34/72 -> 91,2 % 40/72; HISTORY 0.31.96); revert = False
-    # ARQ-1u (22-oct): con el enlace de reserva, los hechos dicen cómo se reserva y se paga por él (el extranjero, 100 %
-    # con tarjeta en la web), que la reserva queda confirmada cuando el equipo concilia el pago (política
-    # payment_confirmation) y, si pide certificación, el carné. APAGADO hasta medirlo.
-    enlace_con_como_pagar: bool = True  # PROMOCIONADO 23-oct (G10 nº 5 con los 11: 90,1 % 34/72 -> 91,2 % 40/72; HISTORY 0.31.96); revert = False
-    # ARQ-1t (22-oct): «el paquete de varios días» sin cifra: el extractor lo dice (paso 6, `paquete_varios_dias`), la
-    # duración queda en varios días y, sin plan elegido, los hechos son los de los paquetes (precio desde el primero con
-    # la lista de todos; qué incluye: lo común a todos), no los de la salida de un día. APAGADO hasta medirlo.
-    paquete_varios_dias: bool = True  # PROMOCIONADO 23-oct (G10 nº 5 con los 11: 90,1 % 34/72 -> 91,2 % 40/72; HISTORY 0.31.96); revert = False
-    # ARQ-1v (22-oct): «me voy mañana al mediodía, ¿me da tiempo?» entra en la tabla (Jev pide_si_alcanza): los hechos
-    # dan la decisión de Gadea (desde las islas va muy justo y lo confirma un asesor; desde Cartagena no alcanza; cierre
-    # de las 4:30 del día anterior) y la espera antes de volar, solo si vuela. APAGADO hasta medirlo.
-    tiempo_limitado: bool = True  # PROMOCIONADO 23-oct (G10 nº 6 con los 8: 92,4 % 42/72 -> 94,3 % 46/72; HISTORY 0.31.98); revert = False
-    # ARQ-1i (23-oct, Gonzalo con Claude, decisión de Gadea #1312 y #1477; G10 nº 5: g10-034 el clima, g10-067/045/006 el
-    # pago): dos intenciones más de la tabla, que no dependen de la actividad. El clima en GENERAL (política
-    # weather_cancellation: si Capitanía cierra se reprograma o se reembolsa el 100 %; sin pronósticos, ofrece un asesor)
-    # ya no va a la ruta sensible; con un día concreto o una reserva hecha, sigue el pase. Y cómo se paga (según la
-    # nacionalidad: el extranjero 100 % con tarjeta en la web; el colombiano, 100 % o 50 % y 50 %, con un asesor), la
-    # confirmación y la transferencia solo si falla el online. APAGADO hasta medirlo.
-    intenciones_clima_pago: bool = True  # PROMOCIONADO 23-oct (G10 nº 6 con los 8: 92,4 % 42/72 -> 94,3 % 46/72; HISTORY 0.31.98); revert = False
-    # ARQ-5f (23-oct, Gonzalo con Claude, reparto de Gadea #1525; G10 nº 5): hechos que faltaban en la tabla. La excepción
-    # del refresher (500+ inmersiones o Divemaster: lo revisa un asesor) en los requisitos del buceo certificado y del
-    # refresher; que el horario no se adelanta (lo ve un asesor); buceo y snorkel en la misma lancha si el turno trae los
-    # dos; y que alojados en Barú o Playa Blanca salen desde Cartagena. APAGADO hasta medirlo.
-    hechos_que_faltaban: bool = True  # PROMOCIONADO 23-oct (G10 nº 6 con los 8: 92,4 % 42/72 -> 94,3 % 46/72; HISTORY 0.31.98); revert = False
     # ARQ-8d (23-oct, reparto de Gadea #1617; G10 nº 6, «qué incluye» del minicurso y del Open Water ya en las islas):
     # con «incluye» va también lo que se HACE (el itinerario de la ficha: la clase, la piscina, la inmersión), si no se
     # pidió el horario; y lo que no incluyen los planes de las islas es la frase de `island_pickup` que lo dice («no
@@ -324,10 +284,7 @@ class Settings(BaseSettings):
     principiante_sin_buceo_certificado: bool = False
     frases_por_codigo: bool = True  # PROMOCIONADO 23-oct (G10 nº 6 con los 8: 92,4 % 42/72 -> 94,3 % 46/72; HISTORY 0.31.98); revert = False
     # arq-4b (22-oct, fallos del G10 nº 4), APAGADOS hasta medirlos con su banco:
-    recotizar_al_cambiar_moneda: bool = True  # PROMOCIONADO 23-oct (G10 nº 5 con los 11: 90,1 % 34/72 -> 91,2 % 40/72; HISTORY 0.31.96); revert = False · «soy colombiano» DESPUÉS de recibir el precio en USD: se vuelve a dar en COP (g10-003/016/047)
-    redactor_sin_preguntas_de_cierre: bool = True  # PROMOCIONADO 23-oct (G10 nº 5 con los 11: 90,1 % 34/72 -> 91,2 % 40/72; HISTORY 0.31.96); revert = False · el redactor no cierra preguntando datos (fecha, personas, origen…): los pregunta el sistema
     descuentos_en_la_tabla: bool = True  # PROMOCIONADO 23-oct (G10 nº 5 con los 11: 90,1 % 34/72 -> 91,2 % 40/72; HISTORY 0.31.96); revert = False · los descuentos son una intención de la tabla (Jev): el redactor los da con sus condiciones (g10-027/035/067)
-    fecha_con_dia_de_la_semana: bool = True  # PROMOCIONADO 23-oct (G10 nº 5 con los 11: 90,1 % 34/72 -> 91,2 % 40/72; HISTORY 0.31.96); revert = False · la fecha del contexto del RAG lleva el día de la semana y el de mañana («jueves 23» era viernes)
     # CAL (17-oct): la preparación de cada producto (`preparation_*`, 18 de 36) en el catálogo, SIEMPRE. MEDIDO: arregla
     # cal-49 (la carta de referido) pero rompe cal-26 y cal-64 (banco CAL-A 41/48 frente a 38/48): dieciocho párrafos
     # en todos los turnos compiten con lo que hace falta en cada uno. APAGADO; la preparación va mejor en la ficha del
