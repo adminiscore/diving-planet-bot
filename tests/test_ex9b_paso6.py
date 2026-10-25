@@ -76,15 +76,14 @@ def _cliente(datos: dict, llamadas: list):
 
 
 async def _llamada(mensaje: str, datos: dict, *, history=None, sabido=None) -> tuple[dict, dict]:
-    """La lectura y LAS DOS llamadas juntas (la de siempre y la del paso 6, siempre aparte desde sim-5): el esquema con
-    los campos de las dos y el prompt de sistema de las dos seguidos."""
+    """La lectura y la llamada (lat-6b: UNA, con los campos de siempre y los del paso 6): su esquema, que va en el prompt
+    de sistema, en la forma de siempre de estos tests, y el prompt."""
     llamadas: list = []
     out = await ex.extraer_turno(mensaje, history=history, sabido=sabido or {}, client=_cliente(datos, llamadas))
-    esquemas = [k["response_format"]["json_schema"]["schema"] for k in llamadas]
-    junta = {"response_format": {"json_schema": {"schema": {
-        "properties": {c: v for e in esquemas for c, v in e["properties"].items()},
-        "required": [c for e in esquemas for c in e.get("required", [])]}}},
-        "messages": [{"content": "\n".join(k["messages"][0]["content"] for k in llamadas)}]}
+    assert len(llamadas) == 1
+    sistema = llamadas[0]["messages"][0]["content"]
+    junta = {"response_format": {"json_schema": {"schema": ex.esquema_del_prompt(sistema)}},
+             "messages": [{"content": sistema}]}
     return out, junta
 
 
@@ -408,80 +407,29 @@ def test_reexporta_lo_de_siempre():
     assert st.detected_duration == "single_day"  # una sola escritura sin el flag
 
 
-# --- 7. los campos del paso 6 en una SEGUNDA llamada (decisión de Gadea 19-oct; promocionado, flag borrado en sim-5) --
-# Ronda ex9b-4: con dos o más campos del paso 6 el esquema estricto no cabía en Haiku ("compiled grammar is too large")
-# y contestaba siempre el respaldo. La llamada de siempre no cambia y los campos nuevos van aparte.
-
-def _cliente_dos(principal: dict, paso6: dict | None, llamadas: list, falla: str | None = None):
-    class _C:
-        async def create(self, **kw):
-            llamadas.append(kw)
-            es_paso6 = "dias_de_buceo" in kw["response_format"]["json_schema"]["schema"]["properties"]
-            if falla == ("paso6" if es_paso6 else "principal"):
-                raise RuntimeError("400 grammar too large")
-            msg = type("M", (), {"content": json.dumps(paso6 if es_paso6 else principal)})()
-            return type("R", (), {"choices": [type("C", (), {"message": msg})()], "usage": None})()
-
-    return type("O", (), {"chat": type("Ch", (), {"completions": _C()})()})()
-
+# --- 7. lat-6b (25-oct): los campos del paso 6 van en la MISMA llamada, sin gramática -------------------------------
+# Hasta hoy iban en una segunda llamada a la vez (ronda ex9b-4: la gramática estricta no cabía en Haiku; el límite real
+# de Anthropic son 16 campos anulables y son 18). Ahora el esquema va al final del prompt y el código valida.
 
 MENSAJE7 = "somos 2, estaré una semana pero solo quiero bucear un día"
-PRINCIPAL7 = {"group_size": {"valor": 2, "cita": "somos 2"}}
-PASO6_7 = {"dias_de_buceo": {"valor": 1, "cita": "solo quiero bucear un día"}, "dias_de_estancia": None}
-
-
-@pytest.fixture
-def aparte(monkeypatch, encender):
-    monkeypatch.setattr(settings, "extractor_respaldo_modelo", "")
+DATOS7 = {"group_size": {"valor": 2, "cita": "somos 2"},
+          "dias_de_buceo": {"valor": 1, "cita": "solo quiero bucear un día"}, "dias_de_estancia": None}
 
 
 @pytest.mark.asyncio
-async def test_aparte_dos_llamadas_y_se_juntan(aparte):
+async def test_una_sola_llamada_con_todos_los_campos_y_sin_gramatica():
     llamadas: list = []
-    out = await ex.extraer_turno(MENSAJE7, history=None, sabido={}, client=_cliente_dos(PRINCIPAL7, PASO6_7, llamadas))
-    assert len(llamadas) == 2
-    principal, paso6 = sorted(llamadas, key=lambda k: "dias_de_buceo" in _campos_del_esquema(k))
-    assert "dias_de_buceo" not in _campos_del_esquema(principal) and "group_size" in _campos_del_esquema(principal)
-    assert {"dias_de_buceo", "dias_de_estancia", "edades"} <= _campos_del_esquema(paso6)
-    assert ex.REGLA_DURACION_ES not in principal["messages"][0]["content"]
-    assert ex.REGLA_DURACION_ES in paso6["messages"][0]["content"]
+    out = await ex.extraer_turno(MENSAJE7, history=None, sabido={}, client=_cliente(DATOS7, llamadas))
+    assert len(llamadas) == 1 and "response_format" not in llamadas[0]
+    esquema = ex.esquema_del_prompt(llamadas[0]["messages"][0]["content"])
+    assert {"group_size", "dias_de_buceo", "dias_de_estancia", "edades"} <= set(esquema["properties"])
+    assert ex.REGLA_DURACION_ES in llamadas[0]["messages"][0]["content"]
     assert out["group_size"] == 2 and out["dias_de_buceo"] == 1
 
 
-@pytest.mark.asyncio
-async def test_aparte_si_falla_la_del_paso6_quedan_los_demas_datos(aparte):
-    out = await ex.extraer_turno(MENSAJE7, history=None, sabido={},
-                                 client=_cliente_dos(PRINCIPAL7, PASO6_7, [], falla="paso6"))
-    assert out is not None and out["group_size"] == 2 and "dias_de_buceo" not in out
-
-
-@pytest.mark.asyncio
-async def test_aparte_si_falla_la_principal_el_extractor_falla(aparte):
-    out = await ex.extraer_turno(MENSAJE7, history=None, sabido={},
-                                 client=_cliente_dos(PRINCIPAL7, PASO6_7, [], falla="principal"))
-    assert out is None
-
-
-@pytest.mark.asyncio
-async def test_aparte_la_llamada_lenta_del_paso6_no_bloquea_el_turno(aparte, monkeypatch):
-    """Ronda ex9b-6: el respaldo de la llamada del paso 6 tardó 6-8 s y el turno lo esperaba."""
-    import asyncio
-    import time
-
-    monkeypatch.setattr(ex, "PASO6_ESPERA_MAX", 0.1)
-
-    class _C:
-        async def create(self, **kw):
-            if "dias_de_buceo" in kw["response_format"]["json_schema"]["schema"]["properties"]:
-                await asyncio.sleep(3)
-            msg = type("M", (), {"content": json.dumps(PRINCIPAL7)})()
-            return type("R", (), {"choices": [type("C", (), {"message": msg})()], "usage": None})()
-
-    cliente = type("O", (), {"chat": type("Ch", (), {"completions": _C()})()})()
-    t0 = time.perf_counter()
-    out = await ex.extraer_turno(MENSAJE7, history=None, sabido={}, client=cliente)
-    assert time.perf_counter() - t0 < 1.5
-    assert out["group_size"] == 2 and "dias_de_buceo" not in out
+@pytest.mark.parametrize("texto", ['{"a": 1}', '```json\n{"a": 1}\n```', 'Aquí va:\n{"a": 1}\n(fin)'])
+def test_el_json_de_la_respuesta_tolera_cercos_y_texto_suelto(texto):
+    assert ex._json_de_la_respuesta(texto) == {"a": 1}
 
 
 # --- 8. quien se suma al grupo: por el punto único del acompañante y con Jev (ex-9b, punto 2 de Gadea) -------------

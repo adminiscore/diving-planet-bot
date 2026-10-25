@@ -15,7 +15,6 @@ Si la llamada falla, devuelve {} y el turno sigue con lo de hoy (degradación). 
 """
 from __future__ import annotations
 
-import asyncio
 import json
 import logging
 import re
@@ -368,8 +367,30 @@ _REPARTO_EN_PARES = _dato(
     "Cuántas personas hacen cada actividad (una entrada por actividad), solo si el grupo se reparte entre VARIAS.")
 
 
-# Cuánto más que a la llamada principal se espera a la del paso 6 (ver `extraer_turno`).
-PASO6_ESPERA_MAX = 1.5
+# lat-6b (25-oct): UNA llamada sin gramática. Hasta hoy eran dos a la vez (la de siempre y la del paso 6) porque la
+# gramática estricta de Anthropic no admite más de 16 campos anulables y son 18. Ahora el esquema va al final del
+# prompt y el código valida como siempre (citas, tipos). Banco ex0 50×2 frente a las dos llamadas: inventados 8 -> 2,
+# casos inestables 3 -> 1, p90 2,5 -> 2,1 s; perdidos 2 -> 6 (el bot los pregunta).
+_SOLO_JSON_ES = ("\n\nResponde SOLO con un objeto JSON (sin texto antes ni después, sin ```), con EXACTAMENTE las claves "
+                 "de este esquema y sus tipos; cada dato es {\"valor\", \"cita\"} o null si el cliente no lo afirma:\n")
+_SOLO_JSON_EN = ("\n\nAnswer ONLY with a JSON object (no text before or after, no ```), with EXACTLY the keys of this "
+                 "schema and their types; each fact is {\"valor\", \"cita\"} or null if the customer does not state it:\n")
+
+
+def esquema_del_prompt(sistema: str) -> dict:
+    """El esquema que fue en el prompt de sistema de una llamada (lat-6b: va después de `_SOLO_JSON_*`). Para los tests."""
+    marca = next((m for m in (_SOLO_JSON_ES, _SOLO_JSON_EN) if m in sistema), None)
+    return json.loads(sistema.split(marca, 1)[1]) if marca else {}
+
+
+def _json_de_la_respuesta(texto: str) -> dict:
+    """El JSON de una respuesta sin gramática: tolera ``` alrededor y texto suelto antes o después."""
+    t = (texto or "").strip()
+    if t.startswith("```"):
+        t = t.split("\n", 1)[1] if "\n" in t else t[3:]
+        t = t.rsplit("```", 1)[0]
+    i, j = t.find("{"), t.rfind("}")
+    return json.loads(t[i:j + 1] if i >= 0 and j > i else t)
 
 
 def _reparto_de_pares(valor):
@@ -711,18 +732,10 @@ async def extraer_turno(mensaje: str, *, history: list[dict] | None = None, sabi
     con_refresher = (sabido or {}).get("last_dive_over_2_years") is True
     if con_refresher:
         sistema += REGLA_REFRESHER_ES if lang == "es" else REGLA_REFRESHER_EN
-    # ex-9b paso 6: los campos nuevos con su regla (ninguno con los flags apagados).
+    # ex-9b paso 6: los campos nuevos con su regla, en la misma llamada (lat-6b).
     paso6 = campos_paso6(history)
-    # ex-9b (19-oct, decisión de Gadea): con dos o más campos del paso 6 el esquema estricto no cabía en Haiku ("compiled
-    # grammar is too large": ronda ex9b-4, 92 de 92 llamadas al respaldo). La llamada de siempre sale con su esquema de
-    # siempre y los campos del paso 6 van en OTRA llamada, a la vez (mismo texto + sus reglas: el principio del prompt
-    # sale de la caché). Se juntan al leer.
-    aparte = bool(paso6)
-    sistema_paso6 = sistema
     for _esq, regla_es, regla_en in paso6.values():
-        sistema_paso6 += regla_es if lang == "es" else regla_en
-    if not aparte:
-        sistema = sistema_paso6
+        sistema += regla_es if lang == "es" else regla_en
     if (sabido or {}).get("group_size") or (sabido or {}).get("group_allocation"):
         sistema += REGLA_SUMARSE_ES if lang == "es" else REGLA_SUMARSE_EN
     modelo = modelo or settings.extractor_turno_model
@@ -733,44 +746,25 @@ async def extraer_turno(mensaje: str, *, history: list[dict] | None = None, sabi
         # 18-oct (mod-2): con `extractor_respaldo_modelo`, si el extractor no contesta en `extractor_respaldo_segundos`
         # la misma petición va al respaldo y gana la primera (ronda mod-F: la cola de Haiku por OpenRouter, 4-5 s en
         # 2 de 47 turnos). Vacío = la llamada de siempre. r6-1: sale etiquetada en [TURN_METRICS] como `pieza`.
+        # lat-6b: sin gramática; el esquema (con sus reglas) va al final del prompt y el código valida después.
+        sist = sist + (_SOLO_JSON_ES if lang == "es" else _SOLO_JSON_EN) + json.dumps(esquema, ensure_ascii=False)
         with pieza_llm(pieza):
             return await crear_con_respaldo(
                 client, respaldo=settings.extractor_respaldo_modelo, segundos=settings.extractor_respaldo_segundos,
                 pieza=pieza,
                 model=modelo,
                 messages=[{"role": "system", "content": sist}, {"role": "user", "content": usuario}],
-                response_format={"type": "json_schema",
-                                 "json_schema": {"name": "datos_del_turno", "strict": True, "schema": esquema}},
                 temperature=0.0,
                 # EX-EST-1 (14-oct): con los campos nuevos (idioma, nombre, quiere_bucear...) 400 cortaba el JSON (2 de
                 # cada 1.000 llamadas en el banco: "Unterminated string" -> el turno caía al camino viejo).
                 max_tokens=700,
             )
 
-    datos_paso6: dict = {}
     try:
         client = client or trace_openai(AsyncOpenAI(api_key=settings.openai_api_key))
-        esquema = _esquema(True, con_refresher, settings.precio_no_elige, None if aparte else paso6)
-        if aparte:
-            esquema_paso6 = {"type": "object", "properties": {c: e for c, (e, _es, _en) in paso6.items()},
-                             "required": list(paso6), "additionalProperties": False}
-            t6 = asyncio.ensure_future(_pedir(sistema_paso6, esquema_paso6, "extractor_paso6"))
-            try:
-                resp = await _pedir(sistema, esquema, "extractor")
-            except BaseException:
-                t6.cancel()
-                raise
-            # Ronda ex9b-6: el respaldo de esta llamada tardó 6-8 s en 3 turnos y el turno lo esperaba. Como mucho se la
-            # espera `PASO6_ESPERA_MAX` s más que a la principal; si no llega, el turno sigue sin sus campos (el bot los
-            # pregunta si hacen falta, como cuando el extractor falla).
-            try:
-                resp6 = await asyncio.wait_for(t6, timeout=PASO6_ESPERA_MAX)
-                datos_paso6 = json.loads(resp6.choices[0].message.content or "{}")
-            except Exception as exc6:  # noqa: BLE001 — sin los campos del paso 6 en este turno
-                logger.warning(f"[LLM_EXTRACTOR] la llamada del paso 6 no llegó o falló ({exc6!r}): sin sus campos")
-        else:
-            resp = await _pedir(sistema, esquema, "extractor")
-        datos = {**json.loads(resp.choices[0].message.content or "{}"), **datos_paso6}
+        esquema = _esquema(True, con_refresher, settings.precio_no_elige, paso6)
+        resp = await _pedir(sistema, esquema, "extractor")
+        datos = _json_de_la_respuesta(resp.choices[0].message.content or "{}")
         uso = getattr(resp, "usage", None)
         detalle = getattr(uso, "prompt_tokens_details", None)
         extraer_turno.ultimo_uso = {"entrada": getattr(uso, "prompt_tokens", 0) or 0,

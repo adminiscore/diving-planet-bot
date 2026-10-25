@@ -37,7 +37,7 @@ async def test_la_decision_y_quiere_bucear():
     out = await ex.extraer_turno(MSG, sabido={"is_certified": True, "last_dive_over_2_years": True}, client=_cliente(SI, llamadas))
     assert out["refresher_interested"] is True
     assert out["activity"] == "certified_diving"  # certificado que quiere el repaso = quiere bucear
-    esquema = llamadas[0]["response_format"]["json_schema"]["schema"]
+    esquema = ex.esquema_del_prompt(llamadas[0]["messages"][0]["content"])
     assert "refresher_interested" in esquema["properties"] and "refresher_interested" in esquema["required"]
     assert ex.REGLA_REFRESHER_ES in llamadas[0]["messages"][0]["content"]
 
