@@ -45,8 +45,11 @@ History
     de entrada 35.900 → 29.900 por turno; latencia igual (p50 2,67 → 2,71 s, p90 5,92 → 5,87 s, p95 6,93 = 6,93 s);
     el extractor p50 0,71 → 0,86 s y p90 1,21 → 1,08 s, sin respaldos. Calidad: 92,6 % 71/116 frente a 93,5 %
     73/116 del código de PRE (14 rotos, 12 arreglados: ruido), con un mecanismo reconocible: los fallos del flujo
-    pasan de 20 a 26 y varios son repreguntas, lo que cuadra con los «perdidos» del banco. Deuda: afinar el prompt del
-    esquema para que no deje en null lo que el cliente dice (sin llamadas).
+    pasan de 20 a 26 y varios son repreguntas, lo que cuadra con los «perdidos» del banco.
+  - **Prompt del esquema afinado** (misma noche): «todas las claves, ninguna omitida; rellena lo que el cliente dice
+    aunque ya se supiera; repasa el mensaje entero antes de dejar un null». Banco ex0 50 × 2 frente al prompt de
+    arriba: aciertos 44 → 46, perdidos 6 → 4, inventados 2 = 2, casos inestables 1 → 0, p90 2,06 → 1,98 s. Sin
+    llamadas nuevas; se comprueba en la siguiente real-1.
 
 0.32.1 - (2026-10-24)
 ---------------------

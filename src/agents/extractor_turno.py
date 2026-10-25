@@ -371,10 +371,14 @@ _REPARTO_EN_PARES = _dato(
 # gramática estricta de Anthropic no admite más de 16 campos anulables y son 18. Ahora el esquema va al final del
 # prompt y el código valida como siempre (citas, tipos). Banco ex0 50×2 frente a las dos llamadas: inventados 8 -> 2,
 # casos inestables 3 -> 1, p90 2,5 -> 2,1 s; perdidos 2 -> 6 (el bot los pregunta).
-_SOLO_JSON_ES = ("\n\nResponde SOLO con un objeto JSON (sin texto antes ni después, sin ```), con EXACTAMENTE las claves "
-                 "de este esquema y sus tipos; cada dato es {\"valor\", \"cita\"} o null si el cliente no lo afirma:\n")
-_SOLO_JSON_EN = ("\n\nAnswer ONLY with a JSON object (no text before or after, no ```), with EXACTLY the keys of this "
-                 "schema and their types; each fact is {\"valor\", \"cita\"} or null if the customer does not state it:\n")
+_SOLO_JSON_ES = ("\n\nResponde SOLO con un objeto JSON (sin texto antes ni después, sin ```), con TODAS las claves de "
+                 "este esquema (ninguna omitida, en este orden) y sus tipos. Cada dato es {\"valor\", \"cita\"} si el "
+                 "cliente lo afirma en su mensaje (aunque ya se supiera o parezca obvio: rellénalo con su cita) y null "
+                 "solo si no lo dice. Repasa el mensaje entero antes de dejar un dato en null:\n")
+_SOLO_JSON_EN = ("\n\nAnswer ONLY with a JSON object (no text before or after, no ```), with ALL the keys of this schema "
+                 "(none omitted, in this order) and their types. Each fact is {\"valor\", \"cita\"} if the customer "
+                 "states it in their message (even if it was already known or seems obvious: fill it in with the "
+                 "quote) and null only if they do not say it. Re-read the whole message before leaving a fact null:\n")
 
 
 def esquema_del_prompt(sistema: str) -> dict:

@@ -59,7 +59,32 @@ integrar la rama del otro y suite en verde, porque en PRE gana el último; (3) *
 despliegue reinicia el contenedor y mata la medida del otro (avisar en el registro de Plan Coral con la hora de fin).
 Las doce normas, con su porqué, están en el documento.
 
-### ▶️ RETOMAR AQUÍ — 24-oct, 00:15 (Gadea con Claude): G10 nº 6 y arq-8 PROMOCIONADOS; real-1 = 94,9 % 82/116
+### ▶️ RETOMAR AQUÍ — 25-oct, noche (Claude solo, con el mandato de Gadea): fase LAT, PRE 542d5ac
+
+- **Rumbo (Gadea, 24-oct y 25-oct):** adelgazar: menos llamadas y menos latencia, borrando código (no flags nuevos);
+  la calidad puede bajar algo porque se recupera después (`lat-deuda` en Plan Coral). Plan:
+  `docs/robustness/lat/plan-lat.md`. Si se agota OpenRouter u OpenAI: subir todo, relevo y apagar el PC.
+- **PRE sirve `542d5ac`** (feature/pre_gadea; HISTORY 0.32.0 y 0.32.1): cortes A y B, lat-1 completo, lat-6, lat-7,
+  lat-0a y sim-5 entero (141 → 21 interruptores; en `config.py` no queda ningún flag promocionado). real-1 A/B a la
+  misma hora: llamadas por turno **7,67 → 4,57**, p90 **7,98 → 5,61 s**, p95 11,18 → 6,87 s; calidad 82 → 73/116
+  (3 de los 4 fallos del flujo revisados tienen la conversación idéntica en A y B: es el juez; el resto, ruido más
+  deuda). Meta de la fase: 3-5 llamadas por turno y p90 ≤ 7 s: cumplida; se sigue adelgazando.
+- **lat-6b subido a `pre_gadea` 0c126e2** (HISTORY 0.32.2): el extractor en UNA llamada sin gramática (el límite
+  real de Anthropic son 16 campos anulables y son 18). real-1 A/B a la misma hora: llamadas por turno **4,66 → 3,57**,
+  coste −19 %, latencia igual; calidad 92,6 % 71/116 frente a 93,5 % 73/116 (ruido; suben las repreguntas del flujo
+  20 → 26 por los datos que el extractor deja en null: deuda). Con esto, desde el 24-oct por la mañana: **7,67 → 3,57
+  llamadas por turno**, p90 7,98 → 5,87 s.
+- **En marcha:** lat-5 (Gonzalo, opción b: el revisor solo con cifras fuera de contexto). sim-6 (Álvaro: borrar los
+  18 experimentos apagados, `reparto_en_pares` incluido; `jev_router_enabled` a True; conservar `flows/avisos.py`).
+  Deuda del extractor: el prompt del esquema afinado la misma noche (banco ex0: perdidos 6 → 4, inestables 1 → 0,
+  inventados 2 = 2); pendiente de comprobarlo en la siguiente real-1 (cualquier A/B lo lleva).
+- **Después, por orden:** lat-deuda (avisos del 10 % de grupo, Barú y clima por código; COP y origen antes del
+  precio por código), lat-0b (solo «mi tío es buzo certificado»), lat-8 (ampliar la tabla con lo que se repite en los
+  chats reales), lat-9 (un solo escritor: juntar redactor y RAG).
+- **Medir:** real-1 con el juez en paralelo (~45 min, ~2,5 $ OpenAI + ~0,6 $ OpenRouter); cada juez cuesta, así que
+  una A/B por corte y en serie.
+
+### (anterior) RETOMAR AQUÍ — 24-oct, 00:15 (Gadea con Claude): G10 nº 6 y arq-8 PROMOCIONADOS; real-1 = 94,9 % 82/116
 
 - **PRE sirve `39cd9ec`** (feature/pre_gadea), healthy, 152 ajustes. HISTORY 0.31.98 (G10 nº 6: 8 flags, mej-7 a 300 s,
   arq-7e y el juez `--paralelo`) y 0.31.99 (arq-8: 7 flags; fuera `discount_policies` de pricing.json).
