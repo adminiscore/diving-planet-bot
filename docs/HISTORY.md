@@ -30,6 +30,35 @@ History
   - calidad: **94,8 % 80/116**, frente al 94,9 % 82/116 de anoche, dentro del ruido.
   - Deuda apuntada: el acuse ya no reconoce lo concreto del mensaje («anoto a tu amigo para el minicurso»).
 
+0.32.1 - (2026-10-24)
+---------------------
+* **lat-6: una sola extracción por turno.** `datos_del_extractor` consumía la tarea adelantada y la soltaba; si el
+  mismo turno volvía a leer (el redactor, el enrutado) se pedía otra extracción en serie, ~1 s en el 13 % de los
+  turnos de real-1. La lectura del turno se guarda y se reutiliza.
+* **lat-1 completo** (Gonzalo): en la reserva sin pregunta también se cancela el RAG adelantado, y cancelar una
+  respuesta cancela de verdad sus llamadas en marcha (antes el escritor seguía vivo hasta terminar, aunque el que
+  esperaba ya estuviera cancelado). Medido frente al bot desplegado a la misma hora: llamadas por turno 5,47 → **4,71**,
+  escritor del RAG 316 → 208 llamadas, p90 6,52 → 6,18 s, p95 7,89 → 7,13 s.
+* **sim-5 completo** (Álvaro, integrado por Gadea): fuera los ~118 flags promocionados con sus caminos viejos (tandas
+  1-6: lo del 13 al 22-oct; tanda 7: los 24 del 23-oct, arq-8 incluido). El mapa pasa de 141 a **21 interruptores** y en
+  `config.py` no queda ningún flag promocionado salvo los del canal. Foto de equivalencia idéntica antes y después
+  (384/384 piezas): no cambia lo que dice el bot. Donde sim-5 y los cortes de LAT borraban cosas distintas, se quedan
+  los dos borrados; del compose solo sigue vivo `OPENROUTER_RESPALDO_SEGUNDOS=2.0`. `discount_policies` de
+  `pricing.json` ya no lo lee nadie.
+* **lat-7** (Gonzalo): pedir algo de la reserva sin preguntar («quiero bucear certificado», «hola, me gustaría
+  reservar») ya no va al RAG: lo contesta el flujo con su siguiente pregunta (~1,3 s en vez de 2,8-9,5 s y el saludo
+  repetido). Un solo cambio en `_turn_has_question`, sin flags.
+* **Medido con real-1, A (desplegado 1d97b6d) y B a la vez:**
+  - integra-sim5 (lat-6 + sim-5 + lat-1 completo): llamadas por turno 5,69 → 4,84, p50 3,21 → 2,97 s, p90 igual,
+    coste de la ronda 0,76 → 0,57 $; calidad 93,9 % 73/116 (PRE: 94,8 % 80/116).
+  - + lat-7: llamadas 5,45 → **4,57**, p50 2,73 → **2,54 s**, p90 6,01 → **5,61 s**, p95 7,33 → **6,87 s**; escritor
+    del RAG 320 → 179 llamadas; calidad 93,5 % 73/116 (lat-7 no cuesta nada).
+  - Los −7 diálogos frente a PRE: de los 4 fallos del flujo revisados, 3 tienen la conversación idéntica en A y B
+    (el juez) y el cuarto es la inestabilidad del extractor de siempre (sonda ×5: 2/5 con lo nuevo, 1/5 con PRE). Lo
+    demás son invenciones sueltas del RAG. Se da por ruido más deuda; no se gasta el juez de atribución.
+* **Acumulado de la fase LAT desde el 24-oct por la mañana:** llamadas por turno 7,67 → 4,57, p90 7,98 → 5,61 s, p95
+  11,18 → 6,87 s, interruptores 141 → 21; calidad 82 → 73/116 (deuda en Plan Coral, lat-deuda).
+
 0.31.99 - (2026-10-23)
 ----------------------
 * **PROMOCIÓN arq-8** (decisión de Gadea, 23-oct). Son las causas de los fallos que se repetían en el G10 nº 6 y en su
