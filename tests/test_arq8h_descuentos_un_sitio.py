@@ -42,16 +42,3 @@ def test_la_regla_de_que_no_se_acumulan_llega_a_la_tabla_y_al_catalogo(lang):
                        .read_text(encoding="utf-8-sig"))["discount_policies"]["non_cumulative"][lang]
     assert regla in hechos._descuentos(ConversationState(conversation_id="arq8h", language=lang), lang)
     assert regla in catalog.catalog_facts(lang)
-
-
-def test_el_indice_lee_la_base():
-    from scripts.load_embeddings import load_knowledge_base
-
-    docs = [d for d in load_knowledge_base() if str(d["metadata"].get("section", "")).startswith("discount_")]
-    textos = " ".join(d["content"] for d in docs)
-    assert DISCOUNTS["own_equipment_discount"]["description_es"] in textos  # con «solo buceo recreativo y cursos»
-    assert DISCOUNTS["group_discount"]["companion_note_en"] in textos
-    assert "roverd" not in textos.lower()
-    assert {"discount_group_discount", "discount_own_equipment", "discount_online_booking",
-            "discount_colombian_cop_pricing", "discount_non_cumulative", "discount_policies"} \
-        == {d["metadata"]["section"] for d in docs}

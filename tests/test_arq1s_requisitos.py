@@ -17,9 +17,11 @@ def _requisitos(actividad: str, lang: str = "es") -> list[str]:
 
 
 @pytest.mark.parametrize("lang", ["es", "en"])
-def test_el_corte_de_la_politica_existe(lang):
-    """Si alguien reescribe la política médica sin la frase del buzo certificado, el corte dejaría de aplicarse."""
-    assert hechos._CORTE_FORMULARIO[lang] in hechos._politica("medical_restrictions", lang)
+def test_el_formulario_de_curso_va_aparte_del_de_buzo_certificado(lang):
+    """lat-deuda-u (26-oct): ya no se corta la política por una frase; son dos políticas."""
+    curso, certificado = hechos._politica("medical_restrictions", lang), hechos._politica("medical_certified_diver", lang)
+    assert "exoneracion-curso" in curso and "exoneracion-buzo" not in curso
+    assert "exoneracion-buzo" in certificado and "exoneracion-curso" not in certificado
 
 
 @pytest.mark.parametrize("lang", ["es", "en"])

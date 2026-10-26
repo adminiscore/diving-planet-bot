@@ -119,3 +119,69 @@ def test_el_paquete_de_3_vuelve_al_dia_siguiente():
     svc = _json("services.json")["services"]["3_dives_1_day"]
     assert any(p.startswith("Día 2: regreso a Cartagena") for p in svc["itinerary_es"])
     assert any(p.startswith("Day 2: return to Cartagena") for p in svc["itinerary_en"])
+
+
+# --- limpieza del inventario (26-oct): políticas partidas, una lista de hoteles, días de cierre, nada muerto -------
+
+@pytest.mark.parametrize("actividad, con", [
+    ("certified_diving", {"refresh_requirement", "insurance_form_requirement"}),
+    ("refresher", {"medical_restrictions", "refresh_requirement", "insurance_form_requirement"}),
+    ("minicourse", {"medical_restrictions", "insurance_form_requirement"}),
+    ("padi_open_water", {"medical_restrictions", "insurance_form_requirement"}),
+    ("snorkel", {"insurance_form_requirement"}),
+])
+def test_los_requisitos_que_son_politicas_salen_de_un_sitio(actividad, con):
+    requisitos = catalog.requisitos_de_politica(actividad, "es")
+    for clave in ("medical_restrictions", "refresh_requirement", "insurance_form_requirement"):
+        assert (catalog.politica(clave, "es") in requisitos) == (clave in con), clave
+
+
+def test_las_fichas_no_copian_politicas_ni_la_edad():
+    for sid, svc in _json("services.json")["services"].items():
+        assert len(svc.get("requirements_es") or []) == len(svc.get("requirements_en") or []), sid
+        for r in svc.get("requirements_es") or []:
+            assert not any(x in r for x in ("seguro", "Si llevas más de 2 años", "exoneracion-curso", "años de edad",
+                                            "Tener al menos", "Edad mínima")), (sid, r)
+
+
+def test_las_politicas_ya_no_se_cortan_por_frases():
+    import inspect
+
+    fuente = inspect.getsource(hechos)
+    assert "_CORTE_" not in fuente and ".find(" not in fuente
+
+
+def test_una_sola_lista_de_hoteles():
+    from src.agents import extractor_turno, jev_router, rag_agent
+    from src.domain import lugares
+
+    assert extractor_turno.HOTELES_DE_LA_BASE == lugares.hoteles_con_recogida()
+    assert rag_agent.AMBIGUOUS_LOCATION_NAMES == lugares.lugares_de_las_islas()
+    assert "Pao Pao" in lugares.hoteles_con_recogida()
+    pregunta = jev_router._questions_for_turn(None)[jev_router.CUSTOMER_PLACE]
+    assert "Pao Pao" in pregunta["criteria"]["islands"]
+    texto = _json("policies.json")["policies"]["other_island_hotels"]
+    for hotel in lugares.hoteles_con_recogida():
+        assert hotel.replace("San Pedro de ", "") in texto["es"] and hotel.replace("San Pedro de ", "") in texto["en"]
+
+
+def test_los_dias_de_cierre_salen_de_la_base():
+    from src.agents import escalation
+    from src.domain.calendario import dias_cerrados
+    from src.prompts import info
+
+    assert dias_cerrados("es") == "el 25 de diciembre y el 1 de enero"
+    assert dias_cerrados("es", articulo=False) == "25 de diciembre y 1 de enero"
+    assert dias_cerrados("en") == "December 25 and January 1"
+    for texto in (catalog.catalog_facts("es"), escalation._CLIMA_CON_POLITICA["es"], info.RAG_DISPONIBILIDAD_NUEVA_ES):
+        assert dias_cerrados("es") in texto
+
+
+def test_nada_muerto():
+    assert not ({"price", "extra_notes_es", "extra_block_es", "flight_rule_es", "summary_intro_es"}
+                & set(catalog.SERVICES["2_dives_1_day"]))
+    from scripts import load_embeddings
+
+    assert not hasattr(load_embeddings, "load_knowledge_base")
+    ci = (Path(__file__).resolve().parents[1] / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
+    assert "python -m scripts.load_embeddings" not in ci and "python -m scripts.kb_v2 --yes" in ci

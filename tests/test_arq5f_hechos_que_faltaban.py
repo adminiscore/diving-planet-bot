@@ -36,6 +36,7 @@ def test_buceo_y_snorkel_en_la_misma_lancha():
 def test_barú_sale_desde_cartagena():
     foto = redactor_hechos._foto(_st(), {}, "cartagena", "Nos alojamos en Barú, ¿a qué hora sale el snorkel?", [])
     [b] = hechos.hechos(foto, ["horario"], ["snorkel"])
-    assert b["recogida"]["cartagena"][-1].startswith("Quien se aloja en Barú")
+    assert b["recogida"]["cartagena"][-1] == hechos._politica("baru_departs_from_cartagena", "es")
+    assert "quien se aloja en Barú sale desde Cartagena" in b["recogida"]["cartagena"][-1]
     otra = redactor_hechos._foto(_st(), {}, "cartagena", "¿A qué hora sale el snorkel desde Cartagena?", [])
     assert not getattr(otra, "_aloja_en_baru", False)

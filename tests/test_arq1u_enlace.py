@@ -16,8 +16,9 @@ def _bloque(actividad="certified_diving", lang="es", **campos):
 
 
 @pytest.mark.parametrize("lang", ["es", "en"])
-def test_el_corte_del_pago_existe(lang):
-    assert hechos._CORTE_PAGO[lang] in hechos._politica("foreign_card_payment", lang)
+def test_el_pago_de_los_colombianos_va_aparte(lang):
+    """lat-deuda-u (26-oct): ya no se corta `foreign_card_payment` por una frase; son dos políticas."""
+    assert "50" in hechos._politica("payment_colombian", lang) and "50" not in hechos._politica("foreign_card_payment", lang)
     assert hechos._politica("payment_confirmation", lang)
 
 
@@ -29,7 +30,7 @@ def test_con_el_enlace_va_como_reservar_pagar_y_la_confirmacion(monkeypatch, lan
     assert hechos._politica("payment_confirmation", lang) in como
     assert hechos._politica("certification_required", lang) in como  # el buceo certificado
     pago = hechos._pago_extranjero(lang)
-    assert pago in como and hechos._CORTE_PAGO[lang] not in pago  # sin la parte de los colombianos
+    assert pago in como and hechos._politica("payment_colombian", lang) not in como  # sin la parte de los colombianos
 
 
 def test_sin_certificacion_no_va_el_carne(monkeypatch):

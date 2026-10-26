@@ -21,14 +21,16 @@ import httpx
 from openai import AsyncOpenAI
 
 from src.config import settings
+from src.domain import lugares
 from src.llm_client import trace_openai
 
 # MOD-6 (18-oct, flag `transcripcion_con_vocabulario`): la pista de vocabulario del negocio para la transcripción
 # (parámetro `prompt` de la API). Con 10 notas de voz sintéticas, gpt-transcribe pasa de 5,7 a 3,2 % de palabras mal y
 # escribe bien "Muelle de la Bodeguita" y "Getsemaní" (sin ella: "muelle la Destesa / La Destreza").
 VOCABULARIO_TRANSCRIPCION = (
-    "Diving Planet, Muelle de la Bodeguita, Islas del Rosario, Isla Grande, Barú, Hotel San Pedro de Majagua, "
-    "Cocoliso, Getsemaní, Bocagrande, minicurso, snorkel, Open Water, PADI, refresher, buzo certificado."
+    "Diving Planet, Muelle de la Bodeguita, Islas del Rosario, Isla Grande, Barú, "
+    + ", ".join(f"Hotel {h}" if i == 0 else h for i, h in enumerate(lugares.hoteles_base()))  # lat-deuda-u: lugares.json
+    + ", Getsemaní, Bocagrande, minicurso, snorkel, Open Water, PADI, refresher, buzo certificado."
 )
 
 logger = logging.getLogger("uvicorn.error")

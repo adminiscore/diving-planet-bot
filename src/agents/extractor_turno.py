@@ -24,6 +24,7 @@ from openai import AsyncOpenAI
 
 from src.config import settings
 from src.domain import activities as dom
+from src.domain import lugares
 from src.llm_client import crear_con_respaldo, trace_openai
 from src.observability import pieza_llm
 from src.utils.text import strip_accents
@@ -528,13 +529,11 @@ def _solo_baru(cita: str) -> bool:
     return "rosario" not in texto and not any(isla and isla in texto for isla in islas)
 
 
-# gen-15 (21-oct, flag `hoteles_de_la_base`): los hoteles de las islas que da la base del negocio
-# (data/knowledge_base/policies.json, other_island_hotels: la base en Majagua y Cocoliso, y otros con acceso marítimo).
-# La lista de hoteles del bot (rag_agent.AMBIGUOUS_LOCATION_NAMES) no tenía Mulata, Rosario de Mar ni Eco Hotel Las
-# Palmeras, y «we booked 2 nights at Mulata» o «vamos a estar en Las Palmeras» no salían como «ya en las islas» (banco
-# docs/robustness/gen/banco_gen15_hoteles.py). tests/test_gen15_hoteles_de_la_base.py vigila que sigan en la base.
-HOTELES_DE_LA_BASE = ("San Pedro de Majagua", "Cocoliso", "Ubuntu", "Secreto", "Mulata", "Rosario de Mar",
-                      "Eco Hotel Las Palmeras")
+# gen-15 (21-oct): los hoteles de las islas que da la base del negocio. La lista de lugares del bot no tenía Mulata,
+# Rosario de Mar ni Eco Hotel Las Palmeras, y «we booked 2 nights at Mulata» o «vamos a estar en Las Palmeras» no salían
+# como «ya en las islas» (banco docs/robustness/gen/banco_gen15_hoteles.py). Desde lat-deuda-u (26-oct) vienen de
+# data/knowledge_base/lugares.json (con Pao Pao); tests/test_gen15_hoteles_de_la_base.py vigila que la política los nombre.
+HOTELES_DE_LA_BASE = lugares.hoteles_con_recogida()
 
 
 def _nombres_de_lugar() -> list[str]:

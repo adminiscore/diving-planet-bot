@@ -28,7 +28,7 @@ from src.flows.catalog import (
     RAW_SERVICES,
     SERVICES,
     descuentos_de_la_base,
-    regla_de_vuelo,
+    requisitos_de_politica,
 )
 from src.flows.state import ConversationState
 from src.utils import money
@@ -38,10 +38,6 @@ INTENCIONES = ("precio", "incluye", "requisitos", "horario", "disponibilidad", "
 ORIGENES = ("cartagena", "island")
 # Las intenciones cuyos hechos cambian según desde dónde sale el cliente: sin origen van las dos variantes.
 _DEPENDEN_DEL_ORIGEN = {"precio", "incluye", "horario", "enlace"}
-# Planes que exigen el formulario médico de curso (política medical_restrictions): cursos, minicurso y refresher (se
-# reserva como minicurso), por su `cart_type` en el registro de actividades.
-_CON_FORMULARIO_MEDICO = {"course", "beginner", "refresh"}
-
 _POLICIES = Path(__file__).resolve().parents[2] / "data" / "knowledge_base" / "policies.json"
 
 
@@ -212,14 +208,13 @@ def hechos(state: ConversationState, intenciones: list[str], actividades: list[s
             sid = _plan_base(actividad, origen or "cartagena", elegido)
             if sid:
                 requisitos += _lista(sid, "requirements", lang)
-            requisitos.append(regla_de_vuelo(actividad, lang))  # lat-deuda-u: la de ESTA actividad, no la del plan
-            if (registro.cart_type in _CON_FORMULARIO_MEDICO
-                    and not _ya_dice_el_enlace(requisitos, _formulario_de_curso(lang))):
-                requisitos.append(_formulario_de_curso(lang))
+            # lat-deuda-u: los que son políticas (formulario médico, refresh, seguro, vuelo), los de ESTA actividad y no
+            # los del plan con el que se vende (el refresher, con la ficha del minicurso).
+            requisitos += requisitos_de_politica(actividad, lang)
             requisitos += _previo_y_edad(registro, lang)
             if registro.requires_certification:
                 requisitos.append(_politica("certification_required", lang))
-            requisitos += [_politica("insurance_form_requirement", lang), _politica("what_to_bring", lang)]
+            requisitos.append(_politica("what_to_bring", lang))
             bloque["requisitos"] = [r for r in dict.fromkeys(requisitos) if r]
         if "horario" in pedidas:
             bloque["horario"] = _por_origen(actividad, origenes, lambda sid: _lista(sid, "itinerary", lang), elegido)
@@ -274,25 +269,11 @@ def hechos(state: ConversationState, intenciones: list[str], actividades: list[s
     return _lo_que_faltaba(state, bloques, pedidas, lang)
 
 
-# arq-1s (22-oct; G10 nº 4): (1) en un curso, un solo formulario: la política médica dice a
-# la vez «para cursos, el médico de curso» y «si eres buzo certificado, el de buzo certificado», y el alumno del Advanced
-# (certificado Y en un curso) recibía los dos (g10-058, «contradictorio»); decisión de Gadea: en un curso, el de curso.
-# (2) el requisito previo del curso (el nivel anterior del registro: el Open Water para el Advanced) y la edad mínima en
-# cifra (g10-032).
-_CORTE_FORMULARIO = {"es": "Si eres buzo certificado", "en": "If you are a certified diver"}
-
-
-def _formulario_de_curso(lang: str) -> str | None:
-    """La parte de la política médica que vale para un curso (sin la del formulario de buzo certificado)."""
-    texto = _politica("medical_restrictions", lang) or ""
-    corte = texto.find(_CORTE_FORMULARIO[lang])
-    return (texto[:corte] if corte >= 0 else texto).strip() or None
-
-
-def _ya_dice_el_enlace(requisitos: list[str], hecho: str | None) -> bool:
-    """¿Algún requisito de la ficha ya lleva el enlace de este hecho? (el minicurso trae el formulario en su ficha)."""
-    enlaces = _URL.findall(hecho or "")
-    return bool(enlaces) and any(e.rstrip(".,") in r for e in enlaces for r in requisitos)
+# arq-1s (22-oct; G10 nº 4): en un curso, un solo formulario (decisión de Gadea), y el alumno del Advanced (certificado Y
+# en un curso) recibía los dos (g10-058). Desde lat-deuda-u (26-oct) la política del formulario de curso
+# (`medical_restrictions`) y la de buzo certificado (`medical_certified_diver`) van por separado: no hay que cortarla.
+# Aquí, el requisito previo del curso (el nivel anterior del registro: el Open Water para el Advanced) y la edad mínima
+# en cifra (g10-032).
 
 
 def _previo_y_edad(registro, lang: str) -> list[str]:
@@ -336,14 +317,9 @@ def _comunes(listas: list[list[str]]) -> list[str]:
 # cómo se reserva y se paga por él (el extranjero, 100 % con tarjeta en la web) y que la reserva queda confirmada cuando
 # el equipo concilia el pago; si la actividad pide certificación, el carné (g10-027). Al colombiano no se le da el
 # enlace (lo coordina un asesor), así que la parte de su pago no va aquí.
-_CORTE_PAGO = {"es": "El anticipo del 50 %", "en": "The 50% deposit option"}
-
-
 def _pago_extranjero(lang: str) -> str | None:
-    """La parte de `foreign_card_payment` que vale para quien paga por el enlace (sin la del pago de los colombianos)."""
-    texto = _politica("foreign_card_payment", lang) or ""
-    corte = texto.find(_CORTE_PAGO[lang])
-    return (texto[:corte] if corte >= 0 else texto).strip() or None
+    """Cómo paga quien paga por el enlace (lat-deuda-u: su propia política, ya no un corte de `foreign_card_payment`)."""
+    return _politica("foreign_card_payment", lang)
 
 
 # arq-1p (22-oct): lo que NO depende de la actividad. En el G10 nº 4, 24 turnos se quedaron sin
@@ -402,55 +378,40 @@ def hechos_sin_actividad(state: ConversationState, intenciones: list[str]) -> li
 # arq-5f (23-oct, reparto de Gadea #1525; G10 nº 5): hechos de la base que la tabla no daba.
 # La excepción del refresher (g10-008, g10-047), que el horario no se adelanta (g10-066), buceo y snorkel en la misma
 # lancha (g10-049) y que alojados en Barú salen desde Cartagena. Se añaden a los bloques ya hechos.
-_CON_REFRESH = {"certified_diving", "refresher"}
 _BUCEO = {"certified_diving", "minicourse", "bubble_makers", "refresher"}
-_CORTE_BARU = {"es": "quien se aloja en Barú", "en": "guests staying in Barú"}
 
 
 def _sale_de_baru(lang: str) -> str | None:
-    """La parte de `island_pickup` de quien se aloja en Barú (sale desde Cartagena)."""
-    texto = _politica("island_pickup", lang) or ""
-    corte = texto.find(_CORTE_BARU[lang])
-    if corte < 0:
-        return None
-    frase = texto[corte:].strip()
-    return frase[0].upper() + frase[1:]
+    """Quien se aloja en Barú sale desde Cartagena (lat-deuda-u: política `baru_departs_from_cartagena`)."""
+    return _politica("baru_departs_from_cartagena", lang)
 
 
-# arq-8d/8e (23-oct; G10 nº 6): `island_pickup` junta tres cosas: cómo se coordina la recogida, lo que esos planes no
-# incluyen y que Barú no es de las islas. Se corta por sus frases (el texto de la base, sin cambiarlo; la política entera
-# la siguen usando el índice del RAG, los avisos y las preguntas de la base).
-_CORTE_NO_INCLUYEN = {"es": "Estos planes manejan", "en": "These plans have"}
-_CORTE_SOLO_ISLAS = {"es": "La recogida es solo", "en": "Pick-up is only"}
-
-
+# arq-8d/8e (23-oct; G10 nº 6): `island_pickup` juntaba tres cosas que el código cortaba por sus frases. Desde
+# lat-deuda-u (26-oct) son tres políticas: cómo se coordina la recogida (`island_pickup`), lo que esos planes no incluyen
+# (`island_plans_exclude`) y que Barú no es de las islas (`baru_departs_from_cartagena`).
 def _partes_de_la_recogida(lang: str) -> tuple[str, str] | None:
-    """(cómo se coordina la recogida, lo que no incluyen los planes de las islas), o None si la política cambió."""
-    texto = _politica("island_pickup", lang) or ""
-    a, b = texto.find(_CORTE_NO_INCLUYEN[lang]), texto.find(_CORTE_SOLO_ISLAS[lang])
-    if a <= 0 or b <= a:
-        return None
-    return texto[:a].strip(), texto[a:b].strip()
+    """(cómo se coordina la recogida, lo que no incluyen los planes de las islas)."""
+    como, excluye = _politica("island_pickup", lang), _politica("island_plans_exclude", lang)
+    return (como, excluye) if como and excluye else None
 
 
 def _no_incluyen_las_islas(lang: str) -> str | None:
-    """arq-8d: solo la frase de lo que no incluyen; si la política cambió (sin los cortes), la política entera."""
-    partes = _partes_de_la_recogida(lang)
-    return partes[1] if partes else _politica("island_pickup", lang)
+    """arq-8d: lo que no incluyen los planes de las islas."""
+    return _politica("island_plans_exclude", lang)
 
 
 def _sin_almuerzo_en_las_islas(lang: str, pedidas: list[str]) -> list[str]:
     """arq-8d: con «incluye», la frase de que los planes de las islas no incluyen transporte desde Cartagena ni almuerzo
     va también con la recogida, que la pone el código entera (banco arq-8, B: con `no_incluye` solo, el redactor no la
     decía en 9 de 9, porque `no_incluye` solo se cuenta si el cliente pregunta por algo concreto)."""
-    partes = _partes_de_la_recogida(lang) if "incluye" in pedidas else None
-    return [partes[1]] if partes else []
+    excluye = _no_incluyen_las_islas(lang) if "incluye" in pedidas else None
+    return [excluye] if excluye else []
 
 
 def _coordinacion_en_las_islas(lang: str) -> list[str]:
-    """arq-8e: las frases de cómo se coordina la recogida en las islas."""
-    partes = _partes_de_la_recogida(lang)
-    return [partes[0]] if partes else []
+    """arq-8e: cómo se coordina la recogida en las islas."""
+    como = _politica("island_pickup", lang)
+    return [como] if como else []
 
 
 def _bucea(actividad: str | None) -> bool:
@@ -469,7 +430,7 @@ def _lo_que_faltaba(state: ConversationState, bloques: list[dict], pedidas: list
             b["horario_general"] = [*b["horario_general"], *filter(None, [_politica("schedule_not_adjustable", lang)])]
         actividad = b.get("actividad")
         certificado_sin_actividad = actividad is None and getattr(state, "is_certified", None) is True
-        if "requisitos" in pedidas and "requisitos" in b and (actividad in _CON_REFRESH or certificado_sin_actividad):
+        if "requisitos" in pedidas and "requisitos" in b and certificado_sin_actividad:  # con actividad: requisitos_de_politica
             b["requisitos"] = list(dict.fromkeys([*b["requisitos"], *filter(None, [_politica("refresh_requirement",
                                                                                               lang)])]))
         if getattr(state, "_aloja_en_baru", False) and (b.get("recogida") or {}).get("cartagena") is not None:
@@ -491,10 +452,8 @@ _PREVISION = {
 
 
 def _pago_colombiano(lang: str) -> str | None:
-    """La parte de `foreign_card_payment` del pago de los colombianos y residentes (desde el corte de arq-1u)."""
-    texto = _politica("foreign_card_payment", lang) or ""
-    corte = texto.find(_CORTE_PAGO[lang])
-    return texto[corte:].strip() if corte >= 0 else None
+    """Cómo pagan los colombianos y residentes (lat-deuda-u: política `payment_colombian`)."""
+    return _politica("payment_colombian", lang)
 
 
 def _clima_y_pago(state: ConversationState, pedidas: list[str], lang: str) -> dict:
@@ -512,8 +471,8 @@ def _clima_y_pago(state: ConversationState, pedidas: list[str], lang: str) -> di
         elif colombiano is False or mixto:
             pago = [_pago_extranjero(lang), _politica("payment_confirmation", lang), _politica("payment_fallback", lang)]
         else:
-            pago = [_politica("foreign_card_payment", lang), _politica("payment_confirmation", lang),
-                    _politica("payment_fallback", lang)]
+            pago = [_politica("foreign_card_payment", lang), _politica("payment_colombian", lang),
+                    _politica("payment_confirmation", lang), _politica("payment_fallback", lang)]
         out["pago"] = [p for p in pago if p]
     return out
 

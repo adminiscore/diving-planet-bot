@@ -1,6 +1,14 @@
 # Inventario de fuentes del negocio (lat-deuda-u) — 26-oct
 
 Tarea pedida por Gadea: dónde vive cada dato del negocio que importa al cliente, qué huecos tiene y cómo unificarlo.
+
+> **Estado (26-oct, tarde).** Decididas por Gadea las 11 preguntas del dueño y la moneda (D13: USD y COP).
+> HECHO: Y1 (vuelo por actividad), Y2 (una regla de moneda), Y3 (tarjeta desde la ficha), Y4 (el equipo no va en todos
+> los planes), Y5 (Rescue 12), Y6 (sin notas internas), Y7 (descuentos no acumulables), Y8 (políticas partidas, sin
+> cortes por frases), Y10 (una lista de hoteles), Y11 a medias (fechas de cierre como dato y frase generada; falta que el
+> extractor lea la fecha del cliente: decisión de Gadea), Y12 (muerto fuera, salvo lo que lee el juez), las copias de
+> L9-5 en los requisitos (seguro, refresh, formulario, edad) y D1-D12. QUEDAN: Y9, Y13-Y17, L8-*, L9-1..4 y la regex de
+> hoteles del detector viejo (`intent_detector.py`).
 Hecho **solo leyendo** el repo (rama `integra-sim5`, HEAD 274baf9 con los cambios de avisos sin commitear), sin
 llamadas a modelos. Los avisos (`avisos.json` / `avisos.py`) solo se citan como sitio donde vive un dato, sin
 valorarlos.

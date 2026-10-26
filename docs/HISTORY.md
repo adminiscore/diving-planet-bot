@@ -30,6 +30,30 @@ History
   - calidad: **94,8 % 80/116**, frente al 94,9 % 82/116 de anoche, dentro del ruido.
   - Deuda apuntada: el acuse ya no reconoce lo concreto del mensaje («anoto a tu amigo para el minicurso»).
 
+0.32.5 - (2026-10-26)
+---------------------
+* **lat-deuda-u, limpieza del inventario (los 4 puntos que pidió Gadea).** Sin llamadas nuevas; lo que lee el modelo
+  no cambia salvo en las fichas (requisitos sin copias).
+  1. **Políticas partidas y fichas sin copias.** `medical_restrictions` (formulario de curso) y `medical_certified_diver`;
+     `foreign_card_payment` (extranjeros) y `payment_colombian`; `island_pickup`, `island_plans_exclude` y
+     `baru_departs_from_cartagena` (con Playa Blanca, que solo estaba en el código). Fuera los cuatro cortes por frases
+     de `hechos.py` (`_CORTE_*`): si el negocio reescribía una frase, el corte fallaba en silencio. Los requisitos que
+     son políticas (formulario médico, refresh, seguro, vuelo) los pone `catalog.requisitos_de_politica` por actividad
+     para la tabla y la ficha del RAG; fuera 74 copias de las fichas, que estaban desordenadas (el seguro solo en las
+     de «ya en las islas», el refresh en 8 de 14, la edad copiada del registro, una lista en inglés con una línea que
+     la española no tenía). Formas de preguntar de las 4 políticas nuevas en `curada/preguntas.json`.
+  2. **Una sola lista de hoteles**, `data/knowledge_base/lugares.json` (`src/domain/lugares.py`): los 8 hoteles con
+     recogida (con Pao Pao) y los 37 lugares de las islas; la leen el extractor, Jev, el redactor, el detector del RAG,
+     el catálogo y la pista de la transcripción. Eran seis listas distintas.
+  3. **Días de cierre como dato**: `closed_days.fechas` y `src/domain/calendario.py`; la frase «el 25 de diciembre y el
+     1 de enero» se genera en los 6 sitios que la tenían a mano (textos idénticos, comprobado). Pendiente de Gadea:
+     que el extractor lea la fecha que pide el cliente para comprobar el cierre sin la regex de hoy.
+  4. **Muerto, fuera**: el paso del CI que regeneraba el índice v1 (embeddings de pago en cada deploy, sin lector), el
+     constructor de ese índice (`load_knowledge_base`) y su script de inventario, `scripts/kb_curar.py` (volver a
+     ejecutarlo machacaba las FAQ curadas con datos viejos), 4 funciones y 7 campos calculados sin lector del catálogo,
+     y 39 campos de las fichas que solo leía el índice v1. Se quedan `availability.json`, `escalation_rules.json` y los
+     campos sin lector de `pricing.json` porque el juez los lee como referencia (cambiarlos rompe la comparación).
+
 0.32.4 - (2026-10-26)
 ---------------------
 * **lat-deuda-u: cada dato del negocio en un sitio, en los dos idiomas y para todos los caminos.** Pedida por Gadea al

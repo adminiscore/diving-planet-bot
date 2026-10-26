@@ -9,9 +9,12 @@ heurística de idioma por stopwords. Casi hoja: depende de la stdlib y de
 """
 
 import json
+from functools import lru_cache
 from pathlib import Path
 
 from src.domain import activities as dom
+from src.domain import lugares
+from src.domain.calendario import dias_cerrados
 from src.utils import money
 
 # Common Spanish/English words used to guess the language of ANY free-text
@@ -90,19 +93,6 @@ def _join_items(items: list[str] | str | None) -> str:
     return items or ""
 
 
-def _format_price(service: dict) -> str:
-    price = service.get("price_usd")
-    normal = service.get("price_usd_normal")
-    note = service.get("price_note")
-    if price and normal:
-        return f"{money.usd(price)} online / {money.usd(normal)} normal"
-    if price:
-        return money.usd(price)
-    if note:
-        return note
-    return "Consultar precio actualizado en la web"
-
-
 def _format_duration(service: dict, lang: str) -> str:
     days = service.get("duration_days")
     if days == 1:
@@ -110,89 +100,6 @@ def _format_duration(service: dict, lang: str) -> str:
     if days:
         return f"{days} dias" if lang == "es" else f"{days} days"
     return "Multi-dia / variable" if lang == "es" else "Multi-day / variable"
-
-
-def _flight_rule(service: dict, lang: str) -> str:
-    requirements = service.get(f"requirements_{lang}", [])
-    for requirement in requirements:
-        lowered = requirement.lower()
-        if "vuelo" in lowered or "flying" in lowered or "fly" in lowered:
-            return requirement
-    return ""
-
-
-def _extra_notes(service: dict, lang: str) -> str:
-    parts = []
-    description = service.get(f"description_{lang}")
-    preparation = service.get(f"preparation_{lang}")
-    not_included = service.get(f"not_included_{lang}", [])
-    if description:
-        parts.append(description)
-    if preparation:
-        title = "Preparacion: " if lang == "es" else "Preparation: "
-        parts.append(title + preparation)
-    if lang == "es":
-        if "Minicurso" in service.get("name_es", "") and "No necesitas experiencia previa" not in " ".join(parts):
-            parts.append("No necesitas experiencia previa.")
-        if "Snorkeling" in service.get("name_es", "") and "Actividad de superficie" not in " ".join(parts):
-            parts.append("Actividad de superficie ideal para acompañantes o personas que no quieren bucear.")
-        if service.get("includes_night_dive") and "quitar la nocturna" not in " ".join(parts):
-            parts.append("Si quieres quitar la nocturna, cambiar noches o personalizar el paquete, lo revisamos con un asesor.")
-        if any("Hotel/alojamiento" in item for item in not_included) and "alojamiento no esta incluido" not in " ".join(parts):
-            parts.append("El alojamiento no esta incluido y se reserva aparte con el hotel.")
-    return " ".join(parts)
-
-
-def _extra_notes_multiline(service: dict, lang: str) -> str:
-    lines: list[str] = []
-    description = service.get(f"description_{lang}")
-    preparation = service.get(f"preparation_{lang}")
-    itinerary = service.get(f"itinerary_{lang}", [])
-    not_included = service.get(f"not_included_{lang}", [])
-    requirements = service.get(f"requirements_{lang}", [])
-
-    if description:
-        lines.append(description)
-
-    if preparation:
-        title = "Preparacion:" if lang == "es" else "Preparation:"
-        lines.append(title)
-        lines.append(f"- {preparation}")
-
-    if itinerary:
-        title = "Itinerario:" if lang == "es" else "Itinerary:"
-        lines.append(title)
-        for item in itinerary:
-            lines.append(f"- {item}")
-
-    if requirements:
-        title = "Requisitos:" if lang == "es" else "Requirements:"
-        lines.append(title)
-        for item in requirements:
-            lines.append(f"- {item}")
-
-    if not_included:
-        title = "No incluye:" if lang == "es" else "Not included:"
-        lines.append(title)
-        for item in not_included:
-            lines.append(f"- {item}")
-
-    if lang == "es":
-        name_es = service.get("name_es", "")
-        if "Minicurso" in name_es and not any("No necesitas experiencia previa" in ln for ln in lines):
-            lines.append("No necesitas experiencia previa.")
-        if "Snorkeling" in name_es and not any("Actividad de superficie" in ln for ln in lines):
-            lines.append("Actividad de superficie ideal para acompañantes o personas que no quieren bucear.")
-        if service.get("includes_night_dive") and not any("nocturna" in ln for ln in lines):
-            lines.append("Si quieres quitar la nocturna, cambiar noches o personalizar el paquete, lo revisamos con un asesor.")
-        if any("Hotel/alojamiento" in item for item in not_included) and not any("alojamiento no esta incluido" in ln for ln in lines):
-            lines.append("El alojamiento no esta incluido y se reserva aparte con el hotel.")
-
-    return "\n".join(lines)
-
-
-
-
 
 
 # ord-3 (21-oct, decisión de Gadea, Coral #1150): la tarifa vive en UN sitio, `pricing.json` (la que vigila
@@ -241,15 +148,11 @@ def _load_services() -> dict:
             "name_en": service.get("name_en", service.get("name_es", service_id)),
             "requires_cert": service.get("requires_certification", False),
             "duration_days": service.get("duration_days"),
-            "price": _format_price(service),
             # Precios crudos para poder elegir COP/USD segun el cliente
             "price_usd": service.get("price_usd"),
             "price_usd_normal": service.get("price_usd_normal"),
             "price_cop": service.get("price_cop"),
             "price_cop_normal": service.get("price_cop_normal"),
-            "price_note": service.get("price_note"),
-            "price_note_es": service.get("price_note_es"),
-            "price_note_en": service.get("price_note_en"),
             "duration_es": _format_duration(service, "es"),
             "duration_en": _format_duration(service, "en"),
             "includes_es": _join_items(service.get("included_es")),
@@ -260,10 +163,6 @@ def _load_services() -> dict:
             "preparation_en": service.get("preparation_en", ""),
             "itinerary_es": service.get("itinerary_es", []) or [],
             "itinerary_en": service.get("itinerary_en", []) or [],
-            "summary_intro_es": service.get("summary_intro_es", []) or [],
-            "summary_intro_en": service.get("summary_intro_en", []) or [],
-            "itinerary_overview_es": service.get("itinerary_overview_es", []) or [],
-            "itinerary_overview_en": service.get("itinerary_overview_en", []) or [],
             "requirements_es": service.get("requirements_es", []) or [],
             "requirements_en": service.get("requirements_en", []) or [],
             "included_es": service.get("included_es", []) or [],
@@ -271,12 +170,6 @@ def _load_services() -> dict:
             "not_included_es": service.get("not_included_es", []) or [],
             "not_included_en": service.get("not_included_en", []) or [],
             "min_age": inferred_min_age,
-            "extra_notes_es": _extra_notes(service, "es"),
-            "extra_notes_en": _extra_notes(service, "en"),
-            "extra_block_es": _extra_notes_multiline(service, "es"),
-            "extra_block_en": _extra_notes_multiline(service, "en"),
-            "flight_rule_es": _flight_rule(service, "es"),
-            "flight_rule_en": _flight_rule(service, "en"),
             "includes_night_dive": service.get("includes_night_dive", False),
             # "optional": plan de varios dias en el que dormir en las islas es opcional (Curso Referido:
             # el dia 1 se puede volver a Cartagena). Sin el campo, lo deciden `duration_days` y el nocturno.
@@ -344,6 +237,41 @@ def regla_de_vuelo(actividad: str | None, lang: str) -> str | None:
             else f"After diving, wait at least {horas} hours before flying")
 
 
+@lru_cache(maxsize=1)
+def _politicas() -> dict:
+    datos = json.loads((_KB_DIR / "policies.json").read_text(encoding="utf-8-sig"))
+    return datos.get("policies", datos)
+
+
+def politica(clave: str, lang: str) -> str | None:
+    """El texto de una política de la base en el idioma del cliente."""
+    valor = _politicas().get(clave)
+    if isinstance(valor, dict):
+        return valor.get("es" if lang == "es" else "en") or valor.get("es")
+    return valor
+
+
+# Los planes que exigen el formulario médico de curso: cursos, minicurso y refresher (por su `cart_type`); los que
+# llevan la regla del refresh: el buceo certificado y el propio refresher.
+CON_FORMULARIO_MEDICO = {"course", "beginner", "refresh"}
+CON_REFRESH = {"certified_diving", "refresher"}
+
+
+def requisitos_de_politica(actividad: str | None, lang: str) -> list[str]:
+    """lat-deuda-u (26-oct): los requisitos que son POLÍTICAS de la base, puestos por actividad en un solo sitio para la
+    tabla de hechos y la ficha del RAG. Eran copias en las fichas, y desordenadas: el seguro solo en las de «ya en las
+    islas», el refresh en 8 de las 14 de buceo certificado, el formulario en 4; una lista en inglés llevaba una línea
+    que su lista en español no tenía."""
+    registro = dom.by_id(actividad) if actividad else None
+    if registro is None:
+        return []
+    requisitos = [politica("medical_restrictions", lang) if registro.cart_type in CON_FORMULARIO_MEDICO else None,
+                  politica("refresh_requirement", lang) if registro.id in CON_REFRESH else None,
+                  politica("insurance_form_requirement", lang),
+                  regla_de_vuelo(registro.id, lang)]
+    return [r for r in requisitos if r]
+
+
 def service_fact_sheet(service_id: str, lang: str, svc: dict | None = None, actividad: str | None = None) -> str:
     """La ficha autocontenida de un servicio: qué es, datos, incluye/no incluye, itinerario,
     requisitos, preparación y enlaces. `actividad`: la que se describe, si no es la dueña del servicio (el refresher
@@ -374,8 +302,8 @@ def service_fact_sheet(service_id: str, lang: str, svc: dict | None = None, acti
         _sheet_list(t["incluye"] + de, svc.get(f"included_{lang}")),
         _sheet_list(t["no_incluye"] + de, svc.get(f"not_included_{lang}")),
         _sheet_list(t["itinerario"] + de, svc.get(f"itinerary_{lang}")),
-        _sheet_list(t["requisitos"] + de, [*(svc.get(f"requirements_{lang}") or []), *filter(None, [regla_de_vuelo(
-            actividad or getattr(dom.activity_for_service(service_id), "id", None), lang)])]),
+        _sheet_list(t["requisitos"] + de, [*(svc.get(f"requirements_{lang}") or []), *requisitos_de_politica(
+            actividad or getattr(dom.activity_for_service(service_id), "id", None), lang)]),
         _sheet_list(t["preparacion"] + de, svc.get(f"preparation_{lang}")),
         " · ".join(x for x in (
             f"{t['reserva']}: {svc['booking_url']}" if svc.get("booking_url") and not svc.get("contact_only") else "",
@@ -688,11 +616,13 @@ def catalog_facts(lang: str) -> str:
     # 9-oct (Gadea): en los hoteles base la recogida no depende del acceso maritimo. Con solo "si tiene acceso
     # maritimo" en el catalogo, el RAG (y RAG_CONDICIONES) dudaba tambien de Cocoliso: "el equipo confirma si Cocoliso
     # tiene acceso maritimo" (paquete-5-buceos-islas-residente-sin-recogida).
+    base = list(lugares.hoteles_base())  # lat-deuda-u: de data/knowledge_base/lugares.json (nombres propios, tal cual)
+    base_es = base[0] if len(base) == 1 else ", ".join(base[:-1]) + " y " + base[-1]
+    base_en = base[0] if len(base) == 1 else ", ".join(base[:-1]) + " and " + base[-1]
     islas_es = ("Si ya estás en las Islas del Rosario (recogida en tu hotel si tiene acceso marítimo; en nuestros "
-                "hoteles base, San Pedro de Majagua y Cocoliso, en Isla Grande, la recogida está confirmada e "
-                "incluida):")
+                f"hoteles base, {base_es}, en Isla Grande, la recogida está confirmada e incluida):")
     islas_en = ("If already on the Rosario Islands (pickup at your hotel if it has boat access; at our base hotels, "
-                "San Pedro de Majagua and Cocoliso on Isla Grande, pickup is confirmed and included):")
+                f"{base_en} on Isla Grande, pickup is confirmed and included):")
     companion_normal = money.usd_cop(comp["usd_normal"], comp["cop_normal"])
     if es:
         head = ("CATÁLOGO OFICIAL (fuente de verdad; precios por persona, 'online' = con el 10% de "
@@ -708,7 +638,7 @@ def catalog_facts(lang: str) -> str:
                f"{_lista_en_frase(COMPANION_INCLUDES['es']['island'], 'es')}; almuerzo NO incluido; no incluye "
                f"{COMPANION_NO_INCLUYE['es']}.",
                "Edad mínima 10 años salvo que se indique otra.",
-               "Operamos todos los días del año salvo el 25 de diciembre y el 1 de enero. Tú no ves los cupos: "
+               f"Operamos todos los días del año salvo {dias_cerrados('es')}. Tú no ves los cupos: "
                "el cliente elige la fecha y el número de personas en el calendario del link de reserva.",
                "Descuentos: 10% online (ya aplicado en el precio 'online'); 10% extra para grupos de 5 o más en "
                "buceo recreativo, minicurso y snorkel (no en cursos PADI; no es automático: se pide al equipo ANTES "
@@ -737,7 +667,7 @@ def catalog_facts(lang: str) -> str:
                f"{_lista_en_frase(COMPANION_INCLUDES['en']['island'], 'en')}; lunch NOT included; does not include "
                f"{COMPANION_NO_INCLUYE['en']}.",
                "Minimum age 10 unless stated otherwise.",
-               "We operate every day of the year except December 25 and January 1. You can't see open slots: "
+               f"We operate every day of the year except {dias_cerrados('en')}. You can't see open slots: "
                "the customer picks the date and number of people in the booking link's calendar.",
                "Discounts: 10% online (already in the 'online' price); an extra 10% for groups of 5 or more in "
                "recreational diving, mini course and snorkeling (not PADI courses; not automatic: it is requested "

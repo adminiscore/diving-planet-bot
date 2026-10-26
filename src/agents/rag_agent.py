@@ -26,6 +26,7 @@ from src.agents.grounding_check import (
 )
 from src.agents.query_rewriter import condense_query
 from src.config import settings
+from src.domain import lugares
 from src.knowledge.loader import load_brand_tone
 from src.knowledge.vector_store import get_pool, search_knowledge_base
 from src.llm_client import trace_openai
@@ -292,45 +293,9 @@ def _normalize_text(value: str) -> str:
     return " ".join(value.strip().lower().split())
 
 
-AMBIGUOUS_LOCATION_NAMES = (
-    "Isla Grande",
-    "Isla Marina",
-    "Isla del Pirata",
-    "Isla del Sol",
-    "Isleta",
-    "Isla Arena",
-    "Isla Pavitos",
-    "Isla Lizamar",
-    "Isla Gigi",
-    "Isla Rosa",
-    "Isla Pelicano",
-    "Isla Rosario",
-    "San Pedro de Majagua",
-    "Bora Bora Beach Club",
-    "Cocoliso Island Resort",
-    "Pao Pao Hotel",
-    "Fragata Island House",
-    "Secreto Hostel",
-    "Gente de Mar Resort",
-    "Luxury Beach Club",
-    "Ecohotel Las Flores",
-    "Ecohostal Playa Libre",
-    "Islabela",
-    "Hotel El Hamaquero",
-    "Centro Ubuntu",
-    "Hotel Isla del Pirata",
-    "Hotel Isla del Sol",
-    "Coralina Island",
-    "Isleta Beach",
-    "Isla Arena Eco Resort",
-    "Isla Pavitos (Privada)",
-    "Hotel Lizamar",
-    "Casa de Isla Gigi",
-    "Isla Rosa (Privada)",
-    "Isla Pelicano",
-    "Rosario EcoHotel",
-    "Hotel San Tropel",
-)
+# lat-deuda-u (26-oct): la lista de lugares de las islas vive en data/knowledge_base/lugares.json (antes aquí, y otra
+# distinta en el extractor, Jev y el catálogo).
+AMBIGUOUS_LOCATION_NAMES = lugares.lugares_de_las_islas()
 
 AMBIGUOUS_LOCATION_PREFIXES = (
     "hotel ",

@@ -21,12 +21,14 @@ def _estado(origen=None, lang="es"):
 # --- 8d -------------------------------------------------------------------------------------------------------------
 
 @pytest.mark.parametrize("lang", ["es", "en"])
-def test_la_politica_se_corta_en_sus_frases(lang):
+def test_las_tres_partes_de_la_recogida_son_politicas(lang):
+    """lat-deuda-u (26-oct): ya no se corta `island_pickup` por frases; son tres políticas."""
     coordinacion, no_incluyen = hechos._partes_de_la_recogida(lang)
-    entera = hechos._politica("island_pickup", lang)
-    assert entera.startswith(coordinacion) and no_incluyen in entera
+    assert coordinacion == hechos._politica("island_pickup", lang)
+    assert no_incluyen == hechos._politica("island_plans_exclude", lang)
     assert ("almuerzo" if lang == "es" else "lunch") in no_incluyen
     assert "Barú" not in no_incluyen and "Barú" not in coordinacion
+    assert "Barú" in hechos._politica("baru_departs_from_cartagena", lang)
 
 
 def test_con_incluye_va_lo_que_se_hace_y_lo_que_no_incluyen(monkeypatch):

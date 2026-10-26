@@ -27,6 +27,7 @@ import structlog
 from openai import AsyncOpenAI
 
 from src.config import settings
+from src.domain.calendario import dias_cerrados
 from src.llm_client import tool_arguments, trace_openai
 from src.observability import con_pieza_llm
 from src.prompts.router import ROUTING_TOOL, con_dieta_no_es_medica, routing_system_prompt
@@ -137,10 +138,10 @@ _PASE_MEDICO = {
 # cambiar, te conecto con el equipo". Antes del pase, lo que la base ya dice (FAQ 3 y 10): cuándo operamos y qué pasa si
 # el mar no está apto. La previsión de un día concreto sigue siendo del equipo.
 _CLIMA_CON_POLITICA = {
-    "es": ("Operamos todos los días del año salvo el 25 de diciembre y el 1 de enero, y la seguridad va primero: si el "
+    "es": (f"Operamos todos los días del año salvo {dias_cerrados('es')}, y la seguridad va primero: si el "
            "mar no está apto, la salida se reprograma. La previsión de un día concreto te la confirma el equipo: te "
            "paso ahora con alguien que te escribe por aquí enseguida."),
-    "en": ("We operate every day of the year except December 25 and January 1, and safety comes first: if the sea is "
+    "en": (f"We operate every day of the year except {dias_cerrados('en')}, and safety comes first: if the sea is "
            "not suitable, the trip is rescheduled. The forecast for a specific day is confirmed by our team: I'm "
            "passing you now to someone who will write to you here shortly."),
 }

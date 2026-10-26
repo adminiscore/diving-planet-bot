@@ -19,11 +19,12 @@ def test_abre_con_la_respuesta():
 
 def test_la_base_dice_lo_que_es_no():
     pol = json.loads((BASE / "policies.json").read_text(encoding="utf-8"))["policies"]
-    assert "Barú no es parte de las islas" in pol["island_pickup"]["es"] and "Barú is not part" in pol["island_pickup"]["en"]
+    assert "no es parte de las islas" in pol["baru_departs_from_cartagena"]["es"]
+    assert "is not part of the islands" in pol["baru_departs_from_cartagena"]["en"]
     assert "no hay recogida en el hotel" in pol["meeting_point"]["es"]
     assert "al menos una noche" in pol["courses_overnight_requirement"]["es"]
     formas = json.loads((BASE / "curada/preguntas.json").read_text(encoding="utf-8"))["reglas"]
-    assert any("efectivo" in f for f in formas["politica:foreign_card_payment"]["es"])
+    assert any("efectivo" in f for f in formas["politica:payment_colombian"]["es"])  # lat-deuda-u: su política
 
 
 def test_sin_genero_supuesto():
