@@ -17,35 +17,9 @@ def _detect(msg: str):
 
 # ---------------------------------------------------------------------------
 # Eligibility rules (single source of truth)
+# sim-8 (26-oct): `activities_for_age` y `can_*` no tenían llamador; las reglas de edad que se usan son
+# `beginner_options_for_age`, `plan_group` y `age_eligibility_note`.
 # ---------------------------------------------------------------------------
-
-@pytest.mark.parametrize("age,expected", [
-    (4, []),
-    (5, []),
-    (6, [elig.SNORKEL]),
-    (7, [elig.SNORKEL]),
-    (8, [elig.SNORKEL, elig.BUBBLE_MAKERS]),
-    (9, [elig.SNORKEL, elig.BUBBLE_MAKERS]),
-    (10, [elig.SNORKEL, elig.MINICOURSE, elig.OPEN_WATER]),
-    (14, [elig.SNORKEL, elig.MINICOURSE, elig.OPEN_WATER]),
-    (30, [elig.SNORKEL, elig.MINICOURSE, elig.OPEN_WATER]),
-])
-def test_activities_for_age(age, expected):
-    assert elig.activities_for_age(age) == expected
-
-
-def test_can_fun_dive_requires_cert_and_age():
-    assert elig.can_fun_dive(30, True) is True
-    assert elig.can_fun_dive(30, False) is False
-    assert elig.can_fun_dive(9, True) is False   # too young regardless of cert
-
-
-def test_bubble_makers_window():
-    assert elig.can_bubble_makers(7) is False
-    assert elig.can_bubble_makers(8) is True
-    assert elig.can_bubble_makers(10) is True
-    assert elig.can_bubble_makers(11) is False
-
 
 @pytest.mark.parametrize("age,must_include", [
     (5, "acompañar"),          # too young -> companion framing

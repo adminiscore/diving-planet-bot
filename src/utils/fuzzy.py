@@ -26,9 +26,6 @@ _PUNCT = _re.compile(r"[¿¡?!.,;:()\[\]\"'/\\]")
 # Canonical command sets
 # ---------------------------------------------------------------------------
 
-_BACK: frozenset[str] = frozenset({
-    "back", "cancel", "cancelar", "volver", "atras", "atrás", "salir",
-})
 
 # Strict yes — for binary yes/no questions only
 _YES: frozenset[str] = frozenset({
@@ -47,10 +44,6 @@ _AGREE: frozenset[str] = frozenset({
     "claro", "venga", "dale", "vamos", "adelante",
 })
 
-# "None / zero" selection (e.g. "ninguno de ellos")
-_NONE_ZERO: frozenset[str] = frozenset({
-    "0", "ninguno", "ninguna", "none", "no",
-})
 
 # Word → integer mapping (1–10, ES + EN)
 _WORD_NUMBERS = number_words(1, 10)
@@ -70,15 +63,6 @@ _MIN_FUZZY    = 3      # strings shorter than this: exact match only
 
 def _ratio(a: str, b: str) -> float:
     return SequenceMatcher(None, a, b).ratio()
-
-
-def word_ratio(a: str, b: str) -> float:
-    """Public SequenceMatcher ratio between two single words (0.0-1.0).
-
-    For callers that need fuzzy word-vs-word scoring with their own cutoff
-    (e.g. menu-button matching), rather than membership in a canonical set.
-    """
-    return _ratio(a, b)
 
 
 def _fuzzy_in(value: str, candidates: frozenset[str]) -> bool:
@@ -105,10 +89,6 @@ def _fuzzy_in(value: str, candidates: frozenset[str]) -> bool:
 # Public API
 # ---------------------------------------------------------------------------
 
-def is_back(msg: str) -> bool:
-    """True if msg means 'go back / cancel'  (e.g. 'cancellar', 'bak')."""
-    return _fuzzy_in(msg, _BACK)
-
 
 def is_affirmative(msg: str) -> bool:
     """True if msg is a strict yes answer  (e.g. 'sii', 'yess', 'sip')."""
@@ -123,11 +103,6 @@ def is_negative(msg: str) -> bool:
 def is_agree(msg: str) -> bool:
     """True if msg signals general agreement/proceed  ('ok', 'vale', 'sii', 'dale')."""
     return _fuzzy_in(msg, _AGREE)
-
-
-def is_none_selection(msg: str) -> bool:
-    """True if msg means 'none / zero'  ('ninguno', 'ninguna', 'none', '0')."""
-    return _fuzzy_in(msg, _NONE_ZERO)
 
 
 def fuzzy_word_number(msg: str) -> int | None:

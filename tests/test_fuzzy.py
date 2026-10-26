@@ -1,45 +1,15 @@
-"""Unit tests for src/utils/fuzzy.py — typo-tolerant input matching."""
+"""Unit tests for src/utils/fuzzy.py — typo-tolerant input matching.
+
+sim-8 (26-oct): `is_back`, `is_none_selection` y `word_ratio` no tenían llamador (botones del árbol viejo): fuera, con sus
+tests."""
 
 import pytest
 from src.utils.fuzzy import (
-    is_back,
     is_affirmative,
     is_negative,
     is_agree,
-    is_none_selection,
     fuzzy_word_number,
 )
-
-
-# ---------------------------------------------------------------------------
-# is_back
-# ---------------------------------------------------------------------------
-
-class TestIsBack:
-    @pytest.mark.parametrize("msg", [
-        "back", "cancel", "cancelar", "volver", "atras", "atrás", "salir",
-    ])
-    def test_exact_matches(self, msg):
-        assert is_back(msg)
-
-    @pytest.mark.parametrize("msg", [
-        "bak",           # missing 'c'
-        "cancellar",     # double 'l'
-        "cancell",       # double 'l' truncated
-        "Cancelar",      # uppercase
-        "BACK",          # all caps
-        " back ",        # spaces
-        "volveer",       # double 'e'
-    ])
-    def test_typos(self, msg):
-        assert is_back(msg), f"Expected is_back({msg!r}) to be True"
-
-    @pytest.mark.parametrize("msg", [
-        "si", "sí", "yes", "no", "ok", "buceo", "snorkel", "hola",
-        "1", "2", "tres",
-    ])
-    def test_no_false_positives(self, msg):
-        assert not is_back(msg), f"Expected is_back({msg!r}) to be False"
 
 
 # ---------------------------------------------------------------------------
@@ -136,33 +106,6 @@ class TestIsAgree:
 
 
 # ---------------------------------------------------------------------------
-# is_none_selection
-# ---------------------------------------------------------------------------
-
-class TestIsNoneSelection:
-    @pytest.mark.parametrize("msg", [
-        "0", "ninguno", "ninguna", "none", "no",
-    ])
-    def test_exact_matches(self, msg):
-        assert is_none_selection(msg)
-
-    @pytest.mark.parametrize("msg", [
-        "ningun",   # truncated
-        "ningunn",  # double 'n'
-        "Ninguno",  # uppercase
-        "NONE",     # caps
-    ])
-    def test_typos(self, msg):
-        assert is_none_selection(msg), f"Expected is_none_selection({msg!r}) to be True"
-
-    @pytest.mark.parametrize("msg", [
-        "si", "yes", "1", "back", "tres", "cuatro",
-    ])
-    def test_no_false_positives(self, msg):
-        assert not is_none_selection(msg), f"Expected is_none_selection({msg!r}) to be False"
-
-
-# ---------------------------------------------------------------------------
 # fuzzy_word_number
 # ---------------------------------------------------------------------------
 
@@ -218,9 +161,6 @@ class TestConversationalTypos:
     def test_nno_is_negative(self):
         assert is_negative("nno")
 
-    def test_cancellar_is_back(self):
-        assert is_back("cancellar")
-
     def test_doss_is_two(self):
         assert fuzzy_word_number("doss") == 2
 
@@ -230,12 +170,3 @@ class TestConversationalTypos:
     def test_back_does_not_match_affirmative(self):
         assert not is_affirmative("back")
         assert not is_affirmative("cancel")
-
-    def test_affirmative_does_not_match_back(self):
-        assert not is_back("si")
-        assert not is_back("sii")
-        assert not is_back("yes")
-
-    def test_negative_does_not_match_back(self):
-        assert not is_back("no")
-        assert not is_back("nno")

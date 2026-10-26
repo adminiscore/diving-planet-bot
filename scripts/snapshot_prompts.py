@@ -166,8 +166,6 @@ def _collect() -> dict[str, str]:
     add("info/grounding_verify_v3_luna.system.en", info.GROUNDING_VERIFY_V3_LUNA_EN)
     add("info/rag_condiciones.es", info.RAG_CONDICIONES_ES)
     add("info/rag_condiciones.en", info.RAG_CONDICIONES_EN)
-    add("info/rag_no_supone.es", info.RAG_NO_SUPONE_ES)
-    add("info/rag_no_supone.en", info.RAG_NO_SUPONE_EN)
     add("info/rag_no_adivina.es", info.RAG_NO_ADIVINA_ES)
     add("info/rag_no_adivina.en", info.RAG_NO_ADIVINA_EN)
     add("info/rag_abre_con_la_respuesta.es", info.RAG_ABRE_CON_LA_RESPUESTA_ES)  # gen-2 (20-oct)

@@ -41,43 +41,6 @@ CERTIFIED_DIVING = "certified_diving"
 COMPANION = "companion"
 
 
-def activities_for_age(age: int) -> list[str]:
-    """Ordered list of activity keys a person of the given age may do.
-
-    Does not consider certification (see `can_fun_dive`). An empty list means
-    no in-water activity — the person can still come as a companion.
-    """
-    if age < MIN_SNORKEL:
-        return []
-    if age < BUBBLE_MAKERS_MIN:            # 6-7
-        return [SNORKEL]
-    if age < MIN_DIVE:                      # 8-9
-        return [SNORKEL, BUBBLE_MAKERS]
-    # 10+  -> snorkel, mini-course, Open Water (fun dives need a certification too)
-    return [SNORKEL, MINICOURSE, OPEN_WATER]
-
-
-def can_snorkel(age: int) -> bool:
-    return age >= MIN_SNORKEL
-
-
-def can_bubble_makers(age: int) -> bool:
-    return BUBBLE_MAKERS_MIN <= age <= BUBBLE_MAKERS_MAX
-
-
-def can_minicourse(age: int) -> bool:
-    return age >= MIN_DIVE
-
-
-def can_take_courses(age: int) -> bool:
-    return age >= MIN_DIVE
-
-
-def can_fun_dive(age: int, is_certified: bool | None) -> bool:
-    """Certified fun dives require an Open Water certification and age >= 10."""
-    return age >= MIN_DIVE and bool(is_certified)
-
-
 def is_minor(age: int) -> bool:
     return age < 18
 

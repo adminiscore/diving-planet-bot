@@ -38,7 +38,6 @@ from src.agents.notes_extractor import extract_notes
 from src.domain import activities as dom
 from src.flows import cart_render, eligibility, moneda
 from src.flows.state import ConversationState, Step
-from src.utils.fuzzy import is_affirmative, is_agree
 from src.utils.number_words import number_alt
 from src.utils.text import strip_accents
 
@@ -1071,12 +1070,6 @@ def _describe_value(field: str, value, lang: str) -> str:
 
 def _words(message: str) -> list[str]:
     return [w for w in re.split(r"[^\wáéíóúñü]+", (message or "").lower()) if w]
-
-
-def _is_short_ack(message: str) -> bool:
-    """"vale", "ok", "sí" a secas: tras el cierre no justifican una peticion."""
-    words = _words(message)
-    return 0 < len(words) <= 2 and all(is_agree(w) or is_affirmative(w) for w in words)
 
 
 def _known_field_values(state: ConversationState) -> dict:

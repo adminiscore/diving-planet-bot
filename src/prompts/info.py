@@ -370,21 +370,6 @@ GROUNDING_VERIFY_V3_LUNA_ES = GROUNDING_VERIFY_V3_ES.replace(_PASO_2_ES, _JUEZ_L
 GROUNDING_VERIFY_V3_LUNA_EN = GROUNDING_VERIFY_V3_EN.replace(_PASO_2_EN, _JUEZ_LUNA_EN + _PASO_2_EN, 1)
 
 
-# EX-RAG-2 (flag `rag_no_supone_reserva`, 14-oct). Ronda atencion-B2 (cambio-fecha-por-enfermedad t1): "we will be
-# meeting at the pier at 8am, then staying overnight on the island" recibía "For the 3-dive package…": el RAG deducía
-# el servicio reservado. Pasaba igual con el flag de posventa apagado y encendido.
-RAG_NO_SUPONE_ES = (
-    "No atribuyas al cliente datos que no ha dicho: si habla de su reserva o de su plan sin decir qué servicio, "
-    "cuántas inmersiones o qué día reservó, no lo deduzcas ni lo nombres como si lo supieras (no digas «tu paquete de "
-    "3 inmersiones» si él no lo dijo). Contesta lo que pregunta con la información general y, si para responder hace "
-    "falta saber su servicio, pregúntaselo."
-)
-RAG_NO_SUPONE_EN = (
-    "Do not attribute to the customer anything they have not said: if they talk about their booking or plan without "
-    "saying which service, how many dives or which day they booked, do not infer it or name it as if you knew it "
-    "(don't say \"your 3-dive package\" unless they said so). Answer what they ask with the general information and, "
-    "if you need to know their service to answer, ask them."
-)
 # Flag `rag_no_adivina` (18-oct, decisión de Gadea: "no adivinar nada que el cliente no haya dicho"). Sustituye a
 # RAG_NO_SUPONE_*, que solo cubría el servicio reservado. Fallos estables de CAL-F (3 reps): el origen dado por supuesto
 # ("desde Cartagena", "dormir en las islas"), un mes o una fecha que nadie dijo, "certified diver" a un principiante y
@@ -436,7 +421,6 @@ RAG_SIN_GENERO_EN = (
     "Do not assume whether the customer is a man or a woman. If you do not know, do not use gendered words for them "
     "(\"sir\", \"madam\", \"guys\"); use wording that fits anyone."
 )
-
 
 
 # EX-EST-2 (flag `est2_datos`, 14-oct). Rondas del 13-14 oct: (1) "no puedo confirmar cupos, el equipo debe verificar"

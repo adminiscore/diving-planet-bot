@@ -66,11 +66,11 @@ def test_la_regla_de_no_adivinar_sustituye_a_la_de_no_suponer(monkeypatch, lang)
     la regla ampliada (origen, nacionalidad, certificación, cuántos, fechas…) y no la vieja, que solo cubría el
     servicio; las dos a la vez se contradirían en el alcance."""
     from src.agents.rag_agent import build_system_prompt
-    from src.prompts.info import RAG_NO_ADIVINA_EN, RAG_NO_ADIVINA_ES, RAG_NO_SUPONE_EN, RAG_NO_SUPONE_ES
+    from src.prompts.info import RAG_NO_ADIVINA_EN, RAG_NO_ADIVINA_ES
 
     prompt = build_system_prompt(lang)
     assert (RAG_NO_ADIVINA_ES if lang == "es" else RAG_NO_ADIVINA_EN) in prompt
-    assert (RAG_NO_SUPONE_ES if lang == "es" else RAG_NO_SUPONE_EN) not in prompt
+    # sim-8 (26-oct): la regla vieja (`RAG_NO_SUPONE_*`) ya no existe en el código.
 
 
 def test_una_o_dos_palabras_no_cambian_el_idioma(monkeypatch):
