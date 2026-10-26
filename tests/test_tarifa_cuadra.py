@@ -9,7 +9,9 @@ mismo CSV de tarifas: si el CSV trae un error, está en los dos. Aquí, cada pre
 Así salieron, el 21-oct, siete precios que no cuadraban (los paquetes de 4, 5, 7 y 9 inmersiones desde las islas, el
 Rescue desde las islas y el snorkel nocturno). Gadea los confirmó el mismo día (documento «Revisión de la base de Coral
 (2026)»): son los buenos. Quedan en `EXCEPCIONES_CONFIRMADAS` con el precio confirmado; si la tarifa cambia uno, el test
-pide volver a confirmarlo.
+pide volver a confirmarlo. 26-oct (VAL-BASE): dos de ellos, los paquetes de 4 inmersiones desde las islas, no eran precios
+raros sino los pesos cruzados entre los dos (ver `test_tarifa_es_la_de_la_hoja.py`); corregidos según la hoja, cuadran
+y salen de la lista.
 """
 
 import json
@@ -25,8 +27,6 @@ TOLERANCIA_DESCUENTO = 0.015
 
 # (origen, servicio) -> (COP online, USD online) que el negocio confirmó aunque no cuadren con el resto (Gadea, 21-oct).
 EXCEPCIONES_CONFIRMADAS = {
-    ("from_islands", "paquete_4_buceos_diurnos"): (830000, 204.3),
-    ("from_islands", "paquete_4_buceos_mixto"): (720000, 235.8),
     ("from_islands", "paquete_5_buceos"): (1000000, 318.6),
     ("from_islands", "paquete_7_buceos"): (1375000, 432),
     ("from_islands", "paquete_9_buceos"): (1695000, 544.5),
