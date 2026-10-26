@@ -2,13 +2,17 @@
 
 Ronda A del paso 3 (27-sep, golden completo): de 12 "¿lo cambio?", 6 eran la MISMA confirmación
 repetida porque el cliente no contestaba sí/no, y 2 proponían cambiar X por X.
+lat-11 T6d (26-oct): el intent de cada mensaje se construye a mano con lo que leía IntentDetector.detect (la clase se
+quitó); `_route_contradictions` solo escribe en él.
 """
 
+import copy
 from unittest.mock import AsyncMock
 
 import pytest
 
 from src.agents import conversational_core as core
+from src.agents.intent_detector import DetectedIntent
 from src.agents.nucleo import extraction as core_extraction
 from src.agents.nucleo import routing as core_routing
 from src.agents.nucleo import slotfill_close as core_close
@@ -33,8 +37,22 @@ def _state(**kw) -> ConversationState:
     return s
 
 
+# Lo que leia el regex de cada mensaje (IntentDetector.detect, quitado en lat-11 T6d).
+_LECTURAS = {
+    "somos los dos solamente": dict(language="es", detected_fields=["language"]),
+    "somos 4": dict(language="es", group_size=4, detected_fields=["language", "group_size"]),
+    "I apologize for the change and confusion!": dict(language="en", detected_fields=["language"]),
+    "esperate, somos 4 al final, se sumo uno mas": dict(
+        language="es", group_size=4, detected_fields=["language", "group_size"]),
+}
+
+
+def _lectura(message):
+    return DetectedIntent(**copy.deepcopy(_LECTURAS[message]))
+
+
 def _route(st, message, proposed):
-    intent = core._detector.detect(message, st)
+    intent = _lectura(message)
     core._route_contradictions(st, message, intent, proposed)
 
 
@@ -120,7 +138,7 @@ def test_correccion_clara_segun_jev_se_aplica_sin_preguntar(monkeypatch):
     st = _state(detected_group_size=3)
     st._jev_corrects = True
     msg = "esperate, somos 4 al final, se sumo uno mas"
-    intent = core._detector.detect(msg, st)
+    intent = _lectura(msg)
     core._route_contradictions(st, msg, intent, {"group_size": 4})
     assert not st.pending_correction
     assert intent.group_size == 4 and "group_size" in intent.overwrite

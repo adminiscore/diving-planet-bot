@@ -2,43 +2,13 @@
 1. Language detection used substring matching ("ahi" -> matched "hi" -> English).
 2. Bare "pagar"/"pago" escalated info questions like "¿puedo pagar en euros?".
 3. RAG answers offering an advisor showed generic main-menu buttons.
+lat-11 T6d (26-oct): fuera los tests del nit 1 (idioma de IntentDetector.detect; la clase se quitó y el idioma lo fija
+la apertura).
 """
 
 import pytest
 
 from src.agents.escalation import detect_sensitive_escalation
-from src.agents.intent_detector import IntentDetector
-from src.flows.state import ConversationState
-
-# ---------------------------------------------------------------------------
-# Nit 1 — language detection by whole word, not substring
-# ---------------------------------------------------------------------------
-
-def _lang(msg: str) -> str | None:
-    return IntentDetector().detect(msg, ConversationState(conversation_id="t")).language
-
-
-class TestLanguageWordBoundary:
-    def test_ahi_does_not_trigger_english(self):
-        # "ahi" contains "hi" but the sentence is Spanish.
-        assert _lang("Estoy en el hotel Pao Pao, me recogen ahi?") == "es"
-
-    @pytest.mark.parametrize("msg", [
-        "Cuanto cuesta el buceo?",
-        "Quiero reservar un minicurso",
-        "Estoy en las islas, me pueden recoger?",
-    ])
-    def test_spanish_stays_spanish(self, msg):
-        assert _lang(msg) == "es"
-
-    @pytest.mark.parametrize("msg", [
-        "Can you pick me up at the hotel?",
-        "hi, how much is diving?",
-        "I want to book a course",
-    ])
-    def test_english_stays_english(self, msg):
-        assert _lang(msg) == "en"
-
 
 # ---------------------------------------------------------------------------
 # Nit 2 — payment info questions must not escalate; real failures still do

@@ -8,13 +8,13 @@ cortas de isla (C.3) (2026-09-15/16).
   ubicacion), asi que es estructura, sin palabras de dominio.
 - C.3: "grande", "marina", "arena"... sueltas son palabras corrientes: solo cuentan como la
   isla "Isla X" si el mensaje nombra una isla.
+lat-11 T6d (26-oct): el lugar con `detect_location` (IntentDetector.detect se quitó; el lugar lo sigue leyendo este lector).
 """
 
 import pytest
 
 from src.agents import conversational_core as core
-from src.agents.intent_detector import IntentDetector, place_by_role
-from src.flows.state import ConversationState
+from src.agents.intent_detector import DetectedIntent, detect_location, place_by_role
 
 
 @pytest.mark.parametrize("message, place", [
@@ -61,7 +61,8 @@ def test_an_island_hotel_is_lodging():
 
 
 def _location(message):
-    intent = IntentDetector().detect(message, ConversationState(conversation_id="loc"))
+    intent = DetectedIntent()
+    detect_location(message.lower().strip(), intent)
     return intent.location, intent.island
 
 

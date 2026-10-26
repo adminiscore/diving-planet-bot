@@ -10,24 +10,20 @@ Two routing paths:
 - confidence >= 0.30  → direct routing (enough signal in the message)
 - 0.20 < confidence < 0.30 → bot asks "¿Te refieres a X?" first (Capa 3),
   then routes after user confirms with "sí" / "yes"
+lat-11 T6d (26-oct): fuera la parte 1 (la actividad de IntentDetector.detect; la clase se quitó y la actividad la
+decide el extractor).
 """
 
 
 import pytest
 
-from src.agents.intent_detector import DetectedIntent, IntentDetector
+from src.agents.intent_detector import DetectedIntent
 from src.agents.supervisor import route_message
 from src.flows.state import ConversationState, Step
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
-
-def _detect(msg: str) -> "DetectedIntent":  # noqa: F821
-    state = ConversationState(conversation_id="t")
-    state.language = "es"
-    return IntentDetector().detect(msg, state)
-
 
 def make_state(lang: str = "es") -> ConversationState:
     s = ConversationState(conversation_id="test-padi")
@@ -36,52 +32,8 @@ def make_state(lang: str = "es") -> ConversationState:
 
 
 # ---------------------------------------------------------------------------
-# Part 1 — IntentDetector emits specific activity names
-# ---------------------------------------------------------------------------
-
-class TestIntentDetectorPadiActivity:
-    """IntentDetector must emit a specific activity, not the generic 'padi_course'."""
-
-    def test_open_water_es(self):
-        intent = _detect("quiero hacer el curso open water")
-        assert intent.activity == "padi_open_water"
-        assert intent.service_id == "open_water"
-
-    def test_open_water_en(self):
-        intent = _detect("I want to do the open water course")
-        assert intent.activity == "padi_open_water"
-        assert intent.service_id == "open_water"
-
-    def test_advanced_es(self):
-        intent = _detect("me interesa el curso advanced")
-        assert intent.activity == "padi_advanced"
-        assert intent.service_id == "advanced"
-
-    def test_advanced_en(self):
-        intent = _detect("I want to do the advanced course")
-        assert intent.activity == "padi_advanced"
-        assert intent.service_id == "advanced"
-
-    def test_rescue_es(self):
-        intent = _detect("quiero hacer el curso rescue diver")
-        assert intent.activity == "padi_rescue"
-        assert intent.service_id == "rescue"
-
-    def test_divemaster_es(self):
-        intent = _detect("información sobre el divemaster")
-        assert intent.activity == "padi_divemaster"
-        assert intent.service_id == "divemaster"
-
-    def test_generic_padi_stays_generic(self):
-        """If the user mentions PADI without a specific course, stays generic."""
-        intent = _detect("quiero certificarme con padi")
-        assert intent.activity == "padi_course"
-
-
-# ---------------------------------------------------------------------------
 # Part 2 — supervisor sets mixed_pending_qty_plan after free-text PADI intent
 # ---------------------------------------------------------------------------
-
 
 
 # ---------------------------------------------------------------------------

@@ -8,6 +8,8 @@ snorkel: 1}) y totales de turno mal leídos ("4 certificados" con 7 ya sabidos).
 Aquí vivía también el veto LLM de `group_allocation`: salió del camino real en ex-9, su maquinaria se borró en MEJ-1
 y sus restos de `llm_extractor` (`verify_fields`, `_clean_verified_value`) en mej-1d (21-oct). Quedan la regla del
 reparto y el comportamiento del regex.
+lat-11 T6d (26-oct): fuera el test de IntentDetector.detect (la clase se quitó; el reparto lo decide el extractor); los
+intents de prueba se construyen a mano.
 """
 
 from unittest.mock import AsyncMock, patch
@@ -15,31 +17,13 @@ from unittest.mock import AsyncMock, patch
 import pytest
 
 from src.agents import supervisor
-from src.agents.intent_detector import IntentDetector
+from src.agents.intent_detector import DetectedIntent
 from src.flows.state import ConversationState
-
-_INCOMPLETE_MSG = "somos 5: 3 certificados, 1 minicurso y 1 snorkel"
-_COMPLETE_MSG = "somos 5, 3 quieren bucear, 1 minicurso y 1 snorkel"
-_REGEX_PARTIAL = {"minicourse": 1, "snorkel": 1}
-_FULL_ALLOCATION = {"certified_diving": 3, "minicourse": 1, "snorkel": 1}
-
-
-def _detect(msg):
-    state = ConversationState(conversation_id="ga-veto-test")
-    return IntentDetector().detect(msg, state), state
 
 
 # -- Los flags nacen apagados ------------------------------------------------
 
 # -- El caso real que motiva el mecanismo ------------------------------------
-
-def test_regex_produces_an_incomplete_but_visible_allocation():
-    """El fallo que se quiere cazar, tal cual, sin LLM de por medio."""
-    intent, _ = _detect(_INCOMPLETE_MSG)
-    assert intent.group_size == 5
-    assert intent.group_allocation == _REGEX_PARTIAL
-    assert sum(intent.group_allocation.values()) != intent.group_size
-
 
 # -- El trigger propio -------------------------------------------------------
 
@@ -52,7 +36,7 @@ def test_regex_produces_an_incomplete_but_visible_allocation():
 # casos multi-turno -- que eran los que quedaban mal en la bateria.
 
 def _intent_con_reparto(alloc, gs=None):
-    intent, _ = _detect("x")
+    intent = DetectedIntent()
     intent.group_allocation = alloc
     intent.group_size = gs
     return intent
@@ -71,7 +55,7 @@ def _intent_con_reparto(alloc, gs=None):
 # que cualquier fuente futura queda cubierta sin tocar nada.
 
 def _intent_alloc(alloc, gs=None, detected=True):
-    intent, _ = _detect("x")
+    intent = DetectedIntent()
     intent.group_allocation = alloc
     intent.group_size = gs
     intent.detected_fields = ["group_allocation"] if detected else []
@@ -223,9 +207,12 @@ def test_split_whose_turn_total_the_regex_derived_from_the_split_itself():
     msg = "4 con brevet, 2 minicurso y 1 snorkel"
     state = ConversationState(conversation_id="ga-b10")
     state.detected_group_size = 7
-    intent = IntentDetector().detect(msg, state)
-    assert intent.group_allocation == {"minicourse": 2, "snorkel": 1}
-    assert intent.group_size == 3  # el total que el regex dedujo del reparto
+    # Lo que leia el regex de este mensaje (IntentDetector.detect, quitado en lat-11 T6d): el total 3 sale del reparto.
+    intent = DetectedIntent(
+        language="es", activity="minicourse", service_id="minicourse", is_certified=False,
+        group_size=3, group_allocation={"minicourse": 2, "snorkel": 1},
+        detected_fields=["language", "activity", "is_certified", "group_allocation"],
+    )
 
     supervisor.enforce_group_allocation_consistency(intent, state, msg)
     assert intent.group_allocation is None

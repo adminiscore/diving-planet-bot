@@ -1,62 +1,19 @@
 """Intent-detector robustness regressions found auditing typos / ES-EN mix /
-negations / multi-intent messages."""
+negations / multi-intent messages.
+lat-11 T6d (26-oct): fuera los tests de IntentDetector.detect (actividad, certificacion, grupo, reparto, ultima
+inmersion, nacionalidad e idioma; la clase se quito y esos campos los decide el extractor). Las edades, el lugar y la
+cifra de inmersiones o de dias se leen con `lectura_del_turno`."""
+
+import copy
 
 import pytest
 
-from src.agents.intent_detector import IntentDetector
+from src.agents.intent_detector import DetectedIntent, lectura_del_turno
 from src.flows.state import ConversationState
-
-det = IntentDetector()
 
 
 def _d(msg: str):
-    return det.detect(msg, ConversationState(conversation_id="rob"))
-
-
-# --- Negations --------------------------------------------------------------
-
-@pytest.mark.parametrize("msg", [
-    "no soy certificado todavía",
-    "no somos certificados",
-    "todavía no soy certificada",
-])
-def test_no_soy_certificado_is_not_certified(msg):
-    assert _d(msg).is_certified is False
-
-
-def test_companion_denial_with_postponed_subject_is_not_the_writers():
-    """"no es certificado mi acompañante" habla del acompañante, con el sujeto detras del
-    verbo (2026-09-15): no fija el estado de quien escribe."""
-    from src.agents.intent_detector import other_person_certification
-
-    assert _d("no es certificado mi acompañante").is_certified is None
-    assert other_person_certification("no es certificado mi acompañante") is False
-
-
-@pytest.mark.parametrize("msg", [
-    "no quiero bucear, solo snorkel",
-    "solo quiero snorkel para mi familia",
-    "solamente snorkel por favor",
-    "just snorkel, no diving",
-    "only snorkel please",
-])
-def test_only_snorkel_resolves_to_snorkel_not_diving(msg):
-    assert _d(msg).activity == "snorkel"
-
-
-# --- Certified detection still works (no over-correction) --------------------
-
-@pytest.mark.parametrize("msg,expected", [
-    ("somos 2 buzos certificados", True),
-    ("soy buzo certificado con open water", True),
-])
-def test_certified_positive_still_detected(msg, expected):
-    assert _d(msg).is_certified is expected
-
-
-def test_nunca_hemos_buceado_still_beginner():
-    i = _d("nunca hemos buceado")
-    assert i.activity == "minicourse" and i.is_certified is False
+    return lectura_del_turno(msg)
 
 
 # --- English age phrasings --------------------------------------------------
@@ -68,103 +25,6 @@ def test_nunca_hemos_buceado_still_beginner():
 ])
 def test_english_age_phrasings(msg, expected):
     assert _d(msg).ages == expected
-
-
-# --- Mixed ES/EN headcount / certification ----------------------------------
-
-def test_mixed_language_group_and_cert():
-    i = _d("hi, somos 3 personas certified divers")
-    assert i.group_size == 3
-    assert i.is_certified is True
-
-
-# --- Group composition / auto-build understanding ---------------------------
-
-@pytest.mark.parametrize("msg", [
-    "los dos buzos",
-    "somos buzos",
-    "reservar para mi pareja y yo, los dos buzos",
-    "vamos 3 buzos a las islas",
-    "soy buza",
-])
-def test_bare_buzos_means_certified_diving(msg):
-    i = _d(msg)
-    assert i.activity == "certified_diving"
-    assert i.is_certified is True
-
-
-@pytest.mark.parametrize("msg", [
-    "no somos buzos",
-    "quiero ser buzo",
-    "queremos hacernos buzos",
-])
-def test_wanting_to_become_or_not_being_a_diver_is_not_certified(msg):
-    assert _d(msg).is_certified is False
-
-
-def test_verb_form_activity_split():
-    """'3 bucean y 2 hacen snorkel' -> allocation, not all-diving."""
-    i = _d("somos 5, 3 bucean y 2 hacen snorkel")
-    assert i.group_allocation == {"certified_diving": 3, "snorkel": 2}
-    assert i.group_size == 5
-
-
-def test_open_water_and_sin_certificar_is_cert_split():
-    """'dos con open water y uno sin certificar' -> 2 certified + 1 beginner."""
-    i = _d("somos 3, dos con open water y uno sin certificar")
-    assert i.group_allocation == {"certified_diving": 2, "undecided": 1}
-
-
-def test_somos_dos_queremos_bucear_asks_cert_not_lost():
-    """'somos dos y queremos bucear' -> diving intent for 2 (cert unknown)."""
-    i = _d("somos dos y queremos bucear")
-    assert i.activity == "certified_diving"
-    assert i.group_size == 2
-    assert i.is_certified is None
-
-
-def test_plural_certificados_in_verb_split():
-    """'3 buceamos certificados y 2 hacen snorkel' -> the plural 'certificados'
-    between the activity verb and 'y' must not break the numeric split."""
-    i = _d("somos 5, 3 buceamos certificados y 2 hacen snorkel")
-    assert i.group_allocation == {"certified_diving": 3, "snorkel": 2}
-
-
-# --- Bubble Makers is a kids beginner activity (not certified diving) --------
-
-@pytest.mark.parametrize("msg", [
-    "quiero saber del bubble makers",
-    "bubble makers para mi hijo de 9",
-    "cuentame del bubblemaker",
-    "el bubble maker",
-])
-def test_bubble_makers_is_minicourse_not_certified(msg):
-    i = _d(msg)
-    assert i.activity == "minicourse"
-    assert i.is_certified is False
-
-
-# --- "para mí" / solo self → 1 person ---------------------------------------
-
-@pytest.mark.parametrize("msg", [
-    "Quiero el minicurso para mi, no se bucear, desde cartagena, soy colombiano",
-    "Quiero el curso open water para mi, extranjero",
-    "solo yo",
-    "just me, open water course",
-    "para mi, tengo 30 años",
-])
-def test_solo_self_means_one_person(msg):
-    assert _d(msg).group_size == 1
-
-
-@pytest.mark.parametrize("msg", [
-    "para mi y mi novia",
-    "para mi esposo y yo",
-    "quiero 2 inmersiones para mi",   # other number present -> stay conservative
-    "para mi familia",
-])
-def test_solo_self_not_triggered_with_companions_or_numbers(msg):
-    assert _d(msg).group_size is None
 
 
 # --- Generic "las islas" location (no specific island/hotel named) ---------
@@ -187,9 +47,6 @@ def test_screenshot_message_detects_island_location():
     """Exact message from the PRE bug report."""
     i = _d("Hola queremos bucear somos 5 certificados y queremos el paqiete de 7, vamos desde las islas")
     assert i.location == "island"
-    assert i.activity == "certified_diving"
-    assert i.is_certified is True
-    assert i.group_size == 5
 
 
 @pytest.mark.parametrize("msg", [
@@ -268,151 +125,6 @@ def test_praying_the_rosary_english_does_not_trigger_island_location():
     assert _d("I pray the rosary every day").location is None
 
 
-# --- Holding a PADI certification level => certified diver -------------------
-
-@pytest.mark.parametrize("msg", [
-    "soy open water",
-    "tengo el open water",
-    "soy advanced",
-    "tengo el advanced",
-    "soy rescue diver",
-    "soy divemaster",
-    "i am open water",
-    "i have my advanced",
-    "tengo nitrox",
-    "soy aguas abiertas",
-    "estoy certificado en open water",
-    "hola soy open water y quiero hacer dos inmersiones",
-    "somos advanced y queremos 2 inmersiones",
-])
-def test_holding_padi_level_is_certified(msg):
-    assert _d(msg).is_certified is True
-
-
-@pytest.mark.parametrize("msg", [
-    "quiero el curso open water",
-    "quiero sacarme el advanced",
-    "quiero hacer el rescue",
-    "quiero certificarme",
-    "curso de open water",
-    "quiero el advanced",
-    "me interesa el divemaster",
-])
-def test_wanting_a_course_is_not_certified(msg):
-    # Wanting to TAKE a course != holding the certification.
-    assert _d(msg).is_certified is not True
-
-
-def test_holding_openwater_is_not_the_course_activity():
-    """"soy open water" is a certified diver wanting fun dives, not someone
-    taking the Open Water course."""
-    i = _d("soy open water")
-    assert i.is_certified is True
-    assert i.activity != "padi_open_water"
-
-
-# --- Group size from "N divers" / "N certified" ------------------------------
-
-@pytest.mark.parametrize("msg,expected", [
-    ("2 certified divers", 2),
-    ("3 divers from cartagena", 3),
-    ("somos 3 buzos", 3),
-    ("3 buceadores", 3),
-    ("4 certificados", 4),
-    ("2 certified divers, 2 dives, we dived last month", 2),
-])
-def test_group_size_from_divers_or_certified(msg, expected):
-    assert _d(msg).group_size == expected
-
-
-# --- Nationality captured from the message (COP vs USD, don't re-ask) ---------
-
-@pytest.mark.parametrize("msg,expected", [
-    ("somos colombianos", True),
-    ("soy colombiano", True),
-    ("i am colombian", True),
-    ("resident in colombia", True),
-    ("soy de colombia", True),
-    ("we are foreigners", False),
-    ("somos extranjeros", False),
-    ("no soy colombiano", False),
-    ("not colombian, from spain", False),
-])
-def test_nationality_detected(msg, expected):
-    assert _d(msg).is_colombian is expected
-
-
-@pytest.mark.parametrize("msg", [
-    "quiero bucear",
-    "las mejores islas de colombia",   # country name, not a nationality claim
-])
-def test_nationality_not_falsely_detected(msg):
-    assert _d(msg).is_colombian is None
-
-
-# --- Info retention: last-dive stated in the message --------------------------
-
-@pytest.mark.parametrize("msg,expected", [
-    ("somos 2 buzos certificados, buceamos hace un mes", False),
-    ("buceamos hace 6 meses", False),
-    ("no hace mas de 2 anos que buceamos", False),
-    ("we dived recently", False),
-    ("dived last month", False),
-    ("llevo 5 anos sin bucear", True),
-    ("hace mas de 3 anos que no buceo", True),
-    ("mi ultima inmersion fue hace 3 anos", True),
-    ("buceamos hace 2 anos", True),
-    ("buceo hace 18 meses", False),
-])
-def test_last_dive_captured_from_message(msg, expected):
-    assert _d(msg).last_dive_over_2_years is expected
-
-
-@pytest.mark.parametrize("msg", [
-    "soy certificado",              # no last-dive info
-    "reserve hace un mes",          # not a diving context
-    "quiero bucear 2 dias",
-])
-def test_last_dive_not_falsely_detected(msg):
-    assert _d(msg).last_dive_over_2_years is None
-
-
-# --- Info retention: "N persona" singular counts as group size ---------------
-
-@pytest.mark.parametrize("msg,expected", [
-    ("quiero el minicurso para 1 persona", 1),
-    ("snorkel para 2 persona", 2),
-    ("just 1 person", 1),
-])
-def test_singular_persona_counts_as_group_size(msg, expected):
-    assert _d(msg).group_size == expected
-
-
-# --- Under-10 kids can't be certified (safe split) --------------------------
-
-def test_under_10_kids_split_out_of_certified_group():
-    """'familia de 5: papá y mamá certificados, 3 niños de 6, 9 y 13' — the 6- and
-    9-year-olds cannot hold a certification (OW min age 10), so they become
-    beginners; the 13yo (who CAN be certified) stays in the cert count."""
-    i = _d("familia de 5: papa y mama certificados, 3 ninos de 6, 9 y 13, desde cartagena")
-    assert i.group_allocation == {"certified_diving": 3, "minicourse": 2}
-
-
-def test_single_under_10_kid_split_from_certified_pair():
-    i = _d("somos 2 buzos certificados y mi hijo de 6")
-    assert i.group_allocation == {"certified_diving": 1, "minicourse": 1}
-
-
-@pytest.mark.parametrize("msg", [
-    "somos 3 buzos certificados",                       # no ages at all
-    "somos 4 certificados, dos adolescentes de 14 y 16",  # teens CAN be certified
-    "somos 3 certificados de 25, 30 y 35",              # adults
-    "soy buzo certificado, tengo 30 años",              # single adult
-])
-def test_no_kid_split_when_no_under_10_age(msg):
-    assert _d(msg).group_allocation is None
-
-
 # --- Explicit certified dive-count detection --------------------------------
 
 @pytest.mark.parametrize("msg,expected", [
@@ -486,8 +198,6 @@ def test_pack_qualifier_recognized_for_day_count():
     assert _d("el pack de 2 dias").cert_days == 2
 
 
-
-
 # --- Exhaustive audit: bare "pack/paquete de N" for every N 1-10, digit and
 # word form, ES and EN (2026-07-09). Only 5/7/9 are unambiguous package sizes
 # (never valid as a day-count too) — everything else must stay None and let
@@ -528,17 +238,31 @@ def test_bare_pack_en_word_all_numbers(n):
     assert _d(f"the pack of {_BARE_PACK_EN_WORDS[n]}").cert_dives == expected
 
 
-
-
-
-
 # --- Latest concrete activity wins (customer changes their mind) -------------
+
+# Lo que leia el regex de cada mensaje (IntentDetector.detect, quitado en lat-11 T6d).
+_LECTURAS = {
+    "quiero bucear": DetectedIntent(
+        language="es", activity="certified_diving", service_id="2_dives_1_day",
+        detected_fields=["language", "activity"]),
+    "mejor un minicurso para el niño": DetectedIntent(
+        language="es", activity="minicourse", service_id="minicourse", is_certified=False,
+        detected_fields=["language", "activity", "is_certified"]),
+    "cuentame del bubble makers": DetectedIntent(
+        language="es", activity="minicourse", service_id="minicourse", is_certified=False,
+        detected_fields=["language", "activity", "is_certified"]),
+    "somos 2 buzos certificados": DetectedIntent(
+        language="es", activity="certified_diving", service_id="2_dives_1_day", is_certified=True, group_size=2,
+        detected_fields=["language", "activity", "is_certified", "group_size"]),
+    "y cuanto cuesta?": DetectedIntent(language="es", detected_fields=["language"]),
+}
+
 
 def _apply_seq(msgs):
     from src.agents.supervisor import _apply_detected_intent
     st = ConversationState(conversation_id="seq"); st.language = "es"
     for m in msgs:
-        _apply_detected_intent(_d(m), st)
+        _apply_detected_intent(copy.deepcopy(_LECTURAS[m]), st)
     return st
 
 
@@ -562,45 +286,7 @@ def test_activity_stays_certified_when_no_new_activity():
     assert st.detected_is_certified is True
 
 
-# --- Language: Spanish question with an English activity name ---------------
-
-@pytest.mark.parametrize("msg", [
-    "¿qué es el Mindful Diving?",
-    "que es el open water",
-    "¿cómo funciona el discover scuba?",
-])
-def test_spanish_question_with_english_term_stays_spanish(msg):
-    assert _d(msg).language == "es"
-
-
-@pytest.mark.parametrize("msg", [
-    "cuentame del fun dive",   # tie (del vs dive) -> None, must NOT flip to English
-    "el diving",
-])
-def test_ambiguous_spanish_never_flips_to_english(msg):
-    assert _d(msg).language != "en"
-
-
-@pytest.mark.parametrize("msg", [
-    "how much is diving",
-    "i want to dive",
-    "what is the mindful diving course",
-    "hello, how much is snorkeling",
-])
-def test_english_messages_still_english(msg):
-    assert _d(msg).language == "en"
-
-
 # --- English family / kids-age extraction -----------------------------------
-
-@pytest.mark.parametrize("msg,expected", [
-    ("we are a family of 4", 4),
-    ("a family of 5 wants to dive", 5),
-    ("family of three, all certified", 3),
-])
-def test_english_family_of_n_group_size(msg, expected):
-    assert _d(msg).group_size == expected
-
 
 @pytest.mark.parametrize("msg,expected", [
     ("our kids are 7 and 11", [7, 11]),
@@ -638,43 +324,10 @@ def test_kid_noun_tiene_age(msg, expected):
     assert _d(msg).ages == expected
 
 
-# --- Mixed-group split with a count phrase inserted mid-sentence ------------
-# Regression: "somos 5, 3 buceamos certificados 5 inmersiones y 2 hacen
-# snorkel" used to produce NO group_allocation (the injected dive-count broke
-# the split-pattern's adjacency requirement), silently dropping the 2
-# snorkelers when it fell through to the certified-only path downstream.
-
-@pytest.mark.parametrize("msg,expected", [
-    ("somos 5, 3 buceamos certificados 5 inmersiones y 2 hacen snorkel", {"certified_diving": 3, "snorkel": 2}),
-    ("3 buceamos certificados y 2 hacen snorkel, queremos 5 inmersiones", {"certified_diving": 3, "snorkel": 2}),
-    ("somos 5, 3 bucean 2 dias y 2 hacen snorkel", {"certified_diving": 3, "snorkel": 2}),
-    ("we are 5, 3 diving 3 dives and 2 snorkel", {"certified_diving": 3, "snorkel": 2}),
-    ("3 de buceo certificado 7 inmersiones y 2 de snorkel", {"certified_diving": 3, "snorkel": 2}),
-])
-def test_group_split_survives_injected_count_phrase(msg, expected):
-    assert _d(msg).group_allocation == expected
-
-
 # --- Fase 7: 3 bugs reales de regex hallados por las baterías (2026-07-21/22)
 # Decisión documentada en docs/robustness/plan.md §Fase 7: estos casos eran
 # patrones concretos y deterministas → se arregla el REGEX (no un override LLM
 # no-determinista). El eval-set los tenía registrados como regresión permanente.
-
-@pytest.mark.parametrize("msg,expected", [
-    # el hablante es ADICIONAL al conteo de acompañantes
-    ("me plus 3 friends, ppl wanna try diving first time", 4),
-    ("me plus 3 friends want to snorkel", 4),
-    ("vienen 3 amigos conmigo, queremos bucear", 4),
-    ("3 amigos y yo queremos hacer snorkel", 4),
-    ("voy con 2 amigos a bucear", 3),
-    # controles: los totales explícitos NO se incrementan
-    ("somos 4, mi novia y yo buceamos", 4),
-    ("we are 3 people", 3),
-    ("4 friends want to dive", 4),
-])
-def test_speaker_additional_to_companion_count(msg, expected):
-    assert _d(msg).group_size == expected
-
 
 @pytest.mark.parametrize("msg", [
     "hace como 3 años que no buceo, seré yo solo",
@@ -696,17 +349,3 @@ def test_timeframe_years_are_not_ages(msg):
 ])
 def test_real_ages_still_detected(msg, expected):
     assert _d(msg).ages == expected
-
-
-def test_already_have_card_is_certified_not_course():
-    """'i already have my open water card, want to do more dives' clasificaba
-    como CURSO Open Water a quien ya lo tiene y quiere bucear."""
-    it = _d("i already have my open water card, want to do more dives")
-    assert it.is_certified is True
-    assert it.activity == "certified_diving"
-
-
-def test_we_already_have_advanced_is_certified():
-    it = _d("we already have the advanced, want to dive tomorrow")
-    assert it.is_certified is True
-    assert it.activity != "padi_advanced"

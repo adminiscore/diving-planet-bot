@@ -21,7 +21,6 @@ os.environ.setdefault("ENV_FILE", ".env.dev")
 os.environ.setdefault("APP_ENV", "development")
 
 from scripts.run_extraction_eval import CAMPOS_EX0, _turno_ex0, puntuar_ex0  # noqa: E402
-from src.agents.intent_detector import IntentDetector  # noqa: E402
 
 BANCO = Path(__file__).resolve().parent.parent / "docs" / "robustness" / "regex" / "banco-ex7" / "banco.json"
 _INGLES = re.compile(r"\b(the|i|i'm|we|we're|you|is|my|our|of|and|will|are|us)\b", re.IGNORECASE)
@@ -41,7 +40,6 @@ async def main() -> None:
     ap.add_argument("--out", default=None)
     a = ap.parse_args()
     casos = json.loads(BANCO.read_text(encoding="utf-8"))["casos"]
-    detector = IntentDetector()
     filas = []
     for pasada in range(a.pasadas):
         # ex-9 (15-oct): el camino viejo ("hoy") ya no existe: el grupo lo decide siempre el extractor.
@@ -49,7 +47,7 @@ async def main() -> None:
             for c in casos:
                 caso = _caso(c)
                 try:
-                    producido = await _turno_ex0(caso, "actual", detector)
+                    producido = await _turno_ex0(caso, "actual")
                 except Exception as exc:  # noqa: BLE001 — se apunta y se sigue
                     producido = {"ERROR": repr(exc)}
                 r = puntuar_ex0({k: v for k, v in producido.items() if k in CAMPOS_EX0}, c["esperado"], caso["sabido"])

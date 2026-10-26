@@ -13,6 +13,8 @@ Lo que se fija aquí:
 6. el RAG recibe la foto del historial tomada al lanzarlo;
 7. la duda de Jev en `asks_question` no manda el turno al router LLM, y su respuesta
    viaja también cuando Jev duda en las señales del router.
+lat-11 T6d (26-oct): el intent que reciben `_route_contradictions` se construye a mano con lo que leía
+IntentDetector.detect (la clase se quitó).
 """
 
 import asyncio
@@ -24,6 +26,7 @@ import pytest
 
 from src.agents import conversational_core as core
 from src.agents import escalation, jev_router, supervisor
+from src.agents.intent_detector import DetectedIntent
 from src.agents.nucleo import extraction as core_extraction
 from src.agents.nucleo import routing as core_routing
 from src.agents.nucleo import slotfill_close as core_close
@@ -507,7 +510,7 @@ async def test_el_lo_cambio_fantasma_se_descarta_si_jev_dice_que_no_lo_afirma(mo
     "¿lo cambio?". Con Jev diciendo que el mensaje no habla de certificación, no se pregunta."""
     st = _con_pregunta(_state(), {"is_certified": False})
     st.is_certified = True
-    intent = core._detector.detect("listo, como pago", st)
+    intent = DetectedIntent(language="es", detected_fields=["language"])  # lo que leia IntentDetector.detect
     core._route_contradictions(st, "listo, como pago", intent, {"is_certified": False})
     assert not st.pending_correction
     assert st.is_certified is True
@@ -520,7 +523,7 @@ async def test_el_lo_cambio_fantasma_tambien_se_descarta_en_un_turno_de_cortesia
     st = _state()
     st.location = "cartagena"
     st._answer_affirms = {"location": False}
-    intent = core._detector.detect("Just completed the waivers. Thank you!", st)
+    intent = DetectedIntent(language="en", detected_fields=["language"])  # lo que leia IntentDetector.detect
     core._route_contradictions(st, "Just completed the waivers. Thank you!", intent, {"location": "island"})
     assert not st.pending_correction
     assert st.location == "cartagena"
@@ -541,7 +544,9 @@ async def test_la_senal_de_jev_se_renueva_en_cada_turno(monkeypatch, signals, ra
 async def test_si_jev_dice_que_si_lo_afirma_la_contradiccion_se_confirma(monkeypatch):
     st = _con_pregunta(_state(), {"is_certified": True})
     st.is_certified = True
-    intent = core._detector.detect("no soy certificado, ¿qué me recomiendas?", st)
+    # Lo que leia IntentDetector.detect de este mensaje.
+    intent = DetectedIntent(language="es", activity="certified_diving", is_certified=False, group_size=1,
+                            solo_confirmed=True, detected_fields=["language", "is_certified", "group_size", "activity"])
     core._route_contradictions(st, "no soy certificado, ¿qué me recomiendas?", intent, {"is_certified": False})
     assert st.pending_correction == {"is_certified": False}
 

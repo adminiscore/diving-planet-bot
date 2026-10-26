@@ -5,16 +5,17 @@ Antes eran dos listas de fraseos ("un dia", "varios dias", "\\d+ days"), asi que
 volvia a preguntar cuanto se quedan. Ahora la cantidad multiplica los dias de la unidad y
 el total decide. Las noches quedan fuera a proposito, y el tiempo transcurrido ("hace 3
 dias que llegamos") no es estancia.
+lat-11 T6d (26-oct): con `lectura_del_turno` (IntentDetector.detect se quitó; la duración la sigue leyendo este
+lector).
 """
 
 import pytest
 
-from src.agents.intent_detector import IntentDetector
-from src.flows.state import ConversationState
+from src.agents.intent_detector import lectura_del_turno
 
 
 def _duration(message: str) -> str | None:
-    return IntentDetector().detect(message, ConversationState(conversation_id="dur")).duration
+    return lectura_del_turno(message).duration
 
 
 @pytest.mark.parametrize("message", [

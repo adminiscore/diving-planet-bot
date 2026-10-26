@@ -31,7 +31,6 @@ import logging
 import re
 
 from src.agents.intent_detector import (
-    IntentDetector,
     courses_mentioned,
     matched_activity_categories,
 )
@@ -44,8 +43,6 @@ from src.utils.number_words import number_alt
 from src.utils.text import strip_accents
 
 logger = logging.getLogger("uvicorn.error")
-
-_detector = IntentDetector()
 
 # ─── Slots (orden del plan) ───
 SLOT_ACTIVITY = "activity"

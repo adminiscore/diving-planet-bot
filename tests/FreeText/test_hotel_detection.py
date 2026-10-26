@@ -1,9 +1,9 @@
 """
 Test de detección mejorada de hoteles e islas.
+lat-11 T6d (26-oct): con `detect_location` (IntentDetector.detect se quitó; el lugar lo sigue leyendo este lector).
 """
 
-from src.agents.intent_detector import IntentDetector
-from src.flows.state import ConversationState
+from src.agents.intent_detector import DetectedIntent, detect_location
 
 
 def test_hotel_detection():
@@ -11,9 +11,6 @@ def test_hotel_detection():
     Prueba que el detector identifica correctamente hoteles e islas,
     incluyendo variantes y aliases comunes.
     """
-    detector = IntentDetector()
-    state = ConversationState(conversation_id="test-hotel")
-
     test_cases = [
         # Hotel Pao Pao
         ("Estoy en el Pao Pao", "pao_pao", "isla_grande", "island"),
@@ -104,7 +101,8 @@ def test_hotel_detection():
     failed = 0
 
     for msg, expected_hotel, expected_island, expected_location in test_cases:
-        intent = detector.detect(msg, state)
+        intent = DetectedIntent()
+        detect_location(msg.lower().strip(), intent)
 
         # Verificar hotel
         if expected_hotel:
