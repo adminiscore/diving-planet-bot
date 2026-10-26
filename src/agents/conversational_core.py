@@ -2153,6 +2153,15 @@ def _origen_antes_del_precio(state: ConversationState, message: str, answer: str
         tras = (ORIGEN_TRAS_LOS_ENLACES_ES, ORIGEN_TRAS_LOS_ENLACES_EN) if da_enlace else (
             ORIGEN_TRAS_LAS_VARIANTES_ES, ORIGEN_TRAS_LAS_VARIANTES_EN)
         pregunta = f"{variantes}\n\n{tras[0] if state.language == 'es' else tras[1]}"
+    elif not da_enlace and _cotiza_los_dos_origenes(state, answer):
+        # 27-oct (decisión de Gadea del 26-oct, «origen-y-precio»: sin el origen, dos precios y pregunta): sin variantes
+        # del catálogo (paquetes y planes de buzo con varios planes por origen) se quitaban todos los importes y quedaba
+        # solo la pregunta, aunque el escritor hubiera dado el precio de cada origen (4-5 criterios por ronda en
+        # integra4-6: «preguntó el origen pero no cotizó»). Si los da los dos, se dejan y detrás va la pregunta; si da
+        # uno solo, o un enlace (el de una sola salida), se quitan como antes.
+        cuerpo = _sin_la_pregunta_final(answer) if _cierra_preguntando_el_origen(state, answer) else answer
+        tras = ORIGEN_TRAS_LAS_VARIANTES_ES if state.language == "es" else ORIGEN_TRAS_LAS_VARIANTES_EN
+        return f"{cuerpo.rstrip()}\n\n{tras}"
     resto = _sin_importes(answer)
     return f"{resto}\n\n{pregunta}" if resto else pregunta
 
@@ -2263,6 +2272,19 @@ def _dos_variantes(state: ConversationState, answer: str = "", con_enlace: bool 
         url = cart_render._resolve_service_booking_url(servicio, state) if con_enlace else None
         lineas.append(f"{linea} {url}" if url else linea)
     return "\n".join(lineas)
+
+
+def _cotiza_los_dos_origenes(state: ConversationState, answer: str) -> bool:
+    """¿La respuesta da un precio de algún plan de la actividad desde Cartagena Y otro de algún plan ya en las islas?
+    Con los datos del catálogo, no con palabras."""
+    from src.flows.catalog import SERVICES  # lazy
+
+    actividad = state.actividad_preguntada or state.detected_activity or state.suggested_activity
+    if not actividad or not answer:
+        return False
+    por_origen = [[SERVICES[s] for s in dom.service_ids(actividad, origen) if s in SERVICES]
+                  for origen in ("cartagena", "island")]
+    return all(servicios and _cotiza_alguno(answer, servicios) for servicios in por_origen)
 
 
 def _enlaza_alguno(answer: str, servicios: list[tuple[str, dict]], state: ConversationState) -> bool:

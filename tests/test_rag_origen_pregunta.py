@@ -170,3 +170,18 @@ def test_tambien_quita_el_link_y_lo_que_incluye(monkeypatch):
                                                                                                 "4 inmersiones. 693 USD."))
     assert "book.divingplanet.org" not in salida and "Incluye" not in salida
     assert "el alojamiento no está incluido" in salida  # lo que vale para los dos orígenes, queda
+
+
+def test_si_el_escritor_da_los_dos_origenes_la_puerta_los_deja():
+    """27-oct (decisión «origen-y-precio»: sin el origen, dos precios y pregunta): en los planes con varios por origen
+    (buzo certificado) la puerta quitaba también los dos precios bien dados y quedaba solo la pregunta."""
+    from src.domain import activities as dom
+    from src.flows.catalog import SERVICES
+
+    st = _estado()
+    st.detected_activity = "certified_diving"
+    car, isl = (SERVICES[dom.service_ids("certified_diving", o)[0]] for o in ("cartagena", "island"))
+    respuesta = (f"Desde Cartagena: {round(car['price_usd'])} USD por persona. "
+                 f"Ya en las islas: {round(isl['price_usd'])} USD por persona.")
+    salida = core._origen_antes_del_precio(st, "¿cuánto cuesta?", respuesta)
+    assert salida.startswith(respuesta) and salida.endswith(core.ORIGEN_TRAS_LAS_VARIANTES_ES)
