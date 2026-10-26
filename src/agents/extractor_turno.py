@@ -557,6 +557,17 @@ def _lugares() -> set[str]:
     return palabras
 
 
+def _mismo_hotel_del_catalogo(valor, mensaje: str) -> bool:
+    """lat-11 T6c (26-oct): el extractor escribe el nombre del catálogo («Secreto Hostel») y el cliente lo dijo a su
+    manera («me quedo en el hostal Secreto»): vale si los dos nombran el MISMO hotel de `lugares.json`. El extractor dice
+    que es un hotel, así que cuentan también sus alias de palabra corriente (banco-lat11-t6c, k2: sin esto se perdía 2
+    de 3 veces; antes lo salvaba la palabra suelta del detector)."""
+    if not isinstance(valor, str):
+        return False
+    hotel = lugares.hotel_nombrado(valor.lower(), nombra_un_hotel=True)
+    return bool(hotel) and hotel == lugares.hotel_nombrado((mensaje or "").lower(), nombra_un_hotel=True)
+
+
 def nombra_un_lugar(cita: str) -> bool:
     """La cita de la ubicación nombra un lugar (como `ORIGEN_DEL_CLIENTE` de s4-28): "im getting in tmrw" no."""
     return bool(set(_norm(cita)) & _lugares())
@@ -721,6 +732,10 @@ async def extraer_turno(mensaje: str, *, history: list[dict] | None = None, sabi
             salida[campo] = "cartagena"
             continue
         if campo == "hotel" and not (isinstance(valor, str) and cita_verificable(valor, mensaje)):
+            if _mismo_hotel_del_catalogo(valor, mensaje):
+                salida[campo] = valor
+                logger.info(f"[EXTRACT][LAT11] hotel {valor!r}: el mensaje nombra ese hotel del catálogo a su manera")
+                continue
             descartes[campo] = f"el nombre del hotel no está en el mensaje: {valor!r}"
             continue
         salida[campo] = valor

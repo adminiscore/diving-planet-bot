@@ -49,6 +49,20 @@ async def test_un_hotel_que_no_esta_en_el_mensaje_se_descarta(monkeypatch):
     assert "hotel" in ex.extraer_turno.ultimo_motivo
 
 
+@pytest.mark.asyncio
+@pytest.mark.parametrize("msg,valor,vale", [
+    ("Quiero hacer el minicurso, me quedo en el hostal Secreto", "Secreto Hostel", True),
+    ("nos quedamos en el San Pedro", "San Pedro de Majagua", True),
+    ("Quiero hacer el minicurso, me quedo en el hostal Secreto", "Cocoliso Island Resort", False),
+    ("te cuento un secreto: nos quedamos en Cartagena", "Hotel Charleston", False),
+])
+async def test_lat11_el_hotel_del_catalogo_dicho_a_su_manera(msg, valor, vale):
+    """lat-11 T6c: el extractor escribe el nombre del catálogo y el cliente lo dijo a su manera; vale si es el MISMO hotel
+    del catálogo (lugares.json)."""
+    out = await ex.extraer_turno(msg, lang="es", client=_cliente({"hotel": {"valor": valor, "cita": msg}}, []))
+    assert (out.get("hotel") == valor) is vale
+
+
 def _intent():
     return type("I", (), {"hotel": None, "detected_fields": []})()
 
