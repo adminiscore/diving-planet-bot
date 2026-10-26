@@ -481,7 +481,7 @@ def _hotel_del_catalogo(nombre: str) -> tuple[str, str | None] | None:
     el detector (`detect_location`: 'ubuntu' → isla_marina…); None si no. Se le pasa SOLO el nombre
     (cita comprobada por el extractor), así que solo puede encontrar ese hotel, como `_departure_place`."""
     intent = DetectedIntent()
-    detect_location((nombre or "").lower(), intent)
+    detect_location((nombre or "").lower(), intent, nombra_un_hotel=True)
     return (intent.hotel, intent.island) if intent.hotel else None
 
 

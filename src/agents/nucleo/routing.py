@@ -204,9 +204,10 @@ async def _lectura_de_la_ia(state: ConversationState, message: str, routing_sign
 
 
 def _lugar_del_catalogo(texto: str) -> tuple[str | None, str | None]:
-    """(hotel, isla) de la lista cerrada del catálogo que nombra el texto (la del detector, clase d: se queda)."""
+    """(hotel, isla) de la lista cerrada del catálogo que nombra el texto (la del detector, clase d: se queda). El texto
+    es la cita del hotel o la respuesta a «¿en qué hotel te hospedas?»: nombra un hotel (lat-11 T6c)."""
     intent = DetectedIntent()
-    detect_location((texto or "").lower(), intent)
+    detect_location((texto or "").lower(), intent, nombra_un_hotel=True)
     return intent.hotel, intent.island
 
 

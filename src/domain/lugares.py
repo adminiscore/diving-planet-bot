@@ -43,8 +43,9 @@ def _islas() -> tuple[tuple[str, tuple[re.Pattern, ...], tuple[re.Pattern, ...]]
 
 
 @lru_cache(maxsize=1)
-def _hoteles() -> tuple[tuple[str, str | None, tuple[re.Pattern, ...]], ...]:
-    return tuple((h["id"], h.get("isla"), tuple(map(_patron, h["alias"]))) for h in _datos()["alias_de_los_hoteles"])
+def _hoteles() -> tuple[tuple[str, str | None, tuple[re.Pattern, ...], tuple[re.Pattern, ...]], ...]:
+    return tuple((h["id"], h.get("isla"), tuple(map(_patron, h["alias"])),
+                  tuple(map(_patron, h.get("alias_si_nombra_un_hotel", ())))) for h in _datos()["alias_de_los_hoteles"])
 
 
 def isla_nombrada(texto: str, *, nombra_una_isla: bool) -> str | None:
@@ -56,9 +57,11 @@ def isla_nombrada(texto: str, *, nombra_una_isla: bool) -> str | None:
     return None
 
 
-def hotel_nombrado(texto: str) -> tuple[str, str | None] | None:
-    """(hotel, isla) del primer hotel de `alias_de_los_hoteles` que nombra `texto` (en minúsculas); None si ninguno."""
-    for hotel, isla, alias in _hoteles():
-        if any(p.search(texto) for p in alias):
+def hotel_nombrado(texto: str, *, nombra_un_hotel: bool = False) -> tuple[str, str | None] | None:
+    """(hotel, isla) del primer hotel de `alias_de_los_hoteles` que nombra `texto` (en minúsculas); None si ninguno.
+    Sus alias de palabra corriente («san pedro», «flores») solo cuentan si `nombra_un_hotel`: se sabe que el texto es
+    el nombre de un hotel (lat-11 T6c)."""
+    for hotel, isla, alias, cortos in _hoteles():
+        if any(p.search(texto) for p in alias) or (nombra_un_hotel and any(p.search(texto) for p in cortos)):
             return hotel, isla
     return None

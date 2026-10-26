@@ -1,5 +1,5 @@
 {
-  "_about": "Los lugares de las Islas del Rosario que el bot reconoce, en UN sitio (lat-deuda-u, 26-oct). Antes había seis listas en el código, cada una distinta. `hoteles_con_recogida`: los hoteles donde recogemos (los de la base, con la recogida confirmada, y otros con acceso marítimo; Pao Pao entra por decisión de Gadea del 26-oct); los leen el extractor, Jev, el redactor, el catálogo del RAG y la pista de la transcripción. La política `other_island_hotels` los nombra en texto: un test vigila que estén todos. `lugares_de_las_islas`: islas, hoteles y clubes de playa que están en las islas, para reconocer que el cliente nombra un sitio de allí (el detector del RAG y las pistas del extractor). Barú y Playa Blanca NO son de las islas (política baru_departs_from_cartagena). `alias_de_las_islas` y `alias_de_los_hoteles` (lat-11 T5, 26-oct): cómo puede nombrar el cliente cada isla y cada hotel, y en qué isla está cada hotel; los lee el detector de lugar (antes eran tres diccionarios dentro de su código). Gana la primera que coincide, en este orden. Un alias son palabras enteras en minúsculas (cualquier espacio entre ellas); los de `alias_si_nombra_una_isla` son palabras corrientes («grande», «marina») y solo cuentan si el mensaje nombra una isla («somos un grupo grande» no es Isla Grande).",
+  "_about": "Los lugares de las Islas del Rosario que el bot reconoce, en UN sitio (lat-deuda-u, 26-oct). Antes había seis listas en el código, cada una distinta. `hoteles_con_recogida`: los hoteles donde recogemos (los de la base, con la recogida confirmada, y otros con acceso marítimo; Pao Pao entra por decisión de Gadea del 26-oct); los leen el extractor, Jev, el redactor, el catálogo del RAG y la pista de la transcripción. La política `other_island_hotels` los nombra en texto: un test vigila que estén todos. `lugares_de_las_islas`: islas, hoteles y clubes de playa que están en las islas, para reconocer que el cliente nombra un sitio de allí (el detector del RAG y las pistas del extractor). Barú y Playa Blanca NO son de las islas (política baru_departs_from_cartagena). `alias_de_las_islas` y `alias_de_los_hoteles` (lat-11 T5, 26-oct): cómo puede nombrar el cliente cada isla y cada hotel, y en qué isla está cada hotel; los lee el detector de lugar (antes eran tres diccionarios dentro de su código). Gana la primera que coincide, en este orden. Un alias son palabras enteras en minúsculas (cualquier espacio entre ellas); los de `alias_si_nombra_una_isla` son palabras corrientes («grande», «marina») y solo cuentan si el mensaje nombra una isla («somos un grupo grande» no es Isla Grande). lat-11 T6c (26-oct): «islas del rosario» (el archipiélago) ya no es un alias de Isla Rosario: nombrar las islas no dice en cuál está el cliente. `alias_si_nombra_un_hotel`: alias de hotel que son palabras corrientes o lugares de Cartagena («san pedro», «flores», «secreto», «fragata», «pelícano»…): solo cuentan cuando se sabe que el texto nombra un hotel (la cita del hotel que trae el extractor o la respuesta a «¿en qué hotel te hospedas?»).",
   "hoteles_con_recogida": [
     {"nombre": "San Pedro de Majagua", "base": true, "isla": "Isla Grande"},
     {"nombre": "Cocoliso", "base": true, "isla": "Isla Grande"},
@@ -61,18 +61,18 @@
     {"id": "isla_gigi", "alias": ["isla gigi"]},
     {"id": "isla_rosa", "alias": ["isla rosa"]},
     {"id": "isla_pelicano", "alias": ["isla pelicano", "isla pelícano"], "alias_si_nombra_una_isla": ["pelicano", "pelícano"]},
-    {"id": "isla_rosario", "alias": ["isla rosario", "islas del rosario"]}
+    {"id": "isla_rosario", "alias": ["isla rosario"]}
   ],
   "alias_de_los_hoteles": [
-    {"id": "san_pedro_majagua", "isla": "isla_grande", "alias": ["san pedro de majagua", "san pedro", "majagua", "hotel majagua"]},
-    {"id": "bora_bora", "isla": "isla_grande", "alias": ["bora bora", "bora", "hotel bora"]},
+    {"id": "san_pedro_majagua", "isla": "isla_grande", "alias": ["san pedro de majagua", "majagua", "hotel majagua"], "alias_si_nombra_un_hotel": ["san pedro"]},
+    {"id": "bora_bora", "isla": "isla_grande", "alias": ["bora bora", "hotel bora"], "alias_si_nombra_un_hotel": ["bora"]},
     {"id": "cocoliso", "isla": "isla_grande", "alias": ["cocoliso", "hotel cocoliso", "cocoliso island", "cocoliso resort"]},
     {"id": "pao_pao", "isla": "isla_grande", "alias": ["pao pao", "paopao", "hotel pao"]},
-    {"id": "fragata", "isla": "isla_grande", "alias": ["fragata", "hotel fragata", "fragata island"]},
-    {"id": "secreto", "isla": "isla_grande", "alias": ["secreto", "hotel secreto", "hostel secreto"]},
+    {"id": "fragata", "isla": "isla_grande", "alias": ["hotel fragata", "fragata island"], "alias_si_nombra_un_hotel": ["fragata"]},
+    {"id": "secreto", "isla": "isla_grande", "alias": ["hotel secreto", "hostel secreto", "secreto hostel"], "alias_si_nombra_un_hotel": ["secreto"]},
     {"id": "gente_de_mar", "isla": "isla_grande", "alias": ["gente de mar", "hotel gente"]},
-    {"id": "luxury_beach", "isla": "isla_grande", "alias": ["luxury beach", "luxury"]},
-    {"id": "ecohotel_flores", "isla": "isla_grande", "alias": ["ecohotel las flores", "las flores", "flores"]},
+    {"id": "luxury_beach", "isla": "isla_grande", "alias": ["luxury beach"], "alias_si_nombra_un_hotel": ["luxury"]},
+    {"id": "ecohotel_flores", "isla": "isla_grande", "alias": ["ecohotel las flores"], "alias_si_nombra_un_hotel": ["las flores", "flores"]},
     {"id": "playa_libre", "isla": "isla_grande", "alias": ["playa libre", "ecohostal playa"]},
     {"id": "islabela", "isla": "isla_marina", "alias": ["islabela", "isla bella", "hotel islabela"]},
     {"id": "hamaquero", "isla": "isla_marina", "alias": ["hamaquero", "el hamaquero", "hotel hamaquero"]},
@@ -82,12 +82,12 @@
     {"id": "coralina", "isla": "isleta", "alias": ["coralina", "hotel coralina", "coralina island"]},
     {"id": "isleta_beach", "isla": "isleta", "alias": ["isleta beach"]},
     {"id": "isla_arena_resort", "isla": "isla_arena", "alias": ["isla arena eco resort", "isla arena resort", "isla arena"]},
-    {"id": "isla_pavitos_hotel", "isla": "isla_pavitos", "alias": ["isla pavitos", "pavitos"]},
+    {"id": "isla_pavitos_hotel", "isla": "isla_pavitos", "alias": ["isla pavitos"], "alias_si_nombra_un_hotel": ["pavitos"]},
     {"id": "lizamar", "isla": "isla_lizamar", "alias": ["lizamar", "hotel lizamar"]},
-    {"id": "gigi", "isla": "isla_gigi", "alias": ["casa de isla gigi", "isla gigi", "gigi"]},
+    {"id": "gigi", "isla": "isla_gigi", "alias": ["casa de isla gigi", "isla gigi"], "alias_si_nombra_un_hotel": ["gigi"]},
     {"id": "isla_rosa_hotel", "isla": "isla_rosa", "alias": ["isla rosa"]},
-    {"id": "isla_pelicano_hotel", "isla": "isla_pelicano", "alias": ["isla pelicano", "isla pelícano", "pelicano", "pelícano"]},
+    {"id": "isla_pelicano_hotel", "isla": "isla_pelicano", "alias": ["isla pelicano", "isla pelícano"], "alias_si_nombra_un_hotel": ["pelicano", "pelícano"]},
     {"id": "rosario_ecohotel", "isla": "isla_rosario", "alias": ["rosario ecohotel", "ecohotel rosario"]},
-    {"id": "san_tropel", "isla": "isla_rosario", "alias": ["san tropel", "tropel"]}
+    {"id": "san_tropel", "isla": "isla_rosario", "alias": ["san tropel"], "alias_si_nombra_un_hotel": ["tropel"]}
   ]
 }

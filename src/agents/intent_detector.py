@@ -1169,7 +1169,10 @@ def detect_duration(message: str, intent: DetectedIntent) -> None:
     intent.detected_fields.append("duration")
 
 
-def detect_location(message: str, intent: DetectedIntent) -> None:
+def detect_location(message: str, intent: DetectedIntent, *, nombra_un_hotel: bool = False) -> None:
+    """El lugar que nombra el mensaje: Cartagena, una isla o un hotel de `lugares.json` (con su isla) y el papel de cada
+    uno. `nombra_un_hotel`: se sabe que el texto es el nombre de un hotel (la cita del extractor o la respuesta a la
+    pregunta del hotel), así que cuentan también los alias de hotel que son palabras corrientes (lat-11 T6c)."""
     msg_lower = message.lower()
 
     # Detectar Cartagena — incluye apodos históricos reales de la ciudad,
@@ -1195,18 +1198,20 @@ def detect_location(message: str, intent: DetectedIntent) -> None:
         intent.location = "island"
         intent.detected_fields.extend(["island", "location"])
 
-    # Bare "rosario" also means the island (e.g. "corales del rosario"),
+    # Bare "rosario" also means the islands (e.g. "corales del rosario"),
     # but checked separately from the loop above and guarded against
     # "rezar el rosario" — the Catholic prayer, a common phrase in
     # Colombia. Pre-existing false positive (bare \brosario\b in the loop
     # above matched it too) found 2026-07-09 while auditing nicknames.
-    if not intent.island and re.search(r'\brosario\b', msg_lower) and not re.search(r'\brezar\b', msg_lower):
-        intent.island = "isla_rosario"
+    # lat-11 T6c (26-oct): es el archipiélago ("las Islas del Rosario", "Rosario Islands"), no Isla Rosario: dice
+    # "en las islas" sin isla concreta (antes daba island=isla_rosario, que llegaba al lead y al RAG).
+    names_the_archipelago = bool(re.search(r'\brosario\b', msg_lower)) and not re.search(r'\brezar\b', msg_lower)
+    if not intent.island and names_the_archipelago:
         intent.location = "island"
-        intent.detected_fields.extend(["island", "location"])
+        intent.detected_fields.append("location")
 
     # Detectar hotel (los hoteles, sus alias y su isla están en lugares.json, lat-11 T5)
-    hotel = hotel_nombrado(msg_lower)
+    hotel = hotel_nombrado(msg_lower, nombra_un_hotel=nombra_un_hotel)
     if hotel:
         hotel_id, hotel_island = hotel
         intent.hotel = hotel_id
@@ -1247,7 +1252,7 @@ def detect_location(message: str, intent: DetectedIntent) -> None:
         intent.location = "island"
         intent.detected_fields.append("location")
     # Cartagena Y una isla en el mismo mensaje: el papel de cada lugar (`place_by_role`).
-    if _CARTAGENA_NAME_RE.search(msg_lower) and (intent.island or names_an_island):
+    if _CARTAGENA_NAME_RE.search(msg_lower) and (intent.island or names_an_island or names_the_archipelago):
         place = place_by_role(msg_lower, lodging_island=bool(intent.hotel and intent.island))
         if place == "cartagena":
             intent.location, intent.island = "cartagena", None

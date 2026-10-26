@@ -23,7 +23,10 @@ def test_hotel_detection():
         # San Pedro de Majagua
         ("Estoy en San Pedro de Majagua", "san_pedro_majagua", "isla_grande", "island"),
         ("Hotel Majagua", "san_pedro_majagua", "isla_grande", "island"),
-        ("San Pedro", "san_pedro_majagua", "isla_grande", "island"),
+        # lat-11 T6c (26-oct): «San Pedro», «Fragata» y «Las Flores» sueltos son palabras corrientes (San Pedro Claver
+        # está en Cartagena): en el mensaje entero no son el hotel; sí en la cita del extractor o en la respuesta a la
+        # pregunta del hotel (tests/test_lat11_t6c_lugares.py).
+        ("San Pedro", None, None, None),
 
         # Cocoliso
         ("Estoy en el Cocoliso", "cocoliso", "isla_grande", "island"),
@@ -34,7 +37,7 @@ def test_hotel_detection():
         ("Bora Bora Beach Club", "bora_bora", "isla_grande", "island"),
 
         # Fragata
-        ("Estoy en Fragata", "fragata", "isla_grande", "island"),
+        ("Estoy en Fragata", None, None, None),
         ("Fragata Island House", "fragata", "isla_grande", "island"),
 
         # Secreto
@@ -48,7 +51,7 @@ def test_hotel_detection():
 
         # Ecohotel Las Flores
         ("Ecohotel Las Flores", "ecohotel_flores", "isla_grande", "island"),
-        ("Las Flores", "ecohotel_flores", "isla_grande", "island"),
+        ("Las Flores", None, None, None),
 
         # Playa Libre
         ("Ecohostal Playa Libre", "playa_libre", "isla_grande", "island"),
@@ -86,7 +89,7 @@ def test_hotel_detection():
         # Solo isla (sin hotel)
         ("Estoy en Isla Grande", None, "isla_grande", "island"),
         ("Isla Marina", None, "isla_marina", "island"),
-        ("Islas del Rosario", None, "isla_rosario", "island"),
+        ("Islas del Rosario", None, None, "island"),  # lat-11 T6c: el archipiélago, no Isla Rosario
 
         # Cartagena
         ("Estoy en Cartagena", None, None, "cartagena"),

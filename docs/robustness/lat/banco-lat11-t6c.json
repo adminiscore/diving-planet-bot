@@ -1,0 +1,15 @@
+{
+ "about": "lat-11 T6c (26-oct): nombrar el archipiélago («las Islas del Rosario») ya no da Isla Rosario, y los alias de hotel que son palabras corrientes o lugares de Cartagena («san pedro», «secreto», «flores», «pelícano») solo cuentan si se sabe que el texto nombra un hotel (la cita del extractor o la respuesta a la pregunta del hotel). Se mira el ESTADO final (island, hotel, location). Frases nuestras: no salen del golden, de G9/G10 ni de las charlas reales. a*: archipiélago (island no debe ser isla_rosario); p*: palabra corriente (sin hotel); k*: control con un hotel de verdad (hotel e isla del catálogo).",
+ "dialogos": [
+  {"id": "a1-alojados-en-las-islas", "tipo": "archipielago", "turnos": ["Hola, estamos alojados en las Islas del Rosario y queremos hacer snorkel"], "estado_no": {"island": "isla_rosario"}},
+  {"id": "a2-rosario-islands-en", "tipo": "archipielago", "turnos": ["We're staying on the Rosario Islands, can we dive tomorrow? I'm certified"], "estado_no": {"island": "isla_rosario"}},
+  {"id": "a3-bucear-en-el-rosario", "tipo": "archipielago", "turnos": ["Quiero bucear en el Rosario, tengo el Open Water, ¿qué opciones hay?"], "estado_no": {"island": "isla_rosario"}},
+  {"id": "p1-san-pedro-claver", "tipo": "palabra_corriente", "turnos": ["Hola, nos quedamos cerca de San Pedro Claver, en el centro, ¿cuánto cuesta el snorkel?"], "estado_no": {"hotel": "san_pedro_majagua", "location": "island"}},
+  {"id": "p2-pelicano", "tipo": "palabra_corriente", "turnos": ["Ayer vimos un pelícano en la playa. ¿El snorkel sale desde Cartagena?"], "estado_no": {"hotel": "isla_pelicano_hotel"}},
+  {"id": "p3-un-secreto", "tipo": "palabra_corriente", "turnos": ["Te cuento un secreto: nunca he buceado. ¿Qué me recomiendas? Salgo de Cartagena"], "estado_no": {"hotel": "secreto"}},
+  {"id": "p4-flores", "tipo": "palabra_corriente", "turnos": ["Llevamos flores para un cumpleaños en la lancha, ¿se puede? Somos 4 para snorkel desde Cartagena"], "estado_no": {"hotel": "ecohotel_flores"}},
+  {"id": "k1-majagua", "tipo": "control", "turnos": ["Nos hospedamos en el San Pedro de Majagua, quiero bucear, soy certificado"], "estado": {"hotel": "san_pedro_majagua", "island": "isla_grande"}},
+  {"id": "k2-hostal-secreto", "tipo": "control", "turnos": ["Quiero hacer el minicurso, me quedo en el hostal Secreto"], "estado": {"hotel": "secreto", "island": "isla_grande"}},
+  {"id": "k3-cocoliso", "tipo": "control", "turnos": ["Estamos en Cocoliso, ¿nos recogen para el minicurso?"], "estado": {"hotel": "cocoliso", "island": "isla_grande"}}
+ ]
+}
