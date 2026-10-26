@@ -97,9 +97,6 @@ def rag(monkeypatch):
     monkeypatch.setattr(rag_agent, "search_knowledge_base", fake_search)
     monkeypatch.setattr(rag_agent, "_expand_with_parent_context", fake_expand)
     monkeypatch.setattr(rag_agent, "condense_query", fake_condense)
-    monkeypatch.setattr(settings, "rag_plan_primero", False)
-    monkeypatch.setattr(settings, "rag_revisor_completitud", False)
-    monkeypatch.setattr(settings, "rag_revisor_avisos", False)
     monkeypatch.setattr(settings, "rag_respaldo_modelo", "")
     return rag_agent, llamadas
 

@@ -867,14 +867,6 @@ async def rag_answer(
 
             user_content += f"\n\n{RAG_CON_HECHOS_ES if lang == 'es' else RAG_CON_HECHOS_EN}\n{hechos}"
         user_content += f"\n\nPregunta del cliente: {redact_pii(query)}"
-        # CAL-A2 (`rag_plan_primero`): la lista de lo que el cliente pregunta, para contestarla punto por punto.
-        puntos: list[str] = []
-        if settings.rag_plan_primero or settings.rag_revisor_completitud:
-            from src.agents.rag_plan import bloque_de_puntos, planificar  # lazy
-
-            puntos = await planificar(redact_pii(query), history, lang) or []
-            if puntos and settings.rag_plan_primero:
-                user_content += "\n\n" + bloque_de_puntos(puntos, lang)
         # lat-deuda (26-oct): los avisos que el cliente necesita y no pregunta ya no van aquí; los pone el código al
         # final de la respuesta del turno, sea del RAG, del redactor o de la reserva (`src/flows/avisos.py`).
 
@@ -906,7 +898,6 @@ async def rag_answer(
         # false fallback into a real answer. Only fall back if both tries fail.
 
         last_reject = ""
-        respuesta_buena = None  # CAL-A3: la respuesta aprobada a la que solo le faltaba algún punto
         for attempt in range(2):
             try:
                 response = await generar_con_respaldo(client, messages)
@@ -950,37 +941,17 @@ async def rag_answer(
                 # lat (24-oct): fuera el aviso final (CAL-A6), que iba a la vez que este juez pero tardaba más (Luna,
                 # ~2,3 s en serie tras escribir: 1,4 s exclusivos por turno del RAG en real-1).
                 grounded, reason = await _verify_grounding(answer, grounding_context, lang=lang)
-                if grounded and attempt == 0 and (
-                        (settings.rag_revisor_completitud and puntos) or settings.rag_revisor_avisos
-                        or hechos_bloques):
-                    # CAL-A3/A4: el revisor de siempre solo castiga inventar; aquí también dejarse algo (A3: un punto
-                    # del plan; A4: un aviso que el cliente necesita). Si falta, se reintenta UNA vez con lo que
-                    # falta; si el reintento sale peor, vale esta.
-                    from src.agents import rag_plan  # lazy
+                if grounded and attempt == 0 and hechos_bloques:
+                    # arq-4b/arq-7b: con los hechos delante, el RAG dejaba fuera puntos de la lista («qué incluye» del
+                    # minicurso sin la piscina ni la inmersión). Los añade el código, sin otro modelo. lat-3 (24-oct):
+                    # lo que el código no puede añadir ya no se pide en otra redacción (el reintento repetía escritor
+                    # y revisor, ~5 s): es deuda de calidad de la fase.
+                    from src.flows import hechos as hechos_mod  # lazy
 
-                    faltan = await rag_plan.puntos_sin_cubrir(puntos, answer, lang) if (
-                        settings.rag_revisor_completitud and puntos) else []
-                    avisos = await rag_plan.avisos_que_faltan(redact_pii(query), grounding_context, answer, lang) if (
-                        settings.rag_revisor_avisos) else []
-                    if hechos_bloques:
-                        # arq-4b/arq-7b: con los hechos delante, el RAG dejaba fuera puntos de la lista («qué incluye»
-                        # del minicurso sin la piscina ni la inmersión). Los añade el código, sin otro modelo. lat-3
-                        # (24-oct): lo que el código no puede añadir ya no se pide en otra redacción (el reintento
-                        # repetía escritor y revisor, ~5 s): es deuda de calidad de la fase.
-                        from src.flows import hechos as hechos_mod  # lazy
-
-                        perdidos = hechos_mod.faltan(answer, *hechos_bloques)
-                        if perdidos and (completada := _completar_con_hechos(answer, *hechos_bloques, lang)):
-                            logger.info(f"[RAG][ARQ7B] faltaban {len(perdidos)} hechos: los añade el código")
-                            answer = completada
-                    if faltan or avisos:
-                        partes = ([rag_plan.feedback_de_faltan(faltan, lang)] if faltan else []) + (
-                            [rag_plan.feedback_de_avisos(avisos, lang)] if avisos else [])
-                        respuesta_buena = answer
-                        messages = [*messages, {"role": "assistant", "content": answer},
-                                    {"role": "user", "content": "\n\n".join(partes)}]
-                        logger.info(f"[RAG][COMPLETITUD] reintento: faltan {len(faltan)} puntos, {len(avisos)} avisos")
-                        continue
+                    perdidos = hechos_mod.faltan(answer, *hechos_bloques)
+                    if perdidos and (completada := _completar_con_hechos(answer, *hechos_bloques, lang)):
+                        logger.info(f"[RAG][ARQ7B] faltaban {len(perdidos)} hechos: los añade el código")
+                        answer = completada
                 if grounded:
                     logger.info(
                         f"[RAG] Query: {query[:60]}... | Docs: {len(docs) if docs else 0} | "
@@ -999,9 +970,6 @@ async def rag_answer(
                     messages = [*messages, {"role": "assistant", "content": answer},
                                 {"role": "user", "content": feedback}]
 
-        if respuesta_buena is not None:
-            logger.info("[RAG][COMPLETITUD] el reintento no pasó: se queda la primera respuesta aprobada")
-            return respuesta_buena
         logger.warning(
             f"[RAG][GROUNDING] Rejecting after 2 attempts query={query[:60]}... reason={last_reject}"
         )

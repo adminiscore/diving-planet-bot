@@ -336,17 +336,6 @@ def _poner_frases(answer: str, bloques: list[dict], lang: str) -> str:
         elif hechos_mod.faltan(answer, [{campo: v} for v in valores], []):
             answer = f"{answer.rstrip()}\n\n{texto}"
     return answer
-# arq-5b: en un mensaje mezclado el redactor contesta solo la parte de los hechos; lo demás va justo después (el RAG).
-_SOLO_LA_TABLA = {
-    "es": ("\n- El mensaje pregunta además otras cosas que contesta otra parte del sistema justo después de ti: contesta "
-           "SOLO lo que cubren los hechos, sin mencionar lo demás ni decir FALTA por ello, sin saludar y sin cerrar con "
-           "una pregunta."),
-    "en": ("\n- The message also asks other things that another part of the system answers right after you: answer ONLY "
-           "what the facts cover, without mentioning the rest or saying FALTA because of it, without greeting and "
-           "without closing with a question."),
-}
-
-
 def _en_otro_idioma(answer: str, lang: str) -> bool:
     """arq-5d: ¿la redacción salió en otro idioma que el de la conversación? Las mismas palabras vacías con las que el
     flujo detecta el idioma del cliente, con margen claro (el doble y al menos 4): los nombres propios en español de
@@ -436,18 +425,10 @@ async def responder(state: ConversationState, message: str, history: list[dict])
     return await _escribir(state, message, history, bloques, intenciones)
 
 
-async def redactar_parte(state: ConversationState, message: str, history: list[dict], bloques: list[dict],
-                         cubiertas: list[str]) -> str | None:
-    """arq-5b (flag `mezclados_por_partes`): en un mensaje MEZCLADO, la parte de la tabla escrita con los hechos (el resto
-    lo contesta el RAG a la vez). None si no sale (falta algo, guardas, idioma): entonces contesta el RAG entero, como
-    con `hechos_al_rag`."""
-    return await _escribir(state, message, history, bloques, cubiertas, parte=True)
-
-
 async def _escribir(state: ConversationState, message: str, history: list[dict], bloques: list[dict],
-                    intenciones: list[str], *, parte: bool = False) -> str | None:
+                    intenciones: list[str]) -> str | None:
     """La redacción con los hechos: guardas, idioma, comprobación de que no falta ninguno (arq-3) y, si hace falta, la
-    pregunta del origen. `parte`: el mensaje trae además otras preguntas, que contesta el RAG."""
+    pregunta del origen."""
     from src.observability import note_turn  # lazy
 
     actividad = bloques[0]["actividad"]
@@ -456,8 +437,6 @@ async def _escribir(state: ConversationState, message: str, history: list[dict],
     texto_hechos = texto_de_los_hechos(bloques)
     client = trace_openai(AsyncOpenAI(api_key=settings.openai_api_key))
     mensajes = _mensajes(lang, history, message, texto_hechos)
-    if parte:
-        mensajes[0] = {"role": "system", "content": mensajes[0]["content"] + _SOLO_LA_TABLA[lang]}
     answer = await _redactar(client, mensajes)
     if answer is not None and _en_otro_idioma(answer, lang):
         # arq-5d (G10 nº 5, g10-020): a quien escribía en portugués el redactor le contestó en portugués, aunque la
@@ -477,8 +456,7 @@ async def _escribir(state: ConversationState, message: str, history: list[dict],
         # have the price for the refresher. FALTA»), y las dos veces le habría llegado al cliente.
         logger.info(f"[HECHOS] el redactor dice que falta algo ({intenciones}); contesta el RAG")
         note_turn(hechos_por_codigo="falta")
-        if not parte:
-            state._redactor_dijo_falta = True  # arq-1g: el mensaje era mezclado; el RAG recibe los hechos
+        state._redactor_dijo_falta = True  # arq-1g: el mensaje era mezclado; el RAG recibe los hechos
         return None
     answer = _poner_listas(answer, bloques, intenciones, lang)
     if not _pasa_las_guardas(answer, texto_hechos, message):
@@ -492,11 +470,6 @@ async def _escribir(state: ConversationState, message: str, history: list[dict],
         # falte se apunta en [TURN_METRICS] y es deuda de calidad de la fase.
         logger.info(f"[HECHOS][ARQ3] faltan {len(perdidos)} (no se rehace): {[p[:60] for p in perdidos]}")
         note_turn(hechos_faltaban=len(perdidos), hechos_quedan=len(perdidos))
-    if parte:
-        # arq-5b: la parte de la tabla de un mensaje mezclado; la pregunta del origen no va en medio (detrás va el RAG).
-        logger.info(f"[HECHOS] parte de la tabla del redactor: {actividad} {intenciones} origen={origen}")
-        note_turn(rag_used=True, hechos_por_codigo="por_partes", intenciones=",".join(intenciones))
-        return answer
     if any(b.get("pregunta_pendiente") == "origen" for b in bloques):
         # La pregunta del origen la pone el código, con el texto que reconoce el flujo (`_es_pregunta_de_origen`): así
         # queda pendiente el origen y, cuando lo diga, se le contesta el plan exacto, como en ord-7.
