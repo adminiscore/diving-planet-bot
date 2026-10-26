@@ -180,7 +180,7 @@ _CHAT_PAGE = (
     + """
   <div class="wrap"><main class="card">
     """ + _EMBLEM + """
-    <div class="eyebrow">Desde 1995 · 30 años bajo el mar</div>
+    <div class="eyebrow">Desde 1995 · más de 30 años bajo el mar</div>
     <h1>Diving Planet <span class="accent">Cartagena</span></h1>
     <p class="tagline">Reserva buceo, cursos PADI y snorkel en las Islas del Rosario con <b>Coral</b> 🪸. Pregúntale lo que quieras — te responde al instante. 🐠</p>
     <div class="chips">

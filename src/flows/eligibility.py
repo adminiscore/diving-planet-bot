@@ -9,7 +9,7 @@ and services.json `min_age`):
 - Snorkel: from 6 years old.
 - Bubble Makers (intro dive for kids — pool / very shallow water, max 2 m): 8-10.
 - Dive mini-course (bautismo / discover scuba): from 10.
-- PADI Open Water, Advanced and Rescue: from 10 (owner 2026-09-14). Divemaster 18.
+- PADI Open Water: from 10 (owner 2026-09-14); Advanced and Rescue: from 12 (Gadea 2026-10-26). Divemaster 18.
 - Certified fun dives: require an Open Water certification (and age >= 10).
 - Under 6: no in-water activity yet — can come along as a companion.
 - Minors must be accompanied by a responsible adult.

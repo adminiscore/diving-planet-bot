@@ -12,7 +12,14 @@ ISLAND_SERVICE_MAP/ConversationState/Step).
 from __future__ import annotations
 
 from src.domain import activities as dom
-from src.flows.catalog import COMPANION_PRICE, ISLAND_SERVICE_MAP, SERVICES
+from src.flows import moneda
+from src.flows.catalog import (
+    COMPANION_INCLUDES,
+    COMPANION_PRICE,
+    ISLAND_SERVICE_MAP,
+    SERVICES,
+    _lista_en_frase,
+)
 from src.flows.state import MESSAGE_SPLIT, ConversationState, Step
 from src.utils import money as money_fmt
 from src.utils.fuzzy import fuzzy_word_number
@@ -64,14 +71,11 @@ def _refresher_service(state: ConversationState) -> dict:
 
 def refresher_price_text(state: ConversationState, una_moneda: bool = False) -> str:
     """Precio por persona del refresher, desde el catalogo (tarifa 2026, decision
-    del owner 2026-09-14: se cobra). Nunca una cifra escrita a mano. `una_moneda`
-    (G3-07a, decision de Gadea: una sola moneda por mensaje): COP a colombianos y
-    residentes; USD al resto o si no se sabe."""
+    del owner 2026-09-14: se cobra). Nunca una cifra escrita a mano. `una_moneda`:
+    en la moneda del cliente (`src/flows/moneda.py`: sin nacionalidad, las dos)."""
     service = _refresher_service(state)
     if una_moneda:
-        if state.is_colombian:
-            return money_fmt.cop(service.get("price_cop")) or money_fmt.usd(service.get("price_usd"))
-        return money_fmt.usd(service.get("price_usd")) or money_fmt.cop(service.get("price_cop"))
+        return moneda.precio(state, service.get("price_usd"), service.get("price_cop")) or ""
     parts = [money_fmt.usd(service.get("price_usd")), money_fmt.cop(service.get("price_cop"))]
     return " / ".join(p for p in parts if p)
 
@@ -169,24 +173,12 @@ def _format_activity_booking_messages(state: ConversationState) -> list[str]:
     """One message per cart activity: summary + price + '👉 click here' + link.
     Sent as separate WhatsApp messages (joined with MESSAGE_SPLIT upstream)."""
     lang = state.language
-    primary = state.mixed_display_currency
 
     def money(usd, cop, qty=1):
         # Round the per-person price first, then multiply, so the arithmetic
-        # shown to the client always adds up (e.g. "2 × $126 = $252", never $251).
-        return money_fmt.cop(cop, qty) if primary == "COP" else money_fmt.usd(usd, qty)
+        # shown to the client always adds up (e.g. "2 × $126 = $252", never $251). En su moneda (lat-deuda-u).
+        return moneda.precio(state, usd, cop, qty)
 
-    includes = (
-        "✅ Incluye: transporte Cartagena-Islas-Cartagena, almuerzo, equipo y seguro."
-        if lang == "es"
-        else "✅ Includes: Cartagena-Islands transport, lunch, gear and insurance."
-    )
-    if state.location == "island":
-        includes = (
-            "✅ Incluye: equipo, seguro y acompañamiento de un profesional PADI (sin transporte desde Cartagena ni almuerzo)."
-            if lang == "es"
-            else "✅ Includes: gear, insurance and a PADI professional (no Cartagena transport or lunch)."
-        )
     depart = (
         ("📍 Salida desde Cartagena (Muelle de la Bodeguita, 8:00 a.m.)." if lang == "es"
          else "📍 Departure from Cartagena (Muelle de la Bodeguita, 8:00 a.m.).")
@@ -228,7 +220,11 @@ def _format_activity_booking_messages(state: ConversationState) -> list[str]:
                 else "📚 PADI course: dates, sessions and details are arranged with you."
             )
         else:
-            lines.append(includes)
+            # lat-deuda-u (26-oct, C3 del inventario): lo que incluye ESTE plan, de su ficha (el acompañante, de la suya).
+            # Era un texto fijo para todos: «equipo» también al acompañante y «almuerzo» en los de varios días.
+            if b.get("incluye"):
+                cabeza = "✅ Incluye: " if lang == "es" else "✅ Includes: "
+                lines.append(f"{cabeza}{_lista_en_frase(b['incluye'], lang)}.")
             lines.append(depart)
         if b.get("note"):
             lines.append(b["note"])
@@ -269,7 +265,7 @@ def _cart_booking_blocks(state: ConversationState) -> list[dict]:
         blocks.append({
             "label": label, "qty": qty,
             "usd": svc.get("price_usd"), "cop": svc.get("price_cop"), "url": url,
-            "note": note, "kind": kind,
+            "note": note, "kind": kind, "incluye": svc.get(f"included_{lang}") or [],
         })
 
     for item in state.mixed_cart:
@@ -312,6 +308,7 @@ def _cart_booking_blocks(state: ConversationState) -> list[dict]:
                 "label": _cart_label_for(it, None, lang), "qty": qty,
                 "usd": COMPANION_PRICE.get("usd_online"), "cop": COMPANION_PRICE.get("cop_online"), "url": None,
                 "note": None, "kind": "day",
+                "incluye": COMPANION_INCLUDES[lang]["island" if state.location == "island" else "cartagena"],
             })
             continue
         svc_id = _cart_service_id(it, item.get("plan"), state)

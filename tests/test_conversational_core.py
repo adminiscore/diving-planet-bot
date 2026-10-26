@@ -1263,7 +1263,10 @@ async def test_hallucinated_main_activity_restatement_is_not_queued_as_companion
     })):
         resp = await route_message(state, "viene también un amigo que quiere hacer snorkel")
 
-    assert "certificado" not in resp.lower(), (
+    # La pregunta, no la palabra: desde lat-deuda-u la tarjeta dice lo que incluye el plan («…con un profesional PADI
+    # certificado…»).
+    preguntas = [linea for linea in resp.lower().splitlines() if "?" in linea]
+    assert not any("certificado" in p for p in preguntas), (
         "no debe re-preguntar por la actividad principal ya confirmada"
     )
     types = {it["type"]: it["qty"] for it in state.mixed_cart}
@@ -2044,7 +2047,7 @@ async def test_course_vs_course_deliberation_routes_to_rag_without_qmark():
 # ---------------------------------------------------------------------------
 
 def test_compose_comparison_uses_catalog_facts():
-    out = core._compose_comparison(["certified_diving", "snorkel"], "es")
+    out = core._compose_comparison(["certified_diving", "snorkel"], ConversationState(conversation_id="cmp", language="es"))
     # Nombres del catálogo + requisito de cert + precio (nunca inventado).
     assert "Snorkel" in out
     assert "Sin certificación previa" in out and "Requiere certificación previa" in out

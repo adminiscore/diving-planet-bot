@@ -57,11 +57,11 @@ QUERY_REWRITE_EN = (
 # (JUEZ_PRESENTACION). Sin ella el juez marcaba como inventados "30 años" y "PADI 5
 # estrellas", que el bot tiene ORDENADO decir (ronda 2026-10-01-juez-B, docs/robustness/juez/README.md).
 PRESENTACION_ES = (
-    "el primer centro de buceo PADI 5 Estrellas de Colombia con 30 años de experiencia en las Islas del Rosario, "
+    "el primer centro de buceo PADI 5 Estrellas de Colombia con más de 30 años de experiencia en las Islas del Rosario, "
     "Cartagena"
 )
 PRESENTACION_EN = (
-    "Colombia's first PADI 5 Star Dive Center with 30 years of experience in the Rosario Islands, Cartagena"
+    "Colombia's first PADI 5 Star Dive Center with more than 30 years of experience in the Rosario Islands, Cartagena"
 )
 JUEZ_PRESENTACION_ES = (
     "PRESENTACIÓN DE DIVING PLANET (hechos ciertos que el bot puede decir): Diving Planet es " + PRESENTACION_ES + "."

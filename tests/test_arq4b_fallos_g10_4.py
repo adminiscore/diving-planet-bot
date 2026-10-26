@@ -77,6 +77,7 @@ def test_los_hechos_del_descuento_con_y_sin_actividad():
     st = ConversationState(conversation_id="arq4b", language="es")
     con = hechos_mod.hechos(st, ["descuento"], ["snorkel"])[0]["descuento"]
     sin = hechos_mod.hechos_sin_actividad(st, ["descuento"])[0]["descuento"]
-    assert con == sin and len(con) == 4 and any("grupos de 5" in d for d in con)
+    # online, grupo, equipo propio, colombianos y que no se acumulan (lat-deuda-u, 26-oct)
+    assert con == sin and len(con) == 5 and any("grupos de 5" in d for d in con)
     respuesta = "Reservando online tienes un 10 % de descuento automático."
     assert hechos_mod.faltan(respuesta, [{"descuento": con}], ["descuento"])  # le faltan el de grupo, el del equipo…

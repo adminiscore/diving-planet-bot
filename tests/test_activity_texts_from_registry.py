@@ -41,7 +41,7 @@ def test_course_mentions_use_registry_ids():
 def test_comparison_uses_registry_names_and_pitches(lang):
     offerings = core._mentioned_offerings("open water o advanced")
     query = core._comparison_query(offerings, lang)
-    composed = core._compose_comparison(offerings, lang)
+    composed = core._compose_comparison(offerings, ConversationState(conversation_id="cmp", language=lang))
     for activity_id in offerings:
         assert dom.text(activity_id, "name_in_sentence", lang) in query
         assert dom.text(activity_id, "pitch", lang) in composed
@@ -50,7 +50,7 @@ def test_comparison_uses_registry_names_and_pitches(lang):
 @pytest.mark.parametrize("lang", LANGS)
 def test_generic_course_is_compared_as_its_default_level(lang):
     """padi_course se compara como Open Water (regla del owner, `default_level`)."""
-    composed = core._compose_comparison(["padi_course"], lang)
+    composed = core._compose_comparison(["padi_course"], ConversationState(conversation_id="cmp", language=lang))
     open_water = dom.by_id("padi_open_water").services["cartagena"][0]
     from src.flows.catalog import SERVICES
 

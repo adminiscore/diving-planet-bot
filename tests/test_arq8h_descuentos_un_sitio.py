@@ -34,6 +34,16 @@ def test_los_hechos_llevan_la_nota():
     assert any(DISCOUNTS["group_discount"]["companion_note_es"] in x for x in hechos._descuentos(ConversationState(conversation_id="arq8h", language="es"), "es"))
 
 
+@pytest.mark.parametrize("lang", ["es", "en"])
+def test_la_regla_de_que_no_se_acumulan_llega_a_la_tabla_y_al_catalogo(lang):
+    """lat-deuda-u (26-oct, confirmado por Gadea): grupo y equipo propio no se suman; estaba en la base y no la leía
+    ningún camino."""
+    regla = json.loads((Path(__file__).resolve().parents[1] / "data/knowledge_base/discounts.json")
+                       .read_text(encoding="utf-8-sig"))["discount_policies"]["non_cumulative"][lang]
+    assert regla in hechos._descuentos(ConversationState(conversation_id="arq8h", language=lang), lang)
+    assert regla in catalog.catalog_facts(lang)
+
+
 def test_el_indice_lee_la_base():
     from scripts.load_embeddings import load_knowledge_base
 
@@ -43,4 +53,5 @@ def test_el_indice_lee_la_base():
     assert DISCOUNTS["group_discount"]["companion_note_en"] in textos
     assert "roverd" not in textos.lower()
     assert {"discount_group_discount", "discount_own_equipment", "discount_online_booking",
-            "discount_colombian_cop_pricing", "discount_policies"} == {d["metadata"]["section"] for d in docs}
+            "discount_colombian_cop_pricing", "discount_non_cumulative", "discount_policies"} \
+        == {d["metadata"]["section"] for d in docs}

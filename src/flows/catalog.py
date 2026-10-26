@@ -266,6 +266,8 @@ def _load_services() -> dict:
             "itinerary_overview_en": service.get("itinerary_overview_en", []) or [],
             "requirements_es": service.get("requirements_es", []) or [],
             "requirements_en": service.get("requirements_en", []) or [],
+            "included_es": service.get("included_es", []) or [],
+            "included_en": service.get("included_en", []) or [],
             "not_included_es": service.get("not_included_es", []) or [],
             "not_included_en": service.get("not_included_en", []) or [],
             "min_age": inferred_min_age,
@@ -330,9 +332,22 @@ def _sheet_list(titulo: str, items) -> str:
     return f"{titulo}:\n" + "\n".join(f"- {i}" for i in items) if items else ""
 
 
-def service_fact_sheet(service_id: str, lang: str, svc: dict | None = None) -> str:
+def regla_de_vuelo(actividad: str | None, lang: str) -> str | None:
+    """lat-deuda-u (26-oct): cuánto esperar para volar tras la actividad, del registro de actividades (18 h al bucear,
+    12 h tras el minicurso, 18 h tras el refresher aunque se venda con la ficha del minicurso). Era una línea copiada en
+    los requisitos de 31 fichas, y el refresher heredaba las 12 h del minicurso."""
+    registro = dom.by_id(actividad) if actividad else None
+    horas = registro.horas_antes_de_volar if registro else None
+    if not horas:
+        return None
+    return (f"Después de bucear, esperar mínimo {horas} horas antes de tomar un vuelo" if lang == "es"
+            else f"After diving, wait at least {horas} hours before flying")
+
+
+def service_fact_sheet(service_id: str, lang: str, svc: dict | None = None, actividad: str | None = None) -> str:
     """La ficha autocontenida de un servicio: qué es, datos, incluye/no incluye, itinerario,
-    requisitos, preparación y enlaces.
+    requisitos, preparación y enlaces. `actividad`: la que se describe, si no es la dueña del servicio (el refresher
+    con la ficha del minicurso), para la regla de vuelo.
 
     UNA sola fuente para dos usos (rag-3, 29-sep): el documento de la base curada v2
     (`scripts/kb_v2.ficha_servicio`, que solo le añade sus metadatos) y el contexto del turno
@@ -359,7 +374,8 @@ def service_fact_sheet(service_id: str, lang: str, svc: dict | None = None) -> s
         _sheet_list(t["incluye"] + de, svc.get(f"included_{lang}")),
         _sheet_list(t["no_incluye"] + de, svc.get(f"not_included_{lang}")),
         _sheet_list(t["itinerario"] + de, svc.get(f"itinerary_{lang}")),
-        _sheet_list(t["requisitos"] + de, svc.get(f"requirements_{lang}")),
+        _sheet_list(t["requisitos"] + de, [*(svc.get(f"requirements_{lang}") or []), *filter(None, [regla_de_vuelo(
+            actividad or getattr(dom.activity_for_service(service_id), "id", None), lang)])]),
         _sheet_list(t["preparacion"] + de, svc.get(f"preparation_{lang}")),
         " · ".join(x for x in (
             f"{t['reserva']}: {svc['booking_url']}" if svc.get("booking_url") and not svc.get("contact_only") else "",
@@ -602,8 +618,10 @@ _DESCUENTOS = ("online_direct_booking", "group_discount", "own_equipment_discoun
 
 def descuentos_de_la_base(lang: str) -> dict[str, str]:
     """arq-8h: cada descuento con sus condiciones, tal cual de discounts.json (el único sitio). El de grupo lleva la
-    nota del acompañante."""
-    datos = json.loads((_KB_DIR / "discounts.json").read_text(encoding="utf-8-sig")).get("discounts", {})
+    nota del acompañante. lat-deuda-u (26-oct, confirmado por Gadea): también la regla de que no se acumulan (grupo y
+    equipo propio no se suman entre sí, cada uno sí con el online), que estaba en la base y no la leía ningún camino."""
+    base = json.loads((_KB_DIR / "discounts.json").read_text(encoding="utf-8-sig"))
+    datos = base.get("discounts", {})
     lang = "es" if lang == "es" else "en"
     textos = {}
     for clave in _DESCUENTOS:
@@ -613,6 +631,9 @@ def descuentos_de_la_base(lang: str) -> dict[str, str]:
             continue
         nota = d.get(f"companion_note_{lang}")
         textos[clave] = f"{texto} {nota}" if nota else texto
+    acumulacion = (base.get("discount_policies") or {}).get("non_cumulative") or {}
+    if texto := acumulacion.get(lang) or acumulacion.get("es"):
+        textos["non_cumulative"] = texto
     return textos
 
 
@@ -698,8 +719,8 @@ def catalog_facts(lang: str) -> str:
                "USD (en un grupo mixto de colombianos o residentes y extranjeros, toda la reserva en USD); es el "
                "mismo precio en las dos monedas: el precio en COP de cada plan es el que pagan los "
                "colombianos. NO existe descuento ni tarifa rebajada para colombianos: si el cliente cree que la hay, "
-               "díselo claramente (solo cambia la moneda). Si no sabes la nacionalidad del cliente, da el precio en "
-               "USD (si te dice que es colombiano o residente en Colombia, en COP). No sumes ni calcules totales. "
+               "díselo claramente (solo cambia la moneda). " + MONEDA_SIN_NACIONALIDAD["es"] + " No sumes ni calcules "
+               "totales. "
                "Si el cliente "
                "cita un precio que no coincide con el catálogo, dale el del catálogo sin repetir su cifra."]
     else:
@@ -725,8 +746,7 @@ def catalog_facts(lang: str) -> str:
                "Currency: Colombians (wherever they live) and residents of Colombia pay in COP; everyone else in USD "
                "(in a mixed group of Colombians or residents and foreigners, the whole booking in USD); it is the same price in both currencies: each plan's COP price is what Colombians pay. There is NO "
                "discount or reduced rate for Colombians: if the customer thinks there is one, say so clearly (only "
-               "the currency changes). If you don't know the customer's nationality, give the price in USD (if they "
-               "tell you they are Colombian or a resident of Colombia, in COP). Do not add up or compute totals. If the "
+               "the currency changes). " + MONEDA_SIN_NACIONALIDAD["en"] + " Do not add up or compute totals. If the "
                "customer quotes a price that doesn't match the catalog, give the catalog price without repeating theirs."]
     # arq-8h: los descuentos, de discounts.json (no del texto fijo de arriba).
     fijo = "Descuentos: 10% online" if es else "Discounts: 10% online"
@@ -743,15 +763,13 @@ def catalog_facts(lang: str) -> str:
     return text
 
 
-# CAL-B (15-oct, `moneda_sin_nacionalidad_usd`, promocionado el 16-oct; decisión de Gadea del 15-oct): "si el cliente
-# pide precio y no sabemos su nacionalidad → precio en USD (no las dos monedas)". La regla del catálogo decía lo
-# contrario ("da las dos monedas"): de ahí parte de los 16 fallos de moneda de ex-10 (docs/robustness/cal/README.md).
-# mej-1d (decisión de Gadea, Coral #976): la regla va escrita en el catálogo, sin sustituirla al vuelo ni interruptor.
+# lat-deuda-u (26-oct, decisión de Gadea): sin saber la nacionalidad, el precio en USD y en COP, como la tabla de hechos
+# (arq-5c); sustituye a la regla de solo USD de CAL-B (15-oct). La regla del código está en `src/flows/moneda.py`.
 MONEDA_SIN_NACIONALIDAD = {
-    "es": "Si no sabes la nacionalidad del cliente, da el precio en USD (si te dice que es colombiano o residente en "
-          "Colombia, en COP).",
-    "en": "If you don't know the customer's nationality, give the price in USD (if they tell you they are Colombian "
-          "or a resident of Colombia, in COP).",
+    "es": "Si no sabes la nacionalidad del cliente, da el precio en USD y en COP: es el mismo precio, solo cambia la "
+          "moneda (si te dice que es colombiano o residente en Colombia, solo en COP).",
+    "en": "If you don't know the customer's nationality, give the price in USD and in COP: it is the same price, only "
+          "the currency changes (if they tell you they are Colombian or a resident of Colombia, only in COP).",
 }
 
 

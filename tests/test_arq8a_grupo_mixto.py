@@ -19,7 +19,7 @@ def test_en_un_grupo_mixto_el_descuento_lleva_la_regla_del_grupo(monkeypatch, la
     [b] = h.hechos(_conv(lang, mixed_nationality_notice=True), ["descuento"], ["snorkel"])
     texto = " ".join(b["descuento"])
     assert todo_en_usd in texto and cop not in texto
-    assert len(b["descuento"]) == 4  # online, grupo y equipo propio siguen
+    assert len(b["descuento"]) == 5  # online, grupo, equipo propio y que no se acumulan siguen
 
 
 def test_con_los_descuentos_en_un_sitio_tambien(monkeypatch):
@@ -27,7 +27,7 @@ def test_con_los_descuentos_en_un_sitio_tambien(monkeypatch):
     [b] = h.hechos(_conv(mixed_nationality_notice=True), ["descuento"], ["snorkel"])
     texto = " ".join(b["descuento"])
     assert "toda la reserva del grupo se paga en dólares" in texto and "pagan en pesos" not in texto
-    assert len(b["descuento"]) == 4
+    assert len(b["descuento"]) == 5
 
 
 def test_sin_actividad_tambien(monkeypatch):

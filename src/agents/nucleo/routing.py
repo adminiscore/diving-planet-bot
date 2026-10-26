@@ -55,7 +55,7 @@ from src.agents.intent_detector import (
 from src.agents.llm_extractor import detect_special_signals
 from src.config import settings
 from src.domain import activities as dom
-from src.flows import cart_render
+from src.flows import cart_render, moneda
 from src.flows.state import ConversationState
 from src.utils.fuzzy import is_affirmative, is_agree, is_negative
 from src.utils.text import strip_accents
@@ -613,10 +613,12 @@ def _comparison_query(offerings: list[str], lang: str) -> str:
 # generica (padi_course) se compara como su nivel por defecto (Open Water).
 
 
-def _compose_comparison(offerings: list[str], lang: str) -> str:
+def _compose_comparison(offerings: list[str], state) -> str:
     """Comparación lado-a-lado desde el catálogo, sin depender de RAG. Precio y
-    requisito de certificación salen de SERVICES (nunca inventados)."""
+    requisito de certificación salen de SERVICES (nunca inventados); el precio, en la moneda del cliente."""
     from src.flows.catalog import SERVICES
+
+    lang = state.language
     rows = []
     for o in offerings:
         svc = SERVICES.get(dom.base_service_id(dom.resolved_activity_id(o)) or "", {})
@@ -629,10 +631,9 @@ def _compose_comparison(offerings: list[str], lang: str) -> str:
         else:
             cert_line = "Requires prior certification" if svc.get("requires_cert") else "No certification needed"
         row = f"🤿 *{name}*\n• {cert_line}\n• {dom.text(o, 'pitch', lang, default='')}"
-        price = svc.get("price_usd")
+        price = moneda.precio(state, svc.get("price_usd"), svc.get("price_cop"))  # lat-deuda-u: en su moneda
         if price:
-            row += (f"\n• Desde {int(round(price))} USD por persona"
-                    if lang == "es" else f"\n• From {int(round(price))} USD per person")
+            row += f"\n• Desde {price} por persona" if lang == "es" else f"\n• From {price} per person"
         rows.append(row)
     if lang == "es":
         return ("¡Con gusto te explico la diferencia! 🌊\n\n" + "\n\n".join(rows)
@@ -914,7 +915,7 @@ async def _routing_phase(
         # respuesta de "no lo tengo a la mano"), comparar desde el catálogo en
         # vez de ofrecer un asesor (hallazgo en vivo 2026-07-24, consistente).
         if _is_rag_fallback(rag):
-            rag = _compose_comparison(offerings, state.language)
+            rag = _compose_comparison(offerings, state)
             state.core_pending_slot = SLOT_ACTIVITY
             state.quick_replies = []
             logger.info(f"[CORE] deliberation RAG fallback -> catalog compare offerings={offerings}")

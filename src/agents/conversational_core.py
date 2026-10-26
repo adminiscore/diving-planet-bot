@@ -38,7 +38,7 @@ from src.agents.intent_detector import (
 from src.agents.notes_extractor import extract_notes
 from src.config import settings
 from src.domain import activities as dom
-from src.flows import cart_render, eligibility
+from src.flows import cart_render, eligibility, moneda
 from src.flows.state import ConversationState, Step
 from src.utils.fuzzy import is_affirmative, is_agree
 from src.utils.number_words import number_alt
@@ -2175,13 +2175,12 @@ _VARIANTE = {
 
 def _dos_variantes(state: ConversationState, answer: str = "", con_enlace: bool = False) -> str | None:
     """Las dos salidas de la actividad de la que pregunta el cliente, del catálogo: precio online por persona en su
-    moneda (COP a colombianos y residentes; USD al resto o si no se sabe), el transporte y si lleva almuerzo. None si
+    moneda (`src/flows/moneda.py`), el transporte y si lleva almuerzo. None si
     no hay una actividad concreta con un solo plan por origen (los paquetes de buceo tienen varios) o si el importe que
     dio el RAG (`answer`) no es de ninguna de las dos: la actividad anotada no era la cotizada (banco ord-7: «tengo el
     Open Water, ¿cuánto cuesta el repaso?» anotaba el Open Water y salían los precios del curso). `con_enlace`: cada
     variante lleva su enlace de reserva (el RAG había dado uno sin saber el origen)."""
     from src.flows.catalog import SERVICES  # lazy
-    from src.utils import money
 
     actividad = state.actividad_preguntada or state.detected_activity or state.suggested_activity
     if not actividad:
@@ -2199,8 +2198,7 @@ def _dos_variantes(state: ConversationState, answer: str = "", con_enlace: bool 
     textos = _VARIANTE[lang]
     lineas = [textos["titulo"].format(actividad=f"*{dom.label(actividad, lang)}*")]
     for origen, servicio in servicios:
-        precio = (money.cop(servicio.get("price_cop")) if state.is_colombian
-                  else money.usd(servicio.get("price_usd")))
+        precio = moneda.precio(state, servicio.get("price_usd"), servicio.get("price_cop"))
         if not precio:
             return None
         nombre, transporte = textos[origen]

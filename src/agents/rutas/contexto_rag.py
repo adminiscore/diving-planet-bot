@@ -550,15 +550,16 @@ def _build_extra_context(state: ConversationState) -> str | None:
         parts.append("El cliente indico que es colombiano/a (mostrar precios en COP, no hay descuento especial por ser colombiano).")
         # gen-4 (decisión de Gadea, Coral #862): al cerrar, un asesor coordina su pago en COP; el link de reserva que
         # el RAG le daba antes (banco dialogos-gen4-moneda, g4-colombiana) le hacía pagar por otro camino.
-        parts.append("Al ser colombiano/a o residente, su pago (100 % online o 50 % online + 50 % en persona, en "
-                     "COP) lo coordina un asesor al cerrar la reserva: no le compartas el link de reserva.")
+        parts.append("Al ser colombiano/a o residente, su pago (100 % online, o un anticipo del 50 % con el enlace, el "
+                     "QR o Llave que le envía un asesor y el otro 50 % el día de la actividad, en COP) lo coordina un "
+                     "asesor al cerrar la reserva: no le compartas el link de reserva.")
     elif getattr(state, "is_colombian", None) is False:
         parts.append("El cliente indico que no es colombiano/a (mostrar precios en USD).")
     else:
-        # CAL-B (15-oct, decisión de Gadea): la moneda la decide el código con el estado, no el modelo. Sin
-        # nacionalidad, USD; antes no se decía nada y el modelo daba las dos monedas o cotizaba en COP.
-        parts.append("Aun no sabemos la nacionalidad del cliente: si das un precio, en USD (si dice que es colombiano/a "
-                     "o residente en Colombia, en COP; no hay descuento especial por ser colombiano).")
+        # La moneda la decide el código con el estado, no el modelo (CAL-B). Sin nacionalidad, USD y COP
+        # (lat-deuda-u, decisión de Gadea del 26-oct; `src/flows/moneda.py`).
+        parts.append("Aun no sabemos la nacionalidad del cliente: si das un precio, en USD y en COP (es el mismo precio, "
+                     "solo cambia la moneda; si dice que es colombiano/a o residente en Colombia, solo en COP).")
 
     # Inactividad y refresher
     if getattr(state, "last_dive_over_2_years", None) is True:

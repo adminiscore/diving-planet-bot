@@ -19,7 +19,7 @@ from functools import lru_cache
 from pathlib import Path
 
 from src.domain import activities as dom
-from src.flows import cart_render
+from src.flows import cart_render, moneda
 from src.flows.catalog import (
     COMPANION_INCLUDES,
     COMPANION_NO_INCLUYE,
@@ -28,6 +28,7 @@ from src.flows.catalog import (
     RAW_SERVICES,
     SERVICES,
     descuentos_de_la_base,
+    regla_de_vuelo,
 )
 from src.flows.state import ConversationState
 from src.utils import money
@@ -70,15 +71,14 @@ def _politica(clave: str, lang: str) -> str | None:
 
 
 def _dos_monedas(state: ConversationState) -> bool:
-    """arq-5c: no se sabe si paga en COP (ni es un grupo mixto, que paga en USD)."""
-    return state.is_colombian is None and not getattr(state, "mixed_nationality_notice", False)
+    """arq-5c: no se sabe si paga en COP (ni es un grupo mixto, que paga en USD). La regla, en `src/flows/moneda.py`."""
+    return len(moneda.monedas(state)) == 2
 
 
 def _moneda(state: ConversationState) -> str:
-    """COP a colombianos y residentes; USD al resto, si no se sabe o en un grupo mixto (decisiones de Gadea)."""
-    if getattr(state, "mixed_nationality_notice", False):
-        return "USD"
-    return "COP" if state.is_colombian else "USD"
+    """La moneda principal del bloque: COP a colombianos y residentes; USD al resto (sin nacionalidad, también va el
+    precio en COP: `_dos_monedas`)."""
+    return "COP" if moneda.monedas(state) == ("COP",) else "USD"
 
 
 def _plan_base(actividad: str, origen: str, elegido: str | None = None) -> str | None:
@@ -212,6 +212,7 @@ def hechos(state: ConversationState, intenciones: list[str], actividades: list[s
             sid = _plan_base(actividad, origen or "cartagena", elegido)
             if sid:
                 requisitos += _lista(sid, "requirements", lang)
+            requisitos.append(regla_de_vuelo(actividad, lang))  # lat-deuda-u: la de ESTA actividad, no la del plan
             if (registro.cart_type in _CON_FORMULARIO_MEDICO
                     and not _ya_dice_el_enlace(requisitos, _formulario_de_curso(lang))):
                 requisitos.append(_formulario_de_curso(lang))

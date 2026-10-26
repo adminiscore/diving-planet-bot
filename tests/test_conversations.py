@@ -779,7 +779,7 @@ async def test_final_summary_price_arithmetic_adds_up():
     from src.flows import cart_render
     state = make_state()
     state.mixed_cart = [{"type": "snorkel", "qty": 12, "label": "Snorkel"}]  # $125.57 p.p.
-    state.mixed_display_currency = "USD"
+    state.is_colombian = False  # en USD: la moneda la decide src/flows/moneda.py (sin nacionalidad, las dos)
     resp = cart_render.goto_final_summary(state)
     # Formato unico de precio (owner 2026-09-14): "183 USD", sin "$".
     m = re.search(r"(\d+) × (\d+) USD p\.p\. = \*(\d+) USD\*", resp)

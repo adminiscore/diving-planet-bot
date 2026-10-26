@@ -30,6 +30,33 @@ History
   - calidad: **94,8 % 80/116**, frente al 94,9 % 82/116 de anoche, dentro del ruido.
   - Deuda apuntada: el acuse ya no reconoce lo concreto del mensaje («anoto a tu amigo para el minicurso»).
 
+0.32.4 - (2026-10-26)
+---------------------
+* **lat-deuda-u: cada dato del negocio en un sitio, en los dos idiomas y para todos los caminos.** Pedida por Gadea al
+  ver los avisos. Inventario (solo leyendo; `docs/robustness/lat/inventario-fuentes.md`): 16 contradicciones, 17
+  arreglos sin llamadas, 8 para lat-8, 5 para lat-9 y 12 preguntas para el dueño; Gadea contestó 10 y quedan 2 para
+  Andrés (precios de Bubble Makers; cuándo se vuelve en el paquete de 3 inmersiones desde Cartagena). Hecho hoy:
+  - **Vuelo tras el refresher (seguridad):** las horas antes de volar son un dato de cada actividad en
+    `activities.json` (`horas_antes_de_volar`: 18 al bucear, 12 tras el minicurso); fuera las 62 copias de las fichas;
+    la tabla de hechos, la ficha del RAG y el índice generan la línea con `catalog.regla_de_vuelo`. El refresher, que
+    se vende con la ficha del minicurso, decía 12 h y ahora dice 18 h; el minicurso desde las islas no tenía la regla.
+  - **Moneda sin nacionalidad (decisión de Gadea): USD y COP en todos los caminos**, con una sola regla en
+    `src/flows/moneda.py` que usan la tabla de hechos, el catálogo y el contexto del RAG, la tarjeta, el precio del
+    refresher, las dos variantes del origen y la comparación de planes (que daba USD también al colombiano). Convivían
+    tres reglas (arq-5c, CAL-B y G3-07a).
+  - **La tarjeta del flujo** lee lo que incluye cada plan de su ficha (y el acompañante, de la suya): era un texto
+    fijo con «equipo» también para el acompañante y «almuerzo» en los paquetes de varios días.
+  - **Descuentos:** la regla de que no se acumulan (grupo y equipo propio no se suman; cada uno sí con el online)
+    llega a la tabla, al catálogo y al índice; estaba en la base y no la leía nadie.
+  - **Base (decisiones de Gadea):** Rescue desde los 12; Open Water de 2 días en las FAQ (decían 3-4 días y 5
+    sesiones); el Scuba Diver no se ofrece (tres FAQ lo ofrecían); Divemaster «aproximadamente 2 meses»; Pao Pao en
+    los hoteles con recogida; Rescue y Mindful Diving con noche; «el equipo va incluido en todos los planes» ya no
+    (Divemaster con equipo propio); el pago de colombianos (50 % con el enlace, QR o Llave que manda un asesor y 50 %
+    el día de la actividad); el formulario médico en inglés avisa de que está en español; «más de 30 años»; fuera las
+    notas internas («decisión de Gadea… confirmar con Andrés») de los textos que lee el cliente.
+  - Avisos: van delante del bloque final de pregunta (con sus opciones o su frase de cierre) y no repiten lo dicho
+    con cifras (en avisos-B, «operamos todos los días» se repetía 7 veces). La métrica del turno lleva el aviso.
+
 0.32.3 - (2026-10-26)
 ---------------------
 * **lat-deuda (1): los avisos los pone el código, al final de la respuesta y en cualquier camino.** Decisión de Gadea
