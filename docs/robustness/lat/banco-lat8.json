@@ -1,0 +1,24 @@
+{
+ "about": "lat-8 (26-oct, decisión de Gadea #1880): cuatro temas más de la tabla (hoteles, regreso otro día, fotos y la política general de cambios y cancelación), con las políticas que la base ya tiene. Frases nuestras: no salen del golden, de G9/G10 ni de las charlas reales. Controles (k*): los pasos de la reserva, cancelar una reserva YA hecha (sigue yendo a un asesor) y las intenciones de antes (precio, pago, clima), que no deben moverse. Fragmentos sin tildes y en minúsculas (puntuar_banco_rag).",
+ "dialogos": [
+  {"id": "h1-hoteles-es", "tipo": "hoteles", "turnos": ["Queremos dormir en las islas para bucear dos días seguidos, ¿qué hotel nos queda cerca de ustedes?"], "todas": ["majagua", "cocoliso"]},
+  {"id": "h2-hoteles-en", "tipo": "hoteles", "turnos": ["Is your dive base inside a hotel? We'd like to book a room there."], "todas": ["majagua", "cocoliso"]},
+  {"id": "h3-hoteles-curso-es", "tipo": "hoteles", "turnos": ["Vamos a hacer el curso Open Water de dos días, ¿en qué hotel de la isla nos podemos quedar?"], "todas": ["cocoliso"]},
+  {"id": "h4-hoteles-en", "tipo": "hoteles", "turnos": ["Which hotels on the Rosario Islands would you suggest for a diving trip?"], "todas": ["majagua"]},
+  {"id": "r1-regreso-es", "tipo": "regreso", "turnos": ["Después de los buceos nos gustaría quedarnos dos noches más en la isla. ¿Nos podrían llevar de vuelta a Cartagena otro día?"], "todas": ["asesor"]},
+  {"id": "r2-regreso-en", "tipo": "regreso", "turnos": ["Could we stay a couple of extra nights on the islands and ride back to Cartagena with your boat later?"], "todas": ["team"]},
+  {"id": "f1-fotos-es", "tipo": "fotos", "turnos": ["¿En el minicurso alguien nos toma fotos debajo del agua o eso se paga aparte?"], "todas": ["instructor"]},
+  {"id": "f2-fotos-en", "tipo": "fotos", "turnos": ["Will there be someone taking pictures or video while we dive?"], "todas": ["instructor"]},
+  {"id": "f3-fotos-es", "tipo": "fotos", "turnos": ["Si el instructor graba videos, ¿cuándo nos los manda?"], "todas": ["dia siguiente"]},
+  {"id": "c1-cambios-es", "tipo": "cambios", "turnos": ["Antes de reservar, ¿cuál es su política de cancelación?"], "todas": ["terminos-y-condiciones"]},
+  {"id": "c2-cambios-en", "tipo": "cambios", "turnos": ["Before I book: if my plans change, can I move the dive to another date?"], "todas": ["availability"]},
+  {"id": "c3-cambios-es", "tipo": "cambios", "turnos": ["Si reservamos para cuatro y al final somos cinco, ¿se puede cambiar?"], "todas": ["disponibilidad"]},
+  {"id": "m1-mezclado-es", "tipo": "mezclado", "turnos": ["¿Cuánto cuesta el minicurso desde Cartagena? ¿Y el instructor puede sacar fotos?"], "todas": ["usd", "instructor"]},
+  {"id": "k1-paso-reserva-es", "tipo": "control", "turnos": ["quiero bucear, ya estoy certificado"], "ninguno": ["majagua", "terminos-y-condiciones", "propina"]},
+  {"id": "k2-paso-reserva-es", "tipo": "control", "turnos": ["somos 3 y salimos desde cartagena"], "ninguno": ["majagua", "terminos-y-condiciones", "propina"]},
+  {"id": "k3-reserva-hecha-es", "tipo": "control", "turnos": ["Tengo una reserva para el sábado y me surgió algo, quiero cancelarla."], "todas": ["asesor"]},
+  {"id": "k4-precio-es", "tipo": "control", "turnos": ["¿Cuánto cuesta el snorkel saliendo de Cartagena?"], "todas": ["usd"], "ninguno": ["terminos-y-condiciones"]},
+  {"id": "k5-pago-en", "tipo": "control", "turnos": ["Can I pay by credit card?"], "todas": ["card"]},
+  {"id": "k6-clima-es", "tipo": "control", "turnos": ["Si el día del buceo hace mal tiempo, ¿qué pasa?"], "todas": ["100"]}
+ ]
+}
