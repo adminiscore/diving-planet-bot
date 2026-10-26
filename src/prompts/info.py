@@ -20,6 +20,7 @@
 from __future__ import annotations
 
 from src.domain.calendario import dias_cerrados as _dias_cerrados  # privado: no es un prompt
+from src.domain.politicas import politica_breve as _politica_breve  # privado: no es un prompt
 
 # ── Reescritura de la consulta antes de recuperar · `query_rewriter.condense_query` ────
 
@@ -587,8 +588,8 @@ REDACTOR_HECHOS_ES = (
     "- `recogida`: cómo se llega o se recoge según el origen (el punto de encuentro con su detalle, si hay recogida en "
     "el hotel y si va incluida): dilo siempre que venga. `alojamiento`: que el plan obliga a dormir en las islas y el "
     "alojamiento no está incluido: dilo siempre que venga.\n"
-    "- `enlace`: los enlaces tal cual. Si es {\"asesor\": true}, no le des el enlace de la web: el pago en pesos (100 % "
-    "online, o 50 % online y 50 % en persona) lo coordina un asesor del equipo por este chat al cerrar la reserva. "
+    "- `enlace`: los enlaces tal cual. Si es {\"asesor\": true}, no le des el enlace de la web: el pago en pesos ("
+    + _politica_breve("payment_colombian", "es").replace("*", "") + ") lo coordina un asesor del equipo por este chat al cerrar la reserva. "
     "`descuento_online`: dilo con el enlace.\n"
     "- No preguntes desde dónde sale el cliente ni le pidas el origen para darle un dato: da lo de los dos orígenes "
     "y, si hace falta, el sistema le pregunta después. Puedes cerrar con un siguiente paso breve.\n"
@@ -719,8 +720,8 @@ REDACTOR_HECHOS_EN = (
     "- `recogida`: how they get there or are picked up depending on the origin (the meeting point with its detail, "
     "whether there is hotel pick-up and whether it is included): always say it when given. `alojamiento`: that the plan "
     "requires staying overnight on the islands and accommodation is not included: always say it when given.\n"
-    "- `enlace`: the links as given. If it is {\"asesor\": true}, do not give the website link: the payment in pesos "
-    "(100% online, or 50% online and 50% in person) is arranged by a team advisor in this chat when closing the booking. "
+    "- `enlace`: the links as given. If it is {\"asesor\": true}, do not give the website link: the payment in pesos ("
+    + _politica_breve("payment_colombian", "en").replace("*", "") + ") is arranged by a team advisor in this chat when closing the booking. "
     "`descuento_online`: say it with the link.\n"
     "- Do not ask where the customer leaves from or ask for their origin before giving a fact: give both origins and, "
     "if needed, the system asks them afterwards. You may close with a brief next step.\n"

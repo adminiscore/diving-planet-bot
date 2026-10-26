@@ -19,6 +19,7 @@ from functools import lru_cache
 from pathlib import Path
 
 from src.domain import activities as dom
+from src.domain.politicas import politica
 from src.flows import cart_render, moneda
 from src.flows.catalog import (
     COMPANION_INCLUDES,
@@ -38,15 +39,6 @@ INTENCIONES = ("precio", "incluye", "requisitos", "horario", "disponibilidad", "
 ORIGENES = ("cartagena", "island")
 # Las intenciones cuyos hechos cambian según desde dónde sale el cliente: sin origen van las dos variantes.
 _DEPENDEN_DEL_ORIGEN = {"precio", "incluye", "horario", "enlace"}
-_POLICIES = Path(__file__).resolve().parents[2] / "data" / "knowledge_base" / "policies.json"
-
-
-@lru_cache(maxsize=1)
-def _politicas() -> dict:
-    datos = json.loads(_POLICIES.read_text(encoding="utf-8-sig"))
-    return datos.get("policies", datos)
-
-
 _DISCOUNTS = Path(__file__).resolve().parents[2] / "data" / "knowledge_base" / "discounts.json"
 
 
@@ -60,10 +52,8 @@ def _descuento_online(lang: str) -> str | None:
 
 
 def _politica(clave: str, lang: str) -> str | None:
-    valor = _politicas().get(clave)
-    if isinstance(valor, dict):
-        return valor.get(lang) or valor.get("es")
-    return valor
+    """Una política de la base (lat-deuda-u: del lector único del dominio, `src/domain/politicas.py`)."""
+    return politica(clave, lang)
 
 
 def _dos_monedas(state: ConversationState) -> bool:

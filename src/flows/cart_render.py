@@ -19,6 +19,7 @@ from src.flows.catalog import (
     ISLAND_SERVICE_MAP,
     SERVICES,
     _lista_en_frase,
+    enlace_en_su_idioma,
 )
 from src.flows.state import MESSAGE_SPLIT, ConversationState, Step
 from src.utils import money as money_fmt
@@ -369,6 +370,4 @@ def _resolve_service_booking_url(service: dict, state: ConversationState) -> str
         url = service["booking_url_island"]
     else:
         url = service.get("booking_url")
-    if url and state.language == "en":
-        url = url.replace("language=es", "language=en")
-    return url
+    return enlace_en_su_idioma(url, state.language)

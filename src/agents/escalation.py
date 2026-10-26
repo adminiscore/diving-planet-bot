@@ -59,13 +59,14 @@ SENSITIVE_RULES = {
     },
     "real_time_issues": {
         "keywords": {
-            "disponible mañana", "cupo mañana", "hay cupo",
+            # lat-deuda-u (26-oct): fuera «hay cupo», «cupo mañana», «disponible mañana» (y en inglés): pasaban a un asesor
+            # con «depende de disponibilidad en tiempo real» y siempre hay disponibilidad (decisión del negocio).
             # payment PROBLEMS only — the bare verb "pagar"/"pago" wrongly caught
             # info questions like "¿puedo pagar en euros?" / "¿cómo pago?".
             "no puedo pagar", "no me deja pagar", "pago no", "pago fallo", "pago falló",
             "pago fallido", "error de pago", "error en el pago", "pago rechazado",
             "falla el pago", "falló el pago", "reserva no",
-            "error reserva", "no puedo reservar", "available tomorrow", "availability tomorrow",
+            "error reserva", "no puedo reservar",
             "payment failed", "payment error", "payment didn't", "payment not going",
             "booking error", "can't book", "cannot book",
         },
@@ -139,10 +140,12 @@ _PASE_MEDICO = {
 # el mar no está apto. La previsión de un día concreto sigue siendo del equipo.
 _CLIMA_CON_POLITICA = {
     "es": (f"Operamos todos los días del año salvo {dias_cerrados('es')}, y la seguridad va primero: si el "
-           "mar no está apto, la salida se reprograma. La previsión de un día concreto te la confirma el equipo: te "
+           "mar no está apto, la salida se reprograma y, si no es posible reagendarla, se reembolsa el 100 %. "
+           "La previsión de un día concreto te la confirma el equipo: te "
            "paso ahora con alguien que te escribe por aquí enseguida."),
     "en": (f"We operate every day of the year except {dias_cerrados('en')}, and safety comes first: if the sea is "
-           "not suitable, the trip is rescheduled. The forecast for a specific day is confirmed by our team: I'm "
+           "not suitable, the trip is rescheduled and, if that is not possible, it is refunded 100%. "
+           "The forecast for a specific day is confirmed by our team: I'm "
            "passing you now to someone who will write to you here shortly."),
 }
 

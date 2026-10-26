@@ -185,3 +185,47 @@ def test_nada_muerto():
     assert not hasattr(load_embeddings, "load_knowledge_base")
     ci = (Path(__file__).resolve().parents[1] / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
     assert "python -m scripts.load_embeddings" not in ci and "python -m scripts.kb_v2 --yes" in ci
+
+
+# --- contradicciones que quedaban (C9, C10, C13, C14, C15) y el pago de colombianos en un sitio -------------------
+
+def test_las_edades_del_contexto_salen_del_registro():
+    from src.agents.rutas import contexto_rag
+
+    st = ConversationState(conversation_id="lat-deuda-u", language="es")
+    st.kids_under_8_count, st.kids_eight_to_ten_count = 1, 1
+    texto = contexto_rag._build_extra_context(st) or ""
+    assert "Advanced y Rescue desde los 12" in texto and "Divemaster desde los 18" in texto
+    assert "cursos PADI." not in texto
+
+
+def test_el_pase_del_clima_dice_el_reembolso():
+    from src.agents import escalation
+
+    assert "100 %" in escalation._CLIMA_CON_POLITICA["es"] and "100%" in escalation._CLIMA_CON_POLITICA["en"]
+
+
+def test_hay_cupo_no_es_una_incidencia():
+    from src.agents.escalation import detect_sensitive_escalation
+
+    assert detect_sensitive_escalation("¿hay cupo mañana?", "es") is None
+
+
+def test_los_paquetes_de_3_y_4_tambien_piden_certificacion():
+    texto = _json("policies.json")["policies"]["packages_certification_requirement"]
+    assert "3, 4, 5, 7 y 9" in texto["es"] and "3, 4, 5, 7 and 9" in texto["en"]
+
+
+def test_el_enlace_va_en_el_idioma_del_cliente_en_todos_los_sitios():
+    en = catalog.service_fact_sheet("2_dives_1_day", "en")
+    assert "language=en" in en and "language=es" not in en
+    assert "language=es" not in catalog.catalog_booking_links("en")
+
+
+def test_el_pago_de_los_colombianos_en_un_sitio():
+    from src.domain.politicas import politica_breve
+    from src.prompts import info
+
+    breve = politica_breve("payment_colombian", "es")
+    assert "Llave" in breve and breve.replace("*", "") in info.REDACTOR_HECHOS_ES
+    assert politica_breve("payment_colombian", "en").replace("*", "") in info.REDACTOR_HECHOS_EN

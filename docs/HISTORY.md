@@ -53,6 +53,18 @@ History
      ejecutarlo machacaba las FAQ curadas con datos viejos), 4 funciones y 7 campos calculados sin lector del catálogo,
      y 39 campos de las fichas que solo leía el índice v1. Se quedan `availability.json`, `escalation_rules.json` y los
      campos sin lector de `pricing.json` porque el juez los lee como referencia (cambiarlos rompe la comparación).
+  5. **Contradicciones que quedaban**: las edades del contexto del RAG salen del registro (decía «desde los 10: cursos
+     PADI»; Advanced y Rescue son desde los 12, Divemaster desde los 18); el pase del clima dice el reembolso del 100 %
+     de la política; «¿hay cupo mañana?» ya no pasa a un asesor (siempre hay disponibilidad); los paquetes de 3 y 4
+     inmersiones también piden certificación en la política; el enlace de reserva va en el idioma del cliente en los
+     tres sitios que lo dan (`catalog.enlace_en_su_idioma`; la ficha del RAG lo daba en español al cliente inglés).
+  6. **El pago de los colombianos en un sitio**: la política `payment_colombian` lleva su versión breve, que leen el
+     mensaje del flujo al cerrar y el prompt del redactor (decían la versión vieja, «50 % online + 50 % en persona»);
+     las políticas se leen con un solo lector del dominio (`src/domain/politicas.py`), que también pueden usar los
+     prompts.
+  - Sin medir: OpenAI se quedó sin crédito a mitad de la ronda limpieza-B (no vale). Con la vara de Álvaro (#1845:
+    ruido de una ronda ±5 diálogos y ±7 criterios fallados; ±14 neutro), lat-deuda-u ya en PRE queda en duda (+13
+    fallos frente a avisos-B): se mide ×2 con esto antes de subirlo.
 
 0.32.4 - (2026-10-26)
 ---------------------

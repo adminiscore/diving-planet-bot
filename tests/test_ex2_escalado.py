@@ -16,6 +16,8 @@ from src.agents.escalation import detect_sensitive_escalation, sensitive_respons
     "he oído que tienen buceo nocturno, ¿cuánto cuesta?",
     "mi amigo es abogado y también quiere bucear, somos 3",
     "el viento de la isla es delicioso, ¿se puede quedar uno a dormir allí?",
+    # lat-deuda-u (26-oct, C9 del inventario): siempre hay disponibilidad (decisión del negocio); no es una incidencia.
+    "hay cupo mañana para 4 personas en el buceo?",
 ])
 def test_las_falsas_alarmas_de_la_lista_ya_no_pasan_a_un_asesor(mensaje):
     assert detect_sensitive_escalation(mensaje, "es") is None
@@ -25,7 +27,6 @@ def test_las_falsas_alarmas_de_la_lista_ya_no_pasan_a_un_asesor(mensaje):
     ("es una emergencia, llamen por favor", "complaints_or_emergencies"),
     ("hubo un accidente con la lancha, necesitamos ayuda", "complaints_or_emergencies"),
     ("my friend fainted on the boat", "complaints_or_emergencies"),
-    ("hay cupo mañana para 4 personas en el buceo?", "real_time_issues"),
     ("no puedo pagar, me sale error en la tarjeta", "real_time_issues"),
 ])
 def test_emergencias_e_incidencias_siguen_por_la_lista(mensaje, motivo):

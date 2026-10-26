@@ -9,12 +9,12 @@ heurística de idioma por stopwords. Casi hoja: depende de la stdlib y de
 """
 
 import json
-from functools import lru_cache
 from pathlib import Path
 
 from src.domain import activities as dom
 from src.domain import lugares
 from src.domain.calendario import dias_cerrados
+from src.domain.politicas import politica, politica_breve  # noqa: F401 — la usan otros por aquí
 from src.utils import money
 
 # Common Spanish/English words used to guess the language of ANY free-text
@@ -237,20 +237,6 @@ def regla_de_vuelo(actividad: str | None, lang: str) -> str | None:
             else f"After diving, wait at least {horas} hours before flying")
 
 
-@lru_cache(maxsize=1)
-def _politicas() -> dict:
-    datos = json.loads((_KB_DIR / "policies.json").read_text(encoding="utf-8-sig"))
-    return datos.get("policies", datos)
-
-
-def politica(clave: str, lang: str) -> str | None:
-    """El texto de una política de la base en el idioma del cliente."""
-    valor = _politicas().get(clave)
-    if isinstance(valor, dict):
-        return valor.get("es" if lang == "es" else "en") or valor.get("es")
-    return valor
-
-
 # Los planes que exigen el formulario médico de curso: cursos, minicurso y refresher (por su `cart_type`); los que
 # llevan la regla del refresh: el buceo certificado y el propio refresher.
 CON_FORMULARIO_MEDICO = {"course", "beginner", "refresh"}
@@ -270,6 +256,12 @@ def requisitos_de_politica(actividad: str | None, lang: str) -> list[str]:
                   politica("insurance_form_requirement", lang),
                   regla_de_vuelo(registro.id, lang)]
     return [r for r in requisitos if r]
+
+
+def enlace_en_su_idioma(url: str | None, lang: str) -> str | None:
+    """lat-deuda-u (26-oct): las fichas guardan el enlace con `language=es`; al cliente inglés, en inglés. Lo hacían a
+    mano la tarjeta y la lista de enlaces del RAG, y la ficha del RAG no (C15 del inventario)."""
+    return url.replace("language=es", "language=en") if url and lang == "en" else url
 
 
 def service_fact_sheet(service_id: str, lang: str, svc: dict | None = None, actividad: str | None = None) -> str:
@@ -306,7 +298,8 @@ def service_fact_sheet(service_id: str, lang: str, svc: dict | None = None, acti
             actividad or getattr(dom.activity_for_service(service_id), "id", None), lang)]),
         _sheet_list(t["preparacion"] + de, svc.get(f"preparation_{lang}")),
         " · ".join(x for x in (
-            f"{t['reserva']}: {svc['booking_url']}" if svc.get("booking_url") and not svc.get("contact_only") else "",
+            f"{t['reserva']}: {enlace_en_su_idioma(svc['booking_url'], lang)}"
+            if svc.get("booking_url") and not svc.get("contact_only") else "",
             f"{t['info']}: {svc['url']}" if svc.get("url") else "") if x),
     ]
     return "\n\n".join(b for b in bloques if b.strip())
@@ -737,8 +730,7 @@ def catalog_booking_links(lang: str) -> str:
         url = svc.get("booking_url")
         if not url or svc.get("contact_only") or svc.get("category") == "private":
             continue
-        if not es:
-            url = url.replace("language=es", "language=en")
+        url = enlace_en_su_idioma(url, lang)
         lines.append(f"- {svc.get('name_es' if es else 'name_en') or service_id}: {url}")
     head = ("LINKS DE RESERVA ONLINE (el cliente elige fecha y personas y paga ahí; comparte solo el del "
             "servicio que corresponde):" if es else

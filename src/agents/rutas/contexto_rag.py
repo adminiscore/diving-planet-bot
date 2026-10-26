@@ -10,6 +10,7 @@ from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
 from src.config import settings
+from src.domain import activities as dom
 from src.flows import cart_render, eligibility
 from src.flows.state import ConversationState, Step
 
@@ -100,6 +101,12 @@ def _mentions_inactive_but_certified_companion(text: str) -> bool:
         and _CERTIFIED_MENTION_RE.search(text)
         and not _UNCERTIFIED_COMPANION_NOTE_RE.search(text)
     )
+
+
+def _edad(actividad: str, maxima: bool = False) -> int | None:
+    """lat-deuda-u (26-oct): las edades de la regla, del registro de actividades (eran cifras escritas aquí)."""
+    registro = dom.by_id(actividad)
+    return (registro.max_age if maxima else registro.min_age) if registro else None
 
 
 def _build_extra_context(state: ConversationState) -> str | None:
@@ -621,22 +628,26 @@ def _build_extra_context(state: ConversationState) -> str | None:
             parts.append(
                 f"En el grupo ya se contabilizaron {kids_u8} menor(es) de 8 años "
                 f"y {kids_8_10} de 8 a 10 años. No vuelvas a preguntar por edades de niños. "
-                "Regla de edades (fuente de verdad): los menores de 8 años SOLO pueden hacer "
-                "snorkel (edad minima 6 años), no pueden bucear. De 8 a 10 años: programa "
+                f"Regla de edades (fuente de verdad): los menores de {_edad('bubble_makers')} años SOLO pueden "
+                f"hacer snorkel (edad minima {_edad('snorkel')} años), no pueden bucear. De {_edad('bubble_makers')} "
+                f"a {_edad('bubble_makers', maxima=True)} años: programa "
                 "Bubble Makers — sesion especializada de buceo en piscina y aguas poco "
                 "profundas (maximo 2 metros de profundidad) con un instructor PADI dedicado, "
                 "es la forma en que los niños de esa edad si pueden iniciarse en el buceo de "
-                "forma segura. Desde los 10 años: minicurso de buceo normal y cursos PADI."
+                f"forma segura. Desde los {_edad('minicourse')} años: minicurso de buceo normal y curso Open Water; "
+                f"Advanced y Rescue desde los {_edad('padi_advanced')}; Divemaster desde los {_edad('padi_divemaster')}."
             )
         else:
             parts.append(
                 f"The group already accounts for {kids_u8} child(ren) under 8 and "
                 f"{kids_8_10} aged 8-10. Do not ask about kids' ages again. "
-                "Age rule (source of truth): children under 8 can ONLY do snorkeling "
-                "(minimum age 6), they cannot dive. Ages 8 to 10: Bubble Makers program — "
+                f"Age rule (source of truth): children under {_edad('bubble_makers')} can ONLY do snorkeling "
+                f"(minimum age {_edad('snorkel')}), they cannot dive. Ages {_edad('bubble_makers')} to "
+                f"{_edad('bubble_makers', maxima=True)}: Bubble Makers program — "
                 "a specialized dive session in a pool or very shallow water (max 2 meters "
                 "deep) with a dedicated PADI instructor; that's how kids that age can safely "
-                "start diving. From age 10: the regular dive mini-course and PADI courses."
+                f"start diving. From age {_edad('minicourse')}: the regular dive mini-course and the Open Water "
+                f"course; Advanced and Rescue from {_edad('padi_advanced')}; Divemaster from {_edad('padi_divemaster')}."
             )
 
     # Lancha privada

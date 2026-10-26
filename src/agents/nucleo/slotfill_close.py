@@ -34,6 +34,7 @@ from src.agents.conversational_core import (
 )
 from src.domain import activities as dom
 from src.flows import cart_render
+from src.flows.catalog import politica_breve
 from src.flows.state import ConversationState, Step
 from src.utils import money
 
@@ -192,14 +193,14 @@ def _finalize(state: ConversationState) -> str:
                 f"{refresher_note}{summary}\n\n"
                 "El pago es en pesos colombianos (COP): "
                 + ("pueden" if grupo else "puedes")
-                + " pagar *100% online* o *50% online + 50% en persona*. "
+                + f" pagar {politica_breve('payment_colombian', 'es')}. "
                 + ("Les paso con un asesor para coordinar el pago; enseguida se pone en contacto con ustedes. 🌊"
                    if grupo else
                    "Te paso con un asesor para coordinar el pago; enseguida se pone en contacto contigo. 🌊")
             )
         return (
             f"{refresher_note}{summary}\n\n"
-            "You pay in Colombian pesos (COP): *100% online* or *50% online + 50% in person*. I'll connect you "
+            f"You pay in Colombian pesos (COP): {politica_breve('payment_colombian', 'en')}. I'll connect you "
             "with an advisor to arrange the payment — they'll be in touch shortly. 🌊"
         )
 
