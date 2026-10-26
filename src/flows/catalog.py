@@ -339,42 +339,6 @@ OVERNIGHT_SERVICES = {
     if SERVICES[service_id].get("overnight") != "optional"
 }
 
-# Above this many people in one line item, nudge toward a human-coordinated
-# private/group service instead of silently treating it like a normal small
-# group (T123 in docs/archive/test-battery-edge-cases.md). Deliberately does NOT state
-# a maximum boat/group capacity (the KB has none — inventing one is forbidden,
-# see rag_agent.py's "never invent capacity numbers" rule); it only suggests
-# advisor coordination while continuing the flow normally.
-LARGE_GROUP_ADVISOR_THRESHOLD = 15
-
-REFRESHER_PRESERVE_SERVICES = {
-    "2_dives_1_day",
-    "2_dives_1_day_already_on_island",
-    "3_dives_1_day",
-    "4_dives_2_days",
-    "5_dives_2_days",
-    "7_dives_3_days",
-    "9_dives_4_days",
-    "3_dives_1_day_already_on_island",
-    "4_dives_2_days_already_on_island",
-    "4_dives_2_days_mixed_already_on_island",
-    "5_dives_2_days_already_on_island",
-    "7_dives_3_days_already_on_island",
-    "9_dives_4_days_already_on_island",
-}
-
-SPECIALTY_SERVICE_IDS = {
-    "mindful_diving",
-    "naturalist_specialty",
-    "fish_identification_specialty",
-    "buoyancy_specialty",
-    "nitrox_specialty",
-    "fish_identification_specialty_already_on_island",
-    "nitrox_specialty_already_on_island",
-    "naturalist_specialty_already_on_island",
-    "buoyancy_specialty_already_on_island",
-}
-
 
 def _load_companion_price() -> dict:
     """El precio del acompañante, de su fila de la tarifa. ord-3: sin cifras de respaldo escritas aquí; si la fila

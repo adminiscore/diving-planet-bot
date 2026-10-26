@@ -76,14 +76,16 @@ def _actividades(state: ConversationState, datos: dict) -> list[str]:
     return [una] if una else []
 
 
-def _origen(state: ConversationState, datos: dict) -> str | None:
+def _origen(state: ConversationState, datos: dict, leido: bool = False) -> str | None:
+    """`leido`: el extractor leyó el mensaje (aunque no traiga nada). DEUDA-ORIGEN (26-oct): entonces el lugar de Jev
+    no fija el origen ("Estaremos visitando Cartagena…" no dice la salida): van los dos precios y se pregunta."""
     for lugar in (state.location, state.detected_location, datos.get("location")):
         if lugar in hechos_mod.ORIGENES:
             return lugar
     from src.agents.jev_router import CUSTOMER_PLACE_MIN  # lazy
 
     lugar = getattr(state, "_jev_lugar", None) or {}  # gen-15: «nos alojamos en Mulata» lo dice Jev, no una palabra
-    if (lugar.get("confidence") or 0.0) >= CUSTOMER_PLACE_MIN:
+    if not leido and (lugar.get("confidence") or 0.0) >= CUSTOMER_PLACE_MIN:
         return _LUGAR_DE_JEV.get(lugar.get("choice"))
     if datos.get("hotel"):
         # arq-8b: «We'll be staying at the Ubuntu hotel… how much…?» con Jev a 0,52 en el lugar: el extractor lee el hotel
@@ -374,12 +376,13 @@ async def hechos_del_turno(state: ConversationState, message: str, history: list
         return None
     from src.agents.nucleo.extractor import lectura_del_extractor  # lazy
 
-    datos = await lectura_del_extractor(state, message) or {}
+    leida = await lectura_del_extractor(state, message)
+    datos, leido = leida or {}, leida is not None
     actividades = _actividades(state, datos)
     if not actividades:
         if set(intenciones) <= hechos_mod.INTENCIONES_SIN_ACTIVIDAD:
             # arq-1p: la hora, la recogida, qué llevar o si hay sitio son iguales para todas las actividades.
-            foto = _foto(state, datos, _origen(state, datos), message, history)
+            foto = _foto(state, datos, _origen(state, datos, leido), message, history)
             if foto.is_certified is None and datos.get("is_certified") is not None:
                 foto.is_certified = datos["is_certified"]  # arq-1s: el certificado lleva el carné en los requisitos
             bloques = hechos_mod.hechos_sin_actividad(foto, intenciones)
@@ -387,7 +390,7 @@ async def hechos_del_turno(state: ConversationState, message: str, history: list
             return (bloques, cubiertas) if cubiertas else None
         note_turn(hechos_por_codigo="sin_actividad" if datos else "sin_lectura")
         return None
-    bloques = hechos_mod.hechos(_foto(state, datos, _origen(state, datos), message, history), intenciones,
+    bloques = hechos_mod.hechos(_foto(state, datos, _origen(state, datos, leido), message, history), intenciones,
                                 actividades)
     cubiertas = [i for i in intenciones if any(_cubierta(b, i) for b in bloques)]
     if not cubiertas:

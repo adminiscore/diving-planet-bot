@@ -38,7 +38,6 @@ from src.agents.notes_extractor import extract_notes
 from src.domain import activities as dom
 from src.flows import cart_render, eligibility, moneda
 from src.flows.state import ConversationState, Step
-from src.utils.fuzzy import is_affirmative, is_agree
 from src.utils.number_words import number_alt
 from src.utils.text import strip_accents
 
@@ -312,6 +311,10 @@ def _ofrecer_la_actividad_preguntada(state: ConversationState) -> str | None:
     elige el cliente: "sí" confirma la recomendación (`suggested_activity`, nucleo/routing)."""
     actividad = state.actividad_preguntada
     if not actividad or actividad in _SIN_OFERTA_CONCRETA:
+        return None
+    if not state.detected_activity and actividad in (state.detected_group_allocation or {}):
+        # DEUDA-EXT (26-oct): es la actividad de los que se suman ("vienen dos amigos que quieren probar el minicurso"),
+        # no una oferta para el grupo que aún no ha elegido la suya (banco-lat11 a4: se ofrecía el minicurso a 3 buzos).
         return None
     if state.suggested_activity and state.suggested_activity != actividad:
         return None
@@ -998,11 +1001,27 @@ async def _otro_idioma_en_ingles(state: ConversationState, datos: dict | None = 
         state.language = state.detected_language = "en"
 
 
+def _el_extractor_calla_el_lugar(state: ConversationState) -> bool:
+    """DEUDA-ORIGEN (26-oct): ¿el extractor ya leyó el mensaje de este turno y no dice desde dónde sale el cliente? Si
+    aún no ha acabado o falló, no se sabe (False)."""
+    leida = getattr(state, "_lectura_del_turno", None)
+    if leida is not None:
+        return leida[1] is not None and not leida[1].get("location")
+    tarea = getattr(state, "_extraccion_adelantada", None)
+    if tarea is None or not tarea.done() or tarea.cancelled() or tarea.exception() is not None:
+        return False
+    datos = tarea.result()
+    return datos is not None and not datos.get("location")
+
+
 def _jev_dice_el_lugar(state: ConversationState) -> bool:
     """gen-15: ¿Jev está seguro (≥ `CUSTOMER_PLACE_MIN`) de que el mensaje dice dónde está el cliente (Cartagena o las
-    islas)? Lo contrario de `_jev_dice_que_no_lo_dice`."""
+    islas)? Lo contrario de `_jev_dice_que_no_lo_dice`. DEUDA-ORIGEN (decisión de Gadea, 26-oct): con el extractor
+    callado no vale ("Estaremos visitando Cartagena…": Jev dice cartagena, y el viaje no dice la salida)."""
     from src.agents.jev_router import CUSTOMER_PLACE_MIN  # lazy
 
+    if _el_extractor_calla_el_lugar(state):
+        return False
     lugar = getattr(state, "_jev_lugar", None) or {}
     return lugar.get("choice") in ("islands", "cartagena") and (lugar.get("confidence") or 0.0) >= CUSTOMER_PLACE_MIN
 
@@ -1051,12 +1070,6 @@ def _describe_value(field: str, value, lang: str) -> str:
 
 def _words(message: str) -> list[str]:
     return [w for w in re.split(r"[^\wáéíóúñü]+", (message or "").lower()) if w]
-
-
-def _is_short_ack(message: str) -> bool:
-    """"vale", "ok", "sí" a secas: tras el cierre no justifican una peticion."""
-    words = _words(message)
-    return 0 < len(words) <= 2 and all(is_agree(w) or is_affirmative(w) for w in words)
 
 
 def _known_field_values(state: ConversationState) -> dict:
@@ -1240,9 +1253,15 @@ def _merge_companion_activity(state: ConversationState, activity: str, qty: int)
     main_act = state.detected_activity
     if main_act and main_act not in alloc:
         alloc.setdefault(main_act, state.detected_group_size or 1)
+    known = state.detected_group_size or 0
     alloc[activity] = alloc.get(activity, 0) + qty
     state.detected_group_allocation = alloc
     state.detected_group_size = sum(alloc.values())
+    if not main_act and known + qty > state.detected_group_size:
+        # DEUDA-EXT (26-oct): sin actividad principal, los que ya se contaban se perdían: "two certified divers" + "my
+        # wife will join us but she'll just snorkel" dejaba {snorkel: 1} y total 1 (banco-lat11 a3). El total suma a la
+        # persona nueva; los demás esperan a la principal, que el bot pregunta (`booking._resto_a_la_principal`).
+        state.detected_group_size = known + qty
     logger.info(f"[CORE] merged companion activity {activity} x{qty} -> alloc={alloc}")
 
 
@@ -1262,6 +1281,14 @@ def _apply_group_total(state: ConversationState, total: int) -> bool:
         return True
     alloc = dict(state.detected_group_allocation or {})
     main = state.detected_activity
+    if not main:
+        # DEUDA-EXT (26-oct): sin actividad principal, el que ya estaba contado pasa a su actividad y el resto espera a
+        # la principal (antes `alloc[None]`).
+        moved = min(qty, known or qty)
+        alloc[activity] = alloc.get(activity, 0) + moved
+        state.detected_group_allocation = alloc
+        logger.info(f"[CORE] companion {activity} x{moved} ya contado, sin principal -> alloc={alloc}")
+        return True
     alloc.setdefault(main, known or qty)
     moved = min(qty, alloc[main])
     alloc[main] -= moved

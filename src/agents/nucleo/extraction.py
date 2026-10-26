@@ -280,7 +280,9 @@ _PLURAL_COMPANION_RE = re.compile(
     # La jerga plural se queda AQUI a proposito (medido 2026-09-15): llevarla a la
     # lista compartida hacia que el conteo de grupo del detector sumara "dos panas
     # y yo" = 3 y pisara un "somos 4" explicito. Aqui solo decide singular/plural.
-    r"parceros?|parceras?|cuates|panas|carnales|compas|patas|causas|"
+    # DEUDA-EXT (26-oct): solo el plural; con «parceros?» el singular «mi parcero se anima al snorkel» contaba como
+    # plural y se preguntaba cuántos son (banco-lat11 a5).
+    r"parceros|parceras|cuates|panas|carnales|compas|patas|causas|"
     + _PERSON_NOUN_PLURAL_EN + r")\b",
     re.IGNORECASE,
 )

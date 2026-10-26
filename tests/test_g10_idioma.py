@@ -73,7 +73,7 @@ def test_la_regla_de_no_adivinar_sustituye_a_la_de_no_suponer(monkeypatch, lang)
     es = lang == "es"
     assert (info.ESCRITOR_NO_ADIVINA_ES if es else info.ESCRITOR_NO_ADIVINA_EN) in prompt
     assert (info.RAG_PREGUNTA_LO_QUE_FALTA_ES if es else info.RAG_PREGUNTA_LO_QUE_FALTA_EN) in prompt
-    assert (info.RAG_NO_SUPONE_ES if es else info.RAG_NO_SUPONE_EN) not in prompt
+    # sim-8 (26-oct): la regla vieja (`RAG_NO_SUPONE_*`) ya no existe en el código.
 
 
 def test_una_o_dos_palabras_no_cambian_el_idioma(monkeypatch):

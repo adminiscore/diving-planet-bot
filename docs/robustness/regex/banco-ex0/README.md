@@ -16,7 +16,8 @@ Hecho el 12-oct-2026 (Gadea con Claude). Es la vara de medir de toda la fase EX 
 
 Criterios de etiqueta: "quiero bucear" a secas no es una actividad (recomendar, no suponer); lo dicho de OTRA persona
 no cambia los datos de quien escribe; una hipótesis ("in case I decided to…") no es un dato; viajar "a Cartagena" no
-dice desde dónde sale; "sacarme la certificación" = Open Water. Campos: `activity`, `is_certified`, `group_size`,
+dice desde dónde sale (DEUDA-ORIGEN, 26-oct: «Vamos en família a Cartagena» y «Estaremos visitando Cartagena…», que ex-5
+había pasado a cartagena, vuelven a este criterio); "sacarme la certificación" = Open Water. Campos: `activity`, `is_certified`, `group_size`,
 `group_allocation`, `location`, `is_colombian`, `last_dive_over_2_years`.
 
 ## Cómo se mide

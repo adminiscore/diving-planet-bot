@@ -164,8 +164,6 @@ def _collect() -> dict[str, str]:
     add("info/grounding_verify_v3_luna.system.en", info.GROUNDING_VERIFY_V3_LUNA_EN)
     add("info/rag_condiciones.es", info.RAG_CONDICIONES_ES)
     add("info/rag_condiciones.en", info.RAG_CONDICIONES_EN)
-    add("info/rag_no_supone.es", info.RAG_NO_SUPONE_ES)
-    add("info/rag_no_supone.en", info.RAG_NO_SUPONE_EN)
     add("info/rag_no_adivina.es", info.RAG_NO_ADIVINA_ES)
     add("info/rag_no_adivina.en", info.RAG_NO_ADIVINA_EN)
     # lat-9 paso 1 (26-oct): las reglas de cualquier escritor y la parte de no adivinar que es solo del RAG.
