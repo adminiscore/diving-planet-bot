@@ -1,8 +1,8 @@
 """
 Knowledge base loader.
 
-Loads service catalog, FAQs, and policies from JSON files
-in data/knowledge_base/ for use by the decision tree and RAG agent.
+Loads JSON files from data/knowledge_base/ (today, the brand tone for the RAG agent). The policies have ONE reader:
+`src/domain/politicas.py` (sim-7, 26-oct).
 """
 
 import json
@@ -29,18 +29,6 @@ def load_json(filename: str) -> dict:
     except json.JSONDecodeError as e:
         logger.error("knowledge_parse_error", file=filename, error=str(e))
         return {}
-
-
-def load_services() -> dict:
-    return load_json("services.json")
-
-
-def load_faqs() -> dict:
-    return load_json("faqs.json")
-
-
-def load_policies() -> dict:
-    return load_json("policies.json")
 
 
 def load_brand_tone() -> dict:

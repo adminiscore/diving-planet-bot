@@ -119,10 +119,8 @@ async def _availability_phase(
     # ex-9b paso 4 (medido y descartado): sin este texto fijo, "quiero bucear el 25 de diciembre, somos 2" no llega al
     # RAG (Jev: no pregunta nada) y nadie avisa de que ese día está cerrado (banco del paso 4).
     if supervisor._CLOSED_DATE_RE.search(msg_lower):
-        from src.knowledge.loader import load_policies
-        policy_text = (load_policies().get("policies", {}).get("closed_days") or {}).get(
-            state.language, ""
-        )
+        from src.domain.politicas import politicas  # lazy
+        policy_text = (politicas().get("closed_days") or {}).get(state.language, "")
         response = greeting + policy_text
         state.history.append({"role": "assistant", "content": response})
         return response

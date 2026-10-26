@@ -3,11 +3,11 @@ La frase «el 25 de diciembre y el 1 de enero» estaba escrita a mano en seis si
 prompts del RAG); si el negocio cambia un día, se cambia en la base y aquí se genera."""
 from __future__ import annotations
 
-import json
 from functools import lru_cache
-from pathlib import Path
 
-_POLICIES = Path(__file__).resolve().parents[2] / "data" / "knowledge_base" / "policies.json"
+# El dominio no importa nada del runtime (tests/test_prompts_surface.py); politicas.py es su vecino, solo stdlib.
+from .politicas import politicas
+
 _MESES = {
     "es": ("enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre",
            "noviembre", "diciembre"),
@@ -19,7 +19,7 @@ _MESES = {
 @lru_cache(maxsize=1)
 def fechas_cerradas() -> tuple[tuple[int, int], ...]:
     """(mes, día) de cada día cerrado, en el orden de la base."""
-    fechas = json.loads(_POLICIES.read_text(encoding="utf-8-sig"))["policies"]["closed_days"]["fechas"]
+    fechas = politicas()["closed_days"]["fechas"]
     return tuple((int(m), int(d)) for m, d in (f.split("-") for f in fechas))
 
 
