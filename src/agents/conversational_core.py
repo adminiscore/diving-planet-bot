@@ -1002,11 +1002,27 @@ async def _otro_idioma_en_ingles(state: ConversationState, datos: dict | None = 
         state.language = state.detected_language = "en"
 
 
+def _el_extractor_calla_el_lugar(state: ConversationState) -> bool:
+    """DEUDA-ORIGEN (26-oct): ¿el extractor ya leyó el mensaje de este turno y no dice desde dónde sale el cliente? Si
+    aún no ha acabado o falló, no se sabe (False)."""
+    leida = getattr(state, "_lectura_del_turno", None)
+    if leida is not None:
+        return leida[1] is not None and not leida[1].get("location")
+    tarea = getattr(state, "_extraccion_adelantada", None)
+    if tarea is None or not tarea.done() or tarea.cancelled() or tarea.exception() is not None:
+        return False
+    datos = tarea.result()
+    return datos is not None and not datos.get("location")
+
+
 def _jev_dice_el_lugar(state: ConversationState) -> bool:
     """gen-15: ¿Jev está seguro (≥ `CUSTOMER_PLACE_MIN`) de que el mensaje dice dónde está el cliente (Cartagena o las
-    islas)? Lo contrario de `_jev_dice_que_no_lo_dice`."""
+    islas)? Lo contrario de `_jev_dice_que_no_lo_dice`. DEUDA-ORIGEN (decisión de Gadea, 26-oct): con el extractor
+    callado no vale ("Estaremos visitando Cartagena…": Jev dice cartagena, y el viaje no dice la salida)."""
     from src.agents.jev_router import CUSTOMER_PLACE_MIN  # lazy
 
+    if _el_extractor_calla_el_lugar(state):
+        return False
     lugar = getattr(state, "_jev_lugar", None) or {}
     return lugar.get("choice") in ("islands", "cartagena") and (lugar.get("confidence") or 0.0) >= CUSTOMER_PLACE_MIN
 
