@@ -274,7 +274,7 @@ async def _sin_dato(state: ConversationState, message: str, prev_pending: str, p
         return None
     state._pregunta_del_escritor = pregunta
     try:
-        escrita = await _rag_answer(state, message, history=list(state.history))
+        escrita = await _rag_answer(state, message, history=list(state.history), sin_busqueda=True)
     except Exception as exc:  # noqa: BLE001 — sin escritor, la pregunta del flujo
         logger.warning(f"[CORE][LAT9] el escritor falló en un turno sin dato: {exc!r}")
         return None

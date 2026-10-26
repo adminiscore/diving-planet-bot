@@ -1624,7 +1624,7 @@ async def _hechos_para_el_rag(state: ConversationState, message: str, history: l
 
 async def _rag_answer(
     state: ConversationState, message: str, *, rag_query: str | None = None, history: list | None = None,
-    sin_precio: bool = False,
+    sin_precio: bool = False, sin_busqueda: bool = False,
 ) -> str:
     from src.agents import supervisor  # lazy
 
@@ -1641,6 +1641,8 @@ async def _rag_answer(
         entradas["hechos_bloques"] = state._hechos_del_rag
     if sin_precio:  # G3-07a: solo se pasa cuando hace falta (la llamada de siempre no cambia)
         entradas["sin_precio"] = True
+    if sin_busqueda:  # lat-9 paso 2: el escritor solo (`slotfill_close._sin_dato`)
+        entradas["sin_busqueda"] = True
     answer = await supervisor.rag_answer(rag_query or message, **entradas)
     # 7-oct (opción C): si cotiza sin origen, se pregunta el origen; quien la recibe deja el estado preparado
     # (`_fijar_origen_antes_del_precio`).
