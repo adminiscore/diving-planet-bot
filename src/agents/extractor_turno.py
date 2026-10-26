@@ -25,7 +25,7 @@ from openai import AsyncOpenAI
 from src.config import settings
 from src.domain import activities as dom
 from src.domain import lugares
-from src.llm_client import crear_con_respaldo, trace_openai
+from src.llm_client import trace_openai
 from src.observability import pieza_llm
 from src.utils.text import strip_accents
 
@@ -648,15 +648,13 @@ async def extraer_turno(mensaje: str, *, history: list[dict] | None = None, sabi
     usuario = _contexto(mensaje, ultima_pregunta_del_bot(history), sabido or {}, lang)
 
     async def _pedir(sist: str, esquema: dict, pieza: str):
-        # 18-oct (mod-2): con `extractor_respaldo_modelo`, si el extractor no contesta en `extractor_respaldo_segundos`
-        # la misma petición va al respaldo y gana la primera (ronda mod-F: la cola de Haiku por OpenRouter, 4-5 s en
-        # 2 de 47 turnos). Vacío = la llamada de siempre. r6-1: sale etiquetada en [TURN_METRICS] como `pieza`.
-        # lat-6b: sin gramática; el esquema (con sus reglas) va al final del prompt y el código valida después.
+        # r6-1: sale etiquetada en [TURN_METRICS] como `pieza`. lat-6b: sin gramática; el esquema (con sus reglas) va al
+        # final del prompt y el código valida después. Si Haiku se queda en la cola, el respaldo por tiempo de OpenRouter
+        # (`llm_client._por_proveedor`) lanza la misma petición por OpenAI; el respaldo propio del extractor, que la
+        # duplicaba, se quitó el 26-oct (decisión de Gadea: en el 0,8 % de los turnos, < 0,01 s de media por turno).
         sist = sist + (_SOLO_JSON_ES if lang == "es" else _SOLO_JSON_EN) + json.dumps(esquema, ensure_ascii=False)
         with pieza_llm(pieza):
-            return await crear_con_respaldo(
-                client, respaldo=settings.extractor_respaldo_modelo, segundos=settings.extractor_respaldo_segundos,
-                pieza=pieza,
+            return await client.chat.completions.create(
                 model=modelo,
                 messages=[{"role": "system", "content": sist}, {"role": "user", "content": usuario}],
                 temperature=0.0,
