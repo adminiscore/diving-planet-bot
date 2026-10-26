@@ -7,7 +7,6 @@ y el bot pasaba a un asesor una pregunta que se contesta (decisión de Gadea del
 
 from types import SimpleNamespace
 
-from src.agents import escalation
 from src.agents import jev_router as j
 from src.llm_client import _is_empty_for
 from src.prompts.router import ROUTING_TOOL
@@ -42,16 +41,3 @@ class _Cliente:
             return respuesta
 
         self.chat = SimpleNamespace(completions=SimpleNamespace(create=create))
-
-
-async def test_none_no_llega_como_senal():
-    cliente = _Cliente('{"wants_human": false, "sensitive_topic": "none", "booking_change_topic": "none"}')
-    senales = await escalation.detect_routing_signals("the discount is not showing up", lang="en", client=cliente)
-    assert "sensitive_topic" not in senales and "booking_change_topic" not in senales
-    assert senales["wants_human"] is False
-
-
-async def test_un_valor_real_sigue_llegando():
-    cliente = _Cliente('{"sensitive_topic": "medical_questions", "booking_change_topic": "none"}')
-    senales = await escalation.detect_routing_signals("estoy embarazada", lang="es", client=cliente)
-    assert senales["sensitive_topic"] == "medical_questions" and "booking_change_topic" not in senales

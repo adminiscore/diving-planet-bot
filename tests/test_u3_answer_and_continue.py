@@ -232,18 +232,8 @@ async def test_por_debajo_de_07_no_es_pregunta(monkeypatch):
 async def test_si_jev_duda_en_el_router_la_pregunta_viaja_igual(monkeypatch):
     _mock_http(monkeypatch, {
         jev_router.ASKS_QUESTION: {"type": "noul", "noul": 0.9},
-        "wants_human": {"type": "noul", "noul": 0.5},  # duda -> router LLM
+        "wants_human": {"type": "noul", "noul": 0.4},  # duda: decide Jev igual (lat-11 T2), y 0,4 es «no»
     })
-
-    class _NoTool:
-        class chat:  # noqa: N801
-            class completions:  # noqa: N801
-                @staticmethod
-                async def create(**_k):
-                    raise RuntimeError("sin LLM en tests")
-
-    monkeypatch.setattr(escalation, "AsyncOpenAI", lambda **_k: _NoTool())
-    monkeypatch.setattr(escalation, "trace_openai", lambda c: c)
     got = await escalation.detect_routing_signals("perfecto, como pago")
     assert got == {"asks_question": True}
 
@@ -257,18 +247,8 @@ async def test_si_jev_duda_en_el_router_los_afirma_viajan_igual(monkeypatch):
         jev_router.AFFIRMS_ACTIVITY: {"type": "noul", "noul": 0.93},
         jev_router.ACTIVITY_HYPOTHESIS: {"type": "noul", "noul": 0.04},
         jev_router.AFFIRMS_NATIONALITY: {"type": "noul", "noul": 0.05},
-        "wants_human": {"type": "noul", "noul": 0.5},  # duda -> router LLM
+        "wants_human": {"type": "noul", "noul": 0.4},  # duda: decide Jev igual (lat-11 T2), y 0,4 es «no»
     })
-
-    class _NoTool:
-        class chat:  # noqa: N801
-            class completions:  # noqa: N801
-                @staticmethod
-                async def create(**_k):
-                    raise RuntimeError("sin LLM en tests")
-
-    monkeypatch.setattr(escalation, "AsyncOpenAI", lambda **_k: _NoTool())
-    monkeypatch.setattr(escalation, "trace_openai", lambda c: c)
     got = await escalation.detect_routing_signals("Yo soy open y me gustaría salir un día. No sé qué tienen.")
     # (u3-3 mandaba también las probabilidades crudas, `affirms_p`: se quitaron en la limpieza ex9b con su único lector,
     # la puerta del regex en los turnos sin pregunta.)

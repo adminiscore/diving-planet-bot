@@ -65,22 +65,6 @@ def test_well_formed_arguments_are_unchanged():
     assert tool_arguments(_call(args), ROUTING_TOOL) == args
 
 
-@pytest.mark.asyncio
-async def test_routing_signals_escalate_the_forecast_question_with_the_flattened_shape():
-    """La respuesta exacta que dio el LLM real (batería del router, caso s04)."""
-    message = SimpleNamespace(tool_calls=[SimpleNamespace(function=SimpleNamespace(arguments=REAL_ROUTER_ARGUMENTS))])
-
-    class FakeCompletions:
-        async def create(self, **kwargs):
-            return SimpleNamespace(choices=[SimpleNamespace(message=message)])
-
-    client = SimpleNamespace(chat=SimpleNamespace(completions=FakeCompletions()))
-    signals = await escalation.detect_routing_signals("¿va a llover mañana en cartagena?", lang="es", client=client)
-    assert signals.get("sensitive_topic") == "weather_conditions"
-    assert "weather_conditions" not in signals
-    assert escalation.sensitive_response_for(signals["sensitive_topic"], "es") is not None
-
-
 # ── Claves repetidas (2026-09-16) ───────────────────────────────────────────
 
 def _raw(raw: str):

@@ -17,20 +17,16 @@ Actions:
 - Log escalation reason for analytics
 """
 
-import json
 import logging
 import re
 import time
 
 import httpx
 import structlog
-from openai import AsyncOpenAI
 
 from src.config import settings
 from src.domain.calendario import dias_cerrados
-from src.llm_client import tool_arguments, trace_openai
-from src.observability import con_pieza_llm
-from src.prompts.router import ROUTING_TOOL, con_dieta_no_es_medica, routing_system_prompt
+from src.prompts.router import ROUTING_TOOL, con_dieta_no_es_medica
 
 con_dieta_no_es_medica(ROUTING_TOOL)  # gen-3 (20-oct): el enrutador de respaldo, con la misma definición que Jev
 
@@ -228,83 +224,26 @@ def sensitive_response_for(category: str, lang: str = "es") -> tuple[str, str] |
     return category, _rule_message(rule, lang)
 
 
-def _mensaje_con_contexto(message: str, history: list[dict] | None) -> str:
-    """CAL-E5: lo que lee el enrutador LLM de respaldo. Con el flag, los dos últimos mensajes como referencia (para
-    que un mensaje referido no pierda a qué se refiere) y después el mensaje de este turno; sin el flag, el mensaje
-    tal cual, como siempre."""
-    if not history:
-        return message
-    ultimos = [h for h in history if (h or {}).get("content")][-2:]
-    if not ultimos:
-        return message
-    lineas = "\n".join(
-        f"{'Cliente' if h.get('role') == 'user' else 'Bot'}: {str(h['content'])[:400]}" for h in ultimos)
-    return (f"Así acabó la conversación, solo para saber a qué se refiere el cliente:\n{lineas}\n\n"
-            f"Clasifica SOLO este último mensaje del cliente:\n{message}")
-
-
-@con_pieza_llm("senales_router")
 async def detect_routing_signals(
-    message: str, *, lang: str = "es", client: AsyncOpenAI | None = None, pending_slot: str | None = None,
-    history: list[dict] | None = None,
+    message: str, *, lang: str = "es", pending_slot: str | None = None, history: list[dict] | None = None,
 ) -> dict:
-    """Red de precisión para los 3 gates de arriba — solo se llama cuando las
-    listas de palabras clave NO encontraron nada (ver supervisor.py). Nunca
-    lanza excepción: {} en cualquier error, respuesta rara, o mensaje vacío,
-    para que el caller siga con el comportamiento anterior (las listas)."""
+    """Las señales del turno, de Jev (U3, ~0,3 s): las 9 del enrutador y las del turno (u3-4/u3-5, intenciones…).
+    lat-11 T2 (26-oct): sin router LLM de respaldo. Si Jev duda, decide igual con lo que tiene; si no contesta (sin
+    clave de OpenRouter, OpenRouter cortado, tiempo agotado), {} y deciden las listas de siempre (`regex_decide`).
+    Nunca lanza excepción."""
     if not message or not message.strip():
         return {}
-    # U3 (u3-1): Jev contesta las mismas 9 señales en ~0,27 s. Si no hay clave de OpenRouter
-    # o falla, sigue el router LLM de siempre (y el turno lo apunta en su resumen).
-    # Si Jev DUDA (cascada por confianza), decide el router LLM: la conducta de hoy.
-    turn_signals: dict = {}
-    if client is None:
-        from src.agents.jev_router import ASKS_QUESTION, UNCERTAIN, detect_routing_signals_jev_full
-        from src.observability import note_turn
+    from src.agents.jev_router import ASKS_QUESTION, UNCERTAIN, detect_routing_signals_jev_full
+    from src.observability import note_turn
 
-        t0 = time.perf_counter()
-        jev, turn_signals = await detect_routing_signals_jev_full(
-            message, lang=lang, pending_slot=pending_slot, history=history)
-        if isinstance(turn_signals, bool):  # contrato anterior (solo asks_question)
-            turn_signals = {ASKS_QUESTION: True} if turn_signals else {}
-        router = "jev" if isinstance(jev, dict) else ("llm_uncertain" if jev == UNCERTAIN else "llm_fallback")
-        note_turn(router=router, router_ms=round((time.perf_counter() - t0) * 1000))
-        if isinstance(jev, dict):
-            return {**jev, **turn_signals}
-    try:
-        client = client or trace_openai(AsyncOpenAI(api_key=settings.openai_api_key))
-        response = await client.chat.completions.create(
-            model=settings.senales_model,
-            messages=[
-                {"role": "system", "content": routing_system_prompt(lang)},
-                # CAL-E5 (flag `jev_con_contexto`): el mismo contexto que Jev. Medido el 16-oct con
-                # `scripts/sonda_senales.py`: con los últimos turnos, "Me lo podrías compartir por favor" (tras "se me
-                # perdió el número") sube a 0,63 en Jev, cae en la zona de duda y la decide este enrutador, que veía
-                # solo el mensaje y decía que no. La mitad del arreglo estaba aquí.
-                {"role": "user", "content": _mensaje_con_contexto(message, history)},
-            ],
-            tools=[ROUTING_TOOL],
-            tool_choice={"type": "function", "function": {"name": "detect_routing_signals"}},
-            temperature=0.0,
-            max_tokens=140,
-        )
-        choice = response.choices[0].message
-        tool_calls = getattr(choice, "tool_calls", None)
-        args = tool_arguments(tool_calls[0], ROUTING_TOOL) if tool_calls else {}
-    except (json.JSONDecodeError, TypeError, AttributeError, IndexError) as exc:
-        _llm_logger.warning(f"[ESCALATION] routing signals malformed response: {exc}")
-        args = {}
-    except Exception as exc:  # noqa: BLE001
-        _llm_logger.warning(f"[ESCALATION] routing signals error: {exc}")
-        args = {}
-
-    # "none" es la opción "nada" de los enums (ex-9b, 19-oct): para el resto del código, como si no viniera.
-    result = {k: v for k, v in (args or {}).items() if v not in (None, "", [], {}, "none")}
-    if turn_signals:
-        # u3-4/u3-5: Jev dudó en las señales del router, pero sus respuestas a "¿hay algo que
-        # contestar?" y a los "¿lo afirma?" siguen valiendo (son otras preguntas y el router
-        # LLM no las contesta).
-        result.update(turn_signals)
+    t0 = time.perf_counter()
+    jev, turn_signals = await detect_routing_signals_jev_full(
+        message, lang=lang, pending_slot=pending_slot, history=history)
+    if isinstance(turn_signals, bool):  # contrato anterior (solo asks_question)
+        turn_signals = {ASKS_QUESTION: True} if turn_signals else {}
+    router = "jev" if isinstance(jev, dict) else ("jev_duda" if jev == UNCERTAIN else "sin_ia")
+    note_turn(router=router, router_ms=round((time.perf_counter() - t0) * 1000))
+    result = {**(jev if isinstance(jev, dict) else {}), **turn_signals}
     if result:
         _llm_logger.info(f"[ESCALATION][ROUTING_SIGNALS] detected={result} msg={message[:80]!r}")
     return result

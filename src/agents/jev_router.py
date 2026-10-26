@@ -1006,7 +1006,7 @@ def _medir_jev(resp: httpx.Response | None, t0: float) -> None:
         pass
 
 
-UNCERTAIN = "uncertain"  # Jev respondió pero duda: el turno lo decide el router LLM
+UNCERTAIN = "uncertain"  # Jev respondió pero duda en alguna señal del router (lat-11: decide igual, ya sin router LLM)
 
 # CAL-E5 (16-oct, flag `jev_con_contexto`): Jev contestaba las señales viendo SOLO el mensaje del turno, así que un
 # mensaje que se refiere a lo anterior perdía a qué se refiere: "Me lo podrías compartir por favor" (tras "se me perdió
@@ -1112,8 +1112,10 @@ async def detect_routing_signals_jev_full(
         return None, {}
     ms = (time.perf_counter() - t0) * 1000
     if doubts:
-        logger.info(f"[ROUTER][JEV] {ms:.0f} ms duda={doubts} -> router LLM (se conservan {sorted(extras)}) msg={message[:80]!r}")
-        return UNCERTAIN, extras
+        # lat-11 T2 (26-oct): con la duda decide Jev igual; el router LLM de respaldo se quitó (9 % de los turnos,
+        # 0,63 s; iba por OpenRouter como Jev). Sus señales viajan con las del turno.
+        logger.info(f"[ROUTER][JEV] {ms:.0f} ms duda={doubts}: decide Jev igual detected={signals} msg={message[:80]!r}")
+        return UNCERTAIN, {**signals, **extras}
     if signals:
         logger.info(f"[ROUTER][JEV] {ms:.0f} ms detected={signals} msg={message[:80]!r}")
     return signals, extras

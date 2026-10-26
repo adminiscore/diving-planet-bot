@@ -140,18 +140,6 @@ def test_el_contexto_son_los_ultimos_turnos_y_va_cortado(monkeypatch):
     assert len(estado) < 2000, "el turno largo va cortado"
 
 
-def test_el_enrutador_de_respaldo_tambien_ve_los_ultimos_turnos(monkeypatch):
-    """La otra mitad de E5, medida con la sonda: con contexto Jev sube a 0,63, cae en la zona de duda y decide el
-    enrutador LLM, que veía solo el mensaje. Si el contexto no llega también aquí, el arreglo no sirve."""
-    from src.agents import escalation
-
-    con = escalation._mensaje_con_contexto("Me lo podrías compartir", _HISTORIAL)
-    assert "Se me perdió el número" in con
-    assert con.rstrip().endswith("Me lo podrías compartir")
-    assert "SOLO este último mensaje" in con
-    assert escalation._mensaje_con_contexto("hola", None) == "hola"
-
-
 def test_sin_historial_el_estado_es_el_de_siempre(monkeypatch):
     assert jr._estado_para_jev("hola", None) == jr._estado_para_jev("hola", [])
     assert jr._estado_para_jev("hola", [{"role": "user", "content": ""}]).endswith("Customer message: hola")
