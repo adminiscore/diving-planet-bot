@@ -185,6 +185,35 @@ def test_dos_preguntas_al_final_van_juntas_detras():
     assert av._insertar("Which date? How many people?", "AVISO") == "AVISO\n\nWhich date? How many people?"
 
 
+def test_la_pregunta_con_sus_opciones_en_lista_va_al_final():
+    """Ronda avisos-B: en la bienvenida el aviso salía detrás del menú de actividades."""
+    resp = av._insertar("¡Hola!\n\nCuéntame, ¿qué te gustaría vivir con nosotros? 🤿\n• *Buceo*\n• *Minicurso*", "AVISO")
+    assert resp == "¡Hola!\n\nAVISO\n\nCuéntame, ¿qué te gustaría vivir con nosotros? 🤿\n• *Buceo*\n• *Minicurso*"
+
+
+def test_la_frase_de_cierre_tras_la_pregunta_va_con_ella():
+    texto = "Son 5 personas.\n\nNecesito saber: ¿sales desde Cartagena o ya estás en las islas? Los precios cambian. 🌊"
+    assert av._insertar(texto, "AVISO") == ("Son 5 personas.\n\nAVISO\n\nNecesito saber: ¿sales desde Cartagena o ya "
+                                            "estás en las islas? Los precios cambian. 🌊")
+
+
+def test_el_interrogante_de_un_enlace_no_es_una_pregunta():
+    resp = av._insertar("Reserva aquí:\nhttps://book.divingplanet.org/book/x?language=es", "AVISO")
+    assert resp.endswith("?language=es\n\nAVISO")
+
+
+def test_con_sus_cifras_y_parte_de_sus_palabras_ya_lo_dice():
+    """Ronda avisos-B: «siempre hay disponibilidad, excepto el 25 de diciembre y el 1 de enero» ya lo decía."""
+    ya = ("¡Buenos días! Sí, siempre hay disponibilidad, excepto el 25 de diciembre y el 1 de enero. La fecha se elige "
+          "en el enlace. ¿Qué te gustaría hacer?")
+    st = _con(["disponibilidad"])
+    assert av.poner_avisos(st, ya) == ya and st.avisos_dados == ["operamos-todos-los-dias"]
+    # Una cifra suelta no basta: «10 %» online y «5 personas» no son el descuento de grupo.
+    st = _con(["precio"], detected_group_size=5)
+    resp = av.poner_avisos(st, "Para las 5 personas el precio online incluye el 10 % de descuento.")
+    assert "10 % de descuento de grupo" in resp
+
+
 def test_en_ingles_va_en_ingles():
     st = _con(["disponibilidad"], language="en")
     assert "There is always availability" in av.poner_avisos(st, "Sure, it's 178 USD.")

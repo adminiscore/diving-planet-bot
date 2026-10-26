@@ -170,37 +170,56 @@ def seleccionar(hechos: dict, temas: set[str]) -> list[dict]:
 
 
 def _ya_lo_dice(texto: str, respuesta: str) -> bool:
-    """La respuesta ya lo dice: la misma comprobación que la tabla de hechos usa para un dato (sus palabras con
-    contenido, recortadas, están casi todas)."""
+    """La respuesta ya lo dice: la comprobación de la tabla de hechos (la mitad de sus palabras con contenido) o, si
+    el aviso lleva cifras, todas sus cifras y una cuarta parte de sus palabras. Medido en la ronda avisos-B (26-oct):
+    las 7 veces que «operamos todos los días» repetía la respuesta, sus cifras estaban y compartía el 27-46 % de las
+    palabras; los avisos que añadían algo no pasaban del 22 % aunque coincidiera alguna cifra."""
     from src.flows import hechos as hechos_mod  # lazy
 
-    return hechos_mod._elemento_dado(texto, hechos_mod._raices(respuesta), respuesta)
+    raices = hechos_mod._raices(respuesta)
+    if hechos_mod._elemento_dado(texto, raices, respuesta):
+        return True
+    cifras, propias = hechos_mod._cifras(texto), hechos_mod._raices(texto)
+    return bool(cifras and propias) and cifras <= hechos_mod._cifras(respuesta) \
+        and len(propias & raices) / len(propias) >= 0.25
 
 
-_PREGUNTA_AL_FINAL = re.compile(r"\?[^\w]*$")
 _FRASES = re.compile(r"(?<=[.!?…])\s+")
 _CON_LETRAS = re.compile(r"\w")
+_URL = re.compile(r"https?://\S+")
+_LINEA_DE_LISTA = re.compile(r"^\s*(?:[-*•▪◦]|\d+[.)])\s")
 
 
-def _insertar(respuesta: str, aviso: str) -> str:
-    """El aviso va al final; si la respuesta acaba preguntando algo, delante de esa pregunta, que sigue siendo lo
-    último que lee el cliente."""
-    cuerpo = respuesta.rstrip()
-    antes, salto, ultima = cuerpo.rpartition("\n")
+def _pregunta(texto: str) -> bool:
+    return "?" in _URL.sub("", texto)  # el «?» de un enlace no es una pregunta
+
+
+def _frases(linea: str) -> list[str]:
     frases: list[str] = []
-    for trozo in _FRASES.split(ultima):
+    for trozo in _FRASES.split(linea):
         if frases and not _CON_LETRAS.search(trozo):
             frases[-1] = f"{frases[-1]} {trozo}"  # un emoji suelto tras la pregunta es de esa frase
         else:
             frases.append(trozo)
-    corte = len(frases)
-    while corte > 0 and _PREGUNTA_AL_FINAL.search(frases[corte - 1]):
-        corte -= 1
-    if corte == len(frases):
-        return f"{cuerpo}\n\n{aviso}"
-    previas, preguntas = " ".join(frases[:corte]), " ".join(frases[corte:])
-    delante = f"{antes}{salto}{previas}" if previas else antes
-    return "\n\n".join(p for p in (delante.rstrip(), aviso, preguntas) if p)
+    return frases
+
+
+def _insertar(respuesta: str, aviso: str) -> str:
+    """El aviso va al final; si la respuesta acaba preguntando algo, delante de esa pregunta, que sigue siendo lo
+    último que lee el cliente junto con lo que la acompaña (las opciones en lista que la siguen, una frase de cierre)."""
+    lineas = respuesta.rstrip().split("\n")
+    i = len(lineas) - 1
+    while i >= 0 and (not lineas[i].strip() or _LINEA_DE_LISTA.match(lineas[i])):
+        i -= 1  # las opciones de la pregunta van con ella
+    if i < 0 or not _pregunta(lineas[i]):
+        return f"{respuesta.rstrip()}\n\n{aviso}"
+    frases = _frases(lineas[i])
+    j = max(k for k, f in enumerate(frases) if _pregunta(f))
+    while j > 0 and _pregunta(frases[j - 1]):
+        j -= 1  # dos preguntas seguidas van juntas
+    delante = "\n".join([*lineas[:i], *([" ".join(frases[:j])] if j else [])]).rstrip()
+    detras = "\n".join([" ".join(frases[j:]), *lineas[i + 1:]])
+    return "\n\n".join(p for p in (delante, aviso, detras) if p)
 
 
 def poner_avisos(state, respuesta: str) -> str:

@@ -330,6 +330,8 @@ def turn_metrics_line(conversation_id: str, facts: dict, started_at: str, second
         payload["hechos"] = facts["hechos_por_codigo"]
     if facts.get("openrouter"):
         payload["openrouter"] = facts["openrouter"]  # mej-7: "cortado" si OpenRouter estaba cortado (clave o crédito)
+    if facts.get("aviso"):
+        payload["aviso"] = facts["aviso"]  # lat-deuda: el aviso que el código puso al final de la respuesta
     if facts.get("rag_respaldo"):
         # 8-oct: respuesta del RAG con respaldo. "principal" (contestó antes de la espera), "gana_principal" /
         # "gana_respaldo" (saltó el respaldo y ganó ese), "error_principal" (falló el principal y contestó el respaldo).
