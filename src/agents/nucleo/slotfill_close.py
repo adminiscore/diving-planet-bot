@@ -19,6 +19,7 @@ from src.agents.conversational_core import (
     _answer_asks_the_origin,
     _answer_replaces_the_booking_question,
     _cart_item,
+    _cierra_preguntando_el_origen,
     _effective_activity,
     _es_pregunta_de_origen,
     _fijar_origen_antes_del_precio,
@@ -256,6 +257,10 @@ async def _con_la_pregunta(state: ConversationState, message: str, answer: str, 
         note_turn(pregunta_escritor="igual")
         logger.info("[CORE][LAT9] el escritor cerró con la pregunta que toca")
         return answer if _answer_already_asks(answer) else f"{answer.rstrip()}\n\n{response}"
+    if not finalized and _cierra_preguntando_el_origen(answer):
+        state.quick_replies = []  # la pregunta del turno es la del origen; la de la reserva queda pendiente
+        logger.info("[CORE][LAT9] el escritor pregunta el origen: esa ocupa el turno")
+        return answer
     note_turn(pregunta_escritor="corrige")
     logger.info("[CORE][LAT9] la pregunta cambió con el mensaje: el código pone la que toca")
     sin = _sin_la_pregunta_final(answer)

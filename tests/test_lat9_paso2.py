@@ -52,3 +52,9 @@ def test_otra_pregunta_el_codigo_la_cambia():
 def test_cierre_igual_va_sin_pregunta_ni_tarjeta():
     assert _con("Dura 4 horas.\n\n¿Cuántos serían?", "TARJETA", "¿Cuántos serían?", finalized=True,
                 cierre_igual=True) == "Dura 4 horas."
+
+
+def test_si_el_escritor_pregunta_el_origen_esa_ocupa_el_turno():
+    """LAT-0b (#2053): sin el origen da los dos precios y lo pregunta; no se le pega detrás la de la certificación."""
+    answer = "Desde Cartagena cuesta 150 USD y ya en las islas 124 USD.\n\n¿Saldrías desde Cartagena o ya estás en las islas?"
+    assert _con(answer, "¿Eres buzo certificado?", "¿Cuántas personas son?") == answer

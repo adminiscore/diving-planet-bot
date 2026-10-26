@@ -1577,6 +1577,9 @@ async def _answer_question(
         pregunta = ask_slot(state, pending, reasking=True)
         if pregunta == escrita and _answer_already_asks(answer):
             return answer
+        if _cierra_preguntando_el_origen(answer):
+            state.quick_replies = []  # la pregunta del turno es la del origen; la de la reserva queda pendiente
+            return answer
         return f"{_sin_la_pregunta_final(answer).rstrip()}\n\n{pregunta}"
     # No re-anclar el slot si la propia respuesta RAG ya cierra con una
     # pregunta (una recomendación/comparación termina invitando a elegir): el
@@ -2052,6 +2055,14 @@ _PREGUNTA_ORIGEN_RE = re.compile(
 def _answer_asks_the_origin(state: ConversationState, answer: str) -> bool:
     """¿La reserva iba a preguntar el origen y la respuesta del RAG ya lo pregunta? Entonces va sola."""
     return state.core_pending_slot == SLOT_LOCATION and bool(_PREGUNTA_ORIGEN_RE.search(answer))
+
+
+def _cierra_preguntando_el_origen(answer: str) -> bool:
+    """lat-9 paso 2 (LAT-0b, #2053): sin el origen, el escritor da los dos precios y lo pregunta (decisión
+    «origen-y-precio»). Esa pregunta ocupa el turno, sea cual sea la pendiente de la reserva, que queda para el
+    siguiente; pegarle detrás la otra eran dos preguntas seguidas («¿Desde dónde saldrías? … ¿Eres buzo certificado?»)."""
+    ultima = next((ln for ln in reversed(answer.strip().splitlines()) if ln.strip()), "")
+    return "?" in ultima and bool(_PREGUNTA_ORIGEN_RE.search(ultima))
 
 
 # 7-oct (Álvaro, opción C del punto 3; flag `rag_origen_pregunta`): si el cliente pide un PRECIO y no sabemos desde
