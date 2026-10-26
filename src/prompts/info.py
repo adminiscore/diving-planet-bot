@@ -491,10 +491,11 @@ RAG_PASE_OFRECIDO_EN = (
 
 def reglas_del_escritor(lang: str) -> str:
     """lat-9 paso 1 (26-oct): las reglas que valen para CUALQUIER escritor (el RAG y el redactor de hechos), en UN sitio.
-    Antes el RAG tenía las de no adivinar, el género, abrir con la respuesta, las condiciones, el pase ofrecido y los
-    varios planes, y el redactor no; y la moneda y el origen estaban escritos aparte en cada uno. Las decisiones del
-    negocio (moneda, origen y precio, sin totales) salen de `data/knowledge_base/decisiones.json`, donde están junto a
-    lo que el juez da por correcto."""
+    Antes el RAG tenía las de no adivinar, el género, abrir con la respuesta, las condiciones y el pase ofrecido, y el
+    redactor no; y la moneda y el origen estaban escritos aparte en cada uno. Las decisiones del negocio (moneda, origen
+    y precio, sin totales) salen de `data/knowledge_base/decisiones.json`, donde están junto a lo que el juez da por
+    correcto. «Varios planes» es solo del RAG (busca en todo el catálogo): en el redactor, que ya recibe el plan, le hacía
+    irse a otros (banco lat-9: «how much is per a day» recibía el paquete de 2 días, 0/2 → 2/2 fallos)."""
     es = lang == "es"
     partes = [
         ESCRITOR_NO_ADIVINA_ES if es else ESCRITOR_NO_ADIVINA_EN,
@@ -502,7 +503,6 @@ def reglas_del_escritor(lang: str) -> str:
         RAG_SIN_GENERO_ES if es else RAG_SIN_GENERO_EN,
         RAG_CONDICIONES_ES if es else RAG_CONDICIONES_EN,
         RAG_PASE_OFRECIDO_ES if es else RAG_PASE_OFRECIDO_EN,
-        RAG_VARIOS_PLANES_ES if es else RAG_VARIOS_PLANES_EN,
         *(_instruccion(decision, lang) for decision in ("moneda", "origen-y-precio", "sin-totales")),
     ]
     return "\n\n".join(partes)

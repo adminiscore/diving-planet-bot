@@ -151,6 +151,8 @@ def build_system_prompt(lang: str, query: str | None = None) -> str:
     from src.prompts.info import (  # lazy
         RAG_PREGUNTA_LO_QUE_FALTA_EN,
         RAG_PREGUNTA_LO_QUE_FALTA_ES,
+        RAG_VARIOS_PLANES_EN,
+        RAG_VARIOS_PLANES_ES,
         reglas_del_escritor,
     )
 
@@ -168,8 +170,10 @@ def build_system_prompt(lang: str, query: str | None = None) -> str:
             f"Style and tone:\n{_build_tone_section('en')}\n\n"
             f"{RAG_BODY_EN}"
         )
+    # Solo del RAG: nombrar los varios planes que encajan (busca en todo el catálogo) y preguntar lo que falta.
+    varios = RAG_VARIOS_PLANES_ES if lang == "es" else RAG_VARIOS_PLANES_EN
     pregunta = RAG_PREGUNTA_LO_QUE_FALTA_ES if lang == "es" else RAG_PREGUNTA_LO_QUE_FALTA_EN
-    return f"{prompt}\n\n{reglas_del_escritor(lang)}\n\n{pregunta}"
+    return f"{prompt}\n\n{reglas_del_escritor(lang)}\n\n{varios}\n\n{pregunta}"
 
 
 # Anaphoric / follow-up indicators: demonstratives and pronouns that refer back
