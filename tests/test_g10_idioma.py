@@ -21,6 +21,16 @@ def test_otro_idioma_en_ingles(monkeypatch, idioma, antes, despues):
     assert st.language == despues
 
 
+def test_con_la_conversacion_en_marcha_una_palabra_de_otro_idioma_no_la_cambia():
+    """lat-deuda (26-oct): «Y para transferência tiene descuento?» en el turno 9 de una conversación en español pasaba al
+    inglés. El idioma lo fija la apertura; después, solo una petición del cliente."""
+    st = ConversationState(conversation_id="g10", language="es")
+    st.history = [{"role": "user", "content": "Buzos certificados"}, {"role": "assistant", "content": "¡Hola!"},
+                  {"role": "user", "content": "Y para transferência tiene descuento? Tengo cuenta local"}]
+    asyncio.run(core._otro_idioma_en_ingles(st, {"idioma": "pt"}, st.history[-1]["content"]))
+    assert st.language == "es"
+
+
 def test_primer_turno_mira_la_extraccion_ya_lanzada_sin_consumirla(monkeypatch):
     async def caso():
         st = ConversationState(conversation_id="g10", language="es")

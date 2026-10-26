@@ -432,10 +432,10 @@ _PIDE_PRECIO_Q_ACTIVIDADES = {
     "instructions": (
         "The customer asks how much one of the dive center's activities costs: dive trips and dive packages, the dive "
         "mini-course or refresher, snorkeling, PADI courses and specialties (price, rate, cost, a quote), including "
-        "asking that price again in another currency or for a different number of people. "
-        "It is FALSE when they ask the price of something the dive center does not sell (a hotel, a room or night, a "
-        "taxi or transport), when they only ask which currencies or payment methods are accepted, and when they ask "
-        "about duration, number of dives or how to book."
+        "asking that price again in another currency or for a different number of people, even if the same message "
+        "also asks other things. It is FALSE when they only ask the price of something the dive center does not sell "
+        "(a hotel, a room or night, a taxi or transport), when they only ask in which currency they pay or which "
+        "payment methods are accepted, and when they ask about duration, number of dives or how to book."
     ),
 }
 # ord-9 (21-oct, decisión de Gadea tras G10 de control): el 67 % de los fallos de G10 eran omisiones del RAG con el
@@ -573,19 +573,26 @@ _PIDE_CLIMA_Q = {
         "already booked."
     ),
 }
+# lat-deuda (26-oct): la moneda («¿el precio es en dólares o pesos?») no era de `pide_precio` (la excluye) ni de
+# `pide_otra_cosa` (la daba por precio): sin intención y sin otra cosa, `_solo_pide_reservar` la tomaba por un paso de la
+# reserva y el flujo contestaba «¡Perfecto! 🙌» y su siguiente pregunta. Ahora es de pago; el precio de lo que no vendemos
+# (la estancia, el hotel) es otra cosa. Banco de 20 frases (preguntas de moneda y de precio de lo que no vendemos, y
+# controles de pasos de la reserva y de preguntas): 11/20 -> 18/20, sin perder ningún control.
 _PIDE_PAGO_Q = {
     "type": "noul",
     "instructions": (
         "The customer asks how to pay or about payment in general: payment methods, paying by card, by bank transfer, "
-        "in cash or at the dock, paying a deposit or part now and the rest later, or whether the booking is confirmed "
-        "once they pay, even if the same message also asks other things. It is FALSE when they report a payment that "
-        "failed or ask about a payment they already made, or only ask for the booking link."
+        "in cash or at the dock, paying a deposit or part now and the rest later, whether the booking is confirmed "
+        "once they pay, or in which currency they pay or the prices are (dollars or pesos), even if the same message "
+        "also asks other things. It is FALSE when they report a payment that failed or ask about a payment they "
+        "already made, or only ask for the booking link."
     ),
 }
 _OTRA_COSA_SIN_CLIMA_NI_PAGO = (
     " What happens in general with bad weather (cancellation, rescheduling or refund, not the forecast for a specific "
     "day) and how to pay (payment methods, deposit, transfer, when the booking is confirmed) also count as one of "
-    "those (they are not something else)."
+    "those (they are not something else). The price of something the dive center does not sell (a hotel, a room or "
+    "night, a taxi or transport) IS something else."
 )
 CAMBIA_IDIOMA = "cambia_idioma"
 CAMBIA_IDIOMA_MIN = 0.6

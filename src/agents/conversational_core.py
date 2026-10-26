@@ -976,7 +976,13 @@ async def _otro_idioma_en_ingles(state: ConversationState, datos: dict | None = 
     """G-10 (decisión de Gadea, 14-oct): si el mensaje está escrito en un idioma que no es español ni inglés, el bot
     contesta en inglés. El idioma principal lo dice el extractor de la fase EX (misma llamada; unas palabras sueltas no
     cuentan). En el primer turno se mira la extracción ya lanzada con el enrutador, antes del saludo (sin consumirla:
-    `_understand` la vuelve a esperar y ya está hecha)."""
+    `_understand` la vuelve a esperar y ya está hecha).
+
+    Solo en la apertura (lat-deuda, 26-oct): con la conversación ya en marcha, el idioma lo cambia solo una petición
+    del cliente (`cambia_idioma` de Jev). «Y para transferência tiene descuento?», en el noveno turno de una conversación
+    en español, pasaba al inglés (el extractor dijo «pt»): el criterio de idioma fallaba en las 6 rondas."""
+    if any(m.get("role") == "assistant" for m in state.history or []):
+        return
     if len((message or "").split()) < 3:
         # Ronda flujo1-B2: "Frances" (contesta la nacionalidad) pasó la conversación a inglés. Una o dos palabras no
         # dicen en qué idioma escribe el cliente.
