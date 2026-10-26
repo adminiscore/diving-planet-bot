@@ -120,3 +120,17 @@ async def test_los_hechos_van_en_el_mensaje_y_los_ve_el_revisor(rag, monkeypatch
     assert "Hechos del sistema" in primera and "183 USD" in primera
     assert primera.index("183 USD") < primera.index("Pregunta del cliente")
     assert vistos and "183 USD" in vistos[0]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("sin_busqueda", [False, True])
+async def test_sin_busqueda_los_hechos_son_lo_unico_que_se_dice(rag, sin_busqueda):
+    """lat-9 paso 3 (Gadea #2059): con los hechos cubriéndolo todo y sin búsqueda, la regla del redactor."""
+    from src.prompts import info
+
+    rag_agent, llamadas = rag
+    hechos = '[{"actividad": "minicourse", "precio": {"cartagena": {"online": "183 USD"}}}]'
+    await rag_agent.rag_answer("¿cuánto cuesta el minicurso?", lang="es", hechos=hechos, sin_busqueda=sin_busqueda)
+    primera = next(m["content"] for m in reversed(llamadas[0]["messages"]) if m["role"] == "user")
+    assert (info.RAG_SOLO_HECHOS_ES in primera) is sin_busqueda
+    assert (info.RAG_CON_HECHOS_ES in primera) is not sin_busqueda

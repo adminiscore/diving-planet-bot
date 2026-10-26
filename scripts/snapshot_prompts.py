@@ -132,6 +132,8 @@ def _collect() -> dict[str, str]:
     add("info/rag.sin_precio.en", info.RAG_SIN_PRECIO_EN)
     add("info/rag.con_hechos.es", info.RAG_CON_HECHOS_ES)
     add("info/rag.con_hechos.en", info.RAG_CON_HECHOS_EN)
+    add("info/rag.solo_hechos.es", info.RAG_SOLO_HECHOS_ES)
+    add("info/rag.solo_hechos.en", info.RAG_SOLO_HECHOS_EN)
     add("memory/seguridad.notas.es", memory.MEMORIA_SEGURA_NOTAS_ES)
     add("memory/seguridad.notas.en", memory.MEMORIA_SEGURA_NOTAS_EN)
     add("memory/seguridad.resumen.es", memory.MEMORIA_SEGURA_RESUMEN_ES)

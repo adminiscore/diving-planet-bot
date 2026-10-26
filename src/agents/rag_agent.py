@@ -865,9 +865,12 @@ async def rag_answer(
             user_content += f"\n\nContexto adicional de la situacion: {extra_context}"
         if hechos:
             # arq-1g: la parte de la tabla sale del dato, no de memoria; detrás del contexto, antes de la pregunta.
-            from src.prompts.info import RAG_CON_HECHOS_EN, RAG_CON_HECHOS_ES  # lazy
+            # lat-9 paso 3: sin búsqueda, los hechos lo cubren todo y son lo único que se dice (la regla del redactor).
+            from src.prompts import info as prompts_info  # lazy
 
-            user_content += f"\n\n{RAG_CON_HECHOS_ES if lang == 'es' else RAG_CON_HECHOS_EN}\n{hechos}"
+            cabeza = ((prompts_info.RAG_SOLO_HECHOS_ES, prompts_info.RAG_SOLO_HECHOS_EN) if sin_busqueda
+                      else (prompts_info.RAG_CON_HECHOS_ES, prompts_info.RAG_CON_HECHOS_EN))
+            user_content += f"\n\n{cabeza[0] if lang == 'es' else cabeza[1]}\n{hechos}"
         user_content += f"\n\nPregunta del cliente: {redact_pii(query)}"
         if pregunta_final:
             from src.prompts.info import pregunta_final as instruccion_pregunta  # lazy

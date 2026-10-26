@@ -156,8 +156,15 @@ def hechos(state: ConversationState, intenciones: list[str], actividades: list[s
             bloque["precio"] = _por_origen(actividad, origenes, lambda sid: _precio_del_plan(sid, moneda, lang), elegido)
             base = _plan_base(actividad, origen or "cartagena", elegido)
             otros = [s for s in dom.service_ids(actividad, origen or "cartagena") if s != base]
+            if not origen:
+                # lat-9 paso 3 (27-oct): sin origen, también los de las islas, cada uno con el suyo. Eran solo los de
+                # Cartagena y sin decirlo: «¿cuánto cuesta el paquete de 5 inmersiones?» no tenía su precio en las islas.
+                de_las_islas = [ISLAND_SERVICE_MAP.get(s) for s in otros]
+                base_islas = _plan_base(actividad, "island", elegido)
+                otros += [s for s in de_las_islas if s and s != base_islas and s in dom.service_ids(actividad, "island")]
             if otros:  # el buceo y los paquetes: el plan base y la lista de los demás con su precio
-                bloque["otros_planes"] = [{"plan": _nombre(s, lang), "precio": _precio(s, moneda)}
+                bloque["otros_planes"] = [{"plan": _nombre(s, lang), "precio": _precio(s, moneda),
+                                           **({} if origen else {"origen": "island" if s in _DE_LAS_ISLAS else "cartagena"})}
                                           for s in otros if _precio(s, moneda)]
             if _dos_monedas(state):
                 # arq-5c (decisión de Gadea, 23-oct; G10 nº 5, ~6 fallos): sin saber si es colombiano, el precio en las

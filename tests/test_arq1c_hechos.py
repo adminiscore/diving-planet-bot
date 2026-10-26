@@ -146,3 +146,12 @@ def test_arq1m_con_la_disponibilidad_va_el_enlace():
     assert h.faltan("Siempre hay disponibilidad.", [b], ["disponibilidad"])
     [b] = h.hechos(_conv(location="cartagena", is_colombian=True), ["disponibilidad"], ["minicourse"])
     assert b["enlace"] == {"asesor": True}
+
+
+def test_sin_origen_los_otros_planes_de_los_dos_origenes():
+    """lat-9 paso 3 (27-oct): «¿cuánto cuesta el paquete de 5 inmersiones?» sin origen no tenía su precio en las islas."""
+    st = _conv()
+    st.detected_duration = "multi_day"
+    [b] = h.hechos(st, ["precio"], ["certified_diving"])
+    cinco = {p["origen"]: p["precio"]["online"] for p in b["otros_planes"] if "5 inmersiones" in p["plan"]}
+    assert cinco == {"cartagena": "392 USD", "island": "319 USD"}
