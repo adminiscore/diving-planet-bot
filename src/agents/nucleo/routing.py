@@ -30,7 +30,6 @@ from src.agents.conversational_core import (
     _apply_group_total,
     _companion_activity_options,
     _course_level_options,
-    _detector,
     _has_pending_answer,
     _is_greeting_only,
     _is_rag_fallback,
@@ -131,20 +130,6 @@ _HOTEL_UNKNOWN_RE = re.compile(
     r"\b(no\s+s[eé]|ni\s+idea|no\s+lo\s+s[eé]|a[uú]n\s+no|todav[ií]a\s+no|"
     r"sin\s+definir|no\s+estoy\s+segur\w*|no\s+tengo|"
     r"not\s+sure|no\s+idea|dunno|don'?t\s+know|not\s+yet|undecided|tbd)\b",
-    re.IGNORECASE,
-)
-# Deferral en el paso de UBICACIÓN: "no sé / da igual / recomiéndame / tú
-# decides" — el cliente delega la elección. En vez de re-preguntar en bucle
-# (regex de ubicación fallaba), se recomienda Cartagena (la salida más común,
-# como el árbol legacy). "No estoy seguro" se deja FUERA a propósito: eso lo
-# interpreta el resolutor LLM (puede ser Cartagena o abstenerse).
-_LOCATION_DEFER_RE = re.compile(
-    r"\bno\s+s[eé]\b|\bda\s+igual\b|\bme\s+da\s+igual\b|\bcualquiera\b|\bt[uú]\s+decides?\b"
-    r"|\bel\s+que\s+(?:sea|quieras|recomiendes|prefieras|digas)\b"
-    r"|\blo\s+que\s+(?:sea|recomiendes|prefieras|digas|quieras)\b"
-    r"|\brecomi[eé]nd\w*\b|\bqu[eé]\s+(?:me\s+)?recomiendas\b"
-    r"|\bwhatever\b|\byou\s+(?:decide|recommend|choose)\b|\bup\s+to\s+you\b|\beither\b"
-    r"|\bi\s+don'?t\s+know\b|\bno\s+idea\b",
     re.IGNORECASE,
 )
 
@@ -339,23 +324,10 @@ def _apply_short_answer(state: ConversationState, message: str, ia: dict | None 
         if place:
             state.location = state.detected_location = place
             return True
-        # Deferral ("no sé/da igual/recomiéndame") → Cartagena (salida más
-        # común). Sin esto, el regex fallaba y se re-preguntaba en bucle.
-        # Solo si el mensaje no dice nada más (2026-09-15): "no sé si hacer el
-        # minicurso o el snorkel" o "me interesa el curso PADI, no se bucear" con
-        # la ubicación pendiente fijaban Cartagena sin que nadie la eligiera, y
-        # además saltaban la comparación de opciones. Mismo principio que la
-        # verificación del resolutor LLM ("si este turno habla de otra cosa, no
-        # contestaba la ubicación"), con los campos del detector.
-        other_fields = [f for f in _detector.detect(message, state).detected_fields if f != "language"]
-        # Y la duda tiene que ser la respuesta entera (2026-09-15): quitadas sus frases,
-        # como mucho quedan 4 palabras ("lo que tu me recomiendes" deja "lo que tu me").
-        # "que solo nos acompañe en la lancha, no se mete al agua" casaba el "no se"
-        # reflexivo y fijaba Cartagena; le quedan 9 palabras de contenido propio.
-        leftover = re.findall(r"[a-záéíóúñü]+", _LOCATION_DEFER_RE.sub(" ", msg))
-        if _LOCATION_DEFER_RE.search(msg) and not other_fields and len(leftover) <= 4:
-            state.location = state.detected_location = "cartagena"
-            return True
+        # lat-11 T6b (26-oct): la duda ("no sé", "da igual", "tú decides") ya no fija Cartagena aquí. Aquí solo se llega
+        # si la IA calla (con ella, la delegación la resuelve el resolutor, 5/5 en el paso 4 de ex-9b), y la regla
+        # miraba si el mensaje decía algo más con el detector entero (IntentDetector), que se quita. Sin IA, lo que
+        # falta se pregunta (ex-9b paso 3).
         return False
     if slot == SLOT_HOTEL:
         # Guarda de mis-parse (Fase C, 2026-07-23): el hotel acepta texto libre
@@ -677,14 +649,15 @@ def _quantity_answer(state: ConversationState, message: str) -> int | None:
     pendiente, "hace 3 años que no buceo", "mi hijo tiene 9 años", "llegamos el 12" o "a
     las 8" fijaban 3, 9, 12 u 8 personas (y en "¿cuantos para snorkel?" se sumaban). Sin
     lista de unidades: solo cuenta como respuesta lo que ES la cantidad (un unico
-    elemento: "4", "dos", "6+") o lo que el detector ya lee como total del grupo ("somos
-    4", "4 personas", "we are 4"), la misma fuente que la extraccion. Lo demas no se
-    resuelve aqui: la pregunta del total la interpreta el resolutor LLM con su contexto y
-    su guarda de anclaje; la de "¿cuantos para X?" se vuelve a hacer."""
-    if len(_words(message)) == 1:
-        n = cart_render.parse_quantity(message)
-    else:
-        n = _detector.detect(message, state).group_size
+    elemento: "4", "dos", "6+"). Lo demas no se resuelve aqui: el total lo lee la IA
+    (`_cantidad_por_la_ia`) y, si calla, el resolutor LLM con su contexto y su guarda de
+    anclaje; "¿cuantos para X?" sigue el turno (extractor y red de precision).
+    lat-11 T6b (26-oct): antes valía también lo que el detector entero (IntentDetector) leía como total ("somos 4",
+    "4 personas"). En las corridas sintéticas, de 36 respuestas a "¿cuántos serían para X?" leía una cifra en 1; en
+    la del total leía 7, y 4 eran un "para mí" dentro de una pregunta ("¿cuánto sería el precio para mí?" = 1)."""
+    if len(_words(message)) != 1:
+        return None
+    n = cart_render.parse_quantity(message)
     return n if isinstance(n, int) and n > 0 else None
 
 

@@ -2314,7 +2314,6 @@ from src.agents.nucleo.routing import (  # noqa: E402, F401
     _CONFIRMS_DESCRIBED_PACKAGE_RE,
     _DELIBERATION_RE,
     _HOTEL_UNKNOWN_RE,
-    _LOCATION_DEFER_RE,
     _accept_pending_correction,
     _apply_short_answer,
     _assign_split_share,

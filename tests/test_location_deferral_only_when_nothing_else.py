@@ -5,6 +5,9 @@
 pendiente, `_apply_short_answer` fijaba Cartagena sin que nadie la eligiera y el
 turno se saltaba la comparacion de opciones. Un "no sé" o "da igual" a secas sigue
 delegando en Cartagena, como antes.
+
+lat-11 T6b (26-oct): aquí (la IA calla) la duda ya no fija Cartagena, ni a secas: la regla miraba si el mensaje decía
+algo más con el detector entero (IntentDetector), que se quita. Con IA la delegación la resuelve el resolutor.
 """
 
 import pytest
@@ -30,8 +33,8 @@ def test_doubt_about_something_else_does_not_pick_cartagena(message):
 
 
 @pytest.mark.parametrize("message", ["no sé", "da igual", "tú decides", "lo que recomiendes", "up to you"])
-def test_plain_deferral_still_recommends_cartagena(message):
-    assert _answer(message) == (True, "cartagena")
+def test_plain_deferral_is_not_decided_without_the_ai(message):
+    assert _answer(message) == (False, None)
 
 
 @pytest.mark.parametrize("message, location", [("cartagena", "cartagena"), ("ya estamos en la isla", "island"), ("1", "cartagena"), ("2", "island")])
@@ -51,5 +54,5 @@ def test_doubt_inside_a_longer_answer_is_not_a_deferral(message):
 
 
 @pytest.mark.parametrize("message", ["lo que tú me recomiendes", "no sé la verdad, tú decides"])
-def test_short_deferrals_with_filler_still_recommend_cartagena(message):
-    assert _answer(message) == (True, "cartagena")
+def test_short_deferrals_with_filler_are_not_decided_without_the_ai(message):
+    assert _answer(message) == (False, None)

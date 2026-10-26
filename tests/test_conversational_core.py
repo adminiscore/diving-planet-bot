@@ -2108,9 +2108,12 @@ def _at_location_stage(lang: str = "es") -> ConversationState:
     "whatever you recommend",
 ])
 @pytest.mark.asyncio
-async def test_location_deferral_deterministic_recommends_cartagena(message):
+async def test_location_deferral_deterministic_recommends_cartagena(monkeypatch, message):
     """Una deferral ("no sé/da igual/recomiéndame") ya no loopea: se recomienda
-    Cartagena (la salida más común) y el flujo avanza — como el árbol legacy."""
+    Cartagena (la salida más común) y el flujo avanza — como el árbol legacy.
+    lat-11 T6b (26-oct): la decide el resolutor (ex-9b paso 4: 5/5), no la regla del detector entero."""
+    monkeypatch.setattr(core_extraction, "resolve_slot_answer",
+                        AsyncMock(return_value={"value": "cartagena"}))
     state = _at_location_stage()
     with patch("src.agents.supervisor.detect_routing_signals",
                new=AsyncMock(return_value={})):
