@@ -62,6 +62,7 @@ async def _tras_el_pase(
     (cambio-fecha-por-enfermedad, rondas ex8-B2 y ex7-B). Ahora contesta lo que se pregunte (el RAG) y, si no hay
     pregunta, deja una nota corta: la persona ve toda la conversación."""
     state.quick_replies = []
+    state._pregunta_del_escritor = None  # lat-9 paso 2: aquí no sigue la reserva
     answer = None
     if _turn_has_question(message, routing_signals):
         answer = await rag_con_adelantado(state, message, list(state.history))

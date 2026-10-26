@@ -248,7 +248,9 @@ def medir(etiqueta: str, ids: list[str] | None, tarea: str | None, reps: int, fl
         fallan_total += fallan
         caso = {"id": f["id"], "dialogo": f["dialogo"], "criterio": f["criterio"], "repeticiones": len(filas),
                 "fallan": fallan, "respuestas": [h["reply"] for h in filas],
-                "explicaciones": [v.get("explicacion", "") for v in veredictos]}
+                "explicaciones": [v.get("explicacion", "") for v in veredictos],
+                # lat-9 paso 2 (26-oct): el tiempo del turno medido y las líneas del flujo, para la latencia por camino.
+                "segundos": [h.get("segundos") for h in filas], "trazas": [h.get("traza") or [] for h in filas]}
         linea = f"  {f['id']} {f['dialogo'][:40]:40} {f['criterio'][:28]:28} falla {fallan}/{len(filas)}"
         if comparar:
             comparados += len(falla)

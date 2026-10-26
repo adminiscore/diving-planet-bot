@@ -652,9 +652,12 @@ async def rag_answer(
     sin_precio: bool = False,
     hechos: str | None = None,
     hechos_bloques: tuple[list[dict], list[str]] | None = None,
+    pregunta_final: str | None = None,
 ) -> str:
     """`hechos` (arq-1g, flag `hechos_al_rag`): en un mensaje mezclado, los hechos del código (JSON de
     `src/flows/hechos.py`) para la parte que pregunta de la tabla (precio, qué incluye, requisitos…): se usan tal cual.
+
+    `pregunta_final` (lat-9 paso 2): la pregunta de la reserva que decidió el código; el escritor cierra con ella.
 
     `sin_precio` (G3-07a, 18-oct; lo pide el flujo con el flag `rag_sin_precio_con_tarjeta`): el turno lleva la
     tarjeta del plan con el precio y el enlace, así que el texto no los da (ver RAG_SIN_PRECIO_*).
@@ -838,6 +841,10 @@ async def rag_answer(
 
             user_content += f"\n\n{RAG_CON_HECHOS_ES if lang == 'es' else RAG_CON_HECHOS_EN}\n{hechos}"
         user_content += f"\n\nPregunta del cliente: {redact_pii(query)}"
+        if pregunta_final:
+            from src.prompts.info import pregunta_final as instruccion_pregunta  # lazy
+
+            user_content += f"\n\n{instruccion_pregunta(pregunta_final, lang)}"
         # lat-deuda (26-oct): los avisos que el cliente necesita y no pregunta ya no van aquí; los pone el código al
         # final de la respuesta del turno, sea del RAG, del redactor o de la reserva (`src/flows/avisos.py`).
 
@@ -846,6 +853,9 @@ async def rag_answer(
         grounding_context = _build_grounding_context(context, extra_context=extra_context, history=history)
         if hechos:
             grounding_context = f"{grounding_context}\n\n{hechos}"  # arq-1g: el revisor y las guardas también los ven
+        if pregunta_final:
+            # lat-9 paso 2: la pregunta es del sistema (puede llevar el precio del refresher); el revisor también la ve.
+            grounding_context = f"{grounding_context}\n\nPregunta del sistema: {pregunta_final}"
         cabeza = [catalog_prefix_juez or catalog_prefix] if catalog_prefix else []
         # Lo que el bot tiene ordenado decir de la empresa, el juez tiene que poder comprobarlo (1-oct). Va tras el
         # catálogo: los dos son fijos por idioma, así que el prefijo sigue siendo cacheable.

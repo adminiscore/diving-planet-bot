@@ -173,6 +173,8 @@ def _collect() -> dict[str, str]:
     add("info/rag_pregunta_lo_que_falta.en", info.RAG_PREGUNTA_LO_QUE_FALTA_EN)
     for lang in LANGS:
         add(f"info/reglas_del_escritor.{lang}", info.reglas_del_escritor(lang))
+        # lat-9 paso 2 (26-oct): la pregunta de la reserva que escribe el escritor.
+        add(f"info/pregunta_final.{lang}", info.pregunta_final("¿Desde dónde saldrías?", lang))
     add("info/rag_abre_con_la_respuesta.es", info.RAG_ABRE_CON_LA_RESPUESTA_ES)  # gen-2 (20-oct)
     add("info/rag_abre_con_la_respuesta.en", info.RAG_ABRE_CON_LA_RESPUESTA_EN)
     add("info/rag_sin_genero.es", info.RAG_SIN_GENERO_ES)  # gen-12 (21-oct)

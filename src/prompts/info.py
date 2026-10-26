@@ -625,6 +625,25 @@ RAG_CON_HECHOS_EN = (
     "ages). For that part use them as given and IN FULL (whole lists, every amount, the age), without swapping them for "
     "what the catalog says; answer the rest of the question as usual:"
 )
+
+
+# lat-9 paso 2 (26-oct): la pregunta de la reserva la decide el código y la escribe el escritor, al final de su texto. Antes
+# el código la pegaba detrás de la respuesta («…\n\n¿Desde dónde saldrías?») y a veces salían dos preguntas seguidas.
+_PREGUNTA_FINAL = {
+    "es": ("La reserva sigue y el sistema necesita preguntarle esto: «{pregunta}». Contesta primero a lo que dice el "
+           "cliente y termina tu mensaje con esa pregunta, en un párrafo aparte al final. Puedes cambiar las primeras "
+           "palabras para que enlace con tu respuesta, pero pide lo mismo y conserva tal cual sus opciones y sus datos. "
+           "No hagas ninguna otra pregunta."),
+    "en": ("The booking continues and the system needs to ask them this: «{pregunta}». First reply to what the customer "
+           "says, then end your message with that question, in a separate paragraph at the end. You may change the first "
+           "words so it follows on from your reply, but ask the same thing and keep its options and details as they are. "
+           "Do not ask any other question."),
+}
+
+
+def pregunta_final(pregunta: str, lang: str) -> str:
+    """La instrucción para que el escritor cierre con la pregunta que decidió el código."""
+    return _PREGUNTA_FINAL["es" if lang == "es" else "en"].format(pregunta=pregunta.strip())
 REDACTOR_HECHOS_EN = (
     "You answer the customer's question ONLY with the FACTS the system gives you (JSON), already worked out with "
     "Diving Planet's rules. Do not choose among them or change them: put them into words.\n"

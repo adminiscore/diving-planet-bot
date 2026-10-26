@@ -1542,6 +1542,13 @@ async def _answer_question(
         _fijar_origen_antes_del_precio(state, message)
         return answer
     pending = state.core_pending_slot or next_missing_slot(state)
+    escrita = getattr(state, "_pregunta_del_escritor", None)
+    if escrita and pending is not None and not _is_rag_fallback(answer):
+        # lat-9 paso 2: el escritor ya cerró con la pregunta fijada al empezar el turno; si la que toca es otra, se cambia.
+        pregunta = ask_slot(state, pending, reasking=True)
+        if pregunta == escrita and _answer_already_asks(answer):
+            return answer
+        return f"{_sin_la_pregunta_final(answer).rstrip()}\n\n{pregunta}"
     # No re-anclar el slot si la propia respuesta RAG ya cierra con una
     # pregunta (una recomendación/comparación termina invitando a elegir): el
     # re-prompt sería redundante — dos preguntas seguidas y, si el pendiente
@@ -1672,7 +1679,25 @@ def _entradas_rag(state: ConversationState, history: list, message: str = "") ->
     from src.flows import avisos as avisos_mod  # lazy
 
     entradas["avisos_hechos"] = avisos_mod.hechos_del_estado(state)
+    if pregunta := getattr(state, "_pregunta_del_escritor", None):
+        entradas["pregunta_final"] = pregunta  # lat-9 paso 2
     return entradas
+
+
+def fijar_pregunta_del_escritor(state: ConversationState) -> None:
+    """lat-9 paso 2 (26-oct): la pregunta de la reserva la escribe el escritor (RAG o redactor) al final de su texto, en
+    vez de pegarla el código detrás. Se fija al empezar el turno, antes del RAG adelantado (rag-5), con la pregunta
+    pendiente tal como se volvería a hacer, para que la adelantada y la del turno lleven la misma. Si el mensaje cambia
+    la pregunta (contesta el dato, cierra la reserva), el cierre lo arregla (`slotfill_close._con_la_pregunta`). Sin
+    pregunta pendiente (fuera de la reserva), nada: el escritor contesta como siempre."""
+    import copy
+
+    state._pregunta_del_escritor = state._datos_al_empezar = None
+    pendiente = state.core_pending_slot
+    if not pendiente or state.step != Step.FREE_TEXT:  # solo con la reserva en marcha (ni el idioma ni el pase)
+        return
+    state._pregunta_del_escritor = ask_slot(copy.copy(state), pendiente, reasking=True)
+    state._datos_al_empezar = copy.deepcopy(_known_field_values(state))  # ¿trajo el mensaje algún dato? (`_sin_dato`)
 
 
 # s4-27 (7-oct, Gonzalo; flag `rag_plan_nombrado`): "¿el precio de las 2 inmersiones? desde ese hotel" (cliente ya en
@@ -1723,7 +1748,7 @@ def _plan_nombrado(state: ConversationState, message: str) -> str | None:
 # corrección, un cambio de idioma...), se tira y se lanza la de siempre: nunca contesta con otro contexto y nunca
 # tarda más que hoy. Si el turno no llega a pedir respuesta, se cancela al cerrarlo (ese es el coste extra).
 _HORA_DEL_RESUMEN = re.compile(r"^(Fecha y hora actual|Current date and time): [^(]*\([^)]*\)\.\s*")
-_PARTES_HUELLA = ("mensaje", "idioma", "historial", "resumen", "origen", "hechos")  # en el orden de `_huella_rag`
+_PARTES_HUELLA = ("mensaje", "idioma", "historial", "resumen", "origen", "hechos", "pregunta")  # orden de `_huella_rag`
 
 
 def _huella_rag(message: str, entradas: dict) -> tuple:
@@ -1731,7 +1756,7 @@ def _huella_rag(message: str, entradas: dict) -> tuple:
 
     resumen = _HORA_DEL_RESUMEN.sub("", entradas.get("extra_context") or "")  # la hora cambia de un minuto a otro
     return (message, entradas.get("lang"), json.dumps(entradas.get("history") or [], ensure_ascii=False),
-            resumen, entradas.get("origin"), entradas.get("hechos"))
+            resumen, entradas.get("origin"), entradas.get("hechos"), entradas.get("pregunta_final"))
 
 
 def lanzar_rag_adelantado(state: ConversationState, message: str) -> None:
@@ -1964,6 +1989,9 @@ async def _prepend_parallel_answer(state: ConversationState, response: str, gree
     answer = await _take_parallel_answer(state)
     if not answer:
         return response
+    if (getattr(state, "_pregunta_del_escritor", None) and not _is_rag_fallback(answer)
+            and not _es_pregunta_de_origen(answer)):
+        answer = _sin_la_pregunta_final(answer)  # lat-9 paso 2: lo que sigue lo decide el flujo, que va detrás
     body = response[len(greeting):] if greeting and response.startswith(greeting) else response
     if _es_pregunta_de_origen(answer):
         ultimo = next((h.get("content") or "" for h in reversed(state.history or []) if h.get("role") == "user"), "")
@@ -2246,6 +2274,13 @@ def _answer_already_asks(answer: str) -> bool:
         if line.strip():
             return "?" in line or "¿" in line
     return False
+
+
+def _sin_la_pregunta_final(answer: str) -> str:
+    """El texto del escritor sin su último párrafo si es una pregunta (lat-9 paso 2: la de la reserva la escribe ahí,
+    aparte): cuando la pregunta que toca es otra, el código pone la buena."""
+    partes = answer.rstrip().split("\n\n")
+    return "\n\n".join(partes[:-1]) if len(partes) > 1 and "?" in partes[-1] else answer
 
 
 # s4-2 (19-oct): el código de cada nodo del subgrafo `booking` vive en `src/agents/nucleo/<nodo>.py` (ver su

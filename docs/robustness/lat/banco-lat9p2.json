@@ -1,0 +1,1362 @@
+{
+ "about": "LAT-9 paso 2 (26-oct): el banco de la pregunta de la reserva escrita por el escritor, con el formato de\n`scripts/banco_fallos.py`.",
+ "rondas": [
+  "2026-10-26-integra4-B",
+  "2026-10-26-integra3-B",
+  "2026-10-26-rot2-B"
+ ],
+ "fallos": [
+  {
+   "dialogo": "reserva-completa-saludo-a-pago",
+   "criterio": "lat9p2:sin_dato",
+   "pedia": "La respuesta contesta a lo que dice el cliente en su último mensaje (si pregunta algo, lo contesta; si da las gracias, comenta algo o da un dato, lo reconoce sin ignorarlo) y termina con UNA sola pregunta de la reserva, la que toca: no vuelve a preguntar un dato que el cliente acaba de dar ni hace dos preguntas seguidas, y no pone «¡Perfecto!» o similar delante si el cliente no contestó lo que se le preguntó.",
+   "veredicto": "no_cumple",
+   "motivo_juez": "En la ronda el bot no contestó a lo que dijo el cliente y repitió la misma pregunta de la reserva.",
+   "turno": "3",
+   "pieza": "sin_dato",
+   "mensaje_cliente": "voy solo",
+   "respuesta_ronda": "¡Perfecto! 🙌\n\n¿Desde dónde saldrías? Puedes salir *desde Cartagena* (desde el Muelle de la Bodeguita, ida y vuelta el mismo día) o, si ya estás *en las islas*, coordinamos la recogida en tu hotel.",
+   "historial": [
+    {
+     "role": "user",
+     "content": "hola buenas"
+    },
+    {
+     "role": "assistant",
+     "content": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\nCuéntame, ¿qué te gustaría vivir con nosotros? 🤿\n• *Buceo* en las Islas del Rosario, si ya eres buzo certificado\n• *Minicurso* para probar el buceo por primera vez (¡no necesitas experiencia!)\n• *Snorkel* para disfrutar el arrecife desde la superficie, ideal en familia\n• *Cursos PADI* completos, del Open Water en adelante\nDime qué te llama la atención y lo armamos juntos. 🌊"
+    },
+    {
+     "role": "user",
+     "content": "quiero bucear, ya soy certificado"
+    },
+    {
+     "role": "assistant",
+     "content": "¡Perfecto! 🙌\n\n¿Desde dónde saldrías? Puedes salir *desde Cartagena* (desde el Muelle de la Bodeguita, ida y vuelta el mismo día) o, si ya estás *en las islas*, coordinamos la recogida en tu hotel."
+    }
+   ],
+   "ronda": "2026-10-26-integra4-B",
+   "tarea": "LAT-9",
+   "id": "l9p2-01"
+  },
+  {
+   "dialogo": "reserva-solo-link",
+   "criterio": "lat9p2:sin_dato",
+   "pedia": "La respuesta contesta a lo que dice el cliente en su último mensaje (si pregunta algo, lo contesta; si da las gracias, comenta algo o da un dato, lo reconoce sin ignorarlo) y termina con UNA sola pregunta de la reserva, la que toca: no vuelve a preguntar un dato que el cliente acaba de dar ni hace dos preguntas seguidas, y no pone «¡Perfecto!» o similar delante si el cliente no contestó lo que se le preguntó.",
+   "veredicto": "no_cumple",
+   "motivo_juez": "En la ronda el bot no contestó a lo que dijo el cliente y repitió la misma pregunta de la reserva.",
+   "turno": "3",
+   "pieza": "sin_dato",
+   "mensaje_cliente": "cartagena",
+   "respuesta_ronda": "¡Perfecto! 🙌\n\n¡Genial! Para recomendarte el plan perfecto: ¿Eres buzo certificado? (Y si no, ¡tranqui! El minicurso es ideal para empezar. 🤿)",
+   "historial": [
+    {
+     "role": "user",
+     "content": "quiero bucear certificado"
+    },
+    {
+     "role": "assistant",
+     "content": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\n¡Qué chévere! Si ya tienes certificación, puedes hacer una salida de buceo recreativo. Si te refieres a que quieres obtenerla, el curso indicado es el PADI Open Water, que te certifica para bucear hasta 18 metros.\n\n¿Ya tienes tu carné de buzo o quieres sacar la certificación?"
+    },
+    {
+     "role": "user",
+     "content": "solo yo"
+    },
+    {
+     "role": "assistant",
+     "content": "¡Perfecto! 🙌\n\n¡Genial! Para recomendarte el plan perfecto: ¿Eres buzo certificado? (Y si no, ¡tranqui! El minicurso es ideal para empezar. 🤿)"
+    }
+   ],
+   "ronda": "2026-10-26-integra4-B",
+   "tarea": "LAT-9",
+   "id": "l9p2-02"
+  },
+  {
+   "dialogo": "grupo-recompuesto",
+   "criterio": "lat9p2:sin_dato",
+   "pedia": "La respuesta contesta a lo que dice el cliente en su último mensaje (si pregunta algo, lo contesta; si da las gracias, comenta algo o da un dato, lo reconoce sin ignorarlo) y termina con UNA sola pregunta de la reserva, la que toca: no vuelve a preguntar un dato que el cliente acaba de dar ni hace dos preguntas seguidas, y no pone «¡Perfecto!» o similar delante si el cliente no contestó lo que se le preguntó.",
+   "veredicto": "no_cumple",
+   "motivo_juez": "En la ronda el bot no contestó a lo que dijo el cliente y repitió la misma pregunta de la reserva.",
+   "turno": "2",
+   "pieza": "sin_dato",
+   "mensaje_cliente": "espera, en realidad son 4 certificados y 1 minicurso",
+   "respuesta_ronda": "¡Perfecto! 🙌\n\n¿Desde dónde saldrías? Puedes salir *desde Cartagena* (desde el Muelle de la Bodeguita, ida y vuelta el mismo día) o, si ya estás *en las islas*, coordinamos la recogida en tu hotel.",
+   "historial": [
+    {
+     "role": "user",
+     "content": "3 certificados y 2 minicurso"
+    },
+    {
+     "role": "assistant",
+     "content": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\n¿Desde dónde saldrías? Puedes salir *desde Cartagena* (desde el Muelle de la Bodeguita, ida y vuelta el mismo día) o, si ya estás *en las islas*, coordinamos la recogida en tu hotel."
+    }
+   ],
+   "ronda": "2026-10-26-integra4-B",
+   "tarea": "LAT-9",
+   "id": "l9p2-03"
+  },
+  {
+   "dialogo": "acompanante-goteo",
+   "criterio": "lat9p2:sin_dato",
+   "pedia": "La respuesta contesta a lo que dice el cliente en su último mensaje (si pregunta algo, lo contesta; si da las gracias, comenta algo o da un dato, lo reconoce sin ignorarlo) y termina con UNA sola pregunta de la reserva, la que toca: no vuelve a preguntar un dato que el cliente acaba de dar ni hace dos preguntas seguidas, y no pone «¡Perfecto!» o similar delante si el cliente no contestó lo que se le preguntó.",
+   "veredicto": "no_cumple",
+   "motivo_juez": "En la ronda el bot no contestó a lo que dijo el cliente y repitió la misma pregunta de la reserva.",
+   "turno": "3",
+   "pieza": "sin_dato",
+   "mensaje_cliente": "el no es certificado",
+   "respuesta_ronda": "¡Perfecto! 🙌\n\n¿Desde dónde saldrías? Puedes salir *desde Cartagena* (desde el Muelle de la Bodeguita, ida y vuelta el mismo día) o, si ya estás *en las islas*, coordinamos la recogida en tu hotel.",
+   "historial": [
+    {
+     "role": "user",
+     "content": "hola quiero bucear con mi amigo"
+    },
+    {
+     "role": "assistant",
+     "content": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\n¡Genial! Para recomendarte el plan perfecto: ¿Son buzos certificados? (Y si no, ¡tranqui! El minicurso es ideal para empezar. 🤿)"
+    },
+    {
+     "role": "user",
+     "content": "yo soy certificado"
+    },
+    {
+     "role": "assistant",
+     "content": "¡Perfecto! 🙌\n\n¿Desde dónde saldrías? Puedes salir *desde Cartagena* (desde el Muelle de la Bodeguita, ida y vuelta el mismo día) o, si ya estás *en las islas*, coordinamos la recogida en tu hotel."
+    }
+   ],
+   "ronda": "2026-10-26-integra4-B",
+   "tarea": "LAT-9",
+   "id": "l9p2-04"
+  },
+  {
+   "dialogo": "isla-hotel-refresher",
+   "criterio": "lat9p2:sin_dato",
+   "pedia": "La respuesta contesta a lo que dice el cliente en su último mensaje (si pregunta algo, lo contesta; si da las gracias, comenta algo o da un dato, lo reconoce sin ignorarlo) y termina con UNA sola pregunta de la reserva, la que toca: no vuelve a preguntar un dato que el cliente acaba de dar ni hace dos preguntas seguidas, y no pone «¡Perfecto!» o similar delante si el cliente no contestó lo que se le preguntó.",
+   "veredicto": "no_cumple",
+   "motivo_juez": "En la ronda el bot no contestó a lo que dijo el cliente y repitió la misma pregunta de la reserva.",
+   "turno": "2",
+   "pieza": "sin_dato",
+   "mensaje_cliente": "estoy en el hotel Isla del Sol",
+   "respuesta_ronda": "¡Perfecto! 🙌\n\n¡Genial! Para recomendarte el plan perfecto: ¿Eres buzo certificado? (Y si no, ¡tranqui! El minicurso es ideal para empezar. 🤿)",
+   "historial": [
+    {
+     "role": "user",
+     "content": "hola quiero bucear, ya estoy en las islas"
+    },
+    {
+     "role": "assistant",
+     "content": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\n¡Genial! Para recomendarte el plan perfecto: ¿Eres buzo certificado? (Y si no, ¡tranqui! El minicurso es ideal para empezar. 🤿)"
+    }
+   ],
+   "ronda": "2026-10-26-integra4-B",
+   "tarea": "LAT-9",
+   "id": "l9p2-05"
+  },
+  {
+   "dialogo": "familia-ninos-resumen",
+   "criterio": "lat9p2:sin_dato",
+   "pedia": "La respuesta contesta a lo que dice el cliente en su último mensaje (si pregunta algo, lo contesta; si da las gracias, comenta algo o da un dato, lo reconoce sin ignorarlo) y termina con UNA sola pregunta de la reserva, la que toca: no vuelve a preguntar un dato que el cliente acaba de dar ni hace dos preguntas seguidas, y no pone «¡Perfecto!» o similar delante si el cliente no contestó lo que se le preguntó.",
+   "veredicto": "no_cumple",
+   "motivo_juez": "En la ronda el bot no contestó a lo que dijo el cliente y repitió la misma pregunta de la reserva.",
+   "turno": "3",
+   "pieza": "sin_dato",
+   "mensaje_cliente": "los ninos tienen 6 y 9 anos",
+   "respuesta_ronda": "¡Perfecto! 🙌\n\nÚltima cosa para darte el precio y el link correctos: ¿son de nacionalidad colombiana o tienen cédula de extranjería?",
+   "historial": [
+    {
+     "role": "user",
+     "content": "familia de 4, snorkel para todos"
+    },
+    {
+     "role": "assistant",
+     "content": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\n¿Desde dónde saldrías? Puedes salir *desde Cartagena* (desde el Muelle de la Bodeguita, ida y vuelta el mismo día) o, si ya estás *en las islas*, coordinamos la recogida en tu hotel."
+    },
+    {
+     "role": "user",
+     "content": "cartagena"
+    },
+    {
+     "role": "assistant",
+     "content": "¡Perfecto! 🙌\n\nÚltima cosa para darte el precio y el link correctos: ¿son de nacionalidad colombiana o tienen cédula de extranjería?"
+    }
+   ],
+   "ronda": "2026-10-26-integra4-B",
+   "tarea": "LAT-9",
+   "id": "l9p2-06"
+  },
+  {
+   "dialogo": "grupo-cambia-dos-veces",
+   "criterio": "lat9p2:sin_dato",
+   "pedia": "La respuesta contesta a lo que dice el cliente en su último mensaje (si pregunta algo, lo contesta; si da las gracias, comenta algo o da un dato, lo reconoce sin ignorarlo) y termina con UNA sola pregunta de la reserva, la que toca: no vuelve a preguntar un dato que el cliente acaba de dar ni hace dos preguntas seguidas, y no pone «¡Perfecto!» o similar delante si el cliente no contestó lo que se le preguntó.",
+   "veredicto": "no_cumple",
+   "motivo_juez": "En la ronda el bot no contestó a lo que dijo el cliente y repitió la misma pregunta de la reserva.",
+   "turno": "3",
+   "pieza": "sin_dato",
+   "mensaje_cliente": "en realidad revisando somos 3",
+   "respuesta_ronda": "¡Perfecto! 🙌\n\nÚltima cosa para darte el precio y el link correctos: ¿son de nacionalidad colombiana o tienen cédula de extranjería?",
+   "historial": [
+    {
+     "role": "user",
+     "content": "quiero snorkel, somos 2"
+    },
+    {
+     "role": "assistant",
+     "content": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\n¿Desde dónde saldrías? Puedes salir *desde Cartagena* (desde el Muelle de la Bodeguita, ida y vuelta el mismo día) o, si ya estás *en las islas*, coordinamos la recogida en tu hotel."
+    },
+    {
+     "role": "user",
+     "content": "desde cartagena"
+    },
+    {
+     "role": "assistant",
+     "content": "¡Perfecto! 🙌\n\nÚltima cosa para darte el precio y el link correctos: ¿son de nacionalidad colombiana o tienen cédula de extranjería?"
+    }
+   ],
+   "ronda": "2026-10-26-integra4-B",
+   "tarea": "LAT-9",
+   "id": "l9p2-07"
+  },
+  {
+   "dialogo": "actividad-cambia-varias",
+   "criterio": "lat9p2:sin_dato",
+   "pedia": "La respuesta contesta a lo que dice el cliente en su último mensaje (si pregunta algo, lo contesta; si da las gracias, comenta algo o da un dato, lo reconoce sin ignorarlo) y termina con UNA sola pregunta de la reserva, la que toca: no vuelve a preguntar un dato que el cliente acaba de dar ni hace dos preguntas seguidas, y no pone «¡Perfecto!» o similar delante si el cliente no contestó lo que se le preguntó.",
+   "veredicto": "no_cumple",
+   "motivo_juez": "En la ronda el bot no contestó a lo que dijo el cliente y repitió la misma pregunta de la reserva.",
+   "turno": "2",
+   "pieza": "sin_dato",
+   "mensaje_cliente": "voy solo",
+   "respuesta_ronda": "¡Perfecto! 🙌\n\n¡Genial! Para recomendarte el plan perfecto: ¿Eres buzo certificado? (Y si no, ¡tranqui! El minicurso es ideal para empezar. 🤿)",
+   "historial": [
+    {
+     "role": "user",
+     "content": "hola quiero bucear certificado"
+    },
+    {
+     "role": "assistant",
+     "content": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\n¡Genial! Para recomendarte el plan perfecto: ¿Eres buzo certificado? (Y si no, ¡tranqui! El minicurso es ideal para empezar. 🤿)"
+    }
+   ],
+   "ronda": "2026-10-26-integra4-B",
+   "tarea": "LAT-9",
+   "id": "l9p2-08"
+  },
+  {
+   "dialogo": "grupo-con-refresher",
+   "criterio": "lat9p2:sin_dato",
+   "pedia": "La respuesta contesta a lo que dice el cliente en su último mensaje (si pregunta algo, lo contesta; si da las gracias, comenta algo o da un dato, lo reconoce sin ignorarlo) y termina con UNA sola pregunta de la reserva, la que toca: no vuelve a preguntar un dato que el cliente acaba de dar ni hace dos preguntas seguidas, y no pone «¡Perfecto!» o similar delante si el cliente no contestó lo que se le preguntó.",
+   "veredicto": "no_cumple",
+   "motivo_juez": "En la ronda el bot no contestó a lo que dijo el cliente y repitió la misma pregunta de la reserva.",
+   "turno": "2",
+   "pieza": "sin_dato",
+   "mensaje_cliente": "uno de los certificados no bucea hace 5 anos",
+   "respuesta_ronda": "¡Perfecto! 🙌\n\n¿Desde dónde saldrías? Puedes salir *desde Cartagena* (desde el Muelle de la Bodeguita, ida y vuelta el mismo día) o, si ya estás *en las islas*, coordinamos la recogida en tu hotel.",
+   "historial": [
+    {
+     "role": "user",
+     "content": "somos 3: 2 certificados y 1 minicurso"
+    },
+    {
+     "role": "assistant",
+     "content": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\n¿Desde dónde saldrías? Puedes salir *desde Cartagena* (desde el Muelle de la Bodeguita, ida y vuelta el mismo día) o, si ya estás *en las islas*, coordinamos la recogida en tu hotel."
+    }
+   ],
+   "ronda": "2026-10-26-integra4-B",
+   "tarea": "LAT-9",
+   "id": "l9p2-09"
+  },
+  {
+   "dialogo": "ninos-6-y-10",
+   "criterio": "lat9p2:sin_dato",
+   "pedia": "La respuesta contesta a lo que dice el cliente en su último mensaje (si pregunta algo, lo contesta; si da las gracias, comenta algo o da un dato, lo reconoce sin ignorarlo) y termina con UNA sola pregunta de la reserva, la que toca: no vuelve a preguntar un dato que el cliente acaba de dar ni hace dos preguntas seguidas, y no pone «¡Perfecto!» o similar delante si el cliente no contestó lo que se le preguntó.",
+   "veredicto": "no_cumple",
+   "motivo_juez": "En la ronda el bot no contestó a lo que dijo el cliente y repitió la misma pregunta de la reserva.",
+   "turno": "3",
+   "pieza": "sin_dato",
+   "mensaje_cliente": "el mayor tiene 10",
+   "respuesta_ronda": "¡Perfecto! 🙌\n\n¿Con cuál te animas — *buceo*, *minicurso*, *snorkel* o un *curso PADI*? 🌊",
+   "historial": [
+    {
+     "role": "user",
+     "content": "hola quiero llevar a mis hijos a bucear"
+    },
+    {
+     "role": "assistant",
+     "content": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\nCuéntame, ¿qué te gustaría vivir con nosotros? 🤿\n• *Buceo* en las Islas del Rosario, si ya eres buzo certificado\n• *Minicurso* para probar el buceo por primera vez (¡no necesitas experiencia!)\n• *Snorkel* para disfrutar el arrecife desde la superficie, ideal en familia\n• *Cursos PADI* completos, del Open Water en adelante\nDime qué te llama la atención y lo armamos juntos. 🌊"
+    },
+    {
+     "role": "user",
+     "content": "son 2 ninos"
+    },
+    {
+     "role": "assistant",
+     "content": "¡Perfecto! 🙌\n\n¿Con cuál te animas — *buceo*, *minicurso*, *snorkel* o un *curso PADI*? 🌊"
+    }
+   ],
+   "ronda": "2026-10-26-integra4-B",
+   "tarea": "LAT-9",
+   "id": "l9p2-10"
+  },
+  {
+   "dialogo": "vuelo-tras-bucear",
+   "criterio": "lat9p2:sin_dato",
+   "pedia": "La respuesta contesta a lo que dice el cliente en su último mensaje (si pregunta algo, lo contesta; si da las gracias, comenta algo o da un dato, lo reconoce sin ignorarlo) y termina con UNA sola pregunta de la reserva, la que toca: no vuelve a preguntar un dato que el cliente acaba de dar ni hace dos preguntas seguidas, y no pone «¡Perfecto!» o similar delante si el cliente no contestó lo que se le preguntó.",
+   "veredicto": "no_cumple",
+   "motivo_juez": "En la ronda el bot no contestó a lo que dijo el cliente y repitió la misma pregunta de la reserva.",
+   "turno": "2",
+   "pieza": "sin_dato",
+   "mensaje_cliente": "hay algun problema de tiempo entre bucear y volar",
+   "respuesta_ronda": "Sí, hay que dejar un intervalo antes de volar: *al menos 18 horas después del buceo recreativo*. Si haces un minicurso y no estás certificado, el mínimo es de 12 horas. El refresher requiere 18 horas.\n\nEl tiempo se cuenta desde la última inmersión, no desde la llegada a Cartagena. ¿Quieres que te pase con un asesor del equipo para revisar tu horario?\n\n*Desde Cartagena:* Muelle de la Bodeguita, a 5 minutos del centro histórico, a las 8:00 AM. Saliendo desde Cartagena no hay recogida en el hotel: cada persona llega por su cuenta al muelle (el transporte terrestre hasta el muelle no está incluido).\n\n*Si ya estás en las Islas del Rosario:* Si ya estás en las Islas del Rosario y tu hotel tiene acceso marítimo, la recogida y el regreso en lancha están incluidos sin cargo adicional.\n\n¡Genial! Para recomendarte el plan perfecto: ¿Eres buzo certificado? (Y si no, ¡tranqui! El minicurso es ideal para empezar. 🤿)",
+   "historial": [
+    {
+     "role": "user",
+     "content": "hola, tengo un vuelo esa misma noche despues de bucear"
+    },
+    {
+     "role": "assistant",
+     "content": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\n¡Genial! Para recomendarte el plan perfecto: ¿Eres buzo certificado? (Y si no, ¡tranqui! El minicurso es ideal para empezar. 🤿)"
+    }
+   ],
+   "ronda": "2026-10-26-integra4-B",
+   "tarea": "LAT-9",
+   "id": "l9p2-11"
+  },
+  {
+   "dialogo": "cambio-fecha-carrito",
+   "criterio": "lat9p2:sin_dato",
+   "pedia": "La respuesta contesta a lo que dice el cliente en su último mensaje (si pregunta algo, lo contesta; si da las gracias, comenta algo o da un dato, lo reconoce sin ignorarlo) y termina con UNA sola pregunta de la reserva, la que toca: no vuelve a preguntar un dato que el cliente acaba de dar ni hace dos preguntas seguidas, y no pone «¡Perfecto!» o similar delante si el cliente no contestó lo que se le preguntó.",
+   "veredicto": "no_cumple",
+   "motivo_juez": "En la ronda el bot no contestó a lo que dijo el cliente y repitió la misma pregunta de la reserva.",
+   "turno": "2",
+   "pieza": "sin_dato",
+   "mensaje_cliente": "somos 3",
+   "respuesta_ronda": "¡Perfecto! 🙌\n\n¿Desde dónde saldrías? Puedes salir *desde Cartagena* (desde el Muelle de la Bodeguita, ida y vuelta el mismo día) o, si ya estás *en las islas*, coordinamos la recogida en tu hotel.",
+   "historial": [
+    {
+     "role": "user",
+     "content": "quiero hacer snorkel"
+    },
+    {
+     "role": "assistant",
+     "content": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\n¿Desde dónde saldrías? Puedes salir *desde Cartagena* (desde el Muelle de la Bodeguita, ida y vuelta el mismo día) o, si ya estás *en las islas*, coordinamos la recogida en tu hotel."
+    }
+   ],
+   "ronda": "2026-10-26-integra4-B",
+   "tarea": "LAT-9",
+   "id": "l9p2-12"
+  },
+  {
+   "dialogo": "paquete-5-buceos-islas-residente-sin-recogida",
+   "criterio": "lat9p2:sin_dato",
+   "pedia": "La respuesta contesta a lo que dice el cliente en su último mensaje (si pregunta algo, lo contesta; si da las gracias, comenta algo o da un dato, lo reconoce sin ignorarlo) y termina con UNA sola pregunta de la reserva, la que toca: no vuelve a preguntar un dato que el cliente acaba de dar ni hace dos preguntas seguidas, y no pone «¡Perfecto!» o similar delante si el cliente no contestó lo que se le preguntó.",
+   "veredicto": "no_cumple",
+   "motivo_juez": "En la ronda el bot no contestó a lo que dijo el cliente y repitió la misma pregunta de la reserva.",
+   "turno": "4",
+   "pieza": "sin_dato",
+   "mensaje_cliente": "Va quiero comprar sin ir de cartagena",
+   "respuesta_ronda": "¡Perfecto! 🙌\n\n¡Genial! Para recomendarte el plan perfecto: ¿Son buzos certificados? (Y si no, ¡tranqui! El minicurso es ideal para empezar. 🤿)",
+   "historial": [
+    {
+     "role": "user",
+     "content": "Tienes disponibilidad para el plan de 5 buceos para el finde del 27 de junio al 30 de junio"
+    },
+    {
+     "role": "assistant",
+     "content": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\nSiempre hay disponibilidad, excepto el 25 de diciembre y el 1 de enero. Las salidas pueden suspenderse por condiciones meteorológicas adversas.\n\nLa fecha y el número de personas se eligen en el enlace de reserva. Para reservar para el día siguiente, debes hacerlo antes de las 4:30 p. m.; después de esa hora, puedes reservar por la web para el siguiente día disponible.\n\n¡Genial! Para recomendarte el plan perfecto: ¿Eres buzo certificado? (Y si no, ¡tranqui! El minicurso es ideal para empezar. 🤿)"
+    },
+    {
+     "role": "user",
+     "content": "Para dos personas"
+    },
+    {
+     "role": "assistant",
+     "content": "¡Perfecto! 🙌\n\n¡Genial! Para recomendarte el plan perfecto: ¿Son buzos certificados? (Y si no, ¡tranqui! El minicurso es ideal para empezar. 🤿)"
+    },
+    {
+     "role": "user",
+     "content": "Hola para residentes en colombia (3 años) no aplica el desc colombia o?"
+    },
+    {
+     "role": "assistant",
+     "content": "No hay un descuento especial por ser residente en Colombia; el precio es el mismo, solo cambia la moneda. Si resides en Colombia, pagas en pesos colombianos (COP).\n\nEl descuento online del 10 % sí aplica al reservar directamente por nuestra página web.\n\n• 10% de descuento reservando online directamente con nosotros a través de la página web, no a través de terceros como PADI. Este es el descuento online estándar y se aplica automáticamente al reservar por la web.\n• 10% de descuento para grupos de 5 personas o más, que se suma al 10% de descuento online (20% total reservando online). No aplica automáticamente: el grupo debe contactar al equipo para aplicarlo. Hay que pedirlo al equipo ANTES de pagar: si el grupo paga sin haberlo pedido, pierde el descuento (no se devuelve después). Aplica a buceo recreativo, minicurso y snorkel; no aplica a cursos PADI. Para el plan de acompañante (quien va en la lancha sin bucear ni hacer snorkel), si entra en el descuento de grupo lo confirma el equipo al pedir el descuento, antes de pagar.\n• 5% de descuento si traes tu propio equipo COMPLETO (regulador, BCD/chaleco, traje, máscara, aletas, etc.), solo en buceo recreativo y cursos PADI: no aplica al minicurso ni al snorkel, aunque traigas el equipo completo. Tampoco aplica si solo traes parte del equipo.\n• Los clientes colombianos y residentes en Colombia pagan en pesos colombianos (COP). Los clientes internacionales pagan en dólares (USD). No hay un descuento especial por ser colombiano; el precio es el mismo, solo cambia la moneda.\n• Los descuentos no son acumulables excepto en casos especiales autorizados por el staff o donde se indique explícitamente lo contrario (ej: grupo + online sí se suman; equipo propio + online también).\n\n¡Genial! Para recomendarte el plan perfecto: ¿Son buzos certificados? (Y si no, ¡tranqui! El minicurso es ideal para empezar. 🤿)"
+    }
+   ],
+   "ronda": "2026-10-26-integra4-B",
+   "tarea": "LAT-9",
+   "id": "l9p2-13"
+  },
+  {
+   "dialogo": "grupo-mixto-precio-cop-total",
+   "criterio": "lat9p2:sin_dato",
+   "pedia": "La respuesta contesta a lo que dice el cliente en su último mensaje (si pregunta algo, lo contesta; si da las gracias, comenta algo o da un dato, lo reconoce sin ignorarlo) y termina con UNA sola pregunta de la reserva, la que toca: no vuelve a preguntar un dato que el cliente acaba de dar ni hace dos preguntas seguidas, y no pone «¡Perfecto!» o similar delante si el cliente no contestó lo que se le preguntó.",
+   "veredicto": "no_cumple",
+   "motivo_juez": "En la ronda el bot no contestó a lo que dijo el cliente y repitió la misma pregunta de la reserva.",
+   "turno": "2",
+   "pieza": "sin_dato",
+   "mensaje_cliente": "Para el sabado, 30/05",
+   "respuesta_ronda": "¡Perfecto! 🙌\n\nÚltima cosa para darte el precio y el link correctos: ¿son de nacionalidad colombiana o tienen cédula de extranjería?",
+   "historial": [
+    {
+     "role": "user",
+     "content": "Busco el seguinte:\nVamos en família a Cartagena. 1 buzo avanzado y 2 para bautismo"
+    },
+    {
+     "role": "assistant",
+     "content": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\nÚltima cosa para darte el precio y el link correctos: ¿son de nacionalidad colombiana o tienen cédula de extranjería?"
+    }
+   ],
+   "ronda": "2026-10-26-integra4-B",
+   "tarea": "LAT-9",
+   "id": "l9p2-14"
+  },
+  {
+   "dialogo": "regreso-otro-dia-paquete-5",
+   "criterio": "lat9p2:sin_dato",
+   "pedia": "La respuesta contesta a lo que dice el cliente en su último mensaje (si pregunta algo, lo contesta; si da las gracias, comenta algo o da un dato, lo reconoce sin ignorarlo) y termina con UNA sola pregunta de la reserva, la que toca: no vuelve a preguntar un dato que el cliente acaba de dar ni hace dos preguntas seguidas, y no pone «¡Perfecto!» o similar delante si el cliente no contestó lo que se le preguntó.",
+   "veredicto": "no_cumple",
+   "motivo_juez": "En la ronda el bot no contestó a lo que dijo el cliente y repitió la misma pregunta de la reserva.",
+   "turno": "2",
+   "pieza": "sin_dato",
+   "mensaje_cliente": "Porque el paquete es saliendo un dia y regresando al siguiente a Cartagena. Nosotros quedaríamos 1 noche mas .",
+   "respuesta_ronda": "Sí, el paquete de 5 inmersiones contempla salir desde Cartagena el primer día y regresar al día siguiente a las 3:00 p. m. Si se quedan una noche más en Cocoliso, ese regreso adicional a Cartagena no está incluido; coordinarlo con nosotros depende del espacio disponible en la lancha.\n\n¿Quieres que te pase con un asesor del equipo para consultar el regreso del día siguiente?\n\n• Tarifa de ingreso al Parque Nacional Natural\n• Seguro de buceo obligatorio\n• Transporte en lancha rápida Cartagena-Islas-Cartagena\n• Equipo de buceo\n• Almuerzo el primer día\n• Aporte eco-social a DIVE TO HEAL\n\nMuelle de la Bodeguita, a 5 minutos del centro histórico, a las 8:00 AM. Saliendo desde Cartagena no hay recogida en el hotel: cada persona llega por su cuenta al muelle (el transporte terrestre hasta el muelle no está incluido).\n\nLos cursos de 2 días (Open Water, Curso Referido, Advanced, Rescue y Mindful Diving) requieren alojamiento en las islas: al menos una noche, la del día 1 (el día 1 no se vuelve a Cartagena). No hay opción de ir y volver desde Cartagena ambos días. El alojamiento no está incluido y debe reservarse directamente con el hotel. Lo mismo en los paquetes de buceo de varios días (4, 5, 7 y 9 inmersiones): se duerme en las islas y el alojamiento, que no está incluido, se reserva directamente con el hotel.\n\n¿Ha pasado *más de 2 años* desde la última inmersión de alguno del grupo?",
+   "historial": [
+    {
+     "role": "user",
+     "content": "Seguramente tomaremos el paquete de 5 buceos para 2 personas con el traslado saliendo desde cartagena, niche en cocoliso, buceo nuevamente  .\nAqui esta mi duda ,\nSi nos quedamos una segunda noche en cocoliso,\nPodremos regresar con ustedes con el regreso del dia siguiente ?"
+    },
+    {
+     "role": "assistant",
+     "content": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\nSí, pueden quedarse una segunda noche en Cocoliso, pero el regreso a Cartagena al día siguiente no está incluido en el paquete de 5 buceos. Si quieren volver con nuestra lancha en otra fecha, debe coordinarlo un asesor del equipo y confirmar el espacio disponible.\n\n¿Quieres que te pase con un asesor para consultar ese regreso?\n\nMuelle de la Bodeguita, a 5 minutos del centro histórico, a las 8:00 AM. Saliendo desde Cartagena no hay recogida en el hotel: cada persona llega por su cuenta al muelle (el transporte terrestre hasta el muelle no está incluido).\n\n¿Ha pasado *más de 2 años* desde la última inmersión de alguno del grupo?"
+    }
+   ],
+   "ronda": "2026-10-26-integra4-B",
+   "tarea": "LAT-9",
+   "id": "l9p2-15"
+  },
+  {
+   "dialogo": "contacto-hoteles-cocoliso-san-pedro",
+   "criterio": "lat9p2:sin_dato",
+   "pedia": "La respuesta contesta a lo que dice el cliente en su último mensaje (si pregunta algo, lo contesta; si da las gracias, comenta algo o da un dato, lo reconoce sin ignorarlo) y termina con UNA sola pregunta de la reserva, la que toca: no vuelve a preguntar un dato que el cliente acaba de dar ni hace dos preguntas seguidas, y no pone «¡Perfecto!» o similar delante si el cliente no contestó lo que se le preguntó.",
+   "veredicto": "no_cumple",
+   "motivo_juez": "En la ronda el bot no contestó a lo que dijo el cliente y repitió la misma pregunta de la reserva.",
+   "turno": "4",
+   "pieza": "sin_dato",
+   "mensaje_cliente": "O el San Pedro",
+   "respuesta_ronda": "¡Perfecto! 🙌\n\n¿Con cuál te animas — *buceo*, *minicurso*, *snorkel* o un *curso PADI*? 🌊",
+   "historial": [
+    {
+     "role": "user",
+     "content": "Hola!!"
+    },
+    {
+     "role": "assistant",
+     "content": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\nCuéntame, ¿qué te gustaría vivir con nosotros? 🤿\n• *Buceo* en las Islas del Rosario, si ya eres buzo certificado\n• *Minicurso* para probar el buceo por primera vez (¡no necesitas experiencia!)\n• *Snorkel* para disfrutar el arrecife desde la superficie, ideal en familia\n• *Cursos PADI* completos, del Open Water en adelante\nDime qué te llama la atención y lo armamos juntos. 🌊"
+    },
+    {
+     "role": "user",
+     "content": "Me pasas el contacto del hotel cocoliso?"
+    },
+    {
+     "role": "assistant",
+     "content": "No tengo el contacto directo del Hotel Cocoliso a la mano. Puedes reservar con ellos directamente; el alojamiento se gestiona por separado. ¿Quieres que te ayude con alguna actividad de buceo?"
+    },
+    {
+     "role": "user",
+     "content": "Muchas gracias"
+    },
+    {
+     "role": "assistant",
+     "content": "¡Perfecto! 🙌\n\n¿Con cuál te animas — *buceo*, *minicurso*, *snorkel* o un *curso PADI*? 🌊"
+    }
+   ],
+   "ronda": "2026-10-26-integra4-B",
+   "tarea": "LAT-9",
+   "id": "l9p2-16"
+  },
+  {
+   "dialogo": "paquete-5-buceos-precio-overnight-isla-grande-baru",
+   "criterio": "lat9p2:sin_dato",
+   "pedia": "La respuesta contesta a lo que dice el cliente en su último mensaje (si pregunta algo, lo contesta; si da las gracias, comenta algo o da un dato, lo reconoce sin ignorarlo) y termina con UNA sola pregunta de la reserva, la que toca: no vuelve a preguntar un dato que el cliente acaba de dar ni hace dos preguntas seguidas, y no pone «¡Perfecto!» o similar delante si el cliente no contestó lo que se le preguntó.",
+   "veredicto": "no_cumple",
+   "motivo_juez": "En la ronda el bot no contestó a lo que dijo el cliente y repitió la misma pregunta de la reserva.",
+   "turno": "3",
+   "pieza": "sin_dato",
+   "mensaje_cliente": "beginner",
+   "respuesta_ronda": "Perfect! 🙌\n\nAnd how many people should I plan for? That way I can give you the exact price. 😊",
+   "historial": [
+    {
+     "role": "user",
+     "content": "Hello My name is [NOMBRE], i'd like to inquiry about the modalities for a 2 day dive package at the rosario islands. i'll be heading in on april 13th and 14th leaving on the 15th in the morning. What do i need to bring. i<ll be in Cartagena, is it hard to get to your location, any advice?"
+    },
+    {
+     "role": "assistant",
+     "content": "Hi! 🪸 I'm *Coral* from *Diving Planet* — we dive year-round in the Rosario Islands, departing from Cartagena or right from the islands. So happy to have you here! I'd love to help you put your plan together. 🌊\n\nThe Rosario Islands are a beautiful place to dive! For a two-day trip departing from Cartagena, there are two options for certified divers:\n\n- *4 dives over 2 days:* 4 daytime dives — *316 USD / 1,154,000 COP online* or *351 USD / 1,282,000 COP regular*.\n- *5 dives over 2 days:* 4 daytime dives plus 1 night dive — *392 USD / 1,429,000 COP online* or *436 USD / 1,587,000 COP regular*.\n\nBoth include boat transport from Cartagena and diving equipment. The 4-dive option includes lunch on day 1; the 5-dive option also includes lunch on day 1. Accommodation on the islands isn’t included, and you’ll need to stay there overnight. The boat returns to Cartagena on day 2 at 3:00 p.m., arriving around 4:15 p.m., so it wouldn’t fit with leaving on the 15th in the morning. You’d need to arrange a different return plan with a team advisor.\n\nPlease bring your certification card, swimsuit, towel, sunscreen, sunglasses, and comfortable clothes. The meeting point is *Muelle de la Bodeguita*, about 5 minutes from the historic center, at *8:00 a.m.* There’s no hotel pickup in Cartagena, so you’ll need to get to the dock yourself; ground transport isn’t included.\n\nIf you’ve gone more than 2 years since your last dive, a refresher is normally required. Would you like me to connect you with a team advisor about your return on the 15th and the best package for your dates?\n\nYou'll also need:\n• To process the insurance, you must complete the form we send in the booking confirmation email.\n\nGreat! So I can recommend the perfect plan: Are you a certified diver? (And if not, no worries — the mini-course is the ideal way to start. 🤿)"
+    },
+    {
+     "role": "user",
+     "content": "certified diver"
+    },
+    {
+     "role": "assistant",
+     "content": "Perfect! 🙌\n\nAnd how many people should I plan for? That way I can give you the exact price. 😊"
+    }
+   ],
+   "ronda": "2026-10-26-integra4-B",
+   "tarea": "LAT-9",
+   "id": "l9p2-17"
+  },
+  {
+   "dialogo": "descuento-online-sin-codigo",
+   "criterio": "lat9p2:sin_dato",
+   "pedia": "La respuesta contesta a lo que dice el cliente en su último mensaje (si pregunta algo, lo contesta; si da las gracias, comenta algo o da un dato, lo reconoce sin ignorarlo) y termina con UNA sola pregunta de la reserva, la que toca: no vuelve a preguntar un dato que el cliente acaba de dar ni hace dos preguntas seguidas, y no pone «¡Perfecto!» o similar delante si el cliente no contestó lo que se le preguntó.",
+   "veredicto": "no_cumple",
+   "motivo_juez": "En la ronda el bot no contestó a lo que dijo el cliente y repitió la misma pregunta de la reserva.",
+   "turno": "2",
+   "pieza": "sin_dato",
+   "mensaje_cliente": "ah I see.",
+   "respuesta_ronda": "Perfect! 🙌\n\nWhere would you be departing from? This plan takes 2 days and you need to *stay on the islands* (accommodation is not included): you can leave *from Cartagena* on the first day or, if you're already *on the islands*, we arrange pickup at your hotel.",
+   "historial": [
+    {
+     "role": "user",
+     "content": "Hi, I’m trying to checkout to take PADI Open Water Diver certification course but the discount of 10% is not showing up. what is the code?"
+    },
+    {
+     "role": "assistant",
+     "content": "Hi! 🪸 I'm *Coral* from *Diving Planet* — we dive year-round in the Rosario Islands, departing from Cartagena or right from the islands. So happy to have you here! I'd love to help you put your plan together. 🌊\n\nThere’s no code—the 10% online discount is applied automatically when you book directly through our website. It doesn’t apply to bookings made through third parties like PADI.\n\n• 10% discount when booking online directly with us through our website, not through third parties like PADI. This is the standard online discount and is applied automatically when booking on the web.\n• 10% discount for groups of 5 or more people, which stacks with the 10% online discount (20% total when booking online). Not applied automatically: the group must contact the team to apply it. It must be requested from the team BEFORE paying: if the group pays without having requested it, the discount is lost (it is not refunded afterwards). Applies to recreational diving, mini-courses and snorkeling; does not apply to PADI courses. For the companion plan (someone who rides the boat without diving or snorkeling), whether it counts for the group discount is confirmed by the team when the discount is requested, before paying.\n• 5% discount if you bring your own COMPLETE gear (regulator, BCD, wetsuit, mask, fins, etc.), only for recreational diving and PADI courses: it does not apply to the mini-course or snorkeling, even with complete gear. It also does not apply if you only bring part of the equipment.\n• Colombian clients and residents pay in Colombian pesos (COP). International clients pay in US dollars (USD). There is no special discount for being Colombian; the price is the same, only the currency changes.\n• Discounts are not cumulative except in special cases authorized by staff or where explicitly stated otherwise (e.g. group + online do stack; own equipment + online also stack).\n\nWhere would you be departing from? This plan takes 2 days and you need to *stay on the islands* (accommodation is not included): you can leave *from Cartagena* on the first day or, if you're already *on the islands*, we arrange pickup at your hotel."
+    }
+   ],
+   "ronda": "2026-10-26-integra4-B",
+   "tarea": "LAT-9",
+   "id": "l9p2-18"
+  },
+  {
+   "dialogo": "colombianos-precio-minicurso-dos-inmersiones",
+   "criterio": "lat9p2:sin_dato",
+   "pedia": "La respuesta contesta a lo que dice el cliente en su último mensaje (si pregunta algo, lo contesta; si da las gracias, comenta algo o da un dato, lo reconoce sin ignorarlo) y termina con UNA sola pregunta de la reserva, la que toca: no vuelve a preguntar un dato que el cliente acaba de dar ni hace dos preguntas seguidas, y no pone «¡Perfecto!» o similar delante si el cliente no contestó lo que se le preguntó.",
+   "veredicto": "no_cumple",
+   "motivo_juez": "En la ronda el bot no contestó a lo que dijo el cliente y repitió la misma pregunta de la reserva.",
+   "turno": "4",
+   "pieza": "sin_dato",
+   "mensaje_cliente": "Yo vi un video en YT de alguien que hizo el paquete con ustedes e hicieron dos inmersiones en dos distintos puntos",
+   "respuesta_ronda": "¡Perfecto! 🙌\n\n¿Con cuál te animas — *buceo*, *minicurso*, *snorkel* o un *curso PADI*? 🌊",
+   "historial": [
+    {
+     "role": "user",
+     "content": "Ya vi la página, está increíble!"
+    },
+    {
+     "role": "assistant",
+     "content": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\nCuéntame, ¿qué te gustaría vivir con nosotros? 🤿\n• *Buceo* en las Islas del Rosario, si ya eres buzo certificado\n• *Minicurso* para probar el buceo por primera vez (¡no necesitas experiencia!)\n• *Snorkel* para disfrutar el arrecife desde la superficie, ideal en familia\n• *Cursos PADI* completos, del Open Water en adelante\nDime qué te llama la atención y lo armamos juntos. 🌊"
+    },
+    {
+     "role": "user",
+     "content": "Cuál es la tarifa especial para Colombianos? Mi pareja y yo somos de Bogotá"
+    },
+    {
+     "role": "assistant",
+     "content": "¡Qué bueno que tú y tu pareja sean de Bogotá! No hay una tarifa especial para colombianos: el precio es el mismo, solo que ustedes pagan en pesos colombianos (COP). También pueden reservar directamente en la web con el 10% de descuento online.\n\nLos grupos de 5 o más personas tienen un 10 % de descuento de grupo, que se suma al 10 % online, en el buceo recreativo, el minicurso y el snorkel (no en los cursos PADI); no se aplica solo: hay que pedírselo al equipo antes de pagar.\n\n¿Qué actividad les interesa? Así te comparto la tarifa en COP."
+    },
+    {
+     "role": "user",
+     "content": "Y de cuata duración aproximada sería la inmersión, tengo entendido que son una o dos?"
+    },
+    {
+     "role": "assistant",
+     "content": "¡Sí, las salidas de buceo incluyen dos inmersiones! Cada una dura aproximadamente entre 40 y 50 minutos, y se realizan en dos puntos distintos. ¿Te interesa la salida de un día desde Cartagena?\n\nMuelle de la Bodeguita, a 5 minutos del centro histórico, a las 8:00 AM. Saliendo desde Cartagena no hay recogida en el hotel: cada persona llega por su cuenta al muelle (el transporte terrestre hasta el muelle no está incluido).\n\nSi ya estás en las Islas del Rosario y tu hotel tiene acceso marítimo, la recogida y el regreso en lancha están incluidos sin cargo adicional.\n\n¿Con cuál te animas — *buceo*, *minicurso*, *snorkel* o un *curso PADI*? 🌊"
+    }
+   ],
+   "ronda": "2026-10-26-integra4-B",
+   "tarea": "LAT-9",
+   "id": "l9p2-19"
+  },
+  {
+   "dialogo": "certificado-precio-dia-paquete-5-y-hoteles-base",
+   "criterio": "lat9p2:sin_dato",
+   "pedia": "La respuesta contesta a lo que dice el cliente en su último mensaje (si pregunta algo, lo contesta; si da las gracias, comenta algo o da un dato, lo reconoce sin ignorarlo) y termina con UNA sola pregunta de la reserva, la que toca: no vuelve a preguntar un dato que el cliente acaba de dar ni hace dos preguntas seguidas, y no pone «¡Perfecto!» o similar delante si el cliente no contestó lo que se le preguntó.",
+   "veredicto": "no_cumple",
+   "motivo_juez": "En la ronda el bot no contestó a lo que dijo el cliente y repitió la misma pregunta de la reserva.",
+   "turno": "2",
+   "pieza": "sin_dato",
+   "mensaje_cliente": "PADI open water, advanced open water and deep diver certs",
+   "respuesta_ronda": "Perfect! 🙌\n\nAnd how many people should I plan for? That way I can give you the exact price. 😊",
+   "historial": [
+    {
+     "role": "user",
+     "content": "Hi, I plan on being in Cartagena and do scuba diving on April 21 and 22. I have open water, advanced open water and deep diver certs. Please advise what options do you have for scuba diving and how much it costs"
+    },
+    {
+     "role": "assistant",
+     "content": "Hi! 🪸 I'm *Coral* from *Diving Planet* — we dive year-round in the Rosario Islands, departing from Cartagena or right from the islands. So happy to have you here! I'd love to help you put your plan together. 🌊\n\nThe Rosario Islands are a beautiful place to dive, and your certifications open up several options. For April 21–22, these are the certified-diver plans departing from Cartagena (prices are per person):\n\n- *4 dives over 2 days, daytime dives:* online *316 USD / 1,154,000 COP*; regular *351 USD / 1,282,000 COP*.\n- *5 dives over 2 days, including a night dive:* online *392 USD / 1,429,000 COP*; regular *436 USD / 1,587,000 COP*.\n- *3 dives in 1 day, including a night dive:* online *287 USD / 1,017,000 COP*; regular *319 USD / 1,130,000 COP*.\n- *2 dives in 1 day:* online *178 USD / 630,000 COP*; regular *197 USD / 700,000 COP*.\n\nThe online prices include the 10% website-booking discount. The 2-day packages require staying overnight on the islands; accommodation isn’t included. The 1-day package with a night dive also requires an overnight stay. Colombians and residents of Colombia pay in COP; other international guests pay in USD—the price is the same, only the currency changes.\n\nWould you like the booking link for one of these options?\n\nTwo-day courses (Open Water, Referral Course, Advanced, Rescue and Mindful Diving) require accommodation on the islands: at least one night, the night of day 1 (there is no return to Cartagena on day 1). There is no option to commute from Cartagena on both days. Accommodation is not included and must be booked directly with the hotel. The same goes for multi-day dive packages (4, 5, 7 and 9 dives): you stay on the islands, and accommodation, which is not included, is booked directly with the hotel.\n\nAnd how many people should I plan for? That way I can give you the exact price. 😊"
+    }
+   ],
+   "ronda": "2026-10-26-integra4-B",
+   "tarea": "LAT-9",
+   "id": "l9p2-20"
+  },
+  {
+   "dialogo": "ninos-6-y-10",
+   "criterio": "lat9p2:pregunta",
+   "pedia": "La respuesta contesta a lo que dice el cliente en su último mensaje (si pregunta algo, lo contesta; si da las gracias, comenta algo o da un dato, lo reconoce sin ignorarlo) y termina con UNA sola pregunta de la reserva, la que toca: no vuelve a preguntar un dato que el cliente acaba de dar ni hace dos preguntas seguidas, y no pone «¡Perfecto!» o similar delante si el cliente no contestó lo que se le preguntó.",
+   "veredicto": "no_cumple",
+   "motivo_juez": "Riesgo en este turno: la respuesta a la pregunta y la pregunta de la reserva pegadas (dos preguntas seguidas, o una pregunta por un dato que el cliente acaba de dar).",
+   "turno": "5",
+   "pieza": "pregunta",
+   "mensaje_cliente": "pueden hacer snorkel los dos o el pequeno esta muy chico?",
+   "respuesta_ronda": "Sí, los dos pueden hacer snorkel: es desde los 6 años.\n\nSi quieres, te ayudo a reservar: *Snorkel*. ¿Te animas? 🌊",
+   "historial": [
+    {
+     "role": "user",
+     "content": "hola quiero llevar a mis hijos a bucear"
+    },
+    {
+     "role": "assistant",
+     "content": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\nCuéntame, ¿qué te gustaría vivir con nosotros? 🤿\n• *Buceo* en las Islas del Rosario, si ya eres buzo certificado\n• *Minicurso* para probar el buceo por primera vez (¡no necesitas experiencia!)\n• *Snorkel* para disfrutar el arrecife desde la superficie, ideal en familia\n• *Cursos PADI* completos, del Open Water en adelante\nDime qué te llama la atención y lo armamos juntos. 🌊"
+    },
+    {
+     "role": "user",
+     "content": "son 2 ninos"
+    },
+    {
+     "role": "assistant",
+     "content": "¡Perfecto! 🙌\n\n¿Con cuál te animas — *buceo*, *minicurso*, *snorkel* o un *curso PADI*? 🌊"
+    },
+    {
+     "role": "user",
+     "content": "el mayor tiene 10"
+    },
+    {
+     "role": "assistant",
+     "content": "¡Perfecto! 🙌\n\n¿Con cuál te animas — *buceo*, *minicurso*, *snorkel* o un *curso PADI*? 🌊"
+    },
+    {
+     "role": "user",
+     "content": "y el menor tiene 6"
+    },
+    {
+     "role": "assistant",
+     "content": "¡Perfecto! 🙌\n\n¿Con cuál te animas — *buceo*, *minicurso*, *snorkel* o un *curso PADI*? 🌊"
+    }
+   ],
+   "ronda": "2026-10-26-integra4-B",
+   "tarea": "LAT-9",
+   "id": "l9p2-21"
+  },
+  {
+   "dialogo": "paquete-en-carrito",
+   "criterio": "lat9p2:pregunta",
+   "pedia": "La respuesta contesta a lo que dice el cliente en su último mensaje (si pregunta algo, lo contesta; si da las gracias, comenta algo o da un dato, lo reconoce sin ignorarlo) y termina con UNA sola pregunta de la reserva, la que toca: no vuelve a preguntar un dato que el cliente acaba de dar ni hace dos preguntas seguidas, y no pone «¡Perfecto!» o similar delante si el cliente no contestó lo que se le preguntó.",
+   "veredicto": "no_cumple",
+   "motivo_juez": "Riesgo en este turno: la respuesta a la pregunta y la pregunta de la reserva pegadas (dos preguntas seguidas, o una pregunta por un dato que el cliente acaba de dar).",
+   "turno": "3",
+   "pieza": "pregunta",
+   "mensaje_cliente": "y tienen algo para mas dias, como un paquete?",
+   "respuesta_ronda": "¡Sí! Hay paquetes de varios días para buzos certificados. Si salen desde Cartagena, pueden elegir entre:\n\n- *4 inmersiones en 2 días*, todas diurnas: *316 USD / 1.154.000 COP online*.\n- *5 inmersiones en 2 días*, incluye una nocturna: *392 USD / 1.429.000 COP online*.\n- *7 inmersiones en 3 días*, incluye una nocturna: *503 USD / 1.813.000 COP online*.\n- *9 inmersiones en 4 días*, incluye una nocturna: *602 USD / 2.170.000 COP online*.\n\nEstos paquetes requieren dormir en las islas; el alojamiento no está incluido. Si ya están alojados en las islas, también hay paquetes de 5 inmersiones en 2 días y 9 en 4 días.\n\n¿Saldrían desde Cartagena o ya estarían en las islas?",
+   "historial": [
+    {
+     "role": "user",
+     "content": "quiero bucear certificado"
+    },
+    {
+     "role": "assistant",
+     "content": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\n¡Qué chévere! Si ya tienes certificación, puedes hacer una salida de buceo recreativo en las Islas del Rosario. Para recomendarte el plan y darte el precio correcto, ¿sales desde Cartagena o ya estás en las islas? 🐠"
+    },
+    {
+     "role": "user",
+     "content": "somos 2"
+    },
+    {
+     "role": "assistant",
+     "content": "¡Perfecto! 🙌\n\n¡Genial! Para recomendarte el plan perfecto: ¿Son buzos certificados? (Y si no, ¡tranqui! El minicurso es ideal para empezar. 🤿)"
+    }
+   ],
+   "ronda": "2026-10-26-integra4-B",
+   "tarea": "LAT-9",
+   "id": "l9p2-22"
+  },
+  {
+   "dialogo": "semana-santa-solo-avanzado-islas",
+   "criterio": "lat9p2:pregunta",
+   "pedia": "La respuesta contesta a lo que dice el cliente en su último mensaje (si pregunta algo, lo contesta; si da las gracias, comenta algo o da un dato, lo reconoce sin ignorarlo) y termina con UNA sola pregunta de la reserva, la que toca: no vuelve a preguntar un dato que el cliente acaba de dar ni hace dos preguntas seguidas, y no pone «¡Perfecto!» o similar delante si el cliente no contestó lo que se le preguntó.",
+   "veredicto": "no_cumple",
+   "motivo_juez": "Riesgo en este turno: la respuesta a la pregunta y la pregunta de la reserva pegadas (dos preguntas seguidas, o una pregunta por un dato que el cliente acaba de dar).",
+   "turno": "3",
+   "pieza": "pregunta",
+   "mensaje_cliente": "1. Cuakes son sus costos con equipo?\n2. ⁠tienen disponibilidad?\n3. ⁠tienen algun hospedaje o zona para hospedarme que recomienden centrico a nuestras partidas?",
+   "respuesta_ronda": "¡Claro que sí! Te respondo punto por punto. 🤿\n\n*1. Costos (equipo incluido)*\n\nEl precio online ya trae el 10% de descuento por reservar en la web. Y si traes tu equipo *completo* (regulador, BCD, traje, máscara y aletas), tienes un 5% adicional.\n\n*2. Disponibilidad*\n¡Sí, siempre hay disponibilidad! Solo cerramos el 25 de diciembre y el 1 de enero. La fecha y el número de personas las eliges tú mismo en el link de reserva. Eso sí: para reservar para el día siguiente hay que hacerlo antes de las 4:30 p.m. del día anterior.\n\n*3. Hospedaje*\nEl alojamiento no está incluido en los planes, se reserva directo con el hotel. Nuestra base está en Isla Grande, en dos hoteles: *San Pedro de Majagua* y *Cocoliso* — si te quedas en cualquiera de los dos, la recogida es directa. Otros hoteles del área con acceso marítimo son Rosario de Mar, Secreto, Ubuntu, Mulata, Eco Hotel Las Palmeras y Pao Pao.\n\n¿Quieres que te ayude a armar la reserva? 🐠\n\nPara darte el precio exacto necesito saber desde dónde sales: ¿saldrías *desde Cartagena* o ya estás *en las Islas del Rosario*? Los planes y los precios cambian según el punto de salida. 🌊",
+   "historial": [
+    {
+     "role": "user",
+     "content": "Estoy interesada en bucear en semana santa 18 y 19"
+    },
+    {
+     "role": "assistant",
+     "content": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\n¡Genial! Para recomendarte el plan perfecto: ¿Eres buzo certificado? (Y si no, ¡tranqui! El minicurso es ideal para empezar. 🤿)"
+    },
+    {
+     "role": "user",
+     "content": "Un solo buzo avanzado"
+    },
+    {
+     "role": "assistant",
+     "content": "¡Perfecto! 🙌\n\n¿Desde dónde saldrías? Puedes salir *desde Cartagena* (desde el Muelle de la Bodeguita, ida y vuelta el mismo día) o, si ya estás *en las islas*, coordinamos la recogida en tu hotel."
+    }
+   ],
+   "ronda": "2026-10-26-integra4-B",
+   "tarea": "LAT-9",
+   "id": "l9p2-23"
+  },
+  {
+   "dialogo": "paquete-5-buceos-islas-residente-sin-recogida",
+   "criterio": "lat9p2:pregunta",
+   "pedia": "La respuesta contesta a lo que dice el cliente en su último mensaje (si pregunta algo, lo contesta; si da las gracias, comenta algo o da un dato, lo reconoce sin ignorarlo) y termina con UNA sola pregunta de la reserva, la que toca: no vuelve a preguntar un dato que el cliente acaba de dar ni hace dos preguntas seguidas, y no pone «¡Perfecto!» o similar delante si el cliente no contestó lo que se le preguntó.",
+   "veredicto": "no_cumple",
+   "motivo_juez": "Riesgo en este turno: la respuesta a la pregunta y la pregunta de la reserva pegadas (dos preguntas seguidas, o una pregunta por un dato que el cliente acaba de dar).",
+   "turno": "3",
+   "pieza": "pregunta",
+   "mensaje_cliente": "Hola para residentes en colombia (3 años) no aplica el desc colombia o?",
+   "respuesta_ronda": "No hay un descuento especial por ser residente en Colombia; el precio es el mismo, solo cambia la moneda. Si resides en Colombia, pagas en pesos colombianos (COP).\n\nEl descuento online del 10 % sí aplica al reservar directamente por nuestra página web.\n\n• 10% de descuento reservando online directamente con nosotros a través de la página web, no a través de terceros como PADI. Este es el descuento online estándar y se aplica automáticamente al reservar por la web.\n• 10% de descuento para grupos de 5 personas o más, que se suma al 10% de descuento online (20% total reservando online). No aplica automáticamente: el grupo debe contactar al equipo para aplicarlo. Hay que pedirlo al equipo ANTES de pagar: si el grupo paga sin haberlo pedido, pierde el descuento (no se devuelve después). Aplica a buceo recreativo, minicurso y snorkel; no aplica a cursos PADI. Para el plan de acompañante (quien va en la lancha sin bucear ni hacer snorkel), si entra en el descuento de grupo lo confirma el equipo al pedir el descuento, antes de pagar.\n• 5% de descuento si traes tu propio equipo COMPLETO (regulador, BCD/chaleco, traje, máscara, aletas, etc.), solo en buceo recreativo y cursos PADI: no aplica al minicurso ni al snorkel, aunque traigas el equipo completo. Tampoco aplica si solo traes parte del equipo.\n• Los clientes colombianos y residentes en Colombia pagan en pesos colombianos (COP). Los clientes internacionales pagan en dólares (USD). No hay un descuento especial por ser colombiano; el precio es el mismo, solo cambia la moneda.\n• Los descuentos no son acumulables excepto en casos especiales autorizados por el staff o donde se indique explícitamente lo contrario (ej: grupo + online sí se suman; equipo propio + online también).\n\n¡Genial! Para recomendarte el plan perfecto: ¿Son buzos certificados? (Y si no, ¡tranqui! El minicurso es ideal para empezar. 🤿)",
+   "historial": [
+    {
+     "role": "user",
+     "content": "Tienes disponibilidad para el plan de 5 buceos para el finde del 27 de junio al 30 de junio"
+    },
+    {
+     "role": "assistant",
+     "content": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\nSiempre hay disponibilidad, excepto el 25 de diciembre y el 1 de enero. Las salidas pueden suspenderse por condiciones meteorológicas adversas.\n\nLa fecha y el número de personas se eligen en el enlace de reserva. Para reservar para el día siguiente, debes hacerlo antes de las 4:30 p. m.; después de esa hora, puedes reservar por la web para el siguiente día disponible.\n\n¡Genial! Para recomendarte el plan perfecto: ¿Eres buzo certificado? (Y si no, ¡tranqui! El minicurso es ideal para empezar. 🤿)"
+    },
+    {
+     "role": "user",
+     "content": "Para dos personas"
+    },
+    {
+     "role": "assistant",
+     "content": "¡Perfecto! 🙌\n\n¡Genial! Para recomendarte el plan perfecto: ¿Son buzos certificados? (Y si no, ¡tranqui! El minicurso es ideal para empezar. 🤿)"
+    }
+   ],
+   "ronda": "2026-10-26-integra4-B",
+   "tarea": "LAT-9",
+   "id": "l9p2-24"
+  },
+  {
+   "dialogo": "snorkel-precio-residente-y-pago-link",
+   "criterio": "lat9p2:pregunta",
+   "pedia": "La respuesta contesta a lo que dice el cliente en su último mensaje (si pregunta algo, lo contesta; si da las gracias, comenta algo o da un dato, lo reconoce sin ignorarlo) y termina con UNA sola pregunta de la reserva, la que toca: no vuelve a preguntar un dato que el cliente acaba de dar ni hace dos preguntas seguidas, y no pone «¡Perfecto!» o similar delante si el cliente no contestó lo que se le preguntó.",
+   "veredicto": "no_cumple",
+   "motivo_juez": "Riesgo en este turno: la respuesta a la pregunta y la pregunta de la reserva pegadas (dos preguntas seguidas, o una pregunta por un dato que el cliente acaba de dar).",
+   "turno": "6",
+   "pieza": "pregunta",
+   "mensaje_cliente": "me aplica el descuento adicional?",
+   "respuesta_ronda": "El descuento adicional del 10% aplica para grupos de *5 personas o más* y se suma al 10% online. No aplica por ser residente en Colombia; el precio es el mismo, solo cambia la moneda.\n\nPara solicitar el descuento de grupo, hay que contactar al equipo *antes de pagar*.\n\n• 10% de descuento reservando online directamente con nosotros a través de la página web, no a través de terceros como PADI. Este es el descuento online estándar y se aplica automáticamente al reservar por la web.\n• 10% de descuento para grupos de 5 personas o más, que se suma al 10% de descuento online (20% total reservando online). No aplica automáticamente: el grupo debe contactar al equipo para aplicarlo. Hay que pedirlo al equipo ANTES de pagar: si el grupo paga sin haberlo pedido, pierde el descuento (no se devuelve después). Aplica a buceo recreativo, minicurso y snorkel; no aplica a cursos PADI. Para el plan de acompañante (quien va en la lancha sin bucear ni hacer snorkel), si entra en el descuento de grupo lo confirma el equipo al pedir el descuento, antes de pagar.\n• 5% de descuento si traes tu propio equipo COMPLETO (regulador, BCD/chaleco, traje, máscara, aletas, etc.), solo en buceo recreativo y cursos PADI: no aplica al minicurso ni al snorkel, aunque traigas el equipo completo. Tampoco aplica si solo traes parte del equipo.\n• Los clientes colombianos y residentes en Colombia pagan en pesos colombianos (COP). Los clientes internacionales pagan en dólares (USD). No hay un descuento especial por ser colombiano; el precio es el mismo, solo cambia la moneda.\n• Los descuentos no son acumulables excepto en casos especiales autorizados por el staff o donde se indique explícitamente lo contrario (ej: grupo + online sí se suman; equipo propio + online también).\n\n¿Saldrías *desde Cartagena* o ya estás *en las Islas del Rosario*? Así te paso el plan y el enlace exactos. 🌊",
+   "historial": [
+    {
+     "role": "user",
+     "content": "cupo para snorkeling para dos personas el sábado?"
+    },
+    {
+     "role": "assistant",
+     "content": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\nEl snorkel tiene disponibilidad, excepto el 25 de diciembre y el 1 de enero, y puede suspenderse por mal tiempo. Para reservar para el día siguiente, hazlo antes de las 4:30 p. m.; después, puedes reservar por la web para el siguiente día disponible.\n\nElige el enlace según el punto de salida:\n• Desde Cartagena: https://book.divingplanet.org/book/superficio/3?language=es\n• Si ya estás en las Islas del Rosario: https://book.divingplanet.org/book/snorkeling-already-on-the-island/25?language=es\n\nTienes 10 % de descuento al reservar online directamente con nosotros; se aplica automáticamente. La fecha y las personas se eligen en el enlace.\n\n¿Desde dónde saldrías? Puedes salir *desde Cartagena* (desde el Muelle de la Bodeguita, ida y vuelta el mismo día) o, si ya estás *en las islas*, coordinamos la recogida en tu hotel."
+    },
+    {
+     "role": "user",
+     "content": "cuanto cuesta"
+    },
+    {
+     "role": "assistant",
+     "content": "El precio es por persona:\n\n• *Desde Cartagena:* 126 USD reservando online o 140 USD sin reserva online. En pesos: 448.000 COP online o 497.000 COP sin reserva online.\n• *Si ya estás en las Islas del Rosario:* 45 USD reservando online o 50 USD sin reserva online. En pesos: 150.000 COP online o 167.000 COP sin reserva online.\n\nEl precio es el mismo; solo cambia la moneda según si eres colombiano o residente en Colombia.\n\n¿Saldrías *desde Cartagena* o ya estás *en las Islas del Rosario*? Así te paso el plan y el enlace exactos. 🌊"
+    },
+    {
+     "role": "user",
+     "content": "?"
+    },
+    {
+     "role": "assistant",
+     "content": "¿Quieres saber el precio del snorkel? Depende del punto de salida:\n\n• *Desde Cartagena:* 126 USD online o 140 USD sin reserva online. En pesos: 448.000 COP online o 497.000 COP sin reserva online.\n• *Si ya estás en las Islas del Rosario:* 45 USD online o 50 USD sin reserva online. En pesos: 150.000 COP online o 167.000 COP sin reserva online.\n\nEl precio es el mismo; solo cambia la moneda según si eres colombiano o residente en Colombia.\n\n¿Saldrías *desde Cartagena* o ya estás *en las Islas del Rosario*? Así te paso el plan y el enlace exactos. 🌊"
+    },
+    {
+     "role": "user",
+     "content": "y que incluye?"
+    },
+    {
+     "role": "assistant",
+     "content": "Si sales desde Cartagena, incluye:\n*Desde Cartagena:*\n• Tarifa de ingreso al Parque Nacional Natural\n• Seguro de la actividad\n• Transporte en lancha Cartagena-Islas-Cartagena\n• 2 salidas guiadas con guía local\n• Equipo de snorkeling\n• Almuerzo\n• Aporte eco-social a DIVE TO HEAL\n\n*Si ya estás en las Islas del Rosario:*\n• Recogida en hotel (si tiene acceso marítimo)\n• Seguro\n• Equipo de snorkeling\n• Profesional PADI acompañando la actividad\n*Desde Cartagena:*\n• Punto de encuentro: Muelle de la Bodeguita a las 8:00 a.m. (a 5 min del centro histórico)\n• Traslado en lancha rápida (aprox. 1 hora) a las Islas del Rosario\n• Bienvenida en nuestra base en las islas\n• Entrega de equipo de snorkeling\n• 2 salidas guiadas de snorkel + intervalo de superficie\n• Almuerzo en las instalaciones del hotel\n• Regreso a Cartagena a las 3:00 p.m. (llegada estimada 4:15 p.m.)\n\n*Si ya estás en las Islas del Rosario:*\n• Recogida en tu hotel entre 9:30 y 9:45 (si tiene acceso por lancha)\n• Traslado a nuestra base y entrega de equipo de snorkeling\n• 2 salidas de snorkeling en los arrecifes + intervalo de superficie en la base\n• Regreso al hotel hacia las 12:00-13:00\n*Desde Cartagena:* Muelle de la Bodeguita, a 5 minutos del centro histórico, a las 8:00 AM. Saliendo desde Cartagena no hay recogida en el hotel: cada persona llega por su cuenta al muelle (el transporte terrestre hasta el muelle no está incluido).\n\n*Si ya estás en las Islas del Rosario:* Si ya estás en las Islas del Rosario y tu hotel tiene acceso marítimo, la recogida y el regreso en lancha están incluidos sin cargo adicional. Si ya estás en las Islas del Rosario, coordinamos recogida y regreso desde hoteles con acceso marítimo. En algunos casos la lancha llega directo al hotel; en otros te indicamos el muelle o punto más cercano. Estos planes manejan precios diferentes porque no incluyen transporte desde Cartagena ni almuerzo.\n\nSi ya estás en las Islas del Rosario, incluye:\n\n\n\n\n¿Saldrías *desde Cartagena* o ya estás *en las Islas del Rosario*? Así te paso el plan y el enlace exactos. 🌊"
+    },
+    {
+     "role": "user",
+     "content": "yo soy residente"
+    },
+    {
+     "role": "assistant",
+     "content": "¡Perfecto! 🙌\n\n¿Desde dónde saldrías? Puedes salir *desde Cartagena* (desde el Muelle de la Bodeguita, ida y vuelta el mismo día) o, si ya estás *en las islas*, coordinamos la recogida en tu hotel."
+    }
+   ],
+   "ronda": "2026-10-26-integra4-B",
+   "tarea": "LAT-9",
+   "id": "l9p2-25"
+  },
+  {
+   "dialogo": "certificado-fecha-precio-cop-descuento-transferencia",
+   "criterio": "lat9p2:pregunta",
+   "pedia": "La respuesta contesta a lo que dice el cliente en su último mensaje (si pregunta algo, lo contesta; si da las gracias, comenta algo o da un dato, lo reconoce sin ignorarlo) y termina con UNA sola pregunta de la reserva, la que toca: no vuelve a preguntar un dato que el cliente acaba de dar ni hace dos preguntas seguidas, y no pone «¡Perfecto!» o similar delante si el cliente no contestó lo que se le preguntó.",
+   "veredicto": "no_cumple",
+   "motivo_juez": "Riesgo en este turno: la respuesta a la pregunta y la pregunta de la reserva pegadas (dos preguntas seguidas, o una pregunta por un dato que el cliente acaba de dar).",
+   "turno": "6",
+   "pieza": "pregunta",
+   "mensaje_cliente": "Como esta el precio?",
+   "respuesta_ronda": "¡Claro! Como tienes cédula de extranjería, pagas en pesos colombianos; el precio es el mismo, solo cambia la moneda.\n\nEl precio online incluye el 10% de descuento por reservar en la web.\n\nPara darte el precio exacto necesito saber desde dónde sales: ¿saldrías *desde Cartagena* o ya estás *en las Islas del Rosario*? Los planes y los precios cambian según el punto de salida. 🌊",
+   "historial": [
+    {
+     "role": "user",
+     "content": "Buzos certificados"
+    },
+    {
+     "role": "assistant",
+     "content": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\nComo ya eres buzo certificado, te propongo la *salida de 2 inmersiones* en las Islas del Rosario; si quieres más días, hay *paquetes de varias inmersiones*, y si buscas subir de nivel, el *curso Advanced* o una especialidad. ¿Cuál te interesa? 🤿"
+    },
+    {
+     "role": "user",
+     "content": "Me gustaria saber las salidas para 17 enero"
+    },
+    {
+     "role": "assistant",
+     "content": "Ver opciones y reservar: https://divingplanet.org/buceo-islas-del-rosario/\n\nEn el enlace puedes seleccionar la fecha y el número de personas.\n\nPara darte el precio exacto necesito saber desde dónde sales: ¿saldrías *desde Cartagena* o ya estás *en las Islas del Rosario*? Los planes y los precios cambian según el punto de salida. 🌊"
+    },
+    {
+     "role": "user",
+     "content": "Como estan las salidas?"
+    },
+    {
+     "role": "assistant",
+     "content": "¡Las salidas para buzos certificados operan todos los días, salvo el 25 de diciembre y el 1 de enero, si el clima permite navegar con seguridad! Desde Cartagena, la salida es a las 8:00 a. m. del Muelle de la Bodeguita y el regreso estimado es a las 4:15 p. m.\n\nPuedes elegir entre 1 o 2 inmersiones. ¿Saldrías desde Cartagena o ya estás en las Islas del Rosario?"
+    },
+    {
+     "role": "user",
+     "content": "Si, pero puede pasar de ir al mismo punto o me llevan a otros puntos?"
+    },
+    {
+     "role": "assistant",
+     "content": "¡Sí, las inmersiones se realizan en distintos puntos de buceo de las Islas del Rosario! El punto específico de la salida no lo tengo a la mano; ¿quieres que te lo confirme un asesor del equipo? ¿Saldrías desde Cartagena o ya estás en las islas?"
+    },
+    {
+     "role": "user",
+     "content": "Yo tengo extrangeria"
+    },
+    {
+     "role": "assistant",
+     "content": "¡Perfecto! 🙌\n\n¿Te animas con la *salida de 2 inmersiones*, un *paquete de varios días* o un *curso avanzado*? 🌊"
+    }
+   ],
+   "ronda": "2026-10-26-integra4-B",
+   "tarea": "LAT-9",
+   "id": "l9p2-26"
+  },
+  {
+   "dialogo": "acompanante-madre-desde-cartagena",
+   "criterio": "lat9p2:pregunta",
+   "pedia": "La respuesta contesta a lo que dice el cliente en su último mensaje (si pregunta algo, lo contesta; si da las gracias, comenta algo o da un dato, lo reconoce sin ignorarlo) y termina con UNA sola pregunta de la reserva, la que toca: no vuelve a preguntar un dato que el cliente acaba de dar ni hace dos preguntas seguidas, y no pone «¡Perfecto!» o similar delante si el cliente no contestó lo que se le preguntó.",
+   "veredicto": "no_cumple",
+   "motivo_juez": "Riesgo en este turno: la respuesta a la pregunta y la pregunta de la reserva pegadas (dos preguntas seguidas, o una pregunta por un dato que el cliente acaba de dar).",
+   "turno": "3",
+   "pieza": "pregunta",
+   "mensaje_cliente": "Mi madre puede acompañarme en el buceo y se quedar en la isla de apoyo?",
+   "respuesta_ronda": "Sí, tu mamá puede acompañarte en la lancha y quedarse en nuestra base de la isla mientras buceas. Si salen desde Cartagena, el plan de acompañante incluye lancha, almuerzo, seguro y entrada al Parque Nacional; si ya están en las islas, incluye seguro y entrada, pero no almuerzo. No incluye alojamiento.\n\n¿Saldrían desde Cartagena o ya estarán en las islas?",
+   "historial": [
+    {
+     "role": "user",
+     "content": "Hola, buenas tardes!"
+    },
+    {
+     "role": "assistant",
+     "content": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\nCuéntame, ¿qué te gustaría vivir con nosotros? 🤿\n• *Buceo* en las Islas del Rosario, si ya eres buzo certificado\n• *Minicurso* para probar el buceo por primera vez (¡no necesitas experiencia!)\n• *Snorkel* para disfrutar el arrecife desde la superficie, ideal en familia\n• *Cursos PADI* completos, del Open Water en adelante\nDime qué te llama la atención y lo armamos juntos. 🌊"
+    },
+    {
+     "role": "user",
+     "content": "Una consulta"
+    },
+    {
+     "role": "assistant",
+     "content": "¡Perfecto! 🙌\n\n¿Con cuál te animas — *buceo*, *minicurso*, *snorkel* o un *curso PADI*? 🌊"
+    }
+   ],
+   "ronda": "2026-10-26-integra4-B",
+   "tarea": "LAT-9",
+   "id": "l9p2-27"
+  },
+  {
+   "dialogo": "grupo-mixto-precio-cop-total",
+   "criterio": "lat9p2:pregunta",
+   "pedia": "La respuesta contesta a lo que dice el cliente en su último mensaje (si pregunta algo, lo contesta; si da las gracias, comenta algo o da un dato, lo reconoce sin ignorarlo) y termina con UNA sola pregunta de la reserva, la que toca: no vuelve a preguntar un dato que el cliente acaba de dar ni hace dos preguntas seguidas, y no pone «¡Perfecto!» o similar delante si el cliente no contestó lo que se le preguntó.",
+   "veredicto": "no_cumple",
+   "motivo_juez": "Riesgo en este turno: la respuesta a la pregunta y la pregunta de la reserva pegadas (dos preguntas seguidas, o una pregunta por un dato que el cliente acaba de dar).",
+   "turno": "4",
+   "pieza": "pregunta",
+   "mensaje_cliente": "Cual seria el valor en COP?",
+   "respuesta_ronda": "El Minicurso de Buceo cuesta *655.000 COP por persona* reservando y pagando online, con el 10 % de descuento aplicado. Sin reserva online, cuesta *727.000 COP por persona*.\n\nEl precio en COP aplica para personas colombianas o residentes en Colombia, incluidas quienes tienen cédula de extranjería. El precio es el mismo; solo cambia la moneda.\n\nhttps://book.divingplanet.org/book/minicurso-de-buceo/2?language=es",
+   "historial": [
+    {
+     "role": "user",
+     "content": "Busco el seguinte:\nVamos en família a Cartagena. 1 buzo avanzado y 2 para bautismo"
+    },
+    {
+     "role": "assistant",
+     "content": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\nÚltima cosa para darte el precio y el link correctos: ¿son de nacionalidad colombiana o tienen cédula de extranjería?"
+    },
+    {
+     "role": "user",
+     "content": "Para el sabado, 30/05"
+    },
+    {
+     "role": "assistant",
+     "content": "¡Perfecto! 🙌\n\nÚltima cosa para darte el precio y el link correctos: ¿son de nacionalidad colombiana o tienen cédula de extranjería?"
+    },
+    {
+     "role": "user",
+     "content": "Muchas gracias!"
+    },
+    {
+     "role": "assistant",
+     "content": "¡Perfecto! 🙌\n\nÚltima cosa para darte el precio y el link correctos: ¿son de nacionalidad colombiana o tienen cédula de extranjería?"
+    }
+   ],
+   "ronda": "2026-10-26-integra4-B",
+   "tarea": "LAT-9",
+   "id": "l9p2-28"
+  },
+  {
+   "dialogo": "precio-desde-islas-vs-cartagena",
+   "criterio": "lat9p2:pregunta",
+   "pedia": "La respuesta contesta a lo que dice el cliente en su último mensaje (si pregunta algo, lo contesta; si da las gracias, comenta algo o da un dato, lo reconoce sin ignorarlo) y termina con UNA sola pregunta de la reserva, la que toca: no vuelve a preguntar un dato que el cliente acaba de dar ni hace dos preguntas seguidas, y no pone «¡Perfecto!» o similar delante si el cliente no contestó lo que se le preguntó.",
+   "veredicto": "no_cumple",
+   "motivo_juez": "Riesgo en este turno: la respuesta a la pregunta y la pregunta de la reserva pegadas (dos preguntas seguidas, o una pregunta por un dato que el cliente acaba de dar).",
+   "turno": "2",
+   "pieza": "pregunta",
+   "mensaje_cliente": "Gracias por la información.\nMe podrías decir cual es el hotel en islas de Rosario? Para evaluar si tomar la propuesta desde Cartagena o quedarnos en el Hotel",
+   "respuesta_ronda": "¡Claro! Nuestra base de buceo está en dos hoteles de Isla Grande: *San Pedro de Majagua* y *Cocoliso*. También pueden hospedarse en otros hoteles con acceso marítimo, como Rosario de Mar, Secreto, Ubuntu, Mulata, Eco Hotel Las Palmeras o Pao Pao.\n\nEl alojamiento no está incluido y se reserva directamente con el hotel. Si se quedan en las islas, la recogida y el regreso en lancha están incluidos si el hotel tiene acceso marítimo; desde Cartagena, la salida es desde el Muelle de la Bodeguita.\n\n¿Quieren que les comparta también los precios de las inmersiones desde Cartagena y desde las islas para comparar?\n\nMuelle de la Bodeguita, a 5 minutos del centro histórico, a las 8:00 AM. Saliendo desde Cartagena no hay recogida en el hotel: cada persona llega por su cuenta al muelle (el transporte terrestre hasta el muelle no está incluido).\n\n¿Desde dónde saldrías? Puedes salir *desde Cartagena* (desde el Muelle de la Bodeguita, ida y vuelta el mismo día) o, si ya estás *en las islas*, coordinamos la recogida en tu hotel.",
+   "historial": [
+    {
+     "role": "user",
+     "content": "Hola!! Te contacto desde Argentina.  Estaremos visitando Cartagena y queria coordinar inmersiones en Isla del Rosario.  Somos una pareja Advanced O.W."
+    },
+    {
+     "role": "assistant",
+     "content": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\n¿Desde dónde saldrías? Puedes salir *desde Cartagena* (desde el Muelle de la Bodeguita, ida y vuelta el mismo día) o, si ya estás *en las islas*, coordinamos la recogida en tu hotel."
+    }
+   ],
+   "ronda": "2026-10-26-integra4-B",
+   "tarea": "LAT-9",
+   "id": "l9p2-29"
+  },
+  {
+   "dialogo": "paquete-5-buceos-precio-overnight-isla-grande-baru",
+   "criterio": "lat9p2:pregunta",
+   "pedia": "La respuesta contesta a lo que dice el cliente en su último mensaje (si pregunta algo, lo contesta; si da las gracias, comenta algo o da un dato, lo reconoce sin ignorarlo) y termina con UNA sola pregunta de la reserva, la que toca: no vuelve a preguntar un dato que el cliente acaba de dar ni hace dos preguntas seguidas, y no pone «¡Perfecto!» o similar delante si el cliente no contestó lo que se le preguntó.",
+   "veredicto": "no_cumple",
+   "motivo_juez": "Riesgo en este turno: la respuesta a la pregunta y la pregunta de la reserva pegadas (dos preguntas seguidas, o una pregunta por un dato que el cliente acaba de dar).",
+   "turno": "4",
+   "pieza": "pregunta",
+   "mensaje_cliente": "Looking for recommendations for hotels for a solo backpacker is Isla Grande part of rosario island?",
+   "respuesta_ronda": "Yes—Isla Grande is one of the Rosario Islands, and our dive base is there at Hotel San Pedro de Majagua and Hotel Cocoliso.\n\nFor other places to stay with maritime access, you could look at Rosario de Mar, Secreto, Ubuntu, Mulata, Eco Hotel Las Palmeras, or Pao Pao. Accommodation isn’t included in the dive plans, so you’d book directly with the hotel. I don’t have specific hostel or budget recommendations, but would you like help choosing a dive plan that fits your stay?",
+   "historial": [
+    {
+     "role": "user",
+     "content": "Hello My name is [NOMBRE], i'd like to inquiry about the modalities for a 2 day dive package at the rosario islands. i'll be heading in on april 13th and 14th leaving on the 15th in the morning. What do i need to bring. i<ll be in Cartagena, is it hard to get to your location, any advice?"
+    },
+    {
+     "role": "assistant",
+     "content": "Hi! 🪸 I'm *Coral* from *Diving Planet* — we dive year-round in the Rosario Islands, departing from Cartagena or right from the islands. So happy to have you here! I'd love to help you put your plan together. 🌊\n\nThe Rosario Islands are a beautiful place to dive! For a two-day trip departing from Cartagena, there are two options for certified divers:\n\n- *4 dives over 2 days:* 4 daytime dives — *316 USD / 1,154,000 COP online* or *351 USD / 1,282,000 COP regular*.\n- *5 dives over 2 days:* 4 daytime dives plus 1 night dive — *392 USD / 1,429,000 COP online* or *436 USD / 1,587,000 COP regular*.\n\nBoth include boat transport from Cartagena and diving equipment. The 4-dive option includes lunch on day 1; the 5-dive option also includes lunch on day 1. Accommodation on the islands isn’t included, and you’ll need to stay there overnight. The boat returns to Cartagena on day 2 at 3:00 p.m., arriving around 4:15 p.m., so it wouldn’t fit with leaving on the 15th in the morning. You’d need to arrange a different return plan with a team advisor.\n\nPlease bring your certification card, swimsuit, towel, sunscreen, sunglasses, and comfortable clothes. The meeting point is *Muelle de la Bodeguita*, about 5 minutes from the historic center, at *8:00 a.m.* There’s no hotel pickup in Cartagena, so you’ll need to get to the dock yourself; ground transport isn’t included.\n\nIf you’ve gone more than 2 years since your last dive, a refresher is normally required. Would you like me to connect you with a team advisor about your return on the 15th and the best package for your dates?\n\nYou'll also need:\n• To process the insurance, you must complete the form we send in the booking confirmation email.\n\nGreat! So I can recommend the perfect plan: Are you a certified diver? (And if not, no worries — the mini-course is the ideal way to start. 🤿)"
+    },
+    {
+     "role": "user",
+     "content": "certified diver"
+    },
+    {
+     "role": "assistant",
+     "content": "Perfect! 🙌\n\nAnd how many people should I plan for? That way I can give you the exact price. 😊"
+    },
+    {
+     "role": "user",
+     "content": "beginner"
+    },
+    {
+     "role": "assistant",
+     "content": "Perfect! 🙌\n\nAnd how many people should I plan for? That way I can give you the exact price. 😊"
+    }
+   ],
+   "ronda": "2026-10-26-integra4-B",
+   "tarea": "LAT-9",
+   "id": "l9p2-30"
+  },
+  {
+   "dialogo": "pareja-certificados-cop-descuento-almuerzo",
+   "criterio": "lat9p2:pregunta",
+   "pedia": "La respuesta contesta a lo que dice el cliente en su último mensaje (si pregunta algo, lo contesta; si da las gracias, comenta algo o da un dato, lo reconoce sin ignorarlo) y termina con UNA sola pregunta de la reserva, la que toca: no vuelve a preguntar un dato que el cliente acaba de dar ni hace dos preguntas seguidas, y no pone «¡Perfecto!» o similar delante si el cliente no contestó lo que se le preguntó.",
+   "veredicto": "no_cumple",
+   "motivo_juez": "Riesgo en este turno: la respuesta a la pregunta y la pregunta de la reserva pegadas (dos preguntas seguidas, o una pregunta por un dato que el cliente acaba de dar).",
+   "turno": "4",
+   "pieza": "pregunta",
+   "mensaje_cliente": "incluye el almuerzo?",
+   "respuesta_ronda": "Sí, el almuerzo está incluido. • Tarifa de ingreso al Parque Nacional Natural\n• Seguro de buceo obligatorio\n• Transporte en lancha rápida Cartagena-Islas-Cartagena\n• 2 inmersiones guiadas con un profesional PADI certificado\n• Equipo de buceo\n• Almuerzo\n• Aporte eco-social a DIVE TO HEAL\n\n• Punto de encuentro: Muelle de la Bodeguita a las 8:00 a.m. (a 5 min del centro histórico)\n• Traslado en lancha rápida (aprox. 1 hora) a las Islas del Rosario\n• Bienvenida en nuestra base de buceo en las islas y entrega de equipo\n• 2 inmersiones en arrecifes + intervalo de superficie\n• Almuerzo en las instalaciones del hotel\n• Regreso a Cartagena a las 3:00 p.m. (llegada estimada 4:15 p.m.)",
+   "historial": [
+    {
+     "role": "user",
+     "content": "somos buzos certificados"
+    },
+    {
+     "role": "assistant",
+     "content": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\nComo ya eres buzo certificado, te propongo la *salida de 2 inmersiones* en las Islas del Rosario; si quieres más días, hay *paquetes de varias inmersiones*, y si buscas subir de nivel, el *curso Advanced* o una especialidad. ¿Cuál te interesa? 🤿"
+    },
+    {
+     "role": "user",
+     "content": "nos gusta, somos 2 personas y queremos el de saliendo de cartagena, además somos colombianos"
+    },
+    {
+     "role": "assistant",
+     "content": "¡Perfecto! 🙌\n\nTe recomiendo el plan de *2 inmersiones en 1 día* en las Islas del Rosario. (Si prefieres un *paquete multi-día* de 3 o más inmersiones, dímelo.)\n\n¿Ha pasado *más de 2 años* desde la última inmersión de alguno del grupo?"
+    },
+    {
+     "role": "user",
+     "content": "dice que hay un bono aadicional"
+    },
+    {
+     "role": "assistant",
+     "content": "No existe ningún código de descuento ni bono adicional: el 10 % de descuento se aplica directamente al reservar online en la web, y el precio online ya lo lleva.\n\nSobre los descuentos:\n• 10% de descuento reservando online directamente con nosotros a través de la página web, no a través de terceros como PADI. Este es el descuento online estándar y se aplica automáticamente al reservar por la web.\n• 10% de descuento para grupos de 5 personas o más, que se suma al 10% de descuento online (20% total reservando online). No aplica automáticamente: el grupo debe contactar al equipo para aplicarlo. Hay que pedirlo al equipo ANTES de pagar: si el grupo paga sin haberlo pedido, pierde el descuento (no se devuelve después). Aplica a buceo recreativo, minicurso y snorkel; no aplica a cursos PADI. Para el plan de acompañante (quien va en la lancha sin bucear ni hacer snorkel), si entra en el descuento de grupo lo confirma el equipo al pedir el descuento, antes de pagar.\n• 5% de descuento si traes tu propio equipo COMPLETO (regulador, BCD/chaleco, traje, máscara, aletas, etc.), solo en buceo recreativo y cursos PADI: no aplica al minicurso ni al snorkel, aunque traigas el equipo completo. Tampoco aplica si solo traes parte del equipo.\n• Los clientes colombianos y residentes en Colombia pagan en pesos colombianos (COP). Los clientes internacionales pagan en dólares (USD). No hay un descuento especial por ser colombiano; el precio es el mismo, solo cambia la moneda.\n• Los descuentos no son acumulables excepto en casos especiales autorizados por el staff o donde se indique explícitamente lo contrario (ej: grupo + online sí se suman; equipo propio + online también).\n\n¿Te refieres a un bono adicional? En los hechos disponibles no aparece información sobre un bono.\n\n• 10% de descuento reservando online directamente con nosotros a través de la página web, no a través de terceros como PADI. Este es el descuento online estándar y se aplica automáticamente al reservar por la web.\n• 10% de descuento para grupos de 5 personas o más, que se suma al 10% de descuento online (20% total reservando online). No aplica automáticamente: el grupo debe contactar al equipo para aplicarlo. Hay que pedirlo al equipo ANTES de pagar: si el grupo paga sin haberlo pedido, pierde el descuento (no se devuelve después). Aplica a buceo recreativo, minicurso y snorkel; no aplica a cursos PADI. Para el plan de acompañante (quien va en la lancha sin bucear ni hacer snorkel), si entra en el descuento de grupo lo confirma el equipo al pedir el descuento, antes de pagar.\n• 5% de descuento si traes tu propio equipo COMPLETO (regulador, BCD/chaleco, traje, máscara, aletas, etc.), solo en buceo recreativo y cursos PADI: no aplica al minicurso ni al snorkel, aunque traigas el equipo completo. Tampoco aplica si solo traes parte del equipo.\n• Los clientes colombianos y residentes en Colombia pagan en pesos colombianos (COP). Los clientes internacionales pagan en dólares (USD). No hay un descuento especial por ser colombiano; el precio es el mismo, solo cambia la moneda.\n• Los descuentos no son acumulables excepto en casos especiales autorizados por el staff o donde se indique explícitamente lo contrario (ej: grupo + online sí se suman; equipo propio + online también).\n\n🤿 *Salidas de Buceo - 2 inmersiones (1 día)*\n💰 2 × 630.000 COP p.p. = *1.260.000 COP*\n\nEl pago es en pesos colombianos (COP): pueden pagar *100 % online* o un *anticipo del 50 %* con el enlace, el QR o Llave que envía el asesor, y el *otro 50 % el día de la actividad*. Les paso con un asesor para coordinar el pago; enseguida se pone en contacto con ustedes. 🌊\n\n⚠️ Si alguno lleva *más de 2 años* sin bucear, se añade el *refresher* (repaso en el agua antes de la inmersión): *655.000 COP* por persona. ¿Es el caso de alguno de ustedes?"
+    }
+   ],
+   "ronda": "2026-10-26-integra4-B",
+   "tarea": "LAT-9",
+   "id": "l9p2-31"
+  },
+  {
+   "dialogo": "open-water-hoteles-noche-fotos-horario",
+   "criterio": "lat9p2:pregunta",
+   "pedia": "La respuesta contesta a lo que dice el cliente en su último mensaje (si pregunta algo, lo contesta; si da las gracias, comenta algo o da un dato, lo reconoce sin ignorarlo) y termina con UNA sola pregunta de la reserva, la que toca: no vuelve a preguntar un dato que el cliente acaba de dar ni hace dos preguntas seguidas, y no pone «¡Perfecto!» o similar delante si el cliente no contestó lo que se le preguntó.",
+   "veredicto": "no_cumple",
+   "motivo_juez": "Riesgo en este turno: la respuesta a la pregunta y la pregunta de la reserva pegadas (dos preguntas seguidas, o una pregunta por un dato que el cliente acaba de dar).",
+   "turno": "2",
+   "pieza": "pregunta",
+   "mensaje_cliente": "do you have any hotel in Rosario you recommend?",
+   "respuesta_ronda": "Our dive base is at *Hotel San Pedro de Majagua* and *Hotel Cocoliso* on Isla Grande, so staying at either is convenient for diving. You can also stay at Rosario de Mar, Secreto, Ubuntu, Mulata, Eco Hotel Las Palmeras, or Pao Pao; we can coordinate boat pickup if your hotel has maritime access. Accommodation isn’t included in the course and must be booked directly with the hotel.\n\nWould you like to continue with the Open Water course details?",
+   "historial": [
+    {
+     "role": "user",
+     "content": "Hi, I'm interested in taking PADI Open Water Diver certification course."
+    },
+    {
+     "role": "assistant",
+     "content": "Hi! 🪸 I'm *Coral* from *Diving Planet* — we dive year-round in the Rosario Islands, departing from Cartagena or right from the islands. So happy to have you here! I'd love to help you put your plan together. 🌊\n\nWhere would you be departing from? This plan takes 2 days and you need to *stay on the islands* (accommodation is not included): you can leave *from Cartagena* on the first day or, if you're already *on the islands*, we arrange pickup at your hotel."
+    }
+   ],
+   "ronda": "2026-10-26-integra4-B",
+   "tarea": "LAT-9",
+   "id": "l9p2-32"
+  },
+  {
+   "dialogo": "colombianos-precio-minicurso-dos-inmersiones",
+   "criterio": "lat9p2:pregunta",
+   "pedia": "La respuesta contesta a lo que dice el cliente en su último mensaje (si pregunta algo, lo contesta; si da las gracias, comenta algo o da un dato, lo reconoce sin ignorarlo) y termina con UNA sola pregunta de la reserva, la que toca: no vuelve a preguntar un dato que el cliente acaba de dar ni hace dos preguntas seguidas, y no pone «¡Perfecto!» o similar delante si el cliente no contestó lo que se le preguntó.",
+   "veredicto": "no_cumple",
+   "motivo_juez": "Riesgo en este turno: la respuesta a la pregunta y la pregunta de la reserva pegadas (dos preguntas seguidas, o una pregunta por un dato que el cliente acaba de dar).",
+   "turno": "5",
+   "pieza": "pregunta",
+   "mensaje_cliente": "Eso es una tarifa diferente?",
+   "respuesta_ronda": "No, el precio no cambia por hacer las dos inmersiones en puntos distintos: ambas están incluidas en la tarifa de la salida de dos inmersiones. Cada una dura entre 40 y 50 minutos.\n\n¿Con cuál te animas — *buceo*, *minicurso*, *snorkel* o un *curso PADI*? 🌊",
+   "historial": [
+    {
+     "role": "user",
+     "content": "Ya vi la página, está increíble!"
+    },
+    {
+     "role": "assistant",
+     "content": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\nCuéntame, ¿qué te gustaría vivir con nosotros? 🤿\n• *Buceo* en las Islas del Rosario, si ya eres buzo certificado\n• *Minicurso* para probar el buceo por primera vez (¡no necesitas experiencia!)\n• *Snorkel* para disfrutar el arrecife desde la superficie, ideal en familia\n• *Cursos PADI* completos, del Open Water en adelante\nDime qué te llama la atención y lo armamos juntos. 🌊"
+    },
+    {
+     "role": "user",
+     "content": "Cuál es la tarifa especial para Colombianos? Mi pareja y yo somos de Bogotá"
+    },
+    {
+     "role": "assistant",
+     "content": "¡Qué bueno que tú y tu pareja sean de Bogotá! No hay una tarifa especial para colombianos: el precio es el mismo, solo que ustedes pagan en pesos colombianos (COP). También pueden reservar directamente en la web con el 10% de descuento online.\n\nLos grupos de 5 o más personas tienen un 10 % de descuento de grupo, que se suma al 10 % online, en el buceo recreativo, el minicurso y el snorkel (no en los cursos PADI); no se aplica solo: hay que pedírselo al equipo antes de pagar.\n\n¿Qué actividad les interesa? Así te comparto la tarifa en COP."
+    },
+    {
+     "role": "user",
+     "content": "Y de cuata duración aproximada sería la inmersión, tengo entendido que son una o dos?"
+    },
+    {
+     "role": "assistant",
+     "content": "¡Sí, las salidas de buceo incluyen dos inmersiones! Cada una dura aproximadamente entre 40 y 50 minutos, y se realizan en dos puntos distintos. ¿Te interesa la salida de un día desde Cartagena?\n\nMuelle de la Bodeguita, a 5 minutos del centro histórico, a las 8:00 AM. Saliendo desde Cartagena no hay recogida en el hotel: cada persona llega por su cuenta al muelle (el transporte terrestre hasta el muelle no está incluido).\n\nSi ya estás en las Islas del Rosario y tu hotel tiene acceso marítimo, la recogida y el regreso en lancha están incluidos sin cargo adicional.\n\n¿Con cuál te animas — *buceo*, *minicurso*, *snorkel* o un *curso PADI*? 🌊"
+    },
+    {
+     "role": "user",
+     "content": "Yo vi un video en YT de alguien que hizo el paquete con ustedes e hicieron dos inmersiones en dos distintos puntos"
+    },
+    {
+     "role": "assistant",
+     "content": "¡Perfecto! 🙌\n\n¿Con cuál te animas — *buceo*, *minicurso*, *snorkel* o un *curso PADI*? 🌊"
+    }
+   ],
+   "ronda": "2026-10-26-integra4-B",
+   "tarea": "LAT-9",
+   "id": "l9p2-33"
+  },
+  {
+   "dialogo": "certificado-precio-dia-paquete-5-y-hoteles-base",
+   "criterio": "lat9p2:pregunta",
+   "pedia": "La respuesta contesta a lo que dice el cliente en su último mensaje (si pregunta algo, lo contesta; si da las gracias, comenta algo o da un dato, lo reconoce sin ignorarlo) y termina con UNA sola pregunta de la reserva, la que toca: no vuelve a preguntar un dato que el cliente acaba de dar ni hace dos preguntas seguidas, y no pone «¡Perfecto!» o similar delante si el cliente no contestó lo que se le preguntó.",
+   "veredicto": "no_cumple",
+   "motivo_juez": "Riesgo en este turno: la respuesta a la pregunta y la pregunta de la reserva pegadas (dos preguntas seguidas, o una pregunta por un dato que el cliente acaba de dar).",
+   "turno": "3",
+   "pieza": "pregunta",
+   "mensaje_cliente": "So if I book for 2 days are we going to the same spots or do different one within San Brenardo National park?",
+   "respuesta_ronda": "Yes—your dives are in the Rosario Islands, within the Corales del Rosario y San Bernardo National Natural Park. For the 2-day package, the specific dive sites depend on the plan and conditions; the instructor decides on the day if a site needs to be changed. Would you like me to help you choose between the 4-daytime-dive and 5-dive package?",
+   "historial": [
+    {
+     "role": "user",
+     "content": "Hi, I plan on being in Cartagena and do scuba diving on April 21 and 22. I have open water, advanced open water and deep diver certs. Please advise what options do you have for scuba diving and how much it costs"
+    },
+    {
+     "role": "assistant",
+     "content": "Hi! 🪸 I'm *Coral* from *Diving Planet* — we dive year-round in the Rosario Islands, departing from Cartagena or right from the islands. So happy to have you here! I'd love to help you put your plan together. 🌊\n\nThe Rosario Islands are a beautiful place to dive, and your certifications open up several options. For April 21–22, these are the certified-diver plans departing from Cartagena (prices are per person):\n\n- *4 dives over 2 days, daytime dives:* online *316 USD / 1,154,000 COP*; regular *351 USD / 1,282,000 COP*.\n- *5 dives over 2 days, including a night dive:* online *392 USD / 1,429,000 COP*; regular *436 USD / 1,587,000 COP*.\n- *3 dives in 1 day, including a night dive:* online *287 USD / 1,017,000 COP*; regular *319 USD / 1,130,000 COP*.\n- *2 dives in 1 day:* online *178 USD / 630,000 COP*; regular *197 USD / 700,000 COP*.\n\nThe online prices include the 10% website-booking discount. The 2-day packages require staying overnight on the islands; accommodation isn’t included. The 1-day package with a night dive also requires an overnight stay. Colombians and residents of Colombia pay in COP; other international guests pay in USD—the price is the same, only the currency changes.\n\nWould you like the booking link for one of these options?\n\nTwo-day courses (Open Water, Referral Course, Advanced, Rescue and Mindful Diving) require accommodation on the islands: at least one night, the night of day 1 (there is no return to Cartagena on day 1). There is no option to commute from Cartagena on both days. Accommodation is not included and must be booked directly with the hotel. The same goes for multi-day dive packages (4, 5, 7 and 9 dives): you stay on the islands, and accommodation, which is not included, is booked directly with the hotel.\n\nAnd how many people should I plan for? That way I can give you the exact price. 😊"
+    },
+    {
+     "role": "user",
+     "content": "PADI open water, advanced open water and deep diver certs"
+    },
+    {
+     "role": "assistant",
+     "content": "Perfect! 🙌\n\nAnd how many people should I plan for? That way I can give you the exact price. 😊"
+    }
+   ],
+   "ronda": "2026-10-26-integra4-B",
+   "tarea": "LAT-9",
+   "id": "l9p2-34"
+  },
+  {
+   "dialogo": "minicurso-precio-colombianos-origen-pendiente",
+   "criterio": "lat9p2:pregunta",
+   "pedia": "La respuesta contesta a lo que dice el cliente en su último mensaje (si pregunta algo, lo contesta; si da las gracias, comenta algo o da un dato, lo reconoce sin ignorarlo) y termina con UNA sola pregunta de la reserva, la que toca: no vuelve a preguntar un dato que el cliente acaba de dar ni hace dos preguntas seguidas, y no pone «¡Perfecto!» o similar delante si el cliente no contestó lo que se le preguntó.",
+   "veredicto": "no_cumple",
+   "motivo_juez": "Riesgo en este turno: la respuesta a la pregunta y la pregunta de la reserva pegadas (dos preguntas seguidas, o una pregunta por un dato que el cliente acaba de dar).",
+   "turno": "4",
+   "pieza": "pregunta",
+   "mensaje_cliente": "Ese es el precio para ciudadanos colombianos? somos de Bogotá",
+   "respuesta_ronda": "El precio es el mismo; solo cambia la moneda. Las personas colombianas o residentes en Colombia pagan en pesos colombianos (COP). No hay un descuento especial por ser colombiano.\n\n• 10% de descuento reservando online directamente con nosotros a través de la página web, no a través de terceros como PADI. Este es el descuento online estándar y se aplica automáticamente al reservar por la web.\n• 10% de descuento para grupos de 5 personas o más, que se suma al 10% de descuento online (20% total reservando online). No aplica automáticamente: el grupo debe contactar al equipo para aplicarlo. Hay que pedirlo al equipo ANTES de pagar: si el grupo paga sin haberlo pedido, pierde el descuento (no se devuelve después). Aplica a buceo recreativo, minicurso y snorkel; no aplica a cursos PADI. Para el plan de acompañante (quien va en la lancha sin bucear ni hacer snorkel), si entra en el descuento de grupo lo confirma el equipo al pedir el descuento, antes de pagar.\n• 5% de descuento si traes tu propio equipo COMPLETO (regulador, BCD/chaleco, traje, máscara, aletas, etc.), solo en buceo recreativo y cursos PADI: no aplica al minicurso ni al snorkel, aunque traigas el equipo completo. Tampoco aplica si solo traes parte del equipo.\n• Los clientes colombianos y residentes en Colombia pagan en pesos colombianos (COP). Los clientes internacionales pagan en dólares (USD). No hay un descuento especial por ser colombiano; el precio es el mismo, solo cambia la moneda.\n• Los descuentos no son acumulables excepto en casos especiales autorizados por el staff o donde se indique explícitamente lo contrario (ej: grupo + online sí se suman; equipo propio + online también).\n\nPara empezar, lo ideal es el *minicurso*: no hace falta experiencia ni certificación. ¿Te animas? (Si prefieres certificarte, está el *curso Open Water*.) 🤿",
+   "historial": [
+    {
+     "role": "user",
+     "content": "Me gustaría agendar un día de buceo con ustedes"
+    },
+    {
+     "role": "assistant",
+     "content": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\n¡Genial! Para recomendarte el plan perfecto: ¿Eres buzo certificado? (Y si no, ¡tranqui! El minicurso es ideal para empezar. 🤿)"
+    },
+    {
+     "role": "user",
+     "content": "Buceo para principiantes"
+    },
+    {
+     "role": "assistant",
+     "content": "¡Perfecto! 🙌\n\nPara una primera vez te recomiendo el *minicurso*: teoría, práctica en aguas tranquilas y una inmersión en el mar con instructor, sin necesidad de experiencia. Si lo que buscas es certificarte, está el *curso PADI Open Water*. ¿Te animas con el minicurso? 🤿"
+    },
+    {
+     "role": "user",
+     "content": "2 personas"
+    },
+    {
+     "role": "assistant",
+     "content": "¡Perfecto! 🙌\n\nPara empezar, lo ideal es el *minicurso*: no hace falta experiencia ni certificación. ¿Te animas? (Si prefieres certificarte, está el *curso Open Water*.) 🤿"
+    }
+   ],
+   "ronda": "2026-10-26-integra4-B",
+   "tarea": "LAT-9",
+   "id": "l9p2-35"
+  },
+  {
+   "dialogo": "principiante-hora-lugar-y-precio",
+   "criterio": "lat9p2:pregunta",
+   "pedia": "La respuesta contesta a lo que dice el cliente en su último mensaje (si pregunta algo, lo contesta; si da las gracias, comenta algo o da un dato, lo reconoce sin ignorarlo) y termina con UNA sola pregunta de la reserva, la que toca: no vuelve a preguntar un dato que el cliente acaba de dar ni hace dos preguntas seguidas, y no pone «¡Perfecto!» o similar delante si el cliente no contestó lo que se le preguntó.",
+   "veredicto": "no_cumple",
+   "motivo_juez": "Riesgo en este turno: la respuesta a la pregunta y la pregunta de la reserva pegadas (dos preguntas seguidas, o una pregunta por un dato que el cliente acaba de dar).",
+   "turno": "3",
+   "pieza": "pregunta",
+   "mensaje_cliente": "OK, could you just confirm at what time and where we make the appointment?",
+   "respuesta_ronda": "The meeting point and time depend on your departure:\n\n• *From Cartagena:* Muelle de la Bodeguita at 8:00 a.m., 5 minutes from the historic center. There’s no hotel pick-up; you’ll need to get to the dock on your own.\n\n• *If you’re already on the Rosario Islands:* boat pick-up is between 9:30 and 9:45 a.m., if your hotel has maritime access. The pick-up point may be your hotel or a nearby dock or meeting point.\n\nWould you leave *from Cartagena* or are you already *on the Rosario Islands*? Then I'll send you the exact plan and booking link. 🌊",
+   "historial": [
+    {
+     "role": "user",
+     "content": "Hello, is it possible to book for a diving cruise tomorrow, for 1 person?"
+    },
+    {
+     "role": "assistant",
+     "content": "Hi! 🪸 I'm *Coral* from *Diving Planet* — we dive year-round in the Rosario Islands, departing from Cartagena or right from the islands. So happy to have you here! I'd love to help you put your plan together. 🌊\n\nYes, there is availability. To book for tomorrow, please complete the booking on our website before 4:30 p.m. The booking system lets you select the date and number of people.\n\nGreat!\n\nThere is always availability: we operate every day, including public holidays, except December 25 and January 1; if sea conditions are not safe, the trip is rescheduled.\n\nSo I can recommend the perfect plan: Are you a certified diver? (And if not, no worries — the mini-course is the ideal way to start. 🤿)"
+    },
+    {
+     "role": "user",
+     "content": "I am a beginner ( I have made 4/5 divings before)"
+    },
+    {
+     "role": "assistant",
+     "content": "Perfect! 🙌\n\nFor a first time I'd recommend the *mini-course*: theory, practice in calm water and a sea dive with an instructor, no experience needed. If you want to get certified, there's the *PADI Open Water course*. Shall we go for the mini-course? 🤿"
+    }
+   ],
+   "ronda": "2026-10-26-integra4-B",
+   "tarea": "LAT-9",
+   "id": "l9p2-36"
+  },
+  {
+   "dialogo": "familia-mixta-precio-descuento-refresher",
+   "criterio": "lat9p2:pregunta",
+   "pedia": "La respuesta contesta a lo que dice el cliente en su último mensaje (si pregunta algo, lo contesta; si da las gracias, comenta algo o da un dato, lo reconoce sin ignorarlo) y termina con UNA sola pregunta de la reserva, la que toca: no vuelve a preguntar un dato que el cliente acaba de dar ni hace dos preguntas seguidas, y no pone «¡Perfecto!» o similar delante si el cliente no contestó lo que se le preguntó.",
+   "veredicto": "no_cumple",
+   "motivo_juez": "Riesgo en este turno: la respuesta a la pregunta y la pregunta de la reserva pegadas (dos preguntas seguidas, o una pregunta por un dato que el cliente acaba de dar).",
+   "turno": "3",
+   "pieza": "pregunta",
+   "mensaje_cliente": "So should I book 2  separately? One for diving and one for snorkeling",
+   "respuesta_ronda": "You can book the diving and snorkeling activities separately, but they can be part of the same outing. Snorkeling takes place in a different area from the dive sites; if there are few people, everyone travels on the same boat, otherwise the group may be split by activity.\n\nFor the booking links and prices, I’ll need to know whether you’re departing from Cartagena or already staying on the Rosario Islands. Which applies to you?",
+   "historial": [
+    {
+     "role": "user",
+     "content": "Hi There,\nI am looking to book 2 dives and snorkeling sessions for the following people.\n2 diving sessions - All PADI certified for open water.\n2 adults (ages 42, 19)\n1 youth (age 17)\nSnorkeling\n1 Adult (Age 43)\n2 kids (Ages 14, 10)\nCan you provide information and total price please\nThanks\n[NOMBRE]"
+    },
+    {
+     "role": "assistant",
+     "content": "Hi! 🪸 I'm *Coral* from *Diving Planet* — we dive year-round in the Rosario Islands, departing from Cartagena or right from the islands. So happy to have you here! I'd love to help you put your plan together. 🌊\n\nFor the *2-dive certified diving plan*, the price is per person:\n\n• *From Cartagena:* 178 USD online or 197 USD without booking online. In COP: 630.000 COP online or 700.000 COP without booking online.\n• *If you’re already on the Rosario Islands:* 124 USD online or 138 USD without booking online. In COP: 440.000 COP online or 489.000 COP without booking online.\n\nColombians and residents of Colombia pay in COP; all other international guests pay in USD. The price is the same—the currency changes, with no Colombian discount.\n\nI don’t have the snorkeling details or enough information to calculate a total.\n\nGroups of 5 or more get a 10% group discount, on top of the 10% online discount, on recreational diving, the mini-course and snorkeling (not on PADI courses); it is not applied automatically: it has to be requested from the team before paying.\n\nWould you leave *from Cartagena* or are you already *on the Rosario Islands*? Then I'll send you the exact plan and booking link. 🌊"
+    },
+    {
+     "role": "user",
+     "content": "May 3rd"
+    },
+    {
+     "role": "assistant",
+     "content": "Perfect! 🙌\n\nWhere would you be departing from? You can leave *from Cartagena* (from Muelle de la Bodeguita) or, if you're already *on the islands*, we arrange pickup at your hotel."
+    }
+   ],
+   "ronda": "2026-10-26-integra4-B",
+   "tarea": "LAT-9",
+   "id": "l9p2-37"
+  },
+  {
+   "dialogo": "precios-y-disponibilidad-con-negociacion",
+   "criterio": "lat9p2:pregunta",
+   "pedia": "La respuesta contesta a lo que dice el cliente en su último mensaje (si pregunta algo, lo contesta; si da las gracias, comenta algo o da un dato, lo reconoce sin ignorarlo) y termina con UNA sola pregunta de la reserva, la que toca: no vuelve a preguntar un dato que el cliente acaba de dar ni hace dos preguntas seguidas, y no pone «¡Perfecto!» o similar delante si el cliente no contestó lo que se le preguntó.",
+   "veredicto": "no_cumple",
+   "motivo_juez": "Riesgo en este turno: la respuesta a la pregunta y la pregunta de la reserva pegadas (dos preguntas seguidas, o una pregunta por un dato que el cliente acaba de dar).",
+   "turno": "6",
+   "pieza": "pregunta",
+   "mensaje_cliente": "Y en el caso de tomar solo el buceo doble?",
+   "respuesta_ronda": "El buceo doble de 1 día cuesta *178 USD online* o *197 USD sin reserva online*. Para colombianos y residentes en Colombia, el mismo precio es *630.000 COP online* o *700.000 COP sin reserva online*.\n\nLos cursos de 2 días (Open Water, Curso Referido, Advanced, Rescue y Mindful Diving) requieren alojamiento en las islas: al menos una noche, la del día 1 (el día 1 no se vuelve a Cartagena). No hay opción de ir y volver desde Cartagena ambos días. El alojamiento no está incluido y debe reservarse directamente con el hotel. Lo mismo en los paquetes de buceo de varios días (4, 5, 7 y 9 inmersiones): se duerme en las islas y el alojamiento, que no está incluido, se reserva directamente con el hotel.\n\nTe recomiendo el plan de *2 inmersiones en 1 día* en las Islas del Rosario. (Si prefieres un *paquete multi-día* de 3 o más inmersiones, dímelo.)\n\n¿Han pasado *más de 2 años* desde tu última inmersión?",
+   "historial": [
+    {
+     "role": "user",
+     "content": "Hola! Como estan? Me llamo [NOMBRE] soy buza advanced"
+    },
+    {
+     "role": "assistant",
+     "content": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\n¡Hola! Estamos muy bien, gracias 😊 ¡Encantada! Soy Coral, de Diving Planet. Qué chévere que seas buza Advanced. ¿Qué plan de buceo te gustaría hacer en las Islas del Rosario?"
+    },
+    {
+     "role": "user",
+     "content": "Queria saber los valores de dos buceos o del pack de 5 buceos en 2 dias"
+    },
+    {
+     "role": "assistant",
+     "content": "¡Claro! Para *2 inmersiones en 1 día*:\n\n• Desde Cartagena: *178 USD online* o *197 USD sin reserva online*; para colombianos o residentes en Colombia, *630.000 COP online* o *700.000 COP sin reserva online*.\n• Si ya estás en las Islas del Rosario: *124 USD online* o *138 USD sin reserva online*; para colombianos o residentes en Colombia, *440.000 COP online* o *489.000 COP sin reserva online*.\n\nEl *paquete de 5 inmersiones en 2 días* cuesta *392 USD online* o *436 USD sin reserva online*; para colombianos o residentes en Colombia, *1.429.000 COP online* o *1.587.000 COP sin reserva online*. El precio es el mismo; solo cambia la moneda según residencia o nacionalidad.\n\n¿Saldrías *desde Cartagena* o ya estás *en las Islas del Rosario*? Así te paso el plan y el enlace exactos. 🌊"
+    },
+    {
+     "role": "user",
+     "content": "Tienen disponibilidad para mañana?"
+    },
+    {
+     "role": "assistant",
+     "content": "Siempre hay disponibilidad, salvo que la salida se suspenda por condiciones meteorológicas adversas. Para mañana, la reserva debe hacerse antes de las 4:30 p. m. del día anterior; después de esa hora, el sistema solo permite reservar para el siguiente día disponible.\n\nLos cursos de 2 días (Open Water, Curso Referido, Advanced, Rescue y Mindful Diving) requieren alojamiento en las islas: al menos una noche, la del día 1 (el día 1 no se vuelve a Cartagena). No hay opción de ir y volver desde Cartagena ambos días. El alojamiento no está incluido y debe reservarse directamente con el hotel. Lo mismo en los paquetes de buceo de varios días (4, 5, 7 y 9 inmersiones): se duerme en las islas y el alojamiento, que no está incluido, se reserva directamente con el hotel.\n\nSiempre hay disponibilidad: operamos todos los días, festivos incluidos, salvo el 25 de diciembre y el 1 de enero; si el mar no está apto, la salida se reprograma.\n\n¿Saldrías *desde Cartagena* o ya estás *en las Islas del Rosario*? Así te paso el plan y el enlace exactos. 🌊"
+    },
+    {
+     "role": "user",
+     "content": "Desde cartagena porfi"
+    },
+    {
+     "role": "assistant",
+     "content": "¡Perfecto! Saliendo desde Cartagena, estos son los valores:\n\n- *2 inmersiones en 1 día:* 178 USD / 630.000 COP online; 197 USD / 700.000 COP tarifa normal.\n- *Paquete de 5 inmersiones en 2 días:* 392 USD / 1.429.000 COP online; 436 USD / 1.587.000 COP tarifa normal.\n\nEl paquete de 5 incluye un buceo nocturno y requiere pasar una noche en las islas; el alojamiento no está incluido. Para mañana, puedes revisar la fecha y reservar aquí: https://book.divingplanet.org/book/2-days-5-dives/9?language=es\n\nLa reserva para mañana debe hacerse antes de las 4:30 p. m. de hoy. ¿Cuál de los dos planes te interesa?"
+    },
+    {
+     "role": "user",
+     "content": "Que valor tiene? Y como es el itinerario?"
+    },
+    {
+     "role": "assistant",
+     "content": "Para el *paquete de 5 inmersiones en 2 días*, saliendo desde Cartagena, el valor es *392 USD online* o *436 USD sin reserva online*. Para colombianos y residentes en Colombia, el mismo precio es *1.429.000 COP online* o *1.587.000 COP sin reserva online*.\n\n*Itinerario:*\n\n• Día 1: encuentro en el Muelle de la Bodeguita a las 8:00 a. m. y salida en lancha rápida (aprox. 1 hora).\n• Llegada a la base en las islas y entrega del equipo.\n• 2 inmersiones, intervalo de superficie y almuerzo incluido.\n• Traslado al hotel seleccionado en las islas.\n• Día 2: traslados entre el hotel y la base en las islas.\n• 2 inmersiones en aguas abiertas.\n• Almuerzo no incluido.\n• Regreso a Cartagena a las 3:00 p. m. (llegada estimada a las 4:15 p. m.).\n\nLos cursos de 2 días (Open Water, Curso Referido, Advanced, Rescue y Mindful Diving) requieren alojamiento en las islas: al menos una noche, la del día 1 (el día 1 no se vuelve a Cartagena). No hay opción de ir y volver desde Cartagena ambos días. El alojamiento no está incluido y debe reservarse directamente con el hotel. Lo mismo en los paquetes de buceo de varios días (4, 5, 7 y 9 inmersiones): se duerme en las islas y el alojamiento, que no está incluido, se reserva directamente con el hotel.\n\nMuelle de la Bodeguita, a 5 minutos del centro histórico, a las 8:00 AM. Saliendo desde Cartagena no hay recogida en el hotel: cada persona llega por su cuenta al muelle (el transporte terrestre hasta el muelle no está incluido).\n\n¿Y para cuántas personas armamos el plan? Así te paso el precio exacto. 😊"
+    }
+   ],
+   "ronda": "2026-10-26-integra4-B",
+   "tarea": "LAT-9",
+   "id": "l9p2-38"
+  },
+  {
+   "dialogo": "paquete-5-buceos-cop-refresh-y-hoteles",
+   "criterio": "lat9p2:pregunta",
+   "pedia": "La respuesta contesta a lo que dice el cliente en su último mensaje (si pregunta algo, lo contesta; si da las gracias, comenta algo o da un dato, lo reconoce sin ignorarlo) y termina con UNA sola pregunta de la reserva, la que toca: no vuelve a preguntar un dato que el cliente acaba de dar ni hace dos preguntas seguidas, y no pone «¡Perfecto!» o similar delante si el cliente no contestó lo que se le preguntó.",
+   "veredicto": "no_cumple",
+   "motivo_juez": "Riesgo en este turno: la respuesta a la pregunta y la pregunta de la reserva pegadas (dos preguntas seguidas, o una pregunta por un dato que el cliente acaba de dar).",
+   "turno": "4",
+   "pieza": "pregunta",
+   "mensaje_cliente": "Y me recuerda los hoteles por favor?",
+   "respuesta_ronda": "¡Claro! Nuestra base está en Isla Grande, en los hoteles *San Pedro de Majagua* y *Cocoliso*. También puedes alojarte en *Rosario de Mar, Secreto, Ubuntu, Mulata, Eco Hotel Las Palmeras* o *Pao Pao*; tienen acceso marítimo.\n\nEl alojamiento no está incluido y se reserva directamente con el hotel. ¿Ya tienes alguno en mente?",
+   "historial": [
+    {
+     "role": "user",
+     "content": "Buenos días. Quiero hacer el paquete de 5 buceos. Cuál es el costo para colombianos por favor?"
+    },
+    {
+     "role": "assistant",
+     "content": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\nBuenos días. El paquete de 5 inmersiones (2 días) cuesta *1.429.000 COP por persona reservando online* o *1.587.000 COP por persona sin reserva online*. Los colombianos pagan en pesos y no tienen un descuento especial; el precio es el mismo, solo cambia la moneda.\n\n• 10% de descuento reservando online directamente con nosotros a través de la página web, no a través de terceros como PADI. Este es el descuento online estándar y se aplica automáticamente al reservar por la web.\n• 10% de descuento para grupos de 5 personas o más, que se suma al 10% de descuento online (20% total reservando online). No aplica automáticamente: el grupo debe contactar al equipo para aplicarlo. Hay que pedirlo al equipo ANTES de pagar: si el grupo paga sin haberlo pedido, pierde el descuento (no se devuelve después). Aplica a buceo recreativo, minicurso y snorkel; no aplica a cursos PADI. Para el plan de acompañante (quien va en la lancha sin bucear ni hacer snorkel), si entra en el descuento de grupo lo confirma el equipo al pedir el descuento, antes de pagar.\n• 5% de descuento si traes tu propio equipo COMPLETO (regulador, BCD/chaleco, traje, máscara, aletas, etc.), solo en buceo recreativo y cursos PADI: no aplica al minicurso ni al snorkel, aunque traigas el equipo completo. Tampoco aplica si solo traes parte del equipo.\n• Los clientes colombianos y residentes en Colombia pagan en pesos colombianos (COP). Los clientes internacionales pagan en dólares (USD). No hay un descuento especial por ser colombiano; el precio es el mismo, solo cambia la moneda.\n• Los descuentos no son acumulables excepto en casos especiales autorizados por el staff o donde se indique explícitamente lo contrario (ej: grupo + online sí se suman; equipo propio + online también).\n\n¿Saldrías *desde Cartagena* o ya estás *en las Islas del Rosario*? Así te paso el plan y el enlace exactos. 🌊"
+    },
+    {
+     "role": "user",
+     "content": "Gracias - y en pesos? Para colombianos?"
+    },
+    {
+     "role": "assistant",
+     "content": "Sí, para colombianos el paquete de 5 inmersiones cuesta *1.429.000 COP por persona reservando online* o *1.587.000 COP por persona sin reserva online*. No hay un descuento especial por ser colombiano; solo cambia la moneda.\n\nEl paquete es de 2 días y requiere dormir en las islas. El alojamiento no está incluido y se reserva directamente con el hotel.\n\nPara pagar, puedes cancelar el 100 % online o dejar un anticipo del 50 % con el enlace, QR o Llave que coordina un asesor por este chat al cerrar la reserva, y pagar el otro 50 % el día de la actividad con tarjeta o efectivo.\n\n• 10% de descuento reservando online directamente con nosotros a través de la página web, no a través de terceros como PADI. Este es el descuento online estándar y se aplica automáticamente al reservar por la web.\n• 10% de descuento para grupos de 5 personas o más, que se suma al 10% de descuento online (20% total reservando online). No aplica automáticamente: el grupo debe contactar al equipo para aplicarlo. Hay que pedirlo al equipo ANTES de pagar: si el grupo paga sin haberlo pedido, pierde el descuento (no se devuelve después). Aplica a buceo recreativo, minicurso y snorkel; no aplica a cursos PADI. Para el plan de acompañante (quien va en la lancha sin bucear ni hacer snorkel), si entra en el descuento de grupo lo confirma el equipo al pedir el descuento, antes de pagar.\n• 5% de descuento si traes tu propio equipo COMPLETO (regulador, BCD/chaleco, traje, máscara, aletas, etc.), solo en buceo recreativo y cursos PADI: no aplica al minicurso ni al snorkel, aunque traigas el equipo completo. Tampoco aplica si solo traes parte del equipo.\n• Los clientes colombianos y residentes en Colombia pagan en pesos colombianos (COP). Los clientes internacionales pagan en dólares (USD). No hay un descuento especial por ser colombiano; el precio es el mismo, solo cambia la moneda.\n• Los descuentos no son acumulables excepto en casos especiales autorizados por el staff o donde se indique explícitamente lo contrario (ej: grupo + online sí se suman; equipo propio + online también).\n\nLos cursos de 2 días (Open Water, Curso Referido, Advanced, Rescue y Mindful Diving) requieren alojamiento en las islas: al menos una noche, la del día 1 (el día 1 no se vuelve a Cartagena). No hay opción de ir y volver desde Cartagena ambos días. El alojamiento no está incluido y debe reservarse directamente con el hotel. Lo mismo en los paquetes de buceo de varios días (4, 5, 7 y 9 inmersiones): se duerme en las islas y el alojamiento, que no está incluido, se reserva directamente con el hotel.\n\n¿Saldrías *desde Cartagena* o ya estás *en las Islas del Rosario*? Así te paso el plan y el enlace exactos. 🌊"
+    },
+    {
+     "role": "user",
+     "content": "Gracias - yo complete el curso básico el 3 de abril 2025. Tengo que hacer algo especial?"
+    },
+    {
+     "role": "assistant",
+     "content": "¡Qué bueno que ya completaste el Open Water! Para el paquete de 5 buceos, presenta tu carné de buzo certificado; puedes mostrarlo el día de la actividad o enviar una foto antes. El equipo está incluido.\n\nComo completaste el curso el 3 de abril de 2025, no han pasado más de dos años, así que normalmente no necesitarías un refresher por tiempo sin bucear. ¿Hace cuánto fue tu última inmersión?"
+    }
+   ],
+   "ronda": "2026-10-26-integra3-B",
+   "tarea": "LAT-9",
+   "id": "l9p2-39"
+  },
+  {
+   "dialogo": "precio-paquetes-5-o-3-buceos-y-opcion-2-diurnos",
+   "criterio": "lat9p2:pregunta",
+   "pedia": "La respuesta contesta a lo que dice el cliente en su último mensaje (si pregunta algo, lo contesta; si da las gracias, comenta algo o da un dato, lo reconoce sin ignorarlo) y termina con UNA sola pregunta de la reserva, la que toca: no vuelve a preguntar un dato que el cliente acaba de dar ni hace dos preguntas seguidas, y no pone «¡Perfecto!» o similar delante si el cliente no contestó lo que se le preguntó.",
+   "veredicto": "no_cumple",
+   "motivo_juez": "Riesgo en este turno: la respuesta a la pregunta y la pregunta de la reserva pegadas (dos preguntas seguidas, o una pregunta por un dato que el cliente acaba de dar).",
+   "turno": "3",
+   "pieza": "pregunta",
+   "mensaje_cliente": "do you have an option for 2 dives and 1 night dive so I do one day of diving instead of two?",
+   "respuesta_ronda": "Yes! We have a one-day package with *2 daytime dives and 1 night dive*. If you’re departing from Cartagena, it’s *USD 287 / COP 1,017,000 online* or *USD 319 / COP 1,130,000 regular*. You’ll need to stay overnight on the islands after the dives; accommodation isn’t included. Book the Cartagena package: https://divingplanet.org/tours-buceo-snorkel-cartagena/\n\nIf you’ll already be staying on the Rosario Islands, the same package is *USD 188 / COP 665,000 online* or *USD 209 / COP 739,000 regular*. Book the islands package: https://book.divingplanet.org/book/package-of-3-dives-already-on-island/22?language=en\n\nBoth options require diving certification. Which departure option fits your plan?",
+   "historial": [
+    {
+     "role": "user",
+     "content": "Hey I am going to be in Colombia in a few days and moving around the country. I was hoping to include the island visit and dives as part of the plan."
+    },
+    {
+     "role": "assistant",
+     "content": "Hi! 🪸 I'm *Coral* from *Diving Planet* — we dive year-round in the Rosario Islands, departing from Cartagena or right from the islands. So happy to have you here! I'd love to help you put your plan together. 🌊\n\nGreat! So I can recommend the perfect plan: Are you a certified diver? (And if not, no worries — the mini-course is the ideal way to start. 🤿)"
+    },
+    {
+     "role": "user",
+     "content": "I was seeing your 5 dive plan - and wanted to see whats the price for stay and dives"
+    },
+    {
+     "role": "assistant",
+     "content": "Perfect! 🙌\n\nGreat! So I can recommend the perfect plan: Are you a certified diver? (And if not, no worries — the mini-course is the ideal way to start. 🤿)"
+    }
+   ],
+   "ronda": "2026-10-26-integra3-B",
+   "tarea": "LAT-9",
+   "id": "l9p2-40"
+  }
+ ]
+}

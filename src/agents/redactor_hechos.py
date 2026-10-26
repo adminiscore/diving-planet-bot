@@ -156,7 +156,8 @@ def _cubierta(bloque: dict, intencion: str) -> bool:
     return bool(valor)
 
 
-def _mensajes(lang: str, history: list[dict], message: str, texto_hechos: str) -> list[dict]:
+def _mensajes(lang: str, history: list[dict], message: str, texto_hechos: str, pregunta: str | None = None
+              ) -> list[dict]:
     from src.agents.rag_agent import _build_tone_section  # lazy
     from src.prompts.info import (  # lazy
         RAG_INTRO_EN,
@@ -175,6 +176,10 @@ def _mensajes(lang: str, history: list[dict], message: str, texto_hechos: str) -
         system = (f"{RAG_INTRO_EN}\n\n{RAG_SECURITY_EN}\nStyle and tone:\n{_build_tone_section('en')}\n\n"
                   f"{REDACTOR_HECHOS_EN}")
         user = f"Facts:\n{texto_hechos}\n\nCustomer's question: {redact_pii(message)}"
+    if pregunta:
+        from src.prompts.info import pregunta_final  # lazy
+
+        user += "\n\n" + pregunta_final(pregunta, lang)  # lat-9 paso 2: la pregunta de la reserva la escribe él
     from src.prompts.info import (  # lazy
         REDACTOR_CLIMA_PAGO_EN,
         REDACTOR_CLIMA_PAGO_ES,
@@ -441,7 +446,10 @@ async def _escribir(state: ConversationState, message: str, history: list[dict],
     lang = "es" if state.language == "es" else "en"
     texto_hechos = texto_de_los_hechos(bloques)
     client = trace_openai(AsyncOpenAI(api_key=settings.openai_api_key))
-    mensajes = _mensajes(lang, history, message, texto_hechos)
+    # lat-9 paso 2: la pregunta de la reserva, salvo si este turno pregunta el origen (la pone el código, abajo).
+    pregunta = (None if any(b.get("pregunta_pendiente") == "origen" for b in bloques)
+                else getattr(state, "_pregunta_del_escritor", None))
+    mensajes = _mensajes(lang, history, message, texto_hechos, pregunta)
     answer = await _redactar(client, mensajes)
     if answer is not None and _en_otro_idioma(answer, lang):
         # arq-5d (G10 nº 5, g10-020): a quien escribía en portugués el redactor le contestó en portugués, aunque la
@@ -464,7 +472,7 @@ async def _escribir(state: ConversationState, message: str, history: list[dict],
         state._redactor_dijo_falta = True  # arq-1g: el mensaje era mezclado; el RAG recibe los hechos
         return None
     answer = _poner_listas(answer, bloques, intenciones, lang)
-    if not _pasa_las_guardas(answer, texto_hechos, message):
+    if not _pasa_las_guardas(answer, f"{texto_hechos}\n{pregunta or ''}", message):
         logger.info("[HECHOS] la redacción no pasa las guardas deterministas; contesta el RAG")
         note_turn(hechos_por_codigo="guardas")
         return None

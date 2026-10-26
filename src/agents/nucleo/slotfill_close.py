@@ -15,6 +15,7 @@ from src.agents.conversational_core import (
     SLOT_COMPANION_ACTIVITY,
     SLOT_COMPANION_QTY,
     SLOT_SAFETY,
+    _answer_already_asks,
     _answer_asks_the_origin,
     _answer_replaces_the_booking_question,
     _cart_item,
@@ -28,6 +29,7 @@ from src.agents.conversational_core import (
     _merge_pending_undecided,
     _rag_answer,
     _same_for_customer,
+    _sin_la_pregunta_final,
     _take_parallel_answer,
     ask_slot,
     next_missing_slot,
@@ -235,7 +237,52 @@ _ACUSE = {"es": "¡Perfecto! 🙌", "en": "Perfect! 🙌"}
 
 
 def _acuse_por_codigo(state: ConversationState, prev_pending) -> str:
-    return _ACUSE["es" if state.language == "es" else "en"] if prev_pending else ""
+    """ACUSE (26-oct): solo si el cliente contestó lo que se le preguntó: la pregunta de este turno ya no es la pendiente
+    y ese dato ya no falta. Salía siempre que había una pendiente: 111 de 273 respuestas de integra4, 32 delante de la
+    MISMA pregunta («Muchas gracias!» → «¡Perfecto! 🙌» y otra vez la de la nacionalidad)."""
+    if not prev_pending or state.core_pending_slot == prev_pending or next_missing_slot(state) == prev_pending:
+        return ""
+    return _ACUSE["es" if state.language == "es" else "en"]
+
+
+async def _con_la_pregunta(state: ConversationState, message: str, answer: str, response: str, escrita: str,
+                           finalized: bool, cierre_igual: bool) -> str:
+    """lat-9 paso 2 (26-oct): el escritor cerró con la pregunta fijada al empezar el turno (`escrita`). Si es la que toca,
+    su texto va solo (los botones ya los puso `ask_slot`). Si el mensaje la cambió (contestaba el dato, o la reserva se
+    cierra con la tarjeta), el código cambia su último párrafo por lo que toca (variante «corrige»)."""
+    from src.observability import note_turn  # lazy
+
+    if not finalized and response == escrita:
+        note_turn(pregunta_escritor="igual")
+        logger.info("[CORE][LAT9] el escritor cerró con la pregunta que toca")
+        return answer if _answer_already_asks(answer) else f"{answer.rstrip()}\n\n{response}"
+    note_turn(pregunta_escritor="corrige")
+    logger.info("[CORE][LAT9] la pregunta cambió con el mensaje: el código pone la que toca")
+    sin = _sin_la_pregunta_final(answer)
+    return sin if cierre_igual else f"{sin.rstrip()}\n\n{response}"
+
+
+async def _sin_dato(state: ConversationState, message: str, prev_pending: str, pregunta: str) -> str | None:
+    """lat-9 paso 2 (decisión de Gadea del 26-oct: «el escritor»): el cliente no contestó la pregunta pendiente ni dio
+    otro dato (da las gracias, se despide, comenta algo): en vez de la misma pregunta otra vez, el escritor contesta a lo
+    que dijo y cierra con ella. None si el turno trajo algún dato, o si el escritor no sabe qué decir: entonces la pregunta
+    del flujo, como antes."""
+    from src.observability import note_turn  # lazy
+
+    if (state.core_pending_slot != prev_pending
+            or _known_field_values(state) != getattr(state, "_datos_al_empezar", None)):
+        return None
+    state._pregunta_del_escritor = pregunta
+    try:
+        escrita = await _rag_answer(state, message, history=list(state.history))
+    except Exception as exc:  # noqa: BLE001 — sin escritor, la pregunta del flujo
+        logger.warning(f"[CORE][LAT9] el escritor falló en un turno sin dato: {exc!r}")
+        return None
+    if not escrita or _is_rag_fallback(escrita) or _es_pregunta_de_origen(escrita):
+        return None
+    note_turn(pregunta_escritor="sin_dato")
+    logger.info("[CORE][LAT9] sin dato ni pregunta: contesta el escritor con la pregunta pendiente")
+    return escrita if _answer_already_asks(escrita) else f"{escrita.rstrip()}\n\n{pregunta}"
 
 
 def _no_hace_falta_certificacion(state: ConversationState, carry: dict) -> str:
@@ -447,6 +494,7 @@ async def _slotfill_close_phase(
         # precio, y la respuesta (adelantada, escrita antes de saber de dónde es el cliente) traía otro importe: "126
         # USD" en el texto y "2 × 448.000 COP" en la tarjeta (conv 5573). Se rehace sin precio; solo en este caso.
         logger.info("[CORE][G3-07a] la respuesta trae un importe y el turno lleva la tarjeta: se rehace sin precio")
+        state._pregunta_del_escritor = None  # lat-9 paso 2: la tarjeta cierra el turno; no hay pregunta que escribir
         try:
             answer = await _rag_answer(state, message, history=list(state.history), sin_precio=True) or answer
         except Exception as exc:  # noqa: BLE001 — si falla, va la de antes
@@ -456,11 +504,15 @@ async def _slotfill_close_phase(
         # tengo a la mano" no aporta nada y, por la regla de arriba, TAPABA el cierre: "great, how do
         # i pay" se quedaba sin el link (ronda B de u3-5). El cierre ya contesta "¿cómo pago?".
         answer = None
+    cierre_igual = bool(finalized and cierre_previo and state.mixed_last_summary == cierre_previo)
     if answer:
-        if _answer_replaces_the_booking_question(state, answer, finalized=finalized):
+        escrita = getattr(state, "_pregunta_del_escritor", None)
+        if escrita and not _is_rag_fallback(answer) and not _answer_asks_the_origin(state, answer):
+            response = await _con_la_pregunta(state, message, answer, response, escrita, finalized, cierre_igual)
+        elif _answer_replaces_the_booking_question(state, answer, finalized=finalized):
             state.quick_replies = []
             response = answer
-        elif finalized and cierre_previo and state.mixed_last_summary == cierre_previo:
+        elif cierre_igual:
             # s4-26: la reserva ya estaba cerrada y no ha cambiado; la tarjeta (precio, link) ya la tiene el cliente.
             # Repetirla detrás de cada respuesta ("¿cuánto dura?") era el fallo de manual-duracion-curso.
             logger.info("[CORE][S4-26] cierre igual al ya enviado: va solo la respuesta")
@@ -472,6 +524,11 @@ async def _slotfill_close_phase(
         response = greeting + response
         state.history.append({"role": "assistant", "content": response})
         return response
+
+    if not first_turn and not finalized and prev_pending and (escrita := await _sin_dato(state, message, prev_pending,
+                                                                                         response)):
+        state.history.append({"role": "assistant", "content": escrita})
+        return escrita
 
     ack = ""
     if not first_turn:
