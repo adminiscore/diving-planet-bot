@@ -114,7 +114,11 @@ def _reproducir_en_pre(turnos: list[str], *, reps: int = 1, flags: list[str] | N
     from scripts.pre_access import docker_python, pre_ssh
     from scripts.reproducir_juez_pre import _REMOTO
 
-    script = f"TURNOS_JSON = {json.dumps(turnos, ensure_ascii=False)!r}\nN_REPS = {reps}\nFLAGS = {flags or []!r}\n{_REMOTO}"
+    # 26-oct: el script de PRE recibe una LISTA de diálogos ([id, turnos]) desde arq-1d (22-oct); con el nombre viejo
+    # (TURNOS_JSON) cada caso moría con NameError y la medida salía «0 casos medidos».
+    dialogos = [["caso", turnos]]
+    script = (f"DIALOGOS_JSON = {json.dumps(dialogos, ensure_ascii=False)!r}\nN_REPS = {reps}\n"
+              f"FLAGS = {flags or []!r}\n{_REMOTO}")
     r = pre_ssh(docker_python(entorno or {}, codigo_local=codigo), input_text=script,
                 timeout=240 + 60 * len(turnos) * reps)
     filas = [json.loads(ln) for ln in (r.stdout or "").splitlines() if ln.startswith("{")]
