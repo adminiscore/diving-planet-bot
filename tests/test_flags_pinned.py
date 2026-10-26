@@ -3,14 +3,14 @@ defecto en el código. Hasta hoy 14 flags promocionados seguían apagados por de
 ellos (o la suite) medía otro bot distinto del de PRE — la misma trampa que `test_models_pinned` cierra
 para los modelos.
 
-Excepciones a propósito: `app_env` (cada entorno el suyo) y `jev_router_enabled` (depende de tener la
-clave de OpenRouter; sin clave, el bot usa el router LLM).
+Excepción a propósito: `app_env` (cada entorno el suyo). `jev_router_enabled` ya no existe (sim-6): Jev va siempre y,
+sin la clave de OpenRouter, se aparta solo y decide el router LLM.
 """
 
 from scripts.check_deploy import expected_from_compose
 from src.config import Settings
 
-EXCEPCIONES = {"app_env", "jev_router_enabled"}
+EXCEPCIONES = {"app_env"}
 
 
 def test_los_interruptores_de_pre_son_el_valor_por_defecto_del_codigo():

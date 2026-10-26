@@ -152,21 +152,6 @@ services:
       # y quitar TRANSCRIPCION_CON_VOCABULARIO.
       OPENAI_TRANSCRIPTION_MODEL: "gpt-transcribe"
       JEV_MODEL: "typesafe/jev-1.13"
-      # EX-EST-2: el RAG no supone la fecha ni la hora de hoy. DESCARTADO 15-oct (ver config.py).
-      RAG_SIN_HORA: "false"
-      # EX-RAG-3: DESCARTADO 14-oct (deja pasar inventos: 12/30 errores sembrados; ver config.py).
-      JUEZ_REVISA_CON_CITA: "false"
-      # g-7 paso 4 (24-sep): los chats antiguos (conversations.json) y el few-shot
-      # se borraron del codigo y del indice, asi que RAG_EXCLUDE_SOURCES y
-      # RAG_FEWSHOT_ENABLED ya no hacen falta. l1-1 (juez de grounding unico) es
-      # ahora la unica conducta del codigo: su flag tambien se retiro.
-      # U3 (u3-1, paso 1): las 9 senales del router con Jev (src/agents/jev_router.py),
-      # con el router LLM de respaldo si Jev falla, tarda >2 s o DUDA (cascada por
-      # confianza). A/B del 24-sep: -25 % de latencia de cliente sin cascada, y con
-      # cascada 0 regresiones frente a las dos rondas A (HISTORY 0.29.15) -> se QUEDA
-      # ENCENDIDO. La clave OPENROUTER_API_KEY esta en .env.pre del VPS.
-      # Revert = quitar esta linea + redeploy.
-      JEV_ROUTER_ENABLED: "true"
       # l2-3 (28-sep): "escribiendo…" en el chat mientras el bot prepara la respuesta. Solo
       # cambia lo que ve el cliente mientras espera, no lo que dice el bot. Revert = "false".
       CHATWOOT_TYPING_INDICATOR: "true"

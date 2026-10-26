@@ -51,25 +51,6 @@ class Settings(BaseSettings):
     # 2 colas de 4-5 s en 47 turnos de reserva (p50 1,14 s, p90 1,67 s); gpt-5.4-mini es de OpenAI (otro proveedor).
     extractor_respaldo_modelo: str = "gpt-5.4-mini"  # ENCENDIDO 18-oct con mod-F (HISTORY 0.31.56); revert = ""
     extractor_respaldo_segundos: float = 2.0
-    # EX-EST-2 (15-oct): regla del RAG: no sabe la fecha ni la hora de hoy ('ya pasó esa hora', 'como todavía estás a
-    # tiempo' sobre el cierre de las 4:30, rondas est4-B/est5-B). prompts/info.RAG_SIN_HORA_*. DESCARTADO 15-oct (APAGADO):
-    # en est6-B el RAG, sin fecha, calculo igual que 'desde el 3 de abril de 2025 ya pasaron mas de dos años' (falso).
-    # El arreglo por causa es darle al RAG la fecha y la hora de hoy (ex-9b).
-    rag_sin_hora: bool = False
-    # EX-RAG-3 (14-oct): cuando el juez de grounding rechaza, cada frase rechazada tiene que traer la cita literal del
-    # contexto que la respalda (el codigo comprueba la cita y que sus cifras y enlaces estan en el contexto); si todas
-    # la traen, la respuesta pasa. El juez rechazaba ~6 % de respuestas, varias correctas (politicas). Solo corre al
-    # rechazar. juez_segunda_opinion.respaldadas_con_cita. DESCARTADO 14-oct (APAGADO): el banco del revisor
-    # (scripts/banco_revisor.py) mostro que deja pasar inventos: con la cita se escapan 12/30 errores sembrados
-    # (sin ella 0/30), porque una cita real que respalda solo PARTE de la frase la daba por buena ("en un grupo mixto
-    # los colombianos pagan en pesos" con la cita "pagan en pesos los colombianos"). Sin la cita: 0/30 rechazos injustos.
-    juez_revisa_con_cita: bool = False
-    # ex-9b paso 4: los días cerrados (25 de diciembre y 1 de enero) los contesta el RAG, que lleva siempre las políticas
-    # (`rag_politicas_en_contexto`), en vez del texto fijo que dispara `_CLOSED_DATE_RE` y se come el resto del mensaje.
-    # Replay del golden: 0 cambios (ningún diálogo visible los nombra); pero sin el texto fijo, "quiero bucear el 25 de
-    # diciembre, somos 2" no llega al RAG (Jev: no pregunta nada) y nadie avisa del cierre. nucleo/availability.
-    # APAGADO hasta medirlo.
-    dias_cerrados_por_rag: bool = False
     # ex-9b paso 6 (19-oct): los últimos datos de "entender al cliente" que decidía solo el regex, al extractor del turno
     # (campo nuevo con su cita, en una segunda llamada a la vez que la de siempre). La duración, las edades, quien se suma
     # al grupo y las notas sobre otras personas se promocionaron el 20-oct y sus flags se borraron en sim-5. Si el
@@ -130,14 +111,6 @@ class Settings(BaseSettings):
     # todas. Subirlo por entorno si algun dia hay una llamada legitimamente larga.
     llm_timeout_seconds: float = 30.0
 
-    # U3 (u3-1, paso 1): las 9 señales del router con Jev (TypeSafe, vía el Decisions API
-    # de OpenRouter) en vez de con el LLM. Evaluado en l2-4 (2026-09-24): mejor que el
-    # router LLM en la batería (32/37 frente a 30/37, seguridad 11/11 frente a 8/11) y
-    # ~0,27 s frente a ~1,3 s. Decisión de Gadea: Jev para U3 (en PRE sí; la privacidad
-    # para PRO se decide antes). APAGADO por defecto; sin clave o si Jev falla o tarda
-    # más de `jev_timeout_seconds`, se usa el router LLM de siempre. Ver
-    # `src/agents/jev_router.py`.
-    jev_router_enabled: bool = False
     openrouter_api_key: str = ""
     # Versión fija: si Jev cambia de versión, el comportamiento no cambia sin medirlo.
     jev_model: str = "typesafe/jev-1.13"
@@ -173,9 +146,6 @@ class Settings(BaseSettings):
     # salto en el 10 % y corto las colas de 11-13 s. Revert = rag_answer_model "gpt-4.1-mini" y esto vacio.
     rag_respaldo_modelo: str = "deepseek/deepseek-v4.1-flash"  # PROMOCIONADO 18-oct (mod-5, mod-E, HISTORY 0.31.55); revert = "gpt-4.1-mini"
     rag_respaldo_segundos: float = 3.0
-    # r6-1(d) (17-oct, salir de gpt-4.1; acordado con Gadea): el respaldo del RAG es otra petición al MISMO modelo
-    # (Luna) a los `rag_respaldo_segundos`, en vez de gpt-4.1-mini. APAGADO hasta medir latencia (p95/máx) y calidad.
-    respaldo_mismo_modelo: bool = False
     # CAL-A2 (16-oct): antes de redactar, un PLAN (src/agents/rag_plan.py) saca la lista de lo que el cliente pregunta y la
     # redacción la contesta punto por punto. APAGADO hasta medirlo.
     rag_plan_primero: bool = False
@@ -196,9 +166,6 @@ class Settings(BaseSettings):
     # 18-oct (Gadea: probar Haiku): + Anthropic, Google Vertex y Amazon Bedrock, empresas de EE. UU., con las mismas
     # condiciones de mod-7 (sin retención ni entrenamiento, datos personales tapados). PROMOCIONADO (HISTORY 0.31.56).
     openrouter_proveedores: str = "baseten,fireworks/us,coreweave,google-vertex,anthropic,amazon-bedrock"
-    # OpenRouter solo deja usar la API oficial de DeepSeek si se acepta que ENTRENEN con los datos (su politica "Paid
-    # model training"). Apagado = nunca. Solo para pruebas con datos anonimizados; nunca con clientes reales.
-    openrouter_permitir_entrenamiento: bool = False
     # 18-oct (ronda mod-G: la clave de OpenRouter llegó a su límite y el revisor dejaba pasar las respuestas sin
     # revisar): si una llamada a OpenRouter falla, se repite con este modelo de OpenAI (llm_client._por_proveedor).
     # Solo actúa cuando OpenRouter falla. Vacío = sube el error como antes.
@@ -219,23 +186,9 @@ class Settings(BaseSettings):
     # Se mide con scripts/banco_juez_reales.py --ajuste juez_luna_razonamiento=low.
     juez_luna_razonamiento: str = "none"
     varias_actividades: bool = False  # ARQ-1j (22-oct): el extractor da TODAS las actividades del mensaje (y el acompañante) y los hechos salen de cada una
-    rag_enlace_al_recomendar: bool = False  # ARQ-1o (22-oct, decisión de Gadea): el RAG da el enlace del plan que recomienda si sabe el origen (a colombianos no)
     # arq-5b (23-oct, G10 nº 5): en los mensajes mezclados el redactor escribe la parte de la tabla con los hechos y el
     # RAG, a la vez, solo lo demás (las listas salen completas y sobra el reintento del RAG). APAGADO hasta medirlo.
     mezclados_por_partes: bool = False
-    # arq-8c (23-oct, G10 nº 6, g10-003): a quien dijo que no está certificado no se le ofrece una actividad que exige la
-    # certificación («Si quieres, te ayudo a reservar: *Buceo certificado*»). APAGADO hasta medirlo.
-    principiante_sin_buceo_certificado: bool = False
-    # CAL (17-oct): la preparación de cada producto (`preparation_*`, 18 de 36) en el catálogo, SIEMPRE. MEDIDO: arregla
-    # cal-49 (la carta de referido) pero rompe cal-26 y cal-64 (banco CAL-A 41/48 frente a 38/48): dieciocho párrafos
-    # en todos los turnos compiten con lo que hace falta en cada uno. APAGADO; la preparación va mejor en la ficha del
-    # producto del que se habla.
-    catalogo_preparacion: bool = False
-    # CAL (17-oct): cuando la conversación YA está con una persona (paso ESCALATE), el contexto del RAG lo dice. Una
-    # pregunta tras el pase seguía el flujo normal y el RAG improvisaba sobre la reserva o el pago concreto, que no ve
-    # (cal-14: explicaba qué poner en el concepto de una transferencia, contra la política). Lo general se contesta
-    # igual; lo del caso concreto lo confirma el asesor. APAGADO hasta medirlo.
-    contexto_tras_el_pase: bool = False
     # Esquema de la base curada que lee la busqueda (rag-2, `scripts/kb_v2.py`). Solo para medir una base nueva sin
     # tocar la que usa PRE (p. ej. RAG_KB_ESQUEMA=kb_v2_prueba con `rag_piezas --codigo-local`); en PRE es siempre "kb_v2".
     rag_kb_esquema: str = "kb_v2"
