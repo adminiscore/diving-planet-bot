@@ -103,6 +103,9 @@ def rag(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_los_hechos_van_en_el_mensaje_y_los_ve_el_revisor(rag, monkeypatch):
+    from src.agents import rag_agent as _ra
+
+    monkeypatch.setattr(_ra, "_hay_algo_que_revisar", lambda *a, **k: True)  # lat-5: que el revisor corra
     rag_agent, llamadas = rag
     vistos: list[str] = []
 

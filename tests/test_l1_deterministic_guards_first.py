@@ -122,6 +122,9 @@ async def test_un_telefono_no_llega_a_gastar_el_juez(monkeypatch, juez_contador)
 async def test_una_respuesta_limpia_si_llega_al_juez(monkeypatch, juez_contador):
     """El control del test anterior: sin rechazo determinista, el juez SÍ opina.
     Sin esto, los dos tests de arriba pasarían aunque el juez no se llamara nunca."""
+    from src.agents import rag_agent as _ra
+
+    monkeypatch.setattr(_ra, "_hay_algo_que_revisar", lambda *a, **k: True)  # lat-5: que el revisor corra
     respuesta = await _responder(
         monkeypatch,
         respuesta="El plan de 2 inmersiones cuesta 178 USD.",

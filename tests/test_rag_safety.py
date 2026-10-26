@@ -892,6 +892,9 @@ def test_prompt_sin_chats_antiguos():
 
 @pytest.mark.asyncio
 async def test_rag_returns_fallback_when_grounding_check_rejects(monkeypatch):
+    from src.agents import rag_agent as _ra
+
+    monkeypatch.setattr(_ra, "_hay_algo_que_revisar", lambda *a, **k: True)  # lat-5: que el revisor corra
     async def fake_search(query, lang="es"):
         return [
             {

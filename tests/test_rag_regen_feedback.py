@@ -79,7 +79,10 @@ RECHAZO = (False, "HALLUCINATED - Llevamos 30 años buceando. NO")
 
 
 @pytest.mark.asyncio
-async def test_la_segunda_muestra_sabe_que_quitar(rag):
+async def test_la_segunda_muestra_sabe_que_quitar(rag, monkeypatch):
+    from src.agents import rag_agent as _ra
+
+    monkeypatch.setattr(_ra, "_hay_algo_que_revisar", lambda *a, **k: True)  # lat-5: que el revisor corra
     llamadas = rag([INVENTO, BIEN], [RECHAZO, (True, "GROUNDED")])
     assert await rag_agent.rag_answer("¿dónde nos vemos?", lang="es") == BIEN
     assert len(llamadas) == 2
@@ -90,6 +93,9 @@ async def test_la_segunda_muestra_sabe_que_quitar(rag):
 
 
 @pytest.mark.asyncio
-async def test_el_juez_sigue_juzgando_la_segunda(rag):
+async def test_el_juez_sigue_juzgando_la_segunda(rag, monkeypatch):
+    from src.agents import rag_agent as _ra
+
+    monkeypatch.setattr(_ra, "_hay_algo_que_revisar", lambda *a, **k: True)  # lat-5: que el revisor corra
     rag([INVENTO, INVENTO], [RECHAZO, RECHAZO])
     assert await rag_agent.rag_answer("¿dónde nos vemos?", lang="es") == FALLBACK_ES
