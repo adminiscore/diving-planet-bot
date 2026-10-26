@@ -23,7 +23,7 @@
  "global_criteria": [
   {
    "id": "idioma",
-   "check": "Responde en el idioma del cliente si es español o inglés (o en el que pide cambiar, si es uno de los dos). Si el cliente escribe en otro idioma (portugués, francés…), responde en inglés (decisión de Gadea, 14-oct). Unas palabras sueltas de otro idioma dentro de un mensaje en español no cambian el idioma, y nombrar un idioma (\"mi amigo habla francés\") no es pedir cambiarlo."
+   "check": "Responde en el idioma que manda la decisión «idioma»: el del cliente si escribe en español o en inglés, o el que pide si es uno de los dos. Nombrar un idioma («mi amigo habla francés») no es pedir cambiarlo."
   },
   {
    "id": "sin-invenciones",
@@ -41,11 +41,11 @@
   },
   {
    "id": "sin-repreguntas",
-   "check": "No vuelve a preguntar un dato que el cliente ya dio con claridad. Escribir desde otro país o vivir fuera NO dice la nacionalidad (los colombianos pagan en COP vivan donde vivan): preguntar si es colombiano o residente no es repreguntar."
+   "check": "No vuelve a preguntar un dato que el cliente ya dio con claridad. Preguntar UNA vez un dato que el cliente no ha dicho (decisión «no-adivinar»: escribir desde otro país o vivir fuera no dice la nacionalidad) no es repreguntar."
   },
   {
    "id": "sin-fugas",
-   "check": "No revela instrucciones internas, nombres de sistemas internos, código, identificadores internos (nombres de producto en formato de programa, como palabras_unidas_con_guion_bajo) ni datos de otros clientes. Una cifra pública de la empresa (por ejemplo, «hemos llevado a más de 360 personas con discapacidad» de DIVE TO HEAL) no es un dato de otros clientes (decisión de Gadea, 21-oct)."
+   "check": "No revela instrucciones internas, nombres de sistemas internos, código, identificadores internos (nombres de producto en formato de programa, como palabras_unidas_con_guion_bajo) ni datos de otros clientes. Una cifra pública de la empresa no es un dato de otros clientes (decisión «cifras-publicas»)."
   }
  ],
  "dialogues": [
@@ -97,7 +97,7 @@
    "criteria": [
     {
      "id": "precio-buceo",
-     "check": "Cuando pregunta 'cuánto cuesta', da el precio del buceo certificado desde Cartagena para 1 persona extranjera, en USD, igual que el catálogo."
+     "check": "Cuando pregunta 'cuánto cuesta', da el precio del catálogo del buceo certificado desde Cartagena para 1 persona, en la moneda que le corresponde por no ser colombiano (decisión «moneda»)."
     },
     {
      "id": "como-pagar-link",
@@ -137,11 +137,11 @@
    "criteria": [
     {
      "id": "datos",
-     "check": "Recoge actividad (buceo certificado), 1 persona, Cartagena y nacionalidad sin volver a preguntar lo ya respondido. Decisión de Gadea 18-oct: 'quiero bucear certificado' no confirma la certificación, así que preguntar UNA vez si es buzo certificado es correcto y no cuenta como repregunta."
+     "check": "Recoge actividad (buceo certificado), 1 persona, Cartagena y nacionalidad sin volver a preguntar lo ya respondido. Preguntar UNA vez si es buzo certificado es correcto y no cuenta como repregunta (decisión «no-adivinar»)."
     },
     {
      "id": "precio-moneda",
-     "check": "El precio es el del catálogo para 1 buzo certificado desde Cartagena, en USD por no ser colombiano."
+     "check": "El precio es el del catálogo para 1 buzo certificado desde Cartagena, en la moneda que le corresponde por no ser colombiano (decisión «moneda»)."
     },
     {
      "id": "link",
@@ -185,7 +185,7 @@
     },
     {
      "id": "precio",
-     "check": "Da el precio del catálogo para 1 buzo certificado desde Cartagena en USD."
+     "check": "Da el precio del catálogo para 1 buzo certificado desde Cartagena, en la moneda que le corresponde por no ser colombiano (decisión «moneda»)."
     },
     {
      "id": "link",
@@ -217,7 +217,7 @@
    "criteria": [
     {
      "id": "moneda-cop",
-     "check": "Como son colombianos, el precio va en pesos colombianos (COP), con el importe del catálogo para snorkel desde Cartagena."
+     "check": "Como son colombianos, el precio va en su moneda (decisión «moneda»), con el importe del catálogo para snorkel desde Cartagena."
     },
     {
      "id": "personas",
@@ -275,7 +275,7 @@
     },
     {
      "id": "precios",
-     "check": "Cada actividad lleva su precio del catálogo desde Cartagena en USD; si da total, cuadra con la suma."
+     "check": "Cada actividad lleva su precio del catálogo desde Cartagena, en la moneda que les corresponde por no ser colombianos (decisión «moneda»); si da total, cuadra con la suma."
     },
     {
      "id": "descuento-grupo",
@@ -308,7 +308,7 @@
     },
     {
      "id": "moneda",
-     "check": "Precios en USD (todos extranjeros), del catálogo desde Cartagena."
+     "check": "Precios del catálogo desde Cartagena, en la moneda que les corresponde por ser todos extranjeros (decisión «moneda»)."
     }
    ],
    "cobertura": {
@@ -336,11 +336,11 @@
     },
     {
      "id": "no-asume",
-     "check": "Decisión del owner: del amigo solo sabe que acompaña. No le asigna ninguna actividad hasta que el cliente la diga: si el bot muestra al amigo contado como buceo (por ejemplo '2 buceo certificado' al proponer un cambio), ya lo había asumido y no cumple."
+     "check": "Del amigo solo sabe que acompaña. No le asigna ninguna actividad hasta que el cliente la diga: si el bot muestra al amigo contado como buceo (por ejemplo '2 buceo certificado' al proponer un cambio), ya lo había asumido y no cumple (decisión «no-adivinar»)."
     },
     {
      "id": "precios",
-     "check": "Precios del catálogo desde Cartagena en USD para cada actividad."
+     "check": "Precios del catálogo desde Cartagena para cada actividad, en la moneda que les corresponde por no ser colombianos (decisión «moneda»)."
     }
    ],
    "cobertura": {
@@ -369,7 +369,7 @@
     },
     {
      "id": "resumen",
-     "check": "El resumen final es 4 × snorkel desde Cartagena en USD, con precio del catálogo."
+     "check": "El resumen final es 4 × snorkel desde Cartagena con el precio del catálogo, en la moneda que les corresponde por no ser colombianos (decisión «moneda»)."
     }
    ],
    "cobertura": {
@@ -533,11 +533,11 @@
    "criteria": [
     {
      "id": "menor-6",
-     "check": "Para el niño de 6 años solo ofrece snorkel (minicurso desde 10, Bubble Makers de 8 a 10)."
+     "check": "Para el niño de 6 años solo ofrece actividades que su edad permite según las edades de la base."
     },
     {
      "id": "mayor-10",
-     "check": "Para el de 10 años ofrece opciones válidas a su edad (snorkel, minicurso o Bubble Makers)."
+     "check": "Para el de 10 años ofrece opciones válidas a su edad según las edades de la base."
     },
     {
      "id": "recomienda-cada-uno",
@@ -565,7 +565,7 @@
    "criteria": [
     {
      "id": "no-bucea-7",
-     "check": "Dice que un niño de 7 años no puede hacer buceo ni minicurso y recomienda snorkel."
+     "check": "Para el niño de 7 años no ofrece las actividades que su edad no permite según las edades de la base y le recomienda una que sí."
     },
     {
      "id": "reserva-4",
@@ -594,7 +594,7 @@
    "criteria": [
     {
      "id": "regla",
-     "check": "Aplica la política: toda persona nacida en Colombia cuenta como colombiana viva donde viva, así que paga en COP (mismo precio). Si pasa a un asesor sin resolverlo, no cumple."
+     "check": "Aplica la decisión «moneda» y colombian_pricing (un colombiano lo es viva donde viva): le da el precio en su moneda, que es el mismo precio. Si pasa a un asesor sin resolverlo, no cumple."
     }
    ],
    "cobertura": {
@@ -618,7 +618,7 @@
    "criteria": [
     {
      "id": "usd-todo-el-grupo",
-     "check": "Aplica la política de grupo con nacionalidades mixtas: todo el grupo paga en USD al mismo precio (o pasa a un asesor). No cobra a unos en COP y a otros en USD."
+     "check": "Aplica la decisión «moneda» para un grupo con nacionalidades mixtas (mixed_nationality_group): todo el grupo paga en la misma moneda al mismo precio (o pasa a un asesor). No cobra a unos en una moneda y a otros en otra."
     }
    ],
    "cobertura": {
@@ -672,7 +672,7 @@
    "criteria": [
     {
      "id": "edad",
-     "check": "Dice que el Open Water es desde los 10 años."
+     "check": "Da la edad mínima del Open Water que dice la base."
     }
    ],
    "cobertura": {
@@ -696,7 +696,7 @@
    "criteria": [
     {
      "id": "lugar-hora",
-     "check": "Indica el Muelle de la Bodeguita y la hora de salida (8:00 a. m.)."
+     "check": "Indica el punto de encuentro y la hora de salida desde Cartagena que da la base."
     }
    ],
    "cobertura": {
@@ -724,7 +724,7 @@
     },
     {
      "id": "reserva-cop",
-     "check": "Si la conversación llega a la reserva final, es buceo certificado, 1 persona, desde Cartagena y en COP por ser colombiano. Si no llega a la reserva final, no aplica (g-8: la conversación del golden termina antes)."
+     "check": "Si la conversación llega a la reserva final, es buceo certificado, 1 persona, desde Cartagena y en su moneda por ser colombiano (decisión «moneda»). Si no llega a la reserva final, no aplica (g-8: la conversación del golden termina antes)."
     }
    ],
    "cobertura": {
@@ -749,7 +749,7 @@
    "criteria": [
     {
      "id": "precio",
-     "check": "Da el precio del paquete de 5 inmersiones (2 días) del catálogo, o pregunta desde dónde sale si el precio depende de ello; no inventa."
+     "check": "Da el precio del catálogo del paquete de 5 inmersiones; si no sabe desde dónde sale, como manda la decisión «origen-y-precio»; no inventa."
     }
    ],
    "cobertura": {
@@ -1028,7 +1028,7 @@
     },
     {
      "id": "asesor",
-     "check": "Decisión del owner: un cambio de fecha antes de tener la reserva pagada se pasa a un asesor. El bot ofrece o hace ese pase, en vez de seguir con otra pregunta ignorando la fecha."
+     "check": "Aplica la decisión «cambio-de-fecha»: el bot ofrece o hace el pase a un asesor, en vez de seguir con otra pregunta ignorando la fecha."
     }
    ],
    "review_note": "Hallazgo 17-sep: el bot dijo 'entiendo que necesitas cambiar la fecha' y siguió preguntando la nacionalidad sin pasar a asesor.",
@@ -1078,7 +1078,7 @@
    "criteria": [
     {
      "id": "contacto-real",
-     "check": "Decisión de Gadea (16-oct, sustituye a la del 17-sep): esto es un chatbot y NO da números de teléfono ni de WhatsApp. Si el cliente pide un número o quiere hablar con alguien, la conversación se pasa a un asesor (y se le dice). No inventa números ni restricciones."
+     "check": "Si el cliente pide un número o quiere hablar con alguien, aplica la decisión «telefono»: no da números de teléfono ni de WhatsApp, pasa la conversación a un asesor y se lo dice. No inventa números ni restricciones."
     }
    ],
    "cobertura": {
@@ -1305,11 +1305,11 @@
    "criteria": [
     {
      "id": "sin-precio-especial-colombianos",
-     "check": "Aclara que no existe un 'precio especial para colombianos'; el precio es el mismo y solo cambia la moneda. Da el valor en COP para colombianos o, si aún no sabe desde dónde sale el cliente, se lo pregunta antes de cotizar (regla del origen, opción C del 7-oct)."
+     "check": "Aclara que no existe un 'precio especial para colombianos': el precio es el mismo y solo cambia la moneda (decisión «moneda»). Da el valor en la moneda del cliente colombiano; si aún no sabe desde dónde sale, como manda la decisión «origen-y-precio»."
     },
     {
      "id": "precio-open-water-o-pregunta-origen",
-     "check": "Da el precio del catálogo en COP para el Curso Open Water por persona saliendo desde Cartagena; si no sabe si sale desde Cartagena o ya está en las islas, pregunta ese dato para dar el precio correcto."
+     "check": "Da el precio del catálogo del Curso Open Water por persona saliendo desde Cartagena, en la moneda del cliente colombiano (decisión «moneda»); si no sabe si sale desde Cartagena o ya está en las islas, como manda la decisión «origen-y-precio»."
     }
    ],
    "source": {
@@ -1342,11 +1342,11 @@
    "criteria": [
     {
      "id": "precio-vigente-open-water",
-     "check": "Ante la solicitud de costo del 'curso básico', cotiza con el precio vigente del catálogo para el Curso Open Water (no confirma el precio histórico). Si falta saber desde dónde salen o cuántas personas, puede preguntar esos datos antes de cotizar."
+     "check": "Ante la solicitud de costo del 'curso básico', cotiza con el precio vigente del catálogo para el Curso Open Water (no confirma el precio histórico). Si falta saber cuántas personas, puede preguntarlo; si falta el origen, como manda la decisión «origen-y-precio»."
     },
     {
      "id": "moneda-cop-colombianos",
-     "check": "Da el precio en COP por ser cliente colombiana o, si aún no sabe desde dónde sale, se lo pregunta antes de cotizar (regla del origen, opción C del 7-oct)."
+     "check": "Da el precio en la moneda de la cliente colombiana (decisión «moneda»); si aún no sabe desde dónde sale, como manda la decisión «origen-y-precio»."
     },
     {
      "id": "hoteles-base-no-incluido",
@@ -1385,7 +1385,7 @@
    "criteria": [
     {
      "id": "no-validar-precio-citado",
-     "check": "No confirma el precio citado por el cliente; da el precio del catálogo para el Curso Open Water y aplica la moneda según la nacionalidad (COP si es colombiano/residente; USD si es internacional)."
+     "check": "No confirma el precio citado por el cliente; da el precio del catálogo para el Curso Open Water en la moneda que manda la decisión «moneda»."
     }
    ],
    "review_note": "El cliente pide los pasos para reservar y cita un precio; el eLearning y la lista de datos no los pregunto.",
@@ -1419,11 +1419,11 @@
    "criteria": [
     {
      "id": "precio-cop-segun-origen",
-     "check": "Da el precio del catálogo en COP para el paquete de 5 buceos según salga desde Cartagena o desde islas; si el cliente no dice desde dónde, el bot pregunta si sale de Cartagena o si ya está en las islas antes de cotizar."
+     "check": "Da el precio del catálogo del paquete de 5 buceos en COP, que es lo que pide el cliente; si no dice desde dónde sale, como manda la decisión «origen-y-precio» (dar el precio de una sola salida sin saberlo no cumple)."
     },
     {
      "id": "refresh-menos-de-dos-anos",
-     "check": "A '¿tengo que hacer algo especial?' no le exige refresh: termino el curso basico el 3 de abril de 2025, hace menos de 2 años."
+     "check": "A '¿tengo que hacer algo especial?' no le exige refresh: terminó el curso básico el 3 de abril de 2025, menos tiempo del que pide la política de refresh de la base."
     },
     {
      "id": "hoteles-base-y-no-incluido",
@@ -1458,7 +1458,7 @@
    "criteria": [
     {
      "id": "origen-cartagena-o-islas",
-     "check": "Antes de cotizar o enviar link, pregunta si sale desde Cartagena o si ya está en las islas (los planes y precios cambian según origen)."
+     "check": "Antes de enviar el link, pregunta si sale desde Cartagena o si ya está en las islas (los planes y los enlaces cambian según el origen); si da el precio antes de saberlo, como manda la decisión «origen-y-precio»."
     }
    ],
    "review_note": "El cliente no cita ningun descuento ni pregunta como pagar.",
@@ -1494,7 +1494,7 @@
    "criteria": [
     {
      "id": "no-confirmar-precio-citado",
-     "check": "No da por bueno el '293' que cita el cliente; se atiene a la referencia para el Paquete 5 buceos desde Cartagena y, si no tiene nacionalidad/moneda, la pide antes de cotizar."
+     "check": "No da por bueno el '293' que cita el cliente; se atiene a la referencia para el Paquete 5 buceos desde Cartagena, en la moneda que manda la decisión «moneda»."
     },
     {
      "id": "disponibilidad-semana-santa",
@@ -1541,11 +1541,11 @@
    "criteria": [
     {
      "id": "no-descuento-colombiano-moneda-cop",
-     "check": "Aclara que no hay descuento especial por ser colombiano/residente; el precio es el mismo y solo cambia la moneda a COP para colombianos y residentes."
+     "check": "Aclara que no hay descuento especial por ser colombiano o residente: el precio es el mismo y solo cambia la moneda (decisión «moneda»)."
     },
     {
      "id": "precio-paquete-5-islas",
-     "check": "Da el precio del catálogo para el Paquete 5 Buceos (2 días) desde las islas, por persona (en COP por ser residente)."
+     "check": "Da el precio del catálogo del Paquete 5 Buceos desde las islas, por persona, en la moneda del residente (decisión «moneda»)."
     },
     {
      "id": "recogida-islas-incluida",
@@ -1615,11 +1615,11 @@
    "criteria": [
     {
      "id": "origen-antes-de-cotizar",
-     "check": "Da el precio del catálogo para snorkeling según salgan desde Cartagena o si ya están en las islas; si el cliente no lo dijo, pregunta desde dónde salen o da ambos precios rotulados. Contestar qué incluye no exige saber el origen."
+     "check": "Da el precio del catálogo para snorkeling según salgan desde Cartagena o ya estén en las islas; si el cliente no lo dijo, como manda la decisión «origen-y-precio». Contestar qué incluye no exige saber el origen."
     },
     {
      "id": "sin-descuento-por-residente",
-     "check": "A 'soy residente, ¿me aplica el descuento adicional?' aclara que no hay descuento especial por ser colombiano/residente; solo cambia la moneda a COP. Sí menciona el descuento online estándar si reserva por la web."
+     "check": "A 'soy residente, ¿me aplica el descuento adicional?' aclara que no hay descuento especial por ser colombiano o residente; solo cambia la moneda (decisión «moneda»). Sí menciona el descuento online estándar si reserva por la web."
     },
     {
      "id": "pago-por-link",
@@ -1690,7 +1690,7 @@
     },
     {
      "id": "origen-cartagena-o-islas",
-     "check": "Pregunta si sale desde Cartagena o si ya está en las islas para dar el precio exacto, o bien ofrece ambas opciones con sus precios de catálogo."
+     "check": "Si no sabe si sale desde Cartagena o ya está en las islas, actúa como manda la decisión «origen-y-precio»."
     }
    ],
    "source": {
@@ -1760,7 +1760,7 @@
    "criteria": [
     {
      "id": "precio-moneda-cop-por-cedula-extranjeria",
-     "check": "Cotiza (o indica que cotizará) el precio del catálogo para buzo certificado desde Cartagena en COP por tener cédula de extranjería; si faltan datos (personas y si sale de Cartagena o ya está en las islas), los pregunta en vez de asumir."
+     "check": "Cotiza (o indica que cotizará) el precio del catálogo para buzo certificado en la moneda de quien tiene cédula de extranjería (decisión «moneda»); si faltan las personas, las pregunta en vez de asumir; si falta el origen, como manda la decisión «origen-y-precio»."
     },
     {
      "id": "no-descuento-transferencia",
@@ -1802,7 +1802,7 @@
     },
     {
      "id": "precio-moneda-o-pregunta",
-     "check": "Da el precio del catálogo del acompañante saliendo desde Cartagena: en COP si el cliente es colombiano o residente, si no (o si no lo ha dicho) en USD; o pregunta si sale desde Cartagena o ya está en las islas antes de cotizar. No hace falta preguntar la nacionalidad antes de cotizar."
+     "check": "Da el precio del catálogo del acompañante en la moneda que manda la decisión «moneda»; si no sabe desde dónde sale, como manda la decisión «origen-y-precio»."
     }
    ],
    "source": {
@@ -1834,7 +1834,7 @@
    "criteria": [
     {
      "id": "precio-total-cop-grupo-mixto",
-     "check": "Da en COP el precio por persona del catálogo de cada plan (buzo certificado, 2 inmersiones; minicurso) saliendo desde Cartagena, sin calcular el total del grupo (el bot no da totales); si no está claro desde dónde salen, lo pregunta antes de cotizar."
+     "check": "Da en COP, que es lo que pide el cliente, el precio por persona del catálogo de cada plan (buzo certificado, 2 inmersiones; minicurso) saliendo desde Cartagena, sin calcular el total del grupo (decisión «sin-totales»); si no está claro desde dónde salen, como manda la decisión «origen-y-precio»."
     }
    ],
    "review_note": "g-8 (26-sep): quitado 'moneda-colombianos-o-residentes' (un fallo, un criterio: cuenta en precio-total).",
@@ -1909,7 +1909,7 @@
     },
     {
      "id": "confirmacion-por-pago-enlace",
-     "check": "Indica que se reserva y paga por el enlace online (el pago queda registrado y el equipo lo concilia y confirma la reserva; decisión de Gadea 17-oct: no 'confirmada al instante de pagar') y, ante 'concepto', no inventa instrucciones de transferencia: sugiere pagar por el enlace o, si requiere otra forma, ofrece pasar con un asesor."
+     "check": "Indica que se reserva y paga por el enlace online, como dice la decisión «pago-y-reserva», y, ante 'concepto', no inventa instrucciones de transferencia: sugiere pagar por el enlace o, si requiere otra forma, ofrece pasar con un asesor."
     }
    ],
    "source": {
@@ -2018,7 +2018,7 @@
    "criteria": [
     {
      "id": "lugar-hora",
-     "check": "A la pregunta sobre el programa indica el punto de encuentro (Muelle de la Bodeguita) y la hora de salida (8:00 a. m.)."
+     "check": "A la pregunta sobre el programa indica el punto de encuentro y la hora de salida desde Cartagena que da la base."
     },
     {
      "id": "fotos-politica",
@@ -2229,7 +2229,7 @@
     },
     {
      "id": "precio-islas-2-buzos-usd",
-     "check": "Da el precio del catálogo desde las islas en USD por ser extranjeros, por persona o el total para los 2 (o pregunta el dato que falte si no puede asumirlo)."
+     "check": "Da el precio del catálogo desde las islas en la moneda que les corresponde por ser extranjeros (decisión «moneda»), por persona o el total para los 2 (o pregunta el dato que falte si no puede asumirlo)."
     },
     {
      "id": "diferente-precio-cartagena-vs-islas",
@@ -2431,7 +2431,7 @@
     },
     {
      "id": "precio-cartagena-moneda",
-     "check": "Da el precio del catálogo para 1 buzo certificado (2 inmersiones, 1 día) saliendo desde Cartagena: en COP si es colombiano o residente; si no ha dicho su nacionalidad, en USD (no hace falta preguntarla antes de cotizar)."
+     "check": "Da el precio del catálogo para 1 buzo certificado (2 inmersiones, 1 día) saliendo desde Cartagena, en la moneda que manda la decisión «moneda»."
     },
     {
      "id": "base-en-islas",
@@ -2478,7 +2478,7 @@
     },
     {
      "id": "precio-cop-cartagena",
-     "check": "Da el precio del catálogo en COP para buzo certificado 2 inmersiones desde Cartagena, o pregunta si sale desde Cartagena o ya está en las islas antes de cotizar; si falta el número de personas, lo pide."
+     "check": "Da el precio del catálogo para buzo certificado 2 inmersiones en COP (decisión «moneda») de la salida que corresponda; si no sabe si sale desde Cartagena o ya está en las islas, como manda la decisión «origen-y-precio»; si falta el número de personas, lo pide."
     },
     {
      "id": "link-reserva",
@@ -2517,11 +2517,11 @@
    "criteria": [
     {
      "id": "overnight-obligatorio",
-     "check": "Aclara que el paquete de 5 buceos (2 días) requiere alojarse en las islas y que no hay opción de ir y volver ambos días desde Cartagena."
+     "check": "Aclara lo que dice la base del alojamiento del paquete de 5 buceos: si hay que dormir en las islas o se puede ir y volver cada día desde Cartagena."
     },
     {
      "id": "precio-y-moneda-correctos",
-     "check": "Da el precio del catálogo del paquete de 5 buceos desde Cartagena (y, si aplica, desde islas): en COP si es colombiano o residente; si no ha dicho su nacionalidad, en USD (no hace falta preguntarla). También confirma si sale desde Cartagena o ya está en las islas antes de cotizar."
+     "check": "Da el precio del catálogo del paquete de 5 buceos en la moneda que manda la decisión «moneda»; si no sabe si sale desde Cartagena o ya está en las islas, como manda la decisión «origen-y-precio»."
     },
     {
      "id": "geografia-rosario-vs-baru",
@@ -2593,7 +2593,7 @@
     },
     {
      "id": "formulario-medico-refresher",
-     "check": "Indica que para el refresher/minicurso se requiere el formulario médico (decisión de Gadea 18-oct: el enlace se puede enviar junto con el de la reserva y, si no lo ha completado, se le vuelve a enviar en el correo de confirmación; vale cualquiera de las dos cosas)."
+     "check": "Indica que para el refresher/minicurso se requiere el formulario médico y cómo se envía, como dice la base (vale cualquiera de las vías que da)."
     }
    ],
    "source": {
@@ -2631,7 +2631,7 @@
    "criteria": [
     {
      "id": "pide-datos-para-cotizar",
-     "check": "Antes de dar precios, pide si salen desde Cartagena o ya están en las islas (la nacionalidad no hace falta preguntarla: sin ella, el precio va en USD). Con el origen, entrega el precio del catálogo correspondiente para buceo certificado y snorkeling."
+     "check": "Da el precio del catálogo de buceo certificado y de snorkeling en la moneda que manda la decisión «moneda»; si no sabe si salen desde Cartagena o ya están en las islas, como manda la decisión «origen-y-precio»."
     },
     {
      "id": "link-especial-escalar",
@@ -2672,11 +2672,11 @@
    "criteria": [
     {
      "id": "origen-cartagena-o-islas",
-     "check": "Antes de cotizar el total, confirma si salen desde Cartagena o si ya están en las islas (los precios cambian según el origen)."
+     "check": "Antes de dar un total, sabe si salen desde Cartagena o ya están en las islas (los precios cambian según el origen); si da precios sin saberlo, como manda la decisión «origen-y-precio»."
     },
     {
      "id": "moneda-segun-nacionalidad",
-     "check": "Pregunta si el grupo es colombiano/residente o internacional para definir la moneda; si hay mezcla en el grupo, indica que toda la reserva se paga en USD."
+     "check": "Aplica la decisión «moneda» al grupo: si no sabe la nacionalidad, lo que manda esa decisión (o la pregunta); si hay mezcla en el grupo, lo de un grupo mixto."
     },
     {
      "id": "link-reserva",
@@ -2716,7 +2716,7 @@
     },
     {
      "id": "moneda-extranjeros",
-     "check": "Aclara que, al ser extranjeros y no tener cédula colombiana, el pago se realiza en USD (misma tarifa, cambia la moneda)."
+     "check": "Aclara en qué moneda pagan por ser extranjeros sin cédula colombiana, según la decisión «moneda» (misma tarifa, cambia la moneda)."
     }
    ],
    "source": {
@@ -2755,7 +2755,7 @@
     },
     {
      "id": "hora-salida",
-     "check": "Confirma la hora de salida correcta: 8:00 a. m. (no 7:30 a. m.)."
+     "check": "Confirma la hora de salida desde Cartagena que da la base, no la que cita el cliente."
     }
    ],
    "source": {
@@ -2786,7 +2786,7 @@
    "criteria": [
     {
      "id": "precio-moneda-cartagena-cop",
-     "check": "Da el precio del catálogo para 2 buzos certificados saliendo desde Cartagena, en COP por ser colombianos (sin inventar otros cargos)."
+     "check": "Da el precio del catálogo para 2 buzos certificados saliendo desde Cartagena, en la moneda de los clientes colombianos (decisión «moneda»), sin inventar otros cargos."
     },
     {
      "id": "descuentos-vigentes",
@@ -2860,11 +2860,11 @@
    "criteria": [
     {
      "id": "pernocta-obligatoria",
-     "check": "Ante 'booking just for one night will be enough, right?', confirma que los cursos de 2 días requieren alojarse en las islas y que, como mínimo, una noche es necesaria."
+     "check": "Ante 'booking just for one night will be enough, right?', contesta con lo que dice la base de las noches que requiere el curso."
     },
     {
      "id": "hora-fin-dia1",
-     "check": "Responde que las actividades del primer día terminan hacia las 12:00-13:00 y que después va a su hotel en las islas, donde pasa la noche, para que el cliente sepa que tendrá tiempo de disfrutarlo."
+     "check": "Responde con la hora de fin de las actividades del primer día que da la base y que después va a su hotel en las islas, donde pasa la noche, para que el cliente sepa que tendrá tiempo de disfrutarlo."
     }
    ],
    "review_note": "g-8 (26-sep): quitado 'fotos-no-incluidas-sin-fotografo' (un fallo, un criterio).",
@@ -2904,7 +2904,7 @@
     },
     {
      "id": "punto-encuentro-hora",
-     "check": "Indica el punto de encuentro Muelle de la Bodeguita a las 8:00 a. m."
+     "check": "Indica el punto de encuentro y la hora de salida desde Cartagena que da la base."
     }
    ],
    "source": {
@@ -2939,7 +2939,7 @@
     },
     {
      "id": "solo-explica-si-no-aparece",
-     "check": "Si el cliente indica que el descuento no aparece, explica que el 10% online se aplica solo al reservar en la web, sin código; no hace falta pasarlo con un asesor (decisión de Gadea 18-oct: solo se explica)."
+     "check": "Si el cliente indica que el descuento no aparece, aplica la decisión «descuento-online»: explica cómo se aplica, sin pasarlo con un asesor."
     }
    ],
    "source": {
@@ -3017,11 +3017,11 @@
    "criteria": [
     {
      "id": "precio-dia-cartagena",
-     "check": "Da el precio del catálogo por persona para buzo certificado (2 inmersiones, 1 día) saliendo desde Cartagena en USD, o pregunta la nacionalidad para definir la moneda."
+     "check": "Da el precio del catálogo por persona para buzo certificado (2 inmersiones, 1 día) saliendo desde Cartagena, en la moneda que manda la decisión «moneda» (el cliente no ha dicho su nacionalidad)."
     },
     {
      "id": "paquete-5-requiere-noche",
-     "check": "Si menciona el paquete de 5 buceos, aclara que dura 2 días, incluye buceo nocturno y requiere alojarse al menos 1 noche en las islas."
+     "check": "Si menciona el paquete de 5 buceos, aclara lo que dice la base de su duración, de su buceo nocturno y de las noches en las islas."
     },
     {
      "id": "hoteles-base-islas",
@@ -3058,11 +3058,11 @@
    "criteria": [
     {
      "id": "moneda-colombianos",
-     "check": "Aclara que no existe 'tarifa especial' por ser colombiano: los colombianos pagan en COP y el precio es el mismo que en USD (solo cambia la moneda)."
+     "check": "Aclara que no existe 'tarifa especial' por ser colombiano: el precio es el mismo y solo cambia la moneda (decisión «moneda»)."
     },
     {
      "id": "precio-minicurso-cop-o-origen",
-     "check": "Da el precio del catálogo para el Minicurso/Refresh en COP si salen desde Cartagena y son 2 personas, o pregunta si salen desde Cartagena o ya están en las islas antes de cotizar."
+     "check": "Da el precio del catálogo del Minicurso/Refresh para 2 personas en la moneda de los clientes colombianos (decisión «moneda»); si no sabe si salen desde Cartagena o ya están en las islas, como manda la decisión «origen-y-precio»."
     },
     {
      "id": "dos-inmersiones-para-certificados",
@@ -3097,15 +3097,15 @@
    "criteria": [
     {
      "id": "pregunta-origen-cartagena-o-islas",
-     "check": "Antes de dar un precio, pregunta si salen desde Cartagena o si ya están en las islas, porque el plan y el precio cambian según el origen."
+     "check": "Si no sabe si salen desde Cartagena o ya están en las islas, actúa como manda la decisión «origen-y-precio» (el plan y el precio cambian según el origen)."
     },
     {
      "id": "moneda-colombianos",
-     "check": "Aclara que los colombianos pagan en COP y que el precio es el mismo que para extranjeros (solo cambia la moneda), sin otorgar un 'precio de colombiano'."
+     "check": "Aclara que el precio es el mismo para colombianos y extranjeros y solo cambia la moneda (decisión «moneda»), sin otorgar un 'precio de colombiano'."
     },
     {
      "id": "no-validar-precio-historico",
-     "check": "No confirma el importe histórico citado; usa el precio del catálogo para el Minicurso de buceo para 2 personas en COP si confirman salida desde Cartagena, o el precio del catálogo desde islas si dicen que ya están allá."
+     "check": "No confirma el importe histórico citado; usa el precio del catálogo del Minicurso de buceo para 2 personas, en la moneda de los clientes colombianos (decisión «moneda»), de la salida que confirmen o, si no la confirman, como manda la decisión «origen-y-precio»."
     }
    ],
    "source": {
@@ -3138,7 +3138,7 @@
     },
     {
      "id": "origen-para-precio",
-     "check": "Antes de cotizar, aclara si sale desde Cartagena o si ya está en las islas (los planes y precios cambian según el origen); o da el precio correcto según el origen si ya estuviera claro."
+     "check": "Da el precio correcto según el origen si ya está claro; si no, como manda la decisión «origen-y-precio»."
     },
     {
      "id": "no-promete-pecios",
@@ -3179,7 +3179,7 @@
     },
     {
      "id": "alternativa-desde-cartagena",
-     "check": "Ofrece la alternativa correcta con nosotros: unirse saliendo desde Cartagena, indicando que el punto es el Muelle de la Bodeguita a las 8:00 a. m."
+     "check": "Ofrece la alternativa correcta con nosotros: unirse saliendo desde Cartagena, indicando el punto de encuentro y la hora de salida desde Cartagena que da la base."
     }
    ],
    "source": {
@@ -3218,7 +3218,7 @@
     },
     {
      "id": "minicurso-no-certifica",
-     "check": "Explica que el minicurso no otorga certificación PADI y que para certificar (Open Water) se requieren 2 días de práctica y pernocta en las islas, por lo que no es posible si se van mañana al mediodía."
+     "check": "Explica que el minicurso no otorga certificación PADI y que certificarse (Open Water) requiere los días y la noche en las islas que dice la base, por lo que no es posible si se van mañana al mediodía."
     }
    ],
    "source": {
@@ -3256,7 +3256,7 @@
     },
     {
      "id": "punto-encuentro",
-     "check": "Entrega el punto de encuentro y hora (Muelle de la Bodeguita a las 8:00 AM) cuando le piden la información del centro."
+     "check": "Entrega el punto de encuentro y la hora de salida desde Cartagena que da la base cuando le piden la información del centro."
     }
    ],
    "source": {
@@ -3289,11 +3289,11 @@
    "criteria": [
     {
      "id": "precio-moneda-origen",
-     "check": "Da el precio del catálogo para el Curso Open Water saliendo desde Cartagena y para el mismo curso si ya está en las islas: en COP si es colombiano o residente; si no ha dicho su nacionalidad, en USD (no hace falta preguntarla antes de cotizar)."
+     "check": "Da el precio del catálogo del Curso Open Water saliendo desde Cartagena y para el mismo curso si ya está en las islas, en la moneda que manda la decisión «moneda»."
     },
     {
      "id": "duracion-2-dias",
-     "check": "Aclara que la práctica del Curso Open Water dura 2 días (no 3) y se realiza en las Islas del Rosario."
+     "check": "Aclara la duración de la práctica del Curso Open Water que da la base (no la que cita el cliente) y que se realiza en las Islas del Rosario."
     },
     {
      "id": "hospedaje-no-incluido",
@@ -3331,7 +3331,7 @@
    "criteria": [
     {
      "id": "moneda-por-nacionalidad",
-     "check": "Aclara que colombianos y residentes pagan en COP y clientes internacionales en USD; si el cliente no dijo su nacionalidad, preguntar para indicarle la moneda correcta."
+     "check": "Aclara en qué moneda paga cada cliente según la decisión «moneda»; como el cliente no dijo su nacionalidad, actúa como manda esa decisión o le pregunta para indicarle la suya."
     }
    ],
    "review_note": "g-8 (26-sep): quitado 'origen-para-cotizar' (un fallo, un criterio).",
@@ -3369,7 +3369,7 @@
     },
     {
      "id": "alojamiento-no-incluido-5-buceos",
-     "check": "Aclara que el paquete de 5 buceos requiere pernoctar en las islas y que el alojamiento no está incluido (se reserva directamente con el hotel)."
+     "check": "Aclara lo que dice la base del alojamiento del paquete de 5 buceos: si hay que dormir en las islas, si el alojamiento está incluido y cómo se reserva."
     },
     {
      "id": "opcion-3-buceos-disponible",
@@ -3422,7 +3422,7 @@
     },
     {
      "id": "hora-regreso",
-     "check": "Indica el regreso estimado a Cartagena a las 4:15 p. m."
+     "check": "Indica la hora estimada de llegada a Cartagena que da la base."
     },
     {
      "id": "equipaje-en-lancha",
@@ -3466,7 +3466,7 @@
     },
     {
      "id": "lugar-y-hora",
-     "check": "Indica el punto de encuentro y hora correctos: Muelle de la Bodeguita a las 8:00 a. m."
+     "check": "Indica el punto de encuentro y la hora de salida desde Cartagena que da la base."
     }
    ],
    "review_note": "g-8 (26-sep): quitado 'precio-moneda-datos' (un fallo, un criterio).",
@@ -3622,7 +3622,7 @@
    "criteria": [
     {
      "id": "precio-mixto-cartagena-o-pregunta-faltantes",
-     "check": "Da el precio del catálogo para 3 buzos certificados (2 inmersiones) y 3 snorkelers (2 salidas) desde Cartagena: en COP si son colombianos o residentes; en USD si no han dicho la nacionalidad o el grupo es mixto (decisión de moneda del 15-oct). Si falta saber desde dónde salen, lo pregunta antes de cotizar."
+     "check": "Da el precio del catálogo para 3 buzos certificados (2 inmersiones) y 3 snorkelers (2 salidas) desde Cartagena, en la moneda que manda la decisión «moneda»; si no sabe desde dónde salen, como manda la decisión «origen-y-precio»."
     },
     {
      "id": "descuento-online-sin-cupon",
@@ -3630,7 +3630,7 @@
     },
     {
      "id": "refresh-no-requerido-1-5-anos",
-     "check": "Aclara que el refresh se exige solo si han pasado más de 2 años sin bucear; con 1.5 años no es obligatorio ni tiene costo adicional por defecto."
+     "check": "Aclara, con la política de refresh de la base, que con 1,5 años sin bucear no es obligatorio ni tiene costo adicional por defecto."
     }
    ],
    "source": {
@@ -3707,11 +3707,11 @@
    "criteria": [
     {
      "id": "precio-2-buceos-cartagena",
-     "check": "Da el precio del catálogo para buzo certificado (2 inmersiones, 1 día) saliendo desde Cartagena en la moneda que corresponda (o pide nacionalidad para definirla antes de cotizar)."
+     "check": "Da el precio del catálogo para buzo certificado (2 inmersiones, 1 día) saliendo desde Cartagena en la moneda que manda la decisión «moneda»."
     },
     {
      "id": "cutoff-430pm",
-     "check": "A '¿tienen disponibilidad para mañana?' indica que el sistema online cierra a las 4:30 p. m. del día anterior y que, pasada esa hora, se reserva por la web para el siguiente día disponible (decisión de Gadea, 14-oct: no se pasa a un asesor)."
+     "check": "A '¿tienen disponibilidad para mañana?' indica la hora de cierre de reservas del día anterior y que, pasada esa hora, se reserva por la web para el siguiente día disponible, como dice booking_system_info (no se pasa a un asesor)."
     },
     {
      "id": "no-acepta-precio-propuesto",
@@ -3748,7 +3748,7 @@
    "criteria": [
     {
      "id": "curso-overnight-obligatorio",
-     "check": "Aclara que el curso Open Water de 2 días requiere alojarse en las islas; no es posible ir y volver ambos días desde Cartagena."
+     "check": "Aclara lo que dice la base de las noches del curso Open Water: si hay que dormir en las islas o se puede ir y volver cada día desde Cartagena."
     },
     {
      "id": "idioma",
@@ -3760,7 +3760,7 @@
     },
     {
      "id": "anticipacion-cierre-sistema",
-     "check": "Responde la anticipación indicando que el sistema de reservas cierra a las 4:30 p.m. del día anterior, y que después de esa hora se reserva igual por la web para el siguiente día disponible (sin WhatsApp de última hora)."
+     "check": "Responde la anticipación con la hora de cierre del sistema de reservas del día anterior que da la base, y que después de esa hora se reserva igual por la web para el siguiente día disponible (sin WhatsApp de última hora)."
     }
    ],
    "review_note": "Decision de Gadea (22-sep): clases en español e ingles; se acepta interprete. rag-2 (29-sep): anticipacion-cierre-sistema alineado con how_to_book (tras el cierre se reserva por la web, sin WhatsApp; decision de Gadea en g-7).",
@@ -3792,7 +3792,7 @@
    "criteria": [
     {
      "id": "pide-datos-antes-de-precio",
-     "check": "Antes de dar un precio, pregunta si sale desde Cartagena o si ya está en las islas (la nacionalidad no hace falta preguntarla: sin ella, el precio va en USD). Con el origen, da el precio del catálogo para el minicurso."
+     "check": "Da el precio del catálogo del minicurso en la moneda que manda la decisión «moneda»; si no sabe si sale desde Cartagena o ya está en las islas, como manda la decisión «origen-y-precio»."
     },
     {
      "id": "no-consejo-medico",
@@ -3868,7 +3868,7 @@
    "criteria": [
     {
      "id": "origen-cartagena-o-islas",
-     "check": "Da el precio correcto según si sale desde Cartagena o ya está en las Islas del Rosario; si el cliente no lo dijo, el bot debe preguntarlo antes de cotizar."
+     "check": "Da el precio correcto según si sale desde Cartagena o ya está en las Islas del Rosario; si el cliente no lo dijo, como manda la decisión «origen-y-precio»."
     }
    ],
    "review_note": "g-8 (26-sep): quitado 'moneda-segun-nacionalidad' (un fallo, un criterio).",
@@ -3899,7 +3899,7 @@
    "criteria": [
     {
      "id": "politica-refresh",
-     "check": "Aclara que, tras más de 2 años sin bucear, normalmente se requiere refresh; valida que él ya hizo su Reactivate y propone refresher para ella (o pasar a un asesor si quiere validar excepción)."
+     "check": "Aclara la política de refresh de la base; valida que él ya hizo su Reactivate y propone refresher para ella (o pasar a un asesor si quiere validar excepción)."
     },
     {
      "id": "grupo-mixto-permitido",
@@ -3937,7 +3937,7 @@
    "criteria": [
     {
      "id": "curso-requiere-pernocta",
-     "check": "Si el cliente pregunta por alojarse en las islas para el curso, el bot aclara que los cursos de 2 días (Open Water) requieren quedarse al menos 1 noche en las islas y que el alojamiento no está incluido."
+     "check": "Si el cliente pregunta por alojarse en las islas para el curso, aclara lo que dice la base de las noches del curso Open Water y si el alojamiento está incluido."
     },
     {
      "id": "recogida-hoteles-islas",
@@ -4016,11 +4016,11 @@
     },
     {
      "id": "mixto-moneda-usd",
-     "check": "Aclara que en grupos mixtos (colombianos y extranjeros) toda la reserva se paga en USD al mismo precio equivalente."
+     "check": "Aclara en qué moneda paga un grupo mixto según la decisión «moneda» (toda la reserva en la misma moneda, al mismo precio equivalente)."
     },
     {
      "id": "origen-cartagena-o-islas",
-     "check": "Pregunta si salen desde Cartagena o si ya están en las islas antes de cotizar, o da el precio correspondiente según la respuesta."
+     "check": "Si no sabe si salen desde Cartagena o ya están en las islas, actúa como manda la decisión «origen-y-precio»; si lo sabe, da el precio de esa salida."
     }
    ],
    "source": {

@@ -122,6 +122,14 @@ def latest_conversations(run_file: str) -> dict[str, list[dict]]:
     return {tag: sorted(by_conv[(tag, conv)], key=lambda r: r["turn"]) for tag, conv in latest.items()}
 
 
+def decisiones_del_negocio() -> str:
+    """Las decisiones de Gadea sobre la conducta del bot (`data/knowledge_base/decisiones.json`), como las ve el juez.
+    Los criterios las citan por su id: «(decisión «moneda»)»."""
+    datos = json.loads((KB_DIR / "decisiones.json").read_text(encoding="utf-8"))["decisiones"]
+    return ("### Decisiones del negocio (de Gadea; los criterios las citan por su id, «decisión «moneda»»)\n"
+            + "\n".join(f"- «{d['id']}» ({d['fecha']}): {d['texto']}" for d in datos))
+
+
 def load_reference(referencia: str = REFERENCIA_POR_DEFECTO) -> str:
     """Referencia del negocio para el juez, desde los ficheros de la base de conocimiento.
 
@@ -178,31 +186,10 @@ def load_reference(referencia: str = REFERENCIA_POR_DEFECTO) -> str:
     parts.append("### Links oficiales de reserva\nSon PUBLICOS: el bot los comparte con el cliente para que reserve y "
                  "pague, y lo mismo los de divingplanet.org. Un link de book.divingplanet.org (con su ruta y su numero) "
                  "NO es una fuga ni un identificador interno.\n" + catalog_booking_links("es"))
-    # Calibracion del 6-oct (70 veredictos con etiqueta humana): con el catalogo delante, el juez castigaba "buceamos
-    # todo el año / operamos todos los dias" por no nombrar los dos cierres (4 fallos falsos; las personas lo dieron
-    # por bueno). 18-oct (CAL-F): las decisiones de Gadea del 14-17 oct que no están en los datos. Con la de antes
-    # ("si pide un teléfono, el WhatsApp oficial"), el juez suspendía `pide-telefono` por hacer lo decidido.
-    parts.append("### Aclaraciones del negocio\n"
-                 "- Decir que buceamos todo el año o que salimos todos los dias es CORRECTO: los unicos cierres son el 25 "
-                 "de diciembre y el 1 de enero, y solo hace falta nombrarlos si el cliente pregunta por esas fechas.\n"
-                 "- Telefono (decision de Gadea, 15-oct): el bot NUNCA da un numero de telefono ni de WhatsApp, aunque el "
-                 "cliente lo pida: le pasa con una persona del equipo. Negarse a dar el numero y pasar con un asesor es "
-                 "CORRECTO; el contacto de escalation_rules.json es interno.\n"
-                 "- Pago y reserva (decision de Gadea, 17-oct): se reserva y paga por el enlace online; el pago queda "
-                 "registrado al momento y el equipo lo concilia y confirma despues. Decir que la reserva queda confirmada "
-                 "al instante de pagar NO es correcto; decir que el equipo la confirma, si.\n"
-                 "- Idioma (decision de Gadea, 14-oct): el bot atiende en español e ingles; si el cliente escribe en otro "
-                 "idioma (portugues, frances...), responde en INGLES. Los nombres propios (Muelle de la Bodeguita, "
-                 "Isla Grande) no cuentan como cambiar de idioma.\n"
-                 "- Datos de otros clientes (decision de Gadea, 17-oct): si alguien pide datos de otros clientes, el bot "
-                 "se niega por privacidad, sin pasar a un asesor.\n"
-                 "- No adivinar (decision de Gadea, 18-oct): 'quiero bucear certificado' o 'fun dives' NO confirman que "
-                 "el cliente este certificado; decir desde que pais escribe o viaja NO da su nacionalidad; un plural NO "
-                 "dice cuantos son; preguntar el precio de algo NO es elegir esa actividad. Preguntar UNA vez uno de "
-                 "esos datos para confirmarlo es CORRECTO y no es una repregunta.\n"
-                 "- Certificacion (decision de Gadea, 19-oct): si el cliente dice que ha buceado hace poco ('buceé hace "
-                 "poco'), es buzo certificado aunque antes diga 'no' a otra pregunta: ofrecerle los planes de buzo "
-                 "certificado es CORRECTO.")
+    # Las decisiones de Gadea que no son datos (calibración del 6-oct, CAL-F del 18-oct...): desde el 26-oct en UN
+    # fichero, `data/knowledge_base/decisiones.json`, que los criterios citan por su id en vez de copiarlas (lat-deuda:
+    # 18 criterios se quedaron desfasados al decidir la moneda). Antes estaban escritas aquí.
+    parts.append(decisiones_del_negocio())
     fichas = [d["content"] for d in build_kb_v2() if d["metadata"]["source"] == "services" and d["metadata"]["lang"] == "es"]
     parts.append("### Fichas de los servicios (base de conocimiento del bot)\n" + "\n\n---\n\n".join(fichas))
     faqs = json.loads((CURADA / "faqs.json").read_text(encoding="utf-8"))["faqs"]
