@@ -58,7 +58,8 @@ _TRAZA = []
 class _Traza(logging.Handler):
     def emit(self, rec):
         m = rec.getMessage()
-        if any(t in m for t in ("[EXTRACT]", "[LLM_EXTRACTOR]", "[CORE]", "[INTENT]", "[ROUTER]", "[AVISOS]", "[HECHOS]", "[INFO]")):
+        if any(t in m for t in ("[EXTRACT]", "[LLM_EXTRACTOR]", "[CORE]", "[INTENT]", "[ROUTER]", "[AVISOS]", "[HECHOS]", "[INFO]",
+                                    "[RAG][GROUNDING]", "[RAG][LAT5]")):  # lat-5: el revisor del RAG
             _TRAZA.append(m[:400])
 logging.getLogger().addHandler(_Traza())
 logging.getLogger().setLevel(logging.INFO)

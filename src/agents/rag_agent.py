@@ -939,6 +939,7 @@ async def rag_answer(
                     # hay nada comprobable que el revisor pueda pillar: no se le llama (0,5 s por turno del RAG). Sin
                     # documentos de la base (`require_grounding`) se revisa siempre: ahí inventaría de lo que sabe.
                     grounded, reason = True, "sin_cifras_nuevas"
+                    logger.info("[RAG][LAT5] revisor saltado: la respuesta no trae cifras ni días fuera del contexto")
                     from src.observability import note_turn  # lazy
 
                     note_turn(revisor="saltado")
