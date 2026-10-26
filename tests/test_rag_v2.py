@@ -203,6 +203,9 @@ def test_el_catalogo_trae_el_precio_del_refresher():
 # ─── Paso 9 (l2-2, prompt caching) ───────────────────────────────────────────
 
 async def test_con_cache_el_catalogo_va_al_prompt_del_sistema(monkeypatch):
+    from src.agents import rag_agent as _ra
+
+    monkeypatch.setattr(_ra, "_hay_algo_que_revisar", lambda *a, **k: True)  # lat-5: que el revisor corra
     seen: list = []
     judged: list = []
 
@@ -235,6 +238,9 @@ async def test_con_cache_el_catalogo_va_al_prompt_del_sistema(monkeypatch):
 async def test_el_juez_ve_la_presentacion_tras_el_catalogo(monkeypatch):
     """1-oct (`juez_presentacion`): lo que el bot tiene ordenado decir de la empresa (PADI 5 Estrellas, 30 años) va
     en el contexto del juez, después del catálogo (los dos prefijos fijos, cacheables)."""
+    from src.agents import rag_agent as _ra
+
+    monkeypatch.setattr(_ra, "_hay_algo_que_revisar", lambda *a, **k: True)  # lat-5: que el revisor corra
     from src.prompts.info import JUEZ_PRESENTACION_ES, PRESENTACION_ES, RAG_INTRO_ES
 
     assert PRESENTACION_ES in RAG_INTRO_ES  # una sola fuente: la misma frase que dice el bot
