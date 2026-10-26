@@ -1,0 +1,17 @@
+{
+ "about": "DEUDA-EXT2 (26-oct; Gadea #2006, lo encontrado al medir lat-5 #2000 y lo que quedó de DEUDA-EXT #1969): (1) quien dice que YA tiene un nivel («PADI open water, advanced…») es un buzo certificado, no alguien que pide el curso Open Water; (2) «voy con una amiga que no está certificada» son 2 personas (la amiga, sin decidir). Se mira el ESTADO final. Frases nuestras: no salen del golden, de G9/G10 ni de las charlas reales. n*: niveles que ya tiene; c*: control, quiere el curso; g*: alguien que va con él; k*: control de grupo.",
+ "dialogos": [
+  {"id": "n1-tengo-ow-y-advanced", "tipo": "nivel", "turnos": ["Hola, quiero bucear la semana que viene desde Cartagena", "Tengo PADI Open Water y Advanced"], "estado": {"is_certified": true}, "estado_no": {"activity": "padi_open_water"}},
+  {"id": "n2-certs-en", "tipo": "nivel", "turnos": ["Hi, we'd like to go diving from Cartagena next month", "Open Water, Advanced and Rescue certifications"], "estado": {"is_certified": true}, "estado_no": {"activity": "padi_open_water"}},
+  {"id": "n3-soy-open-water", "tipo": "nivel", "turnos": ["Soy Open Water y salgo de Cartagena, ¿qué inmersiones tienen?"], "estado": {"is_certified": true}, "estado_no": {"activity": "padi_open_water"}},
+  {"id": "n4-ya-hice-el-curso", "tipo": "nivel", "turnos": ["Ya hice el Open Water el año pasado, quiero bucear desde Cartagena"], "estado": {"is_certified": true}, "estado_no": {"activity": "padi_open_water"}},
+  {"id": "n5-padi-certs-en", "tipo": "nivel", "turnos": ["Hi, I'd like to dive from Cartagena next week", "PADI open water and advanced open water certs"], "estado": {"is_certified": true}, "estado_no": {"activity": "padi_open_water"}},
+  {"id": "n6-padi-certificaciones", "tipo": "nivel", "turnos": ["Quiero bucear desde Cartagena la semana que viene", "PADI Open Water y Advanced, esas son mis certificaciones"], "estado": {"is_certified": true}, "estado_no": {"activity": "padi_open_water"}},
+  {"id": "c1-quiero-el-advanced", "tipo": "control", "turnos": ["Tengo el Open Water y quiero hacer el curso Advanced, salgo de Cartagena"], "estado": {"activity": "padi_advanced"}},
+  {"id": "c2-sacarme-el-ow", "tipo": "control", "turnos": ["Quiero sacarme el Open Water, salgo de Cartagena"], "estado": {"activity": "padi_open_water"}},
+  {"id": "g1-amiga-no-certificada", "tipo": "acompanante", "turnos": ["Quiero bucear el sábado desde Cartagena, tengo el Open Water", "Voy con una amiga que no está certificada"], "estado": {"detected_group_size": 2}},
+  {"id": "g2-novio-nunca-ha-buceado", "tipo": "acompanante", "turnos": ["Soy buzo certificado y salgo de Cartagena", "Viene mi novio, que nunca ha buceado"], "estado": {"detected_group_size": 2}},
+  {"id": "g3-friend-not-certified-en", "tipo": "acompanante", "turnos": ["I'm a certified diver leaving from Cartagena", "My friend is coming too, but she isn't certified"], "estado": {"detected_group_size": 2}},
+  {"id": "k1-voy-solo", "tipo": "control", "turnos": ["Quiero bucear desde Cartagena, soy certificado y voy solo"], "estado": {"detected_group_size": 1}}
+ ]
+}
