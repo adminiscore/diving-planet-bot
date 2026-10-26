@@ -15,7 +15,6 @@ from unittest.mock import patch
 import pytest
 
 from src.agents import conversational_core as cc
-from src.agents.nucleo import extraction as core_extraction
 from src.flows.state import ConversationState
 
 
@@ -63,17 +62,12 @@ async def _understand_with_llm(message, llm_patch, combined=None, **state_fields
         calls.append("extract_and_verify")
         return dict(llm_patch if combined is None else combined), {}
 
-    async def fake_fill(*args, **kwargs):
-        calls.append(("fill_gaps", tuple(kwargs.get("only_fields") or ())))
-        return dict(llm_patch)
-
     state = ConversationState(conversation_id="named-people")
     state.language = "es"
     for name, value in state_fields.items():
         setattr(state, name, value)
     with (
         patch.object(cc, "extract_and_verify", fake_extract, create=True),
-        patch.object(core_extraction, "fill_gaps", fake_fill),
     ):
         await cc._understand(state, message)
     return state, calls
@@ -185,7 +179,6 @@ async def test_no_second_request_while_the_cert_or_course_question_is_pending(ex
         combined={},
         detected_group_size=5,
     )
-    assert ("fill_gaps", ("group_allocation",)) not in calls
     assert state.detected_group_allocation is None
     assert state.needs_cert_or_course is True
 

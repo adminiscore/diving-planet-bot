@@ -17,8 +17,7 @@ import httpx
 import pytest
 from openai import APITimeoutError, AsyncOpenAI
 
-from src.agents.intent_detector import DetectedIntent
-from src.agents.llm_extractor import fill_gaps
+from src.agents.extractor_turno import extraer_turno
 from src.config import settings
 from src.llm_client import trace_openai
 
@@ -59,9 +58,9 @@ async def test_un_timeout_degrada_el_turno_pero_no_lo_tumba(caplog):
                     raise APITimeoutError(request=httpx.Request("POST", "https://api.openai.com/v1"))
 
     with caplog.at_level("WARNING"):
-        patch = await fill_gaps("quiero bucear", DetectedIntent(), client=_ClienteQueExpira())
+        patch = await extraer_turno("quiero bucear", lang="es", client=_ClienteQueExpira())  # lat-11: era fill_gaps
 
-    assert patch == {}, "un timeout debe degradar a vacío, no propagar"
+    assert patch is None, "un timeout debe degradar a «sin lectura» (None), no propagar"
     assert any("DEGRADED" in r.message or "DEGRADED" in r.getMessage() for r in caplog.records), (
         "un timeout que no deja rastro en el log es una degradación invisible"
     )

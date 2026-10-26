@@ -49,7 +49,7 @@ def test_jev_dudoso_no_tapa_un_acompanante_real(monkeypatch):
 
 @pytest.fixture
 def _offline(monkeypatch):
-    for modulo, name in ((core_extraction, "fill_gaps"), (core_routing, "detect_special_signals"),
+    for modulo, name in ((core_routing, "detect_special_signals"),
                          (core_extraction, "detect_special_signals"), (core_extraction, "resolve_slot_answer")):
         monkeypatch.setattr(modulo, name, AsyncMock(return_value={}))
     monkeypatch.setattr(core, "extract_notes", AsyncMock(return_value=[]))

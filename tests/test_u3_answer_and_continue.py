@@ -57,7 +57,6 @@ def _state() -> ConversationState:
 
 @pytest.fixture(autouse=True)
 def _offline(monkeypatch):
-    monkeypatch.setattr(core_extraction, "fill_gaps", AsyncMock(return_value={}))
     _senales = AsyncMock(return_value={})
     monkeypatch.setattr(core_routing, "detect_special_signals", _senales)
     monkeypatch.setattr(core_extraction, "detect_special_signals", _senales)
@@ -106,7 +105,6 @@ def _llm_reads(monkeypatch, message, patch):
     async def _combined(fields, veto_fields, msg, *_a, **_k):  # huecos + verificación, una petición
         return (dict(patch) if msg == message else {}), {}
 
-    monkeypatch.setattr(core_extraction, "fill_gaps", _fill)
     monkeypatch.setattr(core, "extract_and_verify", _combined, raising=False)
 
 
@@ -394,7 +392,6 @@ def no_rellena(monkeypatch):
         calls.append(message)
         return {}, {}
 
-    monkeypatch.setattr(core_extraction, "fill_gaps", _fill)
     monkeypatch.setattr(core, "extract_and_verify", _combined, raising=False)
     return calls
 
@@ -588,7 +585,6 @@ def relleno(monkeypatch):
         calls.append({"fields": list(fields), "history": "combinada"})
         return {}, {}
 
-    monkeypatch.setattr(core_extraction, "fill_gaps", _fill)
     monkeypatch.setattr(core, "extract_and_verify", _combined, raising=False)
     return calls, box
 

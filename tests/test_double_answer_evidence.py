@@ -12,7 +12,6 @@ borraron con su test.
 import pytest
 
 from src.agents import conversational_core as core
-from src.agents.nucleo import extraction as core_extraction
 from src.flows.state import ConversationState
 from src.prompts.booking import EVIDENCE_FIELDS, extraction_tool
 
@@ -48,13 +47,7 @@ async def _understand(state, message, returned):
         calls.append(tuple(kwargs.get("extra_fields") or ()))
         return (dict(returned), {}) if "gaps" not in kwargs else dict(returned)
 
-    async def fake_fill(*args, **kwargs):
-        calls.append(tuple(kwargs.get("extra_fields") or ()))
-        return dict(returned)
-
-    from unittest.mock import patch
-    with patch.object(core, "extract_and_verify", fake, create=True), patch.object(core_extraction, "fill_gaps", fake_fill):
-        await core._understand(state, message)
+    await core._understand(state, message)
     return calls
 
 

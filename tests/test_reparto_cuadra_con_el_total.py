@@ -16,7 +16,6 @@ import pytest
 
 from src.agents import supervisor
 from src.agents.intent_detector import IntentDetector
-from src.agents.nucleo import extraction as core_extraction
 from src.flows.state import ConversationState
 
 _INCOMPLETE_MSG = "somos 5: 3 certificados, 1 minicurso y 1 snorkel"
@@ -143,9 +142,7 @@ async def test_invariant_runs_in_the_real_turn_path():
     state = ConversationState(conversation_id="ga-invariante-e2e")
     state.detected_group_size = 6
     with patch.object(cc, "extract_and_verify", create=True,
-                      new=AsyncMock(return_value=({"group_allocation": {"snorkel": 2}}, {}))), \
-         patch.object(core_extraction, "fill_gaps",
-                      new=AsyncMock(return_value={"group_allocation": {"snorkel": 2}})):
+                      new=AsyncMock(return_value=({"group_allocation": {"snorkel": 2}}, {}))):
         intent, _carry = await cc._understand(state, "4 con titulo y 2 snorkel")
     assert intent.group_allocation is None, (
         "un reparto que no suma el total no puede llegar al estado"
@@ -242,8 +239,7 @@ async def test_a_misread_turn_total_cannot_carry_a_partial_split_into_the_state(
     state = ConversationState(conversation_id="ga-total-mal-leido-e2e")
     state.detected_group_size = 7
     partial = {"group_allocation": {"certified_diving": 4}}
-    with patch.object(cc, "extract_and_verify", create=True, new=AsyncMock(return_value=(partial, {}))), \
-         patch.object(core_extraction, "fill_gaps", new=AsyncMock(return_value=dict(partial))):
+    with patch.object(cc, "extract_and_verify", create=True, new=AsyncMock(return_value=(partial, {}))):
         await cc._understand(state, "4 certificados")
     assert state.detected_group_size == 7
     assert state.detected_group_allocation is None

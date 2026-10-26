@@ -135,7 +135,6 @@ async def test_caido_el_hotel_del_catalogo_se_conserva(extractor):
 @pytest.mark.asyncio
 async def test_caido_turno_completo_pregunta_en_vez_de_inventar(extractor, monkeypatch):
     extractor(None)
-    monkeypatch.setattr(core_extraction, "fill_gaps", AsyncMock(return_value={}))
     senales = AsyncMock(return_value={})
     monkeypatch.setattr(core_routing, "detect_special_signals", senales)
     monkeypatch.setattr(core_extraction, "detect_special_signals", senales)

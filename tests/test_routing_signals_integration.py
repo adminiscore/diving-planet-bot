@@ -168,8 +168,7 @@ async def test_sensitive_signal_escalates_with_conversational_core_on():
     el camino."""
     state = make_state()
     with patch("src.agents.supervisor.detect_routing_signals",
-               new=AsyncMock(return_value={"sensitive_topic": "complaints_or_emergencies"})), \
-         patch("src.agents.nucleo.extraction.fill_gaps", new=AsyncMock(return_value={})):
+               new=AsyncMock(return_value={"sensitive_topic": "complaints_or_emergencies"})):
         resp = await route_message(state, "esto es un robo, quiero mi dinero")
     assert state.step == Step.ESCALATE
     assert resp

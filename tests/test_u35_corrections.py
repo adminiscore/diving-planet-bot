@@ -18,7 +18,7 @@ from src.flows.state import ConversationState
 
 @pytest.fixture(autouse=True)
 def _offline(monkeypatch):
-    for modulo, name in ((core_extraction, "fill_gaps"), (core_routing, "detect_special_signals"),
+    for modulo, name in ((core_routing, "detect_special_signals"),
                          (core_extraction, "detect_special_signals"), (core_extraction, "resolve_slot_answer")):
         monkeypatch.setattr(modulo, name, AsyncMock(return_value={}))
     monkeypatch.setattr(core, "extract_notes", AsyncMock(return_value=[]))
@@ -150,13 +150,9 @@ async def test_la_nacionalidad_que_jev_no_ve_afirmada_no_se_rellena(monkeypatch,
     """"Busco el seguinte: Vamos en família a Cartagena..." (portugués): el relleno ponía
     is_colombian=False; Jev dice que el mensaje no la afirma. Los demás campos rellenados se quedan."""
 
-    async def _fill(msg, *_a, only_fields=None, **_k):
-        return {f: v for f, v in {"is_colombian": False, "location": "cartagena"}.items() if f in (only_fields or [])}
-
     async def _combined(fields, veto, msg, *_a, **_k):
         return {f: v for f, v in {"is_colombian": False, "location": "cartagena"}.items() if f in fields}, {}
 
-    monkeypatch.setattr(core_extraction, "fill_gaps", _fill)
     monkeypatch.setattr(core, "extract_and_verify", _combined, raising=False)
 
     async def _signals(message, **_k):

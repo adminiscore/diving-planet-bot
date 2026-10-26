@@ -41,7 +41,6 @@ def _core_on(monkeypatch):
     """Deja el gap-filler y el detector de señales (recordar/acompañante) en
     no-op por defecto para todos los tests de este módulo (cada test los
     re-mockea si necesita que el LLM 'decida' algo)."""
-    monkeypatch.setattr(core_extraction, "fill_gaps", AsyncMock(return_value={}))
     _senales = AsyncMock(return_value={})
     monkeypatch.setattr(core_routing, "detect_special_signals", _senales)
     monkeypatch.setattr(core_extraction, "detect_special_signals", _senales)
@@ -421,9 +420,6 @@ async def test_llm_gap_fill_feeds_slots(monkeypatch, extractor_dice):
     extractor_dice({"never been underwater before, wanna give it a try, solo":
                     {"quiere_bucear": True, "is_certified": False, "group_size": 1}})
     state = make_state("en")
-    monkeypatch.setattr(core_extraction, "fill_gaps", AsyncMock(return_value={
-        "activity": "minicourse", "is_certified": False, "group_size": 1,
-    }))
     resp = await route_message(state, "never been underwater before, wanna give it a try, solo")
     assert state.detected_activity is None and state.suggested_activity == "minicourse"
     assert state.detected_is_certified is False
@@ -683,8 +679,6 @@ async def test_understand_skips_llm_when_state_knows_driving_fields(monkeypatch)
     state.detected_group_size = 2
     state.last_dive_over_2_years = state.detected_last_dive_over_2_years = False
     state.is_colombian = False
-    monkeypatch.setattr(core_extraction, "fill_gaps",
-                        AsyncMock(side_effect=AssertionError("LLM must not be called")))
     await core._understand(state, "genial entonces nos vemos pronto por allá")
 
 
@@ -697,9 +691,6 @@ async def test_understand_still_fills_when_state_is_empty(monkeypatch, extractor
     `_understand`: la recomendación la hace CAL-C1 al preguntar la actividad, con lo que dice el extractor."""
     extractor_dice({"never tried it before but would love to": {"quiere_bucear": True, "is_certified": False}})
     state = make_state("en")
-    monkeypatch.setattr(core_extraction, "fill_gaps", AsyncMock(return_value={
-        "activity": "minicourse", "is_certified": False,
-    }))
     await core._understand(state, "never tried it before but would love to")
     assert state.detected_is_certified is False
     assert core.next_missing_slot(state) == core.SLOT_ACTIVITY
@@ -1175,8 +1166,7 @@ async def test_three_activities_all_explicit_merge_without_asking():
         "companion_activity": "snorkel", "companion_qty": 3,
         "mentions_other_person": True,
     })
-    with patch.object(core_extraction, "fill_gaps", new=AsyncMock(return_value={})), \
-         patch.object(core_routing, "detect_special_signals", new=_senales), patch.object(core_extraction, "detect_special_signals", new=_senales):
+    with patch.object(core_routing, "detect_special_signals", new=_senales), patch.object(core_extraction, "detect_special_signals", new=_senales):
         resp = await route_message(state, "somos 2 que bucean y 3 que hacen snorkel")
     alloc = state.detected_group_allocation
     assert alloc.get("certified_diving") == 2
@@ -1206,8 +1196,7 @@ async def test_other_companions_post_close_asks_before_adding_unconfirmed_item(e
         "mentions_other_person": True,
         "other_companions": [{"activity": "minicourse", "qty": 1}],  # "otro" no es un número real
     })
-    with patch.object(core_extraction, "fill_gaps", new=AsyncMock(return_value={})), \
-         patch.object(core_routing, "detect_special_signals", new=_senales), patch.object(core_extraction, "detect_special_signals", new=_senales):
+    with patch.object(core_routing, "detect_special_signals", new=_senales), patch.object(core_extraction, "detect_special_signals", new=_senales):
         resp = await route_message(state, "2 amigos hacen snorkel y otro el minicurso")
     # El carrito original nunca se pierde; el nuevo ítem sin confirmar (minicurso)
     # no se añade todavía — se pregunta primero.
@@ -1220,8 +1209,7 @@ async def test_other_companions_post_close_asks_before_adding_unconfirmed_item(e
 
     # Al responder, el carrito se cierra con AMBAS actividades nuevas.
     _senales2 = AsyncMock(return_value={})
-    with patch.object(core_extraction, "fill_gaps", new=AsyncMock(return_value={})), \
-         patch.object(core_routing, "detect_special_signals", new=_senales2), patch.object(core_extraction, "detect_special_signals", new=_senales2):
+    with patch.object(core_routing, "detect_special_signals", new=_senales2), patch.object(core_extraction, "detect_special_signals", new=_senales2):
         resp2 = await route_message(state, "1")
     types2 = {it["type"]: it["qty"] for it in state.mixed_cart}
     assert types2.get("cert") == 1
@@ -1258,10 +1246,7 @@ async def test_hallucinated_main_activity_restatement_is_not_queued_as_companion
     await route_message(state, "no soy colombiano")
     assert state.mixed_cart[0]["type"] == "cert"
 
-    with patch.object(core_extraction, "fill_gaps", new=AsyncMock(return_value={
-        "group_allocation": {"certified_diving": 1, "snorkel": 1},
-    })):
-        resp = await route_message(state, "viene también un amigo que quiere hacer snorkel")
+    resp = await route_message(state, "viene también un amigo que quiere hacer snorkel")
 
     # La pregunta, no la palabra: desde lat-deuda-u la tarjeta dice lo que incluye el plan («…con un profesional PADI
     # certificado…»).
@@ -1362,10 +1347,7 @@ async def test_companion_qty_answer_mentioning_different_activity_not_misapplied
     assert pending_before in ("certified_diving", "snorkel")
     snorkel_before = (state.detected_group_allocation or {}).get("snorkel")
 
-    with patch.object(core_extraction, "fill_gaps", new=AsyncMock(return_value={
-        "group_allocation": {"certified_diving": 3},
-    })):
-        resp = await route_message(state, "we are 3 for diving")
+    resp = await route_message(state, "we are 3 for diving")
 
     assert (state.detected_group_allocation or {}).get("snorkel") == snorkel_before, (
         "el número de buceo no puede colarse como cantidad de snorkel"
@@ -1398,8 +1380,7 @@ async def test_companion_attribute_without_activity_asks_instead_of_guessing():
              "companion_activity": "minicourse", "mentions_other_person": True,
              "companion_is_singular": False,
          })
-    with patch.object(core_extraction, "fill_gaps", new=AsyncMock(return_value={})), \
-         patch.object(core_routing, "detect_special_signals", new=_senales), patch.object(core_extraction, "detect_special_signals", new=_senales):
+    with patch.object(core_routing, "detect_special_signals", new=_senales), patch.object(core_extraction, "detect_special_signals", new=_senales):
         resp = await route_message(state, "mi amigo no esta certificado")
     assert state.core_pending_slot == core.SLOT_COMPANION_ACTIVITY
     assert not (state.detected_group_allocation or {}).get("minicourse"), (
@@ -1409,8 +1390,7 @@ async def test_companion_attribute_without_activity_asks_instead_of_guessing():
     assert "?" in resp
 
     _senales2 = AsyncMock(return_value={})
-    with patch.object(core_extraction, "fill_gaps", new=AsyncMock(return_value={})), \
-         patch.object(core_routing, "detect_special_signals", new=_senales2), patch.object(core_extraction, "detect_special_signals", new=_senales2):
+    with patch.object(core_routing, "detect_special_signals", new=_senales2), patch.object(core_extraction, "detect_special_signals", new=_senales2):
         resp2 = await route_message(state, "snorkel")
     assert state.core_pending_slot == core.SLOT_COMPANION_QTY
     assert state.pending_companion_activity == "snorkel"
@@ -1465,8 +1445,7 @@ async def test_companion_activity_ambiguity_defers_instead_of_burying_pending_sl
              "companion_activity": "minicourse", "mentions_other_person": True,
              "companion_is_singular": False, "companion_qty": 2,
          })
-    with patch.object(core_extraction, "fill_gaps", new=AsyncMock(return_value={})), \
-         patch.object(core_routing, "detect_special_signals", new=_senales), patch.object(core_extraction, "detect_special_signals", new=_senales):
+    with patch.object(core_routing, "detect_special_signals", new=_senales), patch.object(core_extraction, "detect_special_signals", new=_senales):
         resp = await route_message(state, "mis amigos tambien vienen")
     # La ambigüedad del acompañante NO se pierde (se difiere), pero tampoco
     # entierra la pregunta de seguridad que ya estaba pendiente.
@@ -1477,15 +1456,13 @@ async def test_companion_activity_ambiguity_defers_instead_of_burying_pending_sl
     # Resolver seguridad y nacionalidad — el bot debe seguir preguntando por
     # ELLAS, nunca volver a la ambigüedad del acompañante a mitad de camino.
     _senales2 = AsyncMock(return_value={})
-    with patch.object(core_extraction, "fill_gaps", new=AsyncMock(return_value={})), \
-         patch.object(core_routing, "detect_special_signals", new=_senales2), patch.object(core_extraction, "detect_special_signals", new=_senales2):
+    with patch.object(core_routing, "detect_special_signals", new=_senales2), patch.object(core_extraction, "detect_special_signals", new=_senales2):
         resp2 = await route_message(state, "no")
     assert state.last_dive_over_2_years is False
     assert state.core_pending_slot != core.SLOT_COMPANION_ACTIVITY
 
     _senales3 = AsyncMock(return_value={})
-    with patch.object(core_extraction, "fill_gaps", new=AsyncMock(return_value={})), \
-         patch.object(core_routing, "detect_special_signals", new=_senales3), patch.object(core_extraction, "detect_special_signals", new=_senales3):
+    with patch.object(core_routing, "detect_special_signals", new=_senales3), patch.object(core_extraction, "detect_special_signals", new=_senales3):
         resp3 = await route_message(state, "no somos colombianos")
     assert state.is_colombian is False
     # Ahora que ya no queda nada más pendiente, se retoma el acompañante.
@@ -1516,8 +1493,7 @@ async def test_kids_only_mention_does_not_trigger_spurious_companion_activity():
     _senales = AsyncMock(return_value={
              "mentions_other_person": True,
          })
-    with patch.object(core_extraction, "fill_gaps", new=AsyncMock(return_value={})), \
-         patch.object(core_routing, "detect_special_signals", new=_senales), patch.object(core_extraction, "detect_special_signals", new=_senales):
+    with patch.object(core_routing, "detect_special_signals", new=_senales), patch.object(core_extraction, "detect_special_signals", new=_senales):
         await route_message(state, "los niños tienen 7 y 10")
     assert state.companion_activity_deferred is False
     assert state.core_pending_slot != core.SLOT_COMPANION_ACTIVITY
@@ -1542,8 +1518,7 @@ async def test_bare_headcount_in_price_question_does_not_spawn_phantom_companion
              "companion_activity": "certified_diving", "mentions_other_person": True,
              "companion_is_singular": False, "companion_qty": 2,
          })
-    with patch.object(core_extraction, "fill_gaps", new=AsyncMock(return_value={})), \
-         patch.object(core_routing, "detect_special_signals", new=_senales), patch.object(core_extraction, "detect_special_signals", new=_senales):
+    with patch.object(core_routing, "detect_special_signals", new=_senales), patch.object(core_extraction, "detect_special_signals", new=_senales):
         await route_message(state, "how much for 2 people, certified diving?")
     assert state.companion_activity_deferred is False
     assert state.pending_companion_activity is None
@@ -1577,8 +1552,7 @@ async def test_safety_answer_without_person_mention_does_not_spawn_phantom_compa
              "companion_activity": "certified_diving", "mentions_other_person": True,
              "companion_is_singular": True, "companion_qty": 1,
          })
-    with patch.object(core_extraction, "fill_gaps", new=AsyncMock(return_value={})), \
-         patch.object(core_routing, "detect_special_signals", new=_senales), patch.object(core_extraction, "detect_special_signals", new=_senales):
+    with patch.object(core_routing, "detect_special_signals", new=_senales), patch.object(core_extraction, "detect_special_signals", new=_senales):
         await route_message(state, "no hace mas de 2 años que buceamos")
     assert state.last_dive_over_2_years is False
     assert state.companion_activity_deferred is False
@@ -1613,8 +1587,7 @@ async def test_closing_affirmation_without_person_mention_does_not_reopen_with_p
              "companion_activity": "certified_diving", "mentions_other_person": True,
              "companion_is_singular": False, "companion_qty": 2,
          })
-    with patch.object(core_extraction, "fill_gaps", new=AsyncMock(return_value={})), \
-         patch.object(core_routing, "detect_special_signals", new=_senales), patch.object(core_extraction, "detect_special_signals", new=_senales):
+    with patch.object(core_routing, "detect_special_signals", new=_senales), patch.object(core_extraction, "detect_special_signals", new=_senales):
         resp = await route_message(state, "perfecto, hagamos la reserva")
     assert state.companion_activity_deferred is False
     assert state.pending_companion_activity is None
@@ -1631,8 +1604,7 @@ async def test_solo_traveler_confirmed_via_solo_regex_sets_persistent_flag():
     state.core_pending_slot = None
 
     _senales = AsyncMock(return_value={})
-    with patch.object(core_extraction, "fill_gaps", new=AsyncMock(return_value={})), \
-         patch.object(core_routing, "detect_special_signals", new=_senales), patch.object(core_extraction, "detect_special_signals", new=_senales):
+    with patch.object(core_routing, "detect_special_signals", new=_senales), patch.object(core_extraction, "detect_special_signals", new=_senales):
         await route_message(state, "solo yo")
     assert state.detected_group_size == 1
     assert state.solo_traveler_confirmed is True
@@ -1662,8 +1634,7 @@ async def test_solo_traveler_never_asked_about_companion_again():
     _senales = AsyncMock(return_value={
              "mentions_other_person": True,
          })
-    with patch.object(core_extraction, "fill_gaps", new=AsyncMock(return_value={})), \
-         patch.object(core_routing, "detect_special_signals", new=_senales), patch.object(core_extraction, "detect_special_signals", new=_senales):
+    with patch.object(core_routing, "detect_special_signals", new=_senales), patch.object(core_extraction, "detect_special_signals", new=_senales):
         await route_message(state, "listo, como pago")
     assert state.companion_activity_deferred is False
     assert state.core_pending_slot != core.SLOT_COMPANION_ACTIVITY
@@ -1690,8 +1661,7 @@ async def test_group_size_one_without_solo_flag_still_allows_companion_question(
     _senales = AsyncMock(return_value={
              "mentions_other_person": True,
          })
-    with patch.object(core_extraction, "fill_gaps", new=AsyncMock(return_value={})), \
-         patch.object(core_routing, "detect_special_signals", new=_senales), patch.object(core_extraction, "detect_special_signals", new=_senales):
+    with patch.object(core_routing, "detect_special_signals", new=_senales), patch.object(core_extraction, "detect_special_signals", new=_senales):
         resp = await route_message(state, "mi amigo tambien quiere venir")
     assert state.core_pending_slot == core.SLOT_COMPANION_ACTIVITY
     assert "?" in resp
@@ -1724,8 +1694,7 @@ async def test_fully_resolved_group_allocation_self_heals_stale_companion_flags(
     state.pending_companion_queue = ["snorkel"]
 
     _senales = AsyncMock(return_value={})
-    with patch.object(core_extraction, "fill_gaps", new=AsyncMock(return_value={})), \
-         patch.object(core_routing, "detect_special_signals", new=_senales), patch.object(core_extraction, "detect_special_signals", new=_senales):
+    with patch.object(core_routing, "detect_special_signals", new=_senales), patch.object(core_extraction, "detect_special_signals", new=_senales):
         resp = await route_message(state, "no")
     assert state.last_dive_over_2_years is False
     assert state.companion_activity_deferred is False
@@ -1778,8 +1747,7 @@ async def test_detect_special_signals_skipped_when_group_already_fully_resolved(
             {"activity": "minicourse", "qty": 2}, {"activity": "snorkel", "qty": 2},
         ],
     })
-    with patch.object(core_extraction, "fill_gaps", new=AsyncMock(return_value={"is_colombian": False})), \
-         patch.object(core_routing, "detect_special_signals", new=poison_signals), patch.object(core_extraction, "detect_special_signals", new=poison_signals):
+    with patch.object(core_routing, "detect_special_signals", new=poison_signals), patch.object(core_extraction, "detect_special_signals", new=poison_signals):
         await route_message(state, "ninguno colombiano")
     poison_signals.assert_not_called()
     assert state.detected_group_allocation == {
@@ -1814,8 +1782,7 @@ async def test_companion_attribute_in_opening_message_keeps_main_activity(extrac
              "companion_activity": "minicourse", "mentions_other_person": True,
              "companion_is_singular": True, "companion_qty": 1,
          })
-    with patch.object(core_extraction, "fill_gaps", new=AsyncMock(return_value={})), \
-         patch.object(core_routing, "detect_special_signals", new=_senales), patch.object(core_extraction, "detect_special_signals", new=_senales):
+    with patch.object(core_routing, "detect_special_signals", new=_senales), patch.object(core_extraction, "detect_special_signals", new=_senales):
         resp = await route_message(state, mensaje)
     assert state.detected_activity == "certified_diving", (
         "la actividad principal detectada este mismo turno no debe perderse "
@@ -1829,16 +1796,14 @@ async def test_companion_attribute_in_opening_message_keeps_main_activity(extrac
     # nunca vuelve a la ambigüedad del acompañante (ya resuelta) a mitad de
     # camino.
     _senales2 = AsyncMock(return_value={})
-    with patch.object(core_extraction, "fill_gaps", new=AsyncMock(return_value={})), \
-         patch.object(core_routing, "detect_special_signals", new=_senales2), patch.object(core_extraction, "detect_special_signals", new=_senales2):
+    with patch.object(core_routing, "detect_special_signals", new=_senales2), patch.object(core_extraction, "detect_special_signals", new=_senales2):
         resp2 = await route_message(state, "desde cartagena")
     assert state.location == "cartagena"
     assert state.core_pending_slot != core.SLOT_COMPANION_ACTIVITY
     assert "año" in resp2.lower() or "inmersión" in resp2.lower() or "immersion" in resp2.lower()
 
     _senales3 = AsyncMock(return_value={})
-    with patch.object(core_extraction, "fill_gaps", new=AsyncMock(return_value={})), \
-         patch.object(core_routing, "detect_special_signals", new=_senales3), patch.object(core_extraction, "detect_special_signals", new=_senales3):
+    with patch.object(core_routing, "detect_special_signals", new=_senales3), patch.object(core_extraction, "detect_special_signals", new=_senales3):
         await route_message(state, "no")
     assert state.last_dive_over_2_years is False
     assert state.core_pending_slot != core.SLOT_COMPANION_ACTIVITY
@@ -2964,43 +2929,11 @@ async def test_explicit_language_switch_mid_conversation_is_honored(monkeypatch,
 # Cierre del problema ABIERTO de docs/multi-agent-refactor-plan.md §6.bis
 # (2026-09-01). La causa raíz #1 (detect_special_signals re-derivando el reparto
 # del historial) se arregló arriba; estos tests cubren la causa raíz #2, la misma
-# familia por otras dos vías: `fill_gaps` y el resolutor de slot anti-bucle
+# familia por otras dos vías: `fill_gaps` (borrado en lat-11) y el resolutor de slot anti-bucle
 # contestando ELLOS una pregunta que el mensaje del cliente no responde.
 
-def test_relevant_gaps_never_asks_the_pending_boolean_slot():
-    """GUARDA (a): el slot booleano que el bot acaba de preguntar no se le pide
-    nunca a `fill_gaps` — ya lo resuelven `_apply_short_answer` (determinista) y
-    el resolutor anti-bucle, ambos anclados al mensaje del turno."""
-    state = make_state("es")
-    state.detected_activity = "certified_diving"
-    state.is_certified = True
-    state.detected_group_size = 2
-    state.location = state.detected_location = "cartagena"
-
-    intent = core._detector.detect("ninguno colombiano", state)
-
-    state.core_pending_slot = None
-    assert "last_dive_over_2_years" in core._relevant_gaps(state, intent, "ninguno colombiano")
-
-    state.core_pending_slot = core.SLOT_SAFETY
-    assert "last_dive_over_2_years" not in core._relevant_gaps(state, intent, "ninguno colombiano")
-
-
-def test_relevant_gaps_still_asks_free_text_slots_while_pending():
-    """El corte es SOLO para los booleanos: en location/hotel/activity la
-    respuesta ES texto libre y `fill_gaps` sigue siendo el extractor correcto
-    ("salimos desde bocagrande")."""
-    state = make_state("es")
-    state.detected_activity = "certified_diving"
-    state.detected_group_size = 2
-    state.core_pending_slot = core.SLOT_LOCATION
-
-    intent = core._detector.detect("salimos desde bocagrande", state)
-    assert "location" in core._relevant_gaps(state, intent, "salimos desde bocagrande")
-
-
 @pytest.mark.asyncio
-async def test_fill_gaps_hallucinated_safety_answer_is_dropped():
+async def test_ninguno_colombiano_no_contesta_la_seguridad():
     """Repro EXACTO de §6.bis causa raíz #3, vía A (conversación 769 de PRE + repro
     determinista en local con LLM real): con `SLOT_SAFETY` pendiente, el mensaje
     "ninguno colombiano" —que solo responde nacionalidad— hacía que `fill_gaps`
@@ -3008,8 +2941,8 @@ async def test_fill_gaps_hallucinated_safety_answer_is_dropped():
     diálogo, ve la pregunta del bot sin responder, y la contesta él. La reserva
     se cerraba sin haber preguntado nunca algo que es de SEGURIDAD.
 
-    Con las guardas puestas el valor se descarta, el slot sigue pendiente y el
-    bot RE-PREGUNTA."""
+    Con las guardas puestas el valor se descartaba; desde lat-11 `fill_gaps` ya no existe. Se queda como control: el
+    slot sigue pendiente y el bot RE-PREGUNTA."""
     state = make_state("es")
     state.detected_activity = "certified_diving"
     state.is_certified = True
@@ -3020,15 +2953,7 @@ async def test_fill_gaps_hallucinated_safety_answer_is_dropped():
     state.location = state.detected_location = "cartagena"
     state.core_pending_slot = core.SLOT_SAFETY
 
-    # Payload REAL de la traza de LangSmith (turno "ninguno colombiano").
-    poison = AsyncMock(return_value={
-        "activity": "minicourse", "is_certified": True, "group_size": 6,
-        "group_allocation": {"certified_diving": 2, "minicourse": 2, "snorkel": 2},
-        "last_dive_over_2_years": False,
-        "location": "cartagena", "is_colombian": False,
-    })
-    with patch.object(core_extraction, "fill_gaps", new=poison), \
-         patch.object(core_extraction, "resolve_slot_answer", new=AsyncMock(return_value={})):
+    with patch.object(core_extraction, "resolve_slot_answer", new=AsyncMock(return_value={})):
         resp = await route_message(state, "ninguno colombiano")
 
     assert state.last_dive_over_2_years is None
@@ -3056,8 +2981,7 @@ async def test_slot_resolver_discarded_when_turn_answered_another_slot(extractor
     state.location = state.detected_location = "cartagena"
     state.core_pending_slot = core.SLOT_SAFETY
 
-    with patch.object(core_extraction, "fill_gaps", new=AsyncMock(return_value={})), \
-         patch.object(core_extraction, "resolve_slot_answer", new=AsyncMock(return_value={"value": False})):
+    with patch.object(core_extraction, "resolve_slot_answer", new=AsyncMock(return_value={"value": False})):
         resp = await route_message(state, "ninguno colombiano")
 
     assert state.is_colombian is False          # eso SÍ lo respondió el mensaje
@@ -3080,8 +3004,7 @@ async def test_slot_resolver_still_reads_non_canonical_answer_to_pending_slot():
     state.location = state.detected_location = "cartagena"
     state.core_pending_slot = core.SLOT_SAFETY
 
-    with patch.object(core_extraction, "fill_gaps", new=AsyncMock(return_value={})), \
-         patch.object(core_extraction, "resolve_slot_answer", new=AsyncMock(return_value={"value": True})):
+    with patch.object(core_extraction, "resolve_slot_answer", new=AsyncMock(return_value={"value": True})):
         await route_message(state, "uf, hace muchisimo")
 
     assert state.last_dive_over_2_years is True
@@ -3100,8 +3023,7 @@ async def test_regex_last_dive_still_wins_over_the_backing_gate(extractor_dice):
     state.location = state.detected_location = "cartagena"
     state.core_pending_slot = core.SLOT_SAFETY
 
-    with patch.object(core_extraction, "fill_gaps", new=AsyncMock(return_value={})):
-        await route_message(state, "hace 3 años que no buceo")
+    await route_message(state, "hace 3 años que no buceo")
 
     assert state.last_dive_over_2_years is True
 
@@ -3117,7 +3039,6 @@ async def test_canonical_short_answer_to_safety_slot_still_resolves():
     state.location = state.detected_location = "cartagena"
     state.core_pending_slot = core.SLOT_SAFETY
 
-    with patch.object(core_extraction, "fill_gaps", new=AsyncMock(return_value={})):
-        await route_message(state, "no")
+    await route_message(state, "no")
 
     assert state.last_dive_over_2_years is False

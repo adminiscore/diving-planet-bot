@@ -39,7 +39,6 @@ from src.agents.intent_detector import IntentDetector
 from src.agents.llm_extractor import (
     EXTRACTABLE_FIELDS,
     compare_with_ground_truth,
-    fill_gaps,
 )
 from src.flows.state import ConversationState
 
@@ -155,17 +154,10 @@ async def _core_turn(case: dict) -> tuple[dict, dict]:
 
 
 async def _script_turn(case: dict, detector: IntentDetector) -> tuple[dict, dict]:
+    # lat-11 (26-oct): `fill_gaps` ya no existe; este modo mide solo el regex. Para el producto, `--core` o `--banco ex0`.
     state = ConversationState(conversation_id=f"eval-{case['id']}")
-    regex_intent = detector.detect(case["message"], state)
-    resolved = _regex_resolved(regex_intent)
-    patch = await fill_gaps(
-        case["message"], regex_intent, history=case.get("history"), lang=case.get("lang", "es"),
-    )
-    combined = {**resolved, **patch}
-
-    # El veto de campos ya resueltos (sep-2026) salio del camino real en ex-9 y se borro en MEJ-1 (21-oct): este modo
-    # mide regex + `fill_gaps`, como el producto.
-    return combined, {"regex_had": resolved, "llm_patch": patch}
+    resolved = _regex_resolved(detector.detect(case["message"], state))
+    return resolved, {"regex_had": resolved}
 
 
 async def run(core: bool = False) -> None:
@@ -177,7 +169,7 @@ async def run(core: bool = False) -> None:
     total_agree = total_disagree = total_missed = 0
     watcher = _install_watcher()
     contaminados: list[str] = []
-    print(f"Modo: {'nucleo (_understand, config de produccion)' if core else 'script (regex + fill_gaps)'}")
+    print(f"Modo: {'nucleo (_understand, config de produccion)' if core else 'script (solo el regex)'}")
 
     for case in cases:
         antes_degradado = watcher.degraded

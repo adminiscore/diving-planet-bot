@@ -47,7 +47,6 @@ def test_edades_en_singular(mensaje, edades):
 def extractor_reparte(monkeypatch):
     """La reserva entera sin red; el extractor devuelve el reparto correcto de la familia (3 bucean, 3 snorkel)."""
     reparto = {"group_size": 6, "group_allocation": {"certified_diving": 3, "snorkel": 3}}
-    monkeypatch.setattr(core_extraction, "fill_gaps", AsyncMock(return_value=dict(reparto)))
     monkeypatch.setattr(core, "extract_and_verify", AsyncMock(return_value=(dict(reparto), {})))
     _especiales = AsyncMock(return_value={})
     monkeypatch.setattr(core_routing, "detect_special_signals", _especiales)
