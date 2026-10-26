@@ -1,0 +1,188 @@
+{
+ "about": "lat-5 (26-oct): los turnos donde el revisor del RAG rechazó la primera respuesta en dos rondas de PRE (ex10-completa del 15-oct y calb-B2 del 16-oct: golden visible y el examen del 2-oct, ya gastado), con la conversación hasta ese turno. Con lat-5 el revisor no se llama si la respuesta no trae ninguna cifra ni día de la semana fuera del contexto: se mide si el error que pilló entonces llega ahora al cliente. `motivo_del_revisor`: lo que rechazó entonces.",
+ "dialogos": [
+  {
+   "id": "ex10-descuento-efectivo-t1",
+   "ronda": "2026-10-15-ex10-completa",
+   "batch": "golden",
+   "turnos": [
+    "me haces un descuento si pago en efectivo?"
+   ],
+   "motivo_del_revisor": "HALLUCINATED - El efectivo no tiene un descuento adicional. NO",
+   "respuesta_aprobada_en_la_ronda": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\n¡Con mucho gusto! El 10% de descuento se aplica al reservar online en la web. Si eres colombiano, puedes pagar el 100% online o dejar un anticipo del 50% online y pagar el resto presencialmente con tarjeta o efectivo. ¿Qué actividad te interesa?"
+  },
+  {
+   "id": "ex10-grupo-mixto-precio-cop-total-t6",
+   "ronda": "2026-10-15-ex10-completa",
+   "batch": "golden",
+   "turnos": [
+    "Busco el seguinte:\nVamos en família a Cartagena. 1 buzo avanzado y 2 para bautismo",
+    "Para el sabado, 30/05",
+    "Muchas gracias!",
+    "Cual seria el valor en COP?",
+    "Yo vivo en Colombia",
+    "Para el total"
+   ],
+   "motivo_del_revisor": "ungrounded_amount",
+   "respuesta_aprobada_en_la_ronda": "¡Con gusto te ayudo! 🌊 Ese detalle en concreto no lo tengo a la mano, pero puedo ayudarte con las actividades, precios, logística o a armar tu reserva. ¿Quieres que te pase con un asesor para resolver eso puntual?"
+  },
+  {
+   "id": "ex10-logistica-isla-fragata-regreso-otro-dia-t2",
+   "ronda": "2026-10-15-ex10-completa",
+   "batch": "golden",
+   "turnos": [
+    "Hello! I have a question about the diving excursion. My husband and I are booked for April 13-14 and are staying in the Rosario islands that night. We will be staying at hotel fragata. Will you be able to transport us there?",
+    "Amazing thank you! We’re thinking about extending our stay on the Rosario islands. Would it be possible to get dropped back off there after diving on the 14th?"
+   ],
+   "motivo_del_revisor": "HALLUCINATED - Since you’re extending your stay, returning to the islands after diving on the 14th should be possible under that arrangement. NO",
+   "respuesta_aprobada_en_la_ronda": "Of course! If you’re staying on the Rosario Islands and your hotel has maritime access, boat pick-up and drop-off are included at no extra charge. Sometimes the boat goes directly to the hotel; otherwise, the team will coordinate the nearest dock or meeting point.\n\nI don’t have the specific detail about returning you to the islands after diving on the 14th handy. A team advisor can confirm that arrangement for you.\n\nTell me, what would you like to experience with us? 🤿\n• *Diving* in the Rosario Islands, if you're already certified\n• A beginner *mini-course* to try diving for the first time (no experience needed!)\n• *Snorkeling* to enjoy the reef from the surface, great for families\n• Full *PADI courses*, from Open Water up\nTell me what catches your eye and we'll put it together. 🌊"
+  },
+  {
+   "id": "ex10-precio-desde-islas-vs-cartagena-t3",
+   "ronda": "2026-10-15-ex10-completa",
+   "batch": "golden",
+   "turnos": [
+    "Hola!! Te contacto desde Argentina.  Estaremos visitando Cartagena y queria coordinar inmersiones en Isla del Rosario.  Somos una pareja Advanced O.W.",
+    "Gracias por la información.\nMe podrías decir cual es el hotel en islas de Rosario? Para evaluar si tomar la propuesta desde Cartagena o quedarnos en el Hotel",
+    "Me pasas el precio por noche ? O me contacto con el hotel ?"
+   ],
+   "motivo_del_revisor": "HALLUCINATED - El precio por noche depende del hotel y no lo tengo a la mano. NO",
+   "respuesta_aprobada_en_la_ronda": "¡Claro! El alojamiento no está incluido en el plan de buceo y se reserva directamente con el hotel. Nuestra base está en San Pedro de Majagua y Cocoliso, en Isla Grande. ¿Quieres que te ayude a comparar el plan de buceo saliendo desde Cartagena con el de quienes ya están alojados en las islas?\n\nPara darte el precio y el link correctos: ¿sois colombianos o residentes en Colombia?"
+  },
+  {
+   "id": "ex10-precio-desde-islas-vs-cartagena-t5",
+   "ronda": "2026-10-15-ex10-completa",
+   "batch": "golden",
+   "turnos": [
+    "Hola!! Te contacto desde Argentina.  Estaremos visitando Cartagena y queria coordinar inmersiones en Isla del Rosario.  Somos una pareja Advanced O.W.",
+    "Gracias por la información.\nMe podrías decir cual es el hotel en islas de Rosario? Para evaluar si tomar la propuesta desde Cartagena o quedarnos en el Hotel",
+    "Me pasas el precio por noche ? O me contacto con el hotel ?",
+    "Ese? Desde ahi sale la lancha de buceo ?",
+    "Me puedes decir el precio de las 2 inmersiones? Desde ese hotel?"
+   ],
+   "motivo_del_revisor": "HALLUCINATED - Las 2 inmersiones cuestan USD 124 por persona online o USD 138 precio normal. NO",
+   "respuesta_aprobada_en_la_ronda": "¡Claro! Si te alojas en San Pedro de Majagua o Cocoliso, la recogida y el regreso en lancha están incluidos.\n\nLas 2 inmersiones desde Cartagena cuestan *USD 178 por persona online* o *USD 197 precio normal*. Incluyen lancha desde Cartagena, equipo y almuerzo. Se sale a las 8:00 a. m. desde el Muelle de la Bodeguita y se regresa a Cartagena el mismo día.\n\n¿Quieres que te comparta el enlace para reservar?\n\nPara darte el precio y el link correctos: ¿sois colombianos o residentes en Colombia?"
+  },
+  {
+   "id": "ex10-certificado-profundidad-precio-y-base-hotel-t2",
+   "ronda": "2026-10-15-ex10-completa",
+   "batch": "golden",
+   "turnos": [
+    "Hola!!! Como estas?",
+    "Espero te encuentres super bien! Realmente estoy cotizando una buceada para mi tio! El es buzo certificado y ya con bastante experiencia y queria saber que planes ofrecen!! A que partes de las islas van, cuanto tiempo dura el plan, cantidad de inmersiones, cuantos metros bajan, y toda la cuestion!!"
+   ],
+   "motivo_del_revisor": "HALLUCINATED - Profundidades que varían según el sitio y el nivel del buzo, pero típicamente entre 10 y 30 metros, siempre respetando los límites de seguridad y experiencia. NO",
+   "respuesta_aprobada_en_la_ronda": "¡Qué bueno que tu tío quiera bucear con nosotros en las Islas del Rosario! 🌊 Buceamos dentro del Parque Nacional Natural Corales del Rosario y San Bernardo, donde hay arrecifes y mucha vida marina.\n\nPara buzos certificados hay salidas de 1 o 2 inmersiones en un día, y paquetes de varios días que pueden incluir un buceo nocturno. Si ya está alojado en las islas, la salida de 2 inmersiones incluye recogida en su hotel si tiene acceso marítimo; el regreso es hacia las 12:00–13:00. El equipo completo y un profesional PADI acompañando la actividad están incluidos. Debe presentar su carné de buzo certificado.\n\nLa profundidad exacta de las inmersiones no la tengo a la mano; un asesor del equipo puede confirmársela. ¿Tu tío saldría desde Cartagena o ya está alojado en las islas? Así te comparto los planes y precios que corresponden."
+  },
+  {
+   "id": "ex10-grupo-mixto-cotiza-y-pide-link-t6",
+   "ronda": "2026-10-15-ex10-completa",
+   "batch": "golden",
+   "turnos": [
+    "Somos 4 buceando, 1 de clase, y [NOMBRE]",
+    "[NOMBRE] es que no va hacer nada de eso",
+    "que costo tendría",
+    "para el 15 de abril",
+    "[NOMBRE], entonces serían 6 pax, 5 buceo, 1 de clase y el acompañante.",
+    "Dejame saber cuanto es todo, y el link que ella va a hacer el pago."
+   ],
+   "motivo_del_revisor": "HALLUCINATED - Son 6 personas: 5 buceando y 1 acompañante. NO",
+   "respuesta_aprobada_en_la_ronda": "¡Claro! Para darte el valor correcto y el enlace de pago, necesito confirmar qué actividad harán quienes bucean y si salen desde Cartagena o ya están en las islas. ¿Sería una salida de 2 inmersiones en un día desde Cartagena?\n\n¿Ha pasado *más de 2 años* desde la última inmersión de alguno del grupo?"
+  },
+  {
+   "id": "ex10-open-water-hoteles-noche-fotos-horario-t3",
+   "ronda": "2026-10-15-ex10-completa",
+   "batch": "golden",
+   "turnos": [
+    "Hi, I'm interested in taking PADI Open Water Diver certification course.",
+    "do you have any hotel in Rosario you recommend?",
+    "so, if I understood correctly, booking just for one night will be enough, right?"
+   ],
+   "motivo_del_revisor": "HALLUCINATED - The bot cannot confirm that one night will be enough for the course; the customer should check hotel stay dates with a team advisor to coordinate with the course schedule. NO",
+   "respuesta_aprobada_en_la_ronda": "The PADI Open Water course lasts *2 days* and requires accommodation on the Rosario Islands; lodging isn’t included and must be booked directly with the hotel. I don’t have the specific detail about whether one night is enough handy, but a team advisor can confirm the hotel dates that fit the course schedule. Would you like me to connect you?\n\nAnd how many people should I plan for? That way I can give you the exact price. 😊"
+  },
+  {
+   "id": "ex10-certificado-precio-dia-paquete-5-y-hoteles-base-t4",
+   "ronda": "2026-10-15-ex10-completa",
+   "batch": "golden",
+   "turnos": [
+    "Hi, I plan on being in Cartagena and do scuba diving on April 21 and 22. I have open water, advanced open water and deep diver certs. Please advise what options do you have for scuba diving and how much it costs",
+    "PADI open water, advanced open water and deep diver certs",
+    "So if I book for 2 days are we going to the same spots or do different one within San Brenardo National park?",
+    "And how much is per a day"
+   ],
+   "motivo_del_revisor": "ungrounded_amount",
+   "respuesta_aprobada_en_la_ronda": "For your two-day plan from Cartagena, the *5-dive package* is *$392 USD online* or *$436 USD regular*. It includes 4 daytime dives and 1 night dive. You’ll need to stay one night on the islands; accommodation isn’t included. The online price includes the 10% online discount. Would you like the booking link?\n\nHas it been *more than 2 years* since your last dive?"
+  },
+  {
+   "id": "ex10-minicurso-precio-colombianos-origen-pendiente-t4",
+   "ronda": "2026-10-15-ex10-completa",
+   "batch": "golden",
+   "turnos": [
+    "Me gustaría agendar un día de buceo con ustedes",
+    "Buceo para principiantes",
+    "2 personas",
+    "Ese es el precio para ciudadanos colombianos? somos de Bogotá"
+   ],
+   "motivo_del_revisor": "HALLUCINATED - Si son de Bogotá, pagan en pesos colombianos; el precio es el mismo, solo cambia la moneda. NO",
+   "respuesta_aprobada_en_la_ronda": "Para darte el precio exacto necesito saber desde dónde sales: ¿saldrías *desde Cartagena* o ya estás *en las Islas del Rosario*? Los planes y los precios cambian según el punto de salida. 🌊"
+  },
+  {
+   "id": "ex10-familia-mixta-precio-descuento-refresher-t3",
+   "ronda": "2026-10-15-ex10-completa",
+   "batch": "golden",
+   "turnos": [
+    "Hi There,\nI am looking to book 2 dives and snorkeling sessions for the following people.\n2 diving sessions - All PADI certified for open water.\n2 adults (ages 42, 19)\n1 youth (age 17)\nSnorkeling\n1 Adult (Age 43)\n2 kids (Ages 14, 10)\nCan you provide information and total price please\nThanks\n[NOMBRE]",
+    "May 3rd",
+    "So should I book 2  separately? One for diving and one for snorkeling"
+   ],
+   "motivo_del_revisor": "HALLUCINATED - You’ll need to select both activities: Fun Dives – 2 dives for the three certified divers, and Snorkeling Tour for the three snorkelers. NO | - Are you departing from Cartagena or staying on the Ros",
+   "respuesta_aprobada_en_la_ronda": "You can combine diving and snorkeling in one outing. Snorkeling takes place in a different area from the dive sites; if there are few people, everyone goes on the same boat, otherwise the group is split by activity. Would you like me to share the information page for the combined outing?\n\nI recommend the *2 dives in 1 day* plan in the Rosario Islands. (If you'd rather a *multi-day package* of 3+ dives, just tell me.)\n\nHas it been *more than 2 years* since any diver in the group last dived?"
+  },
+  {
+   "id": "ex10-precios-y-disponibilidad-con-negociacion-t2",
+   "ronda": "2026-10-15-ex10-completa",
+   "batch": "golden",
+   "turnos": [
+    "Hola! Como estan? Me llamo [NOMBRE] soy buza advanced",
+    "Queria saber los valores de dos buceos o del pack de 5 buceos en 2 dias"
+   ],
+   "motivo_del_revisor": "HALLUCINATED - Para el paquete de 5, hay además un 10% de descuento para el segundo día de buceo. NO",
+   "respuesta_aprobada_en_la_ronda": "¡Claro que sí! Las Islas del Rosario son una belleza para bucear. Como eres buza Advanced, estas son las opciones saliendo desde Cartagena:\n\n- *2 inmersiones en un día:* 178 USD online o 197 USD tarifa normal. Incluye lancha ida y vuelta, equipo y almuerzo.\n- *Paquete de 5 inmersiones en 2 días:* 392 USD online o 436 USD tarifa normal. Incluye 4 diurnas y 1 nocturna, lancha y almuerzo el primer día. Requiere pasar una noche en las islas; el alojamiento no está incluido.\n\nEl precio online ya incluye el 10% de descuento. ¿Saldrías desde Cartagena o ya estarías en las islas?"
+  },
+  {
+   "id": "ex10-minicurso-islas-y-acompanante-lancha-t1",
+   "ronda": "2026-10-15-ex10-completa",
+   "batch": "golden",
+   "turnos": [
+    "Buena Tardes quería preguntarte estaremos en islas del rosario en junio y quería regalarle a mi esposo una experiencia del buceo no tiene experiencia en buceo, solo snorke normal quería conocer los planes y costos gracias"
+   ],
+   "motivo_del_revisor": "ungrounded_amount",
+   "respuesta_aprobada_en_la_ronda": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\n¡Buenas tardes! Qué lindo regalo 😊 Las Islas del Rosario son un lugar muy chévere para iniciarse: hay arrecifes poco profundos y el minicurso no requiere experiencia ni certificación.\n\nComo estarán en las islas, el *Minicurso de Buceo* dura un día e incluye teoría, práctica en piscina y una inmersión en el mar con instructor. El precio online es *134 USD* o *475.000 COP*. No incluye almuerzo; la recogida está incluida si el hotel tiene acceso marítimo.\n\nTambién pueden hacer *snorkel*, desde *45 USD* o *150.000 COP online*. Incluye equipo y recogida si el hotel tiene acceso marítimo; el almuerzo no está incluido.\n\nReservar el minicurso: https://book.divingplanet.org/book/dive-mini-course-already-on-island/20?language=es · Reservar snorkel: https://book.divingplanet.org/book/snorkeling-already-on-the-island/25?language=es\n\n¿Sabes en qué hotel de las islas se van a hospedar?\n\n¿En qué hotel o isla te hospedas? Así coordinamos la recogida."
+  },
+  {
+   "id": "calbB2-paquete-5-buceos-cop-refresh-y-hoteles-t2",
+   "ronda": "2026-10-16-calb-B2",
+   "batch": "golden",
+   "turnos": [
+    "Buenos días. Quiero hacer el paquete de 5 buceos. Cuál es el costo para colombianos por favor?",
+    "Gracias - y en pesos? Para colombianos?"
+   ],
+   "motivo_del_revisor": "HALLUCINATED - El paquete de 5 buceos desde Cartagena cuesta 1.587.000 COP online para colombianos. NO | - El paquete de 5 buceos cuesta 1.429.000 COP si ya estás en las Islas del Rosario. NO | - El precio es el m",
+   "respuesta_aprobada_en_la_ronda": "¡Claro que sí! Los colombianos pagan en pesos colombianos (COP); no hay un descuento especial por ser colombiano, solo cambia la moneda. ¿Saldrías desde Cartagena o ya estás en las Islas del Rosario?"
+  },
+  {
+   "id": "calbB2-certificado-precio-dia-paquete-5-y-hoteles-base-t4",
+   "ronda": "2026-10-16-calb-B2",
+   "batch": "golden",
+   "turnos": [
+    "Hi, I plan on being in Cartagena and do scuba diving on April 21 and 22. I have open water, advanced open water and deep diver certs. Please advise what options do you have for scuba diving and how much it costs",
+    "PADI open water, advanced open water and deep diver certs",
+    "So if I book for 2 days are we going to the same spots or do different one within San Brenardo National park?",
+    "And how much is per a day"
+   ],
+   "motivo_del_revisor": "HALLUCINATED - The second day of diving has a 10% discount. NO",
+   "respuesta_aprobada_en_la_ronda": "For two days of diving, the *4-dive package (two daytime dives each day)* is *$316 USD online* or *$351 USD regular*. You’ll need to stay overnight on the islands; accommodation isn’t included.\n\nFor a separate one-day trip, *two dives cost $178 USD online* or *$197 USD regular per day*. Which option would you prefer?\n\nHas it been *more than 2 years* since your last dive?"
+  }
+ ]
+}
