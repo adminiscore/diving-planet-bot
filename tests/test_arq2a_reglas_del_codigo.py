@@ -1,15 +1,22 @@
-"""arq-2a (22-oct, flag `rag_sin_reglas_del_codigo`): fuera del prompt del RAG las reglas que el código ya pone en el
-contexto que el RAG lee siempre (catálogo y políticas). Se fija: (1) cada regla que se quita está en el prompt (si
-alguien la reescribe, el cambio dejaría de aplicarse sin avisar); (2) el dato que la sustituye sigue en el contexto;
-(3) las reglas que solo vigila un guarda se quedan."""
+"""arq-2a (22-oct): fuera del prompt del RAG las reglas que el código ya pone en el contexto que el RAG lee siempre
+(catálogo y políticas). Desde lat-9 paso 1 (26-oct) los recortes están escritos en `RAG_BODY_*` (antes se aplicaban al
+vuelo con `RAG_SIN_REGLAS_DEL_CODIGO_*`). Se fija: (1) lo que se quitó no vuelve; (2) el dato que lo sustituye sigue en
+el contexto; (3) las reglas que solo vigila un guarda se quedan."""
 import pytest
 
 from src.agents.rag_agent import build_system_prompt
 from src.flows.catalog import catalog_facts, policies_facts
 from src.prompts import info
 
-REGLAS = {"es": info.RAG_SIN_REGLAS_DEL_CODIGO_ES, "en": info.RAG_SIN_REGLAS_DEL_CODIGO_EN}
-# Lo que dice el contexto en lugar de cada regla que se quita (catálogo + políticas).
+# Lo que se quitó del cuerpo: la viñeta del tono que repite brand_tone, las dos de la moneda por nacionalidad (la regla
+# va UNA vez, en las reglas del escritor, desde decisiones.json) y la vieja de «no confirmes cupos».
+QUITADAS = {
+    "es": ("Habla como un cartagenero amigable", "Usa el contexto de extra_context para adaptar la moneda",
+           "Evita mezclar muchas monedas", "NUNCA confirmes disponibilidad o cupo"),
+    "en": ("Use the extra_context to adapt currency", "Avoid mixing several currencies",
+           "NEVER confirm availability or open slots"),
+}
+# Lo que dice el contexto en lugar de lo quitado (catálogo + políticas).
 EN_EL_CONTEXTO = {
     "es": ("Moneda:", "25 de diciembre", "suspend"),
     "en": ("Currency:", "December 25", "weather"),
@@ -28,10 +35,10 @@ SE_QUEDAN = {
 
 
 @pytest.mark.parametrize("lang", ["es", "en"])
-def test_con_el_flag_salen_y_el_dato_sigue_en_el_contexto(monkeypatch, lang):
+def test_lo_quitado_no_vuelve_y_el_dato_sigue_en_el_contexto(lang):
     prompt = build_system_prompt(lang)
-    for antes, despues in REGLAS[lang]:
-        assert antes not in prompt or antes in despues
+    for quitada in QUITADAS[lang]:
+        assert quitada not in prompt, quitada
     contexto = catalog_facts(lang) + policies_facts(lang)
     for dato in EN_EL_CONTEXTO[lang]:
         assert dato in contexto, dato

@@ -31,7 +31,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from src.agents import llm_extractor, rag_agent  # noqa: E402
+from src.agents import llm_extractor, rag_agent, redactor_hechos  # noqa: E402
 from src.prompts import booking as _booking  # noqa: E402
 from src.prompts import info as _info  # noqa: E402
 from src.prompts import memory as _memory  # noqa: E402
@@ -155,8 +155,6 @@ def _collect() -> dict[str, str]:
     add("info/redactor_hechos.en", info.REDACTOR_HECHOS_EN)
     add("info/redactor_sin_preguntas.es", info.REDACTOR_SIN_PREGUNTAS_ES)
     add("info/redactor_sin_preguntas.en", info.REDACTOR_SIN_PREGUNTAS_EN)
-    add("info/redactor_dos_monedas.es", info.REDACTOR_DOS_MONEDAS_ES)
-    add("info/redactor_dos_monedas.en", info.REDACTOR_DOS_MONEDAS_EN)
     add("info/redactor_listas_por_codigo.es", info.REDACTOR_LISTAS_POR_CODIGO_ES)
     add("info/redactor_listas_por_codigo.en", info.REDACTOR_LISTAS_POR_CODIGO_EN)
     add("info/redactor_frases_por_codigo.es", info.REDACTOR_FRASES_POR_CODIGO_ES)
@@ -191,21 +189,22 @@ def _collect() -> dict[str, str]:
     add("info/rag_no_supone.en", info.RAG_NO_SUPONE_EN)
     add("info/rag_no_adivina.es", info.RAG_NO_ADIVINA_ES)
     add("info/rag_no_adivina.en", info.RAG_NO_ADIVINA_EN)
+    # lat-9 paso 1 (26-oct): las reglas de cualquier escritor y la parte de no adivinar que es solo del RAG.
+    add("info/escritor_no_adivina.es", info.ESCRITOR_NO_ADIVINA_ES)
+    add("info/escritor_no_adivina.en", info.ESCRITOR_NO_ADIVINA_EN)
+    add("info/rag_pregunta_lo_que_falta.es", info.RAG_PREGUNTA_LO_QUE_FALTA_ES)
+    add("info/rag_pregunta_lo_que_falta.en", info.RAG_PREGUNTA_LO_QUE_FALTA_EN)
+    for lang in LANGS:
+        add(f"info/reglas_del_escritor.{lang}", info.reglas_del_escritor(lang))
     add("info/rag_abre_con_la_respuesta.es", info.RAG_ABRE_CON_LA_RESPUESTA_ES)  # gen-2 (20-oct)
     add("info/rag_abre_con_la_respuesta.en", info.RAG_ABRE_CON_LA_RESPUESTA_EN)
     add("info/rag_sin_genero.es", info.RAG_SIN_GENERO_ES)  # gen-12 (21-oct)
     add("info/rag_sin_genero.en", info.RAG_SIN_GENERO_EN)
-    add("info/rag_disponibilidad_vieja.es", info.RAG_DISPONIBILIDAD_VIEJA_ES)
-    add("info/rag_disponibilidad_vieja.en", info.RAG_DISPONIBILIDAD_VIEJA_EN)
-    add("info/rag_disponibilidad_nueva.es", info.RAG_DISPONIBILIDAD_NUEVA_ES)
-    add("info/rag_disponibilidad_nueva.en", info.RAG_DISPONIBILIDAD_NUEVA_EN)
     add("info/rag_varios_planes.es", info.RAG_VARIOS_PLANES_ES)
     add("info/rag_varios_planes.en", info.RAG_VARIOS_PLANES_EN)
-    # arq-2a (flag `rag_sin_reglas_del_codigo`): la disponibilidad corta y lo que se quita del prompt del RAG.
+    # La viñeta de la disponibilidad, dentro de RAG_BODY_* (arq-2a; escrita en el cuerpo desde lat-9 paso 1).
     add("info/rag_disponibilidad_corta.es", info.RAG_DISPONIBILIDAD_CORTA_ES)
     add("info/rag_disponibilidad_corta.en", info.RAG_DISPONIBILIDAD_CORTA_EN)
-    add_json("info/rag_sin_reglas_del_codigo.es", info.RAG_SIN_REGLAS_DEL_CODIGO_ES)
-    add_json("info/rag_sin_reglas_del_codigo.en", info.RAG_SIN_REGLAS_DEL_CODIGO_EN)
     add("info/rag_regen_feedback.es", info.RAG_REGEN_FEEDBACK_ES)
     add("info/rag_regen_feedback.en", info.RAG_REGEN_FEEDBACK_EN)
     add_json("info/rag_regen_guard.es", info.RAG_REGEN_GUARD_ES)
@@ -228,6 +227,8 @@ def _collect() -> dict[str, str]:
     add("info/rag.body.en", info.RAG_BODY_EN)
     for lang in LANGS:
         add(f"info/rag.system.assembled.{lang}", rag_agent.build_system_prompt(lang))
+        # lat-9 paso 1: el del redactor de hechos, ensamblado (comparte las reglas del escritor con el del RAG).
+        add(f"info/redactor.system.assembled.{lang}", redactor_hechos._mensajes(lang, [], "", "{}")[0]["content"])
 
     return out
 

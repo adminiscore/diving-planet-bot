@@ -137,12 +137,23 @@ def is_fallback_answer(text: str | None) -> bool:
 
 
 def build_system_prompt(lang: str, query: str | None = None) -> str:
-    """Compose the full system prompt: intro + dynamic tone + body.
+    """Compose the full system prompt: intro + dynamic tone + body + las reglas de cualquier escritor.
 
     ``query`` ya no se usa: alimentaba el few-shot de los chats antiguos de WhatsApp
     (conversations.json), retirado en g-7 paso 4 (2026-09-24). Se deja en la firma para
     no tocar a quien llama.
+
+    lat-9 paso 1 (26-oct): las reglas que se añadían aquí una a una (no adivinar, abrir con la respuesta, el género, el
+    pase ofrecido, las condiciones, los varios planes) son las de CUALQUIER escritor y vienen de
+    `info.reglas_del_escritor`, con las decisiones del negocio (moneda, origen y precio, sin totales); los recortes que
+    se aplicaban al cuerpo con `replace` están escritos en `RAG_BODY_*`. Solo es del RAG preguntar lo que falta.
     """
+    from src.prompts.info import (  # lazy
+        RAG_PREGUNTA_LO_QUE_FALTA_EN,
+        RAG_PREGUNTA_LO_QUE_FALTA_ES,
+        reglas_del_escritor,
+    )
+
     if lang == "es":
         prompt = (
             f"{RAG_INTRO_ES}\n\n"
@@ -157,52 +168,8 @@ def build_system_prompt(lang: str, query: str | None = None) -> str:
             f"Style and tone:\n{_build_tone_section('en')}\n\n"
             f"{RAG_BODY_EN}"
         )
-    # EX-EST-2: siempre hay disponibilidad (decisión del negocio) y, si encajan varios planes, se nombran todos.
-    from src.prompts.info import (  # lazy
-        RAG_DISPONIBILIDAD_NUEVA_EN,
-        RAG_DISPONIBILIDAD_NUEVA_ES,
-        RAG_DISPONIBILIDAD_VIEJA_EN,
-        RAG_DISPONIBILIDAD_VIEJA_ES,
-        RAG_VARIOS_PLANES_EN,
-        RAG_VARIOS_PLANES_ES,
-    )
-
-    prompt = prompt.replace(RAG_DISPONIBILIDAD_VIEJA_ES, RAG_DISPONIBILIDAD_NUEVA_ES).replace(
-        RAG_DISPONIBILIDAD_VIEJA_EN, RAG_DISPONIBILIDAD_NUEVA_EN)
-    prompt = f"{prompt}\n\n{RAG_VARIOS_PLANES_ES if lang == 'es' else RAG_VARIOS_PLANES_EN}"
-    # 18-oct: no adivinar ningún dato del cliente (origen, nacionalidad, certificación, cuántos, fechas); sustituye a
-    # la regla de EX-RAG-2, que solo cubría el servicio (ver RAG_NO_ADIVINA_*).
-    from src.prompts.info import RAG_NO_ADIVINA_EN, RAG_NO_ADIVINA_ES  # lazy
-
-    prompt = f"{prompt}\n\n{RAG_NO_ADIVINA_ES if lang == 'es' else RAG_NO_ADIVINA_EN}"
-    # gen-2 (20-oct): sin "¡Claro que sí!" delante de un "no" o un "depende" (ver RAG_ABRE_CON_LA_RESPUESTA_*).
-    from src.prompts.info import (  # lazy
-        RAG_ABRE_CON_LA_RESPUESTA_EN,
-        RAG_ABRE_CON_LA_RESPUESTA_ES,
-    )
-
-    prompt = f"{prompt}\n\n{RAG_ABRE_CON_LA_RESPUESTA_ES if lang == 'es' else RAG_ABRE_CON_LA_RESPUESTA_EN}"
-    # gen-12 (21-oct): sin dar por hecho si el cliente es hombre o mujer (ver RAG_SIN_GENERO_*).
-    from src.prompts.info import RAG_SIN_GENERO_EN, RAG_SIN_GENERO_ES  # lazy
-
-    prompt = f"{prompt}\n\n{RAG_SIN_GENERO_ES if lang == 'es' else RAG_SIN_GENERO_EN}"
-    # G3-03: el RAG no puede pasar el caso a una persona; lo OFRECE como pregunta (ver RAG_PASE_OFRECIDO_*).
-    from src.prompts.info import RAG_PASE_OFRECIDO_EN, RAG_PASE_OFRECIDO_ES  # lazy
-
-    prompt = f"{prompt}\n\n{RAG_PASE_OFRECIDO_ES if lang == 'es' else RAG_PASE_OFRECIDO_EN}"
-    # s4-26 (7-oct): una condición del cliente no pasa a hecho sin que nadie lo diga (ver RAG_CONDICIONES_*).
-    from src.prompts.info import RAG_CONDICIONES_EN, RAG_CONDICIONES_ES  # lazy
-
-    prompt = f"{prompt}\n\n{RAG_CONDICIONES_ES if lang == 'es' else RAG_CONDICIONES_EN}"
-    # arq-2a: fuera las reglas que el código ya pone en el contexto del RAG (ver RAG_SIN_REGLAS_DEL_CODIGO_*).
-    from src.prompts.info import (  # lazy
-        RAG_SIN_REGLAS_DEL_CODIGO_EN,
-        RAG_SIN_REGLAS_DEL_CODIGO_ES,
-    )
-
-    for antes, despues in (RAG_SIN_REGLAS_DEL_CODIGO_ES if lang == "es" else RAG_SIN_REGLAS_DEL_CODIGO_EN):
-        prompt = prompt.replace(antes, despues)
-    return prompt
+    pregunta = RAG_PREGUNTA_LO_QUE_FALTA_ES if lang == "es" else RAG_PREGUNTA_LO_QUE_FALTA_EN
+    return f"{prompt}\n\n{reglas_del_escritor(lang)}\n\n{pregunta}"
 
 
 # Anaphoric / follow-up indicators: demonstratives and pronouns that refer back

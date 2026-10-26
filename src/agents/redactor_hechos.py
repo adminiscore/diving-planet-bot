@@ -176,8 +176,6 @@ def _mensajes(lang: str, history: list[dict], message: str, texto_hechos: str) -
     from src.prompts.info import (  # lazy
         REDACTOR_CLIMA_PAGO_EN,
         REDACTOR_CLIMA_PAGO_ES,
-        REDACTOR_DOS_MONEDAS_EN,
-        REDACTOR_DOS_MONEDAS_ES,
         REDACTOR_EN_QUE_CONSISTE_EN,
         REDACTOR_EN_QUE_CONSISTE_ES,
         REDACTOR_FRASES_POR_CODIGO_EN,
@@ -188,15 +186,18 @@ def _mensajes(lang: str, history: list[dict], message: str, texto_hechos: str) -
         REDACTOR_QUE_FALTABAN_ES,
         REDACTOR_SIN_PREGUNTAS_EN,
         REDACTOR_SIN_PREGUNTAS_ES,
+        reglas_del_escritor,
     )
 
     system += REDACTOR_LISTAS_POR_CODIGO_ES if lang == "es" else REDACTOR_LISTAS_POR_CODIGO_EN
     system += REDACTOR_FRASES_POR_CODIGO_ES if lang == "es" else REDACTOR_FRASES_POR_CODIGO_EN
     system += REDACTOR_EN_QUE_CONSISTE_ES if lang == "es" else REDACTOR_EN_QUE_CONSISTE_EN  # arq-8d
-    system += REDACTOR_DOS_MONEDAS_ES if lang == "es" else REDACTOR_DOS_MONEDAS_EN
     system += REDACTOR_SIN_PREGUNTAS_ES if lang == "es" else REDACTOR_SIN_PREGUNTAS_EN
     system += REDACTOR_QUE_FALTABAN_ES if lang == "es" else REDACTOR_QUE_FALTABAN_EN  # arq-5f
     system += REDACTOR_CLIMA_PAGO_ES if lang == "es" else REDACTOR_CLIMA_PAGO_EN  # arq-1i
+    # lat-9 paso 1 (26-oct): las reglas de cualquier escritor (las mismas que el RAG) y las decisiones del negocio. Antes
+    # el redactor no tenía las de no adivinar, el género o abrir con la respuesta, y la moneda iba escrita aparte.
+    system += "\n\n" + reglas_del_escritor(lang)
     previos = list(history or [])
     if previos and previos[-1].get("role") == "user" and previos[-1].get("content") == message:
         previos = previos[:-1]  # el mensaje va abajo, con los hechos

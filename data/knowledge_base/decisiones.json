@@ -1,5 +1,5 @@
 {
-  "_about": "Las decisiones de Gadea sobre la conducta del bot que no son datos de un servicio (lat-deuda, 26-oct): UN sitio. Las lee el juez del golden (scripts/judge_golden_set.py, «Decisiones del negocio» de su referencia) y el generador de exámenes (scripts/generar_examen_sintetico.py, que usa la misma referencia). Los criterios de los exámenes las CITAN por su id («(decisión «moneda»)») y no las copian: cuando Gadea decide otra cosa, se cambia aquí y ningún criterio se queda desfasado (tests/test_golden_sin_reglas_copiadas.py lo vigila). Los datos (precios, horas, edades, cierres, políticas) no van aquí: están en el resto de la base. El bot no lee este fichero (kb_v2 tiene su propia lista): cada decisión dice dónde la cumple el código.",
+  "_about": "Las decisiones de Gadea sobre la conducta del bot que no son datos de un servicio (lat-deuda, 26-oct): UN sitio. Las lee el juez del golden (scripts/judge_golden_set.py, «Decisiones del negocio» de su referencia) y el generador de exámenes (scripts/generar_examen_sintetico.py, que usa la misma referencia). Los criterios de los exámenes las CITAN por su id («(decisión «moneda»)») y no las copian: cuando Gadea decide otra cosa, se cambia aquí y ningún criterio se queda desfasado (tests/test_golden_sin_reglas_copiadas.py lo vigila). Los datos (precios, horas, edades, cierres, políticas) no van aquí: están en el resto de la base. Las decisiones que el escritor tiene que aplicar llevan además `instruccion_es`/`instruccion_en`: el texto que leen los prompts de los escritores (src/domain/decisiones.py, lat-9 paso 1); así la decisión, lo que el juez da por correcto y lo que se le dice al bot están juntos. kb_v2 no indexa este fichero. Cada decisión dice dónde la cumple el código.",
   "decisiones": [
     {
       "id": "cierres",
@@ -59,7 +59,9 @@
       "id": "sin-totales",
       "fecha": "2026-10-09",
       "texto": "El bot no da el total de un grupo: da el precio por persona del catálogo de cada plan.",
-      "en_el_bot": "src/flows/catalog.py (cabecera del catálogo)"
+      "en_el_bot": "src/flows/catalog.py (cabecera del catálogo)",
+      "instruccion_es": "Precio por persona: no sumes ni calcules el total de un grupo; da el precio por persona de cada plan.",
+      "instruccion_en": "Price per person: do not add up or work out a group total; give the price per person of each plan."
     },
     {
       "id": "descuento-online",
@@ -71,13 +73,17 @@
       "id": "moneda",
       "fecha": "2026-10-26",
       "texto": "Pagan en COP los colombianos y los residentes en Colombia; en USD los extranjeros y toda la reserva de un grupo mixto (policies.json: colombian_pricing, mixed_nationality_group). Si no se sabe la nacionalidad, el precio va en USD y en COP: es el mismo precio, solo cambia la moneda. No hace falta preguntar la nacionalidad para cotizar; preguntarla una vez también es CORRECTO.",
-      "en_el_bot": "src/flows/moneda.py"
+      "en_el_bot": "src/flows/moneda.py",
+      "instruccion_es": "Moneda: pagan en pesos colombianos (COP) los colombianos y los residentes en Colombia; en dólares (USD) los extranjeros y toda la reserva de un grupo con nacionalidades mixtas. Es el mismo precio, solo cambia la moneda (no hay descuento por ser colombiano). Si no sabes la nacionalidad del cliente, da el precio en USD y en COP; no hace falta preguntarla.",
+      "instruccion_en": "Currency: Colombians and residents of Colombia pay in Colombian pesos (COP); international guests, and the whole booking of a group with mixed nationalities, pay in US dollars (USD). It is the same price, only the currency changes (there is no discount for being Colombian). If you don't know the customer's nationality, give the price in USD and in COP; there is no need to ask for it."
     },
     {
       "id": "origen-y-precio",
       "fecha": "2026-10-26",
       "texto": "Si el cliente no ha dicho si sale desde Cartagena o ya está en las islas, el bot da el precio de cada salida del catálogo, cada uno con su rótulo, y le pregunta desde dónde sale. No hace falta preguntar el origen antes de dar el precio; dar el precio de una sola salida sin saber el origen NO es correcto.",
-      "en_el_bot": "src/flows/hechos.py (precio por origen)"
+      "en_el_bot": "src/flows/hechos.py (precio por origen)",
+      "instruccion_es": "Origen y precio: si no sabes si el cliente sale desde Cartagena o ya está en las Islas del Rosario, da el precio de cada salida que tenga el plan, cada uno con su rótulo («desde Cartagena» y «si ya estás en las Islas del Rosario»), sin elegir uno ni esperar a saberlo. Si ya lo sabes, da solo el de su salida.",
+      "instruccion_en": "Origin and price: if you don't know whether the customer leaves from Cartagena or is already on the Rosario Islands, give the price of each departure the plan has, each one labelled («from Cartagena» and «if you're already on the Rosario Islands»), without picking one or waiting to know it. If you already know it, give only theirs."
     }
   ]
 }

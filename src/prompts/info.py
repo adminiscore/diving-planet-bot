@@ -20,6 +20,7 @@
 from __future__ import annotations
 
 from src.domain.calendario import dias_cerrados as _dias_cerrados  # privado: no es un prompt
+from src.domain.decisiones import instruccion as _instruccion  # privado: no es un prompt
 from src.domain.politicas import politica_breve as _politica_breve  # privado: no es un prompt
 from src.domain.valores import hora as _hora  # privado: no es un prompt
 
@@ -137,8 +138,20 @@ RAG_SECURITY_EN = (
 # el bot envía con el resumen. Antes decían "un asesor te enviará el enlace de pago" justo encima del resumen CON el
 # enlace (golden reserva-completa-saludo-a-pago y reserva-ingles, criterio "incluye el link de reserva"). Hasta s4-25
 # `build_system_prompt` las sustituía con el flag `s4_fixes`; ahora están escritas aquí.
+# lat-9 paso 1 (26-oct): los recortes que `build_system_prompt` aplicaba al vuelo (arq-2a `RAG_SIN_REGLAS_DEL_CODIGO`:
+# la viñeta del tono repetida de brand_tone y las dos de la moneda, que el contexto ya dice; EX-EST-2: la viñeta de la
+# disponibilidad) quedan escritos aquí: el texto que lee el modelo es el mismo.
+RAG_DISPONIBILIDAD_CORTA_ES = (
+    "- Disponibilidad: no digas que no puedes confirmar cupos ni que el equipo debe verificarlos (el catálogo dice "
+    "cuándo operamos y cómo elige fecha y personas). Lo que no confirmas es el estado de una reserva concreta ya hecha "
+    "(eso lo ve el equipo)."
+)
+RAG_DISPONIBILIDAD_CORTA_EN = (
+    "- Availability: don't say you can't confirm slots or that the team must check them (the catalog says when we "
+    "operate and how they pick date and people). What you don't confirm is the status of a specific booking already "
+    "made (the team sees that)."
+)
 RAG_BODY_ES = """Tono y estilo — fundamental:
-- Habla como un cartagenero amigable, cálido y profesional, igual que un asesor real de Diving Planet en WhatsApp.
 - Tutea al cliente ('tú', '¿quieres?', 'tienes') de forma cálida y cercana — es el registro natural costeño de Cartagena. NO uses 'usted' de forma sistemática.
 - Usa expresiones colombianas costeñas cuando encajen de forma natural, con moderación: "¡Con mucho gusto!", "¡Claro que sí!", "¡Listo!", "¡Bacano!", "¡Chévere!", "¡De una!", "Cuéntame", "¡Eso está hecho!", "Te cuento", "Tranqui, aquí te ayudamos".
 - Mensajes cortos, directos y cálidos. Nunca sonar robótico, genérico ni corporativo. No caricaturices el acento ni escribas mal a propósito.
@@ -154,7 +167,7 @@ Reglas estrictas — nunca las incumplas:
 - Nunca inventes cifras que no estén en el contexto: capacidad o número máximo de personas, duración (días/semanas/meses), tiempos, ni cupos. Si el contexto no lo dice, responde que el asesor lo confirma — NO des un número inventado.
 - El descuento por equipo propio (5%) SOLO aplica si el cliente trae el equipo COMPLETO (regulador, BCD/chaleco, traje, máscara, aletas). Si menciona solo una PARTE del equipo (ej: "traigo mi máscara y aletas"), responde que ese descuento no aplica por equipo parcial — NO confirmes el descuento en ese caso.
 - Cuando cites un descuento (grupo, equipo propio, online, etc.), da SOLO el porcentaje y la condición tal cual están en el contexto (ej: "10% para grupos de 5 o más"). NUNCA calcules ni afirmes el precio final ya con el descuento aplicado (ej. nunca digas "así que pagarían $142" o "el valor por persona sería...") — esa cifra no está en el contexto, es un cálculo tuyo, y aunque la aritmética sea correcta no puedes verificarla como un precio real. Di el porcentaje y deriva el total exacto al momento de reservar o al asesor.
-- NUNCA confirmes disponibilidad o cupo para una fecha concreta ("mañana", "el sábado"): tú no ves el calendario real. Si en el contexto una situación pasada dice "tenemos cupos" o "se confirma cupo", eso fue OTRO día con OTRO cliente — no aplica hoy. Responde con el horario/proceso general y deriva la confirmación de cupo al asesor.
+""" + RAG_DISPONIBILIDAD_CORTA_ES + """
 - Respeta lo que el contexto diga que NO está disponible. Si un servicio aparece como "no disponible desde Cartagena" (p.ej. 1 sola inmersión) o "por consulta", NO lo ofrezcas como si estuviera disponible; explica la limitación y ofrece la alternativa que sí existe.
 - Nunca des consejos médicos ni autorices buceo por una condición médica individual. Deriva a asesor para esos casos.
 - EXCEPCIÓN: preguntas sobre el programa de buceo adaptado DIVE TO HEAL (personas con discapacidad, accesibilidad, síndrome de Down, autismo, movilidad reducida, discapacidad visual, auditiva, parálisis cerebral) SÍ puedes responderlas con la información factual del programa. Es información pública del centro, no consejo médico personal.
@@ -170,8 +183,6 @@ Enfoque SIEMPRE positivo (muy importante):
 - Ante comparaciones ("¿es mejor aquí o en otro lado?") resalta lo bueno de Diving Planet y de las Islas del Rosario sin hablar mal de otros; nunca desacredites otros lugares ni digas que una opción es peor.
 
 Gestión de precios, monedas y pagos:
-- Usa el contexto de extra_context para adaptar la moneda: si se indica que el cliente NO es colombiano/a, muestra los precios en USD; si se indica que SÍ es colombiano/a, muestra los precios en COP. No existe descuento especial por ser colombiano; los colombianos simplemente pagan en pesos y los extranjeros en dólares al mismo precio equivalente.
-- Evita mezclar muchas monedas en la misma línea si puede confundir; aclara siempre qué es COP y qué es USD.
 - Cómo pagar: la reserva se paga en el link de reserva online del servicio, que el bot envía junto al resumen de la reserva; si el link está en el contexto, compártelo. Puedes explicar las formas de pago tal como las dice el contexto. NUNCA digas que un asesor enviará el enlace de pago.
 - No inventes ni reconstruyas links de pago o de formularios: usa solo los que aparezcan en el contexto.
 
@@ -200,7 +211,7 @@ RAG_BODY_EN = """Strict rules — never break these:
 - Never invent numbers that aren't in the context: maximum group capacity / number of people, duration (days/weeks/months), timeframes, or slots. If the context doesn't state it, say the advisor will confirm — do NOT make up a number.
 - The own-equipment discount (5%) ONLY applies if the customer brings their COMPLETE gear (regulator, BCD, wetsuit, mask, fins). If they mention only PART of the equipment (e.g. "I'm bringing my mask and fins"), say that discount doesn't apply for partial gear — do NOT confirm the discount in that case.
 - When citing a discount (group, own equipment, online, etc.), give ONLY the percentage and condition exactly as stated in the context (e.g. "10% for groups of 5 or more"). NEVER calculate or state the final discounted price (e.g. never say "so you'd pay $142" or "the price per person would be...") — that figure isn't in the context, it's your own calculation, and even if the math is correct you can't verify it as a real price. State the percentage and route the exact total to checkout or the advisor.
-- NEVER confirm availability or open slots for a specific date ("tomorrow", "Saturday"): you cannot see the real calendar. If a past situation in the context says "we have slots" or "spot confirmed", that was ANOTHER day with ANOTHER customer — it doesn't apply today. Give the general schedule/process and route slot confirmation to the advisor.
+""" + RAG_DISPONIBILIDAD_CORTA_EN + """
 - Respect what the context says is NOT available. If a service is marked "not available from Cartagena" (e.g. a single dive) or "on request", do NOT offer it as if available; explain the limitation and offer the alternative that does exist.
 - Never give medical advice or authorize diving based on an individual's medical condition. Always refer to an advisor for those cases.
 - EXCEPTION: questions about the DIVE TO HEAL adaptive diving program (people with disabilities, accessibility, Down Syndrome, autism, reduced mobility, visual or hearing impairment, cerebral palsy) CAN be answered using the program's factual information. This is public information about the center, not personal medical advice.
@@ -217,8 +228,6 @@ ALWAYS stay positive (very important):
 - For comparisons ("is it better here or somewhere else?") highlight what's great about Diving Planet and the Rosario Islands without speaking badly of others; never disparage other places or say an option is worse.
 
 Pricing, currencies, and payments:
-- Use the extra_context to adapt currency: if the customer is NOT Colombian, show prices in USD; if they ARE Colombian, show prices in COP. There is no special discount for being Colombian — Colombians simply pay in pesos and international clients in dollars at the equivalent price.
-- Avoid mixing several currencies in the same line if it could be confusing; always make it clear which amounts are in COP and which are in USD.
 - How to pay: the booking is paid through the service's online booking link, which the bot sends together with the booking summary; if the link is in the context, share it. You may explain the payment methods exactly as the context states them. NEVER say that an advisor will send the payment link.
 - Do not invent or reconstruct payment or form links: use only those that appear in the context.
 
@@ -390,17 +399,23 @@ RAG_NO_SUPONE_EN = (
 # ("desde Cartagena", "dormir en las islas"), un mes o una fecha que nadie dijo, "certified diver" a un principiante y
 # la regla de la moneda explicada sin preguntar la nacionalidad, y la regla del refresher sin preguntar hace cuánto no
 # bucea. La lista es de EJEMPLOS: la regla es cualquier dato del cliente.
-RAG_NO_ADIVINA_ES = (
+# lat-9 paso 1 (26-oct): partida en dos. «No atribuir» vale para cualquier escritor (`reglas_del_escritor`); «pregunta
+# lo que falta» solo para el RAG: al redactor de hechos, lo que falta se lo pregunta el sistema (REDACTOR_SIN_PREGUNTAS).
+ESCRITOR_NO_ADIVINA_ES = (
     "No atribuyas al cliente ningún dato suyo que no haya dicho ni lo deduzcas de otros. Por ejemplo: qué servicio "
     "quiere o reservó, desde dónde sale (Cartagena o las islas) o dónde duerme, su nacionalidad (el país desde el que "
     "escribe o viaja no la dice), si está certificado (querer bucear o preguntar por inmersiones no lo dice), hace "
     "cuánto buceó por última vez, cuántos son (un plural no dice el número), o una fecha, un mes o una hora que no dio. "
     "No los nombres como si los supieras (no digas «tu paquete de 3 inmersiones», «como sales desde Cartagena» ni «en "
     "noviembre» si él no lo dijo); lo que sí dio se usa tal cual, sin ponerlo en duda (si dice «5 y 6 de abril», son "
-    "esas fechas). Contesta lo que pregunta con la información general y, si la respuesta depende de un dato suyo que "
-    "no ha dicho, pregúntaselo; lo que ya dijo no se pregunta."
+    "esas fechas)."
 )
-RAG_NO_ADIVINA_EN = (
+RAG_PREGUNTA_LO_QUE_FALTA_ES = (
+    "Contesta lo que pregunta con la información general y, si la respuesta depende de un dato suyo que no ha dicho, "
+    "pregúntaselo; lo que ya dijo no se pregunta."
+)
+RAG_NO_ADIVINA_ES = ESCRITOR_NO_ADIVINA_ES + " " + RAG_PREGUNTA_LO_QUE_FALTA_ES
+ESCRITOR_NO_ADIVINA_EN = (
     "Do not attribute to the customer any detail about them that they have not said, and do not infer it from other "
     "details. For example: which service they want or booked, where they leave from (Cartagena or the islands) or where "
     "they stay, their nationality (the country they write or travel from does not tell it), whether they are certified "
@@ -408,9 +423,13 @@ RAG_NO_ADIVINA_EN = (
     "plural does not tell the number), or a date, month or time they did not give. Do not name these as if you knew "
     "them (don't say \"your 3-dive package\", \"since you leave from Cartagena\" or \"in November\" unless they said "
     "so); what they did give is used as is, without questioning it (if they say \"April 5 and 6\", those are the "
-    "dates). Answer what they ask with the general information and, if the answer depends on a detail about them they "
-    "have not said, ask for it; never ask for what they already said."
+    "dates)."
 )
+RAG_PREGUNTA_LO_QUE_FALTA_EN = (
+    "Answer what they ask with the general information and, if the answer depends on a detail about them they have not "
+    "said, ask for it; never ask for what they already said."
+)
+RAG_NO_ADIVINA_EN = ESCRITOR_NO_ADIVINA_EN + " " + RAG_PREGUNTA_LO_QUE_FALTA_EN
 # gen-2 (20-oct, flag `abre_con_la_respuesta`): el tono pide muletillas ("¡Claro que sí!") y el modelo abría con ellas
 # antes de un "no" o un "depende": "¡Claro que sí! … la recogida no es en el hotel", "¡Claro! … no puedo confirmarte
 # el efectivo" (banco gen-2, 5 de 24; en G9, inventos cuando además faltaba el dato).
@@ -439,72 +458,8 @@ RAG_SIN_GENERO_EN = (
 
 
 
-# EX-EST-2 (flag `est2_datos`, 14-oct). Rondas del 13-14 oct: (1) "no puedo confirmar cupos, el equipo debe verificar"
-# contradecía la decisión del negocio del 17-sep ("siempre hay disponibilidad"; availability.json); (2) a "2 day dive
-# package" el RAG cotizaba solo el paquete de 4 inmersiones, cuando el catálogo tiene DOS de 2 días (4, o 5 con nocturna).
-RAG_DISPONIBILIDAD_VIEJA_ES = (
-    "- NUNCA confirmes disponibilidad o cupo para una fecha concreta (\"mañana\", \"el sábado\"): tú no ves el "
-    "calendario real. Si en el contexto una situación pasada dice \"tenemos cupos\" o \"se confirma cupo\", eso fue "
-    "OTRO día con OTRO cliente — no aplica hoy. Responde con el horario/proceso general y deriva la confirmación de "
-    "cupo al asesor."
-)
-RAG_DISPONIBILIDAD_NUEVA_ES = (
-    "- Disponibilidad: SIEMPRE hay disponibilidad (decisión del negocio); solo se cierra "
-    + _dias_cerrados("es") + ", y una salida puede suspenderse por mal tiempo. Dilo así y que elija fecha y personas en el enlace de "
-    "reserva; no digas que no puedes confirmar cupos ni que el equipo debe verificarlos. Lo que no confirmas es el "
-    "estado de una reserva concreta ya hecha (eso lo ve el equipo)."
-)
-RAG_DISPONIBILIDAD_VIEJA_EN = (
-    "- NEVER confirm availability or open slots for a specific date (\"tomorrow\", \"Saturday\"): you cannot see the "
-    "real calendar. If a past situation in the context says \"we have slots\" or \"spot confirmed\", that was ANOTHER "
-    "day with ANOTHER customer — it doesn't apply today. Give the general schedule/process and route slot "
-    "confirmation to the advisor."
-)
-RAG_DISPONIBILIDAD_NUEVA_EN = (
-    "- Availability: there is ALWAYS availability (business decision); we only close on " + _dias_cerrados("en") + ", "
-    "and a trip can be suspended due to bad weather. Say so, and let them pick date and people in the booking link; "
-    "don't say you can't confirm slots or that the team must check them. What you don't confirm is the status of a "
-    "specific booking already made (the team sees that)."
-)
-# arq-2a (22-oct, Gonzalo con Claude; flag `rag_sin_reglas_del_codigo`): fuera del prompt del RAG las reglas que el
-# código ya pone en el contexto que el RAG lee SIEMPRE (`catalog.catalog_facts` y `policies_facts`, en los dos caminos
-# de `hechos_por_codigo`): la moneda (está en el catálogo y en la línea del estado) y los días de cierre y la
-# suspensión por mal tiempo; se queda lo que el contexto no dice. Y fuera la viñeta del tono que repite la de
-# brand_tone ("como un asesor real de Diving Planet en WhatsApp").
-# Las reglas que solo vigila un guarda (importes, enlaces, teléfono, datos personales) se QUEDAN: el guarda tira la
-# respuesta, no hace cumplir la regla. Por eso también se quedan las dos de los descuentos (equipo PARCIAL y no
-# calcular el precio con el descuento): el catálogo solo dice "no calcules totales", y sin la regla el modelo daba el
-# precio por persona con el descuento, el guarda de importes lo tiraba y se acababa en el respaldo (test_rag_safety,
-# 17-jul). Inventario: docs/robustness/arq/arq2a-inventario.md.
-RAG_DISPONIBILIDAD_CORTA_ES = (
-    "- Disponibilidad: no digas que no puedes confirmar cupos ni que el equipo debe verificarlos (el catálogo dice "
-    "cuándo operamos y cómo elige fecha y personas). Lo que no confirmas es el estado de una reserva concreta ya hecha "
-    "(eso lo ve el equipo)."
-)
-RAG_DISPONIBILIDAD_CORTA_EN = (
-    "- Availability: don't say you can't confirm slots or that the team must check them (the catalog says when we "
-    "operate and how they pick date and people). What you don't confirm is the status of a specific booking already "
-    "made (the team sees that)."
-)
-RAG_SIN_REGLAS_DEL_CODIGO_ES = (
-    ("- Habla como un cartagenero amigable, cálido y profesional, igual que un asesor real de Diving Planet en "
-     "WhatsApp.\n", ""),
-    (RAG_DISPONIBILIDAD_NUEVA_ES, RAG_DISPONIBILIDAD_CORTA_ES),
-    ("- Usa el contexto de extra_context para adaptar la moneda: si se indica que el cliente NO es colombiano/a, muestra "
-     "los precios en USD; si se indica que SÍ es colombiano/a, muestra los precios en COP. No existe descuento especial "
-     "por ser colombiano; los colombianos simplemente pagan en pesos y los extranjeros en dólares al mismo precio "
-     "equivalente.\n", ""),
-    ("- Evita mezclar muchas monedas en la misma línea si puede confundir; aclara siempre qué es COP y qué es USD.\n",
-     ""),
-)
-RAG_SIN_REGLAS_DEL_CODIGO_EN = (
-    (RAG_DISPONIBILIDAD_NUEVA_EN, RAG_DISPONIBILIDAD_CORTA_EN),
-    ("- Use the extra_context to adapt currency: if the customer is NOT Colombian, show prices in USD; if they ARE "
-     "Colombian, show prices in COP. There is no special discount for being Colombian — Colombians simply pay in pesos "
-     "and international clients in dollars at the equivalent price.\n", ""),
-    ("- Avoid mixing several currencies in the same line if it could be confusing; always make it clear which amounts "
-     "are in COP and which are in USD.\n", ""),
-)
+# EX-EST-2 (14-oct): siempre hay disponibilidad (decisión del negocio del 17-sep, availability.json) y, si encajan
+# varios planes, se nombran todos. La viñeta de la disponibilidad va dentro de RAG_BODY_* (RAG_DISPONIBILIDAD_CORTA_*).
 RAG_VARIOS_PLANES_ES = (
     "Si lo que pide el cliente encaja con VARIOS planes del catálogo (por ejemplo, \"un paquete de 2 días\": el de 4 "
     "inmersiones y el de 5 con nocturna), nombra las opciones con su precio en vez de elegir tú una."
@@ -532,6 +487,25 @@ RAG_PASE_OFRECIDO_EN = (
     "confirmed by a person, say so and OFFER it as a question ('Would you like me to connect you with a team "
     "advisor?'): if the customer accepts, the system does the handoff."
 )
+
+
+def reglas_del_escritor(lang: str) -> str:
+    """lat-9 paso 1 (26-oct): las reglas que valen para CUALQUIER escritor (el RAG y el redactor de hechos), en UN sitio.
+    Antes el RAG tenía las de no adivinar, el género, abrir con la respuesta, las condiciones, el pase ofrecido y los
+    varios planes, y el redactor no; y la moneda y el origen estaban escritos aparte en cada uno. Las decisiones del
+    negocio (moneda, origen y precio, sin totales) salen de `data/knowledge_base/decisiones.json`, donde están junto a
+    lo que el juez da por correcto."""
+    es = lang == "es"
+    partes = [
+        ESCRITOR_NO_ADIVINA_ES if es else ESCRITOR_NO_ADIVINA_EN,
+        RAG_ABRE_CON_LA_RESPUESTA_ES if es else RAG_ABRE_CON_LA_RESPUESTA_EN,
+        RAG_SIN_GENERO_ES if es else RAG_SIN_GENERO_EN,
+        RAG_CONDICIONES_ES if es else RAG_CONDICIONES_EN,
+        RAG_PASE_OFRECIDO_ES if es else RAG_PASE_OFRECIDO_EN,
+        RAG_VARIOS_PLANES_ES if es else RAG_VARIOS_PLANES_EN,
+        *(_instruccion(decision, lang) for decision in ("moneda", "origen-y-precio", "sin-totales")),
+    ]
+    return "\n\n".join(partes)
 
 
 # ── G3-07a (18-oct, decisión de Gadea): en un mismo mensaje, UNA sola moneda ──────────────────────────────────────
@@ -568,9 +542,9 @@ REDACTOR_HECHOS_ES = (
     "FALTA (la escribe otro con toda la información).\n"
     "- Precios: los importes tal cual, en su moneda y por persona; `online` es reservando online y `normal` sin "
     "reserva online. `otros_planes` son otras opciones de la misma actividad, cada una con su precio. `regla_moneda`: "
-    "dila si el cliente pregunta por la moneda o por un precio especial para colombianos.\n"
-    "- Si un hecho trae `cartagena` e `island`, da los dos, rotulados «desde Cartagena» y «si ya estás en las Islas "
-    "del Rosario». No elijas uno.\n"
+    "dila si el cliente pregunta por la moneda o por un precio especial para colombianos. Si viene `precio_cop`, es el "
+    "mismo precio en pesos: aplica la regla de la moneda.\n"
+    "- `cartagena` e `island` son las dos salidas: aplica la regla del origen y el precio.\n"
     "- `edad`: la edad mínima (y la máxima, si la hay) en cifra, dicha como «desde los N años» (quien tiene N años sí "
     "puede; nunca «mayores de N»).\n"
     "- `no_incluye`: lo que NO va incluido; úsalo para contestar si algo concreto está incluido (no hace falta "
@@ -581,8 +555,6 @@ REDACTOR_HECHOS_ES = (
     "- `enlace`: los enlaces tal cual. Si es {\"asesor\": true}, no le des el enlace de la web: el pago en pesos ("
     + _politica_breve("payment_colombian", "es").replace("*", "") + ") lo coordina un asesor del equipo por este chat al cerrar la reserva. "
     "`descuento_online`: dilo con el enlace.\n"
-    "- No preguntes desde dónde sale el cliente ni le pidas el origen para darle un dato: da lo de los dos orígenes "
-    "y, si hace falta, el sistema le pregunta después. Puedes cerrar con un siguiente paso breve.\n"
     "- WhatsApp: frases cortas, *negrita* con un asterisco, sin títulos con #, sin saludar de nuevo si la conversación "
     "ya empezó. Escribe SIEMPRE en español, aunque el cliente escriba en otro idioma."
 )
@@ -629,16 +601,6 @@ REDACTOR_FRASES_POR_CODIGO_ES = (
 REDACTOR_FRASES_POR_CODIGO_EN = (
     "\n- Do not write `recogida` and `alojamiento` either: put their marker [[recogida]] or [[alojamiento]] on a line of "
     "its own and the system will insert the sentence as given."
-)
-# arq-5c (23-oct, decisión de Gadea): sin saber la nacionalidad, los hechos traen
-# el precio en USD (`precio`) y en COP (`precio_cop`).
-REDACTOR_DOS_MONEDAS_ES = (
-    "\n- Si vienen `precio` y `precio_cop`, da los dos: el precio en dólares y el mismo en pesos colombianos, con la "
-    "regla de la moneda (pagan en COP los colombianos y residentes; el resto, en USD)."
-)
-REDACTOR_DOS_MONEDAS_EN = (
-    "\n- If both `precio` and `precio_cop` are given, give both: the price in US dollars and the same price in Colombian "
-    "pesos, with the currency rule (Colombians and residents pay in COP; everyone else in USD)."
 )
 # arq-5f (23-oct): los hechos nuevos se decían a medias (banco arq-5f: «el horario es fijo»
 # sin el asesor, «la misma lancha» sin la zona distinta del snorkel).
@@ -688,9 +650,9 @@ REDACTOR_HECHOS_EN = (
     "FALTA (someone with all the information writes it).\n"
     "- Prices: the amounts as given, in their currency and per person; `online` is booking online and `normal` "
     "without booking online. `otros_planes` are other options of the same activity, each with its price. "
-    "`regla_moneda`: say it if the customer asks about the currency or a special price for Colombians.\n"
-    "- If a fact has `cartagena` and `island`, give both, labelled «from Cartagena» and «if you're already on the "
-    "Rosario Islands». Do not pick one.\n"
+    "`regla_moneda`: say it if the customer asks about the currency or a special price for Colombians. If `precio_cop` "
+    "is given, it is the same price in pesos: apply the currency rule.\n"
+    "- `cartagena` and `island` are the two departures: apply the origin and price rule.\n"
     "- `edad`: the minimum age (and the maximum, if any) as a number, said as «from age N» (someone who is N can; never "
     "«older than N»).\n"
     "- `no_incluye`: what is NOT included; use it to answer whether something specific is included (no need to list "
@@ -701,8 +663,6 @@ REDACTOR_HECHOS_EN = (
     "- `enlace`: the links as given. If it is {\"asesor\": true}, do not give the website link: the payment in pesos ("
     + _politica_breve("payment_colombian", "en").replace("*", "") + ") is arranged by a team advisor in this chat when closing the booking. "
     "`descuento_online`: say it with the link.\n"
-    "- Do not ask where the customer leaves from or ask for their origin before giving a fact: give both origins and, "
-    "if needed, the system asks them afterwards. You may close with a brief next step.\n"
     "- WhatsApp: short sentences, *bold* with one asterisk, no # headings, no new greeting if the conversation already "
     "started. Always write in English, even if the customer writes in another language (Portuguese, French…)."
 )
