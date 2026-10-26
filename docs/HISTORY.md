@@ -79,6 +79,10 @@ History
   - Borrado el camino viejo: el flag `avisos_condicionados` (mapa 21 → 20 interruptores), su bloque en el RAG, los
     avisos dados de la respuesta adelantada, `scripts/sonda_avisos.py` y sus tests; nuevos en
     `tests/test_avisos_por_codigo.py`.
+  - **real-1 A (PRE 274baf9) y B a la misma hora: 92,5 % 74/116 → 95,1 % 83/116** (37 criterios arreglados, 14
+    rotos, ninguno por un aviso). Por encima de antes de LAT (real-1 del 23-oct: 82/116) con 3,6 llamadas por turno en
+    vez de 7,7. 40 avisos puestos en 465 turnos; llamadas y latencia iguales (3,53 → 3,60 llamadas; p90 7,78 → 7,61 s,
+    los dos lentos esa mañana por los proveedores).
 * **lat-deuda-u (nueva, pedida por Gadea):** inventario de dónde vive cada dato del negocio para que esté en un solo
   sitio, en los dos idiomas y al alcance de todos los caminos.
 
