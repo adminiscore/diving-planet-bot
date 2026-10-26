@@ -30,8 +30,34 @@ History
   - calidad: **94,8 % 80/116**, frente al 94,9 % 82/116 de anoche, dentro del ruido.
   - Deuda apuntada: el acuse ya no reconoce lo concreto del mensaje («anoto a tu amigo para el minicurso»).
 
-0.32.7 - (2026-10-26, en la rama `feature/integra-sim7-gadea`; por medir)
+0.32.8 - (2026-10-26, integra4: a PRE)
 ---------------------
+* **lat-9 paso 1** (diseño en `docs/robustness/lat/diseno-lat9.md`): un prompt base para los dos escritores
+  (`info.reglas_del_escritor`) con las decisiones moneda, origen y precio y sin totales leídas de decisiones.json; el
+  cuerpo del RAG queda igual y «varios planes» solo en el RAG. Banco de lat-9 (40 turnos ×2): 51 → 52/80, neutro.
+* **lat-11** (Álvaro): fuera el detector viejo de regex (la clase IntentDetector, intent_detector.py 2.187 → 1.126
+  líneas), el router LLM de respaldo (con la duda decide Jev) y el relleno LLM `fill_gaps`; hoteles, islas y alias en
+  lugares.json; el archipiélago ya no da la isla concreta isla_rosario; alias de hotel corrientes solo si se nombra un
+  hotel. La red de señales especiales y el resolutor se quedan (tapan huecos reales).
+* **lat-8** (Álvaro): cuatro temas más en la tabla de hechos: alojamiento, regreso otro día, fotos y cambios o
+  cancelación (solo la política).
+* **DEUDA-EXT** (Álvaro): quien se suma a un grupo («my wife… just snorkel», «vienen dos amigos al minicurso», «mi
+  parcero»): banco 16/24 → 22/24. **DEUDA-ORIGEN**: visitar o ir a Cartagena no fija la salida (decisión «no-adivinar»):
+  banco 10/20 → 20/20. **sim-8**: −214 líneas de código muerto.
+* **VAL-BASE**: los dos paquetes de 4 inmersiones desde las islas tenían los pesos cruzados respecto a la hoja original;
+  corregidos, con test que compara toda la tarifa con la hoja.
+* **banco_fallos** volvía a funcionar: estaba roto desde arq-1d (cada caso, NameError: «0 casos medidos»).
+* **Medida (A = integra2-B, el mismo código que PRE 33bfbcd; regla de ahorro de OpenAI):** integra3 (sin las deudas ni
+  sim-8) 78/116 y 52 fallos; **integra4 80/116 y 46 fallos** frente a 77/116 y 51; visible 33 → 30; **oculto 18 → 16
+  fallos, 89,0 → 90,4 %** (primera vez ≥ 90 %). Tanda rotativa (integra3): 29 → 30, neutro. Latencia con PRE tranquilo:
+  3,51 llamadas/turno, p50 3,19 s, p90 6,85 s, p95 8,46 s (el extractor, 0,86 → 1,11 s de mediana: su prompt crece;
+  fuera el router LLM, ~0,65 s en el 9 % de los turnos). Código del bot: −3.741/+1.117 líneas desde el PRE de esta
+  mañana.
+
+0.32.7 - (2026-10-26, en PRE: 33bfbcd)
+---------------------
+* **Medida** (integra2, A = PRE ac12d2c, golden nuevo): 73/116 y 64 fallos → **77/116 y 51**; oculto 85,5 → 89,0 %;
+  p90 6,19 → 6,13 s. El deploy salió en rojo por el índice (OpenAI sin crédito) y se relanzó al recargar.
 * **Jev, el hueco entre precio, pago y «otra cosa»** (c04d1d7): «¿el precio es en dólares o pesos?» o «price for stay
   and dives» salían con `asks_question` y sin intención ni otra cosa, y `_solo_pide_reservar` los mandaba al flujo
   («¡Perfecto! 🙌» y la siguiente pregunta: 149 de 465 respuestas de deudau-B empiezan así). La moneda es de pago; el
