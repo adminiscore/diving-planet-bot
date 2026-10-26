@@ -5,6 +5,7 @@ from functools import lru_cache
 from openai import OpenAI
 
 from src.domain import activities as dom
+from src.domain.lugares import hotel_nombrado, isla_nombrada
 from src.flows.state import ConversationState
 from src.utils.number_words import number_alt, number_words
 from src.utils.text import strip_accents
@@ -2069,74 +2070,16 @@ class IntentDetector:
             intent.location = "cartagena"
             intent.detected_fields.append("location")
 
-        # Mapeo de hoteles a islas
-        hotel_to_island = {
-            # Isla Grande
-            'san_pedro_majagua': 'isla_grande',
-            'bora_bora': 'isla_grande',
-            'cocoliso': 'isla_grande',
-            'pao_pao': 'isla_grande',
-            'fragata': 'isla_grande',
-            'secreto': 'isla_grande',
-            'gente_de_mar': 'isla_grande',
-            'luxury_beach': 'isla_grande',
-            'ecohotel_flores': 'isla_grande',
-            'playa_libre': 'isla_grande',
-            # Isla Marina
-            'islabela': 'isla_marina',
-            'hamaquero': 'isla_marina',
-            'ubuntu': 'isla_marina',
-            # Isla del Pirata
-            'isla_del_pirata_hotel': 'isla_del_pirata',
-            # Isla del Sol
-            'isla_del_sol_hotel': 'isla_del_sol',
-            # Isleta
-            'coralina': 'isleta',
-            'isleta_beach': 'isleta',
-            # Isla Arena
-            'isla_arena_resort': 'isla_arena',
-            # Isla Pavitos
-            'isla_pavitos_hotel': 'isla_pavitos',
-            # Isla Lizamar
-            'lizamar': 'isla_lizamar',
-            # Isla Gigi
-            'gigi': 'isla_gigi',
-            # Isla Rosa
-            'isla_rosa_hotel': 'isla_rosa',
-            # Isla Pelícano
-            'isla_pelicano_hotel': 'isla_pelicano',
-            # Isla Rosario
-            'rosario_ecohotel': 'isla_rosario',
-            'san_tropel': 'isla_rosario',
-        }
-
-        # Patrones de islas (con variantes)
-        island_patterns = {
-            'isla_grande': [r'\bisla\s+grande\b', r'\bgrande\b'],
-            'isla_marina': [r'\bisla\s+marina\b', r'\bmarina\b'],
-            'isla_del_pirata': [r'\bisla\s+del\s+pirata\b', r'\bpirata\b'],
-            'isla_del_sol': [r'\bisla\s+del\s+sol\b'],
-            'isleta': [r'\bisleta\b', r'\bisla\s+isleta\b'],
-            'isla_arena': [r'\bisla\s+arena\b', r'\barena\b'],
-            'isla_pavitos': [r'\bisla\s+pavitos\b', r'\bpavitos\b'],
-            'isla_lizamar': [r'\bisla\s+lizamar\b'],
-            'isla_gigi': [r'\bisla\s+gigi\b'],
-            'isla_rosa': [r'\bisla\s+rosa\b'],
-            'isla_pelicano': [r'\bisla\s+pelicano\b', r'\bisla\s+pelícano\b', r'\bpelicano\b', r'\bpelícano\b'],
-            'isla_rosario': [r'\bisla\s+rosario\b', r'\bislas\s+del\s+rosario\b'],
-        }
-
-        # Detectar isla primero. La forma corta de una isla que se llama "Isla X" ("grande",
-        # "marina", "arena", "pirata") es tambien una palabra corriente: solo cuenta si el
+        # Detectar isla primero (las islas y sus alias están en lugares.json, lat-11 T5). La forma corta de una isla que
+        # se llama "Isla X" ("grande", "marina", "arena", "pirata") es tambien una palabra corriente: solo cuenta si el
         # mensaje nombra una isla (hallazgo C.3, 2026-09-16; "nos vemos en la marina" o "somos un
         # grupo grande" no son una isla). Los nombres de hotel son nombres propios y no cambian.
         names_an_island = bool(_GENERIC_ISLAND_RE.search(msg_lower))
-        for island_id, patterns in island_patterns.items():
-            if any(re.search(pattern, msg_lower) for pattern in patterns if "isl" in pattern or names_an_island):
-                intent.island = island_id
-                intent.location = "island"
-                intent.detected_fields.extend(["island", "location"])
-                break
+        island_id = isla_nombrada(msg_lower, nombra_una_isla=names_an_island)
+        if island_id:
+            intent.island = island_id
+            intent.location = "island"
+            intent.detected_fields.extend(["island", "location"])
 
         # Bare "rosario" also means the island (e.g. "corales del rosario"),
         # but checked separately from the loop above and guarded against
@@ -2148,153 +2091,23 @@ class IntentDetector:
             intent.location = "island"
             intent.detected_fields.extend(["island", "location"])
 
-        # Patrones de hoteles (con muchas más variantes)
-        hotel_patterns = {
-            # Isla Grande
-            'san_pedro_majagua': [
-                r'\bsan\s+pedro\s+de\s+majagua\b',
-                r'\bsan\s+pedro\b',
-                r'\bmajagua\b',
-                r'\bhotel\s+majagua\b',
-            ],
-            'bora_bora': [
-                r'\bbora\s+bora\b',
-                r'\bbora\b',
-                r'\bhotel\s+bora\b',
-            ],
-            'cocoliso': [
-                r'\bcocoliso\b',
-                r'\bhotel\s+cocoliso\b',
-                r'\bcocoliso\s+island\b',
-                r'\bcocoliso\s+resort\b',
-            ],
-            'pao_pao': [
-                r'\bpao\s+pao\b',
-                r'\bpaopao\b',
-                r'\bhotel\s+pao\b',
-            ],
-            'fragata': [
-                r'\bfragata\b',
-                r'\bhotel\s+fragata\b',
-                r'\bfragata\s+island\b',
-            ],
-            'secreto': [
-                r'\bsecreto\b',
-                r'\bhotel\s+secreto\b',
-                r'\bhostel\s+secreto\b',
-            ],
-            'gente_de_mar': [
-                r'\bgente\s+de\s+mar\b',
-                r'\bhotel\s+gente\b',
-            ],
-            'luxury_beach': [
-                r'\bluxury\s+beach\b',
-                r'\bluxury\b',
-            ],
-            'ecohotel_flores': [
-                r'\becohotel\s+las\s+flores\b',
-                r'\blas\s+flores\b',
-                r'\bflores\b',
-            ],
-            'playa_libre': [
-                r'\bplaya\s+libre\b',
-                r'\becohostal\s+playa\b',
-            ],
-            # Isla Marina
-            'islabela': [
-                r'\bislabela\b',
-                r'\bisla\s+bella\b',
-                r'\bhotel\s+islabela\b',
-            ],
-            'hamaquero': [
-                r'\bhamaquero\b',
-                r'\bel\s+hamaquero\b',
-                r'\bhotel\s+hamaquero\b',
-            ],
-            'ubuntu': [
-                r'\bubuntu\b',
-                r'\bcentro\s+ubuntu\b',
-            ],
-            # Isla del Pirata
-            'isla_del_pirata_hotel': [
-                r'\bhotel\s+isla\s+del\s+pirata\b',
-                r'\bisla\s+del\s+pirata\b',
-            ],
-            # Isla del Sol
-            'isla_del_sol_hotel': [
-                r'\bhotel\s+isla\s+del\s+sol\b',
-                r'\bisla\s+del\s+sol\b',
-            ],
-            # Isleta
-            'coralina': [
-                r'\bcoralina\b',
-                r'\bhotel\s+coralina\b',
-                r'\bcoralina\s+island\b',
-            ],
-            'isleta_beach': [
-                r'\bisleta\s+beach\b',
-            ],
-            # Isla Arena
-            'isla_arena_resort': [
-                r'\bisla\s+arena\s+eco\s+resort\b',
-                r'\bisla\s+arena\s+resort\b',
-                r'\bisla\s+arena\b',
-            ],
-            # Isla Pavitos
-            'isla_pavitos_hotel': [
-                r'\bisla\s+pavitos\b',
-                r'\bpavitos\b',
-            ],
-            # Isla Lizamar
-            'lizamar': [
-                r'\blizamar\b',
-                r'\bhotel\s+lizamar\b',
-            ],
-            # Isla Gigi
-            'gigi': [
-                r'\bcasa\s+de\s+isla\s+gigi\b',
-                r'\bisla\s+gigi\b',
-                r'\bgigi\b',
-            ],
-            # Isla Rosa
-            'isla_rosa_hotel': [
-                r'\bisla\s+rosa\b',
-            ],
-            # Isla Pelícano
-            'isla_pelicano_hotel': [
-                r'\bisla\s+pelicano\b',
-                r'\bisla\s+pelícano\b',
-                r'\bpelicano\b',
-                r'\bpelícano\b',
-            ],
-            # Isla Rosario
-            'rosario_ecohotel': [
-                r'\brosario\s+ecohotel\b',
-                r'\becohotel\s+rosario\b',
-            ],
-            'san_tropel': [
-                r'\bsan\s+tropel\b',
-                r'\btropel\b',
-            ],
-        }
-
-        # Detectar hotel
-        for hotel_id, patterns in hotel_patterns.items():
-            if any(re.search(pattern, msg_lower) for pattern in patterns):
-                intent.hotel = hotel_id
-                # Detectar isla automáticamente desde el hotel
-                if hotel_id in hotel_to_island and not intent.island:
-                    intent.island = hotel_to_island[hotel_id]
-                    intent.detected_fields.append("island")
-                if not intent.location:
-                    intent.location = "island"
-                    # s4-27 (8-oct): la ubicacion que se deduce del hotel se DECLARA, como
-                    # todas, para que pase por la puerta de Jev (u3-3/u3-4). Sin declararla se colaba siempre:
-                    # "¿me pasas el contacto del hotel Cocoliso?" (Jev: no afirma ubicacion) dejaba al cliente "ya en
-                    # las islas" (contacto-hoteles-cocoliso-san-pedro).
-                    intent.detected_fields.append("location")
-                intent.detected_fields.append("hotel")
-                break
+        # Detectar hotel (los hoteles, sus alias y su isla están en lugares.json, lat-11 T5)
+        hotel = hotel_nombrado(msg_lower)
+        if hotel:
+            hotel_id, hotel_island = hotel
+            intent.hotel = hotel_id
+            # Detectar isla automáticamente desde el hotel
+            if hotel_island and not intent.island:
+                intent.island = hotel_island
+                intent.detected_fields.append("island")
+            if not intent.location:
+                intent.location = "island"
+                # s4-27 (8-oct): la ubicacion que se deduce del hotel se DECLARA, como
+                # todas, para que pase por la puerta de Jev (u3-3/u3-4). Sin declararla se colaba siempre:
+                # "¿me pasas el contacto del hotel Cocoliso?" (Jev: no afirma ubicacion) dejaba al cliente "ya en
+                # las islas" (contacto-hoteles-cocoliso-san-pedro).
+                intent.detected_fields.append("location")
+            intent.detected_fields.append("hotel")
 
         # Fallback: "vamos desde las islas" / "ya estoy en la isla" / "estamos
         # en las islas" / EN "we are on the islands" / "from the islands" — no

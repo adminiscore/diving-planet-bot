@@ -1,0 +1,17 @@
+{
+ "about": "lat-11 T3/T4 (26-oct): sin la red de señales especiales (acompañantes y refresher) ni el resolutor de respuestas cortas, ¿el extractor del turno y Jev siguen viendo al acompañante, el sí al refresher y las cantidades en palabras? Frases nuestras: no salen del golden, de G9/G10 ni de las charlas reales. a*: acompañantes; r*: refresher; q*: respuestas cortas; k*: controles que no deben preguntar por un acompañante. Fragmentos sin tildes y en minúsculas (puntuar_banco_rag; «a|b» = cualquiera).",
+ "dialogos": [
+  {"id": "a1-el-snorkel", "tipo": "acompanante", "turnos": ["Hola, soy buzo certificado y quiero bucear saliendo desde Cartagena", "Somos dos", "Ah, y él quiere hacer snorkel"], "todas": ["snorkel"]},
+  {"id": "a2-amiga-sin-cert", "tipo": "acompanante", "turnos": ["Quiero bucear el sábado, tengo el Open Water", "Voy con una amiga que no está certificada"], "todas": ["minicurso|snorkel|acompa|amiga"]},
+  {"id": "a3-wife-snorkel-en", "tipo": "acompanante", "turnos": ["Hi, two certified divers here, leaving from Cartagena", "My wife will join us but she'll just snorkel", "We're from Canada"], "todas": ["snorkel"]},
+  {"id": "a4-dos-minicurso", "tipo": "acompanante", "turnos": ["Somos 3 buzos certificados desde Cartagena", "Además vienen dos amigos que quieren probar el minicurso", "Somos de Perú"], "todas": ["minicurso"]},
+  {"id": "a5-parcero", "tipo": "acompanante", "turnos": ["quiero bucear, soy certificado, salgo desde cartagena", "mi parcero se anima al snorkel"], "todas": ["snorkel"]},
+  {"id": "r1-repaso-si", "tipo": "refresher", "turnos": ["Hola, tengo el Open Water pero hace 3 años que no buceo", "Desde Cartagena, voy solo", "Sí, no estaría mal hacer el repaso"], "todas": ["refresh|repaso"]},
+  {"id": "r2-refresher-en", "tipo": "refresher", "turnos": ["I'm Advanced certified but my last dive was 4 years ago", "From Cartagena, just me, I'm German", "Yeah why not, let's do the refresher"], "todas": ["refresh"]},
+  {"id": "q1-un-par", "tipo": "cantidad", "turnos": ["Queremos hacer snorkel desde Cartagena", "un par"], "ninguno": ["cuantas personas", "cuantos son", "cuantos serian"]},
+  {"id": "q2-two-of-us-en", "tipo": "cantidad", "turnos": ["We want to go snorkeling from Cartagena", "just the two of us"], "ninguno": ["how many people", "how many of you", "how many are"]},
+  {"id": "q3-uno-solo", "tipo": "cantidad", "turnos": ["Quiero bucear, soy certificado, desde Cartagena, somos 2 buzos", "Viene alguien más que quiere hacer snorkel", "uno solo"], "todas": ["snorkel"]},
+  {"id": "k1-voy-solo", "tipo": "control", "turnos": ["Hola, quiero bucear, soy certificado", "Voy solo, desde Cartagena"], "ninguno": ["acompa"]},
+  {"id": "k2-cuatro-buzos", "tipo": "control", "turnos": ["Somos 4 buzos certificados y salimos desde Cartagena", "No somos colombianos"], "ninguno": ["acompa"]}
+ ]
+}
