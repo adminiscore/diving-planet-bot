@@ -593,6 +593,12 @@ def _principal_del_grupo_repartido(state: ConversationState, reparto: dict) -> s
 
     if len(reparto) < 2 or state.detected_activity in reparto:
         return None
+    sin_decidir = reparto.get("undecided") or 0
+    if sin_decidir and sin_decidir >= sum(v for k, v in reparto.items() if k != "undecided" and isinstance(v, int)):
+        # DEUDA-EXT2 (26-oct): «two certified divers» + «my wife will join us but she'll just snorkel» con el extractor
+        # trayendo {snorkel: 1, undecided: 2} hacía principal el snorkel de la mujer y se cerraba la reserva como snorkel
+        # (banco-lat11 a3). Si la parte más grande del grupo aún no ha decidido, la principal sigue pendiente.
+        return None
     return actividad_principal_del_reparto(reparto)
 
 
@@ -602,6 +608,15 @@ def _poner_actividad(intent, state: ConversationState, datos: dict) -> None:
     minicurso deducido del regex ("es mi primera vez"): la recomendación sale de lo que dice el extractor (CAL-C1,
     `actividad_por_lo_sabido`)."""
     actividad = datos.get("activity")
+    certificado = datos.get("is_certified")
+    if certificado is None:
+        certificado = _known_field_values(state).get("is_certified")
+    if actividad == "padi_open_water" and certificado is True:
+        # DEUDA-EXT2 (26-oct): "PADI open water, advanced open water and deep diver certs" (contestando a "¿cuántas
+        # personas?") daba el curso Open Water a quien ya lo tiene, y el redactor de hechos le cotizaba el curso (banco
+        # de lat-5). Quien ya está certificado no se saca el Open Water: no es una elección de actividad.
+        logger.info("[EXTRACT][DEUDA-EXT2] padi_open_water con is_certified true: no es el curso, se ignora")
+        actividad = None
     if actividad and dom.by_id(actividad) is not None:
         intent.activity = actividad
         intent.service_id = dom.base_service_id(actividad)

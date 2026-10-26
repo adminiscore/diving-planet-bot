@@ -315,6 +315,17 @@ def _message_numbers(message: str) -> Counter:
 _NAMED_PERSON_RE = re.compile(_SINGULAR_PERSON, re.IGNORECASE)
 
 
+def _contar_al_acompanante_sin_actividad(state: ConversationState, message: str, signals: dict) -> None:
+    """DEUDA-EXT2 (26-oct): "Voy con una amiga que no está certificada" dejaba el total sin saber y se preguntaba
+    "¿cuántas personas?" (banco-deuda-ext2 g1). Una persona más, en singular y sin total sabido: son 2. Qué hará ella se
+    sigue preguntando, como hoy."""
+    if state.detected_group_size:
+        return
+    if _singular_companion(message) or (signals.get("companion_is_singular") and not _PLURAL_COMPANION_RE.search(message)):
+        state.detected_group_size = 2
+        logger.info("[CORE][DEUDA-EXT2] acompañante sin actividad, en singular y sin total: grupo de 2")
+
+
 def _singular_companion(message: str) -> bool:
     """¿El mensaje habla de UN solo acompañante? Exactamente una persona nombrada o, si no
     nombra a nadie, "someone"/"uno que" (2026-09-15). Antes bastaba con que apareciera una:
@@ -1348,6 +1359,7 @@ async def _extraction_phase_body(
                 state, prev_main_activity, prev_main_service_id,
                 prev_main_is_certified, prev_main_last_dive, prev_main_refresher,
             )
+            _contar_al_acompanante_sin_actividad(state, message, signals)
             if next_missing_slot(state) is None:
                 response = greeting + ask_slot(state, SLOT_COMPANION_ACTIVITY)
                 state.history.append({"role": "assistant", "content": response})
