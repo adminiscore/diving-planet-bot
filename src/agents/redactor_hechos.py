@@ -432,7 +432,39 @@ async def responder(state: ConversationState, message: str, history: list[dict])
         logger.info(f"[HECHOS] {actividad}: los hechos no cubren {intenciones}; contesta el RAG")
         note_turn(hechos_por_codigo="no_cubre")
         return None
-    return await _escribir(state, message, history, bloques, intenciones)
+    return await _con_el_escritor(state, message, history, bloques, intenciones)
+
+
+async def _con_el_escritor(state: ConversationState, message: str, history: list[dict], bloques: list[dict],
+                           intenciones: list[str]) -> str | None:
+    """lat-9 paso 3 (26-oct): un solo escritor. Lo que pide el mensaje lo cubren entero los hechos del código: lo escribe
+    el mismo escritor que el RAG (su prompt, las reglas del negocio, el catálogo y las políticas), con los hechos y sin
+    reescritura ni búsqueda; las listas que se le escapen las añade el código (arq-7b), y el revisor va con la regla de
+    lat-5. Antes era otra llamada con otro prompt (el redactor), que si no sabía decía FALTA y pagaba además el RAG."""
+    from src.agents import conversational_core as core  # lazy
+    from src.agents import supervisor  # lazy
+    from src.agents.rag_agent import is_fallback_answer  # lazy
+    from src.observability import note_turn  # lazy
+
+    lang = "es" if state.language == "es" else "en"
+    origen_pendiente = any(b.get("pregunta_pendiente") == "origen" for b in bloques)
+    entradas = core._entradas_rag(state, history, message)
+    if origen_pendiente:
+        entradas.pop("pregunta_final", None)  # la pregunta del origen la pone el código, abajo
+    entradas.update(hechos=texto_de_los_hechos(bloques), hechos_bloques=(bloques, intenciones), sin_busqueda=True)
+    answer = await supervisor.rag_answer(message, **entradas)
+    if not answer or is_fallback_answer(answer):
+        note_turn(hechos_por_codigo="fallo")
+        return None
+    if origen_pendiente:
+        tras = ((core.ORIGEN_TRAS_LOS_ENLACES_ES, core.ORIGEN_TRAS_LOS_ENLACES_EN) if "enlace" in intenciones
+                else (core.ORIGEN_TRAS_LAS_VARIANTES_ES, core.ORIGEN_TRAS_LAS_VARIANTES_EN))
+        answer = f"{core._sin_la_pregunta_final(answer).rstrip()}\n\n{tras[0] if lang == 'es' else tras[1]}"
+    general = all(b.get("actividad") is None for b in bloques)
+    logger.info(f"[HECHOS] contesta el escritor con los hechos: {bloques[0]['actividad']} {intenciones}")
+    note_turn(rag_used=True, hechos_por_codigo="redactor_general" if general else "redactor",
+              intenciones=",".join(intenciones))
+    return answer
 
 
 async def _escribir(state: ConversationState, message: str, history: list[dict], bloques: list[dict],
