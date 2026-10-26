@@ -73,6 +73,7 @@ PRICES = {
     "gpt-4.1-mini": (0.4, 0.1, 1.6),
     "gpt-5": (1.25, 0.125, 10.0),
     "gpt-5-mini": (0.25, 0.025, 2.0),
+    "gpt-6-luna": (0.10, 0.01, 0.50),  # JUEZ-BARATO (26-oct): la prueba de Luna como juez
 }
 
 JUDGE_INSTRUCTIONS = """Eres un evaluador estricto de conversaciones de Coral, el asistente de reservas de Diving Planet (buceo en las Islas del Rosario, Colombia).
@@ -643,7 +644,7 @@ def llm_judge_criterion(
     others: list[dict] | None = None, counted: list[dict] | None = None,
 ) -> dict:
     user = judge_user_message(dialogue, records, criterion, others, counted)
-    kwargs = {"reasoning_effort": effort} if model.startswith(("gpt-5", "o")) and effort else {"temperature": 0}
+    kwargs = {"reasoning_effort": effort} if model.startswith(("gpt-5", "gpt-6", "o")) and effort else {"temperature": 0}
     resp = client.chat.completions.create(
         model=model,
         response_format={"type": "json_object"},
