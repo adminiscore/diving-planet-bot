@@ -56,6 +56,15 @@ History
     notas internas («decisión de Gadea… confirmar con Andrés») de los textos que lee el cliente.
   - Avisos: van delante del bloque final de pregunta (con sus opciones o su frase de cierre) y no repiten lo dicho
     con cifras (en avisos-B, «operamos todos los días» se repetía 7 veces). La métrica del turno lleva el aviso.
+  - Bubble Makers con precio definitivo y el paquete de 3 inmersiones vuelve al día siguiente en nuestra lancha
+    (las dos preguntas que iban para Andrés, contestadas por Gadea).
+  - **real-1 deudau-B (todo junto): 93,6 % 75/116** frente a avisos-A 74/116 (PRE de hoy) y avisos-B 83/116. Es más
+    ruido que efecto: de los 37 criterios que arreglaron los avisos siguen arreglados 24, y de los 13 que vuelven a
+    fallar solo 2 son de avisos; de los 30 rotos frente a avisos-B, 21 ya habían fallado en alguna de las 4 rondas
+    anteriores. La regla de moneda no hace cotizar más (turnos con precio 86 / 85 / 86 de 465), solo da las dos
+    monedas cuando toca (67 frente a 37). Lección: con casi el mismo código hay 8 diálogos de diferencia entre dos
+    rondas, así que las decisiones finas necesitan bancos por tema o real-1 por duplicado. Llamadas 3,51 por turno;
+    p90 7,24 s (mañana lenta de los proveedores).
 
 0.32.3 - (2026-10-26)
 ---------------------
