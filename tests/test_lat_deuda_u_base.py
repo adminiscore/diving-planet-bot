@@ -173,8 +173,11 @@ def test_los_dias_de_cierre_salen_de_la_base():
     assert dias_cerrados("es") == "el 25 de diciembre y el 1 de enero"
     assert dias_cerrados("es", articulo=False) == "25 de diciembre y 1 de enero"
     assert dias_cerrados("en") == "December 25 and January 1"
-    for texto in (catalog.catalog_facts("es"), escalation._CLIMA_CON_POLITICA["es"], info.RAG_DISPONIBILIDAD_NUEVA_ES):
+    for texto in (catalog.catalog_facts("es"), escalation._CLIMA_CON_POLITICA["es"]):
         assert dias_cerrados("es") in texto
+    # lat-9 paso 1: el prompt del RAG los nombra en su viñeta del enfoque positivo (RAG_DISPONIBILIDAD_NUEVA_*, que se
+    # reemplazaba antes de llegar al modelo, ya no existe).
+    assert dias_cerrados("es", articulo=False) in info.RAG_BODY_ES
 
 
 def test_nada_muerto():
