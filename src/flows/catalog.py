@@ -502,7 +502,7 @@ def service_fact_parts(service_id: str, lang: str) -> list[str]:
         parts.append("incluye un buceo nocturno" if es else "includes a night dive")
     island = service_id.endswith("_already_on_island")
     if svc.get("detalles_por_asesor"):
-        # ord-6b (21-oct): un servicio con precio provisional y sin itinerario en la base (Bubble Makers desde
+        # ord-6b (21-oct): un servicio sin itinerario en la base (Bubble Makers desde
         # Cartagena). Lo de abajo rellenaría «ida y vuelta el mismo día» y «almuerzo NO incluido» sin saberlo.
         parts.append("traslado, horario y almuerzo: los confirma un asesor" if es
                      else "transfer, schedule and lunch: confirmed by an advisor")

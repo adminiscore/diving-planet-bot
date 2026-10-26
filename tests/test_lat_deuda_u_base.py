@@ -103,9 +103,19 @@ def test_el_equipo_no_va_en_todos_los_planes():
 
 def test_mas_de_30_anos():
     from src.prompts import info
-    from src.prompts.info import (  # noqa: F401 — el prompt carga
-        JUEZ_PRESENTACION_EN,
-        JUEZ_PRESENTACION_ES,
-    )
 
-    assert "más de 30 años" in Path(info.__file__).read_text(encoding="utf-8")
+    assert "más de 30 años" in info.JUEZ_PRESENTACION_ES or "más de 30 años" in Path(info.__file__).read_text(
+        encoding="utf-8")
+
+
+def test_bubble_makers_con_precio_definitivo():
+    """Gadea, 26-oct: los precios ya no son provisionales."""
+    for nombre in ("pricing.json", "services.json", "curada/faqs.json"):
+        assert "provisional" not in (KB / nombre).read_text(encoding="utf-8-sig").lower(), nombre
+
+
+def test_el_paquete_de_3_vuelve_al_dia_siguiente():
+    """Gadea, 26-oct: tras la noche en las islas se vuelve al día siguiente en nuestra lancha."""
+    svc = _json("services.json")["services"]["3_dives_1_day"]
+    assert any(p.startswith("Día 2: regreso a Cartagena") for p in svc["itinerary_es"])
+    assert any(p.startswith("Day 2: return to Cartagena") for p in svc["itinerary_en"])
