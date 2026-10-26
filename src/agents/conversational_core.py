@@ -1577,7 +1577,7 @@ async def _answer_question(
         pregunta = ask_slot(state, pending, reasking=True)
         if pregunta == escrita and _answer_already_asks(answer):
             return answer
-        if _cierra_preguntando_el_origen(answer):
+        if _cierra_preguntando_el_origen(state, answer):
             state.quick_replies = []  # la pregunta del turno es la del origen; la de la reserva queda pendiente
             return answer
         return f"{_sin_la_pregunta_final(answer).rstrip()}\n\n{pregunta}"
@@ -2057,10 +2057,14 @@ def _answer_asks_the_origin(state: ConversationState, answer: str) -> bool:
     return state.core_pending_slot == SLOT_LOCATION and bool(_PREGUNTA_ORIGEN_RE.search(answer))
 
 
-def _cierra_preguntando_el_origen(answer: str) -> bool:
+def _cierra_preguntando_el_origen(state: ConversationState, answer: str) -> bool:
     """lat-9 paso 2 (LAT-0b, #2053): sin el origen, el escritor da los dos precios y lo pregunta (decisión
     «origen-y-precio»). Esa pregunta ocupa el turno, sea cual sea la pendiente de la reserva, que queda para el
-    siguiente; pegarle detrás la otra eran dos preguntas seguidas («¿Desde dónde saldrías? … ¿Eres buzo certificado?»)."""
+    siguiente; pegarle detrás la otra eran dos preguntas seguidas («¿Desde dónde saldrías? … ¿Eres buzo certificado?»).
+    Solo si el origen SIGUE sin saberse: si el cliente lo acaba de dar, esa pregunta es la fijada al empezar el turno y
+    está desfasada (integra6: 4 «vuelve a preguntar desde dónde saldría» tras decirlo); la cambia el código."""
+    if state.location or state.detected_location:
+        return False
     ultima = next((ln for ln in reversed(answer.strip().splitlines()) if ln.strip()), "")
     return "?" in ultima and bool(_PREGUNTA_ORIGEN_RE.search(ultima))
 

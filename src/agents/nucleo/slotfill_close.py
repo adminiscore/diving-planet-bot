@@ -257,7 +257,7 @@ async def _con_la_pregunta(state: ConversationState, message: str, answer: str, 
         note_turn(pregunta_escritor="igual")
         logger.info("[CORE][LAT9] el escritor cerró con la pregunta que toca")
         return answer if _answer_already_asks(answer) else f"{answer.rstrip()}\n\n{response}"
-    if not finalized and _cierra_preguntando_el_origen(answer):
+    if not finalized and _cierra_preguntando_el_origen(state, answer):
         state.quick_replies = []  # la pregunta del turno es la del origen; la de la reserva queda pendiente
         logger.info("[CORE][LAT9] el escritor pregunta el origen: esa ocupa el turno")
         return answer

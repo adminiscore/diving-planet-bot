@@ -58,3 +58,12 @@ def test_si_el_escritor_pregunta_el_origen_esa_ocupa_el_turno():
     """LAT-0b (#2053): sin el origen da los dos precios y lo pregunta; no se le pega detrás la de la certificación."""
     answer = "Desde Cartagena cuesta 150 USD y ya en las islas 124 USD.\n\n¿Saldrías desde Cartagena o ya estás en las islas?"
     assert _con(answer, "¿Eres buzo certificado?", "¿Cuántas personas son?") == answer
+
+
+def test_con_el_origen_ya_dicho_la_pregunta_del_origen_esta_desfasada():
+    """integra6: el cliente acababa de dar el origen y se le volvía a preguntar (la pregunta fijada al empezar)."""
+    st = _estado(location="cartagena")
+    answer = "Cuesta 150 USD.\n\n¿Saldrías desde Cartagena o ya estás en las islas?"
+    out = asyncio.run(close._con_la_pregunta(st, "msg", answer, "¿Cuántas personas son?",
+                                             "¿Saldrías desde Cartagena o ya estás en las islas?", False, False))
+    assert out == "Cuesta 150 USD.\n\n¿Cuántas personas son?"
