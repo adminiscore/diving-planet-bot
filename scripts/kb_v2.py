@@ -28,6 +28,7 @@ from openai import OpenAI
 
 from scripts.load_embeddings import DATA_DIR, EMBEDDING_MODEL, detect_topics, generate_embeddings
 from src.config import settings
+from src.domain.politicas import politicas
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -134,7 +135,7 @@ def _qa(pregunta: str, otras: list[str], respuesta: str, lang: str) -> str:
 
 def build_kb_v2() -> list[dict]:
     services = json.loads((DATA_DIR / "services.json").read_text(encoding="utf-8-sig"))["services"]
-    policies = json.loads((DATA_DIR / "policies.json").read_text(encoding="utf-8"))["policies"]
+    policies = politicas()
     discounts = json.loads((DATA_DIR / "discounts.json").read_text(encoding="utf-8"))["discounts"]
     faqs = json.loads((CURADA / "faqs.json").read_text(encoding="utf-8"))["faqs"]
     preguntas = json.loads((CURADA / "preguntas.json").read_text(encoding="utf-8"))["reglas"]

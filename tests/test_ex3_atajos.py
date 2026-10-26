@@ -34,9 +34,9 @@ def test_alergia_a_un_alimento_la_contesta_el_rag():
 
 def test_con_alcohol_la_alergia_sigue_en_el_texto_fijo():
     # La política de alcohol no está en la base del RAG: si el mensaje habla de las dos cosas, va todo junto.
-    from src.knowledge.loader import load_policies
+    from src.domain.politicas import politicas as _politicas
 
-    politicas = load_policies()["policies"]
+    politicas = _politicas()
     mensaje = "queremos bucear mañana, anoche tomamos alcohol y uno es alérgico a los mariscos"
     texto = supervisor._alcohol_and_food_policy_answer(mensaje, "es")
     assert politicas["no_alcohol_policy"]["es"] in texto and politicas["food_policy"]["es"] in texto

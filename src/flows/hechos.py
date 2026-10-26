@@ -14,7 +14,6 @@ from __future__ import annotations
 
 import json
 import re
-import unicodedata
 from functools import lru_cache
 from pathlib import Path
 
@@ -33,6 +32,7 @@ from src.flows.catalog import (
 )
 from src.flows.state import ConversationState
 from src.utils import money
+from src.utils.text import strip_accents
 
 INTENCIONES = ("precio", "incluye", "requisitos", "horario", "disponibilidad", "edad", "enlace", "descuento",
                "tiempo", "clima", "pago")
@@ -513,14 +513,9 @@ _VACIAS = {"para", "como", "desde", "hasta", "este", "esta", "estos", "estas", "
 _MINIMO_DE_PALABRAS = 0.5
 
 
-def _plano(texto: str) -> str:
-    t = unicodedata.normalize("NFKD", (texto or "").lower())
-    return "".join(c for c in t if not unicodedata.combining(c))
-
-
 def _raices(texto: str) -> set[str]:
     """Las palabras con contenido, recortadas a 5 letras (plural, género y conjugación cercanos cuentan igual)."""
-    return {p[:5] for p in _PALABRA.findall(_plano(_URL.sub(" ", texto))) if len(p) >= 4 and p not in _VACIAS}
+    return {p[:5] for p in _PALABRA.findall(strip_accents(_URL.sub(" ", texto).lower())) if len(p) >= 4 and p not in _VACIAS}
 
 
 def _cifras(texto: str) -> set[str]:

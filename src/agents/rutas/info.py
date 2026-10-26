@@ -9,9 +9,9 @@ import re
 
 from src.agents.intent_detector import IntentDetector
 from src.agents.lead_summary import build_lead_summary
+from src.domain.politicas import politicas
 from src.flows import eligibility
 from src.flows.state import ConversationState, Step
-from src.knowledge.loader import load_policies
 
 logger = logging.getLogger("uvicorn.error")
 
@@ -65,7 +65,7 @@ def _alcohol_and_food_policy_answer(msg_lower: str, lang: str) -> str | None:
     al otro. Usado tanto por el nodo `info` como por `_shared_turn_handler`
     (cascada) para que se comporten igual.
     """
-    policies = load_policies().get("policies", {})
+    policies = politicas()
     parts: list[str] = []
     if _ALCOHOL_BEFORE_DIVING_RE.search(msg_lower):
         text = (policies.get("no_alcohol_policy") or {}).get(lang, "")

@@ -28,6 +28,7 @@ from src.flows import hechos as hechos_mod
 from src.flows.state import ConversationState
 from src.llm_client import trace_openai
 from src.privacy import redact_pii
+from src.utils.text import strip_accents
 
 logger = logging.getLogger("uvicorn.error")
 
@@ -97,7 +98,7 @@ _GENERICAS_DE_HOTEL = {"hotel", "eco", "the", "el"}
 
 
 def _sin_genericas(nombre: str) -> str:
-    plano = hechos_mod._plano(nombre)
+    plano = strip_accents((nombre or "").lower())
     return " ".join(p for p in re.findall(r"[a-z0-9]+", plano) if p not in _GENERICAS_DE_HOTEL)
 
 

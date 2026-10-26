@@ -9,8 +9,8 @@ import re
 
 from src.agents.lead_summary import build_lead_summary
 from src.agents.supervisor import _infer_language
+from src.domain.politicas import politicas
 from src.flows.state import ConversationState, Step
-from src.knowledge.loader import load_policies
 from src.utils.text import strip_accents as _strip_accents
 
 logger = logging.getLogger("uvicorn.error")
@@ -218,7 +218,7 @@ def _booking_change_response(state: ConversationState, message: str, kind: str) 
     que la deflexión de contacto/identidad IA."""
     effective_lang = state.language if state.detected_language else _infer_language(message, state.language)
     policy_kind = {"modify_headcount": "modify_booking"}.get(kind, kind)
-    policy_text = (load_policies().get("policies", {}).get(policy_kind) or {}).get(effective_lang, "")
+    policy_text = (politicas().get(policy_kind) or {}).get(effective_lang, "")
     # El mensaje va al historial ANTES del resumen del pase, para que el asesor lo lea.
     state.history.append({"role": "user", "content": message})
     response = _pase_por_cambio_de_reserva(state, policy_text, kind, effective_lang)

@@ -14,7 +14,11 @@ from pathlib import Path
 from src.domain import activities as dom
 from src.domain import lugares
 from src.domain.calendario import dias_cerrados
-from src.domain.politicas import politica, politica_breve  # noqa: F401 — la usan otros por aquí
+from src.domain.politicas import (  # noqa: F401 — politica(_breve): la usan otros por aquí
+    politica,
+    politica_breve,
+    politicas,
+)
 from src.utils import money
 
 # Common Spanish/English words used to guess the language of ANY free-text
@@ -513,8 +517,7 @@ def policies_facts(lang: str) -> str:
     enteras (data/knowledge_base/policies.json, ~2.000 tokens), para que vayan SIEMPRE en el contexto del RAG como el
     catálogo. Ronda atencion-B2: un mensaje que mezclaba el paquete de 5 buceos, el check-out y el equipaje solo
     recuperaba FAQs y servicios, y el RAG contestaba que no tenía la política de equipaje."""
-    path = Path(__file__).resolve().parents[2] / "data" / "knowledge_base" / "policies.json"
-    policies = json.loads(path.read_text(encoding="utf-8"))["policies"]
+    policies = politicas()
     head = "Políticas de Diving Planet:" if lang == "es" else "Diving Planet policies:"
     lines = [f"- {text.get(lang) or text.get('es', '')}" for text in policies.values() if isinstance(text, dict)]
     return "\n".join([head, *[ln for ln in lines if ln.strip() != "-"]])
