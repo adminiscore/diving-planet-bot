@@ -71,6 +71,10 @@ class Activity:
     # lat-deuda-u (26-oct): las horas que hay que esperar para volar tras la actividad (18 al bucear, 12 tras el
     # minicurso). Era una línea copiada en 31 fichas y el refresher, que se vende con la del minicurso, decía 12.
     horas_antes_de_volar: int | None = None
+    # lat-deuda-u (26-oct): lo que incluye y no incluye una actividad sin ficha (el acompañante), por idioma y origen.
+    # Estaba escrito en el catálogo.
+    incluye: dict | None = None
+    no_incluye: dict | None = None
 
     def all_services(self) -> tuple[str, ...]:
         return tuple(s for loc in LOCATIONS for s in self.services.get(loc, ()))
@@ -114,6 +118,8 @@ def _parse(raw: dict) -> Registry:
             texts={k: dict(v) for k, v in entry["texts"].items()} if entry.get("texts") else None,
             default_level=entry.get("default_level"),
             horas_antes_de_volar=entry.get("horas_antes_de_volar"),
+            incluye=entry.get("incluye"),
+            no_incluye=entry.get("no_incluye"),
         ))
     return Registry(tuple(activities), dict(raw.get("non_activity_services", {})))
 

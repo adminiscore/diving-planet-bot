@@ -62,6 +62,14 @@ History
      mensaje del flujo al cerrar y el prompt del redactor (decían la versión vieja, «50 % online + 50 % en persona»);
      las políticas se leen con un solo lector del dominio (`src/domain/politicas.py`), que también pueden usar los
      prompts.
+  7. **Datos repetidos**: lo que incluye el acompañante, al registro de actividades (estaba en el catálogo); la
+     cabecera del catálogo genera la edad mínima del registro y los descuentos de la base (había un texto fijo que se
+     sustituía al vuelo); el texto del Open Water saca sus días y sus inmersiones de la ficha y la tarifa; el horario
+     oficial y el umbral del refresh, en `data/knowledge_base/valores.json` (`src/domain/valores.py`), del que leen la
+     tarjeta (salida 8:00) y los ejemplos del prompt (cierre 4:30). Las ~450 horas de la base no se cambian por
+     marcadores (la misma hora significa cosas distintas y el juez lee la base tal cual): `tests/test_valores_de_la_base.py`
+     vigila que toda hora escrita esté en el horario oficial y que el umbral sea el mismo en la base y en el código. Los
+     textos que lee el modelo no cambian (comprobado).
   - Sin medir: OpenAI se quedó sin crédito a mitad de la ronda limpieza-B (no vale). Con la vara de Álvaro (#1845:
     ruido de una ronda ±5 diálogos y ±7 criterios fallados; ±14 neutro), lat-deuda-u ya en PRE queda en duda (+13
     fallos frente a avisos-B): se mide ×2 con esto antes de subirlo.

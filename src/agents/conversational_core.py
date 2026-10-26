@@ -335,6 +335,23 @@ def _ofrecer_la_actividad_preguntada(state: ConversationState) -> str | None:
             f"If you'd like, I can help you book it: *{nombre}*. Shall we? 🌊")
 
 
+def _ow_plan() -> tuple[dict, dict]:
+    """La ficha y la fila de la tarifa del Open Water desde Cartagena (lat-deuda-u: sus días e inmersiones salen de ahí,
+    no de un texto fijo)."""
+    from src.flows.catalog import RAW_SERVICES, fila_de_la_tarifa  # lazy
+
+    ficha = RAW_SERVICES[dom.service_ids("padi_open_water", "cartagena")[0]]
+    return ficha, fila_de_la_tarifa(ficha["tarifa"])
+
+
+def _ow_dias() -> int:
+    return _ow_plan()[0]["duration_days"]
+
+
+def _ow_inmersiones() -> int:
+    return _ow_plan()[1]["num_dives"]
+
+
 def ask_slot(state: ConversationState, slot: str, *, reasking: bool = False) -> str:
     """Pregunta natural por el slot que falta. Un solo mensaje, UNA pregunta,
     quick-replies solo donde el plan lo permite (ubicación / sí-no).
@@ -382,12 +399,14 @@ def ask_slot(state: ConversationState, slot: str, *, reasking: bool = False) -> 
                 "Shall we go for the *Open Water course*, or would you rather try the *mini-course* first? 🌊"
             )
         return (
-            "Para certificarte desde cero, el curso es el *PADI Open Water*: 2 días en las Islas del Rosario "
-            "con teoría online, piscina y 4 inmersiones. Si antes prefieres probar, está el *minicurso*, sin "
+            f"Para certificarte desde cero, el curso es el *PADI Open Water*: {_ow_dias()} días en las Islas del "
+            f"Rosario con teoría online, piscina y {_ow_inmersiones()} inmersiones. Si antes prefieres probar, está el "
+            "*minicurso*, sin "
             "necesidad de experiencia. ¿Te animas con el Open Water? 🤿"
             if lang == "es" else
-            "To get certified from scratch, the course is the *PADI Open Water*: 2 days in the Rosario Islands "
-            "with online theory, pool and 4 dives. If you'd rather try first, there's the *mini-course*, no "
+            f"To get certified from scratch, the course is the *PADI Open Water*: {_ow_dias()} days in the Rosario "
+            f"Islands with online theory, pool and {_ow_inmersiones()} dives. If you'd rather try first, there's the "
+            "*mini-course*, no "
             "experience needed. Shall we go for the Open Water? 🤿"
         )
     if slot == SLOT_ACTIVITY and state.suggested_activity == "minicourse":

@@ -383,14 +383,9 @@ def _load_companion_price() -> dict:
 COMPANION_PRICE = _load_companion_price()
 # Lo que incluye el plan de acompañante según el origen (una sola fuente: el catálogo del RAG y los hechos de arq-1j). No
 # incluye equipo: no se mete al agua (G10 nº 2: «todos los planes incluyen equipo», también el acompañante).
-COMPANION_NO_INCLUYE = {"es": "equipo de buceo o de snorkel (no se mete al agua)",
-                        "en": "diving or snorkeling gear (they don't go in the water)"}
-COMPANION_INCLUDES = {
-    "es": {"cartagena": ["Lancha", "Almuerzo", "Seguro", "Entrada al Parque Nacional Natural"],
-           "island": ["Seguro", "Entrada al Parque Nacional Natural"]},
-    "en": {"cartagena": ["Boat", "Lunch", "Insurance", "The National Natural Park entrance fee"],
-           "island": ["Insurance", "The National Natural Park entrance fee"]},
-}
+# lat-deuda-u (26-oct): lo que incluye el acompañante, del registro de actividades (estaba escrito aquí).
+COMPANION_NO_INCLUYE = dom.by_id("companion").no_incluye
+COMPANION_INCLUDES = dom.by_id("companion").incluye
 
 
 def _lista_en_frase(elementos: list[str], lang: str) -> str:
@@ -630,14 +625,10 @@ def catalog_facts(lang: str) -> str:
                f"{companion_normal} normal (el mismo precio); incluye "
                f"{_lista_en_frase(COMPANION_INCLUDES['es']['island'], 'es')}; almuerzo NO incluido; no incluye "
                f"{COMPANION_NO_INCLUYE['es']}.",
-               "Edad mínima 10 años salvo que se indique otra.",
+               f"Edad mínima {dom.by_id('minicourse').min_age} años salvo que se indique otra.",
                f"Operamos todos los días del año salvo {dias_cerrados('es')}. Tú no ves los cupos: "
                "el cliente elige la fecha y el número de personas en el calendario del link de reserva.",
-               "Descuentos: 10% online (ya aplicado en el precio 'online'); 10% extra para grupos de 5 o más en "
-               "buceo recreativo, minicurso y snorkel (no en cursos PADI; no es automático: se pide al equipo ANTES "
-               "de pagar y, si se paga sin pedirlo, no se devuelve); "
-               "5% si el cliente trae su equipo COMPLETO, solo en buceo recreativo y cursos (no en snorkel ni "
-               "minicurso).",
+               "Descuentos: " + " ".join(descuentos_de_la_base("es").values()),
                "Moneda: los colombianos (vivan donde vivan) y los residentes en Colombia pagan en COP; el resto, en "
                "USD (en un grupo mixto de colombianos o residentes y extranjeros, toda la reserva en USD); es el "
                "mismo precio en las dos monedas: el precio en COP de cada plan es el que pagan los "
@@ -659,23 +650,16 @@ def catalog_facts(lang: str) -> str:
                f"{companion_normal} regular (the same price); includes "
                f"{_lista_en_frase(COMPANION_INCLUDES['en']['island'], 'en')}; lunch NOT included; does not include "
                f"{COMPANION_NO_INCLUYE['en']}.",
-               "Minimum age 10 unless stated otherwise.",
+               f"Minimum age {dom.by_id('minicourse').min_age} unless stated otherwise.",
                f"We operate every day of the year except {dias_cerrados('en')}. You can't see open slots: "
                "the customer picks the date and number of people in the booking link's calendar.",
-               "Discounts: 10% online (already in the 'online' price); an extra 10% for groups of 5 or more in "
-               "recreational diving, mini course and snorkeling (not PADI courses; not automatic: it is requested "
-               "from the team BEFORE paying and, if paid without requesting it, it is not refunded); 5% if the customer brings their COMPLETE gear, only for recreational diving and courses (not "
-               "snorkeling or the mini course).",
+               "Discounts: " + " ".join(descuentos_de_la_base("en").values()),
                "Currency: Colombians (wherever they live) and residents of Colombia pay in COP; everyone else in USD "
                "(in a mixed group of Colombians or residents and foreigners, the whole booking in USD); it is the same price in both currencies: each plan's COP price is what Colombians pay. There is NO "
                "discount or reduced rate for Colombians: if the customer thinks there is one, say so clearly (only "
                "the currency changes). " + MONEDA_SIN_NACIONALIDAD["en"] + " Do not add up or compute totals. If the "
                "customer quotes a price that doesn't match the catalog, give the catalog price without repeating theirs."]
-    # arq-8h: los descuentos, de discounts.json (no del texto fijo de arriba).
-    fijo = "Descuentos: 10% online" if es else "Discounts: 10% online"
-    cabeza = "Descuentos:" if es else "Discounts:"
-    out = [x if not x.startswith(fijo) else f"{cabeza} " + " ".join(descuentos_de_la_base(lang).values())
-           for x in out]
+    # arq-8h / lat-deuda-u: los descuentos salen de discounts.json (arriba, sin texto fijo que sustituir).
     text = chr(10).join(out)
     # La profundidad también como regla general: "certifica hasta 18 m" en la línea del CURSO no le llegaba a quien
     # pregunta por una SALIDA siendo ya buzo certificado (cal-18 siguió 3/3 con solo la parte de la ficha).

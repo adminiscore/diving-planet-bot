@@ -12,6 +12,7 @@ ISLAND_SERVICE_MAP/ConversationState/Step).
 from __future__ import annotations
 
 from src.domain import activities as dom
+from src.domain.valores import hora
 from src.flows import moneda
 from src.flows.catalog import (
     COMPANION_INCLUDES,
@@ -181,8 +182,8 @@ def _format_activity_booking_messages(state: ConversationState) -> list[str]:
         return moneda.precio(state, usd, cop, qty)
 
     depart = (
-        ("📍 Salida desde Cartagena (Muelle de la Bodeguita, 8:00 a.m.)." if lang == "es"
-         else "📍 Departure from Cartagena (Muelle de la Bodeguita, 8:00 a.m.).")
+        (f"📍 Salida desde Cartagena (Muelle de la Bodeguita, {hora('salida_cartagena')} a.m.)." if lang == "es"
+         else f"📍 Departure from Cartagena (Muelle de la Bodeguita, {hora('salida_cartagena')} a.m.).")
         if state.location != "island"
         else ("📍 Recogida en tu hotel de las islas." if lang == "es" else "📍 Pickup at your island hotel.")
     )

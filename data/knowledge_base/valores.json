@@ -1,0 +1,16 @@
+{
+  "_about": "Los valores del negocio que se repiten en muchos textos de la base (lat-deuda-u, 26-oct): el horario oficial y el umbral del refresh. Hoy salen unas 450 horas escritas en las políticas, las fichas y las FAQ (itinerarios en español e inglés), y no conviene cambiarlas por marcadores: la misma hora significa cosas distintas (las 8:00 son la salida de Cartagena y la recogida de las especialidades) y el juez lee la base tal cual. Por eso aquí está el valor oficial y tests/test_valores_de_la_base.py vigila que toda hora escrita en la base esté en este horario y que el umbral del refresh sea el mismo en todas partes. Si el negocio cambia una hora: se cambia aquí y en los textos que el test señale. El código (la tarjeta del flujo, los ejemplos de los prompts) lee las horas de aquí.",
+  "horario": {
+    "salida_cartagena": ["8:00"],
+    "recogida_islas": ["9:30", "9:45"],
+    "recogida_especialidades_islas": ["8:00"],
+    "recogida_dia_2_cursos": ["7:30"],
+    "fin_actividades_dia": ["12:00", "13:00", "1:00"],
+    "regreso_desde_la_base": ["3:00"],
+    "llegada_a_cartagena": ["4:15"],
+    "nocturno_recogida": ["5:30"],
+    "nocturno_regreso": ["7:30"],
+    "cierre_reservas": ["4:30"]
+  },
+  "anos_sin_bucear_refresh": 2
+}
