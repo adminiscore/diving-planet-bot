@@ -540,6 +540,26 @@ def regen_feedback(reject_reason: str, lang: str) -> str | None:
     return template.format(facts=facts)
 
 
+_CIFRA_RE = re.compile(r"\d+(?:[.,:]\d+)*")
+_DIAS_DE_LA_SEMANA = ("lunes", "martes", "miercoles", "jueves", "viernes", "sabado", "domingo", "monday", "tuesday",
+                      "wednesday", "thursday", "friday", "saturday", "sunday")
+
+
+def _hay_algo_que_revisar(answer: str, contexto: str) -> bool:
+    """lat-5: ¿afirma la respuesta una cifra o un día de la semana que no está en el contexto? Las cifras se comparan
+    sin separadores (8:00 = 800, 1.429.000 = 1429000)."""
+    from src.utils.text import strip_accents  # lazy
+
+    def digitos(texto: str) -> set[str]:
+        return {re.sub(r"\D", "", c) for c in _CIFRA_RE.findall(texto or "")}
+
+    if digitos(answer) - digitos(contexto):
+        return True
+    plano_respuesta = strip_accents((answer or "").lower())
+    plano_contexto = strip_accents((contexto or "").lower())
+    return any(d in plano_respuesta and d not in plano_contexto for d in _DIAS_DE_LA_SEMANA)
+
+
 async def _verify_grounding(answer: str, context: str, lang: str) -> tuple[bool, str]:
     """Juzga UNA vez si la respuesta está sostenida por el contexto (l1-1, Fase L1).
 
@@ -921,7 +941,18 @@ async def rag_answer(
             else:
                 # lat (24-oct): fuera el aviso final (CAL-A6), que iba a la vez que este juez pero tardaba más (Luna,
                 # ~2,3 s en serie tras escribir: 1,4 s exclusivos por turno del RAG en real-1).
-                grounded, reason = await _verify_grounding(answer, grounding_context, lang=lang)
+                if require_grounding or _hay_algo_que_revisar(answer, f"{grounding_context} {query}"):
+                    grounded, reason = await _verify_grounding(answer, grounding_context, lang=lang)
+                else:
+                    # lat-5 (26-oct, Gadea #1792): las guardas de arriba ya comprueban importes, enlaces y capacidades; si
+                    # además toda cifra (hora, edad, días) y todo día de la semana de la respuesta está en el contexto, no
+                    # hay nada comprobable que el revisor pueda pillar: no se le llama (0,5 s por turno del RAG). Sin
+                    # documentos de la base (`require_grounding`) se revisa siempre: ahí inventaría de lo que sabe.
+                    grounded, reason = True, "sin_cifras_nuevas"
+                    logger.info("[RAG][LAT5] revisor saltado: la respuesta no trae cifras ni días fuera del contexto")
+                    from src.observability import note_turn  # lazy
+
+                    note_turn(revisor="saltado")
                 if grounded and attempt == 0 and hechos_bloques:
                     # arq-4b/arq-7b: con los hechos delante, el RAG dejaba fuera puntos de la lista («qué incluye» del
                     # minicurso sin la piscina ni la inmersión). Los añade el código, sin otro modelo. lat-3 (24-oct):
