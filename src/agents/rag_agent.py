@@ -741,9 +741,8 @@ async def rag_answer(
     `sin_precio` (G3-07a, 18-oct; lo pide el flujo con el flag `rag_sin_precio_con_tarjeta`): el turno lleva la
     tarjeta del plan con el precio y el enlace, así que el texto no los da (ver RAG_SIN_PRECIO_*).
 
-    `avisos_hechos` (CAL-A, flag `avisos_condicionados`): lo que ya sabemos del cliente en campos estructurados
-    (`src/flows/avisos.hechos_del_estado`), para que el CÓDIGO elija los avisos que la respuesta tiene que dar. Su
-    clave "dados" es la lista del propio estado: los avisos dados se apuntan ahí y no se repiten.
+    `avisos_hechos` (CAL-D): lo que ya sabemos del cliente en campos estructurados
+    (`src/flows/avisos.hechos_del_estado`), para que la consulta de búsqueda nombre el asunto.
 
     `origin` (rag-3): `state.location` del cliente ("cartagena" / "island"); la
     busqueda baja las fichas del otro origen.
@@ -929,17 +928,8 @@ async def rag_answer(
             puntos = await planificar(redact_pii(query), history, lang) or []
             if puntos and settings.rag_plan_primero:
                 user_content += "\n\n" + bloque_de_puntos(puntos, lang)
-        # CAL-A5 (`avisos_condicionados`): los avisos que el cliente necesita y no pregunta, elegidos por el
-        # CÓDIGO con el estado y con los TEMAS de los documentos que trajo la búsqueda (nunca con patrones sobre su
-        # mensaje). A4 usaba el mismo mecanismo pero los elegía un modelo pequeño, y metía avisos que no tocaban.
-        avisos_elegidos: list[dict] = []
-        if settings.avisos_condicionados and avisos_hechos:
-            from src.flows import avisos as avisos_mod  # lazy
-
-            avisos_elegidos = avisos_mod.seleccionar(avisos_hechos, avisos_mod.temas_de_los_docs(docs),
-                                                     avisos_mod.fuentes_recuperadas(docs))
-            if avisos_elegidos:
-                user_content += "\n\n" + avisos_mod.bloque_de_avisos(avisos_elegidos, lang)
+        # lat-deuda (26-oct): los avisos que el cliente necesita y no pregunta ya no van aquí; los pone el código al
+        # final de la respuesta del turno, sea del RAG, del redactor o de la reserva (`src/flows/avisos.py`).
 
         messages.append({"role": "user", "content": user_content})
 
@@ -967,15 +957,6 @@ async def rag_answer(
         # intermittent (~1/3) false fallbacks. We now REGENERATE the answer once
         # when any guard rejects: a fresh sample is usually grounded, turning a
         # false fallback into a real answer. Only fall back if both tries fail.
-        def _apuntar_avisos() -> None:
-            """CAL-A5: los avisos de `una_vez` ya dados quedan en la lista del estado (`avisos_hechos["dados"]`)
-            para no repetirlos en los turnos siguientes."""
-            dados = (avisos_hechos or {}).get("dados")
-            if dados is None:
-                return
-            for aviso in avisos_elegidos:
-                if aviso.get("una_vez") and aviso["id"] not in dados:
-                    dados.append(aviso["id"])
 
         last_reject = ""
         respuesta_buena = None  # CAL-A3: la respuesta aprobada a la que solo le faltaba algún punto
@@ -1017,7 +998,6 @@ async def rag_answer(
                 # Regenerate; a fresh sample usually drops the number.
                 last_reject = "phone_number"
             elif not verify_grounding and not require_grounding:
-                _apuntar_avisos()
                 return answer
             else:
                 # lat (24-oct): fuera el aviso final (CAL-A6), que iba a la vez que este juez pero tardaba más (Luna,
@@ -1025,7 +1005,7 @@ async def rag_answer(
                 grounded, reason = await _verify_grounding(answer, grounding_context, lang=lang)
                 if grounded and attempt == 0 and (
                         (settings.rag_revisor_completitud and puntos) or settings.rag_revisor_avisos
-                        or avisos_elegidos or hechos_bloques):
+                        or hechos_bloques):
                     # CAL-A3/A4: el revisor de siempre solo castiga inventar; aquí también dejarse algo (A3: un punto
                     # del plan; A4: un aviso que el cliente necesita). Si falta, se reintenta UNA vez con lo que
                     # falta; si el reintento sale peor, vale esta.
@@ -1035,13 +1015,6 @@ async def rag_answer(
                         settings.rag_revisor_completitud and puntos) else []
                     avisos = await rag_plan.avisos_que_faltan(redact_pii(query), grounding_context, answer, lang) if (
                         settings.rag_revisor_avisos) else []
-                    if avisos_elegidos:
-                        # CAL-A5: los eligió el código, así que aquí solo se comprueba que ESTÉN (la misma llamada
-                        # barata de A3; ningún modelo vuelve a decidir cuáles hacían falta).
-                        from src.flows import avisos as avisos_mod  # lazy
-
-                        avisos += await rag_plan.puntos_sin_cubrir(
-                            avisos_mod.textos(avisos_elegidos), answer, lang)
                     if hechos_bloques:
                         # arq-4b/arq-7b: con los hechos delante, el RAG dejaba fuera puntos de la lista («qué incluye»
                         # del minicurso sin la piscina ni la inmersión). Los añade el código, sin otro modelo. lat-3
@@ -1062,7 +1035,6 @@ async def rag_answer(
                         logger.info(f"[RAG][COMPLETITUD] reintento: faltan {len(faltan)} puntos, {len(avisos)} avisos")
                         continue
                 if grounded:
-                    _apuntar_avisos()
                     logger.info(
                         f"[RAG] Query: {query[:60]}... | Docs: {len(docs) if docs else 0} | "
                         f"Tokens: {response.usage.total_tokens} | "
@@ -1081,7 +1053,6 @@ async def rag_answer(
                                 {"role": "user", "content": feedback}]
 
         if respuesta_buena is not None:
-            _apuntar_avisos()
             logger.info("[RAG][COMPLETITUD] el reintento no pasó: se queda la primera respuesta aprobada")
             return respuesta_buena
         logger.warning(

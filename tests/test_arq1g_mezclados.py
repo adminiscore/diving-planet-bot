@@ -60,3 +60,63 @@ def test_hechos_del_turno_da_las_cubiertas(con_flags):
 def test_si_el_redactor_dijo_falta_tambien_recibe_los_hechos(con_flags):
     st = _conv(_otra_cosa=False, _redactor_dijo_falta=True)
     assert asyncio.run(cc._hechos_para_el_rag(st, MENSAJE, st.history))
+
+
+@pytest.fixture
+def rag(monkeypatch):
+    """El RAG con una búsqueda y un LLM de mentira: devuelve las llamadas que se hicieron. (Vivía en los tests de
+    CAL-A5, que se fueron con los avisos dentro del RAG el 26-oct.)"""
+    from src.agents import rag_agent
+    from src.config import settings
+
+    llamadas: list[dict] = []
+
+    class _Completions:
+        async def create(self, **kwargs):
+            llamadas.append(kwargs)
+            msg = type("M", (), {"content": "El minicurso es una experiencia guiada con instructor."})()
+            return type("R", (), {"choices": [type("C", (), {"message": msg})()],
+                                  "usage": type("U", (), {"total_tokens": 10, "prompt_tokens_details": None})()})()
+
+    class _OpenAI:
+        def __init__(self, api_key=None):
+            self.chat = type("Chat", (), {"completions": _Completions()})()
+
+    async def fake_search(query, lang="es", **kw):
+        return [{"content": "El minicurso es una experiencia guiada y no otorga certificación.",
+                 "metadata": {"source": "policies", "key": "minicourse_scope", "topics": ["certification"]},
+                 "score": 0.9}]
+
+    async def fake_expand(docs, lang):
+        return docs
+
+    async def fake_condense(query, history=None, lang="es", hechos=None):
+        return query
+
+    monkeypatch.setattr(rag_agent, "AsyncOpenAI", _OpenAI)
+    monkeypatch.setattr(rag_agent, "search_knowledge_base", fake_search)
+    monkeypatch.setattr(rag_agent, "_expand_with_parent_context", fake_expand)
+    monkeypatch.setattr(rag_agent, "condense_query", fake_condense)
+    monkeypatch.setattr(settings, "rag_plan_primero", False)
+    monkeypatch.setattr(settings, "rag_revisor_completitud", False)
+    monkeypatch.setattr(settings, "rag_revisor_avisos", False)
+    monkeypatch.setattr(settings, "rag_respaldo_modelo", "")
+    return rag_agent, llamadas
+
+
+@pytest.mark.asyncio
+async def test_los_hechos_van_en_el_mensaje_y_los_ve_el_revisor(rag, monkeypatch):
+    rag_agent, llamadas = rag
+    vistos: list[str] = []
+
+    async def fake_verify(answer, context, lang="es"):
+        vistos.append(context)
+        return True, ""
+
+    monkeypatch.setattr(rag_agent, "_verify_grounding", fake_verify)
+    hechos = '[{"actividad": "minicourse", "precio": {"cartagena": {"online": "183 USD"}}}]'
+    await rag_agent.rag_answer("¿cuánto cuesta el minicurso y qué peces se ven?", lang="es", hechos=hechos)
+    primera = next(m["content"] for m in reversed(llamadas[0]["messages"]) if m["role"] == "user")
+    assert "Hechos del sistema" in primera and "183 USD" in primera
+    assert primera.index("183 USD") < primera.index("Pregunta del cliente")
+    assert vistos and "183 USD" in vistos[0]

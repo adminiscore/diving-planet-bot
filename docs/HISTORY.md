@@ -30,6 +30,31 @@ History
   - calidad: **94,8 % 80/116**, frente al 94,9 % 82/116 de anoche, dentro del ruido.
   - Deuda apuntada: el acuse ya no reconoce lo concreto del mensaje («anoto a tu amigo para el minicurso»).
 
+0.32.3 - (2026-10-26)
+---------------------
+* **lat-deuda (1): los avisos los pone el código, al final de la respuesta y en cualquier camino.** Decisión de Gadea
+  (26-oct): se paran los cortes nuevos hasta recuperar parte de la deuda de calidad (82 → 71/116 en la fase LAT).
+  Frente a real-1 del 23-oct fallan 40 criterios nuevos y se arreglan 20; unos 10 son avisos que el cliente necesita y
+  no pregunta, que añadía la llamada del aviso final (CAL-A6, Luna) hasta que el corte A la quitó.
+  - Diseño aprobado por Gadea: los elige el código con el estado (actividades, origen, nacionalidad, inactividad y,
+    nuevo, el tamaño del grupo) y con las **intenciones de Jev del turno** (antes, con los documentos de la búsqueda,
+    que solo existen en el camino del RAG); el texto para el cliente está en `avisos.json` **en español y en inglés**
+    (antes era una instrucción para el escritor y solo en español); va **uno por turno, al final**, delante de la
+    pregunta con la que acaba la respuesta, una vez por conversación y sin repetir lo que la respuesta ya dice (la
+    misma comprobación que la tabla de hechos). Sin llamadas. Es la prueba que proponía el §10 de CAL-A5: el aviso no
+    compite por el sitio con lo que la respuesta ya tenía que decir, porque la respuesta se escribe entera antes.
+  - `cuando` admite varios juegos de condiciones: el 10 % de grupo sale al hablar de descuentos **o** a un grupo de 5
+    o más que pregunta el precio o cómo pagar (con lo que dice `discounts.json`: se suma al 10 % online y hay que
+    pedirlo antes de pagar).
+  - 11 avisos. Fuera, por no tener con qué cumplirse por código: Barú (el estado no guarda la zona del hotel), fotos y
+    profundidad (Jev no tiene esas intenciones), el plan que no cabe en la estancia (sin fechas en el estado) y los
+    cuatro de información general que ya da la tabla de hechos. Apuntado en lat-deuda-u.
+  - Borrado el camino viejo: el flag `avisos_condicionados` (mapa 21 → 20 interruptores), su bloque en el RAG, los
+    avisos dados de la respuesta adelantada, `scripts/sonda_avisos.py` y sus tests; nuevos en
+    `tests/test_avisos_por_codigo.py`.
+* **lat-deuda-u (nueva, pedida por Gadea):** inventario de dónde vive cada dato del negocio para que esté en un solo
+  sitio, en los dos idiomas y al alcance de todos los caminos.
+
 0.32.2 - (2026-10-25)
 ---------------------
 * **lat-6b: el extractor en UNA llamada, sin gramática estricta.** Hasta hoy eran dos llamadas a Haiku a la vez en

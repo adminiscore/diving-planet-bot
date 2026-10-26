@@ -1680,14 +1680,11 @@ def _entradas_rag(state: ConversationState, history: list, message: str = "") ->
     # rag-3: con el origen del cliente, la búsqueda baja las fichas del otro origen.
     if state.location:
         entradas["origin"] = state.location
-    # CAL-A5 (`avisos_condicionados`): los hechos del estado con los que el código elige los avisos que la respuesta
-    # tiene que dar. "dados" es la lista DEL ESTADO (el mismo objeto), así que lo que se avisa se apunta solo.
-    # CAL-D usa los mismos hechos para que la consulta de búsqueda nombre el asunto.
+    # CAL-D: lo que ya sabemos del cliente (los mismos hechos del estado que eligen los avisos) para que la consulta de
+    # búsqueda nombre el asunto.
     from src.flows import avisos as avisos_mod  # lazy
 
-    hechos = avisos_mod.hechos_del_estado(state)
-    hechos["dados"] = state.avisos_dados
-    entradas["avisos_hechos"] = hechos
+    entradas["avisos_hechos"] = avisos_mod.hechos_del_estado(state)
     return entradas
 
 
@@ -1768,10 +1765,6 @@ def lanzar_rag_adelantado(state: ConversationState, message: str) -> None:
     history = [*(state.history or []), {"role": "user", "content": message}]
     foto = copy.copy(state)
     foto.history = history
-    # CAL-A5: la copia es superficial, así que la lista de avisos ya dados es la MISMA del estado. Si esta respuesta
-    # se tira (la huella cambió), lo que haya apuntado no puede contar: se le da su propia lista y, si se aprovecha,
-    # se pasa al estado en `_adoptar_o_rehacer`.
-    foto.avisos_dados = list(state.avisos_dados)
     if state.step in (Step.WELCOME, Step.LANGUAGE):
         from src.flows.catalog import _detect_language_from_text
 
@@ -1790,7 +1783,7 @@ def lanzar_rag_adelantado(state: ConversationState, message: str) -> None:
         return await supervisor.rag_answer(message, **entradas)
 
     state._rag_adelantado = {"task": asyncio.create_task(_correr()), "huella": _huella_rag(message, entradas),
-                             "mensaje": message, "avisos_dados": foto.avisos_dados}
+                             "mensaje": message}
 
 
 async def _adoptar_o_rehacer(state: ConversationState, message: str, history: list, adelantado: dict) -> str:
@@ -1817,10 +1810,6 @@ async def _adoptar_o_rehacer(state: ConversationState, message: str, history: li
         note_turn(rag_used=True, rag_adelantado="aprovechado")
         logger.info("[CORE][RAG5] respuesta adelantada aprovechada")
         answer = await adelantado["task"]
-        # CAL-A5: los avisos que dio la respuesta adelantada ya están dados (no se repiten en los turnos siguientes).
-        for aviso_id in adelantado.get("avisos_dados") or []:
-            if aviso_id not in state.avisos_dados:
-                state.avisos_dados.append(aviso_id)
         return _puerta_del_origen(state, message, answer)  # 7-oct: opción C, ver `_rag_answer`
     adelantado["task"].cancel()
     # Diagnóstico (30-sep): la mitad de los intentos de la ronda rag5-B se rehicieron y no se sabía por qué.

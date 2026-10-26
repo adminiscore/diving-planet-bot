@@ -175,8 +175,8 @@
       "carril": "flujo",
       "tipo": "salida",
       "titulo": "Cerrar el turno",
-      "que_hace": "Junta la respuesta con lo que se preparó en paralelo y, cada 24 mensajes, actualiza el resumen de la conversación.",
-      "donde": "src/agents/conversation_summarizer.py:maybe_update_summary",
+      "que_hace": "Junta la respuesta con lo que se preparó en paralelo, le añade al final el aviso que el cliente necesita y no ha preguntado (uno por turno, elegido por el código con lo que sabemos del cliente y lo que pregunta, en su idioma; data/knowledge_base/avisos.json) y, cada 24 mensajes, actualiza el resumen de la conversación.",
+      "donde": "src/agents/supervisor.py:route_message",
       "modelos": [
         "openai_model"
       ],
@@ -517,7 +517,6 @@
         "rag_sin_hora",
         "respaldo_mismo_modelo",
         "rag_plan_primero",
-        "avisos_condicionados",
         "rag_enlace_al_recomendar"
       ],
       "tiempo_medido": {
@@ -907,11 +906,6 @@
       "area": "Reserva",
       "titulo": "Preguntar un precio no es elegir",
       "texto": "Si el cliente solo pregunta cuánto cuesta algo ('¿cuánto vale el paquete de 5 inmersiones?'), el bot no da por hecho que lo ha elegido ni que es buzo certificado: es una duda. Decir lo que quiere hacer sí lo elige."
-    },
-    "avisos_condicionados": {
-      "area": "Preguntas",
-      "titulo": "Avisos que el cliente necesita y no pregunta",
-      "texto": "La empresa tiene escrito qué hay que avisar y cuándo (el minicurso no certifica, sin cédula se paga en USD, en Barú no operamos). El programa mira lo que ya sabemos del cliente y de qué va su pregunta, y la respuesta tiene que decir los avisos que le toquen."
     },
     "rag_plan_primero": {
       "area": "Preguntas",

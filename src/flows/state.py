@@ -257,8 +257,8 @@ class ConversationState:
     # en vez de enterrarla o entrar en bucle re-preguntándola.
     companion_activity_deferred: bool = False
 
-    # CAL-A (16-oct, flag `avisos_condicionados`): los avisos de `data/knowledge_base/avisos.json` que ya se le han
-    # dado en esta conversacion (los de `una_vez` no se repiten). Lo rellena `src/flows/avisos.py` desde el RAG.
+    # Los avisos de `data/knowledge_base/avisos.json` que ya se le han dado en esta conversacion (los de `una_vez`
+    # no se repiten). Lo rellena `src/flows/avisos.poner_avisos` al cerrar el turno (lat-deuda, 26-oct).
     avisos_dados: list[str] = field(default_factory=list)
 
     def __post_init__(self):

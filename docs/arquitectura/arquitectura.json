@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-25T22:17:00+00:00",
-  "commit": "fa05bb58",
+  "generado": "2026-10-26T08:57:50+00:00",
+  "commit": "274baf9d",
   "rama": "integra-sim5"
  },
  "vistas": {
@@ -254,8 +254,8 @@
    "carril": "flujo",
    "tipo": "salida",
    "titulo": "Cerrar el turno",
-   "que_hace": "Junta la respuesta con lo que se preparó en paralelo y, cada 24 mensajes, actualiza el resumen de la conversación.",
-   "donde": "src/agents/conversation_summarizer.py:maybe_update_summary",
+   "que_hace": "Junta la respuesta con lo que se preparó en paralelo, le añade al final el aviso que el cliente necesita y no ha preguntado (uno por turno, elegido por el código con lo que sabemos del cliente y lo que pregunta, en su idioma; data/knowledge_base/avisos.json) y, cada 24 mensajes, actualiza el resumen de la conversación.",
+   "donde": "src/agents/supervisor.py:route_message",
    "modelos": [
     {
      "ajuste": "openai_model",
@@ -769,13 +769,6 @@
     {
      "nombre": "rag_plan_primero",
      "titulo": "Primero la lista de lo que pregunta el cliente",
-     "codigo": false,
-     "pre": false,
-     "sin_efecto": false
-    },
-    {
-     "nombre": "avisos_condicionados",
-     "titulo": "Avisos que el cliente necesita y no pregunta",
      "codigo": false,
      "pre": false,
      "sin_efecto": false
@@ -1447,19 +1440,6 @@
   }
  ],
  "interruptores": [
-  {
-   "nombre": "avisos_condicionados",
-   "area": "Preguntas",
-   "titulo": "Avisos que el cliente necesita y no pregunta",
-   "texto": "La empresa tiene escrito qué hay que avisar y cuándo (el minicurso no certifica, sin cédula se paga en USD, en Barú no operamos). El programa mira lo que ya sabemos del cliente y de qué va su pregunta, y la respuesta tiene que decir los avisos que le toquen.",
-   "codigo": false,
-   "pre": false,
-   "fijado_en_pre": false,
-   "usado_por": [
-    "r_escribir"
-   ],
-   "sin_efecto": null
-  },
   {
    "nombre": "catalogo_preparacion",
    "area": "Preguntas",

@@ -213,6 +213,12 @@ async def route_message(state: ConversationState, message: str) -> str:
         if state.pending_escalation_reason == escalation_before:  # un traspaso a persona va solo
             response = await attach_unused_answer(state, response)
         await await_pending_notes(state)
+        if state.pending_escalation_reason == escalation_before and state.step != Step.ESCALATE:
+            # lat-deuda (26-oct): el aviso que el cliente necesita y no ha preguntado, por código y al final, en
+            # cualquier camino (antes lo añadía una llamada de Luna solo en el RAG, que quitó la fase LAT).
+            from src.flows.avisos import poner_avisos
+
+            response = poner_avisos(state, response)
         # u3-4: una respuesta lanzada en paralelo que el turno no usó se cancela.
         cancel_pending_answer(state)
         cancelar_rag_adelantado(state)  # rag-5: la respuesta adelantada que nadie usó
