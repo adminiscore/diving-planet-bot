@@ -1,7 +1,11 @@
 """Banco de calibracion de `customer_place` (s4-28): ¿puede Jev decir DÓNDE está / desde dónde sale el cliente
 (Cartagena / islas / no lo dice) mejor que place_by_role (la regex de preposiciones)? Banco 1 = los casos etiquetados de tests/test_location_single_source.py;
-banco 2 = frases nuevas propias (ciego, no del golden); banco 3 = mensajes largos de primer contacto. Ningun
+banco 2 = frases nuevas propias (ciego, no del golden); banco 3 = mensajes largos de primer contacto; banco 4 (27-oct,
+(a) de LAT-0b) = negaciones («sin pasar por Cartagena»), sueltas y como respuesta a la pregunta del origen. Ningun
 mensaje sale del golden. Mide aciertos de Jev y de la regex y cuantas respuestas de Jev son seguras y equivocadas.
+
+27-oct: la pregunta es la de PRE (`_con_hoteles_de_la_base(_CUSTOMER_PLACE_Q_BARU_CARTAGENA)`) y el estado se arma como
+en PRE (`_estado_para_jev`, con el turno del bot delante si lo hay). Con gen-6, Barú sale desde Cartagena.
 
     python -m scripts.sonda_lugar_cliente
 """
@@ -19,7 +23,7 @@ from src.agents import jev_router  # noqa: E402
 from src.agents.intent_detector import place_by_role  # noqa: E402
 from src.config import settings  # noqa: E402
 
-Q = jev_router._CUSTOMER_PLACE_Q
+Q = jev_router._con_hoteles_de_la_base(jev_router._CUSTOMER_PLACE_Q_BARU_CARTAGENA)
 
 BANCO = [  # tests/test_location_single_source.py (place_by_role)
     ("quiero ir a las islas del rosario desde cartagena", "cartagena"),
@@ -29,7 +33,7 @@ BANCO = [  # tests/test_location_single_source.py (place_by_role)
     ("llegamos a cartagena y luego nos vamos a baru", "cartagena"),
     ("vamos de cartagena a baru", "cartagena"),
     ("estoy en cartagena, mañana nos vamos a las islas", "cartagena"),
-    ("nos quedamos en baru, vamos a cartagena de paseo", "islands"),
+    ("nos quedamos en baru, vamos a cartagena de paseo", "cartagena"),  # gen-6: desde Barú se sale de Cartagena
     ("we are staying at isla grande, arriving from cartagena", "islands"),
     ("no sé si cartagena o las islas", "none"),
 ]
@@ -57,20 +61,50 @@ LARGOS = [
  ("Hola!! Les escribo desde México, viajamos a Colombia en marzo, la idea es conocer Cartagena y bucear en las Islas del Rosario. Somos buzos avanzados", "cartagena"),
  ("Hi, I'll be in Colombia in May, thinking about diving in the Rosario islands, how does it work and what are the prices?", "none"),
  ("Buenas tardes, queremos regalarle a mi papá un bautismo de buceo en las islas, estamos pensando ir en junio, que opciones hay", "none"),
- ("Hi! we booked a night at a hotel in Baru for next week and want to know if you can pick us up there for a dive", "islands"),
+ ("Hi! we booked a night at a hotel in Baru for next week and want to know if you can pick us up there for a dive", "cartagena"),  # gen-6
  ("Estamos en el centro de Cartagena hasta el domingo, somos pareja, ella no bucea y yo soy open water, qué nos recomiendas en las islas", "cartagena"),
  ("Hola, me alojo en Bocagrande y quiero hacer snorkel en el Rosario con mis hijos mañana, a qué hora sale la lancha", "cartagena"),
  ("Good morning, we arrive on the islands tomorrow by ferry and stay 2 nights, could we do a fun dive from our hotel?", "islands"),
  ("Hola, somos 6 compañeros de trabajo, queremos hacer una actividad de buceo en las Islas del Rosario en octubre, ninguno es certificado", "none"),
 ]
+# (a) de LAT-0b: el cliente dice desde dónde NO sale. Solo hay dos salidas: «sin pasar por Cartagena» es salir desde las
+# islas; «sin salir de Cartagena», quedarse en la ciudad. Con «Assistant: …», la frase contesta a la pregunta del origen.
+_PREGUNTA_ORIGEN = ("Assistant: ¿Saldrías *desde Cartagena* o ya estás *en las Islas del Rosario*? Así te paso el plan y "
+                    "el enlace exactos.")
+NEGACIONES = [
+    ("Quiero reservar sin pasar por Cartagena", "islands"),
+    ("No vamos a salir desde Cartagena, ya estaremos en las islas esos días", "islands"),
+    ("We don't want to go back to Cartagena for the dive", "islands"),
+    ("No estaremos en Cartagena, solo en Isla Grande", "islands"),
+    ("Sin salir de Cartagena, ¿qué buceo puedo hacer?", "cartagena"),
+    ("No nos quedamos en las islas, volvemos a Cartagena en la tarde", "cartagena"),
+    ("We won't stay on the islands, we're based in Cartagena", "cartagena"),
+    ("No sabemos todavía si dormiremos en las islas", "none"),
+    ("¿Hay que ir a Cartagena para bucear con ustedes?", "none"),
+    ("No conozco Cartagena, ¿es lindo bucear allá?", "none"),
+    (f"{_PREGUNTA_ORIGEN}\nCustomer: Prefiero reservar sin tener que ir a Cartagena", "islands"),
+    (f"{_PREGUNTA_ORIGEN}\nCustomer: No, desde Cartagena no", "islands"),
+    (f"{_PREGUNTA_ORIGEN}\nCustomer: Desde la isla, no pienso ir a Cartagena", "islands"),
+    (f"{_PREGUNTA_ORIGEN}\nCustomer: Ni idea, todavía no lo hemos decidido", "none"),
+    (f"{_PREGUNTA_ORIGEN}\nCustomer: Desde Cartagena, no estaremos en las islas", "cartagena"),
+]
 N = 2
 
 
-async def preguntar(cli, msg):
+def _historial_y_mensaje(caso: str) -> tuple[list[dict], str]:
+    """«Assistant: …\\nCustomer: …» → (el turno del bot como historial, el mensaje); una frase suelta, sin historial."""
+    if not caso.startswith("Assistant: "):
+        return [], caso
+    bot, cliente = caso.split("\nCustomer: ", 1)
+    return [{"role": "assistant", "content": bot.removeprefix("Assistant: ")}], cliente
+
+
+async def preguntar(cli, caso):
+    historial, msg = _historial_y_mensaje(caso)
     r = await cli.post(
         jev_router.JEV_URL,
         headers={"Authorization": f"Bearer {settings.openrouter_api_key}"},
-        json={"model": settings.jev_model, "state": f"{jev_router._CONTEXT}\n\nCustomer message: {msg}",
+        json={"model": settings.jev_model, "state": jev_router._estado_para_jev(msg, historial),
               "questions": {"q": Q}},
         timeout=10.0,
     )
@@ -81,22 +115,26 @@ async def preguntar(cli, msg):
 
 async def main():
     regex_map = {"cartagena": "cartagena", "island": "islands", None: "none"}
+    total_ok = total = total_mal = 0
     async with httpx.AsyncClient() as cli:
-        for nombre, banco in (("BANCO (tests)", BANCO), ("CIEGO (nuevas)", CIEGO), ("LARGOS", LARGOS)):
+        for nombre, banco in (("BANCO (tests)", BANCO), ("CIEGO (nuevas)", CIEGO), ("LARGOS", LARGOS),
+                              ("NEGACIONES", NEGACIONES)):
             print(f"\n## {nombre}")
             ok_j = ok_r = seguros_mal = 0
-            for msg, esperado in banco:
-                res = [await preguntar(cli, msg) for _ in range(N)]
+            for caso, esperado in banco:
+                res = [await preguntar(cli, caso) for _ in range(N)]
                 elec = {c for c, _ in res}
                 conf = min(c for _, c in res)
                 jev = res[0][0] if len(elec) == 1 else "dudoso"
-                reg = regex_map[place_by_role(msg.lower())]
+                reg = regex_map[place_by_role(_historial_y_mensaje(caso)[1].lower())]
                 ok_j += jev == esperado
                 ok_r += reg == esperado
-                seguros_mal += (jev != esperado and jev != "dudoso" and conf >= 0.6)
+                seguros_mal += (jev != esperado and jev != "dudoso" and conf >= jev_router.CUSTOMER_PLACE_MIN)
                 marca = "ok " if jev == esperado else "MAL"
-                print(f"{marca} jev={jev:9} ({conf:.2f}) regex={reg:9} esperado={esperado:9} | {msg}")
+                print(f"{marca} jev={jev:9} ({conf:.2f}) regex={reg:9} esperado={esperado:9} | {caso.replace(chr(10), ' / ')}")
             print(f"--> Jev {ok_j}/{len(banco)} · regex {ok_r}/{len(banco)} · Jev seguro (>=0,6) y equivocado: {seguros_mal}")
+            total_ok, total, total_mal = total_ok + ok_j, total + len(banco), total_mal + seguros_mal
+    print(f"\nTOTAL Jev {total_ok}/{total} · seguro y equivocado: {total_mal}")
 
 
 if __name__ == "__main__":
