@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-26T11:52:51+00:00",
-  "commit": "0c84a40b",
+  "generado": "2026-10-26T12:08:00+00:00",
+  "commit": "c68b90c8",
   "rama": "feature/sim6-alvaro"
  },
  "vistas": {
@@ -447,15 +447,7 @@
      "pre": "deepseek/deepseek-v4.1-flash"
     }
    ],
-   "interruptores": [
-    {
-     "nombre": "plan_elegido_por_extractor",
-     "titulo": "Aceptar el paquete que propone Coral lo elige",
-     "codigo": false,
-     "pre": false,
-     "sin_efecto": false
-    }
-   ],
+   "interruptores": [],
    "marca": "openrouter",
    "tiempos": {
     "n": 144,
@@ -512,15 +504,7 @@
      "pre": "anthropic/claude-haiku-5.5"
     }
    ],
-   "interruptores": [
-    {
-     "nombre": "precio_no_elige",
-     "titulo": "Preguntar un precio no es elegir",
-     "codigo": false,
-     "pre": false,
-     "sin_efecto": false
-    }
-   ],
+   "interruptores": [],
    "marca": "openrouter",
    "tiempos": {
     "n": 141,
@@ -672,13 +656,6 @@
     }
    ],
    "interruptores": [
-    {
-     "nombre": "varias_actividades",
-     "titulo": "Varias actividades en un mensaje",
-     "codigo": false,
-     "pre": false,
-     "sin_efecto": false
-    },
     {
      "nombre": "mezclados_por_partes",
      "titulo": "Mensajes mezclados, por partes",
@@ -1403,32 +1380,6 @@
    "sin_efecto": null
   },
   {
-   "nombre": "plan_elegido_por_extractor",
-   "area": "Reserva",
-   "titulo": "Aceptar el paquete que propone Coral lo elige",
-   "texto": "Si Coral acaba de proponer un paquete y el cliente lo acepta con sus palabras («perfecto, ese me sirve», «vamos con ese»), queda elegido y sigue la reserva (decisión de Gadea). Antes solo valía la frase «quiero este paquete». Preguntar por el paquete (su precio, qué incluye) no es elegirlo. Si la IA no contesta, la frase de siempre.",
-   "codigo": false,
-   "pre": false,
-   "fijado_en_pre": false,
-   "usado_por": [
-    "b_routing"
-   ],
-   "sin_efecto": null
-  },
-  {
-   "nombre": "precio_no_elige",
-   "area": "Reserva",
-   "titulo": "Preguntar un precio no es elegir",
-   "texto": "Si el cliente solo pregunta cuánto cuesta algo ('¿cuánto vale el paquete de 5 inmersiones?'), el bot no da por hecho que lo ha elegido ni que es buzo certificado: es una duda. Decir lo que quiere hacer sí lo elige.",
-   "codigo": false,
-   "pre": false,
-   "fijado_en_pre": false,
-   "usado_por": [
-    "b_slotfill_close"
-   ],
-   "sin_efecto": null
-  },
-  {
    "nombre": "rag_plan_primero",
    "area": "Preguntas",
    "titulo": "Primero la lista de lo que pregunta el cliente",
@@ -1464,30 +1415,6 @@
    "fijado_en_pre": false,
    "usado_por": [
     "r_revisor"
-   ],
-   "sin_efecto": null
-  },
-  {
-   "nombre": "reparto_en_pares",
-   "area": "Reserva",
-   "titulo": "El reparto del grupo, en un formato más corto para la IA",
-   "texto": "Cómo se reparte el grupo entre actividades se le pide a la IA como una lista de pares (actividad y personas) en lugar de un casillero por cada actividad. Hace falta para que quepan los datos nuevos del paso 6 (duración, edades, notas): con el formato de antes, el modelo rechazaba la petición. Apagado: con él, el reparto se leía algo peor en el banco.",
-   "codigo": false,
-   "pre": false,
-   "fijado_en_pre": false,
-   "usado_por": [],
-   "sin_efecto": null
-  },
-  {
-   "nombre": "varias_actividades",
-   "area": "Preguntas",
-   "titulo": "Varias actividades en un mensaje",
-   "texto": "Si el cliente pregunta por varias actividades a la vez («¿cuánto pagamos un buzo y un acompañante?», «¿qué incluyen el snorkel y el minicurso?»), el extractor las da todas y Coral contesta cada una con sus datos; antes contestaba el RAG de memoria (arq-1j, 22-oct).",
-   "codigo": false,
-   "pre": false,
-   "fijado_en_pre": false,
-   "usado_por": [
-    "r_hechos"
    ],
    "sin_efecto": null
   }

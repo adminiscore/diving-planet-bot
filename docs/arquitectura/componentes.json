@@ -333,9 +333,7 @@
       "modelos": [
         "senales_model"
       ],
-      "interruptores": [
-        "plan_elegido_por_extractor"
-      ]
+      "interruptores": []
     },
     {
       "id": "b_extraction",
@@ -368,9 +366,7 @@
       "modelos": [
         "resolutor_model"
       ],
-      "interruptores": [
-        "precio_no_elige"
-      ]
+      "interruptores": []
     },
     {
       "id": "b_notas",
@@ -487,7 +483,6 @@
         "rag_answer_model"
       ],
       "interruptores": [
-        "varias_actividades",
         "mezclados_por_partes"
       ]
     },
@@ -877,11 +872,6 @@
       "titulo": "“Escribiendo…” en el chat",
       "texto": "El cliente ve que el bot está preparando la respuesta mientras espera."
     },
-    "precio_no_elige": {
-      "area": "Reserva",
-      "titulo": "Preguntar un precio no es elegir",
-      "texto": "Si el cliente solo pregunta cuánto cuesta algo ('¿cuánto vale el paquete de 5 inmersiones?'), el bot no da por hecho que lo ha elegido ni que es buzo certificado: es una duda. Decir lo que quiere hacer sí lo elige."
-    },
     "rag_plan_primero": {
       "area": "Preguntas",
       "titulo": "Primero la lista de lo que pregunta el cliente",
@@ -901,21 +891,6 @@
       "area": "Chat",
       "titulo": "Formato de WhatsApp",
       "texto": "Antes de enviar, el texto pasa a formato de WhatsApp: la negrita de documento (**así**) queda *así* y los enlaces [texto](url) quedan 'texto: url'. Los modelos nuevos escriben en formato de documento."
-    },
-    "reparto_en_pares": {
-      "area": "Reserva",
-      "titulo": "El reparto del grupo, en un formato más corto para la IA",
-      "texto": "Cómo se reparte el grupo entre actividades se le pide a la IA como una lista de pares (actividad y personas) en lugar de un casillero por cada actividad. Hace falta para que quepan los datos nuevos del paso 6 (duración, edades, notas): con el formato de antes, el modelo rechazaba la petición. Apagado: con él, el reparto se leía algo peor en el banco."
-    },
-    "plan_elegido_por_extractor": {
-      "area": "Reserva",
-      "titulo": "Aceptar el paquete que propone Coral lo elige",
-      "texto": "Si Coral acaba de proponer un paquete y el cliente lo acepta con sus palabras («perfecto, ese me sirve», «vamos con ese»), queda elegido y sigue la reserva (decisión de Gadea). Antes solo valía la frase «quiero este paquete». Preguntar por el paquete (su precio, qué incluye) no es elegirlo. Si la IA no contesta, la frase de siempre."
-    },
-    "varias_actividades": {
-      "area": "Preguntas",
-      "titulo": "Varias actividades en un mensaje",
-      "texto": "Si el cliente pregunta por varias actividades a la vez («¿cuánto pagamos un buzo y un acompañante?», «¿qué incluyen el snorkel y el minicurso?»), el extractor las da todas y Coral contesta cada una con sus datos; antes contestaba el RAG de memoria (arq-1j, 22-oct)."
     },
     "mezclados_por_partes": {
       "area": "Preguntas",
