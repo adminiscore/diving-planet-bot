@@ -187,24 +187,6 @@ REGLA_EDADES_EN = (
     "= [9]). A hypothetical age or a rule (\"from what age can you dive?\", \"could a 5-year-old?\") is nobody in the "
     "group; a time span (\"6 years ago\", \"I haven't dived in 4 years\") is not an age."
 )
-# 3. `plan_elegido_por_extractor`: si el mensaje ACEPTA lo que el bot acaba de proponer (decisión de Gadea, 19-oct:
-#    "perfecto, ese me sirve" lo da por elegido y sigue la reserva; preguntar el precio NO es elegir). Lo leía
-#    `_CONFIRMS_DESCRIBED_PACKAGE_RE` ("quiero este paquete"). El campo solo va cuando el bot acaba de proponer UN plan
-#    (`plan_que_propone_el_bot`): es la única propuesta cuyo "sí" cambia algo que el extractor no lee ya.
-CAMPO_ACEPTA = _dato({"type": "boolean"},
-                     "true si el mensaje ACEPTA lo que el bot le acaba de proponer; false si lo rechaza.")
-REGLA_ACEPTA_ES = (
-    "\n- acepta_propuesta: true si el mensaje acepta o elige lo que el bot le acaba de proponer en su último mensaje "
-    "(\"perfecto, ese me sirve\", \"vamos con ese\", \"quiero ese paquete\"); false si lo rechaza (\"no, mejor otra "
-    "cosa\"). Preguntar por la propuesta (su precio, qué incluye, cuándo es) o compararla con otra opción NO es "
-    "aceptarla: null. La cita son las palabras del cliente."
-)
-REGLA_ACEPTA_EN = (
-    "\n- acepta_propuesta: true if the message accepts or chooses what the bot has just proposed in its last message "
-    "(\"perfect, that one works for me\", \"let's go with that\", \"I want that package\"); false if it rejects it "
-    "(\"no, something else\"). Asking about the proposal (its price, what's included, when it is) or comparing it with "
-    "another option is NOT accepting it: null. The quote is the customer's words."
-)
 # 4. `reparto_al_sumarse_alguien`: alguien que se SUMA a un grupo ya sabido. Con "No repitas lo que ya sabemos" y
 #    "group_size solo si dice cuántas personas", el modelo dudaba si la persona era nueva o de las que ya iban: "mi
 #    hermano también viene, él quiere hacer snorkel" sobre 2 buzos salía sin total ni reparto, o {buceo: 1, snorkel: 1}
@@ -268,27 +250,6 @@ REGLA_ACTIVIDAD_PREGUNTADA_EN = (
 )
 
 
-# arq-1j (22-oct, flag `varias_actividades`): TODAS las actividades por las que pregunta el mensaje. Con una sola
-# (`actividad_preguntada`), «¿cuánto pagamos un buzo y un acompañante?» o «¿qué incluyen el snorkel y el minicurso?»
-# quedaban sin actividad (la regla pide null si compara varias) y contestaba el RAG sin los hechos del código: ~8-10
-# fallos del G10 nº 2. El acompañante entra porque tiene precio y lo que incluye, aunque no sea una actividad elegible.
-CAMPO_ACTIVIDADES_PREGUNTADAS = _dato({"type": "array", "items": {"type": "string",
-                                                                  "enum": [*ACTIVIDADES, "companion"]}},
-                                      "Todas las actividades concretas por las que pregunta el mensaje.")
-REGLA_ACTIVIDADES_PREGUNTADAS_ES = (
-    "\n- actividades_preguntadas: TODAS las actividades concretas de la lista por las que pregunta este mensaje (su "
-    "precio, qué incluyen, sus requisitos…), aunque no elija ninguna; companion es el acompañante que va en la lancha "
-    "sin bucear. «¿Cuánto cuestan el snorkel y el minicurso?» → [snorkel, minicourse]. null si no nombra ninguna "
-    "concreta."
-)
-REGLA_ACTIVIDADES_PREGUNTADAS_EN = (
-    "\n- actividades_preguntadas: ALL the concrete activities from the list that this message asks about (their price, "
-    "what they include, their requirements…), even if it chooses none; companion is the companion who rides the boat "
-    "without diving. \"How much are snorkeling and the mini course?\" → [snorkel, minicourse]. null if it names no "
-    "concrete one."
-)
-
-
 # arq-1t (22-oct): «¿cuánto vale el paquete de varios días?» no dejaba nada en el estado
 # (dias_de_buceo solo con cifra) y el «¿qué incluye?» siguiente recibía lo de la salida de un día (G10 nº 4, g10-041).
 CAMPO_PAQUETE_VARIOS_DIAS = _dato({"type": "boolean"},
@@ -308,21 +269,16 @@ REGLA_PAQUETE_VARIOS_DIAS_EN = (
 def campos_paso6(history: list[dict] | None) -> dict:
     """Los campos nuevos del paso 6 que van en ESTA llamada: {campo: (esquema, regla_es, regla_en)}. La duración, las
     edades y las otras personas del grupo siempre (promocionados; sus flags se borraron en sim-5); el resto, según sus
-    flags. `acepta_propuesta` solo si el bot acaba de proponer un plan."""
+    flags."""
     campos: dict = {
         "dias_de_buceo": (CAMPO_DIAS_DE_BUCEO, REGLA_DURACION_ES, REGLA_DURACION_EN),
         "dias_de_estancia": (CAMPO_DIAS_DE_ESTANCIA, "", ""),
         "edades": (CAMPO_EDADES, REGLA_EDADES_ES, REGLA_EDADES_EN),
     }
-    if settings.plan_elegido_por_extractor and plan_que_propone_el_bot(history) is not None:
-        campos["acepta_propuesta"] = (CAMPO_ACEPTA, REGLA_ACEPTA_ES, REGLA_ACEPTA_EN)
     campos["otro_sin_certificar"] = (CAMPO_OTRO_SIN_CERTIFICAR, REGLA_OTRAS_PERSONAS_ES, REGLA_OTRAS_PERSONAS_EN)
     campos["otro_certificado_inactivo"] = (CAMPO_OTRO_CERTIFICADO_INACTIVO, "", "")
     campos["actividad_preguntada"] = (CAMPO_ACTIVIDAD_PREGUNTADA, REGLA_ACTIVIDAD_PREGUNTADA_ES,
                                       REGLA_ACTIVIDAD_PREGUNTADA_EN)
-    if settings.varias_actividades:
-        campos["actividades_preguntadas"] = (CAMPO_ACTIVIDADES_PREGUNTADAS, REGLA_ACTIVIDADES_PREGUNTADAS_ES,
-                                             REGLA_ACTIVIDADES_PREGUNTADAS_EN)
     campos["paquete_varios_dias"] = (CAMPO_PAQUETE_VARIOS_DIAS, REGLA_PAQUETE_VARIOS_DIAS_ES,
                                      REGLA_PAQUETE_VARIOS_DIAS_EN)
     return campos
@@ -331,8 +287,8 @@ def campos_paso6(history: list[dict] | None) -> dict:
 def plan_que_propone_el_bot(history: list[dict] | None) -> int | None:
     """El paquete de varios días (nº de inmersiones del catálogo) que describe el ÚLTIMO mensaje del bot, si describe
     uno solo; None si no describe ninguno o compara varios ("este paquete" no diría cuál). Lee el texto del BOT (formato
-    nuestro, no el del cliente), con la misma lectura de cifras que el detector y el RAG (`dive_counts_in`). La usan el
-    extractor (si pregunta `acepta_propuesta`) y `nucleo/routing` (el paquete confirmado)."""
+    nuestro, no el del cliente), con la misma lectura de cifras que el detector y el RAG (`dive_counts_in`). La usa
+    `nucleo/routing` (el paquete confirmado)."""
     from src.agents.intent_detector import dive_counts_in  # lazy
 
     ultimo = next((h.get("content", "") for h in reversed(history or []) if h.get("role") == "assistant"), "")
@@ -354,18 +310,6 @@ def edades_citadas(edades, cita: str) -> list[int]:
         if str(edad) in tokens or any(palabras.get(t) == edad for t in tokens):
             validas.append(edad)
     return list(dict.fromkeys(validas))
-
-
-# ex-9b (19-oct, flag `reparto_en_pares`): con los campos del paso 6 la llamada a Haiku fallaba SIEMPRE (Anthropic: "The
-# compiled grammar is too large"; ronda ex9b-4, 92 de 92): el reparto, un objeto con un entero opcional por actividad
-# (10), era la parte que más gramática pedía. Como lista de pares {actividad, personas} caben todos los campos; nada más
-# leer se convierte al diccionario de siempre (`_reparto_de_pares`), así que el resto del código no cambia.
-_REPARTO_EN_PARES = _dato(
-    {"type": "array", "items": {"type": "object",
-                                "properties": {"actividad": {"type": "string", "enum": list(CLAVES_REPARTO)},
-                                               "personas": {"type": "integer"}},
-                                "required": ["actividad", "personas"], "additionalProperties": False}},
-    "Cuántas personas hacen cada actividad (una entrada por actividad), solo si el grupo se reparte entre VARIAS.")
 
 
 # lat-6b (25-oct): UNA llamada sin gramática. Hasta hoy eran dos a la vez (la de siempre y la del paso 6) porque la
@@ -399,7 +343,8 @@ def _json_de_la_respuesta(texto: str) -> dict:
 
 
 def _reparto_de_pares(valor):
-    """La lista de pares del reparto -> {actividad: personas} (sumando si una actividad sale dos veces)."""
+    """Si el modelo da el reparto como lista de pares {actividad, personas} (era el esquema de `reparto_en_pares`, borrado
+    en sim-6), al diccionario de siempre, sumando si una actividad sale dos veces; si no es una lista, tal cual."""
     if not isinstance(valor, list):
         return valor
     reparto: dict = {}
@@ -410,18 +355,9 @@ def _reparto_de_pares(valor):
     return reparto
 
 
-def _esquema(con_hotel: bool, con_refresher: bool = False, precio_no_elige: bool = False,
-             paso6: dict | None = None) -> dict:
+def _esquema(con_hotel: bool, con_refresher: bool = False, paso6: dict | None = None) -> dict:
     """El esquema de la llamada con los campos opcionales encendidos (sin ellos, el de siempre)."""
     base = ESQUEMA_CON_NOMBRE
-    if precio_no_elige:  # mod-2: ver `_PRECIO_NO_ELIGE`
-        import copy
-
-        base = copy.deepcopy(base)
-        qb = base["properties"]["quiere_bucear"]
-        qb["description"] = qb["description"].replace(_QUIERE_BUCEAR_PRECIO, _QUIERE_BUCEAR_SIN_PRECIO)
-    if settings.reparto_en_pares:
-        base = {**base, "properties": {**base["properties"], "group_allocation": _REPARTO_EN_PARES}}
     if not (con_hotel or con_refresher or paso6):
         return base
     extra = {**({"hotel": CAMPO_HOTEL} if con_hotel else {}),
@@ -445,32 +381,6 @@ GENERAL_PRECIO_EN_V2 = ('A question ("can I dive pregnant?") does not say they a
                         'price of a product ("how much is certified diving?") does not say the customer is a certified '
                         'diver, but it DOES choose that activity (see activity). A hypothesis ("in case I decided to do '
                         'the course…") or something they mention without choosing it is not a fact.')
-# mod-2 (18-oct, decisión de Gadea: "no se adivina nada que el cliente no haya dicho"; flag `precio_no_elige`):
-# preguntar el precio de un producto es una DUDA: no elige la actividad, no dice que quiera bucear ni que sea buzo
-# certificado. Revoca la del 14/27-sep (`extractor_precio_elige`). Apagar ese flag no bastaba: volvía el texto de antes,
-# que chocaba con la regla de `activity` ("…o del que quiere saber el precio") y el modelo dejaba de elegir también lo
-# que sí elige ("quiero bucear certificado", "trying to checkout to take PADI Open Water"; banco ex0 109 → 101). Las
-# cuatro frases que hablan del precio cambian a la vez, para que digan lo mismo.
-GENERAL_PRECIO_ES_V3 = ('Una pregunta ("¿puedo bucear embarazada?") no dice que esté embarazada ni que vaya a bucear; '
-                        'preguntar el precio de un producto ("¿cuánto cuesta el buceo certificado?", "¿cuánto vale el '
-                        'paquete de 5 inmersiones?") es una duda: no elige esa actividad ni dice que el cliente sea buzo '
-                        'certificado. Una hipótesis ("si decidiera hacer el curso…") o algo que nombra sin elegirlo no es '
-                        'un dato.')
-GENERAL_PRECIO_EN_V3 = ('A question ("can I dive pregnant?") does not say they are pregnant or will dive; asking the '
-                        'price of a product ("how much is certified diving?", "how much is the 5-dive package?") is a '
-                        'doubt: it does not choose that activity nor say the customer is a certified diver. A hypothesis '
-                        '("in case I decided to do the course…") or something they mention without choosing it is not a '
-                        'fact.')
-_PRECIO_NO_ELIGE = (
-    ("como lo que quiere hacer, reservar, ya tiene reservado o del que quiere saber el precio,",
-     "como lo que quiere hacer, reservar o ya tiene reservado (preguntar solo su precio no lo elige),"),
-    ("as what they want to do, book, have already booked or want the price of,",
-     "as what they want to do, book or have already booked (only asking its price does not choose it),"),
-    ("(lo dice, pide buceos, sus precios o una fecha para bucear)",
-     "(lo dice, pide buceos o una fecha para bucear; preguntar solo un precio no)"),
-    ("(they say so, ask for dives, their prices or a date to dive)",
-     "(they say so, ask for dives or a date to dive; only asking a price does not)"),
-)
 # 19-oct (ronda mod-G, flag `certificado_solo_si_lo_dice`): sin la regla del código "buceo certificado ⇒ certificado",
 # el extractor no veía la certificación en lo que también la dice: «completé el curso básico» (paquete-5-buceos) o
 # «I'm gonna need a little refresher» (el repaso es para quien YA está certificado). Con el flag, la regla de
@@ -487,8 +397,6 @@ IS_CERTIFIED_DICHO_EN = ("- is_certified: true only if they say they have a cert
                          "course\", \"I got certified in…\"), that they have logged dives, that they dived recently (\"I "
                          "dived recently\": true even if it starts with \"no\", which was answering something else) or that "
                          "they need a refresher (a refresher is for someone already certified), themselves or their group;")
-_QUIERE_BUCEAR_PRECIO = "pregunta sus precios o fechas,"
-_QUIERE_BUCEAR_SIN_PRECIO = "pregunta sus fechas (preguntar solo un precio no),"
 
 
 REGLA_NOMBRE_ES = (
@@ -693,13 +601,7 @@ async def extraer_turno(mensaje: str, *, history: list[dict] | None = None, sabi
         return {}
     sistema = (SISTEMA_ES if lang == "es" else SISTEMA_EN).replace("{islas}", _pistas_islas()).replace(
         "{actividades}", _actividades(lang))
-    if settings.precio_no_elige:
-        # mod-2 (decisión de Gadea, 18-oct): preguntar el precio no elige ni certifica; manda sobre `extractor_precio_elige`.
-        sistema = sistema.replace(GENERAL_PRECIO_ES, GENERAL_PRECIO_ES_V3).replace(GENERAL_PRECIO_EN, GENERAL_PRECIO_EN_V3)
-        for antes, despues in _PRECIO_NO_ELIGE:
-            sistema = sistema.replace(antes, despues)
-    else:
-        sistema = sistema.replace(GENERAL_PRECIO_ES, GENERAL_PRECIO_ES_V2).replace(GENERAL_PRECIO_EN, GENERAL_PRECIO_EN_V2)
+    sistema = sistema.replace(GENERAL_PRECIO_ES, GENERAL_PRECIO_ES_V2).replace(GENERAL_PRECIO_EN, GENERAL_PRECIO_EN_V2)
     # 19-oct: sin la regla del código, que is_certified vea todas las formas de decirlo (ver IS_CERTIFIED_DICHO_*).
     sistema = sistema.replace(IS_CERTIFIED_HOY_ES, IS_CERTIFIED_DICHO_ES).replace(IS_CERTIFIED_HOY_EN, IS_CERTIFIED_DICHO_EN)
     # EX-EXTRACTOR-1: la regla de la ubicación con la negación primero (ver UBICACION_NEGACION_*).
@@ -765,7 +667,7 @@ async def extraer_turno(mensaje: str, *, history: list[dict] | None = None, sabi
 
     try:
         client = client or trace_openai(AsyncOpenAI(api_key=settings.openai_api_key))
-        esquema = _esquema(True, con_refresher, settings.precio_no_elige, paso6)
+        esquema = _esquema(True, con_refresher, paso6)
         resp = await _pedir(sistema, esquema, "extractor")
         datos = _json_de_la_respuesta(resp.choices[0].message.content or "{}")
         uso = getattr(resp, "usage", None)

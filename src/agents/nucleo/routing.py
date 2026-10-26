@@ -53,7 +53,6 @@ from src.agents.intent_detector import (
     DetectedIntent,
 )
 from src.agents.llm_extractor import detect_special_signals
-from src.config import settings
 from src.domain import activities as dom
 from src.flows import cart_render, moneda
 from src.flows.state import ConversationState
@@ -105,30 +104,6 @@ def _elegir_el_paquete_propuesto(state: ConversationState) -> bool:
     state.detected_cert_dives = dives
     state.mixed_cart = []
     return True
-
-
-async def _paquete_confirmado(state: ConversationState, message: str) -> None:
-    """ex-9b paso 6 (`plan_elegido_por_extractor`): si el bot acaba de proponer UN paquete y el extractor lee que el
-    mensaje lo ACEPTA (`acepta_propuesta`, con su cita: "perfecto, ese me sirve"), queda elegido y sigue la reserva
-    (decisión de Gadea, 19-oct). Preguntar su precio no es aceptarlo. Solo espera al extractor cuando hay propuesta (es
-    la única vez que lleva ese campo); si el extractor falla, la frase de siempre (`_CONFIRMS_DESCRIBED_PACKAGE_RE`).
-    Sin el flag, la frase de siempre."""
-    if not settings.plan_elegido_por_extractor:
-        _maybe_apply_confirmed_package(state, message)
-        return
-    from src.agents.extractor_turno import plan_que_propone_el_bot  # lazy
-    from src.agents.nucleo.extractor import lectura_del_extractor  # lazy
-
-    dives = plan_que_propone_el_bot(state.history)
-    if dives is None or dives == state.detected_cert_dives:
-        return
-    datos = await lectura_del_extractor(state, message)
-    if datos is None:
-        logger.info("[CORE][EX9B-6] el extractor falló: el paquete confirmado lo decide la frase de siempre")
-        _maybe_apply_confirmed_package(state, message)
-        return
-    if datos.get("acepta_propuesta") is True and _elegir_el_paquete_propuesto(state):
-        logger.info(f"[CORE][EX9B-6] el cliente acepta el paquete propuesto: {dives} inmersiones")
 
 
 def _departure_place(message: str) -> str | None:
@@ -788,7 +763,7 @@ async def _routing_phase(
     # pase con el "?" (ver `_maybe_apply_confirmed_package`), para que un
     # mensaje como "...que podria hacer esos dos dias?" no deje el carrito
     # pegado al paquete de 1 día que se armó antes de esta conversación.
-    await _paquete_confirmado(state, message)
+    _maybe_apply_confirmed_package(state, message)
 
     sembrar_senales_del_turno(state, routing_signals)
 

@@ -4,7 +4,7 @@ extractor, cada uno con su flag (APAGADO = la llamada y la conducta de hoy):
 1. `duracion_por_extractor`: los días de buceo y de estancia (manda lo que dice de bucear; decisión de Gadea, 19-oct);
    fuera los falsos positivos de `_detect_duration` ("embarazada de 4 meses", "3 días esperando");
 2. `edades_por_extractor`: las edades con su cita (el regex solo valida la cifra; `fill_gaps` ya no las supone);
-3. `plan_elegido_por_extractor`: aceptar el paquete que el bot acaba de proponer ("perfecto, ese me sirve");
+3. `plan_elegido_por_extractor` (NO, borrado en sim-6): el paquete propuesto se elige con la frase de siempre;
 4. `reparto_al_sumarse_alguien`: alguien que se suma a un grupo ya sabido (el extractor ve el reparto sabido; el atajo
    de "reparto completo" deja pasar la red si Jev está seguro de que entra alguien);
 5. `notas_rag_desde_estado`: las notas del RAG sobre otra persona del grupo salen del estado.
@@ -28,16 +28,9 @@ from src.config import settings
 from src.flows.state import ConversationState
 
 # sim-5: duracion_por_extractor, edades_por_extractor, reparto_al_sumarse_alguien, notas_rag_desde_estado y
-# paso6_en_llamada_aparte se promocionaron y se borraron sus flags (siempre encendidos). Queda el del plan.
-FLAGS6 = ("plan_elegido_por_extractor",)
+# paso6_en_llamada_aparte se promocionaron y se borraron sus flags (siempre encendidos); sim-6 borró el del plan.
 PROPUESTA = ("Te propongo el *paquete de 5 inmersiones en 2 días*: sales desde Cartagena, duermes en la isla y vuelves "
              "al día siguiente. ¿Te encaja?")
-
-
-@pytest.fixture(autouse=True)
-def _apagados(monkeypatch):
-    for f in FLAGS6:
-        monkeypatch.setattr(settings, f, False)
 
 
 @pytest.fixture
@@ -107,15 +100,8 @@ async def test_cada_campo_con_su_regla(campos, regla):
     assert regla in llamada["messages"][0]["content"]
 
 
-@pytest.mark.asyncio
-async def test_acepta_propuesta_solo_si_el_bot_propuso_un_paquete(encender):
-    encender("plan_elegido_por_extractor")
-    _, sin = await _llamada("perfecto, ese me sirve", {}, history=[{"role": "assistant", "content": "¿Cuántos sois?"}])
-    assert "acepta_propuesta" not in _campos_del_esquema(sin)
-    out, con = await _llamada("perfecto, ese me sirve", {"acepta_propuesta": {"valor": True, "cita": "perfecto, ese me sirve"}},
-                              history=[{"role": "assistant", "content": PROPUESTA}])
-    assert "acepta_propuesta" in _campos_del_esquema(con) and ex.REGLA_ACEPTA_ES in con["messages"][0]["content"]
-    assert out["acepta_propuesta"] is True
+def test_el_plan_que_propone_el_bot():
+    assert ex.plan_que_propone_el_bot([{"role": "assistant", "content": PROPUESTA}]) == 5
     # Comparar varios paquetes no es proponer uno.
     assert ex.plan_que_propone_el_bot([{"role": "assistant", "content": "el de 5 inmersiones en 2 días o el de 7 inmersiones en 3 días"}]) is None
 
@@ -255,47 +241,12 @@ def _con_propuesta(**campos) -> ConversationState:
     return st
 
 
-@pytest.mark.asyncio
-async def test_plan_apagado_solo_la_frase(extractor_dice):
-    extractor_dice({"perfecto, ese me sirve": {"acepta_propuesta": True}})
+def test_el_paquete_propuesto_se_elige_con_la_frase():
     st = _con_propuesta()
-    await core_routing._paquete_confirmado(st, "perfecto, ese me sirve")
+    core_routing._maybe_apply_confirmed_package(st, "perfecto, ese me sirve")
     assert st.detected_cert_dives is None
-    await core_routing._paquete_confirmado(st, "quiero este paquete")
+    core_routing._maybe_apply_confirmed_package(st, "quiero este paquete")
     assert st.detected_cert_dives == 5 and st.mixed_cart == []
-
-
-@pytest.mark.asyncio
-async def test_plan_encendido_aceptar_la_propuesta_la_elige(encender, extractor_dice):
-    encender("plan_elegido_por_extractor")
-    extractor_dice({"perfecto, ese me sirve": {"acepta_propuesta": True}, "¿y cuánto cuesta?": {}})
-    st = _con_propuesta()
-    await core_routing._paquete_confirmado(st, "¿y cuánto cuesta?")
-    assert st.detected_cert_dives is None and st.mixed_cart  # preguntar el precio no es elegir
-    core_extractor.cancelar_extraccion_adelantada(st)  # fin del turno
-    await core_routing._paquete_confirmado(st, "perfecto, ese me sirve")
-    assert st.detected_cert_dives == 5 and st.mixed_cart == []
-
-
-@pytest.mark.asyncio
-async def test_plan_sin_propuesta_no_espera_al_extractor(encender, monkeypatch):
-    encender("plan_elegido_por_extractor")
-    leer = AsyncMock(return_value={"acepta_propuesta": True})
-    monkeypatch.setattr(core_extractor, "lectura_del_extractor", leer)
-    st = _estado()
-    st.history = [{"role": "assistant", "content": "¿Desde dónde saldrías?"}]
-    await core_routing._paquete_confirmado(st, "perfecto")
-    leer.assert_not_awaited()
-
-
-@pytest.mark.asyncio
-async def test_plan_extractor_caido_como_hoy(encender, extractor_caido):
-    encender("plan_elegido_por_extractor")
-    st = _con_propuesta()
-    await core_routing._paquete_confirmado(st, "perfecto, ese me sirve")
-    assert st.detected_cert_dives is None
-    await core_routing._paquete_confirmado(st, "quiero ese paquete")
-    assert st.detected_cert_dives == 5
 
 
 # --- 4. alguien que se suma al grupo -------------------------------------------------------------------------------

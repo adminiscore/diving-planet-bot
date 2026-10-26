@@ -64,12 +64,7 @@ def _actividad(state: ConversationState, datos: dict) -> str | None:
 
 
 def _actividades(state: ConversationState, datos: dict) -> list[str]:
-    """arq-1j (flag `varias_actividades`): todas las del mensaje si nombra dos o más («¿cuánto pagamos un buzo y un
-    acompañante?»); si no, la de siempre."""
-    if settings.varias_actividades:
-        varias = [a for a in dict.fromkeys(datos.get("actividades_preguntadas") or []) if dom.by_id(a) is not None]
-        if len(varias) >= 2:
-            return varias
+    """La actividad del mensaje (y, si es genérica, las concretas de su familia)."""
     una = _actividad(state, datos)
     registro = dom.by_id(una) if una else None
     if registro is not None and registro.generic:
