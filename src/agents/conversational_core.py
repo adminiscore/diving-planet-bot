@@ -1253,7 +1253,7 @@ def _merge_companion_activity(state: ConversationState, activity: str, qty: int)
     main_act = state.detected_activity
     if main_act and main_act not in alloc:
         alloc.setdefault(main_act, state.detected_group_size or 1)
-    known = state.detected_group_size or 0
+    known = state.detected_group_size or 1  # DEUDA-EXT2: sin total, quien escribe es uno (como `setdefault(main, … or 1)`)
     alloc[activity] = alloc.get(activity, 0) + qty
     state.detected_group_allocation = alloc
     state.detected_group_size = sum(alloc.values())
