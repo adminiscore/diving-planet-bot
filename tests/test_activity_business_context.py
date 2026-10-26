@@ -10,54 +10,22 @@ con propositos distintos (decision del owner 2026-09-14, tras medir):
   actividades. Se probo meterlo en los de extraccion y cada frase movia lo que el
   modelo se atreve a rellenar (un caso del eval-set y dos de la bateria, en
   sentidos opuestos segun la redaccion), asi que no va ahi.
+
+lat-11 T6e (26-oct): el tool y el prompt de la extracción del relleno (`fill_gaps`) se quitaron, y sus tests.
 """
 
 import pytest
 
 from src.domain import activities as dom
-from src.prompts.booking import (
-    _ENUM_VALUE_GLOSSES_EN,
-    _ENUM_VALUE_GLOSSES_ES,
-    EXTRACTION_TOOL,
-    SIGNALS_TOOL,
-    _field_enum,
-    extraction_system_prompt,
-)
+from src.prompts.booking import SIGNALS_TOOL
 
 LANGS = ["es", "en"]
 
 
 def test_every_activity_enum_value_exists_in_the_registry():
     ids = set(dom.activity_ids())
-    for field, tool in (("activity", EXTRACTION_TOOL), ("companion_activity", SIGNALS_TOOL)):
-        assert set(_field_enum(field, tool)) <= ids, f"{field} usa valores fuera del registro"
-
-
-def test_extraction_activity_enum_is_bookable_but_not_widened():
-    """F2b, medido 2026-09-14: abrir el enum del extractor a todo lo reservable
-    (15 valores) arreglo 2 casos del eval-set pero rompio 2 deterministas en OTROS
-    campos del mismo prompt de relleno ('im from the states' dejo de dar
-    is_colombian=False; '2 adultos bucean y 2 ninos hacen snorkel' dejo de dar el
-    reparto). El vocabulario abierto se queda en el router; el extractor sigue con
-    su enum medido, que tiene que ser reservable."""
-    assert set(_field_enum("activity")) <= set(dom.bookable_activity_ids())
-
-
-def test_activity_glosses_are_not_copied_by_hand_anymore():
-    for glosses in (_ENUM_VALUE_GLOSSES_ES, _ENUM_VALUE_GLOSSES_EN):
-        assert "activity" not in glosses
-        assert "companion_activity" not in glosses
-
-
-@pytest.mark.parametrize("lang", LANGS)
-def test_extraction_prompts_carry_the_registry_gloss_not_the_full_context(lang):
-    prompts = [extraction_system_prompt(lang, ["activity"])]  # mej-1d: el veto y el combinado se quitaron
-    glossed = [a for a in dom.registry().activities if a.gloss and a.id in _field_enum("activity")]
-    assert glossed, "ninguna actividad del enum tiene gloss: test en vacio"
-    for prompt in prompts:
-        for activity in glossed:
-            assert activity.gloss[lang] in prompt
-            assert activity.for_whom[lang] not in prompt
+    prop = SIGNALS_TOOL["function"]["parameters"]["properties"]["companion_activity"]
+    assert set(prop.get("enum") or prop["items"]["enum"]) <= ids, "companion_activity usa valores fuera del registro"
 
 
 @pytest.mark.parametrize("lang", LANGS)

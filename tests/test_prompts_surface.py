@@ -91,7 +91,6 @@ def test_domain_modules_are_a_leaf_no_src_imports():
         (escalation, "ROUTING_TOOL", router),
         # booking (subgrafo)
         (language_detector, "LANGUAGE_DETECT_PROMPT", booking),
-        (llm_extractor, "EXTRACTION_TOOL", booking),
         (llm_extractor, "SIGNALS_TOOL", booking),
         (llm_extractor, "signals_system_prompt", booking),
         (llm_extractor, "SLOT_RESOLVER_SPEC", booking),

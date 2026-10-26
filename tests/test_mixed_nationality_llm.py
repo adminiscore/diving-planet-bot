@@ -6,6 +6,7 @@ aleman" cobraba en COP) y marcaba mixto "mi amigo es colombiano y yo tambien". O
 lea el LLM. Viaja como `mixed_nationality` en la peticion que el turno ya hace, solo si el
 mensaje habla de quien escribe y de otra persona (con un solo lado el LLM suponia la otra
 mitad 2/2), y el tool de siempre no cambia.
+lat-11 T6e (26-oct): el tool y el prompt de la extracción del relleno (`fill_gaps`) se quitaron, y sus tests.
 """
 
 from unittest.mock import patch
@@ -14,20 +15,12 @@ import pytest
 
 from src.agents import conversational_core as core
 from src.flows.state import ConversationState
-from src.prompts.booking import EXTRACTION_TOOL, extraction_tool
 
 
 @pytest.fixture(autouse=True)
 def _camino_viejo_de_actividad(monkeypatch):
     """Estos tests prueban el camino viejo (regex + veto/relleno). Con ex-8 (`extraccion_llm_actividad`) la actividad y
     la nacionalidad las decide el extractor "LLM primero": tests/test_ex8_actividad_nacionalidad.py."""
-
-
-def test_the_usual_tool_is_untouched():
-    assert extraction_tool() is EXTRACTION_TOOL
-    assert "mixed_nationality" not in EXTRACTION_TOOL["function"]["parameters"]["properties"]
-    variant = extraction_tool(["mixed_nationality"])
-    assert variant["function"]["parameters"]["properties"]["mixed_nationality"]["type"] == "boolean"
 
 
 async def _understand(message, returned):

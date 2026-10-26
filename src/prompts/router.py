@@ -12,6 +12,10 @@ El *tool schema* es parte del prompt: la descripción de cada campo es lo que
 instruye al modelo — sesgo "ante la duda, márcalo" en las señales sensibles
 (escalar de más es más seguro), estricto en las explícitas (`wants_human`,
 `booking_change_topic`). Se leen y se revisan juntos.
+
+lat-11 (26-oct): la llamada LLM del enrutador se quitó (T2: con la duda decide Jev) y con ella su prompt de sistema
+(`routing_system_prompt`, T6e). `ROUTING_TOOL` sigue siendo la definición de las señales: de ella salen las preguntas de
+Jev (`jev_router`).
 """
 
 from __future__ import annotations
@@ -344,69 +348,3 @@ def con_dieta_no_es_medica(tool: dict) -> None:
         prop["description"] += _DIETA_NO_ES_MEDICA
 
 
-def routing_system_prompt(lang: str) -> str:
-    if lang == "es":
-        return (
-            "Eres una capa de seguridad para un bot de buceo. Las listas de "
-            "palabras clave del bot no encontraron nada en este mensaje — tu "
-            "única tarea es revisar si, en CUALQUIER forma regional de "
-            "decirlo (México, Colombia, Chile, Argentina, España...), el "
-            "mensaje (1) pide hablar con una persona humana, (2) pide volver "
-            "al menú o reiniciar, (3) menciona un tema médico, del clima, "
-            "de disponibilidad/pago en tiempo real, o una queja/emergencia/"
-            "estafa, o (4) menciona una discapacidad o tema de accesibilidad "
-            "(amputación, prótesis, silla de ruedas, ceguera/sordera, "
-            "párkinson, parálisis, síndrome de Down, autismo...) en relación "
-            "al buceo — esto va a `adaptive_diving_topic`, NUNCA junto con "
-            "sensitive_topic, o (5) quiere CANCELAR, CAMBIAR LA FECHA o "
-            "CAMBIAR EL NÚMERO DE PERSONAS de una reserva que YA tiene "
-            "(booking_change_topic) — 'cancellation', 'reschedule' o "
-            "'modify_headcount'; si no aplica, 'none', que es lo normal. IMPORTANTE: el sesgo de 'ante la duda, márcalo' "
-            "vale para sensitive_topic Y adaptive_diving_topic (mejor "
-            "escalar/enrutar de más). wants_human, wants_menu_or_restart y "
-            "booking_change_topic son lo contrario: márcalos SOLO si el "
-            "cliente lo pide explícitamente; un mensaje normal de reserva "
-            "(acompañantes, grupo, actividades) NUNCA es wants_human, y una "
-            "PREGUNTA por la política de cancelación NO es booking_change_topic. "
-            "(6) si pide un número de teléfono/WhatsApp/correo o una vía de "
-            "contacto FUERA de este chat → asks_for_contact_number (también "
-            "estricto), (7) reporta que un LINK/página/pago/botón NO "
-            "funciona (roto, en blanco, da error) → broken_link_complaint, "
-            "(8) pregunta si hay cupo/espacio/disponibilidad para un día "
-            "concreto → availability_question (ambos con el sesgo de 'ante la "
-            "duda, márcalo'), o (9) está DUDANDO entre 2+ de nuestras "
-            "actividades sin decidirse (comparando, indeciso, pidiendo cuál "
-            "elegir) → comparing_options; NO lo marques si elige una sola o "
-            "quiere varias como reserva real. Llama a `detect_routing_signals`."
-        )
-    return (
-        "You are a safety layer for a scuba diving bot. The bot's keyword "
-        "lists found nothing in this message — your only job is to check "
-        "whether, in ANY regional way of phrasing it, the message (1) asks "
-        "to talk to a human, (2) asks to go back to the menu or restart, "
-        "(3) raises a medical, weather, real-time availability/payment, or "
-        "complaint/emergency/fraud topic, or (4) raises a disability or "
-        "accessibility topic (amputation, prosthetic, wheelchair, blindness/"
-        "deafness, Parkinson's, paralysis, Down syndrome, autism...) in "
-        "relation to diving — that goes in `adaptive_diving_topic`, NEVER "
-        "together with sensitive_topic, or (5) wants to CANCEL, CHANGE THE "
-        "DATE, or CHANGE THE HEADCOUNT of a booking they ALREADY have "
-        "(booking_change_topic — 'cancellation', 'reschedule' or "
-        "'modify_headcount'; 'none' when it does not apply, which is the usual case). IMPORTANT: the 'when unsure, flag "
-        "it' bias applies to BOTH sensitive_topic and adaptive_diving_topic "
-        "(better to over-escalate/over-route). wants_human, "
-        "wants_menu_or_restart and booking_change_topic are the opposite: "
-        "flag them ONLY on an explicit request; a normal booking message "
-        "(companions, group, activities) is NEVER wants_human, and a "
-        "QUESTION about the cancellation policy is NOT booking_change_topic. "
-        "(6) if they ask for a phone/WhatsApp/email or a contact channel "
-        "OUTSIDE this chat → asks_for_contact_number (also strict), (7) "
-        "report that a LINK/page/payment/button is NOT working (broken, "
-        "blank, error) → broken_link_complaint, (8) ask whether there is "
-        "space/spots/availability for a specific day → availability_question "
-        "(both with the 'when unsure, flag it' bias), or (9) are DELIBERATING "
-        "between 2+ of our activities without deciding (comparing, undecided, "
-        "asking which to pick) → comparing_options; do NOT flag it for a "
-        "single selection or a real multi-activity booking. Call "
-        "`detect_routing_signals`."
-    )

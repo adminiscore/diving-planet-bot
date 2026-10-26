@@ -23,7 +23,6 @@ from src.config import settings
 from src.llm_client import tool_arguments, trace_openai
 from src.observability import con_pieza_llm
 from src.prompts.booking import (
-    EXTRACTION_TOOL,  # noqa: F401 — se reexporta (tests/test_prompts_surface.py)
     SIGNALS_TOOL,
     SLOT_RESOLVER_CONTRADICCION,
     SLOT_RESOLVER_SPEC,
@@ -32,16 +31,12 @@ from src.prompts.booking import (
     slot_resolver_tool,
 )
 from src.prompts.booking import lugar_sin_baru as _lugar_sin_baru
-from src.prompts.booking import tool_sin_baru as _tool_sin_baru
 
 
 def _sin_baru(texto: str) -> str:
     """G3-06: los textos de lugar de estos prompts, sin Barú entre "las islas"."""
     return _lugar_sin_baru(texto, True)
 
-
-def _tool(tool: dict) -> dict:
-    return _tool_sin_baru(tool, True)
 
 logger = logging.getLogger("uvicorn.error")
 
