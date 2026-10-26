@@ -4,13 +4,14 @@
 nivel sin que la pieza de querer lo reconociera, asi que el nivel quedaba "sin decir si lo
 tienen o lo quieren" y el bot preguntaba de mas ("¿ya la tienes o quieres sacarla?"). La
 clase de verbos es cerrada, como la de tener: el deseo, el interes y llegar a serlo.
+lat-11 T6d (26-oct): `certification_status` se quitó con IntentDetector (la certificacion la decide el extractor): su
+False salia de `certification_claim`, que se prueba aqui; tener el nivel se prueba con `course_level_is_ambiguous`.
 """
 
 import pytest
 
 from src.agents.intent_detector import (
     certification_claim,
-    certification_status,
     course_level_is_ambiguous,
 )
 
@@ -39,7 +40,7 @@ def test_wanting_the_level_is_not_ambiguous(message):
     "estoy interesada en sacar la licencia",
 ])
 def test_wanting_the_entry_level_means_not_certified_yet(message):
-    assert certification_status(message) is False
+    assert certification_claim(message) is False
 
 
 @pytest.mark.parametrize("message", [
@@ -48,7 +49,6 @@ def test_wanting_the_entry_level_means_not_certified_yet(message):
 ])
 def test_the_interest_of_another_person_says_nothing_about_the_writer(message):
     assert certification_claim(message) is None
-    assert certification_status(message) is None
     # Para repartir el grupo si cuenta: ese miembro aun no esta certificado.
     assert certification_claim(message, about_writer=False) is False
 
@@ -66,4 +66,4 @@ def test_a_bare_level_is_still_ambiguous(message):
     "ya llevo el rescue, quiero seguir buceando",
 ])
 def test_holding_the_level_is_untouched(message):
-    assert certification_status(message) is True
+    assert course_level_is_ambiguous(message) is False

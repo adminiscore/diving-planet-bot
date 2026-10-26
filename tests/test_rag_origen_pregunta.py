@@ -92,7 +92,6 @@ def conversacion(monkeypatch, extractor_dice):
     extractor_dice({"queremos bucear, somos certificados":
                     {"quiere_bucear": True, "is_certified": True, "activity": "certified_diving"},
                     "desde cartagena": {"location": "cartagena"}})
-    monkeypatch.setattr(core_extraction, "fill_gaps", AsyncMock(return_value={}))
     _senales = AsyncMock(return_value={})
     monkeypatch.setattr(core_routing, "detect_special_signals", _senales)
     monkeypatch.setattr(core_extraction, "detect_special_signals", _senales)

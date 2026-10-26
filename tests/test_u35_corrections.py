@@ -2,13 +2,17 @@
 
 Ronda A del paso 3 (27-sep, golden completo): de 12 "¿lo cambio?", 6 eran la MISMA confirmación
 repetida porque el cliente no contestaba sí/no, y 2 proponían cambiar X por X.
+lat-11 T6d (26-oct): el intent de cada mensaje se construye a mano con lo que leía IntentDetector.detect (la clase se
+quitó); `_route_contradictions` solo escribe en él.
 """
 
+import copy
 from unittest.mock import AsyncMock
 
 import pytest
 
 from src.agents import conversational_core as core
+from src.agents.intent_detector import DetectedIntent
 from src.agents.nucleo import extraction as core_extraction
 from src.agents.nucleo import routing as core_routing
 from src.agents.nucleo import slotfill_close as core_close
@@ -18,7 +22,7 @@ from src.flows.state import ConversationState
 
 @pytest.fixture(autouse=True)
 def _offline(monkeypatch):
-    for modulo, name in ((core_extraction, "fill_gaps"), (core_routing, "detect_special_signals"),
+    for modulo, name in ((core_routing, "detect_special_signals"),
                          (core_extraction, "detect_special_signals"), (core_extraction, "resolve_slot_answer")):
         monkeypatch.setattr(modulo, name, AsyncMock(return_value={}))
     monkeypatch.setattr(core, "extract_notes", AsyncMock(return_value=[]))
@@ -33,8 +37,22 @@ def _state(**kw) -> ConversationState:
     return s
 
 
+# Lo que leia el regex de cada mensaje (IntentDetector.detect, quitado en lat-11 T6d).
+_LECTURAS = {
+    "somos los dos solamente": dict(language="es", detected_fields=["language"]),
+    "somos 4": dict(language="es", group_size=4, detected_fields=["language", "group_size"]),
+    "I apologize for the change and confusion!": dict(language="en", detected_fields=["language"]),
+    "esperate, somos 4 al final, se sumo uno mas": dict(
+        language="es", group_size=4, detected_fields=["language", "group_size"]),
+}
+
+
+def _lectura(message):
+    return DetectedIntent(**copy.deepcopy(_LECTURAS[message]))
+
+
 def _route(st, message, proposed):
-    intent = core._detector.detect(message, st)
+    intent = _lectura(message)
     core._route_contradictions(st, message, intent, proposed)
 
 
@@ -120,7 +138,7 @@ def test_correccion_clara_segun_jev_se_aplica_sin_preguntar(monkeypatch):
     st = _state(detected_group_size=3)
     st._jev_corrects = True
     msg = "esperate, somos 4 al final, se sumo uno mas"
-    intent = core._detector.detect(msg, st)
+    intent = _lectura(msg)
     core._route_contradictions(st, msg, intent, {"group_size": 4})
     assert not st.pending_correction
     assert intent.group_size == 4 and "group_size" in intent.overwrite
@@ -150,13 +168,9 @@ async def test_la_nacionalidad_que_jev_no_ve_afirmada_no_se_rellena(monkeypatch,
     """"Busco el seguinte: Vamos en família a Cartagena..." (portugués): el relleno ponía
     is_colombian=False; Jev dice que el mensaje no la afirma. Los demás campos rellenados se quedan."""
 
-    async def _fill(msg, *_a, only_fields=None, **_k):
-        return {f: v for f, v in {"is_colombian": False, "location": "cartagena"}.items() if f in (only_fields or [])}
-
     async def _combined(fields, veto, msg, *_a, **_k):
         return {f: v for f, v in {"is_colombian": False, "location": "cartagena"}.items() if f in fields}, {}
 
-    monkeypatch.setattr(core_extraction, "fill_gaps", _fill)
     monkeypatch.setattr(core, "extract_and_verify", _combined, raising=False)
 
     async def _signals(message, **_k):

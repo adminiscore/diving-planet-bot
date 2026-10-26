@@ -31,7 +31,6 @@ import logging
 import re
 
 from src.agents.intent_detector import (
-    IntentDetector,
     courses_mentioned,
     matched_activity_categories,
 )
@@ -44,8 +43,6 @@ from src.utils.number_words import number_alt
 from src.utils.text import strip_accents
 
 logger = logging.getLogger("uvicorn.error")
-
-_detector = IntentDetector()
 
 # ─── Slots (orden del plan) ───
 SLOT_ACTIVITY = "activity"
@@ -2241,7 +2238,6 @@ from src.agents.nucleo.extraction import (  # noqa: E402, F401
     _BARE_HEADCOUNT_RE,
     _BOOL_SLOT_FIELD,
     _COURSE_SOLO_RE,
-    _DRIVING_FIELDS,
     _LLM_RESOLVABLE_SLOTS,
     _MENTIONS_PERSON_RE,
     _NAMED_PERSON_RE,
@@ -2269,7 +2265,6 @@ from src.agents.nucleo.extraction import (  # noqa: E402, F401
     _pista_del_regex,
     _question_turn_fields,
     _recommend_inferred_minicourse,
-    _relevant_gaps,
     _restore_main_diver_fields,
     _singular_companion,
     _state_known_fields,
@@ -2316,7 +2311,6 @@ from src.agents.nucleo.routing import (  # noqa: E402, F401
     _CONFIRMS_DESCRIBED_PACKAGE_RE,
     _DELIBERATION_RE,
     _HOTEL_UNKNOWN_RE,
-    _LOCATION_DEFER_RE,
     _accept_pending_correction,
     _apply_short_answer,
     _assign_split_share,

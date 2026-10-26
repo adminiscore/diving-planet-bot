@@ -657,7 +657,6 @@ from src.agents.rutas.info import (  # noqa: E402, F401
     _looks_like_age_eligibility_question,
     _maybe_answer_age_eligibility,
     _private_group_event_answer,
-    intent_detector,
     private_group_event_reply,
 )
 from src.agents.rutas.router import (  # noqa: E402, F401

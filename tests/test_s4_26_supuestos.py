@@ -9,6 +9,7 @@ from unittest.mock import AsyncMock
 import pytest
 
 from src.agents import conversational_core as core
+from src.agents.intent_detector import lectura_del_turno
 from src.agents.nucleo import extraction as core_extraction
 from src.agents.nucleo import routing as core_routing
 from src.agents.nucleo import slotfill_close as core_close
@@ -49,7 +50,7 @@ def test_jev_dudoso_no_tapa_un_acompanante_real(monkeypatch):
 
 @pytest.fixture
 def _offline(monkeypatch):
-    for modulo, name in ((core_extraction, "fill_gaps"), (core_routing, "detect_special_signals"),
+    for modulo, name in ((core_routing, "detect_special_signals"),
                          (core_extraction, "detect_special_signals"), (core_extraction, "resolve_slot_answer")):
         monkeypatch.setattr(modulo, name, AsyncMock(return_value={}))
     monkeypatch.setattr(core, "extract_notes", AsyncMock(return_value=[]))
@@ -123,7 +124,8 @@ def test_el_contexto_del_rag_no_dice_carrito():
 # --- s4-27: la ubicacion deducida del hotel pasa por la puerta de Jev --------------
 
 def test_la_ubicacion_del_hotel_se_declara():
-    intent = core._detector.detect("¿Me pasas el contacto del hotel cocoliso?", _state())
+    # lat-11 T6d (26-oct): con `lectura_del_turno` (IntentDetector.detect se quitó; el lugar lo sigue leyendo este lector).
+    intent = lectura_del_turno("¿Me pasas el contacto del hotel cocoliso?")
     assert intent.location == "island" and intent.hotel == "cocoliso"
     assert "location" in intent.detected_fields
 

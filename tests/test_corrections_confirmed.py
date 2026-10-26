@@ -54,7 +54,6 @@ async def _send(state, message, verify=None):
     # contradiccion sale de compararlo con lo guardado (hallazgo J, 2026-09-15).
     _senales = AsyncMock(return_value={})
     with patch("src.agents.supervisor.detect_routing_signals", new=AsyncMock(return_value={})), \
-         patch.object(core_extraction, "fill_gaps", new=AsyncMock(return_value={})), \
          patch.object(core, "extract_and_verify", create=True,
                       new=AsyncMock(side_effect=lambda *a, **k: (dict(verify or {}), {}))), \
          patch.object(core, "verify_fields", create=True, new=AsyncMock(return_value=verify or {})), \
@@ -120,8 +119,7 @@ async def test_split_with_an_ambiguous_course_level_waits_for_the_answer(extract
     state.language = "es"
     state.detected_group_size = 5
     split = {"group_allocation": {"padi_open_water": 2, "snorkel": 3}}
-    with patch.object(core, "extract_and_verify", create=True, new=AsyncMock(return_value=(split, {}))), \
-         patch.object(core_extraction, "fill_gaps", new=AsyncMock(return_value=split)):
+    with patch.object(core, "extract_and_verify", create=True, new=AsyncMock(return_value=(split, {}))):
         await core._understand(state, "2 open water y 3 snorkel")
     assert state.needs_cert_or_course is True
     assert state.detected_group_allocation is None

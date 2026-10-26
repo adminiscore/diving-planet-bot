@@ -1,17 +1,15 @@
 """Fase 0 gap-filler LLM extractor (docs/robustness/plan.md).
 
 Runs ALONGSIDE the regex-based IntentDetector (src/agents/intent_detector.py),
-never replacing it. `fill_gaps()` only asks the LLM for fields the regex left
-unresolved (None/empty) on a given DetectedIntent, and never overwrites a
-field the regex already resolved. On any error, timeout, or malformed
-response it returns an empty patch — the caller keeps whatever the regex
-already found, so a failure here can never make the bot worse than today.
+never replacing it. Its gap-filler `fill_gaps()` was removed in lat-11 (26-oct): it only
+filled the children's ages when the turn extractor failed (0 calls in
+465 turns of the 26-oct round). What is left here: the special-signals net,
+the slot resolver and the eval helpers.
 
 During Fase 0 this was wired in SHADOW mode only (logged for comparison, never
 applied); that probe (`supervisor._maybe_log_llm_extraction_shadow` and its
 flag `llm_extraction_shadow_mode`) was removed in s4-1: nothing called it since
-28-jul. Today `fill_gaps()` is called by the conversational core
-(`conversational_core._understand`). See docs/robustness/plan.md §3-4.
+28-jul. See docs/robustness/plan.md §3-4.
 """
 
 from __future__ import annotations
@@ -21,32 +19,24 @@ import logging
 
 from openai import AsyncOpenAI, OpenAIError
 
-from src.agents.intent_detector import DetectedIntent
 from src.config import settings
 from src.llm_client import tool_arguments, trace_openai
 from src.observability import con_pieza_llm
 from src.prompts.booking import (
-    EXTRACTION_TOOL,  # noqa: F401 — se reexporta (tests/test_prompts_surface.py)
     SIGNALS_TOOL,
     SLOT_RESOLVER_CONTRADICCION,
     SLOT_RESOLVER_SPEC,
-    extraction_system_prompt,
-    extraction_tool,
     signals_system_prompt,
     slot_resolver_prompt,
     slot_resolver_tool,
 )
 from src.prompts.booking import lugar_sin_baru as _lugar_sin_baru
-from src.prompts.booking import tool_sin_baru as _tool_sin_baru
 
 
 def _sin_baru(texto: str) -> str:
     """G3-06: los textos de lugar de estos prompts, sin Barú entre "las islas"."""
     return _lugar_sin_baru(texto, True)
 
-
-def _tool(tool: dict) -> dict:
-    return _tool_sin_baru(tool, True)
 
 logger = logging.getLogger("uvicorn.error")
 
@@ -85,122 +75,6 @@ EXTRACTABLE_FIELDS = (
     "cert_days",
     "is_colombian",
 )
-
-
-def missing_fields(regex_intent: DetectedIntent) -> list[str]:
-    """Fields EXTRACTABLE_FIELDS the regex-based detector left unresolved.
-
-    Uses `in (None, [])` rather than plain truthiness: `is_certified=False` /
-    `last_dive_over_2_years=False` / `is_colombian=False` are real, resolved
-    answers, not "missing" — a bare `not value` check would wrongly treat
-    them as gaps to fill.
-    """
-    return [f for f in EXTRACTABLE_FIELDS if getattr(regex_intent, f, None) in (None, [])]
-
-
-def _build_messages(system: str, message: str, history: list[dict] | None) -> list[dict]:
-    """system + ventana de historial + el mensaje del turno (fill_gaps; antes tambien el veto, que quito
-    mej-1d)."""
-    messages: list[dict] = [{"role": "system", "content": system}]
-    for turn in (history or [])[-settings.history_retrieval_enrichment_window:]:
-        role = turn.get("role")
-        content = turn.get("content")
-        if role in ("user", "assistant") and content:
-            messages.append({"role": role, "content": content})
-    messages.append({"role": "user", "content": message})
-    return messages
-
-
-def _strip_schema_nulls(args: dict) -> dict:
-    """`group_allocation` vuelve con las claves fijas del schema estricto y las
-    actividades no usadas a null."""
-    ga = (args or {}).get("group_allocation")
-    if isinstance(ga, dict):
-        args["group_allocation"] = {k: v for k, v in ga.items() if v}
-    return args
-
-
-@con_pieza_llm("red_fill_gaps")
-async def fill_gaps(
-    message: str,
-    regex_intent: DetectedIntent,
-    *,
-    history: list[dict] | None = None,
-    lang: str = "es",
-    client: AsyncOpenAI | None = None,
-    only_fields: list[str] | None = None,
-    extra_fields=(),
-) -> dict:
-    """Ask the LLM to fill ONLY the fields `regex_intent` left unresolved.
-
-    Returns a dict patch (field -> value) with just the fields the LLM found
-    real signal for. Never includes a field regex_intent already resolved,
-    and never mutates regex_intent. On any error/timeout/malformed response,
-    returns {} so the caller keeps the regex result untouched.
-
-    `only_fields` (optional) further restricts the request to that subset —
-    used by the conversational core (Fix B, conversational-refactor-handoff)
-    to avoid asking the LLM for fields the conversation STATE already knows
-    even though this turn's regex intent left them None. Fewer requested
-    fields = fewer tokens and less misfill surface.
-    """
-    missing = missing_fields(regex_intent)
-    if only_fields is not None:
-        missing = [f for f in missing if f in only_fields]
-    if not missing or not message or not message.strip():
-        return {}
-    # Campos que no salen del detector y solo viajan cuando se piden, con su propia
-    # variante del tool (`extraction_tool`, hallazgo A): nunca abren una peticion solos.
-    missing = missing + [f for f in extra_fields if f not in missing]
-    tool = _tool(extraction_tool(extra_fields))
-
-    messages: list[dict] = [{"role": "system", "content": _sin_baru(extraction_system_prompt(lang, missing))}]
-    for turn in (history or [])[-settings.history_retrieval_enrichment_window:]:
-        role = turn.get("role")
-        content = turn.get("content")
-        if role in ("user", "assistant") and content:
-            messages.append({"role": role, "content": content})
-    messages.append({"role": "user", "content": message})
-
-    try:
-        client = client or trace_openai(AsyncOpenAI(api_key=settings.openai_api_key))
-        response = await client.chat.completions.create(
-            model=settings.red_extractor_model,
-            messages=messages,
-            tools=[tool],
-            tool_choice={"type": "function", "function": {"name": "extract_fields"}},
-            temperature=0.0,
-            max_tokens=200,
-        )
-        choice = response.choices[0].message
-        tool_calls = getattr(choice, "tool_calls", None)
-        if not tool_calls:
-            return {}
-        args = tool_arguments(tool_calls[0], tool)
-    except (json.JSONDecodeError, TypeError, AttributeError, IndexError) as exc:
-        logger.warning(f"[LLM_EXTRACTOR][DEGRADED] malformed response: {exc}")
-        return {}
-    except Exception as exc:  # noqa: BLE001
-        logger.warning(f"[LLM_EXTRACTOR][DEGRADED] error: {exc}")
-        return {}
-
-    # Strict schema: group_allocation comes back with fixed keys where the
-    # unused activities are null — strip those so downstream sees only the
-    # real split (and an all-null object counts as "no signal").
-    ga = (args or {}).get("group_allocation")
-    if isinstance(ga, dict):
-        args["group_allocation"] = {k: v for k, v in ga.items() if v}
-
-    # Belt and suspenders: only keep fields that were actually missing (never
-    # let the LLM overwrite something regex already resolved) and that have a
-    # real, non-empty value.
-    patch = {
-        k: v for k, v in (args or {}).items()
-        if k in missing and v not in (None, "", [], {})
-    }
-    if patch:
-        logger.info(f"[LLM_EXTRACTOR] filled gaps={list(patch.keys())} msg={message[:60]!r}")
-    return patch
 
 
 def compare_with_ground_truth(patch: dict, expected: dict) -> dict:

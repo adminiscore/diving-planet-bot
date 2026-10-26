@@ -26,7 +26,6 @@ MODELOS = (
     "rag_answer_model",
     "grounding_v3_model",
     "extraction_model",
-    "senales_model",  # mod-3: las piezas de extraction_model, cada una con su modelo
     "red_extractor_model",
     "resolutor_model",
     "notas_model",

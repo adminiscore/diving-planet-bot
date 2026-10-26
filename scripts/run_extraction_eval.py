@@ -1,7 +1,7 @@
 """Fase 0 eval-set runner (docs/robustness/plan.md §4-5).
 
-Runs the REALISTIC end-to-end pipeline — regex IntentDetector first, then the
-LLM gap-filler on whatever it left missing — against
+Runs the REALISTIC end-to-end pipeline (lat-11 T6d, 26-oct: the turn's `_understand`; the regex IntentDetector
+and the LLM gap-filler are gone) against
 docs/robustness/eval-set.json, and reports per-field agreement with the
 hand-labeled `expected` values. This is the tool used to decide, per domain,
 whether the Fase 1+ cutover criteria (plan.md §4) are met.
@@ -19,11 +19,11 @@ environment that has one, e.g.:
     ENV_FILE=.env.dev python -m scripts.run_extraction_eval
     ssh ... "docker exec -i dp-pre-bot python3 -m scripts.run_extraction_eval"
 
-Banco ex-0 (fase EX, 12-oct): `--banco ex0 --modo regex|actual --grupo diseño|ciego|todos` (ver el bloque
+Banco ex-0 (fase EX, 12-oct): `--banco ex0 --modo regex|actual|llm-primero --grupo diseño|ciego|todos` (ver el bloque
 "Banco ex-0" abajo y docs/robustness/regex/banco-ex0/README.md).
 
-Usage: no arguments, or `--core` to run each case through the real turn
-(`conversational_core._understand`, production config, guards included) and
+Usage: no arguments (`--core` is still accepted: it is the only mode since lat-11 T6d) runs each case through the
+real turn (`conversational_core._understand`, production config, guards included) and
 score what the turn changed in the state. Cases may carry an optional `state`
 (e.g. the pending slot a `history` implies). Prints a per-case and a per-field
 summary to stdout.
@@ -35,11 +35,8 @@ import logging
 import sys
 from pathlib import Path
 
-from src.agents.intent_detector import IntentDetector
 from src.agents.llm_extractor import (
-    EXTRACTABLE_FIELDS,
     compare_with_ground_truth,
-    fill_gaps,
 )
 from src.flows.state import ConversationState
 
@@ -100,13 +97,6 @@ def _install_watcher() -> _DegradationWatcher:
     lg.setLevel(logging.WARNING)
     return w
 
-def _regex_resolved(intent) -> dict:
-    return {
-        f: getattr(intent, f)
-        for f in EXTRACTABLE_FIELDS
-        if getattr(intent, f, None) not in (None, [])
-    }
-
 
 # ── Modo --core (2026-09-15) ─────────────────────────────────────────────────
 #
@@ -154,34 +144,20 @@ async def _core_turn(case: dict) -> tuple[dict, dict]:
     return produced, {"estado_inicial": {f: v for f, v in before.items() if v not in (None, [], {})}}
 
 
-async def _script_turn(case: dict, detector: IntentDetector) -> tuple[dict, dict]:
-    state = ConversationState(conversation_id=f"eval-{case['id']}")
-    regex_intent = detector.detect(case["message"], state)
-    resolved = _regex_resolved(regex_intent)
-    patch = await fill_gaps(
-        case["message"], regex_intent, history=case.get("history"), lang=case.get("lang", "es"),
-    )
-    combined = {**resolved, **patch}
-
-    # El veto de campos ya resueltos (sep-2026) salio del camino real en ex-9 y se borro en MEJ-1 (21-oct): este modo
-    # mide regex + `fill_gaps`, como el producto.
-    return combined, {"regex_had": resolved, "llm_patch": patch}
-
-
-async def run(core: bool = False) -> None:
+async def run() -> None:
+    """lat-11 T6d (26-oct): sin el modo «script» (solo el regex de IntentDetector, que se quitó): cada caso por el turno."""
     with open(EVAL_SET_PATH, encoding="utf-8") as f:
         cases = json.load(f)["cases"]
 
-    detector = IntentDetector()
     field_stats: dict[str, dict[str, int]] = {}
     total_agree = total_disagree = total_missed = 0
     watcher = _install_watcher()
     contaminados: list[str] = []
-    print(f"Modo: {'nucleo (_understand, config de produccion)' if core else 'script (regex + fill_gaps)'}")
+    print("Modo: nucleo (_understand, config de produccion)")
 
     for case in cases:
         antes_degradado = watcher.degraded
-        combined, context = await (_core_turn(case) if core else _script_turn(case, detector))
+        combined, context = await _core_turn(case)
 
         # Si la cuota se agoto, PARAR: seguir solo quema peticiones para
         # producir numeros invalidos (y ademas impide re-correr la medicion
@@ -241,9 +217,9 @@ async def run(core: bool = False) -> None:
     # buenas: el 2026-09-12 un `grep -v` borro justo la fila de `activity`,
     # el campo que se estaba midiendo. Un fichero aparte no se puede
     # corromper asi.
-    out = EVAL_SET_PATH.parent / ("eval-last-run-core.json" if core else "eval-last-run.json")
+    out = EVAL_SET_PATH.parent / "eval-last-run-core.json"
     out.write_text(json.dumps({
-        "modo": "core" if core else "script",
+        "modo": "core",
         "per_field": field_stats,
         "overall": {"agree": total_agree, "disagree": total_disagree, "missed": total_missed},
         "cases_evaluados": evaluados,
@@ -274,7 +250,8 @@ async def run(core: bool = False) -> None:
 # etiqueta no trae es "no lo dice", así que si el extractor pone un valor es un INVENTO. Grupos diseño/ciego por
 # diálogo (sha1 % 2, fijado antes de medir): ajustar SOLO mirando el de diseño.
 #
-#   --modo regex   lo determinista: lector de respuestas cortas a la pregunta pendiente + detector (sin LLM ni Jev)
+#   --modo regex   lo determinista: lector de respuestas cortas a la pregunta pendiente (sin LLM ni Jev; lat-11 T6d:
+#                  sin el detector IntentDetector, que se quitó)
 #   --modo actual  el turno de producción hasta entender el mensaje: señales del router (Jev, en cascada), lector de
 #                  respuestas cortas y `_understand` (regex + sus redes LLM), con la config de producción
 BANCO_EX0 = Path(__file__).resolve().parent.parent / "docs" / "robustness" / "regex" / "banco-ex0"
@@ -324,7 +301,7 @@ def _cambios(antes: dict, despues: dict) -> dict:
 TIEMPOS_EX0: list[float] = []
 
 
-async def _turno_ex0(caso: dict, modo: str, detector: IntentDetector, modelo: str | None = None) -> dict:
+async def _turno_ex0(caso: dict, modo: str, modelo: str | None = None) -> dict:
     from src.agents import conversational_core  # lazy
 
     if modo == "llm-primero":
@@ -351,9 +328,7 @@ async def _turno_ex0(caso: dict, modo: str, detector: IntentDetector, modelo: st
         if not (resuelto and len(msg.strip()) <= 12):
             await conversational_core._understand(state, msg, answered_pending=resuelto)
         return _cambios(antes, _state_values(state))
-    intent = detector.detect(msg, state)
-    return {**{f: v for f, v in _regex_resolved(intent).items() if f in CAMPOS_EX0},
-            **_cambios(antes, _state_values(state))}
+    return _cambios(antes, _state_values(state))
 
 
 def _tolerado(campo: str, valor, esperado: dict, sabido: dict | None = None) -> bool:
@@ -390,7 +365,6 @@ def puntuar_ex0(producido: dict, esperado: dict, sabido: dict | None = None) -> 
 
 async def run_ex0(modo: str, grupo: str, modelo: str | None = None) -> None:
     casos = casos_ex0(grupo)
-    detector = IntentDetector()
     watcher = _install_watcher()
     por_campo: dict[str, dict[str, int]] = {f: {"acierto": 0, "equivocado": 0, "perdido": 0, "inventado": 0}
                                             for f in CAMPOS_EX0}
@@ -398,7 +372,7 @@ async def run_ex0(modo: str, grupo: str, modelo: str | None = None) -> None:
     print(f"Banco ex0 · modo {modo}{f' ({modelo})' if modelo else ''} · grupo {grupo} · {len(casos)} casos")
     for caso in casos:
         antes_degradado = watcher.degraded
-        producido = await _turno_ex0(caso, modo, detector, modelo)
+        producido = await _turno_ex0(caso, modo, modelo)
         if watcher.rate_limited:
             print(f"\n!! ABORTADO en {caso['id']!r}: rate-limit de la API (ver el modo de siempre).", file=sys.stderr)
             sys.exit(2)
@@ -454,4 +428,4 @@ if __name__ == "__main__":
                 setattr(settings, args[i + 1], True)
         asyncio.run(run_ex0(modo, grupo, modelo))
     else:
-        asyncio.run(run(core="--core" in args))
+        asyncio.run(run())

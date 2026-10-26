@@ -1,372 +1,31 @@
+"""Los lectores del regex que siguen vivos: edades, duracion y lugar (`lectura_del_turno`), las categorias de actividad
+y `certification_claim`.
+lat-11 T6d (26-oct): fuera los tests de IntentDetector.detect (idioma, actividad, certificacion, grupo, ultima inmersion,
+nacionalidad y confianza; la clase se quito y esos campos los decide el extractor).
+"""
 import pytest
 from src.agents.intent_detector import (
-    IntentDetector,
-    DetectedIntent,
     certification_claim,
+    lectura_del_turno,
     matched_activity_categories,
 )
-from src.flows.state import ConversationState
 
 
-@pytest.fixture
-def detector():
-    return IntentDetector()
+class TestAgeDetection:
 
-
-@pytest.fixture
-def state():
-    return ConversationState(conversation_id="test-123")
-
-
-class TestLanguageDetection:
-    
-    def test_detect_spanish(self, detector, state):
-        intent = detector.detect("Hola quiero bucear", state)
-        assert intent.language == "es"
-        assert "language" in intent.detected_fields
-    
-    def test_detect_english(self, detector, state):
-        intent = detector.detect("Hello I want to dive", state)
-        assert intent.language == "en"
-        assert "language" in intent.detected_fields
-    
-    def test_spanish_with_multiple_keywords(self, detector, state):
-        intent = detector.detect("Hola somos dos personas que queremos hacer buceo", state)
-        assert intent.language == "es"
-
-
-class TestActivityDetection:
-    
-    def test_detect_certified_diving(self, detector, state):
-        intent = detector.detect("quiero hacer buceo", state)
-        assert intent.activity == "certified_diving"
-        assert intent.service_id == "2_dives_1_day"
-        assert "activity" in intent.detected_fields
-    
-    def test_detect_minicourse(self, detector, state):
-        intent = detector.detect("quiero hacer un minicurso de buceo", state)
-        assert intent.activity == "minicourse"
-        assert intent.service_id == "minicourse"
-        assert intent.is_certified is False
-    
-    def test_detect_snorkel(self, detector, state):
-        intent = detector.detect("quiero hacer snorkel", state)
-        assert intent.activity == "snorkel"
-        assert intent.service_id == "snorkeling"
-    
-    def test_detect_padi_open_water(self, detector, state):
-        intent = detector.detect("quiero hacer el curso open water", state)
-        assert intent.activity == "padi_open_water"
-        assert intent.service_id == "open_water"
-
-    def test_detect_advanced_course(self, detector, state):
-        intent = detector.detect("I want to do the advanced course", state)
-        assert intent.activity == "padi_advanced"
-        assert intent.service_id == "advanced"
-
-    def test_detect_specialty_nitrox(self, detector, state):
-        intent = detector.detect("quiero hacer el curso de nitrox", state)
-        assert intent.activity == "specialty_nitrox"
-        assert intent.service_id == "nitrox_specialty"
-
-    def test_already_have_cert_not_classified_as_wanting_the_course(self, detector, state):
-        """Bug real hallado en la batería de la Fase 6 (docs/robustness/
-        live-test-battery-fase6.md A6): '_HOLDS_CERT_RE' exigía "i have"
-        pegado; "i ALREADY have" con la palabra de por medio rompía el match
-        y el mensaje se clasificaba como querer TOMAR el curso Open Water
-        (padi_open_water) en vez de reconocer que ya lo tiene."""
-        intent = detector.detect("i already have my open water card, want to do more dives", state)
-        assert intent.activity != "padi_open_water"
-        assert intent.activity == "certified_diving"
-
-    def test_ya_tengo_el_open_water_es(self, detector, state):
-        intent = detector.detect("ya tengo el open water, quiero seguir buceando", state)
-        assert intent.activity == "certified_diving"
-
-
-class TestCertificationDetection:
-    
-    def test_detect_certified(self, detector, state):
-        intent = detector.detect("soy buzo certificado", state)
-        assert intent.is_certified is True
-        assert "is_certified" in intent.detected_fields
-    
-    def test_detect_not_certified(self, detector, state):
-        intent = detector.detect("no soy certificado, es mi primera vez", state)
-        assert intent.is_certified is False
-    
-    def test_detect_certified_english(self, detector, state):
-        intent = detector.detect("I am a certified diver", state)
-        assert intent.is_certified is True
-    
-    def test_minicourse_implies_not_certified(self, detector, state):
-        intent = detector.detect("quiero hacer el minicurso", state)
-        assert intent.is_certified is False
-        assert intent.activity == "minicourse"
-
-    def test_english_not_certified_typo(self, detector, state):
-        """Real bug found live against PRE (2026-07-21): 'not_certified_patterns'
-        required exact "certified" spelling ('\\bnot\\s+certified\\b'), while
-        'certified_patterns' has a typo-tolerant catch-all ('\\bcert\\w*\\b')
-        checked afterwards. So "im not certfied tho" matched NEITHER negation
-        pattern NOR the exact positive one, fell through to the typo-tolerant
-        catch-all, and was wrongly read as is_certified=True — the bot told a
-        beginner "I see you are a certified diver"."""
-        intent = detector.detect("hi i wanna dive, im not certfied tho, just me", state)
-        assert intent.is_certified is False
-
-    def test_spanish_bv_typo_activity_detection(self, detector, state):
-        """Real bug found live against PRE (2026-07-21): "vucea" (b/v typo for
-        "bucea", a very common confusion for Spanish speakers since both letters
-        sound identical) was not recognized as a diving-activity word at all —
-        the message fell through to RAG entirely and got rejected as a
-        hallucination, landing on the generic advisor fallback instead of
-        entering the booking flow. Without the typo ("bucea"), the exact same
-        message correctly asks certification."""
-        intent = detector.detect("vamos 2, mi novia y yo, ella no vucea solo yo", state)
-        assert intent.activity == "certified_diving"
-
-
-class TestGroupDetection:
-    
-    def test_detect_group_size_somos_dos(self, detector, state):
-        intent = detector.detect("somos dos personas", state)
-        assert intent.group_size == 2
-        assert "group_size" in intent.detected_fields
-    
-    def test_detect_group_size_venimos_tres(self, detector, state):
-        intent = detector.detect("venimos tres", state)
-        assert intent.group_size == 3
-    
-    def test_detect_group_size_number(self, detector, state):
-        intent = detector.detect("somos 4 personas", state)
-        assert intent.group_size == 4
-    
-    def test_detect_group_size_english(self, detector, state):
-        intent = detector.detect("we are 3 people", state)
-        assert intent.group_size == 3
-
-    def test_detect_group_size_somos_nueve(self, detector, state):
-        """Word-form numbers used to stop at 'ocho' (8) in this pattern while
-        digits ('9') already worked — real bug found 2026-07-16."""
-        intent = detector.detect("somos nueve, queremos bucear", state)
-        assert intent.group_size == 9
-
-    def test_detect_group_size_somos_diez(self, detector, state):
-        intent = detector.detect("somos diez, queremos bucear", state)
-        assert intent.group_size == 10
-
-    def test_detect_group_size_family_of_nine_english(self, detector, state):
-        intent = detector.detect("family of nine", state)
-        assert intent.group_size == 9
-
-    def test_detect_group_size_me_plus_n_friends(self, detector, state):
-        """Fase 7 candidato / bug real hallado en la batería de la Fase 6
-        (docs/robustness/live-test-battery-fase6.md B3): 'me plus 3 friends'
-        son 4 personas (el hablante + 3), no 3 — el patrón genérico de conteo
-        capturaba solo el número pegado a 'friends' sin sumar al hablante."""
-        intent = detector.detect("me plus 3 friends, ppl wanna try diving first time", state)
-        assert intent.group_size == 4
-
-    def test_detect_group_size_n_plus_me(self, detector, state):
-        intent = detector.detect("3 friends plus me want to dive", state)
-        assert intent.group_size == 4
-
-    def test_detect_group_size_tengo_n_amigos(self, detector, state):
-        """Bug en vivo PRE (2026-07-23, Rocío): 'tengo 3 amigos que quieren
-        hacer alguna actividad' facturaba 3 personas en vez de 4 (ella + 3).
-        'tengo N amigos' declara POSESIÓN de N acompañantes, misma forma que
-        'voy con N amigos', no un 'somos N' literal — el total es N+1."""
-        intent = detector.detect("tengo 3 amigos que quieren hacer alguna actividad", state)
-        assert intent.group_size == 4
-
-    def test_detect_group_size_i_have_n_friends(self, detector, state):
-        intent = detector.detect("I have 3 friends who want to dive", state)
-        assert intent.group_size == 4
-
-    def test_detect_mixed_group_yo_buceo_amigo_snorkel(self, detector, state):
-        intent = detector.detect("yo quiero buceo y mi amigo snorkel", state)
-        assert intent.group_allocation is not None
-        assert intent.group_allocation.get("certified_diving") == 1
-        assert intent.group_allocation.get("snorkel") == 1
-        assert intent.group_size == 2
-    
-    def test_detect_mixed_group_uno_buceo_otro_snorkel(self, detector, state):
-        intent = detector.detect("uno quiere buceo y el otro snorkel", state)
-        assert intent.group_allocation is not None
-        assert intent.group_allocation.get("certified_diving") == 1
-        assert intent.group_allocation.get("snorkel") == 1
-    
-    def test_detect_mixed_minicourse_snorkel(self, detector, state):
-        intent = detector.detect("yo haría el minicurso y mi novia snorkel", state)
-        # Should detect minicourse activity at minimum
-        assert intent.activity == "minicourse"
-        assert intent.is_certified is False
-
-    def test_detect_mixed_group_mitad_x_mitad_y(self, detector, state):
-        """Hallazgo en vivo (batería de grupos mixtos contra PRE, 2026-09-01,
-        lote 8): "somos 10 de una empresa, mitad buceo certificado y mitad
-        snorkel" no matcheaba NINGÚN patrón de reparto (todos exigían
-        cantidades explícitas por actividad) — la conversación se quedaba
-        atascada repitiendo "¿cuántos serían para buceo certificado?" sin
-        importar qué respondiera el cliente después, porque nunca iba a dar
-        un número exacto (ya lo dijo con "mitad"). El impar (si lo hay) se
-        lo lleva la PRIMERA actividad mencionada."""
-        intent = detector.detect(
-            "somos 10 de una empresa, mitad buceo certificado y mitad snorkel", state)
-        assert intent.group_size == 10
-        assert intent.group_allocation == {"certified_diving": 5, "snorkel": 5}
-
-    def test_detect_mixed_group_mitad_odd_total_rounds_to_first_activity(self, detector, state):
-        intent = detector.detect("somos 9, mitad certificado y mitad minicurso", state)
-        assert intent.group_size == 9
-        assert intent.group_allocation == {"certified_diving": 5, "minicourse": 4}
-
-    def test_detect_mixed_group_mitad_certificado_mitad_nunca_ha_buceado(self, detector, state):
-        """Hallazgo del inventario regex (2026-09-03): _activity_key() (helper
-        interno de _detect_group_info) tenia su PROPIO vocabulario de "esto es
-        buceo certificado" por substring (`in text`), sin la exclusion de
-        cualificadores de experiencia que ya tenia _CERTIFIED_DIVING_PATTERNS
-        -- "nunca ha buceado" clasificaba mal como certified_diving solo por
-        contener "buce". Ahora reusa matched_activity_categories()."""
-        intent = detector.detect("somos 4, mitad certificado y mitad nunca ha buceado", state)
-        assert intent.group_size == 4
-        assert intent.group_allocation == {"certified_diving": 2, "minicourse": 2}
-
-    def test_detect_mixed_group_mitad_comma_separated(self, detector, state):
-        intent = detector.detect("somos 7, mitad snorkel, la otra mitad buceo", state)
-        assert intent.group_size == 7
-        assert intent.group_allocation == {"snorkel": 4, "certified_diving": 3}
-
-    def test_detect_mixed_group_half_x_half_y_english(self, detector, state):
-        intent = detector.detect("we are 6, half diving and half snorkel", state)
-        assert intent.group_size == 6
-        assert intent.group_allocation == {"certified_diving": 3, "snorkel": 3}
-
-    def test_mitad_without_activity_context_does_not_false_positive(self, detector, state):
-        """"mitad" fuera de contexto de reparto de actividades (pago, tiempo)
-        no debe disparar ningún group_allocation espurio."""
-        intent = detector.detect("puedo pagar la mitad ahora y la mitad despues?", state)
-        assert intent.group_allocation is None
-
-    def test_detect_mixed_group_three_activities(self, detector, state):
-        """Hallazgo en vivo (batería de grupos mixtos contra PRE, 2026-09-01,
-        lote 8): "somos 6: 2 bucean certificados, 2 hacen minicurso y 2
-        snorkel" solo capturaba 2 de las 3 actividades (el patrón de reparto
-        exigía exactamente un par de cláusulas) — el resumen final terminaba
-        sin la línea de buceo certificado, y `group_size` se recalculaba
-        como 4 en vez de 6 (solo sumaba las 2 actividades capturadas)."""
-        intent = detector.detect(
-            "somos 6: 2 bucean certificados, 2 hacen minicurso y 2 snorkel", state)
-        assert intent.group_size == 6
-        assert intent.group_allocation == {
-            "certified_diving": 2, "minicourse": 2, "snorkel": 2,
-        }
-
-    def test_detect_mixed_group_two_activities_still_uses_pattern_a(self, detector, state):
-        """Regresión: un reparto de 2 actividades (el caso ya cubierto por el
-        Patrón A) debe seguir funcionando igual tras añadir el patrón de 3+."""
-        intent = detector.detect("2 de buceo y 3 de snorkel", state)
-        assert intent.group_size == 5
-        assert intent.group_allocation == {"certified_diving": 2, "snorkel": 3}
-
-    @pytest.mark.parametrize("message,expected_size", [
-        ("vamos 4: 2 certificados, 1 minicurso y 1 snorkel", 4),
-        ("somos 4, 2 certificados, 1 minicurso y 1 snorkel", 4),
-        ("somos 5: 3 certificados, 1 minicurso y 1 snorkel", 5),
-    ])
-    def test_incomplete_allocation_never_shrinks_explicit_group_size(
-        self, detector, state, message, expected_size
-    ):
-        """Hallazgo en vivo (batería sintética de repartos, 2026-09-10):
-        "N certificados" (sin verbo, a diferencia de "N bucean certificados")
-        no matchea `activity_kw`, así que el Patrón E de 3+ actividades no se
-        activa, cae al Patrón A, captura solo 2 de las 3 cláusulas, y la suma
-        (2) sobreescribía el total explícito del cliente — una reserva de 5
-        personas se convertía en una de 2, con impacto directo en el precio
-        (mismo patrón de fallo que la §6.bis). El reparto puede quedar
-        incompleto, pero el TOTAL declarado por el cliente nunca se reduce en
-        silencio."""
-        intent = detector.detect(message, state)
-        assert intent.group_size == expected_size
-
-    def test_allocation_may_still_grow_group_size_when_sum_is_larger(self, detector, state):
-        """La guarda es unidireccional a propósito: un reparto SÍ puede
-        ampliar el total cuando la suma real es mayor que lo que un patrón
-        genérico había fijado (aquí "2 de buceo" fijaría 2; el total real
-        es 5)."""
-        intent = detector.detect("2 de buceo y 3 de snorkel", state)
-        assert intent.group_size == 5
-
-    def test_pareja_alone_still_resolves_two(self, detector, state):
-        """El patrón 'pareja' -> 2 sigue funcionando para las afirmaciones
-        reales de "somos pareja"/"una pareja"/"con mi pareja" (sin más gente
-        mencionada). Investigado 2026-09-10 (batería sintética): "mi pareja
-        y nuestros dos hijos" también matchea esto y subcuenta a 2 en vez de
-        4 — gap conocido, no arreglado (un intento de excluir "mi/tu/su
-        pareja" rompió el caso real validado abajo, que SÍ debe dar 2)."""
-        intent = detector.detect("somos pareja", state)
-        assert intent.group_size == 2
-
-
-class TestLastDiveDetection:
-    
-    def test_detect_last_dive_6_months(self, detector, state):
-        # Note: This requires exact phrasing with numbers
-        intent = detector.detect("mi última inmersión fue hace 6 meses", state)
-        assert intent.last_dive_over_2_years is False
-        assert "last_dive_over_2_years" in intent.detected_fields
-    
-    def test_detect_last_dive_3_years(self, detector, state):
-        intent = detector.detect("última inmersión fue hace 3 años", state)
-        assert intent.last_dive_over_2_years is True
-    
-    def test_detect_last_dive_english(self, detector, state):
-        intent = detector.detect("my last dive was 1 year ago", state)
-        assert intent.last_dive_over_2_years is False
-
-    def test_hace_como_n_anos_does_not_leak_into_ages(self, detector, state):
+    def test_hace_como_n_anos_does_not_leak_into_ages(self):
         """Bug real hallado en la batería de la Fase 6 (docs/robustness/
         live-test-battery-fase6.md D5): 'hace como 3 años que no buceo' —
         la guarda que descarta 'hace N años' como edad solo miraba 8
         caracteres atrás, y 'como' entre 'hace' y el número empujaba 'hace'
         fuera de esa ventana, colando un niño fantasma de 3 años que
         contaminaría kids_under_8_count en el checkout."""
-        intent = detector.detect("hace como 3 años que no buceo, seré yo solo", state)
-        assert intent.ages == []
-        assert intent.last_dive_over_2_years is True
-
-    def test_hace_ya_n_anos_does_not_leak_into_ages_english(self, detector, state):
-        intent = detector.detect("it's been like 4 years since i last dived", state)
+        intent = lectura_del_turno("hace como 3 años que no buceo, seré yo solo")
         assert intent.ages == []
 
-    def test_two_last_dive_clauses_take_the_conservative_one(self, detector, state):
-        """Hallazgo en vivo (batería sintética contra PRE, 2026-08-26): "yo
-        bucee hace 1 mes pero mi amigo no bucea hace 8 años" tiene DOS
-        cláusulas "hace N periodo" en el mismo mensaje — `re.search` solo
-        capturaba la PRIMERA (la del hablante, reciente) e ignoraba en
-        silencio la del acompañante (>2 años), perdiendo la necesidad real
-        de ofrecer refresher al grupo. La propia pregunta del bot es "¿ha
-        pasado más de 2 años desde la última inmersión de ALGUNO del
-        grupo?" — el criterio correcto es el más conservador: si CUALQUIER
-        cláusula indica >2 años/24 meses, el valor final debe ser True."""
-        intent = detector.detect(
-            "yo bucee hace 1 mes pero mi amigo no bucea hace 8 años", state
-        )
-        assert intent.last_dive_over_2_years is True
-
-        # El orden inverso (la cláusula de >2 años aparece PRIMERO) ya
-        # funcionaba antes del fix y debe seguir funcionando.
-        intent2 = detector.detect(
-            "mi amigo no bucea hace 8 años pero yo bucee hace 1 mes", state
-        )
-        assert intent2.last_dive_over_2_years is True
-
-        # Sin ninguna cláusula >2 años, el resultado sigue siendo False.
-        intent3 = detector.detect(
-            "yo bucee hace 1 mes y mi amigo hace 3 meses", state
-        )
-        assert intent3.last_dive_over_2_years is False
+    def test_hace_ya_n_anos_does_not_leak_into_ages_english(self):
+        intent = lectura_del_turno("it's been like 4 years since i last dived")
+        assert intent.ages == []
 
     # Edades en PALABRA (2026-07-24): _detect_ages era digit-only; "mi hija de
     # nueve años" no se capturaba y el gate de elegibilidad caía a RAG genérico.
@@ -378,269 +37,65 @@ class TestLastDiveDetection:
         ("kids aged eight and eleven", [8, 11]),
         ("¿a partir de qué edad?", []),          # sin edad concreta
     ])
-    def test_word_ages_detected(self, detector, state, message, expected):
-        assert detector.detect(message, state).ages == expected
+    def test_word_ages_detected(self, message, expected):
+        assert lectura_del_turno(message).ages == expected
 
-    def test_word_age_timeframe_not_leaked(self, detector, state):
+    def test_word_age_timeframe_not_leaked(self):
         """"llevo nueve años sin bucear" es un plazo, NO una edad."""
-        intent = detector.detect("llevo nueve años sin bucear, voy solo", state)
+        intent = lectura_del_turno("llevo nueve años sin bucear, voy solo")
         assert intent.ages == []
 
 
 class TestDurationDetection:
     
-    def test_detect_single_day(self, detector, state):
-        intent = detector.detect("estoy solo un día", state)
+    def test_detect_single_day(self):
+        intent = lectura_del_turno("estoy solo un día")
         assert intent.duration == "single_day"
         assert "duration" in intent.detected_fields
     
-    def test_detect_multi_day(self, detector, state):
-        intent = detector.detect("estoy varios días en las islas", state)
+    def test_detect_multi_day(self):
+        intent = lectura_del_turno("estoy varios días en las islas")
         assert intent.duration == "multi_day"
     
-    def test_detect_multi_day_number(self, detector, state):
-        intent = detector.detect("estoy 3 días", state)
+    def test_detect_multi_day_number(self):
+        intent = lectura_del_turno("estoy 3 días")
         assert intent.duration == "multi_day"
 
-    def test_detect_multi_day_without_accent_typo(self, detector, state):
+    def test_detect_multi_day_without_accent_typo(self):
         """'dias'/'dia' without the accent (very common on phones) used to
         silently fail to match — real bug found 2026-07-16."""
-        intent = detector.detect("estamos 5 dias en la isla, que podemos hacer?", state)
+        intent = lectura_del_turno("estamos 5 dias en la isla, que podemos hacer?")
         assert intent.duration == "multi_day"
 
-    def test_detect_varios_dias_without_accent_typo(self, detector, state):
-        intent = detector.detect("vamos varios dias a la isla", state)
+    def test_detect_varios_dias_without_accent_typo(self):
+        intent = lectura_del_turno("vamos varios dias a la isla")
         assert intent.duration == "multi_day"
 
-    def test_detect_single_day_without_accent_typo(self, detector, state):
-        intent = detector.detect("estoy solo un dia", state)
+    def test_detect_single_day_without_accent_typo(self):
+        intent = lectura_del_turno("estoy solo un dia")
         assert intent.duration == "single_day"
-
-
-class TestNationalityDetection:
-
-    def test_colombian_by_city_medellin(self, detector, state):
-        """A common way to self-identify as Colombian is naming a Colombian
-        city instead of the country — real gap found 2026-07-16."""
-        intent = detector.detect("soy de Medellin, quiero bucear", state)
-        assert intent.is_colombian is True
-
-    def test_colombian_by_city_bogota(self, detector, state):
-        intent = detector.detect("somos de Bogota", state)
-        assert intent.is_colombian is True
-
-    def test_not_colombian_when_only_currently_in_cartagena(self, detector, state):
-        """'estoy en Cartagena' is current whereabouts, not an origin claim —
-        must NOT be misread as Colombian nationality (a foreign tourist could
-        say this)."""
-        intent = detector.detect("estoy en Cartagena, soy de España", state)
-        assert intent.is_colombian is not True
-
-    @pytest.mark.parametrize("message", [
-        "ninguno colombiano",
-        "ninguno es colombiano",
-        "ninguno de nosotros es colombiano",
-        "nadie es colombiano",
-    ])
-    def test_group_negation_ninguno_nadie_reads_as_not_colombian(self, detector, state, message):
-        """Hallazgo en vivo (batería de grupos mixtos contra PRE, 2026-09-01,
-        lote 8): "ninguno colombiano" (respuesta de GRUPO a "¿sois
-        colombianos?") no matcheaba la negación (exigía "no soy/somos"
-        literal) y caía al regex afirmativo (que solo busca la palabra
-        "colombiano" en cualquier parte) — is_colombian quedaba en True,
-        justo lo contrario de la intención. El resumen final terminaba
-        diciendo "como sois colombianos, el pago es en pesos" a un grupo
-        que explícitamente dijo que NINGUNO lo era — riesgo real de
-        confusión de pago."""
-        intent = detector.detect(message, state)
-        assert intent.is_colombian is False
 
 
 class TestLocationDetection:
     
-    def test_detect_cartagena(self, detector, state):
-        intent = detector.detect("estoy en Cartagena", state)
+    def test_detect_cartagena(self):
+        intent = lectura_del_turno("estoy en Cartagena")
         assert intent.location == "cartagena"
         assert "location" in intent.detected_fields
     
-    def test_detect_isla_grande(self, detector, state):
-        intent = detector.detect("estoy en Isla Grande", state)
+    def test_detect_isla_grande(self):
+        intent = lectura_del_turno("estoy en Isla Grande")
         assert intent.island == "isla_grande"
         assert intent.location == "island"
     
-    def test_detect_hotel_pao_pao(self, detector, state):
-        intent = detector.detect("estoy en el hotel Pao Pao", state)
+    def test_detect_hotel_pao_pao(self):
+        intent = lectura_del_turno("estoy en el hotel Pao Pao")
         assert intent.hotel == "pao_pao"
         assert "hotel" in intent.detected_fields
     
-    def test_detect_hotel_cocoliso(self, detector, state):
-        intent = detector.detect("me hospedo en Cocoliso", state)
+    def test_detect_hotel_cocoliso(self):
+        intent = lectura_del_turno("me hospedo en Cocoliso")
         assert intent.hotel == "cocoliso"
-
-
-class TestCompleteScenarios:
-    
-    def test_complete_certified_group_spanish(self, detector, state):
-        intent = detector.detect("Hola somos dos personas que queremos hacer buceo y estamos certificados", state)
-        assert intent.language == "es"
-        assert intent.activity == "certified_diving"
-        assert intent.is_certified is True
-        assert intent.group_size == 2
-        assert intent.confidence > 0.5
-    
-    def test_complete_certified_single_english(self, detector, state):
-        intent = detector.detect("Hello I am a certified diver and want to dive", state)
-        assert intent.language == "en"
-        assert intent.activity == "certified_diving"
-        assert intent.is_certified is True
-        assert intent.confidence > 0.4
-    
-    def test_complete_minicourse_spanish(self, detector, state):
-        intent = detector.detect("Hola quiero hacer el minicurso de buceo, es mi primera vez", state)
-        assert intent.language == "es"
-        assert intent.activity == "minicourse"
-        assert intent.is_certified is False
-        assert intent.confidence > 0.4
-    
-    def test_complete_mixed_group(self, detector, state):
-        intent = detector.detect("Somos dos, yo quiero buceo certificado y mi novia snorkel", state)
-        assert intent.language == "es"
-        assert intent.group_size == 2
-        assert intent.is_certified is True
-        assert intent.activity == "certified_diving"
-        # Group allocation might not be detected in all cases, but key info is there
-        assert intent.confidence > 0.5
-    
-    def test_ambiguous_diving_no_certification(self, detector, state):
-        intent = detector.detect("Hola quiero bucear", state)
-        assert intent.language == "es"
-        assert intent.activity == "certified_diving"
-        assert intent.is_certified is None
-    
-    def test_diving_with_location(self, detector, state):
-        intent = detector.detect("Quiero hacer buceo, estoy en Cartagena y soy certificado", state)
-        assert intent.activity == "certified_diving"
-        assert intent.is_certified is True
-        assert intent.location == "cartagena"
-
-
-class TestConfidenceScoring:
-    
-    def test_high_confidence_complete_info(self, detector, state):
-        intent = detector.detect("Hola somos dos buzos certificados que queremos hacer buceo", state)
-        assert intent.confidence >= 0.5
-    
-    def test_medium_confidence_partial_info(self, detector, state):
-        intent = detector.detect("Hola quiero bucear", state)
-        # Should detect language and activity at minimum
-        assert intent.confidence >= 0.2
-    
-    def test_low_confidence_minimal_info(self, detector, state):
-        intent = detector.detect("Hola", state)
-        assert intent.confidence <= 0.2
-
-
-class TestOpenWaterCertSplit:
-    """v0.17.2: 'dos tenemos open water y una no' must yield a cert+minicourse
-    allocation so the bot skips the ambiguous certification question."""
-
-    def test_es_open_water_and_one_not(self, detector, state):
-        intent = detector.detect(
-            "hola somos tres personas que queremos bucear, dos tenemos el open water y una no",
-            state,
-        )
-        assert intent.group_allocation == {"certified_diving": 2, "undecided": 1}
-        assert intent.group_size == 3
-
-    def test_es_con_open_water_short(self, detector, state):
-        intent = detector.detect("somos 3, 2 con open water y 1 no", state)
-        assert intent.group_allocation == {"certified_diving": 2, "undecided": 1}
-
-    def test_en_have_open_water(self, detector, state):
-        intent = detector.detect("we are three, two have open water and one does not", state)
-        assert intent.group_allocation == {"certified_diving": 2, "undecided": 1}
-
-
-class TestCertificationOnlyNotCertifiedCount:
-    """Regression: "somos 2 ... y uno no esta certificado" only states the
-    NOT-certified count (no explicit "N certified" phrase) — the certified
-    count must be inferred as the complement of the known group size, and the
-    activity must be inferred as diving even without the word "buceo", since
-    certification is a diving-only concept in this business. Also covers the
-    typo "certficado" that was breaking detection entirely."""
-
-    def test_es_only_not_certified_count_no_activity_word(self, detector, state):
-        intent = detector.detect(
-            "Hola somos dos personas y uno no esta certificado", state
-        )
-        assert intent.activity == "certified_diving"
-        assert intent.group_allocation == {"certified_diving": 1, "undecided": 1}
-        assert intent.confidence > 0.2
-
-    def test_es_typo_certficado_still_detected(self, detector, state):
-        """The exact reported typo: "certficado" (missing the second "i")."""
-        intent = detector.detect(
-            "Hola somos dos personas y uno no esta certficado", state
-        )
-        assert intent.activity == "certified_diving"
-        # "uno no esta certficado" habla de uno de los dos, no de quien escribe (2026-09-15).
-        assert intent.is_certified is None
-        assert intent.group_allocation == {"certified_diving": 1, "undecided": 1}
-
-    def test_es_three_people_one_not_certified(self, detector, state):
-        intent = detector.detect("somos 3, uno no esta certificado", state)
-        assert intent.group_allocation == {"certified_diving": 2, "undecided": 1}
-
-    def test_en_one_is_not_certified(self, detector, state):
-        intent = detector.detect(
-            "we are 2 and one is not certified", state
-        )
-        assert intent.activity == "certified_diving"
-        assert intent.group_allocation == {"certified_diving": 1, "undecided": 1}
-
-    def test_certification_mention_without_group_size_still_infers_activity(
-        self, detector, state
-    ):
-        """No group size at all — still infers diving from "certficado" alone
-        (typo) so a solo "estoy certficado" doesn't fall through to RAG."""
-        intent = detector.detect("hola estoy certficado", state)
-        assert intent.activity == "certified_diving"
-        assert intent.is_certified is True
-
-
-class TestSingularSelfInfersOnePerson:
-    """A singular first-person self-identification as a diver means 1 person, so
-    the flow shouldn't ask "¿cuántas personas?" (reported miss: "hola soy Sofia,
-    ya soy certificada, quiero unas inmersiones" was asking for a headcount)."""
-
-    @pytest.mark.parametrize(
-        "message",
-        [
-            "hola soy Sofia, ya soy certificada, quiero hacer unas inmersiones en Cartagena",
-            "soy certificado, quiero bucear en cartagena",
-            "quiero bucear, soy certificada",
-            "soy buzo open water",
-            "estoy certificado y quiero bucear",
-            "i am a certified diver, i want to dive in cartagena",
-        ],
-    )
-    def test_singular_certified_self_infers_one(self, detector, state, message):
-        assert detector.detect(message, state).group_size == 1
-
-    @pytest.mark.parametrize(
-        "message",
-        [
-            "soy certificado y quiero bucear con mi novia",   # companion
-            "soy certificado, quiero bucear con 3 amigos",    # explicit other count
-            "somos certificados, queremos bucear",            # plural
-            "quiero reservar para mi familia, soy certificado",  # collective
-            "soy certificado pero mi esposa no bucea",        # companion (spouse)
-        ],
-    )
-    def test_more_than_one_hint_stays_conservative(self, detector, state, message):
-        # Any "more than one" signal must NOT be collapsed to 1 (a wrong 1 would
-        # undercount the booking); the flow asks instead.
-        assert detector.detect(message, state).group_size != 1
 
 
 class TestMatchedActivityCategories:
@@ -725,23 +180,3 @@ class TestCertificationClaim:
         """'not certfied' (typo real, bug live 2026-07-21) debe leer False,
         no True por el catch-all generico \\bcert\\w*\\b."""
         assert certification_claim("not certfied") is False
-
-
-class TestCompanionNounSharedVocabulary:
-    """Inventario regex 2026-09-03: _detect_group_info usaba su propio
-    vocabulario local (_companion_noun) para 'me + N companions', sin las
-    mismas familias que otras listas del mismo concepto. Ahora reusa
-    _PERSON_NOUN_PLURAL_ES/EN -- cierra un gap real (hermanos/primos en
-    plural no contaban, "voy con 2 hermanos" resolvia group_size=None)."""
-
-    def test_voy_con_hermanos_gap_closed(self, detector, state):
-        intent = detector.detect("voy con 2 hermanos, queremos bucear", state)
-        assert intent.group_size == 3
-
-    def test_tengo_primos_gap_closed(self, detector, state):
-        intent = detector.detect("tengo 3 primos que quieren bucear", state)
-        assert intent.group_size == 4
-
-    def test_me_plus_friends_still_works(self, detector, state):
-        intent = detector.detect("me plus 3 friends, we want to dive", state)
-        assert intent.group_size == 4

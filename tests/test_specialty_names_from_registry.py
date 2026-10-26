@@ -4,6 +4,7 @@ El vocabulario de especialidades estaba escrito tres veces en el detector y la t
 de cursos que usa el nucleo solo conocia nitrox: "dudo entre la especialidad de nitrox
 y la de flotabilidad" nombraba una sola oferta y se reservaba nitrox. Ahora el nombre
 es la etiqueta sin el sustantivo de la familia ("Especialidad Flotabilidad").
+lat-11 T6d (26-oct): fuera el test de IntentDetector.detect (la clase se quitó; la actividad la decide el extractor).
 """
 
 import pytest
@@ -11,7 +12,6 @@ import pytest
 from src.agents import conversational_core as core
 from src.agents import intent_detector as det
 from src.domain import activities as dom
-from src.flows.state import ConversationState
 
 
 def test_every_specialty_has_its_name_in_the_course_table():
@@ -31,14 +31,6 @@ def test_every_specialty_has_its_name_in_the_course_table():
 ])
 def test_specialty_names(message, activity_id):
     assert det.courses_mentioned(message) == [activity_id]
-
-
-@pytest.mark.parametrize("message, activity_id", [
-    ("quiero hacer la especialidad naturalist", "specialty_naturalist"),
-    ("I'd like to do the identificacion de peces specialty", "specialty_fish_identification"),
-])
-def test_detector_activity_uses_the_same_names(message, activity_id):
-    assert det.IntentDetector().detect(message, ConversationState(conversation_id="c")).activity == activity_id
 
 
 def test_doubt_between_two_specialties_is_a_comparison():

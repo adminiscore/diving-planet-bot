@@ -5,16 +5,14 @@ hasta tres palabras por medio y en ingles cuatro frases cerradas, de las que la 
 certificacion solo tenia una ("never dived"). Por eso "never been underwater before, wanna
 give it a try, solo" no salia como no certificado. Ahora es la misma regla en los dos
 idiomas: nunca + auxiliares + el tema de sumergirse.
+lat-11 T6d (26-oct): `certification_status` e IntentDetector.detect se quitaron (la certificacion y la actividad las
+decide el extractor); la negacion se prueba en `certification_claim`, que es de donde `certification_status` sacaba
+el False.
 """
 
 import pytest
 
-from src.agents.intent_detector import IntentDetector, certification_status
-from src.flows.state import ConversationState
-
-
-def _intent(message: str):
-    return IntentDetector().detect(message, ConversationState(conversation_id="nd"))
+from src.agents.intent_detector import certification_claim
 
 
 @pytest.mark.parametrize("message", [
@@ -31,15 +29,7 @@ def _intent(message: str):
     "nunca nos hemos sumergido",
 ])
 def test_never_underwater_means_not_certified(message):
-    assert certification_status(message) is False
-
-
-@pytest.mark.parametrize("message", [
-    "never been underwater before, wanna give it a try, solo",
-    "nunca he estado bajo el agua",
-])
-def test_never_underwater_is_the_minicourse(message):
-    assert _intent(message).activity == "minicourse"
+    assert certification_claim(message) is False
 
 
 @pytest.mark.parametrize("message", [
@@ -49,7 +39,7 @@ def test_never_underwater_is_the_minicourse(message):
     "never tried nitrox but i am advanced",
 ])
 def test_never_about_something_else_is_not_a_claim(message):
-    assert certification_status(message) is not False
+    assert certification_claim(message) is not False
 
 
 def test_the_two_lists_share_one_source():

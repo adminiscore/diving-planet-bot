@@ -170,10 +170,8 @@ async def test_formato_sin_ia(extractor, slot, mensaje, campo, valor):
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("slot,mensaje,campo,valor", [
-    (SLOT_LOCATION, "da igual", "location", "cartagena"),
     (SLOT_HOTEL, "no sé todavía", "hotel", "por confirmar"),
     (SLOT_HOTEL, "hotel las palmas", "hotel", "hotel las palmas"),
-    (SLOT_QTY, "somos 4", "detected_group_size", 4),
 ])
 async def test_la_ia_calla_decide_el_regex(extractor, slot, mensaje, campo, valor):
     extractor(None)
@@ -181,6 +179,21 @@ async def test_la_ia_calla_decide_el_regex(extractor, slot, mensaje, campo, valo
     assert await core_routing._lectura_de_la_ia(st, mensaje, {}, slot) is None
     assert await _respuesta(st, mensaje) is True
     assert getattr(st, campo) == valor
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("slot,mensaje,campo", [
+    (SLOT_LOCATION, "da igual", "location"),
+    (SLOT_QTY, "somos 4", "detected_group_size"),
+])
+async def test_la_ia_calla_y_sin_detector_no_se_decide_aqui(extractor, slot, mensaje, campo):
+    """lat-11 T6b (26-oct): la duda al origen y el total de varias palabras los leía el detector entero
+    (IntentDetector), que se quita. Si la IA calla, no se deciden aquí: sigue el turno (resolutor) o se pregunta."""
+    extractor(None)
+    st = _estado(slot, detected_activity="certified_diving")
+    assert await core_routing._lectura_de_la_ia(st, mensaje, {}, slot) is None
+    assert await _respuesta(st, mensaje) is False
+    assert getattr(st, campo) is None
 
 
 @pytest.mark.asyncio
@@ -197,15 +210,15 @@ async def test_otras_preguntas_no_cambian(extractor):
 @pytest.mark.asyncio
 @pytest.mark.parametrize("jev,lee", [(True, True), (False, False)])
 async def test_respuesta_corta_por_la_ia_pasa_por_el_extractor(monkeypatch, extractor, jev, lee):
-    extractor(None)  # sin Jev y con el extractor caído, el regex de "da igual" (como hoy: se salta `_understand`)
+    extractor(None)  # sin Jev y con el extractor caído, el formato ("1" = Cartagena; como hoy: se salta `_understand`)
     entender = AsyncMock(return_value=(None, False))
     monkeypatch.setattr(core_extraction, "_understand", entender)
     st = _estado(SLOT_LOCATION, detected_activity="certified_diving")
     st.history = [{"role": "assistant", "content": "¿Desde dónde saldrías?"}, {"role": "user", "content": "el hilton"}]
-    carry = await core_routing._routing_phase(st, "el hilton" if jev else "da igual",
+    carry = await core_routing._routing_phase(st, "el hilton" if jev else "1",
                                               _jev(SLOT_LOCATION, "cartagena") if jev else {}, "")
     assert carry["resolved_short"] is True and st.location == "cartagena"
-    await core_extraction._extraction_phase_body(st, "el hilton" if jev else "da igual", {}, "", carry)
+    await core_extraction._extraction_phase_body(st, "el hilton" if jev else "1", {}, "", carry)
     assert entender.await_count == (1 if lee else 0)
 
 

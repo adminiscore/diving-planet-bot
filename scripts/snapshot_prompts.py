@@ -31,7 +31,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from src.agents import llm_extractor, rag_agent, redactor_hechos  # noqa: E402
+from src.agents import rag_agent, redactor_hechos  # noqa: E402
 from src.prompts import booking as _booking  # noqa: E402
 from src.prompts import info as _info  # noqa: E402
 from src.prompts import memory as _memory  # noqa: E402
@@ -78,34 +78,14 @@ def _collect() -> dict[str, str]:
     def add_json(key: str, value: object) -> None:
         add(key, json.dumps(value, ensure_ascii=False, sort_keys=True, indent=2))
 
-    # ── router · detect_routing_signals ──────────────────────────────────────
-    for lang in LANGS:
-        add(f"router/routing_signals.system.{lang}", router.routing_system_prompt(lang))
+    # ── router · las señales del turno (las preguntas de Jev; lat-11 T6e: sin el prompt del router LLM) ──
     add_json("router/routing_signals.tool", router.ROUTING_TOOL)
     # gen-3 (20-oct, flag `dieta_no_es_medica`): la misma definición con la exclusión de la dieta (sobre una copia).
     tool_dieta = json.loads(json.dumps(router.ROUTING_TOOL))
     router.con_dieta_no_es_medica(tool_dieta)
     add_json("router/routing_signals.tool.dieta_no_es_medica", tool_dieta)
 
-    # ── booking · extracción (fill_gaps) ─────────────────────────────────────
-    # El texto interpola los campos pedidos: se cubren el caso de 1 campo, el de
-    # varios, y el de TODOS los extraíbles (el máximo real).
-    field_variants = {
-        "one": ["activity"],
-        "few": ["activity", "group_size", "location"],
-        "all": list(llm_extractor.EXTRACTABLE_FIELDS),
-    }
-    for lang in LANGS:
-        for name, fields in field_variants.items():
-            add(
-                f"booking/extraction.system.{lang}.{name}",
-                booking.extraction_system_prompt(lang, fields),
-            )
-    add_json("booking/extraction.tool", booking.EXTRACTION_TOOL)
-    # Variante con los campos que solo viajan cuando el nucleo los pide (hallazgo A).
-    add_json("booking/extraction.tool+mixed_nationality", booking.extraction_tool(["mixed_nationality"]))
-    add_json("booking/extraction.tool+evidence", booking.extraction_tool(["evidence"]))
-    add_json("booking/evidence.fields", list(booking.EVIDENCE_FIELDS))
+    # (lat-11 T6e, 26-oct: el tool y el prompt de la extracción del relleno `fill_gaps` se quitaron.)
 
     # (mej-1d: el veto y el prompt combinado se quitaron; no corrian desde ex-9.)
 
@@ -130,7 +110,6 @@ def _collect() -> dict[str, str]:
     for lang in LANGS:
         add(f"booking/slot_resolver.system.location.{lang}.sin_baru",
             booking.lugar_sin_baru(booking.slot_resolver_prompt("location", lang)))
-    add_json("booking/extraction.tool.sin_baru", booking.tool_sin_baru(booking.EXTRACTION_TOOL))
 
     # ── booking/setup · detección de idioma ──────────────────────────────────
     add("booking/language_detect.prompt.template", booking.LANGUAGE_DETECT_PROMPT)

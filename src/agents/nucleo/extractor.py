@@ -13,14 +13,14 @@ import logging
 from src.agents.conversational_core import (
     _EXPLICIT_NUMBER_RE,
     _NAME_STOPWORDS,
-    _detector,
+    SLOT_COMPANION_QTY,
     _has_pending_answer,
     _jev_dice_que_no_lo_dice,
     _known_field_values,
     _otro_idioma_en_ingles,
     _same_for_customer,
 )
-from src.agents.intent_detector import DetectedIntent
+from src.agents.intent_detector import DetectedIntent, detect_location
 from src.domain import activities as dom
 from src.flows.state import ConversationState
 
@@ -359,6 +359,13 @@ def _poner_grupo(intent, state: ConversationState, message: str, datos: dict) ->
     guardado = _known_field_values(state)
     corrige = _has_correction_cue(state, message)
     reparto, total = _reparto_valido(datos.get("group_allocation"), message, state), datos.get("group_size")
+    if total is not None and not reparto and state.core_pending_slot == SLOT_COMPANION_QTY:
+        # lat-11 T6b (26-oct): con «¿Cuántos serían para X?» pendiente, la cifra sola («3 personas», «son 2») contesta
+        # esa pregunta, no el total del grupo: la reparte la red de acompañantes (el resolutor). El extractor la tomaba
+        # por el total y se sumaba dos veces (banco-lat11-t6b, c1: «3 personas» -> 3 buzos + 3 snorkel; c2 «son 2» igual
+        # también antes, cuando el atajo del detector entero no la leía).
+        logger.info(f"[EXTRACT][LAT11] group_size={total!r} contesta «¿cuántos para X?»: no es el total del grupo")
+        total = None
     if reparto and _amplia(reparto, _reparto_guardado(state)) and _jev_dice_que_nadie_se_suma(state):
         # ex-9b paso 6 (`reparto_al_sumarse_alguien`): el extractor suma a alguien y Jev está seguro de que el mensaje
         # habla de alguien ya contado (s4-26, `adds_person`). Dos lectores en contra: no se suma a nadie aquí; lo decide
@@ -479,10 +486,10 @@ def _poner_ubicacion(intent, state: ConversationState, message: str, datos: dict
 
 def _hotel_del_catalogo(nombre: str) -> tuple[str, str | None] | None:
     """CAL-C3e: (hotel_id, isla) si el hotel que nombra el cliente está en el catálogo de hoteles de las islas que ya usa
-    el detector (`IntentDetector._detect_location`: 'ubuntu' → isla_marina…); None si no. Se le pasa SOLO el nombre
+    el detector (`detect_location`: 'ubuntu' → isla_marina…); None si no. Se le pasa SOLO el nombre
     (cita comprobada por el extractor), así que solo puede encontrar ese hotel, como `_departure_place`."""
     intent = DetectedIntent()
-    _detector._detect_location((nombre or "").lower(), intent)
+    detect_location((nombre or "").lower(), intent, nombra_un_hotel=True)
     return (intent.hotel, intent.island) if intent.hotel else None
 
 

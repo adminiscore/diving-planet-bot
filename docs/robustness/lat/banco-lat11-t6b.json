@@ -1,0 +1,13 @@
+{
+ "about": "lat-11 T6b (26-oct): sin el detector entero, ¿la respuesta de varias palabras a «¿Cuántos serían para X?» («3 personas», «somos 2», «two of them») sigue repartiendo bien al grupo? Antes la leía el detector («N personas», «somos N», «we are N»); ahora sigue el turno normal (extractor y red de precisión). Se mira el ESTADO final (reparto y total), no solo la respuesta. Frases nuestras: no salen del golden, de G9/G10 ni de las charlas reales. c*: respuesta de varias palabras; f*: control de formato (cifra sola, no cambia). Fragmentos sin tildes y en minúsculas (puntuar_banco_rag; «a|b» = cualquiera).",
+ "dialogos": [
+  {"id": "c1-tres-personas", "tipo": "cantidad_acompanante", "turnos": ["Hola, quiero bucear, soy certificado y salgo desde Cartagena. Vienen unos amigos que quieren hacer snorkel", "3 personas"], "reparto": {"certified_diving": 1, "snorkel": 3}, "ninguno": ["cuantos serian para"]},
+  {"id": "c2-somos-dos", "tipo": "cantidad_acompanante", "turnos": ["Quiero bucear, tengo el Open Water, desde Cartagena, y unas amigas se animan al snorkel", "son 2"], "reparto": {"certified_diving": 1, "snorkel": 2}, "ninguno": ["cuantos serian para"]},
+  {"id": "c3-two-of-them-en", "tipo": "cantidad_acompanante", "turnos": ["Hi, I'm a certified diver leaving from Cartagena, and some friends of mine want to snorkel", "two of them"], "reparto": {"certified_diving": 1, "snorkel": 2}, "ninguno": ["how many people would that be"]},
+  {"id": "c4-dos-personas", "tipo": "cantidad_acompanante", "turnos": ["Soy buzo certificado, salgo de Cartagena, y unos primos quieren probar el minicurso", "dos personas"], "reparto": {"certified_diving": 1, "minicourse": 2}, "ninguno": ["cuantos serian para"]},
+  {"id": "c5-uno-solo", "tipo": "cantidad_acompanante", "turnos": ["Hola, buceo certificado desde Cartagena; viene gente que quiere hacer snorkel", "uno solo"], "reparto": {"certified_diving": 1, "snorkel": 1}, "ninguno": ["cuantos serian para"]},
+  {"id": "c6-four-people-en", "tipo": "cantidad_acompanante", "turnos": ["Hello, certified diver here, from Cartagena; a few friends are coming and they want to try the minicourse", "4 people"], "reparto": {"certified_diving": 1, "minicourse": 4}, "ninguno": ["how many people would that be"]},
+  {"id": "f1-cifra-sola", "tipo": "formato", "turnos": ["Quiero bucear, soy certificado, desde Cartagena. Vienen unos amigos que quieren hacer snorkel", "3"], "reparto": {"certified_diving": 1, "snorkel": 3}, "ninguno": ["cuantos serian para"]},
+  {"id": "f2-number-word-en", "tipo": "formato", "turnos": ["I'm a certified diver leaving from Cartagena; some friends want to snorkel", "two"], "reparto": {"certified_diving": 1, "snorkel": 2}, "ninguno": ["how many people would that be"]}
+ ]
+}

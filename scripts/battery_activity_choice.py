@@ -102,7 +102,9 @@ def _context_block(lang: str, ids: list[str]) -> str:
 
 
 def _with_for_whom():
-    companion_ids = booking._field_enum("companion_activity", booking.SIGNALS_TOOL)
+    # lat-11 T6e: `booking._field_enum` se quitó con el prompt de la extracción; la lista sale del tool.
+    prop = booking.SIGNALS_TOOL["function"]["parameters"]["properties"]["companion_activity"]
+    companion_ids = prop.get("enum") or prop.get("items", {}).get("enum")
     llm_extractor.signals_system_prompt = (
         lambda lang: _ORIG["signals_prompt"](lang) + _context_block(lang, companion_ids)
     )

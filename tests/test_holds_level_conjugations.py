@@ -5,17 +5,19 @@ pieza de tener un nivel solo conocia "tengo/tenemos/tiene(n)", el nivel quedaba 
 si lo tienen y `_flag_cert_or_course` borraba el valor para preguntar. Mismo hueco en "hice
 mi open water" (conversacion real) o "I did my open water". La clase de verbos es cerrada:
 tener y llevar, y haberlo hecho (hacer, sacar, terminar, completar).
+lat-11 T6d (26-oct): fuera los tests de IntentDetector.detect, `holds_padi_cert` y `certification_status` (se quitaron;
+la certificacion la decide el extractor); el verbo de tener un nivel se sigue probando en `_HOLDS_CERT_RE`.
 """
 
 import pytest
 
-from src.agents.intent_detector import (
-    IntentDetector,
-    certification_status,
-    course_level_is_ambiguous,
-    holds_padi_cert,
-)
-from src.flows.state import ConversationState
+from src.agents.intent_detector import _HOLDS_CERT_RE, _WANTS_CERT_RE, course_level_is_ambiguous
+
+
+def _holds_a_level(message):
+    """Lo que leia `holds_padi_cert(message, about_writer=False)` (se quito con IntentDetector en lat-11 T6d): alguien
+    TIENE un nivel PADI, sin querer sacarlo. Sigue vivo en `course_level_is_ambiguous`."""
+    return bool(_HOLDS_CERT_RE.search(message)) and not _WANTS_CERT_RE.search(message)
 
 
 @pytest.mark.parametrize("message", [
@@ -31,15 +33,8 @@ from src.flows.state import ConversationState
     "we have done the open water",
 ])
 def test_writer_holds_the_level(message):
-    assert holds_padi_cert(message) is True
+    assert _holds_a_level(message)
     assert not course_level_is_ambiguous(message)
-    assert certification_status(message) is True
-
-
-def test_holding_the_level_is_certified_diving_not_the_course():
-    intent = IntentDetector().detect("ya llevo el rescue, quiero seguir buceando", ConversationState(conversation_id="f1"))
-    assert intent.activity == "certified_diving"
-    assert intent.is_certified is True
 
 
 @pytest.mark.parametrize("message", [
@@ -47,10 +42,8 @@ def test_holding_the_level_is_certified_diving_not_the_course():
     "mi novia lleva el advanced",
     "my wife completed the advanced",
 ])
-def test_other_person_holds_the_level_but_not_the_writer(message):
-    assert holds_padi_cert(message, about_writer=False) is True
-    assert holds_padi_cert(message) is False
-    assert certification_status(message) is None
+def test_other_person_holds_the_level(message):
+    assert _holds_a_level(message)
 
 
 @pytest.mark.parametrize("message", [
@@ -60,7 +53,7 @@ def test_other_person_holds_the_level_but_not_the_writer(message):
     "ya hice la teoria y la piscina en mi centro PADI y traigo la carta de referido para terminar el open water",
 ])
 def test_wanting_a_level_is_not_holding_it(message):
-    assert holds_padi_cert(message) is False
+    assert not _holds_a_level(message)
 
 
 @pytest.mark.parametrize("message", [
@@ -69,4 +62,4 @@ def test_wanting_a_level_is_not_holding_it(message):
     "¿tienen el advanced?",        # preguntar al centro no es tenerlo
 ])
 def test_bare_level_or_question_is_not_holding(message):
-    assert holds_padi_cert(message) is False
+    assert not _holds_a_level(message)

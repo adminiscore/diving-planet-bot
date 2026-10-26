@@ -15,20 +15,13 @@ These lock in the DETERMINISTIC layer that the 4 live-testing bugs lived in:
 The full LLM-mediated routing (orchestrator answer/book/escalate) is exercised
 live and in the async supervisor tests; here we pin only the regex/keyword layer
 so it stays fast, deterministic, and free of network/DB dependencies.
+lat-11 T6d (26-oct): fuera los tests de IntentDetector.detect (escenarios 1-3, 5, 7 y 8: actividad, certificacion y
+grupo; la clase se quitó y esos campos los decide el extractor). Queda el guard de escalado con los 8 mensajes.
 """
 
 import pytest
 
-from src.agents.intent_detector import IntentDetector
 from src.agents.supervisor import _matches_escalation_keyword
-from src.flows.state import ConversationState
-
-
-detector = IntentDetector()
-
-
-def _detect(msg: str):
-    return detector.detect(msg, ConversationState(conversation_id="owner-test"))
 
 
 # Every owner message, indexed by scenario, for the escalation-keyword guard.
@@ -55,74 +48,3 @@ def test_no_owner_message_false_positives_escalation(key, msg):
     "hay una persona que tiene 14 años" escalated with an empty reply).
     """
     assert _matches_escalation_keyword(msg.lower()) is False
-
-
-# --- Scenario 1: budget + 5 people + no experience --------------------------
-
-def test_scenario1_five_beginners_detected():
-    intent = _detect(OWNER_MESSAGES["1_budget_5_no_exp"])
-    assert intent.is_certified is False  # "nunca hemos hecho buceo" -> not certified
-    assert intent.activity == "minicourse"
-    assert intent.group_size == 5
-
-
-# --- Scenario 2: never dived, asks for a recommendation ---------------------
-
-def test_scenario2_never_dived_is_beginner():
-    intent = _detect(OWNER_MESSAGES["2_never_dived_reco"])
-    assert intent.is_certified is False
-    assert intent.activity == "minicourse"
-
-
-# --- Scenario 3: couple, one certified (OW) + one not, don't split them ------
-
-def test_scenario3a_couple_group_size_two():
-    intent = _detect(OWNER_MESSAGES["3a_couple_budget"])
-    assert intent.group_size == 2
-
-
-def test_scenario3c_mixed_cert_split_not_all_certified():
-    """'uno certificado con el open water y otro sin certificar' must NOT read
-    as a fully-certified group (the '... sin certificar' half must win)."""
-    intent = _detect(OWNER_MESSAGES["3c_dont_split_us"])
-    assert intent.is_certified is False
-    assert intent.group_size == 2
-
-
-# --- Scenario 5: family, someone 14, baptism, minimum age -------------------
-
-def test_scenario5_family_baptism_is_beginner_and_no_escalation():
-    intent = _detect(OWNER_MESSAGES["5_family_14_baptism"])
-    assert intent.is_certified is False   # bautismo -> beginner
-    assert intent.activity == "minicourse"
-    # The headcount word "persona" must not escalate (main scenario-5 bug).
-    assert _matches_escalation_keyword(OWNER_MESSAGES["5_family_14_baptism"].lower()) is False
-
-
-# --- Scenario 7: wants to GET certified (Open Water) ------------------------
-
-def test_scenario7_wants_to_get_certified_is_not_certified():
-    """'quiero certificarme de open water' = wants to obtain the certification,
-    so is_certified must be False, not True (reflexive certificar* fix)."""
-    intent = _detect(OWNER_MESSAGES["7_open_water_detail"])
-    assert intent.activity == "padi_open_water"
-    assert intent.is_certified is False
-
-
-@pytest.mark.parametrize("msg", [
-    "quiero certificarme",
-    "queremos certificarnos con ustedes",
-    "me gustaría certificarme en buceo",
-    "i want to get certified",
-])
-def test_reflexive_certificar_means_not_yet_certified(msg):
-    intent = _detect(msg)
-    assert intent.is_certified is False
-
-
-# --- Scenario 8: group of 5, one is 14 --------------------------------------
-
-def test_scenario8_group_five_no_escalation():
-    intent = _detect(OWNER_MESSAGES["8_group_5_one_14"])
-    assert intent.group_size == 5
-    assert _matches_escalation_keyword(OWNER_MESSAGES["8_group_5_one_14"].lower()) is False

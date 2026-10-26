@@ -2,10 +2,8 @@ import re
 from dataclasses import dataclass, field
 from functools import lru_cache
 
-from openai import OpenAI
-
 from src.domain import activities as dom
-from src.flows.state import ConversationState
+from src.domain.lugares import hotel_nombrado, isla_nombrada
 from src.utils.number_words import number_alt, number_words
 from src.utils.text import strip_accents
 
@@ -170,13 +168,6 @@ def _is_elapsed_time(message: str, match: re.Match) -> bool:
 # conocía ("soy paisa", "tengo el AOWD"). Los decidió después la estructura
 # del turno (`_boolean_patch_is_anchored`, borrada en ex-9b: hoy los decide el
 # extractor del turno).
-
-# Contexto de buceo — gate original de `_detect_last_dive` (extraído aquí sin
-# cambiarlo): sin él, un "hace un mes" de cualquier otro tema fijaría el campo.
-LAST_DIVE_TOPIC_RE = re.compile(
-    r"\b(buce\w*|inmersi\w+|dive\w*|dived|sin\s+bucear)\b",
-    re.IGNORECASE,
-)
 
 
 def detect_cert_dive_count(message: str) -> int | None:
@@ -407,25 +398,6 @@ def courses_mentioned(message: str) -> list[str]:
             if re.search(pattern, text, re.IGNORECASE)]
 
 
-def _distinct_course_levels(message: str) -> list[str]:
-    """Cursos con nivel nombrados, sin contar un nombre que solo aparece DENTRO del
-    nombre de otro curso nombrado: "advanced open water" es el Advanced, no el Open
-    Water. El nombre compuesto sale de la etiqueta del registro sin el sustantivo
-    del catalogo ("Advanced Open Water course" -> "advanced open water"). Si quedan
-    varios (una duda entre dos cursos), se conserva el orden del registro."""
-    text = " ".join(re.findall(r"\w+", strip_accents((message or "").lower())))
-    levels = [c for c in courses_mentioned(message) if dom.by_id(c).course_level]
-    nouns = _course_family_nouns()
-    dropped = set()
-    for other in levels:
-        for lang in dom.LANGS:
-            words = [w for w in re.findall(r"\w+", strip_accents(dom.by_id(other).label[lang].lower())) if w not in nouns]
-            phrase = " ".join(words)
-            if len(words) > 1 and re.search(rf"\b{re.escape(phrase)}\b", text):
-                dropped |= {c for c in levels
-                            if c != other and re.search(dict(_COURSE_NAME_PATTERNS)[c], phrase, re.IGNORECASE)}
-    return [c for c in levels if c not in dropped]
-
 _ACTIVITY_CATEGORY_PATTERNS: dict[str, list[str]] = {
     "certified_diving": _CERTIFIED_DIVING_PATTERNS,
     "minicourse": _MINICOURSE_PATTERNS,
@@ -453,79 +425,6 @@ def matched_activity_categories(message: str) -> set[str]:
     }
 
 
-# Vocabulario de nacionalidad, elevado de `_detect_nationality` a constantes de
-# modulo (2026-09-14) para que `nationality_is_ambiguous` reuse EXACTAMENTE los
-# mismos patrones en vez de duplicarlos -- mismo criterio que
-# `matched_activity_categories`.
-_NOT_COLOMBIAN_RE = re.compile(
-    r"\bextranjer[oa]s?\b|\bforeigners?\b|\bwe\s+are\s+foreign\b"
-    r"|\bno\s+(?:soy|somos)\s+colombian[oa]s?\b|\bnot\s+colombian\b"
-    # Hallazgo en vivo (batería de grupos mixtos contra PRE, 2026-09-01,
-    # lote 8): "ninguno colombiano"/"ninguno es colombiano"/"nadie es
-    # colombiano" (respuesta de GRUPO a "¿sois colombianos?") no
-    # matcheaba esta negación (exigía "no soy/somos" literal) — caía al
-    # segundo regex de abajo, que solo busca la palabra "colombiano" en
-    # cualquier parte del mensaje, y marcaba is_colombian=True: justo lo
-    # contrario de la intención. El resumen final terminaba diciendo
-    # "como sois colombianos, el pago es en pesos" a un grupo que
-    # explícitamente dijo que NINGUNO lo era.
-    r"|\bning[uú]n[oa]?\b[^.]{0,30}\bcolombian[oa]s?\b"
-    r"|\bnadie\b[^.]{0,30}\bcolombian[oa]s?\b"
-)
-_COLOMBIAN_RE = re.compile(
-    r"\bcolombian[oa]s?\b|\bcolombian\b"
-    r"|\b(?:soy|somos|vivo|vivimos|residente|resido)\b[^.]{0,20}\bcolombia\b"
-    r"|\bfrom\s+colombia\b|\bresident\s+in\s+colombia\b"
-    # A common way to self-identify as Colombian is naming a Colombian
-    # city ("soy de Medellín") instead of the country. Requires the
-    # explicit "soy/somos DE" origin claim (not "estoy en", which
-    # would just mean their current location, e.g. a foreign tourist
-    # in Cartagena) so it never misreads current whereabouts as origin.
-    r"|\b(?:soy|somos)\s+de\s+(?:bogot[aá]|medell[ií]n|cali|cartagena|barranquilla|"
-    r"bucaramanga|pereira|manizales|c[uú]cuta|santa\s+marta|monter[ií]a|ibagu[eé]|"
-    r"villavicencio|neiva|pasto|armenia|popay[aá]n)\b"
-)
-_BARE_NEGATION_RE = re.compile(r"\b(?:no|not|nope)\b")
-
-
-def nationality_is_ambiguous(message: str) -> bool:
-    """True si el mensaje dice cosas de nacionalidad con polaridad
-    CONTRADICTORIA -- la senal barata de "aqui el regex puede haber elegido mal"
-    que dispara el veto LLM de `is_colombian` (`supervisor._nationality_should_
-    verify`). Funcion pura, sin llamadas ni estado.
-
-    Contradictoria significa que, ademas de la marca que el detector usaria,
-    queda otra de sentido contrario FUERA del tramo que la produjo:
-      - hay negacion reconocida y, fuera de ella, una afirmacion
-        ("dos somos colombianos pero uno es extranjero");
-      - no hay negacion reconocida, pero fuera de la afirmacion queda una
-        negacion suelta que el detector no sabe atribuir ("mi pareja es
-        colombiana, yo no").
-
-    Por que existe (2026-09-14): con el trigger generico, el LLM se consultaba
-    en toda nacionalidad resuelta, incluidas las negaciones compactas que el
-    regex acierta y el LLM confunde ("ninguno colombiano", eval-set). Esas no
-    son ambiguas: la afirmacion queda DENTRO del tramo negado.
-    """
-    return polarity_is_ambiguous(message, _NOT_COLOMBIAN_RE, _COLOMBIAN_RE)
-
-
-def polarity_is_ambiguous(message: str, negative: re.Pattern, positive: re.Pattern) -> bool:
-    """Regla comun de "polaridad contradictoria" para un campo si/no, con los
-    MISMOS patrones que usa su detector (nunca una lista nueva de fraseos):
-      - hay negacion reconocida y, fuera de ella, queda una afirmacion; o
-      - no hay negacion reconocida, pero fuera de la afirmacion queda una
-        negacion suelta que el detector no sabe atribuir.
-    Texto sin tildes y en minusculas, como `certification_claim`."""
-    lowered = strip_accents((message or "").lower())
-    outside_negation = negative.sub(" ", lowered)
-    if outside_negation != lowered:
-        return bool(positive.search(outside_negation))
-    if not positive.search(lowered):
-        return False
-    return bool(_BARE_NEGATION_RE.search(positive.sub(" ", lowered)))
-
-
 def course_level_is_ambiguous(message: str) -> bool:
     """Nivel PADI nombrado ("open water", "advanced"...) sin decir si la persona YA lo
     tiene o QUIERE sacarlo ("hola somos 4 open water", "2 advanced and 2 snorkel").
@@ -534,9 +433,9 @@ def course_level_is_ambiguous(message: str) -> bool:
     `_WANTS_CERT_RE`) y `certification_claim`, sin vocabulario nuevo. Decision del
     owner (2026-09-15): en ese caso el bot pregunta, no supone."""
     text = message or ""
-    if not re.search(r"\b" + IntentDetector._CERT_LEVEL + r"\b", text, re.IGNORECASE):
+    if not re.search(r"\b" + _CERT_LEVEL + r"\b", text, re.IGNORECASE):
         return False
-    if IntentDetector._WANTS_CERT_RE.search(text) or IntentDetector._HOLDS_CERT_RE.search(text):
+    if _WANTS_CERT_RE.search(text) or _HOLDS_CERT_RE.search(text):
         return False
     # Nombra el PRODUCTO ("the advanced course", "curso de advanced", "la especialidad de
     # nitrox"): pide el curso o la especialidad, no dice que ya lo tenga.
@@ -626,7 +525,7 @@ _CERTIFIED_OTHER_PERSON_PATTERNS = [
 ]
 
 # Deseo de certificarse: una sola fuente (2026-09-15). Antes vivia en tres listas que no
-# coincidian: `IntentDetector._WANTS_CERT_RE` (solo niveles), un patron de
+# coincidian: `_WANTS_CERT_RE` (solo niveles), un patron de
 # `_NOT_CERTIFIED_PATTERNS` (solo "quiero ...") y `rag_agent._WANTS_CERT_EXCLUDE_RE`
 # (cualquier "quiero hacer ...", incluido "quiero hacer buceo"). "quiere sacarse la
 # certificacion" o "me quiero certificar" no casaban ninguna y salian certificados.
@@ -699,8 +598,6 @@ _NOT_CERTIFIED_PATTERNS = [
 ]
 
 
-
-
 # Negacion que alcanza a lo que viene justo despues (hasta dos palabras por medio):
 # "no tienen certificación", "aren't certified", "sin la licencia". Sin tildes.
 _NEGATION_BEFORE_RE = re.compile(
@@ -751,28 +648,6 @@ def _is_negated(prefix: str) -> bool:
         count += 1
         prefix = prefix[:match.start()]
     return count % 2 == 1
-
-
-def holds_padi_cert(message: str, about_writer: bool = True) -> bool:
-    """True if the message says someone HOLDS a PADI cert level (certified
-    diver), as opposed to wanting to take that course. `about_writer=False` also
-    counts another named person ("mi pareja tiene el advanced")."""
-    if IntentDetector._WANTS_CERT_RE.search(message):
-        return False
-    regex = IntentDetector._HOLDS_CERT_WRITER_RE if about_writer else IntentDetector._HOLDS_CERT_RE
-    return bool(regex.search(message))
-
-
-def certification_status(message: str) -> bool | None:
-    """¿Esta ya certificado quien escribe? Unica fuente para `is_certified` del detector y
-    para el RAG (2026-09-15): lo que diga `certification_claim` o, si no dice nada, tener
-    un nivel PADI (Open Water, Advanced, Rescue, Divemaster, Nitrox) sin querer sacarlo.
-    Solo lo que quien escribe dice de si mismo: la certificacion de otra persona es
-    reparto del grupo."""
-    claim = certification_claim(message)
-    if claim is not None:
-        return claim
-    return True if holds_padi_cert(message) else None
 
 
 # Vocabulario compartido de sustantivos de parentesco/compañía -- inventario
@@ -891,86 +766,6 @@ def _about_other_person(text: str, start: int) -> bool:
     )
 
 
-@lru_cache(maxsize=1)
-def _other_person_cert_re() -> re.Pattern:
-    cert = (
-        r"(?:buz[oa]s?|certificad\w*|certified|divers?|licencia|licen[cs]e|"
-        + strip_accents(IntentDetector._CERT_LEVEL) + r")"
-    )
-    return re.compile(
-        r"(?:" + strip_accents(_OTHER_PERSON_SUBJECT) + r")\s+(?:\w+\s+){0,2}?"
-        r"(?:es|son|esta|estan|tiene|tienen|is|are|has|have)?\s*(?:\w+\s+){0,2}?" + cert + r"\b"
-        # Orden invertido: "no es certificado mi acompañante", "tiene licencia mi amigo".
-        r"|\b(?:no\s+)?" + _THIRD_PERSON_VERB + r"\s+(?:\w+\s+){0,2}?" + cert
-        + r"\s+(?:\w+\s+)?(?:" + strip_accents(_NAMED_OTHER_PERSON) + r")",
-        re.IGNORECASE,
-    )
-
-
-# Polaridad de una frase eliptica ("yo no", "pero yo si", "and I am not"): la negacion
-# se reconoce aunque la frase siga ("yo no tengo nada"); la afirmacion solo si, quitado
-# el sujeto, la frase son particulas o auxiliares ("yo si", "I am", "I do too"), para que
-# "yo si quiero bucear" no pase por una afirmacion de certificacion.
-_ELIDED_NEGATION_RE = re.compile(r"\b(?:no|not|nunca|never)\b|n't\b")
-_ELIDED_AFFIRMATIVE_WORDS = frozenset({"si", "yes", "tambien", "also", "too", "am", "do", "does", "is", "have", "has"})
-_WRITER_SUBJECT_WORDS = frozenset({"yo", "i", "me", "m"})
-
-
-def clause_subject(clause: str, person: str = _NAMED_OTHER_PERSON) -> str | None:
-    """De quien habla una frase: "writer" si solo nombra a quien escribe ("yo", "I"),
-    "other" si solo nombra a otra persona (`person`), None si a las dos o a nadie. Pieza
-    unica para leer el sujeto frase a frase (2026-09-15): la usan el contraste eliptico de
-    certificacion (hallazgo I) y el reparto de ofertas por persona del nucleo (hallazgo E)."""
-    writer = bool(_WRITER_SUBJECT_WORDS & set(re.findall(r"\w+", clause)))
-    other = bool(re.search(person, clause, re.IGNORECASE))
-    if writer == other:
-        return None
-    return "writer" if writer else "other"
-
-
-def elided_certification(message: str, about_writer: bool) -> bool | None:
-    """Certificacion de una frase eliptica de contraste (2026-09-15, hallazgo I): "mi amigo
-    tiene licencia, yo no", "soy certificado y mi hijo no", "my wife is certified and I am
-    not", "mi pareja tiene el advanced y yo no tengo nada". La frase coordinada no repite
-    el predicado y `certification_claim` no la leia, asi que el reparto dependia de que el
-    LLM contestara (y a veces devolvia `{}` entero).
-
-    Devuelve la polaridad de la frase sin afirmacion propia cuyo sujeto es quien escribe
-    (`about_writer`) o la persona nombrada: False si niega, True si solo afirma, None si no
-    hay tal frase. No invierte nada: "mi amigo no tiene licencia y yo tampoco" no es un
-    contraste y no se lee aqui."""
-    text = strip_accents((message or "").lower())
-    for clause in _CLAUSE_BOUNDARY_RE.split(text):
-        if not clause.strip() or certification_claim(clause, about_writer=False) is not None:
-            continue
-        if holds_padi_cert(clause, about_writer=False):
-            continue
-        words = re.findall(r"\w+", clause)
-        subject = clause_subject(clause, person=_SINGULAR_PERSON)
-        if subject != ("writer" if about_writer else "other"):
-            continue
-        other = subject == "other"
-        if _ELIDED_NEGATION_RE.search(clause):
-            return False
-        rest = [w for w in words if w not in _WRITER_SUBJECT_WORDS]
-        if other:
-            rest = re.findall(r"\w+", re.sub(_SINGULAR_PERSON, " ", clause, flags=re.IGNORECASE))
-        if rest and set(rest) <= _ELIDED_AFFIRMATIVE_WORDS:
-            return True
-    return None
-
-
-def other_person_certification(message: str) -> bool | None:
-    """Certificacion dicha de OTRA persona del mensaje: True si la afirma ("mi amigo es
-    buzo"), False si la niega ("mi amigo no esta certificado"), None si no habla de eso.
-    Nunca dice nada de quien escribe (2026-09-15)."""
-    text = strip_accents((message or "").lower())
-    match = _other_person_cert_re().search(text)
-    if not match:
-        return None
-    return not re.search(r"\b(?:no|not|nunca|never|sin)\b|n't\b", match.group(0))
-
-
 # Palabras de lugar con una sola fuente (hallazgo C, 2026-09-15). Antes el nucleo tenia su
 # propio `_CARTAGENA_RE`/`_ISLAND_RE`: no conocia los apodos de la ciudad ni los hoteles, y
 # leia isla en "rezar el rosario".
@@ -1035,1314 +830,297 @@ def place_by_role(text: str, lodging_island: bool = False) -> str | None:
     return mentions[0][1]
 
 
-class IntentDetector:
+def detect_ages(message: str, intent: DetectedIntent) -> None:
+    """Extract person ages mentioned in the message ("mi hijo de 9 años",
+    "uno tiene 14", "a 6 year old", "kids aged 8 and 10").
 
-    def __init__(self, openai_client: OpenAI | None = None):
-        self.openai_client = openai_client
+    Skips clear non-age numbers: 'hace N años' / 'N years ago' (last-dive
+    context), and durations like 'N días/horas'. Ages are 1-99.
+    """
+    ages: list[int] = []
 
-    def detect(self, message: str, state: ConversationState) -> DetectedIntent:
-        intent = DetectedIntent()
-        message_lower = message.lower().strip()
+    def _add(group: str) -> None:
+        for num in re.findall(r'\d{1,2}', group):
+            a = int(num)
+            if 1 <= a <= 99:
+                ages.append(a)
 
-        self._detect_language(message_lower, intent)
-        self._detect_activity(message_lower, intent, state)
-        # Explicit dive-count ("2 inmersiones", "paquete de 5 buceos"). Computed
-        # regardless of the detected activity because the certified flow is often
-        # entered via is_certified alone; only consumed at the cert entry point.
-        intent.cert_dives = self._detect_cert_dive_count(message_lower)
-        # Day-count phrasing ("paquete de 3 dias") as a fallback when no explicit
-        # dive-count was given — dive-count wins when both are somehow present.
-        if intent.cert_dives is None:
-            intent.cert_days = detect_cert_day_count(message_lower)
-        self._detect_certification(message_lower, intent)
-        self._detect_group_info(message_lower, intent, state)
-        self._detect_ages(message_lower, intent)
-        self._detect_last_dive(message_lower, intent)
-        self._detect_duration(message_lower, intent)
-        self._detect_location(message_lower, intent)
-        self._detect_nationality(message_lower, intent)
+    # 1) Numbers explicitly qualified by an age unit, including coordinated
+    #    lists: "9 años", "8 y 10 años", "6 and 12 years old", "14yo".
+    #    Skip "hace N años" / "N years ago" (last-dive context, not an age).
+    for m in re.finditer(
+        r'((?:\d{1,2}\s*(?:,|y|e|and|&)\s*)*\d{1,2})\s*(?:a[nñ]os?|year[s]?(?:\s*old)?|y(?:/|-)?o)\b',
+        message,
+    ):
+        # Timeframes are NOT ages: "hace (como) 3 años", "llevo 4 años sin
+        # bucear", "in like 4 years", "5 years ago". The old 8-char window
+        # cut "hace" out of "hace como 3 años" (real bug: the years since
+        # the last dive became a phantom kid's age and would poison the
+        # checkout's kids split — Fase 7, docs/robustness/plan.md).
+        preceding = message[max(0, m.start() - 20):m.start()]
+        if re.search(r'\b(hace|ultimo|ultima|last|desde|llevo|llevamos|in|for|like|since)\b', preceding):
+            continue
+        if re.match(r'\s*(?:ago|sin\s+bucear|que\s+no\s+buce)', message[m.end():]):
+            continue
+        _add(m.group(1))
+    # 2) Kid-noun context without the word "años", incl. coordinated ages:
+    #    "niño de 8", "hijo de 9", "niños de 8 y 10".
+    for m in re.finditer(
+        r'\b(?:niñ[oa]|nin[oa]|hij[oa]|niet[oa]|beb[eé]|kid|child|son|daughter|grandchild)s?\s+de\s+'
+        r'((?:\d{1,2}\s*(?:,|y|e|and|&)\s*)*\d{1,2})',
+        message,
+    ):
+        _add(m.group(1))
+    # 2b) Kid-noun + "tiene N" without an age unit: "mi hijo, tiene 7",
+    #     "mi hija tiene 9". Common in incremental group building.
+    for m in re.finditer(
+        r'\b(?:niñ[oa]|nin[oa]|hij[oa]|niet[oa]|beb[eé])s?\b[^.;]{0,20}?\btiene\s+(\d{1,2})\b',
+        message,
+    ):
+        _add(m.group(1))
+    # 3) "uno/una/otro/otra de N" — a specific group member's age (NOT
+    #    "familia de N" / "grupo de N", which are group sizes).
+    for m in re.finditer(r'\b(?:uno|una|otr[oa]|el\s+otro|la\s+otra)\s+de\s+(\d{1,2})\b', message):
+        _add(m.group(1))
+    # 4) "aged 8 and 10", "ages 8 and 10", "edad 8 y 10".
+    #    9-oct: también en singular, "1 youth (age 17)" (familia-mixta: se perdían 2 de
+    #    6 edades); no "minimum age 10" / "edad mínima", que es una regla, no una persona.
+    _edad_re = r'aged|ages?'
+    for m in re.finditer(
+        rf'\b(?:{_edad_re}|edad(?:es)?(?:\s+de)?)\s+((?:\d{{1,2}}\s*(?:,|y|e|and|&)\s*)*\d{{1,2}})',
+        message,
+    ):
+        if re.search(r'm[ií]nim|\bmin\b', message[max(0, m.start() - 12):m.start()]):
+            continue
+        _add(m.group(1))
+    # 5) English kid-noun + "are/is N and M": "our kids are 7 and 11".
+    for m in re.finditer(
+        r'\b(?:kids?|children|sons?|daughters?)\s+(?:are|is)\s+'
+        r'((?:\d{1,2}\s*(?:,|and|&)\s*)*\d{1,2})',
+        message,
+    ):
+        _add(m.group(1))
 
-        # Certification ("certificado"/"no certificado") is a diving-only
-        # concept in this business — if the message mentions it but never
-        # says "buceo"/"dive" explicitly (e.g. "somos 2 y uno no esta
-        # certificado"), infer the activity instead of leaving it ambiguous,
-        # so the booking flow still asks for what's missing (location, etc.)
-        # instead of falling through to a generic LLM answer.
-        # Tambien si piden un numero de inmersiones ("quiero hacer 2 inmersiones"): un
-        # paquete de inmersiones es buceo certificado (2026-09-15, mismo detector de
-        # cantidad que ya se usa, sin patron nuevo).
-        # Quien quiere sacarse la certificacion pide un curso, no buceo: se deja sin
-        # actividad para que la resuelva el LLM o se pregunte.
-        if (intent.activity is None and (intent.is_certified is not None or intent.cert_dives)
-                and not self._WANTS_CERT_RE.search(message_lower)):
-            intent.activity = "certified_diving"
-            intent.detected_fields.append("activity")
+    def _add_words(group: str) -> None:
+        for w in re.findall(_AGE_WORD_ALT, group, re.IGNORECASE):
+            ages.append(AGE_WORDS[w.lower()])
 
-        self._split_out_uncertifiable_kids(intent)
+    # 6) Edades en PALABRA (opción A): "nueve años", "cinco y siete años",
+    #    "mi hija de nueve", "kids aged eight and eleven". Mismas guardas de
+    #    plazo que el patrón 1 ("llevo nueve años sin bucear" NO es edad).
+    for m in re.finditer(
+        rf'\b((?:(?:{_AGE_WORD_ALT})\s*(?:,|y|e|and|&)\s*)*(?:{_AGE_WORD_ALT}))'
+        r'\s*(?:a[nñ]os?|year[s]?(?:\s*old)?)\b',
+        message, re.IGNORECASE,
+    ):
+        preceding = message[max(0, m.start() - 20):m.start()]
+        if re.search(r'\b(hace|ultimo|ultima|last|desde|llevo|llevamos|in|for|like|since)\b',
+                     preceding, re.IGNORECASE):
+            continue
+        if re.match(r'\s*(?:ago|sin\s+bucear|que\s+no\s+buce)', message[m.end():], re.IGNORECASE):
+            continue
+        _add_words(m.group(1))
+    # 6b) kid-noun / "aged" + word-number sin la palabra "años":
+    #     "mi hija de nueve", "un niño de doce", "aged eight and eleven".
+    for m in re.finditer(
+        r'\b(?:niñ[oa]|nin[oa]|hij[oa]|niet[oa]|beb[eé]|kid|child|son|daughter|grandchild'
+        r'|aged?|ages|edad(?:es)?)s?\s+(?:de\s+)?'
+        rf'((?:(?:{_AGE_WORD_ALT})\s*(?:,|y|e|and|&)\s*)*(?:{_AGE_WORD_ALT}))\b',
+        message, re.IGNORECASE,
+    ):
+        _add_words(m.group(1))
+    # 6c) kid-noun + "tiene N" en palabra: "mi hijo tiene ocho" (equivalente
+    #     al patrón 2b de dígitos).
+    for m in re.finditer(
+        rf'\b(?:niñ[oa]|nin[oa]|hij[oa]|niet[oa]|beb[eé])s?\b[^.;]{{0,20}}?\btiene\s+({_AGE_WORD_ALT})\b',
+        message, re.IGNORECASE,
+    ):
+        _add_words(m.group(1))
 
-        # La actividad principal no puede contradecir el reparto (2026-09-15). "somos 3, 2
-        # con open water y 1 no" reparte {certified_diving: 2, ...} pero la rama de cursos
-        # dejaba el curso; "somos 5 y 2 nunca han buceado" reparte 3 certificados y la
-        # rama del minicurso dejaba minicurso. Regla general: si el reparto trae buceo
-        # certificado y no contiene la actividad principal, esa es buceo certificado.
-        # Solo si el mensaje no dice que lo QUIEREN sacar.
-        # Tambien sin actividad: "vamos 4 pero dos no tienen licencia" reparte buceo
-        # certificado, y la actividad ya no sale de un estado atribuido a quien escribe.
-        allocation = intent.group_allocation or {}
-        if (
-            intent.activity not in allocation
-            and allocation.get("certified_diving")
-            and not self._WANTS_CERT_RE.search(message_lower)
-        ):
-            intent.activity = "certified_diving"
-            intent.service_id = dom.base_service_id(intent.activity)
+    if ages:
+        intent.ages = sorted(set(ages))
+        intent.detected_fields.append("ages")
 
-        self._calculate_confidence(intent)
 
-        return intent
+def detect_duration(message: str, intent: DetectedIntent) -> None:
+    spans = [
+        _duration_span(m, unit_days)
+        for pattern, unit_days in _DURATION_RES
+        for m in pattern.finditer(message)
+        if not _is_elapsed_time(message, m)
+    ]
+    # Lo que no es cantidad x unidad: un paquete dura varios dias por definicion
+    # (lo dice el catalogo) y "solo hoy" es un dia.
+    if _MULTI_DAY_PRODUCT_RE.search(message):
+        spans.append(_MAX_PACKAGE_DAYS)
+    if _TODAY_ONLY_RE.search(message):
+        spans.append(1)
+    if not spans:
+        return
+    # La estancia mas larga manda, como antes mandaba el patron de varios dias:
+    # "un dia de buceo y 3 dias en las islas" es multi-dia.
+    intent.duration = "multi_day" if max(spans) > 1 else "single_day"
+    intent.detected_fields.append("duration")
 
-    # PADI Open Water (the entry certification) has a minimum age of 10, so a
-    # child under 10 can NEVER be a certified diver. This is a hard, unambiguous
-    # rule (no false positives) — unlike guessing whether a teenager is certified.
-    _MIN_CERTIFIED_AGE = dom.by_id("padi_open_water").min_age  # del registro
 
-    def _split_out_uncertifiable_kids(self, intent: "DetectedIntent") -> None:
-        """When a group is tagged certified but includes kids too young to hold a
-        certification (detected age < 10), split those kids out as non-certified
-        so the flow handles them by age (snorkel / Bubble Makers) instead of
-        counting them as certified divers.
+def detect_location(message: str, intent: DetectedIntent, *, nombra_un_hotel: bool = False) -> None:
+    """El lugar que nombra el mensaje: Cartagena, una isla o un hotel de `lugares.json` (con su isla) y el papel de cada
+    uno. `nombra_un_hotel`: se sabe que el texto es el nombre de un hotel (la cita del extractor o la respuesta a la
+    pregunta del hotel), así que cuentan también los alias de hotel que son palabras corrientes (lat-11 T6c)."""
+    msg_lower = message.lower()
 
-        E.g. "familia de 5: papá y mamá certificados, 3 niños de 6, 9 y 13" — the
-        6- and 9-year-olds cannot be certified, so it becomes 3 certified + 2
-        beginners (the flow then adapts each kid by age). Only the under-10 kids
-        are moved; a 13-year-old CAN be certified, so it's left in the cert count.
-        """
-        if intent.is_certified is not True:
-            return
-        if intent.group_allocation is not None:
-            return  # respect an explicit split already parsed
-        if not intent.group_size or not intent.ages:
-            return
-        young = [a for a in intent.ages if a < self._MIN_CERTIFIED_AGE]
-        if not young or intent.group_size <= len(young):
-            return
-        cert_qty = intent.group_size - len(young)
-        intent.group_allocation = {"certified_diving": cert_qty, "minicourse": len(young)}
-        if "group_allocation" not in intent.detected_fields:
-            intent.detected_fields.append("group_allocation")
+    # Detectar Cartagena — incluye apodos históricos reales de la ciudad,
+    # ES y EN ("la heroica"/"the heroic city": Simón Bolívar tras el Sitio
+    # de Morillo de 1815; "corralito de piedra": sus murallas coloniales;
+    # "ciudad redentora": otro título del propio Bolívar; "la ciudad
+    # amurallada"/"the walled city": el centro histórico amurallado, muy
+    # usado por locales y turistas hispanohablantes; "queen of the
+    # caribbean": apodo turístico en inglés).
+    # Encontrado 2026-07-09 que ninguno se reconocía — solo "cartagena"/"ctg".
+    if _CARTAGENA_NAME_RE.search(msg_lower):
+        intent.location = "cartagena"
+        intent.detected_fields.append("location")
 
-    def _detect_language(self, message: str, intent: DetectedIntent) -> None:
-        spanish_keywords = {
-            'hola', 'quiero', 'buceo', 'snorkel', 'curso', 'minicurso',
-            'certificado', 'somos', 'personas', 'día', 'días', 'inmersión',
-            'buzo', 'bautismo', 'precio', 'información', 'reservar',
-            # common function words / verbs that disambiguate ES vs EN
-            'estoy', 'recogen', 'puedo', 'gracias', 'cuánto', 'dónde', 'está',
-            # unambiguously-Spanish function words: keep a Spanish question with an
-            # English activity name ("¿qué es el Mindful Diving?") from being
-            # flagged as English just because it contains "diving".
-            'qué', 'que', 'es', 'el', 'la', 'los', 'las', 'del', 'para', 'con',
-            'cómo', 'como', 'cuál', 'cual', 'una', 'más', 'sí', 'tú', 'y', 'o',
-        }
+    # Detectar isla primero (las islas y sus alias están en lugares.json, lat-11 T5). La forma corta de una isla que
+    # se llama "Isla X" ("grande", "marina", "arena", "pirata") es tambien una palabra corriente: solo cuenta si el
+    # mensaje nombra una isla (hallazgo C.3, 2026-09-16; "nos vemos en la marina" o "somos un
+    # grupo grande" no son una isla). Los nombres de hotel son nombres propios y no cambian.
+    names_an_island = bool(_GENERIC_ISLAND_RE.search(msg_lower))
+    island_id = isla_nombrada(msg_lower, nombra_una_isla=names_an_island)
+    if island_id:
+        intent.island = island_id
+        intent.location = "island"
+        intent.detected_fields.extend(["island", "location"])
 
-        english_keywords = {
-            'hello', 'hi', 'want', 'diving', 'dive', 'snorkel', 'course',
-            'certified', 'people', 'day', 'days', 'price', 'information',
-            'book', 'booking', 'diver', 'beginner',
-            'can', 'you', 'the', 'my', 'how', 'where', 'much', 'pick',
-        }
+    # Bare "rosario" also means the islands (e.g. "corales del rosario"),
+    # but checked separately from the loop above and guarded against
+    # "rezar el rosario" — the Catholic prayer, a common phrase in
+    # Colombia. Pre-existing false positive (bare \brosario\b in the loop
+    # above matched it too) found 2026-07-09 while auditing nicknames.
+    # lat-11 T6c (26-oct): es el archipiélago ("las Islas del Rosario", "Rosario Islands"), no Isla Rosario: dice
+    # "en las islas" sin isla concreta (antes daba island=isla_rosario, que llegaba al lead y al RAG).
+    names_the_archipelago = bool(re.search(r'\brosario\b', msg_lower)) and not re.search(r'\brezar\b', msg_lower)
+    if not intent.island and names_the_archipelago:
+        intent.location = "island"
+        intent.detected_fields.append("location")
 
-        # Match whole words only. Substring matching wrongly flags e.g. "ahi"
-        # (Spanish) as English because it contains "hi".
-        words = set(re.findall(r"[a-zá-úñü]+", message.lower()))
-        spanish_count = len(words & spanish_keywords)
-        english_count = len(words & english_keywords)
+    # Detectar hotel (los hoteles, sus alias y su isla están en lugares.json, lat-11 T5)
+    hotel = hotel_nombrado(msg_lower, nombra_un_hotel=nombra_un_hotel)
+    if hotel:
+        hotel_id, hotel_island = hotel
+        intent.hotel = hotel_id
+        # Detectar isla automáticamente desde el hotel
+        if hotel_island and not intent.island:
+            intent.island = hotel_island
+            intent.detected_fields.append("island")
+        if not intent.location:
+            intent.location = "island"
+            # s4-27 (8-oct): la ubicacion que se deduce del hotel se DECLARA, como
+            # todas, para que pase por la puerta de Jev (u3-3/u3-4). Sin declararla se colaba siempre:
+            # "¿me pasas el contacto del hotel Cocoliso?" (Jev: no afirma ubicacion) dejaba al cliente "ya en
+            # las islas" (contacto-hoteles-cocoliso-san-pedro).
+            intent.detected_fields.append("location")
+        intent.detected_fields.append("hotel")
 
-        if spanish_count > english_count and spanish_count > 0:
-            intent.language = "es"
-            intent.detected_fields.append("language")
-        elif english_count > spanish_count and english_count > 0:
-            intent.language = "en"
-            intent.detected_fields.append("language")
-
-    def _detect_activity(self, message: str, intent: DetectedIntent, state: ConversationState) -> None:
-        # "solo snorkel" / "no quiero bucear, solo snorkel" must resolve to snorkel,
-        # not diving — the bare verb "bucear" would otherwise win the diving branch.
-        if re.search(r'e?snork\w*', message) and (
-            re.search(r'\b(?:solo|solamente|s[oó]lo|only|just)\s+(?:quiero\s+|want\s+(?:to\s+)?|hacer\s+|do\s+)?e?snork', message)
-            or re.search(r'\bno\s+(?:quiero\s+)?buce\w*', message)
-            or re.search(r"\bdon'?t\s+want\s+to\s+dive\b", message)
-        ):
-            intent.activity = "snorkel"
-            intent.service_id = dom.base_service_id(intent.activity)
-            intent.detected_fields.append("activity")
-            return
-
-        if any(re.search(pattern, message) for pattern in _MINICOURSE_PATTERNS):
-            intent.activity = "minicourse"
-            intent.service_id = dom.base_service_id(intent.activity)
-            intent.is_certified = False
-            intent.detected_fields.extend(["activity", "is_certified"])
-        # Un producto NOMBRADO (curso o especialidad) va antes que la palabra generica de
-        # buceo (2026-09-15): con el orden anterior, "quiero bucear y hacer la
-        # especialidad de flotabilidad" o "el curso open water de buceo" salian buceo
-        # certificado porque "buce*"/"diving" casaba primero.
-        elif any(re.search(pattern, message) for pattern in _PADI_COURSE_PATTERNS) and not self._holds_padi_cert(message):
-            # Only a COURSE if they want to take it — "soy open water" (holds it)
-            # is a certified diver, handled via is_certified + the activity fallback.
-            levels = _distinct_course_levels(message)
-            intent.activity = levels[0] if levels else "padi_course"
-            intent.service_id = dom.base_service_id(intent.activity)
-            intent.detected_fields.append("activity")
-        elif any(re.search(pattern, message) for pattern in _SPECIALTY_PATTERNS):
-            # Sin nombre de especialidad reconocible: la generica, y el nucleo
-            # pregunta cual (F4).
-            intent.activity = next(
-                (activity_id for activity_id, pattern in _SPECIALTY_NAME_PATTERNS if re.search(pattern, message)),
-                "padi_specialty",
-            )
-            intent.service_id = dom.base_service_id(intent.activity)
-            intent.detected_fields.append("activity")
-        elif any(re.search(pattern, message) for pattern in _CERTIFIED_DIVING_PATTERNS):
-            intent.activity = "certified_diving"
-            intent.service_id = dom.base_service_id(intent.activity)
-            intent.detected_fields.append("activity")
-        elif any(re.search(pattern, message) for pattern in _SNORKEL_PATTERNS):
-            intent.activity = "snorkel"
-            intent.service_id = dom.base_service_id(intent.activity)
-            intent.detected_fields.append("activity")
-
-    def _detect_cert_dive_count(self, message: str) -> int | None:
-        return detect_cert_dive_count(message)
-
-    # A named PADI certification level. Holding ANY of these means you're a
-    # certified diver (Open Water is the entry level; the rest are above it).
-    _CERT_LEVEL = (
-        r"(?:open[\s-]*water|advanced|rescue|dive\s*master|divemaster|"
-        r"aguas\s+abiertas|nitrox)"
-    )
-    # Verbos de tener un nivel (hallazgo F.1, 2026-09-15): la posesion (tener, llevar) y
-    # haberlo hecho (hacer, sacar, terminar, completar), en primera y tercera persona.
-    # Antes solo "tengo/tenemos/tiene(n)": "ya llevo el rescue" o "hice mi open water"
-    # se tomaban por un nivel sin decir si lo tienen y el bot preguntaba de mas. Querer
-    # sacarlo (`_WANTS_CERT_RE`) sigue ganando: "hice el open water y quiero el advanced".
-    _HOLD_VERB_WRITER_ES = r"(?:tengo|tenemos|llevo|llevamos|hice|hicimos|saqu[eé]|termin[eé]|complet[eé])"
-    _HOLD_VERB_OTHER_ES = (
-        r"(?:tienen?|llevan?|hizo|hicieron|sac[oó]|sacaron|termin[oó]|terminaron|complet[oó]|completaron)"
-    )
-    _HOLD_VERB_EN = r"(?:have|has|got|did|completed|finished|took)\s+(?:got\s+|done\s+|completed\s+|finished\s+)?"
-    # "I HAVE / I AM this cert" — status, not a course to take.
-    _HOLDS_WRITER = (
-        r"\b(?:soy|somos|estoy|estamos)\s+(?:un[ao]?\s+|buz[oa]s?\s+)?"
-        r"(?:certificad[oa]s?\s+(?:en|como)\s+)?" + _CERT_LEVEL + r"\b"
-        r"|\b" + _HOLD_VERB_WRITER_ES + r"\s+(?:el\s+|la\s+|mi\s+|nuestr[oa]\s+|un[ao]?\s+)?" + _CERT_LEVEL + r"\b"
-        r"|\bi(?:'?m|\s+am)\s+(?:an?\s+)?" + _CERT_LEVEL + r"\b"
-        # "i already have my open water card" — the adverb between "i/we" and
-        # "have" used to break the match, so the message was classified as
-        # WANTING the Open Water course instead of holding it (real bug from
-        # the Fase 6 battery — Fase 7, docs/robustness/plan.md).
-        r"|\b(?:i|we)\s+(?:already\s+|now\s+|both\s+)?" + _HOLD_VERB_EN + r"(?:my\s+|our\s+|an?\s+|the\s+)?" + _CERT_LEVEL + r"\b"
-        r"|\b" + _CERT_LEVEL + r"\s+(?:diver|certified)\b"
-        r"|\bbuz[oa]\s+avanzad[oa]\b"
-    )
-    # Tercera persona con la persona nombrada (2026-09-15): "mi pareja tiene el
-    # advanced" salia curso Advanced. Sin persona, "¿tienen el advanced?" es preguntar
-    # si el centro lo ofrece, asi que la persona sale de la lista compartida de
-    # sustantivos. Dice que NO pide el curso, pero nada del estado de quien escribe.
-    _HOLDS_OTHER_PERSON = (
-        r"\b(?:" + _PERSON_NOUN_SINGULAR_ES + r"|" + _PERSON_NOUN_PLURAL_ES + r")\s+(?:\w+\s+){0,2}?"
-        + _HOLD_VERB_OTHER_ES + r"\s+(?:el\s+|la\s+|su\s+|un[ao]?\s+)?" + _CERT_LEVEL + r"\b"
-        r"|\b(?:" + _PERSON_NOUN_SINGULAR_EN + r"|" + _PERSON_NOUN_PLURAL_EN + r")\s+(?:\w+\s+){0,2}?"
-        + _HOLD_VERB_EN + r"(?:her\s+|his\s+|their\s+|an?\s+|the\s+)?" + _CERT_LEVEL + r"\b"
-    )
-    _HOLDS_CERT_RE = re.compile(_HOLDS_WRITER + r"|" + _HOLDS_OTHER_PERSON, re.IGNORECASE)
-    _HOLDS_CERT_WRITER_RE = re.compile(_HOLDS_WRITER, re.IGNORECASE)
-    # "I WANT / I'm doing the <level> COURSE" — wants the certification, so NOT
-    # certified yet. Requires the want-verb to be followed by the cert level so
-    # "quiero 2 inmersiones" (wanting dives) never counts as wanting a course.
-    _WANTS_CERT_RE = re.compile(
-        r"\b" + _WANT_VERB + _WANT_OBJECT_PREFIX + r"(?:" + _CERT_LEVEL + r"|" + _CERT_NOUN + r")"
-        + r"|\bcurso\s+(?:de\s+)?(?:padi\s+)?" + _CERT_LEVEL
-        + r"|\bcertificar(?:me|nos|te|se)\b|\bget\s+certified\b",
-        re.IGNORECASE,
-    )
-
-    def _holds_padi_cert(self, message: str) -> bool:
-        # Para decidir la actividad cuenta cualquier persona: "mi pareja tiene el advanced"
-        # no pide el curso Advanced.
-        return holds_padi_cert(message, about_writer=False)
-
-    def _detect_certification(self, message: str, intent: DetectedIntent) -> None:
-        if intent.is_certified is not None:
-            return
-        status = certification_status(message)
-        if status is not None:
-            intent.is_certified = status
-            intent.detected_fields.append("is_certified")
-
-    def _detect_group_info(self, message: str, intent: DetectedIntent, state: ConversationState | None = None) -> None:
-        # Fixed 2026-07-08: the verb-split patterns below (pat_numeric_fwd/rev,
-        # "N bucean y M hacen snorkel") used to require the activity keyword to
-        # sit right next to the split clause. Inserting an explicit dive/day
-        # count in between broke the match — e.g. "somos 5, 3 buceamos
-        # certificados 5 inmersiones y 2 hacen snorkel" produced no
-        # group_allocation at all (falling through to supervisor.py's
-        # _should_skip_to_certified_flow, which then silently treated the
-        # WHOLE group as certified divers, dropping the 2 snorkelers). Now an
-        # optional trailing count phrase ("5 inmersiones", "2 dias", "3 dives")
-        # is allowed between the first activity clause and the "y/and" split —
-        # see `_split_infix` below.
-        #
-        # "3 buceadoras y 2 buceadores" / "2 buzas y 1 buzo" — gendered variants
-        # of the SAME noun (no certification/activity split implied). Must run
-        # BEFORE the generic "somos N" pattern below, which would otherwise
-        # match only the first number and stop (T165 in
-        # docs/archive/test-battery-edge-cases.md: summed to 3 instead of 5).
-        _gendered_diver_noun = r'(?:buceador[ae]s?|buz[oa]s?|buseador[ae]s?)'
-        m_gendered_sum = re.search(
-            rf'\b(\d+)\s+{_gendered_diver_noun}\s+y\s+(\d+)\s+{_gendered_diver_noun}\b',
-            message, re.IGNORECASE,
-        )
-        if m_gendered_sum:
-            intent.group_size = int(m_gendered_sum.group(1)) + int(m_gendered_sum.group(2))
-            intent.detected_fields.append("group_size")
-
-        # Word-form numbers used to stop at "ocho"/"eight" (8) in these
-        # patterns while every other number-word map in this file already
-        # goes to "diez"/"ten" — "somos nueve"/"somos diez" silently resolved
-        # to no group size at all (digits like "9"/"10" still worked).
-        _es_word_nums = number_words(2, 10, "es")
-        _en_word_nums = number_words(2, 10, "en")
-        _es_word_alt = number_alt(2, 10, "es")
-        _en_word_alt = number_alt(2, 10, "en")
-
-        # "me plus 3 friends" / "3 amigos y yo" / "vienen 3 amigos conmigo" /
-        # "voy con 2 amigos" / "tengo 3 amigos" / "I have 3 friends": a
-        # COMPANION-noun count where the speaker is explicitly additional —
-        # the real total is N+1. Real regex bug caught three times by live
-        # batteries/PRE ("me plus 3 friends" resolved to 3, Fase 7,
-        # docs/robustness/plan.md; "tengo 3 amigos que quieren hacer alguna
-        # actividad" resolved to 3 instead of 4, live-PRE 2026-07-23 — "tengo
-        # N amigos" declares POSSESSION of N companions, same shape as "voy
-        # con N amigos", not a literal "we are N" headcount). Must run BEFORE
-        # the generic "N friends" pattern below, which matches first and
-        # undercounts.
-        # Inventario regex 2026-09-03: sustantivos de parentesco/compañía
-        # ahora vienen de _PERSON_NOUN_PLURAL_ES/EN (constantes de módulo de
-        # este mismo archivo) -- cierra el mismo gap real que las demás
-        # (suegros/cuñados/sobrinos/etc y brothers/sisters/sons/daughters en
-        # plural, que esta lista no tenía). "colegas?" se queda local (no es
-        # un sustantivo de parentesco); "friends?" admite singular por si
-        # cuenta N=1 ("me + 1 friend"), fuera del fragmento plural estricto.
-        _companion_noun = r'(?:friends?|' + _PERSON_NOUN_PLURAL_ES + r'|colegas?|' + _PERSON_NOUN_PLURAL_EN + r')'
-        if not m_gendered_sum and intent.group_size is None:
-            m_plus_speaker = re.search(
-                rf'\b(?:me|yo)\s*(?:\+|plus|y|and|más|mas)\s+(\d+|{_es_word_alt}|{_en_word_alt})\s+{_companion_noun}\b'
-                rf'|\b(\d+|{_es_word_alt}|{_en_word_alt})\s+{_companion_noun}\s+(?:y\s+yo|and\s+(?:me|i)\b|conmigo|plus\s+me|with\s+me)'
-                rf'|\b(?:voy|vengo|viajo|going)\s+(?:con|with)\s+(\d+|{_es_word_alt}|{_en_word_alt})\s+{_companion_noun}\b'
-                rf'|\b(?:tengo|i\s+have)\s+(\d+|{_es_word_alt}|{_en_word_alt})\s+{_companion_noun}\b',
-                message, re.IGNORECASE,
-            )
-            if m_plus_speaker:
-                raw = next(g for g in m_plus_speaker.groups() if g)
-                n = int(raw) if raw.isdigit() else {**_es_word_nums, **_en_word_nums}.get(raw.lower())
-                if n:
-                    intent.group_size = n + 1
-                    intent.detected_fields.append("group_size")
-
-        group_size_patterns = [
-            (rf'\bsomos\s+(\d+|{_es_word_alt})\b', _es_word_nums),
-            (rf'\bvenimos\s+(\d+|{_es_word_alt})\b', _es_word_nums),
-            (rf'\bvamos\s+(\d+|{_es_word_alt})\b', _es_word_nums),
-            (rf'\bwe\s+are\s+(\d+|{_en_word_alt})\b', _en_word_nums),
-            (r'\b(\d+)\s+of\s+us\b', {}),
-            (rf'\bgroup\s+of\s+(\d+|{_en_word_alt})\b', _en_word_nums),
-            (r'\b(\d+)\s+(personas?|people|person|friends|amig[oa]s|friend|compañer[oa]s|companer[oa]s|acompañantes|acompanantes|divers?|buzos?|buceador[ae]s?)\b', {}),
-            # "2 certified divers" / "3 certified" — a count directly before a
-            # certification word (EN+ES) is a group size.
-            (r'\b(\d+)\s+(?:certified|certificad[oa]s)\b', {}),
-            # "una pareja" / "somos pareja" / "con mi pareja" → 2 (capturing
-            # group required by loop). NOTA (investigado 2026-09-10, bateria
-            # sintetica): "mi pareja y nuestros dos hijos" tambien matchea
-            # esto y resuelve 2, subcontando a los hijos (deberia ser 4). Un
-            # intento de excluir "mi/tu/su pareja" via lookbehind negativa
-            # rompio un caso real validado por el owner ("...con mi pareja,
-            # tenemos un presupuesto..." = 2, sin mas gente mencionada,
-            # test_owner_conversations_fase1.py::test_scenario3a_couple_
-            # group_size_two) -- la diferencia entre "pareja" = TODO el grupo
-            # vs. "pareja" = una mencion de acompañante con MAS gente detras
-            # no se puede distinguir con una exclusion simple por posesivo.
-            # Revertido; queda como gap conocido, no arreglado a medias.
-            (r'\b(?:somos\s+)?(?:una?\s+)?(pareja)\b', {'pareja': 2}),
-            # "familia de N" → N personas
-            (rf'\bfamilia\s+de\s+(\d+|{_es_word_alt})\b', _es_word_nums),
-            (rf'\bfamily\s+of\s+(\d+|{_en_word_alt})\b', _en_word_nums),
-        ]
-
-        if not m_gendered_sum and intent.group_size is None:
-            for pattern, word_map in group_size_patterns:
-                match = re.search(pattern, message)
-                if match:
-                    size_str = match.group(1)
-                    if size_str.isdigit():
-                        intent.group_size = int(size_str)
-                    elif size_str in word_map:
-                        intent.group_size = word_map[size_str]
-
-                    if intent.group_size:
-                        intent.detected_fields.append("group_size")
-                        break
-
-        # Singular first-person self-reference → 1 person, but ONLY when the message
-        # names no companion, no other headcount number, and no plural/collective
-        # marker. A wrong 1 would undercount the booking, so every "more than one"
-        # hint keeps us conservative and lets the flow ask.
-        if intent.group_size is None:
-            solo_self = re.search(
-                r'\b(?:para\s+m[ií]|s[oó]lo\s+yo|solo\s+yo|solamente\s+yo|just\s+me|only\s+me|for\s+me)\b',
-                message,
-            )
-            # A SINGULAR declaration of being a diver ("soy Sofia, ya soy certificada",
-            # "soy buzo", "estoy certificado", "i am a certified diver") is a strong
-            # 1-person signal — it was the reported miss: the bot asked "¿cuántas
-            # personas?" to someone who clearly spoke for herself alone.
-            singular_diver = re.search(
-                r'\b(?:soy|estoy|i\s*am|i\'m)\s+(?:un[ao]?\s+|a\s+|buz[oa]s?\s+)?'
-                r'(?:buz[oa]|certificad[oa]|certified|open\s*water|advanced|rescue|'
-                r'divemaster|nitrox|diver)\b',
-                message, re.IGNORECASE,
-            )
-            companion = re.search(
-                r'\b(?:y\s+mi\b|and\s+my\b|con\s+mi\b|junto\s+a|'
-                r'mi\s+(?:novi[oa]|espos[oa]|pareja|hij[oa]s?|amig[oa]s?|herman[oa]s?|mam[aá]|pap[aá]|familia)|'
-                r'my\s+(?:girlfriend|boyfriend|wife|husband|partner|kids?|son|daughter|friend|brother|sister|family|mom|dad))\b',
-                message,
-            )
-            other_num = re.search(
-                r'\b([2-9]|' + number_alt(2, 9) + r')\b',
-                message,
-            )
-            # Any plural first-person or collective noun means "not just me".
-            plural_self = re.search(
-                r'\b(?:somos|estamos|queremos|venimos|vamos|seremos|iremos|'
-                r'nuestr[oa]s?|nos\s+gustar[ií]a|we\s+are|we\'re|we\s+want)\b',
-                message, re.IGNORECASE,
-            )
-            collective = re.search(
-                r'\b(?:familia|grupo|pareja|gente|personas?|amig[oa]s|compa[nñ]er\w*|'
-                r'todos|equipo|family|group|friends|couple|people)\b',
-                message, re.IGNORECASE,
-            )
-            if (solo_self or singular_diver) and not companion and not other_num \
-                    and not plural_self and not collective:
-                intent.group_size = 1
-                intent.solo_confirmed = True
-                intent.detected_fields.append("group_size")
-
-        # ── Numeric split: "3 de buceo y 2 de snorkel", "5 snorkel y 2 buceo" ──
-        activity_kw = r'(buce\w*|buse\w*|snorkel|snorkeling|esnorkel|careteo|caretear|minicurso|mini\s?curso|bautismo|bautizo|diving|scuba|submarinismo)'
-        num_pat = r'(\d+|' + number_alt(2, 6) + r')'
-        _word_num_map = number_words(2, 6)
-
-        def _parse_num(s: str) -> int:
-            return int(s) if s.isdigit() else _word_num_map.get(s, 1)
-
-        def _activity_key(text: str) -> str | None:
-            # Hallazgo en vivo, batería regex 2026-09-03: reusa
-            # matched_activity_categories() (fuente única, ya blindada contra
-            # "nunca he buceado"/"primera vez" etc.) en vez de un vocabulario
-            # propio por substring (`in text`, sin ni siquiera límites de
-            # palabra) sin esas exclusiones -- "2 nunca han buceado" ya no se
-            # clasifica como certified_diving solo por contener "buce".
-            # Misma prioridad minicourse > snorkel > certified_diving que este
-            # helper ya tenía.
-            cats = matched_activity_categories(text)
-            if "minicourse" in cats:
-                return "minicourse"
-            if "snorkel" in cats:
-                return "snorkel"
-            if "certified_diving" in cats:
-                return "certified_diving"
-            # "mitad certificado y mitad minicurso": el fragmento "certificado"
-            # solo no dispara ninguna categoria de matched_activity_categories
-            # (esa palabra sola es un ESTADO de certificacion, no un nombre de
-            # actividad) pero en este contexto de reparto de grupo si implica
-            # buceo certificado. Fallback acotado, no un vocabulario generico
-            # nuevo -- solo la palabra exacta, con limites de palabra.
-            if re.search(r'\bcertificad[oa]s?\b|\bcertified\b', text, re.IGNORECASE):
-                return "certified_diving"
-            return None
-
-        # Pattern A: "3 de buceo y 2 de snorkel" / "3 buceos y 2 snorkel"
-        # También cubre "buceo 3 y snorkel 2" (número después del keyword)
-        # y "3 for diving and 2 for snorkel" (inglés)
-        # y "2 queremos hacer buceo y 1 snorkel" / "2 hacen snorkel y 3 buceo"
-        sep_pat = r'\s+(?:y|and|,)\s+'
-        # Optional count phrase that may sit between the first activity clause
-        # and the "y/and" split ("...certificados 5 inmersiones y 2 hacen
-        # snorkel", "...diving 3 dives and 2 snorkel").
-        _split_infix = r'(?:\s+\d+\s+(?:inmersi\w*|buceos?|d[ií]as?|dives?|days?))?'
-        # Verb fillers: "hacen", "harán", "quieren hacer", "queremos hacer", "vamos a hacer", etc.
-        verb_filler = (
-            r'(?:'
-            r'(?:queremos?|quieren?|hacemos?|hacen?|hago|hace|haremos?|har[aá]n?)\s+(?:hacer\s+)?'
-            r'|vamos?\s+a\s+(?:hacer\s+)?'
-            r')?'
-        )
-        # Prefix: "N de", "N para", "N personas", "N hacen", or bare "N "
-        quant_prefix = rf'{num_pat}\s+(?:de\s+|para\s+|for\s+|personas?\s+(?:de\s+|para\s+|for\s+)?|{verb_filler})'
-        pat_numeric_fwd = (
-            rf'{quant_prefix}{activity_kw}(?:\s+certificad[ao]s?)?'
-            rf'{_split_infix}'
-            rf'{sep_pat}'
-            rf'{quant_prefix}{activity_kw}(?:\s+certificad[ao]s?)?'
-        )
-        pat_numeric_rev = (
-            rf'{activity_kw}(?:\s+certificad[ao]s?)?\w*\s+{num_pat}'
-            rf'{_split_infix}'
-            rf'{sep_pat}'
-            rf'{activity_kw}(?:\s+certificad[ao]s?)?\w*\s+{num_pat}'
-        )
-        # ── Pattern B (priority): cert/no-cert splits — BEFORE numeric split ──
-        # "2 buceadores (1 certificado y otro no)" / "N cert y M principiante"
-        word_num = r'(\d+|' + number_alt(1, 6) + r'|un)'
-        cert_split_patterns = [
-            # "2 buceadores (1 certificado y otro/s no)" / "4 buceadores (2 cert y 2 no)"
-            rf'(\d+)\s+buceador[aes]*[^,\(]*[\(,]\s*{word_num}\s+certificad[ao]s?\s+y\s+(?:{word_num}\s+)?(?:el\s+)?otr[ao]s?\s+no',
-            # "4 buceadores (2 certificados y 2 no)" — with explicit "2 no"
-            rf'(\d+)\s+buceador[aes]*[^,\(]*[\(,]\s*{word_num}\s+certificad[ao]s?\s+y\s+{word_num}\s+no\b',
-            # "N certificados y M no certificados/principiantes"
-            r'(\d+)\s+certificad[ao]s?\s+y\s+(\d+)\s+(?:no\s+certificad[ao]s?|principiantes?|sin\s+certificar)',
-            # "uno certificado y dos minicurso" (palabras)
-            rf'{word_num}\s+certificad[ao]s?\s+y\s+{word_num}\s+(?:minicurso|bautismo|no\s+certificad[ao]|principiante)',
-            # "N buceo certificado y M minicurso/no certificado"
-            r'(\d+)\s+(?:de\s+)?buceo\s+certificado\s+y\s+(\d+)\s+(?:minicurso|no\s+certificad[ao]|principiante|bautismo)',
-            # "somos N, M certificados y el/los otro/s no"
-            r'(\d+)\s+certificad[ao]s?\s+y\s+(?:el\s+)?otr[ao]s?\s+(?:\d+\s+)?(?:no|sin\s+certific)',
-            # English: "N certified and M not certified/beginners"
-            r'(\d+)\s+certified\s+and\s+(\d+)\s+(?:not\s+certified|beginners?|uncertified)',
-            # "dos tenemos (el) open water y una no / sin certificar" / "2 con open water y 1 no"
-            rf'{word_num}\s+(?:tenemos|tienen|tiene|tengo|con|somos)\s+'
-            rf'(?:el\s+|la\s+|los\s+|las\s+|nuestro\s+)?'
-            rf'(?:open\s*water|advanced|rescue|divemaster|licencia|certificad[ao]s?|padi|ssi|cmas|naui)\b'
-            rf'[^,.;]*?\s+y\s+{word_num}\s+(?:no\b|sin\s+certific|no\s+certific)',
-            # English: "two have (their) open water and one doesn't/does not/not"
-            rf'{word_num}\s+(?:have|with|are)\s+(?:their\s+|the\s+)?'
-            rf'(?:open\s*water|advanced|rescue|certified|padi|ssi)\b'
-            rf'[^,.;]*?\s+and\s+{word_num}\s+(?:no|not|doesn\'?t|does\s+not|don\'?t|do\s+not)\b',
-        ]
-        for pat_idx, pat in enumerate(cert_split_patterns):
-            m_split = re.search(pat, message, re.IGNORECASE)
-            if m_split:
-                g = m_split.groups()
-                n1_raw = g[0]
-                # Para pat 0: g = (total, cert, maybe_beg_qty)
-                # Para pat 2 (palabras): g = (cert_word, beg_word) — sin grupo total
-                n2_raw = g[1] if len(g) > 1 else None
-                n1 = _parse_num(n1_raw) if n1_raw else 1
-                n2 = _parse_num(n2_raw) if n2_raw else 1
-
-                if pat_idx in (0, 1):
-                    # "N buceadores (M cert y [K] otros/K no)" — n1=total, n2=cert
-                    total = n1
-                    cert_n = n2
-                    # si hay tercer grupo (K no cert), usarlo; si no, resto
-                    n3_raw = g[2] if len(g) > 2 else None
-                    if n3_raw and re.match(r'\d+|' + number_alt(2, 6, "es"), n3_raw, re.IGNORECASE):
-                        beg_n = _parse_num(n3_raw)
-                        total = cert_n + beg_n
-                    else:
-                        beg_n = total - cert_n
-                elif pat_idx == 3:
-                    # "uno certificado y dos minicurso" — n1=cert_word, n2=beg_word
-                    cert_n = n1
-                    beg_n = n2
-                    total = cert_n + beg_n
-                else:
-                    cert_n = n1
-                    beg_n = n2 if n2 > 0 else (intent.group_size - cert_n if intent.group_size else 1)
-                    total = cert_n + beg_n
-
-                if cert_n > 0 and beg_n > 0:
-                    # Decision del owner (2026-09-15): el tramo no certificado solo es
-                    # minicurso si el mensaje lo nombra ("y dos minicurso"); si solo
-                    # dice que no estan certificados, queda `undecided` y el bot les
-                    # recomienda opciones. Mismas categorias que el detector de
-                    # actividad, sin vocabulario nuevo.
-                    beg_key = (
-                        "minicourse" if "minicourse" in matched_activity_categories(m_split.group(0))
-                        else "undecided"
-                    )
-                    intent.group_allocation = {'certified_diving': cert_n, beg_key: beg_n}
-                    intent.group_size = total
-                    intent.detected_fields.append("group_allocation")
-                break
-
-        # "Somos 2 ... y uno no esta certificado" — only the NOT-certified count
-        # is stated explicitly; the certified count is the complement against
-        # the already-known group_size (typo-tolerant: "certficado" matches
-        # cert\w*). Without this, a message that only describes who is NOT
-        # certified (instead of spelling out "N certified and M not") never
-        # resolves to a group_allocation and falls through to a generic answer.
-        # La frase que sigue a la cantidad se juzga con `certification_claim` (la misma
-        # fuente que decide `is_certified`, con su alcance de negacion), no con un patron
-        # propio que solo conocia "cert*" ("dos no tienen licencia", "uno no es buzo"
-        # quedaban sin reparto, 2026-09-15). La frase acaba en puntuacion o conjuncion.
-        # El total puede venir de la conversacion y una persona nombrada cuenta como 1
-        # (2026-09-15, r11): "mi amigo no esta certificado" con el grupo de 2 ya sabido deja
-        # al amigo sin decidir y el bot le recomienda opciones (decision del owner).
-        known_total = intent.group_size or (state.detected_group_size if state else None)
-        if not intent.group_allocation and known_total:
-            beg_n = 0
-            for m_count in re.finditer(
-                rf'(?:\b{word_num}|\b(?:el\s+|la\s+)?otr[ao]s?|{_SINGULAR_PERSON})\s+(?=([^,.;]+))',
-                strip_accents(message.lower()),
-            ):
-                clause = re.split(r'\b(?:y|and|pero|but)\b', m_count.group(2))[0]
-                # Quien "quiere certificarse" ya eligio: no es un tramo sin actividad.
-                if (clause.strip() and certification_claim(clause, about_writer=False) is False
-                        and not self._WANTS_CERT_RE.search(clause)):
-                    beg_n = _parse_num(m_count.group(1)) if m_count.group(1) else 1
-                    break
-            if beg_n:
-                if 0 < beg_n < known_total:
-                    cert_n = known_total - beg_n
-                    # Solo un atributo ("uno no esta certificado"): sin actividad elegida.
-                    intent.group_allocation = {'certified_diving': cert_n, 'undecided': beg_n}
-                    intent.detected_fields.append("group_allocation")
-        # Una persona nombrada y quien escribe, cada uno con su certificacion y de signo
-        # contrario (2026-09-15): "mi novia es buza certificada y yo nunca he buceado" o
-        # "soy buzo certificado y mi novia no esta certificada" son 2 personas, 1 certificada
-        # y 1 sin decidir. Fuentes unicas: `_SINGULAR_PERSON`, `other_person_certification`
-        # y `certification_claim`. Sin esto dependia de que el LLM devolviera el reparto.
-        # Sin total, o con el total de 2 ya sabido (las dos personas cuadran); con otro total
-        # serian solo 2 de N y no se reparte.
-        if not intent.group_allocation and known_total in (None, 0, 2):
-            other = other_person_certification(message)
-            writer = certification_claim(message)
-            # El lado que no repite el predicado ("..., yo no", "y mi hijo no") se lee por
-            # su propia polaridad (hallazgo I, 2026-09-15). Solo se rellena el que falta.
-            if other is not None and writer is None:
-                writer = elided_certification(message, about_writer=True)
-            elif writer is not None and other is None:
-                other = elided_certification(message, about_writer=False)
-            if (
-                len(re.findall(_SINGULAR_PERSON, strip_accents(message.lower()), re.IGNORECASE)) == 1
-                and other is not None and writer is not None and other != writer
-            ):
-                intent.group_allocation = {'certified_diving': 1, 'undecided': 1}
-                intent.detected_fields.append("group_allocation")
-                if not intent.group_size:
-                    intent.group_size = 2
-                    intent.detected_fields.append("group_size")
-
-        def _set_group_size_from_allocation(allocation: dict[str, int]) -> None:
-            """Fija `group_size` a la suma del reparto, pero NUNCA a la baja
-            si el cliente ya declaró un total explícito.
-
-            Hallazgo en vivo (batería sintética de repartos, 2026-09-10):
-            "somos 5: 3 certificados, 1 minicurso y 1 snorkel" resolvía
-            `group_size=2`. Causa: "3 certificados" no matchea `activity_kw`
-            (le falta el verbo, a diferencia de "3 bucean certificados"), así
-            que el Patrón E de 3+ actividades no se activa, cae al Patrón A,
-            captura solo las 2 cláusulas que sí ve, y la suma (2) sobreescribe
-            el "somos 5" explícito. Una reserva de 5 personas se convertía en
-            una de 2 — el mismo patrón de fallo que la §6.bis (perder gente de
-            un grupo mixto), y con impacto directo en el precio.
-
-            La guarda es estructural, no una lista de fraseos: un reparto
-            incompleto puede AMPLIAR el total (p. ej. "2 certificados y 3
-            snorkel", donde el patrón genérico de group_size había fijado 2 y
-            la suma real es 5), pero nunca reducirlo por debajo de lo que el
-            cliente contó. Si el reparto suma menos que el total declarado,
-            el total manda y el hueco se resuelve preguntando.
-            """
-            total = sum(allocation.values())
-            if intent.group_size is None or total > intent.group_size:
-                intent.group_size = total
-
-        # ── Pattern E (3+ actividades): "2 bucean certificados, 2 minicurso y
-        # 2 snorkel" (portado 2026-09-01, hallazgo en vivo lote 8 — batería de
-        # grupos mixtos contra PRE): el Patrón A de abajo solo captura UN PAR
-        # de cláusulas (regex de "N X y N Y"), así que un mensaje con 3+
-        # actividades perdía la primera cláusula en silencio — el resumen
-        # final terminaba sin la línea de buceo certificado, y `group_size`
-        # se recalculaba como la suma de solo 2 de las 3 actividades (4 en
-        # vez de 6). Recorre TODAS las cláusulas "N ACTIVIDAD" del mensaje con
-        # `finditer` (generalización de la misma gramática que Pattern A) en
-        # vez de un par fijo; solo se activa con 3+ actividades DISTINTAS
-        # para no tocar el camino ya probado de 2 actividades (Pattern A/B/C
-        # más abajo).
-        if not intent.group_allocation:
-            clause_pat = rf'{quant_prefix}{activity_kw}(?:\s+certificad[ao]s?)?'
-            allocation: dict[str, int] = {}
-            for m in re.finditer(clause_pat, message, re.IGNORECASE):
-                act = _activity_key(m.group(2).lower())
-                if act:
-                    allocation[act] = allocation.get(act, 0) + _parse_num(m.group(1))
-            if len(allocation) >= 3:
-                intent.group_allocation = allocation
-                _set_group_size_from_allocation(allocation)
-                intent.detected_fields.append("group_allocation")
-
-        # ── Pattern A: "3 de buceo y 2 de snorkel" / "buceo 3 y snorkel 2" ──
-        if not intent.group_allocation:
-            m_num = re.search(pat_numeric_fwd, message, re.IGNORECASE)
-            m_num_r = re.search(pat_numeric_rev, message, re.IGNORECASE) if not m_num else None
-            if m_num:
-                qty1 = _parse_num(m_num.group(1))
-                act1 = _activity_key(m_num.group(2).lower())
-                qty2 = _parse_num(m_num.group(3))
-                act2 = _activity_key(m_num.group(4).lower())
-                if act1 and act2 and act1 != act2:
-                    allocation: dict[str, int] = {}
-                    allocation[act1] = allocation.get(act1, 0) + qty1
-                    allocation[act2] = allocation.get(act2, 0) + qty2
-                    intent.group_allocation = allocation
-                    _set_group_size_from_allocation(allocation)
-                    intent.detected_fields.append("group_allocation")
-            elif m_num_r:
-                act1 = _activity_key(m_num_r.group(1).lower())
-                qty1 = _parse_num(m_num_r.group(2))
-                act2 = _activity_key(m_num_r.group(3).lower())
-                qty2 = _parse_num(m_num_r.group(4))
-                if act1 and act2 and act1 != act2:
-                    allocation = {}
-                    allocation[act1] = allocation.get(act1, 0) + qty1
-                    allocation[act2] = allocation.get(act2, 0) + qty2
-                    intent.group_allocation = allocation
-                    _set_group_size_from_allocation(allocation)
-                    intent.detected_fields.append("group_allocation")
-
-        # Pattern C: "somos N personas, M de buceo y el resto snorkel/minicurso"
-        pat_rest = (
-            r'somos\s+(\d+)\s*(?:personas?)?\s*[,;]?\s*'
-            r'(\d+)\s+(?:de\s+)?(\w+(?:\s+\w+)?)\s+y\s+(?:el\s+)?rest[oa]s?\s+(?:de\s+)?(\w+)'
-        )
-        m_rest = re.search(pat_rest, message, re.IGNORECASE)
-        if m_rest and not intent.group_allocation:
-            total = int(m_rest.group(1))
-            n1 = int(m_rest.group(2))
-            act1 = _activity_key(m_rest.group(3).lower())
-            act2 = _activity_key(m_rest.group(4).lower())
-            n2 = total - n1
-            if act1 and act2 and act1 != act2 and n1 > 0 and n2 > 0:
-                intent.group_allocation = {act1: n1, act2: n2}
-                intent.group_size = total
-                intent.detected_fields.append("group_allocation")
-
-        # Pattern D: "mitad buceo certificado y mitad snorkel" (portado
-        # 2026-09-01, hallazgo en vivo lote 8 — bateria de grupos mixtos
-        # contra PRE): "somos 10 de una empresa, mitad buceo certificado y
-        # mitad snorkel" no matcheaba NINGUN patron de reparto (todos exigen
-        # cantidades EXPLICITAS por actividad) — el grupo se quedaba sin
-        # `group_allocation`, y como la pregunta "¿cuantos serian para buceo
-        # certificado?" no tiene ninguna respuesta que el usuario pueda dar
-        # para resolverla (ya lo dijo con "mitad", no va a repetir un numero
-        # exacto), la conversacion se quedaba atascada repitiendo la misma
-        # pregunta sin importar lo que respondiera despues. Requiere
-        # `group_size` ya conocido (de "somos N" en el mismo mensaje o de un
-        # turno anterior) para calcular las mitades; el resto impar (si lo
-        # hay) se lo lleva la PRIMERA actividad mencionada.
-        if not intent.group_allocation:
-            m_half = re.search(
-                r'\bmitad\s+(?:de\s+)?(\w+(?:\s+\w+){0,2}?)[,\s]+(?:y\s+)?(?:la\s+otra\s+)?mitad\s+(?:de\s+)?(\w+(?:\s+\w+){0,2})'
-                r'|\bhalf\s+(\w+(?:\s+\w+){0,2}?)[,\s]+(?:and\s+)?half\s+(\w+(?:\s+\w+){0,2})',
-                message, re.IGNORECASE,
-            )
-            total = intent.group_size
-            if m_half is None:
-                m_half_total = None
-            else:
-                m_half_total = re.search(r'\bsomos\s+(\d+)\b|\b(\d+)\s+(?:de\s+una\s+empresa|personas?)\b', message, re.IGNORECASE)
-            if m_half and (total or m_half_total):
-                if not total and m_half_total:
-                    total = int(next(g for g in m_half_total.groups() if g))
-                g = m_half.groups()
-                act1_raw, act2_raw = (g[0], g[1]) if g[0] else (g[2], g[3])
-                act1 = _activity_key(act1_raw.lower()) if act1_raw else None
-                act2 = _activity_key(act2_raw.lower()) if act2_raw else None
-                if act1 and act2 and act1 != act2 and total:
-                    n1 = -(-total // 2)  # ceil: la primera actividad se lleva el impar
-                    n2 = total - n1
-                    intent.group_allocation = {act1: n1, act2: n2}
-                    intent.group_size = total
-                    intent.detected_fields.append("group_allocation")
-
-        mixed_group_patterns = [
-            # "yo quiero buceo certificado y mi novia snorkel" - captura hasta 3 palabras
-            (r'\byo\s+(?:quiero|hago|haría|haré)\s+(?:el\s+)?(\w+(?:\s+\w+){0,2}?)\s+y\s+(?:mi\s+)?(?:novia|novio|amigo|amiga|pareja|compañero|compañera|él|ella)\s+(?:quiere|hace|haría|hará)?\s*(?:el\s+)?(\w+(?:\s+\w+){0,2})', 'es'),
-            # "uno quiere buceo y el otro snorkel"
-            (r'\b(?:uno|una)\s+(?:quiere|hace)\s+(?:el\s+)?(\w+(?:\s+\w+)?)\s+y\s+(?:el\s+otro|la\s+otra|otro|otra)\s+(?:el\s+)?(\w+(?:\s+\w+)?)', 'es'),
-            # "yo buceo y mi novia snorkel" (sin verbo querer)
-            (r'\byo\s+(?:buceo|snorkel|minicurso)\s+y\s+(?:mi\s+)?(?:novia|novio|amigo|amiga|pareja|compañero|compañera|él|ella)\s+(\w+)', 'es'),
-            # English patterns
-            (r'\bi\s+(?:want|do)\s+(\w+(?:\s+\w+)?)\s+and\s+(?:my\s+)?(?:girlfriend|boyfriend|friend|partner|he|she)\s+(?:wants|does)?\s*(\w+(?:\s+\w+)?)', 'en'),
-            (r'\bone\s+(?:wants|does)\s+(\w+(?:\s+\w+)?)\s+and\s+(?:the\s+)?other\s+(\w+(?:\s+\w+)?)', 'en'),
-        ]
-
-        for pattern, lang in mixed_group_patterns:
-            if intent.group_allocation:
-                break  # Ya detectado por los patrones numéricos anteriores
-            match = re.search(pattern, message)
-            if match:
-                activity1 = match.group(1).lower()
-                try:
-                    activity2 = match.group(2).lower()
-                except IndexError:
-                    activity2 = ""
-
-                allocation = {}
-
-                for activity_text in [activity1, activity2]:
-                    # Primero verificar minicurso (tiene prioridad sobre buceo genérico)
-                    if any(kw in activity_text for kw in ['minicurso', 'bautismo', 'discover', 'principiante']):
-                        allocation['minicourse'] = allocation.get('minicourse', 0) + 1
-                    # Luego snorkel
-                    elif any(kw in activity_text for kw in ['snorkel', 'careteo']):
-                        allocation['snorkel'] = allocation.get('snorkel', 0) + 1
-                    # Finalmente buceo (certificado o genérico)
-                    elif any(kw in activity_text for kw in ['buceo', 'dive', 'diving', 'certificado', 'certified']):
-                        allocation['certified_diving'] = allocation.get('certified_diving', 0) + 1
-
-                if allocation:
-                    intent.group_allocation = allocation
-                    if not intent.group_size:
-                        _set_group_size_from_allocation(allocation)
-                    intent.detected_fields.append("group_allocation")
-                    break
-
-    def _detect_ages(self, message: str, intent: DetectedIntent) -> None:
-        """Extract person ages mentioned in the message ("mi hijo de 9 años",
-        "uno tiene 14", "a 6 year old", "kids aged 8 and 10").
-
-        Skips clear non-age numbers: 'hace N años' / 'N years ago' (last-dive
-        context), and durations like 'N días/horas'. Ages are 1-99.
-        """
-        ages: list[int] = []
-
-        def _add(group: str) -> None:
-            for num in re.findall(r'\d{1,2}', group):
-                a = int(num)
-                if 1 <= a <= 99:
-                    ages.append(a)
-
-        # 1) Numbers explicitly qualified by an age unit, including coordinated
-        #    lists: "9 años", "8 y 10 años", "6 and 12 years old", "14yo".
-        #    Skip "hace N años" / "N years ago" (last-dive context, not an age).
-        for m in re.finditer(
-            r'((?:\d{1,2}\s*(?:,|y|e|and|&)\s*)*\d{1,2})\s*(?:a[nñ]os?|year[s]?(?:\s*old)?|y(?:/|-)?o)\b',
-            message,
-        ):
-            # Timeframes are NOT ages: "hace (como) 3 años", "llevo 4 años sin
-            # bucear", "in like 4 years", "5 years ago". The old 8-char window
-            # cut "hace" out of "hace como 3 años" (real bug: the years since
-            # the last dive became a phantom kid's age and would poison the
-            # checkout's kids split — Fase 7, docs/robustness/plan.md).
-            preceding = message[max(0, m.start() - 20):m.start()]
-            if re.search(r'\b(hace|ultimo|ultima|last|desde|llevo|llevamos|in|for|like|since)\b', preceding):
-                continue
-            if re.match(r'\s*(?:ago|sin\s+bucear|que\s+no\s+buce)', message[m.end():]):
-                continue
-            _add(m.group(1))
-        # 2) Kid-noun context without the word "años", incl. coordinated ages:
-        #    "niño de 8", "hijo de 9", "niños de 8 y 10".
-        for m in re.finditer(
-            r'\b(?:niñ[oa]|nin[oa]|hij[oa]|niet[oa]|beb[eé]|kid|child|son|daughter|grandchild)s?\s+de\s+'
-            r'((?:\d{1,2}\s*(?:,|y|e|and|&)\s*)*\d{1,2})',
-            message,
-        ):
-            _add(m.group(1))
-        # 2b) Kid-noun + "tiene N" without an age unit: "mi hijo, tiene 7",
-        #     "mi hija tiene 9". Common in incremental group building.
-        for m in re.finditer(
-            r'\b(?:niñ[oa]|nin[oa]|hij[oa]|niet[oa]|beb[eé])s?\b[^.;]{0,20}?\btiene\s+(\d{1,2})\b',
-            message,
-        ):
-            _add(m.group(1))
-        # 3) "uno/una/otro/otra de N" — a specific group member's age (NOT
-        #    "familia de N" / "grupo de N", which are group sizes).
-        for m in re.finditer(r'\b(?:uno|una|otr[oa]|el\s+otro|la\s+otra)\s+de\s+(\d{1,2})\b', message):
-            _add(m.group(1))
-        # 4) "aged 8 and 10", "ages 8 and 10", "edad 8 y 10".
-        #    9-oct: también en singular, "1 youth (age 17)" (familia-mixta: se perdían 2 de
-        #    6 edades); no "minimum age 10" / "edad mínima", que es una regla, no una persona.
-        _edad_re = r'aged|ages?'
-        for m in re.finditer(
-            rf'\b(?:{_edad_re}|edad(?:es)?(?:\s+de)?)\s+((?:\d{{1,2}}\s*(?:,|y|e|and|&)\s*)*\d{{1,2}})',
-            message,
-        ):
-            if re.search(r'm[ií]nim|\bmin\b', message[max(0, m.start() - 12):m.start()]):
-                continue
-            _add(m.group(1))
-        # 5) English kid-noun + "are/is N and M": "our kids are 7 and 11".
-        for m in re.finditer(
-            r'\b(?:kids?|children|sons?|daughters?)\s+(?:are|is)\s+'
-            r'((?:\d{1,2}\s*(?:,|and|&)\s*)*\d{1,2})',
-            message,
-        ):
-            _add(m.group(1))
-
-        def _add_words(group: str) -> None:
-            for w in re.findall(_AGE_WORD_ALT, group, re.IGNORECASE):
-                ages.append(AGE_WORDS[w.lower()])
-
-        # 6) Edades en PALABRA (opción A): "nueve años", "cinco y siete años",
-        #    "mi hija de nueve", "kids aged eight and eleven". Mismas guardas de
-        #    plazo que el patrón 1 ("llevo nueve años sin bucear" NO es edad).
-        for m in re.finditer(
-            rf'\b((?:(?:{_AGE_WORD_ALT})\s*(?:,|y|e|and|&)\s*)*(?:{_AGE_WORD_ALT}))'
-            r'\s*(?:a[nñ]os?|year[s]?(?:\s*old)?)\b',
-            message, re.IGNORECASE,
-        ):
-            preceding = message[max(0, m.start() - 20):m.start()]
-            if re.search(r'\b(hace|ultimo|ultima|last|desde|llevo|llevamos|in|for|like|since)\b',
-                         preceding, re.IGNORECASE):
-                continue
-            if re.match(r'\s*(?:ago|sin\s+bucear|que\s+no\s+buce)', message[m.end():], re.IGNORECASE):
-                continue
-            _add_words(m.group(1))
-        # 6b) kid-noun / "aged" + word-number sin la palabra "años":
-        #     "mi hija de nueve", "un niño de doce", "aged eight and eleven".
-        for m in re.finditer(
-            r'\b(?:niñ[oa]|nin[oa]|hij[oa]|niet[oa]|beb[eé]|kid|child|son|daughter|grandchild'
-            r'|aged?|ages|edad(?:es)?)s?\s+(?:de\s+)?'
-            rf'((?:(?:{_AGE_WORD_ALT})\s*(?:,|y|e|and|&)\s*)*(?:{_AGE_WORD_ALT}))\b',
-            message, re.IGNORECASE,
-        ):
-            _add_words(m.group(1))
-        # 6c) kid-noun + "tiene N" en palabra: "mi hijo tiene ocho" (equivalente
-        #     al patrón 2b de dígitos).
-        for m in re.finditer(
-            rf'\b(?:niñ[oa]|nin[oa]|hij[oa]|niet[oa]|beb[eé])s?\b[^.;]{{0,20}}?\btiene\s+({_AGE_WORD_ALT})\b',
-            message, re.IGNORECASE,
-        ):
-            _add_words(m.group(1))
-
-        if ages:
-            intent.ages = sorted(set(ages))
-            intent.detected_fields.append("ages")
-
-    _LASTDIVE_NUM = {
-        **number_words(1, 6), "un": 1, "unos": 2, "unas": 2, "a": 1, "an": 1, "couple": 2, "few": 3,
-    }
-
-    def _last_dive_num(self, token: str) -> int:
-        token = token.lower()
-        return int(token) if token.isdigit() else self._LASTDIVE_NUM.get(token, 1)
-
-    def _detect_last_dive(self, message: str, intent: DetectedIntent) -> None:
-        """Capture whether the last dive was over 2 years ago (drives the refresher
-        question). Only fires in a diving context so an unrelated "hace un mes"
-        doesn't set it; harmless anyway since it's only used in the certified flow.
-        """
-        if intent.last_dive_over_2_years is not None:
-            return
-        # Must be talking about diving for this to be a last-dive statement.
-        # (Mismo gate, ahora en `LAST_DIVE_TOPIC_RE` a nivel de módulo — lo
-        # comparte el gate de respaldo textual del núcleo conversacional.)
-        if not LAST_DIVE_TOPIC_RE.search(message):
-            return
-
-        num = r"(\d+|unos|unas|" + number_alt(1, 6) + r"|un|a|an|couple|few)"
-
-        # Explicitly recent -> NOT over 2 years.
-        if re.search(
-            r"\b(hace\s+poco|recientemente|el\s+mes\s+pasado|la\s+semana\s+pasada|"
-            r"este\s+(?:mes|ano|año)|recently|last\s+month|last\s+week|just\s+dived|"
-            r"a\s+few\s+months\s+ago|this\s+(?:month|year))\b",
-            message,
-        ):
-            intent.last_dive_over_2_years = False
-            intent.detected_fields.append("last_dive_over_2_years")
-            return
-        # "no hace más de N años" / "hace menos de N años" / "less than N years" -> NOT over.
-        if re.search(
-            r"\bno\s+(?:hace|llevo|llevamos|ha\s+pasado)\b.{0,20}\bm[aá]s\s+de\b"
-            r"|\bhace\s+menos\s+de\b|\bmenos\s+de\s+\d+\s+a[nñ]os"
-            r"|\bless\s+than\s+\d+\s+years?\b",
-            message,
-        ):
-            intent.last_dive_over_2_years = False
-            intent.detected_fields.append("last_dive_over_2_years")
-            return
-        # "más de N años" / "N años sin bucear" / "haven't dived in N years" -> over if N>=2.
-        m_over = (
-            re.search(rf"\bhace\s+m[aá]s\s+de\s+{num}\s+a[nñ]os", message)
-            or re.search(rf"\b{num}\s+a[nñ]os\s+sin\s+bucear", message)
-            or re.search(rf"\bllev\w+\s+{num}\s+a[nñ]os\s+sin\s+bucear", message)
-            or re.search(rf"\bhaven'?t\s+dived\s+(?:in\s+)?{num}\s+years?", message)
-            or re.search(rf"\bmore\s+than\s+{num}\s+years?\b", message)
-        )
-        if m_over:
-            intent.last_dive_over_2_years = self._last_dive_num(m_over.group(1)) >= 2
-            intent.detected_fields.append("last_dive_over_2_years")
-            return
-        # Generic "hace N año(s)/mes(es)" (digit or word), verb optional either
-        # side. Allows one filler word ("hace COMO 3 años") — real bug found in
-        # the Fase 6 battery (D5): "hace como 3 años" fell through this
-        # entirely (no adjacency), leaving last_dive_over_2_years unresolved.
-        #
-        # `re.search` solo devolvía la PRIMERA coincidencia del mensaje — con
-        # dos cláusulas de este tipo en el mismo mensaje ("yo bucee hace 1
-        # mes pero mi amigo no bucea hace 8 años"), se quedaba con la del
-        # hablante (reciente) e ignoraba en silencio la del acompañante
-        # (>2 años), aunque la propia pregunta del bot es "¿ha pasado más de
-        # 2 años desde la última inmersión de ALGUNO del grupo?" — el criterio
-        # correcto es el más conservador: si CUALQUIER cláusula del mensaje
-        # indica >2 años/24 meses, el grupo entero necesita la oferta de
-        # refresher (batería sintética contra PRE, 2026-08-26, portado de
-        # pre_gadea v0.21.12).
-        m2_patterns = [
-            rf"\bhace\s+(?:como\s+)?{num}\s+(a[nñ]os?|mes(?:es)?)",
-            rf"\b[uú]ltima\s+inmersi[oó]n\s+(?:fue\s+)?hace\s+{num}\s+(a[nñ]os?|mes(?:es)?)",
-            rf"\bdived\s+{num}\s+(years?|months?)\s+ago",
-            rf"\blast\s+dive\s+(?:was\s+)?{num}\s+(years?|months?)\s+ago",
-        ]
-        m2_values = []
-        for pattern in m2_patterns:
-            for match in re.finditer(pattern, message):
-                n = self._last_dive_num(match.group(1))
-                unit = match.group(2)
-                if unit.startswith("a") or unit.startswith("y"):   # año(s) / year(s)
-                    m2_values.append(n >= 2)
-                else:                                                # mes(es) / month(s)
-                    m2_values.append(n >= 24)
-        if m2_values:
-            intent.last_dive_over_2_years = any(m2_values)
-            intent.detected_fields.append("last_dive_over_2_years")
-
-    def _detect_nationality(self, message: str, intent: DetectedIntent) -> None:
-        """Capture nationality stated in the message (drives COP vs USD) so the
-        checkout doesn't re-ask "¿eres colombiano?" when they already said it.
-        Negation is checked first so "no soy colombiano" reads as NOT Colombian."""
-        if intent.is_colombian is not None:
-            return
-        # Con polaridad contradictoria el regex no decide (2026-09-14): "somos
-        # extranjeros pero vivimos en colombia" (residentes: pagan en COP) daba
-        # False y "colombiano no, soy venezolano" daba True. El hueco lo resuelve
-        # el LLM en la misma peticion del turno, o el bot lo pregunta.
-        if nationality_is_ambiguous(message):
-            return
-        # Patrones en `_NOT_COLOMBIAN_RE`/`_COLOMBIAN_RE` (constantes de modulo,
-        # compartidas con `nationality_is_ambiguous`).
-        if _NOT_COLOMBIAN_RE.search(message):
-            intent.is_colombian = False
-            intent.detected_fields.append("is_colombian")
-            return
-        if _COLOMBIAN_RE.search(message):
-            intent.is_colombian = True
-            intent.detected_fields.append("is_colombian")
-
-    def _detect_duration(self, message: str, intent: DetectedIntent) -> None:
-        spans = [
-            _duration_span(m, unit_days)
-            for pattern, unit_days in _DURATION_RES
-            for m in pattern.finditer(message)
-            if not _is_elapsed_time(message, m)
-        ]
-        # Lo que no es cantidad x unidad: un paquete dura varios dias por definicion
-        # (lo dice el catalogo) y "solo hoy" es un dia.
-        if _MULTI_DAY_PRODUCT_RE.search(message):
-            spans.append(_MAX_PACKAGE_DAYS)
-        if _TODAY_ONLY_RE.search(message):
-            spans.append(1)
-        if not spans:
-            return
-        # La estancia mas larga manda, como antes mandaba el patron de varios dias:
-        # "un dia de buceo y 3 dias en las islas" es multi-dia.
-        intent.duration = "multi_day" if max(spans) > 1 else "single_day"
-        intent.detected_fields.append("duration")
-
-    def _detect_location(self, message: str, intent: DetectedIntent) -> None:
-        msg_lower = message.lower()
-
-        # Detectar Cartagena — incluye apodos históricos reales de la ciudad,
-        # ES y EN ("la heroica"/"the heroic city": Simón Bolívar tras el Sitio
-        # de Morillo de 1815; "corralito de piedra": sus murallas coloniales;
-        # "ciudad redentora": otro título del propio Bolívar; "la ciudad
-        # amurallada"/"the walled city": el centro histórico amurallado, muy
-        # usado por locales y turistas hispanohablantes; "queen of the
-        # caribbean": apodo turístico en inglés).
-        # Encontrado 2026-07-09 que ninguno se reconocía — solo "cartagena"/"ctg".
-        if _CARTAGENA_NAME_RE.search(msg_lower):
-            intent.location = "cartagena"
+    # Fallback: "vamos desde las islas" / "ya estoy en la isla" / "estamos
+    # en las islas" / EN "we are on the islands" / "from the islands" — no
+    # specific island/hotel named, but a real bug seen live on PRE
+    # (2026-07-09): with no generic pattern here, this message never set
+    # location, so the bot kept re-asking "¿desde dónde sales?" even
+    # though the customer had just answered it. Only checked when no
+    # island/hotel/Cartagena match already fired above; leaves `island`
+    # unset so the ISLAND_MENU step still asks which island (same as
+    # clicking "🏝️ Ya estoy en las islas").
+    # "los rosarios" / EN "the rosarios" — informal plural nickname for
+    # the whole archipelago (found via web search 2026-07-09). Deliberately
+    # NOT matching the singular "el rosario": in Colombia that phrase
+    # overwhelmingly means the Catholic prayer ("rezar el rosario"), not
+    # the islands — too risky to treat as a location signal. The plural
+    # (ES and EN) is unambiguous.
+    if not intent.location and (
+        re.search(r'\b(?:desde|en)\s+las?\s+islas?\b', msg_lower)
+        or re.search(r'\b(?:from|on|at)\s+the\s+islands?\b', msg_lower)
+        or re.search(r'\blos\s+rosarios\b', msg_lower)
+        or re.search(r'\bthe\s+rosarios\b', msg_lower)
+    ):
+        intent.location = "island"
+        intent.detected_fields.append("location")
+    # Cartagena Y una isla en el mismo mensaje: el papel de cada lugar (`place_by_role`).
+    if _CARTAGENA_NAME_RE.search(msg_lower) and (intent.island or names_an_island or names_the_archipelago):
+        place = place_by_role(msg_lower, lodging_island=bool(intent.hotel and intent.island))
+        if place == "cartagena":
+            intent.location, intent.island = "cartagena", None
+            intent.detected_fields = [f for f in intent.detected_fields if f != "island"]
+        elif place == "island":
+            intent.location = "island"
+        if place and "location" not in intent.detected_fields:
             intent.detected_fields.append("location")
 
-        # Mapeo de hoteles a islas
-        hotel_to_island = {
-            # Isla Grande
-            'san_pedro_majagua': 'isla_grande',
-            'bora_bora': 'isla_grande',
-            'cocoliso': 'isla_grande',
-            'pao_pao': 'isla_grande',
-            'fragata': 'isla_grande',
-            'secreto': 'isla_grande',
-            'gente_de_mar': 'isla_grande',
-            'luxury_beach': 'isla_grande',
-            'ecohotel_flores': 'isla_grande',
-            'playa_libre': 'isla_grande',
-            # Isla Marina
-            'islabela': 'isla_marina',
-            'hamaquero': 'isla_marina',
-            'ubuntu': 'isla_marina',
-            # Isla del Pirata
-            'isla_del_pirata_hotel': 'isla_del_pirata',
-            # Isla del Sol
-            'isla_del_sol_hotel': 'isla_del_sol',
-            # Isleta
-            'coralina': 'isleta',
-            'isleta_beach': 'isleta',
-            # Isla Arena
-            'isla_arena_resort': 'isla_arena',
-            # Isla Pavitos
-            'isla_pavitos_hotel': 'isla_pavitos',
-            # Isla Lizamar
-            'lizamar': 'isla_lizamar',
-            # Isla Gigi
-            'gigi': 'isla_gigi',
-            # Isla Rosa
-            'isla_rosa_hotel': 'isla_rosa',
-            # Isla Pelícano
-            'isla_pelicano_hotel': 'isla_pelicano',
-            # Isla Rosario
-            'rosario_ecohotel': 'isla_rosario',
-            'san_tropel': 'isla_rosario',
-        }
 
-        # Patrones de islas (con variantes)
-        island_patterns = {
-            'isla_grande': [r'\bisla\s+grande\b', r'\bgrande\b'],
-            'isla_marina': [r'\bisla\s+marina\b', r'\bmarina\b'],
-            'isla_del_pirata': [r'\bisla\s+del\s+pirata\b', r'\bpirata\b'],
-            'isla_del_sol': [r'\bisla\s+del\s+sol\b'],
-            'isleta': [r'\bisleta\b', r'\bisla\s+isleta\b'],
-            'isla_arena': [r'\bisla\s+arena\b', r'\barena\b'],
-            'isla_pavitos': [r'\bisla\s+pavitos\b', r'\bpavitos\b'],
-            'isla_lizamar': [r'\bisla\s+lizamar\b'],
-            'isla_gigi': [r'\bisla\s+gigi\b'],
-            'isla_rosa': [r'\bisla\s+rosa\b'],
-            'isla_pelicano': [r'\bisla\s+pelicano\b', r'\bisla\s+pelícano\b', r'\bpelicano\b', r'\bpelícano\b'],
-            'isla_rosario': [r'\bisla\s+rosario\b', r'\bislas\s+del\s+rosario\b'],
-        }
+def lectura_del_turno(message: str) -> DetectedIntent:
+    """lat-11 T6a (26-oct): lo poco del regex que el turno sigue usando junto al extractor: la cifra de inmersiones o de
+    días (`detect_cert_dive_count`/`detect_cert_day_count`), las edades y la duración (cuentan si el extractor falla)
+    y el lugar (la pista de isla y hotel del catálogo, `lugares.json`). Lo demás que leía `IntentDetector.detect`
+    (actividad, certificación, grupo, última inmersión, nacionalidad) lo decide el extractor y se quitaba con
+    `_quitar_provisional`; el idioma lo fija la apertura (`idioma_de_apertura`)."""
+    intent = DetectedIntent()
+    message_lower = message.lower().strip()
+    intent.cert_dives = detect_cert_dive_count(message_lower)
+    if intent.cert_dives is None:
+        intent.cert_days = detect_cert_day_count(message_lower)
+    detect_ages(message_lower, intent)
+    detect_duration(message_lower, intent)
+    detect_location(message_lower, intent)
+    return intent
 
-        # Detectar isla primero. La forma corta de una isla que se llama "Isla X" ("grande",
-        # "marina", "arena", "pirata") es tambien una palabra corriente: solo cuenta si el
-        # mensaje nombra una isla (hallazgo C.3, 2026-09-16; "nos vemos en la marina" o "somos un
-        # grupo grande" no son una isla). Los nombres de hotel son nombres propios y no cambian.
-        names_an_island = bool(_GENERIC_ISLAND_RE.search(msg_lower))
-        for island_id, patterns in island_patterns.items():
-            if any(re.search(pattern, msg_lower) for pattern in patterns if "isl" in pattern or names_an_island):
-                intent.island = island_id
-                intent.location = "island"
-                intent.detected_fields.extend(["island", "location"])
-                break
 
-        # Bare "rosario" also means the island (e.g. "corales del rosario"),
-        # but checked separately from the loop above and guarded against
-        # "rezar el rosario" — the Catholic prayer, a common phrase in
-        # Colombia. Pre-existing false positive (bare \brosario\b in the loop
-        # above matched it too) found 2026-07-09 while auditing nicknames.
-        if not intent.island and re.search(r'\brosario\b', msg_lower) and not re.search(r'\brezar\b', msg_lower):
-            intent.island = "isla_rosario"
-            intent.location = "island"
-            intent.detected_fields.extend(["island", "location"])
-
-        # Patrones de hoteles (con muchas más variantes)
-        hotel_patterns = {
-            # Isla Grande
-            'san_pedro_majagua': [
-                r'\bsan\s+pedro\s+de\s+majagua\b',
-                r'\bsan\s+pedro\b',
-                r'\bmajagua\b',
-                r'\bhotel\s+majagua\b',
-            ],
-            'bora_bora': [
-                r'\bbora\s+bora\b',
-                r'\bbora\b',
-                r'\bhotel\s+bora\b',
-            ],
-            'cocoliso': [
-                r'\bcocoliso\b',
-                r'\bhotel\s+cocoliso\b',
-                r'\bcocoliso\s+island\b',
-                r'\bcocoliso\s+resort\b',
-            ],
-            'pao_pao': [
-                r'\bpao\s+pao\b',
-                r'\bpaopao\b',
-                r'\bhotel\s+pao\b',
-            ],
-            'fragata': [
-                r'\bfragata\b',
-                r'\bhotel\s+fragata\b',
-                r'\bfragata\s+island\b',
-            ],
-            'secreto': [
-                r'\bsecreto\b',
-                r'\bhotel\s+secreto\b',
-                r'\bhostel\s+secreto\b',
-            ],
-            'gente_de_mar': [
-                r'\bgente\s+de\s+mar\b',
-                r'\bhotel\s+gente\b',
-            ],
-            'luxury_beach': [
-                r'\bluxury\s+beach\b',
-                r'\bluxury\b',
-            ],
-            'ecohotel_flores': [
-                r'\becohotel\s+las\s+flores\b',
-                r'\blas\s+flores\b',
-                r'\bflores\b',
-            ],
-            'playa_libre': [
-                r'\bplaya\s+libre\b',
-                r'\becohostal\s+playa\b',
-            ],
-            # Isla Marina
-            'islabela': [
-                r'\bislabela\b',
-                r'\bisla\s+bella\b',
-                r'\bhotel\s+islabela\b',
-            ],
-            'hamaquero': [
-                r'\bhamaquero\b',
-                r'\bel\s+hamaquero\b',
-                r'\bhotel\s+hamaquero\b',
-            ],
-            'ubuntu': [
-                r'\bubuntu\b',
-                r'\bcentro\s+ubuntu\b',
-            ],
-            # Isla del Pirata
-            'isla_del_pirata_hotel': [
-                r'\bhotel\s+isla\s+del\s+pirata\b',
-                r'\bisla\s+del\s+pirata\b',
-            ],
-            # Isla del Sol
-            'isla_del_sol_hotel': [
-                r'\bhotel\s+isla\s+del\s+sol\b',
-                r'\bisla\s+del\s+sol\b',
-            ],
-            # Isleta
-            'coralina': [
-                r'\bcoralina\b',
-                r'\bhotel\s+coralina\b',
-                r'\bcoralina\s+island\b',
-            ],
-            'isleta_beach': [
-                r'\bisleta\s+beach\b',
-            ],
-            # Isla Arena
-            'isla_arena_resort': [
-                r'\bisla\s+arena\s+eco\s+resort\b',
-                r'\bisla\s+arena\s+resort\b',
-                r'\bisla\s+arena\b',
-            ],
-            # Isla Pavitos
-            'isla_pavitos_hotel': [
-                r'\bisla\s+pavitos\b',
-                r'\bpavitos\b',
-            ],
-            # Isla Lizamar
-            'lizamar': [
-                r'\blizamar\b',
-                r'\bhotel\s+lizamar\b',
-            ],
-            # Isla Gigi
-            'gigi': [
-                r'\bcasa\s+de\s+isla\s+gigi\b',
-                r'\bisla\s+gigi\b',
-                r'\bgigi\b',
-            ],
-            # Isla Rosa
-            'isla_rosa_hotel': [
-                r'\bisla\s+rosa\b',
-            ],
-            # Isla Pelícano
-            'isla_pelicano_hotel': [
-                r'\bisla\s+pelicano\b',
-                r'\bisla\s+pelícano\b',
-                r'\bpelicano\b',
-                r'\bpelícano\b',
-            ],
-            # Isla Rosario
-            'rosario_ecohotel': [
-                r'\brosario\s+ecohotel\b',
-                r'\becohotel\s+rosario\b',
-            ],
-            'san_tropel': [
-                r'\bsan\s+tropel\b',
-                r'\btropel\b',
-            ],
-        }
-
-        # Detectar hotel
-        for hotel_id, patterns in hotel_patterns.items():
-            if any(re.search(pattern, msg_lower) for pattern in patterns):
-                intent.hotel = hotel_id
-                # Detectar isla automáticamente desde el hotel
-                if hotel_id in hotel_to_island and not intent.island:
-                    intent.island = hotel_to_island[hotel_id]
-                    intent.detected_fields.append("island")
-                if not intent.location:
-                    intent.location = "island"
-                    # s4-27 (8-oct): la ubicacion que se deduce del hotel se DECLARA, como
-                    # todas, para que pase por la puerta de Jev (u3-3/u3-4). Sin declararla se colaba siempre:
-                    # "¿me pasas el contacto del hotel Cocoliso?" (Jev: no afirma ubicacion) dejaba al cliente "ya en
-                    # las islas" (contacto-hoteles-cocoliso-san-pedro).
-                    intent.detected_fields.append("location")
-                intent.detected_fields.append("hotel")
-                break
-
-        # Fallback: "vamos desde las islas" / "ya estoy en la isla" / "estamos
-        # en las islas" / EN "we are on the islands" / "from the islands" — no
-        # specific island/hotel named, but a real bug seen live on PRE
-        # (2026-07-09): with no generic pattern here, this message never set
-        # location, so the bot kept re-asking "¿desde dónde sales?" even
-        # though the customer had just answered it. Only checked when no
-        # island/hotel/Cartagena match already fired above; leaves `island`
-        # unset so the ISLAND_MENU step still asks which island (same as
-        # clicking "🏝️ Ya estoy en las islas").
-        # "los rosarios" / EN "the rosarios" — informal plural nickname for
-        # the whole archipelago (found via web search 2026-07-09). Deliberately
-        # NOT matching the singular "el rosario": in Colombia that phrase
-        # overwhelmingly means the Catholic prayer ("rezar el rosario"), not
-        # the islands — too risky to treat as a location signal. The plural
-        # (ES and EN) is unambiguous.
-        if not intent.location and (
-            re.search(r'\b(?:desde|en)\s+las?\s+islas?\b', msg_lower)
-            or re.search(r'\b(?:from|on|at)\s+the\s+islands?\b', msg_lower)
-            or re.search(r'\blos\s+rosarios\b', msg_lower)
-            or re.search(r'\bthe\s+rosarios\b', msg_lower)
-        ):
-            intent.location = "island"
-            intent.detected_fields.append("location")
-        # Cartagena Y una isla en el mismo mensaje: el papel de cada lugar (`place_by_role`).
-        if _CARTAGENA_NAME_RE.search(msg_lower) and (intent.island or names_an_island):
-            place = place_by_role(msg_lower, lodging_island=bool(intent.hotel and intent.island))
-            if place == "cartagena":
-                intent.location, intent.island = "cartagena", None
-                intent.detected_fields = [f for f in intent.detected_fields if f != "island"]
-            elif place == "island":
-                intent.location = "island"
-            if place and "location" not in intent.detected_fields:
-                intent.detected_fields.append("location")
-
-    def _calculate_confidence(self, intent: DetectedIntent) -> None:
-        field_weights = {
-            'language': 0.1,
-            'activity': 0.25,
-            'is_certified': 0.2,
-            'group_size': 0.15,
-            'group_allocation': 0.2,
-            'last_dive_over_2_years': 0.15,
-            'duration': 0.1,
-            'location': 0.1,
-            'island': 0.1,
-            'hotel': 0.1,
-        }
-
-        total_confidence = sum(field_weights.get(field, 0.1) for field in intent.detected_fields)
-        intent.confidence = min(total_confidence, 1.0)
+# A named PADI certification level. Holding ANY of these means you're a
+# certified diver (Open Water is the entry level; the rest are above it).
+_CERT_LEVEL = (
+    r"(?:open[\s-]*water|advanced|rescue|dive\s*master|divemaster|"
+    r"aguas\s+abiertas|nitrox)"
+)
+# Verbos de tener un nivel (hallazgo F.1, 2026-09-15): la posesion (tener, llevar) y
+# haberlo hecho (hacer, sacar, terminar, completar), en primera y tercera persona.
+# Antes solo "tengo/tenemos/tiene(n)": "ya llevo el rescue" o "hice mi open water"
+# se tomaban por un nivel sin decir si lo tienen y el bot preguntaba de mas. Querer
+# sacarlo (`_WANTS_CERT_RE`) sigue ganando: "hice el open water y quiero el advanced".
+_HOLD_VERB_WRITER_ES = r"(?:tengo|tenemos|llevo|llevamos|hice|hicimos|saqu[eé]|termin[eé]|complet[eé])"
+_HOLD_VERB_OTHER_ES = (
+    r"(?:tienen?|llevan?|hizo|hicieron|sac[oó]|sacaron|termin[oó]|terminaron|complet[oó]|completaron)"
+)
+_HOLD_VERB_EN = r"(?:have|has|got|did|completed|finished|took)\s+(?:got\s+|done\s+|completed\s+|finished\s+)?"
+# "I HAVE / I AM this cert" — status, not a course to take.
+_HOLDS_WRITER = (
+    r"\b(?:soy|somos|estoy|estamos)\s+(?:un[ao]?\s+|buz[oa]s?\s+)?"
+    r"(?:certificad[oa]s?\s+(?:en|como)\s+)?" + _CERT_LEVEL + r"\b"
+    r"|\b" + _HOLD_VERB_WRITER_ES + r"\s+(?:el\s+|la\s+|mi\s+|nuestr[oa]\s+|un[ao]?\s+)?" + _CERT_LEVEL + r"\b"
+    r"|\bi(?:'?m|\s+am)\s+(?:an?\s+)?" + _CERT_LEVEL + r"\b"
+    # "i already have my open water card" — the adverb between "i/we" and
+    # "have" used to break the match, so the message was classified as
+    # WANTING the Open Water course instead of holding it (real bug from
+    # the Fase 6 battery — Fase 7, docs/robustness/plan.md).
+    r"|\b(?:i|we)\s+(?:already\s+|now\s+|both\s+)?" + _HOLD_VERB_EN + r"(?:my\s+|our\s+|an?\s+|the\s+)?" + _CERT_LEVEL + r"\b"
+    r"|\b" + _CERT_LEVEL + r"\s+(?:diver|certified)\b"
+    r"|\bbuz[oa]\s+avanzad[oa]\b"
+)
+# Tercera persona con la persona nombrada (2026-09-15): "mi pareja tiene el
+# advanced" salia curso Advanced. Sin persona, "¿tienen el advanced?" es preguntar
+# si el centro lo ofrece, asi que la persona sale de la lista compartida de
+# sustantivos. Dice que NO pide el curso, pero nada del estado de quien escribe.
+_HOLDS_OTHER_PERSON = (
+    r"\b(?:" + _PERSON_NOUN_SINGULAR_ES + r"|" + _PERSON_NOUN_PLURAL_ES + r")\s+(?:\w+\s+){0,2}?"
+    + _HOLD_VERB_OTHER_ES + r"\s+(?:el\s+|la\s+|su\s+|un[ao]?\s+)?" + _CERT_LEVEL + r"\b"
+    r"|\b(?:" + _PERSON_NOUN_SINGULAR_EN + r"|" + _PERSON_NOUN_PLURAL_EN + r")\s+(?:\w+\s+){0,2}?"
+    + _HOLD_VERB_EN + r"(?:her\s+|his\s+|their\s+|an?\s+|the\s+)?" + _CERT_LEVEL + r"\b"
+)
+_HOLDS_CERT_RE = re.compile(_HOLDS_WRITER + r"|" + _HOLDS_OTHER_PERSON, re.IGNORECASE)
+# "I WANT / I'm doing the <level> COURSE" — wants the certification, so NOT
+# certified yet. Requires the want-verb to be followed by the cert level so
+# "quiero 2 inmersiones" (wanting dives) never counts as wanting a course.
+_WANTS_CERT_RE = re.compile(
+    r"\b" + _WANT_VERB + _WANT_OBJECT_PREFIX + r"(?:" + _CERT_LEVEL + r"|" + _CERT_NOUN + r")"
+    + r"|\bcurso\s+(?:de\s+)?(?:padi\s+)?" + _CERT_LEVEL
+    + r"|\bcertificar(?:me|nos|te|se)\b|\bget\s+certified\b",
+    re.IGNORECASE,
+)

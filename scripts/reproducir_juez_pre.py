@@ -65,6 +65,8 @@ logging.getLogger().setLevel(logging.INFO)
 _CAMPOS = ("location", "detected_location", "core_pending_slot", "pregunta_precio_pendiente", "detected_activity",
            "selected_service", "detected_group_size", "detected_group_allocation", "is_certified", "is_colombian",
            "quiere_bucear", "suggested_activity",
+           # lat-11 T6c (26-oct): la isla y el hotel, para medir los falsos «está en las islas».
+           "island", "detected_island", "hotel", "detected_hotel",
            # gen-3b (21-oct): si el turno pasó el caso a una persona (y por qué), para medir "pasa directo" frente a
            # "ofrece el pase".
            "pending_escalation_reason")

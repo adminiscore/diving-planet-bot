@@ -2,8 +2,8 @@
 
 Lo que se fija aquí:
 1. con el flag APAGADO (por defecto) no se llama a Jev: la conducta es la de siempre;
-2. con el flag encendido, si Jev responde, esa es la respuesta y no se llama al LLM;
-3. si Jev falla (sin clave, error, tiempo máximo, respuesta rara), se usa el router LLM;
+2. si Jev responde, esa es la respuesta; si duda, decide igual (lat-11 T2: el router LLM de respaldo se quitó);
+3. si Jev falla (sin clave, error, tiempo máximo, respuesta rara), {} y deciden las listas de siempre;
 4. las respuestas de Jev se traducen al MISMO dict que devuelve el router LLM;
 5. la configuración es la que ganó en l2-4 (`scripts/jev_router_eval.py --v2`).
 """
@@ -15,42 +15,6 @@ import pytest
 
 from src.agents import escalation, jev_router
 from src.config import settings
-
-
-class _FakeLLM:
-    """Cliente OpenAI de mentira: cuenta las llamadas y no marca ninguna señal."""
-
-    def __init__(self):
-        self.calls = 0
-        outer = self
-
-        class _Completions:
-            async def create(self, **_kw):
-                outer.calls += 1
-
-                class _Msg:
-                    tool_calls = None
-
-                class _Choice:
-                    message = _Msg()
-
-                class _Resp:
-                    choices = [_Choice()]
-
-                return _Resp()
-
-        class _Chat:
-            completions = _Completions()
-
-        self.chat = _Chat()
-
-
-@pytest.fixture
-def llm(monkeypatch):
-    fake = _FakeLLM()
-    monkeypatch.setattr(escalation, "AsyncOpenAI", lambda **_kw: object())
-    monkeypatch.setattr(escalation, "trace_openai", lambda _c: fake)
-    return fake
 
 
 @pytest.fixture
@@ -70,25 +34,23 @@ def _full(fn, asks=False):
     return _wrapped
 
 
-async def test_con_flag_manda_jev_y_no_se_llama_al_llm(monkeypatch, llm, facts):
+async def test_manda_jev(monkeypatch, facts):
     async def _jev(message, *, lang="es"):
         return {"wants_human": True}
 
     monkeypatch.setattr(jev_router, "detect_routing_signals_jev_full", _full(_jev))
     got = await escalation.detect_routing_signals("quiero hablar con un asesor")
     assert got == {"wants_human": True}
-    assert llm.calls == 0
     assert facts["router"] == "jev"
 
 
-async def test_si_jev_falla_se_usa_el_router_llm(monkeypatch, llm, facts):
+async def test_si_jev_falla_deciden_las_listas(monkeypatch, facts):
     async def _falla(message, *, lang="es"):
         return None
 
     monkeypatch.setattr(jev_router, "detect_routing_signals_jev_full", _full(_falla))
-    await escalation.detect_routing_signals("quiero hablar con un asesor")
-    assert llm.calls == 1
-    assert facts["router"] == "llm_fallback"
+    assert await escalation.detect_routing_signals("quiero hablar con un asesor") == {}
+    assert facts["router"] == "sin_ia"
 
 
 def test_traduccion_de_respuestas_al_dict_del_router():
@@ -208,11 +170,11 @@ async def test_si_jev_duda_devuelve_uncertain(monkeypatch):
     assert got == jev_router.UNCERTAIN
 
 
-async def test_si_jev_duda_decide_el_router_llm(monkeypatch, llm, facts):
-    async def _duda(message, *, lang="es"):
-        return jev_router.UNCERTAIN
+async def test_si_jev_duda_decide_igual(monkeypatch, facts):
+    async def _duda(message, *, lang="es", pending_slot=None, history=None):
+        return jev_router.UNCERTAIN, {"availability_question": True}
 
-    monkeypatch.setattr(jev_router, "detect_routing_signals_jev_full", _full(_duda))
-    await escalation.detect_routing_signals("the discount of 10% is not showing up")
-    assert llm.calls == 1
-    assert facts["router"] == "llm_uncertain"
+    monkeypatch.setattr(jev_router, "detect_routing_signals_jev_full", _duda)
+    assert await escalation.detect_routing_signals("the discount of 10% is not showing up") == {
+        "availability_question": True}
+    assert facts["router"] == "jev_duda"

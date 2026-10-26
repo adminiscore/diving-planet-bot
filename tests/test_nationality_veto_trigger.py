@@ -13,68 +13,12 @@ La senal de ambiguedad reutiliza los MISMOS patrones que `_detect_nationality`
 (nunca una lista nueva de fraseos): hay polaridad contradictoria si, ademas de
 lo que el detector eligio, queda una marca de la polaridad contraria fuera del
 tramo que la produjo.
+lat-11 T6d (26-oct): fuera los tests de `nationality_is_ambiguous` e IntentDetector.detect (se quitaron; la
+nacionalidad la decide el extractor). Queda la regla del grupo mixto.
 """
 
-import pytest
-
 from src.agents import supervisor
-from src.agents.intent_detector import IntentDetector, nationality_is_ambiguous
 from src.flows.state import ConversationState
-
-
-@pytest.mark.parametrize("message", [
-    "ninguno colombiano",
-    "ninguno es colombiano",
-    "no soy colombiano",
-    "no, somos extranjeros",
-    "soy extranjero",
-    "i'm not colombian",
-    "nadie es colombiano, todos extranjeros",
-    "soy colombiano",
-    "somos colombianos",
-    "soy de Medellin, quiero bucear",
-])
-def test_unambiguous_nationality_is_not_ambiguous(message):
-    assert nationality_is_ambiguous(message) is False
-
-
-@pytest.mark.parametrize("message", [
-    # las dos polaridades a la vez, fuera del tramo negado
-    "dos somos colombianos pero uno es extranjero",
-    "yo soy colombiano y mi novia extranjera",
-    "somos extranjeros pero vivimos en colombia",
-    "no soy colombiano pero vivo en colombia",
-    # afirmacion + negacion suelta que el detector no ve como tal
-    "mi pareja es colombiana, yo no",
-    "colombiano no, soy venezolano",
-])
-def test_contradictory_polarity_is_ambiguous(message):
-    assert nationality_is_ambiguous(message) is True
-
-
-def test_message_without_nationality_is_not_ambiguous():
-    assert nationality_is_ambiguous("somos 4 y queremos bucear") is False
-    assert nationality_is_ambiguous("no tenemos certificado") is False
-
-
-def _intent(message):
-    state = ConversationState(conversation_id="nat-trigger")
-    return IntentDetector().detect(message, state), state
-
-
-@pytest.mark.parametrize("message", [
-    "somos extranjeros pero vivimos en colombia",
-    "no soy colombiano pero vivo en colombia",
-    "colombiano no, soy venezolano",
-    "mi pareja es colombiana, yo no",
-])
-def test_detector_abstains_on_contradictory_nationality(message):
-    """2026-09-14: con polaridad contradictoria el regex no decide (daba False a
-    residentes, que pagan en COP, y True a "soy venezolano"). El hueco lo resuelve
-    el LLM en la misma peticion del turno o el bot lo pregunta."""
-    intent, _state = _intent(message)
-    assert intent.is_colombian is None
-    assert "is_colombian" not in intent.detected_fields
 
 
 def test_mixed_nationality_group_pays_in_usd():

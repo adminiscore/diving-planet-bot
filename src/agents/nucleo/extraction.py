@@ -29,10 +29,8 @@ from src.agents.conversational_core import (
     _apply_cert_or_course,
     _apply_group_total,
     _cart_item,
-    _cart_will_include_cert,
     _companion_activity_options,
     _course_level_options,
-    _detector,
     _group_allocation_fully_resolved,
     _has_pending_answer,
     _is_greeting_only,
@@ -59,17 +57,15 @@ from src.agents.intent_detector import (
     _SINGULAR_PERSON,
     certification_claim,
     course_level_is_ambiguous,
+    lectura_del_turno,
 )
 from src.agents.llm_extractor import (
     detect_special_signals,
-    fill_gaps,
-    missing_fields,
     resolve_slot_answer,
 )
 from src.agents.nucleo.extractor import (
     _CAMPOS_LISTA_CERRADA,
     _aplicar_extractor,
-    campos_del_extractor,
 )
 from src.domain import activities as dom
 from src.flows import cart_render
@@ -365,19 +361,6 @@ def _activity_has_textual_backing(activity: str, message: str) -> bool:
     return False
 
 
-# Campos que CONDUCEN la reserva en el núcleo (alimentan next_missing_slot o el
-# gating de links/moneda). duration/cert_dives/cert_days quedan fuera del
-# gap-fill del núcleo a propósito: son afinadores espontáneos que el regex ya
-# captura cuando el cliente los dice claro (detect_cert_dive_count etc.) y no
-# bloquean ningún slot — pedirlos al LLM en cada turno era parte del gasto que
-# el Fix B elimina. (El cutover legacy del supervisor no cambia.)
-_DRIVING_FIELDS = {
-    "activity", "is_certified", "group_size", "group_allocation",
-    "location", "island", "hotel", "ages", "last_dive_over_2_years",
-    "is_colombian",
-}
-
-
 # Slots de SÍ/NO y el campo que resuelve cada uno. Hallazgo en vivo
 # (2026-09-01, cierre del problema abierto §6.bis del plan multi-agente,
 # conversación 769 de PRE + repro determinista en local con LLM real): con
@@ -490,75 +473,6 @@ def _pista_del_regex(intent) -> dict:
     return {c: getattr(intent, c) for c in _CAMPOS_LISTA_CERRADA if getattr(intent, c, None) not in (None, "", [], {})}
 
 
-def _relevant_gaps(state: ConversationState, intent, message: str, *, keep_pending_bool: bool = False) -> list[str]:
-    """(Fix B del handoff) Huecos que de verdad vale la pena pedirle al LLM:
-    los calcula contra el ESTADO (no solo contra el intent del mensaje suelto,
-    que casi siempre está vacío) y descarta los campos que no aplican al
-    contexto (island/hotel saliendo de Cartagena, edades sin menores
-    mencionados, seguridad sin buceo certificado en la reserva, reparto con la
-    cantidad ya sabida y sin señal de persona añadida)."""
-    known = _state_known_fields(state)
-    gaps = [f for f in missing_fields(intent) if f in _DRIVING_FIELDS and f not in known]
-    if (state.location or state.detected_location) == "cartagena":
-        gaps = [f for f in gaps if f not in ("island", "hotel")]
-    if not state.kids_mention_detected:
-        gaps = [f for f in gaps if f != "ages"]
-    if state.detected_activity and not _cart_will_include_cert(state):
-        gaps = [f for f in gaps if f != "last_dive_over_2_years"]
-    # PUERTA RETIRADA (2026-09-12). Aqui se quitaba `group_allocation` de los
-    # huecos cuando ya se sabia la cantidad y el mensaje no anadia gente. El
-    # motivo era el COSTE ("pedirlo cada turno era gasto puro"), y ese argumento
-    # decayo al fusionar las peticiones del turno: un campo mas viaja en la
-    # MISMA peticion, asi que cuesta tokens (abundante), no peticiones (lo
-    # escaso).
-    #
-    # Medido antes de quitarla, con scripts/battery_group_allocation_gate.py
-    # (23 escenarios de conversacion x 4 variantes x 2 repeticiones):
-    #   hoy (puerta puesta)     3/10 repartos correctos
-    #   puerta fuera + veto     6/10, 0 repartos parciales, 0 alucinaciones
-    # Los 10 escenarios de riesgo (turnos donde inventarse un reparto seria un
-    # misfill) salen limpios en las cuatro variantes: lo que protege de eso no
-    # era esta puerta sino `_state_known_fields`, que impide rederivar un
-    # reparto que la conversacion YA sabe.
-    #
-    # No va sola: depende de `supervisor.enforce_group_allocation_consistency`,
-    # que impide guardar un reparto que no suma el total. Sin esa invariante,
-    # quitar la puerta introducia repartos PARCIALES (medido), que son peores
-    # que no tener reparto.
-    #
-    # PERO el argumento "viaja gratis" solo vale si la peticion YA se iba a
-    # hacer. Si `group_allocation` fuese el UNICO hueco, seria el causante de
-    # una llamada que si no no existiria -- y una reserva ya completa haria una
-    # peticion en cada turno de charla ("genial, nos vemos"). Asi que se aplica
-    # el argumento tal cual: puede viajar de acompanante, nunca originar la
-    # peticion. Lo caza `test_understand_skips_llm_when_state_knows_driving_fields`.
-    if gaps == ["group_allocation"]:
-        gaps = []
-    # GUARDA (a) — el slot booleano que el bot ACABA de preguntar no se le pide
-    # nunca a `fill_gaps`. Ver `_BOOL_SLOT_FIELD`: esos campos ya tienen dos
-    # resolutores anclados al mensaje del turno, y `fill_gaps` es el único de
-    # los tres que puede "contestar" mirando el historial.
-    #
-    # Excepción (u3-4, 26-sep): el relleno CON PUERTA del turno con pregunta
-    # (`keep_pending_bool`). Va sin historial y con el "sí" de Jev para ese campo, así que
-    # el motivo de la guarda no aplica; y en un turno con pregunta los otros dos resolutores
-    # se lo saltan (la respuesta corta exige que no haya "?" y `resolve_slot_answer`, que no
-    # "parezca pregunta"), así que sin esto "completé el curso básico el 3 de abril, ¿tengo
-    # que hacer algo especial?" se perdía siempre (regresión de la ronda B2).
-    pending_field = _BOOL_SLOT_FIELD.get(state.core_pending_slot)
-    if pending_field and not keep_pending_bool:
-        gaps = [f for f in gaps if f != pending_field]
-    return gaps
-
-
-async def _edades_las_lee_el_extractor(state: ConversationState, message: str) -> bool:
-    """ex-9b paso 6: ¿leyó el extractor este mensaje (con su campo `edades`)? Espera la lectura adelantada sin gastarla
-    (`lectura_del_extractor`): ninguna llamada más."""
-    from src.agents.nucleo.extractor import lectura_del_extractor  # lazy
-
-    return await lectura_del_extractor(state, message) is not None
-
-
 async def _understand(state: ConversationState, message: str, *, answered_pending: bool = False) -> tuple:
     """Regex fast-path + gap-fill LLM sobre los campos que la CONVERSACIÓN aún
     no conoce (Fix B: nunca se piden campos que el estado ya tiene), y volcado
@@ -582,7 +496,8 @@ async def _understand(state: ConversationState, message: str, *, answered_pendin
     prev_last_dive = state.last_dive_over_2_years
     prev_refresher = state.refresher_interested
 
-    intent = _detector.detect(message, state)
+    # lat-11 T6a: del regex, solo lo que el turno sigue usando (`lectura_del_turno`); el resto lo decide el extractor.
+    intent = lectura_del_turno(message)
     # ex-5 (fase EX): los dominios que entiende el extractor "LLM primero" no los
     # decide el regex. Lo que leyó se queda en el intent como PROVISIONAL (las guardas que miran si el mensaje
     # CONTESTA la pregunta pendiente lo siguen viendo, como hoy), pero ni dispara contradicciones, ni va al veto, al
@@ -591,48 +506,11 @@ async def _understand(state: ConversationState, message: str, *, answered_pendin
     # se pregunta.
     pista_lugar = _pista_del_regex(intent)
     # u3-4: turno con pregunta (la respuesta del RAG ya está lanzada en paralelo).
-    question_turn_fields = None
     if _has_pending_answer(state):
-        question_turn_fields = _question_turn_fields(intent, state)
+        _question_turn_fields(intent, state)
     state.mixed_nationality_notice = False
-    # ex-9 (15-oct): con los cuatro dominios en el extractor "LLM primero" (ex-5…ex-8), lo único que el relleno LLM de
-    # siempre (`fill_gaps`) aún decide son las EDADES de los menores. El veto, la re-comprobación de lo sabido, la
-    # verificación del turno con pregunta, las contradicciones del regex y las guardas del parche (grupo, booleanos,
-    # origen, grupo mixto) se quedaban sin campos y se quitaron (HISTORY 0.31.28).
-    gaps = [f for f in _relevant_gaps(state, intent, message) if f not in campos_del_extractor()]
-    # u3-4: un mensaje con pregunta ya no se salta el relleno (así nació el núcleo, 22-jul: pregunta -> RAG O dato ->
-    # extracción); el dato que venga junto a la pregunta no se pierde.
-    rellenar = gaps if question_turn_fields is None and not _is_greeting_only(message) else []
-    rellenar_sin_historial = []
-    if question_turn_fields is not None and not _is_greeting_only(message):
-        # u3-4 paso 3: en el turno con pregunta, solo los huecos que Jev dice que el cliente afirma en ESTE mensaje, y
-        # sin historial (Jev solo ve el mensaje).
-        afirma = getattr(state, "_answer_affirms", None) or {}
-        rellenar_sin_historial = [
-            f for f in _relevant_gaps(state, intent, message, keep_pending_bool=True)
-            if afirma.get(f) is True and f not in campos_del_extractor()
-        ]
-    if "ages" in rellenar + rellenar_sin_historial and await _edades_las_lee_el_extractor(state, message):
-        # ex-9b paso 6 (`edades_por_extractor`): las edades las da el extractor con su cita (`_poner_edades`); el relleno
-        # con el historial no las supone. Si el extractor falla, el relleno de siempre.
-        rellenar = [f for f in rellenar if f != "ages"]
-        rellenar_sin_historial = [f for f in rellenar_sin_historial if f != "ages"]
-    if rellenar or rellenar_sin_historial:
-        patch = await fill_gaps(
-            message, intent, history=state.history if rellenar else None, lang=state.language,
-            only_fields=rellenar or rellenar_sin_historial,
-        )
-        patch = {
-            f: v for f, v in patch.items()
-            if f not in campos_del_extractor() and f not in ("evidence", "mixed_nationality")
-        }
-        for field_name, value in patch.items():
-            setattr(intent, field_name, value)
-            if field_name not in intent.detected_fields:
-                intent.detected_fields.append(field_name)
-        if patch:
-            # (Fix A del handoff) El tag que parsea scripts/harvest_cutover_logs.py.
-            logger.info(f"[EXTRACT][CUTOVER] applied={patch} msg={supervisor._log_safe_message(message)!r}")
+    # lat-11 (26-oct): fuera el relleno LLM de siempre (`fill_gaps`). Solo decidía las edades de los menores y solo si el
+    # extractor fallaba (0 llamadas en la integra-B del 26-oct, 465 turnos); sin extractor, las edades se preguntan.
     # Invariante del reparto, en el UNICO punto donde el intent del turno ya
     # esta completo (regex + veto + relleno) y aun no se ha escrito al estado.
     # Ponerla aqui la hace valida para cualquier fuente del reparto, presente o
@@ -823,7 +701,7 @@ def _number_of_something_else(state: ConversationState, message: str, value) -> 
     """¿El detector ya lee ese numero como otra magnitud (inmersiones, dias, edades)? Lo
     usa el resolutor LLM de la pregunta del total (G): con "¿cuantas personas?"
     pendiente, "2 inmersiones" volvia como 2 personas 2/2."""
-    intent = _detector.detect(message, state)
+    intent = lectura_del_turno(message)
     return value in {intent.cert_dives, intent.cert_days, *(intent.ages or [])}
 
 

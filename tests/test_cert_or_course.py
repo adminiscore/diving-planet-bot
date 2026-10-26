@@ -11,7 +11,6 @@ import pytest
 
 from src.agents import conversational_core as core
 from src.agents.intent_detector import course_level_is_ambiguous
-from src.agents.nucleo import extraction as core_extraction
 from src.flows.state import ConversationState
 
 
@@ -50,8 +49,7 @@ async def test_ambiguous_level_asks_before_quoting(extractor_dice):
     # decir si lo tienen; el núcleo pregunta antes de cotizar. Sin él, en los tests iba por la pista del regex.
     extractor_dice({"hola somos 4 open water": {"activity": "padi_open_water", "group_size": 4}})
     state = _state()
-    with patch.object(core_extraction, "fill_gaps", new=AsyncMock(return_value={"is_certified": True})), \
-         patch.object(core, "extract_and_verify", create=True, new=AsyncMock(return_value=({"is_certified": True}, {}))):
+    with patch.object(core, "extract_and_verify", create=True, new=AsyncMock(return_value=({"is_certified": True}, {}))):
         await core._understand(state, "hola somos 4 open water")
     assert state.needs_cert_or_course is True
     assert state.is_certified is None          # no se da por buena la suposicion del LLM

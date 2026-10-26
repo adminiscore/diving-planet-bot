@@ -4,23 +4,24 @@ Lo que se dice de otra persona no fija el estado de quien escribe. El sujeto del
 verbo ("mi amigo no esta certificado") ya se reconocia; faltaba el sujeto pospuesto ("no
 es certificado mi acompañante"), que se atribuia a quien escribe. Un complemento ("con mi
 pareja", "para mi novia") no es el sujeto.
+lat-11 T6d (26-oct): fuera las comprobaciones de `other_person_certification` (se quitó con IntentDetector; esos
+campos los decide el extractor).
 """
 
 import pytest
 
-from src.agents.intent_detector import certification_claim, other_person_certification
+from src.agents.intent_detector import certification_claim
 
 
-@pytest.mark.parametrize("message, other", [
-    ("mi amigo no esta certificado", False),          # sujeto delante
-    ("no es certificado mi acompañante", False),      # sujeto detras
-    ("está certificada mi novia", True),
-    ("no tiene licencia mi amigo, yo si", False),
-    ("is certified my wife", True),
+@pytest.mark.parametrize("message", [
+    "mi amigo no esta certificado",          # sujeto delante
+    "no es certificado mi acompañante",      # sujeto detras
+    "está certificada mi novia",
+    "no tiene licencia mi amigo, yo si",
+    "is certified my wife",
 ])
-def test_statement_about_another_person_is_not_the_writers(message, other):
+def test_statement_about_another_person_is_not_the_writers(message):
     assert certification_claim(message) is None
-    assert other_person_certification(message) is other
 
 
 @pytest.mark.parametrize("message, writer", [
@@ -35,4 +36,3 @@ def test_complements_do_not_steal_the_writers_statement(message, writer):
 @pytest.mark.parametrize("message", ["es para mi novia", "quiero bucear con mi pareja"])
 def test_no_certification_statement_no_signal(message):
     assert certification_claim(message) is None
-    assert other_person_certification(message) is None

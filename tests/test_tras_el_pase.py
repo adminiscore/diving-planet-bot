@@ -29,7 +29,7 @@ def test_el_aviso_medico_dice_que_pasa_a_una_persona():
 
 @pytest.fixture
 def offline(monkeypatch):
-    for modulo, name in ((core_extraction, "fill_gaps"), (core_routing, "detect_special_signals"),
+    for modulo, name in ((core_routing, "detect_special_signals"),
                          (core_extraction, "detect_special_signals"), (core_extraction, "resolve_slot_answer")):
         monkeypatch.setattr(modulo, name, AsyncMock(return_value={}))
     monkeypatch.setattr(core, "extract_notes", AsyncMock(return_value=[]))

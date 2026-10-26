@@ -200,7 +200,6 @@ async def test_duracion_respuesta_corta_a_un_dia_o_varios(encender, extractor_di
 @pytest.mark.asyncio
 async def test_edades_encendido_las_del_extractor(encender, extractor_dice, monkeypatch):
     relleno = AsyncMock(return_value={})
-    monkeypatch.setattr(core_extraction, "fill_gaps", relleno)
     extractor_dice({"el pequeño tiene 6 y el grande 10": {"edades": [6, 10]},
                     "soy residente hace 3 años": {}})
     st = await _entender("el pequeño tiene 6 y el grande 10", _estado(kids_mention_detected=True))
@@ -213,7 +212,6 @@ async def test_edades_encendido_las_del_extractor(encender, extractor_dice, monk
 @pytest.mark.asyncio
 async def test_edades_extractor_caido_como_hoy(encender, extractor_caido, monkeypatch):
     relleno = AsyncMock(return_value={})
-    monkeypatch.setattr(core_extraction, "fill_gaps", relleno)
     st = await _entender("los niños tienen 6 y 9 años", _estado(kids_mention_detected=True))
     assert st.detected_ages == [6, 9]  # el regex de siempre
 

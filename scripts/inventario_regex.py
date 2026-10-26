@@ -67,7 +67,6 @@ REGLAS = [
     ("conversational_core.py", ("_PREGUNTA_ORIGEN_RE", "_IMPORTE_RE", "_FRASE_RE", "_DEPENDE_DEL_ORIGEN_RE",
                                 "_HORA_DEL_RESUMEN"), GUARDA),
     ("conversational_core.py", "*", ENTENDER),  # incluye _PIDE_PRECIO_RE, _PRECIO_AJENO_RE y _PISTA_ORIGEN_RE
-    ("intent_detector.py", ("hotel_patterns", "island_patterns"), LISTA),  # hoteles e islas del catálogo
     ("intent_detector.py", TOKENIZADORES, LISTA),
     ("intent_detector.py", "*", ENTENDER),
 ]

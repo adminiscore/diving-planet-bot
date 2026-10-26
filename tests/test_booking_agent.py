@@ -35,7 +35,6 @@ def _core_llm_offline(monkeypatch):
     se mockea aparte donde hace falta)."""
     import src.agents.conversational_core as core
 
-    monkeypatch.setattr(core_extraction, "fill_gaps", AsyncMock(return_value={}))
     _senales = AsyncMock(return_value={})
     monkeypatch.setattr(core_routing, "detect_special_signals", _senales)
     monkeypatch.setattr(core_extraction, "detect_special_signals", _senales)

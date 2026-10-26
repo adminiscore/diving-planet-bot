@@ -5,6 +5,8 @@ Caso: `familia-mixta-precio-descuento-refresher`, primer mensaje: "2 adults (age
 Snorkeling / 1 Adult (Age 43) / 2 kids (Ages 14, 10)". El reparto {buceo 3, snorkel 3} que devolvía el extractor era
 correcto, pero ningún "3" está escrito: la guarda de cifras lo tiraba y el bot preguntaba "¿cuántos serían para buceo
 certificado?" (repregunta en el golden). En PRE con el flag: 3/3 guardan 6 personas, 3 y 3.
+lat-11 T6d (26-oct): las edades con `lectura_del_turno` (IntentDetector.detect se quitó; las edades las sigue leyendo
+este lector).
 """
 from unittest.mock import AsyncMock
 
@@ -12,10 +14,10 @@ import pytest
 
 from src.agents import conversational_core as core
 from src.agents import supervisor
+from src.agents.intent_detector import lectura_del_turno
 from src.agents.nucleo import extraction as core_extraction
 from src.agents.nucleo import routing as core_routing
 from src.agents.nucleo import slotfill_close as core_close
-from src.flows.state import ConversationState
 
 
 @pytest.fixture(autouse=True)
@@ -30,7 +32,7 @@ FAMILIA = ("Hi There,\nI am looking to book 2 dives and snorkeling sessions for 
 
 
 def _edades(mensaje: str) -> list[int]:
-    return sorted(core._detector.detect(mensaje, ConversationState(conversation_id="e")).ages or [])
+    return sorted(lectura_del_turno(mensaje).ages or [])
 
 
 @pytest.mark.parametrize("mensaje,edades", [
@@ -47,7 +49,6 @@ def test_edades_en_singular(mensaje, edades):
 def extractor_reparte(monkeypatch):
     """La reserva entera sin red; el extractor devuelve el reparto correcto de la familia (3 bucean, 3 snorkel)."""
     reparto = {"group_size": 6, "group_allocation": {"certified_diving": 3, "snorkel": 3}}
-    monkeypatch.setattr(core_extraction, "fill_gaps", AsyncMock(return_value=dict(reparto)))
     monkeypatch.setattr(core, "extract_and_verify", AsyncMock(return_value=(dict(reparto), {})))
     _especiales = AsyncMock(return_value={})
     monkeypatch.setattr(core_routing, "detect_special_signals", _especiales)

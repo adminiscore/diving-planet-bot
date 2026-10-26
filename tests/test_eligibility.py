@@ -1,19 +1,18 @@
 """Age & certification eligibility: rules, age detection, and the deterministic
-supervisor responder that informs what each person can/can't do."""
+supervisor responder that informs what each person can/can't do.
+lat-11 T6d (26-oct): las edades con `lectura_del_turno` (IntentDetector.detect se quitó; las edades las sigue leyendo
+este lector)."""
 
 import pytest
 
 from src.flows import eligibility as elig
-from src.agents.intent_detector import IntentDetector
+from src.agents.intent_detector import lectura_del_turno
 from src.flows.state import ConversationState, Step
 from src.agents.supervisor import route_message
 
 
-detector = IntentDetector()
-
-
 def _detect(msg: str):
-    return detector.detect(msg, ConversationState(conversation_id="elig"))
+    return lectura_del_turno(msg)
 
 
 # ---------------------------------------------------------------------------

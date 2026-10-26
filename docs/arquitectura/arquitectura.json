@@ -1,8 +1,8 @@
 {
  "meta": {
-  "generado": "2026-10-26T12:27:50+00:00",
-  "commit": "e6866375",
-  "rama": "feature/sim6-alvaro"
+  "generado": "2026-10-26T14:40:01+00:00",
+  "commit": "77e78b09",
+  "rama": "feature/lat11-alvaro"
  },
  "vistas": {
   "general": {
@@ -112,24 +112,19 @@
    "tipo": "cerebro",
    "titulo": "Enrutador",
    "nodo_grafo": "router",
-   "que_hace": "Decide qué tipo de mensaje es. Primero pregunta a Jev (un clasificador rápido); si duda o falla, a un LLM. Luego unas reglas eligen una de las 5 rutas.",
+   "que_hace": "Decide qué tipo de mensaje es. Pregunta a Jev (un clasificador rápido); si duda, decide igual, y si falla, las listas de palabras. Luego unas reglas eligen una de las 5 rutas.",
    "donde": "src/orchestration/graph.py:_router_node",
    "modelos": [
     {
      "ajuste": "jev_model",
      "codigo": "typesafe/jev-1.13",
      "pre": "typesafe/jev-1.13"
-    },
-    {
-     "ajuste": "senales_model",
-     "codigo": "deepseek/deepseek-v4.1-flash",
-     "pre": "deepseek/deepseek-v4.1-flash"
     }
    ],
    "interruptores": [],
    "detalle": [
     "Jev: jev_router.detect_routing_signals_jev_full (OpenRouter)",
-    "LLM de respaldo: escalation.detect_routing_signals",
+    "Señales: escalation.detect_routing_signals (sin LLM de respaldo desde lat-11)",
     "Reglas: orchestration/router.classify_route"
    ],
    "marca": "openrouter",
@@ -440,15 +435,8 @@
    "nodo_grafo": "routing",
    "que_hace": "Lee las señales de Jev: respuestas cortas a lo que se preguntó, correcciones, '¿me recuerdas…?'. Si hay una pregunta, lanza la respuesta en paralelo.",
    "donde": "src/agents/nucleo/routing.py:_routing_phase",
-   "modelos": [
-    {
-     "ajuste": "senales_model",
-     "codigo": "deepseek/deepseek-v4.1-flash",
-     "pre": "deepseek/deepseek-v4.1-flash"
-    }
-   ],
+   "modelos": [],
    "interruptores": [],
-   "marca": "openrouter",
    "tiempos": {
     "n": 144,
     "p50": 0.007,
@@ -1262,14 +1250,6 @@
    "peso_fuente": "estimado"
   },
   {
-   "de": "router",
-   "a": "openai",
-   "etiqueta": "LLM de respaldo si Jev duda",
-   "estilo": "datos",
-   "origen": "curada",
-   "vista": "general"
-  },
-  {
    "de": "preparacion",
    "a": "openai",
    "etiqueta": "notas de voz a texto",
@@ -1472,17 +1452,6 @@
    "codigo": "deepseek/deepseek-v4.1-flash",
    "pre": "deepseek/deepseek-v4.1-flash",
    "usado_por": [],
-   "proveedor": "OpenRouter",
-   "llamadas_ultima_ronda": 528
-  },
-  {
-   "ajuste": "senales_model",
-   "codigo": "deepseek/deepseek-v4.1-flash",
-   "pre": "deepseek/deepseek-v4.1-flash",
-   "usado_por": [
-    "router",
-    "b_routing"
-   ],
    "proveedor": "OpenRouter",
    "llamadas_ultima_ronda": 528
   }

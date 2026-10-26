@@ -3,12 +3,14 @@
 Con la pregunta del total pendiente, "hace 3 años que no buceo" fijaba 3 personas y "a
 las 8" fijaba 8; con "¿cuantos para snorkel?", "mi hijo tiene 9 años" sumaba 9. Solo es
 respuesta lo que ES la cantidad o lo que el detector ya lee como total del grupo.
+
+lat-11 T6b (26-oct): sin el detector entero, aquí solo vale la cifra sola; "somos 4" lo lee la IA del turno
+(`_cantidad_por_la_ia`) y, si calla, el resolutor.
 """
 
 import pytest
 
 from src.agents import conversational_core as core
-from src.agents.nucleo import extraction as core_extraction
 from src.flows.state import ConversationState
 
 NOT_A_COUNT = [
@@ -19,8 +21,8 @@ NOT_A_COUNT = [
     "a las 8",
     "2 inmersiones",
 ]
-COUNTS = [("4", 4), ("dos", 2), ("3 😊", 3), ("6+", 6), ("somos 4", 4), ("4 personas", 4),
-          ("we are 4", 4), ("vamos 2", 2), ("yo y mi pareja", 2)]
+COUNTS = [("4", 4), ("dos", 2), ("3 😊", 3), ("6+", 6)]
+SIN_IA_NO_SE_RESUELVEN = ["somos 4", "4 personas", "we are 4", "vamos 2", "yo y mi pareja"]
 
 
 def _pending(slot):
@@ -48,6 +50,13 @@ def test_counts_still_answer_the_total_question(message, n):
     state = _pending(core.SLOT_QTY)
     assert core._apply_short_answer(state, message) is True
     assert state.detected_group_size == n
+
+
+@pytest.mark.parametrize("message", SIN_IA_NO_SE_RESUELVEN)
+def test_a_total_in_words_is_not_decided_here_without_the_ai(message):
+    state = _pending(core.SLOT_QTY)
+    assert core._apply_short_answer(state, message) is False
+    assert state.detected_group_size is None
 
 
 @pytest.mark.parametrize("typed, value", [("seguimos siendo 2", "2"), ("Somos 3!", "3"), ("seguimos siendo dos", None)])
@@ -85,7 +94,6 @@ async def test_llm_fill_does_not_take_a_dive_count_as_the_group_total():
     state.is_certified = state.detected_is_certified = True
     fill = {"group_size": 2}
     with patch.object(core, "extract_and_verify", create=True, new=AsyncMock(return_value=(fill, {}))), \
-         patch.object(core_extraction, "fill_gaps", new=AsyncMock(return_value=fill)), \
          patch.object(core, "verify_fields", create=True, new=AsyncMock(return_value={})):
         await core._understand(state, "2 inmersiones")
     assert state.detected_group_size is None
@@ -105,7 +113,6 @@ async def test_boolean_riding_on_an_invalid_answer_to_the_pending_question_is_dr
     state.is_certified = state.detected_is_certified = True
     fill = {"group_size": 2, "is_colombian": False}
     with patch.object(core, "extract_and_verify", create=True, new=AsyncMock(return_value=(dict(fill), {}))), \
-         patch.object(core_extraction, "fill_gaps", new=AsyncMock(return_value=dict(fill))), \
          patch.object(core, "verify_fields", create=True, new=AsyncMock(return_value={})):
         await core._understand(state, "2 inmersiones")
     assert state.detected_group_size is None

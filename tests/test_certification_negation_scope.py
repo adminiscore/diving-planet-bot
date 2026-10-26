@@ -4,12 +4,13 @@ certificado (2026-09-15).
 "2 no tienen certificación" y "two aren't certified" casaban el patron positivo y
 salian True. No se anade cada frase negativa: una afirmacion precedida de cerca por
 una negacion no cuenta, y la doble negacion se cancela.
+lat-11 T6d (26-oct): fuera el test de IntentDetector.detect ("N inmersiones" como buceo certificado; la clase se
+quitó y la actividad la decide el extractor).
 """
 
 import pytest
 
-from src.agents.intent_detector import IntentDetector, certification_claim
-from src.flows.state import ConversationState
+from src.agents.intent_detector import certification_claim
 
 
 @pytest.mark.parametrize("message", [
@@ -37,13 +38,3 @@ def test_negation_about_others_is_not_the_writers(message):
 ])
 def test_affirmative_claim_survives(message):
     assert certification_claim(message) is True
-
-
-@pytest.mark.parametrize("message, dives", [
-    ("quiero hacer 2 inmersiones", 2),
-    ("want to do 3 dives", 3),
-])
-def test_dive_count_means_certified_diving(message, dives):
-    intent = IntentDetector().detect(message, ConversationState(conversation_id="c"))
-    assert intent.cert_dives == dives
-    assert intent.activity == "certified_diving"

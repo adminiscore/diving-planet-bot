@@ -12,26 +12,21 @@ import pytest
 
 from scripts import run_extraction_eval as ev
 from src.agents import conversational_core as cc
-from src.agents.nucleo import extraction as core_extraction
 
 
-def _mock_llm(merged=None, fill=None):
+def _mock_llm(merged=None):
     async def fake_merged(*args, **kwargs):
         return copy.deepcopy(merged) if merged is not None else ({}, {})
 
-    async def fake_fill(*args, **kwargs):
-        return copy.deepcopy(fill or {})
-
     return (
         patch.object(cc, "extract_and_verify", create=True, new=fake_merged),
-        patch.object(core_extraction, "fill_gaps", new=fake_fill),
         contextlib.nullcontext(),  # el veto de campos se borró en MEJ-1 (21-oct)
     )
 
 
 async def _run(case, **llm):
-    a, b, c = _mock_llm(**llm)
-    with a, b, c:
+    a, b = _mock_llm(**llm)
+    with a, b:
         return (await ev._core_turn(case))[0]
 
 
@@ -58,7 +53,7 @@ async def test_undecided_members_are_scored_inside_the_allocation(extractor_dice
     extractor_dice({"somos 3, uno no esta certificado":
                     {"group_size": 3, "group_allocation": {"certified_diving": 2, "undecided": 1}}})
     case = {"id": "t", "lang": "es", "message": "somos 3, uno no esta certificado"}
-    produced = await _run(case, fill={"group_allocation": {"certified_diving": 2, "undecided": 1}})
+    produced = await _run(case)
     assert produced["group_allocation"] == {"certified_diving": 2, "undecided": 1}
     assert produced["group_size"] == 3
 

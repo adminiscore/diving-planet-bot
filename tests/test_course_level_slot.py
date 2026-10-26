@@ -108,12 +108,10 @@ async def test_conversation_asks_the_course_and_continues_after_the_choice(extra
     extractor_dice({"quiero hacer un curso PADI": {"activity": "padi_course"}})
     state = _state("es")
     no_llm = {
-        "fill_gaps": AsyncMock(return_value={}),
         "extract_and_verify": AsyncMock(return_value=({}, {})),
         "detect_special_signals": AsyncMock(return_value={}),
     }
-    with patch.object(core_extraction, "fill_gaps", new=no_llm["fill_gaps"]), \
-         patch.object(core, "extract_and_verify", create=True, new=no_llm["extract_and_verify"]), \
+    with patch.object(core, "extract_and_verify", create=True, new=no_llm["extract_and_verify"]), \
          patch.object(core_routing, "detect_special_signals", new=no_llm["detect_special_signals"]), patch.object(core_extraction, "detect_special_signals", new=no_llm["detect_special_signals"]):
         first = await route_message(state, "quiero hacer un curso PADI")
         assert state.detected_activity == "padi_course"

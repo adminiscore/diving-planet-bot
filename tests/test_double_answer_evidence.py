@@ -7,14 +7,13 @@ las palabras del mensaje que dicen cada booleano, y la cita lo respalda si esta 
 mensaje, no es el mensaje entero y el detector no lee en ella la respuesta pendiente.
 ex-9b: `_quote_backs_boolean` y `_boolean_patch_is_anchored` no tenían llamador desde ex-9 (0.31.28) y se
 borraron con su test.
+lat-11 T6e (26-oct): el tool y el prompt de la extracción del relleno (`fill_gaps`) se quitaron, y sus tests.
 """
 
 import pytest
 
 from src.agents import conversational_core as core
-from src.agents.nucleo import extraction as core_extraction
 from src.flows.state import ConversationState
-from src.prompts.booking import EVIDENCE_FIELDS, extraction_tool
 
 
 @pytest.fixture(autouse=True)
@@ -24,11 +23,6 @@ def _camino_viejo_de_actividad(monkeypatch):
 
 
 LOC = core.SLOT_LOCATION
-
-
-def test_one_list_of_quoted_booleans():
-    assert set(EVIDENCE_FIELDS) == set(core._BOOL_SLOT_FIELD.values())
-    assert set(extraction_tool(["evidence"])["function"]["parameters"]["properties"]["evidence"]["properties"]) == set(EVIDENCE_FIELDS)
 
 
 def _waiting_location():
@@ -48,13 +42,7 @@ async def _understand(state, message, returned):
         calls.append(tuple(kwargs.get("extra_fields") or ()))
         return (dict(returned), {}) if "gaps" not in kwargs else dict(returned)
 
-    async def fake_fill(*args, **kwargs):
-        calls.append(tuple(kwargs.get("extra_fields") or ()))
-        return dict(returned)
-
-    from unittest.mock import patch
-    with patch.object(core, "extract_and_verify", fake, create=True), patch.object(core_extraction, "fill_gaps", fake_fill):
-        await core._understand(state, message)
+    await core._understand(state, message)
     return calls
 
 

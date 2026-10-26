@@ -7,15 +7,14 @@ guarda (`supervisor._apply_detected_intent`). Antes cada detector ponia el suyo:
   carrito como curso sin precio ni link;
 - el regex escribia nombres a mano que no existian en el catalogo ("nitrox" en vez
   de "nitrox_specialty"), con el mismo resultado.
+lat-11 T6d (26-oct): fuera los tests de IntentDetector.detect (la clase se quitó; la actividad la decide el extractor).
 """
 
 
 import pytest
 
 from src.agents import supervisor
-from src.agents.intent_detector import DetectedIntent, IntentDetector
-from src.domain import activities as dom
-from src.flows.catalog import SERVICES
+from src.agents.intent_detector import DetectedIntent
 from src.flows.state import ConversationState
 
 
@@ -23,35 +22,6 @@ from src.flows.state import ConversationState
 def _camino_viejo_de_actividad(monkeypatch):
     """Estos tests prueban el camino viejo (regex + veto/relleno). Con ex-8 (`extraccion_llm_actividad`) la actividad y
     la nacionalidad las decide el extractor "LLM primero": tests/test_ex8_actividad_nacionalidad.py."""
-
-
-def _detect(message):
-    return IntentDetector().detect(message, ConversationState(conversation_id="svc"))
-
-
-@pytest.mark.parametrize("message", [
-    "quiero bucear", "quiero hacer snorkel", "quiero el minicurso", "quiero el open water",
-    "quiero hacer el advanced", "me interesa el rescue", "quiero ser divemaster",
-    "quiero la especialidad de nitrox", "me interesa la especialidad de flotabilidad",
-    "quiero la especialidad naturalista",
-])
-def test_every_service_the_detector_emits_exists_in_the_catalog(message):
-    intent = _detect(message)
-    assert intent.activity in dom.activity_ids()
-    if intent.service_id is not None:
-        assert intent.service_id in SERVICES, f"{message!r} -> {intent.service_id}"
-    assert intent.service_id == dom.base_service_id(intent.activity)
-
-
-@pytest.mark.parametrize(("message", "activity_id"), [
-    ("quiero la especialidad de nitrox", "specialty_nitrox"),
-    ("me interesa la especialidad de flotabilidad", "specialty_buoyancy"),
-    ("quiero la especialidad naturalista", "specialty_naturalist"),
-])
-def test_named_specialty_becomes_its_registry_activity(message, activity_id):
-    intent = _detect(message)
-    assert intent.activity == activity_id
-    assert intent.service_id in SERVICES
 
 
 def test_apply_derives_the_service_even_if_the_detector_gave_none():
