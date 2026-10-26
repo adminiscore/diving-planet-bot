@@ -30,6 +30,24 @@ History
   - calidad: **94,8 % 80/116**, frente al 94,9 % 82/116 de anoche, dentro del ruido.
   - Deuda apuntada: el acuse ya no reconoce lo concreto del mensaje («anoto a tu amigo para el minicurso»).
 
+0.32.9 - (2026-10-26, integra5: a PRE)
+---------------------
+* **lat-9 paso 2: la pregunta de la reserva la escribe el escritor.** Se fija al empezar el turno (antes del RAG
+  adelantado, que la lleva en su huella) y el escritor (RAG o redactor) cierra con ella; si el mensaje la cambia, el
+  código cambia el último párrafo (variante «corrige»). La variante «espera» (el escritor la rehace) salió peor en el
+  banco del paso 2 (con pregunta 23/40 frente a 19/40, p90 9,4 s frente a 7,5 s) y se descarta.
+* **ACUSE**: el «¡Perfecto! 🙌» solo si el cliente contestó lo preguntado (en integra4 iba delante de la MISMA pregunta
+  en 32 respuestas; banco: 34 → 0).
+* **Si la pregunta se repite** (gracias, despedida, otro dato, una corrección; decisión de Gadea «el escritor»), contesta
+  el escritor y cierra con ella, con el **escritor ligero** (idea de Álvaro: sin reescritura ni búsqueda; el revisor con
+  la regla de lat-5). Banco sin dato (20 ×2): PRE 29/40 fallan, p50 1,9 s → 6/40, p50 3,7 s, p90 5,5 s.
+* **lat-5** (Álvaro): el revisor del RAG solo si la respuesta trae una cifra o un día fuera del contexto (banco de 15
+  turnos: ningún error llega al cliente; el revisor se salta en 12 de 12).
+* **Medida** (ronda completa, juez gpt-5-mini; A = integra4-B, el código de PRE 5bfc7e8): 80/116 → **80/116**, 46 → 50
+  fallos (ruido); visible 30 → 35; **oculto 16 → 15 fallos, 90,8 %**. Latencia: p50 3,19 → 3,28 s, **p90 6,85 → 5,67 s**,
+  **p95 8,46 → 6,41 s**; **3,51 → 3,29 llamadas por turno**; respaldos por lentitud 10 → 4. Juez barato: Luna no
+  sustituye a gpt-5-mini (decisión de Gadea: el juez de las rondas no cambia hasta cerrar LAT).
+
 0.32.8 - (2026-10-26, integra4: a PRE)
 ---------------------
 * **lat-9 paso 1** (diseño en `docs/robustness/lat/diseno-lat9.md`): un prompt base para los dos escritores
