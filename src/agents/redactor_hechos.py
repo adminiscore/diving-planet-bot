@@ -1,11 +1,10 @@
-"""ARQ-1d (22-oct, fase ARQ: el modelo interpreta, el código decide, el modelo redacta): el REDACTOR de hechos.
+"""ARQ-1d (22-oct, fase ARQ: el modelo interpreta, el código decide, el modelo redacta): los HECHOS del turno.
 
-Diseño: `docs/robustness/arq/diseno-intenciones-y-hechos.md` §3. Si Jev dice que el mensaje solo pide intenciones de la
+Diseño: `docs/robustness/arq/diseno-intenciones-y-hechos.md` §3. Si Jev dice que el mensaje pide intenciones de la
 tabla (precio, qué incluye, requisitos, horario, disponibilidad, edad, enlace) y se sabe de qué actividad habla, el
-código saca los hechos (`src/flows/hechos.py`) y Luna solo los pone en palabras, con el estilo de Coral y sin el
-catálogo, las políticas ni las reglas del RAG (el 21-oct, con todo eso delante, recortaba las listas que tenía). Lo
-demás sigue en el RAG de siempre: aquí se devuelve None y contesta él. Con el flag `hechos_por_codigo` apagado no se
-llama.
+código saca los hechos (`src/flows/hechos.py`). lat-9 paso 3 (26-oct): los escribe el escritor único (el del RAG), con
+los hechos y sin búsqueda si el mensaje solo pide eso (`responder`), o con la búsqueda si trae algo más (arq-1g). El
+redactor con su propio prompt y su «FALTA» ya no existe.
 """
 from __future__ import annotations
 
@@ -14,30 +13,14 @@ import json
 import logging
 import re
 
-from openai import AsyncOpenAI
-
-from src.agents.grounding_check import (
-    contains_phone_number,
-    currency_amounts_grounded,
-    is_coherent_text,
-    urls_grounded,
-)
-from src.config import settings
 from src.domain import activities as dom
 from src.flows import hechos as hechos_mod
 from src.flows.state import ConversationState
-from src.llm_client import trace_openai
-from src.privacy import redact_pii
 from src.utils.text import strip_accents
 
 logger = logging.getLogger("uvicorn.error")
 
-# Mensajes anteriores que ve el redactor: para el tono y no volver a saludar, no para sacar datos (los datos son los
-# hechos).
-_HISTORIAL = 6
 _LUGAR_DE_JEV = {"cartagena": "cartagena", "islands": "island"}
-# La palabra con la que el redactor dice que los hechos no contestan lo que pregunta (ver REDACTOR_HECHOS_*).
-_FALTA = "FALTA"
 
 
 def _actividad(state: ConversationState, datos: dict) -> str | None:
@@ -156,213 +139,6 @@ def _cubierta(bloque: dict, intencion: str) -> bool:
     return bool(valor)
 
 
-def _mensajes(lang: str, history: list[dict], message: str, texto_hechos: str, pregunta: str | None = None
-              ) -> list[dict]:
-    from src.agents.rag_agent import _build_tone_section  # lazy
-    from src.prompts.info import (  # lazy
-        RAG_INTRO_EN,
-        RAG_INTRO_ES,
-        RAG_SECURITY_EN,
-        RAG_SECURITY_ES,
-        REDACTOR_HECHOS_EN,
-        REDACTOR_HECHOS_ES,
-    )
-
-    if lang == "es":
-        system = (f"{RAG_INTRO_ES}\n\n{RAG_SECURITY_ES}\nEstilo y tono:\n{_build_tone_section('es')}\n\n"
-                  f"{REDACTOR_HECHOS_ES}")
-        user = f"Hechos:\n{texto_hechos}\n\nPregunta del cliente: {redact_pii(message)}"
-    else:
-        system = (f"{RAG_INTRO_EN}\n\n{RAG_SECURITY_EN}\nStyle and tone:\n{_build_tone_section('en')}\n\n"
-                  f"{REDACTOR_HECHOS_EN}")
-        user = f"Facts:\n{texto_hechos}\n\nCustomer's question: {redact_pii(message)}"
-    if pregunta:
-        from src.prompts.info import pregunta_final  # lazy
-
-        user += "\n\n" + pregunta_final(pregunta, lang)  # lat-9 paso 2: la pregunta de la reserva la escribe él
-    from src.prompts.info import (  # lazy
-        REDACTOR_CLIMA_PAGO_EN,
-        REDACTOR_CLIMA_PAGO_ES,
-        REDACTOR_EN_QUE_CONSISTE_EN,
-        REDACTOR_EN_QUE_CONSISTE_ES,
-        REDACTOR_FRASES_POR_CODIGO_EN,
-        REDACTOR_FRASES_POR_CODIGO_ES,
-        REDACTOR_LISTAS_POR_CODIGO_EN,
-        REDACTOR_LISTAS_POR_CODIGO_ES,
-        REDACTOR_QUE_FALTABAN_EN,
-        REDACTOR_QUE_FALTABAN_ES,
-        REDACTOR_SIN_PREGUNTAS_EN,
-        REDACTOR_SIN_PREGUNTAS_ES,
-        reglas_del_escritor,
-    )
-
-    system += REDACTOR_LISTAS_POR_CODIGO_ES if lang == "es" else REDACTOR_LISTAS_POR_CODIGO_EN
-    system += REDACTOR_FRASES_POR_CODIGO_ES if lang == "es" else REDACTOR_FRASES_POR_CODIGO_EN
-    system += REDACTOR_EN_QUE_CONSISTE_ES if lang == "es" else REDACTOR_EN_QUE_CONSISTE_EN  # arq-8d
-    system += REDACTOR_SIN_PREGUNTAS_ES if lang == "es" else REDACTOR_SIN_PREGUNTAS_EN
-    system += REDACTOR_QUE_FALTABAN_ES if lang == "es" else REDACTOR_QUE_FALTABAN_EN  # arq-5f
-    system += REDACTOR_CLIMA_PAGO_ES if lang == "es" else REDACTOR_CLIMA_PAGO_EN  # arq-1i
-    # lat-9 paso 1 (26-oct): las reglas de cualquier escritor (las mismas que el RAG) y las decisiones del negocio. Antes
-    # el redactor no tenía las de no adivinar, el género o abrir con la respuesta, y la moneda iba escrita aparte.
-    system += "\n\n" + reglas_del_escritor(lang)
-    previos = list(history or [])
-    if previos and previos[-1].get("role") == "user" and previos[-1].get("content") == message:
-        previos = previos[:-1]  # el mensaje va abajo, con los hechos
-    return [{"role": "system", "content": system},
-            *({"role": m["role"], "content": redact_pii(m.get("content") or "")} for m in previos[-_HISTORIAL:]),
-            {"role": "user", "content": user}]
-
-
-async def _redactar(client, mensajes: list[dict]) -> str | None:
-    from src.agents.rag_agent import generar_con_respaldo  # lazy
-
-    try:
-        respuesta = await generar_con_respaldo(client, mensajes, pieza="redactor_hechos")
-    except Exception as exc:  # noqa: BLE001 — sin redacción, contesta el RAG
-        logger.warning(f"[HECHOS] el redactor falló: {exc!r}")
-        return None
-    return (respuesta.choices[0].message.content or "").strip()
-
-
-_EN_SU_IDIOMA = {"es": "Escríbela de nuevo entera en español.", "en": "Write it again in full in English."}
-
-# arq-7a (23-oct, latencia): en el G10 nº 5 el redactor escribía dos veces en 53 de 79 turnos:
-# el primer borrador resumía las listas largas y arq-3 pedía rehacerlo (+2,5 s). Esas listas las pone ahora el código,
-# copiadas del dato, donde el modelo deja su marca («[[incluye]]»); el modelo escribe solo las frases.
-_LISTAS_DEL_CODIGO = ("incluye", "requisitos", "descuento")
-_ROTULO_DEL_ORIGEN = {"es": {"cartagena": "Desde Cartagena", "island": "Si ya estás en las Islas del Rosario"},
-                      "en": {"cartagena": "From Cartagena", "island": "If you're already on the Rosario Islands"}}
-
-
-def _listas_del_codigo() -> tuple[str, ...]:
-    """arq-8d: también lo que se hace en la actividad (va con «incluye»)."""
-    return (*_LISTAS_DEL_CODIGO, "en_que_consiste")
-
-
-def _en_vinetas(valor, lang: str) -> str:
-    """Una lista del dato en viñetas «•»; si viene por origen y hay dos, cada una con su rótulo en negrita."""
-    if isinstance(valor, dict):
-        partes = [(o, items) for o, items in valor.items() if items]
-        return "\n\n".join((f"*{_ROTULO_DEL_ORIGEN[lang].get(o, o)}:*\n" if len(partes) > 1 else "")
-                           + "\n".join(f"• {x}" for x in items) for o, items in partes)
-    return "\n".join(f"• {x}" for x in valor or [])
-
-
-def _poner_listas(answer: str, bloques: list[dict], intenciones: list[str], lang: str) -> str:
-    """Cambia cada marca «[[campo]]» por la lista entera del dato. Si el modelo no dejó la marca y tampoco escribió la
-    lista (arq-3 ve que faltan sus puntos), la lista va al final; si la escribió él, se queda la suya."""
-    for campo in _listas_del_codigo():
-        if (campo if campo != "en_que_consiste" else "incluye") not in intenciones:
-            continue
-        piezas = [(b, _en_vinetas(b.get(campo), lang)) for b in bloques]
-        piezas = [(b, t) for b, t in piezas if t]
-        if not piezas:
-            continue
-        texto = _una_vez(piezas)
-        marca = f"[[{campo}]]"
-        if marca in answer:
-            answer = answer.replace(marca, texto, 1).replace(marca, "")
-        elif hechos_mod.faltan(answer, [{campo: b.get(campo)} for b, _ in piezas],
-                               ["incluye" if campo == "en_que_consiste" else campo]):
-            answer = f"{answer.rstrip()}\n\n{texto}"
-    answer = _poner_frases(answer, bloques, lang)
-    answer = _sin_rotulos_sueltos(answer, lang)
-    return _sin_marcas(answer)
-
-
-def _una_vez(piezas: list[tuple[dict, str]]) -> str:
-    """arq-8f: la lista que sale igual en varias actividades va una vez, con el nombre de todas ellas; si es igual en
-    todas, sin nombre (G10 nº 6: los descuentos ×5 en las cinco especialidades)."""
-    grupos: dict[str, list[str]] = {}
-    for b, t in piezas:
-        grupos.setdefault(t, []).append(b.get("nombre") or "")
-    if len(grupos) == 1:
-        return next(iter(grupos))
-    return "\n\n".join((f"*{', '.join(n for n in nombres if n)}*\n" if any(nombres) else "") + t
-                       for t, nombres in grupos.items())
-
-
-def _rotulo_solo(linea: str, lang: str) -> bool:
-    """¿La línea es solo un rótulo de origen («*Desde Cartagena*», «*From Cartagena:*»), sin nada detrás?"""
-    limpia = linea.strip().strip("*").strip().rstrip(":").strip("*").strip()
-    return limpia.lower() in {r.lower() for r in _ROTULO_DEL_ORIGEN[lang].values()}
-
-
-def _sin_rotulos_sueltos(answer: str, lang: str) -> str:
-    """arq-8f (#1631; arq-7e, 2 de 98 respuestas): el modelo escribe su rótulo de origen justo antes de la marca y el
-    código pone el suyo (rótulo doble), o queda un rótulo sin nada debajo. Fuera el rótulo solo en su línea si lo que
-    sigue es otro rótulo, una línea en blanco o el final."""
-    lineas = answer.split("\n")
-    fuera = set()
-    for i, linea in enumerate(lineas):
-        if not _rotulo_solo(linea, lang):
-            continue
-        siguiente = lineas[i + 1] if i + 1 < len(lineas) else ""
-        if not siguiente.strip() or _empieza_por_rotulo(siguiente, lang):
-            fuera.add(i)
-    if not fuera:
-        return answer
-    return re.sub(r"\n{3,}", "\n\n", "\n".join(x for i, x in enumerate(lineas) if i not in fuera)).strip()
-
-
-def _empieza_por_rotulo(linea: str, lang: str) -> bool:
-    cabeza = linea.strip().lstrip("*").lower()
-    return any(cabeza.startswith(r.lower()) for r in _ROTULO_DEL_ORIGEN[lang].values())
-
-
-# G10 nº 6: con el enlace, los hechos traen `descuento_online` y no la lista `descuento` (no se preguntó por descuentos);
-# el modelo dejó igual «[[descuento]]» y la marca le llegó al cliente en 2 respuestas. Lo que el código no rellena, se quita.
-_MARCA = re.compile(r"[ \t]*\[\[[a-z_]+\]\][ \t]*")
-
-
-def _sin_marcas(answer: str) -> str:
-    if "[[" not in answer:
-        return answer
-    return re.sub(r"\n{3,}", "\n\n", _MARCA.sub("", answer)).strip()
-
-
-# arq-7d (23-oct, latencia): tras arq-7a, en el banco fijo quedaban 28 de 96 turnos con
-# segunda redacción, casi todos por las frases de la recogida y del alojamiento (políticas que el modelo parafraseaba
-# y arq-3 no reconocía). También las pone el código, tal cual, donde el modelo deja «[[recogida]]» o «[[alojamiento]]».
-_FRASES_DEL_CODIGO = ("recogida", "alojamiento")
-
-
-def _poner_frases(answer: str, bloques: list[dict], lang: str) -> str:
-    for campo in _FRASES_DEL_CODIGO:
-        valores = [b.get(campo) for b in bloques if b.get(campo)]
-        if not valores:
-            continue
-        if campo == "alojamiento":
-            texto = "\n\n".join(dict.fromkeys(valores))
-        else:
-            partes = [(o, frases) for v in valores for o, frases in v.items() if frases]
-            partes = list(dict.fromkeys((o, tuple(f)) for o, f in partes))  # arq-8f: el punto de encuentro, una vez
-            texto = "\n\n".join((f"*{_ROTULO_DEL_ORIGEN[lang].get(o, o)}:* " if len(partes) > 1 else "")
-                                + " ".join(frases) for o, frases in partes)
-        marca = f"[[{campo}]]"
-        if marca in answer:
-            answer = answer.replace(marca, texto, 1).replace(marca, "")
-        elif hechos_mod.faltan(answer, [{campo: v} for v in valores], []):
-            answer = f"{answer.rstrip()}\n\n{texto}"
-    return answer
-def _en_otro_idioma(answer: str, lang: str) -> bool:
-    """arq-5d: ¿la redacción salió en otro idioma que el de la conversación? Las mismas palabras vacías con las que el
-    flujo detecta el idioma del cliente, con margen claro (el doble y al menos 4): los nombres propios en español de
-    una respuesta en inglés («Muelle de la Bodeguita», «Islas del Rosario») no bastan para tomarla por otro idioma."""
-    from src.flows.catalog import _ENGLISH_STOPWORDS, _SPANISH_STOPWORDS  # lazy
-
-    palabras = [p.strip(".,!?¡¿:;()[]{}\"'*•") for p in answer.lower().split()]
-    es, en = sum(p in _SPANISH_STOPWORDS for p in palabras), sum(p in _ENGLISH_STOPWORDS for p in palabras)
-    propio, ajeno = (es, en) if lang == "es" else (en, es)
-    return ajeno >= 4 and ajeno >= 2 * propio
-
-
-def _pasa_las_guardas(answer: str, texto_hechos: str, message: str) -> bool:
-    """Las guardas deterministas de siempre: ni importes, ni enlaces, ni teléfonos que no estén en los hechos."""
-    return (is_coherent_text(answer) and currency_amounts_grounded(answer, f"{texto_hechos}\n{message}")
-            and urls_grounded(answer, texto_hechos) and not contains_phone_number(answer))
-
-
 async def hechos_del_turno(state: ConversationState, message: str, history: list[dict]) -> tuple[list[dict], list[str]] | None:
     """Los hechos de las intenciones de este mensaje que el código sabe dar (bloques, intenciones cubiertas), o None si
     no hay: Jev no da intenciones, la pregunta no es la del mensaje de ahora o no se sabe la actividad. No mira si el
@@ -462,70 +238,6 @@ async def _con_el_escritor(state: ConversationState, message: str, history: list
         answer = f"{core._sin_la_pregunta_final(answer).rstrip()}\n\n{tras[0] if lang == 'es' else tras[1]}"
     general = all(b.get("actividad") is None for b in bloques)
     logger.info(f"[HECHOS] contesta el escritor con los hechos: {bloques[0]['actividad']} {intenciones}")
-    note_turn(rag_used=True, hechos_por_codigo="redactor_general" if general else "redactor",
-              intenciones=",".join(intenciones))
-    return answer
-
-
-async def _escribir(state: ConversationState, message: str, history: list[dict], bloques: list[dict],
-                    intenciones: list[str]) -> str | None:
-    """La redacción con los hechos: guardas, idioma, comprobación de que no falta ninguno (arq-3) y, si hace falta, la
-    pregunta del origen."""
-    from src.observability import note_turn  # lazy
-
-    actividad = bloques[0]["actividad"]
-    origen = bloques[0].get("origen")
-    lang = "es" if state.language == "es" else "en"
-    texto_hechos = texto_de_los_hechos(bloques)
-    client = trace_openai(AsyncOpenAI(api_key=settings.openai_api_key))
-    # lat-9 paso 2: la pregunta de la reserva, salvo si este turno pregunta el origen (la pone el código, abajo).
-    pregunta = (None if any(b.get("pregunta_pendiente") == "origen" for b in bloques)
-                else getattr(state, "_pregunta_del_escritor", None))
-    mensajes = _mensajes(lang, history, message, texto_hechos, pregunta)
-    answer = await _redactar(client, mensajes)
-    if answer is not None and _en_otro_idioma(answer, lang):
-        # arq-5d (G10 nº 5, g10-020): a quien escribía en portugués el redactor le contestó en portugués, aunque la
-        # conversación es en inglés (decisión de Gadea). Se rehace una vez diciéndolo; si sigue igual, contesta el RAG.
-        logger.info(f"[HECHOS] la redacción no está en {lang}: se rehace")
-        answer = await _redactar(client, [*mensajes, {"role": "assistant", "content": answer},
-                                          {"role": "user", "content": _EN_SU_IDIOMA[lang]}])
-        if answer is not None and _en_otro_idioma(answer, lang):
-            answer = None
-    if answer is None:
-        note_turn(hechos_por_codigo="fallo")
-        return None
-    if _FALTA in answer:
-        # Pregunta algo que los hechos no traen (Jev no marcó esa intención: «what time do we meet» a 0,72 en un mensaje
-        # de tres preguntas, banco arq-1d v3). Mejor el RAG, con toda la base, que un «no tengo ese dato». Se mira en
-        # todo el texto, en mayúsculas: la escribió en medio (banco D, v2) y al final de una frase (core B2: «I don't
-        # have the price for the refresher. FALTA»), y las dos veces le habría llegado al cliente.
-        logger.info(f"[HECHOS] el redactor dice que falta algo ({intenciones}); contesta el RAG")
-        note_turn(hechos_por_codigo="falta")
-        state._redactor_dijo_falta = True  # arq-1g: el mensaje era mezclado; el RAG recibe los hechos
-        return None
-    answer = _poner_listas(answer, bloques, intenciones, lang)
-    if not _pasa_las_guardas(answer, f"{texto_hechos}\n{pregunta or ''}", message):
-        logger.info("[HECHOS] la redacción no pasa las guardas deterministas; contesta el RAG")
-        note_turn(hechos_por_codigo="guardas")
-        return None
-    perdidos = hechos_mod.faltan(answer, bloques, intenciones)
-    if perdidos:
-        # lat-2 (24-oct, fase LAT): ya no se rehace la respuesta cuando le falta un hecho (ARQ-3 la rehacía en el 38 % de
-        # los turnos del redactor de real-1, ~2,5 s más). Las listas y las frases ya las pone el código; lo demás que
-        # falte se apunta en [TURN_METRICS] y es deuda de calidad de la fase.
-        logger.info(f"[HECHOS][ARQ3] faltan {len(perdidos)} (no se rehace): {[p[:60] for p in perdidos]}")
-        note_turn(hechos_faltaban=len(perdidos), hechos_quedan=len(perdidos))
-    if any(b.get("pregunta_pendiente") == "origen" for b in bloques):
-        # La pregunta del origen la pone el código, con el texto que reconoce el flujo (`_es_pregunta_de_origen`): así
-        # queda pendiente el origen y, cuando lo diga, se le contesta el plan exacto, como en ord-7.
-        from src.agents import conversational_core as core  # lazy
-
-        tras = ((core.ORIGEN_TRAS_LOS_ENLACES_ES, core.ORIGEN_TRAS_LOS_ENLACES_EN) if "enlace" in intenciones
-                else (core.ORIGEN_TRAS_LAS_VARIANTES_ES, core.ORIGEN_TRAS_LAS_VARIANTES_EN))
-        answer = f"{answer}\n\n{tras[0] if lang == 'es' else tras[1]}"
-    logger.info(f"[HECHOS] contesta el redactor: {actividad} {intenciones} origen={origen}")
-    # arq-1p: «redactor_general» cuando contestó con el bloque sin actividad (se ve en [TURN_METRICS] `hechos`).
-    general = all(b.get("actividad") is None for b in bloques)
     note_turn(rag_used=True, hechos_por_codigo="redactor_general" if general else "redactor",
               intenciones=",".join(intenciones))
     return answer

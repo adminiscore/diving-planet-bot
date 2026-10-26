@@ -8,7 +8,6 @@
 
 import pytest
 
-from src.agents import redactor_hechos
 from src.agents.nucleo.slotfill_close import _precio_en_su_moneda
 from src.agents.rutas import contexto_rag
 from src.flows.state import ConversationState
@@ -48,11 +47,6 @@ def test_grupo_mixto_no_recotiza(monkeypatch):
     st = _estado()
     st.mixed_nationality_notice = True
     assert _precio_en_su_moneda(st, {"prev_is_colombian": None}) == ""
-
-
-def test_el_redactor_no_cierra_preguntando_datos():
-    sistema = redactor_hechos._mensajes("es", [], "¿qué incluye?", "[]")[0]["content"]
-    assert "No termines preguntando un dato del cliente" in sistema
 
 
 def test_la_fecha_lleva_el_dia_de_la_semana(monkeypatch):

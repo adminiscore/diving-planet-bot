@@ -1,5 +1,6 @@
-"""ARQ-1d (22-oct, flag `hechos_por_codigo`): si el mensaje solo pide intenciones que el código sabe contestar, Luna
-redacta con los hechos del código (src/agents/redactor_hechos.py); si no, contesta el RAG de siempre."""
+"""ARQ-1d (22-oct, flag `hechos_por_codigo`): si el mensaje solo pide intenciones que el código sabe contestar, se
+escribe con los hechos del código (src/agents/redactor_hechos.py; lat-9 paso 3: el escritor del RAG, sin búsqueda); si
+no, contesta el RAG de siempre."""
 import asyncio
 from types import SimpleNamespace
 
@@ -36,23 +37,29 @@ def llamadas(monkeypatch):
 
     async def generar(client, messages, pieza="rag_escritor"):
         hechas.append((messages, pieza))
-        return SimpleNamespace(choices=[SimpleNamespace(message=SimpleNamespace(content=estado["texto"]))])
+        return SimpleNamespace(usage=SimpleNamespace(total_tokens=0),
+                               choices=[SimpleNamespace(message=SimpleNamespace(content=estado["texto"]))])
 
     monkeypatch.setattr(extractor, "lectura_del_extractor", lectura)
+    async def revisor(answer, context, lang="es"):
+        return True, "ok"
+
+    from src.agents import supervisor
+
     monkeypatch.setattr(rag_agent, "generar_con_respaldo", generar)
-    monkeypatch.setattr(redactor_hechos, "trace_openai", lambda c: c)
+    monkeypatch.setattr(rag_agent, "_verify_grounding", revisor)
+    monkeypatch.setattr(supervisor, "rag_answer", rag_agent.rag_answer)  # el escritor de verdad, con Luna simulada
     return SimpleNamespace(hechas=hechas, estado=estado)
 
 
 def test_contesta_con_los_hechos_y_el_codigo_pregunta_el_origen(llamadas):
+    """lat-9 paso 3: escribe el escritor del RAG (su prompt, con el catálogo), con los hechos y sin búsqueda."""
     st = _conv()
     answer = asyncio.run(redactor_hechos.responder(st, MENSAJE, st.history))
     assert answer.endswith(core.ORIGEN_TRAS_LAS_VARIANTES_ES) and core._es_pregunta_de_origen(answer)
     [(messages, pieza)] = llamadas.hechas
-    assert pieza == "redactor_hechos"
-    assert "SOLO con los HECHOS" in messages[0]["content"] and "Catálogo" not in messages[0]["content"]
-    assert '"183 USD"' in messages[-1]["content"] and messages[-1]["content"].endswith(MENSAJE)
-    assert sum(1 for m in messages if MENSAJE in m["content"]) == 1  # el mensaje no va dos veces
+    assert pieza == "rag_escritor"
+    assert '"183 USD"' in messages[-1]["content"] and MENSAJE in messages[-1]["content"]
 
 
 def test_con_origen_no_se_pregunta(llamadas):
@@ -124,20 +131,10 @@ def test_la_tarjeta_de_edades_no_se_come_las_otras_preguntas(monkeypatch, intenc
     assert (respuesta is not None) is tarjeta
 
 
-def test_si_los_hechos_no_contestan_lo_que_pregunta_contesta_el_rag(llamadas):
-    """Jev no marcó una intención (v3: «what time do we meet» a 0,72): el redactor dice FALTA y contesta el RAG."""
-    llamadas.estado["texto"] = "FALTA"
+def test_si_el_escritor_no_sabe_contesta_el_rag_con_busqueda(llamadas):
+    """lat-9 paso 3: ya no hay FALTA; si el escritor sin búsqueda da el «no lo tengo», contesta el RAG con la base."""
+    llamadas.estado["texto"] = rag_agent.FALLBACK_ES
     st = _conv(location="cartagena")
-    assert asyncio.run(redactor_hechos.responder(st, MENSAJE, st.history)) is None
-
-
-def test_falta_en_medio_de_la_respuesta_tampoco_llega_al_cliente(llamadas):
-    """Banco D, v2: «…Incluye: … / FALTA / ¿Y para cuántas personas…?» habría llegado tal cual."""
-    llamadas.estado["texto"] = "El snorkel cuesta 45 USD.\n\nFALTA\n\n¿Para cuántas personas?"
-    st = _conv(location="island")
-    assert asyncio.run(redactor_hechos.responder(st, MENSAJE, st.history)) is None
-    # Core B2: al final de una frase.
-    llamadas.estado["texto"] = "El snorkel cuesta 45 USD. No tengo el precio del refresher. FALTA"
     assert asyncio.run(redactor_hechos.responder(st, MENSAJE, st.history)) is None
 
 
@@ -145,7 +142,8 @@ def test_lat2_si_falta_un_hecho_no_se_rehace(llamadas, monkeypatch):
     """lat-2 (24-oct): ARQ-3 rehacía la respuesta en el 38 % de los turnos del redactor; ahora se queda la primera."""
     async def generar(client, messages, pieza="rag_escritor"):
         llamadas.hechas.append((messages, pieza))
-        return SimpleNamespace(choices=[SimpleNamespace(message=SimpleNamespace(content="Cuesta 183 USD."))])
+        return SimpleNamespace(usage=SimpleNamespace(total_tokens=0),
+                               choices=[SimpleNamespace(message=SimpleNamespace(content="Cuesta 183 USD."))])
 
     monkeypatch.setattr(rag_agent, "generar_con_respaldo", generar)
     st = _conv(location="cartagena")

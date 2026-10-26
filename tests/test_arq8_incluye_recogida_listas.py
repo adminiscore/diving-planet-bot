@@ -7,7 +7,6 @@
 - 8f `listas_una_vez`: lo que se repite igual en varias actividades se pinta una vez, sin rótulos dobles ni sueltos."""
 import pytest
 
-from src.agents import redactor_hechos as rh
 from src.flows import hechos
 from src.flows.state import ConversationState
 
@@ -56,18 +55,6 @@ def test_arq3_echa_de_menos_lo_que_se_hace(monkeypatch):
     assert any("piscina" in p for p in perdidos) and any("1 inmersión" in p for p in perdidos)
 
 
-def test_el_codigo_pone_lo_que_se_hace_en_su_marca(monkeypatch):
-    b = hechos.hechos(_estado("island"), ["incluye"], ["minicourse"])[0]
-    out = rh._poner_listas("Esto incluye:\n[[incluye]]\nY esto es lo que harás:\n[[en_que_consiste]]", [b], ["incluye"], "es")
-    assert "[[" not in out and "piscina" in out and "Seguro de buceo" in out
-
-
-def test_sin_su_marca_lo_que_se_hace_va_al_final(monkeypatch):
-    b = hechos.hechos(_estado("island"), ["incluye"], ["minicourse"])[0]
-    out = rh._poner_listas("Esto incluye:\n[[incluye]]", [b], ["incluye"], "es")
-    assert "piscina" in out and not hechos.faltan(out, [{"en_que_consiste": b["en_que_consiste"]}], ["incluye"])
-
-
 # --- 8e -------------------------------------------------------------------------------------------------------------
 
 def test_la_recogida_de_las_islas_dice_como_se_coordina(monkeypatch):
@@ -88,36 +75,6 @@ def _especialidades(origen="cartagena"):
     st = _estado(origen)
     acts = ["specialty_nitrox", "specialty_buoyancy", "specialty_naturalist"]
     return hechos.hechos(st, ["descuento", "horario"], acts)
-
-
-def test_la_lista_igual_en_todas_sale_una_vez(monkeypatch):
-    out = rh._poner_listas("[[descuento]]", _especialidades(), ["descuento"], "es")
-    assert out.count("10% de descuento para grupos") == 1
-    assert "*Especialidad" not in out  # igual en todas: sin el nombre de cada una
-
-
-def test_la_recogida_igual_sale_una_vez(monkeypatch):
-    out = rh._poner_listas("[[recogida]]", _especialidades(), [], "es")
-    assert out.count("Muelle de la Bodeguita") == 1
-
-
-def test_listas_distintas_cada_una_con_su_nombre(monkeypatch):
-    texto = rh._una_vez([({"nombre": "A"}, "• x"), ({"nombre": "B"}, "• y"), ({"nombre": "C"}, "• x")])
-    assert texto == "*A, C*\n• x\n\n*B*\n• y"
-
-
-def test_rotulo_doble_y_rotulo_suelto(monkeypatch):
-    respuesta = ("Esto es lo que incluye:\n\n*Desde Cartagena*\n*Desde Cartagena:*\n• Almuerzo\n\n"
-                 "*Si ya estás en las Islas del Rosario:*\n• Seguro\n\n*Si ya estás en las Islas del Rosario*\n\n\n\n"
-                 "¿Saldrías desde Cartagena?")
-    out = rh._sin_rotulos_sueltos(respuesta, "es")
-    assert out == ("Esto es lo que incluye:\n\n*Desde Cartagena:*\n• Almuerzo\n\n"
-                   "*Si ya estás en las Islas del Rosario:*\n• Seguro\n\n¿Saldrías desde Cartagena?")
-
-
-def test_un_rotulo_con_su_frase_se_queda(monkeypatch):
-    texto = "*From Cartagena:* Muelle de la Bodeguita at 8:00.\n\n*If you're already on the Rosario Islands:*\n• Pick-up"
-    assert rh._sin_rotulos_sueltos(texto, "en") == texto
 
 
 # --- 8f: el precio pendiente ----------------------------------------------------------------------------------------

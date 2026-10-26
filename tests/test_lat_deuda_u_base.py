@@ -227,8 +227,10 @@ def test_el_enlace_va_en_el_idioma_del_cliente_en_todos_los_sitios():
 
 def test_el_pago_de_los_colombianos_en_un_sitio():
     from src.domain.politicas import politica_breve
-    from src.prompts import info
+    from src.flows import hechos
 
-    breve = politica_breve("payment_colombian", "es")
-    assert "Llave" in breve and breve.replace("*", "") in info.REDACTOR_HECHOS_ES
-    assert politica_breve("payment_colombian", "en").replace("*", "") in info.REDACTOR_HECHOS_EN
+    # lat-9 paso 3: sin el prompt del redactor, el escritor único la lee de los hechos; la breve y la de los hechos
+    # salen de la misma política (`payment_colombian`).
+    for lang in ("es", "en"):
+        assert "Llave" in politica_breve("payment_colombian", lang)
+        assert "Llave" in hechos._politica("payment_colombian", lang)

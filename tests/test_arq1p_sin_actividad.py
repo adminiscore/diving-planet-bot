@@ -1,6 +1,6 @@
 """ARQ-1p (22-oct, flag `hechos_sin_actividad`): sin saber la actividad, la hora o la recogida, qué llevar y si hay sitio
-salen de las políticas (son iguales para todas) y las escribe el redactor. Precio, qué incluye, edad y enlace siguen
-necesitando la actividad: con ellos contesta el RAG, como antes."""
+salen de las políticas (son iguales para todas) y las escribe el escritor con los hechos (lat-9 paso 3: el del RAG, sin
+búsqueda). Precio, qué incluye, edad y enlace siguen necesitando la actividad: con ellos contesta el RAG, como antes."""
 import asyncio
 from types import SimpleNamespace
 
@@ -39,11 +39,18 @@ def redactor(monkeypatch):
 
     async def generar(client, messages, pieza="rag_escritor"):
         hechas.append(messages)
-        return SimpleNamespace(choices=[SimpleNamespace(message=SimpleNamespace(content=estado["texto"]))])
+        return SimpleNamespace(usage=SimpleNamespace(total_tokens=0),
+                               choices=[SimpleNamespace(message=SimpleNamespace(content=estado["texto"]))])
+
+    async def revisor(answer, context, lang="es"):
+        return True, "ok"
+
+    from src.agents import supervisor
 
     monkeypatch.setattr(extractor, "lectura_del_extractor", lectura)
     monkeypatch.setattr(rag_agent, "generar_con_respaldo", generar)
-    monkeypatch.setattr(redactor_hechos, "trace_openai", lambda c: c)
+    monkeypatch.setattr(rag_agent, "_verify_grounding", revisor)  # lat-9 paso 3: escribe el escritor del RAG
+    monkeypatch.setattr(supervisor, "rag_answer", rag_agent.rag_answer)
     return SimpleNamespace(hechas=hechas, estado=estado)
 
 

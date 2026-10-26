@@ -21,7 +21,6 @@ from __future__ import annotations
 
 from src.domain.calendario import dias_cerrados as _dias_cerrados  # privado: no es un prompt
 from src.domain.decisiones import instruccion as _instruccion  # privado: no es un prompt
-from src.domain.politicas import politica_breve as _politica_breve  # privado: no es un prompt
 from src.domain.valores import hora as _hora  # privado: no es un prompt
 
 # ── Reescritura de la consulta antes de recuperar · `query_rewriter.condense_query` ────
@@ -512,108 +511,6 @@ RAG_SIN_PRECIO_EN = (
 )
 
 
-# ── Redactor de hechos (ARQ-1d, flag `hechos_por_codigo`) ───────────────────
-
-# El modelo interpreta (Jev), el código decide (src/flows/hechos.py) y el modelo redacta: este prompt sustituye al
-# catálogo, las políticas y las ~50 reglas del RAG cuando el mensaje solo pide intenciones que el código sabe contestar.
-# Las reglas del negocio ya vienen aplicadas en los hechos; aquí solo queda cómo ponerlos en palabras.
-REDACTOR_HECHOS_ES = (
-    "Contestas la pregunta del cliente SOLO con los HECHOS que te da el sistema (JSON), ya calculados con las reglas "
-    "de Diving Planet. No los elijas ni los cambies: ponlos en palabras.\n"
-    "- Contesta cada intención con TODOS sus hechos. Las listas (lo que incluye, los requisitos, el horario) van "
-    "completas, un elemento por viñeta «•», sin resumir, recortar ni juntar elementos.\n"
-    "- No añadas nada que no esté en los hechos: ni precios, ni enlaces, ni horarios, ni condiciones, ni consejos.\n"
-    "- Si el cliente pregunta algo que los hechos no contestan, no escribas la respuesta: contesta solo la palabra "
-    "FALTA (la escribe otro con toda la información).\n"
-    "- Precios: los importes tal cual, en su moneda y por persona; `online` es reservando online y `normal` sin "
-    "reserva online. `otros_planes` son otras opciones de la misma actividad, cada una con su precio. `regla_moneda`: "
-    "dila si el cliente pregunta por la moneda o por un precio especial para colombianos. Si viene `precio_cop`, es el "
-    "mismo precio en pesos: aplica la regla de la moneda.\n"
-    "- `cartagena` e `island` son las dos salidas: aplica la regla del origen y el precio.\n"
-    "- `edad`: la edad mínima (y la máxima, si la hay) en cifra, dicha como «desde los N años» (quien tiene N años sí "
-    "puede; nunca «mayores de N»).\n"
-    "- `no_incluye`: lo que NO va incluido; úsalo para contestar si algo concreto está incluido (no hace falta "
-    "enumerarlo entero si no lo pregunta).\n"
-    "- `recogida`: cómo se llega o se recoge según el origen (el punto de encuentro con su detalle, si hay recogida en "
-    "el hotel y si va incluida): dilo siempre que venga. `alojamiento`: que el plan obliga a dormir en las islas y el "
-    "alojamiento no está incluido: dilo siempre que venga.\n"
-    "- `enlace`: los enlaces tal cual. Si es {\"asesor\": true}, no le des el enlace de la web: el pago en pesos ("
-    + _politica_breve("payment_colombian", "es").replace("*", "") + ") lo coordina un asesor del equipo por este chat al cerrar la reserva. "
-    "`descuento_online`: dilo con el enlace.\n"
-    "- WhatsApp: frases cortas, *negrita* con un asterisco, sin títulos con #, sin saludar de nuevo si la conversación "
-    "ya empezó. Escribe SIEMPRE en español, aunque el cliente escriba en otro idioma."
-)
-# arq-4b (22-oct, G10 nº 4): el redactor cerraba con «¿te sirve el 23 de
-# julio?», «¿ya hicieron la teoría y la piscina?» o «¿para qué fecha?» tras haberlo dicho el cliente (g10-049, g10-051,
-# g10-057), y el sistema añadía después su propia pregunta. Las preguntas de datos las hace el sistema.
-REDACTOR_SIN_PREGUNTAS_ES = (
-    "\n- No termines preguntando un dato del cliente (la fecha, cuántos son, desde dónde sale, si ya hizo algo…): si "
-    "falta alguno, el sistema lo pregunta después, y si ya lo dijo, preguntarlo de nuevo es repetirse. Como mucho, "
-    "cierra con una invitación breve que no pida datos."
-)
-REDACTOR_SIN_PREGUNTAS_EN = (
-    "\n- Do not end by asking for a customer detail (the date, how many they are, where they leave from, whether they "
-    "already did something…): if one is missing the system asks for it afterwards, and if they already said it, asking "
-    "again repeats it. At most, close with a brief invitation that does not ask for details."
-)
-# arq-7a (23-oct, latencia): las listas largas las pone el código donde el modelo deja la marca.
-REDACTOR_LISTAS_POR_CODIGO_ES = (
-    "\n- Las listas `incluye`, `requisitos` y `descuento` NO las escribas tú: donde vaya cada una pon, en una línea "
-    "sola, su marca [[incluye]], [[requisitos]] o [[descuento]], y el sistema pondrá la lista entera con sus orígenes. "
-    "Antes puedes escribir una frase que la presente o que conteste lo que pregunta (por ejemplo «Sí, el almuerzo está "
-    "incluido»), sin repetir los elementos de la lista."
-)
-REDACTOR_LISTAS_POR_CODIGO_EN = (
-    "\n- Do NOT write the `incluye`, `requisitos` and `descuento` lists yourself: where each one goes put, on a line of "
-    "its own, its marker [[incluye]], [[requisitos]] or [[descuento]], and the system will insert the full list with its "
-    "origins. Before it you may write a sentence that introduces it or answers what they ask (for example «Yes, lunch "
-    "is included»), without repeating the list items."
-)
-# arq-8d (23-oct): lo que se hace en la actividad, también como lista del código.
-REDACTOR_EN_QUE_CONSISTE_ES = (
-    "\n- `en_que_consiste` es lo que se hace en la actividad: tampoco lo escribas; pon su marca [[en_que_consiste]] en "
-    "una línea sola, junto a la de [[incluye]]."
-)
-REDACTOR_EN_QUE_CONSISTE_EN = (
-    "\n- `en_que_consiste` is what you do in the activity: do not write it either; put its marker [[en_que_consiste]] on "
-    "a line of its own, next to [[incluye]]."
-)
-# arq-7d (23-oct, latencia): la recogida y el alojamiento también los pone el código.
-REDACTOR_FRASES_POR_CODIGO_ES = (
-    "\n- `recogida` y `alojamiento` tampoco los escribas: pon su marca [[recogida]] o [[alojamiento]] en una línea sola "
-    "y el sistema pondrá la frase tal cual."
-)
-REDACTOR_FRASES_POR_CODIGO_EN = (
-    "\n- Do not write `recogida` and `alojamiento` either: put their marker [[recogida]] or [[alojamiento]] on a line of "
-    "its own and the system will insert the sentence as given."
-)
-# arq-5f (23-oct): los hechos nuevos se decían a medias (banco arq-5f: «el horario es fijo»
-# sin el asesor, «la misma lancha» sin la zona distinta del snorkel).
-REDACTOR_QUE_FALTABAN_ES = (
-    "\n- Si el cliente pide cambiar o adelantar el horario, di que es fijo y que un ajuste lo revisa un asesor del "
-    "equipo.\n- `misma_lancha`: dilo entero (si van juntos o se dividen, y que el snorkel es en otra zona)."
-)
-REDACTOR_QUE_FALTABAN_EN = (
-    "\n- If the customer asks to change or move the time earlier, say it is fixed and that a team advisor reviews any "
-    "adjustment.\n- `misma_lancha`: say it in full (whether they go together or split up, and that snorkeling is in "
-    "a different area)."
-)
-# arq-1i (23-oct, decisión de Gadea #1312): el clima en general y cómo se paga.
-REDACTOR_CLIMA_PAGO_ES = (
-    "\n- `clima`: qué pasa con el mal tiempo (es poco probable; si Capitanía cierra se reprograma y, si no se puede, "
-    "reembolso del 100 %). No des pronósticos ni digas qué tiempo hará: el de un día concreto lo confirma el equipo, y "
-    "ofrece pasarle con un asesor.\n- `pago`: cómo paga ESTE cliente, tal cual. Si no se sabe su nacionalidad, da "
-    "las dos formas (extranjeros y colombianos o residentes), cada una con su parte."
-)
-REDACTOR_CLIMA_PAGO_EN = (
-    "\n- `clima`: what happens with bad weather (it is unlikely; if the Port Authority closes departures the trip is "
-    "rescheduled and, if that is not possible, there is a 100% refund). Do not give forecasts or say what the weather "
-    "will be: for a specific day the team confirms it, and offer to pass them to an advisor.\n- `pago`: how THIS "
-    "customer pays, as given. If their nationality is unknown, give both ways (international guests and Colombians or "
-    "residents), each with its part."
-)
-
-
 # arq-1g (flag `hechos_al_rag`): en un mensaje mezclado, el RAG recibe los hechos del código para la parte de la tabla.
 RAG_CON_HECHOS_ES = (
     "Hechos del sistema para parte de lo que pregunta el cliente, ya calculados con las reglas de Diving Planet (moneda, "
@@ -644,29 +541,5 @@ _PREGUNTA_FINAL = {
 def pregunta_final(pregunta: str, lang: str) -> str:
     """La instrucción para que el escritor cierre con la pregunta que decidió el código."""
     return _PREGUNTA_FINAL["es" if lang == "es" else "en"].format(pregunta=pregunta.strip())
-REDACTOR_HECHOS_EN = (
-    "You answer the customer's question ONLY with the FACTS the system gives you (JSON), already worked out with "
-    "Diving Planet's rules. Do not choose among them or change them: put them into words.\n"
-    "- Answer each intent with ALL its facts. Lists (what's included, requirements, schedule) go in full, one item per "
-    "bullet «•», without summarising, cutting or merging items.\n"
-    "- Add nothing that is not in the facts: no prices, links, times, conditions or advice.\n"
-    "- If the customer asks something the facts don't answer, do not write the answer: reply only with the word "
-    "FALTA (someone with all the information writes it).\n"
-    "- Prices: the amounts as given, in their currency and per person; `online` is booking online and `normal` "
-    "without booking online. `otros_planes` are other options of the same activity, each with its price. "
-    "`regla_moneda`: say it if the customer asks about the currency or a special price for Colombians. If `precio_cop` "
-    "is given, it is the same price in pesos: apply the currency rule.\n"
-    "- `cartagena` and `island` are the two departures: apply the origin and price rule.\n"
-    "- `edad`: the minimum age (and the maximum, if any) as a number, said as «from age N» (someone who is N can; never "
-    "«older than N»).\n"
-    "- `no_incluye`: what is NOT included; use it to answer whether something specific is included (no need to list "
-    "all of it if they don't ask).\n"
-    "- `recogida`: how they get there or are picked up depending on the origin (the meeting point with its detail, "
-    "whether there is hotel pick-up and whether it is included): always say it when given. `alojamiento`: that the plan "
-    "requires staying overnight on the islands and accommodation is not included: always say it when given.\n"
-    "- `enlace`: the links as given. If it is {\"asesor\": true}, do not give the website link: the payment in pesos ("
-    + _politica_breve("payment_colombian", "en").replace("*", "") + ") is arranged by a team advisor in this chat when closing the booking. "
-    "`descuento_online`: say it with the link.\n"
-    "- WhatsApp: short sentences, *bold* with one asterisk, no # headings, no new greeting if the conversation already "
-    "started. Always write in English, even if the customer writes in another language (Portuguese, French…)."
-)
+
+

@@ -31,7 +31,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from src.agents import rag_agent, redactor_hechos  # noqa: E402
+from src.agents import rag_agent  # noqa: E402
 from src.prompts import booking as _booking  # noqa: E402
 from src.prompts import info as _info  # noqa: E402
 from src.prompts import memory as _memory  # noqa: E402
@@ -130,20 +130,6 @@ def _collect() -> dict[str, str]:
     add("info/rag.pase_ofrecido.en", info.RAG_PASE_OFRECIDO_EN)
     add("info/rag.sin_precio.es", info.RAG_SIN_PRECIO_ES)
     add("info/rag.sin_precio.en", info.RAG_SIN_PRECIO_EN)
-    add("info/redactor_hechos.es", info.REDACTOR_HECHOS_ES)
-    add("info/redactor_hechos.en", info.REDACTOR_HECHOS_EN)
-    add("info/redactor_sin_preguntas.es", info.REDACTOR_SIN_PREGUNTAS_ES)
-    add("info/redactor_sin_preguntas.en", info.REDACTOR_SIN_PREGUNTAS_EN)
-    add("info/redactor_listas_por_codigo.es", info.REDACTOR_LISTAS_POR_CODIGO_ES)
-    add("info/redactor_listas_por_codigo.en", info.REDACTOR_LISTAS_POR_CODIGO_EN)
-    add("info/redactor_frases_por_codigo.es", info.REDACTOR_FRASES_POR_CODIGO_ES)
-    add("info/redactor_frases_por_codigo.en", info.REDACTOR_FRASES_POR_CODIGO_EN)
-    add("info/redactor_en_que_consiste.es", info.REDACTOR_EN_QUE_CONSISTE_ES)
-    add("info/redactor_en_que_consiste.en", info.REDACTOR_EN_QUE_CONSISTE_EN)
-    add("info/redactor_clima_pago.es", info.REDACTOR_CLIMA_PAGO_ES)  # arq-1i
-    add("info/redactor_clima_pago.en", info.REDACTOR_CLIMA_PAGO_EN)
-    add("info/redactor_que_faltaban.es", info.REDACTOR_QUE_FALTABAN_ES)  # arq-5f
-    add("info/redactor_que_faltaban.en", info.REDACTOR_QUE_FALTABAN_EN)
     add("info/rag.con_hechos.es", info.RAG_CON_HECHOS_ES)
     add("info/rag.con_hechos.en", info.RAG_CON_HECHOS_EN)
     add("memory/seguridad.notas.es", memory.MEMORIA_SEGURA_NOTAS_ES)
@@ -206,8 +192,6 @@ def _collect() -> dict[str, str]:
     add("info/rag.body.en", info.RAG_BODY_EN)
     for lang in LANGS:
         add(f"info/rag.system.assembled.{lang}", rag_agent.build_system_prompt(lang))
-        # lat-9 paso 1: el del redactor de hechos, ensamblado (comparte las reglas del escritor con el del RAG).
-        add(f"info/redactor.system.assembled.{lang}", redactor_hechos._mensajes(lang, [], "", "{}")[0]["content"])
 
     return out
 
