@@ -20,7 +20,7 @@ def test_encendido_jev_pregunta_y_otra_cosa_no_los_cuenta():
     q = j._questions_for_turn()
     assert q[j.PIDE_CLIMA] is j._PIDE_CLIMA_Q and q[j.PIDE_PAGO] is j._PIDE_PAGO_Q
     otra = q[j.PIDE_OTRA_COSA]["instructions"]
-    assert otra.endswith(j._OTRA_COSA_SIN_CLIMA_NI_PAGO)
+    assert j._OTRA_COSA_SIN_CLIMA_NI_PAGO in otra  # lat-8 añade su frase detrás
     assert "the weather, " not in otra and "payment methods, cancellations" not in otra
     senales = j.answers_to_signals({j.PIDE_CLIMA: {"type": "noul", "noul": 0.9},
                                     j.PIDE_PAGO: {"type": "noul", "noul": 0.2}})

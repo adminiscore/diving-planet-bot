@@ -35,7 +35,7 @@ from src.utils import money
 from src.utils.text import strip_accents
 
 INTENCIONES = ("precio", "incluye", "requisitos", "horario", "disponibilidad", "edad", "enlace", "descuento",
-               "tiempo", "clima", "pago")
+               "tiempo", "clima", "pago", "hoteles", "regreso", "fotos", "cambios")
 ORIGENES = ("cartagena", "island")
 # Las intenciones cuyos hechos cambian según desde dónde sale el cliente: sin origen van las dos variantes.
 _DEPENDEN_DEL_ORIGEN = {"precio", "incluye", "horario", "enlace"}
@@ -220,6 +220,7 @@ def hechos(state: ConversationState, intenciones: list[str], actividades: list[s
         if "tiempo" in pedidas:
             bloque.update(_tiempo(lang))
         bloque.update(_clima_y_pago(state, pedidas, lang))
+        bloque.update(_temas_de_lat8(pedidas, lang))
         # arq-1m (G10 nº 2): «¿hay disponibilidad mañana?» o «¿cómo reservamos?» se contestaban con «en la web», sin el
         # enlace (Jev marcaba la disponibilidad, no el enlace): con la disponibilidad va también el enlace de reserva.
         # lat-0a (real-1, 24-oct): «listo, ¿cómo pago?» con el plan ya elegido se contestaba «pagas con tarjeta en la
@@ -316,7 +317,8 @@ def _pago_extranjero(lang: str) -> str | None:
 # redactor porque no se sabía la actividad (`hechos=sin_actividad`); 11 preguntaban solo la hora o la recogida, qué llevar
 # o si hay sitio, casi siempre quien ya reservó y no la nombra. Esos hechos son los mismos para todas las actividades (las
 # políticas), así que el código los da sin adivinar la actividad. Precio, qué incluye, edad y enlace sí la necesitan.
-INTENCIONES_SIN_ACTIVIDAD = frozenset({"horario", "disponibilidad", "requisitos", "descuento", "tiempo", "clima", "pago"})
+INTENCIONES_SIN_ACTIVIDAD = frozenset({"horario", "disponibilidad", "requisitos", "descuento", "tiempo", "clima", "pago",
+                                       "hoteles", "regreso", "fotos", "cambios"})
 
 
 def _descuentos(state: ConversationState, lang: str) -> list[str]:
@@ -362,6 +364,7 @@ def hechos_sin_actividad(state: ConversationState, intenciones: list[str]) -> li
     if "descuento" in pedidas:
         bloque["descuento"] = _descuentos(state, lang)
     bloque.update(_clima_y_pago(state, pedidas, lang))
+    bloque.update(_temas_de_lat8(pedidas, lang))
     return _lo_que_faltaba(state, [bloque], pedidas, lang)
 
 
@@ -467,6 +470,24 @@ def _clima_y_pago(state: ConversationState, pedidas: list[str], lang: str) -> di
     return out
 
 
+# lat-8 (26-oct, #1880): cuatro temas más, con las políticas que la base ya tiene. En «cambios», la política general
+# (cambiar la fecha o el número de personas, la cancelación); una reserva ya hecha la lleva un asesor (no llega aquí).
+_POLITICAS_DE_LAT8 = {
+    "hoteles": ("other_island_hotels",),
+    "regreso": ("return_different_day",),
+    "fotos": ("photos_videos_policy",),
+    "cambios": ("reschedule", "modify_booking", "cancellation"),
+}
+
+
+def _temas_de_lat8(pedidas: list[str], lang: str) -> dict:
+    out: dict = {}
+    for tema, claves in _POLITICAS_DE_LAT8.items():
+        if tema in pedidas and (textos := [p for p in (_politica(c, lang) for c in claves) if p]):
+            out[tema] = textos
+    return out
+
+
 def _acompanante(bloque: dict, pedidas: list[str], origen: str | None, origenes: tuple[str, ...], moneda: str,
                  lang: str, dos_monedas: bool = False) -> dict:
     """arq-1j: el acompañante (va en la lancha sin bucear) no tiene ficha: su precio es una fila de la tarifa, el mismo en
@@ -567,6 +588,9 @@ def faltan(answer: str, bloques: list[dict], intenciones: list[str]) -> list[str
             perdidos.append(b["clima"][0])  # arq-1i: lo que contesta la pregunta, el reembolso del 100 % si no se reprograma
         if "pago" in intenciones and b.get("pago") and not _elemento_dado(b["pago"][0], raices, answer):
             perdidos.append(b["pago"][0])  # arq-1i: cómo paga ESTE cliente
+        for tema in _POLITICAS_DE_LAT8:  # lat-8: lo que contesta la pregunta, la primera política del tema
+            if tema in intenciones and b.get(tema) and not _elemento_dado(b[tema][0], raices, answer):
+                perdidos.append(b[tema][0])
         if "tiempo" in intenciones and b.get("tiempo"):  # arq-1v: la decisión de Gadea tiene que ir
             if not _elemento_dado(b["tiempo"][0], raices, answer):
                 perdidos.append(b["tiempo"][0])

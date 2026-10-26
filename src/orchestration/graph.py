@@ -32,16 +32,20 @@ from src.agents.escalation_agent import escalation_node
 from src.agents.info_agent import info_node
 from src.agents.jev_router import (
     NUEVO_CASO,
+    PIDE_CAMBIOS,
     PIDE_CLIMA,
     PIDE_DESCUENTO,
     PIDE_DISPONIBILIDAD,
     PIDE_EDAD,
     PIDE_ENLACE,
+    PIDE_FOTOS,
     PIDE_HORARIO,
+    PIDE_HOTELES,
     PIDE_OTRA_COSA,
     PIDE_PAGO,
     PIDE_PRECIO,
     PIDE_QUE_INCLUYE,
+    PIDE_REGRESO,
     PIDE_REQUISITOS,
     PIDE_SI_ALCANZA,
 )
@@ -66,6 +70,7 @@ _INTENCION_DE_SENAL = {
     "descuento": PIDE_DESCUENTO,  # arq-4b
     "tiempo": PIDE_SI_ALCANZA,  # arq-1v
     "clima": PIDE_CLIMA, "pago": PIDE_PAGO,  # arq-1i
+    "hoteles": PIDE_HOTELES, "regreso": PIDE_REGRESO, "fotos": PIDE_FOTOS, "cambios": PIDE_CAMBIOS,  # lat-8
 }
 
 

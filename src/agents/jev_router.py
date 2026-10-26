@@ -594,6 +594,53 @@ _OTRA_COSA_SIN_CLIMA_NI_PAGO = (
     "those (they are not something else). The price of something the dive center does not sell (a hotel, a room or "
     "night, a taxi or transport) IS something else."
 )
+# lat-8 (26-oct, decisión de Gadea #1880): cuatro temas más de la tabla, contados en real-1 (solo los diálogos visibles,
+# #1879): ~40 de los 121 turnos que contestaba el RAG. Sus hechos son políticas que la base ya tiene. Cambiar o cancelar
+# una reserva YA hecha no entra: sigue yendo a un asesor (ya_reservado / needs_staff / el tema de cambio de reserva).
+PIDE_HOTELES = "pide_hoteles"
+PIDE_REGRESO = "pide_regreso"
+PIDE_FOTOS = "pide_fotos"
+PIDE_CAMBIOS = "pide_cambios"
+_PIDE_HOTELES_Q = {
+    "type": "noul",
+    "instructions": (
+        "The customer asks where to stay or sleep: hotel recommendations on the islands, which hotels are near the "
+        "dive base or which one is the base, whether they can stay with the dive center, or which island to look for a "
+        "hotel on, even if the same message also asks other things. It is FALSE when they only ask whether "
+        "accommodation is included in a plan, or only give the hotel where they are already staying."
+    ),
+}
+_PIDE_REGRESO_Q = {
+    "type": "noul",
+    "instructions": (
+        "The customer asks whether they can stay longer on the islands and come back to Cartagena with the dive center "
+        "on a later day, or be dropped back on the islands after diving, even if the same message also asks other "
+        "things. It is FALSE when they only ask the usual return time of an activity."
+    ),
+}
+_PIDE_FOTOS_Q = {
+    "type": "noul",
+    "instructions": (
+        "The customer asks about photos or videos of the activity: whether there is a photographer, whether photos are "
+        "included or cost extra, or how to get the photos, even if the same message also asks other things. It is FALSE "
+        "when they ask about anything else."
+    ),
+}
+_PIDE_CAMBIOS_Q = {
+    "type": "noul",
+    "instructions": (
+        "The customer asks in GENERAL about the cancellation policy or about changing the date or the number of people "
+        "of a booking (what the policy is, whether it is possible), even if the same message also asks other things. "
+        "It is FALSE when they ask to cancel or change a booking they have ALREADY made, or say they cannot come on "
+        "their booked date."
+    ),
+}
+_INTENCIONES_LAT8 = (PIDE_HOTELES, PIDE_REGRESO, PIDE_FOTOS, PIDE_CAMBIOS)
+_OTRA_COSA_SIN_LOS_TEMAS_DE_LAT8 = (
+    " Where to stay (hotel recommendations, the dive base hotel), staying longer on the islands and coming back another "
+    "day, photos or videos of the activity, and the general cancellation or date-change policy also count as one of "
+    "those (they are not something else)."
+)
 CAMBIA_IDIOMA = "cambia_idioma"
 CAMBIA_IDIOMA_MIN = 0.6
 _CAMBIA_IDIOMA_Q = {
@@ -783,6 +830,7 @@ _U34_QUESTIONS = (
     PIDE_DATOS_AJENOS, NUEVO_CASO, PREGUNTA_SI_ES_IA, CAMBIA_IDIOMA, PIDE_PRECIO, PIDE_SERVICIO_PRIVADO, PIDE_QUE_INCLUYE,
     *_INTENCIONES_Q, PIDE_DESCUENTO, PIDE_SI_ALCANZA,  # arq-4b/arq-1v: su duda no manda el turno al router LLM
     PIDE_CLIMA, PIDE_PAGO,  # arq-1i
+    *_INTENCIONES_LAT8,
 )
 
 
@@ -870,6 +918,13 @@ def _questions_for_turn(pending_slot: str | None = None) -> dict:
         otra = (q[PIDE_OTRA_COSA]["instructions"].replace("the weather, ", "the forecast for a specific day, ")
                 .replace("payment methods, ", ""))
         q[PIDE_OTRA_COSA] = {**q[PIDE_OTRA_COSA], "instructions": otra + _OTRA_COSA_SIN_CLIMA_NI_PAGO}
+    if PIDE_OTRA_COSA in q:
+        # lat-8: alojamiento, regreso otro día, fotos y la política de cambios son de la tabla; «otra cosa» deja de
+        # contarlos (su lista de ejemplos nombraba las cancelaciones).
+        q.update({PIDE_HOTELES: _PIDE_HOTELES_Q, PIDE_REGRESO: _PIDE_REGRESO_Q, PIDE_FOTOS: _PIDE_FOTOS_Q,
+                  PIDE_CAMBIOS: _PIDE_CAMBIOS_Q})
+        otra = q[PIDE_OTRA_COSA]["instructions"].replace("cancellations, ", "")
+        q[PIDE_OTRA_COSA] = {**q[PIDE_OTRA_COSA], "instructions": otra + _OTRA_COSA_SIN_LOS_TEMAS_DE_LAT8}
     return q
 
 
@@ -947,7 +1002,7 @@ def answers_to_signals(answers: dict, threshold: float = THRESHOLD) -> dict:
         out[PIDE_PRECIO] = (answers.get(PIDE_PRECIO) or {}).get("noul", 0.0) >= PIDE_PRECIO_MIN
     if PIDE_QUE_INCLUYE in answers:
         out[PIDE_QUE_INCLUYE] = (answers.get(PIDE_QUE_INCLUYE) or {}).get("noul", 0.0) >= PIDE_QUE_INCLUYE_MIN
-    for intencion in (*_INTENCIONES_Q, PIDE_DESCUENTO, PIDE_CLIMA, PIDE_PAGO):
+    for intencion in (*_INTENCIONES_Q, PIDE_DESCUENTO, PIDE_CLIMA, PIDE_PAGO, *_INTENCIONES_LAT8):
         if intencion in answers and intencion != PIDE_OTRA_COSA:
             out[intencion] = (answers.get(intencion) or {}).get("noul", 0.0) >= INTENCION_MIN
     if PIDE_SI_ALCANZA in answers:
@@ -1053,6 +1108,7 @@ _TURN_SIGNALS = (
     ADDS_PERSON,
     PIDE_SI_ALCANZA,  # arq-1v: también cuando Jev duda en el router (si no, se perdía: banco arq-1v, v1)
     PIDE_CLIMA, PIDE_PAGO,  # arq-1i: el router los mira (el clima en general no va a la ruta sensible)
+    *_INTENCIONES_LAT8,  # lat-8: también cuando Jev duda en el router
 )  # ASKS_QUESTION y PENDING_ANSWER se anaden a mano en `detect_routing_signals_jev_full`
 
 
