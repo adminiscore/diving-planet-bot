@@ -2925,7 +2925,9 @@ async def test_explicit_language_switch_mid_conversation_is_honored(monkeypatch,
     with patch("src.agents.supervisor.detect_routing_signals", new=AsyncMock(return_value={})):
         resp = await route_message(state, "actually can we continue in english")
     assert state.language == "en"
-    assert "?" in resp and "certified diver" in resp
+    # LAT-0b (decisión de Gadea #2040): con el buceo certificado ya elegido, la pregunta es para confirmar la certificación;
+    # se hace una vez por idioma (si pide otro, no la entendió).
+    assert "?" in resp and "certification" in resp
 
 
 # ── §6.bis: extractores LLM que "contestan de más" ────────────────────────────
