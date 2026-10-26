@@ -1036,6 +1036,246 @@ def place_by_role(text: str, lodging_island: bool = False) -> str | None:
     return mentions[0][1]
 
 
+def detect_ages(message: str, intent: DetectedIntent) -> None:
+    """Extract person ages mentioned in the message ("mi hijo de 9 años",
+    "uno tiene 14", "a 6 year old", "kids aged 8 and 10").
+
+    Skips clear non-age numbers: 'hace N años' / 'N years ago' (last-dive
+    context), and durations like 'N días/horas'. Ages are 1-99.
+    """
+    ages: list[int] = []
+
+    def _add(group: str) -> None:
+        for num in re.findall(r'\d{1,2}', group):
+            a = int(num)
+            if 1 <= a <= 99:
+                ages.append(a)
+
+    # 1) Numbers explicitly qualified by an age unit, including coordinated
+    #    lists: "9 años", "8 y 10 años", "6 and 12 years old", "14yo".
+    #    Skip "hace N años" / "N years ago" (last-dive context, not an age).
+    for m in re.finditer(
+        r'((?:\d{1,2}\s*(?:,|y|e|and|&)\s*)*\d{1,2})\s*(?:a[nñ]os?|year[s]?(?:\s*old)?|y(?:/|-)?o)\b',
+        message,
+    ):
+        # Timeframes are NOT ages: "hace (como) 3 años", "llevo 4 años sin
+        # bucear", "in like 4 years", "5 years ago". The old 8-char window
+        # cut "hace" out of "hace como 3 años" (real bug: the years since
+        # the last dive became a phantom kid's age and would poison the
+        # checkout's kids split — Fase 7, docs/robustness/plan.md).
+        preceding = message[max(0, m.start() - 20):m.start()]
+        if re.search(r'\b(hace|ultimo|ultima|last|desde|llevo|llevamos|in|for|like|since)\b', preceding):
+            continue
+        if re.match(r'\s*(?:ago|sin\s+bucear|que\s+no\s+buce)', message[m.end():]):
+            continue
+        _add(m.group(1))
+    # 2) Kid-noun context without the word "años", incl. coordinated ages:
+    #    "niño de 8", "hijo de 9", "niños de 8 y 10".
+    for m in re.finditer(
+        r'\b(?:niñ[oa]|nin[oa]|hij[oa]|niet[oa]|beb[eé]|kid|child|son|daughter|grandchild)s?\s+de\s+'
+        r'((?:\d{1,2}\s*(?:,|y|e|and|&)\s*)*\d{1,2})',
+        message,
+    ):
+        _add(m.group(1))
+    # 2b) Kid-noun + "tiene N" without an age unit: "mi hijo, tiene 7",
+    #     "mi hija tiene 9". Common in incremental group building.
+    for m in re.finditer(
+        r'\b(?:niñ[oa]|nin[oa]|hij[oa]|niet[oa]|beb[eé])s?\b[^.;]{0,20}?\btiene\s+(\d{1,2})\b',
+        message,
+    ):
+        _add(m.group(1))
+    # 3) "uno/una/otro/otra de N" — a specific group member's age (NOT
+    #    "familia de N" / "grupo de N", which are group sizes).
+    for m in re.finditer(r'\b(?:uno|una|otr[oa]|el\s+otro|la\s+otra)\s+de\s+(\d{1,2})\b', message):
+        _add(m.group(1))
+    # 4) "aged 8 and 10", "ages 8 and 10", "edad 8 y 10".
+    #    9-oct: también en singular, "1 youth (age 17)" (familia-mixta: se perdían 2 de
+    #    6 edades); no "minimum age 10" / "edad mínima", que es una regla, no una persona.
+    _edad_re = r'aged|ages?'
+    for m in re.finditer(
+        rf'\b(?:{_edad_re}|edad(?:es)?(?:\s+de)?)\s+((?:\d{{1,2}}\s*(?:,|y|e|and|&)\s*)*\d{{1,2}})',
+        message,
+    ):
+        if re.search(r'm[ií]nim|\bmin\b', message[max(0, m.start() - 12):m.start()]):
+            continue
+        _add(m.group(1))
+    # 5) English kid-noun + "are/is N and M": "our kids are 7 and 11".
+    for m in re.finditer(
+        r'\b(?:kids?|children|sons?|daughters?)\s+(?:are|is)\s+'
+        r'((?:\d{1,2}\s*(?:,|and|&)\s*)*\d{1,2})',
+        message,
+    ):
+        _add(m.group(1))
+
+    def _add_words(group: str) -> None:
+        for w in re.findall(_AGE_WORD_ALT, group, re.IGNORECASE):
+            ages.append(AGE_WORDS[w.lower()])
+
+    # 6) Edades en PALABRA (opción A): "nueve años", "cinco y siete años",
+    #    "mi hija de nueve", "kids aged eight and eleven". Mismas guardas de
+    #    plazo que el patrón 1 ("llevo nueve años sin bucear" NO es edad).
+    for m in re.finditer(
+        rf'\b((?:(?:{_AGE_WORD_ALT})\s*(?:,|y|e|and|&)\s*)*(?:{_AGE_WORD_ALT}))'
+        r'\s*(?:a[nñ]os?|year[s]?(?:\s*old)?)\b',
+        message, re.IGNORECASE,
+    ):
+        preceding = message[max(0, m.start() - 20):m.start()]
+        if re.search(r'\b(hace|ultimo|ultima|last|desde|llevo|llevamos|in|for|like|since)\b',
+                     preceding, re.IGNORECASE):
+            continue
+        if re.match(r'\s*(?:ago|sin\s+bucear|que\s+no\s+buce)', message[m.end():], re.IGNORECASE):
+            continue
+        _add_words(m.group(1))
+    # 6b) kid-noun / "aged" + word-number sin la palabra "años":
+    #     "mi hija de nueve", "un niño de doce", "aged eight and eleven".
+    for m in re.finditer(
+        r'\b(?:niñ[oa]|nin[oa]|hij[oa]|niet[oa]|beb[eé]|kid|child|son|daughter|grandchild'
+        r'|aged?|ages|edad(?:es)?)s?\s+(?:de\s+)?'
+        rf'((?:(?:{_AGE_WORD_ALT})\s*(?:,|y|e|and|&)\s*)*(?:{_AGE_WORD_ALT}))\b',
+        message, re.IGNORECASE,
+    ):
+        _add_words(m.group(1))
+    # 6c) kid-noun + "tiene N" en palabra: "mi hijo tiene ocho" (equivalente
+    #     al patrón 2b de dígitos).
+    for m in re.finditer(
+        rf'\b(?:niñ[oa]|nin[oa]|hij[oa]|niet[oa]|beb[eé])s?\b[^.;]{{0,20}}?\btiene\s+({_AGE_WORD_ALT})\b',
+        message, re.IGNORECASE,
+    ):
+        _add_words(m.group(1))
+
+    if ages:
+        intent.ages = sorted(set(ages))
+        intent.detected_fields.append("ages")
+
+
+def detect_duration(message: str, intent: DetectedIntent) -> None:
+    spans = [
+        _duration_span(m, unit_days)
+        for pattern, unit_days in _DURATION_RES
+        for m in pattern.finditer(message)
+        if not _is_elapsed_time(message, m)
+    ]
+    # Lo que no es cantidad x unidad: un paquete dura varios dias por definicion
+    # (lo dice el catalogo) y "solo hoy" es un dia.
+    if _MULTI_DAY_PRODUCT_RE.search(message):
+        spans.append(_MAX_PACKAGE_DAYS)
+    if _TODAY_ONLY_RE.search(message):
+        spans.append(1)
+    if not spans:
+        return
+    # La estancia mas larga manda, como antes mandaba el patron de varios dias:
+    # "un dia de buceo y 3 dias en las islas" es multi-dia.
+    intent.duration = "multi_day" if max(spans) > 1 else "single_day"
+    intent.detected_fields.append("duration")
+
+
+def detect_location(message: str, intent: DetectedIntent) -> None:
+    msg_lower = message.lower()
+
+    # Detectar Cartagena — incluye apodos históricos reales de la ciudad,
+    # ES y EN ("la heroica"/"the heroic city": Simón Bolívar tras el Sitio
+    # de Morillo de 1815; "corralito de piedra": sus murallas coloniales;
+    # "ciudad redentora": otro título del propio Bolívar; "la ciudad
+    # amurallada"/"the walled city": el centro histórico amurallado, muy
+    # usado por locales y turistas hispanohablantes; "queen of the
+    # caribbean": apodo turístico en inglés).
+    # Encontrado 2026-07-09 que ninguno se reconocía — solo "cartagena"/"ctg".
+    if _CARTAGENA_NAME_RE.search(msg_lower):
+        intent.location = "cartagena"
+        intent.detected_fields.append("location")
+
+    # Detectar isla primero (las islas y sus alias están en lugares.json, lat-11 T5). La forma corta de una isla que
+    # se llama "Isla X" ("grande", "marina", "arena", "pirata") es tambien una palabra corriente: solo cuenta si el
+    # mensaje nombra una isla (hallazgo C.3, 2026-09-16; "nos vemos en la marina" o "somos un
+    # grupo grande" no son una isla). Los nombres de hotel son nombres propios y no cambian.
+    names_an_island = bool(_GENERIC_ISLAND_RE.search(msg_lower))
+    island_id = isla_nombrada(msg_lower, nombra_una_isla=names_an_island)
+    if island_id:
+        intent.island = island_id
+        intent.location = "island"
+        intent.detected_fields.extend(["island", "location"])
+
+    # Bare "rosario" also means the island (e.g. "corales del rosario"),
+    # but checked separately from the loop above and guarded against
+    # "rezar el rosario" — the Catholic prayer, a common phrase in
+    # Colombia. Pre-existing false positive (bare \brosario\b in the loop
+    # above matched it too) found 2026-07-09 while auditing nicknames.
+    if not intent.island and re.search(r'\brosario\b', msg_lower) and not re.search(r'\brezar\b', msg_lower):
+        intent.island = "isla_rosario"
+        intent.location = "island"
+        intent.detected_fields.extend(["island", "location"])
+
+    # Detectar hotel (los hoteles, sus alias y su isla están en lugares.json, lat-11 T5)
+    hotel = hotel_nombrado(msg_lower)
+    if hotel:
+        hotel_id, hotel_island = hotel
+        intent.hotel = hotel_id
+        # Detectar isla automáticamente desde el hotel
+        if hotel_island and not intent.island:
+            intent.island = hotel_island
+            intent.detected_fields.append("island")
+        if not intent.location:
+            intent.location = "island"
+            # s4-27 (8-oct): la ubicacion que se deduce del hotel se DECLARA, como
+            # todas, para que pase por la puerta de Jev (u3-3/u3-4). Sin declararla se colaba siempre:
+            # "¿me pasas el contacto del hotel Cocoliso?" (Jev: no afirma ubicacion) dejaba al cliente "ya en
+            # las islas" (contacto-hoteles-cocoliso-san-pedro).
+            intent.detected_fields.append("location")
+        intent.detected_fields.append("hotel")
+
+    # Fallback: "vamos desde las islas" / "ya estoy en la isla" / "estamos
+    # en las islas" / EN "we are on the islands" / "from the islands" — no
+    # specific island/hotel named, but a real bug seen live on PRE
+    # (2026-07-09): with no generic pattern here, this message never set
+    # location, so the bot kept re-asking "¿desde dónde sales?" even
+    # though the customer had just answered it. Only checked when no
+    # island/hotel/Cartagena match already fired above; leaves `island`
+    # unset so the ISLAND_MENU step still asks which island (same as
+    # clicking "🏝️ Ya estoy en las islas").
+    # "los rosarios" / EN "the rosarios" — informal plural nickname for
+    # the whole archipelago (found via web search 2026-07-09). Deliberately
+    # NOT matching the singular "el rosario": in Colombia that phrase
+    # overwhelmingly means the Catholic prayer ("rezar el rosario"), not
+    # the islands — too risky to treat as a location signal. The plural
+    # (ES and EN) is unambiguous.
+    if not intent.location and (
+        re.search(r'\b(?:desde|en)\s+las?\s+islas?\b', msg_lower)
+        or re.search(r'\b(?:from|on|at)\s+the\s+islands?\b', msg_lower)
+        or re.search(r'\blos\s+rosarios\b', msg_lower)
+        or re.search(r'\bthe\s+rosarios\b', msg_lower)
+    ):
+        intent.location = "island"
+        intent.detected_fields.append("location")
+    # Cartagena Y una isla en el mismo mensaje: el papel de cada lugar (`place_by_role`).
+    if _CARTAGENA_NAME_RE.search(msg_lower) and (intent.island or names_an_island):
+        place = place_by_role(msg_lower, lodging_island=bool(intent.hotel and intent.island))
+        if place == "cartagena":
+            intent.location, intent.island = "cartagena", None
+            intent.detected_fields = [f for f in intent.detected_fields if f != "island"]
+        elif place == "island":
+            intent.location = "island"
+        if place and "location" not in intent.detected_fields:
+            intent.detected_fields.append("location")
+
+
+def lectura_del_turno(message: str) -> DetectedIntent:
+    """lat-11 T6a (26-oct): lo poco del regex que el turno sigue usando junto al extractor: la cifra de inmersiones o de
+    días (`detect_cert_dive_count`/`detect_cert_day_count`), las edades y la duración (cuentan si el extractor falla)
+    y el lugar (la pista de isla y hotel del catálogo, `lugares.json`). Lo demás que leía `IntentDetector.detect`
+    (actividad, certificación, grupo, última inmersión, nacionalidad) lo decide el extractor y se quitaba con
+    `_quitar_provisional`; el idioma lo fija la apertura (`idioma_de_apertura`)."""
+    intent = DetectedIntent()
+    message_lower = message.lower().strip()
+    intent.cert_dives = detect_cert_dive_count(message_lower)
+    if intent.cert_dives is None:
+        intent.cert_days = detect_cert_day_count(message_lower)
+    detect_ages(message_lower, intent)
+    detect_duration(message_lower, intent)
+    detect_location(message_lower, intent)
+    return intent
+
+
+
 class IntentDetector:
 
     def __init__(self, openai_client: OpenAI | None = None):
@@ -1057,10 +1297,10 @@ class IntentDetector:
             intent.cert_days = detect_cert_day_count(message_lower)
         self._detect_certification(message_lower, intent)
         self._detect_group_info(message_lower, intent, state)
-        self._detect_ages(message_lower, intent)
+        detect_ages(message_lower, intent)
         self._detect_last_dive(message_lower, intent)
-        self._detect_duration(message_lower, intent)
-        self._detect_location(message_lower, intent)
+        detect_duration(message_lower, intent)
+        detect_location(message_lower, intent)
         self._detect_nationality(message_lower, intent)
 
         # Certification ("certificado"/"no certificado") is a diving-only
@@ -1813,117 +2053,6 @@ class IntentDetector:
                     intent.detected_fields.append("group_allocation")
                     break
 
-    def _detect_ages(self, message: str, intent: DetectedIntent) -> None:
-        """Extract person ages mentioned in the message ("mi hijo de 9 años",
-        "uno tiene 14", "a 6 year old", "kids aged 8 and 10").
-
-        Skips clear non-age numbers: 'hace N años' / 'N years ago' (last-dive
-        context), and durations like 'N días/horas'. Ages are 1-99.
-        """
-        ages: list[int] = []
-
-        def _add(group: str) -> None:
-            for num in re.findall(r'\d{1,2}', group):
-                a = int(num)
-                if 1 <= a <= 99:
-                    ages.append(a)
-
-        # 1) Numbers explicitly qualified by an age unit, including coordinated
-        #    lists: "9 años", "8 y 10 años", "6 and 12 years old", "14yo".
-        #    Skip "hace N años" / "N years ago" (last-dive context, not an age).
-        for m in re.finditer(
-            r'((?:\d{1,2}\s*(?:,|y|e|and|&)\s*)*\d{1,2})\s*(?:a[nñ]os?|year[s]?(?:\s*old)?|y(?:/|-)?o)\b',
-            message,
-        ):
-            # Timeframes are NOT ages: "hace (como) 3 años", "llevo 4 años sin
-            # bucear", "in like 4 years", "5 years ago". The old 8-char window
-            # cut "hace" out of "hace como 3 años" (real bug: the years since
-            # the last dive became a phantom kid's age and would poison the
-            # checkout's kids split — Fase 7, docs/robustness/plan.md).
-            preceding = message[max(0, m.start() - 20):m.start()]
-            if re.search(r'\b(hace|ultimo|ultima|last|desde|llevo|llevamos|in|for|like|since)\b', preceding):
-                continue
-            if re.match(r'\s*(?:ago|sin\s+bucear|que\s+no\s+buce)', message[m.end():]):
-                continue
-            _add(m.group(1))
-        # 2) Kid-noun context without the word "años", incl. coordinated ages:
-        #    "niño de 8", "hijo de 9", "niños de 8 y 10".
-        for m in re.finditer(
-            r'\b(?:niñ[oa]|nin[oa]|hij[oa]|niet[oa]|beb[eé]|kid|child|son|daughter|grandchild)s?\s+de\s+'
-            r'((?:\d{1,2}\s*(?:,|y|e|and|&)\s*)*\d{1,2})',
-            message,
-        ):
-            _add(m.group(1))
-        # 2b) Kid-noun + "tiene N" without an age unit: "mi hijo, tiene 7",
-        #     "mi hija tiene 9". Common in incremental group building.
-        for m in re.finditer(
-            r'\b(?:niñ[oa]|nin[oa]|hij[oa]|niet[oa]|beb[eé])s?\b[^.;]{0,20}?\btiene\s+(\d{1,2})\b',
-            message,
-        ):
-            _add(m.group(1))
-        # 3) "uno/una/otro/otra de N" — a specific group member's age (NOT
-        #    "familia de N" / "grupo de N", which are group sizes).
-        for m in re.finditer(r'\b(?:uno|una|otr[oa]|el\s+otro|la\s+otra)\s+de\s+(\d{1,2})\b', message):
-            _add(m.group(1))
-        # 4) "aged 8 and 10", "ages 8 and 10", "edad 8 y 10".
-        #    9-oct: también en singular, "1 youth (age 17)" (familia-mixta: se perdían 2 de
-        #    6 edades); no "minimum age 10" / "edad mínima", que es una regla, no una persona.
-        _edad_re = r'aged|ages?'
-        for m in re.finditer(
-            rf'\b(?:{_edad_re}|edad(?:es)?(?:\s+de)?)\s+((?:\d{{1,2}}\s*(?:,|y|e|and|&)\s*)*\d{{1,2}})',
-            message,
-        ):
-            if re.search(r'm[ií]nim|\bmin\b', message[max(0, m.start() - 12):m.start()]):
-                continue
-            _add(m.group(1))
-        # 5) English kid-noun + "are/is N and M": "our kids are 7 and 11".
-        for m in re.finditer(
-            r'\b(?:kids?|children|sons?|daughters?)\s+(?:are|is)\s+'
-            r'((?:\d{1,2}\s*(?:,|and|&)\s*)*\d{1,2})',
-            message,
-        ):
-            _add(m.group(1))
-
-        def _add_words(group: str) -> None:
-            for w in re.findall(_AGE_WORD_ALT, group, re.IGNORECASE):
-                ages.append(AGE_WORDS[w.lower()])
-
-        # 6) Edades en PALABRA (opción A): "nueve años", "cinco y siete años",
-        #    "mi hija de nueve", "kids aged eight and eleven". Mismas guardas de
-        #    plazo que el patrón 1 ("llevo nueve años sin bucear" NO es edad).
-        for m in re.finditer(
-            rf'\b((?:(?:{_AGE_WORD_ALT})\s*(?:,|y|e|and|&)\s*)*(?:{_AGE_WORD_ALT}))'
-            r'\s*(?:a[nñ]os?|year[s]?(?:\s*old)?)\b',
-            message, re.IGNORECASE,
-        ):
-            preceding = message[max(0, m.start() - 20):m.start()]
-            if re.search(r'\b(hace|ultimo|ultima|last|desde|llevo|llevamos|in|for|like|since)\b',
-                         preceding, re.IGNORECASE):
-                continue
-            if re.match(r'\s*(?:ago|sin\s+bucear|que\s+no\s+buce)', message[m.end():], re.IGNORECASE):
-                continue
-            _add_words(m.group(1))
-        # 6b) kid-noun / "aged" + word-number sin la palabra "años":
-        #     "mi hija de nueve", "un niño de doce", "aged eight and eleven".
-        for m in re.finditer(
-            r'\b(?:niñ[oa]|nin[oa]|hij[oa]|niet[oa]|beb[eé]|kid|child|son|daughter|grandchild'
-            r'|aged?|ages|edad(?:es)?)s?\s+(?:de\s+)?'
-            rf'((?:(?:{_AGE_WORD_ALT})\s*(?:,|y|e|and|&)\s*)*(?:{_AGE_WORD_ALT}))\b',
-            message, re.IGNORECASE,
-        ):
-            _add_words(m.group(1))
-        # 6c) kid-noun + "tiene N" en palabra: "mi hijo tiene ocho" (equivalente
-        #     al patrón 2b de dígitos).
-        for m in re.finditer(
-            rf'\b(?:niñ[oa]|nin[oa]|hij[oa]|niet[oa]|beb[eé])s?\b[^.;]{{0,20}}?\btiene\s+({_AGE_WORD_ALT})\b',
-            message, re.IGNORECASE,
-        ):
-            _add_words(m.group(1))
-
-        if ages:
-            intent.ages = sorted(set(ages))
-            intent.detected_fields.append("ages")
-
     _LASTDIVE_NUM = {
         **number_words(1, 6), "un": 1, "unos": 2, "unas": 2, "a": 1, "an": 1, "couple": 2, "few": 3,
     }
@@ -2034,114 +2163,6 @@ class IntentDetector:
         if _COLOMBIAN_RE.search(message):
             intent.is_colombian = True
             intent.detected_fields.append("is_colombian")
-
-    def _detect_duration(self, message: str, intent: DetectedIntent) -> None:
-        spans = [
-            _duration_span(m, unit_days)
-            for pattern, unit_days in _DURATION_RES
-            for m in pattern.finditer(message)
-            if not _is_elapsed_time(message, m)
-        ]
-        # Lo que no es cantidad x unidad: un paquete dura varios dias por definicion
-        # (lo dice el catalogo) y "solo hoy" es un dia.
-        if _MULTI_DAY_PRODUCT_RE.search(message):
-            spans.append(_MAX_PACKAGE_DAYS)
-        if _TODAY_ONLY_RE.search(message):
-            spans.append(1)
-        if not spans:
-            return
-        # La estancia mas larga manda, como antes mandaba el patron de varios dias:
-        # "un dia de buceo y 3 dias en las islas" es multi-dia.
-        intent.duration = "multi_day" if max(spans) > 1 else "single_day"
-        intent.detected_fields.append("duration")
-
-    def _detect_location(self, message: str, intent: DetectedIntent) -> None:
-        msg_lower = message.lower()
-
-        # Detectar Cartagena — incluye apodos históricos reales de la ciudad,
-        # ES y EN ("la heroica"/"the heroic city": Simón Bolívar tras el Sitio
-        # de Morillo de 1815; "corralito de piedra": sus murallas coloniales;
-        # "ciudad redentora": otro título del propio Bolívar; "la ciudad
-        # amurallada"/"the walled city": el centro histórico amurallado, muy
-        # usado por locales y turistas hispanohablantes; "queen of the
-        # caribbean": apodo turístico en inglés).
-        # Encontrado 2026-07-09 que ninguno se reconocía — solo "cartagena"/"ctg".
-        if _CARTAGENA_NAME_RE.search(msg_lower):
-            intent.location = "cartagena"
-            intent.detected_fields.append("location")
-
-        # Detectar isla primero (las islas y sus alias están en lugares.json, lat-11 T5). La forma corta de una isla que
-        # se llama "Isla X" ("grande", "marina", "arena", "pirata") es tambien una palabra corriente: solo cuenta si el
-        # mensaje nombra una isla (hallazgo C.3, 2026-09-16; "nos vemos en la marina" o "somos un
-        # grupo grande" no son una isla). Los nombres de hotel son nombres propios y no cambian.
-        names_an_island = bool(_GENERIC_ISLAND_RE.search(msg_lower))
-        island_id = isla_nombrada(msg_lower, nombra_una_isla=names_an_island)
-        if island_id:
-            intent.island = island_id
-            intent.location = "island"
-            intent.detected_fields.extend(["island", "location"])
-
-        # Bare "rosario" also means the island (e.g. "corales del rosario"),
-        # but checked separately from the loop above and guarded against
-        # "rezar el rosario" — the Catholic prayer, a common phrase in
-        # Colombia. Pre-existing false positive (bare \brosario\b in the loop
-        # above matched it too) found 2026-07-09 while auditing nicknames.
-        if not intent.island and re.search(r'\brosario\b', msg_lower) and not re.search(r'\brezar\b', msg_lower):
-            intent.island = "isla_rosario"
-            intent.location = "island"
-            intent.detected_fields.extend(["island", "location"])
-
-        # Detectar hotel (los hoteles, sus alias y su isla están en lugares.json, lat-11 T5)
-        hotel = hotel_nombrado(msg_lower)
-        if hotel:
-            hotel_id, hotel_island = hotel
-            intent.hotel = hotel_id
-            # Detectar isla automáticamente desde el hotel
-            if hotel_island and not intent.island:
-                intent.island = hotel_island
-                intent.detected_fields.append("island")
-            if not intent.location:
-                intent.location = "island"
-                # s4-27 (8-oct): la ubicacion que se deduce del hotel se DECLARA, como
-                # todas, para que pase por la puerta de Jev (u3-3/u3-4). Sin declararla se colaba siempre:
-                # "¿me pasas el contacto del hotel Cocoliso?" (Jev: no afirma ubicacion) dejaba al cliente "ya en
-                # las islas" (contacto-hoteles-cocoliso-san-pedro).
-                intent.detected_fields.append("location")
-            intent.detected_fields.append("hotel")
-
-        # Fallback: "vamos desde las islas" / "ya estoy en la isla" / "estamos
-        # en las islas" / EN "we are on the islands" / "from the islands" — no
-        # specific island/hotel named, but a real bug seen live on PRE
-        # (2026-07-09): with no generic pattern here, this message never set
-        # location, so the bot kept re-asking "¿desde dónde sales?" even
-        # though the customer had just answered it. Only checked when no
-        # island/hotel/Cartagena match already fired above; leaves `island`
-        # unset so the ISLAND_MENU step still asks which island (same as
-        # clicking "🏝️ Ya estoy en las islas").
-        # "los rosarios" / EN "the rosarios" — informal plural nickname for
-        # the whole archipelago (found via web search 2026-07-09). Deliberately
-        # NOT matching the singular "el rosario": in Colombia that phrase
-        # overwhelmingly means the Catholic prayer ("rezar el rosario"), not
-        # the islands — too risky to treat as a location signal. The plural
-        # (ES and EN) is unambiguous.
-        if not intent.location and (
-            re.search(r'\b(?:desde|en)\s+las?\s+islas?\b', msg_lower)
-            or re.search(r'\b(?:from|on|at)\s+the\s+islands?\b', msg_lower)
-            or re.search(r'\blos\s+rosarios\b', msg_lower)
-            or re.search(r'\bthe\s+rosarios\b', msg_lower)
-        ):
-            intent.location = "island"
-            intent.detected_fields.append("location")
-        # Cartagena Y una isla en el mismo mensaje: el papel de cada lugar (`place_by_role`).
-        if _CARTAGENA_NAME_RE.search(msg_lower) and (intent.island or names_an_island):
-            place = place_by_role(msg_lower, lodging_island=bool(intent.hotel and intent.island))
-            if place == "cartagena":
-                intent.location, intent.island = "cartagena", None
-                intent.detected_fields = [f for f in intent.detected_fields if f != "island"]
-            elif place == "island":
-                intent.location = "island"
-            if place and "location" not in intent.detected_fields:
-                intent.detected_fields.append("location")
 
     def _calculate_confidence(self, intent: DetectedIntent) -> None:
         field_weights = {

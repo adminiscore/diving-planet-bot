@@ -13,14 +13,13 @@ import logging
 from src.agents.conversational_core import (
     _EXPLICIT_NUMBER_RE,
     _NAME_STOPWORDS,
-    _detector,
     _has_pending_answer,
     _jev_dice_que_no_lo_dice,
     _known_field_values,
     _otro_idioma_en_ingles,
     _same_for_customer,
 )
-from src.agents.intent_detector import DetectedIntent
+from src.agents.intent_detector import DetectedIntent, detect_location
 from src.domain import activities as dom
 from src.flows.state import ConversationState
 
@@ -479,10 +478,10 @@ def _poner_ubicacion(intent, state: ConversationState, message: str, datos: dict
 
 def _hotel_del_catalogo(nombre: str) -> tuple[str, str | None] | None:
     """CAL-C3e: (hotel_id, isla) si el hotel que nombra el cliente está en el catálogo de hoteles de las islas que ya usa
-    el detector (`IntentDetector._detect_location`: 'ubuntu' → isla_marina…); None si no. Se le pasa SOLO el nombre
+    el detector (`detect_location`: 'ubuntu' → isla_marina…); None si no. Se le pasa SOLO el nombre
     (cita comprobada por el extractor), así que solo puede encontrar ese hotel, como `_departure_place`."""
     intent = DetectedIntent()
-    _detector._detect_location((nombre or "").lower(), intent)
+    detect_location((nombre or "").lower(), intent)
     return (intent.hotel, intent.island) if intent.hotel else None
 
 

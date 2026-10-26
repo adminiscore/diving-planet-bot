@@ -31,7 +31,6 @@ from src.agents.conversational_core import (
     _cart_item,
     _companion_activity_options,
     _course_level_options,
-    _detector,
     _group_allocation_fully_resolved,
     _has_pending_answer,
     _is_greeting_only,
@@ -58,6 +57,7 @@ from src.agents.intent_detector import (
     _SINGULAR_PERSON,
     certification_claim,
     course_level_is_ambiguous,
+    lectura_del_turno,
 )
 from src.agents.llm_extractor import (
     detect_special_signals,
@@ -496,7 +496,8 @@ async def _understand(state: ConversationState, message: str, *, answered_pendin
     prev_last_dive = state.last_dive_over_2_years
     prev_refresher = state.refresher_interested
 
-    intent = _detector.detect(message, state)
+    # lat-11 T6a: del regex, solo lo que el turno sigue usando (`lectura_del_turno`); el resto lo decide el extractor.
+    intent = lectura_del_turno(message)
     # ex-5 (fase EX): los dominios que entiende el extractor "LLM primero" no los
     # decide el regex. Lo que leyó se queda en el intent como PROVISIONAL (las guardas que miran si el mensaje
     # CONTESTA la pregunta pendiente lo siguen viendo, como hoy), pero ni dispara contradicciones, ni va al veto, al
@@ -700,7 +701,7 @@ def _number_of_something_else(state: ConversationState, message: str, value) -> 
     """¿El detector ya lee ese numero como otra magnitud (inmersiones, dias, edades)? Lo
     usa el resolutor LLM de la pregunta del total (G): con "¿cuantas personas?"
     pendiente, "2 inmersiones" volvia como 2 personas 2/2."""
-    intent = _detector.detect(message, state)
+    intent = lectura_del_turno(message)
     return value in {intent.cert_dives, intent.cert_days, *(intent.ages or [])}
 
 

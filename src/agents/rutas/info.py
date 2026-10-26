@@ -7,16 +7,13 @@ s4-2 (19-oct): movido tal cual desde `supervisor.py`, que lo re-exporta. Ver `sr
 import logging
 import re
 
-from src.agents.intent_detector import IntentDetector
+from src.agents.intent_detector import lectura_del_turno
 from src.agents.lead_summary import build_lead_summary
 from src.domain.politicas import politicas
 from src.flows import eligibility
 from src.flows.state import ConversationState, Step
 
 logger = logging.getLogger("uvicorn.error")
-
-
-intent_detector = IntentDetector()
 
 
 # Hallazgo (batería sintética contra PRE, 2026-08-26, lote 4, portado de
@@ -234,7 +231,7 @@ def _maybe_answer_age_eligibility(message: str, state: ConversationState) -> str
     # NOTE (robustness review H4, deferred): LLM cutover not wired here because this
     # is a pre-dispatch short-circuit; wiring it would double the LLM call on
     # fall-through (the turn is extracted again later by the core).
-    intent = intent_detector.detect(message, state)
+    intent = lectura_del_turno(message)
     ages = sorted({a for a in (intent.ages or []) if 1 <= a <= 99})
     # Persist any age mentioned here so a later follow-up can reuse it (this
     # responder returns before the conversation agent's _apply_detected_intent).

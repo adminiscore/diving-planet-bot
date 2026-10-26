@@ -51,6 +51,8 @@ from src.agents.intent_detector import (
     _GENERIC_ISLAND_RE,
     AGE_WORDS,
     DetectedIntent,
+    detect_location,
+    lectura_del_turno,
 )
 from src.agents.llm_extractor import detect_special_signals
 from src.domain import activities as dom
@@ -114,7 +116,7 @@ def _departure_place(message: str) -> str | None:
     hallazgo C.2): "quiero ir a las islas del rosario desde cartagena" sale de Cartagena."""
     text = (message or "").lower()
     intent = DetectedIntent()
-    _detector._detect_location(text, intent)
+    detect_location(text, intent)
     if intent.location:
         return intent.location
     isla = _GENERIC_ISLAND_RE.search(text)
@@ -219,7 +221,7 @@ async def _lectura_de_la_ia(state: ConversationState, message: str, routing_sign
 def _lugar_del_catalogo(texto: str) -> tuple[str | None, str | None]:
     """(hotel, isla) de la lista cerrada del catálogo que nombra el texto (la del detector, clase d: se queda)."""
     intent = DetectedIntent()
-    _detector._detect_location((texto or "").lower(), intent)
+    detect_location((texto or "").lower(), intent)
     return intent.hotel, intent.island
 
 
@@ -468,7 +470,7 @@ def _apply_short_answer(state: ConversationState, message: str, ia: dict | None 
                 if duration is not None and de_buceo:
                     state.duracion_de_buceo = True
             elif duration not in ("single_day", "multi_day"):
-                duration = _detector.detect(message, state).duration
+                duration = lectura_del_turno(message).duration
             if duration in ("single_day", "multi_day"):
                 state.detected_duration = duration
                 state.needs_companion_activity = True
