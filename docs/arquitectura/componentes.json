@@ -482,9 +482,7 @@
       "modelos": [
         "rag_answer_model"
       ],
-      "interruptores": [
-        "mezclados_por_partes"
-      ]
+      "interruptores": []
     },
     {
       "id": "r_escribir",
@@ -497,9 +495,7 @@
       "modelos": [
         "rag_answer_model"
       ],
-      "interruptores": [
-        "rag_plan_primero"
-      ],
+      "interruptores": [],
       "tiempo_medido": {
         "p50": 1.9,
         "fuente": "medido dentro de PRE el 28-sep (8 preguntas, HISTORY 0.29.65)"
@@ -526,10 +522,7 @@
       "modelos": [
         "grounding_v3_model"
       ],
-      "interruptores": [
-        "rag_revisor_completitud",
-        "rag_revisor_avisos"
-      ],
+      "interruptores": [],
       "tiempo_medido": {
         "p50": 1.2,
         "fuente": "medido dentro de PRE el 28-sep (8 preguntas, HISTORY 0.29.65)"
@@ -872,30 +865,10 @@
       "titulo": "“Escribiendo…” en el chat",
       "texto": "El cliente ve que el bot está preparando la respuesta mientras espera."
     },
-    "rag_plan_primero": {
-      "area": "Preguntas",
-      "titulo": "Primero la lista de lo que pregunta el cliente",
-      "texto": "Antes de escribir, una llamada rápida saca cada cosa que pregunta o pide el cliente, y la respuesta las contesta todas punto por punto. Antes una sola llamada lo hacía todo a la vez y se dejaba cosas."
-    },
-    "rag_revisor_avisos": {
-      "area": "Preguntas",
-      "titulo": "El revisor busca avisos que faltan",
-      "texto": "Lee la misma información que el revisor de siempre y mira si a la respuesta le falta algo que el cliente necesita saber aunque no lo pregunte (no le da tiempo, el minicurso no certifica, tiene que traer un documento). Si falta, se reescribe una vez."
-    },
-    "rag_revisor_completitud": {
-      "area": "Preguntas",
-      "titulo": "El revisor también mira que no falte nada",
-      "texto": "Además de comprobar que la respuesta no inventa, se comprueba que contesta cada punto que preguntó el cliente. Si falta alguno se reescribe una vez; si la reescritura sale peor, se queda la primera."
-    },
     "formato_whatsapp": {
       "area": "Chat",
       "titulo": "Formato de WhatsApp",
       "texto": "Antes de enviar, el texto pasa a formato de WhatsApp: la negrita de documento (**así**) queda *así* y los enlaces [texto](url) quedan 'texto: url'. Los modelos nuevos escriben en formato de documento."
-    },
-    "mezclados_por_partes": {
-      "area": "Preguntas",
-      "titulo": "Mensajes mezclados, por partes",
-      "texto": "Cuando el cliente pregunta a la vez algo de la tabla (precio, qué incluye, horarios…) y otra cosa, la parte de la tabla la escribe el redactor con los datos del código y el RAG, a la vez, solo lo demás: las listas salen completas y no hace falta rehacer la respuesta (arq-5b, 23-oct)."
     }
   },
   "areas": [

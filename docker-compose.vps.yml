@@ -145,8 +145,6 @@ services:
       EXTRACTOR_RESPALDO_SEGUNDOS: "2.0"
       # mod-7 + Haiku (18-oct): solo proveedores de EE. UU. por OpenRouter, sin retención ni entrenamiento.
       OPENROUTER_PROVEEDORES: "baseten,fireworks/us,coreweave,google-vertex,anthropic,amazon-bedrock"
-      # CAL-A2/A3 (16-oct): el plan del RAG y la comprobacion de completitud (src/agents/rag_plan.py; flags apagados).
-      RAG_PLAN_MODEL: "gpt-6-luna"
       OPENAI_EMBEDDING_MODEL: "text-embedding-3-small"
       # MOD-6 (18-oct): gpt-transcribe con el vocabulario del negocio. PROMOCIONADO (HISTORY 0.31.53). Revert = "gpt-4o-mini-transcribe"
       # y quitar TRANSCRIPCION_CON_VOCABULARIO.

@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-26T12:08:00+00:00",
-  "commit": "c68b90c8",
+  "generado": "2026-10-26T12:20:26+00:00",
+  "commit": "01d0605c",
   "rama": "feature/sim6-alvaro"
  },
  "vistas": {
@@ -655,15 +655,7 @@
      "pre": "gpt-6-luna"
     }
    ],
-   "interruptores": [
-    {
-     "nombre": "mezclados_por_partes",
-     "titulo": "Mensajes mezclados, por partes",
-     "codigo": false,
-     "pre": false,
-     "sin_efecto": false
-    }
-   ],
+   "interruptores": [],
    "marca": "openai"
   },
   {
@@ -681,15 +673,7 @@
      "pre": "gpt-6-luna"
     }
    ],
-   "interruptores": [
-    {
-     "nombre": "rag_plan_primero",
-     "titulo": "Primero la lista de lo que pregunta el cliente",
-     "codigo": false,
-     "pre": false,
-     "sin_efecto": false
-    }
-   ],
+   "interruptores": [],
    "tiempo_medido": {
     "p50": 1.9,
     "fuente": "medido dentro de PRE el 28-sep (8 preguntas, HISTORY 0.29.65)"
@@ -722,22 +706,7 @@
      "pre": "deepseek/deepseek-v4.1-flash"
     }
    ],
-   "interruptores": [
-    {
-     "nombre": "rag_revisor_completitud",
-     "titulo": "El revisor también mira que no falte nada",
-     "codigo": false,
-     "pre": false,
-     "sin_efecto": false
-    },
-    {
-     "nombre": "rag_revisor_avisos",
-     "titulo": "El revisor busca avisos que faltan",
-     "codigo": false,
-     "pre": false,
-     "sin_efecto": false
-    }
-   ],
+   "interruptores": [],
    "tiempo_medido": {
     "p50": 1.2,
     "fuente": "medido dentro de PRE el 28-sep (8 preguntas, HISTORY 0.29.65)"
@@ -1365,58 +1334,6 @@
    "fijado_en_pre": false,
    "usado_por": [],
    "sin_efecto": null
-  },
-  {
-   "nombre": "mezclados_por_partes",
-   "area": "Preguntas",
-   "titulo": "Mensajes mezclados, por partes",
-   "texto": "Cuando el cliente pregunta a la vez algo de la tabla (precio, qué incluye, horarios…) y otra cosa, la parte de la tabla la escribe el redactor con los datos del código y el RAG, a la vez, solo lo demás: las listas salen completas y no hace falta rehacer la respuesta (arq-5b, 23-oct).",
-   "codigo": false,
-   "pre": false,
-   "fijado_en_pre": false,
-   "usado_por": [
-    "r_hechos"
-   ],
-   "sin_efecto": null
-  },
-  {
-   "nombre": "rag_plan_primero",
-   "area": "Preguntas",
-   "titulo": "Primero la lista de lo que pregunta el cliente",
-   "texto": "Antes de escribir, una llamada rápida saca cada cosa que pregunta o pide el cliente, y la respuesta las contesta todas punto por punto. Antes una sola llamada lo hacía todo a la vez y se dejaba cosas.",
-   "codigo": false,
-   "pre": false,
-   "fijado_en_pre": false,
-   "usado_por": [
-    "r_escribir"
-   ],
-   "sin_efecto": null
-  },
-  {
-   "nombre": "rag_revisor_avisos",
-   "area": "Preguntas",
-   "titulo": "El revisor busca avisos que faltan",
-   "texto": "Lee la misma información que el revisor de siempre y mira si a la respuesta le falta algo que el cliente necesita saber aunque no lo pregunte (no le da tiempo, el minicurso no certifica, tiene que traer un documento). Si falta, se reescribe una vez.",
-   "codigo": false,
-   "pre": false,
-   "fijado_en_pre": false,
-   "usado_por": [
-    "r_revisor"
-   ],
-   "sin_efecto": null
-  },
-  {
-   "nombre": "rag_revisor_completitud",
-   "area": "Preguntas",
-   "titulo": "El revisor también mira que no falte nada",
-   "texto": "Además de comprobar que la respuesta no inventa, se comprueba que contesta cada punto que preguntó el cliente. Si falta alguno se reescribe una vez; si la reescritura sale peor, se queda la primera.",
-   "codigo": false,
-   "pre": false,
-   "fijado_en_pre": false,
-   "usado_por": [
-    "r_revisor"
-   ],
-   "sin_efecto": null
   }
  ],
  "modelos": [
@@ -1519,14 +1436,6 @@
     "r_hechos",
     "r_escribir"
    ],
-   "proveedor": "OpenAI",
-   "llamadas_ultima_ronda": 360
-  },
-  {
-   "ajuste": "rag_plan_model",
-   "codigo": "gpt-6-luna",
-   "pre": "gpt-6-luna",
-   "usado_por": [],
    "proveedor": "OpenAI",
    "llamadas_ultima_ronda": 360
   },
