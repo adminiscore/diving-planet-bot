@@ -67,6 +67,8 @@ _CAMPOS = ("location", "detected_location", "core_pending_slot", "pregunta_preci
            "quiere_bucear", "suggested_activity",
            # lat-11 T6c (26-oct): la isla y el hotel, para medir los falsos «está en las islas».
            "island", "detected_island", "hotel", "detected_hotel",
+           # DEUDA-EXT (26-oct): el repaso y el acompañante que se suma.
+           "refresher_interested", "last_dive_over_2_years", "pending_companion_activity", "needs_companion_activity",
            # gen-3b (21-oct): si el turno pasó el caso a una persona (y por qué), para medir "pasa directo" frente a
            # "ofrece el pase".
            "pending_escalation_reason")

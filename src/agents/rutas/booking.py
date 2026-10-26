@@ -378,7 +378,21 @@ def _principal_sigue_en_el_reparto(intent, state: ConversationState) -> bool:
     )
 
 
+def _resto_a_la_principal(state: ConversationState, principal_antes: str | None) -> None:
+    """DEUDA-EXT (26-oct): se elige por primera vez la actividad principal de un grupo que ya tenía acompañantes con su
+    actividad y el total: el resto del grupo hace la principal (la regla de `routing._with_main_rest`). Sin esto, "two
+    certified divers" + "my wife will just snorkel" + "the 2-dive trip" cobraba solo el snorkel."""
+    alloc = state.detected_group_allocation or {}
+    main = state.detected_activity
+    resto = (state.detected_group_size or 0) - sum(v for v in alloc.values() if isinstance(v, int))
+    if principal_antes is None and main and alloc and main not in alloc and resto > 0:
+        state.detected_group_allocation = {**alloc, main: resto}
+        logger.info(f"[INTENT][DEUDA-EXT] el resto del grupo ({resto}) hace la principal {main!r} -> "
+                    f"{state.detected_group_allocation}")
+
+
 def _apply_detected_intent(intent, state: ConversationState, message: str | None = None) -> None:
+    principal_antes = state.detected_activity
     if intent.language and not state.detected_language:
         state.detected_language = intent.language
         state.language = intent.language
@@ -499,6 +513,8 @@ def _apply_detected_intent(intent, state: ConversationState, message: str | None
         state.detected_hotel = intent.hotel
         state.hotel = intent.hotel
         logger.info(f"[INTENT] Detected hotel: {intent.hotel}")
+
+    _resto_a_la_principal(state, principal_antes)
 
 
 _INTENT_TRIGGER_STEPS = {

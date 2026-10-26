@@ -303,6 +303,34 @@ def _reparto_guardado(state: ConversationState) -> dict:
     return {}
 
 
+def _suma_a_un_grupo_sin_actividad(state: ConversationState, reparto: dict, total) -> str | None:
+    """DEUDA-EXT: ¿el reparto del extractor suma personas a un grupo ya contado que aún no tiene actividad?
+    - "todos": el reparto ya trae a los de antes con una actividad ({certified_diving: 3, minicourse: 2}, total 5): vale
+      entero, como un reparto que amplía el de antes;
+    - "nuevos": trae solo a los que se suman ({minicourse: 2}, total 3 + 2) o a los de antes sin decidir
+      ({minicourse: 2, undecided: 3}): los nuevos van por el punto único del acompañante;
+    - None: no es una suma (el total no cuadra y Jev no está seguro de que se sume alguien)."""
+    sabido = _known_field_values(state).get("group_size")
+    if not sabido or state.detected_activity or state.detected_group_allocation or _jev_dice_que_nadie_se_suma(state):
+        return None
+    suma = sum(v for v in reparto.values() if isinstance(v, int) and v > 0)
+    sin_decidir = reparto.get("undecided") or 0
+    cuadra = total is None or total == suma
+    if sin_decidir >= sabido and cuadra and suma > sabido:
+        return "nuevos"
+    if len(reparto) > 1 and cuadra and suma > sabido and any(
+            n == sabido for a, n in reparto.items() if a != "undecided"):
+        return "todos"
+    if isinstance(total, int):
+        # Los sin decidir del extractor son (parte de) los de antes: {minicourse: 2, undecided: 1} con total 5 sobre 3
+        # (banco-lat11 a4, 3 de 3: el extractor cuenta a quien escribe y no a su grupo). Cuadra el total con los nuevos.
+        return "nuevos" if sin_decidir <= sabido and total == sabido + suma - sin_decidir else None
+    from src.agents.nucleo.extraction import _JEV_SE_SUMA_SEGURO  # lazy
+
+    jev = getattr(state, "_jev_adds_person", None)
+    return "nuevos" if jev is not None and jev >= _JEV_SE_SUMA_SEGURO else None
+
+
 def _amplia(nuevo: dict, antes: dict) -> bool:
     """¿El reparto nuevo solo SUMA personas al de antes (nadie de antes cambia de actividad)?"""
     return bool(antes) and all(nuevo.get(act, 0) >= n for act, n in antes.items()) and nuevo != antes
@@ -321,7 +349,7 @@ def _jev_dice_que_nadie_se_suma(state: ConversationState) -> bool:
 _CATEGORIA_DEL_REPARTO = {"minicourse": "minicourse", "snorkel": "snorkel", "padi_specialty": "specialty"}
 
 
-def _reparto_valido(reparto: dict | None, message: str, state: ConversationState) -> dict | None:
+def _reparto_valido(reparto: dict | None, message: str, state: ConversationState, minimo: int = 2) -> dict | None:
     """Lo que el código comprueba del reparto del extractor antes de usarlo (fase EX: el código valida):
     (1) una cifra de más de una persona tiene que estar en el mensaje o saberse ya: "yo buceo y mis amigos hacen
         snorkel" no dice cuántos, así que no hay reparto y el bot lo pregunta (banco ex7: inventaba 2);
@@ -345,7 +373,7 @@ def _reparto_valido(reparto: dict | None, message: str, state: ConversationState
         if not nombrada:
             logger.info(f"[EXTRACT][EX7] {act!r} no se nombra en el mensaje: {n} sin decidir")
         valido[clave] = valido.get(clave, 0) + n
-    return valido if len(valido) > 1 else None
+    return valido if len(valido) >= minimo else None
 
 
 def _poner_grupo(intent, state: ConversationState, message: str, datos: dict) -> None:
@@ -373,6 +401,34 @@ def _poner_grupo(intent, state: ConversationState, message: str, datos: dict) ->
         logger.info(f"[EXTRACT][EX9B-6] el extractor amplía el reparto {reparto!r}, pero Jev dice que ya estaba contado")
         reparto, total = None, None
     antes_del_turno = _reparto_guardado(state)
+    # DEUDA-EXT: los que se suman pueden ser de UNA sola actividad ({minicourse: 2}): el reparto normal pide dos.
+    nuevos = reparto or _reparto_valido(datos.get("group_allocation"), message, state, minimo=1)
+    suma_sin_actividad = (_suma_a_un_grupo_sin_actividad(state, nuevos, total)
+                          if nuevos and not antes_del_turno and not corrige else None)
+    if suma_sin_actividad == "todos":
+        # DEUDA-EXT (26-oct): el extractor trae el grupo entero, los de antes ya con actividad: se guarda sin preguntar.
+        suma = sum(v for v in nuevos.values() if isinstance(v, int) and v > 0)
+        intent.group_allocation, intent.group_size = dict(nuevos), suma
+        intent._reparto_del_extractor = set(nuevos)
+        for campo in _CAMPOS_GRUPO:
+            for listado in (intent.detected_fields, intent.overwrite):
+                if campo not in listado:
+                    listado.append(campo)
+        logger.info(f"[EXTRACT][DEUDA-EXT] el reparto {nuevos!r} suma al grupo de {guardado['group_size']} (total {suma})")
+        return
+    if suma_sin_actividad == "nuevos":
+        # DEUDA-EXT (26-oct): "Somos 3 buzos certificados" (sin actividad) + "además vienen dos amigos que quieren probar
+        # el minicurso": el extractor trae {minicourse: 2} y total 5, pero sin reparto de antes no se veía la suma y se
+        # pedía confirmar "3 → 5" (banco-lat11 a4). Los que se suman van por el punto único del acompañante; los de
+        # antes esperan a la principal.
+        from src.agents.nucleo.extraction import _add_or_ask_companion  # lazy
+
+        intent._reparto_del_extractor = set(nuevos)
+        decididos = {a: n for a, n in nuevos.items() if a != "undecided" and isinstance(n, int) and n > 0}  # los nuevos
+        logger.info(f"[EXTRACT][DEUDA-EXT] se suman {decididos!r} al grupo de {guardado['group_size']} sin actividad")
+        for actividad, cuantos in decididos.items():
+            _add_or_ask_companion(state, message, actividad, cuantos)
+        return
     if reparto and _amplia(reparto, antes_del_turno) and not corrige:
         # ex-9b (19-oct, punto 2 de Gadea): el extractor suma gente de UNA actividad al grupo ya sabido. Sumarla sin
         # más contaba dos veces a alguien ya contado cuando Jev dudaba ("mi amigo, el que ya te dije que viene, quiere

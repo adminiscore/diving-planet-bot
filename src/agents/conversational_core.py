@@ -313,6 +313,10 @@ def _ofrecer_la_actividad_preguntada(state: ConversationState) -> str | None:
     actividad = state.actividad_preguntada
     if not actividad or actividad in _SIN_OFERTA_CONCRETA:
         return None
+    if not state.detected_activity and actividad in (state.detected_group_allocation or {}):
+        # DEUDA-EXT (26-oct): es la actividad de los que se suman ("vienen dos amigos que quieren probar el minicurso"),
+        # no una oferta para el grupo que aún no ha elegido la suya (banco-lat11 a4: se ofrecía el minicurso a 3 buzos).
+        return None
     if state.suggested_activity and state.suggested_activity != actividad:
         return None
     lang = state.language
@@ -1240,9 +1244,15 @@ def _merge_companion_activity(state: ConversationState, activity: str, qty: int)
     main_act = state.detected_activity
     if main_act and main_act not in alloc:
         alloc.setdefault(main_act, state.detected_group_size or 1)
+    known = state.detected_group_size or 0
     alloc[activity] = alloc.get(activity, 0) + qty
     state.detected_group_allocation = alloc
     state.detected_group_size = sum(alloc.values())
+    if not main_act and known + qty > state.detected_group_size:
+        # DEUDA-EXT (26-oct): sin actividad principal, los que ya se contaban se perdían: "two certified divers" + "my
+        # wife will join us but she'll just snorkel" dejaba {snorkel: 1} y total 1 (banco-lat11 a3). El total suma a la
+        # persona nueva; los demás esperan a la principal, que el bot pregunta (`booking._resto_a_la_principal`).
+        state.detected_group_size = known + qty
     logger.info(f"[CORE] merged companion activity {activity} x{qty} -> alloc={alloc}")
 
 
@@ -1262,6 +1272,14 @@ def _apply_group_total(state: ConversationState, total: int) -> bool:
         return True
     alloc = dict(state.detected_group_allocation or {})
     main = state.detected_activity
+    if not main:
+        # DEUDA-EXT (26-oct): sin actividad principal, el que ya estaba contado pasa a su actividad y el resto espera a
+        # la principal (antes `alloc[None]`).
+        moved = min(qty, known or qty)
+        alloc[activity] = alloc.get(activity, 0) + moved
+        state.detected_group_allocation = alloc
+        logger.info(f"[CORE] companion {activity} x{moved} ya contado, sin principal -> alloc={alloc}")
+        return True
     alloc.setdefault(main, known or qty)
     moved = min(qty, alloc[main])
     alloc[main] -= moved
