@@ -30,6 +30,33 @@ History
   - calidad: **94,8 % 80/116**, frente al 94,9 % 82/116 de anoche, dentro del ruido.
   - Deuda apuntada: el acuse ya no reconoce lo concreto del mensaje («anoto a tu amigo para el minicurso»).
 
+0.32.7 - (2026-10-26, en la rama `feature/integra-sim7-gadea`; por medir)
+---------------------
+* **Jev, el hueco entre precio, pago y «otra cosa»** (c04d1d7): «¿el precio es en dólares o pesos?» o «price for stay
+  and dives» salían con `asks_question` y sin intención ni otra cosa, y `_solo_pide_reservar` los mandaba al flujo
+  («¡Perfecto! 🙌» y la siguiente pregunta: 149 de 465 respuestas de deudau-B empiezan así). La moneda es de pago; el
+  precio de lo que no vendemos, otra cosa; el precio vale aunque el mensaje pregunte más. Banco de 20 frases: 11 → 18.
+* **El idioma lo fija la apertura** (c04d1d7): «Y para transferência…» en el turno 9 pasaba al inglés (6 de 6 rondas).
+* **Fuera el respaldo propio del extractor** (374a50c, decisión de Gadea): duplicaba el respaldo por tiempo de
+  OpenRouter (0,8 % de los turnos, < 0,01 s de media); 142 líneas menos.
+* **sim-7** (Álvaro): un solo lector de políticas y una sola función para quitar tildes.
+* **Exámenes (puntos 2 y 3, decisión de Gadea):** las decisiones de conducta en `data/knowledge_base/decisiones.json`
+  (el juez las lee de ahí); 68 criterios visibles, 17 del oculto y 3 globales las citan en vez de copiarlas, y un test
+  lo vigila. Tandas rotativas de casos nuevos (`generar_examen_sintetico --rotativo`, gpt-5-mini) para medir si el bot
+  generaliza sin gastar el oculto; la primera, `docs/robustness/rotativo/2026-10-26-13.json` (30 casos). La
+  referencia del juez cambia: A y B se juzgan con esta versión.
+
+0.32.6 - (2026-10-26, en PRE: ac12d2c)
+---------------------
+* **Sube la limpieza de lat-deuda-u (0.32.5) con sim-6 de Álvaro** (17 experimentos apagados fuera, Jev siempre).
+* **real-1 a la vez** (integra-A = PRE eb47132, integra-B = ac12d2c, mismo juez y referencia):
+  - calidad: A 78/116 y 52 criterios fallados; B 71/116 y 63: +11, dentro del ruido (±14, #1845). Visible 70 → 61/95
+    (31 → 46 fallos); **oculto 8 → 10/21 (21 → 17 fallos)**. Los fallos que solo tiene B no vienen de la limpieza
+    (el mismo precio de Cartagena «desde ese hotel» lo da A; variación del escritor; el juez marca como invento el
+    rótulo «ya en las islas» de los dos precios, que arregla 0.32.7);
+  - llamadas por turno 3,63 → 3,55; p90 7,5 → 7,2 s;
+  - aparece gpt-5.4-mini en el 2-3 % de los turnos: el respaldo del extractor (fuera en 0.32.7).
+
 0.32.5 - (2026-10-26)
 ---------------------
 * **lat-deuda-u, limpieza del inventario (los 4 puntos que pidió Gadea).** Sin llamadas nuevas; lo que lee el modelo
