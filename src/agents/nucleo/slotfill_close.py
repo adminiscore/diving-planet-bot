@@ -248,14 +248,26 @@ def _acuse_por_codigo(state: ConversationState, prev_pending) -> str:
 async def _con_la_pregunta(state: ConversationState, message: str, answer: str, response: str, escrita: str,
                            finalized: bool, cierre_igual: bool) -> str:
     """lat-9 paso 2 (26-oct): el escritor cerró con la pregunta fijada al empezar el turno (`escrita`). Si es la que toca,
-    su texto va solo (los botones ya los puso `ask_slot`). Si el mensaje la cambió (contestaba el dato, o la reserva se
-    cierra con la tarjeta), el código cambia su último párrafo por lo que toca (variante «corrige»)."""
+    su texto va solo (los botones ya los puso `ask_slot`). Si el mensaje la cambió (contestaba el dato), el escritor la
+    vuelve a escribir con la que toca (variante «espera»: espera al extractor solo en esos turnos); si la reserva se cierra
+    con la tarjeta, o el escritor falla, el código cambia su último párrafo por lo que toca."""
     from src.observability import note_turn  # lazy
 
     if not finalized and response == escrita:
         note_turn(pregunta_escritor="igual")
         logger.info("[CORE][LAT9] el escritor cerró con la pregunta que toca")
         return answer if _answer_already_asks(answer) else f"{answer.rstrip()}\n\n{response}"
+    if not finalized:
+        state._pregunta_del_escritor = response
+        try:
+            nueva = await _rag_answer(state, message, history=list(state.history))
+        except Exception as exc:  # noqa: BLE001 — si falla, el código cambia la pregunta
+            logger.warning(f"[CORE][LAT9] el escritor falló al rehacer con la pregunta nueva: {exc!r}")
+            nueva = None
+        if nueva and not _is_rag_fallback(nueva) and not _es_pregunta_de_origen(nueva):
+            note_turn(pregunta_escritor="rehace")
+            logger.info("[CORE][LAT9] la pregunta cambió con el mensaje: el escritor la vuelve a escribir")
+            return nueva if _answer_already_asks(nueva) else f"{nueva.rstrip()}\n\n{response}"
     note_turn(pregunta_escritor="corrige")
     logger.info("[CORE][LAT9] la pregunta cambió con el mensaje: el código pone la que toca")
     sin = _sin_la_pregunta_final(answer)

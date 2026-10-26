@@ -44,7 +44,20 @@ def test_misma_pregunta_va_el_texto_del_escritor():
         == "Sí, incluye el equipo.\n\n¿Cuántos serían?"
 
 
-def test_otra_pregunta_el_codigo_la_cambia():
+def test_otra_pregunta_el_escritor_la_vuelve_a_escribir(monkeypatch):
+    async def escritor(state, message, history=None):
+        return f"Sí, incluye el equipo.{chr(10)}{chr(10)}{state._pregunta_del_escritor}"
+
+    monkeypatch.setattr(close, "_rag_answer", escritor)  # variante «espera»: el escritor recibe la que toca
+    assert _con("Sí, incluye el equipo.\n\n¿Cuántos serían?", "¿Eres buzo certificado?", "¿Cuántas personas son?") \
+        == "Sí, incluye el equipo.\n\n¿Eres buzo certificado?"
+
+
+def test_otra_pregunta_si_el_escritor_falla_el_codigo_la_cambia(monkeypatch):
+    async def falla(*a, **k):
+        raise RuntimeError("sin escritor")
+
+    monkeypatch.setattr(close, "_rag_answer", falla)
     assert _con("Sí, incluye el equipo.\n\n¿Cuántos serían?", "¿Eres buzo certificado?", "¿Cuántas personas son?") \
         == "Sí, incluye el equipo.\n\n¿Eres buzo certificado?"
 
