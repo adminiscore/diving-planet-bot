@@ -1,0 +1,1456 @@
+{
+ "etiqueta": "lat9p2-A",
+ "reps": 2,
+ "flags": [],
+ "env": {},
+ "codigo_local": false,
+ "verificador": "gpt-6-luna",
+ "casos": [
+  {
+   "id": "l9p2-01",
+   "dialogo": "reserva-completa-saludo-a-pago",
+   "criterio": "lat9p2:sin_dato",
+   "repeticiones": 2,
+   "fallan": 0,
+   "respuestas": [
+    "¡Perfecto! 🙌\n\n¿Desde dónde saldrías? Puedes salir *desde Cartagena* (desde el Muelle de la Bodeguita, ida y vuelta el mismo día) o, si ya estás *en las islas*, coordinamos la recogida en tu hotel.",
+    "¡Perfecto! 🙌\n\n¿Desde dónde saldrías? Puedes salir *desde Cartagena* (desde el Muelle de la Bodeguita, ida y vuelta el mismo día) o, si ya estás *en las islas*, coordinamos la recogida en tu hotel."
+   ],
+   "explicaciones": [
+    "La respuesta no repite la pregunta sobre cuántas personas van: pregunta por el punto de salida, otro dato de la reserva. Aunque «¡Perfecto!» no reconoce explícitamente que el cliente va solo, el fallo descrito era repetir la misma pregunta y no contestar al mensaje.",
+    "La respuesta reconoce «voy solo» con «¡Perfecto!» y hace una sola pregunta de reserva: desde dónde saldría. No repite el dato que el cliente acaba de dar."
+   ],
+   "segundos": [
+    1.59,
+    1.48
+   ],
+   "trazas": [
+    [
+     "[ROUTER][JEV] 406 ms detected={'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.04, 'customer_place': {'choice': 'none', 'confidence': 1.0}, 'adds_person': 0.04, 'shares_open_fact': 0.32, 'changes_date': False, 'ya_reservado': False, 'pide_datos_ajenos': False, 'pide_servicio_privado': False, 'nuevo_caso': False, 'pregunta_si_es_ia': False, 'pide_precio': False, ",
+     "[EXTRACT][EX7] group_size=1",
+     "[INTENT] Detected group size: 1"
+    ],
+    [
+     "[ROUTER][JEV] 303 ms detected={'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.04, 'customer_place': {'choice': 'none', 'confidence': 1.0}, 'adds_person': 0.04, 'shares_open_fact': 0.36, 'changes_date': False, 'ya_reservado': False, 'pide_datos_ajenos': False, 'pide_servicio_privado': False, 'nuevo_caso': False, 'pregunta_si_es_ia': False, 'pide_precio': False, ",
+     "[EXTRACT][EX7] group_size=1",
+     "[INTENT] Detected group size: 1"
+    ]
+   ]
+  },
+  {
+   "id": "l9p2-02",
+   "dialogo": "reserva-solo-link",
+   "criterio": "lat9p2:sin_dato",
+   "repeticiones": 2,
+   "fallan": 2,
+   "respuestas": [
+    "¡Perfecto! 🙌\n\n¡Genial! Para recomendarte el plan perfecto: ¿Eres buzo certificado? (Y si no, ¡tranqui! El minicurso es ideal para empezar. 🤿)",
+    "¡Perfecto! 🙌\n\n¡Genial! Para recomendarte el plan perfecto: ¿Eres buzo certificado? (Y si no, ¡tranqui! El minicurso es ideal para empezar. 🤿)"
+   ],
+   "explicaciones": [
+    "El cliente solo dijo «cartagena», pero la respuesta lo trata como si hubiera contestado algo y no reconoce ni aclara ese dato; además, hace una pregunta de reserva sin contexto que permita saber si es la que toca.",
+    "El cliente respondió «cartagena», pero la respuesta lo celebra como si hubiera contestado y vuelve a preguntar si es buzo certificado, sin reconocer ni atender el dato que dio."
+   ],
+   "segundos": [
+    1.55,
+    1.51
+   ],
+   "trazas": [
+    [
+     "[ROUTER][JEV] 288 ms detected={'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.03, 'customer_place': {'choice': 'cartagena', 'confidence': 0.94}, 'adds_person': 0.03, 'shares_open_fact': 0.06, 'changes_date': False, 'ya_reservado': False, 'pide_datos_ajenos': False, 'pide_servicio_privado': False, 'nuevo_caso': False, 'pregunta_si_es_ia': False, 'pide_precio': F",
+     "[CORE][NOTAS] Jev: nada que apuntar (0.06): no se llama al extractor",
+     "[EXTRACT][EX5] location='cartagena' (guardado: None)",
+     "[INTENT] Detected location: cartagena",
+     "[CORE][U3-6] señales sin LLM (Jev: acompañante 0.03, no pide recordar)",
+     "[CORE][U3-7] respuesta a certification por Jev: None (1.00)"
+    ],
+    [
+     "[ROUTER][JEV] 426 ms detected={'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.04, 'customer_place': {'choice': 'cartagena', 'confidence': 0.94}, 'adds_person': 0.04, 'shares_open_fact': 0.07, 'changes_date': False, 'ya_reservado': False, 'pide_datos_ajenos': False, 'pide_servicio_privado': False, 'nuevo_caso': False, 'pregunta_si_es_ia': False, 'pide_precio': F",
+     "[CORE][NOTAS] Jev: nada que apuntar (0.07): no se llama al extractor",
+     "[EXTRACT][EX5] location='cartagena' (guardado: None)",
+     "[INTENT] Detected location: cartagena",
+     "[CORE][U3-6] señales sin LLM (Jev: acompañante 0.04, no pide recordar)",
+     "[CORE][U3-7] respuesta a certification por Jev: None (1.00)"
+    ]
+   ]
+  },
+  {
+   "id": "l9p2-03",
+   "dialogo": "grupo-recompuesto",
+   "criterio": "lat9p2:sin_dato",
+   "repeticiones": 2,
+   "fallan": 2,
+   "respuestas": [
+    "¡Perfecto! 🙌\n\n¿Desde dónde saldrías? Puedes salir *desde Cartagena* (desde el Muelle de la Bodeguita, ida y vuelta el mismo día) o, si ya estás *en las islas*, coordinamos la recogida en tu hotel.",
+    "¡Perfecto! 🙌\n\n¿Desde dónde saldrías? Puedes salir *desde Cartagena* (desde el Muelle de la Bodeguita, ida y vuelta el mismo día) o, si ya estás *en las islas*, coordinamos la recogida en tu hotel."
+   ],
+   "explicaciones": [
+    "El cliente corrigió la cantidad y el tipo de participantes, pero la respuesta no reconoce ese dato y repite la pregunta sobre desde dónde saldría. Además, dice «¡Perfecto!» aunque el cliente no respondió a la pregunta anterior.",
+    "El cliente corrigió la cantidad y el tipo de participantes, pero la respuesta no reconoce ese dato y repite la pregunta sobre desde dónde saldría. Además, «¡Perfecto!» no corresponde porque el cliente no respondió a la pregunta anterior."
+   ],
+   "segundos": [
+    2.17,
+    2.06
+   ],
+   "trazas": [
+    [
+     "[ROUTER][JEV] 504 ms detected={'corrects': True, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.06, 'customer_place': {'choice': 'none', 'confidence': 1.0}, 'adds_person': 0.04, 'shares_open_fact': 0.03, 'changes_date': False, 'ya_reservado': False, 'pide_datos_ajenos': False, 'pide_servicio_privado': False, 'nuevo_caso': False, 'pregunta_si_es_ia': False, 'pide_precio': False, '",
+     "[CORE][NOTAS] Jev: nada que apuntar (0.03): no se llama al extractor",
+     "[EXTRACT][EX7] corrección del reparto {'certified_diving': 3, 'minicourse': 2} -> {'certified_diving': 4, 'minicourse': 1}",
+     "[EXTRACT][EX7] group_size=5",
+     "[INTENT] Detected group allocation: {'certified_diving': 4, 'minicourse': 1}",
+     "[CORE][S4-26] la regex ve a otra persona y Jev no (0.06): manda Jev"
+    ],
+    [
+     "[ROUTER][JEV] 475 ms detected={'corrects': True, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.06, 'customer_place': {'choice': 'none', 'confidence': 1.0}, 'adds_person': 0.05, 'shares_open_fact': 0.03, 'changes_date': False, 'ya_reservado': False, 'pide_datos_ajenos': False, 'pide_servicio_privado': False, 'nuevo_caso': False, 'pregunta_si_es_ia': False, 'pide_precio': False, '",
+     "[CORE][NOTAS] Jev: nada que apuntar (0.03): no se llama al extractor",
+     "[EXTRACT][EX7] corrección del reparto {'certified_diving': 3, 'minicourse': 2} -> {'certified_diving': 4, 'minicourse': 1}",
+     "[EXTRACT][EX7] group_size=5",
+     "[INTENT] Detected group allocation: {'certified_diving': 4, 'minicourse': 1}",
+     "[CORE][S4-26] la regex ve a otra persona y Jev no (0.06): manda Jev"
+    ]
+   ]
+  },
+  {
+   "id": "l9p2-04",
+   "dialogo": "acompanante-goteo",
+   "criterio": "lat9p2:sin_dato",
+   "repeticiones": 2,
+   "fallan": 2,
+   "respuestas": [
+    "¡Perfecto! 🙌\n\n¿Desde dónde saldrías? Puedes salir *desde Cartagena* (desde el Muelle de la Bodeguita, ida y vuelta el mismo día) o, si ya estás *en las islas*, coordinamos la recogida en tu hotel.",
+    "¡Perfecto! 🙌\n\n¿Desde dónde saldrías? Puedes salir *desde Cartagena* (desde el Muelle de la Bodeguita, ida y vuelta el mismo día) o, si ya estás *en las islas*, coordinamos la recogida en tu hotel."
+   ],
+   "explicaciones": [
+    "El cliente aclara que no está certificado, pero la respuesta no lo reconoce y vuelve a preguntar desde dónde saldría. Además, ante una respuesta que no contesta la pregunta anterior, empieza con «¡Perfecto!».",
+    "El cliente aclara que no está certificado, pero la respuesta lo ignora, dice «¡Perfecto!» y pregunta por el punto de salida. El contexto no está disponible para evaluar información faltante."
+   ],
+   "segundos": [
+    1.96,
+    1.87
+   ],
+   "trazas": [
+    [
+     "[ROUTER][JEV] 397 ms detected={'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.91, 'customer_place': {'choice': 'none', 'confidence': 0.98}, 'adds_person': 0.08, 'shares_open_fact': 0.29, 'changes_date': False, 'ya_reservado': False, 'pide_datos_ajenos': False, 'pide_servicio_privado': False, 'nuevo_caso': False, 'pregunta_si_es_ia': False, 'pide_precio': False,",
+     "[EXTRACT][EX7] group_size=2",
+     "[EXTRACT][EX9B-6] otra persona del grupo no está certificada",
+     "[INTENT] Detected group allocation: {'certified_diving': 1}"
+    ],
+    [
+     "[ROUTER][JEV] 368 ms detected={'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.91, 'customer_place': {'choice': 'none', 'confidence': 1.0}, 'adds_person': 0.09, 'shares_open_fact': 0.27, 'changes_date': False, 'ya_reservado': False, 'pide_datos_ajenos': False, 'pide_servicio_privado': False, 'nuevo_caso': False, 'pregunta_si_es_ia': False, 'pide_precio': False, ",
+     "[EXTRACT][EX7] group_size=2",
+     "[EXTRACT][EX9B-6] otra persona del grupo no está certificada",
+     "[INTENT] Detected group allocation: {'certified_diving': 1}"
+    ]
+   ]
+  },
+  {
+   "id": "l9p2-05",
+   "dialogo": "isla-hotel-refresher",
+   "criterio": "lat9p2:sin_dato",
+   "repeticiones": 2,
+   "fallan": 2,
+   "respuestas": [
+    "¡Perfecto! 🙌\n\n¡Genial! Para recomendarte el plan perfecto: ¿Eres buzo certificado? (Y si no, ¡tranqui! El minicurso es ideal para empezar. 🤿)",
+    "¡Perfecto! 🙌\n\n¡Genial! Para recomendarte el plan perfecto: ¿Eres buzo certificado? (Y si no, ¡tranqui! El minicurso es ideal para empezar. 🤿)"
+   ],
+   "explicaciones": [
+    "El cliente indicó que está en el hotel Isla del Sol, pero la respuesta no reconoce ese dato y vuelve a preguntar si es buzo certificado. Además, empieza con «¡Perfecto!» aunque el cliente no respondió a esa pregunta.",
+    "El cliente indicó que está en el hotel Isla del Sol, pero la respuesta no reconoce ese dato y vuelve a preguntar si es buzo certificado. Además, empieza con «¡Perfecto!» aunque el cliente no respondió a esa pregunta."
+   ],
+   "segundos": [
+    1.55,
+    2.16
+   ],
+   "trazas": [
+    [
+     "[ROUTER][JEV] 356 ms detected={'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.04, 'customer_place': {'choice': 'islands', 'confidence': 0.94}, 'adds_person': 0.03, 'shares_open_fact': 0.04, 'changes_date': False, 'ya_reservado': False, 'pide_datos_ajenos': False, 'pide_servicio_privado': False, 'nuevo_caso': False, 'pregunta_si_es_ia': False, 'pide_precio': Fal",
+     "[CORE][NOTAS] Jev: nada que apuntar (0.04): no se llama al extractor",
+     "[EXTRACT][EX5] location='island' (guardado: 'island')",
+     "[INTENT] Detected island: isla_del_sol",
+     "[INTENT] Detected hotel: isla_del_sol_hotel"
+    ],
+    [
+     "[ROUTER][JEV] 291 ms detected={'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.04, 'customer_place': {'choice': 'islands', 'confidence': 0.92}, 'adds_person': 0.03, 'shares_open_fact': 0.04, 'changes_date': False, 'ya_reservado': False, 'pide_datos_ajenos': False, 'pide_servicio_privado': False, 'nuevo_caso': False, 'pregunta_si_es_ia': False, 'pide_precio': Fal",
+     "[CORE][NOTAS] Jev: nada que apuntar (0.04): no se llama al extractor",
+     "[EXTRACT][EX5] location='island' (guardado: 'island')",
+     "[INTENT] Detected island: isla_del_sol",
+     "[INTENT] Detected hotel: isla_del_sol_hotel"
+    ]
+   ]
+  },
+  {
+   "id": "l9p2-06",
+   "dialogo": "familia-ninos-resumen",
+   "criterio": "lat9p2:sin_dato",
+   "repeticiones": 2,
+   "fallan": 2,
+   "respuestas": [
+    "¡Perfecto! 🙌\n\nÚltima cosa para darte el precio y el link correctos: ¿son de nacionalidad colombiana o tienen cédula de extranjería?",
+    "¡Perfecto! 🙌\n\nÚltima cosa para darte el precio y el link correctos: ¿son de nacionalidad colombiana o tienen cédula de extranjería?"
+   ],
+   "explicaciones": [
+    "El cliente informó que los niños tienen 6 y 9 años, pero la respuesta no lo reconoce y empieza con «¡Perfecto!» antes de repetir una pregunta de la reserva. No hay contexto disponible para verificar qué pregunta correspondía.",
+    "El cliente indicó que los niños tienen 6 y 9 años, pero la respuesta no reconoce ese dato y pasa a preguntar por la nacionalidad. Además, «¡Perfecto!» aparece aunque el cliente no respondió a la pregunta anterior."
+   ],
+   "segundos": [
+    3.11,
+    3.7
+   ],
+   "trazas": [
+    [
+     "[ROUTER][JEV] 294 ms detected={'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.84, 'customer_place': {'choice': 'none', 'confidence': 0.52}, 'adds_person': 0.12, 'shares_open_fact': 0.26, 'changes_date': False, 'ya_reservado': False, 'pide_datos_ajenos': False, 'pide_servicio_privado': False, 'nuevo_caso': False, 'pregunta_si_es_ia': False, 'pide_precio': False,",
+     "[CORE] notes captured -> ['Viaja con niños de 6 y 9 años']",
+     "[EXTRACT][EX9B-6] ages=[6, 9] (regex: [6, 9])",
+     "[INTENT] Detected ages: [6, 9]",
+     "[CORE][SIGNALS] detected={'recall_field': 'ages'} msg='los ninos tienen 6 y 9 anos'",
+     "[CORE][U3-7] respuesta a nationality por Jev: None (0.98)"
+    ],
+    [
+     "[ROUTER][JEV] 451 ms detected={'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.84, 'customer_place': {'choice': 'none', 'confidence': 0.62}, 'adds_person': 0.11, 'shares_open_fact': 0.23, 'changes_date': False, 'ya_reservado': False, 'pide_datos_ajenos': False, 'pide_servicio_privado': False, 'nuevo_caso': False, 'pregunta_si_es_ia': False, 'pide_precio': False,",
+     "[CORE] notes captured -> ['Viaja con niños de 6 y 9 años']",
+     "[EXTRACT][EX9B-6] ages=[6, 9] (regex: [6, 9])",
+     "[INTENT] Detected ages: [6, 9]",
+     "[CORE][SIGNALS] detected={'recall_field': 'ages'} msg='los ninos tienen 6 y 9 anos'",
+     "[CORE][U3-7] respuesta a nationality por Jev: None (0.98)"
+    ]
+   ]
+  },
+  {
+   "id": "l9p2-07",
+   "dialogo": "grupo-cambia-dos-veces",
+   "criterio": "lat9p2:sin_dato",
+   "repeticiones": 2,
+   "fallan": 2,
+   "respuestas": [
+    "¡Perfecto! 🙌\n\nÚltima cosa para darte el precio y el link correctos: ¿son de nacionalidad colombiana o tienen cédula de extranjería?",
+    "¡Perfecto! 🙌\n\nÚltima cosa para darte el precio y el link correctos: ¿son de nacionalidad colombiana o tienen cédula de extranjería?"
+   ],
+   "explicaciones": [
+    "El cliente corrigió el número de personas a 3, pero la respuesta no lo reconoce y vuelve a preguntar por la nacionalidad. Además, dice «¡Perfecto!» aunque el cliente no respondió a esa pregunta.",
+    "El cliente corrigió el número de personas a 3, pero la respuesta no lo reconoce y repite la pregunta sobre nacionalidad. Además, dice «¡Perfecto!» aunque el cliente no respondió a esa pregunta."
+   ],
+   "segundos": [
+    1.78,
+    2.31
+   ],
+   "trazas": [
+    [
+     "[ROUTER][JEV] 315 ms detected={'corrects': True, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.77, 'customer_place': {'choice': 'none', 'confidence': 0.25}, 'adds_person': 0.04, 'shares_open_fact': 0.03, 'changes_date': False, 'ya_reservado': False, 'pide_datos_ajenos': False, 'pide_servicio_privado': False, 'nuevo_caso': False, 'pregunta_si_es_ia': False, 'pide_precio': False, ",
+     "[CORE][NOTAS] Jev: nada que apuntar (0.03): no se llama al extractor",
+     "[EXTRACT][EX7] group_size=3",
+     "[INTENT] Group size CORRECTED: 2 -> 3"
+    ],
+    [
+     "[ROUTER][JEV] 442 ms detected={'corrects': True, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.78, 'customer_place': {'choice': 'none', 'confidence': 0.28}, 'adds_person': 0.05, 'shares_open_fact': 0.03, 'changes_date': False, 'ya_reservado': False, 'pide_datos_ajenos': False, 'pide_servicio_privado': False, 'nuevo_caso': False, 'pregunta_si_es_ia': False, 'pide_precio': False, ",
+     "[CORE][NOTAS] Jev: nada que apuntar (0.03): no se llama al extractor",
+     "[EXTRACT][EX7] group_size=3",
+     "[INTENT] Group size CORRECTED: 2 -> 3"
+    ]
+   ]
+  },
+  {
+   "id": "l9p2-08",
+   "dialogo": "actividad-cambia-varias",
+   "criterio": "lat9p2:sin_dato",
+   "repeticiones": 2,
+   "fallan": 2,
+   "respuestas": [
+    "¡Perfecto! 🙌\n\n¡Genial! Para recomendarte el plan perfecto: ¿Eres buzo certificado? (Y si no, ¡tranqui! El minicurso es ideal para empezar. 🤿)",
+    "¡Perfecto! 🙌\n\n¡Genial! Para recomendarte el plan perfecto: ¿Eres buzo certificado? (Y si no, ¡tranqui! El minicurso es ideal para empezar. 🤿)"
+   ],
+   "explicaciones": [
+    "El cliente indicó que va solo, pero la respuesta no lo reconoce y vuelve a preguntar si es buzo certificado, además de anteponer «¡Perfecto!» sin que haya contestado esa pregunta. No hay contexto disponible.",
+    "El cliente indicó que va solo, pero la respuesta no reconoce ese dato y pasa directamente a preguntar si es buzo certificado. Además, empieza con «¡Perfecto!» aunque el cliente no respondió a esa pregunta."
+   ],
+   "segundos": [
+    1.48,
+    1.67
+   ],
+   "trazas": [
+    [
+     "[ROUTER][JEV] 303 ms detected={'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.04, 'customer_place': {'choice': 'none', 'confidence': 1.0}, 'adds_person': 0.04, 'shares_open_fact': 0.38, 'changes_date': False, 'ya_reservado': False, 'pide_datos_ajenos': False, 'pide_servicio_privado': False, 'nuevo_caso': False, 'pregunta_si_es_ia': False, 'pide_precio': False, ",
+     "[EXTRACT][EX7] group_size=1",
+     "[INTENT] Detected group size: 1"
+    ],
+    [
+     "[ROUTER][JEV] 313 ms detected={'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.04, 'customer_place': {'choice': 'none', 'confidence': 1.0}, 'adds_person': 0.04, 'shares_open_fact': 0.35, 'changes_date': False, 'ya_reservado': False, 'pide_datos_ajenos': False, 'pide_servicio_privado': False, 'nuevo_caso': False, 'pregunta_si_es_ia': False, 'pide_precio': False, ",
+     "[EXTRACT][EX7] group_size=1",
+     "[INTENT] Detected group size: 1"
+    ]
+   ]
+  },
+  {
+   "id": "l9p2-09",
+   "dialogo": "grupo-con-refresher",
+   "criterio": "lat9p2:sin_dato",
+   "repeticiones": 2,
+   "fallan": 2,
+   "respuestas": [
+    "¡Perfecto! 🙌\n\n¿Desde dónde saldrías? Puedes salir *desde Cartagena* (desde el Muelle de la Bodeguita, ida y vuelta el mismo día) o, si ya estás *en las islas*, coordinamos la recogida en tu hotel.",
+    "¡Perfecto! 🙌\n\n¿Desde dónde saldrías? Puedes salir *desde Cartagena* (desde el Muelle de la Bodeguita, ida y vuelta el mismo día) o, si ya estás *en las islas*, coordinamos la recogida en tu hotel."
+   ],
+   "explicaciones": [
+    "El cliente aporta un dato relevante —uno de los certificados lleva cinco años sin bucear— y la respuesta lo ignora, dice «¡Perfecto!» y pregunta por el punto de salida.",
+    "El cliente aporta que uno de los certificados no bucea hace cinco años, pero la respuesta lo ignora, dice «¡Perfecto!» y pregunta por el punto de salida. El contexto no está disponible para evaluar información faltante."
+   ],
+   "segundos": [
+    1.5,
+    1.53
+   ],
+   "trazas": [
+    [
+     "[ROUTER][JEV] 335 ms duda=['sensitive_topic=none@0.39']: decide Jev igual detected={'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.81, 'customer_place': {'choice': 'none', 'confidence': 1.0}, 'adds_person': 0.04, 'shares_open_fact': 0.28, 'changes_date': False, 'ya_reservado': False, 'pide_datos_ajenos': False, 'pide_servicio_privado': False, 'nuevo_caso': Fals",
+     "[CORE] notes captured -> ['Uno de los certificados no bucea desde hace 5 años']",
+     "[EXTRACT][EX9B-6] otra persona del grupo está certificada pero inactiva",
+     "[CORE][U3-7] respuesta a location por Jev: None (1.00)"
+    ],
+    [
+     "[ROUTER][JEV] 300 ms duda=['sensitive_topic=none@0.44']: decide Jev igual detected={'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.77, 'customer_place': {'choice': 'none', 'confidence': 1.0}, 'adds_person': 0.04, 'shares_open_fact': 0.22, 'changes_date': False, 'ya_reservado': False, 'pide_datos_ajenos': False, 'pide_servicio_privado': False, 'nuevo_caso': Fals",
+     "[CORE] notes captured -> ['Uno de los certificados no bucea desde hace 5 años']",
+     "[EXTRACT][EX9B-6] otra persona del grupo está certificada pero inactiva",
+     "[CORE][U3-7] respuesta a location por Jev: None (1.00)"
+    ]
+   ]
+  },
+  {
+   "id": "l9p2-10",
+   "dialogo": "ninos-6-y-10",
+   "criterio": "lat9p2:sin_dato",
+   "repeticiones": 2,
+   "fallan": 2,
+   "respuestas": [
+    "¡Perfecto! 🙌\n\n¿Con cuál te animas — *buceo*, *minicurso*, *snorkel* o un *curso PADI*? 🌊",
+    "¡Perfecto! 🙌\n\n¿Con cuál te animas — *buceo*, *minicurso*, *snorkel* o un *curso PADI*? 🌊"
+   ],
+   "explicaciones": [
+    "El cliente dio la edad del mayor, pero la respuesta no la reconoce y vuelve a preguntar qué actividad quiere, además de anteponer «¡Perfecto!» aunque no respondió a la pregunta anterior. No hay contexto disponible para evaluar información faltante.",
+    "El cliente dio la edad del mayor, pero la respuesta no la reconoce y vuelve a preguntar qué actividad quiere, además de anteponer «¡Perfecto!» aunque no respondió a esa pregunta. No hay contexto disponible para evaluar si la pregunta de la reserva era la que tocaba."
+   ],
+   "segundos": [
+    2.6,
+    2.62
+   ],
+   "trazas": [
+    [
+     "[ROUTER][JEV] 342 ms detected={'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.87, 'customer_place': {'choice': 'none', 'confidence': 1.0}, 'adds_person': 0.04, 'shares_open_fact': 0.29, 'changes_date': False, 'ya_reservado': False, 'pide_datos_ajenos': False, 'pide_servicio_privado': False, 'nuevo_caso': False, 'pregunta_si_es_ia': False, 'pide_precio': False, ",
+     "[CORE] notes captured -> ['Viaja con 2 niños; el mayor tiene 10 años']",
+     "[EXTRACT][EX9B-6] ages=[10] (regex: [])",
+     "[INTENT] Detected ages: [10]"
+    ],
+    [
+     "[ROUTER][JEV] 339 ms detected={'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.87, 'customer_place': {'choice': 'none', 'confidence': 1.0}, 'adds_person': 0.04, 'shares_open_fact': 0.3, 'changes_date': False, 'ya_reservado': False, 'pide_datos_ajenos': False, 'pide_servicio_privado': False, 'nuevo_caso': False, 'pregunta_si_es_ia': False, 'pide_precio': False, '",
+     "[CORE] notes captured -> ['Hijo mayor tiene 10 años']",
+     "[EXTRACT][EX9B-6] ages=[10] (regex: [])",
+     "[INTENT] Detected ages: [10]"
+    ]
+   ]
+  },
+  {
+   "id": "l9p2-11",
+   "dialogo": "vuelo-tras-bucear",
+   "criterio": "lat9p2:sin_dato",
+   "repeticiones": 2,
+   "fallan": 0,
+   "respuestas": [
+    "Sí, hay un intervalo mínimo recomendado antes de volar: *18 horas después de buceo recreativo*. Para el minicurso, son *12 horas* si no estás certificado; el refresher requiere *18 horas*.\n\nSe cuentan desde la última inmersión, no desde la llegada a Cartagena. La inmersión del minicurso termina hacia el mediodía, y desde ahí se cuentan sus 12 horas.\n\n*Desde Cartagena:* Muelle de la Bodeguita, a 5 minutos del centro histórico, a las 8:00 AM. Saliendo desde Cartagena no hay recogida en el hotel: cada persona llega por su cuenta al muelle (el transporte terrestre hasta el muelle no está incluido).\n\n*Si ya estás en las Islas del Rosario:* Si ya estás en las Islas del Rosario y tu hotel tiene acceso marítimo, la recogida y el regreso en lancha están incluidos sin cargo adicional.\n\n¡Genial! Para recomendarte el plan perfecto: ¿Eres buzo certificado? (Y si no, ¡tranqui! El minicurso es ideal para empezar. 🤿)",
+    "Sí, hay que dejar un intervalo antes de volar: *al menos 18 horas después del buceo recreativo*. Para el minicurso, el mínimo es de 12 horas si no estás certificado; la inmersión termina hacia el mediodía y el tiempo se cuenta desde ahí. El refresher requiere 18 horas.\n\nLas horas se cuentan desde la última inmersión, no desde la vuelta a Cartagena.\n\n*Desde Cartagena:* Muelle de la Bodeguita, a 5 minutos del centro histórico, a las 8:00 AM. Saliendo desde Cartagena no hay recogida en el hotel: cada persona llega por su cuenta al muelle (el transporte terrestre hasta el muelle no está incluido).\n\n*Si ya estás en las Islas del Rosario:* Si ya estás en las Islas del Rosario y tu hotel tiene acceso marítimo, la recogida y el regreso en lancha están incluidos sin cargo adicional.\n\n¡Genial! Para recomendarte el plan perfecto: ¿Eres buzo certificado? (Y si no, ¡tranqui! El minicurso es ideal para empezar. 🤿)"
+   ],
+   "explicaciones": [
+    "La respuesta contesta la pregunta sobre el intervalo entre bucear y volar. Aunque termina preguntando si es buzo certificado, no antepone «¡Genial!» como si el cliente hubiera respondido a una pregunta anterior.",
+    "La respuesta contesta la pregunta sobre el intervalo entre bucear y volar. Aunque termina preguntando si es buzo certificado, no antepone «¡Genial!» como si el cliente hubiera respondido a esa pregunta."
+   ],
+   "segundos": [
+    4.2,
+    4.35
+   ],
+   "trazas": [
+    [
+     "[ROUTER][JEV] 288 ms detected={'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.04, 'customer_place': {'choice': 'none', 'confidence': 0.89}, 'adds_person': 0.03, 'shares_open_fact': 0.7, 'changes_date': False, 'ya_reservado': False, 'pide_datos_ajenos': False, 'pide_servicio_privado': False, 'nuevo_caso': False, 'pregunta_si_es_ia': False, 'pide_precio': False, ",
+     "[HECHOS] contesta el redactor: None ['horario', 'tiempo'] origen=None"
+    ],
+    [
+     "[ROUTER][JEV] 319 ms detected={'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.04, 'customer_place': {'choice': 'none', 'confidence': 0.91}, 'adds_person': 0.03, 'shares_open_fact': 0.68, 'changes_date': False, 'ya_reservado': False, 'pide_datos_ajenos': False, 'pide_servicio_privado': False, 'nuevo_caso': False, 'pregunta_si_es_ia': False, 'pide_precio': False,",
+     "[HECHOS] contesta el redactor: None ['horario', 'tiempo'] origen=None"
+    ]
+   ]
+  },
+  {
+   "id": "l9p2-12",
+   "dialogo": "cambio-fecha-carrito",
+   "criterio": "lat9p2:sin_dato",
+   "repeticiones": 2,
+   "fallan": 1,
+   "respuestas": [
+    "¡Perfecto! 🙌\n\n¿Desde dónde saldrías? Puedes salir *desde Cartagena* (desde el Muelle de la Bodeguita, ida y vuelta el mismo día) o, si ya estás *en las islas*, coordinamos la recogida en tu hotel.",
+    "¡Perfecto! 🙌\n\n¿Desde dónde saldrías? Puedes salir *desde Cartagena* (desde el Muelle de la Bodeguita, ida y vuelta el mismo día) o, si ya estás *en las islas*, coordinamos la recogida en tu hotel."
+   ],
+   "explicaciones": [
+    "La respuesta reconoce que son 3 con «¡Perfecto!» y hace una sola pregunta de reserva: desde dónde saldrían. No repite el dato que el cliente acaba de dar.",
+    "Reconoce que son 3 con «¡Perfecto!», pero no termina con una sola pregunta: pregunta desde dónde saldrían y añade una segunda pregunta sobre si ya están en las islas."
+   ],
+   "segundos": [
+    1.5,
+    1.54
+   ],
+   "trazas": [
+    [
+     "[ROUTER][JEV] 305 ms detected={'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.86, 'customer_place': {'choice': 'none', 'confidence': 1.0}, 'adds_person': 0.04, 'shares_open_fact': 0.03, 'changes_date': False, 'ya_reservado': False, 'pide_datos_ajenos': False, 'pide_servicio_privado': False, 'nuevo_caso': False, 'pregunta_si_es_ia': False, 'pide_precio': False, ",
+     "[CORE][NOTAS] Jev: nada que apuntar (0.03): no se llama al extractor",
+     "[EXTRACT][EX7] group_size=3",
+     "[INTENT] Detected group size: 3"
+    ],
+    [
+     "[ROUTER][JEV] 395 ms detected={'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.83, 'customer_place': {'choice': 'none', 'confidence': 1.0}, 'adds_person': 0.04, 'shares_open_fact': 0.03, 'changes_date': False, 'ya_reservado': False, 'pide_datos_ajenos': False, 'pide_servicio_privado': False, 'nuevo_caso': False, 'pregunta_si_es_ia': False, 'pide_precio': False, ",
+     "[CORE][NOTAS] Jev: nada que apuntar (0.03): no se llama al extractor",
+     "[EXTRACT][EX7] group_size=3",
+     "[INTENT] Detected group size: 3"
+    ]
+   ]
+  },
+  {
+   "id": "l9p2-13",
+   "dialogo": "paquete-5-buceos-islas-residente-sin-recogida",
+   "criterio": "lat9p2:sin_dato",
+   "repeticiones": 2,
+   "fallan": 2,
+   "respuestas": [
+    "¡Claro! Si ya estarás en las Islas del Rosario, puedes reservar el plan de 5 inmersiones para dos personas.\n\nComo eres residente en Colombia, el pago se coordina en pesos con un asesor.\n\nPara darte el precio exacto necesito saber desde dónde sales: ¿saldrías *desde Cartagena* o ya estás *en las Islas del Rosario*? Los planes y los precios cambian según el punto de salida. 🌊",
+    "¡Claro! Si ya estás en las Islas del Rosario, puedes hacer el curso desde allá; no necesitas salir desde Cartagena. La recogida está incluida si tu hotel tiene acceso marítimo, y el alojamiento y los almuerzos no están incluidos.\n\n¿Te interesa el curso Open Water, el Referido o el Advanced? Para el Referido necesitas haber completado la teoría y la piscina en otro centro PADI."
+   ],
+   "explicaciones": [
+    "El cliente ya indicó que quiere salir desde Cartagena («sin ir de Cartagena»), pero la respuesta vuelve a preguntarle si saldría desde Cartagena o desde las islas. Además, propone el paquete de 5 inmersiones para quien ya está en las islas, contradiciendo lo que acaba de decir.",
+    "La respuesta reconoce que quiere salir desde Cartagena y explica la opción de recogida desde las islas, pero interpreta «quiero comprar sin ir de Cartagena» como que ya está en las islas, aunque el cliente no lo dijo claramente. Además, termina con dos preguntas seguidas sobre el curso y el requisito del Referido, en vez de una sola pregunta de reserva."
+   ],
+   "segundos": [
+    4.16,
+    4.13
+   ],
+   "trazas": [
+    [
+     "[ROUTER][JEV] 364 ms detected={'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.05, 'customer_place': {'choice': 'none', 'confidence': 0.92}, 'adds_person': 0.04, 'shares_open_fact': 0.1, 'changes_date': False, 'ya_reservado': False, 'pide_datos_ajenos': False, 'pide_servicio_privado': False, 'nuevo_caso': False, 'pregunta_si_es_ia': False, 'pide_precio': False, ",
+     "[CORE][NOTAS] Jev: nada que apuntar (0.10): no se llama al extractor",
+     "[CORE][RAG5] respuesta adelantada aprovechada",
+     "[EXTRACT][CAL-C3c] el extractor dice location='island' y Jev, seguro, que el mensaje no lo dice: no se guarda",
+     "[CORE][ORIGEN] precio sin origen -> se pregunta el origen antes de cotizar"
+    ],
+    [
+     "[ROUTER][JEV] 543 ms detected={'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.04, 'customer_place': {'choice': 'none', 'confidence': 0.92}, 'adds_person': 0.04, 'shares_open_fact': 0.07, 'changes_date': False, 'ya_reservado': False, 'pide_datos_ajenos': False, 'pide_servicio_privado': False, 'nuevo_caso': False, 'pregunta_si_es_ia': False, 'pide_precio': False,",
+     "[CORE][NOTAS] Jev: nada que apuntar (0.07): no se llama al extractor",
+     "[CORE][RAG5] respuesta adelantada aprovechada",
+     "[EXTRACT][CAL-C3c] el extractor dice location='island' y Jev, seguro, que el mensaje no lo dice: no se guarda"
+    ]
+   ]
+  },
+  {
+   "id": "l9p2-14",
+   "dialogo": "grupo-mixto-precio-cop-total",
+   "criterio": "lat9p2:sin_dato",
+   "repeticiones": 2,
+   "fallan": 0,
+   "respuestas": [
+    "¡Perfecto! 🙌\n\nÚltima cosa para darte el precio y el link correctos: ¿son de nacionalidad colombiana o tienen cédula de extranjería?",
+    "¡Perfecto! 🙌\n\n¿Desde dónde saldrías? Puedes salir *desde Cartagena* (desde el Muelle de la Bodeguita, ida y vuelta el mismo día) o, si ya estás *en las islas*, coordinamos la recogida en tu hotel."
+   ],
+   "explicaciones": [
+    "La respuesta no repite la pregunta de la reserva: pregunta por la nacionalidad o cédula de extranjería, un dato distinto. Aunque «¡Perfecto!» no reconoce explícitamente la fecha indicada, el contexto no permite confirmar que esa fuera la pregunta anterior.",
+    "El cliente indicó la fecha y la respuesta la reconoce con «¡Perfecto!» y pregunta por otro dato de la reserva (desde dónde saldría), sin repetir la fecha."
+   ],
+   "segundos": [
+    1.71,
+    1.43
+   ],
+   "trazas": [
+    [
+     "[ROUTER][JEV] 308 ms duda=['availability_question@0.50']: decide Jev igual detected={'availability_question': True, 'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.19, 'customer_place': {'choice': 'cartagena', 'confidence': 0.35}, 'adds_person': 0.04, 'shares_open_fact': 0.06, 'changes_date': False, 'ya_reservado': False, 'pide_datos_ajenos': False, 'pide_servic",
+     "[CORE][NOTAS] Jev: nada que apuntar (0.06): no se llama al extractor",
+     "[CORE][U3-6] señales sin LLM (Jev: acompañante 0.19, no pide recordar)",
+     "[CORE][U3-7] respuesta a nationality por Jev: None (1.00)"
+    ],
+    [
+     "[ROUTER][JEV] 329 ms duda=['availability_question@0.50']: decide Jev igual detected={'availability_question': True, 'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.17, 'customer_place': {'choice': 'none', 'confidence': 0.27}, 'adds_person': 0.04, 'shares_open_fact': 0.08, 'changes_date': False, 'ya_reservado': False, 'pide_datos_ajenos': False, 'pide_servicio_pr",
+     "[CORE][NOTAS] Jev: nada que apuntar (0.08): no se llama al extractor",
+     "[CORE][U3-6] señales sin LLM (Jev: acompañante 0.17, no pide recordar)",
+     "[CORE][U3-7] respuesta a location por Jev: None (0.94)"
+    ]
+   ]
+  },
+  {
+   "id": "l9p2-15",
+   "dialogo": "regreso-otro-dia-paquete-5",
+   "criterio": "lat9p2:sin_dato",
+   "repeticiones": 2,
+   "fallan": 0,
+   "respuestas": [
+    "Sí, el paquete de 5 inmersiones contempla dos días de buceo y el regreso a Cartagena el día 2 a las 3:00 p. m. Si se quedan una noche más en Cocoliso, el regreso en una fecha distinta no está incluido y debe coordinarse con un asesor del equipo, sujeto a espacio en la lancha. ¿Quieres que te pase con un asesor para revisarlo?\n\n• Tarifa de ingreso al Parque Nacional Natural\n• Seguro de buceo obligatorio\n• Transporte en lancha rápida Cartagena-Islas-Cartagena\n• Equipo de buceo\n• Almuerzo el primer día\n• Aporte eco-social a DIVE TO HEAL\n\nMuelle de la Bodeguita, a 5 minutos del centro histórico, a las 8:00 AM. Saliendo desde Cartagena no hay recogida en el hotel: cada persona llega por su cuenta al muelle (el transporte terrestre hasta el muelle no está incluido).\n\nLos cursos de 2 días (Open Water, Curso Referido, Advanced, Rescue y Mindful Diving) requieren alojamiento en las islas: al menos una noche, la del día 1 (el día 1 no se vuelve a Cartagena). No hay opción de ir y volver desde Cartagena ambos días. El alojamiento no está incluido y debe reservarse directamente con el hotel. Lo mismo en los paquetes de buceo de varios días (4, 5, 7 y 9 inmersiones): se duerme en las islas y el alojamiento, que no está incluido, se reserva directamente con el hotel.\n\n¡Genial! Para recomendarte el plan perfecto: ¿Son buzos certificados? (Y si no, ¡tranqui! El minicurso es ideal para empezar. 🤿)",
+    "Sí, el paquete de 5 inmersiones contempla el regreso a Cartagena el segundo día a las 3:00 p. m. Si se quedan una noche más, el regreso en una fecha distinta no está incluido y debe coordinarse con un asesor, sujeto a espacio en la lancha.\n\n¿Quieres que te pase con un asesor del equipo para consultar el regreso al día siguiente?\n\n• Tarifa de ingreso al Parque Nacional Natural\n• Seguro de buceo obligatorio\n• Transporte en lancha rápida Cartagena-Islas-Cartagena\n• Equipo de buceo\n• Almuerzo el primer día\n• Aporte eco-social a DIVE TO HEAL\n\nMuelle de la Bodeguita, a 5 minutos del centro histórico, a las 8:00 AM. Saliendo desde Cartagena no hay recogida en el hotel: cada persona llega por su cuenta al muelle (el transporte terrestre hasta el muelle no está incluido).\n\nLos cursos de 2 días (Open Water, Curso Referido, Advanced, Rescue y Mindful Diving) requieren alojamiento en las islas: al menos una noche, la del día 1 (el día 1 no se vuelve a Cartagena). No hay opción de ir y volver desde Cartagena ambos días. El alojamiento no está incluido y debe reservarse directamente con el hotel. Lo mismo en los paquetes de buceo de varios días (4, 5, 7 y 9 inmersiones): se duerme en las islas y el alojamiento, que no está incluido, se reserva directamente con el hotel.\n\n¿Ha pasado *más de 2 años* desde la última inmersión de alguno del grupo?"
+   ],
+   "explicaciones": [
+    "La respuesta de hoy reconoce que se quedarán una noche más y explica qué implica para el regreso, en vez de ignorar el mensaje y repetir la pregunta sobre certificación. El contexto figura como «sin contexto», así que esa información no está disponible allí para verificarla.",
+    "La respuesta reconoce que se quedarán una noche más y explica que el regreso en otra fecha no está incluido y debe coordinarse con un asesor. Termina con una sola pregunta pertinente, sin repetir la pregunta anterior sobre el tiempo desde la última inmersión."
+   ],
+   "segundos": [
+    4.06,
+    3.66
+   ],
+   "trazas": [
+    [
+     "[ROUTER][JEV] 337 ms detected={'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.23, 'customer_place': {'choice': 'islands', 'confidence': 0.48}, 'adds_person': 0.04, 'shares_open_fact': 0.06, 'changes_date': False, 'ya_reservado': False, 'pide_datos_ajenos': False, 'pide_servicio_privado': False, 'nuevo_caso': False, 'pregunta_si_es_ia': False, 'pide_precio': Fal",
+     "[CORE][NOTAS] Jev: nada que apuntar (0.06): no se llama al extractor",
+     "[EXTRACT][EX9B-6] duration='multi_day' (estancia; regex: 'multi_day')",
+     "[CORE][U3-7] respuesta a certification por Jev: None (1.00)",
+     "[HECHOS] contesta el redactor: certified_diving ['incluye', 'horario', 'regreso'] origen=cartagena"
+    ],
+    [
+     "[ROUTER][JEV] 287 ms detected={'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.23, 'customer_place': {'choice': 'islands', 'confidence': 0.61}, 'adds_person': 0.04, 'shares_open_fact': 0.05, 'changes_date': False, 'ya_reservado': False, 'pide_datos_ajenos': False, 'pide_servicio_privado': False, 'nuevo_caso': False, 'pregunta_si_es_ia': False, 'pide_precio': Fal",
+     "[CORE][NOTAS] Jev: nada que apuntar (0.05): no se llama al extractor",
+     "[EXTRACT][EX9B-6] el regex leía duration='multi_day'; el cliente no lo dice",
+     "[CORE][U3-7] respuesta a safety por Jev: None (1.00)",
+     "[HECHOS] contesta el redactor: certified_diving ['incluye', 'horario', 'regreso'] origen=cartagena"
+    ]
+   ]
+  },
+  {
+   "id": "l9p2-16",
+   "dialogo": "contacto-hoteles-cocoliso-san-pedro",
+   "criterio": "lat9p2:sin_dato",
+   "repeticiones": 2,
+   "fallan": 2,
+   "respuestas": [
+    "¡Perfecto! 🙌\n\n¿Con cuál te animas — *buceo*, *minicurso*, *snorkel* o un *curso PADI*? 🌊",
+    "¡Perfecto! 🙌\n\n¿Con cuál te animas — *buceo*, *minicurso*, *snorkel* o un *curso PADI*? 🌊"
+   ],
+   "explicaciones": [
+    "El cliente respondió «O el San Pedro», pero el bot lo ignora y vuelve a preguntar qué actividad quiere, además de anteponer «¡Perfecto!» sin que haya contestado esa pregunta.",
+    "El cliente indicó «O el San Pedro», pero la respuesta no reconoce ni aclara esa elección y vuelve a preguntar qué actividad quiere. Además, dice «¡Perfecto!» aunque el cliente no respondió a la pregunta anterior."
+   ],
+   "segundos": [
+    1.85,
+    1.49
+   ],
+   "trazas": [
+    [
+     "[ROUTER][JEV] 386 ms duda=['comparing@0.45']: decide Jev igual detected={'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.1, 'customer_place': {'choice': 'islands', 'confidence': 0.27}, 'adds_person': 0.12, 'shares_open_fact': 0.06, 'changes_date': False, 'ya_reservado': False, 'pide_datos_ajenos': False, 'pide_servicio_privado': False, 'nuevo_caso': False, 'preg",
+     "[CORE][NOTAS] Jev: nada que apuntar (0.06): no se llama al extractor",
+     "[EXTRACT][CAL-C3] hotel='San Pedro' (nombrado por el cliente)",
+     "[EXTRACT][CAL-C3e] 'San Pedro' es del catálogo de las islas: ('san_pedro_majagua', 'isla_grande')",
+     "[INTENT] Detected location: island",
+     "[INTENT] Detected island: isla_grande",
+     "[INTENT] Detected hotel: san_pedro_majagua",
+     "[CORE][U3-6] señales sin LLM (Jev: acompañante 0.10, no pide recordar)"
+    ],
+    [
+     "[ROUTER][JEV] 429 ms duda=['comparing@0.37']: decide Jev igual detected={'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.08, 'customer_place': {'choice': 'islands', 'confidence': 0.25}, 'adds_person': 0.11, 'shares_open_fact': 0.05, 'changes_date': False, 'ya_reservado': False, 'pide_datos_ajenos': False, 'pide_servicio_privado': False, 'nuevo_caso': False, 'pre",
+     "[CORE][NOTAS] Jev: nada que apuntar (0.05): no se llama al extractor",
+     "[CORE][U3-6] señales sin LLM (Jev: acompañante 0.08, no pide recordar)"
+    ]
+   ]
+  },
+  {
+   "id": "l9p2-17",
+   "dialogo": "paquete-5-buceos-precio-overnight-isla-grande-baru",
+   "criterio": "lat9p2:sin_dato",
+   "repeticiones": 2,
+   "fallan": 0,
+   "respuestas": [
+    "Perfect! 🙌\n\nAnd how many people should I plan for? That way I can give you the exact price. 😊",
+    "Perfect! 🙌\n\nAnd how many people should I plan for? That way I can give you the exact price. 😊"
+   ],
+   "explicaciones": [
+    "El cliente indicó que es principiante y la respuesta lo reconoce con «Perfect!». Después hace una sola pregunta de reserva, sin repetir un dato que el cliente acabara de dar.",
+    "La respuesta reconoce que el cliente es principiante y hace una sola pregunta de reserva, sobre cuántas personas asistirán. No hay contexto disponible para evaluar si esa pregunta ya se había hecho."
+   ],
+   "segundos": [
+    2.54,
+    2.4
+   ],
+   "trazas": [
+    [
+     "[ROUTER][JEV] 411 ms detected={'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.07, 'customer_place': {'choice': 'none', 'confidence': 1.0}, 'adds_person': 0.07, 'shares_open_fact': 0.49, 'changes_date': False, 'ya_reservado': False, 'pide_datos_ajenos': False, 'pide_servicio_privado': False, 'nuevo_caso': False, 'pregunta_si_es_ia': False, 'pide_precio': False, ",
+     "[CORE][U3-6] señales sin LLM (Jev: acompañante 0.07, no pide recordar)"
+    ],
+    [
+     "[ROUTER][JEV] 295 ms detected={'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.1, 'customer_place': {'choice': 'none', 'confidence': 1.0}, 'adds_person': 0.08, 'shares_open_fact': 0.45, 'changes_date': False, 'ya_reservado': False, 'pide_datos_ajenos': False, 'pide_servicio_privado': False, 'nuevo_caso': False, 'pregunta_si_es_ia': False, 'pide_precio': False, '",
+     "[CORE][U3-6] señales sin LLM (Jev: acompañante 0.10, no pide recordar)"
+    ]
+   ]
+  },
+  {
+   "id": "l9p2-18",
+   "dialogo": "descuento-online-sin-codigo",
+   "criterio": "lat9p2:sin_dato",
+   "repeticiones": 2,
+   "fallan": 2,
+   "respuestas": [
+    "Perfect! 🙌\n\nWhere would you be departing from? This plan takes 2 days and you need to *stay on the islands* (accommodation is not included): you can leave *from Cartagena* on the first day or, if you're already *on the islands*, we arrange pickup at your hotel.",
+    "Perfect! 🙌\n\nWhere would you be departing from? This plan takes 2 days and you need to *stay on the islands* (accommodation is not included): you can leave *from Cartagena* on the first day or, if you're already *on the islands*, we arrange pickup at your hotel."
+   ],
+   "explicaciones": [
+    "El cliente dice «ah I see», pero la respuesta empieza con «Perfect!» y repite la pregunta sobre desde dónde saldría, sin reconocer directamente su comentario. No hay contexto disponible para determinar si esa pregunta ya se había hecho.",
+    "El cliente dice «ah I see», pero la respuesta no lo reconoce y vuelve a preguntar desde dónde saldría. Además, empieza con «Perfect!», aunque el cliente no respondió a una pregunta."
+   ],
+   "segundos": [
+    1.46,
+    1.91
+   ],
+   "trazas": [
+    [
+     "[ROUTER][JEV] 297 ms detected={'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.03, 'customer_place': {'choice': 'none', 'confidence': 0.98}, 'adds_person': 0.02, 'shares_open_fact': 0.03, 'changes_date': False, 'ya_reservado': False, 'pide_datos_ajenos': False, 'pide_servicio_privado': False, 'nuevo_caso': False, 'pregunta_si_es_ia': False, 'pide_precio': False,",
+     "[CORE][NOTAS] Jev: nada que apuntar (0.03): no se llama al extractor",
+     "[CORE][U3-6] señales sin LLM (Jev: acompañante 0.03, no pide recordar)",
+     "[CORE][U3-7] respuesta a location por Jev: None (1.00)"
+    ],
+    [
+     "[ROUTER][JEV] 343 ms detected={'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.04, 'customer_place': {'choice': 'none', 'confidence': 0.98}, 'adds_person': 0.03, 'shares_open_fact': 0.03, 'changes_date': False, 'ya_reservado': False, 'pide_datos_ajenos': False, 'pide_servicio_privado': False, 'nuevo_caso': False, 'pregunta_si_es_ia': False, 'pide_precio': False,",
+     "[CORE][NOTAS] Jev: nada que apuntar (0.03): no se llama al extractor",
+     "[CORE][U3-6] señales sin LLM (Jev: acompañante 0.04, no pide recordar)",
+     "[CORE][U3-7] respuesta a location por Jev: None (1.00)"
+    ]
+   ]
+  },
+  {
+   "id": "l9p2-19",
+   "dialogo": "colombianos-precio-minicurso-dos-inmersiones",
+   "criterio": "lat9p2:sin_dato",
+   "repeticiones": 2,
+   "fallan": 2,
+   "respuestas": [
+    "¡Perfecto! 🙌\n\n¿Con cuál te animas — *buceo*, *minicurso*, *snorkel* o un *curso PADI*? 🌊",
+    "¡Perfecto! 🙌\n\n¿Con cuál te animas — *buceo*, *minicurso*, *snorkel* o un *curso PADI*? 🌊"
+   ],
+   "explicaciones": [
+    "El cliente comenta que vio un video de un paquete con dos inmersiones en distintos puntos, pero la respuesta no reconoce ni responde a ese comentario y vuelve a preguntar qué actividad le interesa. Además, ante un comentario que no responde a la pregunta anterior, no corresponde empezar con «¡Perfecto!».",
+    "El cliente comenta que vio un video sobre dos inmersiones en distintos puntos, pero la respuesta no lo reconoce y repite la pregunta sobre qué actividad elige. Además, «¡Perfecto!» no corresponde porque el cliente no respondió a esa pregunta."
+   ],
+   "segundos": [
+    1.37,
+    1.39
+   ],
+   "trazas": [
+    [
+     "[ROUTER][JEV] 383 ms detected={'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.07, 'customer_place': {'choice': 'none', 'confidence': 0.98}, 'adds_person': 0.04, 'shares_open_fact': 0.04, 'changes_date': False, 'ya_reservado': False, 'pide_datos_ajenos': False, 'pide_servicio_privado': False, 'nuevo_caso': False, 'pregunta_si_es_ia': False, 'pide_precio': False,",
+     "[CORE][NOTAS] Jev: nada que apuntar (0.04): no se llama al extractor",
+     "[EXTRACT][EX9B-6] el regex leía duration='multi_day'; el cliente no lo dice",
+     "[INTENT] Detected cert dive count: 2",
+     "[CORE][U3-6] señales sin LLM (Jev: acompañante 0.07, no pide recordar)"
+    ],
+    [
+     "[ROUTER][JEV] 336 ms detected={'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.06, 'customer_place': {'choice': 'none', 'confidence': 1.0}, 'adds_person': 0.04, 'shares_open_fact': 0.04, 'changes_date': False, 'ya_reservado': False, 'pide_datos_ajenos': False, 'pide_servicio_privado': False, 'nuevo_caso': False, 'pregunta_si_es_ia': False, 'pide_precio': False, ",
+     "[CORE][NOTAS] Jev: nada que apuntar (0.04): no se llama al extractor",
+     "[EXTRACT][EX9B-6] el regex leía duration='multi_day'; el cliente no lo dice",
+     "[INTENT] Detected cert dive count: 2",
+     "[CORE][U3-6] señales sin LLM (Jev: acompañante 0.06, no pide recordar)"
+    ]
+   ]
+  },
+  {
+   "id": "l9p2-20",
+   "dialogo": "certificado-precio-dia-paquete-5-y-hoteles-base",
+   "criterio": "lat9p2:sin_dato",
+   "repeticiones": 2,
+   "fallan": 2,
+   "respuestas": [
+    "Perfect! 🙌\n\nAnd how many people should I plan for? That way I can give you the exact price. 😊",
+    "Perfect! 🙌\n\nAnd how many people should I plan for? That way I can give you the exact price. 😊"
+   ],
+   "explicaciones": [
+    "El cliente indicó sus certificaciones, pero la respuesta no las reconoce ni responde a ese dato y pasa directamente a preguntar cuántas personas son. Además, empieza con «Perfect!» aunque el cliente no contestó a la pregunta anterior.",
+    "El cliente indicó que tiene certificaciones PADI Open Water, Advanced Open Water y Deep Diver, pero la respuesta no reconoce ni comenta ese dato y pasa a preguntar cuántas personas son. Además, empieza con «Perfect!» aunque el cliente no respondió a la pregunta anterior."
+   ],
+   "segundos": [
+    2.55,
+    2.45
+   ],
+   "trazas": [
+    [
+     "[ROUTER][JEV] 319 ms detected={'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.03, 'customer_place': {'choice': 'none', 'confidence': 0.66}, 'adds_person': 0.03, 'shares_open_fact': 0.05, 'changes_date': False, 'ya_reservado': False, 'pide_datos_ajenos': False, 'pide_servicio_privado': False, 'nuevo_caso': False, 'pregunta_si_es_ia': False, 'pide_precio': False,",
+     "[CORE][NOTAS] Jev: nada que apuntar (0.05): no se llama al extractor",
+     "[EXTRACT][EX8] activity='padi_open_water'",
+     "[EXTRACT][GEN8] pregunta por 'padi_advanced' sin elegirla",
+     "[INTENT] Activity updated to: padi_open_water (service: open_water)",
+     "[CORE][U3-6] señales sin LLM (Jev: acompañante 0.03, no pide recordar)"
+    ],
+    [
+     "[ROUTER][JEV] 317 ms detected={'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.03, 'customer_place': {'choice': 'none', 'confidence': 0.41}, 'adds_person': 0.03, 'shares_open_fact': 0.05, 'changes_date': False, 'ya_reservado': False, 'pide_datos_ajenos': False, 'pide_servicio_privado': False, 'nuevo_caso': False, 'pregunta_si_es_ia': False, 'pide_precio': False,",
+     "[CORE][NOTAS] Jev: nada que apuntar (0.05): no se llama al extractor",
+     "[EXTRACT][EX8] activity='padi_open_water'",
+     "[EXTRACT][GEN8] pregunta por 'padi_advanced' sin elegirla",
+     "[INTENT] Activity updated to: padi_open_water (service: open_water)",
+     "[CORE][U3-6] señales sin LLM (Jev: acompañante 0.03, no pide recordar)"
+    ]
+   ]
+  },
+  {
+   "id": "l9p2-21",
+   "dialogo": "ninos-6-y-10",
+   "criterio": "lat9p2:pregunta",
+   "repeticiones": 2,
+   "fallan": 1,
+   "respuestas": [
+    "Sí, los dos pueden hacer snorkel: es desde los 6 años.\n\n¿Desde dónde saldrías? Puedes salir *desde Cartagena* (desde el Muelle de la Bodeguita, ida y vuelta el mismo día) o, si ya estás *en las islas*, coordinamos la recogida en tu hotel.",
+    "Sí, los dos pueden hacer snorkel: es desde los 6 años.\n\nSi quieres, te ayudo a reservar: *Snorkel*. ¿Te animas? 🌊"
+   ],
+   "explicaciones": [
+    "Contesta la duda sobre la edad, pero después hace dos preguntas seguidas sobre desde dónde saldrían y si están en Cartagena o en las islas. El contexto no aporta información adicional.",
+    "La respuesta contesta que ambos pueden hacer snorkel y aclara la edad mínima. Después hace una sola pregunta de reserva, sin volver a pedir un dato que el cliente ya haya dado."
+   ],
+   "segundos": [
+    3.47,
+    5.18
+   ],
+   "trazas": [
+    [
+     "[ROUTER][JEV] 305 ms detected={'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.88, 'customer_place': {'choice': 'none', 'confidence': 1.0}, 'adds_person': 0.07, 'shares_open_fact': 0.23, 'changes_date': False, 'ya_reservado': False, 'pide_datos_ajenos': False, 'pide_servicio_privado': False, 'nuevo_caso': False, 'pregunta_si_es_ia': False, 'pide_precio': False, ",
+     "[CORE][U3-6] recordar sin LLM (Jev: no pide recordar)",
+     "[EXTRACT][EX7] group_size=2",
+     "[EXTRACT][EX8] activity='snorkel'",
+     "[EXTRACT][GEN8] pregunta por 'snorkel' sin elegirla",
+     "[INTENT] Activity updated to: snorkel (service: snorkeling)",
+     "[INTENT] Detected group size: 2",
+     "[HECHOS] contesta el redactor: snorkel ['edad'] origen=None"
+    ],
+    [
+     "[ROUTER][JEV] 306 ms detected={'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.88, 'customer_place': {'choice': 'none', 'confidence': 1.0}, 'adds_person': 0.06, 'shares_open_fact': 0.24, 'changes_date': False, 'ya_reservado': False, 'pide_datos_ajenos': False, 'pide_servicio_privado': False, 'nuevo_caso': False, 'pregunta_si_es_ia': False, 'pide_precio': False, ",
+     "[CORE][U3-6] recordar sin LLM (Jev: no pide recordar)",
+     "[EXTRACT][GEN8] pregunta por 'snorkel' sin elegirla",
+     "[HECHOS] contesta el redactor: snorkel ['edad'] origen=None"
+    ]
+   ]
+  },
+  {
+   "id": "l9p2-22",
+   "dialogo": "paquete-en-carrito",
+   "criterio": "lat9p2:pregunta",
+   "repeticiones": 2,
+   "fallan": 0,
+   "respuestas": [
+    "¡Sí! Hay paquetes de varios días para buzos certificados. Si salen desde Cartagena, pueden elegir entre:\n\n- **4 inmersiones en 2 días:** 316 USD / 1.154.000 COP online por persona.\n- **5 inmersiones en 2 días:** 392 USD / 1.429.000 COP online por persona.\n- **7 inmersiones en 3 días:** 503 USD / 1.813.000 COP online por persona.\n- **9 inmersiones en 4 días:** 602 USD / 2.170.000 COP online por persona.\n\nTodos requieren pasar la noche en las islas; el alojamiento no está incluido. Los paquetes de 5, 7 y 9 inmersiones incluyen una nocturna. Si ya están alojados en las islas, también hay opciones de paquetes con precios distintos y sin almuerzo.\n\n¿Saldrían desde Cartagena o ya estarían en las islas?",
+    "¡Sí! Hay paquetes de varios días para buzos certificados. 🤿\n\nSi salen desde Cartagena:\n- **4 inmersiones en 2 días:** 316 USD / 1.154.000 COP online.\n- **5 inmersiones en 2 días:** 392 USD / 1.429.000 COP online.\n- **7 inmersiones en 3 días:** 503 USD / 1.813.000 COP online.\n- **9 inmersiones en 4 días:** 602 USD / 2.170.000 COP online.\n\nSi ya están en las islas:\n- **4 inmersiones en 2 días:** 204 USD / 720.000 COP online, solo diurnas; o 236 USD / 830.000 COP online, con una nocturna.\n- **5 inmersiones en 2 días:** 319 USD / 1.000.000 COP online.\n- **7 inmersiones en 3 días:** 432 USD / 1.375.000 COP online.\n- **9 inmersiones en 4 días:** 544 USD / 1.695.000 COP online.\n\nLos paquetes de varios días requieren alojarse en las islas; el alojamiento no está incluido. Los de 5, 7 y 9 inmersiones incluyen una nocturna. ¿Desde Cartagena o ya están en las islas?"
+   ],
+   "explicaciones": [
+    "La respuesta contesta la pregunta sobre paquetes de varios días y termina con una sola pregunta pertinente para distinguir si salen desde Cartagena o ya están en las islas. No repite un dato que el cliente acaba de dar ni antepone «¡Perfecto!» a una respuesta que no contestó.",
+    "La respuesta contesta la pregunta sobre paquetes de varios días y termina con una sola pregunta pertinente sobre el origen, que aún no se había indicado. No antepone «¡Perfecto!» a una respuesta que no contestó la pregunta previa."
+   ],
+   "segundos": [
+    4.22,
+    4.86
+   ],
+   "trazas": [
+    [
+     "[ROUTER][JEV] 526 ms detected={'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.12, 'customer_place': {'choice': 'none', 'confidence': 0.98}, 'adds_person': 0.03, 'shares_open_fact': 0.04, 'changes_date': False, 'ya_reservado': False, 'pide_datos_ajenos': False, 'pide_servicio_privado': False, 'nuevo_caso': False, 'pregunta_si_es_ia': False, 'pide_precio': False,",
+     "[CORE][NOTAS] Jev: nada que apuntar (0.04): no se llama al extractor",
+     "[CORE][U3-6] recordar sin LLM (Jev: no pide recordar)",
+     "[CORE][RAG5] respuesta adelantada aprovechada",
+     "[EXTRACT][ARQ1T] pide un paquete de varios días sin decir cuántos",
+     "[EXTRACT][EX9B-6] duration='multi_day' (días de buceo; regex: 'multi_day')",
+     "[INTENT] Detected duration: multi_day",
+     "[CORE][U3-6] señales sin LLM (Jev: acompañante 0.12, no pide recordar)"
+    ],
+    [
+     "[ROUTER][JEV] 411 ms detected={'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.13, 'customer_place': {'choice': 'none', 'confidence': 0.98}, 'adds_person': 0.03, 'shares_open_fact': 0.04, 'changes_date': False, 'ya_reservado': False, 'pide_datos_ajenos': False, 'pide_servicio_privado': False, 'nuevo_caso': False, 'pregunta_si_es_ia': False, 'pide_precio': False,",
+     "[CORE][NOTAS] Jev: nada que apuntar (0.04): no se llama al extractor",
+     "[CORE][U3-6] recordar sin LLM (Jev: no pide recordar)",
+     "[CORE][RAG5] respuesta adelantada aprovechada",
+     "[EXTRACT][ARQ1T] pide un paquete de varios días sin decir cuántos",
+     "[EXTRACT][EX9B-6] duration='multi_day' (días de buceo; regex: 'multi_day')",
+     "[INTENT] Detected duration: multi_day",
+     "[CORE][U3-6] señales sin LLM (Jev: acompañante 0.13, no pide recordar)"
+    ]
+   ]
+  },
+  {
+   "id": "l9p2-23",
+   "dialogo": "semana-santa-solo-avanzado-islas",
+   "criterio": "lat9p2:pregunta",
+   "repeticiones": 2,
+   "fallan": 1,
+   "respuestas": [
+    "**Si ya estás en las Islas del Rosario**\n\nEl precio es el mismo; solo cambia la moneda según si eres colombiano/a o residente en Colombia. Reservando directamente en nuestra web se aplica automáticamente el **10% de descuento online**.\n\n**Hospedaje:** nuestra base está en los hoteles San Pedro de Majagua y Cocoliso, en Isla Grande. También puedes consultar Rosario de Mar, Secreto, Ubuntu, Mulata, Eco Hotel Las Palmeras o Pao Pao. El alojamiento se reserva directamente con cada hotel y no está incluido en el buceo.\n\nSiempre hay disponibilidad: operamos todos los días, festivos incluidos, salvo el 25 de diciembre y el 1 de enero; si el mar no está apto, la salida se reprograma.\n\nPara darte el precio exacto necesito saber desde dónde sales: ¿saldrías *desde Cartagena* o ya estás *en las Islas del Rosario*? Los planes y los precios cambian según el punto de salida. 🌊",
+    "Reservando directamente en nuestra web tienes el 10% de descuento online, ya reflejado en el precio online. El precio es el mismo en ambas monedas; colombianos y residentes en Colombia pagan en COP, y los demás en USD.\n\nPara hospedarte en las islas, nuestra base está en los hoteles San Pedro de Majagua y Cocoliso, en Isla Grande. También puedes consultar Rosario de Mar, Secreto, Ubuntu, Mulata, Eco Hotel Las Palmeras o Pao Pao. El alojamiento se reserva directamente con el hotel y no está incluido en el buceo.\n\nSiempre hay disponibilidad: operamos todos los días, festivos incluidos, salvo el 25 de diciembre y el 1 de enero; si el mar no está apto, la salida se reprograma.\n\nPara darte el precio exacto necesito saber desde dónde sales: ¿saldrías *desde Cartagena* o ya estás *en las Islas del Rosario*? Los planes y los precios cambian según el punto de salida. 🌊"
+   ],
+   "explicaciones": [
+    "El cliente ya había indicado que es buzo certificado y preguntó por costos con equipo, disponibilidad y hospedaje. La respuesta reconoce disponibilidad y hospedaje, pero vuelve a preguntar desde dónde saldría, aunque el bot ya había preguntado eso y el cliente no lo respondió; además, no contesta el costo con equipo.",
+    "La respuesta reconoce y contesta las preguntas sobre hospedaje y disponibilidad, y termina con una sola pregunta pertinente sobre el punto de salida, necesario para precisar el precio. No vuelve a preguntar un dato que el cliente ya haya dado."
+   ],
+   "segundos": [
+    9.84,
+    9.48
+   ],
+   "trazas": [
+    [
+     "[ROUTER][JEV] 335 ms duda=['availability_question@0.54']: decide Jev igual detected={'availability_question': True, 'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.17, 'customer_place': {'choice': 'none', 'confidence': 0.98}, 'adds_person': 0.05, 'shares_open_fact': 0.08, 'changes_date': False, 'ya_reservado': False, 'pide_datos_ajenos': False, 'pide_servicio_pr",
+     "[CORE][NOTAS] Jev: nada que apuntar (0.08): no se llama al extractor",
+     "[CORE][U3-6] recordar sin LLM (Jev: no pide recordar)",
+     "[CORE][S4-26] la regex ve a otra persona y Jev no (0.17): manda Jev",
+     "[CORE][U3-6] señales sin LLM (Jev: acompañante 0.17, no pide recordar)",
+     "[CORE][S4-26] la regex ve a otra persona y Jev no (0.17): manda Jev",
+     "[HECHOS] mensaje mezclado: el RAG recibe los hechos de ['precio', 'disponibilidad', 'hoteles'] (certified_diving)",
+     "[CORE][RAG5] el contexto cambió entre medias (hechos): se rehace la respuesta",
+     "[CORE][ORIGEN] precio sin origen -> se pregunta el origen antes de cotizar",
+     "[AVISOS] operamos-todos-los-dias al final de la respuesta"
+    ],
+    [
+     "[ROUTER][JEV] 313 ms duda=['availability_question@0.52']: decide Jev igual detected={'availability_question': True, 'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.15, 'customer_place': {'choice': 'none', 'confidence': 0.98}, 'adds_person': 0.04, 'shares_open_fact': 0.09, 'changes_date': False, 'ya_reservado': False, 'pide_datos_ajenos': False, 'pide_servicio_pr",
+     "[CORE][NOTAS] Jev: nada que apuntar (0.09): no se llama al extractor",
+     "[CORE][U3-6] recordar sin LLM (Jev: no pide recordar)",
+     "[CORE][S4-26] la regex ve a otra persona y Jev no (0.15): manda Jev",
+     "[CORE][U3-6] señales sin LLM (Jev: acompañante 0.15, no pide recordar)",
+     "[CORE][S4-26] la regex ve a otra persona y Jev no (0.15): manda Jev",
+     "[HECHOS] mensaje mezclado: el RAG recibe los hechos de ['precio', 'disponibilidad', 'hoteles'] (certified_diving)",
+     "[CORE][RAG5] el contexto cambió entre medias (hechos): se rehace la respuesta",
+     "[CORE][ORIGEN] precio sin origen -> se pregunta el origen antes de cotizar",
+     "[AVISOS] operamos-todos-los-dias al final de la respuesta"
+    ]
+   ]
+  },
+  {
+   "id": "l9p2-24",
+   "dialogo": "paquete-5-buceos-islas-residente-sin-recogida",
+   "criterio": "lat9p2:pregunta",
+   "repeticiones": 2,
+   "fallan": 2,
+   "respuestas": [
+    "No hay un descuento especial por ser colombiano o residente en Colombia; el precio es el mismo, solo cambia la moneda. Si eres residente en Colombia, pagas en COP.\n\n• 10% de descuento reservando online directamente con nosotros a través de la página web, no a través de terceros como PADI. Este es el descuento online estándar y se aplica automáticamente al reservar por la web.\n• 10% de descuento para grupos de 5 personas o más, que se suma al 10% de descuento online (20% total reservando online). No aplica automáticamente: el grupo debe contactar al equipo para aplicarlo. Hay que pedirlo al equipo ANTES de pagar: si el grupo paga sin haberlo pedido, pierde el descuento (no se devuelve después). Aplica a buceo recreativo, minicurso y snorkel; no aplica a cursos PADI. Para el plan de acompañante (quien va en la lancha sin bucear ni hacer snorkel), si entra en el descuento de grupo lo confirma el equipo al pedir el descuento, antes de pagar.\n• 5% de descuento si traes tu propio equipo COMPLETO (regulador, BCD/chaleco, traje, máscara, aletas, etc.), solo en buceo recreativo y cursos PADI: no aplica al minicurso ni al snorkel, aunque traigas el equipo completo. Tampoco aplica si solo traes parte del equipo.\n• Los clientes colombianos y residentes en Colombia pagan en pesos colombianos (COP). Los clientes internacionales pagan en dólares (USD). No hay un descuento especial por ser colombiano; el precio es el mismo, solo cambia la moneda.\n• Los descuentos no son acumulables excepto en casos especiales autorizados por el staff o donde se indique explícitamente lo contrario (ej: grupo + online sí se suman; equipo propio + online también).\n\nLos cursos de 2 días (Open Water, Curso Referido, Advanced, Rescue y Mindful Diving) requieren alojamiento en las islas: al menos una noche, la del día 1 (el día 1 no se vuelve a Cartagena). No hay opción de ir y volver desde Cartagena ambos días. El alojamiento no está incluido y debe reservarse directamente con el hotel. Lo mismo en los paquetes de buceo de varios días (4, 5, 7 y 9 inmersiones): se duerme en las islas y el alojamiento, que no está incluido, se reserva directamente con el hotel.\n\n¿Saldrías *desde Cartagena* o ya estás *en las Islas del Rosario*? Así te paso el plan y el enlace exactos. 🌊",
+    "¡Con mucho gusto! Te cuento cómo funciona:\n\nNo hay un descuento especial por ser colombiano. El precio es el mismo, solo cambia la moneda: los colombianos y residentes en Colombia pagan en pesos colombianos (COP), y los clientes internacionales en dólares (USD).\n\n• 10% de descuento reservando online directamente con nosotros a través de la página web, no a través de terceros como PADI. Este es el descuento online estándar y se aplica automáticamente al reservar por la web.\n• 10% de descuento para grupos de 5 personas o más, que se suma al 10% de descuento online (20% total reservando online). No aplica automáticamente: el grupo debe contactar al equipo para aplicarlo. Hay que pedirlo al equipo ANTES de pagar: si el grupo paga sin haberlo pedido, pierde el descuento (no se devuelve después). Aplica a buceo recreativo, minicurso y snorkel; no aplica a cursos PADI. Para el plan de acompañante (quien va en la lancha sin bucear ni hacer snorkel), si entra en el descuento de grupo lo confirma el equipo al pedir el descuento, antes de pagar.\n• 5% de descuento si traes tu propio equipo COMPLETO (regulador, BCD/chaleco, traje, máscara, aletas, etc.), solo en buceo recreativo y cursos PADI: no aplica al minicurso ni al snorkel, aunque traigas el equipo completo. Tampoco aplica si solo traes parte del equipo.\n• Los clientes colombianos y residentes en Colombia pagan en pesos colombianos (COP). Los clientes internacionales pagan en dólares (USD). No hay un descuento especial por ser colombiano; el precio es el mismo, solo cambia la moneda.\n• Los descuentos no son acumulables excepto en casos especiales autorizados por el staff o donde se indique explícitamente lo contrario (ej: grupo + online sí se suman; equipo propio + online también).\n\n¿Te ayudo con algo más de tu plan de buceo? 🌊"
+   ],
+   "explicaciones": [
+    "La respuesta contesta la pregunta sobre el descuento, pero termina preguntando desde dónde saldría el cliente, sin que el contexto disponible permita justificar que ese sea el dato de reserva que toca pedir. Además, el contexto figura como «sin contexto», así que no se puede verificar que esa pregunta corresponda.",
+    "La respuesta contesta la pregunta sobre el descuento para colombianos, pero termina con una pregunta genérica en vez de una sola pregunta pertinente de la reserva. Además, el contexto está indicado como «sin contexto», así que no hay datos de reserva para formular la pregunta que toca."
+   ],
+   "segundos": [
+    3.45,
+    5.25
+   ],
+   "trazas": [
+    [
+     "[ROUTER][JEV] 338 ms detected={'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.14, 'customer_place': {'choice': 'none', 'confidence': 0.97}, 'adds_person': 0.04, 'shares_open_fact': 0.15, 'changes_date': False, 'ya_reservado': False, 'pide_datos_ajenos': False, 'pide_servicio_privado': False, 'nuevo_caso': False, 'pregunta_si_es_ia': False, 'pide_precio': False,",
+     "[CORE][NOTAS] Jev: nada que apuntar (0.15): no se llama al extractor",
+     "[CORE][U3-6] recordar sin LLM (Jev: no pide recordar)",
+     "[EXTRACT][U3-4] campo=ages regex=[3] descartado (turno con pregunta)",
+     "[INTENT] Detected nationality is_colombian=True",
+     "[CORE][U3-6] señales sin LLM (Jev: acompañante 0.14, no pide recordar)",
+     "[CORE][APLAZA] el cliente no contestó 'location' dos veces: se pregunta antes del resumen",
+     "[HECHOS][ARQ3] faltan 4 (no se rehace): ['2.450.000 COP', '2.722.000 COP', '2.100.000 COP', '2.335.000 COP']",
+     "[HECHOS] contesta el redactor: padi_open_water ['descuento', 'precio'] origen=None",
+     "[CORE][ORIGEN] precio sin origen -> se pregunta el origen antes de cotizar",
+     "[AVISOS] sin-precio-especial-colombianos: la respuesta ya lo dice",
+     "[AVISOS] descuento-grupo-no-cursos: la respuesta ya lo dice"
+    ],
+    [
+     "[ROUTER][JEV] 617 ms detected={'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.14, 'customer_place': {'choice': 'none', 'confidence': 0.97}, 'adds_person': 0.04, 'shares_open_fact': 0.18, 'changes_date': False, 'ya_reservado': False, 'pide_datos_ajenos': False, 'pide_servicio_privado': False, 'nuevo_caso': False, 'pregunta_si_es_ia': False, 'pide_precio': False,",
+     "[CORE][NOTAS] Jev: nada que apuntar (0.18): no se llama al extractor",
+     "[CORE][U3-6] recordar sin LLM (Jev: no pide recordar)",
+     "[EXTRACT][U3-4] campo=ages regex=[3] descartado (turno con pregunta)",
+     "[INTENT] Detected nationality is_colombian=True",
+     "[CORE][U3-6] señales sin LLM (Jev: acompañante 0.14, no pide recordar)",
+     "[HECHOS] contesta el redactor: None ['descuento'] origen=None",
+     "[AVISOS] sin-precio-especial-colombianos: la respuesta ya lo dice",
+     "[AVISOS] descuento-grupo-no-cursos: la respuesta ya lo dice"
+    ]
+   ]
+  },
+  {
+   "id": "l9p2-25",
+   "dialogo": "snorkel-precio-residente-y-pago-link",
+   "criterio": "lat9p2:pregunta",
+   "repeticiones": 2,
+   "fallan": 1,
+   "respuestas": [
+    "El descuento adicional es para grupos de *5 personas o más* y también aplica al snorkel. Se suma al 10% online, para un 20% total al reservar por la web. Hay que pedirlo al equipo antes de pagar; no se aplica automáticamente.\n\nSer residente en Colombia no da un descuento adicional: solo cambia la moneda a COP.\n\n• 10% de descuento reservando online directamente con nosotros a través de la página web, no a través de terceros como PADI. Este es el descuento online estándar y se aplica automáticamente al reservar por la web.\n• 10% de descuento para grupos de 5 personas o más, que se suma al 10% de descuento online (20% total reservando online). No aplica automáticamente: el grupo debe contactar al equipo para aplicarlo. Hay que pedirlo al equipo ANTES de pagar: si el grupo paga sin haberlo pedido, pierde el descuento (no se devuelve después). Aplica a buceo recreativo, minicurso y snorkel; no aplica a cursos PADI. Para el plan de acompañante (quien va en la lancha sin bucear ni hacer snorkel), si entra en el descuento de grupo lo confirma el equipo al pedir el descuento, antes de pagar.\n• 5% de descuento si traes tu propio equipo COMPLETO (regulador, BCD/chaleco, traje, máscara, aletas, etc.), solo en buceo recreativo y cursos PADI: no aplica al minicurso ni al snorkel, aunque traigas el equipo completo. Tampoco aplica si solo traes parte del equipo.\n• Los clientes colombianos y residentes en Colombia pagan en pesos colombianos (COP). Los clientes internacionales pagan en dólares (USD). No hay un descuento especial por ser colombiano; el precio es el mismo, solo cambia la moneda.\n• Los descuentos no son acumulables excepto en casos especiales autorizados por el staff o donde se indique explícitamente lo contrario (ej: grupo + online sí se suman; equipo propio + online también).\n\n¿Saldrías *desde Cartagena* o ya estás *en las Islas del Rosario*? Así te paso el plan y el enlace exactos. 🌊",
+    "El descuento adicional del 10% aplica para grupos de *5 personas o más* y se suma al 10% online. No aplica automáticamente: hay que solicitarlo al equipo antes de pagar. ¿Quieres que te pase con un asesor para que lo revise?\n\n• 10% de descuento reservando online directamente con nosotros a través de la página web, no a través de terceros como PADI. Este es el descuento online estándar y se aplica automáticamente al reservar por la web.\n• 10% de descuento para grupos de 5 personas o más, que se suma al 10% de descuento online (20% total reservando online). No aplica automáticamente: el grupo debe contactar al equipo para aplicarlo. Hay que pedirlo al equipo ANTES de pagar: si el grupo paga sin haberlo pedido, pierde el descuento (no se devuelve después). Aplica a buceo recreativo, minicurso y snorkel; no aplica a cursos PADI. Para el plan de acompañante (quien va en la lancha sin bucear ni hacer snorkel), si entra en el descuento de grupo lo confirma el equipo al pedir el descuento, antes de pagar.\n• 5% de descuento si traes tu propio equipo COMPLETO (regulador, BCD/chaleco, traje, máscara, aletas, etc.), solo en buceo recreativo y cursos PADI: no aplica al minicurso ni al snorkel, aunque traigas el equipo completo. Tampoco aplica si solo traes parte del equipo.\n• Los clientes colombianos y residentes en Colombia pagan en pesos colombianos (COP). Los clientes internacionales pagan en dólares (USD). No hay un descuento especial por ser colombiano; el precio es el mismo, solo cambia la moneda.\n• Los descuentos no son acumulables excepto en casos especiales autorizados por el staff o donde se indique explícitamente lo contrario (ej: grupo + online sí se suman; equipo propio + online también).\n\n¿Saldrías *desde Cartagena* o ya estás *en las Islas del Rosario*? Así te paso el plan y el enlace exactos. 🌊"
+   ],
+   "explicaciones": [
+    "La respuesta contesta la pregunta sobre el descuento, pero termina con una pregunta de reserva que no corresponde al dato que toca pedir y no reconoce ni aclara a qué descuento se refiere el cliente. El contexto disponible estaba vacío, así que no se puede verificar qué dato de reserva correspondía.",
+    "La respuesta contesta que el descuento adicional del 10% es para grupos de 5 o más y explica cómo solicitarlo. Termina con una sola pregunta de seguimiento y no repite un dato que el cliente haya dado."
+   ],
+   "segundos": [
+    3.86,
+    4.23
+   ],
+   "trazas": [
+    [
+     "[ROUTER][JEV] 458 ms detected={'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.04, 'customer_place': {'choice': 'none', 'confidence': 0.95}, 'adds_person': 0.04, 'shares_open_fact': 0.1, 'changes_date': False, 'ya_reservado': False, 'pide_datos_ajenos': False, 'pide_servicio_privado': False, 'nuevo_caso': False, 'pregunta_si_es_ia': False, 'pide_precio': False, ",
+     "[CORE][NOTAS] Jev: nada que apuntar (0.10): no se llama al extractor",
+     "[CORE][U3-6] recordar sin LLM (Jev: no pide recordar)",
+     "[HECHOS][ARQ3] faltan 8 (no se rehace): ['126 USD', '140 USD', '45 USD', '50 USD', '448.000 COP', '497.000 COP', '150.000 COP', '167.000 COP']",
+     "[HECHOS] contesta el redactor: snorkel ['descuento', 'precio'] origen=None",
+     "[CORE][ORIGEN] precio sin origen -> se pregunta el origen antes de cotizar",
+     "[AVISOS] descuento-grupo-no-cursos: la respuesta ya lo dice"
+    ],
+    [
+     "[ROUTER][JEV] 310 ms detected={'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.04, 'customer_place': {'choice': 'none', 'confidence': 0.77}, 'adds_person': 0.04, 'shares_open_fact': 0.2, 'changes_date': False, 'ya_reservado': False, 'pide_datos_ajenos': False, 'pide_servicio_privado': False, 'nuevo_caso': False, 'pregunta_si_es_ia': False, 'pide_precio': False, ",
+     "[CORE][U3-6] recordar sin LLM (Jev: no pide recordar)",
+     "[CORE][U3-6] señales sin LLM (Jev: acompañante 0.04, no pide recordar)",
+     "[HECHOS][ARQ3] faltan 4 (no se rehace): ['448.000 COP', '497.000 COP', '150.000 COP', '167.000 COP']",
+     "[HECHOS] contesta el redactor: snorkel ['descuento', 'precio'] origen=None",
+     "[CORE][ORIGEN] precio sin origen -> se pregunta el origen antes de cotizar",
+     "[AVISOS] sin-precio-especial-colombianos: la respuesta ya lo dice",
+     "[AVISOS] descuento-grupo-no-cursos: la respuesta ya lo dice"
+    ]
+   ]
+  },
+  {
+   "id": "l9p2-26",
+   "dialogo": "certificado-fecha-precio-cop-descuento-transferencia",
+   "criterio": "lat9p2:pregunta",
+   "repeticiones": 2,
+   "fallan": 2,
+   "respuestas": [
+    "Para darte el precio exacto necesito saber desde dónde sales: ¿saldrías *desde Cartagena* o ya estás *en las Islas del Rosario*? Los planes y los precios cambian según el punto de salida. 🌊",
+    "Como tienes cédula de extranjería, pagas en pesos colombianos; el precio es el mismo, solo cambia la moneda.\n\nSon dos puntos de buceo distintos y cada inmersión dura entre 40 y 50 minutos. El precio online ya incluye el 10% de descuento por reservar en la web.\n\nPara darte el precio exacto necesito saber desde dónde sales: ¿saldrías *desde Cartagena* o ya estás *en las Islas del Rosario*? Los planes y los precios cambian según el punto de salida. 🌊"
+   ],
+   "explicaciones": [
+    "El contexto incluye precios en COP para buzos certificados tanto desde Cartagena como desde las islas, y además indica que, si el origen no está claro, se pueden dar ambos precios rotulados o preguntar desde dónde saldría. La respuesta solo pregunta el origen y no contesta la pregunta del cliente sobre el precio.",
+    "El cliente pregunta por el precio, pero la respuesta no da ningún precio y vuelve a preguntar desde dónde saldría, aunque ya había indicado «Desde Cartagena» en un turno anterior. El fallo es de respuesta y seguimiento de la conversación, no de falta de información en el contexto."
+   ],
+   "segundos": [
+    5.84,
+    5.77
+   ],
+   "trazas": [
+    [
+     "[ROUTER][JEV] 315 ms detected={'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.04, 'customer_place': {'choice': 'none', 'confidence': 0.98}, 'adds_person': 0.05, 'shares_open_fact': 0.17, 'changes_date': False, 'ya_reservado': False, 'pide_datos_ajenos': False, 'pide_servicio_privado': False, 'nuevo_caso': False, 'pregunta_si_es_ia': False, 'pide_precio': True, ",
+     "[CORE][NOTAS] Jev: nada que apuntar (0.17): no se llama al extractor",
+     "[CORE][U3-6] recordar sin LLM (Jev: no pide recordar)",
+     "[CORE][U3-6] señales sin LLM (Jev: acompañante 0.04, no pide recordar)",
+     "[CORE][ORIGEN] precio sin origen -> se pregunta el origen antes de cotizar"
+    ],
+    [
+     "[ROUTER][JEV] 310 ms detected={'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.04, 'customer_place': {'choice': 'none', 'confidence': 0.98}, 'adds_person': 0.05, 'shares_open_fact': 0.16, 'changes_date': False, 'ya_reservado': False, 'pide_datos_ajenos': False, 'pide_servicio_privado': False, 'nuevo_caso': False, 'pregunta_si_es_ia': False, 'pide_precio': True, ",
+     "[CORE][NOTAS] Jev: nada que apuntar (0.16): no se llama al extractor",
+     "[CORE][U3-6] recordar sin LLM (Jev: no pide recordar)",
+     "[CORE][U3-6] señales sin LLM (Jev: acompañante 0.04, no pide recordar)",
+     "[CORE][ORIGEN] precio sin origen -> se pregunta el origen antes de cotizar"
+    ]
+   ]
+  },
+  {
+   "id": "l9p2-27",
+   "dialogo": "acompanante-madre-desde-cartagena",
+   "criterio": "lat9p2:pregunta",
+   "repeticiones": 2,
+   "fallan": 0,
+   "respuestas": [
+    "¡Sí! Tu mamá puede ir como acompañante y quedarse en nuestra base de la isla mientras buceas. Si salen desde Cartagena, el plan incluye lancha de ida y vuelta, almuerzo, seguro y entrada al Parque Nacional; cuesta **80 USD / 288.000 COP online**. Si ya están en las islas, cuesta lo mismo e incluye seguro y entrada, pero no almuerzo.\n\n¿Saldrían desde Cartagena o ya estarían en las islas?",
+    "¡Sí! Tu mamá puede ir como acompañante y quedarse en nuestra base de la isla mientras buceas. El plan de acompañante no incluye alojamiento; si salen desde Cartagena, incluye lancha, almuerzo, seguro y entrada al Parque Nacional Natural. Si ya están en las islas, incluye seguro y entrada, pero no almuerzo.\n\n¿Saldrían desde Cartagena o ya están alojados en las islas?"
+   ],
+   "explicaciones": [
+    "Responde a la pregunta sobre si la madre puede acompañar y quedarse en la isla, y termina con una sola pregunta pertinente para aclarar desde dónde saldrían. No vuelve a preguntar un dato que el cliente acaba de dar.",
+    "Responde a la pregunta de si su madre puede acompañarla y quedarse en la isla, y termina con una sola pregunta pertinente sobre el punto de salida. No repite un dato que el cliente haya dado ni antepone «¡Perfecto!»."
+   ],
+   "segundos": [
+    2.85,
+    3.0
+   ],
+   "trazas": [
+    [
+     "[ROUTER][JEV] 356 ms detected={'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.93, 'customer_place': {'choice': 'none', 'confidence': 0.97}, 'adds_person': 0.51, 'shares_open_fact': 0.15, 'changes_date': False, 'ya_reservado': False, 'pide_datos_ajenos': False, 'pide_servicio_privado': False, 'nuevo_caso': False, 'pregunta_si_es_ia': False, 'pide_precio': False,",
+     "[CORE][NOTAS] Jev: nada que apuntar (0.15): no se llama al extractor",
+     "[CORE][U3-6] recordar sin LLM (Jev: no pide recordar)",
+     "[CORE][RAG5] respuesta adelantada aprovechada",
+     "[EXTRACT][EX7] group_size=2",
+     "[EXTRACT][EX8] activity='certified_diving'",
+     "[INTENT] Activity updated to: certified_diving (service: 2_dives_1_day)",
+     "[INTENT] Detected group size: 2"
+    ],
+    [
+     "[ROUTER][JEV] 305 ms detected={'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.94, 'customer_place': {'choice': 'none', 'confidence': 0.98}, 'adds_person': 0.48, 'shares_open_fact': 0.15, 'changes_date': False, 'ya_reservado': False, 'pide_datos_ajenos': False, 'pide_servicio_privado': False, 'nuevo_caso': False, 'pregunta_si_es_ia': False, 'pide_precio': False,",
+     "[CORE][NOTAS] Jev: nada que apuntar (0.15): no se llama al extractor",
+     "[CORE][U3-6] recordar sin LLM (Jev: no pide recordar)",
+     "[CORE][RAG5] respuesta adelantada aprovechada",
+     "[CORE][SIGNALS] detected={'companion_activity': 'snorkel', 'mentions_other_person': True, 'companion_is_singular': True} msg='Mi madre puede acompañarme en el buceo y se quedar en la isla de apoyo?'"
+    ]
+   ]
+  },
+  {
+   "id": "l9p2-28",
+   "dialogo": "grupo-mixto-precio-cop-total",
+   "criterio": "lat9p2:pregunta",
+   "repeticiones": 2,
+   "fallan": 0,
+   "respuestas": [
+    "El valor en COP depende de dónde salgan:\n\n• *Desde Cartagena:* 655.000 COP reservando online o 727.000 COP sin reserva online.  \n• *Si ya están en las Islas del Rosario:* 475.000 COP reservando online o 528.000 COP sin reserva online.\n\nEl precio es el mismo para colombianos y residentes en Colombia; solo cambia la moneda.\n\n¿Saldrías *desde Cartagena* o ya estás *en las Islas del Rosario*? Así te paso el plan y el enlace exactos. 🌊",
+    "El valor en COP depende de dónde salgan:\n\n• *Desde Cartagena:* 655.000 COP reservando online o 727.000 COP sin reserva online.  \n• *Si ya están en las Islas del Rosario:* 475.000 COP reservando online o 528.000 COP sin reserva online.\n\nEl precio es el mismo; solo cambia la moneda según la nacionalidad o residencia. Los colombianos y residentes en Colombia pagan en COP.\n\n¿Saldrías *desde Cartagena* o ya estás *en las Islas del Rosario*? Así te paso el plan y el enlace exactos. 🌊"
+   ],
+   "explicaciones": [
+    "La respuesta contesta cuánto cuesta en COP y termina con una sola pregunta de reserva sobre el punto de salida. No vuelve a preguntar un dato que el cliente haya dado.",
+    "La respuesta contesta cuánto cuesta en COP y termina con una sola pregunta de reserva sobre el punto de salida. No hay contexto disponible para contrastar los precios."
+   ],
+   "segundos": [
+    3.65,
+    3.4
+   ],
+   "trazas": [
+    [
+     "[ROUTER][JEV] 346 ms detected={'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.04, 'customer_place': {'choice': 'none', 'confidence': 1.0}, 'adds_person': 0.05, 'shares_open_fact': 0.04, 'changes_date': False, 'ya_reservado': False, 'pide_datos_ajenos': False, 'pide_servicio_privado': False, 'nuevo_caso': False, 'pregunta_si_es_ia': False, 'pide_precio': True, '",
+     "[CORE][NOTAS] Jev: nada que apuntar (0.04): no se llama al extractor",
+     "[CORE][U3-6] recordar sin LLM (Jev: no pide recordar)",
+     "[HECHOS][ARQ3] faltan 5 (no se rehace): ['183 USD', '204 USD', '134 USD', '149 USD', 'Los clientes extranjeros pagan el 100 % con tarjeta en la pá']",
+     "[HECHOS] contesta el redactor: minicourse ['precio', 'pago'] origen=None",
+     "[CORE][ORIGEN] precio sin origen -> se pregunta el origen antes de cotizar"
+    ],
+    [
+     "[ROUTER][JEV] 362 ms detected={'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.04, 'customer_place': {'choice': 'none', 'confidence': 1.0}, 'adds_person': 0.04, 'shares_open_fact': 0.04, 'changes_date': False, 'ya_reservado': False, 'pide_datos_ajenos': False, 'pide_servicio_privado': False, 'nuevo_caso': False, 'pregunta_si_es_ia': False, 'pide_precio': True, '",
+     "[CORE][NOTAS] Jev: nada que apuntar (0.04): no se llama al extractor",
+     "[CORE][U3-6] recordar sin LLM (Jev: no pide recordar)",
+     "[HECHOS][ARQ3] faltan 5 (no se rehace): ['183 USD', '204 USD', '134 USD', '149 USD', 'Los clientes extranjeros pagan el 100 % con tarjeta en la pá']",
+     "[HECHOS] contesta el redactor: minicourse ['precio', 'pago'] origen=None",
+     "[CORE][ORIGEN] precio sin origen -> se pregunta el origen antes de cotizar"
+    ]
+   ]
+  },
+  {
+   "id": "l9p2-29",
+   "dialogo": "precio-desde-islas-vs-cartagena",
+   "criterio": "lat9p2:pregunta",
+   "repeticiones": 2,
+   "fallan": 0,
+   "respuestas": [
+    "¡Claro! Nuestra base de buceo está en dos hoteles de Isla Grande: *Hotel San Pedro de Majagua* y *Hotel Cocoliso*. También pueden hospedarse en otros hoteles cercanos con acceso marítimo, como Rosario de Mar, Secreto, Ubuntu, Mulata, Eco Hotel Las Palmeras o Pao Pao.\n\nEl alojamiento no está incluido en los planes y se reserva directamente con el hotel. Si se quedan en las islas, la recogida y el regreso en lancha están incluidos cuando el hotel tiene acceso marítimo; si salen desde Cartagena, el plan incluye el traslado en lancha y el almuerzo.\n\n¿Quieren que les comparta también los precios de las dos opciones de buceo?\n\nMuelle de la Bodeguita, a 5 minutos del centro histórico, a las 8:00 AM. Saliendo desde Cartagena no hay recogida en el hotel: cada persona llega por su cuenta al muelle (el transporte terrestre hasta el muelle no está incluido).\n\n¿Desde dónde saldrías? Puedes salir *desde Cartagena* (desde el Muelle de la Bodeguita, ida y vuelta el mismo día) o, si ya estás *en las islas*, coordinamos la recogida en tu hotel.",
+    "¡Claro! Nuestra base de buceo está en el *Hotel San Pedro de Majagua* y el *Hotel Cocoliso*, ambos en Isla Grande. También puedes hospedarte en otros hoteles con acceso marítimo, como Rosario de Mar, Secreto, Ubuntu, Mulata, Eco Hotel Las Palmeras o Pao Pao.\n\nEl alojamiento no está incluido en los planes y se reserva directamente con el hotel. Si te quedas en las islas y tu hotel tiene acceso marítimo, la recogida y el regreso en lancha están incluidos; si sales desde Cartagena, el plan incluye el traslado en lancha y el almuerzo.\n\n¿Quieres que te comparta también los precios de las dos opciones de buceo para comparar?\n\nMuelle de la Bodeguita, a 5 minutos del centro histórico, a las 8:00 AM. Saliendo desde Cartagena no hay recogida en el hotel: cada persona llega por su cuenta al muelle (el transporte terrestre hasta el muelle no está incluido).\n\n¿Desde dónde saldrías? Puedes salir *desde Cartagena* (desde el Muelle de la Bodeguita, ida y vuelta el mismo día) o, si ya estás *en las islas*, coordinamos la recogida en tu hotel."
+   ],
+   "explicaciones": [
+    "La respuesta contesta qué hoteles hay en las islas y reconoce el agradecimiento. Termina con una sola pregunta pertinente sobre el origen; no repite una pregunta ya contestada ni antepone «¡Perfecto!».",
+    "La respuesta contesta qué hoteles hay en las islas y reconoce el agradecimiento. Termina con una sola pregunta pertinente sobre el origen; no repite una pregunta ya contestada ni añade otra pregunta."
+   ],
+   "segundos": [
+    5.1,
+    4.86
+   ],
+   "trazas": [
+    [
+     "[ROUTER][JEV] 436 ms detected={'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.22, 'customer_place': {'choice': 'none', 'confidence': 0.64}, 'adds_person': 0.03, 'shares_open_fact': 0.07, 'changes_date': False, 'ya_reservado': False, 'pide_datos_ajenos': False, 'pide_servicio_privado': False, 'nuevo_caso': False, 'pregunta_si_es_ia': False, 'pide_precio': False,",
+     "[CORE][NOTAS] Jev: nada que apuntar (0.07): no se llama al extractor",
+     "[CORE][U3-6] recordar sin LLM (Jev: no pide recordar)",
+     "[HECHOS] mensaje mezclado: el RAG recibe los hechos de ['horario', 'hoteles'] (certified_diving)",
+     "[CORE][RAG5] el contexto cambió entre medias (hechos): se rehace la respuesta",
+     "[EXTRACT][CAL-C3] hotel='Hotel' (nombrado por el cliente)",
+     "[INTENT] Detected hotel: Hotel"
+    ],
+    [
+     "[ROUTER][JEV] 311 ms detected={'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.18, 'customer_place': {'choice': 'none', 'confidence': 0.74}, 'adds_person': 0.04, 'shares_open_fact': 0.07, 'changes_date': False, 'ya_reservado': False, 'pide_datos_ajenos': False, 'pide_servicio_privado': False, 'nuevo_caso': False, 'pregunta_si_es_ia': False, 'pide_precio': False,",
+     "[CORE][NOTAS] Jev: nada que apuntar (0.07): no se llama al extractor",
+     "[CORE][U3-6] recordar sin LLM (Jev: no pide recordar)",
+     "[HECHOS] mensaje mezclado: el RAG recibe los hechos de ['horario', 'hoteles'] (certified_diving)",
+     "[CORE][RAG5] el contexto cambió entre medias (hechos): se rehace la respuesta",
+     "[CORE][U3-6] señales sin LLM (Jev: acompañante 0.18, no pide recordar)"
+    ]
+   ]
+  },
+  {
+   "id": "l9p2-30",
+   "dialogo": "paquete-5-buceos-precio-overnight-isla-grande-baru",
+   "criterio": "lat9p2:pregunta",
+   "repeticiones": 2,
+   "fallan": 0,
+   "respuestas": [
+    "Yes! Isla Grande is one of the Rosario Islands, and our dive base is there. 🌴\n\nFor places with maritime access near our dive base, you could look at Hotel San Pedro de Majagua or Hotel Cocoliso, as well as Rosario de Mar, Secreto, Ubuntu, Mulata, Eco Hotel Las Palmeras, and Pao Pao. Accommodation isn’t included in the dive plans, so you’d book directly with the hotel. I don’t have budget or backpacker-specific details for these places, but would you like help comparing them based on access for diving?",
+    "Yes! Isla Grande is one of the Rosario Islands, and our dive base is there. For a solo backpacker, you could look into **Rosario de Mar, Secreto, Ubuntu, Mulata, Eco Hotel Las Palmeras, or Pao Pao**. Our base hotels are **San Pedro de Majagua** and **Cocoliso**. Accommodation isn’t included in the dive plans, so you’ll book directly with the hotel.\n\nI don’t have specific hostel or budget details for these places, but would you like help choosing a dive plan that fits your stay?"
+   ],
+   "explicaciones": [
+    "La respuesta contesta si Isla Grande forma parte de las Islas del Rosario y ofrece hoteles, reconociendo que no tiene detalles específicos para mochileros con presupuesto ajustado. Termina con una sola pregunta y no antepone «¡Perfecto!» ni vuelve a pedir un dato que el cliente acaba de dar.",
+    "La respuesta contesta si Isla Grande forma parte de las Islas del Rosario y ofrece opciones de hoteles, reconociendo que no tiene detalles específicos de hostales o presupuesto. Termina con una sola pregunta de reserva y no antepone «¡Perfecto!»."
+   ],
+   "segundos": [
+    6.08,
+    6.0
+   ],
+   "trazas": [
+    [
+     "[ROUTER][JEV] 301 ms detected={'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.04, 'customer_place': {'choice': 'none', 'confidence': 0.66}, 'adds_person': 0.04, 'shares_open_fact': 0.42, 'changes_date': False, 'ya_reservado': False, 'pide_datos_ajenos': False, 'pide_servicio_privado': False, 'nuevo_caso': True, 'pregunta_si_es_ia': False, 'pide_precio': False, ",
+     "[CORE][U3-6] recordar sin LLM (Jev: no pide recordar)",
+     "[CORE] notes captured -> ['Solo backpacker looking for budget-friendly hotel recommendations']",
+     "[CORE][U3-6] señales sin LLM (Jev: acompañante 0.04, no pide recordar)",
+     "[CORE][APLAZA] el cliente no contestó 'qty' dos veces: se pregunta antes del resumen",
+     "[HECHOS] mensaje mezclado: el RAG recibe los hechos de ['hoteles'] (certified_diving)",
+     "[CORE][RAG5] el contexto cambió entre medias (resumen,hechos): se rehace la respuesta"
+    ],
+    [
+     "[ROUTER][JEV] 295 ms detected={'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.04, 'customer_place': {'choice': 'none', 'confidence': 0.72}, 'adds_person': 0.04, 'shares_open_fact': 0.48, 'changes_date': False, 'ya_reservado': False, 'pide_datos_ajenos': False, 'pide_servicio_privado': False, 'nuevo_caso': True, 'pregunta_si_es_ia': False, 'pide_precio': False, ",
+     "[CORE][U3-6] recordar sin LLM (Jev: no pide recordar)",
+     "[CORE] notes captured -> ['Solo backpacker looking for budget/hostel-style accommodation']",
+     "[CORE][U3-6] señales sin LLM (Jev: acompañante 0.04, no pide recordar)",
+     "[CORE][APLAZA] el cliente no contestó 'qty' dos veces: se pregunta antes del resumen",
+     "[HECHOS] mensaje mezclado: el RAG recibe los hechos de ['hoteles'] (certified_diving)",
+     "[CORE][RAG5] el contexto cambió entre medias (resumen,hechos): se rehace la respuesta"
+    ]
+   ]
+  },
+  {
+   "id": "l9p2-31",
+   "dialogo": "pareja-certificados-cop-descuento-almuerzo",
+   "criterio": "lat9p2:pregunta",
+   "repeticiones": 2,
+   "fallan": 0,
+   "respuestas": [
+    "Sí, el almuerzo está incluido. • Tarifa de ingreso al Parque Nacional Natural\n• Seguro de buceo obligatorio\n• Transporte en lancha rápida Cartagena-Islas-Cartagena\n• 2 inmersiones guiadas con un profesional PADI certificado\n• Equipo de buceo\n• Almuerzo\n• Aporte eco-social a DIVE TO HEAL\n\n• Punto de encuentro: Muelle de la Bodeguita a las 8:00 a.m. (a 5 min del centro histórico)\n• Traslado en lancha rápida (aprox. 1 hora) a las Islas del Rosario\n• Bienvenida en nuestra base de buceo en las islas y entrega de equipo\n• 2 inmersiones en arrecifes + intervalo de superficie\n• Almuerzo en las instalaciones del hotel\n• Regreso a Cartagena a las 3:00 p.m. (llegada estimada 4:15 p.m.)",
+    "Sí, el almuerzo está incluido. • Tarifa de ingreso al Parque Nacional Natural\n• Seguro de buceo obligatorio\n• Transporte en lancha rápida Cartagena-Islas-Cartagena\n• 2 inmersiones guiadas con un profesional PADI certificado\n• Equipo de buceo\n• Almuerzo\n• Aporte eco-social a DIVE TO HEAL\n\n• Punto de encuentro: Muelle de la Bodeguita a las 8:00 a.m. (a 5 min del centro histórico)\n• Traslado en lancha rápida (aprox. 1 hora) a las Islas del Rosario\n• Bienvenida en nuestra base de buceo en las islas y entrega de equipo\n• 2 inmersiones en arrecifes + intervalo de superficie\n• Almuerzo en las instalaciones del hotel\n• Regreso a Cartagena a las 3:00 p.m. (llegada estimada 4:15 p.m.)"
+   ],
+   "explicaciones": [
+    "La respuesta contesta que el almuerzo está incluido y lo confirma también en la lista de inclusiones y en el itinerario. No termina con una pregunta de reserva, así que no incurre en el riesgo señalado de encadenar preguntas.",
+    "La respuesta contesta que el almuerzo está incluido y aporta detalles del itinerario. No termina con una pregunta de reserva, pero el contexto indica que el turno no pasó por el revisor y no permite determinar qué pregunta correspondía."
+   ],
+   "segundos": [
+    2.59,
+    2.51
+   ],
+   "trazas": [
+    [
+     "[ROUTER][JEV] 365 ms detected={'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.07, 'customer_place': {'choice': 'none', 'confidence': 1.0}, 'adds_person': 0.04, 'shares_open_fact': 0.03, 'changes_date': False, 'ya_reservado': False, 'pide_datos_ajenos': False, 'pide_servicio_privado': False, 'nuevo_caso': False, 'pregunta_si_es_ia': False, 'pide_precio': False, ",
+     "[CORE][NOTAS] Jev: nada que apuntar (0.03): no se llama al extractor",
+     "[HECHOS] contesta el redactor: certified_diving ['incluye'] origen=cartagena",
+     "[CORE] tras el pase a una persona: sin pregunta de la reserva"
+    ],
+    [
+     "[ROUTER][JEV] 324 ms detected={'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.05, 'customer_place': {'choice': 'none', 'confidence': 1.0}, 'adds_person': 0.05, 'shares_open_fact': 0.04, 'changes_date': False, 'ya_reservado': False, 'pide_datos_ajenos': False, 'pide_servicio_privado': False, 'nuevo_caso': False, 'pregunta_si_es_ia': False, 'pide_precio': False, ",
+     "[CORE][NOTAS] Jev: nada que apuntar (0.04): no se llama al extractor",
+     "[HECHOS] contesta el redactor: certified_diving ['incluye'] origen=cartagena",
+     "[CORE] tras el pase a una persona: sin pregunta de la reserva"
+    ]
+   ]
+  },
+  {
+   "id": "l9p2-32",
+   "dialogo": "open-water-hoteles-noche-fotos-horario",
+   "criterio": "lat9p2:pregunta",
+   "repeticiones": 2,
+   "fallan": 0,
+   "respuestas": [
+    "For your Open Water course, I’d recommend **Hotel San Pedro de Majagua** or **Hotel Cocoliso** on Isla Grande, where our dive base is located. Staying at either makes pickup direct. You can also stay at Rosario de Mar, Secreto, Ubuntu, Mulata, Eco Hotel Las Palmeras, or Pao Pao if the hotel has maritime access.\n\nAccommodation isn’t included in the course, so you’ll book directly with the hotel. Would you like me to share the course details for departing from Cartagena or from the islands?",
+    "For your Open Water course, I’d recommend staying at **Hotel San Pedro de Majagua** or **Hotel Cocoliso** on Isla Grande, where our dive base is. Pick-up is direct from either hotel. You can also stay at **Rosario de Mar, Secreto, Ubuntu, Mulata, Eco Hotel Las Palmeras,** or **Pao Pao** if they have maritime access.\n\nAccommodation isn’t included in the course, so you’ll need to book directly with the hotel. Would you like to continue with the course details?"
+   ],
+   "explicaciones": [
+    "La respuesta contesta la pregunta sobre hoteles y termina con una sola pregunta pertinente para la reserva: desde dónde saldría. No repite un dato que el cliente haya dado ni antepone «Perfecto».",
+    "La respuesta contesta la pregunta sobre hoteles en las islas, aclara que el alojamiento se reserva directamente y termina con una sola pregunta de seguimiento. No antepone «¡Perfecto!» ni vuelve a preguntar un dato que el cliente acaba de dar."
+   ],
+   "segundos": [
+    6.64,
+    6.93
+   ],
+   "trazas": [
+    [
+     "[ROUTER][JEV] 322 ms detected={'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.04, 'customer_place': {'choice': 'none', 'confidence': 0.98}, 'adds_person': 0.03, 'shares_open_fact': 0.04, 'changes_date': False, 'ya_reservado': False, 'pide_datos_ajenos': False, 'pide_servicio_privado': False, 'nuevo_caso': False, 'pregunta_si_es_ia': False, 'pide_precio': False,",
+     "[CORE][NOTAS] Jev: nada que apuntar (0.04): no se llama al extractor",
+     "[CORE][U3-6] recordar sin LLM (Jev: no pide recordar)",
+     "[CORE][U3-6] señales sin LLM (Jev: acompañante 0.04, no pide recordar)",
+     "[HECHOS] mensaje mezclado: el RAG recibe los hechos de ['hoteles'] (padi_open_water)",
+     "[CORE][RAG5] el contexto cambió entre medias (hechos): se rehace la respuesta"
+    ],
+    [
+     "[ROUTER][JEV] 447 ms detected={'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.04, 'customer_place': {'choice': 'none', 'confidence': 0.98}, 'adds_person': 0.03, 'shares_open_fact': 0.04, 'changes_date': False, 'ya_reservado': False, 'pide_datos_ajenos': False, 'pide_servicio_privado': False, 'nuevo_caso': False, 'pregunta_si_es_ia': False, 'pide_precio': False,",
+     "[CORE][NOTAS] Jev: nada que apuntar (0.04): no se llama al extractor",
+     "[CORE][U3-6] recordar sin LLM (Jev: no pide recordar)",
+     "[CORE][U3-6] señales sin LLM (Jev: acompañante 0.04, no pide recordar)",
+     "[HECHOS] mensaje mezclado: el RAG recibe los hechos de ['hoteles'] (padi_open_water)",
+     "[CORE][RAG5] el contexto cambió entre medias (hechos): se rehace la respuesta"
+    ]
+   ]
+  },
+  {
+   "id": "l9p2-33",
+   "dialogo": "colombianos-precio-minicurso-dos-inmersiones",
+   "criterio": "lat9p2:pregunta",
+   "repeticiones": 2,
+   "fallan": 2,
+   "respuestas": [
+    "No, el precio no cambia por hacer las dos inmersiones en puntos distintos: ambas están incluidas en la salida de 2 inmersiones. Cada una dura entre 40 y 50 minutos. ¿Te refieres a esa salida de un día desde Cartagena?",
+    "No, las dos inmersiones en puntos distintos corresponden a la salida regular de buceo de un día; no es una tarifa diferente. Para ustedes, el precio online es **630.000 COP por persona** y requiere certificación. ¿Ya cuentan con certificación de buceo?"
+   ],
+   "explicaciones": [
+    "Contesta la duda sobre si cambia la tarifa, pero termina con una pregunta de reserva que ya se había hecho antes («¿Te refieres a esa salida de un día desde Cartagena?»), aunque el cliente no acaba de confirmar el tipo de actividad. El contexto confirma que el precio no cambia por bucear en puntos distintos.",
+    "Contesta la duda sobre si es otra tarifa, pero luego pregunta por la certificación, que ya había preguntado antes y el cliente no la respondió. Debía continuar con una sola pregunta pertinente del flujo, sin repetir ese dato."
+   ],
+   "segundos": [
+    4.07,
+    4.47
+   ],
+   "trazas": [
+    [
+     "[ROUTER][JEV] 287 ms detected={'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.04, 'customer_place': {'choice': 'none', 'confidence': 0.98}, 'adds_person': 0.04, 'shares_open_fact': 0.03, 'changes_date': False, 'ya_reservado': False, 'pide_datos_ajenos': False, 'pide_servicio_privado': False, 'nuevo_caso': False, 'pregunta_si_es_ia': False, 'pide_precio': False,",
+     "[CORE][NOTAS] Jev: nada que apuntar (0.03): no se llama al extractor",
+     "[CORE][U3-6] recordar sin LLM (Jev: no pide recordar)",
+     "[CORE][RAG5] respuesta adelantada aprovechada",
+     "[CORE][U3-6] señales sin LLM (Jev: acompañante 0.04, no pide recordar)"
+    ],
+    [
+     "[ROUTER][JEV] 404 ms detected={'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.05, 'customer_place': {'choice': 'none', 'confidence': 0.98}, 'adds_person': 0.04, 'shares_open_fact': 0.03, 'changes_date': False, 'ya_reservado': False, 'pide_datos_ajenos': False, 'pide_servicio_privado': False, 'nuevo_caso': False, 'pregunta_si_es_ia': False, 'pide_precio': False,",
+     "[CORE][NOTAS] Jev: nada que apuntar (0.03): no se llama al extractor",
+     "[CORE][U3-6] recordar sin LLM (Jev: no pide recordar)",
+     "[CORE][RAG5] respuesta adelantada aprovechada",
+     "[CORE][U3-6] señales sin LLM (Jev: acompañante 0.05, no pide recordar)"
+    ]
+   ]
+  },
+  {
+   "id": "l9p2-34",
+   "dialogo": "certificado-precio-dia-paquete-5-y-hoteles-base",
+   "criterio": "lat9p2:pregunta",
+   "repeticiones": 2,
+   "fallan": 1,
+   "respuestas": [
+    "Yes—your dives are in the Rosario Islands, within the Corales del Rosario y San Bernardo National Natural Park. The two dives on a day are at different sites; the instructor may choose a different site on the day if conditions call for it. Would you like the booking link for the 2-day option?",
+    "You’ll dive at different sites within the Corales del Rosario y San Bernardo National Natural Park. The exact sites can vary depending on the conditions that day, and the instructor chooses the best site. Each dive is 40–50 minutes.\n\nSo I can give you the right price and link: are you a Colombian national, or do you have a Colombian *cédula de extranjería* (Colombia's ID card for foreigners)?"
+   ],
+   "explicaciones": [
+    "Contesta la pregunta sobre los sitios de buceo y termina con una sola pregunta de reserva: si quiere el enlace para la opción de 2 días. No repite un dato que el cliente acaba de dar ni antepone «Perfecto».",
+    "La respuesta sí contesta la pregunta sobre los sitios, pero luego hace una pregunta de nacionalidad que ya había sido contestada antes: el cliente indicó que es buzo certificado y el contexto dice que aún no se sabe su nacionalidad, pero no que esa pregunta sea la que toca ahora. Además, el bot ya había preguntado cuántas personas y el cliente no respondió ese dato; debía continuar con esa pregunta, no cambiar a otra."
+   ],
+   "segundos": [
+    2.98,
+    2.56
+   ],
+   "trazas": [
+    [
+     "[ROUTER][JEV] 516 ms detected={'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.06, 'customer_place': {'choice': 'none', 'confidence': 0.97}, 'adds_person': 0.04, 'shares_open_fact': 0.03, 'changes_date': False, 'ya_reservado': False, 'pide_datos_ajenos': False, 'pide_servicio_privado': False, 'nuevo_caso': False, 'pregunta_si_es_ia': False, 'pide_precio': False,",
+     "[CORE][NOTAS] Jev: nada que apuntar (0.03): no se llama al extractor",
+     "[CORE][U3-6] recordar sin LLM (Jev: no pide recordar)",
+     "[CORE][RAG5] respuesta adelantada aprovechada",
+     "[EXTRACT][EX9B-6] duration='multi_day' (días de buceo; regex: 'multi_day')",
+     "[CORE][U3-6] señales sin LLM (Jev: acompañante 0.06, no pide recordar)",
+     "[CORE][APLAZA] el cliente no contestó 'qty' dos veces: se pregunta antes del resumen"
+    ],
+    [
+     "[ROUTER][JEV] 303 ms detected={'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.07, 'customer_place': {'choice': 'none', 'confidence': 0.97}, 'adds_person': 0.04, 'shares_open_fact': 0.04, 'changes_date': False, 'ya_reservado': False, 'pide_datos_ajenos': False, 'pide_servicio_privado': False, 'nuevo_caso': False, 'pregunta_si_es_ia': False, 'pide_precio': False,",
+     "[CORE][NOTAS] Jev: nada que apuntar (0.04): no se llama al extractor",
+     "[CORE][U3-6] recordar sin LLM (Jev: no pide recordar)",
+     "[CORE][RAG5] respuesta adelantada aprovechada",
+     "[EXTRACT][EX9B-6] duration='multi_day' (días de buceo; regex: 'multi_day')",
+     "[CORE][U3-6] señales sin LLM (Jev: acompañante 0.07, no pide recordar)",
+     "[CORE][APLAZA] el cliente no contestó 'qty' dos veces: se pregunta antes del resumen"
+    ]
+   ]
+  },
+  {
+   "id": "l9p2-35",
+   "dialogo": "minicurso-precio-colombianos-origen-pendiente",
+   "criterio": "lat9p2:pregunta",
+   "repeticiones": 2,
+   "fallan": 2,
+   "respuestas": [
+    "El precio es el mismo para todas las nacionalidades; lo que cambia es la moneda. Si son colombianos o residentes en Colombia, pagan en pesos colombianos (COP). No hay un descuento especial por ser colombianos.\n\n• 10% de descuento reservando online directamente con nosotros a través de la página web, no a través de terceros como PADI. Este es el descuento online estándar y se aplica automáticamente al reservar por la web.\n• 10% de descuento para grupos de 5 personas o más, que se suma al 10% de descuento online (20% total reservando online). No aplica automáticamente: el grupo debe contactar al equipo para aplicarlo. Hay que pedirlo al equipo ANTES de pagar: si el grupo paga sin haberlo pedido, pierde el descuento (no se devuelve después). Aplica a buceo recreativo, minicurso y snorkel; no aplica a cursos PADI. Para el plan de acompañante (quien va en la lancha sin bucear ni hacer snorkel), si entra en el descuento de grupo lo confirma el equipo al pedir el descuento, antes de pagar.\n• 5% de descuento si traes tu propio equipo COMPLETO (regulador, BCD/chaleco, traje, máscara, aletas, etc.), solo en buceo recreativo y cursos PADI: no aplica al minicurso ni al snorkel, aunque traigas el equipo completo. Tampoco aplica si solo traes parte del equipo.\n• Los clientes colombianos y residentes en Colombia pagan en pesos colombianos (COP). Los clientes internacionales pagan en dólares (USD). No hay un descuento especial por ser colombiano; el precio es el mismo, solo cambia la moneda.\n• Los descuentos no son acumulables excepto en casos especiales autorizados por el staff o donde se indique explícitamente lo contrario (ej: grupo + online sí se suman; equipo propio + online también).\n\nPara empezar, lo ideal es el *minicurso*: no hace falta experiencia ni certificación. ¿Te animas? (Si prefieres certificarte, está el *curso Open Water*.) 🤿",
+    "El precio es el mismo para todas las nacionalidades; lo que cambia es la moneda. Si son colombianos o residentes en Colombia, pagan en pesos colombianos (COP). No tengo aquí el precio del minicurso.\n\n• 10% de descuento reservando online directamente con nosotros a través de la página web, no a través de terceros como PADI. Este es el descuento online estándar y se aplica automáticamente al reservar por la web.\n• 10% de descuento para grupos de 5 personas o más, que se suma al 10% de descuento online (20% total reservando online). No aplica automáticamente: el grupo debe contactar al equipo para aplicarlo. Hay que pedirlo al equipo ANTES de pagar: si el grupo paga sin haberlo pedido, pierde el descuento (no se devuelve después). Aplica a buceo recreativo, minicurso y snorkel; no aplica a cursos PADI. Para el plan de acompañante (quien va en la lancha sin bucear ni hacer snorkel), si entra en el descuento de grupo lo confirma el equipo al pedir el descuento, antes de pagar.\n• 5% de descuento si traes tu propio equipo COMPLETO (regulador, BCD/chaleco, traje, máscara, aletas, etc.), solo en buceo recreativo y cursos PADI: no aplica al minicurso ni al snorkel, aunque traigas el equipo completo. Tampoco aplica si solo traes parte del equipo.\n• Los clientes colombianos y residentes en Colombia pagan en pesos colombianos (COP). Los clientes internacionales pagan en dólares (USD). No hay un descuento especial por ser colombiano; el precio es el mismo, solo cambia la moneda.\n• Los descuentos no son acumulables excepto en casos especiales autorizados por el staff o donde se indique explícitamente lo contrario (ej: grupo + online sí se suman; equipo propio + online también).\n\nPara empezar, lo ideal es el *minicurso*: no hace falta experiencia ni certificación. ¿Te animas? (Si prefieres certificarte, está el *curso Open Water*.) 🤿"
+   ],
+   "explicaciones": [
+    "Aunque responde que el precio no cambia por nacionalidad, termina con «¿Te animas?» y añade otra pregunta entre paréntesis sobre el curso Open Water. No termina con una sola pregunta de reserva y el contexto indicado está ausente.",
+    "La respuesta contesta que el precio no cambia por nacionalidad y reconoce que son de Bogotá, pero termina con dos preguntas («¿Te animas?» y «¿prefieres certificarte…?»), en vez de una sola pregunta de reserva. El contexto figura como «sin contexto»."
+   ],
+   "segundos": [
+    3.11,
+    3.13
+   ],
+   "trazas": [
+    [
+     "[ROUTER][JEV] 334 ms detected={'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.23, 'customer_place': {'choice': 'none', 'confidence': 0.95}, 'adds_person': 0.04, 'shares_open_fact': 0.06, 'changes_date': False, 'ya_reservado': False, 'pide_datos_ajenos': False, 'pide_servicio_privado': False, 'nuevo_caso': False, 'pregunta_si_es_ia': False, 'pide_precio': False,",
+     "[CORE][NOTAS] Jev: nada que apuntar (0.06): no se llama al extractor",
+     "[CORE][U3-6] recordar sin LLM (Jev: no pide recordar)",
+     "[INTENT] Detected nationality is_colombian=True",
+     "[HECHOS] contesta el redactor: minicourse ['descuento'] origen=None",
+     "[AVISOS] sin-precio-especial-colombianos: la respuesta ya lo dice",
+     "[AVISOS] descuento-grupo-no-cursos: la respuesta ya lo dice"
+    ],
+    [
+     "[ROUTER][JEV] 316 ms detected={'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.23, 'customer_place': {'choice': 'none', 'confidence': 0.95}, 'adds_person': 0.04, 'shares_open_fact': 0.06, 'changes_date': False, 'ya_reservado': False, 'pide_datos_ajenos': False, 'pide_servicio_privado': False, 'nuevo_caso': False, 'pregunta_si_es_ia': False, 'pide_precio': False,",
+     "[CORE][NOTAS] Jev: nada que apuntar (0.06): no se llama al extractor",
+     "[CORE][U3-6] recordar sin LLM (Jev: no pide recordar)",
+     "[INTENT] Detected nationality is_colombian=True",
+     "[HECHOS] contesta el redactor: minicourse ['descuento'] origen=None",
+     "[AVISOS] sin-precio-especial-colombianos: la respuesta ya lo dice",
+     "[AVISOS] descuento-grupo-no-cursos: la respuesta ya lo dice"
+    ]
+   ]
+  },
+  {
+   "id": "l9p2-36",
+   "dialogo": "principiante-hora-lugar-y-precio",
+   "criterio": "lat9p2:pregunta",
+   "repeticiones": 2,
+   "fallan": 1,
+   "respuestas": [
+    "From Cartagena, the meeting point is *Muelle de la Bodeguita at 8:00 a.m.* It’s 5 minutes from the historic center. There’s no hotel pick-up, so you’ll need to get to the dock on your own.\n\nIf you’re already on the Rosario Islands, pick-up is between *9:30 and 9:45 a.m.* if your hotel has boat access. We coordinate the pick-up and drop-off; the boat may arrive at your hotel or we’ll indicate the nearest dock or meeting point.\n\nWould you leave *from Cartagena* or are you already *on the Rosario Islands*? Then I'll send you the exact plan and booking link. 🌊",
+    "If you’re departing from Cartagena, meet at *Muelle de la Bodeguita at 8:00 a.m.* It’s 5 minutes from the historic center. There’s no hotel pick-up, so you’ll need to get to the dock on your own.\n\nIf you’re already on the Rosario Islands, pick-up is between *9:30 and 9:45 a.m.*, if your hotel has boat access. The pick-up point may be your hotel or a nearby dock or meeting point.\n\nWhich departure applies to you?\n\nWould you leave *from Cartagena* or are you already *on the Rosario Islands*? Then I'll send you the exact plan and booking link. 🌊"
+   ],
+   "explicaciones": [
+    "La respuesta contesta dónde y a qué hora es el encuentro según el punto de salida, y termina con una sola pregunta de reserva para aclarar si sale de Cartagena o ya está en las islas. No hay contexto disponible para verificar esos datos, pero el fallo señalado era la estructura de la respuesta.",
+    "La respuesta contesta la pregunta sobre hora y lugar, pero termina con dos preguntas seguidas que piden aclarar lo mismo: cuál salida aplica y si sale de Cartagena o ya está en las islas. El contexto no está disponible para evaluar información adicional."
+   ],
+   "segundos": [
+    3.48,
+    3.36
+   ],
+   "trazas": [
+    [
+     "[ROUTER][JEV] 317 ms detected={'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.04, 'customer_place': {'choice': 'none', 'confidence': 1.0}, 'adds_person': 0.04, 'shares_open_fact': 0.09, 'changes_date': False, 'ya_reservado': False, 'pide_datos_ajenos': False, 'pide_servicio_privado': False, 'nuevo_caso': False, 'pregunta_si_es_ia': False, 'pide_precio': False, ",
+     "[CORE][NOTAS] Jev: nada que apuntar (0.09): no se llama al extractor",
+     "[CORE][U3-6] recordar sin LLM (Jev: no pide recordar)",
+     "[CORE][U3-6] señales sin LLM (Jev: acompañante 0.04, no pide recordar)",
+     "[HECHOS] contesta el redactor: minicourse ['horario'] origen=None",
+     "[CORE][ORIGEN] precio sin origen -> se pregunta el origen antes de cotizar"
+    ],
+    [
+     "[ROUTER][JEV] 338 ms detected={'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.04, 'customer_place': {'choice': 'none', 'confidence': 1.0}, 'adds_person': 0.04, 'shares_open_fact': 0.09, 'changes_date': False, 'ya_reservado': False, 'pide_datos_ajenos': False, 'pide_servicio_privado': False, 'nuevo_caso': False, 'pregunta_si_es_ia': False, 'pide_precio': False, ",
+     "[CORE][NOTAS] Jev: nada que apuntar (0.09): no se llama al extractor",
+     "[CORE][U3-6] recordar sin LLM (Jev: no pide recordar)",
+     "[CORE][U3-6] señales sin LLM (Jev: acompañante 0.04, no pide recordar)",
+     "[HECHOS] contesta el redactor: minicourse ['horario'] origen=None",
+     "[CORE][ORIGEN] precio sin origen -> se pregunta el origen antes de cotizar"
+    ]
+   ]
+  },
+  {
+   "id": "l9p2-37",
+   "dialogo": "familia-mixta-precio-descuento-refresher",
+   "criterio": "lat9p2:pregunta",
+   "repeticiones": 2,
+   "fallan": 2,
+   "respuestas": [
+    "You can combine diving and snorkeling in the same outing, but they’re separate activities, so you’ll need to select both when booking. Snorkeling takes place at a different area from the dive sites; depending on the group size, everyone may travel on the same boat or be split by activity.\n\nFor your group, the booking should include *3 people for two dives* and *3 people for snorkeling*. The 10-year-old meets the minimum age for snorkeling. Would you like the booking links for both activities?",
+    "You can book the diving and snorkeling activities separately, but they can be combined for the same group and day. Snorkelers visit a different reef area; if there are few participants, everyone travels on the same boat, otherwise the group may be split by activity.\n\nFor the booking links and prices, I’ll need to know whether you’ll be departing from Cartagena or staying on the Rosario Islands. Which applies to you?"
+   ],
+   "explicaciones": [
+    "La respuesta sí contesta que se deben seleccionar ambas actividades, pero termina con una pregunta sobre si quiere los enlaces, seguida de dos preguntas implícitas al ofrecer enlaces para ambas reservas; no termina con una sola pregunta de reserva que toque. Además, ante la pregunta del cliente, no debía añadir una pregunta de seguimiento sobre los enlaces.",
+    "El cliente pregunta si debe hacer dos reservas; la respuesta sí lo aborda, pero termina con una pregunta de la reserva y no reconoce que ya había indicado que son seis personas. El contexto adicional confirma que el grupo tiene 6 personas."
+   ],
+   "segundos": [
+    3.83,
+    3.72
+   ],
+   "trazas": [
+    [
+     "[ROUTER][JEV] 336 ms duda=['comparing@0.37']: decide Jev igual detected={'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.08, 'customer_place': {'choice': 'none', 'confidence': 1.0}, 'adds_person': 0.08, 'shares_open_fact': 0.03, 'changes_date': False, 'ya_reservado': False, 'pide_datos_ajenos': False, 'pide_servicio_privado': False, 'nuevo_caso': False, 'pregunt",
+     "[CORE][NOTAS] Jev: nada que apuntar (0.03): no se llama al extractor",
+     "[CORE][U3-6] recordar sin LLM (Jev: no pide recordar)",
+     "[CORE][RAG5] respuesta adelantada aprovechada",
+     "[EXTRACT][GEN8] pregunta por 'snorkel' sin elegirla",
+     "[CORE][S4-26] la regex ve a otra persona y Jev no (0.08): manda Jev",
+     "[CORE][APLAZA] el cliente no contestó 'location' dos veces: se pregunta antes del resumen"
+    ],
+    [
+     "[ROUTER][JEV] 305 ms duda=['comparing@0.34']: decide Jev igual detected={'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.07, 'customer_place': {'choice': 'none', 'confidence': 1.0}, 'adds_person': 0.07, 'shares_open_fact': 0.04, 'changes_date': False, 'ya_reservado': False, 'pide_datos_ajenos': False, 'pide_servicio_privado': False, 'nuevo_caso': False, 'pregunt",
+     "[CORE][NOTAS] Jev: nada que apuntar (0.04): no se llama al extractor",
+     "[CORE][U3-6] recordar sin LLM (Jev: no pide recordar)",
+     "[CORE][RAG5] respuesta adelantada aprovechada",
+     "[EXTRACT][GEN8] pregunta por 'snorkel' sin elegirla",
+     "[CORE][S4-26] la regex ve a otra persona y Jev no (0.07): manda Jev",
+     "[CORE][APLAZA] el cliente no contestó 'location' dos veces: se pregunta antes del resumen"
+    ]
+   ]
+  },
+  {
+   "id": "l9p2-38",
+   "dialogo": "precios-y-disponibilidad-con-negociacion",
+   "criterio": "lat9p2:pregunta",
+   "repeticiones": 2,
+   "fallan": 2,
+   "respuestas": [
+    "El buceo doble desde Cartagena cuesta **178 USD / 630.000 COP reservando online** o **197 USD / 700.000 COP a tarifa normal**, por persona. Incluye dos inmersiones guiadas, equipo, lancha y almuerzo.\n\nEl itinerario es: encuentro a las **8:00 a. m. en el Muelle de la Bodeguita**, lancha a las Islas del Rosario, dos inmersiones con intervalo de superficie, almuerzo y regreso a Cartagena a las **3:00 p. m.** (llegada aproximada a las 4:15 p. m.).\n\nComo eres buza certificada, recuerda llevar tu carné. Puedes reservar aquí: https://book.divingplanet.org/book/salidas-de-buceo/1?language=es",
+    "El buceo doble es la salida de *2 inmersiones en un día*. Desde Cartagena cuesta *178 USD / 630.000 COP online* o *197 USD / 700.000 COP* sin el descuento online. Incluye lancha ida y vuelta, equipo, guía, seguro y almuerzo.\n\nEl plan sale a las 8:00 a. m. del Muelle de la Bodeguita; hacen las dos inmersiones en las Islas del Rosario y regresan a Cartagena a las 3:00 p. m. (llegada aproximada a las 4:15 p. m.). Como eres buza certificada, lleva tu carné de buceo. 🌊\n\nPuedes revisar la fecha y reservar aquí: https://book.divingplanet.org/book/salidas-de-buceo/1?language=es"
+   ],
+   "explicaciones": [
+    "Contesta el precio y los detalles del buceo doble, pero no termina con una sola pregunta de reserva: no hace ninguna pregunta para avanzar con la reserva.",
+    "Contesta la pregunta sobre el buceo doble, pero no termina con una sola pregunta de reserva: comparte el enlace y no pregunta el dato que toca a continuación, el número de personas. El contexto indica que el cliente ya dijo que saldrá desde Cartagena y que el bot ya preguntó cuántas personas son."
+   ],
+   "segundos": [
+    7.98,
+    4.76
+   ],
+   "trazas": [
+    [
+     "[ROUTER][JEV] 332 ms detected={'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.04, 'customer_place': {'choice': 'none', 'confidence': 0.94}, 'adds_person': 0.04, 'shares_open_fact': 0.03, 'changes_date': False, 'ya_reservado': False, 'pide_datos_ajenos': False, 'pide_servicio_privado': False, 'nuevo_caso': False, 'pregunta_si_es_ia': False, 'pide_precio': True, ",
+     "[CORE][NOTAS] Jev: nada que apuntar (0.03): no se llama al extractor",
+     "[CORE][U3-6] recordar sin LLM (Jev: no pide recordar)",
+     "[CORE][U3-6] señales sin LLM (Jev: acompañante 0.04, no pide recordar)",
+     "[CORE][APLAZA] el cliente no contestó 'qty' dos veces: se pregunta antes del resumen",
+     "[HECHOS] mensaje mezclado: el RAG recibe los hechos de ['precio'] (certified_diving)",
+     "[CORE][RAG5] el contexto cambió entre medias (hechos): se rehace la respuesta"
+    ],
+    [
+     "[ROUTER][JEV] 325 ms detected={'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.05, 'customer_place': {'choice': 'none', 'confidence': 0.86}, 'adds_person': 0.04, 'shares_open_fact': 0.03, 'changes_date': False, 'ya_reservado': False, 'pide_datos_ajenos': False, 'pide_servicio_privado': False, 'nuevo_caso': False, 'pregunta_si_es_ia': False, 'pide_precio': False,",
+     "[CORE][NOTAS] Jev: nada que apuntar (0.03): no se llama al extractor",
+     "[CORE][U3-6] recordar sin LLM (Jev: no pide recordar)",
+     "[CORE][RAG5] respuesta adelantada aprovechada",
+     "[CORE][U3-6] señales sin LLM (Jev: acompañante 0.05, no pide recordar)",
+     "[CORE][APLAZA] el cliente no contestó 'qty' dos veces: se pregunta antes del resumen"
+    ]
+   ]
+  },
+  {
+   "id": "l9p2-39",
+   "dialogo": "paquete-5-buceos-cop-refresh-y-hoteles",
+   "criterio": "lat9p2:pregunta",
+   "repeticiones": 2,
+   "fallan": 0,
+   "respuestas": [
+    "¡Claro! Nuestra base está en el *Hotel San Pedro de Majagua* y el *Hotel Cocoliso*, ambos en Isla Grande. También puedes alojarte en *Rosario de Mar, Secreto, Ubuntu, Mulata, Eco Hotel Las Palmeras* o *Pao Pao*, si tienen acceso marítimo para la recogida.\n\nEl alojamiento no está incluido y se reserva directamente con el hotel.\n\n¿Y para cuántas personas armamos el plan? Así te paso el precio exacto. 😊",
+    "¡Claro! Para tu paquete de 5 buceos, puedes alojarte en:\n\n- Hotel San Pedro de Majagua o Hotel Cocoliso, en Isla Grande; son nuestras bases.\n- También puedes elegir Rosario de Mar, Secreto, Ubuntu, Mulata, Eco Hotel Las Palmeras o Pao Pao.\n\nEl alojamiento no está incluido y se reserva directamente con el hotel. ¿Ya tienes alguno en mente?"
+   ],
+   "explicaciones": [
+    "La respuesta contesta la pregunta sobre los hoteles y termina con una sola pregunta de reserva: cuántas personas. No repite un dato que el cliente acaba de dar ni antepone «¡Perfecto!».",
+    "La respuesta contesta la pregunta sobre los hoteles, enumera las opciones del contexto y aclara que el alojamiento no está incluido y se reserva directamente. Termina con una sola pregunta de seguimiento («¿Ya tienes alguno en mente?»), sin repetir un dato que el cliente acaba de dar."
+   ],
+   "segundos": [
+    4.01,
+    3.73
+   ],
+   "trazas": [
+    [
+     "[ROUTER][JEV] 410 ms detected={'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.06, 'customer_place': {'choice': 'none', 'confidence': 0.97}, 'adds_person': 0.05, 'shares_open_fact': 0.05, 'changes_date': False, 'ya_reservado': False, 'pide_datos_ajenos': False, 'pide_servicio_privado': False, 'nuevo_caso': False, 'pregunta_si_es_ia': False, 'pide_precio': False,",
+     "[CORE][NOTAS] Jev: nada que apuntar (0.05): no se llama al extractor",
+     "[CORE][U3-6] recordar sin LLM (Jev: no pide recordar)",
+     "[CORE][RAG5] respuesta adelantada aprovechada",
+     "[CORE][U3-6] señales sin LLM (Jev: acompañante 0.06, no pide recordar)",
+     "[CORE][APLAZA] el cliente no contestó 'location' dos veces: se pregunta antes del resumen"
+    ],
+    [
+     "[ROUTER][JEV] 343 ms detected={'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.06, 'customer_place': {'choice': 'none', 'confidence': 0.97}, 'adds_person': 0.05, 'shares_open_fact': 0.05, 'changes_date': False, 'ya_reservado': False, 'pide_datos_ajenos': False, 'pide_servicio_privado': False, 'nuevo_caso': False, 'pregunta_si_es_ia': False, 'pide_precio': False,",
+     "[CORE][NOTAS] Jev: nada que apuntar (0.05): no se llama al extractor",
+     "[CORE][U3-6] recordar sin LLM (Jev: no pide recordar)",
+     "[CORE][RAG5] respuesta adelantada aprovechada",
+     "[CORE][U3-6] señales sin LLM (Jev: acompañante 0.06, no pide recordar)",
+     "[CORE][APLAZA] el cliente no contestó 'location' dos veces: se pregunta antes del resumen"
+    ]
+   ]
+  },
+  {
+   "id": "l9p2-40",
+   "dialogo": "precio-paquetes-5-o-3-buceos-y-opcion-2-diurnos",
+   "criterio": "lat9p2:pregunta",
+   "repeticiones": 2,
+   "fallan": 1,
+   "respuestas": [
+    "Yes! We have a one-day package with **2 daytime dives and 1 night dive**. If you’re departing from Cartagena, it’s **USD 287 / COP 1,017,000 online** or **USD 319 / COP 1,130,000 regular**. You’ll need to stay overnight on the islands after the dives; accommodation isn’t included, and the boat returns to Cartagena the following day.\n\nIf you’re already staying on the Rosario Islands, it’s **USD 188 / COP 665,000 online** or **USD 209 / COP 739,000 regular**. This option doesn’t include lunch.\n\nBoth options require dive certification. Which would apply to you: departing from Cartagena or already staying on the islands?\n\nMuelle de la Bodeguita, 5 minutes from the historic center, at 8:00 AM. Departing from Cartagena there is no hotel pick-up: each person gets to the dock on their own (ground transportation to the dock is not included).\n\nIf you're already on the Rosario Islands and your hotel has maritime access, boat pick-up and drop-off are included at no extra charge.\n\nIf you are already on the Rosario Islands, we coordinate pick-up and drop-off from hotels with maritime access. In some cases the boat arrives directly at the hotel; in others we indicate the nearest dock or meeting point.\n\nGreat! So I can recommend the perfect plan: Are you a certified diver? (And if not, no worries — the mini-course is the ideal way to start. 🤿)",
+    "Yes! There’s a **one-day package with 2 daytime dives and 1 night dive**. From Cartagena, it’s **287 USD / 1,017,000 COP online** or **319 USD / 1,130,000 COP regular**. You’ll need to stay overnight on the islands after diving; accommodation isn’t included. The boat from Cartagena and lunch are included.\n\nIf you’re already staying on the Rosario Islands, the same package is **188 USD / 665,000 COP online** or **209 USD / 739,000 COP regular**; hotel pick-up is included if your hotel has boat access, and lunch isn’t included.\n\nWhich option fits your plan—departing from Cartagena or staying on the islands?"
+   ],
+   "explicaciones": [
+    "Aunque responde correctamente que existe el paquete de 2 inmersiones diurnas y 1 nocturna, termina preguntando por el origen y luego añade otra pregunta: «Are you a certified diver?». Además, «Great!» aparece antes de que el cliente haya contestado si está certificado, repitiendo el mismo fallo de turno.",
+    "Responde directamente que existe el paquete de un día con 2 inmersiones diurnas y 1 nocturna, y da una sola pregunta final para aclarar si saldrá de Cartagena o ya estará en las islas. No repite un dato que el cliente acaba de dar ni antepone «¡Perfecto!»."
+   ],
+   "segundos": [
+    8.3,
+    3.64
+   ],
+   "trazas": [
+    [
+     "[ROUTER][JEV] 474 ms detected={'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.04, 'customer_place': {'choice': 'none', 'confidence': 0.97}, 'adds_person': 0.04, 'shares_open_fact': 0.1, 'changes_date': False, 'ya_reservado': False, 'pide_datos_ajenos': False, 'pide_servicio_privado': False, 'nuevo_caso': False, 'pregunta_si_es_ia': False, 'pide_precio': False, ",
+     "[CORE][NOTAS] Jev: nada que apuntar (0.10): no se llama al extractor",
+     "[CORE][U3-6] recordar sin LLM (Jev: no pide recordar)",
+     "[EXTRACT][EX8] activity='certified_diving'",
+     "[EXTRACT][EX9B-6] duration='single_day' (días de buceo; regex: 'single_day')",
+     "[INTENT] Detected duration: single_day",
+     "[CORE][U3-6] señales sin LLM (Jev: acompañante 0.04, no pide recordar)",
+     "[HECHOS] mensaje mezclado: el RAG recibe los hechos de ['horario'] (certified_diving)",
+     "[CORE][RAG5] el contexto cambió entre medias (hechos): se rehace la respuesta"
+    ],
+    [
+     "[ROUTER][JEV] 315 ms detected={'corrects': False, 'asks_recall': False, 'needs_staff': False, 'companion_joins': 0.04, 'customer_place': {'choice': 'none', 'confidence': 0.97}, 'adds_person': 0.04, 'shares_open_fact': 0.09, 'changes_date': False, 'ya_reservado': False, 'pide_datos_ajenos': False, 'pide_servicio_privado': False, 'nuevo_caso': False, 'pregunta_si_es_ia': False, 'pide_precio': False,",
+     "[CORE][NOTAS] Jev: nada que apuntar (0.09): no se llama al extractor",
+     "[CORE][U3-6] recordar sin LLM (Jev: no pide recordar)",
+     "[CORE][RAG5] respuesta adelantada aprovechada",
+     "[EXTRACT][EX9B-6] duration='single_day' (días de buceo; regex: 'single_day')",
+     "[INTENT] Detected duration: single_day",
+     "[CORE][U3-6] señales sin LLM (Jev: acompañante 0.04, no pide recordar)"
+    ]
+   ]
+  }
+ ],
+ "sin_medir": []
+}

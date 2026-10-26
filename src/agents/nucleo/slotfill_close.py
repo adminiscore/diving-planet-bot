@@ -263,14 +263,14 @@ async def _con_la_pregunta(state: ConversationState, message: str, answer: str, 
 
 
 async def _sin_dato(state: ConversationState, message: str, prev_pending: str, pregunta: str) -> str | None:
-    """lat-9 paso 2 (decisión de Gadea del 26-oct: «el escritor»): el cliente no contestó la pregunta pendiente ni dio
-    otro dato (da las gracias, se despide, comenta algo): en vez de la misma pregunta otra vez, el escritor contesta a lo
-    que dijo y cierra con ella. None si el turno trajo algún dato, o si el escritor no sabe qué decir: entonces la pregunta
-    del flujo, como antes."""
+    """lat-9 paso 2 (decisión de Gadea del 26-oct: «el escritor»): el cliente no contestó la pregunta pendiente (da las
+    gracias, se despide, corrige o da otro dato): en vez de la misma pregunta otra vez, el escritor contesta a lo que dijo
+    y cierra con ella. En el banco del paso 2, sin esto, «voy solo» o «en realidad somos 3» recibían la misma pregunta sin
+    que nadie reconociera lo que dijo. None con la reserva fuera de marcha, si la pregunta cambia o si el escritor no
+    sabe qué decir: entonces la pregunta del flujo, como antes."""
     from src.observability import note_turn  # lazy
 
-    if (state.core_pending_slot != prev_pending
-            or _known_field_values(state) != getattr(state, "_datos_al_empezar", None)):
+    if not getattr(state, "_pregunta_del_escritor", None) or state.core_pending_slot != prev_pending:
         return None
     state._pregunta_del_escritor = pregunta
     try:
@@ -281,7 +281,7 @@ async def _sin_dato(state: ConversationState, message: str, prev_pending: str, p
     if not escrita or _is_rag_fallback(escrita) or _es_pregunta_de_origen(escrita):
         return None
     note_turn(pregunta_escritor="sin_dato")
-    logger.info("[CORE][LAT9] sin dato ni pregunta: contesta el escritor con la pregunta pendiente")
+    logger.info("[CORE][LAT9] no contestó la pregunta: contesta el escritor con la pregunta pendiente")
     return escrita if _answer_already_asks(escrita) else f"{escrita.rstrip()}\n\n{pregunta}"
 
 

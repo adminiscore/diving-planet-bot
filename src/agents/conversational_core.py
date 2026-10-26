@@ -1692,12 +1692,11 @@ def fijar_pregunta_del_escritor(state: ConversationState) -> None:
     pregunta pendiente (fuera de la reserva), nada: el escritor contesta como siempre."""
     import copy
 
-    state._pregunta_del_escritor = state._datos_al_empezar = None
+    state._pregunta_del_escritor = None
     pendiente = state.core_pending_slot
     if not pendiente or state.step != Step.FREE_TEXT:  # solo con la reserva en marcha (ni el idioma ni el pase)
         return
     state._pregunta_del_escritor = ask_slot(copy.copy(state), pendiente, reasking=True)
-    state._datos_al_empezar = copy.deepcopy(_known_field_values(state))  # ¿trajo el mensaje algún dato? (`_sin_dato`)
 
 
 # s4-27 (7-oct, Gonzalo; flag `rag_plan_nombrado`): "¿el precio de las 2 inmersiones? desde ese hotel" (cliente ya en
