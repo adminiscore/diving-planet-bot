@@ -4,7 +4,6 @@ import asyncio
 import pytest
 
 from src.agents.conversational_core import guardar_lo_dicho_en_el_pase
-from src.config import settings
 from src.flows.state import ConversationState
 
 
@@ -54,15 +53,3 @@ def test_jev_cuenta_las_peticiones_en_imperativo():
     pregunta = jev_router._questions_for_turn()[jev_router.ASKS_QUESTION]
     assert pregunta is jev_router._ASKS_QUESTION_Q_V2
     assert "send me the link" in pregunta["instructions"]
-
-
-@pytest.mark.parametrize("lang", ["es", "en"])
-@pytest.mark.parametrize("flag", [True, False])
-def test_el_rag_no_supone_la_hora_solo_con_el_flag(monkeypatch, flag, lang):
-    """`rag_sin_hora`: "ya pasó esa hora" sobre el cierre de las 4:30 sin que el cliente dijera la hora."""
-    from src.agents.rag_agent import build_system_prompt
-    from src.prompts.info import RAG_SIN_HORA_EN, RAG_SIN_HORA_ES
-
-    monkeypatch.setattr(settings, "rag_sin_hora", flag)
-    regla = RAG_SIN_HORA_ES if lang == "es" else RAG_SIN_HORA_EN
-    assert (regla in build_system_prompt(lang)) is flag

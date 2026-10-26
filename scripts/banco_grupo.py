@@ -22,7 +22,6 @@ os.environ.setdefault("APP_ENV", "development")
 
 from scripts.run_extraction_eval import CAMPOS_EX0, _turno_ex0, puntuar_ex0  # noqa: E402
 from src.agents.intent_detector import IntentDetector  # noqa: E402
-from src.config import settings  # noqa: E402
 
 BANCO = Path(__file__).resolve().parent.parent / "docs" / "robustness" / "regex" / "banco-ex7" / "banco.json"
 _INGLES = re.compile(r"\b(the|i|i'm|we|we're|you|is|my|our|of|and|will|are|us)\b", re.IGNORECASE)
@@ -41,7 +40,6 @@ async def main() -> None:
     ap.add_argument("--pasadas", type=int, default=1)
     ap.add_argument("--out", default=None)
     a = ap.parse_args()
-    settings.jev_router_enabled = True
     casos = json.loads(BANCO.read_text(encoding="utf-8"))["casos"]
     detector = IntentDetector()
     filas = []

@@ -14,7 +14,7 @@ import httpx
 import pytest
 
 from src.agents import escalation, jev_router
-from src.config import Settings, settings
+from src.config import settings
 
 
 class _FakeLLM:
@@ -70,25 +70,10 @@ def _full(fn, asks=False):
     return _wrapped
 
 
-def test_el_flag_nace_apagado():
-    assert Settings().jev_router_enabled is False
-
-
-async def test_flag_apagado_no_llama_a_jev(monkeypatch, llm):
-    async def _no(*_a, **_k):
-        raise AssertionError("con el flag apagado no se llama a Jev")
-
-    monkeypatch.setattr(settings, "jev_router_enabled", False)
-    monkeypatch.setattr(jev_router, "detect_routing_signals_jev_full", _full(_no))
-    await escalation.detect_routing_signals("quiero hablar con un asesor")
-    assert llm.calls == 1
-
-
 async def test_con_flag_manda_jev_y_no_se_llama_al_llm(monkeypatch, llm, facts):
     async def _jev(message, *, lang="es"):
         return {"wants_human": True}
 
-    monkeypatch.setattr(settings, "jev_router_enabled", True)
     monkeypatch.setattr(jev_router, "detect_routing_signals_jev_full", _full(_jev))
     got = await escalation.detect_routing_signals("quiero hablar con un asesor")
     assert got == {"wants_human": True}
@@ -100,7 +85,6 @@ async def test_si_jev_falla_se_usa_el_router_llm(monkeypatch, llm, facts):
     async def _falla(message, *, lang="es"):
         return None
 
-    monkeypatch.setattr(settings, "jev_router_enabled", True)
     monkeypatch.setattr(jev_router, "detect_routing_signals_jev_full", _full(_falla))
     await escalation.detect_routing_signals("quiero hablar con un asesor")
     assert llm.calls == 1
@@ -228,7 +212,6 @@ async def test_si_jev_duda_decide_el_router_llm(monkeypatch, llm, facts):
     async def _duda(message, *, lang="es"):
         return jev_router.UNCERTAIN
 
-    monkeypatch.setattr(settings, "jev_router_enabled", True)
     monkeypatch.setattr(jev_router, "detect_routing_signals_jev_full", _full(_duda))
     await escalation.detect_routing_signals("the discount of 10% is not showing up")
     assert llm.calls == 1

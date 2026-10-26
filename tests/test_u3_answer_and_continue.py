@@ -218,7 +218,6 @@ def _mock_http(monkeypatch, answers):
 
 
 async def test_jev_marca_la_pregunta_en_las_senales(monkeypatch):
-    monkeypatch.setattr(settings, "jev_router_enabled", True)
     sent = _mock_http(monkeypatch, {jev_router.ASKS_QUESTION: {"type": "noul", "noul": 0.92}})
     got = await escalation.detect_routing_signals("perfecto, como pago")
     assert got == {"asks_question": True}
@@ -226,7 +225,6 @@ async def test_jev_marca_la_pregunta_en_las_senales(monkeypatch):
 
 
 async def test_por_debajo_de_07_no_es_pregunta(monkeypatch):
-    monkeypatch.setattr(settings, "jev_router_enabled", True)
     _mock_http(monkeypatch, {jev_router.ASKS_QUESTION: {"type": "noul", "noul": 0.65}})
     # 27-sep: el "no" viaja como False (lo usa la respuesta corta tras el pase a una persona); para
     # `_turn_has_question` False y ausente son lo mismo.
@@ -234,7 +232,6 @@ async def test_por_debajo_de_07_no_es_pregunta(monkeypatch):
 
 
 async def test_si_jev_duda_en_el_router_la_pregunta_viaja_igual(monkeypatch):
-    monkeypatch.setattr(settings, "jev_router_enabled", True)
     _mock_http(monkeypatch, {
         jev_router.ASKS_QUESTION: {"type": "noul", "noul": 0.9},
         "wants_human": {"type": "noul", "noul": 0.5},  # duda -> router LLM
@@ -257,7 +254,6 @@ async def test_si_jev_duda_en_el_router_los_afirma_viajan_igual(monkeypatch):
     """26-sep: antes solo se rescataba `asks_question`; los `affirms_*` se perdían en los
     turnos en que Jev duda en el router ("Yo soy open y me gustaría salir un día…" perdió la
     actividad así en el replay, con Jev afirmándola a 0,93)."""
-    monkeypatch.setattr(settings, "jev_router_enabled", True)
     _mock_http(monkeypatch, {
         jev_router.ASKS_QUESTION: {"type": "noul", "noul": 0.9},
         jev_router.AFFIRMS_ACTIVITY: {"type": "noul", "noul": 0.93},

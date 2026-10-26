@@ -6,8 +6,8 @@
    `group_size` 1 del extractor.
 2. Si la regex ve "me llamo X", manda el `nombre` del extractor.
 3. Clase A: el plan de N inmersiones del RAG lee la cifra con `dive_counts_in` (sin flag: replay igual) y los días
-   cerrados los contesta el RAG con `dias_cerrados_por_rag` (con flag: sin el texto fijo, "quiero bucear el 25 de
-   diciembre" no llega al RAG).
+   cerrados siguen con su texto fijo (`dias_cerrados_por_rag`, que los dejaba al RAG, se descartó: sin el texto fijo,
+   "quiero bucear el 25 de diciembre" no llega al RAG; se borró en sim-6).
 Los flags de 1 y 2 (`respuesta_corta_por_ia`, `nombre_solo_por_extractor`) se promocionaron con la ronda ex9b-3 y se
 quitaron en la limpieza ex9b, con sus casos "flag apagado". (Las notas del RAG desde el estado no se hacen: el estado no
 tiene lo que hace falta; ver el informe del paso 4.)
@@ -23,8 +23,6 @@ from src.agents.nucleo import extraction as core_extraction
 from src.agents.nucleo import extractor as core_extractor
 from src.agents.nucleo import routing as core_routing
 from src.agents.nucleo import setup as core_setup
-from src.config import settings
-from src.flows.catalog import policies_facts
 from src.flows.state import ConversationState
 
 
@@ -289,13 +287,7 @@ def test_dive_counts_in_con_tamanos():
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("flag", [False, True])
-async def test_dias_cerrados(monkeypatch, flag):
-    monkeypatch.setattr(settings, "dias_cerrados_por_rag", flag)
+async def test_dias_cerrados():
     st = _estado()
     reply = await core._availability_phase(st, "¿abren el 25 de diciembre?", {}, "")
-    if flag:  # lo contesta el RAG, que lleva siempre la política
-        assert reply is None
-        assert "25 de diciembre" in policies_facts("es") and "December 25" in policies_facts("en")
-    else:  # el texto fijo de hoy
-        assert reply and "25 de diciembre" in reply
+    assert reply and "25 de diciembre" in reply

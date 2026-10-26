@@ -473,26 +473,17 @@ def _parte_ficha(service_id: str, lang: str) -> list[str]:
     - `catalogo_profundidad`: hasta qué profundidad certifica (`max_depth_m`: Open Water 18 m, Advanced 30 m, lo que
       la base dice en el registro de actividades). Sin esto, a "¿cuántos metros bajan?" el RAG solo podía decir
       "depende de la certificación": el dato no estaba en nada que viera (cal-18).
-    - `catalogo_preparacion`: qué preparación pide antes de empezar (`preparation_*`, en 18 de 36 productos).
-      **MEDIDO el 17-oct (banco CAL-A 16x3): arregla cal-49 (la carta de referido, 3/3 -> 0/3) pero rompe cal-26
-      (0/3 -> 3/3: el refresher se vende como minicurso y la preparación del minicurso, "completar la teoría", se
-      mezcla con el formulario médico) y cal-64 (0/3 -> 2/3). Total 41/48 frente a 38/48.** Dieciocho párrafos en el
-      contexto de TODOS los turnos compiten con lo que hace falta en cada uno (lo mismo que enseñaron los avisos):
-      se queda APAGADO. La preparación tiene sentido solo cuando se habla de ese producto.
+    - La preparación de cada producto (`preparation_*`) NO va: medido el 17-oct (banco CAL-A 16x3), arreglaba cal-49
+      pero rompía cal-26 y cal-64; dieciocho párrafos en TODOS los turnos compiten con lo que hace falta en cada uno.
 
     Va en el catálogo y no en una regla del prompt: es un dato de cada producto y sale de su ficha. Como el juez lee
     el mismo catálogo, también puede comprobar lo que el bot diga de ello."""
-    from src.config import settings  # lazy
-
     svc = RAW_SERVICES.get(service_id, {})
     es = lang == "es"
     partes: list[str] = []
     metros = svc.get("max_depth_m")
     if metros:
         partes.append(f"certifica para bucear hasta {metros} m" if es else f"certifies you to dive down to {metros} m")
-    preparacion = (svc.get("preparation_es" if es else "preparation_en") or "").strip().rstrip(".")
-    if preparacion and settings.catalogo_preparacion:
-        partes.append(("preparación: " if es else "preparation: ") + preparacion)
     return partes
 
 
@@ -565,11 +556,7 @@ def catalog_facts(lang: str) -> str:
     de 2 dias "ida y vuelta el mismo dia", el paquete de 3 inmersiones "en 1 dia"). Con estos
     hechos siempre en el contexto el LLM contesta la pregunta real y el precio sale del catalogo
     (el guard de importes sigue exigiendo que cada cifra este en el contexto)."""
-    from src.config import settings  # lazy
-
-    # 17-oct: la clave lleva TODOS los flags que cambian el texto. Antes solo llevaba la moneda, así que cambiar
-    # otro flag en el mismo proceso (los tests, o una medida que enciende un flag) devolvía el catálogo de antes.
-    clave = f"{lang}|{settings.catalogo_preparacion}"
+    clave = lang
     if clave in _FACTS_CACHE:
         return _FACTS_CACHE[clave]
 

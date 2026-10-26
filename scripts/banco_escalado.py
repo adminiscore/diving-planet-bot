@@ -23,7 +23,6 @@ os.environ.setdefault("ENV_FILE", ".env.dev")
 os.environ.setdefault("APP_ENV", "development")
 
 from src.agents import escalation  # noqa: E402
-from src.config import settings  # noqa: E402
 
 BANCO = Path(__file__).resolve().parent.parent / "docs" / "robustness" / "escalado" / "banco-ex2.json"
 _INGLES = re.compile(r"\b(the|i|i'm|we|you|is|my|it|can|there)\b", re.IGNORECASE)
@@ -63,7 +62,6 @@ async def main() -> None:
     ap.add_argument("--pasadas", type=int, default=1)
     ap.add_argument("--out", default=None, help="guarda el detalle en este JSON")
     a = ap.parse_args()
-    settings.jev_router_enabled = True
     frases = json.loads(BANCO.read_text(encoding="utf-8"))["frases"]
     filas = []
     for pasada in range(a.pasadas):

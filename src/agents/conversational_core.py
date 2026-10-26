@@ -319,13 +319,6 @@ def _ofrecer_la_actividad_preguntada(state: ConversationState) -> str | None:
         return None
     if state.suggested_activity and state.suggested_activity != actividad:
         return None
-    if settings.principiante_sin_buceo_certificado and state.is_certified is False:
-        # arq-8c (G10 nº 6, g10-003): «¿cuánto vale bucear? nunca lo he hecho» deja preguntado el buceo certificado; al
-        # decir «soy colombiano» se le ofrecía «Buceo certificado». A quien no está certificado no se le ofrece una
-        # actividad que lo exige: sigue la recomendación de siempre (minicurso o curso), y elige él.
-        registro = dom.by_id(actividad)
-        if registro is not None and registro.requires_certification:
-            return None
     lang = state.language
     state.suggested_activity = actividad
     nombre = dom.label(actividad, lang)

@@ -167,12 +167,6 @@ async def test_respaldo_mismo_modelo_lanza_otra_peticion_a_luna(monkeypatch):
     monkeypatch.setattr(settings, "rag_answer_model", "gpt-6-luna")
     monkeypatch.setattr(settings, "rag_respaldo_modelo", "gpt-4.1-mini")
     monkeypatch.setattr(settings, "rag_respaldo_segundos", 0.05)
-    monkeypatch.setattr(settings, "respaldo_mismo_modelo", True)
-    assert await rag_agent.generar_con_respaldo(cliente, [{"role": "user", "content": "hola"}]) == "rag_respaldo"
-    assert sorted(vistas) == [("gpt-6-luna", "rag_escritor"), ("gpt-6-luna", "rag_respaldo")]
-    # sin el flag, el respaldo es gpt-4.1-mini, como hoy
-    vistas.clear()
-    monkeypatch.setattr(settings, "respaldo_mismo_modelo", False)
     await rag_agent.generar_con_respaldo(cliente, [{"role": "user", "content": "hola"}])
     assert ("gpt-4.1-mini", "rag_respaldo") in vistas
 

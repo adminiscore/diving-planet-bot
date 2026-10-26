@@ -190,11 +190,6 @@ def build_system_prompt(lang: str, query: str | None = None) -> str:
     from src.prompts.info import RAG_PASE_OFRECIDO_EN, RAG_PASE_OFRECIDO_ES  # lazy
 
     prompt = f"{prompt}\n\n{RAG_PASE_OFRECIDO_ES if lang == 'es' else RAG_PASE_OFRECIDO_EN}"
-    if settings.rag_sin_hora:
-        # EX-EST-2: el RAG no sabe la hora ni la fecha de hoy (ver RAG_SIN_HORA_*).
-        from src.prompts.info import RAG_SIN_HORA_EN, RAG_SIN_HORA_ES  # lazy
-
-        prompt = f"{prompt}\n\n{RAG_SIN_HORA_ES if lang == 'es' else RAG_SIN_HORA_EN}"
     # s4-26 (7-oct): una condición del cliente no pasa a hecho sin que nadie lo diga (ver RAG_CONDICIONES_*).
     from src.prompts.info import RAG_CONDICIONES_EN, RAG_CONDICIONES_ES  # lazy
 
@@ -207,14 +202,6 @@ def build_system_prompt(lang: str, query: str | None = None) -> str:
 
     for antes, despues in (RAG_SIN_REGLAS_DEL_CODIGO_ES if lang == "es" else RAG_SIN_REGLAS_DEL_CODIGO_EN):
         prompt = prompt.replace(antes, despues)
-    if settings.rag_enlace_al_recomendar:
-        # arq-1o: al recomendar un plan con el origen sabido, su enlace va en la respuesta (ver RAG_ENLACE_AL_RECOMENDAR_*).
-        from src.prompts.info import (  # lazy
-            RAG_ENLACE_AL_RECOMENDAR_EN,
-            RAG_ENLACE_AL_RECOMENDAR_ES,
-        )
-
-        prompt = f"{prompt}\n\n{RAG_ENLACE_AL_RECOMENDAR_ES if lang == 'es' else RAG_ENLACE_AL_RECOMENDAR_EN}"
     return prompt
 
 
@@ -637,11 +624,6 @@ async def generar_con_respaldo(client, messages: list[dict], pieza: str = "rag_e
 
     principal = settings.rag_answer_model or settings.openai_model
     respaldo, espera = settings.rag_respaldo_modelo, settings.rag_respaldo_segundos
-    if settings.respaldo_mismo_modelo:
-        # r6-1(d) (17-oct, salir de gpt-4.1; acordado con Gadea por Coral): el respaldo es OTRA petición al mismo modelo
-        # ("hedging"). La cola de Luna (~8 % de llamadas a 6-13 s) es azar de cada petición: una segunda lanzada a los
-        # `rag_respaldo_segundos` suele volver antes. gpt-5-mini/nano se descartaron el 8-oct por latencia.
-        respaldo = principal
 
     async def llamar(model: str, es_respaldo: bool = False):
         # CAL-A1 (`rag_temperatura_cero`): 18 de los 56 fallos del RAG en ex-10 eran azar (mismo contexto, unas veces
@@ -652,7 +634,7 @@ async def generar_con_respaldo(client, messages: list[dict], pieza: str = "rag_e
             return await client.chat.completions.create(model=model, messages=messages, temperature=temperatura,
                                                         max_tokens=500)
 
-    if not respaldo or espera <= 0 or (respaldo == principal and not settings.respaldo_mismo_modelo):
+    if not respaldo or espera <= 0 or respaldo == principal:
         return await llamar(principal)
     t0 = asyncio.get_running_loop().time()
     t_principal = asyncio.ensure_future(llamar(principal))

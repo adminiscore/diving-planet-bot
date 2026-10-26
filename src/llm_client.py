@@ -117,7 +117,7 @@ def parametros_openrouter(kwargs: dict) -> dict:
                           for m in kw["messages"]]
     proveedores = [p.strip() for p in settings.openrouter_proveedores.split(",") if p.strip()]
     extra = dict(kw.pop("extra_body", None) or {})
-    datos = "allow" if settings.openrouter_permitir_entrenamiento else "deny"
+    datos = "deny"  # los proveedores no entrenan con los mensajes de los clientes
     if str(kw.get("model") or "").startswith("anthropic/") and proveedores:
         # ARQ-2b: cada proveedor tiene su caché; con «el más rápido en cada llamada» Haiku saltaba entre Vertex,
         # Anthropic y Bedrock y la caché acertaba 3 de 5 (sonda del 22-oct). Orden fijo (`cache_anthropic_proveedor`

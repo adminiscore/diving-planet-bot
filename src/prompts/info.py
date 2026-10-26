@@ -436,18 +436,7 @@ RAG_SIN_GENERO_EN = (
     "Do not assume whether the customer is a man or a woman. If you do not know, do not use gendered words for them "
     "(\"sir\", \"madam\", \"guys\"); use wording that fits anyone."
 )
-# EX-EST-2 (15-oct, flag `rag_sin_hora`): el RAG no sabe la hora ni la fecha de hoy. Rondas est4-B/est5-B: "ya pasó esa
-# hora" o "como todavía estás a tiempo" sobre el cierre de las 4:30, sin que el cliente dijera la hora.
-RAG_SIN_HORA_ES = (
-    "No sabes la fecha ni la hora de hoy: no digas que ya pasó una hora o una fecha, ni que el cliente todavía está a "
-    "tiempo. Si la respuesta depende de la hora (por ejemplo, el cierre de reservas de las 4:30 p. m. del día anterior), "
-    "da la regla completa."
-)
-RAG_SIN_HORA_EN = (
-    "You do not know today's date or the current time: do not say that a time or a date has already passed, or that the "
-    "customer is still in time. If the answer depends on the time (for example, the booking cutoff at 4:30 p.m. the day "
-    "before), give the full rule."
-)
+
 
 
 # EX-EST-2 (flag `est2_datos`, 14-oct). Rondas del 13-14 oct: (1) "no puedo confirmar cupos, el equipo debe verificar"
@@ -596,18 +585,6 @@ REDACTOR_HECHOS_ES = (
     "y, si hace falta, el sistema le pregunta después. Puedes cerrar con un siguiente paso breve.\n"
     "- WhatsApp: frases cortas, *negrita* con un asterisco, sin títulos con #, sin saludar de nuevo si la conversación "
     "ya empezó. Escribe SIEMPRE en español, aunque el cliente escriba en otro idioma."
-)
-# arq-1o (22-oct, flag `rag_enlace_al_recomendar`, decisión de Gadea): al recomendar un plan, el RAG preguntaba «¿quieres
-# que te comparta el enlace?» en vez de darlo (G10 nº 2: g10-013, g10-003).
-RAG_ENLACE_AL_RECOMENDAR_ES = (
-    "Si recomiendas UN plan concreto y el contexto dice desde dónde sale el cliente, da en la misma respuesta su enlace "
-    "de reserva del catálogo de enlaces en vez de preguntar si lo quiere. A un cliente colombiano no le des el enlace: "
-    "el pago lo coordina un asesor por este chat."
-)
-RAG_ENLACE_AL_RECOMENDAR_EN = (
-    "If you recommend ONE specific plan and the context says where the customer departs from, give its booking link from "
-    "the catalog of links in the same answer instead of asking whether they want it. Do not give the link to a Colombian "
-    "customer: the payment is arranged by an advisor in this chat."
 )
 # arq-4b (22-oct, G10 nº 4): el redactor cerraba con «¿te sirve el 23 de
 # julio?», «¿ya hicieron la teoría y la piscina?» o «¿para qué fecha?» tras haberlo dicho el cliente (g10-049, g10-051,

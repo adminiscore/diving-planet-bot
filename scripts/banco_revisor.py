@@ -67,7 +67,7 @@ async def main_async(pasadas: int) -> int:
     n_err = sum(1 for _, c, _ in CASOS if not c) * pasadas
     n_ok = sum(1 for _, c, _ in CASOS if c) * pasadas
     resumen = {"pasadas": pasadas, "errores_escapados": f"{escapados}/{n_err}", "rechazos_injustos": f"{injustos}/{n_ok}",
-               "juez_revisa_con_cita": settings.juez_revisa_con_cita, "modelo": settings.grounding_v3_model}
+               "modelo": settings.grounding_v3_model}
     print(json.dumps(resumen, ensure_ascii=False))
     out = Path("docs/robustness/juez/banco-revisor-resultado.json")
     out.parent.mkdir(parents=True, exist_ok=True)

@@ -254,11 +254,11 @@ async def detect_routing_signals(
     para que el caller siga con el comportamiento anterior (las listas)."""
     if not message or not message.strip():
         return {}
-    # U3 (u3-1): Jev contesta las mismas 9 señales en ~0,27 s. Si está apagado, no hay
-    # clave o falla, sigue el router LLM de siempre (y el turno lo apunta en su resumen).
+    # U3 (u3-1): Jev contesta las mismas 9 señales en ~0,27 s. Si no hay clave de OpenRouter
+    # o falla, sigue el router LLM de siempre (y el turno lo apunta en su resumen).
     # Si Jev DUDA (cascada por confianza), decide el router LLM: la conducta de hoy.
     turn_signals: dict = {}
-    if settings.jev_router_enabled and client is None:
+    if client is None:
         from src.agents.jev_router import ASKS_QUESTION, UNCERTAIN, detect_routing_signals_jev_full
         from src.observability import note_turn
 

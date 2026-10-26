@@ -9,10 +9,9 @@ import re
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
-from src.config import settings
 from src.domain import activities as dom
 from src.flows import cart_render, eligibility
-from src.flows.state import ConversationState, Step
+from src.flows.state import ConversationState
 
 # Cliente aclarando explicitamente que, dentro de una conversacion DIVE TO
 # HEAL, la pregunta actual es sobre el programa NORMAL/no adaptado -- ver
@@ -212,35 +211,6 @@ def _build_extra_context(state: ConversationState) -> str | None:
                 "instead, explain that those details are worked out with the team per case. "
                 "If the customer clarifies they're now asking about the regular (non-adaptive) "
                 "program, you can use the generic package information."
-            )
-
-    # CAL (17-oct, flag `contexto_tras_el_pase`): la conversación YA está con una persona del equipo. Tras un pase,
-    # un "gracias" recibía una respuesta corta (la cortesía de s4-20), pero una PREGUNTA seguía el flujo normal y
-    # el RAG contestaba sin saber que el caso lo tiene un asesor: en cal-14 el cliente, tras pasar su pago a una
-    # persona, pregunta qué poner en el "concepto" de una transferencia, y el bot se lo explica, aunque la política dice
-    # que no se paga por transferencia y aunque el pase se hizo justo porque el bot no ve pagos. Mismo patrón que la
-    # nota de DIVE TO HEAL: un dato del estado que cambia cómo leer las preguntas siguientes. Lo general se contesta
-    # igual; lo de SU reserva o SU pago, no se improvisa.
-    if settings.contexto_tras_el_pase and state.step == Step.ESCALATE:
-        if state.language == "es":
-            parts.append(
-                "Esta conversación ya se pasó a una persona del equipo de Diving Planet, que tiene el caso del "
-                "cliente. Tú no ves sus reservas, sus pagos ni sus correos: si pregunta por un detalle de SU reserva "
-                "o de SU pago (si está confirmada, qué rellenar, cómo completar un pago), no lo deduzcas ni des "
-                "instrucciones nuevas; dile que el asesor que tiene su caso se lo confirma y dale también la "
-                "información general de la empresa sobre ese tema (cómo se reserva, cómo se paga). Las preguntas "
-                "generales (planes, precios, "
-                "horarios) contéstalas con normalidad."
-            )
-        else:
-            parts.append(
-                "This conversation has already been passed to a person from the Diving Planet team, who has the "
-                "customer's case. You cannot see their bookings, payments or emails: if they ask about a detail of "
-                "THEIR booking or THEIR payment (whether it is confirmed, what to fill in, how to complete a "
-                "payment), do not infer it or give new instructions; tell them the advisor handling their case will "
-                "confirm it, and also give the company's general information on that topic (how booking works, how "
-                "payment works). Answer general "
-                "questions (plans, prices, schedules) as usual."
             )
 
     # Resumen progresivo de la conversación (Fase B, ver
