@@ -4,13 +4,14 @@
    buceo certificado no dice que lo esté); la pregunta dice que es para confirmar y se hace una vez (Gadea #2040).
 2. «El plan de 5 buceos» con el extractor diciendo padi_course (curso sin nivel) era el bucle de «¿qué curso?»: un
    paquete de buceos sin ningún curso ni especialidad nombrados es buceo certificado.
-3. «Soy residente» a secas cuenta para el precio de residentes (regla del extractor; ver ex0 en el commit).
+3. («Soy residente» a secas en la regla del extractor: quitado. En ex0 daba +1 de 199, pero el extractor pasaba a leer
+   «Busco el seguinte: Vamos en família a Cartagena…» como portugués 10 de 50 veces (antes 0 de 50) y el bot contestaba
+   en inglés: grupo-mixto-precio-cop-total de integra6-B.)
 """
 
 import pytest
 
 from src.agents import conversational_core as core
-from src.agents import extractor_turno as ex
 from src.agents.intent_detector import DetectedIntent
 from src.agents.nucleo import extractor as core_extractor
 from src.flows.state import ConversationState
@@ -42,13 +43,6 @@ def test_con_un_curso_nombrado_sigue_siendo_curso(mensaje):
     it = DetectedIntent()
     core_extractor._poner_actividad(it, _estado(), {"activity": "padi_course"}, mensaje)
     assert it.activity == "padi_course"
-
-
-@pytest.mark.parametrize("sistema", [ex.SISTEMA_ES, ex.SISTEMA_EN])
-def test_residente_a_secas_esta_en_la_regla(sistema):
-    regla = next(ln for ln in sistema.splitlines() if ln.startswith("- is_colombian:"))
-    assert "residente" in regla.lower() or "resident" in regla.lower()
-    assert '"soy residente"' in regla or "\"I'm a resident\"" in regla
 
 
 def test_la_certificacion_se_confirma_una_vez_por_idioma():
