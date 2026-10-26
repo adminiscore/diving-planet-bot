@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import re
 
 from src.agents.conversational_core import (
     _EXPLICIT_NUMBER_RE,
@@ -193,7 +194,7 @@ async def _aplicar_extractor(intent, state: ConversationState, message: str, pis
     intent.solo_confirmed = intent.group_size == 1 and "group_size" in intent.detected_fields
     if datos.get("quiere_bucear") is True:
         state.quiere_bucear = True
-    _poner_actividad(intent, state, datos)
+    _poner_actividad(intent, state, datos, message)
     _poner_nacionalidad(intent, state, message, datos)
     _poner_certificacion(intent, state, message, datos)
     _poner_duracion(intent, state, datos, message)
@@ -602,7 +603,26 @@ def _principal_del_grupo_repartido(state: ConversationState, reparto: dict) -> s
     return actividad_principal_del_reparto(reparto)
 
 
-def _poner_actividad(intent, state: ConversationState, datos: dict) -> None:
+def _paquete_de_buceos_sin_curso(message: str) -> bool:
+    """LAT-0b: ¿el mensaje nombra un paquete de inmersiones del catálogo («el plan de 5 buceos») y ningún curso ni
+    especialidad? La cifra con su unidad la lee `dive_counts_in`; los cursos, `courses_mentioned` y los sustantivos de la
+    familia (`_product_family_nouns`: curso, especialidad…), las listas del catálogo de siempre. «Quiero un curso, ¿el
+    de 4 inmersiones?» o «la especialidad de 3 buceos» siguen siendo un curso."""
+    from src.agents.intent_detector import (  # lazy
+        _product_family_nouns,
+        courses_mentioned,
+        dive_counts_in,
+    )
+    from src.utils.text import strip_accents  # lazy
+
+    texto = message or ""
+    palabras = set(re.findall(r"\w+", strip_accents(texto.lower())))
+    familia = {strip_accents(n) for n in _product_family_nouns()}
+    nombra_un_curso = bool(palabras & (familia | {n + "s" for n in familia} | {n + "es" for n in familia}))
+    return bool(dive_counts_in(texto)) and not courses_mentioned(texto) and not nombra_un_curso
+
+
+def _poner_actividad(intent, state: ConversationState, datos: dict, message: str = "") -> None:
     """ex-8: la actividad es la que el cliente ELIGE (extractor). La última elegida manda, como hoy. El servicio sale
     del registro. En un grupo repartido sin actividad elegida, la principal sale del reparto (ex-9b paso 3). No hay
     minicurso deducido del regex ("es mi primera vez"): la recomendación sale de lo que dice el extractor (CAL-C1,
@@ -617,6 +637,13 @@ def _poner_actividad(intent, state: ConversationState, datos: dict) -> None:
         # de lat-5). Quien ya está certificado no se saca el Open Water: no es una elección de actividad.
         logger.info("[EXTRACT][DEUDA-EXT2] padi_open_water con is_certified true: no es el curso, se ignora")
         actividad = None
+    if actividad in ("padi_course", "padi_specialty") and _paquete_de_buceos_sin_curso(message):
+        # LAT-0b (26-oct): «¿Tienes disponibilidad para el plan de 5 buceos…?» daba padi_course (la regla del extractor
+        # dice que un paquete de N buceos es certified_diving) y el bot preguntaba «¿qué curso?» en bucle (integra5-B,
+        # paquete-5-buceos-islas-residente-sin-recogida, 6 turnos). Un paquete de buceos sin ningún curso nombrado es
+        # buceo certificado.
+        logger.info(f"[EXTRACT][LAT-0b] {actividad!r} con un paquete de buceos y sin curso nombrado: certified_diving")
+        actividad = "certified_diving"
     if actividad and dom.by_id(actividad) is not None:
         intent.activity = actividad
         intent.service_id = dom.base_service_id(actividad)

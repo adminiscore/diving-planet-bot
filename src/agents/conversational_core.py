@@ -213,7 +213,7 @@ def next_missing_slot(state: ConversationState, saltar: frozenset[str] | set[str
         # Curso/especialidad sin nivel: nunca se cierra sin decidir cual (antes
         # acababa en un curso sin precio ni link). F4 del plan de dominio.
         return SLOT_COURSE_LEVEL
-    if act == "certified_diving" and state.is_certified is None and not (
+    if act == "certified_diving" and state.is_certified is None and not _certificacion_ya_preguntada(state) and not (
         state.detected_group_allocation or {}
     ).get("certified_diving"):
         # Un reparto explícito ("3 certificados y 2 snorkel") ya dice quién está
@@ -302,6 +302,25 @@ def _minicurso_ya_recomendado(state: ConversationState) -> bool:
                for m in marcas)
 
 
+# LAT-0b: un trozo de cada forma de la pregunta de la certificación (`ask_slot`), en minúsculas y sin tildes.
+_PREGUNTAS_DE_CERTIFICACION = {
+    "es": ("me confirmas que tienes tu certificacion", "me confirmas que tienen su certificacion",
+           "eres buzo certificado?", "son buzos certificados?"),
+    "en": ("can you confirm you have your certification", "can you confirm you all have your certification",
+           "are you a certified diver?", "are you certified divers?"),
+}
+
+
+def _certificacion_ya_preguntada(state: ConversationState) -> bool:
+    """LAT-0b (26-oct, decisión de Gadea #2040): la certificación se pregunta UNA vez; si el cliente contesta otra cosa,
+    no se insiste (mod-2: elegir el buceo certificado no la confirma). Cuenta la que el cliente VIO: un mensaje del bot
+    que la trae, en el idioma de ahora (si pidió otro, no la entendió). Marcarla al prepararla no valía: hay turnos en
+    que se prepara y sale otra pregunta (el origen), y entonces no se hacía nunca."""
+    trozos = _PREGUNTAS_DE_CERTIFICACION.get(state.language, ())
+    return any(trozo in strip_accents((t.get("content") or "").lower()) for t in (state.history or [])
+               if t.get("role") == "assistant" for trozo in trozos)
+
+
 # gen-8 (`actividad_de_la_pregunta`): productos genéricos ("un curso PADI", "una especialidad"): no hay uno que ofrecer.
 _SIN_OFERTA_CONCRETA = ("padi_course", "padi_specialty")
 
@@ -367,7 +386,7 @@ def ask_slot(state: ConversationState, slot: str, *, reasking: bool = False) -> 
         certificado = _known_field_values(state).get("is_certified")
         if certificado is False:
             state.suggested_activity = "minicourse"
-        elif certificado is None:
+        elif certificado is None and not _certificacion_ya_preguntada(state):
             return ask_slot(state, SLOT_CERTIFICATION, reasking=reasking)
     if (slot == SLOT_ACTIVITY and state.suggested_activity == "minicourse"
             and reasking and not _minicurso_ya_recomendado(state)):
@@ -544,6 +563,16 @@ def ask_slot(state: ConversationState, slot: str, *, reasking: bool = False) -> 
         return head + "\n" + "\n".join(lines)
     if slot == SLOT_CERTIFICATION:
         plural = (state.detected_group_size or 1) > 1
+        if state.detected_activity == "certified_diving":
+            # LAT-0b (26-oct, decisión de Gadea #2040): ya eligió el buceo certificado; la pregunta es para confirmarlo
+            # (mod-2), no para recomendar: «¿Eres buzo certificado?» sonaba a no haberle escuchado.
+            if lang == "es":
+                return ("Para la salida de buceo certificado, ¿me confirmas que "
+                        + ("tienen su certificación (Open Water o superior)? El día les pedirán el carné."
+                           if plural else "tienes tu certificación (Open Water o superior)? El día te pedirán el carné."))
+            return ("For the certified-diving trip, can you confirm "
+                    + ("you all have your certification (Open Water or higher)? You'll be asked for your cards on the day."
+                       if plural else "you have your certification (Open Water or higher)? You'll be asked for your card on the day."))
         if lang == "es":
             q = ("¿Son buzos certificados?" if plural
                  else "¿Eres buzo certificado?")

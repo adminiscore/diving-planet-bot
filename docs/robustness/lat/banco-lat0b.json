@@ -1,0 +1,158 @@
+{
+ "about": "LAT-0b (26-oct; Gadea #2029 y #2040): repreguntas de integra5-B. (1) Con el buceo certificado ya elegido, la certificación se confirma UNA vez y diciendo para qué (mod-2 se queda: elegirlo no dice que lo esté); (2) «el plan/paquete de N buceos» es buceo certificado, no un curso PADI sin nivel (el bot preguntaba «¿qué curso?» en bucle); (3) «soy residente» a secas cuenta para el precio de residentes en Colombia. Se mira el ESTADO y la respuesta del último turno. Frases nuestras: no salen del golden, de G9/G10 ni de las charlas reales. e*: elige buceo certificado; p*: paquete de buceos; r*: residente; k*: controles.",
+ "dialogos": [
+  {
+   "id": "e1-certificado-una-vez",
+   "tipo": "certificado",
+   "turnos": [
+    "Quiero hacer buceo certificado desde Cartagena el sábado",
+    "Somos dos"
+   ],
+   "ninguno": [
+    "son buzos certificados|eres buzo certificado|me confirmas que tienen|me confirmas que tienes"
+   ]
+  },
+  {
+   "id": "e2-certificado-solo-yo",
+   "tipo": "certificado",
+   "turnos": [
+    "Me gustaría bucear certificado",
+    "Voy yo solo"
+   ],
+   "ninguno": [
+    "eres buzo certificado|son buzos certificados"
+   ]
+  },
+  {
+   "id": "p4-plan-de-5-sin-origen",
+   "tipo": "paquete",
+   "turnos": [
+    "¿Hay cupo en el plan de 5 buceos para el puente de noviembre?"
+   ],
+   "estado": {
+    "activity": "certified_diving"
+   },
+   "estado_no": {
+    "core_pending_slot": "course_level"
+   }
+  },
+  {
+   "id": "p5-plan-de-5-dos",
+   "tipo": "paquete",
+   "turnos": [
+    "¿Les queda sitio en el plan de 5 buceos del 14 al 16 de noviembre?",
+    "Somos dos"
+   ],
+   "estado": {
+    "activity": "certified_diving"
+   },
+   "estado_no": {
+    "core_pending_slot": "course_level"
+   }
+  },
+  {
+   "id": "r3-residente-tras-precio",
+   "tipo": "residente",
+   "turnos": [
+    "¿Tienen snorkel para dos personas este domingo?",
+    "¿Qué valor tiene?",
+    "Soy residente"
+   ],
+   "estado": {
+    "is_colombian": true
+   }
+  },
+  {
+   "id": "k1-quiero-bucear",
+   "tipo": "control",
+   "turnos": [
+    "Hola, quiero bucear desde Cartagena el sábado"
+   ],
+   "estado_no": {
+    "is_certified": true
+   }
+  },
+  {
+   "id": "p1-paquete-de-3",
+   "tipo": "paquete",
+   "turnos": [
+    "¿Tienen el paquete de 3 buceos para el fin de semana? Salimos de Cartagena"
+   ],
+   "estado": {
+    "activity": "certified_diving"
+   },
+   "estado_no": {
+    "core_pending_slot": "course_level"
+   }
+  },
+  {
+   "id": "p2-plan-de-4-inmersiones",
+   "tipo": "paquete",
+   "turnos": [
+    "Quiero reservar el plan de 4 inmersiones, salgo de Cartagena"
+   ],
+   "estado": {
+    "activity": "certified_diving"
+   },
+   "estado_no": {
+    "core_pending_slot": "course_level"
+   }
+  },
+  {
+   "id": "p3-four-dive-package-en",
+   "tipo": "paquete",
+   "turnos": [
+    "Do you have availability for the four dive package next month? We leave from Cartagena"
+   ],
+   "estado": {
+    "activity": "certified_diving"
+   },
+   "estado_no": {
+    "core_pending_slot": "course_level"
+   }
+  },
+  {
+   "id": "k2-curso-advanced",
+   "tipo": "control",
+   "turnos": [
+    "Quiero hacer el curso Advanced desde Cartagena, ¿cuántas inmersiones son?"
+   ],
+   "estado": {
+    "activity": "padi_advanced"
+   }
+  },
+  {
+   "id": "r1-soy-residente",
+   "tipo": "residente",
+   "turnos": [
+    "Queremos hacer snorkel desde Cartagena, somos dos",
+    "Soy residente"
+   ],
+   "estado": {
+    "is_colombian": true
+   }
+  },
+  {
+   "id": "r2-resident-en",
+   "tipo": "residente",
+   "turnos": [
+    "We'd like to snorkel from Cartagena, two of us",
+    "I'm a resident"
+   ],
+   "estado": {
+    "is_colombian": true
+   }
+  },
+  {
+   "id": "k3-turista",
+   "tipo": "control",
+   "turnos": [
+    "Queremos hacer snorkel desde Cartagena, somos dos",
+    "Somos turistas, venimos de España"
+   ],
+   "estado": {
+    "is_colombian": false
+   }
+  }
+ ]
+}
