@@ -252,3 +252,10 @@ Primera charla contra el código de una rama sin desplegarla (`docs/robustness/g
 
 Clases: completar el grupo (CALN-2, arreglado); niños en el reparto y recomendación por edad (CALN-2, nuevo); los hechos
 del grupo entero para el escritor (CALN-4); el montaje que corta la frase del escritor (CALN-6).
+
+**Cómo queda en la rama (27-oct, 16:30, `familia-suegro-lancha-t2f`):** el turno 2 guarda el grupo entero (suegro
+acompañante, marido buceo, 2 minicursos y Bubble Makers; nadie pendiente) y el escritor da el precio de cada uno con el
+descuento de grupo explicado y sin sumar el total; sigue la pregunta de seguridad. Arreglos: `grupo.completado`
+(CALN-2), Bubble Makers en el reparto y la recomendación por edad (CALN-2 3c), los hechos de todo el grupo para el
+escritor (CALN-4, `redactor_hechos._actividades`). Queda: a veces el escritor omite una línea (el acompañante) y el
+código añade detrás su recomendación del plan del buceo.

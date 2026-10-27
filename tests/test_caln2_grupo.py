@@ -182,6 +182,18 @@ def test_la_recomendacion_mira_las_edades_del_grupo(edades, esperadas):
     assert core._companion_activity_options(st) == esperadas
 
 
+def test_el_escritor_recibe_los_hechos_de_todo_el_grupo():
+    """Sparring CALN1-04: «¿cuánto todo junto?» llevaba solo los hechos de Bubble Makers («no tengo aquí los precios de
+    las otras actividades»). El reparto de este mensaje viene de la lectura del extractor (el del estado va después)."""
+    from src.agents import redactor_hechos
+
+    st = _grupo(detected_group_allocation={"companion": 1})
+    datos = {"actividad_preguntada": "bubble_makers",
+             "group_allocation": {"certified_diving": 1, "minicourse": 2, "bubble_makers": 1, "companion": 1}}
+    assert redactor_hechos._actividades(st, datos) == ["bubble_makers", "companion", "certified_diving", "minicourse"]
+    assert redactor_hechos._actividades(_grupo(), {"actividad_preguntada": "snorkel"}) == ["snorkel"]  # sin grupo, igual
+
+
 def test_quien_hace_que_va_antes_que_el_origen():
     """Paso 3a: el orden aprobado (quién hace qué, el origen, seguridad y edades, la nacionalidad); si no contesta dos
     veces, se aplaza hasta antes del resumen como las demás."""

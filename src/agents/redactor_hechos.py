@@ -56,7 +56,16 @@ def _actividades(state: ConversationState, datos: dict) -> list[str]:
         # RAG las nombraba sin precio. Se abre en las actividades concretas de su familia, con plan.
         return [a.id for a in dom.registry().activities if a.family == registro.family and not a.generic
                 and (dom.service_ids(a.id, "cartagena") or dom.service_ids(a.id, "island"))]
-    return [una] if una else []
+    if not una:
+        return []
+    # CALN (27-oct, sparring CALN1-04): en un grupo ya repartido, también las del resto del grupo. «Mi marido bucea, yo y
+    # la de 14 el minicurso, la pequeña Bubble Makers: ¿cuánto todo?» llevaba solo los de Bubble Makers y el escritor
+    # contestaba «no tengo aquí los precios de las otras actividades». El reparto de ESTE mensaje lo trae la lectura del
+    # extractor: el del estado se guarda después de contestar.
+    repartos = (state.detected_group_allocation or {}, datos.get("group_allocation") or {})
+    del_grupo = list(dict.fromkeys(a for reparto in repartos for a, n in reparto.items()
+                                   if n and a != una and dom.by_id(a) is not None and not dom.by_id(a).generic))
+    return [una, *del_grupo]
 
 
 def _origen(state: ConversationState, datos: dict, leido: bool = False) -> str | None:
