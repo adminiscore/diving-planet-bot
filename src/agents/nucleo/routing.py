@@ -424,6 +424,10 @@ def _apply_short_answer(state: ConversationState, message: str, ia: dict | None 
                 candidates.add("snorkel")
             if "minicourse" in mentioned or "certified_diving" in mentioned:
                 candidates.add("minicourse")
+            # CALN-2 (27-oct, banco-lectura l04): también por su nombre del catálogo en es/en, la misma fuente que el
+            # reparto (`dom.nombra_el_producto`). «she'd go for the mini course. Only one day» no la elegía (el detector
+            # no tiene «mini course»): se tomaba solo la duración y se volvía a preguntar qué quería hacer ella.
+            candidates |= {o for o in options if dom.nombra_el_producto(o, message)}
             if len(candidates) == 1:
                 chosen = next(iter(candidates))
         if chosen is not None:
