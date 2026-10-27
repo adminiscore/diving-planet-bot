@@ -766,12 +766,15 @@ def _texto_de_la_pregunta(state: ConversationState, slot: str, *, reasking: bool
                  {"title": "🏝️ Several days", "value": "multi_day"}]
             )
             if state.pending_undecided_qty:
+                # CALN-2 (27-oct, tanda de precios q1 t2): quien no ha elegido puede ser un buzo certificado («uno es buzo
+                # certificado y los otros dos queremos snorkel»); la pregunta no supone que sea quien no lo está.
+                varios = state.pending_undecided_qty > 1
                 return (
-                    "Para recomendar lo que mejor les encaje a quienes no están certificados: "
-                    "¿van a estar *un solo día* o *varios días*? 🌊"
+                    f"Para recomendar lo que mejor le{'s' if varios else ''} encaje a quien{'es' if varios else ''} "
+                    f"aún no ha{'n' if varios else ''} elegido: ¿van a estar *un solo día* o *varios días*? 🌊"
                     if lang == "es" else
-                    "So I can recommend what suits those who aren't certified: will you be "
-                    "here for *one day* or *several days*? 🌊"
+                    f"So I can recommend what suits {'those who haven' if varios else 'the one who hasn'}'t chosen yet: "
+                    "will you be here for *one day* or *several days*? 🌊"
                 )
             return (
                 "¡Qué bien que venga alguien más! 🌊 Para recomendarle lo que mejor le "
@@ -789,13 +792,13 @@ def _texto_de_la_pregunta(state: ConversationState, slot: str, *, reasking: bool
         if state.pending_undecided_qty:
             plural = state.pending_undecided_qty > 1
             head = (
-                ("Para quienes no están certificados te recomiendo estas opciones. ¿Cuál les apetece más? 🐠"
+                ("Para quienes aún no han elegido te recomiendo estas opciones. ¿Cuál les apetece más? 🐠"
                  if plural else
-                 "Para quien no está certificado te recomiendo estas opciones. ¿Cuál le apetece más? 🐠")
+                 "Para quien aún no ha elegido te recomiendo estas opciones. ¿Cuál le apetece más? 🐠")
                 if lang == "es" else
-                ("For those who aren't certified I'd recommend these options. Which one do they like best? 🐠"
+                ("For those who haven't chosen yet I'd recommend these options. Which one do they like best? 🐠"
                  if plural else
-                 "For the one who isn't certified I'd recommend these options. Which one do they like best? 🐠")
+                 "For the one who hasn't chosen yet I'd recommend these options. Which one do they like best? 🐠")
             )
         else:
             head = (

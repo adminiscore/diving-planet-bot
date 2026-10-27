@@ -1,0 +1,33 @@
+{
+ "about": "CALN-2 (27-oct, tanda de precios de Gadea q1/q2): lectura del grupo. (A) el minicurso nombrado en inglés entra en el reparto; (B) la contestación a «qué hará quien no ha elegido» es la elección de ESA persona y la actividad de quien escribe sigue; (C) la pregunta por quien no ha elegido no supone que no esté certificado. Se mira el ÚLTIMO turno con scripts/puntua_banco_edades.py (estado, estado_no, debe, ninguno; «a|b» = cualquiera; minúsculas y sin tildes). Frases nuestras: no salen del golden, de G9/G10 ni de las charlas.",
+ "dialogos": [
+  {"id": "l01-en-el-buzo-y-ella-minicurso", "tarea": "(A)",
+   "turnos": ["Hello! I'm Advanced Open Water and my girlfriend has never been underwater. We're staying in Cartagena for a few days.",
+              "I'll go for the two fun dives and she'll take the mini course. How much for both?"],
+   "estado": {"detected_group_allocation": {"certified_diving": 1, "minicourse": 1}}, "ninguno": ["haven't chosen|hasn't chosen"]},
+  {"id": "l02-en-mini-course-guion", "tarea": "(A)",
+   "turnos": ["Hi there, two of us coming to Cartagena: my brother holds a PADI Open Water card, I'm a total beginner.",
+              "He does the 2-dive trip, I'd like the mini-course. Prices please?"],
+   "estado": {"detected_group_allocation": {"certified_diving": 1, "minicourse": 1}}},
+  {"id": "l03-es-ella-minicurso", "tarea": "(A) en español",
+   "turnos": ["Hola, mi pareja y yo vamos a Cartagena. Yo soy Open Water y ella nunca ha buceado.",
+              "Yo hago las 2 inmersiones y ella el minicurso. ¿Cuánto es?"],
+   "estado": {"detected_group_allocation": {"certified_diving": 1, "minicourse": 1}}},
+  {"id": "l04-en-contesta-lo-de-ella", "tarea": "(B)",
+   "turnos": ["Hi! My wife and I will be in Cartagena next month. I'm a certified diver and I want to do the 2 dives. She's never dived.",
+              "Like I said, she'd go for the mini course. Only one day."],
+   "estado": {"detected_activity": "certified_diving", "detected_group_allocation": {"certified_diving": 1, "minicourse": 1}},
+   "ninguno": ["which option does she|haven't chosen|hasn't chosen"]},
+  {"id": "l05-es-contesta-lo-del-amigo", "tarea": "(B) en español",
+   "turnos": ["Hola! Vamos dos amigos a Cartagena. Yo tengo el Advanced y quiero bucear las 2 inmersiones. Mi amigo nunca ha buceado.",
+              "Ya te dije, mi amigo quiere hacer snorkel. Un solo día."],
+   "estado": {"detected_activity": "certified_diving", "detected_group_allocation": {"certified_diving": 1, "snorkel": 1}},
+   "ninguno": ["cual le gusta|aun no ha elegido"]},
+  {"id": "l06-es-certificado-sin-elegir", "tarea": "(C)",
+   "turnos": ["Buenas! Somos 3 de Pereira. Mi primo tiene la certificación de buzo y nosotras dos queremos hacer snorkel. Salimos desde Cartagena."],
+   "ninguno": ["no estan certificados|no esta certificado"]},
+  {"id": "l07-en-certificado-sin-elegir", "tarea": "(C) en inglés",
+   "turnos": ["Hi! Three of us from Toronto, leaving from Cartagena. My cousin is a certified diver and the two of us want to go snorkeling."],
+   "ninguno": ["not certified|aren't certified|isn't certified"]}
+ ]
+}
