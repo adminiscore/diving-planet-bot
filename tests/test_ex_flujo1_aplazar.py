@@ -73,6 +73,18 @@ def test_mismo_dia_solo_si_se_sabe():
     assert "mismo día" in core.ask_slot(st, core.SLOT_LOCATION)
 
 
+def test_mismo_dia_no_si_el_cliente_pregunta():
+    """CALN (g21): «¿y si en vez de un día buceamos 2 días?» con el plan de un día del estado recibía «ida y vuelta el
+    mismo día». Si el cliente pregunta, el plan puede cambiar: no se afirma su duración."""
+    st = ConversationState(conversation_id="flujo1", language="es")
+    st.detected_activity = "certified_diving"
+    st.detected_duration = "single_day"
+    st._senales_router = {"asks_question": True}
+    assert "mismo día" not in core.ask_slot(st, core.SLOT_LOCATION)
+    st._senales_router = {"asks_question": False}
+    assert "mismo día" in core.ask_slot(st, core.SLOT_LOCATION)
+
+
 def test_politicas_nuevas_siempre_en_el_contexto():
     from src.flows.catalog import policies_facts
 

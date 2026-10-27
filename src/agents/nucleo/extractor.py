@@ -543,6 +543,14 @@ def _poner_ubicacion(intent, state: ConversationState, message: str, datos: dict
         # Jev seguro de que el mensaje NO dice dónde está → el origen queda sin saber y la reserva lo pregunta.
         logger.info(f"[EXTRACT][CAL-C3c] el extractor dice location={lugar!r} y Jev, seguro, que el mensaje no lo "
                     "dice: no se guarda")
+        if not guardado and (state.asked_corrections or {}).get("location") != lugar:
+            # ORIGEN-CONFIRMA (27-oct, idea de Álvaro #2080, decisión de Gadea #2082): en vez de tirarlo y volver a
+            # preguntar «¿desde dónde saldrías?» (lo que el cliente oye como no haberle escuchado: «Va quiero comprar
+            # sin ir de cartagena» → la misma pregunta), se confirma UNA vez lo leído («Entonces, ¿ya estarás en las
+            # islas?»). No se cotiza ese origen hasta que conteste; un «no» lo deja sin saber, como hasta hoy.
+            state.pending_correction = {**(state.pending_correction or {}), "location": lugar}
+            state.asked_corrections = {**(state.asked_corrections or {}), "location": lugar}
+            logger.info(f"[EXTRACT][ORIGEN-CONFIRMA] se confirma location={lugar!r} antes de guardarlo")
         return
     if guardado and guardado != lugar:
         # Cambiar un origen ya guardado pasa por la confirmación de siempre (`_route_contradictions`): con una señal
@@ -843,6 +851,11 @@ async def _guardar_lo_dicho(state: ConversationState, motivo: str) -> None:
         if campo == "group_size" and not (isinstance(valor, int) and valor > 0):
             continue
         setattr(state, atributo, valor)
+        if campo == "location":
+            # CALN (27-oct, sparring s2-familia-ninos-pequenos de Gadea, #2136): «Estamos alojados en Cartagena» en un
+            # turno sin núcleo quedaba solo en detected_location; el escritor cotizaba desde Cartagena, pero la reserva
+            # mira `location` y en el turno 3 volvía a preguntar «¿Desde dónde saldrías?». Como en el resto del núcleo.
+            state.location = valor
         guardados[campo] = valor
     hotel = (datos or {}).get("hotel")
     if hotel and not (state.hotel or state.detected_hotel):

@@ -378,6 +378,15 @@ def _ow_inmersiones() -> int:
     return _ow_plan()[1]["num_dives"]
 
 
+# ORIGEN-CONFIRMA (27-oct): la confirmación del origen que leyó el extractor y Jev, seguro, dijo que el mensaje no da.
+_CONFIRMA_ORIGEN = {
+    "island": {"es": "Entonces, ¿ya estarás en las *Islas del Rosario* (salida desde las islas)? 🌴",
+               "en": "So, will you already be on the *Rosario Islands* (departing from the islands)? 🌴"},
+    "cartagena": {"es": "Entonces, ¿saldrías *desde Cartagena* (Muelle de la Bodeguita)? 🚤",
+                  "en": "So, would you leave *from Cartagena* (Muelle de la Bodeguita)? 🚤"},
+}
+
+
 def ask_slot(state: ConversationState, slot: str, *, reasking: bool = False) -> str:
     """Pregunta natural por el slot que falta. Un solo mensaje, UNA pregunta,
     quick-replies solo donde el plan lo permite (ubicación / sí-no).
@@ -627,6 +636,11 @@ def ask_slot(state: ConversationState, slot: str, *, reasking: bool = False) -> 
             # Paso 6 (ronda B): con la actividad sin concretar ("curso básico" -> curso PADI generico)
             # se ofrecia "ida y vuelta el mismo dia" a un Open Water. Solo se afirma si se sabe.
             return _pregunta_origen(lang)
+        if (getattr(state, "_senales_router", None) or {}).get("asks_question"):
+            # CALN (27-oct, g21 del banco de grupos): «¿y si en vez de un día buceamos 2 días?» recibía «ida y vuelta el
+            # mismo día» con el plan de un día del estado. Si el cliente está preguntando, el plan puede cambiar: no se
+            # afirma su duración.
+            return _pregunta_origen(lang)
         return _pregunta_origen(lang, mismo_dia=True)
     if slot == SLOT_HOTEL:
         return (
@@ -672,6 +686,15 @@ def ask_slot(state: ConversationState, slot: str, *, reasking: bool = False) -> 
         )
     if slot == SLOT_CONFIRM_CORRECTION and state.pending_correction:
         known = _known_field_values(state)
+        origen = state.pending_correction.get("location")
+        if len(state.pending_correction) == 1 and origen in _CONFIRMA_ORIGEN and known.get("location") is None:
+            # ORIGEN-CONFIRMA: no había origen; se confirma lo que leyó el extractor (ver `_poner_ubicacion`).
+            state.quick_replies = (
+                [{"title": "✅ Sí", "value": "sí"}, {"title": "No", "value": "no"}]
+                if lang == "es" else
+                [{"title": "✅ Yes", "value": "yes"}, {"title": "No", "value": "no"}]
+            )
+            return _CONFIRMA_ORIGEN[origen]["es" if lang == "es" else "en"]
         lines = "\n".join(
             f"• {_describe_value(field, known.get(field), lang)} → *{_describe_value(field, value, lang)}*"
             for field, value in state.pending_correction.items()
@@ -2167,6 +2190,10 @@ def _origen_antes_del_precio(state: ConversationState, message: str, answer: str
     if any(_PISTA_ORIGEN_RE.search(t) for t in [*del_cliente, *este]):
         return None
     pregunta = ORIGEN_ANTES_DEL_PRECIO_ES if state.language == "es" else ORIGEN_ANTES_DEL_PRECIO_EN
+    por_confirmar = (state.pending_correction or {}).get("location")
+    if por_confirmar in _CONFIRMA_ORIGEN:
+        # ORIGEN-CONFIRMA: el extractor leyó un origen que falta confirmar; se pregunta eso, no «¿desde dónde?».
+        pregunta = _CONFIRMA_ORIGEN[por_confirmar]["es" if state.language == "es" else "en"]
     variantes = _dos_variantes(state, answer, con_enlace=da_enlace)
     if variantes:
         tras = (ORIGEN_TRAS_LOS_ENLACES_ES, ORIGEN_TRAS_LOS_ENLACES_EN) if da_enlace else (
