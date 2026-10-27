@@ -59,7 +59,54 @@ integrar la rama del otro y suite en verde, porque en PRE gana el último; (3) *
 despliegue reinicia el contenedor y mata la medida del otro (avisar en el registro de Plan Coral con la hora de fin).
 Las doce normas, con su porqué, están en el documento.
 
-### ▶️ RETOMAR AQUÍ — 27-oct, 20:30 (Gadea con Claude; Álvaro y Gonzalo): fase CALN; PRE = integra5
+### ▶️ RETOMAR AQUÍ — 28-oct, 00:45 (Gadea con Claude; Álvaro y Gonzalo): CALN-6 cerrado en rama, CALN-3 (precios) en curso; PRE = integra5
+
+- **Estado:** PRE sirve **integra5 `0faff2c`** (HISTORY 0.32.9), sin cambios hoy. Base de CALN = **`feature/caln-gadea`**
+  (HISTORY 0.35.0) con todo junto; suite 3052 con `ENV_FILE=.env.ci` y ruff limpio; sin interruptores nuevos. Plan
+  Coral al día (caln-6 hecha, caln-3b pendiente) y mapa regenerado con caln3-B. Sin integrar A PROPÓSITO:
+  `feature/caln2-lector-grupo-alvaro` (el lector del grupo, paso 1, sin enchufar: espera la decisión de Gadea) y
+  `feature/caln3-paso2-gonzalo` (en curso; tiene que rebasar sobre caln-gadea 9928489, que toca `hechos.faltan`).
+- **Hecho hoy (HISTORY 0.35.0):**
+
+  | Qué | Quién | Estado | Medida |
+  |---|---|---|---|
+  | CALN-6 pasos 2d-2f (compositor) | Gadea | en rama, **cerrado** | golden repite 22 → 5, dos preguntas 18 → 1; sparring 2/20 → 8/20; saludo repetido 56 → 2; recogida con el juez 5 → 4 fallos, criterios 6/6 |
+  | CALN-2: sin decidir, tarjeta rehecha, lectura, buzo sin elegir, CALN4-05 | Álvaro | en rama | grupos 38/56 → 49-51/58; lectura 6/14 → 14/14; tarjeta 0/2 → 2/2; precios-q 2/10 → 8/10 |
+  | CALN-3 paso 2a/2b (candidatos, descuento de grupo) | Gonzalo | en curso, su rama | midiéndose con banco-precios y precios-q |
+  | Sparring: precios q1-q5 y 2.ª tanda de la batería | Gadea / Álvaro | hallazgos con dueño | CALN3-Q01..Q09, CALN4-01..12 |
+  | Limpieza del examen oculto | Gadea | en rama | ids y casos fuera de 60 ficheros |
+  | 3.ª ronda caln3-B | Gadea | medida | 78/116, 54 fallos, oculto 88,0 %, rotativa 11/30: **no sube** |
+
+- **Siguiente, en orden:**
+  1. **Decisiones de Gadea:** (a) el lector del grupo, paso 2 con T2b: calidad (total 84 → 99,8 %, reparto 75 → 94 %,
+     inventos 60 → 36) contra latencia (+1,3-1,8 s en el p95 de los turnos que lo llaman, 9,5 % del golden); Álvaro
+     mide si se puede lanzar en paralelo con la señal de Jev. (b) El control de integra5 (~3,5 $): ¿su 90,8 % del
+     oculto fue suerte?
+  2. **CALN-3 paso 2 (Gonzalo):** que el código elija bien el PLAN en sombra antes de poner él los importes (q5: elige
+     el paquete de 316 USD donde tocan 178); descuentos, separar la pregunta genérica de la concreta (choca con arq-4b).
+     Hecho = banco-precios y precios-q sin bajar y la sombra sin discrepancias de plan.
+  3. **Integrar** el paso 2 en caln-gadea, **4.ª ronda completa** (golden + rotativa) y la batería de sparring. Sube a PRE
+     si iguala o mejora integra5 (80/116, 90,8 %). Meta de salida de CALN: ≥ 82/116 de media en 2 rondas y oculto ≥ 90 %.
+  4. **CALN-3b** (después del paso 2): el origen (el ya dicho que se repregunta, «saliendo desde Cartagena» en una
+     pregunta de precio, Barú, sin origen los dos precios), el enlace y el pago del colombiano (choca con la decisión del
+     21-oct: preguntar a Gadea) y los totales de la tarjeta (decisión del 9-oct).
+  5. Menor: la pregunta del origen en singular a un grupo (CALN3-Q07).
+- **Cómo medir:**
+  - Ronda completa, igual que caln3-B: `ronda_local_pre --name caln4-B --sample golden --codigo-local --metricas`,
+    `ronda_local_pre --name rot9-B --sample golden --golden docs/robustness/rotativo/2026-10-26-13.json --codigo-local
+    --metricas` y `judge_golden_set --run …` (la rotativa, con `--golden`), con `set -o pipefail` y `ENV_FILE`.
+  - Bancos: `reproducir_juez_pre --banco docs/robustness/caln/banco-<x>.json --reps 2 --codigo-local --out …` y
+    `puntua_banco_edades` (sparring, precios-q, lectura) o `puntua_banco_grupo`; la composición con
+    `python -m scripts.caln0_comprobaciones <jsonl>`.
+  - Mini-ronda con el juez: `ronda_local_pre --sample golden --ids <visibles> --codigo-local` y `judge_golden_set --run`.
+- **Avisos de hoy:**
+  - El 44 % de los fallos son de precio (24 de 54); la bajada del oculto viene de integra6b, no de CALN.
+  - El banco de CAL tenía casos del oculto (ya limpiado): la cifra del oculto desde CAL puede ser algo optimista; la
+    rotativa es la medida limpia. Al hacer bancos desde una ronda completa, filtrar `suite == "oculto"`.
+  - La latencia depende de la hora: comparar rondas a la misma hora o por ms/token.
+  - La suite, siempre con `ENV_FILE=.env.ci`.
+
+### ✅ 27-oct, 20:30 (Gadea con Claude; Álvaro y Gonzalo) — fase CALN; PRE = integra5
 
 - **PRE sirve integra5 `0faff2c`** (HISTORY 0.32.9): golden 80/116, oculto 90,8 %, rotativa 13/30. Ninguna ronda de
   CALN la supera todavía.
@@ -83,7 +130,7 @@ Las doce normas, con su porqué, están en el documento.
 - **Herramientas nuevas:** `scripts/charla_rama.py` (sparring contra una rama), comprobaciones de composición y de precio
   en `scripts/caln0_comprobaciones.py`, bancos `docs/robustness/caln/banco-{grupo,composicion,edades,precios,sparring}.json`.
 
-### (anterior) RETOMAR AQUÍ — 27-oct, 03:30 (Gadea con Claude; Álvaro y Gonzalo de noche): OpenAI SIN CRÉDITO; integra6b sin juzgar; PRE = integra5
+### ✅ 27-oct, 03:30 (Gadea con Claude; Álvaro y Gonzalo de noche): OpenAI SIN CRÉDITO; integra6b sin juzgar; PRE = integra5
 
 - **PRE sirve integra5 `0faff2c`** (HISTORY 0.32.9): lat-9 paso 2 (el escritor cierra con la pregunta de la reserva,
   variante «corrige»; si la pregunta se repite, el escritor ligero), ACUSE y lat-5. Golden 80/116 (50 fallos), oculto
@@ -110,7 +157,7 @@ Las doce normas, con su porqué, están en el documento.
   pregunta del origen cuando el plan del estado es de un día y preguntan por un paquete.
 - **Ojo:** los ficheros de las rondas llevan la fecha UTC (de noche en España, la del día anterior).
 
-### (anterior) RETOMAR AQUÍ — 25-oct, noche (Claude solo, con el mandato de Gadea): fase LAT, PRE 542d5ac
+### ✅ 25-oct, noche (Claude solo, con el mandato de Gadea): fase LAT, PRE 542d5ac
 
 - **Rumbo (Gadea, 24-oct y 25-oct):** adelgazar: menos llamadas y menos latencia, borrando código (no flags nuevos);
   la calidad puede bajar algo porque se recupera después (`lat-deuda` en Plan Coral). Plan:
@@ -135,7 +182,7 @@ Las doce normas, con su porqué, están en el documento.
 - **Medir:** real-1 con el juez en paralelo (~45 min, ~2,5 $ OpenAI + ~0,6 $ OpenRouter); cada juez cuesta, así que
   una A/B por corte y en serie.
 
-### (anterior) RETOMAR AQUÍ — 24-oct, 00:15 (Gadea con Claude): G10 nº 6 y arq-8 PROMOCIONADOS; real-1 = 94,9 % 82/116
+### ✅ 24-oct, 00:15 (Gadea con Claude): G10 nº 6 y arq-8 PROMOCIONADOS; real-1 = 94,9 % 82/116
 
 - **PRE sirve `39cd9ec`** (feature/pre_gadea), healthy, 152 ajustes. HISTORY 0.31.98 (G10 nº 6: 8 flags, mej-7 a 300 s,
   arq-7e y el juez `--paralelo`) y 0.31.99 (arq-8: 7 flags; fuera `discount_policies` de pricing.json).
@@ -152,7 +199,7 @@ Las doce normas, con su porqué, están en el documento.
 - **Siguiente (decisión de Gadea, 24-oct):** revisar mejoras y empeoramientos de real-1 frente al 17-oct y elegir el
   rumbo. Candidatos: real-1a y real-1b (por causa, banco ×3), la latencia (real-1c), integrar sim-5 y g-3b.
 
-### (anterior) RETOMAR AQUÍ — 23-oct, 01:15 (Gadea con Claude): arreglos del G10 nº 4 hechos y SIN PROMOCIONAR; G10 nº 5 = 91,2 % 40/72
+### ✅ 23-oct, 01:15 (Gadea con Claude): arreglos del G10 nº 4 hechos y SIN PROMOCIONAR; G10 nº 5 = 91,2 % 40/72
 
 - **PRE sirve `229193f`** (flu-1 promocionado, 125 ajustes). **Nada más subido:** por decisión de Gadea (23-oct, 00:20)
   todo lo de la noche está integrado SOLO en local en `feature/pre_gadea` (último `8137f28` + relevo). Lo primero
@@ -172,7 +219,7 @@ Las doce normas, con su porqué, están en el documento.
 - **Siguiente:** (1) decidir la promoción con la nota del nº 5; (2) clasificar sus fallos por quién y repartir;
   (3) arq-1i (Gonzalo, en pausa); (4) mej-7 (respaldo cuando OpenRouter falla).
 
-### (anterior) RETOMAR AQUÍ — 22-oct, 18:00 (Gadea con Claude): G10 nº 2 = 90,7 % 34/72; promoción y G10 nº 3 en marcha
+### ✅ 22-oct, 18:00 (Gadea con Claude): G10 nº 2 = 90,7 % 34/72; promoción y G10 nº 3 en marcha
 
 - **PRE sirve `909a065`** (pre_gadea), sano, 122 ajustes (HISTORY 0.31.93).
 - **G10:** control de ayer 86,4 % 22/72 → nº 1 87,7 % 25/72 → **nº 2 90,7 % 34/72** (sin desfasados; 10 criterios
@@ -192,7 +239,7 @@ Las doce normas, con su porqué, están en el documento.
   3. arq-1i (Gonzalo, en pausa).
   4. arq-9 (futuro).
 
-### (anterior) RETOMAR AQUÍ — 22-oct, 15:10 (Gadea con Claude): ARQ PROMOCIONADA en PRE (eb1679a) y G10 nº 2 en marcha
+### ✅ 22-oct, 15:10 (Gadea con Claude): ARQ PROMOCIONADA en PRE (eb1679a) y G10 nº 2 en marcha
 
 - **PRE sirve `eb1679a`** (pre_gadea), sano, 120 ajustes. Encendidos hoy (HISTORY 0.31.92): `hechos_por_codigo`
   (redactor + arq-3 + arq-1e + arq-1h), `el_verbo_no_la_ciudad`, `hechos_al_rag`, `rag_sin_reglas_del_codigo` (Gonzalo),
@@ -209,7 +256,7 @@ Las doce normas, con su porqué, están en el documento.
 - **Lección del día:** las palabras de control de un modelo (FALTA, NADA) se buscan en todo el texto, no por longitud
   ni solo en una línea: las dos se colaron al cliente.
 
-### (anterior) RETOMAR AQUÍ — 22-oct, 12:30 (Gadea con Claude): ARQ-1 hecha, el redactor de hechos da 116/120 en el banco (base 100/120)
+### ✅ 22-oct, 12:30 (Gadea con Claude): ARQ-1 hecha, el redactor de hechos da 116/120 en el banco (base 100/120)
 
 - **Hecho (HISTORY 0.31.91, flag `hechos_por_codigo` APAGADO hasta que Gadea lo promocione):**
   - Jev da las intenciones del mensaje (arq-1b).
@@ -235,7 +282,7 @@ Las doce normas, con su porqué, están en el documento.
     y luego `puntuar_banco_rag --detalle`.
   - La traza guarda `[HECHOS]`: dice si contestó el redactor, si dijo FALTA o si no pasó las guardas.
 
-### (anterior) RETOMAR AQUÍ — 22-oct, 10:30 (Gadea con Claude): FASE NUEVA ARQ, «el modelo interpreta, el código decide, el modelo redacta»
+### ✅ 22-oct, 10:30 (Gadea con Claude): FASE NUEVA ARQ, «el modelo interpreta, el código decide, el modelo redacta»
 
 - **Plan:** `docs/robustness/arq/plan-hechos-por-codigo.md` y fase **ARQ** en Plan Coral (arq-0a a arq-4, en orden).
   Decisión de Gadea (22-oct, 01:00): se deja de arreglar el RAG por capas y se cambia la arquitectura de la respuesta,
@@ -246,7 +293,7 @@ Las doce normas, con su porqué, están en el documento.
   fijo) → arq-0c (Luna frente a gpt-5-mini) → arq-0d → arq-1a… Álvaro y Gonzalo no están por la mañana: Claude avanza
   en orden y les pasa tareas cuando se conecten (arq-1b y arq-2c son buenas para Álvaro).
 
-### (anterior) RETOMAR AQUÍ — 22-oct, 00:40 (Gadea con Claude): G10 de control con todo junto, PLANO; el RAG omite datos que tiene (67 % de los fallos) → ord-9 «listas del dato» a medias
+### ✅ 22-oct, 00:40 (Gadea con Claude): G10 de control con todo junto, PLANO; el RAG omite datos que tiene (67 % de los fallos) → ord-9 «listas del dato» a medias
 
 - **PRE sirve `c59f092`** (pre_gadea), sano. Encendido: gen-13, gen-14, gen-15, gen-16, ord-7, ord-4 y ord-6c (sin el
   formulario médico). Lo último subido esta noche (ver el push de las 00:40) lleva además los arreglos de lo que
@@ -279,7 +326,7 @@ Las doce normas, con su porqué, están en el documento.
 - **Reglas nuevas de Gadea (en memoria):** quien quede libre coge la siguiente tarea del orden; si alguien no está
   conectado, sus tareas se liberan y se reparten en orden; el plan se adapta a lo que digan los resultados.
 
-### (anterior) RETOMAR AQUÍ — 20-oct, 16:40 (Gadea con Claude): fase GEN (subir el examen oculto) — gen-1, gen-2, gen-3 (a), textos de Cartagena y gen-7 PROMOCIONADOS
+### ✅ 20-oct, 16:40 (Gadea con Claude): fase GEN (subir el examen oculto) — gen-1, gen-2, gen-3 (a), textos de Cartagena y gen-7 PROMOCIONADOS
 
 - **Plan:** fase **GEN** en Plan Coral (tareas gen-1 a gen-11). Sale de G9: 84,1 % de criterios y 20/72 diálogos sin
   fallos (26 diálogos con un solo fallo). Reglas: nada de parches ni regex, se arregla por causa con bancos de frases
@@ -310,7 +357,7 @@ Las doce normas, con su porqué, están en el documento.
   la misma referencia (la caché del juez depende de la base). Al subir `policies.json`, el CI regenera `kb_v2` en PRE.
 - **PRE:** `feature/pre_gadea`, último commit de hoy; libre.
 
-### (anterior) RETOMAR AQUÍ — 20-oct, 00:20 (Gadea con Claude, en autonomía): ex-9b TERMINADO; G9 lanzado (autorizado por Gadea)
+### ✅ 20-oct, 00:20 (Gadea con Claude, en autonomía): ex-9b TERMINADO; G9 lanzado (autorizado por Gadea)
 
 **ex-9b (las expresiones regulares que "entendían" al cliente) TERMINADO y en PRE (835d318, pre_gadea).** HISTORY
 0.31.62-0.31.68. Rondas core del día: ex9b-1 96,1 % → ex9b-2 97,0 % → ex9b-3 97,4 % → (ex9b-4/5/6, el paso 6 mal
@@ -335,7 +382,7 @@ SEGUNDA llamada al extractor (todo junto no cabía en Haiku). Limpieza de los fl
   procesos pesados a la vez en el portátil; un esquema estricto grande no cabe en Haiku ("compiled grammar is too
   large", falla SIEMPRE y contesta el respaldo); las rondas core varían ±3 diálogos con el mismo código.
 
-### (anterior) RETOMAR AQUÍ — 19-oct, 14:40 (Gadea con Claude; Álvaro parado): ex-9b en marcha, ronda ex9b-2 midiendo
+### ✅ 19-oct, 14:40 (Gadea con Claude; Álvaro parado): ex-9b en marcha, ronda ex9b-2 midiendo
 
 **Decisión de Gadea (19-oct): ex-9 parte 2 (ex-9b) ENTERA antes de G9** — "quiero hacer g9 con todo lo que es código y
 fallos solucionables terminados". Plan de 6 pasos en `docs/robustness/regex/estudio-ex9-regex.md`; bancos y scripts en
@@ -353,7 +400,7 @@ DELIBERACION_POR_JEV, la regla del grupo repartido del paso 3 y el enrutador de 
 - **Cómo lanzar una ronda** (lección del 19-oct): `set -o pipefail && check_deploy --sha <commit SUBIDO> | tail && ronda`;
   el jsonl se abre en modo append (si una tanda sale mal, apartarla antes de repetir el mismo `--name`).
 
-### (anterior) RETOMAR AQUÍ — 19-oct, 05:15 (Gadea con Claude, noche en autonomía): limpieza s4-25 TERMINADA (pasos 1 y 2)
+### ✅ 19-oct, 05:15 (Gadea con Claude, noche en autonomía): limpieza s4-25 TERMINADA (pasos 1 y 2)
 
 **PRE sirve 970641f (pre_gadea)**: el estado promocionado de la noche + la limpieza s4-25 en sus dos pasos (21 flags sin
 su camino apagado, src −412 líneas netas), cada paso con su ronda de equivalencia comprobada con el código de antes y
@@ -366,7 +413,7 @@ parte 2 y s4-2 (Álvaro), las dos reglas del extractor apagadas (ver abajo) y G9
 Coral #564). **Ojo:** los últimos commits de la noche (HISTORY 0.31.58-0.31.59, relevo) son solo docs y están en
 `feature/gadea-g3` y en local; `pre_gadea`/PRE siguen en 970641f (el código es el mismo): suben con el próximo push.
 
-### (anterior) RETOMAR AQUÍ — 19-oct, 03:15 (Gadea con Claude, noche en autonomía): G2 promocionada, limpieza paso 1 confirmada
+### ✅ 19-oct, 03:15 (Gadea con Claude, noche en autonomía): G2 promocionada, limpieza paso 1 confirmada
 
 **PRE sirve fc53411 (pre_gadea), el estado promocionado**: el bot sin gpt-4 (mod-F), mod-G2 (TARJETA_SIN_SEGURIDAD,
 RECOMENDAR_A_NO_CERTIFICADOS, resolutor Haiku con RESOLUTOR_SIN_CONTRADICCIONES), el respaldo si OpenRouter falla y la
@@ -383,7 +430,7 @@ en reserva-solo-link; falta la regla de contradicción también en el extractor)
 paso 2 de la limpieza (flujo) lo prepara un agente en `feature/limpieza-paso2-flujo` (no despliega): revisarlo e
 integrarlo con su ronda de equivalencia; los dos fallos de flujo de CAL-F (`cal-f-golden-completo.md`, al final).
 
-### (anterior) RETOMAR AQUÍ — 18-oct, 23:50 (Gadea con Claude, en autonomía por la noche): ronda mod-G2 en marcha
+### ✅ 18-oct, 23:50 (Gadea con Claude, en autonomía por la noche): ronda mod-G2 en marcha
 
 **Noche (Gadea durmiendo; permiso para seguir y decidir; si se acaba el saldo de OpenAI u OpenRouter: subir,
 documentar y apagar).** Hecho desde las 21:30:
@@ -403,7 +450,7 @@ documentar y apagar).** Hecho desde las 21:30:
 - Los dos fallos de flujo de CAL-F: misma familia (mensaje que solo se entiende con el turno anterior; Jev no lo ve como
   pregunta, ni con más contexto): documentado en `cal-f-golden-completo.md` para Álvaro.
 
-### (anterior) RETOMAR AQUÍ — 18-oct, 21:30 (Gadea con Claude, con las tareas de Álvaro): EL BOT YA NO USA NINGÚN MODELO GPT-4
+### ✅ 18-oct, 21:30 (Gadea con Claude, con las tareas de Álvaro): EL BOT YA NO USA NINGÚN MODELO GPT-4
 
 **PRE sirve 738ca41 (pre_gadea)**, con todo lo de Álvaro integrado. Hoy, en orden: mod-B y mod-C (HISTORY 0.31.53), la
 mod-D de Álvaro revertida (0.31.54), **mod-E** (`RAG_NO_ADIVINA` + respaldo del RAG en DeepSeek, 0.31.55) y **mod-F**
@@ -420,7 +467,7 @@ criterio `datos` de `reserva-solo-link` (una pregunta de confirmación de la cer
 (3) los dos fallos de flujo de CAL-F (#461); (4) herramientas en gpt-4.1: verificador de `rag_piezas` y juez del
 `banco_acuse`; (5) limpieza (OPENAI_MODEL, EXTRACTION_MODEL, RAG_PLAN_MODEL, RESPALDO_MISMO_MODELO sin uso; s4-25).
 
-### (anterior) RETOMAR AQUÍ — 18-oct, 17:15 (Álvaro con Claude): PARADA por tokens; relevo a Gadea hasta que Álvaro vuelva (~1 día)
+### ✅ 18-oct, 17:15 (Álvaro con Claude): PARADA por tokens; relevo a Gadea hasta que Álvaro vuelva (~1 día)
 
 **Estado de PRE:** sirve lo de Gadea (mod-B y mod-C promocionadas) + lo de Álvaro con la ronda mod-D REVERTIDA (los
 flags de abajo, APAGADOS; los modelos de mod-2/mod-3, los de antes). Todo subido a `feature/pre_alvaro`.
@@ -449,7 +496,7 @@ actividad (arreglarlo dando los precios y preguntando cuál quiere, decisión de
 de s4-25 de Gadea; ex-9 parte 2. `RESPALDO_MISMO_MODELO` (mío, APAGADO) sobra si mod-5 (respaldo en DeepSeek) se
 promociona: se puede borrar.
 
-### (anterior) RETOMAR AQUÍ — 18-oct, 16:20 (Gadea con Claude): mod-B y mod-C PROMOCIONADAS (HISTORY 0.31.53); ronda mod-D de Álvaro
+### ✅ 18-oct, 16:20 (Gadea con Claude): mod-B y mod-C PROMOCIONADAS (HISTORY 0.31.53); ronda mod-D de Álvaro
 
 **PRE sirve f3edbe2 (pre_gadea)**: G3 (Barú, la pregunta sola, una sola moneda), el revisor con `JUEZ_V3_LUNA`, la
 reescritura, el resumen y el idioma en DeepSeek, y la transcripción con `gpt-transcribe` y vocabulario. Core: A 97,4 %
@@ -466,7 +513,7 @@ Después, medir `RAG_NO_ADIVINA` (APAGADO; fallos estables de CAL-F del RAG). Pr
 formulario médico ¿se rellena antes con el enlace público (lo que dice la base) o llega tras reservar (lo que pide el
 criterio de refresher-que-completar-antes)?
 
-### (anterior) RETOMAR AQUÍ — 18-oct, 14:20 (Gadea con Claude): FASE MOD en marcha; rondas core mod-A/B/C; decisiones de Gadea
+### ✅ 18-oct, 14:20 (Gadea con Claude): FASE MOD en marcha; rondas core mod-A/B/C; decisiones de Gadea
 
 **Rondas core en curso** (A/B/C, acordadas con Álvaro): **mod-A** = PRE a7d4e65 con todo lo nuevo apagado →
 97,4 % (6 fallos de 227), 27/32. **mod-B** = A + `BARU_NO_ES_ROSARIO` + `BUSQUEDA_CON_LA_PREGUNTA_SOLA` (DeepSeek) +
@@ -489,7 +536,7 @@ no dicen que esté certificado; "desde Argentina" no da la nacionalidad; un plur
 
 **Pendiente de Gadea:** mod-7 (privacidad de OpenRouter con datos reales en producción).
 
-### ▶️ RETOMAR AQUÍ — 18-oct, 06:00 (Gadea con Claude, en autonomía): CAL-F 95,8 %, G3-03 PROMOCIONADO; decisiones pendientes para Gadea
+### ✅ 18-oct, 06:00 (Gadea con Claude, en autonomía): CAL-F 95,8 %, G3-03 PROMOCIONADO; decisiones pendientes para Gadea
 
 **En PRE** (feature/pre_gadea, con la rama de Álvaro integrada): `RAG_OFRECE_EL_PASE` PROMOCIONADO; los 4 flags de
 G3-01 de Álvaro siguen ENCENDIDOS (su ronda g301-B; promocionarlos lo decide él); `BUSQUEDA_CON_LA_PREGUNTA_SOLA`
@@ -524,7 +571,7 @@ la pregunta del origen afirma "hay que dormir en las islas" (`_plan_needs_overni
 con las fotos por pieza; y G9 UNA sola vez cuando Gadea lo diga (`run_synthetic_pre --sample golden --golden
 docs/robustness/golden-set/examen-sintetico-g9.json` y `judge_golden_set --golden …`, con la referencia de ese momento).
 
-### ▶️ RETOMAR AQUÍ — 17-oct, 21:45 (Gadea con Claude, en autonomía): G3 en directo (G3-04…08), G3-05 arreglado con flag; SIN CRÉDITO DE OPENAI
+### ✅ 17-oct, 21:45 (Gadea con Claude, en autonomía): G3 en directo (G3-04…08), G3-05 arreglado con flag; SIN CRÉDITO DE OPENAI
 
 **Bloqueo:** el crédito de OpenAI se agotó a las 21:31 (429 `credit_balance_exhausted`, también en PRE). Hay que
 recargar (Gadea o Álvaro; Claude no toca claves). El juez de CAL-F quedó a medias (la caché guarda lo juzgado):
@@ -557,7 +604,7 @@ agrupado y avisando por Coral (Álvaro medía g3-01 en PRE).
 **Siguiente:** recargar → juez de CAL-F → medir g3-08 y la latencia de G3-05 → ronda core B con los flags de G3 →
 CAL-G → G9 una vez.
 
-### ▶️ RETOMAR AQUÍ — 17-oct, 19:00 (Gadea con Claude): CAL-A y CAL-D cerradas, r6-2 hecha, G9 congelado; PLAN HASTA ANDRÉS
+### ✅ 17-oct, 19:00 (Gadea con Claude): CAL-A y CAL-D cerradas, r6-2 hecha, G9 congelado; PLAN HASTA ANDRÉS
 
 **Plan decidido por Gadea (Plan Coral, log `l-1017-plan-andres`):** no se piden conversaciones a Andrés (dueño de Diving
 Planet) hasta tener el bot robusto. Orden: (1) cerrar lo en vuelo (CAL-C de Álvaro, r6-2); (2) **G9**, examen oculto
@@ -582,8 +629,8 @@ sintético CONGELADO; (3) **CAL-F**, golden visible completo; (4) **G3**, Claude
   `/tmp/codigo-local-plaza-*` del contenedor son de Álvaro; `…-usuario-*`, de Gadea.
 
 ### ▶️ (anterior) — 17-oct tarde (Álvaro con Claude): CAL-C PROMOCIONADO; Luna medida; Coral activado
-### ▶️ RETOMAR AQUÍ — 17-oct noche (Álvaro con Claude): CAL-C CERRADA (C4, C5, C3e promocionados); siguiente r6-1
-### ▶️ RETOMAR AQUÍ — 18-oct mañana (Álvaro con Claude): G3-01 y refresher PROMOCIONADOS
+### ✅ 17-oct noche (Álvaro con Claude): CAL-C CERRADA (C4, C5, C3e promocionados); siguiente r6-1
+### ✅ 18-oct mañana (Álvaro con Claude): G3-01 y refresher PROMOCIONADOS
 
 **Promocionados (decisión de Álvaro, HISTORY 0.31.50):** los 4 flags de G3-01 (`LO_DICHO_EN_RESPUESTA_FIJA`,
 `REPARTO_PARCIAL_CON_LO_SABIDO`, `ACTIVIDAD_PRINCIPAL_EN_EL_REPARTO`, `NINOS_PRIMERO_AL_SNORKEL`) y
@@ -1232,7 +1279,7 @@ router de respaldo, pero sin Jev no funcionan bien `POSVENTA_SIN_VENDER`, ni la 
 3. Pendientes: `acompanante-goteo`, `precio-desde-islas`, y lo de antes de Álvaro (abajo). ex-9 sigue esperando.
 - Estudio de las 45 regresiones: `docs/robustness/regresiones-ex-2026-10-13.md`.
 
-### ▶️ (anterior) RETOMAR AQUÍ — 13-oct, CIERRE (Álvaro con Claude) → para Gonzalo: fase EX con ex-0…ex-8 hechos; siguiente, los restos y ex-9
+### ✅ 13-oct, CIERRE (Álvaro con Claude) → para Gonzalo: fase EX con ex-0…ex-8 hechos; siguiente, los restos y ex-9
 
 **Estado.** PRE sirve `feature/pre_alvaro` (último commit del 13-oct, sana; `check_deploy` en verde). Lleva TODO
 `feature/pre_gadea` (ex-5, ex-6, ex-8) y `feature/l1_gonzalo`: **partid de `feature/pre_alvaro`** e integradla antes de
@@ -1371,7 +1418,7 @@ Integrad `feature/pre_gadea` antes de subir. HISTORY 0.31.9-0.31.12 (0.31.12: de
 **Avisos:** el banco se ajusta SOLO con diseño; el ciego se usó una vez (ex-4). Una regla del extractor que contradiga una
 decisión ya tomada (como la de Cartagena de s4-28) es un error del extractor, no del banco.
 
-### ▶️ RETOMAR AQUÍ — 9-oct tarde (Gonzalo): s4-28 casos 2 y 3 CERRADOS; dos arreglos PROMOCIONADOS; siguiente ex-0
+### ✅ 9-oct tarde (Gonzalo): s4-28 casos 2 y 3 CERRADOS; dos arreglos PROMOCIONADOS; siguiente ex-0
 
 **Estado.** PRE sirve `feature/pre_gadea` (sana) con `ORIGEN_DEL_CLIENTE` y `GRUPO_POR_EDADES` **encendidos**
 (HISTORY 0.31.8; evidencia `docs/robustness/s4-28/README.md`). Integrad `feature/pre_gadea` antes de subir.
@@ -1439,7 +1486,7 @@ independientes y pueden ir en paralelo.
 - `run_synthetic_pre --name X` ya antepone la fecha al fichero: no pongáis la fecha en el nombre.
 - Gasto OpenAI del 9-oct ≈ 3,5 $ (jueces de 4 mini-rondas y los bancos del revisor).
 
-### ▶️ RETOMAR AQUÍ — 8-oct, CIERRE DE SESIÓN (Álvaro con Claude): s4-31 CERRADA; s4-33 EN CURSO — Luna como revisor aún NO
+### ✅ 8-oct, CIERRE DE SESIÓN (Álvaro con Claude): s4-31 CERRADA; s4-33 EN CURSO — Luna como revisor aún NO
 
 **Estado al cerrar.** PRE sirve `feature/pre_alvaro` (`check_deploy` en verde). **Integrad `feature/pre_alvaro` antes de
 subir** (lleva todo `feature/pre_gadea` del 8-oct + esta sesión; nada que integrar de otras ramas). Modelos: respuesta del

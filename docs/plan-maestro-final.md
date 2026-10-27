@@ -542,6 +542,13 @@ medias (u3-1 ✅, u3-4 ✅ promocionada, u3-5 🟡); PRE con u3-4 encendido. Sui
 > vez, como cierre del bloque RAG.** (Esto corrige el bloque de abajo, que ponía el oculto antes de rag-6.) Detalle:
 > `session-handoff.md`, "RETOMAR AQUÍ" del 1-oct.
 
+> **Estado al 28-oct (Gadea), fase CALN** (calidad en conversaciones nuevas, sin parches y con la arquitectura
+> delgada): el orden vivo está en Plan Coral (fase CALN) y en el «RETOMAR AQUÍ» del handoff. PRE = integra5
+> (HISTORY 0.32.9); la base de CALN es `feature/caln-gadea` (HISTORY 0.35.0). Hecho: CALN-0, CALN-2 (casi), CALN-6.
+> En curso: CALN-3 paso 2 (precios, Gonzalo). Después: integrar y 4.ª ronda (sube a PRE si iguala o mejora
+> integra5), CALN-3b (origen, enlace y pago, totales de la tarjeta). Pendiente de Gadea: el lector del grupo (calidad
+> contra latencia) y el control de integra5. Salida de CALN: ≥ 82/116 de media en 2 rondas y oculto ≥ 90 %.
+
 > **Estado al 30-sep noche (Gadea), fase RAG:** rag-1, rag-2 y rag-3 ✅ promocionadas (HISTORY 0.29.70-0.29.85);
 > rag-4 ❌ descartada con medida (89 → 83 %). **rag-5 ⏳ en curso** (0.29.86): el RAG arranca a la vez que el
 > enrutador (`RAG_ADELANTADO`, encendido en PRE sin promocionar); gana 1,2 s cuando se aprovecha, pero solo en el 29 %

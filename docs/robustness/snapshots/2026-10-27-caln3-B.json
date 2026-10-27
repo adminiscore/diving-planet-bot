@@ -1,0 +1,451 @@
+{
+  "label": "caln3-B",
+  "source": "turn_metrics (log de PRE)",
+  "taken_at": "2026-10-27T23:42:08+00:00",
+  "run_at": "2026-10-27T20:13:00Z",
+  "commit": "99284892",
+  "environment": "staging",
+  "window": {
+    "from": "2026-10-27T20:05:42Z",
+    "to": "2026-10-27T20:13:00Z",
+    "first_turn": "2026-10-27T20:05:42Z",
+    "last_turn": "2026-10-27T20:13:00Z"
+  },
+  "all": {
+    "turns": 465,
+    "latency_p50": 3.586,
+    "latency_p95": 7.239,
+    "latency_avg": 3.768,
+    "llm_calls_avg": 3.23,
+    "llm_calls_p95": 5.0,
+    "llm_calls_max": 7,
+    "embeddings_avg": 0.98,
+    "llm_share": 1.023,
+    "tokens_avg": 0,
+    "cost_avg_usd": 0
+  },
+  "by_type": {
+    "reserva": {
+      "turns": 155,
+      "latency_p50": 1.578,
+      "latency_p95": 2.282,
+      "latency_avg": 1.674,
+      "llm_calls_avg": 2.28,
+      "llm_calls_p95": 3.0,
+      "llm_calls_max": 3,
+      "embeddings_avg": 0.56,
+      "llm_share": 1.202,
+      "tokens_avg": 0,
+      "cost_avg_usd": 0
+    },
+    "rag": {
+      "turns": 310,
+      "latency_p50": 4.728,
+      "latency_p95": 7.407,
+      "latency_avg": 4.814,
+      "llm_calls_avg": 3.71,
+      "llm_calls_p95": 5.0,
+      "llm_calls_max": 7,
+      "embeddings_avg": 1.19,
+      "llm_share": 0.992,
+      "tokens_avg": 0,
+      "cost_avg_usd": 0
+    }
+  },
+  "by_turn_type": {
+    "cambios": {
+      "turns": 1,
+      "latency_p50": 1.487,
+      "latency_p95": 1.487,
+      "latency_avg": 1.487,
+      "llm_calls_avg": 2.0,
+      "llm_calls_p95": 2.0,
+      "llm_calls_max": 2,
+      "embeddings_avg": 1,
+      "llm_share": 1.171,
+      "tokens_avg": 0,
+      "cost_avg_usd": 0
+    },
+    "deflection": {
+      "turns": 1,
+      "latency_p50": 1.355,
+      "latency_p95": 1.355,
+      "latency_avg": 1.355,
+      "llm_calls_avg": 3.0,
+      "llm_calls_p95": 3.0,
+      "llm_calls_max": 3,
+      "embeddings_avg": 2,
+      "llm_share": 1.387,
+      "tokens_avg": 0,
+      "cost_avg_usd": 0
+    },
+    "escalado": {
+      "turns": 10,
+      "latency_p50": 1.512,
+      "latency_p95": 2.298,
+      "latency_avg": 1.613,
+      "llm_calls_avg": 2.0,
+      "llm_calls_p95": 2.0,
+      "llm_calls_max": 2,
+      "embeddings_avg": 1,
+      "llm_share": 1.171,
+      "tokens_avg": 0,
+      "cost_avg_usd": 0
+    },
+    "rag": {
+      "turns": 310,
+      "latency_p50": 4.728,
+      "latency_p95": 7.407,
+      "latency_avg": 4.814,
+      "llm_calls_avg": 3.71,
+      "llm_calls_p95": 5.0,
+      "llm_calls_max": 7,
+      "embeddings_avg": 1.19,
+      "llm_share": 0.992,
+      "tokens_avg": 0,
+      "cost_avg_usd": 0
+    },
+    "reserva": {
+      "turns": 128,
+      "latency_p50": 1.59,
+      "latency_p95": 2.234,
+      "latency_avg": 1.665,
+      "llm_calls_avg": 2.29,
+      "llm_calls_p95": 3.0,
+      "llm_calls_max": 3,
+      "embeddings_avg": 0.54,
+      "llm_share": 1.212,
+      "tokens_avg": 0,
+      "cost_avg_usd": 0
+    },
+    "saludo": {
+      "turns": 15,
+      "latency_p50": 1.489,
+      "latency_p95": 3.839,
+      "latency_avg": 1.833,
+      "llm_calls_avg": 2.4,
+      "llm_calls_p95": 3.0,
+      "llm_calls_max": 3,
+      "embeddings_avg": 0.33,
+      "llm_share": 1.143,
+      "tokens_avg": 0,
+      "cost_avg_usd": 0
+    }
+  },
+  "turns_with_summary": 465,
+  "business": {
+    "conversations": 116,
+    "turns": 465,
+    "turns_per_conversation": 4.01,
+    "funnel": {
+      "hablan": {
+        "conversations": 116,
+        "pct": 100.0
+      },
+      "eligen_actividad": {
+        "conversations": 16,
+        "pct": 13.8
+      },
+      "carrito_con_personas": {
+        "conversations": 16,
+        "pct": 13.8
+      },
+      "link_de_pago": {
+        "conversations": 25,
+        "pct": 21.6
+      }
+    },
+    "escalation_rate_pct": 19.8,
+    "fallback_turns": 0,
+    "fallback_pct_of_turns": 0.0,
+    "by_turn_type": {
+      "rag": 310,
+      "reserva": 128,
+      "saludo": 15,
+      "escalado": 10,
+      "cambios": 1,
+      "deflection": 1
+    }
+  },
+  "nodes": {
+    "booking": {
+      "n": 433,
+      "p50": 3.029,
+      "p95": 6.595
+    },
+    "info": {
+      "n": 3,
+      "p50": 2.425,
+      "p95": 5.113
+    },
+    "slotfill_close": {
+      "n": 393,
+      "p50": 1.931,
+      "p95": 5.106
+    },
+    "extraction": {
+      "n": 396,
+      "p50": 1.105,
+      "p95": 2.405
+    },
+    "router": {
+      "n": 465,
+      "p50": 0.347,
+      "p95": 1.806
+    },
+    "routing": {
+      "n": 396,
+      "p50": 0.005,
+      "p95": 0.079
+    },
+    "setup": {
+      "n": 433,
+      "p50": 0.005,
+      "p95": 0.041
+    },
+    "availability": {
+      "n": 433,
+      "p50": 0.004,
+      "p95": 0.071
+    },
+    "changes": {
+      "n": 3,
+      "p50": 0.003,
+      "p95": 3.055
+    },
+    "safety": {
+      "n": 24,
+      "p50": 0.002,
+      "p95": 3.363
+    },
+    "deflection": {
+      "n": 2,
+      "p50": 0.001,
+      "p95": 0.001
+    }
+  },
+  "router": {
+    "by_backend": {
+      "jev": 421,
+      "jev_duda": 43,
+      "llm": 1
+    },
+    "ms_p50": 316.5,
+    "ms_p95": 425.85
+  },
+  "models": {
+    "anthropic/claude-haiku-5.5": 523,
+    "typesafe/jev-1.13": 464,
+    "gpt-6-luna": 295,
+    "deepseek/deepseek-v4.1-flash": 221
+  },
+  "rag_adelantado": {
+    "resultados": {
+      "descartado": 354,
+      "aprovechado": 57,
+      "rehecho": 52,
+      "sin_adelantar": 2
+    },
+    "latencia_turnos_rag": {
+      "aprovechado": {
+        "n": 57,
+        "p50": 3.44,
+        "p95": 6.125
+      },
+      "descartado": {
+        "n": 201,
+        "p50": 4.724,
+        "p95": 7.515
+      },
+      "rehecho": {
+        "n": 52,
+        "p50": 5.835,
+        "p95": 7.409
+      }
+    },
+    "rehecho_por": {
+      "hechos": 45,
+      "resumen": 10,
+      "origen": 2,
+      "pregunta": 3
+    }
+  },
+  "por_pieza": {
+    "extractor": {
+      "n": 514,
+      "p50": 1.462,
+      "p95": 2.028,
+      "modelos": {
+        "anthropic/claude-haiku-5.5": 514
+      }
+    },
+    "jev": {
+      "n": 464,
+      "p50": 0.316,
+      "p95": 0.426,
+      "modelos": {
+        "typesafe/jev-1.13": 464
+      }
+    },
+    "embedding": {
+      "n": 456,
+      "p50": 0.16,
+      "p95": 0.245,
+      "modelos": {
+        "text-embedding-3-small": 456
+      }
+    },
+    "rag_escritor": {
+      "n": 259,
+      "p50": 2.132,
+      "p95": 3.996,
+      "modelos": {
+        "gpt-6-luna": 259
+      }
+    },
+    "reescritura": {
+      "n": 85,
+      "p50": 0.493,
+      "p95": 0.921,
+      "modelos": {
+        "deepseek/deepseek-v4.1-flash": 85
+      }
+    },
+    "rag_respaldo": {
+      "n": 69,
+      "p50": 1.154,
+      "p95": 1.901,
+      "modelos": {
+        "deepseek/deepseek-v4.1-flash": 69
+      }
+    },
+    "notas": {
+      "n": 54,
+      "p50": 0.49,
+      "p95": 0.884,
+      "modelos": {
+        "deepseek/deepseek-v4.1-flash": 54
+      }
+    },
+    "red_detect_special_signals": {
+      "n": 36,
+      "p50": 1.138,
+      "p95": 2.286,
+      "modelos": {
+        "gpt-6-luna": 36
+      }
+    },
+    "revisor": {
+      "n": 12,
+      "p50": 0.772,
+      "p95": 1.438,
+      "modelos": {
+        "deepseek/deepseek-v4.1-flash": 12
+      }
+    },
+    "red_resolve_slot_answer": {
+      "n": 9,
+      "p50": 0.946,
+      "p95": 1.137,
+      "modelos": {
+        "anthropic/claude-haiku-5.5": 9
+      }
+    },
+    "idioma": {
+      "n": 1,
+      "p50": 0.363,
+      "p95": 0.363,
+      "modelos": {
+        "deepseek/deepseek-v4.1-flash": 1
+      }
+    }
+  },
+  "coste": {
+    "precios": "2026-10-21",
+    "usd": 0.5444,
+    "openai_usd": 0.1044,
+    "openrouter_usd": 0.4401,
+    "usd_por_100_turnos": 0.1171,
+    "por_conversacion": {
+      "n": 116,
+      "p50": 0.004,
+      "max": 0.0159
+    },
+    "por_pieza": {
+      "jev": {
+        "usd": 0.1577,
+        "in": 3754226,
+        "out": 510533,
+        "n": 464
+      },
+      "extractor": {
+        "usd": 0.1258,
+        "in": 5003272,
+        "out": 113672,
+        "n": 514
+      },
+      "rag_escritor": {
+        "usd": 0.1006,
+        "in": 3590296,
+        "out": 26913,
+        "n": 259
+      },
+      "rag_respaldo": {
+        "usd": 0.0979,
+        "in": 1076013,
+        "out": 14016,
+        "n": 69
+      },
+      "revisor": {
+        "usd": 0.027,
+        "in": 127148,
+        "out": 631,
+        "n": 12
+      },
+      "notas": {
+        "usd": 0.0182,
+        "in": 60274,
+        "out": 1519,
+        "n": 54
+      },
+      "reescritura": {
+        "usd": 0.0128,
+        "in": 46134,
+        "out": 1970,
+        "n": 85
+      },
+      "red_detect_special_signals": {
+        "usd": 0.0035,
+        "in": 107253,
+        "out": 703,
+        "n": 36
+      },
+      "red_resolve_slot_answer": {
+        "usd": 0.0007,
+        "in": 8601,
+        "out": 99,
+        "n": 9
+      },
+      "embedding": {
+        "usd": 0.0002,
+        "in": 11883,
+        "out": 0,
+        "n": 456
+      },
+      "idioma": {
+        "usd": 0.0,
+        "in": 39,
+        "out": 2,
+        "n": 1
+      }
+    },
+    "por_modelo": {
+      "typesafe/jev-1.13": 0.1577,
+      "deepseek/deepseek-v4.1-flash": 0.1559,
+      "anthropic/claude-haiku-5.5": 0.1264,
+      "gpt-6-luna": 0.1042,
+      "text-embedding-3-small": 0.0002
+    },
+    "sin_precio": {}
+  }
+}

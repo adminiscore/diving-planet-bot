@@ -1,6 +1,35 @@
 History
 =======
 
+0.35.0 - (2026-10-28, CALN: EN RAMA `feature/caln-gadea` 9928489, NO sube; PRE sigue en 0.32.9 = integra5)
+---------------------
+* **CALN-6 cerrado en rama** (Gadea, el compositor al final del turno), pasos 2d-2f: UNA pregunta como mucho (si el
+  texto ya pregunta, la de la reserva queda pendiente, sin sus botones ni la recomendación que el cliente no vio); la
+  explicación de la pregunta final no se repite; el historial guarda lo que vio el cliente; sin «Te recomiendo el plan
+  de 2 inmersiones» a quien ya dijo cuántas; el saludo de Coral sin su calidez si contesta el escritor (56 → 2); la
+  invitación genérica de la tarjeta cede ante una pregunta concreta; arq-7b solo completa lo PEDIDO: la recogida va en
+  los hechos y ni se pega ni se exige (cambia la regla del G10 de control del 22-oct; medido con el juez: golden 5 → 4
+  fallos en 14 diálogos, rotativa con los criterios de recogida 5/6 → 6/6). Golden: repite 22 → 5, dos preguntas
+  18 → 1 (integra5 → caln3-B).
+* **CALN-2** (Álvaro): quien viene sin elegir queda sin decidir; la tarjeta se rehace si el reparto ya no cuadra; la
+  lectura del grupo («she the mini course», repetir lo de ella no borra al buzo, la pregunta a quien aún no ha elegido);
+  el buzo sin elegir con el buceo entre sus opciones; el reparto que olvida a quien escribe (CALN4-05). Bancos: grupos
+  38/56 → 49-51/58, lectura 6/14 → 14/14 (y 15/20 → 20/20), tarjeta 0/2 → 2/2, precios-q 2/10 → 8/10.
+* **CALN-3** (Gonzalo): paso 2 en curso en `feature/caln3-paso2-gonzalo` (los candidatos sin actividad elegida, el
+  descuento de grupo solo cuando aplica). **CALN-3b** nuevo (Gadea): lo de precios que no cubre el resolvedor (origen,
+  enlace y pago del colombiano, totales de la tarjeta), DESPUÉS del paso 2.
+* **Sparring:** tanda de precios q1-q5 (CALN3-Q01..Q09, `banco-precios-q.json`) y 2.ª tanda de la batería fija
+  (CALN4-01..12, Álvaro). Hallazgos en `docs/robustness/g3/hallazgos.md`.
+* **Limpieza del examen oculto** (Gadea): fuera los ids y los casos del oculto de 60 ficheros (documentos, banco de CAL,
+  análisis de ex-10, medidas de CAL). El banco de CAL tenía casos del oculto: su cifra desde CAL puede ser algo
+  optimista; la rotativa es la medida limpia.
+* **Medida** (ronda completa, juez gpt-5-mini): **caln3-B 78/116, 54 fallos** (visible 34, integra5 35), **oculto
+  88,0 %** (20 fallos; integra5 15, integra6b 18), **rotativa 11/30** (todas entre 23 y 30 fallos: ruido); p50 3,59 s,
+  p95 7,24 s, 3,23 llamadas por turno. No supera a integra5: **PRE no cambia**. La bajada del oculto viene de la base
+  integra6b (fallos que no son de precio 6 → 9). El 44 % de los fallos son de precio (24 de 54).
+* **Pendiente de Gadea:** el lector del grupo (Álvaro, paso 1 medido: total 84 → 99,8 %, reparto 75 → 94 %, inventos
+  60 → 36 con T2b; +1,3-1,8 s en el p95 de esos turnos: calidad contra latencia) y el control de integra5 (~3,5 $).
+
 0.32.0 - (2026-10-24)
 ---------------------
 * **Fase LAT** (decisión de Gadea, 24-oct): bajar la latencia y la complejidad. La calidad puede bajar algo y se
