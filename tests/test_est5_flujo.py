@@ -25,6 +25,8 @@ async def test_el_turno_del_pase_guarda_lo_que_dijo_el_cliente(monkeypatch):
     state = _con_extraccion({"location": "island", "activity": "minicourse", "group_size": 2})
     await guardar_lo_dicho_en_el_pase(state)
     assert state.detected_location == "island"
+    # CALN (s2-familia-ninos-pequenos): también `location`, la que mira la reserva; si no, volvía a preguntar el origen.
+    assert state.location == "island"
     assert state.detected_activity == "minicourse"
     assert state.detected_group_size == 2
     assert state._extraccion_adelantada is None

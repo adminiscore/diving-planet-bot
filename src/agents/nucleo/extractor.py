@@ -851,6 +851,11 @@ async def _guardar_lo_dicho(state: ConversationState, motivo: str) -> None:
         if campo == "group_size" and not (isinstance(valor, int) and valor > 0):
             continue
         setattr(state, atributo, valor)
+        if campo == "location":
+            # CALN (27-oct, sparring s2-familia-ninos-pequenos de Gadea, #2136): «Estamos alojados en Cartagena» en un
+            # turno sin núcleo quedaba solo en detected_location; el escritor cotizaba desde Cartagena, pero la reserva
+            # mira `location` y en el turno 3 volvía a preguntar «¿Desde dónde saldrías?». Como en el resto del núcleo.
+            state.location = valor
         guardados[campo] = valor
     hotel = (datos or {}).get("hotel")
     if hotel and not (state.hotel or state.detected_hotel):
