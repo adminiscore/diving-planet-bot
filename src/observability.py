@@ -207,9 +207,13 @@ async def _on_response(response) -> None:
             model = json.loads(request.content or b"{}").get("model")
         except Exception:  # noqa: BLE001
             pass
+        # LAT-10 (27-oct): el gancho salta al llegar las CABECERAS. OpenRouter las manda antes de que el modelo acabe
+        # de escribir, así que la duración se toma tras leer el cuerpo (`_uso_de`); antes el extractor salía con 0,86 s
+        # de mediana y los ~0,6 s en que escribía su JSON quedaban como un hueco sin llamadas (integra6b-B).
+        uso = await _uso_de(response)
         segundos = time.perf_counter() - t0
         record_llm_call(kind, segundos, model, pieza=request.extensions.get("coral_pieza"),
-                        inicio=t0, status=response.status_code, uso=await _uso_de(response))
+                        inicio=t0, status=response.status_code, uso=uso)
     except Exception:  # noqa: BLE001 — medir nunca rompe una llamada
         pass
 
