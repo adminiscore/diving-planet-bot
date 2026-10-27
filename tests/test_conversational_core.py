@@ -738,8 +738,9 @@ async def test_recall_unknown_field_falls_back_to_rag():
 async def test_companion_signal_adds_minicourse_not_regex_match():
     """"mi acompañante quiere hacer buceo pero no es certificado" — el regex
     NO lo reconoce (misma actividad que la principal, sin persona-añadida
-    explícita); la señal LLM sí, y debe mapear a MINICURSO (no repetir el
-    resumen de buceo certificado con un refresher que no venía a cuento)."""
+    explícita); la señal LLM sí. CALN-2 (27-oct, decisión «no asumir»): la señal
+    dice minicurso, pero el mensaje no lo nombra: el acompañante se suma SIN
+    DECIDIR (se le recomienda y elige el cliente), no como minicurso ni como buzo."""
     state = make_state("es")
     state.detected_activity = "certified_diving"
     state.is_certified = True
@@ -754,7 +755,8 @@ async def test_companion_signal_adds_minicourse_not_regex_match():
         await route_message(state, "mi acompañante quiere hacer buceo pero no es certificado")
     alloc = state.detected_group_allocation or {}
     assert alloc.get("certified_diving") == 1
-    assert alloc.get("minicourse") == 1
+    assert "minicourse" not in alloc
+    assert state.pending_undecided_qty == 1 and state.detected_group_size == 2
 
 
 @pytest.mark.asyncio
@@ -1400,11 +1402,10 @@ async def test_companion_attribute_without_activity_asks_instead_of_guessing(ext
 
 
 def test_activity_has_textual_backing_translates_diving_intent_to_minicourse():
-    """La regla de negocio "no certificado + quiere bucear -> minicurso" debe
-    seguir contando como respaldo textual válido para `minicourse` (no es
-    una alucinación, es una traducción de negocio) — pero un mensaje que NO
-    menciona ninguna actividad no respalda nada."""
-    assert core._activity_has_textual_backing("minicourse", "quiere hacer buceo")
+    """CALN-2 (27-oct): la regla vieja "no certificado + quiere bucear -> minicurso" ya NO respalda `minicourse` (la
+    decisión es no asumir: sin decidir y se recomienda). Lo nombrado sí respalda; un mensaje sin actividad, nada."""
+    assert not core._activity_has_textual_backing("minicourse", "quiere hacer buceo")
+    assert core._activity_has_textual_backing("minicourse", "ella quiere hacer el minicurso")
     assert core._activity_has_textual_backing("snorkel", "quiere hacer snorkel")
     assert not core._activity_has_textual_backing("minicourse", "mi amigo no esta certificado")
 
@@ -1773,25 +1774,12 @@ async def test_companion_attribute_in_opening_message_keeps_main_activity(extrac
         "la actividad principal detectada este mismo turno no debe perderse "
         "al restaurar el perfil frente a la mención del acompañante"
     )
-    assert (state.detected_group_allocation or {}).get("minicourse") == 1
+    # CALN-2 (27-oct, decisión «no asumir»): el amigo no certificado no se convierte en minicurso: queda SIN DECIDIR y
+    # la reserva le pregunta qué quiere hacer (CALN-2 paso 3a: primero quién hace qué), con la recomendación.
     assert (state.detected_group_allocation or {}).get("certified_diving") == 1
-    assert "cartagena" in resp.lower() or "isla" in resp.lower()
-
-    # Sigue el flujo normal: ubicación -> seguridad -> nacionalidad. El bot
-    # nunca vuelve a la ambigüedad del acompañante (ya resuelta) a mitad de
-    # camino.
-    _senales2 = AsyncMock(return_value={})
-    with patch.object(core_routing, "detect_special_signals", new=_senales2), patch.object(core_extraction, "detect_special_signals", new=_senales2):
-        resp2 = await route_message(state, "desde cartagena")
-    assert state.location == "cartagena"
-    assert state.core_pending_slot != core.SLOT_COMPANION_ACTIVITY
-    assert "año" in resp2.lower() or "inmersión" in resp2.lower() or "immersion" in resp2.lower()
-
-    _senales3 = AsyncMock(return_value={})
-    with patch.object(core_routing, "detect_special_signals", new=_senales3), patch.object(core_extraction, "detect_special_signals", new=_senales3):
-        await route_message(state, "no")
-    assert state.last_dive_over_2_years is False
-    assert state.core_pending_slot != core.SLOT_COMPANION_ACTIVITY
+    assert "minicourse" not in (state.detected_group_allocation or {})
+    assert state.pending_undecided_qty == 1 and state.detected_group_size == 2
+    assert state.core_pending_slot == core.SLOT_COMPANION_ACTIVITY
 
 
 # ---------------------------------------------------------------------------

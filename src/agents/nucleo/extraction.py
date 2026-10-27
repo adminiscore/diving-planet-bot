@@ -317,16 +317,26 @@ _NAMED_PERSON_RE = re.compile(_SINGULAR_PERSON, re.IGNORECASE)
 
 def _contar_al_acompanante_sin_actividad(state: ConversationState, message: str, signals: dict) -> None:
     """DEUDA-EXT2 (26-oct): "Voy con una amiga que no está certificada" dejaba el total sin saber y se preguntaba
-    "¿cuántas personas?" (banco-deuda-ext2 g1). Una persona más, en singular y sin total sabido: son 2. Qué hará ella se
-    sigue preguntando, como hoy. CALN2-04 (27-oct): con más gente en plural en el mismo mensaje («voy con mi esposa, que no
+    "¿cuántas personas?" (banco-deuda-ext2 g1). Una persona más, en singular y sin total sabido: son 2, y ella queda SIN
+    DECIDIR (CALN-2, 27-oct: se le recomienda y elige el cliente; contada sin actividad, la tarjeta le cobraba la de
+    quien escribe). CALN2-04 (27-oct): con más gente en plural en el mismo mensaje («voy con mi esposa, que no
     bucea, y nuestras hijas de 8 y 5») no son 2: el total queda sin saber (banco-edades e1). Tampoco con dos o más
     edades sabidas (las lee el extractor): «mi esposo no bucea y vamos con los niños, de 7 y 4» acababa en una tarjeta
     de 2 buzos (sparring b5)."""
     if state.detected_group_size or _PLURAL_COMPANION_RE.search(message) or len(state.detected_ages or []) >= 2:
         return
     if _singular_companion(message) or signals.get("companion_is_singular"):
-        state.detected_group_size = 2
-        logger.info("[CORE][DEUDA-EXT2] acompañante sin actividad, en singular y sin total: grupo de 2")
+        _merge_companion_activity(state, "undecided", 1)
+        logger.info("[CORE][DEUDA-EXT2] acompañante sin actividad, en singular y sin total: grupo de 2, ella sin decidir")
+
+
+def _el_extractor_no_ve_al_grupo(state: ConversationState, message: str) -> bool:
+    """¿El extractor leyó ESTE mensaje sin dar nada del grupo (ni total ni reparto)? False si no lo leyó (falló o no se
+    lanzó): entonces decide lo de siempre."""
+    leida = getattr(state, "_lectura_del_turno", None)
+    if not leida or leida[0] != message or leida[1] is None:
+        return False
+    return not (leida[1].get("group_size") or leida[1].get("group_allocation"))
 
 
 def _singular_companion(message: str) -> bool:
@@ -369,8 +379,8 @@ def _activity_has_textual_backing(activity: str, message: str) -> bool:
     mentioned = set(_mentioned_product_activities(message))
     if activity in mentioned:
         return True
-    if activity == "minicourse" and "certified_diving" in mentioned:
-        return True
+    # CALN-2 (27-oct, banco de grupos g02): «voy con mi novia que no ha buceado nunca» no es elegir el minicurso (la
+    # decisión es no asumir: se le recomienda y elige el cliente). Antes «buceo» en el mensaje respaldaba el minicurso.
     # El acompanante es OTRA persona: cuenta su certificacion ("mi amigo tiene licencia").
     if activity == "certified_diving" and certification_claim(message, about_writer=False) is True:
         return True
@@ -1105,6 +1115,21 @@ async def _extraction_phase_body(
         # menciona NINGÚN producto por palabra clave, la actividad que
         # devuelve el LLM no tiene respaldo textual — se descarta.
         if activity and not _activity_has_textual_backing(activity, message):
+            # CALN-2 (27-oct, banco de grupos g02): un minicurso que el mensaje no nombra es la regla vieja de esta red
+            # («no certificado + quiere bucear»); la decisión es no asumir: esa persona queda sin decidir y se le
+            # recomienda (eligibility, por edad).
+            activity = "undecided" if activity == "minicourse" and _mentioned_product_activities(message) else None
+        if activity and activity == (prev_main_activity or state.detected_activity) and _el_extractor_no_ve_al_grupo(
+                state, message):
+            # CALN-2 (27-oct, banco de grupos g26/g28): «vienen también unos amigos, no sé qué querrán hacer» o «my friend
+            # is coming too but she's not sure» → esta red les daba la actividad de quien escribe (el «bucear» del
+            # mensaje es suyo). Si el extractor leyó el mensaje y no puso a nadie más en el grupo, esa actividad es una
+            # suposición: la persona queda sin decidir (no adivinar).
+            logger.info(f"[CORE][CALN2] la red de señales da {activity!r} al acompañante y el extractor no: sin decidir")
+            activity = "undecided"
+        if activity == "undecided" and not (_singular_companion(message) or (
+                signals.get("companion_is_singular") and not _PLURAL_COMPANION_RE.search(message))):
+            # Sin decidir y sin poder contarlos («unos amigos»): no se suma a nadie; el total se pregunta como siempre.
             activity = None
         # Guard contra el flip-flop del LLM con historial: solo se trata como
         # ACOMPAÑANTE si el mensaje nombra a otra persona. El LLM decide la
