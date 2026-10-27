@@ -109,3 +109,49 @@ def test_con_el_paquete_elegido_sigue_diciendo_que_hay_que_dormir(monkeypatch):
     st.detected_activity, st.detected_duration = "certified_diving", "multi_day"
     st.detected_service_id = sorted(OVERNIGHT_SERVICES)[0]
     assert "dormir en las islas" in core.ask_slot(st, core.SLOT_LOCATION)
+
+
+# CALN-2 (27-oct, batería CALN4-05 b5): el reparto que olvida a quien escribe ----------------------------------------
+
+MADRE = "Hola! Yo tengo el Open Water y quiero bucear. Mi esposo no bucea y vamos con los niños, de 7 y 4 años."
+SIN_ELLA = {"is_certified": {"valor": True, "cita": "Yo tengo el Open Water"},
+            "quiere_bucear": {"valor": True, "cita": "quiero bucear"},
+            "group_size": {"valor": 3, "cita": "Mi esposo no bucea y vamos con los niños"},
+            "group_allocation": {"valor": {"companion": 1, "undecided": 2},
+                                 "cita": "Mi esposo no bucea y vamos con los niños"}}
+
+
+@pytest.mark.asyncio
+async def test_si_el_reparto_olvida_a_quien_escribe_se_suma():
+    out = await ex.extraer_turno(MADRE, client=_cliente(SIN_ELLA, []))
+    assert out["activity"] == "certified_diving"
+    assert out["group_allocation"] == {"certified_diving": 1, "companion": 1, "undecided": 2}
+    assert out["group_size"] == 4
+
+
+@pytest.mark.asyncio
+async def test_si_el_total_ya_la_contaba_no_se_toca_el_total():
+    datos = {**SIN_ELLA, "group_size": {"valor": 4, "cita": "Mi esposo no bucea y vamos con los niños"}}
+    out = await ex.extraer_turno(MADRE, client=_cliente(datos, []))
+    assert out["group_allocation"] == {"certified_diving": 1, "companion": 1, "undecided": 2}
+    assert out["group_size"] == 4
+
+
+@pytest.mark.asyncio
+async def test_la_madre_buzo_queda_buzo_en_el_turno_entero(extractor_dice, monkeypatch):
+    from unittest.mock import AsyncMock
+
+    from src.agents.nucleo import extraction as core_extraction
+    from src.agents.nucleo import routing as core_routing
+    from src.agents.supervisor import route_message
+
+    senales = AsyncMock(return_value={})
+    monkeypatch.setattr(core_routing, "detect_special_signals", senales)
+    monkeypatch.setattr(core_extraction, "detect_special_signals", senales)
+    monkeypatch.setattr(core_extraction, "resolve_slot_answer", AsyncMock(return_value={}))
+    extractor_dice({MADRE: {"activity": "certified_diving", "is_certified": True, "quiere_bucear": True, "group_size": 4,
+                            "group_allocation": {"certified_diving": 1, "companion": 1, "undecided": 2}}})
+    st = ConversationState(conversation_id="caln4-05")
+    await route_message(st, MADRE)
+    assert st.detected_activity == "certified_diving" and st.detected_group_size == 4
+    assert st.detected_group_allocation == {"certified_diving": 1, "companion": 1} and st.pending_undecided_qty == 2

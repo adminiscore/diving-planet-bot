@@ -752,10 +752,22 @@ async def extraer_turno(mensaje: str, *, history: list[dict] | None = None, sabi
     # de 2 años): quien dice que lo quiere, quiere bucear ("en realidad sí lo quiero, mejor prevenir").
     quiere = quiere or salida.get("refresher_interested") is True
     certificado = salida.get("is_certified", sabido.get("is_certified"))
-    if quiere and certificado is True and not salida.get("activity") and not sabido.get("activity"):
+    por_la_regla = quiere and certificado is True and not salida.get("activity") and not sabido.get("activity")
+    if por_la_regla:
         salida["activity"] = "certified_diving"
     reparto, actividad = salida.get("group_allocation"), salida.get("activity")
-    if isinstance(reparto, dict) and actividad and actividad not in reparto:
+    if isinstance(reparto, dict) and por_la_regla and actividad not in reparto:
+        # CALN-2 (27-oct, batería CALN4-05 b5): «Yo tengo el Open Water y quiero bucear. Mi esposo no bucea y vamos con
+        # los niños, de 7 y 4» daba el reparto {companion 1, undecided 2} y el total 3: sin quien escribe. Su actividad
+        # sale de dos cosas que dice de sí mismo, así que el reparto lo olvidó (no se contradicen, como abajo): se suma, y
+        # al total si tampoco lo contaba. Antes CAL-F le daba la del reparto y quedaba de acompañante.
+        antes = sum(v for v in reparto.values() if isinstance(v, int))
+        salida["group_allocation"] = {actividad: 1, **reparto}
+        if salida.get("group_size") == antes:
+            salida["group_size"] = antes + 1
+        logger.info(f"[EXTRACT][CALN2] el reparto {reparto} no contaba a quien escribe ({actividad!r}): "
+                    f"{salida['group_allocation']}, total {salida.get('group_size')}")
+    elif isinstance(reparto, dict) and actividad and actividad not in reparto:
         # CAL-F (18-oct, grupo-mixto-precio-cop-total 2/3): "1 buzo avanzado y 2 para bautismo" daba el reparto
         # {certified_diving: 1, minicourse: 2} (bien) y la actividad padi_advanced: el bot cotizaba el Curso Avanzado.
         # Si la actividad no es de nadie del reparto, se contradicen; manda el reparto.
