@@ -94,11 +94,19 @@ El paso 1 no cambia nada visible y ya dice cuánto se equivoca hoy el escritor f
 
 **Propuesta: A, pasando por B** (el paso 2 es B y ya vale solo; el paso 3 llega a A cuando el compositor esté).
 
-## 6. Para que decida Gadea
+## 6. Decisiones (27-oct, Gadea delegó en su Claude, #2154)
 
-1. ¿Enfoque A (pasando por B)?
-2. **Sin plan elegido:** ¿se cotizan los 2-3 candidatos o se pregunta primero qué plan? (Hoy: a veces el menú de 4
-   actividades sin precio.)
-3. **Total del grupo antes de la tarjeta:** ¿la cotización da el total (`N × precio`) o solo el precio por persona hasta
-   la tarjeta?
-4. **Descuentos:** ¿la pieza dice siempre el online (−10 %) y el de grupo cuando aplica, o solo si los pregunta?
+1. **A pasando por B: sí.** Primero B (paso 2: la pieza como hechos del escritor); A cuando el compositor de CALN-6
+   ponga piezas.
+2. **Sin plan elegido:** se cotizan los 2-3 candidatos que deja el contexto (edad, días, certificación; los de CALN-2) y
+   elige el cliente; nunca el catálogo entero.
+3. **Total del grupo:** ya decidido el 9-oct (A1): en el texto, precio por persona; solo la tarjeta multiplica.
+4. **Descuentos:** el online siempre (va en «online / normal»); el de grupo solo cuando aplica (5+, se pide antes de
+   pagar); los demás solo si los pregunta.
+
+## 7. Hecho
+
+- Paso 0 (f304b40): banco de precios y comprobaciones por código en `caln0_comprobaciones`.
+- Paso 1 (Gadea, 53b6082): `cotizar()` en sombra (`src/flows/cotizar.py`), solo traza.
+- Paso 2a (4036ad5): sin actividad elegida, el precio con los hechos de los candidatos (CALN3-P01): el escritor recibe
+  el plan base de cada uno en los dos orígenes, sin la carta de paquetes, y el código pregunta el origen detrás.
