@@ -89,10 +89,26 @@ def _pareja_con_ella_sin_elegir(**campos) -> ConversationState:
     ("Ya te dije, ella hace el minicurso. Un solo día.", "minicourse"),
     ("She can't decide between the mini course and snorkeling", None),
 ])
-def test_b2_la_respuesta_corta_lee_la_opcion_por_su_nombre(mensaje, eleccion):
+def test_b2_la_respuesta_a_un_dia_o_varios_lee_la_opcion_por_su_nombre(mensaje, eleccion):
     st = _pareja_con_ella_sin_elegir()
-    core_routing._apply_short_answer(st, mensaje)
+    core_routing._apply_short_answer(st, mensaje, ia={"jev": None, "extractor": {"actividad_preguntada": "minicourse"}})
     assert st.pending_companion_activity == eleccion
+
+
+def test_b2_si_la_ia_lee_el_reparto_manda_el_reparto():
+    mensaje = "Hacemos el paquete de 5 inmersiones y el niño el Open Water. Mi suegra va de acompañante."
+    st = _pareja_con_ella_sin_elegir()
+    reparto = {"certified_diving": 2, "padi_open_water": 1, "companion": 1}
+    core_routing._apply_short_answer(st, mensaje, ia={"jev": None, "extractor": {"group_allocation": reparto}})
+    assert st.pending_companion_activity is None
+
+
+def test_b2_con_las_opciones_ya_mostradas_no_adivina_por_el_nombre():
+    """g21 t3 (banco de grupos): con la duración ya sabida, «mi suegra va de acompañante» no es la opción del niño."""
+    st = _pareja_con_ella_sin_elegir(detected_duration="multi_day")
+    core_routing._apply_short_answer(st, "Hacemos el paquete de 5 inmersiones y el niño el Open Water. Mi suegra va de "
+                                         "acompañante.")
+    assert st.pending_companion_activity is None
 
 
 @pytest.mark.asyncio
