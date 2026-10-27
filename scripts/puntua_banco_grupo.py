@@ -7,7 +7,8 @@
 El grupo se lee en términos que valen antes y después del rediseño (docs/robustness/caln/diseno-caln2-grupo.md):
 `total` (cuántos son), `decididos` (personas con actividad elegida, por actividad), `sin_decidir`, `edades` (las dichas
 están todas) y `alguno_mas_de_2` (alguien certificado que lleva más de 2 años sin bucear). Lo que el caso no trae no
-se mira.
+se mira. `pregunta` / `no_pregunta`: la pregunta de la reserva que queda pendiente al final (paso 3: se pregunta por
+quien no ha elegido, y solo por él).
 """
 from __future__ import annotations
 
@@ -37,6 +38,7 @@ def grupo_del_estado(estado: dict) -> dict:
         "sin_decidir": sin_decidir,
         "edades": sorted(estado.get("detected_ages") or []),
         "alguno_mas_de_2": bool(estado.get("last_dive_over_2_years") or estado.get("acompanante_certificado_inactivo")),
+        "pregunta": estado.get("core_pending_slot"),
     }
 
 
@@ -52,6 +54,9 @@ def fallos(esperado: dict, leido: dict) -> list[str]:
             asumidas = [a for a in valor if leido["decididos"].get(a)]
             if asumidas:
                 malos.append(f"asume {asumidas} sin que lo elija")
+        elif campo == "no_pregunta":
+            if leido["pregunta"] == valor:
+                malos.append(f"pregunta {valor!r}")
         elif leido.get(campo) != valor:
             malos.append(f"{campo} {leido.get(campo)!r} (esperaba {valor!r})")
     return malos
