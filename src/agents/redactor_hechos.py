@@ -14,6 +14,7 @@ import logging
 import re
 
 from src.domain import activities as dom
+from src.flows import cotizar
 from src.flows import hechos as hechos_mod
 from src.flows.state import ConversationState
 from src.utils.text import strip_accents
@@ -45,6 +46,13 @@ def _actividad(state: ConversationState, datos: dict) -> str | None:
     if not en_juego and state.suggested_activity and dom.by_id(state.suggested_activity) is not None:
         return state.suggested_activity  # la que acaba de proponer el bot («¿y qué incluye?»)
     return None
+
+
+def _actividades_en_juego(state: ConversationState) -> bool:
+    """¿Hay alguna actividad en la conversación? Con varias, `_actividad` no adivina (arq-1k) y contesta el RAG; los
+    candidatos de CALN-3 son solo para cuando no hay ninguna."""
+    return bool(state.selected_service or state.actividad_preguntada or state.detected_activity
+                or any(n for n in (state.detected_group_allocation or {}).values()))
 
 
 def _actividades(state: ConversationState, datos: dict) -> list[str]:
@@ -176,6 +184,16 @@ async def hechos_del_turno(state: ConversationState, message: str, history: list
     leida = await lectura_del_extractor(state, message)
     datos, leido = leida or {}, leida is not None
     actividades = _actividades(state, datos)
+    if not actividades and "precio" in intenciones and not _actividades_en_juego(state):
+        # CALN-3 paso 2 (CALN3-P01): el precio sin actividad elegida, con los candidatos que deja lo que se sabe.
+        foto = _foto(state, datos, _origen(state, datos, leido), message, history)
+        for campo in ("is_certified", "quiere_bucear"):
+            if getattr(foto, campo) in (None, False) and datos.get(campo) is not None:
+                setattr(foto, campo, datos[campo])
+        if bloques := cotizar.hechos_de_los_candidatos(foto, intenciones):
+            cubiertas = [i for i in intenciones if any(_cubierta(b, i) for b in bloques)]
+            logger.info(f"[HECHOS][CALN3] sin actividad elegida: los candidatos {[b['actividad'] for b in bloques]}")
+            return (bloques, cubiertas) if cubiertas else None
     if not actividades:
         if set(intenciones) <= hechos_mod.INTENCIONES_SIN_ACTIVIDAD:
             # arq-1p: la hora, la recogida, qué llevar o si hay sitio son iguales para todas las actividades.

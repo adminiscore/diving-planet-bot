@@ -97,6 +97,30 @@ def test_sin_actividad_va_al_rag(llamadas, monkeypatch):
     assert asyncio.run(redactor_hechos.responder(st, MENSAJE, st.history)) is None
 
 
+def test_caln3_sin_actividad_elegida_los_candidatos(llamadas, monkeypatch):
+    """CALN-3 paso 2 (CALN3-P01): «nunca he buceado, ¿cuánto cuesta bucear?» sin actividad elegida: el escritor recibe
+    el minicurso en los dos orígenes y el código pregunta el origen detrás (antes: el RAG y la puerta sin un precio)."""
+    async def lectura(state, message):
+        return {"quiere_bucear": True, "is_certified": False}
+
+    monkeypatch.setattr(extractor, "lectura_del_extractor", lectura)
+    st = _conv()
+    answer = asyncio.run(redactor_hechos.responder(st, MENSAJE, st.history))
+    assert answer.endswith(core.ORIGEN_TRAS_LAS_VARIANTES_ES)
+    [(messages, _)] = llamadas.hechas
+    assert '"183 USD"' in messages[-1]["content"] and '"134 USD"' in messages[-1]["content"]
+
+
+def test_caln3_con_una_actividad_en_juego_no_hay_candidatos(llamadas, monkeypatch):
+    async def lectura(state, message):
+        return {"quiere_bucear": True}
+
+    monkeypatch.setattr(extractor, "lectura_del_extractor", lectura)
+    st = _conv(detected_group_allocation={"snorkel": 1, "certified_diving": 1})
+    st._intenciones = ["incluye"]
+    assert asyncio.run(redactor_hechos.responder(st, MENSAJE, st.history)) is None
+
+
 def test_la_nacionalidad_del_mensaje_pone_la_moneda(llamadas, monkeypatch):
     async def lectura(state, message):
         return {"actividad_preguntada": "minicourse", "is_colombian": True, "location": "cartagena"}

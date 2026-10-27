@@ -8,6 +8,11 @@ Paso 1, EN SOMBRA: qué importes tocan en este turno, calculados por código con
 cambia nada de lo que ve el cliente. Los importes salen de `hechos` (los mismos ayudantes que ya usa el escritor: el
 plan base o los paquetes de varios días, los dos orígenes y las dos monedas si no se saben): aquí solo se decide QUÉ
 actividades cotizar.
+
+Paso 2 (27-oct, Gonzalo): sin actividad elegida, la pregunta del precio ya no va al RAG con el catálogo entero (CALN3-P01,
+«¿cuánto cuesta bucear?»: tres turnos sin un precio, la puerta del origen quitaba los importes). El escritor recibe los
+hechos de los candidatos (`hechos_de_los_candidatos`), cada uno con su plan base en los dos orígenes, y el código pregunta
+el origen detrás, como con una actividad elegida.
 """
 from __future__ import annotations
 
@@ -20,10 +25,8 @@ from src.flows import hechos as hechos_mod
 logger = logging.getLogger("uvicorn.error")
 
 
-def actividades_a_cotizar(state) -> list[str]:
-    """Las del grupo (CALN-2) o la elegida o por la que pregunta; sin ninguna, los candidatos que deja lo que se sabe
-    (decisión 2: los 2-3 del contexto, nunca el catálogo): certificado, el buceo; sin certificar, el minicurso y el
-    snorkel; si solo se sabe que quiere bucear, el buceo y el minicurso."""
+def _elegidas(state) -> list[str]:
+    """Las del grupo (CALN-2) o la elegida o por la que pregunta."""
     reparto = [a for a, n in (state.detected_group_allocation or {}).items() if n and dom.by_id(a) is not None]
     if reparto:
         return reparto
@@ -31,17 +34,44 @@ def actividades_a_cotizar(state) -> list[str]:
         registro = dom.by_id(actividad) if actividad else None
         if registro is not None and not registro.generic:
             return [actividad]
+    return []
+
+
+def candidatos(state) -> list[str]:
+    """Sin actividad elegida, los candidatos que deja lo que se sabe (decisión 2: los 2-3 del contexto, nunca el
+    catálogo): certificado, el buceo; sin certificar, el minicurso y, si no ha dicho que quiere bucear, el snorkel
+    (CALN3-P01: «nunca he buceado» a «¿cuánto cuesta bucear?» no pide el snorkel); si solo se sabe que quiere bucear,
+    el buceo y el minicurso."""
+    quiere_bucear = getattr(state, "quiere_bucear", False)
     if state.is_certified is True:
         return ["certified_diving"]
     if state.is_certified is False:
-        return ["minicourse", "snorkel"]
-    return ["certified_diving", "minicourse"] if getattr(state, "quiere_bucear", False) else []
+        return ["minicourse"] if quiere_bucear else ["minicourse", "snorkel"]
+    return ["certified_diving", "minicourse"] if quiere_bucear else []
+
+
+def actividades_a_cotizar(state) -> list[str]:
+    """Las elegidas o, sin ninguna, los candidatos."""
+    return _elegidas(state) or candidatos(state)
+
+
+def hechos_de_los_candidatos(state, intenciones: list[str]) -> list[dict]:
+    """Paso 2: los hechos de los candidatos, cada uno con su plan base y sin la lista de los demás planes (los paquetes
+    de buceo de los dos orígenes eran media carta: «nunca el catálogo entero»)."""
+    bloques = hechos_mod.hechos(state, intenciones, candidatos(state))
+    for bloque in bloques:
+        bloque.pop("otros_planes", None)
+    return bloques
 
 
 def cotizar(state) -> dict:
     """La pieza de precios del turno: las actividades, los importes (cifras, sin separadores) y lo que falta saber."""
-    actividades = actividades_a_cotizar(state)
-    bloques = hechos_mod.hechos(state, ["precio"], actividades) if actividades else []
+    actividades = _elegidas(state)
+    if actividades:
+        bloques = hechos_mod.hechos(state, ["precio"], actividades)
+    else:
+        actividades = candidatos(state)
+        bloques = hechos_de_los_candidatos(state, ["precio"]) if actividades else []
     def cifras(precios) -> list[str]:
         return sorted({re.sub(r"\D", "", p[clave]) for p in precios for clave in ("online", "normal") if p.get(clave)})
 
