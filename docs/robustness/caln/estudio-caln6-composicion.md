@@ -57,3 +57,18 @@ información, en una posventa o cuando el cliente pide para otro. Arreglarlas un
 
 **APROBADA la opción A** (un compositor al final del turno), por pasos medidos por código. Gadea preguntó cuál
 de las cuatro era mejor y eligió A: la única que quita la causa y deja menos código. Se empieza por el paso 0.
+
+## 5. Lo hecho (27-oct)
+
+| Paso | Commit | Qué | Medida |
+|---|---|---|---|
+| 0 | — | `caln0_comprobaciones`: repite, dos_preguntas, menu_con_plan, frase_cortada; `banco-composicion.json` | — |
+| 1 | — | `src/agents/compositor.py`: la pregunta de la reserva una vez y al final (`ask_slot` la apunta en el turno) | golden caln2-B: repite 16 → 7, dos preguntas 17 → 2 |
+| 2a | dec9ebb | En un pase, gen-13 no vuelve a contestar si el escritor ya contestó | sparring 2/20 → 4/20 |
+| 2b | dd0b0fc | Fuera el texto fijo del grupo mixto (con «¿…volver al menú principal?») | s07 0/2 → 2/2 |
+| 2c | 267a0fa | Tras el saludo de Coral, el escritor no vuelve a saludar | 27 de 116 primeros turnos |
+| 2d | ff5d9fa | UNA pregunta como mucho (si el texto ya pregunta, la de la reserva queda pendiente, sin sus botones ni la recomendación no vista); la explicación de la pregunta final no se repite; el historial guarda lo que vio el cliente | sparring 4/20 → 8/20 (s10 0 → 2/2), dos preguntas 3 → 0; composición igual |
+
+Queda del paso 2: los bloques de arq-7b que se pegan sin venir a cuento (la recogida y el alojamiento siempre, y
+los requisitos con la intención «requisitos»: «También necesitas: alojarte 1 noche en las islas» a quien pregunta
+la edad mínima). Tocan criterios del golden: se miden con el juez en la ronda de integración, no por código.
