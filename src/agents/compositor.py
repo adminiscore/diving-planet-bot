@@ -12,8 +12,11 @@ pase), no se toca.
 """
 from __future__ import annotations
 
+import logging
 import re
 import unicodedata
+
+logger = logging.getLogger("uvicorn.error")
 
 _PARRAFO = "\n\n"
 # Una frase que acaba en «?» (con el cierre de negrita, cursiva o paréntesis), dentro de una línea.
@@ -83,6 +86,8 @@ def componer(state, respuesta: str, *, pase: bool = False) -> str:
     quitada, cuerpo = _sin_las_preguntas(respuesta, [texto for _, texto in preguntas if texto])
     if not quitada:
         return respuesta
+    logger.info(f"[CORE][CALN6] compositor: {len(respuesta)} → {len(cuerpo)} caracteres sin las preguntas del turno "
+                f"({[slot for slot, _ in preguntas]}), pendiente {pendiente!r}, pase {pase}")
     if pase or final is None:
         return cuerpo
     return f"{cuerpo.rstrip()}{_PARRAFO}{final}" if cuerpo.strip() else final

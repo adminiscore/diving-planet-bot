@@ -1,6 +1,8 @@
 """CALN-6 paso 1 (27-oct): la pregunta de la reserva, una vez y al final (src/agents/compositor.py)."""
 from types import SimpleNamespace
 
+import pytest
+
 from src.agents.compositor import componer
 
 SEGURIDAD = "¿Ha pasado *más de 2 años* desde la última inmersión de alguno del grupo?"
@@ -67,3 +69,22 @@ def test_en_un_pase_salen_las_copias_y_no_se_vuelve_a_poner():
 
 def test_un_parrafo_identico_a_otro_sale():
     assert componer(_turno(None), "Hola.\n\nLista:\n• a\n\nOtra cosa.\n\nLista:\n•  a") == "Hola.\n\nLista:\n• a\n\nOtra cosa."
+
+
+@pytest.mark.asyncio
+async def test_sin_dato_tambien_cuando_la_pregunta_de_antes_se_aplazo(monkeypatch):
+    """regateo-grupo-6 t5 (caln2-B): «¿cómo reservamos?» con el origen aplazado; la pendiente ya es la seguridad y el
+    escritor no contestaba (solo salía la pregunta de seguridad, sin los enlaces)."""
+    from src.agents.nucleo import slotfill_close
+    from src.flows.state import ConversationState
+
+    async def escritor(*_a, **_k):
+        return "Se reserva por la web: elige la fecha y las 6 personas en el enlace."
+
+    monkeypatch.setattr(slotfill_close, "_rag_answer", escritor)
+    st = ConversationState(conversation_id="caln6", language="es")
+    st._pregunta_del_escritor, st.core_pending_slot, st.preguntas_aplazadas = "¿Desde dónde saldrías?", "safety", ["location"]
+    respuesta = await slotfill_close._sin_dato(st, "¿cómo reservamos?", "location", SEGURIDAD)
+    assert respuesta.startswith("Se reserva por la web") and respuesta.endswith(SEGURIDAD)
+    st.preguntas_aplazadas = []  # la contestó: la pregunta cambia porque ya hay dato, no es un turno sin dato
+    assert await slotfill_close._sin_dato(st, "desde cartagena", "location", SEGURIDAD) is None

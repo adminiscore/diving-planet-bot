@@ -274,10 +274,13 @@ async def _sin_dato(state: ConversationState, message: str, prev_pending: str, p
     gracias, se despide, corrige o da otro dato): en vez de la misma pregunta otra vez, el escritor contesta a lo que dijo
     y cierra con ella. En el banco del paso 2, sin esto, «voy solo» o «en realidad somos 3» recibían la misma pregunta sin
     que nadie reconociera lo que dijo. None con la reserva fuera de marcha, si la pregunta cambia o si el escritor no
-    sabe qué decir: entonces la pregunta del flujo, como antes."""
+    sabe qué decir: entonces la pregunta del flujo, como antes. Una pregunta que cambia porque la de antes se APLAZÓ
+    (EX-FLUJO-1: no la contestó dos veces) sigue siendo un turno sin dato: «bueno, aceptamos el precio normal, ¿cómo
+    reservamos?» recibía solo la de seguridad, sin los enlaces (regateo-grupo-6, ronda caln2-B)."""
     from src.observability import note_turn  # lazy
 
-    if not getattr(state, "_pregunta_del_escritor", None) or state.core_pending_slot != prev_pending:
+    sin_contestar = state.core_pending_slot == prev_pending or prev_pending in (state.preguntas_aplazadas or [])
+    if not getattr(state, "_pregunta_del_escritor", None) or not sin_contestar:
         return None
     state._pregunta_del_escritor = pregunta
     try:
