@@ -330,6 +330,30 @@ def _contar_al_acompanante_sin_actividad(state: ConversationState, message: str,
         logger.info("[CORE][DEUDA-EXT2] acompañante sin actividad, en singular y sin total: grupo de 2, ella sin decidir")
 
 
+def _rehacer_la_tarjeta_si_no_cuadra(state: ConversationState) -> bool:
+    """CALN-2 (27-oct, sparring b2): tras el cierre, si el reparto ya no cuadra con lo que cobra la tarjeta (personas por
+    tipo de ítem), la tarjeta se rehace ENTERA desde el reparto (`_build_cart_from_slots`, la del cierre). Antes solo se
+    añadían los tipos nuevos: «no, él es buzo; solo yo hago el minicurso» dejaba «minicurso × 2» y sumaba el buceo (tres
+    plazas para dos). Cubre también el añadido de siempre («viene también uno que hace snorkel»). True si la rehízo."""
+    from src.agents.nucleo.slotfill_close import _build_cart_from_slots  # lazy
+
+    cobrables = set(dom.cart_activity_ids())
+    reparto: dict = {}
+    for actividad, n in (state.detected_group_allocation or {}).items():
+        if actividad in cobrables and n:
+            tipo = _cart_item(state, actividad, n)["type"]
+            reparto[tipo] = reparto.get(tipo, 0) + n
+    tarjeta: dict = {}
+    for item in state.mixed_cart or []:
+        tarjeta[item.get("type")] = tarjeta.get(item.get("type"), 0) + (item.get("qty") or 0)
+    if not reparto or reparto == tarjeta:
+        return False
+    _build_cart_from_slots(state)
+    logger.info(f"[CORE][CALN2] el reparto cambió tras el cierre: tarjeta {tarjeta} -> "
+                f"{[(i['type'], i['qty']) for i in state.mixed_cart]}")
+    return True
+
+
 def _el_extractor_no_ve_al_grupo(state: ConversationState, message: str) -> bool:
     """¿El extractor leyó ESTE mensaje sin dar nada del grupo (ni total ni reparto)? False si no lo leyó (falló o no se
     lanzó): entonces decide lo de siempre."""
@@ -990,16 +1014,7 @@ async def _extraction_phase_body(
     # resumen ya se emitió): añadir el subgrupo nuevo al carrito existente y
     # re-emitir el resumen completo — el buceo original nunca se pierde.
     if prev_cart_types:
-        alloc = state.detected_group_allocation or {}
-        new_items = [
-            _cart_item(state, activity, qty)
-            for activity, qty in alloc.items()
-            if activity in _ACTIVITY_TO_CART_TYPE and qty
-            and _ACTIVITY_TO_CART_TYPE[activity] not in prev_cart_types
-        ]
-        if new_items:
-            state.mixed_cart.extend(new_items)
-            logger.info(f"[CORE] post-close additions: {[i['type'] for i in new_items]}")
+        if _rehacer_la_tarjeta_si_no_cuadra(state):
             response = cart_render.goto_final_summary(state)
             state.core_pending_slot = None
             supervisor._maybe_build_pending_note(state)
@@ -1298,15 +1313,7 @@ async def _extraction_phase_body(
             # que se añaden todas las que falten en el carrito, no solo la
             # principal (mismo patrón que el chequeo genérico de arriba).
             if prev_cart_types:
-                alloc_now = state.detected_group_allocation or {}
-                new_items = [
-                    _cart_item(state, act2, qty2)
-                    for act2, qty2 in alloc_now.items()
-                    if act2 in _ACTIVITY_TO_CART_TYPE and qty2
-                    and _ACTIVITY_TO_CART_TYPE[act2] not in prev_cart_types
-                ]
-                if new_items:
-                    state.mixed_cart.extend(new_items)
+                if _rehacer_la_tarjeta_si_no_cuadra(state):
                     response = cart_render.goto_final_summary(state)
                     state.core_pending_slot = None
                     supervisor._maybe_build_pending_note(state)

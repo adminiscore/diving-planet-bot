@@ -1,0 +1,17 @@
+{
+ "about": "CALN-2 (27-oct, sparring b2 / banco-sparring s03): con la tarjeta ya hecha, el cliente corrige el reparto, suma a alguien o cambia cuántos son. La tarjeta tiene que cobrar a quien va, ni más ni menos. Precios en USD (clientes de fuera; desde Cartagena: buceo 2 inmersiones 178, minicurso 183, snorkel 126). Se mira la respuesta del último turno con scripts/puntua_banco_edades.py («debe» = cada grupo «a|b» sale; «ninguno» = ninguno sale; minúsculas y sin tildes). Frases nuestras.",
+ "dialogos": [
+  {"id": "t1-pareja-corrige-reparto", "turnos": [
+    "Hola, somos 2 y queremos hacer el minicurso desde Cartagena el sábado. Somos de Chile.",
+    "Perdón, me equivoqué: mi pareja ya es buzo certificado y buceó hace poco, quiere las inmersiones. Solo yo hago el minicurso."],
+   "debe": ["178", "183"], "ninguno": ["2 × 183|2 x 183"]},
+  {"id": "t2-se-suma-una-hermana", "turnos": [
+    "Hola, somos 2 buzos certificados y queremos la salida de 2 inmersiones. Buceamos este año, salimos desde Cartagena el sábado y somos de México.",
+    "Viene también mi hermana, que quiere hacer snorkel."],
+   "debe": ["2 × 178|2 x 178", "126"]},
+  {"id": "t3-al-final-son-3", "turnos": [
+    "Hola, somos 2 buzos certificados y queremos la salida de 2 inmersiones. Buceamos este año, salimos desde Cartagena el sábado y somos de México.",
+    "Al final somos 3 buzos, se apunta otro amigo certificado."],
+   "debe": ["3 × 178|3 x 178"], "ninguno": ["2 × 178|2 x 178"]}
+ ]
+}
