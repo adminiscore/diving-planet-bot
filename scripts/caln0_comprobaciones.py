@@ -10,6 +10,13 @@ texto; cada una saca sus casos para revisarlos a mano.
 - origen: la respuesta da un precio de UN solo origen (Cartagena o las islas) sin que el cliente haya dicho desde
   dónde sale.
 
+CALN-6 paso 0 (27-oct, decisión de Gadea: un compositor al final del turno), la composición de cada respuesta:
+- repite: dice lo mismo dos veces (la misma pregunta pegada dos veces, la misma nota con otras palabras). No cuentan
+  las líneas de la tarjeta ni dos frases con cifras distintas.
+- dos_preguntas: dos o más párrafos que acaban en pregunta.
+- menu_con_plan: el menú genérico de actividades en una respuesta que ya da precios o un plan.
+- frase_cortada: una línea larga que se queda sin acabar (el tope del escritor).
+
     python scripts/caln0_comprobaciones.py docs/robustness/synthetic-runs/2026-10-26-integra5-B.jsonl [otra.jsonl ...]
     python scripts/caln0_comprobaciones.py --casos grupo ronda.jsonl      # los casos de una comprobación
 
@@ -85,6 +92,58 @@ _ORIGEN_DICHO = re.compile(r"cartagena|isla|islands?|rosario|baru|hotel|hostal|h
                            r"getsemani|ciudad amurallada|walled city")
 
 
+# CALN-6 paso 0 (27-oct, decisión de Gadea: un compositor al final del turno): la composición de cada respuesta.
+_LINEA_DE_TARJETA = ("✅", "💰", "📍", "🤿", "👉", "🐠", "📅", "🎓", "•", "-", "_", "*")
+_MENU_GENERICO = re.compile(r"con cual te animas\W+buceo|que te gustaria vivir con nosotros|which one are you leaning toward"
+                            r"\W+diving|what would you like to experience with us")
+_FIN_DE_LINEA = re.compile(r"[.!?…:)\]»\"][*_]*\s*$|[\U0001F000-\U0001FAFF☀-➿]\s*$")
+_PREGUNTA_AL_FINAL = re.compile(r"\?[*_]*\s*[\U0001F000-\U0001FAFF☀-➿]?\s*$")
+_SALTO = "\n"
+_PARRAFO = "\n\n"
+_BURBUJA = "\n---\n"
+
+
+def _frases_de_texto(respuesta: str) -> list[str]:
+    """Las frases largas del texto, sin las líneas de la tarjeta ni los enlaces."""
+    frases = []
+    for linea in respuesta.replace(_BURBUJA, _SALTO).split(_SALTO):
+        if linea.strip().startswith(_LINEA_DE_TARJETA) or "http" in linea:
+            continue
+        frases += [f.strip() for f in re.split(r"(?<=[.!?])\s+", linea) if len(f.strip()) > 40]
+    return frases
+
+
+def _dice_lo_mismo(a: str, b: str) -> bool:
+    """Dos frases con las mismas cifras y casi las mismas palabras."""
+    if re.findall(r"\d[\d.,]*", a) != re.findall(r"\d[\d.,]*", b):
+        return False
+    pa, pb = (set(re.sub(r"[^a-z0-9 ]", " ", _plano(x)).split()) for x in (a, b))
+    return len(pa & pb) / max(1, min(len(pa), len(pb))) >= 0.8
+
+
+def composicion(respuesta: str) -> dict[str, str]:
+    """Los fallos de composición de UNA respuesta: {comprobación: el trozo que lo muestra}."""
+    fallos = {}
+    frases = _frases_de_texto(respuesta)
+    repetida = next((frases[i] for i in range(len(frases)) for j in range(i + 1, len(frases))
+                     if _dice_lo_mismo(frases[i], frases[j])), None)
+    if repetida:
+        fallos["repite"] = repetida[:120]
+    parrafos = [p.strip() for p in respuesta.replace(_BURBUJA, _PARRAFO).split(_PARRAFO) if p.strip()]
+    preguntas = [p.split(_SALTO)[-1] for p in parrafos if _PREGUNTA_AL_FINAL.search(p.split(_SALTO)[-1])]
+    if len(preguntas) >= 2:
+        fallos["dos_preguntas"] = " || ".join(p[-70:] for p in preguntas)
+    if _MENU_GENERICO.search(_plano(respuesta)) and _PRECIO.search(_plano(respuesta)):
+        fallos["menu_con_plan"] = "menú genérico en una respuesta con precio"
+    for p in parrafos:
+        ultima = p.split(_SALTO)[-1].strip()
+        if (len(ultima) > 60 and "http" not in ultima and not ultima.startswith(_LINEA_DE_TARJETA)
+                and not _FIN_DE_LINEA.search(ultima)):
+            fallos["frase_cortada"] = ultima[-80:]
+            break
+    return fallos
+
+
 def _grupo_dicho(texto: str) -> int | None:
     t = _plano(texto)
     for patron, fijo in _GRUPO_DICHO:
@@ -158,10 +217,14 @@ def comprobar(conversacion: list[dict]) -> dict[str, list[dict]]:
             cartagena, islas = bool(_ORIGEN_CARTAGENA.search(r)), bool(_ORIGEN_ISLAS.search(r))
             if cartagena != islas:
                 fallos["origen"].append({**caso, "origen": "cartagena" if cartagena else "islas"})
+        # composición (CALN-6)
+        for comp, muestra in composicion(respuesta).items():
+            fallos[comp].append({**caso, "muestra": muestra})
     return fallos
 
 
-COMPROBACIONES = ("repregunta", "repite_sin_respuesta", "grupo", "moneda", "origen")
+COMPROBACIONES = ("repregunta", "repite_sin_respuesta", "grupo", "moneda", "origen",
+                  "repite", "dos_preguntas", "menu_con_plan", "frase_cortada")
 
 
 def conversaciones(ruta: Path) -> dict[str, list[dict]]:
@@ -169,7 +232,9 @@ def conversaciones(ruta: Path) -> dict[str, list[dict]]:
     for linea in ruta.read_text(encoding="utf-8").splitlines():
         if linea.strip():
             fila = json.loads(linea)
-            por_conv[f"{fila.get('tag')}#{fila.get('conv')}"].append(fila)
+            # Una ronda (tag/conv) o un banco de `reproducir_juez_pre` (dialogo/rep).
+            nombre, conv = fila.get("tag") or fila.get("dialogo"), fila.get("conv", fila.get("rep"))
+            por_conv[f"{nombre}#{conv}"].append(fila)
     return {k: sorted(v, key=lambda f: f.get("turn") or 0) for k, v in por_conv.items()}
 
 

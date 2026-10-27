@@ -49,3 +49,25 @@ def test_un_solo_origen_sin_saberlo():
     assert c.comprobar(_conv(("¿cuánto cuesta bucear?", solo)))["origen"]
     assert not c.comprobar(_conv(("¿cuánto cuesta bucear?", los_dos)))["origen"]
     assert not c.comprobar(_conv(("estoy en Cartagena, ¿cuánto cuesta?", solo)))["origen"]
+
+
+# CALN-6 paso 0 (27-oct): la composición de cada respuesta.
+def test_la_misma_pregunta_pegada_dos_veces_se_repite():
+    r = ("¿Ha pasado *más de 2 años* desde la última inmersión de alguno del grupo?\n\n"
+         "¿Ha pasado *más de 2 años* desde la última inmersión de alguno del grupo?")
+    assert set(c.composicion(r)) >= {"repite", "dos_preguntas"}
+
+
+def test_la_tarjeta_de_dos_actividades_no_se_repite():
+    r = ("🤿 *Salidas de Buceo*\n💰 6 × 630.000 COP p.p. = *3.780.000 COP*\n✅ Incluye: lancha, almuerzo y equipo.\n\n"
+         "🤿 *Minicurso*\n💰 2 × 655.000 COP p.p. = *1.310.000 COP*\n✅ Incluye: lancha, almuerzo y equipo.")
+    assert not c.composicion(r)
+
+
+def test_menu_generico_tras_un_precio_y_frase_cortada():
+    r = ("El minicurso desde Cartagena cuesta 655.000 COP online por persona, con lancha y almuerzo.\n\n"
+         "¿Con cuál te animas — *buceo*, *minicurso*, *snorkel* o un *curso PADI*? 🌊")
+    assert "menu_con_plan" in c.composicion(r)
+    cortada = "Un detalle importante: el minicurso es una experiencia de iniciación de un día y no certifica. Así que"
+    assert "frase_cortada" in c.composicion(cortada)
+    assert not c.composicion("¡Perfecto! Como son de Bogotá, pagan en pesos colombianos (COP) y el precio es igual. 🇨🇴")
