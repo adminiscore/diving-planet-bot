@@ -57,10 +57,22 @@ def completa(reparto: dict | None, nuevo: dict, total) -> bool:
     grupo, lo completa: da actividad a quien no la tenía. True si el reparto nuevo no le quita la actividad a nadie que la
     tuviera y lo que añade cabe en los que faltaban por decidir (banco de grupos g24)."""
     decididos = {a: c for a, c in (reparto or {}).items() if a != SIN_DECIDIR}
-    if not isinstance(total, int) or any(nuevo.get(a, 0) < c for a, c in decididos.items()):
-        return False
-    anadidos = sum(c for a, c in nuevo.items() if a != SIN_DECIDIR) - sum(decididos.values())
-    return 0 < anadidos <= total - sum(decididos.values())
+    return all(nuevo.get(a, 0) >= c for a, c in decididos.items()) and completado(reparto, nuevo, total) is not None
+
+
+def completado(reparto: dict | None, nuevo: dict, total) -> dict | None:
+    """El reparto completado: lo que ya se sabía más lo nuevo de quienes faltaban por elegir, si cabe en ellos; None si
+    no es completar. Quien no se nombra no se quita: el extractor lee el mensaje, y «yo y la de 14 el minicurso» no habla
+    del suegro que ya iba de acompañante (sparring contra la rama, 27-oct)."""
+    if not isinstance(total, int):
+        return None
+    antes = {a: c for a, c in (reparto or {}).items() if a != SIN_DECIDIR}
+    junto = dict(antes)
+    for actividad, cuantos in nuevo.items():
+        if actividad != SIN_DECIDIR and isinstance(cuantos, int) and cuantos > junto.get(actividad, 0):
+            junto[actividad] = cuantos
+    anadidos = sum(junto.values()) - sum(antes.values())
+    return junto if 0 < anadidos <= total - sum(antes.values()) else None
 
 
 def reparto_de(personas: list[dict]) -> dict | None:

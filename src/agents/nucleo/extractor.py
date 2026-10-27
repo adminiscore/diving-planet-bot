@@ -23,6 +23,7 @@ from src.agents.conversational_core import (
 )
 from src.agents.intent_detector import DetectedIntent, detect_location
 from src.domain import activities as dom
+from src.flows import grupo
 from src.flows.state import ConversationState
 
 logger = logging.getLogger("uvicorn.error")
@@ -395,6 +396,23 @@ def _poner_grupo(intent, state: ConversationState, message: str, datos: dict) ->
         # también antes, cuando el atajo del detector entero no la leía).
         logger.info(f"[EXTRACT][LAT11] group_size={total!r} contesta «¿cuántos para X?»: no es el total del grupo")
         total = None
+    junto = (grupo.completado(state.detected_group_allocation, reparto, state.detected_group_size)
+             if reparto and state.pending_undecided_qty and not corrige else None)
+    if junto:
+        # CALN-2 (27-oct): el reparto solo da actividad a quienes faltaban por elegir y cabe en el total: no se suma
+        # nadie (Jev acierta si dice que ya estaban contados), se completa el grupo. Familia de 5 con 4 pendientes:
+        # «mi marido quiere bucear, yo y la de 14 el minicurso» se tiraba entero por el veto de Jev de abajo, o se
+        # pedía confirmar el «cambio» porque no nombraba al suegro (sparring contra la rama, 27-oct). El total no
+        # cambia; quien quede sin elegir sigue pendiente.
+        decididos = junto
+        resto = state.detected_group_size - sum(decididos.values())
+        intent.group_allocation = {**decididos, **({grupo.SIN_DECIDIR: resto} if resto else {})}
+        intent._reparto_del_extractor = set(reparto)
+        for listado in (intent.detected_fields, intent.overwrite):
+            if "group_allocation" not in listado:
+                listado.append("group_allocation")
+        logger.info(f"[EXTRACT][CALN2] el reparto {decididos!r} completa a los que faltaban por elegir ({resto} sin elegir)")
+        return
     if reparto and _amplia(reparto, _reparto_guardado(state)) and _jev_dice_que_nadie_se_suma(state):
         # ex-9b paso 6 (`reparto_al_sumarse_alguien`): el extractor suma a alguien y Jev está seguro de que el mensaje
         # habla de alguien ya contado (s4-26, `adds_person`). Dos lectores en contra: no se suma a nadie aquí; lo decide

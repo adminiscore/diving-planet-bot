@@ -147,6 +147,29 @@ def test_restaurar_a_quien_escribe_no_borra_lo_que_acaba_de_decir():
     assert st.is_certified is False  # lo que había antes del turno, se protege como siempre
 
 
+def test_el_reparto_que_completa_a_los_pendientes_no_lo_tira_el_veto_de_jev(monkeypatch):
+    """Sparring contra la rama (27-oct): familia de 5, el suegro acompañante y 4 por elegir; «mi marido quiere bucear,
+    yo me animo al minicurso, la de 14 también» se tiraba porque Jev dice (bien) que nadie se suma."""
+    from src.agents.nucleo import extraction, extractor
+
+    st = _grupo(detected_group_size=5, detected_group_allocation={"companion": 1}, pending_undecided_qty=4,
+                needs_companion_activity=True)
+    monkeypatch.setattr(extractor, "_jev_dice_que_nadie_se_suma", lambda _st: True)
+    mensaje = "Mi marido quiere bucear, yo me animo al minicurso, la de 14 también minicurso"
+    intent = extraction.lectura_del_turno(mensaje)
+    extractor._poner_grupo(intent, st, mensaje,
+                           {"group_allocation": {"certified_diving": 1, "minicourse": 2, "companion": 1}})
+    assert intent.group_allocation == {"certified_diving": 1, "minicourse": 2, "companion": 1, "undecided": 1}
+    assert intent.group_size in (None, 5)
+
+
+def test_quien_no_se_nombra_no_se_quita_al_completar():
+    """La misma familia, otra lectura del extractor: no nombra al suegro (ya iba de acompañante)."""
+    assert grupo.completado({"companion": 1}, {"minicourse": 2, "undecided": 1}, 5) == {"companion": 1, "minicourse": 2}
+    assert grupo.completado({"companion": 1}, {"minicourse": 5}, 5) is None  # no caben en los que faltaban
+    assert not grupo.completa({"companion": 1}, {"minicourse": 2}, 5)  # lo que se GUARDA nunca quita a nadie
+
+
 def test_quien_hace_que_va_antes_que_el_origen():
     """Paso 3a: el orden aprobado (quién hace qué, el origen, seguridad y edades, la nacionalidad); si no contesta dos
     veces, se aplaza hasta antes del resumen como las demás."""

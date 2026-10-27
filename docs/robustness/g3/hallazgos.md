@@ -228,3 +228,27 @@ Clases: el grupo en la primera cotización (cada persona su actividad) → CALN-
 
 Clases: origen leído del sitio de la actividad → CALN-3 / extractor; corrección del origen tras un precio sin
 re-cotizar → CALN-3 (el resolvedor de precios); frases repetidas del montaje → CALN-6.
+
+## CALN1-04 · Familia de 5 con niños y suegro acompañante, contra la RAMA (feature/caln-gadea de5cb9f, `scripts/charla_rama.py`, 27-oct)
+
+Primera charla contra el código de una rama sin desplegarla (`docs/robustness/g3/charlas-rama/familia-suegro-lancha*.jsonl`).
+
+1. «Familia de 5, del 3 al 7 de noviembre: mi marido Advanced, yo nunca he buceado, hijas de 14 y 9 quieren probar algo,
+   mi suegro solo acompaña en la lancha. ¿Qué nos recomiendas y cuánto sale?» → bien: plan persona a persona (por edad:
+   Bubble Makers para la de 9), precios con los dos orígenes, «el minicurso no certifica», descuento de grupo de 5+; el
+   estado, bien (suegro acompañante, 4 por elegir, 5, varios días). Mal: la última frase del escritor se corta («…no
+   certifica. Así») y detrás va el **menú genérico de 4 actividades** (la pregunta de la actividad sustituye el último
+   párrafo del escritor).
+2. «Mi marido quiere bucear, yo minicurso, la de 14 también y la pequeña Bubble Makers. Somos colombianos. ¿Cuánto todo
+   junto?» → **no guarda nada** y contesta «No tengo aquí los precios calculados para las otras actividades» (los dio
+   antes) y otra vez «¿Con cuál te animas?». Causas: (a) el reparto que COMPLETA a los que faltaban por elegir lo tiraba
+   el veto de Jev («nadie se suma»: cierto, ya estaban contados) o, si el extractor no nombraba al suegro, se pedía
+   confirmar un «cambio» → ARREGLADO en la rama (`grupo.completado`): ahora queda {acompañante 1, minicurso 2} y 2 por
+   elegir; (b) **Bubble Makers no cabe en el reparto del extractor** (no está en sus actividades): la elección de la
+   niña se pierde; (c) **la recomendación para quien no ha elegido no mira la edad**: a la de 9 le ofrece minicurso y
+   Open Water (desde los 10) y no Bubble Makers; (d) **el escritor solo recibe los hechos de UNA actividad** (la
+   preguntada o el acompañante) y dice que no tiene los demás precios; (e) el extractor a veces no reparte «mi marido
+   quiere bucear».
+
+Clases: completar el grupo (CALN-2, arreglado); niños en el reparto y recomendación por edad (CALN-2, nuevo); los hechos
+del grupo entero para el escritor (CALN-4); el montaje que corta la frase del escritor (CALN-6).
