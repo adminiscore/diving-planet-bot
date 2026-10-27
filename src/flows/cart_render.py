@@ -347,14 +347,19 @@ def _goto_mixed_final_summary(state: ConversationState) -> str:
     # por actividad). Sin precios/links aquí: van en los `msgs` de arriba.
     closing = (
         "\n\n_El precio es el mismo en pesos (COP) o dólares (USD), sin cobro extra por la divisa._"
-        "\n\n¿Te ayudo con algo más? Puedo *añadir otra actividad*, resolver dudas o "
-        "ajustar la reserva. 🤿"
         if lang == "es"
         else "\n\n_The price is the same in COP or USD, with no extra charge for the currency._"
-        "\n\nIs there anything else I can help you with? I can *add another activity*, "
-        "answer questions, or adjust your booking. 🤿"
     )
-    return MESSAGE_SPLIT.join(msgs) + closing
+    return MESSAGE_SPLIT.join(msgs) + closing + "\n\n" + CIERRE_DE_LA_TARJETA["es" if lang == "es" else "en"]
+
+
+# CALN-6 paso 2 (sparring CALN4, b2 t2): la invitación genérica del cierre. Si la respuesta ya pregunta algo concreto
+# (el escritor: «¿te ayudo a añadir el refresher?»), el compositor la quita: una pregunta como mucho.
+CIERRE_DE_LA_TARJETA = {
+    "es": "¿Te ayudo con algo más? Puedo *añadir otra actividad*, resolver dudas o ajustar la reserva. 🤿",
+    "en": "Is there anything else I can help you with? I can *add another activity*, answer questions, or adjust your "
+          "booking. 🤿",
+}
 
 
 def _is_contact_only_service(service_id: str | None) -> bool:

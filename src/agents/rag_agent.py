@@ -593,7 +593,11 @@ def _completar_con_hechos(answer: str, bloques: list[dict], intenciones: list[st
             extra.append(rotulos[i] + "\n" + "\n".join(f"• {x}" for x in faltan))
     for campo in ("recogida", "alojamiento"):
         extra += list(dict.fromkeys(x for b in bloques for x in hechos_mod.faltan(answer, [{campo: b.get(campo)}], [])))
-    completada = f"{answer.rstrip()}\n\n" + "\n\n".join(extra) if extra else answer
+    # CALN-6 paso 2 (sparring CALN4, b11 t1): lo añadido va DELANTE de la pregunta con que cierra el escritor; detrás,
+    # la pregunta quedaba en medio («¿Te comparto los enlaces?» y debajo el punto de encuentro).
+    partes = answer.rstrip().split("\n\n")
+    cierre = [partes.pop()] if len(partes) > 1 and "?" in partes[-1] else []
+    completada = "\n\n".join([*partes, *extra, *cierre]) if extra else answer
     return None if hechos_mod.faltan(completada, bloques, intenciones) else completada
 
 

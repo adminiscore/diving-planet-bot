@@ -109,17 +109,38 @@ def _aplazar(state) -> None:
         state.suggested_activity = antes
 
 
-def _sin_saludo_repetido(respuesta: str) -> str:
+def _sin_saludo_repetido(respuesta: str, *, escribio: bool = False) -> str:
     """Tras el saludo de Coral, el escritor no vuelve a saludar (CALN-6 paso 2: «¡Hola! 🪸 Soy Coral…» y debajo «¡Hola!
-    Bucear en las islas…» en 27 de los 116 primeros turnos de caln2-B)."""
+    Bucear en las islas…» en 27 de los 116 primeros turnos de caln2-B). Si en el turno contesta el escritor, que ya da
+    la bienvenida a su manera («¡Bienvenidos!», «¡Con mucho gusto te ayudo a armar el plan!»: 4 de 10 en la batería
+    CALN4), el saludo se queda en la presentación, sin su frase de calidez."""
     partes = respuesta.split(_PARRAFO)
     for i, parrafo in enumerate(partes[:-1]):
         if _SALUDO_DE_CORAL_RE.search(parrafo):
+            if escribio:
+                from src.agents.conversational_core import CALIDEZ_DEL_SALUDO  # lazy
+
+                for calidez in CALIDEZ_DEL_SALUDO.values():
+                    partes[i] = partes[i].replace(calidez, "")
             resto = _SALUDO_INICIAL_RE.sub("", partes[i + 1], count=1)
             if resto.strip() and resto != partes[i + 1]:
                 partes[i + 1] = resto if resto[0] in "¡¿*_" else resto[0].upper() + resto[1:]
             break
     return _PARRAFO.join(partes)
+
+
+def _sin_el_cierre_si_ya_pregunta(respuesta: str) -> str:
+    """La invitación genérica de la tarjeta («¿Te ayudo con algo más?…») cede ante una pregunta concreta de la misma
+    respuesta (sparring CALN4, b2 t2: «Would you like help adding the refresher for him?» y la tarjeta con su cierre)."""
+    from src.flows.cart_render import CIERRE_DE_LA_TARJETA  # lazy
+
+    partes = respuesta.split(_PARRAFO)
+    cierres = [i for i, p in enumerate(partes) if p.strip() in CIERRE_DE_LA_TARJETA.values()]
+    otras = [p for i, p in enumerate(partes) if i not in cierres and p.strip()]
+    if not cierres or not _ya_pregunta(_PARRAFO.join(otras)):
+        return respuesta
+    logger.info("[CORE][CALN6] compositor: la respuesta ya pregunta; fuera la invitación genérica de la tarjeta")
+    return _PARRAFO.join(otras)
 
 
 def _sin_parrafos_repetidos(respuesta: str) -> str:
@@ -135,13 +156,19 @@ def _sin_parrafos_repetidos(respuesta: str) -> str:
     return _PARRAFO.join(quedan)
 
 
-def componer(state, respuesta: str, *, pase: bool = False) -> str:
+def componer(state, respuesta: str, *, pase: bool = False, escribio: bool | None = None) -> str:
     """La respuesta del turno con la pregunta de la reserva una vez y al final (paso 1), si no pregunta ya otra cosa
     (paso 2). En un turno que pasa a un asesor, sus copias salen y no se vuelve a poner: sigue una persona (y la nota
-    de la tarjeta, si va, ya pregunta)."""
+    de la tarjeta, si va, ya pregunta). `escribio`: si en el turno contestó el escritor (sin darlo, lo dice la traza
+    del turno, `rag_used`)."""
     if not respuesta:
         return respuesta
-    respuesta = _sin_parrafos_repetidos(_sin_saludo_repetido(respuesta))
+    if escribio is None:
+        from src.observability import hechos_del_turno  # lazy
+
+        escribio = bool(hechos_del_turno().get("rag_used"))
+    respuesta = _sin_el_cierre_si_ya_pregunta(_sin_parrafos_repetidos(_sin_saludo_repetido(respuesta,
+                                                                                           escribio=escribio)))
     preguntas = getattr(state, "_preguntas_del_turno", None) or []
     pendiente = state.core_pending_slot
     final = next((texto for slot, texto in reversed(preguntas) if slot == pendiente and texto), None)

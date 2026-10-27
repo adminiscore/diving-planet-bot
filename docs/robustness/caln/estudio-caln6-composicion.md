@@ -68,6 +68,7 @@ de las cuatro era mejor y eligió A: la única que quita la causa y deja menos c
 | 2b | dd0b0fc | Fuera el texto fijo del grupo mixto (con «¿…volver al menú principal?») | s07 0/2 → 2/2 |
 | 2c | 267a0fa | Tras el saludo de Coral, el escritor no vuelve a saludar | 27 de 116 primeros turnos |
 | 2d | ff5d9fa | UNA pregunta como mucho (si el texto ya pregunta, la de la reserva queda pendiente, sin sus botones ni la recomendación no vista); la explicación de la pregunta final no se repite; el historial guarda lo que vio el cliente | sparring 4/20 → 8/20 (s10 0 → 2/2), dos preguntas 3 → 0; composición igual |
+| 2e | (este) | Si contesta el escritor, el saludo de Coral se queda en la presentación (sin «¡Qué alegría tenerte por acá!…»); la invitación genérica de la tarjeta cede ante una pregunta concreta; lo que pega arq-7b va delante de la pregunta del escritor | bancos ×2 (A = fa9c650): saludo con la calidez repetida 56 → 2 respuestas; composición y precios-q iguales; sparring 11 → 9/28, ruido de lectura (s06, s13) |
 
 Queda del paso 2: los bloques de arq-7b que se pegan sin venir a cuento (la recogida y el alojamiento siempre, y
 los requisitos con la intención «requisitos»: «También necesitas: alojarte 1 noche en las islas» a quien pregunta

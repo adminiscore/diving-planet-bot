@@ -23,6 +23,14 @@ def test_sin_nada_que_anadir_queda_igual():
     assert _completar_con_hechos(answer, _B, ["incluye"], "es") == answer
 
 
+def test_lo_anadido_va_delante_de_la_pregunta_del_escritor():
+    """CALN-6 paso 2 (sparring CALN4, b11 t1): la pregunta con que cierra el escritor sigue al final."""
+    answer = "El minicurso incluye la piscina y una inmersión en el mar.\n\n¿Quieres que te comparta el enlace?"
+    completada = _completar_con_hechos(answer, _B, ["incluye"], "es")
+    assert completada.startswith("El minicurso incluye") and completada.endswith("¿Quieres que te comparta el enlace?")
+    assert "Muelle de la Bodeguita" in completada and "También incluye:" in completada
+
+
 def test_un_precio_que_falta_no_se_anade_se_rehace():
     bloques = [{"precio": {"cartagena": {"online": "183 USD", "normal": "204 USD"}}}]
     assert _completar_con_hechos("Cuesta 100 USD.", bloques, ["precio"], "es") is None

@@ -286,6 +286,13 @@ _NAME_STOPWORDS = frozenset({
 })
 
 
+# CALN-6 paso 2 (sparring CALN4: «¡Bienvenidos!», «¡Con mucho gusto te ayudo a armar el plan!» debajo del saludo en 4
+# de 10 primeros turnos): la calidez del saludo. Si en el turno contesta el escritor, que ya da la bienvenida, el
+# compositor la quita y el saludo se queda en la presentación (`compositor._sin_saludo_repetido`).
+CALIDEZ_DEL_SALUDO = {"es": "¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. ",
+                      "en": "So happy to have you here! I'd love to help you put your plan together. "}
+
+
 def _greeting(state: ConversationState) -> str:
     """Presentación de Coral en el PRIMER turno de la conversación — cálida,
     con el nombre de la empresa y tono cercano colombiano. Nunca se describe
@@ -297,14 +304,12 @@ def _greeting(state: ConversationState) -> str:
         saludo = f"¡Hola, {name}! 🪸" if name else "¡Hola! 🪸"
         return (
             f"{saludo} Soy *Coral*, de *Diving Planet* — buceamos todo el año en "
-            "las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. "
-            "¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\n"
+            f"las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. {CALIDEZ_DEL_SALUDO['es']}🌊\n\n"
         )
     saludo = f"Hi, {name}! 🪸" if name else "Hi! 🪸"
     return (
         f"{saludo} I'm *Coral* from *Diving Planet* — we dive year-round in the Rosario "
-        "Islands, departing from Cartagena or right from the islands. So happy to have "
-        "you here! I'd love to help you put your plan together. 🌊\n\n"
+        f"Islands, departing from Cartagena or right from the islands. {CALIDEZ_DEL_SALUDO['en']}🌊\n\n"
     )
 
 

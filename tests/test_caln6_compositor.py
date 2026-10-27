@@ -158,6 +158,30 @@ def test_la_recomendacion_del_plan_solo_si_el_cliente_no_lo_dijo(dijo, recomiend
     assert bool(core._recommended_plan_intro(st)) is recomienda
 
 
+def test_si_contesta_el_escritor_el_saludo_se_queda_en_la_presentacion():
+    """Batería CALN4 (b5 t1): «…¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan.» y debajo
+    «¡Con mucho gusto te ayudo a armar el plan!». Si el turno es solo una pregunta del código, el saludo va entero."""
+    from src.agents.conversational_core import _greeting
+
+    saludo = _greeting(SimpleNamespace(client_name=None, language="es")).rstrip()
+    escritor = "¡Con mucho gusto te ayudo a armar el plan! 🐠"
+    compuesta = componer(_turno(None), f"{saludo}\n\n{escritor}", escribio=True)
+    assert compuesta == ("¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, "
+                         f"saliendo desde Cartagena o desde las propias islas. 🌊\n\n{escritor}")
+    assert componer(_turno(None), f"{saludo}\n\n{MENU}", escribio=False) == f"{saludo}\n\n{MENU}"
+
+
+def test_la_invitacion_generica_de_la_tarjeta_cede_ante_una_pregunta_concreta():
+    """Batería CALN4 (b2 t2): la pregunta del escritor, la tarjeta y su «Is there anything else I can help you with?»."""
+    from src.flows.cart_render import CIERRE_DE_LA_TARJETA
+
+    tarjeta = "🤿 *Dive Mini Course*\n💰 2 × 134 USD p.p. = *268 USD*"
+    escritor = "Would you like help adding the refresher for him?"
+    cierre = CIERRE_DE_LA_TARJETA["en"]
+    assert componer(_turno(None), f"{escritor}\n\n{tarjeta}\n\n{cierre}") == f"{escritor}\n\n{tarjeta}"
+    assert componer(_turno(None), f"Done.\n\n{tarjeta}\n\n{cierre}") == f"Done.\n\n{tarjeta}\n\n{cierre}"
+
+
 def test_en_el_historial_queda_lo_que_vio_el_cliente():
     from src.agents.supervisor import _lo_que_vio_el_cliente
 
