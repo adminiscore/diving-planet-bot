@@ -145,6 +145,8 @@ def _foto(state: ConversationState, datos: dict, origen: str | None, message: st
 
         dicho = [message, *(m.get("content") or "" for m in (history or []) if m.get("role") == "user")]
         foto._aloja_en_baru = any(_solo_baru(t) for t in dicho)
+    if isinstance(datos.get("group_size"), int) and datos["group_size"] > (foto.detected_group_size or 0):
+        foto.detected_group_size = datos["group_size"]  # CALN-3: «somos 5» en ESTE mensaje, para el descuento de grupo
     reparto = datos.get("group_allocation")
     if isinstance(reparto, dict) and not foto.detected_group_allocation:
         # arq-5f: «dos bucean y dos hacen snorkel» en ESTE mensaje (la extracción aún no lo ha guardado): la misma lancha.

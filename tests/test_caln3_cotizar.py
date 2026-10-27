@@ -47,3 +47,15 @@ def test_los_candidatos_sin_la_carta_de_paquetes():
     assert [b["actividad"] for b in bloques] == ["certified_diving", "minicourse"]
     assert all("otros_planes" not in b and set(b["precio"]) == {"cartagena", "island"} for b in bloques)
     assert all(b["pregunta_pendiente"] == "origen" for b in bloques)
+
+
+def test_el_descuento_de_grupo_solo_cuando_aplica():
+    """CALN3-Q04 (decisión 4): con 5 o más, el de grupo en el snorkel; en el Open Water, que no aplica; con menos, nada."""
+    from src.flows import hechos
+
+    [snorkel] = hechos.hechos(_st(detected_group_size=5), ["precio"], ["snorkel"])
+    assert "10%" in snorkel["descuento_de_grupo"] or "10 %" in snorkel["descuento_de_grupo"]
+    [curso] = hechos.hechos(_st(detected_group_size=5), ["precio"], ["padi_open_water"])
+    assert "NO aplica" in curso["descuento_de_grupo"]
+    [pareja] = hechos.hechos(_st(detected_group_size=2), ["precio"], ["snorkel"])
+    assert "descuento_de_grupo" not in pareja

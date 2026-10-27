@@ -175,6 +175,8 @@ def hechos(state: ConversationState, intenciones: list[str], actividades: list[s
                 for plan, sid in zip(bloque.get("otros_planes") or [], [s for s in otros if _precio(s, moneda)],
                                      strict=False):
                     plan["precio_cop"] = _precio(sid, "COP")
+            if grupo := _descuento_de_grupo(state, registro, lang):
+                bloque["descuento_de_grupo"] = grupo
         if "incluye" in pedidas and paquetes:
             # arq-1t: lo común a todos los paquetes de varios días del origen (solo cambia el número de inmersiones) y
             # la lista de paquetes; lo que NO incluyen, igual (el alojamiento y los almuerzos de los otros días).
@@ -339,6 +341,31 @@ def _descuentos(state: ConversationState, lang: str) -> list[str]:
         # tú en dólares». En un grupo mixto, la regla de la moneda es la suya, como en `regla_moneda`.
         textos = {**textos, "colombian_cop_pricing": _politica("mixed_nationality_group", lang)}
     return [x for x in textos.values() if x]
+
+
+# CALN-3 (decisión 4 del 27-oct, CALN3-Q04): con el precio, el de grupo solo cuando aplica a ESTE grupo y plan. A 5
+# españoles que piden el Open Water se les ofrecía «10 % para grupos de 5 o más… no aplica a cursos PADI. ¿Te paso con un
+# asesor para aplicarlo?»: los descuentos iban todos en el contexto sin decir cuál aplica. A quién aplica, de la base
+# (`applicability`: buceo recreativo, minicurso y snorkel); los cursos no.
+_CON_DESCUENTO_DE_GRUPO = {"cert", "beginner", "snorkel"}
+_SIN_DESCUENTO_DE_GRUPO = {
+    "es": "El descuento de grupo ({pct} % desde {n} personas) NO aplica a los cursos PADI: no lo ofrezcas para este plan.",
+    "en": "The group discount ({pct}% from {n} people) does NOT apply to PADI courses: don't offer it for this plan.",
+}
+
+
+def _descuento_de_grupo(state: ConversationState, registro, lang: str) -> str | None:
+    """Si el grupo llega al mínimo: el texto del descuento de grupo si el plan lo tiene, o que no aplica si es un curso.
+    Sin grupo de ese tamaño, nada (los demás descuentos, solo si los pregunta)."""
+    datos = json.loads(_DISCOUNTS.read_text(encoding="utf-8-sig")).get("discounts", {}).get("group_discount") or {}
+    minimo = datos.get("min_people") or 5
+    if (state.detected_group_size or 0) < minimo:
+        return None
+    if registro.cart_type == "course":
+        return _SIN_DESCUENTO_DE_GRUPO[lang].format(pct=datos.get("percentage", 10), n=minimo)
+    if registro.cart_type in _CON_DESCUENTO_DE_GRUPO:
+        return datos.get(f"description_{lang}") or datos.get("description_es")
+    return None
 
 
 def hechos_sin_actividad(state: ConversationState, intenciones: list[str]) -> list[dict]:
