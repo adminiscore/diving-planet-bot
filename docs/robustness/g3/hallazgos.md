@@ -404,6 +404,11 @@ con los dos orígenes); q1 t4 y q5 t3 (tarjeta por actividad, sin total del grup
    los descuentos:» con el de equipo propio, la moneda y que no se acumulan. `hechos.faltan` exige todos los
    descuentos con la intención `descuento` y `_completar_con_hechos` los pega; la decisión es «los demás, solo si los
    pregunta».
+   Análisis (27-oct, 21:20): choca con arq-4b (G10 nº 4: ante «¿hay algún descuento?» los hechos dan TODOS con sus
+   condiciones, lo fijan test_arq4b_fallos_g10_4, test_arq8a y test_arq8h). Para separar la pregunta genérica de la
+   concreta hay que saber QUÉ descuento se pregunta, y la intención `descuento` de Jev no lo dice: va con la pieza de
+   precios (CALN-3) y con el juez. En Q04, el de grupo no venía de los hechos (solo 'precio'), sino de
+   `catalog_facts` (catalog.py), que lleva todos los descuentos en el contexto del escritor.
 6. **«Te recomiendo el plan de 2 inmersiones» a quien ya dijo cuántas** (CALN-6, Gadea): q2 t4 debajo de sus
    enlaces; q5 t2. ARREGLADO: `_recommended_plan_intro` no recomienda si el cliente dijo cuántas inmersiones o días.
    Queda el caso de CALN3-10 b1/b4 (el escritor propone otro plan y el cliente no dijo la cifra): va con CALN-3.
