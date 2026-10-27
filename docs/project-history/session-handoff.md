@@ -59,7 +59,31 @@ integrar la rama del otro y suite en verde, porque en PRE gana el último; (3) *
 despliegue reinicia el contenedor y mata la medida del otro (avisar en el registro de Plan Coral con la hora de fin).
 Las doce normas, con su porqué, están en el documento.
 
-### ▶️ RETOMAR AQUÍ — 27-oct, 03:30 (Gadea con Claude; Álvaro y Gonzalo de noche): OpenAI SIN CRÉDITO; integra6b sin juzgar; PRE = integra5
+### ▶️ RETOMAR AQUÍ — 27-oct, 20:30 (Gadea con Claude; Álvaro y Gonzalo): fase CALN; PRE = integra5
+
+- **PRE sirve integra5 `0faff2c`** (HISTORY 0.32.9): golden 80/116, oculto 90,8 %, rotativa 13/30. Ninguna ronda de
+  CALN la supera todavía.
+- **Base de CALN = `feature/caln-gadea` (267a0fa)**, todo junto (HISTORY 0.34.0): CALN-2 (grupo), CALN-6 pasos 0-1 y
+  parte del 2 (compositor), CALN-3 pasos 0-1 (precios, en sombra), ORIGEN-CONFIRMA, CALN2-04 de Álvaro, la batería de
+  sparring. Rondas: caln1-B 76/116, 88,3 %, rot 11/30; caln2-B 76/116, 87,7 %, rot 13/30 (composición: repite 16 → 7,
+  dos preguntas 17 → 2).
+- **Decisiones del día (Gadea):** CALN-6 = opción A (compositor). CALN-3: delegó en su Claude («lo más lógico, orgánico,
+  en la línea de la arquitectura, sin añadir de más»): cotizar() → pieza de precios, A pasando por B; sin plan, 2-3
+  candidatos; sin total del grupo en el texto; descuentos: el online siempre, el de grupo cuando aplica. Foco: los fallos
+  generales entre rondas y los precios; **más sparring** (barato y encuentra lo que el oculto no ve): batería fija en
+  cada integración + tandas por tema.
+- **Siguiente, en orden:** (1) CALN-3 paso 2 (Gonzalo: la pieza de precios como hechos del escritor; el caso que más
+  duele, banco de precios p17: «¿cuánto cuesta bucear?» tres turnos sin un solo precio, la puerta del origen);
+  (2) CALN-6 paso 2 (Gadea): los bloques que arq-7b pega sin venir a cuento (recogida, alojamiento, listas: tocan
+  criterios del golden, medir con el juez) y UNA pregunta como mucho; (3) Álvaro: el reparto del grupo por código
+  (g02, g28, g26, g12) y la tarjeta que no se rehace al corregir el reparto; (4) 3.ª ronda con todo y sparring de la
+  batería; sube a PRE la que iguale o mejore integra5.
+- **Vigilar:** el oculto baja un poco en cada ronda (90,8 → 89,0 → 88,3 → 87,7 %): dentro del ruido, pero siempre en
+  la misma dirección.
+- **Herramientas nuevas:** `scripts/charla_rama.py` (sparring contra una rama), comprobaciones de composición y de precio
+  en `scripts/caln0_comprobaciones.py`, bancos `docs/robustness/caln/banco-{grupo,composicion,edades,precios,sparring}.json`.
+
+### (anterior) RETOMAR AQUÍ — 27-oct, 03:30 (Gadea con Claude; Álvaro y Gonzalo de noche): OpenAI SIN CRÉDITO; integra6b sin juzgar; PRE = integra5
 
 - **PRE sirve integra5 `0faff2c`** (HISTORY 0.32.9): lat-9 paso 2 (el escritor cierra con la pregunta de la reserva,
   variante «corrige»; si la pregunta se repite, el escritor ligero), ACUSE y lat-5. Golden 80/116 (50 fallos), oculto

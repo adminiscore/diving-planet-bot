@@ -30,6 +30,29 @@ History
   - calidad: **94,8 % 80/116**, frente al 94,9 % 82/116 de anoche, dentro del ruido.
   - Deuda apuntada: el acuse ya no reconoce lo concreto del mensaje («anoto a tu amigo para el minicurso»).
 
+0.34.0 - (2026-10-27, CALN: EN RAMA `feature/caln-gadea`, NO sube; PRE sigue en 0.32.9 = integra5)
+---------------------
+* **Fase CALN** (decisión de Gadea, 27-oct): calidad en conversaciones nuevas y difíciles, sin parches y sin perder la
+  arquitectura delgada. Se mide por código (CALN-0), con bancos y con **sparring contra la rama sin desplegarla**
+  (`scripts/charla_rama.py`; batería fija de Álvaro en `docs/robustness/g3/bateria-sparring.md`).
+* **CALN-2, el grupo como lista de personas** (`src/flows/grupo.py`; diseño en `docs/robustness/caln/diseno-caln2-grupo.md`):
+  quien no está certificado no hereda el buceo; completar el grupo no es corregirlo; la pregunta por quien no ha elegido
+  sale de `next_missing_slot`, la primera (fuera `companion_activity_deferred` y 4 bloques, −142 líneas); «sin decidir»
+  nunca dentro del reparto; Bubble Makers en el reparto y la recomendación por edad. Banco de grupos 38 → 48-49/58.
+  CALN2-04 (Álvaro): fuera el camino viejo de edades (−510 líneas), banco de edades 4/14 → 12/14.
+* **CALN-6, un compositor al final del turno** (opción A, decisión de Gadea; `src/agents/compositor.py`): la pregunta de
+  la reserva una vez y al final, fuera los párrafos idénticos y el saludo doble; en un pase, gen-13 ya no repite lo que
+  el escritor contestó; fuera el texto fijo del grupo mixto («¿…volver al menú principal?»). En el golden: «dice lo mismo
+  dos veces» 16 → 7, «dos preguntas» 17 → 2; el juez, sin-repreguntas 9 → 4.
+* **CALN-3, precios** (diseño de Gonzalo, decisiones del 27-oct): paso 0 (comprobaciones de precio en CALN-0, banco de
+  precios) y paso 1 (`src/flows/cotizar.py`, en sombra: solo traza). ORIGEN-CONFIRMA y los arreglos del origen
+  (Gonzalo). CALN-4: en un grupo, el escritor recibe los hechos de todas sus actividades.
+* **Medida** (ronda completa, juez gpt-5-mini): caln1-B 76/116, 53 fallos, oculto 88,3 %, rotativa 11/30; **caln2-B
+  76/116, 54 fallos, oculto 87,7 %, rotativa 13/30**. No supera a integra5 (80/116, 90,8 %): **PRE no cambia**. Latencia
+  p90 5,99-6,61 s con las mismas llamadas: el proveedor va al doble de lento por la tarde (ms/token).
+* **Descartado:** un campo nuevo del extractor (`otro_sin_elegir`) y cambiar la regla de group_size en el prompt: los dos
+  hacían que el extractor perdiera el reparto en otros casos (el banco ex0 no lo vio; sí las llamadas directas ×8).
+
 0.33.0 - (2026-10-27, integra6b: EN RAMA `feature/integra6-gadea`, SIN JUZGAR; PRE sigue en 0.32.9)
 ---------------------
 * **lat-9 pasos 3 y 4: un solo escritor.** Lo que cubren los hechos lo escribe el escritor del RAG con los hechos y
