@@ -36,7 +36,7 @@ from src.agents.conversational_core import (
     next_missing_slot,
 )
 from src.domain import activities as dom
-from src.flows import cart_render
+from src.flows import cart_render, grupo
 from src.flows.catalog import politica_breve
 from src.flows.state import ConversationState, Step
 from src.utils import money
@@ -368,6 +368,9 @@ async def _slotfill_close_phase(
     ):
         state.detected_group_allocation = {state.detected_activity: alloc[prev_main_activity]}
         logger.info(f"[CORE] reparto sigue a la actividad principal -> {state.detected_group_allocation}")
+
+    if grupo.sin_certificar_no_hereda(state):
+        logger.info(f"[CORE][CALN2] otra persona no está certificada: no hereda la actividad -> {state.personas}")
 
     # Circuit-breaker (portado 2026-09-01, hallazgo en vivo, batería de
     # grupos mixtos contra PRE, lote 8): repetido aquí (además de en

@@ -48,3 +48,31 @@ def test_una_conversacion_guardada_antes_trae_el_reparto_de_siempre():
 
 def test_sin_nadie_el_reparto_es_none():
     assert grupo.reparto_de([]) is None
+
+
+def _grupo(**campos) -> ConversationState:
+    st = ConversationState(conversation_id="caln2")
+    for campo, valor in campos.items():
+        setattr(st, campo, valor)
+    return st
+
+
+def test_quien_no_esta_certificado_no_hereda_el_buceo():
+    """«Quiero bucear, soy certificado. Voy con mi novia, que nunca ha buceado» (banco de grupos g02 y g18)."""
+    st = _grupo(detected_activity="certified_diving", detected_group_size=2, acompanante_sin_certificar=True)
+    assert grupo.sin_certificar_no_hereda(st)
+    assert st.detected_group_allocation == {"certified_diving": 1, "undecided": 1}
+
+
+@pytest.mark.parametrize("campos", [
+    {"detected_activity": "snorkel", "detected_group_size": 2, "acompanante_sin_certificar": True},  # no pide certificado
+    {"detected_activity": "certified_diving", "detected_group_size": 2},  # nadie dijo que no esté certificado
+    {"detected_activity": "certified_diving", "acompanante_sin_certificar": True},  # sin total, se pregunta
+    {"detected_activity": "certified_diving", "detected_group_size": 2, "acompanante_sin_certificar": True,
+     "detected_group_allocation": {"certified_diving": 1, "snorkel": 1}},  # el reparto dicho manda
+])
+def test_si_no_toca_no_cambia_el_grupo(campos):
+    st = _grupo(**campos)
+    antes = st.detected_group_allocation
+    assert not grupo.sin_certificar_no_hereda(st)
+    assert st.detected_group_allocation == antes

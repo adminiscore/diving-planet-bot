@@ -18,6 +18,23 @@ def entradas_de_reparto(reparto: dict | None) -> list[dict]:
             for actividad, cantidad in (reparto or {}).items()]
 
 
+def sin_certificar_no_hereda(state) -> bool:
+    """CALN-2 paso 2 (27-oct): quien no está certificado no puede hacer una actividad que pide certificación. Si el
+    cliente dijo que OTRA persona del grupo no lo está («voy con mi novia, que nunca ha buceado») y no dio el reparto,
+    esa persona no hereda la actividad de quien escribe: quien escribe hace la suya y los demás quedan sin decidir (se les
+    recomienda y elige el cliente). Antes el grupo entero hacía la principal (banco de grupos g02 y g18: dos buzos
+    certificados). True si cambia el grupo."""
+    from src.domain import activities as dom  # lazy
+
+    actividad = dom.by_id(state.detected_activity) if state.detected_activity else None
+    total = state.detected_group_size
+    if (not state.acompanante_sin_certificar or state.personas or actividad is None
+            or not actividad.requires_certification or not isinstance(total, int) or total < 2):
+        return False
+    state.personas = [{"actividad": actividad.id, "cantidad": 1}, {"actividad": None, "cantidad": total - 1}]
+    return True
+
+
 def reparto_de(personas: list[dict]) -> dict | None:
     """La lista como el reparto de siempre; None sin nadie (el valor por defecto de antes)."""
     if not personas:
