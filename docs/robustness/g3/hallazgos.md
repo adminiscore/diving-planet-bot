@@ -290,3 +290,78 @@ acompañantes); la disculpa ante la queja («ya te lo dije») y el precio bueno 
    descuento de grupo dos veces seguidas (t3); la regla del grupo mixto dos veces y «¿…o prefieres volver al menú
    principal?» (s2-mixta, t1).
 8. **Latencia:** turnos de 9-14 s (s2-pareja t1 13,7 s; s2-amigos t3 12,1 s).
+
+## CALN3-01..14 · Primera tanda de la batería fija de sparring, contra la RAMA (feature/caln-gadea b0f3a97, 27-oct)
+
+Once personas de `docs/robustness/g3/bateria-sparring.md`, pasadas con `scripts/charla_rama.py`. Las charlas están en
+`docs/robustness/g3/charlas-rama/b*.jsonl`. Los casos van al banco `docs/robustness/caln/banco-sparring.json`.
+
+**Lo que va bien:**
+
+- Corregir el origen tras un precio vuelve a cotizar (b3).
+- El repaso tras 4 años se cotiza desde las islas, y el corte de reservas se dice tal cual, sin «cerró ayer» (b8).
+- El snorkel de una pareja va directo a la tarjeta en 4 s (b10).
+- El descuento de grupo se explica una vez y con sus condiciones (b6, t1).
+- Una familia de 5 recibe el precio de cada persona, con su grupo entero guardado (b4, t2).
+- La tarjeta final de una familia con buceo, Open Water y acompañante sale bien (b1).
+- La familia con niños ya no cae en el camino viejo de edades (b5, CALN2-04).
+- «Alojados en Cartagena» se guarda como origen... a veces (b5 sí, b5b no).
+
+**Lo que falla, por causa (y su tarea):**
+
+1. **Lo mismo dicho dos veces** (CALN-6):
+   - b1 t3: la respuesta ENTERA (precios, días, lo que incluye) dos veces, con «Tienes razón…» en medio; 16,9 s.
+   - b5 t2: «Como hace un año que no buceas, no necesitas refresher…» dos veces.
+   - b3 t3: dos «¡Perfecto…!» seguidos (acuse y escritor).
+   - b7 t1: la regla del grupo mixto (USD), del escritor y otra vez en un bloque fijo.
+   - b8 t2: dos párrafos casi iguales de la recogida en el hotel.
+   - b9 t1: el bloque entero de descuentos tras explicar el de grupo, más requisitos y qué llevar sin pedirlos.
+2. **Más de una pregunta, o la pregunta antes del final** (CALN-6, más allá del paso 1):
+   - b11: «¿te comparto los enlaces?» y, detrás del punto de encuentro, la oferta de gen-8 «Si quieres, te ayudo a
+     reservar: Curso Advanced… ¿Te animas?».
+   - b7: «¿te comparto el enlace?» más «¿te conecto con un asesor, o prefieres volver al menú principal?».
+   - b2 t2: dos «Is there anything else…?».
+   - b5 t2: «¿Quieres que te pase con un asesor?» y detrás «Les paso con un asesor».
+3. **Sin origen, ningún precio, y la puerta deja trozos sueltos** (CALN-3; la decisión es «dos precios y pregunta»):
+   - b2 t1: solo un título «**Already on the Rosario Islands**» sin nada debajo.
+   - b4 t1: sin un solo precio para una familia de 5.
+   - b5b t2: «Reserva con el de tu punto de salida.» sin los enlaces.
+4. **El grupo leído a medias o no guardado** (CALN-2, lectura del extractor; Álvaro (3)):
+   - b1 t1: «mi esposo y yo somos Advanced, nuestro hijo de 11… mi suegra…» → el extractor da group_size 2 (solo
+     cuenta a los buzos).
+   - b6: «4 tenemos certificación y 2 dudan» no deja reparto. En t2 («somos 8: 6 certificados y 2 minicurso», que el
+     escritor entiende) sale «¿Con cuál te animas — buceo, minicurso…?».
+   - b9: 5 certificados y 3 principiantes, sin reparto.
+   - b11: «el Advanced y también Nitrox» no deja actividad.
+   - b10 t2: «mejor el minicurso los dos» no cambia la actividad guardada (sigue en snorkel).
+5. **La tarjeta no se rehace al corregir el reparto, y el repaso no tiene precio** (CALN-2/CALN-3, CALN2-01):
+   - b2 t2: tarjeta «Dive Mini Course 2 × 134 USD» para una pareja en la que él es buzo con 3 años sin bucear.
+   - b2 t3: tras «he's a certified diver, only I do the mini course», el reparto queda bien (1 + 1), pero la tarjeta
+     lleva minicurso ×2 MÁS fun dives ×1: tres plazas para dos personas, y el repaso sin precio.
+6. **Mi regla de DEUDA-EXT2 («voy con una amiga» = 2) acababa en una tarjeta mal cobrada**:
+   - b5 t2: «mi esposo no bucea y vamos con los niños, de 7 y 4» → grupo 2 → tarjeta «Salidas de Buceo 2 × 630.000
+     COP» (el esposo no bucea y los niños quedan fuera).
+   - _PLURAL_COMPANION_RE no tiene «niños». ARREGLADO sin tocar la lista: con dos o más edades sabidas, el total no
+     es 2 (feature/sparring-alvaro). b5b ya no sale con esa tarjeta.
+7. **El origen dicho no se guarda y se vuelve a preguntar** (ORIGEN-CONFIRMA / extractor):
+   - b1: «vamos a pasar unos días en Cartagena» → en t2 «¿Desde dónde saldrías?», y eso que el escritor ya decía
+     «Desde Cartagena…».
+   - b5b: «estamos alojados en Cartagena» unas veces sí y otras no.
+8. **Cambiar la fecha ANTES de reservar se toma como el cambio de una reserva** (Jev changes_date / ya_reservado):
+   - b10 t2: «el sábado en vez del viernes» → pase al asesor «para gestionar el cambio de fecha», sin reserva hecha.
+9. **El escritor sin la nota de edades habla del sistema** (CALN-4/6, la misma causa que banco-edades e5):
+   - b5 t1: «Para el niño de 4 años, no tengo una actividad confirmada en el contexto», en vez de ofrecer el
+     acompañante.
+10. **La recomendación del plan que pone el código contradice al escritor o no pega** (CALN-6, `_recommended_plan_intro`):
+    - b1 t2: el escritor propone el paquete de 5 inmersiones en 2 días y detrás va «Te recomiendo el plan de 2
+      inmersiones en 1 día».
+    - b4 t2: lo mismo a una familia que va 5 días.
+    - b3 t2: redundante.
+11. **El catálogo entero de planes** (CALN-3, «2-3 candidatos»):
+    - b4 t2: al buzo de la familia, los 6 planes de buceo (de 2 a 9 inmersiones).
+12. **Saludo** (CALN-6):
+    - b9 t1: sin saludo en el primer turno (camino del pase por la medicación).
+    - b1 t1 y b4 t1: dos saludos, el fijo y el «¡Hola…!» del escritor.
+13. **Colombianos con los enlaces de la web en el texto** (hechos `enlace = {asesor}`):
+    - b3 t3: el escritor da los enlaces y la tarjeta dice que el pago lo coordina el asesor.
+14. **Latencia:** 10-17 s en los turnos con grupo (b1 t3 16,9 s; b2 t2 11,4 s; b1 t1 9,9 s).
