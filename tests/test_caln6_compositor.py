@@ -144,6 +144,20 @@ def test_la_explicacion_de_la_pregunta_no_se_repite(dicho):
     assert componer(_turno("location", ("location", ORIGEN)), r) == f"{dicho}\n\n{ORIGEN}"
 
 
+@pytest.mark.parametrize("dijo,recomienda", [({}, True), ({"detected_cert_dives": 2}, False),
+                                             ({"detected_cert_dives": 5}, False), ({"detected_cert_days": 3}, False)])
+def test_la_recomendacion_del_plan_solo_si_el_cliente_no_lo_dijo(dijo, recomienda):
+    """Sparring q2 t4 (27-oct): «I'd do the 2 dives» y debajo de sus enlaces «I recommend the 2 dives in 1 day plan»."""
+    from src.agents import conversational_core as core
+    from src.flows.state import ConversationState
+
+    st = ConversationState(conversation_id="plan", language="es")
+    st.detected_activity = "certified_diving"
+    for campo, valor in dijo.items():
+        setattr(st, campo, valor)
+    assert bool(core._recommended_plan_intro(st)) is recomienda
+
+
 def test_en_el_historial_queda_lo_que_vio_el_cliente():
     from src.agents.supervisor import _lo_que_vio_el_cliente
 

@@ -926,11 +926,12 @@ def _recommended_plan_intro(state: ConversationState) -> str:
     """Recomendación del plan (determinista, del catálogo) antepuesta a la
     pregunta de seguridad — mismo criterio que v0.20.27: al certificado que ya
     dijo que quiere bucear no se le manda a un menú, se le recomienda el plan
-    más popular y puede cambiarlo por texto."""
+    más popular y puede cambiarlo por texto. CALN-6 (27-oct, sparring q2/q5): si el cliente ya dijo cuántas
+    inmersiones o días, el plan es suyo y no hay nada que recomendar, tampoco si son las 2 de siempre («I'd do the 2
+    dives» recibía «I recommend the 2 dives in 1 day plan» debajo de sus enlaces)."""
     lang = state.language
-    plan_id = _resolve_cert_plan(state)
-    if plan_id and plan_id != cart_render.service_for_location("2_dives_1_day", state):
-        return ""  # eligió un plan explícito: no hay que "recomendar" nada
+    if state.detected_cert_dives is not None or state.detected_cert_days in _DAYS_TO_DIVES:
+        return ""
     if lang == "es":
         return ("Te recomiendo el plan de *2 inmersiones en 1 día* en las "
                 "Islas del Rosario. (Si prefieres un *paquete multi-día* de 3 o más "

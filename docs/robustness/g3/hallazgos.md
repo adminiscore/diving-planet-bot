@@ -381,3 +381,38 @@ Once personas de `docs/robustness/g3/bateria-sparring.md`, pasadas con `scripts/
 13. **Colombianos con los enlaces de la web en el texto** (hechos `enlace = {asesor}`):
     - b3 t3: el escritor da los enlaces y la tarjeta dice que el pago lo coordina el asesor.
 14. **Latencia:** 10-17 s en los turnos con grupo (b1 t3 16,9 s; b2 t2 11,4 s; b1 t1 9,9 s).
+
+## CALN3-Q01..Q09 · 2.ª tanda de PRECIOS contra la rama (feature/caln-gadea b26392c, 27-oct, `charla_rama`)
+
+Cinco personas nuevas (`docs/robustness/g3/charlas-rama/q*.jsonl`), 17 turnos, en la línea de Gadea (precios y más
+sparring). CALN-0 de composición: 0 fallos en los 17. Bien: q1 t1 (dos actividades × dos orígenes, en COP); q4 (Barú
+no es de las islas, no hay recogida, mismo precio desde Cartagena); q3 t3 (no hay euros, paga en USD); q5 t1 (paquete
+con los dos orígenes); q1 t4 y q5 t3 (tarjeta por actividad, sin total del grupo en el texto).
+
+1. **«she the mini course» no cuenta** (CALN-2, Álvaro): q2 t2, `[EXTRACT][EX7] 'minicourse' no se nombra en el
+   mensaje`. `_reparto_valido` (nucleo/extractor.py) comprueba con `matched_activity_categories`, que no tiene el
+   nombre en inglés del propio producto («mini course», dom.label «Dive mini-course»).
+2. **Repetir lo que hace ella borra al buzo** (CALN-2, Álvaro): q2 t3, «I told you, she wants the mini course» →
+   {certified_diving 1} pasa a {minicourse 1} + 1 sin decidir; tercera vez «Which option does she like best?».
+3. **La pregunta de quien no ha elegido supone que es el no certificado** (CALN-2, Álvaro): q1 t2, sin decidir = el
+   buzo ({snorkel 2}) y la pregunta dice «a quienes no están certificados: ¿un día o varios?».
+4. **El descuento de grupo ofrecido a un curso PADI** (CALN-3, Gonzalo): q3 t1, 5 amigos y el Open Water: «10 % para
+   grupos de 5 o más, que se suma al online… no aplica a cursos PADI. ¿Quieres que te pase con un asesor para
+   aplicarlo?». Los hechos dan los descuentos con su texto, sin decir si ESTE aplica; la decisión (27-oct) es «el de
+   grupo cuando aplica».
+5. **Pregunta por el de grupo y recibe todos** (CALN-3 + arq-7b): q3 t2, el escritor contesta bien y debajo «Sobre
+   los descuentos:» con el de equipo propio, la moneda y que no se acumulan. `hechos.faltan` exige todos los
+   descuentos con la intención `descuento` y `_completar_con_hechos` los pega; la decisión es «los demás, solo si los
+   pregunta».
+6. **«Te recomiendo el plan de 2 inmersiones» a quien ya dijo cuántas** (CALN-6, Gadea): q2 t4 debajo de sus
+   enlaces; q5 t2. ARREGLADO: `_recommended_plan_intro` no recomienda si el cliente dijo cuántas inmersiones o días.
+   Queda el caso de CALN3-10 b1/b4 (el escritor propone otro plan y el cliente no dijo la cifra): va con CALN-3.
+7. **La pregunta del origen en singular a un grupo** (CALN-6, Gadea): «¿Saldrías desde Cartagena o ya estás…?» a
+   una pareja (q5 t1) y a 5 amigos (q3 t2).
+8. **Lo mismo dos veces, del escritor y del código** (CALN-6 / arq-7b): q3 t3, la nota de la moneda de la tarjeta y
+   un párrafo con lo mismo; q5 t3, el escritor dice qué incluye y el punto de encuentro y la tarjeta lo repite; q2 t1,
+   el bloque de la recogida repite lo que el escritor acaba de decir.
+9. **Varios días sin dormir en las islas** (CALN-3, banco de precios): q5, «3 días, nos quedamos en el centro». El
+   escritor y la tarjeta aciertan (2 inmersiones, 178 USD, «3 salidas independientes»), pero `cotizar` en sombra
+   elige el paquete de 4 inmersiones en 2 días (316 USD) por `detected_duration = multi_day`: si la pieza de precios
+   pasa al código, este caso tiene que estar en el banco.
