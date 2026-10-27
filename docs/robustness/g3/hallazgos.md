@@ -259,3 +259,34 @@ descuento de grupo explicado y sin sumar el total; sigue la pregunta de segurida
 (CALN-2), Bubble Makers en el reparto y la recomendación por edad (CALN-2 3c), los hechos de todo el grupo para el
 escritor (CALN-4, `redactor_hechos._actividades`). Queda: a veces el escritor omite una línea (el acompañante) y el
 código añade detrás su recomendación del plan del buceo.
+
+## CALN2-01..05 · Sparring de la 1.ª integración de CALN, contra la RAMA (feature/caln-gadea 5fb7127, 27-oct)
+
+Cinco clientes difíciles con `scripts/charla_rama.py` (`docs/robustness/g3/charlas-rama/s2-*.jsonl`).
+
+**Lo que va bien:** los grupos (6 amigos que pasan a 8 y dos que eligen el minicurso: el reparto 6 + 2 se guarda y la
+tarjeta sale bien con 6 × 630.000 y 2 × 655.000 COP); el precio por persona de una familia (buceo, snorkel del de 7,
+acompañantes); la disculpa ante la queja («ya te lo dije») y el precio bueno después; la moneda de un grupo mixto (USD).
+
+**Lo que falla, por causa:**
+
+1. **Los hechos del escritor se arman con lo guardado ANTES del turno** (CALN-4/CALN-3): «al final vamos a estar en Isla
+   Grande, ¿cambia el precio?» → «Sí, cambia: desde Cartagena es… No tengo aquí el precio para Isla Grande» (s2-corrige,
+   t2; es la causa de CALN1-03: `redactor_hechos._origen` prefiere el origen guardado a lo que dice este mensaje). El
+   refresher del marido, igual: «I don't have its island price here» (s2-pareja, t2: el refresher no entra en los hechos).
+2. **Precio pedido sin origen y sin actividad elegida → ningún precio** (s2-pareja, t1: «To give you the exact price I
+   need to know where you're starting from»), contra la decisión «dos precios y pregunta» (CALN-3).
+3. **«¿Cuántos sois?» tras «for us» / «him and me»** (s2-pareja, t2): «el refresher para él y el minicurso para mí» no
+   deja el grupo de 2 (CALN-2, lectura del extractor).
+4. **Un camino viejo de edades se come el turno** (s2-familia, t1): «soy buza y quiero bucear, voy con mi esposo que no
+   bucea y los niños de 7 y 4» → solo lo que pueden hacer los niños por edad, sin saludo, sin la madre ni el padre, con un
+   relleno robótico («Si además preguntabas por algo más concreto…»), y sin guardar el grupo de 4 (CALN-2/CALN-6).
+5. **«Alojados en Cartagena» no se guarda como origen** (s2-familia): el escritor cotiza desde Cartagena y en el turno 3
+   se vuelve a preguntar «¿Desde dónde saldrías?» en vez de dar los enlaces pedidos (ORIGEN-CONFIRMA, Gonzalo).
+6. **El menú genérico de 4 actividades** cuando el grupo ya acota la elección (s2-amigos, t1: 4 certificados y 2 que
+   dudan entre minicurso y snorkel → «Cuéntame, ¿qué te gustaría vivir…? Buceo / Minicurso / Snorkel / Cursos PADI»):
+   la misma familia que las 5 repreguntas «¿Con cuál te animas?» de la ronda caln1 (siguiente tarea).
+7. **El montaje repite** (CALN-6): el bloque entero de descuentos pegado tras explicar el de grupo (s2-amigos, t1); el
+   descuento de grupo dos veces seguidas (t3); la regla del grupo mixto dos veces y «¿…o prefieres volver al menú
+   principal?» (s2-mixta, t1).
+8. **Latencia:** turnos de 9-14 s (s2-pareja t1 13,7 s; s2-amigos t3 12,1 s).
