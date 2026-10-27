@@ -72,7 +72,10 @@ _CAMPOS = ("location", "detected_location", "core_pending_slot", "pregunta_preci
            "refresher_interested", "last_dive_over_2_years", "pending_companion_activity", "needs_companion_activity",
            # gen-3b (21-oct): si el turno pasó el caso a una persona (y por qué), para medir "pasa directo" frente a
            # "ofrece el pase".
-           "pending_escalation_reason")
+           "pending_escalation_reason",
+           # CALN-2 (27-oct): el grupo entero, para el banco de grupos (scripts/puntua_banco_grupo.py).
+           "detected_ages", "pending_undecided_qty", "acompanante_sin_certificar", "acompanante_certificado_inactivo",
+           "pending_companion_queue", "pending_companion_in_group")
 
 async def main():
     for dialogo, turnos, rep in [(d, ts, r) for d, ts in DIALOGOS for r in range(REPS)]:

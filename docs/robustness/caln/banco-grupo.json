@@ -1,0 +1,268 @@
+{
+ "about": "CALN-2 paso 0 (27-oct): el banco de grupos. Frases nuestras (no salen del golden, de G9/G10, de las tandas ni de los reales), en español e inglés. Se mira el ESTADO final con `scripts/puntua_banco_grupo.py`, en términos que valen antes y después del rediseño del grupo: `total` (cuántos son; null = no lo dijo), `decididos` (personas con actividad elegida, por actividad), `sin_decidir` (personas sin actividad elegida: se les recomienda y elige el cliente), `edades` (las que dijo) y `alguno_mas_de_2` (alguien certificado que lleva más de 2 años sin bucear). Un campo que no está en el caso no se mira. Decisión de Gadea «no asumir la actividad»: si el cliente no ELIGE una actividad (decir que es certificado o que quiere «probar el buceo» no es elegir), se le recomienda y no cuenta como decidida; esos casos miran el total y, con `no_decididos`, que no se haya asumido esa actividad.",
+ "dialogos": [
+  {
+   "id": "g01-amigos-2-cert-2-nuevos",
+   "turnos": [
+    "Hola! Somos 4 amigos, 2 buzos certificados y 2 que nunca han buceado"
+   ],
+   "grupo": {
+    "total": 4
+   }
+  },
+  {
+   "id": "g02-novia-sin-bucear",
+   "turnos": [
+    "Quiero bucear, soy certificado. Voy con mi novia que no ha buceado nunca"
+   ],
+   "grupo": {
+    "total": 2,
+    "decididos": {
+     "certified_diving": 1
+    },
+    "sin_decidir": 1
+   }
+  },
+  {
+   "id": "g03-familia-padres-cert-hijos-snorkel",
+   "turnos": [
+    "Somos una familia: mi esposo y yo somos buzos certificados y nuestros hijos de 9 y 12 años quieren hacer snorkel"
+   ],
+   "grupo": {
+    "total": 4,
+    "decididos": {
+     "certified_diving": 2,
+     "snorkel": 2
+    },
+    "edades": [
+     9,
+     12
+    ]
+   }
+  },
+  {
+   "id": "g04-tres-snorkel",
+   "turnos": [
+    "Vamos 3 a hacer snorkel"
+   ],
+   "grupo": {
+    "total": 3,
+    "decididos": {
+     "snorkel": 3
+    },
+    "sin_decidir": 0
+   }
+  },
+  {
+   "id": "g05-se-suma-hermano",
+   "turnos": [
+    "Somos 2 buzos certificados y queremos bucear",
+    "al final se suma mi hermano, que quiere hacer snorkel"
+   ],
+   "grupo": {
+    "total": 3,
+    "decididos": {
+     "certified_diving": 2,
+     "snorkel": 1
+    },
+    "sin_decidir": 0
+   }
+  },
+  {
+   "id": "g06-minicurso-y-snorkel",
+   "turnos": [
+    "Somos 5: 3 hacemos el minicurso y 2 snorkel"
+   ],
+   "grupo": {
+    "total": 5,
+    "decididos": {
+     "minicourse": 3,
+     "snorkel": 2
+    },
+    "sin_decidir": 0
+   }
+  },
+  {
+   "id": "g07-solo-certificado",
+   "turnos": [
+    "Voy solo, soy buzo certificado"
+   ],
+   "grupo": {
+    "total": 1
+   }
+  },
+  {
+   "id": "g08-uno-inactivo",
+   "turnos": [
+    "Somos 4 y queremos bucear, todos certificados",
+    "uno de nosotros no bucea desde hace 5 años"
+   ],
+   "grupo": {
+    "total": 4,
+    "decididos": {
+     "certified_diving": 4
+    },
+    "alguno_mas_de_2": true
+   }
+  },
+  {
+   "id": "g09-grupo-grande",
+   "turnos": [
+    "Somos un grupo de 12: 8 buzos certificados y 4 que harán snorkel"
+   ],
+   "grupo": {
+    "total": 12,
+    "decididos": {
+     "certified_diving": 8,
+     "snorkel": 4
+    },
+    "sin_decidir": 0
+   }
+  },
+  {
+   "id": "g10-minicurso-somos-3",
+   "turnos": [
+    "Queremos hacer el minicurso",
+    "Somos 3"
+   ],
+   "grupo": {
+    "total": 3,
+    "decididos": {
+     "minicourse": 3
+    },
+    "sin_decidir": 0
+   }
+  },
+  {
+   "id": "g11-dos-parejas",
+   "turnos": [
+    "Somos dos parejas: una está certificada y la otra quiere probar el buceo por primera vez"
+   ],
+   "grupo": {
+    "total": 4,
+    "no_decididos": [
+     "minicourse"
+    ]
+   }
+  },
+  {
+   "id": "g12-family-kids-try",
+   "turnos": [
+    "Hi! We're a family of 4: my wife and I are certified divers, and our kids (8 and 10) would like to try diving"
+   ],
+   "grupo": {
+    "total": 4,
+    "decididos": {
+     "certified_diving": 2
+    },
+    "sin_decidir": 2,
+    "edades": [
+     8,
+     10
+    ]
+   }
+  },
+  {
+   "id": "g13-three-certified",
+   "turnos": [
+    "There will be three of us, all certified divers"
+   ],
+   "grupo": {
+    "total": 3
+   }
+  },
+  {
+   "id": "g14-corrige-el-total",
+   "turnos": [
+    "Somos 4 buzos certificados",
+    "perdón, al final somos 3"
+   ],
+   "grupo": {
+    "total": 3
+   }
+  },
+  {
+   "id": "g15-amigos-sin-numero",
+   "turnos": [
+    "Voy con unos amigos a bucear, todos somos certificados"
+   ],
+   "grupo": {
+    "total": null
+   }
+  },
+  {
+   "id": "g16-hijo-7-snorkel",
+   "turnos": [
+    "Mi hijo de 7 años y yo queremos hacer snorkel"
+   ],
+   "grupo": {
+    "total": 2,
+    "decididos": {
+     "snorkel": 2
+    },
+    "sin_decidir": 0,
+    "edades": [
+     7
+    ]
+   }
+  },
+  {
+   "id": "g17-tres-actividades",
+   "turnos": [
+    "Somos 3: yo soy buzo certificado, mi amiga quiere hacer el minicurso y mi mamá solo viene en la lancha a acompañarnos"
+   ],
+   "grupo": {
+    "total": 3,
+    "decididos": {
+     "certified_diving": 1,
+     "minicourse": 1,
+     "companion": 1
+    },
+    "sin_decidir": 0
+   }
+  },
+  {
+   "id": "g18-amiga-no-certificada",
+   "turnos": [
+    "Quiero bucear, soy buzo certificado",
+    "voy con una amiga que no está certificada"
+   ],
+   "grupo": {
+    "total": 2,
+    "decididos": {
+     "certified_diving": 1
+    },
+    "sin_decidir": 1
+   }
+  },
+  {
+   "id": "g19-husband-joins",
+   "turnos": [
+    "I'd like to do the mini course",
+    "my husband is certified, he'd like to dive"
+   ],
+   "grupo": {
+    "total": 2,
+    "decididos": {
+     "minicourse": 1,
+     "certified_diving": 1
+    },
+    "sin_decidir": 0
+   }
+  },
+  {
+   "id": "g20-mitad-y-mitad",
+   "turnos": [
+    "Somos 6: la mitad somos buzos certificados y la otra mitad hará snorkel"
+   ],
+   "grupo": {
+    "total": 6,
+    "decididos": {
+     "certified_diving": 3,
+     "snorkel": 3
+    },
+    "sin_decidir": 0
+   }
+  }
+ ]
+}
