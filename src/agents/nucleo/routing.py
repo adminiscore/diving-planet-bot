@@ -424,6 +424,10 @@ def _apply_short_answer(state: ConversationState, message: str, ia: dict | None 
                 candidates.add("snorkel")
             if "minicourse" in mentioned or "certified_diving" in mentioned:
                 candidates.add("minicourse")
+            if "certified_diving" in mentioned and "certified_diving" in options:
+                # CALN-2 (27-oct): si no se sabe si quien falta es principiante, el buceo certificado está entre las
+                # opciones y «quiere bucear» vale para las dos: no se adivina.
+                candidates.add("certified_diving")
             # CALN-2 (27-oct, banco-lectura l04): contestando a «¿un día o varios?» (la IA ya leyó el mensaje), también
             # por su nombre del catálogo en es/en, la misma fuente que el reparto (`dom.nombra_el_producto`). «she'd go
             # for the mini course. Only one day» no la elegía (el detector no tiene «mini course»): se tomaba solo la

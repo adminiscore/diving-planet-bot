@@ -1,5 +1,5 @@
 {
- "about": "CALN-2 (27-oct, tanda de precios de Gadea q1/q2): lectura del grupo. (A) el minicurso nombrado en inglés entra en el reparto; (B) la contestación a «qué hará quien no ha elegido» es la elección de ESA persona y la actividad de quien escribe sigue; (C) la pregunta por quien no ha elegido no supone que no esté certificado. Se mira el ÚLTIMO turno con scripts/puntua_banco_edades.py (estado, estado_no, debe, ninguno; «a|b» = cualquiera; minúsculas y sin tildes). Frases nuestras: no salen del golden, de G9/G10 ni de las charlas.",
+ "about": "CALN-2 (27-oct, tanda de precios de Gadea q1/q2): lectura del grupo. (A) el minicurso nombrado en inglés entra en el reparto; (B) la contestación a «qué hará quien no ha elegido» es la elección de ESA persona y la actividad de quien escribe sigue; (C) la pregunta por quien no ha elegido no supone que no esté certificado. (D, Gadea #2208) si nadie ha dicho que quien falta no está certificado, entre sus opciones va el buceo certificado, y el buzo puede elegirlo. Se mira el ÚLTIMO turno con scripts/puntua_banco_edades.py (estado, estado_no, debe, ninguno; «a|b» = cualquiera; minúsculas y sin tildes). Frases nuestras: no salen del golden, de G9/G10 ni de las charlas.",
  "dialogos": [
   {"id": "l01-en-el-buzo-y-ella-minicurso", "tarea": "(A)",
    "turnos": ["Hello! I'm Advanced Open Water and my girlfriend has never been underwater. We're staying in Cartagena for a few days.",
@@ -28,6 +28,9 @@
    "ninguno": ["no estan certificados|no esta certificado"]},
   {"id": "l07-en-certificado-sin-elegir", "tarea": "(C) en inglés",
    "turnos": ["Hi! Three of us from Toronto, leaving from Cartagena. My cousin is a certified diver and the two of us want to go snorkeling."],
-   "ninguno": ["not certified|aren't certified|isn't certified"]}
+   "ninguno": ["not certified|aren't certified|isn't certified"]},
+  {"id": "l08-es-buzo-sin-elegir-opciones", "tarea": "(D)", "turnos": ["Hola, somos 3 de Cali. Mi hermano es buzo certificado y mi esposa y yo queremos hacer snorkel. Salimos desde Cartagena.", "Solo un día."], "debe": ["buceo certificado"]},
+  {"id": "l09-es-el-buzo-elige", "tarea": "(D)", "turnos": ["Hola, somos 3 de Cali. Mi hermano es buzo certificado y mi esposa y yo queremos hacer snorkel. Salimos desde Cartagena.", "Solo un día.", "Mi hermano se va con el buceo certificado."], "estado": {"detected_group_allocation": {"snorkel": 2, "certified_diving": 1}}},
+  {"id": "l10-en-buzo-sin-elegir-opciones", "tarea": "(D) en inglés", "turnos": ["Hi, there are three of us leaving from Cartagena. My sister is a certified diver, and my husband and I want to snorkel.", "Just one day."], "debe": ["certified diving"]}
  ]
 }

@@ -2321,6 +2321,7 @@ def test_companion_question_asks_stay_first_when_unknown():
 ])
 def test_companion_recommendations_depend_on_the_stay(duration, expected):
     state = make_state("es")
+    state.acompanante_sin_certificar = True  # un principiante: sin buceo certificado (test_caln2_buzo_sin_elegir)
     state.detected_duration = duration
     text = core.ask_slot(state, core.SLOT_COMPANION_ACTIVITY)
     assert [q["value"] for q in state.quick_replies] == expected

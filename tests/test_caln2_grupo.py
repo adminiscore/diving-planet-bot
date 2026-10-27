@@ -178,7 +178,8 @@ def test_quien_no_se_nombra_no_se_quita_al_completar():
 def test_la_recomendacion_mira_las_edades_del_grupo(edades, esperadas):
     from src.agents import conversational_core as core
 
-    st = _grupo(detected_ages=edades, detected_duration="single_day")
+    # Quien falta por elegir no está certificado («nunca ha buceado»): sin buceo certificado (ver test_caln2_buzo_sin_elegir).
+    st = _grupo(detected_ages=edades, detected_duration="single_day", acompanante_sin_certificar=True)
     assert core._companion_activity_options(st) == esperadas
 
 
