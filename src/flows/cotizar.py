@@ -46,7 +46,7 @@ def cotizar(state) -> dict:
         return sorted({re.sub(r"\D", "", p[clave]) for p in precios for clave in ("online", "normal") if p.get(clave)})
 
     base = [p for b in bloques for p in (*(b.get("precio") or {}).values(), *(b.get("precio_cop") or {}).values())]
-    otros = [p.get("precio") or {} for b in bloques for p in b.get("otros_planes") or []]
+    otros = [p.get(clave) or {} for b in bloques for p in b.get("otros_planes") or [] for clave in ("precio", "precio_cop")]
     falta = [dato for dato, sabido in (("origen", state.location in hechos_mod.ORIGENES),
                                        ("plan", bool(state.detected_activity or state.detected_group_allocation)))
              if not sabido]
