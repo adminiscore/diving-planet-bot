@@ -1,5 +1,5 @@
 {
- "about": "Casos de la primera tanda de la batería fija de sparring (hallazgos CALN3-01..14, 27-oct; docs/robustness/g3/bateria-sparring.md), para medir sin juez con scripts/puntua_banco_edades.py (estado, estado_no, edades, debe, ninguno; «a|b» = cualquiera; minúsculas y sin tildes) sobre el ÚLTIMO turno de cada diálogo. Es lo que el bot DEBERÍA hacer: hoy (b0f3a97) falla en la mayoría. Frases nuestras (las del sparring): no salen del golden, de G9/G10 ni de las charlas reales.",
+ "about": "Casos de la primera tanda de la batería fija de sparring (hallazgos CALN3-01..14, 27-oct; s11..s14 de la segunda, CALN4-01..12 sobre c1be0e4; docs/robustness/g3/bateria-sparring.md), para medir sin juez con scripts/puntua_banco_edades.py (estado, estado_no, edades, debe, ninguno; «a|b» = cualquiera; minúsculas y sin tildes) sobre el ÚLTIMO turno de cada diálogo. Es lo que el bot DEBERÍA hacer: hoy (b0f3a97) falla en la mayoría. Frases nuestras (las del sparring): no salen del golden, de G9/G10 ni de las charlas reales.",
  "dialogos": [
   {"id": "s01-familia-advanced-grupo", "tarea": "CALN-2 lectura (CALN3-04)",
    "turnos": ["Hola! Vamos a pasar unos días en Cartagena. Mi esposo y yo somos Advanced, nuestro hijo de 11 nunca ha buceado y mi suegra viene con nosotros pero no se mete al agua. ¿Qué nos recomiendas y cuánto cuesta?"],
@@ -35,6 +35,10 @@
    "estado": {"detected_activity": "minicourse"}, "ninguno": ["cambio de fecha"]},
   {"id": "s10-advanced-nitrox", "tarea": "CALN-6 dos preguntas (CALN3-02) + CALN-2 actividad",
    "turnos": ["Hola, tengo el Open Water hace un año y quiero sacar el Advanced y también la especialidad de Nitrox. Salgo de Cartagena y tengo libre del 12 al 15 de diciembre. ¿Cuántos días son, hay que dormir en las islas y cuánto cuesta cada uno?"],
-   "debe": ["616"], "ninguno": ["te animas"]}
+   "debe": ["616"], "ninguno": ["te animas"]},
+  {"id": "s11-snorkel-islas-sin-origen", "tarea": "CALN-3 dos precios y pregunta: el de las islas no es «desde Cartagena» (CALN4-01)", "turnos": ["Holaaa, somos unos amigos de Medellín y queremos hacer snorkel en las islas este puente festivo, ¿cuánto vale?"], "debe": ["448.000", "150.000"]},
+  {"id": "s12-buzo-con-ninos-pequenos", "tarea": "CALN-2 el reparto con quien escribe (CALN4-05) + nota de edades (CALN4-09)", "turnos": ["Hola! Yo tengo el Open Water y quiero bucear. Mi esposo no bucea y vamos con los niños, de 7 y 4 años. Estamos alojados en Cartagena. ¿Qué podemos hacer todos?"], "estado": {"detected_activity": "certified_diving", "detected_group_size": 4}, "ninguno": ["ninguno alcanza"]},
+  {"id": "s13-familia-origen-dicho", "tarea": "ORIGEN-CONFIRMA: «unos días en Cartagena» no se vuelve a preguntar (CALN4-08)", "turnos": ["Hola! Vamos a pasar unos días en Cartagena. Mi esposo y yo somos Advanced, nuestro hijo de 11 nunca ha buceado y mi suegra viene con nosotros pero no se mete al agua. ¿Qué nos recomiendas y cuánto cuesta?", "Somos colombianos. Iríamos la semana del 10 de noviembre. ¿Y si mi esposo y yo buceamos dos días? ¿El niño podría sacar el Open Water en esos mismos días?"], "estado": {"location": "cartagena"}, "ninguno": ["desde donde saldria"]},
+  {"id": "s14-ingles-book-me", "tarea": "CALN-2 «book me» es 1 (CALN4-07)", "turnos": ["hey!! im at a lil hotel on isla grande rn, certified diver but havent dived in like 4 yrs lol. can i go tmrw afternoon? how much", "ok cool its hotel sol y mar, does it have boat access?? book me for the dive + refresher tmrw morning then"], "estado_no": {"core_pending_slot": "qty"}, "ninguno": ["how many people"]}
  ]
 }

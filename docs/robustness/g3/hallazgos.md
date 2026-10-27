@@ -428,3 +428,79 @@ con los dos orígenes); q1 t4 y q5 t3 (tarjeta por actividad, sin total del grup
    escritor y la tarjeta aciertan (2 inmersiones, 178 USD, «3 salidas independientes»), pero `cotizar` en sombra
    elige el paquete de 4 inmersiones en 2 días (316 USD) por `detected_duration = multi_day`: si la pieza de precios
    pasa al código, este caso tiene que estar en el banco.
+
+## CALN4-01..12 · Segunda tanda de la batería fija de sparring, contra la RAMA (feature/caln-gadea c1be0e4, 27-oct)
+
+Las once personas de `bateria-sparring.md` con el mismo primer mensaje que en la 1.ª tanda (CALN3-01..14), pasadas
+con `scripts/charla_rama.py` sobre c1be0e4 (3.ª ronda de CALN + CALN-2 lectura). Charlas en
+`docs/robustness/g3/charlas-rama/b*-t2.jsonl` (22 turnos); casos nuevos s11..s14 en `banco-sparring.json`.
+
+**Lo que mejora frente a la 1.ª tanda:**
+
+- b1 t3: la respuesta ya no sale entera dos veces (16,9 → 12,3 s) y la tarjeta es la de la familia (2 × paquete de 5,
+  Open Water y acompañante).
+- b2 t3: al corregir el reparto, la tarjeta se rehace (buceo 1 + minicurso 1, no tres plazas para dos).
+- b7: la regla del grupo mixto (USD) una vez y sin «¿…volver al menú principal?».
+- b11: sin la oferta de gen-8 «¿Te animas?» detrás del punto de encuentro.
+- b9: la medicación pasa a una persona del equipo y los descuentos son los que hay (efectivo sin descuento).
+
+**Lo que falla, por causa (y su tarea):**
+
+1. **Precio de un origen dado como del otro — GRAVE** (CALN-3, Gonzalo; decisión «dos precios y pregunta»):
+   - b3 t1, «snorkel en las islas» sin decir de dónde salen: «150.000 COP por persona… ese precio es saliendo desde
+     Cartagena». 150.000 es el de quien ya está en las islas; desde Cartagena son 448.000 (`cotizar` en sombra los
+     tenía los dos: «faltan 448000, 497000»).
+   - b3 t2: al decir «salimos desde Cartagena» no re-cotiza (la 1.ª tanda sí), y en t3 la tarjeta dice 448.000 sin
+     aclarar el 150.000 de t1.
+2. **Sin origen, ningún precio y títulos sueltos** (CALN-3, Gonzalo; CALN3-03 sigue):
+   - b2 t1: «**Already on the Rosario Islands**» sin nada debajo.
+   - b4 t1: «**Precios por persona (online / normal):**» sin un solo precio.
+3. **El catálogo entero y bloques que nadie pidió** (CALN-3 / hechos; CALN3-10/11 siguen):
+   - b4 t2: los 6 planes de buceo, el alojamiento de los cursos de 2 días (nadie hace un curso) y «Te recomiendo el
+     plan de 2 inmersiones» a una familia que va 5 días.
+   - b9 t1: 4 planes de buceo y qué llevar, sin pedirlos.
+   - b2 t3: el repaso de él sin precio.
+4. **El grupo leído a medias** (CALN-2, Álvaro):
+   - b1 t1: «mi esposo y yo somos Advanced, nuestro hijo de 11… mi suegra…» → grupo 2 (cuenta solo a los buzos);
+     t2: reparto {acompañante 1, buceo 1} en un grupo de 2 (se pierden un buzo y el niño). Se arregla solo en t3.
+   - b2 t2: «I'd like to try the mini course… He hasn't been diving in 3 years» sin reparto → tarjeta «Dive Mini
+     Course 2 × 134 USD» para una pareja en la que él es buzo.
+   - b6 t1 y b9 t1: «4 tenemos certificación y 2 dudan», «5 buzos certificados y 3 que nunca han buceado»: sin
+     reparto.
+   - b11: «el Advanced y también Nitrox» no deja actividad (CALN3-04 sigue).
+5. **El reparto olvida a quien escribe y una regla del código le cambia la actividad** (CALN-2, Álvaro):
+   - b5 t1, «Yo tengo el Open Water y quiero bucear. Mi esposo no bucea y vamos con los niños, de 7 y 4»: el
+     extractor da {companion 1, undecided 2} y grupo 3 (sin ella). La regla de negocio pone `certified_diving`
+     (certificada y quiere bucear, las dos cosas dichas) y la regla CAL-F de `extractor_turno` («si la actividad no
+     es de nadie del reparto, manda el reparto») la cambia a `companion`: quien escribe queda de acompañante, el
+     grupo en 3, y así sigue en t2.
+6. **El reparto que suma a los nuevos se descarta y la certificación se vuelve a preguntar** (CALN-2, Álvaro):
+   - b6 t2, «se suman dos amigos más que también están certificados, así que somos 8. Los dos que dudaban hacen el
+     minicurso»: el extractor da {certified_diving 2, minicourse 2} (solo lo nuevo; los 4 de t1 no estaban
+     guardados) y `GROUP_ALLOCATION_INCOMPLETO` lo descarta (4 de 8). Sin `is_certified`, el bot pregunta «¿me
+     confirmas que tienen su certificación?» a quien lo ha dicho dos veces.
+7. **«book me» no es 1** (CALN-2 / extractor): b8 t2, «book me for the dive + refresher» → «how many people should I
+   plan for?».
+8. **El origen dicho no se guarda y se vuelve a preguntar, en singular** (ORIGEN-CONFIRMA / extractor; CALN3-07 y
+   CALN3-Q07 siguen):
+   - b1 t2: «¿Desde dónde saldrías?» tras «vamos a pasar unos días en Cartagena».
+   - b5 t2: «¿Saldrías desde Cartagena o ya estás en las islas?» tras «estamos alojados en Cartagena», y con los
+     enlaces de Cartagena ya dados. Detrás, «Reserva con el de tu punto de salida.» suelto.
+   - b4 t1: «¿saldrías?» a una familia de 5.
+9. **Una edad mal razonada** (CALN-4/6, nota de edades; la misma causa que banco-edades e5): b5 t1, respuesta
+   adelantada (RAG5) sin la nota: «El snorkel es desde los 6 años… Con 7 y 4 años, ninguno alcanza la edad mínima».
+   El de 7 sí puede; lo corrige cuando el cliente lo pregunta (t2).
+10. **Lo mismo dicho dos o tres veces** (CALN-6, Gadea):
+    - doble saludo en 4 de los 10 primeros turnos con la presentación: «Bienvenidos…» del escritor (b1, b3) o
+      «¡Con mucho gusto te ayudo…!» repitiendo el fijo (b5, b6); b9 sin la presentación (camino del pase).
+    - b8 t2: la recogida en el hotel en tres párrafos.
+    - b2 t3: los enlaces (texto y tarjeta) y la nota de la moneda, dos veces.
+    - b9 t1: lo médico al principio y al final; b7 t1: lo que incluye, en el texto y en la tarjeta.
+11. **Dos preguntas o la pregunta en medio** (CALN-6, Gadea): b2 t2 («adding the refresher?» y «anything else?»), b5
+    t2 («¿te paso con un asesor?» y «¿saldrías…?»), b11 t1 (la pregunta y detrás un párrafo suelto del punto de
+    encuentro).
+12. **Sin dueño todavía:** b10 t2, «mejor el minicurso los dos… el sábado en vez del viernes»: la actividad guardada
+    sigue en snorkel (CALN-2) y el cambio de fecha sin reserva va al asesor (Jev changes_date / ya_reservado).
+
+**Latencia:** 14 de 22 turnos pasan de 8 s (mediana 8,5 s; b1 12-13 s cada turno, b2 t2 10,7 s); el máximo baja de
+16,9 a 13,4 s.
