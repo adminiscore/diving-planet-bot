@@ -37,7 +37,7 @@ async def test_el_hotel_con_su_cita():
         {"hotel": {"valor": "Bodegas de Santa Clara", "cita": "staying at Bodegas de Santa Clara"}}, llamadas))
     assert out["hotel"] == "Bodegas de Santa Clara"
     esquema = ex.esquema_del_prompt(llamadas[0]["messages"][0]["content"])
-    assert "hotel" in esquema["properties"] and "hotel" in esquema["required"]
+    assert "hotel" in esquema["properties"]  # EXT-SALIDA: el prompt va sin `required`
     assert ex.REGLA_HOTEL_EN in llamadas[0]["messages"][0]["content"]
 
 

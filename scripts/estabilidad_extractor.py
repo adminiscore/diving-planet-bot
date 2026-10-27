@@ -30,7 +30,40 @@ def _clave(producido: dict) -> str:
                       sort_keys=True, ensure_ascii=False)
 
 
-async def _una(caso: dict, modelo: str | None, coinciden: int, tiempos: list[float]) -> dict:
+# EXT-SALIDA (27-oct): para medir A/B desde una sola rama. «hoy» = el prompt de lat-6b (TODAS las claves y sus null,
+# con `required`); «b» = todas repasadas en orden, pero escribiendo solo las que tienen dato; sin --variante, la del
+# código («a»: solo las claves con dato).
+_HOY_ES = ("\n\nResponde SOLO con un objeto JSON (sin texto antes ni después, sin ```), con TODAS las claves de "
+           "este esquema (ninguna omitida, en este orden) y sus tipos. Cada dato es {\"valor\", \"cita\"} si el "
+           "cliente lo afirma en su mensaje (aunque ya se supiera o parezca obvio: rellénalo con su cita) y null "
+           "solo si no lo dice. Repasa el mensaje entero antes de dejar un dato en null:\n")
+_HOY_EN = ("\n\nAnswer ONLY with a JSON object (no text before or after, no ```), with ALL the keys of this schema "
+           "(none omitted, in this order) and their types. Each fact is {\"valor\", \"cita\"} if the customer "
+           "states it in their message (even if it was already known or seems obvious: fill it in with the "
+           "quote) and null only if they do not say it. Re-read the whole message before leaving a fact null:\n")
+_B_ES = ("\n\nResponde SOLO con un objeto JSON (sin texto antes ni después, sin ```). Repasa, una a una y en este "
+         "orden, TODAS las claves de este esquema contra el mensaje entero, pero escribe solo las que el cliente "
+         "afirma, más \"idioma\" siempre, con sus tipos; las que no dice no se escriben (nada de null ni de listas "
+         "vacías). Cada dato es {\"valor\", \"cita\"} (aunque ya se supiera o parezca obvio: escríbelo con su cita):\n")
+_B_EN = ("\n\nAnswer ONLY with a JSON object (no text before or after, no ```). Go through ALL the keys of this "
+         "schema, one by one and in this order, against the whole message, but write only the ones the customer "
+         "states, plus \"idioma\" always, with their types; the ones they do not say are not written (no nulls, no "
+         "empty lists). Each fact is {\"valor\", \"cita\"} (even if it was already known or seems obvious: write it "
+         "with the quote):\n")
+
+
+def _poner_variante(variante: str | None) -> None:
+    from src.agents import extractor_turno as ex
+
+    if variante == "hoy":
+        ex._SOLO_JSON_ES, ex._SOLO_JSON_EN = _HOY_ES, _HOY_EN
+        ex._esquema_del_prompt = lambda esquema: esquema
+    elif variante == "b":
+        ex._SOLO_JSON_ES, ex._SOLO_JSON_EN = _B_ES, _B_EN
+
+
+async def _una(caso: dict, modelo: str | None, coinciden: int, tiempos: list[float],
+               salidas: list[int] | None = None) -> dict:
     from src.agents.extractor_turno import extraer_turno
 
     sabido = caso.get("sabido") or {}
@@ -40,6 +73,9 @@ async def _una(caso: dict, modelo: str | None, coinciden: int, tiempos: list[flo
         datos = await extraer_turno(caso["message"], history=caso.get("history"), sabido=sabido, lang=caso["lang"],
                                     modelo=modelo)
         tiempos.append(time.perf_counter() - t0)
+        if salidas is not None and datos is not None and (extraer_turno.ultimo_uso or {}).get("salida"):
+            # Sin await desde que extraer_turno lo puso: es el de esta llamada aunque haya otras a la vez.
+            salidas.append(extraer_turno.ultimo_uso["salida"])
         return {f: v for f, v in (datos or {}).items() if v != sabido.get(f)}
 
     if coinciden <= 1:
@@ -63,13 +99,15 @@ async def main_async(args) -> int:
 
     for flag in args.flag or []:
         setattr(settings, flag, True)
+    _poner_variante(args.variante)
     casos = casos_ex0(args.grupo)
     sem = asyncio.Semaphore(args.concurrencia)
     tiempos: list[float] = []
+    salidas: list[int] = []
 
     async def pasadas(caso):
         async with sem:
-            return [await _una(caso, args.modelo, args.coinciden, tiempos) for _ in range(args.pasadas)]
+            return [await _una(caso, args.modelo, args.coinciden, tiempos, salidas) for _ in range(args.pasadas)]
 
     t0 = time.perf_counter()
     todas = await asyncio.gather(*[pasadas(c) for c in casos])
@@ -90,9 +128,12 @@ async def main_async(args) -> int:
         if len(cuenta) > 1:
             detalle.append({"id": caso["id"], "message": caso["message"][:160], "esperado": caso["expected"],
                             "resultados": dict(cuenta)})
-    ts = sorted(tiempos)
+    ts, sal = sorted(tiempos), sorted(salidas)
     resumen = {
         "modelo": args.modelo or settings.extractor_turno_model, "flags": args.flag or [], "pasadas": args.pasadas,
+        "variante": args.variante or "a",
+        "tokens_salida_p50": sal[len(sal) // 2] if sal else None,
+        "tokens_salida_p90": sal[int(0.9 * len(sal))] if sal else None,
         "coinciden": args.coinciden, "grupo": args.grupo, "casos": len(casos),
         "estables_pct": round(100 * estables / len(casos), 1),
         "modal": _tot(modal_filas), "peor": _tot(peor_filas),
@@ -118,6 +159,8 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--coinciden", type=int, default=1, help="llamadas en paralelo que tienen que coincidir (1 = una)")
     p.add_argument("--concurrencia", type=int, default=8)
     p.add_argument("--etiqueta", default=None)
+    p.add_argument("--variante", choices=("hoy", "a", "b"), default=None,
+                   help="EXT-SALIDA: prompt de la salida del extractor (hoy = todas las claves con null; a = el del código)")
     return asyncio.run(main_async(p.parse_args(argv)))
 
 

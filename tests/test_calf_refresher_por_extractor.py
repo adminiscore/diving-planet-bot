@@ -38,7 +38,7 @@ async def test_la_decision_y_quiere_bucear():
     assert out["refresher_interested"] is True
     assert out["activity"] == "certified_diving"  # certificado que quiere el repaso = quiere bucear
     esquema = ex.esquema_del_prompt(llamadas[0]["messages"][0]["content"])
-    assert "refresher_interested" in esquema["properties"] and "refresher_interested" in esquema["required"]
+    assert "refresher_interested" in esquema["properties"]  # EXT-SALIDA: el prompt va sin `required`
     assert ex.REGLA_REFRESHER_ES in llamadas[0]["messages"][0]["content"]
 
 

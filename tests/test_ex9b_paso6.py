@@ -96,7 +96,7 @@ def _campos_del_esquema(llamada: dict) -> set:
 async def test_cada_campo_con_su_regla(campos, regla):
     _, llamada = await _llamada("hola", {})
     esquema = llamada["response_format"]["json_schema"]["schema"]
-    assert campos <= set(esquema["properties"]) and campos <= set(esquema["required"])
+    assert campos <= set(esquema["properties"])  # EXT-SALIDA: el prompt va sin `required`
     assert regla in llamada["messages"][0]["content"]
 
 

@@ -316,14 +316,34 @@ def edades_citadas(edades, cita: str) -> list[int]:
 # gramática estricta de Anthropic no admite más de 16 campos anulables y son 18. Ahora el esquema va al final del
 # prompt y el código valida como siempre (citas, tipos). Banco ex0 50×2 frente a las dos llamadas: inventados 8 -> 2,
 # casos inestables 3 -> 1, p90 2,5 -> 2,1 s; perdidos 2 -> 6 (el bot los pregunta).
-_SOLO_JSON_ES = ("\n\nResponde SOLO con un objeto JSON (sin texto antes ni después, sin ```), con TODAS las claves de "
-                 "este esquema (ninguna omitida, en este orden) y sus tipos. Cada dato es {\"valor\", \"cita\"} si el "
-                 "cliente lo afirma en su mensaje (aunque ya se supiera o parezca obvio: rellénalo con su cita) y null "
-                 "solo si no lo dice. Repasa el mensaje entero antes de dejar un dato en null:\n")
-_SOLO_JSON_EN = ("\n\nAnswer ONLY with a JSON object (no text before or after, no ```), with ALL the keys of this schema "
-                 "(none omitted, in this order) and their types. Each fact is {\"valor\", \"cita\"} if the customer "
-                 "states it in their message (even if it was already known or seems obvious: fill it in with the "
-                 "quote) and null only if they do not say it. Re-read the whole message before leaving a fact null:\n")
+# EXT-SALIDA (27-oct, LAT-10): con TODAS las claves y sus null, el extractor escribía 188 tokens en más de la mitad de
+# los turnos (~2,75 ms por token: ~0,5 s en el camino crítico de cada turno). Ahora escribe solo las claves con dato; el
+# código ya toma por no dicho lo que falta. El esquema del prompt va sin `required` (`_esquema_del_prompt`).
+_SOLO_JSON_ES = ("\n\nResponde SOLO con un objeto JSON (sin texto antes ni después, sin ```), con SOLO las claves de "
+                 "este esquema que el cliente afirma en su mensaje, más \"idioma\" siempre, en este orden y con sus "
+                 "tipos; las que no dice no se escriben (nada de null ni de listas vacías). Cada dato es {\"valor\", "
+                 "\"cita\"} (aunque ya se supiera o parezca obvio: escríbelo con su cita). Repasa el mensaje entero "
+                 "antes de dejar fuera un dato:\n")
+_SOLO_JSON_EN = ("\n\nAnswer ONLY with a JSON object (no text before or after, no ```), with ONLY the keys of this "
+                 "schema that the customer states in their message, plus \"idioma\" always, in this order and with "
+                 "their types; the ones they do not say are not written (no nulls, no empty lists). Each fact is "
+                 "{\"valor\", \"cita\"} (even if it was already known or seems obvious: write it with the quote). "
+                 "Re-read the whole message before leaving a fact out:\n")
+
+
+_SIN_DATO_NULL = " null si el cliente no lo AFIRMA en su mensaje."
+_SIN_DATO_FUERA = " Si el cliente no lo AFIRMA en su mensaje, la clave no se escribe."
+
+
+def _esquema_del_prompt(esquema: dict) -> dict:
+    """EXT-SALIDA: el esquema que va en el prompt, sin `required` y sin null: solo se escriben las claves con dato."""
+    campos = {}
+    for nombre, campo in esquema["properties"].items():
+        if campo.get("type") == ["object", "null"]:
+            campo = {**campo, "type": "object",
+                     "description": campo.get("description", "").replace(_SIN_DATO_NULL, _SIN_DATO_FUERA)}
+        campos[nombre] = campo
+    return {**{k: v for k, v in esquema.items() if k != "required"}, "properties": campos}
 
 
 def esquema_del_prompt(sistema: str) -> dict:
@@ -663,7 +683,8 @@ async def extraer_turno(mensaje: str, *, history: list[dict] | None = None, sabi
         # final del prompt y el código valida después. Si Haiku se queda en la cola, el respaldo por tiempo de OpenRouter
         # (`llm_client._por_proveedor`) lanza la misma petición por OpenAI; el respaldo propio del extractor, que la
         # duplicaba, se quitó el 26-oct (decisión de Gadea: en el 0,8 % de los turnos, < 0,01 s de media por turno).
-        sist = sist + (_SOLO_JSON_ES if lang == "es" else _SOLO_JSON_EN) + json.dumps(esquema, ensure_ascii=False)
+        sist = sist + (_SOLO_JSON_ES if lang == "es" else _SOLO_JSON_EN) + json.dumps(_esquema_del_prompt(esquema),
+                                                                                   ensure_ascii=False)
         with pieza_llm(pieza):
             return await client.chat.completions.create(
                 model=modelo,
