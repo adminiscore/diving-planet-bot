@@ -26,26 +26,6 @@
    ]
   },
   {
-   "id": "cal-16",
-   "dialogo": "certificada-pide-fecha-faltan-datos",
-   "criterio": "pide-datos-faltantes",
-   "repeticiones": 2,
-   "fallan": 2,
-   "respuestas": [
-    "Entendido, el 21 de mayo.\n\n¿Desde dónde saldrías? Podemos recogerte saliendo *desde Cartagena* (ida y vuelta el mismo día) o, si ya estás *en las islas*, coordinamos la recogida en tu hotel.",
-    "Entendido, el 21 de mayo.\n\n¿Desde dónde saldrías? Podemos recogerte saliendo *desde Cartagena* (ida y vuelta el mismo día) o, si ya estás *en las islas*, coordinamos la recogida en tu hotel."
-   ],
-   "explicaciones": [
-    "El bot solo pregunta el punto de salida, pero no solicita el número de personas ni la nacionalidad/moneda, que son necesarios para cotizar o reservar según el criterio.",
-    "El bot solo pregunta el punto de salida, pero no solicita el número de personas ni la nacionalidad/moneda, que son necesarios para cotizar o reservar según el criterio."
-   ],
-   "fallan_comparado": 2,
-   "explicaciones_comparado": [
-    "La respuesta vuelve a preguntar únicamente el punto de salida y no solicita el siguiente dato faltante, como cuántas personas son. No hay contexto disponible para determinar qué datos ya se habían proporcionado.",
-    "La respuesta vuelve a preguntar el punto de salida, pero no solicita el siguiente dato faltante, como cuántas personas son. No hay contexto disponible para determinar qué datos ya se habían proporcionado."
-   ]
-  },
-  {
    "id": "cal-25",
    "dialogo": "refresher-que-completar-antes",
    "criterio": "valida-tiempo-sin-bucear",
@@ -86,26 +66,6 @@
    ]
   },
   {
-   "id": "cal-45",
-   "dialogo": "disponibilidad-hora-precio-y-pecios",
-   "criterio": "global:sin-repreguntas",
-   "repeticiones": 2,
-   "fallan": 0,
-   "respuestas": [
-    "¡Con gusto!\n\n¡Genial! Para recomendarte el plan perfecto: ¿Eres buzo certificado? (Y si no, ¡tranquilo! El minicurso es ideal para empezar. 🤿)",
-    "¡Con gusto!\n\n¡Genial! Para recomendarte el plan perfecto: ¿Eres buzo certificado? (Y si no, ¡tranquilo! El minicurso es ideal para empezar. 🤿)"
-   ],
-   "explicaciones": [
-    "La respuesta actual no repregunta sobre la actividad, sino que avanza preguntando si el cliente es buzo certificado, lo cual es relevante para recomendar el plan adecuado. No vuelve a preguntar qué actividad desea realizar.",
-    "La respuesta actual no repregunta sobre la actividad, sino que avanza preguntando si el cliente es buzo certificado, lo cual es relevante para recomendar el plan adecuado. No vuelve a preguntar qué actividad desea realizar."
-   ],
-   "fallan_comparado": 0,
-   "explicaciones_comparado": [
-    "La respuesta de hoy no vuelve a preguntar qué actividad quiere realizar; pregunta si es buzo certificado, un dato distinto. El contexto está indicado como ausente.",
-    "La respuesta de hoy no vuelve a preguntar qué actividad quiere realizar; pregunta si es buzo certificado, un dato distinto. No hay contexto disponible para evaluar si ese dato ya se había dado."
-   ]
-  },
-  {
    "id": "cal-52",
    "dialogo": "moneda-precios-principiante-y-snorkel",
    "criterio": "moneda-por-nacionalidad",
@@ -123,46 +83,6 @@
    "explicaciones_comparado": [
     "La respuesta explica la moneda según nacionalidad o residencia, pero no pregunta cuál aplica al cliente, que aún no lo ha indicado. El contexto adicional confirma que su nacionalidad sigue siendo desconocida.",
     "Aunque explica correctamente que colombianos o residentes pagan en COP y los demás en USD, no pregunta si el cliente es colombiano o residente para indicarle cuál moneda le corresponde, tal como pedía el criterio."
-   ]
-  },
-  {
-   "id": "cal-60",
-   "dialogo": "principiantes-no-certificados-minicurso",
-   "criterio": "recomienda-minicurso",
-   "repeticiones": 2,
-   "fallan": 2,
-   "respuestas": [
-    "Entiendo que no cuentan con certificación.\n\nPara empezar, lo ideal es el *minicurso*: no hace falta experiencia ni certificación. ¿Te animas? (Si prefieres certificarte, está el *curso Open Water*.) 🤿",
-    "Entiendo que no cuentan con certificación.\n\nPara empezar, lo ideal es el *minicurso*: no hace falta experiencia ni certificación. ¿Te animas? (Si prefieres certificarte, está el *curso Open Water*.) 🤿"
-   ],
-   "explicaciones": [
-    "La respuesta actual sí recomienda el Minicurso de Buceo para principiantes sin certificación, pero no comparte el enlace de detalles como pedía el criterio. El fallo original era doble: no recomendar el minicurso y no dar el enlace; ahora solo falta el enlace.",
-    "La respuesta actual sí recomienda el Minicurso de Buceo para principiantes sin certificación, pero no comparte el enlace de detalles como pedía el criterio. El contexto no muestra que el enlace esté disponible o haya sido compartido."
-   ],
-   "fallan_comparado": 2,
-   "explicaciones_comparado": [
-    "La respuesta sí recomienda el minicurso para quienes no tienen certificación, pero no comparte ningún enlace. El contexto disponible está indicado como «sin contexto», así que no contiene el enlace.",
-    "La respuesta sí recomienda el minicurso y aclara que no requiere certificación, pero no comparte ningún enlace. El contexto disponible indica que no había contexto."
-   ]
-  },
-  {
-   "id": "cal-73",
-   "dialogo": "precio-dispo-buceo-certificado-grupo-mixto",
-   "criterio": "origen-cartagena-o-islas",
-   "repeticiones": 2,
-   "fallan": 0,
-   "respuestas": [
-    "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\n¡Hola!\n\nOperamos los festivos; solo cerramos el 25 de diciembre y el 1 de enero, y una salida puede suspenderse por mal tiempo.\n\nPara darte el precio exacto necesito saber desde dónde sales: ¿saldrías *desde Cartagena* o ya estás *en las Islas del Rosario*? Los planes y los precios cambian según el punto de salida. 🌊",
-    "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\nPara darte el precio exacto necesito saber desde dónde sales: ¿saldrías *desde Cartagena* o ya estás *en las Islas del Rosario*? Los planes y los precios cambian según el punto de salida. 🌊"
-   ],
-   "explicaciones": [
-    "La respuesta actual pregunta explícitamente si el cliente saldrá desde Cartagena o si ya está en las islas antes de cotizar, cumpliendo el criterio de origen-cartagena-o-islas. No da un precio hasta saber el punto de salida, como exige el criterio.",
-    "La respuesta actual pregunta explícitamente si el cliente saldrá desde Cartagena o si ya está en las islas antes de cotizar, cumpliendo así el criterio de origen-cartagena-o-islas. No falta información relevante y la pregunta es clara y suficiente según el contexto."
-   ],
-   "fallan_comparado": 0,
-   "explicaciones_comparado": [
-    "La respuesta pregunta explícitamente si saldría desde Cartagena o si ya está en las Islas del Rosario, tal como pedía el criterio. No cotiza antes de conocer el origen.",
-    "La respuesta pregunta explícitamente si saldría desde Cartagena o si ya está en las Islas del Rosario, tal como pide el criterio, antes de cotizar."
    ]
   }
  ],

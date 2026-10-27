@@ -41,23 +41,6 @@
    ]
   },
   {
-   "id": "cal-18",
-   "dialogo": "certificado-profundidad-precio-y-base-hotel",
-   "criterio": "profundidad-segun-nivel",
-   "repeticiones": 3,
-   "fallan": 3,
-   "respuestas": [
-    "¡Qué chévere que tu tío ya sea buzo certificado! Las Islas del Rosario tienen arrecifes muy bonitos para explorar. 🪸\n\nSi sale desde Cartagena, ofrecemos salidas de buceo recreativo de **2 inmersiones en un día** por **178 USD online** o **197 USD precio normal**. Incluye equipo, almuerzo y transporte en lancha desde Cartagena. También hay paquetes de varios días, algunos con buceo nocturno; para esos planes se requiere alojarse en las islas.\n\nSi ya está hospedado en las islas, hay salidas de **1 o 2 inmersiones**: desde **97 USD online** por una inmersión o **124 USD online** por dos. La recogida depende de que su hotel tenga acceso marítimo.\n\nBuceamos en las Islas del Rosario, dentro del Parque Nacional Natural Corales del Rosario y San Bernardo. Para recomendarte el plan y compartirte el enlace correcto, ¿tu tío saldría desde Cartagena o ya está en las islas?",
-    "¡Qué chévere que tu tío ya sea buzo certificado! Las Islas del Rosario tienen arrecifes muy bonitos para explorar. 🪸\n\nSi ya está alojado en las islas, ofrecemos salidas recreativas de **1 inmersión por USD 97 online** o **2 inmersiones por USD 124 online**. Incluyen equipo, seguro, acompañamiento de un profesional PADI y recogida si su hotel tiene acceso marítimo; el almuerzo no está incluido.\n\nBuceamos en distintos puntos de las Islas del Rosario, pero no tengo a la mano los nombres específicos de los sitios de inmersión. Si me cuentas si tu tío sale desde Cartagena o ya está en las islas, te comparto el plan que corresponde.",
-    "¡Qué chévere que tu tío ya tenga experiencia! Las Islas del Rosario tienen arrecifes muy bonitos para explorar. 🪸\n\nSi sale desde Cartagena, ofrecemos salidas recreativas de **2 inmersiones en un día** y paquetes de **3, 4, 5, 7 o 9 inmersiones**, distribuidos entre uno y varios días. Los paquetes de varios días requieren alojarse en las islas; el alojamiento no está incluido. Si ya está hospedado allá, también hay salidas de **1 o 2 inmersiones** y paquetes.\n\nBuceamos dentro del Parque Nacional Natural Corales del Rosario y San Bernardo. No tengo a la mano los nombres de los puntos de buceo específicos; los sitios se definen según las condiciones del día.\n\n¿Tu tío saldría desde Cartagena o ya está en las islas?"
-   ],
-   "explicaciones": [
-    "La respuesta actual no menciona que la profundidad máxima de las inmersiones depende del nivel de certificación del buzo (Open Water hasta 18 m, Advanced hasta 30 m), ni pregunta por el nivel de certificación del tío. Solo describe los planes y precios, pero omite la información clave sobre profundidad según nivel, que es lo que el criterio exige.",
-    "La respuesta actual no menciona que la profundidad máxima de las inmersiones depende del nivel de certificación del buzo (Open Water hasta 18 m, Advanced hasta 30 m), ni pregunta por el nivel de certificación del tío. El contexto no contiene esa explicación ni la pregunta, por lo que la información sigue faltando.",
-    "La respuesta actual no menciona en ningún momento que la profundidad máxima de las inmersiones depende del nivel de certificación del buzo (Open Water hasta 18 m, Advanced hasta 30 m), ni pregunta por el nivel de certificación del tío. El cliente menciona que su tío es buzo certificado y con experiencia, pero no especifica el nivel, por lo que el bot debería aclarar la política de profundidad y, si no sabe el nivel, consultarlo."
-   ]
-  },
-  {
    "id": "cal-24",
    "dialogo": "tours-diarios-isla-grande",
    "criterio": "pickup-islas",
@@ -89,23 +72,6 @@
     "The current response states: 'Beforehand, you’ll need to complete the medical form and the theory sent by email after booking.' This clearly indicates that the medical form is sent after booking, which fulfills the criterion that the bot must specify the medical form is required and is sent after reservation. The previous failure was not mentioning that the medical form is sent after booking, but now this is explicitly stated.",
     "The bot says 'Beforehand, you’ll need to complete the medical form,' which implies it must be done before booking, but the correct process (from context: 'Complete the form sent in the confirmation email to process the insurance' and 'The medical form is required for courses or mini-courses...') is that the medical form is sent after booking and completed before the activity. The bot does correctly say the insurance and waiver are sent after booking, but not the medical form, so the required clarification is still missing.",
     "The current response states: 'Beforehand, you’ll need to complete the medical form and the theory sent by email after booking.' This clearly indicates that the medical form is sent after booking, which fulfills the criterion that the bot must specify the medical form is required and is sent after reservation. The previous failure was not mentioning that the medical form is sent after booking, but now this is explicitly stated."
-   ]
-  },
-  {
-   "id": "cal-32",
-   "dialogo": "link-pago-extranjeros-sin-cedula",
-   "criterio": "moneda-extranjeros",
-   "repeticiones": 3,
-   "fallan": 0,
-   "respuestas": [
-    "¡Claro! Si no tienes cédula, puedes reservar con tu pasaporte. Como no eres colombiano ni residente en Colombia, el pago se hace en USD con tarjeta en la página web; la tarifa es la misma, solo cambia la moneda. La reserva queda confirmada al completar el pago en el enlace online.\n\n¿Qué actividad quieres reservar para pasarte el enlace correcto?",
-    "¡Claro que sí! Si no tienes cédula y no eres residente en Colombia, puedes reservar usando tu pasaporte como documento de identificación y pagar en USD con tarjeta en la página web. La tarifa es la misma; solo cambia la moneda.\n\nLa reserva queda confirmada al completar el pago en el enlace online. ¿Qué actividad quieres reservar para pasarte el link correcto?",
-    "¡Claro! Si no tienes cédula y no eres colombiano ni residente en Colombia, pagas el 100% en USD con tarjeta extranjera en la página web. Para identificarte, usas tu pasaporte; la tarifa es la misma, solo cambia la moneda. ¿Qué actividad quieres reservar para pasarte el enlace correcto?"
-   ],
-   "explicaciones": [
-    "La respuesta actual aclara explícitamente que, al no tener cédula y ser extranjero, el pago se realiza en USD (misma tarifa, solo cambia la moneda), cumpliendo con el criterio solicitado. El mensaje dice: 'Como no eres colombiano ni residente en Colombia, el pago se hace en USD con tarjeta en la página web; la tarifa es la misma, solo cambia la moneda.'",
-    "La respuesta actual aclara explícitamente que, al no tener cédula y no ser residente en Colombia, el pago se realiza en USD con tarjeta en la web, y que la tarifa es la misma, solo cambia la moneda. Esto cumple con el criterio solicitado y corrige el fallo anterior.",
-    "La respuesta actual aclara explícitamente que, al no tener cédula y no ser colombiano ni residente, el pago se realiza en USD (misma tarifa, solo cambia la moneda), y que se usa el pasaporte como identificación. Esto cumple con el criterio solicitado y corrige el fallo anterior."
    ]
   },
   {
@@ -194,23 +160,6 @@
    ]
   },
   {
-   "id": "cal-55",
-   "dialogo": "paquete-5-buceos-precio-fecha-y-equipaje",
-   "criterio": "no-operamos-en-baru",
-   "repeticiones": 3,
-   "fallan": 3,
-   "respuestas": [
-    "Entendido, estás en Barú y Rosario.\n\n¿Con cuál te animas — *buceo*, *minicurso*, *snorkel* o un *curso PADI*? 🌊",
-    "Entiendo que estás en Barú y Rosario.\n\n¿En qué hotel o isla te hospedas? Así coordinamos la recogida.",
-    "Entiendo que te encuentras en Barú y Rosario.\n\n¿Con cuál te animas — *buceo*, *minicurso*, *snorkel* o un *curso PADI*? 🌊"
-   ],
-   "explicaciones": [
-    "La respuesta solo reconoce la mención de Barú y Rosario, pero no aclara que Diving Planet no opera en Barú ni que las salidas son en las Islas del Rosario, como exige el criterio.",
-    "La respuesta solo repite la ubicación mencionada por el cliente y pide el hotel, pero no aclara que Diving Planet no opera en Barú ni que las salidas son en las Islas del Rosario, como exige el criterio.",
-    "La respuesta actual solo repite la ubicación mencionada por el cliente y no aclara que Diving Planet no opera en Barú ni que las salidas son en las Islas del Rosario, como exige el criterio."
-   ]
-  },
-  {
    "id": "cal-64",
    "dialogo": "curso-open-water-principiantes-idioma-frances-anticipacion",
    "criterio": "anticipacion-cierre-sistema",
@@ -225,57 +174,6 @@
     "La respuesta no menciona que el sistema de reservas cierra a las 4:30 p.m. del día anterior y que pasada esa hora se puede seguir reservando por la web, pero solo para el siguiente día disponible. Esta información está en el contexto: 'Sistema de reservas online cierra a las 4:30 p.m. del dia anterior; pasada esa hora se reserva por la web para el siguiente día disponible.'",
     "La respuesta no menciona que el sistema de reservas cierra a las 4:30 p.m. del día anterior y que después de esa hora se puede seguir reservando por la web, pero solo para el siguiente día disponible. Esta información está en el contexto: 'Sistema de reservas online cierra a las 4:30 p.m. del dia anterior; pasada esa hora se reserva por la web para el siguiente día disponible.'",
     "La respuesta no menciona en ningún momento que, tras el cierre del sistema de reservas a las 4:30 p.m. del día anterior, se puede seguir reservando por la web pero solo para el siguiente día disponible. El contexto lo indica claramente: 'Sistema de reservas online cierra a las 4:30 p.m. del dia anterior; pasada esa hora se reserva por la web para el siguiente día disponible.'"
-   ]
-  },
-  {
-   "id": "cal-69",
-   "dialogo": "pareja-reactivate-y-refresh-cartagena",
-   "criterio": "politica-refresh",
-   "repeticiones": 3,
-   "fallan": 3,
-   "respuestas": [
-    "It's great to hear that you completed your PADI reactivate course on your cruise!\n\nShall we go for the *2-dive trip*, a *multi-day package* or an *advanced course*? 🌊",
-    "It's great to hear you completed your PADI reactivate course on your cruise!\n\nShall we go for the *2-dive trip*, a *multi-day package* or an *advanced course*? 🌊",
-    "It's great to hear that you completed your PADI reactivate course on your cruise!\n\nShall we go for the *2-dive trip*, a *multi-day package* or an *advanced course*? 🌊"
-   ],
-   "explicaciones": [
-    "La respuesta actual solo felicita al cliente por completar el Reactivate y ofrece opciones de buceo, pero no menciona la política de refresher tras más de 2 años sin bucear, ni valida explícitamente que el cliente ya cumplió el requisito, ni propone un refresher para la esposa o pasar a un asesor.",
-    "La respuesta actual solo felicita al cliente por completar el Reactivate y ofrece opciones de buceo, pero no menciona la política de refresher tras 2 años sin bucear, no valida que el cliente ya cumplió el requisito, ni propone refresher para la esposa o pasar a un asesor.",
-    "La respuesta actual solo felicita al cliente por completar el Reactivate y ofrece opciones de buceo, pero no menciona la política de refresher tras 2 años sin bucear, ni valida explícitamente que el cliente ya cumplió el requisito, ni propone refresher para la esposa."
-   ]
-  },
-  {
-   "id": "cal-70",
-   "dialogo": "pareja-reactivate-y-refresh-cartagena",
-   "criterio": "grupo-mixto-permitido",
-   "repeticiones": 3,
-   "fallan": 3,
-   "respuestas": [
-    "It's great to hear you completed your PADI reactivate course on your cruise!\n\nShall we go for the *2-dive trip*, a *multi-day package* or an *advanced course*? 🌊",
-    "It's great to hear that you completed your PADI reactivate course on your cruise!\n\nShall we go for the *2-dive trip*, a *multi-day package* or an *advanced course*? 🌊",
-    "It's great to hear you completed your PADI reactivate course on your cruise!\n\nShall we go for the *2-dive trip*, a *multi-day package* or an *advanced course*? 🌊"
-   ],
-   "explicaciones": [
-    "La respuesta actual no confirma explícitamente que ambos pueden ir juntos en el mismo tour combinando un refresher para la esposa y buceo certificado para él, ni menciona la posibilidad de tours mixtos. Solo ofrece opciones generales de buceo sin abordar la situación específica planteada por el cliente.",
-    "El bot no confirma que ambos puedan ir juntos en el mismo tour combinando un refresher para la esposa y buceo certificado para él, ni menciona la posibilidad de tours mixtos; solo ofrece opciones generales de buceo.",
-    "El bot no confirma que ambos puedan ir juntos en el mismo tour, combinando un refresher para la esposa y buceo certificado para él, como pedía el criterio. Solo ofrece opciones generales de buceo sin abordar la situación específica del cliente."
-   ]
-  },
-  {
-   "id": "cal-72",
-   "dialogo": "precio-dispo-buceo-certificado-grupo-mixto",
-   "criterio": "mixto-moneda-usd",
-   "repeticiones": 3,
-   "fallan": 3,
-   "respuestas": [
-    "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\n¡Hola! Bucear en las Islas del Rosario en un festivo es un plan buenísimo 🐠\n\nPara dos buzos certificados Open Water, la salida de **2 inmersiones desde las islas** cuesta **124 USD por persona reservando online** (almuerzo no incluido). Si el hotel tiene acceso marítimo, la recogida está incluida.\n\nOperamos los festivos; siempre hay disponibilidad, salvo cierres el 25 de diciembre y el 1 de enero, y posibles suspensiones por mal tiempo. Elijan el lunes y las dos personas en el calendario para reservar: https://book.divingplanet.org/book/fun-dives-already-on-island/19?language=es\n\n¿En qué hotel de las islas se alojan?\n\n¿En qué hotel o isla te hospedas? Así coordinamos la recogida.",
-    "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\n¡Hola! Bucear en las Islas del Rosario es un plan buenísimo 🐠 Para dos buzos Open Water, la salida de 2 inmersiones cuesta **124 USD por persona reservando online**; incluye equipo, seguro y recogida si el hotel tiene acceso marítimo. El almuerzo no está incluido.\n\nOperamos los festivos; siempre hay disponibilidad, salvo cierres del 25 de diciembre y 1 de enero, y posibles suspensiones por mal tiempo. Elige el lunes festivo y las 2 personas en el calendario para reservar:\n\nhttps://book.divingplanet.org/book/fun-dives-already-on-island/19?language=es\n\n¿Tu hotel tiene acceso por lancha?\n\n¿En qué hotel o isla te hospedas? Así coordinamos la recogida.",
-    "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\n¡Hola! Bucear en las Islas del Rosario en un festivo es un plan buenísimo 🐠\n\nPara dos buzos Open Water que ya están en las islas, la salida de **2 inmersiones cuesta USD 124 por persona reservando online**. Incluye equipo, seguro y acompañamiento de un profesional PADI; no incluye almuerzo. Si el hotel tiene acceso marítimo, la recogida está incluida.\n\nOperamos los festivos y siempre hay disponibilidad, salvo el 25 de diciembre y el 1 de enero; la salida puede suspenderse por mal tiempo. Puedes elegir el lunes festivo y las dos personas en la reserva: https://book.divingplanet.org/book/fun-dives-already-on-island/19?language=es\n\n¿En qué hotel de las islas se están quedando?\n\n¿En qué hotel o isla te hospedas? Así coordinamos la recogida."
-   ],
-   "explicaciones": [
-    "La respuesta actual no menciona la política de moneda para grupos mixtos, que está claramente indicada en el contexto: 'Si en el grupo hay colombianos o residentes y también extranjeros, toda la reserva del grupo se paga en dólares (USD), al mismo precio equivalente.' El bot solo da el precio en USD y no aclara esta política, por lo que el fallo persiste.",
-    "El bot no menciona la política de grupos mixtos: 'Si en el grupo hay colombianos o residentes y también extranjeros, toda la reserva del grupo se paga en dólares (USD), al mismo precio equivalente.' Esta información está claramente en el contexto, pero no fue incluida en la respuesta.",
-    "La respuesta no menciona la política de moneda para grupos mixtos, que está claramente indicada en el contexto: 'Si en el grupo hay colombianos o residentes y también extranjeros, toda la reserva del grupo se paga en dólares (USD), al mismo precio equivalente.' Aunque el cliente no especificó nacionalidad, el bot debió aclarar esta política al dar el precio en USD."
    ]
   }
  ]

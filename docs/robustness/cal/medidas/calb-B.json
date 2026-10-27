@@ -92,23 +92,6 @@
    ]
   },
   {
-   "id": "cal-28",
-   "dialogo": "cotiza-buceo-snorkel-y-pide-link-especial",
-   "criterio": "pide-datos-para-cotizar",
-   "repeticiones": 3,
-   "fallan": 0,
-   "respuestas": [
-    "Para darte el precio exacto necesito saber desde dónde sales: ¿saldrías *desde Cartagena* o ya estás *en las Islas del Rosario*? Los planes y los precios cambian según el punto de salida. 🌊",
-    "Para darte el precio exacto necesito saber desde dónde sales: ¿saldrías *desde Cartagena* o ya estás *en las Islas del Rosario*? Los planes y los precios cambian según el punto de salida. 🌊",
-    "¡Claro!\n\nSi ya están en las islas, los precios son distintos.\n\nPara darte el precio exacto necesito saber desde dónde sales: ¿saldrías *desde Cartagena* o ya estás *en las Islas del Rosario*? Los planes y los precios cambian según el punto de salida. 🌊"
-   ],
-   "explicaciones": [
-    "La respuesta actual pregunta correctamente por el punto de salida antes de dar precios, tal como exige el criterio. No pregunta por la nacionalidad/moneda (lo cual es correcto según el criterio, ya que solo debe preguntarse si el cliente lo menciona o si se va a dar el precio en COP). No entrega precios aún porque está esperando la respuesta sobre el origen, lo cual es adecuado según el flujo esperado. Por lo tanto, el fallo anterior ya no se reproduce.",
-    "La respuesta actual pregunta correctamente por el punto de salida antes de dar precios, tal como exige el criterio. No pregunta por la nacionalidad/moneda (lo cual es correcto según el criterio, ya que solo debe preguntarse si el cliente lo menciona o para dar el precio en COP). Tampoco entrega precios aún, porque está esperando la respuesta sobre el punto de salida, lo cual es adecuado en este paso del flujo.",
-    "La respuesta actual pregunta correctamente por el punto de salida antes de dar precios, tal como exige el criterio. No pregunta por la nacionalidad, lo cual es correcto según el criterio (solo se da el precio en USD si no se sabe la nacionalidad). Tampoco entrega precios aún, pero esto es adecuado porque primero debe saber el punto de salida y el número de personas antes de cotizar. Por lo tanto, el fallo anterior ya no se reproduce."
-   ]
-  },
-  {
    "id": "cal-43",
    "dialogo": "colombianos-precio-minicurso-dos-inmersiones",
    "criterio": "precio-minicurso-cop-o-origen",
@@ -123,23 +106,6 @@
     "La respuesta actual pregunta correctamente si el cliente saldría desde Cartagena o si ya está en las islas antes de cotizar el precio, tal como exige el criterio. No falta información relevante y no se entrega un precio incorrecto ni omite la aclaración necesaria sobre el punto de origen.",
     "El bot solo aclara que la tarifa no es diferente por ser colombiano y menciona el descuento online, pero no da el precio en COP del Minicurso/Refresher para salida desde Cartagena (655.000 COP online) ni pregunta si el cliente sale desde Cartagena o ya está en las islas, como exige el criterio. El contexto tiene ambos precios y la instrucción de preguntar el origen si no está claro.",
     "La respuesta actual pregunta correctamente si el cliente saldrá desde Cartagena o si ya está en las islas antes de cotizar, tal como exige el criterio. No falta información relevante y no se entrega un precio incorrecto ni omite la aclaración sobre el punto de origen."
-   ]
-  },
-  {
-   "id": "cal-66",
-   "dialogo": "principiante-precio-y-evaluacion-medica",
-   "criterio": "pide-datos-antes-de-precio",
-   "repeticiones": 3,
-   "fallan": 0,
-   "respuestas": [
-    "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\n¡Qué buen plan para celebrar tu cumpleaños!\n\nAhí eliges la fecha y el número de personas. Operamos todo el año, excepto el 25 de diciembre y el 1 de enero; las salidas pueden suspenderse por mal tiempo.\n\nPara darte el precio exacto necesito saber desde dónde sales: ¿saldrías *desde Cartagena* o ya estás *en las Islas del Rosario*? Los planes y los precios cambian según el punto de salida. 🌊",
-    "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\n¡Qué chévere celebrar tu cumpleaños conociendo los arrecifes de las Islas del Rosario! Como eres principiante, te recomiendo el **Minicurso de Buceo**: incluye teoría online, práctica en piscina y una inmersión en el mar con instructor PADI. No necesitas experiencia ni certificación previa.\n\nPara darte el precio exacto necesito saber desde dónde sales: ¿saldrías *desde Cartagena* o ya estás *en las Islas del Rosario*? Los planes y los precios cambian según el punto de salida. 🌊",
-    "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\n¡Qué buen plan para celebrar tu cumpleaños! Como es tu primera vez, te recomiendo el **Minicurso de Buceo**: incluye teoría online, práctica en piscina y una inmersión en el mar con instructor PADI.\n\nm. y regresan aproximadamente a las 4:15 p. m.\n\nPara darte el precio exacto necesito saber desde dónde sales: ¿saldrías *desde Cartagena* o ya estás *en las Islas del Rosario*? Los planes y los precios cambian según el punto de salida. 🌊"
-   ],
-   "explicaciones": [
-    "La respuesta actual cumple con el criterio: antes de dar el precio, pregunta desde dónde saldría el cliente (Cartagena o ya en las islas), que es el dato requerido para poder dar el precio correcto según el catálogo. No pregunta por la nacionalidad, lo cual es correcto según el criterio y el contexto ('la nacionalidad no hace falta preguntarla: sin ella, el precio va en USD').",
-    "La respuesta actual cumple con el criterio: antes de dar el precio, pregunta si el cliente sale desde Cartagena o ya está en las islas, tal como pide el criterio. No pregunta por la nacionalidad (lo cual es correcto según el criterio), y no da el precio hasta saber el punto de salida. Por lo tanto, el fallo original ya no se reproduce.",
-    "La respuesta actual cumple con el criterio: antes de dar el precio, pregunta si el cliente sale desde Cartagena o ya está en las islas, y no pregunta por la nacionalidad (lo cual es correcto según el criterio). No da el precio aún, porque falta el dato del origen, lo cual es lo esperado según la instrucción y el contexto."
    ]
   }
  ]

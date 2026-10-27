@@ -138,68 +138,68 @@ del entendimiento del flujo (extractor con frases nuevas, RAG sin la fecha de ho
 
 **El RAG omite información que debía dar (6)**
 
-- `certificado-profundidad-precio-y-base-hotel` / `profundidad-segun-nivel`: No explicó profundidad según certificación ni preguntó nivel del tío.
-- `link-pago-extranjeros-sin-cedula` / `moneda-extranjeros`: No aclaró que extranjeros pagan en USD, misma tarifa, cambia moneda.
-- `paquete-5-buceos-precio-fecha-y-equipaje` / `no-operamos-en-baru`: No aclara que no operan en Barú y salidas son en Rosario.
-- `pareja-reactivate-y-refresh-cartagena` / `politica-refresh`: No aclara política de refresh tras 2 años ni valida Reactivate del cliente.
-- `pareja-reactivate-y-refresh-cartagena` / `grupo-mixto-permitido`: No confirma que ambos pueden ir juntos en el mismo tour.
-- `precio-dispo-buceo-certificado-grupo-mixto` / `mixto-moneda-usd`: No aclaró política de pago en USD para grupos mixtos.
+- `un diálogo del oculto` / `profundidad-segun-nivel`: No explicó profundidad según certificación ni preguntó nivel del tío.
+- `un diálogo del oculto` / `moneda-extranjeros`: No aclaró que extranjeros pagan en USD, misma tarifa, cambia moneda.
+- `un diálogo del oculto` / `no-operamos-en-baru`: No aclara que no operan en Barú y salidas son en Rosario.
+- `un diálogo del oculto` / `politica-refresh`: No aclara política de refresh tras 2 años ni valida Reactivate del cliente.
+- `un diálogo del oculto` / `grupo-mixto-permitido`: No confirma que ambos pueden ir juntos en el mismo tour.
+- `un diálogo del oculto` / `mixto-moneda-usd`: No aclaró política de pago en USD para grupos mixtos.
 
 **Moneda y nacionalidad (6)**
 
-- `certificado-profundidad-precio-y-base-hotel` / `precio-cartagena-moneda` (revisar): Cotizó sin preguntar nacionalidad, incumpliendo regla de moneda.
-- `cotiza-buceo-snorkel-y-pide-link-especial` / `pide-datos-para-cotizar`: No pidió nacionalidad antes de cotizar, incumpliendo regla de moneda.
-- `grupo-mixto-cotiza-y-pide-link` / `moneda-segun-nacionalidad`: No pregunta nacionalidad ni aplica regla de moneda para grupo mixto.
-- `open-water-precio-duracion-hospedaje` / `precio-moneda-origen` (revisar): Cotizó sin preguntar nacionalidad, no aplicó regla de moneda.
-- `principiante-precio-y-evaluacion-medica` / `pide-datos-antes-de-precio`: No pidió nacionalidad antes de cotizar, incumpliendo regla de moneda.
-- `precio-dispo-buceo-certificado-grupo-mixto` / `origen-cartagena-o-islas`: No pregunta origen antes de cotizar, da precio 'ya en islas' directo.
+- `un diálogo del oculto` / `precio-cartagena-moneda` (revisar): Cotizó sin preguntar nacionalidad, incumpliendo regla de moneda.
+- `un diálogo del oculto` / `pide-datos-para-cotizar`: No pidió nacionalidad antes de cotizar, incumpliendo regla de moneda.
+- `un diálogo del oculto` / `moneda-segun-nacionalidad`: No pregunta nacionalidad ni aplica regla de moneda para grupo mixto.
+- `un diálogo del oculto` / `precio-moneda-origen` (revisar): Cotizó sin preguntar nacionalidad, no aplicó regla de moneda.
+- `un diálogo del oculto` / `pide-datos-antes-de-precio`: No pidió nacionalidad antes de cotizar, incumpliendo regla de moneda.
+- `un diálogo del oculto` / `origen-cartagena-o-islas`: No pregunta origen antes de cotizar, da precio 'ya en islas' directo.
 
 **Repregunta la actividad (5)**
 
-- `certificado-profundidad-precio-y-base-hotel` / `global:sin-repreguntas`: Bot repregunta actividad ya indicada por el cliente
-- `disponibilidad-hora-precio-y-pecios` / `global:sin-repreguntas`: Bot volvió a preguntar actividad ya indicada por el cliente.
-- `open-water-precio-duracion-hospedaje` / `global:sin-repreguntas` (revisar): Bot repregunta curso tras cliente pedir certificación
-- `paquete-5-buceos-precio-fecha-y-equipaje` / `global:sin-repreguntas`: Bot repregunta actividad ya indicada por el cliente
-- `principiantes-no-certificados-minicurso` / `recomienda-minicurso`: Volvió a preguntar la actividad ya indicada por el cliente.
+- `un diálogo del oculto` / `global:sin-repreguntas`: Bot repregunta actividad ya indicada por el cliente
+- `un diálogo del oculto` / `global:sin-repreguntas`: Bot volvió a preguntar actividad ya indicada por el cliente.
+- `un diálogo del oculto` / `global:sin-repreguntas` (revisar): Bot repregunta curso tras cliente pedir certificación
+- `un diálogo del oculto` / `global:sin-repreguntas`: Bot repregunta actividad ya indicada por el cliente
+- `un diálogo del oculto` / `recomienda-minicurso`: Volvió a preguntar la actividad ya indicada por el cliente.
 
 **Supone algo que el cliente no dijo (4)**
 
-- `certificado-viernes-precio-cop-y-reserva` / `global:sin-invenciones` (revisar): Supone cierre de reservas sin evidencia en la base
-- `cotiza-buceo-snorkel-y-pide-link-especial` / `global:sin-invenciones`: Supone punto de salida sin que el cliente lo haya indicado
-- `pareja-reactivate-y-refresh-cartagena` / `global:sin-invenciones`: El bot asume el año sin que el cliente lo haya dicho.
-- `precio-dispo-buceo-certificado-grupo-mixto` / `global:sin-invenciones`: El bot asumió el origen del cliente sin que lo dijera.
+- `un diálogo del oculto` / `global:sin-invenciones` (revisar): Supone cierre de reservas sin evidencia en la base
+- `un diálogo del oculto` / `global:sin-invenciones`: Supone punto de salida sin que el cliente lo haya indicado
+- `un diálogo del oculto` / `global:sin-invenciones`: El bot asume el año sin que el cliente lo haya dicho.
+- `un diálogo del oculto` / `global:sin-invenciones`: El bot asumió el origen del cliente sin que lo dijera.
 
 **Repregunta otro dato ya dado (3)**
 
-- `grupo-mixto-cotiza-y-pide-link` / `global:sin-repreguntas`: Bot repregunta por acompañante ya informado por el cliente.
-- `curso-mas-paquetes-desde-islas-sin-nocturno-y-total` / `global:sin-repreguntas`: Bot repregunta hotel ya informado por el cliente
-- `pareja-reactivate-y-refresh-cartagena` / `global:sin-repreguntas`: El bot vuelve a pedir fechas ya dadas por el cliente.
+- `un diálogo del oculto` / `global:sin-repreguntas`: Bot repregunta por acompañante ya informado por el cliente.
+- `un diálogo del oculto` / `global:sin-repreguntas`: Bot repregunta hotel ya informado por el cliente
+- `un diálogo del oculto` / `global:sin-repreguntas`: El bot vuelve a pedir fechas ya dadas por el cliente.
 
 **No pide un dato necesario antes de cotizar (2)**
 
-- `certificada-pide-fecha-faltan-datos` / `pide-datos-faltantes`: No pidió personas ni nacionalidad antes de cotizar
-- `certificado-viernes-precio-cop-y-reserva` / `precio-cop-cartagena`: No pidió número de personas antes de cotizar o cerrar
+- `un diálogo del oculto` / `pide-datos-faltantes`: No pidió personas ni nacionalidad antes de cotizar
+- `un diálogo del oculto` / `precio-cop-cartagena`: No pidió número de personas antes de cotizar o cerrar
 
 **Dato falso (2)**
 
-- `paquete-5-buceos-precio-fecha-y-equipaje` / `global:sin-invenciones`: Cotizó 4 inmersiones cuando el cliente pidió 5 inmersiones.
-- `principiante-precio-y-evaluacion-medica` / `global:sin-invenciones`: El bot contradice la edad mínima oficial para buceo.
+- `un diálogo del oculto` / `global:sin-invenciones`: Cotizó 4 inmersiones cuando el cliente pidió 5 inmersiones.
+- `un diálogo del oculto` / `global:sin-invenciones`: El bot contradice la edad mínima oficial para buceo.
 
 **Escalado (1)**
 
-- `cotiza-buceo-snorkel-y-pide-link-especial` / `link-especial-escalar`: No ofreció pasar a un asesor humano para link especial.
+- `un diálogo del oculto` / `link-especial-escalar`: No ofreció pasar a un asesor humano para link especial.
 
 **No da el contacto (decisión: pasar a una persona) (1)**
 
-- `punto-encuentro-corrige-todo-mar-y-hora` / `global:sin-invenciones`: No entregó el WhatsApp oficial solicitado por el cliente.
+- `un diálogo del oculto` / `global:sin-invenciones`: No entregó el WhatsApp oficial solicitado por el cliente.
 
 **Idioma (1)**
 
-- `curso-mas-paquetes-desde-islas-sin-nocturno-y-total` / `global:idioma`: Respondió en español cuando el cliente usó inglés.
+- `un diálogo del oculto` / `global:idioma`: Respondió en español cuando el cliente usó inglés.
 
 **Enlaces (1)**
 
-- `grupo-mixto-buceo-y-snorkel-reserva-web` / `links-reserva-web`: No compartió enlaces específicos para 2 buceos y snorkeling solicitados.
+- `un diálogo del oculto` / `links-reserva-web`: No compartió enlaces específicos para 2 buceos y snorkeling solicitados.
 
 ### Visible sintético (43 diálogos): 3 fallos
 

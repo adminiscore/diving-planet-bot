@@ -150,66 +150,6 @@
   "resumen": "No explicó política de fotos/videos ni su carácter voluntario."
  },
  {
-  "grupo": "oculto-real",
-  "dialogo": "certificada-pide-fecha-faltan-datos",
-  "criterio": "pide-datos-faltantes",
-  "veredicto": "no_cumple",
-  "razon": "El bot solo preguntó el punto de salida (y lo repitió) pero no solicitó el número de personas ni la nacionalidad/moneda, datos que el criterio exige pedir para cotizar/reservar.",
-  "check": "Pide los datos que faltan para cotizar/reservar: cuántas personas, si salen desde Cartagena o ya están en las islas, y nacionalidad (para la moneda).",
-  "causa": "no_pide_dato",
-  "resumen": "No pidió personas ni nacionalidad antes de cotizar"
- },
- {
-  "grupo": "oculto-real",
-  "dialogo": "certificado-profundidad-precio-y-base-hotel",
-  "criterio": "global:sin-repreguntas",
-  "veredicto": "no_cumple",
-  "razon": "El bot vuelve a preguntar qué tipo de actividad (buceo/minicurso/snorkel/curso) cuando el cliente ya dejó claro que cotiza una 'buceada' para un tío buzo certificado, por lo que la pregunta es una repregunta innecesaria.",
-  "check": "",
-  "causa": "repregunta_actividad",
-  "resumen": "Bot repregunta actividad ya indicada por el cliente"
- },
- {
-  "grupo": "oculto-real",
-  "dialogo": "certificado-profundidad-precio-y-base-hotel",
-  "criterio": "profundidad-segun-nivel",
-  "veredicto": "no_cumple",
-  "razon": "El bot no explicó que la profundidad depende del nivel (Open Water hasta 18 m; Advanced hasta 30 m) ni preguntó por el nivel de certificación del tío; en vez de eso evitó dar la información y remitió a un asesor.",
-  "check": "No fija una profundidad única; explica que depende del nivel de certificación (Open Water hasta 18 m; Advanced hasta 30 m) y, si no conoce el nivel del tío, lo pregunta.",
-  "causa": "rag_omite",
-  "resumen": "No explicó profundidad según certificación ni preguntó nivel del tío."
- },
- {
-  "grupo": "oculto-real",
-  "dialogo": "certificado-profundidad-precio-y-base-hotel",
-  "criterio": "precio-cartagena-moneda",
-  "veredicto": "revisar",
-  "razon": "[evidencia del bot no encontrada] El bot cotizó precios en USD y COP sin preguntar la nacionalidad del cliente; el criterio exige preguntar la nacionalidad antes de cotizar si no se ha indicado, por lo que la respuesta incumple la regla.",
-  "check": "Da el precio del catálogo para 1 buzo certificado (2 inmersiones, 1 día) saliendo desde Cartagena, en la moneda que corresponda a la nacionalidad; si no han dicho su nacionalidad, lo pregunta antes de cotizar.",
-  "causa": "moneda",
-  "resumen": "Cotizó sin preguntar nacionalidad, incumpliendo regla de moneda."
- },
- {
-  "grupo": "oculto-real",
-  "dialogo": "certificado-viernes-precio-cop-y-reserva",
-  "criterio": "global:sin-invenciones",
-  "veredicto": "revisar",
-  "razon": "[evidencia del bot no encontrada] El bot afirma primero que hay disponibilidad el viernes y luego declara que el sistema ya cerró las reservas para mañana, contradiciendo o añadiendo un hecho temporal no respaldado por la referencia.",
-  "check": "",
-  "causa": "supone",
-  "resumen": "Supone cierre de reservas sin evidencia en la base"
- },
- {
-  "grupo": "oculto-real",
-  "dialogo": "certificado-viernes-precio-cop-y-reserva",
-  "criterio": "precio-cop-cartagena",
-  "veredicto": "no_cumple",
-  "razon": "El bot sí dio el precio correcto en COP para la salida desde Cartagena, pero no pidió explícitamente el número de personas (dato que falta) antes de intentar cerrar la reserva, lo que exige el criterio. Por eso no cumple.",
-  "check": "Da el precio del catálogo en COP para buzo certificado 2 inmersiones desde Cartagena, o pregunta si sale desde Cartagena o ya está en las islas antes de cotizar; si falta el número de personas, lo pide.",
-  "causa": "no_pide_dato",
-  "resumen": "No pidió número de personas antes de cotizar o cerrar"
- },
- {
   "grupo": "visible-real",
   "dialogo": "paquete-5-buceos-precio-overnight-isla-grande-baru",
   "criterio": "precio-y-moneda-correctos",
@@ -258,76 +198,6 @@
   "check": "Indica que para el refresher/minicurso se requiere formulario médico (se envía tras reservar).",
   "causa": "rag_omite",
   "resumen": "No indicó que el formulario médico se envía tras reservar"
- },
- {
-  "grupo": "oculto-real",
-  "dialogo": "cotiza-buceo-snorkel-y-pide-link-especial",
-  "criterio": "global:sin-invenciones",
-  "veredicto": "no_cumple",
-  "razon": "El bot proporcionó un enlace específico para la salida desde Cartagena sin que el cliente hubiera indicado el punto de salida, asumiendo un dato no declarado por el cliente.",
-  "check": "",
-  "causa": "supone",
-  "resumen": "Supone punto de salida sin que el cliente lo haya indicado"
- },
- {
-  "grupo": "oculto-real",
-  "dialogo": "cotiza-buceo-snorkel-y-pide-link-especial",
-  "criterio": "pide-datos-para-cotizar",
-  "veredicto": "no_cumple",
-  "razon": "El bot preguntó por el punto de salida pero nunca solicitó la nacionalidad/moneda antes de dar precios (requisito del criterio) y además no entregó los precios solicitados por el cliente.",
-  "check": "Antes de dar precios, pide si salen desde Cartagena o ya están en las islas y la nacionalidad (moneda). Si el cliente da esos datos, entrega el precio del catálogo correspondiente para buceo certificado y snorkeling.",
-  "causa": "moneda",
-  "resumen": "No pidió nacionalidad antes de cotizar, incumpliendo regla de moneda."
- },
- {
-  "grupo": "oculto-real",
-  "dialogo": "cotiza-buceo-snorkel-y-pide-link-especial",
-  "criterio": "link-especial-escalar",
-  "veredicto": "no_cumple",
-  "razon": "El cliente pidió un 'link especial' y aunque el bot mencionó que un asesor puede preparar y coordinar la cotización, no ofreció explícitamente pasar o conectar la conversación con un asesor humano para gestionar ese enlace especial.",
-  "check": "Ante la solicitud de un 'link especial' único para varios clientes o para omitir la selección de fecha, no lo inventa: ofrece pasar con un asesor humano para coordinar esa logística/agencia.",
-  "causa": "escalado",
-  "resumen": "No ofreció pasar a un asesor humano para link especial."
- },
- {
-  "grupo": "oculto-real",
-  "dialogo": "grupo-mixto-cotiza-y-pide-link",
-  "criterio": "global:sin-repreguntas",
-  "veredicto": "no_cumple",
-  "razon": "El cliente ya indicó claramente que hay un acompañante; el bot vuelve a pedir confirmación sobre si la persona que no bucea irá como acompañante, que es una repregunta innecesaria.",
-  "check": "",
-  "causa": "repregunta_dato",
-  "resumen": "Bot repregunta por acompañante ya informado por el cliente."
- },
- {
-  "grupo": "oculto-real",
-  "dialogo": "grupo-mixto-cotiza-y-pide-link",
-  "criterio": "moneda-segun-nacionalidad",
-  "veredicto": "no_cumple",
-  "razon": "El bot no preguntó si el grupo son colombianos/residentes o internacionales ni indicó la regla para grupos mixtos (toda la reserva se paga en USD), requisito del criterio de moneda según nacionalidad.",
-  "check": "Pregunta si el grupo es colombiano/residente o internacional para definir la moneda; si hay mezcla en el grupo, indica que toda la reserva se paga en USD.",
-  "causa": "moneda",
-  "resumen": "No pregunta nacionalidad ni aplica regla de moneda para grupo mixto."
- },
- {
-  "grupo": "oculto-real",
-  "dialogo": "link-pago-extranjeros-sin-cedula",
-  "criterio": "moneda-extranjeros",
-  "veredicto": "no_cumple",
-  "razon": "El bot explicó el método de pago con tarjeta extranjera y el requisito del 100% pero no aclaró que, como extranjeros sin cédula, el pago se realiza en USD (misma tarifa, solo cambia la moneda), información requerida por la referencia.",
-  "check": "Aclara que, al ser extranjeros y no tener cédula colombiana, el pago se realiza en USD (misma tarifa, cambia la moneda).",
-  "causa": "rag_omite",
-  "resumen": "No aclaró que extranjeros pagan en USD, misma tarifa, cambia moneda."
- },
- {
-  "grupo": "oculto-real",
-  "dialogo": "punto-encuentro-corrige-todo-mar-y-hora",
-  "criterio": "global:sin-invenciones",
-  "veredicto": "no_cumple",
-  "razon": "La referencia indica que si el cliente pide un teléfono el bot debe dar el WhatsApp oficial; el bot se negó a compartir el número.",
-  "check": "",
-  "causa": "telefono",
-  "resumen": "No entregó el WhatsApp oficial solicitado por el cliente."
  },
  {
   "grupo": "visible-real",
@@ -390,26 +260,6 @@
   "resumen": "No explicó que el 10% online se aplica automáticamente sin código."
  },
  {
-  "grupo": "oculto-real",
-  "dialogo": "curso-mas-paquetes-desde-islas-sin-nocturno-y-total",
-  "criterio": "global:idioma",
-  "veredicto": "no_cumple",
-  "razon": "El bot respondió en español aunque el cliente se expresó principalmente en inglés.",
-  "check": "",
-  "causa": "idioma",
-  "resumen": "Respondió en español cuando el cliente usó inglés."
- },
- {
-  "grupo": "oculto-real",
-  "dialogo": "curso-mas-paquetes-desde-islas-sin-nocturno-y-total",
-  "criterio": "global:sin-repreguntas",
-  "veredicto": "no_cumple",
-  "razon": "El bot vuelve a preguntar el hotel cuando el cliente ya indicó claramente que se hospedan en Isla Mulata (Isla Grande).",
-  "check": "",
-  "causa": "repregunta_dato",
-  "resumen": "Bot repregunta hotel ya informado por el cliente"
- },
- {
   "grupo": "visible-real",
   "dialogo": "certificado-precio-dia-paquete-5-y-hoteles-base",
   "criterio": "precio-dia-cartagena",
@@ -438,16 +288,6 @@
   "check": "Aclara que los colombianos pagan en COP y que el precio es el mismo que para extranjeros (solo cambia la moneda), sin otorgar un 'precio de colombiano'.",
   "causa": "moneda",
   "resumen": "No aclaró que colombianos pagan en COP y precio es igual."
- },
- {
-  "grupo": "oculto-real",
-  "dialogo": "disponibilidad-hora-precio-y-pecios",
-  "criterio": "global:sin-repreguntas",
-  "veredicto": "no_cumple",
-  "razon": "El cliente ya indicó claramente que quiere \"hacer un par de inmersiones\" (es decir, buceo); el bot volvió a preguntar qué actividad elige, repregunta innecesaria.",
-  "check": "",
-  "causa": "repregunta_actividad",
-  "resumen": "Bot volvió a preguntar actividad ya indicada por el cliente."
  },
  {
   "grupo": "visible-real",
@@ -490,26 +330,6 @@
   "resumen": "No menciona requisito de carta de referido PADI firmada."
  },
  {
-  "grupo": "oculto-real",
-  "dialogo": "open-water-precio-duracion-hospedaje",
-  "criterio": "global:sin-repreguntas",
-  "veredicto": "revisar",
-  "razon": "[evidencia del cliente no encontrada] Después de que el cliente dijo 'Quiero certificarme', el bot vuelve a preguntar '¿Qué curso te interesa?', repregunta de un dato ya dado o deducible (Open Water para principiante).",
-  "check": "",
-  "causa": "repregunta_actividad",
-  "resumen": "Bot repregunta curso tras cliente pedir certificación"
- },
- {
-  "grupo": "oculto-real",
-  "dialogo": "open-water-precio-duracion-hospedaje",
-  "criterio": "precio-moneda-origen",
-  "veredicto": "revisar",
-  "razon": "[evidencia del bot no encontrada] El bot cotizó ambos precios (Cartagena y 'ya en las islas') en COP y USD sin preguntar la nacionalidad del cliente; según la referencia, si la nacionalidad no fue dada el bot debe preguntar antes de cotizar en una moneda concreta.",
-  "check": "Da el precio del catálogo para el Curso Open Water saliendo desde Cartagena y para el mismo curso si ya está en las islas; la moneda depende de la nacionalidad. Si el cliente no dijo su nacionalidad, el bot debe preguntarla antes de cotizar.",
-  "causa": "moneda",
-  "resumen": "Cotizó sin preguntar nacionalidad, no aplicó regla de moneda."
- },
- {
   "grupo": "visible-real",
   "dialogo": "moneda-precios-principiante-y-snorkel",
   "criterio": "moneda-por-nacionalidad",
@@ -518,36 +338,6 @@
   "check": "Aclara que colombianos y residentes pagan en COP y clientes internacionales en USD; si el cliente no dijo su nacionalidad, preguntar para indicarle la moneda correcta.",
   "causa": "moneda",
   "resumen": "No preguntó nacionalidad antes de cotizar moneda adecuada."
- },
- {
-  "grupo": "oculto-real",
-  "dialogo": "paquete-5-buceos-precio-fecha-y-equipaje",
-  "criterio": "global:sin-invenciones",
-  "veredicto": "no_cumple",
-  "razon": "El cliente indicó que quería '5 inmersiones', pero el bot respondió con información y precio del paquete de 2 días / 4 inmersiones, contradiciendo la solicitud del cliente.",
-  "check": "",
-  "causa": "rag_falso",
-  "resumen": "Cotizó 4 inmersiones cuando el cliente pidió 5 inmersiones."
- },
- {
-  "grupo": "oculto-real",
-  "dialogo": "paquete-5-buceos-precio-fecha-y-equipaje",
-  "criterio": "global:sin-repreguntas",
-  "veredicto": "no_cumple",
-  "razon": "El cliente ya indicó \"5 inmersiones\"; el bot vuelve a preguntar qué actividad quiere (repregunta innecesaria).",
-  "check": "",
-  "causa": "repregunta_actividad",
-  "resumen": "Bot repregunta actividad ya indicada por el cliente"
- },
- {
-  "grupo": "oculto-real",
-  "dialogo": "paquete-5-buceos-precio-fecha-y-equipaje",
-  "criterio": "no-operamos-en-baru",
-  "veredicto": "no_cumple",
-  "razon": "El cliente mencionó Barú, y el bot sólo repitió/confirmó «Entiendo que estás en Barú y Rosario» sin aclarar que Diving Planet no opera en Barú y que las salidas son en las Islas del Rosario; por tanto no cumple el requisito de aclaración.",
-  "check": "Aclara que no operan en Barú y que las salidas son en las Islas del Rosario.",
-  "causa": "rag_omite",
-  "resumen": "No aclara que no operan en Barú y salidas son en Rosario."
  },
  {
   "grupo": "visible-real",
@@ -590,16 +380,6 @@
   "resumen": "Bot preguntó actividad ya mencionada por el cliente previamente."
  },
  {
-  "grupo": "oculto-real",
-  "dialogo": "principiantes-no-certificados-minicurso",
-  "criterio": "recomienda-minicurso",
-  "veredicto": "no_cumple",
-  "razon": "El cliente dejó claro que no tiene certificación, pero el bot no recomendó el Minicurso de Buceo ni compartió el enlace correspondiente; en su lugar volvió a preguntar la opción.",
-  "check": "Informa que para principiantes sin certificación el plan adecuado es el Minicurso de buceo (Discover/DSD) y puede compartir el enlace de detalles.",
-  "causa": "repregunta_actividad",
-  "resumen": "Volvió a preguntar la actividad ya indicada por el cliente."
- },
- {
   "grupo": "visible-real",
   "dialogo": "familia-mixta-precio-descuento-refresher",
   "criterio": "precio-mixto-cartagena-o-pregunta-faltantes",
@@ -608,16 +388,6 @@
   "check": "Da el precio del catálogo para 3 buzos certificados (2 inmersiones) y 3 snorkelers (2 salidas) desde Cartagena en la moneda según nacionalidad; si falta saber desde dónde salen o la nacionalidad, lo pregunta antes de cotizar.",
   "causa": "moneda",
   "resumen": "No pidió nacionalidad antes de cotizar, omitió regla de moneda."
- },
- {
-  "grupo": "oculto-real",
-  "dialogo": "grupo-mixto-buceo-y-snorkel-reserva-web",
-  "criterio": "links-reserva-web",
-  "veredicto": "no_cumple",
-  "razon": "El cliente pidió enlaces de reserva para 2 buceos y snorkeling; el bot solo compartió un único enlace general en lugar de los enlaces de reserva específicos para '2 dives' y 'snorkeling' solicitados por el criterio.",
-  "check": "Indica que se reserva por la web y comparte los enlaces de reserva para: 2 dives (certified) y snorkeling, explicando que pueden reservar ambos productos para la misma fecha.",
-  "causa": "enlace",
-  "resumen": "No compartió enlaces específicos para 2 buceos y snorkeling solicitados."
  },
  {
   "grupo": "visible-real",
@@ -638,95 +408,5 @@
   "check": "Responde la anticipación indicando que el sistema de reservas cierra a las 4:30 p.m. del día anterior, y que después de esa hora se reserva igual por la web para el siguiente día disponible (sin WhatsApp de última hora).",
   "causa": "rag_omite",
   "resumen": "No informa reserva web tras cierre 4:30 p.m."
- },
- {
-  "grupo": "oculto-real",
-  "dialogo": "principiante-precio-y-evaluacion-medica",
-  "criterio": "global:sin-invenciones",
-  "veredicto": "no_cumple",
-  "razon": "El bot afirma 'mayores de 10 años', lo que implica >10; la REFERENCIA indica edad mínima 10 años (>=10), por lo que la redacción del bot contradice la edad mínima oficial.",
-  "check": "",
-  "causa": "rag_falso",
-  "resumen": "El bot contradice la edad mínima oficial para buceo."
- },
- {
-  "grupo": "oculto-real",
-  "dialogo": "principiante-precio-y-evaluacion-medica",
-  "criterio": "pide-datos-antes-de-precio",
-  "veredicto": "no_cumple",
-  "razon": "El cliente preguntó el precio; el bot solo preguntó el punto de salida pero no pidió la nacionalidad/moneda requerida por el criterio antes de dar el precio (además no llegó a dar un precio).",
-  "check": "Antes de dar un precio, pregunta si sale desde Cartagena o si ya está en las islas y su nacionalidad (moneda). Si ya los tuviera, da el precio del catálogo para el minicurso acorde a ese origen y moneda.",
-  "causa": "moneda",
-  "resumen": "No pidió nacionalidad antes de cotizar, incumpliendo regla de moneda."
- },
- {
-  "grupo": "oculto-real",
-  "dialogo": "pareja-reactivate-y-refresh-cartagena",
-  "criterio": "global:sin-invenciones",
-  "veredicto": "no_cumple",
-  "razon": "El cliente no especificó el año; el bot afirma sin base que esas fechas \"ya pasaron\", asumiendo el año y por tanto inventando un hecho no provisto por el cliente.",
-  "check": "",
-  "causa": "supone",
-  "resumen": "El bot asume el año sin que el cliente lo haya dicho."
- },
- {
-  "grupo": "oculto-real",
-  "dialogo": "pareja-reactivate-y-refresh-cartagena",
-  "criterio": "global:sin-repreguntas",
-  "veredicto": "no_cumple",
-  "razon": "El cliente ya dio fechas (June 6-13); el bot vuelve a pedir las fechas en lugar de confirmar solo el año si era necesario.",
-  "check": "",
-  "causa": "repregunta_dato",
-  "resumen": "El bot vuelve a pedir fechas ya dadas por el cliente."
- },
- {
-  "grupo": "oculto-real",
-  "dialogo": "pareja-reactivate-y-refresh-cartagena",
-  "criterio": "politica-refresh",
-  "veredicto": "no_cumple",
-  "razon": "El bot propuso un refresher y ofrecer pasar a un asesor, pero no aclaró la política explícita de que tras más de 2 años sin bucear normalmente se requiere refresh, ni validó/confirmó que el cliente ya completó su Reactivate; por eso no cumple el criterio.",
-  "check": "Aclara que, tras más de 2 años sin bucear, normalmente se requiere refresh; valida que él ya hizo su Reactivate y propone refresher para ella (o pasar a un asesor si quiere validar excepción).",
-  "causa": "rag_omite",
-  "resumen": "No aclara política de refresh tras 2 años ni valida Reactivate del cliente."
- },
- {
-  "grupo": "oculto-real",
-  "dialogo": "pareja-reactivate-y-refresh-cartagena",
-  "criterio": "grupo-mixto-permitido",
-  "veredicto": "no_cumple",
-  "razon": "El bot no confirma explícitamente que puedan ir juntos en el mismo tour combinando un refresher para la esposa y buceo certificado para él; en su lugar pide revisión por el equipo y no da la confirmación requerida.",
-  "check": "Confirma que pueden ir juntos en el mismo tour combinando refresher para ella y buceo certificado para él.",
-  "causa": "rag_omite",
-  "resumen": "No confirma que ambos pueden ir juntos en el mismo tour."
- },
- {
-  "grupo": "oculto-real",
-  "dialogo": "precio-dispo-buceo-certificado-grupo-mixto",
-  "criterio": "global:sin-invenciones",
-  "veredicto": "no_cumple",
-  "razon": "El cliente no dijo si está 'ya en las islas' o sale desde Cartagena; el bot asumió origen y dio el precio correspondiente a 'ya en las islas' sin que el cliente lo hubiera informado.",
-  "check": "",
-  "causa": "supone",
-  "resumen": "El bot asumió el origen del cliente sin que lo dijera."
- },
- {
-  "grupo": "oculto-real",
-  "dialogo": "precio-dispo-buceo-certificado-grupo-mixto",
-  "criterio": "mixto-moneda-usd",
-  "veredicto": "no_cumple",
-  "razon": "La referencia exige aclarar que en grupos mixtos (colombianos/residentes y extranjeros) toda la reserva se paga en USD; el bot no mencionó esa política en ninguna de sus respuestas.",
-  "check": "Aclara que en grupos mixtos (colombianos y extranjeros) toda la reserva se paga en USD al mismo precio equivalente.",
-  "causa": "rag_omite",
-  "resumen": "No aclaró política de pago en USD para grupos mixtos."
- },
- {
-  "grupo": "oculto-real",
-  "dialogo": "precio-dispo-buceo-certificado-grupo-mixto",
-  "criterio": "origen-cartagena-o-islas",
-  "veredicto": "no_cumple",
-  "razon": "El bot cotiza directamente el precio 'ya en las islas' (124 USD) sin preguntar si la salida será desde Cartagena o si ya están en las islas, por lo que no cumple el criterio de preguntar el origen o dar precios según la respuesta.",
-  "check": "Pregunta si salen desde Cartagena o si ya están en las islas antes de cotizar, o da el precio correspondiente según la respuesta.",
-  "causa": "moneda",
-  "resumen": "No pregunta origen antes de cotizar, da precio 'ya en islas' directo."
  }
 ]

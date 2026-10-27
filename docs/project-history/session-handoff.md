@@ -1,4 +1,4 @@
-﻿# Session handoff
+# Session handoff
 
 Read this file before changing code in the Diving Planet Bot. For a quick version overview, read `docs/HISTORY.md` first.
 
@@ -1037,8 +1037,8 @@ en dos pasos, completitud en el revisor, lo determinista en código). El cruce d
 1. **CAL-B moneda.** Lo primero: **actualizar los 4 criterios del golden** que piden preguntar la nacionalidad
    (`acompanante-madre-desde-cartagena/precio-moneda-o-pregunta`,
    `paquete-5-buceos-precio-overnight-isla-grande-baru/precio-y-moneda-correctos`,
-   `cotiza-buceo-snorkel-y-pide-link-especial/pide-datos-para-cotizar`,
-   `principiante-precio-y-evaluacion-medica/pide-datos-antes-de-precio`) a la decisión del 15-oct (sin nacionalidad →
+   `un diálogo del oculto/pide-datos-para-cotizar`,
+   `un diálogo del oculto/pide-datos-antes-de-precio`) a la decisión del 15-oct (sin nacionalidad →
    USD) — cambio de criterios: con el visto bueno de Gadea. Luego la regla en un solo sitio.
 2. CAL-A, CAL-C, CAL-D + CAL-E, CAL-F (como en el bloque de abajo).
 - **Medir con ≥ 3 repeticiones por caso**: casi 1 de cada 4 fallos es variación. `python -m scripts.banco_fallos
@@ -1148,7 +1148,7 @@ inventos), `scripts/banco_revisor.py` (errores sembrados frente al revisor), `sc
 - **Para comparar A/B a partir de ahora:** `ENV_FILE=.env.dev python -m scripts.ab_judge_compare A B --rejuzgar 2`
   (separa el ruido del juez y las conversaciones que no llegan al punto; ~0,1 $).
 - **Antes de elegir los diálogos de una mini-ronda**, quitad los del examen oculto: en `golden-dialogues.json` llevan
-  `"suite": "oculto"` (hoy se coló uno, `paquete-5-buceos-precio-fecha-y-equipaje`, y se quitó a tiempo).
+  `"suite": "oculto"` (hoy se coló uno, `un diálogo del oculto`, y se quitó a tiempo).
 
 **Siguiente, en orden:**
 1. **EX-FLUJO-1 (necesita decisión de Gadea):** qué hace el bot si el cliente no contesta una pregunta de la reserva
@@ -1817,7 +1817,7 @@ hoy** (el paso 8 se re-juzgó: mismas conversaciones, oculto 76,4 → 79,0 %, o 
    referencia del juez no tiene el acompañante "ya en las islas" (decisión de Gadea del 1-oct, está en la base de
    Coral): añadirlo a `pricing.json` (es también el catálogo del bot: comprobar que dice lo mismo que la ficha).
 2. **El link de reserva**: si el cliente lo pide, darlo (o preguntar el origen UNA vez y darlo); hoy el RAG lo ofrece
-   en vez de darlo. Casos visibles: `grupo-mixto-cotiza-y-pide-link`, `cotiza-buceo-snorkel-y-pide-link-especial`.
+   en vez de darlo. Casos visibles: `un diálogo del oculto`, `un diálogo del oculto`.
 3. **"Ese plan no existe desde las islas"** cuando el catálogo lo tiene (`precio-desde-islas-vs-cartagena`).
 4. Supuestos sueltos: "el hotel tiene acceso en lancha" (`logistica-isla-fragata-regreso-otro-dia`), "está en tu
    carrito" y "¡Qué bien que venga alguien más!" (`manual-duracion-curso`), "¿Cuántos serían para buceo

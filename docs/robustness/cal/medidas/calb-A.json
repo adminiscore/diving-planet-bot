@@ -90,23 +90,6 @@
    ]
   },
   {
-   "id": "cal-28",
-   "dialogo": "cotiza-buceo-snorkel-y-pide-link-especial",
-   "criterio": "pide-datos-para-cotizar",
-   "repeticiones": 3,
-   "fallan": 0,
-   "respuestas": [
-    "¡Claro! Para tus clientes con licencia y poca experiencia, la salida de *2 inmersiones* es una buena opción; el equipo está incluido.\n\nEl precio online ya incluye el 10% de descuento por reservar en la web.\n\nPara darte el precio exacto necesito saber desde dónde sales: ¿saldrías *desde Cartagena* o ya estás *en las Islas del Rosario*? Los planes y los precios cambian según el punto de salida. 🌊",
-    "¡Claro!\n\nSi ya están en las islas, los precios son distintos.\n\nPara darte el precio exacto necesito saber desde dónde sales: ¿saldrías *desde Cartagena* o ya estás *en las Islas del Rosario*? Los planes y los precios cambian según el punto de salida. 🌊",
-    "¡Claro! Si tus clientes tienen licencia, pueden hacer la salida de *2 inmersiones*. ¿Saldrían desde Cartagena o ya están en las islas? Así te doy el costo correcto para el grupo. 🤿"
-   ],
-   "explicaciones": [
-    "La respuesta actual pregunta correctamente por el punto de salida antes de dar precios, tal como exige el criterio. No pregunta por la nacionalidad/moneda, lo cual es correcto según el criterio (solo se pregunta si el cliente lo menciona o si es relevante para el pago, pero para cotizar basta con dar el precio en USD si no se sabe). No entrega precios aún porque está esperando el dato clave (origen), lo cual es correcto según el flujo esperado.",
-    "La respuesta actual pide correctamente el punto de salida antes de dar precios, tal como exige el criterio. No pregunta por la nacionalidad, lo cual es correcto según el criterio (solo se pregunta si el cliente lo menciona o si quiere pagar en COP). Tampoco entrega precios aún, porque está esperando el dato clave (origen), lo cual es adecuado según el flujo y el contexto.",
-    "La respuesta actual pregunta correctamente si el cliente sale desde Cartagena o ya está en las islas antes de dar precios, tal como exige el criterio. No pregunta por nacionalidad (lo cual es correcto según el criterio), y aún no entrega precios porque está esperando la respuesta sobre el punto de salida. Por lo tanto, el fallo anterior ya no se reproduce."
-   ]
-  },
-  {
    "id": "cal-43",
    "dialogo": "colombianos-precio-minicurso-dos-inmersiones",
    "criterio": "precio-minicurso-cop-o-origen",
@@ -121,23 +104,6 @@
     "El bot no da el precio en COP del Minicurso/Refresher para salida desde Cartagena (655.000 COP online, 727.000 COP normal) ni pregunta si la salida es desde Cartagena o si ya están en las islas antes de cotizar, como exige el criterio. El contexto tiene ambos precios y la instrucción de preguntar el origen si no está claro.",
     "El bot no da el precio en COP del Minicurso/Refresher para salida desde Cartagena (655.000 COP online), ni pregunta si la salida es desde Cartagena o si ya están en las islas antes de cotizar. El contexto tiene ambos precios y la instrucción de preguntar el origen si no está claro.",
     "El bot no da el precio en COP del Minicurso/Refresher para salida desde Cartagena (655.000 COP online), ni pregunta si la salida sería desde Cartagena o si ya están en las islas antes de cotizar. El contexto tiene ambos precios y la instrucción de preguntar el origen si no está claro. El mensaje del cliente no especifica el origen, así que debía cotizar ambos o preguntar."
-   ]
-  },
-  {
-   "id": "cal-66",
-   "dialogo": "principiante-precio-y-evaluacion-medica",
-   "criterio": "pide-datos-antes-de-precio",
-   "repeticiones": 3,
-   "fallan": 0,
-   "respuestas": [
-    "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\n¡Qué chévere celebrar tu cumpleaños conociendo los arrecifes de las Islas del Rosario! Como es tu primera vez, te recomiendo el **Minicurso de Buceo**: incluye teoría online, práctica en piscina y una inmersión en el mar con instructor PADI. No necesitas experiencia ni certificación previa.\n\nSí, debes reservar con anticipación por la web. Después de reservar recibirás la teoría para completar antes de la actividad.\n\nPara darte el precio exacto necesito saber desde dónde sales: ¿saldrías *desde Cartagena* o ya estás *en las Islas del Rosario*? Los planes y los precios cambian según el punto de salida. 🌊",
-    "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\n¡Qué chévere celebrar tu cumpleaños conociendo los arrecifes de las Islas del Rosario! Como eres principiante, te recomiendo el **Minicurso de Buceo**: incluye teoría online, práctica en piscina y una inmersión en el mar con instructor PADI.\n\nVeo que mencionas el **11 de mayo**, pero esa fecha ya pasó este año.\n\nPara darte el precio exacto necesito saber desde dónde sales: ¿saldrías *desde Cartagena* o ya estás *en las Islas del Rosario*? Los planes y los precios cambian según el punto de salida. 🌊",
-    "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\n¡Qué chévere celebrar tu cumpleaños conociendo los arrecifes de las Islas del Rosario! Como eres principiante, te recomiendo el **Minicurso de Buceo**: incluye teoría online, práctica en piscina y una inmersión en el mar con instructor PADI. No necesitas experiencia ni certificación previa.\n\nLa salida es a las 8:00 a. m. desde el Muelle de la Bodeguita y el regreso a Cartagena es aproximadamente a las 4:15 p. m.\n\nSí, debes reservar con anticipación por la web; ahí eliges la fecha y el número de personas.\n\nTen en cuenta que, después de bucear, debes esperar al menos 12 horas antes de tomar un vuelo.\n\nPara darte el precio exacto necesito saber desde dónde sales: ¿saldrías *desde Cartagena* o ya estás *en las Islas del Rosario*? Los planes y los precios cambian según el punto de salida. 🌊"
-   ],
-   "explicaciones": [
-    "La respuesta actual pregunta correctamente el punto de salida antes de dar el precio, tal como exige el criterio. No pregunta por la nacionalidad/moneda, lo cual es correcto según el criterio (solo se pregunta si es relevante, y si no, el precio va en USD). Además, explica el plan recomendado y el proceso de reserva, alineándose con el contexto y el criterio.",
-    "La respuesta actual pregunta correctamente el punto de salida antes de dar el precio, tal como exige el criterio. No pregunta por la nacionalidad, lo cual es correcto según el criterio y el contexto ('la nacionalidad no hace falta preguntarla: sin ella, el precio va en USD'). Por lo tanto, el fallo original ya no se reproduce.",
-    "La respuesta actual pregunta correctamente el punto de salida antes de dar el precio, tal como exige el criterio. No pregunta por la nacionalidad, lo cual es correcto según el criterio y el contexto ('la nacionalidad no hace falta preguntarla: sin ella, el precio va en USD'). Por lo tanto, el fallo original ya no se reproduce."
    ]
   }
  ]
