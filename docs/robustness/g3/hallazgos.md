@@ -391,11 +391,18 @@ con los dos orígenes); q1 t4 y q5 t3 (tarjeta por actividad, sin total del grup
 
 1. **«she the mini course» no cuenta** (CALN-2, Álvaro): q2 t2, `[EXTRACT][EX7] 'minicourse' no se nombra en el
    mensaje`. `_reparto_valido` (nucleo/extractor.py) comprueba con `matched_activity_categories`, que no tiene el
-   nombre en inglés del propio producto («mini course», dom.label «Dive mini-course»).
+   nombre en inglés del propio producto («mini course», dom.label «Dive mini-course»). ARREGLADO
+   (feature/caln-lectura-alvaro): el producto también por su nombre del catálogo es/en (`dom.nombra_el_producto`).
 2. **Repetir lo que hace ella borra al buzo** (CALN-2, Álvaro): q2 t3, «I told you, she wants the mini course» →
    {certified_diving 1} pasa a {minicourse 1} + 1 sin decidir; tercera vez «Which option does she like best?».
+   ARREGLADO (feature/caln-lectura-alvaro): con esa pregunta pendiente, la actividad leída es la de quien no había
+   elegido. Y la variante «she'd go for the mini course. Only one day» contestando a «¿un día o varios?» (el extractor
+   solo da `actividad_preguntada`, 9/10): la respuesta corta la elige por su nombre del catálogo si la IA no lee un
+   reparto (banco-lectura l04).
 3. **La pregunta de quien no ha elegido supone que es el no certificado** (CALN-2, Álvaro): q1 t2, sin decidir = el
-   buzo ({snorkel 2}) y la pregunta dice «a quienes no están certificados: ¿un día o varios?».
+   buzo ({snorkel 2}) y la pregunta dice «a quienes no están certificados: ¿un día o varios?». ARREGLADO
+   (feature/caln-lectura-alvaro): «quien(es) aún no ha(n) elegido». Queda: las opciones para quien no ha elegido son
+   solo de principiante aunque sea el buzo (`personas` no guarda la certificación de cada uno).
 4. **El descuento de grupo ofrecido a un curso PADI** (CALN-3, Gonzalo): q3 t1, 5 amigos y el Open Water: «10 % para
    grupos de 5 o más, que se suma al online… no aplica a cursos PADI. ¿Quieres que te pase con un asesor para
    aplicarlo?». Los hechos dan los descuentos con su texto, sin decir si ESTE aplica; la decisión (27-oct) es «el de
