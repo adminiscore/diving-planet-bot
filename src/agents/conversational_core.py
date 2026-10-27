@@ -388,6 +388,16 @@ _CONFIRMA_ORIGEN = {
 
 
 def ask_slot(state: ConversationState, slot: str, *, reasking: bool = False) -> str:
+    """La pregunta de la reserva por el slot que falta (`_texto_de_la_pregunta`). CALN-6 paso 1: se apunta en el turno,
+    para que el compositor (`src/agents/compositor.py`) la ponga una vez y al final."""
+    texto = _texto_de_la_pregunta(state, slot, reasking=reasking)
+    if not isinstance(getattr(state, "_preguntas_del_turno", None), list):
+        state._preguntas_del_turno = []
+    state._preguntas_del_turno.append((slot, texto))
+    return texto
+
+
+def _texto_de_la_pregunta(state: ConversationState, slot: str, *, reasking: bool = False) -> str:
     """Pregunta natural por el slot que falta. Un solo mensaje, UNA pregunta,
     quick-replies solo donde el plan lo permite (ubicación / sí-no).
 

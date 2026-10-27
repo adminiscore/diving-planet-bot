@@ -1,0 +1,56 @@
+"""CALN-6 paso 1 (27-oct): la pregunta de la reserva, una vez y al final (src/agents/compositor.py)."""
+from types import SimpleNamespace
+
+from src.agents.compositor import componer
+
+SEGURIDAD = "¿Ha pasado *más de 2 años* desde la última inmersión de alguno del grupo?"
+PLAN_Y_SEGURIDAD = ("Te recomiendo el plan de *2 inmersiones en 1 día* en las Islas del Rosario. (Si prefieres un *paquete "
+                    "multi-día* de 3 o más inmersiones, dímelo.)\n\n" + SEGURIDAD)
+MENU = "¿Con cuál te animas — *buceo*, *minicurso*, *snorkel* o un *curso PADI*? 🌊"
+LISTAS = ("También incluye:\n• Tarifa de ingreso al Parque Nacional Natural\n• Equipo de buceo\n\n"
+          "Muelle de la Bodeguita, a 5 minutos del centro histórico, a las 8:00 AM.")
+
+
+def _turno(pendiente, *preguntas):
+    return SimpleNamespace(core_pending_slot=pendiente, _preguntas_del_turno=list(preguntas))
+
+
+def test_la_pregunta_pegada_dos_veces_queda_una_al_final():
+    """regreso-otro-dia-paquete-5 t2 (caln1-B): el escritor cierra con ella, el código añade las listas y la repite."""
+    r = f"Entiendo: el regreso en otra fecha lo coordina un asesor.\n\n{SEGURIDAD}\n\n{LISTAS}\n\n{SEGURIDAD}"
+    assert componer(_turno("safety", ("safety", SEGURIDAD)), r) == (
+        f"Entiendo: el regreso en otra fecha lo coordina un asesor.\n\n{LISTAS}\n\n{SEGURIDAD}")
+
+
+def test_la_pregunta_en_medio_pasa_al_final():
+    r = f"Entiendo.\n\n{SEGURIDAD}\n\n{LISTAS}"
+    assert componer(_turno("safety", ("safety", SEGURIDAD)), r).endswith(f"{LISTAS}\n\n{SEGURIDAD}")
+
+
+def test_sin_la_pregunta_no_se_toca():
+    tarjeta = "🤿 *Minicurso*\n💰 2 × 655.000 COP p.p. = *1.310.000 COP*"
+    assert componer(_turno("safety", ("safety", SEGURIDAD)), tarjeta) == tarjeta
+    assert componer(_turno(None, ("safety", SEGURIDAD)), f"Hola.\n\n{SEGURIDAD}") == f"Hola.\n\n{SEGURIDAD}"
+
+
+def test_bien_puesta_queda_igual():
+    r = f"Entiendo.\n\n{SEGURIDAD}"
+    assert componer(_turno("safety", ("safety", SEGURIDAD)), r) == r
+
+
+def test_dentro_de_un_parrafo_solo_sale_la_frase():
+    r = f"Con esos tiempos no alcanzarías a volar. {SEGURIDAD}\n\n{LISTAS}"
+    assert componer(_turno("safety", ("safety", SEGURIDAD)), r) == (
+        f"Con esos tiempos no alcanzarías a volar.\n\n{LISTAS}\n\n{SEGURIDAD}")
+
+
+def test_la_larga_y_la_corta_de_la_misma_pregunta():
+    """El turno formuló la larga (con la recomendación del plan) y luego la corta: va la última, una vez."""
+    r = f"{PLAN_Y_SEGURIDAD}\n\n{LISTAS}\n\n{SEGURIDAD}"
+    assert componer(_turno("safety", ("safety", PLAN_Y_SEGURIDAD), ("safety", SEGURIDAD)), r) == f"{LISTAS}\n\n{SEGURIDAD}"
+
+
+def test_el_menu_repetido_queda_uno():
+    """vuelo-tras-bucear t2 (caln1-B): el menú de actividades dos veces, con la logística en medio."""
+    r = f"Hay que esperar 18 horas para volar.\n\n{MENU}\n\n{LISTAS}\n\n{MENU}"
+    assert componer(_turno("activity", ("activity", MENU)), r) == f"Hay que esperar 18 horas para volar.\n\n{LISTAS}\n\n{MENU}"

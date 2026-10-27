@@ -175,6 +175,7 @@ async def route_message(state: ConversationState, message: str) -> str:
     paso_antes = state.step
     state._contestado_antes_del_pase = False  # gen-13: se renueva cada turno
     state._senales_router = None
+    state._preguntas_del_turno = []  # CALN-6: las preguntas de la reserva de ESTE turno (`ask_slot`)
     async with turn_trace(settings, state.conversation_id, message) as turn:
         note_turn(language=state.language, greeting=_is_greeting_only(message))
         from src.orchestration.graph import run_turn_via_graph
@@ -219,6 +220,12 @@ async def route_message(state: ConversationState, message: str) -> str:
             from src.flows.avisos import poner_avisos
 
             response = poner_avisos(state, response)
+        if state.pending_escalation_reason == escalation_before and isinstance(response, str):
+            # CALN-6 paso 1 (decisión de Gadea: un compositor al final del turno): la pregunta de la reserva, una vez y
+            # al final, detrás de lo que el código añadió al escritor y de los avisos.
+            from src.agents.compositor import componer
+
+            response = componer(state, response)
         # u3-4: una respuesta lanzada en paralelo que el turno no usó se cancela.
         cancel_pending_answer(state)
         cancelar_rag_adelantado(state)  # rag-5: la respuesta adelantada que nadie usó
