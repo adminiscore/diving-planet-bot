@@ -41,7 +41,9 @@ ACTIVIDADES = tuple(a for a in dom.activity_ids() if a not in ("refresher", "com
 ACTIVIDADES_REPARTO = ("certified_diving", "minicourse", "snorkel", "padi_open_water", "padi_open_water_referral",
                        "padi_advanced", "padi_rescue", "padi_divemaster", "padi_specialty",
                        # CALN-2 paso 2a (27-oct): quien solo acompaña en la lancha también es una persona del grupo.
-                       "companion")
+                       "companion",
+                       # CALN-2 (27-oct, sparring CALN1-04): «la pequeña el Bubble Makers» se perdía (no cabía aquí).
+                       "bubble_makers")
 # ex-7: más las personas del grupo que no han elegido actividad (decisión del owner, 15-sep: si solo se dice que no
 # están certificadas, quedan "sin decidir" y el bot les recomienda opciones; `_take_undecided_members`).
 CLAVES_REPARTO = (*ACTIVIDADES_REPARTO, "undecided")

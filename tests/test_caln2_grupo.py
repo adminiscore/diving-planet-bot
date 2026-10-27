@@ -170,6 +170,18 @@ def test_quien_no_se_nombra_no_se_quita_al_completar():
     assert not grupo.completa({"companion": 1}, {"minicourse": 2}, 5)  # lo que se GUARDA nunca quita a nadie
 
 
+@pytest.mark.parametrize("edades,esperadas", [
+    ([], ["minicourse", "snorkel", "companion"]),
+    ([9, 14], ["minicourse", "snorkel", "bubble_makers", "companion"]),  # sparring CALN1-04: la de 9, Bubble Makers
+    ([40], ["minicourse", "snorkel", "companion"]),
+])
+def test_la_recomendacion_mira_las_edades_del_grupo(edades, esperadas):
+    from src.agents import conversational_core as core
+
+    st = _grupo(detected_ages=edades, detected_duration="single_day")
+    assert core._companion_activity_options(st) == esperadas
+
+
 def test_quien_hace_que_va_antes_que_el_origen():
     """Paso 3a: el orden aprobado (quién hace qué, el origen, seguridad y edades, la nacionalidad); si no contesta dos
     veces, se aplaza hasta antes del resumen como las demás."""

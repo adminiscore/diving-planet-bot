@@ -348,7 +348,8 @@ def _jev_dice_que_nadie_se_suma(state: ConversationState) -> bool:
 
 
 # Clave del reparto -> categoría de `intent_detector.matched_activity_categories` (la lista cerrada de nombres).
-_CATEGORIA_DEL_REPARTO = {"minicourse": "minicourse", "snorkel": "snorkel", "padi_specialty": "specialty"}
+_CATEGORIA_DEL_REPARTO = {"minicourse": "minicourse", "bubble_makers": "minicourse", "snorkel": "snorkel",
+                         "padi_specialty": "specialty"}
 
 
 def _reparto_valido(reparto: dict | None, message: str, state: ConversationState, minimo: int = 2) -> dict | None:

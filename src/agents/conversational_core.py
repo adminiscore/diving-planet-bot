@@ -163,8 +163,17 @@ def _companion_activity_options(state: ConversationState) -> list[str]:
 
     Base: las opciones de un principiante de `eligibility` (minicurso, snorkel e ir
     de acompañante). El curso Open Water se añade solo si se sabe que se quedan
-    varios días: certificarse no cabe en un día."""
-    options = [eligibility.option_activity_id(o) for o in eligibility.beginner_options_for_age(None)]
+    varios días: certificarse no cabe en un día.
+
+    CALN-2 (27-oct): más lo que puede hacer cada edad sabida del grupo: con una niña de 9, Bubble Makers (sparring
+    CALN1-04). Las de un adulto se quedan siempre: las edades no dicen quién falta por elegir."""
+    edades = [e for e in state.detected_ages or [] if isinstance(e, int)]
+    por_edad = [eligibility.beginner_options_for_age(e) for e in [None, *edades]]
+    options: list[str] = []
+    for opcion in (eligibility.option_activity_id(o) for grupo_edad in por_edad for o in grupo_edad):
+        if opcion not in options:
+            options.append(opcion)
+    options.sort(key=lambda o: o == "companion")  # ir de acompañante, siempre la última
     if state.detected_duration == "multi_day" and "minicourse" in options:
         options.insert(options.index("minicourse") + 1, "padi_open_water")
     return [o for o in options if dom.by_id(o) is not None]
