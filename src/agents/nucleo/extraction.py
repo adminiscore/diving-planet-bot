@@ -319,8 +319,10 @@ def _contar_al_acompanante_sin_actividad(state: ConversationState, message: str,
     """DEUDA-EXT2 (26-oct): "Voy con una amiga que no está certificada" dejaba el total sin saber y se preguntaba
     "¿cuántas personas?" (banco-deuda-ext2 g1). Una persona más, en singular y sin total sabido: son 2. Qué hará ella se
     sigue preguntando, como hoy. CALN2-04 (27-oct): con más gente en plural en el mismo mensaje («voy con mi esposa, que no
-    bucea, y nuestras hijas de 8 y 5») no son 2: el total queda sin saber (banco-edades e1)."""
-    if state.detected_group_size or _PLURAL_COMPANION_RE.search(message):
+    bucea, y nuestras hijas de 8 y 5») no son 2: el total queda sin saber (banco-edades e1). Tampoco con dos o más
+    edades sabidas (las lee el extractor): «mi esposo no bucea y vamos con los niños, de 7 y 4» acababa en una tarjeta
+    de 2 buzos (sparring b5)."""
+    if state.detected_group_size or _PLURAL_COMPANION_RE.search(message) or len(state.detected_ages or []) >= 2:
         return
     if _singular_companion(message) or signals.get("companion_is_singular"):
         state.detected_group_size = 2

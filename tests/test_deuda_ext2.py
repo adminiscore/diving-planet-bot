@@ -75,6 +75,15 @@ def test_una_persona_mas_y_otras_en_plural_no_son_dos():
     assert st.detected_group_size is None
 
 
+def test_una_persona_mas_y_dos_edades_no_son_dos():
+    """Sparring b5: «mi esposo no bucea y vamos con los niños, de 7 y 4» (sin plural que lo diga): con dos edades
+    sabidas, el total no es 2."""
+    st = _estado(detected_ages=[4, 7])
+    core_extraction._contar_al_acompanante_sin_actividad(
+        st, "Mi esposo no bucea y vamos con los niños, de 7 y 4 años", {"companion_is_singular": True})
+    assert st.detected_group_size is None
+
+
 def test_sin_principal_ni_total_quien_escribe_cuenta():
     st = _estado()
     core._merge_companion_activity(st, "minicourse", 1)
