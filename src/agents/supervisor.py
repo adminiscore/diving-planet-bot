@@ -180,8 +180,13 @@ async def route_message(state: ConversationState, message: str) -> str:
         note_turn(language=state.language, greeting=_is_greeting_only(message))
         from src.orchestration.graph import run_turn_via_graph
         response = await run_turn_via_graph(state, message)
-        if state.pending_escalation_reason not in (None, escalation_before) and isinstance(response, str):
-            # gen-13: el turno acaba de pasar a un asesor; las OTRAS preguntas del mensaje se contestan delante.
+        from src.observability import hechos_del_turno
+
+        if (state.pending_escalation_reason not in (None, escalation_before) and isinstance(response, str)
+                and not hechos_del_turno().get("rag_used")):
+            # gen-13: el turno acaba de pasar a un asesor; las OTRAS preguntas del mensaje se contestan delante. CALN-6:
+            # no si el escritor ya contestó este turno (sparring b1 t3: el pago en pesos tras la tarjeta y la respuesta
+            # entera dos veces, con «Tienes razón…» en medio).
             from src.agents.conversational_core import _greeting
             from src.agents.escalation_agent import lo_contestable_en_cualquier_pase
 

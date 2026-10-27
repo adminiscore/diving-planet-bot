@@ -352,6 +352,12 @@ def note_turn(**facts: Any) -> None:
         current.update(facts)
 
 
+def hechos_del_turno() -> dict:
+    """Lo apuntado con `note_turn` en el turno en curso (vacío fuera de un turno). CALN-6: el cierre del turno sabe si
+    el escritor ya contestó (`rag_used`)."""
+    return dict(_TURN_FACTS.get() or {})
+
+
 def turn_summary(facts: dict, reply: str | None) -> dict:
     """Resumen de un turno a partir de sus hechos y la respuesta final. Sin PII:
     solo etiquetas, booleanos y el paso de la reserva."""
