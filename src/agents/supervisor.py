@@ -226,6 +226,13 @@ async def route_message(state: ConversationState, message: str) -> str:
             from src.agents.compositor import componer
 
             response = componer(state, response, pase=state.pending_escalation_reason not in (None, escalation_before))
+            # CALN-3 paso 1: qué importes daría el código, en la traza; no cambia la respuesta y nunca rompe el turno.
+            from src.flows.cotizar import en_sombra
+
+            try:
+                en_sombra(state, response)
+            except Exception as exc:  # noqa: BLE001 — la sombra solo mide
+                logger.warning(f"[CORE][CALN3] la sombra falló: {exc!r}")
         # u3-4: una respuesta lanzada en paralelo que el turno no usó se cancela.
         cancel_pending_answer(state)
         cancelar_rag_adelantado(state)  # rag-5: la respuesta adelantada que nadie usó
