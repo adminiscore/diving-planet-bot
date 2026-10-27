@@ -71,12 +71,19 @@ def _actividades(state: ConversationState, datos: dict) -> list[str]:
 def _origen(state: ConversationState, datos: dict, leido: bool = False) -> str | None:
     """`leido`: el extractor leyó el mensaje (aunque no traiga nada). DEUDA-ORIGEN (26-oct): entonces el lugar de Jev
     no fija el origen ("Estaremos visitando Cartagena…" no dice la salida): van los dos precios y se pregunta."""
-    for lugar in (state.location, state.detected_location, datos.get("location")):
-        if lugar in hechos_mod.ORIGENES:
-            return lugar
     from src.agents.jev_router import CUSTOMER_PLACE_MIN  # lazy
 
     lugar = getattr(state, "_jev_lugar", None) or {}  # gen-15: «nos alojamos en Mulata» lo dice Jev, no una palabra
+    del_mensaje = datos.get("location")
+    if (del_mensaje in hechos_mod.ORIGENES and _LUGAR_DE_JEV.get(lugar.get("choice")) == del_mensaje
+            and (lugar.get("confidence") or 0.0) >= CUSTOMER_PLACE_MIN):
+        # CALN-3 (27-oct, CALN1-03 / CALN2 de Gadea #2136): «al final vamos a estar en Isla Grande, ¿cambia el precio?»
+        # se cotizaba desde Cartagena, lo guardado ANTES del turno. Si los dos lectores de ESTE mensaje dicen el mismo
+        # origen (extractor y Jev seguro), manda ese. Con uno solo no («snorkel en las islas»: Jev dice none, CAL-C3c).
+        return del_mensaje
+    for guardado in (state.location, state.detected_location, del_mensaje):
+        if guardado in hechos_mod.ORIGENES:
+            return guardado
     if not leido and (lugar.get("confidence") or 0.0) >= CUSTOMER_PLACE_MIN:
         return _LUGAR_DE_JEV.get(lugar.get("choice"))
     if datos.get("hotel"):
