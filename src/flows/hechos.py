@@ -582,9 +582,8 @@ def faltan(answer: str, bloques: list[dict], intenciones: list[str]) -> list[str
                                           for e in lista):
                 if not _elemento_dado(elemento, raices, answer):
                     perdidos.append(elemento)
-        for elemento in dict.fromkeys(e for lista in (b.get("recogida") or {}).values() for e in lista):
-            if not _elemento_dado(elemento, raices, answer):
-                perdidos.append(elemento)
+        # CALN-6 paso 2f (27-oct): la recogida va en los hechos, pero no se exige (si no la decía el escritor, arq-7b la
+        # pegaba siempre: repetida o sin venir a cuento; mini-ronda con el juez: 5 → 4 fallos en 14 diálogos).
         if "clima" in intenciones and b.get("clima") and "100" not in cifras:
             perdidos.append(b["clima"][0])  # arq-1i: lo que contesta la pregunta, el reembolso del 100 % si no se reprograma
         if "pago" in intenciones and b.get("pago") and not _elemento_dado(b["pago"][0], raices, answer):

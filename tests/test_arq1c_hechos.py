@@ -136,8 +136,11 @@ def test_la_recogida_y_el_alojamiento_van_en_los_hechos():
     assert "sin cargo" in b["recogida"]["island"][0] and "alojamiento" not in b
     [b] = h.hechos(_conv(location="cartagena"), ["precio"], ["padi_advanced"])
     assert "no está incluido" in b["alojamiento"] and "recogida" not in b
-    assert any("Muelle" in p for p in h.faltan("Cuesta 0 USD.", h.hechos(_conv(location="cartagena"), ["horario"],
-                                                                          ["minicourse"]), ["horario"]))
+    # CALN-6 paso 2f (27-oct): la recogida va en los hechos, pero ya no se exige ni la pega arq-7b (salía repetida o sin
+    # venir a cuento; con el juez, golden 5 → 4 fallos y rotativa 6/6 criterios de recogida frente a 5/6).
+    bloques = h.hechos(_conv(location="cartagena"), ["horario"], ["minicourse"])
+    assert any("Muelle" in p for p in bloques[0]["recogida"]["cartagena"])
+    assert not any("Muelle" in p for p in h.faltan("Cuesta 0 USD.", bloques, ["horario"]))
 
 
 def test_arq1m_con_la_disponibilidad_va_el_enlace():

@@ -28,7 +28,13 @@ def test_lo_anadido_va_delante_de_la_pregunta_del_escritor():
     answer = "El minicurso incluye la piscina y una inmersión en el mar.\n\n¿Quieres que te comparta el enlace?"
     completada = _completar_con_hechos(answer, _B, ["incluye"], "es")
     assert completada.startswith("El minicurso incluye") and completada.endswith("¿Quieres que te comparta el enlace?")
-    assert "Muelle de la Bodeguita" in completada and "También incluye:" in completada
+    assert "También incluye:" in completada
+
+
+def test_la_recogida_no_se_pega_ni_se_exige():
+    """CALN-6 paso 2f: la recogida va en los hechos y la dice el escritor si viene a cuento; el código no la pega."""
+    answer = "Incluye seguro obligatorio de buceo, entrenamiento en piscina y una inmersión en el mar, y almuerzo."
+    assert _completar_con_hechos(answer, _B, ["incluye"], "es") == answer
 
 
 def test_un_precio_que_falta_no_se_anade_se_rehace():

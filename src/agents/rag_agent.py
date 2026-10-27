@@ -580,7 +580,9 @@ _ROTULOS_DE_LO_QUE_FALTA = {"incluye": ("También incluye:", "It also includes:"
 
 def _completar_con_hechos(answer: str, bloques: list[dict], intenciones: list[str], lang: str) -> str | None:
     """arq-7b: la respuesta con los puntos de los hechos que le faltan añadidos por el código, o None si lo que falta
-    no se puede añadir así (un precio, un enlace, una edad, una hora): entonces se rehace, como antes."""
+    no se puede añadir así (un precio, un enlace, una edad, una hora): entonces se rehace, como antes. CALN-6 paso 2f
+    (27-oct): solo lo PEDIDO (las listas de las intenciones); la recogida va en los hechos y la dice el escritor si
+    viene a cuento (pegada siempre, salía repetida o sin venir a cuento: 26 párrafos sueltos en 14 diálogos)."""
     from src.flows import hechos as hechos_mod  # lazy
 
     i = 0 if lang == "es" else 1
@@ -591,8 +593,6 @@ def _completar_con_hechos(answer: str, bloques: list[dict], intenciones: list[st
         faltan = dict.fromkeys(x for b in bloques for x in hechos_mod.faltan(answer, [{campo: b.get(campo)}], [campo]))
         if faltan:
             extra.append(rotulos[i] + "\n" + "\n".join(f"• {x}" for x in faltan))
-    for campo in ("recogida", "alojamiento"):
-        extra += list(dict.fromkeys(x for b in bloques for x in hechos_mod.faltan(answer, [{campo: b.get(campo)}], [])))
     # CALN-6 paso 2 (sparring CALN4, b11 t1): lo añadido va DELANTE de la pregunta con que cierra el escritor; detrás,
     # la pregunta quedaba en medio («¿Te comparto los enlaces?» y debajo el punto de encuentro).
     partes = answer.rstrip().split("\n\n")

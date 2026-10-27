@@ -69,7 +69,8 @@ de las cuatro era mejor y eligió A: la única que quita la causa y deja menos c
 | 2c | 267a0fa | Tras el saludo de Coral, el escritor no vuelve a saludar | 27 de 116 primeros turnos |
 | 2d | ff5d9fa | UNA pregunta como mucho (si el texto ya pregunta, la de la reserva queda pendiente, sin sus botones ni la recomendación no vista); la explicación de la pregunta final no se repite; el historial guarda lo que vio el cliente | sparring 4/20 → 8/20 (s10 0 → 2/2), dos preguntas 3 → 0; composición igual |
 | 2e | (este) | Si contesta el escritor, el saludo de Coral se queda en la presentación (sin «¡Qué alegría tenerte por acá!…»); la invitación genérica de la tarjeta cede ante una pregunta concreta; lo que pega arq-7b va delante de la pregunta del escritor | bancos ×2 (A = fa9c650): saludo con la calidez repetida 56 → 2 respuestas; composición y precios-q iguales; sparring 11 → 9/28, ruido de lectura (s06, s13) |
+| 2f | (este) | arq-7b solo completa lo PEDIDO (las listas de las intenciones): la recogida va en los hechos, pero ni se exige ni se pega; la dice el escritor si viene a cuento | mini-rondas con el juez (A = bcbb3d5/e05c01b): golden, 14 diálogos con el bloque, 5 → 4 fallos; rotativa, 12 diálogos, 9 → 11 (repreguntas en los dos sentidos, ruido) y criterios de recogida e inclusiones 5/6 → 6/6; párrafos de recogida sueltos 26 → 0 |
 
-Queda del paso 2: los bloques de arq-7b que se pegan sin venir a cuento (la recogida y el alojamiento siempre, y
+Hecho en 2f (antes quedaba): los bloques de arq-7b que se pegan sin venir a cuento (la recogida y el alojamiento siempre, y
 los requisitos con la intención «requisitos»: «También necesitas: alojarte 1 noche en las islas» a quien pregunta
 la edad mínima). Tocan criterios del golden: se miden con el juez en la ronda de integración, no por código.
