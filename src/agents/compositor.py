@@ -21,6 +21,10 @@ logger = logging.getLogger("uvicorn.error")
 _PARRAFO = "\n\n"
 # Una frase que acaba en «?» (con el cierre de negrita, cursiva o paréntesis), dentro de una línea.
 _PREGUNTA_RE = re.compile(r"[^.!?\n]*\?+[*_)\]]*")
+# El saludo de Coral del primer turno (`conversational_core._greeting`) y el «¡Hola!» con que el escritor empieza.
+_SALUDO_DE_CORAL_RE = re.compile(r"Soy \*Coral\*|I'm \*Coral\*")
+_SALUDO_INICIAL_RE = re.compile(r"^\s*(?:¡\s*)?(?:hola|buenas(?: tardes| noches)?|buenos d[ií]as|hi|hello|hey)\b"
+                                r"[^.!?\n]{0,25}?[!.,]\s*", re.IGNORECASE)
 
 
 def _palabras(texto: str) -> set[str]:
@@ -59,6 +63,19 @@ def _sin_las_preguntas(respuesta: str, preguntas: list[str]) -> tuple[bool, str]
     return quitada, _PARRAFO.join(quedan)
 
 
+def _sin_saludo_repetido(respuesta: str) -> str:
+    """Tras el saludo de Coral, el escritor no vuelve a saludar (CALN-6 paso 2: «¡Hola! 🪸 Soy Coral…» y debajo «¡Hola!
+    Bucear en las islas…» en 27 de los 116 primeros turnos de caln2-B)."""
+    partes = respuesta.split(_PARRAFO)
+    for i, parrafo in enumerate(partes[:-1]):
+        if _SALUDO_DE_CORAL_RE.search(parrafo):
+            resto = _SALUDO_INICIAL_RE.sub("", partes[i + 1], count=1)
+            if resto.strip() and resto != partes[i + 1]:
+                partes[i + 1] = resto if resto[0] in "¡¿*_" else resto[0].upper() + resto[1:]
+            break
+    return _PARRAFO.join(partes)
+
+
 def _sin_parrafos_repetidos(respuesta: str) -> str:
     """Fuera los párrafos idénticos a uno anterior (en un pase, lo contestado delante y la respuesta del turno traían la
     misma lista dos veces: caln1-B, pareja-certificados-cop-descuento-almuerzo t3)."""
@@ -77,7 +94,7 @@ def componer(state, respuesta: str, *, pase: bool = False) -> str:
     asesor, sus copias salen y no se vuelve a poner: sigue una persona (y la nota de la tarjeta, si va, ya pregunta)."""
     if not respuesta:
         return respuesta
-    respuesta = _sin_parrafos_repetidos(respuesta)
+    respuesta = _sin_parrafos_repetidos(_sin_saludo_repetido(respuesta))
     preguntas = getattr(state, "_preguntas_del_turno", None) or []
     pendiente = state.core_pending_slot
     final = next((texto for slot, texto in reversed(preguntas) if slot == pendiente and texto), None)

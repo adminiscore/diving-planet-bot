@@ -88,3 +88,16 @@ async def test_sin_dato_tambien_cuando_la_pregunta_de_antes_se_aplazo(monkeypatc
     assert respuesta.startswith("Se reserva por la web") and respuesta.endswith(SEGURIDAD)
     st.preguntas_aplazadas = []  # la contestó: la pregunta cambia porque ya hay dato, no es un turno sin dato
     assert await slotfill_close._sin_dato(st, "desde cartagena", "location", SEGURIDAD) is None
+
+
+@pytest.mark.parametrize("escritor,queda", [
+    ("¡Hola! Bucear en las islas es una experiencia muy chévere 🐠", "Bucear en las islas es una experiencia muy chévere 🐠"),
+    ("¡Hola! ¡Con mucho gusto! Sí, operamos todos los días.", "¡Con mucho gusto! Sí, operamos todos los días."),
+    ("Hi! Snorkeling is a lovely way to enjoy the reef.", "Snorkeling is a lovely way to enjoy the reef."),
+    ("Hola Marta, el minicurso cuesta 655.000 COP.", "El minicurso cuesta 655.000 COP."),
+    ("Holandeses también vienen, ¿verdad?", "Holandeses también vienen, ¿verdad?"),  # no es un saludo
+])
+def test_tras_el_saludo_de_coral_el_escritor_no_vuelve_a_saludar(escritor, queda):
+    saludo = "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año. 🌊"
+    assert componer(_turno(None), f"{saludo}\n\n{escritor}") == f"{saludo}\n\n{queda}"
+    assert componer(_turno(None), escritor) == escritor  # sin el saludo de Coral, nada
