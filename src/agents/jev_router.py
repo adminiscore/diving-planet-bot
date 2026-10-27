@@ -740,14 +740,9 @@ _CUSTOMER_PLACE_Q_BARU_CARTAGENA = {
         **_CUSTOMER_PLACE_Q_SIN_BARU["criteria"],
         "cartagena": "They are in, are staying in, or set out from Cartagena (the city). Also when they are staying in "
                      "Barú or Playa Blanca: we do not pick up there, and from there they set out from Cartagena.",
-        # (a) de LAT-0b (27-oct): «sin pasar por Cartagena» era none 0,94 y ese none tumba el island del extractor
-        # (CAL-C3c): el bot volvía a preguntar desde dónde sale. Solo hay dos salidas (sonda_lugar_cliente, NEGACIONES).
-        "islands": f"{_CUSTOMER_PLACE_Q_SIN_BARU['criteria']['islands']} Also when they say they will NOT set out from, "
-                   "go to or pass through Cartagena for the trip (there are only two starting points: Cartagena or the "
-                   "islands).",
         "none": "The message does not say where they are or leave from, or it is somewhere that is neither the city of "
                 "Cartagena, Barú, Playa Blanca nor the Rosario Islands: it only names a place to dive, visit or go to, "
-                "asks a question about a place, or is unclear. Saying they will NOT set out from Cartagena is not none.",
+                "asks a question about a place, or is unclear.",
     },
 }
 

@@ -1,7 +1,8 @@
 """Banco de calibracion de `customer_place` (s4-28): ¿puede Jev decir DÓNDE está / desde dónde sale el cliente
 (Cartagena / islas / no lo dice) mejor que place_by_role (la regex de preposiciones)? Banco 1 = los casos etiquetados de tests/test_location_single_source.py;
 banco 2 = frases nuevas propias (ciego, no del golden); banco 3 = mensajes largos de primer contacto; banco 4 (27-oct,
-(a) de LAT-0b) = negaciones («sin pasar por Cartagena»), sueltas y como respuesta a la pregunta del origen. Ningun
+(a) de LAT-0b) = negaciones («sin pasar por Cartagena»), sueltas y como respuesta a la pregunta del origen; banco 5 =
+los «none» con los que CAL-C3c tumba bien un origen mal leído (no deben bajar de 0,6). Ningun
 mensaje sale del golden. Mide aciertos de Jev y de la regex y cuantas respuestas de Jev son seguras y equivocadas.
 
 27-oct: la pregunta es la de PRE (`_con_hoteles_de_la_base(_CUSTOMER_PLACE_Q_BARU_CARTAGENA)`) y el estado se arma como
@@ -88,6 +89,15 @@ NEGACIONES = [
     (f"{_PREGUNTA_ORIGEN}\nCustomer: Ni idea, todavía no lo hemos decidido", "none"),
     (f"{_PREGUNTA_ORIGEN}\nCustomer: Desde Cartagena, no estaremos en las islas", "cartagena"),
 ]
+# Mensajes en que CAL-C3c tumba bien el origen que leyó el extractor (Jev «none» seguro), de bancos propios (trazas del
+# 27-oct). Un cambio de la pregunta que los baje de 0,6 deja pasar un origen mal leído: el de (a)
+# de LAT-0b bajaba «living in Medellín… from Cartagena» de 6/6 a 4/6 y no arreglaba su caso, y se quitó.
+TUMBA_C3C = [
+    ("Hi! I'm American but I've been living in Medellín for a year. How much is the 2-dive trip from Cartagena?", "none"),
+    ("Hi, I'm from Canada. How do I book and pay for the mini course from Cartagena?", "none"),
+    ("Hi! I'm Colombian but I live in Miami. How much is the 2-dive trip from Cartagena?", "none"),
+    ("Hola, soy de Bogotá. ¿Cuánto cuesta el snorkel desde Cartagena?", "none"),
+]
 N = 2
 
 
@@ -118,7 +128,7 @@ async def main():
     total_ok = total = total_mal = 0
     async with httpx.AsyncClient() as cli:
         for nombre, banco in (("BANCO (tests)", BANCO), ("CIEGO (nuevas)", CIEGO), ("LARGOS", LARGOS),
-                              ("NEGACIONES", NEGACIONES)):
+                              ("NEGACIONES", NEGACIONES), ("TUMBA_C3C", TUMBA_C3C)):
             print(f"\n## {nombre}")
             ok_j = ok_r = seguros_mal = 0
             for caso, esperado in banco:
