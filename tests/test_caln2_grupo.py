@@ -61,7 +61,9 @@ def test_quien_no_esta_certificado_no_hereda_el_buceo():
     """«Quiero bucear, soy certificado. Voy con mi novia, que nunca ha buceado» (banco de grupos g02 y g18)."""
     st = _grupo(detected_activity="certified_diving", detected_group_size=2, acompanante_sin_certificar=True)
     assert grupo.sin_certificar_no_hereda(st)
-    assert st.detected_group_allocation == {"certified_diving": 1, "undecided": 1}
+    # como los deja `_take_undecided_members`: fuera del reparto, pendientes y con la recomendación marcada
+    assert st.detected_group_allocation == {"certified_diving": 1}
+    assert st.pending_undecided_qty == 1 and st.needs_companion_activity
 
 
 @pytest.mark.parametrize("campos", [
@@ -70,9 +72,30 @@ def test_quien_no_esta_certificado_no_hereda_el_buceo():
     {"detected_activity": "certified_diving", "acompanante_sin_certificar": True},  # sin total, se pregunta
     {"detected_activity": "certified_diving", "detected_group_size": 2, "acompanante_sin_certificar": True,
      "detected_group_allocation": {"certified_diving": 1, "snorkel": 1}},  # el reparto dicho manda
+    {"detected_activity": "certified_diving", "detected_group_size": 2, "acompanante_sin_certificar": True,
+     "pending_undecided_qty": 1},  # ya están pendientes de elegir
 ])
 def test_si_no_toca_no_cambia_el_grupo(campos):
     st = _grupo(**campos)
     antes = st.detected_group_allocation
     assert not grupo.sin_certificar_no_hereda(st)
     assert st.detected_group_allocation == antes
+
+
+@pytest.mark.parametrize("reparto,nuevo,total", [
+    ({"certified_diving": 1}, {"certified_diving": 1, "snorkel": 1}, 2),  # «ella prefiere hacer snorkel» (g24)
+    ({"certified_diving": 1, "undecided": 1}, {"certified_diving": 1, "minicourse": 1}, 2),
+    ({"snorkel": 2}, {"snorkel": 2, "minicourse": 1}, 4),  # uno de los dos que faltaban
+])
+def test_dar_actividad_a_quien_no_la_tenia_completa_el_grupo(reparto, nuevo, total):
+    assert grupo.completa(reparto, nuevo, total)
+
+
+@pytest.mark.parametrize("reparto,nuevo,total", [
+    ({"certified_diving": 2}, {"certified_diving": 1, "snorkel": 1}, 2),  # le quita el buceo a uno: corrección
+    ({"certified_diving": 1}, {"certified_diving": 1, "snorkel": 2}, 2),  # más de los que faltaban
+    ({"certified_diving": 1}, {"certified_diving": 1}, 2),  # no añade nada
+    ({"certified_diving": 1}, {"certified_diving": 1, "snorkel": 1}, None),  # sin total no se sabe quién falta
+])
+def test_lo_demas_no_completa(reparto, nuevo, total):
+    assert not grupo.completa(reparto, nuevo, total)

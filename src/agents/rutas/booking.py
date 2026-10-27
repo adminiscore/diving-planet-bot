@@ -13,7 +13,7 @@ from src.agents.intent_detector import DetectedIntent
 from src.agents.lead_summary import build_lead_summary
 from src.agents.supervisor import _booking_change_buttons
 from src.domain import activities as dom
-from src.flows import cart_render
+from src.flows import cart_render, grupo
 from src.flows.state import ConversationState, Step
 from src.utils.text import strip_accents as _strip_accents
 
@@ -455,9 +455,10 @@ def _apply_detected_intent(intent, state: ConversationState, message: str | None
         state.solo_traveler_confirmed = True
 
     # Estos campos se escriben una vez; un turno solo los sobrescribe con una correccion
-    # aceptada (`intent.overwrite`, tarea 7b).
+    # aceptada (`intent.overwrite`, tarea 7b) o, el reparto, cuando lo completa (CALN-2).
     if intent.group_allocation and (
         not state.detected_group_allocation or "group_allocation" in intent.overwrite
+        or grupo.completa(state.detected_group_allocation, intent.group_allocation, state.detected_group_size)
     ):
         state.detected_group_allocation = intent.group_allocation
         logger.info(f"[INTENT] Detected group allocation: {intent.group_allocation}")
