@@ -545,7 +545,6 @@ async def _understand(state: ConversationState, message: str, *, answered_pendin
     # adelante en el turno pese a no tener ya ningún sentido.
     if _group_allocation_fully_resolved(state):
         state.needs_companion_activity = False
-        state.companion_activity_deferred = False
         state.pending_companion_activity = None
         state.pending_companion_queue = []
         state.pending_split_total = None
@@ -930,7 +929,6 @@ async def _extraction_phase_body(
     # actividad — limpiar la cola aquí, justo antes de que se consuma.
     if _group_allocation_fully_resolved(state):
         state.needs_companion_activity = False
-        state.companion_activity_deferred = False
         state.pending_companion_activity = None
         state.pending_companion_queue = []
         state.pending_split_total = None
@@ -947,32 +945,6 @@ async def _extraction_phase_body(
         response = greeting + ask_slot(state, SLOT_COMPANION_QTY)
         state.history.append({"role": "assistant", "content": response})
         return response
-
-    # Auditoría 2026-07-23: `_understand()` detectó un acompañante mencionado
-    # solo por un ATRIBUTO ("mi amigo no está certificado"), sin actividad ni
-    # intención declarada — no hay caso válido para adivinar snorkel o
-    # minicurso, se pregunta qué le gustaría hacer.
-    #
-    # Auditoría 2026-08-26 (batería sintética contra PRE, portado de
-    # pre_gadea v0.21.1): interrumpir SIEMPRE aquí, sin mirar si ya había
-    # una pregunta obligatoria pendiente (seguridad, nacionalidad...), la
-    # enterraba sin preguntarla nunca — "soy buzo certificado... ¿han
-    # pasado más de 2 años?" seguido de "somos 2" saltaba directo a la
-    # pregunta del acompañante, sin que la de seguridad se llegara a
-    # responder jamás. Mismo criterio que el bloque
-    # `companion_activity_deferred` de más abajo: solo se interrumpe YA
-    # MISMO si no había nada más pendiente; si lo había, se difiere (se
-    # deja caer sin `return`, para que el resto del turno siga su curso
-    # normal — `next_missing_slot` volverá a preguntar por lo que de
-    # verdad tocaba) y se marca para retomar el acompañante en cuanto ese
-    # hueco se cierre.
-    if state.needs_companion_activity:
-        state.needs_companion_activity = False
-        if next_missing_slot(state) is None:
-            response = greeting + ask_slot(state, SLOT_COMPANION_ACTIVITY)
-            state.history.append({"role": "assistant", "content": response})
-            return response
-        state.companion_activity_deferred = True
 
     # ¿La extracción base (regex + gap-fill, dentro de `_understand()`) ya
     # cambió el tamaño/reparto del grupo este turno? Bug en vivo (2026-07-23,
@@ -1351,20 +1323,13 @@ async def _extraction_phase_body(
             # (que en realidad respondía a SEGURIDAD, una pregunta
             # pendiente ANTERIOR que quedó enterrada) seguía devolviendo
             # `mentions_other_person=True` turno tras turno, re-preguntando
-            # la MISMA pregunta sin parar. Además, interrumpir aquí SIEMPRE
-            # sin mirar si ya había una pregunta obligatoria pendiente la
-            # enterraba sin preguntarla nunca — se difiere con
-            # `companion_activity_deferred` si hace falta.
+            # la MISMA pregunta sin parar. La pregunta la hace `next_missing_slot` en su turno (CALN-2 paso 3a).
             _restore_main_diver_fields(
                 state, prev_main_activity, prev_main_service_id,
                 prev_main_is_certified, prev_main_last_dive, prev_main_refresher,
             )
             _contar_al_acompanante_sin_actividad(state, message, signals)
-            if next_missing_slot(state) is None:
-                response = greeting + ask_slot(state, SLOT_COMPANION_ACTIVITY)
-                state.history.append({"role": "assistant", "content": response})
-                return response
-            state.companion_activity_deferred = True
+            state.needs_companion_activity = True
             advanced = True
         elif signals.get("refresher_interested") is not None:
             # Auditoría 2026-07-22: refresher_interested no tenía NINGÚN

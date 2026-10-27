@@ -446,7 +446,6 @@ def _apply_short_answer(state: ConversationState, message: str, ia: dict | None 
                 duration = lectura_del_turno(message).duration
             if duration in ("single_day", "multi_day"):
                 state.detected_duration = duration
-                state.needs_companion_activity = True
                 return True
         return False
     if slot == SLOT_CERT_OR_COURSE:

@@ -1341,7 +1341,6 @@ async def test_companion_qty_answer_mentioning_different_activity_not_misapplied
                      {"role": "assistant", "content": "How many people would that be for snorkeling?"}]
     state.detected_activity = "certified_diving"
     state.pending_companion_activity = "snorkel"
-    state.companion_activity_deferred = True
     state.core_pending_slot = core.SLOT_COMPANION_QTY
     pending_before = state.pending_companion_activity
     assert pending_before in ("certified_diving", "snorkel")
@@ -1422,23 +1421,20 @@ def test_activity_has_textual_backing_certification_claim_backs_certified_diving
 
 
 @pytest.mark.asyncio
-async def test_companion_activity_ambiguity_defers_instead_of_burying_pending_slot(monkeypatch, extractor_dice):
+async def test_companion_activity_comes_first_and_does_not_bury_the_pending_slot():
     """Hallazgo en vivo 2026-08-26 (batería sintética contra PRE, conv 190 y
     210): cuando la ambigüedad de actividad del acompañante aparecía MIENTRAS
     todavía había una pregunta obligatoria pendiente (seguridad, en este
-    caso), el bot la enterraba para siempre — interrumpía con "¿qué le
-    gustaría hacer a tu acompañante?" y nunca volvía a preguntar por la
-    seguridad, quedándose incluso en BUCLE repitiendo la pregunta del
-    acompañante ante cualquier respuesta corta ("no", "no somos
-    colombianos") que en realidad respondía a otra cosa. Ahora se difiere: se
-    sigue preguntando lo que tocaba (seguridad), y el acompañante se retoma
-    justo antes de cerrar, sin perderse ni bloquear nada por el medio."""
-    extractor_dice({"no somos colombianos": {"is_colombian": False}})
+    caso), el bot la enterraba para siempre y entraba en BUCLE con la del
+    acompañante. CALN-2 paso 3a (orden aprobado por Gadea, 27-oct): quién hace
+    qué va primero, y las dos salen de `next_missing_slot`, así que la
+    seguridad vuelve en cuanto el acompañante elige; nada se entierra."""
     state = make_state("es")
     state.detected_activity = "certified_diving"
     state.is_certified = True
     state.location = "cartagena"
     state.detected_group_size = 1
+    state.detected_duration = "single_day"
     state.core_pending_slot = core.SLOT_SAFETY
 
     _senales = AsyncMock(return_value={
@@ -1447,28 +1443,19 @@ async def test_companion_activity_ambiguity_defers_instead_of_burying_pending_sl
          })
     with patch.object(core_routing, "detect_special_signals", new=_senales), patch.object(core_extraction, "detect_special_signals", new=_senales):
         resp = await route_message(state, "mis amigos tambien vienen")
-    # La ambigüedad del acompañante NO se pierde (se difiere), pero tampoco
-    # entierra la pregunta de seguridad que ya estaba pendiente.
-    assert state.core_pending_slot == core.SLOT_SAFETY
-    assert state.companion_activity_deferred is True
-    assert "año" in resp.lower() or "inmersión" in resp.lower() or "immersion" in resp.lower()
+    assert state.core_pending_slot == core.SLOT_COMPANION_ACTIVITY
+    assert state.needs_companion_activity is True
+    assert "snorkel" in resp.lower() or "minicurso" in resp.lower()
 
-    # Resolver seguridad y nacionalidad — el bot debe seguir preguntando por
-    # ELLAS, nunca volver a la ambigüedad del acompañante a mitad de camino.
     _senales2 = AsyncMock(return_value={})
     with patch.object(core_routing, "detect_special_signals", new=_senales2), patch.object(core_extraction, "detect_special_signals", new=_senales2):
-        resp2 = await route_message(state, "no")
-    assert state.last_dive_over_2_years is False
-    assert state.core_pending_slot != core.SLOT_COMPANION_ACTIVITY
-
-    _senales3 = AsyncMock(return_value={})
-    with patch.object(core_routing, "detect_special_signals", new=_senales3), patch.object(core_extraction, "detect_special_signals", new=_senales3):
-        resp3 = await route_message(state, "no somos colombianos")
-    assert state.is_colombian is False
-    # Ahora que ya no queda nada más pendiente, se retoma el acompañante.
-    assert state.core_pending_slot == core.SLOT_COMPANION_ACTIVITY
-    assert state.companion_activity_deferred is False
-    assert "acompañante" in resp3.lower() or "?" in resp3
+        await route_message(state, "snorkel")
+        assert state.core_pending_slot == core.SLOT_COMPANION_QTY
+        await route_message(state, "2")
+    assert state.needs_companion_activity is False
+    assert (state.detected_group_allocation or {}).get("snorkel") == 2
+    # La seguridad no se ha perdido: es lo siguiente.
+    assert state.core_pending_slot == core.SLOT_SAFETY
 
 
 @pytest.mark.asyncio
@@ -1495,7 +1482,7 @@ async def test_kids_only_mention_does_not_trigger_spurious_companion_activity():
          })
     with patch.object(core_routing, "detect_special_signals", new=_senales), patch.object(core_extraction, "detect_special_signals", new=_senales):
         await route_message(state, "los niños tienen 7 y 10")
-    assert state.companion_activity_deferred is False
+    assert state.needs_companion_activity is False
     assert state.core_pending_slot != core.SLOT_COMPANION_ACTIVITY
 
 
@@ -1520,7 +1507,7 @@ async def test_bare_headcount_in_price_question_does_not_spawn_phantom_companion
          })
     with patch.object(core_routing, "detect_special_signals", new=_senales), patch.object(core_extraction, "detect_special_signals", new=_senales):
         await route_message(state, "how much for 2 people, certified diving?")
-    assert state.companion_activity_deferred is False
+    assert state.needs_companion_activity is False
     assert state.pending_companion_activity is None
     assert state.core_pending_slot != core.SLOT_COMPANION_ACTIVITY
 
@@ -1555,7 +1542,7 @@ async def test_safety_answer_without_person_mention_does_not_spawn_phantom_compa
     with patch.object(core_routing, "detect_special_signals", new=_senales), patch.object(core_extraction, "detect_special_signals", new=_senales):
         await route_message(state, "no hace mas de 2 años que buceamos")
     assert state.last_dive_over_2_years is False
-    assert state.companion_activity_deferred is False
+    assert state.needs_companion_activity is False
     assert state.pending_companion_activity is None
     assert state.core_pending_slot != core.SLOT_COMPANION_ACTIVITY
     # El reparto de grupo NO debe llevar un companero fantasma.
@@ -1589,7 +1576,7 @@ async def test_closing_affirmation_without_person_mention_does_not_reopen_with_p
          })
     with patch.object(core_routing, "detect_special_signals", new=_senales), patch.object(core_extraction, "detect_special_signals", new=_senales):
         resp = await route_message(state, "perfecto, hagamos la reserva")
-    assert state.companion_activity_deferred is False
+    assert state.needs_companion_activity is False
     assert state.pending_companion_activity is None
     assert state.core_pending_slot != core.SLOT_COMPANION_ACTIVITY
     assert "acompañante" not in resp.lower()
@@ -1636,7 +1623,7 @@ async def test_solo_traveler_never_asked_about_companion_again():
          })
     with patch.object(core_routing, "detect_special_signals", new=_senales), patch.object(core_extraction, "detect_special_signals", new=_senales):
         await route_message(state, "listo, como pago")
-    assert state.companion_activity_deferred is False
+    assert state.needs_companion_activity is False
     assert state.core_pending_slot != core.SLOT_COMPANION_ACTIVITY
 
 
@@ -1690,14 +1677,14 @@ async def test_fully_resolved_group_allocation_self_heals_stale_companion_flags(
     state.last_dive_over_2_years = None
     state.core_pending_slot = core.SLOT_SAFETY
     # Banderas corruptas, exactamente como se observaron en vivo.
-    state.companion_activity_deferred = True
+    state.needs_companion_activity = True
     state.pending_companion_queue = ["snorkel"]
 
     _senales = AsyncMock(return_value={})
     with patch.object(core_routing, "detect_special_signals", new=_senales), patch.object(core_extraction, "detect_special_signals", new=_senales):
         resp = await route_message(state, "no")
     assert state.last_dive_over_2_years is False
-    assert state.companion_activity_deferred is False
+    assert state.needs_companion_activity is False
     assert state.pending_companion_queue == []
     assert state.core_pending_slot != core.SLOT_COMPANION_ACTIVITY
     assert "acompañante" not in resp.lower()
@@ -2288,6 +2275,7 @@ def _at_companion_activity_stage(lang: str = "es") -> ConversationState:
     # primero (preguntar un día o varios) tiene sus propios tests abajo.
     s.detected_duration = "single_day"
     s.core_pending_slot = core.SLOT_COMPANION_ACTIVITY
+    s.needs_companion_activity = True  # alguien sin elegir: dura hasta que elige (CALN-2 paso 3a)
     return s
 
 

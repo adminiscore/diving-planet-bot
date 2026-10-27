@@ -99,3 +99,26 @@ def test_dar_actividad_a_quien_no_la_tenia_completa_el_grupo(reparto, nuevo, tot
 ])
 def test_lo_demas_no_completa(reparto, nuevo, total):
     assert not grupo.completa(reparto, nuevo, total)
+
+
+def test_quien_hace_que_va_antes_que_el_origen():
+    """Paso 3a: el orden aprobado (quién hace qué, el origen, seguridad y edades, la nacionalidad); si no contesta dos
+    veces, se aplaza hasta antes del resumen como las demás."""
+    from src.agents import conversational_core as core
+
+    st = _grupo(detected_activity="certified_diving", is_certified=True, needs_companion_activity=True)
+    assert core.next_missing_slot(st) == core.SLOT_COMPANION_ACTIVITY
+    assert core.next_missing_slot(st, saltar={core.SLOT_COMPANION_ACTIVITY}) == core.SLOT_LOCATION
+
+
+def test_sin_contestar_el_origen_no_hay_acuse():
+    """«Voy con una amiga que no está certificada» a la pregunta del origen: la de ella sale delante, pero el origen
+    sigue sin contestar y no toca «¡Perfecto!» (banco g18 y g24)."""
+    from src.agents import conversational_core as core
+    from src.agents.nucleo import slotfill_close
+
+    st = _grupo(detected_activity="certified_diving", is_certified=True, needs_companion_activity=True,
+                core_pending_slot=core.SLOT_COMPANION_ACTIVITY)
+    assert slotfill_close._acuse_por_codigo(st, core.SLOT_LOCATION) == ""
+    st.location = "cartagena"
+    assert slotfill_close._acuse_por_codigo(st, core.SLOT_LOCATION) != ""

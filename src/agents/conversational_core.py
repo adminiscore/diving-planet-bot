@@ -67,11 +67,11 @@ SLOT_CERT_OR_COURSE = "cert_or_course"
 SLOT_CONFIRM_CORRECTION = "confirm_correction"
 
 
-# SLOT_COMPANION_QTY y SLOT_COMPANION_ACTIVITY NO van aquí: `next_missing_slot`
-# no los rastrea, así que con la reserva principal ya resuelta `advanced` es
-# espuriamente True y el bloque genérico Fase C (gate `not advanced`) los
-# saltaría. Tienen bloques dedicados en maybe_handle_turn (gate `not
-# resolved_short`).
+# SLOT_COMPANION_QTY NO lo rastrea `next_missing_slot`, así que con la reserva
+# principal ya resuelta `advanced` es espuriamente True y el bloque genérico
+# Fase C (gate `not advanced`) lo saltaría. SLOT_COMPANION_ACTIVITY sí sale de
+# `next_missing_slot` (CALN-2 paso 3a). Los dos tienen su bloque de lectura
+# dedicado en maybe_handle_turn (gate `not resolved_short`).
 
 
 # Desde el catalogo (`dom.dive_packages`, 2026-09-15). Con solo los dias se elige el
@@ -171,9 +171,11 @@ def _companion_activity_options(state: ConversationState) -> list[str]:
 
 
 # EX-FLUJO-1 (decisión de Gadea, 14-oct): las preguntas que se pueden dejar para antes del resumen si el cliente no
-# las contesta. No condicionan a otras; la actividad, la certificación y las confirmaciones sí, y no se aplazan.
+# las contesta. No condicionan a otras; la actividad, la certificación y las confirmaciones sí, y no se aplazan. Qué
+# hará quien aún no ha elegido tampoco: si no contesta, se le vuelve a preguntar antes del resumen (CALN-2 paso 3a).
 _SLOTS_APLAZABLES = frozenset({
-    SLOT_LOCATION, SLOT_HOTEL, SLOT_QTY, SLOT_SAFETY, SLOT_REFRESHER, SLOT_AGES, SLOT_NATIONALITY,
+    SLOT_COMPANION_ACTIVITY, SLOT_LOCATION, SLOT_HOTEL, SLOT_QTY, SLOT_SAFETY, SLOT_REFRESHER, SLOT_AGES,
+    SLOT_NATIONALITY,
 })
 
 
@@ -219,6 +221,10 @@ def next_missing_slot(state: ConversationState, saltar: frozenset[str] | set[str
         # Un reparto explícito ("3 certificados y 2 snorkel") ya dice quién está
         # certificado — la pregunta genérica sobraría.
         return SLOT_CERTIFICATION
+    if state.needs_companion_activity and SLOT_COMPANION_ACTIVITY not in saltar:
+        # Quién hace qué, antes que el origen: el plan y el precio dependen de eso (CALN-2 paso 3a, orden aprobado por
+        # Gadea el 27-oct). Antes se aplazaba, con dos esperas, hasta que no faltara nada más.
+        return SLOT_COMPANION_ACTIVITY
     if not state.location and SLOT_LOCATION not in saltar:
         return SLOT_LOCATION
     if state.location == "island" and not state.hotel and SLOT_HOTEL not in saltar:

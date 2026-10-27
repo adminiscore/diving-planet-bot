@@ -12,7 +12,6 @@ import logging
 from src.agents.conversational_core import (
     _IMPORTE_RE,
     _SLOTS_APLAZABLES,
-    SLOT_COMPANION_ACTIVITY,
     SLOT_COMPANION_QTY,
     SLOT_SAFETY,
     _answer_already_asks,
@@ -240,8 +239,11 @@ _ACUSE = {"es": "¡Perfecto! 🙌", "en": "Perfect! 🙌"}
 def _acuse_por_codigo(state: ConversationState, prev_pending) -> str:
     """ACUSE (26-oct): solo si el cliente contestó lo que se le preguntó: la pregunta de este turno ya no es la pendiente
     y ese dato ya no falta. Salía siempre que había una pendiente: 111 de 273 respuestas de integra4, 32 delante de la
-    MISMA pregunta («Muchas gracias!» → «¡Perfecto! 🙌» y otra vez la de la nacionalidad)."""
-    if not prev_pending or state.core_pending_slot == prev_pending or next_missing_slot(state) == prev_pending:
+    MISMA pregunta («Muchas gracias!» → «¡Perfecto! 🙌» y otra vez la de la nacionalidad). «Ya no falta» se mira también
+    detrás de las aplazables que salgan delante: «voy con una amiga que no está certificada» a la pregunta del origen
+    trae delante la de qué hará ella, y el origen sigue sin contestar (CALN-2 paso 3a)."""
+    sigue = next_missing_slot(state, saltar=_SLOTS_APLAZABLES - {prev_pending}) if prev_pending else None
+    if not prev_pending or state.core_pending_slot == prev_pending or sigue == prev_pending:
         return ""
     return _ACUSE["es" if state.language == "es" else "en"]
 
@@ -350,7 +352,6 @@ async def _slotfill_close_phase(
     `maybe_handle_turn`) y el nodo `slotfill_close` del subgrafo."""
     from src.agents import supervisor  # lazy
 
-    resolved_short = carry["resolved_short"]
     prev_pending = carry["prev_pending"]
     finalized = False
     cierre_previo = None
@@ -384,7 +385,6 @@ async def _slotfill_close_phase(
     # cubre a todo el grupo).
     if _group_allocation_fully_resolved(state):
         state.needs_companion_activity = False
-        state.companion_activity_deferred = False
         state.pending_companion_activity = None
         state.pending_companion_queue = []
         state.pending_split_total = None
@@ -412,36 +412,6 @@ async def _slotfill_close_phase(
         state.pending_companion_activity = state.pending_companion_queue.pop(0)
         response = ask_slot(state, SLOT_COMPANION_QTY)
         state.step = Step.FREE_TEXT
-    elif prev_pending == SLOT_COMPANION_ACTIVITY and not resolved_short:
-        # La actividad del acompañante seguía pendiente y este turno no la
-        # resolvió (deferral "lo que sea mejor" que el LLM no fija): re-preguntar
-        # en vez de caer al resumen y PERDER al acompañante (hallazgo en vivo
-        # 2026-07-24). `next_missing_slot` no rastrea este slot, de ahí el guard
-        # explícito antes de dejar que sobrescriba `core_pending_slot`.
-        #
-        # Auditoría 2026-08-26 (batería sintética contra PRE, portado de
-        # pre_gadea v0.21.1): re-preguntar INCONDICIONALMENTE aquí entraba
-        # en BUCLE — seguía repitiendo la MISMA pregunta para siempre,
-        # incluso cuando había otras preguntas obligatorias (seguridad,
-        # nacionalidad) todavía sin responder por detrás, enterradas sin
-        # posibilidad de llegar a plantearse nunca. Ahora se distingue: si
-        # el resto de la reserva YA está completa, repreguntar aquí mismo
-        # (si no, se pierde el acompañante al cerrar); si todavía falta
-        # algo más, se deja avanzar a por ello primero y se marca
-        # `companion_activity_deferred` (NO `needs_companion_activity` —
-        # ese otro flag es para la detección FRESCA del turno actual, se
-        # consume de inmediato justo tras `_understand()`, y usarlo aquí
-        # también haría que ese chequeo temprano interceptara el turno
-        # SIGUIENTE antes de procesar la respuesta a la pregunta realmente
-        # pendiente) para retomar el acompañante justo antes de cerrar.
-        nxt_now = next_missing_slot(state)
-        if nxt_now is None:
-            response = ask_slot(state, SLOT_COMPANION_ACTIVITY, reasking=True)
-            state.step = Step.FREE_TEXT
-        else:
-            state.companion_activity_deferred = True
-            response = ask_slot(state, nxt_now, reasking=(nxt_now == prev_pending))
-            state.step = Step.FREE_TEXT
     else:
         nxt = next_missing_slot(state)
         if _tarjeta_sin_seguridad(state, nxt, prev_pending):
@@ -453,21 +423,13 @@ async def _slotfill_close_phase(
             state.core_pending_slot = SLOT_SAFETY  # su respuesta, si llega, se recoge como siempre
             supervisor._maybe_build_pending_note(state)
         elif nxt is None:
-            if state.companion_activity_deferred:
-                # Ya se cerró el hueco que interrumpió la pregunta del
-                # acompañante (seguridad/nacionalidad/etc.) — se retoma
-                # ahora, antes de cerrar, en vez de darla por perdida.
-                state.companion_activity_deferred = False
-                response = ask_slot(state, SLOT_COMPANION_ACTIVITY, reasking=True)
-                state.step = Step.FREE_TEXT
-            else:
-                finalized = True
-                cierre_previo = state.mixed_last_summary
-                response = _finalize(state)
-                # Materializar la nota de lead (el cierre no-colombiano deja solo
-                # pending_lead_note_reason; en el camino legacy la construye
-                # _finalize_tree_response — aquí el equivalente).
-                supervisor._maybe_build_pending_note(state)
+            finalized = True
+            cierre_previo = state.mixed_last_summary
+            response = _finalize(state)
+            # Materializar la nota de lead (el cierre no-colombiano deja solo
+            # pending_lead_note_reason; en el camino legacy la construye
+            # _finalize_tree_response — aquí el equivalente).
+            supervisor._maybe_build_pending_note(state)
         else:
             nxt = _siguiente_pregunta(state, prev_pending)
             response = ask_slot(state, nxt, reasking=(nxt == prev_pending))

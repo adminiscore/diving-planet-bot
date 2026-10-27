@@ -197,7 +197,8 @@ class ConversationState:
     # minicurso — dos extractores distintos adivinaban cosas distintas para
     # la MISMA frase ambigua. Marca que hay que preguntar qué actividad
     # quiere ese acompañante (SLOT_COMPANION_ACTIVITY) antes de poder
-    # preguntar la cantidad.
+    # preguntar la cantidad. Dura hasta que elige o el reparto cubre a todo el
+    # grupo; la pregunta la hace `next_missing_slot` (CALN-2 paso 3a).
     needs_companion_activity: bool = False
 
     # Personas del grupo que el cliente describio sin actividad elegida ("somos 3,
@@ -249,15 +250,6 @@ class ConversationState:
     # `cert_or_course_level` guarda el curso nombrado, si el detector lo resolvio.
     needs_cert_or_course: bool = False
     cert_or_course_level: str | None = None
-
-    # Portado de pre_gadea v0.21.1 (batería sintética contra PRE): distinto
-    # de `needs_companion_activity` (detección FRESCA del turno actual, se
-    # consume de inmediato tras `_understand()`). Este se marca cuando la
-    # ambigüedad de acompañante aparece mientras TODAVÍA hay una pregunta
-    # obligatoria pendiente (seguridad, nacionalidad...) — se difiere hasta
-    # que ese hueco se cierre, y se retoma justo antes de cerrar la reserva,
-    # en vez de enterrarla o entrar en bucle re-preguntándola.
-    companion_activity_deferred: bool = False
 
     # Los avisos de `data/knowledge_base/avisos.json` que ya se le han dado en esta conversacion (los de `una_vez`
     # no se repiten). Lo rellena `src/flows/avisos.poner_avisos` al cerrar el turno (lat-deuda, 26-oct).

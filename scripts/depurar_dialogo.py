@@ -21,7 +21,7 @@ from src.agents.nucleo import slotfill_close as core_close  # noqa: E402
 from src.flows.state import ConversationState  # noqa: E402
 
 CAMPOS = ("core_pending_slot", "detected_activity", "detected_group_size", "detected_group_allocation", "location",
-          "is_certified", "solo_traveler_confirmed", "needs_companion_activity", "companion_activity_deferred",
+          "is_certified", "solo_traveler_confirmed", "needs_companion_activity",
           "pending_companion_activity", "pending_undecided_qty", "detected_duration", "hotel")
 
 
