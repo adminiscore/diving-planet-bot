@@ -53,6 +53,7 @@ información, en una posventa o cuando el cliente pide para otro. Arreglarlas un
   código antes y después de cada uno.
 - La partición de los módulos grandes (Álvaro, aparcada) se hace mejor después: este cambio reordena justo ese código.
 
-## 4. Decisión de Gadea
+## 4. Decisión de Gadea (27-oct)
 
-Pendiente.
+**APROBADA la opción A** (un compositor al final del turno), por pasos medidos por código. Gadea preguntó cuál
+de las cuatro era mejor y eligió A: la única que quita la causa y deja menos código. Se empieza por el paso 0.
