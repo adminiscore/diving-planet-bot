@@ -220,12 +220,12 @@ async def route_message(state: ConversationState, message: str) -> str:
             from src.flows.avisos import poner_avisos
 
             response = poner_avisos(state, response)
-        if state.pending_escalation_reason == escalation_before and isinstance(response, str):
+        if isinstance(response, str):
             # CALN-6 paso 1 (decisión de Gadea: un compositor al final del turno): la pregunta de la reserva, una vez y
-            # al final, detrás de lo que el código añadió al escritor y de los avisos.
+            # al final, detrás de lo que el código añadió al escritor y de los avisos; en un pase, sin ella.
             from src.agents.compositor import componer
 
-            response = componer(state, response)
+            response = componer(state, response, pase=state.pending_escalation_reason not in (None, escalation_before))
         # u3-4: una respuesta lanzada en paralelo que el turno no usó se cancela.
         cancel_pending_answer(state)
         cancelar_rag_adelantado(state)  # rag-5: la respuesta adelantada que nadie usó

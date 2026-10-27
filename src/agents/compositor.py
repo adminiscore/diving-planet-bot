@@ -56,14 +56,33 @@ def _sin_las_preguntas(respuesta: str, preguntas: list[str]) -> tuple[bool, str]
     return quitada, _PARRAFO.join(quedan)
 
 
-def componer(state, respuesta: str) -> str:
-    """La respuesta del turno con la pregunta de la reserva una vez y al final (paso 1)."""
+def _sin_parrafos_repetidos(respuesta: str) -> str:
+    """Fuera los párrafos idénticos a uno anterior (en un pase, lo contestado delante y la respuesta del turno traían la
+    misma lista dos veces: caln1-B, pareja-certificados-cop-descuento-almuerzo t3)."""
+    vistos, quedan = set(), []
+    for parrafo in respuesta.split(_PARRAFO):
+        clave = " ".join(parrafo.split())
+        if clave and clave in vistos:
+            continue
+        vistos.add(clave)
+        quedan.append(parrafo)
+    return _PARRAFO.join(quedan)
+
+
+def componer(state, respuesta: str, *, pase: bool = False) -> str:
+    """La respuesta del turno con la pregunta de la reserva una vez y al final (paso 1). En un turno que pasa a un
+    asesor, sus copias salen y no se vuelve a poner: sigue una persona (y la nota de la tarjeta, si va, ya pregunta)."""
+    if not respuesta:
+        return respuesta
+    respuesta = _sin_parrafos_repetidos(respuesta)
     preguntas = getattr(state, "_preguntas_del_turno", None) or []
     pendiente = state.core_pending_slot
     final = next((texto for slot, texto in reversed(preguntas) if slot == pendiente and texto), None)
-    if not respuesta or final is None:
+    if final is None and not pase:
         return respuesta
     quitada, cuerpo = _sin_las_preguntas(respuesta, [texto for _, texto in preguntas if texto])
     if not quitada:
         return respuesta
+    if pase or final is None:
+        return cuerpo
     return f"{cuerpo.rstrip()}{_PARRAFO}{final}" if cuerpo.strip() else final

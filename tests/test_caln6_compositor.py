@@ -54,3 +54,16 @@ def test_el_menu_repetido_queda_uno():
     """vuelo-tras-bucear t2 (caln1-B): el menú de actividades dos veces, con la logística en medio."""
     r = f"Hay que esperar 18 horas para volar.\n\n{MENU}\n\n{LISTAS}\n\n{MENU}"
     assert componer(_turno("activity", ("activity", MENU)), r) == f"Hay que esperar 18 horas para volar.\n\n{LISTAS}\n\n{MENU}"
+
+
+def test_en_un_pase_salen_las_copias_y_no_se_vuelve_a_poner():
+    """pareja-certificados-cop-descuento-almuerzo t3 (caln1-B): pase por el pago en pesos, con la tarjeta y su nota."""
+    lista = "Sobre los descuentos:\n• 10% reservando online."
+    nota = "⚠️ Si alguno lleva *más de 2 años* sin bucear, se añade el *refresher*. ¿Es el caso de alguno de ustedes?"
+    r = f"El de grupo no aplica.\n\n{SEGURIDAD}\n\n{lista}\n\nEl de grupo es desde 5.\n\n{SEGURIDAD}\n\n{lista}\n\n{nota}"
+    assert componer(_turno("safety", ("safety", SEGURIDAD)), r, pase=True) == (
+        f"El de grupo no aplica.\n\n{lista}\n\nEl de grupo es desde 5.\n\n{nota}")
+
+
+def test_un_parrafo_identico_a_otro_sale():
+    assert componer(_turno(None), "Hola.\n\nLista:\n• a\n\nOtra cosa.\n\nLista:\n•  a") == "Hola.\n\nLista:\n• a\n\nOtra cosa."
