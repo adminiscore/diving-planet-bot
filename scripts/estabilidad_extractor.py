@@ -52,14 +52,36 @@ _B_EN = ("\n\nAnswer ONLY with a JSON object (no text before or after, no ```). 
          "with the quote):\n")
 
 
+# EXT-SALIDA 2.ª tanda (Gadea #2101: con a y b los inventados subían 8 → 11-12; escribir cada clave le hace pensar cada
+# dato). «c» = primero la lista de las claves que afirma (pensando cada una) y luego solo esas; «d» = el de hoy tal
+# cual, en una sola línea sin espacios (mismas claves y null: solo quita el formato).
+_C_ES = ("\n\nResponde SOLO con un objeto JSON (sin texto antes ni después, sin ```). Primero, la clave \"afirma\": la "
+         "lista de las claves de este esquema que el cliente afirma en su mensaje; para hacerla, repasa TODAS, una a "
+         "una y en este orden, contra el mensaje entero (aunque ya se supiera o parezca obvio, si lo dice, va). Después, "
+         "SOLO esas claves, más \"idioma\" siempre, con sus tipos; cada dato es {\"valor\", \"cita\"}. Las que no "
+         "afirma no se escriben:\n")
+_C_EN = ("\n\nAnswer ONLY with a JSON object (no text before or after, no ```). First, the key \"afirma\": the list "
+         "of the keys of this schema that the customer states in their message; to make it, go through ALL of them, "
+         "one by one and in this order, against the whole message (even if it was already known or seems obvious, if "
+         "they say it, it goes in). Then ONLY those keys, plus \"idioma\" always, with their types; each fact is "
+         "{\"valor\", \"cita\"}. The ones they do not state are not written:\n")
+_COMPACTO_ES = " Escribe el JSON en UNA sola línea, sin espacios ni saltos de línea entre los elementos."
+_COMPACTO_EN = " Write the JSON on ONE single line, with no spaces or line breaks between the elements."
+
+
 def _poner_variante(variante: str | None) -> None:
     from src.agents import extractor_turno as ex
 
-    if variante == "hoy":
+    if variante in ("hoy", "d"):
         ex._SOLO_JSON_ES, ex._SOLO_JSON_EN = _HOY_ES, _HOY_EN
         ex._esquema_del_prompt = lambda esquema: esquema
+        if variante == "d":
+            ex._SOLO_JSON_ES = _HOY_ES[:-1] + _COMPACTO_ES + "\n"
+            ex._SOLO_JSON_EN = _HOY_EN[:-1] + _COMPACTO_EN + "\n"
     elif variante == "b":
         ex._SOLO_JSON_ES, ex._SOLO_JSON_EN = _B_ES, _B_EN
+    elif variante == "c":
+        ex._SOLO_JSON_ES, ex._SOLO_JSON_EN = _C_ES, _C_EN
 
 
 async def _una(caso: dict, modelo: str | None, coinciden: int, tiempos: list[float],
@@ -159,7 +181,7 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--coinciden", type=int, default=1, help="llamadas en paralelo que tienen que coincidir (1 = una)")
     p.add_argument("--concurrencia", type=int, default=8)
     p.add_argument("--etiqueta", default=None)
-    p.add_argument("--variante", choices=("hoy", "a", "b"), default=None,
+    p.add_argument("--variante", choices=("hoy", "a", "b", "c", "d"), default=None,
                    help="EXT-SALIDA: prompt de la salida del extractor (hoy = todas las claves con null; a = el del código)")
     return asyncio.run(main_async(p.parse_args(argv)))
 
