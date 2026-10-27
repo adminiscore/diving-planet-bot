@@ -636,6 +636,11 @@ def ask_slot(state: ConversationState, slot: str, *, reasking: bool = False) -> 
             # Paso 6 (ronda B): con la actividad sin concretar ("curso básico" -> curso PADI generico)
             # se ofrecia "ida y vuelta el mismo dia" a un Open Water. Solo se afirma si se sabe.
             return _pregunta_origen(lang)
+        if (getattr(state, "_senales_router", None) or {}).get("asks_question"):
+            # CALN (27-oct, g21 del banco de grupos): «¿y si en vez de un día buceamos 2 días?» recibía «ida y vuelta el
+            # mismo día» con el plan de un día del estado. Si el cliente está preguntando, el plan puede cambiar: no se
+            # afirma su duración.
+            return _pregunta_origen(lang)
         return _pregunta_origen(lang, mismo_dia=True)
     if slot == SLOT_HOTEL:
         return (
