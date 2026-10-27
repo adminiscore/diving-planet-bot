@@ -30,6 +30,26 @@ History
   - calidad: **94,8 % 80/116**, frente al 94,9 % 82/116 de anoche, dentro del ruido.
   - Deuda apuntada: el acuse ya no reconoce lo concreto del mensaje («anoto a tu amigo para el minicurso»).
 
+0.33.0 - (2026-10-27, integra6b: EN RAMA `feature/integra6-gadea`, SIN JUZGAR; PRE sigue en 0.32.9)
+---------------------
+* **lat-9 pasos 3 y 4: un solo escritor.** Lo que cubren los hechos lo escribe el escritor del RAG con los hechos y
+  sin búsqueda; fuera el redactor viejo (su prompt REDACTOR_*, su llamada, sus listas por marcas y su FALTA): −416
+  líneas en src. Con la regla del redactor dentro (`RAG_SOLO_HECHOS`, Álvaro b0f76ae: no añadir nada fuera de los
+  hechos ni calcular el corte con la hora de hoy) y los otros planes de las islas en los hechos cuando no se sabe el
+  origen.
+* **EXT2** (Álvaro): el curso Open Water no es para quien ya está certificado; «voy con una amiga» son 2. **LAT-0b**
+  (Álvaro): la certificación se confirma una vez y diciendo para qué; «el plan de N buceos» no es un curso.
+* **Arreglos de la noche:** la pregunta del origen del escritor solo ocupa el turno si el origen sigue sin saberse
+  (integra6 volvía a preguntarlo tras darlo); sin el origen, si el escritor da los precios de los dos orígenes la
+  puerta ya no los quita (decisión «origen-y-precio»; banco de 13 turnos neutro).
+* **Medida:** integra6 sin esos arreglos 78/116, 60 fallos, oculto 88,0 %: no subió. integra6b, ronda hecha
+  (`2026-10-26-integra6b-B` y `rot5-B`): p50 3,19 s, **p90 5,25 s**, p95 5,86 s, 3,24 llamadas por turno; la calidad
+  SIN JUZGAR (OpenAI sin crédito a mitad del juez). Se sube a PRE si iguala o mejora a integra5.
+* **Medido sin integrar:** juez barato (Luna no sustituye a gpt-5-mini; el juez de las rondas no cambia hasta cerrar
+  LAT, decisión de Gadea); EXT-SALIDA (recortar la salida del extractor: −0,3 s por turno pero +1-2 inventos de cada 200
+  en ex0; aparcado); lat-10 (el «hueco sin llamadas» era la medida: la duración de OpenRouter se tomaba con las
+  cabeceras; arreglo de Gonzalo para integra7).
+
 0.32.9 - (2026-10-26, integra5: a PRE)
 ---------------------
 * **lat-9 paso 2: la pregunta de la reserva la escribe el escritor.** Se fija al empezar el turno (antes del RAG

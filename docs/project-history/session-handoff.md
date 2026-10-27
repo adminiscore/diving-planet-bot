@@ -59,7 +59,34 @@ integrar la rama del otro y suite en verde, porque en PRE gana el último; (3) *
 despliegue reinicia el contenedor y mata la medida del otro (avisar en el registro de Plan Coral con la hora de fin).
 Las doce normas, con su porqué, están en el documento.
 
-### ▶️ RETOMAR AQUÍ — 25-oct, noche (Claude solo, con el mandato de Gadea): fase LAT, PRE 542d5ac
+### ▶️ RETOMAR AQUÍ — 27-oct, 03:30 (Gadea con Claude; Álvaro y Gonzalo de noche): OpenAI SIN CRÉDITO; integra6b sin juzgar; PRE = integra5
+
+- **PRE sirve integra5 `0faff2c`** (HISTORY 0.32.9): lat-9 paso 2 (el escritor cierra con la pregunta de la reserva,
+  variante «corrige»; si la pregunta se repite, el escritor ligero), ACUSE y lat-5. Golden 80/116 (50 fallos), oculto
+  90,8 %, rotativa 13/30; p50 3,28 s, p90 5,67 s, 3,29 llamadas por turno. **Sin crédito de OpenAI, PRE va degradado**
+  (embeddings de la búsqueda y el escritor).
+- **`feature/integra6-gadea` (34e156c) = integra6b, SIN JUZGAR** (el juez se cortó por el crédito): lat-9 pasos 3-4
+  (un solo escritor; fuera el redactor viejo, −416 líneas), EXT2, LAT-0b (sin la regla «soy residente», que cambiaba el
+  idioma), 66eaf8b (la pregunta del origen desfasada), c49aa89 (dos precios y pregunta), b0f76ae (Álvaro:
+  RAG_SOLO_HECHOS y los otros planes de las islas). Ronda hecha y guardada: `2026-10-26-integra6b-B` y `rot5-B`
+  (p50 3,19 s, p90 5,25 s, p95 5,86 s, 3,24 llamadas). integra6 sin esos arreglos dio 78/116, 60 fallos, oculto 88 %:
+  no subió.
+- **Al recargar OpenAI, por orden:** (1) juzgar: `judge_golden_set --run docs/robustness/synthetic-runs/2026-10-26-integra6b-B.jsonl`
+  y `--run …/2026-10-26-rot5-B.jsonl --golden docs/robustness/rotativo/2026-10-26-13.json` (la caché aprovecha lo
+  juzgado); (2) si iguala o mejora integra5 (80/116, oculto ≥ 90 %), HISTORY 0.33.0 y subir a `pre_gadea`; (3) es la
+  2.ª ronda del cierre de LAT (media de 2 rondas ≥ 82/116).
+- **En marcha:** Álvaro parte `conversational_core.py` y `nucleo/extraction.py` sin cambiar la conducta
+  (`feature/partir-core-alvaro`); Gonzalo prepara integra7 (`feature/integra7-prep-gonzalo`: código muerto 24582ff +
+  la medida de lat-10 75854ea). integra7 = integra6b + eso + la partición.
+- **Decidido o aparcado:** el juez de las rondas sigue con gpt-5-mini hasta cerrar LAT (juez mixto aparcado);
+  EXT-SALIDA aparcado (variante c: −0,3 s por turno, +1-2 inventos de cada 200 en ex0; no integrar
+  `feature/ext-salida-a-gonzalo`); ORIGEN-CONFIRMA (Álvaro, tras partir los módulos). lat-10: el «hueco sin llamadas»
+  era la medida; desde integra7 el `s` de OpenRouter sube y el hueco baja a ~0.
+- **Deuda:** origen-y-precio (banco-origen-precio 19-20/26, causas variadas); «ida y vuelta el mismo día» en la
+  pregunta del origen cuando el plan del estado es de un día y preguntan por un paquete.
+- **Ojo:** los ficheros de las rondas llevan la fecha UTC (de noche en España, la del día anterior).
+
+### (anterior) RETOMAR AQUÍ — 25-oct, noche (Claude solo, con el mandato de Gadea): fase LAT, PRE 542d5ac
 
 - **Rumbo (Gadea, 24-oct y 25-oct):** adelgazar: menos llamadas y menos latencia, borrando código (no flags nuevos);
   la calidad puede bajar algo porque se recupera después (`lat-deuda` en Plan Coral). Plan:
