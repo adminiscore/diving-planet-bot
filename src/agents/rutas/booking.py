@@ -11,7 +11,6 @@ import re
 
 from src.agents.intent_detector import DetectedIntent
 from src.agents.lead_summary import build_lead_summary
-from src.agents.supervisor import _booking_change_buttons
 from src.domain import activities as dom
 from src.flows import cart_render, grupo
 from src.flows.state import ConversationState, Step
@@ -109,41 +108,6 @@ def _looks_like_info_question(message: str) -> bool:
         or _INFO_REQUEST_ANYWHERE_RE.search(lowered)
         or _CLAUSE_QUESTION_RE.search(lowered)
     )
-
-
-def _mixed_nationality_response(state: ConversationState, message: str) -> str:
-    """Copy + efecto de estado para grupos con nacionalidades mixtas (portado a
-    `booking_agent.py`, 2026-08-27 — gap encontrado al verificar hallazgo P en
-    vivo contra PRE: el router ya clasificaba estos mensajes como ROUTE_BOOKING,
-    pero el subgrafo de booking nunca reproducía esta explicación, así que en
-    el grafo caían al slot-fill normal sin decir nada del pago individual por
-    nacionalidad). Extraído de `_shared_turn_handler` para que la cascada y el
-    nodo `booking` usen una única fuente de copy/estado, mismo patrón que
-    `_booking_change_response`.
-
-    Hallazgo A (2026-09-15): lo dispara el nucleo cuando el LLM lee un grupo mixto
-    (antes una lista de fraseos en la cascada, el nodo `booking` y el router), y el
-    historial lo escribe quien llama."""
-    # Decision del owner (2026-09-14): un grupo con nacionalidades mixtas paga
-    # TODO en dolares (USD). Antes se explicaba un pago individual por nacionalidad.
-    state.is_colombian = False
-    if state.language == "es":
-        response = (
-            "¡Entendido! Cuando en el grupo hay nacionalidades mixtas, la reserva se paga en "
-            "dólares (USD) para todo el grupo, al mismo precio equivalente — no hay descuento "
-            "especial por ser colombiano.\n\n¿Quieres que te conecte con un asesor, o prefieres "
-            "volver al menú principal?"
-        )
-    else:
-        response = (
-            "Got it! When the group has mixed nationalities, the booking is paid in US dollars "
-            "(USD) for the whole group, at the same equivalent price — there's no special "
-            "discount for being Colombian.\n\nWould you like me to connect you with an advisor, "
-            "or would you rather go back to the main menu?"
-        )
-    state.quick_replies = _booking_change_buttons(state.language)
-    logger.info("[SUPERVISOR] Mixed-nationality group detected -> honest explanation + escalate/home buttons")
-    return response
 
 
 GREETING_ONLY_KEYWORDS = {

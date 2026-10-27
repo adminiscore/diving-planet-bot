@@ -928,11 +928,12 @@ async def _extraction_phase_body(
     if not (resolved_short and len(message.strip()) <= 12) or carry.get("respuesta_por_la_ia"):
         _, companion_merged_fastpath = await _understand(state, message, answered_pending=resolved_short)
     if state.mixed_nationality_notice:
-        # Una sola fuente de copy y efecto para el grupo mixto (hallazgo A, 2026-09-15).
-        state.mixed_nationality_notice = False
-        response = greeting + supervisor._mixed_nationality_response(state, message)
-        state.history.append({"role": "assistant", "content": response})
-        return response
+        # Grupo con nacionalidades mixtas (hallazgo A, 2026-09-15; decisión del owner del 14-sep: todo en USD). CALN-6
+        # paso 2 (27-oct): ya no corta el turno con un texto fijo, que repetía lo que el escritor dice con sus hechos (la
+        # regla del grupo mixto) y cerraba con «¿…o prefieres volver al menú principal?», un menú que ya no existe
+        # (sparring s07). Queda el efecto y el turno sigue; la regla la dicen el escritor y, si hace falta, el aviso
+        # «grupo-mixto-todo-usd».
+        state.is_colombian = False
 
     # Circuit-breaker (portado 2026-09-01, hallazgo en vivo, batería de
     # grupos mixtos contra PRE, lote 8): este chequeo es el punto REAL que

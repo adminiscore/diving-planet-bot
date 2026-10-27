@@ -616,7 +616,6 @@ from src.agents.rutas.booking import (  # noqa: E402, F401
     _log_safe_message,
     _looks_like_info_question,
     _maybe_build_pending_note,
-    _mixed_nationality_response,
     _principal_sigue_en_el_reparto,
     _should_skip_to_certified_flow,
     enforce_group_allocation_consistency,
