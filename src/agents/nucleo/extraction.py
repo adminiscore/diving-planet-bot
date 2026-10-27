@@ -661,13 +661,18 @@ def _restore_main_diver_fields(
     esta certificado"), no hay ninguna actividad previa que restaurar —
     pisarla con None borraba la actividad recién y correctamente detectada
     del hablante, dejando la reserva sin actividad principal (hallazgo D,
-    batería sintética 2026-08-26)."""
+    batería sintética 2026-08-26). Igual el resto (CALN-2, 27-oct): «Quiero
+    bucear, soy buzo certificado. Vienen también unos amigos…» perdía la
+    certificación recién dicha y se le volvía a preguntar (banco g26)."""
     if activity is not None:
         state.detected_activity = activity
         state.detected_service_id = service_id
-    state.is_certified = is_certified
-    state.last_dive_over_2_years = last_dive
-    state.refresher_interested = refresher
+    if is_certified is not None:
+        state.is_certified = is_certified
+    if last_dive is not None:
+        state.last_dive_over_2_years = last_dive
+    if refresher is not None:
+        state.refresher_interested = refresher
 
 
 def _flag_cert_or_course(intent, state: ConversationState, message: str) -> None:
@@ -754,6 +759,13 @@ def _add_or_ask_companion(state: ConversationState, message: str, activity: str,
             return
         logger.info(f"[CORE] companion {activity} x{qty}: ¿ya contado en {total}? -> se pregunta el total")
         return
+    pendientes = state.pending_undecided_qty or 0
+    if pendientes and total and counted + qty <= total and not se_suma:
+        # CALN-2: cabe en el total sin los que aún no habían elegido, y nadie dice que se sume: es de ellos, que ya
+        # elige («el niño el Open Water» con el niño pendiente). Sumarlo lo contaba dos veces (banco g21: total 5 de 4).
+        quedan = pendientes - min(qty, pendientes)
+        state.pending_undecided_qty = quedan or None
+        state.needs_companion_activity = bool(quedan)
     _merge_companion_activity(state, activity, qty)
 
 

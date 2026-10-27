@@ -124,6 +124,29 @@ def test_otro_que_se_suma_no_quita_del_total_a_quien_no_ha_elegido():
     assert st.detected_group_size == 3 and st.pending_undecided_qty == 1
 
 
+def test_quien_no_habia_elegido_y_elige_no_se_cuenta_otra_vez(monkeypatch):
+    """«El niño el Open Water» con el niño pendiente de elegir en una familia de 4 (banco g21)."""
+    from src.agents.nucleo import extraction
+
+    st = _grupo(detected_activity="certified_diving", detected_group_size=4, pending_undecided_qty=1,
+                needs_companion_activity=True, detected_group_allocation={"certified_diving": 2, "companion": 1})
+    monkeypatch.setattr(st, "_jev_adds_person", 0.1, raising=False)
+    extraction._add_or_ask_companion(st, "y el niño el Open Water", "padi_open_water", 1)
+    assert st.detected_group_allocation == {"certified_diving": 2, "companion": 1, "padi_open_water": 1}
+    assert st.detected_group_size == 4 and not st.pending_undecided_qty and not st.needs_companion_activity
+
+
+def test_restaurar_a_quien_escribe_no_borra_lo_que_acaba_de_decir():
+    """«Quiero bucear, soy buzo certificado. Vienen también unos amigos…»: antes del turno no se sabía (banco g26)."""
+    from src.agents.nucleo import extraction
+
+    st = _grupo(detected_activity="certified_diving", is_certified=True)
+    extraction._restore_main_diver_fields(st, None, None, None, None, None)
+    assert st.is_certified is True
+    extraction._restore_main_diver_fields(st, None, None, False, None, None)
+    assert st.is_certified is False  # lo que había antes del turno, se protege como siempre
+
+
 def test_quien_hace_que_va_antes_que_el_origen():
     """Paso 3a: el orden aprobado (quién hace qué, el origen, seguridad y edades, la nacionalidad); si no contesta dos
     veces, se aplaza hasta antes del resumen como las demás."""

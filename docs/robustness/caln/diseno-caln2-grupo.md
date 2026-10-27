@@ -110,8 +110,11 @@ queda sencillo y lo individual cabe sin casos especiales.
 | 2b | Completar el grupo no es corregirlo (`grupo.completa`); los sin decidir, pendientes como siempre | 44/50 | g24 0/2 → 2/2 |
 | 3a | La pregunta de quien no ha decidido sale de `next_missing_slot`, primero (orden aprobado); fuera `companion_activity_deferred` y los 4 bloques que la aplazaban | 44/50 | CALN-0: repite sin respuesta 14 → 12; el acuse ya no sale si el dato sigue faltando |
 | 3a-2 | «Sin decidir» lo dice solo el extractor (fuera de la rama de señales de «otra persona», que lo marcaba en «somos unos amigos y queremos hacer snorkel»); quien se suma sin elegir nunca se queda DENTRO del reparto (`grupo.sin_decidir_aparte`, en el punto único del acompañante) | 46/56 (D 44/56, A 38/56) | 28 casos: +g26-g28; g27 0/2 → 2/2 |
+| 3b | Probado: un hecho nuevo del extractor (`otro_sin_elegir`) arreglaba g02/g03/g28 (49/56), pero un campo más en el esquema de Haiku le hacía dejar el reparto (g09: 16/16 → 6/16 en llamadas directas; ex0 no lo vio): DESCARTADO. Se quedan dos arreglos de código: restaurar a quien escribe no borra lo que acaba de decir de sí mismo (g26: la certificación se borraba y se volvía a preguntar) y quien estaba pendiente y elige no se cuenta dos veces (g21: total 5 de 4) | 46/56 | CALN-0: repite sin respuesta 12 |
 
 Quedan del banco g02, g12 y g17 (el extractor pone actividad a quien no la eligió) y g26/g28 (quien viene sin elegir:
 «unos amigos, no sé qué querrán hacer» lo lee el LLM de señales como buzos; «my friend… not sure» el extractor no da
 el reparto y la amiga hereda el buceo). Son lecturas de quien no ha elegido, sin cantidad o sin reparto: paso 3b
-(entradas sin cantidad, leídas por el extractor; fuera la rama de señales que las adivina).
+(entradas sin cantidad, leídas por el extractor; fuera la rama de señales que las adivina). El 3b mostró que no
+cabe un campo más en el extractor: quien viene sin elegir tendrá que salir de los campos que ya hay (el reparto con
+«undecided») o de quitar otro.
