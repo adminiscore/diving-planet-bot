@@ -290,3 +290,20 @@ acompañantes); la disculpa ante la queja («ya te lo dije») y el precio bueno 
    descuento de grupo dos veces seguidas (t3); la regla del grupo mixto dos veces y «¿…o prefieres volver al menú
    principal?» (s2-mixta, t1).
 8. **Latencia:** turnos de 9-14 s (s2-pareja t1 13,7 s; s2-amigos t3 12,1 s).
+
+## CALN3-01..03 · Tanda de PRECIOS contra la rama (feature/caln-gadea b0f3a97, 27-oct, `charla_rama`)
+
+Gadea (27-oct): foco en los precios y más sparring. Charlas en `docs/robustness/g3/charlas-rama/p*.jsonl`.
+
+1. **«¿Cuánto cuesta bucear?» → tres turnos sin un solo precio** (p1-cuanto-cuesta-bucear): t1 «para darte el precio
+   exacto necesito saber desde dónde sales»; t2 «no sé todavía, primero quiero saber precios, nunca he buceado» →
+   recomienda el minicurso, «el precio online incluye el 10 %» y SIN cifra; t3 «dime el precio de las dos opciones por
+   favor» → igual. La traza: `[CORE][ORIGEN] precio sin origen -> se pregunta el origen antes de cotizar` en los tres.
+   Contra la decisión «dos precios y pregunta». Causa: la puerta del origen quita los importes cuando la actividad no
+   está elegida y el escritor no da los dos orígenes (CALN-3: cotizar los candidatos con los dos orígenes).
+2. **«We'll already be staying at Isla Barú… how much?»** (p2-cedula-extranjeria-snorkel): bien la moneda (cédula de
+   extranjería → COP), pero NO toma Barú como dónde está, vuelve a preguntar el origen y no da precio (CALN-3 / el
+   origen).
+3. **«¿Cómo reservamos?» sin origen** (regateo-grupo-6 t5, reproducido 4 veces): los enlaces dependen de que Jev marque
+   la intención `enlace`; si no, el turno sin dato escribe sin hechos (sin enlace) o se descarta si pregunta el origen
+   (CALN-3: los enlaces, como los precios, una pieza del código; 9311eea arregla solo que el escritor conteste).
