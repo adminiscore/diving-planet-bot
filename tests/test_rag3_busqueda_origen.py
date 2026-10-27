@@ -39,6 +39,5 @@ async def test_rag_answer_pasa_el_origen_del_estado_a_la_busqueda(monkeypatch):
     buscar = AsyncMock(return_value=[])
     monkeypatch.setattr(rag_agent, "search_knowledge_base", buscar)
     monkeypatch.setattr(rag_agent, "condense_query", AsyncMock(side_effect=lambda q, **k: q))
-    await rag_agent.rag_answer("what is included in the snorkel tour?", lang="en", origin="island",
-                               verify_grounding=False)
+    await rag_agent.rag_answer("what is included in the snorkel tour?", lang="en", origin="island")
     assert buscar.await_args.kwargs.get("origin") == "islas"

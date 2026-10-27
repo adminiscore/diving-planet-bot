@@ -36,7 +36,7 @@ async def test_rag_answer_busca_tambien_con_la_pregunta_original(monkeypatch):
     buscar = AsyncMock(return_value=[])
     monkeypatch.setattr(rag_agent, "search_knowledge_base", buscar)
     monkeypatch.setattr(rag_agent, "condense_query", AsyncMock(return_value="How do I pay for the Fun Dives?"))
-    await rag_agent.rag_answer("great, how do i pay", lang="en", verify_grounding=False)
+    await rag_agent.rag_answer("great, how do i pay", lang="en")
     assert {c.args[0] for c in buscar.await_args_list} == {"How do I pay for the Fun Dives?", "great, how do i pay"}
 
 
@@ -45,7 +45,7 @@ async def test_si_la_reescritura_no_cambia_nada_se_busca_una_vez(monkeypatch):
     buscar = AsyncMock(return_value=[])
     monkeypatch.setattr(rag_agent, "search_knowledge_base", buscar)
     monkeypatch.setattr(rag_agent, "condense_query", AsyncMock(side_effect=lambda q, **k: q))
-    await rag_agent.rag_answer("what is included in the snorkel tour?", lang="en", verify_grounding=False)
+    await rag_agent.rag_answer("what is included in the snorkel tour?", lang="en")
     assert buscar.await_count == 1
 
 
@@ -88,7 +88,7 @@ async def test_con_la_reescrita_igual_la_marca_de_origen_no_dispara_la_busqueda_
     buscar = AsyncMock(return_value=[])
     monkeypatch.setattr(rag_agent, "search_knowledge_base", buscar)
     monkeypatch.setattr(rag_agent, "condense_query", AsyncMock(side_effect=lambda q, **k: q))
-    await rag_agent.rag_answer("¿podemos ir juntos el mismo día?", lang="es", verify_grounding=False,
+    await rag_agent.rag_answer("¿podemos ir juntos el mismo día?", lang="es",
                                extra_context="El cliente saldra desde Cartagena.")
     assert buscar.await_count == 1
 
@@ -98,7 +98,7 @@ async def test_la_original_lleva_la_misma_marca_de_origen(monkeypatch):
     buscar = AsyncMock(return_value=[])
     monkeypatch.setattr(rag_agent, "search_knowledge_base", buscar)
     monkeypatch.setattr(rag_agent, "condense_query", AsyncMock(return_value="¿Cómo pago los Fun Dives?"))
-    await rag_agent.rag_answer("listo, como pago", lang="es", verify_grounding=False,
+    await rag_agent.rag_answer("listo, como pago", lang="es",
                                extra_context="El cliente saldra desde Cartagena.")
     consultas = {c.args[0] for c in buscar.await_args_list}
     assert any(q.startswith("listo, como pago") and q.endswith("[origen_cliente]=desde Cartagena") for q in consultas)
