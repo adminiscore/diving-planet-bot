@@ -8,7 +8,10 @@ from src.flows.state import ConversationState
 
 
 def _st(**kw):
-    return ConversationState(conversation_id="arq5f", language="es", **kw)
+    st = ConversationState(conversation_id="arq5f", language="es")
+    for campo, valor in kw.items():  # CALN-2: el reparto es una propiedad (se guarda en la lista de personas)
+        setattr(st, campo, valor)
+    return st
 
 
 def test_requisitos_del_buceo_certificado_con_la_excepcion_del_refresher():

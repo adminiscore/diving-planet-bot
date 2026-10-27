@@ -107,7 +107,9 @@ class ConversationState:
     detected_service_id: str | None = None
     detected_is_certified: bool | None = None
     detected_group_size: int | None = None
-    detected_group_allocation: dict | None = None
+    # CALN-2 (27-oct): el grupo como lista de personas (`src/flows/grupo.py`); `detected_group_allocation` se calcula
+    # de ella y se escribe en ella (propiedad, al final del módulo).
+    personas: list = field(default_factory=list)
     detected_ages: list = field(default_factory=list)   # person ages mentioned across the conversation
     detected_last_dive_over_2_years: bool | None = None
     detected_duration: str | None = None
@@ -266,3 +268,20 @@ class ConversationState:
             self.history = []
         if self.remembered_facts is None:
             self.remembered_facts = {}
+
+
+def _reparto(self: ConversationState) -> dict | None:
+    from src.flows.grupo import reparto_de  # módulo hoja, como este
+
+    return reparto_de(self.personas)
+
+
+def _poner_reparto(self: ConversationState, reparto: dict | None) -> None:
+    from src.flows.grupo import entradas_de_reparto
+
+    self.personas = entradas_de_reparto(reparto)
+
+
+# CALN-2 paso 1 (27-oct): el reparto de siempre ({actividad: cuántos}, «undecided» para quien no ha elegido) se guarda
+# en la lista de personas y se lee de ella. Ida y vuelta exactas: quien lo lee o lo escribe no nota el cambio.
+ConversationState.detected_group_allocation = property(_reparto, _poner_reparto)

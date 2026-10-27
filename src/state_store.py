@@ -118,6 +118,11 @@ def deserialize_state(raw: str, conversation_id: str = "") -> ConversationState:
     else:
         data["pending_intent_confirmation"] = None
 
+    if "detected_group_allocation" in data and "personas" not in data:
+        # CALN-2 (27-oct): las conversaciones guardadas antes de la lista de personas traen el reparto de siempre.
+        from src.flows.grupo import entradas_de_reparto
+
+        data["personas"] = entradas_de_reparto(data.pop("detected_group_allocation"))
     data = _drop_unknown_fields(
         data, _CONVERSATION_STATE_FIELDS, cls_name="ConversationState", conversation_id=conversation_id,
     )
