@@ -151,6 +151,17 @@ def _infer_language(message: str, fallback: str = "es") -> str:
     return fallback
 
 
+def _lo_que_vio_el_cliente(state: ConversationState, response: str, desde: int) -> None:
+    """CALN-6 paso 2: en el historial, la respuesta tal como salió. Cada camino la apunta al escribirla, antes de los
+    avisos y del compositor; si no, el turno siguiente leía una pregunta que no se hizo (la que el compositor aplazó) o
+    no leía el aviso que sí se dio. Solo el último mensaje del bot de ESTE turno."""
+    historial = state.history or []
+    for i in range(len(historial) - 1, desde - 1, -1):
+        if historial[i].get("role") == "assistant":
+            historial[i]["content"] = response
+            return
+
+
 async def route_message(state: ConversationState, message: str) -> str:
     """Public entry point. Delegates to the actual routing logic, then
     updates the rolling conversation summary (Fase B, see
@@ -176,6 +187,8 @@ async def route_message(state: ConversationState, message: str) -> str:
     state._contestado_antes_del_pase = False  # gen-13: se renueva cada turno
     state._senales_router = None
     state._preguntas_del_turno = []  # CALN-6: las preguntas de la reserva de ESTE turno (`ask_slot`)
+    state._sugerida_al_empezar = state.suggested_activity  # CALN-6 paso 2: si su pregunta no sale, se deshace
+    historial_al_empezar = len(state.history or [])
     async with turn_trace(settings, state.conversation_id, message) as turn:
         note_turn(language=state.language, greeting=_is_greeting_only(message))
         from src.orchestration.graph import run_turn_via_graph
@@ -231,6 +244,7 @@ async def route_message(state: ConversationState, message: str) -> str:
             from src.agents.compositor import componer
 
             response = componer(state, response, pase=state.pending_escalation_reason not in (None, escalation_before))
+            _lo_que_vio_el_cliente(state, response, historial_al_empezar)
             # CALN-3 paso 1: qué importes daría el código, en la traza; no cambia la respuesta y nunca rompe el turno.
             from src.flows.cotizar import en_sombra
 

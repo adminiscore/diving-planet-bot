@@ -9,6 +9,11 @@ Paso 1: la pregunta de la reserva va UNA vez y al FINAL. `ask_slot` apunta en el
 (`_preguntas_del_turno`); aquí se quitan sus copias de la respuesta, estén donde estén (un párrafo entero o una frase con
 «?» dentro de otro), y se pone la de la pregunta pendiente al final. Si la respuesta no la llevaba (una tarjeta, un
 pase), no se toca.
+
+Paso 2: UNA pregunta como mucho. Si lo que queda ya pregunta algo (el escritor cierra con su pregunta, la nota de la
+tarjeta pregunta), la de la reserva no se pone y queda pendiente para el turno siguiente: la regla de u3-4 y CAL-C3b
+(`_answer_replaces_the_booking_question`), que solo valía en algunos caminos. Y las frases de la pregunta final (la
+explicación que la acompaña) no se repiten en el cuerpo.
 """
 from __future__ import annotations
 
@@ -21,6 +26,10 @@ logger = logging.getLogger("uvicorn.error")
 _PARRAFO = "\n\n"
 # Una frase que acaba en «?» (con el cierre de negrita, cursiva o paréntesis), dentro de una línea.
 _PREGUNTA_RE = re.compile(r"[^.!?\n]*\?+[*_)\]]*")
+# Una frase entera (acaba en «.», «!» o «?»), dentro de una línea.
+_FRASE_RE = re.compile(r"[^.!?\n]+[.!?]+[*_)\]]*")
+# Un párrafo que acaba preguntando: su última línea acaba en «?» (con la negrita o un emoji detrás).
+_ACABA_PREGUNTANDO_RE = re.compile(r"\?[*_)\]]*\s*[\U0001F000-\U0001FAFF☀-➿]?\s*$")
 # El saludo de Coral del primer turno (`conversational_core._greeting`) y el «¡Hola!» con que el escritor empieza.
 _SALUDO_DE_CORAL_RE = re.compile(r"Soy \*Coral\*|I'm \*Coral\*")
 _SALUDO_INICIAL_RE = re.compile(r"^\s*(?:¡\s*)?(?:hola|buenas(?: tardes| noches)?|buenos d[ií]as|hi|hello|hey)\b"
@@ -63,6 +72,43 @@ def _sin_las_preguntas(respuesta: str, preguntas: list[str]) -> tuple[bool, str]
     return quitada, _PARRAFO.join(quedan)
 
 
+def _sin_las_frases_de(cuerpo: str, pregunta: str) -> str:
+    """El cuerpo sin las frases de la pregunta que va al final, dichas ya en el cuerpo: «¡Perfecto, serían 2 personas
+    para el minicurso! Puedes salir desde Cartagena… o, si ya estás en las islas…» y debajo «¿Desde dónde saldrías?
+    Puedes salir desde Cartagena…» (4 de las 7 respuestas que repiten en caln2-B). Solo frases largas: «¡Perfecto!» no
+    es la pregunta."""
+    frases = [f.strip() for f in _FRASE_RE.findall(pregunta) if len(_palabras(f)) >= 6]
+    if not frases:
+        return cuerpo
+    quedan = []
+    for parrafo in cuerpo.split(_PARRAFO):
+        antes = parrafo
+        for frase in _FRASE_RE.findall(parrafo):
+            if any(_es_la_misma(frase.strip(), f) for f in frases):
+                parrafo = parrafo.replace(frase, "", 1)
+        if parrafo != antes:
+            parrafo = re.sub(r"[ \t]{2,}", " ", parrafo).strip()
+        if parrafo.strip():
+            quedan.append(parrafo)
+    return _PARRAFO.join(quedan)
+
+
+def _ya_pregunta(cuerpo: str) -> bool:
+    """¿Algún párrafo acaba preguntando? (la pregunta del escritor, la de la nota de la tarjeta)."""
+    return any(_ACABA_PREGUNTANDO_RE.search(p.strip().splitlines()[-1]) for p in cuerpo.split(_PARRAFO) if p.strip())
+
+
+def _aplazar(state) -> None:
+    """La pregunta de la reserva no se hace este turno: sigue pendiente (`core_pending_slot` no cambia) y se va lo que
+    preparó para su respuesta, que el cliente no ve: sus botones y la actividad que recomendaba (gen-8, CAL-C1). Si no,
+    un «sí» a la pregunta del escritor («¿quieres que te cuente más del curso?») elegía esa actividad
+    (`nucleo/routing._apply_short_answer`)."""
+    state.quick_replies = []
+    antes = getattr(state, "_sugerida_al_empezar", None)
+    if getattr(state, "suggested_activity", None) and state.suggested_activity != antes:
+        state.suggested_activity = antes
+
+
 def _sin_saludo_repetido(respuesta: str) -> str:
     """Tras el saludo de Coral, el escritor no vuelve a saludar (CALN-6 paso 2: «¡Hola! 🪸 Soy Coral…» y debajo «¡Hola!
     Bucear en las islas…» en 27 de los 116 primeros turnos de caln2-B)."""
@@ -90,8 +136,9 @@ def _sin_parrafos_repetidos(respuesta: str) -> str:
 
 
 def componer(state, respuesta: str, *, pase: bool = False) -> str:
-    """La respuesta del turno con la pregunta de la reserva una vez y al final (paso 1). En un turno que pasa a un
-    asesor, sus copias salen y no se vuelve a poner: sigue una persona (y la nota de la tarjeta, si va, ya pregunta)."""
+    """La respuesta del turno con la pregunta de la reserva una vez y al final (paso 1), si no pregunta ya otra cosa
+    (paso 2). En un turno que pasa a un asesor, sus copias salen y no se vuelve a poner: sigue una persona (y la nota
+    de la tarjeta, si va, ya pregunta)."""
     if not respuesta:
         return respuesta
     respuesta = _sin_parrafos_repetidos(_sin_saludo_repetido(respuesta))
@@ -107,4 +154,9 @@ def componer(state, respuesta: str, *, pase: bool = False) -> str:
                 f"({[slot for slot, _ in preguntas]}), pendiente {pendiente!r}, pase {pase}")
     if pase or final is None:
         return cuerpo
+    if _ya_pregunta(cuerpo):
+        logger.info(f"[CORE][CALN6] compositor: la respuesta ya pregunta; {pendiente!r} queda para el turno siguiente")
+        _aplazar(state)
+        return cuerpo
+    cuerpo = _sin_las_frases_de(cuerpo, final)
     return f"{cuerpo.rstrip()}{_PARRAFO}{final}" if cuerpo.strip() else final
