@@ -177,11 +177,98 @@ def _preguntas(respuesta: str) -> set[str]:
     return {dato for dato, patron in PREGUNTAS.items() if re.search(patron, frases)}
 
 
+# CALN-3 paso 0 (27-oct): los importes de la respuesta, contra el catálogo. Cada importe se busca en las tarifas de los
+# servicios (`RAW_SERVICES`, con su origen por la ruta de la tarifa); el formato es el del bot («630.000 COP», «655,000
+# COP», «178 USD»). Lo que no está en el catálogo (descuentos calculados, el hotel) no se juzga.
+_IMPORTE = re.compile(r"(\d{1,3}(?:[.,]\d{3})+|\d{2,4})\s*(cop|usd)\b", re.I)
+_CLIENTE_ISLAS = re.compile(r"sin (?:ir|salir|pasar) (?:de|por) cartagena|en las islas|en la isla|isla grande|"
+                            r"ya estamos? en|on the islands?|majagua|cocoliso|nos quedamos en el hotel|quedarnos en las islas")
+_CLIENTE_CARTAGENA = re.compile(r"(?:desde|de) cartagena|en cartagena|from cartagena|in cartagena|el continente")
+_CATALOGO: dict[tuple[str, int], set[str]] | None = None
+_PLANES: dict[tuple[str, int], set[str]] = defaultdict(set)
+
+
+def plan_de(servicio: str) -> str:
+    """El plan sin el origen: «minicourse_already_on_island» → «minicourse»."""
+    return servicio.removesuffix("_already_on_island")
+
+
+def _catalogo() -> dict[tuple[str, int], set[str]]:
+    """(moneda, importe) -> orígenes del catálogo con ese precio (online y normal). Los planes, en `_PLANES`."""
+    global _CATALOGO
+    if _CATALOGO is None:
+        from src.flows.catalog import (  # lazy: el resto del script no lo necesita
+            RAW_SERVICES,
+            fila_de_la_tarifa,
+        )
+
+        _CATALOGO = defaultdict(set)
+        for sid, servicio in RAW_SERVICES.items():
+            ruta = servicio.get("tarifa")
+            if not ruta:
+                continue
+            origen = "cartagena" if ruta.startswith("from_cartagena") else "islas"
+            fila = fila_de_la_tarifa(ruta)
+            for clave in ("cop_normal", "cop_online", "usd_normal", "usd_online"):
+                valor = fila.get(clave)
+                if not valor:
+                    continue
+                # Los USD con decimales (544,5) el bot los redondea a uno u otro lado.
+                for entero in {int(valor), round(valor), -int(-valor // 1)}:
+                    _CATALOGO[(clave[:3], entero)].add(origen)
+                    _PLANES[(clave[:3], entero)].add(plan_de(sid))
+    return _CATALOGO
+
+
+def planes_y_origenes(respuesta: str) -> tuple[set[str], set[str], set[str]]:
+    """(planes, orígenes, monedas) de los importes del catálogo que trae la respuesta."""
+    catalogo = _catalogo()
+    planes, origenes, monedas = set(), set(), set()
+    for m, n, _ in _importes(respuesta):
+        if (m, n) in catalogo:
+            planes |= _PLANES[(m, n)]
+            origenes |= catalogo[(m, n)]
+            monedas.add(m)
+    return planes, origenes, monedas
+
+
+def _importes(texto: str) -> list[tuple[str, int, str]]:
+    """(moneda, importe, línea) de cada importe del texto."""
+    salida = []
+    for linea in (texto or "").splitlines():
+        for cifra, moneda in _IMPORTE.findall(linea):
+            salida.append((moneda.lower(), int(re.sub(r"[.,]", "", cifra)), linea))
+    return salida
+
+
+def _precios(respuesta: str, origen: str | None, colombiano: bool | None, mixta: bool) -> dict[str, dict]:
+    """Los fallos de precio de UNA respuesta: origen o moneda contrarios a lo dicho, total del grupo en el texto."""
+    catalogo, fallos = _catalogo(), {}
+    importes = _importes(respuesta)
+    del_catalogo = [(m, n, catalogo[(m, n)]) for m, n, _ in importes if (m, n) in catalogo]
+    if origen and del_catalogo and all(origen not in origenes for _, _, origenes in del_catalogo):
+        fallos["precio_origen"] = {"dicho": origen, "importes": [f"{n} {m.upper()}" for m, n, _ in del_catalogo][:4]}
+    monedas = {m for m, _, _ in del_catalogo}
+    if colombiano is not None and not mixta and len(monedas) == 1:
+        if monedas == ({"usd"} if colombiano else {"cop"}):
+            fallos["precio_moneda"] = {"colombiano": colombiano, "moneda": monedas.pop()}
+    for m, n, linea in importes:
+        # Decisión A1 (Gadea, 9-oct): en el texto, precio por persona; solo la tarjeta multiplica («2 × 178 USD»).
+        if "×" in linea or "x " in linea.lower() or (m, n) in catalogo:
+            continue
+        unidad = next((k for k in range(2, 21) if n % k == 0 and (m, n // k) in catalogo), None)
+        if unidad:
+            fallos["total_en_texto"] = {"importe": f"{n} {m.upper()}", "personas": unidad}
+            break
+    return fallos
+
+
 def comprobar(conversacion: list[dict]) -> dict[str, list[dict]]:
     """Los fallos de UNA conversación (sus turnos en orden), por comprobación."""
     fallos: dict[str, list[dict]] = defaultdict(list)
     preguntado: dict[str, int] = {}  # dato -> turno en que el bot lo preguntó por última vez
     grupo, colombiano, mixta, origen_dicho = None, None, False, False
+    origen_cliente = None  # el último origen que dijo el cliente, si dijo uno solo en su mensaje
     for i, turno in enumerate(conversacion):
         mensaje, respuesta = turno.get("msg") or "", turno.get("reply") or ""
         m = _plano(mensaje)
@@ -194,6 +281,12 @@ def comprobar(conversacion: list[dict]) -> dict[str, list[dict]]:
             colombiano = True
         mixta = mixta or bool(_MIXTA.search(m)) or len(_REPARTO.findall(m)) >= 2
         origen_dicho = origen_dicho or bool(_ORIGEN_DICHO.search(m))
+        if "?" not in mensaje:  # lo que pregunta («¿y desde Cartagena?») no es su origen
+            islas, cartagena = bool(_CLIENTE_ISLAS.search(m)), bool(_CLIENTE_CARTAGENA.search(m))
+            if islas and m.count("cartagena") <= 1 and re.search(r"sin (?:ir|salir|pasar)", m):
+                cartagena = False  # «sin ir de Cartagena» = las islas
+            if islas != cartagena:
+                origen_cliente = "islas" if islas else "cartagena"
         r = _plano(respuesta)
         caso = {"turno": turno.get("turn"), "msg": mensaje[:160], "reply": respuesta[:400]}
         # repregunta
@@ -217,6 +310,9 @@ def comprobar(conversacion: list[dict]) -> dict[str, list[dict]]:
             cartagena, islas = bool(_ORIGEN_CARTAGENA.search(r)), bool(_ORIGEN_ISLAS.search(r))
             if cartagena != islas:
                 fallos["origen"].append({**caso, "origen": "cartagena" if cartagena else "islas"})
+        # precios (CALN-3 paso 0)
+        for comp, detalle in _precios(respuesta, origen_cliente, colombiano, mixta).items():
+            fallos[comp].append({**caso, **detalle})
         # composición (CALN-6)
         for comp, muestra in composicion(respuesta).items():
             fallos[comp].append({**caso, "muestra": muestra})
@@ -224,6 +320,7 @@ def comprobar(conversacion: list[dict]) -> dict[str, list[dict]]:
 
 
 COMPROBACIONES = ("repregunta", "repite_sin_respuesta", "grupo", "moneda", "origen",
+                  "precio_origen", "precio_moneda", "total_en_texto",
                   "repite", "dos_preguntas", "menu_con_plan", "frase_cortada")
 
 

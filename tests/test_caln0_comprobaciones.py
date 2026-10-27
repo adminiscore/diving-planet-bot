@@ -71,3 +71,28 @@ def test_menu_generico_tras_un_precio_y_frase_cortada():
     cortada = "Un detalle importante: el minicurso es una experiencia de iniciación de un día y no certifica. Así que"
     assert "frase_cortada" in c.composicion(cortada)
     assert not c.composicion("¡Perfecto! Como son de Bogotá, pagan en pesos colombianos (COP) y el precio es igual. 🇨🇴")
+
+
+# --- CALN-3 paso 0: los importes contra el catálogo ---
+
+def test_precio_del_otro_origen():
+    """paquete-5-buceos-islas (caln1-B t6): se aloja en Cocoliso y se le cotiza el paquete desde Cartagena."""
+    fallos = c.comprobar(_conv(
+        ("vamos a estar en Isla Grande, en Cocoliso", "¡Genial!"),
+        ("cual es el costo del paquete", "El paquete de 5 inmersiones cuesta *1.429.000 COP por persona online*."),
+    ))
+    assert fallos["precio_origen"][0]["dicho"] == "islas"
+    bien = c.comprobar(_conv(("salimos desde Cartagena", "La salida de 2 inmersiones cuesta 630.000 COP online.")))
+    assert not bien["precio_origen"]
+
+
+def test_precio_en_la_moneda_que_no_toca():
+    assert c.comprobar(_conv(("somos colombianos, ¿cuánto cuesta?", "Cuesta 178 USD por persona.")))["precio_moneda"]
+    assert not c.comprobar(_conv(("somos colombianos", "Cuesta 630.000 COP por persona.")))["precio_moneda"]
+
+
+def test_total_del_grupo_en_el_texto():
+    """Decisión A1 (Gadea, 9-oct): en el texto, precio por persona; solo la tarjeta multiplica."""
+    assert c.comprobar(_conv(("somos 3", "Para los tres son 1.890.000 COP en total.")))["total_en_texto"]
+    tarjeta = "💰 3 × 630.000 COP p.p. = *1.890.000 COP*"
+    assert not c.comprobar(_conv(("somos 3", tarjeta)))["total_en_texto"]
