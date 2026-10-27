@@ -597,6 +597,24 @@ def _completar_con_hechos(answer: str, bloques: list[dict], intenciones: list[st
     return None if hechos_mod.faltan(completada, bloques, intenciones) else completada
 
 
+# Fin de una frase: el signo (con el cierre de negrita o de paréntesis) y un espacio o el final; «630.000» no lo es.
+_FIN_DE_FRASE_RE = re.compile(r"[.!?…](?:\*{1,2}|\))?(?=\s|$)")
+
+
+def sin_la_frase_cortada(answer: str) -> str:
+    """CALN (27-oct, sparring CALN1-04): el escritor llega al tope de tokens a mitad de frase (el plan de una familia de 5:
+    «…el minicurso **no certifica**. Así») y el cliente la recibía cortada. Se queda hasta la última frase o línea
+    acabada; si no hay ninguna, el texto como está."""
+    texto = answer.rstrip()
+    fines = [m.end() for m in _FIN_DE_FRASE_RE.finditer(texto)] + [texto.rfind("\n")]
+    corte = max(fines)
+    if corte <= 0:
+        return answer
+    logger.info(f"[RAG][TOPE] el escritor llegó al tope a mitad de frase: se corta en la última acabada "
+                f"({len(texto) - corte} caracteres fuera)")
+    return texto[:corte].rstrip()
+
+
 def _cancelar(*tareas) -> None:
     for t in tareas:
         if t is not None and not t.done():
@@ -912,6 +930,8 @@ async def rag_answer(
                 return fallback
 
             answer = response.choices[0].message.content or ""
+            if getattr(response.choices[0], "finish_reason", None) == "length":
+                answer = sin_la_frase_cortada(answer)
 
             # Deterministic guards first: never let a price/%/URL not in the
             # context reach the customer (e.g. "$180" when the real price is "$178").
