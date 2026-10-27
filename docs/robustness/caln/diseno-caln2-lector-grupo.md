@@ -58,3 +58,40 @@ Una llamada corta, con su propio esquema, que devuelve **la lista de personas** 
   lector que no cuadra con uno dicho por el cliente no se guarda (se pregunta, como hoy).
 - **Inventar personas:** cita por persona, comprobada; el banco de llamadas directas cuenta los inventos.
 - **Modelo:** el de la red (`red_extractor_model`) o Haiku; se elige en el paso 1 por aciertos, inventos y tiempo.
+
+## 5. Paso 1, medido (28-oct; `scripts/medir_lector_grupo.py`, sin PRE)
+
+32 casos (el primer turno de los de un turno de banco-grupo, b1/b5/b6 de la batería y l01-l10), N=20; en cada llamada el
+extractor y el lector a la vez. A = lo que deja el extractor; B = el lector rellena lo que el extractor dejó vacío y da
+la certificación de cada persona (el reparto del extractor manda si suma el total que dijo). Lector con Haiku
+(`extractor_turno_model`), 3.ª versión del prompt (la 1.ª contaba dos veces «mi esposo y yo» y tomaba «somos Advanced» por
+el curso; la 2.ª hacía acompañante a «mi esposo no bucea» 6/20). Tres disparadores:
+
+- **T1**: el mensaje habla de otras personas y el grupo no queda completo (sin total, o un reparto que no suma).
+- **T2a**: T1, o queda alguien sin elegir (su certificación decide la recomendación: b6, l06-l10).
+- **T2b**: T2a, o cualquier grupo de 2 o más sin reparto (g28: «my friend… not sure»).
+
+| De 640 | A | B con T1 | B con T2a | B con T2b |
+|---|---|---|---|---|
+| Total bien | 537 | 639 | 639 | 639 |
+| Reparto bien | 477 | 585 | 585 | **601** |
+| Certificación bien | 507 | 527 | 635 | **635** |
+| Inventos (más personas o una actividad no elegida) | 60 | 54 | 54 | **36** |
+| Llamadas en que salta | — | 272 | 443 | 481 |
+
+Arregla b1, b5, b6, l01, l02, l06, l08, g02, g16, g28, g30 y g31 (de 0-6/20 a 18-20/20). Los inventos que quedan son
+del extractor donde el lector no salta o su reparto ya cuadra (g12, g17, l10). El lector no lee el JSON 3 de ~690 veces
+(se sigue con lo del extractor) y descarta ~0,1 entradas por llamada sin cita.
+
+**Tiempo:** extractor p50 3,2 s / p95 4,6 s; lector p50 1,7 s / p95 2,4 s.
+
+| Turnos que lo llamarían | T1 | T2a | T2b |
+|---|---|---|---|
+| Golden visible (368 turnos; sin el oculto) | 9 (2,4 %) | 18 (4,9 %) | 35 (9,5 %) |
+| Sparring, 2.ª tanda (22 turnos) | 5 | 9 | 12 |
+| p95 de esos turnos en el golden: hoy → a la vez que el extractor → detrás del extractor | 8,2 → 8,2 → 9,5 s | 8,2 → 8,2 → 9,5 s | 8,7 → 8,7 → 10,2 s |
+| Lo mismo en el sparring | 12,1 → 12,1 → 13,9 s | igual | igual |
+
+«A la vez» supone que el lector sale con el extractor, pero el disparador depende de lo que lee el extractor: para no
+esperar habría que lanzarlo cuando Jev ya señale otras personas y tirar la lectura si luego no hace falta (más llamadas
+que turnos que lo usan). «Detrás» es lo que suma si espera al extractor: +1,3-1,5 s al p95 de esos turnos.
