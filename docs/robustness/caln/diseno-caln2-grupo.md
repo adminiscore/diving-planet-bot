@@ -87,11 +87,12 @@ queda sencillo y lo individual cabe sin casos especiales.
 
 ## 6. Decisiones de Gadea (27-oct)
 
-1. Enfoque: pendiente de los pros y contras de arriba (propuesta A + B).
+1. **Enfoque APROBADO: A + B** (una lista de personas con entradas de una o de varias iguales, que se parten cuando
+   llega un dato de una sola; todo lo demás derivado por código).
 2. **Persona sin decidir: se le recomienda y elige el cliente**, como hoy. La recomendación depende de los días: con
    más de un día se puede ofrecer también el Open Water (la certificación necesita más de un día); con un día, minicurso o
    snorkel.
-3. **Orden de las preguntas** (Gadea: «como creas que es mejor, más óptimo, económico y orgánico»):
+3. **Orden de las preguntas, APROBADO** (Gadea: «como creas que es mejor, más óptimo, económico y orgánico»):
    1. **Quién hace qué** (las personas y su actividad): el plan y el precio dependen de eso; si hay varias sin decidir,
       UNA pregunta para todas («¿qué les gustaría hacer a los otros dos?»);
    2. **el origen** (también cambia plan y precio);
