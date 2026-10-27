@@ -40,14 +40,14 @@ def _elegidas(state) -> list[str]:
 def candidatos(state) -> list[str]:
     """Sin actividad elegida, los candidatos que deja lo que se sabe (decisión 2: los 2-3 del contexto, nunca el
     catálogo): certificado, el buceo; sin certificar, el minicurso y, si no ha dicho que quiere bucear, el snorkel
-    (CALN3-P01: «nunca he buceado» a «¿cuánto cuesta bucear?» no pide el snorkel); si solo se sabe que quiere bucear,
-    el buceo y el minicurso."""
-    quiere_bucear = getattr(state, "quiere_bucear", False)
+    (CALN3-P01: «nunca he buceado» a «¿cuánto cuesta bucear?» no pide el snorkel); sin saber si está certificado, el
+    buceo y el minicurso. Solo se llama cuando pide precio: «hola, ¿cuánto cuesta bucear?» llega sin lectura del
+    extractor (Jev: nada que apuntar), así que no se espera a `quiere_bucear`."""
     if state.is_certified is True:
         return ["certified_diving"]
     if state.is_certified is False:
-        return ["minicourse"] if quiere_bucear else ["minicourse", "snorkel"]
-    return ["certified_diving", "minicourse"] if quiere_bucear else []
+        return ["minicourse"] if getattr(state, "quiere_bucear", False) else ["minicourse", "snorkel"]
+    return ["certified_diving", "minicourse"]
 
 
 def actividades_a_cotizar(state) -> list[str]:

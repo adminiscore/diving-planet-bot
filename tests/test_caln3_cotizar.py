@@ -14,7 +14,7 @@ def test_sin_actividad_elegida_los_candidatos_del_contexto():
     assert cotizar.actividades_a_cotizar(_st(quiere_bucear=True)) == ["certified_diving", "minicourse"]
     assert cotizar.actividades_a_cotizar(_st(is_certified=False)) == ["minicourse", "snorkel"]
     assert cotizar.actividades_a_cotizar(_st(is_certified=True)) == ["certified_diving"]
-    assert cotizar.actividades_a_cotizar(_st()) == []
+    assert cotizar.actividades_a_cotizar(_st()) == ["certified_diving", "minicourse"]  # pide precio sin saber nada
 
 
 def test_el_grupo_manda_y_sin_origen_van_los_dos():
