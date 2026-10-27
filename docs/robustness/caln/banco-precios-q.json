@@ -1,0 +1,78 @@
+{
+ "about": "Casos de la 2.ª tanda de PRECIOS contra la rama (hallazgos CALN3-Q01..Q09, 27-oct; docs/robustness/g3/charlas-rama/q*.jsonl), para medir sin juez con scripts/puntua_banco_edades.py (estado, estado_no, debe, ninguno; «a|b» = cualquiera; minúsculas y sin tildes) sobre el ÚLTIMO turno. Es lo que el bot DEBERÍA hacer. Frases nuestras (las del sparring): no salen del golden, de G9/G10 ni de las charlas reales. Aparte de banco-sparring.json (la batería de Álvaro) para no pisarnos.",
+ "dialogos": [
+  {
+   "id": "q01-she-the-mini-course",
+   "tarea": "CALN-2 lectura del reparto (CALN3-Q01)",
+   "turnos": [
+    "Hi! My wife and I are staying at Hotel San Pedro de Majagua on Isla Grande next week. I'm PADI Open Water certified, she has never dived. What are the prices?",
+    "I'd do the 2 dives and she the mini course. Is the equipment included? What would be the total for both of us?"
+   ],
+   "estado": {
+    "detected_group_allocation": {
+     "certified_diving": 1,
+     "minicourse": 1
+    }
+   },
+   "ninguno": [
+    "which option"
+   ]
+  },
+  {
+   "id": "q02-repite-lo-de-ella",
+   "tarea": "CALN-2 repetir la actividad de ella no borra al buzo (CALN3-Q02)",
+   "turnos": [
+    "Hi! My wife and I are staying at Hotel San Pedro de Majagua on Isla Grande next week. I'm PADI Open Water certified, she has never dived. What are the prices?",
+    "I'd do the 2 dives and she the mini course. Is the equipment included? What would be the total for both of us?",
+    "I told you, she wants the mini course. Just one day."
+   ],
+   "estado": {
+    "detected_group_allocation": {
+     "certified_diving": 1,
+     "minicourse": 1
+    }
+   },
+   "ninguno": [
+    "which option"
+   ]
+  },
+  {
+   "id": "q03-el-que-falta-es-el-buzo",
+   "tarea": "CALN-2 la pregunta de quien no ha elegido (CALN3-Q03)",
+   "turnos": [
+    "Hola! somos 3 amigos de Medellín. Uno es buzo certificado y los otros dos queremos hacer snorkel. Cuánto nos sale?",
+    "Salimos desde Cartagena, estamos en Getsemaní. Y hay algún descuento?"
+   ],
+   "ninguno": [
+    "no estan certificados",
+    "no estas certificado"
+   ]
+  },
+  {
+   "id": "q05-solo-el-de-grupo",
+   "tarea": "CALN-3 descuentos: los demás solo si los pregunta (CALN3-Q05)",
+   "turnos": [
+    "Buenas, somos 5 amigos de España y queremos sacarnos el Open Water en Cartagena. Qué precio tiene?",
+    "Entonces el descuento de grupo nos aplica o no? Somos 5"
+   ],
+   "debe": [
+    "no aplica|no les aplica|no nos aplica"
+   ],
+   "ninguno": [
+    "equipo propio|equipo completo"
+   ]
+  },
+  {
+   "id": "q06-ya-dijo-cuantas",
+   "tarea": "CALN-6 sin recomendar el plan que ya eligió (CALN3-Q06)",
+   "turnos": [
+    "Hi! My wife and I are staying at Hotel San Pedro de Majagua on Isla Grande next week. I'm PADI Open Water certified, she has never dived. What are the prices?",
+    "I'd do the 2 dives and she the mini course. Is the equipment included? What would be the total for both of us?",
+    "No, she does the mini course and I do the 2 dives. How do we book?"
+   ],
+   "ninguno": [
+    "i recommend the"
+   ]
+  }
+ ]
+}
