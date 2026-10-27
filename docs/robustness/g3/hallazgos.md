@@ -179,3 +179,52 @@ refunded?"):
 - Repite los enlaces (texto "¿te los vuelvo a pasar?" + tarjeta con los dos enlaces) y la tarjeta da totales (G3-02).
 
 Medida sin hacer: el crédito de OpenAI se agotó a las 21:31 (429 `credit_balance_exhausted`, también en PRE).
+
+## CALN1-01 · Familia (2 Advanced + niño de 11 + suegra acompañante) no llega a la tarjeta en 6 turnos — conv 6768 (27-oct, PRE integra5 0faff2c)
+
+Sparring de CALN-1 (Claude contra el bot). Zona: **el grupo** (CALN-2) y el extractor.
+
+1. «Vamos a estar en Cartagena… mi marido y yo buceamos (somos Advanced), mi hijo tiene 11 y nunca ha buceado, mi
+   suegra viene pero no se mete al agua. ¿Qué nos recomiendas y cuánto sale?» → BIEN: recomienda sin asumir (2 inmersiones,
+   minicurso, acompañante), precios en USD y COP (sin nacionalidad), sin totales. 10 s.
+2. «somos colombianos. ¿Y si buceamos 2 días? ¿y el niño en 2 días?» → el escritor, muy bien (COP, paquetes de 2 días con
+   noche en las islas, Open Water junior); pero el flujo pega **«¿Eres buzo certificado?»** (ya dicho: Advanced) detrás
+   de su propia pregunta del asesor: repregunta y dos preguntas.
+3. «ya te dije que los dos somos Advanced 😅 paquete de 5, el niño el Open Water, mi suegra de acompañante, salimos el
+   sábado» → «¡Perfecto! 🙌» seco y **«¿Desde dónde saldrías?»** (dijo «vamos a estar en Cartagena» y el bot cotizó desde
+   Cartagena).
+4. «desde Cartagena, ya te lo había dicho» → «¡Perfecto! 🙌» y la pregunta de seguridad (correcta).
+5. «no, hace 6 meses» → **menú para «quien no está certificado»** (el niño ya eligió el Open Water y la suegra acompaña).
+6. «el niño el Open Water y mi suegra de acompañante, como te dije» → **«¿ya tienen esa certificación o quieren
+   sacarla con el curso?»**: bucle.
+
+Clases: el grupo persona a persona no se guarda (lo que elige cada uno se pierde) → CALN-2; certificación por nivel
+(«Advanced») no leída → extractor; origen «estar en Cartagena» no guardado; el acuse seco ante una queja del cliente
+(«ya te lo dije»). Pasa al banco de grupos como g21.
+
+## CALN1-02 · Pareja (él buzo PADI, ella nunca ha buceado) cotizada como dos minicursos — conv 6769 (27-oct, PRE integra5)
+
+1. «My boyfriend is a PADI diver and I've never tried it. How much for both of us one day?» → **solo el precio del
+   minicurso** «para los dos» («your boyfriend's certification doesn't change the price of this plan»): él, certificado,
+   haría la salida de buceo. Bien: sin origen, los dos orígenes y las dos monedas.
+2. «staying at Isla Grande, he wants to dive, I'd try the mini course, we're from Canada» → bien (124 y 134 USD desde
+   las islas, sin almuerzo); pero el flujo repite la recomendación que el escritor ya dio («I recommend the 2 dives…»).
+3. «he dived last month. how do we pay?» → tarjeta correcta (dos líneas, enlaces, recogida), pero la moneda se dice tres
+   veces (arriba, nota de la tarjeta y al final).
+
+Clases: el grupo en la primera cotización (cada persona su actividad) → CALN-2 / CALN-3; redundancias del montaje
+(recomendación repetida, moneda ×3) → CALN-6.
+
+## CALN1-03 · Amigos de Medellín: «snorkel en las islas» como origen, corrección del origen sin re-cotizar y frase repetida — conv 6770 (27-oct, PRE integra5)
+
+1. «somos unos amigos de Medellín y queremos hacer snorkel en las islas este puente, ¿cuánto vale?» → cotiza SOLO «ya en
+   las islas» (150.000 COP): nombrar las islas como sitio de la actividad no es el origen (CAL-C3c, decisión
+   «origen-y-precio»). Bien: «de Medellín» = COP.
+2. «no no, salimos desde Cartagena… somos 5: 2 snorkel y 3 buceo, certificados» → acepta el origen y el reparto, pero
+   NO re-cotiza el snorkel desde Cartagena (el cliente se queda con el precio de las islas) ni dice que lo cambió.
+3. «no, todos buceamos este año. ¿y el snorkel desde Cartagena?» → tarjeta correcta (3 × 630.000 y 2 × 448.000 COP,
+   pago colombiano por asesor), pero la frase del precio del snorkel sale DOS veces seguidas y «el asesor ya tiene el
+   plan» va antes y después de la tarjeta. 12 s.
+
+Clases: origen leído del sitio de la actividad → CALN-3 / extractor; corrección del origen tras un precio sin
+re-cotizar → CALN-3 (el resolvedor de precios); frases repetidas del montaje → CALN-6.
