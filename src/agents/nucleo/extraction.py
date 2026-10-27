@@ -318,10 +318,11 @@ _NAMED_PERSON_RE = re.compile(_SINGULAR_PERSON, re.IGNORECASE)
 def _contar_al_acompanante_sin_actividad(state: ConversationState, message: str, signals: dict) -> None:
     """DEUDA-EXT2 (26-oct): "Voy con una amiga que no está certificada" dejaba el total sin saber y se preguntaba
     "¿cuántas personas?" (banco-deuda-ext2 g1). Una persona más, en singular y sin total sabido: son 2. Qué hará ella se
-    sigue preguntando, como hoy."""
-    if state.detected_group_size:
+    sigue preguntando, como hoy. CALN2-04 (27-oct): con más gente en plural en el mismo mensaje («voy con mi esposa, que no
+    bucea, y nuestras hijas de 8 y 5») no son 2: el total queda sin saber (banco-edades e1)."""
+    if state.detected_group_size or _PLURAL_COMPANION_RE.search(message):
         return
-    if _singular_companion(message) or (signals.get("companion_is_singular") and not _PLURAL_COMPANION_RE.search(message)):
+    if _singular_companion(message) or signals.get("companion_is_singular"):
         state.detected_group_size = 2
         logger.info("[CORE][DEUDA-EXT2] acompañante sin actividad, en singular y sin total: grupo de 2")
 

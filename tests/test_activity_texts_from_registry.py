@@ -63,9 +63,3 @@ def test_recall_answer_uses_registry_recall_text(lang):
     state.language = lang
     state.detected_activity = "padi_open_water"
     assert dom.text("padi_open_water", "recall", lang) in core._recall_answer(state, "activity")
-
-
-@pytest.mark.parametrize("lang", LANGS)
-def test_group_plan_uses_registry_plan_labels(lang):
-    text = eligibility.format_group_plan(eligibility.plan_group(noncert_ages=[9]), lang)
-    assert dom.text("bubble_makers", "plan_label", lang) in text

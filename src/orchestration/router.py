@@ -157,16 +157,6 @@ def classify_route(conv_state: ConversationState, message: str, signals: dict) -
     if sup.pregunta_si_es_ia(msg_lower, signals):
         return ROUTE_DEFLECT
 
-    # ── INFO (elegibilidad por edad) ──
-    # Cierre del hueco "patrón A" del audit §1.5: la cascada responde las
-    # preguntas de edad de forma determinista (`_maybe_answer_age_eligibility`,
-    # ROUTE_INFO) ANTES del núcleo, pero es un gate "decide-haciendo" que el
-    # router no podía predecir. `_looks_like_age_eligibility_question` es el
-    # predicado puro equivalente (cue + edad presente/recordada). Va aquí, antes
-    # de DIVE TO HEAL, igual que en la cascada.
-    if sup._looks_like_age_eligibility_question(message, conv_state):
-        return ROUTE_INFO
-
     # ── SAFETY / INFO (DIVE TO HEAL) ──
     adaptive_now = (regex_vale and bool(sup._ADAPTIVE_DIVING_PATTERN.search(message))) or adaptive_signal
     # El contexto adaptativo persiste entre turnos: un "¿cuánto cuesta?" sin

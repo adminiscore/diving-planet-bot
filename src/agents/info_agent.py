@@ -5,13 +5,9 @@ Ver `docs/multi-agent-refactor-plan.md` §5 Fase 2.4 y §4.bis (taxonomía).
 ## Qué maneja
 
 La ruta `ROUTE_INFO` (preguntas de información factual que la cascada resuelve
-ANTES del núcleo). Dos gates, ambos **pre-núcleo** → se reproducen directamente:
+ANTES del núcleo), **pre-núcleo** → se reproduce directamente:
 
-1. **Elegibilidad por edad** (`_maybe_answer_age_eligibility`): respuesta
-   determinista desde la única fuente de verdad (`eligibility.py`), sin RAG ni
-   alucinación. Es el gate del "patrón A" del audit §1.5, ahora enrutado a INFO
-   por `router._looks_like_age_eligibility_question` (predicado puro).
-2. **DIVE TO HEAL no-precio** (`_ADAPTIVE_DIVING_PATTERN` / señal
+- **DIVE TO HEAL no-precio** (`_ADAPTIVE_DIVING_PATTERN` / señal
    `adaptive_diving_topic`, sin pregunta de precio): info factual del programa de
    buceo adaptado vía `rag_answer` (RAG con grounding, en Python plano). Las
    preguntas de precio dentro de DIVE TO HEAL son SAFETY (nodo `escalation`), no
@@ -21,17 +17,17 @@ La RAG queda en Python plano dentro del nodo (no envuelta en abstracciones de
 LangChain), como pide el plan. Detectores/handlers viven todavía en
 `supervisor.py` (import perezoso, patrón del repo); migran en Fase 3.
 
+La elegibilidad por edad era otro gate de aquí hasta el 27-oct (CALN2-04): con edades y «¿qué podemos hacer?» se comía
+el turno (solo los niños, sin saludo ni los adultos, y sin guardar el grupo). Ahora la contesta el flujo normal, con las
+edades exactas del código (`contexto_rag`, `eligibility.beginner_options_for_age`).
+
 ## Orden y garantía del router
 
-El router comprueba edad ANTES de DIVE TO HEAL (igual que la cascada: línea 2109
-vs 2117), así que este nodo hace lo mismo. Si el router mandó INFO, los gates de
-otras rutas (SAFETY/CHANGE/DEFLECT/mixta) ya dieron False.
+Si el router mandó INFO, los gates de otras rutas (SAFETY/CHANGE/DEFLECT/mixta) ya dieron False.
 
 ## Resiliencia (principio #10, "sin fugas")
 
-`_looks_like_age_eligibility_question` es una aproximación (puede sobre-disparar);
-si el gate de edad real devuelve None y tampoco es DIVE TO HEAL, NO se dropea el
-turno: se delega en la cascada, que siempre responde.
+Si no es DIVE TO HEAL, NO se dropea el turno: se delega en la cascada, que siempre responde.
 """
 
 from __future__ import annotations
@@ -50,7 +46,6 @@ async def info_node(state: BotState) -> dict:
     from src.agents.supervisor import (
         _ADAPTIVE_DIVING_PATTERN,
         _alcohol_and_food_policy_answer,
-        _maybe_answer_age_eligibility,
         _shared_turn_handler,
         private_group_event_reply,
         regex_decide,
@@ -87,15 +82,7 @@ async def info_node(state: BotState) -> dict:
         conv.history.append({"role": "assistant", "content": answer})
         return {"reply": answer}
 
-    # 1 · Elegibilidad por edad (pre-núcleo, determinista desde eligibility.py).
-    age_answer = _maybe_answer_age_eligibility(message, conv)
-    if age_answer is not None:
-        logger.info("[NODE:info] elegibilidad por edad -> respuesta determinista")
-        conv.history.append({"role": "user", "content": message})
-        conv.history.append({"role": "assistant", "content": age_answer})
-        return {"reply": age_answer}
-
-    # 2 · DIVE TO HEAL no-precio -> RAG (info factual del programa). Persiste el
+    # 1 · DIVE TO HEAL no-precio -> RAG (info factual del programa). Persiste el
     #     contexto adaptativo igual que la cascada (líneas 2130-2131). El usuario
     #     se añade al historial ANTES de llamar a RAG (para que lo vea), como en
     #     la cascada.
@@ -118,8 +105,7 @@ async def info_node(state: BotState) -> dict:
         logger.info("[NODE:info] DIVE TO HEAL no-precio -> RAG")
         return {"reply": answer}
 
-    # 3 · Defensa "sin fugas": el router aproximó INFO pero ningún gate dispara
-    #     (p. ej. `_looks_like_age_eligibility_question` sobre-disparó) -> delegar
-    #     en la cascada, que siempre responde.
+    # 2 · Defensa "sin fugas": el router aproximó INFO pero ningún gate dispara -> delegar en la cascada, que siempre
+    #     responde.
     logger.info("[NODE:info] sin match (aproximación del router) -> delego en la cascada")
     return {"reply": await _shared_turn_handler(conv, message, routing_signals=signals)}

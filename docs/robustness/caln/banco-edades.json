@@ -1,0 +1,20 @@
+{
+ "about": "CALN2-04 (27-oct; Gadea #2156): el camino viejo de edades (`_maybe_answer_age_eligibility`) se comía el turno con edades y «¿qué podemos hacer?»: solo los niños, sin saludo ni los adultos, con relleno («Si además preguntabas…») y sin guardar el grupo. Sin él, lo contesta el flujo normal con las edades exactas del código (contexto_rag, eligibility.beginner_options_for_age). Edades del registro: snorkel desde 6, Bubble Makers de 8 a 10, minicurso y Open Water desde 10, Advanced desde 12. Se mira el ESTADO y la respuesta del último turno (puntua_banco_edades.py): «debe» = cada grupo «a|b» tiene que salir; «ninguno» = ninguno puede salir. e1: el total de 4 (yo, mi esposa y nuestras hijas) no lo da el extractor (4/4 sin group_size): hasta que lo lea, se mira que no quede el 2 de la regla de DEUDA-EXT2. Frases nuestras: no salen del golden, de G9/G10 ni de las charlas reales.",
+ "dialogos": [
+  {"id": "e1-familia-buzo-ninas", "turnos": ["¡Hola! Soy buzo Advanced y quiero bucear. Voy con mi esposa, que no bucea, y nuestras hijas de 8 y 5. ¿Qué podemos hacer todos?"],
+   "estado_no": {"detected_group_size": 2}, "edades": [5, 8],
+   "debe": ["soy *coral*|i'm *coral*", "bubble", "acompañ|companion"], "ninguno": ["si además preguntabas|if you were also asking"]},
+  {"id": "e2-nina-9-puede-bucear", "turnos": ["Mi hija tiene 9 años, ¿puede bucear con ustedes?"], "edades": [9],
+   "debe": ["10"], "ninguno": ["si además preguntabas|if you were also asking"]},
+  {"id": "e3-desde-que-edad-minicurso", "turnos": ["¿Desde qué edad se puede hacer el minicurso?"],
+   "debe": ["10"], "ninguno": ["si además preguntabas|if you were also asking"]},
+  {"id": "e4-hijo-14-open-water-en", "turnos": ["My son is 14, can he take the Open Water course with you?"], "edades": [14],
+   "debe": ["junior|yes|sí"], "ninguno": ["si además preguntabas|if you were also asking"]},
+  {"id": "e5-nino-5-que-puede", "turnos": ["Somos dos adultos y un niño de 5 años, ¿qué puede hacer el niño?"], "edades": [5],
+   "debe": ["acompañ|companion"], "ninguno": ["si además preguntabas|if you were also asking"]},
+  {"id": "e6-snorkel-y-luego-edad", "turnos": ["Queremos hacer snorkel en familia, saliendo de Cartagena", "El pequeño tiene 7, ¿puede hacerlo?"],
+   "edades": [7], "debe": ["snorkel", "si|puede"], "ninguno": ["si además preguntabas|if you were also asking"]},
+  {"id": "e7-ninos-6-y-11-en", "turnos": ["We're two adults with kids aged 6 and 11, what can the kids do?"], "edades": [6, 11],
+   "debe": ["snorkel", "mini"], "ninguno": ["si además preguntabas|if you were also asking"]}
+ ]
+}

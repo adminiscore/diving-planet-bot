@@ -1,5 +1,6 @@
 """Detectores y respuestas fijas de la ruta `info` (`info_agent.py`): alcohol y alergias, grupo privado o evento de
-empresa, "¿cambia el precio por nacionalidad?" y la elegibilidad por edad.
+empresa y "¿cambia el precio por nacionalidad?". (La elegibilidad por edad se fue el 27-oct, CALN2-04: la contesta el
+flujo normal con las edades exactas del código; ver `contexto_rag` y `eligibility.beginner_options_for_age`.)
 
 s4-2 (19-oct): movido tal cual desde `supervisor.py`, que lo re-exporta. Ver `src/agents/rutas/__init__.py`.
 """
@@ -7,10 +8,8 @@ s4-2 (19-oct): movido tal cual desde `supervisor.py`, que lo re-exporta. Ver `sr
 import logging
 import re
 
-from src.agents.intent_detector import lectura_del_turno
 from src.agents.lead_summary import build_lead_summary
 from src.domain.politicas import politicas
-from src.flows import eligibility
 from src.flows.state import ConversationState, Step
 
 logger = logging.getLogger("uvicorn.error")
@@ -168,116 +167,3 @@ _SAME_PRICE_DIFFERENT_NATIONALITY_RE = re.compile(
     r"same\s+(?:price|thing).{0,40}(?:colombian|foreign)",
     re.IGNORECASE,
 )
-
-
-# Cues that turn an age mention into an eligibility QUESTION we should answer
-# from the rules ("puede bucear?", "hay edad mínima?", "can my son dive?").
-_AGE_ELIGIBILITY_CUE = re.compile(
-    r"(edad\s+m[ií]nima|edad\s+minima|minimum\s+age|hay\s+(?:una\s+)?edad|"
-    r"a\s+partir\s+de\s+qu[eé]\s+edad|desde\s+qu[eé]\s+edad|"
-    r"\bpued[eo](?:n|s)?\b|\bpodemos\b|\bpodr[íi]a[n]?\b|se\s+puede|es\s+posible|"
-    r"\bcan\s+(?:my|he|she|they|the|a|i|we|kids?|children)\b|"
-    r"\bis\s+it\s+possible|old\s+enough|too\s+young|"
-    r"dejan?\s+(?:bucear|entrar)|permit|allowed|"
-    # options / what-can-they-do questions (valuable when a minor is involved)
-    r"qu[eé]\s+opciones|qu[eé]\s+(?:actividad(?:es)?|plan(?:es)?)|"
-    r"qu[eé]\s+(?:puede[n]?|podemos|pueden)\s+hacer|"
-    r"what\s+(?:can|activities|options)|which\s+activities)",
-    re.IGNORECASE,
-)
-
-
-_AGE_NUMBER_HINT = re.compile(r"\b\d{1,2}\b")
-_AGE_PERSON_REF = re.compile(
-    r"\b(mi\s+\w+|hij[oa]s?|niñ[oa]s?|nin[oa]s?|él|ella|ellos|ellas|"
-    r"my\s+\w+|son|daughter|kids?|child(?:ren)?|he|she|they)\b",
-    re.IGNORECASE,
-)
-
-
-def _looks_like_age_eligibility_question(message: str, state: ConversationState) -> bool:
-    """Predicado PURO (read-only) para el router (Fase 2.4, cierre del hueco
-    "patrón A" del audit §1.5): aproxima cuándo disparará
-    `_maybe_answer_age_eligibility` SIN correr el intent detector ni mutar estado.
-
-    Cue de elegibilidad + o bien un número de 1-2 dígitos plausible como edad, o
-    bien una edad ya recordada (`state.detected_ages`) junto a una referencia a
-    persona (caso multi-turno). El nodo `info` reproduce la lógica exacta y delega
-    en la cascada si no dispara, así que sobre-disparar aquí es seguro (se
-    autocorrige); quedarse corto solo mantiene el comportamiento actual (→ booking)
-    para ese mensaje concreto, sin regresión."""
-    if not _AGE_ELIGIBILITY_CUE.search(message):
-        return False
-    if _AGE_NUMBER_HINT.search(message):
-        return True
-    return bool(state.detected_ages) and bool(_AGE_PERSON_REF.search(message))
-
-
-def _maybe_answer_age_eligibility(message: str, state: ConversationState) -> str | None:
-    """Deterministic answer to an age-eligibility question.
-
-    Fires only when the message both mentions a concrete age and reads like an
-    eligibility question, so it never hijacks a plain booking phrase like
-    "reservar para mi hijo de 14". Returns None otherwise.
-    """
-    if not _AGE_ELIGIBILITY_CUE.search(message):
-        return None
-    if set(getattr(state, "_intenciones", None) or ()) - {"edad"}:
-        # ARQ-1e: «Salgo de Cartagena con mi hijo de 12. ¿Cuánto cuesta el minicurso, qué incluye y desde qué edad?»
-        # salía con esta tarjeta y sin el precio ni lo que incluye (banco arq-1d, v1 y v5: 0 de 4 datos 3 de 3). Si Jev
-        # ve más intenciones que la edad, el turno sigue y lo contesta el redactor de hechos, con la edad como un hecho.
-        logger.info("[INFO][ARQ1E] la pregunta trae más que la edad: no contesta la tarjeta de edades")
-        return None
-    # NOTE (robustness review H4, deferred): LLM cutover not wired here because this
-    # is a pre-dispatch short-circuit; wiring it would double the LLM call on
-    # fall-through (the turn is extracted again later by the core).
-    intent = lectura_del_turno(message)
-    ages = sorted({a for a in (intent.ages or []) if 1 <= a <= 99})
-    # Persist any age mentioned here so a later follow-up can reuse it (this
-    # responder returns before the conversation agent's _apply_detected_intent).
-    if ages:
-        state.detected_ages = sorted(set((state.detected_ages or []) + ages))
-    # Multi-turn: if this message has no age but refers to a specific person
-    # ("pero mi hijo puede bucear?" after "mi hijo tiene 9 años"), reuse the
-    # remembered age. Guarded by a person reference so a bare "¿puede bucear?"
-    # is not answered with a stale age.
-    if not ages and _AGE_PERSON_REF.search(message):
-        ages = sorted({a for a in (state.detected_ages or []) if 1 <= a <= 99})
-    if not ages:
-        return None
-    lang = state.language or "es"
-
-    if len(ages) >= 2:
-        # Several people -> a clear per-person plan (who can do what), using any
-        # detected certified count so the divers appear in the breakdown too.
-        alloc = intent.group_allocation or state.detected_group_allocation or {}
-        certified = int(alloc.get("certified_diving", 0) or 0)
-        plans = eligibility.plan_group(certified=certified, noncert_ages=ages)
-        header = ("¡Con gusto! Esto es lo que puede hacer cada quien: 🐠\n"
-                  if lang == "es" else
-                  "Happy to help! Here's what each person can do: 🐠\n")
-        body = header + eligibility.format_group_plan(plans, lang)
-    else:
-        # Single person -> the fuller, warmer eligibility note.
-        body = eligibility.age_eligibility_note(ages[0], lang)
-
-    if lang == "es":
-        outro = (
-            "\n\n¿Quieres que te ayude a armar el plan para tu grupo? "
-            "Escribe *reservar* o cuéntame qué actividad les interesa. 🐠"
-            "\n\nSi además preguntabas por algo más concreto, cuéntamelo con más detalle "
-            "y te confirmo con exactitud."
-        )
-    else:
-        outro = (
-            "\n\nWant me to help put together the plan for your group? "
-            "Type *book* or tell me which activity you're interested in. 🐠"
-            "\n\nIf you were also asking about something more specific, tell me more "
-            "and I'll confirm the exact details."
-        )
-    # Stay conversational: leave the welcome/language step so a later reply isn't
-    # misread, but don't force menu buttons.
-    if state.step in (Step.WELCOME, Step.LANGUAGE):
-        state.step = Step.MAIN_MENU
-    state.quick_replies = []
-    return body + outro

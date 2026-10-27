@@ -17,8 +17,6 @@ and services.json `min_age`):
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-
 from src.domain import activities as dom
 
 # --- Age thresholds ---------------------------------------------------------
@@ -63,60 +61,7 @@ def beginner_options_for_age(age: int | None) -> list[str]:
     return [MINICOURSE, SNORKEL, COMPANION]   # 10+
 
 
-@dataclass
-class PersonPlan:
-    """What one person (or homogeneous subgroup) can do."""
-    who: str                      # short label, e.g. "buzo certificado", "9 años"
-    qty: int = 1
-    options: list = field(default_factory=list)   # ordered activity keys
-    age: int | None = None
-
-    @property
-    def auto(self) -> str | None:
-        """The single forced activity when there is only one option, else None."""
-        return self.options[0] if len(self.options) == 1 else None
-
-
-def plan_group(certified: int = 0, noncert_ages: list[int] | None = None,
-               noncert_unknown: int = 0) -> list[PersonPlan]:
-    """Build a per-subgroup plan from a known composition.
-
-    - `certified`: how many hold an Open Water certification (fun dives).
-    - `noncert_ages`: ages of non-certified people whose age is known.
-    - `noncert_unknown`: non-certified people whose age is unknown (assume adults).
-
-    Certified people share one line; non-certified people are grouped by the
-    set of options their age allows (so two 9-year-olds share one entry).
-    """
-    noncert_ages = list(noncert_ages or [])
-    plans: list[PersonPlan] = []
-    if certified > 0:
-        plans.append(PersonPlan(who="buzo certificado", qty=certified,
-                                options=[CERTIFIED_DIVING]))
-
-    # Non-certified people with a KNOWN age: one line per distinct age (so two
-    # 9-year-olds merge into "9 años ×2", but a 12-year-old stays separate and
-    # is never confused with an unknown-age adult).
-    age_counts: dict[int, int] = {}
-    for age in noncert_ages:
-        age_counts[age] = age_counts.get(age, 0) + 1
-    for age in sorted(age_counts):
-        plans.append(PersonPlan(
-            who=f"{age} años", qty=age_counts[age],
-            options=beginner_options_for_age(age), age=age,
-        ))
-
-    # Non-certified people with UNKNOWN age (assume adults) get their own line.
-    if noncert_unknown > 0:
-        plans.append(PersonPlan(
-            who="sin certificar", qty=noncert_unknown,
-            options=beginner_options_for_age(None), age=None,
-        ))
-    return plans
-
-
-# Clave de opcion de este modulo -> id del registro de actividades (F3b). Las
-# etiquetas del plan de grupo salen del registro (`texts.plan_label`).
+# Clave de opcion de este modulo -> id del registro de actividades (F3b).
 _OPTION_TO_ACTIVITY = {
     CERTIFIED_DIVING: "certified_diving",
     MINICOURSE: "minicourse",
@@ -129,51 +74,6 @@ _OPTION_TO_ACTIVITY = {
 def option_activity_id(option: str) -> str:
     """Id del registro de actividades para una opcion de este modulo."""
     return _OPTION_TO_ACTIVITY.get(option, option)
-
-
-def _plan_label(option: str, lang: str) -> str:
-    return dom.text(option_activity_id(option), "plan_label", lang, default=option)
-
-
-def format_group_plan(plans: list[PersonPlan], lang: str = "es") -> str:
-    """A clear, positive per-person breakdown of what each can do."""
-    lang = lang if lang in dom.LANGS else "es"
-    labels = {option: _plan_label(option, lang) for option in (*_OPTION_TO_ACTIVITY, COMPANION)}
-    lines: list[str] = []
-    for p in plans:
-        if p.age is not None:
-            opts = " / ".join(_con_edad_minima(o, labels[o], lang) for o in p.options)
-        else:
-            opts = " / ".join(labels[o] for o in p.options)
-        qty_prefix = f"{p.qty}× " if p.qty > 1 else ""
-        who = _who(p, lang)
-        if lang == "es":
-            verb = "→ " if p.auto else "→ puede elegir: "
-            lines.append(f"• {qty_prefix}*{who}* {verb}{opts}")
-        else:
-            verb = "→ " if p.auto else "→ can choose: "
-            lines.append(f"• {qty_prefix}*{who}* {verb}{opts}")
-    return "\n".join(lines)
-
-
-# ord-7b (21-oct, flag `tarjeta_edades_en_cifra`): con niños, la edad mínima de cada opción en cifra (decisión de
-# Gadea con ord-0); la del registro de actividades. Las que ya dicen su franja (Bubble Makers, 8-10) se quedan igual.
-def _con_edad_minima(option: str, label: str, lang: str) -> str:
-    activity = dom.by_id(option_activity_id(option))
-    if activity is None or activity.min_age is None or activity.max_age is not None:
-        return label
-    return f"{label} (desde {activity.min_age} años)" if lang == "es" else f"{label} (from age {activity.min_age})"
-
-
-_WHO_EN = {"buzo certificado": "certified diver", "sin certificar": "not certified"}
-
-
-def _who(p: PersonPlan, lang: str) -> str:
-    if lang == "es":
-        return p.who
-    if p.age is not None:
-        return f"{p.age} years old"
-    return _WHO_EN.get(p.who, p.who)
 
 
 def age_eligibility_note(age: int, lang: str = "es") -> str:

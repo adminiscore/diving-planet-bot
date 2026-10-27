@@ -120,17 +120,6 @@ def test_la_pregunta_pendiente_no_la_ve_el_modelo(llamadas):
     assert "pregunta_pendiente" not in llamadas.hechas[0][0][-1]["content"]
 
 
-@pytest.mark.parametrize("intenciones, tarjeta", [(["precio", "incluye", "edad"], False), (["edad"], True)])
-def test_la_tarjeta_de_edades_no_se_come_las_otras_preguntas(monkeypatch, intenciones, tarjeta):
-    """ARQ-1e: con más intenciones que la edad, el turno lo contesta el redactor de hechos."""
-    from src.agents.rutas.info import _maybe_answer_age_eligibility
-
-    st = _conv(_intenciones=intenciones)
-    respuesta = _maybe_answer_age_eligibility("Mi hijo tiene 12 años, ¿cuánto cuesta el minicurso y desde qué edad "
-                                              "se puede?", st)
-    assert (respuesta is not None) is tarjeta
-
-
 def test_si_el_escritor_no_sabe_contesta_el_rag_con_busqueda(llamadas):
     """lat-9 paso 3: ya no hay FALTA; si el escritor sin búsqueda da el «no lo tengo», contesta el RAG con la base."""
     llamadas.estado["texto"] = rag_agent.FALLBACK_ES

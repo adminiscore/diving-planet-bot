@@ -67,6 +67,14 @@ def test_en_plural_o_con_total_no_se_toca():
     assert st.detected_group_size == 4
 
 
+def test_una_persona_mas_y_otras_en_plural_no_son_dos():
+    """CALN2-04 (banco-edades e1): la esposa en singular, pero también las hijas: el total no es 2."""
+    st = _estado()
+    core_extraction._contar_al_acompanante_sin_actividad(
+        st, "Voy con mi esposa, que no bucea, y nuestras hijas de 8 y 5", {"companion_is_singular": True})
+    assert st.detected_group_size is None
+
+
 def test_sin_principal_ni_total_quien_escribe_cuenta():
     st = _estado()
     core._merge_companion_activity(st, "minicourse", 1)

@@ -8,7 +8,6 @@
 import pytest
 
 from src.agents import conversational_core as cc
-from src.flows import eligibility
 from src.flows.state import ConversationState
 
 RAG_CARTAGENA = ("El minicurso cuesta 183 USD online desde Cartagena. Incluye lancha y almuerzo.\n\n"
@@ -61,19 +60,6 @@ def test_sin_actividad_la_puerta_sigue_como_antes():
 def test_con_origen_no_hay_puerta():
     assert cc._origen_antes_del_precio(_conv(actividad_preguntada="minicourse", location="cartagena"),
                                        "¿cuánto cuesta el minicurso?", RAG_CARTAGENA) is None
-
-
-def test_tarjeta_de_edades():
-    esperado_es, esperado_en = ("minicurso de buceo (desde 10 años)",
-                                "*13 years old* → can choose: dive mini-course (from age 10)")
-    plans = eligibility.plan_group(certified=0, noncert_ages=[8, 13])
-    assert esperado_es in eligibility.format_group_plan(plans, "es")
-    assert esperado_en in eligibility.format_group_plan(plans, "en")
-
-
-def test_tarjeta_bubble_makers_ya_dice_su_franja(monkeypatch):
-    texto = eligibility.format_group_plan(eligibility.plan_group(certified=0, noncert_ages=[8]), "es")
-    assert "Bubble Makers (buceo para niños 8-10, en piscina o aguas de máx. 2 m) /" in texto and "snorkel (desde 6 años)" in texto
 
 
 def test_si_el_rag_cotizo_otra_actividad_no_hay_variantes():

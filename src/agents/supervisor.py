@@ -473,17 +473,6 @@ async def _shared_turn_handler(
         state.history.append({"role": "assistant", "content": response})
         return response
 
-    # Age-eligibility question ("mi hijo de 9 años puede bucear?", "hay edad
-    # mínima?", "una persona de 14 puede?"). Answer deterministically from the
-    # single source of truth (eligibility.py) so age limitations are always
-    # correct and framed positively — no hallucination, no need for RAG.
-    age_answer = _maybe_answer_age_eligibility(message, state)
-    if age_answer is not None:
-        logger.info("[SUPERVISOR] Age-eligibility question answered deterministically")
-        state.history.append({"role": "user", "content": message})
-        state.history.append({"role": "assistant", "content": age_answer})
-        return age_answer
-
     # Adaptive diving / DIVE TO HEAL. The topic is detected per-turn by keyword,
     # but must be REMEMBERED: a follow-up like "¿cuánto cuesta?" carries no
     # disability word, so without a persisted flag it fell through to the
@@ -652,17 +641,12 @@ from src.agents.rutas.deflection import (  # noqa: E402, F401
     pregunta_si_es_ia,
 )
 from src.agents.rutas.info import (  # noqa: E402, F401
-    _AGE_ELIGIBILITY_CUE,
-    _AGE_NUMBER_HINT,
-    _AGE_PERSON_REF,
     _ALCOHOL_BEFORE_DIVING_RE,
     _ALLERGY_WORD_RE,
     _FOOD_ALLERGEN_RE,
     _PRIVATE_GROUP_EVENT_RE,
     _SAME_PRICE_DIFFERENT_NATIONALITY_RE,
     _alcohol_and_food_policy_answer,
-    _looks_like_age_eligibility_question,
-    _maybe_answer_age_eligibility,
     _private_group_event_answer,
     private_group_event_reply,
 )

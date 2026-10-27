@@ -13,7 +13,7 @@ import pytest
 from src.agents.info_agent import info_node
 from src.flows.state import ConversationState, Step
 from src.orchestration.router import classify_route
-from src.orchestration.state import ROUTE_BOOKING, ROUTE_INFO
+from src.orchestration.state import ROUTE_BOOKING
 
 
 def make_state(**over) -> ConversationState:
@@ -25,38 +25,15 @@ def make_state(**over) -> ConversationState:
     return s
 
 
-# ── router: rama edad→INFO (patrón A cerrado) ──
+# ── router: la edad ya no va a INFO (CALN2-04, 27-oct: la contesta el flujo normal) ──
 
-def test_router_routes_age_question_to_info():
+def test_router_age_question_goes_to_booking():
     conv = make_state()
-    assert classify_route(conv, "mi hijo de 9 años puede bucear?", {}) == ROUTE_INFO
-    assert classify_route(conv, "una persona de 14 puede bucear?", {}) == ROUTE_INFO
-
-
-def test_router_does_not_overfire_on_plain_booking_number():
-    """Un número sin cue de elegibilidad NO va a INFO (sigue a booking)."""
-    conv = make_state()
+    assert classify_route(conv, "mi hijo de 9 años puede bucear?", {}) == ROUTE_BOOKING
     assert classify_route(conv, "quiero reservar para 3 personas", {}) == ROUTE_BOOKING
 
 
-def test_router_age_cue_without_number_stays_booking():
-    """Cue sin edad concreta (la cascada devolvería None → núcleo) → booking."""
-    conv = make_state()
-    assert classify_route(conv, "hay edad minima para bucear?", {}) == ROUTE_BOOKING
-
-
 # ── nodo en aislamiento ──
-
-@pytest.mark.asyncio
-async def test_node_age_eligibility_deterministic():
-    conv = make_state()
-    result = await info_node(
-        {"conv_state": conv, "message": "mi hijo de 9 años puede bucear?", "signals": {}}
-    )
-    assert result["reply"]
-    assert conv.history[-1]["role"] == "assistant"
-    assert conv.history[-1]["content"] == result["reply"]
-
 
 @pytest.mark.asyncio
 async def test_node_dive_to_heal_nonprice_uses_rag(monkeypatch):
