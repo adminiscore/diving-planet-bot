@@ -39,6 +39,19 @@ def sin_certificar_no_hereda(state) -> bool:
     return True
 
 
+def sin_decidir_aparte(state) -> None:
+    """Quien no ha elegido nunca se queda DENTRO del reparto: el grupo contaría como completo, el circuito borraría la
+    recomendación y nadie le preguntaría (banco g24; «mi amigo también quiere venir» sobre un grupo sabido). Sale a la
+    cantidad pendiente con la recomendación marcada, como lo deja `_take_undecided_members`."""
+    reparto = state.detected_group_allocation or {}
+    cuantos = reparto.get(SIN_DECIDIR)
+    if not cuantos:
+        return
+    state.detected_group_allocation = {a: n for a, n in reparto.items() if a != SIN_DECIDIR} or None
+    state.pending_undecided_qty = (state.pending_undecided_qty or 0) + cuantos
+    state.needs_companion_activity = True
+
+
 def completa(reparto: dict | None, nuevo: dict, total) -> bool:
     """El reparto se escribe una vez y solo cambia con una corrección; pero «ella prefiere hacer snorkel» no corrige el
     grupo, lo completa: da actividad a quien no la tenía. True si el reparto nuevo no le quita la actividad a nadie que la

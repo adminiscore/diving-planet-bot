@@ -1359,14 +1359,18 @@ async def test_companion_qty_answer_mentioning_different_activity_not_misapplied
 
 
 @pytest.mark.asyncio
-async def test_companion_attribute_without_activity_asks_instead_of_guessing():
+async def test_companion_attribute_without_activity_asks_instead_of_guessing(extractor_dice):
     """Hallazgo en vivo 2026-07-23: "mi amigo no está certificado" da un
     ATRIBUTO del acompañante (certificación) pero ninguna actividad ni
     intención declarada. Dos extractores distintos (fill_gaps y
     detect_special_signals) adivinaban actividades DISTINTAS para la MISMA
     frase ambigua (snorkel vs. minicurso) — reforzar el prompt para que se
     abstuviera no funcionó (medido 3/3 sigue adivinando). Fix determinista:
-    se pregunta qué le gustaría hacer al acompañante en vez de adivinar."""
+    se pregunta qué le gustaría hacer al acompañante en vez de adivinar.
+    CALN-2: quién no ha elegido lo dice el extractor (el reparto con
+    «undecided»); como ya se sabe que es uno, al elegir no se pregunta cuántos."""
+    extractor_dice({"mi amigo no esta certificado": {
+        "otro_sin_certificar": True, "group_allocation": {"certified_diving": 1, "undecided": 1}}})
     state = make_state("es")
     state.detected_activity = "certified_diving"
     state.is_certified = True
@@ -1390,10 +1394,9 @@ async def test_companion_attribute_without_activity_asks_instead_of_guessing():
 
     _senales2 = AsyncMock(return_value={})
     with patch.object(core_routing, "detect_special_signals", new=_senales2), patch.object(core_extraction, "detect_special_signals", new=_senales2):
-        resp2 = await route_message(state, "snorkel")
-    assert state.core_pending_slot == core.SLOT_COMPANION_QTY
-    assert state.pending_companion_activity == "snorkel"
-    assert "snorkel" in resp2.lower()
+        await route_message(state, "snorkel")
+    assert state.core_pending_slot != core.SLOT_COMPANION_QTY
+    assert state.detected_group_allocation == {"certified_diving": 1, "snorkel": 1}
 
 
 def test_activity_has_textual_backing_translates_diving_intent_to_minicourse():
@@ -1421,7 +1424,7 @@ def test_activity_has_textual_backing_certification_claim_backs_certified_diving
 
 
 @pytest.mark.asyncio
-async def test_companion_activity_comes_first_and_does_not_bury_the_pending_slot():
+async def test_companion_activity_comes_first_and_does_not_bury_the_pending_slot(extractor_dice):
     """Hallazgo en vivo 2026-08-26 (batería sintética contra PRE, conv 190 y
     210): cuando la ambigüedad de actividad del acompañante aparecía MIENTRAS
     todavía había una pregunta obligatoria pendiente (seguridad, en este
@@ -1429,6 +1432,8 @@ async def test_companion_activity_comes_first_and_does_not_bury_the_pending_slot
     acompañante. CALN-2 paso 3a (orden aprobado por Gadea, 27-oct): quién hace
     qué va primero, y las dos salen de `next_missing_slot`, así que la
     seguridad vuelve en cuanto el acompañante elige; nada se entierra."""
+    extractor_dice({"vienen tambien mis 2 amigos, aun no saben que haran": {
+        "group_size": 3, "group_allocation": {"certified_diving": 1, "undecided": 2}}})
     state = make_state("es")
     state.detected_activity = "certified_diving"
     state.is_certified = True
@@ -1437,21 +1442,13 @@ async def test_companion_activity_comes_first_and_does_not_bury_the_pending_slot
     state.detected_duration = "single_day"
     state.core_pending_slot = core.SLOT_SAFETY
 
-    _senales = AsyncMock(return_value={
-             "companion_activity": "minicourse", "mentions_other_person": True,
-             "companion_is_singular": False, "companion_qty": 2,
-         })
+    _senales = AsyncMock(return_value={})
     with patch.object(core_routing, "detect_special_signals", new=_senales), patch.object(core_extraction, "detect_special_signals", new=_senales):
-        resp = await route_message(state, "mis amigos tambien vienen")
-    assert state.core_pending_slot == core.SLOT_COMPANION_ACTIVITY
-    assert state.needs_companion_activity is True
-    assert "snorkel" in resp.lower() or "minicurso" in resp.lower()
-
-    _senales2 = AsyncMock(return_value={})
-    with patch.object(core_routing, "detect_special_signals", new=_senales2), patch.object(core_extraction, "detect_special_signals", new=_senales2):
+        resp = await route_message(state, "vienen tambien mis 2 amigos, aun no saben que haran")
+        assert state.core_pending_slot == core.SLOT_COMPANION_ACTIVITY
+        assert state.needs_companion_activity is True
+        assert "snorkel" in resp.lower() or "minicurso" in resp.lower()
         await route_message(state, "snorkel")
-        assert state.core_pending_slot == core.SLOT_COMPANION_QTY
-        await route_message(state, "2")
     assert state.needs_companion_activity is False
     assert (state.detected_group_allocation or {}).get("snorkel") == 2
     # La seguridad no se ha perdido: es lo siguiente.
@@ -1628,13 +1625,14 @@ async def test_solo_traveler_never_asked_about_companion_again():
 
 
 @pytest.mark.asyncio
-async def test_group_size_one_without_solo_flag_still_allows_companion_question():
+async def test_group_size_one_without_solo_flag_still_allows_companion_question(extractor_dice):
     """Regresión: `detected_group_size == 1` por sí solo (sin el flag
     `solo_traveler_confirmed`) NO debe bloquear la pregunta de acompañante —
     es exactamente el escenario ya cubierto por
     test_companion_attribute_without_activity_asks_instead_of_guessing,
     donde el buzo principal está confirmado (group_size=1) mientras un
     acompañante se resuelve por su cuenta vía SLOT_COMPANION_ACTIVITY."""
+    extractor_dice({"mi amigo tambien quiere venir": {"group_allocation": {"certified_diving": 1, "undecided": 1}}})
     state = make_state("es")
     state.detected_activity = "certified_diving"
     state.is_certified = True

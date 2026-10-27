@@ -189,7 +189,8 @@
     "Voy con unos amigos a bucear, todos somos certificados"
    ],
    "grupo": {
-    "total": null
+    "total": null,
+    "no_pregunta": "companion_activity_choice"
    }
   },
   {
@@ -342,6 +343,41 @@
     },
     "sin_decidir": 0
    }
+  },
+  {
+   "id": "g26-amigos-sin-elegir",
+   "turnos": [
+    "Quiero bucear, soy buzo certificado. Vienen también unos amigos, no sé qué querrán hacer"
+   ],
+   "grupo": {
+    "pregunta": "companion_activity_choice"
+   },
+   "nota": "Paso 3a: quien viene sin elegir; se le pregunta (lo contrario de g15/g27)."
+  },
+  {
+   "id": "g27-amigos-mismo-plan",
+   "turnos": [
+    "buenas! somos unos amigos de Medellín y queremos hacer snorkel en las islas este puente. cuánto vale?"
+   ],
+   "grupo": {
+    "no_pregunta": "companion_activity_choice"
+   },
+   "nota": "Primer turno de g23 (sparring CALN1-03): los amigos van con el grupo; no se les pregunta qué harán."
+  },
+  {
+   "id": "g28-friend-not-sure",
+   "turnos": [
+    "I'm a certified diver and I'd like to dive. My friend is coming too but she's not sure what she wants to do"
+   ],
+   "grupo": {
+    "total": 2,
+    "decididos": {
+     "certified_diving": 1
+    },
+    "sin_decidir": 1,
+    "pregunta": "companion_activity_choice"
+   },
+   "nota": "Paso 3a en inglés y en singular: quien viene sin elegir; se le pregunta."
   }
  ]
 }

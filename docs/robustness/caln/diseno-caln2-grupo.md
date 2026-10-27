@@ -109,8 +109,9 @@ queda sencillo y lo individual cabe sin casos especiales.
 | 2 | El extractor reparte persona a persona; quien no está certificado no hereda el buceo | 44/50 | ex0 sin cambio fuera del ruido |
 | 2b | Completar el grupo no es corregirlo (`grupo.completa`); los sin decidir, pendientes como siempre | 44/50 | g24 0/2 → 2/2 |
 | 3a | La pregunta de quien no ha decidido sale de `next_missing_slot`, primero (orden aprobado); fuera `companion_activity_deferred` y los 4 bloques que la aplazaban | 44/50 | CALN-0: repite sin respuesta 14 → 12; el acuse ya no sale si el dato sigue faltando |
+| 3a-2 | «Sin decidir» lo dice solo el extractor (fuera de la rama de señales de «otra persona», que lo marcaba en «somos unos amigos y queremos hacer snorkel»); quien se suma sin elegir nunca se queda DENTRO del reparto (`grupo.sin_decidir_aparte`, en el punto único del acompañante) | 46/56 (D 44/56, A 38/56) | 28 casos: +g26-g28; g27 0/2 → 2/2 |
 
-Quedan del banco g02, g12 y g17 (lectura del extractor). Visto en el 3a: la rama de señales de «otra persona»
-(`extraction.py`, `mentions_other_person` sin actividad) marca como «sin decidir» a quien va con el grupo («somos unos
-amigos y queremos hacer snorkel», g23); antes la pregunta fantasma salía al final, ahora sale primero. Siguiente
-escalón: que «sin decidir» lo diga solo el extractor (fuera esa rama), medido aparte.
+Quedan del banco g02, g12 y g17 (el extractor pone actividad a quien no la eligió) y g26/g28 (quien viene sin elegir:
+«unos amigos, no sé qué querrán hacer» lo lee el LLM de señales como buzos; «my friend… not sure» el extractor no da
+el reparto y la amiga hereda el buceo). Son lecturas de quien no ha elegido, sin cantidad o sin reparto: paso 3b
+(entradas sin cantidad, leídas por el extractor; fuera la rama de señales que las adivina).

@@ -101,6 +101,29 @@ def test_lo_demas_no_completa(reparto, nuevo, total):
     assert not grupo.completa(reparto, nuevo, total)
 
 
+def test_quien_se_suma_sin_elegir_queda_pendiente_y_al_elegir_no_se_cuenta_dos_veces():
+    """«Mi amigo también quiere venir» sobre un grupo sabido: no entra en el reparto como «undecided» (el grupo
+    contaría como completo y nadie le preguntaría)."""
+    from src.agents import conversational_core as core
+
+    st = _grupo(detected_activity="certified_diving", detected_group_size=1)
+    core._merge_companion_activity(st, "undecided", 1)
+    assert st.detected_group_allocation == {"certified_diving": 1}
+    assert st.pending_undecided_qty == 1 and st.needs_companion_activity and st.detected_group_size == 2
+    st.pending_companion_activity = "snorkel"
+    assert core._merge_pending_undecided(st)
+    assert st.detected_group_allocation == {"certified_diving": 1, "snorkel": 1} and st.detected_group_size == 2
+
+
+def test_otro_que_se_suma_no_quita_del_total_a_quien_no_ha_elegido():
+    from src.agents import conversational_core as core
+
+    st = _grupo(detected_activity="certified_diving", detected_group_size=2, pending_undecided_qty=1,
+                detected_group_allocation={"certified_diving": 1})
+    core._merge_companion_activity(st, "snorkel", 1)
+    assert st.detected_group_size == 3 and st.pending_undecided_qty == 1
+
+
 def test_quien_hace_que_va_antes_que_el_origen():
     """Paso 3a: el orden aprobado (quién hace qué, el origen, seguridad y edades, la nacionalidad); si no contesta dos
     veces, se aplaza hasta antes del resumen como las demás."""

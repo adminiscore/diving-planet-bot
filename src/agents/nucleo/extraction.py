@@ -1323,13 +1323,17 @@ async def _extraction_phase_body(
             # (que en realidad respondía a SEGURIDAD, una pregunta
             # pendiente ANTERIOR que quedó enterrada) seguía devolviendo
             # `mentions_other_person=True` turno tras turno, re-preguntando
-            # la MISMA pregunta sin parar. La pregunta la hace `next_missing_slot` en su turno (CALN-2 paso 3a).
+            # la MISMA pregunta sin parar.
+            #
+            # CALN-2 (27-oct): quién no ha elegido lo dice el extractor (el reparto persona a persona, «undecided»), no
+            # esta señal: `mentions_other_person` también salta con quien va con el grupo («somos unos amigos y
+            # queremos hacer snorkel», banco g23) y le preguntaba qué quería hacer. Aquí queda proteger lo de quien
+            # escribe y contar al acompañante.
             _restore_main_diver_fields(
                 state, prev_main_activity, prev_main_service_id,
                 prev_main_is_certified, prev_main_last_dive, prev_main_refresher,
             )
             _contar_al_acompanante_sin_actividad(state, message, signals)
-            state.needs_companion_activity = True
             advanced = True
         elif signals.get("refresher_interested") is not None:
             # Auditoría 2026-07-22: refresher_interested no tenía NINGÚN
