@@ -72,10 +72,29 @@ ve en la lista (personas sin datos) y se pregunta por ellas, sin adivinar.
   banco ex0 lo dirá (EXT-SALIDA enseñó que pequeños cambios de su salida mueven los inventos).
 - Partir los módulos gigantes (Álvaro) queda detrás: este cambio reestructura justo ese código.
 
-## 5. Lo que necesito de Gadea
+## 5. Otras formas de hacerlo (Gadea pidió pros y contras, 27-oct)
 
-1. **¿Vale el enfoque?** Una lista de personas en el estado y todo lo demás derivado por código.
-2. **Personas sin decidir:** «somos 3 y uno no está certificado». Hoy se le recomienda al que no está certificado
-   (minicurso o snorkel) y elige el cliente. ¿Se mantiene así, persona a persona?
-3. **Orden de las preguntas:** ¿primero todas las personas (quién hace qué) y después el resto de la reserva (origen,
-   seguridad, nacionalidad), o como hoy, mezclado?
+| Opción | A favor | En contra |
+|---|---|---|
+| A. Lista de personas | Un dato, un sitio; fuera las esperas; comprobable por código; como habla el cliente | Cambio grande; el extractor puede inventarse personas; «somos 12» son 12 entradas vacías |
+| B. Subgrupos (tramos con cantidad) | Como se cotiza (el carrito ya va por tramos); lo grande es sencillo | Lo de UNA persona (su edad, su refresher, «mi amiga no certificada») vuelve a los casos especiales |
+| C. Lo de hoy + un reconciliador al final del turno | Cambio pequeño | No borra nada: un parche más grande |
+| D. Que lo lleve el modelo (resumen del grupo en texto) | Poco código | Inventa, no determinista, no comprobable; contra «el código decide» |
+
+**Propuesta: A + B.** La lista admite entradas de una o de VARIAS personas iguales («somos 3 certificados» = una entrada
+con cantidad 3); cuando llega un dato de una sola («uno de ellos no bucea hace 5 años»), la entrada se parte. Lo grande
+queda sencillo y lo individual cabe sin casos especiales.
+
+## 6. Decisiones de Gadea (27-oct)
+
+1. Enfoque: pendiente de los pros y contras de arriba (propuesta A + B).
+2. **Persona sin decidir: se le recomienda y elige el cliente**, como hoy. La recomendación depende de los días: con
+   más de un día se puede ofrecer también el Open Water (la certificación necesita más de un día); con un día, minicurso o
+   snorkel.
+3. **Orden de las preguntas** (Gadea: «como creas que es mejor, más óptimo, económico y orgánico»):
+   1. **Quién hace qué** (las personas y su actividad): el plan y el precio dependen de eso; si hay varias sin decidir,
+      UNA pregunta para todas («¿qué les gustaría hacer a los otros dos?»);
+   2. **el origen** (también cambia plan y precio);
+   3. **seguridad y edades, solo a quien aplica** (la última inmersión a los certificados; las edades si hay niños);
+   4. **la nacionalidad, la última** (solo cambia moneda y pago; justo antes de la tarjeta, como hoy).
+   Siempre: se aprovecha todo lo que el cliente dice de golpe y no se pregunta nada ya dicho.
