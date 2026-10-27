@@ -15,9 +15,17 @@ módulo, con su fase y lo que solo usa esa fase:
 - `slotfill_close.py` → `_slotfill_close_phase`: preguntar el hueco que falta o cerrar la reserva, y el acuse en
                         paralelo.
 
-Lo común (los huecos y sus preguntas, el plan, las notas y la respuesta en paralelo, el RAG del núcleo, el origen
-antes del precio) y la entrada `maybe_handle_turn` siguen en `conversational_core.py`, que además re-exporta todo
-lo movido: el resto del código, los scripts y los tests lo siguen encontrando allí.
+Lo común, también aquí desde lat-9 paso 4 (27-oct):
+
+- `huecos.py`    → los huecos de la reserva y cuál falta (`next_missing_slot`); no depende del núcleo.
+- `preguntas.py` → la pregunta de cada hueco (`ask_slot`) y el plan que se recomienda.
+- `origen.py`    → el origen antes del precio (la puerta, lo que Jev dice del lugar) y los recortes del escritor.
+- `escritor.py`  → el RAG del núcleo y el escritor, el RAG adelantado y la respuesta en paralelo.
+
+En `conversational_core.py` quedan la entrada `maybe_handle_turn`, las notas, el saludo, el grupo, el recuerdo y
+el carrito; además re-exporta todo lo movido: el resto del código, los scripts y los tests lo siguen encontrando
+allí. Los tres primeros los importa al principio; `escritor` (que importa del núcleo las notas y el saludo), al final,
+antes que los nodos.
 
 Ojo con los parches de los tests: un nombre se busca en el módulo donde está DEFINIDA la función que lo usa. Para
 cambiar `fill_gaps` dentro de `_understand` hay que parchear `nucleo.extraction.fill_gaps`, no
