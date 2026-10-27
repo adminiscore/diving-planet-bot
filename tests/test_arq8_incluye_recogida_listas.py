@@ -22,9 +22,8 @@ def _estado(origen=None, lang="es"):
 @pytest.mark.parametrize("lang", ["es", "en"])
 def test_las_tres_partes_de_la_recogida_son_politicas(lang):
     """lat-deuda-u (26-oct): ya no se corta `island_pickup` por frases; son tres políticas."""
-    coordinacion, no_incluyen = hechos._partes_de_la_recogida(lang)
-    assert coordinacion == hechos._politica("island_pickup", lang)
-    assert no_incluyen == hechos._politica("island_plans_exclude", lang)
+    coordinacion, no_incluyen = hechos._politica("island_pickup", lang), hechos._politica("island_plans_exclude", lang)
+    assert coordinacion and no_incluyen
     assert ("almuerzo" if lang == "es" else "lunch") in no_incluyen
     assert "Barú" not in no_incluyen and "Barú" not in coordinacion
     assert "Barú" in hechos._politica("baru_departs_from_cartagena", lang)
@@ -34,8 +33,8 @@ def test_con_incluye_va_lo_que_se_hace_y_lo_que_no_incluyen(monkeypatch):
     b = hechos.hechos(_estado("island"), ["incluye"], ["minicourse"])[0]
     que_se_hace = " ".join(b["en_que_consiste"]["island"])
     assert "piscina" in que_se_hace and "1 inmersión" in que_se_hace
-    assert b["no_incluye"]["island"] == [hechos._partes_de_la_recogida("es")[1]]
-    assert hechos._partes_de_la_recogida("es")[1] in b["recogida"]["island"]  # la pone el código entera
+    assert b["no_incluye"]["island"] == [hechos._politica("island_plans_exclude", "es")]
+    assert hechos._politica("island_plans_exclude", "es") in b["recogida"]["island"]  # la pone el código entera
 
 
 def test_con_el_horario_no_se_repite(monkeypatch):
@@ -60,7 +59,7 @@ def test_arq3_echa_de_menos_lo_que_se_hace(monkeypatch):
 def test_la_recogida_de_las_islas_dice_como_se_coordina(monkeypatch):
     b = hechos.hechos(_estado("island"), ["horario"], ["specialty_nitrox"])[0]
     assert b["recogida"]["island"] == [hechos._politica("island_pickup_free", "es"),
-                                       hechos._partes_de_la_recogida("es")[0]]
+                                       hechos._politica("island_pickup", "es")]
     assert "8:00" in " ".join(b["horario"]["island"])
 
 

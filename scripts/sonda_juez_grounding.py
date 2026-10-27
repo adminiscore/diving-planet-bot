@@ -1,4 +1,4 @@
-"""Banco del juez de grounding v2 (flag `rag_v2`): ¿rechaza los datos del negocio inventados y deja
+"""Banco del juez de grounding (nació para el v2, flag `rag_v2`; el v2 ya se borró y queda el v3): ¿rechaza los datos del negocio inventados y deja
 pasar lo que no es un dato? Casos: los inventos que el juez v2 dejó pasar en las rondas B del 27-sep
 ("llevamos 30 años", "debes haber completado la teoría"…) y respuestas correctas o de cortesía que el
 juez v1 mandaba al "no lo tengo". Compara el prompt en uso con un candidato.
@@ -88,14 +88,12 @@ async def judge(client, prompt, ctx, answer):
                   {"role": "user", "content": f"CONTEXTO:\n{ctx}\n\nRESPUESTA:\n{answer}"}],
     )
     from src.agents.grounding_check import verdict_from_fact_list
-    if prompt in (info.GROUNDING_VERIFY_V2_ES,):
-        return "GROUNDED" if (r.choices[0].message.content or "").strip().upper().startswith("GROUNDED") else "HALLUCINATED"
     return "GROUNDED" if verdict_from_fact_list(r.choices[0].message.content or "") else "HALLUCINATED"
 
 
 async def main() -> None:
     client = AsyncOpenAI(api_key=settings.openai_api_key)
-    prompts = {"v2": info.GROUNDING_VERIFY_V2_ES, "v3": info.GROUNDING_VERIFY_V3_ES}
+    prompts = {"v3": info.GROUNDING_VERIFY_V3_ES}  # el v2 se borró (código muerto, 27-oct)
     for name, prompt in prompts.items():
         ok = 0
         for ctx, ans, want in CASOS:

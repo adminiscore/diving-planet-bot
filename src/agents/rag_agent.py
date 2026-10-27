@@ -666,7 +666,6 @@ async def rag_answer(
     lang: str = "es",
     history: list[dict] | None = None,
     extra_context: str | None = None,
-    verify_grounding: bool = True,
     origin: str | None = None,
     avisos_hechos: dict | None = None,
     sin_precio: bool = False,
@@ -689,12 +688,7 @@ async def rag_answer(
     (`src/flows/avisos.hechos_del_estado`), para que la consulta de búsqueda nombre el asunto.
 
     `origin` (rag-3): `state.location` del cliente ("cartagena" / "island"); la
-    busqueda baja las fichas del otro origen.
-
-    `verify_grounding=False` keeps the deterministic price/URL guards but skips
-    the LLM grounding-judge, which false-negatives on correct answers that combine
-    several KB chunks (e.g. a full course program). Used by the conversation agent
-    so it can answer multi-part questions naturally; RAG defaults stay strict."""
+    busqueda baja las fichas del otro origen."""
     """Retrieve context from the knowledge base and answer using the LLM.
 
     Comportamiento en orden de prioridad:
@@ -837,7 +831,7 @@ async def rag_answer(
         require_grounding: bool = False,
     ) -> str:
         """`require_grounding=True` forces the LLM grounding judge even when the
-        caller passed `verify_grounding=False`. Used by the "no confident KB
+        answer brings nothing new to check (lat-5). Used by the "no confident KB
         docs, answer from extra_context only" escape hatches below: there the
         model has NO knowledge-base support, so without the judge it happily
         answers a factual question from its own world knowledge (e.g. inventing
@@ -947,8 +941,6 @@ async def rag_answer(
                 # advisor contact is handled via the internal Chatwoot handoff.
                 # Regenerate; a fresh sample usually drops the number.
                 last_reject = "phone_number"
-            elif not verify_grounding and not require_grounding:
-                return answer
             else:
                 # lat (24-oct): fuera el aviso final (CAL-A6), que iba a la vez que este juez pero tardaba más (Luna,
                 # ~2,3 s en serie tras escribir: 1,4 s exclusivos por turno del RAG en real-1).

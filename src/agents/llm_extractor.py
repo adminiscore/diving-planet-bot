@@ -56,26 +56,6 @@ logger = logging.getLogger("uvicorn.error")
 # ("error", "malformed"...) se queda corto en cuanto se añade un mensaje
 # nuevo, y el fallo seria silencioso. Ver scripts/run_extraction_eval.py.
 
-# Fields DetectedIntent exposes that are worth LLM gap-filling. Deliberately
-# excludes `language` (already has a robust dedicated detector),
-# `service_id`/`confidence`/`detected_fields` (derived/meta, not extracted
-# from the message directly).
-EXTRACTABLE_FIELDS = (
-    "activity",
-    "is_certified",
-    "group_size",
-    "group_allocation",
-    "last_dive_over_2_years",
-    "duration",
-    "location",
-    "island",
-    "hotel",
-    "ages",
-    "cert_dives",
-    "cert_days",
-    "is_colombian",
-)
-
 
 def compare_with_ground_truth(patch: dict, expected: dict) -> dict:
     """Shadow-mode / eval-set helper: compare an LLM patch against an expected

@@ -144,16 +144,12 @@ def _collect() -> dict[str, str]:
     add("info/query_rewrite.system.en", info.QUERY_REWRITE_EN)
 
     # ── info · grounding (verificación de respuesta) ─────────────────────────
-    add("info/grounding_verify_v2.system.es", info.GROUNDING_VERIFY_V2_ES)
-    add("info/grounding_verify_v2.system.en", info.GROUNDING_VERIFY_V2_EN)
     add("info/grounding_verify_v3.system.es", info.GROUNDING_VERIFY_V3_ES)
     add("info/grounding_verify_v3.system.en", info.GROUNDING_VERIFY_V3_EN)
     add("info/grounding_verify_v3_luna.system.es", info.GROUNDING_VERIFY_V3_LUNA_ES)
     add("info/grounding_verify_v3_luna.system.en", info.GROUNDING_VERIFY_V3_LUNA_EN)
     add("info/rag_condiciones.es", info.RAG_CONDICIONES_ES)
     add("info/rag_condiciones.en", info.RAG_CONDICIONES_EN)
-    add("info/rag_no_adivina.es", info.RAG_NO_ADIVINA_ES)
-    add("info/rag_no_adivina.en", info.RAG_NO_ADIVINA_EN)
     # lat-9 paso 1 (26-oct): las reglas de cualquier escritor y la parte de no adivinar que es solo del RAG.
     add("info/escritor_no_adivina.es", info.ESCRITOR_NO_ADIVINA_ES)
     add("info/escritor_no_adivina.en", info.ESCRITOR_NO_ADIVINA_EN)
