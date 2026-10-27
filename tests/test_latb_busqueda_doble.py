@@ -14,7 +14,7 @@ async def test_la_busqueda_doble_va_con_el_mensaje_y_la_reescrita(monkeypatch):
     buscar = AsyncMock(return_value=[])
     monkeypatch.setattr(rag_agent, "search_knowledge_base", buscar)
     monkeypatch.setattr(rag_agent, "condense_query", AsyncMock(return_value="How do I pay for the Fun Dives?"))
-    await rag_agent.rag_answer("great, how do i pay", lang="en", verify_grounding=False)
+    await rag_agent.rag_answer("great, how do i pay", lang="en")
     assert {c.args[0] for c in buscar.await_args_list} == {"How do I pay for the Fun Dives?", "great, how do i pay"}
 
 

@@ -389,12 +389,6 @@ def _sale_de_baru(lang: str) -> str | None:
 # arq-8d/8e (23-oct; G10 nº 6): `island_pickup` juntaba tres cosas que el código cortaba por sus frases. Desde
 # lat-deuda-u (26-oct) son tres políticas: cómo se coordina la recogida (`island_pickup`), lo que esos planes no incluyen
 # (`island_plans_exclude`) y que Barú no es de las islas (`baru_departs_from_cartagena`).
-def _partes_de_la_recogida(lang: str) -> tuple[str, str] | None:
-    """(cómo se coordina la recogida, lo que no incluyen los planes de las islas)."""
-    como, excluye = _politica("island_pickup", lang), _politica("island_plans_exclude", lang)
-    return (como, excluye) if como and excluye else None
-
-
 def _no_incluyen_las_islas(lang: str) -> str | None:
     """arq-8d: lo que no incluyen los planes de las islas."""
     return _politica("island_plans_exclude", lang)

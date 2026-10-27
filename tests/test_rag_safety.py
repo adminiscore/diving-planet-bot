@@ -1180,9 +1180,9 @@ def test_pressure_idioms_do_not_trigger_medical_escalation(msg):
 
 # --- Zero-KB-support must never be answered from world knowledge -------------
 # Regression (2026-07-09): when no retrieved doc passed the confidence gate,
-# rag_agent fell back to "answer from extra_context only". With
-# verify_grounding=False (the conversation-agent path) the grounding judge was
-# skipped, so the LLM happily answered a factual question from its own world
+# rag_agent fell back to "answer from extra_context only". With the judge
+# skipped (then `verify_grounding=False`; today lat-5 skips it when the answer
+# brings nothing new to check), the LLM happily answered a factual question from its own world
 # knowledge — e.g. inventing a list of fish species. The judge must be FORCED
 # on that escape hatch.
 
@@ -1231,10 +1231,9 @@ async def test_no_kb_docs_forces_grounding_even_when_caller_skips_it(monkeypatch
         "que animales se ven?",
         lang="es",
         extra_context="Idioma: es. El cliente eligio buceo certificado.",
-        verify_grounding=False,   # conversation-agent path
     )
 
-    assert judge_calls, "the grounding judge must run even with verify_grounding=False"
+    assert judge_calls, "the grounding judge must run even when the answer brings nothing new to check"
     assert answer == rag_agent.FALLBACK_ES
     assert "peces loro" not in answer
 
