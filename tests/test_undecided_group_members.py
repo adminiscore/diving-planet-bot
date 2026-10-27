@@ -80,6 +80,7 @@ def test_recommendation_speaks_to_the_uncertified_group_members():
     state.pending_undecided_qty = 2
     state.detected_duration = "single_day"
     text = core.ask_slot(state, core.SLOT_COMPANION_ACTIVITY)
-    assert "quienes no están certificados" in text and "acompañante" not in text.splitlines()[0]
+    # CALN-2 (27-oct, tanda de precios q1): quien no ha elegido puede ser un buzo: la frase no supone que no lo sea.
+    assert "quienes aún no han elegido" in text and "acompañante" not in text.splitlines()[0]
     state.pending_undecided_qty = None
     assert "tu acompañante" in core.ask_slot(state, core.SLOT_COMPANION_ACTIVITY)

@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import json
 import re
+import unicodedata
 from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
@@ -231,7 +232,47 @@ def label(activity_id: str, lang: str) -> str:
     return activity.label.get(lang) or activity.label["es"]
 
 
-TEXT_KINDS = ("name_in_sentence", "recall", "price_label", "plan_label", "pitch")
+def _palabras(texto: str) -> list[str]:
+    plano = "".join(c for c in unicodedata.normalize("NFD", (texto or "").lower()) if unicodedata.category(c) != "Mn")
+    return re.findall(r"[a-z0-9]+", plano.replace("-", " "))
+
+
+# Los textos que nombran el producto (`nombre_corto`: como lo escribe el cliente cuando la etiqueta no lo dice así,
+# «mini-course» para «Dive mini-course»).
+_NOMBRES = ("nombre_corto", "name_in_sentence", "recall", "price_label", "plan_label")
+_ARTICULOS = frozenset({"el", "la", "los", "las", "un", "una", "the", "a", "an"})
+
+
+@lru_cache(maxsize=1)
+def _nombres_del_producto() -> dict[str, frozenset[tuple[str, ...]]]:
+    """CALN-2 (27-oct): por actividad, sus nombres del catálogo (la etiqueta y los textos de `_NOMBRES`) en los dos
+    idiomas, en palabras: sin tildes, sin guiones, sin lo que va entre paréntesis y sin el artículo del principio."""
+    nombres: dict[str, set] = {}
+    for a in registry().activities:
+        for lang in LANGS:
+            for n in [a.label.get(lang) or ""] + [((a.texts or {}).get(k) or {}).get(lang) or "" for k in _NOMBRES]:
+                ws = _palabras(re.sub(r"\(.*?\)", " ", n))
+                while ws and ws[0] in _ARTICULOS:
+                    ws = ws[1:]
+                if ws:
+                    nombres.setdefault(a.id, set()).add(tuple(ws))
+    return {aid: frozenset(t) for aid, t in nombres.items()}
+
+
+def nombra_el_producto(activity_id: str, texto: str) -> bool:
+    """¿El texto nombra la actividad por uno de sus nombres del catálogo, en español o en inglés? Una sola fuente (el
+    registro), sin lista de palabras en el código: «she the mini course» nombra el minicurso; también junto
+    («minicourse»). Banco CALN tanda de precios q2 t2: la comprobación del reparto lo tomaba por no nombrado."""
+    ws = _palabras(texto)
+    juntas = set(ws)
+    for nombre in _nombres_del_producto().get(activity_id, ()):
+        n = len(nombre)
+        if "".join(nombre) in juntas or any(tuple(ws[i:i + n]) == nombre for i in range(len(ws) - n + 1)):
+            return True
+    return False
+
+
+TEXT_KINDS = ("name_in_sentence", "recall", "price_label", "plan_label", "pitch", "nombre_corto")
 
 
 def text(activity_id: str, kind: str, lang: str, default: str | None = None) -> str | None:

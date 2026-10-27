@@ -14,7 +14,9 @@ import re
 from src.agents.conversational_core import (
     _EXPLICIT_NUMBER_RE,
     _NAME_STOPWORDS,
+    SLOT_COMPANION_ACTIVITY,
     SLOT_COMPANION_QTY,
+    _companion_activity_options,
     _has_pending_answer,
     _jev_dice_que_no_lo_dice,
     _known_field_values,
@@ -371,7 +373,10 @@ def _reparto_valido(reparto: dict | None, message: str, state: ConversationState
     valido: dict = {}
     for act, n in reparto.items():
         categoria = "padi_course" if act.startswith("padi_") and act != "padi_specialty" else _CATEGORIA_DEL_REPARTO.get(act)
-        nombrada = categoria is None or categoria in nombradas or act == state.detected_activity
+        # CALN-2 (27-oct, tanda de precios q2 t2): también por sus nombres del catálogo, en los dos idiomas
+        # («she the mini course»; los patrones de categoría no tenían el nombre en inglés del propio producto).
+        nombrada = (categoria is None or categoria in nombradas or act == state.detected_activity
+                    or dom.nombra_el_producto(act, message))
         clave = act if nombrada else "undecided"
         if not nombrada:
             logger.info(f"[EXTRACT][EX7] {act!r} no se nombra en el mensaje: {n} sin decidir")
@@ -671,6 +676,20 @@ def _poner_actividad(intent, state: ConversationState, datos: dict, message: str
         # buceo certificado.
         logger.info(f"[EXTRACT][LAT-0b] {actividad!r} con un paquete de buceos y sin curso nombrado: certified_diving")
         actividad = "certified_diving"
+    ya_repartida = actividad in (state.detected_group_allocation or {})
+    if (actividad and not datos.get("group_allocation") and state.core_pending_slot == SLOT_COMPANION_ACTIVITY
+            and (state.pending_undecided_qty or ya_repartida) and state.detected_activity
+            and actividad != state.detected_activity and actividad in _companion_activity_options(state)):
+        # CALN-2 (27-oct, tanda de precios q2 t3): el bot preguntó qué quiere hacer quien no ha elegido y el cliente lo
+        # dice («I told you, she wants the mini course»): es la elección de esa persona, no un cambio de la actividad de
+        # quien escribe (el reparto {buceo 1} pasaba a {minicurso 1}, se perdía al buzo y se volvía a preguntar). Igual
+        # que el botón de esa pregunta: queda para fusionarse con los que no habían elegido. Si la respuesta corta ya la
+        # repartió en este turno (no queda nadie sin elegir y está en el reparto), no se cuenta otra vez.
+        if state.pending_undecided_qty and not state.pending_companion_activity:
+            state.pending_companion_activity = actividad
+            state.needs_companion_activity = False
+        logger.info(f"[EXTRACT][CALN2] {actividad!r} contesta qué hará quien no había elegido; la principal sigue")
+        return
     if actividad and dom.by_id(actividad) is not None:
         intent.activity = actividad
         intent.service_id = dom.base_service_id(actividad)
