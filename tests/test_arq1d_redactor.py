@@ -94,6 +94,7 @@ def test_sin_actividad_va_al_rag(llamadas, monkeypatch):
 
     monkeypatch.setattr(extractor, "lectura_del_extractor", lectura)
     st = _conv()
+    st._intenciones = ["incluye"]  # CALN-3 paso 2: con el precio, los candidatos (test_caln3_sin_actividad_elegida…)
     assert asyncio.run(redactor_hechos.responder(st, MENSAJE, st.history)) is None
 
 
