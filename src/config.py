@@ -127,9 +127,6 @@ class Settings(BaseSettings):
     # salto en el 10 % y corto las colas de 11-13 s. Revert = rag_answer_model "gpt-4.1-mini" y esto vacio.
     rag_respaldo_modelo: str = "deepseek/deepseek-v4.1-flash"  # PROMOCIONADO 18-oct (mod-5, mod-E, HISTORY 0.31.55); revert = "gpt-4.1-mini"
     rag_respaldo_segundos: float = 3.0
-    # CALN-8 (3), MEDIDA TEMPORAL (28-oct): qué ve el escritor del bloque fijo (catálogo, enlaces y políticas): "todo",
-    # "sin_politicas", "sin_catalogo" o "nada" (solo los enlaces). Se mide con --env y se borra al decidir.
-    rag_bloque_escritor: str = "todo"
     # 8-oct (prueba de DeepSeek): un modelo con prefijo de proveedor ("deepseek/deepseek-v4.1-flash") sale por
     # OpenRouter (`llm_client.parametros_openrouter`), solo por estos proveedores (separados por comas, por latencia,
     # sin retención de datos). "deepseek" = la API oficial (servidores en China: solo para pruebas sin datos de
