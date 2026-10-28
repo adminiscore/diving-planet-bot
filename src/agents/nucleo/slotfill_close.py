@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import re
 
 from src.agents.conversational_core import (
     _IMPORTE_RE,
@@ -171,9 +172,12 @@ def _quiere_reservar_o_pagar(state: ConversationState, message: str) -> bool:
         return True
     if (getattr(state, "_senales_router", None) or {}).get("wants_human"):
         return True
-    if supervisor._BARE_AFFIRMATION_RE.match((message or "").strip()):
-        ultimo = next((h.get("content") or "" for h in reversed(state.history or []) if h.get("role") == "assistant"), "")
-        return any(oferta in ultimo for oferta in _OFERTA_DEL_ASESOR.values())
+    if supervisor._BARE_AFFIRMATION_RE.match(re.sub(r"[,;:]+", " ", message or "").strip()):  # «Sí, por favor»
+        # El «sí» contesta a la ÚLTIMA pregunta del bot, aunque después contestara otra cosa sin preguntar («¿y el
+        # almuerzo?» → «no está incluido» → «sí, por favor»: es a la oferta del asesor).
+        pregunta = next((h.get("content") or "" for h in reversed(state.history or [])
+                         if h.get("role") == "assistant" and "?" in (h.get("content") or "")), "")
+        return any(oferta in pregunta for oferta in _OFERTA_DEL_ASESOR.values())
     return False
 
 
@@ -225,12 +229,20 @@ def _finalize(state: ConversationState, *, pasar_al_asesor: bool = True, ofrecer
         reason = "núcleo conversacional - cliente colombiano, pago en COP con asesor"
         state.pending_escalation_reason = reason
         summary = _colombian_summary_lines(state)
+        ya_la_vio = state.mixed_last_summary == summary
         state.mixed_last_summary = summary
         state.pending_note = build_lead_summary(state, escalation_reason=reason)
         # gen-4 (21-oct, decisión de Gadea, #862): el colombiano pasa a un asesor, sin "confirmar disponibilidad" (siempre
         # hay: decisión del negocio) y en el número del cliente ("Como son…" se decía también a quien va solo), sin
         # género supuesto.
         grupo = (state.detected_group_size or 1) > 1
+        if ya_la_vio:
+            # 28-oct: dijo que sí a la oferta del asesor tras ver la tarjeta; no se le repite, solo el pase.
+            return (("¡Perfecto! Les paso con un asesor para reservar y coordinar el pago; enseguida se pone en contacto "
+                     "con ustedes. 🌊" if grupo else "¡Perfecto! Te paso con un asesor para reservar y coordinar el pago; "
+                     "enseguida se pone en contacto contigo. 🌊") if lang == "es" else
+                    "Great! I'll connect you with an advisor to book and arrange the payment — they'll be in touch "
+                    "shortly. 🌊")
         if lang == "es":
             return (
                 f"{refresher_note}{summary}\n\n"

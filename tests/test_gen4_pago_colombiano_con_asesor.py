@@ -62,3 +62,20 @@ def test_sin_querer_reservar_ve_el_precio_y_se_le_ofrece_el_asesor():
     assert st.pending_escalation_reason is None
     assert slotfill_close._OFERTA_DEL_ASESOR["es_grupo"] not in slotfill_close._finalize(_colombiano("es", 5),
                                                                                         pasar_al_asesor=False, ofrecer=False)
+
+
+def test_el_si_contesta_a_la_ultima_pregunta_aunque_despues_contestara_otra_cosa():
+    """Prueba en vivo (r3b, 28-oct): tarjeta y oferta → «¿y el almuerzo?» → «no está incluido» → «sí, por favor»."""
+    st = _colombiano("es", 5)
+    st.history = [{"role": "assistant", "content": "🤿 Tarjeta…\n\n" + slotfill_close._OFERTA_DEL_ASESOR["es_grupo"]},
+                  {"role": "user", "content": "¿y el almuerzo está incluido?"},
+                  {"role": "assistant", "content": "No, desde las islas el almuerzo no está incluido."}]
+    assert slotfill_close._quiere_reservar_o_pagar(st, "Sí, por favor") is True
+
+
+def test_al_aceptar_no_se_repite_la_tarjeta():
+    st = _colombiano("es", 5)
+    slotfill_close._finalize(st, pasar_al_asesor=False)
+    texto = slotfill_close._finalize(st, pasar_al_asesor=True)
+    assert texto.startswith("¡Perfecto! Les paso con un asesor") and "×" not in texto
+    assert st.pending_escalation_reason
