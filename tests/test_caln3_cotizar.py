@@ -56,6 +56,53 @@ def test_el_descuento_de_grupo_solo_cuando_aplica():
     [snorkel] = hechos.hechos(_st(detected_group_size=5), ["precio"], ["snorkel"])
     assert "10%" in snorkel["descuento_de_grupo"] or "10 %" in snorkel["descuento_de_grupo"]
     [curso] = hechos.hechos(_st(detected_group_size=5), ["precio"], ["padi_open_water"])
-    assert "NO aplica" in curso["descuento_de_grupo"]
+    assert "no aplica a los cursos PADI" in curso["descuento_de_grupo"]
     [pareja] = hechos.hechos(_st(detected_group_size=2), ["precio"], ["snorkel"])
     assert "descuento_de_grupo" not in pareja
+
+
+def test_la_lista_de_descuentos_dice_lo_mismo_que_el_precio():
+    """CALN3-R03: 5 amigos y el Open Water; en la lista, el de grupo es el «no aplica», no el texto general."""
+    from src.flows import hechos
+
+    [curso] = hechos.hechos(_st(detected_group_size=5), ["precio", "descuento"], ["padi_open_water"])
+    assert curso["descuento_de_grupo"] in curso["descuento"]
+    assert not any("se suma al 10" in d for d in curso["descuento"])
+
+
+def test_los_demas_planes_dos_por_origen():
+    """CALN3-R04: el buzo que estará una semana (estancia) no recibe la carta de paquetes."""
+    from src.flows import hechos
+
+    [b] = hechos.hechos(_st(detected_duration="multi_day", is_certified=True), ["precio"], ["certified_diving"])
+    por_origen = [p.get("origen") for p in b["otros_planes"]]
+    assert por_origen.count("cartagena") <= 2 and por_origen.count("island") <= 2
+
+
+def test_si_pregunta_por_un_descuento_no_se_exigen_los_demas():
+    """CALN3-Q05: «¿el de grupo nos aplica?»: la lista va en los hechos, pero arq-7b no exige ni pega las demás."""
+    from src.flows import hechos
+
+    st = _st(detected_group_size=5)
+    st._un_descuento = True
+    [b] = hechos.hechos(st, ["descuento"], ["snorkel"])
+    assert b["descuento"] and b["solo_el_preguntado"] is True
+    assert hechos.faltan("Sí, con 5 personas el de grupo les aplica: 10 % más.", [b], ["descuento"]) == []
+    st._un_descuento = False
+    [b] = hechos.hechos(st, ["descuento"], ["snorkel"])
+    assert hechos.faltan("Sí, con 5 personas el de grupo les aplica: 10 % más.", [b], ["descuento"])
+
+
+def test_en_la_pregunta_general_cada_descuento_por_sus_palabras_propias():
+    """rot-029: con palabras que comparten todos los descuentos («descuento», «buceo», «cursos PADI», «aplica»), el del
+    equipo propio se daba por dicho sin nombrar el equipo; ahora cuentan solo sus palabras propias."""
+    from src.flows import hechos
+
+    lista = ["5% de descuento si traes tu propio equipo, solo en buceo y cursos PADI.",
+             "10% de descuento para grupos de 5 personas, solo en buceo y no en cursos PADI.",
+             "10% de descuento online en buceo y cursos PADI."]
+    respuesta = "Hay descuento online del 10 %, solo en buceo y en los cursos PADI, y otro para grupos de 5 personas."
+    raices = hechos._raices(respuesta)
+    assert hechos._elemento_dado(lista[0], raices, respuesta)  # antes: las palabras comunes bastaban
+    assert not hechos._elemento_dado(lista[0], raices, respuesta, hechos._palabras_comunes(lista))
+    assert hechos._elemento_dado(lista[1], raices, respuesta, hechos._palabras_comunes(lista))

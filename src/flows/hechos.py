@@ -173,6 +173,7 @@ def hechos(state: ConversationState, intenciones: list[str], actividades: list[s
                 de_las_islas = [ISLAND_SERVICE_MAP.get(s) for s in otros]
                 base_islas = _plan_base(actividad, "island", elegido)
                 otros += [s for s in de_las_islas if s and s != base_islas and s in dom.service_ids(actividad, "island")]
+            otros = _acotados(otros, varios_dias and state.duracion_de_buceo)
             if otros:  # el buceo y los paquetes: el plan base y la lista de los demás con su precio
                 bloque["otros_planes"] = [{"plan": _nombre(s, lang), "precio": _precio(s, moneda),
                                            **({} if origen else {"origen": "island" if s in _DE_LAS_ISLAS else "cartagena"})}
@@ -241,7 +242,9 @@ def hechos(state: ConversationState, intenciones: list[str], actividades: list[s
         if "edad" in pedidas:
             bloque["edad"] = {"minima": registro.min_age, "maxima": registro.max_age}
         if "descuento" in pedidas:
-            bloque["descuento"] = _descuentos(state, lang)
+            bloque["descuento"] = _descuentos(state, lang, _descuento_de_grupo(state, registro, lang))
+            if getattr(state, "_un_descuento", False):
+                bloque["solo_el_preguntado"] = True  # CALN3-Q05: la lista va, pero no se exige ni se pega
         if "tiempo" in pedidas:
             bloque.update(_tiempo(lang))
         bloque.update(_clima_y_pago(state, pedidas, lang))
@@ -321,6 +324,25 @@ def _paquetes_de_varios_dias(actividad: str, origen: str) -> list[str]:
     return [s for s in dom.service_ids(actividad, origen) if ((SERVICES.get(s) or {}).get("duration_days") or 0) > 1]
 
 
+# CALN-3 (decisión 2 del 27-oct, CALN3-R04): los demás planes, 2 por origen como mucho. Con la actividad elegida iban
+# todos: el buzo que estará «una semana» recibía los paquetes de 3, 4, 5, 7 y 9 inmersiones. Si dijo cuántos días quiere
+# BUCEAR (varios), primero los paquetes de varios días; si no, en el orden del registro (los de un día primero).
+_OTROS_POR_ORIGEN = 2
+
+
+def _acotados(otros: list[str], paquetes_primero: bool) -> list[str]:
+    def varios(sid: str) -> bool:
+        return ((SERVICES.get(sid) or {}).get("duration_days") or 1) > 1
+
+    orden = sorted(otros, key=lambda s: not varios(s)) if paquetes_primero else otros
+    elegidos: list[str] = []
+    for sid in orden:
+        origen = "island" if sid in _DE_LAS_ISLAS else "cartagena"
+        if sum(1 for e in elegidos if ("island" if e in _DE_LAS_ISLAS else "cartagena") == origen) < _OTROS_POR_ORIGEN:
+            elegidos.append(sid)
+    return [s for s in otros if s in elegidos]
+
+
 def _comunes(listas: list[list[str]]) -> list[str]:
     """Los elementos que están en TODAS las listas, en el orden de la primera."""
     if not listas:
@@ -346,11 +368,15 @@ INTENCIONES_SIN_ACTIVIDAD = frozenset({"horario", "disponibilidad", "requisitos"
                                        "hoteles", "regreso", "fotos", "cambios"})
 
 
-def _descuentos(state: ConversationState, lang: str) -> list[str]:
+def _descuentos(state: ConversationState, lang: str, grupo: str | None = None) -> list[str]:
     """arq-4b: los descuentos con sus condiciones, tal cual de discounts.json (online,
     grupo, equipo propio y que no hay descuento por ser colombiano). Son los mismos para todas las actividades: cada uno
-    dice a qué aplica."""
+    dice a qué aplica. `grupo`: lo que dice el de grupo para ESTE grupo y plan (CALN3-R03: a 5 amigos con el Open Water
+    les llegaban «no aplica a cursos PADI» con el precio y el texto general del de grupo en la lista, y el escritor se
+    quedaba con el segundo)."""
     textos = descuentos_de_la_base(lang)  # arq-8h: de la función del catálogo, con la nota del acompañante
+    if grupo and "group_discount" in textos:
+        textos = {**textos, "group_discount": grupo}
     if getattr(state, "mixed_nationality_notice", False):
         # arq-8a (G10 nº 6, g10-043): «mi pareja es colombiana y yo extranjera, ¿hay descuento?» llevaba «los
         # colombianos pagan en COP» y no la regla del grupo mixto (esa solo iba con el precio): «tu pareja paga en pesos y
@@ -364,9 +390,10 @@ def _descuentos(state: ConversationState, lang: str) -> list[str]:
 # asesor para aplicarlo?»: los descuentos iban todos en el contexto sin decir cuál aplica. A quién aplica, de la base
 # (`applicability`: buceo recreativo, minicurso y snorkel); los cursos no.
 _CON_DESCUENTO_DE_GRUPO = {"cert", "beginner", "snorkel"}
+# Texto para el cliente: arq-7b lo pega tal cual si el escritor se lo deja (con la intención `descuento`).
 _SIN_DESCUENTO_DE_GRUPO = {
-    "es": "El descuento de grupo ({pct} % desde {n} personas) NO aplica a los cursos PADI: no lo ofrezcas para este plan.",
-    "en": "The group discount ({pct}% from {n} people) does NOT apply to PADI courses: don't offer it for this plan.",
+    "es": "El descuento de grupo ({pct} % desde {n} personas) no aplica a los cursos PADI, así que este curso no lo tiene.",
+    "en": "The group discount ({pct}% from {n} people) does not apply to PADI courses, so this course doesn't have it.",
 }
 
 
@@ -416,6 +443,8 @@ def hechos_sin_actividad(state: ConversationState, intenciones: list[str]) -> li
             bloque["requisitos"] = [p for p in bloque["requisitos"] if p]
     if "descuento" in pedidas:
         bloque["descuento"] = _descuentos(state, lang)
+        if getattr(state, "_un_descuento", False):
+            bloque["solo_el_preguntado"] = True
     bloque.update(_clima_y_pago(state, pedidas, lang))
     bloque.update(_temas_de_lat8(pedidas, lang))
     return _lo_que_faltaba(state, [bloque], pedidas, lang)
@@ -598,12 +627,22 @@ def _url_sin_parametros(url: str) -> str:
     return url.split("?")[0].split("#")[0].rstrip(".,)")
 
 
-def _elemento_dado(elemento: str, raices: set[str], answer: str) -> bool:
+def _elemento_dado(elemento: str, raices: set[str], answer: str, comunes: frozenset[str] | set[str] = frozenset()
+                   ) -> bool:
     frase = _primera_frase(elemento)
     if any(_url_sin_parametros(u) not in answer for u in _URL.findall(frase)):
         return False
-    propias = _raices(frase)
+    propias = _raices(frase) - comunes or _raices(frase)
     return not propias or len(propias & raices) / len(propias) >= _MINIMO_DE_PALABRAS
+
+
+def _palabras_comunes(elementos: list[str]) -> set[str]:
+    """Las raíces que salen en la primera frase de más de un elemento de la lista."""
+    vistas: dict[str, int] = {}
+    for elemento in elementos:
+        for r in _raices(_primera_frase(elemento)):
+            vistas[r] = vistas.get(r, 0) + 1
+    return {r for r, n in vistas.items() if n > 1}
 
 
 def faltan(answer: str, bloques: list[dict], intenciones: list[str]) -> list[str]:
@@ -623,10 +662,16 @@ def faltan(answer: str, bloques: list[dict], intenciones: list[str]) -> list[str
         for intencion in ("incluye", "requisitos", "descuento", "en_que_consiste"):
             if (intencion if intencion != "en_que_consiste" else "incluye") not in intenciones:
                 continue
+            if intencion == "descuento" and b.get("solo_el_preguntado"):
+                continue  # CALN3-Q05: pregunta por uno; el escritor contesta ese y los demás no se pegan
             listas = b.get(intencion) or {}
-            for elemento in dict.fromkeys(e for lista in (listas.values() if isinstance(listas, dict) else [listas])
-                                          for e in lista):
-                if not _elemento_dado(elemento, raices, answer):
+            elementos = list(dict.fromkeys(e for lista in (listas.values() if isinstance(listas, dict) else [listas])
+                                           for e in lista))
+            # rot-029: en los descuentos, «¿ya lo dijo?» con las palabras PROPIAS de cada uno; las que comparten todos
+            # («descuento», «buceo», «curso») daban por dicho el del equipo propio que el escritor se dejaba.
+            comunes = _palabras_comunes(elementos) if intencion == "descuento" else set()
+            for elemento in elementos:
+                if not _elemento_dado(elemento, raices, answer, comunes):
                     perdidos.append(elemento)
         # CALN-6 paso 2f (27-oct): la recogida va en los hechos, pero no se exige (si no la decía el escritor, arq-7b la
         # pegaba siempre: repetida o sin venir a cuento; mini-ronda con el juez: 5 → 4 fallos en 14 diálogos).

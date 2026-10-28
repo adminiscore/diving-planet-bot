@@ -35,6 +35,7 @@ from src.agents.jev_router import (
     PIDE_CAMBIOS,
     PIDE_CLIMA,
     PIDE_DESCUENTO,
+    PIDE_UN_DESCUENTO,
     PIDE_DISPONIBILIDAD,
     PIDE_EDAD,
     PIDE_ENLACE,
@@ -171,6 +172,7 @@ async def _router_node(state: BotState) -> dict:
     # ARQ-1b: las intenciones del mensaje según Jev (vacío si calla), para los hechos por código (src/flows/hechos.py).
     conv._intenciones = intenciones_del_turno(conv, signals)
     conv._otra_cosa = signals.get(PIDE_OTRA_COSA)  # ARQ-1d: None (Jev calla) cuenta como que sí trae algo más
+    conv._un_descuento = signals.get(PIDE_UN_DESCUENTO) is True  # CALN3-Q05: pregunta por un descuento concreto
     if conv._intenciones and conv._otra_cosa is False:
         # lat-1 (24-oct, fase LAT; Gadea #1731): el mensaje solo pide cosas de la tabla y lo contesta el redactor de
         # hechos, así que la respuesta adelantada del RAG se tira: se cancela ya, antes de que escriba y se revise
