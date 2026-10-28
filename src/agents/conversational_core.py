@@ -195,6 +195,19 @@ def _companion_activity_options(state: ConversationState) -> list[str]:
     return [o for o in options if dom.by_id(o) is not None]
 
 
+OTRA_COSA = "otra_cosa"  # el «No» de «¿también va a bucear?»: se le recomiendan las opciones
+
+
+def _pregunta_si_tambien_bucea(state: ConversationState) -> bool:
+    """CALN-8 (pareja Advanced, golden precio-desde-islas-vs-cartagena; decisión de Gadea #2475): quien escribe va a
+    bucear y quien falta por elegir está certificado (el lector del grupo). En vez de «¿un día o varios?» y las opciones,
+    una pregunta de sí o no: «¿la otra persona también va a bucear?». Sí = el buceo certificado; no = las opciones
+    (`sin_decidir_certificados` deja de ser True). Sin adivinar: «somos una pareja Advanced» y «mi esposa y yo somos
+    buzos, los niños quieren probar» (g12) se leen igual, y en las dos se pregunta."""
+    return (state.sin_decidir_certificados is True and state.detected_activity == "certified_diving"
+            and bool(state.pending_undecided_qty))
+
+
 # EX-FLUJO-1 (decisión de Gadea, 14-oct): las preguntas que se pueden dejar para antes del resumen si el cliente no
 # las contesta. No condicionan a otras; la actividad, la certificación y las confirmaciones sí, y no se aplazan. Qué
 # hará quien aún no ha elegido tampoco: si no contesta, se le vuelve a preguntar antes del resumen (CALN-2 paso 3a).
@@ -774,6 +787,18 @@ def _texto_de_la_pregunta(state: ConversationState, slot: str, *, reasking: bool
             f"How many people would that be for {label}? That way I can give you the exact plan. 😊"
         )
     if slot == SLOT_COMPANION_ACTIVITY:
+        if _pregunta_si_tambien_bucea(state):
+            varios = (state.pending_undecided_qty or 1) > 1
+            state.quick_replies = [
+                {"title": (f"Sí, también bucea{'n' if varios else ''}" if lang == "es" else "Yes, diving too"),
+                 "value": "certified_diving"},
+                {"title": "No, otra cosa" if lang == "es" else "No, something else", "value": OTRA_COSA},
+            ]
+            return (
+                ("¿Los demás también van a bucear? 🤿" if varios else "¿La otra persona también va a bucear? 🤿")
+                if lang == "es" else
+                ("Are the others diving too? 🤿" if varios else "Is the other person diving too? 🤿")
+            )
         # Dos pasos, mismo slot pendiente: sin saber si se quedan uno o varios días
         # no se puede recomendar bien (el Open Water necesita varios), así que se
         # pregunta primero, como la nacionalidad o la ubicación. Con ese dato, se

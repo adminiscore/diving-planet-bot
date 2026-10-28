@@ -11,6 +11,7 @@ import re
 
 from src.agents.conversational_core import (
     _AFFIRMS_SIGNAL_FIELDS,
+    OTRA_COSA,
     SLOT_ACTIVITY,
     SLOT_AGES,
     SLOT_CERT_OR_COURSE,
@@ -39,6 +40,7 @@ from src.agents.conversational_core import (
     _mentioned_courses,
     _mentioned_product_activities,
     _merge_companion_activity,
+    _pregunta_si_tambien_bucea,
     _recall_answer,
     _set_concrete_activity,
     _take_undecided_members,
@@ -401,6 +403,15 @@ def _apply_short_answer(state: ConversationState, message: str, ia: dict | None 
             return True
         return False
     if slot == SLOT_COMPANION_ACTIVITY:
+        if _pregunta_si_tambien_bucea(state):
+            # CALN-8: la respuesta a «¿la otra persona también va a bucear?». Otra cosa («snorkel») sigue abajo.
+            primera = next(iter(_words(message)), "")
+            if msg == "certified_diving" or is_affirmative(primera) or is_agree(primera):
+                _elige_quien_falta(state, "certified_diving")
+                return True
+            if msg == OTRA_COSA or is_negative(primera):
+                state.sin_decidir_certificados = None  # se le recomiendan las opciones
+                return True
         # Respuesta a la recomendación para el acompañante: el valor de un botón,
         # el número de la opción o su nombre exacto. Por palabra clave se sigue
         # aceptando snorkel/minicurso ("quiere bucear" = minicurso, regla de

@@ -156,3 +156,60 @@ async def test_si_el_extractor_ve_al_grupo_manda_el(extractor_dice):
     await _turno(st, mensaje, {"companion_activity": "certified_diving", "mentions_other_person": True,
                                "companion_is_singular": True})
     assert st.detected_group_size == 2 and not st.pending_undecided_qty
+
+
+def _pareja(**campos) -> ConversationState:
+    st = _estado()
+    st.detected_activity, st.detected_group_size, st.is_certified = "certified_diving", 2, True
+    st.detected_group_allocation = {"certified_diving": 1}
+    st.pending_undecided_qty, st.sin_decidir_certificados = 1, True
+    st.core_pending_slot = core.SLOT_COMPANION_ACTIVITY
+    for k, v in campos.items():
+        setattr(st, k, v)
+    return st
+
+
+@pytest.mark.parametrize("campos, pregunta", [
+    ({}, True),
+    ({"sin_decidir_certificados": None}, False),  # no se sabe si está certificado: las opciones
+    ({"detected_activity": "snorkel", "detected_group_allocation": {"snorkel": 1}}, False),  # quien escribe no bucea
+])
+def test_si_quien_falta_esta_certificado_se_pregunta_si_tambien_bucea(campos, pregunta):
+    """CALN-8 (pareja Advanced del golden, decisión de Gadea #2475): una pregunta de sí o no en vez de «¿un día o
+    varios?» y las opciones."""
+    st = _pareja(**campos)
+    texto = core.ask_slot(st, core.SLOT_COMPANION_ACTIVITY)
+    assert ("también va a bucear" in texto) is pregunta
+    if pregunta:
+        assert [b["value"] for b in st.quick_replies] == ["certified_diving", core.OTRA_COSA]
+
+
+@pytest.mark.parametrize("respuesta", ["certified_diving", "sí", "si, los dos"])
+def test_si_tambien_bucea_entran_los_dos(respuesta):
+    st = _pareja()
+    assert core_routing._apply_short_answer(st, respuesta)
+    assert st.detected_group_allocation == {"certified_diving": 2} and st.detected_group_size == 2
+    assert not st.pending_undecided_qty and not st.needs_companion_activity
+
+
+@pytest.mark.parametrize("respuesta", [core.OTRA_COSA, "no"])
+def test_si_no_bucea_se_le_recomiendan_las_opciones(respuesta):
+    st = _pareja()
+    assert core_routing._apply_short_answer(st, respuesta)
+    assert st.pending_undecided_qty == 1 and st.sin_decidir_certificados is None
+    assert "un solo día" in core.ask_slot(st, core.SLOT_COMPANION_ACTIVITY)
+
+
+@pytest.mark.asyncio
+async def test_la_pareja_de_buzos_se_pregunta_y_bucean_los_dos(extractor_dice, monkeypatch):
+    """La pareja de buzos que quiere bucear, leída como quien escribe con buceo y otra persona certificada sin elegir:
+    se pregunta si también bucea y, con el sí, el buceo es para los dos. Frase nuestra."""
+    mensaje = "Hola, somos una pareja de buzos Advanced y queremos hacer unas inmersiones en Cartagena"
+    extractor_dice({mensaje: {"activity": "certified_diving", "is_certified": True, "group_size": 2}, "sí": {}})
+    _con_el_lector(monkeypatch, [{**_persona("cliente", True, mensaje), "cantidad": 2}])
+    st = _estado()
+    await _turno(st, mensaje, {})
+    assert st.core_pending_slot == core.SLOT_COMPANION_ACTIVITY and st.sin_decidir_certificados is True
+    assert [b["value"] for b in st.quick_replies] == ["certified_diving", core.OTRA_COSA]
+    await _turno(st, "sí", {})
+    assert st.detected_group_allocation == {"certified_diving": 2} and not st.pending_undecided_qty
