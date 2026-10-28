@@ -486,6 +486,20 @@ RAG_SIN_PRECIO_EN = (
 )
 
 
+# CALN-3 paso 3 «A» (28-oct, decisión de Gadea #2296): los importes los pone el código debajo del texto del escritor
+# (`cotizar.pieza_de_precios`), con los orígenes, las monedas y el descuento de grupo que aplica.
+RAG_PRECIOS_POR_CODIGO = {
+    "es": ("En ESTA respuesta no escribas precios ni importes (ni cifras en USD o COP): justo debajo de tu texto el sistema "
+           "pone la lista de precios por persona de cada plan, según desde dónde se sale y en su moneda, y el descuento "
+           "de grupo si le aplica. No hables de descuentos que no pregunte. Contesta lo demás que pregunte y, si pregunta "
+           "el precio, di en una frase que se lo dejas a continuación."),
+    "en": ("In THIS answer do not write prices or amounts (no figures in USD or COP): right below your text the system "
+           "adds the list of prices per person for each plan, by departure point and in their currency, and the group "
+           "discount if it applies to them. Do not talk about discounts they do not ask about. Answer the rest of what "
+           "they ask and, if they ask the price, say in one sentence that you are leaving it below."),
+}
+
+
 # arq-1g (flag `hechos_al_rag`): en un mensaje mezclado, el RAG recibe los hechos del código para la parte de la tabla.
 RAG_CON_HECHOS_ES = (
     "Hechos del sistema para parte de lo que pregunta el cliente, ya calculados con las reglas de Diving Planet (moneda, "
