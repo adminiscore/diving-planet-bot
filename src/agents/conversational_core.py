@@ -1752,6 +1752,13 @@ async def _rag_answer(
     if sin_busqueda:  # lat-9 paso 2: el escritor solo (`slotfill_close._sin_dato`)
         entradas["sin_busqueda"] = True
     answer = await supervisor.rag_answer(rag_query or message, **entradas)
+    if sin_precio and answer:
+        # CALN-3 paso 3 «A» (r01): con la tarjeta no va la pieza de precios, pero sí lo que dicen los hechos del
+        # descuento de grupo (aplica, o no aplica a un curso PADI); el escritor ya no habla de él (RAG_SIN_PRECIO).
+        from src.agents import redactor_hechos  # lazy
+
+        if nota := await redactor_hechos.nota_de_grupo(state, message, state.history if history is None else history):
+            answer = redactor_hechos.con_la_pieza(answer, nota)
     # 7-oct (opción C): si cotiza sin origen, se pregunta el origen; quien la recibe deja el estado preparado
     # (`_fijar_origen_antes_del_precio`).
     return _puerta_del_origen(state, message, answer)

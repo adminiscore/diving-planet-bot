@@ -52,6 +52,34 @@ def _actividad(state: ConversationState, datos: dict) -> str | None:
     return None
 
 
+def _del_reparto_del_mensaje(datos: dict) -> list[str]:
+    """Las actividades del reparto que lee el extractor en ESTE mensaje («2 quieren hacer snorkel»), si no hay otra en
+    juego (sparring t3: sin esto iban los candidatos de quien no dice nada, buceo y minicurso, a quien pedía snorkel)."""
+    reparto = datos.get("group_allocation") or {}
+    return [a for a, n in reparto.items() if isinstance(n, int) and n > 0 and dom.by_id(a) is not None
+            and not dom.by_id(a).generic] if isinstance(reparto, dict) else []
+
+
+def _de_quien_no_ha_elegido(foto: ConversationState, datos: dict) -> list[str]:
+    """Las 2 primeras opciones que el bot ofrece a quien aún no ha elegido (sin el acompañante), si hay alguien así en el
+    grupo; [] si no."""
+    reparto = {**(foto.detected_group_allocation or {}), **(datos.get("group_allocation") or {})}
+    sin_elegir = foto.pending_undecided_qty or reparto.get("undecided") or 0
+    if not sin_elegir:
+        return []
+    from src.agents.conversational_core import _companion_activity_options  # lazy
+
+    opciones = [o for o in _companion_activity_options(foto) if o != "companion"]
+    certificado = foto.is_certified is True or datos.get("is_certified") is True
+    if certificado and not any((r := dom.by_id(a)) is not None and r.requires_certification for a in reparto):
+        # CALN-3c (p08): «I'm a certified diver and my son wants to snorkel»: quien no ha elegido es quien escribe, buzo;
+        # su opción es el buceo, no el minicurso que se ofrece a un principiante.
+        opciones = ["certified_diving", *(o for o in opciones if o != "certified_diving")]
+        if sin_elegir == 1:
+            return ["certified_diving"]
+    return opciones[:2]
+
+
 def _actividades_en_juego(state: ConversationState) -> bool:
     """¿Hay alguna actividad en la conversación? Con varias, `_actividad` no adivina (arq-1k) y contesta el RAG; los
     candidatos de CALN-3 son solo para cuando no hay ninguna."""
@@ -151,11 +179,29 @@ def _foto(state: ConversationState, datos: dict, origen: str | None, message: st
         foto._aloja_en_baru = any(_solo_baru(t) for t in dicho)
     if isinstance(datos.get("group_size"), int) and datos["group_size"] > (foto.detected_group_size or 0):
         foto.detected_group_size = datos["group_size"]  # CALN-3: «somos 5» en ESTE mensaje, para el descuento de grupo
+    if not foto.selected_service and (plan := _paquete_nombrado(message, history)):
+        # CALN-3 paso 3 «A» (p11, p12): «¿cuánto cuesta el paquete de 5 inmersiones?» no dejaba el plan en el estado y los
+        # hechos daban la salida de 2; con el catálogo delante el escritor lo arreglaba, con la pieza ya no.
+        foto.detected_service_id = plan
     reparto = datos.get("group_allocation")
     if isinstance(reparto, dict) and not foto.detected_group_allocation:
         # arq-5f: «dos bucean y dos hacen snorkel» en ESTE mensaje (la extracción aún no lo ha guardado): la misma lancha.
         foto.detected_group_allocation = {k: v for k, v in reparto.items() if isinstance(v, int) and v > 0}
     return foto
+
+
+def _paquete_nombrado(message: str, history: list[dict] | None) -> str | None:
+    """El plan de buceo que nombra el cliente por sus inmersiones («el paquete de 5 inmersiones», «the 2-dive trip»), en
+    este mensaje o, si no nombra ninguno, en el último suyo que lo haga; None si nombra varios o ninguno. La lectura es
+    la de siempre (`dive_counts_in`: cifra y unidad del catálogo)."""
+    from src.agents.intent_detector import dive_counts_in  # lazy
+
+    suyos = [message, *(m.get("content") or "" for m in reversed(history or []) if m.get("role") == "user")]
+    for texto in suyos:
+        cuentas = dive_counts_in(texto)
+        if cuentas:
+            return dom.dive_packages()[cuentas[0]][1] if len(cuentas) == 1 else None
+    return None
 
 
 def _cubierta(bloque: dict, intencion: str) -> bool:
@@ -189,15 +235,31 @@ async def hechos_del_turno(state: ConversationState, message: str, history: list
 
     leida = await lectura_del_extractor(state, message)
     datos, leido = leida or {}, leida is not None
-    actividades = _actividades(state, datos)
-    if (not actividades and "precio" in intenciones and not _actividades_en_juego(state)
-            and not (state.ya_reservado or datos.get("ya_reservado"))):
+    actividades = _actividades(state, datos) or _del_reparto_del_mensaje(datos)
+    precio = "precio" in intenciones and not (state.ya_reservado or datos.get("ya_reservado"))
+    if actividades and precio:
+        # CALN-3 paso 3 (sparring t3): quien aún no ha elegido también tiene precio, el de sus 2 primeras opciones (las
+        # que le ofrece el bot, `_companion_activity_options`). «Mi marido es buzo y yo quiero probar» daba solo el
+        # buceo, y el escritor decía «no tengo aquí el precio del minicurso».
+        foto = _foto(state, datos, _origen(state, datos, leido), message, history)
+        sueltos = [a for a in _de_quien_no_ha_elegido(foto, datos) if a not in actividades]
+        if sueltos:
+            bloques = hechos_mod.hechos(foto, intenciones, [*actividades, *sueltos])
+            for b in bloques:
+                if b["actividad"] in sueltos:
+                    b.pop("otros_planes", None)
+            cubiertas = [i for i in intenciones if any(_cubierta(b, i) for b in bloques)]
+            logger.info(f"[HECHOS][CALN3] también las opciones de quien no ha elegido: {sueltos}")
+            return (bloques, cubiertas) if cubiertas else None
+    if not actividades and precio and not _actividades_en_juego(state):
         # CALN-3 paso 2 (CALN3-P01): el precio sin actividad elegida, con los candidatos que deja lo que se sabe. Quien
         # ya reservó algo que no nombra no elige entre candidatos: contesta el RAG (arq-1p).
         foto = _foto(state, datos, _origen(state, datos, leido), message, history)
         for campo in ("is_certified", "quiere_bucear"):
             if getattr(foto, campo) in (None, False) and datos.get(campo) is not None:
                 setattr(foto, campo, datos[campo])
+        if datos.get("otro_sin_certificar") is True:
+            foto.acompanante_sin_certificar = True  # CALN-3c (p07): lo dice ESTE mensaje; se guarda después
         if bloques := cotizar.hechos_de_los_candidatos(foto, intenciones):
             cubiertas = [i for i in intenciones if any(_cubierta(b, i) for b in bloques)]
             logger.info(f"[HECHOS][CALN3] sin actividad elegida: los candidatos {[b['actividad'] for b in bloques]}")
@@ -219,6 +281,50 @@ async def hechos_del_turno(state: ConversationState, message: str, history: list
     if not cubiertas:
         note_turn(hechos_por_codigo="sin_cubrir")
     return (bloques, cubiertas) if cubiertas else None
+
+
+_IMPORTE_RE = re.compile(r"\d[\d.,]*\s*(?:COP|USD|US\$)|(?:USD|COP|US\$)\s*\d", re.IGNORECASE)
+_CIERRA_PREGUNTANDO_RE = re.compile(r"\?[*_)\]]*\s*[\U0001F000-\U0001FAFF☀-➿]?\s*$")
+
+
+# DOTALL: la pieza trae la nota del de grupo en otra línea que los precios (sparring t3: sin él no se veía).
+_DESCUENTO_DE_GRUPO_RE = re.compile(r"(?=.*\b(?:descuento|discount))(?=.*\b(?:grupo|group))", re.IGNORECASE | re.DOTALL)
+
+
+def _quita(regla: re.Pattern, texto: str) -> bool:
+    return bool(regla.search(texto) if regla is _IMPORTE_RE else regla.match(texto))
+
+
+def _sin_frases(parrafo: str, fuera: list[re.Pattern]) -> str:
+    """El párrafo sin las frases que casan con alguna regla de `fuera`."""
+    if not any(_quita(r, parrafo) for r in fuera):
+        return parrafo
+    logger.info("[HECHOS][CALN3] el escritor dio un importe o el descuento de grupo: fuera, lo da la pieza")
+    return " ".join(f for f in re.split(r"(?<=[.!?])\s+", parrafo) if not any(_quita(r, f) for r in fuera)).strip()
+
+
+def con_la_pieza(answer: str, pieza: str) -> str:
+    """CALN-3 paso 3 «A»: la respuesta del escritor con la pieza de precios debajo, delante de su pregunta final si
+    cierra preguntando. Si aun así escribió algún importe, fuera esa frase: la cifra la da la pieza. Y si la pieza dice
+    lo del descuento de grupo, fuera también las frases del escritor sobre él (r01: con «no aplica a los cursos PADI»
+    debajo, el escritor seguía diciendo encima «10 % para grupos de 5, que se suma al online», 2 de 3)."""
+    fuera = [_IMPORTE_RE, *([_DESCUENTO_DE_GRUPO_RE] if _DESCUENTO_DE_GRUPO_RE.match(pieza) else [])]
+    parrafos = [p for p in answer.rstrip().split("\n\n") if p.strip()]
+    cierre = [parrafos.pop()] if len(parrafos) > 1 and _CIERRA_PREGUNTANDO_RE.search(parrafos[-1]) else []
+    # Su párrafo final también (sparring t3b: «Sí, por ser un grupo de 6 aplica el descuento de grupo… ¿Te paso con un
+    # asesor?» quedaba detrás de la nota): se queda su pregunta.
+    limpios = [p for p in (_sin_frases(p, fuera) for p in parrafos) if p]
+    cierre = [c for c in (_sin_frases(p, fuera) for p in cierre) if c]
+    return "\n\n".join([*limpios, pieza, *cierre])
+
+
+async def nota_de_grupo(state: ConversationState, message: str, history: list[dict]) -> str | None:
+    """CALN-3 paso 3 «A»: lo que dicen los hechos de este turno del descuento de grupo (5 o más: aplica, o no aplica a
+    un curso), para el turno que lleva la tarjeta en vez de la pieza; None si no hay nada que decir."""
+    turno = await hechos_del_turno(state, message, history)
+    if turno is None:
+        return None
+    return next((b["descuento_de_grupo"] for b in turno[0] if b.get("descuento_de_grupo")), None)
 
 
 def texto_de_los_hechos(bloques: list[dict]) -> str:
@@ -271,10 +377,16 @@ async def _con_el_escritor(state: ConversationState, message: str, history: list
     if origen_pendiente:
         entradas.pop("pregunta_final", None)  # la pregunta del origen la pone el código, abajo
     entradas.update(hechos=texto_de_los_hechos(bloques), hechos_bloques=(bloques, intenciones), sin_busqueda=True)
+    pieza = cotizar.pieza_de_precios(bloques, lang) if "precio" in intenciones else None
+    if pieza:
+        # CALN-3 paso 3 «A»: el escritor no escribe importes; los pone el código debajo y no se le exigen.
+        entradas.update(precios_por_codigo=True, hechos_bloques=(bloques, [i for i in intenciones if i != "precio"]))
     answer = await supervisor.rag_answer(message, **entradas)
     if not answer or is_fallback_answer(answer):
         note_turn(hechos_por_codigo="fallo")
         return None
+    if pieza:
+        answer = con_la_pieza(answer, pieza)
     if origen_pendiente:
         tras = ((core.ORIGEN_TRAS_LOS_ENLACES_ES, core.ORIGEN_TRAS_LOS_ENLACES_EN) if "enlace" in intenciones
                 else (core.ORIGEN_TRAS_LAS_VARIANTES_ES, core.ORIGEN_TRAS_LAS_VARIANTES_EN))
