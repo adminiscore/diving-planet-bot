@@ -123,7 +123,7 @@ def turnos(dialogo: str) -> list[str]:
     return por_tag[d["source"]["tag"]]
 
 
-def main() -> None:
+def main() -> int:
     sys.stdout.reconfigure(encoding="utf-8")
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("dialogo", nargs="?", help="id del diálogo del golden (no del examen oculto) o del --banco")
@@ -155,7 +155,7 @@ def main() -> None:
         for i, t in enumerate(ts, 1):
             print(f"  {i}. {t}")
     if args.dry:
-        return
+        return 0
 
     from scripts.pre_access import docker_python, pre_ssh, subir_codigo_local
 
@@ -176,7 +176,14 @@ def main() -> None:
               f" · {marca}" + (f" · {rech[0]['why'][:140]}" if rech else ""))
     if len(filas) < total:
         print("⚠️ faltan turnos; stderr de PRE:\n" + (r.stderr or "")[-2000:])
+    # 28-oct (Gadea): como en `ronda_local_pre`, un turno con errores de LLM lo contestó un respaldo (sin saldo de
+    # OpenAI, Luna fallaba y escribía DeepSeek): un banco así no mide el bot de verdad.
+    con_errores = sum(1 for f in filas if any(m.get("llm_errores") for m in f.get("metricas") or []))
+    if con_errores:
+        print(f"⚠️ {con_errores}/{len(filas)} turnos con errores de LLM (contestó un respaldo): "
+              "mira el saldo y los modelos antes de puntuar")
+    return 3 if con_errores > 0.05 * len(filas) else 0
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())
