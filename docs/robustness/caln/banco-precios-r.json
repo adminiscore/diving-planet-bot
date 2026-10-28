@@ -1,0 +1,13 @@
+{
+  "about": "CALN-3 (28-oct, Gonzalo): descuentos y paquetes de la 3.ª tanda de precios de Gadea (CALN3-R03, R04) y rot-029 / Q05. Frases nuestras (no salen del golden, de G9/G10 ni de las charlas reales). Se puntúa con scripts/puntua_banco_edades.py sobre el ÚLTIMO turno: «debe» (cada fragmento, «a|b» = cualquiera) y «ninguno» (minúsculas, sin tildes).",
+  "dialogos": [
+    {"id": "r01-open-water-5-grupo", "turnos": ["Hola, somos 5 amigos de Madrid y queremos sacarnos el Open Water. Salimos desde Cartagena. Precio por persona y si nos hacéis descuento de grupo"],
+     "tarea": "CALN3-R03: el de grupo no aplica a cursos PADI", "debe": ["no aplica"], "ninguno": ["se suma al 10", "se suma al online", "gestionarlo", "para aplicarlo"]},
+    {"id": "r02-buzo-una-semana-en", "turnos": ["Hey! How much is diving? I'm certified (AOW) and I'll be in Cartagena for a week."],
+     "tarea": "CALN3-R04: 2-3 planes, no la carta de paquetes", "ninguno": ["9 dives", "7 dives"]},
+    {"id": "r03-algun-descuento-minicurso", "turnos": ["Quiero hacer el minicurso desde Cartagena, ¿tienen algún descuento?"],
+     "tarea": "rot-029: la pregunta general da todos, también el de equipo propio (que no aplica al minicurso)", "debe": ["equipo"]},
+    {"id": "r04-snorkel-grupo-6-concreto", "turnos": ["Somos 6 y salimos desde Cartagena a hacer snorkel", "¿El descuento de grupo nos aplica?"],
+     "tarea": "CALN3-Q05 en snorkel: contesta el de grupo, sin la lista entera", "debe": ["si|aplica"], "ninguno": ["equipo propio", "equipo completo"]}
+  ]
+}
