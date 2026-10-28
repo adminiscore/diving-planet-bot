@@ -110,3 +110,9 @@ El paso 1 no cambia nada visible y ya dice cuánto se equivoca hoy el escritor f
 - Paso 1 (Gadea, 53b6082): `cotizar()` en sombra (`src/flows/cotizar.py`), solo traza.
 - Paso 2a (4036ad5): sin actividad elegida, el precio con los hechos de los candidatos (CALN3-P01): el escritor recibe
   el plan base de cada uno en los dos orígenes, sin la carta de paquetes, y el código pregunta el origen detrás.
+- Paso 2b (f9d7329): con 5 o más, el precio lleva el descuento de grupo si aplica, o que NO aplica en un curso PADI
+  (CALN3-Q04). Quien ya reservó algo sin nombrarlo no recibe candidatos (9b91d2f).
+- Medido (28-oct, banco-precios ×2, A = caln-gadea 51abfd9, B = 9b91d2f): **26/36 → 31/36**; p17 0 → 2/2 (precio ya en
+  t1), p16 0 → 2/2, p18 1 → 2/2. banco-precios-q 8/10 igual. Mediana 4,06 → 3,80 s, p95 7,05 → 5,10 s.
+- Quedan: p07/p08 (el reparto de la pareja o la familia no se lee en t1: CALN-2), p09 (la corrección a Isla Grande
+  queda por confirmar y no se cotiza), Q05 (qué descuento se pregunta) y Q09 (varios días sin dormir en las islas).
