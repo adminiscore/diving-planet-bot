@@ -186,3 +186,13 @@ def test_paso3_la_nota_del_de_grupo_se_ve_aunque_vaya_en_otra_linea():
              "10% de descuento para grupos de 5 personas o más, que se suma al 10% de descuento online.")
     salida = rh.con_la_pieza("Sí, por ser un grupo de 6 aplica el descuento de grupo. Salen a las 8.", pieza)
     assert salida.startswith("Salen a las 8.") and salida.count("grupo") == 1
+
+
+def test_paso3_el_parrafo_final_del_escritor_tambien_se_limpia():
+    """Sparring t3b: «Sí, por ser un grupo de 6 aplica el descuento de grupo… ¿Quieres que te pase con un asesor?»."""
+    from src.agents import redactor_hechos as rh
+
+    pieza = "*Precios por persona*:\n• Tour de Snorkeling: 448.000 COP · 497.000 COP\n\n10% de descuento para grupos de 5."
+    salida = rh.con_la_pieza("Te dejo los precios.\n\nSí, por ser un grupo de 6 aplica el descuento de grupo. "
+                             "¿Quieres que te pase con un asesor?", pieza)
+    assert salida.endswith(pieza + "\n\n¿Quieres que te pase con un asesor?")

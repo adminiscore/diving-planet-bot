@@ -280,6 +280,18 @@ _CIERRA_PREGUNTANDO_RE = re.compile(r"\?[*_)\]]*\s*[\U0001F000-\U0001FAFF☀-➿
 _DESCUENTO_DE_GRUPO_RE = re.compile(r"(?=.*\b(?:descuento|discount))(?=.*\b(?:grupo|group))", re.IGNORECASE | re.DOTALL)
 
 
+def _quita(regla: re.Pattern, texto: str) -> bool:
+    return bool(regla.search(texto) if regla is _IMPORTE_RE else regla.match(texto))
+
+
+def _sin_frases(parrafo: str, fuera: list[re.Pattern]) -> str:
+    """El párrafo sin las frases que casan con alguna regla de `fuera`."""
+    if not any(_quita(r, parrafo) for r in fuera):
+        return parrafo
+    logger.info("[HECHOS][CALN3] el escritor dio un importe o el descuento de grupo: fuera, lo da la pieza")
+    return " ".join(f for f in re.split(r"(?<=[.!?])\s+", parrafo) if not any(_quita(r, f) for r in fuera)).strip()
+
+
 def con_la_pieza(answer: str, pieza: str) -> str:
     """CALN-3 paso 3 «A»: la respuesta del escritor con la pieza de precios debajo, delante de su pregunta final si
     cierra preguntando. Si aun así escribió algún importe, fuera esa frase: la cifra la da la pieza. Y si la pieza dice
@@ -288,15 +300,10 @@ def con_la_pieza(answer: str, pieza: str) -> str:
     fuera = [_IMPORTE_RE, *([_DESCUENTO_DE_GRUPO_RE] if _DESCUENTO_DE_GRUPO_RE.match(pieza) else [])]
     parrafos = [p for p in answer.rstrip().split("\n\n") if p.strip()]
     cierre = [parrafos.pop()] if len(parrafos) > 1 and _CIERRA_PREGUNTANDO_RE.search(parrafos[-1]) else []
-    limpios = []
-    for parrafo in parrafos:
-        if any(r.search(parrafo) if r is _IMPORTE_RE else r.match(parrafo) for r in fuera):
-            frases = re.split(r"(?<=[.!?])\s+", parrafo)
-            parrafo = " ".join(f for f in frases if not any(r.search(f) if r is _IMPORTE_RE else r.match(f)
-                                                            for r in fuera)).strip()
-            logger.info("[HECHOS][CALN3] el escritor dio un importe o el descuento de grupo: fuera, lo da la pieza")
-        if parrafo:
-            limpios.append(parrafo)
+    # Su párrafo final también (sparring t3b: «Sí, por ser un grupo de 6 aplica el descuento de grupo… ¿Te paso con un
+    # asesor?» quedaba detrás de la nota): se queda su pregunta.
+    limpios = [p for p in (_sin_frases(p, fuera) for p in parrafos) if p]
+    cierre = [c for c in (_sin_frases(p, fuera) for p in cierre) if c]
     return "\n\n".join([*limpios, pieza, *cierre])
 
 
