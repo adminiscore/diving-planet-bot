@@ -196,3 +196,11 @@ def test_paso3_el_parrafo_final_del_escritor_tambien_se_limpia():
     salida = rh.con_la_pieza("Te dejo los precios.\n\nSí, por ser un grupo de 6 aplica el descuento de grupo. "
                              "¿Quieres que te pase con un asesor?", pieza)
     assert salida.endswith(pieza + "\n\n¿Quieres que te pase con un asesor?")
+
+
+def test_paso3_un_descuento_con_su_umbral():
+    """Sparring t3b: el mensaje largo con «¿…y hay descuento de grupo?» da 0,60-0,68; la pregunta general, 0,05."""
+    from src.agents import jev_router as j
+
+    assert j.answers_to_signals({j.PIDE_UN_DESCUENTO: {"noul": 0.64}})[j.PIDE_UN_DESCUENTO] is True
+    assert j.answers_to_signals({j.PIDE_UN_DESCUENTO: {"noul": 0.19}})[j.PIDE_UN_DESCUENTO] is False

@@ -554,6 +554,9 @@ _PIDE_DESCUENTO_Q = {
 # CALN-3 (decisión 4 del 27-oct, CALN3-Q05): «¿el de grupo nos aplica?» recibía debajo todos los demás descuentos
 # (arq-7b exigía la lista entera). Si pregunta por UNO, los hechos llevan la lista igual, pero no se exige ni se pega.
 PIDE_UN_DESCUENTO = "pide_un_descuento"
+# Umbral propio (sparring t3b, sonda ×4): «…Somos 6… ¿Cuánto nos sale y hay descuento de grupo?» da 0,60-0,68 y «¿cuánto
+# nos sale y hay algún descuento?» 0,05; sin pregunta de descuento, nunca más de 0,19 (16 mensajes ×4).
+PIDE_UN_DESCUENTO_MIN = 0.5
 _PIDE_UN_DESCUENTO_Q = {
     "type": "noul",
     "instructions": (
@@ -1017,7 +1020,8 @@ def answers_to_signals(answers: dict, threshold: float = THRESHOLD) -> dict:
         out[PIDE_QUE_INCLUYE] = (answers.get(PIDE_QUE_INCLUYE) or {}).get("noul", 0.0) >= PIDE_QUE_INCLUYE_MIN
     for intencion in (*_INTENCIONES_Q, PIDE_DESCUENTO, PIDE_UN_DESCUENTO, PIDE_CLIMA, PIDE_PAGO, *_INTENCIONES_LAT8):
         if intencion in answers and intencion != PIDE_OTRA_COSA:
-            out[intencion] = (answers.get(intencion) or {}).get("noul", 0.0) >= INTENCION_MIN
+            minimo = PIDE_UN_DESCUENTO_MIN if intencion == PIDE_UN_DESCUENTO else INTENCION_MIN
+            out[intencion] = (answers.get(intencion) or {}).get("noul", 0.0) >= minimo
     if PIDE_SI_ALCANZA in answers:
         out[PIDE_SI_ALCANZA] = (answers.get(PIDE_SI_ALCANZA) or {}).get("noul", 0.0) >= INTENCION_MIN
     if PIDE_OTRA_COSA in answers:
