@@ -144,3 +144,17 @@ def test_paso3_con_la_tarjeta_va_la_nota_del_de_grupo(monkeypatch):
     st = _st(location="cartagena")
     answer = asyncio.run(core._rag_answer(st, "somos 5, ¿descuento de grupo?", sin_precio=True, history=[]))
     assert answer == f"El Open Water dura 2 días.\n\n{nota}\n\n¿Te ayudo con algo más?"
+
+
+def test_paso3_con_la_nota_del_de_grupo_fuera_lo_que_dice_el_escritor_de_el():
+    """r01 (×3 tras 1a84026): con la nota «no aplica» debajo, el escritor seguía diciendo encima que se suma al online."""
+    from src.agents import redactor_hechos as rh
+
+    nota = "El descuento de grupo (10 % desde 5 personas) no aplica a los cursos PADI, así que este curso no lo tiene."
+    texto = ("El Open Water dura 2 días. Para grupos de 5 o más hay un 10% de descuento, que se suma al online. "
+             "Deben solicitarlo al equipo antes de pagar.\n\n¿Te ayudo con algo más?")
+    salida = rh.con_la_pieza(texto, nota)
+    assert "se suma" not in salida and salida.startswith("El Open Water dura 2 días. Deben solicitarlo")
+    assert nota in salida and salida.endswith("¿Te ayudo con algo más?")
+    # Sin nota del de grupo, lo que diga el escritor de él se queda (los demás descuentos, si los pregunta).
+    assert "se suma" in rh.con_la_pieza(texto, "*Precios por persona*:\n• Minicurso: 183 USD · 204 USD")
