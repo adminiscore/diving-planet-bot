@@ -319,3 +319,16 @@ def test_quien_escribe_ya_eligio_y_se_suma_otro():
     # con un total ya sabido, el mensaje puede nombrar solo a una parte: no se cuenta a nadie más
     nuevos, cambios = lg.completar({}, {"total_dicho": None, "personas": marido}, 3, "minicourse")
     assert "group_size" not in nuevos and "group_allocation" not in nuevos and not cambios
+
+
+def test_quien_escribe_nombrado_solo_tambien_conserva_lo_que_eligio():
+    """g19, medida de CALN-8 (2a): la mitad de las lecturas nombran también a quien escribe (cantidad 1, sin actividad)
+    junto al marido; lo que eligió antes sigue siendo suyo. En un «nosotros» («Somos 3», g10), no."""
+    lectura = {"total_dicho": None, "personas": [
+        _p(cita="my husband is certified, he'd like to dive"),
+        _p(quien="husband", certificado=True, actividad="certified_diving", cita="my husband is certified")]}
+    nuevos, _ = lg.completar({}, lectura, None, "minicourse")
+    assert nuevos["group_allocation"] == {"minicourse": 1, "certified_diving": 1}
+    nosotros = {"total_dicho": None, "personas": [_p(cantidad=3, cita="Somos 3")]}
+    nuevos, _ = lg.completar({"group_size": 3}, nosotros, None, "minicourse")
+    assert nuevos["group_allocation"] == {"undecided": 3}

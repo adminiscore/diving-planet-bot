@@ -177,12 +177,18 @@ def completar(datos: dict, lectura: dict, total_sabido: int | None = None,
             and not isinstance(out.get("group_size"), int) and not isinstance(total_sabido, int)):
         # CALN-8 (g19): quien escribe ya eligió («I'd like to do the mini course») y el mensaje habla solo de otro («my
         # husband is certified, he'd like to dive»): quien escribe también va, con lo que eligió. Con un total dicho o
-        # ya sabido no se cuenta: el mensaje puede nombrar solo a una parte del grupo. Solo aquí vale lo elegido antes:
-        # en una entrada «cliente» del mensaje («Somos 3» tras «Queremos hacer el minicurso», g10) quien escribe puede
-        # ser un «nosotros», y darle lo elegido solo a uno deja a los demás sin decidir.
+        # ya sabido no se cuenta: el mensaje puede nombrar solo a una parte del grupo.
         personas = [{"quien": "cliente", "cantidad": 1, "certificado": None, "actividad": ya_eligio, "edades": [],
                      "cita": ""}, *personas]
         lectura = {**lectura, "personas": personas}
+
+    def suya(p: dict) -> str | None:
+        """Lo que hace quien escribe en una entrada «cliente» sin actividad: lo que da el extractor en este turno o, si
+        la entrada es solo él, lo que ya eligió antes (g19, cuando el lector lo nombra igual). En un «nosotros» («Somos
+        3» tras «Queremos hacer el minicurso», g10), lo elegido antes no es de uno solo: los demás quedarían sin decidir."""
+        if p["actividad"] is not None or p["quien"] != "cliente":
+            return None
+        return escritor or (actividad_sabida if p["cantidad"] == 1 else None)
     total_lector = total_de(lectura)
     # Un total de 1 solo porque el mensaje habla de quien escribe no dice que vaya solo: no se pone.
     if (not isinstance(out.get("group_size"), int) and not isinstance(total_sabido, int) and total_lector
@@ -199,8 +205,8 @@ def completar(datos: dict, lectura: dict, total_sabido: int | None = None,
         nuevo: dict = {}
         for p in personas:
             n, act = p["cantidad"], p["actividad"]
-            if act is None and p["quien"] == "cliente" and escritor:
-                nuevo[escritor] = nuevo.get(escritor, 0) + 1
+            if suya(p):
+                nuevo[suya(p)] = nuevo.get(suya(p), 0) + 1
                 n -= 1
             if n > 0:
                 nuevo[act or "undecided"] = nuevo.get(act or "undecided", 0) + n
@@ -209,7 +215,7 @@ def completar(datos: dict, lectura: dict, total_sabido: int | None = None,
         out["group_allocation"] = nuevo
         cambios.append(f"group_allocation={nuevo}")
     else:
-        sin_elegir = [p for p in personas if p["actividad"] is None and not (p["quien"] == "cliente" and escritor)]
+        sin_elegir = [p for p in personas if p["actividad"] is None and not suya(p)]
     if not isinstance(total, int) and any(p["quien"] != "cliente" and p["cantidad"] is None and p["actividad"] is None
                                           and p["certificado"] is not True for p in personas):
         # g26: «Vienen también unos amigos, no sé qué querrán hacer»: vienen otros y no se sabe cuántos ni qué harán. Se
