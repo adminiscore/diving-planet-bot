@@ -151,6 +151,9 @@ services:
       # l2-3 (28-sep): "escribiendo…" en el chat mientras el bot prepara la respuesta. Solo
       # cambia lo que ve el cliente mientras espera, no lo que dice el bot. Revert = "false".
       CHATWOOT_TYPING_INDICATOR: "true"
+      # CALN-2 (28-oct, Gadea #2314): el lector del grupo, con el turno y a la vez que el extractor (+1 llamada en
+      # paralelo, ~0,011 $ por 100 turnos). Docs/robustness/caln/diseno-caln2-lector-grupo.md. Revert = "false".
+      LECTOR_GRUPO: "true"
     depends_on:
       dp-pre-postgres:
         condition: service_healthy

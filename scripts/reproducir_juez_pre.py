@@ -55,9 +55,15 @@ supervisor.rag_answer = _spy_rag
 # (p. ej. el extractor rellenando `location` con la pregunta del origen pendiente).
 import logging
 _TRAZA = []
+_METRICAS = []  # 28-oct (CALN-2, gasto del lector del grupo): el [TURN_METRICS] entero del turno (llamadas, tokens, usd)
 class _Traza(logging.Handler):
     def emit(self, rec):
         m = rec.getMessage()
+        if "[TURN_METRICS] " in m:
+            try:
+                _METRICAS.append(json.loads(m.split("[TURN_METRICS] ", 1)[1]))
+            except ValueError:
+                pass
         if any(t in m for t in ("[EXTRACT]", "[LLM_EXTRACTOR]", "[CORE]", "[INTENT]", "[ROUTER]", "[AVISOS]", "[HECHOS]", "[INFO]",
                                     "[RAG][GROUNDING]", "[RAG][LAT5]")):  # lat-5: el revisor del RAG
             _TRAZA.append(m[:400])
@@ -84,6 +90,7 @@ async def main():
             juicios.clear()
             rags.clear()
             _TRAZA.clear()
+            _METRICAS.clear()
             t0 = time.perf_counter()
             try:
                 reply = await supervisor.route_message(st, msg)
@@ -93,7 +100,7 @@ async def main():
             print(json.dumps({"dialogo": dialogo, "rep": rep, "turn": i, "msg": msg, "reply": reply,
                               "rag": list(rags), "juicios": list(juicios),
                               "segundos": round(time.perf_counter() - t0, 2), "estado": estado,
-                              "traza": list(_TRAZA)},
+                              "traza": list(_TRAZA), "metricas": list(_METRICAS)},
                              ensure_ascii=False, default=str), flush=True)
 
 asyncio.run(main())

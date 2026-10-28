@@ -8,6 +8,7 @@ s4-2 (19-oct): movido tal cual desde `conversational_core.py`, que lo re-exporta
 from __future__ import annotations
 
 import asyncio
+import json
 import logging
 import re
 
@@ -24,6 +25,7 @@ from src.agents.conversational_core import (
     _same_for_customer,
 )
 from src.agents.intent_detector import DetectedIntent, detect_location
+from src.config import settings
 from src.domain import activities as dom
 from src.flows import grupo
 from src.flows.state import ConversationState
@@ -286,6 +288,9 @@ def _poner_otras_personas(state: ConversationState, datos: dict) -> None:
     if (datos or {}).get("otro_certificado_inactivo") is True and not state.acompanante_certificado_inactivo:
         state.acompanante_certificado_inactivo = True
         logger.info("[EXTRACT][EX9B-6] otra persona del grupo está certificada pero inactiva")
+    if isinstance((datos or {}).get("sin_decidir_certificados"), bool):
+        # CALN-2 (flag `lector_grupo`): lo que dice el lector del grupo de quienes faltan por elegir; lo último manda.
+        state.sin_decidir_certificados = datos["sin_decidir_certificados"]
 
 
 def _poner_actividad_preguntada(state: ConversationState, datos: dict) -> None:
@@ -402,8 +407,13 @@ def _poner_grupo(intent, state: ConversationState, message: str, datos: dict) ->
         # también antes, cuando el atajo del detector entero no la leía).
         logger.info(f"[EXTRACT][LAT11] group_size={total!r} contesta «¿cuántos para X?»: no es el total del grupo")
         total = None
+    # Con una corrección («no, ella hace snorkel») el reparto cambia lo elegido y no es completar; pero si conserva a
+    # todos los que ya habían elegido y solo da actividad a quien faltaba (`grupo.completa`), sí lo es aunque empiece por
+    # «No wait…» (sparring s03 con el lector del grupo: «he wants the fun dives… only I'm doing the mini course» se
+    # tiraba por el veto de Jev de abajo y él seguía sin elegir).
+    completa = bool(reparto) and grupo.completa(state.detected_group_allocation, reparto, state.detected_group_size)
     junto = (grupo.completado(state.detected_group_allocation, reparto, state.detected_group_size)
-             if reparto and state.pending_undecided_qty and not corrige else None)
+             if reparto and state.pending_undecided_qty and (not corrige or completa) else None)
     if junto:
         # CALN-2 (27-oct): el reparto solo da actividad a quienes faltaban por elegir y cabe en el total: no se suma
         # nadie (Jev acierta si dice que ya estaban contados), se completa el grupo. Familia de 5 con 4 pendientes:
@@ -788,6 +798,7 @@ def lanzar_extraccion_adelantada(state: ConversationState, message: str) -> None
     """ex-5 (fase EX): el extractor "LLM primero" arranca con el turno, a la vez que el enrutador (no depende de
     Jev), como el RAG adelantado. `_understand` lo espera (`datos_del_extractor`); si el turno no llega, se cancela."""
     state._lectura_del_turno = None  # lat-6: la lectura del turno anterior ya no vale
+    state._lector_grupo = None
     if not campos_del_extractor():
         return
     texto = (message or "").strip()
@@ -807,6 +818,7 @@ def lanzar_extraccion_adelantada(state: ConversationState, message: str) -> None
         lang = _detect_language_from_text(message) or lang
     state._extraccion_adelantada = asyncio.create_task(
         extraer_turno(message, history=list(state.history or []), sabido=sabido, lang=lang))
+    lanzar_lector_grupo(state, message, lang)
 
 
 async def datos_del_extractor(state: ConversationState, message: str) -> dict | None:
@@ -826,11 +838,61 @@ async def datos_del_extractor(state: ConversationState, message: str) -> dict | 
     except (asyncio.CancelledError, Exception) as exc:  # noqa: BLE001
         logger.warning(f"[EXTRACT][EX5] el extractor falló, se sigue con lo de hoy: {exc!r}")
         datos = None
+    datos = await _con_el_lector_del_grupo(state, message, datos)
     # lat-6 (24-oct): lo que lea después este mismo turno (`lectura_del_extractor`: el redactor, el enrutado) sale de
     # aquí. Antes la tarea se soltaba y se pedía OTRA extracción en serie (~1 s; en real-1, 13 % de los turnos y antes
     # de que empezara el redactor).
     state._lectura_del_turno = (message, datos)
     return datos  # None = la llamada falló (degradado)
+
+
+def lanzar_lector_grupo(state: ConversationState, message: str, lang: str) -> None:
+    """CALN-2 (flag `lector_grupo`): el lector del grupo arranca con el turno, a la vez que el extractor (decisión de
+    Gadea, #2314). Lanzado con la señal de Jev salía 1,5 s después y hacía esperar al turno p50 1,1 s / p95 1,7 s en los
+    turnos que lo usaban; con el turno, ~0 (5 de 136), a cambio de una llamada barata en paralelo en cada turno (~0,011 $
+    por 100 turnos). `datos_del_extractor` decide si se usa (el grupo queda por completar) o se tira."""
+    state._lector_grupo = None
+    if not settings.lector_grupo:
+        return
+    from src.agents.lector_grupo import leer_grupo  # lazy
+
+    state._lector_grupo = asyncio.create_task(leer_grupo(message, history=list(state.history or []), lang=lang))
+    logger.info("[EXTRACT][LECTOR] lanzado con el turno")
+
+
+async def _con_el_lector_del_grupo(state: ConversationState, message: str, datos: dict | None) -> dict | None:
+    """CALN-2 (flag `lector_grupo`, diseño docs/robustness/caln/diseno-caln2-lector-grupo.md): con el grupo por
+    completar, los datos del extractor más lo que dejó vacío, de la lectura del grupo (la lanzada con el turno o, si no
+    se lanzó, una ahora); si no, la lectura lanzada se tira. Cada caso deja su línea [EXTRACT][LECTOR] (llamadas
+    lanzadas, usadas y tiradas, y sus tokens)."""
+    from src.agents import lector_grupo  # lazy
+
+    tarea = getattr(state, "_lector_grupo", None)
+    state._lector_grupo = None
+    reparto_antes = dict(state.detected_group_allocation or {})
+    if state.pending_undecided_qty:
+        reparto_antes[grupo.SIN_DECIDIR] = state.pending_undecided_qty
+    hace_falta = (settings.lector_grupo and datos is not None
+                  and lector_grupo.por_completar(datos, state.detected_group_size, reparto_antes or None))
+    if not hace_falta:
+        if tarea is not None:
+            tarea.cancel()
+            logger.info("[EXTRACT][LECTOR] tirado: el grupo no queda por completar")
+        return datos
+    modo = "a la vez" if tarea is not None else "en serie"
+    try:
+        lectura = await (tarea if tarea is not None else lector_grupo.leer_grupo(
+            message, history=list(state.history or []), lang=state.language or "es"))
+    except (asyncio.CancelledError, Exception) as exc:  # noqa: BLE001
+        logger.warning(f"[EXTRACT][LECTOR] falló, se sigue con el extractor: {exc!r}")
+        return datos
+    if not lectura:
+        logger.info(f"[EXTRACT][LECTOR] sin lectura ({modo}): se sigue con el extractor")
+        return datos
+    nuevos, cambios = lector_grupo.completar(datos, lectura, state.detected_group_size)
+    logger.info(f"[EXTRACT][LECTOR] usado ({modo}, {lectura.get('segundos', 0):.2f} s, tokens "
+                f"{json.dumps(lectura.get('tokens'))}): {', '.join(cambios) or 'nada que rellenar'}")
+    return nuevos
 
 
 async def lectura_del_extractor(state: ConversationState, message: str) -> dict | None:
@@ -934,6 +996,11 @@ def cancelar_extraccion_adelantada(state: ConversationState) -> None:
     state._lectura_del_turno = None
     if tarea is not None and not tarea.done():
         tarea.cancel()
+    lector = getattr(state, "_lector_grupo", None)  # CALN-2: el lector del grupo lanzado con Jev que nadie usó
+    state._lector_grupo = None
+    if lector is not None:
+        lector.cancel()
+        logger.info("[EXTRACT][LECTOR] tirado: el turno no llegó a la extracción")
 
 
 def _jev_says_not_affirmed(state: ConversationState, field: str) -> bool:
