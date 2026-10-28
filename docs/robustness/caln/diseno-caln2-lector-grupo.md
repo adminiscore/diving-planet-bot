@@ -95,3 +95,34 @@ del extractor donde el lector no salta o su reparto ya cuadra (g12, g17, l10). E
 «A la vez» supone que el lector sale con el extractor, pero el disparador depende de lo que lee el extractor: para no
 esperar habría que lanzarlo cuando Jev ya señale otras personas y tirar la lectura si luego no hace falta (más llamadas
 que turnos que lo usan). «Detrás» es lo que suma si espera al extractor: +1,3-1,5 s al p95 de esos turnos.
+
+## 6. Paso 2, medido (28-oct; interruptor `lector_grupo`, lanzado con la señal de Jev)
+
+A/B en PRE, ×2, `--codigo-local`; A = caln-gadea (código 5ab8854), B = la rama con `--flag lector_grupo`; el mismo
+`reproducir_juez_pre` en los dos (guarda el [TURN_METRICS] de cada turno).
+
+| Banco | A | B |
+|---|---|---|
+| Grupos (31) | 51/62 | **56/62** (g16, g28, g30, g31) |
+| Sparring (14) | 11/28 | **13/28** (s01 y s12 0 → 2/2; s03 2 → 1 y s10 2 → 1) |
+| Lectura (10) | 20/20 | 20/20 |
+| Precios q (5) | 10/10 | 10/10 |
+
+Tres fallos que la medida destapó, arreglados después y comprobados en PRE ×4 (s03 4/4, g29 4/4):
+- g29: un mensaje que nombra solo a una parte del grupo cambiaba el total sabido (5 → 4): `completar` ya no lo toca.
+- s03: «he hasn't been diving in 3 years» leído como no certificado quitaba el buceo de sus opciones: el prompt del
+  lector lo aclara y la bandera del extractor de «certificado pero inactivo» manda.
+- s03: con el grupo bien leído en t2, la corrección de t3 («No wait… he wants the fun dives… only I'm doing the mini
+  course») se tiraba por el veto de Jev: una corrección que solo completa a quien faltaba por elegir, completa.
+s10 («¿Te animas?») es del escritor, no del grupo.
+
+**Gasto** (192 turnos de bancos de grupo en B): el lector salió con Jev en 170 (88,5 por 100 turnos), se usó en 107 y
+se tiró en 62; 1.266 tokens de entrada y 159 de salida por llamada; 0,00011 $ por llamada → **0,009 $ por 100 turnos**
+(las tiradas con la media: cota alta). Lo que factura OpenRouter por 100 turnos: A 0,069 $ → B 0,082 $ (lo de OpenAI no
+cambia). La red de señales de acompañantes baja sola: 17,7 → 11,5 llamadas por 100 turnos (va en serie, p50 1,4 s).
+
+**Tiempo:** el lector sale **1,5 s después** que el extractor (espera a Jev) y, en los turnos que lo usan, el turno
+espera **p50 1,07 s, p95 1,66 s** (82 de 136); p95 de esos turnos 7,8 → 9,0 s. Si saliera con el extractor, la espera
+sería ~0 (5 de 136), a cambio de lanzarlo en todos los turnos (+1 llamada en paralelo, ~0,011 $ por 100 turnos); en el
+golden visible se usaría en 35 de 368. Lanzarlo con el turno solo en el primer mensaje o con el grupo sabido no compensa
+(66 % de los turnos del golden para cubrir 30 de 35).
