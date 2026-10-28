@@ -121,3 +121,26 @@ def test_paso3_el_paquete_que_nombra_el_cliente_va_en_la_pieza():
     pieza = cotizar.pieza_de_precios(hechos.hechos(foto, ["precio"], ["certified_diving"]), "es")
     assert pieza.splitlines()[1].startswith("• Paquete de 5 inmersiones") and len(pieza.splitlines()) == 4
     assert rh._paquete_nombrado("¿El de 2 inmersiones o el de 5 inmersiones?", []) is None  # dos planes: no se elige
+
+
+def test_paso3_con_la_tarjeta_va_la_nota_del_de_grupo(monkeypatch):
+    """CALN-3 paso 3 (r01): con la tarjeta (G3-07a, sin precio) no va la pieza, pero sí si el de grupo aplica."""
+    import asyncio
+
+    from src.agents import conversational_core as core
+    from src.agents import redactor_hechos, supervisor
+
+    nota = "El descuento de grupo (10 % desde 5 personas) no aplica a los cursos PADI, así que este curso no lo tiene."
+
+    async def rag_answer(query, **kw):
+        assert kw.get("sin_precio") is True
+        return "El Open Water dura 2 días.\n\n¿Te ayudo con algo más?"
+
+    async def nota_de_grupo(state, message, history):
+        return nota
+
+    monkeypatch.setattr(supervisor, "rag_answer", rag_answer)
+    monkeypatch.setattr(redactor_hechos, "nota_de_grupo", nota_de_grupo)
+    st = _st(location="cartagena")
+    answer = asyncio.run(core._rag_answer(st, "somos 5, ¿descuento de grupo?", sin_precio=True, history=[]))
+    assert answer == f"El Open Water dura 2 días.\n\n{nota}\n\n¿Te ayudo con algo más?"
