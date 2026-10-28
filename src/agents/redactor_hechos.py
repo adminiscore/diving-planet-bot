@@ -381,10 +381,10 @@ async def _con_el_escritor(state: ConversationState, message: str, history: list
     if origen_pendiente:
         entradas.pop("pregunta_final", None)  # la pregunta del origen la pone el código, abajo
     entradas.update(hechos=texto_de_los_hechos(bloques), hechos_bloques=(bloques, intenciones), sin_busqueda=True)
-    # 5.ª ronda (paquete-5-buceos-precio-fecha-y-equipaje t6-t9): con una pregunta de precio guardada a la espera del
-    # origen, arq-8f añade «precio» a cada turno con alguna intención, y la pieza salía en «¿a qué hora se vuelve?» o
-    # «¿reservo por la web?». Va si el cliente pide precio en ESTE mensaje (Jev) o si ya se sabe el origen (el caso de
-    # arq-8f: el mensaje que da el origen pregunta otra cosa).
+    # 5.ª ronda: con una pregunta de precio guardada a la espera del origen, arq-8f añade «precio» a cada turno con alguna
+    # intención, y la pieza salía en turnos que preguntan otra cosa (la hora de vuelta, cómo reservar). Va si el cliente
+    # pide precio en ESTE mensaje (Jev) o si ya se sabe el origen (el caso de arq-8f: el mensaje que da el origen
+    # pregunta otra cosa).
     pide_ahora = getattr(state, "_jev_pide_precio", None) is True or any(b.get("origen") for b in bloques)
     pieza = cotizar.pieza_de_precios(bloques, lang) if "precio" in intenciones and pide_ahora else None
     if pieza:
