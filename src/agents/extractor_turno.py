@@ -951,14 +951,9 @@ SIN_CEDULA_EN = ("mixed_nationality true and is_colombian null. If they say they
 # arq-1r (22-oct): «extranjero o turista: false» chocaba con la cédula de extranjería,
 # que es justo la de los extranjeros residentes (paga en COP, decisión de Álvaro del 17-oct). Con historial
 # («living in Bogotá»), «I have a cédula de extranjería» salía false 2 de 9 lecturas (G10 nº 4, g10-047). Una frase.
-# CALN-3c (28-oct): en Colombia se dice «tengo (la) extranjería» por la cédula; con historial y mal escrito («Yo tengo
-# extrangeria») se leía como «es extranjero»: false 6/8. Con la aclaración, 8/8, y los controles (extranjero, gringos,
-# turista, «solo pasaporte», Medellín, nacer o vivir allí) iguales en llamadas directas ×8.
 _CEDULA_DE_EXTRANJERIA_MANDA = (
     ("o que es extranjero o turista: false.",
-     "o que es extranjero o turista: false, salvo que diga que tiene cédula de extranjería (entonces true; «tengo "
-     "extranjería» o «la extranjería» es tener esa cédula, no ser extranjero)."),
+     "o que es extranjero o turista: false, salvo que diga que tiene cédula de extranjería (entonces true)."),
     ("or that they are a foreigner or tourist: false.",
-     "or that they are a foreigner or tourist: false, unless they say they have a cédula de extranjería (then true; "
-     "\"tengo extranjería\" or \"my extranjería\" means holding that card, not being a foreigner)."),
+     "or that they are a foreigner or tourist: false, unless they say they have a cédula de extranjería (then true)."),
 )
