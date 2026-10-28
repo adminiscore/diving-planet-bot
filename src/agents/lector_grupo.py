@@ -33,7 +33,7 @@ SISTEMA_ES = """Lees UN mensaje de un cliente de un centro de buceo y devuelves 
 Cada entrada es una persona o varias iguales («4 tenemos certificación» = una entrada con cantidad 4; «los niños, de 7 y 4» = una entrada con cantidad 2):
 - quien: "cliente" para quien escribe, junto con quienes nombra con él en la misma frase («mi hermana y yo» = una entrada "cliente" con cantidad 2; «4 tenemos certificación» = cantidad 4); para los demás, cómo los nombra ("esposo", "niños", "amiga", "los otros dos"). Nadie va en dos entradas.
 - cantidad: cuántas personas son en esa entrada.
-- certificado: true si el mensaje dice que tiene certificación de buceo (Open Water, Advanced, «buzo certificado»); false si dice que no la tiene, que no bucea o que nunca ha buceado; null si no lo dice.
+- certificado: true si el mensaje dice que tiene certificación de buceo (Open Water, Advanced, «buzo certificado»); false si dice que no la tiene, que no bucea o que nunca ha buceado; null si no lo dice. Llevar tiempo sin bucear («hace 3 años que no bucea») no dice que no esté certificado: null, o true si dice que lo está.
 - actividad: la que ELIGE, de esta lista (el id); null si no la elige. Si varios eligen juntos («mi hija y yo queremos el minicurso»), es la de todos ellos. Tener una certificación («soy Advanced», «tiene el Open Water», «es buzo certificado») es certificado true, NO una actividad ni un curso. Decir que no bucea, que nunca ha buceado o que quiere «probar algo» tampoco es elegir. companion solo si dice que NO se mete al agua y solo acompaña («no se mete al agua», «solo viene en la lancha»). No bucear no es acompañar: «mi amiga no bucea» = certificado false y actividad null (puede hacer snorkel).
 {actividades}
 - edades: las que dice de esa entrada; [] si no las dice.
@@ -50,7 +50,7 @@ SISTEMA_EN = """You read ONE message from a customer of a dive center and return
 Each entry is one person or several alike ("4 of us are certified" = one entry with quantity 4; "the kids, 7 and 4" = one entry with quantity 2):
 - quien: "cliente" for the writer, together with those they name with them in the same sentence ("my sister and I" = one "cliente" entry with quantity 2; "4 of us are certified" = quantity 4); for the others, how they name them ("husband", "kids", "friend", "the other two"). Nobody goes in two entries.
 - cantidad: how many people are in that entry.
-- certificado: true if the message says they have a diving certification (Open Water, Advanced, "certified diver"); false if it says they do not have one, do not dive or have never dived; null if it does not say.
+- certificado: true if the message says they have a diving certification (Open Water, Advanced, "certified diver"); false if it says they do not have one, do not dive or have never dived; null if it does not say. Not having dived for a while ("hasn't been diving in 3 years") does not say they are not certified: null, or true if it says they are.
 - actividad: the one they CHOOSE, from this list (the id); null if they do not choose. If several choose together ("my daughter and I want the mini course"), it is everyone's. Having a certification ("I'm Advanced", "she has her Open Water", "he's a certified diver") is certificado true, NOT an activity or a course. Saying they do not dive, that they have never dived or that they want to "try something" is not choosing either. companion only if it says they will NOT get in the water and only come along ("doesn't get in the water", "just comes on the boat"). Not diving is not coming along: "my friend doesn't dive" = certificado false and actividad null (they could snorkel).
 {actividades}
 - edades: the ages it gives for that entry; [] if none.
@@ -140,20 +140,22 @@ def por_completar(datos: dict, total_antes: int | None = None, reparto_antes: di
     return bool(not reparto or reparto.get("undecided"))
 
 
-def completar(datos: dict, lectura: dict) -> tuple[dict, list[str]]:
+def completar(datos: dict, lectura: dict, total_sabido: int | None = None) -> tuple[dict, list[str]]:
     """Los datos del extractor con lo que dejó vacío, sacado de la lectura del grupo: el total (si no lo dio), el
     reparto (si no lo dio o no suma el total que dijo, y la lectura cuadra con ese total), la certificación de quien
     escribe (si no la dio) y la de quienes faltan por elegir. Lo que el extractor dio y cuadra no se toca. La
-    actividad de quien escribe es la del extractor (con la regla de negocio ya puesta). Devuelve (datos, qué cambió)."""
+    actividad de quien escribe es la del extractor (con la regla de negocio ya puesta). Un total ya sabido de la
+    conversación (`total_sabido`) no lo cambia la lectura de un mensaje que nombra solo a una parte (g29: «yo el minicurso,
+    la de 14 también y la pequeña Bubble Makers» no habla del suegro). Devuelve (datos, qué cambió)."""
     personas = (lectura or {}).get("personas") or []
     if not personas:
         return datos, []
     out, cambios = dict(datos), []
     total_lector = total_de(lectura)
-    if not isinstance(out.get("group_size"), int) and total_lector:
+    if not isinstance(out.get("group_size"), int) and not isinstance(total_sabido, int) and total_lector:
         out["group_size"] = total_lector
         cambios.append(f"group_size={total_lector}")
-    total = out.get("group_size")
+    total = out.get("group_size") if isinstance(out.get("group_size"), int) else total_sabido
     reparto = out.get("group_allocation")
     escritor = out.get("activity")
     sin_elegir = []

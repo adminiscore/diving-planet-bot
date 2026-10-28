@@ -211,3 +211,23 @@ async def test_la_madre_buzo_con_el_lector_en_el_turno_entero(extractor_dice, mo
     await route_message(st, MADRE)
     assert st.detected_group_size == 4 and st.detected_activity == "certified_diving"
     assert st.detected_group_allocation == {"certified_diving": 1} and st.pending_undecided_qty == 3
+
+
+def test_un_mensaje_que_nombra_a_una_parte_no_cambia_el_total_sabido():
+    """g29 (medida del paso 2): «yo el minicurso, la de 14 también y la pequeña Bubble Makers» no habla del suegro."""
+    lectura = {"total_dicho": None, "personas": [_p(actividad="minicourse", cita="Yo tengo el Open Water"),
+                                                 _p(quien="hija", cantidad=3, cita="vamos con los niños, de 7 y 4 años")]}
+    nuevos, cambios = lg.completar({"activity": "minicourse"}, lectura, total_sabido=5)
+    assert "group_size" not in nuevos and "group_allocation" not in nuevos and not cambios
+
+
+def test_el_buzo_inactivo_no_pierde_el_buceo_aunque_el_lector_diga_no_certificado():
+    """s03 (medida del paso 2): «he hasn't been diving in 3 years» leído como no certificado."""
+    from src.agents import conversational_core as core
+    from src.flows.state import ConversationState
+
+    st = ConversationState(conversation_id="lector-s03")
+    st.sin_decidir_certificados = False
+    assert "certified_diving" not in core._companion_activity_options(st)
+    st.acompanante_certificado_inactivo = True
+    assert "certified_diving" in core._companion_activity_options(st)

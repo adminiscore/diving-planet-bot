@@ -888,7 +888,7 @@ async def _con_el_lector_del_grupo(state: ConversationState, message: str, datos
     if not lectura:
         logger.info(f"[EXTRACT][LECTOR] sin lectura ({modo}): se sigue con el extractor")
         return datos
-    nuevos, cambios = lector_grupo.completar(datos, lectura)
+    nuevos, cambios = lector_grupo.completar(datos, lectura, state.detected_group_size)
     logger.info(f"[EXTRACT][LECTOR] usado ({modo}, {lectura.get('segundos', 0):.2f} s, tokens "
                 f"{json.dumps(lectura.get('tokens'))}): {', '.join(cambios) or 'nada que rellenar'}")
     return nuevos

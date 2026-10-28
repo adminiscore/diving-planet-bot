@@ -184,7 +184,10 @@ def _companion_activity_options(state: ConversationState) -> list[str]:
     if state.detected_duration == "multi_day" and "minicourse" in options:
         options.insert(options.index("minicourse") + 1, "padi_open_water")
     certificados = state.sin_decidir_certificados
-    sin_certificar = certificados is False or (certificados is None and state.acompanante_sin_certificar)
+    # Que el lector diga «no certificado» no quita el buceo si el extractor dijo que otra persona lo está pero lleva tiempo
+    # sin bucear (s03 del sparring: «he hasn't been diving in 3 years» leído como no certificado).
+    sin_certificar = ((certificados is False and not state.acompanante_certificado_inactivo)
+                      or (certificados is None and state.acompanante_sin_certificar))
     if not sin_certificar and "certified_diving" not in options:
         primero = certificados is True or state.acompanante_certificado_inactivo
         donde = 0 if primero else len(options) - ("companion" in options)
