@@ -216,3 +216,27 @@ def test_sin_contestar_el_origen_no_hay_acuse():
     assert slotfill_close._acuse_por_codigo(st, core.SLOT_LOCATION) == ""
     st.location = "cartagena"
     assert slotfill_close._acuse_por_codigo(st, core.SLOT_LOCATION) != ""
+
+
+@pytest.mark.parametrize("reparto, queda", [
+    # conserva a quien ya eligió y da actividad a quien faltaba: completa, aunque empiece por «No wait»
+    ({"certified_diving": 1, "minicourse": 1}, {"minicourse": 1, "certified_diving": 1}),
+    # cambia lo que ya estaba elegido: es una corrección, no se completa aquí
+    ({"snorkel": 1, "undecided": 1}, None),
+])
+def test_una_correccion_que_solo_completa_a_quien_faltaba_completa(monkeypatch, reparto, queda):
+    """Sparring s03 con el lector del grupo (28-oct): ella minicurso y él sin elegir; «No wait, he's a certified diver,
+    he wants the fun dives… Only I'm doing the mini course» se tiraba por el veto de Jev y él seguía sin elegir."""
+    from src.agents.nucleo import extraction, extractor
+
+    st = _grupo(detected_group_size=2, detected_group_allocation={"minicourse": 1}, pending_undecided_qty=1,
+                needs_companion_activity=True, detected_activity="minicourse")
+    st._jev_corrects = True
+    monkeypatch.setattr(extractor, "_jev_dice_que_nadie_se_suma", lambda _st: True)
+    mensaje = "No wait, he's a certified diver, he wants the fun dives with a refresher. Only I'm doing the mini course."
+    intent = extraction.lectura_del_turno(mensaje)
+    extractor._poner_grupo(intent, st, mensaje, {"group_allocation": reparto})
+    if queda:
+        assert intent.group_allocation == queda
+    else:
+        assert intent.group_allocation != {"minicourse": 1, "snorkel": 1}

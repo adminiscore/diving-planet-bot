@@ -407,8 +407,13 @@ def _poner_grupo(intent, state: ConversationState, message: str, datos: dict) ->
         # también antes, cuando el atajo del detector entero no la leía).
         logger.info(f"[EXTRACT][LAT11] group_size={total!r} contesta «¿cuántos para X?»: no es el total del grupo")
         total = None
+    # Con una corrección («no, ella hace snorkel») el reparto cambia lo elegido y no es completar; pero si conserva a
+    # todos los que ya habían elegido y solo da actividad a quien faltaba (`grupo.completa`), sí lo es aunque empiece por
+    # «No wait…» (sparring s03 con el lector del grupo: «he wants the fun dives… only I'm doing the mini course» se
+    # tiraba por el veto de Jev de abajo y él seguía sin elegir).
+    completa = bool(reparto) and grupo.completa(state.detected_group_allocation, reparto, state.detected_group_size)
     junto = (grupo.completado(state.detected_group_allocation, reparto, state.detected_group_size)
-             if reparto and state.pending_undecided_qty and not corrige else None)
+             if reparto and state.pending_undecided_qty and (not corrige or completa) else None)
     if junto:
         # CALN-2 (27-oct): el reparto solo da actividad a quienes faltaban por elegir y cabe en el total: no se suma
         # nadie (Jev acierta si dice que ya estaban contados), se completa el grupo. Familia de 5 con 4 pendientes:
