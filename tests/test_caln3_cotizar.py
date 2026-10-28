@@ -229,7 +229,7 @@ def test_quinta_quien_no_ha_elegido_y_esta_certificado_solo_el_buceo():
 
 
 def test_quinta_sin_pedir_precio_ni_origen_no_va_la_pieza(monkeypatch):
-    """5.ª ronda (paquete-5 t6-t9): con la pregunta de precio guardada, arq-8f añade «precio» a cada turno; sin que el
+    """5.ª ronda: con la pregunta de precio guardada, arq-8f añade «precio» a cada turno; sin que el
     cliente pida precio ahora ni se sepa el origen, la pieza no va (el escritor contesta lo que pregunta)."""
     import asyncio
 
