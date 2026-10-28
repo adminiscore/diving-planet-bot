@@ -1,6 +1,23 @@
 History
 =======
 
+0.37.0 - (2026-10-28, la 5.ª de CALN en `feature/caln-gadea`, SIN la moneda; juez de la mini-ronda pendiente: OpenAI sin saldo; PRE sigue en 0.36.0)
+---------------------
+* **Qué lleva** (sobre 0.36.0): CALN-8 (1) + g26 (Álvaro: fuera la red de señales; amigos sin cantidad ni actividad); el
+  paso 3 «A» de CALN-3, sus ajustes y CALN-3c (a, b) (Gonzalo: los importes por código, la pieza solo cuando se pide
+  precio, el reparto de pareja y familia, «¿cambia el precio?»; banco-precios 13 → 18/18); CALN-8 (3) (Gadea: las
+  políticas enteras ya no van al escritor, las ve el juez; −8 % de tokens por turno). Frente a PRE: −656 líneas, −2 campos.
+* **5.ª ronda** (una pasada, con Luna, en serie): golden 78 → 76/116, fallos 55 → 54 (30 nuevos y 31 arreglados: ruido),
+  oculto 88,0 → 91,6 %, de precio 26 → 19; rotativa nueva 15 → 12/30; repreguntas 3 → 7; latencia igual.
+* **Mini-ronda de 23 visibles** (los que la 5.ª falló, más sus repreguntas), PRE estable en 12-13 fallos en 4 pasadas:
+  la 5.ª entera 19, sin CALN-8 (3) 16; **pieza a pieza**: Álvaro 14, Gonzalo 11, CALN-8 (3) 10, **la moneda 15** (sus
+  fallos nuevos son otras lecturas del extractor: una frase en el prompt de Haiku mueve otros campos). La moneda
+  (CALN-3c c) sale de la base (revertida; su banco se queda) hasta medir la frase con todos los campos. P1+P2+P4: ronda
+  hecha con Luna, juez pendiente (OpenAI sin saldo a las ~20:00). Sube a PRE si iguala o mejora a PRE en esos 23.
+* **Oculto:** dos diálogos que se miraron sin querer al revisar la 5.ª quedan fuera de su nota (`contaminado`, decisión de
+  Gadea); desde hoy, 19 diálogos (`scripts/golden_por_grupo.py`).
+* **Medir:** los bancos (`reproducir_juez_pre`) también avisan si contestó un respaldo por errores de LLM.
+
 0.36.0 - (2026-10-28, CALN SUBE A PRE: `feature/pre_gadea` = `feature/caln-gadea`; decisión de Gadea)
 ---------------------
 * **Qué sube** (sobre 0.35.0): CALN-7, el escritor dice la política que el caso exige porque va en los hechos (la

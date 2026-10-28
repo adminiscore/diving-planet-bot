@@ -476,14 +476,31 @@ RAG_SIN_PRECIO_ES = (
     "En ESTA respuesta no des precios, importes, monedas ni enlaces de reserva: justo después el sistema le enseña al "
     "cliente la tarjeta de su plan con el precio por persona en su moneda y el enlace. Contesta el resto de lo que "
     "pregunta (qué incluye, horarios, punto de encuentro, requisitos…) y, si lo único que pregunta es el precio, di en "
-    "una frase que se lo dejas a continuación."
+    "una frase que se lo dejas a continuación. Del descuento de grupo no digas nada: si le toca, el sistema dice debajo "
+    "si le aplica."
 )
 RAG_SIN_PRECIO_EN = (
     "In THIS answer do not give prices, amounts, currencies or booking links: right after it the system shows the "
     "customer the card of their plan with the price per person in their currency and the link. Answer the rest of what "
     "they ask (what's included, schedule, meeting point, requirements…) and, if the price is all they ask, say in one "
-    "sentence that you're sharing it right below."
+    "sentence that you're sharing it right below. Say nothing about the group discount: if it is relevant, the system "
+    "says below whether it applies to them."
 )
+
+
+# CALN-3 paso 3 «A» (28-oct, decisión de Gadea #2296): los importes los pone el código debajo del texto del escritor
+# (`cotizar.pieza_de_precios`), con los orígenes, las monedas y el descuento de grupo que aplica.
+RAG_PRECIOS_POR_CODIGO = {
+    "es": ("En ESTA respuesta no escribas precios ni importes (ni cifras en USD o COP): justo debajo de tu texto el sistema "
+           "pone la lista de precios por persona de cada plan, según desde dónde se sale y en su moneda, y si le aplica "
+           "el descuento de grupo. Del descuento de grupo no digas nada; de los demás descuentos, solo si los pregunta. "
+           "Contesta lo demás que pregunte y, si pregunta el precio, di en una frase que se lo dejas a continuación."),
+    "en": ("In THIS answer do not write prices or amounts (no figures in USD or COP): right below your text the system "
+           "adds the list of prices per person for each plan, by departure point and in their currency, and whether the "
+           "group discount applies to them. Say nothing about the group discount; mention other discounts only if they "
+           "ask. Answer the rest of what they ask and, if they ask the price, say in one sentence that you are leaving "
+           "it below."),
+}
 
 
 # arq-1g (flag `hechos_al_rag`): en un mensaje mezclado, el RAG recibe los hechos del código para la parte de la tabla.

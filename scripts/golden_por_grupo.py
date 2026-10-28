@@ -2,8 +2,9 @@
 
 Las rondas COMPLETAS (`run_synthetic_pre --sample golden`) se resumían a mano en estos tres grupos (paso 8: sintéticos
 96,7 %, reales 83,2 %, oculto 76,4 %). Este script lo hace con la misma cuenta que `judge_golden_set.summarize`:
-  oculto      `suite == "oculto"` en golden-dialogues.json
-  reales      conversaciones de WhatsApp (`source.kind == "whatsapp"`) que no son del oculto
+  oculto      `suite == "oculto"` en golden-dialogues.json, sin los `contaminado` (28-oct, decisión de Gadea)
+  contaminados  los del oculto que alguien miró: fuera de su nota (siguen sin poderse reproducir)
+  reales     conversaciones de WhatsApp (`source.kind == "whatsapp"`) que no son del oculto
   sinteticos  el resto (casos de los lotes sintéticos y diálogos propios)
 
     python -m scripts.golden_por_grupo docs/robustness/golden-set/results/<A>__gpt-5-mini-medium.json [<B>...]
@@ -18,7 +19,7 @@ from pathlib import Path
 from scripts.judge_golden_set import summarize
 
 GOLDEN = Path(__file__).resolve().parent.parent / "docs/robustness/golden-set/golden-dialogues.json"
-GRUPOS = ("sinteticos", "reales", "oculto")
+GRUPOS = ("sinteticos", "reales", "oculto", "contaminados")
 
 
 def grupo_de() -> dict[str, str]:
@@ -26,7 +27,7 @@ def grupo_de() -> dict[str, str]:
     grupo = {}
     for d in dialogos:
         if d.get("suite") == "oculto":
-            grupo[d["id"]] = "oculto"
+            grupo[d["id"]] = "contaminados" if d.get("contaminado") else "oculto"
         elif (d.get("source") or {}).get("kind") == "whatsapp":
             grupo[d["id"]] = "reales"
         else:

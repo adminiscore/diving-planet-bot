@@ -44,7 +44,8 @@ def candidatos(state) -> list[str]:
     buceo y el minicurso. Solo se llama cuando pide precio: «hola, ¿cuánto cuesta bucear?» llega sin lectura del
     extractor (Jev: nada que apuntar), así que no se espera a `quiere_bucear`."""
     if state.is_certified is True:
-        return ["certified_diving"]
+        # CALN-3c (p07): «yo soy buzo certificado y mi novia nunca ha buceado» sin reparto: también el minicurso de ella.
+        return ["certified_diving", *(["minicourse"] if getattr(state, "acompanante_sin_certificar", False) else [])]
     if state.is_certified is False:
         return ["minicourse"] if getattr(state, "quiere_bucear", False) else ["minicourse", "snorkel"]
     return ["certified_diving", "minicourse"]
@@ -103,3 +104,60 @@ def en_sombra(state, respuesta: str) -> None:
     logger.info(f"[CORE][CALN3] cotizar en sombra: pide {pide}, actividades {pieza['actividades']}, falta "
                 f"{pieza['falta']}, el código {len(pieza['importes'])} importes, la respuesta {len(dados)}; "
                 f"faltan {len(faltan)} {faltan[:6]}, sobran {len(sobran)} {sobran[:6]}")
+
+
+# ── Paso 3 «A» (28-oct, decisión de Gadea #2296): los importes los pone el código ──────────────────────────────────
+# El escritor recibe los hechos de precio pero no escribe cifras (`RAG_PRECIOS_POR_CODIGO`); debajo de su texto va esta
+# pieza, sacada de los mismos bloques. Con el escritor redactando los importes, se dejaba un origen (p03, p18: «faltan
+# 630000, 700000» en la sombra) u ofrecía el descuento de grupo a un curso PADI aunque los hechos dijeran que no (r01).
+_PIEZA = {
+    "es": {"titulo": "*Precios por persona* (online · normal):", "cartagena": "*Desde Cartagena*",
+           "island": "*Ya en las Islas del Rosario*"},
+    "en": {"titulo": "*Prices per person* (online · regular):", "cartagena": "*From Cartagena*",
+           "island": "*Already on the Rosario Islands*"},
+}
+_DE_LAS_ISLAS_RE = re.compile(r"\s*(?:[-–]\s*ya en las islas|[-–]\s*already on (?:the )?islands?|"
+                              r"\(ya en las islas\)|\(already on (?:the )?islands?\))", re.IGNORECASE)
+_EN_EL_PARENTESIS_RE = re.compile(r",\s*(?:ya en las islas|already on (?:the )?islands?)\)", re.IGNORECASE)
+
+
+def _sin_el_origen(plan: str) -> str:
+    """«Salidas de Buceo - 2 inmersiones (1 día, ya en las islas)» → «… (1 día)»: el origen ya va en el título."""
+    return _DE_LAS_ISLAS_RE.sub("", _EN_EL_PARENTESIS_RE.sub(")", plan)).strip()
+
+
+def _importe(usd: dict | None, cop: dict | None) -> str:
+    principal = usd or cop or {}
+    texto = f"{principal.get('online')} · {principal.get('normal')}"
+    if usd and cop:
+        texto += f" ({cop.get('online')} · {cop.get('normal')})"
+    return texto
+
+
+def pieza_de_precios(bloques: list[dict], lang: str) -> str | None:
+    """La lista de precios de los bloques de hechos, por origen: cada plan con su precio online y normal (y en COP si
+    van las dos monedas) y, si aplica, el descuento de grupo. None si ningún bloque trae precio."""
+    textos = _PIEZA["es" if lang == "es" else "en"]
+    por_origen: dict[str, list[str]] = {}
+    notas: list[str] = []
+    for b in bloques:
+        for origen, precio in (b.get("precio") or {}).items():
+            cop = (b.get("precio_cop") or {}).get(origen)
+            usd = precio if "COP" not in str(precio.get("online")) else None
+            por_origen.setdefault(origen, []).append(f"• {_sin_el_origen(precio['plan'])}: {_importe(usd, cop or (None if usd else precio))}")
+        for otro in b.get("otros_planes") or []:
+            origen = otro.get("origen") or b.get("origen") or next(iter(b.get("precio") or {}), "cartagena")
+            usd = otro.get("precio") if "COP" not in str((otro.get("precio") or {}).get("online")) else None
+            cop = otro.get("precio_cop") or (None if usd else otro.get("precio"))
+            por_origen.setdefault(origen, []).append(f"• {_sin_el_origen(otro['plan'])}: {_importe(usd, cop)}")
+        if b.get("descuento_de_grupo") and b["descuento_de_grupo"] not in notas:
+            notas.append(b["descuento_de_grupo"])
+    if not por_origen:
+        return None
+    lineas = [textos["titulo"]]
+    for origen in ("cartagena", "island"):
+        if origen in por_origen:
+            if len(por_origen) > 1:
+                lineas.append(textos[origen])
+            lineas += list(dict.fromkeys(por_origen[origen]))
+    return "\n".join(lineas) + ("\n\n" + "\n".join(notas) if notas else "")

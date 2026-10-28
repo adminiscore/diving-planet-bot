@@ -59,7 +59,48 @@ integrar la rama del otro y suite en verde, porque en PRE gana el último; (3) *
 despliegue reinicia el contenedor y mata la medida del otro (avisar en el registro de Plan Coral con la hora de fin).
 Las doce normas, con su porqué, están en el documento.
 
-### ▶️ RETOMAR AQUÍ — 28-oct, 00:45 (Gadea con Claude; Álvaro y Gonzalo): CALN-6 cerrado en rama, CALN-3 (precios) en curso; PRE = integra5
+### ▶️ RETOMAR AQUÍ — 28-oct, 20:15 (Gadea con Claude; Álvaro y Gonzalo): CALN en PRE (0.36.0); la 5.ª sin la moneda, preparada, a falta del juez
+
+- **Estado:** PRE sirve **CALN `ed3baaf`** (HISTORY 0.36.0) desde las 16:38, sano. **`feature/caln-gadea`** (HISTORY
+  0.37.0) = la 5.ª SIN la moneda (P1 Álvaro + P2 Gonzalo + P4 CALN-8 (3)); su código es idéntico al medido en la
+  mini-ronda P124 (`tmp-p124` 118f56a5). Suite 3100 con `ENV_FILE=.env.ci`, ruff limpio, sin interruptores nuevos.
+  **OpenAI SIN SALDO desde las ~20:00**: PRE contesta con el escritor de respaldo y el juez no corre; nadie mide hasta
+  recargar (Gonzalo y Álvaro avisados).
+- **Hecho hoy (HISTORY 0.36.0 y 0.37.0):**
+
+  | Qué | Quién | Estado | Medida |
+  |---|---|---|---|
+  | CALN sube a PRE | Gadea | **en PRE** | 4.ª con Luna: golden 77 → 80/116, oculto 88,1 → 89,8 %, rotativa 14 → 17/30 |
+  | CALN-7 políticas, colombiano al asesor, origen (CALN-3b), lector del grupo | todos | en PRE | ver 0.36.0 |
+  | CALN-8 (1) + g26, sin la red de señales | Álvaro | en la base | −888 líneas; 23 visibles: 14 (PRE 13) |
+  | CALN-3 paso 3 + ajustes + CALN-3c (a, b) | Gonzalo | en la base | banco-precios 13 → 18/18; 23 visibles: 11 |
+  | CALN-8 (3), las políticas fuera del escritor | Gadea | en la base | −8 % de tokens; 23 visibles: 10 |
+  | CALN-3c (c), la moneda | Gadea | **fuera** (revertida) | banco-moneda 7 → 12/12, pero 23 visibles: 15 (mueve otras lecturas del extractor) |
+  | CALN-8 (2a, 2b), el grupo solo en personas | Álvaro | su rama | −3 campos, +76 líneas; grupos 55 → 57/62 |
+  | Pregunta «¿la otra persona también va a bucear?» | Álvaro | su rama (`feature/caln8-sino-alvaro`) | sin medir |
+  | Alarmas de errores de LLM en rondas y bancos | Gadea | en la base | la 4.ª de las 13:07 la escribió DeepSeek sin avisar |
+  | Oculto: 2 diálogos contaminados fuera de la nota | Gadea | en la base | oculto sobre 19 |
+
+- **Siguiente, en orden:**
+  1. **Con saldo:** juzgar P124 (`judge_golden_set --run docs/robustness/synthetic-runs/2026-10-28-mini5-P124.jsonl`,
+     ~0,5 $). Si en los 23 da ≤ 13 fallos (PRE 12-13), **subir `feature/caln-gadea` a PRE** (anunciar, `check_deploy
+     --sha`, prueba corta con `--metricas`) y poner en el título de 0.37.0 que sube.
+  2. Después de subir: Álvaro, 2a/2b y la pregunta de sí/no, con banco-grupo + sparring; la moneda, medida con TODOS
+     los campos del extractor (llamadas directas ×8 al banco ex0, no solo `is_colombian`) antes de volver a juntarla.
+  3. CALN-8 (4), adelgazar los prompts del extractor (~10.000 tokens, ~15 sustituciones acumuladas) y de Jev (~8.000).
+  4. CALN-3c (b) de Gonzalo («snorkel en las islas» no es el origen, g27; «¿ese es el precio para colombianos?»);
+     acotar el menú genérico a lo que nombra el cliente; CALN-3b, totales de la tarjeta.
+- **Cómo medir:** una pasada por lado, a la misma hora, en serie (decisión de Gadea: no repetir medidas). Para
+  decidir una subida, la mini-ronda de los diálogos visibles afectados y PIEZA A PIEZA si sale peor: es barata (~0,5 $
+  por pieza) y encuentra al culpable. Antes de una ronda cara, una prueba corta con `--metricas` (mirar `llm_errores`).
+- **Avisos de hoy:**
+  - Sin saldo, el bot NO falla: contesta el respaldo. Una ronda puede parecer buena y no medir el bot de verdad.
+  - Una frase en el prompt del extractor (Haiku) mueve OTROS campos: medir con todos, no solo con el que se toca.
+  - `caln0_comprobaciones --casos` y los diffs de una ronda completa listan diálogos del oculto: filtrar
+    `g["dialogues"][i]["suite"] == "oculto"` ANTES de mirar casos (hoy se miraron dos por error).
+  - El ruido de una ronda: con el mismo código, ~25 % de diálogos cambian de lado; +3 en una ronda no es una mejora.
+
+### ✅ 28-oct, 00:45 (Gadea con Claude; Álvaro y Gonzalo) — CALN-6 cerrado en rama, CALN-3 (precios) en curso; PRE = integra5
 
 - **Estado:** PRE sirve **integra5 `0faff2c`** (HISTORY 0.32.9), sin cambios hoy. Base de CALN = **`feature/caln-gadea`**
   (HISTORY 0.35.0) con todo junto; suite 3052 con `ENV_FILE=.env.ci` y ruff limpio; sin interruptores nuevos. Plan

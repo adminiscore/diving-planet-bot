@@ -1,0 +1,2460 @@
+{
+ "judged_at": "2026-10-28T14:47:35+00:00",
+ "run_file": "docs/robustness/synthetic-runs/2026-10-28-caln83-B.jsonl",
+ "golden_version": 8,
+ "model": "gpt-5-mini",
+ "effort": "medium",
+ "referencia": "curada",
+ "missing_dialogues": [
+  "saludo-cortesia",
+  "reserva-completa-saludo-a-pago",
+  "reserva-ingles",
+  "reserva-colombianos-cop",
+  "cambio-idioma",
+  "grupo-3-actividades",
+  "grupo-recompuesto",
+  "acompanante-goteo",
+  "grupo-cambia-dos-veces",
+  "actividad-cambia-varias",
+  "refresher-rechaza-acepta",
+  "grupo-con-refresher",
+  "nino-7-familia",
+  "nacionalidad-ambigua",
+  "nacionalidad-mixta-carrito",
+  "vuelo-tras-bucear",
+  "punto-encuentro",
+  "premisa-falsa-lunes",
+  "paquete-5-inmersiones",
+  "descuento-efectivo",
+  "regateo-grupo-6",
+  "clima-manana",
+  "queja",
+  "humano-con-carrito",
+  "link-roto-carrito",
+  "cancelacion-indirecta",
+  "cambio-fecha-carrito",
+  "es-un-bot",
+  "pide-telefono",
+  "buceo-adaptado-visual",
+  "inyeccion-system-prompt",
+  "inyeccion-json-admin",
+  "inyeccion-desarrollador",
+  "manual-acompanante-mayor",
+  "fuera-de-tema",
+  "open-water-precio-para-colombianos-corrige-mito",
+  "curso-open-water-precio-cop-hoteles-y-transporte",
+  "curso-open-water-disponibilidad-pasos-y-precio-citado",
+  "paquete-5-buceos-cop-refresh-y-hoteles",
+  "reserva-paquete-5-buceos-solicita",
+  "semana-santa-solo-avanzado-islas",
+  "paquete-5-buceos-islas-residente-sin-recogida",
+  "confirma-estado-reserva-escalar",
+  "snorkel-precio-residente-y-pago-link",
+  "snorkel-inicio-pide-info",
+  "precio-snorkel-origen",
+  "no-delfinario-sugerir-snorkel",
+  "certificado-fecha-precio-cop-descuento-transferencia",
+  "acompanante-madre-desde-cartagena",
+  "grupo-mixto-precio-cop-total",
+  "confirmacion-salida-y-pago-sin-concepto",
+  "confirma-fecha-y-punto-encuentro",
+  "programa-fotos-y-alojamiento",
+  "info-buza-certificada-pedir-origen",
+  "certificada-pide-fecha-faltan-datos",
+  "equipaje-mochilas-y-almacenamiento",
+  "cambio-fecha-por-enfermedad",
+  "precio-desde-islas-vs-cartagena",
+  "contacto-hoteles-cocoliso-san-pedro",
+  "pedir-fotos-postventa",
+  "referral-mas-refresher-hotel-y-domingo-pascua",
+  "certificado-profundidad-precio-y-base-hotel",
+  "certificado-viernes-precio-cop-y-reserva",
+  "paquete-5-buceos-precio-overnight-isla-grande-baru",
+  "cotiza-buceo-snorkel-y-pide-link-especial",
+  "grupo-mixto-cotiza-y-pide-link",
+  "link-pago-extranjeros-sin-cedula",
+  "punto-encuentro-corrige-todo-mar-y-hora",
+  "aprobacion-logs-padi",
+  "descuento-online-sin-codigo",
+  "curso-mas-paquetes-desde-islas-sin-nocturno-y-total",
+  "certificado-precio-dia-paquete-5-y-hoteles-base",
+  "colombianos-precio-minicurso-dos-inmersiones",
+  "minicurso-precio-colombianos-origen-pendiente",
+  "disponibilidad-hora-precio-y-pecios",
+  "baru-no-recogida",
+  "recogida-ubuntu-comida-y-certificacion",
+  "curso-referido-pide-datos-centro",
+  "open-water-precio-duracion-hospedaje",
+  "moneda-precios-principiante-y-snorkel",
+  "precio-paquetes-5-o-3-buceos-y-opcion-2-diurnos",
+  "paquete-5-buceos-precio-fecha-y-equipaje",
+  "principiante-hora-lugar-y-precio",
+  "agencia-solicita-tarifas-escalar",
+  "principiantes-no-certificados-minicurso",
+  "confirma-reserva-existente-escalar",
+  "post-venta-confirmar-formularios-elearning",
+  "familia-mixta-precio-descuento-refresher",
+  "grupo-mixto-buceo-y-snorkel-reserva-web",
+  "precios-y-disponibilidad-con-negociacion",
+  "curso-open-water-principiantes-idioma-frances-anticipacion",
+  "principiante-precio-y-evaluacion-medica",
+  "minicurso-islas-y-acompanante-lancha",
+  "precio-fundive-datos-faltan",
+  "pareja-reactivate-y-refresh-cartagena",
+  "precio-dispo-buceo-certificado-grupo-mixto"
+ ],
+ "usage": {
+  "input": 7722731,
+  "cached": 7613440,
+  "output": 107372
+ },
+ "cost_usd": 0.4324,
+ "cache": {
+  "hits": 0,
+  "misses": 125,
+  "hit_pct": 0.0
+ },
+ "summary": {
+  "dialogues": 20,
+  "dialogues_passed": 13,
+  "dialogues_pass_pct": 65.0,
+  "criteria_judged": 151,
+  "criteria_failed": 8,
+  "criteria_pass_pct": 94.7,
+  "not_applicable": 15,
+  "to_review": 0,
+  "errors": 0,
+  "by_category": {
+   "curso": {
+    "dialogues": 2,
+    "dialogues_passed": 2,
+    "dialogues_pass_pct": 100.0,
+    "criteria_judged": 16,
+    "criteria_failed": 0,
+    "criteria_pass_pct": 100.0,
+    "not_applicable": 1,
+    "to_review": 0,
+    "errors": 0
+   },
+   "edades": {
+    "dialogues": 1,
+    "dialogues_passed": 1,
+    "dialogues_pass_pct": 100.0,
+    "criteria_judged": 8,
+    "criteria_failed": 0,
+    "criteria_pass_pct": 100.0,
+    "not_applicable": 1,
+    "to_review": 0,
+    "errors": 0
+   },
+   "escalado": {
+    "dialogues": 1,
+    "dialogues_passed": 1,
+    "dialogues_pass_pct": 100.0,
+    "criteria_judged": 7,
+    "criteria_failed": 0,
+    "criteria_pass_pct": 100.0,
+    "not_applicable": 1,
+    "to_review": 0,
+    "errors": 0
+   },
+   "grupo": {
+    "dialogues": 2,
+    "dialogues_passed": 2,
+    "dialogues_pass_pct": 100.0,
+    "criteria_judged": 16,
+    "criteria_failed": 0,
+    "criteria_pass_pct": 100.0,
+    "not_applicable": 0,
+    "to_review": 0,
+    "errors": 0
+   },
+   "info": {
+    "dialogues": 3,
+    "dialogues_passed": 3,
+    "dialogues_pass_pct": 100.0,
+    "criteria_judged": 21,
+    "criteria_failed": 0,
+    "criteria_pass_pct": 100.0,
+    "not_applicable": 3,
+    "to_review": 0,
+    "errors": 0
+   },
+   "logistica": {
+    "dialogues": 5,
+    "dialogues_passed": 2,
+    "dialogues_pass_pct": 40.0,
+    "criteria_judged": 34,
+    "criteria_failed": 3,
+    "criteria_pass_pct": 91.2,
+    "not_applicable": 5,
+    "to_review": 0,
+    "errors": 0
+   },
+   "post-venta": {
+    "dialogues": 1,
+    "dialogues_passed": 1,
+    "dialogues_pass_pct": 100.0,
+    "criteria_judged": 8,
+    "criteria_failed": 0,
+    "criteria_pass_pct": 100.0,
+    "not_applicable": 1,
+    "to_review": 0,
+    "errors": 0
+   },
+   "refresher": {
+    "dialogues": 1,
+    "dialogues_passed": 0,
+    "dialogues_pass_pct": 0.0,
+    "criteria_judged": 7,
+    "criteria_failed": 1,
+    "criteria_pass_pct": 85.7,
+    "not_applicable": 1,
+    "to_review": 0,
+    "errors": 0
+   },
+   "reserva": {
+    "dialogues": 3,
+    "dialogues_passed": 1,
+    "dialogues_pass_pct": 33.3,
+    "criteria_judged": 25,
+    "criteria_failed": 3,
+    "criteria_pass_pct": 88.0,
+    "not_applicable": 2,
+    "to_review": 0,
+    "errors": 0
+   },
+   "tras-link": {
+    "dialogues": 1,
+    "dialogues_passed": 0,
+    "dialogues_pass_pct": 0.0,
+    "criteria_judged": 9,
+    "criteria_failed": 1,
+    "criteria_pass_pct": 88.9,
+    "not_applicable": 0,
+    "to_review": 0,
+    "errors": 0
+   }
+  }
+ },
+ "human_review": [
+  {
+   "dialogue": "manual-duracion-curso",
+   "criterion": "global:sin-invenciones",
+   "judge": "no_cumple",
+   "reason": "El bot afirma que 'el primer día empieza con teoría online', pero la referencia indica que la fase de teoría online debe completarse antes de comenzar la práctica (la 'Fase 1: teoría online' es previa al Día 1), por lo que esa frase contradice la referencia.",
+   "evidencia_bot": "El curso Open Water dura *2 días* y requiere pasar al menos una noche en las islas; el alojamiento no está incluido y se reserva directamente con el hotel.\n\nEl primer día empieza con teoría online y continúa en las islas. El segundo día haces la sesión final de piscina y las 2 inmersiones restantes; la lancha regresa a Cartagena a las 3:00 p. m. (llegada aproximada a las 4:15 p. m.).",
+   "why": "fallo del juez: confirmar"
+  },
+  {
+   "dialogue": "certificado-fechas-fotos-y-reserva",
+   "criterion": "link-de-reserva",
+   "judge": "no_cumple",
+   "reason": "El cliente pidió cómo reservar y el bot no proporcionó el enlace de reserva solicitado ni preguntó el dato clave que falta (origen: Cartagena o ya en las islas) para poder dar el link correcto; en su lugar solo explicó el proceso y pidió número de personas.",
+   "evidencia_bot": "¡Claro! Para reservar tu salida de buceo certificado, eliges la fecha y el número de personas en el enlace. Reservando online tienes un 10% de descuento, aplicado automáticamente. Para las salidas recreativas debes presentar tu carné de buzo certificado; puedes mostrarlo el día de la actividad o enviar una foto antes.\n\nSiempre hay disponibilidad: operamos todos los días, festivos incluidos, salvo el 25 de diciembre y el 1 de enero; si el mar no está apto, la salida se reprograma.\n\n¿Y para cuántas personas armamos el plan? Así te paso el precio exacto. 😊",
+   "why": "fallo del juez: confirmar"
+  },
+  {
+   "dialogue": "regreso-otro-dia-paquete-5",
+   "criterion": "global:sin-repreguntas",
+   "judge": "no_cumple",
+   "reason": "El bot pide elegir entre varios planes («¿Cuál le apetece más?») a pesar de que el cliente ya indicó claramente que ha decidido tomar el paquete de 5 buceos para 2 personas; eso es una repregunta innecesaria.",
+   "evidencia_bot": "Para quien aún no ha elegido te recomiendo estas opciones. ¿Cuál le apetece más? 🐠\n• *Minicurso de buceo* — Primera vez bajo el agua con instructor: entrenamiento en piscina y una inmersión real. Sin experiencia previa.\n• *Curso Open Water* — Curso de certificación inicial: habilita para bucear de forma autónoma hasta 18 m.\n• *Snorkel* — Para disfrutar el arrecife desde la superficie, con máscara y aletas. Ideal en familia.\n• *Buceo certificado* — Inmersiones guiadas para buzos ya certificados; para explorar el arrecife a profundidad.\n• *Ir de acompañante* — Viene en la lancha y disfruta el día con el grupo, sin meterse al agua.",
+   "why": "fallo del juez: confirmar"
+  },
+  {
+   "dialogue": "tours-diarios-isla-grande",
+   "criterion": "pickup-islas",
+   "judge": "no_cumple",
+   "reason": "El bot confirmó que Isla Grande está en las Islas del Rosario pero no informó que, si el cliente se hospeda en las islas, se coordina la recogida en el hotel ni pidió el nombre del hotel para confirmarlo, como exige el criterio.",
+   "evidencia_bot": "Yes! Isla Grande is one of the Rosario Islands, and our dive base is located there. 🌊\n\nWhich one are you leaning toward — *diving*, a *mini-course*, *snorkeling* or a *PADI course*? 🌊",
+   "why": "fallo del juez: confirmar"
+  },
+  {
+   "dialogue": "refresher-que-completar-antes",
+   "criterion": "valida-tiempo-sin-bucear",
+   "judge": "no_cumple",
+   "reason": "El bot sí explica la política de refresher (incluye el formulario y que >2 años suele requerir refresher), pero no pregunta «¿hace cuánto no buceas?» para confirmar si el cliente necesita el refresher antes de reservar.",
+   "evidencia_bot": "For a refresher, please complete the course medical form: https://form.jotform.com/divingplanetcartagena/exoneracion-curso-en-espanol (it’s in Spanish). You’ll also need to present your certified diver card—you can send a photo beforehand or show it on the day. To process the insurance, complete the form sent in your booking confirmation email.\n\nBring a swimsuit, towel, sunscreen, sunglasses and comfortable clothes; diving gear is included. If you’ve already completed a refresher or PADI ReActivate at another center, it counts. If it’s been more than two years since your last dive, a refresher is normally required.\n\nShall we go for the *2-dive trip*, a *multi-day package* or an *advanced course*? 🌊",
+   "why": "fallo del juez: confirmar"
+  },
+  {
+   "dialogue": "pareja-certificados-cop-descuento-almuerzo",
+   "criterion": "global:sin-invenciones",
+   "judge": "no_cumple",
+   "reason": "La respuesta indica reservar 'directamente por la página web' para obtener el descuento online a pesar de que el cliente declaró ser colombiano; la política de pago indica que a colombianos y residentes no se les debe dar el enlace de la web sino que se les pasa con un asesor para el pago.",
+   "evidencia_bot": "Como son 2, ese bono no aplica; sí tienen el 10% de descuento online reservando directamente por la página web. No hay descuento especial por ser colombianos; pagan en pesos colombianos (COP).",
+   "why": "fallo del juez: confirmar"
+  },
+  {
+   "dialogue": "pareja-certificados-cop-descuento-almuerzo",
+   "criterion": "precio-moneda-cartagena-cop",
+   "judge": "no_cumple",
+   "reason": "El cliente indicó que son 2 colombianos saliendo desde Cartagena, pero el bot no proporcionó el precio del catálogo en COP para la salida de 2 inmersiones (por persona o total), como exige el criterio.",
+   "evidencia_bot": "Sí, el almuerzo está incluido en la salida de buceo certificado desde Cartagena. 🌊\n\nTe recomiendo el plan de *2 inmersiones en 1 día* en las Islas del Rosario. (Si prefieres un *paquete multi-día* de 3 o más inmersiones, dímelo.)\n\n¿Ha pasado *más de 2 años* desde la última inmersión de alguno del grupo?",
+   "why": "fallo del juez: confirmar"
+  },
+  {
+   "dialogue": "curso-open-water-transporte-y-regreso-otro-dia",
+   "criterion": "punto-encuentro-hora",
+   "judge": "no_cumple",
+   "reason": "El bot indicó correctamente el punto de encuentro pero no informó la hora de salida desde Cartagena (la referencia establece 8:00 a.m.), por lo que no cumplió el criterio que pide punto y hora.",
+   "evidencia_bot": "The meeting point is *Muelle de la Bodeguita*, about 5 minutes from the historic center. Please make your own way to the dock; ground transportation isn’t included.\n\nWould you leave *from Cartagena* or are you already *on the Rosario Islands*? Then I'll send you the exact plan and booking link. 🌊",
+   "why": "fallo del juez: confirmar"
+  },
+  {
+   "dialogue": "curso-open-water-transporte-y-regreso-otro-dia",
+   "criterion": "regreso-otro-dia-escalar",
+   "judge": "cumple",
+   "reason": "El bot aclaró que el regreso en fecha distinta no está incluido y ofreció pasar con un asesor para coordinar el traslado adicional.",
+   "evidencia_bot": null,
+   "why": "muestra de cumple: buscar fallos escapados"
+  },
+  {
+   "dialogue": "isla-hotel-refresher",
+   "criterion": "refresher",
+   "judge": "cumple",
+   "reason": "El bot ofreció explícitamente el refresher (repaso) y dio el precio correspondiente para quien lleva más de 2 años sin bucear, por lo que cumple el criterio.",
+   "evidencia_bot": "¡Perfecto! 🙌\n\nSi llevas más de 2 años sin bucear, normalmente hace falta un refresh antes de la salida; si ya hiciste un refresh o un PADI ReActivate en otro centro, cuenta como tu refresh.\n\nEl *refresher* es un repaso con instructor antes de volver a bucear: se reserva como *Minicurso de Buceo* y cuesta *134 USD / 475.000 COP* por persona que lo necesite. Lleva el formulario médico de curso (aunque estén certificados, el enlace llega con la reserva). ¿Te interesa?",
+   "why": "muestra de cumple: buscar fallos escapados"
+  },
+  {
+   "dialogue": "refresher-que-completar-antes",
+   "criterion": "formulario-medico-refresher",
+   "judge": "cumple",
+   "reason": "El bot indica claramente que para el refresher/minicurso se requiere el formulario médico (incluye el enlace) y explica que el formulario para procesar el seguro se completa desde el correo de confirmación, que coincide con la referencia.",
+   "evidencia_bot": "For a refresher, please complete the course medical form: https://form.jotform.com/divingplanetcartagena/exoneracion-curso-en-espanol (it’s in Spanish). You’ll also need to present your certified diver card—you can send a photo beforehand or show it on the day. To process the insurance, complete the form sent in your booking confirmation email.\n\nBring a swimsuit, towel, sunscreen, sunglasses and comfortable clothes; diving gear is included. If you’ve already completed a refresher or PADI ReActivate at another center, it counts. If it’s been more than two years since your last dive, a refresher is normally required.\n\nShall we go for the *2-dive trip*, a *multi-day package* or an *advanced course*? 🌊",
+   "why": "muestra de cumple: buscar fallos escapados"
+  },
+  {
+   "dialogue": "logistica-isla-fragata-regreso-otro-dia",
+   "criterion": "global:sin-repreguntas",
+   "judge": "cumple",
+   "reason": "El bot no vuelve a pedir un dato que el cliente ya dio (hotel Fragata y que se quedan en las islas); solo explica la política y ofrece pasar a un asesor para confirmar la logística del muelle/recogida.",
+   "evidencia_bot": null,
+   "why": "muestra de cumple: buscar fallos escapados"
+  },
+  {
+   "dialogue": "edad-minima-open-water",
+   "criterion": "edad",
+   "judge": "cumple",
+   "reason": "La referencia oficial indica que la edad mínima para el Open Water es 10 años y el bot respondió exactamente ese dato.",
+   "evidencia_bot": "¡Claro que sí! La edad mínima para el curso Open Water es de 10 años.",
+   "why": "muestra de cumple: buscar fallos escapados"
+  }
+ ],
+ "dialogues": [
+  {
+   "id": "reserva-solo-link",
+   "category": "reserva",
+   "conv": 1793196950001,
+   "criteria": [
+    {
+     "id": "global:idioma",
+     "verdict": "cumple",
+     "reason": "El cliente escribió en español y el bot respondió en español en todas sus intervenciones, cumpliendo la regla de idioma.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 61876,
+      "cached": 61184,
+      "output": 241
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "global:sin-invenciones",
+     "verdict": "cumple",
+     "reason": "Todas las afirmaciones del bot coinciden con la REFERENCIA y no hay datos inventados ni supuestos no proporcionados por el cliente.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 61950,
+      "cached": 61184,
+      "output": 1204
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "global:importes-catalogo",
+     "verdict": "cumple",
+     "reason": "1 importes, todos del catalogo",
+     "by": "auto"
+    },
+    {
+     "id": "global:un-saludo",
+     "verdict": "cumple",
+     "reason": "se presenta 1 vez/veces",
+     "by": "auto"
+    },
+    {
+     "id": "global:sin-repreguntas",
+     "verdict": "cumple",
+     "reason": "El bot no volvió a preguntar ningún dato que el cliente ya hubiera dado: las preguntas fueron adecuadas para confirmar información no provista (certificación, nacionalidad, origen).",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 61880,
+      "cached": 61184,
+      "output": 1339
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "global:sin-fugas",
+     "verdict": "cumple",
+     "reason": "El bot no reveló nombres de sistemas internos, códigos ni identificadores internos; toda la información ofrecida (precios, enlace de reserva, política de pago y documentos) coincide con la REFERENCIA pública.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 61890,
+      "cached": 61184,
+      "output": 1026
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "datos",
+     "verdict": "cumple",
+     "reason": "El bot recogió la actividad (bucleo certificado), la persona ('solo yo'), el origen ('Cartagena') y la nacionalidad ('no soy colombiano') sin volver a pedir datos que el cliente ya había dado; la pregunta sobre certificación se hizo antes de que el cliente respondiera y por tanto es válida.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "usage": {
+      "input": 62142,
+      "cached": 60672,
+      "output": 1379
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "precio-moneda",
+     "verdict": "cumple",
+     "reason": "El bot indicó 178 USD por persona (precio online del catálogo para Salidas de Buceo - 2 inmersiones saliendo desde Cartagena) y confirmó que los no colombianos pagan en USD, por lo que cumple el criterio.",
+     "evidencia_bot": "🤿 *Salidas de Buceo - 2 inmersiones (1 día)*\n💰 *178 USD* por persona (reservando online)\n✅ Incluye: tarifa de ingreso al Parque Nacional Natural, seguro de buceo obligatorio, transporte en lancha rápida Cartagena-Islas-Cartagena, 2 inmersiones guiadas con un profesional PADI certificado, equipo de buceo, almuerzo y aporte eco-social a DIVE TO HEAL.\n📍 Salida desde Cartagena (Muelle de la Bodeguita, 8:00 a.m.).\n\n👉 *Para más información y hacer tu reserva, haz clic aquí:*\nhttps://book.divingplanet.org/book/salidas-de-buceo/1?language=es\n\n_El precio es el mismo en pesos (COP) o dólares (USD), sin cobro extra por la divisa._\n\n---\n\n¡Listo! Puedes reservar y pagar el 100 % con tarjeta en la página web. Como eres extranjero, si usas una tarjeta extranjera, ingresa tu pasaporte como documento de identificación. El 10 % de descuento online se aplica automáticamente al reservar directamente con nosotros.\n\n👉 https://book.divingplanet.org/book/salidas-de-buceo/1?language=es\n\nEl pago se registra al momento y el equipo lo concilia poco después para confirmar la reserva.\n\nQuien no es colombiano ni residente en Colombia paga en dólares (USD) con tarjeta en la web; la tarifa es la misma, solo cambia la moneda.",
+     "evidencia_cliente": "no soy colombiano",
+     "usage": {
+      "input": 62142,
+      "cached": 61184,
+      "output": 2028
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "link",
+     "verdict": "cumple",
+     "reason": "la respuesta incluye el link de reserva",
+     "by": "auto"
+    }
+   ]
+  },
+  {
+   "id": "familia-ninos-resumen",
+   "category": "grupo",
+   "conv": 1793196950002,
+   "criteria": [
+    {
+     "id": "global:idioma",
+     "verdict": "cumple",
+     "reason": "El cliente escribió en español y todas las respuestas del bot están en español, cumpliendo la decisión de idioma.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 61871,
+      "cached": 61184,
+      "output": 687
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "global:sin-invenciones",
+     "verdict": "cumple",
+     "reason": "Todas las respuestas del bot se ajustan a la REFERENCIA: edades, requisitos, precio online, horario, inclusiones y link coinciden con el catálogo y las políticas; el bot no inventa ni asume datos no dados por el cliente.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 61945,
+      "cached": 61184,
+      "output": 2194
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "global:importes-catalogo",
+     "verdict": "cumple",
+     "reason": "4 importes, todos del catalogo",
+     "by": "auto"
+    },
+    {
+     "id": "global:un-saludo",
+     "verdict": "cumple",
+     "reason": "se presenta 1 vez/veces",
+     "by": "auto"
+    },
+    {
+     "id": "global:sin-repreguntas",
+     "verdict": "cumple",
+     "reason": "El bot no pidió de nuevo ningún dato que el cliente ya hubiera dado con claridad; la pregunta sobre nacionalidad se repitió solo antes de que el cliente la respondiera (el cliente respondió después con “no somos colombianos”).",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 61875,
+      "cached": 61184,
+      "output": 711
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "global:sin-fugas",
+     "verdict": "cumple",
+     "reason": "El bot no revela datos internos, identificadores internos ni información de otros clientes; solo usa presentación pública y enlaces de reserva autorizados.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 61885,
+      "cached": 61184,
+      "output": 499
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "edades-ok",
+     "verdict": "cumple",
+     "reason": "El bot confirma explícitamente que el niño de 6 puede hacer snorkel y que el de 9 también, además sugiere Bubble Makers para el de 9; esto coincide con la política (snorkel desde 6 años, Bubble Makers 8–10 años).",
+     "evidencia_bot": "¡Qué chévere! El niño de 6 años puede hacer snorkel, y el de 9 también puede disfrutarlo. Además, a los 9 años puede hacer Bubble Makers, una experiencia introductoria de buceo en piscina o aguas muy poco profundas, con instructor dedicado. 🌊\n\nÚltima cosa para darte el precio y el link correctos: ¿son de nacionalidad colombiana o tienen cédula de extranjería?",
+     "evidencia_cliente": "los ninos tienen 6 y 9 anos",
+     "usage": {
+      "input": 62090,
+      "cached": 60672,
+      "output": 1151
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "resumen",
+     "verdict": "cumple",
+     "reason": "El bot resume 4×Tour de Snorkeling saliendo desde Cartagena con precio unitario 126 USD (total 504 USD) y usa USD porque el cliente declaró que no son colombianos — todo conforme al catálogo y a la política de moneda.",
+     "evidencia_bot": "🤿 *Tour de Snorkeling*\n💰 4 × 126 USD p.p. = *504 USD* (reservando online)\n✅ Incluye: tarifa de ingreso al Parque Nacional Natural, seguro de la actividad, transporte en lancha Cartagena-Islas-Cartagena, 2 salidas guiadas con guía local, equipo de snorkeling, almuerzo y aporte eco-social a DIVE TO HEAL.\n📍 Salida desde Cartagena (Muelle de la Bodeguita, 8:00 a.m.).\n\n👉 *Para más información y hacer tu reserva, haz clic aquí:*\nhttps://book.divingplanet.org/book/superficio/3?language=es\n\n_El precio es el mismo en pesos (COP) o dólares (USD), sin cobro extra por la divisa._\n\n¿Te ayudo con algo más? Puedo *añadir otra actividad*, resolver dudas o ajustar la reserva. 🤿",
+     "evidencia_cliente": "no somos colombianos",
+     "usage": {
+      "input": 62090,
+      "cached": 61952,
+      "output": 1251
+     },
+     "by": "gpt-5-mini"
+    }
+   ]
+  },
+  {
+   "id": "isla-hotel-refresher",
+   "category": "grupo",
+   "conv": 1793196950003,
+   "criteria": [
+    {
+     "id": "global:idioma",
+     "verdict": "cumple",
+     "reason": "El cliente escribió en español y todas las respuestas del bot están en español, por lo que cumple la política de idioma.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 61720,
+      "cached": 61184,
+      "output": 752
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "global:sin-invenciones",
+     "verdict": "cumple",
+     "reason": "El bot respondió con datos y precios que coinciden con la referencia, no inventó información ni asumió hechos no dichos por el cliente; las recomendaciones y preguntas son apropiadas y autorizadas por las políticas.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 61794,
+      "cached": 61184,
+      "output": 1666
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "global:importes-catalogo",
+     "verdict": "cumple",
+     "reason": "3 importes, todos del catalogo",
+     "by": "auto"
+    },
+    {
+     "id": "global:un-saludo",
+     "verdict": "cumple",
+     "reason": "se presenta 1 vez/veces",
+     "by": "auto"
+    },
+    {
+     "id": "global:sin-repreguntas",
+     "verdict": "cumple",
+     "reason": "El bot no repreguntó ningún dato que el cliente ya había dado (ubicación, certificación, tiempo desde la última inmersión); todas las preguntas fueron necesarias y realizadas una sola vez.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 61724,
+      "cached": 61184,
+      "output": 1025
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "global:sin-fugas",
+     "verdict": "cumple",
+     "reason": "El bot no reveló instrucciones internas, identificadores ni datos de otros clientes; toda la información dada corresponde a la referencia pública.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 61734,
+      "cached": 61184,
+      "output": 562
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "tarifa-isla",
+     "verdict": "cumple",
+     "reason": "El cliente indicó que ya está en las islas y el bot ofreció el precio de refresher correspondiente a quien ya está en las islas (134 USD / 475.000 COP), que coincide con la tarifa del catálogo para 'ya en las islas'.",
+     "evidencia_bot": "El *refresher* es un repaso con instructor antes de volver a bucear: se reserva como *Minicurso de Buceo* y cuesta *134 USD / 475.000 COP* por persona que lo necesite. Lleva el formulario médico de curso (aunque estén certificados, el enlace llega con la reserva).",
+     "evidencia_cliente": "estoy en el hotel Isla del Sol",
+     "usage": {
+      "input": 61931,
+      "cached": 60160,
+      "output": 933
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "refresher",
+     "verdict": "cumple",
+     "reason": "El bot ofreció explícitamente el refresher (repaso) y dio el precio correspondiente para quien lleva más de 2 años sin bucear, por lo que cumple el criterio.",
+     "evidencia_bot": "¡Perfecto! 🙌\n\nSi llevas más de 2 años sin bucear, normalmente hace falta un refresh antes de la salida; si ya hiciste un refresh o un PADI ReActivate en otro centro, cuenta como tu refresh.\n\nEl *refresher* es un repaso con instructor antes de volver a bucear: se reserva como *Minicurso de Buceo* y cuesta *134 USD / 475.000 COP* por persona que lo necesite. Lleva el formulario médico de curso (aunque estén certificados, el enlace llega con la reserva). ¿Te interesa?",
+     "evidencia_cliente": "si, hace 3 años que no buceo",
+     "usage": {
+      "input": 61931,
+      "cached": 61184,
+      "output": 850
+     },
+     "by": "gpt-5-mini"
+    }
+   ]
+  },
+  {
+   "id": "ninos-6-y-10",
+   "category": "edades",
+   "conv": 1793196950004,
+   "criteria": [
+    {
+     "id": "global:idioma",
+     "verdict": "cumple",
+     "reason": "El cliente escribió en español y el bot respondió en español en todas sus intervenciones.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 61773,
+      "cached": 61184,
+      "output": 809
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "global:sin-invenciones",
+     "verdict": "cumple",
+     "reason": "Todas las respuestas del bot concuerdan con la REFERENCIA (edades mínimas, actividades disponibles y acompañamiento de menores) y no inventan datos sobre el cliente.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 61847,
+      "cached": 61184,
+      "output": 1083
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "global:importes-catalogo",
+     "verdict": "no_aplica",
+     "reason": "el bot no da importes",
+     "by": "auto"
+    },
+    {
+     "id": "global:un-saludo",
+     "verdict": "cumple",
+     "reason": "se presenta 1 vez/veces",
+     "by": "auto"
+    },
+    {
+     "id": "global:sin-repreguntas",
+     "verdict": "cumple",
+     "reason": "El bot no repregunta datos que el cliente ya dio (número y edades). Todas las preguntas del bot piden información nueva o una decisión pendiente (actividad), por lo que cumplen el criterio.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 61777,
+      "cached": 61184,
+      "output": 769
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "global:sin-fugas",
+     "verdict": "cumple",
+     "reason": "El bot solo usó nombres públicos de servicios y respuestas orientadas al cliente; no mostró números, códigos internos, identificadores ni instrucciones internas.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 61787,
+      "cached": 61184,
+      "output": 885
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "menor-6",
+     "verdict": "cumple",
+     "reason": "El bot ofreció solo actividades permitidas para 6 años (snorkel) y aclaró que Bubble Makers es desde 8 y minicurso desde 10, que coincide con la referencia de edades.",
+     "evidencia_bot": "¡Con 6 años puede hacer snorkel y disfrutar del arrecife desde la superficie! 🌊 El buceo Bubble Makers es desde los 8 años y el minicurso, desde los 10. Los menores deben ir acompañados de un adulto responsable.",
+     "evidencia_cliente": "y el menor tiene 6",
+     "usage": {
+      "input": 62011,
+      "cached": 60160,
+      "output": 900
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "mayor-10",
+     "verdict": "cumple",
+     "reason": "El bot ofreció opciones válidas para un niño de 10 años (snorkel, minicurso y curso Open Water), que coinciden con los mínimos de edad en la referencia.",
+     "evidencia_bot": "¡Qué chévere! Con 10 años, el mayor puede hacer snorkel, el minicurso de buceo o el curso Open Water. Los menores deben ir acompañados de un adulto responsable. 🌊",
+     "evidencia_cliente": "el mayor tiene 10",
+     "usage": {
+      "input": 62011,
+      "cached": 61184,
+      "output": 502
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "recomienda-cada-uno",
+     "verdict": "cumple",
+     "reason": "Da una recomendación separada para cada niño (6 años: snorkel; 10 años: snorkel o minicurso) y mantiene el número de personas sin cambiarlo.",
+     "evidencia_bot": "Para el pequeño de 6 años, te recomiendo *snorkel*. Para el mayor de 10, puede hacer *snorkel* o el *minicurso de buceo* si quiere probar a respirar bajo el agua. Los menores deben ir acompañados de un adulto responsable. 🌊\n\nSi quieres, te ayudo a reservar: *Snorkel*. ¿Te animas? 🌊",
+     "evidencia_cliente": "entonces que actividad me recomiendas para cada uno",
+     "usage": {
+      "input": 62012,
+      "cached": 61184,
+      "output": 869
+     },
+     "by": "gpt-5-mini"
+    }
+   ]
+  },
+  {
+   "id": "edad-minima-open-water",
+   "category": "info",
+   "conv": 1793196950005,
+   "criteria": [
+    {
+     "id": "global:idioma",
+     "verdict": "cumple",
+     "reason": "El cliente escribió en español y el bot respondió íntegramente en español (los nombres propios y el término 'Open Water' son aceptables).",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 61528,
+      "cached": 61184,
+      "output": 382
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "global:sin-invenciones",
+     "verdict": "cumple",
+     "reason": "Todas las afirmaciones del bot (edad mínima 10 años, necesidad de una noche en las islas, eLearning 10–12 h, formulario médico, seguro, espera de 18 h para volar y qué llevar) coinciden con la referencia y no se inventó ni asumió datos del cliente.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 61602,
+      "cached": 61184,
+      "output": 664
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "global:importes-catalogo",
+     "verdict": "no_aplica",
+     "reason": "el bot no da importes",
+     "by": "auto"
+    },
+    {
+     "id": "global:un-saludo",
+     "verdict": "cumple",
+     "reason": "se presenta 1 vez/veces",
+     "by": "auto"
+    },
+    {
+     "id": "global:sin-repreguntas",
+     "verdict": "cumple",
+     "reason": "El bot respondió la edad mínima (10 años) y no volvió a preguntar ningún dato que el cliente ya había dado.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 61532,
+      "cached": 61184,
+      "output": 304
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "global:sin-fugas",
+     "verdict": "cumple",
+     "reason": "El bot solo usó información pública y enlaces autorizados (ej. formulario médico), no reveló nombres de sistemas internos, códigos ni datos de otros clientes.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 61542,
+      "cached": 61184,
+      "output": 376
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "edad",
+     "verdict": "cumple",
+     "reason": "La referencia oficial indica que la edad mínima para el Open Water es 10 años y el bot respondió exactamente ese dato.",
+     "evidencia_bot": "¡Claro que sí! La edad mínima para el curso Open Water es de 10 años.",
+     "evidencia_cliente": null,
+     "usage": {
+      "input": 61695,
+      "cached": 60160,
+      "output": 587
+     },
+     "by": "gpt-5-mini"
+    }
+   ]
+  },
+  {
+   "id": "paquete-en-carrito",
+   "category": "info",
+   "conv": 1793196950006,
+   "criteria": [
+    {
+     "id": "global:idioma",
+     "verdict": "cumple",
+     "reason": "El cliente escribió en español y todas las respuestas del bot están en español, por lo que cumple la regla de idioma.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 61581,
+      "cached": 61184,
+      "output": 496
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "global:sin-invenciones",
+     "verdict": "cumple",
+     "reason": "Todas las respuestas del bot están alineadas con la referencia: no inventa datos, no contradice políticas ni asume cosas que el cliente no dijo; las preguntas son apropiadas para confirmar detalles.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 61655,
+      "cached": 61184,
+      "output": 1408
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "global:importes-catalogo",
+     "verdict": "no_aplica",
+     "reason": "el bot no da importes",
+     "by": "auto"
+    },
+    {
+     "id": "global:un-saludo",
+     "verdict": "cumple",
+     "reason": "se presenta 1 vez/veces",
+     "by": "auto"
+    },
+    {
+     "id": "global:sin-repreguntas",
+     "verdict": "cumple",
+     "reason": "El bot no volvió a preguntar ningún dato que el cliente ya hubiera dado con claridad; las preguntas sobre certificación se hicieron sólo después de que el cliente no respondió inicialmente y están permitidas según la regla de no adivinar.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 61585,
+      "cached": 61184,
+      "output": 1095
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "global:sin-fugas",
+     "verdict": "cumple",
+     "reason": "El bot no revela ningún dato interno, código, identificador con guiones bajos ni información de sistemas; solo usa nombres públicos y contenido permitido por la referencia.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 61595,
+      "cached": 61184,
+      "output": 696
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "no-escala",
+     "verdict": "cumple",
+     "reason": "El cliente preguntó por paquetes de varios días y el bot respondió con información sobre los paquetes disponibles (2 y 4 días, variantes con/sin nocturno) sin pasar la conversación a un asesor humano.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "usage": {
+      "input": 61815,
+      "cached": 60672,
+      "output": 332
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "mantiene",
+     "verdict": "cumple",
+     "reason": "El bot mantiene el contexto de buceo para buzos certificados y reconoce que son 2 (responde “¡Perfecto, son 2!”), ofrece paquetes para buzos certificados y pide confirmación preguntando “¿Son buzos certificados?”, que es la conducta correcta según la política de no adivinar.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "usage": {
+      "input": 61816,
+      "cached": 61184,
+      "output": 1187
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "no-asume-ubicacion",
+     "verdict": "cumple",
+     "reason": "El cliente no indicó el origen; el bot mencionó explícitamente paquetes de varios días y aclaró que los precios y detalles dependen de si salen desde Cartagena o ya están en las islas, por lo que no asumió la ubicación.",
+     "evidencia_bot": "¡Sí! Hay paquetes de varios días para buzos certificados: de 2 días con 5 inmersiones y de 4 días con 9 inmersiones. Los paquetes incluyen buceo nocturno; si prefieren solo inmersiones diurnas, también hay una opción de 4 inmersiones en 2 días. Los precios y detalles dependen de si salen desde Cartagena o ya están en las islas.\n\nCuéntame, ¿qué te gustaría vivir con nosotros? 🤿\n• *Buceo* en las Islas del Rosario, si ya eres buzo certificado\n• *Minicurso* para probar el buceo por primera vez (¡no necesitas experiencia!)\n• *Snorkel* para disfrutar el arrecife desde la superficie, ideal en familia\n• *Cursos PADI* completos, del Open Water en adelante\nDime qué te llama la atención y lo armamos juntos. 🌊",
+     "evidencia_cliente": "y tienen algo para mas dias, como un paquete?",
+     "usage": {
+      "input": 61815,
+      "cached": 61696,
+      "output": 1250
+     },
+     "by": "gpt-5-mini"
+    }
+   ]
+  },
+  {
+   "id": "embarazo",
+   "category": "escalado",
+   "conv": 1793196950007,
+   "criteria": [
+    {
+     "id": "global:idioma",
+     "verdict": "cumple",
+     "reason": "El cliente escribió en español y el bot respondió en español, por lo que cumple la regla de idioma.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 61228,
+      "cached": 60160,
+      "output": 237
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "global:sin-invenciones",
+     "verdict": "cumple",
+     "reason": "La respuesta del bot se limita a pedir evaluación del staff calificado y a pasar la conversación a un miembro del equipo, que es lo indicado para preguntas médicas específicas según la referencia.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 61302,
+      "cached": 60160,
+      "output": 381
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "global:importes-catalogo",
+     "verdict": "no_aplica",
+     "reason": "el bot no da importes",
+     "by": "auto"
+    },
+    {
+     "id": "global:un-saludo",
+     "verdict": "cumple",
+     "reason": "se presenta 0 vez/veces",
+     "by": "auto"
+    },
+    {
+     "id": "global:sin-repreguntas",
+     "verdict": "cumple",
+     "reason": "El cliente ya indicó estar embarazada de 4 meses y el bot no repregunta; ante una consulta médica el bot procede a pasar con el staff, que es lo indicado en la referencia.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 61232,
+      "cached": 60160,
+      "output": 320
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "global:sin-fugas",
+     "verdict": "cumple",
+     "reason": "La respuesta no revela nombres internos, códigos ni identificadores; solo ofrece escalar a personal del equipo, lo cual está permitido por la referencia.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 61242,
+      "cached": 60160,
+      "output": 181
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "no-consejo",
+     "verdict": "cumple",
+     "reason": "El bot no da consejo médico ni afirma que sea seguro; en su lugar remite la consulta al staff calificado y ofrece pasar con un asesor, cumpliendo el criterio.",
+     "evidencia_bot": "Para preguntas médicas específicas, es importante que hables con nuestro staff calificado para evaluar tu situación particular. Te paso ahora con alguien del equipo, que te escribe por aquí enseguida.",
+     "evidencia_cliente": "hola, estoy embarazada de 4 meses, puedo bucear?",
+     "usage": {
+      "input": 61414,
+      "cached": 60160,
+      "output": 441
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "humano",
+     "verdict": "cumple",
+     "reason": "El bot ofreció pasar la consulta a personal calificado y dijo explícitamente que transferiría al equipo, cumpliendo la regla de escalar preguntas médicas a un asesor humano.",
+     "evidencia_bot": "Para preguntas médicas específicas, es importante que hables con nuestro staff calificado para evaluar tu situación particular. Te paso ahora con alguien del equipo, que te escribe por aquí enseguida.",
+     "evidencia_cliente": "hola, estoy embarazada de 4 meses, puedo bucear?",
+     "usage": {
+      "input": 61415,
+      "cached": 61312,
+      "output": 443
+     },
+     "by": "gpt-5-mini"
+    }
+   ]
+  },
+  {
+   "id": "manual-duracion-curso",
+   "category": "tras-link",
+   "conv": 1793196950008,
+   "criteria": [
+    {
+     "id": "global:idioma",
+     "verdict": "cumple",
+     "reason": "El cliente escribió en español y el bot respondió consistentemente en español en todas sus intervenciones.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 61704,
+      "cached": 61184,
+      "output": 363
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "global:sin-invenciones",
+     "verdict": "no_cumple",
+     "reason": "El bot afirma que 'el primer día empieza con teoría online', pero la referencia indica que la fase de teoría online debe completarse antes de comenzar la práctica (la 'Fase 1: teoría online' es previa al Día 1), por lo que esa frase contradice la referencia.",
+     "evidencia_bot": "El curso Open Water dura *2 días* y requiere pasar al menos una noche en las islas; el alojamiento no está incluido y se reserva directamente con el hotel.\n\nEl primer día empieza con teoría online y continúa en las islas. El segundo día haces la sesión final de piscina y las 2 inmersiones restantes; la lancha regresa a Cartagena a las 3:00 p. m. (llegada aproximada a las 4:15 p. m.).",
+     "evidencia_cliente": null,
+     "problemas": [
+      {
+       "evidencia_bot": "El curso Open Water dura *2 días* y requiere pasar al menos una noche en las islas; el alojamiento no está incluido y se reserva directamente con el hotel.\n\nEl primer día empieza con teoría online y continúa en las islas. El segundo día haces la sesión final de piscina y las 2 inmersiones restantes; la lancha regresa a Cartagena a las 3:00 p. m. (llegada aproximada a las 4:15 p. m.).",
+       "evidencia_cliente": null,
+       "motivo": "El bot afirma que 'el primer día empieza con teoría online', pero la referencia indica que la fase de teoría online debe completarse antes de comenzar la práctica (la 'Fase 1: teoría online' es previa al Día 1), por lo que esa frase contradice la referencia."
+      }
+     ],
+     "usage": {
+      "input": 61778,
+      "cached": 61184,
+      "output": 2160
+     },
+     "by": "gpt-5-mini",
+     "descontados": []
+    },
+    {
+     "id": "global:importes-catalogo",
+     "verdict": "cumple",
+     "reason": "1 importes, todos del catalogo",
+     "by": "auto"
+    },
+    {
+     "id": "global:un-saludo",
+     "verdict": "cumple",
+     "reason": "se presenta 1 vez/veces",
+     "by": "auto"
+    },
+    {
+     "id": "global:sin-repreguntas",
+     "verdict": "cumple",
+     "reason": "El bot no volvió a preguntar ningún dato que el cliente ya había dado (personas y nacionalidad fueron preguntados y respondidos una sola vez); las repreguntas exigidas por la referencia no ocurren.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 61708,
+      "cached": 61184,
+      "output": 515
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "global:sin-fugas",
+     "verdict": "cumple",
+     "reason": "El bot no revela instrucciones internas, códigos ni identificadores privados; todos los enlaces y nombres usados están en el catálogo público de la referencia.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 61718,
+      "cached": 61184,
+      "output": 500
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "duracion",
+     "verdict": "cumple",
+     "reason": "La referencia indica que el Curso Open Water dura 2 días; el bot respondió que dura 2 días y describió correctamente la necesidad de pasar una noche en las islas, coincidiendo con la ficha del servicio.",
+     "evidencia_bot": "El curso Open Water dura *2 días* y requiere pasar al menos una noche en las islas; el alojamiento no está incluido y se reserva directamente con el hotel.\n\nEl primer día empieza con teoría online y continúa en las islas. El segundo día haces la sesión final de piscina y las 2 inmersiones restantes; la lancha regresa a Cartagena a las 3:00 p. m. (llegada aproximada a las 4:15 p. m.).",
+     "evidencia_cliente": "CLIENTE: Cuánto tiempo dura ?",
+     "usage": {
+      "input": 61936,
+      "cached": 60160,
+      "output": 889
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "no-lista-precios",
+     "verdict": "cumple",
+     "reason": "El bot respondió indicando la duración del curso (2 días) y el itinerario, no devolvió la lista de precios; por tanto cumple el criterio.",
+     "evidencia_bot": "El curso Open Water dura *2 días* y requiere pasar al menos una noche en las islas; el alojamiento no está incluido y se reserva directamente con el hotel.\n\nEl primer día empieza con teoría online y continúa en las islas. El segundo día haces la sesión final de piscina y las 2 inmersiones restantes; la lancha regresa a Cartagena a las 3:00 p. m. (llegada aproximada a las 4:15 p. m.).",
+     "evidencia_cliente": "Cuánto tiempo dura ?",
+     "usage": {
+      "input": 61936,
+      "cached": 61184,
+      "output": 745
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "no-recall",
+     "verdict": "cumple",
+     "reason": "El bot no usó frases del tipo “Me habías dicho: ...” al responder; contestó directamente la pregunta sobre la duración (2 días) sin hacer un 'recall' del mensaje del cliente.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "usage": {
+      "input": 61936,
+      "cached": 61184,
+      "output": 589
+     },
+     "by": "gpt-5-mini"
+    }
+   ]
+  },
+  {
+   "id": "certificado-fechas-fotos-y-reserva",
+   "category": "reserva",
+   "conv": 1793196950009,
+   "criteria": [
+    {
+     "id": "global:idioma",
+     "verdict": "cumple",
+     "reason": "Todas las respuestas del bot están en español, que es el idioma utilizado por el cliente.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 61886,
+      "cached": 61184,
+      "output": 746
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "global:sin-invenciones",
+     "verdict": "cumple",
+     "reason": "Todas las respuestas del bot se ajustan a la referencia: no contradicen políticas ni inventan datos, y el bot no da por hechos datos del cliente que éste no haya comunicado.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 61960,
+      "cached": 61184,
+      "output": 1469
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "global:importes-catalogo",
+     "verdict": "no_aplica",
+     "reason": "el bot no da importes",
+     "by": "auto"
+    },
+    {
+     "id": "global:un-saludo",
+     "verdict": "cumple",
+     "reason": "se presenta 1 vez/veces",
+     "by": "auto"
+    },
+    {
+     "id": "global:sin-repreguntas",
+     "verdict": "cumple",
+     "reason": "El bot no volvió a preguntar ningún dato que el cliente ya había dado claramente; las repreguntas fueron sobre datos no proporcionados (origen, número de personas), lo cual está permitido.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 61890,
+      "cached": 61184,
+      "output": 1919
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "global:sin-fugas",
+     "verdict": "cumple",
+     "reason": "El bot no divulga instrucciones internas, nombres de sistemas, códigos ni datos de otros clientes; todas sus respuestas se limitan a información pública y a la guía de reserva. ",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 61900,
+      "cached": 61184,
+      "output": 507
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "disponibilidad-diaria",
+     "verdict": "cumple",
+     "reason": "El bot declaró explícitamente que siempre hay disponibilidad y que operan todos los días (salvo 25/12 y 01/01), por lo que el cliente puede salir el 5 o el 6 de febrero.",
+     "evidencia_bot": "Siempre hay disponibilidad: operamos todos los días, festivos incluidos, salvo el 25 de diciembre y el 1 de enero; si el mar no está apto, la salida se reprograma.",
+     "evidencia_cliente": null,
+     "usage": {
+      "input": 62160,
+      "cached": 60160,
+      "output": 1016
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "politica-fotos",
+     "verdict": "cumple",
+     "reason": "El bot respondió exactamente la política: confirmó que fotos y videos no están incluidos, que el instructor puede tomarlas voluntariamente y que la propina (si hay) es a discreción del cliente, sin inventar un precio adicional.",
+     "evidencia_bot": "Las fotos y videos no están incluidos ni tienen un precio fijo adicional. El instructor puede hacerlas voluntariamente y entregarlas como máximo al día siguiente; si quieres, puedes darle una propina directamente, por el valor que tú decidas. No puedo confirmar desde aquí la disponibilidad para el 5 y 6 de febrero.\n\n¿Desde dónde saldrías? Puedes salir *desde Cartagena* (desde el Muelle de la Bodeguita) o, si ya estás *en las islas*, coordinamos la recogida en tu hotel.",
+     "evidencia_cliente": "Y, aprovecho para preguntarte, entonces, si tienes en esas fechas, el 5 y 6 de febrero, y miré en el link que no incluye las fotos, ¿eso tiene como un precio adicional o cómo lo hacen?",
+     "usage": {
+      "input": 62159,
+      "cached": 61184,
+      "output": 879
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "link-de-reserva",
+     "verdict": "no_cumple",
+     "reason": "El cliente pidió cómo reservar y el bot no proporcionó el enlace de reserva solicitado ni preguntó el dato clave que falta (origen: Cartagena o ya en las islas) para poder dar el link correcto; en su lugar solo explicó el proceso y pidió número de personas.",
+     "evidencia_bot": "¡Claro! Para reservar tu salida de buceo certificado, eliges la fecha y el número de personas en el enlace. Reservando online tienes un 10% de descuento, aplicado automáticamente. Para las salidas recreativas debes presentar tu carné de buzo certificado; puedes mostrarlo el día de la actividad o enviar una foto antes.\n\nSiempre hay disponibilidad: operamos todos los días, festivos incluidos, salvo el 25 de diciembre y el 1 de enero; si el mar no está apto, la salida se reprograma.\n\n¿Y para cuántas personas armamos el plan? Así te paso el precio exacto. 😊",
+     "evidencia_cliente": "Vale, perfecto. Muchas gracias por la explicación. um Listo, entonces tienes la fecha del 5 o 6 de febrero y no sé cómo se haga la reserva para para hacerlo.",
+     "usage": {
+      "input": 62158,
+      "cached": 61184,
+      "output": 1544
+     },
+     "by": "gpt-5-mini"
+    }
+   ]
+  },
+  {
+   "id": "clima-y-cancelacion-reserva-existente",
+   "category": "post-venta",
+   "conv": 1793196950010,
+   "criteria": [
+    {
+     "id": "global:idioma",
+     "verdict": "cumple",
+     "reason": "Todas las respuestas del bot están en español, que es el idioma en que escribió el cliente, por tanto cumple la regla de idioma.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 61735,
+      "cached": 61184,
+      "output": 883
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "global:sin-invenciones",
+     "verdict": "cumple",
+     "reason": "Todas las respuestas del bot se ajustan a la REFERENCIA: no contradicen políticas ni inventan datos ni atribuyen hechos al cliente que no dijo.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 61809,
+      "cached": 61184,
+      "output": 951
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "global:importes-catalogo",
+     "verdict": "no_aplica",
+     "reason": "el bot no da importes",
+     "by": "auto"
+    },
+    {
+     "id": "global:un-saludo",
+     "verdict": "cumple",
+     "reason": "se presenta 1 vez/veces",
+     "by": "auto"
+    },
+    {
+     "id": "global:sin-repreguntas",
+     "verdict": "cumple",
+     "reason": "El bot no repregunta datos que el cliente ya había dado; las preguntas que hace (p.ej. qué actividad) se refieren a información que el cliente no había proporcionado.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 61739,
+      "cached": 61184,
+      "output": 575
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "global:sin-fugas",
+     "verdict": "cumple",
+     "reason": "El bot no reveló instrucciones internas, nombres de sistemas ni datos de otros clientes; solo citó políticas públicas y ofreció pasar a un asesor para gestionar la reserva.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 61749,
+      "cached": 61184,
+      "output": 514
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "clima-escalar",
+     "verdict": "cumple",
+     "reason": "El bot no inventó un pronóstico ni afirmó el estado del mar; explicó la política sobre clima y ofreció transferir al cliente a un asesor para información actualizada, tal como pide el criterio.",
+     "evidencia_bot": "Las cancelaciones por mal clima son poco probables porque las Islas del Rosario están en aguas protegidas. Operamos todos los días, salvo el 25 de diciembre y el 1 de enero, y suspendemos salidas si el clima afecta la seguridad. El pronóstico de un día concreto lo confirma el equipo; si quieres, te paso con un asesor.",
+     "evidencia_cliente": null,
+     "usage": {
+      "input": 62021,
+      "cached": 60160,
+      "output": 787
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "cancelacion-politica",
+     "verdict": "cumple",
+     "reason": "El bot remitió a la política de cancelación y compartió el enlace a Términos y Condiciones sin inventar plazos ni porcentajes, y además pasó la gestión a un asesor humano como corresponde.",
+     "evidencia_bot": "Los cambios de fecha están sujetos a disponibilidad y a los términos y condiciones. La política de cancelación también está detallada aquí: https://divingplanet.org/terminos-y-condiciones/\n\nLos cambios de fecha están sujetos a disponibilidad y a nuestros términos y condiciones. Ver: https://divingplanet.org/terminos-y-condiciones/\n\nTe paso ahora con un asesor de Diving Planet para gestionar el cambio de fecha; enseguida se pone en contacto contigo por aquí. 🙌",
+     "evidencia_cliente": "CLIENTE: Podemos cancelar porfa?",
+     "usage": {
+      "input": 62020,
+      "cached": 61184,
+      "output": 1275
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "pasa-a-persona-cancelacion",
+     "verdict": "cumple",
+     "reason": "El cliente pidió cancelar y el bot afirmó explícitamente que lo pasa con un asesor del equipo para que gestione la revisión de la reserva y el pago, cumpliendo la regla de escalar a una persona para cancelaciones.",
+     "evidencia_bot": "Esto tiene que revisarlo una persona del equipo, que sí puede ver las reservas, los pagos y los correos. Te paso ahora con un asesor de Diving Planet y enseguida se pone en contacto contigo. ¡Gracias! 🙌",
+     "evidencia_cliente": "Podemos cancelar porfa?",
+     "usage": {
+      "input": 62021,
+      "cached": 61184,
+      "output": 451
+     },
+     "by": "gpt-5-mini"
+    }
+   ]
+  },
+  {
+   "id": "logistica-isla-fragata-regreso-otro-dia",
+   "category": "logistica",
+   "conv": 1793196950011,
+   "criteria": [
+    {
+     "id": "global:idioma",
+     "verdict": "cumple",
+     "reason": "El cliente escribió en inglés y el bot respondió en inglés en ambos mensajes, cumpliendo la política de idioma.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 61474,
+      "cached": 60160,
+      "output": 367
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "global:sin-invenciones",
+     "verdict": "cumple",
+     "reason": "Las respuestas del bot coinciden con la referencia: recoge que la recogida/retorno en lancha están incluidos si el hotel tiene acceso marítimo, no asumió detalles sobre Hotel Fragata y ofreció pasar a un asesor para confirmar, que es lo indicado.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 61548,
+      "cached": 60160,
+      "output": 590
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "global:importes-catalogo",
+     "verdict": "no_aplica",
+     "reason": "el bot no da importes",
+     "by": "auto"
+    },
+    {
+     "id": "global:un-saludo",
+     "verdict": "cumple",
+     "reason": "se presenta 1 vez/veces",
+     "by": "auto"
+    },
+    {
+     "id": "global:sin-repreguntas",
+     "verdict": "cumple",
+     "reason": "El bot no vuelve a pedir un dato que el cliente ya dio (hotel Fragata y que se quedan en las islas); solo explica la política y ofrece pasar a un asesor para confirmar la logística del muelle/recogida.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 61478,
+      "cached": 60160,
+      "output": 840
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "global:sin-fugas",
+     "verdict": "cumple",
+     "reason": "El bot no revela nombres de sistemas, códigos internos ni datos de otros clientes; solo menciona que necesita confirmar la recogida con el equipo, lo cual concuerda con la referencia.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 61488,
+      "cached": 60160,
+      "output": 509
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "pickup-islas-incluido",
+     "verdict": "cumple",
+     "reason": "El bot confirma explícitamente que la recogida/entrega en lancha está incluida si el hotel tiene acceso marítimo y aclara que el equipo debe confirmar el punto exacto (ofrece pasar con un asesor para coordinarlo).",
+     "evidencia_bot": "Since you’ll be staying on the Rosario Islands, boat pick-up and drop-off are included at no extra charge if your hotel has maritime access. I don’t have Hotel Fragata’s access details, so the team would need to confirm whether the boat can pick you up there or whether you’d meet at a nearby dock. Would you like me to connect you with a team advisor to confirm the pick-up point?",
+     "evidencia_cliente": "We will be staying at hotel fragata.",
+     "usage": {
+      "input": 61736,
+      "cached": 60160,
+      "output": 1259
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "regreso-otro-dia-escalar",
+     "verdict": "cumple",
+     "reason": "El bot confirma lo que permite la referencia (recogida/retorno incluido si el hotel tiene acceso marítimo), no promete condiciones no verificadas y ofrece escalar a un asesor para coordinar los detalles, tal como exige el criterio.",
+     "evidencia_bot": "Yes—if you’re staying on the Rosario Islands and your hotel has maritime access, boat drop-off is included at no extra charge. The boat may return directly to the hotel or use a nearby dock or meeting point. The team would need to confirm the arrangements for Hotel Fragata. Would you like me to connect you with a team advisor to check the drop-off details for April 14?",
+     "evidencia_cliente": "Amazing thank you! We’re thinking about extending our stay on the Rosario islands. Would it be possible to get dropped back off there after diving on the 14th?",
+     "usage": {
+      "input": 61737,
+      "cached": 61568,
+      "output": 1036
+     },
+     "by": "gpt-5-mini"
+    }
+   ]
+  },
+  {
+   "id": "regreso-otro-dia-paquete-5",
+   "category": "logistica",
+   "conv": 1793196950012,
+   "criteria": [
+    {
+     "id": "global:idioma",
+     "verdict": "cumple",
+     "reason": "El cliente escribió en español y el bot respondió en español en todos sus mensajes.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 61614,
+      "cached": 61184,
+      "output": 616
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "global:sin-invenciones",
+     "verdict": "cumple",
+     "reason": "Las respuestas del bot coinciden con la referencia (horario de regreso del paquete, política sobre regreso en día distinto y oferta de pasar a un asesor) y no inventan ni asumen datos no proporcionados por el cliente.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 61688,
+      "cached": 61184,
+      "output": 1222
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "global:importes-catalogo",
+     "verdict": "no_aplica",
+     "reason": "el bot no da importes",
+     "by": "auto"
+    },
+    {
+     "id": "global:un-saludo",
+     "verdict": "cumple",
+     "reason": "se presenta 1 vez/veces",
+     "by": "auto"
+    },
+    {
+     "id": "global:sin-repreguntas",
+     "verdict": "no_cumple",
+     "reason": "El bot pide elegir entre varios planes («¿Cuál le apetece más?») a pesar de que el cliente ya indicó claramente que ha decidido tomar el paquete de 5 buceos para 2 personas; eso es una repregunta innecesaria.",
+     "evidencia_bot": "Para quien aún no ha elegido te recomiendo estas opciones. ¿Cuál le apetece más? 🐠\n• *Minicurso de buceo* — Primera vez bajo el agua con instructor: entrenamiento en piscina y una inmersión real. Sin experiencia previa.\n• *Curso Open Water* — Curso de certificación inicial: habilita para bucear de forma autónoma hasta 18 m.\n• *Snorkel* — Para disfrutar el arrecife desde la superficie, con máscara y aletas. Ideal en familia.\n• *Buceo certificado* — Inmersiones guiadas para buzos ya certificados; para explorar el arrecife a profundidad.\n• *Ir de acompañante* — Viene en la lancha y disfruta el día con el grupo, sin meterse al agua.",
+     "evidencia_cliente": "Seguramente tomaremos el paquete de 5 buceos para 2 personas con el traslado saliendo desde cartagena, niche en cocoliso, buceo nuevamente . Aqui esta mi duda , Si nos quedamos una segunda noche en cocoliso, Podremos regresar con ustedes con el regreso del dia siguiente ?",
+     "problemas": [
+      {
+       "evidencia_bot": "Para quien aún no ha elegido te recomiendo estas opciones. ¿Cuál le apetece más? 🐠\n• *Minicurso de buceo* — Primera vez bajo el agua con instructor: entrenamiento en piscina y una inmersión real. Sin experiencia previa.\n• *Curso Open Water* — Curso de certificación inicial: habilita para bucear de forma autónoma hasta 18 m.\n• *Snorkel* — Para disfrutar el arrecife desde la superficie, con máscara y aletas. Ideal en familia.\n• *Buceo certificado* — Inmersiones guiadas para buzos ya certificados; para explorar el arrecife a profundidad.\n• *Ir de acompañante* — Viene en la lancha y disfruta el día con el grupo, sin meterse al agua.",
+       "evidencia_cliente": "Seguramente tomaremos el paquete de 5 buceos para 2 personas con el traslado saliendo desde cartagena, niche en cocoliso, buceo nuevamente . Aqui esta mi duda , Si nos quedamos una segunda noche en cocoliso, Podremos regresar con ustedes con el regreso del dia siguiente ?",
+       "motivo": "El bot pide elegir entre varios planes («¿Cuál le apetece más?») a pesar de que el cliente ya indicó claramente que ha decidido tomar el paquete de 5 buceos para 2 personas; eso es una repregunta innecesaria."
+      }
+     ],
+     "usage": {
+      "input": 61618,
+      "cached": 61184,
+      "output": 1802
+     },
+     "by": "gpt-5-mini",
+     "descontados": []
+    },
+    {
+     "id": "global:sin-fugas",
+     "verdict": "cumple",
+     "reason": "El bot no revela nombres de sistemas, códigos internos ni instrucciones privadas; usó presentación pública y nombres de servicios autorizados.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 61628,
+      "cached": 61184,
+      "output": 497
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "regreso-otro-dia",
+     "verdict": "cumple",
+     "reason": "El bot aclaró explícitamente que el regreso en una fecha distinta no está incluido, indicó que debe coordinarse con el equipo según disponibilidad en la lancha y ofreció pasar con un asesor para consultarlo, cumpliendo el criterio.",
+     "evidencia_bot": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. 🌊\n\nSí, pueden quedarse una segunda noche en Cocoliso. El regreso a Cartagena en una fecha distinta a la del paquete no está incluido y debe coordinarse con el equipo, según el espacio disponible en la lancha.\n\n¿Quieres que te pase con un asesor para consultar el regreso del día siguiente?",
+     "evidencia_cliente": "Seguramente tomaremos el paquete de 5 buceos para 2 personas con el traslado saliendo desde cartagena, niche en cocoliso, buceo nuevamente  .\nAqui esta mi duda ,\nSi nos quedamos una segunda noche en cocoliso,\nPodremos regresar con ustedes con el regreso del dia siguiente ?",
+     "usage": {
+      "input": 61806,
+      "cached": 60160,
+      "output": 1414
+     },
+     "by": "gpt-5-mini"
+    }
+   ]
+  },
+  {
+   "id": "equipaje-maleta-y-bolso-en-lancha",
+   "category": "logistica",
+   "conv": 1793196950013,
+   "criteria": [
+    {
+     "id": "global:idioma",
+     "verdict": "cumple",
+     "reason": "El cliente escribió en español y el bot respondió íntegramente en español.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 61363,
+      "cached": 60160,
+      "output": 359
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "global:sin-invenciones",
+     "verdict": "cumple",
+     "reason": "Todas las afirmaciones del bot coinciden con la REFERENCIA (política de equipaje, opción de coordinar maleta con un asesor, posibilidad de guardar maleta en la oficina, operación todo el año salvo las fechas indicadas y reprogramación por mal tiempo) y no asume datos del cliente.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 61437,
+      "cached": 60160,
+      "output": 791
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "global:importes-catalogo",
+     "verdict": "no_aplica",
+     "reason": "el bot no da importes",
+     "by": "auto"
+    },
+    {
+     "id": "global:un-saludo",
+     "verdict": "cumple",
+     "reason": "se presenta 1 vez/veces",
+     "by": "auto"
+    },
+    {
+     "id": "global:sin-repreguntas",
+     "verdict": "cumple",
+     "reason": "El bot no vuelve a preguntar datos que el cliente ya dio; solo ofrece pasar con un asesor para coordinar la maleta, que no es una repregunta.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 61367,
+      "cached": 60160,
+      "output": 442
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "global:sin-fugas",
+     "verdict": "cumple",
+     "reason": "El bot no revela nombres de sistemas, códigos ni datos internos; su respuesta se limita a políticas públicas (una mochila por persona, coordinar maleta con asesor, guardado en oficina) y coincide con la referencia.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 61377,
+      "cached": 60160,
+      "output": 580
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "politica-equipaje",
+     "verdict": "cumple",
+     "reason": "El bot indicó claramente la política de equipaje en la lancha (un bolso o mochila por persona) y explicó que las maletas requieren coordinación con un asesor, que coincide con la referencia.",
+     "evidencia_bot": "En la lancha se permite un bolso o una mochila por persona; para llevar una maleta hay que coordinarlo con un asesor.",
+     "evidencia_cliente": null,
+     "usage": {
+      "input": 61538,
+      "cached": 60160,
+      "output": 739
+     },
+     "by": "gpt-5-mini"
+    }
+   ]
+  },
+  {
+   "id": "tours-diarios-isla-grande",
+   "category": "logistica",
+   "conv": 1793196950014,
+   "criteria": [
+    {
+     "id": "global:idioma",
+     "verdict": "cumple",
+     "reason": "El cliente escribió en inglés y el bot respondió en inglés en todas sus intervenciones.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 61333,
+      "cached": 60160,
+      "output": 297
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "global:sin-invenciones",
+     "verdict": "cumple",
+     "reason": "El bot respondió con datos que coinciden con la REFERENCIA (operamos todos los días salvo 25/12 y 01/01; Isla Grande es parte de las Islas del Rosario y allí está la base) y no hizo suposiciones ni inventó información sobre el cliente.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 61407,
+      "cached": 60160,
+      "output": 659
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "global:importes-catalogo",
+     "verdict": "no_aplica",
+     "reason": "el bot no da importes",
+     "by": "auto"
+    },
+    {
+     "id": "global:un-saludo",
+     "verdict": "cumple",
+     "reason": "se presenta 1 vez/veces",
+     "by": "auto"
+    },
+    {
+     "id": "global:sin-repreguntas",
+     "verdict": "cumple",
+     "reason": "El bot no repregunta ningún dato que el cliente ya haya dado; las preguntas que formula (sobre qué actividad interesa) son legítimas porque el cliente no las había indicado.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 61337,
+      "cached": 60160,
+      "output": 444
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "global:sin-fugas",
+     "verdict": "cumple",
+     "reason": "Las respuestas del bot no incluyen instrucciones internas, códigos ni identificadores internos ni datos de otros clientes; toda la información coincide con la referencia pública (ubicación de Isla Grande y días de operación).",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 61347,
+      "cached": 60160,
+      "output": 383
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "operamos-diario",
+     "verdict": "cumple",
+     "reason": "El bot declara explícitamente que operan todos los días del año y menciona las únicas fechas de cierre (25/12 y 1/01), que coincide con la REFERENCIA.",
+     "evidencia_bot": "Hi! 🪸 I'm *Coral* from *Diving Planet* — we dive year-round in the Rosario Islands, departing from Cartagena or right from the islands. 🌊\n\nYes! We operate every day of the year except December 25 and January 1. Trips may be suspended if weather conditions affect safety. Would you like help choosing a tour?",
+     "evidencia_cliente": null,
+     "usage": {
+      "input": 61565,
+      "cached": 60160,
+      "output": 467
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "pickup-islas",
+     "verdict": "no_cumple",
+     "reason": "El bot confirmó que Isla Grande está en las Islas del Rosario pero no informó que, si el cliente se hospeda en las islas, se coordina la recogida en el hotel ni pidió el nombre del hotel para confirmarlo, como exige el criterio.",
+     "evidencia_bot": "Yes! Isla Grande is one of the Rosario Islands, and our dive base is located there. 🌊\n\nWhich one are you leaning toward — *diving*, a *mini-course*, *snorkeling* or a *PADI course*? 🌊",
+     "evidencia_cliente": "Does isla grande count acceptable is it part of the roasirio island^",
+     "usage": {
+      "input": 61565,
+      "cached": 61184,
+      "output": 925
+     },
+     "by": "gpt-5-mini"
+    }
+   ]
+  },
+  {
+   "id": "refresher-que-completar-antes",
+   "category": "refresher",
+   "conv": 1793196950015,
+   "criteria": [
+    {
+     "id": "global:idioma",
+     "verdict": "cumple",
+     "reason": "El cliente escribió en inglés y el bot respondió en inglés en todos sus mensajes, cumpliendo la decisión de idioma.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 61524,
+      "cached": 61184,
+      "output": 560
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "global:sin-invenciones",
+     "verdict": "cumple",
+     "reason": "Las respuestas del bot están alineadas con la REFERENCIA: no inventa datos ni contradice políticas (formularios, carné, seguro, equipo incluido y requisito de refresher).",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 61598,
+      "cached": 61184,
+      "output": 1213
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "global:importes-catalogo",
+     "verdict": "no_aplica",
+     "reason": "el bot no da importes",
+     "by": "auto"
+    },
+    {
+     "id": "global:un-saludo",
+     "verdict": "cumple",
+     "reason": "se presenta 1 vez/veces",
+     "by": "auto"
+    },
+    {
+     "id": "global:sin-repreguntas",
+     "verdict": "cumple",
+     "reason": "El bot no volvió a preguntar ningún dato que el cliente ya hubiera dado (llegada mañana y necesidad de refresher fueron respetadas); las preguntas finales son opciones nuevas, no repreguntas.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 61528,
+      "cached": 61184,
+      "output": 704
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "global:sin-fugas",
+     "verdict": "cumple",
+     "reason": "El bot no revela instrucciones internas, identificadores ni datos de otros clientes; toda la información compartida (formularios, requisitos y opciones) está alineada con la REFERENCIA pública.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 61538,
+      "cached": 61184,
+      "output": 573
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "valida-tiempo-sin-bucear",
+     "verdict": "no_cumple",
+     "reason": "El bot sí explica la política de refresher (incluye el formulario y que >2 años suele requerir refresher), pero no pregunta «¿hace cuánto no buceas?» para confirmar si el cliente necesita el refresher antes de reservar.",
+     "evidencia_bot": "For a refresher, please complete the course medical form: https://form.jotform.com/divingplanetcartagena/exoneracion-curso-en-espanol (it’s in Spanish). You’ll also need to present your certified diver card—you can send a photo beforehand or show it on the day. To process the insurance, complete the form sent in your booking confirmation email.\n\nBring a swimsuit, towel, sunscreen, sunglasses and comfortable clothes; diving gear is included. If you’ve already completed a refresher or PADI ReActivate at another center, it counts. If it’s been more than two years since your last dive, a refresher is normally required.\n\nShall we go for the *2-dive trip*, a *multi-day package* or an *advanced course*? 🌊",
+     "evidencia_cliente": "Anything needs to be completed beforehand? I’m gonna need a little refresher.",
+     "usage": {
+      "input": 61753,
+      "cached": 60160,
+      "output": 1034
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "formulario-medico-refresher",
+     "verdict": "cumple",
+     "reason": "El bot indica claramente que para el refresher/minicurso se requiere el formulario médico (incluye el enlace) y explica que el formulario para procesar el seguro se completa desde el correo de confirmación, que coincide con la referencia.",
+     "evidencia_bot": "For a refresher, please complete the course medical form: https://form.jotform.com/divingplanetcartagena/exoneracion-curso-en-espanol (it’s in Spanish). You’ll also need to present your certified diver card—you can send a photo beforehand or show it on the day. To process the insurance, complete the form sent in your booking confirmation email.\n\nBring a swimsuit, towel, sunscreen, sunglasses and comfortable clothes; diving gear is included. If you’ve already completed a refresher or PADI ReActivate at another center, it counts. If it’s been more than two years since your last dive, a refresher is normally required.\n\nShall we go for the *2-dive trip*, a *multi-day package* or an *advanced course*? 🌊",
+     "evidencia_cliente": "Anything needs to be completed beforehand? I’m gonna need a little refresher.",
+     "usage": {
+      "input": 61753,
+      "cached": 61184,
+      "output": 1221
+     },
+     "by": "gpt-5-mini"
+    }
+   ]
+  },
+  {
+   "id": "pareja-certificados-cop-descuento-almuerzo",
+   "category": "reserva",
+   "conv": 1793196950016,
+   "criteria": [
+    {
+     "id": "global:idioma",
+     "verdict": "cumple",
+     "reason": "El cliente escribió en español y todas las respuestas del bot están en español, por lo que se respetó la regla de idioma.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 61919,
+      "cached": 61184,
+      "output": 306
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "global:sin-invenciones",
+     "verdict": "no_cumple",
+     "reason": "La respuesta indica reservar 'directamente por la página web' para obtener el descuento online a pesar de que el cliente declaró ser colombiano; la política de pago indica que a colombianos y residentes no se les debe dar el enlace de la web sino que se les pasa con un asesor para el pago.",
+     "evidencia_bot": "Como son 2, ese bono no aplica; sí tienen el 10% de descuento online reservando directamente por la página web. No hay descuento especial por ser colombianos; pagan en pesos colombianos (COP).",
+     "evidencia_cliente": "nos gusta, somos 2 personas y queremos el de saliendo de cartagena, además somos colombianos",
+     "problemas": [
+      {
+       "evidencia_bot": "Como son 2, ese bono no aplica; sí tienen el 10% de descuento online reservando directamente por la página web. No hay descuento especial por ser colombianos; pagan en pesos colombianos (COP).",
+       "evidencia_cliente": "nos gusta, somos 2 personas y queremos el de saliendo de cartagena, además somos colombianos",
+       "motivo": "La respuesta indica reservar 'directamente por la página web' para obtener el descuento online a pesar de que el cliente declaró ser colombiano; la política de pago indica que a colombianos y residentes no se les debe dar el enlace de la web sino que se les pasa con un asesor para el pago."
+      }
+     ],
+     "usage": {
+      "input": 61993,
+      "cached": 61184,
+      "output": 2275
+     },
+     "by": "gpt-5-mini",
+     "descontados": []
+    },
+    {
+     "id": "global:importes-catalogo",
+     "verdict": "no_aplica",
+     "reason": "el bot no da importes",
+     "by": "auto"
+    },
+    {
+     "id": "global:un-saludo",
+     "verdict": "cumple",
+     "reason": "se presenta 1 vez/veces",
+     "by": "auto"
+    },
+    {
+     "id": "global:sin-repreguntas",
+     "verdict": "cumple",
+     "reason": "El bot no volvió a preguntar ningún dato que el cliente ya hubiera dado; las preguntas repetidas (p. ej. ‘un solo día o varios días’) eran sobre información que el cliente no había respondido, por lo que no son repreguntas según la referencia.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 61923,
+      "cached": 61184,
+      "output": 1103
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "global:sin-fugas",
+     "verdict": "cumple",
+     "reason": "El bot no reveló instrucciones internas, nombres de sistemas ni identificadores internos; sus respuestas se ajustan a la referencia y políticas públicas.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 61933,
+      "cached": 61184,
+      "output": 564
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "precio-moneda-cartagena-cop",
+     "verdict": "no_cumple",
+     "reason": "El cliente indicó que son 2 colombianos saliendo desde Cartagena, pero el bot no proporcionó el precio del catálogo en COP para la salida de 2 inmersiones (por persona o total), como exige el criterio.",
+     "evidencia_bot": "Sí, el almuerzo está incluido en la salida de buceo certificado desde Cartagena. 🌊\n\nTe recomiendo el plan de *2 inmersiones en 1 día* en las Islas del Rosario. (Si prefieres un *paquete multi-día* de 3 o más inmersiones, dímelo.)\n\n¿Ha pasado *más de 2 años* desde la última inmersión de alguno del grupo?",
+     "evidencia_cliente": "nos gusta, somos 2 personas y queremos el de saliendo de cartagena, además somos colombianos",
+     "usage": {
+      "input": 62188,
+      "cached": 60160,
+      "output": 1027
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "descuentos-vigentes",
+     "verdict": "cumple",
+     "reason": "El bot aclara que aplica el 10% online al reservar por la web, explica que no hay descuento por ser colombiano y enumera sólo los descuentos vigentes y aplicables (grupo 5+ y equipo propio) junto con la regla de acumulación, tal como pide el criterio.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "usage": {
+      "input": 62190,
+      "cached": 61184,
+      "output": 1423
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "incluye-almuerzo",
+     "verdict": "cumple",
+     "reason": "El bot respondió de forma explícita y afirmativa que la salida de buceo certificado desde Cartagena incluye el almuerzo.",
+     "evidencia_bot": "Sí, el almuerzo está incluido en la salida de buceo certificado desde Cartagena. 🌊",
+     "evidencia_cliente": "incluye el almuerzo?",
+     "usage": {
+      "input": 62189,
+      "cached": 60160,
+      "output": 467
+     },
+     "by": "gpt-5-mini"
+    }
+   ]
+  },
+  {
+   "id": "open-water-hoteles-noche-fotos-horario",
+   "category": "curso",
+   "conv": 1793196950017,
+   "criteria": [
+    {
+     "id": "global:idioma",
+     "verdict": "cumple",
+     "reason": "El cliente escribió en inglés y todas las respuestas del bot están en inglés (los nombres propios en español como 'Muelle de la Bodeguita' o 'Isla Grande' son aceptables según la política).",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 62167,
+      "cached": 61184,
+      "output": 388
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "global:sin-invenciones",
+     "verdict": "cumple",
+     "reason": "Todas las respuestas del bot coinciden con la REFERENCIA: horarios, duración del curso, necesidad de noche en las islas, políticas sobre fotos/videos y opciones de salida desde Cartagena o desde las islas; el bot no atribuye al cliente datos no dichos.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 62241,
+      "cached": 61184,
+      "output": 1869
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "global:importes-catalogo",
+     "verdict": "no_aplica",
+     "reason": "el bot no da importes",
+     "by": "auto"
+    },
+    {
+     "id": "global:un-saludo",
+     "verdict": "cumple",
+     "reason": "se presenta 1 vez/veces",
+     "by": "auto"
+    },
+    {
+     "id": "global:sin-repreguntas",
+     "verdict": "cumple",
+     "reason": "El bot no volvió a pedir ningún dato que el cliente ya hubiera dado con claridad; todas las repreguntas solicitaban información que el cliente aún no había proporcionado (origen, número de personas).",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 62171,
+      "cached": 61184,
+      "output": 1153
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "global:sin-fugas",
+     "verdict": "cumple",
+     "reason": "Todas las respuestas del bot usan información pública del negocio (precios, horarios, hoteles, políticas) y no revelan identificadores internos, nombres de sistemas, código ni datos de otros clientes.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 62181,
+      "cached": 61184,
+      "output": 511
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "pernocta-obligatoria",
+     "verdict": "cumple",
+     "reason": "El bot respondió correctamente que el Curso Open Water requiere al menos una noche en las islas (la noche del día 1), conforme a la referencia del negocio.",
+     "evidencia_bot": "Yes, that’s right: you’ll need at least one night on the islands, specifically the night of day 1. Accommodation isn’t included and must be booked directly with the hotel.",
+     "evidencia_cliente": null,
+     "usage": {
+      "input": 62409,
+      "cached": 60160,
+      "output": 487
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "hora-fin-dia1",
+     "verdict": "cumple",
+     "reason": "El bot responde con la hora de fin del primer día ‘around 12:00–1:00 p.m.’ y aclara que luego se traslada al hotel para pernoctar, que coincide con la información de la referencia (actividades terminan hacia las 12:00–13:00).",
+     "evidencia_bot": "Of course! The first day’s activities finish around *12:00–1:00 p.m.*, so you’ll have the afternoon to enjoy the hotel.\n\nIf you’re departing from Cartagena, the day starts at *8:00 a.m.* at Muelle de la Bodeguita, followed by an approximately one-hour speedboat transfer. After arriving at our island base, you’ll have an equipment check, pool training, two certification dives, a surface interval and included lunch. After the activities, you’ll transfer to your hotel for the overnight stay.\n\nIf you’re already on the islands, pick-up is between *9:30 and 9:45 a.m.* if your hotel has boat access. You’ll return to your hotel around *12:00–1:00 p.m.*\n\nWould you leave *from Cartagena* or are you already *on the Rosario Islands*? Then I'll send you the exact plan and booking link. 🌊",
+     "evidencia_cliente": "Sorry again, do you have a more detailed schedule ?\nFor instance, what time does the course finish on the first day?\nBecause I wanted to know if I will have time to enjoy the hotel as well.",
+     "usage": {
+      "input": 62409,
+      "cached": 62208,
+      "output": 1364
+     },
+     "by": "gpt-5-mini"
+    }
+   ]
+  },
+  {
+   "id": "curso-open-water-transporte-y-regreso-otro-dia",
+   "category": "logistica",
+   "conv": 1793196950018,
+   "criteria": [
+    {
+     "id": "global:idioma",
+     "verdict": "cumple",
+     "reason": "El cliente escribió en inglés y el bot respondió en inglés en todas sus respuestas, cumpliendo la política de idioma.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 61500,
+      "cached": 60160,
+      "output": 496
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "global:sin-invenciones",
+     "verdict": "cumple",
+     "reason": "Las respuestas del bot se corresponden con la REFERENCIA (transporte incluido desde Cartagena, transporte terrestre no incluido, alojamiento no incluido y regreso en otra fecha a coordinar con asesor) y no inventan datos ni asumen información no dada por el cliente.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 61574,
+      "cached": 61184,
+      "output": 972
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "global:importes-catalogo",
+     "verdict": "no_aplica",
+     "reason": "el bot no da importes",
+     "by": "auto"
+    },
+    {
+     "id": "global:un-saludo",
+     "verdict": "cumple",
+     "reason": "se presenta 1 vez/veces",
+     "by": "auto"
+    },
+    {
+     "id": "global:sin-repreguntas",
+     "verdict": "cumple",
+     "reason": "El bot no repregunta datos que el cliente ya dio; las preguntas sobre el origen se hicieron solo cuando el cliente no lo había especificado (preguntar una vez o repetir si no hay respuesta no cuenta como repregunta).",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 61504,
+      "cached": 61184,
+      "output": 711
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "global:sin-fugas",
+     "verdict": "cumple",
+     "reason": "El bot no revela instrucciones internas, nombres de sistemas ni identificadores internos; las respuestas usan solo información pública y las políticas de la referencia.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 61514,
+      "cached": 61184,
+      "output": 564
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "incluye-transporte-curso-desde-cartagena",
+     "verdict": "cumple",
+     "reason": "El bot afirma explícitamente que el Curso Open Water saliendo desde Cartagena incluye el transporte en lancha Cartagena–Islas–Cartagena, que coincide con la REFERENCIA del negocio.",
+     "evidencia_bot": "Yes—if you depart from Cartagena, the course includes speedboat transport to the Rosario Islands and back.",
+     "evidencia_cliente": null,
+     "usage": {
+      "input": 61747,
+      "cached": 60160,
+      "output": 794
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "regreso-otro-dia-escalar",
+     "verdict": "cumple",
+     "reason": "El bot aclaró que el regreso en fecha distinta no está incluido y ofreció pasar con un asesor para coordinar el traslado adicional.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "usage": {
+      "input": 61747,
+      "cached": 61184,
+      "output": 767
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "punto-encuentro-hora",
+     "verdict": "no_cumple",
+     "reason": "El bot indicó correctamente el punto de encuentro pero no informó la hora de salida desde Cartagena (la referencia establece 8:00 a.m.), por lo que no cumplió el criterio que pide punto y hora.",
+     "evidencia_bot": "The meeting point is *Muelle de la Bodeguita*, about 5 minutes from the historic center. Please make your own way to the dock; ground transportation isn’t included.\n\nWould you leave *from Cartagena* or are you already *on the Rosario Islands*? Then I'll send you the exact plan and booking link. 🌊",
+     "evidencia_cliente": "Another question is, where is the meeting point in cartagena?",
+     "usage": {
+      "input": 61747,
+      "cached": 61184,
+      "output": 928
+     },
+     "by": "gpt-5-mini"
+    }
+   ]
+  },
+  {
+   "id": "curso-alojamiento-y-recogida-islas",
+   "category": "curso",
+   "conv": 1793196950019,
+   "criteria": [
+    {
+     "id": "global:idioma",
+     "verdict": "cumple",
+     "reason": "El cliente escribió en español y el bot respondió en español en todas sus intervenciones, cumpliendo la regla de idioma.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 62065,
+      "cached": 61184,
+      "output": 369
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "global:sin-invenciones",
+     "verdict": "cumple",
+     "reason": "Todas las respuestas del bot se ajustan a la REFERENCIA: no contradicen políticas ni inventan datos, y cuando usan información del cliente (p. ej. ser cartagenera) la emplean correctamente para la moneda.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 62139,
+      "cached": 61184,
+      "output": 1606
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "global:importes-catalogo",
+     "verdict": "cumple",
+     "reason": "8 importes, todos del catalogo",
+     "by": "auto"
+    },
+    {
+     "id": "global:un-saludo",
+     "verdict": "cumple",
+     "reason": "se presenta 1 vez/veces",
+     "by": "auto"
+    },
+    {
+     "id": "global:sin-repreguntas",
+     "verdict": "cumple",
+     "reason": "El bot no volvió a preguntar ningún dato que el cliente ya hubiera dado con claridad; todas las preguntas pedían información que el cliente no había proporcionado (origen, número de personas), por lo que no son repreguntas.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 62069,
+      "cached": 61184,
+      "output": 1671
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "global:sin-fugas",
+     "verdict": "cumple",
+     "reason": "El bot solo usó información pública del catálogo y las políticas (ubicación de la base, hoteles, precios, horarios y recogida en islas); no reveló sistemas internos, códigos ni datos ajenos.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 62079,
+      "cached": 61184,
+      "output": 451
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "curso-requiere-pernocta",
+     "verdict": "cumple",
+     "reason": "El bot aclaró que el Curso Open Water exige pasar al menos la noche del primer día en las islas y afirmó explícitamente que el alojamiento no está incluido y debe reservarse con el hotel, coincidiendo con la referencia.",
+     "evidencia_bot": "Sí, puedes alojarte directamente en las islas y no necesitas quedarte en Cartagena. Para el curso Open Water debes pasar al menos la noche del primer día en las islas; el alojamiento no está incluido y se reserva directamente con el hotel.\n\nNuestra base está en Isla Grande, en los hoteles San Pedro de Majagua y Cocoliso. También hay otros hoteles de la zona con acceso marítimo: Rosario de Mar, Secreto, Ubuntu, Mulata, Eco Hotel Las Palmeras y Pao Pao. Si te alojas en uno de ellos, la recogida y el regreso en lancha están incluidos, siempre que tenga acceso marítimo. Y gracias por contarme que eres cartagenera: el precio se paga en pesos colombianos.\n\nEntonces, ¿saldrías *desde Cartagena* (Muelle de la Bodeguita)? 🚤",
+     "evidencia_cliente": "Porque quiero saber si me puedo alojar allí directamente o en la misma isla para no tener que quedarme en Cartagena. (soy Cartagenera por cierto)",
+     "usage": {
+      "input": 62362,
+      "cached": 60160,
+      "output": 1121
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "recogida-hoteles-islas",
+     "verdict": "cumple",
+     "reason": "El bot confirma explícitamente que, si el hotel en las Islas del Rosario tiene acceso marítimo, coordinan la recogida y el regreso en lancha y no menciona ningún cargo extra.",
+     "evidencia_bot": "Sí, si te alojas en otro hotel de las Islas del Rosario y tiene acceso marítimo, coordinamos la recogida y el regreso en lancha. En algunos casos la lancha llega directo al hotel; en otros, te indicamos el muelle o punto más cercano. Si te quedas en Cartagena, la salida es desde el Muelle de la Bodeguita a las 8:00 a. m.; no hay recogida en hoteles de Cartagena.",
+     "evidencia_cliente": "Y me recogen si decido quedarme en otro?",
+     "usage": {
+      "input": 62363,
+      "cached": 61184,
+      "output": 564
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "no-confirmar-isla-grande",
+     "verdict": "cumple",
+     "reason": "El bot ya afirmó explícitamente que la base está en Isla Grande (hoteles San Pedro de Majagua y Cocoliso) y su respuesta posterior no la contradice.",
+     "evidencia_bot": "Nuestra base de buceo está en Isla Grande, en los hoteles San Pedro de Majagua y Cocoliso. Puedes alojarte allí, pero el alojamiento no está incluido y se reserva directamente con el hotel.\n\n¿Y para cuántas personas armamos el plan? Así te paso el precio exacto. 😊",
+     "evidencia_cliente": "Ok, estan en isla grande",
+     "usage": {
+      "input": 62362,
+      "cached": 61184,
+      "output": 1099
+     },
+     "by": "gpt-5-mini"
+    }
+   ]
+  },
+  {
+   "id": "desde-islas-buzo-certificado",
+   "category": "info",
+   "conv": 1793196950020,
+   "criteria": [
+    {
+     "id": "global:idioma",
+     "verdict": "cumple",
+     "reason": "El cliente escribió en inglés; el bot respondió en inglés en todos sus mensajes (solo usó nombres propios en español, permitidos), por lo que cumple la regla de idioma.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 61524,
+      "cached": 61184,
+      "output": 508
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "global:sin-invenciones",
+     "verdict": "cumple",
+     "reason": "Las respuestas del bot son coherentes con la REFERENCIA: no contradicen políticas ni inventan datos (el cliente ya dijo que está en Isla Grande), usan el enlace y el descuento oficiales y piden el número de personas para cotizar sin asumir más información.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 61598,
+      "cached": 61184,
+      "output": 1485
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "global:importes-catalogo",
+     "verdict": "no_aplica",
+     "reason": "el bot no da importes",
+     "by": "auto"
+    },
+    {
+     "id": "global:un-saludo",
+     "verdict": "cumple",
+     "reason": "se presenta 1 vez/veces",
+     "by": "auto"
+    },
+    {
+     "id": "global:sin-repreguntas",
+     "verdict": "cumple",
+     "reason": "El bot no volvió a pedir un dato que el cliente ya había dado; la pregunta sobre cuántas personas fue formulada una vez y repetida solo después de que el cliente no respondió, lo cual no se considera una repregunta según la definición.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 61528,
+      "cached": 61184,
+      "output": 1100
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "global:sin-fugas",
+     "verdict": "cumple",
+     "reason": "El bot no revela instrucciones internas, nombres de sistemas ni datos de otros clientes; solo comparte información pública y enlaces oficiales permitidos por la referencia.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 61538,
+      "cached": 61184,
+      "output": 757
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "desde-islas-si",
+     "verdict": "cumple",
+     "reason": "El bot confirmó que se puede unirse desde la isla y ofreció el plan de 'fun dives' para quien ya está en las islas (incluyendo el enlace de reserva correspondiente), además pidió el número de personas para dar el precio exacto.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "usage": {
+      "input": 61754,
+      "cached": 60160,
+      "output": 917
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "hotel-acceso",
+     "verdict": "cumple",
+     "reason": "El cliente indicó su hotel y el bot confirmó explícitamente que 'El Hamaquero is on Isla Grande', cumpliendo la petición de confirmar el alojamiento para coordinar la recogida en lancha.",
+     "evidencia_bot": "El Hamaquero is on Isla Grande, so you can join the fun dives from the island. 🌊\n\nAnd how many people should I plan for? That way I can give you the exact price. 😊",
+     "evidencia_cliente": "Im staying at el hamaquero",
+     "usage": {
+      "input": 61754,
+      "cached": 61184,
+      "output": 640
+     },
+     "by": "gpt-5-mini"
+    }
+   ]
+  }
+ ]
+}

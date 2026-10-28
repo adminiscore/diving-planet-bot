@@ -542,12 +542,13 @@ medias (u3-1 ✅, u3-4 ✅ promocionada, u3-5 🟡); PRE con u3-4 encendido. Sui
 > vez, como cierre del bloque RAG.** (Esto corrige el bloque de abajo, que ponía el oculto antes de rag-6.) Detalle:
 > `session-handoff.md`, "RETOMAR AQUÍ" del 1-oct.
 
-> **Estado al 28-oct (Gadea), fase CALN** (calidad en conversaciones nuevas, sin parches y con la arquitectura
-> delgada): el orden vivo está en Plan Coral (fase CALN) y en el «RETOMAR AQUÍ» del handoff. PRE = integra5
-> (HISTORY 0.32.9); la base de CALN es `feature/caln-gadea` (HISTORY 0.35.0). Hecho: CALN-0, CALN-2 (casi), CALN-6.
-> En curso: CALN-3 paso 2 (precios, Gonzalo). Después: integrar y 4.ª ronda (sube a PRE si iguala o mejora
-> integra5), CALN-3b (origen, enlace y pago, totales de la tarjeta). Pendiente de Gadea: el lector del grupo (calidad
-> contra latencia) y el control de integra5. Salida de CALN: ≥ 82/116 de media en 2 rondas y oculto ≥ 90 %.
+> **Estado al 28-oct, 20:15 (Gadea), fase CALN:** el orden vivo está en Plan Coral (fase CALN) y en el «RETOMAR AQUÍ»
+> del handoff. **PRE = CALN** (HISTORY 0.36.0, ed3baaf). La base `feature/caln-gadea` (0.37.0) es la 5.ª sin la moneda:
+> CALN-8 (1), el paso 3 de precios con CALN-3c (a, b) y CALN-8 (3); sube a PRE si el juez de su mini-ronda (pendiente:
+> OpenAI sin saldo) iguala a PRE. Tareas nuevas (decisiones de Gadea del 28-oct): **CALN-8 (4)**, adelgazar los prompts
+> del extractor y de Jev (el 61 % de los tokens del turno); **CALN-3c**, los fallos de precio que nadie cubría (reparto,
+> origen, moneda). Medir: una pasada por lado (no repetir), pieza a pieza si una integración sale peor. Oculto sobre 19
+> (2 contaminados). Salida de CALN: ≥ 82/116 de media en 2 rondas y oculto ≥ 90 %.
 
 > **Estado al 30-sep noche (Gadea), fase RAG:** rag-1, rag-2 y rag-3 ✅ promocionadas (HISTORY 0.29.70-0.29.85);
 > rag-4 ❌ descartada con medida (89 → 83 %). **rag-5 ⏳ en curso** (0.29.86): el RAG arranca a la vez que el

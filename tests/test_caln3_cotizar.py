@@ -106,3 +106,146 @@ def test_en_la_pregunta_general_cada_descuento_por_sus_palabras_propias():
     assert hechos._elemento_dado(lista[0], raices, respuesta)  # antes: las palabras comunes bastaban
     assert not hechos._elemento_dado(lista[0], raices, respuesta, hechos._palabras_comunes(lista))
     assert hechos._elemento_dado(lista[1], raices, respuesta, hechos._palabras_comunes(lista))
+
+
+def test_paso3_el_paquete_que_nombra_el_cliente_va_en_la_pieza():
+    """CALN-3 paso 3 (p11, p12): «el paquete de 5 inmersiones» no quedaba en el estado; sin el catálogo del escritor,
+    la pieza daba la salida de 2. Ahora el plan nombrado (este mensaje o el último suyo que lo nombre) es el del precio."""
+    from src.agents import redactor_hechos as rh
+    from src.flows import hechos
+
+    historia = [{"role": "user", "content": "Quiero el paquete de 5 buceos, ya estaremos en las islas"},
+                {"role": "assistant", "content": "¡Genial!"}, {"role": "user", "content": "¿Cuánto es por persona?"}]
+    foto = rh._foto(_st(location="island"), {}, "island", "¿Cuánto es por persona?", historia)
+    assert foto.detected_service_id == "5_dives_2_days"
+    pieza = cotizar.pieza_de_precios(hechos.hechos(foto, ["precio"], ["certified_diving"]), "es")
+    assert pieza.splitlines()[1].startswith("• Paquete de 5 inmersiones") and len(pieza.splitlines()) == 4
+    assert rh._paquete_nombrado("¿El de 2 inmersiones o el de 5 inmersiones?", []) is None  # dos planes: no se elige
+
+
+def test_paso3_con_la_tarjeta_va_la_nota_del_de_grupo(monkeypatch):
+    """CALN-3 paso 3 (r01): con la tarjeta (G3-07a, sin precio) no va la pieza, pero sí si el de grupo aplica."""
+    import asyncio
+
+    from src.agents import conversational_core as core
+    from src.agents import redactor_hechos, supervisor
+
+    nota = "El descuento de grupo (10 % desde 5 personas) no aplica a los cursos PADI, así que este curso no lo tiene."
+
+    async def rag_answer(query, **kw):
+        assert kw.get("sin_precio") is True
+        return "El Open Water dura 2 días.\n\n¿Te ayudo con algo más?"
+
+    async def nota_de_grupo(state, message, history):
+        return nota
+
+    monkeypatch.setattr(supervisor, "rag_answer", rag_answer)
+    monkeypatch.setattr(redactor_hechos, "nota_de_grupo", nota_de_grupo)
+    st = _st(location="cartagena")
+    answer = asyncio.run(core._rag_answer(st, "somos 5, ¿descuento de grupo?", sin_precio=True, history=[]))
+    assert answer == f"El Open Water dura 2 días.\n\n{nota}\n\n¿Te ayudo con algo más?"
+
+
+def test_paso3_con_la_nota_del_de_grupo_fuera_lo_que_dice_el_escritor_de_el():
+    """r01 (×3 tras 1a84026): con la nota «no aplica» debajo, el escritor seguía diciendo encima que se suma al online."""
+    from src.agents import redactor_hechos as rh
+
+    nota = "El descuento de grupo (10 % desde 5 personas) no aplica a los cursos PADI, así que este curso no lo tiene."
+    texto = ("El Open Water dura 2 días. Para grupos de 5 o más hay un 10% de descuento, que se suma al online. "
+             "Deben solicitarlo al equipo antes de pagar.\n\n¿Te ayudo con algo más?")
+    salida = rh.con_la_pieza(texto, nota)
+    assert "se suma" not in salida and salida.startswith("El Open Water dura 2 días. Deben solicitarlo")
+    assert nota in salida and salida.endswith("¿Te ayudo con algo más?")
+    # Sin nota del de grupo, lo que diga el escritor de él se queda (los demás descuentos, si los pregunta).
+    assert "se suma" in rh.con_la_pieza(texto, "*Precios por persona*:\n• Minicurso: 183 USD · 204 USD")
+
+
+def test_paso3_quien_no_ha_elegido_tambien_tiene_precio():
+    """Sparring t3 (pareja de Barú): «mi marido es buzo y yo quiero probar» daba solo el buceo; la pieza también lleva
+    las 2 primeras opciones de quien no ha elegido."""
+    from src.agents import redactor_hechos as rh
+
+    st = _st(location="cartagena", is_certified=True, detected_group_size=2, acompanante_sin_certificar=True,
+             detected_group_allocation={"certified_diving": 1}, pending_undecided_qty=1)
+    opciones = rh._de_quien_no_ha_elegido(st, {})
+    assert "minicourse" in opciones and "certified_diving" not in opciones and len(opciones) <= 2
+    assert rh._de_quien_no_ha_elegido(_st(detected_group_allocation={"snorkel": 2}), {}) == []
+
+
+def test_paso3_el_reparto_del_mensaje_antes_que_los_candidatos():
+    """Sparring t3 (6 de Medellín): «2 quieren hacer snorkel» llegaba como candidatos buceo y minicurso."""
+    from src.agents import redactor_hechos as rh
+
+    assert rh._del_reparto_del_mensaje({"group_allocation": {"snorkel": 2, "undecided": 4}}) == ["snorkel"]
+
+
+def test_paso3_la_nota_del_de_grupo_se_ve_aunque_vaya_en_otra_linea():
+    from src.agents import redactor_hechos as rh
+
+    pieza = ("*Precios por persona* (online · normal):\n• Tour de Snorkeling: 448.000 COP · 497.000 COP\n\n"
+             "10% de descuento para grupos de 5 personas o más, que se suma al 10% de descuento online.")
+    salida = rh.con_la_pieza("Sí, por ser un grupo de 6 aplica el descuento de grupo. Salen a las 8.", pieza)
+    assert salida.startswith("Salen a las 8.") and salida.count("grupo") == 1
+
+
+def test_paso3_el_parrafo_final_del_escritor_tambien_se_limpia():
+    """Sparring t3b: «Sí, por ser un grupo de 6 aplica el descuento de grupo… ¿Quieres que te pase con un asesor?»."""
+    from src.agents import redactor_hechos as rh
+
+    pieza = "*Precios por persona*:\n• Tour de Snorkeling: 448.000 COP · 497.000 COP\n\n10% de descuento para grupos de 5."
+    salida = rh.con_la_pieza("Te dejo los precios.\n\nSí, por ser un grupo de 6 aplica el descuento de grupo. "
+                             "¿Quieres que te pase con un asesor?", pieza)
+    assert salida.endswith(pieza + "\n\n¿Quieres que te pase con un asesor?")
+
+
+def test_paso3_un_descuento_con_su_umbral():
+    """Sparring t3b: el mensaje largo con «¿…y hay descuento de grupo?» da 0,60-0,68; la pregunta general, 0,05."""
+    from src.agents import jev_router as j
+
+    assert j.answers_to_signals({j.PIDE_UN_DESCUENTO: {"noul": 0.64}})[j.PIDE_UN_DESCUENTO] is True
+    assert j.answers_to_signals({j.PIDE_UN_DESCUENTO: {"noul": 0.19}})[j.PIDE_UN_DESCUENTO] is False
+
+
+def test_caln3c_buzo_con_novia_que_nunca_ha_buceado():
+    """p07: «yo soy buzo certificado y mi novia nunca ha buceado» sin reparto: el buceo y el minicurso."""
+    assert cotizar.candidatos(_st(is_certified=True, acompanante_sin_certificar=True)) == ["certified_diving", "minicourse"]
+
+
+def test_caln3c_quien_no_ha_elegido_es_el_buzo_que_escribe():
+    """p08: «I'm a certified diver and my 12 year old son wants to snorkel» → {snorkel 1} + 1 sin elegir: el buceo."""
+    from src.agents import redactor_hechos as rh
+
+    st = _st(is_certified=True, detected_group_allocation={"snorkel": 1}, pending_undecided_qty=1, detected_ages=[12])
+    assert rh._de_quien_no_ha_elegido(st, {}) == ["certified_diving"]
+
+
+def test_quinta_quien_no_ha_elegido_y_esta_certificado_solo_el_buceo():
+    """5.ª ronda (precio-desde-islas-vs-cartagena t5): la pareja Advanced con uno sin elegir llevaba el minicurso."""
+    from src.agents import redactor_hechos as rh
+
+    st = _st(is_certified=True, detected_group_allocation={"certified_diving": 1}, pending_undecided_qty=1,
+             sin_decidir_certificados=True)
+    assert rh._de_quien_no_ha_elegido(st, {}) == ["certified_diving"]
+
+
+def test_quinta_sin_pedir_precio_ni_origen_no_va_la_pieza(monkeypatch):
+    """5.ª ronda: con la pregunta de precio guardada, arq-8f añade «precio» a cada turno; sin que el
+    cliente pida precio ahora ni se sepa el origen, la pieza no va (el escritor contesta lo que pregunta)."""
+    import asyncio
+
+    from src.agents import redactor_hechos as rh
+    from src.agents import supervisor
+    from src.flows import hechos
+
+    llamadas = {}
+
+    async def rag_answer(query, **kw):
+        llamadas.update(kw)
+        return "La lancha vuelve a las 3:00 p. m."
+
+    monkeypatch.setattr(supervisor, "rag_answer", rag_answer)
+    st = _st()
+    st._jev_pide_precio = False
+    bloques = hechos.hechos(st, ["precio", "horario"], ["certified_diving"])
+    answer = asyncio.run(rh._con_el_escritor(st, "¿a qué hora se vuelve?", [], bloques, ["precio", "horario"]))
+    assert "Precios por persona" not in answer and not llamadas.get("precios_por_codigo")
