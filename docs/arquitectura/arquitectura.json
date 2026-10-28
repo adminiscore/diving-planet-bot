@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-27T23:44:34+00:00",
-  "commit": "99284892",
+  "generado": "2026-10-28T10:18:14+00:00",
+  "commit": "944e8c80",
   "rama": "feature/caln-gadea"
  },
  "vistas": {
@@ -1460,7 +1460,7 @@
   "etiqueta": "caln3-B",
   "run_at": "2026-10-27T20:13:00Z",
   "fichero": "2026-10-27-caln3-B.json",
-  "commit": "99284892",
+  "commit": "944e8c80",
   "por_tipo": {
    "reserva": {
     "turns": 155,
@@ -1498,14 +1498,27 @@
    "ms_p50": 316.5,
    "ms_p95": 425.85
   },
-  "cliente": null,
+  "cliente": {
+   "turns": 465,
+   "conversations": 116,
+   "no_reply": 0,
+   "multi_bubble": 4,
+   "latency_p50": 3.6,
+   "latency_p95": 7.2,
+   "latency_max": 8.8
+  },
   "llamadas_por_modelo": {
    "anthropic/claude-haiku-5.5": 523,
    "typesafe/jev-1.13": 464,
    "gpt-6-luna": 295,
    "deepseek/deepseek-v4.1-flash": 221
   },
-  "calidad": null
+  "calidad": {
+   "criteria_pass_pct": 93.8,
+   "dialogues_passed": 78,
+   "dialogues": 116,
+   "model": "gpt-5-mini (medium)"
+  }
  },
  "pesos_fuente": "Los % del enrutador y de las fases de la reserva salen de la foto de la ronda; los del revisor y el reintento, de los logs de PRE de la misma ronda. La cascada y los textos fijos no dejan rastro medible: se animan con una estimación y no llevan porcentaje."
 }

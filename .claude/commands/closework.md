@@ -96,7 +96,7 @@ En `docs/project-history/session-handoff.md`:
   y republica `docs/tracking/plan-coral.html` en la MISMA URL (comprueba antes que el código de la página publicada es
   el del repo).
 
-## 9. Mapa de Coral (https://claude.ai/artifact/SnK5Dku1vAinbJ94b8aNGd)
+## 9. Mapa de Coral (https://claude.ai/artifact/N7VWAU6k24wqdG8C6CM1bK)
 
 Si cambió el grafo, `src/agents/`, `src/config.py`, `docker-compose.vps.yml` o hay una ronda medida nueva:
 
