@@ -551,6 +551,18 @@ _PIDE_DESCUENTO_Q = {
         "is FALSE when they only ask the normal price."
     ),
 }
+# CALN-3 (decisión 4 del 27-oct, CALN3-Q05): «¿el de grupo nos aplica?» recibía debajo todos los demás descuentos
+# (arq-7b exigía la lista entera). Si pregunta por UNO, los hechos llevan la lista igual, pero no se exige ni se pega.
+PIDE_UN_DESCUENTO = "pide_un_descuento"
+_PIDE_UN_DESCUENTO_Q = {
+    "type": "noul",
+    "instructions": (
+        "The customer asks about ONE specific discount: whether a particular discount applies to them or how it works "
+        "(whether the group discount applies to their group, whether bringing their own gear gives a discount, whether "
+        "Colombians or residents get a discount, how the online discount works). It is FALSE when they ask in general "
+        "which discounts there are or whether there is any discount, and when they do not ask about discounts."
+    ),
+}
 _PIDE_OTRA_COSA_CON_DESCUENTOS_Q = {
     "type": "noul",
     "instructions": _INTENCIONES_Q[PIDE_OTRA_COSA]["instructions"]
@@ -828,7 +840,7 @@ _U34_QUESTIONS = (
     AFFIRMS_CERTIFICATION, AFFIRMS_GROUP, AFFIRMS_NATIONALITY, CORRECTS, ASKS_RECALL, NEEDS_STAFF,
     CHANGES_DATE, COMPANION_JOINS, PENDING_ANSWER, SHARES_OPEN_FACT, ADDS_PERSON, CUSTOMER_PLACE, YA_RESERVADO,
     PIDE_DATOS_AJENOS, NUEVO_CASO, PREGUNTA_SI_ES_IA, CAMBIA_IDIOMA, PIDE_PRECIO, PIDE_SERVICIO_PRIVADO, PIDE_QUE_INCLUYE,
-    *_INTENCIONES_Q, PIDE_DESCUENTO, PIDE_SI_ALCANZA,  # arq-4b/arq-1v: su duda no manda el turno al router LLM
+    *_INTENCIONES_Q, PIDE_DESCUENTO, PIDE_UN_DESCUENTO, PIDE_SI_ALCANZA,  # arq-4b/arq-1v/CALN-3: su duda no manda el turno al router LLM
     PIDE_CLIMA, PIDE_PAGO,  # arq-1i
     *_INTENCIONES_LAT8,
 )
@@ -905,6 +917,7 @@ def _questions_for_turn(pending_slot: str | None = None) -> dict:
     q[PIDE_QUE_INCLUYE] = _PIDE_QUE_INCLUYE_Q
     q.update(_INTENCIONES_Q)
     q[PIDE_DESCUENTO] = _PIDE_DESCUENTO_Q
+    q[PIDE_UN_DESCUENTO] = _PIDE_UN_DESCUENTO_Q
     q[PIDE_OTRA_COSA] = _PIDE_OTRA_COSA_CON_DESCUENTOS_Q
     if PIDE_OTRA_COSA in q:
         # arq-1v: preguntar si da tiempo es de la tabla; «otra cosa» deja de contarlo.
@@ -1002,7 +1015,7 @@ def answers_to_signals(answers: dict, threshold: float = THRESHOLD) -> dict:
         out[PIDE_PRECIO] = (answers.get(PIDE_PRECIO) or {}).get("noul", 0.0) >= PIDE_PRECIO_MIN
     if PIDE_QUE_INCLUYE in answers:
         out[PIDE_QUE_INCLUYE] = (answers.get(PIDE_QUE_INCLUYE) or {}).get("noul", 0.0) >= PIDE_QUE_INCLUYE_MIN
-    for intencion in (*_INTENCIONES_Q, PIDE_DESCUENTO, PIDE_CLIMA, PIDE_PAGO, *_INTENCIONES_LAT8):
+    for intencion in (*_INTENCIONES_Q, PIDE_DESCUENTO, PIDE_UN_DESCUENTO, PIDE_CLIMA, PIDE_PAGO, *_INTENCIONES_LAT8):
         if intencion in answers and intencion != PIDE_OTRA_COSA:
             out[intencion] = (answers.get(intencion) or {}).get("noul", 0.0) >= INTENCION_MIN
     if PIDE_SI_ALCANZA in answers:
@@ -1102,7 +1115,7 @@ _TURN_SIGNALS = (
     AFFIRMS_LOCATION, AFFIRMS_ACTIVITY, AFFIRMS_CERTIFICATION, AFFIRMS_GROUP, AFFIRMS_NATIONALITY, CORRECTS,
     ASKS_RECALL, NEEDS_STAFF, CHANGES_DATE, COMPANION_JOINS, SHARES_OPEN_FACT, YA_RESERVADO, PIDE_DATOS_AJENOS,
     NUEVO_CASO, PREGUNTA_SI_ES_IA, CAMBIA_IDIOMA, PIDE_PRECIO, PIDE_SERVICIO_PRIVADO, PIDE_QUE_INCLUYE, *_INTENCIONES_Q,
-    PIDE_DESCUENTO,
+    PIDE_DESCUENTO, PIDE_UN_DESCUENTO,
     # ex-9b (19-oct): ADDS_PERSON también viaja cuando Jev duda en el router (como COMPANION_JOINS): sin él, en esos
     # turnos "¿se suma alguien nuevo?" lo decidía la lista de palabras.
     ADDS_PERSON,

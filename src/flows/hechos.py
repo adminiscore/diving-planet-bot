@@ -232,6 +232,8 @@ def hechos(state: ConversationState, intenciones: list[str], actividades: list[s
             bloque["edad"] = {"minima": registro.min_age, "maxima": registro.max_age}
         if "descuento" in pedidas:
             bloque["descuento"] = _descuentos(state, lang, _descuento_de_grupo(state, registro, lang))
+            if getattr(state, "_un_descuento", False):
+                bloque["solo_el_preguntado"] = True  # CALN3-Q05: la lista va, pero no se exige ni se pega
         if "tiempo" in pedidas:
             bloque.update(_tiempo(lang))
         bloque.update(_clima_y_pago(state, pedidas, lang))
@@ -430,6 +432,8 @@ def hechos_sin_actividad(state: ConversationState, intenciones: list[str]) -> li
             bloque["requisitos"] = [p for p in bloque["requisitos"] if p]
     if "descuento" in pedidas:
         bloque["descuento"] = _descuentos(state, lang)
+        if getattr(state, "_un_descuento", False):
+            bloque["solo_el_preguntado"] = True
     bloque.update(_clima_y_pago(state, pedidas, lang))
     bloque.update(_temas_de_lat8(pedidas, lang))
     return _lo_que_faltaba(state, [bloque], pedidas, lang)
@@ -612,12 +616,22 @@ def _url_sin_parametros(url: str) -> str:
     return url.split("?")[0].split("#")[0].rstrip(".,)")
 
 
-def _elemento_dado(elemento: str, raices: set[str], answer: str) -> bool:
+def _elemento_dado(elemento: str, raices: set[str], answer: str, comunes: frozenset[str] | set[str] = frozenset()
+                   ) -> bool:
     frase = _primera_frase(elemento)
     if any(_url_sin_parametros(u) not in answer for u in _URL.findall(frase)):
         return False
-    propias = _raices(frase)
+    propias = _raices(frase) - comunes or _raices(frase)
     return not propias or len(propias & raices) / len(propias) >= _MINIMO_DE_PALABRAS
+
+
+def _palabras_comunes(elementos: list[str]) -> set[str]:
+    """Las raíces que salen en la primera frase de más de un elemento de la lista."""
+    vistas: dict[str, int] = {}
+    for elemento in elementos:
+        for r in _raices(_primera_frase(elemento)):
+            vistas[r] = vistas.get(r, 0) + 1
+    return {r for r, n in vistas.items() if n > 1}
 
 
 def faltan(answer: str, bloques: list[dict], intenciones: list[str]) -> list[str]:
@@ -637,10 +651,16 @@ def faltan(answer: str, bloques: list[dict], intenciones: list[str]) -> list[str
         for intencion in ("incluye", "requisitos", "descuento", "en_que_consiste"):
             if (intencion if intencion != "en_que_consiste" else "incluye") not in intenciones:
                 continue
+            if intencion == "descuento" and b.get("solo_el_preguntado"):
+                continue  # CALN3-Q05: pregunta por uno; el escritor contesta ese y los demás no se pegan
             listas = b.get(intencion) or {}
-            for elemento in dict.fromkeys(e for lista in (listas.values() if isinstance(listas, dict) else [listas])
-                                          for e in lista):
-                if not _elemento_dado(elemento, raices, answer):
+            elementos = list(dict.fromkeys(e for lista in (listas.values() if isinstance(listas, dict) else [listas])
+                                           for e in lista))
+            # rot-029: en los descuentos, «¿ya lo dijo?» con las palabras PROPIAS de cada uno; las que comparten todos
+            # («descuento», «buceo», «curso») daban por dicho el del equipo propio que el escritor se dejaba.
+            comunes = _palabras_comunes(elementos) if intencion == "descuento" else set()
+            for elemento in elementos:
+                if not _elemento_dado(elemento, raices, answer, comunes):
                     perdidos.append(elemento)
         # CALN-6 paso 2f (27-oct): la recogida va en los hechos, pero no se exige (si no la decía el escritor, arq-7b la
         # pegaba siempre: repetida o sin venir a cuento; mini-ronda con el juez: 5 → 4 fallos en 14 diálogos).
