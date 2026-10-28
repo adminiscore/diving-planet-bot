@@ -30,6 +30,7 @@ from src.agents.conversational_core import (
     _apply_group_total,
     _companion_activity_options,
     _course_level_options,
+    _elige_quien_falta,
     _has_pending_answer,
     _is_greeting_only,
     _is_rag_fallback,
@@ -38,7 +39,6 @@ from src.agents.conversational_core import (
     _mentioned_courses,
     _mentioned_product_activities,
     _merge_companion_activity,
-    _merge_pending_undecided,
     _recall_answer,
     _set_concrete_activity,
     _take_undecided_members,
@@ -436,8 +436,7 @@ def _apply_short_answer(state: ConversationState, message: str, ia: dict | None 
             if len(candidates) == 1:
                 chosen = next(iter(candidates))
         if chosen is not None:
-            state.pending_companion_activity = chosen
-            state.needs_companion_activity = False
+            _elige_quien_falta(state, chosen)
             return True
         # Primer paso (aún sin duración): "un día"/"varios días", botón o 1/2. Con el
         # dato se vuelve a preguntar, ahora con las recomendaciones.
@@ -760,11 +759,9 @@ async def _routing_phase(
     # 2026-07-23): una vez se sabe QUÉ quiere hacer el acompañante ("mi
     # amigo no está certificado" -> se preguntó y respondió "snorkel"),
     # sigue faltando CUÁNTOS son — se encadena la pregunta de cantidad ya
-    # mismo, mismo patrón que la cola de sub-grupos.
-    if (
-        resolved_short and prev_pending == SLOT_COMPANION_ACTIVITY and state.pending_companion_activity
-        and not _merge_pending_undecided(state)
-    ):
+    # mismo. Si se sabía cuántos son, la elección ya los metió en el reparto (`_elige_quien_falta`) y no queda nada
+    # pendiente.
+    if resolved_short and prev_pending == SLOT_COMPANION_ACTIVITY and state.pending_companion_activity:
         response = greeting + ask_slot(state, SLOT_COMPANION_QTY)
         state.history.append({"role": "assistant", "content": response})
         return response

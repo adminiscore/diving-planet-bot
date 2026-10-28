@@ -27,7 +27,6 @@ from src.agents.conversational_core import (
     _has_pending_answer,
     _is_rag_fallback,
     _known_field_values,
-    _merge_pending_undecided,
     _rag_answer,
     _same_for_customer,
     _sin_la_pregunta_final,
@@ -439,9 +438,7 @@ async def _slotfill_close_phase(
     # que estar la última barrera antes de preguntar por un acompañante que
     # ya no existe (el reparto ya cubre a todo el grupo).
     if _group_allocation_fully_resolved(state):
-        state.needs_companion_activity = False
-        state.pending_companion_activity = None
-        state.pending_undecided_qty = None
+        state.personas = grupo.solo_el_reparto(state.personas)
 
     # RESOLVER + RESPONDER.
     #
@@ -456,7 +453,6 @@ async def _slotfill_close_phase(
     # huérfana — el estado seguía "pensando" que faltaba responderla pero
     # nada volvía a preguntarla nunca. Se prioriza sobre next_missing_slot
     # igual que el resto de comprobaciones de este bloque multi-ítem.
-    _merge_pending_undecided(state)
     _prune_applied_corrections(state)
     if state.pending_companion_activity:
         response = ask_slot(state, SLOT_COMPANION_QTY, reasking=True)

@@ -56,7 +56,9 @@ def test_b_contesta_la_pregunta_de_quien_no_ha_elegido():
     it = DetectedIntent()
     core_extractor._poner_actividad(it, st, {"activity": "minicourse"}, "I told you, she wants the mini course")
     assert it.activity is None  # la principal no cambia
-    assert st.pending_companion_activity == "minicourse" and st.needs_companion_activity is False
+    # CALN-8 (2b): con su cantidad sabida, la elección entra ya en el reparto
+    assert st.detected_group_allocation == {"certified_diving": 1, "minicourse": 1} and st.detected_group_size == 2
+    assert not st.pending_undecided_qty and not st.needs_companion_activity
 
 
 def test_b_sin_la_pregunta_pendiente_cambia_la_principal_como_siempre():
@@ -92,7 +94,9 @@ def _pareja_con_ella_sin_elegir(**campos) -> ConversationState:
 def test_b2_la_respuesta_a_un_dia_o_varios_lee_la_opcion_por_su_nombre(mensaje, eleccion):
     st = _pareja_con_ella_sin_elegir()
     core_routing._apply_short_answer(st, mensaje, ia={"jev": None, "extractor": {"actividad_preguntada": "minicourse"}})
-    assert st.pending_companion_activity == eleccion
+    # CALN-8 (2b): con su cantidad sabida (1), la elección entra ya en el reparto
+    assert st.detected_group_allocation == ({"certified_diving": 1, eleccion: 1} if eleccion else {"certified_diving": 1})
+    assert bool(st.pending_undecided_qty) is (eleccion is None)
 
 
 def test_b2_si_la_ia_lee_el_reparto_manda_el_reparto():

@@ -18,6 +18,7 @@ from src.agents.conversational_core import (
     SLOT_COMPANION_ACTIVITY,
     SLOT_COMPANION_QTY,
     _companion_activity_options,
+    _elige_quien_falta,
     _has_pending_answer,
     _jev_dice_que_no_lo_dice,
     _known_field_values,
@@ -734,8 +735,7 @@ def _poner_actividad(intent, state: ConversationState, datos: dict, message: str
         # que el botón de esa pregunta: queda para fusionarse con los que no habían elegido. Si la respuesta corta ya la
         # repartió en este turno (no queda nadie sin elegir y está en el reparto), no se cuenta otra vez.
         if state.pending_undecided_qty and not state.pending_companion_activity:
-            state.pending_companion_activity = actividad
-            state.needs_companion_activity = False
+            _elige_quien_falta(state, actividad)
         logger.info(f"[EXTRACT][CALN2] {actividad!r} contesta qué hará quien no había elegido; la principal sigue")
         return
     if actividad and dom.by_id(actividad) is not None:

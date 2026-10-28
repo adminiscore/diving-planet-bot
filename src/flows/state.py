@@ -179,13 +179,6 @@ class ConversationState:
     # (extractor, con cita). Mientras no elige, la pregunta de la actividad le ofrece esa en vez del menú.
     actividad_preguntada: str | None = None
 
-    # Actividad de un acompañante cuya cantidad falta por preguntar (plural sin
-    # número, p. ej. "mis amigos" — nunca se debe adivinar cuántos son): la
-    # ponen la respuesta a «¿qué hará?» y el extractor. Se consume en cuanto la
-    # respuesta llega (core_pending_slot == SLOT_COMPANION_QTY) y se fusiona con
-    # `_merge_companion_activity`.
-    pending_companion_activity: str | None = None
-
     # Actividad de otra persona que no se sabe si ya estaba contada en el total
     # ("él quiere hacer snorkel" con 2 ya repartidos): {"activity", "qty"}. Se
     # pregunta el total antes de sumar o mover a nadie (tarea 7a, 2026-09-15).
@@ -260,9 +253,9 @@ def _poner_sin_elegir(self: ConversationState, cuantos: int | None) -> None:
 
 
 def _hay_que_preguntar(self: ConversationState) -> bool:
-    from src.flows.grupo import falta_que_elijan
+    from src.flows.grupo import sin_elegir
 
-    return falta_que_elijan(self.personas, bool(self.pending_companion_activity))
+    return bool(sin_elegir(self.personas))
 
 
 def _poner_pregunta(self: ConversationState, preguntar: bool) -> None:
@@ -271,13 +264,28 @@ def _poner_pregunta(self: ConversationState, preguntar: bool) -> None:
     self.personas = con_pregunta(self.personas, bool(preguntar))
 
 
+def _eligiendo(self: ConversationState) -> str | None:
+    from src.flows.grupo import eligiendo
+
+    return eligiendo(self.personas)
+
+
+def _poner_eligiendo(self: ConversationState, actividad: str | None) -> None:
+    from src.flows.grupo import con_eligiendo
+
+    self.personas = con_eligiendo(self.personas, actividad)
+
+
 # CALN-2 paso 1 (27-oct): el reparto de siempre ({actividad: cuántos}) se guarda en la lista de personas y se lee de
 # ella: quien lo lee o lo escribe no nota el cambio. CALN-8 (2a, 28-oct): igual con quien no ha elegido, que vive en la
 # lista (`actividad: None`) y el reparto deja fuera:
 # - `pending_undecided_qty`: cuántos no han elegido («somos 3, uno no está certificado»: el bot les recomienda opciones
 #   y, al elegir, se juntan sin volver a preguntar cuántos son);
 # - `needs_companion_activity`: hay que preguntar qué hará alguien (SLOT_COMPANION_ACTIVITY, en `next_missing_slot`),
-#   también de quien viene sin saber cuántos son («vienen unos amigos, no sé qué querrán hacer»).
+#   también de quien viene sin saber cuántos son («vienen unos amigos, no sé qué querrán hacer»);
+# - `pending_companion_activity` (2b): lo que ya eligió quien viene sin saberse cuántos son; se pregunta cuántos
+#   (SLOT_COMPANION_QTY) y con la respuesta entra en el reparto (`_merge_companion_activity`). Nunca se adivina.
 ConversationState.detected_group_allocation = property(_reparto, _poner_reparto)
 ConversationState.pending_undecided_qty = property(_sin_elegir, _poner_sin_elegir)
 ConversationState.needs_companion_activity = property(_hay_que_preguntar, _poner_pregunta)
+ConversationState.pending_companion_activity = property(_eligiendo, _poner_eligiendo)

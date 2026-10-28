@@ -1329,20 +1329,20 @@ def _take_undecided_members(intent, state: ConversationState) -> None:
         if "group_size" not in intent.detected_fields:
             intent.detected_fields.append("group_size")
     intent.group_allocation = allocation or None
-    state.pending_undecided_qty = qty
-    state.needs_companion_activity = True
+    state.pending_undecided_qty = qty  # CALN-8 (2a): con ellos en la lista, se pregunta qué harán
 
 
-def _merge_pending_undecided(state: ConversationState) -> bool:
-    """Si ya se eligio actividad para las personas `undecided` del grupo, se
-    fusionan con su cantidad conocida (sin preguntar "¿cuantos serian?")."""
-    qty, activity = state.pending_undecided_qty, state.pending_companion_activity
-    if not (qty and activity):
-        return False
-    state.pending_undecided_qty = None  # antes de fusionar: el total ya no los cuenta aparte
-    _merge_companion_activity(state, activity, qty)
-    state.pending_companion_activity = None
-    return True
+def _elige_quien_falta(state: ConversationState, activity: str) -> None:
+    """El cliente elige qué hará quien no había elegido (el botón o el nombre de la opción, el resolutor o el
+    extractor). CALN-8 (2b): si se sabe cuántos son, entran ya en el reparto con su cantidad, sin preguntar «¿cuántos
+    serían?» (antes quedaba la elección aparte y `_merge_pending_undecided` la juntaba más tarde en el turno); si no,
+    queda elegida a falta de cuántos (`pending_companion_activity`)."""
+    cuantos = state.pending_undecided_qty
+    if cuantos:
+        state.pending_undecided_qty = None  # antes de juntar: el total ya no los cuenta aparte
+        _merge_companion_activity(state, activity, cuantos)
+    else:
+        state.pending_companion_activity = activity
 
 
 def _merge_companion_activity(state: ConversationState, activity: str, qty: int) -> None:

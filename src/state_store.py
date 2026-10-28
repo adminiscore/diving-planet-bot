@@ -130,6 +130,11 @@ def deserialize_state(raw: str, conversation_id: str = "") -> ConversationState:
 
         personas = con_sin_elegir(data.get("personas") or [], data.pop("pending_undecided_qty", None) or 0)
         data["personas"] = con_pregunta(personas, True) if data.pop("needs_companion_activity", False) else personas
+    if "pending_companion_activity" in data:
+        # CALN-8 (2b): lo elegido a falta de cuántos son, también en la lista.
+        from src.flows.grupo import con_eligiendo
+
+        data["personas"] = con_eligiendo(data.get("personas") or [], data.pop("pending_companion_activity"))
     data = _drop_unknown_fields(
         data, _CONVERSATION_STATE_FIELDS, cls_name="ConversationState", conversation_id=conversation_id,
     )

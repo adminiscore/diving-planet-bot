@@ -9,6 +9,8 @@ CALN-8 (2a, 28-oct; diseño `docs/robustness/caln/diseno-caln8-2-personas.md`): 
 lista (`actividad: None`; `cantidad: None` si no se sabe cuántos son, «vienen unos amigos»). `pending_undecided_qty` y
 `needs_companion_activity` se calculan de ella (abajo, las funciones; en el estado, las propiedades) y el reparto los
 deja fuera, como antes los dejaba `sin_decidir_aparte`, que ya no hace falta.
+CALN-8 (2b): y quien ya eligió sin saberse cuántos son (`{"actividad": "snorkel", "cantidad": None}`, «¿cuántos serían
+para snorkel?»): `pending_companion_activity`.
 """
 from __future__ import annotations
 
@@ -26,13 +28,18 @@ def sin_elegir(personas: list[dict]) -> list[dict]:
     return [e for e in personas if not e.get("actividad")]
 
 
+def en_el_reparto(entrada: dict) -> bool:
+    """¿Cuenta en el reparto? Quien ya eligió y se sabe cuántos son."""
+    return bool(entrada.get("actividad")) and isinstance(entrada.get("cantidad"), int)
+
+
 def con_reparto(personas: list[dict], reparto: dict | None) -> list[dict]:
-    """La lista con un reparto nuevo de los que ya eligieron. Quien no ha elegido se queda, y los «undecided» del
-    reparto se le suman: nunca se quedan dentro del reparto, donde el grupo contaría como completo y nadie les
-    preguntaría (banco g24)."""
+    """La lista con un reparto nuevo de los que ya eligieron. Lo que está fuera del reparto se queda (quien no ha elegido
+    y quien eligió sin saberse cuántos son), y los «undecided» del reparto se suman a quien no ha elegido: nunca se
+    quedan dentro del reparto, donde el grupo contaría como completo y nadie les preguntaría (banco g24)."""
     entradas = entradas_de_reparto(reparto)
     nuevos = sum(e["cantidad"] for e in entradas if not e["actividad"] and isinstance(e["cantidad"], int))
-    resto = sin_elegir(personas)
+    resto = [e for e in personas if not en_el_reparto(e)]
     if nuevos:
         resto = con_sin_elegir(resto, sin_elegir_contados(resto) + nuevos)
     return [e for e in entradas if e["actividad"]] + resto
@@ -49,20 +56,36 @@ def con_sin_elegir(personas: list[dict], cuantos: int) -> list[dict]:
     return otras + ([{"actividad": None, "cantidad": cuantos}] if cuantos else [])
 
 
-def falta_que_elijan(personas: list[dict], eligiendo: bool) -> bool:
-    """¿Hay que preguntar qué hará alguien? Sí si hay quien no ha elegido, salvo que ya lo haya elegido el cliente y solo
-    falte juntarlo con ellos (`pending_companion_activity`, `eligiendo`); sin saber cuántos son, siempre."""
-    quienes = sin_elegir(personas)
-    return any(e.get("cantidad") is None for e in quienes) or (bool(quienes) and not eligiendo)
-
-
 def con_pregunta(personas: list[dict], preguntar: bool) -> list[dict]:
-    """La lista para que haya (o no) que preguntar qué hará alguien: sin nadie sin elegir, preguntar es que viene alguien
-    sin saber cuántos ni qué hará; no preguntar quita a esos, y los de cantidad sabida esperan a juntarse con lo que se
-    elija."""
+    """La lista para que haya (o no) que preguntar qué hará alguien (`needs_companion_activity`, que es «hay quien no ha
+    elegido»): sin nadie sin elegir, preguntar es que viene alguien sin saber cuántos ni qué hará; no preguntar quita a
+    esos (los de cantidad sabida los quita `pending_undecided_qty`)."""
     if preguntar:
         return personas if sin_elegir(personas) else [*personas, {"actividad": None, "cantidad": None}]
     return [e for e in personas if e.get("actividad") or e.get("cantidad") is not None]
+
+
+def solo_el_reparto(personas: list[dict]) -> list[dict]:
+    """La lista sin esperas (quien no ha elegido, lo elegido a falta de cuántos): para cuando el reparto ya cubre a
+    todo el grupo y no puede quedar nadie por preguntar (el «circuit-breaker» de 2026-09-01)."""
+    return [e for e in personas if en_el_reparto(e)]
+
+
+def eligiendo(personas: list[dict]) -> str | None:
+    """Lo que ya eligió quien viene sin saberse cuántos son («¿cuántos serían para snorkel?»)."""
+    return next((e["actividad"] for e in personas if e.get("actividad") and e.get("cantidad") is None), None)
+
+
+def con_eligiendo(personas: list[dict], actividad: str | None) -> list[dict]:
+    """La lista con (o sin) una elección a falta de cuántos son: la toma quien venía sin saberse cuántos ni qué haría
+    (g26) o, si no hay nadie así, queda sola hasta que se diga cuántos."""
+    resto = [e for e in personas if not (e.get("actividad") and e.get("cantidad") is None)]
+    if not actividad:
+        return resto
+    if any(e.get("cantidad") is None for e in sin_elegir(resto)):
+        return [{**e, "actividad": actividad} if not e.get("actividad") and e.get("cantidad") is None else e
+                for e in resto]
+    return [*resto, {"actividad": actividad, "cantidad": None}]
 
 
 def sin_certificar_no_hereda(state) -> bool:
@@ -109,9 +132,10 @@ def completado(reparto: dict | None, nuevo: dict, total) -> dict | None:
 
 
 def reparto_de(personas: list[dict]) -> dict | None:
-    """Los que ya eligieron como el reparto de siempre; None sin nadie (el valor por defecto de antes)."""
+    """Los que ya eligieron (y se sabe cuántos son) como el reparto de siempre; None sin nadie (el valor por defecto de
+    antes)."""
     reparto: dict = {}
     for entrada in personas:
-        if entrada.get("actividad"):
-            reparto[entrada["actividad"]] = reparto.get(entrada["actividad"], 0) + entrada.get("cantidad", 0)
+        if en_el_reparto(entrada):
+            reparto[entrada["actividad"]] = reparto.get(entrada["actividad"], 0) + entrada["cantidad"]
     return reparto or None

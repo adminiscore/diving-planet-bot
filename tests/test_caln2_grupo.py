@@ -46,9 +46,14 @@ def test_las_esperas_de_quien_no_ha_elegido_salen_de_la_lista():
     assert st.personas == []
     st.pending_undecided_qty = 2
     assert st.needs_companion_activity and st.personas == [{"actividad": None, "cantidad": 2}]
-    st.pending_companion_activity = "snorkel"  # ya eligió: falta juntarlos, no preguntar
-    assert not st.needs_companion_activity and st.pending_undecided_qty == 2
     st.pending_undecided_qty = None
+    assert st.personas == []
+    # CALN-8 (2b): elegir sin saberse cuántos son (g26) es poner la actividad en esa entrada; falta cuántos
+    st.needs_companion_activity = True
+    st.pending_companion_activity = "snorkel"
+    assert st.personas == [{"actividad": "snorkel", "cantidad": None}] and not st.needs_companion_activity
+    assert st.detected_group_allocation is None
+    st.pending_companion_activity = None
     assert st.personas == []
 
 
@@ -153,9 +158,9 @@ def test_quien_se_suma_sin_elegir_queda_pendiente_y_al_elegir_no_se_cuenta_dos_v
     core._merge_companion_activity(st, "undecided", 1)
     assert st.detected_group_allocation == {"certified_diving": 1}
     assert st.pending_undecided_qty == 1 and st.needs_companion_activity and st.detected_group_size == 2
-    st.pending_companion_activity = "snorkel"
-    assert core._merge_pending_undecided(st)
+    core._elige_quien_falta(st, "snorkel")  # CALN-8 (2b): con su cantidad sabida, entra ya en el reparto
     assert st.detected_group_allocation == {"certified_diving": 1, "snorkel": 1} and st.detected_group_size == 2
+    assert not st.pending_undecided_qty and not st.pending_companion_activity and not st.needs_companion_activity
 
 
 def test_otro_que_se_suma_no_quita_del_total_a_quien_no_ha_elegido():
@@ -283,3 +288,14 @@ def test_una_correccion_que_solo_completa_a_quien_faltaba_completa(monkeypatch, 
         assert intent.group_allocation == queda
     else:
         assert intent.group_allocation != {"minicourse": 1, "snorkel": 1}
+
+
+def test_una_conversacion_guardada_antes_trae_lo_elegido_a_falta_de_cuantos():
+    """CALN-8 (2b): `pending_companion_activity` de las conversaciones guardadas antes pasa a la lista."""
+    st = ConversationState(conversation_id="caln2")
+    st.detected_group_allocation = {"certified_diving": 1}
+    datos = json.loads(serialize_state(st))
+    datos["pending_companion_activity"] = "snorkel"
+    cargado = deserialize_state(json.dumps(datos), "caln2")
+    assert cargado.pending_companion_activity == "snorkel"
+    assert cargado.detected_group_allocation == {"certified_diving": 1}
