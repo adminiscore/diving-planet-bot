@@ -120,4 +120,4 @@ def test_paso3_el_paquete_que_nombra_el_cliente_va_en_la_pieza():
     assert foto.detected_service_id == "5_dives_2_days"
     pieza = cotizar.pieza_de_precios(hechos.hechos(foto, ["precio"], ["certified_diving"]), "es")
     assert pieza.splitlines()[1].startswith("• Paquete de 5 inmersiones") and len(pieza.splitlines()) == 4
-    assert rh._paquete_nombrado("¿Las de 2 o las de 5 inmersiones?", []) is None  # dos planes: no se elige
+    assert rh._paquete_nombrado("¿El de 2 inmersiones o el de 5 inmersiones?", []) is None  # dos planes: no se elige
