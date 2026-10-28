@@ -28,15 +28,19 @@ def _actividad(state: ConversationState, datos: dict) -> str | None:
     """La actividad de la que pregunta ESTE mensaje (extractor) o, si no nombra ninguna, la de la conversación SI es
     una sola. arq-1k (G10 nº 2): hablaban de snorkel para los niños y de buceo para el padre, «¿qué incluye?» y el
     redactor contestaba lo del buceo; con varias en juego no se adivina: contesta el RAG, que ve la conversación."""
-    for actividad in (datos.get("actividad_preguntada"), datos.get("activity")):
+    repaso = any(x is True for x in (datos.get("refresher_interested"), datos.get("last_dive_over_2_years"),
+                                     state.refresher_interested, state.last_dive_over_2_years))
+    for clave in ("actividad_preguntada", "activity"):
+        actividad = datos.get(clave)
         if actividad and dom.by_id(actividad) is not None:
-            return actividad
+            # CALN-7 (28-oct): «¿hay que completar algo antes? Necesitaré un refresher» es el buzo que hace el refresher
+            # (arq-1n); el extractor da el buceo certificado de la conversación y los requisitos salían sin el formulario
+            # médico. Si el cliente PREGUNTA por el buceo certificado, se le contesta de eso (arq-1n).
+            return "refresher" if repaso and clave == "activity" and actividad == "certified_diving" else actividad
     elegida = dom.activity_for_service(state.selected_service) if state.selected_service else None
     reparto = state.detected_group_allocation or {}
     en_juego = {a for a in (state.actividad_preguntada, state.detected_activity, elegida.id if elegida else None,
                             *(a for a, n in reparto.items() if n)) if a and dom.by_id(a) is not None}
-    repaso = any(x is True for x in (datos.get("refresher_interested"), datos.get("last_dive_over_2_years"),
-                                     state.refresher_interested, state.last_dive_over_2_years))
     if repaso and en_juego <= {"certified_diving", "minicourse", "refresher"}:
         # arq-1n (G10 nº 2): el certificado con más de 2 años sin bucear hace primero el refresher (se reserva como el
         # minicurso); sin esto, «¿qué incluye?» desde Ubuntu salía con el almuerzo del buceo desde Cartagena.

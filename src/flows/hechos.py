@@ -207,6 +207,11 @@ def hechos(state: ConversationState, intenciones: list[str], actividades: list[s
             sid = _plan_base(actividad, origen or "cartagena", elegido)
             if sid:
                 requisitos += _lista(sid, "requirements", lang)
+                # CALN-7 (28-oct): la preparación de la ficha («Para completar la teoría necesitas al menos 4 horas…»),
+                # solo cuando se preguntan los requisitos de ESTE servicio (en el catálogo de todos los turnos se
+                # descartó el 17-oct: competía con lo que hacía falta en cada uno).
+                s = RAW_SERVICES.get(sid) or {}
+                requisitos.append(s.get(f"preparation_{lang}") or s.get("preparation_es") or "")
             # lat-deuda-u: los que son políticas (formulario médico, refresh, seguro, vuelo), los de ESTA actividad y no
             # los del plan con el que se vende (el refresher, con la ficha del minicurso).
             requisitos += requisitos_de_politica(actividad, lang)
@@ -389,7 +394,10 @@ def hechos_sin_actividad(state: ConversationState, intenciones: list[str]) -> li
     if "tiempo" in pedidas:
         bloque.update(_tiempo(lang))
     if "requisitos" in pedidas:
+        # CALN-7 (28-oct): también el formulario médico, que dice a qué aplica (cursos y minicursos; el refresher):
+        # «vengo con mi hermana en silla de ruedas, ¿qué requisitos hay?» salía con el seguro y qué llevar, sin él.
         bloque["requisitos"] = [p for p in (_politica("insurance_form_requirement", lang),
+                                            _politica("medical_restrictions", lang),
                                             _politica("what_to_bring", lang)) if p]
         if getattr(state, "is_certified", None) is True:
             # arq-1s: «soy buzo certificado, ¿qué requisitos hay?» sin actividad dicha: el carné también.

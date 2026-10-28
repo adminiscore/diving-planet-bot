@@ -1,0 +1,61 @@
+{
+ "about": "CALN-7 (28-oct): casos de la clase «el escritor no dice lo que la política exige» (fallos que se repiten ronda tras ronda), del golden VISIBLE y de la rotativa 2026-10-26-13 (nunca del oculto), hasta el turno que falla. Se puntúa con scripts/puntua_banco_edades.py sobre el último turno («debe»: alguno de los fragmentos, minúsculas y sin tildes). c7-ok-*: controles que ya lo decían.",
+ "dialogos": [
+  {
+   "id": "c7-refresher-formulario",
+   "tarea": "CALN-7: requisitos del refresher",
+   "turnos": [
+    "Hello , im getting in tmrw",
+    "Anything needs to be completed beforehand? I’m gonna need a little refresher."
+   ],
+   "debe": [
+    "jotform|formulario medico|medical form"
+   ]
+  },
+  {
+   "id": "c7-adaptado-formulario",
+   "tarea": "CALN-7: requisitos sin actividad",
+   "turnos": [
+    "Hola, soy Luis — vengo con mi hermana que usa silla de ruedas y queremos saber si pueden ayudarnos con buceo adaptado. ¿Qué requisitos y apoyo brindan? ¿Nos recogen en el hotel?"
+   ],
+   "debe": [
+    "jotform|formulario medico|medical form"
+   ]
+  },
+  {
+   "id": "c7-especialidad-teoria",
+   "tarea": "CALN-7: la preparación de la ficha",
+   "turnos": [
+    "Hola, estoy en Isla Grande alojado en el hotel base. Quiero hacer la Especialidad de Identificación de Peces el 28 de noviembre, hay disponibilidad para esa fecha?",
+    "Soy buzo certificado, viajo solo — precio por persona y me pasas el link para reservar?",
+    "Ya hice parte del e‑learning en casa, ¿necesito completarlo antes del día? ¿a qué hora me recogen en el hotel?"
+   ],
+   "debe": [
+    "4 horas|4 hours|cuatro horas"
+   ]
+  },
+  {
+   "id": "c7-ok-formulario-minicurso",
+   "tarea": "control",
+   "turnos": [
+    "Buenas tardes, quisiera información formal sobre el Minicurso de Buceo. Estoy ya alojado en un hotel de la zona (no en sus bases) y quisiera saber el precio, la hora de recogida y qué incluye exactamente.",
+    "Soy colombiano y viajo mañana, me voy al mediodía así que el tiempo es muy justo — ¿es posible hacerlo si me voy mañana al mediodía?",
+    "¿Necesito completar algún formulario médico? ¿Me pueden enviar el enlace si aplica?"
+   ],
+   "debe": [
+    "jotform|formulario medico"
+   ]
+  },
+  {
+   "id": "c7-ok-pago-colombiano",
+   "tarea": "control",
+   "turnos": [
+    "Hola, reservé el Minicurso de Buceo para mañana desde Cartagena. ¿A qué hora debo presentarme y dónde exactamente?",
+    "¿Qué debo llevar? ¿El equipo está incluido? Soy colombiano y quisiera pagar un anticipo: ¿puedo dar solo el 50% ahora y el resto el día de la actividad?"
+   ],
+   "debe": [
+    "anticipo|50"
+   ]
+  }
+ ]
+}
