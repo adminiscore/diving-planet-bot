@@ -1,0 +1,24 @@
+{
+  "about": "CALN-3c (c), 28-oct: la moneda según nacionalidad o residencia. Frases nuestras (no salen del golden ni del oculto). Nacer en Colombia no basta (Gadea, 21-oct): se condiciona a la nacionalidad o a la cédula de extranjería; «tengo (la) extranjería» es tener la cédula (COP). Controles: colombiano que vive fuera (COP) y turistas (USD). Puntuar con scripts/puntua_banco_edades.py.",
+  "dialogos": [
+    {"id": "m1-nacio-vive-fuera", "tarea": "nació en Colombia y vive fuera: no se da por colombiano; condiciona a la nacionalidad o la cédula",
+     "turnos": ["Hola! Nací en Colombia pero vivo en Madrid desde pequeña. ¿Cuánto cuesta el snorkel desde Cartagena? ¿Pago en pesos?"],
+     "debe": ["nacionalidad|cedula|pasaporte"]},
+    {"id": "m2-nacio-en", "tarea": "born in Colombia, American: conditions on nationality",
+     "turnos": ["Hi! I was born in Bogotá but I'm American and I live in Texas. Do I pay the mini course in pesos?"],
+     "debe": ["nationality|national|cedula|passport"]},
+    {"id": "m3-colombiano-fuera", "tarea": "control: colombiano que vive fuera paga en COP",
+     "turnos": ["Soy colombiano pero vivo en Miami hace años. ¿El minicurso desde Cartagena lo pago en pesos?"],
+     "debe": ["COP|pesos"]},
+    {"id": "m4-extranjeria-de-entrada", "tarea": "«tengo la extranjería» = cédula de extranjería: COP",
+     "turnos": ["Buenas, soy argentino y tengo la extranjería. ¿Cuánto vale el snorkel desde Cartagena?"],
+     "estado": {"is_colombian": true}, "debe": ["COP|pesos"]},
+    {"id": "m5-extrangeria-tras-hablar", "tarea": "«tengo extrangeria» (mal escrito) tras varios turnos: COP",
+     "turnos": ["Hola, soy buzo certificado", "¿Qué salidas tienen el sábado?", "Por cierto, tengo extrangeria",
+                "¿Y cuánto sale la de 2 inmersiones desde Cartagena?"],
+     "estado": {"is_colombian": true}, "debe": ["COP|pesos"]},
+    {"id": "m6-turistas", "tarea": "control: turistas pagan en USD",
+     "turnos": ["Somos turistas alemanes, ¿cuánto cuesta el minicurso desde Cartagena?"],
+     "estado": {"is_colombian": false}, "debe": ["USD|dolares"]}
+  ]
+}
