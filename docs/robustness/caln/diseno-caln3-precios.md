@@ -116,3 +116,15 @@ El paso 1 no cambia nada visible y ya dice cuánto se equivoca hoy el escritor f
   t1), p16 0 → 2/2, p18 1 → 2/2. banco-precios-q 8/10 igual. Mediana 4,06 → 3,80 s, p95 7,05 → 5,10 s.
 - Quedan: p07/p08 (el reparto de la pareja o la familia no se lee en t1: CALN-2), p09 (la corrección a Isla Grande
   queda por confirmar y no se cotiza), Q05 (qué descuento se pregunta) y Q09 (varios días sin dormir en las islas).
+
+## 8. CALN-3b, el origen (28-oct)
+
+- 58a9298: Barú leído como hotel («staying at Isla Barú»: hotel sin origen, 3/3 en dp-pre-bot) sale de Cartagena.
+- faca1db (decisión de Gadea #2286): si el extractor calla el lugar y Jev se inclina por uno, se confirma una vez
+  («Entonces, ¿saldrías desde Cartagena?»), con los dos precios hasta que conteste. Sin lugar en el mensaje, Jev dice
+  none con 0,95 o más (sonda de 12 mensajes ×4): 0 confirmaciones en 21 diálogos sin lugar.
+- Banco ×2 (A = caln-gadea 5ab8854): banco-precios 25 → 31/36; p18, o01 («en Isla Barú, en un hotel de playa») y o03
+  («visitando Cartagena») pasan de la pregunta abierta a confirmar o a saber el origen.
+- **Causa** (el b5 largo, extractor ×5 por variante): «…vamos con los niños, de 7 y 4 años. Estamos alojados en
+  Cartagena…» da location 4/10; con el lugar delante 5/5, sin la frase de los niños 5/5. El extractor pierde el último
+  dato cuando el mensaje carga el reparto con edades. La confirmación es la red, no el arreglo de la lectura.
