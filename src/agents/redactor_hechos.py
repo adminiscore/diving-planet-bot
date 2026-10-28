@@ -70,6 +70,10 @@ def _de_quien_no_ha_elegido(foto: ConversationState, datos: dict) -> list[str]:
     from src.agents.conversational_core import _companion_activity_options  # lazy
 
     opciones = [o for o in _companion_activity_options(foto) if o != "companion"]
+    if foto.sin_decidir_certificados is True:
+        # 5.ª ronda (precio-desde-islas-vs-cartagena t5): «somos una pareja Advanced» con uno sin elegir llevaba también el
+        # minicurso; si el lector dice que quienes faltan están certificados, su opción es el buceo.
+        return ["certified_diving"]
     certificado = foto.is_certified is True or datos.get("is_certified") is True
     if certificado and not any((r := dom.by_id(a)) is not None and r.requires_certification for a in reparto):
         # CALN-3c (p08): «I'm a certified diver and my son wants to snorkel»: quien no ha elegido es quien escribe, buzo;
@@ -377,7 +381,12 @@ async def _con_el_escritor(state: ConversationState, message: str, history: list
     if origen_pendiente:
         entradas.pop("pregunta_final", None)  # la pregunta del origen la pone el código, abajo
     entradas.update(hechos=texto_de_los_hechos(bloques), hechos_bloques=(bloques, intenciones), sin_busqueda=True)
-    pieza = cotizar.pieza_de_precios(bloques, lang) if "precio" in intenciones else None
+    # 5.ª ronda (paquete-5-buceos-precio-fecha-y-equipaje t6-t9): con una pregunta de precio guardada a la espera del
+    # origen, arq-8f añade «precio» a cada turno con alguna intención, y la pieza salía en «¿a qué hora se vuelve?» o
+    # «¿reservo por la web?». Va si el cliente pide precio en ESTE mensaje (Jev) o si ya se sabe el origen (el caso de
+    # arq-8f: el mensaje que da el origen pregunta otra cosa).
+    pide_ahora = getattr(state, "_jev_pide_precio", None) is True or any(b.get("origen") for b in bloques)
+    pieza = cotizar.pieza_de_precios(bloques, lang) if "precio" in intenciones and pide_ahora else None
     if pieza:
         # CALN-3 paso 3 «A»: el escritor no escribe importes; los pone el código debajo y no se le exigen.
         entradas.update(precios_por_codigo=True, hechos_bloques=(bloques, [i for i in intenciones if i != "precio"]))
