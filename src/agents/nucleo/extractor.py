@@ -860,6 +860,17 @@ def lanzar_lector_grupo(state: ConversationState, message: str, lang: str) -> No
     logger.info("[EXTRACT][LECTOR] lanzado con el turno")
 
 
+# CALN-8 (28-oct): la confianza de Jev en que el mensaje mete a otra persona para usar el lector aunque el extractor no
+# diga nada de ella. El mismo umbral que tenía la red de señales para correr con el grupo ya repartido (ex-9b paso 6).
+_JEV_OTRA_PERSONA_MIN = 0.8
+
+
+def _jev_seguro_de_otra_persona(state: ConversationState) -> bool:
+    senales = [p for p in (getattr(state, "_jev_companion", None), getattr(state, "_jev_adds_person", None))
+               if isinstance(p, (int, float))]
+    return bool(senales) and max(senales) >= _JEV_OTRA_PERSONA_MIN
+
+
 async def _con_el_lector_del_grupo(state: ConversationState, message: str, datos: dict | None) -> dict | None:
     """CALN-2 (flag `lector_grupo`, diseño docs/robustness/caln/diseno-caln2-lector-grupo.md): con el grupo por
     completar, los datos del extractor más lo que dejó vacío, de la lectura del grupo (la lanzada con el turno o, si no
@@ -873,7 +884,8 @@ async def _con_el_lector_del_grupo(state: ConversationState, message: str, datos
     if state.pending_undecided_qty:
         reparto_antes[grupo.SIN_DECIDIR] = state.pending_undecided_qty
     hace_falta = (settings.lector_grupo and datos is not None
-                  and lector_grupo.por_completar(datos, state.detected_group_size, reparto_antes or None))
+                  and lector_grupo.por_completar(datos, state.detected_group_size, reparto_antes or None,
+                                                 jev_otros=_jev_seguro_de_otra_persona(state)))
     if not hace_falta:
         if tarea is not None:
             tarea.cancel()

@@ -138,7 +138,7 @@ async def detect_special_signals(
         # cambia el contrato ({} en cualquier fallo) — mismo patrón que
         # `fill_gaps`/`compose_acknowledgement`; cambiarlo es un rediseño de
         # resiliencia más amplio, no específico de acompañantes.
-        logger.error(f"[LLM_EXTRACTOR][DEGRADED] signals API/network error (companion info may be lost silently this turn): {exc}")
+        logger.error(f"[LLM_EXTRACTOR][DEGRADED] signals API/network error (a recall request may go unanswered): {exc}")
         return {}
     except Exception as exc:  # noqa: BLE001
         logger.warning(f"[LLM_EXTRACTOR][DEGRADED] signals error: {exc}")

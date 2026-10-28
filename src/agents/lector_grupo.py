@@ -116,17 +116,20 @@ def _suma(reparto: dict | None) -> int:
     return sum(n for n in (reparto or {}).values() if isinstance(n, int) and not isinstance(n, bool))
 
 
-def por_completar(datos: dict, total_antes: int | None = None, reparto_antes: dict | None = None) -> bool:
+def por_completar(datos: dict, total_antes: int | None = None, reparto_antes: dict | None = None,
+                  jev_otros: bool = False) -> bool:
     """¿Hace falta el lector en este turno? (disparador T2b del paso 1: 601/640 frente a 477/640 sin él.) Si el mensaje
     habla de otras personas y el grupo no queda completo con lo del extractor y lo sabido, o queda alguien sin elegir
     (su certificación decide la recomendación), o es un grupo de 2 o más sin reparto. Es `salta(..., "T2b")` de
-    `scripts/medir_lector_grupo.py`, el que se midió."""
+    `scripts/medir_lector_grupo.py`, el que se midió, más `jev_otros` (CALN-8, 28-oct): si Jev está seguro de que el
+    mensaje mete a otra persona aunque el extractor no diga nada de ella («viene también mi amiga, pero no sabe qué
+    quiere hacer»), también: es lo que hacía la red de señales de acompañantes, que se quitó."""
     reparto = datos.get("group_allocation") or reparto_antes
     total = datos.get("group_size") or total_antes
     otros = bool(datos.get("edades") or datos.get("otro_sin_certificar") or datos.get("otro_certificado_inactivo")
                  or (datos.get("group_allocation") and (len(datos["group_allocation"]) > 1
                                                        or {"undecided", "companion"} & set(datos["group_allocation"])))
-                 or (isinstance(datos.get("group_size"), int) and datos["group_size"] > 1))
+                 or (isinstance(datos.get("group_size"), int) and datos["group_size"] > 1) or jev_otros)
     if not otros:
         return False
     if not isinstance(total, int):
@@ -152,7 +155,9 @@ def completar(datos: dict, lectura: dict, total_sabido: int | None = None) -> tu
         return datos, []
     out, cambios = dict(datos), []
     total_lector = total_de(lectura)
-    if not isinstance(out.get("group_size"), int) and not isinstance(total_sabido, int) and total_lector:
+    # Un total de 1 solo porque el mensaje habla de quien escribe no dice que vaya solo: no se pone.
+    if (not isinstance(out.get("group_size"), int) and not isinstance(total_sabido, int) and total_lector
+            and (lectura.get("total_dicho") or total_lector > 1)):
         out["group_size"] = total_lector
         cambios.append(f"group_size={total_lector}")
     total = out.get("group_size") if isinstance(out.get("group_size"), int) else total_sabido

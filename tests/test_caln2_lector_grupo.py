@@ -238,3 +238,17 @@ def test_el_buzo_inactivo_no_pierde_el_buceo_aunque_el_lector_diga_no_certificad
     assert "certified_diving" not in core._companion_activity_options(st)
     st.acompanante_certificado_inactivo = True
     assert "certified_diving" in core._companion_activity_options(st)
+
+
+def test_jev_seguro_de_otra_persona_usa_el_lector_aunque_el_extractor_calle():
+    """CALN-8 (28-oct): lo que hacía la red de señales de acompañantes («viene también mi amiga…» sin nada del
+    extractor) lo hace el lector cuando Jev está seguro de que se suma alguien."""
+    datos = {"activity": "certified_diving", "is_certified": True}
+    assert not lg.por_completar(datos)
+    assert lg.por_completar(datos, jev_otros=True)
+
+
+def test_un_total_de_uno_solo_por_hablar_de_quien_escribe_no_se_pone():
+    lectura = {"total_dicho": None, "personas": [_p(certificado=True, cita="Yo tengo el Open Water")]}
+    nuevos, _ = lg.completar({"activity": "certified_diving"}, lectura)
+    assert "group_size" not in nuevos

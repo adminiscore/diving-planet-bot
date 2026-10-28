@@ -30,27 +30,50 @@ async def _turno(st, mensaje, senales):
 
 
 @pytest.mark.asyncio
-async def test_no_ha_buceado_nunca_no_es_minicurso(extractor_dice):
-    """g02: la red da minicurso a «mi novia que no ha buceado nunca» (su regla vieja); el mensaje no lo nombra."""
+async def test_no_ha_buceado_nunca_no_es_minicurso(extractor_dice, monkeypatch):
+    """g02: «mi novia que no ha buceado nunca» no es minicurso (el mensaje no lo nombra): queda sin decidir. CALN-8
+    (28-oct): con el extractor sin reparto, la cuenta la hace el lector del grupo (antes, la red de señales)."""
     mensaje = "Quiero bucear, soy certificado. Voy con mi novia que no ha buceado nunca"
     extractor_dice({mensaje: {"activity": "certified_diving", "is_certified": True, "otro_sin_certificar": True}})
+    _con_el_lector(monkeypatch, [_persona("cliente", True, "Quiero bucear, soy certificado"),
+                                 _persona("novia", False, "Voy con mi novia que no ha buceado nunca")])
     st = _estado()
-    await _turno(st, mensaje, {"companion_activity": "minicourse", "mentions_other_person": True,
-                               "companion_is_singular": True})
+    await _turno(st, mensaje, {})
     assert "minicourse" not in (st.detected_group_allocation or {})
     assert st.pending_undecided_qty == 1 and st.detected_group_size == 2
 
 
 @pytest.mark.asyncio
-async def test_la_amiga_que_no_sabe_no_es_buzo(extractor_dice):
-    """g28: la red da a la amiga la actividad de quien escribe; el extractor leyó el mensaje y no puso a nadie más."""
+async def test_la_amiga_que_no_sabe_no_es_buzo(extractor_dice, monkeypatch):
+    """g28: la amiga que no sabe qué hacer no hereda la actividad de quien escribe. CALN-8 (28-oct): con el extractor sin
+    reparto, la cuenta la hace el lector del grupo (antes, la red de señales)."""
     mensaje = "Quiero bucear, soy buzo certificado. Viene también mi amiga, pero no sabe qué quiere hacer"
     extractor_dice({mensaje: {"activity": "certified_diving", "is_certified": True}})
+    _con_el_lector(monkeypatch, [_persona("cliente", True, "Quiero bucear, soy buzo certificado"),
+                                 _persona("amiga", None, "Viene también mi amiga, pero no sabe qué quiere hacer")])
+    # El extractor no dice nada de la amiga: el lector se usa porque Jev está seguro de que se suma alguien.
+    monkeypatch.setattr("src.agents.supervisor.detect_routing_signals",
+                        AsyncMock(return_value={"companion_joins": 0.95}))
     st = _estado()
-    await _turno(st, mensaje, {"companion_activity": "certified_diving", "mentions_other_person": True,
-                               "companion_is_singular": True})
+    await _turno(st, mensaje, {})
     assert (st.detected_group_allocation or {}).get("certified_diving", 0) <= 1
     assert st.pending_undecided_qty == 1 and st.detected_group_size == 2
+
+
+def _persona(quien, certificado, cita):
+    return {"quien": quien, "cantidad": 1, "certificado": certificado, "actividad": None, "edades": [], "cita": cita}
+
+
+def _con_el_lector(monkeypatch, personas):
+    """El lector del grupo encendido, con su lectura simulada (validada como la de verdad)."""
+    from src.agents import lector_grupo
+    from src.config import settings
+
+    async def _leer(mensaje, **_kw):
+        return {**lector_grupo.validar({"personas": personas}, mensaje), "segundos": 0.0}
+
+    monkeypatch.setattr(settings, "lector_grupo", True)
+    monkeypatch.setattr(lector_grupo, "leer_grupo", _leer)
 
 
 @pytest.mark.asyncio

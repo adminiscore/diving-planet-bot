@@ -278,26 +278,12 @@ async def test_reparto_jev_seguro_de_que_ya_estaba_contado(encender, extractor_d
     assert st.detected_group_size == 2  # dos lectores en contra: no se suma a nadie aquí
 
 
-@pytest.mark.parametrize("joins, ambiguo, pasa", [
-    (0.97, True, True),     # Jev seguro de que entra alguien: la red corre
-    (0.5, True, False),     # Jev duda: el atajo, como hoy
-    (None, True, False),    # Jev calla: el atajo, como hoy
-    (0.97, False, False),   # el turno ya resolvió el grupo (o no nombra a nadie)
-])
-def test_reparto_el_atajo_deja_pasar_si_jev_esta_seguro(joins, ambiguo, pasa):
-    st = _dos_buzos(detected_group_allocation={"certified_diving": 2})
-    st._jev_companion = joins
-    assert core_extraction._jev_seguro_de_que_se_suma(st, ambiguo) is pasa
-
-
 @pytest.mark.asyncio
-async def test_reparto_turno_entero_la_red_ya_no_se_salta(encender, extractor_dice, monkeypatch):
-    """Grupo con reparto guardado {buceo: 2} y el extractor sin leer al hermano: el atajo se saltaba la red y la persona
-    se perdía; con Jev seguro (companion_joins 0,97), la red la suma."""
+async def test_reparto_turno_entero_el_que_se_suma_entra(encender, extractor_dice, monkeypatch):
+    """Grupo con reparto guardado {buceo: 2}: «mi hermano también viene, él quiere hacer snorkel» suma una persona.
+    CALN-8 (28-oct): la lee el extractor (su reparto incluye a los que ya iban); antes, la red de señales."""
     msg = "mi hermano también viene, él quiere hacer snorkel"
-    extractor_dice({msg: {}})
-    senales = AsyncMock(return_value={"mentions_other_person": True, "companion_activity": "snorkel"})
-    monkeypatch.setattr(core_extraction, "detect_special_signals", senales)
+    extractor_dice({msg: {"group_size": 3, "group_allocation": {"certified_diving": 2, "snorkel": 1}}})
 
     async def turno() -> ConversationState:
         st = _dos_buzos(detected_group_allocation={"certified_diving": 2}, last_dive_over_2_years=False,

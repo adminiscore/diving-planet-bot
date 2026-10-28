@@ -14,7 +14,6 @@ from unittest.mock import AsyncMock
 import pytest
 
 from src.agents import conversational_core as core
-from src.agents.nucleo import extraction as core_extraction
 from src.agents.nucleo import extractor as core_extractor
 from src.agents.rutas import booking
 from src.flows.state import ConversationState
@@ -100,11 +99,3 @@ def test_a4_no_se_ofrece_al_grupo_la_actividad_de_los_que_se_suman():
     assert core._ofrecer_la_actividad_preguntada(st) is None
     assert st.suggested_activity is None
 
-
-@pytest.mark.parametrize("mensaje,plural", [
-    ("mi parcero se anima al snorkel", False),
-    ("mis parceros se animan al snorkel", True),
-    ("mi parcera viene también", False),
-])
-def test_parcero_en_singular_es_una_persona(mensaje, plural):
-    assert bool(core_extraction._PLURAL_COMPANION_RE.search(mensaje)) is plural
