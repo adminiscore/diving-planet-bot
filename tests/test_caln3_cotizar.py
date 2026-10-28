@@ -158,3 +158,31 @@ def test_paso3_con_la_nota_del_de_grupo_fuera_lo_que_dice_el_escritor_de_el():
     assert nota in salida and salida.endswith("¿Te ayudo con algo más?")
     # Sin nota del de grupo, lo que diga el escritor de él se queda (los demás descuentos, si los pregunta).
     assert "se suma" in rh.con_la_pieza(texto, "*Precios por persona*:\n• Minicurso: 183 USD · 204 USD")
+
+
+def test_paso3_quien_no_ha_elegido_tambien_tiene_precio():
+    """Sparring t3 (pareja de Barú): «mi marido es buzo y yo quiero probar» daba solo el buceo; la pieza también lleva
+    las 2 primeras opciones de quien no ha elegido."""
+    from src.agents import redactor_hechos as rh
+
+    st = _st(location="cartagena", is_certified=True, detected_group_size=2, acompanante_sin_certificar=True,
+             detected_group_allocation={"certified_diving": 1}, pending_undecided_qty=1)
+    opciones = rh._de_quien_no_ha_elegido(st, {})
+    assert "minicourse" in opciones and "certified_diving" not in opciones and len(opciones) <= 2
+    assert rh._de_quien_no_ha_elegido(_st(detected_group_allocation={"snorkel": 2}), {}) == []
+
+
+def test_paso3_el_reparto_del_mensaje_antes_que_los_candidatos():
+    """Sparring t3 (6 de Medellín): «2 quieren hacer snorkel» llegaba como candidatos buceo y minicurso."""
+    from src.agents import redactor_hechos as rh
+
+    assert rh._del_reparto_del_mensaje({"group_allocation": {"snorkel": 2, "undecided": 4}}) == ["snorkel"]
+
+
+def test_paso3_la_nota_del_de_grupo_se_ve_aunque_vaya_en_otra_linea():
+    from src.agents import redactor_hechos as rh
+
+    pieza = ("*Precios por persona* (online · normal):\n• Tour de Snorkeling: 448.000 COP · 497.000 COP\n\n"
+             "10% de descuento para grupos de 5 personas o más, que se suma al 10% de descuento online.")
+    salida = rh.con_la_pieza("Sí, por ser un grupo de 6 aplica el descuento de grupo. Salen a las 8.", pieza)
+    assert salida.startswith("Salen a las 8.") and salida.count("grupo") == 1

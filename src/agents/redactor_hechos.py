@@ -52,6 +52,25 @@ def _actividad(state: ConversationState, datos: dict) -> str | None:
     return None
 
 
+def _del_reparto_del_mensaje(datos: dict) -> list[str]:
+    """Las actividades del reparto que lee el extractor en ESTE mensaje («2 quieren hacer snorkel»), si no hay otra en
+    juego (sparring t3: sin esto iban los candidatos de quien no dice nada, buceo y minicurso, a quien pedía snorkel)."""
+    reparto = datos.get("group_allocation") or {}
+    return [a for a, n in reparto.items() if isinstance(n, int) and n > 0 and dom.by_id(a) is not None
+            and not dom.by_id(a).generic] if isinstance(reparto, dict) else []
+
+
+def _de_quien_no_ha_elegido(foto: ConversationState, datos: dict) -> list[str]:
+    """Las 2 primeras opciones que el bot ofrece a quien aún no ha elegido (sin el acompañante), si hay alguien así en el
+    grupo; [] si no."""
+    reparto = {**(foto.detected_group_allocation or {}), **(datos.get("group_allocation") or {})}
+    if not (foto.pending_undecided_qty or reparto.get("undecided")):
+        return []
+    from src.agents.conversational_core import _companion_activity_options  # lazy
+
+    return [o for o in _companion_activity_options(foto) if o != "companion"][:2]
+
+
 def _actividades_en_juego(state: ConversationState) -> bool:
     """¿Hay alguna actividad en la conversación? Con varias, `_actividad` no adivina (arq-1k) y contesta el RAG; los
     candidatos de CALN-3 son solo para cuando no hay ninguna."""
@@ -207,9 +226,23 @@ async def hechos_del_turno(state: ConversationState, message: str, history: list
 
     leida = await lectura_del_extractor(state, message)
     datos, leido = leida or {}, leida is not None
-    actividades = _actividades(state, datos)
-    if (not actividades and "precio" in intenciones and not _actividades_en_juego(state)
-            and not (state.ya_reservado or datos.get("ya_reservado"))):
+    actividades = _actividades(state, datos) or _del_reparto_del_mensaje(datos)
+    precio = "precio" in intenciones and not (state.ya_reservado or datos.get("ya_reservado"))
+    if actividades and precio:
+        # CALN-3 paso 3 (sparring t3): quien aún no ha elegido también tiene precio, el de sus 2 primeras opciones (las
+        # que le ofrece el bot, `_companion_activity_options`). «Mi marido es buzo y yo quiero probar» daba solo el
+        # buceo, y el escritor decía «no tengo aquí el precio del minicurso».
+        foto = _foto(state, datos, _origen(state, datos, leido), message, history)
+        sueltos = [a for a in _de_quien_no_ha_elegido(foto, datos) if a not in actividades]
+        if sueltos:
+            bloques = hechos_mod.hechos(foto, intenciones, [*actividades, *sueltos])
+            for b in bloques:
+                if b["actividad"] in sueltos:
+                    b.pop("otros_planes", None)
+            cubiertas = [i for i in intenciones if any(_cubierta(b, i) for b in bloques)]
+            logger.info(f"[HECHOS][CALN3] también las opciones de quien no ha elegido: {sueltos}")
+            return (bloques, cubiertas) if cubiertas else None
+    if not actividades and precio and not _actividades_en_juego(state):
         # CALN-3 paso 2 (CALN3-P01): el precio sin actividad elegida, con los candidatos que deja lo que se sabe. Quien
         # ya reservó algo que no nombra no elige entre candidatos: contesta el RAG (arq-1p).
         foto = _foto(state, datos, _origen(state, datos, leido), message, history)
@@ -243,7 +276,8 @@ _IMPORTE_RE = re.compile(r"\d[\d.,]*\s*(?:COP|USD|US\$)|(?:USD|COP|US\$)\s*\d", 
 _CIERRA_PREGUNTANDO_RE = re.compile(r"\?[*_)\]]*\s*[\U0001F000-\U0001FAFF☀-➿]?\s*$")
 
 
-_DESCUENTO_DE_GRUPO_RE = re.compile(r"(?=.*\b(?:descuento|discount))(?=.*\b(?:grupo|group))", re.IGNORECASE)
+# DOTALL: la pieza trae la nota del de grupo en otra línea que los precios (sparring t3: sin él no se veía).
+_DESCUENTO_DE_GRUPO_RE = re.compile(r"(?=.*\b(?:descuento|discount))(?=.*\b(?:grupo|group))", re.IGNORECASE | re.DOTALL)
 
 
 def con_la_pieza(answer: str, pieza: str) -> str:
