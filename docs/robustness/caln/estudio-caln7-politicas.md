@@ -43,3 +43,18 @@ e1384f1, B = con los arreglos (--codigo-local): **4/10 → 10/10** (los tres 0/2
 Lo que queda por ver: las respuestas de requisitos son largas por la lista de arq-7b («También necesitas:»), y a veces
 repiten algo que el escritor ya dijo con otras palabras (el carné del buzo en el refresher): es la misma comprobación
 «¿ya lo dijo?» del caso del descuento.
+
+## 4. Estado (28-oct, 11:45)
+
+| Caso | Estado |
+|---|---|
+| Especialidad: 4 h de teoría | ✅ 818f820 (los requisitos llevan la preparación de la ficha) |
+| Buceo adaptado: formulario médico | ✅ 818f820 (los requisitos sin actividad llevan el formulario) |
+| Refresher: formulario médico | ✅ 818f820 (el buzo que necesita el refresher recibe sus requisitos) |
+| Bubble Makers: la logística la confirma un asesor | ✅ 71f9b19 (`lo_confirma_un_asesor` en los hechos del plan; banco 1/2 → 2/2) |
+| Descuento por equipo en el minicurso (rot-029) | ✅ Gonzalo, paso 3 de CALN-3 (cada descuento por sus palabras propias) |
+| Plan de acompañante (rot-022) | Álvaro, después del lector del grupo |
+| Recogida en Isla Grande («¿cuenta como Islas del Rosario?») | NO se toca: el aviso `recogida-en-hotel-islas` salta con el origen sabido; aquí no se sabe dónde se aloja y la pregunta es del lugar. Un disparador nuevo para un solo diálogo del golden sería sobreajuste. |
+| Edades de los niños: la mínima del snorkel en cifra | Lo dice («cumple la edad mínima») sin la cifra; el criterio es estricto. Sin cambio. |
+
+Banco banco-politicas (6 casos) ×2: 4/10 → 12/12 entre los dos arreglos.
