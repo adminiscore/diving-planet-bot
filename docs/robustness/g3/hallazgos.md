@@ -504,3 +504,24 @@ con `scripts/charla_rama.py` sobre c1be0e4 (3.ª ronda de CALN + CALN-2 lectura)
 
 **Latencia:** 14 de 22 turnos pasan de 8 s (mediana 8,5 s; b1 12-13 s cada turno, b2 t2 10,7 s); el máximo baja de
 16,9 a 13,4 s.
+
+## CALN3-R01..R06 · 3.ª tanda de PRECIOS, sobre el paso 2 de Gonzalo (feature/caln-gadea 818f820, 28-oct, `charla_rama`)
+
+Cinco personas (`docs/robustness/g3/charlas-rama/r*.jsonl`), 8 turnos.
+
+1. **BIEN: «¿cuánto cuesta bucear?» ya da precio** (r1, el p17 de ayer): los dos candidatos (buceo con certificación y
+   minicurso) × los dos orígenes, en USD y COP (sin nacionalidad) y una sola pregunta.
+2. **BIEN: tres días durmiendo en Cartagena** (r5): las salidas de cada día; los paquetes piden dormir en las islas.
+3. **El descuento de grupo ofrecido a un curso PADI, otra vez** (CALN-3, Gonzalo): r4, 5 amigos y el Open Water,
+   «10 % para grupos de 5 o más, que se suma al online… ¿te paso con un asesor para gestionarlo?». Le llegan dos hechos
+   que se contradicen: con el precio, «no aplica a cursos PADI» (paso 2b); en la lista de descuentos, el texto del de
+   grupo, que sale solo de la descripción de discounts.json (la excepción de los cursos está en `applicability`, que no
+   se lee). El escritor se queda con el segundo.
+4. **El catálogo entero de paquetes** (CALN-3, Gonzalo): r2 t1, el buzo que estará «una semana» recibe los paquetes de
+   3, 4, 5, 7 y 9 inmersiones; la decisión 2 es 2-3 candidatos. Con la actividad elegida, `otros_planes` va entero.
+5. **«My wife has never dived» = minicurso** (CALN-2, Álvaro): r2 t1, reparto {certified_diving 1, minicourse 1}; en
+   la lista de nombres del minicurso está «nunca ha buceado», así que cuenta como que lo eligió. «No asumir»: sin
+   decidir y se le recomienda.
+6. **El colombiano pasa a un asesor en el primer turno** (decisión de Gadea): r3, familia de 5 de Bogotá en Isla
+   Grande, «¿qué precio tiene y hay descuento por ser 5?» → tarjeta (5 × 150.000 COP) y «Les paso con un asesor para
+   coordinar el pago», y el escritor dice «el precio te lo confirma el asesor» encima de la tarjeta que lo da.
