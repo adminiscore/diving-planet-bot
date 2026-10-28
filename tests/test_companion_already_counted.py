@@ -18,8 +18,7 @@ from src.agents.nucleo import slotfill_close as core_close
 from src.agents.supervisor import route_message
 from src.flows.state import ConversationState
 
-COMPANION_SNORKEL = {"companion_activity": "snorkel", "mentions_other_person": True,
-                     "companion_is_singular": True, "companion_qty": 1}
+SUMA_SNORKEL = {"group_allocation": {"certified_diving": 2, "snorkel": 1}}
 
 
 def _two_divers_waiting_nationality(reparto: bool = True):
@@ -55,9 +54,9 @@ async def _send(state, message, signals):
 @pytest.mark.asyncio
 @pytest.mark.parametrize("message", ["él quiere hacer snorkel", "mi parce se anima al snorkel", "ella prefiere snorkel"])
 async def test_other_persons_activity_asks_the_total_instead_of_guessing(message, extractor_dice):
-    extractor_dice({})  # el extractor no lee reparto: a la otra persona la ve la señal LLM
+    extractor_dice({message: SUMA_SNORKEL})  # el extractor suma uno de snorkel; ¿estaba ya contado? se pregunta
     state = _two_divers_waiting_nationality(reparto=False)
-    await _send(state, message, COMPANION_SNORKEL)
+    await _send(state, message, {})
     assert state.detected_activity == "certified_diving"
     assert not state.detected_group_allocation
     assert state.core_pending_slot == core.SLOT_QTY
@@ -70,9 +69,9 @@ async def test_other_persons_activity_asks_the_total_instead_of_guessing(message
     ("somos 3", {"certified_diving": 2, "snorkel": 1}, 3),
 ])
 async def test_the_total_decides_move_or_add(answer, allocation, total, extractor_dice):
-    extractor_dice({})  # el extractor no lee reparto (la señal LLM) y la respuesta corta la resuelve el núcleo
+    extractor_dice({"él quiere hacer snorkel": SUMA_SNORKEL})  # la respuesta corta la resuelve el núcleo
     state = _two_divers_waiting_nationality(reparto=False)
-    await _send(state, "él quiere hacer snorkel", COMPANION_SNORKEL)
+    await _send(state, "él quiere hacer snorkel", {})
     await _send(state, answer, {})
     assert state.detected_group_allocation == allocation
     assert state.detected_group_size == total
@@ -86,7 +85,7 @@ async def test_an_explicit_addition_is_added_without_asking(extractor_dice):
     extractor_dice({"también viene mi hermana que quiere hacer snorkel":
                     {"group_allocation": {"certified_diving": 2, "snorkel": 1}}})
     state = _two_divers_waiting_nationality()
-    await _send(state, "también viene mi hermana que quiere hacer snorkel", COMPANION_SNORKEL)
+    await _send(state, "también viene mi hermana que quiere hacer snorkel", {})
     assert state.detected_group_allocation == {"certified_diving": 2, "snorkel": 1}
     assert state.detected_group_size == 3
     assert state.core_pending_slot == core.SLOT_NATIONALITY

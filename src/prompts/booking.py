@@ -8,8 +8,8 @@ routing → extraction → slotfill_close`, Fase 3.3):
 - (lat-11 T6e, 26-oct) `EXTRACTION_TOOL` · `extraction_system_prompt` (el relleno `fill_gaps`) se quitaron: el
   extractor del turno es `extractor_turno`.
 - `SIGNALS_TOOL` · `signals_system_prompt` — fases `routing` y `extraction`
-  (`detect_special_signals`): pedir recordar un dato ya dado, y acompañante
-  añadido a mitad de flujo.
+  (`detect_special_signals`): pedir recordar un dato ya dado (CALN-8, 28-oct:
+  el acompañante añadido a mitad de flujo lo leen el extractor y el lector del grupo).
 - `SLOT_RESOLVER_SPEC` · `slot_resolver_prompt` · `slot_resolver_tool` — red
   anti-bucle (`resolve_slot_answer`): interpreta la respuesta EN EL CONTEXTO de
   la pregunta concreta que se acaba de hacer, o se abstiene (y el bot
@@ -82,239 +82,25 @@ def lugar_sin_baru(texto: str, sale_de_cartagena: bool = False) -> str:
     return texto
 
 
-# ── Señales de turno: recall y acompañante · `llm_extractor.detect_special_signals` ────
+# ── Señales de turno: «¿me recuerdas…?» · `llm_extractor.detect_special_signals` ────
 
 # ---------------------------------------------------------------------------
-# Detección de señales de fallback (núcleo conversacional): "recordar un dato
-# ya dado" y "se añade un acompañante". Herramienta SEPARADA de fill_gaps a
-# propósito: estas no son campos persistentes de DetectedIntent (slots de la
-# reserva), son EVENTOS de un turno concreto — solo se invoca cuando el turno
-# no avanzó la reserva por los caminos normales (ver conversational_core.py,
-# hallazgo en vivo 2026-07-22: "hay un amigo que quiere hacer snorkel" y "mi
-# acompañante quiere hacer buceo pero no es certificado" no los reconocía
-# ningún regex, y quedaban cayendo al escalado genérico de asesor). Decisión
-# del owner: nada de listar más frases en regex — el LLM decide QUÉ pasó, el
-# CÓDIGO decide la respuesta con el valor real del estado (nunca un valor
-# inventado por el LLM), mismo reparto de responsabilidades que fill_gaps.
+# Detección de un pedido de RECORDAR un dato ya dado (núcleo conversacional): el LLM dice QUÉ campo se pide y el
+# CÓDIGO contesta con el valor real del estado (nunca un valor que el LLM crea que se dijo). Hasta el 28-oct esta
+# herramienta también buscaba acompañantes y el refresher (la «red de señales»); CALN-8 la quitó: a quien viene lo
+# leen el extractor y el lector del grupo, y el refresher el extractor (CAL-F).
 SIGNALS_TOOL = {
     "type": "function",
     "function": {
         "name": "detect_signals",
         "description": (
-            "The customer's message did NOT advance a scuba booking through "
-            "the normal deterministic slot-filling. Check ONLY whether it (1) "
-            "asks the bot to recall/remind something the customer ALREADY "
-            "said earlier in this conversation, (2) introduces an "
-            "ADDITIONAL person joining the booking, or (3) answers the "
-            "refresher yes/no question with phrasing a simple parser "
-            "wouldn't catch. Omit a field entirely if it doesn't apply — "
-            "never guess."
+            "Check ONLY whether the customer's message asks the bot to recall/remind something the customer ALREADY "
+            "said earlier in this conversation. Omit the field entirely if it doesn't apply — never guess."
         ),
         "parameters": {
             "type": "object",
             "properties": {
-                "recall_field": {
-                    "type": "string",
-                    "enum": [
-                        "booking_recap", "group_size", "activity", "location",
-                        "is_certified", "is_colombian", "ages", "hotel",
-                        "last_dive_over_2_years", "refresher_interested",
-                    ],
-                    "description": (
-                        "Set ONLY if the customer is asking the bot to remind "
-                        "them of something THEY ALREADY GAVE earlier in this "
-                        "chat. Use 'booking_recap' for a GENERAL recap request "
-                        "('¿qué te había pedido?', '¿qué llevamos?', 'what did "
-                        "I ask for?', 'remind me what I said') — the bot then "
-                        "recaps the WHOLE booking. Use a specific field only "
-                        "for a specific question ('¿cuántas personas dije?' → "
-                        "group_size). Do NOT set this for product/price/"
-                        "logistics questions — those are answered elsewhere. "
-                        "IMPORTANT distinction: a forward-looking RECOMMENDATION "
-                        "question ('¿qué me recomiendas?', '¿cuál es mejor, "
-                        "snorkel o buceo?', 'what do you suggest for us?') is "
-                        "NOT a recall — it asks for NEW advice, not to repeat "
-                        "past info. Leave this field unset for those; only set "
-                        "it when the message is unambiguously asking to repeat "
-                        "something already said."
-                    ),
-                },
-                "companion_activity": {
-                    "type": "string",
-                    "enum": ["certified_diving", "minicourse", "snorkel"],
-                    "description": (
-                        "Set ONLY if the message introduces an ADDITIONAL, "
-                        "SEPARATE person joining the booking (a friend/partner/"
-                        "family member coming along, e.g. 'hay un amigo que "
-                        "quiere hacer snorkel', 'viene mi primo a bucear', "
-                        "'2 y uno hace snorkel', 'también mi novia'). Tolerate "
-                        "typos and informal phrasing. Apply the business rule: "
-                        "'minicourse' if that added person is NOT certified and "
-                        "wants to dive/try diving, 'certified_diving' if they "
-                        "ARE already certified, 'snorkel' if snorkel only. That "
-                        "business rule needs a stated ACTIVITY or intent, not "
-                        "just a certification fact — 'mi amigo no está "
-                        "certificado' / 'my friend isn't certified' with NO "
-                        "mention of what they want to do (no 'quiere bucear', "
-                        "no 'quiere snorkel') is NOT enough to guess minicourse "
-                        "or snorkel: leave this field unset in that case, do "
-                        "not guess between the two options. "
-                        "CRITICAL — do NOT set this when the SPEAKER is simply "
-                        "changing/correcting their OWN plan with no new person "
-                        "('mejor snorkel', 'en realidad quiero snorkel', "
-                        "'cambio a snorkel', 'just snorkel then', 'mejor "
-                        "multi-día'): that is a change of mind, NOT a companion. "
-                        "ALSO do NOT set this for an incidental mention of "
-                        "family/friends that does NOT say they are JOINING "
-                        "THIS booking — 'my family always talks about diving "
-                        "here', 'mis amigos siempre hablan de este sitio', 'my "
-                        "sister has done this before' are just conversation, "
-                        "nobody is being added. Only set it when the message "
-                        "actually proposes adding that person to THIS "
-                        "reservation (wants to/quiere/would like to join, "
-                        "come, dive, etc.) — mentioning a relative exists is "
-                        "not the same as inviting them. If in doubt about "
-                        "whether a NEW person is joining, omit it."
-                    ),
-                },
-                "mentions_other_person": {
-                    "type": "boolean",
-                    "description": (
-                        "True if the message refers to someone OTHER than the "
-                        "speaker joining the booking, in ANY phrasing or "
-                        "regional slang for 'friend'/'buddy'/'companion' — "
-                        "standard Spanish (amigo, novia, hermano, primo, "
-                        "acompañante), regional Latin American slang (parce, "
-                        "parcero, pana, cuate, carnal, compa, pata, causa), "
-                        "English (friend, partner, someone), or any other way "
-                        "of naming another person. False for a plain change of "
-                        "mind by the SPEAKER with no other person involved "
-                        "('mejor snorkel', 'en realidad quiero snorkel'). Also "
-                        "False for an incidental mention of family/friends "
-                        "that does NOT propose adding them to THIS booking "
-                        "('my family always talks about diving here', 'mis "
-                        "amigos siempre hablan de este sitio') — that person "
-                        "isn't joining, just being mentioned in conversation. "
-                        "This is a deliberately broad, language/region-agnostic "
-                        "signal — the deterministic caller-side keyword list "
-                        "cannot keep up with every regional term for 'friend', "
-                        "so trust your own understanding here rather than "
-                        "matching against a fixed vocabulary."
-                    ),
-                },
-                "companion_is_singular": {
-                    "type": "boolean",
-                    "description": (
-                        "True if the message describes EXACTLY ONE additional "
-                        "person, regardless of the exact word used for "
-                        "'friend'/'buddy' — standard Spanish (un amigo, mi "
-                        "novia, mi acompañante), regional slang (mi parce, mi "
-                        "cuate, mi pana, mi carnal, mi compa), or English (a "
-                        "friend, someone). False (or omit) when the message "
-                        "describes MORE than one person, an uncounted/vague "
-                        "plural ('mis amigos', 'unos amigos', 'friends' with "
-                        "no number), or when you're not sure it's exactly one. "
-                        "The calling code has no fixed word list covering "
-                        "every regional term for a single companion, so rely "
-                        "on your own judgment here rather than matching "
-                        "vocabulary — but if genuinely unsure, prefer False so "
-                        "the calling code asks the customer instead of "
-                        "guessing 1."
-                    ),
-                },
-                "companion_qty": {
-                    "type": "integer",
-                    "description": (
-                        "How many people want SPECIFICALLY the activity in "
-                        "`companion_activity` — set ONLY when the message "
-                        "gives an explicit, countable number for THAT "
-                        "activity ('2 amigos' [same activity for both] -> 2, "
-                        "'2 y uno hace snorkel' -> companion_qty=2 for the "
-                        "diving side, with the snorkel side going in "
-                        "`other_companions` instead, NOT added here). If "
-                        "OTHER sub-groups exist (see `other_companions` "
-                        "below), this number is ONLY for the first/main "
-                        "sub-group, never the combined total across all "
-                        "sub-groups — e.g. 'mi amigo bucea y mi otro amigo "
-                        "hace snorkel' is ONE diver (companion_qty=1) and "
-                        "ONE snorkeler (in other_companions), NOT "
-                        "companion_qty=2. Omit this field entirely for a "
-                        "single named companion ('a friend', 'mi novia' — "
-                        "the calling code assumes 1 on its own) AND for a "
-                        "vague, uncounted plural ('mis amigos', 'unos "
-                        "amigos', 'friends' with no number) — do NOT guess a "
-                        "total for an uncounted plural, the calling code "
-                        "asks the customer how many instead. MEASURED FAILURE "
-                        "(audit 2026-07-23): models keep defaulting an "
-                        "uncounted plural to 2 just because plural grammar "
-                        "implies 'more than one' — 'mis amigos hacen snorkel' "
-                        "does NOT mean exactly 2, it could be 2, 3, 5, or "
-                        "more. Guessing 2 here is the exact invented-value "
-                        "mistake you must avoid, just as much as guessing any "
-                        "other number — omit the field, full stop."
-                    ),
-                },
-                "refresher_interested": {
-                    "type": "boolean",
-                    "description": (
-                        "Set ONLY when the message answers whether the "
-                        "customer wants the in-water refresher session, using "
-                        "phrasing the simple yes/no parser wouldn't catch "
-                        "(e.g. 'sí, no estaría mal', 'mejor no, gracias', "
-                        "'claro que sí'). True if they want it, false if not."
-                    ),
-                },
-                "other_companions": {
-                    "type": "array",
-                    "description": (
-                        "Use ONLY when the message describes TWO OR MORE "
-                        "DISTINCT companion sub-groups with DIFFERENT "
-                        "activities (e.g. 'mi amigo bucea y mi otra amiga hace "
-                        "snorkel' = one diver + one snorkeler; 'dos amigos "
-                        "bucean y uno hace snorkel' = two divers + one "
-                        "snorkeler). Put the FIRST/main sub-group in "
-                        "companion_activity/companion_qty/"
-                        "companion_is_singular as always, and list every "
-                        "OTHER sub-group here, one item per distinct "
-                        "activity. Each item MUST include an explicit, "
-                        "countable qty for that sub-group (a single named "
-                        "companion like 'mi otro amigo' counts as qty=1) — "
-                        "if a sub-group's count is a vague/uncounted plural "
-                        "with no number, OMIT THAT ITEM ENTIRELY rather than "
-                        "guessing (the calling code cannot yet ask a "
-                        "follow-up quantity question per sub-group). Leave "
-                        "this array empty/omitted when there's only one "
-                        "companion sub-group. MEASURED FAILURES (audit "
-                        "2026-07-23), both consistently reproduced — avoid "
-                        "them: "
-                        "(1) 'mi amigo bucea y mis amigos hacen snorkel' — "
-                        "models keep guessing qty=2 for the vague 'mis "
-                        "amigos' snorkel sub-group instead of omitting the "
-                        "item. A vague plural is NOT '2' — it is UNKNOWN; "
-                        "leave that item out of the array completely, even "
-                        "though the array will then look incomplete. "
-                        "(2) 'ocho personas hacen snorkel y yo buceo' — the "
-                        "SPEAKER'S OWN activity ('yo buceo', stated at the "
-                        "end) must NEVER appear as a companion item here "
-                        "(e.g. a phantom {'activity': 'certified_diving', "
-                        "'qty': 1}) — the speaker is captured by the main "
-                        "`activity` field elsewhere, not by this array. This "
-                        "array is ONLY for OTHER people, never the speaker, "
-                        "regardless of where in the sentence their own plan "
-                        "is mentioned."
-                    ),
-                    "items": {
-                        "type": "object",
-                        "properties": {
-                            "activity": {
-                                "type": "string",
-                                "enum": ["certified_diving", "minicourse", "snorkel"],
-                            },
-                            "qty": {"type": "integer"},
-                        },
-                        "required": ["activity", "qty"],
-                    },
-                },
+                "recall_field": {"type": "string", "enum": ["booking_recap", "group_size", "activity", "location", "is_certified", "is_colombian", "ages", "hotel", "last_dive_over_2_years", "refresher_interested"], "description": "Set ONLY if the customer is asking the bot to remind them of something THEY ALREADY GAVE earlier in this chat. Use 'booking_recap' for a GENERAL recap request ('¿qué te había pedido?', '¿qué llevamos?', 'what did I ask for?', 'remind me what I said') — the bot then recaps the WHOLE booking. Use a specific field only for a specific question ('¿cuántas personas dije?' → group_size). Do NOT set this for product/price/logistics questions — those are answered elsewhere. IMPORTANT distinction: a forward-looking RECOMMENDATION question ('¿qué me recomiendas?', '¿cuál es mejor, snorkel o buceo?', 'what do you suggest for us?') is NOT a recall — it asks for NEW advice, not to repeat past info. Leave this field unset for those; only set it when the message is unambiguously asking to repeat something already said."},
             },
         },
     },
@@ -324,69 +110,14 @@ SIGNALS_TOOL = {
 def signals_system_prompt(lang: str) -> str:
     if lang == "es":
         return (
-            "Eres una capa de detección de señales para un bot de buceo. El "
-            "mensaje del cliente NO avanzó la reserva por los caminos "
-            "deterministas normales — tu única tarea es revisar si describe "
-            "(1) un pedido de recordar algo que el cliente YA dijo antes en "
-            "esta conversación, o (2) una persona ADICIONAL que se une a la "
-            "reserva (no el propio hablante). Cuando detectes (2), decide "
-            "SIEMPRE estos CUATRO campos juntos, nunca solo alguno: "
-            "`companion_activity` (la actividad del acompañante), "
-            "`mentions_other_person=true`, `companion_is_singular` "
-            "(true si es exactamente 1 persona, false si son más o no estás "
-            "seguro), y `companion_qty` (el número EXACTO si el mensaje lo da "
-            "explícito, p. ej. 'se apuntan 3 amigos' -> companion_qty=3 — "
-            "ponlo SIEMPRE que el mensaje dé un número, no lo omitas solo "
-            "porque ya pusiste companion_is_singular=false). Los CUATRO son "
-            "la señal que el código usa para confiar en tu detección "
-            "— especialmente `companion_activity`, sin el cual el código "
-            "descarta todo el resto — así que no los omitas aunque el "
-            "vocabulario sea informal o regional (parce, cuate, pana, "
-            "carnal...); el código que te llama NO tiene una lista de "
-            "palabras que cubra todas las variantes regionales, así que "
-            "confía en tu propio criterio. Si el mensaje describe DOS O MÁS "
-            "acompañantes con actividades DISTINTAS ('mi parce bucea y mi "
-            "cuate hace snorkel'), pon el PRIMER grupo en "
-            "companion_activity/companion_qty/companion_is_singular como "
-            "siempre, y cada grupo ADICIONAL en `other_companions` (cada uno "
-            "con su actividad y su cantidad exacta — omite un grupo si su "
-            "cantidad no es un número real, nunca la adivines). Llama a "
-            "`detect_signals` incluyendo SOLO los campos para los que el "
-            "mensaje da señal real y explícita (recall_field, "
-            "refresher_interested y other_companions solo si aplican). "
-            "Omite cualquier campo ambiguo — nunca lo adivines."
+            "Eres una capa de detección para un bot de buceo. Tu única tarea es ver si el mensaje del cliente pide que "
+            "le recordemos algo que él YA dijo antes en esta conversación. Llama a `detect_signals` con recall_field "
+            "solo si es así; si no, sin campos. Nunca lo adivines."
         )
     return (
-        "You are a signal-detection layer for a scuba diving bot. The "
-        "customer's message did NOT advance the booking through the normal "
-        "deterministic paths — your only job is to check whether it (1) "
-        "asks the bot to recall something the customer ALREADY said earlier "
-        "in this conversation, or (2) introduces an ADDITIONAL person "
-        "joining the booking (not the speaker themself). When you detect "
-        "(2), ALWAYS decide these FOUR fields together, never just some of "
-        "them: `companion_activity` (the companion's activity), "
-        "`mentions_other_person=true`, `companion_is_singular` (true "
-        "if exactly one person, false if more or unsure), and "
-        "`companion_qty` (the EXACT number if the message gives one "
-        "explicitly, e.g. '3 friends are joining' -> companion_qty=3 — "
-        "always set it when the message gives a number, don't skip it just "
-        "because you already set companion_is_singular=false). All FOUR are "
-        "the fields the calling code trusts — especially "
-        "`companion_activity`, without which the code discards everything "
-        "else — "
-        "to confirm your detection, so don't omit them even for informal or "
-        "regional slang; the calling code has no fixed word list covering "
-        "every regional term, so rely on your own judgment. If the message "
-        "describes TWO OR MORE companion sub-groups with DIFFERENT "
-        "activities ('my friend dives and my other buddy snorkels'), put "
-        "the FIRST sub-group in companion_activity/companion_qty/"
-        "companion_is_singular as always, and every ADDITIONAL sub-group in "
-        "`other_companions` (each with its activity and its exact qty — "
-        "omit a sub-group if its count isn't a real number, never guess "
-        "it). Call `detect_signals` including ONLY the fields the message "
-        "gives real, explicit signal for (recall_field, "
-        "refresher_interested and other_companions only when they apply). "
-        "Omit anything ambiguous — never guess."
+        "You are a detection layer for a scuba diving bot. Your only job is to check whether the customer's message "
+        "asks the bot to recall something the customer ALREADY said earlier in this conversation. Call "
+        "`detect_signals` with recall_field only if so; otherwise with no fields. Never guess."
     )
 
 

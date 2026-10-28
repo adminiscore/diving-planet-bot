@@ -344,7 +344,7 @@ def _principal_sigue_en_el_reparto(intent, state: ConversationState) -> bool:
 
 def _resto_a_la_principal(state: ConversationState, principal_antes: str | None) -> None:
     """DEUDA-EXT (26-oct): se elige por primera vez la actividad principal de un grupo que ya tenía acompañantes con su
-    actividad y el total: el resto del grupo hace la principal (la regla de `routing._with_main_rest`). Sin esto, "two
+    actividad y el total: el resto del grupo hace la principal. Sin esto, "two
     certified divers" + "my wife will just snorkel" + "the 2-dive trip" cobraba solo el snorkel."""
     alloc = state.detected_group_allocation or {}
     main = state.detected_activity

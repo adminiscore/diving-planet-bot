@@ -619,24 +619,6 @@ def test_la_pregunta_de_recordar_va_siempre():
     assert jev_router.answers_to_signals({"asks_recall": {"type": "noul", "noul": 0.1}}) == {"asks_recall": False}
 
 
-# u3-6: Jev como filtro previo del LLM de señales.
-def test_el_filtro_de_senales_solo_con_jev_seguro(monkeypatch):
-    st = _state()
-    st._jev_asks_recall = False
-    st._jev_companion = 0.04
-    assert core._jev_rules_out_special_signals(st)
-    st._jev_companion = 0.66  # quizá hay acompañante -> LLM
-    assert not core._jev_rules_out_special_signals(st)
-    st._jev_companion = None  # Jev no contestó -> LLM
-    assert not core._jev_rules_out_special_signals(st)
-    st._jev_companion = 0.04
-    st.core_pending_slot = core.SLOT_REFRESHER  # esa respuesta la lee el LLM
-    assert not core._jev_rules_out_special_signals(st)
-    st.core_pending_slot = None
-    st.last_dive_over_2_years = True  # refresher en juego: su respuesta puede llegar en cualquier turno
-    assert not core._jev_rules_out_special_signals(st)
-
-
 async def test_con_el_filtro_no_se_llama_al_llm_de_senales(monkeypatch, signals, rag, extractor_dice):
     extractor_dice(LEE_EL_EXTRACTOR)  # ex-9b paso 3: sin él, al 2.º turno se pasa a un asesor
     spy = AsyncMock(return_value={})

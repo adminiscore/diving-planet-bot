@@ -17,15 +17,8 @@ lat-11 T6e (26-oct): el tool y el prompt de la extracción del relleno (`fill_ga
 import pytest
 
 from src.domain import activities as dom
-from src.prompts.booking import SIGNALS_TOOL
 
 LANGS = ["es", "en"]
-
-
-def test_every_activity_enum_value_exists_in_the_registry():
-    ids = set(dom.activity_ids())
-    prop = SIGNALS_TOOL["function"]["parameters"]["properties"]["companion_activity"]
-    assert set(prop.get("enum") or prop["items"]["enum"]) <= ids, "companion_activity usa valores fuera del registro"
 
 
 @pytest.mark.parametrize("lang", LANGS)

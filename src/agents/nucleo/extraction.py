@@ -10,7 +10,6 @@ from __future__ import annotations
 
 import logging
 import re
-from collections import Counter
 
 from src.agents.conversational_core import (
     _ACTIVITY_TO_CART_TYPE,
@@ -45,17 +44,13 @@ from src.agents.conversational_core import (
     _take_undecided_members,
     ask_slot,
     next_missing_slot,
-    refresh_en_el_grupo,
 )
 from src.agents.intent_detector import (
     _PERSON_NOUN_MENTION_EN,
     _PERSON_NOUN_MENTION_ES,
-    _PERSON_NOUN_PLURAL_EN,
-    _PERSON_NOUN_PLURAL_ES,
     _PERSON_NOUN_SINGULAR_EN,
     _PERSON_NOUN_SINGULAR_ES,
     _SINGULAR_PERSON,
-    certification_claim,
     course_level_is_ambiguous,
     lectura_del_turno,
 )
@@ -200,46 +195,6 @@ _MENTIONS_PERSON_RE = re.compile(
     re.IGNORECASE,
 )
 
-# Conteo total dentro de una pregunta de precio/info ("how much for 2
-# people?", "cuanto cuesta para 2 personas?") -- hallazgo en vivo (lote 9,
-# bateria sintetica contra PRE, 2026-09-02): "how much for 2 people,
-# certified diving?" disparaba `_MENTIONS_PERSON_RE` solo por la palabra
-# "people", y el propio `detect_special_signals` (LLM) tambien devolvia
-# `mentions_other_person=true` -- ninguno de los dos tenia respaldo real de
-# un ACOMPAÑANTE con actividad distinta, era el tamaño total del grupo
-# preguntando precio. Resultado: se trataba "certified diving" como la
-# actividad de un acompañante fantasma en vez de la del grupo completo, el
-# estado de certificacion del hablante principal quedaba sin resolver, y el
-# turno terminaba con la respuesta de precio + una re-pregunta redundante de
-# "¿eres buzo certificado?" pese a que el propio mensaje ya lo decia.
-_BARE_HEADCOUNT_RE = re.compile(
-    r"\b(?:for|para)\s+\d+\s+(?:people|personas?|folks?|persons?)\b",
-    re.IGNORECASE,
-)
-
-
-def _mentions_person(message: str) -> bool:
-    # Se enmascara el conteo total ("for 2 people") antes de evaluar: si
-    # "people"/"personas" no aparece en NINGUN otro sitio del mensaje, no es
-    # una mencion real de otra persona (ver _BARE_HEADCOUNT_RE arriba).
-    masked = _BARE_HEADCOUNT_RE.sub("", message)
-    return bool(_MENTIONS_PERSON_RE.search(masked))
-
-
-def _menciona_a_alguien(state: ConversationState, message: str) -> bool:
-    """s4-26 (7-oct): ¿el mensaje menciona a otra persona? Si Jev esta seguro de que
-    no (companion_joins < COMPANION_NONE_MAX, la puerta de u3-6), manda Jev; si no lo sabemos, la regex de
-    siempre. Todas las decisiones del acompañante del turno pasan por aqui."""
-    from src.agents.jev_router import COMPANION_NONE_MAX  # lazy
-
-    p = getattr(state, "_jev_companion", None)
-    if p is not None and p < COMPANION_NONE_MAX:
-        if _mentions_person(message):
-            logger.info(f"[CORE][S4-26] la regex ve a otra persona y Jev no ({p:.2f}): manda Jev")
-        return False
-    return _mentions_person(message)
-
-
 # Compañero SINGULAR e inequívoco (un/una/mi/a + sustantivo en singular, o "a
 # friend"/"someone"): el número de personas es 1 sin ambigüedad, se puede
 # asumir con seguridad sin preguntar. Deliberadamente NO matchea plurales
@@ -260,74 +215,12 @@ _SINGULAR_COMPANION_RE = re.compile(
     re.IGNORECASE,
 )
 
-# Respaldo determinista para la asimetría señalada en la auditoría de Fase B
-# (2026-07-23): `companion_qty` se descarta si el mensaje no trae un número
-# real (`_EXPLICIT_NUMBER_RE`), pero `companion_is_singular` no tenía ninguna
-# segunda verificación — si el LLM dice singular=True para un plural con
-# jerga rarísima, nada lo contradice. Sustantivo de compañero en PLURAL
-# inequívoco (termina en "s": "amigos", "parceros", "friends"...) — si
-# aparece, no se confía en `companion_is_singular=True` del LLM aunque lo
-# devuelva, y se pasa a preguntar cuántos son en vez de asumir 1.
-# Inventario regex 2026-09-03: sustantivos plurales de parentesco ahora
-# vienen de la fuente compartida (`_PERSON_NOUN_PLURAL_ES/EN`,
-# intent_detector.py) -- cierra un gap real (suegros/cuñados/sobrinos/
-# nietos/abuelos y brothers/sisters/sons/daughters/cousins/kids en plural
-# faltaban aquí pese a estar en otras listas del mismo concepto). La jerga
-# regional (parcero/pana/carnal/compa/pata/causa) NO es parte del
-# vocabulario compartido a propósito -- se queda local a este patrón.
-_PLURAL_COMPANION_RE = re.compile(
-    r"\b(?:" + _PERSON_NOUN_PLURAL_ES + r"|"
-    # La jerga plural se queda AQUI a proposito (medido 2026-09-15): llevarla a la
-    # lista compartida hacia que el conteo de grupo del detector sumara "dos panas
-    # y yo" = 3 y pisara un "somos 4" explicito. Aqui solo decide singular/plural.
-    # DEUDA-EXT (26-oct): solo el plural; con «parceros?» el singular «mi parcero se anima al snorkel» contaba como
-    # plural y se preguntaba cuántos son (banco-lat11 a5).
-    r"parceros|parceras|cuates|panas|carnales|compas|patas|causas|"
-    + _PERSON_NOUN_PLURAL_EN + r")\b",
-    re.IGNORECASE,
-)
-
-
 _WORD_TO_NUM = number_words(1, 10)
-
-
-def _message_numbers(message: str) -> Counter:
-    """MULTIconjunto (Counter, no set) de números que aparecen de verdad en el
-    mensaje. Auditoría 2026-07-23 (multi-ítem, `other_companions`): probado en
-    vivo con matriz de 9 casos x 4 repeticiones que el LLM NO se abstiene de
-    forma fiable ante un plural vago ni con el prompt reforzado — sigue
-    inventando una cantidad para "mis amigos". Verificación determinista pura:
-    si la cantidad que dice el LLM para un sub-grupo no tiene un número real
-    detrás en el texto, no es de fiar. Debe ser Counter (con consumo, una
-    ocurrencia por sub-grupo validado) y no un set de presencia: con un set,
-    "2 bucean, mis amigos hacen snorkel" validaba por error un snorkel=2
-    inventado solo porque el "2" de "2 bucean" YA aparecía en el texto —
-    aunque ese "2" ya estaba gastado por el sub-grupo principal."""
-    counts = Counter()
-    for m in _EXPLICIT_NUMBER_RE.finditer(message):
-        tok = m.group(0).lower()
-        counts[int(tok) if tok.isdigit() else _WORD_TO_NUM[tok]] += 1
-    return counts
 
 
 # Personas nombradas una a una: la misma pieza `_SINGULAR_PERSON` que usa
 # `_SINGULAR_COMPANION_RE`. Los plurales ("mis amigos") no cuentan: siguen sin respaldar cifra.
 _NAMED_PERSON_RE = re.compile(_SINGULAR_PERSON, re.IGNORECASE)
-
-
-def _contar_al_acompanante_sin_actividad(state: ConversationState, message: str, signals: dict) -> None:
-    """DEUDA-EXT2 (26-oct): "Voy con una amiga que no está certificada" dejaba el total sin saber y se preguntaba
-    "¿cuántas personas?" (banco-deuda-ext2 g1). Una persona más, en singular y sin total sabido: son 2, y ella queda SIN
-    DECIDIR (CALN-2, 27-oct: se le recomienda y elige el cliente; contada sin actividad, la tarjeta le cobraba la de
-    quien escribe). CALN2-04 (27-oct): con más gente en plural en el mismo mensaje («voy con mi esposa, que no
-    bucea, y nuestras hijas de 8 y 5») no son 2: el total queda sin saber (banco-edades e1). Tampoco con dos o más
-    edades sabidas (las lee el extractor): «mi esposo no bucea y vamos con los niños, de 7 y 4» acababa en una tarjeta
-    de 2 buzos (sparring b5)."""
-    if state.detected_group_size or _PLURAL_COMPANION_RE.search(message) or len(state.detected_ages or []) >= 2:
-        return
-    if _singular_companion(message) or signals.get("companion_is_singular"):
-        _merge_companion_activity(state, "undecided", 1)
-        logger.info("[CORE][DEUDA-EXT2] acompañante sin actividad, en singular y sin total: grupo de 2, ella sin decidir")
 
 
 def _rehacer_la_tarjeta_si_no_cuadra(state: ConversationState) -> bool:
@@ -354,15 +247,6 @@ def _rehacer_la_tarjeta_si_no_cuadra(state: ConversationState) -> bool:
     return True
 
 
-def _el_extractor_no_ve_al_grupo(state: ConversationState, message: str) -> bool:
-    """¿El extractor leyó ESTE mensaje sin dar nada del grupo (ni total ni reparto)? False si no lo leyó (falló o no se
-    lanzó): entonces decide lo de siempre."""
-    leida = getattr(state, "_lectura_del_turno", None)
-    if not leida or leida[0] != message or leida[1] is None:
-        return False
-    return not (leida[1].get("group_size") or leida[1].get("group_allocation"))
-
-
 def _singular_companion(message: str) -> bool:
     """¿El mensaje habla de UN solo acompañante? Exactamente una persona nombrada o, si no
     nombra a nadie, "someone"/"uno que" (2026-09-15). Antes bastaba con que apareciera una:
@@ -370,45 +254,6 @@ def _singular_companion(message: str) -> bool:
     son is 12" contaban como un acompañante y se asumia cantidad 1 sin preguntar."""
     named = len(_NAMED_PERSON_RE.findall(message))
     return named == 1 or (named == 0 and bool(_SINGULAR_COMPANION_RE.search(message)))
-
-
-def _consume_number(counts: Counter, n) -> bool:
-    """True y descuenta una ocurrencia si `n` sigue disponible en `counts`."""
-    if n is not None and counts.get(n, 0) > 0:
-        counts[n] -= 1
-        return True
-    return False
-
-
-# Auditoría 2026-08-26 (batería sintética contra PRE, Grupo 3, portado de
-# pre_gadea v0.21.3): "mi amigo... él es certificado también" respalda
-# `certified_diving` igual que "quiere bucear" — declarar la certificación
-# del acompañante ES la intención (nadie dice "ya soy certificado" para
-# pedir un minicurso). Sin este respaldo, el guard determinista descartaba
-# una señal del LLM que SÍ era correcta (medido 3/3, `detect_special_
-# signals` devolvía `certified_diving` bien), preguntando "¿minicurso o
-# snorkel?" a un acompañante YA certificado — ninguna de las dos opciones
-# tiene sentido en ese caso. Negado explícito ("no está certificado") NO
-# cuenta como respaldo — ese es el caso genuino de `SLOT_COMPANION_ACTIVITY`
-# que sí necesita preguntar.
-def _activity_has_textual_backing(activity: str, message: str) -> bool:
-    """¿Tiene `activity` algún respaldo real en el texto? No basta con
-    buscar la palabra exacta: la regla de negocio traduce "no certificado +
-    quiere bucear" -> minicurso, así que un mensaje que dice "buceo" sin
-    decir "minicurso" SÍ respalda `minicourse` (auditoría 2026-07-23). Lo
-    que NO respalda nada es un mensaje que solo da un ATRIBUTO del
-    acompañante ("mi amigo no está certificado") sin mencionar ninguna
-    actividad ni intención — ahí `_mentioned_product_activities` devuelve
-    vacío y esta función correctamente dice False para cualquier `activity`."""
-    mentioned = set(_mentioned_product_activities(message))
-    if activity in mentioned:
-        return True
-    # CALN-2 (27-oct, banco de grupos g02): «voy con mi novia que no ha buceado nunca» no es elegir el minicurso (la
-    # decisión es no asumir: se le recomienda y elige el cliente). Antes «buceo» en el mensaje respaldaba el minicurso.
-    # El acompanante es OTRA persona: cuenta su certificacion ("mi amigo tiene licencia").
-    if activity == "certified_diving" and certification_claim(message, about_writer=False) is True:
-        return True
-    return False
 
 
 # Slots de SÍ/NO y el campo que resuelve cada uno. Hallazgo en vivo
@@ -424,8 +269,8 @@ def _activity_has_textual_backing(activity: str, message: str) -> bool:
 # resuelto y la reserva se cerraba SIN haber preguntado nunca al cliente algo
 # que es de seguridad, no de logística.
 #
-# La regla estructural (no un parche por síntoma, misma familia que el bloqueo
-# de `detect_special_signals` de `_group_allocation_fully_resolved`): un
+# La regla estructural (no un parche por síntoma, misma familia que el corte
+# de `_group_allocation_fully_resolved`): un
 # extractor LLM de formato libre NO puede responder por el cliente. Estos
 # campos ya tienen DOS resolutores anclados al mensaje del turno —
 # `_apply_short_answer` (determinista, corre ANTES de `_understand`) y el
@@ -535,9 +380,7 @@ async def _understand(state: ConversationState, message: str, *, answered_pendin
     este turno. Sin ese booleano, `advanced` (en maybe_handle_turn) no se
     entera de que este fast-path avanzó la reserva cuando el siguiente slot
     pendiente no cambia (p. ej. seguía faltando "nacionalidad" con o sin el
-    acompañante) — y la red de precisión LLM vuelve a ejecutarse para el
-    MISMO mensaje y duplica la cantidad (hallazgo en vivo 2026-07-22: "viene
-    también uno que hace snorkel" con LLM real daba snorkel:2, no snorkel:1)."""
+    acompañante)."""
     from src.agents import supervisor  # lazy: evita import circular
 
     prev_activity = state.detected_activity
@@ -583,8 +426,6 @@ async def _understand(state: ConversationState, message: str, *, answered_pendin
     if _group_allocation_fully_resolved(state):
         state.needs_companion_activity = False
         state.pending_companion_activity = None
-        state.pending_companion_queue = []
-        state.pending_split_total = None
         state.pending_undecided_qty = None
 
     # "voy solo" → 1 persona. Nació para cursos PADI (Fase 3 causa A) y el owner
@@ -616,9 +457,10 @@ async def _understand(state: ConversationState, message: str, *, answered_pendin
     # cambio de opinión sin persona añadida ("mejor snorkel") sigue siendo
     # cambio (latest wins). Cubre solo las frases de _ADDED_PERSON_RE — frases
     # fuera de esa lista (o donde turn_act == prev_activity, p. ej. "mi
-    # acompañante quiere hacer buceo pero no es certificado") las resuelve la
-    # red de precisión LLM en maybe_handle_turn (detect_special_signals),
-    # nunca ampliando este regex frase a frase (decisión owner 2026-07-22).
+    # acompañante quiere hacer buceo pero no es certificado") las lee el
+    # reparto del extractor o el lector del grupo (CALN-8, 28-oct: antes, la
+    # red de señales), nunca ampliando este regex frase a frase (decisión
+    # owner 2026-07-22).
     turn_act = intent.activity
     companion_merged_fastpath = False
     if (
@@ -644,9 +486,8 @@ async def _understand(state: ConversationState, message: str, *, answered_pendin
         # no ya un valor `explicit_qty` — no solo cuando es None — antes de
         # confiarlo. Si no hay número real en el mensaje ni es un compañero
         # singular inequívoco ("mi novia"/"mi acompañante"), NO fusionar con
-        # una cifra inventada — dejar el estado sin tocar para que el bloque
-        # de la red de precisión más abajo (`detect_special_signals`)
-        # pregunte cuántos son.
+        # una cifra inventada — dejar el estado sin tocar: cuántos son lo da
+        # el reparto del extractor o del lector del grupo (CALN-8, 28-oct).
         if explicit_qty is not None and not _EXPLICIT_NUMBER_RE.search(message):
             explicit_qty = None
         if (
@@ -658,13 +499,6 @@ async def _understand(state: ConversationState, message: str, *, answered_pendin
             _restore_main_diver_fields(state, prev_activity, prev_service_id, prev_is_certified, prev_last_dive, prev_refresher)
             _add_or_ask_companion(state, message, turn_act, explicit_qty or 1)
             companion_merged_fastpath = True
-            # `turn_act` puede haber quedado encolado arriba (guard del
-            # alloc_patch alucinado, sin respaldo numérico) antes de que este
-            # fast-path lo resolviera de verdad por otra vía (compañero
-            # singular inequívoco) — sin este descarte, se preguntaba una
-            # cantidad que ya se acababa de fijar sin ambigüedad.
-            if turn_act in state.pending_companion_queue:
-                state.pending_companion_queue.remove(turn_act)
 
     # Normalizar group_size con el reparto: si el reparto suma MÁS personas que el
     # group_size conocido, el total manda. Bug en vivo (2026-07-22): "1 pero viene
@@ -686,8 +520,7 @@ def _restore_main_diver_fields(
 ) -> None:
     """Restaura el perfil del buceador PRINCIPAL a como estaba antes de este
     turno — usado cuando ya se sabe que el mensaje hablaba de un ACOMPAÑANTE,
-    no del hablante (fast-path regex arriba y red de precisión LLM en
-    maybe_handle_turn). Bug real: "no es certificado"/"sin bucear hace X años"
+    no del hablante (fast-path regex arriba). Bug real: "no es certificado"/"sin bucear hace X años"
     referido al acompañante se aplicaba por 'latest wins' al buceador
     principal ya resuelto (p. ej. is_certified=True → False de golpe).
 
@@ -765,8 +598,7 @@ _JEV_SE_SUMA_SEGURO = 0.7  # ex-9b: por encima, Jev está seguro de que el mensa
 def _add_or_ask_companion(state: ConversationState, message: str, activity: str, qty: int) -> None:
     """Punto unico para la actividad de otra persona (tarea 7a, 2026-09-15).
 
-    Quien es otra persona lo decide el turno (fast-path o red de precision LLM, que
-    reconoce pronombres y jerga). Lo que ni el texto ni el LLM dicen es si esa persona
+    Quien es otra persona lo decide el turno (el fast-path regex o el extractor). Lo que ni el texto ni el LLM dicen es si esa persona
     YA estaba contada: "él quiere hacer snorkel" y "también viene mi hermana que quiere
     hacer snorkel" dan la misma señal. Si sumarla supera el total conocido y el mensaje
     no dice que se suma alguien, no se adivina: se pregunta el total
@@ -806,27 +638,6 @@ def _add_or_ask_companion(state: ConversationState, message: str, activity: str,
     _merge_companion_activity(state, activity, qty)
 
 
-# ex-9b paso 6: por encima, Jev está SEGURO de que el mensaje mete a otra persona en la
-# reserva (`companion_joins`). En los fallos de "se suma alguien a un grupo ya repartido" Jev daba 0,94-0,97.
-_JEV_SE_SUMA_MIN = 0.8
-
-
-def _jev_seguro_de_que_se_suma(state: ConversationState, companion_ambiguous: bool) -> bool:
-    """ex-9b paso 6: el atajo de "el reparto ya cubre a todo el grupo" se saltaba la red de
-    acompañantes aunque el mensaje sumara a alguien ("mi hermano también viene, él quiere hacer snorkel" sobre {buceo: 2}
-    para 2): la persona se perdía. Se deja pasar el turno solo si el mensaje nombra a otra persona y Jev está seguro de
-    que entra en la reserva; el atajo sigue para todo lo demás (se puso porque el router LLM de antes inventaba
-    acompañantes). Si el extractor ya amplió el reparto en este turno, `companion_ambiguous` es False y no hace falta."""
-    if not companion_ambiguous:
-        return False
-    p = getattr(state, "_jev_companion", None)
-    if p is None or p < _JEV_SE_SUMA_MIN:
-        return False
-    logger.info(f"[CORE][EX9B-6] reparto completo, pero Jev seguro de que se suma alguien ({p:.2f}): la red de "
-                "acompañantes corre")
-    return True
-
-
 def _jev_dice_ya_contada(state: ConversationState) -> bool:
     """s4-26 (flag `jev_persona_ya_contada`): ¿Jev esta SEGURO de que el mensaje no suma a una persona nueva
     (adds_person < ADDS_PERSON_NOT_MAX), sino que habla de alguien que ya estaba en el grupo? Ausente = no lo
@@ -850,25 +661,6 @@ def _jev_pending_answer(slot: str | None, routing_signals: dict) -> dict | None:
         return None
     logger.info(f"[CORE][U3-7] respuesta a {slot} por Jev: {pa.get('value')!r} ({pa['confidence']:.2f})")
     return {} if pa.get("value") is None else {"value": pa["value"]}
-
-
-def _jev_rules_out_special_signals(state: ConversationState) -> bool:
-    """u3-6: ¿Jev descarta todo lo que busca `detect_special_signals`? Seguro de
-    que el mensaje no mete a otra persona (p < COMPANION_NONE_MAX), que no pide recordar, y sin la
-    pregunta del refresher pendiente (esa respuesta la lee el LLM). Banco
-    `scripts/sonda_acompanante.py`: 0/14 acompanantes perdidos, 13/14 turnos normales sin la llamada."""
-    from src.agents.jev_router import COMPANION_NONE_MAX  # lazy
-
-    p = getattr(state, "_jev_companion", None)
-    if p is None or p >= COMPANION_NONE_MAX or not _jev_says_no_recall(state):
-        return False
-    # Con el refresher en juego (mas de 2 anos sin bucear) la respuesta a esa pregunta puede llegar en
-    # cualquier turno ("espera, en realidad si lo quiero" con otra pregunta ya pendiente, escalon 0):
-    # esa la lee el LLM.
-    if refresh_en_el_grupo(state) or (state.core_pending_slot or next_missing_slot(state)) == SLOT_REFRESHER:
-        return False
-    logger.info(f"[CORE][U3-6] señales sin LLM (Jev: acompañante {p:.2f}, no pide recordar)")
-    return True
 
 
 def _apply_question_turn_answers(intent, fields: list[str], answers: dict, message: str) -> None:
@@ -949,10 +741,6 @@ async def _extraction_phase_body(
     prev_pending = carry["prev_pending"]
     prev_cart_types = carry["prev_cart_types"]
     prev_main_activity = carry["prev_main_activity"]
-    prev_main_service_id = carry["prev_main_service_id"]
-    prev_main_is_certified = carry["prev_main_is_certified"]
-    prev_main_last_dive = carry["prev_main_last_dive"]
-    prev_main_refresher = carry["prev_main_refresher"]
     prev_group_size = carry["prev_group_size"]
     prev_group_allocation = carry["prev_group_allocation"]
 
@@ -970,41 +758,18 @@ async def _extraction_phase_body(
         state.is_colombian = False
 
     # Circuit-breaker (portado 2026-09-01, hallazgo en vivo, batería de
-    # grupos mixtos contra PRE, lote 8): este chequeo es el punto REAL que
-    # consume `pending_companion_queue` para preguntar por un acompañante —
-    # y corre SIEMPRE, incluso en el turno de arriba donde `_understand()`
-    # se salta por ser respuesta corta ya resuelta (`resolved_short and
-    # len(message) <= 12`, p. ej. "no"/"cartagena"). Si el reparto del grupo
-    # YA cubre a todo el mundo, no puede quedar ningún acompañante sin
-    # actividad — limpiar la cola aquí, justo antes de que se consuma.
+    # grupos mixtos contra PRE, lote 8): corre SIEMPRE, incluso en el turno
+    # de arriba donde `_understand()` se salta por ser respuesta corta ya
+    # resuelta (`resolved_short and len(message) <= 12`, p. ej.
+    # "no"/"cartagena"). Si el reparto del grupo YA cubre a todo el mundo, no
+    # puede quedar ningún acompañante sin actividad.
     if _group_allocation_fully_resolved(state):
         state.needs_companion_activity = False
         state.pending_companion_activity = None
-        state.pending_companion_queue = []
-        state.pending_split_total = None
         state.pending_undecided_qty = None
 
-    # Multi-ítem (auditoría 2026-07-23): si _understand() encoló alguna
-    # actividad del reparto sin respaldo numérico real (fill_gaps inventando
-    # una cantidad para un plural vago dentro de group_allocation — hallazgo
-    # nuevo, mismo principio que la cola de other_companions más abajo),
-    # preguntar por ella ya mismo en vez de seguir de largo. Nunca se pierde
-    # en silencio ni se factura una cantidad inventada.
-    if state.pending_companion_queue and not state.pending_companion_activity:
-        state.pending_companion_activity = state.pending_companion_queue.pop(0)
-        response = greeting + ask_slot(state, SLOT_COMPANION_QTY)
-        state.history.append({"role": "assistant", "content": response})
-        return response
-
-    # ¿La extracción base (regex + gap-fill, dentro de `_understand()`) ya
-    # cambió el tamaño/reparto del grupo este turno? Bug en vivo (2026-07-23,
-    # Rocío): "tengo 3 amigos que quieren hacer alguna actividad" — el fix del
-    # regex de intent_detector.py ya suma correctamente +1 (group_size 1→4).
-    # Sin esta guarda, `companion_ambiguous` (más abajo) volvía a disparar la
-    # red de precisión LLM para el MISMO mensaje, que fusionaba 3 acompañantes
-    # OTRA VEZ encima del grupo ya correcto → 4+3=7. La extracción base y la
-    # red de precisión leen la MISMA evidencia textual; si la base ya absorbió
-    # el cambio de tamaño de grupo, no hay que re-contarlo.
+    # ¿La extracción de `_understand()` ya cambió el tamaño/reparto del grupo
+    # este turno? Cuenta como avance (ver `advanced`, abajo).
     group_composition_resolved_by_base_extraction = (
         state.detected_group_size != prev_group_size
         or (state.detected_group_allocation or {}) != prev_group_allocation
@@ -1021,29 +786,13 @@ async def _extraction_phase_body(
             state.history.append({"role": "assistant", "content": response})
             return response
 
-    # Red de precisión: si el turno NO avanzó nada por los caminos normales
-    # (regex + gap-fill), probar la detección de señales por LLM antes de caer
-    # al escalado genérico — cubre "hay un amigo que quiere hacer snorkel" o
-    # "mi acompañante quiere hacer buceo pero no es certificado", frases que
-    # ningún regex reconocía (decisión owner 2026-07-22: nunca ampliar el
-    # regex frase a frase para esto; el LLM decide QUÉ pasó, el estado decide
-    # el VALOR real). Solo se gasta esta llamada cuando de verdad hace falta.
-    # (Se mide por next_missing_slot, no por un snapshot crudo de campos: un
-    # campo del buceador PRINCIPAL pisado por error por este mismo turno —el
-    # bug que _restore_main_diver_fields corrige— no debe contar como
-    # "avance", o la red de precisión nunca llegaría a correr.)
-    # `companion_merged_fastpath` (hallazgo en vivo 2026-07-22): añadir un
-    # acompañante no siempre cambia next_missing_slot (p. ej. seguía faltando
-    # "nacionalidad" con o sin el acompañante) — sin este flag, la red de
-    # precisión LLM de abajo se ejecutaba OTRA VEZ para el mismo mensaje y
-    # duplicaba la cantidad (snorkel:1 fusionado por el fast-path + snorkel:1
-    # fusionado de nuevo por el LLM = snorkel:2).
-    # `group_composition_resolved_by_base_extraction` (hallazgo en vivo
-    # 2026-07-23, Rocío): si la extracción base ya absorbió el tamaño/reparto
-    # del grupo este turno pero SIN cambiar next_missing_slot (p. ej. seguía
-    # faltando la ubicación), la red de precisión volvía a contar los mismos
-    # acompañantes encima (4 de la base + 3 de la señal = 7). Que la base haya
-    # resuelto la composición del grupo cuenta como avance por sí mismo.
+    # ¿Avanzó el turno? Si no, lo de abajo (el «¿me recuerdas…?», la red
+    # anti-bucle, la pregunta suelta) mira si el mensaje era otra cosa. Se mide
+    # por next_missing_slot, no por un snapshot crudo de campos; sumar un
+    # acompañante (`companion_merged_fastpath`) o cambiar el tamaño/reparto del
+    # grupo cuenta como avance aunque siga faltando el mismo dato (p. ej. la
+    # nacionalidad). Hasta CALN-8 (28-oct) esto decidía también si corría la
+    # red de señales de acompañantes (historia en git).
     advanced = (
         resolved_short
         or companion_merged_fastpath
@@ -1051,354 +800,22 @@ async def _extraction_phase_body(
         or next_missing_slot(state) != prev_pending
     )
 
-    # Un acompañante / actividad DISTINTA a la principal que el fast-path por regex
-    # NO cazó (`_ADDED_PERSON_RE` no matchea "hay un amigo que quiere snorkel",
-    # "2 y uno hace snorkel"…) se clasifica SIEMPRE por el LLM — añadir vs. cambiar —
-    # pase lo que pase con el resto de slots. Así estos añadidos no se pierden por
-    # haber "avanzado" otro dato en el mismo mensaje (bug en vivo 2026-07-22). El
-    # prompt de señales ya distingue el acompañante del cambio de opinión ("mejor
-    # snorkel" → None), así que ampliar el disparo aquí no crea falsos añadidos.
-    # Un mensaje que menciona a OTRA persona (por `_mentions_person`) en una reserva
-    # ya iniciada se clasifica SIEMPRE por el LLM (añadir acompañante vs. nada),
-    # aunque el acompañante quiera la MISMA actividad (p. ej. "1 pero tengo un amigo
-    # que quiere hacer buceo") y aunque otro slot haya avanzado en el mismo mensaje.
-    #
-    # El guard usaba `not _ADDED_PERSON_RE.search(message)` para decidir si el
-    # fast-path "ya cubrió" el mensaje — pero ese regex solo marca que el mensaje
-    # TIENE un disparador léxico de persona ("además", "también"...), no que el
-    # fast-path realmente fusionó algo: ese fast-path (en `_understand()`) exige
-    # ADEMÁS una actividad explícita en el mismo turno (`turn_act`). Bug en vivo
-    # (2026-07-23, Rocío): "tengo el AOWD, además tengo 3 amigos que quieren hacer
-    # ALGUNA actividad" — "además" matchea `_ADDED_PERSON_RE`, pero sin actividad
-    # explícita el fast-path no hace nada; con el guard viejo, la red de precisión
-    # tampoco corría, y los 3 acompañantes se perdían en silencio. La señal correcta
-    # de "¿ya lo fusionó el fast-path?" es `companion_merged_fastpath` (el flag que
-    # `_understand()` ya devuelve para esto mismo), no una re-lectura del regex
-    # disparador.
-    # `prev_main_activity` (actividad ANTES de este turno) no basta cuando la
-    # actividad principal y la mención del acompañante llegan en el MISMO
-    # mensaje de apertura ("hola quiero bucear, voy con mi amigo pero el no
-    # esta certificado"): ahí `prev_main_activity` sigue en None (nada se
-    # había establecido todavía) aunque `_understand()` YA resolvió la
-    # actividad principal este mismo turno, así que este bloque nunca se
-    # disparaba y la mención del acompañante se perdía en silencio (hallazgo
-    # D, batería sintética 2026-08-26, portado de pre_gadea). Se comprueba
-    # también `state.detected_activity` (post-turno) para cubrir ambos casos
-    # sin ampliar el disparo a mensajes que no mencionan actividad alguna.
-    companion_ambiguous = bool(
-        (prev_main_activity in _ACTIVITY_TO_CART_TYPE or state.detected_activity in _ACTIVITY_TO_CART_TYPE)
-        and _menciona_a_alguien(state, message)
-        and not companion_merged_fastpath
-        and not group_composition_resolved_by_base_extraction
-    )
-    # Circuit-breaker (portado 2026-09-01, hallazgo en vivo, batería de
-    # grupos mixtos contra PRE, lote 8, confirmado con trazas de LangSmith):
-    # `detect_special_signals` RE-DERIVA `mentions_other_person`/
-    # `companion_activity`/`other_companions` del HISTORIAL ENTERO en cada
-    # llamada — con un reparto ya completo ("2 certificados, 2 minicurso, 2
-    # snorkel" para un grupo de 6), un turno tan inocuo como "ninguno
-    # colombiano" (respondiendo nacionalidad, sin mencionar a nadie) hizo que
-    # el LLM redescubriera la conversación de grupo y devolviera
-    # `mentions_other_person=true` + una re-descripción de todo el reparto
-    # como "acompañantes" — pisando `detected_group_allocation`, ya
-    # correcto, con una versión parcial. Si el grupo ya está completamente
-    # explicado, no hay ninguna ambigüedad de acompañante que esta llamada
-    # pueda resolver — se salta entera (ahorra una llamada LLM de paso).
-    if (not advanced or companion_ambiguous) and not (
-        _group_allocation_fully_resolved(state) and not _jev_seguro_de_que_se_suma(state, companion_ambiguous)
-    ):
-        signals = (
-            {} if _jev_rules_out_special_signals(state)
-            else await detect_special_signals(message, history=state.history, lang=state.language)
-        )
-        activity = signals.get("companion_activity")
-        # Guardado ANTES del descarte por falta de respaldo textual de abajo
-        # (hallazgo en vivo, lote 10, 2026-09-02): el guard de "misma
-        # actividad que el grupo" más abajo necesita lo que el LLM DIJO, no
-        # si ese valor tenía o no respaldo textual -- un mensaje como
-        # "perfecto, hagamos la reserva" no respalda NINGUNA actividad
-        # (`activity` se pone a None por el chequeo de abajo), pero eso no
-        # significa que ya no exista la señal fantasma que hay que descartar
-        # -- solo cambia por qué rama de código la deja pasar.
-        raw_companion_activity = activity
-        # Verificación determinista (auditoría 2026-07-23): reforzar el
-        # prompt para que no adivine una actividad sin respaldo textual NO
-        # funcionó (medido 3/3 sigue adivinando "minicourse" para "mi amigo
-        # no está certificado", sin ninguna actividad mencionada) — misma
-        # lección que la cuantificación de plurales vagos: hace falta
-        # verificación determinista, no más prompt. Si el mensaje no
-        # menciona NINGÚN producto por palabra clave, la actividad que
-        # devuelve el LLM no tiene respaldo textual — se descarta.
-        if activity and not _activity_has_textual_backing(activity, message):
-            # CALN-2 (27-oct, banco de grupos g02): un minicurso que el mensaje no nombra es la regla vieja de esta red
-            # («no certificado + quiere bucear»); la decisión es no asumir: esa persona queda sin decidir y se le
-            # recomienda (eligibility, por edad).
-            activity = "undecided" if activity == "minicourse" and _mentioned_product_activities(message) else None
-        if activity and activity == (prev_main_activity or state.detected_activity) and _el_extractor_no_ve_al_grupo(
-                state, message):
-            # CALN-2 (27-oct, banco de grupos g26/g28): «vienen también unos amigos, no sé qué querrán hacer» o «my friend
-            # is coming too but she's not sure» → esta red les daba la actividad de quien escribe (el «bucear» del
-            # mensaje es suyo). Si el extractor leyó el mensaje y no puso a nadie más en el grupo, esa actividad es una
-            # suposición: la persona queda sin decidir (no adivinar).
-            logger.info(f"[CORE][CALN2] la red de señales da {activity!r} al acompañante y el extractor no: sin decidir")
-            activity = "undecided"
-        if activity == "undecided" and not (_singular_companion(message) or (
-                signals.get("companion_is_singular") and not _PLURAL_COMPANION_RE.search(message))):
-            # Sin decidir y sin poder contarlos («unos amigos»): no se suma a nadie; el total se pregunta como siempre.
-            activity = None
-        # Guard contra el flip-flop del LLM con historial: solo se trata como
-        # ACOMPAÑANTE si el mensaje nombra a otra persona. El LLM decide la
-        # actividad; que nombre a una persona decide que es un añadido, no un
-        # cambio de opinión ("mejor snorkel" nunca añade; "un amigo…" sí).
-        # La confianza en "nombra a otra persona" viene del propio LLM
-        # (`mentions_other_person`, hallazgo en vivo 2026-07-22: `_mentions_person`
-        # es una lista fija de palabras — amigo/novia/hermano/primo... — que NO
-        # reconoce jerga regional como "parce"/"cuate"/"pana"/"carnal"; con solo
-        # el regex, un acompañante bien detectado por el LLM se descartaba en
-        # silencio porque la palabra no estaba en la lista). El regex se
-        # mantiene como respaldo barato para cuando el LLM no marque el campo.
-        #
-        # Excepcion (hallazgo en vivo, lote 9, 2026-09-02): cuando el UNICO
-        # rastro de "otra persona" en el mensaje es un conteo total tipo "for
-        # 2 people"/"para 2 personas" (ver _BARE_HEADCOUNT_RE), ni siquiera se
-        # confia en que el propio LLM lo haya visto bien -- ya devolvio un
-        # falso positivo igual que el regex en este caso real ("how much for
-        # 2 people, certified diving?" -> companion fantasma con la MISMA
-        # actividad que el grupo, dejando sin resolver la certificacion del
-        # hablante principal y generando una re-pregunta redundante). Mismo
-        # principio que 6.bis: verificacion determinista del TEXTO por encima
-        # de la señal del LLM cuando hay evidencia real de que se equivoca.
-        llm_mentions_other_person = bool(signals.get("mentions_other_person"))
-        regex_mentions_other_person = _menciona_a_alguien(state, message)
-        if (
-            llm_mentions_other_person
-            and not regex_mentions_other_person
-            and _BARE_HEADCOUNT_RE.search(message)
-        ):
-            llm_mentions_other_person = False
-        # Segunda variante del mismo fallo, generalizada (hallazgo en vivo,
-        # lote 10, batería de conversaciones LARGAS hasta el cierre de
-        # reserva, 2026-09-02): "no hace mas de 2 años que buceamos" (una
-        # respuesta de SEGURIDAD sin mencionar a nadie) disparó
-        # mentions_other_person=true + companion_activity=certified_diving
-        # (la MISMA actividad que ya tenía el grupo), corrompiendo
-        # group_allocation con un compañero fantasma y dejando la reserva en
-        # un BUCLE INFINITO. Un primer fix acotó esto a los 3 temas
-        # booleanos (una lista de vocabulario por tema, ya retirada) pero el MISMO fallo reapareció
-        # en un mensaje que no toca ninguno de esos temas: "perfecto,
-        # hagamos la reserva" (afirmación de cierre lisa y llana) volvió a
-        # disparar el mismo companion_activity=certified_diving fantasma —
-        # verificado en vivo tras desplegar el primer fix. Generalizado sin
-        # el requisito de tema: si el LLM dice que hay un acompañante pero
-        # el regex determinista NO ve a NADIE (`_mentions_person` false) Y la
-        # actividad que le atribuye es la MISMA que ya tiene el grupo (no una
-        # elección distinta — la señal real de un acompañante genuino), no
-        # se confía en el LLM. Sigue sin tocar el caso de jerga regional que
-        # motivó confiar en el LLM en primer lugar ("mi parce no está
-        # certificado" -> companion_activity=minicourse, DISTINTA de
-        # certified_diving), porque los disparadores léxicos reales
-        # ("viene", "también", "y otro"...) ya hacen que `_mentions_person`
-        # sea True para cualquier mención genuina de acompañante, aun en
-        # jerga — lo único que queda sin respaldo textual y con la MISMA
-        # actividad es, en la práctica, el LLM alucinando de la nada.
-        #
-        # Usa `raw_companion_activity` (lo que el LLM dijo) y NO `activity`
-        # (ya puesta a None arriba si el mensaje no respalda textualmente
-        # NINGUNA actividad -- exactamente el caso de "perfecto, hagamos la
-        # reserva", que no menciona nada de buceo): con `activity` ya en
-        # None, `None == state.detected_activity` siempre da False y este
-        # guard nunca se disparaba para el caso que motivó el fix.
-        # "La misma actividad que el grupo" es la de ANTES de este turno (tarea 7a,
-        # 2026-09-15): "él quiere hacer snorkel" ya ha pisado la principal con snorkel, y
-        # comparar con el estado de ahora tiraba justo el acompañante real.
-        if (
-            llm_mentions_other_person
-            and not regex_mentions_other_person
-            and raw_companion_activity == (prev_main_activity or state.detected_activity)
-        ):
-            llm_mentions_other_person = False
-        if activity and (llm_mentions_other_person or regex_mentions_other_person):
-            # El turno hablaba de un ACOMPAÑANTE, no del hablante principal:
-            # restaurar lo que este mismo turno pudo haber pisado por error en
-            # el perfil del buceador principal antes de aplicar el añadido.
-            _restore_main_diver_fields(
-                state, prev_main_activity, prev_main_service_id,
-                prev_main_is_certified, prev_main_last_dive, prev_main_refresher,
-            )
-            # Counter compartido con consumo (auditoría multi-ítem 2026-07-23):
-            # el sub-grupo PRINCIPAL consume su número antes que
-            # `other_companions` más abajo, para que un mismo número del texto
-            # no pueda avalar dos sub-grupos distintos a la vez (bug medido en
-            # vivo: "2 bucean, mis amigos hacen snorkel" validaba por error un
-            # snorkel=2 inventado solo porque el "2" de "2 bucean" ya estaba en
-            # el texto — aunque ya estaba gastado por el principal).
-            msg_numbers = _message_numbers(message)
-            qty = signals.get("companion_qty")
-            if qty is not None and not _consume_number(msg_numbers, qty):
-                # Verificado en vivo (2026-07-22): el LLM devolvió qty=1 para
-                # "también vienen mis amigos a hacer snorkel" pese a que el
-                # prompt le pide abstenerse ante un plural vago — no basta con
-                # pedírselo, hay que comprobarlo. Si el número que dice no
-                # tiene respaldo real (o ya lo consumió otro sub-grupo), se
-                # descarta el qty del LLM sea cual sea.
-                qty = None
-            # "¿es exactamente 1?" también se confía primero al LLM
-            # (`companion_is_singular`, mismo criterio que `mentions_other_person`):
-            # el regex `_SINGULAR_COMPANION_RE` es una lista fija de palabras que
-            # no reconoce jerga regional ("mi parce"/"mi cuate" preguntaban
-            # cantidad en vez de asumir 1 sin necesidad). El LLM entiende
-            # cualquier variante; el regex se queda como respaldo barato.
-            #
-            # Asimetría cerrada (auditoría Fase B, 2026-07-23): `companion_qty`
-            # ya se descartaba si no había número real en el texto, pero
-            # `companion_is_singular=True` del LLM no tenía ninguna segunda
-            # verificación — un plural con jerga rarísima podía colarse como
-            # "1 solo" sin que nada lo contradijera. `_PLURAL_COMPANION_RE`
-            # (sustantivo de compañero en plural inequívoco: "amigos",
-            # "parceros"...) invalida esa confianza igual que
-            # `_EXPLICIT_NUMBER_RE` invalida `companion_qty`.
-            singular_confirmed = _singular_companion(message) or (
-                signals.get("companion_is_singular")
-                and not _PLURAL_COMPANION_RE.search(message)
-            )
-            main_ambiguous = qty is None and not singular_confirmed
-            if not main_ambiguous:
-                qty = qty or 1  # singular inequívoco ("un amigo"/"a friend") -> 1
-
-            # Multi-ítem (auditoría 2026-07-23): 3+ actividades en un mensaje
-            # ("2 bucean, mis amigos hacen snorkel y uno hace el minicurso").
-            # Medido con matriz de 9 casos x 4 repeticiones, con Y sin refuerzo
-            # de prompt: el LLM NUNCA se abstiene de forma fiable ante un
-            # plural vago en `other_companions` — sigue inventando una
-            # cantidad. Se procesa ANTES de decidir qué preguntar (si el
-            # principal TAMBIÉN es ambiguo) para no perder sub-grupos
-            # adicionales por cortar el turno demasiado pronto. Reutiliza
-            # `msg_numbers` YA CONSUMIDO por el principal (mismo Counter, no
-            # uno nuevo) — así el mismo número del texto no puede avalar dos
-            # sub-grupos distintos.
-            for item in (signals.get("other_companions") or []):
-                other_act = item.get("activity")
-                other_qty = item.get("qty")
-                if other_act not in _ACTIVITY_TO_CART_TYPE or other_act == activity:
-                    continue
-                if other_qty is not None and _consume_number(msg_numbers, other_qty):
-                    _merge_companion_activity(state, other_act, other_qty)
-                else:
-                    # Cantidad no respaldada por ningún número real del
-                    # mensaje — se pregunta en vez de asumir, en cuanto se
-                    # resuelvan el principal y el resto de la cola.
-                    if other_act not in state.pending_companion_queue:
-                        state.pending_companion_queue.append(other_act)
-
-            if main_ambiguous:
-                # Plural vago ("mis amigos", "unos amigos", "friends" sin
-                # número) en el sub-grupo PRINCIPAL — en vez de asumir 1, se
-                # pregunta cuántos son (hallazgo en vivo: "mis amigos"
-                # generaba group_allocation={snorkel:3} sin preguntar). Va
-                # primero en la cola; lo adicional (ya encolado arriba) se
-                # preguntará después, uno a la vez.
-                if activity not in state.pending_companion_queue:
-                    state.pending_companion_queue.insert(0, activity)
-            else:
-                _add_or_ask_companion(state, message, activity, qty)
-
-            if state.pending_companion_queue:
-                state.pending_companion_activity = state.pending_companion_queue.pop(0)
-                response = greeting + ask_slot(state, SLOT_COMPANION_QTY)
-                state.history.append({"role": "assistant", "content": response})
-                return response
-
-            # Post-cierre: puede haber MÁS de una actividad nueva a la vez
-            # (el sub-grupo principal Y uno o más de other_companions), así
-            # que se añaden todas las que falten en el carrito, no solo la
-            # principal (mismo patrón que el chequeo genérico de arriba).
-            if prev_cart_types:
-                if _rehacer_la_tarjeta_si_no_cuadra(state):
-                    response = cart_render.goto_final_summary(state)
-                    state.core_pending_slot = None
-                    supervisor._maybe_build_pending_note(state)
-                    state.history.append({"role": "assistant", "content": response})
-                    return response
-            advanced = True
-        elif (
-            # Reusa las variables ya corregidas arriba (no `signals.get(
-            # "mentions_other_person")` en crudo) -- mismo hallazgo en vivo
-            # del lote 10, 2026-09-02: esta rama comparte el mismo fallo del
-            # `if` de arriba (compañero fantasma sin respaldo textual, misma
-            # actividad que el grupo) y con la lectura cruda seguía
-            # disparando aunque `activity` fuera falsy más arriba.
-            (llm_mentions_other_person or regex_mentions_other_person)
-            and prev_pending != SLOT_COMPANION_ACTIVITY
-            # Hallazgo en vivo (batería sintética contra PRE, 2026-08-26,
-            # lote 5, portado de pre_gadea): "los niños tienen 7 y 10" (solo
-            # edades, sin acompañante nuevo) hacía que `mentions_other_person`
-            # (LLM, más liberal que el regex — SÍ reconoce "niños") disparara
-            # esta rama, difiriendo una pregunta de acompañante que se
-            # retomaba al final SIN NINGÚN motivo. Si ya estamos en contexto
-            # de niños Y el regex determinista (que NO reconoce "niño") no ve
-            # a nadie más, no se confía solo en la señal LLM más amplia.
-            and not (state.kids_mention_detected and not _menciona_a_alguien(state, message))
-            # Hallazgo en vivo (batería de grupos mixtos contra PRE,
-            # 2026-09-01, lote 8): un cliente que dijo explícitamente "solo
-            # yo" recibía, turnos después (incluso tras cerrar la reserva),
-            # "¿qué le gustaría hacer a tu acompañante?" — `mentions_other_
-            # person` (LLM) se re-deriva del HISTORIAL ENTERO en cada turno
-            # (ver auditoría 2026-07-23 más abajo) y puede volver a disparar
-            # sin que el turno actual mencione a nadie nuevo. `solo_traveler_
-            # confirmed` se fija SOLO desde el match estricto y con guardas
-            # de `_COURSE_SOLO_RE`/`intent_detector` (nunca desde un
-            # `detected_group_size == 1` genérico, que también puede darse
-            # legítimo mientras se negocia un acompañante aparte — ver
-            # test_companion_attribute_without_activity_asks_instead_of_
-            # guessing, que YA fija group_size=1 para el buzo principal
-            # confirmado mientras el acompañante se resuelve por su cuenta).
-            and not state.solo_traveler_confirmed
-        ):
-            # Auditoría 2026-07-23: hay un acompañante (persona mencionada)
-            # pero ninguna actividad con respaldo textual real — "mi amigo
-            # no está certificado" dice un ATRIBUTO, no una actividad ni
-            # intención ("quiere bucear"/"quiere snorkel"). Dos extractores
-            # distintos (fill_gaps y esta misma señal) adivinaban cosas
-            # DISTINTAS para la misma frase ambigua (snorkel vs. minicurso).
-            # En vez de adivinar cuál, se pregunta qué le gustaría hacer.
-            #
-            # Bug en vivo (auditoría 2026-08-26, batería sintética contra
-            # PRE, portado de pre_gadea v0.21.1): sin `prev_pending !=
-            # SLOT_COMPANION_ACTIVITY`, esto entraba en BUCLE —
-            # detect_special_signals RE-DERIVA la señal de "hay un
-            # acompañante" desde el HISTORIAL entero cada vez que se le
-            # llama, así que una respuesta vacía de contenido como "no"
-            # (que en realidad respondía a SEGURIDAD, una pregunta
-            # pendiente ANTERIOR que quedó enterrada) seguía devolviendo
-            # `mentions_other_person=True` turno tras turno, re-preguntando
-            # la MISMA pregunta sin parar.
-            #
-            # CALN-2 (27-oct): quién no ha elegido lo dice el extractor (el reparto persona a persona, «undecided»), no
-            # esta señal: `mentions_other_person` también salta con quien va con el grupo («somos unos amigos y
-            # queremos hacer snorkel», banco g23) y le preguntaba qué quería hacer. Aquí queda proteger lo de quien
-            # escribe y contar al acompañante.
-            _restore_main_diver_fields(
-                state, prev_main_activity, prev_main_service_id,
-                prev_main_is_certified, prev_main_last_dive, prev_main_refresher,
-            )
-            _contar_al_acompanante_sin_actividad(state, message, signals)
-            advanced = True
-        elif signals.get("refresher_interested") is not None:
-            # Auditoría 2026-07-22: refresher_interested no tenía NINGÚN
-            # respaldo LLM — una frase que is_affirmative/is_negative no
-            # reconocieran ("sí, no estaría mal") dejaba al bot re-preguntando
-            # lo mismo sin fin, único slot booleano de la reserva sin red.
-            state.refresher_interested = signals["refresher_interested"]
-            advanced = True
-        elif signals.get("recall_field") and not _jev_says_no_recall(state):
-            recalled = _recall_answer(state, signals["recall_field"])
-            if recalled:
-                response = recalled
-                if prev_pending:
-                    response += "\n\n" + ask_slot(state, prev_pending, reasking=True)
-                response = greeting + response
-                state.history.append({"role": "assistant", "content": response})
-                return response
+    # CALN-8 (1), lector del grupo paso 3 (28-oct, decisión de Gadea #2311): fuera la red de señales de acompañantes
+    # (`detect_special_signals`: companion_activity, mentions_other_person, other_companions, companion_qty). Iba en
+    # serie (p50 1,4 s) y releía el historial entero: sus guardas eran parches contra los acompañantes fantasma que eso
+    # creaba (historia en git). Quién viene y qué hace lo leen el extractor (el reparto persona a persona) y el lector
+    # del grupo; el refresher, el extractor (CAL-F). De esa llamada queda el «¿me recuerdas…?», solo si Jev no descarta
+    # que se pida recordar.
+    if not advanced and not _jev_says_no_recall(state):
+        signals = await detect_special_signals(message, history=state.history, lang=state.language)
+        recalled = _recall_answer(state, signals["recall_field"]) if signals.get("recall_field") else None
+        if recalled:
+            response = recalled
+            if prev_pending:
+                response += "\n\n" + ask_slot(state, prev_pending, reasking=True)
+            response = greeting + response
+            state.history.append({"role": "assistant", "content": response})
+            return response
 
     # Red anti-BUCLE para SLOT_COMPANION_QTY (2026-07-24): el bloque Fase C de
     # abajo se EXCLUYE a propósito cuando hay `pending_companion_activity`, así

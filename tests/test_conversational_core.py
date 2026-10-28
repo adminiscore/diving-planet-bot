@@ -739,12 +739,13 @@ async def test_recall_unknown_field_falls_back_to_rag():
 
 
 @pytest.mark.asyncio
-async def test_companion_signal_adds_minicourse_not_regex_match():
-    """"mi acompañante quiere hacer buceo pero no es certificado" — el regex
-    NO lo reconoce (misma actividad que la principal, sin persona-añadida
-    explícita); la señal LLM sí. CALN-2 (27-oct, decisión «no asumir»): la señal
-    dice minicurso, pero el mensaje no lo nombra: el acompañante se suma SIN
-    DECIDIR (se le recomienda y elige el cliente), no como minicurso ni como buzo."""
+async def test_companion_not_certified_joins_undecided(extractor_dice):
+    """"mi acompañante quiere hacer buceo pero no es certificado" (CALN-2, decisión «no asumir»): el acompañante se suma
+    SIN DECIDIR (se le recomienda y elige el cliente), no como minicurso ni como buzo. CALN-8 (28-oct): lo lee el
+    extractor (el reparto persona a persona); la red de señales que lo leía antes se quitó."""
+    mensaje = "mi acompañante quiere hacer buceo pero no es certificado"
+    extractor_dice({mensaje: {"group_size": 2, "group_allocation": {"certified_diving": 1, "undecided": 1},
+                              "otro_sin_certificar": True}})
     state = make_state("es")
     state.detected_activity = "certified_diving"
     state.is_certified = True
@@ -752,11 +753,7 @@ async def test_companion_signal_adds_minicourse_not_regex_match():
     state.detected_group_size = 1
     state.last_dive_over_2_years = False
     state.core_pending_slot = core.SLOT_NATIONALITY
-    _senales = AsyncMock(return_value={"companion_activity": "minicourse", "companion_qty": 1})
-    with patch.object(core_routing, "detect_special_signals",
-                       new=_senales), patch.object(core_extraction, "detect_special_signals",
-                       new=_senales):
-        await route_message(state, "mi acompañante quiere hacer buceo pero no es certificado")
+    await route_message(state, mensaje)
     alloc = state.detected_group_allocation or {}
     assert alloc.get("certified_diving") == 1
     assert "minicourse" not in alloc
@@ -765,24 +762,20 @@ async def test_companion_signal_adds_minicourse_not_regex_match():
 
 @pytest.mark.asyncio
 async def test_companion_signal_post_close_adds_snorkel_item(extractor_dice):
-    """"hay un amigo que quiere hacer snorkel" tras el cierre — el regex no
-    lo reconoce ('hay un amigo' no matchea _ADDED_PERSON_RE con posesivo);
-    la señal LLM sí y el carrito debe quedar con AMBAS actividades."""
-    # El último mensaje sin datos del extractor: lo que se prueba es la señal LLM (`detect_special_signals`).
+    """"hay un amigo que quiere hacer snorkel" tras el cierre: el carrito debe quedar con AMBAS actividades. CALN-8
+    (28-oct): al amigo lo lee el extractor (su reparto incluye al que ya iba); la red de señales se quitó."""
     extractor_dice({"soy buzo certificado, quiero bucear desde cartagena, voy solo":
                     {**BUZO, **CARTAGENA, "group_size": 1},
-                    "no soy colombiano": {"is_colombian": False}})
+                    "no soy colombiano": {"is_colombian": False},
+                    "hay un amigo que quiere hacer snorkel":
+                    {"group_size": 2, "group_allocation": {"certified_diving": 1, "snorkel": 1}}})
     state = make_state("es")
     await route_message(state, "soy buzo certificado, quiero bucear desde cartagena, voy solo")
     await route_message(state, "no")
     await route_message(state, "no soy colombiano")
     assert state.mixed_cart[0]["type"] == "cert"
 
-    _senales = AsyncMock(return_value={"companion_activity": "snorkel", "companion_qty": 1})
-    with patch.object(core_routing, "detect_special_signals",
-                       new=_senales), patch.object(core_extraction, "detect_special_signals",
-                       new=_senales):
-        resp = await route_message(state, "hay un amigo que quiere hacer snorkel")
+    resp = await route_message(state, "hay un amigo que quiere hacer snorkel")
     types = {it["type"]: it["qty"] for it in state.mixed_cart}
     assert types.get("cert") == 1, "el buceo original no puede perderse"
     assert types.get("snorkel") == 1
@@ -937,10 +930,10 @@ async def test_signal_detection_not_called_when_turn_already_advanced():
 # ---------------------------------------------------------------------------
 
 @pytest.mark.asyncio
-async def test_refresher_unusual_phrasing_resolved_by_signal_not_stuck_forever():
-    """"sí, no estaría mal" no matchea is_affirmative — sin respaldo LLM el
-    bot se quedaría preguntando el refresher para siempre. Con la señal
-    ampliada, se resuelve y avanza."""
+async def test_refresher_unusual_phrasing_resolved_by_the_extractor_not_stuck_forever(extractor_dice):
+    """"sí, no estaría mal" no matchea is_affirmative: sin la IA el bot se quedaría preguntando el refresher para siempre.
+    CALN-8 (28-oct): lo lee el extractor (CAL-F, `refresher_interested`); la red de señales que lo leía antes se quitó."""
+    extractor_dice({"sí, no estaría mal": {"refresher_interested": True}})
     state = make_state("es")
     state.detected_activity = "certified_diving"
     state.is_certified = True
@@ -948,11 +941,7 @@ async def test_refresher_unusual_phrasing_resolved_by_signal_not_stuck_forever()
     state.detected_group_size = 1
     state.last_dive_over_2_years = True
     state.core_pending_slot = core.SLOT_REFRESHER
-    _senales = AsyncMock(return_value={"refresher_interested": True})
-    with patch.object(core_routing, "detect_special_signals",
-                       new=_senales), patch.object(core_extraction, "detect_special_signals",
-                       new=_senales):
-        await route_message(state, "sí, no estaría mal")
+    await route_message(state, "sí, no estaría mal")
     assert state.refresher_interested is True
     assert state.core_pending_slot != core.SLOT_REFRESHER
 
@@ -1020,32 +1009,6 @@ def test_capture_client_name_first_wins(monkeypatch):
     core._capture_client_name(st, "me llamo Rocio")
     core._capture_client_name(st, "en realidad me llamo Ana")
     assert st.client_name == "Rocio"
-
-
-@pytest.mark.parametrize("msg,expected", [
-    # Acompañante (persona nombrada) -> True
-    ("hay un amigo que quiere hacee snorkel", True),
-    ("2 y uno hace snorkel", True),
-    ("también viene mi primo a bucear", True),
-    ("viene mi novia", True),
-    ("y otra para snorkel", True),
-    # Cambio de opinión (sin persona) -> False (nunca añade acompañante)
-    ("mejor snorkel", False),
-    ("en realidad quiero snorkel", False),
-    ("mejor multi-día", False),
-    ("solo yo", False),
-    ("quiero bucear", False),
-    # Conteo total dentro de una pregunta de precio -> False (hallazgo en
-    # vivo, lote 9, 2026-09-02: "how much for 2 people, certified diving?"
-    # se trataba como acompañante solo por la palabra "people").
-    ("how much for 2 people, certified diving?", False),
-    ("cuanto cuesta para 2 personas?", False),
-    # Pero si además de un conteo hay una mención real de otra persona, sigue
-    # contando como acompañante (el conteo se enmascara, no toda la frase).
-    ("how much for 2 people, my friend wants snorkel", True),
-])
-def test_mentions_person_discriminates_companion_from_change(msg, expected):
-    assert core._mentions_person(msg) is expected
 
 
 def test_full_booking_recap_lists_all_activities_and_location():
@@ -1156,11 +1119,11 @@ async def test_recommendation_question_not_hijacked_by_recall_signal():
 # ---------------------------------------------------------------------------
 
 @pytest.mark.asyncio
-async def test_three_activities_all_explicit_merge_without_asking():
-    """"somos 2 que bucean y 3 que hacen snorkel" — los 2 números son reales
-    (caso A de la matriz medida, 100% fiable en vivo) — se fusionan sin
-    preguntar nada. fill_gaps mockeado a {} para aislar el camino de la señal
-    (detect_special_signals), sin interferencia del extractor principal."""
+async def test_three_activities_all_explicit_merge_without_asking(extractor_dice):
+    """"somos 2 que bucean y 3 que hacen snorkel": los dos números son reales y se fusionan sin preguntar nada. CALN-8
+    (28-oct): el reparto lo lee el extractor; la red de señales que lo leía antes se quitó."""
+    extractor_dice({"somos 2 que bucean y 3 que hacen snorkel":
+                    {"group_size": 5, "group_allocation": {"certified_diving": 2, "snorkel": 3}}})
     state = make_state("es")
     state.detected_activity = "certified_diving"
     state.is_certified = True
@@ -1168,12 +1131,7 @@ async def test_three_activities_all_explicit_merge_without_asking():
     state.detected_group_size = 2
     state.last_dive_over_2_years = False
     state.core_pending_slot = core.SLOT_NATIONALITY
-    _senales = AsyncMock(return_value={
-        "companion_activity": "snorkel", "companion_qty": 3,
-        "mentions_other_person": True,
-    })
-    with patch.object(core_routing, "detect_special_signals", new=_senales), patch.object(core_extraction, "detect_special_signals", new=_senales):
-        resp = await route_message(state, "somos 2 que bucean y 3 que hacen snorkel")
+    resp = await route_message(state, "somos 2 que bucean y 3 que hacen snorkel")
     alloc = state.detected_group_allocation
     assert alloc.get("certified_diving") == 2
     assert alloc.get("snorkel") == 3
@@ -1182,46 +1140,25 @@ async def test_three_activities_all_explicit_merge_without_asking():
 
 
 @pytest.mark.asyncio
-async def test_other_companions_post_close_asks_before_adding_unconfirmed_item(extractor_dice):
-    """Tras el cierre, un mensaje con un sub-grupo nuevo confirmado (snorkel,
-    con número real) y otro sin respaldo (minicurso, "otro" no es un número)
-    — el confirmado se registra pero el carrito NO se toca todavía: primero
-    se pregunta el que falta, nunca se factura una cantidad inventada."""
-    # Los mensajes del acompañante sin datos del extractor: lo que se prueba es la señal LLM.
+async def test_post_close_two_new_subgroups_from_the_extractor(extractor_dice):
+    """Tras el cierre, «2 amigos hacen snorkel y otro el minicurso»: los dos sub-grupos nuevos entran en el reparto con
+    sus cantidades y el buceo original no se pierde. CALN-8 (28-oct): los lee el extractor con su cita («otro» es una
+    persona); antes los leía la red de señales, que inventaba cantidades y por eso preguntaba la de «otro»."""
     extractor_dice({"soy buzo certificado, quiero bucear desde cartagena, voy solo":
                     {**BUZO, **CARTAGENA, "group_size": 1},
-                    "no soy colombiano": {"is_colombian": False}})
+                    "no soy colombiano": {"is_colombian": False},
+                    "2 amigos hacen snorkel y otro el minicurso":
+                    {"group_size": 4, "group_allocation": {"certified_diving": 1, "snorkel": 2, "minicourse": 1}}})
     state = make_state("es")
     await route_message(state, "soy buzo certificado, quiero bucear desde cartagena, voy solo")
     await route_message(state, "no")
     await route_message(state, "no soy colombiano")
     assert state.mixed_cart[0]["type"] == "cert"
-
-    _senales = AsyncMock(return_value={
-        "companion_activity": "snorkel", "companion_qty": 2,
-        "mentions_other_person": True,
-        "other_companions": [{"activity": "minicourse", "qty": 1}],  # "otro" no es un número real
-    })
-    with patch.object(core_routing, "detect_special_signals", new=_senales), patch.object(core_extraction, "detect_special_signals", new=_senales):
-        resp = await route_message(state, "2 amigos hacen snorkel y otro el minicurso")
-    # El carrito original nunca se pierde; el nuevo ítem sin confirmar (minicurso)
-    # no se añade todavía — se pregunta primero.
+    await route_message(state, "2 amigos hacen snorkel y otro el minicurso")
+    assert state.detected_group_allocation == {"certified_diving": 1, "snorkel": 2, "minicourse": 1}
+    assert state.detected_group_size == 4
     types = {it["type"]: it["qty"] for it in state.mixed_cart}
     assert types.get("cert") == 1, "el buceo original no puede perderse"
-    assert "beginner" not in types, "no se factura una cantidad inventada"
-    assert state.core_pending_slot == core.SLOT_COMPANION_QTY
-    assert state.pending_companion_activity == "minicourse"
-    assert "minicurso" in resp.lower() or "minicourse" in resp.lower()
-
-    # Al responder, el carrito se cierra con AMBAS actividades nuevas.
-    _senales2 = AsyncMock(return_value={})
-    with patch.object(core_routing, "detect_special_signals", new=_senales2), patch.object(core_extraction, "detect_special_signals", new=_senales2):
-        resp2 = await route_message(state, "1")
-    types2 = {it["type"]: it["qty"] for it in state.mixed_cart}
-    assert types2.get("cert") == 1
-    assert types2.get("snorkel") == 2
-    assert types2.get("beginner") == 1
-    assert "norkel" in resp2
 
 
 @pytest.mark.asyncio
@@ -1266,20 +1203,6 @@ async def test_hallucinated_main_activity_restatement_is_not_queued_as_companion
         "el compañero singular inequívoco se resuelve sin preguntar (qty=1)"
     )
     assert state.core_pending_slot != core.SLOT_COMPANION_QTY
-    assert not state.pending_companion_queue
-
-
-def test_mentions_person_recognizes_english_plurals():
-    """Hallazgo en vivo 2026-07-23 (matriz EN de multi-ítem): la lista de
-    `_MENTIONS_PERSON_RE` en inglés no tenía plurales ("friend" sin "s?"),
-    mientras que TODA la lista en español sí los tiene ("amig[oa]s?") — "my
-    friends do snorkel" no disparaba NINGÚN mecanismo de acompañante en
-    inglés (ni el chequeo de mención perdida, ni el gate original
-    `companion_ambiguous`, ni el fast-path), un hueco real de idioma."""
-    assert core._mentions_person("my friends do snorkel")
-    assert core._mentions_person("2 brothers and my sisters are coming")
-    assert core._mentions_person("some folks want to join")
-    assert not core._mentions_person("I want to do snorkel")
 
 
 class TestPersonNounSharedVocabulary:
@@ -1306,19 +1229,6 @@ class TestPersonNounSharedVocabulary:
     def test_not_alone_re_boyfriend_kids_gap_closed(self):
         assert core._NOT_ALONE_RE.search("voy con mi boyfriend")
         assert core._NOT_ALONE_RE.search("coming with my kids")
-
-    def test_plural_companion_re_extended_family_gap_closed(self):
-        """_PLURAL_COMPANION_RE no tenía suegros/cuñados/sobrinos/nietos/
-        abuelos en plural, pese a que _MENTIONS_PERSON_RE (mismo concepto)
-        sí los tenía."""
-        assert core._PLURAL_COMPANION_RE.search("vienen mis suegros")
-        assert core._PLURAL_COMPANION_RE.search("mis sobrinos también")
-
-    def test_plural_companion_re_regional_slang_still_works(self):
-        """La jerga regional (parcero/pana/carnal/compa/pata/causa) NO es
-        parte del vocabulario compartido a propósito -- debe seguir
-        funcionando, migrada o no."""
-        assert core._PLURAL_COMPANION_RE.search("vienen mis parceros")
 
     def test_singular_companion_re_unaffected(self):
         """Ya era la lista más completa de las 3 con determinante singular
@@ -1403,29 +1313,6 @@ async def test_companion_attribute_without_activity_asks_instead_of_guessing(ext
         await route_message(state, "snorkel")
     assert state.core_pending_slot != core.SLOT_COMPANION_QTY
     assert state.detected_group_allocation == {"certified_diving": 1, "snorkel": 1}
-
-
-def test_activity_has_textual_backing_translates_diving_intent_to_minicourse():
-    """CALN-2 (27-oct): la regla vieja "no certificado + quiere bucear -> minicurso" ya NO respalda `minicourse` (la
-    decisión es no asumir: sin decidir y se recomienda). Lo nombrado sí respalda; un mensaje sin actividad, nada."""
-    assert not core._activity_has_textual_backing("minicourse", "quiere hacer buceo")
-    assert core._activity_has_textual_backing("minicourse", "ella quiere hacer el minicurso")
-    assert core._activity_has_textual_backing("snorkel", "quiere hacer snorkel")
-    assert not core._activity_has_textual_backing("minicourse", "mi amigo no esta certificado")
-
-
-def test_activity_has_textual_backing_certification_claim_backs_certified_diving():
-    """Hallazgo en vivo 2026-08-26 (batería sintética contra PRE, Grupo 3):
-    "mi amigo... él es certificado también" debe respaldar `certified_diving`
-    igual que "quiere bucear" — declarar la certificación ES la intención,
-    nadie dice "ya soy certificado" para pedir un minicurso. Sin este
-    respaldo, se descartaba una señal del LLM que SÍ era correcta (medido
-    3/3), preguntando "¿minicurso o snorkel?" a un acompañante ya
-    certificado. La negación explícita sigue sin respaldar nada."""
-    assert core._activity_has_textual_backing("certified_diving", "el es certificado tambien")
-    assert core._activity_has_textual_backing("certified_diving", "he is certified too")
-    assert not core._activity_has_textual_backing("certified_diving", "mi amigo no esta certificado")
-    assert not core._activity_has_textual_backing("certified_diving", "my friend is not certified")
 
 
 @pytest.mark.asyncio
@@ -1665,8 +1552,8 @@ async def test_fully_resolved_group_allocation_self_heals_stale_companion_flags(
     gustaría hacer a tu acompañante?" — no se aisló con certeza el disparador
     exacto (ni siquiera con trazas de LangSmith), así que el fix es un
     circuit-breaker: se fuerzan aquí las banderas corruptas exactamente como
-    se observaron en producción (`pending_companion_queue` con una entrada
-    "sobrante" pese a que el reparto ya la cubre) y se verifica que
+    se observaron en producción (`needs_companion_activity` encendida
+    pese a que el reparto ya cubre a todos) y se verifica que
     `_group_allocation_fully_resolved` las auto-limpia en el siguiente
     turno, sin importar cuál fue la causa original."""
     state = make_state("es")
@@ -1681,14 +1568,12 @@ async def test_fully_resolved_group_allocation_self_heals_stale_companion_flags(
     state.core_pending_slot = core.SLOT_SAFETY
     # Banderas corruptas, exactamente como se observaron en vivo.
     state.needs_companion_activity = True
-    state.pending_companion_queue = ["snorkel"]
 
     _senales = AsyncMock(return_value={})
     with patch.object(core_routing, "detect_special_signals", new=_senales), patch.object(core_extraction, "detect_special_signals", new=_senales):
         resp = await route_message(state, "no")
     assert state.last_dive_over_2_years is False
     assert state.needs_companion_activity is False
-    assert state.pending_companion_queue == []
     assert state.core_pending_slot != core.SLOT_COMPANION_ACTIVITY
     assert "acompañante" not in resp.lower()
 
@@ -1748,38 +1633,18 @@ async def test_detect_special_signals_skipped_when_group_already_fully_resolved(
 
 @pytest.mark.asyncio
 async def test_companion_attribute_in_opening_message_keeps_main_activity(extractor_dice):
-    """Hallazgo D (batería sintética contra PRE, conv 265/276): un mensaje de
-    APERTURA que establece la actividad principal en primera persona
-    ("quiero bucear") y menciona un acompañante SIN certificar en el MISMO
-    turno ("...voy con mi amigo pero el no esta certificado") perdía la
-    actividad principal recién detectada. Causa raíz:
-    `_restore_main_diver_fields` restauraba `detected_activity` al valor de
-    ANTES de este turno (None, por ser la apertura) para proteger el perfil
-    del buceador principal de un 'latest wins' incorrecto del acompañante —
-    pero en la apertura no hay nada previo que proteger, y la restauración
-    borraba la actividad legítima que este mismo turno acababa de fijar. El
-    bot terminaba preguntando "¿cuántos serían para buceo certificado?" en
-    vez de reconocer al acompañante sin certificar.
-
-    ex-9b paso 3: "quiero bucear" ya no fija el buceo certificado (era una deducción del regex; el extractor no elige
-    actividad con "quiero bucear con mi amigo" y la reserva pregunta). La apertura nombra la actividad ("bucear
-    certificado") para que la fije el mismo turno, que es lo que se prueba; el extractor no da el total, así que el
-    acompañante entra por la señal LLM, donde se restaura el perfil."""
+    """Hallazgo D (batería sintética contra PRE, conv 265/276): un mensaje de APERTURA que fija la actividad principal en
+    primera persona y menciona un acompañante SIN certificar en el MISMO turno («...voy con mi amigo pero el no esta
+    certificado») perdía la actividad principal recién detectada. CALN-2 (27-oct, «no asumir»): el amigo queda SIN
+    DECIDIR, no minicurso. CALN-8 (28-oct): al amigo lo lee el extractor (el reparto persona a persona); la red de
+    señales que lo leía antes, y donde se restauraba el perfil, se quitó."""
     mensaje = "hola quiero bucear certificado, voy con mi amigo pero el no esta certificado"
-    extractor_dice({mensaje: {"quiere_bucear": True, "activity": "certified_diving"}, "desde cartagena": CARTAGENA})
+    extractor_dice({mensaje: {"quiere_bucear": True, "activity": "certified_diving", "group_size": 2,
+                              "group_allocation": {"certified_diving": 1, "undecided": 1}, "otro_sin_certificar": True},
+                    "desde cartagena": CARTAGENA})
     state = make_state("es")
-    _senales = AsyncMock(return_value={
-             "companion_activity": "minicourse", "mentions_other_person": True,
-             "companion_is_singular": True, "companion_qty": 1,
-         })
-    with patch.object(core_routing, "detect_special_signals", new=_senales), patch.object(core_extraction, "detect_special_signals", new=_senales):
-        resp = await route_message(state, mensaje)
-    assert state.detected_activity == "certified_diving", (
-        "la actividad principal detectada este mismo turno no debe perderse "
-        "al restaurar el perfil frente a la mención del acompañante"
-    )
-    # CALN-2 (27-oct, decisión «no asumir»): el amigo no certificado no se convierte en minicurso: queda SIN DECIDIR y
-    # la reserva le pregunta qué quiere hacer (CALN-2 paso 3a: primero quién hace qué), con la recomendación.
+    await route_message(state, mensaje)
+    assert state.detected_activity == "certified_diving"
     assert (state.detected_group_allocation or {}).get("certified_diving") == 1
     assert "minicourse" not in (state.detected_group_allocation or {})
     assert state.pending_undecided_qty == 1 and state.detected_group_size == 2
@@ -1820,7 +1685,6 @@ async def test_comparing_options_object_routes_to_rag_not_cart(monkeypatch):
     rag.assert_awaited_once()
     assert "RAG_DIFERENCIA" in resp
     assert not state.mixed_cart
-    assert not state.pending_companion_queue
     assert state.detected_activity is None
 
 

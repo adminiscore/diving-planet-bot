@@ -27,25 +27,6 @@ def _state(**kw) -> ConversationState:
 
 # --- s4-26, Jev manda en el acompañante: "¿cuántos días son?" no es "son" (hijo) -----------------------------------------------
 
-def test_con_jev_seguro_de_que_no_la_regex_no_inventa_acompanante(monkeypatch):
-    st = _state()
-    st._jev_companion = 0.04
-    assert core._mentions_person("Si cuantos días son?")  # la regex sola sí lo ve
-    assert not core._menciona_a_alguien(st, "Si cuantos días son?")
-
-
-def test_sin_veredicto_de_jev_manda_la_regex(monkeypatch):
-    st = _state()
-    st._jev_companion = None
-    assert core._menciona_a_alguien(st, "voy con mi amigo")
-
-
-def test_jev_dudoso_no_tapa_un_acompanante_real(monkeypatch):
-    st = _state()
-    st._jev_companion = 0.85
-    assert core._menciona_a_alguien(st, "el quiere hacer snorkel con mi hijo")
-
-
 # --- s4-26, el cierre no se repite: tras el cierre, "¿cuánto dura?" se contesta sola --------------------------------------
 
 @pytest.fixture

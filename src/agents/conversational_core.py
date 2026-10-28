@@ -131,7 +131,7 @@ def _group_allocation_fully_resolved(state: ConversationState) -> bool:
         return False
     # Un reparto que no contiene la actividad principal no la explica (tarea 7a,
     # 2026-09-15): "él quiere hacer snorkel" pisa la principal y {certified_diving: 2}
-    # seguia "cubriendo" el grupo, asi que la red de precision no llegaba a correr.
+    # seguia "cubriendo" el grupo, asi que el grupo parecia completo.
     if state.detected_activity in _ACTIVITY_TO_CART_TYPE and state.detected_activity not in alloc:
         return False
     return sum(alloc.values()) >= size
@@ -1347,10 +1347,9 @@ def _merge_pending_undecided(state: ConversationState) -> bool:
 
 def _merge_companion_activity(state: ConversationState, activity: str, qty: int) -> None:
     """Añade `qty` personas a `activity` como subgrupo del reparto sin pisar
-    la actividad principal — helper compartido por el fast-path regex
-    (_ADDED_PERSON_RE, arriba) y por la red de precisión LLM
-    (detect_special_signals, maybe_handle_turn) para que ambos caminos dejen
-    el estado exactamente igual de consistente."""
+    la actividad principal — punto único (fast-path regex, respuesta a
+    «¿cuántos para X?», personas sin decidir que eligen) para que todos los
+    caminos dejen el estado exactamente igual de consistente."""
     alloc = dict(state.detected_group_allocation or {})
     main_act = state.detected_activity
     if main_act and main_act not in alloc:
@@ -2445,32 +2444,24 @@ from src.agents.nucleo.extraction import (  # noqa: E402, F401
     _ADDED_PERSON_RE,
     _ADDITION_CUE,
     _ADDITION_CUE_RE,
-    _BARE_HEADCOUNT_RE,
     _BOOL_SLOT_FIELD,
     _COURSE_SOLO_RE,
     _LLM_RESOLVABLE_SLOTS,
     _MENTIONS_PERSON_RE,
     _NAMED_PERSON_RE,
     _NOT_ALONE_RE,
-    _PLURAL_COMPANION_RE,
     _SINGULAR_COMPANION_RE,
     _SLOT_PREV_KEY,
     _SLOT_STATE_FIELD,
     _WORD_TO_NUM,
-    _activity_has_textual_backing,
     _add_or_ask_companion,
     _apply_question_turn_answers,
     _apply_resolved_slot_value,
-    _consume_number,
     _extraction_phase,
     _extraction_phase_body,
     _flag_cert_or_course,
     _jev_dice_ya_contada,
     _jev_pending_answer,
-    _jev_rules_out_special_signals,
-    _menciona_a_alguien,
-    _mentions_person,
-    _message_numbers,
     _number_of_something_else,
     _pista_del_regex,
     _question_turn_fields,
@@ -2523,7 +2514,6 @@ from src.agents.nucleo.routing import (  # noqa: E402, F401
     _HOTEL_UNKNOWN_RE,
     _accept_pending_correction,
     _apply_short_answer,
-    _assign_split_share,
     _button_value,
     _comparison_query,
     _compose_comparison,
@@ -2534,7 +2524,6 @@ from src.agents.nucleo.routing import (  # noqa: E402, F401
     _mentioned_offerings,
     _quantity_answer,
     _routing_phase,
-    _with_main_rest,
     _word_ages,
     sembrar_senales_del_turno,
 )

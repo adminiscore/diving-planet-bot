@@ -667,11 +667,10 @@ _CAMBIA_IDIOMA_Q = {
     },
 }
 
-# u3-6 (paso 7, promocionado el 27-sep): ¿el mensaje mete a OTRA persona en la reserva? Filtro previo de
-# `detect_special_signals`: por debajo de COMPANION_NONE_MAX (Jev seguro de que no) no se llama al
-# LLM. Calibrado con `scripts/sonda_acompanante.py`.
+# u3-6 (paso 7, promocionado el 27-sep): ¿el mensaje mete a OTRA persona en la reserva? Lo usan el lector del
+# grupo (`nucleo.extractor._JEV_OTRA_PERSONA_MIN`) y la suma de quien se apunta (`_JEV_SE_SUMA_SEGURO`). Hasta CALN-8
+# (28-oct) era también el filtro previo de la red de señales de acompañantes (COMPANION_NONE_MAX), que se quitó.
 COMPANION_JOINS = "companion_joins"
-COMPANION_NONE_MAX = 0.2
 _COMPANION_JOINS_Q = {
     "type": "noul",
     "instructions": (

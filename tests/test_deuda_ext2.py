@@ -4,14 +4,14 @@ banco-lat11 (24/24).
 1. «PADI open water, advanced open water and deep diver certs» (contestando a «¿cuántas personas?») daba el curso
    Open Water a quien ya lo tiene (3 de 3 en PRE) y el redactor de hechos le cotizaba el curso. Quien está certificado
    no se saca el Open Water. Probado también en el prompt: no lo arreglaba y daba 3 inventos de is_certified en ex0.
-2. «Voy con una amiga que no está certificada»: una persona más, en singular y sin total: son 2.
+2. «Voy con una amiga que no está certificada»: una persona más, en singular y sin total: son 2. (CALN-8, 28-oct:
+   la regla iba en la red de señales de acompañantes, que se quitó; lo cuenta el lector del grupo.)
 3. Al sumar a alguien sin actividad principal ni total, quien escribe también cuenta («viene mi novio…» daba 1).
 4. Con la mayor parte del grupo sin decidir, la principal sigue pendiente (no la del acompañante).
 """
 
 from src.agents import conversational_core as core
 from src.agents.intent_detector import DetectedIntent
-from src.agents.nucleo import extraction as core_extraction
 from src.agents.nucleo import extractor as core_extractor
 from src.flows.state import ConversationState
 
@@ -48,40 +48,6 @@ def test_el_advanced_de_un_certificado_sigue():
     it = _intent()
     core_extractor._poner_actividad(it, _estado(), {"activity": "padi_advanced", "is_certified": True})
     assert it.activity == "padi_advanced"
-
-
-def test_una_persona_mas_sin_actividad_son_dos():
-    st = _estado()
-    core_extraction._contar_al_acompanante_sin_actividad(st, "voy con una amiga que no está certificada",
-                                                        {"companion_is_singular": True})
-    assert st.detected_group_size == 2
-
-
-def test_en_plural_o_con_total_no_se_toca():
-    st = _estado()
-    core_extraction._contar_al_acompanante_sin_actividad(st, "vienen unos amigos que no están certificados",
-                                                        {"companion_is_singular": False})
-    assert st.detected_group_size is None
-    st = _estado(detected_group_size=4)
-    core_extraction._contar_al_acompanante_sin_actividad(st, "voy con una amiga", {"companion_is_singular": True})
-    assert st.detected_group_size == 4
-
-
-def test_una_persona_mas_y_otras_en_plural_no_son_dos():
-    """CALN2-04 (banco-edades e1): la esposa en singular, pero también las hijas: el total no es 2."""
-    st = _estado()
-    core_extraction._contar_al_acompanante_sin_actividad(
-        st, "Voy con mi esposa, que no bucea, y nuestras hijas de 8 y 5", {"companion_is_singular": True})
-    assert st.detected_group_size is None
-
-
-def test_una_persona_mas_y_dos_edades_no_son_dos():
-    """Sparring b5: «mi esposo no bucea y vamos con los niños, de 7 y 4» (sin plural que lo diga): con dos edades
-    sabidas, el total no es 2."""
-    st = _estado(detected_ages=[4, 7])
-    core_extraction._contar_al_acompanante_sin_actividad(
-        st, "Mi esposo no bucea y vamos con los niños, de 7 y 4 años", {"companion_is_singular": True})
-    assert st.detected_group_size is None
 
 
 def test_sin_principal_ni_total_quien_escribe_cuenta():

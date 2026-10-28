@@ -238,3 +238,84 @@ def test_el_buzo_inactivo_no_pierde_el_buceo_aunque_el_lector_diga_no_certificad
     assert "certified_diving" not in core._companion_activity_options(st)
     st.acompanante_certificado_inactivo = True
     assert "certified_diving" in core._companion_activity_options(st)
+
+
+def test_jev_seguro_de_otra_persona_usa_el_lector_aunque_el_extractor_calle():
+    """CALN-8 (28-oct): lo que hacía la red de señales de acompañantes («viene también mi amiga…» sin nada del
+    extractor) lo hace el lector cuando Jev está seguro de que se suma alguien."""
+    datos = {"activity": "certified_diving", "is_certified": True}
+    assert not lg.por_completar(datos)
+    assert lg.por_completar(datos, jev_otros=True)
+
+
+def test_un_total_de_uno_solo_por_hablar_de_quien_escribe_no_se_pone():
+    lectura = {"total_dicho": None, "personas": [_p(certificado=True, cita="Yo tengo el Open Water")]}
+    nuevos, _ = lg.completar({"activity": "certified_diving"}, lectura)
+    assert "group_size" not in nuevos
+
+
+AMIGOS = "Voy con unos amigos a bucear, todos somos certificados"
+
+
+def test_unos_amigos_sin_numero_no_dan_total():
+    """g15 (medida de CALN-8): «unos amigos» no dice cuántos; antes el lector ponía 1 y el grupo quedaba en 2."""
+    lectura = lg.validar({"total_dicho": None, "personas": [
+        _p(certificado=True, actividad="certified_diving", cita=AMIGOS),
+        _p(quien="amigos", cantidad=None, certificado=True, actividad="certified_diving", cita=AMIGOS)]}, AMIGOS)
+    assert not lectura["descartes"] and lg.total_de(lectura) is None
+    nuevos, cambios = lg.completar({"activity": "certified_diving", "is_certified": True}, lectura)
+    assert "group_size" not in nuevos and "group_allocation" not in nuevos and not cambios
+
+
+SEIS = "Hola, somos 6 amigos de Bogotá: 4 tenemos certificación y 2 dudan entre el minicurso y el snorkel."
+
+
+def test_la_entrada_sin_numero_que_repite_el_grupo_se_quita():
+    """b6: «somos 6 amigos» sin cantidad, además de los 4 y los 2 que ya suman el total dicho."""
+    lectura = lg.validar({"total_dicho": 6, "personas": [
+        _p(cantidad=None, cita="somos 6 amigos de Bogotá"),
+        _p(quien="certificados", cantidad=4, certificado=True, cita="4 tenemos certificación"),
+        _p(quien="los otros dos", cantidad=2, cita="2 dudan entre el minicurso y el snorkel")]}, SEIS)
+    assert [d["motivo"] for d in lectura["descartes"]] == ["repite el grupo"]
+    nuevos, _ = lg.completar({"group_size": 6}, lectura)
+    assert nuevos["group_allocation"] == {"undecided": 6}
+
+
+def test_un_reparto_que_no_suma_el_total_no_se_pone():
+    """b6: quien escribe + 4 + 2 son 7 con un total de 6 (19 de 20 lecturas daban {undecided: 7})."""
+    lectura = {"total_dicho": 6, "personas": [_p(cita="somos 6 amigos de Bogotá"),
+                                              _p(quien="certificados", cantidad=4, certificado=True, cita="4 tenemos"),
+                                              _p(quien="los otros dos", cantidad=2, cita="2 dudan")]}
+    nuevos, _ = lg.completar({"group_size": 6}, lectura)
+    assert "group_allocation" not in nuevos
+
+
+VIENEN = "Quiero bucear, soy buzo certificado. Vienen también unos amigos, no sé qué querrán hacer"
+
+
+@pytest.mark.parametrize("certificado, total_sabido, pregunta", [
+    (None, None, True),    # g26: no se sabe cuántos ni qué harán
+    (False, None, True),   # «unos amigos que no bucean»: tampoco han elegido
+    (True, None, False),   # g15: certificados que van con quien escribe, al mismo plan
+    (None, 4, False),      # con el total sabido, el reparto ya dirá quién falta
+])
+def test_vienen_otros_sin_saber_cuantos_ni_que_haran(certificado, total_sabido, pregunta):
+    lectura = lg.validar({"total_dicho": None, "personas": [
+        _p(certificado=True, cita="Quiero bucear, soy buzo certificado"),
+        _p(quien="amigos", cantidad=None, certificado=certificado,
+           cita="Vienen también unos amigos, no sé qué querrán hacer")]}, VIENEN)
+    nuevos, _ = lg.completar({"activity": "certified_diving", "is_certified": True}, lectura, total_sabido)
+    assert bool(nuevos.get("otros_sin_elegir")) is pregunta
+    assert "group_size" not in nuevos
+
+
+def test_quien_escribe_ya_eligio_y_se_suma_otro():
+    """g19 (medida de CALN-8): «I'd like to do the mini course» y luego «my husband is certified, he'd like to dive»; el
+    mensaje no habla de quien escribe, pero ya eligió: van 2. Lo hacía la red de señales."""
+    marido = [_p(quien="husband", certificado=True, actividad="certified_diving", cita="my husband is certified")]
+    nuevos, _ = lg.completar({}, {"total_dicho": None, "personas": marido}, None, "minicourse")
+    assert nuevos["group_size"] == 2
+    assert nuevos["group_allocation"] == {"minicourse": 1, "certified_diving": 1}
+    # con un total ya sabido, el mensaje puede nombrar solo a una parte: no se cuenta a nadie más
+    nuevos, cambios = lg.completar({}, {"total_dicho": None, "personas": marido}, 3, "minicourse")
+    assert "group_size" not in nuevos and "group_allocation" not in nuevos and not cambios

@@ -138,7 +138,7 @@ def lectura_b(x: dict, lec: dict | None) -> dict:
     a = lectura_a(x)
     if not lec or not lec["personas"]:
         return a
-    cert = sum(p["cantidad"] for p in lec["personas"] if p["certificado"] is True)
+    cert = sum(p["cantidad"] or 0 for p in lec["personas"] if p["certificado"] is True)  # None: no dice cuántos
     reparto = x.get("group_allocation")
     dicho = x.get("group_size")
     if reparto and isinstance(dicho, int) and sum(n for n in reparto.values() if isinstance(n, int)) == dicho:
@@ -149,7 +149,7 @@ def lectura_b(x: dict, lec: dict | None) -> dict:
         if act is None and p["quien"] == "cliente" and x.get("quiere_bucear") and x.get("is_certified"):
             decididos["certified_diving"] += 1
             continue
-        if act:
+        if act and p["cantidad"]:
             decididos[act] += p["cantidad"]
     total = x.get("group_size") or lg.total_de(lec)
     sin = (total - sum(decididos.values())) if isinstance(total, int) else None
