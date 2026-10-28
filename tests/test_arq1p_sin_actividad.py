@@ -91,6 +91,6 @@ def test_con_el_flag_lo_escribe_el_redactor(redactor, monkeypatch):
 
 
 def test_si_pide_tambien_el_precio_contesta_el_rag(redactor, monkeypatch):
-    st = _conv(["horario", "precio"])
+    st = _conv(["horario", "precio"], ya_reservado=True)  # CALN-3 paso 2: sin reservar, el precio de los candidatos
     assert asyncio.run(redactor_hechos.responder(st, MENSAJE, st.history)) is None
     assert redactor.hechas == []

@@ -186,8 +186,10 @@ async def hechos_del_turno(state: ConversationState, message: str, history: list
     leida = await lectura_del_extractor(state, message)
     datos, leido = leida or {}, leida is not None
     actividades = _actividades(state, datos)
-    if not actividades and "precio" in intenciones and not _actividades_en_juego(state):
-        # CALN-3 paso 2 (CALN3-P01): el precio sin actividad elegida, con los candidatos que deja lo que se sabe.
+    if (not actividades and "precio" in intenciones and not _actividades_en_juego(state)
+            and not (state.ya_reservado or datos.get("ya_reservado"))):
+        # CALN-3 paso 2 (CALN3-P01): el precio sin actividad elegida, con los candidatos que deja lo que se sabe. Quien
+        # ya reservó algo que no nombra no elige entre candidatos: contesta el RAG (arq-1p).
         foto = _foto(state, datos, _origen(state, datos, leido), message, history)
         for campo in ("is_certified", "quiere_bucear"):
             if getattr(foto, campo) in (None, False) and datos.get(campo) is not None:
