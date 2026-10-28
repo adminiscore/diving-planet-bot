@@ -221,6 +221,25 @@ async def hechos_del_turno(state: ConversationState, message: str, history: list
     return (bloques, cubiertas) if cubiertas else None
 
 
+_IMPORTE_RE = re.compile(r"\d[\d.,]*\s*(?:COP|USD|US\$)|(?:USD|COP|US\$)\s*\d", re.IGNORECASE)
+_CIERRA_PREGUNTANDO_RE = re.compile(r"\?[*_)\]]*\s*[\U0001F000-\U0001FAFF☀-➿]?\s*$")
+
+
+def con_la_pieza(answer: str, pieza: str) -> str:
+    """CALN-3 paso 3 «A»: la respuesta del escritor con la pieza de precios debajo, delante de su pregunta final si
+    cierra preguntando. Si aun así escribió algún importe, fuera esa frase: la cifra la da la pieza."""
+    parrafos = [p for p in answer.rstrip().split("\n\n") if p.strip()]
+    cierre = [parrafos.pop()] if len(parrafos) > 1 and _CIERRA_PREGUNTANDO_RE.search(parrafos[-1]) else []
+    limpios = []
+    for parrafo in parrafos:
+        if _IMPORTE_RE.search(parrafo):
+            parrafo = " ".join(f for f in re.split(r"(?<=[.!?])\s+", parrafo) if not _IMPORTE_RE.search(f)).strip()
+            logger.info("[HECHOS][CALN3] el escritor dio un importe: fuera, lo da la pieza")
+        if parrafo:
+            limpios.append(parrafo)
+    return "\n\n".join([*limpios, pieza, *cierre])
+
+
 def texto_de_los_hechos(bloques: list[dict]) -> str:
     """Los hechos en JSON para el modelo. `pregunta_pendiente` es del código (la pregunta la pone él): con ella delante,
     Luna preguntaba el origen en vez de dar los dos enlaces (banco arq-1d, k2 2 de 3)."""
@@ -271,10 +290,16 @@ async def _con_el_escritor(state: ConversationState, message: str, history: list
     if origen_pendiente:
         entradas.pop("pregunta_final", None)  # la pregunta del origen la pone el código, abajo
     entradas.update(hechos=texto_de_los_hechos(bloques), hechos_bloques=(bloques, intenciones), sin_busqueda=True)
+    pieza = cotizar.pieza_de_precios(bloques, lang) if "precio" in intenciones else None
+    if pieza:
+        # CALN-3 paso 3 «A»: el escritor no escribe importes; los pone el código debajo y no se le exigen.
+        entradas.update(precios_por_codigo=True, hechos_bloques=(bloques, [i for i in intenciones if i != "precio"]))
     answer = await supervisor.rag_answer(message, **entradas)
     if not answer or is_fallback_answer(answer):
         note_turn(hechos_por_codigo="fallo")
         return None
+    if pieza:
+        answer = con_la_pieza(answer, pieza)
     if origen_pendiente:
         tras = ((core.ORIGEN_TRAS_LOS_ENLACES_ES, core.ORIGEN_TRAS_LOS_ENLACES_EN) if "enlace" in intenciones
                 else (core.ORIGEN_TRAS_LAS_VARIANTES_ES, core.ORIGEN_TRAS_LAS_VARIANTES_EN))

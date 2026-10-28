@@ -73,9 +73,12 @@ def test_caln3b_si_jev_se_inclina_por_un_origen_se_confirma(llamadas):
 
 
 def test_con_origen_no_se_pregunta(llamadas):
-    llamadas.estado["texto"] = "El *Minicurso* desde Cartagena cuesta 183 USD online o 204 USD sin reserva online."
+    llamadas.estado["texto"] = "El *Minicurso* es la primera experiencia de buceo, con guía. Te dejo el precio abajo."
     st = _conv(location="cartagena")
-    assert asyncio.run(redactor_hechos.responder(st, MENSAJE, st.history)) == llamadas.estado["texto"]
+    answer = asyncio.run(redactor_hechos.responder(st, MENSAJE, st.history))
+    # CALN-3 paso 3 «A»: el texto del escritor y debajo la pieza de precios del código, sin pregunta del origen
+    assert answer.startswith(llamadas.estado["texto"]) and "183 USD · 204 USD" in answer
+    assert not core._es_pregunta_de_origen(answer)
 
 
 @pytest.mark.parametrize("campos", [{"_otra_cosa": None}, {"_otra_cosa": True}, {"_intenciones": []}])
@@ -137,9 +140,10 @@ def test_la_nacionalidad_del_mensaje_pone_la_moneda(llamadas, monkeypatch):
         return {"actividad_preguntada": "minicourse", "is_colombian": True, "location": "cartagena"}
 
     monkeypatch.setattr(extractor, "lectura_del_extractor", lectura)
-    llamadas.estado["texto"] = "El minicurso desde Cartagena cuesta 655.000 COP."
+    llamadas.estado["texto"] = "El minicurso sale desde Cartagena."
     st = _conv()
-    assert asyncio.run(redactor_hechos.responder(st, MENSAJE, st.history)) == llamadas.estado["texto"]
+    answer = asyncio.run(redactor_hechos.responder(st, MENSAJE, st.history))
+    assert "655.000 COP · 727.000 COP" in answer and "USD" not in answer  # la pieza, en la moneda del mensaje
     assert "COP" in llamadas.hechas[0][0][-1]["content"] and st.is_colombian is None  # el estado no se toca
 
 
@@ -171,7 +175,9 @@ def test_lat2_si_falta_un_hecho_no_se_rehace(llamadas, monkeypatch):
 
     monkeypatch.setattr(rag_agent, "generar_con_respaldo", generar)
     st = _conv(location="cartagena")
-    assert asyncio.run(redactor_hechos.responder(st, MENSAJE, st.history)) == "Cuesta 183 USD."
+    answer = asyncio.run(redactor_hechos.responder(st, MENSAJE, st.history))
+    # CALN-3 paso 3 «A»: el importe que escribe igualmente sale; lo da la pieza
+    assert "Cuesta 183 USD." not in answer and "183 USD · 204 USD" in answer
     assert len(llamadas.hechas) == 1
 
 
@@ -205,3 +211,19 @@ def test_arq1n_el_certificado_sin_bucear_hace_el_refresher():
     st = _conv(detected_activity="certified_diving", last_dive_over_2_years=True)
     assert redactor_hechos._actividad(st, {}) == "refresher"
     assert redactor_hechos._actividad(st, {"actividad_preguntada": "certified_diving"}) == "certified_diving"
+
+
+def test_caln3_paso3_el_escritor_no_escribe_importes(llamadas):
+    """CALN-3 paso 3 «A»: el escritor recibe la regla de no escribir importes y no se le exigen los del precio."""
+    st = _conv(location="cartagena")
+    asyncio.run(redactor_hechos.responder(st, MENSAJE, st.history))
+    [(messages, _)] = llamadas.hechas
+    from src.prompts.info import RAG_PRECIOS_POR_CODIGO
+
+    assert RAG_PRECIOS_POR_CODIGO["es"] in messages[0]["content"]
+
+
+def test_caln3_paso3_la_pieza_va_delante_de_la_pregunta_del_escritor():
+    pieza = "*Precios por persona* (online · normal):\n• Minicurso: 183 USD · 204 USD"
+    answer = redactor_hechos.con_la_pieza("Es tu primera inmersión. Cuesta 183 USD.\n\n¿Te paso el enlace? 🌊", pieza)
+    assert answer == "Es tu primera inmersión.\n\n" + pieza + "\n\n¿Te paso el enlace? 🌊"

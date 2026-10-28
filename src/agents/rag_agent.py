@@ -692,6 +692,7 @@ async def rag_answer(
     origin: str | None = None,
     avisos_hechos: dict | None = None,
     sin_precio: bool = False,
+    precios_por_codigo: bool = False,
     hechos: str | None = None,
     hechos_bloques: tuple[list[dict], list[str]] | None = None,
     pregunta_final: str | None = None,
@@ -868,6 +869,11 @@ async def rag_answer(
             from src.prompts.info import RAG_SIN_PRECIO_EN, RAG_SIN_PRECIO_ES  # lazy
 
             system_prompt = f"{system_prompt}\n\n{RAG_SIN_PRECIO_ES if lang == 'es' else RAG_SIN_PRECIO_EN}"
+        elif precios_por_codigo:
+            # CALN-3 paso 3 «A»: los importes los pone el código debajo (`cotizar.pieza_de_precios`).
+            from src.prompts.info import RAG_PRECIOS_POR_CODIGO  # lazy
+
+            system_prompt = f"{system_prompt}\n\n{RAG_PRECIOS_POR_CODIGO['es' if lang == 'es' else 'en']}"
         messages = [{"role": "system", "content": system_prompt}]
 
         # Add conversation history (settings.history_window_size messages max,
