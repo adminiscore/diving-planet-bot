@@ -427,13 +427,17 @@ PIDE_PRECIO_MIN = 0.7
 # center's activities» a secas, Jev no veía «el snorkel» en español como una de ellas: «¿Cuánto cuesta el snorkel?» 0,55 y «precio del snorkel» 0,61 (umbral
 # 0,7), la puerta del origen no saltaba y se cotizaba Cartagena sin saber el origen (banco gen-19, 4/4). Nombrando las
 # actividades: 0,94 y 0,94; hotel, taxi, monedas, duración, cómo reservar y qué incluye siguen en 0,04-0,11.
+# CALN-3c (28-oct, p09): «Al final vamos a estar alojados en Isla Grande, ¿cambia el precio?» daba 0,35 y el turno iba al
+# RAG sin hechos (1 de 2 sin importe). Con «whether that price changes»: las tres frases de «¿cambia el precio?» 0/4 → 4/4;
+# moneda, hotel, duración, cómo reservar, qué incluye y el lugar sin pregunta, iguales (sonda ×4 en dp-pre-bot).
 _PIDE_PRECIO_Q_ACTIVIDADES = {
     "type": "noul",
     "instructions": (
         "The customer asks how much one of the dive center's activities costs: dive trips and dive packages, the dive "
         "mini-course or refresher, snorkeling, PADI courses and specialties (price, rate, cost, a quote), including "
-        "asking that price again in another currency or for a different number of people, even if the same message "
-        "also asks other things. It is FALSE when they only ask the price of something the dive center does not sell "
+        "asking that price again in another currency or for a different number of people, or asking whether that price "
+        "changes (with another departure point, staying on the islands, another date or group size), even if the same "
+        "message also asks other things. It is FALSE when they only ask the price of something the dive center does not sell "
         "(a hotel, a room or night, a taxi or transport), when they only ask in which currency they pay or which "
         "payment methods are accepted, and when they ask about duration, number of dives or how to book."
     ),
@@ -554,6 +558,9 @@ _PIDE_DESCUENTO_Q = {
 # CALN-3 (decisión 4 del 27-oct, CALN3-Q05): «¿el de grupo nos aplica?» recibía debajo todos los demás descuentos
 # (arq-7b exigía la lista entera). Si pregunta por UNO, los hechos llevan la lista igual, pero no se exige ni se pega.
 PIDE_UN_DESCUENTO = "pide_un_descuento"
+# Umbral propio (sparring t3b, sonda ×4): «…Somos 6… ¿Cuánto nos sale y hay descuento de grupo?» da 0,60-0,68 y «¿cuánto
+# nos sale y hay algún descuento?» 0,05; sin pregunta de descuento, nunca más de 0,19 (16 mensajes ×4).
+PIDE_UN_DESCUENTO_MIN = 0.5
 _PIDE_UN_DESCUENTO_Q = {
     "type": "noul",
     "instructions": (
@@ -1016,7 +1023,8 @@ def answers_to_signals(answers: dict, threshold: float = THRESHOLD) -> dict:
         out[PIDE_QUE_INCLUYE] = (answers.get(PIDE_QUE_INCLUYE) or {}).get("noul", 0.0) >= PIDE_QUE_INCLUYE_MIN
     for intencion in (*_INTENCIONES_Q, PIDE_DESCUENTO, PIDE_UN_DESCUENTO, PIDE_CLIMA, PIDE_PAGO, *_INTENCIONES_LAT8):
         if intencion in answers and intencion != PIDE_OTRA_COSA:
-            out[intencion] = (answers.get(intencion) or {}).get("noul", 0.0) >= INTENCION_MIN
+            minimo = PIDE_UN_DESCUENTO_MIN if intencion == PIDE_UN_DESCUENTO else INTENCION_MIN
+            out[intencion] = (answers.get(intencion) or {}).get("noul", 0.0) >= minimo
     if PIDE_SI_ALCANZA in answers:
         out[PIDE_SI_ALCANZA] = (answers.get(PIDE_SI_ALCANZA) or {}).get("noul", 0.0) >= INTENCION_MIN
     if PIDE_OTRA_COSA in answers:
