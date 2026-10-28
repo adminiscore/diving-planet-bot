@@ -44,7 +44,8 @@ def candidatos(state) -> list[str]:
     buceo y el minicurso. Solo se llama cuando pide precio: «hola, ¿cuánto cuesta bucear?» llega sin lectura del
     extractor (Jev: nada que apuntar), así que no se espera a `quiere_bucear`."""
     if state.is_certified is True:
-        return ["certified_diving"]
+        # CALN-3c (p07): «yo soy buzo certificado y mi novia nunca ha buceado» sin reparto: también el minicurso de ella.
+        return ["certified_diving", *(["minicourse"] if getattr(state, "acompanante_sin_certificar", False) else [])]
     if state.is_certified is False:
         return ["minicourse"] if getattr(state, "quiere_bucear", False) else ["minicourse", "snorkel"]
     return ["certified_diving", "minicourse"]

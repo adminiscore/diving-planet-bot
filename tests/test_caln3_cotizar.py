@@ -204,3 +204,16 @@ def test_paso3_un_descuento_con_su_umbral():
 
     assert j.answers_to_signals({j.PIDE_UN_DESCUENTO: {"noul": 0.64}})[j.PIDE_UN_DESCUENTO] is True
     assert j.answers_to_signals({j.PIDE_UN_DESCUENTO: {"noul": 0.19}})[j.PIDE_UN_DESCUENTO] is False
+
+
+def test_caln3c_buzo_con_novia_que_nunca_ha_buceado():
+    """p07: «yo soy buzo certificado y mi novia nunca ha buceado» sin reparto: el buceo y el minicurso."""
+    assert cotizar.candidatos(_st(is_certified=True, acompanante_sin_certificar=True)) == ["certified_diving", "minicourse"]
+
+
+def test_caln3c_quien_no_ha_elegido_es_el_buzo_que_escribe():
+    """p08: «I'm a certified diver and my 12 year old son wants to snorkel» → {snorkel 1} + 1 sin elegir: el buceo."""
+    from src.agents import redactor_hechos as rh
+
+    st = _st(is_certified=True, detected_group_allocation={"snorkel": 1}, pending_undecided_qty=1, detected_ages=[12])
+    assert rh._de_quien_no_ha_elegido(st, {}) == ["certified_diving"]

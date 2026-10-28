@@ -64,11 +64,20 @@ def _de_quien_no_ha_elegido(foto: ConversationState, datos: dict) -> list[str]:
     """Las 2 primeras opciones que el bot ofrece a quien aún no ha elegido (sin el acompañante), si hay alguien así en el
     grupo; [] si no."""
     reparto = {**(foto.detected_group_allocation or {}), **(datos.get("group_allocation") or {})}
-    if not (foto.pending_undecided_qty or reparto.get("undecided")):
+    sin_elegir = foto.pending_undecided_qty or reparto.get("undecided") or 0
+    if not sin_elegir:
         return []
     from src.agents.conversational_core import _companion_activity_options  # lazy
 
-    return [o for o in _companion_activity_options(foto) if o != "companion"][:2]
+    opciones = [o for o in _companion_activity_options(foto) if o != "companion"]
+    certificado = foto.is_certified is True or datos.get("is_certified") is True
+    if certificado and not any((r := dom.by_id(a)) is not None and r.requires_certification for a in reparto):
+        # CALN-3c (p08): «I'm a certified diver and my son wants to snorkel»: quien no ha elegido es quien escribe, buzo;
+        # su opción es el buceo, no el minicurso que se ofrece a un principiante.
+        opciones = ["certified_diving", *(o for o in opciones if o != "certified_diving")]
+        if sin_elegir == 1:
+            return ["certified_diving"]
+    return opciones[:2]
 
 
 def _actividades_en_juego(state: ConversationState) -> bool:
@@ -249,6 +258,8 @@ async def hechos_del_turno(state: ConversationState, message: str, history: list
         for campo in ("is_certified", "quiere_bucear"):
             if getattr(foto, campo) in (None, False) and datos.get(campo) is not None:
                 setattr(foto, campo, datos[campo])
+        if datos.get("otro_sin_certificar") is True:
+            foto.acompanante_sin_certificar = True  # CALN-3c (p07): lo dice ESTE mensaje; se guarda después
         if bloques := cotizar.hechos_de_los_candidatos(foto, intenciones):
             cubiertas = [i for i in intenciones if any(_cubierta(b, i) for b in bloques)]
             logger.info(f"[HECHOS][CALN3] sin actividad elegida: los candidatos {[b['actividad'] for b in bloques]}")
