@@ -11,8 +11,7 @@ from src.state_store import deserialize_state, serialize_state
 @pytest.mark.parametrize("reparto", [
     None,
     {"certified_diving": 2},
-    {"certified_diving": 2, "snorkel": 1, "undecided": 1},
-    {"undecided": 3},
+    {"certified_diving": 2, "snorkel": 1},
     {"minicourse": 0, "snorkel": 2},
 ])
 def test_ida_y_vuelta_exacta(reparto):
@@ -21,6 +20,36 @@ def test_ida_y_vuelta_exacta(reparto):
     assert st.detected_group_allocation == reparto
     if reparto:
         assert list(st.detected_group_allocation) == list(reparto)  # el mismo orden
+
+
+@pytest.mark.parametrize("reparto, queda, sin_elegir", [
+    ({"certified_diving": 2, "snorkel": 1, "undecided": 1}, {"certified_diving": 2, "snorkel": 1}, 1),
+    ({"undecided": 3}, None, 3),
+])
+def test_quien_no_ha_elegido_sale_del_reparto(reparto, queda, sin_elegir):
+    """CALN-8 (2a): quien no ha elegido vive en la lista, fuera del reparto (lo que hacía `sin_decidir_aparte`)."""
+    st = ConversationState(conversation_id="caln2")
+    st.detected_group_allocation = reparto
+    assert st.detected_group_allocation == queda
+    assert st.pending_undecided_qty == sin_elegir and st.needs_companion_activity
+    st.detected_group_allocation = {"certified_diving": 2}  # un reparto nuevo no se los lleva
+    assert st.pending_undecided_qty == sin_elegir
+
+
+def test_las_esperas_de_quien_no_ha_elegido_salen_de_la_lista():
+    """CALN-8 (2a): `pending_undecided_qty` y `needs_companion_activity` se leen y se escriben en `personas`."""
+    st = ConversationState(conversation_id="caln2")
+    assert st.pending_undecided_qty is None and not st.needs_companion_activity
+    st.needs_companion_activity = True  # «vienen unos amigos, no sé qué querrán hacer»: sin saber cuántos
+    assert st.personas == [{"actividad": None, "cantidad": None}] and st.pending_undecided_qty is None
+    st.needs_companion_activity = False
+    assert st.personas == []
+    st.pending_undecided_qty = 2
+    assert st.needs_companion_activity and st.personas == [{"actividad": None, "cantidad": 2}]
+    st.pending_companion_activity = "snorkel"  # ya eligió: falta juntarlos, no preguntar
+    assert not st.needs_companion_activity and st.pending_undecided_qty == 2
+    st.pending_undecided_qty = None
+    assert st.personas == []
 
 
 def test_quien_no_ha_elegido_es_una_entrada_sin_actividad():
@@ -43,7 +72,21 @@ def test_una_conversacion_guardada_antes_trae_el_reparto_de_siempre():
     datos.pop("personas")
     datos["detected_group_allocation"] = {"certified_diving": 2, "undecided": 1}
     cargado = deserialize_state(json.dumps(datos), "caln2")
-    assert cargado.detected_group_allocation == {"certified_diving": 2, "undecided": 1}
+    assert cargado.detected_group_allocation == {"certified_diving": 2} and cargado.pending_undecided_qty == 1
+
+
+@pytest.mark.parametrize("pendientes, preguntar, personas", [
+    (2, True, [{"actividad": "certified_diving", "cantidad": 1}, {"actividad": None, "cantidad": 2}]),
+    (None, True, [{"actividad": "certified_diving", "cantidad": 1}, {"actividad": None, "cantidad": None}]),
+    (None, False, [{"actividad": "certified_diving", "cantidad": 1}]),
+])
+def test_una_conversacion_guardada_antes_trae_a_quien_no_ha_elegido_aparte(pendientes, preguntar, personas):
+    """CALN-8 (2a): las conversaciones guardadas antes traen `pending_undecided_qty` y `needs_companion_activity`."""
+    st = ConversationState(conversation_id="caln2")
+    st.detected_group_allocation = {"certified_diving": 1}
+    datos = json.loads(serialize_state(st))
+    datos.update({"pending_undecided_qty": pendientes, "needs_companion_activity": preguntar})
+    assert deserialize_state(json.dumps(datos), "caln2").personas == personas
 
 
 def test_sin_nadie_el_reparto_es_none():

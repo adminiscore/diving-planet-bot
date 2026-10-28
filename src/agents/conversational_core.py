@@ -36,7 +36,7 @@ from src.agents.intent_detector import (
 )
 from src.agents.notes_extractor import extract_notes
 from src.domain import activities as dom
-from src.flows import cart_render, eligibility, grupo, moneda
+from src.flows import cart_render, eligibility, moneda
 from src.flows.state import ConversationState, Step
 from src.utils.number_words import number_alt
 from src.utils.text import strip_accents
@@ -1357,14 +1357,13 @@ def _merge_companion_activity(state: ConversationState, activity: str, qty: int)
     known = state.detected_group_size or 1  # DEUDA-EXT2: sin total, quien escribe es uno (como `setdefault(main, … or 1)`)
     alloc[activity] = alloc.get(activity, 0) + qty
     state.detected_group_allocation = alloc
-    # Los que aún no han elegido (fuera del reparto) también van (CALN-2).
-    state.detected_group_size = sum(alloc.values()) + (state.pending_undecided_qty or 0)
+    # Los que aún no han elegido (fuera del reparto, CALN-2; CALN-8 2a: también si `activity` es «undecided») van.
+    state.detected_group_size = sum((state.detected_group_allocation or {}).values()) + (state.pending_undecided_qty or 0)
     if not main_act and known + qty > state.detected_group_size:
         # DEUDA-EXT (26-oct): sin actividad principal, los que ya se contaban se perdían: "two certified divers" + "my
         # wife will join us but she'll just snorkel" dejaba {snorkel: 1} y total 1 (banco-lat11 a3). El total suma a la
         # persona nueva; los demás esperan a la principal, que el bot pregunta (`booking._resto_a_la_principal`).
         state.detected_group_size = known + qty
-    grupo.sin_decidir_aparte(state)
     logger.info(f"[CORE] merged companion activity {activity} x{qty} -> alloc={alloc}")
 
 
@@ -1390,7 +1389,6 @@ def _apply_group_total(state: ConversationState, total: int) -> bool:
         moved = min(qty, known or qty)
         alloc[activity] = alloc.get(activity, 0) + moved
         state.detected_group_allocation = alloc
-        grupo.sin_decidir_aparte(state)
         logger.info(f"[CORE] companion {activity} x{moved} ya contado, sin principal -> alloc={alloc}")
         return True
     alloc.setdefault(main, known or qty)
@@ -1398,7 +1396,6 @@ def _apply_group_total(state: ConversationState, total: int) -> bool:
     alloc[main] -= moved
     alloc[activity] = alloc.get(activity, 0) + moved
     state.detected_group_allocation = {k: v for k, v in alloc.items() if v}
-    grupo.sin_decidir_aparte(state)
     logger.info(f"[CORE] companion {activity} x{moved} ya contado -> alloc={state.detected_group_allocation}")
     return True
 

@@ -40,8 +40,8 @@ lista, como ya es `detected_group_allocation`. Quien los lee no cambia; quien lo
 
 | Paso | Qué | Quita | Cómo se mide |
 |---|---|---|---|
-| 2a | Sin elegir: `pending_undecided_qty` y `needs_companion_activity` derivados | `_merge_pending_undecided`, `sin_decidir_aparte`, la limpieza de los 3 circuit-breakers para estos dos | suite + banco-grupo A/B + lectura |
-| 2b | Sin cantidad: `pending_companion_activity` derivado | el resto de los circuit-breakers | suite + banco-grupo A/B |
+| 2a | Sin elegir: `pending_undecided_qty` y `needs_companion_activity` derivados | 2 campos del estado y `sin_decidir_aparte` (el reparto ya deja fuera a quien no ha elegido); +50 líneas de src por las funciones de la lista, que 2b compensa | suite + banco-grupo A/B + lectura |
+| 2b | Sin cantidad: `pending_companion_activity` derivado; elegir es poner la actividad en la entrada | `_merge_pending_undecided` y los 3 circuit-breakers | suite + banco-grupo A/B |
 | 2c | Certificaciones por persona (`sin_decidir_certificados`, `acompanante_*`) | 3 campos sueltos | suite + banco-grupo + políticas (las notas del RAG los leen) |
 | 2d | `pending_companion_in_group` como entrada sin contar | el último campo de espera | suite + banco-grupo (g-«se suma») |
 
