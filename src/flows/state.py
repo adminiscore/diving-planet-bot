@@ -169,6 +169,9 @@ class ConversationState:
     # sí lo está pero lleva tiempo sin bucear (extractor, con cita). Los leen las notas de reglas del RAG.
     acompanante_sin_certificar: bool = False
     acompanante_certificado_inactivo: bool = False
+    # CALN-2 (flag `lector_grupo`): según el lector del grupo, los que faltan por elegir están todos certificados (True),
+    # ninguno (False) o no se sabe / hay de todo (None). Decide si su recomendación lleva el buceo certificado.
+    sin_decidir_certificados: bool | None = None
     # ex-9b paso 6 (`notas_rag_desde_estado`): algún mensaje de esta conversación no lo leyó el extractor (falló): esas
     # notas vuelven al regex de siempre sobre lo que escribió el cliente (solo si la IA calla).
     extractor_ha_fallado: bool = False

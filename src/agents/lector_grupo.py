@@ -112,6 +112,76 @@ def total_de(lectura: dict | None) -> int | None:
     return lectura["total_dicho"] or suma or None
 
 
+def _suma(reparto: dict | None) -> int:
+    return sum(n for n in (reparto or {}).values() if isinstance(n, int) and not isinstance(n, bool))
+
+
+def por_completar(datos: dict, total_antes: int | None = None, reparto_antes: dict | None = None) -> bool:
+    """¿Hace falta el lector en este turno? (disparador T2b del paso 1: 601/640 frente a 477/640 sin él.) Si el mensaje
+    habla de otras personas y el grupo no queda completo con lo del extractor y lo sabido, o queda alguien sin elegir
+    (su certificación decide la recomendación), o es un grupo de 2 o más sin reparto. Es `salta(..., "T2b")` de
+    `scripts/medir_lector_grupo.py`, el que se midió."""
+    reparto = datos.get("group_allocation") or reparto_antes
+    total = datos.get("group_size") or total_antes
+    otros = bool(datos.get("edades") or datos.get("otro_sin_certificar") or datos.get("otro_certificado_inactivo")
+                 or (datos.get("group_allocation") and (len(datos["group_allocation"]) > 1
+                                                       or {"undecided", "companion"} & set(datos["group_allocation"])))
+                 or (isinstance(datos.get("group_size"), int) and datos["group_size"] > 1))
+    if not otros:
+        return False
+    if not isinstance(total, int):
+        return True
+    if reparto and _suma(reparto) != total:
+        return True
+    if not reparto and (datos.get("otro_sin_certificar") or datos.get("edades")):
+        return True
+    if total < 2:
+        return False
+    return bool(not reparto or reparto.get("undecided"))
+
+
+def completar(datos: dict, lectura: dict) -> tuple[dict, list[str]]:
+    """Los datos del extractor con lo que dejó vacío, sacado de la lectura del grupo: el total (si no lo dio), el
+    reparto (si no lo dio o no suma el total que dijo, y la lectura cuadra con ese total), la certificación de quien
+    escribe (si no la dio) y la de quienes faltan por elegir. Lo que el extractor dio y cuadra no se toca. La
+    actividad de quien escribe es la del extractor (con la regla de negocio ya puesta). Devuelve (datos, qué cambió)."""
+    personas = (lectura or {}).get("personas") or []
+    if not personas:
+        return datos, []
+    out, cambios = dict(datos), []
+    total_lector = total_de(lectura)
+    if not isinstance(out.get("group_size"), int) and total_lector:
+        out["group_size"] = total_lector
+        cambios.append(f"group_size={total_lector}")
+    total = out.get("group_size")
+    reparto = out.get("group_allocation")
+    escritor = out.get("activity")
+    sin_elegir = []
+    if not (reparto and _suma(reparto) == total) and total_lector == total:
+        nuevo: dict = {}
+        for p in personas:
+            n, act = p["cantidad"], p["actividad"]
+            if act is None and p["quien"] == "cliente" and escritor:
+                nuevo[escritor] = nuevo.get(escritor, 0) + 1
+                n -= 1
+            if n > 0:
+                nuevo[act or "undecided"] = nuevo.get(act or "undecided", 0) + n
+                if act is None:
+                    sin_elegir.append(p)
+        out["group_allocation"] = nuevo
+        cambios.append(f"group_allocation={nuevo}")
+    else:
+        sin_elegir = [p for p in personas if p["actividad"] is None and not (p["quien"] == "cliente" and escritor)]
+    if out.get("is_certified") is None and any(p["quien"] == "cliente" and p["certificado"] is True for p in personas):
+        out["is_certified"] = True
+        cambios.append("is_certified=True")
+    certs = {p["certificado"] for p in sin_elegir}
+    if sin_elegir and certs in ({True}, {False}):
+        out["sin_decidir_certificados"] = certs == {True}
+        cambios.append(f"sin_decidir_certificados={certs == {True}}")
+    return out, cambios
+
+
 async def leer_grupo(mensaje: str, *, history: list[dict] | None = None, lang: str = "es", modelo: str | None = None,
                      client: AsyncOpenAI | None = None) -> dict | None:
     """La lista de personas que dice `mensaje` (ver `validar`), con `segundos`; None si la llamada falló."""
@@ -135,6 +205,9 @@ async def leer_grupo(mensaje: str, *, history: list[dict] | None = None, lang: s
         return None
     salida = validar(datos if isinstance(datos, dict) else {}, mensaje)
     salida["segundos"] = time.perf_counter() - t0
+    uso = getattr(resp, "usage", None)
+    salida["tokens"] = {"entrada": getattr(uso, "prompt_tokens", 0) or 0, "salida": getattr(uso, "completion_tokens", 0) or 0,
+                        "usd": (getattr(uso, "model_extra", None) or {}).get("cost")}  # OpenRouter da el coste
     return salida
 
 

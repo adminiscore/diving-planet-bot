@@ -171,7 +171,9 @@ def _companion_activity_options(state: ConversationState) -> list[str]:
     CALN-2 (27-oct, tanda de precios q1): quien falta por elegir puede ser un buzo certificado («uno es buzo certificado
     y los otros dos queremos snorkel»), y `personas` aún no guarda la certificación de cada uno. Si nadie del grupo ha
     dicho que no lo está (`acompanante_sin_certificar`), el buceo certificado también se recomienda (su texto dice que
-    es para buzos ya certificados) y elige el cliente; primero si se sabe que es un buzo sin bucear hace tiempo."""
+    es para buzos ya certificados) y elige el cliente; primero si se sabe que es un buzo sin bucear hace tiempo.
+    Con el lector del grupo (flag `lector_grupo`), lo que dice de quienes faltan por elegir manda sobre esa bandera de
+    «otra persona»: todos certificados, el buceo primero; ninguno, sin él (`sin_decidir_certificados`)."""
     edades = [e for e in state.detected_ages or [] if isinstance(e, int)]
     por_edad = [eligibility.beginner_options_for_age(e) for e in [None, *edades]]
     options: list[str] = []
@@ -181,8 +183,11 @@ def _companion_activity_options(state: ConversationState) -> list[str]:
     options.sort(key=lambda o: o == "companion")  # ir de acompañante, siempre la última
     if state.detected_duration == "multi_day" and "minicourse" in options:
         options.insert(options.index("minicourse") + 1, "padi_open_water")
-    if not state.acompanante_sin_certificar and "certified_diving" not in options:
-        donde = 0 if state.acompanante_certificado_inactivo else len(options) - ("companion" in options)
+    certificados = state.sin_decidir_certificados
+    sin_certificar = certificados is False or (certificados is None and state.acompanante_sin_certificar)
+    if not sin_certificar and "certified_diving" not in options:
+        primero = certificados is True or state.acompanante_certificado_inactivo
+        donde = 0 if primero else len(options) - ("companion" in options)
         options.insert(donde, "certified_diving")
     return [o for o in options if dom.by_id(o) is not None]
 
