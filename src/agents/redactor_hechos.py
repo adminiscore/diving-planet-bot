@@ -278,8 +278,13 @@ async def _con_el_escritor(state: ConversationState, message: str, history: list
     if origen_pendiente:
         tras = ((core.ORIGEN_TRAS_LOS_ENLACES_ES, core.ORIGEN_TRAS_LOS_ENLACES_EN) if "enlace" in intenciones
                 else (core.ORIGEN_TRAS_LAS_VARIANTES_ES, core.ORIGEN_TRAS_LAS_VARIANTES_EN))
-        answer = f"{core._sin_la_pregunta_final(answer).rstrip()}\n\n{tras[0] if lang == 'es' else tras[1]}"
-    general = all(b.get("actividad") is None for b in bloques)
+        pregunta = tras[0] if lang == "es" else tras[1]
+        from src.agents.nucleo.extractor import origen_por_confirmar  # lazy
+
+        if por_confirmar := origen_por_confirmar(state):
+            pregunta = core._CONFIRMA_ORIGEN[por_confirmar][lang]  # CALN-3b: se confirma el que se lee, no se pregunta
+        answer = f"{core._sin_la_pregunta_final(answer).rstrip()}\n\n{pregunta}"
+    general =all(b.get("actividad") is None for b in bloques)
     logger.info(f"[HECHOS] contesta el escritor con los hechos: {bloques[0]['actividad']} {intenciones}")
     note_turn(rag_used=True, hechos_por_codigo="redactor_general" if general else "redactor",
               intenciones=",".join(intenciones))

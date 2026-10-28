@@ -62,6 +62,16 @@ def test_contesta_con_los_hechos_y_el_codigo_pregunta_el_origen(llamadas):
     assert '"183 USD"' in messages[-1]["content"] and MENSAJE in messages[-1]["content"]
 
 
+def test_caln3b_si_jev_se_inclina_por_un_origen_se_confirma(llamadas):
+    """CALN-3b: el extractor calla el lugar y Jev se inclina por Cartagena: los dos precios y «Entonces, ¿saldrías desde
+    Cartagena?», no la pregunta abierta."""
+    st = _conv()
+    st._jev_lugar = {"choice": "cartagena", "confidence": 0.3}
+    st._lectura_del_turno = (MENSAJE, {"actividad_preguntada": "minicourse"})
+    answer = asyncio.run(redactor_hechos.responder(st, MENSAJE, st.history))
+    assert answer.endswith(core._CONFIRMA_ORIGEN["cartagena"]["es"])
+
+
 def test_con_origen_no_se_pregunta(llamadas):
     llamadas.estado["texto"] = "El *Minicurso* desde Cartagena cuesta 183 USD online o 204 USD sin reserva online."
     st = _conv(location="cartagena")

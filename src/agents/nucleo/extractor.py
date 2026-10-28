@@ -530,6 +530,35 @@ def _poner_certificacion(intent, state: ConversationState, message: str, datos: 
         logger.info(f"[EXTRACT][EX6] {campo}={valor!r}")
 
 
+_LUGAR_DE_JEV = {"cartagena": "cartagena", "islands": "island"}
+
+
+def origen_por_confirmar(state: ConversationState, datos: dict | None = None) -> str | None:
+    """CALN-3b (28-oct, decisión de Gadea #2286, en la línea de ORIGEN-CONFIRMA): el origen que se confirma una vez
+    («Entonces, ¿saldrías desde Cartagena?») en vez de la pregunta abierta, o None. Ya pendiente de confirmar, ese; si
+    no, cuando el extractor leyó ESTE mensaje sin lugar, no hay origen guardado y Jev elige un lugar, aunque sea con poca
+    confianza: «vamos a estar en Isla Barú, en un hotel de playa» (extractor callado 3/3, Jev cartagena 0,27-0,35) o el
+    mensaje largo de b5 con «Estamos alojados en Cartagena» (extractor 14/20, Jev 1,0). Sin lugar en el mensaje, Jev
+    dice none con 0,95 o más (sonda de 12 mensajes ×4): no se confirma un origen que el cliente no dio. El origen no se
+    da por sabido (DEUDA-ORIGEN): van los dos precios hasta que conteste."""
+    pendiente = (state.pending_correction or {}).get("location")
+    if pendiente in _LUGAR_DE_JEV.values():
+        return pendiente
+    if state.location or state.detected_location:
+        return None
+    if datos is None:
+        from src.agents.conversational_core import _el_extractor_calla_el_lugar  # lazy
+
+        if not _el_extractor_calla_el_lugar(state):  # aún sin leer, falló o dice un lugar
+            return None
+    elif datos.get("location"):
+        return None
+    origen = _LUGAR_DE_JEV.get((getattr(state, "_jev_lugar", None) or {}).get("choice"))
+    if not origen or (state.asked_corrections or {}).get("location") == origen:
+        return None
+    return origen
+
+
 def _poner_ubicacion(intent, state: ConversationState, message: str, datos: dict, pista: dict) -> None:
     """ex-5: la ubicación es la del extractor (cita que nombra un lugar). Si se aloja en las islas, el hotel y la isla del
     regex (lista cerrada) se conservan para la recogida. Un origen distinto del guardado se confirma."""
@@ -540,6 +569,11 @@ def _poner_ubicacion(intent, state: ConversationState, message: str, datos: dict
             # Ya se sabe que está en las islas y no lo repite: el hotel o la isla que nombra (lista cerrada) sirven para
             # la recogida (ronda ex5-B2: "una noche en Coral Sand y la otra en Majagua" se perdía y se repreguntaba).
             _conservar_hotel(intent, pista)
+        elif (por_confirmar := origen_por_confirmar(state, datos)) and not (state.pending_correction or {}).get("location"):
+            state.pending_correction = {**(state.pending_correction or {}), "location": por_confirmar}
+            state.asked_corrections = {**(state.asked_corrections or {}), "location": por_confirmar}
+            logger.info(f"[EXTRACT][CALN3B] el extractor calla el lugar y Jev se inclina por {por_confirmar!r}: se "
+                        "confirma")
         return
     if _jev_dice_que_no_lo_dice(state):
         # CAL-C3c (17-oct): "bucear el lunes festivo en islas del rosario" → el extractor ponía island 3 de 3 (su regla
