@@ -106,3 +106,18 @@ def test_en_la_pregunta_general_cada_descuento_por_sus_palabras_propias():
     assert hechos._elemento_dado(lista[0], raices, respuesta)  # antes: las palabras comunes bastaban
     assert not hechos._elemento_dado(lista[0], raices, respuesta, hechos._palabras_comunes(lista))
     assert hechos._elemento_dado(lista[1], raices, respuesta, hechos._palabras_comunes(lista))
+
+
+def test_paso3_el_paquete_que_nombra_el_cliente_va_en_la_pieza():
+    """CALN-3 paso 3 (p11, p12): «el paquete de 5 inmersiones» no quedaba en el estado; sin el catálogo del escritor,
+    la pieza daba la salida de 2. Ahora el plan nombrado (este mensaje o el último suyo que lo nombre) es el del precio."""
+    from src.agents import redactor_hechos as rh
+    from src.flows import hechos
+
+    historia = [{"role": "user", "content": "Quiero el paquete de 5 buceos, ya estaremos en las islas"},
+                {"role": "assistant", "content": "¡Genial!"}, {"role": "user", "content": "¿Cuánto es por persona?"}]
+    foto = rh._foto(_st(location="island"), {}, "island", "¿Cuánto es por persona?", historia)
+    assert foto.detected_service_id == "5_dives_2_days"
+    pieza = cotizar.pieza_de_precios(hechos.hechos(foto, ["precio"], ["certified_diving"]), "es")
+    assert pieza.splitlines()[1].startswith("• Paquete de 5 inmersiones") and len(pieza.splitlines()) == 4
+    assert rh._paquete_nombrado("¿Las de 2 o las de 5 inmersiones?", []) is None  # dos planes: no se elige
