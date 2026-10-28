@@ -750,15 +750,21 @@ async def rag_answer(
     )
     from src.flows.catalog import catalog_booking_links  # lazy
 
-    facts += "\n" + catalog_booking_links(lang)
+    catalogo, enlaces = facts, catalog_booking_links(lang)
     # EX-RAG-1: las políticas, siempre (como el catálogo); en el prefijo fijo, cacheable, y el juez también las ve (una
     # política citada en la respuesta queda respaldada).
     from src.flows.catalog import policies_facts  # lazy
 
-    facts += "\n\n" + policies_facts(lang)
+    politicas = policies_facts(lang)
+    facts = f"{catalogo}\n{enlaces}\n\n{politicas}"
     # Paso 9 (l2-2): al prompt del sistema y a la cabeza del contexto del juez (prefijos fijos
     # que OpenAI cachea); en el mensaje del usuario, detras del historial, nunca se cacheaba.
-    catalog_prefix = facts
+    # CALN-8 (3), MEDIDA (28-oct): qué parte del bloque fijo ve el ESCRITOR; el revisor y las guardas lo ven entero.
+    catalog_prefix = {
+        "sin_politicas": f"{catalogo}\n{enlaces}",
+        "sin_catalogo": f"{enlaces}\n\n{politicas}",
+        "nada": enlaces,
+    }.get(settings.rag_bloque_escritor, facts)
     catalog_prefix_juez = para_el_juez(facts, lang)  # 1-oct: la regla de moneda como hecho
 
     if sin_busqueda:
