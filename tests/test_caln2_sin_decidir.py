@@ -79,6 +79,19 @@ async def test_el_marido_que_se_suma_a_quien_ya_eligio(extractor_dice, monkeypat
     assert st.detected_activity == "minicourse"
 
 
+@pytest.mark.asyncio
+async def test_queremos_el_minicurso_y_luego_somos_3(extractor_dice, monkeypatch):
+    """g10 (2.ª medida de CALN-8, 28-oct): «Queremos hacer el minicurso» y luego «Somos 3». El lector lee «Somos 3» como
+    quien escribe con 2 más; lo que eligió antes no es solo suyo («queremos»): nadie queda sin decidir."""
+    extractor_dice({"Queremos hacer el minicurso": {"activity": "minicourse"}, "Somos 3": {"group_size": 3}})
+    _con_el_lector(monkeypatch, [{**_persona("cliente", None, "Somos 3"), "cantidad": 3}])
+    st = _estado()
+    await _turno(st, "Queremos hacer el minicurso", {})
+    await _turno(st, "Somos 3", {})
+    assert st.detected_group_size == 3 and not st.pending_undecided_qty
+    assert (st.detected_group_allocation or {"minicourse": 3}) == {"minicourse": 3}
+
+
 def _persona(quien, certificado, cita):
     return {"quien": quien, "cantidad": 1, "certificado": certificado, "actividad": None, "edades": [], "cita": cita}
 

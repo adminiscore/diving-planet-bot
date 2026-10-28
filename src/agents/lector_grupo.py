@@ -163,21 +163,24 @@ def completar(datos: dict, lectura: dict, total_sabido: int | None = None,
     """Los datos del extractor con lo que dejó vacío, sacado de la lectura del grupo: el total (si no lo dio), el
     reparto (si no lo dio o no suma el total que dijo, y la lectura cuadra con ese total), la certificación de quien
     escribe (si no la dio) y la de quienes faltan por elegir. Lo que el extractor dio y cuadra no se toca. La
-    actividad de quien escribe es la del extractor (con la regla de negocio ya puesta) o, si este turno no la dice, la
-    que ya eligió (`actividad_sabida`). Un total ya sabido de la conversación (`total_sabido`) no lo cambia la lectura
-    de un mensaje que nombra solo a una parte (g29: «yo el minicurso, la de 14 también y la pequeña Bubble Makers» no
-    habla del suegro). Devuelve (datos, qué cambió)."""
+    actividad de quien escribe es la del extractor (con la regla de negocio ya puesta); la que ya eligió antes
+    (`actividad_sabida`), solo si el mensaje no habla de él (g19, abajo). Un total ya sabido de la conversación
+    (`total_sabido`) no lo cambia la lectura de un mensaje que nombra solo a una parte (g29: «yo el minicurso, la de 14
+    también y la pequeña Bubble Makers» no habla del suegro). Devuelve (datos, qué cambió)."""
     personas = (lectura or {}).get("personas") or []
     if not personas:
         return datos, []
     out, cambios = dict(datos), []
-    escritor = out.get("activity") or actividad_sabida
-    if (escritor and not any(p["quien"] == "cliente" for p in personas) and not lectura.get("total_dicho")
+    escritor = out.get("activity")
+    ya_eligio = escritor or actividad_sabida
+    if (ya_eligio and not any(p["quien"] == "cliente" for p in personas) and not lectura.get("total_dicho")
             and not isinstance(out.get("group_size"), int) and not isinstance(total_sabido, int)):
         # CALN-8 (g19): quien escribe ya eligió («I'd like to do the mini course») y el mensaje habla solo de otro («my
-        # husband is certified, he'd like to dive»): quien escribe también va. Con un total dicho o ya sabido no se
-        # cuenta: el mensaje puede nombrar solo a una parte del grupo.
-        personas = [{"quien": "cliente", "cantidad": 1, "certificado": None, "actividad": None, "edades": [],
+        # husband is certified, he'd like to dive»): quien escribe también va, con lo que eligió. Con un total dicho o
+        # ya sabido no se cuenta: el mensaje puede nombrar solo a una parte del grupo. Solo aquí vale lo elegido antes:
+        # en una entrada «cliente» del mensaje («Somos 3» tras «Queremos hacer el minicurso», g10) quien escribe puede
+        # ser un «nosotros», y darle lo elegido solo a uno deja a los demás sin decidir.
+        personas = [{"quien": "cliente", "cantidad": 1, "certificado": None, "actividad": ya_eligio, "edades": [],
                      "cita": ""}, *personas]
         lectura = {**lectura, "personas": personas}
     total_lector = total_de(lectura)
