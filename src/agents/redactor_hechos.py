@@ -258,6 +258,15 @@ def con_la_pieza(answer: str, pieza: str) -> str:
     return "\n\n".join([*limpios, pieza, *cierre])
 
 
+async def nota_de_grupo(state: ConversationState, message: str, history: list[dict]) -> str | None:
+    """CALN-3 paso 3 «A»: lo que dicen los hechos de este turno del descuento de grupo (5 o más: aplica, o no aplica a
+    un curso), para el turno que lleva la tarjeta en vez de la pieza; None si no hay nada que decir."""
+    turno = await hechos_del_turno(state, message, history)
+    if turno is None:
+        return None
+    return next((b["descuento_de_grupo"] for b in turno[0] if b.get("descuento_de_grupo")), None)
+
+
 def texto_de_los_hechos(bloques: list[dict]) -> str:
     """Los hechos en JSON para el modelo. `pregunta_pendiente` es del código (la pregunta la pone él): con ella delante,
     Luna preguntaba el origen en vez de dar los dos enlaces (banco arq-1d, k2 2 de 3)."""
