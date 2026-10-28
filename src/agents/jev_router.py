@@ -427,13 +427,17 @@ PIDE_PRECIO_MIN = 0.7
 # center's activities» a secas, Jev no veía «el snorkel» en español como una de ellas: «¿Cuánto cuesta el snorkel?» 0,55 y «precio del snorkel» 0,61 (umbral
 # 0,7), la puerta del origen no saltaba y se cotizaba Cartagena sin saber el origen (banco gen-19, 4/4). Nombrando las
 # actividades: 0,94 y 0,94; hotel, taxi, monedas, duración, cómo reservar y qué incluye siguen en 0,04-0,11.
+# CALN-3c (28-oct, p09): «Al final vamos a estar alojados en Isla Grande, ¿cambia el precio?» daba 0,35 y el turno iba al
+# RAG sin hechos (1 de 2 sin importe). Con «whether that price changes»: las tres frases de «¿cambia el precio?» 0/4 → 4/4;
+# moneda, hotel, duración, cómo reservar, qué incluye y el lugar sin pregunta, iguales (sonda ×4 en dp-pre-bot).
 _PIDE_PRECIO_Q_ACTIVIDADES = {
     "type": "noul",
     "instructions": (
         "The customer asks how much one of the dive center's activities costs: dive trips and dive packages, the dive "
         "mini-course or refresher, snorkeling, PADI courses and specialties (price, rate, cost, a quote), including "
-        "asking that price again in another currency or for a different number of people, even if the same message "
-        "also asks other things. It is FALSE when they only ask the price of something the dive center does not sell "
+        "asking that price again in another currency or for a different number of people, or asking whether that price "
+        "changes (with another departure point, staying on the islands, another date or group size), even if the same "
+        "message also asks other things. It is FALSE when they only ask the price of something the dive center does not sell "
         "(a hotel, a room or night, a taxi or transport), when they only ask in which currency they pay or which "
         "payment methods are accepted, and when they ask about duration, number of dives or how to book."
     ),
