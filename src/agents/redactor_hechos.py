@@ -151,11 +151,29 @@ def _foto(state: ConversationState, datos: dict, origen: str | None, message: st
         foto._aloja_en_baru = any(_solo_baru(t) for t in dicho)
     if isinstance(datos.get("group_size"), int) and datos["group_size"] > (foto.detected_group_size or 0):
         foto.detected_group_size = datos["group_size"]  # CALN-3: «somos 5» en ESTE mensaje, para el descuento de grupo
+    if not foto.selected_service and (plan := _paquete_nombrado(message, history)):
+        # CALN-3 paso 3 «A» (p11, p12): «¿cuánto cuesta el paquete de 5 inmersiones?» no dejaba el plan en el estado y los
+        # hechos daban la salida de 2; con el catálogo delante el escritor lo arreglaba, con la pieza ya no.
+        foto.detected_service_id = plan
     reparto = datos.get("group_allocation")
     if isinstance(reparto, dict) and not foto.detected_group_allocation:
         # arq-5f: «dos bucean y dos hacen snorkel» en ESTE mensaje (la extracción aún no lo ha guardado): la misma lancha.
         foto.detected_group_allocation = {k: v for k, v in reparto.items() if isinstance(v, int) and v > 0}
     return foto
+
+
+def _paquete_nombrado(message: str, history: list[dict] | None) -> str | None:
+    """El plan de buceo que nombra el cliente por sus inmersiones («el paquete de 5 inmersiones», «the 2-dive trip»), en
+    este mensaje o, si no nombra ninguno, en el último suyo que lo haga; None si nombra varios o ninguno. La lectura es
+    la de siempre (`dive_counts_in`: cifra y unidad del catálogo)."""
+    from src.agents.intent_detector import dive_counts_in  # lazy
+
+    suyos = [message, *(m.get("content") or "" for m in reversed(history or []) if m.get("role") == "user")]
+    for texto in suyos:
+        cuentas = dive_counts_in(texto)
+        if cuentas:
+            return dom.dive_packages()[cuentas[0]][1] if len(cuentas) == 1 else None
+    return None
 
 
 def _cubierta(bloque: dict, intencion: str) -> bool:

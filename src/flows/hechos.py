@@ -330,6 +330,12 @@ def _paquetes_de_varios_dias(actividad: str, origen: str) -> list[str]:
 _OTROS_POR_ORIGEN = 2
 
 
+def _origen_del_plan(sid: str) -> str:
+    """Por el id del catálogo: los de las islas acaban en `_already_on_island` (también los que no tienen pareja en
+    Cartagena, como la inmersión suelta, que no están en `_DE_LAS_ISLAS`)."""
+    return "island" if sid.endswith("_already_on_island") else "cartagena"
+
+
 def _acotados(otros: list[str], paquetes_primero: bool) -> list[str]:
     def varios(sid: str) -> bool:
         return ((SERVICES.get(sid) or {}).get("duration_days") or 1) > 1
@@ -337,8 +343,8 @@ def _acotados(otros: list[str], paquetes_primero: bool) -> list[str]:
     orden = sorted(otros, key=lambda s: not varios(s)) if paquetes_primero else otros
     elegidos: list[str] = []
     for sid in orden:
-        origen = "island" if sid in _DE_LAS_ISLAS else "cartagena"
-        if sum(1 for e in elegidos if ("island" if e in _DE_LAS_ISLAS else "cartagena") == origen) < _OTROS_POR_ORIGEN:
+        origen = _origen_del_plan(sid)
+        if sum(1 for e in elegidos if _origen_del_plan(e) == origen) < _OTROS_POR_ORIGEN:
             elegidos.append(sid)
     return [s for s in otros if s in elegidos]
 
