@@ -106,6 +106,10 @@ def _precio_del_plan(sid: str, moneda: str, lang: str) -> dict | None:
     return {"plan": _nombre(sid, lang), **precio} if precio else None
 
 
+_DETALLES_POR_ASESOR = {"es": "El traslado, el horario y el almuerzo los confirma un asesor.",
+                        "en": "Transfer, schedule and lunch are confirmed by an advisor."}
+
+
 def _lista(sid: str, campo: str, lang: str) -> list[str]:
     s = RAW_SERVICES.get(sid) or {}
     return list(s.get(f"{campo}_{lang}") or s.get(f"{campo}_es") or [])
@@ -147,6 +151,13 @@ def hechos(state: ConversationState, intenciones: list[str], actividades: list[s
         if registro.cart_type == "companion":
             bloques.append(_acompanante(bloque, pedidas, origen, origenes, moneda, lang, _dos_monedas(state)))
             continue
+        # CALN-7 (28-oct, rotativa 010): lo que de ESTE plan confirma un asesor (Bubble Makers desde Cartagena: traslado,
+        # horario y almuerzo; ficha `detalles_por_asesor`) va con sus hechos, sea cual sea la pregunta; solo estaba en el
+        # catálogo de todos los turnos y el escritor no lo decía.
+        por_asesor = _por_origen(actividad, origenes, lambda sid: (RAW_SERVICES.get(sid) or {}).get("detalles_por_asesor")
+                                 and _DETALLES_POR_ASESOR[lang], elegido)
+        if por_asesor:
+            bloque["lo_confirma_un_asesor"] = por_asesor
         if "precio" in pedidas:
             bloque["moneda"] = moneda
             # La regla de la moneda (el precio es el mismo, solo cambia la moneda): «según la página tienen un precio

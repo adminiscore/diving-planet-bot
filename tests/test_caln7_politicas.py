@@ -36,3 +36,12 @@ def test_el_buzo_que_necesita_el_refresher_recibe_los_requisitos_del_refresher()
     # Si PREGUNTA por el buceo certificado, se le contesta de eso (arq-1n).
     assert redactor_hechos._actividad(st, {"actividad_preguntada": "certified_diving",
                                            "refresher_interested": True}) == "certified_diving"
+
+
+def test_lo_que_de_un_plan_confirma_un_asesor_va_con_sus_hechos():
+    """Rotativa 010: «¿la de 9 puede hacer Bubble Makers?» sin la nota de que el traslado, el horario y el almuerzo
+    desde Cartagena los confirma un asesor (solo estaba en el catálogo de todos los turnos)."""
+    [b] = h.hechos(_conv(), ["edad"], ["bubble_makers"])
+    assert "asesor" in b["lo_confirma_un_asesor"]["cartagena"]
+    assert "lo_confirma_un_asesor" not in h.hechos(_conv(location="island"), ["edad"], ["bubble_makers"])[0]
+    assert "lo_confirma_un_asesor" not in h.hechos(_conv(), ["precio"], ["snorkel"])[0]
