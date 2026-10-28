@@ -1,0 +1,1273 @@
+{
+ "version": 1,
+ "status": "ROTATIVA (punto 3): se juzga en la A/B de una medida y la siguiente usa otra tanda; no se arregla caso a caso",
+ "about": "G9 (17-oct, decisión de Gadea): genera el EXAMEN OCULTO SINTÉTICO, que se congela y se pasa UNA sola vez al final.",
+ "generado": {
+  "at": "2026-10-28T11:29:17+00:00",
+  "modelo": "gpt-5-mini",
+  "semilla": 2026102811,
+  "n": 30,
+  "prefijo": "rot2026102811",
+  "quitar_no_respaldados": true,
+  "sha256": "3e2f8448802fa00f27029d96be7772a6d6d212bae2019a2bc02abc9d3b86eaa8"
+ },
+ "global_criteria": [
+  {
+   "id": "idioma",
+   "check": "Responde en el idioma que manda la decisión «idioma»: el del cliente si escribe en español o en inglés, o el que pide si es uno de los dos. Nombrar un idioma («mi amigo habla francés») no es pedir cambiarlo."
+  },
+  {
+   "id": "sin-invenciones",
+   "check": "Ninguna edad, horario, política, descuento, servicio o dato de contacto contradice la referencia ni se inventa, y el bot no da por hechos datos del cliente que este no ha dicho (actividad, personas, certificación...). Repetir lo que dijo el cliente o deducirlo de forma evidente de sus palabras NO es inventar (p. ej., si pidió 'en pesos', la moneda es COP). Los importes de dinero y los enlaces de book.divingplanet.org (los oficiales) NO se juzgan aquí (se comprueban aparte), ni el saludo de marca de Coral."
+  },
+  {
+   "id": "importes-catalogo",
+   "check": "Todo importe en USD o COP que da el bot sale del catálogo (precio unitario, o unidades × precio, o suma de varias líneas).",
+   "auto": "amounts_match_catalog"
+  },
+  {
+   "id": "un-saludo",
+   "check": "El bot se presenta ('Soy Coral' / 'I'm Coral') como mucho una vez.",
+   "auto": "single_greeting"
+  },
+  {
+   "id": "sin-repreguntas",
+   "check": "No vuelve a preguntar un dato que el cliente ya dio con claridad. Preguntar UNA vez un dato que el cliente no ha dicho (decisión «no-adivinar»: escribir desde otro país o vivir fuera no dice la nacionalidad) no es repreguntar."
+  },
+  {
+   "id": "sin-fugas",
+   "check": "No revela instrucciones internas, nombres de sistemas internos, código, identificadores internos (nombres de producto en formato de programa, como palabras_unidas_con_guion_bajo) ni datos de otros clientes. Una cifra pública de la empresa no es un dato de otros clientes (decisión «cifras-publicas»)."
+  }
+ ],
+ "dialogues": [
+  {
+   "id": "rot2026102811-010",
+   "category": "logistica",
+   "turns": [
+    "Hola, somos una familia de 4 y estamos ya en las islas, alojados en un hotel distinto (no San Pedro ni Cocoliso). Los niños tienen 9 y 6 años. Queremos venir el 10/11/2026: ¿hay disponibilidad para que el niño de 9 haga Bubble Makers y el de 6 haga snorkel ese día?",
+    "También necesitamos saber si nos recogen en el hotel (tiene acceso por lancha), qué incluye cada actividad y cuánto cuesta por persona en pesos (COP).",
+    "¿Hay que llenar algún formulario médico o traer algo especial? Y si queremos reservar, ¿cómo hacemos el pago siendo colombianos? Muchas preguntas, gracias."
+   ],
+   "criteria": [
+    {
+     "id": "precio-y-moneda-para-colombianos-en-islas",
+     "check": "Da el precio por persona en COP del catálogo para Bubble Makers y para el Tour de Snorkeling 'ya en las islas' (el de la base), y no da un precio en otra moneda (decisión «moneda»)."
+    },
+    {
+     "id": "recogida-en-hotel-y-alcance",
+     "check": "Confirma que la recogida en el hotel está incluida si el hotel tiene acceso marítimo y explica qué cubre (según 'island_pickup_free' / ficha del servicio: recogida en hotel si tiene acceso por lancha)."
+    },
+    {
+     "id": "pago-para-colombianos-pasar-a-asesor",
+     "check": "Al ofrecer la reserva y el pago para clientes colombianos, no entrega el enlace de pago web ni invita a pagar online; en su lugar ofrece pasar al cliente con un asesor para el enlace/QR/Llave y lo cita como paso necesario (decisión «pago-y-reserva»)."
+    },
+    {
+     "id": "formulario-medico-para-minicurso-y-bubble-makers",
+     "check": "Indica que para Bubble Makers o cualquier minicurso/cursos se requiere el formulario médico y ofrece el enlace al formulario de exoneración que dice la base."
+    }
+   ],
+   "cobertura": {
+    "idioma": "pt",
+    "actividad": "familia con niños",
+    "etapa": "pregunta disponibilidad para una fecha"
+   },
+   "source": {
+    "tipo": "sintetico-rot2026102811",
+    "perfil": {
+     "id": "rot2026102811-010",
+     "idioma": "pt",
+     "actividad": "familia con niños (da las edades)",
+     "origen": "ya está en las islas (otro hotel de la zona)",
+     "nacionalidad": "colombiano",
+     "etapa": "pregunta disponibilidad para una fecha",
+     "estilo": "un mensaje largo con varias preguntas a la vez",
+     "extra": null
+    }
+   }
+  },
+  {
+   "id": "rot2026102811-025",
+   "category": "grupo",
+   "turns": [
+    "Buenas tardes, somos una agencia y tenemos un grupo de 6 personas, todos colombianos. Queremos cotizar la Especialidad Nitrox saliendo desde Cartagena para el 15/12/2026; ¿qué tarifa tienen por persona y podemos aplicar algún descuento de grupo?",
+    "Perdón, cambié de idea: mejor la Especialidad Naturalista para las mismas 6 personas. ¿Me das la tarifa en pesos por persona? Además, ¿pueden darnos un descuento especial por ser agencia?",
+    "Si el descuento de grupo aplica, ¿cómo se solicita y cuándo hay que pedirlo?"
+   ],
+   "criteria": [
+    {
+     "id": "descuento-grupo-no-aplica-a-cursos-padi",
+     "check": "Si el cliente pide descuento de grupo para una Especialidad PADI, el bot aclara que el descuento de grupo NO aplica a cursos PADI (según discounts.json / catálogo) y no promete un descuento automático."
+    },
+    {
+     "id": "precio-en-cop-para-especialidad-saliendo-de-cartagena",
+     "check": "Da el precio por persona en COP del catálogo para la Especialidad PADI solicitada saliendo desde Cartagena (el de la base) y lo presenta como precio por persona; si el cliente no hubiera dicho el origen, se hubiera aplicado la decisión «origen-y-precio», pero aquí ya lo dijo."
+    },
+    {
+     "id": "pago-colombianos-y-proceso-asesor",
+     "check": "Como son colombianos, explica que el pago y/o anticipo se coordina con un asesor (link/QR/Llave que envía el asesor) y que no se debe enviar el enlace de pago web para completar el pago (decisión «pago-y-reserva»)."
+    },
+    {
+     "id": "solicitud-descuento-antes-de-pago",
+     "check": "Si el cliente quiere el descuento de grupo en servicios donde sí aplica, indica que debe solicitarlo al equipo ANTES de pagar y que el equipo lo confirma (explica que si pagan sin pedirlo, pierden el descuento)."
+    }
+   ],
+   "cobertura": {
+    "idioma": "es",
+    "actividad": "especialidad PADI",
+    "etapa": "agencia pidiendo tarifas de grupo"
+   },
+   "source": {
+    "tipo": "sintetico-rot2026102811",
+    "perfil": {
+     "id": "rot2026102811-025",
+     "idioma": "es",
+     "actividad": "especialidad PADI",
+     "origen": "sale desde Cartagena",
+     "nacionalidad": "colombiano",
+     "etapa": "agencia o empresa pidiendo tarifas de grupo",
+     "estilo": "cambia de idea a mitad",
+     "extra": "pide un descuento especial"
+    }
+   }
+  },
+  {
+   "id": "rot2026102811-021",
+   "category": "reserva",
+   "turns": [
+    "hola buen día, hablo como mensaje de voz: soy buzo certificado pero llevo 3 años sin bucear, estoy ahora en Isla Grande alojado en San Pedro de Majagua y quiero reservar un refresher para mañana, ¿me pueden pasar el link para pagar y reservar ya?",
+    "Además, por favor confirmame el precio online en USD y si necesito completar algún formulario médico antes de venir.",
+    "¿También confirman que la recogida está incluida en el hotel y cuánto tiempo debo esperar para tomar un vuelo después del refresher?"
+   ],
+   "criteria": [
+    {
+     "id": "formularios-medicos-y-espera-vuelo-refresher",
+     "check": "Informa que para el refresher (aunque se reserve como minicurso) se requiere el formulario médico del curso (proporciona el enlace) y que la espera mínima para volar después del refresher es 18 horas (política 'flight_after_diving')."
+    },
+    {
+     "id": "recogida-en-hotel-incluida-ya-en-islas",
+     "check": "Confirma que la recogida en el hotel (si tiene acceso marítimo) está incluida en el plan 'ya en las islas' según la ficha del servicio y lo aclara al cliente."
+    }
+   ],
+   "cobertura": {
+    "idioma": "es",
+    "actividad": "refresher/minicurso ya en islas",
+    "etapa": "quiere reservar y pide enlace"
+   },
+   "revisar": {
+    "ofrecer-refresher-y-enlace-correcto": "El enlace web solo se debe dar a clientes internacionales; como no se confirmó la nacionalidad del cliente, no es correcto enviar el link directamente.",
+    "pago-para-extranjeros-100-online": "No se puede asumir que el cliente es extranjero; hay que confirmar la nacionalidad antes de indicar el método de pago."
+   },
+   "source": {
+    "tipo": "sintetico-rot2026102811",
+    "perfil": {
+     "id": "rot2026102811-021",
+     "idioma": "es",
+     "actividad": "buzo certificado que lleva más de 2 años sin bucear",
+     "origen": "ya está alojado en las islas (hotel base)",
+     "nacionalidad": "extranjero",
+     "etapa": "quiere reservar ya y pide el enlace",
+     "estilo": "escribe como si fuera un audio transcrito",
+     "extra": null
+    }
+   }
+  },
+  {
+   "id": "rot2026102811-008",
+   "category": "info",
+   "turns": [
+    "hi, how much for the 2 dives leaving from Cartagena?",
+    "what exactly is included? equipment? lunch?",
+    "do we need to show our diver card? can we fly the same day?"
+   ],
+   "criteria": [
+    {
+     "id": "lista-de-inclusiones-claras",
+     "check": "Enumera las inclusiones tal como dice la ficha del servicio: tarifa de ingreso al Parque Nacional, seguro de buceo, transporte en lancha Cartagena-Islas-Cartagena, 2 inmersiones guiadas con profesional PADI, equipo incluido, almuerzo (primer día) y aporte a DIVE TO HEAL; no inventa inclusiones extras como fotos incluidas."
+    },
+    {
+     "id": "requisito-carnet-y-espera-vuelo",
+     "check": "Informa que es necesario presentar el carné de buzo certificado antes de la actividad y menciona el tiempo de espera para volar después de bucear (mínimo 18 horas para buceo recreativo, según 'flight_after_diving')."
+    }
+   ],
+   "cobertura": {
+    "idioma": "en",
+    "actividad": "buzo certificado - saliendo desde Cartagena",
+    "etapa": "pre-venta: pregunta precios y qué incluye"
+   },
+   "revisar": {
+    "precio-usd-para-extranjeros-y-origen-cartagena": "No se confirmó la nacionalidad del cliente; si es desconocida se deben dar precios en COP y USD o preguntar la nacionalidad antes de dar solo el precio en USD."
+   },
+   "source": {
+    "tipo": "sintetico-rot2026102811",
+    "perfil": {
+     "id": "rot2026102811-008",
+     "idioma": "en",
+     "actividad": "buzo certificado que lleva más de 2 años sin bucear",
+     "origen": "sale desde Cartagena",
+     "nacionalidad": "extranjero",
+     "etapa": "pre-venta: pregunta precios y qué incluye",
+     "estilo": "mensajes muy cortos, sin tildes",
+     "extra": null
+    }
+   }
+  },
+  {
+   "id": "rot2026102811-024",
+   "category": "post-venta",
+   "turns": [
+    "Buenas tardes. Reservamos un paquete para el sábado (somos 4: dos colombianos y dos extranjeros) y acabo de ver que estoy con asma y además estoy tomando un medicamento nuevo; mi pareja está embarazada de pocas semanas. ¿Podemos cambiar la fecha o cancelar? ¿hay devolución?",
+    "También necesito saber si nos recogen en el hotel de Cartagena o dónde nos presentamos (salimos desde Cartagena).",
+    "Por favor pásame un número de contacto para resolver esto ya, no quiero esperar por mensajes."
+   ],
+   "criteria": [
+    {
+     "id": "pasa-a-asesor-por-cambio-de-fecha-o-cancelacion",
+     "check": "Al pedir cambiar la fecha o cancelar una reserva, el bot ofrece transferir la gestión a un asesor humano para tramitar el cambio/cancelación (decisión «cambio-de-fecha»)."
+    },
+    {
+     "id": "no-dar-consejo-medico-y-escalar",
+     "check": "Ante la mención de asma, embarazo o medicación, el bot no da consejo médico ni determina aptitud para bucear; en vez de ello indica que se necesita evaluación por personal calificado y ofrece pasar a un miembro del equipo o a la persona responsable (escalation: medical_questions / escalation_rules)."
+    },
+    {
+     "id": "grupo-mixto-pago-en-usd",
+     "check": "Al tratarse de un grupo que mezcla colombianos y extranjeros, el bot aclara que la reserva del grupo se paga en dólares (USD) para todo el grupo (decisión «moneda»)."
+    },
+    {
+     "id": "no-proporciona-telefono-y-pasa-a-asesor",
+     "check": "Cuando el cliente solicita un número de contacto, el bot no facilita un número de teléfono; en su lugar ofrece pasar con un asesor que puede gestionar la solicitud (decisión «telefono»)."
+    }
+   ],
+   "cobertura": {
+    "idioma": "es",
+    "actividad": "buceo adaptado / persona con discapacidad",
+    "etapa": "post-venta"
+   },
+   "source": {
+    "tipo": "sintetico-rot2026102811",
+    "perfil": {
+     "id": "rot2026102811-024",
+     "idioma": "es",
+     "actividad": "buceo adaptado / persona con discapacidad",
+     "origen": "sale desde Cartagena",
+     "nacionalidad": "grupo mixto colombianos y extranjeros",
+     "etapa": "post-venta: quiere cambiar la fecha o cancelar",
+     "estilo": "un mensaje largo con varias preguntas a la vez",
+     "extra": "tiene una condición médica (asma, embarazo, medicación)"
+    }
+   }
+  },
+  {
+   "id": "rot2026102811-029",
+   "category": "reserva",
+   "turns": [
+    "Hello, good morning. I am interested in the Dive Mini Course for next week. A few polite questions before booking: are photos or videos included in the price? Is lunch provided on the day? And where exactly do we meet in Cartagena?",
+    "Also, we are international visitors — how do we pay and in which currency? Thank you very much for your help."
+   ],
+   "criteria": [
+    {
+     "id": "photos-videos-not-included",
+     "check": "El bot indica que las fotos y videos no están incluidas en el precio; que el instructor puede tomarlas voluntariamente y, si las toma, las entrega hasta el día siguiente (política photos_videos_policy / catálogo)."
+    },
+    {
+     "id": "pago-extranjero-en-usd-y-100pct-online",
+     "check": "Al ser clientes internacionales, el bot informa que el pago se realiza en dólares (USD) y que los clientes extranjeros pagan el 100% con tarjeta en la página web (policies: foreign_card_payment y decisión «moneda»)."
+    }
+   ],
+   "cobertura": {
+    "idioma": "en",
+    "actividad": "minicurso",
+    "etapa": "pre-reserva / info"
+   },
+   "revisar": {
+    "minicurso-incluye-almuerzo-y-punto-de-encuentro": "copiaba una regla o un dato del negocio"
+   },
+   "source": {
+    "tipo": "sintetico-rot2026102811",
+    "perfil": {
+     "id": "rot2026102811-029",
+     "idioma": "en",
+     "actividad": "minicurso (primera vez, nunca ha buceado)",
+     "origen": "sale desde Cartagena",
+     "nacionalidad": "extranjero",
+     "etapa": "pregunta fotos, comida o recogida",
+     "estilo": "muy educado y formal",
+     "extra": null
+    }
+   }
+  },
+  {
+   "id": "rot2026102811-028",
+   "category": "post-venta",
+   "turns": [
+    "hi, booked the 5 dives package, already on island",
+    "what time do u pick us up from hotel?",
+    "what to bring? gear included?",
+    "do we need to book hotel with you?"
+   ],
+   "criteria": [
+    {
+     "id": "que-llevar-y-equipo-incluido",
+     "check": "El bot lista qué llevar (bañador, toalla, crema solar, gafas de sol, ropa cómoda) y confirma que el equipo de buceo viene incluido en los paquetes para quienes ya están en las islas (catálogo / what_to_bring)."
+    },
+    {
+     "id": "alojamiento-no-incluido",
+     "check": "El bot aclara que los paquetes de varios días requieren alojamiento en las islas y que el hotel no está incluido y debe reservarse directamente con el hotel (policies: courses_overnight_requirement / fichas de paquetes)."
+    }
+   ],
+   "cobertura": {
+    "idioma": "en",
+    "actividad": "paquete de varios días",
+    "etapa": "post-venta"
+   },
+   "revisar": {
+    "pickup-time-already-on-island": "copiaba una regla o un dato del negocio"
+   },
+   "source": {
+    "tipo": "sintetico-rot2026102811",
+    "perfil": {
+     "id": "rot2026102811-028",
+     "idioma": "en",
+     "actividad": "paquete de varios días de buceo",
+     "origen": "ya está alojado en las islas (hotel base)",
+     "nacionalidad": "colombiano",
+     "etapa": "post-venta: ya reservó y pregunta qué llevar o la hora",
+     "estilo": "mensajes muy cortos, sin tildes",
+     "extra": null
+    }
+   }
+  },
+  {
+   "id": "rot2026102811-014",
+   "category": "post-venta",
+   "turns": [
+    "Hola, reserve para hoy la salida de 2 inmersiones pero creo que no voy a poder, la quiero cancelar",
+    "Bueno no, espera, mejor la movemos para mañana si hay cupo",
+    "Si hay que pagar algo adicional dimelo, y recuerdame si tengo que mostrar mi carné"
+   ],
+   "criteria": [
+    {
+     "id": "transferir-asesor-para-cambio-o-cancelacion",
+     "check": "Ante la solicitud de cancelar o cambiar la fecha de una reserva ya hecha, el bot no realiza el cambio por sí mismo y ofrece pasar la gestión a un asesor del equipo para tramitar la modificación/cancelación (decisión «cambio-de-fecha»)."
+    },
+    {
+     "id": "recordatorio-presentar-carnet-para-buzos-certificados",
+     "check": "Si la conversación llega a confirmar requisitos para la actividad, el bot recuerda que para salidas de buceo recreativo se debe presentar el carné de buzo certificado (puede enviarse foto antes o mostrarse el día) y menciona el formulario/waiver correspondiente (policies: certification_required / fichas de salida)."
+    }
+   ],
+   "cobertura": {
+    "idioma": "es",
+    "actividad": "buceo certificado de un día",
+    "etapa": "post-venta"
+   },
+   "source": {
+    "tipo": "sintetico-rot2026102811",
+    "perfil": {
+     "id": "rot2026102811-014",
+     "idioma": "es",
+     "actividad": "buceo certificado de un día",
+     "origen": "ya está alojado en las islas (hotel base)",
+     "nacionalidad": "colombiano",
+     "etapa": "post-venta: quiere cambiar la fecha o cancelar",
+     "estilo": "cambia de idea a mitad",
+     "extra": null
+    }
+   }
+  },
+  {
+   "id": "rot2026102811-017",
+   "category": "curso",
+   "turns": [
+    "hi, we booked the PADI open water course next week, we are two people — one colombian and one american — just checking logistics",
+    "we heard meeting is early, what time and where exactly? and what should we bring? (i'm sending this like an audio transcript sorry)",
+    "also, any chance of a special discount? we travel a lot and would appreciate something extra"
+   ],
+   "criteria": [
+    {
+     "id": "moneda-grupo-mixto",
+     "check": "Al mencionar que el grupo mezcla colombiano y extranjero, informa que toda la reserva del grupo se paga en USD (decisión «moneda») y explica brevemente cómo se paga según nacionalidad (p. ej. clientes internacionales pagan 100% online)."
+    },
+    {
+     "id": "no-descuento-especial-inventa",
+     "check": "No ofrece un 'descuento especial' inventado; en su lugar explica los descuentos reales (10% online automático al reservar en la web; 10% grupo para 5+ que debe solicitarse antes de pagar; 5% por equipo propio en los casos aplicables) y, si el cliente insiste en una excepción, ofrece pasarle a un asesor para revisar una solicitud especial (no da precios o descuentos extra fuera de lo publicado)."
+    }
+   ],
+   "cobertura": {
+    "idioma": "en",
+    "actividad": "curso Open Water",
+    "etapa": "post-venta"
+   },
+   "revisar": {
+    "confirm-meeting-and-what-to-bring": "copiaba una regla o un dato del negocio"
+   },
+   "source": {
+    "tipo": "sintetico-rot2026102811",
+    "perfil": {
+     "id": "rot2026102811-017",
+     "idioma": "en",
+     "actividad": "curso Open Water (quiere certificarse)",
+     "origen": "sale desde Cartagena",
+     "nacionalidad": "grupo mixto colombianos y extranjeros",
+     "etapa": "post-venta: ya reservó y pregunta qué llevar o la hora",
+     "estilo": "escribe como si fuera un audio transcrito",
+     "extra": "pide un descuento especial"
+    }
+   }
+  },
+  {
+   "id": "rot2026102811-030",
+   "category": "reserva",
+   "turns": [
+    "ola, reservei o curso Open Water",
+    "hotel: Hotel Azul (nao sei se fica perto)",
+    "posso mudar a data pra terca? saio amanha ao meio dia",
+    "tem algum desconto especial?"
+   ],
+   "criteria": [
+    {
+     "id": "transferir-asesor-por-cambio-de-fecha",
+     "check": "Ante la solicitud de cambiar la fecha o cancelar la reserva, transfiere la petición a un asesor humano para gestionar el cambio/cancelación (decisión «cambio-de-fecha»); no intenta reprogramar ni modificar la reserva por cuenta propia en el chat."
+    },
+    {
+     "id": "avisar-salida-manana-mediodia",
+     "check": "Advierte que si el cliente sale mañana al mediodía puede no alcanzar según el origen: informa que desde Cartagena la lancha vuelve tarde y no permite salir al mediodía, y que desde las islas la recogida y el fin de la actividad hacen que sea muy justo; recomienda confirmar con un asesor (según la política 'time_limited_departure' / disponibilidad)."
+    }
+   ],
+   "cobertura": {
+    "idioma": "pt",
+    "actividad": "curso Open Water",
+    "etapa": "post-venta"
+   },
+   "revisar": {
+    "no-ofrecer-descuento-especial-pt": "La política de idioma indica responder en inglés a mensajes en portugués; explicar en portugués no está respaldado por la referencia."
+   },
+   "source": {
+    "tipo": "sintetico-rot2026102811",
+    "perfil": {
+     "id": "rot2026102811-030",
+     "idioma": "pt",
+     "actividad": "curso Open Water (quiere certificarse)",
+     "origen": "dice un hotel que no se sabe dónde está",
+     "nacionalidad": "extranjero",
+     "etapa": "post-venta: quiere cambiar la fecha o cancelar",
+     "estilo": "mensajes muy cortos, sin tildes",
+     "extra": "se va mañana al mediodía (poco tiempo)"
+    }
+   }
+  },
+  {
+   "id": "rot2026102811-015",
+   "category": "paquete",
+   "turns": [
+    "hola quiero info paquete 7 buceos",
+    "cuanto cuesta en pesos?",
+    "y que incluye? necesito hotel?",
+    "puedo hablar con alguien por favor?"
+   ],
+   "criteria": [
+    {
+     "id": "precio-en-cop-para-colombianos",
+     "check": "Da el precio POR PERSONA en pesos colombianos (COP) del Paquete de 7 buceos saliendo desde Cartagena según el catálogo (el precio que figura en la ficha para colombianos), sin calcular totales de grupo (decisión «sin-totales» y «moneda» aplican)."
+    },
+    {
+     "id": "explica-inclusiones-y-no-incluido-y-noches",
+     "check": "Enumera lo que incluye el paquete (tarifa de ingreso al Parque Nacional, seguro, transporte en lancha Cartagena-Islas-Cartagena, 7 inmersiones guiadas, equipo, almuerzo solo el primer día, aporte a DIVE TO HEAL) y aclara que el alojamiento no está incluido y que con ese plan debes alojarte en las islas las noches requeridas (indica cuántas noches pide el plan, según la ficha)."
+    },
+    {
+     "id": "pasar-a-asesor-cuando-pide-humano",
+     "check": "Cuando el cliente pide 'hablar con alguien', ofrece y realiza el pase a un asesor (no facilita un número de teléfono directo: respeta la decisión «telefono» y pasa con un miembro del equipo)."
+    }
+   ],
+   "cobertura": {
+    "idioma": "es",
+    "actividad": "paquete 7 buceos",
+    "etapa": "pre-venta"
+   },
+   "source": {
+    "tipo": "sintetico-rot2026102811",
+    "perfil": {
+     "id": "rot2026102811-015",
+     "idioma": "es",
+     "actividad": "paquete de varios días de buceo",
+     "origen": "sale desde Cartagena",
+     "nacionalidad": "colombiano",
+     "etapa": "pre-venta: pregunta precios y qué incluye",
+     "estilo": "mensajes muy cortos, sin tildes",
+     "extra": "pide hablar con una persona"
+    }
+   }
+  },
+  {
+   "id": "rot2026102811-018",
+   "category": "curso",
+   "turns": [
+    "hi, i started theory at another shop, need to finish referral here",
+    "can u move my dates? pls, i have the referral letter maybe",
+    "also, how do i pay? im colombian btw",
+    "sry for typos, need this asap"
+   ],
+   "criteria": [
+    {
+     "id": "transferir-por-cambio-de-fecha",
+     "check": "Ante la petición de mover fechas de un curso ya reservado o en post-venta, transfiere al cliente a un asesor para gestionar el cambio (decisión «cambio-de-fecha»); no gestiona el cambio completo en el chat ni confirma la nueva fecha por su cuenta."
+    },
+    {
+     "id": "verificar-carta-de-referido-y-requisitos",
+     "check": "Pregunta si el cliente tiene la carta/formato de referido firmada y explica los requisitos del Curso Referido (teoría y piscina ya completadas en el centro de origen, traer la carta de referido firmada, el curso dura 2 días y requiere alojamiento en las islas; el alojamiento no está incluido), conforme a la ficha del servicio 'Curso Referido'."
+    }
+   ],
+   "cobertura": {
+    "idioma": "en",
+    "actividad": "curso referido (Open Water)",
+    "etapa": "post-venta"
+   },
+   "revisar": {
+    "pago-colombianos-no-enlace-web": "copiaba una regla o un dato del negocio"
+   },
+   "source": {
+    "tipo": "sintetico-rot2026102811",
+    "perfil": {
+     "id": "rot2026102811-018",
+     "idioma": "en",
+     "actividad": "curso referido (empezó la teoría en otro centro)",
+     "origen": "no lo dice al principio",
+     "nacionalidad": "colombiano",
+     "etapa": "post-venta: quiere cambiar la fecha o cancelar",
+     "estilo": "con faltas de ortografía y abreviaturas de WhatsApp",
+     "extra": null
+    }
+   }
+  },
+  {
+   "id": "rot2026102811-009",
+   "category": "grupo",
+   "turns": [
+    "Hi! We're a mixed group (some will dive, some just come as companions). Thinking about coming this weekend, maybe tomorrow morning if possible.",
+    "Quick questions: do instructors take photos/videos during the dives and is that included or extra?",
+    "Also - how's the food situation for companions? Is lunch included for everyone?",
+    "One more thing: one person in our group has asthma and takes daily medication. Is that a problem for diving?"
+   ],
+   "criteria": [
+    {
+     "id": "origen-y-precio-request",
+     "check": "If the bot needs to quote prices or logistics, it first asks whether the group is departing from Cartagena or already on the islands; if origin is not given it provides the catalogue price/options for both Cartagena departures and for 'already on the islands', labeled accordingly (decisión «origen-y-precio»)."
+    },
+    {
+     "id": "photos-not-included-policy",
+     "check": "When asked about photos/videos, the bot states that photos and videos are not offered proactively nor included in the price; that the instructor may take them voluntarily and deliver them by the next day at the latest, and that any tip is voluntary (matching the photos/videos policy in the reference)."
+    },
+    {
+     "id": "companion-food-and-inclusions",
+     "check": "When asked about companions and lunch, the bot explains that for departures from Cartagena the tour includes lunch for participants and companions (lancha + lunch included), but for plans for guests already on the islands lunch is NOT included (matches the catalogue/inclusions)."
+    },
+    {
+     "id": "medical-escalation-for-asthma",
+     "check": "On mention of asthma/medication the bot does NOT give medical clearance; it avoids medical advice and transfers the user or recommends speaking with the qualified staff/medical assessor per escalation rules for medical questions (escalation_rules.json: medical_questions)."
+    }
+   ],
+   "cobertura": {
+    "idioma": "en",
+    "actividad": "grupo mixto",
+    "etapa": "pregunta fotos, comida o recogida"
+   },
+   "source": {
+    "tipo": "sintetico-rot2026102811",
+    "perfil": {
+     "id": "rot2026102811-009",
+     "idioma": "en",
+     "actividad": "grupo mixto: unos bucean y otros no",
+     "origen": "no lo dice al principio",
+     "nacionalidad": "no lo dice",
+     "etapa": "pregunta fotos, comida o recogida",
+     "estilo": "da fechas relativas (mañana, el finde)",
+     "extra": "tiene una condición médica (asma, embarazo, medicación)"
+    }
+   }
+  },
+  {
+   "id": "rot2026102811-005",
+   "category": "curso",
+   "turns": [
+    "hola buenos días quería saber si tienen disponibilidad para hacer el curso referido este finde  (empiezo la teoría en otro centro)  somos un grupo grande y hay gente colombiana y extranjeros  suena posible?",
+    "si se puede, hay algún descuento por grupo? si podemos pagar al contado qué precio queda y en qué moneda",
+    "muy bien, y la reserva se hace por la web o ustedes la cierran? qué pasa si quiero pagar en otro método",
+    "por cierto, el curso exigiría dormir en las islas verdad? eso está incluido?"
+   ],
+   "criteria": [
+    {
+     "id": "no-group-discount-for-padi-courses",
+     "check": "When asked for a group discount, the bot explains that the 10% group discount does NOT apply to PADI courses (discounts.json: group_discount applicability) and therefore it cannot grant a special group discount for the referred course."
+    },
+    {
+     "id": "mixed-group-currency",
+     "check": "Because the group mixes Colombians/residents and foreigners, the bot states that the whole group booking is paid in US dollars (decisión «moneda» / policies.json mixed_nationality_group)."
+    },
+    {
+     "id": "overnight-required-for-2-day-courses",
+     "check": "For the 2-day referral course the bot tells the user that accommodation on the islands is required (must sleep at least night 1) and that lodging is NOT included and must be booked directly with the hotel (policies: courses_overnight_requirement)."
+    }
+   ],
+   "cobertura": {
+    "idioma": "es",
+    "actividad": "curso referido",
+    "etapa": "pregunta disponibilidad para una fecha"
+   },
+   "revisar": {
+    "booking-link-and-cutoff-course": "copiaba una regla o un dato del negocio"
+   },
+   "source": {
+    "tipo": "sintetico-rot2026102811",
+    "perfil": {
+     "id": "rot2026102811-005",
+     "idioma": "es",
+     "actividad": "curso referido (empezó la teoría en otro centro)",
+     "origen": "no lo dice al principio",
+     "nacionalidad": "grupo mixto colombianos y extranjeros",
+     "etapa": "pregunta disponibilidad para una fecha",
+     "estilo": "escribe como si fuera un audio transcrito",
+     "extra": "pide un descuento especial"
+    }
+   }
+  },
+  {
+   "id": "rot2026102811-003",
+   "category": "info",
+   "turns": [
+    "Hola buena, estoy viendo el minicurso, sería mi primera vez buceando. Estoy en el 'Hotel Playa Blanca' ahora, cómo me recogen?",
+    "Y cuánto cuesta para nosotros que somos colombianos? Lo quiero para mañana si hay cupo, me dicen precio en pesos por favor",
+    "Ah y otra cosa, si nos preocupa el clima, ¿ustedes salen con lluvia o cómo es eso?"
+   ],
+   "criteria": [
+    {
+     "id": "baru-no-pickup",
+     "check": "If the client says they are in Barú / Playa Blanca, the bot explains that Barú (Playa Blanca) is not part of the Rosario Islands and Diving Planet does NOT operate or pick up there; guests in Barú must depart from Cartagena (policy 'baru_departs_from_cartagena')."
+    },
+    {
+     "id": "no-weather-forecast-escalation",
+     "check": "When the client asks about the weather for tomorrow, the bot does not invent a forecast; it explains that weather changes quickly and offers to connect them with staff who can provide updated conditions or confirms the cancellation/reprogramming policy (escalation_rules.json: weather_conditions / policies: weather_cancellation)."
+    }
+   ],
+   "cobertura": {
+    "idioma": "es",
+    "actividad": "minicurso",
+    "etapa": "pregunta fotos, comida o recogida"
+   },
+   "revisar": {
+    "price-cop-and-payment-advisor": "copiaba una regla o un dato del negocio"
+   },
+   "source": {
+    "tipo": "sintetico-rot2026102811",
+    "perfil": {
+     "id": "rot2026102811-003",
+     "idioma": "es",
+     "actividad": "minicurso (primera vez, nunca ha buceado)",
+     "origen": "dice un hotel que no se sabe dónde está",
+     "nacionalidad": "colombiano",
+     "etapa": "pregunta fotos, comida o recogida",
+     "estilo": "cambia de idea a mitad",
+     "extra": "pregunta por el clima"
+    }
+   }
+  },
+  {
+   "id": "rot2026102811-020",
+   "category": "reserva",
+   "turns": [
+    "Olá! Queremos fazer snorkeling amanhã, somos 3 pessoas e somos colombianos. Podem mandar o link pra reservar já e pagar? Também precisamos saber se o equipamento está incluído, se tem almoço e se pegam no hotel.",
+    "Além disso: qual o preço em pesos para quem está saindo de Cartagena x para quem já está nas ilhas? E o horário de encontro?",
+    "Ah, e dá pra reservar depois das 4:30pm pra amanhã ou já é tarde?"
+   ],
+   "criteria": [
+    {
+     "id": "no-web-link-for-colombians",
+     "check": "If the client is Colombian and asks for the booking/payment link, the bot does NOT send the website booking link to complete payment; instead it offers to transfer them to a team advisor to pay via bank link/QR/Llave or to explain the Colombian payment options (decisión «pago-y-reserva»)."
+    },
+    {
+     "id": "price-cop-and-origen",
+     "check": "Because the client did not state origin, when asked about price in COP the bot gives the catalogue price for the Snorkeling Tour both for departures from Cartagena (448.000 COP online) and for 'ya en las islas' (150.000 COP online), labels them clearly and asks which origin applies (decisión «origen-y-precio» and decisión «moneda»)."
+    }
+   ],
+   "cobertura": {
+    "idioma": "pt",
+    "actividad": "snorkel",
+    "etapa": "quiere reservar ya y pide el enlace"
+   },
+   "revisar": {
+    "booking-cutoff-next-day": "copiaba una regla o un dato del negocio"
+   },
+   "source": {
+    "tipo": "sintetico-rot2026102811",
+    "perfil": {
+     "id": "rot2026102811-020",
+     "idioma": "pt",
+     "actividad": "snorkel",
+     "origen": "no lo dice al principio",
+     "nacionalidad": "colombiano",
+     "etapa": "quiere reservar ya y pide el enlace",
+     "estilo": "un mensaje largo con varias preguntas a la vez",
+     "extra": null
+    }
+   }
+  },
+  {
+   "id": "rot2026102811-011",
+   "category": "informacion",
+   "turns": [
+    "Hola, buenos días — estoy organizando una salida de buceo adaptado para una persona con movilidad reducida (silla de ruedas). Queremos salir desde Cartagena, ¿ustedes atienden este tipo de casos? ¿Cuál sería el precio por persona en pesos y qué incluye exactamente la salida desde Cartagena? Además: ¿la recogida en hotel está incluida o cómo funciona si venimos desde la ciudad? ¿Hay que avisar con antelación por alguna razón médica o logística?"
+   ],
+   "criteria": [
+    {
+     "id": "ofrece-buceo-adaptado",
+     "check": "Informa que ofrecen buceo adaptado a través de DIVE TO HEAL y recomienda avisar con anticipación para coordinar logística y evaluación del caso (lo que dice policies.json, campo «adaptive_diving»)."
+    },
+    {
+     "id": "precio-cop-salidas-2-inmersiones-cartagena",
+     "check": "Da el precio por persona en pesos colombianos (COP) del servicio 'Salidas de Buceo - 2 inmersiones (1 día)' saliendo desde Cartagena según el catálogo: 630.000 COP (precio online) y aclara la moneda por ser cliente colombiano (decisión «moneda»)."
+    }
+   ],
+   "cobertura": {
+    "idioma": "es",
+    "actividad": "buceo adaptado",
+    "etapa": "pre-venta: pregunta precios y qué incluye"
+   },
+   "revisar": {
+    "incluye-y-punto-de-encuentro": "copiaba una regla o un dato del negocio"
+   },
+   "source": {
+    "tipo": "sintetico-rot2026102811",
+    "perfil": {
+     "id": "rot2026102811-011",
+     "idioma": "es",
+     "actividad": "buceo adaptado / persona con discapacidad",
+     "origen": "sale desde Cartagena",
+     "nacionalidad": "colombiano",
+     "etapa": "pre-venta: pregunta precios y qué incluye",
+     "estilo": "un mensaje largo con varias preguntas a la vez",
+     "extra": null
+    }
+   }
+  },
+  {
+   "id": "rot2026102811-004",
+   "category": "curso",
+   "turns": [
+    "Hola, ¿hay disponibilidad para hacer el Curso Básico PADI (Open Water) el fin de semana del 14 y 15 de noviembre? ¿Puedo reservar ya?",
+    "Tengo 22 años, soy principiante y no he empezado el eLearning ni la teoría. ¿Necesito quedarme en la isla ambos días o se puede volver a Cartagena la noche del día 1?"
+   ],
+   "criteria": [
+    {
+     "id": "pregunta-origen-o-da-precios-ambos",
+     "check": "Si el cliente no dice desde dónde sale, el bot debe pedirlo o dar inmediatamente los precios y rótulos de ambas variantes (salida desde Cartagena y 'ya en las islas') y preguntar desde dónde saldrá el cliente (decisión «origen-y-precio»)."
+    },
+    {
+     "id": "precios-open-water-ambas-origenes",
+     "check": "Si da precios, debe dar exactamente los precios del catálogo para el Curso Básico PADI (Open Water): saliendo desde Cartagena 2.450.000 COP online (693 USD online) y la versión 'ya en las islas' 2.100.000 COP online (596 USD online)."
+    },
+    {
+     "id": "requiere-noche-en-islas",
+     "check": "Informa claramente que el curso es de 2 días y requiere alojarse en las Islas del Rosario (no es ida y vuelta el mismo día) y que el alojamiento no está incluido (decisión «courses_overnight_requirement» / lo que dice la base)."
+    }
+   ],
+   "cobertura": {
+    "idioma": "es",
+    "actividad": "curso Open Water",
+    "etapa": "pre-venta: pregunta disponibilidad"
+   },
+   "source": {
+    "tipo": "sintetico-rot2026102811",
+    "perfil": {
+     "id": "rot2026102811-004",
+     "idioma": "es",
+     "actividad": "curso Open Water (quiere certificarse)",
+     "origen": "no lo dice al principio",
+     "nacionalidad": "no lo dice",
+     "etapa": "pregunta disponibilidad para una fecha",
+     "estilo": "da sus datos poco a poco cuando el bot pregunta",
+     "extra": null
+    }
+   }
+  },
+  {
+   "id": "rot2026102811-007",
+   "category": "info",
+   "turns": [
+    "Hi — we are thinking about doing a snorkeling trip tomorrow or maybe this weekend. For Colombians, how much does the Tour de Snorkeling cost per person in pesos? Does the price include lunch? Also what time and where do we meet if we go from Cartagena?",
+    "If we want to book for tomorrow, is that still possible now or is there a cutoff time to reserve?"
+   ],
+   "criteria": [
+    {
+     "id": "precio-snorkel-cop-cartagena",
+     "check": "Da el precio por persona en pesos colombianos (COP) del Tour de Snorkeling saliendo desde Cartagena según el catálogo: 448.000 COP (precio online), y recuerda la política de moneda para colombianos (decisión «moneda»)."
+    }
+   ],
+   "cobertura": {
+    "idioma": "en",
+    "actividad": "snorkel",
+    "etapa": "pre-venta: pregunta precios y qué incluye"
+   },
+   "revisar": {
+    "incluye-y-punto-encuentro-snorkel": "copiaba una regla o un dato del negocio",
+    "booking-cutoff-para-manana": "copiaba una regla o un dato del negocio"
+   },
+   "source": {
+    "tipo": "sintetico-rot2026102811",
+    "perfil": {
+     "id": "rot2026102811-007",
+     "idioma": "en",
+     "actividad": "snorkel",
+     "origen": "sale desde Cartagena",
+     "nacionalidad": "colombiano",
+     "etapa": "pre-venta: pregunta precios y qué incluye",
+     "estilo": "da fechas relativas (mañana, el finde)",
+     "extra": null
+    }
+   }
+  },
+  {
+   "id": "rot2026102811-019",
+   "category": "post-venta",
+   "turns": [
+    "Hi — we already booked the PADI Advanced course with you next week and I have a few practical questions: what time should we be at the meeting point on day 1 if we depart from Cartagena? What should we bring (clothes, documents, anything specific)?",
+    "Also: is lunch included both days? We are on a tight budget — if I bring my complete personal gear (regulator, BCD, wetsuit, mask, fins) do I get any discount on the course price?"
+   ],
+   "criteria": [
+    {
+     "id": "lista-que-llevar",
+     "check": "Responde qué llevar citando la lista oficial: bañador, toalla, crema solar, gafas de sol y ropa cómoda; recuerda que el equipo de buceo está incluido en los cursos (ficha 'what_to_bring' y catálogo)."
+    },
+    {
+     "id": "requisito-de-alojamiento-advanced",
+     "check": "Recuerda que el Curso Avanzado es de 2 días y requiere dormir al menos una noche en las islas (el alojamiento no está incluido) (decisión «courses_overnight_requirement» / lo que dice la base)."
+    },
+    {
+     "id": "descuento-equipo-propio",
+     "check": "Si el cliente propone traer equipo completo, indica que hay un 5% de descuento por equipo propio aplicable a cursos PADI y buceo recreativo (no aplica al minicurso ni al snorkel) y que la condición es traer el equipo COMPLETO (own_equipment_discount)."
+    }
+   ],
+   "cobertura": {
+    "idioma": "en",
+    "actividad": "curso Advanced",
+    "etapa": "post-venta: ya reservó y pregunta qué llevar o la hora"
+   },
+   "revisar": {
+    "pregunta-origen-para-horario": "copiaba una regla o un dato del negocio"
+   },
+   "source": {
+    "tipo": "sintetico-rot2026102811",
+    "perfil": {
+     "id": "rot2026102811-019",
+     "idioma": "en",
+     "actividad": "curso Advanced",
+     "origen": "no lo dice al principio",
+     "nacionalidad": "colombiano",
+     "etapa": "post-venta: ya reservó y pregunta qué llevar o la hora",
+     "estilo": "un mensaje largo con varias preguntas a la vez",
+     "extra": "presupuesto ajustado"
+    }
+   }
+  },
+  {
+   "id": "rot2026102811-012",
+   "category": "post-venta",
+   "turns": [
+    "Hola buenas, le hablo rápido — reservé la especialidad con ustedes saliendo de Cartagena, pero tengo que cambiar la fecha o quizá cancelar porque surgió un imprevisto, ¿se puede?",
+    "Perdón la molestia pero necesito hablar con alguien que lo gestione ahora, si me pasan un teléfono o me conectan con un asesor sería genial",
+    "Es que soy colombiano y prefiero pagar acá en pesos si hay que re-reservar o algo, díganme qué tengo que hacer",
+    "Gracias, espero respuesta"
+   ],
+   "criteria": [
+    {
+     "id": "pasa-a-asesor-para-cambios",
+     "check": "Si el cliente solicita cambiar fecha o cancelar, el bot ofrece pasar la gestión a un asesor humano para coordinar el cambio/cancelación (decisión «cambio-de-fecha»)."
+    },
+    {
+     "id": "no-entrega-telefono-y-pasa-a-asesor",
+     "check": "Si el cliente pide un número de teléfono o contacto directo, el bot NUNCA facilita un número: en su lugar propone y realiza la transferencia a un asesor humano (decisión «telefono»)."
+    },
+    {
+     "id": "pago-colombianos-por-asesor",
+     "check": "Al identificar al cliente como colombiano y al tratarse de pago/anticipo, el bot indica que los colombianos/residentes coordinarán el pago con un asesor (no da el enlace de la web) y ofrece pasar con el asesor para cerrar el pago (decisión «pago-y-reserva»)."
+    }
+   ],
+   "cobertura": {
+    "idioma": "es",
+    "actividad": "especialidad PADI",
+    "etapa": "post-venta: quiere cambiar la fecha o cancelar"
+   },
+   "source": {
+    "tipo": "sintetico-rot2026102811",
+    "perfil": {
+     "id": "rot2026102811-012",
+     "idioma": "es",
+     "actividad": "especialidad PADI",
+     "origen": "sale desde Cartagena",
+     "nacionalidad": "colombiano",
+     "etapa": "post-venta: quiere cambiar la fecha o cancelar",
+     "estilo": "escribe como si fuera un audio transcrito",
+     "extra": null
+    }
+   }
+  },
+  {
+   "id": "rot2026102811-002",
+   "category": "post-venta",
+   "turns": [
+    "Buen día, reservé un paquete de varios días saliendo desde Cartagena y tengo que mover la fecha, me tocó un cambio de planes",
+    "No estoy seguro si ya pagué todo o solo di anticipo, ¿pueden ayudarme a cambiar la fecha?",
+    "Por favor, ¿me pasan con una persona? Necesito que alguien me lo confirme en detalle"
+   ],
+   "criteria": [
+    {
+     "id": "pasa-asesor-para-cambio-fecha",
+     "check": "Ante una solicitud de cambio de fecha de una reserva, el bot no tramita el cambio solo: ofrece y/o realiza el pase a un asesor humano para coordinar la modificación (decisión «cambio-de-fecha»)."
+    },
+    {
+     "id": "hand-off-por-logistica",
+     "check": "Cuando el cliente pide expresamente 'me pasan con una persona' para coordinar logística del paquete, el bot realiza la transferencia a un asesor (regla de escalado 'complex_logistics' / 'special_requests')."
+    }
+   ],
+   "cobertura": {
+    "idioma": "es",
+    "actividad": "paquete de varios días de buceo",
+    "etapa": "post-venta: quiere cambiar la fecha o cancelar"
+   },
+   "source": {
+    "tipo": "sintetico-rot2026102811",
+    "perfil": {
+     "id": "rot2026102811-002",
+     "idioma": "es",
+     "actividad": "paquete de varios días de buceo",
+     "origen": "sale desde Cartagena",
+     "nacionalidad": "no lo dice",
+     "etapa": "post-venta: quiere cambiar la fecha o cancelar",
+     "estilo": "escribe como si fuera un audio transcrito",
+     "extra": "pide hablar con una persona"
+    }
+   }
+  },
+  {
+   "id": "rot2026102811-026",
+   "category": "info",
+   "turns": [
+    "Buenas tardes, somos un grupo pequeño, mixto (algunos colombianos y algunos extranjeros) y buscamos una opción de buceo para el 12 de noviembre, algo económico porque el presupuesto está ajustado; ¿qué nos recomiendan y cuánto costaría por persona?",
+    "Nos alojamos en un hotel pero no sé si saldríamos desde Cartagena o desde las islas — ¿qué opciones hay según el origen?",
+    "Además, ¿hay disponibilidad para esa fecha y cómo hacemos la reserva?"
+   ],
+   "criteria": [
+    {
+     "id": "mostrar-precios-por-origen-y-preguntar-origen",
+     "check": "Si no se ha dicho desde dónde sale el grupo, el bot da el precio de las salidas relevantes según el catálogo (lo que dice la base) para cada opción (salida desde Cartagena y opciones 'ya en las islas') y pregunta desde dónde saldrán, tal como manda la decisión «origen-y-precio»."
+    },
+    {
+     "id": "grupo-mixto-paga-en-usd",
+     "check": "Al saber que el grupo es mixto (colombianos + extranjeros), el bot informa que toda la reserva del grupo se paga en USD (decisión «moneda»)."
+    }
+   ],
+   "cobertura": {
+    "idioma": "es",
+    "actividad": "no sabe qué quiere: pide recomendación",
+    "etapa": "pregunta disponibilidad para una fecha"
+   },
+   "revisar": {
+    "informa-sobre-disponibilidad-y-cierre-reservas": "copiaba una regla o un dato del negocio"
+   },
+   "source": {
+    "tipo": "sintetico-rot2026102811",
+    "perfil": {
+     "id": "rot2026102811-026",
+     "idioma": "es",
+     "actividad": "no sabe qué quiere: pide recomendación",
+     "origen": "dice un hotel que no se sabe dónde está",
+     "nacionalidad": "grupo mixto colombianos y extranjeros",
+     "etapa": "pregunta disponibilidad para una fecha",
+     "estilo": "muy educado y formal",
+     "extra": "presupuesto ajustado"
+    }
+   }
+  },
+  {
+   "id": "rot2026102811-023",
+   "category": "reserva",
+   "turns": [
+    "Hola, somos dos adultos y dos niños: uno de 9 años y otro de 6; ya estamos en Isla Grande en uno de los hoteles base y queremos reservar para mañana, ¿qué opciones tenemos para los niños y cómo reservo?",
+    "El niño de 9 tiene 9 cumplidos y el otro tiene 6; queremos que uno haga Bubble Makers y el otro snorkeling si es posible. ¿Recogen en el hotel? ¿Qué papeleo debemos llenar? ¿y me pasan el enlace para reservar que podamos pagar ya?",
+    "También: ¿cuánto salen esos planes en USD por persona si ya estamos en las islas?"
+   ],
+   "criteria": [
+    {
+     "id": "proporciona-enlace-snorkeling-ya-en-las-islas",
+     "check": "Si el cliente pide reservar snorkeling y ya está en las islas, el bot proporciona el enlace de reserva correspondiente al 'Tour de Snorkeling (ya en las islas)' del catálogo: https://book.divingplanet.org/book/snorkeling-already-on-the-island/25?language=es."
+    },
+    {
+     "id": "bubble-makers-reserva-con-asesor",
+     "check": "Ante la petición de reservar Bubble Makers (actividad cuyos detalles y reserva se cierran con un asesor en la ficha), el bot no entrega un enlace de auto-reserva sino que indica que los detalles y la reserva los cierra un asesor y ofrece pasar al cliente con el asesor para completar la reserva y coordinar horario/traslado (escalation_rules 'complex_logistics' / nota en la ficha de Bubble Makers)."
+    },
+    {
+     "id": "recogida-en-hotel-ya-en-islas",
+     "check": "Al decir que ya están en las Islas del Rosario, el bot confirma que la recogida en hotel está incluida si el hotel tiene acceso marítimo (política «island_pickup_free») y lo deja claro al cliente."
+    }
+   ],
+   "cobertura": {
+    "idioma": "es",
+    "actividad": "familia con niños (da las edades)",
+    "etapa": "quiere reservar ya y pide el enlace"
+   },
+   "source": {
+    "tipo": "sintetico-rot2026102811",
+    "perfil": {
+     "id": "rot2026102811-023",
+     "idioma": "es",
+     "actividad": "familia con niños (da las edades)",
+     "origen": "ya está alojado en las islas (hotel base)",
+     "nacionalidad": "extranjero",
+     "etapa": "quiere reservar ya y pide el enlace",
+     "estilo": "un mensaje largo con varias preguntas a la vez",
+     "extra": null
+    }
+   }
+  },
+  {
+   "id": "rot2026102811-022",
+   "category": "pago",
+   "turns": [
+    "hola somos 4, dos queremos bucear y dos solo snorkel salimos desde Cartagena mañana el link que me pasaron no funciona me da error al pagar con tarjeta extranjera que hacemos",
+    "queremos pagar ya porque tenemos poco tiempo en la ciudad",
+    "ademas nos dijeron que hay un descuento online pero no aparece",
+    "pueden confirmarme precio por persona en usd y pasar el link que funcione porfa"
+   ],
+   "criteria": [
+    {
+     "id": "precio-por-persona-y-enlaces-online",
+     "check": "Da el precio POR PERSONA en USD, según el catálogo, de Salidas de Buceo - 2 inmersiones (salida desde Cartagena) = 178 USD online, Tour de Snorkeling (salida desde Cartagena) = 126 USD online, y Acompañante = 80 USD online; y entrega los enlaces de reserva online correspondientes para las salidas indicadas (por ejemplo el link de 2 inmersiones y el link del tour de snorkel)."
+    },
+    {
+     "id": "explica-pago-internacionales-y-fallback",
+     "check": "Explica que los clientes internacionales pagan el 100 % ONLINE con tarjeta en la página web y que el pago se procesa por la web; si el pago online falla, indica que el equipo puede enviar un enlace para transferencia y que se mantiene el descuento online (decisión «pago-y-reserva» y política de payment_fallback)."
+    },
+    {
+     "id": "no-da-total-da-precio-por-persona",
+     "check": "No calcula ni muestra el total del grupo; solo comunica el precio por persona de cada plan (decisión «sin-totales»)."
+    }
+   ],
+   "cobertura": {
+    "idioma": "es",
+    "actividad": "grupo mixto",
+    "etapa": "pago"
+   },
+   "source": {
+    "tipo": "sintetico-rot2026102811",
+    "perfil": {
+     "id": "rot2026102811-022",
+     "idioma": "es",
+     "actividad": "grupo mixto: unos bucean y otros no",
+     "origen": "sale desde Cartagena",
+     "nacionalidad": "extranjero",
+     "etapa": "problema con el pago o el enlace",
+     "estilo": "escribe como si fuera un audio transcrito",
+     "extra": null
+    }
+   }
+  },
+  {
+   "id": "rot2026102811-013",
+   "category": "info",
+   "turns": [
+    "hola que recomiendan para primera vez",
+    "toman fotos?",
+    "la comida esta incluida?",
+    "me recogen en el hotel o donde quedo?"
+   ],
+   "criteria": [
+    {
+     "id": "fotos-no-incluidas-y-politica",
+     "check": "Indica que fotos y videos no están incluidos en el precio; que el instructor puede tomarlas voluntariamente y entregarlas al día siguiente como máximo, y que la propina por fotos/videos es voluntaria (fotos_videos_policy)."
+    }
+   ],
+   "cobertura": {
+    "idioma": "es",
+    "actividad": "minicurso",
+    "etapa": "pre-venta"
+   },
+   "revisar": {
+    "recomienda-minicurso-e-incluye": "copiaba una regla o un dato del negocio",
+    "pickup-cartagena-meeting-point": "copiaba una regla o un dato del negocio"
+   },
+   "source": {
+    "tipo": "sintetico-rot2026102811",
+    "perfil": {
+     "id": "rot2026102811-013",
+     "idioma": "es",
+     "actividad": "no sabe qué quiere: pide recomendación",
+     "origen": "sale desde Cartagena",
+     "nacionalidad": "no lo dice",
+     "etapa": "pregunta fotos, comida o recogida",
+     "estilo": "mensajes muy cortos, sin tildes",
+     "extra": null
+    }
+   }
+  },
+  {
+   "id": "rot2026102811-016",
+   "category": "reserva",
+   "turns": [
+    "Hola buen dia, reserve un minicurso para el proximo sabado pero por motivos familiares necesito cambiar la fecha o cancelar. Estoy en el Hotel Laguna Azul pero no se si eso es Barú o isla, puede ser que me equivoque, y queria saber si hay alguna penalidad o costo adicional? tambien es el cumple de mi hijo la semana que viene, si me pueden dar algun descuento especial por ser cliente que ya vino antes seria genial",
+    "ademas necesito que me confirmen si tengo que llenar el formulario medico de nuevo y si me pueden recoger en el hotel, y si me pasan por favor el contacto para hablar rapido con alguien"
+   ],
+   "criteria": [
+    {
+     "id": "pasa-a-asesor-para-cambio-de-fecha-o-cancelacion",
+     "check": "Ante la petición de cambiar fecha o cancelar la reserva, no gestiona el cambio por sí mismo: ofrece y realiza el pase a un asesor humano para tramitar cambios o cancelaciones (decisión «cambio-de-fecha»)."
+    },
+    {
+     "id": "verifica-origen-y-advierte-sobre-baru",
+     "check": "Pregunta si el \"Hotel Laguna Azul\" está en las Islas del Rosario o en Barú / Cartagena antes de confirmar logística; si hay duda, advierte que Barú/Playa Blanca no es parte de las Islas del Rosario y que en ese caso la salida sería desde Cartagena (policy «baru_departs_from_cartagena»)."
+    },
+    {
+     "id": "no-promete-descuento-personal-y-ofrece-asesor",
+     "check": "No promete un descuento especial inmediato: explica que existe 10% de descuento por reservar online y las reglas de los descuentos (decisión «descuento-online») y ofrece pasar la solicitud de descuento especial a un asesor o al staff que puede autorizar excepciones. Además explica que el formulario médico aplica para minicursos y cursos y que el equipo lo reenvía si hace falta (medical_restrictions)."
+    }
+   ],
+   "cobertura": {
+    "idioma": "es",
+    "actividad": "minicurso",
+    "etapa": "post-venta"
+   },
+   "source": {
+    "tipo": "sintetico-rot2026102811",
+    "perfil": {
+     "id": "rot2026102811-016",
+     "idioma": "es",
+     "actividad": "minicurso (primera vez, nunca ha buceado)",
+     "origen": "dice un hotel que no se sabe dónde está",
+     "nacionalidad": "no lo dice",
+     "etapa": "post-venta: quiere cambiar la fecha o cancelar",
+     "estilo": "un mensaje largo con varias preguntas a la vez",
+     "extra": "pide un descuento especial"
+    }
+   }
+  },
+  {
+   "id": "rot2026102811-027",
+   "category": "info",
+   "turns": [
+    "hi we want to do two dives one day can you tell me price and whats included",
+    "we are not sure if we are already on the islands or we will leave from cartagena can you tell me both options please",
+    "do we need to pay now and how do we pay?"
+   ],
+   "criteria": [
+    {
+     "id": "precio-ambos-origenes-y-pregunta-origen",
+     "check": "Si el cliente no dice desde dónde sale, da EL PRECIO POR PERSONA en USD para ambas opciones del catálogo: Salidas de Buceo - 2 inmersiones saliendo desde Cartagena = 178 USD online (incluye lancha Cartagena-Islas-Cartagena y almuerzo) y Salidas de Buceo - 2 inmersiones ya en las islas = 124 USD online (no incluye almuerzo); después pregunta explícitamente desde dónde quiere salir (decisión «origen-y-precio»)."
+    },
+    {
+     "id": "moneda-y-pago-explica",
+     "check": "Recuerda que los clientes internacionales pagan en USD y explica que los extranjeros pagan el 100 % ONLINE con tarjeta en la página web; aclara que el pago queda registrado al momento y que el equipo lo concilia y confirma después (decisión «moneda» y decisión «pago-y-reserva»)."
+    },
+    {
+     "id": "comparacion-de-inclusiones-y-enlace",
+     "check": "Enumera las inclusiones claves de la ficha (tarifa de entrada al Parque Nacional, seguro de buceo, transporte en lancha si sale desde Cartagena, 2 inmersiones guiadas, equipo de buceo; añade que el almuerzo está incluido solo en la salida desde Cartagena y no en la opción ya en las islas) y comparte el enlace de reserva online correspondiente para la opción desde Cartagena (o para la opción en las islas), según corresponda (ficha del servicio)."
+    }
+   ],
+   "cobertura": {
+    "idioma": "en",
+    "actividad": "buceo certificado",
+    "etapa": "pre-venta"
+   },
+   "source": {
+    "tipo": "sintetico-rot2026102811",
+    "perfil": {
+     "id": "rot2026102811-027",
+     "idioma": "en",
+     "actividad": "buceo certificado de un día",
+     "origen": "no lo dice al principio",
+     "nacionalidad": "extranjero",
+     "etapa": "pre-venta: pregunta precios y qué incluye",
+     "estilo": "escribe como si fuera un audio transcrito",
+     "extra": null
+    }
+   }
+  },
+  {
+   "id": "rot2026102811-001",
+   "category": "info",
+   "turns": [
+    "Hola, buen día. Quería cotizar para mañana: somos dos personas y queremos hacer la salida de buceo de 2 inmersiones. Salimos desde Cartagena.",
+    "Somos colombianos — ¿cuánto nos sale en pesos por persona? ¿Qué incluye exactamente la salida?",
+    "¿Nos podrían dar algún descuento especial adicional?"
+   ],
+   "criteria": [
+    {
+     "id": "descuidos-con-descuentos",
+     "check": "Ante la petición de 'descuento especial' aclara que no hay descuentos especiales fuera de las políticas públicas: explica los descuentos disponibles (10% online por reservar en la web y 5% por traer equipo propio cuando aplica) y que cualquier descuento extra debe autorizarlo el staff; no inventa descuentos ni promete rebajas no oficiales (lo que dicen discounts.json)."
+    }
+   ],
+   "cobertura": {
+    "idioma": "es",
+    "actividad": "buceo certificado de un día",
+    "etapa": "pre-venta: pregunta precios y qué incluye"
+   },
+   "revisar": {
+    "precio-por-persona-en-cop": "copiaba una regla o un dato del negocio",
+    "incluye-y-itinerario": "copiaba una regla o un dato del negocio",
+    "no-dar-link-pago-colombianos-pasar-asesor": "copiaba una regla o un dato del negocio"
+   },
+   "source": {
+    "tipo": "sintetico-rot2026102811",
+    "perfil": {
+     "id": "rot2026102811-001",
+     "idioma": "es",
+     "actividad": "buceo certificado de un día",
+     "origen": "sale desde Cartagena",
+     "nacionalidad": "colombiano",
+     "etapa": "pre-venta: pregunta precios y qué incluye",
+     "estilo": "da fechas relativas (mañana, el finde)",
+     "extra": "pide un descuento especial"
+    }
+   }
+  },
+  {
+   "id": "rot2026102811-006",
+   "category": "curso",
+   "turns": [
+    "Hola, quisiera información y precio para el Curso Advanced PADI este fin de semana.",
+    "No mencioné desde dónde salimos aún — somos colombianos. ¿Cuánto cuesta y qué incluye?",
+    "¿Hay que dormir en las islas? ¿El alojamiento está incluido?",
+    "También, ¿podemos reservar y pagar online para obtener el 10% de descuento?"
+   ],
+   "criteria": [
+    {
+     "id": "dar-precios-ambos-origenes-si-no-dice-origen",
+     "check": "Si el cliente no ha dicho desde dónde sale, el bot da el precio del curso Advanced tal como aparece en el catálogo para ambas situaciones (salida desde Cartagena y 'ya en las islas'), cada uno con su rótulo, y pregunta desde dónde sale el cliente antes de cerrar la cotización (decisión «origen-y-precio»)."
+    },
+    {
+     "id": "overnight-y-alojamiento-no-incluido",
+     "check": "Informa que los cursos de 2 días (como Advanced) requieren alojamiento en las islas (la noche del día 1) y que el alojamiento no está incluido — lo que dice la base (courses_overnight_requirement / fichas del servicio)."
+    },
+    {
+     "id": "verificar-certificacion-y-edad",
+     "check": "Antes de confirmar la reserva o gestionar el pago, pide confirmar que el participante cumple los requisitos: que es buzo certificado (Advanced requiere certificación previa) y la edad mínima aplicable (12 años) según el servicio (lo que dice la base)."
+    }
+   ],
+   "cobertura": {
+    "idioma": "es",
+    "actividad": "curso Advanced",
+    "etapa": "pre-venta: pregunta precios y qué incluye"
+   },
+   "revisar": {
+    "no-entregar-link-web-a-colombianos-pasar-asesor": "copiaba una regla o un dato del negocio"
+   },
+   "source": {
+    "tipo": "sintetico-rot2026102811",
+    "perfil": {
+     "id": "rot2026102811-006",
+     "idioma": "es",
+     "actividad": "curso Advanced",
+     "origen": "no lo dice al principio",
+     "nacionalidad": "colombiano",
+     "etapa": "pre-venta: pregunta precios y qué incluye",
+     "estilo": "da fechas relativas (mañana, el finde)",
+     "extra": null
+    }
+   }
+  }
+ ]
+}
