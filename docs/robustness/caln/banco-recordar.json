@@ -1,0 +1,9 @@
+{
+ "about": "CALN-8 (1) (28-oct): la llamada de señales quedó solo para «¿me recuerdas…?» y su texto cambió; esta sonda mira que el bot sigue contestando con el dato que dio el cliente (r01-r03) y que una pregunta de recomendación no se toma por un recordar (r04). Se mira el ÚLTIMO turno con scripts/puntua_banco_edades.py (debe, ninguno; «a|b» = cualquiera; minúsculas y sin tildes). Frases nuestras: no salen del golden, de G9/G10 ni de las charlas.",
+ "dialogos": [
+  {"id": "r01-es-cuantos-somos", "tarea": "recordar group_size", "turnos": ["Hola, somos 3 amigos y queremos hacer snorkel saliendo desde Cartagena.", "Perdona, ¿cuántas personas te dije que éramos?"], "debe": ["3"]},
+  {"id": "r02-en-desde-donde", "tarea": "recordar location, en inglés", "turnos": ["Hi, two of us are certified divers and we're staying in Cartagena.", "Sorry, can you remind me where I said we're leaving from?"], "debe": ["cartagena"]},
+  {"id": "r03-es-que-llevamos", "tarea": "recordar booking_recap", "turnos": ["Hola, soy buzo certificado y quiero bucear saliendo desde Cartagena. Voy solo.", "No soy colombiano.", "¿Me recuerdas qué te había pedido?"], "debe": ["buceo|bucear|inmersion"]},
+  {"id": "r04-es-recomienda-no-es-recordar", "tarea": "no es un recordar", "turnos": ["Somos 2, ninguno ha buceado nunca y salimos desde Cartagena.", "¿Qué nos recomiendas?"], "ninguno": ["me dijiste"]}
+ ]
+}
