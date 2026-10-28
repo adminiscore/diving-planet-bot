@@ -64,3 +64,25 @@ async def test_el_extractor_pone_cartagena_por_baru():
     cliente = type("O", (), {"chat": type("Ch", (), {"completions": _C()})()})()
     out = await ex.extraer_turno("estamos en el hotel las islas, en baru. nos pueden recoger ahi?", client=cliente)
     assert out.get("location") == "cartagena"
+
+
+def test_caln3b_baru_como_hotel_tambien_sale_de_cartagena():
+    """CALN-3b (CALN3-P02): «we'll already be staying at Isla Barú» llegaba como hotel y sin origen (3/3 en PRE)."""
+    import asyncio
+    import json
+
+    def cliente(datos):
+        class _C:
+            async def create(self, **kw):
+                msg = type("M", (), {"content": json.dumps(datos)})()
+                return type("R", (), {"choices": [type("C", (), {"message": msg})()], "usage": None})()
+
+        return type("O", (), {"chat": type("Ch", (), {"completions": _C()})()})()
+
+    msg = "We're 2 and want to snorkel, we'll already be staying at Isla Barú. How much?"
+    out = asyncio.run(ex.extraer_turno(msg, lang="en", client=cliente(
+        {"hotel": {"valor": "Isla Barú", "cita": "staying at Isla Barú"}})))
+    assert out["hotel"] == "Isla Barú" and out["location"] == "cartagena"
+    otro = asyncio.run(ex.extraer_turno("We'll be staying at Bodegas de Santa Clara", lang="en", client=cliente(
+        {"hotel": {"valor": "Bodegas de Santa Clara", "cita": "staying at Bodegas de Santa Clara"}})))
+    assert "location" not in otro

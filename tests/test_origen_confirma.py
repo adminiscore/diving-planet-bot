@@ -71,3 +71,20 @@ def test_la_puerta_del_precio_pregunta_la_confirmacion():
     st._jev_pide_precio = True
     puerta = core._origen_antes_del_precio(st, msg, "El paquete cuesta 500 USD por persona.")
     assert puerta == core._CONFIRMA_ORIGEN["island"]["es"]  # sin cotizar, y no «¿desde dónde saldrías?»
+
+
+# CALN-3b (28-oct, decisión de Gadea #2286): el extractor calla el lugar y Jev se inclina por uno → se confirma.
+def test_caln3b_jev_se_inclina_y_el_extractor_calla_se_confirma():
+    from src.agents.nucleo.extractor import origen_por_confirmar
+
+    st = ConversationState(conversation_id="caln3b", language="es")
+    st._jev_lugar = {"choice": "cartagena", "confidence": 0.3}
+    assert origen_por_confirmar(st, {}) == "cartagena"
+    st._jev_lugar = {"choice": "none", "confidence": 0.98}
+    assert origen_por_confirmar(st, {}) is None  # sin lugar en el mensaje: Jev dice none
+    st._jev_lugar = {"choice": "islands", "confidence": 0.3}
+    assert origen_por_confirmar(st, {"location": "cartagena"}) is None  # el extractor lo dice: se guarda, no se confirma
+    st.asked_corrections = {"location": "island"}
+    assert origen_por_confirmar(st, {}) is None  # una vez
+    st.asked_corrections, st.location = {}, "cartagena"
+    assert origen_por_confirmar(st, {}) is None  # ya sabido
