@@ -480,7 +480,8 @@ def policies_facts(lang: str) -> str:
     """EX-RAG-1 (flag `rag_politicas_en_contexto`, aprobado por Gadea el 14-oct para medir): las políticas del negocio
     enteras (data/knowledge_base/policies.json, ~2.000 tokens), para que vayan SIEMPRE en el contexto del RAG como el
     catálogo. Ronda atencion-B2: un mensaje que mezclaba el paquete de 5 buceos, el check-out y el equipaje solo
-    recuperaba FAQs y servicios, y el RAG contestaba que no tenía la política de equipaje."""
+    recuperaba FAQs y servicios, y el RAG contestaba que no tenía la política de equipaje. CALN-8 (3) (28-oct): ya solo
+    las ve el juez del RAG; al escritor le llegan en los hechos las que el caso exige (CALN-7)."""
     policies = politicas()
     head = "Políticas de Diving Planet:" if lang == "es" else "Diving Planet policies:"
     lines = [f"- {text.get(lang) or text.get('es', '')}" for text in policies.values() if isinstance(text, dict)]
