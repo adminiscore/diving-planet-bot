@@ -60,6 +60,25 @@ async def test_la_amiga_que_no_sabe_no_es_buzo(extractor_dice, monkeypatch):
     assert st.pending_undecided_qty == 1 and st.detected_group_size == 2
 
 
+@pytest.mark.asyncio
+async def test_el_marido_que_se_suma_a_quien_ya_eligio(extractor_dice, monkeypatch):
+    """g19 (medida de CALN-8, 28-oct): «quiero hacer el minicurso» y luego «mi marido es certificado, quiere bucear».
+    El extractor no dice nada del grupo y el lector nombra solo al marido; quien escribe ya eligió, así que van 2."""
+    extractor_dice({"quiero hacer el minicurso": {"activity": "minicourse"},
+                    "mi marido es certificado, quiere bucear": {}})
+    marido = {**_persona("marido", True, "mi marido es certificado, quiere bucear"), "actividad": "certified_diving"}
+    _con_el_lector(monkeypatch, [marido])
+    st = _estado()
+    await _turno(st, "quiero hacer el minicurso", {})
+    assert st.detected_activity == "minicourse" and not st.detected_group_size
+    monkeypatch.setattr("src.agents.supervisor.detect_routing_signals",
+                        AsyncMock(return_value={"companion_joins": 0.97}))
+    await _turno(st, "mi marido es certificado, quiere bucear", {})
+    assert st.detected_group_size == 2
+    assert st.detected_group_allocation == {"minicourse": 1, "certified_diving": 1}
+    assert st.detected_activity == "minicourse"
+
+
 def _persona(quien, certificado, cita):
     return {"quien": quien, "cantidad": 1, "certificado": certificado, "actividad": None, "edades": [], "cita": cita}
 
