@@ -161,10 +161,35 @@ def _refresher_note(state: ConversationState) -> str:
     )
 
 
-def _finalize(state: ConversationState) -> str:
+def _quiere_reservar_o_pagar(state: ConversationState, message: str) -> bool:
+    """28-oct (decisión de Gadea): el colombiano pasa al asesor cuando quiere RESERVAR o PAGAR, no en cuanto sale la
+    tarjeta (sparring CALN3-R06: la familia que solo preguntaba el precio pasaba al asesor en el primer turno). Lo pide
+    en el mensaje (Jev: el pago o el enlace para reservar; o una persona) o dice que sí a la oferta del asesor."""
+    from src.agents import supervisor  # lazy
+
+    if set(getattr(state, "_intenciones", None) or []) & {"pago", "enlace"}:
+        return True
+    if (getattr(state, "_senales_router", None) or {}).get("wants_human"):
+        return True
+    if supervisor._BARE_AFFIRMATION_RE.match((message or "").strip()):
+        ultimo = next((h.get("content") or "" for h in reversed(state.history or []) if h.get("role") == "assistant"), "")
+        return any(oferta in ultimo for oferta in _OFERTA_DEL_ASESOR.values())
+    return False
+
+
+# La oferta del asesor al colombiano (28-oct); el «sí» que la sigue se reconoce por su texto exacto, que es nuestro.
+_OFERTA_DEL_ASESOR = {
+    "es_uno": "¿Quieres que te pase con un asesor para reservar y coordinar el pago? 🌊",
+    "es_grupo": "¿Quieren que les pase con un asesor para reservar y coordinar el pago? 🌊",
+    "en": "Would you like me to connect you with an advisor to book and arrange the payment? 🌊",
+}
+
+
+def _finalize(state: ConversationState, *, pasar_al_asesor: bool = True, ofrecer: bool = True) -> str:
     """Todos los slots listos → resumen por actividad + links (determinista,
     del catálogo), con gating colombiano: colombiano → asesor coordina el pago
-    en COP (100% online o 50/50), sin link directo."""
+    en COP (100% online o 50/50), sin link directo. 28-oct (decisión de Gadea): si aún no quiere reservar ni pagar
+    (`pasar_al_asesor=False`), ve el precio y se le OFRECE el asesor (`ofrecer`: no si el turno ya pregunta otra cosa)."""
     from src.agents.lead_summary import build_lead_summary
 
     lang = state.language
@@ -175,6 +200,22 @@ def _finalize(state: ConversationState) -> str:
     _build_cart_from_slots(state)
 
     refresher_note = _refresher_note(state)
+
+    if state.is_colombian and not pasar_al_asesor:
+        summary = _colombian_summary_lines(state)
+        state.mixed_last_summary = summary
+        state.quick_replies = []
+        # Como el cierre no colombiano: la nota del lead para el equipo, sin pasar todavía.
+        state.pending_lead_note_reason = "núcleo conversacional - cliente colombiano: ha visto el precio, se le ofrece el asesor"
+        grupo = (state.detected_group_size or 1) > 1
+        if lang == "es":
+            oferta = _OFERTA_DEL_ASESOR["es_grupo" if grupo else "es_uno"]
+            return (f"{refresher_note}{summary}\n\n"
+                    f"El pago es en pesos colombianos (COP): {'pueden' if grupo else 'puedes'} pagar "
+                    f"{politica_breve('payment_colombian', 'es')}." + (f"\n\n{oferta}" if ofrecer else ""))
+        return (f"{refresher_note}{summary}\n\n"
+                f"You pay in Colombian pesos (COP): {politica_breve('payment_colombian', 'en')}."
+                + (f"\n\n{_OFERTA_DEL_ASESOR['en']}" if ofrecer else ""))
 
     if state.is_colombian:
         # Gating colombiano: SIN link de reserva directa — el asesor coordina el
@@ -422,13 +463,14 @@ async def _slotfill_close_phase(
             # cliente no la contestó; la tarjeta sale igualmente, con la pregunta una vez dentro (ver la función).
             finalized = True
             cierre_previo = state.mixed_last_summary
-            response = _finalize(state) + _nota_seguridad(state)
+            response = _finalize(state, pasar_al_asesor=_quiere_reservar_o_pagar(state, message), ofrecer=False) + (
+                _nota_seguridad(state))
             state.core_pending_slot = SLOT_SAFETY  # su respuesta, si llega, se recoge como siempre
             supervisor._maybe_build_pending_note(state)
         elif nxt is None:
             finalized = True
             cierre_previo = state.mixed_last_summary
-            response = _finalize(state)
+            response = _finalize(state, pasar_al_asesor=_quiere_reservar_o_pagar(state, message))
             # Materializar la nota de lead (el cierre no-colombiano deja solo
             # pending_lead_note_reason; en el camino legacy la construye
             # _finalize_tree_response — aquí el equivalente).

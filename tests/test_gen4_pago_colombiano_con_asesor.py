@@ -37,3 +37,28 @@ def test_el_rag_sabe_que_el_pago_lo_coordina_un_asesor():
     extranjero = _colombiano("es", 1)
     extranjero.is_colombian = False
     assert "no le compartas el link" not in (_build_extra_context(extranjero) or "")
+
+
+@pytest.mark.parametrize("intenciones, senales, mensaje, previo, pasa", [
+    (["precio", "descuento"], {}, "¿qué precio tiene y hay descuento por ser 5?", "", False),  # sparring CALN3-R06
+    (["pago"], {}, "listo, ¿cómo pagamos?", "", True),
+    (["enlace"], {}, "¿cómo reservamos?", "", True),
+    ([], {"wants_human": True}, "quiero hablar con alguien", "", True),
+    ([], {}, "dale", "…\n\n" + slotfill_close._OFERTA_DEL_ASESOR["es_grupo"], True),
+    ([], {}, "dale", "¿Ha pasado más de 2 años desde la última inmersión?", False),  # el «sí» es a otra pregunta
+])
+def test_el_colombiano_pasa_al_asesor_cuando_quiere_reservar_o_pagar(intenciones, senales, mensaje, previo, pasa):
+    """28-oct (decisión de Gadea): no en cuanto sale la tarjeta; cuando lo pide o dice que sí a la oferta."""
+    st = _colombiano("es", 5)
+    st._intenciones, st._senales_router = intenciones, senales
+    st.history = [{"role": "assistant", "content": previo}] if previo else []
+    assert slotfill_close._quiere_reservar_o_pagar(st, mensaje) is pasa
+
+
+def test_sin_querer_reservar_ve_el_precio_y_se_le_ofrece_el_asesor():
+    st = _colombiano("es", 5)
+    texto = slotfill_close._finalize(st, pasar_al_asesor=False)
+    assert texto.endswith(slotfill_close._OFERTA_DEL_ASESOR["es_grupo"]) and "COP" in texto
+    assert st.pending_escalation_reason is None
+    assert slotfill_close._OFERTA_DEL_ASESOR["es_grupo"] not in slotfill_close._finalize(_colombiano("es", 5),
+                                                                                        pasar_al_asesor=False, ofrecer=False)

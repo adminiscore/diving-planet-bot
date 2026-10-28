@@ -443,10 +443,14 @@ async def test_colombian_checkout_escalates_no_direct_link(extractor_dice):
     assert state.core_pending_slot == core.SLOT_NATIONALITY
     resp = await route_message(state, "sí, somos colombianos")
     assert state.is_colombian is True
-    assert state.step == Step.ESCALATE
-    assert "asesor" in resp.lower()
+    # 28-oct (decisión de Gadea): ve el precio y se le OFRECE el asesor; pasa cuando quiere reservar o pagar.
+    assert state.step != Step.ESCALATE and state.pending_escalation_reason is None
+    assert "asesor" in resp.lower() and "?" in resp
     assert "book.divingplanet.org" not in resp
     assert state.mixed_display_currency == "COP"
+    resp = await route_message(state, "dale")
+    assert state.step == Step.ESCALATE
+    assert "book.divingplanet.org" not in resp
 
 
 # ---------------------------------------------------------------------------
