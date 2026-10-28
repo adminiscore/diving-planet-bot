@@ -217,3 +217,35 @@ def test_caln3c_quien_no_ha_elegido_es_el_buzo_que_escribe():
 
     st = _st(is_certified=True, detected_group_allocation={"snorkel": 1}, pending_undecided_qty=1, detected_ages=[12])
     assert rh._de_quien_no_ha_elegido(st, {}) == ["certified_diving"]
+
+
+def test_quinta_quien_no_ha_elegido_y_esta_certificado_solo_el_buceo():
+    """5.ª ronda (precio-desde-islas-vs-cartagena t5): la pareja Advanced con uno sin elegir llevaba el minicurso."""
+    from src.agents import redactor_hechos as rh
+
+    st = _st(is_certified=True, detected_group_allocation={"certified_diving": 1}, pending_undecided_qty=1,
+             sin_decidir_certificados=True)
+    assert rh._de_quien_no_ha_elegido(st, {}) == ["certified_diving"]
+
+
+def test_quinta_sin_pedir_precio_ni_origen_no_va_la_pieza(monkeypatch):
+    """5.ª ronda (paquete-5 t6-t9): con la pregunta de precio guardada, arq-8f añade «precio» a cada turno; sin que el
+    cliente pida precio ahora ni se sepa el origen, la pieza no va (el escritor contesta lo que pregunta)."""
+    import asyncio
+
+    from src.agents import redactor_hechos as rh
+    from src.agents import supervisor
+    from src.flows import hechos
+
+    llamadas = {}
+
+    async def rag_answer(query, **kw):
+        llamadas.update(kw)
+        return "La lancha vuelve a las 3:00 p. m."
+
+    monkeypatch.setattr(supervisor, "rag_answer", rag_answer)
+    st = _st()
+    st._jev_pide_precio = False
+    bloques = hechos.hechos(st, ["precio", "horario"], ["certified_diving"])
+    answer = asyncio.run(rh._con_el_escritor(st, "¿a qué hora se vuelve?", [], bloques, ["precio", "horario"]))
+    assert "Precios por persona" not in answer and not llamadas.get("precios_por_codigo")
