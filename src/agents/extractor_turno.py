@@ -743,6 +743,11 @@ async def extraer_turno(mensaje: str, *, history: list[dict] | None = None, sabi
             descartes[campo] = f"el nombre del hotel no está en el mensaje: {valor!r}"
             continue
         salida[campo] = valor
+    if "location" not in salida and isinstance(salida.get("hotel"), str) and _solo_baru(salida["hotel"]):
+        # CALN-3b (28-oct, CALN3-P02): «we'll already be staying at Isla Barú» daba hotel='Isla Barú' y ningún origen
+        # (3/3 en dp-pre-bot); el redactor cotizaba desde Cartagena y aun así preguntaba desde dónde sale. La regla de
+        # gen-6, también cuando el lugar llega como hotel.
+        salida["location"] = "cartagena"
     # Regla del negocio (ex-8): un buzo certificado (lo dice ahora o ya se sabe) que quiere bucear y no elige otra cosa
     # hace buceo certificado. La decide el código con dos hechos que el cliente afirma; el modelo, cuando la deducía,
     # razonaba al revés ("bucear" ≈ "buceo certificado" → inventaba también la certificación).
