@@ -56,6 +56,24 @@ def test_el_descuento_de_grupo_solo_cuando_aplica():
     [snorkel] = hechos.hechos(_st(detected_group_size=5), ["precio"], ["snorkel"])
     assert "10%" in snorkel["descuento_de_grupo"] or "10 %" in snorkel["descuento_de_grupo"]
     [curso] = hechos.hechos(_st(detected_group_size=5), ["precio"], ["padi_open_water"])
-    assert "NO aplica" in curso["descuento_de_grupo"]
+    assert "no aplica a los cursos PADI" in curso["descuento_de_grupo"]
     [pareja] = hechos.hechos(_st(detected_group_size=2), ["precio"], ["snorkel"])
     assert "descuento_de_grupo" not in pareja
+
+
+def test_la_lista_de_descuentos_dice_lo_mismo_que_el_precio():
+    """CALN3-R03: 5 amigos y el Open Water; en la lista, el de grupo es el «no aplica», no el texto general."""
+    from src.flows import hechos
+
+    [curso] = hechos.hechos(_st(detected_group_size=5), ["precio", "descuento"], ["padi_open_water"])
+    assert curso["descuento_de_grupo"] in curso["descuento"]
+    assert not any("se suma al 10" in d for d in curso["descuento"])
+
+
+def test_los_demas_planes_dos_por_origen():
+    """CALN3-R04: el buzo que estará una semana (estancia) no recibe la carta de paquetes."""
+    from src.flows import hechos
+
+    [b] = hechos.hechos(_st(detected_duration="multi_day", is_certified=True), ["precio"], ["certified_diving"])
+    por_origen = [p.get("origen") for p in b["otros_planes"]]
+    assert por_origen.count("cartagena") <= 2 and por_origen.count("island") <= 2
