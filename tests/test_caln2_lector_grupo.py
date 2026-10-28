@@ -146,8 +146,7 @@ async def test_con_el_interruptor_apagado_no_se_lanza(monkeypatch, _lector_falso
     from src.flows.state import ConversationState
 
     st = ConversationState(conversation_id="lector-apagado")
-    st._jev_companion = 0.9
-    nx.lanzar_lector_grupo(st, MADRE)
+    nx.lanzar_lector_grupo(st, MADRE, "es")
     assert st._lector_grupo is None
     datos = {"activity": "certified_diving", "edades": [7, 4]}
     assert await nx._con_el_lector_del_grupo(st, MADRE, datos) is datos and not llamadas
@@ -159,8 +158,7 @@ async def test_lanzado_con_jev_se_usa_si_hace_falta(_lector_falso):
 
     nx, llamadas = _lector_falso
     st = ConversationState(conversation_id="lector-usado")
-    st._jev_companion = 0.9
-    nx.lanzar_lector_grupo(st, MADRE)
+    nx.lanzar_lector_grupo(st, MADRE, "es")
     assert st._lector_grupo is not None
     nuevos = await nx._con_el_lector_del_grupo(st, MADRE, {"activity": "certified_diving", "edades": [7, 4]})
     assert nuevos["group_size"] == 4 and llamadas == [MADRE]
@@ -172,8 +170,7 @@ async def test_lanzado_con_jev_se_tira_si_no_hace_falta(_lector_falso):
 
     nx, _ = _lector_falso
     st = ConversationState(conversation_id="lector-tirado")
-    st._jev_adds_person = 0.5
-    nx.lanzar_lector_grupo(st, "somos 3 para snorkel")
+    nx.lanzar_lector_grupo(st, "somos 3 para snorkel", "es")
     tarea = st._lector_grupo
     datos = {"group_size": 3, "group_allocation": {"snorkel": 3}}
     assert await nx._con_el_lector_del_grupo(st, "somos 3 para snorkel", datos) is datos
@@ -182,13 +179,23 @@ async def test_lanzado_con_jev_se_tira_si_no_hace_falta(_lector_falso):
 
 
 @pytest.mark.asyncio
-async def test_jev_seguro_de_que_no_no_lo_lanza(_lector_falso):
+async def test_sale_con_el_turno_a_la_vez_que_el_extractor(monkeypatch, _lector_falso):
+    """Decisión de Gadea (#2314): con el turno, no tras la señal de Jev (salía 1,5 s después y hacía esperar)."""
+    from src.agents import extractor_turno
     from src.flows.state import ConversationState
 
-    nx, _ = _lector_falso
-    st = ConversationState(conversation_id="lector-jev-no")
-    st._jev_companion, st._jev_adds_person = 0.05, 0.1
-    nx.lanzar_lector_grupo(st, MADRE)
+    nx, llamadas = _lector_falso
+
+    async def _extraer(mensaje, **_kw):
+        return {}
+
+    monkeypatch.setattr(extractor_turno, "extraer_turno", _extraer)
+    st = ConversationState(conversation_id="lector-con-el-turno")
+    nx.lanzar_extraccion_adelantada(st, MADRE)
+    assert st._extraccion_adelantada is not None and st._lector_grupo is not None
+    await st._lector_grupo
+    assert llamadas == [MADRE]
+    nx.lanzar_extraccion_adelantada(st, "2")  # una cifra sola: ni extractor ni lector
     assert st._lector_grupo is None
 
 

@@ -798,6 +798,7 @@ def lanzar_extraccion_adelantada(state: ConversationState, message: str) -> None
     """ex-5 (fase EX): el extractor "LLM primero" arranca con el turno, a la vez que el enrutador (no depende de
     Jev), como el RAG adelantado. `_understand` lo espera (`datos_del_extractor`); si el turno no llega, se cancela."""
     state._lectura_del_turno = None  # lat-6: la lectura del turno anterior ya no vale
+    state._lector_grupo = None
     if not campos_del_extractor():
         return
     texto = (message or "").strip()
@@ -817,6 +818,7 @@ def lanzar_extraccion_adelantada(state: ConversationState, message: str) -> None
         lang = _detect_language_from_text(message) or lang
     state._extraccion_adelantada = asyncio.create_task(
         extraer_turno(message, history=list(state.history or []), sabido=sabido, lang=lang))
+    lanzar_lector_grupo(state, message, lang)
 
 
 async def datos_del_extractor(state: ConversationState, message: str) -> dict | None:
@@ -844,30 +846,24 @@ async def datos_del_extractor(state: ConversationState, message: str) -> dict | 
     return datos  # None = la llamada falló (degradado)
 
 
-def lanzar_lector_grupo(state: ConversationState, message: str) -> None:
-    """CALN-2 (flag `lector_grupo`): si Jev no descarta que el mensaje hable de otras personas (`companion_joins` o
-    `adds_person`, la puerta de u3-6), el lector del grupo arranca ya, a la vez que lo que le queda al extractor.
-    `datos_del_extractor` decide si se usa (el grupo queda por completar) o se tira."""
-    from src.agents.jev_router import COMPANION_NONE_MAX  # lazy
-
+def lanzar_lector_grupo(state: ConversationState, message: str, lang: str) -> None:
+    """CALN-2 (flag `lector_grupo`): el lector del grupo arranca con el turno, a la vez que el extractor (decisión de
+    Gadea, #2314). Lanzado con la señal de Jev salía 1,5 s después y hacía esperar al turno p50 1,1 s / p95 1,7 s en los
+    turnos que lo usaban; con el turno, ~0 (5 de 136), a cambio de una llamada barata en paralelo en cada turno (~0,011 $
+    por 100 turnos). `datos_del_extractor` decide si se usa (el grupo queda por completar) o se tira."""
     state._lector_grupo = None
     if not settings.lector_grupo:
         return
-    senales = [p for p in (getattr(state, "_jev_companion", None), getattr(state, "_jev_adds_person", None))
-               if isinstance(p, (int, float))]
-    if not senales or max(senales) < COMPANION_NONE_MAX:
-        return
     from src.agents.lector_grupo import leer_grupo  # lazy
 
-    state._lector_grupo = asyncio.create_task(
-        leer_grupo(message, history=list(state.history or []), lang=state.language or "es"))
-    logger.info(f"[EXTRACT][LECTOR] lanzado con Jev ({max(senales):.2f})")
+    state._lector_grupo = asyncio.create_task(leer_grupo(message, history=list(state.history or []), lang=lang))
+    logger.info("[EXTRACT][LECTOR] lanzado con el turno")
 
 
 async def _con_el_lector_del_grupo(state: ConversationState, message: str, datos: dict | None) -> dict | None:
     """CALN-2 (flag `lector_grupo`, diseño docs/robustness/caln/diseno-caln2-lector-grupo.md): con el grupo por
-    completar, los datos del extractor más lo que dejó vacío, de la lectura del grupo (la lanzada con Jev o, si Jev no
-    la lanzó, una ahora); si no, la lectura lanzada se tira. Cada caso deja su línea [EXTRACT][LECTOR] (llamadas
+    completar, los datos del extractor más lo que dejó vacío, de la lectura del grupo (la lanzada con el turno o, si no
+    se lanzó, una ahora); si no, la lectura lanzada se tira. Cada caso deja su línea [EXTRACT][LECTOR] (llamadas
     lanzadas, usadas y tiradas, y sus tokens)."""
     from src.agents import lector_grupo  # lazy
 

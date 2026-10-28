@@ -65,6 +65,17 @@ def _no_typing_indicator(request, monkeypatch):
 
 
 @pytest.fixture(autouse=True)
+def _sin_lector_del_grupo(request, monkeypatch):
+    """CALN-2: el lector del grupo (encendido en config) llama al modelo en cada turno. En los tests se apaga para no
+    tocar la red; tests/test_caln2_lector_grupo.py lo prueba de verdad (con el modelo simulado)."""
+    if request.node.module.__name__.rsplit(".", 1)[-1] == "test_caln2_lector_grupo":
+        return
+    from src.config import settings
+
+    monkeypatch.setattr(settings, "lector_grupo", False)
+
+
+@pytest.fixture(autouse=True)
 def _no_llm_language_fallback(monkeypatch):
     """Default the welcome-step LLM language fallback (conversational_core →
     language_detector.detect_language_llm) to "no detection", so tests stay

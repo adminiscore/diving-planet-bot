@@ -753,10 +753,6 @@ async def _routing_phase(
     _maybe_apply_confirmed_package(state, message)
 
     sembrar_senales_del_turno(state, routing_signals)
-    # CALN-2 (flag `lector_grupo`): con la señal de Jev, el lector del grupo arranca ya (a la vez que el extractor).
-    from src.agents.nucleo.extractor import lanzar_lector_grupo  # lazy
-
-    lanzar_lector_grupo(state, message)
 
     # COMPRENDER (carryover PRIMERO): si hay un slot pendiente y este mensaje
     # lo RESUELVE, el carryover gana aunque el mensaje "parezca pregunta" por

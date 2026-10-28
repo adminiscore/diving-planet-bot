@@ -46,10 +46,11 @@ class Settings(BaseSettings):
     # 90,6 % y 21,8 %), p50 ~1,0 s. gpt-4o-mini parecido y algo peor; Luna inventa menos pero tarda 2,1-2,4 s.
     extractor_turno_model: str = "anthropic/claude-haiku-5.5"  # PROMOCIONADO 18-oct (mod-F, HISTORY 0.31.56); revert = "gpt-4.1-mini"
     # CALN-2 (28-oct, paso 2 aprobado por Gadea #2247; docs/robustness/caln/diseno-caln2-lector-grupo.md): el lector del
-    # grupo (`agents/lector_grupo.py`), lanzado con la señal de Jev de otras personas y usado solo si el grupo queda
+    # grupo (`agents/lector_grupo.py`), lanzado con el turno a la vez que el extractor y usado solo si el grupo queda
     # incompleto o hay alguien sin elegir (T2b); si no, se tira. Rellena lo que el extractor dejó vacío y la certificación
-    # de quien falta por elegir. Apagado = el turno de siempre.
-    lector_grupo: bool = False
+    # de quien falta por elegir. ENCENDIDO para la 4.ª ronda (Gadea #2314): grupos 51 → 56/62, sparring 11 → 13/28,
+    # ~0,011 $ por 100 turnos, sin espera. Revert = False (el turno de siempre).
+    lector_grupo: bool = True
     # ("4 inmersiones") se tomaba por la propuesta de un paquete y "para mí" lo elegía: Curso Referido. 0 usos en PRE.
     cache_anthropic_proveedor: str = "amazon-bedrock"  # ARQ-2b: con la caché, el proveedor de Haiku que va primero (los demás de respaldo). Sonda 22-oct (7 llamadas cada uno): bedrock caché 7/7 y p50 1,98 s (sin caché 1,94 s); anthropic 7/7 y 2,29 s; vertex 3/7
     # Model for the RAG answer-generation call only (rag_agent.py
