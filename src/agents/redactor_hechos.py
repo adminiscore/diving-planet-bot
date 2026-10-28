@@ -243,16 +243,24 @@ _IMPORTE_RE = re.compile(r"\d[\d.,]*\s*(?:COP|USD|US\$)|(?:USD|COP|US\$)\s*\d", 
 _CIERRA_PREGUNTANDO_RE = re.compile(r"\?[*_)\]]*\s*[\U0001F000-\U0001FAFF☀-➿]?\s*$")
 
 
+_DESCUENTO_DE_GRUPO_RE = re.compile(r"(?=.*\b(?:descuento|discount))(?=.*\b(?:grupo|group))", re.IGNORECASE)
+
+
 def con_la_pieza(answer: str, pieza: str) -> str:
     """CALN-3 paso 3 «A»: la respuesta del escritor con la pieza de precios debajo, delante de su pregunta final si
-    cierra preguntando. Si aun así escribió algún importe, fuera esa frase: la cifra la da la pieza."""
+    cierra preguntando. Si aun así escribió algún importe, fuera esa frase: la cifra la da la pieza. Y si la pieza dice
+    lo del descuento de grupo, fuera también las frases del escritor sobre él (r01: con «no aplica a los cursos PADI»
+    debajo, el escritor seguía diciendo encima «10 % para grupos de 5, que se suma al online», 2 de 3)."""
+    fuera = [_IMPORTE_RE, *([_DESCUENTO_DE_GRUPO_RE] if _DESCUENTO_DE_GRUPO_RE.match(pieza) else [])]
     parrafos = [p for p in answer.rstrip().split("\n\n") if p.strip()]
     cierre = [parrafos.pop()] if len(parrafos) > 1 and _CIERRA_PREGUNTANDO_RE.search(parrafos[-1]) else []
     limpios = []
     for parrafo in parrafos:
-        if _IMPORTE_RE.search(parrafo):
-            parrafo = " ".join(f for f in re.split(r"(?<=[.!?])\s+", parrafo) if not _IMPORTE_RE.search(f)).strip()
-            logger.info("[HECHOS][CALN3] el escritor dio un importe: fuera, lo da la pieza")
+        if any(r.search(parrafo) if r is _IMPORTE_RE else r.match(parrafo) for r in fuera):
+            frases = re.split(r"(?<=[.!?])\s+", parrafo)
+            parrafo = " ".join(f for f in frases if not any(r.search(f) if r is _IMPORTE_RE else r.match(f)
+                                                            for r in fuera)).strip()
+            logger.info("[HECHOS][CALN3] el escritor dio un importe o el descuento de grupo: fuera, lo da la pieza")
         if parrafo:
             limpios.append(parrafo)
     return "\n\n".join([*limpios, pieza, *cierre])
