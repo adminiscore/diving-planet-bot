@@ -291,6 +291,10 @@ def _poner_otras_personas(state: ConversationState, datos: dict) -> None:
     if isinstance((datos or {}).get("sin_decidir_certificados"), bool):
         # CALN-2 (flag `lector_grupo`): lo que dice el lector del grupo de quienes faltan por elegir; lo último manda.
         state.sin_decidir_certificados = datos["sin_decidir_certificados"]
+    if (datos or {}).get("otros_sin_elegir") and not state.needs_companion_activity:
+        # CALN-8 (g26): vienen otros sin decir cuántos ni qué harán: se pregunta qué harán (y después, cuántos).
+        state.needs_companion_activity = True
+        logger.info("[EXTRACT][CALN8] vienen otros sin decir cuántos ni qué harán: se pregunta qué harán")
 
 
 def _poner_actividad_preguntada(state: ConversationState, datos: dict) -> None:

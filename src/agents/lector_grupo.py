@@ -210,6 +210,13 @@ def completar(datos: dict, lectura: dict, total_sabido: int | None = None,
         cambios.append(f"group_allocation={nuevo}")
     else:
         sin_elegir = [p for p in personas if p["actividad"] is None and not (p["quien"] == "cliente" and escritor)]
+    if not isinstance(total, int) and any(p["quien"] != "cliente" and p["cantidad"] is None and p["actividad"] is None
+                                          and p["certificado"] is not True for p in personas):
+        # g26: «Vienen también unos amigos, no sé qué querrán hacer»: vienen otros y no se sabe cuántos ni qué harán. Se
+        # les pregunta qué harán (y luego cuántos), como a quien viene sin elegir. Si están certificados y van con quien
+        # escribe («Voy con unos amigos a bucear, todos somos certificados», g15), no: van al mismo plan.
+        out["otros_sin_elegir"] = True
+        cambios.append("otros_sin_elegir")
     if out.get("is_certified") is None and any(p["quien"] == "cliente" and p["certificado"] is True for p in personas):
         out["is_certified"] = True
         cambios.append("is_certified=True")

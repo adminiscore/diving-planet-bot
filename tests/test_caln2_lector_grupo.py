@@ -290,6 +290,25 @@ def test_un_reparto_que_no_suma_el_total_no_se_pone():
     assert "group_allocation" not in nuevos
 
 
+VIENEN = "Quiero bucear, soy buzo certificado. Vienen también unos amigos, no sé qué querrán hacer"
+
+
+@pytest.mark.parametrize("certificado, total_sabido, pregunta", [
+    (None, None, True),    # g26: no se sabe cuántos ni qué harán
+    (False, None, True),   # «unos amigos que no bucean»: tampoco han elegido
+    (True, None, False),   # g15: certificados que van con quien escribe, al mismo plan
+    (None, 4, False),      # con el total sabido, el reparto ya dirá quién falta
+])
+def test_vienen_otros_sin_saber_cuantos_ni_que_haran(certificado, total_sabido, pregunta):
+    lectura = lg.validar({"total_dicho": None, "personas": [
+        _p(certificado=True, cita="Quiero bucear, soy buzo certificado"),
+        _p(quien="amigos", cantidad=None, certificado=certificado,
+           cita="Vienen también unos amigos, no sé qué querrán hacer")]}, VIENEN)
+    nuevos, _ = lg.completar({"activity": "certified_diving", "is_certified": True}, lectura, total_sabido)
+    assert bool(nuevos.get("otros_sin_elegir")) is pregunta
+    assert "group_size" not in nuevos
+
+
 def test_quien_escribe_ya_eligio_y_se_suma_otro():
     """g19 (medida de CALN-8): «I'd like to do the mini course» y luego «my husband is certified, he'd like to dive»; el
     mensaje no habla de quien escribe, pero ya eligió: van 2. Lo hacía la red de señales."""

@@ -5,6 +5,7 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
+from src.agents import conversational_core as core
 from src.agents.nucleo import extraction as core_extraction
 from src.agents.nucleo import routing as core_routing
 from src.agents.supervisor import route_message
@@ -77,6 +78,33 @@ async def test_el_marido_que_se_suma_a_quien_ya_eligio(extractor_dice, monkeypat
     assert st.detected_group_size == 2
     assert st.detected_group_allocation == {"minicourse": 1, "certified_diving": 1}
     assert st.detected_activity == "minicourse"
+
+
+@pytest.mark.asyncio
+async def test_vienen_unos_amigos_sin_elegir_se_pregunta_que_haran_y_cuantos(extractor_dice, monkeypatch):
+    """g26 (CALN-8, 28-oct): «Vienen también unos amigos, no sé qué querrán hacer». No se sabe cuántos ni qué harán: se
+    pregunta qué harán y después cuántos; el grupo queda con quien escribe y ellos. Antes, sin la red de señales y sin
+    el 1 que el lector inventaba a «unos amigos», se seguía con el origen como si no viniera nadie."""
+    mensaje = "Quiero bucear, soy buzo certificado. Vienen también unos amigos, no sé qué querrán hacer"
+    extractor_dice({mensaje: {"activity": "certified_diving", "is_certified": True}, "un día": {}, "snorkel": {},
+                    "3": {}})
+    _con_el_lector(monkeypatch, [_persona("cliente", True, "Quiero bucear, soy buzo certificado"),
+                                 {**_persona("amigos", None, "Vienen también unos amigos, no sé qué querrán hacer"),
+                                  "cantidad": None}])
+    monkeypatch.setattr("src.agents.supervisor.detect_routing_signals",
+                        AsyncMock(return_value={"companion_joins": 0.96}))
+    st = _estado()
+    await _turno(st, mensaje, {})
+    assert st.core_pending_slot == core.SLOT_COMPANION_ACTIVITY and not st.detected_group_size
+    monkeypatch.setattr("src.agents.supervisor.detect_routing_signals", AsyncMock(return_value={}))
+    await _turno(st, "single_day", {})
+    assert st.core_pending_slot == core.SLOT_COMPANION_ACTIVITY
+    assert "snorkel" in [b["value"] for b in st.quick_replies]
+    await _turno(st, "snorkel", {})
+    assert st.core_pending_slot == core.SLOT_COMPANION_QTY
+    await _turno(st, "3", {})
+    assert st.detected_group_allocation == {"certified_diving": 1, "snorkel": 3}
+    assert st.detected_group_size == 4 and st.detected_activity == "certified_diving"
 
 
 @pytest.mark.asyncio
