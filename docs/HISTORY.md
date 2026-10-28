@@ -1,6 +1,26 @@
 History
 =======
 
+0.36.0 - (2026-10-28, CALN SUBE A PRE: `feature/pre_gadea` = `feature/caln-gadea`; decisión de Gadea)
+---------------------
+* **Qué sube** (sobre 0.35.0): CALN-7, el escritor dice la política que el caso exige porque va en los hechos (la
+  preparación de la ficha, el formulario médico sin actividad, el refresher, «lo confirma un asesor»; banco-politicas
+  4/10 → 12/12); el **colombiano** ve el precio y pasa al asesor solo cuando quiere reservar o pagar (enlace bancario,
+  QR o Llave; nunca el de la web); el **origen** de CALN-3b (Gonzalo: Barú sale de Cartagena; si Jev se inclina por un
+  lugar, se confirma una vez; banco-precios 25 → 31/36); el **lector del grupo** encendido, a la vez que el extractor
+  (Álvaro: grupos 51 → 56/62, sin espera, ~0,06 m$ por turno); `scripts/complejidad.py` (Álvaro).
+* **Medida** (4.ª ronda, repetida CON LUNA: la de las 13:07 la escribió DeepSeek porque OpenAI se quedó sin saldo a las
+  13:10, y salió con 0 fallos técnicos). Misma hora, en serie, misma referencia del juez; A = integra5, B = CALN deee13f:
+  golden 77 → **80/116**, fallos 55 → 50, de precio 25 → 21, **oculto 88,1 → 89,8 %**; rotativa nueva 2026-10-28-11
+  14 → **17/30**, fallos 22 → 19, de precio 17 → 9; repite 20 → 5 y dos preguntas 22 → 1; latencia del cliente del
+  golden p50/p95 3,2/7,7 → 3,4/6,1 s. Complejidad frente a integra5: +614 líneas, +4 ficheros, +1 interruptor
+  (`lector_grupo`). CALN gana en todo, poco en cada medida y siempre en la misma dirección.
+* **Para que no vuelva a pasar:** `ronda_local_pre --metricas` avisa si contestó un respaldo por errores de LLM y sale
+  con 3 si pasa en más del 5 % de los turnos.
+* **Sigue (5.ª ronda):** CALN-8 (1) sin la red de señales (Álvaro, −919 líneas), el paso 3 «A» de CALN-3 (Gonzalo, los
+  importes por código) y CALN-8 (3), el bloque fijo del escritor (Gadea: sin catálogo empeoran los precios; sin
+  políticas, en medida).
+
 0.35.0 - (2026-10-28, CALN: EN RAMA `feature/caln-gadea` 9928489, NO sube; PRE sigue en 0.32.9 = integra5)
 ---------------------
 * **CALN-6 cerrado en rama** (Gadea, el compositor al final del turno), pasos 2d-2f: UNA pregunta como mucho (si el

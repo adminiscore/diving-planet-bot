@@ -150,6 +150,14 @@ def main(argv: list[str] | None = None) -> int:
         metricas = [ln[2:] for ln in (r.stdout or "").splitlines() if ln.startswith("M {")]
         out.with_suffix(".metricas").write_text("".join(ln + "\n" for ln in metricas), encoding="utf-8")
         print(f"métricas de {len(metricas)} turnos → {out.with_suffix('.metricas')}", flush=True)
+        # 28-oct: sin saldo de OpenAI, Luna fallaba y escribía el respaldo (DeepSeek); 0 turnos sin respuesta y la ronda
+        # parecía buena (caln4-B: 218 de 465 turnos con errores de LLM). Una ronda así no mide el bot de verdad.
+        con_errores = sum(1 for ln in metricas if json.loads(ln).get("llm_errores"))
+        if con_errores:
+            print(f"⚠️ {con_errores}/{len(metricas)} turnos con errores de LLM (contestó un respaldo): "
+                  "mira el saldo y los modelos antes de juzgar", flush=True)
+        if con_errores > 0.05 * len(metricas):
+            return 3
     sin = sum(1 for ln in filas if json.loads(ln)["reply"] is None)
     print(f"FIN {out}: {len(filas)}/{turnos} turnos, {sin} sin respuesta", flush=True)
     if len(filas) < turnos:
