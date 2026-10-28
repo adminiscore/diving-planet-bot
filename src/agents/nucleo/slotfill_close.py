@@ -435,15 +435,12 @@ async def _slotfill_close_phase(
     # respuesta corta (`resolved_short=True`, p. ej. "no" a la pregunta de
     # seguridad) puede saltarse la extracción completa y llegar aquí sin
     # pasar por ese chequeo — este es el punto que de verdad CONSUME
-    # `pending_companion_queue`/`pending_companion_activity`
-    # (líneas de abajo), así que es donde tiene que estar la última barrera
-    # antes de preguntar por un acompañante que ya no existe (el reparto ya
-    # cubre a todo el grupo).
+    # `pending_companion_activity` (líneas de abajo), así que es donde tiene
+    # que estar la última barrera antes de preguntar por un acompañante que
+    # ya no existe (el reparto ya cubre a todo el grupo).
     if _group_allocation_fully_resolved(state):
         state.needs_companion_activity = False
         state.pending_companion_activity = None
-        state.pending_companion_queue = []
-        state.pending_split_total = None
         state.pending_undecided_qty = None
 
     # RESOLVER + RESPONDER.
@@ -453,7 +450,7 @@ async def _slotfill_close_phase(
     # el mensaje mencionaba OTRA actividad distinta a la preguntada — guarda
     # nueva en `_apply_short_answer`/SLOT_COMPANION_QTY — y cayó de largo
     # hasta aquí), `next_missing_slot()` NO conoce en absoluto
-    # `pending_companion_activity`/`pending_companion_queue`: sin este
+    # `pending_companion_activity`: sin este
     # chequeo, `core_pending_slot` se sobreescribía con el siguiente slot
     # "normal" (ubicación, seguridad...) dejando la pregunta de acompañante
     # huérfana — el estado seguía "pensando" que faltaba responderla pero
@@ -463,10 +460,6 @@ async def _slotfill_close_phase(
     _prune_applied_corrections(state)
     if state.pending_companion_activity:
         response = ask_slot(state, SLOT_COMPANION_QTY, reasking=True)
-        state.step = Step.FREE_TEXT
-    elif state.pending_companion_queue:
-        state.pending_companion_activity = state.pending_companion_queue.pop(0)
-        response = ask_slot(state, SLOT_COMPANION_QTY)
         state.step = Step.FREE_TEXT
     else:
         nxt = next_missing_slot(state)

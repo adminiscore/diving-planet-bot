@@ -8,8 +8,8 @@ routing → extraction → slotfill_close`, Fase 3.3):
 - (lat-11 T6e, 26-oct) `EXTRACTION_TOOL` · `extraction_system_prompt` (el relleno `fill_gaps`) se quitaron: el
   extractor del turno es `extractor_turno`.
 - `SIGNALS_TOOL` · `signals_system_prompt` — fases `routing` y `extraction`
-  (`detect_special_signals`): pedir recordar un dato ya dado, y acompañante
-  añadido a mitad de flujo.
+  (`detect_special_signals`): pedir recordar un dato ya dado (CALN-8, 28-oct:
+  el acompañante añadido a mitad de flujo lo leen el extractor y el lector del grupo).
 - `SLOT_RESOLVER_SPEC` · `slot_resolver_prompt` · `slot_resolver_tool` — red
   anti-bucle (`resolve_slot_answer`): interpreta la respuesta EN EL CONTEXTO de
   la pregunta concreta que se acaba de hacer, o se abstiene (y el bot

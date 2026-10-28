@@ -179,20 +179,12 @@ class ConversationState:
     # (extractor, con cita). Mientras no elige, la pregunta de la actividad le ofrece esa en vez del menú.
     actividad_preguntada: str | None = None
 
-    # Actividad del acompañante detectada por la red de precisión LLM
-    # (detect_special_signals) cuando la cantidad quedó pendiente de preguntar
-    # (plural sin número, p. ej. "mis amigos" — nunca se debe adivinar cuántos
-    # son). Se consume en cuanto la respuesta llega (core_pending_slot ==
-    # SLOT_COMPANION_QTY) y se fusiona con `_merge_companion_activity`.
+    # Actividad de un acompañante cuya cantidad falta por preguntar (plural sin
+    # número, p. ej. "mis amigos" — nunca se debe adivinar cuántos son): la
+    # ponen la respuesta a «¿qué hará?» y el extractor. Se consume en cuanto la
+    # respuesta llega (core_pending_slot == SLOT_COMPANION_QTY) y se fusiona con
+    # `_merge_companion_activity`.
     pending_companion_activity: str | None = None
-
-    # Cola de sub-grupos ADICIONALES (más de un acompañante con actividades
-    # distintas en el mismo mensaje, `other_companions` del LLM) cuya cantidad
-    # también quedó ambigua (plural vago sin número) — se preguntan uno a uno,
-    # igual que `pending_companion_activity` pero para el 2º/3º/... grupo.
-    # Auditoría 2026-07-23: mismo hallazgo que motivó pending_companion_activity,
-    # extendido a "3 o más actividades, algunas con plural vago".
-    pending_companion_queue: list = field(default_factory=list)
 
     # Auditoría 2026-07-23: un acompañante mencionado solo por un ATRIBUTO
     # ("mi amigo no está certificado") sin actividad ni intención declarada
@@ -214,12 +206,6 @@ class ConversationState:
     # ("él quiere hacer snorkel" con 2 ya repartidos): {"activity", "qty"}. Se
     # pregunta el total antes de sumar o mover a nadie (tarea 7a, 2026-09-15).
     pending_companion_in_group: dict | None = None
-
-    # Total del grupo al que pertenecen los tramos de `pending_companion_queue` que salen
-    # de un reparto de ESE grupo ("vamos 3, ... mi suegra hace snorkel"): la respuesta a
-    # "¿cuantos serian para X?" se reparte dentro de este total y la actividad principal
-    # se queda con el resto, sin sumar encima (hallazgo H, 2026-09-15).
-    pending_split_total: int | None = None
 
     # El LLM leyo en ESTE turno un grupo con nacionalidades mixtas: el nucleo responde con
     # la explicacion de pago en USD (decision del owner) en vez de seguir (hallazgo A, 2026-09-15).

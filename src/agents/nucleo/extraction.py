@@ -269,8 +269,8 @@ def _singular_companion(message: str) -> bool:
 # resuelto y la reserva se cerraba SIN haber preguntado nunca al cliente algo
 # que es de seguridad, no de logística.
 #
-# La regla estructural (no un parche por síntoma, misma familia que el bloqueo
-# de `detect_special_signals` de `_group_allocation_fully_resolved`): un
+# La regla estructural (no un parche por síntoma, misma familia que el corte
+# de `_group_allocation_fully_resolved`): un
 # extractor LLM de formato libre NO puede responder por el cliente. Estos
 # campos ya tienen DOS resolutores anclados al mensaje del turno —
 # `_apply_short_answer` (determinista, corre ANTES de `_understand`) y el
@@ -380,9 +380,7 @@ async def _understand(state: ConversationState, message: str, *, answered_pendin
     este turno. Sin ese booleano, `advanced` (en maybe_handle_turn) no se
     entera de que este fast-path avanzó la reserva cuando el siguiente slot
     pendiente no cambia (p. ej. seguía faltando "nacionalidad" con o sin el
-    acompañante) — y la red de precisión LLM vuelve a ejecutarse para el
-    MISMO mensaje y duplica la cantidad (hallazgo en vivo 2026-07-22: "viene
-    también uno que hace snorkel" con LLM real daba snorkel:2, no snorkel:1)."""
+    acompañante)."""
     from src.agents import supervisor  # lazy: evita import circular
 
     prev_activity = state.detected_activity
@@ -428,8 +426,6 @@ async def _understand(state: ConversationState, message: str, *, answered_pendin
     if _group_allocation_fully_resolved(state):
         state.needs_companion_activity = False
         state.pending_companion_activity = None
-        state.pending_companion_queue = []
-        state.pending_split_total = None
         state.pending_undecided_qty = None
 
     # "voy solo" → 1 persona. Nació para cursos PADI (Fase 3 causa A) y el owner
@@ -461,9 +457,10 @@ async def _understand(state: ConversationState, message: str, *, answered_pendin
     # cambio de opinión sin persona añadida ("mejor snorkel") sigue siendo
     # cambio (latest wins). Cubre solo las frases de _ADDED_PERSON_RE — frases
     # fuera de esa lista (o donde turn_act == prev_activity, p. ej. "mi
-    # acompañante quiere hacer buceo pero no es certificado") las resuelve la
-    # red de precisión LLM en maybe_handle_turn (detect_special_signals),
-    # nunca ampliando este regex frase a frase (decisión owner 2026-07-22).
+    # acompañante quiere hacer buceo pero no es certificado") las lee el
+    # reparto del extractor o el lector del grupo (CALN-8, 28-oct: antes, la
+    # red de señales), nunca ampliando este regex frase a frase (decisión
+    # owner 2026-07-22).
     turn_act = intent.activity
     companion_merged_fastpath = False
     if (
@@ -489,9 +486,8 @@ async def _understand(state: ConversationState, message: str, *, answered_pendin
         # no ya un valor `explicit_qty` — no solo cuando es None — antes de
         # confiarlo. Si no hay número real en el mensaje ni es un compañero
         # singular inequívoco ("mi novia"/"mi acompañante"), NO fusionar con
-        # una cifra inventada — dejar el estado sin tocar para que el bloque
-        # de la red de precisión más abajo (`detect_special_signals`)
-        # pregunte cuántos son.
+        # una cifra inventada — dejar el estado sin tocar: cuántos son lo da
+        # el reparto del extractor o del lector del grupo (CALN-8, 28-oct).
         if explicit_qty is not None and not _EXPLICIT_NUMBER_RE.search(message):
             explicit_qty = None
         if (
@@ -503,13 +499,6 @@ async def _understand(state: ConversationState, message: str, *, answered_pendin
             _restore_main_diver_fields(state, prev_activity, prev_service_id, prev_is_certified, prev_last_dive, prev_refresher)
             _add_or_ask_companion(state, message, turn_act, explicit_qty or 1)
             companion_merged_fastpath = True
-            # `turn_act` puede haber quedado encolado arriba (guard del
-            # alloc_patch alucinado, sin respaldo numérico) antes de que este
-            # fast-path lo resolviera de verdad por otra vía (compañero
-            # singular inequívoco) — sin este descarte, se preguntaba una
-            # cantidad que ya se acababa de fijar sin ambigüedad.
-            if turn_act in state.pending_companion_queue:
-                state.pending_companion_queue.remove(turn_act)
 
     # Normalizar group_size con el reparto: si el reparto suma MÁS personas que el
     # group_size conocido, el total manda. Bug en vivo (2026-07-22): "1 pero viene
@@ -531,8 +520,7 @@ def _restore_main_diver_fields(
 ) -> None:
     """Restaura el perfil del buceador PRINCIPAL a como estaba antes de este
     turno — usado cuando ya se sabe que el mensaje hablaba de un ACOMPAÑANTE,
-    no del hablante (fast-path regex arriba y red de precisión LLM en
-    maybe_handle_turn). Bug real: "no es certificado"/"sin bucear hace X años"
+    no del hablante (fast-path regex arriba). Bug real: "no es certificado"/"sin bucear hace X años"
     referido al acompañante se aplicaba por 'latest wins' al buceador
     principal ya resuelto (p. ej. is_certified=True → False de golpe).
 
@@ -610,8 +598,7 @@ _JEV_SE_SUMA_SEGURO = 0.7  # ex-9b: por encima, Jev está seguro de que el mensa
 def _add_or_ask_companion(state: ConversationState, message: str, activity: str, qty: int) -> None:
     """Punto unico para la actividad de otra persona (tarea 7a, 2026-09-15).
 
-    Quien es otra persona lo decide el turno (fast-path o red de precision LLM, que
-    reconoce pronombres y jerga). Lo que ni el texto ni el LLM dicen es si esa persona
+    Quien es otra persona lo decide el turno (el fast-path regex o el extractor). Lo que ni el texto ni el LLM dicen es si esa persona
     YA estaba contada: "él quiere hacer snorkel" y "también viene mi hermana que quiere
     hacer snorkel" dan la misma señal. Si sumarla supera el total conocido y el mensaje
     no dice que se suma alguien, no se adivina: se pregunta el total
@@ -771,41 +758,18 @@ async def _extraction_phase_body(
         state.is_colombian = False
 
     # Circuit-breaker (portado 2026-09-01, hallazgo en vivo, batería de
-    # grupos mixtos contra PRE, lote 8): este chequeo es el punto REAL que
-    # consume `pending_companion_queue` para preguntar por un acompañante —
-    # y corre SIEMPRE, incluso en el turno de arriba donde `_understand()`
-    # se salta por ser respuesta corta ya resuelta (`resolved_short and
-    # len(message) <= 12`, p. ej. "no"/"cartagena"). Si el reparto del grupo
-    # YA cubre a todo el mundo, no puede quedar ningún acompañante sin
-    # actividad — limpiar la cola aquí, justo antes de que se consuma.
+    # grupos mixtos contra PRE, lote 8): corre SIEMPRE, incluso en el turno
+    # de arriba donde `_understand()` se salta por ser respuesta corta ya
+    # resuelta (`resolved_short and len(message) <= 12`, p. ej.
+    # "no"/"cartagena"). Si el reparto del grupo YA cubre a todo el mundo, no
+    # puede quedar ningún acompañante sin actividad.
     if _group_allocation_fully_resolved(state):
         state.needs_companion_activity = False
         state.pending_companion_activity = None
-        state.pending_companion_queue = []
-        state.pending_split_total = None
         state.pending_undecided_qty = None
 
-    # Multi-ítem (auditoría 2026-07-23): si _understand() encoló alguna
-    # actividad del reparto sin respaldo numérico real (fill_gaps inventando
-    # una cantidad para un plural vago dentro de group_allocation — hallazgo
-    # nuevo, mismo principio que la cola de other_companions más abajo),
-    # preguntar por ella ya mismo en vez de seguir de largo. Nunca se pierde
-    # en silencio ni se factura una cantidad inventada.
-    if state.pending_companion_queue and not state.pending_companion_activity:
-        state.pending_companion_activity = state.pending_companion_queue.pop(0)
-        response = greeting + ask_slot(state, SLOT_COMPANION_QTY)
-        state.history.append({"role": "assistant", "content": response})
-        return response
-
-    # ¿La extracción base (regex + gap-fill, dentro de `_understand()`) ya
-    # cambió el tamaño/reparto del grupo este turno? Bug en vivo (2026-07-23,
-    # Rocío): "tengo 3 amigos que quieren hacer alguna actividad" — el fix del
-    # regex de intent_detector.py ya suma correctamente +1 (group_size 1→4).
-    # Sin esta guarda, `companion_ambiguous` (más abajo) volvía a disparar la
-    # red de precisión LLM para el MISMO mensaje, que fusionaba 3 acompañantes
-    # OTRA VEZ encima del grupo ya correcto → 4+3=7. La extracción base y la
-    # red de precisión leen la MISMA evidencia textual; si la base ya absorbió
-    # el cambio de tamaño de grupo, no hay que re-contarlo.
+    # ¿La extracción de `_understand()` ya cambió el tamaño/reparto del grupo
+    # este turno? Cuenta como avance (ver `advanced`, abajo).
     group_composition_resolved_by_base_extraction = (
         state.detected_group_size != prev_group_size
         or (state.detected_group_allocation or {}) != prev_group_allocation
@@ -822,29 +786,13 @@ async def _extraction_phase_body(
             state.history.append({"role": "assistant", "content": response})
             return response
 
-    # Red de precisión: si el turno NO avanzó nada por los caminos normales
-    # (regex + gap-fill), probar la detección de señales por LLM antes de caer
-    # al escalado genérico — cubre "hay un amigo que quiere hacer snorkel" o
-    # "mi acompañante quiere hacer buceo pero no es certificado", frases que
-    # ningún regex reconocía (decisión owner 2026-07-22: nunca ampliar el
-    # regex frase a frase para esto; el LLM decide QUÉ pasó, el estado decide
-    # el VALOR real). Solo se gasta esta llamada cuando de verdad hace falta.
-    # (Se mide por next_missing_slot, no por un snapshot crudo de campos: un
-    # campo del buceador PRINCIPAL pisado por error por este mismo turno —el
-    # bug que _restore_main_diver_fields corrige— no debe contar como
-    # "avance", o la red de precisión nunca llegaría a correr.)
-    # `companion_merged_fastpath` (hallazgo en vivo 2026-07-22): añadir un
-    # acompañante no siempre cambia next_missing_slot (p. ej. seguía faltando
-    # "nacionalidad" con o sin el acompañante) — sin este flag, la red de
-    # precisión LLM de abajo se ejecutaba OTRA VEZ para el mismo mensaje y
-    # duplicaba la cantidad (snorkel:1 fusionado por el fast-path + snorkel:1
-    # fusionado de nuevo por el LLM = snorkel:2).
-    # `group_composition_resolved_by_base_extraction` (hallazgo en vivo
-    # 2026-07-23, Rocío): si la extracción base ya absorbió el tamaño/reparto
-    # del grupo este turno pero SIN cambiar next_missing_slot (p. ej. seguía
-    # faltando la ubicación), la red de precisión volvía a contar los mismos
-    # acompañantes encima (4 de la base + 3 de la señal = 7). Que la base haya
-    # resuelto la composición del grupo cuenta como avance por sí mismo.
+    # ¿Avanzó el turno? Si no, lo de abajo (el «¿me recuerdas…?», la red
+    # anti-bucle, la pregunta suelta) mira si el mensaje era otra cosa. Se mide
+    # por next_missing_slot, no por un snapshot crudo de campos; sumar un
+    # acompañante (`companion_merged_fastpath`) o cambiar el tamaño/reparto del
+    # grupo cuenta como avance aunque siga faltando el mismo dato (p. ej. la
+    # nacionalidad). Hasta CALN-8 (28-oct) esto decidía también si corría la
+    # red de señales de acompañantes (historia en git).
     advanced = (
         resolved_short
         or companion_merged_fastpath

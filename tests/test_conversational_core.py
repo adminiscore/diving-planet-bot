@@ -1203,7 +1203,6 @@ async def test_hallucinated_main_activity_restatement_is_not_queued_as_companion
         "el compañero singular inequívoco se resuelve sin preguntar (qty=1)"
     )
     assert state.core_pending_slot != core.SLOT_COMPANION_QTY
-    assert not state.pending_companion_queue
 
 
 class TestPersonNounSharedVocabulary:
@@ -1553,8 +1552,8 @@ async def test_fully_resolved_group_allocation_self_heals_stale_companion_flags(
     gustaría hacer a tu acompañante?" — no se aisló con certeza el disparador
     exacto (ni siquiera con trazas de LangSmith), así que el fix es un
     circuit-breaker: se fuerzan aquí las banderas corruptas exactamente como
-    se observaron en producción (`pending_companion_queue` con una entrada
-    "sobrante" pese a que el reparto ya la cubre) y se verifica que
+    se observaron en producción (`needs_companion_activity` encendida
+    pese a que el reparto ya cubre a todos) y se verifica que
     `_group_allocation_fully_resolved` las auto-limpia en el siguiente
     turno, sin importar cuál fue la causa original."""
     state = make_state("es")
@@ -1569,14 +1568,12 @@ async def test_fully_resolved_group_allocation_self_heals_stale_companion_flags(
     state.core_pending_slot = core.SLOT_SAFETY
     # Banderas corruptas, exactamente como se observaron en vivo.
     state.needs_companion_activity = True
-    state.pending_companion_queue = ["snorkel"]
 
     _senales = AsyncMock(return_value={})
     with patch.object(core_routing, "detect_special_signals", new=_senales), patch.object(core_extraction, "detect_special_signals", new=_senales):
         resp = await route_message(state, "no")
     assert state.last_dive_over_2_years is False
     assert state.needs_companion_activity is False
-    assert state.pending_companion_queue == []
     assert state.core_pending_slot != core.SLOT_COMPANION_ACTIVITY
     assert "acompañante" not in resp.lower()
 
@@ -1688,7 +1685,6 @@ async def test_comparing_options_object_routes_to_rag_not_cart(monkeypatch):
     rag.assert_awaited_once()
     assert "RAG_DIFERENCIA" in resp
     assert not state.mixed_cart
-    assert not state.pending_companion_queue
     assert state.detected_activity is None
 
 

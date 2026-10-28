@@ -396,10 +396,7 @@ def _apply_short_answer(state: ConversationState, message: str, ia: dict | None 
             return False
         n = _quantity_answer(state, message)
         if n is not None and n > 0 and act:
-            if state.pending_split_total:
-                _assign_split_share(state, act, n)
-            else:
-                _merge_companion_activity(state, act, n)
+            _merge_companion_activity(state, act, n)
             state.pending_companion_activity = None
             return True
         return False
@@ -663,7 +660,7 @@ def _quantity_answer(state: ConversationState, message: str) -> int | None:
     lista de unidades: solo cuenta como respuesta lo que ES la cantidad (un unico
     elemento: "4", "dos", "6+"). Lo demas no se resuelve aqui: el total lo lee la IA
     (`_cantidad_por_la_ia`) y, si calla, el resolutor LLM con su contexto y su guarda de
-    anclaje; "¿cuantos para X?" sigue el turno (extractor y red de precision).
+    anclaje; "¿cuantos para X?" sigue el turno (el extractor).
     lat-11 T6b (26-oct): antes valía también lo que el detector entero (IntentDetector) leía como total ("somos 4",
     "4 personas"). En las corridas sintéticas, de 36 respuestas a "¿cuántos serían para X?" leía una cifra en 1; en
     la del total leía 7, y 4 eran un "para mí" dentro de una pregunta ("¿cuánto sería el precio para mí?" = 1)."""
@@ -671,42 +668,6 @@ def _quantity_answer(state: ConversationState, message: str) -> int | None:
         return None
     n = cart_render.parse_quantity(message)
     return n if isinstance(n, int) and n > 0 else None
-
-
-def _with_main_rest(allocation: dict, main_activity, total, taken: int = 0) -> dict:
-    """El resto del grupo hace la actividad principal: con el total ya sabido, su cifra
-    es aritmetica y no necesita respaldo en el texto. `taken` son personas del total que
-    no estan en el reparto (las `undecided`). Punto unico (2026-09-15): lo usan las
-    personas sin decidir, la guarda de cifras y las respuestas a "¿cuantos para X?"."""
-    others = sum(v for k, v in allocation.items() if k != main_activity)
-    rest = (total or 0) - others - taken
-    result = {k: v for k, v in allocation.items() if k != main_activity}
-    if main_activity and rest > 0:
-        result[main_activity] = rest
-    return result
-
-
-def _assign_split_share(state: ConversationState, activity: str, qty: int) -> None:
-    """Respuesta a "¿cuantos serian para X?" cuando X es un tramo del grupo YA contado
-    (hallazgo H, 2026-09-15). Antes se sumaba encima: con 3 sabidos, "uno" dejaba 4 y el
-    siguiente tramo 5. Ahora se reparte dentro del total; al contestar el ultimo tramo, la
-    actividad principal se queda con el resto. Si las respuestas superan el total, se
-    pregunta si se suma alguien (la pregunta de 7a)."""
-    total = state.pending_split_total
-    allocation = dict(state.detected_group_allocation or {})
-    allocation[activity] = allocation.get(activity, 0) + qty
-    main = state.detected_activity
-    if sum(v for k, v in allocation.items() if k != main) > total:
-        state.pending_split_total = None
-        state.pending_companion_queue = []
-        state.pending_companion_in_group = {"activity": activity, "qty": qty}
-        return
-    if not state.pending_companion_queue:
-        state.pending_split_total = None
-        allocation = _with_main_rest(allocation, main, total)
-    state.detected_group_allocation = allocation
-    state.detected_group_size = total
-    logger.info(f"[CORE] tramo {activity} x{qty} dentro del total {total} -> alloc={allocation}")
 
 
 def sembrar_senales_del_turno(state: ConversationState, routing_signals: dict) -> None:
@@ -794,18 +755,6 @@ async def _routing_phase(
         elif state.pending_correction:
             logger.info(f"[CORE] correccion no confirmada, se queda lo guardado: {sorted(state.pending_correction)}")
             state.pending_correction = None
-
-    # Encadenar la cola de sub-grupos adicionales (multi-ítem, auditoría
-    # 2026-07-23): si se acaba de resolver la cantidad de UN sub-grupo
-    # ambiguo y quedan más en `pending_companion_queue`, preguntar por el
-    # siguiente ya mismo — el flujo normal (next_missing_slot) no conoce esta
-    # cola, así que hay que interceptarlo aquí antes de que seguir de largo
-    # pierda la pregunta pendiente.
-    if resolved_short and prev_pending == SLOT_COMPANION_QTY and state.pending_companion_queue:
-        state.pending_companion_activity = state.pending_companion_queue.pop(0)
-        response = greeting + ask_slot(state, SLOT_COMPANION_QTY)
-        state.history.append({"role": "assistant", "content": response})
-        return response
 
     # Encadenar SLOT_COMPANION_ACTIVITY -> SLOT_COMPANION_QTY (auditoría
     # 2026-07-23): una vez se sabe QUÉ quiere hacer el acompañante ("mi
