@@ -2407,17 +2407,25 @@ def _con_la_pieza(state: ConversationState, answer: str | None) -> str | None:
     if not answer or not _IMPORTE_RE.search(answer) or not _cotiza_alguno(answer, list(SERVICES.values())):
         return None
     lang = "es" if state.language == "es" else "en"
+
+    def cifras(texto: str) -> set[str]:
+        return {re.sub(r"\D", "", c) for c in re.findall(r"\d[\d.,]*", texto)}
+
+    def de_servicio(s: dict) -> set[str]:
+        return {str(round(float(s[k]))) for k in ("price_usd", "price_usd_normal", "price_cop", "price_cop_normal")
+                if s.get(k)}
+
+    dados = cifras(answer) & set().union(*(de_servicio(s) for s in SERVICES.values()))
     _, bloques = cotizar.bloques_de_precio(state)
     pieza = cotizar.pieza_de_precios(bloques, lang)
-    if not pieza:
-        return None
-    # Solo si lo que cotiza el RAG es lo de la pieza: «¿el refresher cuesta aparte?» de un buzo da el precio del
-    # minicurso, y la pieza (la del buceo) lo quitaría sin darlo; ese sigue con la puerta de siempre.
-    del_catalogo = {str(round(float(s[k]))) for s in SERVICES.values()
-                    for k in ("price_usd", "price_usd_normal", "price_cop", "price_cop_normal") if s.get(k)}
-    dados = {re.sub(r"\D", "", c) for c in re.findall(r"\d[\d.,]*", answer)} & del_catalogo
-    if not dados <= {re.sub(r"\D", "", c) for c in re.findall(r"\d[\d.,]*", pieza)}:
-        return None
+    if not pieza or not dados <= cifras(pieza):
+        # Cotiza otro plan que el del estado («quiero reservar el paquete de 5 buceos» con la salida de 2 de base, o el
+        # refresher de un buzo, que se cobra como el minicurso): la pieza, de los planes que cotizó (medida caln6-B1:
+        # eran los 2 turnos en que aún saltaba la puerta).
+        bloques = cotizar.bloques_de_los_servicios(state, [sid for sid, s in SERVICES.items() if de_servicio(s) & dados])
+        pieza = cotizar.pieza_de_precios(bloques, lang)
+        if not pieza or not dados <= cifras(pieza):
+            return None
     logger.info("[CORE][CALN3] el RAG general cotiza: sus importes, fuera; debajo, la pieza de precios")
     if any(b.get("origen") for b in bloques):
         return redactor_hechos.con_la_pieza(answer, pieza)

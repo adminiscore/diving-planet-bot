@@ -44,10 +44,18 @@ def test_un_importe_que_no_es_del_catalogo_no_lleva_pieza():
     assert core._con_la_pieza(_st(), "El minicurso dura un día; la salida es a las 8:00.") is None
 
 
-def test_si_cotiza_otra_actividad_que_la_de_la_pieza_sigue_la_puerta():
-    # Buzo que pregunta por el refresher: el RAG da el precio del minicurso y la pieza sería la del buceo.
+def test_si_cotiza_otro_plan_la_pieza_es_la_de_ese():
+    # Buzo que pregunta por el refresher: el RAG da el precio del minicurso, no el del buceo (caln6-B1)
     st = _st("cartagena", detected_activity="certified_diving")
-    assert core._con_la_pieza(st, "El refresher se reserva como el minicurso: 655.000 COP online.") is None
+    salida = core._con_la_pieza(st, "El refresher se reserva como el minicurso: 655.000 COP online.")
+    assert "Minicurso de Buceo: 183 USD" in salida and "630.000" not in salida
+    # «quiero reservar el paquete de 5 buceos» con la salida de 2 de base: el paquete, de los dos orígenes
+    salida = core._con_la_pieza(_st(detected_activity="certified_diving"), "El paquete de 5 cuesta 1.429.000 COP.")
+    assert "1.429.000" in salida and "1.000.000" in salida and salida.endswith(core.ORIGEN_TRAS_LAS_VARIANTES_ES)
+
+
+def test_si_la_cifra_no_es_de_ningun_plan_la_puerta_de_siempre():
+    assert core._con_la_pieza(_st(), "Te sale por 999.999 COP.") is None
 
 
 def test_con_la_tarjeta_no_va_la_pieza():
