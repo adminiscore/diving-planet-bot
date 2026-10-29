@@ -243,19 +243,23 @@ def _finalize(state: ConversationState, *, pasar_al_asesor: bool = True, ofrecer
                      "enseguida se pone en contacto contigo. 🌊") if lang == "es" else
                     "Great! I'll connect you with an advisor to book and arrange the payment — they'll be in touch "
                     "shortly. 🌊")
+        # Sparring s29 (29-oct): si pregunta CÓMO pagar (Jev: pago), eso lo contesta el escritor en este turno (o el asesor);
+        # el cierre lo repetía debajo con otras palabras. Queda la tarjeta y el pase.
+        pregunta_el_pago = "pago" in set(getattr(state, "_intenciones", None) or [])
         if lang == "es":
+            como_paga = ("" if pregunta_el_pago else
+                         "El pago es en pesos colombianos (COP): " + ("pueden" if grupo else "puedes")
+                         + f" pagar {politica_breve('payment_colombian', 'es')}. ")
             return (
-                f"{refresher_note}{summary}\n\n"
-                "El pago es en pesos colombianos (COP): "
-                + ("pueden" if grupo else "puedes")
-                + f" pagar {politica_breve('payment_colombian', 'es')}. "
+                f"{refresher_note}{summary}\n\n{como_paga}"
                 + ("Les paso con un asesor para coordinar el pago; enseguida se pone en contacto con ustedes. 🌊"
                    if grupo else
                    "Te paso con un asesor para coordinar el pago; enseguida se pone en contacto contigo. 🌊")
             )
+        como_paga = ("" if pregunta_el_pago else
+                     f"You pay in Colombian pesos (COP): {politica_breve('payment_colombian', 'en')}. ")
         return (
-            f"{refresher_note}{summary}\n\n"
-            f"You pay in Colombian pesos (COP): {politica_breve('payment_colombian', 'en')}. I'll connect you "
+            f"{refresher_note}{summary}\n\n{como_paga}I'll connect you "
             "with an advisor to arrange the payment — they'll be in touch shortly. 🌊"
         )
 

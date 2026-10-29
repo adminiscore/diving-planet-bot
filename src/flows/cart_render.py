@@ -345,11 +345,15 @@ def _goto_mixed_final_summary(state: ConversationState) -> str:
     # añadir otra actividad, resolver dudas o ajustar la reserva. Con varias
     # actividades es un único cierre al final de todos los mensajes (no uno
     # por actividad). Sin precios/links aquí: van en los `msgs` de arriba.
-    closing = (
-        "\n\n_El precio es el mismo en pesos (COP) o dólares (USD), sin cobro extra por la divisa._"
-        if lang == "es"
-        else "\n\n_The price is the same in COP or USD, with no extra charge for the currency._"
-    )
+    # Sparring s29 (29-oct): la nota solo cuando van las dos monedas (sin nacionalidad). Al extranjero, al colombiano o al
+    # grupo mixto («pagan toda la reserva en dólares») les decía que podían pagar en pesos o en dólares.
+    closing = ""
+    if len(moneda.monedas(state)) == 2:
+        closing = (
+            "\n\n_El precio es el mismo en pesos (COP) o dólares (USD), sin cobro extra por la divisa._"
+            if lang == "es"
+            else "\n\n_The price is the same in COP or USD, with no extra charge for the currency._"
+        )
     return MESSAGE_SPLIT.join(msgs) + closing + "\n\n" + CIERRE_DE_LA_TARJETA["es" if lang == "es" else "en"]
 
 
