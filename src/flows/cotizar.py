@@ -65,14 +65,18 @@ def hechos_de_los_candidatos(state, intenciones: list[str]) -> list[dict]:
     return bloques
 
 
-def cotizar(state) -> dict:
-    """La pieza de precios del turno: las actividades, los importes (cifras, sin separadores) y lo que falta saber."""
+def bloques_de_precio(state) -> tuple[list[str], list[dict]]:
+    """Las actividades a cotizar y sus hechos de precio: los de las elegidas o, sin ninguna, los de los candidatos."""
     actividades = _elegidas(state)
     if actividades:
-        bloques = hechos_mod.hechos(state, ["precio"], actividades)
-    else:
-        actividades = candidatos(state)
-        bloques = hechos_de_los_candidatos(state, ["precio"]) if actividades else []
+        return actividades, hechos_mod.hechos(state, ["precio"], actividades)
+    actividades = candidatos(state)
+    return actividades, hechos_de_los_candidatos(state, ["precio"]) if actividades else []
+
+
+def cotizar(state) -> dict:
+    """La pieza de precios del turno: las actividades, los importes (cifras, sin separadores) y lo que falta saber."""
+    actividades, bloques = bloques_de_precio(state)
     def cifras(precios) -> list[str]:
         return sorted({re.sub(r"\D", "", p[clave]) for p in precios for clave in ("online", "normal") if p.get(clave)})
 

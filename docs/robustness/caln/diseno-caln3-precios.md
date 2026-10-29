@@ -128,3 +128,16 @@ El paso 1 no cambia nada visible y ya dice cuánto se equivoca hoy el escritor f
 - **Causa** (el b5 largo, extractor ×5 por variante): «…vamos con los niños, de 7 y 4 años. Estamos alojados en
   Cartagena…» da location 4/10; con el lugar delante 5/5, sin la frase de los niños 5/5. El extractor pierde el último
   dato cuando el mensaje carga el reparto con edades. La confirmación es la red, no el arreglo de la lectura.
+
+## 9. Paso 4 (29-oct, decisión de Gadea #2499)
+
+- Medido sin llamadas en la 5.ª (caln5-B, 368 turnos visibles): 51 turnos preguntan el origen; 39 salen de los hechos
+  con la pieza y 12 de la puerta, sobre respuestas del RAG general que dan importes en turnos que Jev no da por precio
+  («¿cuánto va a subir?», el coste del refresher, «los pasos para reservar»). El RAG saca los importes también de las
+  fichas (`pricing.json`, FAQ), así que quitar la tabla del prompt no basta.
+- (1) `_con_la_pieza` (conversational_core): si la respuesta del RAG general da precios del catálogo y todos son de la
+  pieza de `cotizar` (las actividades del estado o sus candidatos), fuera sus frases con importes y debajo la pieza;
+  sin origen, los dos y la pregunta (o la confirmación de CALN-3b). Si cotiza otra cosa (el refresher de un buzo), o va
+  la tarjeta, la puerta de siempre.
+- (2) Pendiente: la puerta (enlaces sin origen y lo que (1) deja pasar) y `sin_precio`.
+- Medir con saldo: bancos p/q/r y una mini-ronda de los visibles afectados, una pasada; la ronda completa al integrar.
