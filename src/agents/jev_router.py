@@ -778,8 +778,19 @@ def _con_hoteles_de_la_base(pregunta: dict) -> dict:
 
     hoteles = ", ".join(HOTELES_DE_LA_BASE)
     criterios = dict(pregunta["criteria"])
-    criterios["islands"] = (f"{criterios['islands']} Staying at one of these island hotels also counts: {hoteles}.")
+    criterios["islands"] = (f"{criterios['islands']} Staying at one of these island hotels also counts: {hoteles}."
+                            f"{_SIN_IR_DE_CARTAGENA}")
     return {**pregunta, "criteria": criterios}
+
+
+# CALN-6 (29-oct, #2551 de Gadea): «Va quiero comprar sin ir de cartagena» daba none 4/4 (no nombra las islas). Con el
+# extractor leyendo island (su regla de la negación), Jev seguro de que no lo dice hacía saltar la confirmación «¿ya
+# estarás en las islas?», que el juez cuenta como repregunta (paquete-5-buceos-islas-residente-sin-recogida, en PRE y
+# en la 5.ª). Con esta frase: la negación none → islands 4/4 (y en inglés); «bucear sin salir de Cartagena» sigue en
+# cartagena, y los 8 controles (las islas como sitio de buceo, Cartagena, Isla Grande, Barú, el punto de encuentro, sin
+# lugar) iguales (`scripts/sonda_jev_negacion_lugar.py`, ×4).
+_SIN_IR_DE_CARTAGENA = (" Also when they say they will NOT set out from or go through Cartagena (\"sin ir de Cartagena\", "
+                        "\"without going back to Cartagena\"): then they will already be on the islands.")
 
 
 # rag-5 (1-oct): ¿el mensaje cuenta algo del cliente que haya que APUNTAR como nota? Puerta del extractor de
