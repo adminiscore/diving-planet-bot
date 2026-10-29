@@ -1,6 +1,23 @@
 History
 =======
 
+0.38.0 - (2026-10-29, SUBE A PRE: el paso 4 (1) de precios, la tarjeta sin totales y la política de la moneda)
+---------------------
+* **Qué sube** (sobre 0.37.0): el paso 4 (1) de CALN-3 (Gonzalo): los importes que el RAG general escribe por su cuenta
+  salen de la pieza de cotizar, y la pieza es la del plan que cotiza; sin origen, fuera también el enlace de un solo
+  origen; «¿ese es el precio para colombianos?» es pedir precio (Jev). CALN-3b, los totales (Gadea; decisión del 29-oct):
+  la tarjeta y el resumen del colombiano dan el precio por persona y cuántos son, nunca el total. CALN-3c (c), solo la
+  política: `colombian_pricing` dice que nacer en Colombia no basta (la frase del extractor, descartada: ×10, inventados
+  2 → 23).
+* **Medida** (una pasada, a la misma hora, en serie; A = PRE 0.37.0): mini-ronda de 18 visibles (los 12 donde saltaba la
+  puerta del origen y 6 de precio y moneda): **9/18 → 11/18 sin fallos, 14 → 8 fallos**; repreguntas 1 → 0, repite
+  3 → 0; banco-moneda 4/6 = 4/6; bancos de precio p/q/r iguales (Gonzalo). El paso 4 (2), fuera la puerta del origen,
+  empeoraba (7 → 11) y queda aparcado: sin ella, el escritor dice lo que incluye sin el origen («incluye almuerzo») y
+  haría falta otra capa que recorte.
+* **CALN-8 (4), aparcado** (decisión de Gadea): tres recortes del prompt del extractor disparan los inventos en los
+  mismos casos (×10: 2 → 52, 2 → 23, 36 → 57). Método nuevo para el prompt de Haiku: los casos que cambian, ×10,
+  contando inventos (`docs/robustness/caln/estudio-caln8-4-prompts.md`).
+
 0.37.0 - (2026-10-29, la 5.ª de CALN SIN la moneda SUBE A PRE: en los 23 visibles 11 fallos frente a 12-13 de PRE)
 ---------------------
 * **Qué lleva** (sobre 0.36.0): CALN-8 (1) + g26 (Álvaro: fuera la red de señales; amigos sin cantidad ni actividad); el
