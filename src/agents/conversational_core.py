@@ -1761,7 +1761,7 @@ async def _rag_answer(
             answer = redactor_hechos.con_la_pieza(answer, nota)
     # 7-oct (opción C): si cotiza sin origen, se pregunta el origen; quien la recibe deja el estado preparado
     # (`_fijar_origen_antes_del_precio`).
-    return _puerta_del_origen(state, message, answer)
+    return _puerta_del_origen(state, message, answer, sin_precio=sin_precio)
 
 
 # CAL-C3d (17-oct, flag `tras_pase_recuerda_el_pase`): tras pasar la conversación a un asesor, "¿me podrías ayudar con
@@ -2380,12 +2380,57 @@ def _enlaza_alguno(answer: str, servicios: list[tuple[str, dict]], state: Conver
     return any(u and u.split("?")[0] in answer for u in urls)
 
 
-def _puerta_del_origen(state: ConversationState, message: str, answer: str) -> str:
+def _puerta_del_origen(state: ConversationState, message: str, answer: str, sin_precio: bool = False) -> str:
     """La respuesta del RAG tras la puerta del origen (opción C): la pregunta del origen (con las dos variantes, ord-7)
     si cotiza o enlaza sin saber el origen; si no, la respuesta tal cual. gen-19 (21-oct) añadía aquí el enlace cuando
     tocaba; se quitó por decisión de Gadea: en su banco no cambiaba nada (el enlace ya salía cuando lo piden). ord-9
-    (la lista de qué incluye, de la ficha) se retiró en arq-2c (22-oct): la da el redactor de hechos."""
+    (la lista de qué incluye, de la ficha) se retiró en arq-2c (22-oct): la da el redactor de hechos.
+
+    CALN-3 paso 4 (1): antes, si la respuesta cotiza, sus importes los cambia la pieza de precios (`_con_la_pieza`)."""
+    if not sin_precio and (con_pieza := _con_la_pieza(state, answer)):
+        return con_pieza
     return _origen_antes_del_precio(state, message, answer) or answer
+
+
+def _con_la_pieza(state: ConversationState, answer: str | None) -> str | None:
+    """CALN-3 paso 4 (1) (29-oct, decisión de Gadea #2499): el RAG general aún escribe importes, de las fichas o del
+    catálogo, y la puerta los quitaba sin dar otros: en la 5.ª, 12 de las 51 preguntas del origen eran de la puerta
+    (caln5-B), casi todas en turnos que Jev no daba por precio («¿cuánto va a subir?», el coste del refresher). Ahora, si
+    la respuesta da un precio del catálogo, fuera sus frases con importes y debajo la pieza de `cotizar`, como en el
+    redactor de hechos (paso 3 «A»): sin el origen, los dos y la pregunta (o la confirmación de CALN-3b). None si no
+    cotiza o no hay pieza (la puerta de siempre)."""
+    from src.agents import redactor_hechos  # lazy
+    from src.agents.nucleo.extractor import origen_por_confirmar  # lazy
+    from src.flows import cotizar  # lazy
+    from src.flows.catalog import SERVICES  # lazy
+
+    if not answer or not _IMPORTE_RE.search(answer) or not _cotiza_alguno(answer, list(SERVICES.values())):
+        return None
+    lang = "es" if state.language == "es" else "en"
+    _, bloques = cotizar.bloques_de_precio(state)
+    pieza = cotizar.pieza_de_precios(bloques, lang)
+    if not pieza:
+        return None
+    # Solo si lo que cotiza el RAG es lo de la pieza: «¿el refresher cuesta aparte?» de un buzo da el precio del
+    # minicurso, y la pieza (la del buceo) lo quitaría sin darlo; ese sigue con la puerta de siempre.
+    del_catalogo = {str(round(float(s[k]))) for s in SERVICES.values()
+                    for k in ("price_usd", "price_usd_normal", "price_cop", "price_cop_normal") if s.get(k)}
+    dados = {re.sub(r"\D", "", c) for c in re.findall(r"\d[\d.,]*", answer)} & del_catalogo
+    if not dados <= {re.sub(r"\D", "", c) for c in re.findall(r"\d[\d.,]*", pieza)}:
+        return None
+    logger.info("[CORE][CALN3] el RAG general cotiza: sus importes, fuera; debajo, la pieza de precios")
+    if any(b.get("origen") for b in bloques):
+        return redactor_hechos.con_la_pieza(answer, pieza)
+    pregunta = ORIGEN_TRAS_LAS_VARIANTES_ES if lang == "es" else ORIGEN_TRAS_LAS_VARIANTES_EN
+    if por_confirmar := origen_por_confirmar(state):
+        pregunta = _CONFIRMA_ORIGEN[por_confirmar][lang]
+    # La pregunta con que cierra el RAG («¿te paso el enlace?») la sustituye la del origen, como en la puerta.
+    partes = answer.rstrip().split("\n\n")
+    frases = _FRASE_RE.split(partes[-1].strip())
+    while frases and "?" in frases[-1]:
+        frases.pop()
+    cuerpo = "\n\n".join(p for p in [*partes[:-1], " ".join(frases)] if p.strip())
+    return f"{redactor_hechos.con_la_pieza(cuerpo, pieza) if cuerpo else pieza}\n\n{pregunta}"
 
 
 def _cotiza_alguno(answer: str, servicios: list[dict]) -> bool:
