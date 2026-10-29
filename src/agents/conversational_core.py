@@ -192,6 +192,10 @@ def _companion_activity_options(state: ConversationState) -> list[str]:
         primero = certificados is True or state.acompanante_certificado_inactivo
         donde = 0 if primero else len(options) - ("companion" in options)
         options.insert(donde, "certified_diving")
+    if certificados is True:
+        # Sparring s29c (pareja de Barú, los dos Advanced): a quien ya está certificado no se le ofrecen el minicurso
+        # ni el curso Open Water, que son para quien no bucea.
+        options = [o for o in options if o not in ("minicourse", "padi_open_water")]
     return [o for o in options if dom.by_id(o) is not None]
 
 

@@ -213,3 +213,14 @@ async def test_la_pareja_de_buzos_se_pregunta_y_bucean_los_dos(extractor_dice, m
     assert [b["value"] for b in st.quick_replies] == ["certified_diving", core.OTRA_COSA]
     await _turno(st, "sí", {})
     assert st.detected_group_allocation == {"certified_diving": 2} and not st.pending_undecided_qty
+
+
+def test_a_quien_falta_y_esta_certificado_no_se_le_ofrecen_cursos_de_principiante():
+    """Sparring s29c (pareja de Barú, los dos Advanced): el menú de quien no ha elegido no lleva el minicurso ni el curso
+    Open Water si se sabe que está certificado."""
+    st = _pareja(sin_decidir_certificados=True, detected_duration="multi_day")
+    opciones = core._companion_activity_options(st)
+    assert opciones[0] == "certified_diving"
+    assert "minicourse" not in opciones and "padi_open_water" not in opciones
+    st.sin_decidir_certificados = None  # sin saberlo, siguen todas
+    assert {"minicourse", "padi_open_water"} <= set(core._companion_activity_options(st))
