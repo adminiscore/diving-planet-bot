@@ -1,7 +1,7 @@
 History
 =======
 
-0.37.0 - (2026-10-28, la 5.ª de CALN en `feature/caln-gadea`, SIN la moneda; juez de la mini-ronda pendiente: OpenAI sin saldo; PRE sigue en 0.36.0)
+0.37.0 - (2026-10-29, la 5.ª de CALN SIN la moneda SUBE A PRE: en los 23 visibles 11 fallos frente a 12-13 de PRE)
 ---------------------
 * **Qué lleva** (sobre 0.36.0): CALN-8 (1) + g26 (Álvaro: fuera la red de señales; amigos sin cantidad ni actividad); el
   paso 3 «A» de CALN-3, sus ajustes y CALN-3c (a, b) (Gonzalo: los importes por código, la pieza solo cuando se pide
@@ -12,8 +12,8 @@ History
 * **Mini-ronda de 23 visibles** (los que la 5.ª falló, más sus repreguntas), PRE estable en 12-13 fallos en 4 pasadas:
   la 5.ª entera 19, sin CALN-8 (3) 16; **pieza a pieza**: Álvaro 14, Gonzalo 11, CALN-8 (3) 10, **la moneda 15** (sus
   fallos nuevos son otras lecturas del extractor: una frase en el prompt de Haiku mueve otros campos). La moneda
-  (CALN-3c c) sale de la base (revertida; su banco se queda) hasta medir la frase con todos los campos. P1+P2+P4: ronda
-  hecha con Luna, juez pendiente (OpenAI sin saldo a las ~20:00). Sube a PRE si iguala o mejora a PRE en esos 23.
+  (CALN-3c c) sale de la base (revertida; su banco se queda) hasta medir la frase con todos los campos. **P1+P2+P4
+  (juzgada el 29-oct, 12:40, tras recargar OpenAI): 14/23 sin fallos y 11 fallos, frente a 13/23 y 13 de PRE: SUBE.**
 * **Oculto:** dos diálogos que se miraron sin querer al revisar la 5.ª quedan fuera de su nota (`contaminado`, decisión de
   Gadea); desde hoy, 19 diálogos (`scripts/golden_por_grupo.py`).
 * **Medir:** los bancos (`reproducir_juez_pre`) también avisan si contestó un respaldo por errores de LLM.
