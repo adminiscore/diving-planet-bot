@@ -59,13 +59,17 @@ integrar la rama del otro y suite en verde, porque en PRE gana el último; (3) *
 despliegue reinicia el contenedor y mata la medida del otro (avisar en el registro de Plan Coral con la hora de fin).
 Las doce normas, con su porqué, están en el documento.
 
-### ▶️ RETOMAR AQUÍ — 29-oct, 12:55 (Gadea con Claude; Álvaro y Gonzalo): la 5.ª sin la moneda EN PRE (0.37.0)
+### ▶️ RETOMAR AQUÍ — 29-oct, 17:35 (Gadea con Claude; Álvaro y Gonzalo): 0.38.0 EN PRE (precios paso 4 (1), tarjeta sin totales, moneda)
 
-- **Estado:** PRE sirve **`def9c5b`** (HISTORY 0.37.0, `feature/pre_gadea` = `feature/caln-gadea`) desde el 29-oct a las
-  12:55: la 5.ª SIN la moneda (P1 Álvaro + P2 Gonzalo + P4 CALN-8 (3)). Juez de su mini-ronda (P124, tras recargar
-  OpenAI el 29-oct a las 12:37): 14/23 sin fallos y 11 fallos, frente a 13/23 y 13 de PRE. CI en verde, PRE sano,
-  prueba corta 5/5 con Luna. Suite 3100, ruff limpio, sin interruptores nuevos. Pendiente de Gadea: el tope diario de
-  gasto en medidas (propuesta: 15 $) y separar la clave de OpenAI del juez de la de PRE.
+- **Estado:** PRE sirve **`189cf44`** (HISTORY 0.38.0, `feature/pre_gadea` = `feature/caln-gadea`) desde el 29-oct a las
+  17:35, sano; prueba corta 5/5 con Luna. Sobre 0.37.0 (12:55, la 5.ª sin la moneda): el paso 4 (1) de precios
+  (Gonzalo), la tarjeta sin totales (CALN-3b) y la política de la moneda (solo datos). Mini-ronda de 18 visibles: 14 →
+  8 fallos. Suite 3108, ruff limpio, sin interruptores nuevos. Pendiente de Gadea: el tope diario de gasto en medidas
+  (propuesta: 15 $) y separar la clave de OpenAI del juez de la de PRE.
+- **Hecho el 29-oct:** 0.37.0 (P124, 11 fallos frente a 12-13) y 0.38.0 (arriba). Descartado con medida: la frase de la
+  moneda en el extractor (×10: inventados 2 → 23) y el paso 4 (2), fuera la puerta del origen (7 → 11). CALN-8 (4)
+  APARCADO (tres recortes del prompt del extractor, inventados ×10 hasta 2 → 52). Las repreguntas de actividad de la
+  5.ª eran variación de lectura (reproducidas, no se repiten).
 - **Hecho hoy (HISTORY 0.36.0 y 0.37.0):**
 
   | Qué | Quién | Estado | Medida |
@@ -82,16 +86,13 @@ Las doce normas, con su porqué, están en el documento.
   | Oculto: 2 diálogos contaminados fuera de la nota | Gadea | en la base | oculto sobre 19 |
 
 - **Siguiente, en orden:**
-  1. ✅ (29-oct, 12:55) P124 juzgada (11 fallos frente a 12-13) y la 5.ª sin la moneda SUBIDA a PRE.
-  1b. Gonzalo, el paso 4 de CALN-3: (1) los importes del RAG general, de la pieza (7a010da, limpia a la salida) frente a
-     (b) el escritor sin importes y la marca [PRECIOS] (bae9bff, quita también la puerta y sin_precio); bancos p/q/r y
-     mini-ronda, una pasada por lado, y se queda (b) si mide igual. También CALN-6 de Gonzalo: «¿ese es el precio
-     para colombianos?» es pedir precio (e5c8fe8).
-  2. Después de subir: Álvaro, 2a/2b y la pregunta de sí/no, con banco-grupo + sparring; la moneda, medida con TODOS
-     los campos del extractor (llamadas directas ×8 al banco ex0, no solo `is_colombian`) antes de volver a juntarla.
-  3. CALN-8 (4), adelgazar los prompts del extractor (~10.000 tokens, ~15 sustituciones acumuladas) y de Jev (~8.000).
-  4. CALN-3c (b) de Gonzalo («snorkel en las islas» no es el origen, g27; «¿ese es el precio para colombianos?»);
-     acotar el menú genérico a lo que nombra el cliente; CALN-3b, totales de la tarjeta.
+  1. ✅ 0.37.0 y 0.38.0 en PRE (29-oct).
+  2. Álvaro: 2a/2b y la pregunta de sí/no (`feature/caln8-sino-alvaro`, rebasar sobre 189cf44), con banco-grupo +
+     sparring y la mini-ronda de los visibles de grupo, una pasada contra PRE.
+  3. Gonzalo, CALN-3c (b), el origen: g27 («snorkel en las islas» no es el origen) y «sin ir de Cartagena» →
+     «¿ya estarás en las islas?» (sale en PRE y en la 5.ª): el extractor lee island y Jev lo veta y salta la confirmación.
+  4. Siguiente ronda completa (golden + rotativa nueva, una pasada por lado) cuando haya varias piezas juntas: la meta
+     de salida de CALN (≥ 82/116 de media en 2 rondas, oculto ≥ 90 % sobre 19).
 - **Cómo medir:** una pasada por lado, a la misma hora, en serie (decisión de Gadea: no repetir medidas). Para
   decidir una subida, la mini-ronda de los diálogos visibles afectados y PIEZA A PIEZA si sale peor: es barata (~0,5 $
   por pieza) y encuentra al culpable. Antes de una ronda cara, una prueba corta con `--metricas` (mirar `llm_errores`).
