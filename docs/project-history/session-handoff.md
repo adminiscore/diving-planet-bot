@@ -59,13 +59,13 @@ integrar la rama del otro y suite en verde, porque en PRE gana el último; (3) *
 despliegue reinicia el contenedor y mata la medida del otro (avisar en el registro de Plan Coral con la hora de fin).
 Las doce normas, con su porqué, están en el documento.
 
-### ▶️ RETOMAR AQUÍ — 28-oct, 20:15 (Gadea con Claude; Álvaro y Gonzalo): CALN en PRE (0.36.0); la 5.ª sin la moneda, preparada, a falta del juez
+### ▶️ RETOMAR AQUÍ — 29-oct, 12:55 (Gadea con Claude; Álvaro y Gonzalo): la 5.ª sin la moneda EN PRE (0.37.0)
 
-- **Estado:** PRE sirve **CALN `ed3baaf`** (HISTORY 0.36.0) desde las 16:38, sano. **`feature/caln-gadea`** (HISTORY
-  0.37.0) = la 5.ª SIN la moneda (P1 Álvaro + P2 Gonzalo + P4 CALN-8 (3)); su código es idéntico al medido en la
-  mini-ronda P124 (`tmp-p124` 118f56a5). Suite 3100 con `ENV_FILE=.env.ci`, ruff limpio, sin interruptores nuevos.
-  **OpenAI SIN SALDO desde las ~20:00**: PRE contesta con el escritor de respaldo y el juez no corre; nadie mide hasta
-  recargar (Gonzalo y Álvaro avisados).
+- **Estado:** PRE sirve **`def9c5b`** (HISTORY 0.37.0, `feature/pre_gadea` = `feature/caln-gadea`) desde el 29-oct a las
+  12:55: la 5.ª SIN la moneda (P1 Álvaro + P2 Gonzalo + P4 CALN-8 (3)). Juez de su mini-ronda (P124, tras recargar
+  OpenAI el 29-oct a las 12:37): 14/23 sin fallos y 11 fallos, frente a 13/23 y 13 de PRE. CI en verde, PRE sano,
+  prueba corta 5/5 con Luna. Suite 3100, ruff limpio, sin interruptores nuevos. Pendiente de Gadea: el tope diario de
+  gasto en medidas (propuesta: 15 $) y separar la clave de OpenAI del juez de la de PRE.
 - **Hecho hoy (HISTORY 0.36.0 y 0.37.0):**
 
   | Qué | Quién | Estado | Medida |
@@ -82,9 +82,11 @@ Las doce normas, con su porqué, están en el documento.
   | Oculto: 2 diálogos contaminados fuera de la nota | Gadea | en la base | oculto sobre 19 |
 
 - **Siguiente, en orden:**
-  1. **Con saldo:** juzgar P124 (`judge_golden_set --run docs/robustness/synthetic-runs/2026-10-28-mini5-P124.jsonl`,
-     ~0,5 $). Si en los 23 da ≤ 13 fallos (PRE 12-13), **subir `feature/caln-gadea` a PRE** (anunciar, `check_deploy
-     --sha`, prueba corta con `--metricas`) y poner en el título de 0.37.0 que sube.
+  1. ✅ (29-oct, 12:55) P124 juzgada (11 fallos frente a 12-13) y la 5.ª sin la moneda SUBIDA a PRE.
+  1b. Gonzalo, el paso 4 de CALN-3: (1) los importes del RAG general, de la pieza (7a010da, limpia a la salida) frente a
+     (b) el escritor sin importes y la marca [PRECIOS] (bae9bff, quita también la puerta y sin_precio); bancos p/q/r y
+     mini-ronda, una pasada por lado, y se queda (b) si mide igual. También CALN-6 de Gonzalo: «¿ese es el precio
+     para colombianos?» es pedir precio (e5c8fe8).
   2. Después de subir: Álvaro, 2a/2b y la pregunta de sí/no, con banco-grupo + sparring; la moneda, medida con TODOS
      los campos del extractor (llamadas directas ×8 al banco ex0, no solo `is_colombian`) antes de volver a juntarla.
   3. CALN-8 (4), adelgazar los prompts del extractor (~10.000 tokens, ~15 sustituciones acumuladas) y de Jev (~8.000).
