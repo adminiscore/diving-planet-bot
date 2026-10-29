@@ -525,3 +525,34 @@ Cinco personas (`docs/robustness/g3/charlas-rama/r*.jsonl`), 8 turnos.
 6. **El colombiano pasa a un asesor en el primer turno** (decisión de Gadea): r3, familia de 5 de Bogotá en Isla
    Grande, «¿qué precio tiene y hay descuento por ser 5?» → tarjeta (5 × 150.000 COP) y «Les paso con un asesor para
    coordinar el pago», y el escritor dice «el precio te lo confirma el asesor» encima de la tarjeta que lo da.
+
+## CALN-S29-01..08 · Sparring de clientes nuevos contra PRE 0.38.0 (29-oct, `charla_pre`)
+
+Seis personas que no salen del golden (`docs/robustness/g3/charlas/6771-6776.jsonl`), 14 turnos: pareja de Madrid en
+Isla Grande (buzo + nunca buceó), familia de Bogotá con niños de 7 y 11, buzo Advanced canadiense con 3 años sin bucear,
+residente venezolano con cédula de extranjería, grupo de 6 (4 colombianos y 2 alemanes) y posventa (cambio de fecha
+por enfermedad).
+
+- **BIEN:** el almuerzo NO incluido desde las islas y SÍ desde Cartagena; los precios de las islas en USD al de Madrid;
+  la tarjeta sin total («por persona · N personas»); edades (snorkel desde 6, minicurso al de 11); el refresher de quien
+  lleva 3 años, como minicurso; el residente con cédula paga en pesos; el grupo mixto paga todo en USD; el colombiano
+  pasa al asesor al querer pagar; el cambio de fecha pasa al asesor con el enlace de los términos.
+
+1. **La nota fija de la tarjeta contradice la moneda** (Gadea): «_El precio es el mismo en pesos (COP) o dólares (USD)_»
+   sale en TODA tarjeta (`cart_render._goto_mixed_final_summary`), también al de Madrid (USD) y al grupo mixto, justo
+   debajo de «pagan toda la reserva en dólares». Solo tiene sentido cuando van las dos monedas (sin nacionalidad).
+2. **La explicación del pago del colombiano, dos veces** (Gadea): «¿cómo pagamos?» → el escritor explica el 100 % online
+   o el 50 % con enlace/QR/Llave y el cierre del colombiano (`slotfill_close._finalize`) lo repite debajo.
+3. **CALN-8 (3): el escritor ya no sabe la regla de la transferencia** (Gadea): «¿puedo pagar por transferencia? ¿me
+   hacen el 10 %?» → «no tengo confirmado» dos veces. La regla está en policies.json (si falla el pago online, enlace
+   para transferencia y se mantiene el 10 %); antes iba en el prompt y ahora ni en los hechos ni en lo que se busca.
+   Arreglo por causa (como CALN-7): con la intención de pago de Jev, las políticas de pago en los hechos.
+4. **«I'm staying in Cartagena old town» no da el origen** (Gonzalo, CALN-3c b): los dos orígenes y «would you leave
+   from Cartagena?»; el cliente: «I told you I'm staying there». La misma clase que «sin ir de Cartagena».
+5. **El texto de la recomendación del plan**: «(Si prefieres un *paquete multi-día* de 3 o más inmersiones…)» debajo de
+   una lista con el «Paquete de 3 inmersiones (1 día…)»: el de 3 no es de varios días.
+6. **«Elijan la fecha y las dos personas»** con una tarjeta por persona (él buceo, ella minicurso): cada enlace es de 1.
+7. **¿Enlace de la web al grupo mixto?** (decisión de Gadea): 4 colombianos y 2 alemanes, todo en USD → la tarjeta con el
+   enlace de la web. El juez de la rotativa lo marcó dos veces («los colombianos no reciben el enlace»); pero el grupo
+   paga en USD, que es lo que cobra la web.
+8. **Menor:** el cambio de fecha por una hija enferma pasa al asesor «para preguntas médicas específicas».
