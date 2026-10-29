@@ -3,7 +3,7 @@ respuesta necesita un precio, deja la marca; el código pone ahí la pieza de `c
 import re
 
 from src.agents import conversational_core as core
-from src.agents.rag_agent import sin_importes
+from src.agents.rag_agent import sin_importes, sin_precios_tapados
 from src.flows.catalog import catalog_facts
 from src.flows.state import ConversationState, Step
 from src.prompts.info import MARCA_PRECIOS
@@ -30,6 +30,16 @@ def test_el_escritor_no_ve_importes():
     # lo que no es un importe, queda
     assert sin_importes("Sale a las 8:00, 18 horas antes de volar, 2 inmersiones, 10 % online") == \
         "Sale a las 8:00, 18 horas antes de volar, 2 inmersiones, 10 % online"
+
+
+def test_si_copia_el_precio_tapado_esa_frase_sale():
+    # mini-ronda caln6-B2 (dos turnos del redactor de hechos): copiaba «(precio)» en vez de dejarlo a la pieza
+    assert sin_precios_tapados("Pagas en pesos (COP). El paquete cuesta (precio) online o (precio) normal.") == \
+        "Pagas en pesos (COP)."
+    con_lista = ("Depende de desde dónde salgas. Para ti, el precio por persona en USD es:\n\n"
+                 "*Salidas de Buceo - 2 inmersiones*  \n• Online: (precio)  \n• Normal: (precio)\n\n¿En qué hotel estás?")
+    assert sin_precios_tapados(con_lista) == "Depende de desde dónde salgas.\n\n¿En qué hotel estás?"
+    assert sin_precios_tapados("Incluye el equipo.") == "Incluye el equipo."
 
 
 def test_sin_origen_la_pieza_en_la_marca_y_la_pregunta_del_origen():

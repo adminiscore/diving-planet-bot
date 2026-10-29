@@ -214,6 +214,38 @@ def sin_importes(texto: str | None) -> str | None:
     return _IMPORTES_CTX_RE.sub("(precio)", texto) if texto else texto
 
 
+_FRASES_RE = re.compile(r"(?<=[.!?])\s+")
+
+
+def sin_precios_tapados(answer: str) -> str:
+    """El escritor a veces copia el «(precio)» de su contexto en vez de dejar la marca (mini-ronda caln6-B2: 2 de 74
+    turnos, «cuesta (precio) online»): fuera esas frases y las líneas que se quedan en nada, y el título que se queda
+    sin lista («*Salidas de Buceo…*» o la frase que acaba en «…en USD es:»). La cifra la da la pieza."""
+    if "(precio)" not in (answer or ""):
+        return answer
+    lineas: list[str] = []
+    for linea in answer.splitlines():
+        if "(precio)" in linea:
+            linea = " ".join(f for f in _FRASES_RE.split(linea) if "(precio)" not in f).rstrip()
+            if not linea.strip():
+                while lineas:
+                    ultima = lineas[-1].strip()
+                    if not ultima or re.fullmatch(r"\*[^*]+\*", ultima):
+                        lineas.pop()
+                    elif ultima.endswith(":"):
+                        frases = _FRASES_RE.split(ultima)[:-1]
+                        if frases:
+                            lineas[-1] = " ".join(frases)
+                            break
+                        lineas.pop()
+                    else:
+                        break
+                continue
+        lineas.append(linea)
+    logger.info("[RAG][CALN3] el escritor copió «(precio)»: fuera esas frases, lo da la pieza")
+    return re.sub(r"\n{3,}", "\n\n", "\n".join(lineas)).strip()
+
+
 def _looks_like_follow_up(query: str) -> bool:
     """Heuristic: does this query rely on previous turns to be understood?
 
@@ -1018,6 +1050,7 @@ async def rag_answer(
                         logger.info(f"[RAG][ARQ7B] faltaban {len(perdidos)} hechos: los añade el código")
                         answer = completada
                 if grounded:
+                    answer = sin_precios_tapados(answer)  # CALN-3 paso 4 (b)
                     logger.info(
                         f"[RAG] Query: {query[:60]}... | Docs: {len(docs) if docs else 0} | "
                         f"Tokens: {response.usage.total_tokens} | "
