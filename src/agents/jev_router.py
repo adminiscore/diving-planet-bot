@@ -418,7 +418,7 @@ _PREGUNTA_SI_ES_IA_Q = {
         "anything that is not this chat assistant itself."
     ),
 }
-# - PIDE_PRECIO: la puerta "origen antes del precio" (conversational_core._origen_antes_del_precio)
+# - PIDE_PRECIO: la puerta "origen antes del precio" (quitada en CALN-3 paso 4 (2); hoy, la pieza de precios)
 #   miraba si el mensaje decía "precio/cuánto" y no "hotel/noche" EN NINGUNA PARTE: "¿cuánto me sale el plan de 2
 #   inmersiones? me quedo en el hotel Caribe" se cotizaba sin saber el origen. Regex 13/16, Jev 16/16.
 PIDE_PRECIO = "pide_precio"

@@ -153,30 +153,6 @@ def test_deliberacion(senales, mensaje, delibera):
     assert _is_deliberation_between_options(mensaje, senales) is delibera
 
 
-# ── Pide precio: la puerta "origen antes del precio" ─────────────────────────────────────────────────────────────────
-CON_HOTEL = "cuánto me sale el plan de 2 inmersiones? me quedo en el hotel Caribe"
-COTIZA = "El plan de 2 inmersiones cuesta 150 USD por persona."
-
-
-def _sin_origen(monkeypatch, jev):
-    from src.agents import conversational_core as core
-
-    st = _estado()
-    st._jev_pide_precio = jev
-    return core, st
-
-
-@pytest.mark.parametrize("jev, pregunta_el_origen", [
-    (True, True),    # manda Jev: pide el precio de una actividad (antes "hotel" saltaba la puerta)
-    (None, False),   # Jev calla: las listas de siempre ("hotel" en el mensaje salta la puerta)
-    (False, False),  # Jev dice que no pide precio
-])
-def test_pide_precio_con_un_hotel_en_el_mensaje(monkeypatch, jev, pregunta_el_origen):
-    core, st = _sin_origen(monkeypatch, jev)
-    respuesta = core._origen_antes_del_precio(st, CON_HOTEL, COTIZA)
-    assert (respuesta is not None and "desde dónde sales" in respuesta) is pregunta_el_origen
-
-
 async def test_el_grafo_guarda_lo_de_jev_en_cada_turno(monkeypatch, router_sin_red):
     router_sin_red({j.PIDE_PRECIO: True, "asks_question": True})
     st = _estado()

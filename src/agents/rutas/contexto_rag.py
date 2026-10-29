@@ -414,7 +414,7 @@ def _build_extra_context(state: ConversationState) -> str | None:
             )
     # 6-oct: con el origen desconocido aquí iba un aviso para el RAG (V1 "no lo sabemos, pregúntalo"; V2 "la
     # conversación manda"). Medido y quitado: con texto el modelo o repreguntaba o volvía a suponer. Desde el 7-oct lo
-    # hace el código (`conversational_core._origen_antes_del_precio`, opción C).
+    # hace el código (hoy, `conversational_core._con_la_pieza`: CALN-3 paso 4).
 
     # Isla / hotel
     if getattr(state, "island", None):

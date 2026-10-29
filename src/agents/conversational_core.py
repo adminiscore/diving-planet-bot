@@ -36,7 +36,7 @@ from src.agents.intent_detector import (
 )
 from src.agents.notes_extractor import extract_notes
 from src.domain import activities as dom
-from src.flows import cart_render, eligibility, grupo, moneda
+from src.flows import cart_render, eligibility, grupo
 from src.flows.state import ConversationState, Step
 from src.utils.number_words import number_alt
 from src.utils.text import strip_accents
@@ -2152,18 +2152,6 @@ def _cierra_preguntando_el_origen(state: ConversationState, answer: str) -> bool
     return "?" in ultima and bool(_PREGUNTA_ORIGEN_RE.search(ultima))
 
 
-# 7-oct (Álvaro, opción C del punto 3; flag `rag_origen_pregunta`): si el cliente pide un PRECIO y no sabemos desde
-# dónde sale, el bot pregunta el origen ANTES de cotizar (lo pide el golden) y lo hace el CÓDIGO, no el modelo: con
-# instrucciones en el contexto del RAG (6-oct, V1 y V2) o repreguntaba lo que el cliente ya había dado a entender o
-# volvía a cotizar Cartagena. La pregunta del precio se guarda y se contesta en cuanto el cliente dice el origen.
-ORIGEN_ANTES_DEL_PRECIO_ES = (
-    "Para darte el precio exacto necesito saber desde dónde sales: ¿saldrías *desde Cartagena* o ya estás *en las "
-    "Islas del Rosario*? Los planes y los precios cambian según el punto de salida. 🌊"
-)
-ORIGEN_ANTES_DEL_PRECIO_EN = (
-    "To give you the exact price I need to know where you're starting from: would you leave *from Cartagena* or are "
-    "you already *on the Rosario Islands*? Plans and prices change depending on the departure point. 🌊"
-)
 _PIDE_PRECIO_RE = re.compile(
     r"cu[aá]nto (cuesta|cuestan|vale|valen|sale|salen|cobran|ser[ií]a|es\b)|\bprecios?\b|\bcostos?\b|\bcoste\b|"
     r"\btarifas?\b|\bvalor\b|how much|\bprices?\b|\bcosts?\b|\brates?\b|\bfees?\b",
@@ -2190,118 +2178,33 @@ _IMPORTE_RE = re.compile(
 )
 
 
-def _origen_antes_del_precio(state: ConversationState, message: str, answer: str | None) -> str | None:
-    """El texto fijo que pregunta el origen, si la respuesta del RAG (`answer`) cotiza sin saber desde dónde sale el
-    cliente; si no, None (y la respuesta va tal cual).
-
-    Cotiza = lleva un importe, y el cliente pide un precio o repregunta tras la pregunta del origen sin contestarla
-    ("¿y en pesos?"). Un importe en la respuesta a otra cosa ("¿qué incluye?") se deja como hoy."""
+def _el_cliente_dio_el_origen(state: ConversationState, message: str) -> bool:
+    """¿Se sabe o dio a entender desde dónde sale? Entonces la pieza va sin la pregunta del origen (sería repreguntar).
+    Es lo que decidía la puerta del origen (7-oct, opción C, quitada en CALN-3 paso 4 (2)) antes de preguntar."""
     if state.location or state.detected_location:
-        return None
+        return True
     if _jev_dice_el_lugar(state):
-        # gen-15: la puerta mira el origen antes de que la extracción del turno lo guarde, y sus pistas son palabras
+        # gen-15: esto se mira antes de que la extracción del turno guarde el origen, y las pistas son palabras
         # («Cartagena», «islas», «Barú»): «We booked 3 nights at Mulata. How much is snorkeling?» se repreguntaba 2/2
         # con Jev seguro (islands 0,97). Si Jev está seguro de dónde está el cliente, el mensaje ya lo dice.
-        return None
-    texto = message or ""
-    # ord-7: un enlace de reserva también depende del origen («mándame el enlace del Open Water» daba el de Cartagena).
-    da_enlace = bool(answer) and "book.divingplanet.org" in answer
-    if not answer or not (_IMPORTE_RE.search(answer) or da_enlace):
-        return None
-    jev = getattr(state, "_jev_pide_precio", None)
-    if jev is not None:
-        # ex-9b paso 5: Jev dice si pide el precio de NUESTRAS actividades (el hotel, la noche o un taxi no cuentan);
-        # las palabras sueltas solo si Jev calla. "Me quedo en el hotel Caribe" ya no salta la puerta.
-        pide = jev is True
-    elif _PRECIO_AJENO_RE.search(texto):
-        return None
-    else:
-        pide = bool(_PIDE_PRECIO_RE.search(texto))
-    if not (pide or state.pregunta_precio_pendiente or da_enlace):
-        return None
+        return True
     del_cliente = [h.get("content") or "" for h in (state.history or []) if h.get("role") == "user"]
-    este = [texto]
+    este = [message or ""]
     if _jev_dice_que_no_lo_dice(state):
         # CAL-C3c: "bucear en islas del rosario" nombra las islas sin decir dónde está el cliente (cal-71/73); si Jev
-        # está seguro de que ESTE mensaje no dice su origen, sus palabras no cuentan como pista y se pregunta antes de
-        # cotizar. El mensaje ya está en el historial cuando contesta el RAG: se quita de ahí también.
+        # está seguro de que ESTE mensaje no dice su origen, sus palabras no cuentan como pista. El mensaje ya está en
+        # el historial cuando contesta el RAG: se quita de ahí también.
         este = []
-        if del_cliente and del_cliente[-1] == texto:
+        if del_cliente and del_cliente[-1] == message:
             del_cliente = del_cliente[:-1]
-    if any(_PISTA_ORIGEN_RE.search(t) for t in [*del_cliente, *este]):
-        return None
-    pregunta = ORIGEN_ANTES_DEL_PRECIO_ES if state.language == "es" else ORIGEN_ANTES_DEL_PRECIO_EN
-    por_confirmar = (state.pending_correction or {}).get("location")
-    if por_confirmar in _CONFIRMA_ORIGEN:
-        # ORIGEN-CONFIRMA: el extractor leyó un origen que falta confirmar; se pregunta eso, no «¿desde dónde?».
-        pregunta = _CONFIRMA_ORIGEN[por_confirmar]["es" if state.language == "es" else "en"]
-    variantes = _dos_variantes(state, answer, con_enlace=da_enlace)
-    if variantes:
-        tras = (ORIGEN_TRAS_LOS_ENLACES_ES, ORIGEN_TRAS_LOS_ENLACES_EN) if da_enlace else (
-            ORIGEN_TRAS_LAS_VARIANTES_ES, ORIGEN_TRAS_LAS_VARIANTES_EN)
-        pregunta = f"{variantes}\n\n{tras[0] if state.language == 'es' else tras[1]}"
-    elif not da_enlace and _cotiza_los_dos_origenes(state, answer):
-        # 27-oct (decisión de Gadea del 26-oct, «origen-y-precio»: sin el origen, dos precios y pregunta): sin variantes
-        # del catálogo (paquetes y planes de buzo con varios planes por origen) se quitaban todos los importes y quedaba
-        # solo la pregunta, aunque el escritor hubiera dado el precio de cada origen (4-5 criterios por ronda en
-        # integra4-6: «preguntó el origen pero no cotizó»). Si los da los dos, se dejan y detrás va la pregunta; si da
-        # uno solo, o un enlace (el de una sola salida), se quitan como antes.
-        cuerpo = _sin_la_pregunta_final(answer) if _cierra_preguntando_el_origen(state, answer) else answer
-        tras = ORIGEN_TRAS_LAS_VARIANTES_ES if state.language == "es" else ORIGEN_TRAS_LAS_VARIANTES_EN
-        return f"{cuerpo.rstrip()}\n\n{tras}"
-    resto = _sin_importes(answer)
-    return f"{resto}\n\n{pregunta}" if resto else pregunta
+    return any(_PISTA_ORIGEN_RE.search(t) for t in [*del_cliente, *este])
 
 
-# s4-31 (8-oct, flag `origen_conserva_respuesta`): en la ronda del golden visible con Luna (`2026-10-08-luna-visible`),
-# 6 de los 33 fallos del RAG eran de la puerta del origen: la pregunta fija SUSTITUÍA la respuesta entera y se perdía lo
-# que no era el precio ("no hay precio especial para colombianos, solo cambia la moneda", "con 1,5 años no hace falta
-# el refresher", "el refresher tiene el coste del minicurso"). Ahora se quitan solo las frases con un importe y la
-# pregunta final de la respuesta (la sustituye la del origen); si no queda nada que decir, solo la pregunta.
 _FRASE_RE = re.compile(r"(?<=[.!?])\s+")
-# Escalón 0 en PRE (8-oct): además del importe dependen del origen el link de reserva (uno por origen: se dejaba el de
-# Cartagena mientras se preguntaba el origen) y lo que incluye ("Incluye lancha ida y vuelta y almuerzo" es solo de
-# Cartagena, y sin la frase del precio se quedaba sin sujeto).
-_DEPENDE_DEL_ORIGEN_RE = re.compile(
-    rf"{_IMPORTE_RE.pattern}|book\.divingplanet\.org|^\W*(?:esto |el plan |el curso |el paquete )?(?:incluye|includes|it includes)\b"
-    r"|desde cartagena|from cartagena|cartagena-islas|islands-cartagena|almuerzo|\blunch\b",
-    re.IGNORECASE,
-)
-
-
-def _sin_importes(answer: str) -> str:
-    lineas = []
-    for linea in (answer or "").splitlines():
-        if not _DEPENDE_DEL_ORIGEN_RE.search(linea):
-            lineas.append(linea)
-            continue
-        frases = [f for f in _FRASE_RE.split(linea) if f.strip() and not _DEPENDE_DEL_ORIGEN_RE.search(f)]
-        if frases:
-            lineas.append(" ".join(frases))
-        else:
-            # El título de una lista que se ha quitado entera ("los precios son:"). gen-6 (21-oct): "La salida de 2
-            # inmersiones cuesta:", una línea en blanco y la lista de precios dejaba el título colgado ("…cuesta:" y
-            # luego la pregunta del origen): el título se busca saltando las líneas en blanco.
-            ultima = len(lineas) - 1
-            while ultima >= 0 and not lineas[ultima].strip():
-                ultima -= 1
-            if ultima >= 0 and lineas[ultima].rstrip().endswith(":"):
-                del lineas[ultima:]
-    # La pregunta final (casi siempre "¿quieres el link / que te ayude a reservar?") la sustituye la del origen.
-    while lineas and not lineas[-1].strip():
-        lineas.pop()
-    if lineas:
-        frases = _FRASE_RE.split(lineas[-1].strip())
-        while frases and "?" in frases[-1]:
-            frases.pop()
-        lineas[-1] = " ".join(frases)
-    texto = re.sub(r"\n{3,}", "\n\n", "\n".join(lineas)).strip()
-    return texto if len(texto) >= 40 else ""
 
 
 def _es_pregunta_de_origen(answer: str | None) -> bool:
-    return bool(answer) and any(p in answer for p in (ORIGEN_ANTES_DEL_PRECIO_ES, ORIGEN_ANTES_DEL_PRECIO_EN,
-                                                      ORIGEN_TRAS_LAS_VARIANTES_ES, ORIGEN_TRAS_LAS_VARIANTES_EN,
+    return bool(answer) and any(p in answer for p in (ORIGEN_TRAS_LAS_VARIANTES_ES, ORIGEN_TRAS_LAS_VARIANTES_EN,
                                                       ORIGEN_TRAS_LOS_ENLACES_ES, ORIGEN_TRAS_LOS_ENLACES_EN))
 
 
@@ -2313,98 +2216,35 @@ ORIGEN_TRAS_LAS_VARIANTES_ES = "¿Saldrías *desde Cartagena* o ya estás *en la
 ORIGEN_TRAS_LAS_VARIANTES_EN = "Would you leave *from Cartagena* or are you already *on the Rosario Islands*? Then I'll send you the exact plan and booking link. 🌊"
 ORIGEN_TRAS_LOS_ENLACES_ES = "Reserva con el de tu punto de salida. ¿Saldrías *desde Cartagena* o ya estás *en las Islas del Rosario*? 🌊"
 ORIGEN_TRAS_LOS_ENLACES_EN = "Book with the one for your starting point. Would you leave *from Cartagena* or are you already *on the Rosario Islands*? 🌊"
-_VARIANTE = {
-    "es": {"cartagena": ("Desde Cartagena", "lancha ida y vuelta desde el Muelle de la Bodeguita"),
-           "island": ("Ya en las islas", "recogida en tu hotel si tiene acceso marítimo"),
-           "titulo": "{actividad}, según desde dónde salgas (precio online por persona):",
-           "con_almuerzo": "almuerzo incluido", "sin_almuerzo": "sin almuerzo"},
-    "en": {"cartagena": ("From Cartagena", "round-trip boat from Muelle de la Bodeguita"),
-           "island": ("Already on the islands", "pickup at your hotel if it has sea access"),
-           "titulo": "{actividad}, depending on where you start from (online price per person):",
-           "con_almuerzo": "lunch included", "sin_almuerzo": "no lunch"},
-}
-
-
-def _dos_variantes(state: ConversationState, answer: str = "", con_enlace: bool = False) -> str | None:
-    """Las dos salidas de la actividad de la que pregunta el cliente, del catálogo: precio online por persona en su
-    moneda (`src/flows/moneda.py`), el transporte y si lleva almuerzo. None si
-    no hay una actividad concreta con un solo plan por origen (los paquetes de buceo tienen varios) o si el importe que
-    dio el RAG (`answer`) no es de ninguna de las dos: la actividad anotada no era la cotizada (banco ord-7: «tengo el
-    Open Water, ¿cuánto cuesta el repaso?» anotaba el Open Water y salían los precios del curso). `con_enlace`: cada
-    variante lleva su enlace de reserva (el RAG había dado uno sin saber el origen)."""
-    from src.flows.catalog import SERVICES  # lazy
-
-    actividad = state.actividad_preguntada or state.detected_activity or state.suggested_activity
-    if not actividad:
-        return None
-    servicios = []
-    for origen in ("cartagena", "island"):
-        ids = dom.service_ids(actividad, origen)
-        servicio = SERVICES.get(ids[0]) if len(ids) == 1 else None
-        if not servicio:
-            return None
-        servicios.append((origen, servicio))
-    if answer and not _cotiza_alguno(answer, [s for _, s in servicios]) and not _enlaza_alguno(answer, servicios, state):
-        return None
-    lang = "es" if state.language == "es" else "en"
-    textos = _VARIANTE[lang]
-    lineas = [textos["titulo"].format(actividad=f"*{dom.label(actividad, lang)}*")]
-    for origen, servicio in servicios:
-        precio = moneda.precio(state, servicio.get("price_usd"), servicio.get("price_cop"))
-        if not precio:
-            return None
-        nombre, transporte = textos[origen]
-        almuerzo = textos["con_almuerzo" if "almuerzo" in (servicio.get("includes_es") or "").lower() else "sin_almuerzo"]
-        linea = f"• *{nombre}*: {precio}, {transporte}; {almuerzo}."
-        url = cart_render._resolve_service_booking_url(servicio, state) if con_enlace else None
-        lineas.append(f"{linea} {url}" if url else linea)
-    return "\n".join(lineas)
-
-
-def _cotiza_los_dos_origenes(state: ConversationState, answer: str) -> bool:
-    """¿La respuesta da un precio de algún plan de la actividad desde Cartagena Y otro de algún plan ya en las islas?
-    Con los datos del catálogo, no con palabras."""
-    from src.flows.catalog import SERVICES  # lazy
-
-    actividad = state.actividad_preguntada or state.detected_activity or state.suggested_activity
-    if not actividad or not answer:
-        return False
-    por_origen = [[SERVICES[s] for s in dom.service_ids(actividad, origen) if s in SERVICES]
-                  for origen in ("cartagena", "island")]
-    return all(servicios and _cotiza_alguno(answer, servicios) for servicios in por_origen)
-
-
-def _enlaza_alguno(answer: str, servicios: list[tuple[str, dict]], state: ConversationState) -> bool:
-    """¿La respuesta lleva el enlace de reserva de alguna de las dos variantes?"""
-    urls = (cart_render._resolve_service_booking_url(s, state) or "" for _, s in servicios)
-    return any(u and u.split("?")[0] in answer for u in urls)
-
 
 def _puerta_del_origen(state: ConversationState, message: str, answer: str, sin_precio: bool = False) -> str:
-    """La respuesta del RAG tras la puerta del origen (opción C): la pregunta del origen (con las dos variantes, ord-7)
-    si cotiza o enlaza sin saber el origen; si no, la respuesta tal cual. gen-19 (21-oct) añadía aquí el enlace cuando
-    tocaba; se quitó por decisión de Gadea: en su banco no cambiaba nada (el enlace ya salía cuando lo piden). ord-9
-    (la lista de qué incluye, de la ficha) se retiró en arq-2c (22-oct): la da el redactor de hechos.
-
-    CALN-3 paso 4 (1): antes, si la respuesta cotiza, sus importes los cambia la pieza de precios (`_con_la_pieza`)."""
-    if not sin_precio and (con_pieza := _con_la_pieza(state, answer)):
-        return con_pieza
-    return _origen_antes_del_precio(state, message, answer) or answer
+    """La respuesta del RAG general con los importes del código (`_con_la_pieza`), o tal cual. CALN-3 paso 4 (2): era la
+    puerta del origen (7-oct, opción C: si cotizaba o enlazaba sin saber el origen, fuera los importes y la pregunta, con
+    las dos variantes de ord-7); ya no queda nada que solo hiciera ella. Con la tarjeta (`sin_precio`), tal cual."""
+    if sin_precio:
+        return answer
+    return _con_la_pieza(state, message, answer) or answer
 
 
-def _con_la_pieza(state: ConversationState, answer: str | None) -> str | None:
+def _con_la_pieza(state: ConversationState, message: str, answer: str | None) -> str | None:
     """CALN-3 paso 4 (1) (29-oct, decisión de Gadea #2499): el RAG general aún escribe importes, de las fichas o del
     catálogo, y la puerta los quitaba sin dar otros: en la 5.ª, 12 de las 51 preguntas del origen eran de la puerta
     (caln5-B), casi todas en turnos que Jev no daba por precio («¿cuánto va a subir?», el coste del refresher). Ahora, si
-    la respuesta da un precio del catálogo, fuera sus frases con importes y debajo la pieza de `cotizar`, como en el
-    redactor de hechos (paso 3 «A»): sin el origen, los dos y la pregunta (o la confirmación de CALN-3b). None si no
-    cotiza o no hay pieza (la puerta de siempre)."""
+    la respuesta da un precio del catálogo, o un enlace de reserva sin saber el origen, fuera sus frases con importes y
+    debajo la pieza de `cotizar`, como en el redactor de hechos (paso 3 «A»): sin el origen, los dos y la pregunta (o la
+    confirmación de CALN-3b), salvo que el cliente lo haya dado (`_el_cliente_dio_el_origen`). None si no hace falta o
+    no hay pieza (va tal cual)."""
     from src.agents import redactor_hechos  # lazy
     from src.agents.nucleo.extractor import origen_por_confirmar  # lazy
     from src.flows import cotizar  # lazy
     from src.flows.catalog import SERVICES  # lazy
 
-    if not answer or not _IMPORTE_RE.search(answer) or not _cotiza_alguno(answer, list(SERVICES.values())):
+    if not answer:
+        return None
+    cotiza = bool(_IMPORTE_RE.search(answer)) and _cotiza_alguno(answer, list(SERVICES.values()))
+    dio_el_origen = _el_cliente_dio_el_origen(state, message)
+    # ord-7: un enlace de reserva también depende del origen («mándame el enlace del Open Water» daba el de Cartagena).
+    if not cotiza and (dio_el_origen or "book.divingplanet.org" not in answer):
         return None
     lang = "es" if state.language == "es" else "en"
 
@@ -2415,7 +2255,7 @@ def _con_la_pieza(state: ConversationState, answer: str | None) -> str | None:
         return {str(round(float(s[k]))) for k in ("price_usd", "price_usd_normal", "price_cop", "price_cop_normal")
                 if s.get(k)}
 
-    dados = cifras(answer) & set().union(*(de_servicio(s) for s in SERVICES.values()))
+    dados = cifras(answer) & set().union(*(de_servicio(s) for s in SERVICES.values())) if cotiza else set()
     _, bloques = cotizar.bloques_de_precio(state)
     pieza = cotizar.pieza_de_precios(bloques, lang)
     if not pieza or not dados <= cifras(pieza):
@@ -2427,7 +2267,8 @@ def _con_la_pieza(state: ConversationState, answer: str | None) -> str | None:
         if not pieza or not dados <= cifras(pieza):
             return None
     logger.info("[CORE][CALN3] el RAG general cotiza: sus importes, fuera; debajo, la pieza de precios")
-    if any(b.get("origen") for b in bloques):
+    if any(b.get("origen") for b in bloques) or dio_el_origen:
+        # Con el origen dicho y aún sin guardar, los dos orígenes (cada uno rotulado) y sin repreguntarlo.
         return redactor_hechos.con_la_pieza(answer, pieza)
     pregunta = ORIGEN_TRAS_LAS_VARIANTES_ES if lang == "es" else ORIGEN_TRAS_LAS_VARIANTES_EN
     if por_confirmar := origen_por_confirmar(state):

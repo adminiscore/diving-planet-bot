@@ -38,17 +38,16 @@ def test_jev_los_nombra_en_la_opcion_islas():
 @pytest.mark.parametrize("lugar, pregunta", [
     ({"choice": "islands", "confidence": 0.97}, False),
     ({"choice": "cartagena", "confidence": 0.9}, False),
-    ({"choice": "islands", "confidence": 0.3}, True),   # Jev no está seguro: la puerta de siempre
+    ({"choice": "islands", "confidence": 0.3}, True),   # Jev no está seguro: se pregunta
     ({"choice": "none", "confidence": 0.9}, True),
 ])
-def test_la_puerta_del_origen_no_pregunta_si_jev_esta_seguro(lugar, pregunta):
-    """«We booked 3 nights at Mulata. How much is snorkeling?»: la puerta del origen preguntaba con Jev seguro."""
+def test_no_se_pregunta_el_origen_si_jev_esta_seguro(lugar, pregunta):
+    """«We booked 3 nights at Mulata. How much is snorkeling?»: la puerta del origen preguntaba con Jev seguro (CALN-3
+    paso 4 (2): hoy, tras la pieza de precios)."""
     from src.agents import conversational_core as core
     from src.flows.state import ConversationState
 
     st = ConversationState(conversation_id="gen15", language="en")
     st._jev_lugar = lugar
     st._jev_pide_precio = True
-    texto = core._origen_antes_del_precio(st, "We booked 3 nights at Mulata. How much is snorkeling?",
-                                          "Snorkeling costs 45 USD online.")
-    assert (texto is not None) is pregunta
+    assert core._el_cliente_dio_el_origen(st, "We booked 3 nights at Mulata. How much is snorkeling?") is not pregunta

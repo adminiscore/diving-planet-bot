@@ -28,23 +28,6 @@ def test_el_resolutor_de_la_pregunta_del_origen():
     assert "sets out from Cartagena" in texto and "'cartagena'" in texto
     assert lugar_sin_baru(SLOT_RESOLVER_SPEC["location"]["value_meaning"]) == lugar_sin_baru(
         SLOT_RESOLVER_SPEC["location"]["value_meaning"], False)
-
-
-_RAG_CON_LISTA = ("¡Claro que sí! 🌊\n\nLa **salida de 2 inmersiones** cuesta:\n\n- **178 USD online** / **197 USD normal**\n"
-                  "- **630.000 COP online** / **700.000 COP normal**\n\nEso es para la opción **saliendo desde Cartagena**.  "
-                  "\nSi ya están en las Islas del Rosario, también existe la opción de **124 USD online**.\n\n"
-                  "¿Quieres que te comparta el link de reserva del plan que te aplica?")
-
-
-def test_la_puerta_del_origen_no_deja_el_titulo_colgado(monkeypatch):
-    """Respuesta real del RAG (banco gen-6, g6-precio-sin-origen): el título de la lista va separado por una línea en
-    blanco."""
-    from src.agents.conversational_core import _sin_importes
-
-    resto = _sin_importes(_RAG_CON_LISTA + "\n\nCuéntame qué día te viene mejor para organizarlo todo.")
-    assert "cuesta:" not in resto and "USD" not in resto and "Cuéntame qué día" in resto
-
-
 def test_en_baru_es_respuesta_cartagena_al_origen():
     from src.agents import conversational_core as core
 

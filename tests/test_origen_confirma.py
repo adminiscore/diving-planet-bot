@@ -64,13 +64,14 @@ def test_si_lo_guarda_por_el_camino_de_siempre():
     assert st.pending_correction is None and (st.location or st.detected_location) == "island"
 
 
-def test_la_puerta_del_precio_pregunta_la_confirmacion():
+def test_la_pieza_del_precio_pregunta_la_confirmacion():
     msg = "Va quiero comprar sin ir de cartagena, cuanto cuesta?"
     st = _st(pending_correction={"location": "island"})
     st.history = [{"role": "user", "content": msg}]
     st._jev_pide_precio = True
-    puerta = core._origen_antes_del_precio(st, msg, "El paquete cuesta 500 USD por persona.")
-    assert puerta == core._CONFIRMA_ORIGEN["island"]["es"]  # sin cotizar, y no «¿desde dónde saldrías?»
+    st.detected_activity = "certified_diving"
+    salida = core._con_la_pieza(st, msg, "El paquete de 5 cuesta 1.429.000 COP por persona.")
+    assert salida.endswith(core._CONFIRMA_ORIGEN["island"]["es"])  # y no «¿desde dónde saldrías?»
 
 
 # CALN-3b (28-oct, decisión de Gadea #2286): el extractor calla el lugar y Jev se inclina por uno → se confirma.

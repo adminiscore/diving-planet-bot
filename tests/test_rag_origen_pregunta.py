@@ -36,37 +36,34 @@ def _estado(location=None, historial=None, pendiente=None) -> ConversationState:
     return s
 
 
+# CALN-3 paso 4 (2) (29-oct): la puerta del origen se quitó; si la respuesta cotiza, sus importes los pone la pieza de
+# `cotizar` (`_con_la_pieza`), y la pregunta del origen va detrás salvo que el cliente lo haya dado.
 @pytest.mark.parametrize("location,historial,mensaje,pregunta", [
     (None, [], "¿cuánto cuesta el minicurso?", True),
     (None, [], "Cuál es el costo para colombianos?", True),
     (None, [], "how much is the 5 dive package?", True),
     ("cartagena", [], "¿cuánto cuesta el minicurso?", False),             # el origen consta
-    (None, [], "¿qué incluye el minicurso?", False),                      # no pide precio
-    (None, [], "¿me pasas el precio por noche del hotel?", False),        # precio ajeno
     (None, [], "salimos desde Cartagena, ¿cuánto cuesta?", False),        # lo dice en el mensaje
     (None, [{"role": "user", "content": "we will book our hotel on the island"}],
      "how much is the refresher?", False),                                       # lo dio a entender antes
     (None, [{"role": "assistant", "content": "saliendo desde Cartagena o desde las propias islas"}],
      "¿cuánto cuesta?", True),                                                   # lo que dice el BOT no cuenta
 ])
-def test_cuando_se_pregunta_el_origen_antes_de_cotizar(monkeypatch, location, historial, mensaje, pregunta):
-    assert bool(core._origen_antes_del_precio(_estado(location, historial), mensaje, COTIZA)) is pregunta
+def test_cuando_se_pregunta_el_origen_tras_la_pieza(monkeypatch, location, historial, mensaje, pregunta):
+    salida = core._con_la_pieza(_estado(location, historial), mensaje, COTIZA)
+    assert "*Precios por persona*" in salida and "RESPUESTA" not in salida
+    assert core._es_pregunta_de_origen(salida) is pregunta
 
 
-@pytest.mark.parametrize("mensaje,respuesta,pendiente,pregunta", [
+@pytest.mark.parametrize("respuesta,pieza", [
     # ronda origen-c-B (7-oct): dice "precio" pero pregunta la MONEDA; la respuesta no cotiza -> va tal cual
-    ("Amigo el precio que está allí es en dólares o pesos colombianos",
-     "Los precios en dólares son para internacionales y en pesos (COP) para colombianos.", None, False),
-    # ronda origen-c-B: repregunta sin palabras de precio tras la pregunta del origen -> el RAG cotizaba Cartagena
-    ("Gracias - y en pesos? Para colombianos?", "El paquete de 5 inmersiones cuesta 1.429.000 COP.",
-     "¿Cuál es el costo para colombianos?", True),
-    ("Gracias - y en pesos? Para colombianos?", "El paquete de 5 inmersiones cuesta 1.429.000 COP.", None, False),
-    ("¿qué incluye el minicurso?", COTIZA, None, False),  # un importe en la respuesta a otra cosa: como hoy
-    ("how much is it?", "It costs USD 178 per person.", None, True),
+    ("Los precios en dólares son para internacionales y en pesos (COP) para colombianos.", False),
+    # ronda origen-c-B: «Gracias - y en pesos?» tras la pregunta del origen: el RAG cotizaba Cartagena
+    ("El paquete de 5 inmersiones cuesta 1.429.000 COP.", True),
+    ("It costs USD 178 per person.", True),
 ])
-def test_la_puerta_mira_si_la_respuesta_cotiza(monkeypatch, mensaje, respuesta, pendiente, pregunta):
-    estado = _estado(pendiente=pendiente)
-    assert bool(core._origen_antes_del_precio(estado, mensaje, respuesta)) is pregunta
+def test_la_pieza_mira_si_la_respuesta_cotiza(monkeypatch, respuesta, pieza):
+    assert (core._con_la_pieza(_estado(), "Gracias - y en pesos?", respuesta) is not None) is pieza
 
 
 @pytest.mark.parametrize("slot,respuesta,va_sola", [
@@ -152,39 +149,32 @@ MITO = ("¡Qué bueno que quieras hacer el curso! Para colombianos no hay un pre
 
 
 def test_conserva_lo_que_no_es_precio_y_pregunta_el_origen(monkeypatch):
-    salida = core._origen_antes_del_precio(_estado(), "Cuál es el costo para colombianos?", MITO)
+    salida = core._con_la_pieza(_estado(), "Cuál es el costo para colombianos?", MITO)
     assert "no hay un precio especial" in salida and "solo cambia la moneda" in salida  # lo que no es precio, queda
-    assert "COP" not in salida and "2.450.000" not in salida                            # ningún importe
-    assert "link" not in salida                                                         # su pregunta final, fuera
-    assert salida.endswith(core.ORIGEN_ANTES_DEL_PRECIO_ES) and core._es_pregunta_de_origen(salida)
+    assert "El curso cuesta 2.450.000" not in salida and "link" not in salida            # su importe y su pregunta, fuera
+    assert "*Desde Cartagena*" in salida and "2.450.000" in salida                       # el importe, de la pieza
+    assert salida.endswith(core.ORIGEN_TRAS_LAS_VARIANTES_ES) and core._es_pregunta_de_origen(salida)
 
 
 @pytest.mark.parametrize("respuesta", ["Cuesta 655.000 COP. ¿Te lo reservo?", "El minicurso: 183 USD online."])
-def test_si_solo_habia_precio_queda_solo_la_pregunta(monkeypatch, respuesta):
-    assert core._origen_antes_del_precio(_estado(), "¿cuánto cuesta?", respuesta) == core.ORIGEN_ANTES_DEL_PRECIO_ES
+def test_si_solo_habia_precio_queda_la_pieza_y_la_pregunta(monkeypatch, respuesta):
+    salida = core._con_la_pieza(_estado(), "¿cuánto cuesta?", respuesta)
+    assert salida.startswith("*Precios por persona*") and salida.endswith(core.ORIGEN_TRAS_LAS_VARIANTES_ES)
 
 
-def test_tambien_quita_el_link_y_lo_que_incluye(monkeypatch):
-    """Escalón 0 en PRE (8-oct): se dejaba el link de Cartagena mientras se preguntaba el origen, y "Incluye lancha y
-    almuerzo" (solo es de Cartagena) se quedaba sin sujeto."""
-    respuesta = ("¡Claro que sí! Incluye teoría online y 4 inmersiones.\nSon 2 días y hay que dormir una noche en las "
-                 "islas; el alojamiento no está incluido. Reserva aquí: https://book.divingplanet.org/book/basic-course/4")
-    salida = core._origen_antes_del_precio(_estado(), "¿cuánto cuesta el curso?", respuesta.replace("4 inmersiones.",
-                                                                                                "4 inmersiones. 693 USD."))
-    assert "book.divingplanet.org" not in salida and "Incluye" not in salida
-    assert "el alojamiento no está incluido" in salida  # lo que vale para los dos orígenes, queda
+def test_tambien_quita_el_link(monkeypatch):
+    """Escalón 0 en PRE (8-oct): se dejaba el link de Cartagena mientras se preguntaba el origen. Lo que incluye
+    («Incluye teoría online y 4 inmersiones») ya no se quita: la pieza dice el precio de cada origen."""
+    respuesta = ("¡Claro que sí! Incluye teoría online y 4 inmersiones. 693 USD.\nSon 2 días y hay que dormir una noche en "
+                 "las islas; el alojamiento no está incluido. Reserva aquí: https://book.divingplanet.org/book/basic-course/4")
+    salida = core._con_la_pieza(_estado(), "¿cuánto cuesta el curso?", respuesta)
+    assert "book.divingplanet.org" not in salida and "el alojamiento no está incluido" in salida
 
 
-def test_si_el_escritor_da_los_dos_origenes_la_puerta_los_deja():
-    """27-oct (decisión «origen-y-precio»: sin el origen, dos precios y pregunta): en los planes con varios por origen
-    (buzo certificado) la puerta quitaba también los dos precios bien dados y quedaba solo la pregunta."""
-    from src.domain import activities as dom
-    from src.flows.catalog import SERVICES
-
+def test_si_el_escritor_da_los_dos_origenes_la_pieza_los_da_igual():
+    """27-oct (decisión «origen-y-precio»: sin el origen, dos precios y pregunta)."""
     st = _estado()
     st.detected_activity = "certified_diving"
-    car, isl = (SERVICES[dom.service_ids("certified_diving", o)[0]] for o in ("cartagena", "island"))
-    respuesta = (f"Desde Cartagena: {round(car['price_usd'])} USD por persona. "
-                 f"Ya en las islas: {round(isl['price_usd'])} USD por persona.")
-    salida = core._origen_antes_del_precio(st, "¿cuánto cuesta?", respuesta)
-    assert salida.startswith(respuesta) and salida.endswith(core.ORIGEN_TRAS_LAS_VARIANTES_ES)
+    salida = core._con_la_pieza(st, "¿cuánto cuesta?", "Desde Cartagena: 178 USD por persona. Ya en las islas: 124 USD.")
+    assert "*Desde Cartagena*" in salida and "*Ya en las Islas del Rosario*" in salida
+    assert salida.endswith(core.ORIGEN_TRAS_LAS_VARIANTES_ES)
