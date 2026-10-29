@@ -1056,6 +1056,10 @@ def _mentioned_product_activities(message: str) -> list:
             acts.remove("certified_diving")
         if "minicourse" in acts and not _EXPLICIT_MINICOURSE_NAME_RE.search(message):
             acts.remove("minicourse")
+    if acts:
+        from src.observability import marca_regex  # lazy
+
+        marca_regex("R7")  # CALN-8 (6): las actividades que nombra el mensaje, por el detector
     return acts
 
 

@@ -122,3 +122,19 @@ async def test_la_linea_dice_quien_contesto_lo_de_la_tabla(caplog):
             turn.update(reply="x")
     linea = next(m for m in caplog.messages if m.startswith(obs.TURN_METRICS_TAG))
     assert json.loads(linea[len(obs.TURN_METRICS_TAG):])["hechos"] == "otra_cosa"
+
+
+async def test_las_ramas_del_regex_que_deciden_salen_en_la_linea(caplog):
+    """CALN-8 (6): `marca_regex` apunta qué rama del detector de regex decidió (inventario-caln8.md); fuera de un
+    turno no hace nada."""
+    obs.marca_regex("R3")  # fuera de un turno: no-op
+    with caplog.at_level("INFO", logger="uvicorn.error"):
+        async with obs.turn_trace(_S(), "5678", "desde cartagena") as turn:
+            obs.marca_regex("R3")
+            obs.marca_regex("R7")
+            turn.update(reply="ok")
+        async with obs.turn_trace(_S(), "5679", "hola") as turn:
+            turn.update(reply="ok")
+    lines = [json.loads(m[len(obs.TURN_METRICS_TAG):]) for m in caplog.messages if m.startswith(obs.TURN_METRICS_TAG)]
+    assert lines[0]["regex"] == ["R3", "R7"]
+    assert "regex" not in lines[1]

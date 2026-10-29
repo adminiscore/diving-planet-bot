@@ -582,6 +582,9 @@ def _flag_cert_or_course(intent, state: ConversationState, message: str) -> None
         if f != "is_certified" and (f != "group_allocation" or intent.group_allocation)
     ]
     state.needs_cert_or_course = True
+    from src.observability import marca_regex  # lazy
+
+    marca_regex("R6")  # CALN-8 (6): nivel PADI ambiguo según el detector; se pregunta cert o curso
 
 
 def _number_of_something_else(state: ConversationState, message: str, value) -> bool:
@@ -930,6 +933,9 @@ async def _extraction_phase_body(
             resolved_value is not None and prev_pending == SLOT_QTY
             and _number_of_something_else(state, message, resolved_value)
         ):
+            from src.observability import marca_regex  # lazy
+
+            marca_regex("R5")  # CALN-8 (6): el número es otra magnitud según el detector
             logger.info(
                 f"[CORE] slot resolver descartado para 'qty' (el numero es de otra magnitud) "
                 f"msg={supervisor._log_safe_message(message)!r}"

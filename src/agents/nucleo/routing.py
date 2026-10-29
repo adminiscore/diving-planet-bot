@@ -322,6 +322,10 @@ def _apply_short_answer(state: ConversationState, message: str, ia: dict | None 
         # que is_certified/nationality/safety) solo tiene sentido si es la
         # respuesta COMPLETA, no una cifra suelta dentro de otra frase.
         place = {"1": "cartagena", "2": "island"}.get(msg) or _departure_place(msg)
+        if place and msg not in ("1", "2"):
+            from src.observability import marca_regex  # lazy
+
+            marca_regex("R3")  # CALN-8 (6): el origen de la respuesta, por el detector
         if place:
             state.location = state.detected_location = place
             return True
@@ -453,6 +457,10 @@ def _apply_short_answer(state: ConversationState, message: str, ia: dict | None 
                     state.duracion_de_buceo = True
             elif duration not in ("single_day", "multi_day"):
                 duration = lectura_del_turno(message).duration
+                if duration in ("single_day", "multi_day"):
+                    from src.observability import marca_regex  # lazy
+
+                    marca_regex("R2")  # CALN-8 (6): la duración del regex, sin la IA
             if duration in ("single_day", "multi_day"):
                 state.detected_duration = duration
                 return True
@@ -489,6 +497,10 @@ def _apply_short_answer(state: ConversationState, message: str, ia: dict | None 
         ages = [int(a) for a in re.findall(r"\b(\d{1,2})\b", message) if 0 < int(a) < 100]
         if not ages:  # sin dígitos, probar edades en palabra ("cinco y siete")
             ages = _word_ages(message)
+            if ages:
+                from src.observability import marca_regex  # lazy
+
+                marca_regex("R4")  # CALN-8 (6): edades en palabra (AGE_WORDS)
         if ages:
             state.detected_ages = sorted(set((state.detected_ages or []) + ages))
             return True
