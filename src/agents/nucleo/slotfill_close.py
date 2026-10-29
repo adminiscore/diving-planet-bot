@@ -273,10 +273,7 @@ def _colombian_summary_lines(state: ConversationState) -> str:
         lines.append(f"🤿 *{b['label']}*")
         cop = b.get("cop")
         if cop:
-            if qty > 1:
-                lines.append(f"💰 {qty} × {money.cop(cop)} p.p. = *{money.cop(cop, qty)}*")
-            else:
-                lines.append(f"💰 *{money.cop(cop)}*" + (" por persona" if lang == "es" else " per person"))
+            lines.append(cart_render.linea_de_precio(money.cop(cop), qty, lang))
         if b.get("note"):
             lines.append(b["note"])
         lines.append("")
