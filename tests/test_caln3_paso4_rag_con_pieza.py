@@ -27,6 +27,18 @@ def test_sin_origen_la_pieza_de_los_dos_y_la_pregunta():
     assert salida.endswith(core.ORIGEN_TRAS_LAS_VARIANTES_ES) and core._es_pregunta_de_origen(salida)
 
 
+def test_sin_origen_fuera_su_enlace_de_reserva():
+    # medida caln6-B1: el enlace de Cartagena se quedaba sin saber de dónde sale
+    con_enlace = ("El snorkel dura medio día. Cuesta 448.000 COP. Reserva aquí: "
+                  "https://book.divingplanet.org/book/superficio/3?language=es. ¿Te ayudo?")
+    st = _st(detected_activity="snorkel")
+    salida = core._con_la_pieza(st, con_enlace)
+    assert "book.divingplanet.org" not in salida and "dura medio día" in salida
+    assert salida.endswith(core.ORIGEN_TRAS_LAS_VARIANTES_ES)
+    st.location = "cartagena"  # con el origen, el enlace se queda
+    assert "book.divingplanet.org" in core._con_la_pieza(st, con_enlace)
+
+
 def test_con_origen_la_pieza_de_ese_y_sin_pregunta():
     salida = core._con_la_pieza(_st("cartagena"), RAG)
     assert "655.000" in salida and "475.000" not in salida
