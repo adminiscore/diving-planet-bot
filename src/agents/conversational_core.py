@@ -2432,8 +2432,12 @@ def _con_la_pieza(state: ConversationState, answer: str | None) -> str | None:
     pregunta = ORIGEN_TRAS_LAS_VARIANTES_ES if lang == "es" else ORIGEN_TRAS_LAS_VARIANTES_EN
     if por_confirmar := origen_por_confirmar(state):
         pregunta = _CONFIRMA_ORIGEN[por_confirmar][lang]
+    # Sin el origen, fuera también sus enlaces de reserva (uno por origen: medida caln6-B1, el del snorkel y el del
+    # minicurso de Cartagena sin saber de dónde sale), como hacía la puerta; la pregunta promete el enlace exacto.
+    answer = "\n".join(" ".join(f for f in _FRASE_RE.split(linea) if "book.divingplanet.org" not in f)
+                       if "book.divingplanet.org" in linea else linea for linea in answer.splitlines())
     # La pregunta con que cierra el RAG («¿te paso el enlace?») la sustituye la del origen, como en la puerta.
-    partes = answer.rstrip().split("\n\n")
+    partes = [p for p in answer.rstrip().split("\n\n") if p.strip()]
     frases = _FRASE_RE.split(partes[-1].strip())
     while frases and "?" in frases[-1]:
         frases.pop()
