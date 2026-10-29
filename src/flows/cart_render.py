@@ -171,15 +171,22 @@ def _parse_mixed_quantity(message: str) -> int | None:
     return None
 
 
+def linea_de_precio(pp: str, qty: int, lang: str, online: str = "") -> str:
+    """CALN-3b (29-oct, decisión de Gadea: «sin-totales», también en la tarjeta): el precio por persona y cuántos son,
+    nunca el total del grupo («2 × 448.000 p.p. = 896.000» lo contaba el juez como un total)."""
+    por_persona = f"💰 *{pp}* por persona{online}" if lang == "es" else f"💰 *{pp}* per person{online}"
+    if qty <= 1:
+        return por_persona
+    return f"{por_persona} · {qty} personas" if lang == "es" else f"{por_persona} · {qty} people"
+
+
 def _format_activity_booking_messages(state: ConversationState) -> list[str]:
     """One message per cart activity: summary + price + '👉 click here' + link.
     Sent as separate WhatsApp messages (joined with MESSAGE_SPLIT upstream)."""
     lang = state.language
 
-    def money(usd, cop, qty=1):
-        # Round the per-person price first, then multiply, so the arithmetic
-        # shown to the client always adds up (e.g. "2 × $126 = $252", never $251). En su moneda (lat-deuda-u).
-        return moneda.precio(state, usd, cop, qty)
+    def money(usd, cop):
+        return moneda.precio(state, usd, cop)  # en su moneda (lat-deuda-u)
 
     depart = (
         (f"📍 Salida desde Cartagena (Muelle de la Bodeguita, {hora('salida_cartagena')} a.m.)." if lang == "es"
@@ -204,14 +211,7 @@ def _format_activity_booking_messages(state: ConversationState) -> list[str]:
         lines = [f"🤿 *{b['label']}*"]
         pp = money(b["usd"], b["cop"])
         if pp:
-            if qty > 1:
-                sub = money(b["usd"], b["cop"], qty)
-                lines.append(f"💰 {qty} × {pp} p.p. = *{sub}*{online}")
-            else:
-                lines.append(
-                    f"💰 *{pp}* por persona{online}" if lang == "es"
-                    else f"💰 *{pp}* per person{online}"
-                )
+            lines.append(linea_de_precio(pp, qty, lang, online))
         if b.get("kind") == "course":
             # Multi-day PADI courses aren't the standard 8 a.m. day-tour: dates,
             # sessions and logistics are arranged with you, so skip the day-tour

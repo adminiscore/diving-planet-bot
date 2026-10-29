@@ -336,6 +336,8 @@ def turn_metrics_line(conversation_id: str, facts: dict, started_at: str, second
         payload["openrouter"] = facts["openrouter"]  # mej-7: "cortado" si OpenRouter estaba cortado (clave o crédito)
     if facts.get("aviso"):
         payload["aviso"] = facts["aviso"]  # lat-deuda: el aviso que el código puso al final de la respuesta
+    if facts.get("regex"):
+        payload["regex"] = facts["regex"]  # CALN-8 (6): las ramas del detector de regex que decidieron (marca_regex)
     if facts.get("rag_respaldo"):
         # 8-oct: respuesta del RAG con respaldo. "principal" (contestó antes de la espera), "gana_principal" /
         # "gana_respaldo" (saltó el respaldo y ganó ese), "error_principal" (falló el principal y contestó el respaldo).
@@ -350,6 +352,14 @@ def note_turn(**facts: Any) -> None:
     current = _TURN_FACTS.get()
     if current is not None:
         current.update(facts)
+
+
+def marca_regex(rama: str) -> None:
+    """CALN-8 (6): apunta que una lectura del detector de regex decidió algo en este turno (`rama`, del inventario
+    docs/robustness/regex/inventario-caln8.md); sale en [TURN_METRICS] como `regex`. No cambia nada."""
+    current = _TURN_FACTS.get()
+    if current is not None:
+        current.setdefault("regex", []).append(rama)
 
 
 def hechos_del_turno() -> dict:

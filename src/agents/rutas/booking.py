@@ -457,10 +457,16 @@ def _apply_detected_intent(intent, state: ConversationState, message: str | None
         state.duracion_de_buceo = True
 
     if getattr(intent, "cert_dives", None) and not state.detected_cert_dives:
+        from src.observability import marca_regex  # lazy
+
         state.detected_cert_dives = intent.cert_dives
+        marca_regex("R1")  # CALN-8 (6): la cifra de inmersiones del regex
         logger.info(f"[INTENT] Detected cert dive count: {intent.cert_dives}")
 
     if getattr(intent, "cert_days", None) and not state.detected_cert_days:
+        from src.observability import marca_regex  # lazy
+
+        marca_regex("R1")  # CALN-8 (6): la cifra de días del regex
         state.detected_cert_days = intent.cert_days
         logger.info(f"[INTENT] Detected cert day count: {intent.cert_days}")
 

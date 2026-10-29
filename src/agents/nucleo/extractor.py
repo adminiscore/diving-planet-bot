@@ -244,6 +244,9 @@ def _poner_duracion(intent, state: ConversationState, datos: dict, message: str 
     duracion, de_buceo = duracion_del_extractor(datos, state)
     if duracion is None and not state.detected_duration and _paquete_de_varios_dias_nombrado(message):
         duracion = "multi_day"
+        from src.observability import marca_regex  # lazy
+
+        marca_regex("R10")  # CALN-8 (6): paquete de varios días nombrado, por el detector
         logger.info("[EXTRACT][EX9B-6] sin días dichos, pero nombra un paquete de varios días del catálogo")
     if duracion is None and (datos or {}).get("paquete_varios_dias") is True:
         # arq-1t: «el paquete de varios días», sin cifra (el extractor lo dice con su cita).
@@ -389,6 +392,9 @@ def _reparto_valido(reparto: dict | None, message: str, state: ConversationState
                     or dom.nombra_el_producto(act, message))
         clave = act if nombrada else "undecided"
         if not nombrada:
+            from src.observability import marca_regex  # lazy
+
+            marca_regex("R8")  # CALN-8 (6): el detector no ve la actividad del reparto en el mensaje
             logger.info(f"[EXTRACT][EX7] {act!r} no se nombra en el mensaje: {n} sin decidir")
         valido[clave] = valido.get(clave, 0) + n
     return valido if len(valido) >= minimo else None
@@ -724,6 +730,9 @@ def _poner_actividad(intent, state: ConversationState, datos: dict, message: str
         # paquete-5-buceos-islas-residente-sin-recogida, 6 turnos). Un paquete de buceos sin ningún curso nombrado es
         # buceo certificado.
         logger.info(f"[EXTRACT][LAT-0b] {actividad!r} con un paquete de buceos y sin curso nombrado: certified_diving")
+        from src.observability import marca_regex  # lazy
+
+        marca_regex("R9")  # CALN-8 (6): paquete de buceos sin curso, por el detector
         actividad = "certified_diving"
     ya_repartida = actividad in (state.detected_group_allocation or {})
     if (actividad and not datos.get("group_allocation") and state.core_pending_slot == SLOT_COMPANION_ACTIVITY

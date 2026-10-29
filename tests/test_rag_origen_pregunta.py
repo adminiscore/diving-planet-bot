@@ -118,13 +118,16 @@ async def test_pide_precio_sin_origen_se_pregunta_y_luego_se_contesta(monkeypatc
     st = ConversationState(conversation_id="origen-c", language="es")
     await route_message(st, "queremos bucear, somos certificados")
     resp = await route_message(st, "¿cuánto cuesta?")
-    assert core.ORIGEN_ANTES_DEL_PRECIO_ES in resp and "RESPUESTA_RAG" not in resp  # la cotización no sale
+    # CALN-3 paso 4 (1): la cotización del RAG no sale; van los precios de la pieza, de los dos orígenes, y la pregunta
+    assert "RESPUESTA_RAG" not in resp and "*Desde Cartagena*" in resp
+    assert resp.endswith(core.ORIGEN_TRAS_LAS_VARIANTES_ES)
     assert st.core_pending_slot == core.SLOT_LOCATION and st.quick_replies  # con sus botones
     assert st.pregunta_precio_pendiente == "¿cuánto cuesta?"
     assert resp.count("¿") == 1  # una sola pregunta, sin la de la reserva detrás
 
     resp = await route_message(st, "desde cartagena")
-    assert resp.startswith("RESPUESTA_RAG")  # se contesta la pregunta del precio que quedó pendiente
+    # se contesta la pregunta del precio que quedó pendiente (CALN-3 paso 4 (1): con los importes de la pieza)
+    assert resp.startswith("*Precios por persona*") and "630.000" in resp
     assert conversacion[-1]["message"] == "¿cuánto cuesta?"
     assert st.pregunta_precio_pendiente is None
     assert st.location == "cartagena" or st.detected_location == "cartagena"
@@ -137,7 +140,7 @@ async def test_y_en_pesos_tras_la_pregunta_del_origen_tampoco_cotiza(monkeypatch
     await route_message(st, "¿cuánto cuesta?")
     resp = await route_message(st, "Gracias - y en pesos?")
     assert conversacion[-1]["message"] == "Gracias - y en pesos?"  # el RAG contestó (y cotizaba)...
-    assert "RESPUESTA_RAG" not in resp and core.ORIGEN_ANTES_DEL_PRECIO_ES in resp  # ...y se pregunta el origen
+    assert "RESPUESTA_RAG" not in resp and resp.endswith(core.ORIGEN_TRAS_LAS_VARIANTES_ES)  # ...pieza y pregunta
     assert st.pregunta_precio_pendiente  # sigue pendiente: se contesta cuando diga el origen
 
 

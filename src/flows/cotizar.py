@@ -16,6 +16,7 @@ el origen detrás, como con una actividad elegida.
 """
 from __future__ import annotations
 
+import copy
 import logging
 import re
 
@@ -65,14 +66,35 @@ def hechos_de_los_candidatos(state, intenciones: list[str]) -> list[dict]:
     return bloques
 
 
-def cotizar(state) -> dict:
-    """La pieza de precios del turno: las actividades, los importes (cifras, sin separadores) y lo que falta saber."""
+def bloques_de_precio(state) -> tuple[list[str], list[dict]]:
+    """Las actividades a cotizar y sus hechos de precio: los de las elegidas o, sin ninguna, los de los candidatos."""
     actividades = _elegidas(state)
     if actividades:
-        bloques = hechos_mod.hechos(state, ["precio"], actividades)
-    else:
-        actividades = candidatos(state)
-        bloques = hechos_de_los_candidatos(state, ["precio"]) if actividades else []
+        return actividades, hechos_mod.hechos(state, ["precio"], actividades)
+    actividades = candidatos(state)
+    return actividades, hechos_de_los_candidatos(state, ["precio"]) if actividades else []
+
+
+def bloques_de_los_servicios(state, servicios: list[str]) -> list[dict]:
+    """Los hechos de precio de unos planes concretos (de Cartagena o de las islas), cada uno en los orígenes que tocan:
+    los que cotizó el RAG cuando no son los del estado (CALN-3 paso 4: «quiero reservar el paquete de 5 buceos» o el
+    refresher de un buzo, que se cobra como el minicurso)."""
+    bloques = []
+    for sid in dict.fromkeys(hechos_mod._DE_LAS_ISLAS.get(s, s) for s in servicios):
+        actividad = dom.activity_for_service(sid)
+        if actividad is None:
+            continue
+        con_ese = copy.copy(state)
+        con_ese.selected_service, con_ese.detected_service_id, con_ese.detected_duration = None, sid, None
+        for bloque in hechos_mod.hechos(con_ese, ["precio"], [actividad.id]):
+            bloque.pop("otros_planes", None)
+            bloques.append(bloque)
+    return bloques
+
+
+def cotizar(state) -> dict:
+    """La pieza de precios del turno: las actividades, los importes (cifras, sin separadores) y lo que falta saber."""
+    actividades, bloques = bloques_de_precio(state)
     def cifras(precios) -> list[str]:
         return sorted({re.sub(r"\D", "", p[clave]) for p in precios for clave in ("online", "normal") if p.get(clave)})
 

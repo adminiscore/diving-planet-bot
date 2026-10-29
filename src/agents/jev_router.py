@@ -430,14 +430,19 @@ PIDE_PRECIO_MIN = 0.7
 # CALN-3c (28-oct, p09): «Al final vamos a estar alojados en Isla Grande, ¿cambia el precio?» daba 0,35 y el turno iba al
 # RAG sin hechos (1 de 2 sin importe). Con «whether that price changes»: las tres frases de «¿cambia el precio?» 0/4 → 4/4;
 # moneda, hotel, duración, cómo reservar, qué incluye y el lugar sin pregunta, iguales (sonda ×4 en dp-pre-bot).
+# CALN-6 (29-oct): «¿Ese es el precio para ciudadanos colombianos?» daba 0,64-0,72 y no salían los precios. Con «whether
+# that price is the one that applies to them»: cinco frases de nacionalidad o residencia 10/20 → 20/20; la moneda
+# («¿dólares o pesos?», que es de pago), pagar, el hotel, la duración y los links, 0/4 igual
+# (`scripts/sonda_jev_precio_nacionalidad.py`).
 _PIDE_PRECIO_Q_ACTIVIDADES = {
     "type": "noul",
     "instructions": (
         "The customer asks how much one of the dive center's activities costs: dive trips and dive packages, the dive "
         "mini-course or refresher, snorkeling, PADI courses and specialties (price, rate, cost, a quote), including "
         "asking that price again in another currency or for a different number of people, or asking whether that price "
-        "changes (with another departure point, staying on the islands, another date or group size), even if the same "
-        "message also asks other things. It is FALSE when they only ask the price of something the dive center does not sell "
+        "changes (with another departure point, staying on the islands, another date or group size) or whether that price "
+        "is the one that applies to them (for Colombians, residents or foreigners), even if the same message also asks "
+        "other things. It is FALSE when they only ask the price of something the dive center does not sell "
         "(a hotel, a room or night, a taxi or transport), when they only ask in which currency they pay or which "
         "payment methods are accepted, and when they ask about duration, number of dives or how to book."
     ),
@@ -773,8 +778,19 @@ def _con_hoteles_de_la_base(pregunta: dict) -> dict:
 
     hoteles = ", ".join(HOTELES_DE_LA_BASE)
     criterios = dict(pregunta["criteria"])
-    criterios["islands"] = (f"{criterios['islands']} Staying at one of these island hotels also counts: {hoteles}.")
+    criterios["islands"] = (f"{criterios['islands']} Staying at one of these island hotels also counts: {hoteles}."
+                            f"{_SIN_IR_DE_CARTAGENA}")
     return {**pregunta, "criteria": criterios}
+
+
+# CALN-6 (29-oct, #2551 de Gadea): «Va quiero comprar sin ir de cartagena» daba none 4/4 (no nombra las islas). Con el
+# extractor leyendo island (su regla de la negación), Jev seguro de que no lo dice hacía saltar la confirmación «¿ya
+# estarás en las islas?», que el juez cuenta como repregunta (paquete-5-buceos-islas-residente-sin-recogida, en PRE y
+# en la 5.ª). Con esta frase: la negación none → islands 4/4 (y en inglés); «bucear sin salir de Cartagena» sigue en
+# cartagena, y los 8 controles (las islas como sitio de buceo, Cartagena, Isla Grande, Barú, el punto de encuentro, sin
+# lugar) iguales (`scripts/sonda_jev_negacion_lugar.py`, ×4).
+_SIN_IR_DE_CARTAGENA = (" Also when they say they will NOT set out from or go through Cartagena (\"sin ir de Cartagena\", "
+                        "\"without going back to Cartagena\"): then they will already be on the islands.")
 
 
 # rag-5 (1-oct): ¿el mensaje cuenta algo del cliente que haya que APUNTAR como nota? Puerta del extractor de

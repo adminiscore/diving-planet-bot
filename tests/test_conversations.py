@@ -775,21 +775,17 @@ async def test_final_summary_generic_link_uses_info_plus_advisor():
 
 
 @pytest.mark.asyncio
-async def test_final_summary_price_arithmetic_adds_up():
-    """qty × per-person must equal the shown subtotal (round p.p. first, then
-    multiply) — a fractional catalog price must not produce '2 × $126 = $251'."""
-    import re
-
+async def test_final_summary_per_person_price_without_group_total():
+    """CALN-3b (29-oct, decisión de Gadea: «sin-totales», también en la tarjeta): el resumen da el precio por persona
+    (redondeado: 125,57 → 126 USD) y cuántos son, nunca el total del grupo."""
     from src.flows import cart_render
     state = make_state()
     state.mixed_cart = [{"type": "snorkel", "qty": 12, "label": "Snorkel"}]  # $125.57 p.p.
     state.is_colombian = False  # en USD: la moneda la decide src/flows/moneda.py (sin nacionalidad, las dos)
     resp = cart_render.goto_final_summary(state)
     # Formato unico de precio (owner 2026-09-14): "183 USD", sin "$".
-    m = re.search(r"(\d+) × (\d+) USD p\.p\. = \*(\d+) USD\*", resp)
-    assert m, resp
-    qty, pp, sub = int(m.group(1)), int(m.group(2)), int(m.group(3))
-    assert pp * qty == sub  # shown arithmetic is internally consistent
+    assert "*126 USD* por persona" in resp and "12 personas" in resp, resp
+    assert "×" not in resp and "1512" not in resp and "1.512" not in resp, resp
 
 
 @pytest.mark.asyncio
