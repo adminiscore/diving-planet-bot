@@ -128,3 +128,16 @@ El paso 1 no cambia nada visible y ya dice cuánto se equivoca hoy el escritor f
 - **Causa** (el b5 largo, extractor ×5 por variante): «…vamos con los niños, de 7 y 4 años. Estamos alojados en
   Cartagena…» da location 4/10; con el lugar delante 5/5, sin la frase de los niños 5/5. El extractor pierde el último
   dato cuando el mensaje carga el reparto con edades. La confirmación es la red, no el arreglo de la lectura.
+
+## 9. Paso 4 (29-oct, decisión de Gadea #2499), variante (b) (#2504)
+
+- Medido sin llamadas en la 5.ª (caln5-B, 368 turnos visibles): 51 turnos preguntan el origen; 39 salen de los hechos
+  con la pieza y 12 de la puerta, sobre respuestas del RAG general que dan importes en turnos que Jev no da por precio.
+  El RAG los saca también de las fichas (`pricing.json`, FAQ), así que quitar la tabla del prompt no basta.
+- (b): el escritor no ve importes (`rag_agent.sin_importes`: catálogo, fichas, estado, hechos y lo que ya dijo el bot,
+  con cada importe en «(precio)»; el revisor los sigue viendo) y, si su respuesta necesita un precio, deja la marca
+  `[PRECIOS]` (`RAG_PRECIOS_CON_MARCA`); `conversational_core.con_los_precios` pone ahí la pieza de `cotizar`, y sin
+  origen los dos y la pregunta. Con la tarjeta, la marca sale sin más.
+- Frente a (1) (feature/caln6-gonzalo 7a010daf: borrar a la salida las frases con importes): no recorta frases. A medir
+  las dos, una pasada por lado, en los bancos p/q/r y la mini-ronda de los visibles afectados, con frase_cortada y
+  repite de caln0. La que gane va con el (2) (fuera la puerta y `sin_precio`) en la misma integración.

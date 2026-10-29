@@ -396,6 +396,9 @@ async def _con_el_escritor(state: ConversationState, message: str, history: list
         return None
     if pieza:
         answer = con_la_pieza(answer, pieza)
+    else:
+        # CALN-3 paso 4 (b): sin la pieza decidida, si el escritor dejó la marca, ahí va; la pregunta del origen, abajo.
+        answer = core.con_los_precios(state, answer, con_pregunta=False)
     if origen_pendiente:
         tras = ((core.ORIGEN_TRAS_LOS_ENLACES_ES, core.ORIGEN_TRAS_LOS_ENLACES_EN) if "enlace" in intenciones
                 else (core.ORIGEN_TRAS_LAS_VARIANTES_ES, core.ORIGEN_TRAS_LAS_VARIANTES_EN))

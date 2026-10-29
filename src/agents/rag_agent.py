@@ -204,6 +204,16 @@ _LOCATION_STATEMENT_PREFIX = re.compile(
 )
 
 
+# CALN-3 paso 4 (b) (29-oct): el escritor no ve importes, ni del catálogo ni de las fichas ni de lo que el bot ya dijo;
+# cada importe (y los que van seguidos: «178 USD / 630.000 COP») queda en «(precio)». Los ve el revisor, no él.
+_IMPORTE_CTX = r"(?:(?:US\$|\$)\s?\d[\d.,]*(?:\s*(?:USD|COP)\b)?|\d[\d.,]*\s*(?:USD|COP|US\$|d[oó]lares|dollars|pesos)\b)"
+_IMPORTES_CTX_RE = re.compile(rf"{_IMPORTE_CTX}(?:\s*(?:/|\(|·|,|o|or|y|and)?\s*{_IMPORTE_CTX}\)?)*", re.IGNORECASE)
+
+
+def sin_importes(texto: str | None) -> str | None:
+    return _IMPORTES_CTX_RE.sub("(precio)", texto) if texto else texto
+
+
 def _looks_like_follow_up(query: str) -> bool:
     """Heuristic: does this query rely on previous turns to be understood?
 
@@ -875,13 +885,20 @@ async def rag_answer(
             from src.prompts.info import RAG_PRECIOS_POR_CODIGO  # lazy
 
             system_prompt = f"{system_prompt}\n\n{RAG_PRECIOS_POR_CODIGO['es' if lang == 'es' else 'en']}"
-        messages = [{"role": "system", "content": system_prompt}]
+        else:
+            # CALN-3 paso 4 (b): sin la tarjeta ni la pieza ya decidida, si hace falta un precio lo pone el código.
+            from src.prompts.info import RAG_PRECIOS_CON_MARCA  # lazy
+
+            system_prompt = f"{system_prompt}\n\n{RAG_PRECIOS_CON_MARCA['es' if lang == 'es' else 'en']}"
+        messages = [{"role": "system", "content": sin_importes(system_prompt)}]
 
         # Add conversation history (settings.history_window_size messages max,
         # to keep a longer thread — see Fase A, docs/archive/memory-context-improvement-plan.md)
         if history:
             for msg in history[-settings.history_window_size:]:
-                messages.append({"role": msg["role"], "content": redact_pii(msg["content"])})
+                contenido = redact_pii(msg["content"])
+                messages.append({"role": msg["role"],
+                                 "content": sin_importes(contenido) if msg["role"] == "assistant" else contenido})
 
         user_content = f"Contexto:\n{context}"
         if extra_context and context != extra_context:
@@ -895,6 +912,7 @@ async def rag_answer(
             cabeza = ((prompts_info.RAG_SOLO_HECHOS_ES, prompts_info.RAG_SOLO_HECHOS_EN) if sin_busqueda
                       else (prompts_info.RAG_CON_HECHOS_ES, prompts_info.RAG_CON_HECHOS_EN))
             user_content += f"\n\n{cabeza[0] if lang == 'es' else cabeza[1]}\n{hechos}"
+        user_content = sin_importes(user_content)  # CALN-3 paso 4 (b): las fichas, el estado y los hechos, sin importes
         user_content += f"\n\nPregunta del cliente: {redact_pii(query)}"
         if pregunta_final:
             from src.prompts.info import pregunta_final as instruccion_pregunta  # lazy

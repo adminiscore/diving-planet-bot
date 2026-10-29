@@ -59,7 +59,9 @@ def test_contesta_con_los_hechos_y_el_codigo_pregunta_el_origen(llamadas):
     assert answer.endswith(core.ORIGEN_TRAS_LAS_VARIANTES_ES) and core._es_pregunta_de_origen(answer)
     [(messages, pieza)] = llamadas.hechas
     assert pieza == "rag_escritor"
-    assert '"183 USD"' in messages[-1]["content"] and MENSAJE in messages[-1]["content"]
+    # CALN-3 paso 4 (b): los hechos le llegan sin importes; la pieza los pone el código
+    assert '"online": "(precio)"' in messages[-1]["content"] and MENSAJE in messages[-1]["content"]
+    assert "183 USD" not in messages[-1]["content"]
 
 
 def test_caln3b_si_jev_se_inclina_por_un_origen_se_confirma(llamadas):
@@ -122,7 +124,8 @@ def test_caln3_sin_actividad_elegida_los_candidatos(llamadas, monkeypatch):
     answer = asyncio.run(redactor_hechos.responder(st, MENSAJE, st.history))
     assert answer.endswith(core.ORIGEN_TRAS_LAS_VARIANTES_ES)
     [(messages, _)] = llamadas.hechas
-    assert '"183 USD"' in messages[-1]["content"] and '"134 USD"' in messages[-1]["content"]
+    assert '"cartagena"' in messages[-1]["content"] and '"island"' in messages[-1]["content"]  # los dos orígenes
+    assert "183 USD" not in messages[-1]["content"]  # CALN-3 paso 4 (b): sin importes
 
 
 def test_caln3_con_una_actividad_en_juego_no_hay_candidatos(llamadas, monkeypatch):

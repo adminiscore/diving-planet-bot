@@ -501,6 +501,19 @@ RAG_PRECIOS_POR_CODIGO = {
            "ask. Answer the rest of what they ask and, if they ask the price, say in one sentence that you are leaving "
            "it below."),
 }
+# CALN-3 paso 4 (b) (29-oct, idea de Gadea #2504): el escritor ya no recibe importes (en su contexto salen como
+# «(precio)»); si su respuesta necesita un precio, deja la marca y el código pone ahí la pieza de `cotizar`.
+MARCA_PRECIOS = "[PRECIOS]"
+RAG_PRECIOS_CON_MARCA = {
+    "es": ("Los importes no los escribes tú: en tu contexto salen como «(precio)». Si el cliente pide un precio o tu "
+           f"respuesta necesita darlo, no escribas cifras ni «(precio)»: pon {MARCA_PRECIOS} solo, en su propia línea, "
+           "donde iría la lista; el sistema pone ahí los precios por persona de su plan, según desde dónde sale y en su "
+           f"moneda. Si no hace falta ningún precio, no pongas {MARCA_PRECIOS}."),
+    "en": ("You do not write amounts: in your context they appear as «(precio)». If the customer asks a price or your "
+           f"answer needs to give one, do not write figures or «(precio)»: put {MARCA_PRECIOS} alone, on its own line, "
+           "where the list would go; the system puts there the prices per person of their plan, by departure point and "
+           f"in their currency. If no price is needed, do not write {MARCA_PRECIOS}."),
+}
 
 
 # arq-1g (flag `hechos_al_rag`): en un mensaje mezclado, el RAG recibe los hechos del código para la parte de la tabla.

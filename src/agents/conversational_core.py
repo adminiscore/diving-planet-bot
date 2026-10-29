@@ -1761,7 +1761,7 @@ async def _rag_answer(
             answer = redactor_hechos.con_la_pieza(answer, nota)
     # 7-oct (opción C): si cotiza sin origen, se pregunta el origen; quien la recibe deja el estado preparado
     # (`_fijar_origen_antes_del_precio`).
-    return _puerta_del_origen(state, message, answer)
+    return _puerta_del_origen(state, message, answer, sin_precio=sin_precio)
 
 
 # CAL-C3d (17-oct, flag `tras_pase_recuerda_el_pase`): tras pasar la conversación a un asesor, "¿me podrías ayudar con
@@ -2380,12 +2380,52 @@ def _enlaza_alguno(answer: str, servicios: list[tuple[str, dict]], state: Conver
     return any(u and u.split("?")[0] in answer for u in urls)
 
 
-def _puerta_del_origen(state: ConversationState, message: str, answer: str) -> str:
+def _puerta_del_origen(state: ConversationState, message: str, answer: str, sin_precio: bool = False) -> str:
     """La respuesta del RAG tras la puerta del origen (opción C): la pregunta del origen (con las dos variantes, ord-7)
     si cotiza o enlaza sin saber el origen; si no, la respuesta tal cual. gen-19 (21-oct) añadía aquí el enlace cuando
     tocaba; se quitó por decisión de Gadea: en su banco no cambiaba nada (el enlace ya salía cuando lo piden). ord-9
-    (la lista de qué incluye, de la ficha) se retiró en arq-2c (22-oct): la da el redactor de hechos."""
+    (la lista de qué incluye, de la ficha) se retiró en arq-2c (22-oct): la da el redactor de hechos.
+
+    CALN-3 paso 4 (b): si el escritor dejó la marca de los precios, la resuelve `con_los_precios`."""
+    from src.prompts.info import MARCA_PRECIOS  # lazy
+
+    if answer and MARCA_PRECIOS in answer:
+        return con_los_precios(state, answer, sin_precio=sin_precio)
     return _origen_antes_del_precio(state, message, answer) or answer
+
+
+def con_los_precios(state: ConversationState, answer: str, sin_precio: bool = False, con_pregunta: bool = True) -> str:
+    """CALN-3 paso 4 (b) (29-oct, idea de Gadea #2504): el escritor no ve importes y, si su respuesta necesita un precio,
+    deja la marca (`RAG_PRECIOS_CON_MARCA`); aquí va en su sitio la pieza de `cotizar`. Sin el origen, la pieza trae los
+    dos y detrás va la pregunta (o la confirmación de CALN-3b), en vez de la pregunta con que cerrara el escritor.
+    Con la tarjeta (`sin_precio`) o sin pieza, la marca sale sin más. `con_pregunta=False`: la pregunta la pone quien
+    llama (el redactor de hechos)."""
+    from src.agents.nucleo.extractor import origen_por_confirmar  # lazy
+    from src.flows import cotizar  # lazy
+    from src.prompts.info import MARCA_PRECIOS  # lazy
+
+    lang = "es" if state.language == "es" else "en"
+    _, bloques = cotizar.bloques_de_precio(state) if not sin_precio else (None, [])
+    pieza = cotizar.pieza_de_precios(bloques, lang) if bloques else None
+    partes = [p.strip() for p in answer.split(MARCA_PRECIOS)]
+    if not pieza:
+        return re.sub(r"\n{3,}", "\n\n", "\n\n".join(p for p in partes if p)).strip()
+    logger.info("[CORE][CALN3] el escritor pide los precios: la pieza va en su marca")
+    sabido = any(b.get("origen") for b in bloques)
+    if not sabido and con_pregunta:
+        # La pregunta con que cierra el escritor («¿te paso el enlace?») la sustituye la del origen.
+        frases = _FRASE_RE.split(partes[-1])
+        while frases and "?" in frases[-1]:
+            frases.pop()
+        partes[-1] = " ".join(frases).strip()
+    texto = f"\n\n{pieza}\n\n".join(partes[:2]) + "".join(f"\n\n{p}" for p in partes[2:])
+    texto = re.sub(r"\n{3,}", "\n\n", texto).strip()
+    if sabido or not con_pregunta:
+        return texto
+    pregunta = ORIGEN_TRAS_LAS_VARIANTES_ES if lang == "es" else ORIGEN_TRAS_LAS_VARIANTES_EN
+    if por_confirmar := origen_por_confirmar(state):
+        pregunta = _CONFIRMA_ORIGEN[por_confirmar][lang]
+    return f"{texto}\n\n{pregunta}"
 
 
 def _cotiza_alguno(answer: str, servicios: list[dict]) -> bool:

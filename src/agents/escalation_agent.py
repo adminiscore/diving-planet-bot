@@ -160,6 +160,9 @@ async def _contestar_lo_demas(conv, message: str, tema: str, key: str, reason: s
         return None
     if not answer or _es_nada(answer) or rag_agent.is_fallback_answer(answer):
         return None
+    from src.agents.conversational_core import con_los_precios  # lazy
+
+    answer = con_los_precios(conv, answer, con_pregunta=False)  # CALN-3 paso 4 (b): la marca de los precios
     logger.info(f"[NODE:escalation] contesta antes de pasar ({reason}): {len(answer)} caracteres")
     return answer
 

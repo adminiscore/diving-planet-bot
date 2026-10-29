@@ -117,9 +117,9 @@ async def test_los_hechos_van_en_el_mensaje_y_los_ve_el_revisor(rag, monkeypatch
     hechos = '[{"actividad": "minicourse", "precio": {"cartagena": {"online": "183 USD"}}}]'
     await rag_agent.rag_answer("¿cuánto cuesta el minicurso y qué peces se ven?", lang="es", hechos=hechos)
     primera = next(m["content"] for m in reversed(llamadas[0]["messages"]) if m["role"] == "user")
-    assert "Hechos del sistema" in primera and "183 USD" in primera
-    assert primera.index("183 USD") < primera.index("Pregunta del cliente")
-    assert vistos and "183 USD" in vistos[0]
+    assert "Hechos del sistema" in primera and "183 USD" not in primera  # CALN-3 paso 4 (b): el escritor, sin importes
+    assert primera.index("(precio)") < primera.index("Pregunta del cliente")
+    assert vistos and "183 USD" in vistos[0]  # el revisor sí los ve
 
 
 @pytest.mark.asyncio

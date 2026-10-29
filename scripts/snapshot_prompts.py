@@ -132,6 +132,9 @@ def _collect() -> dict[str, str]:
     add("info/rag.sin_precio.en", info.RAG_SIN_PRECIO_EN)
     add("info/rag.precios_por_codigo.es", info.RAG_PRECIOS_POR_CODIGO["es"])  # CALN-3 paso 3 «A»
     add("info/rag.precios_por_codigo.en", info.RAG_PRECIOS_POR_CODIGO["en"])
+    add("info/rag.precios_con_marca.es", info.RAG_PRECIOS_CON_MARCA["es"])  # CALN-3 paso 4 (b)
+    add("info/rag.precios_con_marca.en", info.RAG_PRECIOS_CON_MARCA["en"])
+    add("info/marca_precios", info.MARCA_PRECIOS)
     add("info/rag.con_hechos.es", info.RAG_CON_HECHOS_ES)
     add("info/rag.con_hechos.en", info.RAG_CON_HECHOS_EN)
     add("info/rag.solo_hechos.es", info.RAG_SOLO_HECHOS_ES)
