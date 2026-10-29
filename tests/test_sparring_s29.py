@@ -45,3 +45,14 @@ def test_el_cierre_del_colombiano_no_repite_el_pago_que_pregunta(monkeypatch):
     assert "El pago es en pesos colombianos" in cierre([])
     con_pregunta = cierre(["pago"])
     assert "El pago es en pesos colombianos" not in con_pregunta and "asesor" in con_pregunta
+
+
+def test_grupo_y_equipo_propio_no_se_suman_y_sin_notas_internas():
+    """Sparring s29c: «¿nos suman el de grupo y el de equipo propio?» → «¡Sí!». La regla de la base lo dice ya; y el
+    texto que llega al cliente (arq-7b lo pega tal cual) no lleva notas internas («decisión de…»)."""
+    from src.flows.catalog import descuentos_de_la_base
+
+    for lang, marca in (("es", "NO se suman entre sí"), ("en", "do NOT stack with each other")):
+        textos = descuentos_de_la_base(lang)
+        assert marca in textos["non_cumulative"]
+        assert not any("Gadea" in t or "decisión de" in t for t in textos.values())
