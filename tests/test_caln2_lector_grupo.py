@@ -380,16 +380,18 @@ PADRES = "Desde Cartagena. Mi marido y yo vamos al minicurso, entonces"
 @pytest.mark.asyncio
 async def test_los_dos_que_faltaban_eligen_en_el_turno_entero(extractor_dice, monkeypatch):
     """CALN-S30A-01 con el turno entero: el extractor da solo la actividad y el atajo del regex («mi marido», ×1) ya no
-    decide: los dos entran en el minicurso y no queda nadie sin elegir. Jev ve a otra persona (en la charla, el lector
-    salió y dijo «nada que rellenar»)."""
+    decide: los dos entran en el minicurso y no queda nadie sin elegir. Sin que Jev esté seguro de otra persona (g35:
+    0,72-0,78), basta con que faltara alguien por elegir y el mensaje elija una actividad."""
     from unittest.mock import AsyncMock
 
     from src.agents.nucleo import extraction as core_extraction
-    from src.agents.nucleo import extractor as nx
     from src.agents.nucleo import routing as core_routing
     from src.agents.supervisor import route_message
     from src.config import settings
     from src.flows.state import ConversationState
+
+    assert lg.por_completar({"activity": "minicourse"}, 5, {"snorkel": 2, "companion": 1, "undecided": 2})
+    assert not lg.por_completar({"activity": "minicourse"}, 5, {"snorkel": 3, "companion": 2})
 
     async def _leer(mensaje, **_kw):
         return {"total_dicho": 2, "personas": [_p(cantidad=2, actividad="minicourse", cita="Mi marido y yo")],
@@ -397,7 +399,6 @@ async def test_los_dos_que_faltaban_eligen_en_el_turno_entero(extractor_dice, mo
 
     monkeypatch.setattr(lg, "leer_grupo", _leer)
     monkeypatch.setattr(settings, "lector_grupo", True)
-    monkeypatch.setattr(nx, "_jev_seguro_de_otra_persona", lambda _st: True)
     senales = AsyncMock(return_value={})
     monkeypatch.setattr(core_routing, "detect_special_signals", senales)
     monkeypatch.setattr(core_extraction, "detect_special_signals", senales)

@@ -140,13 +140,16 @@ def por_completar(datos: dict, total_antes: int | None = None, reparto_antes: di
     (su certificación decide la recomendación), o es un grupo de 2 o más sin reparto. Es `salta(..., "T2b")` de
     `scripts/medir_lector_grupo.py`, el que se midió, más `jev_otros` (CALN-8, 28-oct): si Jev está seguro de que el
     mensaje mete a otra persona aunque el extractor no diga nada de ella («viene también mi amiga, pero no sabe qué
-    quiere hacer»), también: es lo que hacía la red de señales de acompañantes, que se quitó."""
+    quiere hacer»), también: es lo que hacía la red de señales de acompañantes, que se quitó. Y si alguien faltaba por
+    elegir y el mensaje elige una actividad (CALN-S30A-01, banco g35: «mi pareja y yo nos animamos al minicurso» con Jev
+    en 0,72-0,78), puede ser de ellos: la lectura dice de quién."""
     reparto = datos.get("group_allocation") or reparto_antes
     total = datos.get("group_size") or total_antes
     otros = bool(datos.get("edades") or datos.get("otro_sin_certificar") or datos.get("otro_certificado_inactivo")
                  or (datos.get("group_allocation") and (len(datos["group_allocation"]) > 1
                                                        or {"undecided", "companion"} & set(datos["group_allocation"])))
-                 or (isinstance(datos.get("group_size"), int) and datos["group_size"] > 1) or jev_otros)
+                 or (isinstance(datos.get("group_size"), int) and datos["group_size"] > 1) or jev_otros
+                 or (datos.get("activity") and (reparto_antes or {}).get("undecided")))
     if not otros:
         return False
     if not isinstance(total, int):
