@@ -77,6 +77,9 @@ Las doce normas, con su porqué, están en el documento.
   minutos de B. Pero 185 frente a 1, con A justo antes, parece sistemático: mirar si la 0.41 manda más llamadas a la vez
   a Haiku (la 2.ª lectura que sale con Jev) y salta el corte. Primero repetir la mini tal cual y mirar los «*_respaldo»
   de las métricas antes de culpar al código.
+  **Álvaro (#2677):** sus sondas directas a Haiku (~160 llamadas, de 14:45 a 14:48) corrieron durante el lado B
+  (14:44-14:48): pudieron empeorarlo (los respaldos empiezan a las 14:44, antes). Norma nueva del equipo: nada de
+  llamadas directas a Haiku mientras alguien mide en PRE. Repetir la mini de la 0.41 sin nada más corriendo.
 - **Meta de salida de CALN (Gadea, 30-oct):** dos tandas seguidas de sparring sin graves + oculto ≥ 90 % + bancos. Van
   **0 de 2**: s30a (3 graves, arreglados en 0.40) y s30e (3 graves, ya en PRE; 2 arreglados en la 0.41; el venezolano con
   cédula dentro del «grupo mixto» sigue abierto: la frase del extractor se midió ×10 y se descartó).
