@@ -67,7 +67,11 @@ Las doce normas, con su porqué, están en el documento.
   `affirms_nationality`) + s30e (el mismo día no se reserva; la edad del buceo certificado pide estar certificado) +
   CALN-9b de Álvaro 6274ed86. Suite 3159. **Su mini-ronda (43 visibles, A = PRE 0.40 / B con RAG_KB_ESQUEMA=kb_v2_gadea)
   quedó corriendo a las 14:45** (`docs/robustness/synthetic-runs/2026-10-30-c041-*`; el juez, `results/2026-10-30-c041-*`).
-  Si no acabó, repetirla. Sube si iguala o mejora; antes, la 3.ª tanda de sparring (8 clientes nuevos).
+  Las dos pasadas ACABARON (201/201, 0 errores); el juez quedó corriendo. **OJO, LATENCIA: la 0.41 es más lenta** —
+  por turno +0,77 s de mediana, p90 6,30 → 7,37 s— y no es la hora (jev 0,32/0,33 s, extractor 2,0/2,16, escritor
+  2,0/1,89 por llamada): el nodo `extraction` pasa de 1,61 a 2,89 s de mediana. Sospechoso: la espera de 10b
+  (`lanzar_segunda_nacionalidad_si_hace_falta` / `_nacionalidad_en_dos_lecturas`, 2736f65a) o lo que espera el nodo
+  con ella. Encontrar la causa ANTES de subir; si no, la 0.41 sin 2736f65a. Luego, la 3.ª tanda de sparring.
 - **Meta de salida de CALN (Gadea, 30-oct):** dos tandas seguidas de sparring sin graves + oculto ≥ 90 % + bancos. Van
   **0 de 2**: s30a (3 graves, arreglados en 0.40) y s30e (3 graves, ya en PRE; 2 arreglados en la 0.41; el venezolano con
   cédula dentro del «grupo mixto» sigue abierto: la frase del extractor se midió ×10 y se descartó).
