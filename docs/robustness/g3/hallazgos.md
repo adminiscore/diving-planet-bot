@@ -556,3 +556,51 @@ por enfermedad).
    enlace de la web. El juez de la rotativa lo marcó dos veces («los colombianos no reciben el enlace»); pero el grupo
    paga en USD, que es lo que cobra la web.
 8. **Menor:** el cambio de fecha por una hija enferma pasa al asesor «para preguntas médicas específicas».
+
+## CALN-S30A-01..12 · Sparring de clientes nuevos contra la CANDIDATA 0.39 (30-oct, `charla_rama`)
+
+Primera tanda con la meta nueva de Gadea (cerrar CALN con dos tandas seguidas sin fallos graves). Candidata
+`feature/caln-integra039-gadea` 27d5e2c1 (caln-gadea + s29 + feature/caln8-sino-alvaro 9c58185). Ocho personas
+(`docs/robustness/g3/charlas-rama/s30a-*`): familia de Bogotá de 5 (abuela que no se mete, niños de 8 y 11), alemán
+con Open Water y 3 años sin bucear (dos días), pareja de Valencia en Isla Grande (buzo + nunca buceó), paisa con doble
+nacionalidad que vive en Miami (Open Water para mañana), empresa de 8 de EE. UU. (3 certificados, factura), buzo
+argentino que regatea con equipo propio, padre buzo con hija de 12, tres franceses (snorkel, uno se marea). Graves
+contrastados contra PRE (`docs/robustness/g3/charlas/` s30a-pre-*).
+
+- **BIEN:** actividades por edad (Bubble Makers no a los 12) y la abuela de acompañante; la tarjeta de la familia sin
+  total, en COP; la pareja de Isla Grande: reparto 1 + 1, precios de las islas en USD, recogida y vuelta, un enlace por
+  actividad; la empresa: precios por persona, el de grupo explicado corto y la factura al asesor; regatear: no hay precio
+  especial y equipo propio + online sí se suman; «tengo la colombiana» corrige y contesta lo de mañana; el padre con la
+  hija: minicurso para ella y buceo para él, al asesor por ser colombiano.
+
+**Graves (3; ninguno nuevo de la candidata):**
+1. **«Mi esposo y yo hacemos el minicurso» → minicurso ×1 + 1 sin elegir** (familia t2; Álvaro, modelo del grupo):
+   `[CORE] merged companion activity minicourse x1` y el lector «nada que rellenar»; pregunta «¿un día o varios?» a
+   «quien aún no ha elegido». Con la corrección del cliente sale bien. **También en PRE** (s30a-pre-familia): no lo trae
+   la candidata. Misma clase que «both of us».
+2. **«¿Nos suman el de grupo, el de equipo y el online? ¿Cuánto por persona?» → sin respuesta** (regateo t2): CALN-3
+   quita las dos frases del escritor con el descuento de grupo («fuera, lo da la pieza») y queda «Hay que pedir que lo
+   apliquen antes de pagar. No puedo calcular el precio final por persona» + la lista ENTERA de descuentos pegada (con la
+   regla de que no se suman enterrada dentro). **También en PRE** (peor: sin texto del escritor). Es la lista de arq-7b.
+3. **El refresher en inglés: dos actividades contestadas con los hechos de una** (refresher t2, «refresher on day one
+   and normal dives on day two?»): «I can't confirm whether you can add regular dives on a second day» / «the available
+   plan for the second day is the 2-day 4-dive package». NO es de la candidata (lo vio Álvaro, #2628; yo lo había
+   contado con 200 caracteres): PRE 0/7, base 1/6, base + s29 2/6, rama de Álvaro 1/6, candidata 3/7. Causa: el escritor
+   contesta solo con los hechos del refresher (`redactor_hechos._con_el_escritor`, sin búsqueda, «refresher
+   ['incluye']») y el buceo del día 2 (detected_activity certified_diving) no le llega. Mío (los hechos).
+
+**Medios:**
+4. La lista ENTERA de descuentos pegada en 4 turnos (familia t1 y t2, regateo t1 y t2), con «ANTES» y «COMPLETO».
+5. «Mal de mer» (mareo) → pasa al equipo «para preguntas médicas»: misma clase que la embarazada (pendiente de Gadea).
+6. «Soy paisa, tengo doble nacionalidad» → «el precio depende de si conservas la nacionalidad colombiana» (la política de
+   la moneda); y «¿podría empezar mañana?» sin contestar en t1.
+7. «También incluye» con tres seguros y dos entradas al parque al juntar minicurso, snorkel y acompañante (familia t2).
+8. El refresher: el escritor lo pone en otro día y la tarjeta dice «the guide runs the in-water review before the dive»;
+   los enlaces, dos veces (refresher t3).
+9. Sin el origen, «Fun Dives also includes lunch», como si el minicurso no lo incluyera (refresher t1): CALN-9b.
+
+**Menores:** Getsemaní y Bocagrande (barrios de Cartagena) → los dos orígenes y «¿saldrías desde Cartagena?» (la clase de
+«staying in Cartagena»); «No hay descuento por ser colombiano» sin que lo pregunte; la pregunta del asesor dos veces en
+el mismo mensaje y otra que no va al final; al francés se le contesta en inglés y con los precios también en COP; el
+menú entero de actividades después de proponer el plan (pareja t1); «Te dejo a continuación los precios».
+

@@ -986,11 +986,12 @@ def _recommended_plan_intro(state: ConversationState) -> str:
     if state.detected_cert_dives is not None or state.detected_cert_days in _DAYS_TO_DIVES:
         return ""
     if lang == "es":
+        # Sparring s29: «paquete multi-día de 3 o más» debajo del «Paquete de 3 inmersiones (1 día…)».
         return ("Te recomiendo el plan de *2 inmersiones en 1 día* en las "
-                "Islas del Rosario. (Si prefieres un *paquete multi-día* de 3 o más "
-                "inmersiones, dímelo.)\n\n")
+                "Islas del Rosario. (Si prefieres más inmersiones, hay *paquetes* de 3 o más; "
+                "dímelo.)\n\n")
     return ("I recommend the *2 dives in 1 day* plan in the Rosario "
-            "Islands. (If you'd rather a *multi-day package* of 3+ dives, just tell "
+            "Islands. (If you'd rather do more dives, there are *packages* of 3 or more; just tell "
             "me.)\n\n")
 
 

@@ -542,7 +542,10 @@ def _clima_y_pago(state: ConversationState, pedidas: list[str], lang: str) -> di
         mixto = getattr(state, "mixed_nationality_notice", False)
         colombiano = None if mixto else state.is_colombian
         if colombiano is True:
-            pago = [_pago_colombiano(lang)]
+            # Sparring s29 (29-oct): «¿puedo pagar por transferencia? ¿me hacen el 10 %?» → «no tengo confirmado»; la
+            # regla de la transferencia (solo si falla el online, con el 10 %) vale también para él. Sin las políticas
+            # en el prompt del escritor (CALN-8 (3)), solo le llega por aquí.
+            pago = [_pago_colombiano(lang), _politica("payment_fallback", lang)]
         elif colombiano is False or mixto:
             pago = [_pago_extranjero(lang), _politica("payment_confirmation", lang), _politica("payment_fallback", lang)]
         else:

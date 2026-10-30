@@ -1,6 +1,30 @@
 History
 =======
 
+0.39.0 - (2026-10-30, SUBE A PRE: la rama de Álvaro (grupo y pareja Advanced), «sin ir de Cartagena» y los arreglos del sparring s29)
+---------------------
+* **Qué sube** (sobre 0.38.0; `feature/caln-integra039-gadea`): **Álvaro** (`feature/caln8-sino-alvaro` 9c58185): g19,
+  CALN-8 (2a, 2b), el grupo solo en personas (fuera 3 campos del estado, `sin_decidir_aparte` y
+  `_merge_pending_undecided`); la pregunta de sí/no («¿la otra persona también va a bucear?»); la pareja Advanced
+  («both of us»): (A) sin minicurso ni Open Water en el menú de un certificado y (B) el lector del grupo con la misma
+  definición de certified_diving que el extractor (decisión de Gadea: las dos); el campo `lector` en [TURN_METRICS].
+  Banco de grupos 30 → 33/34. **Gonzalo** (1ca8439a): «sin ir de Cartagena» = ya en las islas (Jev); las marcas del regex
+  R1-R10 en [TURN_METRICS], sin cambio de conducta. **Gadea** (sparring s29 y s29c): la nota «pesos o dólares» de la
+  tarjeta solo sin nacionalidad; el pago del colombiano una vez; la transferencia (`payment_fallback`) en sus hechos de
+  pago; el texto de los paquetes; el grupo mixto (USD) recibe el enlace de la web (decisiones.json); «soy de Cali» ya
+  dice la nacionalidad (`colombian_pricing`); el de grupo y el de equipo propio no se suman (discounts.json), sin notas
+  internas en lo que llega al cliente.
+* **Medida** (una pasada, a la misma hora, en serie; A = PRE 0.38.0): mini-ronda de 32 visibles (los de las mini-rondas
+  de 0.37 y 0.38): **19 = 19 fallos** (92,4 → 92,5 %), 18 → 17/32 sin fallos: empate; llamadas por turno 4,20 → 4,15,
+  tokens de entrada 30.541 → 30.037; 0 errores de LLM. Juez ~1,74 $. Suite 3135, ruff limpio.
+* **Sparring s30a** (8 clientes nuevos contra la candidata; `hallazgos.md` CALN-S30A): 3 graves, ninguno nuevo de la
+  candidata («mi esposo y yo hacemos el minicurso» → ×1; «¿se suman grupo, equipo y online?» sin respuesta y la lista de
+  descuentos pegada; el refresher con buceo otro día, contestado con los hechos de uno): los tres, a arreglar.
+* **Decisiones de Gadea (30-oct):** la salida de CALN = dos tandas seguidas de sparring sin graves + oculto ≥ 90 % +
+  bancos sin bajar (el golden visible, solo de control); el gasto que se vigila es el del juez (GPT); CALN-10: 10a (Bedrock
+  primero para Haiku) ya estaba desde ARQ-2b; 10b (la nacionalidad solo si dos lecturas coinciden) medido, equivocadas
+  2,5 % → 0 % y preguntas 5,6 → 11,8 % (`estudio-caln10-lecturas.md`): entra en la siguiente.
+
 0.38.0 - (2026-10-29, SUBE A PRE: el paso 4 (1) de precios, la tarjeta sin totales y la política de la moneda)
 ---------------------
 * **Qué sube** (sobre 0.37.0): el paso 4 (1) de CALN-3 (Gonzalo): los importes que el RAG general escribe por su cuenta
