@@ -1,6 +1,32 @@
 History
 =======
 
+0.40.0 - (2026-10-30, SUBE A PRE: lo delgado y CALN-9a de Álvaro, CALN-10b, los arreglos del sparring s30a y las respuestas de negocio de Gadea)
+---------------------
+* **Qué sube** (sobre 0.39.0; `feature/caln-integra040-gadea`): **Álvaro** (`feature/caln8-sino-alvaro` 1d725d99): el
+  lector del grupo sale tras Jev y solo si hace falta (89 → 25 por 100 turnos, también en la apertura); CALN-9a, con el
+  origen sabido el escritor solo recibe la ficha de su origen; «mi esposo y yo hacemos el minicurso» (S30A-01: g35/g36
+  0/10 → 10/10). **Gadea:** CALN-10b, la nacionalidad solo vale si la confirma una segunda lectura del extractor, que va
+  solo cuando la primera la trae (Álvaro, #2649); el refresher de varios días con los hechos del buceo de los demás días
+  (S30A-03); «¿se suman grupo, equipo y online?» se contesta sin la lista entera (S30A-02: Jev cuenta varios descuentos
+  nombrados; la nota del de grupo que aplica ya no borra la respuesta del escritor); la doble nacionalidad con la
+  colombiana paga en pesos. **Respuestas de negocio de Gadea (30-oct)**, decisiones «salud», «acompanante-y-grupo» y
+  «refresher»: el mareo y el embarazo los contesta la base (políticas `seasickness` y `pregnancy`; ya no son preguntas
+  médicas para Jev); la factura se emite (`invoice`); el acompañante cuenta para el grupo y tiene el descuento; el
+  refresher es el minicurso en su propio día. 10a (Bedrock primero para Haiku) ya estaba desde ARQ-2b.
+* **Medida** (una pasada, a la misma hora, en serie; A = PRE 0.39.0, B con su base curada en `kb_v2_gadea`): mini-ronda de
+  43 visibles: **24 → 22 fallos, 19 → 16 diálogos con fallos**; llamadas por turno **4,12 → 3,60** (lector 0,9 → 0,3;
+  extractor 1,1 → 1,2); tokens de entrada iguales (~29.500); latencia p50 3,48 → 3,56 s, **p90 5,29 → 5,82 s**: es la
+  segunda lectura de 10b, en serie, en el 20 % de los turnos (~1,7 s; esos turnos p50 4,3 → 5,6 s; sin ellos, p90 4,67 s).
+  Decisión de Gadea: subir ya y esconder después la espera (que la segunda lectura corra con el RAG adelantado). Antes,
+  la mini-ronda de 26 visibles de 10b con las dos lecturas a la vez: 12 → 11 fallos y 4,13 → 5,02 llamadas por turno.
+  Suite 3152, ruff limpio. Juez de hoy ~5,2 $.
+* **Sparring** (decisión de Gadea: pesa más que el golden; la salida de CALN pide dos tandas seguidas sin graves):
+  s30a (8 clientes, contra la 0.39) 3 graves → arreglados los 3 en esta subida; s30e (8 clientes nuevos, contra la 0.40)
+  3 graves, los 3 también en PRE: «¿podemos bucear HOY?» a la 1:45 pm → «sí»; el venezolano con cédula de extranjería y
+  esposa colombiana → «grupo mixto, USD»; el nieto de 13 «puede hacer buceo certificado» sin decir que lo está
+  (`hallazgos.md`, CALN-S30A y CALN-S30E). Tandas sin graves seguidas: 0 de 2.
+
 0.39.0 - (2026-10-30, SUBE A PRE: la rama de Álvaro (grupo y pareja Advanced), «sin ir de Cartagena» y los arreglos del sparring s29)
 ---------------------
 * **Qué sube** (sobre 0.38.0; `feature/caln-integra039-gadea`): **Álvaro** (`feature/caln8-sino-alvaro` 9c58185): g19,
