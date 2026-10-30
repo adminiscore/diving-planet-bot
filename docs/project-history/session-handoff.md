@@ -59,6 +59,31 @@ integrar la rama del otro y suite en verde, porque en PRE gana el último; (3) *
 despliegue reinicia el contenedor y mata la medida del otro (avisar en el registro de Plan Coral con la hora de fin).
 Las doce normas, con su porqué, están en el documento.
 
+### ▶️ RETOMAR AQUÍ — 30-oct, 14:45 (Gadea con Claude; Álvaro): 0.40.0 EN PRE; candidata 0.41 midiéndose
+
+- **PRE sirve `7d916a95`** (HISTORY 0.40.0, `feature/pre_gadea` = `feature/caln-gadea`) desde las ~14:00, sano (CI verde,
+  23 ajustes, humo 5/5, kb_v2 regenerada con 414 documentos). Hoy subieron 0.39.0 (12:04) y 0.40.0.
+- **Candidata 0.41** `feature/caln-integra041-gadea` 9219f283 = 0.40 + la espera de 10b (la 2.ª lectura sale con Jev
+  `affirms_nationality`) + s30e (el mismo día no se reserva; la edad del buceo certificado pide estar certificado) +
+  CALN-9b de Álvaro 6274ed86. Suite 3159. **Su mini-ronda (43 visibles, A = PRE 0.40 / B con RAG_KB_ESQUEMA=kb_v2_gadea)
+  quedó corriendo a las 14:45** (`docs/robustness/synthetic-runs/2026-10-30-c041-*`; el juez, `results/2026-10-30-c041-*`).
+  Si no acabó, repetirla. Sube si iguala o mejora; antes, la 3.ª tanda de sparring (8 clientes nuevos).
+- **Meta de salida de CALN (Gadea, 30-oct):** dos tandas seguidas de sparring sin graves + oculto ≥ 90 % + bancos. Van
+  **0 de 2**: s30a (3 graves, arreglados en 0.40) y s30e (3 graves, ya en PRE; 2 arreglados en la 0.41; el venezolano con
+  cédula dentro del «grupo mixto» sigue abierto: la frase del extractor se midió ×10 y se descartó).
+- **Decisiones de Gadea de hoy** (en `decisiones.json` y memoria): la meta de CALN; vigilar solo el gasto del JUEZ (GPT);
+  10a ya estaba (ARQ-2b); 10b sí, con la 2.ª lectura solo cuando la 1.ª trae la nacionalidad (Álvaro); salud (mareo y
+  embarazo los contesta la base); el acompañante cuenta para el grupo y tiene el descuento; el refresher es el minicurso;
+  la factura se emite; el efectivo se queda como está; idiomas español e inglés; edades como PADI (ya estaban).
+- **En marcha:** Álvaro, el origen de ESTA pregunta (Getsemaní, Bocagrande, «staying in old town», «¿el precio desde ese
+  hotel?» con un hotel de las islas), medido frente a la 0.41. Gonzalo no se conectó (último 29-oct 18:56).
+- **Abiertos del sparring:** «soy de Cali» cuando la frase cuenta lo que pagó una amiga (lectura de Haiku, sin parche); el
+  venezolano con cédula; el francés no encuentra el consejo del mareo; «También incluye» con seguros repetidos; el texto
+  largo del de grupo pegado; «no puedo calcular el precio por persona». Detalle en `docs/robustness/g3/hallazgos.md`
+  (CALN-S30A y CALN-S30E).
+- **Sin hacer hoy:** Plan Coral (no se tocó: añadir CALN-10 hecho, 0.39/0.40, las tandas s30a/s30e) y el mapa.
+- **Gasto de hoy en el juez (GPT):** ~5,2 $ más la mini de la 0.41 (~2,3 $).
+
 ### ▶️ RETOMAR AQUÍ — 29-oct, 17:35 (Gadea con Claude; Álvaro y Gonzalo): 0.38.0 EN PRE (precios paso 4 (1), tarjeta sin totales, moneda)
 
 - **Estado:** PRE sirve **`189cf44`** (HISTORY 0.38.0, `feature/pre_gadea` = `feature/caln-gadea`) desde el 29-oct a las
