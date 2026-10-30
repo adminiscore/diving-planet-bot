@@ -397,8 +397,9 @@ def _descuentos(state: ConversationState, lang: str, grupo: str | None = None) -
 # CALN-3 (decisión 4 del 27-oct, CALN3-Q04): con el precio, el de grupo solo cuando aplica a ESTE grupo y plan. A 5
 # españoles que piden el Open Water se les ofrecía «10 % para grupos de 5 o más… no aplica a cursos PADI. ¿Te paso con un
 # asesor para aplicarlo?»: los descuentos iban todos en el contexto sin decir cuál aplica. A quién aplica, de la base
-# (`applicability`: buceo recreativo, minicurso y snorkel); los cursos no.
-_CON_DESCUENTO_DE_GRUPO = {"cert", "beginner", "snorkel"}
+# (`applicability`: buceo recreativo, minicurso y snorkel); los cursos no. El acompañante también (decisión de Gadea,
+# 30-oct: cuenta para llegar a 5 y tiene el descuento).
+_CON_DESCUENTO_DE_GRUPO = {"cert", "beginner", "snorkel", "companion"}
 # Texto para el cliente: arq-7b lo pega tal cual si el escritor se lo deja (con la intención `descuento`).
 _SIN_DESCUENTO_DE_GRUPO = {
     "es": "El descuento de grupo ({pct} % desde {n} personas) no aplica a los cursos PADI, así que este curso no lo tiene.",

@@ -59,12 +59,13 @@ def _nota_seguridad(state: ConversationState) -> str:
     """La pregunta de seguridad, una vez, dentro de la tarjeta, con el precio del refresher (del catálogo)."""
     precio = cart_render.refresher_price_text(state, una_moneda=True)  # una sola moneda por mensaje (Gadea)
     if state.language == "es":
-        return ("\n\n⚠️ Si alguno lleva *más de 2 años* sin bucear, se añade el *refresher* (repaso en el agua antes de "
-                f"la inmersión): *{precio}* por persona. "
+        # Decisión de Gadea (30-oct, decisión «refresher»): el refresher es el minicurso, en su propio día.
+        return ("\n\n⚠️ Si alguno lleva *más de 2 años* sin bucear, se añade el *refresher* (el minicurso: piscina y una "
+                f"inmersión con instructor): *{precio}* por persona. "
                 + ("¿Es el caso de alguno de ustedes?" if (state.detected_group_size or 1) > 1
                                else "¿Es tu caso?"))
-    return ("\n\n⚠️ If anyone hasn't dived for *more than 2 years*, a *refresher* is added (a review in the water before "
-            f"the dive): *{precio}* per person. Is that your case?")
+    return ("\n\n⚠️ If anyone hasn't dived for *more than 2 years*, a *refresher* is added (the mini-course: pool and one "
+            f"dive with an instructor): *{precio}* per person. Is that your case?")
 
 
 def _siguiente_pregunta(state: ConversationState, prev_pending: str | None) -> str | None:
@@ -151,12 +152,12 @@ def _refresher_note(state: ConversationState) -> str:
     if state.language == "es":
         how = f" Resérvalo aquí: {url}" if url else " El asesor te lo confirma junto con el pago."
         return (
-            "✅ *Refresher añadido* — el guía hace el repaso en el agua antes de la "
-            f"inmersión. Tiene un costo de *{price}* por persona que lo necesite.{how}\n\n"
+            "✅ *Refresher añadido* — es el minicurso: entrenamiento en piscina y una inmersión con instructor, en "
+            f"su propio día. Tiene un costo de *{price}* por persona que lo necesite.{how}\n\n"
         )
     how = f" Book it here: {url}" if url else " The advisor will confirm it with the payment."
     return (
-        "✅ *Refresher added* — the guide runs the in-water review before the dive. "
+        "✅ *Refresher added* — it is the mini-course: pool training and one dive with an instructor, on its own day. "
         f"It costs *{price}* per person who needs it.{how}\n\n"
     )
 

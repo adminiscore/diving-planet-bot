@@ -171,7 +171,7 @@ SLOT_RESOLVER_SPEC = {
         ),
     },
     "refresher": {
-        "question_es": "¿Quieres hacer el refresher (repaso en el agua)?",
+        "question_es": "¿Quieres hacer el refresher (el minicurso: piscina y una inmersión)?",
         "question_en": "Would you like to do the refresher (in-water refresh)?",
         "type": "boolean",
         "value_meaning": "true if they want the refresher, false if not.",

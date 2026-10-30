@@ -34,9 +34,9 @@ import time
 import httpx
 
 from src.config import settings
-from src.prompts.router import ROUTING_TOOL, con_dieta_no_es_medica
+from src.prompts.router import ROUTING_TOOL, con_lo_que_no_es_medico
 
-con_dieta_no_es_medica(ROUTING_TOOL)  # gen-3 (20-oct): antes de construir las preguntas de abajo
+con_lo_que_no_es_medico(ROUTING_TOOL)  # gen-3 (20-oct): antes de construir las preguntas de abajo
 
 logger = logging.getLogger("uvicorn.error")
 

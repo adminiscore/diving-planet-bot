@@ -332,19 +332,30 @@ ROUTING_TOOL = {
 # gen-3 (20-oct, flag `dieta_no_es_medica`): "una de nosotras es celíaca, ¿qué puede comer?" salía como
 # 'medical_questions' y pasaba a un asesor, aunque la base lo contesta (arroz con vegetales, puede traer su comida, avisar
 # antes). La misma clase de exclusión que la discapacidad o los métodos de pago de arriba. El enrutador de respaldo y Jev
-# (`jev_router.routing_questions`) leen esta descripción al importar: los dos llaman a `con_dieta_no_es_medica` con el
+# (`jev_router.routing_questions`) leen esta descripción al importar: los dos llaman a `con_lo_que_no_es_medico` con el
 # flag (este módulo no lee la configuración).
 _DIETA_NO_ES_MEDICA = (
     " Do NOT use 'medical_questions' for a DIET or FOOD question (celiac/gluten-free, vegetarian, vegan, lactose "
     "intolerance, a food allergy and what they can eat at lunch): that is the lunch/food policy, normal catalog "
     "information, and must be left 'none' here."
 )
+# Sparring s30a (30-oct, decisión de Gadea: el bot contesta lo que sabe la base y solo lo de verdad médico pasa al
+# equipo): «un amigo se marea en la lancha» y «estoy embarazada, ¿puedo hacer snorkel?» pasaban a un asesor y se perdía
+# lo demás que preguntaban. La base contesta los dos (los consejos del día, y el embarazo en faqs.json).
+_MAREO_Y_EMBARAZO_NO_SON_MEDICOS = (
+    " Do NOT use 'medical_questions' either for SEASICKNESS on the boat (getting seasick, mareo, mal de mer) or for "
+    "PREGNANCY questions about which activities they can do (embarazada, pregnant): the base answers both (the day's "
+    "tips; no scuba while pregnant, surface snorkeling with their doctor's approval), so leave them 'none' unless they "
+    "ask whether a specific medical condition or a medication affects diving."
+)
 
 
-def con_dieta_no_es_medica(tool: dict) -> None:
-    """Añade la exclusión de la dieta a la definición de `sensitive_topic` (una sola vez)."""
+def con_lo_que_no_es_medico(tool: dict) -> None:
+    """Añade a la definición de `sensitive_topic` lo que NO es médico porque lo contesta la base: la dieta, el mareo y
+    el embarazo (una sola vez)."""
     prop = tool["function"]["parameters"]["properties"]["sensitive_topic"]
-    if _DIETA_NO_ES_MEDICA not in prop["description"]:
-        prop["description"] += _DIETA_NO_ES_MEDICA
+    for exclusion in (_DIETA_NO_ES_MEDICA, _MAREO_Y_EMBARAZO_NO_SON_MEDICOS):
+        if exclusion not in prop["description"]:
+            prop["description"] += exclusion
 
 
