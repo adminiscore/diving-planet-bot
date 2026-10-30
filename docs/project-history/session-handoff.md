@@ -72,6 +72,11 @@ Las doce normas, con su porqué, están en el documento.
   2,0/1,89 por llamada): el nodo `extraction` pasa de 1,61 a 2,89 s de mediana. Sospechoso: la espera de 10b
   (`lanzar_segunda_nacionalidad_si_hace_falta` / `_nacionalidad_en_dos_lecturas`, 2736f65a) o lo que espera el nodo
   con ella. Encontrar la causa ANTES de subir; si no, la 0.41 sin 2736f65a. Luego, la 3.ª tanda de sparring.
+  **Álvaro (#2676):** en B el extractor fue al RESPALDO (gpt-5.4-mini, corte a ~2 s) en 185 llamadas y Haiku contestó
+  en 57; el lector, 53 y 14 (en A, 1 y 1): el +1,3 s es el respaldo. Él lo achaca a que Haiku iba lento en los 4
+  minutos de B. Pero 185 frente a 1, con A justo antes, parece sistemático: mirar si la 0.41 manda más llamadas a la vez
+  a Haiku (la 2.ª lectura que sale con Jev) y salta el corte. Primero repetir la mini tal cual y mirar los «*_respaldo»
+  de las métricas antes de culpar al código.
 - **Meta de salida de CALN (Gadea, 30-oct):** dos tandas seguidas de sparring sin graves + oculto ≥ 90 % + bancos. Van
   **0 de 2**: s30a (3 graves, arreglados en 0.40) y s30e (3 graves, ya en PRE; 2 arreglados en la 0.41; el venezolano con
   cédula dentro del «grupo mixto» sigue abierto: la frase del extractor se midió ×10 y se descartó).
