@@ -50,8 +50,7 @@ def test_choice_merges_with_the_known_quantity():
     state.detected_group_allocation = {"certified_diving": 2}
     state.detected_group_size = 3
     state.pending_undecided_qty = 1
-    state.pending_companion_activity = "snorkel"
-    assert core._merge_pending_undecided(state) is True
+    core._elige_quien_falta(state, "snorkel")  # CALN-8 (2b): con su cantidad sabida, entra ya en el reparto
     assert state.detected_group_allocation == {"certified_diving": 2, "snorkel": 1}
     assert state.detected_group_size == 3
     assert state.pending_undecided_qty is None and state.pending_companion_activity is None
@@ -59,9 +58,8 @@ def test_choice_merges_with_the_known_quantity():
 
 def test_without_undecided_quantity_the_bot_still_asks_how_many():
     state = _state()
-    state.pending_companion_activity = "snorkel"
-    assert core._merge_pending_undecided(state) is False
-    assert state.pending_companion_activity == "snorkel"
+    core._elige_quien_falta(state, "snorkel")  # sin saber cuántos: queda elegida a falta de cuántos
+    assert state.pending_companion_activity == "snorkel" and not state.detected_group_allocation
 
 
 @pytest.mark.asyncio

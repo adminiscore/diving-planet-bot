@@ -30,6 +30,7 @@ from src.agents.conversational_core import (
     _cart_item,
     _companion_activity_options,
     _course_level_options,
+    _elige_quien_falta,
     _group_allocation_fully_resolved,
     _has_pending_answer,
     _is_greeting_only,
@@ -63,7 +64,7 @@ from src.agents.nucleo.extractor import (
     _aplicar_extractor,
 )
 from src.domain import activities as dom
-from src.flows import cart_render
+from src.flows import cart_render, grupo
 from src.flows.state import ConversationState
 from src.utils.number_words import number_alt, number_words
 
@@ -137,8 +138,7 @@ def _apply_resolved_slot_value(state: ConversationState, slot: str, value) -> bo
         _set_concrete_activity(state, value)
         return True
     if slot == SLOT_COMPANION_ACTIVITY and value in _companion_activity_options(state):
-        state.pending_companion_activity = value
-        state.needs_companion_activity = False
+        _elige_quien_falta(state, value)
         return True
     return False
 
@@ -424,9 +424,7 @@ async def _understand(state: ConversationState, message: str, *, answered_pendin
     # marcada por la razón que sea, en vez de dejar que dispare más
     # adelante en el turno pese a no tener ya ningún sentido.
     if _group_allocation_fully_resolved(state):
-        state.needs_companion_activity = False
-        state.pending_companion_activity = None
-        state.pending_undecided_qty = None
+        state.personas = grupo.solo_el_reparto(state.personas)
 
     # "voy solo" → 1 persona. Nació para cursos PADI (Fase 3 causa A) y el owner
     # decidió extenderlo a CUALQUIER actividad (2026-07-22): la señal explícita
@@ -767,9 +765,7 @@ async def _extraction_phase_body(
     # "no"/"cartagena"). Si el reparto del grupo YA cubre a todo el mundo, no
     # puede quedar ningún acompañante sin actividad.
     if _group_allocation_fully_resolved(state):
-        state.needs_companion_activity = False
-        state.pending_companion_activity = None
-        state.pending_undecided_qty = None
+        state.personas = grupo.solo_el_reparto(state.personas)
 
     # ¿La extracción de `_understand()` ya cambió el tamaño/reparto del grupo
     # este turno? Cuenta como avance (ver `advanced`, abajo).

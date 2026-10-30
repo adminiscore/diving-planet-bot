@@ -319,3 +319,29 @@ def test_quien_escribe_ya_eligio_y_se_suma_otro():
     # con un total ya sabido, el mensaje puede nombrar solo a una parte: no se cuenta a nadie más
     nuevos, cambios = lg.completar({}, {"total_dicho": None, "personas": marido}, 3, "minicourse")
     assert "group_size" not in nuevos and "group_allocation" not in nuevos and not cambios
+
+
+def test_quien_escribe_nombrado_solo_tambien_conserva_lo_que_eligio():
+    """g19, medida de CALN-8 (2a): la mitad de las lecturas nombran también a quien escribe (cantidad 1, sin actividad)
+    junto al marido; lo que eligió antes sigue siendo suyo. En un «nosotros» («Somos 3», g10), no."""
+    lectura = {"total_dicho": None, "personas": [
+        _p(cita="my husband is certified, he'd like to dive"),
+        _p(quien="husband", certificado=True, actividad="certified_diving", cita="my husband is certified")]}
+    nuevos, _ = lg.completar({}, lectura, None, "minicourse")
+    assert nuevos["group_allocation"] == {"minicourse": 1, "certified_diving": 1}
+    nosotros = {"total_dicho": None, "personas": [_p(cantidad=3, cita="Somos 3")]}
+    nuevos, _ = lg.completar({"group_size": 3}, nosotros, None, "minicourse")
+    assert nuevos["group_allocation"] == {"undecided": 3}
+
+
+@pytest.mark.parametrize("certificado, escritor, reparto", [
+    (True, "certified_diving", {"certified_diving": 2}),    # «somos 2 buzos certificados y queremos bucear» (g05)
+    (None, "certified_diving", {"certified_diving": 1, "undecided": 1}),  # «mi hermana y yo»: de ella no se sabe
+    (True, "snorkel", {"snorkel": 1, "undecided": 1}),      # solo el buceo certificado sigue a la certificación
+])
+def test_quien_escribe_y_los_que_nombra_con_el_si_todos_estan_certificados(certificado, escritor, reparto):
+    """Medida de la rama contra PRE 0.38 (30-oct): con el lector que sabe qué es certified_diving, «somos 2/4 buzos
+    certificados y queremos bucear» quedaba como uno con buceo y el resto sin elegir (g05, g08)."""
+    lectura = {"total_dicho": None, "personas": [_p(cantidad=2, certificado=certificado, cita="somos 2")]}
+    nuevos, _ = lg.completar({"activity": escritor, "group_size": 2}, lectura)
+    assert nuevos["group_allocation"] == reparto

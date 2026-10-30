@@ -50,4 +50,8 @@ def test_la_pregunta_lo_muestra_con_su_texto(lang, texto):
 def test_la_respuesta_corta(mensaje, eleccion):
     st = _tres_amigos()
     core_routing._apply_short_answer(st, mensaje)
-    assert st.pending_companion_activity == eleccion
+    # CALN-8 (2b): con su cantidad sabida (1), la elección entra ya en el reparto
+    esperado = {"snorkel": 2} if eleccion is None else {"snorkel": 2 + (eleccion == "snorkel"),
+                                                         **({eleccion: 1} if eleccion != "snorkel" else {})}
+    assert st.detected_group_allocation == esperado and st.detected_group_size == 3
+    assert bool(st.pending_undecided_qty) is (eleccion is None)

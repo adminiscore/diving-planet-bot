@@ -18,6 +18,7 @@ from src.agents.conversational_core import (
     SLOT_COMPANION_ACTIVITY,
     SLOT_COMPANION_QTY,
     _companion_activity_options,
+    _elige_quien_falta,
     _has_pending_answer,
     _jev_dice_que_no_lo_dice,
     _known_field_values,
@@ -743,8 +744,7 @@ def _poner_actividad(intent, state: ConversationState, datos: dict, message: str
         # que el botón de esa pregunta: queda para fusionarse con los que no habían elegido. Si la respuesta corta ya la
         # repartió en este turno (no queda nadie sin elegir y está en el reparto), no se cuenta otra vez.
         if state.pending_undecided_qty and not state.pending_companion_activity:
-            state.pending_companion_activity = actividad
-            state.needs_companion_activity = False
+            _elige_quien_falta(state, actividad)
         logger.info(f"[EXTRACT][CALN2] {actividad!r} contesta qué hará quien no había elegido; la principal sigue")
         return
     if actividad and dom.by_id(actividad) is not None:
@@ -884,6 +884,18 @@ def _jev_seguro_de_otra_persona(state: ConversationState) -> bool:
     return bool(senales) and max(senales) >= _JEV_OTRA_PERSONA_MIN
 
 
+def _apunta_lector(state: ConversationState, como: str, cambios: int = 0) -> None:
+    """CALN-8 (lo delgado, el lector solo cuando hace falta): qué fue del lector del grupo en el turno (`lector`), si
+    cambió algo (`lector_cambia`), lo que dijo Jev de otra persona (`jev_otros`) y si ya se sabía que era un grupo
+    (`grupo_sabido`), en [TURN_METRICS], para decidir con una ronda cuándo hace falta lanzarlo. No cambia nada."""
+    from src import observability  # lazy
+
+    senales = [p for p in (getattr(state, "_jev_companion", None), getattr(state, "_jev_adds_person", None))
+               if isinstance(p, (int, float))]
+    observability.note_turn(lector=como, lector_cambia=cambios, jev_otros=round(max(senales), 2) if senales else None,
+                            grupo_sabido=bool((state.detected_group_size or 0) > 1 or state.personas))
+
+
 async def _con_el_lector_del_grupo(state: ConversationState, message: str, datos: dict | None) -> dict | None:
     """CALN-2 (flag `lector_grupo`, diseño docs/robustness/caln/diseno-caln2-lector-grupo.md): con el grupo por
     completar, los datos del extractor más lo que dejó vacío, de la lectura del grupo (la lanzada con el turno o, si no
@@ -903,6 +915,7 @@ async def _con_el_lector_del_grupo(state: ConversationState, message: str, datos
         if tarea is not None:
             tarea.cancel()
             logger.info("[EXTRACT][LECTOR] tirado: el grupo no queda por completar")
+            _apunta_lector(state, "tirado")
         return datos
     modo = "a la vez" if tarea is not None else "en serie"
     try:
@@ -910,13 +923,16 @@ async def _con_el_lector_del_grupo(state: ConversationState, message: str, datos
             message, history=list(state.history or []), lang=state.language or "es"))
     except (asyncio.CancelledError, Exception) as exc:  # noqa: BLE001
         logger.warning(f"[EXTRACT][LECTOR] falló, se sigue con el extractor: {exc!r}")
+        _apunta_lector(state, "fallo")
         return datos
     if not lectura:
         logger.info(f"[EXTRACT][LECTOR] sin lectura ({modo}): se sigue con el extractor")
+        _apunta_lector(state, "sin_lectura")
         return datos
     nuevos, cambios = lector_grupo.completar(datos, lectura, state.detected_group_size, state.detected_activity)
     logger.info(f"[EXTRACT][LECTOR] usado ({modo}, {lectura.get('segundos', 0):.2f} s, tokens "
                 f"{json.dumps(lectura.get('tokens'))}): {', '.join(cambios) or 'nada que rellenar'}")
+    _apunta_lector(state, "a_la_vez" if tarea is not None else "en_serie", len(cambios))
     return nuevos
 
 
@@ -1026,6 +1042,7 @@ def cancelar_extraccion_adelantada(state: ConversationState) -> None:
     if lector is not None:
         lector.cancel()
         logger.info("[EXTRACT][LECTOR] tirado: el turno no llegó a la extracción")
+        _apunta_lector(state, "tirado_sin_extraccion")
 
 
 def _jev_says_not_affirmed(state: ConversationState, field: str) -> bool:

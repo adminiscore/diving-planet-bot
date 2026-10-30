@@ -20,7 +20,7 @@ vacía:
 
 Lo que existe solo para tenerlos de acuerdo entre sí: el «circuit-breaker» `_group_allocation_fully_resolved` y sus
 3 sitios de limpieza (extraction ×2, slotfill_close), `_merge_pending_undecided`, `grupo.sin_decidir_aparte`, parte de
-`_take_undecided_members` y de `_add_or_ask_companion`. Unas 150 líneas, y los bucles de la pregunta del acompañante
+`_take_undecided_members` y de `_add_or_ask_companion`. Unas 150 líneas (medido: 2a +50 y 2b +26; la lógica se muda a la lista más de lo que se borra), y los bucles de la pregunta del acompañante
 vienen de ahí (el orden en que se vacían decide qué se pregunta).
 
 ## 2. Propuesta
@@ -40,8 +40,8 @@ lista, como ya es `detected_group_allocation`. Quien los lee no cambia; quien lo
 
 | Paso | Qué | Quita | Cómo se mide |
 |---|---|---|---|
-| 2a | Sin elegir: `pending_undecided_qty` y `needs_companion_activity` derivados | `_merge_pending_undecided`, `sin_decidir_aparte`, la limpieza de los 3 circuit-breakers para estos dos | suite + banco-grupo A/B + lectura |
-| 2b | Sin cantidad: `pending_companion_activity` derivado | el resto de los circuit-breakers | suite + banco-grupo A/B |
+| 2a | Sin elegir: `pending_undecided_qty` y `needs_companion_activity` derivados | 2 campos del estado y `sin_decidir_aparte` (el reparto ya deja fuera a quien no ha elegido); +50 líneas de src por las funciones de la lista, que 2b compensa | suite + banco-grupo A/B + lectura |
+| 2b | Sin cantidad: `pending_companion_activity` derivado; elegir es una función (`_elige_quien_falta`): con la cantidad sabida entra ya en el reparto | 1 campo, `_merge_pending_undecided` y sus 2 llamadas; las 3 limpiezas del circuit-breaker, de 3 líneas a 1. Balance: +26 líneas de src (las funciones de la lista) | suite + banco-grupo A/B |
 | 2c | Certificaciones por persona (`sin_decidir_certificados`, `acompanante_*`) | 3 campos sueltos | suite + banco-grupo + políticas (las notas del RAG los leen) |
 | 2d | `pending_companion_in_group` como entrada sin contar | el último campo de espera | suite + banco-grupo (g-«se suma») |
 

@@ -36,7 +36,7 @@ from src.agents.intent_detector import (
 )
 from src.agents.notes_extractor import extract_notes
 from src.domain import activities as dom
-from src.flows import cart_render, eligibility, grupo, moneda
+from src.flows import cart_render, eligibility, moneda
 from src.flows.state import ConversationState, Step
 from src.utils.number_words import number_alt
 from src.utils.text import strip_accents
@@ -192,7 +192,24 @@ def _companion_activity_options(state: ConversationState) -> list[str]:
         primero = certificados is True or state.acompanante_certificado_inactivo
         donde = 0 if primero else len(options) - ("companion" in options)
         options.insert(donde, "certified_diving")
+    if certificados is True:
+        # Sparring s29c (pareja de Barú, los dos Advanced): a quien ya está certificado no se le ofrecen el minicurso
+        # ni el curso Open Water, que son para quien no bucea.
+        options = [o for o in options if o not in ("minicourse", "padi_open_water")]
     return [o for o in options if dom.by_id(o) is not None]
+
+
+OTRA_COSA = "otra_cosa"  # el «No» de «¿también va a bucear?»: se le recomiendan las opciones
+
+
+def _pregunta_si_tambien_bucea(state: ConversationState) -> bool:
+    """CALN-8 (pareja Advanced, golden precio-desde-islas-vs-cartagena; decisión de Gadea #2475): quien escribe va a
+    bucear y quien falta por elegir está certificado (el lector del grupo). En vez de «¿un día o varios?» y las opciones,
+    una pregunta de sí o no: «¿la otra persona también va a bucear?». Sí = el buceo certificado; no = las opciones
+    (`sin_decidir_certificados` deja de ser True). Sin adivinar: «somos una pareja Advanced» y «mi esposa y yo somos
+    buzos, los niños quieren probar» (g12) se leen igual, y en las dos se pregunta."""
+    return (state.sin_decidir_certificados is True and state.detected_activity == "certified_diving"
+            and bool(state.pending_undecided_qty))
 
 
 # EX-FLUJO-1 (decisión de Gadea, 14-oct): las preguntas que se pueden dejar para antes del resumen si el cliente no
@@ -774,6 +791,18 @@ def _texto_de_la_pregunta(state: ConversationState, slot: str, *, reasking: bool
             f"How many people would that be for {label}? That way I can give you the exact plan. 😊"
         )
     if slot == SLOT_COMPANION_ACTIVITY:
+        if _pregunta_si_tambien_bucea(state):
+            varios = (state.pending_undecided_qty or 1) > 1
+            state.quick_replies = [
+                {"title": (f"Sí, también bucea{'n' if varios else ''}" if lang == "es" else "Yes, diving too"),
+                 "value": "certified_diving"},
+                {"title": "No, otra cosa" if lang == "es" else "No, something else", "value": OTRA_COSA},
+            ]
+            return (
+                ("¿Los demás también van a bucear? 🤿" if varios else "¿La otra persona también va a bucear? 🤿")
+                if lang == "es" else
+                ("Are the others diving too? 🤿" if varios else "Is the other person diving too? 🤿")
+            )
         # Dos pasos, mismo slot pendiente: sin saber si se quedan uno o varios días
         # no se puede recomendar bien (el Open Water necesita varios), así que se
         # pregunta primero, como la nacionalidad o la ubicación. Con ese dato, se
@@ -1334,20 +1363,20 @@ def _take_undecided_members(intent, state: ConversationState) -> None:
         if "group_size" not in intent.detected_fields:
             intent.detected_fields.append("group_size")
     intent.group_allocation = allocation or None
-    state.pending_undecided_qty = qty
-    state.needs_companion_activity = True
+    state.pending_undecided_qty = qty  # CALN-8 (2a): con ellos en la lista, se pregunta qué harán
 
 
-def _merge_pending_undecided(state: ConversationState) -> bool:
-    """Si ya se eligio actividad para las personas `undecided` del grupo, se
-    fusionan con su cantidad conocida (sin preguntar "¿cuantos serian?")."""
-    qty, activity = state.pending_undecided_qty, state.pending_companion_activity
-    if not (qty and activity):
-        return False
-    state.pending_undecided_qty = None  # antes de fusionar: el total ya no los cuenta aparte
-    _merge_companion_activity(state, activity, qty)
-    state.pending_companion_activity = None
-    return True
+def _elige_quien_falta(state: ConversationState, activity: str) -> None:
+    """El cliente elige qué hará quien no había elegido (el botón o el nombre de la opción, el resolutor o el
+    extractor). CALN-8 (2b): si se sabe cuántos son, entran ya en el reparto con su cantidad, sin preguntar «¿cuántos
+    serían?» (antes quedaba la elección aparte y `_merge_pending_undecided` la juntaba más tarde en el turno); si no,
+    queda elegida a falta de cuántos (`pending_companion_activity`)."""
+    cuantos = state.pending_undecided_qty
+    if cuantos:
+        state.pending_undecided_qty = None  # antes de juntar: el total ya no los cuenta aparte
+        _merge_companion_activity(state, activity, cuantos)
+    else:
+        state.pending_companion_activity = activity
 
 
 def _merge_companion_activity(state: ConversationState, activity: str, qty: int) -> None:
@@ -1362,14 +1391,13 @@ def _merge_companion_activity(state: ConversationState, activity: str, qty: int)
     known = state.detected_group_size or 1  # DEUDA-EXT2: sin total, quien escribe es uno (como `setdefault(main, … or 1)`)
     alloc[activity] = alloc.get(activity, 0) + qty
     state.detected_group_allocation = alloc
-    # Los que aún no han elegido (fuera del reparto) también van (CALN-2).
-    state.detected_group_size = sum(alloc.values()) + (state.pending_undecided_qty or 0)
+    # Los que aún no han elegido (fuera del reparto, CALN-2; CALN-8 2a: también si `activity` es «undecided») van.
+    state.detected_group_size = sum((state.detected_group_allocation or {}).values()) + (state.pending_undecided_qty or 0)
     if not main_act and known + qty > state.detected_group_size:
         # DEUDA-EXT (26-oct): sin actividad principal, los que ya se contaban se perdían: "two certified divers" + "my
         # wife will join us but she'll just snorkel" dejaba {snorkel: 1} y total 1 (banco-lat11 a3). El total suma a la
         # persona nueva; los demás esperan a la principal, que el bot pregunta (`booking._resto_a_la_principal`).
         state.detected_group_size = known + qty
-    grupo.sin_decidir_aparte(state)
     logger.info(f"[CORE] merged companion activity {activity} x{qty} -> alloc={alloc}")
 
 
@@ -1395,7 +1423,6 @@ def _apply_group_total(state: ConversationState, total: int) -> bool:
         moved = min(qty, known or qty)
         alloc[activity] = alloc.get(activity, 0) + moved
         state.detected_group_allocation = alloc
-        grupo.sin_decidir_aparte(state)
         logger.info(f"[CORE] companion {activity} x{moved} ya contado, sin principal -> alloc={alloc}")
         return True
     alloc.setdefault(main, known or qty)
@@ -1403,7 +1430,6 @@ def _apply_group_total(state: ConversationState, total: int) -> bool:
     alloc[main] -= moved
     alloc[activity] = alloc.get(activity, 0) + moved
     state.detected_group_allocation = {k: v for k, v in alloc.items() if v}
-    grupo.sin_decidir_aparte(state)
     logger.info(f"[CORE] companion {activity} x{moved} ya contado -> alloc={state.detected_group_allocation}")
     return True
 

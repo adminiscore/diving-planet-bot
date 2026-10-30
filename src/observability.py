@@ -338,6 +338,10 @@ def turn_metrics_line(conversation_id: str, facts: dict, started_at: str, second
         payload["aviso"] = facts["aviso"]  # lat-deuda: el aviso que el código puso al final de la respuesta
     if facts.get("regex"):
         payload["regex"] = facts["regex"]  # CALN-8 (6): las ramas del detector de regex que decidieron (marca_regex)
+    if facts.get("lector"):
+        # CALN-8 (lo delgado): qué fue del lector del grupo, si cambió algo, lo que dijo Jev de otra persona y si ya se
+        # sabía que era un grupo (`nucleo.extractor._apunta_lector`).
+        payload["lector"] = {k: facts.get(k) for k in ("lector", "lector_cambia", "jev_otros", "grupo_sabido")}
     if facts.get("rag_respaldo"):
         # 8-oct: respuesta del RAG con respaldo. "principal" (contestó antes de la espera), "gana_principal" /
         # "gana_respaldo" (saltó el respaldo y ganó ese), "error_principal" (falló el principal y contestó el respaldo).

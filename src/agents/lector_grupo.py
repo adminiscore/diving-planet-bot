@@ -15,6 +15,8 @@ import time
 from openai import AsyncOpenAI
 
 from src.agents.extractor_turno import (
+    BUCEO_CERTIFICADO_EN,
+    BUCEO_CERTIFICADO_ES,
     _actividades,
     _json_de_la_respuesta,
     cita_verificable,
@@ -34,7 +36,7 @@ Cada entrada es una persona o varias iguales («4 tenemos certificación» = una
 - quien: "cliente" para quien escribe, junto con quienes nombra con él en la misma frase («mi hermana y yo» = una entrada "cliente" con cantidad 2; «4 tenemos certificación» = cantidad 4); para los demás, cómo los nombra ("esposo", "niños", "amiga", "los otros dos"). Nadie va en dos entradas.
 - cantidad: cuántas personas son en esa entrada; null si el mensaje no lo dice («unos amigos», «mis primos»: no se sabe cuántos son).
 - certificado: true si el mensaje dice que tiene certificación de buceo (Open Water, Advanced, «buzo certificado»); false si dice que no la tiene, que no bucea o que nunca ha buceado; null si no lo dice. Llevar tiempo sin bucear («hace 3 años que no bucea») no dice que no esté certificado: null, o true si dice que lo está.
-- actividad: la que ELIGE, de esta lista (el id); null si no la elige. Si varios eligen juntos («mi hija y yo queremos el minicurso»), es la de todos ellos. Tener una certificación («soy Advanced», «tiene el Open Water», «es buzo certificado») es certificado true, NO una actividad ni un curso. Decir que no bucea, que nunca ha buceado o que quiere «probar algo» tampoco es elegir. companion solo si dice que NO se mete al agua y solo acompaña («no se mete al agua», «solo viene en la lancha»). No bucear no es acompañar: «mi amiga no bucea» = certificado false y actividad null (puede hacer snorkel).
+- actividad: la que ELIGE, de esta lista (el id); null si no la elige. Si varios eligen juntos («mi hija y yo queremos el minicurso»), es la de todos ellos. Tener una certificación («soy Advanced», «tiene el Open Water», «es buzo certificado») es certificado true, NO una actividad ni un curso. """ + BUCEO_CERTIFICADO_ES + """; si solo dice que es buzo o que está certificado, NO: actividad null. Decir que no bucea, que nunca ha buceado o que quiere «probar algo» tampoco es elegir. companion solo si dice que NO se mete al agua y solo acompaña («no se mete al agua», «solo viene en la lancha»). No bucear no es acompañar: «mi amiga no bucea» = certificado false y actividad null (puede hacer snorkel).
 {actividades}
 - edades: las que dice de esa entrada; [] si no las dice.
 - cita: el trozo del mensaje, copiado tal cual, que habla de esa entrada.
@@ -51,7 +53,7 @@ Each entry is one person or several alike ("4 of us are certified" = one entry w
 - quien: "cliente" for the writer, together with those they name with them in the same sentence ("my sister and I" = one "cliente" entry with quantity 2; "4 of us are certified" = quantity 4); for the others, how they name them ("husband", "kids", "friend", "the other two"). Nobody goes in two entries.
 - cantidad: how many people are in that entry; null if the message does not say ("some friends", "my cousins": we do not know how many).
 - certificado: true if the message says they have a diving certification (Open Water, Advanced, "certified diver"); false if it says they do not have one, do not dive or have never dived; null if it does not say. Not having dived for a while ("hasn't been diving in 3 years") does not say they are not certified: null, or true if it says they are.
-- actividad: the one they CHOOSE, from this list (the id); null if they do not choose. If several choose together ("my daughter and I want the mini course"), it is everyone's. Having a certification ("I'm Advanced", "she has her Open Water", "he's a certified diver") is certificado true, NOT an activity or a course. Saying they do not dive, that they have never dived or that they want to "try something" is not choosing either. companion only if it says they will NOT get in the water and only come along ("doesn't get in the water", "just comes on the boat"). Not diving is not coming along: "my friend doesn't dive" = certificado false and actividad null (they could snorkel).
+- actividad: the one they CHOOSE, from this list (the id); null if they do not choose. If several choose together ("my daughter and I want the mini course"), it is everyone's. Having a certification ("I'm Advanced", "she has her Open Water", "he's a certified diver") is certificado true, NOT an activity or a course. """ + BUCEO_CERTIFICADO_EN + """; if they only say they are divers or certified, NOT: actividad null. Saying they do not dive, that they have never dived or that they want to "try something" is not choosing either. companion only if it says they will NOT get in the water and only come along ("doesn't get in the water", "just comes on the boat"). Not diving is not coming along: "my friend doesn't dive" = certificado false and actividad null (they could snorkel).
 {actividades}
 - edades: the ages it gives for that entry; [] if none.
 - cita: the piece of the message, copied verbatim, that talks about that entry.
@@ -177,12 +179,18 @@ def completar(datos: dict, lectura: dict, total_sabido: int | None = None,
             and not isinstance(out.get("group_size"), int) and not isinstance(total_sabido, int)):
         # CALN-8 (g19): quien escribe ya eligió («I'd like to do the mini course») y el mensaje habla solo de otro («my
         # husband is certified, he'd like to dive»): quien escribe también va, con lo que eligió. Con un total dicho o
-        # ya sabido no se cuenta: el mensaje puede nombrar solo a una parte del grupo. Solo aquí vale lo elegido antes:
-        # en una entrada «cliente» del mensaje («Somos 3» tras «Queremos hacer el minicurso», g10) quien escribe puede
-        # ser un «nosotros», y darle lo elegido solo a uno deja a los demás sin decidir.
+        # ya sabido no se cuenta: el mensaje puede nombrar solo a una parte del grupo.
         personas = [{"quien": "cliente", "cantidad": 1, "certificado": None, "actividad": ya_eligio, "edades": [],
                      "cita": ""}, *personas]
         lectura = {**lectura, "personas": personas}
+
+    def suya(p: dict) -> str | None:
+        """Lo que hace quien escribe en una entrada «cliente» sin actividad: lo que da el extractor en este turno o, si
+        la entrada es solo él, lo que ya eligió antes (g19, cuando el lector lo nombra igual). En un «nosotros» («Somos
+        3» tras «Queremos hacer el minicurso», g10), lo elegido antes no es de uno solo: los demás quedarían sin decidir."""
+        if p["actividad"] is not None or p["quien"] != "cliente":
+            return None
+        return escritor or (actividad_sabida if p["cantidad"] == 1 else None)
     total_lector = total_de(lectura)
     # Un total de 1 solo porque el mensaje habla de quien escribe no dice que vaya solo: no se pone.
     if (not isinstance(out.get("group_size"), int) and not isinstance(total_sabido, int) and total_lector
@@ -199,9 +207,13 @@ def completar(datos: dict, lectura: dict, total_sabido: int | None = None,
         nuevo: dict = {}
         for p in personas:
             n, act = p["cantidad"], p["actividad"]
-            if act is None and p["quien"] == "cliente" and escritor:
-                nuevo[escritor] = nuevo.get(escritor, 0) + 1
-                n -= 1
+            if suya(p):
+                # La regla de negocio de quien escribe (certificado y quiere bucear = buceo certificado, la del extractor)
+                # vale para todos los que nombra con él si TODOS están certificados («somos 2 buzos certificados y
+                # queremos bucear», g05; la pareja Advanced del golden). Si de alguno no se sabe, solo para él.
+                juntos = n if suya(p) == "certified_diving" and p["certificado"] is True else 1
+                nuevo[suya(p)] = nuevo.get(suya(p), 0) + juntos
+                n -= juntos
             if n > 0:
                 nuevo[act or "undecided"] = nuevo.get(act or "undecided", 0) + n
                 if act is None:
@@ -209,7 +221,7 @@ def completar(datos: dict, lectura: dict, total_sabido: int | None = None,
         out["group_allocation"] = nuevo
         cambios.append(f"group_allocation={nuevo}")
     else:
-        sin_elegir = [p for p in personas if p["actividad"] is None and not (p["quien"] == "cliente" and escritor)]
+        sin_elegir = [p for p in personas if p["actividad"] is None and not suya(p)]
     if not isinstance(total, int) and any(p["quien"] != "cliente" and p["cantidad"] is None and p["actividad"] is None
                                           and p["certificado"] is not True for p in personas):
         # g26: «Vienen también unos amigos, no sé qué querrán hacer»: vienen otros y no se sabe cuántos ni qué harán. Se
