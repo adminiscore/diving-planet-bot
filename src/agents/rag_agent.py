@@ -415,6 +415,49 @@ def _is_confident(doc: dict) -> bool:
         return False
 
 
+def fichas_del_origen(docs: list[dict], origin: str | None, lang: str) -> list[dict]:
+    """CALN-9a (30-oct; diseño docs/robustness/caln/diseno-caln9-origen.md, #2621): con el origen del cliente sabido
+    ("cartagena" / "islas", el de `metadata.origin` de las fichas), al escritor solo le llega la ficha de SU origen de
+    cada plan. La búsqueda solo bajaba la del otro (rag-3, `penalizar_otro_origen`) y, si pasaba el umbral, llegaba:
+    «lancha Cartagena-Islas incluida» a quien ya está en las islas (precio-desde-islas-vs-cartagena). Si la del suyo ya
+    vino, la del otro sale; si no, se cambia por la del suyo, armada con la misma función que la de la base
+    (`catalog.service_fact_sheet`). Sin origen, sin pareja en el catálogo, o en documentos que no son fichas de servicio
+    (FAQ, políticas, el refresher), no cambia nada."""
+    if origin not in ("cartagena", "islas"):
+        return docs
+    from src.flows.catalog import RAW_SERVICES, service_fact_sheet  # lazy
+
+    sufijo = "_already_on_island"
+
+    def ficha(doc: dict) -> str | None:
+        metadata = doc.get("metadata") or {}
+        key = str(metadata.get("key") or "")
+        return metadata.get("service_id") if key.startswith("ficha:") and metadata.get("source") == "services" else None
+
+    presentes = {ficha(d) for d in docs if ficha(d)}
+    out, cambios = [], []
+    for doc in docs:
+        sid = ficha(doc)
+        otro = sid and (doc.get("metadata") or {}).get("origin") not in (None, origin)
+        if not otro:
+            out.append(doc)
+            continue
+        suyo = sid + sufijo if origin == "islas" else sid.removesuffix(sufijo)
+        if suyo in presentes:
+            cambios.append(f"{sid} fuera")
+            continue
+        if suyo not in RAW_SERVICES:
+            out.append(doc)
+            continue
+        metadata = {**(doc.get("metadata") or {}), "service_id": suyo, "key": f"ficha:{suyo}", "origin": origin}
+        out.append({**doc, "content": service_fact_sheet(suyo, lang), "metadata": metadata})
+        presentes.add(suyo)
+        cambios.append(f"{sid} -> {suyo}")
+    if cambios:
+        logger.info(f"[RAG][CALN9] fichas del origen {origin!r}: {', '.join(cambios)}")
+    return out
+
+
 async def _expand_with_parent_context(docs: list[dict], lang: str) -> list[dict]:
     parent_ids_needed: set[str] = set()
     existing_keys = {
@@ -1057,6 +1100,7 @@ async def rag_answer(
 
     # 3) Hay documentos suficientemente relevantes -> expandimos contexto padre y respondemos
     docs = await _expand_with_parent_context(docs, lang=lang)
+    docs = fichas_del_origen(docs, {"cartagena": "cartagena", "island": "islas"}.get(origin or ""), lang)  # CALN-9a
     context_parts = []
     sources = []
     for i, doc in enumerate(docs, 1):
