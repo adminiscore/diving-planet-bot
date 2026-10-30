@@ -201,12 +201,30 @@ def test_si_no_bucea_se_le_recomiendan_las_opciones(respuesta):
 
 
 @pytest.mark.asyncio
-async def test_la_pareja_de_buzos_se_pregunta_y_bucean_los_dos(extractor_dice, monkeypatch):
-    """La pareja de buzos que quiere bucear, leída como quien escribe con buceo y otra persona certificada sin elegir:
-    se pregunta si también bucea y, con el sí, el buceo es para los dos. Frase nuestra."""
+async def test_la_pareja_de_buzos_que_quiere_bucear_bucea_los_dos(extractor_dice, monkeypatch):
+    """La pareja de buzos que quiere bucear, leída por el lector como quien escribe ×2, certificados: la regla de negocio
+    de quien escribe (certificado y quiere bucear = buceo certificado) vale para los dos; no se pregunta nada. Frase
+    nuestra."""
     mensaje = "Hola, somos una pareja de buzos Advanced y queremos hacer unas inmersiones en Cartagena"
-    extractor_dice({mensaje: {"activity": "certified_diving", "is_certified": True, "group_size": 2}, "sí": {}})
+    extractor_dice({mensaje: {"activity": "certified_diving", "is_certified": True, "group_size": 2}})
     _con_el_lector(monkeypatch, [{**_persona("cliente", True, mensaje), "cantidad": 2}])
+    st = _estado()
+    await _turno(st, mensaje, {})
+    # todo el grupo hace la principal: el reparto puede no guardarse (es la actividad y el total, como lo lee el banco)
+    assert (st.detected_group_allocation or {"certified_diving": 2}) == {"certified_diving": 2}
+    assert st.detected_activity == "certified_diving" and st.detected_group_size == 2 and not st.pending_undecided_qty
+    assert st.core_pending_slot != core.SLOT_COMPANION_ACTIVITY
+
+
+@pytest.mark.asyncio
+async def test_el_acompanante_certificado_sin_elegir_se_pregunta_si_tambien_bucea(extractor_dice, monkeypatch):
+    """Quien escribe quiere bucear y nombra aparte a otra persona certificada que no dice qué hará: la pregunta de sí o
+    no y, con el sí, el buceo es para los dos. Frase nuestra."""
+    mensaje = "Quiero bucear, tengo el Advanced. Viene también mi pareja, que tiene el Open Water"
+    extractor_dice({mensaje: {"activity": "certified_diving", "is_certified": True, "group_size": 2}, "sí": {}})
+    _con_el_lector(monkeypatch, [{**_persona("cliente", True, "Quiero bucear, tengo el Advanced"),
+                                  "actividad": "certified_diving"},
+                                 _persona("pareja", True, "Viene también mi pareja, que tiene el Open Water")])
     st = _estado()
     await _turno(st, mensaje, {})
     assert st.core_pending_slot == core.SLOT_COMPANION_ACTIVITY and st.sin_decidir_certificados is True

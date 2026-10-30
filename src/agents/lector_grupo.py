@@ -208,8 +208,12 @@ def completar(datos: dict, lectura: dict, total_sabido: int | None = None,
         for p in personas:
             n, act = p["cantidad"], p["actividad"]
             if suya(p):
-                nuevo[suya(p)] = nuevo.get(suya(p), 0) + 1
-                n -= 1
+                # La regla de negocio de quien escribe (certificado y quiere bucear = buceo certificado, la del extractor)
+                # vale para todos los que nombra con él si TODOS están certificados («somos 2 buzos certificados y
+                # queremos bucear», g05; la pareja Advanced del golden). Si de alguno no se sabe, solo para él.
+                juntos = n if suya(p) == "certified_diving" and p["certificado"] is True else 1
+                nuevo[suya(p)] = nuevo.get(suya(p), 0) + juntos
+                n -= juntos
             if n > 0:
                 nuevo[act or "undecided"] = nuevo.get(act or "undecided", 0) + n
                 if act is None:
