@@ -244,6 +244,10 @@ def hechos(state: ConversationState, intenciones: list[str], actividades: list[s
                                                     _politica("booking_system_info", lang)) if p]
         if "edad" in pedidas:
             bloque["edad"] = {"minima": registro.min_age, "maxima": registro.max_age}
+            if registro.requires_certification:
+                # Sparring s30e (30-oct): «buzo con nietos de 9 y 13» → «el de 13 puede hacer buceo certificado»; la edad
+                # del buceo certificado (desde 10) no decía que además hay que estar certificado.
+                bloque["edad"]["solo_si_esta_certificado"] = True
         if "descuento" in pedidas:
             bloque["descuento"] = _descuentos(state, lang, _descuento_de_grupo(state, registro, lang))
             if getattr(state, "_un_descuento", False):
@@ -673,7 +677,7 @@ def faltan(answer: str, bloques: list[dict], intenciones: list[str]) -> list[str
                 perdidos += [precio[k] for k in ("online", "normal")
                              if precio.get(k) and re.sub(r"\D", "", precio[k]) not in cifras]
         if "edad" in intenciones:
-            perdidos += [f"edad {v}" for v in (b.get("edad") or {}).values() if v and str(v) not in cifras]
+            perdidos += [f"edad {v}" for v in (b.get("edad") or {}).values() if type(v) is int and str(v) not in cifras]
         if "enlace" in intenciones or "disponibilidad" in intenciones:
             perdidos += [u for u in (b.get("enlace") or {}).values()
                          if isinstance(u, str) and _url_sin_parametros(u) not in answer]
