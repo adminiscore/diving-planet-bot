@@ -25,3 +25,35 @@ def test_con_el_refresher_el_buceo_va_con_su_plan_de_un_dia():
     assert set(juntos) == {"refresher", "certified_diving"}
     assert "2 days" in solo["certified_diving"]["precio"]["cartagena"]["plan"]  # sin el refresher: el paquete de 2 días
     assert "(1 day)" in juntos["certified_diving"]["precio"]["cartagena"]["plan"]  # con él: el día de buceo que queda
+
+
+def test_preguntando_por_los_descuentos_la_pieza_no_quita_lo_que_dice_el_escritor_del_de_grupo(monkeypatch):
+    """s30a-02: «¿nos suman el de grupo, el de equipo y el online?» → la pieza quitaba la respuesta del escritor (sus
+    frases del de grupo) y quedaba «no puedo calcular…». Con la intención de descuento, la nota del de grupo que aplica
+    no va en la pieza; la de que no aplica (un curso PADI, r01) sí."""
+    import asyncio
+
+    from src.agents import supervisor
+    from src.flows import cotizar
+
+    aplica = "10% de descuento para grupos de 5 personas o más, que se suma al 10% de descuento online."
+    no_aplica = hechos._SIN_DESCUENTO_DE_GRUPO["es"].format(pct=10, n=5)
+    respuesta = "El de grupo y el de equipo propio no se suman entre sí: cada uno se suma solo al online, del grupo el 20 %."
+    piezas = []
+
+    async def rag(message, **kw):
+        return respuesta
+
+    def pieza(bloques, lang):
+        piezas.append([b.get("descuento_de_grupo") for b in bloques])
+        return "*Precios por persona*:\n• Salidas de Buceo: 178 USD · 197 USD"
+
+    monkeypatch.setattr(supervisor, "rag_answer", rag)
+    monkeypatch.setattr(cotizar, "pieza_de_precios", pieza)
+    st = ConversationState(conversation_id="s30a-2", language="es")
+    st._jev_pide_precio = True
+    for nota, queda in ((aplica, None), (no_aplica, no_aplica)):
+        bloques = [{"actividad": "certified_diving", "origen": "cartagena", "descuento_de_grupo": nota}]
+        salida = asyncio.run(redactor_hechos._con_el_escritor(st, "m", [], bloques, ["precio", "descuento"]))
+        assert piezas[-1] == [queda] and respuesta in salida
+    assert hechos.no_aplica_el_de_grupo(no_aplica) and not hechos.no_aplica_el_de_grupo(aplica)

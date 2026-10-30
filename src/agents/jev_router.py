@@ -566,13 +566,16 @@ PIDE_UN_DESCUENTO = "pide_un_descuento"
 # Umbral propio (sparring t3b, sonda ×4): «…Somos 6… ¿Cuánto nos sale y hay descuento de grupo?» da 0,60-0,68 y «¿cuánto
 # nos sale y hay algún descuento?» 0,05; sin pregunta de descuento, nunca más de 0,19 (16 mensajes ×4).
 PIDE_UN_DESCUENTO_MIN = 0.5
+# Sparring s30a-02 (30-oct): «¿nos suman el de grupo, el de equipo y el online?» nombra los descuentos por los que
+# pregunta, pero no era UNO: se pegaba la lista entera debajo de la respuesta. Cuenta igual si nombra varios.
 _PIDE_UN_DESCUENTO_Q = {
     "type": "noul",
     "instructions": (
-        "The customer asks about ONE specific discount: whether a particular discount applies to them or how it works "
-        "(whether the group discount applies to their group, whether bringing their own gear gives a discount, whether "
-        "Colombians or residents get a discount, how the online discount works). It is FALSE when they ask in general "
-        "which discounts there are or whether there is any discount, and when they do not ask about discounts."
+        "The customer asks about specific discounts they name (one or several): whether a particular discount applies "
+        "to them, how it works, or whether the ones they name add up (whether the group discount applies to their "
+        "group, whether bringing their own gear gives a discount, whether Colombians or residents get a discount, how "
+        "the online discount works, whether the group and own-gear discounts stack). It is FALSE when they ask in "
+        "general which discounts there are or whether there is any discount, and when they do not ask about discounts."
     ),
 }
 _PIDE_OTRA_COSA_CON_DESCUENTOS_Q = {

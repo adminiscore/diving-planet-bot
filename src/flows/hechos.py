@@ -406,6 +406,11 @@ _SIN_DESCUENTO_DE_GRUPO = {
 }
 
 
+def no_aplica_el_de_grupo(texto: str) -> bool:
+    """¿Es la nota de que el descuento de grupo no aplica (a un curso PADI)?"""
+    return any(texto.startswith(plantilla.split("{pct}")[0]) for plantilla in _SIN_DESCUENTO_DE_GRUPO.values())
+
+
 def _descuento_de_grupo(state: ConversationState, registro, lang: str) -> str | None:
     """Si el grupo llega al mínimo: el texto del descuento de grupo si el plan lo tiene, o que no aplica si es un curso.
     Sin grupo de ese tamaño, nada (los demás descuentos, solo si los pregunta)."""
