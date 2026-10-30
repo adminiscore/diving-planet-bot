@@ -26,9 +26,9 @@ import structlog
 
 from src.config import settings
 from src.domain.calendario import dias_cerrados
-from src.prompts.router import ROUTING_TOOL, con_dieta_no_es_medica
+from src.prompts.router import ROUTING_TOOL, con_lo_que_no_es_medico
 
-con_dieta_no_es_medica(ROUTING_TOOL)  # gen-3 (20-oct): el enrutador de respaldo, con la misma definición que Jev
+con_lo_que_no_es_medico(ROUTING_TOOL)  # gen-3 (20-oct): el enrutador de respaldo, con la misma definición que Jev
 
 logger = structlog.get_logger()
 _llm_logger = logging.getLogger("uvicorn.error")
@@ -36,10 +36,10 @@ _llm_logger = logging.getLogger("uvicorn.error")
 SENSITIVE_RULES = {
     "medical_questions": {
         "keywords": {
-            "asma", "embarazo", "embarazada", "corazón", "corazon", "cardíaco", "cardiaco",
+            "asma", "corazón", "corazon", "cardíaco", "cardiaco",
             "cirugía", "cirugia", "medicamento", "medicación", "medicacion", "diabetes",
             "epilepsia", "presión", "presion", "oído", "oido", "medical", "asthma",
-            "pregnant", "pregnancy", "heart", "surgery", "medication", "medicine",
+            "heart", "surgery", "medication", "medicine",
         },
         "es": "Para preguntas médicas específicas, es importante que hables con nuestro staff calificado para evaluar tu situación particular.",
         "en": "For specific medical questions, it's important that you speak with our qualified staff so they can assess your particular situation.",

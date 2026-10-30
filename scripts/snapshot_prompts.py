@@ -82,7 +82,7 @@ def _collect() -> dict[str, str]:
     add_json("router/routing_signals.tool", router.ROUTING_TOOL)
     # gen-3 (20-oct, flag `dieta_no_es_medica`): la misma definición con la exclusión de la dieta (sobre una copia).
     tool_dieta = json.loads(json.dumps(router.ROUTING_TOOL))
-    router.con_dieta_no_es_medica(tool_dieta)
+    router.con_lo_que_no_es_medico(tool_dieta)
     add_json("router/routing_signals.tool.dieta_no_es_medica", tool_dieta)
 
     # (lat-11 T6e, 26-oct: el tool y el prompt de la extracción del relleno `fill_gaps` se quitaron.)

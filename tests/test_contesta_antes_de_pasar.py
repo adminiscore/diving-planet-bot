@@ -85,10 +85,12 @@ def test_la_dieta_no_es_medica_en_la_definicion():
     from src.prompts import router
 
     tool = copy.deepcopy(router.ROUTING_TOOL)
-    router.con_dieta_no_es_medica(tool)
-    router.con_dieta_no_es_medica(tool)  # una sola vez aunque se llame desde Jev y desde el enrutador de respaldo
+    router.con_lo_que_no_es_medico(tool)
+    router.con_lo_que_no_es_medico(tool)  # una sola vez aunque se llame desde Jev y desde el enrutador de respaldo
     desc = tool["function"]["parameters"]["properties"]["sensitive_topic"]["description"]
-    assert desc.count("celiac") == 1 and desc.endswith("must be left 'none' here.")
+    assert desc.count("celiac") == 1 and "must be left 'none' here." in desc
+    # Sparring s30a (decisión de Gadea, 30-oct): el mareo y el embarazo tampoco son médicos (los contesta la base).
+    assert desc.count("SEASICKNESS") == 1 and desc.count("PREGNANCY") == 1
 
 
 async def test_el_rag_no_cree_que_el_pase_ya_esta_hecho(monkeypatch, rag):

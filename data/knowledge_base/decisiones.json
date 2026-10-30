@@ -84,6 +84,30 @@
       "en_el_bot": "src/flows/hechos.py (precio por origen)",
       "instruccion_es": "Origen y precio: si no sabes si el cliente sale desde Cartagena o ya está en las Islas del Rosario, da el precio de cada salida que tenga el plan, cada uno con su rótulo («desde Cartagena» y «si ya estás en las Islas del Rosario»), sin elegir uno ni esperar a saberlo. Si ya lo sabes, da solo el de su salida.",
       "instruccion_en": "Origin and price: if you don't know whether the customer leaves from Cartagena or is already on the Rosario Islands, give the price of each departure the plan has, each one labelled («from Cartagena» and «if you're already on the Rosario Islands»), without picking one or waiting to know it. If you already know it, give only theirs."
+    },
+    {
+      "id": "salud",
+      "fecha": "2026-10-30",
+      "texto": "El bot contesta lo que sabe la base sobre salud y solo pasa al equipo lo de verdad médico (una enfermedad o una medicación que puede afectar al buceo). El mareo en la lancha NO es médico: se contesta (desayunar ligero, pastillas para el mareo). El embarazo: no se bucea con botella (ni minicurso, ni buceo, ni cursos); el snorkel en superficie sí, con el visto bueno de su médico; quien la acompañe bucea con normalidad. Pasar al equipo un mareo o una pregunta de embarazo, o perder lo demás que preguntaba, NO es correcto.",
+      "en_el_bot": "src/prompts/router.py (lo que no es médico), policies.json (pregnancy, seasickness)",
+      "instruccion_es": "Salud: contesta lo que sabe la base (el mareo: desayunar ligero y pastillas; el embarazo: no se bucea con botella y el snorkel en superficie sí, con el visto bueno de su médico) y pasa al equipo solo una enfermedad o una medicación que pueda afectar al buceo.",
+      "instruccion_en": "Health: answer what the base knows (seasickness: a light breakfast and tablets; pregnancy: no scuba, surface snorkeling with her doctor's approval) and pass to the team only a condition or medication that may affect diving."
+    },
+    {
+      "id": "acompanante-y-grupo",
+      "fecha": "2026-10-30",
+      "texto": "El acompañante (quien va en la lancha sin bucear ni hacer snorkel) cuenta como una persona más del grupo para llegar a 5 y también tiene el descuento de grupo.",
+      "en_el_bot": "discounts.json (group_discount)",
+      "instruccion_es": "Acompañante y grupo: el acompañante cuenta para llegar a 5 personas y también tiene el descuento de grupo.",
+      "instruccion_en": "Companion and group: the companion counts towards the 5 people and also gets the group discount."
+    },
+    {
+      "id": "refresher",
+      "fecha": "2026-10-30",
+      "texto": "El refresher es el minicurso (entrenamiento en piscina y una inmersión con instructor), en su propio día; quien viene varios días hace el refresher el primero y bucea los demás. Describirlo como un repaso con el guía antes de bucear el mismo día NO es correcto.",
+      "en_el_bot": "activities.json (refresher), slotfill_close (la tarjeta)",
+      "instruccion_es": "Refresher: es el minicurso (piscina y una inmersión con instructor) en su propio día; con varios días, el refresher el primero y el buceo los demás.",
+      "instruccion_en": "Refresher: it is the mini-course (pool and one dive with an instructor) on its own day; with several days, the refresher first and diving the rest."
     }
   ]
 }

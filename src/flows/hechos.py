@@ -142,7 +142,10 @@ def hechos(state: ConversationState, intenciones: list[str], actividades: list[s
         if registro is None:
             continue
         detectado = getattr(state, "detected_service_id", None)
-        sin_plan = varios_dias and detectado in (None, dom.base_service_id(actividad))
+        # Con el refresher, uno de los días es el suyo: el buceo de los demás va con su plan base y los paquetes entre
+        # sus otros planes (sparring s30a).
+        con_refresher = actividad == "certified_diving" and "refresher" in actividades
+        sin_plan = varios_dias and not con_refresher and detectado in (None, dom.base_service_id(actividad))
         paquetes = {o: _paquetes_de_varios_dias(actividad, o) for o in origenes} if sin_plan else {}
         paquetes = {o: s for o, s in paquetes.items() if s}
         if paquetes:
@@ -394,13 +397,19 @@ def _descuentos(state: ConversationState, lang: str, grupo: str | None = None) -
 # CALN-3 (decisión 4 del 27-oct, CALN3-Q04): con el precio, el de grupo solo cuando aplica a ESTE grupo y plan. A 5
 # españoles que piden el Open Water se les ofrecía «10 % para grupos de 5 o más… no aplica a cursos PADI. ¿Te paso con un
 # asesor para aplicarlo?»: los descuentos iban todos en el contexto sin decir cuál aplica. A quién aplica, de la base
-# (`applicability`: buceo recreativo, minicurso y snorkel); los cursos no.
-_CON_DESCUENTO_DE_GRUPO = {"cert", "beginner", "snorkel"}
+# (`applicability`: buceo recreativo, minicurso y snorkel); los cursos no. El acompañante también (decisión de Gadea,
+# 30-oct: cuenta para llegar a 5 y tiene el descuento).
+_CON_DESCUENTO_DE_GRUPO = {"cert", "beginner", "snorkel", "companion"}
 # Texto para el cliente: arq-7b lo pega tal cual si el escritor se lo deja (con la intención `descuento`).
 _SIN_DESCUENTO_DE_GRUPO = {
     "es": "El descuento de grupo ({pct} % desde {n} personas) no aplica a los cursos PADI, así que este curso no lo tiene.",
     "en": "The group discount ({pct}% from {n} people) does not apply to PADI courses, so this course doesn't have it.",
 }
+
+
+def no_aplica_el_de_grupo(texto: str) -> bool:
+    """¿Es la nota de que el descuento de grupo no aplica (a un curso PADI)?"""
+    return any(texto.startswith(plantilla.split("{pct}")[0]) for plantilla in _SIN_DESCUENTO_DE_GRUPO.values())
 
 
 def _descuento_de_grupo(state: ConversationState, registro, lang: str) -> str | None:

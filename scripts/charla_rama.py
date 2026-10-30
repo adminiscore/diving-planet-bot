@@ -79,13 +79,13 @@ def _nueva(nombre: str) -> None:
     print(f"charla {nombre} -> {f} (rama {_git('rev-parse', '--abbrev-ref', 'HEAD')}, {_git('rev-parse', '--short', 'HEAD')})")
 
 
-def _di(nombre: str, mensaje: str) -> None:
+def _di(nombre: str, mensaje: str, entorno: dict[str, str] | None = None) -> None:
     from scripts.pre_access import docker_python, pre_ssh, subir_codigo_local
 
     filas = _filas(nombre)
     estado = filas[-1]["guardado"] if filas else None
     script = (f"CONV = {('charla-rama-' + nombre)!r}\nMENSAJE = {mensaje!r}\nESTADO = {estado!r}\n{_REMOTO}")
-    r = pre_ssh(docker_python({}, codigo_local=subir_codigo_local()), input_text=script, timeout=300)
+    r = pre_ssh(docker_python(entorno or {}, codigo_local=subir_codigo_local()), input_text=script, timeout=300)
     salida = next((json.loads(ln) for ln in (r.stdout or "").splitlines() if ln.startswith("{")), None)
     if salida is None:
         raise SystemExit("el turno no devolvió nada; stderr de PRE:\n" + (r.stderr or "")[-2000:])
@@ -110,11 +110,14 @@ def main() -> None:
         p.add_argument("--nombre", required=True)
         if accion == "di":
             p.add_argument("mensaje")
+            p.add_argument("--env", action="append", default=[], metavar="CLAVE=VALOR",
+                           help="variable de entorno SOLO en este turno (p. ej. RAG_KB_ESQUEMA=kb_v2_gadea: la base curada"
+                                " de la rama, cargada con `scripts.kb_v2 --esquema`)")
     args = ap.parse_args()
     if args.accion == "nueva":
         _nueva(args.nombre)
     elif args.accion == "di":
-        _di(args.nombre, args.mensaje)
+        _di(args.nombre, args.mensaje, dict(e.split("=", 1) for e in args.env))
     else:
         _ver(args.nombre)
 

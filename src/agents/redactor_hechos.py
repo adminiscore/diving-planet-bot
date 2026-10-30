@@ -109,6 +109,11 @@ def _actividades(state: ConversationState, datos: dict) -> list[str]:
     repartos = (state.detected_group_allocation or {}, datos.get("group_allocation") or {})
     del_grupo = list(dict.fromkeys(a for reparto in repartos for a, n in reparto.items()
                                    if n and a != una and dom.by_id(a) is not None and not dom.by_id(a).generic))
+    if una == "refresher" and state.detected_duration == "multi_day" and "certified_diving" not in del_grupo:
+        # Sparring s30a (30-oct): el buzo que lleva 3 años sin bucear y viene VARIOS días hace el refresher el primero y
+        # bucea los demás. «¿El refresher el día 1 y buceo normal el día 2?» llevaba solo los hechos del refresher y el
+        # escritor contestaba «no puedo confirmar si puedes bucear otro día» (en todas las ramas, ~1 de 4).
+        del_grupo.append("certified_diving")
     return [una, *del_grupo]
 
 
@@ -386,7 +391,15 @@ async def _con_el_escritor(state: ConversationState, message: str, history: list
     # pide precio en ESTE mensaje (Jev) o si ya se sabe el origen (el caso de arq-8f: el mensaje que da el origen
     # pregunta otra cosa).
     pide_ahora = getattr(state, "_jev_pide_precio", None) is True or any(b.get("origen") for b in bloques)
-    pieza = cotizar.pieza_de_precios(bloques, lang) if "precio" in intenciones and pide_ahora else None
+    de_la_pieza = bloques
+    if "descuento" in intenciones:
+        # Sparring s30a-02: si además pregunta por los descuentos, la respuesta es del escritor, que tiene sus hechos. Con
+        # la nota del de grupo en la pieza, `con_la_pieza` le quitaba esas frases («¿se suman el de grupo y el de
+        # equipo?» → «no puedo calcular…»). Se queda en la pieza solo la de que no aplica (r01: el escritor decía que se
+        # suma al online a un curso PADI).
+        de_la_pieza = [{k: v for k, v in b.items()
+                        if k != "descuento_de_grupo" or hechos_mod.no_aplica_el_de_grupo(v)} for b in bloques]
+    pieza = cotizar.pieza_de_precios(de_la_pieza, lang) if "precio" in intenciones and pide_ahora else None
     if pieza:
         # CALN-3 paso 3 «A»: el escritor no escribe importes; los pone el código debajo y no se le exigen.
         entradas.update(precios_por_codigo=True, hechos_bloques=(bloques, [i for i in intenciones if i != "precio"]))

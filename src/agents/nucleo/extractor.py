@@ -832,8 +832,37 @@ def lanzar_extraccion_adelantada(state: ConversationState, message: str) -> None
         # instrucciones van en el idioma del detector de siempre; el extractor lo corrige si se equivoca (cal-40,
         # "Hola! My partner and I…", el detector dice "es" y el extractor "en" igualmente).
         lang = _detect_language_from_text(message) or lang
-    state._extraccion_adelantada = asyncio.create_task(
-        extraer_turno(message, history=list(state.history or []), sabido=sabido, lang=lang))
+    historia = list(state.history or [])
+    if state.is_colombian is None and not state.mixed_nationality_notice:
+        lectura = _nacionalidad_en_dos_lecturas(message, historia, sabido, lang)
+    else:
+        lectura = extraer_turno(message, history=historia, sabido=sabido, lang=lang)
+    state._extraccion_adelantada = asyncio.create_task(lectura)
+
+
+async def _nacionalidad_en_dos_lecturas(message: str, historia: list[dict], sabido: dict, lang: str) -> dict | None:
+    """CALN-10b (decisión de Gadea, 30-oct): mientras no se sabe si es colombiano, la nacionalidad solo vale si la
+    confirma una segunda lectura; si no, se queda sin dato y el bot pregunta. Haiku lee «soy de Cali» o el residente
+    casi al 50 %: con una lectura, 2,5 % de nacionalidades equivocadas (la moneda que no es) y con dos que coinciden, 0;
+    las preguntas, 5,6 → 11,8 % (`docs/robustness/caln/estudio-caln10-lecturas.md`). La segunda va solo si la primera
+    trae la nacionalidad (Álvaro, #2649): si no la trae, la segunda no podría hacer que valga; las dos a la vez eran
+    +0,86 llamadas por turno (mini-ronda c10b) por el turno que la dice. Los demás campos, de la primera; si la segunda
+    falla, vale la primera, como antes."""
+    from src.agents.extractor_turno import extraer_turno  # lazy
+
+    datos = await extraer_turno(message, history=historia, sabido=sabido, lang=lang)
+    if not datos or datos.get("is_colombian") is None:
+        return datos
+    try:
+        otra = await extraer_turno(message, history=historia, sabido=sabido, lang=lang)
+    except Exception as exc:  # noqa: BLE001 — sin la segunda, la primera como antes
+        logger.warning(f"[EXTRACT][CALN10B] la segunda lectura falló, vale la primera: {exc!r}")
+        return datos
+    if isinstance(otra, dict) and otra.get("is_colombian") != datos["is_colombian"]:
+        logger.info(f"[EXTRACT][CALN10B] la nacionalidad no coincide en las dos lecturas "
+                    f"({datos['is_colombian']} / {otra.get('is_colombian')}): sin dato, se pregunta")
+        datos = {k: v for k, v in datos.items() if k != "is_colombian"}
+    return datos
 
 
 async def datos_del_extractor(state: ConversationState, message: str) -> dict | None:
