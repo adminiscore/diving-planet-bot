@@ -80,6 +80,8 @@ Las doce normas, con su porqué, están en el documento.
   **Álvaro (#2677):** sus sondas directas a Haiku (~160 llamadas, de 14:45 a 14:48) corrieron durante el lado B
   (14:44-14:48): pudieron empeorarlo (los respaldos empiezan a las 14:44, antes). Norma nueva del equipo: nada de
   llamadas directas a Haiku mientras alguien mide en PRE. Repetir la mini de la 0.41 sin nada más corriendo.
+  **Juez de esa mini (NO VALE, el lado B es del respaldo):** A (PRE 0.40) 19 fallos, 28/43 sin fallos; B 24 fallos,
+  22/43. Con el extractor en gpt-5.4-mini en 185 de 242 llamadas, B no mide la 0.41: no se usa para decidir.
 - **Meta de salida de CALN (Gadea, 30-oct):** dos tandas seguidas de sparring sin graves + oculto ≥ 90 % + bancos. Van
   **0 de 2**: s30a (3 graves, arreglados en 0.40) y s30e (3 graves, ya en PRE; 2 arreglados en la 0.41; el venezolano con
   cédula dentro del «grupo mixto» sigue abierto: la frase del extractor se midió ×10 y se descartó).
