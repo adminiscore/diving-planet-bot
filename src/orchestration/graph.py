@@ -155,7 +155,10 @@ async def _router_node(state: BotState) -> dict:
     # señales, para que todas las rutas contesten en el mismo (antes lo sensible, el contacto, la edad o el buceo
     # adaptado decidían cada uno a su manera y sin G-10).
 
-    from src.agents.nucleo.extractor import lanzar_lector_si_hace_falta
+    from src.agents.nucleo.extractor import (
+        lanzar_lector_si_hace_falta,
+        lanzar_segunda_nacionalidad_si_hace_falta,
+    )
 
     abre = not conv.detected_language and not msg_lower.isdigit() and conv.step in (Step.WELCOME, Step.LANGUAGE)
     if abre:
@@ -167,6 +170,7 @@ async def _router_node(state: BotState) -> dict:
             # y el turno esperaba ~1,5 s más (11 de 23 turnos útiles).
             senales = await _senales()
             lanzar_lector_si_hace_falta(conv, message, senales)
+            lanzar_segunda_nacionalidad_si_hace_falta(conv, senales)  # CALN-10b: igual, en cuanto contesta Jev
             return senales
 
         if signals is None:
@@ -185,6 +189,7 @@ async def _router_node(state: BotState) -> dict:
     conv._un_descuento = signals.get(PIDE_UN_DESCUENTO) is True  # CALN3-Q05: pregunta por un descuento concreto
     # CALN-8 (lo delgado): el lector del grupo sale ahora, con lo que dice Jev, y solo si puede hacer falta.
     lanzar_lector_si_hace_falta(conv, message, signals)
+    lanzar_segunda_nacionalidad_si_hace_falta(conv, signals)  # CALN-10b: la 2.ª lectura de la nacionalidad, ya
     if conv._intenciones and conv._otra_cosa is False:
         # lat-1 (24-oct, fase LAT; Gadea #1731): el mensaje solo pide cosas de la tabla y lo contesta el redactor de
         # hechos, así que la respuesta adelantada del RAG se tira: se cancela ya, antes de que escriba y se revise
