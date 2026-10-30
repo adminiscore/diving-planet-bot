@@ -57,3 +57,19 @@ def test_preguntando_por_los_descuentos_la_pieza_no_quita_lo_que_dice_el_escrito
         salida = asyncio.run(redactor_hechos._con_el_escritor(st, "m", [], bloques, ["precio", "descuento"]))
         assert piezas[-1] == [queda] and respuesta in salida
     assert hechos.no_aplica_el_de_grupo(no_aplica) and not hechos.no_aplica_el_de_grupo(aplica)
+
+
+def test_las_politicas_del_30_oct_las_lee_el_bot():
+    """Decisiones de Gadea (30-oct): el embarazo, el mareo y la factura, en el bloque que leen el bot y la base curada."""
+    from src.domain.politicas import politica
+
+    for clave, marca in (("pregnancy", "snorkel"), ("seasickness", "desayuna ligero"), ("invoice", "factura")):
+        assert marca in politica(clave, "es") and politica(clave, "en")
+
+
+def test_el_acompanante_tiene_el_descuento_de_grupo():
+    from src.domain import activities as dom
+
+    st = ConversationState(conversation_id="s30a-acomp", language="es")
+    st.detected_group_size = 5
+    assert hechos._descuento_de_grupo(st, dom.by_id("companion"), "es")
