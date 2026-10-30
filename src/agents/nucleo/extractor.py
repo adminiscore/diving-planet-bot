@@ -831,7 +831,6 @@ def lanzar_extraccion_adelantada(state: ConversationState, message: str) -> None
         lang = _detect_language_from_text(message) or lang
     state._extraccion_adelantada = asyncio.create_task(
         extraer_turno(message, history=list(state.history or []), sabido=sabido, lang=lang))
-    lanzar_lector_grupo(state, message, lang)
 
 
 async def datos_del_extractor(state: ConversationState, message: str) -> dict | None:
@@ -859,18 +858,35 @@ async def datos_del_extractor(state: ConversationState, message: str) -> dict | 
     return datos  # None = la llamada falló (degradado)
 
 
+# CALN-8 (lo delgado): con qué confianza de Jev en que el mensaje mete a otra persona sale el lector del grupo. En la
+# ronda lector-B (30-oct, 50 diálogos visibles, 205 turnos) los 17 turnos en que rellenó algo tenían Jev ≥ 0,79 (14) o
+# el grupo ya sabido (3); con 0,5 queda margen y no se pierde ninguno.
+_LECTOR_JEV_MIN = 0.5
+
+
+def lanzar_lector_si_hace_falta(state: ConversationState, message: str, senales: dict) -> None:
+    """CALN-8 (lo delgado): el lector del grupo sale en cuanto contesta Jev (en el grafo, antes de la ruta) y solo si
+    puede hacer falta: el grupo ya se sabía o Jev dice que el mensaje mete a otra persona (≥ `_LECTOR_JEV_MIN`). Antes
+    salía con el turno, en 88 de cada 100, y se tiraba en 180 de 181 (ronda lector-B, 30-oct): −58 llamadas por 100
+    turnos y ningún turno útil perdido; los que lo usan esperan +0,0 s p50 / +0,3 s p95 (el lector tarda menos que el
+    extractor). Si no salió y al final hace falta, `_con_el_lector_del_grupo` lo pide en serie, como siempre."""
+    jev = [v for v in (senales.get("companion_joins"), senales.get("adds_person")) if isinstance(v, (int, float))]
+    if (state.detected_group_size or 0) > 1 or state.personas or (jev and max(jev) >= _LECTOR_JEV_MIN):
+        lanzar_lector_grupo(state, message, state.language or "es")
+
+
 def lanzar_lector_grupo(state: ConversationState, message: str, lang: str) -> None:
-    """CALN-2 (flag `lector_grupo`): el lector del grupo arranca con el turno, a la vez que el extractor (decisión de
-    Gadea, #2314). Lanzado con la señal de Jev salía 1,5 s después y hacía esperar al turno p50 1,1 s / p95 1,7 s en los
-    turnos que lo usaban; con el turno, ~0 (5 de 136), a cambio de una llamada barata en paralelo en cada turno (~0,011 $
-    por 100 turnos). `datos_del_extractor` decide si se usa (el grupo queda por completar) o se tira."""
+    """CALN-2 (flag `lector_grupo`): lanza el lector del grupo, a la vez que el extractor sigue (#2314). Hasta CALN-8
+    salía con el turno; lanzado con la señal de Jev dentro de la ruta salía 1,5 s después y hacía esperar p50 1,1 s; ahora
+    sale en el grafo, en cuanto contesta Jev (`lanzar_lector_si_hace_falta`). `datos_del_extractor` decide si se usa (el
+    grupo queda por completar) o se tira."""
     state._lector_grupo = None
     if not settings.lector_grupo:
         return
     from src.agents.lector_grupo import leer_grupo  # lazy
 
     state._lector_grupo = asyncio.create_task(leer_grupo(message, history=list(state.history or []), lang=lang))
-    logger.info("[EXTRACT][LECTOR] lanzado con el turno")
+    logger.info("[EXTRACT][LECTOR] lanzado con Jev")
 
 
 # CALN-8 (28-oct): la confianza de Jev en que el mensaje mete a otra persona para usar el lector aunque el extractor no

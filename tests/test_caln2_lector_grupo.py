@@ -179,8 +179,9 @@ async def test_lanzado_con_jev_se_tira_si_no_hace_falta(_lector_falso):
 
 
 @pytest.mark.asyncio
-async def test_sale_con_el_turno_a_la_vez_que_el_extractor(monkeypatch, _lector_falso):
-    """Decisión de Gadea (#2314): con el turno, no tras la señal de Jev (salía 1,5 s después y hacía esperar)."""
+async def test_sale_con_jev_y_solo_si_puede_hacer_falta(monkeypatch, _lector_falso):
+    """CALN-8 (lo delgado, ronda lector-B del 30-oct): ya no sale con el turno (88 de cada 100, tirado en 180 de 181),
+    sino en cuanto contesta Jev y solo si el grupo ya se sabía o Jev dice que se suma otra persona (≥ 0,5)."""
     from src.agents import extractor_turno
     from src.flows.state import ConversationState
 
@@ -190,13 +191,18 @@ async def test_sale_con_el_turno_a_la_vez_que_el_extractor(monkeypatch, _lector_
         return {}
 
     monkeypatch.setattr(extractor_turno, "extraer_turno", _extraer)
-    st = ConversationState(conversation_id="lector-con-el-turno")
+    st = ConversationState(conversation_id="lector-con-jev", language="es")
     nx.lanzar_extraccion_adelantada(st, MADRE)
-    assert st._extraccion_adelantada is not None and st._lector_grupo is not None
+    assert st._extraccion_adelantada is not None and st._lector_grupo is None  # el extractor sí, con el turno
+    nx.lanzar_lector_si_hace_falta(st, MADRE, {"companion_joins": 0.1, "adds_person": 0.2})
+    assert st._lector_grupo is None  # Jev no ve a nadie más y no se sabía que fuera un grupo
+    nx.lanzar_lector_si_hace_falta(st, MADRE, {"companion_joins": 0.93})
     await st._lector_grupo
     assert llamadas == [MADRE]
-    nx.lanzar_extraccion_adelantada(st, "2")  # una cifra sola: ni extractor ni lector
-    assert st._lector_grupo is None
+    st._lector_grupo, st.detected_group_size = None, 3
+    nx.lanzar_lector_si_hace_falta(st, "desde Cartagena", {})  # el grupo ya se sabía
+    assert st._lector_grupo is not None
+    await st._lector_grupo
 
 
 @pytest.mark.asyncio

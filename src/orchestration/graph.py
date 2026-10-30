@@ -173,6 +173,10 @@ async def _router_node(state: BotState) -> dict:
     conv._intenciones = intenciones_del_turno(conv, signals)
     conv._otra_cosa = signals.get(PIDE_OTRA_COSA)  # ARQ-1d: None (Jev calla) cuenta como que sí trae algo más
     conv._un_descuento = signals.get(PIDE_UN_DESCUENTO) is True  # CALN3-Q05: pregunta por un descuento concreto
+    # CALN-8 (lo delgado): el lector del grupo sale ahora, con lo que dice Jev, y solo si puede hacer falta.
+    from src.agents.nucleo.extractor import lanzar_lector_si_hace_falta
+
+    lanzar_lector_si_hace_falta(conv, message, signals)
     if conv._intenciones and conv._otra_cosa is False:
         # lat-1 (24-oct, fase LAT; Gadea #1731): el mensaje solo pide cosas de la tabla y lo contesta el redactor de
         # hechos, así que la respuesta adelantada del RAG se tira: se cancela ya, antes de que escriba y se revise
