@@ -410,3 +410,29 @@ async def test_los_dos_que_faltaban_eligen_en_el_turno_entero(extractor_dice, mo
     await route_message(st, PADRES)
     assert st.detected_group_allocation == {"snorkel": 2, "companion": 1, "minicourse": 2}
     assert st.detected_group_size == 5 and not st.pending_undecided_qty and not st.needs_companion_activity
+
+
+@pytest.mark.asyncio
+async def test_en_el_primer_mensaje_sale_una_vez_con_el_idioma_del_detector(monkeypatch):
+    """CALN-8 (lo delgado, medida frente a la 0.39): en la apertura sale en cuanto contesta Jev, sin esperar al idioma
+    decidido (que espera al extractor), con el del detector; y no sale dos veces en el mismo turno."""
+    from src.agents.nucleo import extractor as nx
+    from src.config import settings
+    from src.flows.state import ConversationState
+
+    idiomas = []
+
+    async def _leer(mensaje, *, lang="es", **_kw):
+        idiomas.append(lang)
+        return B5
+
+    monkeypatch.setattr(lg, "leer_grupo", _leer)
+    monkeypatch.setattr(settings, "lector_grupo", True)
+    st = ConversationState(conversation_id="lector-apertura")
+    mensaje = "Hi! We're a family of four, my husband and I and our two kids"
+    nx.lanzar_lector_si_hace_falta(st, mensaje, {"companion_joins": 0.9})
+    primera = st._lector_grupo
+    nx.lanzar_lector_si_hace_falta(st, mensaje, {"companion_joins": 0.9})
+    assert st._lector_grupo is primera
+    await primera
+    assert idiomas == ["en"]

@@ -155,12 +155,22 @@ async def _router_node(state: BotState) -> dict:
     # señales, para que todas las rutas contesten en el mismo (antes lo sensible, el contacto, la edad o el buceo
     # adaptado decidían cada uno a su manera y sin G-10).
 
+    from src.agents.nucleo.extractor import lanzar_lector_si_hace_falta
+
     abre = not conv.detected_language and not msg_lower.isdigit() and conv.step in (Step.WELCOME, Step.LANGUAGE)
     if abre:
         from src.agents.nucleo.setup import idioma_de_apertura
 
+        async def _senales_y_lector() -> dict:
+            # CALN-8 (lo delgado, medida frente a la 0.39): el lector sale en cuanto contesta Jev, sin esperar al idioma
+            # de la apertura, que espera al extractor (~2 s): en los primeros mensajes de grupo salía tras el extractor
+            # y el turno esperaba ~1,5 s más (11 de 23 turnos útiles).
+            senales = await _senales()
+            lanzar_lector_si_hace_falta(conv, message, senales)
+            return senales
+
         if signals is None:
-            signals, _ = await asyncio.gather(_senales(), idioma_de_apertura(conv, message))
+            signals, _ = await asyncio.gather(_senales_y_lector(), idioma_de_apertura(conv, message))
         else:
             await idioma_de_apertura(conv, message)
         logger.info(f"[GRAPH][IDIOMA] apertura en {conv.language!r}")
@@ -174,8 +184,6 @@ async def _router_node(state: BotState) -> dict:
     conv._otra_cosa = signals.get(PIDE_OTRA_COSA)  # ARQ-1d: None (Jev calla) cuenta como que sí trae algo más
     conv._un_descuento = signals.get(PIDE_UN_DESCUENTO) is True  # CALN3-Q05: pregunta por un descuento concreto
     # CALN-8 (lo delgado): el lector del grupo sale ahora, con lo que dice Jev, y solo si puede hacer falta.
-    from src.agents.nucleo.extractor import lanzar_lector_si_hace_falta
-
     lanzar_lector_si_hace_falta(conv, message, signals)
     if conv._intenciones and conv._otra_cosa is False:
         # lat-1 (24-oct, fase LAT; Gadea #1731): el mensaje solo pide cosas de la tabla y lo contesta el redactor de

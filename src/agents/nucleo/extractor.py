@@ -872,10 +872,19 @@ def lanzar_lector_si_hace_falta(state: ConversationState, message: str, senales:
     puede hacer falta: el grupo ya se sabía o Jev dice que el mensaje mete a otra persona (≥ `_LECTOR_JEV_MIN`). Antes
     salía con el turno, en 88 de cada 100, y se tiraba en 180 de 181 (ronda lector-B, 30-oct): −58 llamadas por 100
     turnos y ningún turno útil perdido; los que lo usan esperan +0,0 s p50 / +0,3 s p95 (el lector tarda menos que el
-    extractor). Si no salió y al final hace falta, `_con_el_lector_del_grupo` lo pide en serie, como siempre."""
+    extractor). Si no salió y al final hace falta, `_con_el_lector_del_grupo` lo pide en serie, como siempre. Una vez por
+    turno (`lanzar_extraccion_adelantada` lo deja a None al empezar). En el primer mensaje el idioma aún no está decidido:
+    va el del detector, como el extractor adelantado."""
+    if getattr(state, "_lector_grupo", None) is not None:
+        return
     jev = [v for v in (senales.get("companion_joins"), senales.get("adds_person")) if isinstance(v, (int, float))]
     if (state.detected_group_size or 0) > 1 or state.personas or (jev and max(jev) >= _LECTOR_JEV_MIN):
-        lanzar_lector_grupo(state, message, state.language or "es")
+        lang = state.language or "es"
+        if not state.history:
+            from src.flows.catalog import _detect_language_from_text  # lazy
+
+            lang = _detect_language_from_text(message) or lang
+        lanzar_lector_grupo(state, message, lang)
 
 
 def lanzar_lector_grupo(state: ConversationState, message: str, lang: str) -> None:
