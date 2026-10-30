@@ -156,22 +156,67 @@ def _importe(usd: dict | None, cop: dict | None) -> str:
     return texto
 
 
+# CALN-9b (30-oct): sin el origen, la pieza lleva los dos y el escritor decía lo de uno sin rótulo («El almuerzo no está
+# incluido» encima de los precios desde Cartagena, que sí lo incluyen: precio-desde-islas t5, 2/2 en PRE 0.40; en las
+# rondas del 30-oct, el almuerzo sin rótulo en el 12-16 % de los turnos con los dos orígenes). Bajo cada rótulo va lo
+# que cambia: cómo se llega y, si todos los planes de la lista coinciden en su ficha, el almuerzo.
+_LO_QUE_CAMBIA = {
+    "es": {"cartagena": "lancha desde el Muelle de la Bodeguita", "island": "recogida en tu hotel si tiene acceso por lancha",
+           "uno": "con almuerzo", "varios": "con el almuerzo del primer día",
+           "mezcla": "con almuerzo (en los de varios días, el del primer día)", "no": "sin almuerzo"},
+    "en": {"cartagena": "boat from Muelle de la Bodeguita", "island": "pickup at your hotel if it has boat access",
+           "uno": "lunch included", "varios": "lunch on the first day", "mezcla": "lunch included (on multi-day plans, "
+           "the first day's)", "no": "no lunch"},
+}
+
+
+def _almuerzo(planes: list[str], lang: str) -> str | None:
+    """Lo del almuerzo de los planes de la lista, de su ficha (`included`): ninguno lo lleva («no»), todos («uno»; en
+    los de varios días solo el del primer día, la política `food_policy`), o None si no coinciden o lo confirma un
+    asesor (Bubble Makers desde Cartagena: su ficha no lo trae, pero no es que no lo haya). Un plan que no es del
+    catálogo (el acompañante) no cuenta."""
+    por_nombre = {hechos_mod._nombre(sid, lang): sid for sid in hechos_mod.SERVICES}
+    sids = [s for s in (por_nombre.get(p) for p in planes) if s]
+    fichas = [hechos_mod.RAW_SERVICES.get(s) or {} for s in sids]
+    if not sids or any(f.get("detalles_por_asesor") for f in fichas):
+        return None
+    lleva = {any(("almuerzo" if lang == "es" else "lunch") in x.lower() for x in hechos_mod._lista(s, "included", lang))
+             for s in sids}
+    if lleva != {True}:
+        return "no" if lleva == {False} else None
+    varios = {(f.get("duration_days") or 1) > 1 for f in fichas}
+    return "uno" if varios == {False} else "varios" if varios == {True} else "mezcla"
+
+
+def _rotulo(origen: str, planes: list[str], lang: str) -> str:
+    """El rótulo del origen con lo que cambia: «*Desde Cartagena* — lancha desde el Muelle de la Bodeguita · con
+    almuerzo»."""
+    cambia = _LO_QUE_CAMBIA[lang]
+    almuerzo = _almuerzo(planes, lang)
+    return f"{_PIEZA[lang][origen]} — {cambia[origen]}{' · ' + cambia[almuerzo] if almuerzo else ''}"
+
+
 def pieza_de_precios(bloques: list[dict], lang: str) -> str | None:
     """La lista de precios de los bloques de hechos, por origen: cada plan con su precio online y normal (y en COP si
-    van las dos monedas) y, si aplica, el descuento de grupo. None si ningún bloque trae precio."""
-    textos = _PIEZA["es" if lang == "es" else "en"]
+    van las dos monedas) y, si aplica, el descuento de grupo. Con los dos orígenes, cada rótulo dice lo que cambia
+    (CALN-9b). None si ningún bloque trae precio."""
+    lang = "es" if lang == "es" else "en"
+    textos = _PIEZA[lang]
     por_origen: dict[str, list[str]] = {}
+    planes: dict[str, list[str]] = {}
     notas: list[str] = []
     for b in bloques:
         for origen, precio in (b.get("precio") or {}).items():
             cop = (b.get("precio_cop") or {}).get(origen)
             usd = precio if "COP" not in str(precio.get("online")) else None
             por_origen.setdefault(origen, []).append(f"• {_sin_el_origen(precio['plan'])}: {_importe(usd, cop or (None if usd else precio))}")
+            planes.setdefault(origen, []).append(precio["plan"])
         for otro in b.get("otros_planes") or []:
             origen = otro.get("origen") or b.get("origen") or next(iter(b.get("precio") or {}), "cartagena")
             usd = otro.get("precio") if "COP" not in str((otro.get("precio") or {}).get("online")) else None
             cop = otro.get("precio_cop") or (None if usd else otro.get("precio"))
             por_origen.setdefault(origen, []).append(f"• {_sin_el_origen(otro['plan'])}: {_importe(usd, cop)}")
+            planes.setdefault(origen, []).append(otro["plan"])
         if b.get("descuento_de_grupo") and b["descuento_de_grupo"] not in notas:
             notas.append(b["descuento_de_grupo"])
     if not por_origen:
@@ -180,6 +225,6 @@ def pieza_de_precios(bloques: list[dict], lang: str) -> str | None:
     for origen in ("cartagena", "island"):
         if origen in por_origen:
             if len(por_origen) > 1:
-                lineas.append(textos[origen])
+                lineas.append(_rotulo(origen, planes[origen], lang))
             lineas += list(dict.fromkeys(por_origen[origen]))
     return "\n".join(lineas) + ("\n\n" + "\n".join(notas) if notas else "")

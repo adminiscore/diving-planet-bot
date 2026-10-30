@@ -494,12 +494,16 @@ RAG_PRECIOS_POR_CODIGO = {
     "es": ("En ESTA respuesta no escribas precios ni importes (ni cifras en USD o COP): justo debajo de tu texto el sistema "
            "pone la lista de precios por persona de cada plan, según desde dónde se sale y en su moneda, y si le aplica "
            "el descuento de grupo. Del descuento de grupo no digas nada; de los demás descuentos, solo si los pregunta. "
+           "Si la lista lleva los dos orígenes (desde Cartagena y ya en las islas), en cada uno dice cómo se llega y si "
+           "lleva almuerzo: no lo digas tú sin decir de qué origen es. "
            "Contesta lo demás que pregunte y, si pregunta el precio, di en una frase que se lo dejas a continuación."),
     "en": ("In THIS answer do not write prices or amounts (no figures in USD or COP): right below your text the system "
            "adds the list of prices per person for each plan, by departure point and in their currency, and whether the "
            "group discount applies to them. Say nothing about the group discount; mention other discounts only if they "
-           "ask. Answer the rest of what they ask and, if they ask the price, say in one sentence that you are leaving "
-           "it below."),
+           "ask. If the list has both departure points (from Cartagena and already on the islands), each one says how "
+           "you get there and whether lunch is included: do not say it yourself without saying which one it is for. "
+           "Answer the rest of what they ask and, if they ask the price, say in one sentence that you are leaving it "
+           "below."),
 }
 
 

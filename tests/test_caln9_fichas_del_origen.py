@@ -33,3 +33,32 @@ def test_sin_origen_o_sin_pareja_no_cambia_nada():
     assert fichas_del_origen(docs, "", "es") == docs
     solo = [_ficha("divemaster", "cartagena")]  # sin servicio en las islas
     assert fichas_del_origen(solo, "islas", "es") == solo
+
+
+def _pieza(actividad: str, lang: str = "es", location: str | None = None) -> str:
+    from src.flows import cotizar, hechos
+    from src.flows.state import ConversationState
+
+    st = ConversationState(conversation_id="caln9b", language=lang)
+    st.is_colombian, st.location = False, location
+    return cotizar.pieza_de_precios(hechos.hechos(st, ["precio"], [actividad]), lang)
+
+
+def test_sin_origen_cada_rotulo_dice_lo_que_cambia():
+    """CALN-9b: precio-desde-islas t5 (2/2 en PRE 0.40), «El almuerzo no está incluido» encima de los precios desde
+    Cartagena, que sí lo incluyen. Bajo cada origen, cómo se llega y el almuerzo, de la ficha de los planes de la lista."""
+    mini = _pieza("minicourse")
+    assert "*Desde Cartagena* — lancha desde el Muelle de la Bodeguita · con almuerzo\n" in mini
+    assert "*Ya en las Islas del Rosario* — recogida en tu hotel si tiene acceso por lancha · sin almuerzo\n" in mini
+    assert "*From Cartagena* — boat from Muelle de la Bodeguita · lunch included" in _pieza("minicourse", "en")
+    # Los de varios días llevan solo el almuerzo del primer día (food_policy).
+    assert "· con el almuerzo del primer día" in _pieza("padi_open_water")
+    assert "· con almuerzo (en los de varios días, el del primer día)" in _pieza("certified_diving")
+
+
+def test_lo_que_confirma_un_asesor_y_con_el_origen_sabido_no_se_dice():
+    # Bubble Makers desde Cartagena: su ficha no trae el almuerzo porque lo confirma un asesor; no es «sin almuerzo».
+    assert "*Desde Cartagena* — lancha desde el Muelle de la Bodeguita\n" in _pieza("bubble_makers")
+    # Con el origen sabido, un solo origen y sin rótulo, como antes.
+    sabido = _pieza("certified_diving", location="island")
+    assert "Desde Cartagena" not in sabido and "recogida" not in sabido
