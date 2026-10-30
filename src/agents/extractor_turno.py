@@ -579,8 +579,20 @@ def _mismo_hotel_del_catalogo(valor, mensaje: str) -> bool:
 
 
 def nombra_un_lugar(cita: str) -> bool:
-    """La cita de la ubicación nombra un lugar (como `ORIGEN_DEL_CLIENTE` de s4-28): "im getting in tmrw" no."""
-    return bool(set(_norm(cita)) & _lugares())
+    """La cita de la ubicación nombra un lugar (como `ORIGEN_DEL_CLIENTE` de s4-28): "im getting in tmrw" no. También un
+    barrio de Cartagena (`lugares.json`): «Estamos en Bocagrande» se tiraba (sparring s30a familia t1)."""
+    return bool(set(_norm(cita)) & _lugares()) or _solo_un_barrio(cita) is not None
+
+
+def _solo_un_barrio(cita: str) -> str | None:
+    """El barrio de Cartagena que nombra la cita, si no nombra también un sitio de las islas (las de `_pistas_islas`, o
+    «isla»/«islas»/«rosario»)."""
+    texto = " ".join(_norm(cita))
+    barrio = lugares.barrio_nombrado(texto)
+    if barrio is None or {"isla", "islas", "island", "islands", "rosario"} & set(texto.split()):
+        return None
+    islas = [" ".join(_norm(n)) for n in _nombres_de_lugar()]
+    return None if any(isla and isla in texto for isla in islas) else barrio
 
 
 def _contexto(mensaje: str, pregunta_bot: str | None, sabido: dict, lang: str) -> str:
@@ -739,6 +751,10 @@ async def extraer_turno(mensaje: str, *, history: list[dict] | None = None, sabi
             # G3-06 (decisión de Gadea): Barú y Playa Blanca no son las islas ("estamos en el hotel las islas, en
             # baru" salía island). El lugar queda sin saber y lo contesta la base (aviso solo-operamos-en-rosario).
             # gen-6: quien se aloja en Barú sale desde Cartagena (policies.json); sin saberlo, se repreguntaba.
+            salida[campo] = "cartagena"
+            continue
+        if campo == "location" and valor == "island" and _solo_un_barrio(cita):
+            # CALN (30-oct): un barrio de Cartagena (Getsemaní, Bocagrande, el centro histórico) no es las islas.
             salida[campo] = "cartagena"
             continue
         if campo == "hotel" and not (isinstance(valor, str) and cita_verificable(valor, mensaje)):

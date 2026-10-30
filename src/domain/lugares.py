@@ -57,6 +57,17 @@ def isla_nombrada(texto: str, *, nombra_una_isla: bool) -> str | None:
     return None
 
 
+@lru_cache(maxsize=1)
+def _barrios() -> tuple[tuple[str, tuple[re.Pattern, ...]], ...]:
+    return tuple((b["id"], tuple(map(_patron, b["alias"]))) for b in _datos().get("barrios_de_cartagena", ()))
+
+
+def barrio_nombrado(texto: str) -> str | None:
+    """El primer barrio de Cartagena de `barrios_de_cartagena` que nombra `texto` (en minúsculas y sin tildes); None si
+    ninguno. Alojarse en uno es salir desde Cartagena (CALN, 30-oct)."""
+    return next((barrio for barrio, alias in _barrios() if any(p.search(texto) for p in alias)), None)
+
+
 def hotel_nombrado(texto: str, *, nombra_un_hotel: bool = False) -> tuple[str, str | None] | None:
     """(hotel, isla) del primer hotel de `alias_de_los_hoteles` que nombra `texto` (en minúsculas); None si ninguno.
     Sus alias de palabra corriente («san pedro», «flores») solo cuentan si `nombra_un_hotel`: se sabe que el texto es

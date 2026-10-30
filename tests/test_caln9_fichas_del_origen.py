@@ -62,3 +62,17 @@ def test_lo_que_confirma_un_asesor_y_con_el_origen_sabido_no_se_dice():
     # Con el origen sabido, un solo origen y sin rótulo, como antes.
     sabido = _pieza("certified_diving", location="island")
     assert "Desde Cartagena" not in sabido and "recogida" not in sabido
+
+
+def test_la_cita_de_un_barrio_de_cartagena_nombra_un_lugar():
+    """CALN (30-oct, el origen de la pregunta): «Estamos en Bocagrande» y «We're staying in Getsemaní» los leía el
+    extractor como cartagena y se tiraban por no nombrar un lugar (sparring s30a familia t1, s30e cambia-plan t2)."""
+    from src.agents.extractor_turno import _solo_un_barrio, nombra_un_lugar
+
+    for cita in ("Estamos en Bocagrande", "We're staying in Getsemaní.", "nos quedamos en el centro histórico",
+                 "we're at the hotel in the old town"):
+        assert nombra_un_lugar(cita) and _solo_un_barrio(cita)
+    for cita in ("im getting in tmrw", "we'll be in town next week", "soy de Marbella", "vamos a San Diego"):
+        assert not nombra_un_lugar(cita)
+    # Con un sitio de las islas en la misma cita, no es «solo un barrio» (no se corrige a cartagena).
+    assert _solo_un_barrio("dos noches en Bocagrande y luego Isla Grande") is None
