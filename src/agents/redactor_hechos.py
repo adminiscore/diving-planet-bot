@@ -109,6 +109,11 @@ def _actividades(state: ConversationState, datos: dict) -> list[str]:
     repartos = (state.detected_group_allocation or {}, datos.get("group_allocation") or {})
     del_grupo = list(dict.fromkeys(a for reparto in repartos for a, n in reparto.items()
                                    if n and a != una and dom.by_id(a) is not None and not dom.by_id(a).generic))
+    if una == "refresher" and state.detected_duration == "multi_day" and "certified_diving" not in del_grupo:
+        # Sparring s30a (30-oct): el buzo que lleva 3 años sin bucear y viene VARIOS días hace el refresher el primero y
+        # bucea los demás. «¿El refresher el día 1 y buceo normal el día 2?» llevaba solo los hechos del refresher y el
+        # escritor contestaba «no puedo confirmar si puedes bucear otro día» (en todas las ramas, ~1 de 4).
+        del_grupo.append("certified_diving")
     return [una, *del_grupo]
 
 

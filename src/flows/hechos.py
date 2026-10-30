@@ -142,7 +142,10 @@ def hechos(state: ConversationState, intenciones: list[str], actividades: list[s
         if registro is None:
             continue
         detectado = getattr(state, "detected_service_id", None)
-        sin_plan = varios_dias and detectado in (None, dom.base_service_id(actividad))
+        # Con el refresher, uno de los días es el suyo: el buceo de los demás va con su plan base y los paquetes entre
+        # sus otros planes (sparring s30a).
+        con_refresher = actividad == "certified_diving" and "refresher" in actividades
+        sin_plan = varios_dias and not con_refresher and detectado in (None, dom.base_service_id(actividad))
         paquetes = {o: _paquetes_de_varios_dias(actividad, o) for o in origenes} if sin_plan else {}
         paquetes = {o: s for o, s in paquetes.items() if s}
         if paquetes:
