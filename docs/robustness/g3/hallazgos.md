@@ -619,14 +619,18 @@ rechazan la tarjeta. Graves contrastados contra PRE (`docs/robustness/g3/charlas
   rechazada: al equipo con la regla de la transferencia (se mantiene el 10 %); el venezolano, cuando insiste, «los dos en
   pesos»; la rodilla operada pasa al equipo (es médico, decisión «salud») contestando antes lo demás.
 
-**Graves (3; ninguno nuevo de la candidata):**
+**Graves (3; ninguno nuevo de la candidata; 1 y 3 arreglados en feature/caln10b-espera-gadea f5b2661d):**
 1. **«¿Podemos bucear HOY?» a la 1:45 pm → «sí, reservad para hoy en la web»** (hoy-mismo t1 y t2). La salida es a las
    8:00 y la web cierra a las 4:30 PM del día anterior: para el mismo día no hay. Los hechos de disponibilidad
    (`availability_always`: «siempre hay disponibilidad») no dicen nada del mismo día. **También en PRE.**
 2. **Venezolano con cédula de extranjería + esposa colombiana → «grupo mixto, todo en USD»** (venezolano t1): el
    extractor marca mixed_nationality (`[EX8] grupo con nacionalidades mezcladas: USD`) sin mirar que con cédula de
    extranjería es residente (paga en pesos, `colombian_pricing`). **También en PRE.** Es la definición de mixed del
-   extractor (medir ×10 si se toca).
+   extractor. **Probado y DESCARTADO** (30-oct): la frase «mezcla colombianos o residentes con extranjeros que no lo son»
+   en la regla del extractor deja el venezolano en mixed 7/10 y empeora los casos que cambian del ex0 ×10 (aciertos
+   142 → 133, inventados 34 → 40); el extractor ya lee is_colombian true (10/10) pero a la vez mixed, y el código da
+   preferencia al mixto, que no se puede separar por código del «colombiano con amigos alemanes». Queda abierto.
+   (`scripts/sonda_residente_mixto.py`, `docs/robustness/caln/sonda-residente-mixto-30oct.txt`)
 3. **El nieto de 13 «puede hacer buceo certificado»** (abuelo t1): nadie dijo que esté certificado; los hechos de edad
    del buceo certificado (mínimo 10) no dicen que pide la certificación. PRE lo dijo con «si cuenta con certificación»
    (1 charla por lado: puede ser variación del escritor).

@@ -1,0 +1,30 @@
+== frases propias
+  venezolano-cedula    A mixed {True: 10}  is_colombian {True: 10}  (esperado mixed False)
+  venezolano-cedula    B mixed {True: 7, None: 3}  is_colombian {True: 9, False: 1}  (esperado mixed False)
+  aleman-cedula        A mixed {True: 10}  is_colombian {True: 10}  (esperado mixed False)
+  aleman-cedula        B mixed {True: 10}  is_colombian {True: 10}  (esperado mixed False)
+  mixto-de-verdad      A mixed {True: 10}  is_colombian {True: 1, None: 9}  (esperado mixed True)
+  mixto-de-verdad      B mixed {True: 10}  is_colombian {None: 10}  (esperado mixed True)
+  pareja-espanol       A mixed {True: 10}  is_colombian {False: 10}  (esperado mixed True)
+  pareja-espanol       B mixed {True: 10}  is_colombian {False: 10}  (esperado mixed True)
+  todos-colombianos    A mixed {None: 10}  is_colombian {True: 10}  (esperado mixed False)
+  todos-colombianos    B mixed {None: 10}  is_colombian {True: 10}  (esperado mixed False)
+== ex0 diseño × 3 {'A': {'acierto': 299, 'equivocado': 5, 'perdido': 44, 'inventado': 24}, 'B': {'acierto': 302, 'equivocado': 4, 'perdido': 42, 'inventado': 23}}
+   casos que cambian: 16
+== los que cambian × 10 {'A': {'acierto': 142, 'equivocado': 6, 'perdido': 72, 'inventado': 34}, 'B': {'acierto': 133, 'equivocado': 11, 'perdido': 76, 'inventado': 40}}
+   ex0-actividad-cambia-varias-t1                          A {'acierto': 10, 'equivocado': 0, 'perdido': 0, 'inventado': 0}  B {'acierto': 5, 'equivocado': 0, 'perdido': 5, 'inventado': 0}
+   ex0-cambio-fecha-por-enfermedad-t3                      A {'acierto': 0, 'equivocado': 0, 'perdido': 0, 'inventado': 8}  B {'acierto': 0, 'equivocado': 0, 'perdido': 0, 'inventado': 6}
+   ex0-colombianos-precio-minicurso-dos-inmersiones-t2     A {'acierto': 19, 'equivocado': 0, 'perdido': 1, 'inventado': 0}  B {'acierto': 19, 'equivocado': 0, 'perdido': 1, 'inventado': 0}
+   ex0-curso-open-water-principiantes-idioma-frances-anticipacion-t1 A {'acierto': 10, 'equivocado': 0, 'perdido': 20, 'inventado': 0}  B {'acierto': 12, 'equivocado': 8, 'perdido': 10, 'inventado': 0}
+   ex0-curso-open-water-transporte-y-regreso-otro-dia-t2   A {'acierto': 0, 'equivocado': 0, 'perdido': 0, 'inventado': 0}  B {'acierto': 0, 'equivocado': 0, 'perdido': 0, 'inventado': 7}
+   ex0-familia-mixta-precio-descuento-refresher-t6         A {'acierto': 0, 'equivocado': 0, 'perdido': 10, 'inventado': 0}  B {'acierto': 1, 'equivocado': 0, 'perdido': 9, 'inventado': 0}
+   ex0-manual-acompanante-mayor-t2                         A {'acierto': 17, 'equivocado': 3, 'perdido': 0, 'inventado': 0}  B {'acierto': 20, 'equivocado': 0, 'perdido': 0, 'inventado': 0}
+   ex0-minicurso-precio-colombianos-origen-pendiente-t2    A {'acierto': 12, 'equivocado': 0, 'perdido': 8, 'inventado': 0}  B {'acierto': 9, 'equivocado': 0, 'perdido': 11, 'inventado': 0}
+   ex0-nacionalidad-ambigua-t1                             A {'acierto': 2, 'equivocado': 0, 'perdido': 8, 'inventado': 0}  B {'acierto': 2, 'equivocado': 0, 'perdido': 8, 'inventado': 0}
+   ex0-nacionalidad-mixta-carrito-t1                       A {'acierto': 20, 'equivocado': 0, 'perdido': 0, 'inventado': 9}  B {'acierto': 20, 'equivocado': 0, 'perdido': 0, 'inventado': 10}
+   ex0-nacionalidad-mixta-carrito-t2                       A {'acierto': 0, 'equivocado': 0, 'perdido': 10, 'inventado': 7}  B {'acierto': 0, 'equivocado': 3, 'perdido': 7, 'inventado': 7}
+   ex0-open-water-precio-para-colombianos-corrige-mito-t1  A {'acierto': 20, 'equivocado': 0, 'perdido': 0, 'inventado': 0}  B {'acierto': 16, 'equivocado': 0, 'perdido': 4, 'inventado': 0}
+   ex0-premisa-falsa-lunes-t4                              A {'acierto': 20, 'equivocado': 0, 'perdido': 0, 'inventado': 10}  B {'acierto': 20, 'equivocado': 0, 'perdido': 0, 'inventado': 10}
+   ex0-principiante-hora-lugar-y-precio-t2                 A {'acierto': 1, 'equivocado': 1, 'perdido': 8, 'inventado': 0}  B {'acierto': 4, 'equivocado': 0, 'perdido': 6, 'inventado': 0}
+   ex0-reserva-solo-link-t1                                A {'acierto': 4, 'equivocado': 0, 'perdido': 6, 'inventado': 0}  B {'acierto': 3, 'equivocado': 0, 'perdido': 7, 'inventado': 0}
+   ex0-snorkel-precio-residente-y-pago-link-t5             A {'acierto': 7, 'equivocado': 2, 'perdido': 1, 'inventado': 0}  B {'acierto': 2, 'equivocado': 0, 'perdido': 8, 'inventado': 0}
