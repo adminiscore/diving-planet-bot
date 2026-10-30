@@ -351,3 +351,62 @@ def test_quien_escribe_y_los_que_nombra_con_el_si_todos_estan_certificados(certi
     lectura = {"total_dicho": None, "personas": [_p(cantidad=2, certificado=certificado, cita="somos 2")]}
     nuevos, _ = lg.completar({"activity": escritor, "group_size": 2}, lectura)
     assert nuevos["group_allocation"] == reparto
+
+
+def test_la_lectura_de_quienes_faltaban_completa_el_reparto_sabido():
+    """CALN-S30A-01 (sparring contra la 0.39): familia de 5, los niños snorkel, la abuela de acompañante y los padres
+    sin elegir; «mi marido y yo vamos al minicurso» nombra solo a los dos que faltaban: completa el grupo (antes, ×1)."""
+    sabido = {"snorkel": 2, "companion": 1, "undecided": 2}
+    lectura = {"total_dicho": 2, "personas": [_p(cantidad=2, actividad="minicourse", cita="mi marido y yo")]}
+    nuevos, cambios = lg.completar({"activity": "minicourse"}, lectura, 5, "snorkel", sabido)
+    assert nuevos["group_allocation"] == {"snorkel": 2, "companion": 1, "minicourse": 2} and cambios
+    assert "group_size" not in nuevos
+    # Si la lectura no dice qué hace él, la actividad del extractor es solo de quien escribe: queda uno sin elegir.
+    sin_actividad = {"total_dicho": 2, "personas": [_p(cantidad=2, cita="mi marido y yo")]}
+    nuevos, _ = lg.completar({"activity": "minicourse"}, sin_actividad, 5, "snorkel", sabido)
+    assert nuevos["group_allocation"] == {"snorkel": 2, "companion": 1, "minicourse": 1, "undecided": 1}
+    # Lo que no cabe en quienes faltaban no es completar (g29: se queda el total y no se toca el reparto).
+    de_mas = {"total_dicho": 3, "personas": [_p(cantidad=3, actividad="minicourse", cita="los tres")]}
+    nuevos, cambios = lg.completar({"activity": "minicourse"}, de_mas, 5, "snorkel", sabido)
+    assert "group_allocation" not in nuevos and not cambios
+    # Sin nadie por elegir, como antes.
+    nuevos, cambios = lg.completar({"activity": "minicourse"}, lectura, 5, "snorkel", {"snorkel": 3, "companion": 2})
+    assert "group_allocation" not in nuevos and not cambios
+
+
+PADRES = "Desde Cartagena. Mi marido y yo vamos al minicurso, entonces"
+
+
+@pytest.mark.asyncio
+async def test_los_dos_que_faltaban_eligen_en_el_turno_entero(extractor_dice, monkeypatch):
+    """CALN-S30A-01 con el turno entero: el extractor da solo la actividad y el atajo del regex («mi marido», ×1) ya no
+    decide: los dos entran en el minicurso y no queda nadie sin elegir. Jev ve a otra persona (en la charla, el lector
+    salió y dijo «nada que rellenar»)."""
+    from unittest.mock import AsyncMock
+
+    from src.agents.nucleo import extraction as core_extraction
+    from src.agents.nucleo import extractor as nx
+    from src.agents.nucleo import routing as core_routing
+    from src.agents.supervisor import route_message
+    from src.config import settings
+    from src.flows.state import ConversationState
+
+    async def _leer(mensaje, **_kw):
+        return {"total_dicho": 2, "personas": [_p(cantidad=2, actividad="minicourse", cita="Mi marido y yo")],
+                "descartes": []}
+
+    monkeypatch.setattr(lg, "leer_grupo", _leer)
+    monkeypatch.setattr(settings, "lector_grupo", True)
+    monkeypatch.setattr(nx, "_jev_seguro_de_otra_persona", lambda _st: True)
+    senales = AsyncMock(return_value={})
+    monkeypatch.setattr(core_routing, "detect_special_signals", senales)
+    monkeypatch.setattr(core_extraction, "detect_special_signals", senales)
+    monkeypatch.setattr(core_extraction, "resolve_slot_answer", AsyncMock(return_value={}))
+    extractor_dice({PADRES: {"activity": "minicourse", "location": "cartagena"}})
+    st = ConversationState(conversation_id="lector-padres", language="es")
+    st.detected_activity, st.detected_group_size = "snorkel", 5
+    st.detected_group_allocation = {"snorkel": 2, "companion": 1}
+    st.pending_undecided_qty = 2
+    await route_message(st, PADRES)
+    assert st.detected_group_allocation == {"snorkel": 2, "companion": 1, "minicourse": 2}
+    assert st.detected_group_size == 5 and not st.pending_undecided_qty and not st.needs_companion_activity

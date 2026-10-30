@@ -378,7 +378,10 @@ def _reparto_valido(reparto: dict | None, message: str, state: ConversationState
 
     if not reparto:
         return None
-    conocidas = set(_reparto_guardado(state).values()) | {state.detected_group_size}
+    # CALN-S30A-01: cuántos faltaban por elegir también se sabe («mis hijos y yo hacemos el minicurso» con 3 sin elegir),
+    # y los que ya tenían esa actividad no se inventan aunque el mensaje no la nombre (el reparto que completa el lector).
+    guardado = _reparto_guardado(state)
+    conocidas = set(guardado.values()) | {state.detected_group_size, state.pending_undecided_qty}
     if not _EXPLICIT_NUMBER_RE.search(message) and any(n > 1 and n not in conocidas for n in reparto.values()):
         logger.info(f"[EXTRACT][EX7] reparto sin cifras en el mensaje, no se usa: {reparto!r}")
         return None
@@ -389,7 +392,7 @@ def _reparto_valido(reparto: dict | None, message: str, state: ConversationState
         # CALN-2 (27-oct, tanda de precios q2 t2): también por sus nombres del catálogo, en los dos idiomas
         # («she the mini course»; los patrones de categoría no tenían el nombre en inglés del propio producto).
         nombrada = (categoria is None or categoria in nombradas or act == state.detected_activity
-                    or dom.nombra_el_producto(act, message))
+                    or dom.nombra_el_producto(act, message) or n <= guardado.get(act, 0))
         clave = act if nombrada else "undecided"
         if not nombrada:
             from src.observability import marca_regex  # lazy
@@ -945,7 +948,8 @@ async def _con_el_lector_del_grupo(state: ConversationState, message: str, datos
         logger.info(f"[EXTRACT][LECTOR] sin lectura ({modo}): se sigue con el extractor")
         _apunta_lector(state, "sin_lectura")
         return datos
-    nuevos, cambios = lector_grupo.completar(datos, lectura, state.detected_group_size, state.detected_activity)
+    nuevos, cambios = lector_grupo.completar(datos, lectura, state.detected_group_size, state.detected_activity,
+                                             reparto_antes or None)
     logger.info(f"[EXTRACT][LECTOR] usado ({modo}, {lectura.get('segundos', 0):.2f} s, tokens "
                 f"{json.dumps(lectura.get('tokens'))}): {', '.join(cambios) or 'nada que rellenar'}")
     _apunta_lector(state, "a_la_vez" if tarea is not None else "en_serie", len(cambios))
