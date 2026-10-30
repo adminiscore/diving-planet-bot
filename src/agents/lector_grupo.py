@@ -140,13 +140,16 @@ def por_completar(datos: dict, total_antes: int | None = None, reparto_antes: di
     (su certificación decide la recomendación), o es un grupo de 2 o más sin reparto. Es `salta(..., "T2b")` de
     `scripts/medir_lector_grupo.py`, el que se midió, más `jev_otros` (CALN-8, 28-oct): si Jev está seguro de que el
     mensaje mete a otra persona aunque el extractor no diga nada de ella («viene también mi amiga, pero no sabe qué
-    quiere hacer»), también: es lo que hacía la red de señales de acompañantes, que se quitó."""
+    quiere hacer»), también: es lo que hacía la red de señales de acompañantes, que se quitó. Y si alguien faltaba por
+    elegir y el mensaje elige una actividad (CALN-S30A-01, banco g35: «mi pareja y yo nos animamos al minicurso» con Jev
+    en 0,72-0,78), puede ser de ellos: la lectura dice de quién."""
     reparto = datos.get("group_allocation") or reparto_antes
     total = datos.get("group_size") or total_antes
     otros = bool(datos.get("edades") or datos.get("otro_sin_certificar") or datos.get("otro_certificado_inactivo")
                  or (datos.get("group_allocation") and (len(datos["group_allocation"]) > 1
                                                        or {"undecided", "companion"} & set(datos["group_allocation"])))
-                 or (isinstance(datos.get("group_size"), int) and datos["group_size"] > 1) or jev_otros)
+                 or (isinstance(datos.get("group_size"), int) and datos["group_size"] > 1) or jev_otros
+                 or (datos.get("activity") and (reparto_antes or {}).get("undecided")))
     if not otros:
         return False
     if not isinstance(total, int):
@@ -161,14 +164,16 @@ def por_completar(datos: dict, total_antes: int | None = None, reparto_antes: di
 
 
 def completar(datos: dict, lectura: dict, total_sabido: int | None = None,
-              actividad_sabida: str | None = None) -> tuple[dict, list[str]]:
+              actividad_sabida: str | None = None, reparto_sabido: dict | None = None) -> tuple[dict, list[str]]:
     """Los datos del extractor con lo que dejó vacío, sacado de la lectura del grupo: el total (si no lo dio), el
-    reparto (si no lo dio o no suma el total que dijo, y la lectura cuadra con ese total), la certificación de quien
-    escribe (si no la dio) y la de quienes faltan por elegir. Lo que el extractor dio y cuadra no se toca. La
-    actividad de quien escribe es la del extractor (con la regla de negocio ya puesta); la que ya eligió antes
-    (`actividad_sabida`), solo si el mensaje no habla de él (g19, abajo). Un total ya sabido de la conversación
-    (`total_sabido`) no lo cambia la lectura de un mensaje que nombra solo a una parte (g29: «yo el minicurso, la de 14
-    también y la pequeña Bubble Makers» no habla del suegro). Devuelve (datos, qué cambió)."""
+    reparto (si no lo dio o no suma el total que dijo, y la lectura cuadra con ese total, o completa a quienes faltaban
+    por elegir en `reparto_sabido`), la certificación de quien escribe (si no la dio) y la de quienes faltan por elegir.
+    Lo que el extractor dio y cuadra no se toca. La actividad de quien escribe es la del extractor (con la regla de
+    negocio ya puesta); la que ya eligió antes (`actividad_sabida`), solo si el mensaje no habla de él (g19, abajo). Un
+    total ya sabido de la conversación (`total_sabido`) no lo cambia la lectura de un mensaje que nombra solo a una parte
+    (g29: «yo el minicurso, la de 14 también y la pequeña Bubble Makers» no habla del suegro). Devuelve (datos, qué
+    cambió)."""
+    from src.flows import grupo  # lazy
     personas = (lectura or {}).get("personas") or []
     if not personas:
         return datos, []
@@ -199,12 +204,11 @@ def completar(datos: dict, lectura: dict, total_sabido: int | None = None,
         cambios.append(f"group_size={total_lector}")
     total = out.get("group_size") if isinstance(out.get("group_size"), int) else total_sabido
     reparto = out.get("group_allocation")
-    sin_elegir = []
-    # El reparto de la lectura, solo si cuenta a todos y suma el total: «somos 6 amigos: 4 tenemos certificación y 2
-    # dudan» leído como quien escribe + 4 + 2 suma 7 (b6, 19 de 20 lecturas hasta el 28-oct, que daban {undecided: 7}).
-    if (not (reparto and _suma(reparto) == total) and total_lector is not None and total_lector == total
-            and _contadas(personas) and sum(p["cantidad"] for p in personas) == total):
+
+    def de_la_lectura() -> tuple[dict, list[dict]]:
+        """El reparto de las entradas de la lectura y las entradas que quedan en él sin elegir."""
         nuevo: dict = {}
+        sueltas = []
         for p in personas:
             n, act = p["cantidad"], p["actividad"]
             if suya(p):
@@ -215,11 +219,27 @@ def completar(datos: dict, lectura: dict, total_sabido: int | None = None,
                 nuevo[suya(p)] = nuevo.get(suya(p), 0) + juntos
                 n -= juntos
             if n > 0:
-                nuevo[act or "undecided"] = nuevo.get(act or "undecided", 0) + n
+                nuevo[act or grupo.SIN_DECIDIR] = nuevo.get(act or grupo.SIN_DECIDIR, 0) + n
                 if act is None:
-                    sin_elegir.append(p)
-        out["group_allocation"] = nuevo
-        cambios.append(f"group_allocation={nuevo}")
+                    sueltas.append(p)
+        return nuevo, sueltas
+
+    # El reparto de la lectura, solo si cuenta a todos y suma el total: «somos 6 amigos: 4 tenemos certificación y 2
+    # dudan» leído como quien escribe + 4 + 2 suma 7 (b6, 19 de 20 lecturas hasta el 28-oct, que daban {undecided: 7}).
+    if (not (reparto and _suma(reparto) == total) and total_lector is not None and total_lector == total
+            and _contadas(personas) and sum(p["cantidad"] for p in personas) == total):
+        out["group_allocation"], sin_elegir = de_la_lectura()
+        cambios.append(f"group_allocation={out['group_allocation']}")
+    elif (not reparto and (reparto_sabido or {}).get(grupo.SIN_DECIDIR) and _contadas(personas)
+          and (junto := grupo.completado(reparto_sabido, de_la_lectura()[0], total))):
+        # CALN-S30A-01 (sparring contra la 0.39, familia de 5 con los padres sin elegir): «Mi esposo y yo hacemos el
+        # minicurso» nombra solo a una parte del grupo, pero es la que faltaba por elegir: completa el reparto sabido,
+        # con la misma regla que el del extractor (`grupo.completado`). El extractor da solo la actividad y el atajo del
+        # regex sumaba «mi esposo» (×1): «y yo» quedaba sin elegir.
+        resto = total - _suma(junto)
+        out["group_allocation"] = {**junto, **({grupo.SIN_DECIDIR: resto} if resto > 0 else {})}
+        sin_elegir = de_la_lectura()[1]
+        cambios.append(f"group_allocation={out['group_allocation']} (completa a quienes faltaban)")
     else:
         sin_elegir = [p for p in personas if p["actividad"] is None and not suya(p)]
     if not isinstance(total, int) and any(p["quien"] != "cliente" and p["cantidad"] is None and p["actividad"] is None

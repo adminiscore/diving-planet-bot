@@ -179,8 +179,9 @@ async def test_lanzado_con_jev_se_tira_si_no_hace_falta(_lector_falso):
 
 
 @pytest.mark.asyncio
-async def test_sale_con_el_turno_a_la_vez_que_el_extractor(monkeypatch, _lector_falso):
-    """Decisión de Gadea (#2314): con el turno, no tras la señal de Jev (salía 1,5 s después y hacía esperar)."""
+async def test_sale_con_jev_y_solo_si_puede_hacer_falta(monkeypatch, _lector_falso):
+    """CALN-8 (lo delgado, ronda lector-B del 30-oct): ya no sale con el turno (88 de cada 100, tirado en 180 de 181),
+    sino en cuanto contesta Jev y solo si el grupo ya se sabía o Jev dice que se suma otra persona (≥ 0,5)."""
     from src.agents import extractor_turno
     from src.flows.state import ConversationState
 
@@ -190,13 +191,18 @@ async def test_sale_con_el_turno_a_la_vez_que_el_extractor(monkeypatch, _lector_
         return {}
 
     monkeypatch.setattr(extractor_turno, "extraer_turno", _extraer)
-    st = ConversationState(conversation_id="lector-con-el-turno")
+    st = ConversationState(conversation_id="lector-con-jev", language="es")
     nx.lanzar_extraccion_adelantada(st, MADRE)
-    assert st._extraccion_adelantada is not None and st._lector_grupo is not None
+    assert st._extraccion_adelantada is not None and st._lector_grupo is None  # el extractor sí, con el turno
+    nx.lanzar_lector_si_hace_falta(st, MADRE, {"companion_joins": 0.1, "adds_person": 0.2})
+    assert st._lector_grupo is None  # Jev no ve a nadie más y no se sabía que fuera un grupo
+    nx.lanzar_lector_si_hace_falta(st, MADRE, {"companion_joins": 0.93})
     await st._lector_grupo
     assert llamadas == [MADRE]
-    nx.lanzar_extraccion_adelantada(st, "2")  # una cifra sola: ni extractor ni lector
-    assert st._lector_grupo is None
+    st._lector_grupo, st.detected_group_size = None, 3
+    nx.lanzar_lector_si_hace_falta(st, "desde Cartagena", {})  # el grupo ya se sabía
+    assert st._lector_grupo is not None
+    await st._lector_grupo
 
 
 @pytest.mark.asyncio
@@ -345,3 +351,89 @@ def test_quien_escribe_y_los_que_nombra_con_el_si_todos_estan_certificados(certi
     lectura = {"total_dicho": None, "personas": [_p(cantidad=2, certificado=certificado, cita="somos 2")]}
     nuevos, _ = lg.completar({"activity": escritor, "group_size": 2}, lectura)
     assert nuevos["group_allocation"] == reparto
+
+
+def test_la_lectura_de_quienes_faltaban_completa_el_reparto_sabido():
+    """CALN-S30A-01 (sparring contra la 0.39): familia de 5, los niños snorkel, la abuela de acompañante y los padres
+    sin elegir; «mi marido y yo vamos al minicurso» nombra solo a los dos que faltaban: completa el grupo (antes, ×1)."""
+    sabido = {"snorkel": 2, "companion": 1, "undecided": 2}
+    lectura = {"total_dicho": 2, "personas": [_p(cantidad=2, actividad="minicourse", cita="mi marido y yo")]}
+    nuevos, cambios = lg.completar({"activity": "minicourse"}, lectura, 5, "snorkel", sabido)
+    assert nuevos["group_allocation"] == {"snorkel": 2, "companion": 1, "minicourse": 2} and cambios
+    assert "group_size" not in nuevos
+    # Si la lectura no dice qué hace él, la actividad del extractor es solo de quien escribe: queda uno sin elegir.
+    sin_actividad = {"total_dicho": 2, "personas": [_p(cantidad=2, cita="mi marido y yo")]}
+    nuevos, _ = lg.completar({"activity": "minicourse"}, sin_actividad, 5, "snorkel", sabido)
+    assert nuevos["group_allocation"] == {"snorkel": 2, "companion": 1, "minicourse": 1, "undecided": 1}
+    # Lo que no cabe en quienes faltaban no es completar (g29: se queda el total y no se toca el reparto).
+    de_mas = {"total_dicho": 3, "personas": [_p(cantidad=3, actividad="minicourse", cita="los tres")]}
+    nuevos, cambios = lg.completar({"activity": "minicourse"}, de_mas, 5, "snorkel", sabido)
+    assert "group_allocation" not in nuevos and not cambios
+    # Sin nadie por elegir, como antes.
+    nuevos, cambios = lg.completar({"activity": "minicourse"}, lectura, 5, "snorkel", {"snorkel": 3, "companion": 2})
+    assert "group_allocation" not in nuevos and not cambios
+
+
+PADRES = "Desde Cartagena. Mi marido y yo vamos al minicurso, entonces"
+
+
+@pytest.mark.asyncio
+async def test_los_dos_que_faltaban_eligen_en_el_turno_entero(extractor_dice, monkeypatch):
+    """CALN-S30A-01 con el turno entero: el extractor da solo la actividad y el atajo del regex («mi marido», ×1) ya no
+    decide: los dos entran en el minicurso y no queda nadie sin elegir. Sin que Jev esté seguro de otra persona (g35:
+    0,72-0,78), basta con que faltara alguien por elegir y el mensaje elija una actividad."""
+    from unittest.mock import AsyncMock
+
+    from src.agents.nucleo import extraction as core_extraction
+    from src.agents.nucleo import routing as core_routing
+    from src.agents.supervisor import route_message
+    from src.config import settings
+    from src.flows.state import ConversationState
+
+    assert lg.por_completar({"activity": "minicourse"}, 5, {"snorkel": 2, "companion": 1, "undecided": 2})
+    assert not lg.por_completar({"activity": "minicourse"}, 5, {"snorkel": 3, "companion": 2})
+
+    async def _leer(mensaje, **_kw):
+        return {"total_dicho": 2, "personas": [_p(cantidad=2, actividad="minicourse", cita="Mi marido y yo")],
+                "descartes": []}
+
+    monkeypatch.setattr(lg, "leer_grupo", _leer)
+    monkeypatch.setattr(settings, "lector_grupo", True)
+    senales = AsyncMock(return_value={})
+    monkeypatch.setattr(core_routing, "detect_special_signals", senales)
+    monkeypatch.setattr(core_extraction, "detect_special_signals", senales)
+    monkeypatch.setattr(core_extraction, "resolve_slot_answer", AsyncMock(return_value={}))
+    extractor_dice({PADRES: {"activity": "minicourse", "location": "cartagena"}})
+    st = ConversationState(conversation_id="lector-padres", language="es")
+    st.detected_activity, st.detected_group_size = "snorkel", 5
+    st.detected_group_allocation = {"snorkel": 2, "companion": 1}
+    st.pending_undecided_qty = 2
+    await route_message(st, PADRES)
+    assert st.detected_group_allocation == {"snorkel": 2, "companion": 1, "minicourse": 2}
+    assert st.detected_group_size == 5 and not st.pending_undecided_qty and not st.needs_companion_activity
+
+
+@pytest.mark.asyncio
+async def test_en_el_primer_mensaje_sale_una_vez_con_el_idioma_del_detector(monkeypatch):
+    """CALN-8 (lo delgado, medida frente a la 0.39): en la apertura sale en cuanto contesta Jev, sin esperar al idioma
+    decidido (que espera al extractor), con el del detector; y no sale dos veces en el mismo turno."""
+    from src.agents.nucleo import extractor as nx
+    from src.config import settings
+    from src.flows.state import ConversationState
+
+    idiomas = []
+
+    async def _leer(mensaje, *, lang="es", **_kw):
+        idiomas.append(lang)
+        return B5
+
+    monkeypatch.setattr(lg, "leer_grupo", _leer)
+    monkeypatch.setattr(settings, "lector_grupo", True)
+    st = ConversationState(conversation_id="lector-apertura")
+    mensaje = "Hi! We're a family of four, my husband and I and our two kids"
+    nx.lanzar_lector_si_hace_falta(st, mensaje, {"companion_joins": 0.9})
+    primera = st._lector_grupo
+    nx.lanzar_lector_si_hace_falta(st, mensaje, {"companion_joins": 0.9})
+    assert st._lector_grupo is primera
+    await primera
+    assert idiomas == ["en"]

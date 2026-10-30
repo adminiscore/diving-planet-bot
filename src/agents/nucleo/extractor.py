@@ -378,7 +378,10 @@ def _reparto_valido(reparto: dict | None, message: str, state: ConversationState
 
     if not reparto:
         return None
-    conocidas = set(_reparto_guardado(state).values()) | {state.detected_group_size}
+    # CALN-S30A-01: cuántos faltaban por elegir también se sabe («mis hijos y yo hacemos el minicurso» con 3 sin elegir),
+    # y los que ya tenían esa actividad no se inventan aunque el mensaje no la nombre (el reparto que completa el lector).
+    guardado = _reparto_guardado(state)
+    conocidas = set(guardado.values()) | {state.detected_group_size, state.pending_undecided_qty}
     if not _EXPLICIT_NUMBER_RE.search(message) and any(n > 1 and n not in conocidas for n in reparto.values()):
         logger.info(f"[EXTRACT][EX7] reparto sin cifras en el mensaje, no se usa: {reparto!r}")
         return None
@@ -389,7 +392,7 @@ def _reparto_valido(reparto: dict | None, message: str, state: ConversationState
         # CALN-2 (27-oct, tanda de precios q2 t2): también por sus nombres del catálogo, en los dos idiomas
         # («she the mini course»; los patrones de categoría no tenían el nombre en inglés del propio producto).
         nombrada = (categoria is None or categoria in nombradas or act == state.detected_activity
-                    or dom.nombra_el_producto(act, message))
+                    or dom.nombra_el_producto(act, message) or n <= guardado.get(act, 0))
         clave = act if nombrada else "undecided"
         if not nombrada:
             from src.observability import marca_regex  # lazy
@@ -835,7 +838,6 @@ def lanzar_extraccion_adelantada(state: ConversationState, message: str) -> None
     else:
         lectura = extraer_turno(message, history=historia, sabido=sabido, lang=lang)
     state._extraccion_adelantada = asyncio.create_task(lectura)
-    lanzar_lector_grupo(state, message, lang)
 
 
 async def _nacionalidad_en_dos_lecturas(message: str, historia: list[dict], sabido: dict, lang: str) -> dict | None:
@@ -888,18 +890,44 @@ async def datos_del_extractor(state: ConversationState, message: str) -> dict | 
     return datos  # None = la llamada falló (degradado)
 
 
+# CALN-8 (lo delgado): con qué confianza de Jev en que el mensaje mete a otra persona sale el lector del grupo. En la
+# ronda lector-B (30-oct, 50 diálogos visibles, 205 turnos) los 17 turnos en que rellenó algo tenían Jev ≥ 0,79 (14) o
+# el grupo ya sabido (3); con 0,5 queda margen y no se pierde ninguno.
+_LECTOR_JEV_MIN = 0.5
+
+
+def lanzar_lector_si_hace_falta(state: ConversationState, message: str, senales: dict) -> None:
+    """CALN-8 (lo delgado): el lector del grupo sale en cuanto contesta Jev (en el grafo, antes de la ruta) y solo si
+    puede hacer falta: el grupo ya se sabía o Jev dice que el mensaje mete a otra persona (≥ `_LECTOR_JEV_MIN`). Antes
+    salía con el turno, en 88 de cada 100, y se tiraba en 180 de 181 (ronda lector-B, 30-oct): −58 llamadas por 100
+    turnos y ningún turno útil perdido; los que lo usan esperan +0,0 s p50 / +0,3 s p95 (el lector tarda menos que el
+    extractor). Si no salió y al final hace falta, `_con_el_lector_del_grupo` lo pide en serie, como siempre. Una vez por
+    turno (`lanzar_extraccion_adelantada` lo deja a None al empezar). En el primer mensaje el idioma aún no está decidido:
+    va el del detector, como el extractor adelantado."""
+    if getattr(state, "_lector_grupo", None) is not None:
+        return
+    jev = [v for v in (senales.get("companion_joins"), senales.get("adds_person")) if isinstance(v, (int, float))]
+    if (state.detected_group_size or 0) > 1 or state.personas or (jev and max(jev) >= _LECTOR_JEV_MIN):
+        lang = state.language or "es"
+        if not state.history:
+            from src.flows.catalog import _detect_language_from_text  # lazy
+
+            lang = _detect_language_from_text(message) or lang
+        lanzar_lector_grupo(state, message, lang)
+
+
 def lanzar_lector_grupo(state: ConversationState, message: str, lang: str) -> None:
-    """CALN-2 (flag `lector_grupo`): el lector del grupo arranca con el turno, a la vez que el extractor (decisión de
-    Gadea, #2314). Lanzado con la señal de Jev salía 1,5 s después y hacía esperar al turno p50 1,1 s / p95 1,7 s en los
-    turnos que lo usaban; con el turno, ~0 (5 de 136), a cambio de una llamada barata en paralelo en cada turno (~0,011 $
-    por 100 turnos). `datos_del_extractor` decide si se usa (el grupo queda por completar) o se tira."""
+    """CALN-2 (flag `lector_grupo`): lanza el lector del grupo, a la vez que el extractor sigue (#2314). Hasta CALN-8
+    salía con el turno; lanzado con la señal de Jev dentro de la ruta salía 1,5 s después y hacía esperar p50 1,1 s; ahora
+    sale en el grafo, en cuanto contesta Jev (`lanzar_lector_si_hace_falta`). `datos_del_extractor` decide si se usa (el
+    grupo queda por completar) o se tira."""
     state._lector_grupo = None
     if not settings.lector_grupo:
         return
     from src.agents.lector_grupo import leer_grupo  # lazy
 
     state._lector_grupo = asyncio.create_task(leer_grupo(message, history=list(state.history or []), lang=lang))
-    logger.info("[EXTRACT][LECTOR] lanzado con el turno")
+    logger.info("[EXTRACT][LECTOR] lanzado con Jev")
 
 
 # CALN-8 (28-oct): la confianza de Jev en que el mensaje mete a otra persona para usar el lector aunque el extractor no
@@ -958,7 +986,8 @@ async def _con_el_lector_del_grupo(state: ConversationState, message: str, datos
         logger.info(f"[EXTRACT][LECTOR] sin lectura ({modo}): se sigue con el extractor")
         _apunta_lector(state, "sin_lectura")
         return datos
-    nuevos, cambios = lector_grupo.completar(datos, lectura, state.detected_group_size, state.detected_activity)
+    nuevos, cambios = lector_grupo.completar(datos, lectura, state.detected_group_size, state.detected_activity,
+                                             reparto_antes or None)
     logger.info(f"[EXTRACT][LECTOR] usado ({modo}, {lectura.get('segundos', 0):.2f} s, tokens "
                 f"{json.dumps(lectura.get('tokens'))}): {', '.join(cambios) or 'nada que rellenar'}")
     _apunta_lector(state, "a_la_vez" if tarea is not None else "en_serie", len(cambios))
