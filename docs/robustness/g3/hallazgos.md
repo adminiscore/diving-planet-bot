@@ -573,7 +573,7 @@ contrastados contra PRE (`docs/robustness/g3/charlas/` s30a-pre-*).
   especial y equipo propio + online sí se suman; «tengo la colombiana» corrige y contesta lo de mañana; el padre con la
   hija: minicurso para ella y buceo para él, al asesor por ser colombiano.
 
-**Graves (3):**
+**Graves (3; ninguno nuevo de la candidata):**
 1. **«Mi esposo y yo hacemos el minicurso» → minicurso ×1 + 1 sin elegir** (familia t2; Álvaro, modelo del grupo):
    `[CORE] merged companion activity minicourse x1` y el lector «nada que rellenar»; pregunta «¿un día o varios?» a
    «quien aún no ha elegido». Con la corrección del cliente sale bien. **También en PRE** (s30a-pre-familia): no lo trae
@@ -582,10 +582,12 @@ contrastados contra PRE (`docs/robustness/g3/charlas/` s30a-pre-*).
    quita las dos frases del escritor con el descuento de grupo («fuera, lo da la pieza») y queda «Hay que pedir que lo
    apliquen antes de pagar. No puedo calcular el precio final por persona» + la lista ENTERA de descuentos pegada (con la
    regla de que no se suman enterrada dentro). **También en PRE** (peor: sin texto del escritor). Es la lista de arq-7b.
-3. **Regresión de la candidata — el refresher en inglés** (refresher t2, «refresher on day one and normal dives on day
-   two?»): «I can't confirm whether you can add regular dives on a second day» / «the available plan for the second day
-   is the 2-day 4-dive package». Pieza a pieza: PRE 0/7, base caln-gadea 0/6, base + s29 0/6, rama de Álvaro sola 1/6,
-   candidata 3/7 (con su código 4/13; sin él 0/19). A Álvaro (#2625); la 0.39 no sube hasta arreglarlo.
+3. **El refresher en inglés: dos actividades contestadas con los hechos de una** (refresher t2, «refresher on day one
+   and normal dives on day two?»): «I can't confirm whether you can add regular dives on a second day» / «the available
+   plan for the second day is the 2-day 4-dive package». NO es de la candidata (lo vio Álvaro, #2628; yo lo había
+   contado con 200 caracteres): PRE 0/7, base 1/6, base + s29 2/6, rama de Álvaro 1/6, candidata 3/7. Causa: el escritor
+   contesta solo con los hechos del refresher (`redactor_hechos._con_el_escritor`, sin búsqueda, «refresher
+   ['incluye']») y el buceo del día 2 (detected_activity certified_diving) no le llega. Mío (los hechos).
 
 **Medios:**
 4. La lista ENTERA de descuentos pegada en 4 turnos (familia t1 y t2, regateo t1 y t2), con «ANTES» y «COMPLETO».
