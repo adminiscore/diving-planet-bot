@@ -51,9 +51,17 @@ async def test_si_una_lectura_no_la_dice_tampoco_vale(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_si_una_lectura_falla_vale_la_otra_como_antes(monkeypatch):
-    _con_lecturas(monkeypatch, RuntimeError("caída"), {"is_colombian": True})
-    assert await _lee(ConversationState(conversation_id="c10b-4")) == {"is_colombian": True}
+async def test_si_la_primera_no_trae_nacionalidad_no_hay_segunda(monkeypatch):
+    """Álvaro (#2649): si la primera no la trae, la segunda no podría hacer que valga; no se paga."""
+    llamadas = _con_lecturas(monkeypatch, {"location": "cartagena"})
+    assert await _lee(ConversationState(conversation_id="c10b-4")) == {"location": "cartagena"}
+    assert len(llamadas) == 1
+
+
+@pytest.mark.asyncio
+async def test_si_la_segunda_falla_vale_la_primera_como_antes(monkeypatch):
+    _con_lecturas(monkeypatch, {"is_colombian": True}, RuntimeError("caída"))
+    assert await _lee(ConversationState(conversation_id="c10b-4b")) == {"is_colombian": True}
 
 
 @pytest.mark.asyncio
