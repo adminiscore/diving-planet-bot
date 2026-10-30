@@ -138,3 +138,22 @@ async def test_las_ramas_del_regex_que_deciden_salen_en_la_linea(caplog):
     lines = [json.loads(m[len(obs.TURN_METRICS_TAG):]) for m in caplog.messages if m.startswith(obs.TURN_METRICS_TAG)]
     assert lines[0]["regex"] == ["R3", "R7"]
     assert "regex" not in lines[1]
+
+
+async def test_lo_que_fue_del_lector_del_grupo_sale_en_la_linea(caplog):
+    """CALN-8 (lo delgado): qué fue del lector del grupo, si cambió algo, lo que dijo Jev de otra persona y si ya se sabía
+    que era un grupo, para decidir con una ronda cuándo hace falta lanzarlo."""
+    from src.agents.nucleo import extractor as nx
+    from src.flows.state import ConversationState
+
+    st = ConversationState(conversation_id="lector")
+    st._jev_companion, st.detected_group_size = 0.93, 2
+    with caplog.at_level("INFO", logger="uvicorn.error"):
+        async with obs.turn_trace(_S(), "5680", "viene mi amiga") as turn:
+            nx._apunta_lector(st, "a_la_vez", 2)
+            turn.update(reply="ok")
+        async with obs.turn_trace(_S(), "5681", "hola") as turn:
+            turn.update(reply="ok")
+    lines = [json.loads(m[len(obs.TURN_METRICS_TAG):]) for m in caplog.messages if m.startswith(obs.TURN_METRICS_TAG)]
+    assert lines[0]["lector"] == {"lector": "a_la_vez", "lector_cambia": 2, "jev_otros": 0.93, "grupo_sabido": True}
+    assert "lector" not in lines[1]
