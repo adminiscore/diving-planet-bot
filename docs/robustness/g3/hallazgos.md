@@ -604,3 +604,37 @@ contrastados contra PRE (`docs/robustness/g3/charlas/` s30a-pre-*).
 el mismo mensaje y otra que no va al final; al francés se le contesta en inglés y con los precios también en COP; el
 menú entero de actividades después de proponer el plan (pareja t1); «Te dejo a continuación los precios».
 
+## CALN-S30E-01..10 · 2.ª tanda de sparring contra la CANDIDATA 0.40 (30-oct, `charla_rama --env RAG_KB_ESQUEMA=kb_v2_gadea`)
+
+Candidata `feature/caln-integra040-gadea` 9b11f6b9 (0.39 + 10b + s30a + respuestas de negocio + la rama de Álvaro), con
+la base curada de la rama. Ocho personas nuevas (`docs/robustness/g3/charlas-rama/s30e-*`): luna de miel canadiense en
+Barú, abuelo de Medellín (70, operado de la rodilla) con nietos de 9 y 13, despedida de soltera de 7 madrileñas (2
+certificadas), australiano que pasa del Open Water a probar en un día con la novia en snorkel, venezolano con cédula de
+extranjería y esposa colombiana, madre con un niño de 7, dos de Chicago que quieren bucear HOY, colombiano al que le
+rechazan la tarjeta. Graves contrastados contra PRE (`docs/robustness/g3/charlas/` s30e-pre-*).
+
+- **BIEN:** USD y no dólares canadienses; el minicurso a la luna de miel y la salida privada al asesor; el niño de 7:
+  snorkel (Bubble Makers desde 8, minicurso desde 10) y la madre el minicurso a la vez; la despedida: 2 buceo + 5
+  minicurso, el de grupo y «españolas → USD»; el cambio de plan (un día → el minicurso, la novia snorkel); la tarjeta
+  rechazada: al equipo con la regla de la transferencia (se mantiene el 10 %); el venezolano, cuando insiste, «los dos en
+  pesos»; la rodilla operada pasa al equipo (es médico, decisión «salud») contestando antes lo demás.
+
+**Graves (3; ninguno nuevo de la candidata):**
+1. **«¿Podemos bucear HOY?» a la 1:45 pm → «sí, reservad para hoy en la web»** (hoy-mismo t1 y t2). La salida es a las
+   8:00 y la web cierra a las 4:30 PM del día anterior: para el mismo día no hay. Los hechos de disponibilidad
+   (`availability_always`: «siempre hay disponibilidad») no dicen nada del mismo día. **También en PRE.**
+2. **Venezolano con cédula de extranjería + esposa colombiana → «grupo mixto, todo en USD»** (venezolano t1): el
+   extractor marca mixed_nationality (`[EX8] grupo con nacionalidades mezcladas: USD`) sin mirar que con cédula de
+   extranjería es residente (paga en pesos, `colombian_pricing`). **También en PRE.** Es la definición de mixed del
+   extractor (medir ×10 si se toca).
+3. **El nieto de 13 «puede hacer buceo certificado»** (abuelo t1): nadie dijo que esté certificado; los hechos de edad
+   del buceo certificado (mínimo 10) no dicen que pide la certificación. PRE lo dijo con «si cuenta con certificación»
+   (1 charla por lado: puede ser variación del escritor).
+
+**Medios:** «¿se puede llevar cava?» sin contestar dos veces (está `no_alcohol_policy`: nada de alcohol antes de bucear);
+el texto largo del de grupo (con «ANTES») pegado en la despedida; «would you leave from Cartagena?» con Getsemaní y el
+hotel del centro (la clase de «staying in Cartagena»).
+
+**Menores:** la moneda dicha dos veces a la luna de miel; «No calculo el precio final con el descuento aplicado»;
+«La cédula de extranjería no cambia la moneda: para pagar en pesos debes ser residente» (se contradice con lo que sigue).
+
