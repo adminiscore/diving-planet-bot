@@ -50,10 +50,8 @@ from src.agents.conversational_core import (
 )
 from src.agents.intent_detector import (
     _GENERIC_ISLAND_RE,
-    AGE_WORDS,
     DetectedIntent,
     detect_location,
-    lectura_del_turno,
 )
 from src.agents.llm_extractor import detect_special_signals
 from src.domain import activities as dom
@@ -265,14 +263,6 @@ def _cantidad_por_la_ia(state: ConversationState, message: str, ia: dict) -> boo
     return False
 
 
-def _word_ages(message: str) -> list[int]:
-    """Edades escritas en palabra, en orden de aparición ("cinco y siete" ->
-    [5, 7]). Vacío si no hay ninguna. Reusa el mapa canónico `AGE_WORDS` de
-    intent_detector (mismo vocabulario que el gate de elegibilidad)."""
-    return [AGE_WORDS[t] for t in re.findall(r"[a-záéíóúñ]+", message.lower())
-            if t in AGE_WORDS]
-
-
 # ─── COMPRENDER ───
 
 def _apply_short_answer(state: ConversationState, message: str, ia: dict | None = None) -> bool:
@@ -459,18 +449,12 @@ def _apply_short_answer(state: ConversationState, message: str, ia: dict | None 
             duration = {"1": "single_day", "2": "multi_day"}.get(msg, msg)
             if duration not in ("single_day", "multi_day") and ia is not None:
                 # ex-9b paso 6 (`duracion_por_extractor`): la respuesta libre la lee el extractor (días de buceo o, si
-                # no, la estancia); el regex de siempre solo si la IA calla.
+                # no, la estancia). Si la IA calla, se vuelve a preguntar (CALN-8 (6): R2, 0 de 2.619 turnos).
                 from src.agents.nucleo.extractor import duracion_del_extractor  # lazy
 
                 duration, de_buceo = duracion_del_extractor(ia.get("extractor"), state)
                 if duration is not None and de_buceo:
                     state.duracion_de_buceo = True
-            elif duration not in ("single_day", "multi_day"):
-                duration = lectura_del_turno(message).duration
-                if duration in ("single_day", "multi_day"):
-                    from src.observability import marca_regex  # lazy
-
-                    marca_regex("R2")  # CALN-8 (6): la duración del regex, sin la IA
             if duration in ("single_day", "multi_day"):
                 state.detected_duration = duration
                 return True
@@ -505,12 +489,6 @@ def _apply_short_answer(state: ConversationState, message: str, ia: dict | None 
                 return True
             return False
         ages = [int(a) for a in re.findall(r"\b(\d{1,2})\b", message) if 0 < int(a) < 100]
-        if not ages:  # sin dígitos, probar edades en palabra ("cinco y siete")
-            ages = _word_ages(message)
-            if ages:
-                from src.observability import marca_regex  # lazy
-
-                marca_regex("R4")  # CALN-8 (6): edades en palabra (AGE_WORDS)
         if ages:
             state.detected_ages = sorted(set((state.detected_ages or []) + ages))
             return True

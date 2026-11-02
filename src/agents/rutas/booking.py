@@ -430,6 +430,10 @@ def _apply_detected_intent(intent, state: ConversationState, message: str | None
     if intent.ages:
         merged = sorted(set((state.detected_ages or []) + list(intent.ages)))
         if merged != (state.detected_ages or []):
+            if getattr(intent, "_leido_por_extractor", None) is False:
+                from src.observability import marca_regex  # lazy
+
+                marca_regex("R11")  # CALN-8 (6): edades del regex con el extractor caído (ex-9b paso 6)
             state.detected_ages = merged
             logger.info(f"[INTENT] Detected ages: {merged}")
 
@@ -451,6 +455,10 @@ def _apply_detected_intent(intent, state: ConversationState, message: str | None
     # ex-9b paso 6 (`duracion_por_extractor`): la duración del extractor cambia la guardada (`overwrite`): lo que el
     # cliente dice ahora de sus días de buceo manda (decisión de Gadea, 19-oct). Sin el flag, una sola escritura.
     if intent.duration and (not state.detected_duration or "duration" in intent.overwrite):
+        if getattr(intent, "_leido_por_extractor", None) is False:
+            from src.observability import marca_regex  # lazy
+
+            marca_regex("R12")  # CALN-8 (6): duración del regex con el extractor caído (ex-9b paso 6)
         state.detected_duration = intent.duration
         logger.info(f"[INTENT] Detected duration: {intent.duration}")
     if getattr(intent, "_duracion_de_buceo", False):

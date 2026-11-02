@@ -2619,7 +2619,6 @@ from src.agents.nucleo.routing import (  # noqa: E402, F401
     _mentioned_offerings,
     _quantity_answer,
     _routing_phase,
-    _word_ages,
     sembrar_senales_del_turno,
 )
 from src.agents.nucleo.setup import (  # noqa: E402, F401
