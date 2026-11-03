@@ -836,6 +836,10 @@ async def _extraction_phase_body(
     ):
         act = state.pending_companion_activity
         mentioned = _mentioned_product_activities(message)
+        if mentioned and act not in mentioned:
+            from src.observability import marca_regex  # lazy
+
+            marca_regex("R7a")  # CALN-8 (6): nombra otra actividad que la preguntada, según el detector
         if not (mentioned and act not in mentioned):
             resolved = await resolve_slot_answer("companion_qty", message, lang=state.language)
             val = resolved.get("value")

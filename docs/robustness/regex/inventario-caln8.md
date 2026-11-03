@@ -70,3 +70,20 @@ repetidos, sin rotativa ni sparring.
   «extractor caído como hoy» lo fijan a propósito) no tenía marca: **R11** (edades) y **R12** (duración), en
   `rutas/booking.py`. Si dan 0, se proponen fuera, y con ellos `detect_duration` entero (68 líneas del detector).
 - Siguiente: si R1, R7, R8 y R10 coinciden con lo que lee el extractor.
+
+## 5. Paso 5 (3-nov): ¿coinciden con el extractor? Leyendo los turnos (sin LLM, oculto filtrado: 21)
+
+- **R7, mal contada.** Los 446 turnos eran «el mensaje nombra una actividad», no decisiones: la marca estaba dentro de
+  `_mentioned_product_activities`. Ahora va donde decide: **R7a** (nombra otra actividad que la preguntada: se abstiene),
+  **R7b** (la actividad de quien falta, por lo que nombra) y **R7c** (deliberación entre 2+ ofertas). Hay que volver a
+  contarla.
+- **R3 se queda:** 7 turnos distintos, todos «cartagena» o «desde cartagena» a secas.
+- **R10 se queda:** 5 turnos distintos, todos «el paquete / plan de 5 buceos», bien leídos.
+- **R1 no se puede comparar:** el extractor no lee el número de inmersiones (`dias_de_buceo` es otra cosa). Es la única
+  lectura, de cifra + unidad. Se queda, con un falso positivo conocido, ×14 en las rondas: «vi un video de alguien que
+  hizo el paquete… e hicieron dos inmersiones» fija 2 inmersiones por lo que hizo otra persona. En esa ronda, ese
+  turno y el siguiente siguen con el menú de actividades (no comparado sin la lectura). No se toca hasta que dé un fallo visible.
+- **R8 sigue abierta:** nunca «coincide», porque salta cuando el extractor dice algo que el mensaje no nombra; lo que
+  hay que saber es si acierta. 2 turnos distintos, 9 veces (frances-anticipacion t2 ×6, grupo-mixto t1 ×3). Sin trazas
+  no se sabe qué leyó el extractor: en local, `{certified_diving: 1, minicourse: 2}` con «1 buzo avanzado y 2 para
+  bautismo» pasa entero. Hay que reproducirlos con traza.
