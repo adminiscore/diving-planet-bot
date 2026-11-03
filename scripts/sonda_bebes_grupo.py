@@ -6,6 +6,7 @@ el segundo caso: la cuenta va donde se lee el grupo (hallazgos CALN-S03H, grave 
 import asyncio
 import sys
 from collections import Counter
+
 sys.path.insert(0, ".")
 from src.agents import extractor_turno as et
 
