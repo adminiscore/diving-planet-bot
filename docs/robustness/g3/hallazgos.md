@@ -673,3 +673,44 @@ pregunta sola en t3 (la laguna CALN-11); el precio que pidió el indeciso en t2,
 **Menores:** «¿cuántas personas?» cuando dijo «yo»/«I» (advanced-islas, miami, advanced-curso); la moneda dicha dos veces;
 la pregunta del asesor dos veces en el mismo mensaje; «Te dejo a continuación los precios».
 
+
+## CALN-S03H-01..08 · 5.ª tanda de sparring contra PRE 0.44.0, hasta reservar (3-nov, `charla_pre`)
+
+Ocho clientes nuevos, cada uno hasta la tarjeta, el enlace o el asesor, con el criterio de gravedad de Álvaro (#2716):
+japonesa alojada en Barú y vegetariana (6805), 10 amigos de Ámsterdam, 6 buzos y 4 de snorkel (6806), padre buzo con su
+hija de 17 que quiere el Open Water (6807), pareja chilena de 65 y 68 sin experiencia (6808), alemán con cédula de
+extranjería, el minicurso solo (6809), cambio de fecha de una reserva ya hecha (6810), madre acompañante con el bebé de 2
+años mientras el marido bucea (6811), buzo canadiense que pide un nocturno (6812). Cierre: 2 con enlace (snorkel,
+minicurso), 6 al asesor y la pastilla de la tensión al equipo.
+
+- **BIEN:** Barú no son las islas, sale desde Cartagena (`baru_departs_from_cartagena`); el alemán con cédula de
+  extranjería paga en pesos y lo cierra un asesor (decisión del 21-oct); el cambio de fecha CON reserva va al asesor con
+  los términos; los chilenos en USD con su enlace, «no hay edad máxima» y el formulario médico; la tensión, al equipo (es
+  médico); «todos han buceado este año» → sin refresher; los holandeses en USD y el de grupo «pedirlo antes de pagar»;
+  «next Tuesday is November 10».
+
+**Graves (2):**
+1. **Pide el nocturno y la tarjeta es la de 2 inmersiones de día, con su enlace** (nocturno t2 y t3). A «Yes, I want the
+   night dive package, that's why I asked» repite la misma tarjeta y el mismo enlace; solo a «the 3-dive package with the
+   night dive» (t4) pasa al asesor. Reproducido con `charla_rama` en la 0.44 (`noct1`): el estado nunca guarda el plan
+   (`detected_cert_dives` vacío) y `_resolve_cert_plan` cae en el de 2. Causa: el plan del certificado solo se elige por la
+   cifra de inmersiones (R1, `dive_counts_in`) o de días; «el nocturno» no lleva cifra, y `plan_que_propone_el_bot` solo
+   mira los paquetes de varios días (el de 3 con nocturna es de 1 día). Zona: la lectura (Gadea).
+2. **El bebé de 2 años «puede ir en la lancha» y «paga la tarifa de acompañante»** (madre t1 a t4). La base no dice nada
+   de bebés a bordo; en t2 decía «no tengo confirmado si debe pagar» y en t4 lo afirma, con la tarjeta de 2 acompañantes.
+   Un hecho y un importe inventados. Hace falta la regla de negocio (pregunta para Gadea) y que el escritor no afirme lo
+   que los hechos no traen.
+
+**Medios:** «I don't have details on vegetarian options» en t1 y t2 (mensajes con tres preguntas), aunque
+`food_policy` lo dice (arroz con vegetales); a la 3.ª, sola, lo contesta (la pregunta diluida, CALN-11, Álvaro). «2 are
+Advanced» leído como 2 personas más que hacen el curso Advanced: 12 personas, el precio del curso en la lista y dos veces
+«el descuento no aplica a cursos PADI»; en t2 pide confirmar «12 → 10 personas» que el cliente acababa de decir (la
+lectura, Gadea).
+
+**Menores:** «¿Quieres que te pase con un asesor?» dos veces en el mismo mensaje en los cierres en pesos (alemán t2,
+madre t3) y, en padre-hija t2, «¿quieres que te pase?», «Les paso con un asesor» y otra pregunta (el refresher) seguidos;
+el refresher preguntado a «alguno de ustedes» cuando la hija nunca ha buceado; «It must be requested from the team before
+paying» sin sujeto. La clase CALN-9b (lo que incluye según el origen, #2794) no ha salido: el nocturno t1 rotula
+«lunch included» y «no lunch» por origen.
+
+**Meta:** la tanda tiene graves, así que siguen 0 de 2 seguidas sin graves.
