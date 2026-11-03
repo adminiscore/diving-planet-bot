@@ -1,0 +1,77 @@
+######## DETALLE escalón 1
+== ex0-curso-open-water-principiantes-idioma-frances-anticipacion-t1  ('Hola!\nMe gustaria tener mas informacion acerca de los cursos de buceo en Cartagena (especi')
+   A {'acierto:group_size': 10, 'acierto:location': 1, 'perdido:is_certified': 10, 'perdido:location': 9}
+   B {'acierto:group_size': 10, 'acierto:location': 2, 'equivocado:location': 8, 'perdido:is_certified': 10}
+== ex0-desde-islas-buzo-certificado-t1  ('Thank you for contacting us, how may we help? Hii!! I am staying at Isla Grande and I woul')
+   A {'acierto:activity': 10, 'acierto:location': 10}
+   B {'acierto:activity': 9, 'acierto:location': 10, 'perdido:activity': 1}
+== ex0-minicurso-precio-colombianos-origen-pendiente-t2  ('Buceo para principiantes')
+   A {'acierto:activity': 3, 'acierto:is_certified': 9, 'perdido:activity': 7, 'perdido:is_certified': 1}
+   B {'acierto:is_certified': 10, 'perdido:activity': 10}
+######## ESCALÓN 2
+== escalón 2: frases de grupo ×10 (bien A → B)
+  g37           0 →  0   B: [('{"n": null, "r": {"certified_diving": 1, "companion": 1}}', 10)]
+  g38           1 → 10   B: [('{"n": 2, "r": null}', 10)]
+  g39           0 → 10   B: [('{"n": 2, "r": null}', 10)]
+  g40           0 →  0   B: [('{"n": 4, "r": null}', 10)]
+  g42           4 → 10   B: [('{"n": 3, "r": {"certified_diving": 1, "minicourse": 2}}', 10)]
+  g44           0 →  0   B: [('{"n": null, "r": null}', 6), ('{"n": null, "r": {"certified_diving": 1, "undecided": 2}}', 4)]
+  g45           0 →  0   B: [('{"n": null, "r": null}', 6), ('{"n": null, "r": {"certified_diving": 1, "companion": 1, "undecided": 2}}', 4)]
+  g46           0 →  0   B: [('{"n": null, "r": null}', 10)]
+  g47           0 →  0   B: [('{"n": null, "r": null}', 10)]
+  regalo        0 →  0   B: [('{"n": null, "r": null}', 10)]
+  bebe-t2      10 → 10   B: [('{"n": null, "r": {"certified_diving": 1, "companion": 1}}', 10)]
+  somos2-bebe  10 → 10   B: [('{"n": 2, "r": null}', 10)]
+  couple-3yo    0 →  5   B: [('{"n": 3, "r": {"companion": 1, "undecided": 1}}', 5), ('{"n": 2, "r": {"companion": 1, "undecided": 1}}', 5)]
+  r8            8 →  8   B: [('{"n": 3, "r": {"certified_diving": 1, "minicourse": 2}}', 8), ('{"n": 3, "r": {"minicourse": 2, "undecided": 1}}', 2)]
+  plural-10     0 →  0   B: [('{"n": 10, "r": {"snorkel": 7, "undecided": 3}}', 10)]
+  plural-en     0 →  4   B: [('{"n": 6, "r": {"snorkel": 4, "undecided": 2}}', 6), ('{"n": 6, "r": {"certified_diving": 2, "snorkel": 4}}', 4)]
+  plural-sin-total  6 →  1   B: [('{"n": null, "r": {"companion": 2, "minicourse": 2}}', 6), ('{"n": 2, "r": {"companion": 2, "minicourse": 2}}', 3)]
+== ex0 diseño ×3 {'A': {'acierto': 307, 'equivocado': 1, 'perdido': 40, 'inventado': 21}, 'B': {'acierto': 303, 'equivocado': 1, 'perdido': 44, 'inventado': 34}}
+   errores 0 · casos que cambian: 11
+== los que cambian ×10 {'A': {'acierto': 70, 'equivocado': 2, 'perdido': 48, 'inventado': 12}, 'B': {'acierto': 70, 'equivocado': 5, 'perdido': 45, 'inventado': 33}}
+   ex0-actividad-cambia-varias-t1                             A {'acierto': 10, 'equivocado': 0, 'perdido': 0, 'inventado': 0}  B {'acierto': 10, 'equivocado': 0, 'perdido': 0, 'inventado': 8}
+   ex0-aprobacion-logs-padi-t2                                A {'acierto': 0, 'equivocado': 0, 'perdido': 0, 'inventado': 0}  B {'acierto': 0, 'equivocado': 0, 'perdido': 0, 'inventado': 7}
+   ex0-cambio-idioma-t1                                       A {'acierto': 10, 'equivocado': 0, 'perdido': 0, 'inventado': 1}  B {'acierto': 10, 'equivocado': 0, 'perdido': 0, 'inventado': 8}
+   ex0-colombianos-precio-minicurso-dos-inmersiones-t2        A {'acierto': 19, 'equivocado': 0, 'perdido': 1, 'inventado': 0}  B {'acierto': 10, 'equivocado': 0, 'perdido': 10, 'inventado': 0}
+   ex0-familia-mixta-precio-descuento-refresher-t6            A {'acierto': 1, 'equivocado': 0, 'perdido': 9, 'inventado': 0}  B {'acierto': 5, 'equivocado': 0, 'perdido': 5, 'inventado': 0}
+   ex0-grupo-cambia-dos-veces-t5                              A {'acierto': 10, 'equivocado': 0, 'perdido': 0, 'inventado': 3}  B {'acierto': 10, 'equivocado': 0, 'perdido': 0, 'inventado': 0}
+   ex0-minicurso-precio-colombianos-origen-pendiente-t2       A {'acierto': 13, 'equivocado': 0, 'perdido': 7, 'inventado': 0}  B {'acierto': 15, 'equivocado': 0, 'perdido': 5, 'inventado': 0}
+   ex0-nacionalidad-ambigua-t1                                A {'acierto': 0, 'equivocado': 0, 'perdido': 10, 'inventado': 0}  B {'acierto': 0, 'equivocado': 0, 'perdido': 10, 'inventado': 0}
+   ex0-nacionalidad-mixta-carrito-t2                          A {'acierto': 0, 'equivocado': 0, 'perdido': 10, 'inventado': 8}  B {'acierto': 0, 'equivocado': 0, 'perdido': 10, 'inventado': 10}
+   ex0-reserva-solo-link-t1                                   A {'acierto': 0, 'equivocado': 0, 'perdido': 10, 'inventado': 0}  B {'acierto': 10, 'equivocado': 0, 'perdido': 0, 'inventado': 0}
+   ex0-snorkel-precio-residente-y-pago-link-t5                A {'acierto': 7, 'equivocado': 2, 'perdido': 1, 'inventado': 0}  B {'acierto': 0, 'equivocado': 5, 'perdido': 5, 'inventado': 0}
+== los 4 de Gadea ×20 (4 encontrados)
+   ex0-desde-islas-buzo-certificado-t1                        A {'acierto': 39, 'equivocado': 0, 'perdido': 1, 'inventado': 0}  B {'acierto': 40, 'equivocado': 0, 'perdido': 0, 'inventado': 0}
+   ex0-familia-mixta-precio-descuento-refresher-t4            A {'acierto': 40, 'equivocado': 0, 'perdido': 0, 'inventado': 0}  B {'acierto': 39, 'equivocado': 1, 'perdido': 0, 'inventado': 0}
+   ex0-open-water-precio-para-colombianos-corrige-mito-t1     A {'acierto': 40, 'equivocado': 0, 'perdido': 0, 'inventado': 0}  B {'acierto': 37, 'equivocado': 0, 'perdido': 3, 'inventado': 0}
+   ex0-reserva-solo-link-t1                                   A {'acierto': 3, 'equivocado': 0, 'perdido': 17, 'inventado': 1}  B {'acierto': 20, 'equivocado': 0, 'perdido': 0, 'inventado': 0}
+######## ESCALÓN U
+[LLM_EXTRACTOR][DEGRADED] extractor_turno: Expecting value: line 1 column 1 (char 0)
+[LLM_EXTRACTOR][DEGRADED] extractor_turno: Expecting value: line 1 column 1 (char 0)
+[LLM_EXTRACTOR][DEGRADED] extractor_turno: Expecting ',' delimiter: line 1 column 1457 (char 1456)
+== escalón U: frases del origen ×10 (location A → B)
+  ow-un-dia-mas        esperado None      A {None: 10}  B {None: 10}
+  ow-un-dia-mas-es     esperado None      A {'island': 10}  B {None: 10}
+  alojado-isla-grande  esperado island    A {'island': 10}  B {'island': 10}
+  alojado-es           esperado island    A {'island': 10}  B {'island': 10}
+  sale-cartagena       esperado cartagena A {'cartagena': 10}  B {'cartagena': 10}
+== ex0 diseño ×3 {'A': {'acierto': 301, 'equivocado': 3, 'perdido': 44, 'inventado': 24}, 'B': {'acierto': 300, 'equivocado': 7, 'perdido': 41, 'inventado': 29}}
+   errores 0 · casos que cambian: 11
+== los que cambian ×10 {'A': {'acierto': 100, 'equivocado': 2, 'perdido': 58, 'inventado': 10}, 'B': {'acierto': 106, 'equivocado': 13, 'perdido': 41, 'inventado': 21}}
+   ex0-acompanante-goteo-t4                                   A {'acierto': 0, 'equivocado': 0, 'perdido': 10, 'inventado': 0}  B {'acierto': 0, 'equivocado': 10, 'perdido': 0, 'inventado': 0}
+   ex0-cambio-idioma-t1                                       A {'acierto': 10, 'equivocado': 0, 'perdido': 0, 'inventado': 0}  B {'acierto': 10, 'equivocado': 0, 'perdido': 0, 'inventado': 0}
+   ex0-colombianos-precio-minicurso-dos-inmersiones-t2        A {'acierto': 19, 'equivocado': 0, 'perdido': 1, 'inventado': 0}  B {'acierto': 14, 'equivocado': 0, 'perdido': 6, 'inventado': 0}
+   ex0-curso-open-water-principiantes-idioma-frances-anticipacion-t1 A {'acierto': 10, 'equivocado': 0, 'perdido': 20, 'inventado': 0}  B {'acierto': 16, 'equivocado': 0, 'perdido': 14, 'inventado': 0}
+   ex0-familia-mixta-precio-descuento-refresher-t1            A {'acierto': 19, 'equivocado': 0, 'perdido': 1, 'inventado': 0}  B {'acierto': 18, 'equivocado': 0, 'perdido': 2, 'inventado': 0}
+   ex0-familia-mixta-precio-descuento-refresher-t4            A {'acierto': 18, 'equivocado': 2, 'perdido': 0, 'inventado': 0}  B {'acierto': 18, 'equivocado': 2, 'perdido': 0, 'inventado': 0}
+   ex0-grupo-cambia-dos-veces-t5                              A {'acierto': 10, 'equivocado': 0, 'perdido': 0, 'inventado': 1}  B {'acierto': 10, 'equivocado': 0, 'perdido': 0, 'inventado': 2}
+   ex0-nacionalidad-ambigua-t1                                A {'acierto': 3, 'equivocado': 0, 'perdido': 7, 'inventado': 0}  B {'acierto': 0, 'equivocado': 0, 'perdido': 10, 'inventado': 0}
+   ex0-nacionalidad-mixta-carrito-t2                          A {'acierto': 0, 'equivocado': 0, 'perdido': 10, 'inventado': 9}  B {'acierto': 0, 'equivocado': 1, 'perdido': 9, 'inventado': 10}
+   ex0-principiante-hora-lugar-y-precio-t1                    A {'acierto': 10, 'equivocado': 0, 'perdido': 0, 'inventado': 0}  B {'acierto': 10, 'equivocado': 0, 'perdido': 0, 'inventado': 5}
+   ex0-reserva-solo-link-t1                                   A {'acierto': 1, 'equivocado': 0, 'perdido': 9, 'inventado': 0}  B {'acierto': 10, 'equivocado': 0, 'perdido': 0, 'inventado': 4}
+== los 4 de Gadea ×20 (4 encontrados)
+   ex0-desde-islas-buzo-certificado-t1                        A {'acierto': 40, 'equivocado': 0, 'perdido': 0, 'inventado': 0}  B {'acierto': 40, 'equivocado': 0, 'perdido': 0, 'inventado': 0}
+   ex0-familia-mixta-precio-descuento-refresher-t4            A {'acierto': 40, 'equivocado': 0, 'perdido': 0, 'inventado': 0}  B {'acierto': 33, 'equivocado': 7, 'perdido': 0, 'inventado': 0}
+   ex0-open-water-precio-para-colombianos-corrige-mito-t1     A {'acierto': 40, 'equivocado': 0, 'perdido': 0, 'inventado': 0}  B {'acierto': 40, 'equivocado': 0, 'perdido': 0, 'inventado': 0}
+   ex0-reserva-solo-link-t1                                   A {'acierto': 5, 'equivocado': 0, 'perdido': 15, 'inventado': 1}  B {'acierto': 20, 'equivocado': 0, 'perdido': 0, 'inventado': 8}

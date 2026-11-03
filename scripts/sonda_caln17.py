@@ -44,6 +44,28 @@ ESCALONES = {
          "put them in any activity of the split, not in companion nor in undecided (their age does go in edades)."),
     ],
 }
+# El escalón 1 movió el origen de ex0-curso-open-water-principiantes-idioma-frances-anticipacion-t1 (perdido 9/10 → island
+# 8/10): partido en sus dos mitades, cada una sola, para ver cuál lo mueve.
+ESCALONES["1a"] = [  # solo cuentan quienes van
+    ('Hablar en primera persona ("yo", "quiero") no dice el tamaño del grupo.',
+     'Hablar en primera persona ("yo", "quiero") no dice el tamaño del grupo. Cuentan solo quienes van: quien escribe '
+     'no cuenta si dice que no va (reserva para otra persona).'),
+    ESCALONES["1"][1],
+    ('Speaking in first person ("I", "I want") does not give the group size.',
+     'Speaking in first person ("I", "I want") does not give the group size. Only the people going count: the writer '
+     'does not count if they say they are not going (booking for someone else).'),
+    ESCALONES["1"][4],
+]
+ESCALONES["1b"] = [  # el bebé (menor de 6) fuera del reparto y del total
+    ('Hablar en primera persona ("yo", "quiero") no dice el tamaño del grupo.',
+     'Hablar en primera persona ("yo", "quiero") no dice el tamaño del grupo. Un bebé o un niño menor de 6 años no '
+     'cuenta en group_size.'),
+    ESCALONES["1"][2],
+    ('Speaking in first person ("I", "I want") does not give the group size.',
+     'Speaking in first person ("I", "I want") does not give the group size. A baby or a child under 6 does not count '
+     'in group_size.'),
+    ESCALONES["1"][5],
+]
 # Escalón 2 = el 1 + la (3) de #2863: la cifra de su subgrupo en primera persona del plural ya cuenta a quien escribe
 # (despedida de s03j: «4 tenemos licencia y 6 snorkel» salió 11). Sin ejemplos entre comillas (Gadea #2864, 4).
 ESCALONES["2"] = [
