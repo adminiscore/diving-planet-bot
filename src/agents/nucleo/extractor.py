@@ -815,6 +815,7 @@ def lanzar_extraccion_adelantada(state: ConversationState, message: str) -> None
     Jev), como el RAG adelantado. `_understand` lo espera (`datos_del_extractor`); si el turno no llega, se cancela."""
     state._lectura_del_turno = None  # lat-6: la lectura del turno anterior ya no vale
     state._lector_grupo = None
+    state._segunda_nacionalidad = state._args_nacionalidad = None  # CALN-10b: las de este turno, abajo
     if not campos_del_extractor():
         return
     texto = (message or "").strip()
@@ -834,27 +835,34 @@ def lanzar_extraccion_adelantada(state: ConversationState, message: str) -> None
         lang = _detect_language_from_text(message) or lang
     historia = list(state.history or [])
     if state.is_colombian is None and not state.mixed_nationality_notice:
-        lectura = _nacionalidad_en_dos_lecturas(message, historia, sabido, lang)
+        state._args_nacionalidad = (message, historia, sabido, lang)
+        lectura = _nacionalidad_en_dos_lecturas(state)
     else:
         lectura = extraer_turno(message, history=historia, sabido=sabido, lang=lang)
     state._extraccion_adelantada = asyncio.create_task(lectura)
 
 
-async def _nacionalidad_en_dos_lecturas(message: str, historia: list[dict], sabido: dict, lang: str) -> dict | None:
+async def _nacionalidad_en_dos_lecturas(state: ConversationState) -> dict | None:
     """CALN-10b (decisión de Gadea, 30-oct): mientras no se sabe si es colombiano, la nacionalidad solo vale si la
     confirma una segunda lectura; si no, se queda sin dato y el bot pregunta. Haiku lee «soy de Cali» o el residente
     casi al 50 %: con una lectura, 2,5 % de nacionalidades equivocadas (la moneda que no es) y con dos que coinciden, 0;
     las preguntas, 5,6 → 11,8 % (`docs/robustness/caln/estudio-caln10-lecturas.md`). La segunda va solo si la primera
     trae la nacionalidad (Álvaro, #2649): si no la trae, la segunda no podría hacer que valga; las dos a la vez eran
-    +0,86 llamadas por turno (mini-ronda c10b) por el turno que la dice. Los demás campos, de la primera; si la segunda
-    falla, vale la primera, como antes."""
-    from src.agents.extractor_turno import extraer_turno  # lazy
-
-    datos = await extraer_turno(message, history=historia, sabido=sabido, lang=lang)
+    +0,86 llamadas por turno (mini-ronda c10b) por el turno que la dice. Si Jev ya dijo que el mensaje afirma la
+    nacionalidad, la segunda salió con él (`lanzar_segunda_nacionalidad_si_hace_falta`) y acaba casi con la primera; si
+    no, sale ahora, en serie (0.40: ~1,7 s más en esos turnos). Los demás campos, de la primera; si la segunda falla, vale
+    la primera, como antes."""
+    message, historia, sabido, lang = state._args_nacionalidad
+    datos = await _leer(message, historia, sabido, lang)
+    segunda = getattr(state, "_segunda_nacionalidad", None)
     if not datos or datos.get("is_colombian") is None:
+        if segunda is not None:
+            segunda.cancel()  # Jev la creyó dicha y la primera no la trae: no hace falta
         return datos
+    if segunda is None:
+        segunda = state._segunda_nacionalidad = asyncio.create_task(_leer(message, historia, sabido, lang))
     try:
-        otra = await extraer_turno(message, history=historia, sabido=sabido, lang=lang)
+        otra = await segunda
     except Exception as exc:  # noqa: BLE001 — sin la segunda, la primera como antes
         logger.warning(f"[EXTRACT][CALN10B] la segunda lectura falló, vale la primera: {exc!r}")
         return datos
@@ -863,6 +871,25 @@ async def _nacionalidad_en_dos_lecturas(message: str, historia: list[dict], sabi
                     f"({datos['is_colombian']} / {otra.get('is_colombian')}): sin dato, se pregunta")
         datos = {k: v for k, v in datos.items() if k != "is_colombian"}
     return datos
+
+
+async def _leer(message: str, historia: list[dict], sabido: dict, lang: str) -> dict | None:
+    from src.agents.extractor_turno import extraer_turno  # lazy
+
+    return await extraer_turno(message, history=historia, sabido=sabido, lang=lang)
+
+
+def lanzar_segunda_nacionalidad_si_hace_falta(state: ConversationState, senales: dict) -> None:
+    """CALN-10b, sin esperar (idea de Álvaro, #2649): la segunda lectura de la nacionalidad sale en cuanto Jev dice que el
+    mensaje la afirma (en el grafo, junto al lector del grupo), mientras la primera aún no ha vuelto. Solo en los turnos
+    con las dos lecturas (`_args_nacionalidad`) y una vez por turno."""
+    from src.agents.jev_router import AFFIRMS_NATIONALITY  # lazy
+
+    args = getattr(state, "_args_nacionalidad", None)
+    if args is None or getattr(state, "_segunda_nacionalidad", None) is not None or senales.get(AFFIRMS_NATIONALITY) is not True:
+        return
+    state._segunda_nacionalidad = asyncio.create_task(_leer(*args))
+    logger.info("[EXTRACT][CALN10B] Jev dice que el mensaje afirma la nacionalidad: la segunda lectura sale ya")
 
 
 async def datos_del_extractor(state: ConversationState, message: str) -> dict | None:
@@ -1095,6 +1122,10 @@ def cancelar_extraccion_adelantada(state: ConversationState) -> None:
     state._lectura_del_turno = None
     if tarea is not None and not tarea.done():
         tarea.cancel()
+    segunda = getattr(state, "_segunda_nacionalidad", None)  # CALN-10b: la que salió con Jev y nadie esperó
+    state._segunda_nacionalidad = state._args_nacionalidad = None
+    if segunda is not None and not segunda.done():
+        segunda.cancel()
     lector = getattr(state, "_lector_grupo", None)  # CALN-2: el lector del grupo lanzado con Jev que nadie usó
     state._lector_grupo = None
     if lector is not None:

@@ -73,3 +73,20 @@ def test_el_acompanante_tiene_el_descuento_de_grupo():
     st = ConversationState(conversation_id="s30a-acomp", language="es")
     st.detected_group_size = 5
     assert hechos._descuento_de_grupo(st, dom.by_id("companion"), "es")
+
+
+def test_s30e_para_el_mismo_dia_no_se_puede_reservar():
+    """s30e (30-oct): «¿podemos bucear HOY?» a la 1:45 pm → «sí, reservad para hoy». La disponibilidad lo dice ya."""
+    from src.domain.politicas import politica
+
+    assert "MISMO día ya no se puede reservar" in politica("availability_always", "es")
+    assert "SAME day is no longer possible" in politica("availability_always", "en")
+
+
+def test_s30e_la_edad_del_buceo_certificado_dice_que_hay_que_estar_certificado():
+    """s30e: el nieto de 13 «puede hacer buceo certificado» sin decir que lo esté; y lo nuevo no se exige en el texto."""
+    st = ConversationState(conversation_id="s30e-edad", language="es")
+    cert, snorkel = (hechos.hechos(st, ["edad"], [a])[0]["edad"] for a in ("certified_diving", "snorkel"))
+    assert cert.get("solo_si_esta_certificado") is True and "solo_si_esta_certificado" not in snorkel
+    bloque = {"actividad": "certified_diving", "edad": cert}
+    assert hechos.faltan(f"Desde los {cert['minima']} años, si ya está certificado.", [bloque], ["edad"]) == []

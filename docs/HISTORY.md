@@ -1,6 +1,21 @@
 History
 =======
 
+0.41.0 - (2026-11-03, SUBE A PRE: CALN-9b de Álvaro, la espera de 10b y los arreglos del sparring s30e)
+---------------------
+* **Qué sube** (sobre 0.40.0; `feature/caln-integra041-gadea`): **Álvaro** (6274ed86): CALN-9b, sin el origen cada rótulo
+  de la lista de precios lleva cómo se llega y el almuerzo de sus planes (el almuerzo sin decir de qué origen, 5/10 →
+  2/10). **Gadea:** la segunda lectura de la nacionalidad (10b) sale en cuanto Jev dice `affirms_nationality` (idea de
+  Álvaro, #2649); s30e: para el mismo día no se reserva (`availability_always`) y la edad de las actividades que piden
+  certificación lo dice (`solo_si_esta_certificado`).
+* **Medida** (una pasada, a la misma hora, en serie, a solas; A = PRE 0.40.0, B con su base curada en `kb_v2_gadea`):
+  mini-ronda de los mismos 43 visibles: **24 → 18 fallos, 20 → 15 diálogos con fallos** (11 mejoran, 5 empeoran);
+  llamadas por turno 3,67 → 3,60; latencia p50 3,25 → 3,03 s, p90 5,29 → 4,99 s; respaldos 2 y 1. La del 30-oct no valía
+  (el extractor contestó con el respaldo en 185 de 242 llamadas del lado B, con sondas directas a Haiku a la vez): desde
+  entonces, nada de llamadas directas a Haiku mientras alguien mide, y antes del juez se cuentan los `*_respaldo`.
+* **Abierto del s30e:** el venezolano con cédula de extranjería dentro del «grupo mixto» (la frase del extractor, medida ×10
+  y descartada). Tandas de sparring sin graves seguidas: 0 de 2.
+
 0.40.0 - (2026-10-30, SUBE A PRE: lo delgado y CALN-9a de Álvaro, CALN-10b, los arreglos del sparring s30a y las respuestas de negocio de Gadea)
 ---------------------
 * **Qué sube** (sobre 0.39.0; `feature/caln-integra040-gadea`): **Álvaro** (`feature/caln8-sino-alvaro` 1d725d99): el
