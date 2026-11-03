@@ -179,7 +179,10 @@ def _load_services() -> dict:
             # el dia 1 se puede volver a Cartagena). Sin el campo, lo deciden `duration_days` y el nocturno.
             "overnight": service.get("overnight"),
             "web_url": service.get("url") or "https://divingplanet.org/contacto/",
-            "booking_url": service.get("booking_url") or service.get("url") or "https://divingplanet.org/contacto/",
+            # Sparring s03g (3-nov): sin enlace de reserva en la base, ninguno. Antes se ponía la página informativa (`url`), que
+            # no reserva: al inglés de Isla Grande se le daba como «Book here» el paquete de 4 inmersiones y no podía reservar.
+            # Sin enlace, la tarjeta y los hechos lo pasan al asesor, como al acompañante.
+            "booking_url": service.get("booking_url") or None,
             "booking_url_island": "",
             "category": service.get("category"),
             "contact_only": service.get("contact_only", False),

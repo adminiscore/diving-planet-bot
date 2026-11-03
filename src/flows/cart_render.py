@@ -316,7 +316,10 @@ def _cart_booking_blocks(state: ConversationState) -> list[dict]:
         svc_id = _cart_service_id(it, item.get("plan"), state)
         svc = SERVICES.get(svc_id) or {}
         label = svc.get(f"name_{lang}") or item.get("label") or _cart_label_for(it, item.get("plan"), lang)
-        url = None if _is_contact_only_service(svc_id) else _resolve_service_booking_url(svc, state)
+        # s03g: sin enlace de reserva en la base, la página informativa (`web_url`) como «Más información» y el asesor para
+        # reservar, como decidió el negocio el 20-jul (abajo, `direct` solo con book.divingplanet.org).
+        url = None if _is_contact_only_service(svc_id) else (
+            _resolve_service_booking_url(svc, state) or enlace_en_su_idioma(svc.get("web_url"), state.language))
         add(svc, qty, label, url, kind=("course" if it == "course" else "day"))
     return blocks
 

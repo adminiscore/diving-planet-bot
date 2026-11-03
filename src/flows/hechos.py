@@ -269,7 +269,9 @@ def hechos(state: ConversationState, intenciones: list[str], actividades: list[s
                 bloque["enlace"] = _por_origen(
                     actividad, origenes,
                     lambda sid: cart_render._resolve_service_booking_url(SERVICES.get(sid) or {}, state), elegido)
-                if bloque["enlace"]:
+                if not bloque["enlace"] and any(_plan_base(actividad, o, elegido) for o in origenes):
+                    bloque["enlace"] = {"asesor": True}  # s03g: el plan no tiene enlace de reserva: lo reserva un asesor
+                elif bloque["enlace"]:
                     bloque["descuento_online"] = _descuento_online(lang)
                     if "pago" not in pedidas:
                         como = [_politica("how_to_book", lang), _pago_extranjero(lang),
