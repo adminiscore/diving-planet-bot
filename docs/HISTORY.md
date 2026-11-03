@@ -1,6 +1,28 @@
 History
 =======
 
+0.46.0 - (2026-11-04, SUBE A PRE: CALN-11 v2, las FAQ partidas por origen y los planes sin enlace al asesor)
+---------------------
+* **Qué sube** (sobre 0.45.0; `feature/caln-046d-gadea`): **Álvaro** (CALN-11 v2, fe321e7f + 4fc4596e): cada pregunta del
+  mensaje se busca desde donde empieza su frase, no con todo el saludo delante, y sin la marca del origen (el cava
+  de s03i: la política del alcohol llega al escritor 0/4 → 4/4). **Gadea** (CALN-9b, 86d148f1): las FAQ curadas que
+  mezclaban los dos orígenes («el almuerzo solo el primer día para quien sale de Cartagena; si ya estás en las islas, no
+  está incluido») van partidas en la base, un documento por origen (faq:11, 99, 101, 122 y acompañante; faq:16 y 112,
+  solo de las islas), y `fichas_del_origen` quita también la FAQ del otro origen. Sin la marca del origen, esas FAQ
+  subían y el escritor mezclaba lo que incluye cada plan (las 4 minis del 3-nov por la noche). **Gadea** (s03j,
+  920f2ca9): los planes sin enlace de reserva, nombrados en la lista del escritor como del asesor (el CMAS de la tanda de
+  Álvaro recibía el enlace del paquete de 5 para el de 4: 6/6 → 0/2).
+* **Medida** (una pasada, en la misma franja, en serie, a solas; A = PRE 0.45.0): mini-ronda de los 43 visibles: **28 →
+  23 fallos, 23 → 17 diálogos con fallos**; s03j sola, 21 / 19. Llamadas por turno 3,62 → 3,65; p50 3,21 → 3,29 s; p90
+  5,32 → 5,22 s; respaldos 3 y 0. Suite 3194. Ojo con el ruido: la misma 0.45 dio 20/16 a las 22:00 y 28/23 a las 23:45;
+  solo vale comparar dentro de la misma franja.
+* **No sube:** CALN-16 (el escritor con los hechos también busca, la vegetariana). Con las fichas de otros planes
+  mezclaba lo que incluye cada uno (0.46: 20 → 22 fallos y +0,4 s); sin las fichas, las FAQ de paquetes seguían
+  mezclando (0.46c). Vuelve al taller, ahora con las FAQ partidas.
+* **Sparring:** 7.ª tanda (Álvaro, s03j, contra 0.45) 2 graves, ya en la 0.44: el regalo (la lectura del grupo, CALN-17,
+  Álvaro) y el CMAS (arreglado aquí). Tandas sin graves seguidas: 0 de 2. Abierto, ya en la 0.45 (1/3 en PRE): «stay one
+  day longer in rosario» leído como «ya en las islas» → el precio y la recogida del otro origen.
+
 0.45.0 - (2026-11-03, SUBE A PRE: los bebés a bordo, CALN-11 (una búsqueda por pregunta) y CALN-8 (6) del regex)
 ---------------------
 * **Qué sube** (sobre 0.44.0; `feature/caln-integra045-gadea`): **Gadea** (s03h): los bebés y los niños pequeños que aún no
