@@ -157,12 +157,6 @@ def classify_route(conv_state: ConversationState, message: str, signals: dict) -
     if sup.pregunta_si_es_ia(msg_lower, signals):
         return ROUTE_DEFLECT
 
-    # Sparring s03a (3-nov, tanda de Álvaro): dentro de DIVE TO HEAL, «sí, pásame con el asesor» (tres veces) iba al RAG
-    # (ROUTE_INFO, abajo), que prometía el pase sin hacerlo o decía que no podía. Pedir una persona manda, como fuera
-    # de DIVE TO HEAL (el SAFETY de más abajo, que aquí no se alcanzaba).
-    if signals.get("wants_human"):
-        return ROUTE_SAFETY
-
     # ── SAFETY / INFO (DIVE TO HEAL) ──
     adaptive_now = (regex_vale and bool(sup._ADAPTIVE_DIVING_PATTERN.search(message))) or adaptive_signal
     # El contexto adaptativo persiste entre turnos: un "¿cuánto cuesta?" sin
