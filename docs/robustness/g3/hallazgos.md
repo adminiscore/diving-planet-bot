@@ -801,3 +801,48 @@ novia que nunca ha buceado (6819); hermanos de Cali, minicurso, efectivo el día
 **Menores:** la pregunta del asesor dos veces en los cierres en pesos (cava t1, familia t3, novia t3); «And how many
 people should I plan for?» al que dijo «I» (Advanced t1); los buceos certificados en la lista de precios de la francesa
 principiante; el refresh explicado dos veces (novia t1).
+
+## CALN-S03J-01..08 · 7.ª tanda (Álvaro) contra PRE 0.45.0, hasta reservar (3-nov, `charla_pre`)
+
+PRE 0.45 df64eca1. Ocho clientes nuevos, educados y que dan la información (decisión de Gadea, 3-nov), con frases
+nuestras (`docs/robustness/g3/tanda-alvaro-s03j.md`, conv 6821-6828 en `docs/robustness/g3/charlas/`); criterio de
+gravedad de Álvaro (#2716). Fuera a propósito los graves conocidos y aparcados (la cuenta del bebé, el nocturno). Cada
+grave posible, ×3 por versión con `charla_rama`, A = 0.44 / B = 0.45 (`docs/robustness/g3/charlas-rama/s03j-graves/`),
+leyendo las respuestas.
+
+- **BIEN:** la perrita no va (no_pets) y las tres reservan con su enlace, tarjeta peruana con pasaporte; no se fuma a
+  bordo; la lancha no tiene baño y se usa el del hotel; sin edad máxima para el buzo de 71 años, refresher y minicurso
+  para la nieta de 12; el regalo a nombre de otra persona, sin tarjeta regalo; el 20 % de grupo pidiéndolo antes de
+  pagar; Bogotá al asesor con el anticipo del 50 % en pesos; los chilenos 100 % online; el paquete de 2 días lleva una
+  noche en las islas (la ficha lo dice).
+
+**Graves (2; los dos vienen de antes, también en la 0.44): la meta vuelve a 0 de 2.**
+1. **El regalo: «I won't dive or come along» y aun así 2 personas en dólares** (regalo t2: «paid in USD… · 2
+   people», la regla del grupo mixto). Al corregirlo el cliente (t3) dice «una persona, en COP» y sigue dando 183 USD.
+   ×3: 0.44 3/3, 0.45 3/3 (t3 con el importe en USD 5/6). La lectura del grupo cuenta a quien escribe aunque no va, y de
+   ahí la moneda. Zona de Álvaro (CALN-17).
+2. **El paquete de 4 inmersiones en 2 días desde Cartagena, con el enlace de OTRO paquete** (CMAS t3:
+   `book/2-days-5-dives/9`, el de 5 inmersiones). `4_dives_2_days` no tiene enlace de reserva y debe ir al asesor (la
+   clase de s03g, aquí en el texto del escritor). ×3: 0.44 3/3, 0.45 3/3 (5/6 el de 5 inmersiones, 1/6
+   `book/4-days-9-dives/11`), nunca al asesor. Al decírselo el cliente, lo corrige y ofrece el asesor.
+
+**No se repiten (azar):** el refresher a «178 USD desde Cartagena» en t1 (la tarifa del refresh es 183 y el catálogo se
+la da bien; 0/6) y el francés de Isla Grande con la tarjeta de un día para el paquete de 2 (1/6).
+
+**Medios:**
+- **La tarjeta «Salidas de Buceo - 2 inmersiones» en la reserva de quien solo pidió refresher + minicurso** (abuelo t2,
+  5/6 al repetir), y en PRE sigue en t4 después de «no quiero la salida de 2 inmersiones». El texto dice bien «dos
+  reservas separadas»: al límite de grave.
+- **El parqueadero, dos veces «no tengo información»** (Bogotá t1 y t2), aunque está `politica:parking` (no hay
+  parqueadero propio: taxi).
+- **La CMAS, «no tengo confirmado si cumple»** (CMAS t1), aunque la FAQ de certificación nombra PADI, NAUI y CMAS.
+- **La lluvia, dos veces sin «se reprograma»** (chilenos t1 y t2): «depende de los términos y condiciones» y «no tengo
+  aquí el detalle», aunque availability y avisos dicen que si el mar no está apto la salida se reprograma.
+- **La despedida con 11 personas** (t2, «¿lo cambio? 11 → 10»): «4 tenemos licencia y 6 snorkel» contó dos veces a
+  quien escribe (la clase de R8, CALN-17).
+- **«Me quedaría una noche en Isla Grande» leído como salida desde las islas** (CMAS t2): los precios de las islas,
+  con «¿lo cambio?»; al contestar «salgo desde Cartagena», los de Cartagena.
+
+**Menores:** «How many people should I plan for?» a quien dijo «I» (Isla Grande t2, CMAS t3; CALN-18); el enlace de
+reserva dos veces (chilenos t1); la frase sin sujeto «Deben solicitarlo al equipo antes de pagar» (despedida t2); la
+lista de precios de todos los paquetes al abuelo (t3).
