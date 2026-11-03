@@ -249,3 +249,19 @@ def test_quinta_sin_pedir_precio_ni_origen_no_va_la_pieza(monkeypatch):
     bloques = hechos.hechos(st, ["precio", "horario"], ["certified_diving"])
     answer = asyncio.run(rh._con_el_escritor(st, "¿a qué hora se vuelve?", [], bloques, ["precio", "horario"]))
     assert "Precios por persona" not in answer and not llamadas.get("precios_por_codigo")
+
+
+def test_con_el_precio_la_nota_corta_del_de_grupo_y_con_la_pregunta_la_descripcion_entera():
+    """Sparring s30e: la descripción entera de discounts.json, con su «ANTES», pegada bajo los precios."""
+    from src.flows import hechos  # lazy
+
+    st = _st(detected_activity="snorkel", detected_group_size=6)
+    [precio] = hechos.hechos(st, ["precio"], ["snorkel"])
+    nota = precio["descuento_de_grupo"]
+    assert "antes de pagar" in nota and "ANTES" not in nota and "20%" in nota and "No aplica a cursos PADI" in nota
+    assert nota in cotizar.pieza_de_precios([precio], "es")
+    [descuento] = hechos.hechos(st, ["descuento"], ["snorkel"])
+    assert any("ANTES" in texto for texto in descuento["descuento"])  # la pregunta recibe las condiciones enteras
+    st.language = "en"
+    [precio_en] = hechos.hechos(st, ["precio"], ["snorkel"])
+    assert "before paying" in precio_en["descuento_de_grupo"] and "BEFORE" not in precio_en["descuento_de_grupo"]
