@@ -143,7 +143,7 @@ def classify_route(conv_state: ConversationState, message: str, signals: dict) -
     if (regex_vale and sup._detect_reschedule_request(msg_lower)) or (
         signals.get("booking_change_topic") == "reschedule"
         and not sup._in_active_cart_building(conv_state)
-    ) or sup._jev_changes_date(signals):
+    ) or sup._jev_changes_date(signals, conv_state):
         return ROUTE_CHANGE
     if (regex_vale and sup._detect_modify_booking_request(msg_lower)) or (
         signals.get("booking_change_topic") == "modify_headcount"

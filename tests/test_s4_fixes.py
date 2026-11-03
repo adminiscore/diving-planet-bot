@@ -91,11 +91,16 @@ def test_post_venta_va_al_nodo_de_escalado():
     assert router.classify_route(_state(), "¿está todo ok con mis reservas?", {"needs_staff": True}) == router.ROUTE_SAFETY
 
 
-def test_cambio_de_fecha_con_el_carrito_abierto_va_a_cambios(monkeypatch):
+def test_cambio_de_fecha_con_el_carrito_abierto_va_a_cambios_solo_con_reserva(monkeypatch):
+    """3-nov (decisión de Gadea): sin una reserva hecha, cambiar el día no pasa al asesor; con ella, sí (s4-6)."""
     st = _state(detected_activity="snorkel", detected_group_size=3, location="cartagena")
     monkeypatch.setattr(supervisor, "_in_active_cart_building", lambda s: True)
     signals = {"booking_change_topic": "reschedule", "changes_date": True}
+    assert router.classify_route(st, "espera, mejor cambiemos la fecha", signals) != router.ROUTE_CHANGE
+    st.ya_reservado = True
     assert router.classify_route(st, "espera, mejor cambiemos la fecha", signals) == router.ROUTE_CHANGE
+    st.ya_reservado = False
+    assert router.classify_route(st, "mejor el sábado", {**signals, "ya_reservado": True}) == router.ROUTE_CHANGE
     # sin la pregunta de Jev, la señal del router sigue sin valer con el carrito abierto
     assert router.classify_route(st, "hazlo para 3 días", {"booking_change_topic": "reschedule"}) != router.ROUTE_CHANGE
 

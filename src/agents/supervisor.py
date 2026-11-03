@@ -447,7 +447,7 @@ async def _shared_turn_handler(
     if (regex_decide(routing_signals) and _detect_reschedule_request(msg_lower)) or (
         routing_signals.get("booking_change_topic") == "reschedule"
         and not _in_active_cart_building(state)
-    ) or _jev_changes_date(routing_signals):
+    ) or _jev_changes_date(routing_signals, state):
         logger.info("[SUPERVISOR] Reschedule request detected -> policy info + escalate/home buttons")
         return _booking_change_response(state, message, "reschedule")
 
