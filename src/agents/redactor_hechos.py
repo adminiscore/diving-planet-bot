@@ -378,7 +378,9 @@ async def _con_el_escritor(state: ConversationState, message: str, history: list
     CALN-16 (3-nov, sparring s03h): también con la búsqueda. Sin ella, lo que el cliente AFIRMA en el mismo mensaje no
     llegaba: «Is lunch included? I'm vegetarian.» solo pide «incluye» (Jev), y desde CALN-8 (3) las políticas ya no van
     en el prompt del escritor, así que contestaba «no tengo información» con food_policy en la búsqueda adelantada
-    (charla_rama --espia: 0/2 → 2/2 «the vegetarian option is rice with vegetables»)."""
+    (charla_rama --espia: 0/2 → 2/2 «the vegetarian option is rice with vegetables»). Solo con las políticas y las FAQ
+    de la búsqueda (`sin_fichas`): con las fichas de otros planes mezclaba lo que incluye cada uno (mini de la 0.46,
+    20 → 22 fallos)."""
     from src.agents import conversational_core as core  # lazy
     from src.agents import supervisor  # lazy
     from src.agents.rag_agent import is_fallback_answer  # lazy
@@ -389,7 +391,7 @@ async def _con_el_escritor(state: ConversationState, message: str, history: list
     entradas = core._entradas_rag(state, history, message)
     if origen_pendiente:
         entradas.pop("pregunta_final", None)  # la pregunta del origen la pone el código, abajo
-    entradas.update(hechos=texto_de_los_hechos(bloques), hechos_bloques=(bloques, intenciones))
+    entradas.update(hechos=texto_de_los_hechos(bloques), hechos_bloques=(bloques, intenciones), sin_fichas=True)
     # 5.ª ronda: con una pregunta de precio guardada a la espera del origen, arq-8f añade «precio» a cada turno con alguna
     # intención, y la pieza salía en turnos que preguntan otra cosa (la hora de vuelta, cómo reservar). Va si el cliente
     # pide precio en ESTE mensaje (Jev) o si ya se sabe el origen (el caso de arq-8f: el mensaje que da el origen

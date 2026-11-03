@@ -22,4 +22,4 @@ def test_el_escritor_con_hechos_no_pide_ir_sin_busqueda(monkeypatch):
     respuesta = asyncio.run(redactor_hechos._con_el_escritor(
         st, mensaje, [{"role": "user", "content": mensaje}], [{"actividad": "snorkel", "incluye": ["lunch"]}], ["incluye"]))
     assert respuesta and "vegetarian" in respuesta
-    assert pedido.get("hechos") and not pedido.get("sin_busqueda")
+    assert pedido.get("hechos") and not pedido.get("sin_busqueda") and pedido.get("sin_fichas") is True
