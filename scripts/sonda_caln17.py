@@ -44,6 +44,18 @@ ESCALONES = {
          "put them in any activity of the split, not in companion nor in undecided (their age does go in edades)."),
     ],
 }
+# Escalón 2 = el 1 + la (3) de #2863: la cifra de su subgrupo en primera persona del plural ya cuenta a quien escribe
+# (despedida de s03j: «4 tenemos licencia y 6 snorkel» salió 11). Sin ejemplos entre comillas (Gadea #2864, 4).
+ESCALONES["2"] = [
+    *ESCALONES["1"][:2],
+    ("el bot preguntará cuántos son.",
+     ESCALONES["1"][2][1] + " Si quien escribe da la cifra de su parte del grupo hablando en primera persona del plural "
+                            "(nosotros), esa cifra ya lo incluye: no lo sumes aparte."),
+    *ESCALONES["1"][3:5],
+    ("the bot will ask how many.",
+     ESCALONES["1"][5][1] + " If the writer gives the number for their part of the group speaking in the first person "
+                            "plural (we), that number already includes them: do not add them separately."),
+]
 
 
 def _con_escalon(texto: str) -> str:
@@ -82,6 +94,13 @@ FRASES = [  # (id, mensaje, lang, sabido, total esperado, reparto esperado sin u
                    "little one.", "en", {}, 2, None),
     ("r8", "Vamos en família a Cartagena. 1 buzo avanzado y 2 para bautismo", "es", {}, 3,
      {"certified_diving": 1, "minicourse": 2}),
+    # escalón 2: la cifra en primera persona del plural ya cuenta a quien escribe (frases nuestras)
+    ("plural-10", "Somos 10 amigos de Bogotá: 3 tenemos licencia de buceo y 7 quieren snorkel. ¿Cuánto cuesta?", "es", {},
+     10, {"certified_diving": 3, "snorkel": 7}),
+    ("plural-en", "There are six of us: two of us are certified divers and four want to snorkel.", "en", {}, 6,
+     {"certified_diving": 2, "snorkel": 4}),
+    ("plural-sin-total", "Dos hacemos el minicurso y mis padres vienen solo a acompañarnos en la lancha.", "es", {}, 4,
+     {"minicourse": 2, "companion": 2}),
 ]
 FIJOS = ("ex0-desde-islas-buzo-certificado-t1", "ex0-reserva-solo-link-t1",
          "ex0-familia-mixta-precio-descuento-refresher-t4", "ex0-open-water-precio-para-colombianos-corrige-mito-t1")
