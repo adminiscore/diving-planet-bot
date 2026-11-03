@@ -55,3 +55,18 @@ decide la moneda. Es la clase de efecto lateral de `prompt-extractor-efectos-lat
 
 Mi recomendación: (b). Es una lista de nombres propios, no de frases; no mueve nada más, y la confirmación de hoy cuesta
 un turno a cada cliente alojado en Cartagena.
+
+## 4. Decisión y medida (3-nov)
+
+Gadea eligió (b) (#2694). Hecho en 4743aa0d (`extractor_turno.extraer_turno`, `[EXTRACT][BARRIO]`), sobre la 0.41.
+Medido con PRE libre, de 12:51 a 13:05:
+- Sonda directa ×10: las 6 frases de barrio dan `cartagena` 10/10, y los controles siguen bien («visiting Cartagena»
+  null 10/10, Isla Grande island 10/10).
+- Las 4 charlas del sparring donde se preguntaba (s30a familia t1, s30a refresher-en t1, s30e hoy-mismo t1, s30e
+  cambia-plan t2), ×3 por lado, alternando, con charla_rama `--codigo-local`. A es la 0.41 (390e1adc) y B esta rama:
+
+| | A (0.41) | B |
+|---|---|---|
+| Lugar sabido tras el turno | 0/12 | 12/12 cartagena |
+| Pregunta «¿saldrías desde Cartagena?» | 9/12 | 0/12 |
+| Precios de los dos orígenes | 9/12 | 0/12 (solo Cartagena) |
