@@ -59,6 +59,37 @@ integrar la rama del otro y suite en verde, porque en PRE gana el último; (3) *
 despliegue reinicia el contenedor y mata la medida del otro (avisar en el registro de Plan Coral con la hora de fin).
 Las doce normas, con su porqué, están en el documento.
 
+### ▶️ RETOMAR AQUÍ — 4-nov, 00:45 (Gadea con Claude; Álvaro y Gonzalo): 0.46.0 EN PRE; meta de CALN 1 de 2; candidata 0.47 lista
+
+- **PRE sirve `fc501282`** (HISTORY 0.46.0, `feature/pre_gadea` = `feature/caln-gadea`), sano (CI verde, 23 ajustes, humo
+  5/5, 0 respaldos; kb_v2 regenerada con las FAQ partidas por origen). El 3-nov subieron 0.41 → 0.45, y la 0.46 a las 00:15.
+  La 0.46 lleva CALN-11 v2 (Álvaro: cada pregunta desde su frase y sin la marca del origen), CALN-9b (las FAQ con los dos
+  orígenes, partidas en la base y filtradas por `fichas_del_origen`) y s03j (los planes sin enlace, nombrados en la lista
+  del escritor como del asesor). Mini, en la misma franja: 28 → 23 fallos, 23 → 17 diálogos.
+- **Meta de CALN (decisión de Gadea):** dos tandas de sparring SEGUIDAS sin graves, con clientes educados que escriben
+  bien (los difíciles van a la fase DIF, después) + bancos sin bajar; el oculto, una sola vez y al final, en VAL. Van **1 de
+  2**: la 7.ª (Álvaro, s03j) tuvo 2 graves de antes (el regalo → CALN-17; el CMAS → arreglado en la 0.46); la 8.ª (Gadea,
+  s04a, contra la 0.46) sin graves (la luna de miel, medio al límite). Siguiente: la 9.ª.
+- **Candidata 0.47** `feature/caln-integra047-gadea` 456ccb2e = 0.46 + CALN-16 v2 (el escritor con hechos busca, pero solo
+  recibe políticas y FAQ de la búsqueda, sin fichas: la vegetariana) + s04a (la cámara propia sí, no se alquilan; los
+  hallazgos de s03i y s04a). Suite 3195. kb_v2_gadea ya cargada con ella (444 docs). **Falta su mini**: A = PRE 0.46 / B =
+  0.47 con `RAG_KB_ESQUEMA=kb_v2_gadea`, en la misma franja, contando los respaldos antes de juzgar.
+- **Lo aprendido el 3-nov por la noche (importante para medir):**
+  - el ruido de una pasada es grande: la misma 0.45 dio 20/16 a las 22:00 y 28/23 a las 23:45. Comparar A y B SIEMPRE
+    en la misma franja, en serie y a solas;
+  - con OpenRouter atascado (75 respaldos del extractor en 3 minutos), la mini no vale: contar `*_respaldo` antes del juez;
+  - CALN-16 tal cual (el escritor con hechos y TODA la búsqueda) mezclaba lo que incluye cada plan: no subió dos veces;
+  - un campo nuevo en el extractor (el nocturno, CALN-20) movía otras lecturas en 6 redacciones: aparcado.
+- **En marcha:** Álvaro, CALN-17 (la lectura del grupo: el bebé, el regalo, el R8, «quien aún no ha elegido» ya elegido; y
+  el escalón U, «stay one day longer in rosario» leído como «ya en las islas») con su sonda ×10 en
+  `feature/caln17-alvaro`. Gonzalo, CALN-8 (6): contar las marcas del regex en más rondas.
+- **Abiertos:** el Nitrox de Isla Grande, «no hay enlace para las 2 inmersiones desde las islas» (sí lo hay): mirar si viene
+  de la lista de planes sin enlace de la 0.46; la vegetariana del t1 (CALN-16 v2, en la 0.47); los medios de s03i y s04a
+  (CALN-18 y CALN-19).
+- **Plan Coral al día** (fase CALN, CALN-16 a CALN-20, fase DIF). Hallazgos: `docs/robustness/g3/hallazgos.md` (S03G, S03A,
+  S03H, S03I y S04A en `feature/s04a-gadea`; S03J, en la rama de Álvaro).
+- **Gasto del juez (GPT) el 3-nov:** ~12 $ (cinco minis por la noche). OpenRouter: ~22 $ de saldo a las 19:00.
+
 ### ▶️ RETOMAR AQUÍ — 30-oct, 14:45 (Gadea con Claude; Álvaro): 0.40.0 EN PRE; candidata 0.41 midiéndose
 
 - **PRE sirve `7d916a95`** (HISTORY 0.40.0, `feature/pre_gadea` = `feature/caln-gadea`) desde las ~14:00, sano (CI verde,
