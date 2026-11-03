@@ -642,3 +642,34 @@ hotel del centro (la clase de «staying in Cartagena»).
 **Menores:** la moneda dicha dos veces a la luna de miel; «No calculo el precio final con el descuento aplicado»;
 «La cédula de extranjería no cambia la moneda: para pagar en pesos debes ser residente» (se contradice con lo que sigue).
 
+## CALN-S03G-01..08 · 3.ª tanda de sparring contra PRE 0.42.0, hasta reservar (3-nov, `charla_pre`)
+
+Primera tanda con CALN-13 (charlas hasta reservar) y el criterio de gravedad de Álvaro (#2716: GRAVE si reserva mal o no
+puede: importe, moneda, enlace o plan del otro origen equivocados, fecha u horario falsos, consejo inseguro, lo contrario
+de una política, un callejón sin salida, la misma pregunta por 3.ª vez; MEDIO si reserva con fricción; MENOR, el estilo).
+Ocho personas (`docs/robustness/g3/charlas/` 6789-6796): pareja de Lima en Getsemaní (ella OW, él nunca), familia de Cali
+con niños de 6 y 10 en Bocagrande, inglés Advanced en Isla Grande que quiere el paquete de 4 inmersiones, 5 sevillanos (3
+snorkel + 2 acompañantes), nacida en Cartagena con solo pasaporte de EE. UU., paisa con OW y 4 años sin bucear que quiere
+el Advanced, factura de empresa y transferencia «porque sí», indeciso que acaba pidiendo el 25 de diciembre.
+
+- **BIEN (6 de 8 llegan a reservar o al asesor):** Getsemaní y Bocagrande ya dan Cartagena (los barrios de la 0.42); un enlace
+  por actividad y las tarjetas; los niños por edad; el acompañante cuenta para el grupo y tiene el descuento (decisión del
+  30-oct); el pasaporte de EE. UU. paga en USD; refresher + Advanced = 3 días con la noche en las islas y, bajo cada origen,
+  cómo se llega y el almuerzo (9b); la transferencia solo si falla el online; el 25 de diciembre cerrado y el 26 sí.
+
+**Graves (1):**
+1. **El paquete de 4 inmersiones desde las islas no se puede reservar** (advanced-islas t1-t3): da
+   `https://divingplanet.org/buceo-islas-del-rosario/` (la página informativa) como «Book here» e insiste en que es la buena
+   cuando el cliente dice que solo ve información. En services.json, `4_dives_2_days_already_on_island` (y los demás
+   paquetes) no tienen `booking_url`, solo `url`. Sin enlace de reserva, debería pasar al asesor (como hace con el
+   acompañante). Zona: hechos y datos (Gadea). Pregunta para Andrés: ¿enlace de reserva de los paquetes?
+
+**Medios:** la lista entera de descuentos pegada otra vez (cinco amigos t1 y t3, aunque preguntan por uno: precios y
+descuentos, Gonzalo); «I've lived in Miami since I was a baby» → «You mentioned minors are coming, what are their ages?»
+(miami t3; la lectura, Gadea); «entonces lo hago el 26 de diciembre» leído como un CAMBIO de fecha → términos y pase al
+asesor (indeciso t3; Jev, Gadea); la factura sin contestar en t1 y t2 («no tengo información») y bien solo cuando se
+pregunta sola en t3 (la laguna CALN-11); el precio que pidió el indeciso en t2, olvidado.
+
+**Menores:** «¿cuántas personas?» cuando dijo «yo»/«I» (advanced-islas, miami, advanced-curso); la moneda dicha dos veces;
+la pregunta del asesor dos veces en el mismo mensaje; «Te dejo a continuación los precios».
+
