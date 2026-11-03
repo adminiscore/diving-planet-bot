@@ -66,6 +66,32 @@ def _con_escalon(texto: str) -> str:
     return texto
 
 
+# Escalón U (origen, Gadea #2885): «What if I decide to stay one day longer in rosario…» (curso-open-water-transporte-y-
+# regreso-otro-dia t2) se leía «ya en las islas» 1/3: una hipótesis sobre después no es estar alojado allí ahora.
+ESCALONES["U"] = [
+    ('Alojado en las islas, en un hotel de las islas o "sin ir de Cartagena" → island (nombrar las islas como el sitio '
+     'donde se bucea no basta).',
+     'Alojado en las islas, en un hotel de las islas o "sin ir de Cartagena" → island (nombrar las islas como el sitio '
+     'donde se bucea no basta). Preguntar qué pasa si se queda más días en las islas, una hipótesis o un plan para '
+     'después de la actividad, no dice que ya esté alojado allí.'),
+    ("Staying on the islands or at an island hotel → island (naming the islands as the place where you dive is not "
+     "enough).",
+     "Staying on the islands or at an island hotel → island (naming the islands as the place where you dive is not "
+     "enough). Asking what happens if they stay longer on the islands, a hypothesis or a plan for after the activity, "
+     "does not say they are already staying there."),
+]
+FRASES_U = [  # (id, mensaje, lang, sabido, location esperada)
+    ("ow-un-dia-mas", "What if I decide to stay one day longer in rosario, can you provide de transfer back to cartagena?",
+     "en", {"activity": "padi_open_water"}, None),
+    ("ow-un-dia-mas-es", "¿Y si decido quedarme un día más en las islas después del curso, me pueden traer de vuelta a "
+                         "Cartagena?", "es", {"activity": "padi_open_water"}, None),
+    ("alojado-isla-grande", "I'm staying at a hotel on Isla Grande for 4 nights and I want to dive.", "en", {}, "island"),
+    ("alojado-es", "Estamos alojados en un hotel de Isla Grande hasta el domingo. ¿Podemos hacer snorkel?", "es", {},
+     "island"),
+    ("sale-cartagena", "We leave from Cartagena on Saturday and want to snorkel.", "en", {}, "cartagena"),
+]
+
+
 B_ES, B_EN = _con_escalon(SIS_ES), _con_escalon(SIS_EN)
 assert B_ES != SIS_ES and B_EN != SIS_EN
 
@@ -161,10 +187,20 @@ async def detalle(ids: list[str], n: int) -> int:
 async def main() -> int:
     if os.environ.get("DETALLE"):
         return await detalle(os.environ["DETALLE"].split(","), N_FRASES)
-    frases = [{"id": i, "message": m, "lang": lang, "sabido": s, "total": t, "reparto": r}
-              for i, m, lang, s, t, r in FRASES]
-    lf = await pasadas(frases, N_FRASES)
-    print(f"== escalón {ESCALON}: frases de grupo ×{N_FRASES} (bien A → B)")
+    if ESCALON == "U":
+        fu = [{"id": i, "message": m, "lang": lang, "sabido": s, "location": x} for i, m, lang, s, x in FRASES_U]
+        lu = await pasadas(fu, N_FRASES)
+        print(f"== escalón U: frases del origen ×{N_FRASES} (location A → B)")
+        for f in fu:
+            print(f"  {f['id']:20} esperado {f['location']!s:9} A {dict(Counter(d.get('location') for d in lu[(f['id'], 'A')]))}"
+                  f"  B {dict(Counter(d.get('location') for d in lu[(f['id'], 'B')]))}")
+        frases = []
+    else:
+        frases = [{"id": i, "message": m, "lang": lang, "sabido": s, "total": t, "reparto": r}
+                  for i, m, lang, s, t, r in FRASES]
+    lf = await pasadas(frases, N_FRASES) if frases else {}
+    if frases:
+        print(f"== escalón {ESCALON}: frases de grupo ×{N_FRASES} (bien A → B)")
     for f in frases:
         a = sum(bien(d, f["total"], f["reparto"]) for d in lf[(f["id"], "A")])
         b = sum(bien(d, f["total"], f["reparto"]) for d in lf[(f["id"], "B")])
