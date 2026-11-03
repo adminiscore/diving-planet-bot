@@ -33,3 +33,22 @@ def test_un_grupo_de_uno_no_trae_menores_aunque_diga_baby():
     assert core.next_missing_slot(st) == core.SLOT_AGES
     st.detected_group_size = 1
     assert core.next_missing_slot(st) != core.SLOT_AGES
+
+
+def test_s03a_en_dive_to_heal_pedir_o_aceptar_el_asesor_pasa():
+    """s03a (tanda de Álvaro, 6/6): dentro de DIVE TO HEAL, «sí, pásame con el asesor» o un «sí» a la oferta del asesor
+    no pasaba nunca a una persona (el texto del programa y el RAG contestaban antes). Ahora pasa."""
+    import asyncio
+
+    from src.agents.escalation_agent import escalation_node
+    from src.agents.info_agent import info_node
+    from src.flows.state import Step
+
+    oferta = "Sí, con DIVE TO HEAL. ¿Quieres que te pase con un asesor para darte todos los detalles?"
+    for nodo, mensaje, senales in ((info_node, "sí", {}), (info_node, "Sí, pásame con el asesor", {"wants_human": True}),
+                                   (escalation_node, "Sí, ¿cuánto cuesta? pásame con el asesor", {"wants_human": True})):
+        st = ConversationState(conversation_id="s03a", language="es")
+        st.step, st.adaptive_diving_context = Step.MAIN_MENU, True
+        st.history = [{"role": "user", "content": "uso silla de ruedas"}, {"role": "assistant", "content": oferta}]
+        out = asyncio.run(nodo({"conv_state": st, "message": mensaje, "signals": senales}))
+        assert st.step == Step.ESCALATE and st.pending_escalation_reason, (nodo.__name__, mensaje, out)

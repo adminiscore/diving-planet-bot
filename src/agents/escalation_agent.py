@@ -196,6 +196,7 @@ async def escalation_node(state: BotState) -> dict:
         build_lead_summary,
         detect_pii,
         detect_sensitive_escalation,
+        pase_pedido_o_aceptado,
         privacy_block_message,
         regex_decide,
         sensitive_response_for,
@@ -269,6 +270,9 @@ async def escalation_node(state: BotState) -> dict:
         signals.get("adaptive_diving_topic"))
     if adaptive_now:
         conv.adaptive_diving_context = True
+    if conv.adaptive_diving_context and (pase := pase_pedido_o_aceptado(conv, message, signals)):
+        logger.info("[NODE:escalation] DIVE TO HEAL: pide o acepta el asesor -> pase")
+        return {"reply": pase}  # s03a: antes que el texto del programa
     if conv.adaptive_diving_context and _PRICE_OR_BOOKING_Q.search(message):
         if conv.step in (Step.WELCOME, Step.LANGUAGE):
             conv.step = Step.MAIN_MENU

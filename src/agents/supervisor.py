@@ -515,6 +515,8 @@ async def _shared_turn_handler(
         routing_signals.get("adaptive_diving_topic"))
     if adaptive_now:
         state.adaptive_diving_context = True
+    if state.adaptive_diving_context and (pase := pase_pedido_o_aceptado(state, message, routing_signals)):
+        return pase
 
     if (
         state.adaptive_diving_context
@@ -564,39 +566,8 @@ async def _shared_turn_handler(
         # a BOOKING en el router de Fase 1 (la frontera se separa en Fase 3.3).
         return core_response
 
-    # Cliente acepta con un "si"/"dale"/"ok" una oferta que el propio bot hizo
-    # en el turno anterior de pasarle con un asesor ("¿te paso el contacto de
-    # un asesor?"). Sin esta rama, el "si" (demasiado corto para el agente
-    # conversacional) caia a RAG y respondia el fallback generico — bug real
-    # visto en PRE (2026-07-07). Restringido a pasos conversacionales para no
-    # pisar los "si/no" de preguntas del arbol.
-    if (
-        state.step in (Step.MAIN_MENU, Step.FREE_TEXT)
-        and _BARE_AFFIRMATION_RE.match(message.strip())
-    ):
-        last_bot = next(
-            (h.get("content", "") for h in reversed(state.history or []) if h.get("role") == "assistant"),
-            "",
-        )
-        if _ADVISOR_OFFER_RE.search(last_bot) and _OFFER_VERB_RE.search(last_bot):
-            reason = "aceptó la oferta del bot de hablar con un asesor"
-            state.step = Step.ESCALATE
-            state.quick_replies = []
-            state.pending_escalation_reason = reason
-            state.pending_note = build_lead_summary(state, escalation_reason=reason)
-            from src.flows.messages import MESSAGES
-            logger.info("[SUPERVISOR] Bare affirmation accepted pending advisor offer -> escalate")
-            return MESSAGES["escalate"][state.language]
-
-    # Check for escalation keywords (+ red de precisión LLM, auditoría 2026-07-22)
-    if (regex_decide(routing_signals) and _matches_escalation_keyword(msg_lower)) or routing_signals.get("wants_human"):
-        state.step = Step.ESCALATE
-        state.quick_replies = []
-        state.pending_escalation_reason = "solicitó asesor"
-        state.pending_note = build_lead_summary(state, escalation_reason="solicitó asesor")
-        from src.flows.messages import MESSAGES
-        logger.info("[SUPERVISOR] Escalation triggered by keyword or LLM signal")
-        return MESSAGES["escalate"][state.language]
+    if pase := pase_pedido_o_aceptado(state, message, routing_signals):
+        return pase
 
     # Núcleo = único camino (Fase 4): todo mensaje se resuelve arriba. El núcleo
     # solo declina por escalado-keyword/`wants_human` (`_setup_phase`), la misma
@@ -612,6 +583,33 @@ async def _shared_turn_handler(
 # (ver su `__init__`). Se re-exportan aquí para que la cascada (`_shared_turn_handler`), el router, los nodos, el
 # núcleo (que los usa como `supervisor.<nombre>`), los scripts y los tests los sigan encontrando en este módulo. Va
 # al final a propósito: esos módulos importan de aquí lo común, que tiene que estar ya definido.
+def pase_pedido_o_aceptado(state: ConversationState, message: str, routing_signals: dict) -> str | None:
+    """El pase a una persona cuando el cliente la pide (Jev `wants_human`, o la palabra de escalado si decide el regex)
+    o acepta con un «sí» la oferta de asesor del turno anterior; None si no. Un solo sitio para los dos gates que
+    corrían tras el núcleo (el «sí»: bug real en PRE, 2026-07-07, caía al RAG; solo en pasos conversacionales para no
+    pisar los sí/no del árbol). Sparring s03a (3-nov, tanda de Álvaro): dentro de DIVE TO HEAL el texto del programa y
+    el RAG contestaban ANTES y el cliente no llegaba nunca a una persona (6/6): por eso también se mira ahí, antes."""
+    from src.flows.messages import MESSAGES  # lazy
+
+    texto = message.strip()
+    acepta = False
+    if state.step in (Step.MAIN_MENU, Step.FREE_TEXT) and _BARE_AFFIRMATION_RE.match(texto):
+        last_bot = next(
+            (h.get("content", "") for h in reversed(state.history or []) if h.get("role") == "assistant"), "")
+        acepta = bool(_ADVISOR_OFFER_RE.search(last_bot) and _OFFER_VERB_RE.search(last_bot))
+    pide = (regex_decide(routing_signals) and _matches_escalation_keyword(texto.lower())) or bool(
+        (routing_signals or {}).get("wants_human"))
+    if not (acepta or pide):
+        return None
+    reason = "aceptó la oferta del bot de hablar con un asesor" if acepta else "solicitó asesor"
+    state.step = Step.ESCALATE
+    state.quick_replies = []
+    state.pending_escalation_reason = reason
+    state.pending_note = build_lead_summary(state, escalation_reason=reason)
+    logger.info(f"[SUPERVISOR] pase a una persona: {reason}")
+    return MESSAGES["escalate"][state.language]
+
+
 from src.agents.rutas.booking import (  # noqa: E402, F401
     _CLAUSE_QUESTION_RE,
     _CLOSED_DATE_RE,

@@ -47,6 +47,7 @@ async def info_node(state: BotState) -> dict:
         _ADAPTIVE_DIVING_PATTERN,
         _alcohol_and_food_policy_answer,
         _shared_turn_handler,
+        pase_pedido_o_aceptado,
         private_group_event_reply,
         regex_decide,
     )
@@ -95,6 +96,9 @@ async def info_node(state: BotState) -> dict:
     # un seguimiento genérico sin palabra de discapacidad en ESE mensaje — el
     # router ya solo manda aquí cuando `adaptive_context` (persistido o de
     # este turno) es true, así que el nodo debe reproducir el mismo criterio.
+    if conv.adaptive_diving_context and (pase := pase_pedido_o_aceptado(conv, message, signals)):
+        logger.info("[NODE:info] DIVE TO HEAL: pide o acepta el asesor -> pase")
+        return {"reply": pase}  # s03a: antes que el RAG del programa
     if conv.adaptive_diving_context:
         if conv.step in (Step.WELCOME, Step.LANGUAGE):
             conv.step = Step.MAIN_MENU
