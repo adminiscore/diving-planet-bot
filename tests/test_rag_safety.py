@@ -1085,59 +1085,6 @@ async def test_query_rewriter_returns_original_on_llm_error(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_parent_doc_expansion_loads_summary_for_subchunk(monkeypatch):
-    fetched = {}
-
-    class FakeConn:
-        async def fetch(self, query, lang, parent_ids):
-            fetched["lang"] = lang
-            fetched["parent_ids"] = parent_ids
-            return [
-                {
-                    "id": 99,
-                    "content": "Resumen del servicio",
-                    "metadata": '{"source": "services", "key": "minicourse:summary", "lang": "es"}',
-                }
-            ]
-
-    class FakeAcquire:
-        async def __aenter__(self):
-            return FakeConn()
-
-        async def __aexit__(self, *args):
-            return False
-
-    class FakePool:
-        def acquire(self):
-            return FakeAcquire()
-
-    async def fake_get_pool():
-        return FakePool()
-
-    monkeypatch.setattr(rag_agent, "get_pool", fake_get_pool)
-
-    docs = [
-        {
-            "id": 1,
-            "content": "Itinerario del servicio",
-            "metadata": {
-                "source": "services",
-                "key": "minicourse:itinerary",
-                "parent_id": "minicourse:summary",
-                "lang": "es",
-            },
-            "score": 0.88,
-        }
-    ]
-
-    expanded = await rag_agent._expand_with_parent_context(docs, lang="es")
-
-    assert expanded[0]["metadata"]["key"] == "minicourse:summary"
-    assert expanded[1]["metadata"]["key"] == "minicourse:itinerary"
-    assert fetched["parent_ids"] == ["minicourse:summary"]
-
-
-@pytest.mark.asyncio
 async def test_adaptive_diving_question_routes_to_rag_not_booking(monkeypatch):
     """v0.17.2: disability / DIVE TO HEAL questions must be ANSWERED via RAG
     (the documented exception), not hijacked by the booking IntentDetector into

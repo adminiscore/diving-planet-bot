@@ -78,9 +78,6 @@ def rag_offline(monkeypatch):
     async def _busqueda(*a, **k):
         return [{"content": "El Curso Basico PADI dura 2 dias.", "score": 0.99, "metadata": {"source": "faqs"}}]
 
-    async def _sin_expandir(docs, lang="es"):
-        return docs
-
     async def _sin_reescribir(query, history=None, lang="es", hechos=None):
         return query
 
@@ -88,7 +85,6 @@ def rag_offline(monkeypatch):
         return True, "GROUNDED"
 
     monkeypatch.setattr(rag_agent, "search_knowledge_base", _busqueda)
-    monkeypatch.setattr(rag_agent, "_expand_with_parent_context", _sin_expandir)
     monkeypatch.setattr(rag_agent, "condense_query", _sin_reescribir)
     monkeypatch.setattr(rag_agent, "is_grounded", _juez)
 
@@ -215,15 +211,11 @@ async def test_con_cache_el_catalogo_va_al_prompt_del_sistema(monkeypatch):
     async def _same(q, history=None, lang="es", hechos=None):
         return q
 
-    async def _docs_back(docs, lang="es"):
-        return docs
-
     async def _juez(answer, context, lang="es"):
         judged.append(context)
         return True, "GROUNDED"
 
     monkeypatch.setattr(rag_agent, "search_knowledge_base", _busqueda)
-    monkeypatch.setattr(rag_agent, "_expand_with_parent_context", _docs_back)
     monkeypatch.setattr(rag_agent, "condense_query", _same)
     monkeypatch.setattr(rag_agent, "is_grounded", _juez)
     monkeypatch.setattr(rag_agent, "AsyncOpenAI", _openai("El curso dura 2 días.", seen))
@@ -252,15 +244,11 @@ async def test_el_juez_ve_la_presentacion_tras_el_catalogo(monkeypatch):
     async def _same(q, history=None, lang="es", hechos=None):
         return q
 
-    async def _docs_back(docs, lang="es"):
-        return docs
-
     async def _juez(answer, context, lang="es"):
         judged.append(context)
         return True, "GROUNDED"
 
     monkeypatch.setattr(rag_agent, "search_knowledge_base", _busqueda)
-    monkeypatch.setattr(rag_agent, "_expand_with_parent_context", _docs_back)
     monkeypatch.setattr(rag_agent, "condense_query", _same)
     monkeypatch.setattr(rag_agent, "is_grounded", _juez)
     monkeypatch.setattr(rag_agent, "AsyncOpenAI", _openai("Llevamos 30 años.", []))

@@ -8,7 +8,6 @@ decision tree.
 
 import asyncio
 import contextvars
-import json
 import logging
 import re
 
@@ -28,7 +27,7 @@ from src.agents.query_rewriter import condense_query
 from src.config import settings
 from src.domain import lugares
 from src.knowledge.loader import load_brand_tone
-from src.knowledge.vector_store import get_pool, search_knowledge_base
+from src.knowledge.vector_store import search_knowledge_base
 from src.llm_client import trace_openai
 from src.privacy import detect_pii, privacy_block_message, redact_pii
 from src.prompts.info import (
@@ -347,19 +346,6 @@ def _ambiguous_location_clarification(query: str, lang: str) -> str | None:
     )
 
 
-def _coerce_metadata(value: object) -> dict:
-    if isinstance(value, dict):
-        return value
-    if isinstance(value, str):
-        try:
-            parsed = json.loads(value)
-            if isinstance(parsed, dict):
-                return parsed
-        except json.JSONDecodeError:
-            return {}
-    return {}
-
-
 def _score_for_threshold(doc: dict) -> float:
     raw_score = doc.get("score_final", doc.get("score", 0.0))
     try:
@@ -456,67 +442,6 @@ def fichas_del_origen(docs: list[dict], origin: str | None, lang: str) -> list[d
     if cambios:
         logger.info(f"[RAG][CALN9] fichas del origen {origin!r}: {', '.join(cambios)}")
     return out
-
-
-async def _expand_with_parent_context(docs: list[dict], lang: str) -> list[dict]:
-    parent_ids_needed: set[str] = set()
-    existing_keys = {
-        str((doc.get("metadata") or {}).get("key"))
-        for doc in docs
-        if (doc.get("metadata") or {}).get("key")
-    }
-    parent_scores: dict[str, float] = {}
-
-    for doc in docs:
-        metadata = doc.get("metadata") or {}
-        parent_id = metadata.get("parent_id")
-        key = metadata.get("key")
-        if not parent_id or parent_id == key or parent_id in existing_keys:
-            continue
-        parent_key = str(parent_id)
-        parent_ids_needed.add(parent_key)
-        parent_scores[parent_key] = max(parent_scores.get(parent_key, 0.0), _score_for_threshold(doc))
-
-    if not parent_ids_needed:
-        return docs
-
-    try:
-        pool = await get_pool()
-        async with pool.acquire() as conn:
-            rows = await conn.fetch(
-                """
-                SELECT id, content, metadata
-                FROM kb_documents
-                WHERE metadata->>'lang' = $1
-                  AND metadata->>'key' = ANY($2::text[])
-                """,
-                lang,
-                list(parent_ids_needed),
-            )
-    except Exception as exc:
-        logger.warning(f"[RAG][PARENT] failed to expand parent context: {exc}")
-        return docs
-
-    parents: list[dict] = []
-    seen_parent_keys: set[str] = set()
-    for row in rows:
-        metadata = _coerce_metadata(row["metadata"])
-        parent_key = str(metadata.get("key") or "")
-        if not parent_key or parent_key in seen_parent_keys:
-            continue
-        seen_parent_keys.add(parent_key)
-        score = parent_scores.get(parent_key, 0.0)
-        parents.append({
-            "id": row["id"],
-            "content": row["content"],
-            "metadata": metadata,
-            "score": score,
-            "score_final": score,
-        })
-
-    if not parents:
-        return docs
-    return parents + docs
 
 
 def _build_grounding_context(
@@ -1098,8 +1023,7 @@ async def rag_answer(
             )
         return FALLBACK_ES if lang == "es" else FALLBACK_EN
 
-    # 3) Hay documentos suficientemente relevantes -> expandimos contexto padre y respondemos
-    docs = await _expand_with_parent_context(docs, lang=lang)
+    # 3) Hay documentos suficientemente relevantes -> respondemos (RAG R1: sin el «padre» de la base v1, muerto en kb_v2)
     docs = fichas_del_origen(docs, {"cartagena": "cartagena", "island": "islas"}.get(origin or ""), lang)  # CALN-9a
     context_parts = []
     sources = []

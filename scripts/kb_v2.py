@@ -29,6 +29,7 @@ from openai import OpenAI
 from scripts.load_embeddings import DATA_DIR, EMBEDDING_MODEL, detect_topics, generate_embeddings
 from src.config import settings
 from src.domain.politicas import politicas
+from src.utils.text import strip_accents
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -167,29 +168,38 @@ def build_kb_v2() -> list[dict]:
 
 
 def _ddl(schema: str) -> str:
+    """RAG R1 (3-nov): la rama de palabras busca en `texto_busqueda` (el contenido sin tildes) con las raíces del idioma
+    del documento (`spanish` / `english`, las de `vector_store.CONFIG_DEL_IDIOMA`): «inmersiones» encuentra «inmersión».
+    Antes era `'simple'` sobre el contenido, sin raíces ni tildes. La tabla se rehace entera en cada carga (`cargar`):
+    con `CREATE TABLE IF NOT EXISTS` una columna nueva no llegaba nunca a la base de PRE, que ya existía."""
     return f"""
 CREATE SCHEMA IF NOT EXISTS {schema};
-CREATE TABLE IF NOT EXISTS {schema}.kb_documents (
+DROP TABLE IF EXISTS {schema}.kb_documents;
+CREATE TABLE {schema}.kb_documents (
     id SERIAL PRIMARY KEY,
     content TEXT NOT NULL,
     metadata JSONB DEFAULT '{{}}',
     embedding vector(1536),
     created_at TIMESTAMP DEFAULT NOW(),
-    content_tsv tsvector GENERATED ALWAYS AS (to_tsvector('simple', coalesce(content, ''))) STORED
+    texto_busqueda TEXT,
+    content_tsv tsvector GENERATED ALWAYS AS (to_tsvector(
+        CASE WHEN metadata->>'lang' = 'en' THEN 'english'::regconfig ELSE 'spanish'::regconfig END,
+        coalesce(texto_busqueda, ''))) STORED
 );
-CREATE INDEX IF NOT EXISTS kb_v2_content_tsv_idx ON {schema}.kb_documents USING GIN (content_tsv);
+CREATE INDEX kb_v2_content_tsv_idx ON {schema}.kb_documents USING GIN (content_tsv);
 """
 
 
 async def cargar(docs: list[dict], embeddings: list[list[float]], schema: str = SCHEMA) -> int:
+    """La base entera, en una transacción: quien busque mientras tanto espera a que acabe (la tabla se rehace)."""
     conn = await asyncpg.connect(settings.database_url)
     try:
         async with conn.transaction():
             await conn.execute(_ddl(schema))
-            await conn.execute(f"DELETE FROM {schema}.kb_documents")
             await conn.executemany(
-                f"INSERT INTO {schema}.kb_documents (content, metadata, embedding) VALUES ($1, $2, $3)",
-                [(d["content"], json.dumps(d["metadata"], ensure_ascii=False), str(e)) for d, e in zip(docs, embeddings)])
+                f"INSERT INTO {schema}.kb_documents (content, metadata, embedding, texto_busqueda) VALUES ($1, $2, $3, $4)",
+                [(d["content"], json.dumps(d["metadata"], ensure_ascii=False), str(e), strip_accents(d["content"]))
+                 for d, e in zip(docs, embeddings)])
         return int(await conn.fetchval(f"SELECT COUNT(*) FROM {schema}.kb_documents"))
     finally:
         await conn.close()
