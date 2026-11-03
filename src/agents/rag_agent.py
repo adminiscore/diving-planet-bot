@@ -376,13 +376,21 @@ def fusionar_busquedas(reescrita: list[dict], original: list[dict], extra: int =
 # añade detrás (`fusionar_busquedas`), hasta POR_PREGUNTA_EXTRA piezas.
 POR_PREGUNTA_EXTRA = 2
 MAX_PREGUNTAS = 3
+# Gadea #2843 (s03i): la primera pregunta arrastraba el saludo y la presentación («¡Hola! Somos 4 amigas… ¿Podemos
+# llevar una botella de cava?») y su búsqueda era la del mensaje entero. Cada pregunta empieza donde empieza su frase: el
+# «¿», o tras un . o ! seguido de mayúscula («8 a.m. tomorrow?» no se corta), o tras un salto de línea.
+_INICIO_DE_FRASE = re.compile(r"¿|[.!]\s+(?=[A-ZÁÉÍÓÚÑ¡¿])|\n")
 
 
 def preguntas_del_mensaje(texto: str) -> list[str]:
-    """Las preguntas de un mensaje que trae más de una, cada una hasta su «?» con lo que va delante; [] si trae una o
-    ninguna."""
-    trozos = [t.strip() + "?" for t in (texto or "").split("?")[:-1]]
-    preguntas = [t for t in trozos if len(t.strip("¿? ").split()) >= 2]
+    """Las preguntas de un mensaje que trae más de una, cada una desde donde empieza su frase hasta su «?»; [] si trae
+    una o ninguna."""
+    preguntas = []
+    for trozo in (texto or "").split("?")[:-1]:
+        cortes = [m.start() if m.group() == "¿" else m.end() for m in _INICIO_DE_FRASE.finditer(trozo)]
+        pregunta = (trozo[cortes[-1]:] if cortes else trozo).strip() + "?"
+        if len(pregunta.strip("¿? ").split()) >= 2:
+            preguntas.append(pregunta)
     return preguntas[:MAX_PREGUNTAS] if len(preguntas) >= 2 else []
 
 

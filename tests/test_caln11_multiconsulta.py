@@ -9,8 +9,14 @@ from src.agents import rag_agent
 
 @pytest.mark.parametrize("texto, preguntas", [
     ("Somos 7 chicas de Madrid. ¿Cuánto es por persona? ¿Se puede llevar cava a bordo?",
-     ["Somos 7 chicas de Madrid. ¿Cuánto es por persona?", "¿Se puede llevar cava a bordo?"]),
+     ["¿Cuánto es por persona?", "¿Se puede llevar cava a bordo?"]),
     ("How much is it? Can we bring beer on the boat?", ["How much is it?", "Can we bring beer on the boat?"]),
+    # Gadea #2843: la pregunta PRIMERA no arrastra el saludo ni la presentación
+    ("¡Hola! Somos 4 amigas de Medellín y queremos snorkel el sábado. ¿Podemos llevar una botella de cava? ¿Cuánto es?",
+     ["¿Podemos llevar una botella de cava?", "¿Cuánto es?"]),
+    ("We are 3 friends. We land at 8 a.m. tomorrow. Can we still go at 8 a.m. tomorrow? Is lunch included?",
+     ["Can we still go at 8 a.m. tomorrow?", "Is lunch included?"]),  # «a.m. tomorrow» no es fin de frase
+    ("Hola\ncuánto cuesta el minicurso? y el snorkel cuánto?", ["cuánto cuesta el minicurso?", "y el snorkel cuánto?"]),
     ("¿Cuánto cuesta el snorkel?", []),  # una sola: lo de siempre
     ("Quiero bucear el sábado", []),
     ("¿Cuánto es lo mío? ¿y? ¿El bebé paga?", ["¿Cuánto es lo mío?", "¿El bebé paga?"]),  # «¿y?» no es pregunta
@@ -35,7 +41,7 @@ async def test_se_busca_tambien_por_cada_pregunta(monkeypatch):
     await rag_agent.rag_answer(mensaje, lang="es")
     consultas = [c.args[0] for c in buscar.await_args_list]
     assert consultas[0] == mensaje and "¿Se puede llevar cava a bordo?" in consultas
-    assert "Somos 7 chicas de Madrid. ¿Cuánto es por persona?" in consultas
+    assert "¿Cuánto es por persona?" in consultas
 
 
 def test_lo_de_cada_pregunta_entra_hasta_el_limite():
