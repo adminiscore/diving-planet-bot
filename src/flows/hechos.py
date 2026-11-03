@@ -250,8 +250,6 @@ def hechos(state: ConversationState, intenciones: list[str], actividades: list[s
                 bloque["edad"]["solo_si_esta_certificado"] = True
         if "descuento" in pedidas:
             bloque["descuento"] = _descuentos(state, lang, _descuento_de_grupo(state, registro, lang))
-            if getattr(state, "_un_descuento", False):
-                bloque["solo_el_preguntado"] = True  # CALN3-Q05: la lista va, pero no se exige ni se pega
         if "tiempo" in pedidas:
             bloque.update(_tiempo(lang))
         bloque.update(_clima_y_pago(state, pedidas, lang))
@@ -467,8 +465,6 @@ def hechos_sin_actividad(state: ConversationState, intenciones: list[str]) -> li
             bloque["requisitos"] = [p for p in bloque["requisitos"] if p]
     if "descuento" in pedidas:
         bloque["descuento"] = _descuentos(state, lang)
-        if getattr(state, "_un_descuento", False):
-            bloque["solo_el_preguntado"] = True
     bloque.update(_clima_y_pago(state, pedidas, lang))
     bloque.update(_temas_de_lat8(pedidas, lang))
     return _lo_que_faltaba(state, [bloque], pedidas, lang)

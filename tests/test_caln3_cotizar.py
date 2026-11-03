@@ -84,11 +84,6 @@ def test_los_descuentos_van_en_los_hechos_y_no_se_exigen():
     from src.flows import hechos
 
     st = _st(detected_group_size=5)
-    st._un_descuento = True
-    [b] = hechos.hechos(st, ["descuento"], ["snorkel"])
-    assert b["descuento"] and b["solo_el_preguntado"] is True
-    assert hechos.faltan("Sí, con 5 personas el de grupo les aplica: 10 % más.", [b], ["descuento"]) == []
-    st._un_descuento = False
     [b] = hechos.hechos(st, ["descuento"], ["snorkel"])
     assert b["descuento"] and hechos.faltan("Sí, con 5 personas el de grupo les aplica: 10 % más.", [b], ["descuento"]) == []
 
@@ -196,14 +191,6 @@ def test_paso3_el_parrafo_final_del_escritor_tambien_se_limpia():
     salida = rh.con_la_pieza("Te dejo los precios.\n\nSí, por ser un grupo de 6 aplica el descuento de grupo. "
                              "¿Quieres que te pase con un asesor?", pieza)
     assert salida.endswith(pieza + "\n\n¿Quieres que te pase con un asesor?")
-
-
-def test_paso3_un_descuento_con_su_umbral():
-    """Sparring t3b: el mensaje largo con «¿…y hay descuento de grupo?» da 0,60-0,68; la pregunta general, 0,05."""
-    from src.agents import jev_router as j
-
-    assert j.answers_to_signals({j.PIDE_UN_DESCUENTO: {"noul": 0.64}})[j.PIDE_UN_DESCUENTO] is True
-    assert j.answers_to_signals({j.PIDE_UN_DESCUENTO: {"noul": 0.19}})[j.PIDE_UN_DESCUENTO] is False
 
 
 def test_caln3c_buzo_con_novia_que_nunca_ha_buceado():

@@ -558,7 +558,7 @@ def _completar_con_hechos(answer: str, bloques: list[dict], intenciones: list[st
         if campo not in intenciones:
             continue
         faltan = dict.fromkeys(x for b in bloques for x in hechos_mod.faltan(
-            answer, [{campo: b.get(campo), "solo_el_preguntado": b.get("solo_el_preguntado")}], [campo]))
+            answer, [{campo: b.get(campo)}], [campo]))
         if faltan:
             extra.append(rotulos[i] + "\n" + "\n".join(f"• {x}" for x in faltan))
     # CALN-6 paso 2 (sparring CALN4, b11 t1): lo añadido va DELANTE de la pregunta con que cierra el escritor; detrás,

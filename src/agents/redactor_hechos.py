@@ -339,7 +339,7 @@ async def nota_de_grupo(state: ConversationState, message: str, history: list[di
 def texto_de_los_hechos(bloques: list[dict]) -> str:
     """Los hechos en JSON para el modelo. `pregunta_pendiente` es del código (la pregunta la pone él): con ella delante,
     Luna preguntaba el origen en vez de dar los dos enlaces (banco arq-1d, k2 2 de 3)."""
-    return json.dumps([{k: v for k, v in b.items() if k not in ("pregunta_pendiente", "solo_el_preguntado")}
+    return json.dumps([{k: v for k, v in b.items() if k != "pregunta_pendiente"}
                        for b in bloques],
                       ensure_ascii=False, indent=1)
 
