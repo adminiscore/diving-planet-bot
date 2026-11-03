@@ -674,6 +674,51 @@ pregunta sola en t3 (la laguna CALN-11); el precio que pidió el indeciso en t2,
 la pregunta del asesor dos veces en el mismo mensaje; «Te dejo a continuación los precios».
 
 
+## CALN-S03A-01..08 · Tanda de Álvaro (CALN-13) contra PRE 0.42 (3-nov, `charla_pre`)
+
+PRE 0.42 6044e417. Ocho clientes nuevos hasta reservar (`docs/robustness/g3/tanda-alvaro-caln13.md`, conv 6797-6804 en
+`docs/robustness/g3/charlas/`), con el criterio de gravedad de Álvaro adoptado para las dos tandas (#2716): GRAVE = el
+cliente reserva mal o no puede reservar (importe, moneda, enlace o plan de otro origen; fecha, horario o
+disponibilidad falsos; consejo inseguro; lo contrario de una política; callejón sin salida; la misma pregunta por 3.ª
+vez). Cada grave, ×3 por versión con `charla_rama --codigo-local` (`docs/robustness/g3/charlas-rama/s03a-graves/`).
+
+- **BIEN (6 de 8 llegan a reservar o al asesor):** el crucero (horario 8:00 → 4:15 y «muy justo», honesto); los cuatro
+  estudiantes (Getsemaní → Cartagena con los barrios de la 0.42, sin descuento de estudiante, el de grupo no aplica a 4);
+  la madre con hijos de 15 y 17 (Bocagrande → Cartagena, COP por ser de Cali, al asesor con el resumen y el pago); el
+  cambio de fecha + hermano (posventa al asesor y sigue contestando); la pareja brasileña (mareo, tarjeta con
+  pasaporte); el colombiano en Madrid (pesos, sin euros, al asesor al decir «sí»).
+
+**Graves (2):**
+1. **Silla de ruedas (DIVE TO HEAL) no llega nunca al asesor** (conv 6799 t3-t5): «sí, pásame con el asesor» tres veces;
+   el bot vuelve a ofrecerlo, dice «no puedo transferir… ¿dejo registrada tu solicitud?» y luego «no puedo registrar…».
+   Callejón sin salida con el cliente que más necesita a una persona. **6 de 6** en `charla_rama` (0.41 3/3, 0.42 3/3):
+   viene de antes. Causa: con `adaptive_diving_context` el router manda todo a SAFETY/INFO de DIVE TO HEAL y la cascada
+   (`supervisor._shared_turn_handler`) contesta con el texto fijo o el RAG ANTES de los pases por `wants_human` y por el
+   «sí» a la oferta del asesor. **Arreglado en la 0.44** (Gadea, `feature/s03a-dth-gadea` 1ed89f4d, `charla_rama` 2/2):
+   un solo gate del pase (`supervisor.pase_pedido_o_aceptado`) mirado antes de DIVE TO HEAL en los nodos de escalado e
+   info y en la cascada; gen-13 contesta delante lo demás. La versión de Álvaro (en el router, el nodo de escalado y la
+   cascada; sin subir) hacía lo mismo y se descarta: la de Gadea además quita las dos copias del pase.
+2. **SSI + nitrox: «Reserva y paga aquí: https://divingplanet.org/tours-buceo-snorkel-cartagena/»** (conv 6798 t4), la
+   página informativa como enlace de reserva. **0 de 6** en `charla_rama` (0.41 0/3; arreglo s03g de Gadea 9a1a1fe7
+   0/3): azar del escritor, de la misma clase que el grave de s03g de Gadea.
+
+**Medios:**
+- La tarjeta final sin el nitrox después de «reservo las dos» (5 de 6 repeticiones) y una vez «no tengo aquí el enlace de
+  reserva del curso de Nitrox», aunque el enlace existe (SSI t3/t4).
+- La teoría online del Open Water: «no tengo confirmado si debe hacerse antes de llegar», aunque la base lo dice (madre
+  t2; la clase de CALN-11).
+- El paquete con inmersión nocturna ofrecido a quien vuelve al barco a las 17:00 (crucero).
+- «¿Saldrías desde Cartagena?» con el barco atracado en Cartagena (crucero), y en portugués «estamos em Cartagena»
+  (brasileños); la clase de CALN-3b.
+- «¿Puede pagar cada uno con su tarjeta?» → «no lo tengo confirmado», sin dato en la base (CALN-12), y «este sábado» sin
+  contestar (estudiantes).
+- El precio del nitrox «ya en las islas» antes de saber el origen, y «un par de buceos normales… no lo tengo a la mano»
+  (SSI t1-t2).
+- La lancha accesible y el precio del minicurso de la hermana sin contestar hasta que insiste (silla t2).
+
+**Menores:** «bacano» a un argentino; el enlace de reserva dos veces (crucero); la pregunta del origen dos veces en el
+mismo mensaje (Madrid t1).
+
 ## CALN-S03H-01..08 · 5.ª tanda de sparring contra PRE 0.44.0, hasta reservar (3-nov, `charla_pre`)
 
 Ocho clientes nuevos, cada uno hasta la tarjeta, el enlace o el asesor, con el criterio de gravedad de Álvaro (#2716):
