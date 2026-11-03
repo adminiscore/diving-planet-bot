@@ -1,6 +1,22 @@
 History
 =======
 
+0.43.0 - (2026-11-03, SUBE A PRE: los arreglos de la 3.ª tanda de sparring, la nota corta del de grupo y la parte segura del R1)
+---------------------
+* **Qué sube** (sobre 0.42.0; `feature/caln-integra043-gadea`): **Gadea** (s03g): sin enlace de reserva en la base, el plan
+  lo reserva un asesor (el catálogo ponía la página informativa como `booking_url` de 10 servicios: los paquetes desde las
+  islas, Bubble Makers…; la tarjeta sigue con la página como «Más información» y el asesor, decisión del 20-jul); un grupo
+  de una persona no trae menores aunque diga «since I was a baby». **Gonzalo** (26ed1da5): con el precio, la nota corta
+  del de grupo; el umbral de `pide_un_descuento` 0,5 → 0,33 (la lista de descuentos pegada). **Álvaro** (7e8554f8): la
+  parte segura del R1 (la rama de palabras busca la pregunta y no la marca del origen; fuera el código muerto del padre,
+  −159 líneas).
+* **Medida** (una pasada, a la misma hora, en serie, a solas; A = PRE 0.42.0): mini-ronda de los 43 visibles: **21 → 20
+  fallos**, 17 = 17 diálogos con fallos (2 mejoran, 1 empeora); llamadas por turno 3,58 → 3,65; p90 6,23 → 6,68 s (el
+  escritor: 17 respaldos de Luna en B y 0 en A; la 0.43 no lo toca). Suite 3168.
+* **Sparring:** 3.ª tanda (Gadea, s03g, hasta reservar) 1 grave → arreglado aquí; 4.ª tanda (Álvaro, s03a) 2 graves: el
+  enlace informativo (misma causa, arreglada aquí; no se repite ×6) y la silla de ruedas: dentro de DIVE TO HEAL el cliente
+  no llega nunca a una persona (6/6, también en 0.41 y 0.42; lo arregla Álvaro). Tandas sin graves seguidas: 0 de 2.
+
 0.42.0 - (2026-11-03, SUBE A PRE: los barrios de Cartagena por código, R0 del RAG y fuera R2 y R4 del regex)
 ---------------------
 * **Qué sube** (sobre 0.41.0; `feature/caln-integra042-gadea`): **Álvaro** (b3d5f86a): los barrios de Cartagena por código
