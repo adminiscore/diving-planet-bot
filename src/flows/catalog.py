@@ -665,17 +665,23 @@ def catalog_booking_links(lang: str) -> str:
     """Paso 6 (27-sep): el link de reserva de cada servicio para el contexto del RAG. Con la
     regla nueva de "¿cómo pago?" (el link de reserva) el LLM escribía un link que no estaba en el
     contexto, el guard de URLs lo rechazaba y la respuesta acababa en "no lo tengo a la mano" (ronda B
-    del paso 6, "no sé cómo se haga la reserva"). Los de servicios que cierra un asesor no van."""
+    del paso 6, "no sé cómo se haga la reserva"). Los de servicios que cierra un asesor van aparte, con su nombre:
+    sparring s03j (Álvaro, 3-nov), «4 inmersiones en 2 días desde Cartagena» recibía el enlace del paquete de 5. El de 4
+    no estaba en la lista y el escritor tomaba el del plan vecino; ahora sabe que ese plan lo reserva un asesor (decisión
+    del 3-nov, s03g)."""
     es = lang == "es"
-    lines = []
+    lines, por_asesor = [], []
     for service_id, svc in SERVICES.items():
+        nombre = svc.get("name_es" if es else "name_en") or service_id
         url = svc.get("booking_url")
         if not url or svc.get("contact_only") or svc.get("category") == "private":
+            por_asesor.append(f"- {nombre}")
             continue
-        url = enlace_en_su_idioma(url, lang)
-        lines.append(f"- {svc.get('name_es' if es else 'name_en') or service_id}: {url}")
+        lines.append(f"- {nombre}: {enlace_en_su_idioma(url, lang)}")
     head = ("LINKS DE RESERVA ONLINE (el cliente elige fecha y personas y paga ahí; comparte solo el del "
             "servicio que corresponde):" if es else
             "ONLINE BOOKING LINKS (the customer picks date and people and pays there; share only the one "
             "for the matching service):")
-    return chr(10).join([head, *lines])
+    sin_enlace = ("SIN LINK DE RESERVA (los reserva un asesor; nunca des el link de otro servicio):" if es else
+                  "NO BOOKING LINK (an advisor books these; never give another service's link):")
+    return chr(10).join([head, *lines, sin_enlace, *por_asesor])
