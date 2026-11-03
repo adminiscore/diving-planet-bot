@@ -23,6 +23,20 @@ def _causas(fila):
     return {d["id"]: d["causa"] for d in puntuar(CASO, fila)["datos"]}
 
 
+def test_la_busqueda_de_una_sola_pregunta_no_es_la_principal():
+    """CALN-11: la búsqueda de cada pregunta (anotada antes o después) no cuenta para el top-8."""
+    caso = {"id": "c", "pregunta": "¿A qué hora salimos? ¿Se puede llevar cerveza?",
+            "necesita": [{"id": "alcohol", "hecho": "no alcohol", "anclas": ["no se permite alcohol"]}]}
+    principal = {"query": "¿A qué hora sale la lancha y se puede llevar cerveza?",
+                 "docs": [{"content": "No se permite alcohol a bordo"}]}
+    suelta = {"query": "¿A qué hora salimos?\n\n[origen_cliente]=desde Cartagena", "docs": [{"content": "8:00"}]}
+    for orden in ([principal, suelta], [suelta, principal]):
+        assert puntuar(caso, _fila(busquedas=orden))["datos"][0]["rango_top8"] == 1
+    # sin reescritura (la principal es la pregunta tal cual), tampoco cuenta la suelta anotada la última
+    tal_cual = {"query": caso["pregunta"], "docs": [{"content": "No se permite alcohol a bordo"}]}
+    assert puntuar(caso, _fila(busquedas=[tal_cual, suelta]))["datos"][0]["rango_top8"] == 1
+
+
 def test_norm_quita_tildes_y_separadores_de_miles():
     assert norm("Canción 1.429.000 y $1,429,000") == "cancion 1429000 y $1429000"
     assert presente({"anclas": ["san pedro + majagua"]}, norm("Hotel San Pedro de Majagua"))
