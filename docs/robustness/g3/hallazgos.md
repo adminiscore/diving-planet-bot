@@ -702,7 +702,9 @@ minicurso), 6 al asesor y la pastilla de la tensión al equipo.
    de bebés a bordo; en t2 decía «no tengo confirmado si debe pagar» y en t4 lo afirma, con la tarjeta de 2 acompañantes.
    Un hecho y un importe inventados. Regla de Gadea (3-nov): a cualquier edad y no pagan (`policies.babies_onboard`,
    276e20e8); con ella el escritor lo dice bien (bebe2). Queda la cuenta en el grupo: el bebé sale como acompañante que
-   paga o como persona «sin elegir» (bebe1; grupo, propuesta #2798 a Álvaro).
+   paga o como persona «sin elegir» (bebe1; grupo, propuesta #2798 a Álvaro). El extractor no cuenta al bebé de forma estable
+   (`scripts/sonda_bebes_grupo.py`, ×5: «Somos 2 y llevamos a nuestro bebé» → 2; «a couple with our 3-year-old» → 3):
+   restarlo del total por código rompería el primero. Va donde se lee el grupo, medido con el banco (Álvaro).
 
 **Medios:** «I don't have details on vegetarian options» en t1 y t2 (mensajes con tres preguntas), aunque
 `food_policy` lo dice (arroz con vegetales); a la 3.ª, sola, lo contesta (la pregunta diluida, CALN-11, Álvaro). «2 are
