@@ -95,3 +95,19 @@ repetidos, sin rotativa ni sparring.
 
 Solo cubre `intent_detector.py`. Hay regex que deciden fuera, sin marca: p. ej. `_detect_kids_mention`
 (`rutas/router.py`: «since I was a baby» leído como que vienen menores, s03g). Las cifras de R1-R12 no las incluyen.
+
+Ampliación (3-nov, sobre la 0.44, `scripts/inventario_regex`): 415 patrones de «entender al cliente», 240 en el detector
+y 175 en 51 grupos fuera. Sin uso en `src`, uno: `_MENTIONS_PERSON_RE` (6 patrones, solo lo citaba un test): fuera. Marcas
+nuevas, donde está claro que decide y sin cambiar conducta:
+
+| # | Sitio | Qué decide |
+|---|---|---|
+| R20 | `orchestration/router.py`, `_AVAILABILITY_PATTERN` / `_asks_about_availability` (22 patrones) | ruta de disponibilidad, sin la señal de la IA |
+| R22 | `nucleo/routing.py`, `_DELIBERATION_RE` (13) | deliberación por la frase de duda, con la IA callada |
+| R23 | `escalation_agent` e `info_agent`, `_ADAPTIVE_DIVING_PATTERN` (10) | DIVE TO HEAL por regex, sin la señal de la IA |
+| R25 | `nucleo/extraction.py`, `_COURSE_SOLO_RE` + `_NOT_ALONE_RE` (11) | curso en singular → 1 persona, con el extractor caído |
+| R26 | `nucleo/extraction.py`, `_ADDED_PERSON_RE` (6) | añadir o cambiar actividad por la persona que nombra |
+| R27 | `orchestration/graph.py`, `_detect_kids_mention` | «vienen niños», pegajoso el resto de la charla |
+
+Sin marcar a propósito: `_INFO_QUESTION_STARTER_PATTERN` y compañía (`rutas/booking.py`, 17 patrones): están en una
+función de uso general, y marcarla ahí contaría menciones y no decisiones (el error de R7). Hay que mirar sus llamantes.

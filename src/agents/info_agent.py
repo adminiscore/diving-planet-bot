@@ -90,6 +90,10 @@ async def info_node(state: BotState) -> dict:
     adaptive_now = (regex_decide(signals) and bool(_ADAPTIVE_DIVING_PATTERN.search(message))) or bool(
         signals.get("adaptive_diving_topic"))
     if adaptive_now:
+        if not signals.get("adaptive_diving_topic"):
+            from src.observability import marca_regex  # lazy
+
+            marca_regex("R23")  # CALN-8 (6): DIVE TO HEAL por regex, sin la señal de la IA
         conv.adaptive_diving_context = True
     # Hallazgo en vivo (batería de frontera contra PRE, 2026-09-01): usar solo
     # `adaptive_now` aquí (en vez del flag persistido) perdía el contexto en
