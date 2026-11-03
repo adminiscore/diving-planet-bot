@@ -335,6 +335,15 @@ def dive_packages() -> dict[int, tuple[int, str]]:
     return dict(sorted(packages.items()))
 
 
+def paquete_con_nocturna(dias: int = 1) -> int | None:
+    """Sparring s03h (3-nov): el paquete de buceo certificado de `dias` días que lleva la inmersión nocturna, por sus
+    inmersiones (el de 1 día es el de 3: 2 diurnas y 1 nocturna). Del catálogo (`includes_night_dive`); None si no hay
+    uno solo de esos días."""
+    catalog = json.loads(SERVICES_PATH.read_text(encoding="utf-8-sig")).get("services", {})
+    con = [n for n, (d, sid) in dive_packages().items() if d == dias and catalog.get(sid, {}).get("includes_night_dive")]
+    return con[0] if len(con) == 1 else None
+
+
 def validate(services_path: Path = SERVICES_PATH) -> list[str]:
     """Problemas de coherencia del registro contra `services.json`. Lista vacia = OK.
 
