@@ -184,6 +184,10 @@ def classify_route(conv_state: ConversationState, message: str, signals: dict) -
             and not sup._in_active_cart_building(conv_state)
         )
     ) and conv_state.step not in (Step.WELCOME, Step.LANGUAGE):
+        if not signals.get("availability_question"):
+            from src.observability import marca_regex  # lazy
+
+            marca_regex("R20")  # CALN-8 (6): disponibilidad por regex, sin la señal de la IA
         return ROUTE_CHANGE
 
     # ── SAFETY (quiere humano / keyword de escalado) ──

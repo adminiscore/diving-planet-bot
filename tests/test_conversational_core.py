@@ -1215,10 +1215,6 @@ class TestPersonNounSharedVocabulary:
     fuente compartida (intent_detector._PERSON_NOUN_MENTION/SINGULAR/PLURAL_
     ES/EN). Estos tests prueban los gaps reales que se cerraron."""
 
-    def test_mentions_person_re_boyfriend_girlfriend_gap_closed(self):
-        assert core._MENTIONS_PERSON_RE.search("my boyfriend is coming too")
-        assert core._MENTIONS_PERSON_RE.search("mi novia también viene")
-
     def test_added_person_re_companero_primo_gap_closed(self):
         """_ADDED_PERSON_RE no tenía "compañero"/"acompañante"/"primo" (ES)
         ni "companion"/"cousin"/"kid" (EN) pese a que otras listas del mismo

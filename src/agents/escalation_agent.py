@@ -269,6 +269,10 @@ async def escalation_node(state: BotState) -> dict:
     adaptive_now = (regex_decide(signals) and bool(_ADAPTIVE_DIVING_PATTERN.search(message))) or bool(
         signals.get("adaptive_diving_topic"))
     if adaptive_now:
+        if not signals.get("adaptive_diving_topic"):
+            from src.observability import marca_regex  # lazy
+
+            marca_regex("R23")  # CALN-8 (6): DIVE TO HEAL por regex, sin la señal de la IA
         conv.adaptive_diving_context = True
     if conv.adaptive_diving_context and (pase := pase_pedido_o_aceptado(conv, message, signals)):
         logger.info("[NODE:escalation] DIVE TO HEAL: pide o acepta el asesor -> pase")

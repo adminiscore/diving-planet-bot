@@ -2541,7 +2541,6 @@ from src.agents.nucleo.extraction import (  # noqa: E402, F401
     _BOOL_SLOT_FIELD,
     _COURSE_SOLO_RE,
     _LLM_RESOLVABLE_SLOTS,
-    _MENTIONS_PERSON_RE,
     _NAMED_PERSON_RE,
     _NOT_ALONE_RE,
     _SINGULAR_COMPANION_RE,

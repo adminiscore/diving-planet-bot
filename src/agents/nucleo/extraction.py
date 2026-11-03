@@ -163,37 +163,6 @@ _ADDED_PERSON_RE = re.compile(
     re.IGNORECASE,
 )
 
-# Señal LÉXICA amplia de que el mensaje menciona OTRA PERSONA (no el hablante).
-# Es el discriminador entre AÑADIR un acompañante y un CAMBIO de opinión: el LLM
-# decide la ACTIVIDAD, pero solo se trata como añadido si el mensaje nombra a una
-# persona. Robusto ante el flip-flop del LLM con historial: "mejor snorkel" (sin
-# persona) NUNCA añade; "hay un amigo que quiere snorkel" / "2 y uno hace snorkel"
-# (con persona) sí. Más amplio que `_ADDED_PERSON_RE` (que exigía "mi amigo"/"un
-# que" y perdía "hay un amigo que…").
-#
-# Inventario regex 2026-09-03: el sustantivo de parentesco ahora viene de
-# `_PERSON_NOUN_MENTION_ES/EN` (intent_detector.py, fuente compartida con
-# _ADDED_PERSON_RE/_SINGULAR_COMPANION_RE/_PLURAL_COMPANION_RE/_NOT_ALONE_RE
-# más abajo) en vez de una copia local -- cierra el gap real que motivó este
-# fix (ver comentario histórico abajo): "boyfriend"/"girlfriend" faltaban en
-# ESTA lista pese a estar en otras 2 del mismo archivo. Las palabras que NO
-# son sustantivos de parentesco ("vienen", "se suma", "otra persona",
-# "others/folks/people/someone/is coming/joins") se quedan aparte, tal cual
-# — son cues verbales propias de ESTE patrón, no vocabulario compartido.
-_MENTIONS_PERSON_RE = re.compile(
-    r"\b(" + _PERSON_NOUN_MENTION_ES + r"|"
-    r"vien[ea]n?|se\s+(?:suma|apunta|une)n?|otra?\s+persona|"
-    # Auditoría 2026-07-23 (matriz EN de multi-ítem): la lista en inglés no
-    # tenía plurales ("friend" sin "s?") mientras que TODA la lista en
-    # español sí ("amig[oa]s?") — "my friends do snorkel" no disparaba
-    # NINGÚN mecanismo de acompañante (ni el nuevo chequeo de mención
-    # perdida, ni el `companion_ambiguous` original, ni el fast-path), un
-    # hueco real de idioma, no solo del fix de hoy.
-    + _PERSON_NOUN_MENTION_EN + r"|"
-    r"others?|folks?|people|someone|is\s+coming|are\s+coming|joins?)\b"
-    r"|\b(?:y|,|adem[aá]s|tambi[ée]n|más|mas|and)\s+(?:un[oa]?|otr[oa]|another|one)\b",
-    re.IGNORECASE,
-)
 
 # Compañero SINGULAR e inequívoco (un/una/mi/a + sustantivo en singular, o "a
 # friend"/"someone"): el número de personas es 1 sin ambigüedad, se puede
@@ -443,6 +412,9 @@ async def _understand(state: ConversationState, message: str, *, answered_pendin
         and _COURSE_SOLO_RE.search(message)
         and not _NOT_ALONE_RE.search(message)
     ):
+        from src.observability import marca_regex  # lazy
+
+        marca_regex("R25")  # CALN-8 (6): curso en singular por regex, con el extractor caído
         state.detected_group_size = 1
         state.solo_traveler_confirmed = True
         logger.info("[CORE] singular course booking -> group_size=1")
@@ -472,6 +444,9 @@ async def _understand(state: ConversationState, message: str, *, answered_pendin
         # snorkel" sobre buceo de 1 acababa en {snorkel: 2}).
         and turn_act not in (getattr(intent, "_reparto_del_extractor", None) or ())
     ):
+        from src.observability import marca_regex  # lazy
+
+        marca_regex("R26")  # CALN-8 (6): añadir vs cambiar, por la persona que nombra el regex
         explicit_qty = (intent.group_allocation or {}).get(turn_act)
         # `intent.group_allocation` puede venir del gap-fill LLM (`fill_gaps`,
         # llamado más arriba en este mismo `_understand()` vía `_relevant_gaps`),

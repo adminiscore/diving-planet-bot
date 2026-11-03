@@ -624,7 +624,12 @@ def _is_deliberation_between_options(message: str, routing_signals: dict) -> boo
     if routing_signals:
         obj = routing_signals.get("comparing_options")
         return bool(obj.get("comparing")) if isinstance(obj, dict) else False
-    return _looks_like_deliberation(message)
+    if _looks_like_deliberation(message):
+        from src.observability import marca_regex  # lazy
+
+        marca_regex("R22")  # CALN-8 (6): la frase de duda, con la IA callada
+        return True
+    return False
 
 
 def _accept_pending_correction(state: ConversationState, message: str) -> bool:

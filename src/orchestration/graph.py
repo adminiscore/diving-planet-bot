@@ -137,6 +137,9 @@ async def _router_node(state: BotState) -> dict:
             _reset_to_fresh_scenario(conv)
     # Pre-router: detección sticky de niños (persiste el resto de la conversación).
     if not getattr(conv, "kids_mention_detected", False) and _detect_kids_mention(message):
+        from src.observability import marca_regex  # lazy
+
+        marca_regex("R27")  # CALN-8 (6): niños por regex (s03g: «since I was a baby»)
         conv.kids_mention_detected = True
 
     # rag-5: el RAG arranca ya, a la vez que el enrutador; la reserva lo aprovecha si el contexto no cambió.
