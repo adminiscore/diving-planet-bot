@@ -21,3 +21,9 @@ def test_cada_tema_tiene_politica_y_formas_de_preguntarlo(clave):
 def test_los_grupos_sin_cifras():
     """Decisión de Gadea: los grupos son reducidos, sin dar un número."""
     assert not any(c.isdigit() for c in politica("group_ratio", "es") + politica("group_ratio", "en"))
+
+
+def test_no_se_lleva_alcohol_a_bordo():
+    """Decisión de Gadea (3-nov): la despedida que pregunta por el cava. No se lleva ni se toma alcohol a bordo."""
+    assert "llevar ni tomar alcohol en la lancha" in politica("no_alcohol_policy", "es")
+    assert "Bringing or drinking alcohol on the boat" in politica("no_alcohol_policy", "en")
