@@ -695,11 +695,14 @@ minicurso), 6 al asesor y la pastilla de la tensión al equipo.
    night dive» (t4) pasa al asesor. Reproducido con `charla_rama` en la 0.44 (`noct1`): el estado nunca guarda el plan
    (`detected_cert_dives` vacío) y `_resolve_cert_plan` cae en el de 2. Causa: el plan del certificado solo se elige por la
    cifra de inmersiones (R1, `dive_counts_in`) o de días; «el nocturno» no lleva cifra, y `plan_que_propone_el_bot` solo
-   mira los paquetes de varios días (el de 3 con nocturna es de 1 día). Zona: la lectura (Gadea).
+   mira los paquetes de varios días (el de 3 con nocturna es de 1 día). Zona: la lectura (Gadea). **APARCADO** hasta
+   después de CALN (decisión de Gadea, 3-nov): como campo del extractor, cada una de 6 redacciones movía otra lectura
+   del ex0 (`docs/robustness/caln/sonda-plan-nocturno-3nov.md`).
 2. **El bebé de 2 años «puede ir en la lancha» y «paga la tarifa de acompañante»** (madre t1 a t4). La base no dice nada
    de bebés a bordo; en t2 decía «no tengo confirmado si debe pagar» y en t4 lo afirma, con la tarjeta de 2 acompañantes.
-   Un hecho y un importe inventados. Hace falta la regla de negocio (pregunta para Gadea) y que el escritor no afirme lo
-   que los hechos no traen.
+   Un hecho y un importe inventados. Regla de Gadea (3-nov): a cualquier edad y no pagan (`policies.babies_onboard`,
+   276e20e8); con ella el escritor lo dice bien (bebe2). Queda la cuenta en el grupo: el bebé sale como acompañante que
+   paga o como persona «sin elegir» (bebe1; grupo, propuesta #2798 a Álvaro).
 
 **Medios:** «I don't have details on vegetarian options» en t1 y t2 (mensajes con tres preguntas), aunque
 `food_policy` lo dice (arroz con vegetales); a la 3.ª, sola, lo contesta (la pregunta diluida, CALN-11, Álvaro). «2 are
