@@ -372,9 +372,13 @@ async def responder(state: ConversationState, message: str, history: list[dict])
 async def _con_el_escritor(state: ConversationState, message: str, history: list[dict], bloques: list[dict],
                            intenciones: list[str]) -> str | None:
     """lat-9 paso 3 (26-oct): un solo escritor. Lo que pide el mensaje lo cubren entero los hechos del código: lo escribe
-    el mismo escritor que el RAG (su prompt, las reglas del negocio, el catálogo y las políticas), con los hechos y sin
-    reescritura ni búsqueda; las listas que se le escapen las añade el código (arq-7b), y el revisor va con la regla de
-    lat-5. Antes era otra llamada con otro prompt (el redactor), que si no sabía decía FALTA y pagaba además el RAG."""
+    el mismo escritor que el RAG (su prompt y las reglas del negocio), con los hechos; las listas que se le escapen las
+    añade el código (arq-7b), y el revisor va con la regla de lat-5. Antes era otra llamada con otro prompt (el
+    redactor), que si no sabía decía FALTA y pagaba además el RAG.
+    CALN-16 (3-nov, sparring s03h): también con la búsqueda. Sin ella, lo que el cliente AFIRMA en el mismo mensaje no
+    llegaba: «Is lunch included? I'm vegetarian.» solo pide «incluye» (Jev), y desde CALN-8 (3) las políticas ya no van
+    en el prompt del escritor, así que contestaba «no tengo información» con food_policy en la búsqueda adelantada
+    (charla_rama --espia: 0/2 → 2/2 «the vegetarian option is rice with vegetables»)."""
     from src.agents import conversational_core as core  # lazy
     from src.agents import supervisor  # lazy
     from src.agents.rag_agent import is_fallback_answer  # lazy
@@ -385,7 +389,7 @@ async def _con_el_escritor(state: ConversationState, message: str, history: list
     entradas = core._entradas_rag(state, history, message)
     if origen_pendiente:
         entradas.pop("pregunta_final", None)  # la pregunta del origen la pone el código, abajo
-    entradas.update(hechos=texto_de_los_hechos(bloques), hechos_bloques=(bloques, intenciones), sin_busqueda=True)
+    entradas.update(hechos=texto_de_los_hechos(bloques), hechos_bloques=(bloques, intenciones))
     # 5.ª ronda: con una pregunta de precio guardada a la espera del origen, arq-8f añade «precio» a cada turno con alguna
     # intención, y la pieza salía en turnos que preguntan otra cosa (la hora de vuelta, cómo reservar). Va si el cliente
     # pide precio en ESTE mensaje (Jev) o si ya se sabe el origen (el caso de arq-8f: el mensaje que da el origen
