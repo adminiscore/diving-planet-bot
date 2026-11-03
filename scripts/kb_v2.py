@@ -148,10 +148,19 @@ def build_kb_v2() -> list[dict]:
             docs.append(ficha_servicio(sid, svc, lang))
     docs.extend(fichas_refresher(services))
     for f in faqs:
-        for lang in ("es", "en"):
-            texto = _qa(f[f"question_{lang}"], f.get(f"preguntas_alt_{lang}") or [], f[f"answer_{lang}"], lang)
-            docs.append({"content": texto, "metadata": {"source": "faqs", "key": f"faq:{f['origen']}", "lang": lang,
-                                                        "topics": detect_topics(texto)}})
+        # CALN-9b (3-nov): la FAQ que mezclaba los dos orígenes va como un documento por origen (`por_origen`), con su
+        # `origin` como las fichas, y la que habla de uno solo lleva el suyo (`solo_origen`): con el origen sabido, al
+        # escritor solo le llega la de su origen (`rag_agent.fichas_del_origen`).
+        variantes = [(f"faq:{f['origen']}:{o}", o, v) for o, v in (f.get("por_origen") or {}).items()] or [
+            (f"faq:{f['origen']}", f.get("solo_origen"), f)]
+        for key, origen, respuestas in variantes:
+            for lang in ("es", "en"):
+                texto = _qa(f[f"question_{lang}"], f.get(f"preguntas_alt_{lang}") or [], respuestas[f"answer_{lang}"],
+                            lang)
+                metadata = {"source": "faqs", "key": key, "lang": lang, "topics": detect_topics(texto)}
+                if origen:
+                    metadata["origin"] = origen
+                docs.append({"content": texto, "metadata": metadata})
     reglas = [(f"politica:{k}", v.get("es", ""), v.get("en", "")) for k, v in policies.items()]
     reglas += [(f"descuento:{k}", v.get("description_es", ""), v.get("description_en", "")) for k, v in discounts.items()]
     for key, es, en in reglas:

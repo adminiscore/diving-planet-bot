@@ -424,7 +424,8 @@ def fichas_del_origen(docs: list[dict], origin: str | None, lang: str) -> list[d
     «lancha Cartagena-Islas incluida» a quien ya está en las islas (precio-desde-islas-vs-cartagena). Si la del suyo ya
     vino, la del otro sale; si no, se cambia por la del suyo, armada con la misma función que la de la base
     (`catalog.service_fact_sheet`). Sin origen, sin pareja en el catálogo, o en documentos que no son fichas de servicio
-    (FAQ, políticas, el refresher), no cambia nada."""
+    (políticas, el refresher), no cambia nada. CALN-9b (3-nov): las FAQ con `origin` (partidas por origen en la base)
+    también: la del otro origen sale."""
     if origin not in ("cartagena", "islas"):
         return docs
     from src.flows.catalog import RAW_SERVICES, service_fact_sheet  # lazy
@@ -439,8 +440,15 @@ def fichas_del_origen(docs: list[dict], origin: str | None, lang: str) -> list[d
     presentes = {ficha(d) for d in docs if ficha(d)}
     out, cambios = [], []
     for doc in docs:
+        metadata = doc.get("metadata") or {}
+        if metadata.get("source") == "faqs" and metadata.get("origin") not in (None, origin):
+            # CALN-9b (3-nov): la FAQ del otro origen (las que mezclaban los dos van partidas en la base, `kb_v2`). Con
+            # las dos en el texto, «¿incluye almuerzo?» de quien sale de Cartagena traía «si ya estás en las islas, no
+            # está incluido» y el escritor lo mezclaba (minis de la 0.46: «incluye almuerzo… no incluye almuerzo»).
+            cambios.append(f"{metadata.get('key')} fuera")
+            continue
         sid = ficha(doc)
-        otro = sid and (doc.get("metadata") or {}).get("origin") not in (None, origin)
+        otro = sid and metadata.get("origin") not in (None, origin)
         if not otro:
             out.append(doc)
             continue
