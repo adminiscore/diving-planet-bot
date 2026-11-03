@@ -287,7 +287,10 @@ def next_missing_slot(state: ConversationState, saltar: frozenset[str] | set[str
             return SLOT_SAFETY
         if refresh and state.refresher_interested is None and SLOT_REFRESHER not in saltar:
             return SLOT_REFRESHER
-    if state.kids_mention_detected and not state.detected_ages and SLOT_AGES not in saltar:
+    # Sparring s03g (3-nov): «I've lived in Miami since I was a baby» marca niños (la palabra «baby») y, con el grupo ya
+    # en 1 persona, se preguntaba «You mentioned minors are coming, what are their ages?». Un grupo de uno no trae menores.
+    solo_uno = state.detected_group_size == 1 and not state.detected_group_allocation
+    if state.kids_mention_detected and not state.detected_ages and not solo_uno and SLOT_AGES not in saltar:
         return SLOT_AGES
     if state.is_colombian is None and SLOT_NATIONALITY not in saltar:
         return SLOT_NATIONALITY

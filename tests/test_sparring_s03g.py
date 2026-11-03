@@ -20,3 +20,16 @@ def test_el_plan_sin_enlace_lo_reserva_un_asesor():
     st.selected_service = "2_dives_1_day_already_on_island"
     [b] = hechos.hechos(st, ["enlace"], ["certified_diving"])
     assert b["enlace"]["island"].startswith("https://book.divingplanet.org/")
+
+
+def test_un_grupo_de_uno_no_trae_menores_aunque_diga_baby():
+    """s03g (miami t3): «since I was a baby» marca niños; con el grupo en 1 no se preguntan edades."""
+    from src.agents import conversational_core as core
+
+    st = ConversationState(conversation_id="s03g-baby", language="en")
+    st.detected_activity, st.location, st.is_colombian = "minicourse", "cartagena", False
+    st.kids_mention_detected = True
+    st.detected_group_size = 2
+    assert core.next_missing_slot(st) == core.SLOT_AGES
+    st.detected_group_size = 1
+    assert core.next_missing_slot(st) != core.SLOT_AGES
