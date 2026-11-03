@@ -33,3 +33,18 @@ def test_un_grupo_de_uno_no_trae_menores_aunque_diga_baby():
     assert core.next_missing_slot(st) == core.SLOT_AGES
     st.detected_group_size = 1
     assert core.next_missing_slot(st) != core.SLOT_AGES
+
+
+def test_s03a_pedir_una_persona_manda_tambien_en_dive_to_heal():
+    """s03a (tanda de Álvaro): «sí, pásame con el asesor» dentro de DIVE TO HEAL iba al RAG, que prometía el pase sin
+    hacerlo. Con wants_human, al pase; sin él, lo de siempre (el RAG contesta el programa)."""
+    from src.flows.state import Step
+    from src.orchestration.router import classify_route
+    from src.orchestration.state import ROUTE_INFO, ROUTE_SAFETY
+
+    st = ConversationState(conversation_id="s03a-silla", language="es")
+    st.detected_language, st.step, st.adaptive_diving_context = "es", Step.FREE_TEXT, True
+    st.history = [{"role": "user", "content": "uso silla de ruedas, ¿puedo bucear?"},
+                  {"role": "assistant", "content": "Sí, con DIVE TO HEAL. ¿Quieres que te pase con un asesor?"}]
+    assert classify_route(st, "Sí, pásame con el asesor, por favor.", {"wants_human": True}) == ROUTE_SAFETY
+    assert classify_route(st, "¿Qué incluye el programa?", {"wants_human": False}) == ROUTE_INFO
