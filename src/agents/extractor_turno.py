@@ -770,6 +770,14 @@ async def extraer_turno(mensaje: str, *, history: list[dict] | None = None, sabi
         # (3/3 en dp-pre-bot); el redactor cotizaba desde Cartagena y aun así preguntaba desde dónde sale. La regla de
         # gen-6, también cuando el lugar llega como hotel.
         salida["location"] = "cartagena"
+    if "location" not in salida and not (sabido or {}).get("location") and (barrio := _solo_un_barrio(mensaje)):
+        # CALN, el origen de la pregunta (decisión de Gadea, 3-nov, #2694): el extractor calla el lugar cuando no sabe que
+        # el sitio es de Cartagena (sonda ×10: «I'm staying in Getsemaní», «the hotel in the old town», Castillogrande,
+        # «alojados en el centro histórico» 0/10) y el bot preguntaba «¿saldrías desde Cartagena?». Un barrio de la
+        # lista cerrada (`lugares.json`, nombres propios como los hoteles), sin un sitio de las islas: sale desde
+        # Cartagena, como Barú. Ponerle la lista en el prompt movía otras lecturas («soy residente» 0/10).
+        salida["location"] = "cartagena"
+        logger.info(f"[EXTRACT][BARRIO] el mensaje nombra {barrio!r}, de Cartagena: location='cartagena'")
     # Regla del negocio (ex-8): un buzo certificado (lo dice ahora o ya se sabe) que quiere bucear y no elige otra cosa
     # hace buceo certificado. La decide el código con dos hechos que el cliente afirma; el modelo, cuando la deducía,
     # razonaba al revés ("bucear" ≈ "buceo certificado" → inventaba también la certificación).

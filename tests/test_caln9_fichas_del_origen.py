@@ -1,5 +1,7 @@
 """CALN-9a (30-oct; diseño docs/robustness/caln/diseno-caln9-origen.md): con el origen del cliente sabido, al escritor
 solo le llega la ficha de su origen de cada plan."""
+import pytest
+
 from src.agents.rag_agent import fichas_del_origen
 
 
@@ -76,3 +78,36 @@ def test_la_cita_de_un_barrio_de_cartagena_nombra_un_lugar():
         assert not nombra_un_lugar(cita)
     # Con un sitio de las islas en la misma cita, no es «solo un barrio» (no se corrige a cartagena).
     assert _solo_un_barrio("dos noches en Bocagrande y luego Isla Grande") is None
+
+
+def _extractor_que_calla(llamadas: list | None = None):
+    """Un cliente falso del extractor que no da ningún dato (calla el lugar, como Haiku con Getsemaní)."""
+    import json as _json
+
+    class _C:
+        async def create(self, **kw):
+            (llamadas if llamadas is not None else []).append(kw)
+            msg = type("M", (), {"content": _json.dumps({})})()
+            return type("R", (), {"choices": [type("C", (), {"message": msg})()], "usage": None})()
+
+    return type("O", (), {"chat": type("Ch", (), {"completions": _C()})()})()
+
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("mensaje,sabido,location", [
+    ("Hey! I'm staying in Getsemaní for a week, how much are the fun dives?", {}, "cartagena"),
+    ("Hola, estamos alojados en el centro histórico, ¿qué planes tienen?", {}, "cartagena"),
+    ("nos quedamos en un hotel de Castillogrande hasta el domingo", {}, "cartagena"),
+    # Con un sitio de las islas en el mismo mensaje, no: lo decide el extractor (aquí calla).
+    ("hoy en Getsemaní y mañana nos vamos a Isla Grande", {}, None),
+    # Con el lugar ya sabido, un barrio que se nombra de paso no lo cambia.
+    ("ayer cenamos en Getsemaní, ¡qué bonito!", {"location": "island"}, None),
+    ("¿a qué hora sale la lancha?", {}, None),
+])
+async def test_un_barrio_de_cartagena_sale_desde_cartagena_si_el_extractor_calla(mensaje, sabido, location):
+    """CALN, el origen de la pregunta (decisión de Gadea, 3-nov, #2694): el barrio por código, como Barú."""
+    from src.agents import extractor_turno as ex
+
+    out = await ex.extraer_turno(mensaje, sabido=sabido, lang="es", client=_extractor_que_calla())
+    assert out.get("location") == location
