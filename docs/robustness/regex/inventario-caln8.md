@@ -52,3 +52,21 @@ coincide con el extractor, se borra con sus tests.
 
 Las marcas tocan seis ficheros del núcleo (routing, extraction, extractor, booking, core, redactor), los que parte
 Álvaro: se ponen cuando se decida la ventana.
+
+## 4. Primera cuenta (2-nov, rondas del 30-oct)
+
+19 rondas del 30-oct con las marcas (0.39 y candidatas; 2.619 turnos; solo los `.metricas`, sin abrir diálogos). Turnos
+en que decide cada rama: R7 446, R1 103, R3 44, R10 29, R8 9; **0**: R2, R4, R5, R6, R9. Son los mismos visibles
+repetidos, sin rotativa ni sparring.
+
+- R3 se queda: solo actúa cuando la respuesta a «¿desde dónde?» es de formato (un botón, «Cartagena» a secas) o la IA
+  falla, y entonces lee la lista cerrada de lugares.
+- R5 se queda aunque dé 0: es una guarda contra un error medido del resolutor LLM («2 inmersiones» o «mi hijo tiene
+  9 años» como total de personas), no un respaldo.
+- R6 y R9 arreglan casos concretos (gen-16, LAT-0b): se cuentan también en sparring o rotativa antes de decidir.
+- **Fuera R2 y R4** (feature/caln8-regex-gonzalo): la duración del regex en la respuesta corta sin la IA y las edades
+  en palabra sin la IA; con la IA las lee el extractor.
+- El respaldo de ex-9b paso 6 (con el extractor caído, las edades y la duración del regex siguen valiendo; los tests
+  «extractor caído como hoy» lo fijan a propósito) no tenía marca: **R11** (edades) y **R12** (duración), en
+  `rutas/booking.py`. Si dan 0, se proponen fuera, y con ellos `detect_duration` entero (68 líneas del detector).
+- Siguiente: si R1, R7, R8 y R10 coinciden con lo que lee el extractor.

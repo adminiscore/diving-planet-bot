@@ -2072,13 +2072,6 @@ async def test_availability_signal_ignored_mid_booking():
     assert "siempre hay disponibilidad" not in resp.lower()
 
 
-def test_word_ages_helper():
-    assert core._word_ages("cinco y siete") == [5, 7]
-    assert core._word_ages("nueve") == [9]
-    assert core._word_ages("doce y catorce") == [12, 14]
-    assert core._word_ages("no me acuerdo bien") == []
-
-
 def _at_ages_stage(lang: str = "es") -> ConversationState:
     s = make_state(lang)
     s.step = Step.FREE_TEXT
@@ -2087,11 +2080,10 @@ def _at_ages_stage(lang: str = "es") -> ConversationState:
     return s
 
 
+# CALN-8 (6): sin la IA, las edades en palabra («cinco y siete») ya no las lee el regex (R4: 0 de 2.619 turnos en las
+# rondas del 30-oct); con ella las lee el extractor (`edades_por_extractor`).
 @pytest.mark.parametrize("message, expected", [
-    ("tienen 7 y 9 años", [7, 9]),          # dígitos (ya funcionaba)
-    ("cinco y siete", [5, 7]),               # palabras (gap cerrado)
-    ("el peque tiene nueve", [9]),
-    ("doce y catorce", [12, 14]),
+    ("tienen 7 y 9 años", [7, 9]),
 ])
 @pytest.mark.asyncio
 async def test_ages_word_numbers_resolved(message, expected):
