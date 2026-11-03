@@ -542,8 +542,7 @@ async def _verify_grounding(answer: str, context: str, lang: str) -> tuple[bool,
 # arq-7b (23-oct, latencia): los puntos de las listas de los hechos que el RAG dejó
 # fuera, con su rótulo; lo demás (recogida, alojamiento) va tal cual.
 _ROTULOS_DE_LO_QUE_FALTA = {"incluye": ("También incluye:", "It also includes:"),
-                            "requisitos": ("También necesitas:", "You'll also need:"),
-                            "descuento": ("Sobre los descuentos:", "About discounts:")}
+                            "requisitos": ("También necesitas:", "You'll also need:")}
 
 
 def _completar_con_hechos(answer: str, bloques: list[dict], intenciones: list[str], lang: str) -> str | None:

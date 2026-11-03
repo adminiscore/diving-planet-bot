@@ -79,8 +79,8 @@ def test_los_demas_planes_dos_por_origen():
     assert por_origen.count("cartagena") <= 2 and por_origen.count("island") <= 2
 
 
-def test_si_pregunta_por_un_descuento_no_se_exigen_los_demas():
-    """CALN3-Q05: «¿el de grupo nos aplica?»: la lista va en los hechos, pero arq-7b no exige ni pega las demás."""
+def test_los_descuentos_van_en_los_hechos_y_no_se_exigen():
+    """CALN3-Q05 y mini de la 0.43: la lista va en los hechos, pero arq-7b no la exige ni la pega, pregunte por uno o no."""
     from src.flows import hechos
 
     st = _st(detected_group_size=5)
@@ -90,7 +90,7 @@ def test_si_pregunta_por_un_descuento_no_se_exigen_los_demas():
     assert hechos.faltan("Sí, con 5 personas el de grupo les aplica: 10 % más.", [b], ["descuento"]) == []
     st._un_descuento = False
     [b] = hechos.hechos(st, ["descuento"], ["snorkel"])
-    assert hechos.faltan("Sí, con 5 personas el de grupo les aplica: 10 % más.", [b], ["descuento"])
+    assert b["descuento"] and hechos.faltan("Sí, con 5 personas el de grupo les aplica: 10 % más.", [b], ["descuento"]) == []
 
 
 def test_en_la_pregunta_general_cada_descuento_por_sus_palabras_propias():

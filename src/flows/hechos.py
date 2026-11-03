@@ -689,8 +689,10 @@ def faltan(answer: str, bloques: list[dict], intenciones: list[str]) -> list[str
         for intencion in ("incluye", "requisitos", "descuento", "en_que_consiste"):
             if (intencion if intencion != "en_que_consiste" else "incluye") not in intenciones:
                 continue
-            if intencion == "descuento" and b.get("solo_el_preguntado"):
-                continue  # CALN3-Q05: pregunta por uno; el escritor contesta ese y los demás no se pegan
+            if intencion == "descuento":
+                # Mini de la 0.43: «dice que hay un bono adicional» o el regateo «¿quedaría en 160?», bien contestados por
+                # el escritor, recibían los cuatro textos de la base debajo. Van en sus hechos; no se exigen ni se pegan.
+                continue
             listas = b.get(intencion) or {}
             elementos = list(dict.fromkeys(e for lista in (listas.values() if isinstance(listas, dict) else [listas])
                                            for e in lista))
