@@ -48,7 +48,6 @@ from src.agents.jev_router import (
     PIDE_REGRESO,
     PIDE_REQUISITOS,
     PIDE_SI_ALCANZA,
-    PIDE_UN_DESCUENTO,
 )
 from src.flows.state import ConversationState, Step
 from src.orchestration.router import classify_route
@@ -186,7 +185,6 @@ async def _router_node(state: BotState) -> dict:
     # ARQ-1b: las intenciones del mensaje según Jev (vacío si calla), para los hechos por código (src/flows/hechos.py).
     conv._intenciones = intenciones_del_turno(conv, signals)
     conv._otra_cosa = signals.get(PIDE_OTRA_COSA)  # ARQ-1d: None (Jev calla) cuenta como que sí trae algo más
-    conv._un_descuento = signals.get(PIDE_UN_DESCUENTO) is True  # CALN3-Q05: pregunta por un descuento concreto
     # CALN-8 (lo delgado): el lector del grupo sale ahora, con lo que dice Jev, y solo si puede hacer falta.
     lanzar_lector_si_hace_falta(conv, message, signals)
     lanzar_segunda_nacionalidad_si_hace_falta(conv, signals)  # CALN-10b: la 2.ª lectura de la nacionalidad, ya

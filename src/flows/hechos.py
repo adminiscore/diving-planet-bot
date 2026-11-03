@@ -250,8 +250,6 @@ def hechos(state: ConversationState, intenciones: list[str], actividades: list[s
                 bloque["edad"]["solo_si_esta_certificado"] = True
         if "descuento" in pedidas:
             bloque["descuento"] = _descuentos(state, lang, _descuento_de_grupo(state, registro, lang))
-            if getattr(state, "_un_descuento", False):
-                bloque["solo_el_preguntado"] = True  # CALN3-Q05: la lista va, pero no se exige ni se pega
         if "tiempo" in pedidas:
             bloque.update(_tiempo(lang))
         bloque.update(_clima_y_pago(state, pedidas, lang))
@@ -467,8 +465,6 @@ def hechos_sin_actividad(state: ConversationState, intenciones: list[str]) -> li
             bloque["requisitos"] = [p for p in bloque["requisitos"] if p]
     if "descuento" in pedidas:
         bloque["descuento"] = _descuentos(state, lang)
-        if getattr(state, "_un_descuento", False):
-            bloque["solo_el_preguntado"] = True
     bloque.update(_clima_y_pago(state, pedidas, lang))
     bloque.update(_temas_de_lat8(pedidas, lang))
     return _lo_que_faltaba(state, [bloque], pedidas, lang)
@@ -689,8 +685,10 @@ def faltan(answer: str, bloques: list[dict], intenciones: list[str]) -> list[str
         for intencion in ("incluye", "requisitos", "descuento", "en_que_consiste"):
             if (intencion if intencion != "en_que_consiste" else "incluye") not in intenciones:
                 continue
-            if intencion == "descuento" and b.get("solo_el_preguntado"):
-                continue  # CALN3-Q05: pregunta por uno; el escritor contesta ese y los demás no se pegan
+            if intencion == "descuento":
+                # Mini de la 0.43: «dice que hay un bono adicional» o el regateo «¿quedaría en 160?», bien contestados por
+                # el escritor, recibían los cuatro textos de la base debajo. Van en sus hechos; no se exigen ni se pegan.
+                continue
             listas = b.get(intencion) or {}
             elementos = list(dict.fromkeys(e for lista in (listas.values() if isinstance(listas, dict) else [listas])
                                            for e in lista))
