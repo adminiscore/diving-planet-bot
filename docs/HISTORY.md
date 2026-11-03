@@ -1,6 +1,23 @@
 History
 =======
 
+0.44.0 - (2026-11-03, SUBE A PRE: el pase dentro de DIVE TO HEAL, CALN-12 con las respuestas de Gadea y los descuentos sin pegar)
+---------------------
+* **Qué sube** (sobre 0.43.0; `feature/caln-integra044-gadea`): **Gadea** (s03a, la silla de ruedas de la tanda de Álvaro,
+  6/6 desde la 0.41): dentro de DIVE TO HEAL, pedir una persona o aceptar la oferta del asesor pasa de verdad; los dos
+  gates del pase en un solo sitio (`supervisor.pase_pedido_o_aceptado`), mirado antes de DIVE TO HEAL en el nodo de
+  escalado, el de info y la cascada (causa de Álvaro, #2755). **CALN-12** (respuestas de Gadea, 3-nov): sin edad máxima;
+  oxígeno y botiquín a bordo; grupos reducidos sin cifras; la lancha no tiene baño (baño y ducha en el hotel de las
+  islas); sin parqueadero propio; reservar para otro con un asesor; no se fuma; no se lleva ni se toma alcohol a bordo;
+  sin mascotas (8 políticas nuevas + decisión «temas-3nov»). Cambiar el día SIN una reserva hecha ya no pasa al asesor
+  (cambia s4-6). **Gonzalo**: los descuentos en los hechos del escritor, sin exigirlos ni pegarlos; fuera
+  `pide_un_descuento` (una pregunta menos de Jev, −29 líneas).
+* **Medida** (una pasada, a la misma hora, en serie, a solas; A = PRE 0.43.0, B con su base curada en `kb_v2_gadea`):
+  mini-ronda de los 43 visibles: **25 → 23 fallos, 21 → 16 diálogos con fallos** (8 mejoran, 5 empeoran); llamadas por
+  turno 3,60 → 3,58; p50 3,75 → 3,68 s, p90 6,11 → 6,47 s; respaldos 3 y 3. Suite 3178.
+* **CALN-11 redefinida** (a Álvaro): la búsqueda con el mensaje entero solo trae la pregunta principal (el cava, el precio
+  olvidado): buscar por cada pregunta del mensaje.
+
 0.43.0 - (2026-11-03, SUBE A PRE: los arreglos de la 3.ª tanda de sparring, la nota corta del de grupo y la parte segura del R1)
 ---------------------
 * **Qué sube** (sobre 0.42.0; `feature/caln-integra043-gadea`): **Gadea** (s03g): sin enlace de reserva en la base, el plan
