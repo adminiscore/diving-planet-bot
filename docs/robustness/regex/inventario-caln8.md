@@ -83,7 +83,15 @@ repetidos, sin rotativa ni sparring.
   lectura, de cifra + unidad. Se queda, con un falso positivo conocido, ×14 en las rondas: «vi un video de alguien que
   hizo el paquete… e hicieron dos inmersiones» fija 2 inmersiones por lo que hizo otra persona. En esa ronda, ese
   turno y el siguiente siguen con el menú de actividades (no comparado sin la lectura). No se toca hasta que dé un fallo visible.
-- **R8 sigue abierta:** nunca «coincide», porque salta cuando el extractor dice algo que el mensaje no nombra; lo que
-  hay que saber es si acierta. 2 turnos distintos, 9 veces (frances-anticipacion t2 ×6, grupo-mixto t1 ×3). Sin trazas
-  no se sabe qué leyó el extractor: en local, `{certified_diving: 1, minicourse: 2}` con «1 buzo avanzado y 2 para
-  bautismo» pasa entero. Hay que reproducirlos con traza.
+- **R8 se queda.** Reproducida con traza en PRE 0.43: en grupo-mixto t1 ×6 no salta ninguna vez (las 3 veces del 30-oct
+  fueron otra lectura del extractor); en frances-anticipacion t2 ×4 salta en 3 porque el extractor pone `padi_open_water`
+  a alguien y el mensaje solo dice «nuestro curso en línea»: no se le asigna un curso que no nombra, que es su trabajo.
+  De paso: grupo-mixto t1 se lee mal 3 de 6 (una 4.ª persona inventada; el buzo perdido), de la lectura del grupo y no
+  de R8; pasado a Álvaro.
+- **Recuento de R7 con las marcas nuevas** (mini de la 0.43, lado B, 201 turnos): R7b 1, R7a 0, R7c 0, frente a 37 con
+  la marca vieja. Hay que contarla en más rondas antes de proponer nada.
+
+## 6. Límite de este inventario
+
+Solo cubre `intent_detector.py`. Hay regex que deciden fuera, sin marca: p. ej. `_detect_kids_mention`
+(`rutas/router.py`: «since I was a baby» leído como que vienen menores, s03g). Las cifras de R1-R12 no las incluyen.
