@@ -41,3 +41,13 @@ async def test_rag_answer_pasa_el_origen_del_estado_a_la_busqueda(monkeypatch):
     monkeypatch.setattr(rag_agent, "condense_query", AsyncMock(side_effect=lambda q, **k: q))
     await rag_agent.rag_answer("what is included in the snorkel tour?", lang="en", origin="island")
     assert buscar.await_args.kwargs.get("origin") == "islas"
+
+
+def test_la_rama_de_palabras_busca_la_pregunta_y_no_la_marca_del_origen():
+    """RAG R1, la parte segura (3-nov): con el origen sabido, la última línea de la consulta era la marca del código
+    («[origen_cliente]=desde Cartagena») y la rama de palabras buscaba eso (R0)."""
+    assert vector_store.texto_para_palabras("¿hay que saber nadar?\n\n[origen_cliente]=desde Cartagena") == \
+        "¿hay que saber nadar?"
+    assert vector_store.texto_para_palabras("Do you go out on December 25th?\n\n[origin]=from Cartagena") == \
+        "Do you go out on December 25th?"
+    assert vector_store.texto_para_palabras("somos 3\n¿cuánto dura la inmersión?") == "¿cuánto dura la inmersión?"

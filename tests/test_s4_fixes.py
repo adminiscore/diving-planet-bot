@@ -168,9 +168,6 @@ async def test_corregir_el_precio_que_cita_el_cliente_no_acaba_en_no_lo_tengo(mo
     async def _same(q, history=None, lang="es", hechos=None):
         return q
 
-    async def _docs_back(docs, lang="es"):
-        return docs
-
     async def _judge(answer, context, lang="es"):
         return True, "GROUNDED"
 
@@ -187,7 +184,6 @@ async def test_corregir_el_precio_que_cita_el_cliente_no_acaba_en_no_lo_tengo(mo
             self.chat = type("Ch", (), {"completions": type("Co", (), {"create": staticmethod(create)})()})()
 
     monkeypatch.setattr(rag_agent, "search_knowledge_base", _docs)
-    monkeypatch.setattr(rag_agent, "_expand_with_parent_context", _docs_back)
     monkeypatch.setattr(rag_agent, "condense_query", _same)
     monkeypatch.setattr(rag_agent, "AsyncOpenAI", _Cli)
     monkeypatch.setattr(rag_agent, "is_grounded", _judge)
