@@ -190,7 +190,7 @@ def hechos(state: ConversationState, intenciones: list[str], actividades: list[s
                 for plan, sid in zip(bloque.get("otros_planes") or [], [s for s in otros if _precio(s, moneda)],
                                      strict=False):
                     plan["precio_cop"] = _precio(sid, "COP")
-            if grupo := _descuento_de_grupo(state, registro, lang):
+            if grupo := _descuento_de_grupo(state, registro, lang, con_precio=True):
                 bloque["descuento_de_grupo"] = grupo
         if "incluye" in pedidas and paquetes:
             # arq-1t: lo común a todos los paquetes de varios días del origen (solo cambia el número de inmersiones) y
@@ -418,9 +418,11 @@ def no_aplica_el_de_grupo(texto: str) -> bool:
     return any(texto.startswith(plantilla.split("{pct}")[0]) for plantilla in _SIN_DESCUENTO_DE_GRUPO.values())
 
 
-def _descuento_de_grupo(state: ConversationState, registro, lang: str) -> str | None:
+def _descuento_de_grupo(state: ConversationState, registro, lang: str, con_precio: bool = False) -> str | None:
     """Si el grupo llega al mínimo: el texto del descuento de grupo si el plan lo tiene, o que no aplica si es un curso.
-    Sin grupo de ese tamaño, nada (los demás descuentos, solo si los pregunta)."""
+    Sin grupo de ese tamaño, nada (los demás descuentos, solo si los pregunta). `con_precio`: la nota corta que va debajo
+    de los precios sin que lo haya preguntado (sparring s30e: la descripción entera, con su «ANTES», pegada en la
+    despedida); la descripción completa, cuando pregunta por los descuentos."""
     datos = json.loads(_DISCOUNTS.read_text(encoding="utf-8-sig")).get("discounts", {}).get("group_discount") or {}
     minimo = datos.get("min_people") or 5
     if (state.detected_group_size or 0) < minimo:
@@ -428,7 +430,8 @@ def _descuento_de_grupo(state: ConversationState, registro, lang: str) -> str | 
     if registro.cart_type == "course":
         return _SIN_DESCUENTO_DE_GRUPO[lang].format(pct=datos.get("percentage", 10), n=minimo)
     if registro.cart_type in _CON_DESCUENTO_DE_GRUPO:
-        return datos.get(f"description_{lang}") or datos.get("description_es")
+        return ((con_precio and datos.get(f"nota_con_precio_{lang}")) or datos.get(f"description_{lang}")
+                or datos.get("description_es"))
     return None
 
 

@@ -389,6 +389,9 @@ def _apply_short_answer(state: ConversationState, message: str, ia: dict | None 
         # se abstiene para que el mensaje se re-entienda desde cero.
         mentioned = _mentioned_product_activities(message)
         if mentioned and act not in mentioned:
+            from src.observability import marca_regex  # lazy
+
+            marca_regex("R7a")  # CALN-8 (6): nombra otra actividad que la preguntada, según el detector
             return False
         n = _quantity_answer(state, message)
         if n is not None and n > 0 and act:
@@ -440,6 +443,9 @@ def _apply_short_answer(state: ConversationState, message: str, ia: dict | None 
                 candidates |= {o for o in options if dom.nombra_el_producto(o, message)}
             if len(candidates) == 1:
                 chosen = next(iter(candidates))
+                from src.observability import marca_regex  # lazy
+
+                marca_regex("R7b")  # CALN-8 (6): la actividad de quien falta, por lo que nombra el mensaje
         if chosen is not None:
             _elige_quien_falta(state, chosen)
             return True
@@ -812,6 +818,9 @@ async def _routing_phase(
         not resolved_short and not _has_pending_answer(state)
         and _is_deliberation_between_options(message, routing_signals)
     ):
+        from src.observability import marca_regex  # lazy
+
+        marca_regex("R7c")  # CALN-8 (6): deliberación entre 2+ ofertas que nombra el mensaje, según el detector
         offerings = _mentioned_offerings(message)
         obj = routing_signals.get("comparing_options") or {}
         logger.info(
