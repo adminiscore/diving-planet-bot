@@ -44,6 +44,20 @@ async def test_se_busca_tambien_por_cada_pregunta(monkeypatch):
     assert "¿Cuánto es por persona?" in consultas
 
 
+@pytest.mark.asyncio
+async def test_las_de_cada_pregunta_van_sin_la_marca_del_origen(monkeypatch):
+    """Gadea #2845: en una pregunta corta la marca tapaba la pieza buena; la principal la conserva."""
+    buscar = AsyncMock(return_value=[])
+    monkeypatch.setattr(rag_agent, "search_knowledge_base", buscar)
+    monkeypatch.setattr(rag_agent, "condense_query", AsyncMock(side_effect=lambda q, **k: q))
+    await rag_agent.rag_answer("¿A qué hora salimos? ¿Se puede llevar cava a bordo?", lang="es", origin="cartagena",
+                               extra_context="El cliente saldra desde Cartagena.")
+    consultas = [c.args[0] for c in buscar.await_args_list]
+    assert "¿Se puede llevar cava a bordo?" in consultas and "¿A qué hora salimos?" in consultas
+    assert any(q.endswith("[origen_cliente]=desde Cartagena") for q in consultas)  # la principal
+    assert all(c.kwargs.get("origin") == "cartagena" for c in buscar.await_args_list)
+
+
 def test_lo_de_cada_pregunta_entra_hasta_el_limite():
     out = rag_agent.fusionar_busquedas(_docs("grupo", 8), _docs("alcohol", 3), extra=rag_agent.POR_PREGUNTA_EXTRA)
     assert [d["id"] for d in out[8:]] == ["alcohol0", "alcohol1"]

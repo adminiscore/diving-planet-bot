@@ -834,7 +834,9 @@ async def rag_answer(
         reescrita_distinta = tal_cual.strip() != condensed_query.strip()
         original_q = redact_pii(tal_cual + sufijo_origen) if reescrita_distinta else ""
         buscar_original = bool(original_q.strip()) and original_q not in (safe_query, bare_safe_query)
-        por_pregunta = [q for q in (redact_pii(p + sufijo_origen) for p in preguntas_del_mensaje(tal_cual))
+        # CALN-11, sin la marca del origen (Gadea #2845): en una pregunta corta tapaba la pieza buena («Can we bring some
+        # beers on the boat?»: no_alcohol_policy fuera del top-4 con ella, 1.ª sin ella). El origen sigue en `origin`.
+        por_pregunta = [q for q in (redact_pii(p) for p in preguntas_del_mensaje(tal_cual))
                         if q not in (safe_query, bare_safe_query, original_q)]
         de_cada_pregunta = asyncio.gather(*(search_knowledge_base(q, lang=lang, **buscar_kw) for q in por_pregunta))
         originales = await search_knowledge_base(original_q, lang=lang, **buscar_kw) if buscar_original else None
