@@ -270,20 +270,6 @@ REGLA_PAQUETE_VARIOS_DIAS_EN = (
 )
 
 
-# Sparring s03h (3-nov): «I'd love to do a night dive» y luego «yes, the night dive package» dejaban la tarjeta de 2
-# inmersiones de día con su enlace: el plan del certificado solo se elegía por la cifra de inmersiones o de días, y el
-# nocturno no la lleva. El extractor dice si lo quiere; qué paquete es lo dice el catálogo (`dom.paquete_con_nocturna`).
-CAMPO_PLAN_NOCTURNO = _dato({"type": "boolean"}, "Quiere hacer una inmersión nocturna o elige el plan que la lleva.")
-REGLA_PLAN_NOCTURNO_ES = (
-    "\n- plan_nocturno: true si quiere hacer una inmersión nocturna o elige el plan o paquete que la lleva («me "
-    "encantaría hacer un buceo nocturno», «sí, el del nocturno»). null si solo pregunta qué es o si no lo quiere."
-)
-REGLA_PLAN_NOCTURNO_EN = (
-    "\n- plan_nocturno: true if they want to do a night dive or choose the plan or package that has it (\"I'd love to do "
-    "a night dive\", \"yes, the night dive one\"). null if they only ask what it is or do not want it."
-)
-
-
 def campos_paso6(history: list[dict] | None) -> dict:
     """Los campos nuevos del paso 6 que van en ESTA llamada: {campo: (esquema, regla_es, regla_en)}. La duración, las
     edades y las otras personas del grupo siempre (promocionados; sus flags se borraron en sim-5); el resto, según sus
@@ -299,7 +285,6 @@ def campos_paso6(history: list[dict] | None) -> dict:
                                       REGLA_ACTIVIDAD_PREGUNTADA_EN)
     campos["paquete_varios_dias"] = (CAMPO_PAQUETE_VARIOS_DIAS, REGLA_PAQUETE_VARIOS_DIAS_ES,
                                      REGLA_PAQUETE_VARIOS_DIAS_EN)
-    campos["plan_nocturno"] = (CAMPO_PLAN_NOCTURNO, REGLA_PLAN_NOCTURNO_ES, REGLA_PLAN_NOCTURNO_EN)
     return campos
 
 

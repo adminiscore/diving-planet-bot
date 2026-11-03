@@ -204,7 +204,6 @@ async def _aplicar_extractor(intent, state: ConversationState, message: str, pis
     _poner_nacionalidad(intent, state, message, datos)
     _poner_certificacion(intent, state, message, datos)
     _poner_duracion(intent, state, datos, message)
-    _poner_plan_nocturno(intent, state, datos, message)
     _poner_edades(intent, datos)
     _poner_otras_personas(state, datos)
     _poner_actividad_preguntada(state, datos)
@@ -263,25 +262,6 @@ def _poner_duracion(intent, state: ConversationState, datos: dict, message: str 
     if duracion != state.detected_duration and "duration" not in intent.overwrite:
         intent.overwrite.append("duration")
     logger.info(f"[EXTRACT][EX9B-6] duration={duracion!r} ({'días de buceo' if de_buceo else 'estancia'}; regex: {regex!r})")
-
-
-def _poner_plan_nocturno(intent, state: ConversationState, datos: dict, message: str) -> None:
-    """Sparring s03h (3-nov): pide el nocturno sin decir cuántas inmersiones («I'd love to do a night dive», «yes, the
-    night dive package») → el paquete con nocturna de un día, o el de sus días de buceo si los dice; qué paquete es lo
-    dice el catálogo. Si nombra la cifra, manda la cifra (`dive_counts_in`), como siempre."""
-    from src.agents.intent_detector import dive_counts_in  # lazy
-
-    if (datos or {}).get("plan_nocturno") is not True or dive_counts_in(message):
-        return
-    dias = (datos or {}).get("dias_de_buceo")
-    dias = dias if isinstance(dias, int) and dias > 0 else state.detected_cert_days
-    if not dias and "multi_day" in (intent.duration, state.detected_duration):
-        return  # varios días sin decir cuántos: no hay un solo paquete
-    dives = dom.paquete_con_nocturna(dias or 1)
-    if dives:
-        intent.cert_dives = dives
-        intent._plan_nocturno = True
-        logger.info(f"[EXTRACT][S03H] pide el nocturno: el paquete de {dives} inmersiones ({dias or 1} día(s))")
 
 
 def _poner_edades(intent, datos: dict) -> None:

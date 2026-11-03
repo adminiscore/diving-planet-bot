@@ -188,8 +188,7 @@ def _foto(state: ConversationState, datos: dict, origen: str | None, message: st
         foto._aloja_en_baru = any(_solo_baru(t) for t in dicho)
     if isinstance(datos.get("group_size"), int) and datos["group_size"] > (foto.detected_group_size or 0):
         foto.detected_group_size = datos["group_size"]  # CALN-3: «somos 5» en ESTE mensaje, para el descuento de grupo
-    if not foto.selected_service and (plan := _paquete_nombrado(message, None) or _paquete_nocturno(foto, datos)
-                                      or _paquete_nombrado(message, history)):
+    if not foto.selected_service and (plan := _paquete_nombrado(message, history)):
         # CALN-3 paso 3 «A» (p11, p12): «¿cuánto cuesta el paquete de 5 inmersiones?» no dejaba el plan en el estado y los
         # hechos daban la salida de 2; con el catálogo delante el escritor lo arreglaba, con la pieza ya no.
         foto.detected_service_id = plan
@@ -198,19 +197,6 @@ def _foto(state: ConversationState, datos: dict, origen: str | None, message: st
         # arq-5f: «dos bucean y dos hacen snorkel» en ESTE mensaje (la extracción aún no lo ha guardado): la misma lancha.
         foto.detected_group_allocation = {k: v for k, v in reparto.items() if isinstance(v, int) and v > 0}
     return foto
-
-
-def _paquete_nocturno(foto: ConversationState, datos: dict) -> str | None:
-    """Sparring s03h: pide el nocturno en ESTE mensaje sin cifra → el paquete con nocturna de un día (o de sus días),
-    del catálogo, como en la extracción (`nucleo/extractor._poner_plan_nocturno`)."""
-    if datos.get("plan_nocturno") is not True:
-        return None
-    dias = datos.get("dias_de_buceo")
-    dias = dias if isinstance(dias, int) and dias > 0 else foto.detected_cert_days
-    if not dias and foto.detected_duration == "multi_day":
-        return None
-    dives = dom.paquete_con_nocturna(dias or 1)
-    return dom.dive_packages()[dives][1] if dives else None
 
 
 def _paquete_nombrado(message: str, history: list[dict] | None) -> str | None:
