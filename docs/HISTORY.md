@@ -1,6 +1,28 @@
 History
 =======
 
+0.45.0 - (2026-11-03, SUBE A PRE: los bebés a bordo, CALN-11 (una búsqueda por pregunta) y CALN-8 (6) del regex)
+---------------------
+* **Qué sube** (sobre 0.44.0; `feature/caln-integra045-gadea`): **Gadea** (s03h): los bebés y los niños pequeños que aún no
+  tienen edad para ninguna actividad van en la lancha a cualquier edad y no pagan (decisión de Gadea, 3-nov;
+  `policies.babies_onboard`); el bot se inventaba si podían ir y si pagaban. **Álvaro** (CALN-11, 424cf8cf): con 2 o 3
+  preguntas en el mensaje, una búsqueda más por cada una, a la vez y sin llamadas de más al LLM (el dato de la pregunta de
+  detrás llega al escritor 4/7 → 7/7; el cava 0/2 → 2/2; las 51 de siempre iguales). **Gonzalo** (CALN-8 (6), 245e12e0):
+  marcas R20-R27 del regex fuera del detector, sin cambio de conducta; fuera `_MENTIONS_PERSON_RE`. Docs: hallazgos de
+  s03g, s03h y s03a (Álvaro) y el diseño de su tanda (CALN-13).
+* **Medida** (una pasada, a la misma hora, en serie, a solas; A = PRE 0.44.0, B con su base curada en `kb_v2_gadea`):
+  mini-ronda de los 43 visibles: **21 → 22 fallos, 17 → 18 diálogos con fallos** (8 mejoran, 10 empeoran, casi todos de
+  un fallo); dentro del ruido de una pasada (±3 diálogos) y ninguno de los que empeoran viene de lo que sube: los dos del
+  nocturno atribuido a otro plan (clase CALN-9b, también en la mini de la 0.44) son turnos de 0 y 1 preguntas, donde
+  CALN-11 no actúa. Llamadas por turno 3,60 → 3,61; p50 3,70 → 3,52 s, p90 5,72 → 5,71 s; respaldos 1 y 0. Suite 3186.
+* **Sparring:** 5.ª tanda (Gadea, s03h, contra PRE 0.44, hasta reservar) 2 graves: el nocturno (pide un buceo nocturno y
+  la tarjeta es la de 2 de día con su enlace) **aparcado hasta después de CALN** (como campo del extractor, 6 versiones
+  movían otras lecturas del ex0; `docs/robustness/caln/sonda-plan-nocturno-3nov.md`); el bebé: el texto, arreglado aquí;
+  la cuenta en el grupo, con el R8 de Gonzalo, es la pieza «lectura del grupo» de Álvaro, después de CALN-11. Tandas sin
+  graves seguidas: 0 de 2.
+* **OpenAI sin saldo** de ~17:30 a 19:24: sin juez, sin búsqueda por significado y sin respaldo por tiempo. La 5.ª tanda
+  (16:34-16:45) es anterior.
+
 0.44.0 - (2026-11-03, SUBE A PRE: el pase dentro de DIVE TO HEAL, CALN-12 con las respuestas de Gadea y los descuentos sin pegar)
 ---------------------
 * **Qué sube** (sobre 0.43.0; `feature/caln-integra044-gadea`): **Gadea** (s03a, la silla de ruedas de la tanda de Álvaro,
