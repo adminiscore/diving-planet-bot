@@ -764,3 +764,40 @@ paying» sin sujeto. La clase CALN-9b (lo que incluye según el origen, #2794) n
 «lunch included» y «no lunch» por origen.
 
 **Meta:** la tanda tiene graves, así que siguen 0 de 2 seguidas sin graves.
+
+## CALN-S03I-01..08 · 6.ª tanda de sparring contra PRE 0.45.0, hasta reservar (3-nov, `charla_pre`)
+
+Ocho clientes nuevos, cada uno hasta la tarjeta, el enlace o el asesor, con el criterio de gravedad de Álvaro (#2716):
+cuatro amigas de Medellín, snorkel, con cava para brindar y la hora de vuelta (6813); pareja de Manchester que prueba el
+buceo, almuerzo vegano y el trayecto (6814); familia de Bogotá, los padres Open Water y los hijos de 11 y 7 (6815);
+Open Water que quiere el Advanced, 4 días en Cartagena (6816); pareja francesa principiante, con mareo (6817); 12
+compañeros de una empresa alemana, 4 buzos y 8 sin experiencia, con factura (6818); Open Water de hace 5 años con su
+novia que nunca ha buceado (6819); hermanos de Cali, minicurso, efectivo el día (6820). Cierre: 3 con enlace
+(veganos, Advanced, francesa), 5 al asesor (cava, familia, empresa, novia, Cali).
+
+- **BIEN:** el almuerzo vegano (arroz con vegetales) y el trayecto de una hora en un mensaje de dos preguntas (CALN-11);
+  minicurso para el de 11 y snorkel para el de 7 (Bubble Makers es de 8 a 10); el Advanced con la noche en las islas, su
+  enlace y su precio; a la francesa, en inglés, el desayuno ligero y las pastillas del mareo (antes no lo encontraba); el
+  efectivo solo para el 50 % del día; «no puedo confirmar el total» a la novia; el refresher «es el minicurso, en su
+  propio día»; la empresa, ya con el asesor, recibe los precios y el de grupo (20 %, pedirlo antes de pagar). La francesa
+  reserva para mañana: en Colombia son las 14:20 y la web cierra a las 4:30 p. m., así que está bien.
+
+**Graves: ninguno.** Primera tanda sin graves: la meta va **1 de 2**.
+
+**Medios:**
+- **El cava, sin contestar dos veces** (amigas t1 y t2, «no tengo ese dato confirmado»), aunque `no_alcohol_policy` lo
+  dice. Los dos turnos cierran con la tarjeta del snorkel: contesta el escritor con los hechos, sin búsqueda, y CALN-11 no
+  llega (la ruta que Álvaro vio con la vegetariana, #2827). Zona: hechos y escritor (Gadea).
+- **«Para quien aún no ha elegido: ¿un día o varios?»** cuando ya habían elegido todos (Cali t2: los dos el minicurso;
+  novia t2). La lectura del grupo (Álvaro, la pieza del bebé y el R8).
+- **«You'll need to complete the online theory»** para el minicurso (francesa t2): la teoría es del Open Water. Hecho
+  inventado del escritor.
+- **El refresher y la salida de 2 inmersiones el mismo domingo** (novia t3: «un solo día, yo el refresh y la salida»): el
+  carrito lleva los dos y el texto dice «en su propio día», pero no le avisa de que en un día no caben. Lo coordina un
+  asesor (pago en pesos), así que nadie reserva mal; al límite de grave.
+- **La empresa pasa al asesor en t1** por la factura, antes de dar precios o el de grupo (los da en t2).
+- **«El equipo debe confirmar la disponibilidad de la fecha»** (familia t2), contra `availability_always`.
+
+**Menores:** la pregunta del asesor dos veces en los cierres en pesos (cava t1, familia t3, novia t3); «And how many
+people should I plan for?» al que dijo «I» (Advanced t1); los buceos certificados en la lista de precios de la francesa
+principiante; el refresh explicado dos veces (novia t1).
