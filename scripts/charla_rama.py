@@ -32,11 +32,12 @@ _TRAZA = []
 class _Traza(logging.Handler):
     def emit(self, rec):
         m = rec.getMessage()
-        if any(t in m for t in ("[EXTRACT]", "[LLM_EXTRACTOR]", "[CORE]", "[INTENT]", "[HECHOS]", "[RAG][LAT5]")):
+        if any(t in m for t in ("[EXTRACT]", "[LLM_EXTRACTOR]", "[CORE]", "[INTENT]", "[HECHOS]", "[RAG][LAT5]", "[ESPIA]")):
             _TRAZA.append(m[:400])
 logging.getLogger().addHandler(_Traza())
 logging.getLogger().setLevel(logging.INFO)
-CAMPOS = ("core_pending_slot", "detected_activity", "is_certified", "location", "detected_group_size",
+ESPIA_CODIGO
+CAMPOS =("core_pending_slot", "detected_activity", "is_certified", "location", "detected_group_size",
           "detected_group_allocation", "pending_undecided_qty", "needs_companion_activity", "pending_companion_activity",
           "detected_ages", "is_colombian", "last_dive_over_2_years", "detected_duration")
 
@@ -52,6 +53,26 @@ async def main():
                       "traza": _TRAZA, "guardado": serialize_state(st)}, ensure_ascii=False, default=str), flush=True)
 
 asyncio.run(main())
+'''
+
+# CALN-16 (3-nov): con `--espia`, cada búsqueda del RAG (la consulta y las claves de su top-8) y las fichas que llegan al
+# escritor van también a la traza, con [ESPIA]: en la conversación entera se ve lo que `rag_piezas` ve en una pregunta
+# suelta (el cava: la marca del origen pegada a la búsqueda por pregunta).
+_ESPIA = r'''
+from src.agents import rag_agent as _ra
+_lg_e = logging.getLogger("espia")
+_buscar = _ra.search_knowledge_base
+async def _espia_buscar(query, lang="es", top_k=None, **kw):
+    docs = await _buscar(query, lang=lang, top_k=top_k, **kw)
+    _lg_e.warning("[ESPIA] busca %r -> %s", str(query)[:160], [(d.get("metadata") or {}).get("key") for d in docs][:8])
+    return docs
+_ra.search_knowledge_base = _espia_buscar
+_fichas = _ra.fichas_del_origen
+def _espia_fichas(docs, origin, lang):
+    out = _fichas(docs, origin, lang)
+    _lg_e.warning("[ESPIA] al escritor %s", [(d.get("metadata") or {}).get("key") for d in out])
+    return out
+_ra.fichas_del_origen = _espia_fichas
 '''
 
 
@@ -79,12 +100,13 @@ def _nueva(nombre: str) -> None:
     print(f"charla {nombre} -> {f} (rama {_git('rev-parse', '--abbrev-ref', 'HEAD')}, {_git('rev-parse', '--short', 'HEAD')})")
 
 
-def _di(nombre: str, mensaje: str, entorno: dict[str, str] | None = None) -> None:
+def _di(nombre: str, mensaje: str, entorno: dict[str, str] | None = None, espia: bool = False) -> None:
     from scripts.pre_access import docker_python, pre_ssh, subir_codigo_local
 
     filas = _filas(nombre)
     estado = filas[-1]["guardado"] if filas else None
-    script = (f"CONV = {('charla-rama-' + nombre)!r}\nMENSAJE = {mensaje!r}\nESTADO = {estado!r}\n{_REMOTO}")
+    remoto = _REMOTO.replace("ESPIA_CODIGO\n", _ESPIA if espia else "")
+    script = (f"CONV = {('charla-rama-' + nombre)!r}\nMENSAJE = {mensaje!r}\nESTADO = {estado!r}\n{remoto}")
     r = pre_ssh(docker_python(entorno or {}, codigo_local=subir_codigo_local()), input_text=script, timeout=300)
     salida = next((json.loads(ln) for ln in (r.stdout or "").splitlines() if ln.startswith("{")), None)
     if salida is None:
@@ -113,11 +135,13 @@ def main() -> None:
             p.add_argument("--env", action="append", default=[], metavar="CLAVE=VALOR",
                            help="variable de entorno SOLO en este turno (p. ej. RAG_KB_ESQUEMA=kb_v2_gadea: la base curada"
                                 " de la rama, cargada con `scripts.kb_v2 --esquema`)")
+            p.add_argument("--espia", action="store_true",
+                           help="las búsquedas del RAG y las fichas que llegan al escritor, en la traza ([ESPIA])")
     args = ap.parse_args()
     if args.accion == "nueva":
         _nueva(args.nombre)
     elif args.accion == "di":
-        _di(args.nombre, args.mensaje, dict(e.split("=", 1) for e in args.env))
+        _di(args.nombre, args.mensaje, dict(e.split("=", 1) for e in args.env), args.espia)
     else:
         _ver(args.nombre)
 
