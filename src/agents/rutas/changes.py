@@ -135,12 +135,15 @@ def _detect_modify_booking_request(msg_lower: str) -> bool:
     return any(phrase in normalized for phrase in MODIFY_BOOKING_PHRASES)
 
 
-def _jev_changes_date(signals: dict) -> bool:
-    """s4-6 (paso 6, 27-sep): Jev dice que el cliente quiere cambiar el DIA. Vale tambien
-    con el carrito en construccion (decision del owner: sin reserva pagada, un cambio de fecha va a un
-    asesor), a diferencia de `booking_change_topic`, que ahi confunde "hazlo para 3 dias" con
-    reprogramar. Banco `scripts/sonda_cambia_fecha.py`: 7/8 cambios, 0/12 falsas."""
-    return signals.get("changes_date") is True
+def _jev_changes_date(signals: dict, state: ConversationState | None = None) -> bool:
+    """s4-6 (paso 6, 27-sep): Jev dice que el cliente quiere cambiar el DIA, a diferencia de `booking_change_topic`, que
+    con el carrito abierto confunde "hazlo para 3 dias" con reprogramar. Banco `scripts/sonda_cambia_fecha.py`: 7/8
+    cambios, 0/12 falsas. 3-nov (decisión de Gadea, sparring s03g): al asesor SOLO con una reserva ya hecha; sin
+    reserva no hace falta («¿se puede el 25?» → cerrado → «entonces el 26» pasaba al asesor con los términos de los
+    cambios de fecha) y se sigue con el día nuevo. Antes (s4-6) también con la reserva en construcción."""
+    if signals.get("changes_date") is not True:
+        return False
+    return state is None or bool(getattr(state, "ya_reservado", False) or signals.get("ya_reservado") is True)
 
 
 def _in_active_cart_building(state: ConversationState) -> bool:

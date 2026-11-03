@@ -78,7 +78,7 @@ async def changes_node(state: BotState) -> dict:
     if (regex_decide(signals) and _detect_reschedule_request(msg_lower)) or (
         signals.get("booking_change_topic") == "reschedule"
         and not _in_active_cart_building(conv)
-    ) or _jev_changes_date(signals):
+    ) or _jev_changes_date(signals, conv):
         logger.info("[NODE:changes] reprogramación -> política + botones asesor/menú")
         return {"reply": _booking_change_response(conv, message, "reschedule")}
 
