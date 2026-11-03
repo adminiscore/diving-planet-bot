@@ -801,3 +801,41 @@ novia que nunca ha buceado (6819); hermanos de Cali, minicurso, efectivo el día
 **Menores:** la pregunta del asesor dos veces en los cierres en pesos (cava t1, familia t3, novia t3); «And how many
 people should I plan for?» al que dijo «I» (Advanced t1); los buceos certificados en la lista de precios de la francesa
 principiante; el refresh explicado dos veces (novia t1).
+
+## CALN-S04A-01..08 · 8.ª tanda de sparring contra PRE 0.46.0, hasta reservar (4-nov, `charla_pre`)
+
+Ocho clientes nuevos, educados y que escriben bien (decisión de Gadea: los difíciles, en la fase DIF), cada uno hasta la
+tarjeta, el enlace o el asesor, con el criterio de gravedad de Álvaro (#2716): luna de miel de Lima, ella no nada bien
+(6834); padre de Monterrey con sus hijos de 12 y 15, los tres al Open Water (6835); cumpleaños de 7 amigas de
+Barranquilla, 3 con licencia y 3 sin experiencia (6836); Advanced de Vancouver en Isla Grande, Nitrox y fun dives
+(6837); pareja de un crucero, a bordo antes de las 6 p.m. (6838); fotógrafo submarino de Denver (6839); 58 años con
+prótesis de rodilla, primer buceo (6840); snorkel ya pagado y pronóstico de lluvia (6841). Cierre: 5 con enlace
+(luna de miel, padre e hijos, Nitrox, crucero, fotógrafo), 3 al asesor (cumpleaños, rodilla, el cambio de fecha).
+
+- **BIEN:** el Open Water desde 10 años, con la noche en las islas y el enlace para 3 en USD; el cumpleaños con buceo
+  para las certificadas y minicurso para las demás, el 20 % de grupo pidiéndolo antes y el pago en pesos con un asesor;
+  el crucero, «la vuelta a las 4:15 encaja con las 6 p.m.»; la rodilla, al formulario médico y al equipo; la lluvia,
+  reprogramar o reembolsar con los términos; el cambio de fecha CON reserva, al asesor; el Nitrox desde las islas con su
+  enlace; el almuerzo y lo vegetariano de quien sale de Cartagena (comprobado antes de la tanda, con la 0.46).
+
+**Graves: ninguno.** La meta vuelve a **1 de 2** (la 7.ª, de Álvaro, tuvo 2 graves que ya estaban en la 0.44).
+
+**Medios:**
+- **Luna de miel, al límite:** «¿Con cuál te animas: buceo, minicurso, snorkel o un curso PADI?» en t2 y t3, el mismo
+  texto, y en t4 «para quien aún no ha elegido: ¿un día o varios?», aunque dijeron «el minicurso para los dos» y en t3 ya
+  tenían el enlace. La lectura del grupo (CALN-17). Además: «no sabe nadar bien → no puedo confirmar si es adecuado» (la
+  FAQ dice que no hace falta ser buen nadador) y «el viernes 13, ¿de qué mes?» (es el 13 de noviembre).
+- **Nitrox t1:** «I don't have that specific detail handy» a una pregunta del catálogo (la especialidad y fun dives desde
+  Isla Grande); se recupera en t2.
+- **Nitrox t3:** «no hay enlace para las 2 inmersiones desde las islas» (sí lo hay: fun-dives-already-on-island/19); al
+  insistir el cliente, lo da. Puede venir de la lista de planes sin enlace de la 0.46 (s03j): ahí está la de 1 inmersión
+  desde las islas, con un nombre casi igual. Vigilarlo.
+- **Cumpleaños t2:** «¿Son buzos certificados?» cuando dijo «3 con licencia y 3 que nunca han buceado» (lectura del
+  grupo).
+
+**Menores:** el crucero con el precio y el enlace dos veces (texto y tarjeta); el fotógrafo con toda la lista de
+requisitos pegada; «And how many people should I plan for?» al que dijo «I» (Nitrox); «Quieres que te pasemos con un
+asesor» en el cumpleaños.
+
+**Pregunta de negocio para Gadea:** ¿se puede traer una cámara propia a las inmersiones? ¿Se alquilan cámaras? El bot
+dijo «puedes traer tu cámara», y la base no dice nada.
