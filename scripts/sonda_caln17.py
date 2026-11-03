@@ -4,9 +4,11 @@ dos intercalados en el mismo proceso. (1) las frases de grupo (los primeros turn
 (2) el banco ex0 de diseño ×3 por variante; (3) los que cambian ×10; (4) los 4 que se movieron con el nocturno, ×20
 siempre (sonda-plan-nocturno-3nov.md).
     ENV_FILE=.env.dev python scripts/sonda_caln17.py <escalon> [N_frases=10] [N_ex0=3] [N_cambian=10] [N_fijos=20]
+    DETALLE=id1,id2 ENV_FILE=.env.dev python scripts/sonda_caln17.py <escalon> [N=10]   # qué campo se mueve
 """
 import asyncio
 import json
+import os
 import sys
 from collections import Counter
 
@@ -121,7 +123,25 @@ def bien(d: dict, total, reparto) -> bool:
     return ok
 
 
+async def detalle(ids: list[str], n: int) -> int:
+    """Solo estos casos del ex0 ×n, con qué campo sale acertado, perdido, equivocado o inventado en A y en B."""
+    casos = [c for c in casos_ex0("diseño") if c["id"] in ids]
+    lecturas = await pasadas(casos, n)
+    for c in casos:
+        print(f"== {c['id']}  ({c['message'][:90]!r})")
+        for v in "AB":
+            por_campo = Counter()
+            for d in lecturas[(c["id"], v)]:
+                for tipo, campos in puntuar_ex0(d, c["expected"], c.get("sabido")).items():
+                    por_campo.update(f"{tipo}:{campo}" for campo in campos)
+            print(f"   {v} {dict(sorted(por_campo.items()))}")
+    et.SISTEMA_ES, et.SISTEMA_EN = SIS_ES, SIS_EN
+    return 0
+
+
 async def main() -> int:
+    if os.environ.get("DETALLE"):
+        return await detalle(os.environ["DETALLE"].split(","), N_FRASES)
     frases = [{"id": i, "message": m, "lang": lang, "sabido": s, "total": t, "reparto": r}
               for i, m, lang, s, t, r in FRASES]
     lf = await pasadas(frases, N_FRASES)
