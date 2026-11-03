@@ -696,9 +696,14 @@ async def rag_answer(
     hechos_bloques: tuple[list[dict], list[str]] | None = None,
     pregunta_final: str | None = None,
     sin_busqueda: bool = False,
+    sin_fichas: bool = False,
 ) -> str:
     """`hechos` (arq-1g, flag `hechos_al_rag`): en un mensaje mezclado, los hechos del código (JSON de
     `src/flows/hechos.py`) para la parte que pregunta de la tabla (precio, qué incluye, requisitos…): se usan tal cual.
+
+    `sin_fichas` (CALN-16, 3-nov): de la búsqueda, solo las políticas y las FAQ, no las fichas de los planes. Lo pide el
+    escritor con los hechos: el plan ya se lo dan los hechos del código, y con las fichas de otros planes mezclaba lo que
+    incluye cada uno (mini de la 0.46: «debes pasar la noche» en la salida de 2 inmersiones, «ambos incluyen nocturno»).
 
     `pregunta_final` (lat-9 paso 2): la pregunta de la reserva que decidió el código; el escritor cierra con ella.
     `sin_busqueda` (lat-9 paso 2): el escritor solo, sin reescritura ni búsqueda, con el catálogo, las políticas y el
@@ -1063,6 +1068,10 @@ async def rag_answer(
 
     # 3) Hay documentos suficientemente relevantes -> respondemos (RAG R1: sin el «padre» de la base v1, muerto en kb_v2)
     docs = fichas_del_origen(docs, {"cartagena": "cartagena", "island": "islas"}.get(origin or ""), lang)  # CALN-9a
+    if sin_fichas:
+        docs = [d for d in docs if not str((d.get("metadata") or {}).get("key") or "").startswith("ficha:")]
+        if not docs:
+            return await _answer_with_llm(extra_context or "", context_sources=["extra_context_only"])
     context_parts = []
     sources = []
     for i, doc in enumerate(docs, 1):
