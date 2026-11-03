@@ -271,14 +271,23 @@ def cargar_casos(filtro: str | None) -> list[dict]:
     return casos
 
 
+def _de_una_pregunta(query: str, original: str) -> bool:
+    """CALN-11: ¿es la búsqueda de una sola de las preguntas del mensaje (un trozo de la pregunta tal cual, con la marca
+    del origen detrás)? Va aparte y detrás; contarla como principal bajaba el top-8 (caln11-cerveza-en 1 → None)."""
+    sin_marca = "\n".join(ln for ln in query.splitlines() if not ln.strip().startswith(("[origen_cliente]", "[origin]")))
+    trozo = norm(sin_marca).strip()
+    return bool(trozo) and trozo != original.strip() and trozo in original
+
+
 def puntuar(caso: dict, fila: dict) -> dict:
     """Por dato: dónde está (top-8 bruto, contexto visto) y qué hizo la respuesta."""
     busquedas = fila.get("busquedas") or []
     # 1-oct (`rag_busqueda_doble`): con dos búsquedas a la vez, la última registrada puede ser la de la pregunta
     # original (la secundaria). El top-8 se mide en la principal: la que no es la pregunta tal cual.
     original = norm(caso.get("pregunta") or "")
-    principales = [b for b in busquedas if not norm(b.get("query") or "").startswith(original)] if original else []
-    principal = (principales or busquedas)[-1] if busquedas else {}
+    enteras = [b for b in busquedas if not _de_una_pregunta(b.get("query") or "", original)] if original else busquedas
+    principales = [b for b in enteras if not norm(b.get("query") or "").startswith(original)] if original else []
+    principal = (principales or enteras or busquedas)[-1] if busquedas else {}
     top8 = principal.get("docs") or []
     techo = principal.get("techo")  # RAG R0 (--techo): el puesto de cada dato entre los 48 candidatos
     llamadas = fila.get("llamadas") or []
