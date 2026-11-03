@@ -1,0 +1,28 @@
+{
+  "about": "CALN-11 (3-nov, Gadea #2783): mensajes con varias preguntas; el dato que se pierde es el de la pregunta de detrás. Frases propias (no del banco). Se mide con `rag_piezas --solo-busqueda --preguntas docs/robustness/rag-piezas/preguntas-caln11.json`, A = PRE / B = la rama (--codigo-local), cuando haya saldo de OpenAI (la búsqueda por significado usa sus incrustaciones).",
+  "version": 1,
+  "creado": "2026-11-03",
+  "casos": [
+    {"id": "caln11-cava-es", "origen": "caln11:propia", "lang": "es",
+     "pregunta": "Somos 7 amigas de Madrid y queremos hacer el minicurso. ¿Cuánto es por persona? ¿Se puede llevar cava a bordo?",
+     "necesita": [{"id": "alcohol", "hecho": "No se permite llevar ni tomar alcohol en la lancha.", "anclas": ["No se permite llevar ni tomar alcohol en la lancha"]}]},
+    {"id": "caln11-cerveza-en", "origen": "caln11:propia", "lang": "en",
+     "pregunta": "We are 4 friends doing the snorkel tour. What time do we leave? Can we bring some beers on the boat?",
+     "necesita": [{"id": "alcohol", "hecho": "Bringing or drinking alcohol on the boat is not allowed.", "anclas": ["Bringing or drinking alcohol on the boat"]}]},
+    {"id": "caln11-25-es", "origen": "caln11:propia", "lang": "es",
+     "pregunta": "Somos 2 buzos certificados. ¿Cuánto cuesta la salida de dos inmersiones? ¿Se puede ir el 25 de diciembre?",
+     "necesita": [{"id": "cierre", "hecho": "Solo se cierra el 25 de diciembre y el 1 de enero.", "anclas": ["25 de diciembre"]}]},
+    {"id": "caln11-25-en", "origen": "caln11:propia", "lang": "en",
+     "pregunta": "How much is the two-tank dive? Do you go out on December 25?",
+     "necesita": [{"id": "cierre", "hecho": "Closed only on December 25 and January 1.", "anclas": ["December 25"]}]},
+    {"id": "caln11-factura-es", "origen": "caln11:propia", "lang": "es",
+     "pregunta": "Venimos 10 compañeros de una empresa. ¿Hay precio de grupo? ¿Nos pueden dar factura?",
+     "necesita": [{"id": "factura", "hecho": "Sí se emite factura, también a empresas.", "anclas": ["Sí se emite factura"]}]},
+    {"id": "caln11-factura-en", "origen": "caln11:propia", "lang": "en",
+     "pregunta": "What is included in the minicourse? Can I get an invoice for my company?",
+     "necesita": [{"id": "factura", "hecho": "We do issue invoices, also to companies.", "anclas": ["We do issue invoices"]}]},
+    {"id": "caln11-control-cava-es", "origen": "caln11:propia", "lang": "es",
+     "pregunta": "¿Se puede llevar cava a bordo?",
+     "necesita": [{"id": "alcohol", "hecho": "No se permite llevar ni tomar alcohol en la lancha.", "anclas": ["No se permite llevar ni tomar alcohol en la lancha"]}]}
+  ]
+}
