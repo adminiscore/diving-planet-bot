@@ -58,3 +58,26 @@ def test_compactar_y_expandir_ida_y_vuelta():
     c = compactar(json.loads(json.dumps(run)))
     assert c["sistemas"] == ["S1", "S2"] and c["filas"][0]["llamadas"][1]["sistema"] == "@0"
     assert expandir(c)["filas"] == run["filas"]
+
+
+def test_mrr_techo_y_sin_respuesta():
+    """RAG R0 (3-nov): el puesto medio (MRR), el techo de los 48 candidatos (lo que un re-ranker podría subir) y las
+    preguntas que la base no responde (¿la puerta deja pasar documentos igualmente?)."""
+    from scripts.rag_piezas import resumen
+
+    con_techo = _fila(busquedas=[{"docs": [{"content": "otra cosa"}, {"content": "Precio: $1,429,000 COP"}],
+                                  "techo": {"precio": 2, "hotel": 30}}])
+    d = {x["id"]: x for x in puntuar(CASO, con_techo)["datos"]}
+    assert d["precio"]["rango_48"] == 2 and d["hotel"]["rango_48"] == 30
+    assert d["total"]["rango_48"] is None  # un cálculo no se busca
+    sin_techo = {x["id"]: x for x in puntuar(CASO, _fila())["datos"]}
+    assert sin_techo["precio"]["rango_48"] is None  # sin --techo: no se midió
+    vacia = {"id": "nada", "sin_respuesta": True, "necesita": []}
+    filas = [{"id": "c", "s": 1, **con_techo}, {"id": "nada", "s": 1, **_fila(busquedas=[{"docs": [
+        {"content": "x", "vector": 0.43}]}])}]
+    filas[0]["puntos"] = puntuar(CASO, filas[0])
+    filas[1]["puntos"] = puntuar(vacia, filas[1])
+    r = resumen(filas, solo_busqueda=True)
+    assert r["mrr"] == 0.5 / 2  # precio en el puesto 2; hotel no está en el top-8
+    assert r["techo_48"] == 1.0 and r["rescatables"] == 1  # el hotel está en el 30: un re-ranker podría subirlo
+    assert r["sin_respuesta"] == 1 and r["sin_respuesta_confiadas"] == 1 and r["sin_respuesta_vector_max"] == [0.43]

@@ -342,6 +342,8 @@ def turn_metrics_line(conversation_id: str, facts: dict, started_at: str, second
         # CALN-8 (lo delgado): qué fue del lector del grupo, si cambió algo, lo que dijo Jev de otra persona y si ya se
         # sabía que era un grupo (`nucleo.extractor._apunta_lector`).
         payload["lector"] = {k: facts.get(k) for k in ("lector", "lector_cambia", "jev_otros", "grupo_sabido")}
+    if facts.get("rag_docs"):
+        payload["rag_docs"] = facts["rag_docs"]  # RAG R0: lo que trajo cada búsqueda (apunta_busqueda)
     if facts.get("rag_respaldo"):
         # 8-oct: respuesta del RAG con respaldo. "principal" (contestó antes de la espera), "gana_principal" /
         # "gana_respaldo" (saltó el respaldo y ganó ese), "error_principal" (falló el principal y contestó el respaldo).
@@ -364,6 +366,19 @@ def marca_regex(rama: str) -> None:
     current = _TURN_FACTS.get()
     if current is not None:
         current.setdefault("regex", []).append(rama)
+
+
+def apunta_busqueda(docs: list[dict]) -> None:
+    """RAG R0 (3-nov): lo que trajo una búsqueda de la base, para medirla en las rondas (antes solo constaba
+    `embeddings`): cada documento como [clave, nota final, ramas] («v» vector, «p» palabras). Sale en [TURN_METRICS]
+    como `rag_docs`, una lista por búsqueda. No cambia nada."""
+    current = _TURN_FACTS.get()
+    if current is None:
+        return
+    current.setdefault("rag_docs", []).append([
+        [(d.get("metadata") or {}).get("key"), round(float(d.get("score_final", d.get("score", 0.0)) or 0.0), 3),
+         "".join(sorted({"vector": "v", "bm25": "p"}.get(r, r[:1]) for r in d.get("retrieval_branches") or []))]
+        for d in docs])
 
 
 def hechos_del_turno() -> dict:

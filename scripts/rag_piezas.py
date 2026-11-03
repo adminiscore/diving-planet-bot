@@ -48,14 +48,14 @@ GOLDEN = ROOT / "docs/robustness/golden-set/golden-dialogues.json"
 VERIFICADOR_MODELO = "deepseek/deepseek-v4.1-flash"
 
 _REMOTO = r'''
-import asyncio, inspect, json, logging, time, types
+import asyncio, inspect, json, logging, re, time, types, unicodedata
 from openai import AsyncOpenAI
 from src.config import settings
 from src.observability import _TURN_FACTS
 from src.agents import rag_agent, supervisor
 from src.agents.rag_agent import FALLBACK_ES, FALLBACK_EN
 from src.flows.state import ConversationState
-CASOS, SOLO_BUSQUEDA, REPS = json.loads(CASOS_JSON), SOLO_BUSQUEDA_FLAG, N_REPS
+CASOS, SOLO_BUSQUEDA, REPS, TECHO = json.loads(CASOS_JSON), SOLO_BUSQUEDA_FLAG, N_REPS, TECHO_FLAG
 VERIFICADOR = VERIFICADOR_PROMPT
 
 T = {}  # lo que espiamos en el caso en curso
@@ -84,10 +84,14 @@ async def _spy_search(query, lang="es", top_k=None, **kw):
     # **kw: parametros nuevos de la busqueda (p. ej. `origin`, rag-3) pasan tal cual; sin esto la tanda da TypeError
     t0 = time.perf_counter()
     docs = await _search(query, lang=lang, top_k=top_k, **kw)
-    T.setdefault("busquedas", []).append({"query": query, "s": round(time.perf_counter() - t0, 3), "docs": [
+    busqueda = {"query": query, "s": round(time.perf_counter() - t0, 3), "docs": [
         {"key": (d.get("metadata") or {}).get("key"), "source": (d.get("metadata") or {}).get("source"),
          "vector": round(float(d.get("score_vector", 0) or 0), 3), "confiado": rag_agent._is_confident(d),
-         "content": d.get("content") or ""} for d in docs]})
+         "content": d.get("content") or ""} for d in docs]}
+    if TECHO:
+        # RAG R0: los 48 primeros candidatos de la misma búsqueda (lo que un re-ranker podría subir al top-8)
+        busqueda["_candidatos"] = [d.get("content") or "" for d in await _search(query, lang=lang, top_k=48, **kw)]
+    T.setdefault("busquedas", []).append(busqueda)
     return docs
 rag_agent.search_knowledge_base = _spy_search
 
@@ -147,6 +151,21 @@ async def verificar(c, respuesta):
     except Exception:  # noqa: BLE001
         return {}
 
+def _norm(texto):  # = norm() de fuera
+    t = unicodedata.normalize("NFKD", (texto or "").lower())
+    t = "".join(ch for ch in t if not unicodedata.combining(ch))
+    t = re.sub(r"(?<=\d)[.,](?=\d{3}\b)", "", t)
+    return re.sub(r"\s+", " ", t)
+
+def _techo(c):
+    """RAG R0: por búsqueda, el puesto de cada dato entre los 48 candidatos (None si no está); sin guardar sus textos."""
+    for b in T.get("busquedas") or []:
+        cands = [_norm(x) for x in b.pop("_candidatos", None) or []]
+        if cands:
+            b["techo"] = {h["id"]: next((i + 1 for i, t in enumerate(cands)
+                                         if any(all(_norm(p) in t for p in a.split(" + ")) for a in h["anclas"])), None)
+                          for h in c["necesita"] if not h.get("calculo")}
+
 async def una(c, rep):
     T.clear()
     st = ConversationState(conversation_id="rag-piezas", language=c["lang"])
@@ -163,6 +182,7 @@ async def una(c, rep):
     except Exception as exc:  # noqa: BLE001
         ans = f"ERROR {type(exc).__name__}: {exc}"
     s = round(time.perf_counter() - t0, 2)
+    _techo(c)
     n_llm = len((_TURN_FACTS.get() or {}).get("_llm", []))
     _TURN_FACTS.reset(tok)
     fila = {"id": c["id"], "rep": rep, "s": s, "n_llm": n_llm, "respuesta": ans,
@@ -256,7 +276,9 @@ def puntuar(caso: dict, fila: dict) -> dict:
     # original (la secundaria). El top-8 se mide en la principal: la que no es la pregunta tal cual.
     original = norm(caso.get("pregunta") or "")
     principales = [b for b in busquedas if not norm(b.get("query") or "").startswith(original)] if original else []
-    top8 = (principales or busquedas)[-1]["docs"] if busquedas else []
+    principal = (principales or busquedas)[-1] if busquedas else {}
+    top8 = principal.get("docs") or []
+    techo = principal.get("techo")  # RAG R0 (--techo): el puesto de cada dato entre los 48 candidatos
     llamadas = fila.get("llamadas") or []
     visto = (llamadas[0]["sistema"] + "\n" + llamadas[0]["usuario"]) if llamadas else ""
     visto_n = norm(visto)
@@ -291,13 +313,17 @@ def puntuar(caso: dict, fila: dict) -> dict:
         else:
             causa = "redaccion"
         datos.append({"id": h["id"], "calculo": bool(h.get("calculo")), "opcional": bool(h.get("opcional")),
+                      # RAG R0: 0 = no está en los 48 candidatos; None = no se midió (sin --techo)
                       "rango_top8": rango,
+                      "rango_48": None if techo is None or h.get("calculo") else (techo.get(h["id"]) or 0),
                       "en_fragmentos": None if h.get("calculo") else presente(h, frag_n),
                       "en_contexto": en_contexto, "respuesta": v, "causa": causa,
                       "de_busqueda": (not h.get("calculo")) and not presente(h, sin_buscar_n)})
     prohibidas = (fila.get("verificacion") or {}).get("prohibidas") or {}
     return {"datos": datos, "prohibidas_afirmadas": sum(1 for v in prohibidas.values() if v is True),
             "contexto_chars": len(visto), "confiado": fila.get("fragmentos") is not None, "cruzadas_top8": cruzadas,
+            "sin_respuesta": bool(caso.get("sin_respuesta")),
+            "vector_max": max((d.get("vector") or 0 for d in top8), default=0),
             "regeneraciones": max(0, sum(1 for x in llamadas if "respuesta" in x) - 1)}
 
 
@@ -339,7 +365,21 @@ def resumen(filas: list[dict], solo_busqueda: bool) -> dict:
         "sin_confianza": sum(1 for f in filas if not f["puntos"]["confiado"]) / (len(filas) or 1),
         "atajos": sum(1 for f in filas if f.get("atajo")),
         "contexto_chars_media": statistics.mean(f["puntos"]["contexto_chars"] for f in filas) if filas else 0,
+        # RAG R0 (3-nov): el puesto medio del primer documento con el dato (1/puesto; 0 si no está en el top-8)
+        "mrr": sum(1 / d["rango_top8"] for d in busc if d["rango_top8"]) / n,
     }
+    con_techo = [d for d in busc if d.get("rango_48") is not None]
+    if con_techo:
+        # RAG R0 (--techo): entre los 48 candidatos; los «rescatables» están ahí y no en el top-8 (lo que un re-ranker
+        # podría subir).
+        r["techo_48"] = sum(1 for d in con_techo if d.get("rango_48")) / len(con_techo)
+        r["rescatables"] = sum(1 for d in con_techo if d.get("rango_48") and not d["rango_top8"])
+    sin = [f for f in filas if f["puntos"].get("sin_respuesta")]
+    if sin:
+        # RAG R0: preguntas que la base no responde. «confiadas» = la puerta de 0,40 dejó pasar documentos igualmente.
+        r["sin_respuesta"] = len(sin)
+        r["sin_respuesta_confiadas"] = sum(1 for f in sin if f["puntos"]["confiado"])
+        r["sin_respuesta_vector_max"] = sorted(f["puntos"].get("vector_max", 0) for f in sin)
     if not solo_busqueda:
         causas = {}
         for d in datos:
@@ -371,6 +411,13 @@ def imprimir(r: dict, etiqueta: str = "") -> None:
               f"({r['datos_de_busqueda']} datos) · fichas del otro origen en el top-8: {r['fichas_otro_origen_top8']}")
     print(f"            sin confianza (solo estado+catálogo) {pc(r['sin_confianza'])} · atajos {r['atajos']} · "
           f"contexto medio {r['contexto_chars_media'] / 1000:.1f}k caracteres")
+    if "mrr" in r:
+        techo = (f" · techo (en los 48 candidatos) {pc(r['techo_48'])}, rescatables por un re-ranker {r['rescatables']}"
+                 if "techo_48" in r else "")
+        print(f"            MRR {r['mrr']:.2f}{techo}")
+    if r.get("sin_respuesta"):
+        print(f"            sin respuesta en la base: {r['sin_respuesta']}, la puerta dejó pasar documentos en "
+              f"{r['sin_respuesta_confiadas']} (vector máx. {r['sin_respuesta_vector_max']})")
     if "cobertura" in r:
         c = r["causas"]
         print(f"  RESPUESTA cobertura {pc(r['cobertura'])} · faltan por: búsqueda {c.get('busqueda', 0)} · redacción "
@@ -407,6 +454,8 @@ def main() -> None:
     ap.add_argument("--casos", help="ids separados por coma (por defecto, todos)")
     ap.add_argument("--reps", type=int, default=1)
     ap.add_argument("--solo-busqueda", action="store_true", help="no redacta ni juzga: solo qué trae la búsqueda")
+    ap.add_argument("--techo", action="store_true", help="RAG R0: además, el puesto de cada dato entre los 48 "
+                    "candidatos de cada búsqueda (una búsqueda más por búsqueda; sin guardar sus textos)")
     ap.add_argument("--comparar", nargs=2, metavar=("A", "B"))
     ap.add_argument("--repuntuar", metavar="FICHERO", help="recalcula las causas de una medición guardada con las anclas "
                     "actuales de preguntas.json (sin volver a PRE; la verificación de la respuesta no cambia)")
@@ -450,6 +499,7 @@ def main() -> None:
     from scripts.pre_access import docker_python, pre_ssh, subir_codigo_local
 
     script = (f"CASOS_JSON = {json.dumps(casos, ensure_ascii=False)!r}\nSOLO_BUSQUEDA_FLAG = {args.solo_busqueda!r}\n"
+              f"TECHO_FLAG = {args.techo!r}\n"
               f"N_REPS = {args.reps}\nVERIFICADOR_PROMPT = {VERIFICADOR_PROMPT!r}\n"
               f"VERIFICADOR_MODELO = {VERIFICADOR_MODELO!r}\n{_REMOTO}")
     entorno = dict(x.split("=", 1) for x in args.env)

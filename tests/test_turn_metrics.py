@@ -157,3 +157,18 @@ async def test_lo_que_fue_del_lector_del_grupo_sale_en_la_linea(caplog):
     lines = [json.loads(m[len(obs.TURN_METRICS_TAG):]) for m in caplog.messages if m.startswith(obs.TURN_METRICS_TAG)]
     assert lines[0]["lector"] == {"lector": "a_la_vez", "lector_cambia": 2, "jev_otros": 0.93, "grupo_sabido": True}
     assert "lector" not in lines[1]
+
+
+async def test_lo_que_trajo_la_busqueda_sale_en_la_linea(caplog):
+    """RAG R0 (3-nov): cada búsqueda deja su top con la clave, la nota final y las ramas («v» vector, «p» palabras),
+    para medir la búsqueda en las rondas; antes solo constaba cuántas incrustaciones hubo."""
+    docs = [{"metadata": {"key": "faq:nadar"}, "score_final": 0.61234, "retrieval_branches": ["bm25", "vector"]},
+            {"metadata": {"key": "ficha:minicourse"}, "score": 0.5, "retrieval_branches": ["vector"]}]
+    obs.apunta_busqueda(docs)  # fuera de un turno: no-op
+    with caplog.at_level("INFO", logger="uvicorn.error"):
+        async with obs.turn_trace(_S(), "5680", "¿hay que saber nadar?") as turn:
+            obs.apunta_busqueda(docs)
+            obs.apunta_busqueda(docs[:1])
+            turn.update(reply="ok")
+    linea = next(json.loads(m[len(obs.TURN_METRICS_TAG):]) for m in caplog.messages if m.startswith(obs.TURN_METRICS_TAG))
+    assert linea["rag_docs"] == [[["faq:nadar", 0.612, "pv"], ["ficha:minicourse", 0.5, "v"]], [["faq:nadar", 0.612, "pv"]]]

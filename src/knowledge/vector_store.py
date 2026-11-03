@@ -265,4 +265,7 @@ async def search_knowledge_base(
     logger.info(
         f"[RAG][RETRIEVAL] candidates={len(reranked_results)} preview={top_meta}"
     )
+    from src.observability import apunta_busqueda  # lazy
+
+    apunta_busqueda(reranked_results[:top_k])  # RAG R0: lo que trajo, con su clave, en [TURN_METRICS]
     return reranked_results[:top_k]
