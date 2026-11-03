@@ -376,13 +376,21 @@ def fusionar_busquedas(reescrita: list[dict], original: list[dict], extra: int =
 # añade detrás (`fusionar_busquedas`), hasta POR_PREGUNTA_EXTRA piezas.
 POR_PREGUNTA_EXTRA = 2
 MAX_PREGUNTAS = 3
+# Gadea #2843 (s03i): la primera pregunta arrastraba el saludo y la presentación («¡Hola! Somos 4 amigas… ¿Podemos
+# llevar una botella de cava?») y su búsqueda era la del mensaje entero. Cada pregunta empieza donde empieza su frase: el
+# «¿», o tras un . o ! seguido de mayúscula («8 a.m. tomorrow?» no se corta), o tras un salto de línea.
+_INICIO_DE_FRASE = re.compile(r"¿|[.!]\s+(?=[A-ZÁÉÍÓÚÑ¡¿])|\n")
 
 
 def preguntas_del_mensaje(texto: str) -> list[str]:
-    """Las preguntas de un mensaje que trae más de una, cada una hasta su «?» con lo que va delante; [] si trae una o
-    ninguna."""
-    trozos = [t.strip() + "?" for t in (texto or "").split("?")[:-1]]
-    preguntas = [t for t in trozos if len(t.strip("¿? ").split()) >= 2]
+    """Las preguntas de un mensaje que trae más de una, cada una desde donde empieza su frase hasta su «?»; [] si trae
+    una o ninguna."""
+    preguntas = []
+    for trozo in (texto or "").split("?")[:-1]:
+        cortes = [m.start() if m.group() == "¿" else m.end() for m in _INICIO_DE_FRASE.finditer(trozo)]
+        pregunta = (trozo[cortes[-1]:] if cortes else trozo).strip() + "?"
+        if len(pregunta.strip("¿? ").split()) >= 2:
+            preguntas.append(pregunta)
     return preguntas[:MAX_PREGUNTAS] if len(preguntas) >= 2 else []
 
 
@@ -826,7 +834,9 @@ async def rag_answer(
         reescrita_distinta = tal_cual.strip() != condensed_query.strip()
         original_q = redact_pii(tal_cual + sufijo_origen) if reescrita_distinta else ""
         buscar_original = bool(original_q.strip()) and original_q not in (safe_query, bare_safe_query)
-        por_pregunta = [q for q in (redact_pii(p + sufijo_origen) for p in preguntas_del_mensaje(tal_cual))
+        # CALN-11, sin la marca del origen (Gadea #2845): en una pregunta corta tapaba la pieza buena («Can we bring some
+        # beers on the boat?»: no_alcohol_policy fuera del top-4 con ella, 1.ª sin ella). El origen sigue en `origin`.
+        por_pregunta = [q for q in (redact_pii(p) for p in preguntas_del_mensaje(tal_cual))
                         if q not in (safe_query, bare_safe_query, original_q)]
         de_cada_pregunta = asyncio.gather(*(search_knowledge_base(q, lang=lang, **buscar_kw) for q in por_pregunta))
         originales = await search_knowledge_base(original_q, lang=lang, **buscar_kw) if buscar_original else None
