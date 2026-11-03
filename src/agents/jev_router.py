@@ -565,7 +565,10 @@ _PIDE_DESCUENTO_Q = {
 PIDE_UN_DESCUENTO = "pide_un_descuento"
 # Umbral propio (sparring t3b, sonda ×4): «…Somos 6… ¿Cuánto nos sale y hay descuento de grupo?» da 0,60-0,68 y «¿cuánto
 # nos sale y hay algún descuento?» 0,05; sin pregunta de descuento, nunca más de 0,19 (16 mensajes ×4).
-PIDE_UN_DESCUENTO_MIN = 0.5
+# Sparring s03g (3-nov): «¿Hay descuento de grupo? ¿Cuánto sería?» 0,43 y «pásanos con el asesor para pedir el descuento
+# de grupo» 0,37-0,42 quedaban por debajo de 0,5 y se pegaba la lista entera de descuentos. Sonda ×4 de 30 frases: las
+# generales llegan a 0,28 («What discounts do you offer for 6 people?») y las de uno concreto empiezan en 0,37.
+PIDE_UN_DESCUENTO_MIN = 0.33
 # Sparring s30a-02 (30-oct): «¿nos suman el de grupo, el de equipo y el online?» nombra los descuentos por los que
 # pregunta, pero no era UNO: se pegaba la lista entera debajo de la respuesta. Cuenta igual si nombra varios.
 _PIDE_UN_DESCUENTO_Q = {
