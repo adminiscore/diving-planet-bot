@@ -1,6 +1,21 @@
 History
 =======
 
+0.42.0 - (2026-11-03, SUBE A PRE: los barrios de Cartagena por código, R0 del RAG y fuera R2 y R4 del regex)
+---------------------
+* **Qué sube** (sobre 0.41.0; `feature/caln-integra042-gadea`): **Álvaro** (b3d5f86a): los barrios de Cartagena por código
+  (decisión de Gadea, opción b): si el extractor calla el lugar y el mensaje nombra un barrio de la lista cerrada
+  (`lugares.json`, barrios_de_cartagena) sin un sitio de las islas, sale desde Cartagena; en las 4 charlas del sparring
+  donde se preguntaba, lugar sabido 0/12 → 12/12 y «¿saldrías desde Cartagena?» 9/12 → 0/12. R0 del RAG: solo el medidor
+  y `rag_docs` en las métricas (ninguna respuesta cambia). **Gonzalo** (26630821, CALN-8 (6)): fuera R2 y R4 del regex (0
+  de 2.619 turnos), marcas R11/R12 para el respaldo con el extractor caído.
+* **Medida** (una pasada, a la misma hora, en serie, a solas; A = PRE 0.41.0): mini-ronda de los mismos 43 visibles:
+  **22 → 19 fallos, 17 → 15 diálogos con fallos** (7 mejoran, 4 empeoran); llamadas por turno 3,61 → 3,68; latencia p50
+  3,72 → 3,74 s, p90 6,32 → 6,01 s; respaldos 8 y 5. Suite 3164, ruff limpio.
+* **Decisiones de Gadea (3-nov):** el oculto sale de la meta de CALN y se mide una vez, al final, en VAL; CALN se cierra con
+  dos tandas seguidas de sparring sin graves (criterio de Álvaro: grave = reserva mal o no puede) + bancos. Lagunas al
+  plan: CALN-11 a CALN-14.
+
 0.41.0 - (2026-11-03, SUBE A PRE: CALN-9b de Álvaro, la espera de 10b y los arreglos del sparring s30e)
 ---------------------
 * **Qué sube** (sobre 0.40.0; `feature/caln-integra041-gadea`): **Álvaro** (6274ed86): CALN-9b, sin el origen cada rótulo
