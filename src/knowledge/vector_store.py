@@ -8,6 +8,7 @@ and performing cosine similarity search against stored embeddings.
 import asyncio
 import json
 import logging
+import re
 
 import asyncpg
 from openai import AsyncOpenAI
@@ -18,6 +19,16 @@ from src.llm_client import trace_openai
 logger = logging.getLogger("uvicorn.error")
 
 RRF_K = 60
+# RAG R1, la parte segura (3-nov, Coral #2744): las marcas que pone el código al final de la consulta (`rag_agent`, el
+# origen del cliente) no son palabras del cliente. La rama de palabras buscaba la marca en vez de la pregunta (R0).
+_MARCA_DE_CONSULTA_RE = re.compile(r"^\[(?:origen_cliente|origin)\]=")
+
+
+def texto_para_palabras(query: str) -> str:
+    """Lo que busca la rama de palabras: la última línea de la consulta que no es una marca del código. La consulta puede
+    traer delante los mensajes anteriores del cliente (`build_retrieval_query`): las palabras, solo de la de ahora."""
+    lineas = [ln.strip() for ln in query.splitlines() if ln.strip() and not _MARCA_DE_CONSULTA_RE.match(ln.strip())]
+    return lineas[-1] if lineas else query
 
 _pool: asyncpg.Pool | None = None
 _pool_lock = asyncio.Lock()
@@ -234,11 +245,10 @@ async def search_knowledge_base(
         List of dicts with 'content', 'metadata', and 'score'.
     """
     top_k = top_k or settings.rag_top_k
-    last_line = query.splitlines()[-1] if "\n" in query else query
     candidate_limit = max(top_k * 6, top_k)
 
     vector_task = asyncio.create_task(_vector_search(query, lang=lang, k=candidate_limit))
-    bm25_task = asyncio.create_task(_bm25_search(last_line, lang=lang, k=candidate_limit))
+    bm25_task = asyncio.create_task(_bm25_search(texto_para_palabras(query), lang=lang, k=candidate_limit))
     vector_results, bm25_results = await asyncio.gather(vector_task, bm25_task)
 
     rankings = [ranking for ranking in (vector_results, bm25_results) if ranking]

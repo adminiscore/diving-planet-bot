@@ -95,13 +95,15 @@ async def _spy_search(query, lang="es", top_k=None, **kw):
     return docs
 rag_agent.search_knowledge_base = _spy_search
 
-_expand = rag_agent._expand_with_parent_context
-async def _spy_expand(docs, lang):
-    out = await _expand(docs, lang)
+# Los documentos que llegan al escritor: la salida de `fichas_del_origen` (CALN-9a), el último paso antes del contexto.
+# Hasta R1 se espiaba `_expand_with_parent_context`, que se quitó (el «padre» de la base v1, muerto en kb_v2).
+_fichas = rag_agent.fichas_del_origen
+def _spy_fichas(docs, origin, lang):
+    out = _fichas(docs, origin, lang)
     T["fragmentos"] = [{"key": (d.get("metadata") or {}).get("key"), "source": (d.get("metadata") or {}).get("source"),
                         "content": d.get("content") or ""} for d in out]
     return out
-rag_agent._expand_with_parent_context = _spy_expand
+rag_agent.fichas_del_origen = _spy_fichas
 
 _grounded = rag_agent.is_grounded
 async def _spy_grounded(answer, context, lang="es"):

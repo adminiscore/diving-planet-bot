@@ -80,14 +80,10 @@ async def _responder(monkeypatch, respuesta: str, contexto: str) -> str:
     async def _busqueda(*args, **kwargs):
         return [{"content": contexto, "score": 0.99, "metadata": {"source": "faqs"}}]
 
-    async def _sin_expandir(docs, lang="es"):
-        return docs
-
     async def _sin_reescribir(query, history=None, lang="es", hechos=None):
         return query
 
     monkeypatch.setattr(rag_agent, "search_knowledge_base", _busqueda)
-    monkeypatch.setattr(rag_agent, "_expand_with_parent_context", _sin_expandir)
     monkeypatch.setattr(rag_agent, "AsyncOpenAI", _openai_devolviendo(respuesta))
     monkeypatch.setattr(rag_agent, "condense_query", _sin_reescribir)
     return await rag_agent.rag_answer(_CONSULTA_SIN_ATAJO, lang="es")

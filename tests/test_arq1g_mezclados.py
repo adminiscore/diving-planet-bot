@@ -87,15 +87,11 @@ def rag(monkeypatch):
                  "metadata": {"source": "policies", "key": "minicourse_scope", "topics": ["certification"]},
                  "score": 0.9}]
 
-    async def fake_expand(docs, lang):
-        return docs
-
     async def fake_condense(query, history=None, lang="es", hechos=None):
         return query
 
     monkeypatch.setattr(rag_agent, "AsyncOpenAI", _OpenAI)
     monkeypatch.setattr(rag_agent, "search_knowledge_base", fake_search)
-    monkeypatch.setattr(rag_agent, "_expand_with_parent_context", fake_expand)
     monkeypatch.setattr(rag_agent, "condense_query", fake_condense)
     monkeypatch.setattr(settings, "rag_respaldo_modelo", "")
     return rag_agent, llamadas
