@@ -28,6 +28,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import os
 import re
 
 from src.agents.intent_detector import (
@@ -1956,7 +1957,7 @@ def lanzar_rag_adelantado(state: ConversationState, message: str) -> None:
     regla no sabe el idioma (`_setup_phase` preguntaría al LLM), no se adelanta. Si al final decide otra cosa, la
     huella no coincide y se rehace, como siempre."""
     texto = (message or "").strip()
-    if not texto or texto.isdigit():
+    if not texto or texto.isdigit() or escritor_tras_extraccion():
         return
     import copy
 
@@ -2080,6 +2081,40 @@ def _lugar_desconocido(routing_signals: dict) -> bool:
             and (lugar.get("confidence") or 0.0) >= CUSTOMER_PLACE_MIN)
 
 
+def escritor_tras_extraccion() -> bool:
+    """CALN-23, solo para medir (no se integra): el escritor redacta con la extracción de ESTE mensaje ya guardada."""
+    return os.environ.get("CALN23_TRAS_EXTRACCION") == "1"
+
+
+class _RespuestaDiferida:
+    """CALN-23: como la tarea de `_pending_answer`, pero el escritor no arranca hasta que se recoge la respuesta, que es
+    cuando la extracción ya acabó; y su pregunta final es la que toca después de esa extracción."""
+
+    def __init__(self, state: ConversationState, message: str, history: list):
+        self._state, self._message, self._history, self._tarea = state, message, history, None
+
+    async def _correr(self) -> str:
+        import copy
+
+        state = self._state
+        if state.step == Step.FREE_TEXT and (pendiente := next_missing_slot(state)):
+            state._pregunta_del_escritor = ask_slot(copy.copy(state), pendiente, reasking=True)
+        else:
+            state._pregunta_del_escritor = None
+        return await _rag_answer(state, self._message, history=self._history, puerta_al_recoger=True)
+
+    def __await__(self):
+        self._tarea = asyncio.ensure_future(self._correr())
+        return self._tarea.__await__()
+
+    def done(self) -> bool:
+        return self._tarea is not None and self._tarea.done()
+
+    def cancel(self) -> None:
+        if self._tarea is not None:
+            self._tarea.cancel()
+
+
 def _maybe_launch_answer(state: ConversationState, message: str, routing_signals: dict) -> None:
     if _has_pending_answer(state):
         return
@@ -2093,6 +2128,9 @@ def _maybe_launch_answer(state: ConversationState, message: str, routing_signals
     # La foto del historial se toma AQUÍ (lección de la carrera de l1-4): la tarea puede no
     # arrancar hasta después de que el bot meta otra cosa en el historial.
     history = list(state.history)
+    if escritor_tras_extraccion():
+        state._pending_answer = _RespuestaDiferida(state, message, history)
+        return
     adelantado = getattr(state, "_rag_adelantado", None)
     if adelantado is not None and adelantado["mensaje"] == message:
         # rag-5: ya hay una respuesta en marcha desde antes del enrutador; se usa si su contexto es el mismo.
