@@ -39,6 +39,22 @@ def test_si_se_despide_no_lleva_la_pregunta_ni_sus_botones(monkeypatch):
     assert vistas == [None] and st.quick_replies == []
 
 
+def test_se_despide_aunque_la_pregunta_pendiente_haya_cambiado(monkeypatch):
+    """banco-se-despide, d-no-reservar: con el origen pendiente, «al final no vamos a reservar» recibía «¡Perfecto!» y el menú."""
+    vistas = _con_escritor(monkeypatch)
+    st = _estado(**{j.SE_DESPIDE: True})
+    st.core_pending_slot = "location"
+    assert _sin_dato(st) == "¡Claro, aquí estaremos! 🌊"
+    assert vistas == [None] and st.quick_replies == []
+
+
+def test_sin_despedida_y_con_la_pregunta_cambiada_sigue_el_flujo(monkeypatch):
+    vistas = _con_escritor(monkeypatch)
+    st = _estado(**{j.SE_DESPIDE: False})
+    st.core_pending_slot = "location"
+    assert _sin_dato(st) is None and vistas == []
+
+
 def test_si_no_se_despide_sigue_la_pregunta(monkeypatch):
     vistas = _con_escritor(monkeypatch)
     st = _estado(**{j.SE_DESPIDE: False})

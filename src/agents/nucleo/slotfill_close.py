@@ -395,11 +395,13 @@ async def _sin_dato(state: ConversationState, message: str, prev_pending: str, p
     from src.agents.jev_router import SE_DESPIDE  # lazy
     from src.observability import note_turn  # lazy
 
-    sin_contestar = state.core_pending_slot == prev_pending or prev_pending in (state.preguntas_aplazadas or [])
-    if not getattr(state, "_pregunta_del_escritor", None) or not sin_contestar:
-        return None
     # #3300 (2b): a quien se despide, el escritor le contesta sin la pregunta de la reserva y sin sus botones. Si falla, la de siempre.
+    # Antes de mirar si la pregunta cambió: «Gracias, pero al final no vamos a reservar» con el origen pendiente recibía «¡Perfecto!»
+    # y la de la actividad.
     se_despide = bool((getattr(state, "_senales_router", None) or {}).get(SE_DESPIDE))
+    sin_contestar = state.core_pending_slot == prev_pending or prev_pending in (state.preguntas_aplazadas or [])
+    if not se_despide and (not getattr(state, "_pregunta_del_escritor", None) or not sin_contestar):
+        return None
     state._pregunta_del_escritor = None if se_despide else pregunta
     try:
         escrita = await _rag_answer(state, message, history=list(state.history), sin_busqueda=True)
