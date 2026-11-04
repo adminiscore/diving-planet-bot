@@ -839,3 +839,36 @@ asesor» en el cumpleaños.
 
 **Pregunta de negocio para Gadea:** ¿se puede traer una cámara propia a las inmersiones? ¿Se alquilan cámaras? El bot
 dijo «puedes traer tu cámara», y la base no dice nada.
+
+## CALN-S04B-01..08 · 9.ª tanda de sparring contra PRE 0.47.0, hasta reservar (4-nov, `charla_pre`)
+
+Ocho clientes nuevos, educados y que escriben bien, cada uno hasta la tarjeta, el enlace o el asesor, con el criterio de
+Álvaro: chico de 16 de Austin al Open Water y su madre snorkel (6842); sorpresa de cumpleaños para el marido certificado,
+de Medellín (6843); 5 amigos Advanced de Cali, 2 días con nocturna (6844); pareja de Madrid, ella embarazada de 5 meses
+(6845); pareja de Brasil en portugués, snorkel (6846); familia de Toronto en San Pedro de Majagua, niños de 9 y 11
+(6847); Divemaster de Valencia, descuento para profesionales (6848); Rescue Diver sin bucear desde hace 3 años (6849).
+Cierre: 3 con enlace (Austin, embarazada, Brasil), 5 al asesor.
+
+- **BIEN:** el embarazo (no se bucea con botella; snorkel con el visto bueno del médico) y el minicurso para él; el menor
+  de 16 acompañado por un adulto; la sorpresa para otro, con un asesor; en portugués, en inglés; el Divemaster, sin
+  descuento profesional pero con el online y el 5 % de equipo propio, y el de 4 inmersiones al asesor (sin enlace); el de 5
+  inmersiones con nocturna y el de grupo para los de Cali; el refresher del Rescue como el minicurso, en su propio día;
+  el de 11 al minicurso desde las islas, el de 9 a Bubble Makers con un asesor.
+
+**Graves (1):**
+1. **El niño de 9 años en el minicurso** (Majagua t2): «can our 11-year-old do the mini course?» → tarjeta «Dive Mini
+   Course (already on the islands) · 2 people» con el de snorkel de los padres. Reproducido ×3 con `charla_rama` (0.47): el
+   reparto queda {snorkel 2, minicourse 2} en 2 de 3 (la 1.ª, bien: {snorkel 2, bubble_makers 1, minicourse 1}). El de 9
+   no tiene edad (minicurso desde 10) y la tarjeta cobraría 2. La lectura del grupo (CALN-17, Álvaro): el resto del
+   grupo pasa a la actividad que se elige sin mirar las edades sabidas ([9, 11]). Cuando el cliente aclara «solo el de 11»,
+   lo confirma bien. **La meta vuelve a 0 de 2.**
+
+**Medios:** «el catálogo no tiene una opción que coincida exactamente» y luego describe justo la que piden (Cali t1: 5
+inmersiones en 2 días con nocturna), sin darle el precio de esa; «book here» con la página informativa (Brasil t1; al
+preguntar, da el enlace bueno); «el minicurso incluye teoría online» (embarazada t2) y «antes de la práctica debes
+completar la teoría» (Rescue t1): la teoría es del Open Water (CALN-19); «el equipo debe confirmar la disponibilidad»
+(Cali t2, contra availability_always, CALN-19).
+
+**Menores:** «¿para cuántas personas?» a quien dijo «soy» (Divemaster t2, CALN-18); el aviso de la hora límite de mañana a
+quien pedía lunes y martes; el de grupo dicho dos veces; planes que no tocan en la lista de precios (el de 4 inmersiones a
+la embarazada y al Rescue); la lista entera de requisitos pegada (Rescue t1).
