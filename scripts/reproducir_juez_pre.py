@@ -81,7 +81,9 @@ _CAMPOS = ("location", "detected_location", "core_pending_slot", "pregunta_preci
            "pending_escalation_reason",
            # CALN-2 (27-oct): el grupo entero, para el banco de grupos (scripts/puntua_banco_grupo.py).
            "detected_ages", "pending_undecided_qty", "acompanante_sin_certificar", "acompanante_certificado_inactivo",
-           "pending_companion_in_group")
+           "pending_companion_in_group",
+           # Sparring s04h (4-nov): los días, para el banco de «two dives» (banco-dos-inmersiones.json).
+           "detected_duration", "detected_cert_days")
 
 async def main():
     for dialogo, turnos, rep in [(d, ts, r) for d, ts in DIALOGOS for r in range(REPS)]:

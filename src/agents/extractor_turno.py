@@ -725,6 +725,14 @@ async def extraer_turno(mensaje: str, *, history: list[dict] | None = None, sabi
                 isinstance(valor, int) and not isinstance(valor, bool) and 1 <= valor <= 366):
             descartes[campo] = f"no es un número de días: {valor!r}"
             continue
+        if campo == "dias_de_buceo":
+            from src.agents.intent_detector import inmersiones_leidas_como_dias  # lazy
+
+            if inmersiones_leidas_como_dias(valor, cita, mensaje):
+                # Sparring s04h: varios días se comía el plan nombrado (la salida de 2 es el plan base, `sin_plan`) y la
+                # cifra llegaba a `cert_days`. Sin prompt: cambiarlo mueve otros campos (ver CAL-C2).
+                descartes[campo] = f"son inmersiones, no días: {cita!r}"
+                continue
         if campo == "edades":
             # ex-9b paso 6: la cifra de cada edad tiene que estar en la cita (el regex valida, no decide).
             valor = edades_citadas(valor, cita)
