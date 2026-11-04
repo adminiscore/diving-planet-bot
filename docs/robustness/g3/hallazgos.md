@@ -1043,3 +1043,30 @@ mixta en USD; al asesor). `two dives` se descarta bien en Londres t1 y t2 (`son 
 - Residente: t1 no contesta qué paga cada uno hasta t2; «should I change it?» al final; el descuento de grupo a una pareja.
 
 **Menores:** «I'm leaving the prices below» debajo de la lista (niña de 8); el miedo al agua profunda de la luna de miel no se contesta.
+
+## CALN-S04K-01..11 · Tanda de contraste de Gonzalo contra PRE 0.51 (4-nov, `charla_rama` sobre f5e037d1, mismo `src` que 51c9ce27)
+
+Criterio de Álvaro (#2716). 11 clientes nuevos, educados y que escriben bien (`docs/robustness/g3/charlas-rama/s04k-*`): 9 sin graves y 2 con graves; el segundo, por
+seguridad y discutible.
+
+**Graves (2):**
+1. **Español, «2 fun dives».** t1: `dias_de_buceo` 2 (`EX9B-6 duration=multi_day`, días 2). t4: confirma 178 USD y debajo saca «5 Dives - 2 days», 392 USD, con su
+   enlace. La regex de S04H no lo cubre: la palabra en medio rompe `_CERT_DIVE_COUNT_RE`. `banco-fun-dives.json` ×3: PRE 0.51 13/18, `multi_day` equivocado 5 de 15;
+   3624d852 de Gadea (CALN-25, Jev sin mirar la cita) 17/18, 0 de 15; el fallo que queda es de la comprobación (contesta el pago sin dar el precio; enlace y estado bien).
+2. **Open Water, «nos vamos el domingo 14 por la noche».** No dice avión. PRE 0.51 ×5: 2 proponen sábado y domingo y dicen que les alcanza, sin nombrar las 18 horas; 1 lo
+   avisa y pregunta si vuelan; 1 pregunta a qué hora sale su transporte; 1 pone el curso viernes y sábado, y ahí «van sobrados» es cierto. En la charla (t1), «les alcanza
+   para un vuelo el domingo por la noche» y, dos frases después, que ese vuelo no cumple las 18 horas; se corrige en t2 al decir avión. Se cuenta como grave por consejo
+   inseguro por omisión: quien se va de Cartagena de noche probablemente vuela. Si se decide que es medio, la tanda queda en 1 grave.
+
+**BIEN:** Toronto (4, «two dives on Saturday»: 178 USD, sin descuento de grupo, enlace bien), tarjeta perdida con 3 años sin bucear (refresher al asesor y enlace de las 2
+inmersiones), abuela de 68 con asma (al asesor), menor de 15 sin adulto (no vale el permiso firmado), embarazada de 3 meses con Open Water (no bucea, snorkel con visto
+bueno), familia con hijo de 10 (reparto y dos enlaces bien), francés (FFESSM, paquete de 4 al asesor), alemanes Rescue en Isla Grande con equipo propio (188 USD, sin descuento).
+
+**Medios:**
+- Español: pide cuántos son tras «for me» y la nacionalidad tras «I'm from Spain» (aunque t1 ya dice «visiting from Spain»).
+- San Andrés: «no operamos» sale en t2 con «¡Genial!» y otra vez la certificación, ya dicha, a quien acaba de saber que aquí no hay plan; en t1 va escondido tras los precios.
+- Menor: tras decirle que no puede, sigue con la lista de requisitos y «¿desde dónde saldrías?».
+- Familia con hijo de 10: da los 18 m del Open Water y deja la profundidad del niño al equipo; no he comprobado el límite por edad en la base.
+- Alemanes: «Nitrox is available on request» no lo he encontrado en la base como aire para buzos ya certificados (solo la especialidad).
+- Francés: t1 en inglés; pasa al francés cuando lo piden, con la tarjeta en inglés.
+- Tarjeta perdida: «¿para cuántas personas?» a quien habla en singular.
