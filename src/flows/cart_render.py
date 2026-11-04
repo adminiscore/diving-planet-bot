@@ -247,13 +247,19 @@ def _ninos_del_minicurso(state: ConversationState) -> tuple[int, int]:
     G3-01b (flag `ninos_primero_al_snorkel`, 17-oct): familia con hijos de 12 (minicurso) y 8 (snorkel): el niño de 8
     convertía el minicurso del de 12 en "Minicurso [Bubble Makers] (8-10 años)". Si el carrito ya tiene plazas de
     snorkel, los niños más pequeños van primero ahí (un menor de 8 solo puede hacer snorkel) y el resto es el del
-    minicurso. Solo cambia la etiqueta: el precio de Bubble Makers es el del minicurso."""
+    minicurso.
+
+    Sparring s04m (familia con hijos de 11 y 8, cada uno con su plan): lo mismo con las plazas de Bubble Makers ya en el
+    carrito: la tarjeta del minicurso de la hija de 11 salía «[Bubble Makers]» y el de 8 tenía dos precios. Con 10 años vale
+    el minicurso (`min_age` del registro): no se le manda a otro plan."""
     edades = sorted(a for a in (state.detected_ages or []) if isinstance(a, int) and a < 18)
     if not edades:
         return state.kids_under_8_count or 0, state.kids_eight_to_ten_count or 0
-    plazas_snorkel = sum(i.get("qty", 0) for i in state.mixed_cart or [] if i.get("type") == "snorkel")
-    resto = edades[plazas_snorkel:]
-    return len([a for a in resto if a < 8]), len([a for a in resto if 8 <= a <= 10])
+    plazas_ya_dadas = sum(i.get("qty", 0) for i in state.mixed_cart or []
+                          if i.get("type") == "snorkel" or str(i.get("plan") or "").startswith("bubble_makers"))
+    resto = edades[plazas_ya_dadas:]
+    edad_del_minicurso = dom.by_id("minicourse").min_age
+    return len([a for a in resto if a < 8]), len([a for a in resto if 8 <= a < edad_del_minicurso])
 
 
 def _cart_booking_blocks(state: ConversationState) -> list[dict]:
@@ -298,12 +304,10 @@ def _cart_booking_blocks(state: ConversationState) -> list[dict]:
                     )
                     add(snk, u8, nm, _resolve_service_booking_url(snk, state), u8_note)
                 if e10 > 0:
-                    e10_note = (
-                        "_Programa Bubble Makers (8-10 años), con supervisor especializado._"
-                        if lang == "es"
-                        else "_Bubble Makers program (ages 8-10), with a specialized supervisor._"
-                    )
-                    add(beg, e10, beg_name + " [Bubble Makers]", beg_url, e10_note)
+                    # Sparring s04m: era el minicurso con otra etiqueta (183 USD y su enlace), y Bubble Makers tiene su
+                    # servicio y su precio (168 USD) y lo cierra un asesor, como con el plan elegido (s04b).
+                    bub = SERVICES.get(_service_for_location("bubble_makers", state)) or {}
+                    add(bub, e10, bub.get(f"name_{lang}") or "Bubble Makers", _resolve_service_booking_url(bub, state))
                 continue
             add(beg, qty, beg_name, beg_url)
             continue

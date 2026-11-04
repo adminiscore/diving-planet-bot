@@ -1125,3 +1125,25 @@ enlaces con «solo a la persona que hará esa actividad», sin confirmar el port
 
 **Menores:** São Paulo t1, paquetes de 3 y 4 inmersiones en la lista de quien no los pide; añadir a una amiga, los precios de los dos orígenes; miopía t2, «Shall we go for the mini-course?» tras
 darle el enlace.
+
+## CALN-S04M-01..10 · 14.ª tanda de sparring contra PRE 0.52.0 (4-nov, `charla_pre`)
+
+Criterio de Álvaro (#2716), Haiku por Anthropic. 10 clientes nuevos, educados y que escriben bien (conv 6881-6890), con temas distintos a S04H-S04L, elegidos antes de ver nada: 9 sin
+graves y 1 con grave. Llegan hasta el enlace o el asesor en 8 de 10; los otros dos paran antes (Open Water y Advanced, la pareja del crucero). **Meta de CALN-22: sigue en 0 de ~60.**
+
+**Grave (1):**
+1. **Familia con hijos de 11 y 8** (conv 6888). t2: las tarjetas daban «Minicurso de Buceo [Bubble Makers]», 183 USD, con la nota de 8-10 años, y debajo «Bubble Makers», 168 USD. El de 8 parecía tener dos
+   planes y la de 11 llevaba una etiqueta falsa. El escritor lo decía bien. `cart_render._ninos_del_minicurso` solo descontaba las plazas de snorkel, y el comentario decía que Bubble Makers cuesta como el minicurso,
+   desde la 0.48 ya no. **Arreglo (0.53, `feature/052c-gadea`):** descuenta también las plazas de Bubble Makers; quien no tiene plan propio va a Bubble Makers con su servicio, su precio y al asesor; con 10 años vale el minicurso.
+
+**BIEN:** Junior Open Water de 15 con su padre (edad, adulto responsable, formularios), seis amigas de snorkel (448.000 COP, descuento de grupo que hay que pedir, al asesor), diabetes tipo 1 (al asesor, sin consejo médico), GoPro
+y equipo propio (5 % que se suma, cámara bajo su responsabilidad), Hotel Rosario de Mar 3 días (paquete de 7 y días sueltos, recogida si hay acceso), colombiano en Miami con esposa estadounidense (grupo mixto en USD), crucero (hora de vuelta y que no se puede garantizar el retraso), Rescue con EFR caducado.
+
+**Medios:**
+- **Pareja tratada como uno que elige y otro que no:** crucero t2, «dos Open Water» recibe «For the one who hasn't chosen yet» y el menú entero; Junior t2, «Is the other person diving too?» tras «for both of us».
+- **Pide dos planes y recibe uno:** Rosario t3, «both» saca solo la tarjeta de Fun Dives, sin el enlace del paquete de 3; Open Water y Advanced, el precio de uno en cada turno.
+- **Confirma el origen a quien lo acaba de decir:** «desde Cartagena» en la pregunta recibe «Entonces, ¿saldrías desde Cartagena?» (Miami t1, crucero t1, Rescue t1). Es la confirmación de ORIGEN-CONFIRMA.
+- Familia t1: la lista lleva los paquetes de 3 y 4 inmersiones y no el precio de Bubble Makers.
+- Crucero: la espera antes de volar, pegada por el código (0.52), a quien vuelve en barco: sin daño, pero no viene a cuento.
+
+**Menores:** el enlace dos veces (Miami t2, Rescue t2; arreglado en la 0.53); el aviso de moneda repetido (Miami t1); «I'm leaving the price below» debajo de la lista (Junior t1); «Para aplicarlo» sin saber a qué (despedida t1).
