@@ -59,7 +59,17 @@ integrar la rama del otro y suite en verde, porque en PRE gana el último; (3) *
 despliegue reinicia el contenedor y mata la medida del otro (avisar en el registro de Plan Coral con la hora de fin).
 Las doce normas, con su porqué, están en el documento.
 
-### ▶️ RETOMAR AQUÍ — 4-nov, 17:10 (Gadea con Claude; Gonzalo en pausa; Álvaro sin conectar desde la 01:18): 0.51.0 EN PRE; meta, 0 clientes de ~60
+### ▶️ RETOMAR AQUÍ — 4-nov, 23:25 (Gadea, Gonzalo y Álvaro, los tres con Claude): 0.52.0 EN PRE; Haiku por Anthropic; meta, 0 clientes de ~60
+
+- **PRE sirve `6595abed`** (HISTORY 0.52.0, `feature/pre_gadea`), sano; humo 5/5, 0 respaldos. Medidas en el HISTORY: graves 70 → 84/90, moneda 28 → 39/42, grupos 189/204, mini 23 → 22 fallos, misma
+  pregunta 3+ veces 21 → 6 diálogos.
+- **Bedrock era el «Haiku atascado»:** con Anthropic directo, 0 respaldos frente al 37 % y p90 12,4 → 5,1 s (0.51.1). Las medidas del 4-nov anteriores a las 21:25 pueden estar contaminadas: los respaldos van dentro de `llamadas`.
+  Es una sola franja: se sigue mirando. `check_deploy` falla si Actions se queda en «in_progress» con el despliegue acabado: comprobar el commit en el servidor.
+- **Siguiente, orden de Gadea, sin prisa, un cambio a la vez (Plan Coral):** CALN-26 contar los respaldos (Gonzalo); CALN-31 días sueltos, en `feature/052c-gadea` para la 0.53, y la lista vacía de `feature/s052c-lista-gonzalo`;
+  CALN-27 enlace con un solo dueño (Gadea); CALN-28 menú genérico y vuelta de CALN-23 (Gonzalo), que decide cómo se hace el pago; CALN-29 una sola lectura del turno, en CALN-8 (5) (Álvaro); CALN-30 medir CALN-10b y
+  tabla de señales de Jev (Álvaro). Pendiente de Gadea: revisar la meta de ~60 con un par de tandas más sobre la 0.52 (s04l: 1 grave en 10 clientes).
+
+### RETOMAR — 4-nov, 17:10 (Gadea con Claude; Gonzalo en pausa; Álvaro sin conectar desde la 01:18): 0.51.0 EN PRE; meta, 0 clientes de ~60
 
 - **PRE sirve `51c9ce27`** (HISTORY 0.51.0, `feature/pre_gadea`), sano; humo 5/5. Mini frente a la 0.50: **22 → 22 fallos, 18 → 17
   diálogos**. Graves 62 → 64 de 72 (candidata sin y con Gonzalo), grupos 172/192. Actions se quedó en «in_progress» con el despliegue
