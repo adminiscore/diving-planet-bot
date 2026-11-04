@@ -876,3 +876,34 @@ quien pedía lunes y martes; el de grupo dicho dos veces; planes que no tocan en
 la embarazada y al Rescue); la lista entera de requisitos pegada (Rescue t1).
 
 **Corrección (4-nov, 01:25):** la «teoría del minicurso» NO es un hecho inventado: `services.json` la pide para el minicurso desde Cartagena (`minicourse`: «Después de reservar recibirás un correo con instrucciones para completar la teoría. Es indispensable terminarla antes de comenzar la práctica»; requisito «Completar la teoría antes de empezar la práctica»). Desde las islas (`minicourse_already_on_island`) no la pide. Pregunta para Gadea: ¿el minicurso lleva teoría previa, y desde los dos orígenes?
+
+## CALN-S04C-01..08 · 10.ª tanda de sparring contra PRE 0.48.0, hasta reservar (4-nov, `charla_pre`)
+
+Ocho clientes nuevos, educados y que escriben bien, cada uno hasta la tarjeta, el enlace o el asesor, con el criterio de
+Álvaro: Open Water de Seúl al Advanced desde Isla Grande (6850); 6 universitarios de Bogotá sin experiencia y con poco
+presupuesto (6851); buzo de Lyon con su hija de 13 al snorkel en la misma lancha (6852); matrimonio de Buenos Aires de 70 y
+72, él con licencia y 10 años sin bucear (6853); minicurso el sábado con un vuelo a las 7 p.m. ese día (6854); despedida
+de soltera de 10, snorkel (6855); de Pereira, minicurso ya reservado y quiere pagar solo el 50 % (6856); chilenos en un
+hotel de Bocagrande, ¿recogida? (6857). Cierre: 5 con enlace (Seúl, Lyon, jubilados, vuelo, Bocagrande), 3 al asesor
+(universitarios, despedida, el 50 %).
+
+- **BIEN:** el Advanced desde las islas con su horario (la nocturna incluida), la teoría de 4 h, las 18 h antes de volar y
+  su enlace; el minicurso para los universitarios, en pesos, con el 20 % de grupo y el asesor; padre e hija con sus dos
+  tarjetas; sin edad máxima a los de 70 y 72, el refresher de él (el minicurso, en su propio día) y la acompañante para
+  ella, al asesor; el vuelo: en t2, «tras el minicurso, al menos 12 horas: un vuelo a las 7 p.m. sería demasiado pronto»
+  (la base: 12 h tras el minicurso, 18 h tras bucear certificado); la despedida de 10 con el de grupo; el 50 % de una
+  reserva ya hecha, al asesor; sin recogida en hoteles de Cartagena, con el enlace en USD.
+
+**Graves: ninguno.** La meta vuelve a **1 de 2** (la 9.ª tuvo 1 grave, arreglado en la 0.48).
+
+**Medios (al límite, para que los mire Álvaro):**
+- **Jubilados t2:** «Desde Cartagena. Somos argentinos. ¿Y mi esposa qué puede hacer?» → «¿Saldrías desde Cartagena…?» y
+  «¿Desde dónde saldrías?» en el mismo mensaje (con la de t1, tres veces; contando por turnos, como Álvaro, dos). En t3
+  («ya te lo dije») se disculpa y sigue bien. Además, a la esposa que no bucea solo le ofrece el minicurso hasta que dice
+  «sin bucear» (la regla es recomendar las opciones: snorkel, acompañante, minicurso).
+- **Vuelo t1:** con el vuelo a las 7 p.m. dicho, solo da la hora de vuelta; el aviso de las 12 horas llega en t2, antes del
+  enlace.
+
+**Menores:** «And how many people should I plan for?» a quien dijo «I» (Seúl, CALN-18); el Snorkeling Tour en la lista del
+Advanced; «Hay que solicitarlo al equipo antes de pagar» sin sujeto (universitarios t1); «Es una reserva separada.» suelta
+(jubilados t1).
