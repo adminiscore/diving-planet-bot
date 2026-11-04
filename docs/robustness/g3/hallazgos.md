@@ -901,6 +901,14 @@ hotel de Bocagrande, ¿recogida? (6857). Cierre: 5 con enlace (Seúl, Lyon, jubi
   «¿Desde dónde saldrías?» en el mismo mensaje (con la de t1, tres veces; contando por turnos, como Álvaro, dos). En t3
   («ya te lo dije») se disculpa y sigue bien. Además, a la esposa que no bucea solo le ofrece el minicurso hasta que dice
   «sin bucear» (la regla es recomendar las opciones: snorkel, acompañante, minicurso).
+  **Causa (log de PRE, conv 6853 t2):** una carrera. La respuesta en paralelo (u3-4, adelantada con rag-5) decidía la
+  puerta del origen antes de que la extracción de ESE mensaje guardara «Desde Cartagena»: el escritor acabó a los 2,28 s,
+  y la extracción guarda el origen tras el extractor y el lector del grupo (Haiku los dos; el lector acabó a los 2,42 s).
+  Salían los precios
+  de los dos orígenes con `ORIGEN_TRAS_LAS_VARIANTES` y debajo, con el origen pendiente, la pregunta de la reserva. Con
+  `charla_rama`, en local, el extractor ganó y salió bien (1/1). gen-15 lo cubría con Jev solo en `_origen_antes_del_precio`;
+  la rama de la pieza (`_con_la_pieza`, CALN-3 paso 4) no lo miraba. **Arreglo** (feature/s04c-origen-gadea 7c42ecec): la
+  puerta la pone `_take_parallel_answer`, cuando la extracción ya acabó (`_con_la_puerta`).
 - **Vuelo t1:** con el vuelo a las 7 p.m. dicho, solo da la hora de vuelta; el aviso de las 12 horas llega en t2, antes del
   enlace.
 
