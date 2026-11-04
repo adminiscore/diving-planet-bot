@@ -2095,20 +2095,13 @@ def escritor_tras_extraccion() -> bool:
 
 class _RespuestaDiferida:
     """CALN-23: como la tarea de `_pending_answer`, pero el escritor no arranca hasta que se recoge la respuesta, que es
-    cuando la extracción ya acabó; y su pregunta final es la que toca después de esa extracción."""
+    cuando la extracción ya acabó. Su pregunta final, como hoy (`fijar_pregunta_del_escritor`, solo con una pendiente)."""
 
     def __init__(self, state: ConversationState, message: str, history: list):
         self._state, self._message, self._history, self._tarea = state, message, history, None
 
     async def _correr(self) -> str:
-        import copy
-
-        state = self._state
-        if state.step == Step.FREE_TEXT and (pendiente := next_missing_slot(state)):
-            state._pregunta_del_escritor = ask_slot(copy.copy(state), pendiente, reasking=True)
-        else:
-            state._pregunta_del_escritor = None
-        return await _rag_answer(state, self._message, history=self._history, puerta_al_recoger=True)
+        return await _rag_answer(self._state, self._message, history=self._history, puerta_al_recoger=True)
 
     def __await__(self):
         self._tarea = asyncio.ensure_future(self._correr())
