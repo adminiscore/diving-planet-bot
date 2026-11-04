@@ -180,6 +180,14 @@ def _foto(state: ConversationState, datos: dict, origen: str | None, message: st
         foto.mixed_nationality_notice = True
     if datos.get("paquete_varios_dias") is True:
         foto.detected_duration = "multi_day"  # arq-1t: «el paquete de varios días» en ESTE mensaje
+    # Sparring s04b (conv 6844): «un plan de 2 días» en ESTE mensaje no llegaba a los hechos, que daban los planes de un día
+    # (2, 3 y 4 inmersiones) y no el de 5; en el turno siguiente, ya guardado, sí. Lo que dice la extracción (`_poner_duracion`).
+    from src.agents.nucleo.extractor import duracion_del_extractor  # lazy
+
+    duracion, de_buceo = duracion_del_extractor(datos, foto)
+    if duracion is not None:
+        foto.detected_duration = duracion
+        foto.duracion_de_buceo = foto.duracion_de_buceo or de_buceo
     if origen == "cartagena":
         # arq-5f: el extractor deja Barú como Cartagena (gen-6) sin otra marca; los hechos dicen por qué sale de allí.
         from src.agents.extractor_turno import _solo_baru  # lazy

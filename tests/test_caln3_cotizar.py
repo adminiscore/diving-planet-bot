@@ -252,3 +252,19 @@ def test_con_el_precio_la_nota_corta_del_de_grupo_y_con_la_pregunta_la_descripci
     st.language = "en"
     [precio_en] = hechos.hechos(st, ["precio"], ["snorkel"])
     assert "before paying" in precio_en["descuento_de_grupo"] and "BEFORE" not in precio_en["descuento_de_grupo"]
+
+
+def test_los_dias_de_buceo_de_este_mensaje_llegan_a_los_hechos():
+    """Sparring s04b: «un plan de 2 días» en ESTE mensaje, aún sin guardar, daba los planes de un día y no el de 5."""
+    from src.agents import redactor_hechos
+    from src.flows import hechos
+
+    st = _st(detected_activity="certified_diving", is_certified=True, is_colombian=True)
+    foto = redactor_hechos._foto(st, {"dias_de_buceo": 2, "group_size": 5}, "cartagena", "un plan de 2 días")
+    assert foto.detected_duration == "multi_day" and foto.duracion_de_buceo is True
+    assert st.detected_duration is None  # el estado de verdad lo escribe la extracción
+    pieza = cotizar.pieza_de_precios(hechos.hechos(foto, ["precio"], ["certified_diving"]), "es")
+    assert "Paquete de 5 inmersiones" in pieza and "Salidas de Buceo - 2" not in pieza
+    # sin días en el mensaje, como hoy
+    foto = redactor_hechos._foto(st, {"group_size": 5}, "cartagena", "¿cuánto cuesta?")
+    assert foto.detected_duration is None
