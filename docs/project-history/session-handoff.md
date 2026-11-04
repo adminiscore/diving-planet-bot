@@ -59,6 +59,38 @@ integrar la rama del otro y suite en verde, porque en PRE gana el último; (3) *
 despliegue reinicia el contenedor y mata la medida del otro (avisar en el registro de Plan Coral con la hora de fin).
 Las doce normas, con su porqué, están en el documento.
 
+### ▶️ RETOMAR AQUÍ — 4-nov, 02:50 (Gadea con Claude, de noche; Gonzalo; Álvaro sin conectar desde la 01:18): 0.48.0 EN PRE; meta de sparring de CALN cumplida, falta tu cierre formal
+
+- **PRE sirve `df18eaa0`** (HISTORY 0.48.0, `feature/pre_gadea` = `feature/caln-gadea`), sano (CI verde, 23 ajustes, humo
+  5/5, 0 errores, 0 respaldos). Esta noche subieron la 0.47 (`55d0ed30`: CALN-16 v2, el escritor con hechos también recibe
+  políticas y FAQ; la cámara propia) y la 0.48 (s04b: eligen solo los que nombra el mensaje y tienen edad; Bubble Makers
+  con su servicio y para el asesor; Gonzalo, a0afdfc1: los días de buceo de este mensaje en los hechos). Minis, en la misma
+  franja: 0.47 frente a 0.46, 24 → 20 fallos y 20 → 17 diálogos; 0.48 frente a 0.47, 31 → 16 y 24 → 14.
+- **Meta de CALN:**
+  - **sparring:** la 9.ª (s04b, contra la 0.47) tuvo 1 grave (el de 9 años metido en el minicurso), arreglado en la 0.48;
+    la 10.ª (s04c) y la 11.ª (s04d), contra la 0.48, **sin graves**: dos seguidas, las dos mías;
+  - **bancos sin bajar:** el banco de grupos de Álvaro sobre la 0.48 (2 pasadas) da 71/90 en los 45 casos de su base de
+    la 0.45 (73/90), con las mismas esperas: −2, en g17 (ya fallaba) y g29 (una pasada). g30 y g31 solo «bajan» con la
+    espera nueva de los bebés (d219d93f), que depende del lector de CALN-17. El prompt del extractor no cambió desde la
+    0.45 (solo el código de después), así que ex0 no puede bajar.
+- **Para tu decisión por la mañana:**
+  1. **El cierre formal de CALN.** Gonzalo propuso (#2944) y acepté (#2945) una tanda de otro autor antes de cerrar: la
+     7.ª de Álvaro encontró 2 graves que mis tandas no veían. Gonzalo la lanza contra la 0.48 desde las 02:41: si sale sin
+     graves, son tres seguidas y de dos autores. Quedan también: Álvaro revisa los «al límite» de la 10.ª (jubilados t2,
+     el origen dos veces; vuelo t1, el aviso de las 12 h en t2) y los graves abiertos que no salieron en las tandas (el
+     regalo y el bebé, CALN-17; el nocturno, aparcado; «stay one day longer in rosario» → las islas).
+  2. **CALN-17, el diseño de Álvaro.** Sus escalones 1a, 1b, 2 y U en el prompt del extractor se midieron y salieron
+     todos: cada frase sobre el grupo mueve otras lecturas (1b rompe R8 10 → 0; 1a se inventa `is_certified` 10/10).
+     Propone un lector del grupo aparte (2a31c642, `feature/caln17-alvaro`). Es otra llamada y otra pieza: decisión tuya.
+  3. **La teoría del minicurso (CALN-19):** `services.json` la pide desde Cartagena; ¿se mantiene o se quita?
+  4. **RAG R1-R3** (la propuesta de Álvaro de la mañana del 3-nov), después de CALN.
+- **Rama con los hallazgos de la noche:** `feature/caln-integra048-gadea` `dab50470` (S04C y S04D en
+  `docs/robustness/g3/hallazgos.md`, encima de la 0.48): va con la siguiente integración.
+- **Medios y menores que se repiten** (para arreglar por clase): «¿para cuántas personas?» a quien habla en singular
+  (CALN-18, en s04c y s04d); «¿saldrías desde Cartagena?» cuando ya lo dijo (ORIGEN-CONFIRMA); «se elige en el enlace» sin
+  el enlace (s04d, Guadalajara t2).
+- **Gasto del juez (GPT) esta noche:** dos minis (~2 $ cada una). El sparring y el banco de grupos no usan el juez.
+
 ### ▶️ RETOMAR AQUÍ — 4-nov, 00:45 (Gadea con Claude; Álvaro y Gonzalo): 0.46.0 EN PRE; meta de CALN 1 de 2; candidata 0.47 lista
 
 - **PRE sirve `fc501282`** (HISTORY 0.46.0, `feature/pre_gadea` = `feature/caln-gadea`), sano (CI verde, 23 ajustes, humo
