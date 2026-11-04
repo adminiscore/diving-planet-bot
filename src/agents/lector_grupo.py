@@ -281,7 +281,14 @@ def completar(datos: dict, lectura: dict, total_sabido: int | None = None,
 
     # El reparto de la lectura, solo si cuenta a todos y suma el total: «somos 6 amigos: 4 tenemos certificación y 2
     # dudan» leído como quien escribe + 4 + 2 suma 7 (b6, 19 de 20 lecturas hasta el 28-oct, que daban {undecided: 7}).
-    if (not (reparto and _suma(reparto) == total) and total_lector is not None and total_lector == total
+    # Sparring s04i (embarazada): el extractor da {snorkel: 1, undecided: 1} y cuadra, pero la lectura sabe que el otro es un
+    # buzo que bucea («mi esposo es buzo Advanced… mientras él bucea»): manda ella. Solo con un buzo: con cualquiera, al niño
+    # de 4 que el extractor dejaba sin elegir la lectura le daba snorkel (banco g40).
+    sin_decidir = (reparto or {}).get(grupo.SIN_DECIDIR)
+    decide_a_mas = (bool(sin_decidir) and _contadas(personas) and not reparto.get("certified_diving")
+                    and any(p["actividad"] == "certified_diving" and p["certificado"] is True for p in personas)
+                    and de_la_lectura()[0].get(grupo.SIN_DECIDIR, 0) < sin_decidir)
+    if ((not (reparto and _suma(reparto) == total) or decide_a_mas) and total_lector is not None and total_lector == total
             and _contadas(personas) and sum(p["cantidad"] for p in personas) == total):
         out["group_allocation"], sin_elegir = de_la_lectura()
         cambios.append(f"group_allocation={out['group_allocation']}")

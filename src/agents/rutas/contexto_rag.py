@@ -559,6 +559,17 @@ def _build_extra_context(state: ConversationState) -> str | None:
         else:
             parts.append(f"The customer already said there are {group_size} people in total.")
 
+    # Sparring s04i (embarazada): con el total y nada más, el escritor decía «selecciona 2 personas en cada enlace» a un buzo
+    # y una de snorkel (2 de 3): pagaría el doble.
+    lang = "es" if state.language == "es" else "en"
+    reparto = {dom.by_id(a).label.get(lang): n for a, n in (state.detected_group_allocation or {}).items()
+               if isinstance(n, int) and n > 0 and dom.by_id(a) is not None}
+    if len(reparto) > 1:
+        lista = ", ".join(f"{n} × {nombre}" for nombre, n in reparto.items())
+        parts.append(f"Quién hace qué: {lista}. En el enlace de cada actividad se reserva solo a las personas de esa actividad."
+                     if lang == "es" else
+                     f"Who does what: {lista}. Each activity's link is booked only for the people doing that activity.")
+
     # Duracion detectada (un dia vs varios dias)
     duration = getattr(state, "detected_duration", None)
     if duration == "single_day":
