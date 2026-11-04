@@ -66,3 +66,13 @@ def test_el_escritor_del_turno_ya_recibe_la_nacionalidad_de_la_cedula(monkeypatc
     estado = _estado({TIENE_CEDULA: True, GRUPO_MIXTO: False})
     copia = asyncio.run(core._con_la_nacionalidad_del_mensaje(estado, "Yo tengo extrangeria"))
     assert copia.is_colombian is True and estado.is_colombian is None
+
+
+def test_los_hechos_del_codigo_tambien_cotizan_al_residente_con_cedula():
+    # banco-graves g-venezolano-cedula: el estado quedaba en True, pero el escritor con los hechos daba la pieza en USD.
+    from src.agents import redactor_hechos
+
+    foto = redactor_hechos._foto(_estado({TIENE_CEDULA: True, GRUPO_MIXTO: False}), {"is_colombian": None}, None)
+    assert foto.is_colombian is True
+    mixto = redactor_hechos._foto(_estado({TIENE_CEDULA: True, GRUPO_MIXTO: True}), {"is_colombian": None}, None)
+    assert mixto.is_colombian is None
