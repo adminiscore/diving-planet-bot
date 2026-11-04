@@ -59,7 +59,18 @@ integrar la rama del otro y suite en verde, porque en PRE gana el último; (3) *
 despliegue reinicia el contenedor y mata la medida del otro (avisar en el registro de Plan Coral con la hora de fin).
 Las doce normas, con su porqué, están en el documento.
 
-### ▶️ RETOMAR AQUÍ — 4-nov, 13:05 (Gadea con Claude; Gonzalo; Álvaro sin conectar desde la 01:18): 0.49.0 EN PRE; candidata 0.50 lista, sin mini válida; meta nueva, 0 clientes de ~60
+### ▶️ RETOMAR AQUÍ — 4-nov, 17:10 (Gadea con Claude; Gonzalo en pausa; Álvaro sin conectar desde la 01:18): 0.51.0 EN PRE; meta, 0 clientes de ~60
+
+- **PRE sirve `51c9ce27`** (HISTORY 0.51.0, `feature/pre_gadea`), sano; humo 5/5. Mini frente a la 0.50: **22 → 22 fallos, 18 → 17
+  diálogos**. Graves 62 → 64 de 72 (candidata sin y con Gonzalo), grupos 172/192. Actions se quedó en «in_progress» con el despliegue
+  acabado a las 16:52: `check_deploy` espera y falla, y el commit se comprueba en el servidor.
+- **Siguiente, en orden:** (1) tanda de clientes nuevos contra la 0.51 (Gonzalo la tiene pendiente; PRE libre desde las 17:09). (2) Los
+  abiertos de la mini, iguales en PRE y en la candidata: precio citado («los 5 buceos por 293» → «¡Perfecto!», roza un grave de importe),
+  equipaje (dice que no sabe y la base tiene `luggage_policy`), «2 certificados y 1 minicurso» sin plan. (3) CALN-18, «¿para cuántas
+  personas?» a quien habla en singular. (4) CALN-25 + CALN-20, medidas juntas, solo por señales de Jev. (5) CALN-23, CALN-4, CALN-5, CALN-8 (5)(6).
+- **Al escribir filtros de banco:** el puntuador busca texto, no regex, y el bot usa el apóstrofo tipográfico.
+
+### RETOMAR — 4-nov, 13:05 (Gadea con Claude; Gonzalo; Álvaro sin conectar desde la 01:18): 0.49.0 EN PRE; candidata 0.50 lista, sin mini válida; meta nueva, 0 clientes de ~60
 
 - **PRE sirve `050e512a`** (HISTORY 0.49.0, `feature/pre_gadea` = `feature/caln-gadea`), sano. OpenAI recargado por Gadea hacia
   las 11:00. Mini de la 0.49 frente a la 0.48: 27 → 26 fallos, 21 → 22 diálogos.
