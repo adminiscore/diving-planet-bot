@@ -176,7 +176,11 @@ def hechos(state: ConversationState, intenciones: list[str], actividades: list[s
                 de_las_islas = [ISLAND_SERVICE_MAP.get(s) for s in otros]
                 base_islas = _plan_base(actividad, "island", elegido)
                 otros += [s for s in de_las_islas if s and s != base_islas and s in dom.service_ids(actividad, "island")]
-            otros = _acotados(otros, varios_dias and state.duracion_de_buceo)
+            # Sparring s04j y s04l: quien quiere bucear 2 días sueltos («two separate day trips») recibía solo paquetes, sin la
+            # salida de un día, que es lo que haría cada día. Sin plan elegido, la salida base va siempre en la lista.
+            una_salida = dom.base_service_id(actividad)
+            otros = _acotados(otros, varios_dias and state.duracion_de_buceo,
+                              {una_salida, ISLAND_SERVICE_MAP.get(una_salida)} if sin_plan else frozenset())
             if otros:  # el buceo y los paquetes: el plan base y la lista de los demás con su precio
                 bloque["otros_planes"] = [{"plan": _nombre(s, lang), "precio": _precio(s, moneda),
                                            **({} if origen else {"origen": "island" if s in _DE_LAS_ISLAS else "cartagena"})}
@@ -344,11 +348,11 @@ def _origen_del_plan(sid: str) -> str:
     return "island" if sid.endswith("_already_on_island") else "cartagena"
 
 
-def _acotados(otros: list[str], paquetes_primero: bool) -> list[str]:
+def _acotados(otros: list[str], paquetes_primero: bool, siempre=frozenset()) -> list[str]:
     def varios(sid: str) -> bool:
         return ((SERVICES.get(sid) or {}).get("duration_days") or 1) > 1
 
-    orden = sorted(otros, key=lambda s: not varios(s)) if paquetes_primero else otros
+    orden = sorted(otros, key=lambda s: (s not in siempre, not varios(s))) if paquetes_primero else otros
     elegidos: list[str] = []
     for sid in orden:
         origen = _origen_del_plan(sid)

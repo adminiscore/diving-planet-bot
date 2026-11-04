@@ -278,7 +278,7 @@ def test_los_dias_de_buceo_de_este_mensaje_llegan_a_los_hechos():
     assert foto.detected_duration == "multi_day" and foto.duracion_de_buceo is True
     assert st.detected_duration is None  # el estado de verdad lo escribe la extracción
     pieza = cotizar.pieza_de_precios(hechos.hechos(foto, ["precio"], ["certified_diving"]), "es")
-    assert "Paquete de 5 inmersiones" in pieza and "Salidas de Buceo - 2" not in pieza
+    assert "Paquete de 5 inmersiones" in pieza  # y la salida de un día, por si son días sueltos (s04j, s04l)
     # sin días en el mensaje, como hoy
     foto = redactor_hechos._foto(st, {"group_size": 5}, "cartagena", "¿cuánto cuesta?")
     assert foto.detected_duration is None
