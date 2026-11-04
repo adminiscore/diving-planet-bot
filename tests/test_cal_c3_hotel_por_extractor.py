@@ -104,7 +104,7 @@ def _intent_lugar():
 
 @pytest.mark.parametrize("jev, guardado", [
     ({"choice": "none", "confidence": 0.98}, None),        # cal-71: Jev seguro de que no lo dice → sin origen
-    ({"choice": "none", "confidence": 0.40}, "island"),    # Jev duda → vale el extractor
+    ({"choice": "none", "confidence": 0.40}, None),        # CALN-9: Jev duda → se confirma, no se guarda
     ({"choice": "islands", "confidence": 0.99}, "island"),  # de acuerdo
     (None, "island"),                                       # sin Jev → como hoy
 ])

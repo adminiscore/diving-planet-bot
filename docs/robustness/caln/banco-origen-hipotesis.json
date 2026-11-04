@@ -1,0 +1,28 @@
+{
+ "about": "CALN-9 (4-nov): nombrar las islas como hipótesis o como sitio de buceo no es estar allí; afirmarlo, sí. Se puntúa con scripts/puntua_banco_edades.py, por código, en el último turno. Sirve para elegir la regla con Jev sin mover las lecturas buenas: la traza guarda su customer_place.",
+ "dialogos": [
+  {"id": "h-stay-longer", "tarea": "Hipótesis, tras preguntar por el transporte: el grave de CALN-9",
+   "turnos": ["Hi, My understanding is that the transportation to rosario is included in the Open Water course. Is that right?", "What if I decide to stay one day longer in rosario, can you provide de transfer back to cartagena?"],
+   "estado_no": {"location": "island"}},
+  {"id": "h-noche-mas-es", "tarea": "Hipótesis en español", "turnos": ["¿Y si nos quedamos a dormir una noche más en las islas, nos traen de vuelta a Cartagena al día siguiente?"],
+   "estado_no": {"location": "island"}},
+  {"id": "h-overnight-en", "tarea": "Hipótesis en inglés", "turnos": ["Could we stay overnight on the Rosario Islands after the dive and come back the next day?"],
+   "estado_no": {"location": "island"}},
+  {"id": "h-sitio-de-buceo-es", "tarea": "El sitio de buceo no es el origen", "turnos": ["Quiero bucear en las Islas del Rosario, ¿cuánto cuesta?"],
+   "estado_no": {"location": "island"}},
+  {"id": "h-sitio-de-buceo-en", "tarea": "El sitio de buceo no es el origen", "turnos": ["I'd love to snorkel in the Rosario Islands next week. How much is it?"],
+   "estado_no": {"location": "island"}},
+  {"id": "a-hotel-islas-en", "tarea": "Afirma: está en las islas", "turnos": ["I'm staying at Hotel Cocoliso on Isla Grande. How much are two dives?"],
+   "estado": {"location": "island"}},
+  {"id": "a-alojados-islas-es", "tarea": "Afirma: está en las islas", "turnos": ["Estamos alojados en Isla Grande. ¿Cuánto cuesta el snorkel?"],
+   "estado": {"location": "island"}},
+  {"id": "a-guesthouse-en", "tarea": "Afirma, con un sitio que no es un hotel base", "turnos": ["We're already on the islands, in a small guesthouse on Isla Grande. What's the price of the mini course?"],
+   "estado": {"location": "island"}},
+  {"id": "a-baru-no-opera", "tarea": "Afirma: se aloja en otro sitio; no es «ya en las islas» de nuestra base", "turnos": ["Hola, ya estoy en las Islas del Rosario, en un hostal de Isla Grande. ¿Me recogen para bucear?"],
+   "estado": {"location": "island"}},
+  {"id": "a-cartagena-en", "tarea": "Afirma: sale de Cartagena", "turnos": ["We'd leave from Cartagena. How much are two dives?"],
+   "estado": {"location": "cartagena"}},
+  {"id": "a-cartagena-es", "tarea": "Afirma: sale de Cartagena", "turnos": ["Saldríamos desde Cartagena el sábado. ¿Cuánto cuesta el minicurso?"],
+   "estado": {"location": "cartagena"}}
+ ]
+}

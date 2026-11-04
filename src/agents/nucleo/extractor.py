@@ -21,6 +21,7 @@ from src.agents.conversational_core import (
     _elige_quien_falta,
     _has_pending_answer,
     _jev_dice_que_no_lo_dice,
+    _jev_duda_del_lugar,
     _known_field_values,
     _otro_idioma_en_ingles,
     _same_for_customer,
@@ -619,13 +620,13 @@ def _poner_ubicacion(intent, state: ConversationState, message: str, datos: dict
             logger.info(f"[EXTRACT][CALN3B] el extractor calla el lugar y Jev se inclina por {por_confirmar!r}: se "
                         "confirma")
         return
-    if _jev_dice_que_no_lo_dice(state):
+    if _jev_dice_que_no_lo_dice(state) or (not guardado and _jev_duda_del_lugar(state, datos)):
         # CAL-C3c (17-oct): "bucear el lunes festivo en islas del rosario" → el extractor ponía island 3 de 3 (su regla
         # dice que nombrar las islas como sitio de buceo no basta, y no la sigue) y el bot cotizaba solo "ya en las
         # islas" (cal-71/73). El origen decide precio y enlace: se guarda solo si los dos lectores no se contradicen.
         # Jev seguro de que el mensaje NO dice dónde está → el origen queda sin saber y la reserva lo pregunta.
-        logger.info(f"[EXTRACT][CAL-C3c] el extractor dice location={lugar!r} y Jev, seguro, que el mensaje no lo "
-                    "dice: no se guarda")
+        logger.info(f"[EXTRACT][CAL-C3c] el extractor dice location={lugar!r} y Jev no lo respalda (no lo dice, o duda): "
+                    "no se guarda")
         if not guardado and (state.asked_corrections or {}).get("location") != lugar:
             # ORIGEN-CONFIRMA (27-oct, idea de Álvaro #2080, decisión de Gadea #2082): en vez de tirarlo y volver a
             # preguntar «¿desde dónde saldrías?» (lo que el cliente oye como no haberle escuchado: «Va quiero comprar
@@ -1107,8 +1108,9 @@ async def _guardar_lo_dicho(state: ConversationState, motivo: str) -> None:
         valor = (datos or {}).get(campo)
         if valor is None or sabido.get(campo) is not None:
             continue
-        if campo == "location" and valor not in ("cartagena", "island"):
-            continue
+        if campo == "location" and (valor not in ("cartagena", "island") or _jev_dice_que_no_lo_dice(state)
+                                    or _jev_duda_del_lugar(state, datos)):
+            continue  # CALN-9: tampoco aquí, sin que Jev lo respalde
         if campo == "group_size" and not (isinstance(valor, int) and valor > 0):
             continue
         setattr(state, atributo, valor)

@@ -130,7 +130,10 @@ def _origen(state: ConversationState, datos: dict, leido: bool = False) -> str |
         # se cotizaba desde Cartagena, lo guardado ANTES del turno. Si los dos lectores de ESTE mensaje dicen el mismo
         # origen (extractor y Jev seguro), manda ese. Con uno solo no («snorkel en las islas»: Jev dice none, CAL-C3c).
         return del_mensaje
-    for guardado in (state.location, state.detected_location, del_mensaje):
+    from src.agents.conversational_core import _jev_duda_del_lugar  # lazy
+
+    # CALN-9: lo que el extractor lee en este mensaje y Jev no respalda no fija el precio (una hipótesis).
+    for guardado in (state.location, state.detected_location, None if _jev_duda_del_lugar(state, datos) else del_mensaje):
         if guardado in hechos_mod.ORIGENES:
             return guardado
     if not leido and (lugar.get("confidence") or 0.0) >= CUSTOMER_PLACE_MIN:
