@@ -20,9 +20,10 @@ def test_la_familia_con_su_cita():
         _p(quien="esposo", certificado=False, cita="Mi esposo no bucea"),
         _p(quien="niños", cantidad=2, edades=[7, 4], cita="vamos con los niños, de 7 y 4 años")]}
     lectura = lg.validar(datos, MADRE)
-    assert lg.total_de(lectura) == 4 and not lectura["descartes"]
+    # CALN-17 (regla de Gadea, 3-nov): el niño de 4 no tiene edad para ninguna actividad: no cuenta.
+    assert lg.total_de(lectura) == 3 and lectura["bebes"] == 1 and not lectura["descartes"]
     assert [p["certificado"] for p in lectura["personas"]] == [True, False, None]
-    assert lectura["personas"][2]["edades"] == [7, 4]
+    assert lectura["personas"][2]["edades"] == [7] and lectura["personas"][2]["cantidad"] == 1
 
 
 def test_lo_que_no_esta_en_el_mensaje_no_entra():
