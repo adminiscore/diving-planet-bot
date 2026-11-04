@@ -17,8 +17,16 @@ from src.agents import rag_agent
     ("We are 3 friends. We land at 8 a.m. tomorrow. Can we still go at 8 a.m. tomorrow? Is lunch included?",
      ["Can we still go at 8 a.m. tomorrow?", "Is lunch included?"]),  # «a.m. tomorrow» no es fin de frase
     ("Hola\ncuánto cuesta el minicurso? y el snorkel cuánto?", ["cuánto cuesta el minicurso?", "y el snorkel cuánto?"]),
-    ("¿Cuánto cuesta el snorkel?", []),  # una sola: lo de siempre
+    ("¿Cuánto cuesta el snorkel?", []),  # una sola, y es todo el mensaje: lo de siempre
+    ("Hola, ¿cuánto cuesta el snorkel?", []),
     ("Quiero bucear el sábado", []),
+    # s04j: una sola en un mensaje largo también se busca (las mochilas)
+    ("We just booked a 5 dive package for April 13th and will stay on the Rosario islands that night. "
+     "So we have two large hiking backpacks. Will there be somewhere we can store these during the dives?",
+     ["Will there be somewhere we can store these during the dives?"]),
+    # s04j: tras una coma, el «¿» sigue la misma frase: si no, se pierde el tema
+    ("Vamos a probar el minicurso. ¿Podríamos ir el sábado? Una de nosotras no nada muy bien, ¿eso es un problema?",
+     ["¿Podríamos ir el sábado?", "Una de nosotras no nada muy bien, ¿eso es un problema?"]),
     ("¿Cuánto es lo mío? ¿y? ¿El bebé paga?", ["¿Cuánto es lo mío?", "¿El bebé paga?"]),  # «¿y?» no es pregunta
     ("¿a? ¿Precio del minicurso? ¿Hay baño? ¿Hay parqueadero? ¿Puedo llevar a mi perro?",
      ["¿Precio del minicurso?", "¿Hay baño?", "¿Hay parqueadero?"]),  # como mucho MAX_PREGUNTAS

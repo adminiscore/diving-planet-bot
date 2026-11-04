@@ -379,19 +379,24 @@ MAX_PREGUNTAS = 3
 # Gadea #2843 (s03i): la primera pregunta arrastraba el saludo y la presentación («¡Hola! Somos 4 amigas… ¿Podemos
 # llevar una botella de cava?») y su búsqueda era la del mensaje entero. Cada pregunta empieza donde empieza su frase: el
 # «¿», o tras un . o ! seguido de mayúscula («8 a.m. tomorrow?» no se corta), o tras un salto de línea.
-_INICIO_DE_FRASE = re.compile(r"¿|[.!]\s+(?=[A-ZÁÉÍÓÚÑ¡¿])|\n")
+# Sparring s04j: «Una de nosotras no nada muy bien, ¿eso es un problema?» se quedaba en «¿eso es un problema?», sin el tema: tras
+# una coma, el «¿» sigue la misma frase.
+_INICIO_DE_FRASE = re.compile(r"(?<!, )¿|[.!]\s+(?=[A-ZÁÉÍÓÚÑ¡¿])|\n")
 
 
 def preguntas_del_mensaje(texto: str) -> list[str]:
-    """Las preguntas de un mensaje que trae más de una, cada una desde donde empieza su frase hasta su «?»; [] si trae
-    una o ninguna."""
+    """Las preguntas de un mensaje, cada una desde donde empieza su frase hasta su «?»; [] si no trae ninguna o si la única que
+    trae es casi todo el mensaje. Con una sola también se busca (mini de la 0.51, las mochilas): en un mensaje largo, lo de
+    alrededor («5 dive package», «Rosario islands») llenaba el top-8 de fichas y la política de equipaje no llegaba."""
     preguntas = []
     for trozo in (texto or "").split("?")[:-1]:
         cortes = [m.start() if m.group() == "¿" else m.end() for m in _INICIO_DE_FRASE.finditer(trozo)]
         pregunta = (trozo[cortes[-1]:] if cortes else trozo).strip() + "?"
         if len(pregunta.strip("¿? ").split()) >= 2:
             preguntas.append(pregunta)
-    return preguntas[:MAX_PREGUNTAS] if len(preguntas) >= 2 else []
+    if len(preguntas) == 1 and len(preguntas[0].split()) * 2 > len((texto or "").split()):
+        return []
+    return preguntas[:MAX_PREGUNTAS]
 
 
 def _is_confident(doc: dict) -> bool:
