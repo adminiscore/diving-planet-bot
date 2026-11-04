@@ -871,6 +871,24 @@ _GRUPO_MIXTO_Q = {
         "foreigners."
     ),
 }
+# Mini de la 0.52 (4-nov, certificado-fecha-precio-cop-descuento-transferencia t5; Gadea #3202): «Yo tengo extrangeria», tras una
+# charla que ya habla de colombianos y extranjeros, el extractor lo leía como «soy extranjero» (false 8/10 con esa historia; true
+# 10/10 sin ella) y el bot cobraba en USD a un residente. En Colombia «tener (la) extranjería» es tener la cédula de extranjería:
+# paga en pesos (colombian_pricing). Jev lo afirma; el grupo mixto manda sobre esta señal (`nucleo/extractor._poner_nacionalidad`).
+# Sonda de 18 mensajes × 3 (`scripts/sonda_jev_cedula.py`): 51/54, 0,80-0,92 los que la tienen y como mucho 0,23 el resto; Jev
+# p50 0,29 → 0,29 s. Falla «Soy argentina pero tengo extranjería» (0,45): la nacionalidad delante lo confunde; decirle que
+# cuenta tenerla, aunque sea de otro país, solo lo subía a 0,50, y no se queda.
+TIENE_CEDULA = "tiene_cedula_extranjeria"
+TIENE_CEDULA_MIN = 0.7
+_TIENE_CEDULA_Q = {
+    "type": "noul",
+    "instructions": (
+        "The customer says that they themselves hold a Colombian cédula de extranjería, the residence ID for foreigners, "
+        "also when they just say they have the 'extranjería' or misspell it. It is FALSE if they only say they are a "
+        "foreigner or a tourist, if they say they do not have a cédula, if they ask a general question about foreigners or "
+        "residents, and if they say that someone else holds it."
+    ),
+}
 
 
 # CALN-18 (4-nov): «¿para cuántas personas?» a quien habla de sí mismo (7 veces en 5 tandas). «Travelling alone» lo leía Haiku 2 de
@@ -930,7 +948,7 @@ _PIDE_NOCTURNO_Q = {
 
 # Las preguntas de u3-4/u3-5 no son señales del router: su duda NO manda el turno al router LLM.
 _U34_QUESTIONS = (
-    CITA_PRECIO, GRUPO_MIXTO, VIAJA_SOLO, HABLA_DE_SI, SON_DIAS_DE_BUCEO, PIDE_NOCTURNO,
+    CITA_PRECIO, GRUPO_MIXTO, TIENE_CEDULA, VIAJA_SOLO, HABLA_DE_SI, SON_DIAS_DE_BUCEO, PIDE_NOCTURNO,
     ASKS_QUESTION, AFFIRMS_LOCATION, AFFIRMS_ACTIVITY, ACTIVITY_HYPOTHESIS,
     AFFIRMS_CERTIFICATION, AFFIRMS_GROUP, AFFIRMS_NATIONALITY, CORRECTS, ASKS_RECALL, NEEDS_STAFF,
     CHANGES_DATE, COMPANION_JOINS, PENDING_ANSWER, SHARES_OPEN_FACT, ADDS_PERSON, CUSTOMER_PLACE, YA_RESERVADO,
@@ -1000,6 +1018,7 @@ def _questions_for_turn(pending_slot: str | None = None) -> dict:
     q[CHANGES_DATE] = _CHANGES_DATE_Q
     q[CITA_PRECIO] = _CITA_PRECIO_Q
     q[GRUPO_MIXTO] = _GRUPO_MIXTO_Q
+    q[TIENE_CEDULA] = _TIENE_CEDULA_Q
     q[VIAJA_SOLO] = _VIAJA_SOLO_Q
     q[HABLA_DE_SI] = _HABLA_DE_SI_Q
     q[SON_DIAS_DE_BUCEO] = _SON_DIAS_DE_BUCEO_Q
@@ -1103,6 +1122,8 @@ def answers_to_signals(answers: dict, threshold: float = THRESHOLD) -> dict:
         out[CITA_PRECIO] = (answers.get(CITA_PRECIO) or {}).get("noul", 0.0) >= CITA_PRECIO_MIN
     if GRUPO_MIXTO in answers:
         out[GRUPO_MIXTO] = (answers.get(GRUPO_MIXTO) or {}).get("noul", 0.0) >= GRUPO_MIXTO_MIN
+    if TIENE_CEDULA in answers:
+        out[TIENE_CEDULA] = (answers.get(TIENE_CEDULA) or {}).get("noul", 0.0) >= TIENE_CEDULA_MIN
     if VIAJA_SOLO in answers:
         out[VIAJA_SOLO] = (answers.get(VIAJA_SOLO) or {}).get("noul", 0.0) >= VIAJA_SOLO_MIN
     if HABLA_DE_SI in answers:
@@ -1225,7 +1246,7 @@ async def detect_routing_signals_jev(message: str, *, lang: str = "es") -> dict 
 
 # Señales de u3-4/u3-5 que NO son del router: viajan aparte (ver `detect_routing_signals_jev_full`).
 _TURN_SIGNALS = (
-    CITA_PRECIO, GRUPO_MIXTO, VIAJA_SOLO, HABLA_DE_SI, SON_DIAS_DE_BUCEO, PIDE_NOCTURNO,
+    CITA_PRECIO, GRUPO_MIXTO, TIENE_CEDULA, VIAJA_SOLO, HABLA_DE_SI, SON_DIAS_DE_BUCEO, PIDE_NOCTURNO,
     AFFIRMS_LOCATION, AFFIRMS_ACTIVITY, AFFIRMS_CERTIFICATION, AFFIRMS_GROUP, AFFIRMS_NATIONALITY, CORRECTS,
     ASKS_RECALL, NEEDS_STAFF, CHANGES_DATE, COMPANION_JOINS, SHARES_OPEN_FACT, YA_RESERVADO, PIDE_DATOS_AJENOS,
     NUEVO_CASO, PREGUNTA_SI_ES_IA, CAMBIA_IDIOMA, PIDE_PRECIO, PIDE_SERVICIO_PRIVADO, PIDE_QUE_INCLUYE, *_INTENCIONES_Q,

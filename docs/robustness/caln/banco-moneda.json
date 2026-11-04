@@ -33,6 +33,10 @@
      "debe": ["USD|dollar"]},
     {"id": "m10-colombianos-viven-fuera", "tarea": "control: los dos colombianos aunque vivan fuera: COP, no mixto",
      "turnos": ["Somos colombianos los dos, aunque vivimos en Madrid. ¿El snorkel desde Cartagena lo pagamos en pesos?"],
-     "debe": ["COP|pesos"]}
+     "debe": ["COP|pesos"]},
+    {"id": "m11-extrangeria-tras-hablar-de-moneda", "tarea": "«tengo extrangeria» (mal escrito) tras preguntar por colombianos y extranjeros (así fallaba la mini de la 0.52; m5 no habla antes de la moneda): COP",
+     "turnos": ["Hola, soy buzo certificado. ¿Los precios son distintos para colombianos y para extranjeros?",
+                "Yo tengo extrangeria", "¿Cuánto cuesta la salida de 2 inmersiones desde Cartagena?"],
+     "estado": {"is_colombian": true}, "debe": ["COP|pesos"]}
   ]
 }
