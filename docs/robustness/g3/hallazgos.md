@@ -1129,7 +1129,7 @@ darle el enlace.
 ## CALN-S04M-01..10 · 14.ª tanda de sparring contra PRE 0.52.0 (4-nov, `charla_pre`)
 
 Criterio de Álvaro (#2716), Haiku por Anthropic. 10 clientes nuevos, educados y que escriben bien (conv 6881-6890), con temas distintos a S04H-S04L, elegidos antes de ver nada: 9 sin
-graves y 1 con grave. Llegan hasta el enlace o el asesor en 8 de 10; los otros dos paran antes (Open Water y Advanced, la pareja del crucero). **Meta de CALN-22: sigue en 0 de ~60.**
+graves y 1 con grave. Los 10 llegan al enlace o al asesor; en Rosario solo al de uno de los dos planes que pide. **Meta de CALN-22: sigue en 0 de ~60.**
 
 **Grave (1):**
 1. **Familia con hijos de 11 y 8** (conv 6888). t2: las tarjetas daban «Minicurso de Buceo [Bubble Makers]», 183 USD, con la nota de 8-10 años, y debajo «Bubble Makers», 168 USD. El de 8 parecía tener dos
