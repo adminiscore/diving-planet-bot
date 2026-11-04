@@ -36,3 +36,13 @@ def test_el_de_cartagena_no_pide_completar_la_teoria():
 def test_el_colombiano_no_usa_el_enlace_de_la_web(lang, enlace, asesor):
     politica = hechos._politica("payment_colombian", lang)
     assert enlace in politica and asesor in politica
+
+
+def test_las_faq_no_contradicen_el_enlace():
+    """Auditoría del 4-nov: la FAQ 14 («¿Los colombianos pagan diferente?») decía que podían reservar en la web, y las 26 y
+    27 mandaban a reservar a una página informativa (sparring s03g y s03a: «Book here» con la página informativa)."""
+    faqs = {str(f.get("origen")): f for f in json.loads((BASE / "curada/faqs.json").read_text(encoding="utf-8-sig"))["faqs"]}
+    assert "asesor" in faqs["14"]["answer_es"] and "advisor" in faqs["14"]["answer_en"]
+    for clave in ("26", "27"):
+        assert not re.search(r"reservar", faqs[clave]["answer_es"]) and not re.search(r"\bbook\b", faqs[clave]["answer_en"])
+
