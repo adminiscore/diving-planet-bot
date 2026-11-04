@@ -1017,3 +1017,29 @@ porque eran graves conocidos.
 
 **Menores:** «El precio te lo dejo a continuación» después de la lista (venezolana t1); bebé de 10 meses guardado como edad 10 (`detected_ages`, sin efecto
 visible aquí); «how many people?» a quien habla en singular (alemán); la pregunta del asesor con el texto del cierre (holanda t3).
+
+## CALN-S04I-01..10 · Tanda de contraste de Gonzalo contra PRE 0.50 (4-nov, `charla_rama` sobre 5f40a8a1)
+
+Criterio de Álvaro (#2716). 10 clientes nuevos, educados y que escriben bien (`docs/robustness/g3/charlas-rama/s04i-*`), elegidos antes de ver nada: 8 sin
+graves y 2 con graves. Repetición en PRE 0.50 ×3 (`s04i-*` en `banco-graves.json`, `abierto`), 0 respaldos: fallan 2 de 3 cada uno.
+
+**Graves (2):**
+1. **Embarazada** (esposo Advanced, ella snorkel). t4: «selecciona 2 personas en cada enlace», cuando es 1 buceo y 1 snorkel: pagaría el doble. t2, t3 y t4:
+   «¿ya tienen esa certificación o quieren sacarla con el curso?», 3 veces, tras decir Advanced en t1 y repetirlo, y con `is_certified` ya en true desde t3.
+   El reparto se queda en {snorkel: 1, undecided: 1}: el esposo «buzo Advanced» no entra como buceo. La traza: «el extractor amplía el reparto…, pero Jev dice que
+   ya estaba contado».
+2. **Belgas** (Advanced en Isla Grande del 8 al 12, vuelo el 13 a las 7, dos días y una nocturna). t1: recomienda el paquete de 3 de un día, cuando piden dos
+   días; la lista trae el snorkel y no el paquete de 4 con nocturna (236 USD), y dice «the 5-dive option's return timing would leave a very short interval before your 7
+   a.m. flight»: falso, pueden acabar días antes. Además, «the second day returns to Cartagena» a quien duerme en las islas. Se corrige en t2 cuando el cliente
+   lleva la cuenta. Misma clase que el alemán de S04H (CALN-19).
+
+**BIEN:** chilenos («tengo el Rescue» ya no se lee como curso; el vuelo a 18 h, bien calculado), padre e hijo de 12 (Open Water), tensión y operación de corazón (al
+asesor, sin consejo médico), lluvia (reprograma o reembolso; el cambio, al asesor), luna de miel (privado, al asesor), residente con amigo de Texas (la reserva
+mixta en USD; al asesor). `two dives` se descarta bien en Londres t1 y t2 (`son inmersiones, no días`).
+
+**Medios:**
+- Londres: no da el precio con el descuento de grupo («I can't calculate», decisión de negocio pendiente); `multi_day` por la estancia («next week») y el paquete de 4 en la lista.
+- Familia con niña de 8, t2: pide refresher ×2 y snorkel; da bien los dos enlaces, pero añade la tarjeta de Fun Dives para 2. Tampoco suma el total.
+- Residente: t1 no contesta qué paga cada uno hasta t2; «should I change it?» al final; el descuento de grupo a una pareja.
+
+**Menores:** «I'm leaving the prices below» debajo de la lista (niña de 8); el miedo al agua profunda de la luna de miel no se contesta.
