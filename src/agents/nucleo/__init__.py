@@ -23,6 +23,8 @@ módulo, con su fase y lo que solo usa esa fase:
                         `extract_notes` en un test, `nucleo.notas.extract_notes`.
 - `reparto.py`        → el reparto del grupo entre actividades cuando el cliente contesta (CALN-8 (5), 5-nov); los
                         nodos lo importan de aquí.
+- `plan.py`           → el plan: cuántos días dura, si hay que dormir en las islas, el que se recomienda y la
+                        pregunta del origen según el plan (CALN-8 (5), 5-nov).
 - `slotfill_close.py` → `_slotfill_close_phase`: preguntar el hueco que falta o cerrar la reserva, y el acuse en
                         paralelo.
 
