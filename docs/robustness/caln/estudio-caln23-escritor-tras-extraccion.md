@@ -1,10 +1,54 @@
 # CALN-23 · Que el escritor redacte con la extracción ya hecha — estudio (4-nov, Gonzalo)
 
-**Recomendación: no cambiar el orden del turno por ahora.** Esperar a la extracción no cuesta latencia, pero con este
-prototipo las respuestas no mejoran: ninguno de los defectos desaparece y algunos salen más. Decide Gadea.
+**Resultado tras dos vueltas: el orden no cambia nada a favor, y recomiendo cerrar CALN-23 sin integrarlo.** Esperar a la extracción
+no cuesta latencia y ahorra un 7-8 % de llamadas y coste, pero las respuestas no mejoran y tienden a empeorar un poco. Decide Gadea.
 
-Hecho aparte, que sí parece aprovechable: la respuesta adelantada (rag-5) se tira y se rehace casi siempre. Ver «Qué
-miraría después».
+## Vuelta 2 (decisión de Gadea, #3292): la pregunta final como hoy
+
+Mismo cambio, sin tocar la pregunta (`fijar_pregunta_del_escritor`, solo con una pendiente), sobre la 0.52.0 (6595abed, rama
+`feature/caln23-v2-gonzalo` be931d72). Mismo banco, 8 pasadas intercaladas, 96 turnos por lado y 56 puntuables. A solas en PRE, salvo un minuto
+de medida de Gadea al empezar.
+
+| | A, hoy | B, tras la extracción |
+|---|---:|---:|
+| p50 | 4,85 s | 4,82 s |
+| p90 | 6,91 s | 6,83 s |
+| p95 | 7,25 s | 7,01 s |
+| Máximo | 9,5 s | 8,4 s |
+| Turnos de más de 7 s | 7 | 5 |
+| Llamadas por turno | 4,96 | 4,56 |
+| Coste por turno (milésimas de $) | 1,05 | 0,98 |
+| Búsquedas (embeddings) | 351 | 193 |
+| Llamadas al escritor | 114 | 103 |
+| Recorta el compositor (de 96) | 36 | 34 |
+| Adelantada rehecha / aprovechada | 39 / 10 | — |
+
+**A ciegas, 28 pares:** A mejor en 8, B mejor en 5, empate en 15. Respaldos: A, 1 del lector y 3 de otras piezas; B, 2 del lector. Ninguno del extractor.
+
+**Por código, los 56 turnos puntuables:**
+
+| Defecto | A | B |
+|---|---:|---:|
+| Menú genérico | 13 | 15 |
+| «¿Para cuántas personas?» | 1 | 4 |
+| Pago explicado dos veces | 3 | 7 |
+| Mismo enlace dos veces | 4 | 4 |
+| Lista vacía | 0 | 0 |
+
+Quitar la pregunta del prototipo arregla lo peor de la vuelta 1 (menú 24 → 15, compositor 80 → 34): aquello era del prototipo. Lo que queda:
+
+- **Calidad, juntando las dos vueltas:** A mejor en 15 pares, B en 10, empate en 31. No es significativo, pero en ninguna vuelta gana B.
+- **Dos defectos suben en las dos vueltas:** el pago dos veces (4 → 7 y 3 → 7) y «¿para cuántas personas?» (1 → 8 y 1 → 4). Lo del pago tiene sentido: con la
+  nacionalidad ya guardada, el escritor explica el pago y la tarjeta también. Es una hipótesis, sin demostrar.
+- **Ningún defecto de la lista original desaparece.**
+- **Latencia:** iguales. Las diferencias son pequeñas y no las doy por reales.
+
+**Para el pago con un solo dueño:** esperar a la extracción no lo arregla, sino que lo repite más. Hay que decírselo al escritor de otra forma.
+
+**Lo que sí queda como dato:** la respuesta adelantada se rehace 39 de 49 veces (34 de 47 en la vuelta 1) y sin ella la latencia no sube. Pero aquí se quitó junto con
+el resto: quitarla sola, dejando el escritor en paralelo a la extracción, no se ha medido y es otra prueba.
+
+# Vuelta 1 (solo lo que sigue valiendo)
 
 ## Qué se comparó
 
@@ -79,17 +123,6 @@ la extracción hecha.
 - Banco pequeño, elegido por sus defectos y sin los turnos sin pregunta: no sirve para estimar calidad general, solo para comparar.
 - Sin juez, sin mini y sin bancos de grupos o graves.
 - Una sonda de Jev de Álvaro coincidió con el primer minuto de la primera pasada (hasta las 21:43). Al intercalar, no sesga.
-
-## Qué miraría después, si Gadea quiere
-
-1. **Quitar la respuesta adelantada o afinarla.** Se rehace 34 de 47 veces. El dato de arriba dice que sin ella no se pierde
-   latencia y se ahorra alguna llamada; pero se midió junto al resto del prototipo. Es lo más barato de probar por separado:
-   sin rag-5, con la pregunta como hoy.
-2. **B con la misma pregunta que A** (solo con pregunta pendiente): una pasada igual dice si el empeoramiento era del prototipo.
-3. **Los duplicados, por su sitio:** que la tarjeta y el escritor sepan qué dice el otro. Es otra tarea.
-
-Los puntos 1 y 2 se miden a la vez, con unos 20 minutos de PRE a solas, después de la 0.52b. Tocan `conversational_core.py`:
-hay que coordinarlo con CALN-8 (5) de Álvaro.
 
 ## Medidas que no cuentan
 
