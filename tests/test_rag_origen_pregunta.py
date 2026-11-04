@@ -140,7 +140,9 @@ async def test_y_en_pesos_tras_la_pregunta_del_origen_tampoco_cotiza(monkeypatch
     await route_message(st, "¿cuánto cuesta?")
     resp = await route_message(st, "Gracias - y en pesos?")
     assert conversacion[-1]["message"] == "Gracias - y en pesos?"  # el RAG contestó (y cotizaba)...
-    assert "RESPUESTA_RAG" not in resp and resp.endswith(core.ORIGEN_TRAS_LAS_VARIANTES_ES)  # ...pieza y pregunta
+    # ...la pieza, y sin la pregunta del origen: ya salió 2 veces (0.52b, el freno de `compositor.componer`).
+    assert "RESPUESTA_RAG" not in resp and "*Precios por persona*" in resp
+    assert core.ORIGEN_TRAS_LAS_VARIANTES_ES not in resp and st.preguntas_hechas["location"] == 2
     assert st.pregunta_precio_pendiente  # sigue pendiente: se contesta cuando diga el origen
 
 

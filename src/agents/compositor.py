@@ -55,6 +55,38 @@ def _ya_se_pregunto_bastante(state, slot: str | None) -> bool:
     return not set(getattr(state, "_intenciones", None) or []) & {"pago", "enlace"}
 
 
+def _contar_la_pregunta(state, slot: str | None) -> None:
+    hechas = dict(getattr(state, "preguntas_hechas", None) or {})
+    hechas[slot] = hechas.get(slot, 0) + 1
+    state.preguntas_hechas = hechas
+
+
+def _con_el_freno_del_origen(state, respuesta: str) -> str:
+    """0.52b: el origen también se pregunta por caminos que no pasan por `ask_slot` (tras la lista de precios de los dos orígenes,
+    tras los dos enlaces y la confirmación de ORIGEN-CONFIRMA), y en la mini eran 7 de 7 turnos sumando los tres: cuentan como la
+    misma pregunta. Si ya salió bastante, se quita y se queda lo que el cliente pidió. Son textos nuestros, fijos, no del cliente."""
+    from src.agents import conversational_core as core  # lazy
+
+    resto_por_pregunta = {
+        **{texto: "" for por_idioma in core._CONFIRMA_ORIGEN.values() for texto in por_idioma.values()},
+        core.ORIGEN_TRAS_LAS_VARIANTES_ES: "",
+        core.ORIGEN_TRAS_LAS_VARIANTES_EN: "",
+        core.ORIGEN_TRAS_LOS_ENLACES_ES: "Reserva con el de tu punto de salida.",
+        core.ORIGEN_TRAS_LOS_ENLACES_EN: "Book with the one for your starting point.",
+    }
+    fija = next((p for p in resto_por_pregunta if p in respuesta), None)
+    if fija is None:
+        return respuesta
+    if _ya_se_pregunto_bastante(state, core.SLOT_LOCATION):
+        sin = respuesta.replace(fija, resto_por_pregunta[fija]).rstrip()
+        if len(_palabras(sin)) >= _PALABRAS_DE_UNA_RESPUESTA:
+            logger.info(f"[CORE][052B] compositor: el origen ya salió {_VECES_MAX} veces sin contestarse: no sale otra")
+            _aplazar(state)
+            return sin
+    _contar_la_pregunta(state, core.SLOT_LOCATION)
+    return respuesta
+
+
 def _es_la_misma(a: str, b: str) -> bool:
     """Dos textos que dicen lo mismo: las mismas cifras y casi las mismas palabras (sobre el más largo)."""
     if re.findall(r"\d[\d.,]*", a) != re.findall(r"\d[\d.,]*", b):
@@ -209,6 +241,8 @@ def componer(state, respuesta: str, *, pase: bool = False, escribio: bool | None
         escribio = bool(hechos_del_turno().get("rag_used"))
     respuesta = _una_oferta_del_asesor(_sin_el_cierre_si_ya_pregunta(_sin_parrafos_repetidos(_sin_saludo_repetido(
         respuesta, escribio=escribio))))
+    if not pase:
+        respuesta = _con_el_freno_del_origen(state, respuesta)
     preguntas = getattr(state, "_preguntas_del_turno", None) or []
     pendiente = state.core_pending_slot
     final = next((texto for slot, texto in reversed(preguntas) if slot == pendiente and texto), None)
@@ -230,7 +264,5 @@ def componer(state, respuesta: str, *, pase: bool = False, escribio: bool | None
         logger.info(f"[CORE][052B] compositor: {pendiente!r} ya salió {_VECES_MAX} veces sin contestarse: no sale otra")
         _aplazar(state)
         return cuerpo
-    hechas = dict(getattr(state, "preguntas_hechas", None) or {})
-    hechas[pendiente] = hechas.get(pendiente, 0) + 1
-    state.preguntas_hechas = hechas
+    _contar_la_pregunta(state, pendiente)
     return f"{cuerpo.rstrip()}{_PARRAFO}{final}" if cuerpo.strip() else final

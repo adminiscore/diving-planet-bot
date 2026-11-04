@@ -1,4 +1,5 @@
 """0.52b: la misma pregunta de la reserva no sale una 3.ª vez (grave por criterio de Álvaro, #2716)."""
+from src.agents import conversational_core as core
 from src.agents.compositor import componer
 from src.flows.state import ConversationState
 
@@ -43,6 +44,38 @@ def test_si_pide_reservar_o_pagar_si_sale_porque_hace_falta():
 
 def test_sin_nada_mas_que_decir_si_sale():
     assert PREGUNTA in _turno(_estado(veces=2), cuerpo="¡Perfecto! 🙌")
+
+
+def _estado_sin_slot(veces=0, intenciones=None):
+    estado = _estado(veces=veces, intenciones=intenciones)
+    estado._preguntas_del_turno = []
+    estado.core_pending_slot = None
+    return estado
+
+
+def test_el_origen_tras_la_lista_de_precios_cuenta_y_a_la_tercera_no_sale():
+    fija = core.ORIGEN_TRAS_LAS_VARIANTES_ES
+    estado = _estado_sin_slot()
+    assert fija in componer(estado, f"{RESPUESTA}\n\n{fija}", escribio=True)
+    assert fija in componer(estado, f"{RESPUESTA}\n\n{fija}", escribio=True)
+    assert estado.preguntas_hechas["location"] == 2
+    assert componer(estado, f"{RESPUESTA}\n\n{fija}", escribio=True) == RESPUESTA
+
+
+def test_la_confirmacion_del_origen_es_la_misma_pregunta():
+    fija = core._CONFIRMA_ORIGEN["island"]["es"]
+    assert componer(_estado_sin_slot(veces=2), f"{RESPUESTA}\n\n{fija}", escribio=True) == RESPUESTA
+
+
+def test_tras_los_dos_enlaces_se_queda_la_indicacion_y_no_la_pregunta():
+    fija = core.ORIGEN_TRAS_LOS_ENLACES_ES
+    texto = componer(_estado_sin_slot(veces=2), f"{RESPUESTA}\n\n{fija}", escribio=True)
+    assert "Reserva con el de tu punto de salida." in texto and "¿Saldrías" not in texto
+
+
+def test_el_origen_si_sale_si_pide_el_enlace():
+    fija = core.ORIGEN_TRAS_LAS_VARIANTES_ES
+    assert fija in componer(_estado_sin_slot(veces=2, intenciones=["enlace"]), f"{RESPUESTA}\n\n{fija}", escribio=True)
 
 
 def test_cada_pregunta_lleva_su_cuenta():
