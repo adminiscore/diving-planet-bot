@@ -59,7 +59,7 @@ integrar la rama del otro y suite en verde, porque en PRE gana el último; (3) *
 despliegue reinicia el contenedor y mata la medida del otro (avisar en el registro de Plan Coral con la hora de fin).
 Las doce normas, con su porqué, están en el documento.
 
-### ▶️ RETOMAR AQUÍ — 4-nov, 02:50 (Gadea con Claude, de noche; Gonzalo; Álvaro sin conectar desde la 01:18): 0.48.0 EN PRE; meta de sparring de CALN cumplida, falta tu cierre formal
+### ▶️ RETOMAR AQUÍ — 4-nov, 04:00 (Gadea con Claude, de noche; Gonzalo; Álvaro sin conectar desde la 01:18): 0.48.0 EN PRE; meta de sparring de CALN cumplida, falta tu cierre formal; candidata 0.49 medida, sin subir
 
 - **PRE sirve `df18eaa0`** (HISTORY 0.48.0, `feature/pre_gadea` = `feature/caln-gadea`), sano (CI verde, 23 ajustes, humo
   5/5, 0 errores, 0 respaldos). Esta noche subieron la 0.47 (`55d0ed30`: CALN-16 v2, el escritor con hechos también recibe
@@ -100,6 +100,16 @@ Las doce normas, con su porqué, están en el documento.
   colombianos» → 2, el R8, el idioma y tres invenciones del escritor. Es ruido (la misma 0.48 dio 16/14 y 18/15), pero la
   regla es «igual o mejor»: no la subí de noche. Opciones: subirla por el análisis, o repetir la mini (~2 $ de juez).
   Borrador de HISTORY 0.49 en `docs/robustness/caln/borrador-history-049.md`, para cuando suba.
+- **Otra rama para la siguiente integración:** `feature/caln-huerfanas-gadea` d9a37979 (s04d, Múnich t1). Cuando la pieza
+  de precios quita la lista con los importes que anunciaba un párrafo, ese anuncio ya no queda con los dos puntos y la
+  lista vacía («you have two options for certified divers:»): acaba en punto. Es determinista; sin medir en mini.
+- **Causas encontradas de noche, sin tocar:**
+  - el vuelo de la 10.ª (t1 sin el aviso de las 12 h): la búsqueda de CALN-11 no usa la frase que va detrás de la
+    pregunta («I have a flight… that same day»); propuesta a Álvaro en Coral, #2962;
+  - la despedida con «¿con cuál te animas?» (s04d, la tarde t2) viene de lat-9: el turno sin dato cierra con la pregunta
+    pendiente, y para no hacerla haría falta una señal de «se despide»;
+  - «¿qué puede hacer mi esposa?» recibe una sola opción (jubilados t2): las opciones deberían llegar al escritor desde
+    el registro de actividades, no en una FAQ escrita a mano.
 - **Medios y menores que se repiten** (para arreglar por clase): «¿para cuántas personas?» a quien habla en singular
   (CALN-18, en s04c y s04d); «¿saldrías desde Cartagena?» cuando ya lo dijo (ORIGEN-CONFIRMA); «se elige en el enlace» sin
   el enlace (s04d, Guadalajara t2).
