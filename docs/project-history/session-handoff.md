@@ -59,6 +59,31 @@ integrar la rama del otro y suite en verde, porque en PRE gana el último; (3) *
 despliegue reinicia el contenedor y mata la medida del otro (avisar en el registro de Plan Coral con la hora de fin).
 Las doce normas, con su porqué, están en el documento.
 
+### ▶️ RETOMAR AQUÍ — 4-nov, 13:05 (Gadea con Claude; Gonzalo; Álvaro sin conectar desde la 01:18): 0.49.0 EN PRE; candidata 0.50 lista, sin mini válida; meta nueva, 0 clientes de ~60
+
+- **PRE sirve `050e512a`** (HISTORY 0.49.0, `feature/pre_gadea` = `feature/caln-gadea`), sano. OpenAI recargado por Gadea hacia
+  las 11:00. Mini de la 0.49 frente a la 0.48: 27 → 26 fallos, 21 → 22 diálogos.
+- **Candidata 0.50: `feature/caln-integra050-gadea`** (suite 3268; `kb_v2_gadea` ya cargada con su base) = 0.49 +
+  `feature/base-minicurso-pago-gadea` + `feature/dos-buceos-gonzalo` + `feature/caln-frases-gonzalo` +
+  `feature/caln17-lector-gadea` + `feature/caln24-enlaces-gadea` + este banco. **Falta su mini:** la de las 12:35 es INVÁLIDA
+  (`c050-A` y `c050-B`, sin juez): Haiku atascado en OpenRouter desde las 11:36 UTC, 59 y 100 respaldos del extractor
+  (gpt-5.4-mini) de 201 turnos por lado; a las 10:10 UTC eran 0. Repetirla a solas cuando se recupere, con otro nombre (el jsonl
+  se abre añadiendo), y **contar los `*_respaldo` antes de lanzar el juez**.
+- **Meta de CALN nueva (Gadea, 4-nov; CALN-22):** unos 60 clientes seguidos sin graves, de al menos dos autores, + bancos sin
+  bajar; cada grave, a un banco fijo. Dos tandas seguidas de 8 clientes pasaban por azar entre un 12 y un 29 % de las veces. Van 0:
+  la tanda de contraste de Gonzalo contra la 0.49 (s04h, `feature/s04h-gonzalo`) dio 3 graves.
+- **Decisiones de Gadea de hoy:** (1) el colombiano siempre lo cierra un asesor (ya estaba decidido el 21-oct en
+  `decisiones.json`: no preguntarlo otra vez); (2) el minicurso es igual desde Cartagena o desde las islas, sin teoría online ni
+  por correo; (3) las 2 regex de «two dives» de Gonzalo se quedan, y después se prueba que lo decida Jev (CALN-25).
+- **Corrección de los relevos de la noche:** CALN-17 NO esperaba una decisión de diseño ni pide otra llamada. El lector aparte ya
+  existe (`lector_grupo.py`); Álvaro lo corrigió a la 01:07 (#2911). Hecho en `feature/caln17-lector-gadea`: banco de grupos de
+  48 casos, 4 pasadas, 168/192 frente a 70/96 de la 0.48. Siguen mal g12, g17 y g45.
+- **Auditoría de la base (dos pasadas, `docs/robustness/auditoria-base/2026-11-04-caln-4nov*.json`):** 1 contradicción real, la
+  FAQ 14; a mano, las FAQ 26 y 27 (reservar en una página informativa). El resto, falsas alarmas: 12 h frente a 18 h, el
+  formulario del refresher, «the form is in Spanish». Sin garantía de que no quede nada: las dos pasadas no coinciden del todo.
+- **Orden en Plan Coral:** 0.50 → CALN-9 (se lo ofrecí a Gonzalo) → CALN-22 (el banco de graves, ya creado: falta su base) →
+  CALN-19 → CALN-18 → CALN-25 → CALN-23 → CALN-4 y 5 → CALN-8. Con Álvaro o Gonzalo fuera, se coge lo siguiente.
+
 ### ▶️ RETOMAR AQUÍ — 4-nov, 04:50 (Gadea con Claude, de noche; Álvaro sin conectar desde la 01:18; Gonzalo sin turnos desde las 02:43): OPENAI SIN SALDO, PRE degradado; 0.48.0 EN PRE; candidata 0.49 sin medir; meta 0 de 2
 
 - **⚠️ OPENAI SIN SALDO desde las ~04:35** (`credit_balance_exhausted`, 429; comprobado con una llamada de embeddings).
@@ -95,9 +120,9 @@ Las doce normas, con su porqué, están en el documento.
      graves, son tres seguidas y de dos autores. Quedan también: Álvaro revisa los «al límite» de la 10.ª (jubilados t2,
      el origen dos veces; vuelo t1, el aviso de las 12 h en t2) y los graves abiertos que no salieron en las tandas (el
      regalo y el bebé, CALN-17; el nocturno, aparcado; «stay one day longer in rosario» → las islas).
-  2. **CALN-17, el diseño de Álvaro.** Sus escalones 1a, 1b, 2 y U en el prompt del extractor se midieron y salieron
-     todos: cada frase sobre el grupo mueve otras lecturas (1b rompe R8 10 → 0; 1a se inventa `is_certified` 10/10).
-     Propone un lector del grupo aparte (2a31c642, `feature/caln17-alvaro`). Es otra llamada y otra pieza: decisión tuya.
+  2. **CALN-17.** Sus escalones 1a, 1b, 2 y U en el prompt del extractor se midieron y salieron todos: cada frase sobre el
+     grupo mueve otras lecturas (1b rompe R8 10 → 0; 1a se inventa `is_certified` 10/10). CORREGIDO el 4-nov a las 11:15: esto
+     decía que hacía falta un lector nuevo y era falso; ver el relevo de las 13:05.
   3. **La teoría del minicurso (CALN-19):** `services.json` la pide desde Cartagena; ¿se mantiene o se quita?
   4. **RAG R1-R3** (la propuesta de Álvaro de la mañana del 3-nov), después de CALN.
   5. **«¿Para cuántas personas?» a quien habla en singular** (CALN-18, en s04c y s04d): para preguntarlo distinto hay que

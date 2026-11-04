@@ -1,0 +1,247 @@
+{
+ "about": "CALN-22 (4-nov, decisión de Gadea): los graves del sparring desde el 30-oct, para repetirlos en cada integración y que no vuelvan, por código y sin juez, con los mensajes reales. Se corre con reproducir_juez_pre --banco y se puntúa con scripts/puntua_banco_edades.py (último turno). `abierto`: grave conocido sin arreglar, se espera que falle. Los del grupo están en banco-grupo.json (g35, g30, g31, g37-g42, g46, g47) y «two dives» en banco-dos-inmersiones.json: se pasan los tres.",
+ "dialogos": [
+  {
+   "id": "g-descuentos-se-suman",
+   "tarea": "S30A: ¿se suman el de grupo, el de equipo y el online? Sin respuesta",
+   "turnos": [
+    "Buenas. Soy buzo Advanced, argentino, voy a estar en Cartagena. En otra escuela me dejan las 2 inmersiones más baratas. ¿Me hacen un precio mejor? Llevo mi propio equipo completo.",
+    "Y si al final vamos 5 amigos, todos con equipo propio, ¿nos suman el de grupo, el de equipo y el online? ¿Cuánto quedaría por persona?"
+   ],
+   "debe": [
+    "no se combin|no se suman|no se acumul|no son acumulables"
+   ]
+  },
+  {
+   "id": "g-refresher-y-buceo-dia-2",
+   "tarea": "S30A: refresher el día 1 y buceo el día 2; contestaba con los hechos de uno",
+   "turnos": [
+    "Hey! I got my Open Water certification 3 years ago but haven't dived since. I'm staying in Getsemaní for a week and would love to dive on two different days. What would you recommend and how much is it? Can I pay cash in dollars on the boat?",
+    "Yes, from Cartagena. I'm German by the way. So what's the plan, the refresher on day one and normal dives on day two? Does the refresher day include lunch too?"
+   ],
+   "debe": [
+    "refresher"
+   ],
+   "ninguno": [
+    "can't confirm|cannot confirm"
+   ]
+  },
+  {
+   "id": "g-hoy-mismo",
+   "tarea": "S30E: «¿podemos bucear hoy?» → «sí, reservad para hoy»; para el mismo día no hay",
+   "turnos": [
+    "Hi, we're two friends from Chicago, we're at the hotel in the old town right now. Can we go diving TODAY? We are both certified."
+   ],
+   "ninguno": [
+    "reservar para hoy|reservad para hoy|reserven para hoy|book for today"
+   ]
+  },
+  {
+   "id": "g-venezolano-cedula",
+   "tarea": "S30E: cédula de extranjería y esposa colombiana → «grupo mixto, en USD»; pagan en pesos",
+   "abierto": "extractor (sonda del 30-oct)",
+   "turnos": [
+    "Hola, soy venezolano, vivo en Cartagena hace 5 años y tengo cédula de extranjería. Mi esposa es colombiana. Queremos hacer el minicurso los dos. ¿Cuánto es y podemos pagar con Nequi?"
+   ],
+   "debe": [
+    "cop|pesos"
+   ],
+   "ninguno": [
+    "grupo mixto"
+   ]
+  },
+  {
+   "id": "g-nieto-certificado",
+   "tarea": "S30E: el nieto de 13 «puede hacer buceo certificado» sin certificación",
+   "turnos": [
+    "Buenas tardes. Soy de Medellín, buzo certificado desde hace años, tengo 70 años y me operaron de la rodilla hace un año. Quiero bucear con mis nietos de 9 y 13 años. ¿Qué podemos hacer los tres y cuánto cuesta?"
+   ],
+   "ninguno": [
+    "puede hacer buceo certificado|pueden hacer buceo certificado"
+   ]
+  },
+  {
+   "id": "g-paquete-4-islas-sin-enlace",
+   "tarea": "S03G: el de 4 desde las islas, con la página informativa como reserva",
+   "turnos": [
+    "Hi, I'm Advanced Open Water certified, from London. I'm staying at a hotel on Isla Grande for 5 days. I'd like the 4-dive package over 2 days. How much and how do I book?",
+    "Great, I'll take the 4-dive package for next Tuesday and Wednesday. I'm at Hotel Isla del Encanto. Do I need to bring my certification card? How do I pay?",
+    "Just me, 1 person. Is that link really where I book the package? I only see general info there."
+   ],
+   "debe": [
+    "asesor|advisor"
+   ],
+   "ninguno": [
+    "divingplanet.org/buceo-islas"
+   ]
+  },
+  {
+   "id": "g-silla-llega-al-asesor",
+   "tarea": "S03A: silla de ruedas: «pásame con el asesor» sin llegar nunca",
+   "turnos": [
+    "Hola, buenas tardes. Soy de Medellín y uso silla de ruedas desde un accidente hace 5 años (paraplejia). Siempre he querido probar el buceo. ¿Es posible con ustedes? Iría con mi hermana, que tampoco ha buceado.",
+    "Qué bueno! Antes de hablar con el asesor: ¿cuánto cuesta más o menos? ¿La lancha y el muelle son accesibles para la silla? Y mi hermana podría hacer el minicurso el mismo día conmigo?",
+    "Sí, pásame con el asesor. Pero no me respondiste: ¿la lancha es accesible con la silla? Y el minicurso de mi hermana cuánto vale? Salimos desde Cartagena.",
+    "Sí, ya te dije que sí. Pásame con el asesor por favor."
+   ],
+   "debe": [
+    "asesor"
+   ],
+   "ninguno": [
+    "no puedo transferir|no puedo registrar"
+   ]
+  },
+  {
+   "id": "g-ssi-pagina-informativa",
+   "tarea": "S03A: SSI y nitrox: «reserva aquí» con la página informativa",
+   "turnos": [
+    "Buenas! Soy argentino, tengo Advanced de SSI con unas 40 inmersiones. Me interesa bucear con nitrox en las Islas del Rosario. Me sirve mi certificación SSI? Ustedes tienen nitrox?",
+    "Pará, yo voy a estar en un hostel en el centro de Cartagena, no en las islas. Desde Cartagena cuánto sale el curso de nitrox? Y cuántos días son? Quiero hacer también un par de buceos normales.",
+    "Solo yo. Y una salida normal de 2 buceos cuánto cuesta? La idea es un día el nitrox y otro día los 2 buceos. Cómo reservo las dos cosas?",
+    "No, buceé en mayo en Puerto Madryn. Perfecto, reservo las dos. Puedo pagar con mi tarjeta argentina en pesos argentinos o tiene que ser en dólares?"
+   ],
+   "ninguno": [
+    "divingplanet.org/tours-buceo-snorkel-cartagena/"
+   ]
+  },
+  {
+   "id": "g-nocturno",
+   "tarea": "S03H: pide el nocturno y la tarjeta es la de 2 de día",
+   "abierto": "CALN-20, aparcado",
+   "turnos": [
+    "Hey, I'm a certified diver and I'd love to do a night dive. Is that possible? How much?",
+    "From Cartagena. I'm Canadian, Advanced Open Water, last dive 6 months ago. Just me, next Tuesday.",
+    "Yes, I want the night dive package, that's why I asked."
+   ],
+   "ninguno": [
+    "salidas-de-buceo/1"
+   ]
+  },
+  {
+   "id": "g-bebe-no-paga",
+   "tarea": "S03H: el bebé de 2 años pagaba como acompañante",
+   "turnos": [
+    "Hola, voy con mi esposo que es buzo y nuestro bebé de 2 años. ¿Puedo ir en la lancha con el bebé mientras él bucea?",
+    "Desde Cartagena, el domingo 8. Somos colombianos, de Medellín. Él hace las 2 inmersiones y yo voy de acompañante con el bebé. ¿Cuánto es lo mío? ¿El bebé paga?",
+    "Vale. ¿Cómo reservo lo de los dos? Él tiene el Open Water y buceó hace un año.",
+    "Antes de eso: ¿el bebé paga como acompañante? En la tarjeta pone 2 personas."
+   ],
+   "estado": {
+    "detected_group_size": 2
+   },
+   "debe": [
+    "no paga|gratis|sin costo|no tiene costo"
+   ],
+   "ninguno": [
+    "paga la tarifa de acompanante|paga como acompanante"
+   ]
+  },
+  {
+   "id": "g-cmas-sin-enlace-ajeno",
+   "tarea": "S03J: el de 4 sin enlace recibía el enlace del paquete de 5",
+   "turnos": [
+    "Hola, buceo con certificación CMAS una estrella y tengo 30 inmersiones. ¿Puedo bucear con ustedes?",
+    "Desde Cartagena. Soy argentino. Quiero el paquete de 4 inmersiones en 2 días, la semana que viene, solo yo.",
+    "Perfecto, ¿me pasas el enlace para reservarlo?"
+   ],
+   "debe": [
+    "asesor"
+   ],
+   "ninguno": [
+    "2-days-5-dives"
+   ]
+  },
+  {
+   "id": "g-nino-9-minicurso",
+   "tarea": "S04B: «can our 11-year-old do the mini course?» metía también al de 9",
+   "turnos": [
+    "Hello, we're a family from Toronto staying at Hotel San Pedro de Majagua on the islands. Our kids are 9 and 11. What can they do? We parents would snorkel.",
+    "Yes, please connect us about the Bubble Makers. Meanwhile, can our 11-year-old do the mini course instead of snorkeling?"
+   ],
+   "estado_no": {
+    "detected_group_allocation": {
+     "snorkel": 2,
+     "minicourse": 2
+    }
+   }
+  },
+  {
+   "id": "g-si-al-asesor-se-reconoce",
+   "tarea": "S04E: con la tarjeta en pesos ya vista, «Sí, por favor» no pasaba al asesor",
+   "turnos": [
+    "Hola, buenas noches. Somos una pareja de Barranquilla y queremos hacer snorkel el domingo saliendo desde Cartagena. ¿Cuánto cuesta y qué incluye?",
+    "Perfecto, gracias. ¿Y cuánto dura la salida? ¿A qué hora volvemos?",
+    "Sí, por favor."
+   ],
+   "debe": [
+    "les paso con un asesor"
+   ]
+  },
+  {
+   "id": "g-tres-dias-plan",
+   "tarea": "S04E: «bucear tres días seguidos» → la tarjeta de 2 inmersiones",
+   "turnos": [
+    "Hola, somos 5 amigos de Lima, todos con Open Water, y queremos bucear tres días seguidos saliendo desde Cartagena. ¿Qué paquete nos recomiendan y hay descuento por ser grupo?",
+    "Somos peruanos. Ninguno lleva más de un año sin bucear. ¿Cómo reservamos los cinco?"
+   ],
+   "debe": [
+    "3-days-7-dives"
+   ],
+   "ninguno": [
+    "salidas-de-buceo/1",
+    "2 inmersiones en 1 dia"
+   ]
+  },
+  {
+   "id": "g-horas-hasta-el-vuelo",
+   "tarea": "S04H: el miércoles «too close» a un vuelo el viernes a las 10 (son ~46 h)",
+   "abierto": "CALN-19",
+   "turnos": [
+    "Hello, I'm from Hamburg and I'm staying in Bocagrande next week. I'm Open Water certified but my last dive was three years ago. I'd like to dive this Thursday and I fly home on Friday at 10 in the morning. Is that possible, and what would it cost?",
+    "OK, then I'd rather dive on Wednesday. Is the refresher all I do that day, or can I also do normal dives? And how do I book?"
+   ],
+   "ninguno": [
+    "too close|too soon"
+   ]
+  },
+  {
+   "id": "g-quedarse-un-dia-mas",
+   "tarea": "CALN-9: «stay one day longer in rosario» leído como «ya en las islas»",
+   "abierto": "CALN-9",
+   "turnos": [
+    "Hi, My understanding is that the transportation to rosario is included, in case I decided to do PADI Open Water Diver certification course., correct?",
+    "What if I decide to stay one day longer in rosario, can you provide de transfer back to cartagena?"
+   ],
+   "estado_no": {
+    "location": "island"
+   }
+  },
+  {
+   "id": "d-colombiano-no-usa-el-enlace",
+   "tarea": "Decisión de Gadea: «¿ese enlace nos sirve para pagar?» (s04d, Playa Blanca)",
+   "turnos": [
+    "Hola, estamos alojados en Playa Blanca y queremos hacer snorkel. ¿Nos recogen ahí? Somos dos.",
+    "Somos colombianos, de Medellín. ¿Ese enlace nos sirve para pagar?"
+   ],
+   "debe": [
+    "asesor"
+   ],
+   "ninguno": [
+    "si, ese enlace|ese enlace es para reservar y pagar"
+   ]
+  },
+  {
+   "id": "d-minicurso-sin-teoria-online",
+   "tarea": "Decisión de Gadea: la teoría se hace allí",
+   "turnos": [
+    "Hola, quiero hacer el minicurso saliendo desde Cartagena. ¿Tengo que hacer alguna teoría online antes de ir?"
+   ],
+   "debe": [
+    "alli|mismo dia"
+   ],
+   "ninguno": [
+    "recibiras un correo|por correo la parte|completar la teoria"
+   ]
+  }
+ ]
+}

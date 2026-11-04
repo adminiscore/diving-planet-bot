@@ -132,3 +132,14 @@ casos sin medir se contaban como "0 fallos" y el total parecía buenísimo (ver 
 
 **La lección general:** en este flujo, un fallo de medida que se ve como un resultado bueno es más peligroso que
 cualquier regresión del bot. Si un número sale redondo de repente, hay que mirar cuántos casos se midieron.
+
+## Banco de graves (CALN-22, 4-nov, decisión de Gadea)
+
+Cada grave del sparring pasa a `docs/robustness/caln/banco-graves.json`, con sus mensajes reales y comprobaciones por código, sin
+juez. En cada integración, sobre la candidata y antes de la mini:
+
+    python -m scripts.reproducir_juez_pre --banco docs/robustness/caln/banco-graves.json --reps 3 --codigo-local --out <B>.jsonl
+    python scripts/puntua_banco_edades.py docs/robustness/caln/banco-graves.json <A>.jsonl <B>.jsonl
+
+Lo mismo con `banco-grupo.json` y `banco-dos-inmersiones.json`. Un caso con `abierto` es un grave conocido sin arreglar: se espera que
+falle. Si otro caso falla, ha vuelto un grave. Cuenta los `*_respaldo` antes de fiarte, también aquí.
