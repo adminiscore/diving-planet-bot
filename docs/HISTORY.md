@@ -1,6 +1,34 @@
 History
 =======
 
+0.51.0 - (2026-11-04, SUBE A PRE: la hora de volar bien, el lugar en hipótesis no se guarda, las opciones de quien no ha elegido y buzo con snorkel sin repetir)
+---------------------
+* **Qué sube** (sobre 0.50.0; `feature/caln-integra051-gadea`):
+  * **CALN-19, la hora de volar, 2.ª versión** (Gadea; 2aab5988): un vuelo al día siguiente a las 7:00 a. m. o más tarde sí llega, y la
+    hora de vuelta a Cartagena de ese día no cambia nada (`flight_after_diving` y FAQ 9). **Corrige la 0.50:** su HISTORY daba por
+    arreglado el 3.º grave de la tanda s04h, y la 1.ª versión no bastaba.
+  * **CALN-9** (Gadea; 3052fb43): lo que el extractor lee como lugar y Jev no respalda (`customer_place` por debajo de 0,6, una
+    hipótesis) ni se guarda ni se confirma, salvo un hotel de las islas. Banco `banco-origen-hipotesis.json`: 60/66 → 66/66.
+  * **CALN-19, las opciones** (Gadea; 61303051): el escritor recibe lo que puede hacer quien aún no ha elegido, y elige el cliente.
+    «¿Y mi esposa?»: 0/7 → 7/7 con las tres opciones.
+  * **Gonzalo** (s04i; 730edb0e): con buzo y snorkel no se repite la pregunta de la certificación si ya se sabe o el reparto lleva
+    buceo; el lector del grupo completa el reparto de los dos; y el escritor sabe quién hace qué: en cada enlace se reserva solo a
+    las personas de esa actividad.
+  * **CALN-22** (Gadea): al banco de graves, 4 casos de la hora de volar: el que llega y 3 controles que no deben cambiar.
+* **Medida** (una pasada, en la misma franja, en serie, a solas; A = PRE 0.50.0, B con `kb_v2_gadea`): mini-ronda de los 43
+  visibles: **22 → 22 fallos, 18 → 17 diálogos con fallos** (criterios 93,4 → 93,5 %). Llamadas por turno 3,70 → 3,75; p50 3,57 → 3,75 s;
+  p90 5,67 → 6,57 s; sin los turnos con respaldo, p50 3,57 → 3,58 s y p90 5,67 → 6,12 s. Respaldos: 2 en A y 11 en B, los 11 del escritor;
+  ninguno del extractor en B. Suite 3291.
+* **Bancos** (candidata sin y con el arreglo de Gonzalo, no frente a la 0.50): graves ×3, **62 → 64 de 72** (embarazada 1/3 → 3/3, belgas
+  0/3 → 1/3, venezolano 1/3 → 0/3, abierto). Grupos ×4 con Gonzalo: **172/192** (18 respaldos del extractor), frente a 168/192 de la 0.50.
+  El lado sin Gonzalo, 152/192, no vale: Haiku atascado, 163 respaldos del extractor y 129 del lector.
+* **Abiertos, los mismos en PRE y en la candidata** (el juez solo los marca en B, pero la respuesta es igual o casi):
+  * `equipaje-mochilas-y-almacenamiento`: el bot dice que no sabe dónde dejar las mochilas y la base lo tiene (`luggage_policy`).
+  * `semana-santa-solo-avanzado-islas`, t5: «los 5 buceos serían por 293» recibe «¡Perfecto!», sin decir que el precio es otro.
+  * `grupo-con-refresher`, t3: «2 certificados y 1 minicurso» acaba solo con el precio del refresher, sin el plan del grupo.
+* **Sparring:** la tanda de Gonzalo contra la 0.50 (s04i, 10 clientes) dio 2 con graves: de ahí su arreglo. Falta la tanda contra la
+  0.51. Meta de CALN-22: van 0 de ~60.
+
 0.50.0 - (2026-11-04, SUBE A PRE: el regalo y el bebé en el lector, la base corregida, la hora de volar y «two dives» no son 2 días)
 ---------------------
 * **Qué sube** (sobre 0.49.0; `feature/caln-integra050-gadea`):
