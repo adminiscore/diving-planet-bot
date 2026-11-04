@@ -15,6 +15,9 @@ módulo, con su fase y lo que solo usa esa fase:
 - `lectura.py`       → lo que dice ESTE mensaje, para quien contesta antes de que la extracción lo guarde: la
                         copia del estado con el origen, la nacionalidad, el grupo, la duración y el plan del
                         mensaje (`foto_del_turno`; CALN-8 (5) paso 1, 4-nov).
+- `origen_precio.py`  → el origen antes del precio: la puerta que no cotiza sin saber desde dónde sale el cliente,
+                        las dos variantes del catálogo, la pieza de precios por código y la pregunta del origen que
+                        se guarda (CALN-8 (5), 5-nov).
 - `slotfill_close.py` → `_slotfill_close_phase`: preguntar el hueco que falta o cerrar la reserva, y el acuse en
                         paralelo.
 
