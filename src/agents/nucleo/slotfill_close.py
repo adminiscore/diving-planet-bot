@@ -202,6 +202,44 @@ def _con_la_oferta_del_asesor(answer: str, cierre: str) -> str:
     return f"{answer.rstrip()}\n\n{oferta}"
 
 
+_ENLACE_DE_RESERVA_RE = re.compile(r"https://book\.divingplanet\.org/book/[\w\-]+/\d+")
+
+
+def _plan_del_enlace(enlace: str, lang: str) -> str | None:
+    """El nombre del plan del catálogo con ese enlace de reserva; None si no es de ninguno."""
+    from src.flows.catalog import SERVICES  # lazy
+
+    for servicio in SERVICES.values():
+        if enlace in (servicio.get("booking_url") or ""):
+            return servicio.get("name_es" if lang == "es" else "name_en")
+    return None
+
+
+def _si_chocan_los_enlaces(answer: str, cierre: str, lang: str) -> str | None:
+    """CALN-24 (sparring s04e, Lima): el escritor daba el enlace del paquete de 7 inmersiones y la tarjeta, de debajo, el de
+    2. Dos planes en el mismo mensaje, y el cliente no sabe cuál vale. Red de seguridad, sin llamadas: si la tarjeta de este
+    turno lleva enlaces y el escritor da uno de otro plan del catálogo, no sale la tarjeta y se pregunta cuál quiere.
+    Devuelve el texto del turno; None si no chocan. Sin enlaces en la tarjeta (el cierre en pesos) no se compara."""
+    del_cierre = _ENLACE_DE_RESERVA_RE.findall(cierre or "")
+    suyos = [e for e in _ENLACE_DE_RESERVA_RE.findall(answer or "") if e not in del_cierre]
+    if not del_cierre or not suyos:
+        return None
+    el_suyo, el_de_la_tarjeta = _plan_del_enlace(suyos[0], lang), _plan_del_enlace(del_cierre[0], lang)
+    if not el_suyo or not el_de_la_tarjeta:
+        return None
+    logger.info(f"[CORE][CALN24] el escritor da otro plan que la tarjeta ({suyos[0]} / {del_cierre[0]}): se pregunta")
+    pregunta = (f"Para darte el enlace correcto: ¿prefieres *{el_suyo}* o *{el_de_la_tarjeta}*? 🌊" if lang == "es" else
+                f"To give you the right link: would you prefer *{el_suyo}* or *{el_de_la_tarjeta}*? 🌊")
+    quedan = []
+    for parrafo in _sin_la_pregunta_final(answer).split("\n\n"):
+        if "book.divingplanet.org" in parrafo:
+            if quedan and quedan[-1].rstrip().endswith(":"):  # lo que anunciaba el enlace se va con él
+                quedan.pop()
+            continue
+        quedan.append(parrafo)
+    return "\n\n".join([*quedan, pregunta])
+
+
 def _finalize(state: ConversationState, *, pasar_al_asesor: bool = True, ofrecer: bool = True) -> str:
     """Todos los slots listos → resumen por actividad + links (determinista,
     del catálogo), con gating colombiano: colombiano → asesor coordina el pago
@@ -536,6 +574,12 @@ async def _slotfill_close_phase(
         # i pay" se quedaba sin el link (ronda B de u3-5). El cierre ya contesta "¿cómo pago?".
         answer = None
     cierre_igual = bool(finalized and cierre_previo and state.mixed_last_summary == cierre_previo)
+    if answer and finalized and not cierre_igual and (cual := _si_chocan_los_enlaces(answer, response, state.language)):
+        state.mixed_last_summary = cierre_previo  # la tarjeta no se ha visto: con su respuesta tiene que salir
+        state.quick_replies = []
+        response = greeting + cual
+        state.history.append({"role": "assistant", "content": response})
+        return response
     if answer:
         escrita = getattr(state, "_pregunta_del_escritor", None)
         if escrita and not _is_rag_fallback(answer) and not _answer_asks_the_origin(state, answer):
