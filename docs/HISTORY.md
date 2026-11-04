@@ -1,6 +1,21 @@
 History
 =======
 
+0.48.0 - (2026-11-04, SUBE A PRE: quien elige es quien nombra el mensaje y tiene edad, Bubble Makers con su servicio y los días de buceo en los hechos)
+---------------------
+* **Qué sube** (sobre 0.47.0; `feature/caln-integra048-gadea`): **Gadea** (s04b, d8a3f181; el grave de la 9.ª tanda,
+  tomado por la norma de reasignar con Álvaro sin conectar): (1) cuando el cliente dice qué hará quien no había elegido,
+  eligen solo los que nombra el mensaje (sus edades) y tienen edad para la actividad (`_cuantos_eligen`, `dom min_age`);
+  antes entraban todos, y «can our 11-year-old do the mini course?» metía también al de 9 (tarjeta de 2 minicursos); (2)
+  Bubble Makers sale en la tarjeta con su servicio, sin enlace y para el asesor; compartía el tipo «beginner» con el
+  minicurso y se pintaba como otro minicurso con su enlace. **Gonzalo** (a0afdfc1, el medio de s04b): los días de buceo
+  de ESTE mensaje llegan a los hechos (`_foto`); «plan de 2 días con nocturno» ya trae el paquete de 5.
+* **Medida** (una pasada, en la misma franja, en serie, a solas; A = PRE 0.47.0, B con `kb_v2_gadea`): mini-ronda de los
+  43 visibles: **31 → 16 fallos, 24 → 14 diálogos con fallos**. Llamadas por turno 3,77 → 3,73; p50 3,68 → 3,75 s; p90
+  6,01 → 6,34 s (OpenRouter más lento a las 2:00 en los dos lados); respaldos 9 (7 del escritor) y 2. Suite 3199.
+* **Sparring:** 9.ª tanda (Gadea, s04b, contra la 0.47) 1 grave, arreglado aquí: la meta vuelve a 0 de 2. Queda de
+  Álvaro (CALN-17): el lector del grupo leyó una vez {minicourse: 2} con los niños de 9 y 11 (1 de 6).
+
 0.47.0 - (2026-11-04, SUBE A PRE: el escritor con hechos también recibe políticas y FAQ, y la cámara propia)
 ---------------------
 * **Qué sube** (sobre 0.46.0; `feature/caln-integra047-gadea`): **Gadea** (CALN-16 v2, d4067e3d): el escritor con los
