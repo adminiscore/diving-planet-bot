@@ -1365,15 +1365,19 @@ def _take_undecided_members(intent, state: ConversationState) -> None:
     state.pending_undecided_qty = qty  # CALN-8 (2a): con ellos en la lista, se pregunta qué harán
 
 
-def _elige_quien_falta(state: ConversationState, activity: str) -> None:
+def _elige_quien_falta(state: ConversationState, activity: str, solo: int | None = None) -> None:
     """El cliente elige qué hará quien no había elegido (el botón o el nombre de la opción, el resolutor o el
     extractor). CALN-8 (2b): si se sabe cuántos son, entran ya en el reparto con su cantidad, sin preguntar «¿cuántos
     serían?» (antes quedaba la elección aparte y `_merge_pending_undecided` la juntaba más tarde en el turno); si no,
-    queda elegida a falta de cuántos (`pending_companion_activity`)."""
+    queda elegida a falta de cuántos (`pending_companion_activity`). `solo` (sparring s04b): la elección es solo de esos
+    (el mensaje nombra a quiénes); los demás siguen sin elegir."""
     cuantos = state.pending_undecided_qty
     if cuantos:
-        state.pending_undecided_qty = None  # antes de juntar: el total ya no los cuenta aparte
-        _merge_companion_activity(state, activity, cuantos)
+        n = cuantos if solo is None else max(0, min(solo, cuantos))
+        if not n:
+            return
+        state.pending_undecided_qty = (cuantos - n) or None  # antes de juntar: el total ya no los cuenta aparte
+        _merge_companion_activity(state, activity, n)
     else:
         state.pending_companion_activity = activity
 
@@ -1624,6 +1628,10 @@ def _cart_item(state: ConversationState, activity: str, qty: int) -> dict:
         plan = state.detected_service_id if activity == state.detected_activity else dom.base_service_id(activity)
         if plan:
             plan = cart_render.service_for_location(plan, state)
+    elif dom.cart_activity_for_type(item_type) not in (None, activity) and dom.base_service_id(activity):
+        # Sparring s04b (4-nov, Majagua): Bubble Makers comparte el tipo «beginner» con el minicurso, y sin plan propio el
+        # ítem salía con el servicio del minicurso y su enlace («Dive Mini Course» dos veces, una para el niño de 9).
+        plan = cart_render.service_for_location(dom.base_service_id(activity), state)
     return {"type": item_type, "qty": qty, "plan": plan,
             "label": cart_render.cart_label_for(item_type, plan, state.language)}
 

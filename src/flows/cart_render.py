@@ -275,7 +275,9 @@ def _cart_booking_blocks(state: ConversationState) -> list[dict]:
         it = item.get("type")
         if it == "refresh" or qty <= 0:
             continue
-        if it == "beginner":
+        if it == "beginner" and not item.get("plan"):
+            # Con plan propio (Bubble Makers, sparring s04b), va por el camino de abajo: su servicio, y sin enlace, al
+            # asesor. Este reparto de los niños es el del minicurso.
             beg = SERVICES.get(_cart_service_id("beginner", None, state)) or {}
             beg_name = beg.get(f"name_{lang}") or ("Minicurso de Buceo" if lang == "es" else "Dive Mini-Course")
             beg_url = _resolve_service_booking_url(beg, state)

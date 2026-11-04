@@ -264,6 +264,20 @@ def _poner_duracion(intent, state: ConversationState, datos: dict, message: str 
     logger.info(f"[EXTRACT][EX9B-6] duration={duracion!r} ({'días de buceo' if de_buceo else 'estancia'}; regex: {regex!r})")
 
 
+def _cuantos_eligen(actividad: str, datos: dict, pendientes: int) -> int | None:
+    """Sparring s04b (4-nov, Majagua): de quienes faltaban por elegir, ¿cuántos eligen `actividad` en ESTE mensaje? Si
+    nombra sus edades («can our 11-year-old do the mini course?»: [11]), son esas personas, y solo las que tienen edad
+    para la actividad (el minicurso, desde 10); los demás siguen sin elegir. Antes entraban todos: el de 9 en el
+    minicurso y la tarjeta de 2 (2/3 con charla_rama). None si no nombra edades, o nombra más que los que faltaban
+    (no se sabe de quién es cada una): todos, como siempre."""
+    edades = [e for e in ((datos or {}).get("edades") or []) if isinstance(e, int) and 1 <= e <= 99]
+    if not edades or len(edades) > pendientes:
+        return None
+    registro = dom.by_id(actividad)
+    minima = getattr(registro, "min_age", None) if registro else None
+    return sum(1 for e in edades if not minima or e >= minima)
+
+
 def _poner_edades(intent, datos: dict) -> None:
     """ex-9b paso 6: las edades son las del extractor (con la cifra validada en su cita); las del regex no cuentan si el
     extractor leyó el mensaje."""
@@ -747,7 +761,7 @@ def _poner_actividad(intent, state: ConversationState, datos: dict, message: str
         # que el botón de esa pregunta: queda para fusionarse con los que no habían elegido. Si la respuesta corta ya la
         # repartió en este turno (no queda nadie sin elegir y está en el reparto), no se cuenta otra vez.
         if state.pending_undecided_qty and not state.pending_companion_activity:
-            _elige_quien_falta(state, actividad)
+            _elige_quien_falta(state, actividad, _cuantos_eligen(actividad, datos, state.pending_undecided_qty))
         logger.info(f"[EXTRACT][CALN2] {actividad!r} contesta qué hará quien no había elegido; la principal sigue")
         return
     if actividad and dom.by_id(actividad) is not None:
