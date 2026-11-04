@@ -84,12 +84,28 @@ Las doce normas, con su porqué, están en el documento.
      Propone un lector del grupo aparte (2a31c642, `feature/caln17-alvaro`). Es otra llamada y otra pieza: decisión tuya.
   3. **La teoría del minicurso (CALN-19):** `services.json` la pide desde Cartagena; ¿se mantiene o se quita?
   4. **RAG R1-R3** (la propuesta de Álvaro de la mañana del 3-nov), después de CALN.
-- **Rama con los hallazgos de la noche:** `feature/caln-integra048-gadea` `dab50470` (S04C y S04D en
-  `docs/robustness/g3/hallazgos.md`, encima de la 0.48): va con la siguiente integración.
+  5. **«¿Para cuántas personas?» a quien habla en singular** (CALN-18, en s04c y s04d): para preguntarlo distinto hay que
+     saber si habla en singular, y hoy solo lo daría un campo nuevo del extractor (mueve otras lecturas) o un patrón.
+  6. **¿Un colombiano puede pagar el 100 % con el enlace de la web?** El código siempre lo pasa al asesor (gen-4), pero
+     el escritor dijo «sí, ese enlace es para reservar y pagar» (Playa Blanca t2, s04d) y `payment_colombian` solo dice
+     que el anticipo del 50 % no va por la web.
+- **Candidata 0.49, medida y SIN SUBIR (decisión tuya):** `feature/caln-integra049-gadea` = 0.48 + los hallazgos de la
+  noche + dos arreglos por clase (suite 3206):
+  - CALN-18 (e91f5a9b): en el cierre en pesos, la oferta del asesor una sola vez (el compositor quita la pregunta del
+    escritor de delante y deja la nuestra, la que reconoce el «sí»);
+  - s04c (7c42ecec): la puerta del origen de la respuesta en paralelo se pone al recogerla, cuando la extracción del
+    mismo mensaje ya guardó el origen (los jubilados t2: una carrera; ver S04C en los hallazgos).
+  Mini frente a PRE 0.48, a solas: **18 → 20 fallos, 15 → 18 diálogos** (respaldos 1 y 3; p50 3,63 → 3,45 s). Ningún turno
+  que empeora pasa por los dos cambios: el escritor sin enlaces en un turno sin «?», el extractor con «dos somos
+  colombianos» → 2, el R8, el idioma y tres invenciones del escritor. Es ruido (la misma 0.48 dio 16/14 y 18/15), pero la
+  regla es «igual o mejor»: no la subí de noche. Opciones: subirla por el análisis, o repetir la mini (~2 $ de juez).
+  Borrador de HISTORY 0.49 en `docs/robustness/caln/borrador-history-049.md`, para cuando suba.
 - **Medios y menores que se repiten** (para arreglar por clase): «¿para cuántas personas?» a quien habla en singular
   (CALN-18, en s04c y s04d); «¿saldrías desde Cartagena?» cuando ya lo dijo (ORIGEN-CONFIRMA); «se elige en el enlace» sin
   el enlace (s04d, Guadalajara t2).
-- **Gasto del juez (GPT) esta noche:** dos minis (~2 $ cada una). El sparring y el banco de grupos no usan el juez.
+- **Gasto del juez (GPT) esta noche:** tres minis (~2 $ cada una: 0.47, 0.48 y 0.49). El sparring y el banco de grupos no
+  usan el juez.
+- **Gonzalo** lanzó su tanda (s04g) contra la 0.48 a las 02:42 y no ha vuelto a dar turnos desde las 02:43: no está contada.
 
 ### ▶️ RETOMAR AQUÍ — 4-nov, 00:45 (Gadea con Claude; Álvaro y Gonzalo): 0.46.0 EN PRE; meta de CALN 1 de 2; candidata 0.47 lista
 
