@@ -18,6 +18,9 @@ módulo, con su fase y lo que solo usa esa fase:
 - `origen_precio.py`  → el origen antes del precio: la puerta que no cotiza sin saber desde dónde sale el cliente,
                         las dos variantes del catálogo, la pieza de precios por código y la pregunta del origen que
                         se guarda (CALN-8 (5), 5-nov).
+- `notas.py`          → las notas del cliente (lo que cuenta y no es un dato de la reserva), que se apuntan en
+                        paralelo con el turno y se esperan antes de usarlas (CALN-8 (5), 5-nov). Para cambiar
+                        `extract_notes` en un test, `nucleo.notas.extract_notes`.
 - `slotfill_close.py` → `_slotfill_close_phase`: preguntar el hueco que falta o cerrar la reserva, y el acuse en
                         paralelo.
 

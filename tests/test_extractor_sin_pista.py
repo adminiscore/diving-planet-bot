@@ -138,7 +138,7 @@ async def test_caido_turno_completo_pregunta_en_vez_de_inventar(extractor, monke
     senales = AsyncMock(return_value={})
     monkeypatch.setattr(core_routing, "detect_special_signals", senales)
     monkeypatch.setattr(core_extraction, "detect_special_signals", senales)
-    monkeypatch.setattr(core, "extract_notes", AsyncMock(return_value=[]))
+    monkeypatch.setattr("src.agents.nucleo.notas.extract_notes", AsyncMock(return_value=[]))
     monkeypatch.setattr(core_close, "_acuse_por_codigo", lambda *a, **k: "")
     st = _estado(step=Step.MAIN_MENU, history=[{"role": "user", "content": "hola"},
                                                {"role": "assistant", "content": "¡Hola! ¿En qué te ayudo?"}])

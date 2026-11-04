@@ -33,13 +33,11 @@ def _core_llm_offline(monkeypatch):
     """Deja las redes LLM del núcleo en valores fijos → maybe_handle_turn
     determinista (rag_answer ya lo stubea el conftest; detect_routing_signals
     se mockea aparte donde hace falta)."""
-    import src.agents.conversational_core as core
-
     _senales = AsyncMock(return_value={})
     monkeypatch.setattr(core_routing, "detect_special_signals", _senales)
     monkeypatch.setattr(core_extraction, "detect_special_signals", _senales)
     monkeypatch.setattr(core_extraction, "resolve_slot_answer", AsyncMock(return_value={}))
-    monkeypatch.setattr(core, "extract_notes", AsyncMock(return_value=[]))
+    monkeypatch.setattr("src.agents.nucleo.notas.extract_notes", AsyncMock(return_value=[]))
     monkeypatch.setattr(core_close, "_acuse_por_codigo", lambda *a, **k: "")
 
 
