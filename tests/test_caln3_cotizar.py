@@ -201,10 +201,24 @@ def test_paso3_el_anuncio_de_una_lista_de_importes_que_se_va_no_queda_con_dos_pu
     texto = ("Great place for a two-day trip! From Cartagena, you have two options for certified divers:\n\n"
              "- 4-dive package: 316 USD\n- 5 dives: 392 USD\n\nBoth include the boat and lunch on day 1.")
     salida = rh.con_la_pieza(texto, pieza)
-    assert salida == ("Great place for a two-day trip! From Cartagena, you have two options for certified divers.\n\n"
-                      f"Both include the boat and lunch on day 1.\n\n{pieza}")
+    assert salida == f"Great place for a two-day trip!\n\nBoth include the boat and lunch on day 1.\n\n{pieza}"
     # Si la lista se queda (sin importes), el anuncio también.
     assert rh.con_la_pieza("Options:\n\n- 4 dives\n- 5 dives", pieza).startswith("Options:\n\n- 4 dives")
+
+
+def test_paso3_la_lista_que_pierde_los_planes_se_va_entera_con_su_anuncio():
+    """Sparring s04l (Navidad t2): de la lista quedaban las frases de cada plan sin nombrarlo, y el anuncio sin lista."""
+    from src.agents import redactor_hechos as rh
+
+    pieza = "*Prices per person*:\n• 4-dive package: 316 USD · 351 USD"
+    texto = ("Yes, those dates work. For certified divers departing from Cartagena, the options are:\n\n"
+             "4-dive package: 316 USD. You'll need to stay overnight. 5 dives: 392 USD. You'll need to stay overnight.\n\n"
+             "Since you're from Canada, the booking is in USD.")
+    assert rh.con_la_pieza(texto, pieza) == f"Yes, those dates work.\n\nSince you're from Canada, the booking is in USD.\n\n{pieza}"
+    # El anuncio solo, sin nada delante, se va también.
+    assert rh.con_la_pieza("The options are:\n\n- 4 dives: 316 USD", pieza) == pieza
+    # Un párrafo que acaba en dos puntos y cuyo siguiente no pierde nada no se toca.
+    assert "Bring this:" in rh.con_la_pieza("Bring this:\n\nA towel.\n\nIt costs 316 USD.", pieza)
 
 
 def test_caln3c_buzo_con_novia_que_nunca_ha_buceado():
