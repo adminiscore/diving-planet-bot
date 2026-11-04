@@ -73,3 +73,76 @@ def test_si_la_cifra_no_es_de_ningun_plan_la_puerta_de_siempre():
 def test_con_la_tarjeta_no_va_la_pieza():
     salida = core._puerta_del_origen(_st("cartagena"), "¿cuánto cuesta?", RAG, sin_precio=True)
     assert salida == RAG                                         # con el origen sabido, tal cual (la puerta de siempre)
+
+
+# CALN-19 (4-nov, sparring s04g, holanda t1): en un mensaje mezclado, se le dice ANTES al escritor que no escriba importes.
+def _bloques():
+    from src.flows import hechos
+
+    return hechos.hechos(_st(), ["precio"], ["minicourse"])
+
+
+def test_mezclado_que_pide_precio_el_escritor_no_escribe_importes():
+    st = _st()
+    st._jev_pide_precio = True
+    bloques = _bloques()
+    entradas = {"hechos_bloques": (bloques, ["precio", "edad"])}
+    assert core._precios_por_codigo(st, entradas) is True
+    assert entradas["precios_por_codigo"] is True and entradas["hechos_bloques"] == (bloques, ["edad"])
+
+
+def test_sin_precio_o_sin_pedirlo_no_cambia_nada():
+    st = _st()
+    st._jev_pide_precio = True
+    entradas = {"hechos_bloques": (_bloques(), ["incluye"])}
+    assert core._precios_por_codigo(st, entradas) is False and "precios_por_codigo" not in entradas
+    assert core._precios_por_codigo(st, {}) is False
+    # arq-8f: «precio» guardado a la espera del origen en un turno que pregunta otra cosa: como `pide_ahora`
+    st._jev_pide_precio = False
+    entradas = {"hechos_bloques": (_bloques(), ["precio"])}
+    assert core._precios_por_codigo(st, entradas) is False and "precios_por_codigo" not in entradas
+
+
+def test_con_la_pieza_pedida_va_aunque_el_texto_no_traiga_importes():
+    st = _st()
+    st._hechos_del_rag = (_bloques(), ["precio"])
+    texto = "El minicurso dura un día e incluye una inmersión con instructor. Te dejo el precio a continuación."
+    assert core._con_la_pieza(st, texto) is None  # sin pedirla, como hasta hoy
+    salida = core._con_la_pieza(st, texto, pieza_pedida=True)
+    assert salida.startswith("El minicurso dura un día") and "655.000" in salida and "475.000" in salida
+    assert salida.endswith(core.ORIGEN_TRAS_LAS_VARIANTES_ES)
+
+
+def test_al_recoger_con_el_origen_ya_guardado_no_se_repregunta():
+    # u3-4: la respuesta en paralelo se recoge cuando la extracción ya guardó el origen que los hechos no sabían
+    st = _st("cartagena")
+    st._hechos_del_rag = (_bloques(), ["precio"])
+    salida = core._con_la_pieza(st, "El minicurso dura un día.", pieza_pedida=True)
+    assert "655.000" in salida and "475.000" not in salida and not core._es_pregunta_de_origen(salida)
+
+
+async def test_el_escritor_recibe_la_regla_y_la_pieza_va_debajo(monkeypatch):
+    from unittest.mock import AsyncMock
+
+    from src.agents import supervisor
+
+    st = _st()
+    st._jev_pide_precio = True
+    bloques = _bloques()
+
+    async def hechos_rag(state, message, history, **_k):
+        state._hechos_del_rag = (bloques, ["precio", "edad"])
+        return "[hechos]"
+
+    recibido = {}
+
+    async def escritor(message, **kw):
+        recibido.update(kw)
+        return "El minicurso es para mayores de 10 años. Te dejo el precio a continuación."
+
+    monkeypatch.setattr(core, "_con_hechos", AsyncMock(return_value=None))
+    monkeypatch.setattr(core, "_hechos_para_el_rag", hechos_rag)
+    monkeypatch.setattr(supervisor, "rag_answer", escritor)
+    salida = await core._rag_answer(st, "¿cuánto cuesta y desde qué edad?", history=[])
+    assert recibido["precios_por_codigo"] is True and recibido["hechos_bloques"][1] == ["edad"]
+    assert salida.startswith("El minicurso es para mayores") and "*Precios por persona*" in salida

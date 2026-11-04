@@ -1785,6 +1785,7 @@ async def _rag_answer(
     if hechos := await _hechos_para_el_rag(state, message, state.history if history is None else history):
         entradas["hechos"] = hechos  # arq-1g
         entradas["hechos_bloques"] = state._hechos_del_rag
+    pieza_pedida = not sin_precio and _precios_por_codigo(state, entradas)
     if sin_precio:  # G3-07a: solo se pasa cuando hace falta (la llamada de siempre no cambia)
         entradas["sin_precio"] = True
     if sin_busqueda:  # lat-9 paso 2: el escritor solo (`slotfill_close._sin_dato`)
@@ -1799,20 +1800,21 @@ async def _rag_answer(
             answer = redactor_hechos.con_la_pieza(answer, nota)
     # 7-oct (opción C): si cotiza sin origen, se pregunta el origen; quien la recibe deja el estado preparado
     # (`_fijar_origen_antes_del_precio`).
-    return _con_la_puerta(state, message, answer, al_recoger=puerta_al_recoger, sin_precio=sin_precio)
+    return _con_la_puerta(state, message, answer, al_recoger=puerta_al_recoger, sin_precio=sin_precio,
+                          pieza_pedida=pieza_pedida)
 
 
 def _con_la_puerta(state: ConversationState, message: str, answer: str, *, al_recoger: bool,
-                   sin_precio: bool = False) -> str:
+                   sin_precio: bool = False, pieza_pedida: bool = False) -> str:
     """La puerta del origen, ya o al recoger la respuesta. Sparring s04c (jubilados t2, «Desde Cartagena. Somos
     argentinos. ¿Y mi esposa qué puede hacer?»): la respuesta en paralelo (u3-4) corre a la vez que la extracción, y la
     puerta miraba el estado antes de que la extracción de ESTE mensaje guardara el origen: los precios de los dos
     orígenes y la pregunta del origen, y debajo otra vez la de la reserva. Con `al_recoger`, la puerta la pone
     `_take_parallel_answer`, cuando la extracción ya acabó (gen-15 lo arreglaba con Jev solo en una de sus ramas)."""
     if al_recoger:
-        state._puerta_al_recoger = (message, sin_precio)
+        state._puerta_al_recoger = (message, sin_precio, pieza_pedida)
         return answer
-    return _puerta_del_origen(state, message, answer, sin_precio=sin_precio)
+    return _puerta_del_origen(state, message, answer, sin_precio=sin_precio, pieza_pedida=pieza_pedida)
 
 
 # CAL-C3d (17-oct, flag `tras_pase_recuerda_el_pase`): tras pasar la conversación a un asesor, "¿me podrías ayudar con
@@ -1981,19 +1983,21 @@ async def _adoptar_o_rehacer(state: ConversationState, message: str, history: li
     if hechos := await _hechos_para_el_rag(state, message, history):
         entradas["hechos"] = hechos  # arq-1g: la adelantada salió sin ellos, así que su huella no coincide y se rehace
         entradas["hechos_bloques"] = state._hechos_del_rag
+    pieza_pedida = _precios_por_codigo(state, entradas)
     huella = _huella_rag(message, entradas)
     if huella == adelantado["huella"]:
         note_turn(rag_used=True, rag_adelantado="aprovechado")
         logger.info("[CORE][RAG5] respuesta adelantada aprovechada")
         answer = await adelantado["task"]
-        return _con_la_puerta(state, message, answer, al_recoger=puerta_al_recoger)  # 7-oct: opción C, ver `_rag_answer`
+        # 7-oct: opción C, ver `_rag_answer`
+        return _con_la_puerta(state, message, answer, al_recoger=puerta_al_recoger, pieza_pedida=pieza_pedida)
     adelantado["task"].cancel()
     # Diagnóstico (30-sep): la mitad de los intentos de la ronda rag5-B se rehicieron y no se sabía por qué.
     cambio = ",".join(n for n, a, b in zip(_PARTES_HUELLA, adelantado["huella"], huella, strict=True) if a != b)
     note_turn(rag_adelantado="rehecho", rag_rehecho_por=cambio)
     logger.info(f"[CORE][RAG5] el contexto cambió entre medias ({cambio}): se rehace la respuesta")
     answer = await supervisor.rag_answer(message, **entradas)
-    return _con_la_puerta(state, message, answer, al_recoger=puerta_al_recoger)
+    return _con_la_puerta(state, message, answer, al_recoger=puerta_al_recoger, pieza_pedida=pieza_pedida)
 
 
 async def rag_con_adelantado(state: ConversationState, message: str, history: list) -> str:
@@ -2093,7 +2097,7 @@ async def _take_parallel_answer(state: ConversationState) -> str | None:
     if puerta := getattr(state, "_puerta_al_recoger", None):
         # La puerta del origen, con lo que la extracción de este mensaje ya guardó (`_con_la_puerta`).
         state._puerta_al_recoger = None
-        answer = _puerta_del_origen(state, puerta[0], answer, sin_precio=puerta[1])
+        answer = _puerta_del_origen(state, puerta[0], answer, sin_precio=puerta[1], pieza_pedida=puerta[2])
     return answer
 
 
@@ -2439,19 +2443,34 @@ def _enlaza_alguno(answer: str, servicios: list[tuple[str, dict]], state: Conver
     return any(u and u.split("?")[0] in answer for u in urls)
 
 
-def _puerta_del_origen(state: ConversationState, message: str, answer: str, sin_precio: bool = False) -> str:
+def _precios_por_codigo(state: ConversationState, entradas: dict) -> bool:
+    """CALN-19 (4-nov, sparring s04g y s04e): en un mensaje mezclado que pide precio, el escritor del RAG escribía los
+    importes y `con_la_pieza` se llevaba las frases que nombran cada plan: «It requires an overnight stay… That course
+    takes two days…», sin decir de qué plan. Como en el redactor de hechos (paso 3 «A»), se le dice ANTES que no los
+    escriba (`RAG_PRECIOS_POR_CODIGO`) y la pieza va debajo, con la misma condición (`pide_ahora`). True si es el caso."""
+    bloques, intenciones = entradas.get("hechos_bloques") or (None, ())
+    if "precio" not in intenciones:
+        return False
+    if getattr(state, "_jev_pide_precio", None) is not True and not any(b.get("origen") for b in bloques):
+        return False
+    entradas.update(precios_por_codigo=True, hechos_bloques=(bloques, [i for i in intenciones if i != "precio"]))
+    return True
+
+
+def _puerta_del_origen(state: ConversationState, message: str, answer: str, sin_precio: bool = False,
+                       pieza_pedida: bool = False) -> str:
     """La respuesta del RAG tras la puerta del origen (opción C): la pregunta del origen (con las dos variantes, ord-7)
     si cotiza o enlaza sin saber el origen; si no, la respuesta tal cual. gen-19 (21-oct) añadía aquí el enlace cuando
     tocaba; se quitó por decisión de Gadea: en su banco no cambiaba nada (el enlace ya salía cuando lo piden). ord-9
     (la lista de qué incluye, de la ficha) se retiró en arq-2c (22-oct): la da el redactor de hechos.
 
     CALN-3 paso 4 (1): antes, si la respuesta cotiza, sus importes los cambia la pieza de precios (`_con_la_pieza`)."""
-    if not sin_precio and (con_pieza := _con_la_pieza(state, answer)):
+    if not sin_precio and (con_pieza := _con_la_pieza(state, answer, pieza_pedida)):
         return con_pieza
     return _origen_antes_del_precio(state, message, answer) or answer
 
 
-def _con_la_pieza(state: ConversationState, answer: str | None) -> str | None:
+def _con_la_pieza(state: ConversationState, answer: str | None, pieza_pedida: bool = False) -> str | None:
     """CALN-3 paso 4 (1) (29-oct, decisión de Gadea #2499): el RAG general aún escribe importes, de las fichas o del
     catálogo, y la puerta los quitaba sin dar otros: en la 5.ª, 12 de las 51 preguntas del origen eran de la puerta
     (caln5-B), casi todas en turnos que Jev no daba por precio («¿cuánto va a subir?», el coste del refresher). Ahora, si
@@ -2463,7 +2482,9 @@ def _con_la_pieza(state: ConversationState, answer: str | None) -> str | None:
     from src.flows import cotizar  # lazy
     from src.flows.catalog import SERVICES  # lazy
 
-    if not answer or not _IMPORTE_RE.search(answer) or not _cotiza_alguno(answer, list(SERVICES.values())):
+    if not answer:
+        return None
+    if not pieza_pedida and not (_IMPORTE_RE.search(answer) and _cotiza_alguno(answer, list(SERVICES.values()))):
         return None
     lang = "es" if state.language == "es" else "en"
 
@@ -2475,7 +2496,11 @@ def _con_la_pieza(state: ConversationState, answer: str | None) -> str | None:
                 if s.get(k)}
 
     dados = cifras(answer) & set().union(*(de_servicio(s) for s in SERVICES.values()))
-    _, bloques = cotizar.bloques_de_precio(state)
+    # Con la pieza pedida, los hechos que ya tiene el escritor (lo que dice ESTE mensaje, `_foto`), salvo que al recoger la
+    # respuesta en paralelo la extracción ya haya guardado el origen que esos hechos no sabían.
+    bloques = cotizar.bloques_de_precio(state)[1]
+    if pieza_pedida and not (state.location and not any(b.get("origen") for b in state._hechos_del_rag[0])):
+        bloques = state._hechos_del_rag[0]
     pieza = cotizar.pieza_de_precios(bloques, lang)
     if not pieza or not dados <= cifras(pieza):
         # Cotiza otro plan que el del estado («quiero reservar el paquete de 5 buceos» con la salida de 2 de base, o el

@@ -24,7 +24,7 @@ async def _rag(query, **kw):
 
 
 def _puerta_que_apunta(vistos):
-    def puerta(st, mensaje, answer, sin_precio=False):
+    def puerta(st, mensaje, answer, sin_precio=False, pieza_pedida=False):
         vistos.append((st.location, mensaje, sin_precio))
         return f"{answer} [puerta]"
     return puerta
