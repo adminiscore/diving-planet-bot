@@ -49,6 +49,50 @@ _VECES_MAX = 2
 _PALABRAS_DE_UNA_RESPUESTA = 5
 
 
+# CALN-27 (un dato, un solo dueño): el enlace de reserva lo pone la tarjeta. Si el escritor da el mismo, sobra el suyo: en 16 de 50
+# charlas de sparring salía el enlace o el pago dos veces. Se compara exacto, sin leer el sentido, y solo se toca lo de antes de la
+# 1.ª tarjeta (dos tarjetas pueden llevar el mismo enlace, como el minicurso y los Bubble Makers).
+_ENLACE_DE_RESERVA_RE = re.compile(r"https://book\.divingplanet\.org/book/[\w\-]+/\d+")
+_ENLACE_CON_IDIOMA_RE = re.compile(_ENLACE_DE_RESERVA_RE.pattern + r"(?:\?[\w=&\-]*)?")
+_TARJETA_RE = re.compile(r"(?m)^🤿 \*")
+_FIN_DE_FRASE_RE = re.compile(r"(?<=[.!?:])\s+")
+
+
+def _sin_enlaces_repetidos(respuesta: str) -> str:
+    """Quita de lo que escribe el escritor la frase del enlace que ya sale más abajo. Lo que anunciaba el enlace («Reserva aquí:»)
+    se va con él; si el párrafo se queda sin nada, se va entero."""
+    tarjeta = _TARJETA_RE.search(respuesta)
+    if not tarjeta:
+        return respuesta
+    cuerpo, resto = respuesta[:tarjeta.start()], respuesta[tarjeta.start():]
+    de_la_tarjeta = set(_ENLACE_DE_RESERVA_RE.findall(resto))
+    if not de_la_tarjeta & set(_ENLACE_DE_RESERVA_RE.findall(cuerpo)):
+        return respuesta
+    parrafos = []
+    for parrafo in cuerpo.split(_PARRAFO):
+        lineas = []
+        for linea in parrafo.split("\n"):
+            frases = []
+            for frase in _FIN_DE_FRASE_RE.split(linea):
+                if set(_ENLACE_DE_RESERVA_RE.findall(frase)) & de_la_tarjeta:
+                    if frases and frases[-1].rstrip().endswith(":"):
+                        frases.pop()
+                    # Lo que venga detrás del enlace sin punto («…: https://… Lleva tu carné.») no es la frase del enlace.
+                    detras = _ENLACE_CON_IDIOMA_RE.split(frase)[-1].lstrip(" .,;)")
+                    if re.search(r"[^\W\d_]{2,}", detras):
+                        frases.append(detras)
+                    continue
+                frases.append(frase)
+            if frases or not linea.strip():
+                lineas.append(" ".join(frases))
+        while lineas and lineas[-1].rstrip().endswith(":"):
+            lineas.pop()
+        if any(x.strip() for x in lineas):
+            parrafos.append("\n".join(lineas))
+    logger.info("[CORE][CALN27] compositor: el enlace del escritor ya sale en la tarjeta: fuera el suyo")
+    return f"{_PARRAFO.join(p.strip() for p in parrafos if p.strip())}{_PARRAFO}{resto}" if parrafos else resto
+
+
 def _ya_se_pregunto_bastante(state, slot: str | None) -> bool:
     if (getattr(state, "preguntas_hechas", None) or {}).get(slot, 0) < _VECES_MAX:
         return False
@@ -241,6 +285,7 @@ def componer(state, respuesta: str, *, pase: bool = False, escribio: bool | None
         escribio = bool(hechos_del_turno().get("rag_used"))
     respuesta = _una_oferta_del_asesor(_sin_el_cierre_si_ya_pregunta(_sin_parrafos_repetidos(_sin_saludo_repetido(
         respuesta, escribio=escribio))))
+    respuesta = _sin_enlaces_repetidos(respuesta)
     if not pase:
         respuesta = _con_el_freno_del_origen(state, respuesta)
     preguntas = getattr(state, "_preguntas_del_turno", None) or []
