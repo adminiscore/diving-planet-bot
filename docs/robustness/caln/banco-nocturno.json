@@ -1,0 +1,59 @@
+{
+  "about": "CALN-20 (4-nov, decisión de Gadea): pedir el nocturno elige el paquete que lo lleva, por una señal de Jev. Por código y sin juez; se corre con reproducir_juez_pre --banco y se puntúa con scripts/puntua_banco_edades.py (último turno). Los paquetes con nocturna sin enlace (el de 3 desde Cartagena, el de 4 mixto y el de 9 desde las islas) los cierra un asesor.",
+  "dialogos": [
+    {
+      "id": "noct-canadiense-s03h",
+      "tarea": "S03H: pide el nocturno y la tarjeta era la de 2 de día; el de 3 desde Cartagena no tiene enlace: asesor",
+      "turnos": [
+        "Hey, I'm a certified diver and I'd love to do a night dive. Is that possible? How much?",
+        "From Cartagena. I'm Canadian, Advanced Open Water, last dive 6 months ago. Just me, next Tuesday.",
+        "Yes, I want the night dive package, that's why I asked."
+      ],
+      "ninguno": ["salidas-de-buceo/1"]
+    },
+    {
+      "id": "noct-en-un-mensaje-es",
+      "tarea": "Lo pide con todos los datos en un mensaje",
+      "turnos": [
+        "Hola, soy Advanced y canadiense, sin cédula colombiana, viajo solo y mi última inmersión fue hace 6 meses. Salgo desde Cartagena y quiero hacer una inmersión nocturna. ¿Cuánto cuesta?"
+      ],
+      "debe": ["3 inmersiones"],
+      "ninguno": ["salidas-de-buceo/1"]
+    },
+    {
+      "id": "noct-desde-las-islas",
+      "tarea": "Desde las islas el de 3 sí tiene enlace",
+      "turnos": [
+        "Hi, I'm Advanced, Canadian with no Colombian ID, travelling alone, and my last dive was 6 months ago. I'm staying at Hotel Cocoliso and I'd love to do a night dive. How much is it?"
+      ],
+      "debe": ["3 dives|3-dive"],
+      "ninguno": ["salidas-de-buceo/1"]
+    },
+    {
+      "id": "noct-dos-dias",
+      "tarea": "Dos días con nocturna desde Cartagena: el paquete de 5",
+      "turnos": [
+        "Hi, I'm Advanced, Canadian with no Colombian ID, travelling alone, and my last dive was 6 months ago. I'm in Cartagena and I want to dive on two different days, including a night dive. How much is it?"
+      ],
+      "debe": ["392"],
+      "ninguno": ["salidas-de-buceo/1"]
+    },
+    {
+      "id": "c-noct-no-lo-quiere",
+      "tarea": "Control: no quiere el nocturno; sigue con las 2 de día",
+      "turnos": [
+        "Hi, I'm Advanced, Canadian with no Colombian ID, travelling alone, and my last dive was 6 months ago. I'm in Cartagena. We don't want the night dive, just the 2 daytime dives. How much is it?"
+      ],
+      "debe": ["178"],
+      "ninguno": ["3 dives"]
+    },
+    {
+      "id": "c-noct-pregunta-que-es",
+      "tarea": "Control: preguntar qué es no elige el paquete",
+      "turnos": [
+        "Hola, soy Advanced y canadiense, sin cédula colombiana, viajo solo y mi última inmersión fue hace 6 meses. Quiero bucear desde Cartagena la salida de 2 inmersiones. ¿Qué es el buceo nocturno, da miedo?"
+      ],
+      "ninguno": ["3 inmersiones (1 dia"]
+    }
+  ]
+}

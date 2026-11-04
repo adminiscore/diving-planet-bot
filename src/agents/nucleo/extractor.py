@@ -205,18 +205,61 @@ async def _aplicar_extractor(intent, state: ConversationState, message: str, pis
     _poner_nacionalidad(intent, state, message, datos)
     _poner_certificacion(intent, state, message, datos)
     _poner_duracion(intent, state, datos, message)
+    _poner_plan_nocturno(intent, state, datos, message)
     _poner_edades(intent, datos)
     _poner_otras_personas(state, datos)
     _poner_actividad_preguntada(state, datos)
     intent._actividad_preguntada = datos.get("actividad_preguntada")  # la de ESTE mensaje (flu-1, `_flag_cert_or_course`)
 
 
+def dias_de_buceo_de(datos: dict | None, state: ConversationState) -> int | None:
+    """CALN-25 (decisión de Gadea, 4-nov): los días de buceo del extractor, salvo que su cita cuente inmersiones («for two
+    dives») y Jev esté seguro de que no habla de varios días. Sustituye a 2 regex, que descartaban también «two dives on
+    Saturday and Sunday». Si Jev calla, vale lo del extractor."""
+    from src.agents.jev_router import SON_DIAS_DE_BUCEO, SON_DIAS_NO_MAX  # lazy
+
+    dias = (datos or {}).get("dias_de_buceo")
+    if not isinstance(dias, int) or isinstance(dias, bool) or dias <= 0:
+        return None
+    if (datos or {}).get("_dias_citan_inmersiones"):
+        p = (getattr(state, "_senales_router", None) or {}).get(SON_DIAS_DE_BUCEO)
+        if p is not None and p < SON_DIAS_NO_MAX:
+            logger.info(f"[EXTRACT][CALN25] son inmersiones, no días (Jev {p:.2f}): dias_de_buceo={dias!r} se descarta")
+            return None
+    return dias
+
+
+def paquete_nocturno_pedido(state: ConversationState, datos: dict | None, message: str,
+                            duracion: str | None = None) -> int | None:
+    """CALN-20 (decisión de Gadea, 4-nov; sparring s03h): pide el nocturno sin decir cuántas inmersiones («I'd love to do a
+    night dive», «yes, the night dive package») → las inmersiones del paquete con nocturna de un día, o el de sus días de
+    buceo si los dice; qué paquete es lo dice el catálogo. Si nombra la cifra, manda la cifra. Lo afirma Jev: como campo del
+    extractor, 6 versiones movían otras lecturas. None si no lo pide o si son varios días sin decir cuántos."""
+    from src.agents.intent_detector import dive_counts_in  # lazy
+    from src.agents.jev_router import PIDE_NOCTURNO  # lazy
+
+    if not (getattr(state, "_senales_router", None) or {}).get(PIDE_NOCTURNO) or dive_counts_in(message):
+        return None
+    dias = dias_de_buceo_de(datos, state) or state.detected_cert_days
+    if not dias and "multi_day" in (duracion, state.detected_duration):
+        return None
+    return dom.paquete_con_nocturna(dias or 1)
+
+
+def _poner_plan_nocturno(intent, state: ConversationState, datos: dict, message: str) -> None:
+    dives = paquete_nocturno_pedido(state, datos, message, intent.duration)
+    if dives:
+        intent.cert_dives = dives
+        intent._plan_nocturno = True
+        logger.info(f"[EXTRACT][CALN20] pide el nocturno: el paquete de {dives} inmersiones")
+
+
 def duracion_del_extractor(datos: dict | None, state: ConversationState) -> tuple[str | None, bool]:
     """ex-9b paso 6 (`duracion_por_extractor`): (single_day / multi_day, ¿son días de BUCEO?) según lo que dice el
     cliente. Manda lo que dice que quiere bucear; si solo dice su estancia, la estancia, salvo que ya se sepa cuántos días
     quiere bucear (decisión de Gadea, 19-oct). (None, False) si no dice nada de días que cambie lo sabido."""
-    dias_buceo, dias_estancia = (datos or {}).get("dias_de_buceo"), (datos or {}).get("dias_de_estancia")
-    if isinstance(dias_buceo, int) and dias_buceo > 0:
+    dias_buceo, dias_estancia = dias_de_buceo_de(datos, state), (datos or {}).get("dias_de_estancia")
+    if dias_buceo:
         return ("multi_day" if dias_buceo > 1 else "single_day"), True
     if isinstance(dias_estancia, int) and dias_estancia > 0 and not state.duracion_de_buceo:
         return ("multi_day" if dias_estancia > 1 else "single_day"), False
@@ -259,7 +302,7 @@ def _poner_duracion(intent, state: ConversationState, datos: dict, message: str 
         return
     intent.duration = duracion
     intent._duracion_de_buceo = de_buceo
-    dias = (datos or {}).get("dias_de_buceo")
+    dias = dias_de_buceo_de(datos, state)
     if de_buceo and getattr(intent, "cert_days", None) is None and dias in {d for d, _ in dom.dive_packages().values()}:
         # Sparring s04e (Lima, igual en PRE 0.48): «queremos bucear tres días seguidos» → el extractor da 3 días de buceo,
         # pero los días del plan del certificado (`cert_days`) solo los leía el regex («paquete de 3 días», «3 días de

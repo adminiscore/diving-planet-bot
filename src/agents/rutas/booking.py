@@ -464,7 +464,14 @@ def _apply_detected_intent(intent, state: ConversationState, message: str | None
     if getattr(intent, "_duracion_de_buceo", False):
         state.duracion_de_buceo = True
 
-    if getattr(intent, "cert_dives", None) and not state.detected_cert_dives:
+    if getattr(intent, "_plan_nocturno", False):
+        # CALN-20: el paquete con nocturna lo afirma Jev (no el regex) y lo que elige ahora cambia el plan guardado; el carrito
+        # se rehace con él (como `_elegir_el_paquete_propuesto`).
+        if intent.cert_dives != state.detected_cert_dives:
+            state.detected_cert_dives = intent.cert_dives
+            state.mixed_cart = []
+            logger.info(f"[INTENT] Night-dive package: {intent.cert_dives} dives")
+    elif getattr(intent, "cert_dives", None) and not state.detected_cert_dives:
         from src.observability import marca_regex  # lazy
 
         state.detected_cert_dives = intent.cert_dives

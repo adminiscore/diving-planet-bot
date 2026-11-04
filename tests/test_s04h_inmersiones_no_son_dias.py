@@ -1,40 +1,44 @@
 """Sparring s04h (4-nov, australianos y Toronto): «two dives» salía como 2 días de buceo: varios días se comía la salida de
-2 inmersiones y la cifra llegaba a `cert_days`. Valores y citas, los de la sonda ×5 contra el extractor real."""
+2 inmersiones y la cifra llegaba a `cert_days`. Valores y citas, los de la sonda ×5 contra el extractor real.
+CALN-25 (decisión de Gadea, 4-nov): lo decide Jev (`son_dias_de_buceo`) y no 2 regex."""
 import json
 
 import pytest
 
 from src.agents import extractor_turno as ex
-from src.agents.intent_detector import inmersiones_leidas_como_dias
+from src.agents.jev_router import SON_DIAS_DE_BUCEO
+from src.agents.nucleo.extractor import dias_de_buceo_de, duracion_del_extractor
+from src.flows.state import ConversationState
 
 
-@pytest.mark.parametrize("dias, cita, mensaje", [
-    (2, "for two dives", "Can you pick us up there for two dives? Is lunch included?"),
-    (2, "two dives", "Can you pick us up there for two dives? Is lunch included?"),
-    (2, "Five of us will do the two dives", "Five of us will do the two dives and the other two the mini course."),
-    (3, "tres buceos", "Queremos hacer tres buceos"),
-    (2, "two dives", "We're here for 5 days and want two dives"),  # los días que dice son otros
-])
-def test_son_inmersiones(dias, cita, mensaje):
-    assert inmersiones_leidas_como_dias(dias, cita, mensaje)
+def _estado(p=None):
+    estado = ConversationState(conversation_id="s04h")
+    estado._senales_router = {} if p is None else {SON_DIAS_DE_BUCEO: p}
+    return estado
 
 
-@pytest.mark.parametrize("dias, cita, mensaje", [
-    (3, "Queremos bucear 3 días", "Queremos bucear 3 días"),
-    (2, "we want to dive for two days", "we want to dive for two days"),
-    (2, "over 2 days", "I'd like 4 dives over 2 days"),
-    (2, "4 dives over 2 days", "I'd like 4 dives over 2 days"),
-    (2, "2 inmersiones en 2 días", "Quiero 2 inmersiones en 2 días"),
-    (2, "2 inmersiones", "Quiero 2 inmersiones en 2 días"),                    # 1 de 5 cita solo esto
-    (2, "Two days of diving", "Two days of diving, two dives each day"),
-    (2, "We want two dives on Saturday and two dives on Sunday", "We want two dives on Saturday and two dives on Sunday"),
-    (2, "dos inmersiones el sábado y dos el domingo", "dos inmersiones el sábado y dos el domingo"),
-    (3, "the 3-day dive package", "the 3-day dive package please"),
-    (1, "dos buceos el sábado", "Somos certificados y queremos hacer dos buceos el sábado"),
-    (1, "Solo un día", "Solo un día, dos inmersiones"),
-])
-def test_son_dias(dias, cita, mensaje):
-    assert not inmersiones_leidas_como_dias(dias, cita, mensaje)
+def test_jev_seguro_de_que_no_son_dias_se_descartan():
+    datos = {"dias_de_buceo": 2, "_dias_citan_inmersiones": True}
+    assert dias_de_buceo_de(datos, _estado(0.06)) is None
+    assert duracion_del_extractor(datos, _estado(0.06)) == (None, False)
+
+
+@pytest.mark.parametrize("p", [0.41, 0.82, 0.95])  # «2 inmersiones en 2 días», «two dives on Saturday and Sunday»
+def test_si_jev_no_esta_seguro_de_que_no_se_quedan(p):
+    assert dias_de_buceo_de({"dias_de_buceo": 2, "_dias_citan_inmersiones": True}, _estado(p)) == 2
+
+
+def test_si_la_cita_no_cuenta_inmersiones_jev_no_los_quita():
+    # «2» contestando a «¿cuántos días?», o «tres días seguidos»: la cita no cuenta inmersiones
+    assert dias_de_buceo_de({"dias_de_buceo": 3}, _estado(0.05)) == 3
+
+
+def test_si_jev_calla_vale_lo_del_extractor():
+    assert dias_de_buceo_de({"dias_de_buceo": 2, "_dias_citan_inmersiones": True}, _estado()) == 2
+
+
+def test_la_duracion_con_dias_de_buceo():
+    assert duracion_del_extractor({"dias_de_buceo": 3}, _estado()) == ("multi_day", True)
 
 
 def _cliente(datos: dict):
@@ -49,18 +53,14 @@ def _cliente(datos: dict):
     return _C()
 
 
+@pytest.mark.parametrize("cita, marca", [
+    ("for two dives", True),
+    ("Five of us will do the two dives", True),
+    ("we want to dive for two days", False),
+])
 @pytest.mark.asyncio
-async def test_el_extractor_no_deja_pasar_la_cifra():
-    mensaje = "Can you pick us up there for two dives?"
-    salida = await ex.extraer_turno(mensaje, history=[], sabido={},
-                                    client=_cliente({"dias_de_buceo": {"valor": 2, "cita": "for two dives"}}))
-    assert "dias_de_buceo" not in salida
-    assert ex.extraer_turno.ultimo_motivo["dias_de_buceo"].startswith("son inmersiones")
-
-
-@pytest.mark.asyncio
-async def test_el_extractor_deja_pasar_los_dias():
-    mensaje = "we want to dive for two days"
-    salida = await ex.extraer_turno(mensaje, history=[], sabido={},
-                                    client=_cliente({"dias_de_buceo": {"valor": 2, "cita": mensaje}}))
+async def test_el_extractor_marca_la_cita_que_cuenta_inmersiones(cita, marca):
+    salida = await ex.extraer_turno(cita, history=[], sabido={},
+                                    client=_cliente({"dias_de_buceo": {"valor": 2, "cita": cita}}))
     assert salida["dias_de_buceo"] == 2
+    assert bool(salida.get("_dias_citan_inmersiones")) is marca

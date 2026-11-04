@@ -900,9 +900,37 @@ _HABLA_DE_SI_Q = {
 }
 
 
+# CALN-25 y CALN-20 (decisiones de Gadea, 4-nov). Sonda de 28 mensajes × 3 (`scripts/sonda_jev_dias_y_nocturno.py`), con y sin las
+# dos preguntas: las otras señales no se mueven (1 cruce de 4536 lecturas, habla_de_si 0,48 → 0,59, por debajo de su umbral).
+# `son_dias_de_buceo`: 0,41-0,95 si son días («2 inmersiones en 2 días» es el más bajo) y como mucho 0,09 si no: se emite la
+# probabilidad y se descarta solo si Jev está seguro de que no. `pide_nocturno`: 84/84, 0,88-0,98 frente a 0,58 como mucho.
+SON_DIAS_DE_BUCEO = "son_dias_de_buceo"
+SON_DIAS_NO_MAX = 0.3
+_SON_DIAS_DE_BUCEO_Q = {
+    "type": "noul",
+    "instructions": (
+        "The customer says they want to go diving on two or more separate days ('dive on two different days', 'bucear tres "
+        "días', 'on Saturday and Sunday', '4 dives over 2 days'). It is FALSE when the number counts dives and not days ('two "
+        "dives', 'dos inmersiones', 'the two-dive trip', 'the 2 dives on Saturday'), when the days are only how long they "
+        "stay ('we're here for 3 days'), or when they say nothing about diving on several days."
+    ),
+}
+PIDE_NOCTURNO = "pide_nocturno"
+PIDE_NOCTURNO_MIN = 0.7
+_PIDE_NOCTURNO_Q = {
+    "type": "noul",
+    "instructions": (
+        "The customer wants to do a night dive, or a plan or package because it has one: they ask for it, ask to add it, or "
+        "ask how much it costs. It is FALSE if they only ask what a night dive is, whether a plan includes one, or say they "
+        "do not want it, and when 'night' refers to their stay or arrival ('one night on the island', 'llegamos por la "
+        "noche')."
+    ),
+}
+
+
 # Las preguntas de u3-4/u3-5 no son señales del router: su duda NO manda el turno al router LLM.
 _U34_QUESTIONS = (
-    CITA_PRECIO, GRUPO_MIXTO, VIAJA_SOLO, HABLA_DE_SI,
+    CITA_PRECIO, GRUPO_MIXTO, VIAJA_SOLO, HABLA_DE_SI, SON_DIAS_DE_BUCEO, PIDE_NOCTURNO,
     ASKS_QUESTION, AFFIRMS_LOCATION, AFFIRMS_ACTIVITY, ACTIVITY_HYPOTHESIS,
     AFFIRMS_CERTIFICATION, AFFIRMS_GROUP, AFFIRMS_NATIONALITY, CORRECTS, ASKS_RECALL, NEEDS_STAFF,
     CHANGES_DATE, COMPANION_JOINS, PENDING_ANSWER, SHARES_OPEN_FACT, ADDS_PERSON, CUSTOMER_PLACE, YA_RESERVADO,
@@ -974,6 +1002,8 @@ def _questions_for_turn(pending_slot: str | None = None) -> dict:
     q[GRUPO_MIXTO] = _GRUPO_MIXTO_Q
     q[VIAJA_SOLO] = _VIAJA_SOLO_Q
     q[HABLA_DE_SI] = _HABLA_DE_SI_Q
+    q[SON_DIAS_DE_BUCEO] = _SON_DIAS_DE_BUCEO_Q
+    q[PIDE_NOCTURNO] = _PIDE_NOCTURNO_Q
     q[COMPANION_JOINS] = _COMPANION_JOINS_Q
     q[ADDS_PERSON] = _ADDS_PERSON_Q
     q[YA_RESERVADO] = _YA_RESERVADO_Q_SIN_HOTEL
@@ -1077,6 +1107,11 @@ def answers_to_signals(answers: dict, threshold: float = THRESHOLD) -> dict:
         out[VIAJA_SOLO] = (answers.get(VIAJA_SOLO) or {}).get("noul", 0.0) >= VIAJA_SOLO_MIN
     if HABLA_DE_SI in answers:
         out[HABLA_DE_SI] = (answers.get(HABLA_DE_SI) or {}).get("noul", 0.0) >= HABLA_DE_SI_MIN
+    if SON_DIAS_DE_BUCEO in answers:
+        # Se emite la PROBABILIDAD: solo se descarta cuando Jev está seguro de que NO (`nucleo/extractor.dias_de_buceo_de`).
+        out[SON_DIAS_DE_BUCEO] = (answers.get(SON_DIAS_DE_BUCEO) or {}).get("noul", 1.0)
+    if PIDE_NOCTURNO in answers:
+        out[PIDE_NOCTURNO] = (answers.get(PIDE_NOCTURNO) or {}).get("noul", 0.0) >= PIDE_NOCTURNO_MIN
     if YA_RESERVADO in answers:
         out[YA_RESERVADO] = (answers.get(YA_RESERVADO) or {}).get("noul", 0.0) >= YA_RESERVADO_MIN
     if PIDE_DATOS_AJENOS in answers:
@@ -1190,7 +1225,7 @@ async def detect_routing_signals_jev(message: str, *, lang: str = "es") -> dict 
 
 # Señales de u3-4/u3-5 que NO son del router: viajan aparte (ver `detect_routing_signals_jev_full`).
 _TURN_SIGNALS = (
-    CITA_PRECIO, GRUPO_MIXTO, VIAJA_SOLO, HABLA_DE_SI,
+    CITA_PRECIO, GRUPO_MIXTO, VIAJA_SOLO, HABLA_DE_SI, SON_DIAS_DE_BUCEO, PIDE_NOCTURNO,
     AFFIRMS_LOCATION, AFFIRMS_ACTIVITY, AFFIRMS_CERTIFICATION, AFFIRMS_GROUP, AFFIRMS_NATIONALITY, CORRECTS,
     ASKS_RECALL, NEEDS_STAFF, CHANGES_DATE, COMPANION_JOINS, SHARES_OPEN_FACT, YA_RESERVADO, PIDE_DATOS_AJENOS,
     NUEVO_CASO, PREGUNTA_SI_ES_IA, CAMBIA_IDIOMA, PIDE_PRECIO, PIDE_SERVICIO_PRIVADO, PIDE_QUE_INCLUYE, *_INTENCIONES_Q,
