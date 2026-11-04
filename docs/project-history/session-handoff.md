@@ -59,8 +59,20 @@ integrar la rama del otro y suite en verde, porque en PRE gana el último; (3) *
 despliegue reinicia el contenedor y mata la medida del otro (avisar en el registro de Plan Coral con la hora de fin).
 Las doce normas, con su porqué, están en el documento.
 
-### ▶️ RETOMAR AQUÍ — 4-nov, 04:00 (Gadea con Claude, de noche; Gonzalo; Álvaro sin conectar desde la 01:18): 0.48.0 EN PRE; meta de sparring de CALN cumplida, falta tu cierre formal; candidata 0.49 medida, sin subir
+### ▶️ RETOMAR AQUÍ — 4-nov, 04:45 (Gadea con Claude, de noche; Gonzalo; Álvaro sin conectar desde la 01:18): 0.48.0 EN PRE; la 12.ª tanda encontró 2 graves de antes (arreglados en la candidata 0.49): meta 0 de 2
 
+- **LO ÚLTIMO DE LA NOCHE (04:45), léelo primero:**
+  - la **12.ª tanda (s04e, mía) contra la candidata 0.49** encontró **2 graves que ya estaban en PRE 0.48**; los dos se
+    repitieron allí (conv 6866 y 6867):
+    - el asesor preguntado 3 veces: con la tarjeta en pesos ya vista, la oferta se perdía y el «Sí, por favor» al
+      escritor no se reconocía;
+    - «bucear tres días seguidos» acababa en la tarjeta de 2 inmersiones: los días del plan solo los leía el regex.
+    Arreglados en `feature/s04e-oferta-gadea` y `feature/s04e-dias-gadea`, ya dentro de la candidata, y comprobados con
+    `charla_rama`. **La meta de sparring vuelve a 0 de 2.** Hallazgos: S04E.
+  - **La candidata 0.49 es ahora `feature/caln-integra049-gadea` d08d8be2** (suite 3215) = 0.48 + CALN-18 + s04c +
+    caln-huerfanas + s04e-oferta + s04e-dias. **La mini de las 03:30 solo cubre los dos primeros: hace falta otra** (A =
+    PRE 0.48, B = la candidata con `kb_v2_gadea`, que no ha cambiado) y, al subirla, dos tandas sin graves (una de otro
+    autor).
 - **PRE sirve `df18eaa0`** (HISTORY 0.48.0, `feature/pre_gadea` = `feature/caln-gadea`), sano (CI verde, 23 ajustes, humo
   5/5, 0 errores, 0 respaldos). Esta noche subieron la 0.47 (`55d0ed30`: CALN-16 v2, el escritor con hechos también recibe
   políticas y FAQ; la cámara propia) y la 0.48 (s04b: eligen solo los que nombra el mensaje y tienen edad; Bubble Makers
