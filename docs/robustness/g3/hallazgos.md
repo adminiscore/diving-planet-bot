@@ -802,6 +802,8 @@ novia que nunca ha buceado (6819); hermanos de Cali, minicurso, efectivo el día
 people should I plan for?» al que dijo «I» (Advanced t1); los buceos certificados en la lista de precios de la francesa
 principiante; el refresh explicado dos veces (novia t1).
 
+**Corrección (4-nov, 01:25):** la «teoría del minicurso» NO es un hecho inventado: `services.json` la pide para el minicurso desde Cartagena (`minicourse`: «Después de reservar recibirás un correo con instrucciones para completar la teoría. Es indispensable terminarla antes de comenzar la práctica»; requisito «Completar la teoría antes de empezar la práctica»). Desde las islas (`minicourse_already_on_island`) no la pide. Pregunta para Gadea: ¿el minicurso lleva teoría previa, y desde los dos orígenes?
+
 ## CALN-S04A-01..08 · 8.ª tanda de sparring contra PRE 0.46.0, hasta reservar (4-nov, `charla_pre`)
 
 Ocho clientes nuevos, educados y que escriben bien (decisión de Gadea: los difíciles, en la fase DIF), cada uno hasta la
@@ -872,3 +874,5 @@ completar la teoría» (Rescue t1): la teoría es del Open Water (CALN-19); «el
 **Menores:** «¿para cuántas personas?» a quien dijo «soy» (Divemaster t2, CALN-18); el aviso de la hora límite de mañana a
 quien pedía lunes y martes; el de grupo dicho dos veces; planes que no tocan en la lista de precios (el de 4 inmersiones a
 la embarazada y al Rescue); la lista entera de requisitos pegada (Rescue t1).
+
+**Corrección (4-nov, 01:25):** la «teoría del minicurso» NO es un hecho inventado: `services.json` la pide para el minicurso desde Cartagena (`minicourse`: «Después de reservar recibirás un correo con instrucciones para completar la teoría. Es indispensable terminarla antes de comenzar la práctica»; requisito «Completar la teoría antes de empezar la práctica»). Desde las islas (`minicourse_already_on_island`) no la pide. Pregunta para Gadea: ¿el minicurso lleva teoría previa, y desde los dos orígenes?
