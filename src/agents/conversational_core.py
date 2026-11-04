@@ -1770,7 +1770,7 @@ async def _hechos_para_el_rag(state: ConversationState, message: str, history: l
 
 async def _rag_answer(
     state: ConversationState, message: str, *, rag_query: str | None = None, history: list | None = None,
-    sin_precio: bool = False, sin_busqueda: bool = False,
+    sin_precio: bool = False, sin_busqueda: bool = False, puerta_al_recoger: bool = False,
 ) -> str:
     from src.agents import supervisor  # lazy
 
@@ -1799,6 +1799,19 @@ async def _rag_answer(
             answer = redactor_hechos.con_la_pieza(answer, nota)
     # 7-oct (opción C): si cotiza sin origen, se pregunta el origen; quien la recibe deja el estado preparado
     # (`_fijar_origen_antes_del_precio`).
+    return _con_la_puerta(state, message, answer, al_recoger=puerta_al_recoger, sin_precio=sin_precio)
+
+
+def _con_la_puerta(state: ConversationState, message: str, answer: str, *, al_recoger: bool,
+                   sin_precio: bool = False) -> str:
+    """La puerta del origen, ya o al recoger la respuesta. Sparring s04c (jubilados t2, «Desde Cartagena. Somos
+    argentinos. ¿Y mi esposa qué puede hacer?»): la respuesta en paralelo (u3-4) corre a la vez que la extracción, y la
+    puerta miraba el estado antes de que la extracción de ESTE mensaje guardara el origen: los precios de los dos
+    orígenes y la pregunta del origen, y debajo otra vez la de la reserva. Con `al_recoger`, la puerta la pone
+    `_take_parallel_answer`, cuando la extracción ya acabó (gen-15 lo arreglaba con Jev solo en una de sus ramas)."""
+    if al_recoger:
+        state._puerta_al_recoger = (message, sin_precio)
+        return answer
     return _puerta_del_origen(state, message, answer, sin_precio=sin_precio)
 
 
@@ -1952,7 +1965,8 @@ def lanzar_rag_adelantado(state: ConversationState, message: str) -> None:
                              "mensaje": message}
 
 
-async def _adoptar_o_rehacer(state: ConversationState, message: str, history: list, adelantado: dict) -> str:
+async def _adoptar_o_rehacer(state: ConversationState, message: str, history: list, adelantado: dict, *,
+                             puerta_al_recoger: bool = False) -> str:
     """rag-5: donde hoy se lanzaría el RAG. Espera a las notas (como la llamada de siempre), calcula las entradas
     de verdad y, si su huella es la de la respuesta adelantada, la aprovecha; si no, la tira y la rehace."""
     from src.agents import supervisor  # lazy
@@ -1972,14 +1986,14 @@ async def _adoptar_o_rehacer(state: ConversationState, message: str, history: li
         note_turn(rag_used=True, rag_adelantado="aprovechado")
         logger.info("[CORE][RAG5] respuesta adelantada aprovechada")
         answer = await adelantado["task"]
-        return _puerta_del_origen(state, message, answer)  # 7-oct: opción C, ver `_rag_answer`
+        return _con_la_puerta(state, message, answer, al_recoger=puerta_al_recoger)  # 7-oct: opción C, ver `_rag_answer`
     adelantado["task"].cancel()
     # Diagnóstico (30-sep): la mitad de los intentos de la ronda rag5-B se rehicieron y no se sabía por qué.
     cambio = ",".join(n for n, a, b in zip(_PARTES_HUELLA, adelantado["huella"], huella, strict=True) if a != b)
     note_turn(rag_adelantado="rehecho", rag_rehecho_por=cambio)
     logger.info(f"[CORE][RAG5] el contexto cambió entre medias ({cambio}): se rehace la respuesta")
     answer = await supervisor.rag_answer(message, **entradas)
-    return _puerta_del_origen(state, message, answer)
+    return _con_la_puerta(state, message, answer, al_recoger=puerta_al_recoger)
 
 
 async def rag_con_adelantado(state: ConversationState, message: str, history: list) -> str:
@@ -2060,9 +2074,10 @@ def _maybe_launch_answer(state: ConversationState, message: str, routing_signals
     if adelantado is not None and adelantado["mensaje"] == message:
         # rag-5: ya hay una respuesta en marcha desde antes del enrutador; se usa si su contexto es el mismo.
         state._rag_adelantado = None
-        state._pending_answer = asyncio.create_task(_adoptar_o_rehacer(state, message, history, adelantado))
+        state._pending_answer = asyncio.create_task(_adoptar_o_rehacer(state, message, history, adelantado,
+                                                                       puerta_al_recoger=True))
         return
-    state._pending_answer = asyncio.create_task(_rag_answer(state, message, history=history))
+    state._pending_answer = asyncio.create_task(_rag_answer(state, message, history=history, puerta_al_recoger=True))
 
 
 async def _take_parallel_answer(state: ConversationState) -> str | None:
@@ -2071,10 +2086,15 @@ async def _take_parallel_answer(state: ConversationState) -> str | None:
     if task is None:
         return None
     try:
-        return await task
+        answer = await task
     except Exception as exc:  # noqa: BLE001 — si el RAG falla, el turno sigue sin respuesta
         logger.warning(f"[CORE][U3-4] la respuesta en paralelo falló, sigue la reserva: {exc}")
         return None
+    if puerta := getattr(state, "_puerta_al_recoger", None):
+        # La puerta del origen, con lo que la extracción de este mensaje ya guardó (`_con_la_puerta`).
+        state._puerta_al_recoger = None
+        answer = _puerta_del_origen(state, puerta[0], answer, sin_precio=puerta[1])
+    return answer
 
 
 async def attach_unused_answer(state: ConversationState, response):
@@ -2093,6 +2113,7 @@ def cancel_pending_answer(state: ConversationState) -> None:
     """Red de seguridad al cerrar el turno: una respuesta lanzada que nadie usó se cancela."""
     task = getattr(state, "_pending_answer", None)
     state._pending_answer = None
+    state._puerta_al_recoger = None
     if task is not None and not task.done():
         task.cancel()
 
