@@ -660,6 +660,17 @@ def _poner_ubicacion(intent, state: ConversationState, message: str, datos: dict
     regex (lista cerrada) se conservan para la recogida. Un origen distinto del guardado se confirma."""
     lugar = datos.get("location")
     guardado = state.location or state.detected_location
+    if (not guardado and lugar != "cartagena" and (state.pending_correction or {}).get("location") == "island"
+            and (pista.get("hotel") or pista.get("island"))):
+        # Mini 0.53 (minicurso-islas, en los dos lados): a «¿ya estarás en las islas?» contesta «una noche en Coral Sand y
+        # la otra en Majagua». Es un hotel de la lista cerrada, y no valía como respuesta: la misma pregunta otras dos veces.
+        logger.info("[EXTRACT][053B] con las islas por confirmar nombra un hotel o una isla de la lista: location='island'")
+        state.pending_correction = {k: v for k, v in state.pending_correction.items() if k != "location"} or None
+        intent.location = "island"
+        if "location" not in intent.detected_fields:
+            intent.detected_fields.append("location")
+        _conservar_hotel(intent, pista)
+        return
     if not lugar:
         if guardado == "island":
             # Ya se sabe que está en las islas y no lo repite: el hotel o la isla que nombra (lista cerrada) sirven para

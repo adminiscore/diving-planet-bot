@@ -55,17 +55,33 @@ def _tarjeta_sin_seguridad(state: ConversationState, nxt: str | None, prev_pendi
     )
 
 
-def _nota_seguridad(state: ConversationState) -> str:
-    """La pregunta de seguridad, una vez, dentro de la tarjeta, con el precio del refresher (del catálogo)."""
+def _nota_seguridad(state: ConversationState, preguntar: bool = True) -> str:
+    """La pregunta de seguridad, dentro de la tarjeta, con el precio del refresher (del catálogo). `preguntar=False`: ya se
+    preguntó bastante; queda el aviso."""
     precio = cart_render.refresher_price_text(state, una_moneda=True)  # una sola moneda por mensaje (Gadea)
     if state.language == "es":
         # Decisión de Gadea (30-oct, decisión «refresher»): el refresher es el minicurso, en su propio día.
+        pregunta = "¿Es el caso de alguno de ustedes?" if (state.detected_group_size or 1) > 1 else "¿Es tu caso?"
         return ("\n\n⚠️ Si alguno lleva *más de 2 años* sin bucear, se añade el *refresher* (el minicurso: piscina y una "
-                f"inmersión con instructor): *{precio}* por persona. "
-                + ("¿Es el caso de alguno de ustedes?" if (state.detected_group_size or 1) > 1
-                               else "¿Es tu caso?"))
+                f"inmersión con instructor): *{precio}* por persona." + (f" {pregunta}" if preguntar else ""))
     return ("\n\n⚠️ If anyone hasn't dived for *more than 2 years*, a *refresher* is added (the mini-course: pool and one "
-            f"dive with an instructor): *{precio}* per person. Is that your case?")
+            f"dive with an instructor): *{precio}* per person." + (" Is that your case?" if preguntar else ""))
+
+
+def _tras_la_tarjeta_ya_vista(state: ConversationState) -> str:
+    """Mini 0.53 (paquete-5-buceos-islas, en los dos lados): con la tarjeta ya vista y la seguridad sin contestar, «sin recojos»,
+    «El 21 y 22» y «Me regreso el 23» recibían la tarjeta entera y la misma pregunta, cuatro veces. La tarjeta no se repite: la
+    pregunta, si aún toca; si no, el paso siguiente (el asesor en pesos; el enlace, que ya tiene, en dólares)."""
+    from src.agents.compositor import _VECES_MAX, _contar_la_pregunta, _veces_preguntada  # lazy
+
+    if _veces_preguntada(state, SLOT_SAFETY) < _VECES_MAX:
+        _contar_la_pregunta(state, SLOT_SAFETY)
+        return _nota_seguridad(state).strip()
+    if state.is_colombian:
+        lang = state.language if state.language != "es" else ("es_grupo" if (state.detected_group_size or 1) > 1 else "es_uno")
+        return _OFERTA_DEL_ASESOR.get(lang, _OFERTA_DEL_ASESOR["en"])
+    return ("Cuando quieras, reservas con el enlace de arriba: ahí eliges la fecha y las personas. 🌊" if state.language == "es"
+            else "Whenever you're ready, book with the link above: you choose the date and the number of people there. 🌊")
 
 
 def _siguiente_pregunta(state: ConversationState, prev_pending: str | None) -> str | None:
@@ -472,6 +488,7 @@ async def _slotfill_close_phase(
 
     prev_pending = carry["prev_pending"]
     finalized = False
+    sin_seguridad = False
     cierre_previo = None
 
     # El reparto sigue a un cambio de la actividad principal cuando solo tenia la
@@ -527,8 +544,18 @@ async def _slotfill_close_phase(
             # cliente no la contestó; la tarjeta sale igualmente, con la pregunta una vez dentro (ver la función).
             finalized = True
             cierre_previo = state.mixed_last_summary
-            response = _finalize(state, pasar_al_asesor=_quiere_reservar_o_pagar(state, message), ofrecer=False) + (
-                _nota_seguridad(state))
+            sin_seguridad = True
+            from src.agents.compositor import (  # lazy
+                _VECES_MAX,
+                _contar_la_pregunta,
+                _veces_preguntada,
+            )
+
+            preguntar = _veces_preguntada(state, SLOT_SAFETY) < _VECES_MAX
+            response = _finalize(state, pasar_al_asesor=_quiere_reservar_o_pagar(state, message), ofrecer=False)
+            if state.mixed_last_summary != cierre_previo and preguntar:
+                _contar_la_pregunta(state, SLOT_SAFETY)
+            response += _nota_seguridad(state, preguntar=preguntar)
             state.core_pending_slot = SLOT_SAFETY  # su respuesta, si llega, se recoge como siempre
             supervisor._maybe_build_pending_note(state)
         elif nxt is None:
@@ -608,6 +635,12 @@ async def _slotfill_close_phase(
         else:
             response = f"{answer.rstrip()}\n\n{response}"
         response = greeting + response
+        state.history.append({"role": "assistant", "content": response})
+        return response
+
+    if sin_seguridad and cierre_igual and state.step != Step.ESCALATE:
+        sigue = _tras_la_tarjeta_ya_vista(state)
+        response = await _sin_dato(state, message, SLOT_SAFETY, sigue) or sigue
         state.history.append({"role": "assistant", "content": response})
         return response
 

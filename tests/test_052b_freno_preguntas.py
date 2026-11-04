@@ -37,9 +37,8 @@ def test_la_tercera_no_sale_y_se_queda_la_respuesta():
     assert estado.preguntas_hechas["location"] == 2
 
 
-def test_si_pide_reservar_o_pagar_si_sale_porque_hace_falta():
-    for intencion in ("enlace", "pago"):
-        assert PREGUNTA in _turno(_estado(veces=2, intenciones=[intencion]))
+def test_si_pide_el_enlace_si_sale_porque_hace_falta():
+    assert PREGUNTA in _turno(_estado(veces=2, intenciones=["enlace"]))
 
 
 def test_sin_nada_mas_que_decir_si_sale():

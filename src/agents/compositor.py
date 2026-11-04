@@ -93,16 +93,35 @@ def _sin_enlaces_repetidos(respuesta: str) -> str:
     return f"{_PARRAFO.join(p.strip() for p in parrafos if p.strip())}{_PARRAFO}{resto}" if parrafos else resto
 
 
+def _veces_preguntada(state, slot: str | None) -> int:
+    return (getattr(state, "preguntas_hechas", None) or {}).get(slot, 0)
+
+
 def _ya_se_pregunto_bastante(state, slot: str | None) -> bool:
-    if (getattr(state, "preguntas_hechas", None) or {}).get(slot, 0) < _VECES_MAX:
-        return False
-    return not set(getattr(state, "_intenciones", None) or []) & {"pago", "enlace"}
+    """Si pide el enlace, hace falta. Para contestar cómo se paga, no: «¿y por transferencia tiene descuento?» recibía el origen
+    por 3.ª vez (certificado-fecha-precio, mini 0.53, en los dos lados)."""
+    return _veces_preguntada(state, slot) >= _VECES_MAX and "enlace" not in set(getattr(state, "_intenciones", None) or [])
 
 
 def _contar_la_pregunta(state, slot: str | None) -> None:
     hechas = dict(getattr(state, "preguntas_hechas", None) or {})
     hechas[slot] = hechas.get(slot, 0) + 1
     state.preguntas_hechas = hechas
+
+
+def _las_dos_salidas(state, cuerpo: str) -> str | None:
+    """Mini 0.53: el freno dejaba salir la 3.ª y la 4.ª vez cuando no quedaba nada más que decir («Frances» → «¿Desde dónde
+    saldrías?»). Si el plan tiene una salida por origen, en vez de la misma pregunta van las dos, con su precio y su enlace, y el
+    cliente elige. Sin eso (varios planes por origen), None: se pregunta."""
+    from src.agents import conversational_core as core  # lazy
+
+    salidas = core._dos_variantes(state, con_enlace=True)
+    if not salidas:
+        return None
+    logger.info(f"[CORE][053B] compositor: el origen ya salió {_VECES_MAX} veces: van las dos salidas en vez de la pregunta")
+    _aplazar(state)
+    cola = "Reserva con el de tu punto de salida." if state.language == "es" else "Book with the one for your starting point."
+    return _PARRAFO.join(x for x in (cuerpo.strip(), salidas, cola if "http" in salidas else "") if x)
 
 
 def _con_el_freno_del_origen(state, respuesta: str) -> str:
@@ -121,12 +140,16 @@ def _con_el_freno_del_origen(state, respuesta: str) -> str:
     fija = next((p for p in resto_por_pregunta if p in respuesta), None)
     if fija is None:
         return respuesta
-    if _ya_se_pregunto_bastante(state, core.SLOT_LOCATION):
+    # Tras los dos enlaces la pregunta sobra aunque pida el enlace: ya los tiene, con la indicación de cuál usar.
+    con_los_enlaces = resto_por_pregunta[fija] and _veces_preguntada(state, core.SLOT_LOCATION) >= _VECES_MAX
+    if _ya_se_pregunto_bastante(state, core.SLOT_LOCATION) or con_los_enlaces:
         sin = respuesta.replace(fija, resto_por_pregunta[fija]).rstrip()
         if len(_palabras(sin)) >= _PALABRAS_DE_UNA_RESPUESTA:
             logger.info(f"[CORE][052B] compositor: el origen ya salió {_VECES_MAX} veces sin contestarse: no sale otra")
             _aplazar(state)
             return sin
+        if salidas := _las_dos_salidas(state, sin):
+            return salidas
     _contar_la_pregunta(state, core.SLOT_LOCATION)
     return respuesta
 
@@ -305,9 +328,12 @@ def componer(state, respuesta: str, *, pase: bool = False, escribio: bool | None
         _aplazar(state)
         return cuerpo
     cuerpo = _sin_las_frases_de(cuerpo, final)
-    if _ya_se_pregunto_bastante(state, pendiente) and len(_palabras(cuerpo)) >= _PALABRAS_DE_UNA_RESPUESTA:
-        logger.info(f"[CORE][052B] compositor: {pendiente!r} ya salió {_VECES_MAX} veces sin contestarse: no sale otra")
-        _aplazar(state)
-        return cuerpo
+    if _ya_se_pregunto_bastante(state, pendiente):
+        if len(_palabras(cuerpo)) >= _PALABRAS_DE_UNA_RESPUESTA:
+            logger.info(f"[CORE][052B] compositor: {pendiente!r} ya salió {_VECES_MAX} veces sin contestarse: no sale otra")
+            _aplazar(state)
+            return cuerpo
+        if pendiente == "location" and (salidas := _las_dos_salidas(state, cuerpo)):
+            return salidas
     _contar_la_pregunta(state, pendiente)
     return f"{cuerpo.rstrip()}{_PARRAFO}{final}" if cuerpo.strip() else final
