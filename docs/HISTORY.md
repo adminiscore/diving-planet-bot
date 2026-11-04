@@ -1,6 +1,16 @@
 History
 =======
 
+0.51.1 - (2026-11-04, SUBE A PRE: Haiku va primero por Anthropic, no por Bedrock)
+---------------------
+* **Qué sube** (sobre 0.51.0): solo `cache_anthropic_proveedor` = `anthropic`. Decisión de Gadea, 4-nov. Mismo modelo; revert = `amazon-bedrock`.
+* **Por qué:** Bedrock se colgaba a ratos, sin errores (hoy hacia las 12:35, las 15:30 y desde las 17:50), y entraba el respaldo `gpt-5.4-mini`, que lee peor el grupo.
+  Invalidó 2 minis y contaminó tandas y bancos de ese día. El margen de 2 s no era la causa: con 8 s seguía el 42 % de los turnos en respaldo.
+* **Medida:** prueba alternando, mismos 10 diálogos, con 8 s de margen, 106 turnos por lado. Bedrock: 37 % de respaldos, Haiku p50 2,15 s, turno p50 7,64 s y p90 12,36 s, caché
+  97 %. Anthropic: 0 de 142, 1,26 s, 3,41 s y 5,12 s, caché 92 %, +0,2 milésimas de $ por turno. Mini de los 43 visibles con este código (`c052d-A`): 20 fallos, 15 diálogos,
+  p50 3,34 s, p90 5,47 s, 2 respaldos; la 0.51 con Bedrock a las 16:26 dio 22 fallos y 18 diálogos. Es una sola franja: se sigue mirando en cada mini.
+* **No sube la candidata 0.52** (`feature/s04j-gadea` 17cfa46b): su mini, en la misma franja, 20 → 26 fallos y 15 → 20 diálogos. Se trabajan esos fallos para la 0.52b.
+
 0.51.0 - (2026-11-04, SUBE A PRE: la hora de volar bien, el lugar en hipótesis no se guarda, las opciones de quien no ha elegido y buzo con snorkel sin repetir)
 ---------------------
 * **Qué sube** (sobre 0.50.0; `feature/caln-integra051-gadea`):

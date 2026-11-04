@@ -52,7 +52,10 @@ class Settings(BaseSettings):
     # ~0,011 $ por 100 turnos, sin espera. Revert = False (el turno de siempre).
     lector_grupo: bool = True
     # ("4 inmersiones") se tomaba por la propuesta de un paquete y "para mí" lo elegía: Curso Referido. 0 usos en PRE.
-    cache_anthropic_proveedor: str = "amazon-bedrock"  # ARQ-2b: con la caché, el proveedor de Haiku que va primero (los demás de respaldo). Sonda 22-oct (7 llamadas cada uno): bedrock caché 7/7 y p50 1,98 s (sin caché 1,94 s); anthropic 7/7 y 2,29 s; vertex 3/7
+    # 4-nov (Gadea): Bedrock se colgaba a ratos (episodios a las 12:35, 15:30 y desde las 17:50) y saltaba el respaldo, que lee peor
+    # el grupo. Prueba de las 20:41, alternando y con 8 s de margen, 106 turnos por lado: bedrock 37 % de respaldos, Haiku p50 2,15 s,
+    # turno p50 7,64 s y p90 12,36 s, caché 97 %; anthropic 0 %, 1,26 s, 3,41 s y 5,12 s, caché 92 %. +0,2 milésimas de $ por turno.
+    cache_anthropic_proveedor: str = "anthropic"  # ARQ-2b: con la caché, el proveedor de Haiku que va primero (los demás de respaldo). Sonda 22-oct (7 llamadas cada uno): bedrock caché 7/7 y p50 1,98 s (sin caché 1,94 s); anthropic 7/7 y 2,29 s; vertex 3/7; revert = "amazon-bedrock"
     # Model for the RAG answer-generation call only (rag_agent.py
     # `_answer_with_llm`). Kept SEPARATE from `openai_model` (used broadly
     # across the bot) so we can trial a stronger model for JUST this call --
