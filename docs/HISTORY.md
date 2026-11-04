@@ -1,6 +1,21 @@
 History
 =======
 
+0.47.0 - (2026-11-04, SUBE A PRE: el escritor con hechos también recibe políticas y FAQ, y la cámara propia)
+---------------------
+* **Qué sube** (sobre 0.46.0; `feature/caln-integra047-gadea`): **Gadea** (CALN-16 v2, d4067e3d): el escritor con los
+  hechos del código también busca, pero de la búsqueda solo recibe políticas y FAQ, no fichas de planes (`rag_answer(
+  sin_fichas=True)`). Lo que el cliente AFIRMA en el mismo mensaje ya llega: «Is lunch included? I'm vegetarian.» →
+  «la opción vegetariana es arroz con vegetales» (antes, «no tengo información»). Con las fichas (0.46) y con las FAQ de
+  dos orígenes (0.46c) mezclaba lo que incluye cada plan; con las FAQ ya partidas por origen (0.46), no. **Gadea**
+  (s04a): la cámara propia sí, no se alquilan (decisión de Gadea, 4-nov; `policies.own_camera`); hallazgos de s03i y s04a;
+  relevo del 4-nov.
+* **Medida** (una pasada, en la misma franja, en serie, a solas; A = PRE 0.46.0, B con `kb_v2_gadea`): mini-ronda de los
+  43 visibles: **24 → 20 fallos, 20 → 17 diálogos con fallos**. Llamadas por turno 3,64 → 3,77; p50 3,32 → 3,26 s; p90
+  5,17 → 5,08 s; respaldos 0 y 1; turnos de RAG sin documentos 47 → 22. Suite 3195. A vigilar: «los paquetes incluyen
+  alojamiento» (paquete-en-carrito, una vez; requieren alojamiento, no lo incluyen).
+* **Sparring:** 8.ª tanda (Gadea, s04a, contra la 0.46) sin graves: la meta va **1 de 2**.
+
 0.46.0 - (2026-11-04, SUBE A PRE: CALN-11 v2, las FAQ partidas por origen y los planes sin enlace al asesor)
 ---------------------
 * **Qué sube** (sobre 0.45.0; `feature/caln-046d-gadea`): **Álvaro** (CALN-11 v2, fe321e7f + 4fc4596e): cada pregunta del
