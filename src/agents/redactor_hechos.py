@@ -330,7 +330,14 @@ def con_la_pieza(answer: str, pieza: str) -> str:
     cierre = [parrafos.pop()] if len(parrafos) > 1 and _CIERRA_PREGUNTANDO_RE.search(parrafos[-1]) else []
     # Su párrafo final también (sparring t3b: «Sí, por ser un grupo de 6 aplica el descuento de grupo… ¿Te paso con un
     # asesor?» quedaba detrás de la nota): se queda su pregunta.
-    limpios = [p for p in (_sin_frases(p, fuera) for p in parrafos) if p]
+    limpios: list[str] = []
+    for parrafo in parrafos:
+        if limpio := _sin_frases(parrafo, fuera):
+            limpios.append(limpio)
+        elif limpios and limpios[-1].rstrip().endswith(":"):
+            # Sparring s04d (Múnich t1): «From Cartagena, you have two options for certified divers:» y la lista que
+            # anunciaba, con sus importes, fuera entera (la da la pieza): el anuncio quedaba con la lista vacía.
+            limpios[-1] = limpios[-1].rstrip()[:-1].rstrip() + "."
     cierre = [c for c in (_sin_frases(p, fuera) for p in cierre) if c]
     return "\n\n".join([*limpios, pieza, *cierre])
 

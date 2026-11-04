@@ -193,6 +193,20 @@ def test_paso3_el_parrafo_final_del_escritor_tambien_se_limpia():
     assert salida.endswith(pieza + "\n\n¿Quieres que te pase con un asesor?")
 
 
+def test_paso3_el_anuncio_de_una_lista_de_importes_que_se_va_no_queda_con_dos_puntos():
+    """Sparring s04d (Múnich t1): «you have two options for certified divers:» quedaba con la lista vacía."""
+    from src.agents import redactor_hechos as rh
+
+    pieza = "*Prices per person*:\n• 5 Dives - 2 days: 392 USD · 436 USD"
+    texto = ("Great place for a two-day trip! From Cartagena, you have two options for certified divers:\n\n"
+             "- 4-dive package: 316 USD\n- 5 dives: 392 USD\n\nBoth include the boat and lunch on day 1.")
+    salida = rh.con_la_pieza(texto, pieza)
+    assert salida == ("Great place for a two-day trip! From Cartagena, you have two options for certified divers.\n\n"
+                      f"Both include the boat and lunch on day 1.\n\n{pieza}")
+    # Si la lista se queda (sin importes), el anuncio también.
+    assert rh.con_la_pieza("Options:\n\n- 4 dives\n- 5 dives", pieza).startswith("Options:\n\n- 4 dives")
+
+
 def test_caln3c_buzo_con_novia_que_nunca_ha_buceado():
     """p07: «yo soy buzo certificado y mi novia nunca ha buceado» sin reparto: el buceo y el minicurso."""
     assert cotizar.candidatos(_st(is_certified=True, acompanante_sin_certificar=True)) == ["certified_diving", "minicourse"]
