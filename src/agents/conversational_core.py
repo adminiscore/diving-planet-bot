@@ -1169,6 +1169,23 @@ def _jev_dice_que_no_lo_dice(state: ConversationState) -> bool:
     return lugar.get("choice") == "none" and (lugar.get("confidence") or 0.0) >= CUSTOMER_PLACE_MIN
 
 
+def _jev_duda_del_lugar(state: ConversationState, datos: dict | None) -> bool:
+    """CALN-9 (4-nov): el extractor lee un lugar en este mensaje; ¿Jev no está seguro de que el cliente lo afirme? «What if I
+    decide to stay one day longer in rosario» o «¿y si nos quedamos una noche más en las islas?» son hipótesis: el extractor
+    leía «ya en las islas» y salían el precio y la recogida del otro origen. Medido (banco-origen-hipotesis ×6 y 138 lecturas
+    de otros bancos): quien lo afirma tiene a Jev en 0,98-1,00 y las hipótesis en 0,16-0,48; así, solo 2 lecturas buenas
+    pasan a confirmarse. Quien contesta a la pregunta del origen («Desde Cartagena») también tiene a Jev seguro. Sin Jev,
+    como hoy. No si nombra un hotel de las islas (ARQ-8b: «the Ubuntu hotel», con Jev a 0,52)."""
+    from src.agents.jev_router import CUSTOMER_PLACE_MIN  # lazy
+    from src.agents.redactor_hechos import _hotel_de_las_islas  # lazy
+
+    lugar = getattr(state, "_jev_lugar", None) or {}
+    if not lugar or (lugar.get("confidence") or 0.0) >= CUSTOMER_PLACE_MIN:
+        return False
+    hotel = (datos or {}).get("hotel")
+    return not (isinstance(hotel, str) and _hotel_de_las_islas(hotel))
+
+
 def _same_for_customer(field: str, a, b, lang: str) -> bool:
     """¿Se leen igual para el cliente? En un reparto no cuentan el orden ni las cantidades a
     cero (u3-5 paso 1a)."""
