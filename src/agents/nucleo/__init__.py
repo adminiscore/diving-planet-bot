@@ -21,6 +21,8 @@ módulo, con su fase y lo que solo usa esa fase:
 - `notas.py`          → las notas del cliente (lo que cuenta y no es un dato de la reserva), que se apuntan en
                         paralelo con el turno y se esperan antes de usarlas (CALN-8 (5), 5-nov). Para cambiar
                         `extract_notes` en un test, `nucleo.notas.extract_notes`.
+- `reparto.py`        → el reparto del grupo entre actividades cuando el cliente contesta (CALN-8 (5), 5-nov); los
+                        nodos lo importan de aquí.
 - `slotfill_close.py` → `_slotfill_close_phase`: preguntar el hueco que falta o cerrar la reserva, y el acuse en
                         paralelo.
 

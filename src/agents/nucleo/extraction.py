@@ -25,12 +25,9 @@ from src.agents.conversational_core import (
     SLOT_REFRESHER,
     SLOT_SAFETY,
     _answer_question,
-    _apply_cert_or_course,
-    _apply_group_total,
     _cart_item,
     _companion_activity_options,
     _course_level_options,
-    _elige_quien_falta,
     _group_allocation_fully_resolved,
     _has_pending_answer,
     _is_greeting_only,
@@ -38,11 +35,9 @@ from src.agents.conversational_core import (
     _known_field_values,
     _looks_like_question,
     _mentioned_product_activities,
-    _merge_companion_activity,
     _prepend_parallel_answer,
     _recall_answer,
     _set_concrete_activity,
-    _take_undecided_members,
     ask_slot,
     next_missing_slot,
 )
@@ -62,6 +57,13 @@ from src.agents.llm_extractor import (
 from src.agents.nucleo.extractor import (
     _CAMPOS_LISTA_CERRADA,
     _aplicar_extractor,
+)
+from src.agents.nucleo.reparto import (
+    _apply_cert_or_course,
+    _apply_group_total,
+    _elige_quien_falta,
+    _merge_companion_activity,
+    _take_undecided_members,
 )
 from src.domain import activities as dom
 from src.flows import cart_render, grupo

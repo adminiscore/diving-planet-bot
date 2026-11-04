@@ -18,7 +18,6 @@ from src.agents.conversational_core import (
     SLOT_COMPANION_ACTIVITY,
     SLOT_COMPANION_QTY,
     _companion_activity_options,
-    _elige_quien_falta,
     _has_pending_answer,
     _jev_dice_que_no_lo_dice,
     _jev_duda_del_lugar,
@@ -27,6 +26,9 @@ from src.agents.conversational_core import (
     _same_for_customer,
 )
 from src.agents.intent_detector import DetectedIntent, detect_location
+from src.agents.nucleo.reparto import (
+    _elige_quien_falta,
+)
 from src.config import settings
 from src.domain import activities as dom
 from src.flows import grupo
