@@ -59,8 +59,12 @@ integrar la rama del otro y suite en verde, porque en PRE gana el último; (3) *
 despliegue reinicia el contenedor y mata la medida del otro (avisar en el registro de Plan Coral con la hora de fin).
 Las doce normas, con su porqué, están en el documento.
 
-### ▶️ RETOMAR AQUÍ — 4-nov, 04:45 (Gadea con Claude, de noche; Gonzalo; Álvaro sin conectar desde la 01:18): 0.48.0 EN PRE; la 12.ª tanda encontró 2 graves de antes (arreglados en la candidata 0.49): meta 0 de 2
+### ▶️ RETOMAR AQUÍ — 4-nov, 04:50 (Gadea con Claude, de noche; Álvaro sin conectar desde la 01:18; Gonzalo sin turnos desde las 02:43): OPENAI SIN SALDO, PRE degradado; 0.48.0 EN PRE; candidata 0.49 sin medir; meta 0 de 2
 
+- **⚠️ OPENAI SIN SALDO desde las ~04:35** (`credit_balance_exhausted`, 429; comprobado con una llamada de embeddings).
+  **PRE está degradado**: sin embeddings el RAG no busca, y en la mini A de las 04:35 contestó el respaldo (DeepSeek) en
+  152 de 201 turnos (la mini, inválida, se paró antes del lado B). El juez (GPT) tampoco corre. Apagué el PC por tu norma
+  de la noche. **Al recargar:** la mini de la candidata 0.49 (abajo) y, si iguala o mejora, subirla.
 - **LO ÚLTIMO DE LA NOCHE (04:45), léelo primero:**
   - la **12.ª tanda (s04e, mía) contra la candidata 0.49** encontró **2 graves que ya estaban en PRE 0.48**; los dos se
     repitieron allí (conv 6866 y 6867):
