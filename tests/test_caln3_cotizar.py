@@ -282,3 +282,15 @@ def test_los_dias_de_buceo_de_este_mensaje_llegan_a_los_hechos():
     # sin días en el mensaje, como hoy
     foto = redactor_hechos._foto(st, {"group_size": 5}, "cartagena", "¿cuánto cuesta?")
     assert foto.detected_duration is None
+
+
+def test_caln19_el_escritor_recibe_las_opciones_de_quien_no_ha_elegido():
+    """Sparring s04c y s04e: «¿y mi esposa qué puede hacer?» recibía una sola opción."""
+    from src.agents.rutas.contexto_rag import _build_extra_context
+
+    contexto = _build_extra_context(_st(language="es", location="cartagena", is_certified=True, detected_group_size=2,
+                                        acompanante_sin_certificar=True, pending_undecided_qty=1))
+    assert "elige el cliente" in contexto
+    for opcion in ("inicurso", "norkel", "compañante"):
+        assert opcion in contexto.split("elige el cliente")[1].split(".")[0], opcion
+    assert "elige el cliente" not in (_build_extra_context(_st(language="es", location="cartagena")) or "")

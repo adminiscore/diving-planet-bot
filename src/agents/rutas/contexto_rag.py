@@ -342,6 +342,20 @@ def _build_extra_context(state: ConversationState) -> str | None:
                 "nested inside the other."
             )
 
+    if nota_sin_certificar or state.pending_undecided_qty:
+        # CALN-19 (4-nov, sparring s04c y s04e): «¿y mi esposa qué puede hacer?» recibía una sola opción (0 de 7 las tres;
+        # 4 de 7, una), y la regla de Gadea es recomendar las opciones y que elija el cliente. Salen del registro, como en
+        # la pregunta de qué hará quien no ha elegido.
+        from src.agents.conversational_core import _companion_activity_options  # lazy
+
+        opciones = ", ".join(dom.label(o, state.language) for o in _companion_activity_options(state))
+        parts.append(
+            f"Quien aún no ha elegido actividad puede hacer cualquiera de estas, y elige el cliente: {opciones}. Si preguntan "
+            "qué puede hacer, nómbralas todas; no elijas tú una." if state.language == "es" else
+            f"Whoever hasn't chosen an activity yet can do any of these, and the customer chooses: {opciones}. If asked what "
+            "they can do, name them all; don't pick one for them."
+        )
+
     # Hallazgo en vivo (lote 12, 2026-09-02, conv. real 856): sin esta
     # regla, "mi amigo se certifico hace 8 años y no ha vuelto a
     # bucear" hizo que el LLM confundiera "inactivo hace tiempo" con
