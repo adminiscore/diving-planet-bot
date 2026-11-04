@@ -175,15 +175,16 @@ def _foto(state: ConversationState, datos: dict, origen: str | None, message: st
           history: list[dict] | None = None) -> ConversationState:
     """Una copia del estado con lo que dice ESTE mensaje (origen y nacionalidad): la extracción aún no lo ha guardado
     cuando se contesta (como gen-14 en el RAG). El estado de verdad lo sigue escribiendo la extracción."""
-    from src.agents.nucleo.extractor import con_la_cedula  # lazy
+    from src.agents.nucleo.extractor import con_la_cedula, mezclado_del_mensaje  # lazy
 
     foto = copy.copy(state)
     foto.location = origen
-    # La cédula de extranjería (Jev) también aquí: con solo la de gen-14, el venezolano con cédula y esposa colombiana
-    # quedaba residente en el estado pero los hechos y su pieza salían en USD (banco-graves g-venezolano-cedula, 0/3).
+    # La nacionalidad y el grupo mezclado como los guarda la extracción (la cédula y el mixto de Jev): con los del extractor a
+    # secas, el venezolano con cédula y esposa colombiana quedaba residente en el estado, pero los hechos y su pieza salían
+    # en USD (banco-graves g-venezolano-cedula, 0/3).
     if foto.is_colombian is None and (nacional := con_la_cedula(state, datos.get("is_colombian"))) is not None:
         foto.is_colombian = nacional
-    if datos.get("mixed_nationality") is True:
+    if mezclado_del_mensaje(state, datos):
         foto.mixed_nationality_notice = True
     if datos.get("paquete_varios_dias") is True:
         foto.detected_duration = "multi_day"  # arq-1t: «el paquete de varios días» en ESTE mensaje

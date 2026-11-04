@@ -1743,11 +1743,15 @@ async def _con_la_nacionalidad_del_mensaje(state: ConversationState, message: st
     cambia, la huella de rag-5 cambia y la respuesta adelantada se rehace."""
     if state.is_colombian is not None:
         return state
-    from src.agents.nucleo.extractor import con_la_cedula, lectura_del_extractor  # lazy
+    from src.agents.nucleo.extractor import (  # lazy
+        con_la_cedula,
+        lectura_del_extractor,
+        mezclado_del_mensaje,
+    )
 
     datos = await lectura_del_extractor(state, message)
     valor = con_la_cedula(state, (datos or {}).get("is_colombian"))  # «Yo tengo extrangeria»: residente, en pesos
-    if valor is None or (datos or {}).get("mixed_nationality"):
+    if valor is None or mezclado_del_mensaje(state, datos or {}):
         return state
     import copy
 
