@@ -985,3 +985,35 @@ personas?» a quien habla en singular (Nitrox t1, CALN-18); la recogida dicha do
 **Bien:** el origen del mismo mensaje leído sin preguntarlo (Canadá); el Nitrox desde las islas con la recogida del
 hotel base; los tres planes de la familia de Valencia con el acompañante para el asesor; el Open Water de 2 días con la
 noche en las islas y el almuerzo solo el día 1; los 7 años: ni Bubble Makers (8) ni minicurso (10), sí snorkel (6).
+
+## CALN-S04H-01..08 · Tanda de contraste de Gonzalo (2.º autor) contra PRE 0.49, hasta reservar (4-nov, `charla_rama` sobre 050e512a)
+
+Criterio de Álvaro (#2716). Clientes nuevos, educados y que escriben bien (`docs/robustness/g3/charlas-rama/s04h-*`): matrimonio peruano (él Rescue, ella
+nunca), 7 de Toronto (5 Open Water y 2 nunca, con el de grupo y equipo propio), venezolana con cédula y el paquete de 5, familia holandesa (Advanced con
+nocturna, snorkel, hijo de 13 al Open Water, hija de 5), alemán en Bocagrande con 3 años sin bucear y vuelo, australianos en una casa de Isla Grande fuera
+de la lista, el regalo de 2 inmersiones al padre, y pareja de Quito con bebé de 10 meses. Elegidos antes de ver nada; el regalo y el bebé, a propósito,
+porque eran graves conocidos.
+
+- **BIEN:** el regalo (al asesor, sin contar a quien paga) y el bebé (no paga; tarjeta para 2), ya no fallan aquí; la venezolana con cédula en pesos, al
+  asesor, con su paquete; el de grupo y el de equipo propio que no se suman (Toronto); el vuelo del jueves al viernes a las 10, «demasiado pronto».
+
+**Graves (3), la meta sigue en 0:**
+1. **«Two dives» leído como 2 DÍAS de buceo** (australianos t1-t2): piden dos inmersiones y el precio, y la lista trae los paquetes de 4, 4 y 5, sin la
+   salida de 2; piden el precio otra vez y lo mismo; a la 3.ª, 124 USD. `[EX9B-6] duration='multi_day' (días de buceo; regex: None)`: el extractor pone
+   dias_de_buceo=2 y varios_dias se come el plan nombrado, porque la salida de 2 es el plan base (`sin_plan`, hechos.py). No es de CALN-17. Ojo: mi a0afdfc1
+   (0.48) adelantó el síntoma de t2 a t1.
+2. **La misma lectura niega un enlace que existe** (Toronto t3, «five of us will do the two dives»): «for the 2-dive Fun Dives I don't have a direct booking
+   link; that booking needs a team advisor», y el resto va en multi_day. Cuando insiste, «You're right», y da el enlace.
+3. **Horario falso que tumba la reserva** (alemán t2): «Wednesday's dive would be too close to your Friday 10:00 a.m. flight». Son unas 46 horas. Lo
+   corrige si el cliente le lleva la cuenta (t3). Es del escritor: tiene las 18 h y el vuelo, y calcula mal.
+
+**Medios:**
+- La familia holandesa t1: el texto sin sujeto al quitar los importes (CALN-19; feature/caln-frases-gonzalo, aún sin subir). En t2, «para quien aún no ha
+  elegido» por la niña de 5 (CALN-17).
+- «Tengo el Rescue» leído como curso que quiere (`padi_rescue` en el reparto, peruanos t1) y «Solo para confirmar, ¿lo cambio? 1 el curso Rescue Diver…» en
+  t2, ya con los dos enlaces. Luego «¿han pasado más de 2 años?» dos veces, tras «hace un año».
+- Toronto t2: pide los enlaces con el reparto ya dicho en t1 y le preguntan «which one are you leaning toward»: el reparto no se leyó en t1.
+- El alemán t3 recibe a la vez el refresher y la tarjeta de las 2 inmersiones, cuando dijo que iba un día.
+
+**Menores:** «El precio te lo dejo a continuación» después de la lista (venezolana t1); bebé de 10 meses guardado como edad 10 (`detected_ages`, sin efecto
+visible aquí); «how many people?» a quien habla en singular (alemán); la pregunta del asesor con el texto del cierre (holanda t3).
