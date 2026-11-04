@@ -30,6 +30,8 @@ from __future__ import annotations
 
 import logging
 import time
+from collections.abc import Callable
+from dataclasses import dataclass
 
 import httpx
 
@@ -946,19 +948,6 @@ _PIDE_NOCTURNO_Q = {
 }
 
 
-# Las preguntas de u3-4/u3-5 no son señales del router: su duda NO manda el turno al router LLM.
-_U34_QUESTIONS = (
-    CITA_PRECIO, GRUPO_MIXTO, TIENE_CEDULA, VIAJA_SOLO, HABLA_DE_SI, SON_DIAS_DE_BUCEO, PIDE_NOCTURNO,
-    ASKS_QUESTION, AFFIRMS_LOCATION, AFFIRMS_ACTIVITY, ACTIVITY_HYPOTHESIS,
-    AFFIRMS_CERTIFICATION, AFFIRMS_GROUP, AFFIRMS_NATIONALITY, CORRECTS, ASKS_RECALL, NEEDS_STAFF,
-    CHANGES_DATE, COMPANION_JOINS, PENDING_ANSWER, SHARES_OPEN_FACT, ADDS_PERSON, CUSTOMER_PLACE, YA_RESERVADO,
-    PIDE_DATOS_AJENOS, NUEVO_CASO, PREGUNTA_SI_ES_IA, CAMBIA_IDIOMA, PIDE_PRECIO, PIDE_SERVICIO_PRIVADO, PIDE_QUE_INCLUYE,
-    *_INTENCIONES_Q, PIDE_DESCUENTO, PIDE_SI_ALCANZA,  # arq-4b/arq-1v/CALN-3: su duda no manda el turno al router LLM
-    PIDE_CLIMA, PIDE_PAGO,  # arq-1i
-    *_INTENCIONES_LAT8,
-)
-
-
 def activity_affirmed(p_affirms: float, p_hypothesis: float | None) -> bool:
     """¿El cliente afirma la actividad? Jev seguro de que sí (>= 0,7), o bastante probable
     (>= 0,4) y sin pinta de hipótesis (< 0,5).
@@ -1001,6 +990,83 @@ _YA_RESERVO_NO_BASTA = (
 )
 
 
+# Las preguntas sí/no del turno (4-nov, #3300 (4) de Gadea), una fila cada una: su pregunta, cómo se lee la respuesta de
+# Jev y si viaja con las señales del turno. De aquí salen `_questions_for_turn`, `answers_to_signals`, `_U34_QUESTIONS` y
+# `_TURN_SIGNALS`. Antes una señal nueva tocaba seis sitios, y olvidar `_U34_QUESTIONS` mandaba el turno a la duda. Van en
+# el orden en que se le preguntan a Jev.
+@dataclass(frozen=True)
+class _DelTurno:
+    nombre: str
+    pregunta: dict | Callable[[], dict]  # una función si se arma en cada turno (los hoteles de la base)
+    leer: Callable[[dict], object]  # la respuesta de Jev (o {} si no la da) -> la señal
+    viaja: bool = True  # en `_TURN_SIGNALS`: también cuando Jev duda en el router
+
+
+def _si(umbral: float) -> Callable[[dict], bool]:
+    """Sí o no, y también en FALSE, a propósito: «ausente» (Jev apagado, o dudó en el router y el turno se fue al LLM)
+    significa «no lo sé» -> conducta de hoy; `False` significa «Jev dice que no» -> el dato se cae. Los llamantes
+    (`_jev_says_not_affirmed`, el relleno del turno con pregunta) necesitan distinguirlos."""
+    return lambda a: a.get("noul", 0.0) >= umbral
+
+
+def _probabilidad(a: dict) -> float:
+    """Se emite la PROBABILIDAD (ausente o sin respuesta = 1.0, «puede que sí»): quien la usa solo actúa cuando Jev está
+    seguro de que NO."""
+    return a.get("noul", 1.0)
+
+
+def _lugar(a: dict) -> dict:
+    return {"choice": a.get("choice"), "confidence": float(a.get("confidence", 0.0))}
+
+
+def _idioma(a: dict) -> str:
+    return a.get("choice") if float(a.get("confidence", 0.0)) >= CAMBIA_IDIOMA_MIN else "none"
+
+
+_NEEDS_STAFF_Q_DEL_TURNO = {**_NEEDS_STAFF_Q,
+                            "instructions": f"{_NEEDS_STAFF_Q['instructions']} {_FUERA_DEL_SISTEMA} {_YA_RESERVO_NO_BASTA}"}
+
+_DEL_TURNO = (
+    _DelTurno(CORRECTS, _CORRECTS_Q, _si(CORRECTS_MIN)),
+    _DelTurno(ASKS_RECALL, _ASKS_RECALL_Q, _si(ASKS_RECALL_MIN)),
+    _DelTurno(NEEDS_STAFF, _NEEDS_STAFF_Q_DEL_TURNO, _si(NEEDS_STAFF_MIN)),
+    _DelTurno(CHANGES_DATE, _CHANGES_DATE_Q, _si(CHANGES_DATE_MIN)),
+    _DelTurno(CITA_PRECIO, _CITA_PRECIO_Q, _si(CITA_PRECIO_MIN)),
+    _DelTurno(GRUPO_MIXTO, _GRUPO_MIXTO_Q, _si(GRUPO_MIXTO_MIN)),
+    _DelTurno(TIENE_CEDULA, _TIENE_CEDULA_Q, _si(TIENE_CEDULA_MIN)),
+    _DelTurno(VIAJA_SOLO, _VIAJA_SOLO_Q, _si(VIAJA_SOLO_MIN)),
+    _DelTurno(HABLA_DE_SI, _HABLA_DE_SI_Q, _si(HABLA_DE_SI_MIN)),
+    # Solo se descarta cuando Jev está seguro de que NO (`nucleo/extractor.dias_de_buceo_de`).
+    _DelTurno(SON_DIAS_DE_BUCEO, _SON_DIAS_DE_BUCEO_Q, _probabilidad),
+    _DelTurno(PIDE_NOCTURNO, _PIDE_NOCTURNO_Q, _si(PIDE_NOCTURNO_MIN)),
+    _DelTurno(COMPANION_JOINS, _COMPANION_JOINS_Q, _probabilidad),
+    # ex-9b (19-oct): también viaja cuando Jev duda en el router (como COMPANION_JOINS): sin él, en esos turnos «¿se suma
+    # alguien nuevo?» lo decidía la lista de palabras. Ausente = «puede ser nueva»: se pregunta el total, como hoy.
+    _DelTurno(ADDS_PERSON, _ADDS_PERSON_Q, _probabilidad),
+    _DelTurno(YA_RESERVADO, _YA_RESERVADO_Q_SIN_HOTEL, _si(YA_RESERVADO_MIN)),
+    _DelTurno(PIDE_DATOS_AJENOS, _PIDE_DATOS_AJENOS_Q, _si(PIDE_DATOS_AJENOS_MIN)),
+    _DelTurno(PIDE_SERVICIO_PRIVADO, _PIDE_SERVICIO_PRIVADO_Q, _si(PIDE_SERVICIO_PRIVADO_MIN)),
+    _DelTurno(CUSTOMER_PLACE, lambda: _con_hoteles_de_la_base(_CUSTOMER_PLACE_Q_BARU_CARTAGENA), _lugar, viaja=False),
+    _DelTurno(SHARES_OPEN_FACT, _SHARES_OPEN_FACT_Q, _probabilidad),
+    # ex-9b paso 5: también en FALSE («Jev dice que no» manda; ausente = Jev calla y decide el regex).
+    _DelTurno(NUEVO_CASO, _NUEVO_CASO_Q, _si(NUEVO_CASO_MIN)),
+    _DelTurno(PREGUNTA_SI_ES_IA, _PREGUNTA_SI_ES_IA_Q, _si(PREGUNTA_SI_ES_IA_MIN)),
+    _DelTurno(CAMBIA_IDIOMA, _CAMBIA_IDIOMA_Q, _idioma),
+    _DelTurno(PIDE_PRECIO, _PIDE_PRECIO_Q_ACTIVIDADES, _si(PIDE_PRECIO_MIN)),
+    _DelTurno(PIDE_QUE_INCLUYE, _PIDE_QUE_INCLUYE_Q, _si(PIDE_QUE_INCLUYE_MIN)),
+)
+
+# Las preguntas de u3-4/u3-5 no son señales del router: su duda NO manda el turno al router LLM.
+_U34_QUESTIONS = (
+    *(senal.nombre for senal in _DEL_TURNO),
+    ASKS_QUESTION, AFFIRMS_LOCATION, AFFIRMS_ACTIVITY, ACTIVITY_HYPOTHESIS, AFFIRMS_CERTIFICATION, AFFIRMS_GROUP,
+    AFFIRMS_NATIONALITY, PENDING_ANSWER,
+    *_INTENCIONES_Q, PIDE_DESCUENTO, PIDE_SI_ALCANZA,  # arq-4b/arq-1v/CALN-3: su duda no manda el turno al router LLM
+    PIDE_CLIMA, PIDE_PAGO,  # arq-1i
+    *_INTENCIONES_LAT8,
+)
+
+
 def _questions_for_turn(pending_slot: str | None = None) -> dict:
     q = dict(_QUESTIONS)
     pending_q = pending_answer_question(pending_slot)
@@ -1009,32 +1075,8 @@ def _questions_for_turn(pending_slot: str | None = None) -> dict:
     q.update({ASKS_QUESTION: _ASKS_QUESTION_Q_V2,
               **_AFFIRMS_QUESTIONS})
     q[AFFIRMS_GROUP] = _AFFIRMS_GROUP_Q_UNA
-    q[CORRECTS] = _CORRECTS_Q
-    q[ASKS_RECALL] = _ASKS_RECALL_Q
-    instrucciones = _NEEDS_STAFF_Q["instructions"]
-    instrucciones = f"{instrucciones} {_FUERA_DEL_SISTEMA}"
-    instrucciones = f"{instrucciones} {_YA_RESERVO_NO_BASTA}"
-    q[NEEDS_STAFF] = {**_NEEDS_STAFF_Q, "instructions": instrucciones}
-    q[CHANGES_DATE] = _CHANGES_DATE_Q
-    q[CITA_PRECIO] = _CITA_PRECIO_Q
-    q[GRUPO_MIXTO] = _GRUPO_MIXTO_Q
-    q[TIENE_CEDULA] = _TIENE_CEDULA_Q
-    q[VIAJA_SOLO] = _VIAJA_SOLO_Q
-    q[HABLA_DE_SI] = _HABLA_DE_SI_Q
-    q[SON_DIAS_DE_BUCEO] = _SON_DIAS_DE_BUCEO_Q
-    q[PIDE_NOCTURNO] = _PIDE_NOCTURNO_Q
-    q[COMPANION_JOINS] = _COMPANION_JOINS_Q
-    q[ADDS_PERSON] = _ADDS_PERSON_Q
-    q[YA_RESERVADO] = _YA_RESERVADO_Q_SIN_HOTEL
-    q[PIDE_DATOS_AJENOS] = _PIDE_DATOS_AJENOS_Q
-    q[PIDE_SERVICIO_PRIVADO] = _PIDE_SERVICIO_PRIVADO_Q
-    q[CUSTOMER_PLACE] = _con_hoteles_de_la_base(_CUSTOMER_PLACE_Q_BARU_CARTAGENA)
-    q[SHARES_OPEN_FACT] = _SHARES_OPEN_FACT_Q
-    q[NUEVO_CASO] = _NUEVO_CASO_Q
-    q[PREGUNTA_SI_ES_IA] = _PREGUNTA_SI_ES_IA_Q
-    q[CAMBIA_IDIOMA] = _CAMBIA_IDIOMA_Q
-    q[PIDE_PRECIO] = _PIDE_PRECIO_Q_ACTIVIDADES
-    q[PIDE_QUE_INCLUYE] = _PIDE_QUE_INCLUYE_Q
+    for senal in _DEL_TURNO:
+        q[senal.nombre] = senal.pregunta() if callable(senal.pregunta) else senal.pregunta
     q.update(_INTENCIONES_Q)
     q[PIDE_DESCUENTO] = _PIDE_DESCUENTO_Q
     q[PIDE_OTRA_COSA] = _PIDE_OTRA_COSA_CON_DESCUENTOS_Q
@@ -1095,60 +1137,9 @@ def answers_to_signals(answers: dict, threshold: float = THRESHOLD) -> dict:
         choice = (answers.get(name) or {}).get("choice")
         if choice and choice != "none":
             out[name] = choice
-    # u3-4: estas dos se emiten también en FALSE, a propósito. "ausente" (Jev apagado, o
-    # dudó en el router y el turno se fue al LLM) significa "no lo sé" -> conducta de hoy;
-    # `False` significa "Jev dice que el cliente NO lo afirma" -> el dato se cae. Son
-    # distintos y los llamantes (`_jev_says_not_affirmed`, el relleno del turno con pregunta) necesitan distinguirlos.
-    if CORRECTS in answers:
-        out[CORRECTS] = (answers.get(CORRECTS) or {}).get("noul", 0.0) >= CORRECTS_MIN
-    if ASKS_RECALL in answers:
-        out[ASKS_RECALL] = (answers.get(ASKS_RECALL) or {}).get("noul", 0.0) >= ASKS_RECALL_MIN
-    if NEEDS_STAFF in answers:
-        out[NEEDS_STAFF] = (answers.get(NEEDS_STAFF) or {}).get("noul", 0.0) >= NEEDS_STAFF_MIN
-    if COMPANION_JOINS in answers:
-        # Se emite la PROBABILIDAD: el filtro solo actua cuando Jev esta seguro de que NO.
-        out[COMPANION_JOINS] = (answers.get(COMPANION_JOINS) or {}).get("noul", 1.0)
-    if CUSTOMER_PLACE in answers:
-        a = answers.get(CUSTOMER_PLACE) or {}
-        out[CUSTOMER_PLACE] = {"choice": a.get("choice"), "confidence": float(a.get("confidence", 0.0))}
-    if ADDS_PERSON in answers:
-        # Ausente o sin respuesta = 1.0 ("puede ser nueva"): se pregunta el total, como hoy.
-        out[ADDS_PERSON] = (answers.get(ADDS_PERSON) or {}).get("noul", 1.0)
-    if SHARES_OPEN_FACT in answers:
-        out[SHARES_OPEN_FACT] = (answers.get(SHARES_OPEN_FACT) or {}).get("noul", 1.0)
-    if CHANGES_DATE in answers:
-        out[CHANGES_DATE] = (answers.get(CHANGES_DATE) or {}).get("noul", 0.0) >= CHANGES_DATE_MIN
-    if CITA_PRECIO in answers:
-        out[CITA_PRECIO] = (answers.get(CITA_PRECIO) or {}).get("noul", 0.0) >= CITA_PRECIO_MIN
-    if GRUPO_MIXTO in answers:
-        out[GRUPO_MIXTO] = (answers.get(GRUPO_MIXTO) or {}).get("noul", 0.0) >= GRUPO_MIXTO_MIN
-    if TIENE_CEDULA in answers:
-        out[TIENE_CEDULA] = (answers.get(TIENE_CEDULA) or {}).get("noul", 0.0) >= TIENE_CEDULA_MIN
-    if VIAJA_SOLO in answers:
-        out[VIAJA_SOLO] = (answers.get(VIAJA_SOLO) or {}).get("noul", 0.0) >= VIAJA_SOLO_MIN
-    if HABLA_DE_SI in answers:
-        out[HABLA_DE_SI] = (answers.get(HABLA_DE_SI) or {}).get("noul", 0.0) >= HABLA_DE_SI_MIN
-    if SON_DIAS_DE_BUCEO in answers:
-        # Se emite la PROBABILIDAD: solo se descarta cuando Jev está seguro de que NO (`nucleo/extractor.dias_de_buceo_de`).
-        out[SON_DIAS_DE_BUCEO] = (answers.get(SON_DIAS_DE_BUCEO) or {}).get("noul", 1.0)
-    if PIDE_NOCTURNO in answers:
-        out[PIDE_NOCTURNO] = (answers.get(PIDE_NOCTURNO) or {}).get("noul", 0.0) >= PIDE_NOCTURNO_MIN
-    if YA_RESERVADO in answers:
-        out[YA_RESERVADO] = (answers.get(YA_RESERVADO) or {}).get("noul", 0.0) >= YA_RESERVADO_MIN
-    if PIDE_DATOS_AJENOS in answers:
-        out[PIDE_DATOS_AJENOS] = (answers.get(PIDE_DATOS_AJENOS) or {}).get("noul", 0.0) >= PIDE_DATOS_AJENOS_MIN
-    if PIDE_SERVICIO_PRIVADO in answers:
-        out[PIDE_SERVICIO_PRIVADO] = ((answers.get(PIDE_SERVICIO_PRIVADO) or {}).get("noul", 0.0)
-                                      >= PIDE_SERVICIO_PRIVADO_MIN)
-    # ex-9b paso 5: también en FALSE ("Jev dice que no" manda; ausente = Jev calla y decide el regex).
-    if NUEVO_CASO in answers:
-        out[NUEVO_CASO] = (answers.get(NUEVO_CASO) or {}).get("noul", 0.0) >= NUEVO_CASO_MIN
-    if PREGUNTA_SI_ES_IA in answers:
-        out[PREGUNTA_SI_ES_IA] = (answers.get(PREGUNTA_SI_ES_IA) or {}).get("noul", 0.0) >= PREGUNTA_SI_ES_IA_MIN
-    if PIDE_PRECIO in answers:
-        out[PIDE_PRECIO] = (answers.get(PIDE_PRECIO) or {}).get("noul", 0.0) >= PIDE_PRECIO_MIN
-    if PIDE_QUE_INCLUYE in answers:
-        out[PIDE_QUE_INCLUYE] = (answers.get(PIDE_QUE_INCLUYE) or {}).get("noul", 0.0) >= PIDE_QUE_INCLUYE_MIN
+    for senal in _DEL_TURNO:
+        if senal.nombre in answers:
+            out[senal.nombre] = senal.leer(answers.get(senal.nombre) or {})
     for intencion in (*_INTENCIONES_Q, PIDE_DESCUENTO, PIDE_CLIMA, PIDE_PAGO, *_INTENCIONES_LAT8):
         if intencion in answers and intencion != PIDE_OTRA_COSA:
             out[intencion] = (answers.get(intencion) or {}).get("noul", 0.0) >= INTENCION_MIN
@@ -1157,9 +1148,6 @@ def answers_to_signals(answers: dict, threshold: float = THRESHOLD) -> dict:
     if PIDE_OTRA_COSA in answers:
         # ARQ-1d: al revés que las intenciones, cuenta como «sí» todo lo que no sea un «no» seguro.
         out[PIDE_OTRA_COSA] = (answers.get(PIDE_OTRA_COSA) or {}).get("noul", 1.0) > 1 - INTENCION_MIN
-    if CAMBIA_IDIOMA in answers:
-        a = answers.get(CAMBIA_IDIOMA) or {}
-        out[CAMBIA_IDIOMA] = a.get("choice") if float(a.get("confidence", 0.0)) >= CAMBIA_IDIOMA_MIN else "none"
     for name in (AFFIRMS_LOCATION, AFFIRMS_CERTIFICATION, AFFIRMS_GROUP, AFFIRMS_NATIONALITY):
         if name in answers:
             out[name] = (answers.get(name) or {}).get("noul", 0.0) >= AFFIRMS_MIN
@@ -1246,14 +1234,9 @@ async def detect_routing_signals_jev(message: str, *, lang: str = "es") -> dict 
 
 # Señales de u3-4/u3-5 que NO son del router: viajan aparte (ver `detect_routing_signals_jev_full`).
 _TURN_SIGNALS = (
-    CITA_PRECIO, GRUPO_MIXTO, TIENE_CEDULA, VIAJA_SOLO, HABLA_DE_SI, SON_DIAS_DE_BUCEO, PIDE_NOCTURNO,
-    AFFIRMS_LOCATION, AFFIRMS_ACTIVITY, AFFIRMS_CERTIFICATION, AFFIRMS_GROUP, AFFIRMS_NATIONALITY, CORRECTS,
-    ASKS_RECALL, NEEDS_STAFF, CHANGES_DATE, COMPANION_JOINS, SHARES_OPEN_FACT, YA_RESERVADO, PIDE_DATOS_AJENOS,
-    NUEVO_CASO, PREGUNTA_SI_ES_IA, CAMBIA_IDIOMA, PIDE_PRECIO, PIDE_SERVICIO_PRIVADO, PIDE_QUE_INCLUYE, *_INTENCIONES_Q,
+    *(senal.nombre for senal in _DEL_TURNO if senal.viaja),
+    AFFIRMS_LOCATION, AFFIRMS_ACTIVITY, AFFIRMS_CERTIFICATION, AFFIRMS_GROUP, AFFIRMS_NATIONALITY, *_INTENCIONES_Q,
     PIDE_DESCUENTO,
-    # ex-9b (19-oct): ADDS_PERSON también viaja cuando Jev duda en el router (como COMPANION_JOINS): sin él, en esos
-    # turnos "¿se suma alguien nuevo?" lo decidía la lista de palabras.
-    ADDS_PERSON,
     PIDE_SI_ALCANZA,  # arq-1v: también cuando Jev duda en el router (si no, se perdía: banco arq-1v, v1)
     PIDE_CLIMA, PIDE_PAGO,  # arq-1i: el router los mira (el clima en general no va a la ruta sensible)
     *_INTENCIONES_LAT8,  # lat-8: también cuando Jev duda en el router
