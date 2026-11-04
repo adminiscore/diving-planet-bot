@@ -844,11 +844,13 @@ def _poner_nacionalidad(intent, state: ConversationState, message: str, datos: d
     """ex-8: la nacionalidad es la del extractor (nunca deducida del idioma). Grupo mezclado: todo en USD (decisión de
     Gadea, 14-sep). Un valor distinto del guardado se confirma. CALN-S04J: el grupo mezclado lo afirma Jev (la mexicana con
     cédula y su novio de México, que el extractor no veía; el venezolano con cédula y su esposa colombiana, que pagan los dos en
-    pesos y el extractor daba por mezclados). Si Jev calla, lo que diga el extractor."""
+    pesos y el extractor daba por mezclados). Si Jev calla, lo que diga el extractor. Su «no» solo manda sin nacionalidad guardada
+    (revisión de Álvaro, #3170): Jev mira el último mensaje, y «somos dos colombianos» + «se nos suma una amiga alemana» habla de una
+    sola persona; ahí vale el extractor, que tiene lo sabido."""
     from src.agents.jev_router import GRUPO_MIXTO  # lazy
 
     mezclado = (getattr(state, "_senales_router", None) or {}).get(GRUPO_MIXTO)
-    if mezclado is None:
+    if not mezclado and (mezclado is None or state.is_colombian is not None):
         mezclado = datos.get("mixed_nationality") is True
     if mezclado:
         intent.is_colombian = False

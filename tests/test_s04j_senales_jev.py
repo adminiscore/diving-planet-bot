@@ -78,6 +78,22 @@ def test_jev_quita_el_grupo_mixto_que_el_extractor_ve_de_mas():
     assert estado.mixed_nationality_notice is False
 
 
+def test_entre_turnos_el_no_de_jev_no_tapa_al_extractor():
+    # #3170: «somos dos colombianos» + «se nos suma una amiga alemana»: Jev mira el último mensaje, que habla de una persona.
+    estado, intent = _estado({GRUPO_MIXTO: False}), _intent()
+    estado.is_colombian = True
+    _poner_nacionalidad(intent, estado, "se nos suma una amiga alemana", {"mixed_nationality": True})
+    assert intent.is_colombian is False
+    assert estado.mixed_nationality_notice is True
+
+
+def test_entre_turnos_sin_mezcla_sigue_lo_guardado():
+    estado, intent = _estado({GRUPO_MIXTO: False}), _intent()
+    estado.is_colombian = True
+    _poner_nacionalidad(intent, estado, "seguimos siendo dos", {})
+    assert estado.mixed_nationality_notice is False
+
+
 def test_si_jev_calla_vale_lo_del_extractor():
     estado, intent = _estado(None), _intent()
     _poner_nacionalidad(intent, estado, "mi pareja es colombiana y yo española", {"mixed_nationality": True})
