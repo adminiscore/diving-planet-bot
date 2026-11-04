@@ -1,6 +1,31 @@
 History
 =======
 
+0.52.0 - (2026-11-04, SUBE A PRE: la misma pregunta no sale una 3.ª vez; el grupo mixto, la cédula, el precio citado, el nocturno y los días los afirma Jev; fuera las 2 regex de «two dives»)
+---------------------
+* **Qué sube** (sobre 0.51.1; `feature/s04j-gadea`):
+  * **Freno de preguntas** (Gadea; `compositor.componer`): la misma pregunta de la reserva sale como mucho 2 veces, salvo que pida reservar o pagar o no haya nada más que decir. El
+    origen cuenta junto por sus 3 caminos (slot, tras las variantes, confirmación). La 3.ª vez es grave por el criterio de Álvaro (#2716).
+  * **Señales nuevas de Jev**, en la misma llamada y sin campos ni frases en el prompt del extractor: `grupo_mixto` y `cita_precio` (Gadea, sondas 69/69 y 72/72), `viaja_solo` y
+    `habla_de_si` (CALN-18, 69/69 y 60/60), `son_dias_de_buceo` (CALN-25, fuera las 2 regex de Gonzalo: «2 fun dives» tampoco son 2 días) y `pide_nocturno` (CALN-20, 84/84),
+    `tiene_cedula_extranjeria` (Álvaro, 51/54). Las demás señales no se mueven (1 cruce de 4536 lecturas). 57 preguntas a Jev por turno.
+  * **CALN-24 corregido** (Gadea): la pregunta de cuál enlace, una vez en la charla. Creó el grave del irlandés (s04j): quien quería los dos planes no tenía salida.
+  * **Moneda** (Álvaro, con la revisión #3170): la regla del grupo mezclado y la cédula, también en las copias del estado de quien contesta; el «no» de Jev solo manda sin nacionalidad guardada.
+  * **Búsqueda** (Gadea): una sola pregunta en un mensaje largo también se busca aparte; tras una coma, el «¿» no corta el tema.
+  * **Con el tiempo justo se dice la espera antes de volar** (propuesta de Gonzalo, #3161), aunque no diga avión.
+  * **Base:** un grupo no se paga por partes (`colombian_pricing`); el formulario del día del refresher (`medical_certified_diver`); la FAQ de nadar con otra forma de preguntarlo.
+* **Medida** (una pasada, misma franja, en serie, a solas; A = PRE 0.51.1, B = 052ce47c con `kb_v2_gadea`): mini de los 43 visibles: **23 → 22 fallos, 19 → 19 diálogos**. p50 3,29 → 3,21 s; p90 5,18 → 5,29 s;
+  llamadas 3,64 → 3,68; 2 respaldos por lado. Es ruido: el mismo código de A dio 20 una hora antes. **La misma pregunta 3 o más veces, por código: 21 → 6 diálogos; la del origen, 15 → 4.**
+  Una mini anterior de la candidata (17cfa46b, sin el freno ni la cédula) dio 20 → 26 fallos y no subió: se trabajaron sus fallos (Gadea: «divide y vencerás»).
+  Después de esta mini entran 2 commits de Álvaro, medidos con banco y no con mini (aa6a45ed y 79a2bf1c, moneda).
+* **Bancos** (Haiku por Anthropic): graves ×3, **70 → 84 de 90** (A = PRE 0.51.1; de los 6 que fallan, 3 son el venezolano, ya 3/3 con 79a2bf1c, y 1 es un filtro corregido). Moneda +m11 ×3, A 28/42 → B
+  39/42. Grupos ×4, 189/204. Nocturno 18/18, dos inmersiones 35/35, fun dives 18/18. Suite 3332.
+* **Sparring:** s04j (Gadea, contra 0.51, 8 clientes, 2 con graves, ya arreglados), s04k (Gonzalo, contra 0.51, 11, 2, ya arreglados), s04l (Gonzalo, contra 052ce47c, 10, 1 con grave). Ese grave, dos salidas en dos
+  fechas sin la salida de 2 en la lista, ya estaba en PRE; su arreglo va en `feature/052c-gadea`, no sube aquí. Meta de CALN-22: 0 de ~60.
+* **Estudio CALN-23** (Gonzalo): el escritor tras la extracción no cuesta latencia, pero con ese prototipo no mejora: se repite con la pregunta como hoy.
+* **Siguiente, orden de Gadea, sin prisa:** (1) contar los respaldos en un solo sitio; (2) un dato, un solo dueño (enlace, CALN-23, pago) y el menú genérico; (3) una sola lectura del turno, en CALN-8 (5); (4) la
+  medida de CALN-10b y la tabla de señales de Jev.
+
 0.51.1 - (2026-11-04, SUBE A PRE: Haiku va primero por Anthropic, no por Bedrock)
 ---------------------
 * **Qué sube** (sobre 0.51.0): solo `cache_anthropic_proveedor` = `anthropic`. Decisión de Gadea, 4-nov. Mismo modelo; revert = `amazon-bedrock`.

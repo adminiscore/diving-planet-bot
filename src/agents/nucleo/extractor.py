@@ -854,19 +854,25 @@ def con_la_cedula(state: ConversationState, nacional: bool | None) -> bool | Non
     return nacional
 
 
-def _poner_nacionalidad(intent, state: ConversationState, message: str, datos: dict) -> None:
-    """ex-8: la nacionalidad es la del extractor (nunca deducida del idioma). Grupo mezclado: todo en USD (decisión de
-    Gadea, 14-sep). Un valor distinto del guardado se confirma. CALN-S04J: el grupo mezclado lo afirma Jev (la mexicana con
-    cédula y su novio de México, que el extractor no veía; el venezolano con cédula y su esposa colombiana, que pagan los dos en
-    pesos y el extractor daba por mezclados). Si Jev calla, lo que diga el extractor. Su «no» solo manda sin nacionalidad guardada
-    (revisión de Álvaro, #3170): Jev mira el último mensaje, y «somos dos colombianos» + «se nos suma una amiga alemana» habla de una
-    sola persona; ahí vale el extractor, que tiene lo sabido."""
+def mezclado_del_mensaje(state: ConversationState, datos: dict) -> bool:
+    """CALN-S04J: el grupo mezclado lo afirma Jev (la mexicana con cédula y su novio de México, que el extractor no veía; el
+    venezolano con cédula y su esposa colombiana, que pagan los dos en pesos y el extractor daba por mezclados). Si Jev calla, lo
+    que diga el extractor. Su «no» solo manda sin nacionalidad guardada (revisión de Álvaro, #3170): Jev mira el último mensaje,
+    y «somos dos colombianos» + «se nos suma una amiga alemana» habla de una sola persona; ahí vale el extractor, que tiene lo
+    sabido. Lo usan también las copias del estado de quien contesta antes de que se guarde (gen-14, `redactor_hechos._foto`):
+    con la marca del extractor a secas, la pieza del venezolano salía en USD (banco-graves g-venezolano-cedula, 0/3)."""
     from src.agents.jev_router import GRUPO_MIXTO  # lazy
 
     mezclado = (getattr(state, "_senales_router", None) or {}).get(GRUPO_MIXTO)
     if not mezclado and (mezclado is None or state.is_colombian is not None):
         mezclado = datos.get("mixed_nationality") is True
-    if mezclado:
+    return bool(mezclado)
+
+
+def _poner_nacionalidad(intent, state: ConversationState, message: str, datos: dict) -> None:
+    """ex-8: la nacionalidad es la del extractor (nunca deducida del idioma). Grupo mezclado (`mezclado_del_mensaje`): todo
+    en USD (decisión de Gadea, 14-sep). Un valor distinto del guardado se confirma."""
+    if mezclado_del_mensaje(state, datos):
         intent.is_colombian = False
         for listado in (intent.detected_fields, intent.overwrite):
             if "is_colombian" not in listado:

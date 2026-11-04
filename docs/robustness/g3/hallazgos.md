@@ -1098,3 +1098,30 @@ bueno), familia con hijo de 10 (reparto y dos enlaces bien), francés (FFESSM, p
 - Alemanes: «Nitrox is available on request» no lo he encontrado en la base como aire para buzos ya certificados (solo la especialidad).
 - Francés: t1 en inglés; pasa al francés cuando lo piden, con la tarjeta en inglés.
 - Tarjeta perdida: «¿para cuántas personas?» a quien habla en singular.
+
+## CALN-S04L-01..10 · Tanda de contraste de Gonzalo contra la candidata 0.52b (4-nov, `charla_rama` sobre 052ce47c, con `kb_v2_gadea`)
+
+Criterio de Álvaro (#2716), Haiku por Anthropic. 10 clientes nuevos, educados y que escriben bien (`docs/robustness/g3/charlas-rama/s04l-*`), elegidos antes de ver nada,
+con temas distintos a S04H-S04K: 9 sin graves y 1 con grave. Contando con la lista que se escribió antes: empresa, Divemaster, miopía y mareo, comida, Navidad, añadir a una
+persona, nocturna sola, reservar para mañana, pareja de São Paulo, tarjeta rechazada.
+
+**Grave (1):**
+1. **Dos salidas de un día en dos fechas** (`navidad`). Dos Open Water piden 2 inmersiones el 24-dic y 2 el 2-ene, durmiendo en Cartagena. t3: el extractor da días de buceo 2
+   (`EX9B-6 duration=multi_day`) y la lista trae los paquetes de 4, 5 y 7 inmersiones, sin la salida de 2 (178 USD). El texto dice bien que no hay que dormir en las islas y el
+   enlace es el correcto. Pide el total en t2, t3 y t4; lo tiene en t5, cuando lo calcula él (712 USD, y el bot lo confirma). Repetido ×3 en t3 y t4: 052ce47c 0/6, PRE 0.51.1
+   1/6 (1 respaldo en 21 turnos por lado): ya estaba, no lo trae la candidata. No es CALN-25: son dos días de verdad, cada uno con un plan de un día.
+   En `banco-graves.json` como `s04l-dos-salidas-t4`, `abierto`.
+
+**BIEN:** empresa de 12 (factura sí, precios y descuento de grupo, al asesor), Divemaster (internado, equipo propio, requisitos; el precio, al asesor), vegetariana alérgica al
+marisco (almuerzo, avisar antes, enlace), añadir a una amiga a una reserva pagada (al asesor), nocturna sola con cámara propia (no lo confirma; al asesor), São Paulo (reparto, dos
+enlaces con «solo a la persona que hará esa actividad», sin confirmar el portugués), tarjeta rechazada (enlace por transferencia con el descuento; al asesor).
+
+**Medios:**
+- Reservar para mañana, pasadas las 4:30 (`manana2`): «Sí, todavía puedes reservar para mañana: … ya no permite reservar para el jueves». La conclusión es la buena, y la primera palabra, la contraria.
+- Navidad t1: a quien pregunta por el 25-dic y el 1-ene le contesta que esos días se cierra, sin precio ni otras fechas. t2: «the options are:» con la lista vacía, «You'll need to
+  stay overnight» dos veces y otra vez si están certificados, ya dicho en t1. También en t3 («can you confirm…»); el cliente protesta en t4.
+- Miopía t1: «I don't have specific information about prescription lenses», con las máscaras graduadas en la base (FAQ 100). En t2, preguntado directamente, lo contesta bien.
+- `manana` (primera): el cliente dice que son las 6 de la tarde y el bot usa su reloj («ahora son las 4:10 p. m.»). Era cierto en Cartagena: fallo de la prueba, no del bot; por eso se repitió.
+
+**Menores:** São Paulo t1, paquetes de 3 y 4 inmersiones en la lista de quien no los pide; añadir a una amiga, los precios de los dos orígenes; miopía t2, «Shall we go for the mini-course?» tras
+darle el enlace.
