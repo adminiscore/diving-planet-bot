@@ -841,8 +841,41 @@ def pending_answer_value(slot: str, answer: dict) -> dict:
     return {"slot": slot, "value": value, "confidence": float((answer or {}).get("confidence", 0.0))}
 
 
+# CALN-S04J (4-nov): «los 5 buceos serían por 293 pagando en el website» no lleva interrogación ni pide nada (asks_question
+# 0,60; pide_precio 0,42): el flujo contestaba «¡Perfecto! 🙌» y su siguiente pregunta, y la cifra quedaba como buena. Sonda de
+# 24 mensajes × 3 (`scripts/sonda_jev_precio_citado.py`): 72/72, 0,82-0,97 los que citan y 0,03-0,08 el resto.
+CITA_PRECIO = "cita_precio"
+CITA_PRECIO_MIN = 0.7
+_CITA_PRECIO_Q = {
+    "type": "noul",
+    "instructions": (
+        "The customer states a specific amount of money as the price of one of the dive center's activities or packages "
+        "(seen on the website, told by someone, paid before, or worked out by them), even with no question mark. It is "
+        "FALSE if they ask how much something costs without naming an amount, or if the numbers in the message are dates, "
+        "ages, times, a room number, a number of people, of dives or of years, or if the message names no amount of money."
+    ),
+}
+# CALN-S04J (4-nov): «soy mexicana con cédula de extranjería y mi novio vive en México» no quedaba como grupo mixto (Haiku dudaba
+# entre colombiana y no colombiana) y el escritor partía el pago: «tú en pesos, tu novio en dólares». Sonda de 23 mensajes × 3
+# (`scripts/sonda_jev_grupo_mixto.py`): 69/69, 0,88-0,92 los mixtos y como mucho 0,59 el resto (venezolano con cédula y esposa
+# colombiana, que pagan los dos en pesos).
+GRUPO_MIXTO = "grupo_mixto"
+GRUPO_MIXTO_MIN = 0.7
+_GRUPO_MIXTO_Q = {
+    "type": "noul",
+    "instructions": (
+        "The customer says that the people booking together include BOTH someone who is Colombian or a resident of Colombia "
+        "(holder of a cédula de extranjería) AND someone else who is a foreigner who is neither. It is FALSE if everyone in "
+        "the group is Colombian or holds a cédula, if everyone is a foreigner, if they mention only one person, if they do "
+        "not say where the people are from, and if they only ask a general question about prices for Colombians and "
+        "foreigners."
+    ),
+}
+
+
 # Las preguntas de u3-4/u3-5 no son señales del router: su duda NO manda el turno al router LLM.
 _U34_QUESTIONS = (
+    CITA_PRECIO, GRUPO_MIXTO,
     ASKS_QUESTION, AFFIRMS_LOCATION, AFFIRMS_ACTIVITY, ACTIVITY_HYPOTHESIS,
     AFFIRMS_CERTIFICATION, AFFIRMS_GROUP, AFFIRMS_NATIONALITY, CORRECTS, ASKS_RECALL, NEEDS_STAFF,
     CHANGES_DATE, COMPANION_JOINS, PENDING_ANSWER, SHARES_OPEN_FACT, ADDS_PERSON, CUSTOMER_PLACE, YA_RESERVADO,
@@ -910,6 +943,8 @@ def _questions_for_turn(pending_slot: str | None = None) -> dict:
     instrucciones = f"{instrucciones} {_YA_RESERVO_NO_BASTA}"
     q[NEEDS_STAFF] = {**_NEEDS_STAFF_Q, "instructions": instrucciones}
     q[CHANGES_DATE] = _CHANGES_DATE_Q
+    q[CITA_PRECIO] = _CITA_PRECIO_Q
+    q[GRUPO_MIXTO] = _GRUPO_MIXTO_Q
     q[COMPANION_JOINS] = _COMPANION_JOINS_Q
     q[ADDS_PERSON] = _ADDS_PERSON_Q
     q[YA_RESERVADO] = _YA_RESERVADO_Q_SIN_HOTEL
@@ -1005,6 +1040,10 @@ def answers_to_signals(answers: dict, threshold: float = THRESHOLD) -> dict:
         out[SHARES_OPEN_FACT] = (answers.get(SHARES_OPEN_FACT) or {}).get("noul", 1.0)
     if CHANGES_DATE in answers:
         out[CHANGES_DATE] = (answers.get(CHANGES_DATE) or {}).get("noul", 0.0) >= CHANGES_DATE_MIN
+    if CITA_PRECIO in answers:
+        out[CITA_PRECIO] = (answers.get(CITA_PRECIO) or {}).get("noul", 0.0) >= CITA_PRECIO_MIN
+    if GRUPO_MIXTO in answers:
+        out[GRUPO_MIXTO] = (answers.get(GRUPO_MIXTO) or {}).get("noul", 0.0) >= GRUPO_MIXTO_MIN
     if YA_RESERVADO in answers:
         out[YA_RESERVADO] = (answers.get(YA_RESERVADO) or {}).get("noul", 0.0) >= YA_RESERVADO_MIN
     if PIDE_DATOS_AJENOS in answers:
@@ -1118,6 +1157,7 @@ async def detect_routing_signals_jev(message: str, *, lang: str = "es") -> dict 
 
 # Señales de u3-4/u3-5 que NO son del router: viajan aparte (ver `detect_routing_signals_jev_full`).
 _TURN_SIGNALS = (
+    CITA_PRECIO, GRUPO_MIXTO,
     AFFIRMS_LOCATION, AFFIRMS_ACTIVITY, AFFIRMS_CERTIFICATION, AFFIRMS_GROUP, AFFIRMS_NATIONALITY, CORRECTS,
     ASKS_RECALL, NEEDS_STAFF, CHANGES_DATE, COMPANION_JOINS, SHARES_OPEN_FACT, YA_RESERVADO, PIDE_DATOS_AJENOS,
     NUEVO_CASO, PREGUNTA_SI_ES_IA, CAMBIA_IDIOMA, PIDE_PRECIO, PIDE_SERVICIO_PRIVADO, PIDE_QUE_INCLUYE, *_INTENCIONES_Q,

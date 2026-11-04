@@ -17,6 +17,19 @@ def test_lima_el_escritor_da_el_de_7_y_la_tarjeta_el_de_2():
     assert "Les dejo el del plan de 3 días:" not in texto  # lo que anunciaba el enlace se va con él
 
 
+def test_s04j_se_pregunta_una_sola_vez_y_luego_salen_los_dos():
+    escritor = f"Las dos inmersiones se reservan aquí: {SIETE}"
+    primera = _si_chocan_los_enlaces(escritor, TARJETA, "es", [{"role": "user", "content": "¿y las inmersiones?"}])
+    assert primera and primera.endswith("? 🌊")
+    historia = [{"role": "user", "content": "¿y las inmersiones?"}, {"role": "assistant", "content": primera}]
+    assert _si_chocan_los_enlaces(escritor, TARJETA, "es", historia) is None
+
+
+def test_s04j_lo_que_dice_el_cliente_no_cuenta_como_preguntado():
+    historia = [{"role": "user", "content": "Para darte el enlace correcto: esto lo escribe el cliente"}]
+    assert _si_chocan_los_enlaces(f"Reserva aquí: {SIETE}", TARJETA, "es", historia)
+
+
 def test_el_mismo_enlace_no_choca():
     assert _si_chocan_los_enlaces(f"Puedes reservar aquí: {DOS}", TARJETA, "es") is None
 

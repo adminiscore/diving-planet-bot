@@ -791,8 +791,15 @@ def _poner_actividad(intent, state: ConversationState, datos: dict, message: str
 
 def _poner_nacionalidad(intent, state: ConversationState, message: str, datos: dict) -> None:
     """ex-8: la nacionalidad es la del extractor (nunca deducida del idioma). Grupo mezclado: todo en USD (decisión de
-    Gadea, 14-sep). Un valor distinto del guardado se confirma."""
-    if datos.get("mixed_nationality") is True:
+    Gadea, 14-sep). Un valor distinto del guardado se confirma. CALN-S04J: el grupo mezclado lo afirma Jev (la mexicana con
+    cédula y su novio de México, que el extractor no veía; el venezolano con cédula y su esposa colombiana, que pagan los dos en
+    pesos y el extractor daba por mezclados). Si Jev calla, lo que diga el extractor."""
+    from src.agents.jev_router import GRUPO_MIXTO  # lazy
+
+    mezclado = (getattr(state, "_senales_router", None) or {}).get(GRUPO_MIXTO)
+    if mezclado is None:
+        mezclado = datos.get("mixed_nationality") is True
+    if mezclado:
         intent.is_colombian = False
         for listado in (intent.detected_fields, intent.overwrite):
             if "is_colombian" not in listado:

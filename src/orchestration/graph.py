@@ -31,6 +31,9 @@ from src.agents.deflection_agent import deflection_node
 from src.agents.escalation_agent import escalation_node
 from src.agents.info_agent import info_node
 from src.agents.jev_router import (
+    ASKS_QUESTION,
+    CITA_PRECIO,
+    GRUPO_MIXTO,
     NUEVO_CASO,
     PIDE_CAMBIOS,
     PIDE_CLIMA,
@@ -72,6 +75,17 @@ _INTENCION_DE_SENAL = {
     "clima": PIDE_CLIMA, "pago": PIDE_PAGO,  # arq-1i
     "hoteles": PIDE_HOTELES, "regreso": PIDE_REGRESO, "fotos": PIDE_FOTOS, "cambios": PIDE_CAMBIOS,  # lat-8
 }
+
+
+def _con_lo_que_implica(conv, signals: dict) -> dict:
+    """CALN-S04J (4-nov). Quien cita un precio («los 5 buceos serían por 293») recibe el precio del plan, no el siguiente paso
+    de la reserva con un «¡Perfecto!». El grupo mixto se apunta antes de que se escriba nada, para que el escritor reciba la
+    regla del grupo y no la de cada persona («tú en pesos, tu novio en dólares»)."""
+    if signals.get(GRUPO_MIXTO):
+        conv.mixed_nationality_notice = True
+    if signals.get(CITA_PRECIO):
+        return {**signals, PIDE_PRECIO: True, ASKS_QUESTION: True}
+    return signals
 
 
 # Nodos-agente REALES (Fase 2). Con 2.5 los 5 nodos son reales — ya no queda
@@ -182,6 +196,7 @@ async def _router_node(state: BotState) -> dict:
         logger.info(f"[GRAPH][IDIOMA] apertura en {conv.language!r}")
     if signals is None:
         signals = await _senales()
+    signals = _con_lo_que_implica(conv, signals)
     # ex-9b paso 5 (PIDE_PRECIO): lo que Jev dice de ESTE turno (None si calla), para la puerta del origen antes
     # del precio, que corre en la reserva y en info. Se pone en cada turno: nunca queda el de un turno anterior.
     conv._jev_pide_precio = signals.get(PIDE_PRECIO)

@@ -537,7 +537,13 @@ def _build_extra_context(state: ConversationState) -> str | None:
         parts.append("El cliente marco que no es buzo certificado o que viene como principiante/snorkel.")
 
     # Colombiano o no
-    if getattr(state, "is_colombian", None) is True:
+    if getattr(state, "mixed_nationality_notice", False):
+        # CALN-S04J (la mexicana con cédula y su novio de México): sin esto recibía «no es colombiano/a» y partía el pago, «tú en
+        # pesos, tu novio en dólares». La regla del grupo, de la base, como en los hechos (`regla_moneda`).
+        from src.flows.hechos import _politica  # lazy
+
+        parts.append(f"Este grupo es mixto (mostrar precios en USD). {_politica('mixed_nationality_group', 'es')}")
+    elif getattr(state, "is_colombian", None) is True:
         parts.append("El cliente indico que es colombiano/a (mostrar precios en COP, no hay descuento especial por ser colombiano).")
         # gen-4 (decisión de Gadea, Coral #862): al cerrar, un asesor coordina su pago en COP; el link de reserva que
         # el RAG le daba antes (banco dialogos-gen4-moneda, g4-colombiana) le hacía pagar por otro camino.

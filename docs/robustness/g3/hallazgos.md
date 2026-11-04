@@ -1043,3 +1043,32 @@ mixta en USD; al asesor). `two dives` se descarta bien en Londres t1 y t2 (`son 
 - Residente: t1 no contesta qué paga cada uno hasta t2; «should I change it?» al final; el descuento de grupo a una pareja.
 
 **Menores:** «I'm leaving the prices below» debajo de la lista (niña de 8); el miedo al agua profunda de la luna de miel no se contesta.
+
+## CALN-S04J-01..08 · 13.ª tanda de sparring contra PRE 0.51.0, hasta reservar (4-nov, `charla_pre`)
+
+Criterio de Álvaro (#2716). 8 clientes nuevos, educados y que escriben bien, elegidos antes de ver nada (conv 6872-6879): 6 sin graves y 2 con graves. Repetición en
+PRE 0.51 ×3 (`s04j-*` en `banco-graves.json`): fallan 3 de 3. **Meta de CALN-22: sigue en 0 de ~60.**
+
+**Graves (2):**
+1. **Mexicana con cédula y novio de México** (conv 6879). t1: «tú pagas en pesos colombianos; tu novio, en dólares». Un grupo mixto paga todo en USD. La tarjeta decía
+   bien 178 USD, y en t2 lo corrige si se le pregunta. El extractor no marca el grupo como mixto (duda entre colombiana y no colombiana) y el escritor recibía la regla de
+   cada persona. **Arreglo:** señal de Jev `grupo_mixto` (sonda 69/69), que además quita el «mixto» de más al venezolano con cédula y esposa colombiana (abierto desde el
+   30-oct: 0/3 → 2/3); el escritor recibe la regla del grupo. **3/3.**
+2. **Irlandés, refresher y buceo al día siguiente** (conv 6874). t4, t5 y t7: «To give you the right link: would you prefer Fun Dives or Dive Mini Course?», la misma pregunta
+   3 veces tras decir «both», sin enlace. **Es de mi control CALN-24:** el escritor da un plan y la tarjeta otro, se esconde la tarjeta y se pregunta; quien quiere los dos no
+   tiene salida. **Arreglo:** se pregunta una vez en la charla; si siguen saliendo dos planes, salen los dos. **3/3.**
+
+**BIEN:** Portugal (paquete de 5, hoteles, enlace en USD), Advanced de Chile (2 días, 616 USD, pago al reservar), tres amigas de Bogotá (minicurso, COP, al asesor; el mal
+tiempo, bien), cambio de fecha (al asesor), asma (al asesor, sin consejo médico), madre y niña de 10 en un hotel sin recogida confirmada (lo dice y ofrece al asesor).
+
+**Medios:**
+- **Dice que no sabe y la base lo tiene:** «una no nada muy bien» (Bogotá t2, FAQ de saber nadar). Misma clase que las mochilas de la mini (`luggage_policy`).
+- **«¿Para cuántas personas?» a quien viaja solo:** irlandés t2 («travelling alone» en t1) y Advanced t2 (CALN-18). Con «Así te doy el precio exacto», que ya no se sostiene.
+- **«¿Eres de nacionalidad colombiana?» tras «Como eres chileno, pagas…»** (Advanced t3), y al irlandés.
+- Irlandés t3: pide el precio de las inmersiones sueltas y recibe solo los paquetes de 2 y 3 días.
+- Madre y niña, t2: «¿cuál de las dos opciones?» (las dos tarjetas, minicurso y Bubble Makers) contesta con el Open Water como la otra opción.
+
+**Menores:** la lista «También necesitas» con la excepción del refresher a quien no lo hace (Bogotá, madre y niña); «we'll pair you with a buddy», sin base (irlandés t1).
+
+**Precio citado (de la mini de la 0.51, no de la tanda):** «los 5 buceos serían por 293» recibía «¡Perfecto!». **Arreglo:** señal de Jev `cita_precio` (sonda 72/72), que lo
+trata como pregunta de precio. **0/3 → 3/3.**
