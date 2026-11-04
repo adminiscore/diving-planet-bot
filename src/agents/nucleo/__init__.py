@@ -12,6 +12,9 @@ módulo, con su fase y lo que solo usa esa fase:
 - `extractor.py`      → el extractor del turno (ex-5) visto desde el núcleo: lanzarlo adelantado, aplicar sus
                         datos al estado (`_aplicar_extractor`, `_poner_*`) y guardar lo dicho en el pase. Es la
                         capa de abajo de `extraction.py`.
+- `lectura.py`       → lo que dice ESTE mensaje, para quien contesta antes de que la extracción lo guarde: la
+                        copia del estado con el origen, la nacionalidad, el grupo, la duración y el plan del
+                        mensaje (`foto_del_turno`; CALN-8 (5) paso 1, 4-nov).
 - `slotfill_close.py` → `_slotfill_close_phase`: preguntar el hueco que falta o cerrar la reserva, y el acuse en
                         paralelo.
 

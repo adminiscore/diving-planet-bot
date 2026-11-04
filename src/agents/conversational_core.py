@@ -1182,7 +1182,7 @@ def _jev_duda_del_lugar(state: ConversationState, datos: dict | None) -> bool:
     pasan a confirmarse. Quien contesta a la pregunta del origen («Desde Cartagena») también tiene a Jev seguro. Sin Jev,
     como hoy. No si nombra un hotel de las islas (ARQ-8b: «the Ubuntu hotel», con Jev a 0,52)."""
     from src.agents.jev_router import CUSTOMER_PLACE_MIN  # lazy
-    from src.agents.redactor_hechos import _hotel_de_las_islas  # lazy
+    from src.agents.nucleo.lectura import hotel_de_las_islas as _hotel_de_las_islas  # lazy
 
     lugar = getattr(state, "_jev_lugar", None) or {}
     if not lugar or (lugar.get("confidence") or 0.0) >= CUSTOMER_PLACE_MIN:
