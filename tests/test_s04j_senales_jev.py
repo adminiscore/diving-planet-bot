@@ -1,16 +1,19 @@
 """CALN-S04J (4-nov): dos señales de Jev. Quien cita un precio recibe el del plan, y el grupo mixto lo afirma Jev."""
 from types import SimpleNamespace
 
+from src.agents.conversational_core import SLOT_QTY, ask_slot
 from src.agents.jev_router import (
     ASKS_QUESTION,
     CITA_PRECIO,
     GRUPO_MIXTO,
+    HABLA_DE_SI,
     PIDE_PRECIO,
+    VIAJA_SOLO,
     _questions_for_turn,
     answers_to_signals,
     uncertain_answers,
 )
-from src.agents.nucleo.extractor import _poner_nacionalidad
+from src.agents.nucleo.extractor import _poner_grupo, _poner_nacionalidad
 from src.agents.rutas.contexto_rag import _build_extra_context
 from src.flows.state import ConversationState
 from src.orchestration.graph import _con_lo_que_implica
@@ -80,6 +83,42 @@ def test_si_jev_calla_vale_lo_del_extractor():
     _poner_nacionalidad(intent, estado, "mi pareja es colombiana y yo española", {"mixed_nationality": True})
     assert intent.is_colombian is False
     assert estado.mixed_nationality_notice is True
+
+
+def _intent_de_grupo():
+    return SimpleNamespace(group_size=None, group_allocation=None, detected_fields=[], overwrite=[])
+
+
+def test_caln18_quien_dice_que_va_solo_cuenta_una_persona():
+    estado, intent = _estado({VIAJA_SOLO: True}), _intent_de_grupo()
+    _poner_grupo(intent, estado, "I'm travelling alone", {})
+    assert intent.group_size == 1
+
+
+def test_caln18_sin_decirlo_no_se_da_por_hecho():
+    estado, intent = _estado({VIAJA_SOLO: False}), _intent_de_grupo()
+    _poner_grupo(intent, estado, "soy buza advanced", {})
+    assert intent.group_size is None
+
+
+def test_caln18_no_pisa_un_grupo_ya_sabido():
+    estado, intent = _estado({VIAJA_SOLO: True}), _intent_de_grupo()
+    estado.detected_group_size = 3
+    _poner_grupo(intent, estado, "voy solo a la inmersión de la tarde", {})
+    assert intent.group_size is None
+
+
+def test_caln18_a_quien_habla_de_si_se_le_pregunta_distinto():
+    estado = _estado({HABLA_DE_SI: True})
+    estado.language = "es"
+    assert "solo para ti" in ask_slot(estado, SLOT_QTY)
+
+
+def test_caln18_al_grupo_la_pregunta_de_siempre_sin_el_precio_exacto():
+    estado = _estado({HABLA_DE_SI: False})
+    estado.language = "es"
+    texto = ask_slot(estado, SLOT_QTY)
+    assert "cuántas personas" in texto and "solo para ti" not in texto and "precio exacto" not in texto
 
 
 def test_el_escritor_recibe_la_regla_del_grupo_y_no_la_de_una_persona():

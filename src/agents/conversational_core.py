@@ -782,11 +782,14 @@ def _texto_de_la_pregunta(state: ConversationState, slot: str, *, reasking: bool
             "or is someone else joining? 😊"
         )
     if slot == SLOT_QTY:
-        return (
-            "¿Y para cuántas personas armamos el plan? Así te paso el precio exacto. 😊"
-            if lang == "es" else
-            "And how many people should I plan for? That way I can give you the exact price. 😊"
-        )
+        # CALN-18: a quien solo habla de sí mismo no se le da por hecho un grupo (ni que vaya solo: lo dice él). Y «Así te paso el
+        # precio exacto» ya no se sostiene: el precio es por persona y no damos totales (decisión de Gadea, 9-oct).
+        from src.agents.jev_router import HABLA_DE_SI  # lazy
+
+        if (getattr(state, "_senales_router", None) or {}).get(HABLA_DE_SI):
+            return ("¿Para cuántas personas sería: solo para ti o van más? 😊" if lang == "es" else
+                    "How many people would this be for: just you, or more? 😊")
+        return "¿Y para cuántas personas armamos el plan? 😊" if lang == "es" else "And how many people should I plan for? 😊"
     if slot == SLOT_COMPANION_QTY:
         act = state.pending_companion_activity
         label = dom.text(act, "recall", "es" if lang == "es" else "en", default=act or "")

@@ -873,9 +873,36 @@ _GRUPO_MIXTO_Q = {
 }
 
 
+# CALN-18 (4-nov): «¿para cuántas personas?» a quien habla de sí mismo (7 veces en 5 tandas). «Travelling alone» lo leía Haiku 2 de
+# 3 veces y se volvía a preguntar: `viaja_solo` cuenta una persona. Quien solo habla de sí («me gustaría sacar el Advanced») no dice
+# que vaya solo, así que se le sigue preguntando, pero distinto: `habla_de_si`. Sonda de 23 mensajes × 3
+# (`scripts/sonda_jev_viaja_solo.py`): 69/69 (0,85-0,96 frente a 0,02-0,07) y 60/60 (0,80-0,96 frente a 0,02-0,05).
+VIAJA_SOLO = "viaja_solo"
+VIAJA_SOLO_MIN = 0.7
+_VIAJA_SOLO_Q = {
+    "type": "noul",
+    "instructions": (
+        "The customer says that they alone are going: only they will take part ('just me', 'I'm travelling alone', 'voy "
+        "solo', 'es solo para mí'). It is FALSE when they mention or imply anyone else coming, when 'only/solo' limits "
+        "something else ('solo la mañana', 'I can only dive in the morning'), and when they just talk about themselves "
+        "without saying that nobody else is coming."
+    ),
+}
+HABLA_DE_SI = "habla_de_si"
+HABLA_DE_SI_MIN = 0.7
+_HABLA_DE_SI_Q = {
+    "type": "noul",
+    "instructions": (
+        "The customer speaks only about themselves in the first person singular ('I', 'me', 'yo', 'me gustaría', 'soy'), "
+        "and mentions no one else who might come. It is FALSE if they speak in the plural ('we', 'somos', 'queremos') or "
+        "mention anyone else (a partner, friends, family, children)."
+    ),
+}
+
+
 # Las preguntas de u3-4/u3-5 no son señales del router: su duda NO manda el turno al router LLM.
 _U34_QUESTIONS = (
-    CITA_PRECIO, GRUPO_MIXTO,
+    CITA_PRECIO, GRUPO_MIXTO, VIAJA_SOLO, HABLA_DE_SI,
     ASKS_QUESTION, AFFIRMS_LOCATION, AFFIRMS_ACTIVITY, ACTIVITY_HYPOTHESIS,
     AFFIRMS_CERTIFICATION, AFFIRMS_GROUP, AFFIRMS_NATIONALITY, CORRECTS, ASKS_RECALL, NEEDS_STAFF,
     CHANGES_DATE, COMPANION_JOINS, PENDING_ANSWER, SHARES_OPEN_FACT, ADDS_PERSON, CUSTOMER_PLACE, YA_RESERVADO,
@@ -945,6 +972,8 @@ def _questions_for_turn(pending_slot: str | None = None) -> dict:
     q[CHANGES_DATE] = _CHANGES_DATE_Q
     q[CITA_PRECIO] = _CITA_PRECIO_Q
     q[GRUPO_MIXTO] = _GRUPO_MIXTO_Q
+    q[VIAJA_SOLO] = _VIAJA_SOLO_Q
+    q[HABLA_DE_SI] = _HABLA_DE_SI_Q
     q[COMPANION_JOINS] = _COMPANION_JOINS_Q
     q[ADDS_PERSON] = _ADDS_PERSON_Q
     q[YA_RESERVADO] = _YA_RESERVADO_Q_SIN_HOTEL
@@ -1044,6 +1073,10 @@ def answers_to_signals(answers: dict, threshold: float = THRESHOLD) -> dict:
         out[CITA_PRECIO] = (answers.get(CITA_PRECIO) or {}).get("noul", 0.0) >= CITA_PRECIO_MIN
     if GRUPO_MIXTO in answers:
         out[GRUPO_MIXTO] = (answers.get(GRUPO_MIXTO) or {}).get("noul", 0.0) >= GRUPO_MIXTO_MIN
+    if VIAJA_SOLO in answers:
+        out[VIAJA_SOLO] = (answers.get(VIAJA_SOLO) or {}).get("noul", 0.0) >= VIAJA_SOLO_MIN
+    if HABLA_DE_SI in answers:
+        out[HABLA_DE_SI] = (answers.get(HABLA_DE_SI) or {}).get("noul", 0.0) >= HABLA_DE_SI_MIN
     if YA_RESERVADO in answers:
         out[YA_RESERVADO] = (answers.get(YA_RESERVADO) or {}).get("noul", 0.0) >= YA_RESERVADO_MIN
     if PIDE_DATOS_AJENOS in answers:
@@ -1157,7 +1190,7 @@ async def detect_routing_signals_jev(message: str, *, lang: str = "es") -> dict 
 
 # Señales de u3-4/u3-5 que NO son del router: viajan aparte (ver `detect_routing_signals_jev_full`).
 _TURN_SIGNALS = (
-    CITA_PRECIO, GRUPO_MIXTO,
+    CITA_PRECIO, GRUPO_MIXTO, VIAJA_SOLO, HABLA_DE_SI,
     AFFIRMS_LOCATION, AFFIRMS_ACTIVITY, AFFIRMS_CERTIFICATION, AFFIRMS_GROUP, AFFIRMS_NATIONALITY, CORRECTS,
     ASKS_RECALL, NEEDS_STAFF, CHANGES_DATE, COMPANION_JOINS, SHARES_OPEN_FACT, YA_RESERVADO, PIDE_DATOS_AJENOS,
     NUEVO_CASO, PREGUNTA_SI_ES_IA, CAMBIA_IDIOMA, PIDE_PRECIO, PIDE_SERVICIO_PRIVADO, PIDE_QUE_INCLUYE, *_INTENCIONES_Q,
