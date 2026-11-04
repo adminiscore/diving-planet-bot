@@ -184,7 +184,33 @@ def main() -> int:
     if con_errores:
         print(f"⚠️ {con_errores}/{len(filas)} turnos con errores de LLM (contestó un respaldo): "
               "mira el saldo y los modelos antes de puntuar")
-    return 3 if con_errores > 0.05 * len(filas) else 0
+    # 4-nov (#3149 → #3183): los respaldos van dentro de `llamadas` y cada uno los contaba a mano. Una medida con Bedrock
+    # atascado (extractor en respaldo en 18 de 27 turnos) se dio por limpia. El del escritor salta por tiempo y gana el
+    # primero: se avisa, pero no invalida; el del extractor o el del lector cambia lo que se lee.
+    respaldos = respaldos_por_pieza(filas)
+    if respaldos:
+        print(f"respaldos por pieza, en {len(filas)} turnos: {respaldos}")
+    invalida = sum(1 for f in filas if _turno_con_lectura_de_respaldo(f))
+    if invalida > 0.05 * len(filas):
+        print(f"⚠️ {invalida}/{len(filas)} turnos con el extractor o el lector en respaldo: esta medida no mide el bot de verdad")
+    return 3 if con_errores > 0.05 * len(filas) or invalida > 0.05 * len(filas) else 0
+
+
+def respaldos_por_pieza(filas: list[dict]) -> dict[str, int]:
+    """Cuántas llamadas fueron de respaldo, por pieza (`extractor_respaldo`, `rag_respaldo`…; `pieza_llm` en llm_client)."""
+    cuenta: dict[str, int] = {}
+    for f in filas:
+        for m in f.get("metricas") or []:
+            for llamada in m.get("llamadas") or []:
+                pieza = str(llamada.get("p") or "")
+                if pieza.endswith("_respaldo"):
+                    cuenta[pieza] = cuenta.get(pieza, 0) + 1
+    return dict(sorted(cuenta.items()))
+
+
+def _turno_con_lectura_de_respaldo(fila: dict) -> bool:
+    return any(str(llamada.get("p") or "") in ("extractor_respaldo", "lector_grupo_respaldo")
+               for m in fila.get("metricas") or [] for llamada in m.get("llamadas") or [])
 
 
 if __name__ == "__main__":
