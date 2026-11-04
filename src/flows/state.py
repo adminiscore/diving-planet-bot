@@ -195,6 +195,8 @@ class ConversationState:
     # u3-5: correcciones ya preguntadas ({campo: valor propuesto}). No se vuelven a preguntar:
     # si el cliente no las confirmó, se queda lo guardado.
     asked_corrections: dict = field(default_factory=dict)
+    # 0.52b: cuántas veces ha salido cada pregunta de la reserva ({slot: veces}); la 3.ª no sale (`compositor.componer`).
+    preguntas_hechas: dict = field(default_factory=dict)
     # u3-5 (decision de Gadea, 27-sep): actividad RECOMENDADA, no elegida. El minicurso deducido de
     # "es mi primera vez" se recomienda y lo confirma el cliente; hasta entonces no se guarda.
     suggested_activity: str | None = None

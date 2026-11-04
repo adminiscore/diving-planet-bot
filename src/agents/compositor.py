@@ -42,6 +42,19 @@ def _palabras(texto: str) -> set[str]:
     return set(re.sub(r"[^a-z0-9 ]", " ", t).split())
 
 
+# 0.52b: la misma pregunta por 3.ª vez es grave (criterio de Álvaro, #2716). «¿Desde dónde saldrías?» salía 7 veces en 7 turnos a quien
+# aún lo estaba decidiendo. Lo que pregunta el flujo sale como mucho 2 veces, salvo que pida reservar o pagar, porque entonces
+# hace falta, o que no haya nada más que decir (un «¡Perfecto!» suelto no es una respuesta).
+_VECES_MAX = 2
+_PALABRAS_DE_UNA_RESPUESTA = 5
+
+
+def _ya_se_pregunto_bastante(state, slot: str | None) -> bool:
+    if (getattr(state, "preguntas_hechas", None) or {}).get(slot, 0) < _VECES_MAX:
+        return False
+    return not set(getattr(state, "_intenciones", None) or []) & {"pago", "enlace"}
+
+
 def _es_la_misma(a: str, b: str) -> bool:
     """Dos textos que dicen lo mismo: las mismas cifras y casi las mismas palabras (sobre el más largo)."""
     if re.findall(r"\d[\d.,]*", a) != re.findall(r"\d[\d.,]*", b):
@@ -213,4 +226,11 @@ def componer(state, respuesta: str, *, pase: bool = False, escribio: bool | None
         _aplazar(state)
         return cuerpo
     cuerpo = _sin_las_frases_de(cuerpo, final)
+    if _ya_se_pregunto_bastante(state, pendiente) and len(_palabras(cuerpo)) >= _PALABRAS_DE_UNA_RESPUESTA:
+        logger.info(f"[CORE][052B] compositor: {pendiente!r} ya salió {_VECES_MAX} veces sin contestarse: no sale otra")
+        _aplazar(state)
+        return cuerpo
+    hechas = dict(getattr(state, "preguntas_hechas", None) or {})
+    hechas[pendiente] = hechas.get(pendiente, 0) + 1
+    state.preguntas_hechas = hechas
     return f"{cuerpo.rstrip()}{_PARRAFO}{final}" if cuerpo.strip() else final

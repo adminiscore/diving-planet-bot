@@ -1,0 +1,87 @@
+{
+  "about": "0.52b (4-nov): los fallos de la mini de la 0.52 por clases, redactados de otra manera que el golden para no ajustarse a él. Por código y sin juez; se puntúa con scripts/puntua_banco_edades.py (último turno; busca texto, no regex; el | separa alternativas).",
+  "dialogos": [
+    {
+      "id": "b-refresher-formulario-en",
+      "tarea": "Inventa: el refresher lleva el formulario de curso, no el de buzo",
+      "turnos": ["Hi, I haven't dived in four years, so I'll need a refresher. Is there any form I should fill in before I come?"],
+      "debe": ["exoneracion-curso"],
+      "ninguno": ["exoneracion-buzo"]
+    },
+    {
+      "id": "b-refresher-formulario-es",
+      "tarea": "Inventa: el refresher lleva el formulario de curso, no el de buzo",
+      "turnos": ["Hola, soy Open Water y hace tres años que no buceo, así que haré el refresher. ¿Tengo que rellenar algo antes de ir?"],
+      "debe": ["exoneracion-curso"],
+      "ninguno": ["exoneracion-buzo"]
+    },
+    {
+      "id": "b-open-water-sin-carta",
+      "tarea": "Inventa: la carta de referido es solo del Curso Referido",
+      "turnos": ["Quiero sacarme el título de buceo este verano", "¿Qué opciones tienen y qué necesito?"],
+      "ninguno": ["necesitas llevar la carta", "debes llevar la carta", "necesitas la carta"]
+    },
+    {
+      "id": "b-almuerzo-sin-origen-es",
+      "tarea": "Se contradice: sin origen, el almuerzo se dice por origen",
+      "turnos": ["Buenas, quiero el paquete de 5 inmersiones. ¿Qué incluye?"],
+      "debe": ["islas"],
+      "ninguno": ["no incluye almuerzo."]
+    },
+    {
+      "id": "b-almuerzo-sin-origen-en",
+      "tarea": "Se contradice: sin origen, el almuerzo se dice por origen",
+      "turnos": ["Hi, I'd like the 5-dive package. Is lunch included?"],
+      "debe": ["cartagena"]
+    },
+    {
+      "id": "b-cierre-del-dia-anterior",
+      "tarea": "Inventa: el cierre de las 4:30 es del día anterior a la actividad, no de hoy",
+      "turnos": ["Quiero reservar snorkel para el próximo sábado. ¿Hasta cuándo puedo hacerlo?"],
+      "debe": ["dia anterior"],
+      "ninguno": ["de hoy"]
+    },
+    {
+      "id": "b-fotos-es",
+      "tarea": "Dice que no sabe: fotos",
+      "turnos": ["¿Las fotos debajo del agua tienen un costo aparte? ¿Cómo funciona eso?"],
+      "debe": ["propina|voluntari"]
+    },
+    {
+      "id": "b-fotos-en",
+      "tarea": "Dice que no sabe: fotos",
+      "turnos": ["Do you take underwater photos during the dive? How much do they cost?"],
+      "debe": ["tip|voluntar"]
+    },
+    {
+      "id": "b-disponibilidad-con-otra-cosa",
+      "tarea": "Dice que no sabe: disponibilidad, en un mensaje con otra pregunta",
+      "turnos": ["Soy Open Water. ¿Tienen cupo el 5 y el 6 de febrero? Y otra cosa, ¿el equipo va incluido?"],
+      "ninguno": ["confirmarla un asesor", "tendria que confirmarla", "no puedo confirmar"]
+    },
+    {
+      "id": "b-mochilas-es",
+      "tarea": "Dice que no sabe: equipaje",
+      "turnos": ["Llevamos dos mochilas grandes de viaje porque seguimos ruta después. ¿Dónde las dejamos mientras buceamos?"],
+      "debe": ["oficina|mochila o un bolso"]
+    },
+    {
+      "id": "b-maleta-en",
+      "tarea": "Dice que no sabe: equipaje",
+      "turnos": ["We'll have our big suitcases with us because we leave right after the trip. Where can we keep them while we dive?"],
+      "debe": ["office"]
+    },
+    {
+      "id": "b-origen-dicho-en-cartagena",
+      "tarea": "Repite: dijo «in Cartagena» y no se le vuelve a preguntar",
+      "turnos": ["Hi, I'd like to complete my Open Water in Cartagena next month. Could you send me the details of the dive centre?", "And what time do we meet?"],
+      "ninguno": ["where would you", "desde donde saldrias", "leave from cartagena or"]
+    },
+    {
+      "id": "b-origen-dicho-en-las-islas",
+      "tarea": "Repite: dijo que estará en las islas y no se le vuelve a preguntar",
+      "turnos": ["Buenas tardes, estaremos en las Islas del Rosario en junio y quisiera regalarle a mi esposa su primera inmersión. ¿Qué planes tienen?", "Ese me interesa, el minicurso"],
+      "ninguno": ["ya estaras en las", "desde donde saldrias"]
+    }
+  ]
+}
