@@ -163,6 +163,8 @@ def _una_oferta_del_asesor(respuesta: str) -> str:
         if parrafo != antes:
             parrafo = re.sub(r"[ \t]{2,}", " ", parrafo).strip()
             logger.info("[CORE][CALN18] compositor: la tarjeta ofrece el asesor; fuera la pregunta de delante")
+            if not _palabras(parrafo):
+                continue  # solo quedaba el emoji de la pregunta («… del domingo? 🐠»)
         if parrafo.strip():
             delante.append(parrafo)
     return _PARRAFO.join(delante + partes[oferta:])
