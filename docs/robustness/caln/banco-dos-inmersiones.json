@@ -1,0 +1,116 @@
+{
+  "about": "Graves de la tanda s04h (CALN-S04H 1 y 2): «two dives» leído como 2 días de buceo. Se puntúa con scripts/puntua_banco_edades.py, por código, en el último turno. Los controles son días de verdad: siguen en multi_day y con sus días del plan. El grave de Toronto salió 1 vez con charla_rama y no siempre se reproduce aquí: vale el estado, no solo el enlace.",
+  "dialogos": [
+    {
+      "id": "dos-australianos-t1",
+      "tarea": "Pide dos inmersiones y el precio: la salida de 2, no los paquetes",
+      "turnos": [
+        "Hi there, my partner and I are from Melbourne and we'll be staying at a small guesthouse called Casa Coralina on Isla Grande. We're both Advanced divers. Can you pick us up there for two dives? Is lunch included and how much is it?"
+      ],
+      "estado_no": {
+        "detected_duration": "multi_day",
+        "detected_cert_days": 2
+      },
+      "debe": [
+        "124"
+      ],
+      "ninguno": [
+        "5-dive",
+        "4-dive"
+      ]
+    },
+    {
+      "id": "dos-australianos-t2",
+      "tarea": "Lo vuelve a preguntar: el precio de la salida de 2",
+      "turnos": [
+        "Hi there, my partner and I are from Melbourne and we'll be staying at a small guesthouse called Casa Coralina on Isla Grande. We're both Advanced divers. Can you pick us up there for two dives? Is lunch included and how much is it?",
+        "Thanks, but how much is just the two-dive trip? That's what we want. And no, our last dives were a few months ago."
+      ],
+      "estado_no": {
+        "detected_duration": "multi_day",
+        "detected_cert_days": 2
+      },
+      "debe": [
+        "124"
+      ],
+      "ninguno": [
+        "5-dive",
+        "4-dive"
+      ]
+    },
+    {
+      "id": "dos-toronto-t3",
+      "tarea": "Reparto con las dos inmersiones: el enlace existe, no se niega",
+      "turnos": [
+        "Hi! We're a group of 7 friends from Toronto. Five of us are Open Water certified and two have never dived but want to try. We're staying in Cartagena. What would it cost per person, and do you offer any group discount? A couple of us also bring our own full gear, does that lower the price?",
+        "Great, we'd leave from Cartagena on the 14th. How do we ask for the group discount, and can you send us the booking links?",
+        "As I said, five of us will do the two dives and two the mini course. Please send both links."
+      ],
+      "estado_no": {
+        "detected_duration": "multi_day",
+        "detected_cert_days": 2
+      },
+      "debe": [
+        "book.divingplanet.org"
+      ],
+      "ninguno": [
+        "direct booking link",
+        "don't have a direct"
+      ]
+    },
+    {
+      "id": "dos-inmersiones-es",
+      "tarea": "En español, sin la lista de paquetes",
+      "turnos": [
+        "Somos dos buzos certificados, estamos en Cartagena y queremos hacer dos inmersiones. ¿Cuánto cuesta?"
+      ],
+      "estado_no": {
+        "detected_duration": "multi_day",
+        "detected_cert_days": 2
+      },
+      "debe": [
+        "630.000"
+      ]
+    },
+    {
+      "id": "control-tres-dias",
+      "tarea": "Control: 3 días de verdad",
+      "turnos": [
+        "Somos dos buzos certificados, estamos en Cartagena y queremos bucear 3 días. ¿Cuánto cuesta?"
+      ],
+      "estado": {
+        "detected_duration": "multi_day",
+        "detected_cert_days": 3
+      },
+      "debe": [
+        "7 inmersiones"
+      ]
+    },
+    {
+      "id": "control-dos-dias-en",
+      "tarea": "Control: 4 inmersiones en 2 días",
+      "turnos": [
+        "We're two certified divers staying in Cartagena. I'd like 4 dives over 2 days, how much is it?"
+      ],
+      "estado": {
+        "detected_duration": "multi_day"
+      },
+      "debe": [
+        "4-dive"
+      ]
+    },
+    {
+      "id": "control-sabado-y-domingo",
+      "tarea": "Control: dos inmersiones cada día",
+      "turnos": [
+        "We're two certified divers staying in Cartagena. We want two dives on Saturday and two dives on Sunday. How much is it?"
+      ],
+      "estado": {
+        "detected_duration": "multi_day"
+      },
+      "debe": [
+        "4-dive"
+      ]
+    }
+  ]
+}

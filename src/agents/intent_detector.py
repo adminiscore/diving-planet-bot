@@ -206,6 +206,21 @@ def dive_counts_in(message: str, tamanos=None) -> list[int]:
     return list(dict.fromkeys(n for n in counts if n in validos))
 
 
+_UNA_CIFRA_RE = re.compile(r"\b" + _DIVE_NUMBER + r"\b", re.IGNORECASE)
+_CIFRA_DE_DIAS_RE = re.compile(r"\b" + _DIVE_NUMBER + r"[\s\-]*(?:d[ií]as?|days?)\b", re.IGNORECASE)
+
+
+def inmersiones_leidas_como_dias(dias: int, cita: str, mensaje: str) -> bool:
+    """Sparring s04h (4-nov): «can you pick us up for two dives?» → dias_de_buceo 2 con la cita «two dives» (4 de 5). ¿La
+    cifra de los días es la de las inmersiones que cita, sin decir días? No si la cifra se repite («two dives on Saturday
+    and two on Sunday») ni si el mensaje dice esos días («2 inmersiones en 2 días», aunque cite solo «2 inmersiones»)."""
+    if dias not in dive_counts_in(cita):
+        return False
+    if sum(_dive_number(c) == dias for c in _UNA_CIFRA_RE.findall(cita)) > 1:
+        return False
+    return not any(_dive_number(c) == dias for c in _CIFRA_DE_DIAS_RE.findall(mensaje))
+
+
 def detect_cert_day_count(message: str) -> int | None:
     """Requested certified package duration in days (1/2/3/4), inferred from
     explicit day-count phrasing rather than a dive count. None if absent/
