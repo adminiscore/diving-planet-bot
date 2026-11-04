@@ -21,6 +21,7 @@ from __future__ import annotations
 import json
 import logging
 import re
+import unicodedata
 from functools import lru_cache
 from pathlib import Path
 
@@ -184,6 +185,17 @@ def _ya_lo_dice(texto: str, respuesta: str) -> bool:
         and len(propias & raices) / len(propias) >= 0.25
 
 
+def _lo_dice_con_otras_palabras(aviso: dict, respuesta: str) -> bool:
+    """CALN-27 (un dato, un solo dueño): lo que el escritor dice a su manera («pagas en USD») no lo ve la comprobación de arriba, y
+    el aviso de la moneda salía igual en 7 de los 17 turnos que lo llevaban en el sparring del 4-nov. Las frases, en `ya_dicho`
+    del aviso: datos de la base, comparados con el texto del bot, no con el del cliente."""
+    ya_dicho = aviso.get("ya_dicho")
+    if not ya_dicho:
+        return False
+    plano = "".join(c for c in unicodedata.normalize("NFD", respuesta.lower()) if unicodedata.category(c) != "Mn")
+    return any(frase in plano for frase in ya_dicho)
+
+
 _FRASES = re.compile(r"(?<=[.!?…])\s+")
 _CON_LETRAS = re.compile(r"\w")
 _URL = re.compile(r"https?://\S+")
@@ -238,7 +250,7 @@ def poner_avisos(state, respuesta: str) -> str:
         texto = aviso[f"aviso_{lang}"]
         if aviso.get("una_vez"):
             state.avisos_dados.append(aviso["id"])
-        if _ya_lo_dice(texto, respuesta):
+        if _ya_lo_dice(texto, respuesta) or _lo_dice_con_otras_palabras(aviso, respuesta):
             logger.info(f"[AVISOS] {aviso['id']}: la respuesta ya lo dice")
             continue
         respuesta = _insertar(respuesta, texto)
