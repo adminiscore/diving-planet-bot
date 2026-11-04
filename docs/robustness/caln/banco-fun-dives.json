@@ -1,0 +1,53 @@
+{
+ "about": "Grave de la tanda s04k: «2 fun dives», con una palabra entre la cifra y «dives», leído como 2 días de buceo (multi_day), y en el último turno la tarjeta de «5 Dives - 2 days». Se puntúa con scripts/puntua_banco_edades.py, por código, en el último turno. Los controles son días de verdad: siguen en multi_day.",
+ "dialogos": [
+  {
+   "id": "fun-espanol-t1",
+   "tarea": "Primer turno del español: pide 2 inmersiones, no 2 días",
+   "turnos": ["hi, I want to book 2 fun dives for me in Cartagena, Advanced diver, dived in June. I'm from Spain. Can I pay cash when I get there instead of online? I don't trust paying by card on websites"],
+   "estado_no": {"detected_duration": "multi_day", "detected_cert_days": 2},
+   "debe": ["178"]
+  },
+  {
+   "id": "fun-espanol-t4",
+   "tarea": "Charla entera del español: la tarjeta es la de 2 inmersiones, no la de 5",
+   "turnos": [
+    "hi, I want to book 2 fun dives for me in Cartagena, Advanced diver, dived in June. I'm from Spain. Can I pay cash when I get there instead of online? I don't trust paying by card on websites",
+    "ok and if I book and then the weather is bad or I get sick, do I get my money back?",
+    "just me, I told you. So where do I put my date?",
+    "I said I'm from Spain. No cedula. So is 178 final and does it include gear?"
+   ],
+   "estado_no": {"detected_duration": "multi_day", "detected_cert_days": 2},
+   "debe": ["178"],
+   "ninguno": ["392", "2-days-5-dives"]
+  },
+  {
+   "id": "fun-pareja",
+   "tarea": "Pareja: 2 fun dives y el precio",
+   "turnos": ["We're two certified divers staying in Cartagena. We'd like to do 2 fun dives, how much is it?"],
+   "estado_no": {"detected_duration": "multi_day", "detected_cert_days": 2},
+   "debe": ["178"]
+  },
+  {
+   "id": "fun-recreational",
+   "tarea": "«2 recreational dives» en inglés",
+   "turnos": ["Hello, I'm an Open Water diver in Cartagena next week and I'm looking for 2 recreational dives. What's the price?"],
+   "estado_no": {"detected_duration": "multi_day", "detected_cert_days": 2},
+   "debe": ["178"]
+  },
+  {
+   "id": "fun-es-recreativos",
+   "tarea": "«2 buceos recreativos» en español",
+   "turnos": ["Hola, soy buzo Open Water, estoy en Cartagena y quiero 2 buceos recreativos. ¿Cuánto cuesta?"],
+   "estado_no": {"detected_duration": "multi_day", "detected_cert_days": 2},
+   "debe": ["630.000"]
+  },
+  {
+   "id": "control-fun-dos-dias",
+   "tarea": "Control: 2 fun dives cada día, 2 días de verdad",
+   "turnos": ["We're two certified divers staying in Cartagena. We want 2 fun dives a day for 2 days. How much is it?"],
+   "estado": {"detected_duration": "multi_day"},
+   "debe": ["4-dive"]
+  }
+ ]
+}
