@@ -897,6 +897,20 @@ _TIENE_CEDULA_Q = {
 # 3 veces y se volvía a preguntar: `viaja_solo` cuenta una persona. Quien solo habla de sí («me gustaría sacar el Advanced») no dice
 # que vaya solo, así que se le sigue preguntando, pero distinto: `habla_de_si`. Sonda de 23 mensajes × 3
 # (`scripts/sonda_jev_viaja_solo.py`): 69/69 (0,85-0,96 frente a 0,02-0,07) y 60/60 (0,80-0,96 frente a 0,02-0,05).
+# #3300 (2b, 4-nov): «Entiendo, gracias. Entonces lo dejo para otra ocasión» recibía «¿Con cuál te animas?» en todas las pasadas
+# leídas (sparring s04d, la tarde t2). Si se despide, el turno no lleva la pregunta de la reserva. Sonda `scripts/sonda_jev_se_despide.py`.
+SE_DESPIDE = "se_despide"
+SE_DESPIDE_MIN = 0.7
+_SE_DESPIDE_Q = {
+    "type": "noul",
+    "instructions": (
+        "The customer is ending the conversation or giving up on booking for now: they say goodbye, decline ('no thanks', "
+        "'no me interesa', 'too expensive for us'), or put it off with no plan to continue ('lo dejo para otra ocasión', "
+        "'maybe next time'). It is FALSE if they ask anything else or give any booking detail in this message, if they just "
+        "thank ('perfecto, gracias'), if they decline one option but still want another ('no thanks, just the 2 dives'), and "
+        "if they say they will come back to it soon ('lo pienso y te digo mañana', 'I'll book tonight')."
+    ),
+}
 VIAJA_SOLO = "viaja_solo"
 VIAJA_SOLO_MIN = 0.7
 _VIAJA_SOLO_Q = {
@@ -1034,6 +1048,7 @@ _DEL_TURNO = (
     _DelTurno(CITA_PRECIO, _CITA_PRECIO_Q, _si(CITA_PRECIO_MIN)),
     _DelTurno(GRUPO_MIXTO, _GRUPO_MIXTO_Q, _si(GRUPO_MIXTO_MIN)),
     _DelTurno(TIENE_CEDULA, _TIENE_CEDULA_Q, _si(TIENE_CEDULA_MIN)),
+    _DelTurno(SE_DESPIDE, _SE_DESPIDE_Q, _si(SE_DESPIDE_MIN)),
     _DelTurno(VIAJA_SOLO, _VIAJA_SOLO_Q, _si(VIAJA_SOLO_MIN)),
     _DelTurno(HABLA_DE_SI, _HABLA_DE_SI_Q, _si(HABLA_DE_SI_MIN)),
     # Solo se descarta cuando Jev está seguro de que NO (`nucleo/extractor.dias_de_buceo_de`).
