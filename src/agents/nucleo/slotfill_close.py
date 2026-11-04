@@ -189,6 +189,19 @@ _OFERTA_DEL_ASESOR = {
 }
 
 
+def _con_la_oferta_del_asesor(answer: str, cierre: str) -> str:
+    """Sparring s04e (4-nov, Barranquilla; igual en PRE 0.48): con la tarjeta en pesos ya vista va solo la respuesta
+    (s4-26), y la oferta del asesor con que acaba el cierre se perdía. El escritor cerraba con la suya («¿Quieres que te
+    pase con un asesor para dejar lista la reserva del domingo?»), el «Sí, por favor» no se reconocía
+    (`_quiere_reservar_o_pagar` reconoce la nuestra) y volvían la tarjeta y la oferta: el asesor, preguntado 3 veces. Si
+    el cierre ofrecía el asesor y el escritor cierra preguntando, la nuestra va al final y el compositor quita la suya
+    (CALN-18, `compositor._una_oferta_del_asesor`)."""
+    oferta = next((o for o in _OFERTA_DEL_ASESOR.values() if cierre.rstrip().endswith(o)), None)
+    if oferta is None or not _answer_already_asks(answer):
+        return answer
+    return f"{answer.rstrip()}\n\n{oferta}"
+
+
 def _finalize(state: ConversationState, *, pasar_al_asesor: bool = True, ofrecer: bool = True) -> str:
     """Todos los slots listos → resumen por actividad + links (determinista,
     del catálogo), con gating colombiano: colombiano → asesor coordina el pago
@@ -534,7 +547,7 @@ async def _slotfill_close_phase(
             # s4-26: la reserva ya estaba cerrada y no ha cambiado; la tarjeta (precio, link) ya la tiene el cliente.
             # Repetirla detrás de cada respuesta ("¿cuánto dura?") era el fallo de manual-duracion-curso.
             logger.info("[CORE][S4-26] cierre igual al ya enviado: va solo la respuesta")
-            response = answer
+            response = _con_la_oferta_del_asesor(answer, response)
         elif _answer_asks_the_origin(state, answer):
             response = answer  # la misma pregunta que la de la reserva: va una vez, con sus botones de origen
         else:
