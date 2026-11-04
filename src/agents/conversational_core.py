@@ -248,9 +248,11 @@ def next_missing_slot(state: ConversationState, saltar: frozenset[str] | set[str
     if state.pending_correction:
         # Un dato que contradice lo guardado, sin cue: se confirma antes de cotizar (7b).
         return SLOT_CONFIRM_CORRECTION
-    if state.needs_cert_or_course:
+    if (state.needs_cert_or_course and state.is_certified is None
+            and not (state.detected_group_allocation or {}).get("certified_diving")):
         # Nivel PADI nombrado sin decir si ya lo tienen o lo quieren (owner
-        # 2026-09-15): se aclara antes de cotizar nada.
+        # 2026-09-15): se aclara antes de cotizar nada. Sparring s04i (embarazada, 3 veces): si ya se sabe o el reparto
+        # ya lleva a un buzo («mi esposo es Advanced», ella snorkel), la pregunta sobra, como la de la certificación.
         return SLOT_CERT_OR_COURSE
     activity = dom.by_id(act)
     if activity is not None and activity.generic:
