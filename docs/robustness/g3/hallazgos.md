@@ -907,3 +907,30 @@ hotel de Bocagrande, ¿recogida? (6857). Cierre: 5 con enlace (Seúl, Lyon, jubi
 **Menores:** «And how many people should I plan for?» a quien dijo «I» (Seúl, CALN-18); el Snorkeling Tour en la lista del
 Advanced; «Hay que solicitarlo al equipo antes de pagar» sin sujeto (universitarios t1); «Es una reserva separada.» suelta
 (jubilados t1).
+
+## CALN-S04D-01..08 · 11.ª tanda de sparring contra PRE 0.48.0, hasta reservar (4-nov, `charla_pre`)
+
+Ocho clientes nuevos, educados y que escriben bien, con el criterio de Álvaro: chicos de Medellín alojados en Playa Blanca,
+snorkel (6858); dos amigas de Guadalajara, una con Open Water y otra nunca (6859); de Bogotá en un hotel con muelle en Isla
+Grande, Open Water (6860); 4 de Múnich, 2 Advanced y 2 Open Water, dos días (6861); «solo tengo libre de 2 a 6 de la
+tarde» (6862); minicurso de mañana ya reservado y con fiebre (6863); madre de Cali con hijos de 6, 8 y 12, snorkel
+(6864); de Miami con 600 inmersiones y 3 años sin bucear (6865). Cierre: 2 con enlace (Múnich, Guadalajara), 5 al asesor,
+y la de la tarde, sin salida a esa hora.
+
+- **BIEN:** Playa Blanca es Barú: salen desde Cartagena; el de 4 inmersiones al asesor y el de 5 con su enlace para los 4
+  de Múnich (el arreglo de s03j); el Open Water desde las islas en pesos, al asesor; los niños de 6, 8 y 12 al snorkel,
+  acompañados; la fiebre con reserva hecha, al equipo; el de 600 inmersiones lo revisa el equipo (no se le pide el
+  refresher de oficio); «no hay salidas por la tarde, los horarios son fijos»; las 2 inmersiones y el minicurso, cada uno
+  con su enlace.
+
+**Graves: ninguno.** Con la 10.ª (s04c), **dos tandas seguidas sin graves**: la meta de sparring de CALN, **cumplida**
+(falta comprobar los bancos sin bajar sobre la 0.48).
+
+**Medios:** las mexicanas t2, «¿cómo reservamos?» → la fecha «se elige en el enlace de reserva», pero sin el enlace, y
+«¿te animas con la salida de 2 inmersiones, un paquete o un curso avanzado?» cuando ya lo habían dicho (en t3, los dos
+enlaces); Playa Blanca t2, «ese enlace sirve para pagar» y a la vez «les paso con un asesor para coordinar el pago».
+
+**Menores:** «¿saldrías desde Cartagena?» como confirmación cuando ya lo dijeron (Guadalajara t1; ORIGEN-CONFIRMA); «¿para
+cuántas personas?» a quien habla en singular (Isla Grande t1, CALN-18); la pregunta del asesor dos veces (Cali t2); «¿con
+cuál te animas?» a quien se despide (la tarde t2); la lista de requisitos entera (Miami t1); «From Cartagena, you have two
+options:» con la lista vacía (Múnich t1); la fiebre como «pregunta médica».
