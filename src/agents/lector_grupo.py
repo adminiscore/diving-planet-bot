@@ -34,7 +34,7 @@ SISTEMA_ES = """Lees UN mensaje de un cliente de un centro de buceo y devuelves 
 
 Cada entrada es una persona o varias iguales («4 tenemos certificación» = una entrada con cantidad 4; «los niños, de 7 y 4» = una entrada con cantidad 2):
 - quien: "cliente" para quien escribe, junto con quienes nombra con él en la misma frase («mi hermana y yo» = una entrada "cliente" con cantidad 2; «4 tenemos certificación» = cantidad 4); para los demás, cómo los nombra ("esposo", "niños", "amiga", "los otros dos"). Nadie va en dos entradas.
-- cantidad: cuántas personas son en esa entrada; null si el mensaje no lo dice («unos amigos», «mis primos»: no se sabe cuántos son).
+- cantidad: cuántas personas son en esa entrada; null si el mensaje no lo dice («unos amigos», «mis primos»: no se sabe cuántos son). Si quien escribe dice que él no va («es un regalo, yo no voy»), su entrada "cliente" lleva cantidad 0, con esa frase como cita.
 - certificado: true si el mensaje dice que tiene certificación de buceo (Open Water, Advanced, «buzo certificado»); false si dice que no la tiene, que no bucea o que nunca ha buceado; null si no lo dice. Llevar tiempo sin bucear («hace 3 años que no bucea») no dice que no esté certificado: null, o true si dice que lo está.
 - actividad: la que ELIGE, de esta lista (el id); null si no la elige. Si varios eligen juntos («mi hija y yo queremos el minicurso»), es la de todos ellos. Tener una certificación («soy Advanced», «tiene el Open Water», «es buzo certificado») es certificado true, NO una actividad ni un curso. """ + BUCEO_CERTIFICADO_ES + """; si solo dice que es buzo o que está certificado, NO: actividad null. Decir que no bucea, que nunca ha buceado o que quiere «probar algo» tampoco es elegir. companion solo si dice que NO se mete al agua y solo acompaña («no se mete al agua», «solo viene en la lancha»). No bucear no es acompañar: «mi amiga no bucea» = certificado false y actividad null (puede hacer snorkel).
 {actividades}
@@ -51,7 +51,7 @@ SISTEMA_EN = """You read ONE message from a customer of a dive center and return
 
 Each entry is one person or several alike ("4 of us are certified" = one entry with quantity 4; "the kids, 7 and 4" = one entry with quantity 2):
 - quien: "cliente" for the writer, together with those they name with them in the same sentence ("my sister and I" = one "cliente" entry with quantity 2; "4 of us are certified" = quantity 4); for the others, how they name them ("husband", "kids", "friend", "the other two"). Nobody goes in two entries.
-- cantidad: how many people are in that entry; null if the message does not say ("some friends", "my cousins": we do not know how many).
+- cantidad: how many people are in that entry; null if the message does not say ("some friends", "my cousins": we do not know how many). If the writer says they are not going ("it's a gift, I won't be joining"), their "cliente" entry has quantity 0, with that sentence as the quote.
 - certificado: true if the message says they have a diving certification (Open Water, Advanced, "certified diver"); false if it says they do not have one, do not dive or have never dived; null if it does not say. Not having dived for a while ("hasn't been diving in 3 years") does not say they are not certified: null, or true if it says they are.
 - actividad: the one they CHOOSE, from this list (the id); null if they do not choose. If several choose together ("my daughter and I want the mini course"), it is everyone's. Having a certification ("I'm Advanced", "she has her Open Water", "he's a certified diver") is certificado true, NOT an activity or a course. """ + BUCEO_CERTIFICADO_EN + """; if they only say they are divers or certified, NOT: actividad null. Saying they do not dive, that they have never dived or that they want to "try something" is not choosing either. companion only if it says they will NOT get in the water and only come along ("doesn't get in the water", "just comes on the boat"). Not diving is not coming along: "my friend doesn't dive" = certificado false and actividad null (they could snorkel).
 {actividades}
@@ -79,6 +79,7 @@ def validar(datos: dict, mensaje: str) -> dict:
     que están en su cita. Lo descartado va en `descartes` (para contar los inventos)."""
     personas, descartes = [], []
     clientes = 0
+    escritor_no_va = False
     for p in datos.get("personas") or []:
         if not isinstance(p, dict):
             continue
@@ -87,6 +88,10 @@ def validar(datos: dict, mensaje: str) -> dict:
             descartes.append({"motivo": "cita", **p})
             continue
         cantidad = p.get("cantidad")
+        if cantidad == 0 and not isinstance(cantidad, bool) and str(p.get("quien") or "").strip().lower() == "cliente":
+            # CALN-17 (el regalo, s03j): quien escribe dice, con su cita, que él no va.
+            escritor_no_va = True
+            continue
         if cantidad is not None and (not isinstance(cantidad, int) or isinstance(cantidad, bool)
                                      or not 1 <= cantidad <= 50):
             descartes.append({"motivo": "cantidad", **p})
@@ -111,7 +116,38 @@ def validar(datos: dict, mensaje: str) -> dict:
         # nombra otra vez al grupo entero, que ya cuentan las demás.
         descartes += [{"motivo": "repite el grupo", **p} for p in personas if p["cantidad"] is None]
         personas = contadas
-    return {"total_dicho": total, "personas": personas, "descartes": descartes}
+    personas, total, bebes = _sin_quien_no_tiene_edad(personas, total)
+    return {"total_dicho": total, "personas": personas, "descartes": descartes, "bebes": bebes,
+            "escritor_no_va": escritor_no_va}
+
+
+def edad_para_alguna_actividad() -> int:
+    """La edad desde la que hay alguna actividad, del registro (hoy, el snorkel: 6). Quien no la tiene va en la lancha y no
+    paga (`policies.babies_onboard`, decisión de Gadea, 3-nov)."""
+    return min(a.min_age for a in map(dom.by_id, dom.activity_ids()) if a is not None and a.min_age)
+
+
+def _sin_quien_no_tiene_edad(personas: list[dict], total: int | None) -> tuple[list[dict], int | None, int]:
+    """CALN-17 (el bebé, s03h): cada entrada trae sus edades con cita, así que aquí sí se sabe quién es el bebé; con la
+    salida plana del extractor no se podía («Somos 2 y llevamos a nuestro bebé» → 2, «a couple with our 3-year-old» → 3).
+    Quien no tiene edad para ninguna actividad no cuenta, no paga ni es «sin elegir». Devuelve (personas, total, cuántos).
+    El total dicho solo baja si los contaba («Somos 4: mi pareja, yo y los niños de 9 y 4» → 3; «Somos 2 y llevamos al bebé
+    de 2 años», 2)."""
+    minima = edad_para_alguna_actividad()
+    suma = sum(p["cantidad"] or 0 for p in personas)
+    quedan, bebes = [], 0
+    for p in personas:
+        pequenos = [e for e in p["edades"] if e < minima]
+        if not pequenos or p["quien"] == "cliente":
+            quedan.append(p)
+            continue
+        bebes += len(pequenos)
+        cantidad = p["cantidad"] if p["cantidad"] is not None else len(p["edades"])
+        if cantidad > len(pequenos):
+            quedan.append({**p, "cantidad": cantidad - len(pequenos), "edades": [e for e in p["edades"] if e >= minima]})
+    if bebes and total == suma:
+        total -= bebes
+    return quedan, total, bebes
 
 
 def total_de(lectura: dict | None) -> int | None:
@@ -152,6 +188,8 @@ def por_completar(datos: dict, total_antes: int | None = None, reparto_antes: di
                  or (datos.get("activity") and (reparto_antes or {}).get("undecided")))
     if not otros:
         return False
+    if any(isinstance(e, int) and e < edad_para_alguna_actividad() for e in datos.get("edades") or []):
+        return True  # CALN-17: el extractor lo cuenta unas veces sí y otras no; quién es, lo dice la lectura
     if not isinstance(total, int):
         return True
     if reparto and _suma(reparto) != total:
@@ -175,13 +213,30 @@ def completar(datos: dict, lectura: dict, total_sabido: int | None = None,
     cambió)."""
     from src.flows import grupo  # lazy
     personas = (lectura or {}).get("personas") or []
+    # CALN-17: si va un bebé o quien escribe no va, la lectura sabe quién cuenta y el extractor no: manda ella, salvo que
+    # el reparto de él ya cuadre con quienes cuentan (g37: el marido buzo, que el lector dejaba sin actividad).
+    manda = bool((lectura or {}).get("bebes") or (lectura or {}).get("escritor_no_va"))
     if not personas:
+        if manda and isinstance(total_sabido, int) and (datos.get("group_size") or datos.get("group_allocation")):
+            # «También viene nuestro bebé de 2 años»: el grupo sabido no cambia.
+            return {**datos, "group_size": None, "group_allocation": None}, ["el mensaje solo nombra a quien no cuenta"]
         return datos, []
     out, cambios = dict(datos), []
     escritor = out.get("activity")
+    if lectura.get("escritor_no_va") and escritor:
+        # g46: «el minicurso para mi hermana… yo no voy»: lo que el extractor da a quien escribe es de los que van.
+        personas = [{**p, "actividad": p["actividad"] or escritor} for p in personas]
+        lectura = {**lectura, "personas": personas}
+    if manda and _contadas(personas):
+        cuentan = total_de(lectura)
+        if out.get("group_allocation") and _suma(out["group_allocation"]) == cuentan:
+            out["group_size"] = cuentan
+        else:
+            out["group_size"], out["group_allocation"] = None, None
     ya_eligio = escritor or actividad_sabida
-    if (ya_eligio and not any(p["quien"] == "cliente" for p in personas) and not lectura.get("total_dicho")
-            and not isinstance(out.get("group_size"), int) and not isinstance(total_sabido, int)):
+    if (ya_eligio and not lectura.get("escritor_no_va") and not any(p["quien"] == "cliente" for p in personas)
+            and not lectura.get("total_dicho") and not isinstance(out.get("group_size"), int)
+            and not isinstance(total_sabido, int)):
         # CALN-8 (g19): quien escribe ya eligió («I'd like to do the mini course») y el mensaje habla solo de otro («my
         # husband is certified, he'd like to dive»): quien escribe también va, con lo que eligió. Con un total dicho o
         # ya sabido no se cuenta: el mensaje puede nombrar solo a una parte del grupo.
@@ -199,7 +254,7 @@ def completar(datos: dict, lectura: dict, total_sabido: int | None = None,
     total_lector = total_de(lectura)
     # Un total de 1 solo porque el mensaje habla de quien escribe no dice que vaya solo: no se pone.
     if (not isinstance(out.get("group_size"), int) and not isinstance(total_sabido, int) and total_lector
-            and (lectura.get("total_dicho") or total_lector > 1)):
+            and (lectura.get("total_dicho") or total_lector > 1 or manda)):
         out["group_size"] = total_lector
         cambios.append(f"group_size={total_lector}")
     total = out.get("group_size") if isinstance(out.get("group_size"), int) else total_sabido
