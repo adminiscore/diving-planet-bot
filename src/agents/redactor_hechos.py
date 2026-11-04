@@ -349,12 +349,16 @@ def con_la_pieza(answer: str, pieza: str) -> str:
     # asesor?» quedaba detrás de la nota): se queda su pregunta.
     limpios: list[str] = []
     for parrafo in parrafos:
-        if limpio := _sin_frases(parrafo, fuera):
+        limpio = _sin_frases(parrafo, fuera)
+        if limpio != parrafo and limpios and limpios[-1].rstrip().endswith(":"):
+            # Sparring s04d (Múnich t1) y s04l (Navidad t2): «the options are:» y la lista que anunciaba perdía los planes
+            # con sus importes (los da la pieza): quedaba el anuncio y lo que decía cada plan sin nombrarlo («You'll need to
+            # stay overnight» dos veces). Fuera las dos cosas. Antes el anuncio se quedaba con punto: «the options are.».
+            anuncio = re.split(r"(?<=[.!?])\s+", limpios.pop().rstrip())[:-1]
+            if anuncio:
+                limpios.append(" ".join(anuncio))
+        elif limpio:
             limpios.append(limpio)
-        elif limpios and limpios[-1].rstrip().endswith(":"):
-            # Sparring s04d (Múnich t1): «From Cartagena, you have two options for certified divers:» y la lista que
-            # anunciaba, con sus importes, fuera entera (la da la pieza): el anuncio quedaba con la lista vacía.
-            limpios[-1] = limpios[-1].rstrip()[:-1].rstrip() + "."
     cierre = [c for c in (_sin_frases(p, fuera) for p in cierre) if c]
     return "\n\n".join([*limpios, pieza, *cierre])
 
