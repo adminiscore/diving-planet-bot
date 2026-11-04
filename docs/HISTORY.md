@@ -1,6 +1,30 @@
 History
 =======
 
+0.49.0 - (2026-11-04, SUBE A PRE: los días del plan del extractor, la oferta del asesor que se reconoce y la puerta del origen con el origen del mismo mensaje)
+---------------------
+* **Qué sube** (sobre 0.48.0; `feature/caln-integra049-gadea`), todo de **Gadea**, de noche:
+  * **s04e-dias** (ee5f0b9a, grave de la 12.ª tanda, ya en la 0.48): «queremos bucear tres días seguidos» → el plan de 2
+    inmersiones y su tarjeta. Los días del plan del certificado (`cert_days`) solo los leía el regex; si calla, son los
+    días de buceo del extractor (un campo que ya daba; su prompt no cambia).
+  * **s04e-oferta** (d69c3863, grave de la 12.ª, ya en la 0.48): con la tarjeta en pesos ya vista, la oferta del asesor se
+    perdía y el «Sí, por favor» a la pregunta del escritor no se reconocía (el asesor, 3 veces). La nuestra cierra el turno.
+  * **CALN-18** (e91f5a9b): en el cierre en pesos, la oferta del asesor una vez; el compositor quita la pregunta del
+    escritor de delante (7 veces en 3 tandas y Cali t2 en s04d).
+  * **s04c** (7c42ecec): la puerta del origen de la respuesta en paralelo se pone al recogerla, con el origen que ya guardó
+    la extracción del mismo mensaje (jubilados t2: una carrera; los precios de los dos orígenes y el origen dos veces).
+  * **caln-huerfanas** (d9a37979): el anuncio de una lista de importes que quita la pieza ya no queda con dos puntos y la
+    lista vacía (Múnich t1).
+  * Hallazgos de s04c, s04d y s04e, el banco de grupos sobre la 0.48 y el relevo de la noche.
+* **Medida** (una pasada, en la misma franja, en serie, a solas; A = PRE 0.48.0, B con `kb_v2_gadea`): mini-ronda de los
+  43 visibles: **27 → 26 fallos, 21 → 22 diálogos con fallos** (empate en el ruido; ningún turno que empeora pasa por
+  estos cambios y mejoran 8 diálogos). Llamadas por turno 3,75 → 3,69; p50 3,70 → 3,72 s; p90 6,34 → 5,98 s; respaldos 1 y 3.
+  Suite 3215.
+  (La mini de las 03:30, solo con CALN-18 y s04c: 18 → 20 y 15 → 18, ruido.)
+* **Sparring:** 10.ª (s04c) y 11.ª (s04d) contra la 0.48 sin graves; la 12.ª (s04e) contra esta candidata, 2 graves que
+  ya estaban (arreglados aquí): la meta vuelve a 0 de 2. Banco de grupos sobre la 0.48: 71/90 frente a 73/90 de la base de
+  la 0.45, con las mismas esperas.
+
 0.48.0 - (2026-11-04, SUBE A PRE: quien elige es quien nombra el mensaje y tiene edad, Bubble Makers con su servicio y los días de buceo en los hechos)
 ---------------------
 * **Qué sube** (sobre 0.47.0; `feature/caln-integra048-gadea`): **Gadea** (s04b, d8a3f181; el grave de la 9.ª tanda,
