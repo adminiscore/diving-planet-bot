@@ -33,6 +33,25 @@ def test_arq3_echa_de_menos_la_decision(monkeypatch):
     assert hechos.faltan(b["tiempo"][0], [b], ["tiempo"]) == []
 
 
+def test_s04k_con_el_tiempo_justo_se_dice_la_espera_antes_de_volar():
+    from src.agents.rag_agent import _con_la_espera_antes_de_volar as espera
+
+    [b] = hechos.hechos_sin_actividad(_st(), ["tiempo"])
+    texto = espera("Les alcanza: el curso es sábado y domingo.\n\n¿Lo reservamos?", [b], ["tiempo"])
+    assert "18 horas" in texto and "12 horas" in texto
+    assert texto.endswith("¿Lo reservamos?")  # delante de la pregunta con que cierra
+    assert "Las horas se cuentan" not in texto  # solo lo que hace falta, no la política entera
+
+
+def test_s04k_si_ya_la_dice_no_se_repite_y_sin_tiempo_no_se_pone():
+    from src.agents.rag_agent import _con_la_espera_antes_de_volar as espera
+
+    [b] = hechos.hechos_sin_actividad(_st(), ["tiempo"])
+    dicha = "Les alcanza, pero deben esperar 18 horas antes de volar."
+    assert espera(dicha, [b], ["tiempo"]) == dicha
+    assert espera("La salida es a las 8:00.", [b], ["horario"]) == "La salida es a las 8:00."
+
+
 def test_la_senal_viaja_tambien_cuando_jev_duda():
     """Banco arq-1v, v1: con Jev dudando en otra pregunta del router, solo pasan `_TURN_SIGNALS`."""
     assert j.PIDE_SI_ALCANZA in j._TURN_SIGNALS

@@ -606,6 +606,24 @@ def _completar_con_hechos(answer: str, bloques: list[dict], intenciones: list[st
     return None if hechos_mod.faltan(completada, bloques, intenciones) else completada
 
 
+_LA_ESPERA_YA_DICHA = re.compile(r"\b(?:12|18)\s*(?:horas|hours|h)\b", re.IGNORECASE)
+
+
+def _con_la_espera_antes_de_volar(answer: str, bloques: list[dict], intenciones: list[str]) -> str:
+    """Sparring s04k (propuesta de Gonzalo, #3161): «nos vamos el domingo por la noche» no dice avión, y 2 de 5 decían que alcanza
+    sin nombrar las 18 horas. Si el cliente tiene el tiempo justo (`tiempo`) y el escritor no nombra la espera, la añade el código
+    con las dos primeras frases de la política, delante de la pregunta con que cierre. Es seguridad; a quien no vuela no le cuesta nada."""
+    if "tiempo" not in intenciones or _LA_ESPERA_YA_DICHA.search(answer or ""):
+        return answer
+    vuelo = next((b["si_vuela"] for b in bloques if b.get("si_vuela")), None)
+    if not vuelo:
+        return answer
+    aviso = " ".join(re.split(r"(?<=\.)\s+", vuelo)[:2])
+    partes = answer.rstrip().split("\n\n")
+    cierre = [partes.pop()] if len(partes) > 1 and "?" in partes[-1] else []
+    return "\n\n".join([*partes, aviso, *cierre])
+
+
 # Fin de una frase: el signo (con el cierre de negrita o de paréntesis) y un espacio o el final; «630.000» no lo es.
 _FIN_DE_FRASE_RE = re.compile(r"[.!?…](?:\*{1,2}|\))?(?=\s|$)")
 
@@ -1015,6 +1033,7 @@ async def rag_answer(
                     if perdidos and (completada := _completar_con_hechos(answer, *hechos_bloques, lang)):
                         logger.info(f"[RAG][ARQ7B] faltaban {len(perdidos)} hechos: los añade el código")
                         answer = completada
+                    answer = _con_la_espera_antes_de_volar(answer, *hechos_bloques)
                 if grounded:
                     logger.info(
                         f"[RAG] Query: {query[:60]}... | Docs: {len(docs) if docs else 0} | "

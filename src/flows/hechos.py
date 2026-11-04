@@ -319,8 +319,9 @@ def _previo_y_edad(registro, lang: str) -> list[str]:
 
 def _tiempo(lang: str) -> dict:
     """arq-1v: si da tiempo antes de irse. La decisión de Gadea (desde las islas va muy justo y lo confirma un asesor;
-    desde Cartagena no alcanza; el cierre de las 4:30) va en `tiempo`; la espera antes de volar, aparte (`si_vuela`), para
-    que solo se diga si el cliente vuela."""
+    desde Cartagena no alcanza; el cierre de las 4:30) va en `tiempo`; la espera antes de volar, aparte (`si_vuela`): con el
+    tiempo justo se dice siempre, porque quien se va esa noche probablemente vuela aunque no lo diga (sparring s04k; si el
+    escritor no la nombra, la añade `rag_agent._con_la_espera_antes_de_volar`)."""
     tiempo = [p for p in (_politica("time_limited_departure", lang), _politica("activity_schedule", lang)) if p]
     vuela = _politica("flight_after_diving", lang)
     return {"tiempo": tiempo, **({"si_vuela": vuela} if vuela else {})}
