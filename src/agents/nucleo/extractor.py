@@ -213,15 +213,16 @@ async def _aplicar_extractor(intent, state: ConversationState, message: str, pis
 
 
 def dias_de_buceo_de(datos: dict | None, state: ConversationState) -> int | None:
-    """CALN-25 (decisión de Gadea, 4-nov): los días de buceo del extractor, salvo que su cita cuente inmersiones («for two
-    dives») y Jev esté seguro de que no habla de varios días. Sustituye a 2 regex, que descartaban también «two dives on
-    Saturday and Sunday». Si Jev calla, vale lo del extractor."""
+    """CALN-25 (decisión de Gadea, 4-nov): los días de buceo del extractor, salvo que diga varios y Jev esté seguro de que el
+    cliente no habla de varios días. «Two dives» salía como 2 días (sparring s04h): varios días se comía la salida de 2 y la cifra
+    llegaba a `cert_days`; «2 fun dives», igual (s04k). Sustituye a 2 regex, que dejaban pasar el segundo y descartaban «two dives on
+    Saturday and Sunday». No mira la cita: `sonda_jev_dias_sin_cita`, 60/60. Con un día Jev no opina. Si calla, vale el extractor."""
     from src.agents.jev_router import SON_DIAS_DE_BUCEO, SON_DIAS_NO_MAX  # lazy
 
     dias = (datos or {}).get("dias_de_buceo")
     if not isinstance(dias, int) or isinstance(dias, bool) or dias <= 0:
         return None
-    if (datos or {}).get("_dias_citan_inmersiones"):
+    if dias >= 2:
         p = (getattr(state, "_senales_router", None) or {}).get(SON_DIAS_DE_BUCEO)
         if p is not None and p < SON_DIAS_NO_MAX:
             logger.info(f"[EXTRACT][CALN25] son inmersiones, no días (Jev {p:.2f}): dias_de_buceo={dias!r} se descarta")
