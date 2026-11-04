@@ -840,6 +840,20 @@ def _poner_actividad(intent, state: ConversationState, datos: dict, message: str
         logger.info(f"[EXTRACT][EX9B-3] grupo repartido: actividad principal {principal!r}")
 
 
+def con_la_cedula(state: ConversationState, nacional: bool | None) -> bool | None:
+    """La nacionalidad que lee el extractor, salvo que Jev diga que el cliente tiene la cédula de extranjería: entonces es
+    residente (paga en pesos, colombian_pricing). Mini de la 0.52 (Gadea #3202): «Yo tengo extrangeria» tras una charla que ya
+    habla de colombianos y extranjeros salía false 8/10 y el bot cobraba en USD. El grupo mixto manda sobre esto (la mexicana
+    con cédula y su novio de México siguen en USD)."""
+    from src.agents.jev_router import GRUPO_MIXTO, TIENE_CEDULA  # lazy
+
+    senales = getattr(state, "_senales_router", None) or {}
+    if nacional is not True and senales.get(TIENE_CEDULA) and not senales.get(GRUPO_MIXTO):
+        logger.info(f"[EXTRACT][CEDULA] Jev: tiene la cédula de extranjería, residente (el extractor decía {nacional!r})")
+        return True
+    return nacional
+
+
 def _poner_nacionalidad(intent, state: ConversationState, message: str, datos: dict) -> None:
     """ex-8: la nacionalidad es la del extractor (nunca deducida del idioma). Grupo mezclado: todo en USD (decisión de
     Gadea, 14-sep). Un valor distinto del guardado se confirma. CALN-S04J: el grupo mezclado lo afirma Jev (la mexicana con
@@ -860,7 +874,7 @@ def _poner_nacionalidad(intent, state: ConversationState, message: str, datos: d
         state.mixed_nationality_notice = True
         logger.info("[EXTRACT][EX8] grupo con nacionalidades mezcladas: USD")
         return
-    nacional = datos.get("is_colombian")
+    nacional = con_la_cedula(state, datos.get("is_colombian"))
     if nacional is None:
         return
     guardado = state.is_colombian
