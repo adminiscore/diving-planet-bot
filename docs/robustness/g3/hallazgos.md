@@ -942,3 +942,46 @@ enlaces); Playa Blanca t2, «ese enlace sirve para pagar» y a la vez «les paso
 cuántas personas?» a quien habla en singular (Isla Grande t1, CALN-18); la pregunta del asesor dos veces (Cali t2); «¿con
 cuál te animas?» a quien se despide (la tarde t2); la lista de requisitos entera (Miami t1); «From Cartagena, you have two
 options:» con la lista vacía (Múnich t1); la fiebre como «pregunta médica».
+
+## CALN-S04E-01..08 · 12.ª tanda de sparring contra la CANDIDATA 0.49, hasta reservar (4-nov, `charla_rama`)
+
+Ocho clientes nuevos, educados y que escriben bien, contra `feature/caln-integra049-gadea` con `kb_v2_gadea`, con el
+criterio de Álvaro: pareja de Barranquilla, snorkel (s04e-barranquilla); canadiense que da el origen y pregunta en el
+mismo mensaje (s04e-canada); familia de Valencia, él Advanced, ella nunca ha buceado e hija de 14 (s04e-valencia); Advanced
+en el Hotel Cocoliso que quiere el Nitrox (s04e-nitrox); 5 amigos de Lima, certificados, tres días (s04e-lima); de Texas,
+Open Water con tres días libres (s04e-texas); madre de Medellín con un hijo de 7 años (s04e-nino7); reserva para mañana
+con lluvia en el pronóstico (s04e-lluvia). Los dos graves se repitieron contra PRE 0.48 (conv 6866 y 6867): ya estaban.
+
+**Graves (2, de antes, arreglados en la candidata):**
+- **Barranquilla t2-t3, el asesor preguntado 3 veces.** t1: tarjeta en pesos con nuestra oferta. t2 («¿a qué hora
+  volvemos?»): con la tarjeta ya vista va solo la respuesta (s4-26) y la oferta se perdía; el escritor cerraba con la suya.
+  t3 «Sí, por favor»: no se reconoce (solo se reconoce el sí a nuestra frase) y vuelven la tarjeta y la oferta.
+  **Arreglo** (feature/s04e-oferta-gadea d69c3863): si el cierre ofrecía el asesor, la nuestra cierra el turno y el
+  compositor quita la del escritor (CALN-18). Con `charla_rama`: t3 → el pase.
+- **Lima, tres días → el plan de 2 inmersiones.** «queremos bucear tres días seguidos»: el extractor da 3 días de buceo,
+  pero los días del plan (`cert_days`) solo los leía el regex («paquete de 3 días», «3 días de buceo»): «Te recomiendo el
+  plan de 2 inmersiones en 1 día» y la tarjeta de 2 inmersiones con su enlace, mientras el escritor daba el de 7.
+  **Arreglo** (feature/s04e-dias-gadea ee5f0b9a): si el regex calla, los días son los del extractor. Con `charla_rama`:
+  la tarjeta del paquete de 7 inmersiones (3 días).
+
+La meta de sparring vuelve a **0 de 2**.
+
+**Medios:**
+- **Valencia t1:** quedan frases sueltas al quitar los importes del escritor («Lancha ida y vuelta, almuerzo y equipo
+  incluidos.», sin el plan al que se refieren: la frase con el nombre y el precio salió). Y a la madre que nunca ha buceado
+  le da el minicurso por hecho (lo corrige el cliente en t2).
+- **Niño de 7 t2:** tras recomendar snorkel o acompañante, cierra con el menú genérico («¿buceo, minicurso, snorkel o un
+  curso PADI?»), sin mirar los 7 años. t3: «¿Cómo reservamos?» no pasa al asesor (Jev no da la intención del enlace) y
+  vuelve a ofrecerlo.
+- **Lluvia t2:** «si no salimos por el mar, ¿me devuelven el dinero?» → «lo maneja el equipo», con `weather_cancellation`
+  en la base (se reprograma; si no se puede, reembolso del 100 %). Preguntado con «si la Capitanía cierra las salidas por
+  el clima», lo contesta bien: depende de la búsqueda.
+
+**Menores:** «I'm leaving the price per person below» con los precios ya arriba (Canadá t1); los paquetes de 3 y 4 en la
+lista de quien pidió dos inmersiones (Canadá t1, Valencia t2); el enlace dos veces (Canadá t2); «¿para cuántas
+personas?» a quien habla en singular (Nitrox t1, CALN-18); la recogida dicha dos veces con matices distintos (Nitrox t1);
+«¿Quieres…?» en singular a una pareja (Barranquilla t2); el pago explicado dos veces (niño de 7 t3).
+
+**Bien:** el origen del mismo mensaje leído sin preguntarlo (Canadá); el Nitrox desde las islas con la recogida del
+hotel base; los tres planes de la familia de Valencia con el acompañante para el asesor; el Open Water de 2 días con la
+noche en las islas y el almuerzo solo el día 1; los 7 años: ni Bubble Makers (8) ni minicurso (10), sí snorkel (6).
