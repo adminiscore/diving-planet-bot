@@ -1,6 +1,31 @@
 History
 =======
 
+0.50.0 - (2026-11-04, SUBE A PRE: el regalo y el bebé en el lector, la base corregida, la hora de volar y «two dives» no son 2 días)
+---------------------
+* **Qué sube** (sobre 0.49.0; `feature/caln-integra050-gadea`):
+  * **CALN-17** (Gadea, plan de Álvaro #2911; 31501fac): el regalo y el bebé se leen en el lector del grupo, no en el prompt del
+    extractor. Quien escribe y dice que no va no cuenta; quien no tiene edad para ninguna actividad (del registro, hoy 6) no
+    cuenta, no paga ni es «sin elegir».
+  * **La base** (Gadea; 16400151, 86c5e2b6), con sus decisiones del 4-nov: el minicurso no lleva teoría online ni por correo
+    (decía lo contrario para el de Cartagena); el colombiano no usa el enlace de la web (`payment_colombian` lo decía solo del
+    anticipo); la hora desde la que se puede volar, ya calculada (el escritor echaba mal la cuenta). Y de la auditoría de
+    contradicciones: la FAQ 14 decía que el colombiano reserva en la web; las 26 y 27 mandaban a reservar a una página informativa.
+  * **Gonzalo**: «two dives» no son 2 días de buceo (8cd20adf; con 2 regex que comprueban la cita, decisión de Gadea: se quedan y
+    se prueba Jev en CALN-25); en un mensaje mezclado que pide precio, el escritor no escribe importes y no quedan frases sueltas
+    (0d95043a).
+  * **CALN-24** (Gadea, 6f89a636): si el escritor da el enlace de otro plan que la tarjeta, no sale la tarjeta y se pregunta cuál.
+  * **CALN-22** (Gadea): el banco fijo de graves (`docs/robustness/caln/banco-graves.json`, 18 casos), en el protocolo de medición.
+* **Medida** (una pasada, en la misma franja, en serie, a solas; A = PRE 0.49.0, B con `kb_v2_gadea`): mini-ronda de los 43
+  visibles: **27 → 20 fallos, 21 → 19 diálogos con fallos**. Llamadas por turno 3,71 → 3,68; p50 3,82 → 3,72 s; p90 6,08 → 6,02 s;
+  respaldos 15 y 24 (21 del extractor). Banco de graves ×2: **27 → 32 de 36**. Banco de grupos de 48 casos, 4 pasadas: **168/192**
+  frente a 70/96 de la 0.48. «Two dives», 25/35 → 35/35 (Gonzalo). Suite 3272. Una primera mini (12:35) salió inválida: Haiku
+  atascado en OpenRouter, 59 y 100 respaldos del extractor; se paró el juez y se repitió.
+* **A vigilar:** Open Water t1, «el almuerzo no está incluido» con la lista de debajo diciendo que desde Cartagena sí (una vez, solo
+  en B).
+* **Sparring:** tanda de contraste de Gonzalo contra la 0.49 (s04h): 3 graves, 2 de ellos arreglados aquí y el 3.º con la hora de
+  volar. Meta nueva (Gadea, 4-nov): unos 60 clientes seguidos sin graves, de al menos dos autores: van 0.
+
 0.49.0 - (2026-11-04, SUBE A PRE: los días del plan del extractor, la oferta del asesor que se reconoce y la puerta del origen con el origen del mismo mensaje)
 ---------------------
 * **Qué sube** (sobre 0.48.0; `feature/caln-integra049-gadea`), todo de **Gadea**, de noche:
