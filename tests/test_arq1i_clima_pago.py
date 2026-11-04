@@ -56,7 +56,7 @@ def test_el_pago_segun_la_nacionalidad():
     assert "100 %" in extranjero["pago"][0] and "50 %" not in " ".join(extranjero["pago"])
     assert hechos._politica("payment_confirmation", "es") in extranjero["pago"]
     [colombiano] = hechos.hechos_sin_actividad(_st(is_colombian=True), ["pago"])
-    assert colombiano["pago"][0].startswith("El anticipo del 50 %") and "asesor" in colombiano["pago"][0]
+    assert colombiano["pago"][0].startswith("Los colombianos y los residentes") and "asesor" in colombiano["pago"][0]
     [no_se_sabe] = hechos.hechos_sin_actividad(_st(), ["pago"])
     assert no_se_sabe["pago"][0] == hechos._politica("foreign_card_payment", "es")
 

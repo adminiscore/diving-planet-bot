@@ -1,0 +1,360 @@
+{
+  "nombre": "caln-4nov",
+  "modelo": "gpt-5-mini",
+  "modelo_idiomas": "gpt-6-luna",
+  "temas": "todos",
+  "uso_tokens": {
+    "temas": {
+      "entrada": 410774,
+      "salida": 64221
+    },
+    "idiomas": {
+      "entrada": 100753,
+      "salida": 9416
+    }
+  },
+  "contradicciones": [
+    {
+      "que": "tiempo mínimo a esperar después de bucear antes de tomar un vuelo",
+      "doc_a": "ficha:minicourse",
+      "cita_a": "Después de bucear, esperar mínimo 12 horas antes de tomar un vuelo",
+      "doc_b": "ficha:2_dives_1_day",
+      "cita_b": "Después de bucear, esperar mínimo 18 horas antes de tomar un vuelo",
+      "explicacion": "Ambas afirmaciones son un requisito operativo para el mismo acto (volar tras bucear) pero indican duraciones distintas (12 h vs 18 h). No pueden ser verdaderas a la vez porque el cliente obtendría una instrucción de seguridad contradictoria que afecta la logística de viaje y la seguridad del buceador.",
+      "gravedad": "alta",
+      "tema": "booking",
+      "citas_comprobadas": true
+    },
+    {
+      "que": "el refresher es la misma actividad que el minicurso pero tiene distinto requisito post-vuelo",
+      "doc_a": "ficha:refresher:minicourse",
+      "cita_a": "El refresher es la MISMA actividad que el Minicurso de Buceo: mismo itinerario, horario y precio;",
+      "doc_b": "ficha:minicourse",
+      "cita_b": "Después de bucear, esperar mínimo 12 horas antes de tomar un vuelo",
+      "explicacion": "D38 declara que el refresher y el minicurso son la misma actividad (mismo itinerario y horario), por tanto deberían compartir los mismos requisitos. Sin embargo D38 (en su propia sección de requisitos generales) exige esperar 18 horas antes de volar mientras D22 (minicurso) indica 12 horas. No pueden aplicarse dos tiempos de espera distintos a la misma actividad equivalente, lo que genera una contradicción en los requisitos de seguridad.",
+      "gravedad": "alta",
+      "tema": "booking",
+      "citas_comprobadas": true
+    },
+    {
+      "que": "si los colombianos pueden reservar directamente en la web y obtener el descuento online",
+      "doc_a": "faq:14",
+      "cita_a": "Puedes reservar directamente desde nuestra página web con el 10% de descuento online.",
+      "doc_b": "politica:payment_colombian",
+      "cita_b": "no usan el enlace de reserva de la web: la reserva siempre la cierra un asesor del equipo por este chat",
+      "explicacion": "D2 afirma que se puede reservar directamente en la página web (y obtener el 10% online), mientras que D9 afirma que los colombianos no usan el enlace de la web y que su reserva debe cerrarla un asesor por chat; ambas afirmaciones no pueden ser ciertas simultáneamente para el mismo grupo (colombianos/residentes) respecto al método de reserva y acceso al descuento online.",
+      "gravedad": "alta",
+      "tema": "discount_colombian",
+      "citas_comprobadas": true
+    },
+    {
+      "que": "tiempo mínimo de espera para volar después del minicurso/refresher",
+      "doc_a": "ficha:minicourse",
+      "cita_a": "- Después de bucear, esperar mínimo 12 horas antes de tomar un vuelo",
+      "doc_b": "ficha:refresher:minicourse",
+      "cita_b": "- Después de bucear, esperar mínimo 18 horas antes de tomar un vuelo",
+      "explicacion": "D38 afirma que el \"Refresher\" es la MISMA actividad que el Minicurso (mismo itinerario, horario y precio), pero D22 (Minicurso) exige esperar 12 horas y D38 (Refresher) exige 18 horas. No pueden aplicarse simultáneamente al mismo servicio idéntico: un participante no puede cumplir a la vez ambas obligaciones antes de volar.",
+      "gravedad": "alta",
+      "tema": "equipment",
+      "citas_comprobadas": true
+    },
+    {
+      "que": "tiempo mínimo de espera para volar después del minicurso/refresher (versiones 'ya en las islas')",
+      "doc_a": "ficha:minicourse_already_on_island",
+      "cita_a": "- Después de bucear, esperar mínimo 12 horas antes de tomar un vuelo",
+      "doc_b": "ficha:refresher:minicourse_already_on_island",
+      "cita_b": "- Después de bucear, esperar mínimo 18 horas antes de tomar un vuelo",
+      "explicacion": "D39 explica que el \"Refresher\" (reservado como Minicurso ya en las islas) es la misma actividad que el Minicurso, pero D7 (Minicurso ya en las islas) indica 12 horas y D39 (Refresher ya en las islas) indica 18 horas. Ambas afirmaciones se refieren al mismo plan y no pueden ser verdaderas a la vez para un participante que necesita cumplir el tiempo de espera antes de volar.",
+      "gravedad": "alta",
+      "tema": "equipment",
+      "citas_comprobadas": true
+    },
+    {
+      "que": "Tiempo mínimo antes de volar después de bucear",
+      "doc_a": "ficha:minicourse",
+      "cita_a": "Después de bucear, esperar mínimo 12 horas antes de tomar un vuelo",
+      "doc_b": "ficha:refresher:minicourse",
+      "cita_b": "Después de bucear, esperar mínimo 18 horas antes de tomar un vuelo",
+      "explicacion": "D21 (Minicurso) establece un intervalo mínimo de 12 horas entre bucear y volar, mientras que D37 (Refresher) indica 18 horas. D37 además afirma que el refresher es la misma actividad que el Minicurso, por lo que ambas indicaciones aplican al mismo servicio y no pueden ser verdaderas simultáneamente.",
+      "gravedad": "alta",
+      "tema": "location_islands",
+      "citas_comprobadas": true
+    },
+    {
+      "que": "Tiempo mínimo antes de volar después de bucear (versiones 'ya en las islas')",
+      "doc_a": "ficha:minicourse_already_on_island",
+      "cita_a": "Después de bucear, esperar mínimo 12 horas antes de tomar un vuelo",
+      "doc_b": "ficha:refresher:minicourse_already_on_island",
+      "cita_b": "Después de bucear, esperar mínimo 18 horas antes de tomar un vuelo",
+      "explicacion": "D7 (Minicurso / ya en las islas) indica 12 horas de espera antes de volar; D38 (Refresher / ya en las islas) indica 18 horas. D38 describe el refresher como la misma actividad que el minicurso, por lo que hay una contradicción directa sobre el tiempo de espera post‑buceo para el mismo servicio.",
+      "gravedad": "alta",
+      "tema": "location_islands",
+      "citas_comprobadas": true
+    },
+    {
+      "que": "tiempo mínimo a esperar antes de volar tras bucear",
+      "doc_a": "ficha:minicourse_already_on_island",
+      "cita_a": "Después de bucear, esperar mínimo 12 horas antes de tomar un vuelo",
+      "doc_b": "ficha:2_dives_1_day",
+      "cita_b": "Después de bucear, esperar mínimo 18 horas antes de tomar un vuelo",
+      "explicacion": "D7 (minicurso ya en las islas) señala 12 horas, mientras que D1 (salidas de buceo) señala 18 horas; ambas son directrices operativas de seguridad contradictorias.",
+      "gravedad": "alta",
+      "tema": "pricing",
+      "citas_comprobadas": true
+    },
+    {
+      "que": "tiempo mínimo a esperar antes de volar tras bucear",
+      "doc_a": "ficha:minicourse",
+      "cita_a": "Después de bucear, esperar mínimo 12 horas antes de tomar un vuelo",
+      "doc_b": "ficha:open_water_already_on_island",
+      "cita_b": "Después de bucear, esperar mínimo 18 horas antes de tomar un vuelo",
+      "explicacion": "D22 (minicurso saliendo desde Cartagena) indica 12 horas; D16 (curso Open Water ya en las islas) indica 18 horas. Son indicaciones conflictivas sobre un mismo requisito de seguridad post-buceo.",
+      "gravedad": "alta",
+      "tema": "pricing",
+      "citas_comprobadas": true
+    },
+    {
+      "que": "tiempo mínimo a esperar antes de volar tras bucear",
+      "doc_a": "ficha:minicourse_already_on_island",
+      "cita_a": "Después de bucear, esperar mínimo 12 horas antes de tomar un vuelo",
+      "doc_b": "ficha:open_water_already_on_island",
+      "cita_b": "Después de bucear, esperar mínimo 18 horas antes de tomar un vuelo",
+      "explicacion": "La misma regla (espera mínima tras bucear antes de volar) aparece como 12 horas en D7 y 18 horas en D16; ambas no pueden aplicarse simultáneamente al mismo cliente.",
+      "gravedad": "alta",
+      "tema": "pricing",
+      "citas_comprobadas": true
+    },
+    {
+      "que": "igualdad de actividad (Refresher = Minicurso) vs requisitos distintos de espera para volar",
+      "doc_a": "ficha:refresher:minicourse",
+      "cita_a": "El refresher es la MISMA actividad que el Minicurso de Buceo: mismo itinerario, horario y precio;",
+      "doc_b": "faq:9",
+      "cita_b": "El refresher también son 18 horas: es para buzos certificados, aunque se reserve como el minicurso.",
+      "explicacion": "D36 afirma que el Refresher es exactamente la misma actividad que el Minicurso, pero D38 distingue tiempos de espera distintos (minicurso 12 horas frente a refresher 18 horas). Ambas afirmaciones no pueden ser verdaderas a la vez sobre la misma actividad.",
+      "gravedad": "alta",
+      "tema": "refresher",
+      "citas_comprobadas": true
+    },
+    {
+      "que": "qué formulario de exoneración deben completar los buzos certificados (curso/minicurso/refresher)",
+      "doc_a": "faq:133",
+      "cita_a": "buzos certificados: https://form.jotform.com/divingplanetcartagena/exoneracion-buzo-en-espanol",
+      "doc_b": "politica:medical_restrictions",
+      "cita_b": "Para cursos o minicursos se requiere el formulario médico: https://form.jotform.com/divingplanetcartagena/exoneracion-curso-en-espanol",
+      "explicacion": "D29 indica que los buzos certificados deben rellenar el formulario de exoneración 'exoneracion-buzo-en-espanol', mientras que D32 exige para cursos y minicursos el formulario 'exoneracion-curso-en-espanol' (además D32 aclara que el refresher usa el formulario de curso aunque seas certificado). Para un buzo certificado que haga un refresher o un curso, los dos documentos dan instrucciones distintas sobre qué formulario enviar, lo que genera confusión administrativa y de cumplimiento.",
+      "gravedad": "media",
+      "tema": "forms_waiver",
+      "citas_comprobadas": true
+    }
+  ],
+  "diferencias_idioma": [
+    {
+      "par": "P5",
+      "cita_es": "Equipo de buceo",
+      "cita_en": "Full diving equipment",
+      "explicacion": "El inglés especifica que se incluye el equipo completo; el español solo menciona equipo de buceo.",
+      "doc": "ficha:1_dive_1_day_already_on_island",
+      "citas_comprobadas": true
+    },
+    {
+      "par": "P1",
+      "cita_es": "se requiere el formulario médico",
+      "cita_en": "the form is in Spanish",
+      "explicacion": "EN especifica que el formulario está en español; ES no indica su idioma.",
+      "doc": "ficha:minicourse_already_on_island",
+      "citas_comprobadas": true
+    },
+    {
+      "par": "P2",
+      "cita_es": "se requiere el formulario médico",
+      "cita_en": "the form is in Spanish",
+      "explicacion": "EN especifica que el formulario está en español; ES no indica su idioma.",
+      "doc": "ficha:bubble_makers",
+      "citas_comprobadas": true
+    },
+    {
+      "par": "P3",
+      "cita_es": "se requiere el formulario médico",
+      "cita_en": "the form is in Spanish",
+      "explicacion": "EN especifica que el formulario está en español; ES no indica su idioma.",
+      "doc": "ficha:bubble_makers_already_on_island",
+      "citas_comprobadas": true
+    },
+    {
+      "par": "P1",
+      "cita_es": "se requiere el formulario médico",
+      "cita_en": "(the form is in Spanish)",
+      "explicacion": "El inglés especifica que el formulario médico está en español; el español no indica su idioma.",
+      "doc": "ficha:nitrox_specialty_already_on_island",
+      "citas_comprobadas": true
+    },
+    {
+      "par": "P2",
+      "cita_es": "se requiere el formulario médico",
+      "cita_en": "(the form is in Spanish)",
+      "explicacion": "El inglés especifica que el formulario médico está en español; el español no indica su idioma.",
+      "doc": "ficha:naturalist_specialty_already_on_island",
+      "citas_comprobadas": true
+    },
+    {
+      "par": "P3",
+      "cita_es": "se requiere el formulario médico",
+      "cita_en": "(the form is in Spanish)",
+      "explicacion": "El inglés especifica que el formulario médico está en español; el español no indica su idioma.",
+      "doc": "ficha:buoyancy_specialty_already_on_island",
+      "citas_comprobadas": true
+    },
+    {
+      "par": "P4",
+      "cita_es": "se requiere el formulario médico",
+      "cita_en": "(the form is in Spanish)",
+      "explicacion": "El inglés especifica que el formulario médico está en español; el español no indica su idioma.",
+      "doc": "ficha:minicourse",
+      "citas_comprobadas": true
+    },
+    {
+      "par": "P3",
+      "cita_es": "el formulario médico: https://form.jotform.com/divingplanetcartagena/exoneracion-curso-en-espanol",
+      "cita_en": "(the form is in Spanish)",
+      "explicacion": "EN especifica que el formulario está en español; ES no incluye ese dato.",
+      "doc": "ficha:open_water",
+      "citas_comprobadas": true
+    },
+    {
+      "par": "P4",
+      "cita_es": "el formulario médico: https://form.jotform.com/divingplanetcartagena/exoneracion-curso-en-espanol",
+      "cita_en": "(the form is in Spanish)",
+      "explicacion": "EN especifica que el formulario está en español; ES no incluye ese dato.",
+      "doc": "ficha:advanced",
+      "citas_comprobadas": true
+    },
+    {
+      "par": "P5",
+      "cita_es": "el formulario médico: https://form.jotform.com/divingplanetcartagena/exoneracion-curso-en-espanol",
+      "cita_en": "(the form is in Spanish)",
+      "explicacion": "EN especifica que el formulario está en español; ES no incluye ese dato.",
+      "doc": "ficha:rescue",
+      "citas_comprobadas": true
+    },
+    {
+      "par": "P6",
+      "cita_es": "el formulario médico: https://form.jotform.com/divingplanetcartagena/exoneracion-curso-en-espanol",
+      "cita_en": "(the form is in Spanish)",
+      "explicacion": "EN especifica que el formulario está en español; ES no incluye ese dato.",
+      "doc": "ficha:referral",
+      "citas_comprobadas": true
+    },
+    {
+      "par": "P1",
+      "cita_es": "entrega de la carta de referido",
+      "cita_en": "referral paperwork check",
+      "explicacion": "ES indica que entregan la carta; EN, que revisan el papeleo. Además, EN especifica que el formulario médico está en español, dato que ES omite.",
+      "doc": "ficha:referral_already_on_island",
+      "citas_comprobadas": true
+    },
+    {
+      "par": "P2",
+      "cita_es": "se requiere el formulario médico",
+      "cita_en": "(the form is in Spanish)",
+      "explicacion": "EN especifica que el formulario médico está en español; ES no indica su idioma.",
+      "doc": "ficha:mindful_diving",
+      "citas_comprobadas": true
+    },
+    {
+      "par": "P3",
+      "cita_es": "se requiere el formulario médico",
+      "cita_en": "(the form is in Spanish)",
+      "explicacion": "EN especifica que el formulario médico está en español; ES no indica su idioma.",
+      "doc": "ficha:naturalist_specialty",
+      "citas_comprobadas": true
+    },
+    {
+      "par": "P4",
+      "cita_es": "se requiere el formulario médico",
+      "cita_en": "(the form is in Spanish)",
+      "explicacion": "EN especifica que el formulario médico está en español; ES no indica su idioma.",
+      "doc": "ficha:fish_identification_specialty",
+      "citas_comprobadas": true
+    },
+    {
+      "par": "P5",
+      "cita_es": "se requiere el formulario médico",
+      "cita_en": "(the form is in Spanish)",
+      "explicacion": "EN especifica que el formulario médico está en español; ES no indica su idioma.",
+      "doc": "ficha:buoyancy_specialty",
+      "citas_comprobadas": true
+    },
+    {
+      "par": "P6",
+      "cita_es": "se requiere el formulario médico",
+      "cita_en": "(the form is in Spanish)",
+      "explicacion": "EN especifica que el formulario médico está en español; ES no indica su idioma.",
+      "doc": "ficha:nitrox_specialty",
+      "citas_comprobadas": true
+    },
+    {
+      "par": "P1",
+      "cita_es": "se requiere el formulario médico",
+      "cita_en": "(the form is in Spanish)",
+      "explicacion": "La versión EN especifica que el formulario está en español; la ES no lo indica.",
+      "doc": "ficha:divemaster",
+      "citas_comprobadas": true
+    },
+    {
+      "par": "P3",
+      "cita_es": "se requiere el formulario médico",
+      "cita_en": "(the form is in Spanish)",
+      "explicacion": "La versión EN especifica que el formulario está en español; la ES no lo indica.",
+      "doc": "ficha:refresher:minicourse",
+      "citas_comprobadas": true
+    },
+    {
+      "par": "P4",
+      "cita_es": "se requiere el formulario médico",
+      "cita_en": "(the form is in Spanish)",
+      "explicacion": "La versión EN especifica que el formulario está en español; la ES no lo indica.",
+      "doc": "ficha:refresher:minicourse_already_on_island",
+      "citas_comprobadas": true
+    },
+    {
+      "par": "P5",
+      "cita_es": "500+ inmersiones",
+      "cita_en": "500+ logged dives",
+      "explicacion": "El inglés especifica que las inmersiones deben estar registradas; el español no lo indica.",
+      "doc": "faq:17",
+      "citas_comprobadas": true
+    },
+    {
+      "par": "P6",
+      "cita_es": "Formulario: https://form.jotform.com/divingplanetcartagena/exoneracion-curso-en-espanol",
+      "cita_en": "(the form is in Spanish)",
+      "explicacion": "El inglés informa que el formulario está en español; el español omite ese dato.",
+      "doc": "faq:18",
+      "citas_comprobadas": true
+    },
+    {
+      "par": "P4",
+      "cita_es": "los cursos y minicursos avanzan de forma gradual",
+      "cita_en": "courses and beginner experiences progress gradually",
+      "explicacion": "El español menciona minicursos; el inglés los sustituye por experiencias para principiantes, que no necesariamente son lo mismo.",
+      "doc": "faq:77",
+      "citas_comprobadas": true
+    },
+    {
+      "par": "P6",
+      "cita_es": "el sistema de pagos instantáneos de Bancolombia/ACH",
+      "cita_en": "Bancolombia's instant payment system",
+      "explicacion": "La versión en inglés omite la referencia a ACH.",
+      "doc": "faq:114",
+      "citas_comprobadas": true
+    },
+    {
+      "par": "P6",
+      "cita_es": "(buzos certificados: https://form.jotform.com/divingplanetcartagena/exoneracion-buzo-en-espanol)",
+      "cita_en": "(the form is in Spanish)",
+      "explicacion": "La versión EN especifica que el formulario está en español; la ES no lo indica explícitamente.",
+      "doc": "faq:133",
+      "citas_comprobadas": true
+    }
+  ]
+}

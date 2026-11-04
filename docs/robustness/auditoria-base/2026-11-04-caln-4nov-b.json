@@ -1,0 +1,93 @@
+{
+  "nombre": "caln-4nov-b",
+  "modelo": "gpt-5-mini",
+  "modelo_idiomas": "gpt-6-luna",
+  "temas": "todos",
+  "uso_tokens": {
+    "temas": {
+      "entrada": 410774,
+      "salida": 65490
+    },
+    "idiomas": {}
+  },
+  "contradicciones": [
+    {
+      "que": "tiempo mínimo entre bucear y tomar un vuelo",
+      "doc_a": "ficha:2_dives_1_day",
+      "cita_a": "Después de bucear, esperar mínimo 18 horas antes de tomar un vuelo",
+      "doc_b": "ficha:minicourse",
+      "cita_b": "Después de bucear, esperar mínimo 12 horas antes de tomar un vuelo",
+      "explicacion": "Un mismo requisito no puede exigir simultáneamente esperar 'mínimo 18 horas' y 'mínimo 12 horas' después de bucear antes de volar; son valores incompatibles para la misma precaución de seguridad.",
+      "gravedad": "alta",
+      "tema": "booking",
+      "citas_comprobadas": true
+    },
+    {
+      "que": "tiempo mínimo entre bucear y tomar un vuelo",
+      "doc_a": "ficha:open_water_already_on_island",
+      "cita_a": "Después de bucear, esperar mínimo 18 horas antes de tomar un vuelo",
+      "doc_b": "ficha:minicourse_already_on_island",
+      "cita_b": "Después de bucear, esperar mínimo 12 horas antes de tomar un vuelo",
+      "explicacion": "Los dos documentos indican un tiempo mínimo distinto (18 h vs 12 h) para la misma precaución post-buceo; no pueden ser verdaderos simultáneamente porque dan instrucciones contradictorias sobre una restricción de seguridad operacional.",
+      "gravedad": "alta",
+      "tema": "booking",
+      "citas_comprobadas": true
+    },
+    {
+      "que": "Tiempo mínimo de espera antes de volar tras el mismo servicio (Minicurso = Refresher)",
+      "doc_a": "ficha:minicourse",
+      "cita_a": "Después de bucear, esperar mínimo 12 horas antes de tomar un vuelo",
+      "doc_b": "ficha:refresher:minicourse",
+      "cita_b": "Después de bucear, esperar mínimo 18 horas antes de tomar un vuelo",
+      "explicacion": "D38 indica que el 'Refresher' exige 18 horas de espera; D22 describe el 'Minicurso' con 12 horas. D38 además aclara que el Refresher es la MISMA actividad que el Minicurso (se reserva como Minicurso), por lo que no pueden aplicarse simultáneamente dos tiempos mínimos distintos para la misma actividad respecto a vuelos.",
+      "gravedad": "alta",
+      "tema": "equipment",
+      "citas_comprobadas": true
+    },
+    {
+      "que": "Tiempo mínimo de espera antes de volar tras el mismo servicio (Minicurso ya en isla = Refresher ya en isla)",
+      "doc_a": "ficha:minicourse_already_on_island",
+      "cita_a": "Después de bucear, esperar mínimo 12 horas antes de tomar un vuelo",
+      "doc_b": "ficha:refresher:minicourse_already_on_island",
+      "cita_b": "Después de bucear, esperar mínimo 18 horas antes de tomar un vuelo",
+      "explicacion": "D39 define el 'Refresher' (repaso) ya en las islas con 18 horas de espera; D7 define el 'Minicurso' ya en las islas con 12 horas. Como las fichas de Refresher señalan que es la misma actividad que el Minicurso, ambos requisitos de tiempo no pueden ser verdaderos a la vez para la misma actividad/itinerario.",
+      "gravedad": "alta",
+      "tema": "equipment",
+      "citas_comprobadas": true
+    },
+    {
+      "que": "duración y necesidad de pernoctar en el Paquete de 3 inmersiones (Cartagena)",
+      "doc_a": "catalogo",
+      "cita_a": "Paquete de 3 inmersiones (1 día, 2 diurnas + 1 nocturna)",
+      "doc_b": "catalogo",
+      "cita_b": "hay que dormir en las islas (alojamiento no incluido), no es ida y vuelta el mismo día",
+      "explicacion": "No pueden ser verdad a la vez: describir el paquete como '1 día' implica ida y vuelta en el mismo día, mientras que decir 'hay que dormir en las islas' y 'no es ida y vuelta el mismo día' exige pernoctar. Ambas afirmaciones se contradicen sobre la misma salida.",
+      "gravedad": "alta",
+      "tema": "sin_tema",
+      "citas_comprobadas": true
+    },
+    {
+      "que": "formulario médico requerido para buzos certificados (especialmente en el refresher)",
+      "doc_a": "politica:medical_restrictions",
+      "cita_a": "el refresher (repaso con instructor) usa el formulario médico de curso, aunque seas buzo certificado",
+      "doc_b": "politica:medical_certified_diver",
+      "cita_b": "tu formulario de exoneración es el de buzo certificado",
+      "explicacion": "D74 afirma que el refresher (aunque lo haga un buzo certificado) debe usar el formulario médico de 'curso' (exoneracion-curso), mientras que D75 indica que los buzos certificados deben usar el formulario de 'buzo certificado' (exoneracion-buzo). Ambas declaraciones no pueden ser verdaderas al mismo tiempo para un buzo certificado que vaya a hacer un refresher, porque indican formularios diferentes a presentar.",
+      "gravedad": "media",
+      "tema": "certification",
+      "citas_comprobadas": true
+    },
+    {
+      "que": "Qué formulario de exoneración deben usar los buzos certificados al hacer un refresher",
+      "doc_a": "ficha:refresher:minicourse_already_on_island",
+      "cita_a": "Excepción: el refresher (repaso con instructor) usa el formulario médico de curso, aunque seas buzo certificado.",
+      "doc_b": "politica:medical_certified_diver",
+      "cita_b": "tu formulario de exoneración es el de buzo certificado: https://form.jotform.com/divingplanetcartagena/exoneracion-buzo-en-espanol",
+      "explicacion": "D23 afirma explícitamente que el refresher (actividad para buzos certificados) debe usar el formulario de 'curso' en lugar del formulario de buzo certificado; D33 afirma que los buzos certificados usan el formulario de buzo certificado. Para un buzo certificado que reserva un refresher ambos enunciados no pueden ser verdad al mismo tiempo sobre qué formulario debe completarse.",
+      "gravedad": "media",
+      "tema": "forms_waiver",
+      "citas_comprobadas": true
+    }
+  ],
+  "diferencias_idioma": []
+}
