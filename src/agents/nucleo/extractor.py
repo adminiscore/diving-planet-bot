@@ -258,6 +258,12 @@ def _poner_duracion(intent, state: ConversationState, datos: dict, message: str 
         return
     intent.duration = duracion
     intent._duracion_de_buceo = de_buceo
+    dias = (datos or {}).get("dias_de_buceo")
+    if de_buceo and getattr(intent, "cert_days", None) is None and dias in {d for d, _ in dom.dive_packages().values()}:
+        # Sparring s04e (Lima, igual en PRE 0.48): «queremos bucear tres días seguidos» → el extractor da 3 días de buceo,
+        # pero los días del plan del certificado (`cert_days`) solo los leía el regex («paquete de 3 días», «3 días de
+        # buceo»): el plan recomendado y la tarjeta eran los de 2 inmersiones en 1 día. Los días son los del extractor.
+        intent.cert_days = dias
     intent.detected_fields.append("duration")
     if duracion != state.detected_duration and "duration" not in intent.overwrite:
         intent.overwrite.append("duration")
