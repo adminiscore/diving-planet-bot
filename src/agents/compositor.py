@@ -143,6 +143,31 @@ def _sin_el_cierre_si_ya_pregunta(respuesta: str) -> str:
     return _PARRAFO.join(otras)
 
 
+def _una_oferta_del_asesor(respuesta: str) -> str:
+    """En el cierre en pesos, la tarjeta ofrece el asesor con nuestra frase (`slotfill_close._OFERTA_DEL_ASESOR`, la que
+    reconoce el «sí» que la sigue) y el escritor, delante, ya preguntaba lo mismo con otras palabras («¿Quieres que te
+    pase con un asesor para continuar la reserva?»): dos preguntas en el mismo mensaje (CALN-18: 7 veces en 3 tandas de
+    sparring hasta el 3-nov, y Cali t2 en s04d). Una pregunta como mucho (paso 2), y es la nuestra: fuera las preguntas
+    de los párrafos de delante."""
+    from src.agents.nucleo.slotfill_close import _OFERTA_DEL_ASESOR  # lazy
+
+    partes = respuesta.split(_PARRAFO)
+    oferta = next((i for i, p in enumerate(partes) if p.strip() in _OFERTA_DEL_ASESOR.values()), None)
+    if not oferta:
+        return respuesta
+    delante = []
+    for parrafo in partes[:oferta]:
+        antes = parrafo
+        for frase in _PREGUNTA_RE.findall(parrafo):
+            parrafo = parrafo.replace(frase, "", 1)
+        if parrafo != antes:
+            parrafo = re.sub(r"[ \t]{2,}", " ", parrafo).strip()
+            logger.info("[CORE][CALN18] compositor: la tarjeta ofrece el asesor; fuera la pregunta de delante")
+        if parrafo.strip():
+            delante.append(parrafo)
+    return _PARRAFO.join(delante + partes[oferta:])
+
+
 def _sin_parrafos_repetidos(respuesta: str) -> str:
     """Fuera los párrafos idénticos a uno anterior (en un pase, lo contestado delante y la respuesta del turno traían la
     misma lista dos veces: caln1-B, pareja-certificados-cop-descuento-almuerzo t3)."""
@@ -167,8 +192,8 @@ def componer(state, respuesta: str, *, pase: bool = False, escribio: bool | None
         from src.observability import hechos_del_turno  # lazy
 
         escribio = bool(hechos_del_turno().get("rag_used"))
-    respuesta = _sin_el_cierre_si_ya_pregunta(_sin_parrafos_repetidos(_sin_saludo_repetido(respuesta,
-                                                                                           escribio=escribio)))
+    respuesta = _una_oferta_del_asesor(_sin_el_cierre_si_ya_pregunta(_sin_parrafos_repetidos(_sin_saludo_repetido(
+        respuesta, escribio=escribio))))
     preguntas = getattr(state, "_preguntas_del_turno", None) or []
     pendiente = state.core_pending_slot
     final = next((texto for slot, texto in reversed(preguntas) if slot == pendiente and texto), None)
