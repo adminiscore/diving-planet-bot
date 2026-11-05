@@ -1,6 +1,19 @@
 History
 =======
 
+0.57.0 - (2026-11-05, SUBE A PRE: alojamiento fuera de la lista, el asesor confirma la recogida antes de reservar; los graves de la tanda s05d; profesores y menores)
+---------------------
+* **Decisión de Gadea:** con una casa, un Airbnb o un hotel fuera de nuestra lista, el asesor confirma la recogida ANTES de reservar y pagar (`como_reserva.RECOGIDA_POR_CONFIRMAR`): ve el precio, sin enlace, y pasa al asesor. Antes: «You don't need to wait for that confirmation to book».
+* **Qué sube** (sobre 0.56.0):
+  * **Salidas sueltas (grave de s05d):** «dos salidas de un día, en vez del paquete» recibía la tarjeta del paquete de 5, que obliga a dormir en las islas. Señal nueva de Jev `salidas_sueltas` (sonda 20 × 2: 0,69-0,95 quien las pide; como mucho 0,26 el resto).
+  * **Lo que puede cada edad (grave de s05d):** a la niña de 7 se le decía que no había nada, y el snorkel es desde los 6. Las opciones de los menores nombrados entran en los candidatos (`cotizar.candidatos`, con su precio) y `lo_que_puede_cada_edad` es un hecho que `faltan` exige.
+  * **Profesores y menores (rejuicio de s05c):** «Sí, las profesoras pueden acompañar a los menores». Solo datos, en `age_minimum`: si los acompaña otra persona, no se da por válido; lo confirma un asesor antes de reservar.
+* **Medida** (mini de los 43 visibles, una pasada del bot por lado; A = PRE 0.56.0, B = 49d4a19c con `kb_v2_gadea`; Opus medium × 2, misma base): **fallos firmes 22 → 23; diálogos con fallo firme 18 → 18; limpios por pasada 25 y 24 → 21 y 25.** Empate. De los 10 firmes solo en B, 9 son variación conocida del escritor y 1 viene de aquí (la frase del Airbnb a quien sale de Cartagena; 0 de 2 al repetir). Respaldos: A 1, B 0.
+* **Bancos:** graves ×1 45/48 (en 0.56, 38/43; los 4 nuevos de s05d 25/25 antes de endurecer el filtro); `banco-caln35` ×2 43/44; suite 3459.
+* **Tanda y rejuicio (ver `g3/hallazgos.md`):** s05d contra la 0.56: 2 con grave de 10 y 1 duda; Opus a ciegas × 2: 2 por pasada. s05a y s05c rejuzgadas: **5 con grave de 21, frente a los 2 de 20 que contamos.** La tasa real ronda el 20-25 %. Desde ahora, cada tanda con `juez_claude --charlas` y leyendo cada grave. Contador de la meta: empieza con la 0.57.
+* **Presupuesto de complejidad:** `src` +128 líneas sobre la 0.56, sin capa quitada a cambio.
+* **Sigue abierto:** Haiku lee como su hotel el que se pregunta (`h-pregunta-por-hoteles` 1 de 2; semana-santa); `s05a-crucero`: a veces la tarjeta a quien se despide (Jev sí lo ve); CALN-37, el origen preguntado a quien ya lo dijo (firme en 6924 y 6925); el escritor calcula mal el vuelo a veces (6927, `g-vuelo-dia-siguiente`, por el lado prudente).
+
 0.56.0 - (2026-11-05, SUBE A PRE: cómo reserva cada cliente, en un solo sitio; sin hotel no se reserva desde las islas; colombianos sin enlace web)
 ---------------------
 * **Decisiones de Gadea (5-nov):** desde las islas, primero tiene que decirnos el hotel para poder reservar (si no, puede que reserve, le cancelen, no pueda quedarse en ese hotel, se olvide de avisar o acabe saliendo desde Cartagena). Sin hotel se le dice que vuelva cuando lo tenga; NO se le ofrece Cartagena. Con una casa o un Airbnb vale el nombre y un asesor confirma la recogida. De momento solo «desde las islas», no los planes desde Cartagena con noche en las islas. Base: política `hotel_before_booking` y decisión `hotel-antes-de-reservar`.

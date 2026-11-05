@@ -59,6 +59,12 @@ integrar la rama del otro y suite en verde, porque en PRE gana el último; (3) *
 despliegue reinicia el contenedor y mata la medida del otro (avisar en el registro de Plan Coral con la hora de fin).
 Las doce normas, con su porqué, están en el documento.
 
+### ▶️ RETOMAR AQUÍ — 5-nov, ~17:10 (Gadea con Claude; Álvaro y Gonzalo sin conectar): 0.57.0 SUBE A PRE; LA TASA REAL DE GRAVES RONDA EL 20-25 %
+
+- **Lo importante:** Opus a ciegas rejuzgó las tandas: s05a y s05c dan 5 con grave de 21 frente a los 2 de 20 que contamos; s05d, 2-3 de 10. Cada tanda se cuenta con `juez_claude --charlas <convs> --nombre <tanda>` y leyendo cada grave. Contador de la meta (2 graves en 60), desde la 0.57: 0 de 60.
+- **Regla nueva de Gadea:** casa, Airbnb u hotel fuera de la lista: el asesor confirma la recogida antes de reservar y pagar.
+- **Siguiente:** (1) otra tanda contra la 0.57, juzgada a ciegas; la del segundo autor, cuando entre Álvaro o Gonzalo. (2) `s05a-crucero`, tarjeta a quien se despide. (3) Haiku lee como su hotel el que se pregunta: señal de Jev. (4) CALN-37. Lo demás, en el bloque de abajo.
+
 ### ▶️ RETOMAR AQUÍ — 5-nov, ~14:10 (Gadea con Claude; Álvaro y Gonzalo sin conectar): 0.56.0 SUBE A PRE; EL JUEZ ES OPUS; meta, como mucho 2 graves en 60
 
 - **El juez cambió (decisión de Gadea):** Opus medium con Claude Code, cada uno con su suscripción, sin gastar OpenAI: `ENV_FILE=.env.ci python -m scripts.juez_claude --run <ronda>.jsonl`, `--no-cache --sufijo=-2` para la 2.ª pasada, `python -m scripts.ab_judge_compare A B`. Normas en `docs/robustness/protocolo-medicion.md` §2. Juzgar ya no cuesta dinero: dos pasadas por lado y contar lo firme. **No comparar con rondas de gpt-5-mini.** 1 de cada 3 fallos de Opus es falso: leer el texto. gpt-5.4-mini NO se quita: sigue de respaldo de OpenRouter.
