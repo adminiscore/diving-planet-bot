@@ -1207,3 +1207,16 @@ subir la 0.53: **10 sin graves.** Valoración de un solo autor, sin repetir en P
 - Universitarias: pide el total con los dos descuentos y «no puedo calcularlo» (como Londres de S04I; decisión de negocio pendiente). Paquetes de 3 y 4 en la lista.
 
 **Menores:** «I'm leaving the price per person below» debajo de los precios (idioma); la regla de 18 horas a quien no vuela (crucero t1, t2); los requisitos enteros (retirado t1); «Soy Coral, de Diving Planet» a media frase (31 de noviembre).
+## CALN-S05B-01..10 · Tanda de contraste de Gonzalo contra PRE 0.54.0 (5-nov, `charla_rama` sobre 78c581a7)
+
+Criterio de Álvaro (#2716), Haiku por Anthropic. 10 clientes nuevos, educados y que escriben bien (`docs/robustness/g3/charlas-rama/s05b-*`), elegidos antes de ver nada y antes de subir la 0.54: **10 sin graves.** Valoración de un solo autor.
+
+**BIEN:** vuelo el mismo día a las 11 de la noche tras el minicurso («podrías volar desde la medianoche; tu vuelo sería una hora antes»), colombiana y esposo con cédula (ambos en pesos, sin grupo mixto), Barú sin recogida (sale de Cartagena), una sola inmersión desde Cartagena (el mínimo es 2),
+gemelos de 11 con Junior y madre en la lancha (reparto y enlace; acompañante al asesor), minicurso ayer y salidas de certificado mañana (hace falta carné; corte de las 4:30 bien), pareja enferma (al asesor), regalo sin fecha (no hay tarjeta; a nombre de la novia), persona sorda (buceo adaptado; comunicación al asesor).
+
+**Medios:**
+- Especialidad t2: pregunta cuánto dura y si puede bucear al día siguiente, y pide los enlaces: recibe solo la tarjeta de la especialidad, sin contestar ni dar el segundo enlace. Protesta en t3 y entonces contesta todo bien. t1: «la disponibilidad la tendría que confirmar el equipo», con siempre disponible en la base.
+- Gemelos t2: «no puedo calcular el total» para 2 × 178 + 80, sin descuento de grupo por medio.
+- Cédula t1: «¿saldrías desde Cartagena?» cuando lo dijo; lo reconoce en t2 (ORIGEN-CONFIRMA).
+
+**Menores:** «I'm leaving the price details below as well» (Barú), paquetes de más en la lista (Gemelos t2, Una inmersión t1, Cédula t1), Salidas de Buceo en la lista de quien nunca ha buceado (sorda t1), «¿saldrías desde Cartagena?» a quien dijo que iba a Cartagena (sorda t1).
