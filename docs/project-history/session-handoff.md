@@ -59,8 +59,9 @@ integrar la rama del otro y suite en verde, porque en PRE gana el último; (3) *
 despliegue reinicia el contenedor y mata la medida del otro (avisar en el registro de Plan Coral con la hora de fin).
 Las doce normas, con su porqué, están en el documento.
 
-### ▶️ RETOMAR AQUÍ — 5-nov, ~06:20 (Gadea durmiendo; Claude de noche con Gonzalo; Álvaro sin señales desde la 01:44): 0.53.0, 0.54.0 Y 0.55.0 SUBIDAS A PRE; meta, 0 clientes de ~60
+### ▶️ RETOMAR AQUÍ — 5-nov, ~06:40 (Gadea durmiendo; Claude de noche con Gonzalo; Álvaro sin señales desde la 01:44): OPENAI SIN SALDO DESDE LAS 06:21; 0.53.0, 0.54.0 Y 0.55.0 SUBIDAS A PRE; meta, 0 clientes de ~60
 
+- **⚠️ SIN SALDO:** OpenAI agotado a las 06:21 (429 `credit_balance_exhausted`: Luna, embeddings, juez). PRE contesta con DeepSeek y sin búsqueda por significado, con otra voz: **nada de lo medido después de las 06:21 vale.** OpenRouter: quedan 1,11 $ de 160. Hay que recargar los dos antes de medir. Una mini con juez cuesta ~2,3 $. Por la norma de Gadea se espera una hora y, si no hay saldo, se sube todo y se apaga el PC. La 0.55 se probó antes (mini y juez a las 06:14, 0 errores); su humo en PRE, no: al recargar, repetir el humo de la hora de volar.
 - **PRE:** 0.53.0 (8b1f1f35; la 0.53 dio 20 → 24 y no subió; la 0.53b, 20 → 19 fallos), 0.54.0 (78c581a7; 20 → 20) y 0.55.0 (`feature/s05c-gadea`; 21 → 21, la hora de volar). Detalle en HISTORY. Comprobar el commit con `/c/t/c049/despliegue0511.py <sha>`; la base se regenera al final de la CI, no antes de `healthy`.
 - **Contador CALN-22: 0 de ~60.** s04n (Gonzalo, 0.53.0) y s05b (Gonzalo, 0.54.0): 10 y 10 sin graves; s05a y s05c (Gadea): 1 grave en 10 cada una, arreglados en la 0.54 y la 0.55. 2 clientes con grave de 40 esta noche; hasta la 0.51, 17 graves en 109.
 - **Para Gadea (PENDIENTE, sin decidir):** revisar la meta de ~60 clientes con estos datos; CALN-30, quitar 10b con la señal de residente (`docs/robustness/caln/estudio-caln30-sin-10b.md` en `feature/caln30-gonzalo`; 0 de 108, no descarta un 2,5 %); quitar solo la respuesta adelantada (39 de 49 rehechas; sin medir). **Para Andrés:** Rescue, Divemaster y Mindful Diving desde las islas.
