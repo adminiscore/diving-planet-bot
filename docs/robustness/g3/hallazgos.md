@@ -1148,6 +1148,24 @@ y equipo propio (5 % que se suma, cámara bajo su responsabilidad), Hotel Rosari
 
 **Menores:** el enlace dos veces (Miami t2, Rescue t2; arreglado en la 0.53); el aviso de moneda repetido (Miami t1); «I'm leaving the price below» debajo de la lista (Junior t1); «Para aplicarlo» sin saber a qué (despedida t1).
 
+## CALN-S05C-01..10 · 16.ª tanda de sparring contra PRE 0.54.0 (5-nov, `charla_pre`)
+
+Criterio de Álvaro (#2716), Haiku por Anthropic. 10 clientes nuevos, educados y que escriben bien (conv 6908-6917), con temas elegidos antes de ver respuestas. **1 con grave y 9 sin graves. Meta de CALN-22: la s05b de Gonzalo (0.54.0, 10 sin graves) sumaba 10; este grave la devuelve a 0.** Los 10 llegan al enlace o al asesor, o se les dice por qué no se puede.
+
+**Grave (1):**
+1. **Aterriza el sábado a las 11:30 y vuela el domingo a las 20:00** (conv 6914). t1: «Sunday's trip returns around 4:15 p.m., which leaves a comfortable gap before your 8:00 p.m. flight»: consejo inseguro. Contradecía su propio «18 horas» en la misma respuesta, y al preguntarlo el cliente, t2, lo decía bien. No era azar: en PRE 0.54, «¿puedo bucear el sábado por la mañana y me voy a las 21:00?» dijo que sí 3 de 5. **Arreglo (0.55, solo datos):** `flight_after_diving`: para un buzo el mismo día nunca llega, también por la noche, y la lancha no lo arregla; quien dice que se va ese día, probablemente vuela; tras el refresher de día, desde las 7:00 del día siguiente. Banco de la hora de volar: **22/30 → 29/30** (s05c-mismo-dia 2/5 → 5/5; g-vuelo-dia-siguiente, «too soon» con 21 h, 3/5 → 5/5). Sigue abriendo con «Yes» algunas veces antes de explicar por qué no: sin riesgo, pero confuso.
+
+**Medios:**
+- **Rescue a quien ya está en Cocoliso** (conv 6916): t2, «the 796 USD price is for when you're already on the islands; it doesn't include transport or lunch», y en t1 decía que el almuerzo sí. Falso: Rescue, Divemaster y Mindful Diving solo tienen plan desde Cartagena, y sin plan desde las islas no había hechos. **Arreglo (0.55):** los hechos dan el de Cartagena y dicen que desde las islas lo confirma un asesor. **PENDIENTE para Andrés:** ¿se pueden hacer desde las islas y a qué precio?
+- **Tres amigos** (conv 6909): t2, la tarjeta sin «· 3 personas» a quien dice «para mí y dos amigos más».
+- **Mediodía t2:** el origen a quien acaba de saber que no puede bucear (menor si se va).
+
+**Menores:** la lista larga de paquetes a un grupo con reparto (humo 054a); los paquetes en la lista de la luna de miel, antes de pasar al asesor por la lancha privada.
+
+**BIEN:** referido alemán (carta, 2 días, vuelo al día siguiente bien calculado), otra agencia más barata (no se iguala), PayPal y efectivo (no; el enlace), Barú sin recogida (al muelle por su cuenta; niña de 7 en snorkel), italiano (contesta en inglés; comida vegetariana), minicurso y luego bucear (no certifica), colegio de Medellín (14 menores con 2 profesoras, grupo de 16, pesos, al asesor), luna de miel con lancha privada (al asesor).
+
+**Para la revisión de la meta (Gadea):** contra la 0.53: 1 cliente con grave de 20 (s04n, s05a). Contra la 0.54: 1 de 20 (s05b, s05c). Hasta la 0.51: 17 graves en 109 clientes. Cada grave de esta noche salió de una clase nueva y entró en el banco.
+
 ## CALN-S05A-01..10 · 15.ª tanda de sparring contra PRE 0.53.0 (5-nov, `charla_pre`)
 
 Criterio de Álvaro (#2716), Haiku por Anthropic. 10 clientes nuevos, educados y que escriben bien (conv 6895-6905), con temas elegidos antes de ver respuestas. **1 con grave y 9 sin graves. Meta de CALN-22: la s04n de Gonzalo (0.53.0, 10 sin graves) sumaba 10; este grave la devuelve a 0.** Todos llegan al enlace, al asesor o a lo que pedían; el crucero se va porque no llega.

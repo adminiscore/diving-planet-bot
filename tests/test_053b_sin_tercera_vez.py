@@ -262,3 +262,15 @@ def test_la_pregunta_ya_contestada_tambien_con_otra_mayuscula():
     assert _frase_sin_la_pregunta("Para este plan de dos días, ¿desde dónde saldrías?", ["¿Desde dónde saldrías?"]) == "Para este plan de dos días."
     assert _frase_sin_la_pregunta("¿Desde dónde saldrías?", ["¿Desde dónde saldrías?"]) is None  # entera: la quita el paso de antes
     assert _frase_sin_la_pregunta("¿Quieres el enlace?", ["¿Desde dónde saldrías?"]) is None
+
+
+def test_el_curso_sin_plan_desde_las_islas_da_el_de_cartagena_y_lo_dice():
+    from src.flows import hechos
+
+    st = ConversationState(conversation_id="s05c", language="en", detected_activity="padi_rescue", location="island",
+                           detected_location="island", is_colombian=False)
+    [b] = hechos.hechos(st, ["precio", "enlace"], ["padi_rescue"])
+    assert b["precio"]["cartagena"]["online"] == "796 USD" and "curso-de-rescate" in b["enlace"]["cartagena"]
+    assert "advisor" in b["sin_plan_desde_las_islas"] and b["origen"] == "cartagena"
+    [c] = hechos.hechos(st, ["precio"], ["padi_advanced"])  # el Advanced sí tiene plan desde las islas
+    assert "island" in c["precio"] and "sin_plan_desde_las_islas" not in c

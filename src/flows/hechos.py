@@ -125,6 +125,14 @@ def _por_origen(actividad: str, origenes: tuple[str, ...], fn, elegido: str | No
     return out
 
 
+_SIN_PLAN_DESDE_LAS_ISLAS = {
+    "es": ("Este curso solo tiene precio y enlace con salida desde Cartagena (incluyen la lancha desde Cartagena). El cliente dice que ya estará "
+           "en las islas: no digas que este precio es para quien está en las islas; cómo hacerlo desde allí lo confirma un asesor del equipo."),
+    "en": ("This course only has a price and a link departing from Cartagena (they include the boat from Cartagena). The customer says they will "
+           "already be on the islands: do not say this price is for someone on the islands; how to do it from there is confirmed by a team advisor."),
+}
+
+
 def hechos(state: ConversationState, intenciones: list[str], actividades: list[str]) -> list[dict]:
     """Un bloque de hechos por actividad, con solo las intenciones pedidas (y las que el registro sabe dar)."""
     lang = "es" if state.language == "es" else "en"
@@ -137,10 +145,17 @@ def hechos(state: ConversationState, intenciones: list[str], actividades: list[s
     # El plan base que se apunta solo al saber la actividad (`detected_service_id`, rutas/booking) no es una elección.
     varios_dias = not state.selected_service and state.detected_duration == "multi_day"
     bloques = []
+    origen_del_turno, origenes_del_turno = origen, origenes
     for actividad in actividades:
         registro = dom.by_id(actividad)
         if registro is None:
             continue
+        origen, origenes = origen_del_turno, origenes_del_turno
+        # Tanda s05c: el Rescue a quien ya está en Cocoliso. Sin plan desde las islas no había hechos, y el escritor decía que los 796 USD
+        # son «para quien ya está en las islas, sin lancha ni almuerzo», cuando son los de la salida desde Cartagena, que los incluye.
+        solo_cartagena = origen == "island" and bool(dom.service_ids(actividad, "cartagena")) and not dom.service_ids(actividad, "island")
+        if solo_cartagena:
+            origen, origenes = "cartagena", ("cartagena",)
         detectado = getattr(state, "detected_service_id", None)
         # Con el refresher, uno de los días es el suyo: el buceo de los demás va con su plan base y los paquetes entre
         # sus otros planes (sparring s30a).
@@ -151,6 +166,8 @@ def hechos(state: ConversationState, intenciones: list[str], actividades: list[s
         if paquetes:
             elegido = paquetes.get("cartagena", next(iter(paquetes.values())))[0]  # el primero, como base del precio
         bloque: dict = {"actividad": actividad, "nombre": dom.label(actividad, lang), "origen": origen}
+        if solo_cartagena:
+            bloque["sin_plan_desde_las_islas"] = _SIN_PLAN_DESDE_LAS_ISLAS[lang]
         if registro.cart_type == "companion":
             bloques.append(_acompanante(bloque, pedidas, origen, origenes, moneda, lang, _dos_monedas(state)))
             continue
