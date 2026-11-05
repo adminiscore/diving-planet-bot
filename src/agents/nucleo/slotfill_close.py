@@ -533,6 +533,19 @@ async def _sin_dato(state: ConversationState, message: str, prev_pending: str, p
     return escrita if _answer_already_asks(escrita) else f"{escrita.rstrip()}\n\n{pregunta}"
 
 
+async def _si_se_despide(state: ConversationState, message: str, prev_pending: str | None) -> str | None:
+    """La respuesta a quien se despide cuando ya no falta ningún dato: sin tarjeta ni oferta. None si no se despide."""
+    from src.agents.jev_router import SE_DESPIDE  # lazy
+
+    if not (getattr(state, "_senales_router", None) or {}).get(SE_DESPIDE):
+        return None
+    answer = await _take_parallel_answer(state)
+    if answer and not _is_rag_fallback(answer):
+        state.quick_replies = []
+        return answer
+    return await _sin_dato(state, message, prev_pending or "", "")
+
+
 def _no_hace_falta_certificacion(state: ConversationState, carry: dict) -> str:
     """flu-1 (G10 nº 2): «No, I'm not certified. I'm just interested in
     snorkeling» recibía «Got it—you're not certified…» y la pregunta del origen, sin decirle que para el snorkel no hace
@@ -648,6 +661,10 @@ async def _slotfill_close_phase(
         state.step = Step.FREE_TEXT
     else:
         nxt = next_missing_slot(state)
+        if nxt is None and (despedida := await _si_se_despide(state, message, prev_pending)):
+            # s05a (crucero, 2 de 9): «Never mind then, thanks» sin pregunta pendiente recibía la tarjeta entera con su enlace.
+            state.history.append({"role": "assistant", "content": despedida})
+            return despedida
         if nxt is None and como_reserva(state) == HOTEL_PRIMERO:
             # CALN-35: no es un cierre: no hay tarjeta ni pase, y lo que pregunte se contesta con su precio.
             hotel_primero = True

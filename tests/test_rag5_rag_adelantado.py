@@ -10,6 +10,14 @@ from src.agents.nucleo import setup as core_setup
 from src.flows.state import ConversationState, Step
 
 
+@pytest.fixture(autouse=True)
+def _con_la_adelantada(monkeypatch):
+    """Apagada desde la 0.58 (CALN-37); estos tests prueban el código mientras siga ahí."""
+    from src.config import settings
+
+    monkeypatch.setattr(settings, "rag_adelantado", True)
+
+
 def _estado() -> ConversationState:
     s = ConversationState(conversation_id="rag5", language="es")
     s.step = Step.FREE_TEXT

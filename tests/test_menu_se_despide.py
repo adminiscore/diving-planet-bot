@@ -91,3 +91,28 @@ def test_es_una_fila_de_la_tabla_y_su_duda_no_va_al_router():
     assert j.SE_DESPIDE in [s.nombre for s in j._DEL_TURNO]
     assert j.SE_DESPIDE in j._U34_QUESTIONS
     assert j.SE_DESPIDE in j._questions_for_turn(None)
+
+
+def _listo_para_la_tarjeta(**senales) -> ConversationState:
+    st = _estado(**senales)
+    st.core_pending_slot = None
+    st.location, st.is_colombian, st.detected_activity, st.detected_group_size = "cartagena", False, "snorkel", 2
+    return st
+
+
+def _turno(st):
+    carry = {"prev_pending": None, "prev_main_activity": "snorkel"}
+    return asyncio.run(sc._slotfill_close_phase(st, "Never mind then, thanks for your help.", "", False, carry))
+
+
+def test_a_quien_se_despide_sin_pregunta_pendiente_no_le_sale_la_tarjeta(monkeypatch):
+    """s05a (crucero): Jev veía la despedida y salía la tarjeta con su enlace."""
+    _con_escritor(monkeypatch, "You're welcome! Enjoy Cartagena.")
+    texto = _turno(_listo_para_la_tarjeta(**{j.SE_DESPIDE: True}))
+    assert texto == "You're welcome! Enjoy Cartagena."
+
+
+def test_si_no_se_despide_la_tarjeta_sale_como_siempre(monkeypatch):
+    _con_escritor(monkeypatch)
+    texto = _turno(_listo_para_la_tarjeta(**{j.SE_DESPIDE: False}))
+    assert "book.divingplanet.org" in texto
