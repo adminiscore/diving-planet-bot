@@ -196,3 +196,36 @@ def test_con_el_importe_de_su_salida_la_pieza_es_la_de_siempre():
                  detected_activity="certified_diving", is_certified=True, is_colombian=False)
     salida = _con_la_pieza(st, "The 5-dive package costs 319 USD online.")
     assert salida and "319 USD" in salida
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(("senales", "mensaje", "hotel"), [
+    ({"asks_question": True}, "Ustedes cotizan los hoteles san pedro y cocoliso", "por confirmar"),
+    ({"pide_hoteles": True}, "cuál me recomiendan, san pedro o cocoliso", "por confirmar"),
+    ({}, "en el Ubuntu", "ubuntu"),
+])
+async def test_preguntar_por_un_hotel_no_es_alojarse_en_el(monkeypatch, senales, mensaje, hotel):
+    from src.agents.nucleo import routing
+
+    st = _estado(language="es", location="island", core_pending_slot=core.SLOT_HOTEL)
+    st._senales_router = senales
+    assert routing._hotel_por_la_ia(st, mensaje, {"extractor": {}}) is True
+    assert st.hotel == hotel
+
+
+def test_el_hotel_que_dice_el_extractor_vale_aunque_pregunte():
+    from src.agents.nucleo import routing
+
+    st = _estado(language="es", location="island", core_pending_slot=core.SLOT_HOTEL)
+    st._senales_router = {"asks_question": True}
+    assert routing._hotel_por_la_ia(st, "estamos en el Ubuntu, ¿tiene lancha?", {"extractor": {"hotel": "Ubuntu"}}) is True
+    assert st.hotel == "ubuntu"
+
+
+def test_al_quitar_el_enlace_solo_se_va_la_frase_que_lo_anuncia():
+    """Mini 0.56: se perdía «Yes, we operate on Easter Sunday» porque estaba en la misma línea que el anuncio del enlace."""
+    respuesta = (f"Yes, we operate on Easter Sunday. The website applies the online price, and you can pay there:\n{ENLACE_URL}\n\n"
+                 "For the course, bring your referral.")
+    salida = compositor.componer(_estado(language="en", location="island"), respuesta, escribio=True)
+    assert "Yes, we operate on Easter Sunday." in salida and "For the course, bring your referral." in salida
+    assert "pay there" not in salida and "book.divingplanet.org" not in salida

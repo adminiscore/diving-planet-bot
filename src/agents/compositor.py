@@ -107,7 +107,11 @@ def _sin_estos_enlaces(cuerpo: str, enlaces: set[str]) -> str:
             if frases or not linea.strip():
                 lineas.append(" ".join(frases))
         while lineas and lineas[-1].rstrip().endswith(":"):
-            lineas.pop()
+            # Solo la frase que anunciaba el enlace: en la misma línea podía ir la respuesta (mini 0.56: «Yes, we operate on Easter
+            # Sunday. … and pay there:», y el cliente se quedaba sin saber si abrimos).
+            antes = _FIN_DE_FRASE_RE.split(lineas.pop().rstrip())[:-1]
+            if antes:
+                lineas.append(" ".join(antes))
         if any(x.strip() for x in lineas):
             parrafos.append("\n".join(lineas))
     return _PARRAFO.join(p.strip() for p in parrafos if p.strip())

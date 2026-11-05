@@ -676,6 +676,15 @@ def _dice_que_no_tiene_hotel(state: ConversationState) -> bool:
     return bool((getattr(state, "_senales_router", None) or {}).get(SIN_HOTEL))
 
 
+def pregunta_por_hoteles(state: ConversationState) -> bool:
+    """«¿Ustedes cotizan San Pedro y Cocoliso?» nombra hoteles sin alojarse en ellos (semana-santa, votado como fallo real): en un
+    mensaje que pregunta, el hotel solo lo dice el extractor, no la lista cerrada del mensaje."""
+    from src.agents.jev_router import ASKS_QUESTION, PIDE_HOTELES  # lazy
+
+    senales = getattr(state, "_senales_router", None) or {}
+    return bool(senales.get(PIDE_HOTELES) or senales.get(ASKS_QUESTION))
+
+
 def _poner_ubicacion(intent, state: ConversationState, message: str, datos: dict, pista: dict) -> None:
     """ex-5: la ubicación es la del extractor (cita que nombra un lugar). Si se aloja en las islas, el hotel y la isla del
     regex (lista cerrada) se conservan para la recogida. Un origen distinto del guardado se confirma."""
@@ -697,7 +706,8 @@ def _poner_ubicacion(intent, state: ConversationState, message: str, datos: dict
         if guardado == "island":
             # Ya se sabe que está en las islas y no lo repite: el hotel o la isla que nombra (lista cerrada) sirven para
             # la recogida (ronda ex5-B2: "una noche en Coral Sand y la otra en Majagua" se perdía y se repreguntaba).
-            _conservar_hotel(intent, pista)
+            if not pregunta_por_hoteles(state):
+                _conservar_hotel(intent, pista)
         elif (por_confirmar := origen_por_confirmar(state, datos)) and not (state.pending_correction or {}).get("location"):
             state.pending_correction = {**(state.pending_correction or {}), "location": por_confirmar}
             state.asked_corrections = {**(state.asked_corrections or {}), "location": por_confirmar}
