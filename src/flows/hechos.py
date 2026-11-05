@@ -353,12 +353,13 @@ def _acotados(otros: list[str], paquetes_primero: bool, siempre=frozenset()) -> 
         return ((SERVICES.get(sid) or {}).get("duration_days") or 1) > 1
 
     orden = sorted(otros, key=lambda s: (s not in siempre, not varios(s))) if paquetes_primero else otros
+    # Con los paquetes primero, la salida que va siempre no le quita el sitio a uno: el banco de graves (s04i, las belgas) perdió
+    # el de 4 con nocturna y el de 5, que es el que cotizaba el escritor.
+    de_mas = siempre if paquetes_primero else frozenset()
     elegidos: list[str] = []
     for sid in orden:
         origen = _origen_del_plan(sid)
-        # La salida que va siempre no le quita el sitio a un paquete: el banco de graves (s04i, las belgas) perdió el de 4 con
-        # nocturna y el de 5, que es el que cotizaba el escritor.
-        if sid in siempre or sum(1 for e in elegidos if _origen_del_plan(e) == origen and e not in siempre) < _OTROS_POR_ORIGEN:
+        if sid in de_mas or sum(1 for e in elegidos if _origen_del_plan(e) == origen and e not in de_mas) < _OTROS_POR_ORIGEN:
             elegidos.append(sid)
     return [s for s in otros if s in elegidos]
 
