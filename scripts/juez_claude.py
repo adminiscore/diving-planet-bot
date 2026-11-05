@@ -254,29 +254,47 @@ def juzgar_ronda(args) -> int:
     return 0
 
 
-def juzgar_charlas(args) -> int:
-    """Una tanda de sparring (`scripts/charla_pre`): no tiene criterios propios, así que van los generales y el de graves. A ciegas: el
-    juez no sabe qué clasificó quien la escribió."""
-    golden = json.loads(GOLDEN_FILE.read_text(encoding="utf-8"))
+def _clientes_de_las_charlas(charlas: str) -> list[tuple[dict, list[dict]]]:
     tareas = []
-    for conv in args.charlas.split(","):
+    for conv in charlas.split(","):
         filas = [json.loads(ln) for ln in (CHARLAS / f"{conv.strip()}.jsonl").read_text(encoding="utf-8").splitlines() if ln.strip()]
         records = [{**f, "turn": f["turno"], "tag": conv.strip()} for f in filas]
         tareas.append(({"id": conv.strip(), "category": "sparring", "criteria": [CRITERIO_GRAVES]}, records))
+    return tareas
+
+
+def _clientes_del_panel(fichero: str) -> list[tuple[dict, list[dict]]]:
+    """El panel fijo (`docs/robustness/caln/panel-graves.json`) corrido con `reproducir_juez_pre --banco --reps 1`."""
+    por_cliente: dict[str, list[dict]] = {}
+    for ln in Path(fichero).read_text(encoding="utf-8").splitlines():
+        if ln.strip():
+            f = json.loads(ln)
+            por_cliente.setdefault(f["dialogo"], []).append({**f, "tag": f["dialogo"], "conv": f["dialogo"]})
+    return [({"id": cliente, "category": "sparring", "criteria": [CRITERIO_GRAVES]}, records) for cliente, records in por_cliente.items()]
+
+
+def juzgar_charlas(args) -> int:
+    """Una tanda de sparring (`scripts/charla_pre`) o el panel fijo: no tienen criterios propios, así que van los generales y el de graves.
+    A ciegas: el juez no sabe qué clasificó quien la escribió."""
+    golden = json.loads(GOLDEN_FILE.read_text(encoding="utf-8"))
+    tareas = _clientes_del_panel(args.panel) if args.panel else _clientes_de_las_charlas(args.charlas)
     ctx = preparar(args)
 
     def tarea(par):
         dialogo, records = par
         criterios, uso = juzgar_dialogo(dialogo, records, criteria_for(dialogo, golden["global_criteria"]), ctx)
-        return dialogo["id"], {"id": dialogo["id"], "category": "sparring", "conv": int(dialogo["id"]), "criteria": criterios}, uso
+        return dialogo["id"], {"id": dialogo["id"], "category": "sparring", "conv": dialogo["id"], "criteria": criterios}, uso
 
     hechos, uso = en_paralelo(tareas, tarea, args.paralelo)
     results = [hechos[d["id"]] for d, _ in tareas]
     out = RESULTS_DIR / f"tanda-{args.nombre}__claude-{args.modelo}-{args.esfuerzo}{args.sufijo}.json"
-    out.write_text(json.dumps({"tanda": args.nombre, "model": f"claude-{args.modelo}", "effort": args.esfuerzo, "usage": dict(uso),
-                               "dialogues": results}, ensure_ascii=False, indent=1) + "\n", encoding="utf-8", newline="\n")
+    out.write_text(json.dumps({"tanda": args.nombre, "model": f"claude-{args.modelo}", "modelo_exacto": modelo_exacto(args.modelo), "effort": args.esfuerzo,
+                               "usage": dict(uso), "dialogues": results}, ensure_ascii=False, indent=1) + "\n", encoding="utf-8", newline="\n")
     graves = [d for d in results for c in d["criteria"] if c["id"] == "sin-graves" and c["verdict"] != "cumple"]
     print(f"Clientes con grave según el juez: {len(graves)} de {len(results)}")
+    if args.panel:
+        for bloque in sorted({d["id"].split("-")[0] for d in results}):
+            print(f"  {bloque}: {sum(d['id'].startswith(bloque + '-') for d in graves)} de {sum(d['id'].startswith(bloque + '-') for d in results)}")
     for d in results:
         for c in d["criteria"]:
             if c["verdict"] not in ("cumple", "no_aplica"):
@@ -329,7 +347,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--run", help="JSONL de scripts.ronda_local_pre o run_synthetic_pre --sample golden")
     parser.add_argument("--calibrar", action="store_true", help="medir contra las etiquetas de calibration/")
     parser.add_argument("--charlas", help="conversaciones de una tanda de sparring, separadas por comas")
-    parser.add_argument("--nombre", default="tanda", help="con --charlas: el nombre de la tanda")
+    parser.add_argument("--panel", help="JSONL del panel fijo (reproducir_juez_pre --banco docs/robustness/caln/panel-graves.json --reps 1)")
+    parser.add_argument("--nombre", default="tanda", help="con --charlas o --panel: el nombre de la tanda")
     parser.add_argument("--modelo", default="opus", help="opus (fijado en MODELO_EXACTO), sonnet, haiku")
     parser.add_argument("--esfuerzo", default="medium")
     parser.add_argument("--ids", help="solo estos diálogos, separados por comas")
@@ -340,10 +359,10 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     if args.calibrar:
         return calibrar(args)
-    if args.charlas:
+    if args.charlas or args.panel:
         return juzgar_charlas(args)
     if not args.run:
-        parser.error("falta --run, --calibrar o --charlas")
+        parser.error("falta --run, --calibrar, --charlas o --panel")
     return juzgar_ronda(args)
 
 

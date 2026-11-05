@@ -96,7 +96,7 @@ def test_una_tanda_se_juzga_con_los_generales_y_el_de_graves(monkeypatch, tmp_pa
         return [{"id": "sin-graves", "verdict": "no_cumple", "reason": "importe", "by": "claude-opus"}], {}
 
     monkeypatch.setattr(jc, "juzgar_dialogo", falso_juzgar)
-    args = SimpleNamespace(charlas="6908", nombre="s05d", paralelo=1, modelo="opus", esfuerzo="medium", sufijo="")
+    args = SimpleNamespace(charlas="6908", panel=None, nombre="s05d", paralelo=1, modelo="opus", esfuerzo="medium", sufijo="")
     assert jc.juzgar_charlas(args) == 0
     assert set(vistos[0][0]) == {"sin-graves", "global:x"} and vistos[0][1] == 1
     assert "1 de 1" in capsys.readouterr().out
@@ -117,3 +117,14 @@ def test_el_modelo_va_fijado_y_otro_modelo_no_se_cuenta(monkeypatch, tmp_path):
     responde[0] = "claude-opus-4-7"
     with pytest.raises(RuntimeError, match="no se compararía"):
         jc.llamar("claude", tmp_path / "s.txt", "opus", "medium", "m", str(tmp_path))
+
+
+def test_el_panel_agrupa_cada_cliente_con_sus_turnos(tmp_path):
+    fichero = tmp_path / "panel.jsonl"
+    filas = [{"dialogo": "visto-1", "turn": 1, "msg": "a", "reply": "b"}, {"dialogo": "ciego-a01", "turn": 1, "msg": "c", "reply": "d"},
+             {"dialogo": "visto-1", "turn": 2, "msg": "e", "reply": "f"}]
+    fichero.write_text("".join(json.dumps(f) + "\n" for f in filas), encoding="utf-8")
+    clientes = jc._clientes_del_panel(str(fichero))
+    assert [d["id"] for d, _ in clientes] == ["visto-1", "ciego-a01"]
+    assert [r["turn"] for r in clientes[0][1]] == [1, 2]
+    assert clientes[0][0]["criteria"] == [jc.CRITERIO_GRAVES]
