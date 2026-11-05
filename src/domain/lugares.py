@@ -57,6 +57,12 @@ def isla_nombrada(texto: str, *, nombra_una_isla: bool) -> str | None:
     return None
 
 
+def solo_nombra_una_isla(texto: str) -> bool:
+    """«En Isla Grande»: nombra una isla y ningún alojamiento (CALN-35). «Casa Azul en Isla Grande» sí lo nombra."""
+    limpio = re.sub(r"^((en|la|el|in|at|on|the)\s+)+", "", (texto or "").lower()).strip(" .,;!¡")
+    return any(limpio in (*i["alias"], *i.get("alias_si_nombra_una_isla", ())) for i in _datos()["alias_de_las_islas"])
+
+
 @lru_cache(maxsize=1)
 def _barrios() -> tuple[tuple[str, tuple[re.Pattern, ...]], ...]:
     return tuple((b["id"], tuple(map(_patron, b["alias"]))) for b in _datos().get("barrios_de_cartagena", ()))

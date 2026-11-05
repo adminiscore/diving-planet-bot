@@ -10,6 +10,8 @@ planes desde Cartagena con noche en las islas (Gadea, 5-nov).
 """
 from __future__ import annotations
 
+from src.domain.lugares import solo_nombra_una_isla
+
 ENLACE = "enlace"
 ASESOR = "asesor"
 HOTEL_PRIMERO = "hotel_primero"
@@ -19,9 +21,9 @@ POR_CONFIRMAR = {"es": "por confirmar", "en": "to be confirmed"}
 
 
 def hotel_conocido(state) -> str | None:
-    """El hotel que ha dicho el cliente; None si no ha dicho ninguno (o solo tenemos «por confirmar»)."""
+    """El hotel que ha dicho el cliente; None si no ha dicho ninguno (o solo tenemos «por confirmar» o el nombre de una isla)."""
     hotel = getattr(state, "hotel", None) or getattr(state, "detected_hotel", None)
-    return None if hotel in POR_CONFIRMAR.values() else hotel
+    return None if hotel in POR_CONFIRMAR.values() or solo_nombra_una_isla(hotel) else hotel
 
 
 def como_reserva(state) -> str:

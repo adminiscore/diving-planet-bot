@@ -7,6 +7,7 @@ import pytest
 from src.agents import compositor
 from src.agents import conversational_core as core
 from src.agents.intent_detector import DetectedIntent
+from src.agents.jev_router import SIN_HOTEL
 from src.agents.nucleo import extractor, slotfill_close
 from src.agents.nucleo.origen_precio import (
     ORIGEN_TRAS_LAS_VARIANTES_EN,
@@ -46,6 +47,42 @@ def test_como_reserva(campos, esperado):
 def test_por_confirmar_no_es_un_hotel():
     assert hotel_conocido(_estado(hotel="por confirmar", detected_hotel="por confirmar")) is None
     assert hotel_conocido(_estado(detected_hotel="ubuntu")) == "ubuntu"
+
+
+@pytest.mark.parametrize(("hotel", "conocido"), [
+    ("Isla Grande", False), ("En Isla Grande", False), ("en la isla grande.", False), ("isla marina", False),
+    ("Casa Azul en Isla Grande", True), ("Hotel Isla del Sol", True), ("cocoliso", True),
+])
+def test_una_isla_no_es_un_hotel(hotel, conocido):
+    assert bool(hotel_conocido(_estado(hotel=hotel))) is conocido
+    assert (como_reserva(_estado(hotel=hotel, location="island")) == HOTEL_PRIMERO) is not conocido
+
+
+def _sin_hotel(st):
+    st._senales_router = {SIN_HOTEL: True}
+    return st
+
+
+def test_si_dice_que_no_tiene_hotel_no_se_le_pregunta():
+    st = _sin_hotel(_estado(language="es", location="island", detected_activity="certified_diving", is_certified=True))
+    extractor._poner_hotel(DetectedIntent(), st, {})
+    assert st.hotel == "por confirmar" and core.next_missing_slot(st) is None
+
+
+def test_sin_la_senal_o_con_hotel_no_se_marca():
+    st = _estado(language="es", location="island")
+    extractor._poner_hotel(DetectedIntent(), st, {})
+    assert st.hotel is None
+    st = _sin_hotel(_estado(language="es", location="island", hotel="cocoliso"))
+    extractor._poner_hotel(DetectedIntent(), st, {})
+    assert st.hotel == "cocoliso"
+
+
+def test_decir_que_no_tiene_hotel_confirma_las_islas():
+    st = _sin_hotel(_estado(language="es", pending_correction={"location": "island"}))
+    intent = DetectedIntent()
+    extractor._poner_ubicacion(intent, st, "todavía no tenemos hotel", {}, {})
+    assert intent.location == "island" and not st.pending_correction
 
 
 def test_sin_hotel_se_pregunta_y_luego_no_se_sigue_con_la_reserva():

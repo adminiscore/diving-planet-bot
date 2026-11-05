@@ -916,6 +916,19 @@ _QUIERE_CURSO_Q = {
         "Water\", \"soy Divemaster\") and want to go diving, and if they only ask about dives, the mini-course or snorkeling."
     ),
 }
+# CALN-35 (5-nov): a «¿ya estarás en las islas?» contesta «todavía no tenemos hotel» y volvía «¿desde dónde saldrías?». Sonda
+# `scripts/sonda_jev_sin_hotel.py` (32 × 2): 0,93-0,97 quien aún no lo tiene; como mucho 0,38 el resto («no tengo certificación» 0,02).
+SIN_HOTEL = "sin_hotel"
+SIN_HOTEL_MIN = 0.7
+_SIN_HOTEL_Q = {
+    "type": "noul",
+    "instructions": (
+        "The customer says that they do not have their accommodation yet: they have not booked or chosen a hotel or place to stay, "
+        "or are still looking for one. It is FALSE if they name a hotel or place where they stay or say they already have one, if "
+        "they only ask about hotels or whether accommodation is included, if they do not need accommodation, and if what they do "
+        "not have yet is something else (a certification, equipment, a date)."
+    ),
+}
 SE_DESPIDE = "se_despide"
 SE_DESPIDE_MIN = 0.7
 _SE_DESPIDE_Q = {
@@ -1067,6 +1080,7 @@ _DEL_TURNO = (
     _DelTurno(TIENE_CEDULA, _TIENE_CEDULA_Q, _si(TIENE_CEDULA_MIN)),
     _DelTurno(SE_DESPIDE, _SE_DESPIDE_Q, _si(SE_DESPIDE_MIN)),
     _DelTurno(QUIERE_CURSO, _QUIERE_CURSO_Q, _si(QUIERE_CURSO_MIN)),
+    _DelTurno(SIN_HOTEL, _SIN_HOTEL_Q, _si(SIN_HOTEL_MIN)),
     _DelTurno(VIAJA_SOLO, _VIAJA_SOLO_Q, _si(VIAJA_SOLO_MIN)),
     _DelTurno(HABLA_DE_SI, _HABLA_DE_SI_Q, _si(HABLA_DE_SI_MIN)),
     # Solo se descarta cuando Jev está seguro de que NO (`nucleo/extractor.dias_de_buceo_de`).

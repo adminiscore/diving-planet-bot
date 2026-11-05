@@ -32,7 +32,7 @@ from src.agents.nucleo.reparto import (
 from src.config import settings
 from src.domain import activities as dom
 from src.flows import grupo
-from src.flows.como_reserva import hotel_conocido
+from src.flows.como_reserva import POR_CONFIRMAR, hotel_conocido
 from src.flows.state import ConversationState
 
 logger = logging.getLogger("uvicorn.error")
@@ -670,16 +670,23 @@ def origen_por_confirmar(state: ConversationState, datos: dict | None = None) ->
     return origen
 
 
+def _dice_que_no_tiene_hotel(state: ConversationState) -> bool:
+    from src.agents.jev_router import SIN_HOTEL  # lazy
+
+    return bool((getattr(state, "_senales_router", None) or {}).get(SIN_HOTEL))
+
+
 def _poner_ubicacion(intent, state: ConversationState, message: str, datos: dict, pista: dict) -> None:
     """ex-5: la ubicación es la del extractor (cita que nombra un lugar). Si se aloja en las islas, el hotel y la isla del
     regex (lista cerrada) se conservan para la recogida. Un origen distinto del guardado se confirma."""
     lugar = datos.get("location")
     guardado = state.location or state.detected_location
     if (not guardado and lugar != "cartagena" and (state.pending_correction or {}).get("location") == "island"
-            and (pista.get("hotel") or pista.get("island"))):
+            and (pista.get("hotel") or pista.get("island") or _dice_que_no_tiene_hotel(state))):
         # Mini 0.53 (minicurso-islas, en los dos lados): a «¿ya estarás en las islas?» contesta «una noche en Coral Sand y
         # la otra en Majagua». Es un hotel de la lista cerrada, y no valía como respuesta: la misma pregunta otras dos veces.
-        logger.info("[EXTRACT][053B] con las islas por confirmar nombra un hotel o una isla de la lista: location='island'")
+        # CALN-35: «todavía no tenemos hotel» tampoco lo niega.
+        logger.info("[EXTRACT][053B] con las islas por confirmar nombra un hotel, una isla o que no tiene hotel: location='island'")
         state.pending_correction = {k: v for k, v in state.pending_correction.items() if k != "location"} or None
         intent.location = "island"
         if "location" not in intent.detected_fields:
@@ -753,6 +760,10 @@ def _poner_hotel(intent, state: ConversationState, datos: dict) -> None:
     la conversación aún no tiene uno, para no preguntarle "¿En qué hotel o isla te hospedas?" (cal-41, cal-67/68). El
     del regex (lista cerrada, con su isla) manda si lo hay: sirve para la recogida."""
     hotel = (datos or {}).get("hotel")
+    if not hotel and not intent.hotel and not hotel_conocido(state) and _dice_que_no_tiene_hotel(state):
+        # CALN-35: no se le pregunta lo que ya ha dicho que no tiene; si sale desde las islas, se le dice que vuelva con él.
+        state.hotel = state.detected_hotel = POR_CONFIRMAR["es" if state.language == "es" else "en"]
+        logger.info("[EXTRACT][CALN35] dice que aún no tiene hotel: por confirmar")
     if not hotel or intent.hotel or hotel_conocido(state):
         return
     intent.hotel = hotel
