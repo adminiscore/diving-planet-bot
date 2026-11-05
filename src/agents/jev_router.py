@@ -137,6 +137,7 @@ _ASKS_QUESTION_Q_V2 = {
 # `scripts/sonda_afirma_vs_pregunta.py`.
 AFFIRMS_LOCATION = "affirms_location"
 AFFIRMS_ACTIVITY = "affirms_activity"
+ELIGE_SEGURO = "elige_seguro"  # CALN-39: la misma pregunta, con Jev seguro (≥ AFFIRMS_MIN) y sin la excepción de `activity_affirmed`
 ACTIVITY_HYPOTHESIS = "activity_hypothesis"
 AFFIRMS_CERTIFICATION = "affirms_certification"
 AFFIRMS_GROUP = "affirms_group"
@@ -1213,6 +1214,7 @@ def answers_to_signals(answers: dict, threshold: float = THRESHOLD) -> dict:
         if name in answers:
             out[name] = (answers.get(name) or {}).get("noul", 0.0) >= AFFIRMS_MIN
     if AFFIRMS_ACTIVITY in answers:
+        out[ELIGE_SEGURO] = (answers.get(AFFIRMS_ACTIVITY) or {}).get("noul", 0.0) >= AFFIRMS_MIN
         hyp = answers.get(ACTIVITY_HYPOTHESIS)
         out[AFFIRMS_ACTIVITY] = activity_affirmed(
             (answers.get(AFFIRMS_ACTIVITY) or {}).get("noul", 0.0),

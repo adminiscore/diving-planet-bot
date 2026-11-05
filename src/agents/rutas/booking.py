@@ -132,12 +132,12 @@ def _poner_el_plan_dicho(state: ConversationState, intent) -> None:
     tiene que decir que el mensaje elige y no pregunta. Sonda de 15 mensajes × 2: elige 0,75-0,96; contar la experiencia («llevo 5 inmersiones», que el
     regex lee como un plan) como mucho 0,60; preguntar, 0,98 en la otra señal. «Vamos con el de 5» (0,47) sigue sin cambiarlo. Si los días ya no casan
     con las inmersiones, se olvida lo otro, y el carrito se rehace."""
-    from src.agents.jev_router import AFFIRMS_ACTIVITY, ASKS_QUESTION  # lazy
+    from src.agents.jev_router import ASKS_QUESTION, ELIGE_SEGURO  # lazy
     from src.domain import activities as dom  # lazy
     from src.observability import marca_regex  # lazy
 
     senales = getattr(state, "_senales_router", None) or {}
-    cambia = bool(senales.get(AFFIRMS_ACTIVITY)) and not senales.get(ASKS_QUESTION)
+    cambia = bool(senales.get(ELIGE_SEGURO)) and not senales.get(ASKS_QUESTION)
 
     def dias_de(dives: int | None) -> int | None:
         return (dom.dive_packages().get(dives) or (None, None))[0]

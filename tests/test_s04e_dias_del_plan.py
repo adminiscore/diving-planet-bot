@@ -62,27 +62,27 @@ def _plan_dicho(st, senales=None, **campos):
 
 def test_lo_ultimo_que_afirma_manda_y_el_carrito_se_rehace():
     """CALN-39: el paquete de 5 se quedaba pegado a quien luego pide las dos inmersiones de un día."""
-    from src.agents.jev_router import AFFIRMS_ACTIVITY
+    from src.agents.jev_router import ELIGE_SEGURO
 
     st = ConversationState(conversation_id="c39", language="en", detected_cert_dives=5, detected_cert_days=2, mixed_cart=[{"type": "cert"}])
-    _plan_dicho(st, {AFFIRMS_ACTIVITY: True}, cert_dives=2)
+    _plan_dicho(st, {ELIGE_SEGURO: True}, cert_dives=2)
     assert st.detected_cert_dives == 2 and st.detected_cert_days is None and st.mixed_cart == []
     assert core._resolve_cert_plan(st) == "2_dives_1_day"
 
 
 def test_si_cambia_a_un_dia_el_paquete_de_dos_dias_se_olvida():
-    from src.agents.jev_router import AFFIRMS_ACTIVITY
+    from src.agents.jev_router import ELIGE_SEGURO
 
     st = ConversationState(conversation_id="c39", language="es", detected_cert_dives=5, detected_cert_days=2)
-    _plan_dicho(st, {AFFIRMS_ACTIVITY: True}, cert_days=1)
+    _plan_dicho(st, {ELIGE_SEGURO: True}, cert_days=1)
     assert st.detected_cert_days == 1 and st.detected_cert_dives is None
 
 
 def test_una_pregunta_no_cambia_lo_elegido_pero_la_primera_cifra_vale():
-    from src.agents.jev_router import AFFIRMS_ACTIVITY, ASKS_QUESTION
+    from src.agents.jev_router import ASKS_QUESTION, ELIGE_SEGURO
 
     st = ConversationState(conversation_id="c39", language="es", detected_cert_dives=2, mixed_cart=[{"type": "cert"}])
-    _plan_dicho(st, {AFFIRMS_ACTIVITY: True, ASKS_QUESTION: True}, cert_dives=4)
+    _plan_dicho(st, {ELIGE_SEGURO: True, ASKS_QUESTION: True}, cert_dives=4)
     assert st.detected_cert_dives == 2 and st.mixed_cart
     _plan_dicho(st, {}, cert_dives=5)  # «llevo 5 inmersiones»: Jev no dice que elija
     assert st.detected_cert_dives == 2 and st.mixed_cart
@@ -95,3 +95,14 @@ def test_dias_e_inmersiones_que_casan_se_quedan_los_dos():
     st = ConversationState(conversation_id="c39", language="es")
     _plan_dicho(st, cert_dives=5, cert_days=2)
     assert st.detected_cert_dives == 5 and st.detected_cert_days == 2
+
+
+def test_el_refresher_ocupa_uno_de_los_dias_que_queria_bucear():
+    """Tanda s05f (6947): refresher el 8 y bucear el 9 recibía el paquete de dos días."""
+    st = ConversationState(conversation_id="c39", language="es", detected_cert_days=2, refresher_interested=True, detected_group_size=1)
+    st.location = "cartagena"
+    assert core._resolve_cert_plan(st) == "2_dives_1_day"
+    st.detected_cert_days = 3
+    assert core._resolve_cert_plan(st) == "4_dives_2_days"
+    st.detected_group_size = 2  # en un grupo no se sabe quién lo hace
+    assert core._resolve_cert_plan(st) == "7_dives_3_days"

@@ -130,7 +130,12 @@ def _resolve_cert_plan(state: ConversationState) -> str | None:
     """Plan de buceo certificado desde los conteos detectados (sin consumirlos),
     o el recomendado por defecto. Determinista, del catálogo."""
     dives = state.detected_cert_dives
-    if dives is None and state.detected_cert_days in _DAYS_TO_DIVES:
-        dives = _DAYS_TO_DIVES[state.detected_cert_days]
+    dias = state.detected_cert_days
+    if dias and state.refresher_interested and (state.detected_group_size or 1) == 1:
+        # CALN-39 (tanda s05f, conv 6947): el refresher ocupa su propio día. Quien quería bucear dos días hace el refresher y uno de buceo; recibía
+        # el paquete de dos días. Con un grupo no se sabe quién lo hace, y sigue igual.
+        dias -= 1
+    if dives is None and dias in _DAYS_TO_DIVES:
+        dives = _DAYS_TO_DIVES[dias]
     base = _DIVES_TO_BASE_PLAN.get(dives or 2, "2_dives_1_day")
     return cart_render.service_for_location(base, state)
