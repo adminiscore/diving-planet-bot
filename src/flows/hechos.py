@@ -256,7 +256,7 @@ def hechos(state: ConversationState, intenciones: list[str], actividades: list[s
         if "descuento" in pedidas:
             bloque["descuento"] = _descuentos(state, lang, _descuento_de_grupo(state, registro, lang))
         if "tiempo" in pedidas:
-            bloque.update(_tiempo(lang))
+            bloque.update(_tiempo(lang, buceo=registro.cart_type != "snorkel"))
         bloque.update(_clima_y_pago(state, pedidas, lang))
         bloque.update(_temas_de_lat8(pedidas, lang))
         # arq-1m (G10 nº 2): «¿hay disponibilidad mañana?» o «¿cómo reservamos?» se contestaban con «en la web», sin el
@@ -322,13 +322,14 @@ def _previo_y_edad(registro, lang: str) -> list[str]:
     return hechos_
 
 
-def _tiempo(lang: str) -> dict:
+def _tiempo(lang: str, buceo: bool = True) -> dict:
     """arq-1v: si da tiempo antes de irse. La decisión de Gadea (desde las islas va muy justo y lo confirma un asesor;
     desde Cartagena no alcanza; el cierre de las 4:30) va en `tiempo`; la espera antes de volar, aparte (`si_vuela`): con el
     tiempo justo se dice siempre, porque quien se va esa noche probablemente vuela aunque no lo diga (sparring s04k; si el
     escritor no la nombra, la añade `rag_agent._con_la_espera_antes_de_volar`)."""
     tiempo = [p for p in (_politica("time_limited_departure", lang), _politica("activity_schedule", lang)) if p]
-    vuela = _politica("flight_after_diving", lang)
+    # Tanda s05a: la espera es por bucear; a quien hace snorkel se le decía igual, dos veces (crucero, sin vuelo).
+    vuela = _politica("flight_after_diving", lang) if buceo else None
     return {"tiempo": tiempo, **({"si_vuela": vuela} if vuela else {})}
 
 

@@ -900,6 +900,22 @@ _TIENE_CEDULA_Q = {
 # (`scripts/sonda_jev_viaja_solo.py`): 69/69 (0,85-0,96 frente a 0,02-0,07) y 60/60 (0,80-0,96 frente a 0,02-0,05).
 # #3300 (2b, 4-nov): «Entiendo, gracias. Entonces lo dejo para otra ocasión» recibía «¿Con cuál te animas?» en todas las pasadas
 # leídas (sparring s04d, la tarde t2). Si se despide, el turno no lleva la pregunta de la reserva. Sonda `scripts/sonda_jev_se_despide.py`.
+# Tanda s05a (5-nov): «Tres ya tenemos el Open Water» salía como 3 plazas del Curso Básico, 2.450.000 COP cada una, y «Two of us already
+# have our Advanced» como el curso Advanced (2 de 5 en la 0.53, 4 de 5 en la 0.54). El reparto lo lee Haiku y en su prompt no se retoca: si Jev
+# dice que nadie quiere hacer un curso, esas personas son buzos (`nucleo/extractor._reparto_valido`). Sonda de 23 mensajes × 3
+# (`scripts/sonda_jev_quiere_curso.py`): 0,82-0,98 los que quieren hacerlo; como mucho 0,32 los que ya lo tienen. «quiero bucear certificado» da
+# 0,90: aquí no molesta, porque solo se mira si el reparto trae un curso.
+QUIERE_CURSO = "quiere_curso"
+QUIERE_CURSO_MIN = 0.7
+_QUIERE_CURSO_Q = {
+    "type": "noul",
+    "instructions": (
+        "The customer says that they or someone in their group wants to TAKE a certification course (Open Water, Advanced, "
+        "Rescue, Divemaster or a specialty) to get a new certification, or asks about one of those courses. It is FALSE if "
+        "they only say that they ALREADY HOLD a certification (\"we already have our Advanced\", \"tres ya tenemos el Open "
+        "Water\", \"soy Divemaster\") and want to go diving, and if they only ask about dives, the mini-course or snorkeling."
+    ),
+}
 SE_DESPIDE = "se_despide"
 SE_DESPIDE_MIN = 0.7
 _SE_DESPIDE_Q = {
@@ -1050,6 +1066,7 @@ _DEL_TURNO = (
     _DelTurno(GRUPO_MIXTO, _GRUPO_MIXTO_Q, _si(GRUPO_MIXTO_MIN)),
     _DelTurno(TIENE_CEDULA, _TIENE_CEDULA_Q, _si(TIENE_CEDULA_MIN)),
     _DelTurno(SE_DESPIDE, _SE_DESPIDE_Q, _si(SE_DESPIDE_MIN)),
+    _DelTurno(QUIERE_CURSO, _QUIERE_CURSO_Q, _si(QUIERE_CURSO_MIN)),
     _DelTurno(VIAJA_SOLO, _VIAJA_SOLO_Q, _si(VIAJA_SOLO_MIN)),
     _DelTurno(HABLA_DE_SI, _HABLA_DE_SI_Q, _si(HABLA_DE_SI_MIN)),
     # Solo se descarta cuando Jev está seguro de que NO (`nucleo/extractor.dias_de_buceo_de`).

@@ -163,6 +163,17 @@ def _es_la_misma(a: str, b: str) -> bool:
     return bool(pa and pb) and len(pa & pb) / max(len(pa), len(pb)) >= 0.8
 
 
+def _frase_sin_la_pregunta(frase: str, preguntas: list[str]) -> str | None:
+    """La frase del escritor que acaba en la pregunta de la reserva, con algo delante: «Para este plan hay que dormir en las islas:
+    ¿Desde dónde saldrías?» (tanda s05a, a quien acaba de decir «desde Cartagena»). Queda lo de delante, con punto. None si no es el caso."""
+    for pregunta in preguntas:
+        corte = frase.rfind(pregunta)
+        if corte > 0 and frase.rstrip().endswith(pregunta):
+            delante = frase[:corte].rstrip().rstrip(":,;—-").rstrip()
+            return f"{delante}." if delante else ""
+    return None
+
+
 def _sin_las_preguntas(respuesta: str, preguntas: list[str]) -> tuple[bool, str]:
     """(si había alguna, la respuesta sin ellas): fuera los párrafos que son un párrafo de una pregunta del turno y, dentro
     de los demás, las frases con «?» que son la frase con «?» de una pregunta."""
@@ -177,6 +188,8 @@ def _sin_las_preguntas(respuesta: str, preguntas: list[str]) -> tuple[bool, str]
         for frase in _PREGUNTA_RE.findall(parrafo):
             if any(_es_la_misma(frase.strip(), q) for q in frases_de_preguntas):
                 parrafo = parrafo.replace(frase, "", 1)
+            elif (sin_ella := _frase_sin_la_pregunta(frase, frases_de_preguntas)) is not None:
+                parrafo = parrafo.replace(frase, sin_ella, 1)
         if parrafo != antes:
             quitada = True
             parrafo = re.sub(r"[ \t]{2,}", " ", parrafo).strip()
@@ -322,6 +335,10 @@ def componer(state, respuesta: str, *, pase: bool = False, escribio: bool | None
         return respuesta
     logger.info(f"[CORE][CALN6] compositor: {len(respuesta)} → {len(cuerpo)} caracteres sin las preguntas del turno "
                 f"({[slot for slot, _ in preguntas]}), pendiente {pendiente!r}, pase {pase}")
+    # La explicación de una pregunta del turno que ya no es la pendiente (acaba de contestarla) tampoco se queda.
+    for _, texto in preguntas:
+        if texto and texto != final:
+            cuerpo = _sin_las_frases_de(cuerpo, texto)
     if pase or final is None:
         return cuerpo
     if _ya_pregunta(cuerpo):

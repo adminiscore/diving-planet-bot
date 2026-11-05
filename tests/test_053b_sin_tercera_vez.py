@@ -195,3 +195,52 @@ def test_la_politica_dice_que_el_residente_no_es_extranjero():
     assert "no cuenta como extranjero" in politicas["mixed_nationality_group"]["es"]
     assert "does not count as a foreigner" in politicas["mixed_nationality_group"]["en"]
     assert "no es un grupo mixto" in politicas["colombian_pricing"]["es"]
+
+
+def _con_reparto(**senales):
+    estado = ConversationState(conversation_id="s05a", language="es")
+    estado._senales_router = senales
+    return estado
+
+
+def test_quien_ya_tiene_la_certificacion_no_hace_el_curso():
+    from src.agents.jev_router import QUIERE_CURSO
+
+    mensaje = "Somos 7. Tres ya tenemos el Open Water, dos quieren probar el minicurso y dos prefieren snorkel."
+    reparto = {"padi_open_water": 3, "minicourse": 2, "snorkel": 2}
+    assert extractor._reparto_valido(reparto, mensaje, _con_reparto(**{QUIERE_CURSO: False})) == {
+        "certified_diving": 3, "minicourse": 2, "snorkel": 2}
+    assert extractor._reparto_valido(reparto, mensaje, _con_reparto(**{QUIERE_CURSO: True}))["padi_open_water"] == 3
+    assert extractor._reparto_valido(reparto, mensaje, _con_reparto())["padi_open_water"] == 3  # Jev calla: como hoy
+
+
+def test_el_curso_ya_elegido_no_se_toca():
+    from src.agents.jev_router import QUIERE_CURSO
+
+    estado = _con_reparto(**{QUIERE_CURSO: False})
+    estado.detected_activity = "padi_open_water"
+    assert extractor._reparto_valido({"padi_open_water": 2, "snorkel": 1}, "somos 3, 2 el curso y uno snorkel", estado)["padi_open_water"] == 2
+
+
+def test_al_snorkel_no_se_le_dice_la_espera_de_volar():
+    from src.flows import hechos
+
+    st = ConversationState(conversation_id="s05a", language="en", detected_activity="snorkel")
+    assert "si_vuela" not in hechos.hechos(st, ["tiempo"], ["snorkel"])[0]
+    st = ConversationState(conversation_id="s05a", language="en", detected_activity="certified_diving")
+    assert "si_vuela" in hechos.hechos(st, ["tiempo"], ["certified_diving"])[0]
+
+
+def test_la_pregunta_con_algo_delante_y_su_explicacion_se_van_si_ya_la_contesto():
+    origen = ("¿Desde dónde saldrías? Este plan dura 2 días y hay que *dormir en las islas* (el alojamiento no está incluido): puedes salir "
+              "*desde Cartagena* el primer día o, si ya estás *en las islas*, coordinamos la recogida en tu hotel.")
+    cuantos = "¿Para cuántas personas sería: solo para ti o van más? 😊"
+    estado = ConversationState(conversation_id="s05a", language="es")
+    estado.core_pending_slot = "qty"
+    estado._preguntas_del_turno = [("location", origen), ("qty", cuantos)]
+    estado._intenciones = []
+    respuesta = ("El curso dura 2 días y hay que completar las lecturas antes de las inmersiones.\n\n"
+                 f"Para este plan de 2 días, hay que *dormir en las islas* (el alojamiento no está incluido): {origen}\n\n{cuantos}")
+    texto = componer(estado, respuesta, escribio=True)
+    assert "Desde dónde" not in texto and "coordinamos la recogida" not in texto
+    assert "Para este plan de 2 días" in texto and texto.endswith(cuantos)

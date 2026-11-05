@@ -1148,6 +1148,23 @@ y equipo propio (5 % que se suma, cámara bajo su responsabilidad), Hotel Rosari
 
 **Menores:** el enlace dos veces (Miami t2, Rescue t2; arreglado en la 0.53); el aviso de moneda repetido (Miami t1); «I'm leaving the price below» debajo de la lista (Junior t1); «Para aplicarlo» sin saber a qué (despedida t1).
 
+## CALN-S05A-01..10 · 15.ª tanda de sparring contra PRE 0.53.0 (5-nov, `charla_pre`)
+
+Criterio de Álvaro (#2716), Haiku por Anthropic. 10 clientes nuevos, educados y que escriben bien (conv 6895-6905), con temas elegidos antes de ver respuestas. **1 con grave y 9 sin graves. Meta de CALN-22: la s04n de Gonzalo (0.53.0, 10 sin graves) sumaba 10; este grave la devuelve a 0.** Todos llegan al enlace, al asesor o a lo que pedían; el crucero se va porque no llega.
+
+**Grave (1):**
+1. **Siete amigas de Bogotá** (conv 6898). t1: «Tres ya tenemos el Open Water» salió como 3 plazas del Curso Básico, 2.450.000 COP cada una, y el escritor decía «buceo certificado». Se corrigió al aclararlo el cliente. Lo lee Haiku en `group_allocation`; repetido ×5 no salió con esa frase, pero sí con «Two of us already have our Advanced» (A 2 de 5, candidata 4 de 5). **Arreglo (0.54):** señal de Jev `quiere_curso` (sonda 69 lecturas: 0,82-0,98 frente a como mucho 0,32); en el prompt de Haiku no se toca. Si dice que no y el reparto trae un curso que nadie había elegido, son buzos. Banco `s05a-siete-ow-t1`, `s05a-seis-advanced-en-t1` y el control `s05a-cinco-curso-control`.
+
+**Medios:**
+- **SSI y NAUI** (conv 6903): t3-t4, el refresher a quien lleva 8 meses y un año, dos veces, también tras «ninguno lleva más de 2 años». El enlace llegó bien. No se reproduce en 6 repeticiones contra la candidata; queda sin causa. t2: «¿La otra persona también va a bucear?» a quien dice «queremos» (2 de 6).
+- **Cali, Advanced** (conv 6905): t2, a «Desde Cartagena» recibe «¿Desde dónde saldrías?» dentro de una frase del escritor; a «Ya te dije» lo pasa a un asesor pidiendo disculpas. **Arreglo (0.54):** el compositor quita la pregunta con algo delante y su explicación.
+- **Crucero con snorkel** (conv 6899): la espera de volar 2 veces a quien hace snorkel y vuelve al barco; t3, al despedirse, la tarjeta del plan «ya en las islas». **Arreglo (0.54):** la espera, solo con buceo; `se_despide` de Gonzalo.
+- **Bocagrande** (conv 6896): t2, el menú genérico; t3, «¿prefieres la salida o el minicurso?» a quien pide los dos. El menú va en la 0.54 (Gonzalo).
+
+**Menores:** «I'm leaving the prices below» debajo de la lista (holandeses t1); «Is that your case?» separado de su aviso por el aviso de moneda (holandeses t2); el origen dos veces en el mismo mensaje (Lima t1); los requisitos enteros a quien pregunta si vale su carné SSI (t1) y el Advanced (t2).
+
+**BIEN:** Nitrox con salida al día siguiente, mareo con snorkel, mal tiempo y reserva a nombre de otra persona (al asesor), Bocagrande sin recogida, madre acompañante con hija en minicurso, 3 años sin bucear y vuelo (refresher, 18 h, enlace), holandeses con equipo propio (5 %, no es automático).
+
 ## Mini y bancos de la 0.53 (5-nov, no es una tanda: no cuenta para CALN-22)
 
 Fallos reales que salieron al leer la mini y el banco de graves, con su banco (`banco-053b.json`, `banco-graves.json`). Arreglados en la 0.53.0 salvo los que se indican.

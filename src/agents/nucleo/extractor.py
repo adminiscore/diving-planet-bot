@@ -452,9 +452,17 @@ def _reparto_valido(reparto: dict | None, message: str, state: ConversationState
     if not _EXPLICIT_NUMBER_RE.search(message) and any(n > 1 and n not in conocidas for n in reparto.values()):
         logger.info(f"[EXTRACT][EX7] reparto sin cifras en el mensaje, no se usa: {reparto!r}")
         return None
+    from src.agents.jev_router import QUIERE_CURSO  # lazy
+
+    nadie_quiere_curso = (getattr(state, "_senales_router", None) or {}).get(QUIERE_CURSO) is False
     nombradas = matched_activity_categories(message)
     valido: dict = {}
     for act, n in reparto.items():
+        if nadie_quiere_curso and act.startswith("padi_") and act != state.detected_activity and n > guardado.get(act, 0):
+            # Tanda s05a: «Tres ya tenemos el Open Water» no son 3 plazas del curso: ya lo tienen, son buzos (ver `QUIERE_CURSO`).
+            logger.info(f"[EXTRACT][S05A] {act!r} × {n} en el reparto y Jev dice que nadie quiere un curso: buceo certificado")
+            valido["certified_diving"] = valido.get("certified_diving", 0) + n
+            continue
         categoria = "padi_course" if act.startswith("padi_") and act != "padi_specialty" else _CATEGORIA_DEL_REPARTO.get(act)
         # CALN-2 (27-oct, tanda de precios q2 t2): también por sus nombres del catálogo, en los dos idiomas
         # («she the mini course»; los patrones de categoría no tenían el nombre en inglés del propio producto).
