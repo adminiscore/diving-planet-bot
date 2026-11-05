@@ -359,7 +359,10 @@ def _componer(state, respuesta: str, *, pase: bool = False, escribio: bool | Non
     pendiente = state.core_pending_slot
     final = next((texto for slot, texto in reversed(preguntas) if slot == pendiente and texto), None)
     if final is None and not pase:
-        return respuesta
+        # Mini 0.58 (semana-santa, 2 de 3): «Quiero quedarme en las islas» y el escritor cerraba con la pregunta del origen fijada al
+        # empezar el turno. Tiene dos frases y debajo va la pieza, así que nadie la reconocía como final, y se quedaba. Ya contestada, fuera.
+        ya_contestadas = [texto for slot, texto in preguntas if texto and pendiente and slot != pendiente]
+        return _sin_las_preguntas(respuesta, ya_contestadas)[1] if ya_contestadas else respuesta
     quitada, cuerpo = _sin_las_preguntas(respuesta, [texto for _, texto in preguntas if texto])
     if not quitada:
         return respuesta

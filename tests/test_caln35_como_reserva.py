@@ -304,3 +304,13 @@ def test_las_opciones_de_los_menores_entran_en_los_candidatos():
     assert candidatos(_estado(**padres, detected_ages=[7, 11])) == ["certified_diving", "snorkel", "minicourse"]
     assert candidatos(_estado(**padres, detected_ages=[9])) == ["certified_diving", "bubble_makers", "snorkel"]
     assert candidatos(_estado(**padres, detected_ages=[40])) == ["certified_diving"]  # un adulto no cambia nada
+
+
+def test_la_pregunta_ya_contestada_no_se_queda_en_medio():
+    """Mini 0.58: el escritor cierra con la pregunta del origen, el cliente la acaba de contestar y debajo va la lista de precios."""
+    pregunta = core.ask_slot(_estado(language="es"), core.SLOT_LOCATION)
+    st = _estado(language="es", location="island", hotel="cocoliso", core_pending_slot=core.SLOT_SAFETY)
+    st._preguntas_del_turno = [(core.SLOT_LOCATION, pregunta)]
+    respuesta = f"En las islas tenemos nuestra base.\n\n{pregunta}\n\n*Precios por persona* (online · normal):\n• Salidas de Buceo: 124 USD"
+    salida = compositor.componer(st, respuesta, escribio=True)
+    assert "Desde dónde" not in salida and "En las islas tenemos nuestra base." in salida and "124 USD" in salida
