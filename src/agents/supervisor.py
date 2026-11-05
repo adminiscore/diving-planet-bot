@@ -225,7 +225,6 @@ async def route_message(state: ConversationState, message: str) -> str:
             await_pending_notes,
             cancel_pending_answer,
             cancelar_extraccion_adelantada,
-            cancelar_rag_adelantado,
             guardar_lo_dicho_en_el_pase,
             guardar_lo_dicho_sin_nucleo,
         )
@@ -254,7 +253,6 @@ async def route_message(state: ConversationState, message: str) -> str:
                 logger.warning(f"[CORE][CALN3] la sombra falló: {exc!r}")
         # u3-4: una respuesta lanzada en paralelo que el turno no usó se cancela.
         cancel_pending_answer(state)
-        cancelar_rag_adelantado(state)  # rag-5: la respuesta adelantada que nadie usó
         if state.pending_escalation_reason not in (None, escalation_before):
             await guardar_lo_dicho_en_el_pase(state)  # EX-EST-2: lo que dijo en el turno del pase no se pierde
         await guardar_lo_dicho_sin_nucleo(state)  # G3-01: ni en un turno con respuesta fija (núcleo sin correr)
@@ -545,10 +543,9 @@ async def _shared_turn_handler(
         if state.step in (Step.WELCOME, Step.LANGUAGE):
             state.step = Step.MAIN_MENU
         state.history.append({"role": "user", "content": message})
-        # rag-5: aprovecha la respuesta adelantada si el contexto es el mismo (si no, la llamada de siempre).
-        from src.agents.conversational_core import rag_con_adelantado
+        from src.agents.conversational_core import rag_fuera_de_la_reserva
 
-        answer = await rag_con_adelantado(state, message, state.history)
+        answer = await rag_fuera_de_la_reserva(state, message, state.history)
         state.history.append({"role": "assistant", "content": answer})
         return answer
 

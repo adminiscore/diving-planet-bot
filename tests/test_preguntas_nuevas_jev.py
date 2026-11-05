@@ -99,7 +99,6 @@ def _con_memoria() -> ConversationState:
 def router_sin_red(monkeypatch):
     from src.agents import conversational_core as core
 
-    monkeypatch.setattr(core, "lanzar_rag_adelantado", lambda *a, **k: None)
     monkeypatch.setattr(core, "lanzar_extraccion_adelantada", lambda *a, **k: None)
 
     def poner(senales: dict):

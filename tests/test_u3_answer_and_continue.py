@@ -148,7 +148,6 @@ async def test_en_una_pregunta_el_regex_no_escribe_datos(monkeypatch, signals, r
 async def test_sin_pregunta_no_se_lanza_nada(monkeypatch, signals, rag, extractor_dice):
     # rag-5: sin la respuesta adelantada (se llamaría y se cancelaría); aquí se mira el enrutado.
     extractor_dice(LEE_EL_EXTRACTOR)  # ex-9b paso 3: sin él, al 2.º turno se pasa a un asesor
-    monkeypatch.setattr(core, "lanzar_rag_adelantado", lambda *a, **k: None)
     st = _state()
     await route_message(st, "queremos bucear, somos certificados")
     resp = await route_message(st, "desde cartagena")

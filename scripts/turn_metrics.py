@@ -70,8 +70,6 @@ def parse_lines(lines) -> list[dict]:
             "llamadas": m.get("llamadas") or [],
             "router": m.get("router"),
             "router_ms": m.get("router_ms"),
-            "rag_adelantado": m.get("rag_adelantado"),
-            "rag_rehecho_por": m.get("rag_rehecho_por"),
         })
     return sorted(turns, key=lambda t: t["start"] or "")
 
@@ -109,7 +107,6 @@ def build(turns: list[dict], label: str, start: str, end: str) -> dict:
         },
         "router": {"by_backend": dict(routers), "ms_p50": _pct(router_ms, 50), "ms_p95": _pct(router_ms, 95)},
         "models": dict(models.most_common()),
-        "rag_adelantado": rag_adelantado(turns),
         "por_pieza": por_pieza(turns),
         "coste": coste(turns),
     }
@@ -172,19 +169,6 @@ def por_pieza(turns: list[dict]) -> dict:
                 modelos[c.get("p") or "?"][c["m"]] += 1
     return {p: {"n": len(v), "p50": _pct(v, 50), "p95": _pct(v, 95), "modelos": dict(modelos[p])}
             for p, v in sorted(tiempos.items(), key=lambda kv: -len(kv[1]))}
-
-
-def rag_adelantado(turns: list[dict]) -> dict:
-    """rag-5: qué pasó con el RAG lanzado a la vez que el enrutador (aprovechado / rehecho / descartado), la
-    latencia de los turnos RAG según ese resultado y, de los rehechos, qué parte del contexto cambió."""
-    resultados = Counter(t.get("rag_adelantado") or "sin_adelantar" for t in turns)
-    rag = [t for t in turns if t["type"] == "rag"]
-    latencia = {}
-    for r in sorted({t.get("rag_adelantado") or "sin_adelantar" for t in rag}):
-        v = [t["latency"] for t in rag if (t.get("rag_adelantado") or "sin_adelantar") == r and t["latency"] is not None]
-        latencia[r] = {"n": len(v), "p50": _pct(v, 50), "p95": _pct(v, 95)}
-    rehecho_por = Counter(p for t in turns for p in (t.get("rag_rehecho_por") or "").split(",") if p)
-    return {"resultados": dict(resultados), "latencia_turnos_rag": latencia, "rehecho_por": dict(rehecho_por)}
 
 
 def fetch_log_lines(start: str, end: str) -> list[str]:

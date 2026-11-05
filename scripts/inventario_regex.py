@@ -64,8 +64,7 @@ REGLAS = [
     ("agents/nucleo/", "*", ENTENDER),
     ("supervisor.py", "*", ENTENDER),
     ("conversational_core.py", ("_EXPLICIT_NUMBER_RE", "norm", "texto"), LISTA),  # ¿hay una cifra?, saludo, formato
-    ("conversational_core.py", ("_PREGUNTA_ORIGEN_RE", "_IMPORTE_RE", "_FRASE_RE", "_DEPENDE_DEL_ORIGEN_RE",
-                                "_HORA_DEL_RESUMEN"), GUARDA),
+    ("conversational_core.py", ("_PREGUNTA_ORIGEN_RE", "_IMPORTE_RE", "_FRASE_RE", "_DEPENDE_DEL_ORIGEN_RE"), GUARDA),
     ("conversational_core.py", "*", ENTENDER),  # incluye _PIDE_PRECIO_RE, _PRECIO_AJENO_RE y _PISTA_ORIGEN_RE
     ("intent_detector.py", TOKENIZADORES, LISTA),
     ("intent_detector.py", "*", ENTENDER),

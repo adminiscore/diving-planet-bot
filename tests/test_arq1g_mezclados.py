@@ -44,13 +44,6 @@ def test_sin_mezcla_no(con_flags, campos):
     assert asyncio.run(cc._hechos_para_el_rag(st, MENSAJE, st.history)) is None
 
 
-def test_la_huella_distingue_los_hechos():
-    """La respuesta adelantada sale antes que Jev, sin hechos: si al terminar los hay, se rehace."""
-    base = {"lang": "es", "history": [], "extra_context": ""}
-    assert cc._huella_rag("x", base) != cc._huella_rag("x", {**base, "hechos": "[...]"})
-    assert len(cc._PARTES_HUELLA) == len(cc._huella_rag("x", base))
-
-
 def test_hechos_del_turno_da_las_cubiertas(con_flags):
     st = _conv(_intenciones=["precio", "incluye"])
     bloques, cubiertas = asyncio.run(redactor_hechos.hechos_del_turno(st, MENSAJE, st.history))

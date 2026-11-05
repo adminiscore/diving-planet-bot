@@ -277,9 +277,9 @@ async def _openrouter_o_respaldo_por_tiempo(original, respaldo: str, modelo: str
                 return buena.result()
         return t_openai.result()  # fallaron los dos: sube la excepción del respaldo
     except asyncio.CancelledError:
-        # lat-1 (24-oct): si cancelan a quien espera (el RAG adelantado que ya no hace falta), también las
+        # lat-1 (24-oct): si cancelan a quien espera (una respuesta que ya no hace falta), también las
         # llamadas en marcha: con ensure_future seguían vivas y se pagaban enteras (latb4-B: 34 escritores en
-        # turnos del redactor, de 1,2 a 3,6 s cada uno, con el adelantado ya cancelado).
+        # turnos del redactor, de 1,2 a 3,6 s cada uno, con la respuesta ya cancelada).
         _cancelar(t_openrouter, t_openai)
         raise
 

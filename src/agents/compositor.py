@@ -75,8 +75,8 @@ def _sin_enlaces_repetidos(respuesta: str) -> str:
 
 
 def _sin_enlaces_de_reserva(state, respuesta: str) -> str:
-    """CALN-35: a quien no reserva por enlace no le llega ninguno, venga de donde venga. La respuesta adelantada se escribe antes
-    de leer este mensaje («…para colombianos», mini c055), así que el escritor no siempre lo sabe; aquí ya está todo leído."""
+    """CALN-35: a quien no reserva por enlace no le llega ninguno, venga de donde venga. El escritor corre a la vez que
+    la lectura de este mensaje («…para colombianos», mini c055), así que no siempre lo sabe; aquí ya está todo leído."""
     if como_reserva(state) == ENLACE:
         return respuesta
     enlaces = set(_ENLACE_DE_RESERVA_RE.findall(respuesta))

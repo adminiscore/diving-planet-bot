@@ -25,7 +25,6 @@ def router_sin_llamadas(monkeypatch):
         return {}
 
     monkeypatch.setattr(supervisor, "detect_routing_signals", _senales)
-    monkeypatch.setattr("src.agents.conversational_core.lanzar_rag_adelantado", lambda *_a: None)
     idioma = {"valor": "pt"}
 
     def _lanzar(conv, _message):

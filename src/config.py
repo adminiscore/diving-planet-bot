@@ -142,10 +142,6 @@ class Settings(BaseSettings):
     # revisar): si una llamada a OpenRouter falla, se repite con este modelo de OpenAI (llm_client._por_proveedor).
     # Solo actúa cuando OpenRouter falla. Vacío = sube el error como antes.
     respaldo_si_openrouter_falla: str = "gpt-5.4-mini"
-    # CALN-37 (5-nov): la respuesta adelantada se escribía antes de leer el mensaje; se aprovechaba el 13 % de los turnos y se tiraba el
-    # 76 %. Medido sin ella: turno p90 5,51 → 5,03 s, 5,2 → 4,53 llamadas por turno y fallos firmes en empate (17 y 17 diálogos). Apagada;
-    # el código se quita cuando la versión lleve una tanda en PRE.
-    rag_adelantado: bool = False
     # mej-7 (23-oct, Gonzalo con Claude, encargo de Gadea #1566): si OpenRouter contesta 401, 402 o 403 (la clave o el
     # crédito: el 21-oct, ronda respaldo-luna, 401 en las 93 vueltas y en cada pieza), se deja de llamar a OpenRouter
     # estos segundos: cada pieza va directa a su respaldo de OpenAI y Jev se salta (decide el router LLM), en vez de

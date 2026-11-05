@@ -156,16 +156,13 @@ async def _router_node(state: BotState) -> dict:
         marca_regex("R27")  # CALN-8 (6): niños por regex (s03g: «since I was a baby»)
         conv.kids_mention_detected = True
 
-    # rag-5: el RAG arranca ya, a la vez que el enrutador; la reserva lo aprovecha si el contexto no cambió.
     from src.agents.conversational_core import (
         fijar_pregunta_del_escritor,
         lanzar_extraccion_adelantada,
-        lanzar_rag_adelantado,
     )
 
-    fijar_pregunta_del_escritor(conv)  # lat-9 paso 2: antes del adelantado, que la lleva en su huella
-    lanzar_rag_adelantado(conv, message)
-    lanzar_extraccion_adelantada(conv, message)  # ex-5: el extractor "LLM primero", también a la vez
+    fijar_pregunta_del_escritor(conv)  # lat-9 paso 2
+    lanzar_extraccion_adelantada(conv, message)  # ex-5: el extractor "LLM primero", a la vez que el enrutador
 
     # gen-5 (flag `idioma_unico_de_apertura`): el idioma de la apertura se decide aquí, una vez y a la vez que las
     # señales, para que todas las rutas contesten en el mismo (antes lo sensible, el contacto, la edad o el buceo
@@ -206,26 +203,10 @@ async def _router_node(state: BotState) -> dict:
     # CALN-8 (lo delgado): el lector del grupo sale ahora, con lo que dice Jev, y solo si puede hacer falta.
     lanzar_lector_si_hace_falta(conv, message, signals)
     lanzar_segunda_nacionalidad_si_hace_falta(conv, signals)  # CALN-10b: la 2.ª lectura de la nacionalidad, ya
-    if conv._intenciones and conv._otra_cosa is False:
-        # lat-1 (24-oct, fase LAT; Gadea #1731): el mensaje solo pide cosas de la tabla y lo contesta el redactor de
-        # hechos, así que la respuesta adelantada del RAG se tira: se cancela ya, antes de que escriba y se revise
-        # (latb2-B: en 48 turnos del redactor se gastaban escritor, revisor y embeddings para nada). Si al final contesta
-        # el RAG (el redactor dice FALTA o no sabe la actividad), se lanza entonces, como sin adelantar.
-        from src.agents.conversational_core import cancelar_rag_adelantado
-
-        cancelar_rag_adelantado(conv)
     conv._redactor_dijo_falta = False  # ARQ-1g: lo pone el redactor si los hechos no contestan algo del mensaje
     conv._senales_router = signals  # gen-13: el cierre del turno sabe si el mensaje traía una pregunta
     route = classify_route(conv, message, signals)
     logger.info(f"[GRAPH] conv={conv.conversation_id} route={route}")
-    if route == ROUTE_BOOKING and _no_usara_el_rag_adelantado(conv, message, signals):
-        # lat-1 (24-oct; Gadea #1741): en la reserva, la respuesta adelantada solo se usa si el mensaje trae una pregunta
-        # (o el lugar desconocido de CAL-C4). Sin eso se tiraba después de escribirla y revisarla («desde Cartagena»,
-        # «somos 2»: latb3-B, 142 escritores y 67 revisores en turnos «descartado»). Se cancela ya; si al final hace
-        # falta el RAG, se lanza entonces.
-        from src.agents.conversational_core import cancelar_rag_adelantado
-
-        cancelar_rag_adelantado(conv)
     from src.observability import note_turn
 
     note_turn(route=route)  # resumen del turno en Langfuse (m0-1)
@@ -279,19 +260,6 @@ def get_compiled_graph():
     if _COMPILED_GRAPH is None:
         _COMPILED_GRAPH = _build_graph()
     return _COMPILED_GRAPH
-
-
-def _no_usara_el_rag_adelantado(conv: ConversationState, message: str, signals: dict) -> bool:
-    """lat-1: ¿la reserva va a tirar la respuesta adelantada? Con el mismo criterio que la lanza
-    (`conversational_core._maybe_launch_answer`): sin pregunta en el mensaje ni lugar desconocido, y fuera de DIVE TO
-    HEAL (que la usa aunque no haya pregunta)."""
-    from src.agents.conversational_core import _lugar_desconocido, _turn_has_question
-
-    if getattr(conv, "_rag_adelantado", None) is None or conv.adaptive_diving_context:
-        return False
-    if _lugar_desconocido(signals):
-        return False
-    return not _turn_has_question(message, signals)
 
 
 def intenciones_del_turno(conv: ConversationState, signals: dict) -> list[str]:

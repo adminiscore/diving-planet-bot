@@ -1444,13 +1444,12 @@ async def _answer_question(
 
 
 async def _con_la_nacionalidad_del_mensaje(state: ConversationState, message: str) -> ConversationState:
-    """gen-14 (21-oct, flag `rag_espera_la_nacionalidad`): el RAG de un turno con pregunta se escribe (o se adelanta)
+    """gen-14 (21-oct, flag `rag_espera_la_nacionalidad`): el RAG de un turno con pregunta se escribe
     ANTES de que la extracción apunte lo que dice ESE mensaje, así que «Somos de Cali… ¿cuánto vale la salida?» se
     cotizaba en USD con la regla de «sin nacionalidad, USD» (banco dialogos-gen14-moneda: is_colombian True y la
-    respuesta en USD 2/2; en la traza, «respuesta adelantada aprovechada» antes de «Detected nationality»). Con el
+    respuesta en USD 2/2). Con el
     flag, el RAG recibe una COPIA del estado con la nacionalidad que la extracción del turno ya leyó (no se gasta ni
-    se lanza otra: es la tarea adelantada); el estado de verdad lo sigue escribiendo la extracción. Si la nacionalidad
-    cambia, la huella de rag-5 cambia y la respuesta adelantada se rehace."""
+    se lanza otra: es la tarea adelantada del extractor); el estado de verdad lo sigue escribiendo la extracción."""
     if state.is_colombian is not None:
         return state
     from src.agents.nucleo.extractor import (  # lazy
@@ -1566,7 +1565,7 @@ _PASE_HECHO_EN = ("This conversation has ALREADY been passed to an advisor from 
 
 def _entradas_rag(state: ConversationState, history: list, message: str = "") -> dict:
     """Lo que recibe el RAG además de la pregunta: idioma, historial, resumen del estado y (rag-3) el origen.
-    Una sola fuente para la llamada normal y para la adelantada de rag-5, que compara sus huellas."""
+    """
     from src.agents import supervisor  # lazy
 
     extra = supervisor._build_extra_context(state)
@@ -1592,8 +1591,8 @@ def _entradas_rag(state: ConversationState, history: list, message: str = "") ->
 
 def fijar_pregunta_del_escritor(state: ConversationState) -> None:
     """lat-9 paso 2 (26-oct): la pregunta de la reserva la escribe el escritor (RAG o redactor) al final de su texto, en
-    vez de pegarla el código detrás. Se fija al empezar el turno, antes del RAG adelantado (rag-5), con la pregunta
-    pendiente tal como se volvería a hacer, para que la adelantada y la del turno lleven la misma. Si el mensaje cambia
+    vez de pegarla el código detrás. Se fija al empezar el turno, con la pregunta
+    pendiente tal como se volvería a hacer. Si el mensaje cambia
     la pregunta (contesta el dato, cierra la reserva), el cierre lo arregla (`slotfill_close._con_la_pregunta`). Sin
     pregunta pendiente (fuera de la reserva), nada: el escritor contesta como siempre."""
     import copy
@@ -1647,123 +1646,13 @@ def _plan_nombrado(state: ConversationState, message: str) -> str | None:
     return "\n".join([cabeza, *lineas])
 
 
-# rag-5 (30-sep): el RAG arranca A LA VEZ que el enrutador (Jev, ~0,7 s) en vez de después, y solo se usa si su
-# contexto es EXACTAMENTE el que tendría la llamada de siempre (misma "huella": pregunta, idioma, historial,
-# resumen del estado sin la hora y origen). Si algo cambió entre medias (notas nuevas de este mensaje, una
-# corrección, un cambio de idioma...), se tira y se lanza la de siempre: nunca contesta con otro contexto y nunca
-# tarda más que hoy. Si el turno no llega a pedir respuesta, se cancela al cerrarlo (ese es el coste extra).
-_HORA_DEL_RESUMEN = re.compile(r"^(Fecha y hora actual|Current date and time): [^(]*\([^)]*\)\.\s*")
-_PARTES_HUELLA = ("mensaje", "idioma", "historial", "resumen", "origen", "hechos", "pregunta")  # orden de `_huella_rag`
-
-
-def _huella_rag(message: str, entradas: dict) -> tuple:
-    import json
-
-    resumen = _HORA_DEL_RESUMEN.sub("", entradas.get("extra_context") or "")  # la hora cambia de un minuto a otro
-    return (message, entradas.get("lang"), json.dumps(entradas.get("history") or [], ensure_ascii=False),
-            resumen, entradas.get("origin"), entradas.get("hechos"), entradas.get("pregunta_final"))
-
-
-def lanzar_rag_adelantado(state: ConversationState, message: str) -> None:
-    """Al empezar el turno, antes del enrutador: lanza el RAG con lo que ya se sabe (el historial con ESTE
-    mensaje, como lo dejará `_setup_phase`).
-
-    Primer mensaje (1-oct): el idioma aún no está decidido. Se usa la misma regla rápida con la que empieza
-    `_setup_phase` (sin llamadas) y la foto queda como la dejará él (idioma y paso de conversación libre). Si la
-    regla no sabe el idioma (`_setup_phase` preguntaría al LLM), no se adelanta. Si al final decide otra cosa, la
-    huella no coincide y se rehace, como siempre."""
-    from src.config import settings  # lazy
-
-    texto = (message or "").strip()
-    if not settings.rag_adelantado or not texto or texto.isdigit():
-        return
-    import copy
-
-    from src.agents import supervisor  # lazy
-
-    history = [*(state.history or []), {"role": "user", "content": message}]
-    foto = copy.copy(state)
-    foto.history = history
-    if state.step in (Step.WELCOME, Step.LANGUAGE):
-        from src.flows.catalog import _detect_language_from_text
-
-        lang = _detect_language_from_text(message)
-        if not lang:
-            return
-        foto.language = foto.detected_language = lang
-        foto.step = Step.FREE_TEXT
-        foto.quick_replies = []
-    entradas = _entradas_rag(foto, history, message)
-
-    async def _correr() -> str:
-        from src.agents.rag_agent import RAG_ADELANTADO
-
-        RAG_ADELANTADO.set(True)
-        return await supervisor.rag_answer(message, **entradas)
-
-    state._rag_adelantado = {"task": asyncio.create_task(_correr()), "huella": _huella_rag(message, entradas),
-                             "mensaje": message}
-
-
-async def _adoptar_o_rehacer(state: ConversationState, message: str, history: list, adelantado: dict, *,
-                             puerta_al_recoger: bool = False) -> str:
-    """rag-5: donde hoy se lanzaría el RAG. Espera a las notas (como la llamada de siempre), calcula las entradas
-    de verdad y, si su huella es la de la respuesta adelantada, la aprovecha; si no, la tira y la rehace."""
-    from src.agents import supervisor  # lazy
-    from src.observability import note_turn
-
-    await await_pending_notes(state)
-    if con_hechos := await _con_hechos(state, message, history):
-        adelantado["task"].cancel()
-        note_turn(rag_adelantado="descartado")
-        return con_hechos
-    entradas = _entradas_rag(await _con_la_nacionalidad_del_mensaje(state, message), history, message)
-    if hechos := await _hechos_para_el_rag(state, message, history):
-        entradas["hechos"] = hechos  # arq-1g: la adelantada salió sin ellos, así que su huella no coincide y se rehace
-        entradas["hechos_bloques"] = state._hechos_del_rag
-    pieza_pedida = _precios_por_codigo(state, entradas)
-    huella = _huella_rag(message, entradas)
-    if huella == adelantado["huella"]:
-        note_turn(rag_used=True, rag_adelantado="aprovechado")
-        logger.info("[CORE][RAG5] respuesta adelantada aprovechada")
-        answer = await adelantado["task"]
-        # 7-oct: opción C, ver `_rag_answer`
-        return _con_la_puerta(state, message, answer, al_recoger=puerta_al_recoger, pieza_pedida=pieza_pedida)
-    adelantado["task"].cancel()
-    # Diagnóstico (30-sep): la mitad de los intentos de la ronda rag5-B se rehicieron y no se sabía por qué.
-    cambio = ",".join(n for n, a, b in zip(_PARTES_HUELLA, adelantado["huella"], huella, strict=True) if a != b)
-    note_turn(rag_adelantado="rehecho", rag_rehecho_por=cambio)
-    logger.info(f"[CORE][RAG5] el contexto cambió entre medias ({cambio}): se rehace la respuesta")
-    answer = await supervisor.rag_answer(message, **entradas)
-    return _con_la_puerta(state, message, answer, al_recoger=puerta_al_recoger, pieza_pedida=pieza_pedida)
-
-
-async def rag_con_adelantado(state: ConversationState, message: str, history: list) -> str:
-    """rag-5 (1-oct): el RAG de los caminos que contestan fuera de la reserva (buceo adaptado: nodo `info` y la
-    cascada). En la ronda rag5-B esos turnos tiraban su respuesta adelantada y hacían otra. Ahora la adoptan con la
-    misma huella que la reserva; las entradas salen de `_entradas_rag`, así que la búsqueda también recibe el origen
-    del cliente (rag-3), que este camino no pasaba."""
-    adelantado = getattr(state, "_rag_adelantado", None)
-    if adelantado is not None and adelantado["mensaje"] == message:
-        state._rag_adelantado = None
-        answer = await _adoptar_o_rehacer(state, message, history, adelantado)
-    else:
-        answer = await _rag_answer(state, message, history=history)
+async def rag_fuera_de_la_reserva(state: ConversationState, message: str, history: list) -> str:
+    """El RAG de los caminos que contestan fuera de la reserva (buceo adaptado: nodo `info` y la cascada). Las entradas
+    salen de `_entradas_rag`, así que la búsqueda recibe el origen del cliente (rag-3)."""
+    answer = await _rag_answer(state, message, history=history)
     if _es_pregunta_de_origen(answer):
         _fijar_origen_antes_del_precio(state, message)
     return answer
-
-
-def cancelar_rag_adelantado(state: ConversationState) -> None:
-    """Cierre del turno: una respuesta adelantada que el turno no usó se cancela."""
-    from src.observability import note_turn
-
-    adelantado = getattr(state, "_rag_adelantado", None)
-    state._rag_adelantado = None
-    if adelantado is not None:
-        if not adelantado["task"].done():
-            adelantado["task"].cancel()
-        note_turn(rag_adelantado="descartado")
 
 
 # u3-4 (24-sep): "contesta y sigue". Escalón 0, 165 turnos con pregunta de la ronda de
@@ -1812,13 +1701,6 @@ def _maybe_launch_answer(state: ConversationState, message: str, routing_signals
     # La foto del historial se toma AQUÍ (lección de la carrera de l1-4): la tarea puede no
     # arrancar hasta después de que el bot meta otra cosa en el historial.
     history = list(state.history)
-    adelantado = getattr(state, "_rag_adelantado", None)
-    if adelantado is not None and adelantado["mensaje"] == message:
-        # rag-5: ya hay una respuesta en marcha desde antes del enrutador; se usa si su contexto es el mismo.
-        state._rag_adelantado = None
-        state._pending_answer = asyncio.create_task(_adoptar_o_rehacer(state, message, history, adelantado,
-                                                                       puerta_al_recoger=True))
-        return
     state._pending_answer = asyncio.create_task(_rag_answer(state, message, history=history, puerta_al_recoger=True))
 
 

@@ -1668,7 +1668,6 @@ async def test_comparing_options_object_routes_to_rag_not_cart(monkeypatch):
     comparing_options debe ir a RAG (explicar) y NO construir carrito ni
     encolar cantidades de acompañante."""
     # rag-5: sin la respuesta adelantada (se llamaría y se cancelaría); aquí se mira el enrutado.
-    monkeypatch.setattr(core, "lanzar_rag_adelantado", lambda *a, **k: None)
     state = _at_activity_stage()
     obj = {"comparing_options": {
         "comparing": True,
@@ -1692,7 +1691,6 @@ async def test_deliberation_backstop_without_llm_signal_routes_to_rag(monkeypatc
     frases de duda ("no sé si … o …") debe enrutar a RAG igual — sin depender
     del "?" (que es lo único que hoy lo salva)."""
     # rag-5: sin la respuesta adelantada (se llamaría y se cancelaría); aquí se mira el enrutado.
-    monkeypatch.setattr(core, "lanzar_rag_adelantado", lambda *a, **k: None)
     state = _at_activity_stage()
     with patch("src.agents.supervisor.detect_routing_signals",
                new=AsyncMock(return_value={})), \

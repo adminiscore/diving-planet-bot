@@ -322,12 +322,8 @@ def turn_metrics_line(conversation_id: str, facts: dict, started_at: str, second
                      for c in calls],
         "llm_errores": sum(1 for c in calls if c.get("error")),
     }
-    if facts.get("rag_adelantado"):
-        payload["rag_adelantado"] = facts["rag_adelantado"]  # rag-5: aprovechado / rehecho / descartado
     if facts.get("notas"):
         payload["notas"] = facts["notas"]  # rag-5: puerta de Jev del extractor de notas (saltadas / extraidas)
-    if facts.get("rag_rehecho_por"):
-        payload["rag_rehecho_por"] = facts["rag_rehecho_por"]  # rag-5: qué parte de la huella cambió
     if facts.get("hechos_por_codigo"):
         # arq-4 (22-oct): quién contestó lo de la tabla ("redactor"; "falta"/"guardas" si se rindió) o por qué no le
         # tocó al redactor ("otra_cosa", "jev_calla", "sin_actividad", "sin_lectura", "no_cubre"...).

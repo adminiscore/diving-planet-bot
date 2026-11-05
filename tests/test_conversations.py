@@ -363,8 +363,7 @@ async def test_escalation_note_includes_language(extractor_dice):
 async def test_sin_dato_lo_escribe_el_escritor_con_la_pregunta_pendiente(monkeypatch, extractor_dice):
     # lat-9 paso 2 (decisión de Gadea del 26-oct: «el escritor»): un mensaje que no contesta la pregunta pendiente ni da
     # ningún dato ya no recibe la misma pregunta por plantilla (antes: «1 palabra, sin "?" → sin RAG»): lo escribe el
-    # escritor, que cierra con esa pregunta. rag-5: sin la respuesta adelantada; aquí se mira el enrutado.
-    monkeypatch.setattr("src.agents.conversational_core.lanzar_rag_adelantado", lambda *a, **k: None)
+    # escritor, que cierra con esa pregunta; aquí se mira el enrutado.
     extractor_dice({})  # ex-9b paso 3: sin él, al 2.º turno se pasa a un asesor
     state = make_state()
     await route_message(state, "zzz")  # saludo y menú de actividades: la pregunta pendiente es la actividad

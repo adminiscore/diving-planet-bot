@@ -11,7 +11,7 @@ import logging
 from src.agents.conversational_core import (
     _is_rag_fallback,
     _turn_has_question,
-    rag_con_adelantado,
+    rag_fuera_de_la_reserva,
 )
 from src.flows.state import ConversationState, Step
 
@@ -65,7 +65,7 @@ async def _tras_el_pase(
     state._pregunta_del_escritor = None  # lat-9 paso 2: aquí no sigue la reserva
     answer = None
     if _turn_has_question(message, routing_signals):
-        answer = await rag_con_adelantado(state, message, list(state.history))
+        answer = await rag_fuera_de_la_reserva(state, message, list(state.history))
     if (not answer or _is_rag_fallback(answer)) and posventa:
         answer = (
             "¡Perfecto, gracias! 🙌 Si necesitas algo de tu reserva, cuéntame; y si hay que cambiar algo, te paso con "

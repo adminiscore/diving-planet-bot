@@ -31,18 +31,13 @@ def _puerta_que_apunta(vistos):
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("adelantado", [False, True])
-async def test_el_escritor_acaba_antes_que_la_extraccion_y_la_puerta_ve_el_origen(adelantado):
+async def test_el_escritor_acaba_antes_que_la_extraccion_y_la_puerta_ve_el_origen():
     """En PRE, el escritor acabó antes que el extractor (2,2 s): la puerta no veía «Desde Cartagena», ponía los precios
     de los dos orígenes y la pregunta del origen, y debajo otra vez la de la reserva."""
     state, vistos = _estado(), []
     with patch("src.agents.supervisor.rag_answer", new=_rag), \
          patch("src.agents.supervisor._build_extra_context", return_value="X"), \
          patch.object(core, "_puerta_del_origen", side_effect=_puerta_que_apunta(vistos)):
-        if adelantado:
-            state.history = state.history[:-1]
-            core.lanzar_rag_adelantado(state, MENSAJE)
-            state.history.append({"role": "user", "content": MENSAJE})
         core._maybe_launch_answer(state, MENSAJE, {})
         await asyncio.wait([state._pending_answer])  # la respuesta, lista antes que la extracción
         assert vistos == []

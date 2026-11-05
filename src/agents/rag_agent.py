@@ -7,7 +7,6 @@ decision tree.
 """
 
 import asyncio
-import contextvars
 import logging
 import re
 
@@ -40,10 +39,6 @@ from src.prompts.info import (
 )
 
 logger = logging.getLogger("uvicorn.error")
-
-# rag-5 (30-sep): True dentro de la tarea que adelanta el RAG en paralelo con el enrutador (Jev). Vive en el
-# contexto de ESA tarea (asyncio copia el contexto al crearla), así que no afecta al resto del turno.
-RAG_ADELANTADO: contextvars.ContextVar[bool] = contextvars.ContextVar("rag_adelantado", default=False)
 
 _BRAND_TONE_CACHE: dict | None = None
 
@@ -751,10 +746,7 @@ async def rag_answer(
     """
     from src.observability import note_turn
 
-    if not RAG_ADELANTADO.get():
-        # rag-5: una respuesta adelantada (en paralelo con el enrutador) solo cuenta como turno con RAG si se
-        # aprovecha; eso lo apunta quien la adopta (`conversational_core._adoptar_o_rehacer`).
-        note_turn(rag_used=True)  # el turno lo responde el RAG (resumen del turno, m0-1)
+    note_turn(rag_used=True)  # el turno lo responde el RAG (resumen del turno, m0-1)
     pii_hits = detect_pii(query)
     if pii_hits:
         logger.warning(f"[RAG][PRIVACY] PII detected in query hits={pii_hits}")
