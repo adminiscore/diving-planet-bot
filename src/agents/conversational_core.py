@@ -524,6 +524,22 @@ def _texto_de_la_pregunta(state: ConversationState, slot: str, *, reasking: bool
             "with an instructor, no experience needed. If you want to get certified, there's the *PADI Open "
             "Water course*. Shall we go for the mini-course? 🤿"
         )
+    if slot == SLOT_ACTIVITY and state.is_certified is True and state.acompanante_sin_certificar:
+        # #3300 (2b): el buzo con alguien que no bucea (Guadalajara t2, jubilados t2) recibía «¿la salida de 2 inmersiones, un
+        # paquete o un curso avanzado?», sin nada para quien no bucea: se pregunta por los dos.
+        es = lang == "es"
+        state.quick_replies = [
+            {"title": ("🤿 Y minicurso" if es else "🤿 And mini-course"),
+             "value": "2 inmersiones para mí y minicurso para quien no bucea" if es else "2 dives for me and the mini-course for my companion"},
+            {"title": ("🐠 Y snorkel" if es else "🐠 And snorkeling"),
+             "value": "2 inmersiones para mí y snorkel para quien no bucea" if es else "2 dives for me and snorkeling for my companion"},
+            {"title": ("🚤 Y acompañante" if es else "🚤 And boat companion"),
+             "value": "2 inmersiones para mí y de acompañante quien no bucea" if es else "2 dives for me and my companion just comes on the boat"},
+        ]
+        return ("¿Te animas con la *salida de 2 inmersiones* para ti y, para quien no bucea, el *minicurso*, el *snorkel* o ir de "
+                "*acompañante* en la lancha? 🌊" if es else
+                "Shall we go for the *2-dive trip* for you and, for your companion, the *mini-course*, *snorkeling* or just coming "
+                "along on the *boat*? 🌊")
     if slot == SLOT_ACTIVITY and state.is_certified is True:
         # 14-oct (ronda flujo1-B3): a quien ya dijo que es buzo certificado se le ofrecía el menú entero (minicurso,
         # snorkel…) y el juez lo marcaba como repregunta. Regla de Gadea (14/27-sep): recomendar según el contexto, y

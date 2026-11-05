@@ -1,6 +1,7 @@
 """#3300 (2b, 4-nov): «Entiendo, gracias. Entonces lo dejo para otra ocasión» recibía «¿Con cuál te animas?»."""
 import asyncio
 
+from src.agents import conversational_core as core
 from src.agents import jev_router as j
 from src.agents.nucleo import slotfill_close as sc
 from src.flows.state import ConversationState
@@ -66,6 +67,24 @@ def test_sin_la_senal_de_jev_es_la_conducta_de_hoy(monkeypatch):
     vistas = _con_escritor(monkeypatch)
     assert _sin_dato(_estado()) == f"¡Claro, aquí estaremos! 🌊\n\n{PREGUNTA}"
     assert vistas == [PREGUNTA]
+
+
+def _pregunta_actividad(idioma="es", **campos):
+    st = ConversationState(conversation_id="menu", language=idioma)
+    for campo, valor in campos.items():
+        setattr(st, campo, valor)
+    return core.ask_slot(st, core.SLOT_ACTIVITY, reasking=True), st
+
+
+def test_el_buzo_con_alguien_que_no_bucea_recibe_la_pregunta_de_los_dos():
+    texto, st = _pregunta_actividad(is_certified=True, acompanante_sin_certificar=True)
+    assert "para quien no bucea" in texto and "curso avanzado" not in texto and "paquete" not in texto
+    assert len(st.quick_replies) == 3 and st.core_pending_slot == core.SLOT_ACTIVITY
+    assert "companion" in _pregunta_actividad("en", is_certified=True, acompanante_sin_certificar=True)[0]
+
+
+def test_el_buzo_solo_sigue_con_su_pregunta():
+    assert "curso avanzado" in _pregunta_actividad(is_certified=True)[0]
 
 
 def test_es_una_fila_de_la_tabla_y_su_duda_no_va_al_router():
