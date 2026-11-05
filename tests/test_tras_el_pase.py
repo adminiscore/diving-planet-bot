@@ -32,7 +32,7 @@ def offline(monkeypatch):
     for modulo, name in ((core_routing, "detect_special_signals"),
                          (core_extraction, "detect_special_signals"), (core_extraction, "resolve_slot_answer")):
         monkeypatch.setattr(modulo, name, AsyncMock(return_value={}))
-    monkeypatch.setattr(core, "extract_notes", AsyncMock(return_value=[]))
+    monkeypatch.setattr("src.agents.nucleo.notas.extract_notes", AsyncMock(return_value=[]))
     monkeypatch.setattr(core_close, "_acuse_por_codigo", lambda *a, **k: "")
     monkeypatch.setattr(core, "lanzar_rag_adelantado", lambda *a, **k: None)  # rag-5: sin respuesta adelantada
     monkeypatch.setattr(supervisor, "rag_answer", AsyncMock(return_value="RESPUESTA_RAG"))

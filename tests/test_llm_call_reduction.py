@@ -64,7 +64,7 @@ async def test_greeting_smalltalk_first_turn_does_not_hit_rag(monkeypatch):
     _senales = AsyncMock(return_value={})
     monkeypatch.setattr(core_routing, "detect_special_signals", _senales)
     monkeypatch.setattr(core_extraction, "detect_special_signals", _senales)
-    monkeypatch.setattr(core, "extract_notes", AsyncMock(return_value=[]))
+    monkeypatch.setattr("src.agents.nucleo.notas.extract_notes", AsyncMock(return_value=[]))
     monkeypatch.setattr(core_close, "_acuse_por_codigo", lambda *a, **k: "")
 
     reply = await core.maybe_handle_turn(make_state(step=Step.WELCOME), "hola buenas que tal?",

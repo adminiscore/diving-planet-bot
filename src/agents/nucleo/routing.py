@@ -27,11 +27,8 @@ from src.agents.conversational_core import (
     SLOT_REFRESHER,
     SLOT_SAFETY,
     _answer_question,
-    _apply_cert_or_course,
-    _apply_group_total,
     _companion_activity_options,
     _course_level_options,
-    _elige_quien_falta,
     _has_pending_answer,
     _is_greeting_only,
     _is_rag_fallback,
@@ -39,11 +36,9 @@ from src.agents.conversational_core import (
     _maybe_launch_answer,
     _mentioned_courses,
     _mentioned_product_activities,
-    _merge_companion_activity,
     _pregunta_si_tambien_bucea,
     _recall_answer,
     _set_concrete_activity,
-    _take_undecided_members,
     _words,
     ask_slot,
     cancel_pending_answer,
@@ -54,6 +49,13 @@ from src.agents.intent_detector import (
     detect_location,
 )
 from src.agents.llm_extractor import detect_special_signals
+from src.agents.nucleo.reparto import (
+    _apply_cert_or_course,
+    _apply_group_total,
+    _elige_quien_falta,
+    _merge_companion_activity,
+    _take_undecided_members,
+)
 from src.domain import activities as dom
 from src.flows import cart_render, moneda
 from src.flows.state import ConversationState

@@ -34,9 +34,8 @@ from src.agents.intent_detector import (
     courses_mentioned,
     matched_activity_categories,
 )
-from src.agents.notes_extractor import extract_notes
 from src.domain import activities as dom
-from src.flows import cart_render, eligibility, moneda
+from src.flows import cart_render, eligibility
 from src.flows.state import ConversationState, Step
 from src.utils.number_words import number_alt
 from src.utils.text import strip_accents
@@ -922,113 +921,6 @@ def _texto_de_la_pregunta(state: ConversationState, slot: str, *, reasking: bool
     raise ValueError(f"unknown slot {slot!r}")
 
 
-def _dias_del_plan(state: ConversationState) -> int | None:
-    """Cuántos días dura el plan elegido, de la ficha (`duration_days` de services.json): el servicio ya
-    resuelto, o la actividad si todos sus servicios duran lo mismo (Open Water y su referido: 2). None si
-    no se sabe (sin plan, o un paquete sin concretar, que va de 2 a 4 días)."""
-    from src.flows.catalog import RAW_SERVICES  # lazy
-
-    def _dias(sid: str) -> int | None:
-        return (RAW_SERVICES.get(sid) or {}).get("duration_days")
-
-    if state.detected_service_id and _dias(state.detected_service_id):
-        return _dias(state.detected_service_id)
-    act = dom.by_id(state.detected_activity) if state.detected_activity else None
-    dias = {_dias(sid) for sid in (act.all_services() if act else ())}
-    return dias.pop() if len(dias) == 1 and None not in dias else None
-
-
-def _pregunta_origen(lang: str, mismo_dia: bool = False) -> str:
-    """La pregunta del origen (gen, 20-oct, textos en el español de Cartagena): desde Cartagena se sale del Muelle de la
-    Bodeguita ("podemos recogerte saliendo desde Cartagena" sugería una recogida que no existe)."""
-    if lang == "es":
-        dia = ", ida y vuelta el mismo día" if mismo_dia else ""
-        return (f"¿Desde dónde saldrías? Puedes salir *desde Cartagena* (desde el Muelle de la Bodeguita{dia}) o, si ya "
-            "estás *en las islas*, coordinamos la recogida en tu hotel.")
-    dia = ", round trip, same day" if mismo_dia else ""
-    return (f"Where would you be departing from? You can leave *from Cartagena* (from Muelle de la Bodeguita{dia}) or, "
-        "if you're already *on the islands*, we arrange pickup at your hotel.")
-
-
-def _plan_en_duda(state: ConversationState) -> bool:
-    """CAL-F (flag `origen_neutro_con_dos_planes`, 18-oct; precios-y-disponibilidad-con-negociacion, turno 3): "los
-    valores de dos buceos o del pack de 5 buceos en 2 días" dejaba el servicio de un día (el de la actividad) y la
-    duración de varios días (la del pack nombrado). La pregunta del origen mezclaba los dos: "Este plan dura 1 día y hay
-    que dormir en las islas". Si el servicio es de un día y la duración dice varios, el plan no está elegido."""
-    from src.flows.catalog import MULTI_DAY_SERVICES, OVERNIGHT_SERVICES  # lazy
-
-    servicio = state.detected_service_id
-    return bool(
-        state.detected_activity == "certified_diving"
-        and state.detected_duration == "multi_day" and servicio
-        and servicio not in (MULTI_DAY_SERVICES | OVERNIGHT_SERVICES)
-    )
-
-
-def _plan_needs_overnight(state: ConversationState) -> bool:
-    """¿El plan elegido obliga a dormir en las islas? Del catalogo (`OVERNIGHT_SERVICES`: varios dias
-    o buceo nocturno, salvo los marcados "overnight": "optional", como el Curso Referido), no de una
-    lista: el servicio ya resuelto, una actividad cuyos servicios obligan todos, o el paquete multi-dia
-    que el cliente ya pidio."""
-    from src.flows.catalog import OVERNIGHT_SERVICES  # lazy
-
-    if state.detected_service_id and state.detected_service_id in OVERNIGHT_SERVICES:
-        return True
-    act = dom.by_id(state.detected_activity) if state.detected_activity else None
-    services = act.all_services() if act else ()
-    if services and all(sid in OVERNIGHT_SERVICES for sid in services):
-        return True
-    return state.detected_activity == "certified_diving" and state.detected_duration == "multi_day"
-
-
-def _plan_is_single_day(state: ConversationState) -> bool:
-    """¿Se SABE que el plan es de un dia (ida y vuelta desde Cartagena)? El servicio ya resuelto, o
-    una actividad cuyos servicios son todos de un dia sin pernocta. Sin actividad, o con una que mezcla
-    (curso PADI generico: Open Water de 2 dias y especialidades de 1), no se sabe."""
-    from src.flows.catalog import MULTI_DAY_SERVICES, OVERNIGHT_SERVICES  # lazy
-
-    not_single = MULTI_DAY_SERVICES | OVERNIGHT_SERVICES
-    if state.detected_service_id:
-        return state.detected_service_id not in not_single
-    if state.detected_activity == "certified_diving":
-        # EX-EST-2 (14-oct): "el plan de 5 buceos para el finde" sin duración detectada recibía "ida y vuelta el mismo
-        # día". Solo se afirma un día si se SABE.
-        return state.detected_duration == "single_day"
-    act = dom.by_id(state.detected_activity) if state.detected_activity else None
-    services = act.all_services() if act else ()
-    return bool(services) and not any(sid in not_single for sid in services)
-
-
-def _recommended_plan_intro(state: ConversationState) -> str:
-    """Recomendación del plan (determinista, del catálogo) antepuesta a la
-    pregunta de seguridad — mismo criterio que v0.20.27: al certificado que ya
-    dijo que quiere bucear no se le manda a un menú, se le recomienda el plan
-    más popular y puede cambiarlo por texto. CALN-6 (27-oct, sparring q2/q5): si el cliente ya dijo cuántas
-    inmersiones o días, el plan es suyo y no hay nada que recomendar, tampoco si son las 2 de siempre («I'd do the 2
-    dives» recibía «I recommend the 2 dives in 1 day plan» debajo de sus enlaces)."""
-    lang = state.language
-    if state.detected_cert_dives is not None or state.detected_cert_days in _DAYS_TO_DIVES:
-        return ""
-    if lang == "es":
-        # Sparring s29: «paquete multi-día de 3 o más» debajo del «Paquete de 3 inmersiones (1 día…)».
-        return ("Te recomiendo el plan de *2 inmersiones en 1 día* en las "
-                "Islas del Rosario. (Si prefieres más inmersiones, hay *paquetes* de 3 o más; "
-                "dímelo.)\n\n")
-    return ("I recommend the *2 dives in 1 day* plan in the Rosario "
-            "Islands. (If you'd rather do more dives, there are *packages* of 3 or more; just tell "
-            "me.)\n\n")
-
-
-def _resolve_cert_plan(state: ConversationState) -> str | None:
-    """Plan de buceo certificado desde los conteos detectados (sin consumirlos),
-    o el recomendado por defecto. Determinista, del catálogo."""
-    dives = state.detected_cert_dives
-    if dives is None and state.detected_cert_days in _DAYS_TO_DIVES:
-        dives = _DAYS_TO_DIVES[state.detected_cert_days]
-    base = _DIVES_TO_BASE_PLAN.get(dives or 2, "2_dives_1_day")
-    return cart_render.service_for_location(base, state)
-
-
 # Respaldo determinista: verificado en vivo (2026-07-22) que el LLM NO siempre
 # obedece la instrucción de abstenerse en `companion_qty` para un plural vago
 # — "también vienen mis amigos a hacer snorkel" devolvió companion_qty=1 pese
@@ -1198,7 +1090,7 @@ def _jev_duda_del_lugar(state: ConversationState, datos: dict | None) -> bool:
     pasan a confirmarse. Quien contesta a la pregunta del origen («Desde Cartagena») también tiene a Jev seguro. Sin Jev,
     como hoy. No si nombra un hotel de las islas (ARQ-8b: «the Ubuntu hotel», con Jev a 0,52)."""
     from src.agents.jev_router import CUSTOMER_PLACE_MIN  # lazy
-    from src.agents.redactor_hechos import _hotel_de_las_islas  # lazy
+    from src.agents.nucleo.lectura import hotel_de_las_islas as _hotel_de_las_islas  # lazy
 
     lugar = getattr(state, "_jev_lugar", None) or {}
     if not lugar or (lugar.get("confidence") or 0.0) >= CUSTOMER_PLACE_MIN:
@@ -1265,214 +1157,6 @@ def _known_field_values(state: ConversationState) -> dict:
         "is_colombian": state.is_colombian,
     }
     return candidates
-
-
-async def await_pending_notes(state: ConversationState) -> None:
-    """l1-4: espera a la captura de notas que `_setup_phase` lanzó en paralelo.
-
-    Se llama en los dos sitios donde importa que ya estén: antes de
-    `_build_extra_context` (el contexto del RAG las incluye) y al cerrar el turno
-    en `supervisor.route_message`, antes de que el canal guarde el estado. Es
-    idempotente: si no hay tarea, o ya se esperó, no hace nada.
-
-    Si la captura falla, se traga el error a propósito: la nota es un extra para el
-    asesor y no puede tumbar el turno del cliente (el código de siempre, cuando iba
-    en serie, tampoco propagaba: `_maybe_capture_notes` ya registra y sigue).
-    """
-    task = getattr(state, "_pending_notes_task", None)
-    if task is None:
-        return
-    state._pending_notes_task = None
-    try:
-        await task
-    except Exception as exc:  # noqa: BLE001
-        logger.warning(f"[NOTES][PARALELO] la captura de notas falló: {exc}")
-
-
-def _notes_snapshot(state: ConversationState) -> dict:
-    """l1-4: foto de lo que `extract_notes` debe leer, tomada al final de `setup`.
-
-    En serie da lo mismo que leer el estado en el momento. En paralelo es lo que
-    evita la carrera del A/B del 23-sep: una tarea de asyncio no arranca hasta que
-    el turno espera algo, y en los turnos sin más llamadas al LLM eso es el final
-    de `route_message`, cuando las fases ya han metido la respuesta del BOT en
-    `state.history`. Las notas salían de esa respuesta y contaminaban los turnos
-    siguientes. Copias: la lista del historial crece después, y sus mensajes no
-    se modifican."""
-    facts = state.remembered_facts or {}
-    return {
-        "history": list(state.history),
-        "existing": list(facts.get("notes") or []),
-        "lang": state.language,
-    }
-
-
-def _jev_sin_nada_que_apuntar(routing_signals: dict) -> bool:
-    """rag-5 (flag `notas_puerta_jev`): ¿Jev está SEGURO de que el mensaje no cuenta nada del cliente que haya que
-    apuntar? Entonces no se llama al extractor de notas, que en esos mensajes apuntaba la pregunta como si fuera un
-    hecho ("how much would that be" -> "not Colombian"). Sin la respuesta de Jev (falló), lo de siempre."""
-    from src.agents.jev_router import NOTES_SKIP_MAX, SHARES_OPEN_FACT
-    from src.observability import note_turn
-
-    p = routing_signals.get(SHARES_OPEN_FACT)
-    if p is None:
-        return False
-    saltar = p < NOTES_SKIP_MAX
-    note_turn(notas="saltadas" if saltar else "extraidas")
-    if saltar:
-        logger.info(f"[CORE][NOTAS] Jev: nada que apuntar ({p:.2f}): no se llama al extractor")
-    return saltar
-
-
-async def _maybe_capture_notes(
-    state: ConversationState, message: str, *, snapshot: dict | None = None
-) -> None:
-    """(Fase C, re-cableado 2026-07-28 — decisión owner: con LLM) Captura hechos
-    abiertos que un asesor querría recordar (lesión/médico, accesibilidad,
-    ocasión especial, restricciones) y los persiste en
-    `state.remembered_facts["notes"]` → alimenta `_build_extra_context` (contexto
-    del LLM) y la nota de lead del asesor, que ya renderizan esa lista.
-
-    Gate barato: se salta mensajes triviales (numéricos / <3 palabras) para no
-    gastar una llamada en "sí"/"2"/"cartagena". Cualquier fallo se traga — nunca
-    puede romper el turno (mismo principio que el resto del núcleo).
-
-    `snapshot` (l1-4, en paralelo; sin flag desde s4-25): lo que hay que leer, tomado
-    en `_setup_phase` antes de lanzar la tarea (ver `_notes_snapshot`). Sin él (una
-    llamada directa) se toma ahora."""
-    from src.agents import supervisor  # lazy
-
-    stripped = message.strip()
-    if stripped.isdigit() or len(stripped.split()) < 3:
-        return
-    try:
-        snap = snapshot if snapshot is not None else _notes_snapshot(state)
-        new_notes = await extract_notes(
-            message, history=snap["history"], existing_notes=snap["existing"], lang=snap["lang"]
-        )
-        if not new_notes:
-            return
-        # Se fusiona con el estado de AHORA, no con el de la foto: en paralelo el
-        # turno ha podido seguir escribiendo `remembered_facts` mientras tanto.
-        facts = state.remembered_facts if state.remembered_facts is not None else {}
-        existing = list(facts.get("notes") or [])
-        notes = existing + [n for n in new_notes if n not in existing]
-        facts["notes"] = notes[-supervisor._MAX_REMEMBERED_NOTES:]
-        state.remembered_facts = facts
-        logger.info(f"[CORE] notes captured -> {new_notes}")
-    except Exception as exc:  # noqa: BLE001
-        logger.warning(f"[CORE] notes capture failed (ignored): {exc}")
-
-
-def _apply_cert_or_course(state: ConversationState, value) -> bool:
-    """Respuesta a "¿ya la tienen o quieren sacarla?": si ya la tienen, son buzos
-    certificados; si la quieren, es el curso de ese nivel."""
-    if value == "already_certified":
-        state.is_certified = state.detected_is_certified = True
-        _set_concrete_activity(state, "certified_diving")
-    elif value == "wants_course":
-        state.is_certified = state.detected_is_certified = False
-        _set_concrete_activity(state, state.cert_or_course_level or "padi_course")
-    else:
-        return False
-    state.needs_cert_or_course = False
-    state.cert_or_course_level = None
-    return True
-
-
-def _take_undecided_members(intent, state: ConversationState) -> None:
-    """Punto UNICO para las personas del grupo sin actividad elegida, vengan del
-    regex o del LLM: salen del reparto (que se guarda sin ellas), su cantidad queda
-    pendiente y se marca la recomendacion de opciones (F6). Va DESPUES de la
-    invariante de la suma, que las cuenta porque aun estan dentro del reparto."""
-    allocation = getattr(intent, "group_allocation", None)
-    if not isinstance(allocation, dict):
-        return
-    qty = allocation.pop("undecided", None)
-    if not (isinstance(qty, int) and qty > 0):
-        return
-    # El total incluye a esas personas (2026-09-15): sin total escrito ("mi amigo tiene
-    # licencia, yo no"), el total se sincronizaba despues con la suma del reparto ya sin
-    # ellas y quedaba en 1.
-    with_undecided = sum(v for v in allocation.values() if isinstance(v, int) and v > 0) + qty
-    if (intent.group_size or state.detected_group_size or 0) < with_undecided:
-        intent.group_size = with_undecided
-        if "group_size" not in intent.detected_fields:
-            intent.detected_fields.append("group_size")
-    intent.group_allocation = allocation or None
-    state.pending_undecided_qty = qty  # CALN-8 (2a): con ellos en la lista, se pregunta qué harán
-
-
-def _elige_quien_falta(state: ConversationState, activity: str, solo: int | None = None) -> None:
-    """El cliente elige qué hará quien no había elegido (el botón o el nombre de la opción, el resolutor o el
-    extractor). CALN-8 (2b): si se sabe cuántos son, entran ya en el reparto con su cantidad, sin preguntar «¿cuántos
-    serían?» (antes quedaba la elección aparte y `_merge_pending_undecided` la juntaba más tarde en el turno); si no,
-    queda elegida a falta de cuántos (`pending_companion_activity`). `solo` (sparring s04b): la elección es solo de esos
-    (el mensaje nombra a quiénes); los demás siguen sin elegir."""
-    cuantos = state.pending_undecided_qty
-    if cuantos:
-        n = cuantos if solo is None else max(0, min(solo, cuantos))
-        if not n:
-            return
-        state.pending_undecided_qty = (cuantos - n) or None  # antes de juntar: el total ya no los cuenta aparte
-        _merge_companion_activity(state, activity, n)
-    else:
-        state.pending_companion_activity = activity
-
-
-def _merge_companion_activity(state: ConversationState, activity: str, qty: int) -> None:
-    """Añade `qty` personas a `activity` como subgrupo del reparto sin pisar
-    la actividad principal — punto único (fast-path regex, respuesta a
-    «¿cuántos para X?», personas sin decidir que eligen) para que todos los
-    caminos dejen el estado exactamente igual de consistente."""
-    alloc = dict(state.detected_group_allocation or {})
-    main_act = state.detected_activity
-    if main_act and main_act not in alloc:
-        alloc.setdefault(main_act, state.detected_group_size or 1)
-    known = state.detected_group_size or 1  # DEUDA-EXT2: sin total, quien escribe es uno (como `setdefault(main, … or 1)`)
-    alloc[activity] = alloc.get(activity, 0) + qty
-    state.detected_group_allocation = alloc
-    # Los que aún no han elegido (fuera del reparto, CALN-2; CALN-8 2a: también si `activity` es «undecided») van.
-    state.detected_group_size = sum((state.detected_group_allocation or {}).values()) + (state.pending_undecided_qty or 0)
-    if not main_act and known + qty > state.detected_group_size:
-        # DEUDA-EXT (26-oct): sin actividad principal, los que ya se contaban se perdían: "two certified divers" + "my
-        # wife will join us but she'll just snorkel" dejaba {snorkel: 1} y total 1 (banco-lat11 a3). El total suma a la
-        # persona nueva; los demás esperan a la principal, que el bot pregunta (`booking._resto_a_la_principal`).
-        state.detected_group_size = known + qty
-    logger.info(f"[CORE] merged companion activity {activity} x{qty} -> alloc={alloc}")
-
-
-def _apply_group_total(state: ConversationState, total: int) -> bool:
-    """Respuesta al total del grupo. Con una persona pendiente de ubicar
-    (`pending_companion_in_group`): si el total no crece, esa persona ya estaba
-    contada y se MUEVE de la actividad principal; si crece, se AÑADEN los que faltan."""
-    pending = state.pending_companion_in_group
-    if not pending:
-        state.detected_group_size = total
-        return True
-    state.pending_companion_in_group = None
-    known = state.detected_group_size or 0
-    activity, qty = pending["activity"], pending["qty"]
-    if total > known:
-        _merge_companion_activity(state, activity, total - known)
-        return True
-    alloc = dict(state.detected_group_allocation or {})
-    main = state.detected_activity
-    if not main:
-        # DEUDA-EXT (26-oct): sin actividad principal, el que ya estaba contado pasa a su actividad y el resto espera a
-        # la principal (antes `alloc[None]`).
-        moved = min(qty, known or qty)
-        alloc[activity] = alloc.get(activity, 0) + moved
-        state.detected_group_allocation = alloc
-        logger.info(f"[CORE] companion {activity} x{moved} ya contado, sin principal -> alloc={alloc}")
-        return True
-    alloc.setdefault(main, known or qty)
-    moved = min(qty, alloc[main])
-    alloc[main] -= moved
-    alloc[activity] = alloc.get(activity, 0) + moved
-    state.detected_group_allocation = {k: v for k, v in alloc.items() if v}
-    logger.info(f"[CORE] companion {activity} x{moved} ya contado -> alloc={state.detected_group_allocation}")
-    return True
 
 
 def _full_booking_recap(state: ConversationState) -> str | None:
@@ -2228,402 +1912,11 @@ async def _prepend_parallel_answer(state: ConversationState, response: str, gree
     return merged
 
 
-# 6-oct (flag `rag_origen_pregunta`): con el origen desconocido el RAG pregunta ya "¿saldrías desde Cartagena o ya
-# estás en las islas?"; si detrás se pegaba la pregunta del origen de la reserva, el cliente leía la misma pregunta dos
-# veces seguidas.
-# Solo se mira cuando la reserva iba a preguntar justo el origen (`SLOT_LOCATION`), así que basta con reconocer las
-# formas de preguntarlo ("¿desde dónde prefieren salir?", "¿saldrían desde Cartagena o ya están en las islas?").
-_PREGUNTA_ORIGEN_RE = re.compile(
-    r"desde d[oó]nde|(sal|part)\w* desde cartagena o|(depart|leav)\w* from cartagena or|"
-    r"where (would|will|do) you (be )?(depart|leav|start)|cartagena or (are you |you're )?already",
-    re.IGNORECASE,
-)
-
-
-def _answer_asks_the_origin(state: ConversationState, answer: str) -> bool:
-    """¿La reserva iba a preguntar el origen y la respuesta del RAG ya lo pregunta? Entonces va sola."""
-    return state.core_pending_slot == SLOT_LOCATION and bool(_PREGUNTA_ORIGEN_RE.search(answer))
-
-
-def _cierra_preguntando_el_origen(state: ConversationState, answer: str) -> bool:
-    """lat-9 paso 2 (LAT-0b, #2053): sin el origen, el escritor da los dos precios y lo pregunta (decisión
-    «origen-y-precio»). Esa pregunta ocupa el turno, sea cual sea la pendiente de la reserva, que queda para el
-    siguiente; pegarle detrás la otra eran dos preguntas seguidas («¿Desde dónde saldrías? … ¿Eres buzo certificado?»).
-    Solo si el origen SIGUE sin saberse: si el cliente lo acaba de dar, esa pregunta es la fijada al empezar el turno y
-    está desfasada (integra6: 4 «vuelve a preguntar desde dónde saldría» tras decirlo); la cambia el código."""
-    if state.location or state.detected_location:
-        return False
-    ultima = next((ln for ln in reversed(answer.strip().splitlines()) if ln.strip()), "")
-    return "?" in ultima and bool(_PREGUNTA_ORIGEN_RE.search(ultima))
-
-
-# 7-oct (Álvaro, opción C del punto 3; flag `rag_origen_pregunta`): si el cliente pide un PRECIO y no sabemos desde
-# dónde sale, el bot pregunta el origen ANTES de cotizar (lo pide el golden) y lo hace el CÓDIGO, no el modelo: con
-# instrucciones en el contexto del RAG (6-oct, V1 y V2) o repreguntaba lo que el cliente ya había dado a entender o
-# volvía a cotizar Cartagena. La pregunta del precio se guarda y se contesta en cuanto el cliente dice el origen.
-ORIGEN_ANTES_DEL_PRECIO_ES = (
-    "Para darte el precio exacto necesito saber desde dónde sales: ¿saldrías *desde Cartagena* o ya estás *en las "
-    "Islas del Rosario*? Los planes y los precios cambian según el punto de salida. 🌊"
-)
-ORIGEN_ANTES_DEL_PRECIO_EN = (
-    "To give you the exact price I need to know where you're starting from: would you leave *from Cartagena* or are "
-    "you already *on the Rosario Islands*? Plans and prices change depending on the departure point. 🌊"
-)
-_PIDE_PRECIO_RE = re.compile(
-    r"cu[aá]nto (cuesta|cuestan|vale|valen|sale|salen|cobran|ser[ií]a|es\b)|\bprecios?\b|\bcostos?\b|\bcoste\b|"
-    r"\btarifas?\b|\bvalor\b|how much|\bprices?\b|\bcosts?\b|\brates?\b|\bfees?\b",
-    re.IGNORECASE,
-)
-# El precio de algo que no vendemos (el hotel, la noche) no depende de desde dónde sale el cliente.
-_PRECIO_AJENO_RE = re.compile(
-    r"hotel|alojamiento|hospedaje|por noche|la noche|habitaci|taxi|\bnights?\b|\brooms?\b|accommodation|lodging",
-    re.IGNORECASE,
-)
-# Pistas del origen en lo que ha escrito el CLIENTE (el saludo del bot nombra los dos orígenes). Si el cliente ya
-# nombró Cartagena o las islas, el origen se deja al RAG como siempre: preguntarlo sería repreguntar (lección de V1).
-_PISTA_ORIGEN_RE = re.compile(r"cartagena|\bislas?\b|\bislands?\b|bar[uú]|tierra bomba", re.IGNORECASE)
-
-
-# 7-oct (Gonzalo, ronda core origen-c-B): la puerta mira la RESPUESTA, no solo la pregunta. Mirando solo la pregunta
-# fallaba por los dos lados: "Amigo el precio que está allí es en dólares o pesos?" (dice "precio", pero pregunta la
-# MONEDA; antes se contestaba y con la puerta se quedaba sin respuesta) y "Gracias - y en pesos?" (pide un importe sin
-# ninguna palabra de precio; el RAG cotizaba Cartagena). La regla de la opción C es "no cotizar sin origen": se
-# comprueba justo eso, que la respuesta lleve un importe.
-_IMPORTE_RE = re.compile(
-    r"\d[\d.,]*\s*(?:cop|usd|us\$|d[oó]lares|dollars|pesos)\b|(?:usd|cop|us\$|\$)\s*\d",
-    re.IGNORECASE,
-)
-
-
-def _origen_antes_del_precio(state: ConversationState, message: str, answer: str | None) -> str | None:
-    """El texto fijo que pregunta el origen, si la respuesta del RAG (`answer`) cotiza sin saber desde dónde sale el
-    cliente; si no, None (y la respuesta va tal cual).
-
-    Cotiza = lleva un importe, y el cliente pide un precio o repregunta tras la pregunta del origen sin contestarla
-    ("¿y en pesos?"). Un importe en la respuesta a otra cosa ("¿qué incluye?") se deja como hoy."""
-    if state.location or state.detected_location:
-        return None
-    if _jev_dice_el_lugar(state):
-        # gen-15: la puerta mira el origen antes de que la extracción del turno lo guarde, y sus pistas son palabras
-        # («Cartagena», «islas», «Barú»): «We booked 3 nights at Mulata. How much is snorkeling?» se repreguntaba 2/2
-        # con Jev seguro (islands 0,97). Si Jev está seguro de dónde está el cliente, el mensaje ya lo dice.
-        return None
-    texto = message or ""
-    # ord-7: un enlace de reserva también depende del origen («mándame el enlace del Open Water» daba el de Cartagena).
-    da_enlace = bool(answer) and "book.divingplanet.org" in answer
-    if not answer or not (_IMPORTE_RE.search(answer) or da_enlace):
-        return None
-    jev = getattr(state, "_jev_pide_precio", None)
-    if jev is not None:
-        # ex-9b paso 5: Jev dice si pide el precio de NUESTRAS actividades (el hotel, la noche o un taxi no cuentan);
-        # las palabras sueltas solo si Jev calla. "Me quedo en el hotel Caribe" ya no salta la puerta.
-        pide = jev is True
-    elif _PRECIO_AJENO_RE.search(texto):
-        return None
-    else:
-        pide = bool(_PIDE_PRECIO_RE.search(texto))
-    if not (pide or state.pregunta_precio_pendiente or da_enlace):
-        return None
-    del_cliente = [h.get("content") or "" for h in (state.history or []) if h.get("role") == "user"]
-    este = [texto]
-    if _jev_dice_que_no_lo_dice(state):
-        # CAL-C3c: "bucear en islas del rosario" nombra las islas sin decir dónde está el cliente (cal-71/73); si Jev
-        # está seguro de que ESTE mensaje no dice su origen, sus palabras no cuentan como pista y se pregunta antes de
-        # cotizar. El mensaje ya está en el historial cuando contesta el RAG: se quita de ahí también.
-        este = []
-        if del_cliente and del_cliente[-1] == texto:
-            del_cliente = del_cliente[:-1]
-    if any(_PISTA_ORIGEN_RE.search(t) for t in [*del_cliente, *este]):
-        return None
-    pregunta = ORIGEN_ANTES_DEL_PRECIO_ES if state.language == "es" else ORIGEN_ANTES_DEL_PRECIO_EN
-    por_confirmar = (state.pending_correction or {}).get("location")
-    if por_confirmar in _CONFIRMA_ORIGEN:
-        # ORIGEN-CONFIRMA: el extractor leyó un origen que falta confirmar; se pregunta eso, no «¿desde dónde?».
-        pregunta = _CONFIRMA_ORIGEN[por_confirmar]["es" if state.language == "es" else "en"]
-    variantes = _dos_variantes(state, answer, con_enlace=da_enlace)
-    if variantes:
-        tras = (ORIGEN_TRAS_LOS_ENLACES_ES, ORIGEN_TRAS_LOS_ENLACES_EN) if da_enlace else (
-            ORIGEN_TRAS_LAS_VARIANTES_ES, ORIGEN_TRAS_LAS_VARIANTES_EN)
-        pregunta = f"{variantes}\n\n{tras[0] if state.language == 'es' else tras[1]}"
-    elif not da_enlace and _cotiza_los_dos_origenes(state, answer):
-        # 27-oct (decisión de Gadea del 26-oct, «origen-y-precio»: sin el origen, dos precios y pregunta): sin variantes
-        # del catálogo (paquetes y planes de buzo con varios planes por origen) se quitaban todos los importes y quedaba
-        # solo la pregunta, aunque el escritor hubiera dado el precio de cada origen (4-5 criterios por ronda en
-        # integra4-6: «preguntó el origen pero no cotizó»). Si los da los dos, se dejan y detrás va la pregunta; si da
-        # uno solo, o un enlace (el de una sola salida), se quitan como antes.
-        cuerpo = _sin_la_pregunta_final(answer) if _cierra_preguntando_el_origen(state, answer) else answer
-        tras = ORIGEN_TRAS_LAS_VARIANTES_ES if state.language == "es" else ORIGEN_TRAS_LAS_VARIANTES_EN
-        return f"{cuerpo.rstrip()}\n\n{tras}"
-    resto = _sin_importes(answer)
-    return f"{resto}\n\n{pregunta}" if resto else pregunta
-
-
-# s4-31 (8-oct, flag `origen_conserva_respuesta`): en la ronda del golden visible con Luna (`2026-10-08-luna-visible`),
-# 6 de los 33 fallos del RAG eran de la puerta del origen: la pregunta fija SUSTITUÍA la respuesta entera y se perdía lo
-# que no era el precio ("no hay precio especial para colombianos, solo cambia la moneda", "con 1,5 años no hace falta
-# el refresher", "el refresher tiene el coste del minicurso"). Ahora se quitan solo las frases con un importe y la
-# pregunta final de la respuesta (la sustituye la del origen); si no queda nada que decir, solo la pregunta.
-_FRASE_RE = re.compile(r"(?<=[.!?])\s+")
-# Escalón 0 en PRE (8-oct): además del importe dependen del origen el link de reserva (uno por origen: se dejaba el de
-# Cartagena mientras se preguntaba el origen) y lo que incluye ("Incluye lancha ida y vuelta y almuerzo" es solo de
-# Cartagena, y sin la frase del precio se quedaba sin sujeto).
-_DEPENDE_DEL_ORIGEN_RE = re.compile(
-    rf"{_IMPORTE_RE.pattern}|book\.divingplanet\.org|^\W*(?:esto |el plan |el curso |el paquete )?(?:incluye|includes|it includes)\b"
-    r"|desde cartagena|from cartagena|cartagena-islas|islands-cartagena|almuerzo|\blunch\b",
-    re.IGNORECASE,
-)
-
-
-def _sin_importes(answer: str) -> str:
-    lineas = []
-    for linea in (answer or "").splitlines():
-        if not _DEPENDE_DEL_ORIGEN_RE.search(linea):
-            lineas.append(linea)
-            continue
-        frases = [f for f in _FRASE_RE.split(linea) if f.strip() and not _DEPENDE_DEL_ORIGEN_RE.search(f)]
-        if frases:
-            lineas.append(" ".join(frases))
-        else:
-            # El título de una lista que se ha quitado entera ("los precios son:"). gen-6 (21-oct): "La salida de 2
-            # inmersiones cuesta:", una línea en blanco y la lista de precios dejaba el título colgado ("…cuesta:" y
-            # luego la pregunta del origen): el título se busca saltando las líneas en blanco.
-            ultima = len(lineas) - 1
-            while ultima >= 0 and not lineas[ultima].strip():
-                ultima -= 1
-            if ultima >= 0 and lineas[ultima].rstrip().endswith(":"):
-                del lineas[ultima:]
-    # La pregunta final (casi siempre "¿quieres el link / que te ayude a reservar?") la sustituye la del origen.
-    while lineas and not lineas[-1].strip():
-        lineas.pop()
-    if lineas:
-        frases = _FRASE_RE.split(lineas[-1].strip())
-        while frases and "?" in frases[-1]:
-            frases.pop()
-        lineas[-1] = " ".join(frases)
-    texto = re.sub(r"\n{3,}", "\n\n", "\n".join(lineas)).strip()
-    return texto if len(texto) >= 40 else ""
-
-
-def _es_pregunta_de_origen(answer: str | None) -> bool:
-    return bool(answer) and any(p in answer for p in (ORIGEN_ANTES_DEL_PRECIO_ES, ORIGEN_ANTES_DEL_PRECIO_EN,
-                                                      ORIGEN_TRAS_LAS_VARIANTES_ES, ORIGEN_TRAS_LAS_VARIANTES_EN,
-                                                      ORIGEN_TRAS_LOS_ENLACES_ES, ORIGEN_TRAS_LOS_ENLACES_EN))
-
-
-# ord-7 (21-oct, flag `origen_dos_variantes`, decisión de Gadea con ord-0): sin saber el origen, la puerta quitaba el
-# precio, lo que incluye, el almuerzo y el enlace, y el cliente se quedaba sin nada de lo que preguntó (g10-029: «¿hay
-# comida?», g9-003: «¿qué incluye?»). Con las dos variantes del catálogo se contesta sin suponer el origen; la pregunta
-# del origen va después, para el enlace y el plan exacto.
-ORIGEN_TRAS_LAS_VARIANTES_ES = "¿Saldrías *desde Cartagena* o ya estás *en las Islas del Rosario*? Así te paso el plan y el enlace exactos. 🌊"
-ORIGEN_TRAS_LAS_VARIANTES_EN = "Would you leave *from Cartagena* or are you already *on the Rosario Islands*? Then I'll send you the exact plan and booking link. 🌊"
-ORIGEN_TRAS_LOS_ENLACES_ES = "Reserva con el de tu punto de salida. ¿Saldrías *desde Cartagena* o ya estás *en las Islas del Rosario*? 🌊"
-ORIGEN_TRAS_LOS_ENLACES_EN = "Book with the one for your starting point. Would you leave *from Cartagena* or are you already *on the Rosario Islands*? 🌊"
-_VARIANTE = {
-    "es": {"cartagena": ("Desde Cartagena", "lancha ida y vuelta desde el Muelle de la Bodeguita"),
-           "island": ("Ya en las islas", "recogida en tu hotel si tiene acceso marítimo"),
-           "titulo": "{actividad}, según desde dónde salgas (precio online por persona):",
-           "con_almuerzo": "almuerzo incluido", "sin_almuerzo": "sin almuerzo"},
-    "en": {"cartagena": ("From Cartagena", "round-trip boat from Muelle de la Bodeguita"),
-           "island": ("Already on the islands", "pickup at your hotel if it has sea access"),
-           "titulo": "{actividad}, depending on where you start from (online price per person):",
-           "con_almuerzo": "lunch included", "sin_almuerzo": "no lunch"},
-}
-
-
-def _dos_variantes(state: ConversationState, answer: str = "", con_enlace: bool = False) -> str | None:
-    """Las dos salidas de la actividad de la que pregunta el cliente, del catálogo: precio online por persona en su
-    moneda (`src/flows/moneda.py`), el transporte y si lleva almuerzo. None si
-    no hay una actividad concreta con un solo plan por origen (los paquetes de buceo tienen varios) o si el importe que
-    dio el RAG (`answer`) no es de ninguna de las dos: la actividad anotada no era la cotizada (banco ord-7: «tengo el
-    Open Water, ¿cuánto cuesta el repaso?» anotaba el Open Water y salían los precios del curso). `con_enlace`: cada
-    variante lleva su enlace de reserva (el RAG había dado uno sin saber el origen)."""
-    from src.flows.catalog import SERVICES  # lazy
-
-    actividad = state.actividad_preguntada or state.detected_activity or state.suggested_activity
-    if not actividad:
-        return None
-    servicios = []
-    for origen in ("cartagena", "island"):
-        ids = dom.service_ids(actividad, origen)
-        servicio = SERVICES.get(ids[0]) if len(ids) == 1 else None
-        if not servicio:
-            return None
-        servicios.append((origen, servicio))
-    if answer and not _cotiza_alguno(answer, [s for _, s in servicios]) and not _enlaza_alguno(answer, servicios, state):
-        return None
-    lang = "es" if state.language == "es" else "en"
-    textos = _VARIANTE[lang]
-    lineas = [textos["titulo"].format(actividad=f"*{dom.label(actividad, lang)}*")]
-    for origen, servicio in servicios:
-        precio = moneda.precio(state, servicio.get("price_usd"), servicio.get("price_cop"))
-        if not precio:
-            return None
-        nombre, transporte = textos[origen]
-        almuerzo = textos["con_almuerzo" if "almuerzo" in (servicio.get("includes_es") or "").lower() else "sin_almuerzo"]
-        linea = f"• *{nombre}*: {precio}, {transporte}; {almuerzo}."
-        url = cart_render._resolve_service_booking_url(servicio, state) if con_enlace else None
-        lineas.append(f"{linea} {url}" if url else linea)
-    return "\n".join(lineas)
-
-
-def _cotiza_los_dos_origenes(state: ConversationState, answer: str) -> bool:
-    """¿La respuesta da un precio de algún plan de la actividad desde Cartagena Y otro de algún plan ya en las islas?
-    Con los datos del catálogo, no con palabras."""
-    from src.flows.catalog import SERVICES  # lazy
-
-    actividad = state.actividad_preguntada or state.detected_activity or state.suggested_activity
-    if not actividad or not answer:
-        return False
-    por_origen = [[SERVICES[s] for s in dom.service_ids(actividad, origen) if s in SERVICES]
-                  for origen in ("cartagena", "island")]
-    return all(servicios and _cotiza_alguno(answer, servicios) for servicios in por_origen)
-
-
-def _enlaza_alguno(answer: str, servicios: list[tuple[str, dict]], state: ConversationState) -> bool:
-    """¿La respuesta lleva el enlace de reserva de alguna de las dos variantes?"""
-    urls = (cart_render._resolve_service_booking_url(s, state) or "" for _, s in servicios)
-    return any(u and u.split("?")[0] in answer for u in urls)
-
-
-def _precios_por_codigo(state: ConversationState, entradas: dict) -> bool:
-    """CALN-19 (4-nov, sparring s04g y s04e): en un mensaje mezclado que pide precio, el escritor del RAG escribía los
-    importes y `con_la_pieza` se llevaba las frases que nombran cada plan: «It requires an overnight stay… That course
-    takes two days…», sin decir de qué plan. Como en el redactor de hechos (paso 3 «A»), se le dice ANTES que no los
-    escriba (`RAG_PRECIOS_POR_CODIGO`) y la pieza va debajo, con la misma condición (`pide_ahora`). True si es el caso."""
-    bloques, intenciones = entradas.get("hechos_bloques") or (None, ())
-    if "precio" not in intenciones:
-        return False
-    if getattr(state, "_jev_pide_precio", None) is not True and not any(b.get("origen") for b in bloques):
-        return False
-    entradas.update(precios_por_codigo=True, hechos_bloques=(bloques, [i for i in intenciones if i != "precio"]))
-    return True
-
-
-def _puerta_del_origen(state: ConversationState, message: str, answer: str, sin_precio: bool = False,
-                       pieza_pedida: bool = False) -> str:
-    """La respuesta del RAG tras la puerta del origen (opción C): la pregunta del origen (con las dos variantes, ord-7)
-    si cotiza o enlaza sin saber el origen; si no, la respuesta tal cual. gen-19 (21-oct) añadía aquí el enlace cuando
-    tocaba; se quitó por decisión de Gadea: en su banco no cambiaba nada (el enlace ya salía cuando lo piden). ord-9
-    (la lista de qué incluye, de la ficha) se retiró en arq-2c (22-oct): la da el redactor de hechos.
-
-    CALN-3 paso 4 (1): antes, si la respuesta cotiza, sus importes los cambia la pieza de precios (`_con_la_pieza`)."""
-    if not sin_precio and (con_pieza := _con_la_pieza(state, answer, pieza_pedida)):
-        return con_pieza
-    return _origen_antes_del_precio(state, message, answer) or answer
-
-
-def _con_la_pieza(state: ConversationState, answer: str | None, pieza_pedida: bool = False) -> str | None:
-    """CALN-3 paso 4 (1) (29-oct, decisión de Gadea #2499): el RAG general aún escribe importes, de las fichas o del
-    catálogo, y la puerta los quitaba sin dar otros: en la 5.ª, 12 de las 51 preguntas del origen eran de la puerta
-    (caln5-B), casi todas en turnos que Jev no daba por precio («¿cuánto va a subir?», el coste del refresher). Ahora, si
-    la respuesta da un precio del catálogo, fuera sus frases con importes y debajo la pieza de `cotizar`, como en el
-    redactor de hechos (paso 3 «A»): sin el origen, los dos y la pregunta (o la confirmación de CALN-3b). None si no
-    cotiza o no hay pieza (la puerta de siempre)."""
-    from src.agents import redactor_hechos  # lazy
-    from src.agents.nucleo.extractor import origen_por_confirmar  # lazy
-    from src.flows import cotizar  # lazy
-    from src.flows.catalog import SERVICES  # lazy
-
-    if not answer:
-        return None
-    if not pieza_pedida and not (_IMPORTE_RE.search(answer) and _cotiza_alguno(answer, list(SERVICES.values()))):
-        return None
-    lang = "es" if state.language == "es" else "en"
-
-    def cifras(texto: str) -> set[str]:
-        return {re.sub(r"\D", "", c) for c in re.findall(r"\d[\d.,]*", texto)}
-
-    def de_servicio(s: dict) -> set[str]:
-        return {str(round(float(s[k]))) for k in ("price_usd", "price_usd_normal", "price_cop", "price_cop_normal")
-                if s.get(k)}
-
-    dados = cifras(answer) & set().union(*(de_servicio(s) for s in SERVICES.values()))
-    # Con la pieza pedida, los hechos que ya tiene el escritor (lo que dice ESTE mensaje, `_foto`), salvo que al recoger la
-    # respuesta en paralelo la extracción ya haya guardado el origen que esos hechos no sabían.
-    bloques = cotizar.bloques_de_precio(state)[1]
-    if pieza_pedida and not (state.location and not any(b.get("origen") for b in state._hechos_del_rag[0])):
-        bloques = state._hechos_del_rag[0]
-    pieza = cotizar.pieza_de_precios(bloques, lang)
-    if not pieza or not dados <= cifras(pieza):
-        # Cotiza otro plan que el del estado («quiero reservar el paquete de 5 buceos» con la salida de 2 de base, o el
-        # refresher de un buzo, que se cobra como el minicurso): la pieza, de los planes que cotizó (medida caln6-B1:
-        # eran los 2 turnos en que aún saltaba la puerta).
-        bloques = cotizar.bloques_de_los_servicios(state, [sid for sid, s in SERVICES.items() if de_servicio(s) & dados])
-        pieza = cotizar.pieza_de_precios(bloques, lang)
-        if not pieza or not dados <= cifras(pieza):
-            return None
-    logger.info("[CORE][CALN3] el RAG general cotiza: sus importes, fuera; debajo, la pieza de precios")
-    if any(b.get("origen") for b in bloques):
-        return redactor_hechos.con_la_pieza(answer, pieza)
-    pregunta = ORIGEN_TRAS_LAS_VARIANTES_ES if lang == "es" else ORIGEN_TRAS_LAS_VARIANTES_EN
-    if por_confirmar := origen_por_confirmar(state):
-        pregunta = _CONFIRMA_ORIGEN[por_confirmar][lang]
-    # Sin el origen, fuera también sus enlaces de reserva (uno por origen: medida caln6-B1, el del snorkel y el del
-    # minicurso de Cartagena sin saber de dónde sale), como hacía la puerta; la pregunta promete el enlace exacto.
-    answer = "\n".join(" ".join(f for f in _FRASE_RE.split(linea) if "book.divingplanet.org" not in f)
-                       if "book.divingplanet.org" in linea else linea for linea in answer.splitlines())
-    # La pregunta con que cierra el RAG («¿te paso el enlace?») la sustituye la del origen, como en la puerta.
-    partes = [p for p in answer.rstrip().split("\n\n") if p.strip()]
-    frases = _FRASE_RE.split(partes[-1].strip())
-    while frases and "?" in frases[-1]:
-        frases.pop()
-    cuerpo = "\n\n".join(p for p in [*partes[:-1], " ".join(frases)] if p.strip())
-    return f"{redactor_hechos.con_la_pieza(cuerpo, pieza) if cuerpo else pieza}\n\n{pregunta}"
-
-
-def _cotiza_alguno(answer: str, servicios: list[dict]) -> bool:
-    """¿Alguna cifra de la respuesta es un precio (online o normal, USD o COP) de estos servicios? Todas las cifras, no
-    solo los `_IMPORTE_RE`: ese corta «$124 USD» en «$1»."""
-    precios = {str(round(float(s[k]))) for s in servicios
-               for k in ("price_usd", "price_usd_normal", "price_cop", "price_cop_normal") if s.get(k)}
-    return any(re.sub(r"\D", "", cifra) in precios for cifra in re.findall(r"\d[\d.,]*", answer))
-
-
-def _fijar_origen_antes_del_precio(state: ConversationState, pregunta: str) -> None:
-    """La pregunta del origen ocupa el turno: queda pendiente el origen (con los botones de siempre) y se guarda la
-    pregunta del precio para contestarla cuando el cliente lo diga."""
-    ask_slot(state, SLOT_LOCATION)  # solo por lo que deja en el estado: el slot pendiente y sus botones
-    anterior = state.pregunta_precio_pendiente
-    if anterior and not _pide_precio(state, pregunta):
-        # arq-8f (banco arq-8c de Gadea, #1667): con una pregunta de precio guardada, «soy de Medellín» (no dice el origen)
-        # vuelve a pedirlo y pisaba la pregunta con ese mensaje; luego se contestaba «soy de Medellín». Se queda la de
-        # antes, salvo que este mensaje pregunte otro precio.
-        pregunta = anterior
-    state.pregunta_precio_pendiente = pregunta
-    logger.info("[CORE][ORIGEN] precio sin origen -> se pregunta el origen antes de cotizar")
-
-
-def _pide_precio(state: ConversationState, mensaje: str) -> bool:
-    """¿Este mensaje pide un precio? Lo dice Jev (ex-9b paso 5); si calla, las palabras de siempre."""
-    jev = getattr(state, "_jev_pide_precio", None)
-    if jev is not None:
-        return jev is True
-    return bool(_PIDE_PRECIO_RE.search(mensaje or "")) and not _PRECIO_AJENO_RE.search(mensaje or "")
-
-
-def _answer_already_asks(answer: str) -> bool:
-    """¿La respuesta ya termina invitando a responder (cierra con una
-    pregunta)? Mira la última línea no vacía — así una recomendación que
-    acaba en "¿te inclinas por alguna?" no recibe encima el re-prompt del
-    slot. Barato y seguro: un falso negativo solo re-adjunta la variante
-    corta, nunca vuelve al bloque entero."""
-    for line in reversed(answer.strip().splitlines()):
-        if line.strip():
-            return "?" in line or "¿" in line
-    return False
-
-
-def _sin_la_pregunta_final(answer: str) -> str:
-    """El texto del escritor sin su último párrafo si es una pregunta (lat-9 paso 2: la de la reserva la escribe ahí,
-    aparte): cuando la pregunta que toca es otra, el código pone la buena."""
-    partes = answer.rstrip().split("\n\n")
-    return "\n\n".join(partes[:-1]) if len(partes) > 1 and "?" in partes[-1] else answer
-
-
 # s4-2 (19-oct): el código de cada nodo del subgrafo `booking` vive en `src/agents/nucleo/<nodo>.py` (ver su
 # `__init__`). Se re-exporta aquí para que `maybe_handle_turn`, el resto del código, los scripts y los tests lo sigan
 # encontrando en este módulo. Va al final a propósito: esos módulos importan de aquí lo común, que tiene que estar ya
-# definido.
+# definido. CALN-8 (5): `origen_precio` (el origen antes del precio) no es un nodo, pero va igual; tiene que ir antes
+# que `slotfill_close`, que importa de aquí algunos de sus nombres (el orden alfabético ya lo deja así).
 from src.agents.nucleo.availability import (  # noqa: E402, F401
     _availability_phase,
     _modo_posventa,
@@ -2696,6 +1989,60 @@ from src.agents.nucleo.extractor import (  # noqa: E402, F401
     guardar_lo_dicho_en_el_pase,
     guardar_lo_dicho_sin_nucleo,
     lanzar_extraccion_adelantada,
+)
+from src.agents.nucleo.notas import (  # noqa: E402, F401
+    _jev_sin_nada_que_apuntar,
+    _maybe_capture_notes,
+    _notes_snapshot,
+    await_pending_notes,
+)
+from src.agents.nucleo.origen_precio import (  # noqa: E402, F401
+    _DEPENDE_DEL_ORIGEN_RE,
+    _FRASE_RE,
+    _IMPORTE_RE,
+    _PIDE_PRECIO_RE,
+    _PISTA_ORIGEN_RE,
+    _PRECIO_AJENO_RE,
+    _PREGUNTA_ORIGEN_RE,
+    _VARIANTE,
+    ORIGEN_ANTES_DEL_PRECIO_EN,
+    ORIGEN_ANTES_DEL_PRECIO_ES,
+    ORIGEN_TRAS_LAS_VARIANTES_EN,
+    ORIGEN_TRAS_LAS_VARIANTES_ES,
+    ORIGEN_TRAS_LOS_ENLACES_EN,
+    ORIGEN_TRAS_LOS_ENLACES_ES,
+    _answer_already_asks,
+    _answer_asks_the_origin,
+    _cierra_preguntando_el_origen,
+    _con_la_pieza,
+    _cotiza_alguno,
+    _cotiza_los_dos_origenes,
+    _dos_variantes,
+    _enlaza_alguno,
+    _es_pregunta_de_origen,
+    _fijar_origen_antes_del_precio,
+    _origen_antes_del_precio,
+    _pide_precio,
+    _precios_por_codigo,
+    _puerta_del_origen,
+    _sin_importes,
+    _sin_la_pregunta_final,
+)
+from src.agents.nucleo.plan import (  # noqa: E402, F401
+    _dias_del_plan,
+    _plan_en_duda,
+    _plan_is_single_day,
+    _plan_needs_overnight,
+    _pregunta_origen,
+    _recommended_plan_intro,
+    _resolve_cert_plan,
+)
+from src.agents.nucleo.reparto import (  # noqa: E402, F401
+    _apply_cert_or_course,
+    _apply_group_total,
+    _elige_quien_falta,
+    _merge_companion_activity,
+    _take_undecided_members,
 )
 from src.agents.nucleo.routing import (  # noqa: E402, F401
     _CONFIRMS_DESCRIBED_PACKAGE_RE,

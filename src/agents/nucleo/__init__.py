@@ -12,6 +12,19 @@ módulo, con su fase y lo que solo usa esa fase:
 - `extractor.py`      → el extractor del turno (ex-5) visto desde el núcleo: lanzarlo adelantado, aplicar sus
                         datos al estado (`_aplicar_extractor`, `_poner_*`) y guardar lo dicho en el pase. Es la
                         capa de abajo de `extraction.py`.
+- `lectura.py`       → lo que dice ESTE mensaje, para quien contesta antes de que la extracción lo guarde: la
+                        copia del estado con el origen, la nacionalidad, el grupo, la duración y el plan del
+                        mensaje (`foto_del_turno`; CALN-8 (5) paso 1, 4-nov).
+- `origen_precio.py`  → el origen antes del precio: la puerta que no cotiza sin saber desde dónde sale el cliente,
+                        las dos variantes del catálogo, la pieza de precios por código y la pregunta del origen que
+                        se guarda (CALN-8 (5), 5-nov).
+- `notas.py`          → las notas del cliente (lo que cuenta y no es un dato de la reserva), que se apuntan en
+                        paralelo con el turno y se esperan antes de usarlas (CALN-8 (5), 5-nov). Para cambiar
+                        `extract_notes` en un test, `nucleo.notas.extract_notes`.
+- `reparto.py`        → el reparto del grupo entre actividades cuando el cliente contesta (CALN-8 (5), 5-nov); los
+                        nodos lo importan de aquí.
+- `plan.py`           → el plan: cuántos días dura, si hay que dormir en las islas, el que se recomienda y la
+                        pregunta del origen según el plan (CALN-8 (5), 5-nov).
 - `slotfill_close.py` → `_slotfill_close_phase`: preguntar el hueco que falta o cerrar la reserva, y el acuse en
                         paralelo.
 

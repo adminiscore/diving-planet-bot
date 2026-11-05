@@ -18,7 +18,6 @@ from src.agents.conversational_core import (
     SLOT_COMPANION_ACTIVITY,
     SLOT_COMPANION_QTY,
     _companion_activity_options,
-    _elige_quien_falta,
     _has_pending_answer,
     _jev_dice_que_no_lo_dice,
     _jev_duda_del_lugar,
@@ -27,6 +26,9 @@ from src.agents.conversational_core import (
     _same_for_customer,
 )
 from src.agents.intent_detector import DetectedIntent, detect_location
+from src.agents.nucleo.reparto import (
+    _elige_quien_falta,
+)
 from src.config import settings
 from src.domain import activities as dom
 from src.flows import grupo
@@ -878,7 +880,7 @@ def mezclado_del_mensaje(state: ConversationState, datos: dict) -> bool:
     venezolano con cédula y su esposa colombiana, que pagan los dos en pesos y el extractor daba por mezclados). Si Jev calla, lo
     que diga el extractor. Su «no» solo manda sin nacionalidad guardada (revisión de Álvaro, #3170): Jev mira el último mensaje,
     y «somos dos colombianos» + «se nos suma una amiga alemana» habla de una sola persona; ahí vale el extractor, que tiene lo
-    sabido. Lo usan también las copias del estado de quien contesta antes de que se guarde (gen-14, `redactor_hechos._foto`):
+    sabido. Lo usan también las copias del estado de quien contesta antes de que se guarde (gen-14, `lectura.foto_del_turno`):
     con la marca del extractor a secas, la pieza del venezolano salía en USD (banco-graves g-venezolano-cedula, 0/3)."""
     from src.agents.jev_router import GRUPO_MIXTO  # lazy
 

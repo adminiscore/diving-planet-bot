@@ -129,7 +129,7 @@ def _fake_extract(recibido: list, notas: list[str]):
 @pytest.mark.asyncio
 async def test_en_paralelo_las_notas_no_ven_la_respuesta_del_bot(monkeypatch):
     recibido = []
-    monkeypatch.setattr(core, "extract_notes", _fake_extract(recibido, []))
+    monkeypatch.setattr("src.agents.nucleo.notas.extract_notes", _fake_extract(recibido, []))
 
     st = _state()
     await core._setup_phase(st, "tengo una lesion en la rodilla", {})
@@ -148,7 +148,7 @@ async def test_en_paralelo_lee_lo_mismo_que_en_serie(monkeypatch):
     """`extract_notes` recibe lo que había al terminar `setup`, que es lo que leía el camino en serie (quitado en
     s4-25; hasta entonces este test comparaba los dos caminos)."""
     recibido = []
-    monkeypatch.setattr(core, "extract_notes", _fake_extract(recibido, []))
+    monkeypatch.setattr("src.agents.nucleo.notas.extract_notes", _fake_extract(recibido, []))
     st = _state()
     st.remembered_facts = {"notes": ["luna de miel"]}
     st.history.append({"role": "user", "content": "hola"})
@@ -168,7 +168,7 @@ async def test_en_paralelo_lee_lo_mismo_que_en_serie(monkeypatch):
 @pytest.mark.asyncio
 async def test_en_paralelo_la_nota_se_suma_al_estado_actual(monkeypatch):
     """Si el turno escribe notas mientras la tarea corre, no se pisan."""
-    monkeypatch.setattr(core, "extract_notes", _fake_extract([], ["lesion en la rodilla"]))
+    monkeypatch.setattr("src.agents.nucleo.notas.extract_notes", _fake_extract([], ["lesion en la rodilla"]))
 
     st = _state()
     await core._setup_phase(st, "tengo una lesion en la rodilla", {})

@@ -64,7 +64,7 @@ def _offline(monkeypatch):
     monkeypatch.setattr(core_routing, "detect_special_signals", _senales)
     monkeypatch.setattr(core_extraction, "detect_special_signals", _senales)
     monkeypatch.setattr(core_extraction, "resolve_slot_answer", AsyncMock(return_value={}))
-    monkeypatch.setattr(core, "extract_notes", AsyncMock(return_value=[]))
+    monkeypatch.setattr("src.agents.nucleo.notas.extract_notes", AsyncMock(return_value=[]))
     monkeypatch.setattr(core_close, "_acuse_por_codigo", lambda *a, **k: "")
     # Estos tests prueban el camino de u3-4 en el que la ubicación del REGEX se verifica con el LLM. Con ex-5
     # (`extraccion_llm_ubicacion`) la ubicación la decide el extractor (tests/test_ex5_ubicacion_extractor.py).

@@ -45,7 +45,7 @@ def _core_on(monkeypatch):
     monkeypatch.setattr(core_routing, "detect_special_signals", _senales)
     monkeypatch.setattr(core_extraction, "detect_special_signals", _senales)
     monkeypatch.setattr(core_extraction, "resolve_slot_answer", AsyncMock(return_value={}))
-    monkeypatch.setattr(core, "extract_notes", AsyncMock(return_value=[]))  # Fase C: no-op por defecto
+    monkeypatch.setattr("src.agents.nucleo.notas.extract_notes", AsyncMock(return_value=[]))  # Fase C: no-op por defecto
 
 
 # ---------------------------------------------------------------------------
@@ -2407,7 +2407,7 @@ async def test_fase_c_notes_captured_and_rendered(monkeypatch):
     núcleo es un hecho abierto que sí le llega.)"""
     from src.agents.supervisor import _build_extra_context
 
-    monkeypatch.setattr(core, "extract_notes",
+    monkeypatch.setattr("src.agents.nucleo.notas.extract_notes",
                         AsyncMock(return_value=["es su luna de miel"]))
     state = make_state("es")
     await route_message(state, "hola, es nuestra luna de miel y queremos bucear desde cartagena")
@@ -2677,7 +2677,7 @@ async def test_fase_c_notes_dedup_and_cap(monkeypatch):
     state = make_state("es")
     state.remembered_facts = {"notes": ["es nuestro aniversario"]}
     # el mensaje repite la conocida + trae una nueva
-    monkeypatch.setattr(core, "extract_notes",
+    monkeypatch.setattr("src.agents.nucleo.notas.extract_notes",
                         AsyncMock(return_value=["es nuestro aniversario", "viajan con un bebé"]))
     await route_message(state, "somos pareja, es nuestro aniversario y viajamos con un bebé")
     notes = state.remembered_facts["notes"]
@@ -2689,7 +2689,7 @@ async def test_fase_c_notes_dedup_and_cap(monkeypatch):
 @pytest.mark.asyncio
 async def test_fase_c_gate_skips_trivial_message(monkeypatch):
     """Mensaje trivial (<3 palabras) NO dispara la llamada de captura (coste)."""
-    monkeypatch.setattr(core, "extract_notes",
+    monkeypatch.setattr("src.agents.nucleo.notas.extract_notes",
                         AsyncMock(side_effect=AssertionError("no debe llamarse en mensaje trivial")))
     state = make_state("es")
     state.core_pending_slot = core.SLOT_NATIONALITY
@@ -2699,7 +2699,7 @@ async def test_fase_c_gate_skips_trivial_message(monkeypatch):
 @pytest.mark.asyncio
 async def test_fase_c_capture_failure_never_breaks_turn(monkeypatch):
     """Un fallo del extractor de notas se traga: el turno responde igual."""
-    monkeypatch.setattr(core, "extract_notes",
+    monkeypatch.setattr("src.agents.nucleo.notas.extract_notes",
                         AsyncMock(side_effect=RuntimeError("boom")))
     state = make_state("es")
     resp = await route_message(state, "quiero bucear, somos 2, desde cartagena, viajamos con mi suegra")
