@@ -337,6 +337,20 @@ def _sin_frases(parrafo: str, fuera: list[re.Pattern]) -> str:
     return " ".join(f for f in re.split(r"(?<=[.!?])\s+", parrafo) if not any(_quita(r, f) for r in fuera)).strip()
 
 
+_ORIGEN_DEL_ENLACE = {"es": {"cartagena": "Desde Cartagena", "island": "Ya en las islas"},
+                      "en": {"cartagena": "From Cartagena", "island": "Already on the islands"}}
+
+
+def _con_los_enlaces_que_faltan(answer: str, bloques: list[dict], lang: str) -> str:
+    """CALN-27 (un dato, un solo dueño): sin saber el origen, «cómo reservamos» lleva los dos enlaces; si el escritor se deja
+    alguno, lo pone el código (`hechos.faltan` lo ve, pero `_completar_con_hechos` no añade enlaces). Banco-053b: «Reserva con el
+    de tu punto de salida» sin ningún enlace, 2 de 2."""
+    faltan = [f"• {_ORIGEN_DEL_ENLACE[lang][origen]}: {url}" for bloque in bloques
+              for origen, url in (bloque.get("enlace") or {}).items()
+              if origen in _ORIGEN_DEL_ENLACE[lang] and isinstance(url, str) and url.split("?")[0] not in answer]
+    return f"{answer.rstrip()}\n\n" + "\n".join(faltan) if faltan else answer
+
+
 def con_la_pieza(answer: str, pieza: str) -> str:
     """CALN-3 paso 3 «A»: la respuesta del escritor con la pieza de precios debajo, delante de su pregunta final si
     cierra preguntando. Si aun así escribió algún importe, fuera esa frase: la cifra la da la pieza. Y si la pieza dice
@@ -452,6 +466,8 @@ async def _con_el_escritor(state: ConversationState, message: str, history: list
     if pieza:
         answer = con_la_pieza(answer, pieza)
     if origen_pendiente:
+        if "enlace" in intenciones:
+            answer = _con_los_enlaces_que_faltan(answer, bloques, lang)
         tras = ((core.ORIGEN_TRAS_LOS_ENLACES_ES, core.ORIGEN_TRAS_LOS_ENLACES_EN) if "enlace" in intenciones
                 else (core.ORIGEN_TRAS_LAS_VARIANTES_ES, core.ORIGEN_TRAS_LAS_VARIANTES_EN))
         pregunta = tras[0] if lang == "es" else tras[1]

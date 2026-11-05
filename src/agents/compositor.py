@@ -141,7 +141,8 @@ def _con_el_freno_del_origen(state, respuesta: str) -> str:
     if fija is None:
         return respuesta
     # Tras los dos enlaces la pregunta sobra aunque pida el enlace: ya los tiene, con la indicación de cuál usar.
-    con_los_enlaces = resto_por_pregunta[fija] and _veces_preguntada(state, core.SLOT_LOCATION) >= _VECES_MAX
+    con_los_enlaces = (resto_por_pregunta[fija] and "book.divingplanet.org" in respuesta
+                       and _veces_preguntada(state, core.SLOT_LOCATION) >= _VECES_MAX)
     if _ya_se_pregunto_bastante(state, core.SLOT_LOCATION) or con_los_enlaces:
         sin = respuesta.replace(fija, resto_por_pregunta[fija]).rstrip()
         if len(_palabras(sin)) >= _PALABRAS_DE_UNA_RESPUESTA:

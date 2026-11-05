@@ -356,7 +356,9 @@ def _acotados(otros: list[str], paquetes_primero: bool, siempre=frozenset()) -> 
     elegidos: list[str] = []
     for sid in orden:
         origen = _origen_del_plan(sid)
-        if sum(1 for e in elegidos if _origen_del_plan(e) == origen) < _OTROS_POR_ORIGEN:
+        # La salida que va siempre no le quita el sitio a un paquete: el banco de graves (s04i, las belgas) perdió el de 4 con
+        # nocturna y el de 5, que es el que cotizaba el escritor.
+        if sid in siempre or sum(1 for e in elegidos if _origen_del_plan(e) == origen and e not in siempre) < _OTROS_POR_ORIGEN:
             elegidos.append(sid)
     return [s for s in otros if s in elegidos]
 

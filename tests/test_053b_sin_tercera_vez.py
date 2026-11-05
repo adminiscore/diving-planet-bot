@@ -142,3 +142,33 @@ def test_sin_grupo_mixto_el_cambio_se_sigue_confirmando():
     with patch.object(extractor, "_jev_dice_que_nadie_se_suma", return_value=False):
         extractor._poner_grupo(intent, estado, "al final vamos solo 2", {"group_size": 2})
     assert (estado.pending_correction or {}).get("group_size") == 2 or intent.group_size == 2
+
+
+def test_si_el_escritor_se_deja_los_enlaces_los_pone_el_codigo():
+    from src.agents.redactor_hechos import _con_los_enlaces_que_faltan
+
+    a, b = "https://book.divingplanet.org/book/a/1?language=es", "https://book.divingplanet.org/book/b/2?language=es"
+    bloques = [{"enlace": {"cartagena": a, "island": b}}]
+    assert _con_los_enlaces_que_faltan("Es por la web.", bloques, "es") == f"Es por la web.\n\n• Desde Cartagena: {a}\n• Ya en las islas: {b}"
+    con_uno = f"Desde Cartagena: {a}"
+    assert _con_los_enlaces_que_faltan(con_uno, bloques, "es") == f"{con_uno}\n\n• Ya en las islas: {b}"
+    assert _con_los_enlaces_que_faltan(f"{a} {b}", bloques, "es") == f"{a} {b}"
+    assert _con_los_enlaces_que_faltan("Lo cierra un asesor.", [{"enlace": {"asesor": True}}], "es") == "Lo cierra un asesor."
+
+
+def test_sin_los_enlaces_en_la_respuesta_la_pregunta_se_queda():
+    fija = core.ORIGEN_TRAS_LOS_ENLACES_ES
+    estado = _estado()
+    estado._preguntas_del_turno, estado.core_pending_slot, estado._intenciones = [], None, ["enlace"]
+    assert fija in componer(estado, f"La reserva es por la web, y son unas cuantas palabras más.\n\n{fija}", escribio=True)
+
+
+def test_la_salida_que_va_siempre_no_quita_sitio_a_los_paquetes():
+    from src.flows import hechos
+
+    st = ConversationState(conversation_id="053b", language="en", is_certified=True, detected_activity="certified_diving",
+                           location="island", detected_location="island", detected_duration="multi_day", is_colombian=False)
+    st.duracion_de_buceo = True
+    planes = [p["plan"] for p in hechos.hechos(st, ["precio"], ["certified_diving"])[0]["otros_planes"]]
+    assert any("Fun Dives - 2 dives" in p for p in planes)  # la salida de un día (s04j, días sueltos)
+    assert any("night dive" in p for p in planes) and any("5-dive" in p for p in planes)  # y los paquetes (s04i)
