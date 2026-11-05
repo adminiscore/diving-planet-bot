@@ -173,3 +173,25 @@ def test_la_salida_que_va_siempre_no_quita_sitio_a_los_paquetes():
     planes = [p["plan"] for p in hechos.hechos(st, ["precio"], ["certified_diving"])[0]["otros_planes"]]
     assert any("Fun Dives - 2 dives" in p for p in planes)  # la salida de un día (s04j, días sueltos)
     assert any("night dive" in p for p in planes) and any("5-dive" in p for p in planes)  # y los paquetes (s04i)
+
+
+def test_quien_bucea_dos_dias_no_recibe_el_paquete_de_tres():
+    from src.flows import hechos
+
+    st = ConversationState(conversation_id="053b", language="en", is_certified=True, detected_activity="certified_diving",
+                           location="cartagena", detected_location="cartagena", detected_duration="multi_day",
+                           detected_cert_days=2, is_colombian=False)
+    st.duracion_de_buceo = True
+    planes = [p["plan"] for p in hechos.hechos(st, ["precio"], ["certified_diving"])[0]["otros_planes"]]
+    assert not any("3 days" in p for p in planes) and any("Fun Dives - 2 dives" in p for p in planes)
+
+
+def test_la_politica_dice_que_el_residente_no_es_extranjero():
+    """g-venezolano-cedula: «al ser un grupo mixto, se paga en dólares» con la lista en pesos (7 de 8 respuestas, también en la 0.52)."""
+    import json
+    from pathlib import Path
+
+    politicas = json.loads(Path("data/knowledge_base/policies.json").read_text(encoding="utf-8-sig"))["policies"]
+    assert "no cuenta como extranjero" in politicas["mixed_nationality_group"]["es"]
+    assert "does not count as a foreigner" in politicas["mixed_nationality_group"]["en"]
+    assert "no es un grupo mixto" in politicas["colombian_pricing"]["es"]
